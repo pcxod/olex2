@@ -17,6 +17,7 @@ class XLibMacros  {
   static DefMacro(HklMerge)
   static DefMacro(HklAppend)
   static DefMacro(HklExclude)
+  static DefMacro(HklImport)
   static DefMacro(SG)
   static DefMacro(SGE)
   static DefMacro(GraphSR)
@@ -81,6 +82,7 @@ class XLibMacros  {
   static DefMacro(Cif2Tab)
   static DefMacro(Cif2Doc)
   static DefMacro(CifCreate)
+  static DefMacro(FcfCreate)  
 
   static DefMacro(CalcCHN)
   static DefMacro(CalcMass)
@@ -90,6 +92,7 @@ class XLibMacros  {
   static DefMacro(Omit)
   static DefMacro(MolInfo)
   static DefMacro(RTab)
+  static DefMacro(Update)
   
   static DefFunc(Lst)
   static DefFunc(FileName)
@@ -119,6 +122,7 @@ class XLibMacros  {
 
   static DefFunc(CCrd) // cell coordinates of atoms
   static DefFunc(Crd) // cartesian coordinates of atoms
+  static DefFunc(CalcR) // calculates R factors
 
   static TActionQList Actions;
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg, const olxstr& resHKL_FN);

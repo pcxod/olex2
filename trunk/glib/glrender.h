@@ -297,7 +297,7 @@ public:
   void LibCalcZoom(const TStrObjList& Params, TMacroError& E);
   void LibLineWidth(const TStrObjList& Params, TMacroError& E);
   void LibBasis(const TStrObjList& Params, TMacroError& E);
-  TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 
 

@@ -19,17 +19,22 @@ ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg)  {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   return sf_util;
 #else
-  smatd_list ml;
-  sg.GetMatrices(ml, mattAll);
-  return new SF_Util<SG_Impl>(ml);
+  smatd_list all_m, unq_m;
+  sg.GetMatrices(all_m, mattAll);
+  sg.GetMatrices(unq_m, mattAll^(mattInversion|mattCentering));
+  return new SF_Util<SG_Impl>(all_m, unq_m, sg.IsCentrosymmetric());
+  //return new SF_Util<SG_Impl>(all_m, all_m, false);
 #endif
 }
 //...........................................................................................
-void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, const TSpaceGroup& sg, TArrayList<StructureFactor>& out)  {
+void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
+  const TSpaceGroup& sg, TArrayList<StructureFactor>& out)
+{
   if( hkl.Count() != F.Count() )
-    throw TInvalidArgumentException(__OlxSourceInfo, "hkl array and structure factors dimentions must be equal");
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "hkl array and structure factors dimensions missmatch");
   ISF_Util* sf_util = GetSF_Util_Instance(sg);
-  out.SetCount( sf_util->GetSGOrder()* hkl.Count() );
+  out.SetCount(sf_util->GetSGOrder()* hkl.Count());
   sf_util->Expand(hkl, F, out);
   delete sf_util;
   // test
@@ -71,7 +76,8 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i&
 }
 //...........................................................................................
 olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F, 
-                     short mapType, short sfOrigin, short scaleType)  {
+  short mapType, short sfOrigin, short scaleType, double scale)
+{
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
   if( sfOrigin == sfOriginFcf )  {
@@ -138,7 +144,6 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     double av = 0;
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
-    
     RefinementModel::HklStat ms =
       xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
     F.SetCount(refs.Count());
@@ -147,12 +152,14 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
     //fastsymm version is just about 10% faster...
-    CalcSF(xapp.XFile(), refs, F, true);
+    CalcSF(xapp.XFile(), refs, F);
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F
       double a = 0, k = 1;
-      if( scaleType == scaleRegression )  {
+      if( scaleType == scaleExternal )
+        k = scale;
+      else if( scaleType == scaleRegression )  {
         CalcFScale(F, refs, k, a);
         if( TBasicApp::GetInstance().IsProfiling() )
           TBasicApp::NewLogEntry(logInfo) << "Fc^2 = " << k << "*Fo^2" << (a >= 0 ? " +" : " ") << a;
@@ -184,7 +191,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     }
   }
   sw.print(xapp.NewLogEntry(logInfo));
-  return EmptyString;
+  return EmptyString();
 }
 //...........................................................................................
 void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers, TCAtomPList& alist)  {
@@ -222,7 +229,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
   }
 }
 //...........................................................................................
-void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F, bool useFpFdp)  {
+void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
   catch(...)  {
@@ -243,14 +250,13 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComp
     au.GetHklToCartesian(), 
     F, scatterers, 
     alist, 
-    U, 
-    useFpFdp
+    U
   );
   delete sf_util;
   delete [] U;
 }
 //...........................................................................................
-void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TEComplex<double> >& F, bool useFpFdp)  {
+void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TEComplex<double> >& F)  {
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
   catch(...)  {
@@ -270,10 +276,8 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TECom
     refs, au.GetHklToCartesian(), 
     F, scatterers, 
     alist, 
-    U, 
-    useFpFdp
+    U
   );
   delete sf_util;
   delete [] U;
 }
-

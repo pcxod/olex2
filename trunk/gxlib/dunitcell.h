@@ -18,11 +18,11 @@ public:
   void UpdateLabel();
   size_t LabelCount() const {  return 4;  }
   TXGlLabel& GetLabel(size_t i) const {  return *Labels[i];  }
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min);
   void ListPrimitives(TStrList &List) const;
-  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+  void UpdatePrimitives(int32_t Mask);
 
   size_t VertexCount() const {  return FGlP == NULL ? 0 : 8;  }
   const vec3f& GetVertex(size_t i) const {
@@ -51,7 +51,6 @@ public:
   void ToDataItem(TDataItem& di) const;
   void FromDataItem(const TDataItem& di);
 };
-
 
 EndGxlNamespace()
 #endif

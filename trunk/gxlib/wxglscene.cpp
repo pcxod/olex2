@@ -457,11 +457,11 @@ void TwxGlScene::RestoreFontScale()  {
 }
 //..............................................................................
 olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc)  {
-  olxstr rv(EmptyString);
+  olxstr rv(EmptyString());
   olxstr fntId( (glf != NULL) ? glf->GetIdString() : fntDesc );
   if( MetaFont::IsOlexFont(fntId) )  {
     if( fntId.CharAt(fntId.Length()-1) == ':' )  // default font
-      fntId << MetaFont::BuildOlexFontId(EmptyString, 12, true, false, false);
+      fntId << MetaFont::BuildOlexFontId(EmptyString(), 12, true, false, false);
     TStrList fntFiles;
     TEFile::ListDir( FontsFolder, fntFiles, "*.fnt", sefFile );
     dlgEditOlexFont* dlg = new dlgEditOlexFont( fntId, fntFiles );

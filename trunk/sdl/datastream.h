@@ -63,29 +63,29 @@ class IDataOutputStream : public IOutputStream  {
   }
 protected:
   // stream's underlying new line...
-  virtual inline size_t WritelnFor(const TIWString& str)  {  return Write(WNewLineSequence);  }
-  virtual inline size_t WritelnFor(const wchar_t* Data)  {  return Write(WNewLineSequence);  }
-  virtual inline size_t WritelnFor(const TICString& str)  {  return Write(CNewLineSequence);  }
-  virtual inline size_t WritelnFor(const char* Data)  {  return Write(CNewLineSequence);  }
+  virtual inline size_t WritelnFor(const TIWString& str)  {  return Write(WNewLineSequence());  }
+  virtual inline size_t WritelnFor(const wchar_t* Data)  {  return Write(WNewLineSequence());  }
+  virtual inline size_t WritelnFor(const TICString& str)  {  return Write(CNewLineSequence());  }
+  virtual inline size_t WritelnFor(const char* Data)  {  return Write(CNewLineSequence());  }
 public:
   virtual ~IDataOutputStream() {}
 
   virtual size_t Write(const void *Data, size_t size) = 0;
   inline size_t Writecln(const void *Data, size_t size)  {
     const size_t cnt = Write(Data, size);
-    return cnt + Write(CNewLineSequence);
+    return cnt + Write(CNewLineSequence());
   }
-  inline size_t Writecln()  {  return Write(CNewLineSequence);  }
+  inline size_t Writecln()  {  return Write(CNewLineSequence());  }
   inline size_t Writewln(const void *Data, size_t size)  {
     const size_t cnt = Write(Data, size);
-    return cnt + Write(WNewLineSequence);
+    return cnt + Write(WNewLineSequence());
   }
-  inline size_t Writewln()  {  return Write(WNewLineSequence);  }
+  inline size_t Writewln()  {  return Write(WNewLineSequence());  }
   inline size_t Writeuln(const void *Data, size_t size)  {
     const size_t cnt = Write(Data, size);
-    return cnt + Write(NewLineSequence);
+    return cnt + Write(NewLineSequence());
   }
-  inline size_t Writeuln()  {  return Write(NewLineSequence);  }
+  inline size_t Writeuln()  {  return Write(NewLineSequence());  }
   // the following two are needed cause they got a lot of constructors!
   size_t Write(const olxwstr& str)  {  return Write((const TIWString&)str);  }
   size_t Write(const olxcstr& str)  {  return Write((const TICString&)str);  }
@@ -97,7 +97,7 @@ public:
   inline size_t Writeln(const olxwstr& str)  {  return Writeln((const TIWString&)str);  }
   inline size_t Writeln(const TIWString& str)  {
     const size_t cnt = Write(str);
-    return cnt + Write(WNewLineSequence);
+    return cnt + Write(WNewLineSequence());
   }
   inline size_t Writeln(const wchar_t *Data)  {
     const size_t cnt = Write(Data, olxstr::o_strlen(Data));

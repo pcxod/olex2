@@ -78,7 +78,7 @@ public:
   double GetCharHalfWidth(short state) const;
   size_t LengthForWidth(const olxstr& str, size_t width) const;
   size_t LengthForWidth(const olxstr& str, size_t width, short& state) const;
-  uint16_t TextHeight(const olxstr& Text=EmptyString) const;
+  uint16_t TextHeight(const olxstr& Text=EmptyString()) const;
   bool IsCreated() const {  return (Flags&fntCreated) != 0;  }
   TTextRect GetTextRect(const olxstr& str) const;
   bool CharFromRGBArray(size_t Char, unsigned char *RGBData, uint16_t width, uint16_t height);

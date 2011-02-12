@@ -18,7 +18,7 @@ TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
 }
 //..............................................................................
-void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXGlLabels::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   
@@ -36,8 +36,8 @@ void TXGlLabels::Clear()  {  Marks.Clear();  }
 bool TXGlLabels::Orient(TGlPrimitive& P)  {
   TGlFont &Fnt = GetFont();
   TGXApp& app = TGXApp::GetInstance();
-  const size_t ac = app.AtomCount();
-  if( ac == 0 || Marks.Count() != ac )
+  TGXApp::AtomIterator ai = app.GetAtoms();
+  if( ai.count == 0 || Marks.Count() != ai.count )
     return true;
   bool currentGlM, matInited = false;
   const bool zoomed_rendering = Parent.GetExtraZoom() > 1;
@@ -46,18 +46,18 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   TGlMaterial& OGlM = P.GetProperties();
   Fnt.Reset_ATI(optimise_ati);
   const RefinementModel& rm = app.XFile().GetRM();
-  for( size_t i=0; i < ac; i++ )  {
-    const TXAtom& XA = app.GetAtom(i);
+  for( size_t i=0; ai.HasNext(); i++ )  {
+    const TXAtom& XA = ai.Next();
     if( XA.IsDeleted() || !XA.IsVisible() )  continue;
-    if( (Mode & lmHydr) == 0 && (XA.Atom().GetType() == iHydrogenZ) )  
+    if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )  
       continue;
-    if( (Mode & lmQPeak) == 0 && (XA.Atom().GetType() == iQPeakZ) )  continue;
-    if( (Mode & lmIdentity) != 0 && !XA.Atom().IsAUAtom() )  continue;
-    const TCAtom& ca = XA.Atom().CAtom();
-    olxstr Tmp(EmptyString, 48);
+    if( (Mode & lmQPeak) == 0 && (XA.GetType() == iQPeakZ) )  continue;
+    if( (Mode & lmIdentity) != 0 && !XA.IsAUAtom() )  continue;
+    const TCAtom& ca = XA.CAtom();
+    olxstr Tmp(EmptyString(), 48);
     if( (Mode & lmLabels) != 0 )  {
-      Tmp << XA.Atom().GetLabel();
-      if( XA.Atom().CAtom().GetResiId() != 0 )  {
+      Tmp << XA.GetLabel();
+      if( XA.CAtom().GetResiId() != 0 )  {
         size_t resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
         Tmp << '_' << resi;
       }
@@ -82,7 +82,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         }
       }
     }
-    if( (Mode & lmQPeakI) != 0 && (XA.Atom().GetType() == iQPeakZ) )  {
+    if( (Mode & lmQPeakI) != 0 && (XA.GetType() == iQPeakZ) )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
       Tmp << olxstr::FormatFloat(1, ca.GetQPeak());
     }
@@ -185,7 +185,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           }
         }
       }
-      vec3d V = XA.Atom().crd() + Parent.GetBasis().GetCenter();
+      vec3d V = XA.crd() + Parent.GetBasis().GetCenter();
       V *= Parent.GetBasis().GetMatrix();
       V *= Parent.GetBasis().GetZoom();
       const double MaxZ = (Parent.GetMaxRasterZ()-0.001);
@@ -199,7 +199,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       }
     }
     else  {  // vector font?
-      vec3d T = Parent.GetBasis().GetCenter() + XA.Atom().crd();
+      vec3d T = Parent.GetBasis().GetCenter() + XA.crd();
       T *= Parent.GetBasis().GetMatrix();
       T *= Parent.GetBasis().GetZoom();
       T[2] = Parent.GetMaxRasterZ() - 0.001;
@@ -211,8 +211,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
 }
 //..............................................................................
 void TXGlLabels::Init()  {
-  TGXApp& app = TGXApp::GetInstance();
-  Marks.SetSize((uint32_t)app.AtomCount());
+  Marks.SetSize(TGXApp::GetInstance().GetAtoms().count);
 }
 //..............................................................................
 void TXGlLabels::Selected(bool On) {  
@@ -224,8 +223,8 @@ void TXGlLabels::ClearLabelMarks()  {
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
-  if( A.GetXAppId() < Marks.Count() )
-    Marks.Set(A.GetXAppId(), v);
+  if( A.GetOwnerId() < Marks.Count() )
+    Marks.Set(A.GetOwnerId(), v);
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(size_t i, bool v)  {
@@ -234,8 +233,8 @@ void TXGlLabels::MarkLabel(size_t i, bool v)  {
 }
 //..............................................................................
 bool TXGlLabels::IsLabelMarked(const TXAtom& atom) const {
-  if( atom.GetXAppId() < Marks.Count() )
-    return Marks[atom.GetXAppId()];
+  if( atom.GetOwnerId() < Marks.Count() )
+    return Marks[atom.GetOwnerId()];
   return false;  // should not happen...
 }
 //..............................................................................

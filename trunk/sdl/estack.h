@@ -82,7 +82,7 @@ public:
                   argc++;
                 }
                 Push(op);
-                o = EmptyString;
+                o.SetLength(0);
                 NewOperation = false;
               }
               o << Exp[i];

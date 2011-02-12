@@ -5,7 +5,7 @@
 
 UseEsdlNamespace()
 
-//TBasicException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString)  {
+//TBasicException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString())  {
 //    if( msg.IsEmpty() )  Message = "Inherited exception";
 //    else                 Message = msg;
 //    Location = location;

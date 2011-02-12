@@ -35,11 +35,11 @@ size_t imp_auto_AtomCount(const TAsymmUnit& au)  {
 
 void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  olxstr folder( Cmds.IsEmpty() ? EmptyString : Cmds[0] );
+  olxstr folder( Cmds.IsEmpty() ? EmptyString() : Cmds[0] );
   int arg = 0;
   if( folder.IsNumber() )  {
     arg = folder.ToInt();
-    folder = EmptyString;
+    folder.SetLength(0);
   }
   if( folder.IsEmpty() && olex::IOlexProcessor::GetInstance() != NULL )
     olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
@@ -273,10 +273,11 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 
   // distance analysis
   TLattice& latt = xapp.XFile().GetLattice();
+  ASObjectProvider& objects = latt.GetObjects();
   // qpeaks first
   TSAtomPList QPeaks;
-  for( size_t i=0;  i < latt.AtomCount(); i++ )  {
-    TSAtom& sa = latt.GetAtom(i);
+  for( size_t i=0;  i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     if( sa.IsDeleted() || sa.CAtom().IsDeleted() )  continue;
     if( sa.GetType() == iQPeakZ )
       QPeaks.Add(sa);
@@ -453,8 +454,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   // treating NPD atoms... promoting to the next available type
   if( changeNPD > 0 && !sfac.IsEmpty() )  {
     size_t atoms_transformed = 0;
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( (sa.GetEllipsoid() != NULL && sa.GetEllipsoid()->IsNPD()) ||
         (sa.CAtom().GetUiso() <= 0.005) )
       {
@@ -570,10 +571,11 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     // validate max bonds
     TUnitCell& uc = xapp.XFile().GetUnitCell();
     TLattice& latt = xapp.XFile().GetLattice();
+    ASObjectProvider& objects = latt.GetObjects();
     TTypeList<TAtomEnvi> bc_to_check;
     const size_t maxb_cnt = sizeof(_autoMaxBond)/sizeof(_autoMaxBond[0]);
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       for( size_t j=0; j < maxb_cnt; j++ )  {
         if( sa.GetType() == _autoMaxBond[j].type )  {
           uc.GetAtomEnviList(sa, bc_to_check.AddNew()); 
@@ -680,10 +682,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   sw.stop();
   const double vol = xapp.XFile().GetLattice().GetUnitCell().CalcVolume();
 // init map
-  const vec3i dim(
-    (int)(au.Axes()[0].GetV()*resolution),
-    (int)(au.Axes()[1].GetV()*resolution),
-		(int)(au.Axes()[2].GetV()*resolution));
+  const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
   const size_t PointCount = dim.Prod();

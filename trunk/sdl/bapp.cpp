@@ -149,7 +149,7 @@ void BAPP_GetArgCount(const TStrObjList& Params, TMacroError& E)  {
 }
 void BAPP_GetArg(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
-  E.SetRetVal(i < TBasicApp::GetArgCount() ? TBasicApp::GetArg(i) : EmptyString);
+  E.SetRetVal(i < TBasicApp::GetArgCount() ? TBasicApp::GetArg(i) : EmptyString());
 }
 //..............................................................................
 void BAPP_Profiling(const TStrObjList& Params, TMacroError &E)  {

@@ -17,11 +17,11 @@ namespace ctrl_ext  {
       OnCheck(Actions.New(evt_on_check_id)),
       OnUncheck(Actions.New(evt_on_uncheck_id)),
       ActionQueue(NULL),
-      Data(EmptyString),
-      OnCheckStr(EmptyString),
-      OnUncheckStr(EmptyString),
-      OnClickStr(EmptyString),
-      DependMode(EmptyString)  {  SetToDelete(false);  }
+      Data(EmptyString()),
+      OnCheckStr(EmptyString()),
+      OnUncheckStr(EmptyString()),
+      OnClickStr(EmptyString()),
+      DependMode(EmptyString())  {  SetToDelete(false);  }
     virtual ~TCheckBox()  {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);

@@ -30,7 +30,7 @@ public:
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale();
   
-  virtual olxstr ShowFontDialog(TGlFont* glf=NULL, const olxstr& fontDesc=EmptyString);
+  virtual olxstr ShowFontDialog(TGlFont* glf=NULL, const olxstr& fontDesc=EmptyString());
 
   virtual void Destroy()  { AGlScene::Destroy();  }
   virtual void StartSelect(int x, int y, GLuint *Bf) {  AGlScene::StartSelect(x, y, Bf);  }

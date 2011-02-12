@@ -1494,11 +1494,19 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\sdl\math\mmath.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\sdl\poly.h"
 					>
 				</File>
 				<File
 					RelativePath="..\..\..\sdl\sls.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\math\spline.h"
 					>
 				</File>
 				<File
@@ -1562,6 +1570,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\sdl\outstream.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\sdl\utf8file.h"
 					>
 				</File>
@@ -1603,6 +1615,38 @@
 				</File>
 				<File
 					RelativePath="..\..\..\sdl\os_util.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="tests"
+				>
+				<File
+					RelativePath="..\..\..\sdl\tests\encoding_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\file_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\matrix_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\sort_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\spline_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\string_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\sys_test.h"
 					>
 				</File>
 			</Filter>

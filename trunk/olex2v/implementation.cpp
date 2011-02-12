@@ -121,7 +121,7 @@ bool TOlexViewer::OnFileChanged(const char* fileName)  {
 void TOlexViewer::Clear()  {
   GXApp->XFile().GetRM().Clear(rm_clear_ALL);
   GXApp->XFile().GetLattice().Clear(true);
-  GXApp->CreateObjects(false, false);
+  GXApp->CreateObjects(false);
 }
 //.......................................................................................
 olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
@@ -130,15 +130,15 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
   if( G != NULL )  {
     if( EsdlInstanceOf( *G, TXAtom) )  {
       TXAtom& xa = *(TXAtom*)G;
-      Tip = xa.Atom().GetLabel();
-      if( xa.Atom().GetType() == iQPeakZ )  {
-        Tip << ':' << xa.Atom().CAtom().GetQPeak();
+      Tip = xa.GetLabel();
+      if( xa.GetType() == iQPeakZ )  {
+        Tip << ':' << xa.CAtom().GetQPeak();
       }
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
-      Tip = ((TXBond*)G)->Bond().A().GetLabel();
-      Tip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
-      Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
+      Tip = ((TXBond*)G)->A().GetLabel();
+      Tip << '-' << ((TXBond*)G)->B().GetLabel() << ": ";
+      Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Length());
     } 
   }
   return Tip;
@@ -208,7 +208,7 @@ void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
       TDataFile df;
       df.LoadFromXLFile(styleFile);
       GXApp->GetRender().GetStyles().FromDataItem(*df.Root().FindItem("style"), true);
-      GXApp->CreateObjects(true, false);
+      GXApp->CreateObjects(true);
     }
   }
   catch( ... )  {  }  // be quite
@@ -252,10 +252,10 @@ void TOlexViewer::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& fu
   return;
 }
 //.......................................................................................
-const olxstr& TOlexViewer::getDataDir() const  {  return EmptyString;  }
+const olxstr& TOlexViewer::getDataDir() const  {  return EmptyString();  }
 //.......................................................................................
 const olxstr& TOlexViewer::getVar(const olxstr &name, const olxstr &defval) const  {
-  return EmptyString;
+  return EmptyString();
 }
 //.......................................................................................
 void TOlexViewer::setVar(const olxstr &name, const olxstr &val) const {

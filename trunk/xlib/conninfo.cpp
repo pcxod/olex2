@@ -7,7 +7,7 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
   TCAtomGroup ag;
   size_t aag;
-  try  {  ar.Expand(rm, ag, EmptyString, aag);  }
+  try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
   catch(const TExceptionBase&)  {
     TBasicApp::NewLogEntry(logError) << "Could not locate atoms for FREE " << ar.GetExpression();
     return;
@@ -42,7 +42,7 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
   TCAtomGroup ag;
   size_t aag;
-  try  {  ar.Expand(rm, ag, EmptyString, aag);  }
+  try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
   catch(const TExceptionBase&)  {
     TBasicApp::NewLogEntry(logError) << "Could not locate atoms for BIND " << ar.GetExpression();
     return;
@@ -128,7 +128,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     TAtomReference ar(ins.Text(' '));
     TCAtomGroup ag;
     size_t aag;
-    try  {  ar.Expand(rm, ag, EmptyString, aag);  }
+    try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
     catch(const TExceptionBase& )  {  }
     if( ag.IsEmpty() )  {
       TBasicApp::NewLogEntry(logError) <<  "Undefined atom in CONN: " << ins.Text(' ');

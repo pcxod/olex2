@@ -1157,7 +1157,7 @@ int gl_font_simplex[95][112] = {
 const olxcstr& TGlFont::DefinePSChar(olxch ch, const double& drawScale,
                                TGlFont::PSRenderContext& context) const
 {
-  if( ch < 32 || ch > 126 )  return CEmptyString;
+  if( ch < 32 || ch > 126 )  return CEmptyString();
   const size_t _ind = context.def_dict.IndexOf(ch);
   if( _ind != InvalidIndex )
     return context.definitions[context.def_dict.GetValue(_ind)].id;

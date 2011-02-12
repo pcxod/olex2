@@ -7,8 +7,9 @@
 #include "styles.h"
 #include "sbond.h"
 #include "talist.h"
-
 BeginGxlNamespace()
+
+class TXAtom;
 
 class TXBondStylesClear: public AActionHandler  {
 public:
@@ -18,12 +19,10 @@ public:
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
 };
 
-class TXBond: public AGDrawObject  {
+class TXBond: public TSBond, public AGDrawObject  {
 private:
-  TSBond *FBond;
   TXGlLabel* Label;
   short FDrawStyle;
-  size_t XAppId;
   friend class TXBondStylesClear;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
@@ -38,33 +37,30 @@ protected:
   virtual bool IsStyleSaveable() const {  return false; }
   virtual bool IsRadiusSaveable() const {  return false; }
 public:
-  TXBond(TGlRenderer& Render, const olxstr& collectionName, TSBond& B);
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  virtual ACreationParams* GetACreationParams() const;
+  TXBond(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
+  void Create(const olxstr& cName=EmptyString());
   virtual ~TXBond();
 
-  DefPropP(size_t, XAppId)
-  TXGlLabel& GetLabel() const {  return *Label;  }
-  void UpdateLabel()  {  GetLabel().Update();  }
+  // multiple inheritance...
+  void SetTag(index_t v) {   TSBond::SetTag(v);  }
+  index_t GetTag() const {  return TSBond::GetTag();  }
+  index_t IncTag()  {  return TSBond::IncTag();  }
+  index_t DecTag()  {  return TSBond::DecTag();  }
+
+  TXAtom& A() const {  return (TXAtom&)TSBond::A();  }
+  TXAtom& B() const {  return (TXAtom&)TSBond::B();  }
+  TXAtom& Another(const TSAtom& a) const {  return (TXAtom&)TSBond::Another(a);  }
+
+  TXGlLabel& GetGlLabel() const {  return *Label;  }
+  void UpdateLabel()  {  GetGlLabel().Update();  }
   // creates legend up three levels (0 to 2)
   static olxstr GetLegend(const TSBond& B, const short level);
 
-  // beware - for objects, having no wrapped bond this might fail
-  template <class Accessor=DirectAccessor> struct BondAccessor  {
-    static inline TSBond& Access(TXBond& b)  {
-      return Accessor::Access(b).Bond();
-    }
-    static inline TSBond& Access(TXBond* b)  {
-      return Accessor::Access(*b).Bond();
-    }
-  };
-  inline TSBond& Bond() const {  return *FBond; }
-  
   void SetRadius(float V);
   inline double GetRadius() const {  return FParams[4]; }
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
+  bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false; }
 
   void ListParams(TStrList &List, TGlPrimitive *Primitive);
   // for parameters of a specific primitive
@@ -78,17 +74,12 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
-  void SetDeleted(bool v)  {
-    AGDrawObject::SetDeleted(v);
-    Label->SetDeleted(v);
-    if( FBond != NULL )
-      FBond->SetDeleted(v);
-  }
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);
     if( !v )
       Label->SetVisible(false);
   }
+  virtual bool IsDeleted() const {  return TSBond::IsDeleted();  }
   void ListDrawingStyles(TStrList &List);
 
   uint32_t GetPrimitiveMask() const;
@@ -98,7 +89,7 @@ public:
 
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);
   void OnPrimitivesCleared();
-  void Quality(const short Val);
+  static void Quality(const short Val);
   // should be called when atom coordinates have changed
   virtual void Update();
 
@@ -107,17 +98,11 @@ public:
       FXBondStylesClear = new TXBondStylesClear(glr);
   }
 
-  static TGraphicsStyle* GetParamStyle() {  return FBondParams;  }
-  void CreateStaticObjects();
+  static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
+  static void CreateStaticObjects(TGlRenderer& parent);
   static void ClearStaticObjects()  {
     FStaticObjects.Clear();
   }
-};
-
-struct BondCreationParams : public ACreationParams {
-  class TXAtom &a1, &a2;
-  BondCreationParams(TXAtom& xa1, TXAtom& xa2) : a1(xa1), a2(xa2)  {}
-  BondCreationParams(const BondCreationParams& cp) : a1(cp.a1), a2(cp.a2)  {}
 };
 
 EndGxlNamespace()

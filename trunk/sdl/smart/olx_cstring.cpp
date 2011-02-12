@@ -10,7 +10,7 @@ TCString::TCString()  {
   _Increment = 8;
 }
 
-TCString::TCString(const bool& v) : TTIString<char>(v ? CTrueString: CFalseString) { }
+TCString::TCString(const bool& v) : TTIString<char>(v ? CTrueString(): CFalseString()) { }
 
 TCString::TCString( const wchar_t *wstr )  {
   _Start = 0;

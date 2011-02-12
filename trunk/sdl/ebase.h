@@ -281,9 +281,9 @@ public:
   }
 };
 
-extern const TIString& NewLineSequence;
-extern const TICString CNewLineSequence;
-extern const TIWString WNewLineSequence;
+extern const TIString& NewLineSequence();
+extern const TICString& CNewLineSequence();
+extern const TIWString& WNewLineSequence();
 
 // an interface for a referencible object
 class AReferencible : public IEObject  {
@@ -327,22 +327,6 @@ public:
   const class TBasicException* GetException() const; 
 };
 
-struct DirectAccessor  {
-  template <typename Item> static inline const Item& Access(const Item& item)  {
-    return item;
-  }
-  template <typename Item> static inline Item& Access(Item& item)  {
-    return item;
-  }
-};
-template <typename CastType> struct CastAccessor  {
-  template <typename Item> static inline const CastType& Access(const Item& item)  {
-    return (const CastType&)item;
-  }
-  template <typename Item> static inline CastType& Access(Item& item)  {
-    return (CastType&)item;
-  }
-};
 struct olx_alg  {
 protected:
 // logical NOT operator for an analyser
@@ -403,6 +387,7 @@ public:
 };
 
 #include "olxptr.h"
+#include "eaccessor.h"
 #include "association.h"
 #include "listalg.h"
 #include "citem.h"

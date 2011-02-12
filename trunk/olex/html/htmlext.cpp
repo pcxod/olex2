@@ -75,17 +75,17 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, int flags) :
     InitMacroA( *THtml::Library, THtml, Tooltips, Tooltips, , fpNone|fpOne|fpTwo );
     InitMacroA( LC->GetLibrary(), THtml, Tooltips, Htmltt, , fpNone|fpOne|fpTwo );
 
-    InitMacroD( *THtml::Library, THtml, SetFonts, EmptyString, fpTwo,
+    InitMacroD( *THtml::Library, THtml, SetFonts, EmptyString(), fpTwo,
       "Sets normal and fixed fonts to display HTML content");
 
-    InitMacroD( *THtml::Library, THtml, SetBorders, EmptyString, fpOne|fpTwo,
+    InitMacroD( *THtml::Library, THtml, SetBorders, EmptyString(), fpOne|fpTwo,
       "Sets borders between HTML content and window edges");
     InitMacroD( *THtml::Library, THtml, DefineControl, 
       "v-value&;i-tems&;c-checked/down&;bg-background color&;fg-foreground color;&;min-min value&;max-max value", 
       fpTwo, "Defines a managed control properties");
-    InitMacroD( *THtml::Library, THtml, Hide, EmptyString, 
+    InitMacroD( *THtml::Library, THtml, Hide, EmptyString(), 
       fpOne, "Hides an Html popup window");
-    InitMacroD( *THtml::Library, THtml, Group, EmptyString, 
+    InitMacroD( *THtml::Library, THtml, Group, EmptyString(), 
       fpAny^(fpNone|fpOne), "Creates an exclusive group of buttons");
 
     this_InitFuncD(GetValue, fpOne, "Returns value of specified object");
@@ -513,7 +513,7 @@ bool THtml::ProcessPageLoadRequest()  {
     res = LoadPage( PageRequested.u_str() );
   else
     res = UpdatePage();
-  PageRequested  = EmptyString;
+  PageRequested.SetLength(0);
   return res;
 }
 //..............................................................................
@@ -631,7 +631,7 @@ bool THtml::UpdatePage()  {
   }
 //#endif
   SwitchSources.Clear();
-  SwitchSource  = EmptyString;
+  SwitchSource.SetLength(0);
   TEFile::ChangeDir(oldPath);
   if( !FocusedControl.IsEmpty() )  {
     size_t ind = Objects.IndexOf( FocusedControl );
@@ -658,7 +658,7 @@ bool THtml::UpdatePage()  {
       InFocus = wnd;
     }
     else
-      FocusedControl = EmptyString;
+      FocusedControl.SetLength(0);
   }
   return true;
 }
@@ -788,7 +788,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         size_t sindex = itemName.FirstIndexOf('*');
         // *blabla* syntax
         if( sindex == 0 && itemName.Length() > 2 && itemName.CharAt(itemName.Length()-1) == '*')  {
-          rootSwitch.FindSimilar( itemName.SubString(1, itemName.Length()-2), EmptyString, Switches );
+          rootSwitch.FindSimilar( itemName.SubString(1, itemName.Length()-2), EmptyString(), Switches );
         }
         else  {  // assuming bla*bla syntax
           olxstr from = itemName.SubStringTo(sindex), with;
@@ -1013,7 +1013,7 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
     (*props)["bg"] = Options.FindValue("bg");
     (*props)["fg"] = Options.FindValue("fg");
     if( props->IndexOf("data") != InvalidIndex )
-      (*props)["data"] = Options.FindValue("data", EmptyString);
+      (*props)["data"] = Options.FindValue("data", EmptyString());
     if( props->IndexOf("val") != InvalidIndex )
       (*props)["val"] = Options.FindValue("v");
   }
@@ -1033,13 +1033,13 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
     wxTreeItemId ni = T->GetSelection();
     wxTreeItemData* td = T->GetItemData(ni);
     if( td == NULL || !EsdlInstanceOf(*td, TTreeNodeData) )
-      return EmptyString;
+      return EmptyString();
     TTreeNodeData* olx_td = dynamic_cast<TTreeNodeData*>(td);
     if( olx_td == NULL || olx_td->GetData() == NULL )
-      return EmptyString;
+      return EmptyString();
     return olx_td->GetData()->ToString();
   }
-  return EmptyString;
+  return EmptyString();
 }
 void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
   const size_t ind = Params[0].IndexOf('.');
@@ -1145,7 +1145,7 @@ const olxstr& THtml::GetObjectData(const AOlxCtrl *Obj)  {
   if( EsdlInstanceOf(*Obj, TComboBox) )  {  return ((TComboBox*)Obj)->GetData();  }
   if( EsdlInstanceOf(*Obj, TListBox) )  {  return ((TListBox*)Obj)->GetData();  }
   if( EsdlInstanceOf(*Obj, TTreeView) )  {  return ((TTreeView*)Obj)->GetData();  }
-  return EmptyString;
+  return EmptyString();
 }
 void THtml::funGetData(const TStrObjList &Params, TMacroError &E)  {
   const size_t ind = Params[0].IndexOf('.');
@@ -1189,7 +1189,7 @@ olxstr THtml::GetObjectImage(const AOlxCtrl* Obj)  {
     return ((TBmpButton*)Obj)->GetSource();
   else if( EsdlInstanceOf(*Obj, THtmlImageCell) )
     return ((THtmlImageCell*)Obj)->GetSource();
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 bool THtml::SetObjectImage(AOlxCtrl* Obj, const olxstr& src)  {
@@ -1236,7 +1236,7 @@ olxstr THtml::GetObjectItems(const AOlxCtrl* Obj)  {
   else if( EsdlInstanceOf(*Obj, TListBox) )  {
     return ((TListBox*)Obj)->ItemsToString(';');
   }
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
@@ -1322,7 +1322,7 @@ void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
       E.SetRetVal((*props)[Params[1]]);
   }
   else
-    E.SetRetVal(html->GetObjectState(Obj, Params.Count() == 1 ? EmptyString : Params[1]));
+    E.SetRetVal(html->GetObjectState(Obj, Params.Count() == 1 ? EmptyString() : Params[1]));
 }
 //..............................................................................
 void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
@@ -1501,7 +1501,7 @@ bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
       (*props)[Params[1]] = state;
   }
   else
-    html->SetObjectState(Obj, state, (Params.Count() == 2 ? EmptyString : Params[1]));
+    html->SetObjectState(Obj, state, (Params.Count() == 2 ? EmptyString() : Params[1]));
   return true;
 }
 //..............................................................................
@@ -1510,7 +1510,7 @@ void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
     return;
   if( Params.GetLastString().ToBool() )  {
     TStrObjList params(Params);
-    params.GetLastString() = FalseString;
+    params.GetLastString() = FalseString();
     TMacroError e;
     for( size_t i=0; i < Groups.Count(); i++ )  {
       if( Groups[i].IndexOf(Params[0]) == InvalidIndex )  continue;

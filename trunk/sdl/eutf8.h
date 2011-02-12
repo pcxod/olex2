@@ -35,7 +35,7 @@ protected:
     }
   }
 public:
-  static inline const olxcstr& Encode(const olxcstr& str)  {  return str;  }
+  static inline olxcstr Encode(const olxcstr& str)  {  return str;  }
   static inline olxcstr Encode(const olxwstr& str)  {
     return (*Instance.EncodeFunc)(str.raw_str(), str.Length());  
   }
@@ -49,7 +49,7 @@ public:
     return (*Instance.EncodeFunc)(wstr, len);
   }
   
-  static inline const olxwstr& Decode(const olxwstr& str)  {  return str;  }
+  static inline olxwstr Decode(const olxwstr& str)  {  return str;  }
   static inline olxwstr Decode(const olxcstr& str)  {
     return (*Instance.DecodeFunc)(str.raw_str(), str.Length());
   }
@@ -65,7 +65,7 @@ public:
 
   const static uint32_t FileSignature;
 
-protected:  // functions below are unsafe to use if wchar_t size is unknow!!
+protected:  // functions below are unsafe to use if wchar_t size is unknown!!
   static olxcstr Encode2(const void* vinput, size_t len)  {
     const uint16_t* input = (const uint16_t*)vinput;
     TDirectionalList<char> bf(len);
@@ -83,7 +83,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknow!!
         bf.Write((uint8_t)(UTF8_MASKBYTE | input[i] & UTF8_MASKBITS));
       }
     }
-    olxcstr str(CEmptyString, bf.GetLength() );
+    olxcstr str(CEmptyString(), bf.GetLength() );
     bf.ToString(str);
     return str;
   }
@@ -107,7 +107,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknow!!
       }
       bf.Write(ch);
     }
-    olxwstr str(WEmptyString, bf.GetLength() );
+    olxwstr str(WEmptyString(), bf.GetLength() );
     bf.ToString(str);
     return str;
   }
@@ -149,7 +149,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknow!!
         bf.Write((uint8_t)(UTF8_MASKBYTE | input[i] & UTF8_MASKBITS));
       }
     }
-    olxcstr str(CEmptyString, bf.GetLength() );
+    olxcstr str(CEmptyString(), bf.GetLength() );
     bf.ToString(str);
     return str;
   }
@@ -194,7 +194,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknow!!
       }
       bf.Write(ch);
     }
-    olxwstr str(WEmptyString, bf.GetLength() );
+    olxwstr str(WEmptyString(), bf.GetLength() );
     bf.ToString(str);
     return str;
 }

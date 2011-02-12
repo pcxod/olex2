@@ -145,7 +145,7 @@ template <class Base>
   public:
     TFunction(Base* baseClassInstance,
               void (Base::*func)(const TStrObjList& Params, TMacroError& E),
-              const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString)
+              const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString())
     {
       ArgStateMask = argc;
       BaseClassInstance = baseClassInstance;
@@ -203,7 +203,7 @@ template <class Base>
     olxstr RunSignature;
   public:
     TStaticFunction( void (*func)(const TStrObjList& Params, TMacroError& E),
-               const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString )
+               const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString() )
     {
       ArgStateMask = argc;
       Func = func;
@@ -264,7 +264,7 @@ template <class Base>
     TMacro( Base* baseClassInstance,
                void (Base::*macro)(TStrObjList& Params, const TParamList &Options, TMacroError& E),
                const olxstr& macroName, const olxstr& validOptions,
-               unsigned int argc, const olxstr& desc = EmptyString )
+               unsigned int argc, const olxstr& desc=EmptyString() )
     {
       ArgStateMask = argc;
       BaseClassInstance = baseClassInstance;
@@ -345,7 +345,7 @@ template <class Base>
   public:
     TStaticMacro( void (*macro)(TStrObjList& Params, const TParamList &Options, TMacroError& E),
                const olxstr& macroName, const olxstr& validOptions,
-               unsigned int argc, const olxstr& desc = EmptyString)
+               unsigned int argc, const olxstr& desc=EmptyString())
     {
       ArgStateMask = argc;
       Macro = macro;

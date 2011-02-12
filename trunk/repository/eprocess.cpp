@@ -158,7 +158,7 @@ bool TWinProcess::Terminate()  {
   SetTerminated();
   CloseStreams();
   OnTerminate.Execute((AEventsDispatcher*)this, NULL);
-  if( ProcessInfo.hProcess )  {
+  if( ProcessInfo.hProcess != NULL )  {
     bool res = TerminateProcess(ProcessInfo.hProcess, 0) != 0;
     CloseHandle(ProcessInfo.hProcess);
     ProcessInfo.hProcess = NULL;

@@ -13,7 +13,7 @@ namespace ctrl_ext {
 
   class TMenu: public wxMenu, public IEObject  {
   public:
-    TMenu(const olxstr &Name=EmptyString) : wxMenu(Name.u_str()) {}
+    TMenu(const olxstr &Name=EmptyString()) : wxMenu(Name.u_str()) {}
     // the function creates a new clone of wxMenu
     TMenu *Clone() const {  return CopyMenu(*this); };
     // returns a new menu created with new
@@ -29,7 +29,7 @@ namespace ctrl_ext {
     olxstr DependMode, Command, OnModeChangeCmd;
     short DependentOn;
   public:
-    TMenuItem(const short type, int id, TMenu* parent=NULL, const olxstr &Name=EmptyString) :
+    TMenuItem(const short type, int id, TMenu* parent=NULL, const olxstr &Name=EmptyString()) :
       wxMenuItem(parent, id, Name.u_str(), wxString(), static_cast<wxItemKind>(type)),
       OnModeChange(Actions.New(evt_on_mode_change_id)),
       ActionQueue(NULL),

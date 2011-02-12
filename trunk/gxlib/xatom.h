@@ -1,15 +1,16 @@
 #ifndef __olx_gxl_xatom_H
 #define __olx_gxl_xatom_H
-#include "actions.h"
 #include "glrender.h"
 #include "glprimitive.h"
 #include "glmousehandler.h"
 #include "gllabel.h"
 #include "styles.h"
-#include "satom.h"
 #include "ellipsoid.h"
+#include "satom.h"
 
 BeginGxlNamespace()
+
+class TXBond;
 
 const short
   adsSphere       = 1,  // atom draw styles
@@ -47,11 +48,9 @@ public:
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
 };
 
-class TXAtom: public AGlMouseHandlerImp  {
+class TXAtom: public TSAtom, public AGlMouseHandlerImp  {
 private:
-  TSAtom& FAtom;
   short FDrawStyle, FRadius;
-  size_t XAppId;
   static uint8_t PolyhedronIndex, 
     SphereIndex, 
     SmallSphereIndex, 
@@ -91,14 +90,19 @@ protected:
   static olxstr PolyTypeName;
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
 public:
-  TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A);
+  TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  virtual ACreationParams* GetCreationParams() const;
+  void Create(const olxstr& cName=EmptyString());
+  // multiple inheritance...
+  void SetTag(index_t v) {   TSAtom::SetTag(v);  }
+  index_t GetTag() const {  return TSAtom::GetTag();  }
+  index_t IncTag()  {  return TSAtom::IncTag();  }
+  index_t DecTag()  {  return TSAtom::DecTag();  }
 
-  DefPropP(size_t, XAppId)
-  TXGlLabel& GetLabel() const {  return *Label;  }
-  void UpdateLabel()  {  GetLabel().Update();  }
+  TXGlLabel& GetGlLabel() const {  return *Label;  }
+  void UpdateLabel()  {  GetGlLabel().Update();  }
+  inline TXAtom& Node(size_t i) const {  return (TXAtom&)TSAtom::Node(i); }
+  inline TXBond& Bond(size_t i) const {  return (TXBond&)TSAtom::Bond(i); }
 
   static olxstr GetLegend(const TSAtom& A, const short Level=2); // returns full legend with symm code
   // returns level of the given legend (number of '.', basically)
@@ -127,15 +131,6 @@ public:
   static void SetQPeakSizeScale(float V);    // to use with q-peaks
 
   void CalcRad(short DefAtomR);
-  template <class Accessor=DirectAccessor> struct AtomAccessor  {
-    template <class Item> static inline TSAtom& Access(Item& a)  {
-      return Accessor::Access(a).Atom();
-    }
-    template <class Item> static inline TSAtom& Access(Item* a)  {
-      return Accessor::Access(*a).Atom();
-    }
-  };
-  inline TSAtom& Atom() const {  return FAtom;  }
 
   void ApplyStyle(TGraphicsStyle& S);
   void UpdateStyle(TGraphicsStyle& S);
@@ -150,9 +145,9 @@ public:
     double scale = FParams[1];
     if( (FRadius & (darIsot|darIsotH)) != 0 )
       scale *= TelpProb();
-    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && FAtom.GetEllipsoid() != NULL )
+    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && GetEllipsoid() != NULL )
     {
-      if( FAtom.GetEllipsoid()->IsNPD() )
+      if( GetEllipsoid()->IsNPD() )
         return (caDefIso*2*scale);
       return scale;
     }
@@ -168,22 +163,17 @@ public:
   // fills the list with proposal primitives to construct object
   void ListPrimitives(TStrList& List) const;
   TGraphicsStyle& Style();
-  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
+  void UpdatePrimitives(int32_t Mask);
   uint32_t GetPrimitiveMask() const;
 
   bool OnMouseDown(const IEObject* Sender, const TMouseData& Data);
   bool OnMouseUp(const IEObject* Sender, const TMouseData& Data);
   bool OnMouseMove(const IEObject* Sender, const TMouseData& Data);
 
-  void SetDeleted(bool v)  {
-    AGDrawObject::SetDeleted(v);
-    Label->SetDeleted(v);
-    FAtom.SetDeleted(v);
-  }
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);
     if( !v )
-      Label->SetDeleted(false);
+      Label->SetVisible(false);
   }
   void ListDrawingStyles(TStrList &List);
   inline short DrawStyle() const {  return FDrawStyle;  }
@@ -191,7 +181,7 @@ public:
 
   void UpdatePrimitiveParams(TGlPrimitive* GlP);
   void OnPrimitivesCleared();
-  void Quality(const short Val);
+  static void Quality(const short Val);
 
   static void Init(TGlRenderer* glr)  {
     if( FXAtomStylesClear == NULL ) 
@@ -202,13 +192,10 @@ public:
   int GetPolyhedronType();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
-  void CreateStaticObjects();
+  static void CreateStaticObjects(TGlRenderer& parent);
   static void ClearStaticObjects()  {
     FStaticObjects.Clear();
   }
-};
-
-struct AtomCreationParams : public ACreationParams {
 };
 
 EndGxlNamespace()

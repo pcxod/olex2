@@ -83,7 +83,7 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   if( XA->IsSelected() )  
     Tmp << " sel";
   else                  
-    Tmp << " #c" << XA->Atom().CAtom().GetId();
+    Tmp << " #c" << XA->CAtom().GetId();
   ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
@@ -102,7 +102,7 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
     case ID_AtomConn12:  Tmp << def_max_bonds;  break;
   }
   if( !XA->IsSelected() )
-    Tmp << " #c" << XA->Atom().CAtom().GetId();
+    Tmp << " #c" << XA->CAtom().GetId();
   ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
@@ -196,8 +196,8 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
       MatProp->SetCurrent(((TGlGroup*)FObjectUnderMouse)->GetGlM());
     if( MatProp->ShowModal() == wxID_OK )  {
-      if( EsdlInstanceOf( *FObjectUnderMouse, TXAtom) )
-        FXApp->XAtomDS2XBondDS("Sphere");  
+      if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
+        ;//FXApp->SynchroniseBonds((TXAtom*)FObjectUnderMouse);  
     }
     MatProp->Destroy();
     TimePerFrame = FXApp->Draw();
@@ -286,25 +286,25 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
   if( EsdlInstanceOf(*G, TXAtom) )  {
     TStrList SL;
     TXAtom *XA = (TXAtom*)G;
-    FXApp->BangList(XA, SL);
+    FXApp->BangList(*XA, SL);
     pmBang->Clear();
     for( size_t i=0; i < SL.Count(); i++ )
       pmBang->Append(-1, SL[i].u_str());
     pmAtom->Enable(ID_MenuBang, SL.Count() != 0);
-    olxstr T = XA->Atom().GetLabel();
-    T << ':' << ' ' <<  XA->Atom().GetType().name;
-    if( XA->Atom().GetType() == iQPeakZ )  {
-      T << ": " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetQPeak());
+    olxstr T = XA->GetLabel();
+    T << ':' << ' ' <<  XA->GetType().name;
+    if( XA->GetType() == iQPeakZ )  {
+      T << ": " << olxstr::FormatFloat(3, XA->CAtom().GetQPeak());
     }
     else 
-      T << " Occu: " << TEValueD(XA->Atom().CAtom().GetOccu(), XA->Atom().CAtom().GetOccuEsd()).ToString();
+      T << " Occu: " << TEValueD(XA->CAtom().GetOccu(), XA->CAtom().GetOccuEsd()).ToString();
     miAtomInfo->SetText(T.u_str());
-    pmAtom->Enable(ID_AtomGrow, !XA->Atom().IsGrown());
+    pmAtom->Enable(ID_AtomGrow, !XA->IsGrown());
     pmAtom->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     pmAtom->Enable(ID_SelGroup, false);
     size_t bound_cnt = 0;
-    for( size_t i=0; i < XA->Atom().NodeCount(); i++ )  {
-      if( XA->Atom().Node(i).IsDeleted() || XA->Atom().Node(i).GetType().GetMr() < 3.5 )  // H,D,Q
+    for( size_t i=0; i < XA->NodeCount(); i++ )  {
+      if( XA->Node(i).IsDeleted() || XA->Node(i).GetType().GetMr() < 3.5 )  // H,D,Q
         continue;
       bound_cnt++;
     }
@@ -323,9 +323,9 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
       pmTang->Append(0, SL[i].u_str());
 
     pmBond->Enable(ID_MenuTang, SL.Count() != 0);
-    T = XB->Bond().A().GetLabel();
-    T << '-' << XB->Bond().B().GetLabel() << ':' << ' '
-      << olxstr::FormatFloat(3, XB->Bond().Length());
+    T = XB->A().GetLabel();
+    T << '-' << XB->B().GetLabel() << ':' << ' '
+      << olxstr::FormatFloat(3, XB->Length());
     miBondInfo->SetText(T.u_str());
     pmBond->Enable(ID_Selection, G->IsSelected() && EsdlInstanceOf(*G->GetParentGroup(), TGlGroup));
     FCurrentPopup = pmBond;
@@ -377,7 +377,7 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   if( XA->IsSelected() )  
     Tmp << "sel";
   else                  
-    Tmp << "#x" << XA->GetXAppId();
+    Tmp << "#s" << XA->GetOwnerId();
   Tmp << ' ';
   switch( event.GetId() )  {
     case ID_AtomTypeChangeC:
@@ -410,7 +410,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   if( XA->IsSelected() )  
     Tmp << "sel";
   else                  
-    Tmp << "#x" << XA->GetXAppId();
+    Tmp << "#s" << XA->GetOwnerId();
   Tmp << ' ';
   TPTableDlg *Dlg = new TPTableDlg(this);
   if( Dlg->ShowModal() == wxID_OK )  {
@@ -427,9 +427,9 @@ size_t TMainForm::GetFragmentList(TNetPList& res)  {
     TGlGroup& glg = FXApp->GetSelection();
     for( size_t i=0; i < glg.Count(); i++ )  {
       if( EsdlInstanceOf(glg[i], TXAtom) )
-        res.Add(((TXAtom&)glg[i]).Atom().GetNetwork());
+        res.Add(((TXAtom&)glg[i]).GetNetwork());
       else if( EsdlInstanceOf(glg[i], TXBond) )
-        res.Add(((TXBond&)glg[i]).Bond().GetNetwork());
+        res.Add(((TXBond&)glg[i]).GetNetwork());
     }
     for( size_t i=0; i < res.Count(); i++ )
       res[i]->SetTag(i);
@@ -440,9 +440,9 @@ size_t TMainForm::GetFragmentList(TNetPList& res)  {
   }
   else  {
     if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
-      res.Add(((TXAtom*)FObjectUnderMouse)->Atom().GetNetwork());
+      res.Add(((TXAtom*)FObjectUnderMouse)->GetNetwork());
     else if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )
-      res.Add(((TXBond*)FObjectUnderMouse)->Bond().GetNetwork());
+      res.Add(((TXBond*)FObjectUnderMouse)->GetNetwork());
   }
   return res.Count();
 }
@@ -501,24 +501,24 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( event.GetId() == ID_AtomGrow )
-    ProcessMacro(olxstr("grow #x") << XA->GetXAppId());
+    ProcessMacro(olxstr("grow #s") << XA->GetOwnerId());
   else if( event.GetId() == ID_AtomSelRings )  {
     TTypeList<TSAtomPList> rings;
-    XA->Atom().GetNetwork().FindAtomRings(XA->Atom(), rings);
+    XA->GetNetwork().FindAtomRings(*XA, rings);
     if( !rings.IsEmpty() )  {
-      TXAtomPList xatoms;
-      for( size_t i=0; i < rings.Count(); i++ )
-        FXApp->SAtoms2XAtoms(rings[i], xatoms);
-      for( size_t i=0; i < xatoms.Count(); i++ )  {
-        if( !xatoms[i]->IsSelected() )
-          FXApp->GetRender().Select(*xatoms[i]);
+      for( size_t i=0; i < rings.Count(); i++ )  {
+        for( size_t j=0; j < rings[i].Count(); j++ )  {
+          TXAtom* xa = static_cast<TXAtom*>(rings[i][j]);
+          if( !xa->IsSelected() )
+            FXApp->GetRender().Select(*xa);
+        }
       }
       TimePerFrame = FXApp->Draw();
     }
   }
   else if( event.GetId() == ID_AtomCenter )  {
     if( !XA->IsSelected() )
-      ProcessMacro(olxstr("center #x") << XA->GetXAppId());
+      ProcessMacro(olxstr("center #s") << XA->GetOwnerId());
     else
       ProcessMacro("center");  // center of the selection
     TimePerFrame = FXApp->Draw();
@@ -551,15 +551,15 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
     TGlGroup& gl = FXApp->GetSelection();
     for( size_t i=0; i < gl.Count(); i++ )  {
       if( EsdlInstanceOf(gl[i], TXAtom) )  {
-        cent += ((TXAtom&)gl[i]).Atom().crd();
+        cent += ((TXAtom&)gl[i]).crd();
         cnt++;
       }
       else if( EsdlInstanceOf(gl[i], TXBond) ) {
-        cent += ((TXBond&)gl[i]).Bond().GetCenter();
+        cent += ((TXBond&)gl[i]).GetCenter();
         cnt++;
       }
       else if( EsdlInstanceOf(gl[i], TXPlane) ) {
-        cent += ((TXPlane&)gl[i]).Plane().GetCenter();
+        cent += ((TXPlane&)gl[i]).GetCenter();
         cnt++;
       }
     }

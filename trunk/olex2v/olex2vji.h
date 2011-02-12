@@ -53,7 +53,7 @@ class TOlexViewer : public olex::IOlexProcessor {
   bool LabelsVisible;
 protected:
   virtual TStrList GetPluginList() const {  return TStrList();  }
-  virtual olxstr TranslateString(const olxstr& str) const {  return EmptyString;  }
+  virtual olxstr TranslateString(const olxstr& str) const {  return EmptyString();  }
   virtual bool IsControl(const olxstr& cname) const {  return false;  }
   virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er) {  return false;  }
 public:
@@ -69,8 +69,8 @@ public:
   olxstr Status;
   static TPSTypeList<int, TOlexViewer*> Instances;
   static TOlexViewer* Locate(int object)  {
-    int i = Instances.IndexOfobject);
-    return (i==-1) ? NULL : Instances.GetObject(i);
+    const size_t i = Instances.IndexOf(object);
+    return (i==InvalidIndex) ? NULL : Instances.GetObject(i);
   }
   const olxstr GetFileName() const {  return FileName;  }
   void SaveState();
@@ -84,8 +84,8 @@ public:
   virtual bool registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn) {  return false;  }
   virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName) {  return;  }
 
-  virtual const olxstr& getDataDir() const {  return EmptyString;  }
-  virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=NullString) const {  return EmptyString;  }
+  virtual const olxstr& getDataDir() const {  return EmptyString();  }
+  virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=EmptyString()) const {  return EmptyString();  }
   virtual void setVar(const olxstr &name, const olxstr &val) const {  return;  }
 
 };

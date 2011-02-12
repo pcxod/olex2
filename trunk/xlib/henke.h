@@ -125,9 +125,5 @@ extern const cm_Anomalous_Henke _cm_henke_Pa[];
 extern const cm_Anomalous_Henke _cm_henke_U[];
 extern const cm_Anomalous_Henke _cm_henke_D[];
 
-
-extern const cm_Anomalous_Henke _cm_henke_U[];
-
-
 EndXlibNamespace()
 #endif

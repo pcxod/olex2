@@ -19,8 +19,8 @@ namespace ctrl_ext  {
       wxSpinCtrl(Parent, -1, wxEmptyString, wxDefaultPosition, sz),
       AOlxCtrl(this),  
       OnChange(Actions.New(evt_change_id)),
-      Data(EmptyString),
-      OnChangeStr(EmptyString)
+      Data(EmptyString()),
+      OnChangeStr(EmptyString())
     {
     }
     virtual ~TSpinCtrl()  {}

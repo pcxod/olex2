@@ -23,7 +23,7 @@ protected:
     olxstr args;
     size_t index = Cmd.FirstIndexOf('%');  // argument by index
     while( index != InvalidIndex && index < (Cmd.Length()-1) )  {
-      args = EmptyString;
+      args.SetLength(0);
       size_t iindex = index;
       while( olxstr::o_isdigit(Cmd.CharAt(iindex+1)) )  {  // extract argument number
         args << Cmd.CharAt(iindex+1);
@@ -38,7 +38,7 @@ protected:
         }
         else  {
           TBasicApp::NewLogEntry(logError) << Name << ": wrong argument index: " << (pindex+1)
-            << NewLineSequence;
+            << NewLineSequence();
         }
       }
       if( index++ < Cmd.Length() )
@@ -58,7 +58,7 @@ public:
     TStrList& onTerminate, olex::IOlexProcessor& olex_processor )  {
     
     if( Args.Count() < args.Count() )  {
-      TBasicApp::NewLogEntry(logError) << Name << ": too many arguments" << NewLineSequence;
+      TBasicApp::NewLogEntry(logError) << Name << ": too many arguments" << NewLineSequence();
       return false;
     }
     TStrList argV( Args.Count() );
@@ -118,7 +118,7 @@ protected:
   bool ExtractItemVal(const TDataItem& tdi, olxstr& val)  {  // helper function
     val = tdi.GetValue();
     if( val.IsEmpty() )
-      val = tdi.GetFieldValue("cmd", EmptyString);
+      val = tdi.GetFieldValue("cmd", EmptyString());
     return !val.IsEmpty();
   }
   void ParseMacro(const TDataItem& macro_def, TEMacro& macro);

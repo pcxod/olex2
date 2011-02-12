@@ -1,11 +1,8 @@
-#ifndef __olx_md5__H
-#define __olx_md5__H
+#ifndef __olx_sdl_md5_H
+#define __olx_sdl_md5_H
 #include "hashing.h"
 /* MD5 message digest implementation, for reference look at:
-  
   http://en.wikipedia.org/wiki/MD5
-  Simple tests are implemented in the testsuit.cpp
-
   (c) O Dolomanov, 2009
 */
 

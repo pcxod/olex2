@@ -1,6 +1,7 @@
 #ifndef __olx_xl_network_H
 #define __olx_xl_network_H
 #include "math/align.h"
+#include "evalue.h"
 #include "satom.h"
 #include "sbond.h"
 #include "tptrlist.h"
@@ -21,25 +22,24 @@ protected:
   void SortNodes();
 public:
   TNetwork(TLattice* P, TNetwork *N);
-  virtual ~TNetwork();
+  virtual ~TNetwork()  {}
 
   inline TLattice& GetLattice() const {  return *Lattice;  }
   // empties the content of the network
   void Clear();
   // adds a node to the network and assigns its NetId
-  void AddNode(TSAtom& N)  { Nodes.Add(N)->SetNetId(NodeCount());  }
+  void AddNode(TSAtom& N)  { Nodes.Add(N)->SetFragmentId(NodeCount());  }
   // adds a bond to the network and assigns its NetId
-  void AddBond(TSBond& B)  {  Bonds.Add(B)->SetNetId(BondCount());  }
+  void AddBond(TSBond& B)  {  Bonds.Add(B)->SetFragmentId(BondCount());  }
 
   // copies the content of S to the net
   void Assign(TNetwork& S);
 
   /* disassembles the list of Atoms into the fragments; does not affect current net */
-  void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& InterBonds);
-  void Disassemble(const AtomRegistry& ar, TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& InterBonds);
+  void Disassemble(ASObjectProvider& objects, TNetPList& Frags);
   /* creates bonds and fragments for atoms initialised by Disassemble, all Q-bonds end up 
   in the bond_sink*/
-  void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList& bond_sink);
+  void CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Frags);
   // returns true if the two atoms share a matrix
   static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
     for( size_t i=0; i < sa.MatrixCount(); i++ )  {
@@ -133,7 +133,6 @@ public:
     return false;
   }
 
-
   // only pointers are compared!!
   inline bool operator == (const TNetwork& n) const {  return this == &n;  }
   inline bool operator == (const TNetwork* n) const {  return this == n;  }
@@ -221,58 +220,7 @@ public:
     double (*weight_calculator)(const TSAtom&));
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
-
-protected:
-  class TDisassembleTaskRemoveSymmEq  {
-    TSAtomPList& Atoms;
-    double** Distances;
-  public:
-    TDisassembleTaskRemoveSymmEq(TSAtomPList& atoms, double** distances) :
-      Atoms(atoms)  {  Distances = distances;  }
-
-    void Run(size_t ind);
-    TDisassembleTaskRemoveSymmEq* Replicate() const  {
-      return new TDisassembleTaskRemoveSymmEq(Atoms, Distances);
-    }
-  };
-  class TDisassembleTaskCheckConnectivity  {
-    TSAtomPList& Atoms;
-    double** Distances;
-    double Delta;
-  public:
-    TDisassembleTaskCheckConnectivity(TSAtomPList& atoms, 
-      double** distances, double delta) :  Atoms(atoms) 
-    {
-      Distances = distances;
-      Delta = delta;
-    }
-    void Run(size_t ind);
-    TDisassembleTaskCheckConnectivity* Replicate() const {
-      return new TDisassembleTaskCheckConnectivity(Atoms, Distances, Delta);
-    }
-  };
-  class THBondSearchTask  {
-    TSAtomPList& Atoms;
-    TSBondPList* Bonds;
-    double** Distances;
-    double Delta;
-  public:
-    THBondSearchTask(TSAtomPList& atoms, 
-      TSBondPList* bonds, 
-      double** distances, double delta) :  Atoms(atoms)  
-    {
-      Distances = distances;
-      Delta = delta;
-      Bonds = bonds;
-    }
-    void Run(size_t ind);
-    THBondSearchTask* Replicate() const {
-      return new THBondSearchTask(Atoms, Bonds, Distances, Delta);
-    }
-  };
-
 };
-
 
 EndXlibNamespace()
 #endif

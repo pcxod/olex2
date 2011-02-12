@@ -27,34 +27,34 @@ const short
   sotTBond  = 0x0005,
   sotBBond  = 0x0006;
 
-const float
-  dcMaxCBLength = 5.6f, // maximum length of a covalent bond
-  dcMaxHBLength = 6.0f; // maximu length of a short interaction
 const float caDefIso = 0.05f;  // default atom isotropic parameter;
 
 template <class Net> class TSObject: public ACollectionItem  {
 protected:
   Net* Network;  // a pointer to parent Network
-  short   Type;    // object type: eg bond, atom, etc
-  size_t     NetId;    // reference in network container
-  size_t     LattId;    // reference in lattice container
+  short Type;  // object type: eg bond, atom, etc
+  size_t OwnerId, FragmentId;
 public:
-  TSObject(Net* Parent) : Network(Parent), Type(sotNone) {}
+  TSObject(Net* Parent) : Network(Parent), Type(sotNone), OwnerId(~0)  {}
   virtual ~TSObject()  {}
-  void Assign(const TSObject& S) {
+  void Assign(const TSObject& S)  {
     SetType(S.GetType());
     Network = &S.GetNetwork();
     SetTag(S.GetTag());
-    SetNetId(S.GetNetId());
-    SetLattId(S.GetLattId());
+    SetOwnerId(S.GetOwnerId());
+    SetFragmentId(S.GetFragmentId());
   }
 
   inline Net& GetNetwork() const {  return *Network;  }
   inline void SetNetwork(Net& n)  {  Network = &n;  }
 
-  DefPropP(size_t, NetId)
-  DefPropP(size_t, LattId)
   DefPropP(short, Type)
+  // this must be updated by the owner container
+  inline size_t GetOwnerId() const {  return OwnerId;  }
+  inline size_t GetFragmentId() const {  return FragmentId;  }
+  // for the owner usage
+  inline void SetOwnerId(size_t v)  {  OwnerId = v;  }
+  inline void SetFragmentId(size_t v)  {  FragmentId = v;  }
 };
 //---------------------------------------------------------------------------
 // TBasicNode - encapsulate basic bond
@@ -62,14 +62,15 @@ public:
 template <class Net, class Node>
 class TBasicBond : public TSObject<Net>  {
 protected:
-  Node *FA,      // first bond atom
-       *FB;    // second bond atom
+  Node *FA, // first bond atom
+       *FB; // second bond atom
   virtual void OnAtomSet() = 0;
 public:
   TBasicBond(Net* P) : TSObject<Net>(P), FA(NULL), FB(NULL) {
     TSObject<Net>::Type = sotBBond;
   }
   virtual ~TBasicBond() {}
+  bool IsValid() const {  return FA != NULL && FB != NULL;  }
   Node& A() const {  return *FA;  }
   void SetA(Node& a) {  FA = &a;  OnAtomSet();  }
 
@@ -87,10 +88,10 @@ protected:
   TPtrList<NodeType> Nodes;  // list of attached nodes
   TPtrList<BondType> Bonds;  // list of bonds. for quick referencing etc
 public:
-  TBasicNode(Net* N) : TSObject<Net>(N) {  }
-  virtual ~TBasicNode()  {  }
+  TBasicNode(Net* N) : TSObject<Net>(N)  {}
+  virtual ~TBasicNode()  {}
 
-  void Assign(const TBasicNode& S) {  }
+  void Assign(const TBasicNode& S)  {}
   
   void Clear()  {
     Nodes.Clear();
@@ -120,7 +121,7 @@ public:
   const TPtrList<BondType>& GetBonds() const {  return Bonds;  }
   inline void NullBond(size_t i)  {  Bonds[i] = NULL;  }
   inline bool NullBond(const BondType& N) {  
-    size_t ind = Bonds.IndexOf(N);
+    const size_t ind = Bonds.IndexOf(N);
     if( ind != InvalidIndex )  {
       Bonds[ind] = NULL; 
       return true;

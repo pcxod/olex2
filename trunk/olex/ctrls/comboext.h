@@ -43,11 +43,11 @@ namespace ctrl_ext {
       OnLeave(Actions.New(evt_on_mouse_leave_id)),
       OnEnter(Actions.New(evt_on_mouse_enter_id)),
       OnReturn(Actions.New(evt_on_return_id)),
-      Data(EmptyString),
-      OnChangeStr(EmptyString),
-      OnLeaveStr(EmptyString),
-      OnEnterStr(EmptyString),
-      OnReturnStr(EmptyString) {}
+      Data(EmptyString()),
+      OnChangeStr(EmptyString()),
+      OnLeaveStr(EmptyString()),
+      OnEnterStr(EmptyString()),
+      OnReturnStr(EmptyString()) {}
     virtual ~TComboBox();
 
     void Clear();

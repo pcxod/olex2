@@ -1,17 +1,10 @@
 //---------------------------------------------------------------------------//
 // (c) James J Haestier, 2007
 //---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "tls.h"
-
 #include "satom.h"
 #include "asymmunit.h"
-#include "svd.h"
-#include "inv.h"
+#include "math/mmath.h"
 
 /*
 TLS module:
@@ -303,45 +296,11 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 		"TLS Failed: more tls parameters than equations.\nTry adding more atoms or constraints.");
 
 
-	ap::template_2d_array<double> designMatrix; //copy dm for SVD
-    designMatrix.setbounds(1, mRows,1, nColumns);
-
-	for(int j = 0; j < mRows; j++) {	
-			for(int i = 0; i < nColumns; i++) {
-				designMatrix(j+1,i+1) = designM[j][i];  	
-			}		
-	}
-
-	int uNeeded = 2; //Options of SVD  - calculate U, V and W 
-	int vtNeeded = 2;
-	int useAdditionalMemory = 2;
-
-	//SVD output matrices
-	ap::template_1d_array<double> wOutput;
-	wOutput.setbounds(1,nColumns);				//Nb. diagonal nxn 2d array, only diagonal terms outputed
-	ap::template_2d_array<double> uOutput;
-	uOutput.setbounds(1,mRows,1,nColumns);
-	ap::template_2d_array<double> vtOutput;
-	vtOutput.setbounds(1,nColumns,1,nColumns);  //Nb. transpose(v) outputed
-
-	bool svdRes;
-	svdRes = svddecomposition(designMatrix, mRows, nColumns,
-		uNeeded, vtNeeded, useAdditionalMemory,
-		wOutput, uOutput, vtOutput);
-
-	{//Calculate variance-covariance matrix before further changes to w, vt
-		evecd w(nColumns);
-		for (int j = 0; j<nColumns; j++)
-			w[j] = wOutput(j+1);
-
-		ematd V(nColumns,nColumns);
-		for (int j = 0; j<nColumns; j++){
-			for (int k = 0; k<nColumns; k++){
-				V[j][k] = vtOutput(k+1,j+1);
-			}
-		}
-		calcTLS_VcV(w,V);
-	}
+  ematd m(designM);
+  math::SVD<double> svd;
+  bool svdRes = svd.Decompose(m, 2, 2);
+  ematd V(svd.vt);
+  calcTLS_VcV(svd.w, V.Transpose());
 
 	// std::cout << "\nSVD success: " << svdRes << std::endl;
   /***************************************************************************/
@@ -352,39 +311,27 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 
 	
 	// invert w, special case w=0 -> 1/w =0
-	for (short i = 1; i <= TLSfreeParameters; i++){
-		if ( wOutput(i) ) 
-			wOutput(i) = 1.0/wOutput(i);
+	for (short i = 0; i < TLSfreeParameters; i++){
+		if ( svd.w(i) ) 
+			svd.w(i) = 1.0/svd.w(i);
 	}
 
-
 	//compute  v[i][j]. 1/w[j][j]
-	ap::template_2d_array<double> vInvw;
-	vInvw.setbounds(1,nColumns,1,nColumns);  
-
-	for (short i = 1; i <= TLSfreeParameters; i++){
-		for (short j = 1; j<= TLSfreeParameters; j++) {
-			vInvw(i,j) = vtOutput(j,i) * wOutput(j);
-			//std::cout << vInvw(i,j) <<",  " ;  //debug statement
+  ematd vInvw(TLSfreeParameters, TLSfreeParameters);
+	for (short i = 0; i < TLSfreeParameters; i++){
+		for (short j = 0; j < TLSfreeParameters; j++) {
+			vInvw(i,j) = svd.vt(j,i) * svd.w(j);
 		}
-		//std::cout << "\n" <<std::endl;			//debug statement
 	}	
 
 	//compute inverseDM = vInvW[i][j].transpose(u)[j][k], 
 
-	ap::template_2d_array<double> inverseDM;
-    inverseDM.setbounds(1, nColumns,1, mRows);
+	ematd inverseDM(nColumns, mRows);
 
-	for ( int i=1; i <= nColumns; i++){
-		for ( int j = 1; j <= mRows; j++) {
-			inverseDM(i,j) = 0 ;
-		}
-	}
-	
-	for ( int k=1; k <= mRows; k++){
-		for ( int i = 1; i <= nColumns; i++) {	
-			for ( int j = 1; j <= nColumns; j++) {
-				inverseDM(i,k) = inverseDM(i,k) + vInvw(i,j)*uOutput(k,j);
+	for ( int k=0; k < mRows; k++){
+		for ( int i = 0; i < nColumns; i++) {	
+			for ( int j = 0; j < nColumns; j++) {
+				inverseDM(i,k) += vInvw(i,j)*svd.u(k,j);
 			}
 		}
 	}
@@ -393,7 +340,7 @@ bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 	//tls = v* 1/w * u^transpose . UijColumn(vector)
 	for(int k = 0; k< nColumns; k++){
 		for(int i = 0; i < mRows ; i++) {	 
-			tlsElements[k] = tlsElements[k] + inverseDM(k+1,i+1)* UijCol[i];
+			tlsElements[k] = tlsElements[k] + inverseDM(k,i)* UijCol[i];
 		}
 	}
 
@@ -638,30 +585,9 @@ void TLS::inverse3x3(ematd &theMatrix) {
 		"TLS Failed: Inverse of non 3x3 matrix called");
 	//std::cout << "\naM before:";
 	
-    ap::template_2d_array<double> aMatrix; //copy for inverse fn
-    aMatrix.setbounds(1, 3, 1, 3);
-	for (int i = 1 ; i<4; i++){
-		for (int j = 1; j<4; j++){
-			aMatrix(i,j)= theMatrix[i-1][j-1];
-			//std::cout << aMatrix(i,j) <<", ";
-		}
-		//std::cout << "\n";
-	}
-	
-	bool res = inverse(aMatrix,3 );
-	if(!res)
+  if(!math::LU<double>::Invert(theMatrix))
 		throw TFunctionFailedException(__OlxSourceInfo, 
 		"Inverse of singular matrix or other inverse problem: failed");
-	
-	//std::cout << "\nInverse matrix in inverse3x3:" <<std::endl;
-	for (short i = 0; i < 3; i++){
-		for (short j=0 ; j< 3; j++){
-			theMatrix[i][j] = aMatrix(i+1,j+1);
-			//std::cout << aMatrix(i+1,j+1) <<", ";
-		}
-		//std::cout << "\n";
-	}
-	
 }
 
 

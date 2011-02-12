@@ -6,16 +6,28 @@ TIString IEObject::ToString() const {  throw TNotImplementedException(__OlxSourc
 IEObject* IEObject::Replicate() const {  throw TNotImplementedException(__OlxSourceInfo);  }
 bool TExceptionBase::AutoLog = false;
 #ifdef __WIN32__
-  const TICString EsdlObject(CNewLineSequence) = olxcstr("\r\n");
-  const TIWString EsdlObject(WNewLineSequence) = olxwstr("\r\n");
+  const TICString& EsdlObject(CNewLineSequence)()  {
+    static olxcstr rv("\r\n");
+    return rv;
+  }
+  const TIWString& EsdlObject(WNewLineSequence)()  {
+    static olxwstr rv("\r\n");
+    return rv;
+  }
 #else
-  const TICString EsdlObject(CNewLineSequence) = olxcstr("\n");
-  const TIWString EsdlObject(WNewLineSequence) = olxwstr("\n");
+  const TICString& EsdlObject(CNewLineSequence)()  {
+    static olxcstr rv("\n");
+    return rv;
+  }
+  const TIWString& EsdlObject(WNewLineSequence)()  {
+    static olxwstr rv("\n");
+    return rv;
+  }
 #endif
 #ifdef _UNICODE
-  const TIString& EsdlObject(NewLineSequence) = WNewLineSequence;
+  const TIString& EsdlObject(NewLineSequence)()  { return WNewLineSequence();  }
 #else
-  const TIString& EsdlObject(NewLineSequence) = CNewLineSequence;
+  const TIString& EsdlObject(NewLineSequence)()  {  return CNewLineSequence();  }
 #endif
 
 AReferencible::~AReferencible()  {
@@ -26,7 +38,7 @@ AReferencible::~AReferencible()  {
 //................................................................................................
 //................................................................................................
 TIString TExceptionBase::FormatSrc(const char* file, const char* func, int line)  {
-  return olxstr(EmptyString, 384) << '[' << file << '(' << func << "):" << line << ']';
+  return olxstr(EmptyString(), 384) << '[' << file << '(' << func << "):" << line << ']';
 }
 //................................................................................................
 void TExceptionBase::ThrowFunctionFailed(const char* file, const char* func, int line, const char* msg) {
@@ -50,7 +62,7 @@ void TExceptionBase::ThrowInvalidUnsignedFormat(const char* file, const char* fu
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidUnsignedNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxcstr(src, src_len) << '\'');
+    olxstr('\'') << olxwstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* func, int line, 
@@ -64,7 +76,7 @@ void TExceptionBase::ThrowInvalidIntegerFormat(const char* file, const char* fun
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidIntegerNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxcstr(src, src_len) << '\'');
+    olxstr('\'') << olxwstr(src, src_len) << '\'');
 }
 //................................................................................................
 void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func, int line, 
@@ -78,7 +90,7 @@ void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func,
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidFloatNumberException(FormatSrc(file,func,line),
-    olxstr('\'') << olxcstr(src, src_len) << '\'');
+    olxstr('\'') << olxwstr(src, src_len) << '\'');
 }
 //................................................................................................
 const TBasicException* TExceptionBase::GetException() const {

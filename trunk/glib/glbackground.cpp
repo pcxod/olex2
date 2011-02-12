@@ -9,8 +9,6 @@
 
 UseGlNamespace()
 //..............................................................................
-//..............................................................................
-
 TGlBackground::TGlBackground(TGlRenderer& r, const olxstr& collectionName, bool ceiling):
   AGDrawObject(r, collectionName)
 {
@@ -19,7 +17,7 @@ TGlBackground::TGlBackground(TGlRenderer& r, const olxstr& collectionName, bool 
   Texture = NULL;
 }
 //..............................................................................
-void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
+void TGlBackground::Create(const olxstr& cName) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );

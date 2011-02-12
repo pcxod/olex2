@@ -78,13 +78,13 @@ public:
 
   void SetColCount(size_t NCC)  {  Resize(RowCount(), NCC);  }
   void SetRowCount(size_t NRC)  {  Resize(NRC, ColNames.Count() );  }
-  void InsertCol(size_t index, const olxstr& Caption=EmptyString)  {
+  void InsertCol(size_t index, const olxstr& Caption=EmptyString())  {
     for( size_t i=0; i < RowCount(); i++ )
       Rows[i].Insert(index);
     ColNames.Insert(index, Caption);
   }
 
-  T& InsertRow(size_t index, const olxstr& Caption=EmptyString)  {
+  T& InsertRow(size_t index, const olxstr& Caption=EmptyString())  {
     T& SL = Rows.InsertNew(index);
     for( size_t i=0; i < ColNames.Count(); i++ )
       SL.Add();
@@ -92,13 +92,13 @@ public:
     return SL;
   }
 
-  void AddCol(const olxstr& Caption=EmptyString)  {
+  void AddCol(const olxstr& Caption=EmptyString())  {
     for( size_t i=0; i < RowCount(); i++ )
       Rows[i].Add();
     ColNames.Add(Caption);
   }
 
-  T& AddRow(const olxstr& Caption=EmptyString)  {
+  T& AddRow(const olxstr& Caption=EmptyString())  {
     T& SL = Rows.AddNew();
     for( size_t i=0; i < ColNames.Count(); i++ )
       SL.Add();
@@ -187,7 +187,7 @@ public:
     const TStrList& clAttr,
     bool Format=true,
     unsigned short colCount = 1,
-    const olxstr& colSepAttr = EmptyString) const
+    const olxstr& colSepAttr=EmptyString()) const
   {
     TStrList L;
     return CreateHTMLList(L, Title, footer, colNames, rowNames, titlePAttr, footerPAttr, tabAttr,
@@ -204,7 +204,7 @@ public:
     const TStrList& clAttr,
     bool Format=true,
     unsigned short colCount = 1,
-    const olxstr& colSepAttr = EmptyString) const
+    const olxstr& colSepAttr=EmptyString()) const
   {
     olxstr Tmp;
     if( Format )  {
@@ -281,7 +281,7 @@ public:
       rowV[i+1] += rowV[i];
 
     if( colNames )  {
-      Tmp = EmptyString;
+      Tmp.SetLength(0);
       if( rowNames )  {
         Tmp.Format(rowV[0], true, ' ');
         Tmp << Sep;
@@ -300,7 +300,7 @@ public:
         Tmp << Sep;
       }
       else
-        Tmp = EmptyString;
+        Tmp.SetLength(0);
 
       for( size_t j=0; j < ColCount(); j++ )  {
         Tmp << Rows[i][j];

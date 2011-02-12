@@ -1,6 +1,5 @@
-#ifndef glbackgroundH
-#define glbackgroundH
-
+#ifndef __olx_gl_glbackground_H
+#define __olx_gl_glbackground_H
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "gloption.h"
@@ -16,7 +15,7 @@ class TGlBackground: public AGDrawObject  {
 public:
   TGlBackground(TGlRenderer& Render, const olxstr& collectionName, bool Ceiling);
   virtual ~TGlBackground(){  return; };
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
   bool Ceiling(){  return FCeiling;  }

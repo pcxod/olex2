@@ -1,6 +1,7 @@
 #include "vcov.h"
 #include "refmodel.h"
 #include "symmcon.h"
+#include "xapp.h"
 
 TStrList VcoVMatrix::U_annotations;
 //..................................................................................

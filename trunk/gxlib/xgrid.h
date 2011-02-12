@@ -2,7 +2,6 @@
 #define __olx_gxl_xgrid_H
 #include "gxbase.h"
 #include "arrays.h"
-#include "evpoint.h"
 #include "gltextbox.h"
 #include "macroerror.h"
 #include "gltexture.h"
@@ -32,7 +31,6 @@ const short
 class TXGrid: public AGDrawObject  {
   //TVectorDList AllPoints;
   TArray3D<float>* ED;
-  CIsoSurface* IS;
   FractMask* Mask;
   // if mask is specified
   GLuint PListId, NListId;
@@ -107,7 +105,7 @@ public:
   
   // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
   void AdjustMap();
-  virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  virtual void Create(const olxstr& cName=EmptyString());
 
   virtual bool Orient(TGlPrimitive& P);
   virtual bool GetDimensions(vec3d& Max, vec3d& Min);
@@ -169,7 +167,7 @@ public:
   void LibGetMax(const TStrObjList& Params, TMacroError& E);
   void LibRenderMode(const TStrObjList& Params, TMacroError& E);
   void LibIsvalid(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 #ifndef _NO_PYTHON
   static void PyInit();
 #endif  

@@ -196,7 +196,7 @@
     <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)\lib_d\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)\lib_d\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\lib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
@@ -652,6 +652,7 @@
     <ClInclude Include="..\..\..\sdl\dataitem.h" />
     <ClInclude Include="..\..\..\sdl\datastream.h" />
     <ClInclude Include="..\..\..\sdl\defs.h" />
+    <ClInclude Include="..\..\..\sdl\eaccessor.h" />
     <ClInclude Include="..\..\..\sdl\ebase.h" />
     <ClInclude Include="..\..\..\sdl\ebasis.h" />
     <ClInclude Include="..\..\..\sdl\ebtree.h" />
@@ -683,8 +684,6 @@
     <ClInclude Include="..\..\..\sdl\exparse\evaluable.h" />
     <ClInclude Include="..\..\..\sdl\evalue.h" />
     <ClInclude Include="..\..\..\sdl\evector.h" />
-    <ClInclude Include="..\..\..\sdl\evpoint.h" />
-    <ClInclude Include="..\..\..\sdl\evtypes.h" />
     <ClInclude Include="..\..\..\sdl\exception.h" />
     <ClInclude Include="..\..\..\sdl\filetree.h" />
     <ClInclude Include="..\..\..\sdl\function.h" />
@@ -693,11 +692,13 @@
     <ClInclude Include="..\..\..\sdl\integration.h" />
     <ClInclude Include="..\..\..\sdl\istream.h" />
     <ClInclude Include="..\..\..\sdl\library.h" />
-    <ClInclude Include="..\..\..\sdl\listcast.h" />
     <ClInclude Include="..\..\..\sdl\log.h" />
     <ClInclude Include="..\..\..\sdl\macroerror.h" />
     <ClInclude Include="..\..\..\sdl\macrolib.h" />
     <ClInclude Include="..\..\..\sdl\math\align.h" />
+    <ClInclude Include="..\..\..\sdl\math\composite.h" />
+    <ClInclude Include="..\..\..\sdl\math\mmath.h" />
+    <ClInclude Include="..\..\..\sdl\math\spline.h" />
     <ClInclude Include="..\..\..\sdl\md5.h" />
     <ClInclude Include="..\..\..\sdl\olxptr.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />
@@ -724,6 +725,13 @@
     <ClInclude Include="..\..\..\sdl\strmask.h" />
     <ClInclude Include="..\..\..\sdl\talist.h" />
     <ClInclude Include="..\..\..\sdl\testsuit.h" />
+    <ClInclude Include="..\..\..\sdl\tests\encoding_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\matrix_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\sort_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\spline_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\string_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\sys_test.h" />
     <ClInclude Include="..\..\..\sdl\threex3.h" />
     <ClInclude Include="..\..\..\sdl\tptrlist.h" />
     <ClInclude Include="..\..\..\sdl\typelist.h" />

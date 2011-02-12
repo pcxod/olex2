@@ -1,13 +1,7 @@
 //---------------------------------------------------------------------------//
-// namespace TXFiles: TMol - basic procedures for loading MDL MOL files
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "mol.h"
-
 #include "catom.h"
 #include "unitcell.h"
 #include "estrlist.h"
@@ -16,13 +10,16 @@
 //----------------------------------------------------------------------------//
 // TMol function bodies
 //----------------------------------------------------------------------------//
-TMol::TMol()  {   }
+TMol::TMol()  {  Clear();  }
 //..............................................................................
-TMol::~TMol()  {  Clear();    }
+TMol::~TMol()  {}
 //..............................................................................
 void TMol::Clear()  {
   GetAsymmUnit().Clear();
   Bonds.Clear();
+  GetAsymmUnit().GetAxes() = vec3d(1,1,1);
+  GetAsymmUnit().GetAngles() = vec3d(90,90,90);
+  GetAsymmUnit().InitMatrices();
 }
 //..............................................................................
 olxstr TMol::MOLAtom(TCAtom& A)  {
@@ -55,8 +52,8 @@ olxstr TMol::MOLBond(TMolBond& B)  {
 void TMol::SaveToStrings(TStrList& Strings)  {
   olxstr Tmp, Tmp1;
   Strings.Add("-OLEX-");
-  Strings.Add(EmptyString);
-  Strings.Add(EmptyString);
+  Strings.Add(EmptyString());
+  Strings.Add(EmptyString());
   Tmp1 = GetAsymmUnit().AtomCount();
   Tmp1.Format(3, false, ' ');
   Tmp << Tmp1;
@@ -75,13 +72,6 @@ void TMol::SaveToStrings(TStrList& Strings)  {
 void TMol::LoadFromStrings(const TStrList& Strings)  {
   Clear();
   Title = "OLEX: imported from MDL MOL";
-  GetAsymmUnit().Axes()[0] = 1;
-  GetAsymmUnit().Axes()[1] = 1;
-  GetAsymmUnit().Axes()[2] = 1;
-  GetAsymmUnit().Angles()[0] = 90;
-  GetAsymmUnit().Angles()[1] = 90;
-  GetAsymmUnit().Angles()[2] = 90;
-  GetAsymmUnit().InitMatrices();
   bool AtomsCycle = false, BondsCycle = false;
   int AC=0, BC=0;
   for( size_t i=0; i < Strings.Count(); i++ )  {
@@ -130,9 +120,9 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
 //..............................................................................
 bool TMol::Adopt(TXFile& XF)  {
   Clear();
-  TLattice& latt = XF.GetLattice();
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& sa = latt.GetAtom(i);
+  const ASObjectProvider& objects = XF.GetLattice().GetObjects();
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     if( !sa.IsAvailable() )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);
@@ -140,8 +130,8 @@ bool TMol::Adopt(TXFile& XF)  {
     a.SetType(sa.GetType());
     sa.SetTag(i);
   }
-  for( size_t i=0; i < latt.BondCount(); i++ )  {
-    TSBond& sb = latt.GetBond(i);
+  for( size_t i=0; i < objects.bonds.Count(); i++ )  {
+    TSBond& sb = objects.bonds[i];
     if( !sb.IsAvailable() )  continue;
     TMolBond& mb = Bonds.AddNew();
     mb.AtomA = sb.A().GetTag();

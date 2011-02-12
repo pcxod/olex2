@@ -83,6 +83,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
       case fgOH2:
         dis = Distances[GenId(fgOH2,0)];
         if( CreatedAtoms.Count() == 2 )  {
+          //afix = 6;
           sr = &RefMod.rDFIX.AddNew();
           sr->SetEsd(0.01);
           sr->SetValue(dis);

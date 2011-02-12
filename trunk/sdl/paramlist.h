@@ -26,7 +26,7 @@ public:
   template <class T>
   inline bool Contains(const T& Name)  const {  return IndexOf(Name) != InvalidIndex;  }
   template <class T>
-  const olxstr& FindValue(const T& Name, const olxstr& defval=EmptyString) const {
+  const olxstr& FindValue(const T& Name, const olxstr& defval=EmptyString()) const {
     size_t i = IndexOf(Name);
     return (i != InvalidIndex) ? GetObject(i) : defval;
    }

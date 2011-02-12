@@ -17,6 +17,7 @@
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
+#include "absorpc.h"
 
 enum {
   XFILE_SG_Change,
@@ -64,7 +65,7 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
     }
   }
   catch( const TExceptionBase& exc )  {  
-    FileName = EmptyString;
+    FileName.SetLength(0);
     throw TFunctionFailedException(__OlxSourceInfo, exc);  
   }
   /* fix labels for not native formats, will not help for FE1A, because it could come from
@@ -81,7 +82,9 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
 //----------------------------------------------------------------------------//
 // TXFile function bodies
 //----------------------------------------------------------------------------//
-TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit()),
+TXFile::TXFile(ASObjectProvider& Objects) :
+  RefMod(Lattice.GetAsymmUnit()),
+  Lattice(Objects),
   OnFileLoad(Actions.New("XFILELOAD")),
   OnFileSave(Actions.New("XFILESAVE")),
   OnFileClose(Actions.New("XFILECLOSE"))
@@ -194,7 +197,7 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   if( GetRM().GetHKLSource().IsEmpty() || !TEFile::Exists(GetRM().GetHKLSource()) )  {
     olxstr src = TXApp::GetInstance().LocateHklFile();
     if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
-      src = EmptyString;
+      src.SetLength(0);
     GetRM().SetHKLSource(src);
   }
 }
@@ -269,6 +272,10 @@ void TXFile::Sort(const TStrList& ins)  {
         cs.sequence.Add(&AtomSorter::atom_cmp_Part);
       else if( sort.CharAt(i) == 'h' )
         keeph = false;
+       else if( sort.CharAt(i) == 'z' )  
+        cs.sequence.Add(&AtomSorter::atom_cmp_Suffix);
+       else if( sort.CharAt(i) == 'n' )  
+        cs.sequence.Add(&AtomSorter::atom_cmp_Number);
     }
     if( !cs.sequence.IsEmpty() )
       AtomSorter::Sort(list, cs);
@@ -277,7 +284,7 @@ void TXFile::Sort(const TStrList& ins)  {
       labels.Clear();
     }
     if( moiety_index != InvalidIndex )  {
-      sort = EmptyString;
+      sort.SetLength(0);
       if( moiety_index+1 < ins.Count() )  {
         for( size_t i=moiety_index+1; i < ins.Count(); i++ )  {
           if( ins[i].CharAt(0) == '+' )
@@ -324,9 +331,12 @@ void TXFile::ValidateTabs()  {
       continue;
     TSAtom* sa = NULL;
     InfoTab& it = RefMod.GetInfoTab(i);
-    for( size_t j=0; j < Lattice.AtomCount(); j++ )  {
-      if( Lattice.GetAtom(j).CAtom().GetId() == it.GetAtom(0).GetAtom()->GetId() )  {
-        sa = &Lattice.GetAtom(j);
+    ASObjectProvider& objects = Lattice.GetObjects();
+    const size_t ac = objects.atoms.Count();
+    for( size_t j=0; j < ac; j++ )  {
+      TSAtom& sa1 = objects.atoms[j];
+      if( sa1.CAtom().GetId() == it.GetAtom(0).GetAtom()->GetId() )  {
+        sa = &sa1;
         break;
       }
     }
@@ -398,11 +408,11 @@ void TXFile::Close()  {
   OnFileClose.Exit(this, NULL);
 }
 //..............................................................................
-IEObject* TXFile::Replicate() const  {
-  TXFile* xf = new TXFile;
+IEObject* TXFile::Replicate() const {
+  TXFile* xf = new TXFile(*(SObjectProvider*)Lattice.GetObjects().Replicate());
   for( size_t i=0; i < FileFormats.Count(); i++ )  {
-    xf->RegisterFileFormat( (TBasicCFile*)FileFormats.GetObject(i)->Replicate(), 
-                              FileFormats[i] );
+    xf->RegisterFileFormat((TBasicCFile*)FileFormats.GetObject(i)->Replicate(), 
+                              FileFormats[i]);
   }
   return xf;
 }
@@ -425,9 +435,6 @@ void TXFile::FromDataItem(TDataItem& item) {
   GetLattice().FromDataItem(item.FindRequiredItem("Lattice"));
   GetRM().FromDataItem(item.FindRequiredItem("RefModel"));
   GetRM().UpdateUsedSymm(GetUnitCell());
-  //if( FLastLoader != NULL )  {
-  //  FLastLoader->
-  //}
 }
 //..............................................................................
 //..............................................................................
@@ -543,7 +550,21 @@ void TXFile::LibDataName(const TStrObjList& Params, TMacroError& E)  {
   }
 }
 //..............................................................................
-TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
+void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
+  cm_Absorption_Coefficient_Reg ac;
+  ContentList cont = GetAsymmUnit().GetContentList();
+  double mu=0;
+  for( size_t i=0; i < cont.Count(); i++ )  {
+    double v = ac.CalcMuOverRhoForE(
+      GetRM().expl.GetRadiationEnergy(), ac.locate(cont[i].element.symbol));
+    mu += (cont[i].count*cont[i].element.GetMr())*v;
+  }
+  mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume();
+  mu /= 6.022142;
+  E.SetRetVal(mu);
+}
+//..............................................................................
+TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name );
 
   lib->RegisterFunction<TXFile>(
@@ -577,11 +598,15 @@ TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataName, "CurrentData",
     fpOne|psCheckFileTypeCif,
 "Changes current data block within the CIF") );
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
+    fpNone|psFileLoaded,
+"Changes current data block within the CIF") );
   
   lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
   lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());
   lib->AttachLibrary(Lattice.ExportLibrary());
   lib->AttachLibrary(RefMod.expl.ExportLibrary());
+  lib->AttachLibrary(RefMod.ExportLibrary());
   return lib;
 }
 //..............................................................................

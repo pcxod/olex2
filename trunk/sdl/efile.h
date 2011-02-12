@@ -233,12 +233,12 @@ public:
   or ".. " thr normalised original is returned. If base is empty, it is assumed to
   be TBasicApp::GetBaseDir(). Fro empty path path is returned
   */
-  static olxstr ExpandRelativePath(const olxstr& path, const olxstr& base=EmptyString);
+  static olxstr ExpandRelativePath(const olxstr& path, const olxstr& base=EmptyString());
   /* return a string like '../win32' for path='c:/windows' and base='c:/windows/win32' or
   the original path string if the paths do not share a common base.  If base is empty, it is
   assumed to be TBasicApp::GetBaseDir(). For empty path path is returned.
   */
-  static olxstr CreateRelativePath(const olxstr& path, const olxstr& base=EmptyString);
+  static olxstr CreateRelativePath(const olxstr& path, const olxstr& base=EmptyString());
   /* searches given file name in current folder and in path, if found returns full
     path to the file inclusive the file name, otherwise returns empty string.
     if the filename is absolute returns it straight away.
@@ -246,7 +246,7 @@ public:
   static olxstr Which(const olxstr& filename);
   /* returns a new object created with new using tmpnam (on non-windows systems), or
   properly named file object which is deleted upon the object deletion */
-  static TEFile* TmpFile(const olxstr& templ=EmptyString);
+  static TEFile* TmpFile(const olxstr& templ=EmptyString());
   // function is based on utime
   static bool SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t ModTime);
   // function is based on stat;
@@ -259,7 +259,7 @@ public:
   
   static const olxstr AllFilesMask;
 
-  static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndEsdlNamespace()

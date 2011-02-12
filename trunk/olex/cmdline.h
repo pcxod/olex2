@@ -21,7 +21,7 @@ public:
 
   olxstr GetCommand()  {
     return GetText().Length() > PromptStr.Length() ? GetText().SubStringFrom( PromptStr.Length() ) :
-                                                  EmptyString;
+                                                  EmptyString();
   }
   void SetCommand(const olxstr& cmd);
 

@@ -22,10 +22,17 @@ public:
 
   inline T& operator [] (size_t i)  {  return data[i];  }
   inline T const& operator [] (size_t i) const {  return data[i];  }
+  inline T& operator () (size_t i)  {  return data[i];  }
+  inline T const& operator () (size_t i) const {  return data[i];  }
   inline const T* GetData() const {  return &data[0];  }
   inline T QLength() const {  return (data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);  }
   inline T Length() const {  return sqrt(QLength());  }
   inline static size_t Count()  {  return 3;  }
+  inline static bool IsEmpty()  {  return false;  }
+  inline static void Resize(size_t s)  {
+    if( s != 3 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+  }
   
   template <class AT> inline T DistanceTo(const TVector3<AT>& v) const {  
     return sqrt( (data[0]-v[0])*(data[0]-v[0]) + (data[1]-v[1])*(data[1]-v[1]) + (data[2]-v[2])*(data[2]-v[2]) ); 
@@ -333,8 +340,29 @@ public:
   inline const TVector3<T>& Get(size_t i) const {  return data[i];  } 
   inline const T& Get(size_t i, size_t j) const {  return data[i][j];  } 
   inline void Set(size_t i, size_t j, const T& v) const {  return data[i][j] = v;  } 
+  inline T& operator () (size_t i, size_t j)  {  return data[i][j];  }
+  inline const T& operator () (size_t i, size_t j) const {  return data[i][j];  }
   inline static size_t ColCount()  {  return 3;  }
   inline static size_t RowCount()  {  return 3;  }
+  inline static bool IsEmpty()  {  return false;  }
+  inline static void Resize(size_t w, size_t h)  {
+    if( w != 3 || h != 3 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
+  }
+  inline void SwapRows(size_t i, size_t j)  {
+    for( int _i=0; _i < 3; _i++ )  {
+      const T tmp = data[i][_i];
+      data[i][_i] = data[j][_i];
+      data[j][_i] = tmp;
+    }
+  }
+  inline void SwapCols(size_t i, size_t j)  {
+    for( int _i=0; _i < 3; _i++ )  {
+      const T tmp = data[_i][i];
+      data[_i][i] = data[_i][j];
+      data[_i][j] = tmp;
+    }
+  }
 
   template <class AT> TMatrix33<T> operator * (const TMatrix33<AT>& v) const {
     return TMatrix33<T>( data[0][0]*v[0][0] + data[0][1]*v[1][0] + data[0][2]*v[2][0],

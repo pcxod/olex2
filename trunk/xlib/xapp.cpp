@@ -15,8 +15,16 @@
 #include "maputil.h"
 #include "vcov.h"
 
-TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) : 
-    SelectionOwner(selOwner), TBasicApp(basedir), Library(EmptyString, this)  {
+TXApp::TXApp(const olxstr &basedir, bool) : TBasicApp(basedir), Library(EmptyString(), this)  {}
+//..............................................................................
+TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider, ASelectionOwner* selOwner) :
+  TBasicApp(basedir), Library(EmptyString(), this)
+{
+  Init(objectProvider, selOwner);
+}
+//..............................................................................
+void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner)  {
+  SelectionOwner = selOwner;
   try  {
     if( !TSymmLib::IsInitialised() )
       TEGC::AddP(new TSymmLib(GetBaseDir() + "symmlib.xld"));
@@ -24,7 +32,7 @@ TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) :
   catch( const TIOException& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FXFile = new TXFile;
+  FXFile = new TXFile(*(objectProvider == NULL ? new SObjectProvider : objectProvider));
 
   DefineState(psFileLoaded, "Loaded file is expected");
   DefineState(psCheckFileTypeIns, "INS file is expected");
@@ -42,7 +50,7 @@ TXApp::~TXApp()  {
 }
 //..............................................................................
 olxstr TXApp::LocateHklFile()  {
-  if( !XFile().HasLastLoader() )  return EmptyString;
+  if( !XFile().HasLastLoader() )  return EmptyString();
   olxstr HklFN = XFile().GetRM().GetHKLSource();
   if( TEFile::Existsi(olxstr(HklFN), HklFN) )  
     return HklFN;
@@ -70,7 +78,7 @@ olxstr TXApp::LocateHklFile()  {
       return HklFN;
     }
   }
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
@@ -101,8 +109,9 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
   }
-  smatd_list ml, allm;
-  sg->GetMatrices(ml, mattAll);
+  smatd_list ml;
+  sg->GetMatrices(ml, mattAll^(mattCentering));
+  const int multiplier = sg->GetLattice().VectorCount()+1;
 
   evecd quad(6);
   const static double EQ_PI = 8*M_PI*M_PI;
@@ -120,8 +129,6 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   BM[1] *= BM[1];
   BM[2] *= BM[2];
   
-  cm_Element* carb = XElementLib::FindBySymbol("C");
-  compd carb_fpfdp = carb->CalcFpFdp(ev_angstrom/WaveLength);
   ElementPList bais;
   TPtrList<TCAtom> alist;
   double *Ucifs = new double[6*au.AtomCount() + 1];
@@ -165,15 +172,15 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       compd l;
       for( size_t k=0; k < m_cnt; k++ )  {
         const vec3d hkl = ref.GetHkl()*ml[k].r;
-        double tv =  T_PI*(alist[j]->ccrd().DotProd(hkl) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
+        double tv = T_PI*(alist[j]->ccrd().DotProd(hkl) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
         double ca, sa;
         olx_sincos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
           const double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
           double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) + 
                       hkl[1]*(Q[1]*hkl[1]+Q[3]*hkl[2]) + 
-                      hkl[2]*(Q[2]*hkl[2]) );
-          B = exp( B );
+                      hkl[2]*(Q[2]*hkl[2]));
+          B = exp(B);
           l.Re() += B*ca;
           l.Im() += B*sa;
         }
@@ -182,15 +189,15 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
           l.Im() += sa;
         }
       }
-      compd scv = scatterers[ alist[j]->GetTag() ].GetB();
+      compd scv = scatterers[alist[j]->GetTag()].GetB();
       if( alist[j]->GetEllipsoid() == NULL )
-        scv *= exp( Ucifs[j*6]*d_s2 );
+        scv *= exp(Ucifs[j*6]*d_s2);
       
       scv *= alist[j]->GetOccu();
       scv *= l;
       ir += scv;
     }
-    F[i] = ir;
+    F[i] = ir*multiplier;
   }
   delete [] Ucifs;
 }
@@ -203,7 +210,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
     SA.GetLabel().StartsFromi(SA.GetType().symbol) ? 
       SA.GetLabel().SubStringFrom(SA.GetType().symbol.Length())
     :
-      EmptyString
+      EmptyString()
   );
   // is H atom under consideration?
   if( SA.GetType() == iHydrogenZ && SA.GetTag() == -2 )
@@ -269,7 +276,7 @@ TUndoData* TXApp::FixHL()  {
   olxdict<int,TSAtomPList,TPrimitiveComparator> frags;
   TIntList frag_id;
   TSAtomPList satoms;
-  FindSAtoms(EmptyString, satoms, false, true);  //the selection might be returned
+  FindSAtoms(EmptyString(), satoms, false, true);  //the selection might be returned
   if( !satoms.IsEmpty() )  {
     for( size_t i=0; i < satoms.Count(); i++ )  {
       if( !satoms[i]->IsAUAtom() )  continue;
@@ -277,9 +284,10 @@ TUndoData* TXApp::FixHL()  {
         frag_id.Add(satoms[i]->CAtom().GetFragmentId());
     }
   }
-  const size_t ac = XFile().GetLattice().AtomCount();
+  ASObjectProvider& objects = XFile().GetLattice().GetObjects();
+  const size_t ac = objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
-    TSAtom& sa = XFile().GetLattice().GetAtom(i);
+    TSAtom& sa = objects.atoms[i];
     if( !sa.CAtom().IsAvailable() || sa.GetType() == iQPeakZ || !sa.IsAUAtom() )  {
       sa.SetTag(-1);
       continue;
@@ -287,7 +295,7 @@ TUndoData* TXApp::FixHL()  {
     if( sa.GetType() == iHydrogenZ )  {
       sa.SetTag(-2);  // mark as unpocessed
       sa.CAtom().SetTag(-2);
-      sa.CAtom().SetLabel(EmptyString, false);
+      sa.CAtom().SetLabel(EmptyString(), false);
       continue;
     }
     if( frag_id.IsEmpty() || frag_id.IndexOf(sa.CAtom().GetFragmentId()) != InvalidIndex )
@@ -309,7 +317,7 @@ TUndoData* TXApp::FixHL()  {
   }
   // check if there are any standalone h atoms left...
   for( size_t i=0; i < ac; i++ )  {
-    TSAtom& sa = XFile().GetLattice().GetAtom(i);
+    TSAtom& sa = objects.atoms[i];
     if( !sa.CAtom().IsAvailable() || !sa.IsAUAtom() )  continue;
     if( sa.GetType() == iHydrogenZ && sa.CAtom().GetTag() == -2 )
       NameHydrogens(sa, undo, true);
@@ -321,7 +329,7 @@ bool RingsEq(const TSAtomPList& r1, const TSAtomPList& r2 )  {
   for( size_t i=0; i < r1.Count(); i++ )  {
     bool found = false;
     for( size_t j=0; j < r2.Count(); j++ )  {
-      if( r2[j]->GetLattId() == r1[i]->GetLattId() )  {
+      if( r2[j]->GetOwnerId() == r1[i]->GetOwnerId() )  {
         found = true;
         break;
       }
@@ -346,11 +354,11 @@ void TXApp::RingContentFromStr(const olxstr& Condition, ElementPList& ringDesc) 
           toks.Add( symbol );
       }
       symbol = Condition[i];
-      count = EmptyString;
+      count.SetLength(0);
     }
     else if( Condition[i] <= 'z' && Condition[i] >= 'a' )  {
       symbol << Condition[i];
-      count  = EmptyString;
+      count.SetLength(0);
     }
     else if( Condition[i] <= '9' && Condition[i] >= '0' )  {
       count << Condition[i];
@@ -405,14 +413,15 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
   }
   if( !condition.IsEmpty() )  {
     TStrList toks(condition, ' ');
-    TLattice& latt = XFile().GetLattice();
+    //TLattice& latt = XFile().GetLattice();
+    ASObjectProvider& objects = XFile().GetLattice().GetObjects();
     for( size_t i=0; i < toks.Count(); i++ )  {
       if( toks[i].StartsFrom("#s") )  {  // TSAtom.LattId
-        size_t lat_id = toks[i].SubStringFrom(2).ToSizeT();
-        if( lat_id >= latt.AtomCount() )
+        const size_t lat_id = toks[i].SubStringFrom(2).ToSizeT();
+        if( lat_id >= objects.atoms.Count() )
           throw TInvalidArgumentException(__OlxSourceInfo, "satom id");
-        if( latt.GetAtom(lat_id).CAtom().IsAvailable() )
-          res.Add(latt.GetAtom(lat_id));
+        if( objects.atoms[lat_id].CAtom().IsAvailable() )
+          res.Add(objects.atoms[lat_id]);
         toks.Delete(i);
         i--;
       }
@@ -426,7 +435,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
       TCAtomGroup ag;
       TAtomReference ar(toks.Text(' '), SelectionOwner);      
       size_t atomAGroup;
-      ar.Expand(XFile().GetRM(), ag, EmptyString, atomAGroup);
+      ar.Expand(XFile().GetRM(), ag, EmptyString(), atomAGroup);
       if( !ag.IsEmpty() )  {
         atoms.SetCapacity( atoms.Count() + ag.Count() );
         TAsymmUnit& au = XFile().GetAsymmUnit();
@@ -436,8 +445,8 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
         for( size_t i=0; i < ag.Count(); i++ )  {
           if( ag[i].GetAtom()->GetTag() != ag[i].GetAtom()->GetId() )
             continue;
-          for( size_t j=0; j < latt.AtomCount(); j++ )  {
-            TSAtom& sa = XFile().GetLattice().GetAtom(j);
+          for( size_t j=0; j < objects.atoms.Count(); j++ )  {
+            TSAtom& sa = objects.atoms[j];
             if( !sa.CAtom().IsAvailable() )  continue;
             if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
             if( ag[i].GetMatrix() == NULL )  {  // get an atom from the asymm unit
@@ -455,11 +464,12 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
     }
   }
   else if( atoms.IsEmpty() && ReturnAll ) {
-    TLattice &latt = XFile().GetLattice();
-    atoms.SetCapacity(latt.AtomCount());
-    for( size_t i=0; i < latt.AtomCount(); i++ )
-      if( latt.GetAtom(i).CAtom().IsAvailable() )
-        atoms.Add(latt.GetAtom(i));
+    ASObjectProvider& objects = XFile().GetLattice().GetObjects();
+    const size_t ac = objects.atoms.Count();
+    atoms.SetCapacity(ac);
+    for( size_t i=0; i < ac; i++ )
+      if( objects.atoms[i].CAtom().IsAvailable() )
+        atoms.Add(objects.atoms[i]);
   }
   res.AddList(atoms);
   return !atoms.IsEmpty();
@@ -493,7 +503,7 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
 //..............................................................................
 void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
   int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
-  if( TAfixGroup::IsFitted(afix) && ( n == 6 || n == 9) )  {  // special case
+  if( m == 5 || m ==6 || m == 7 || m == 10 )  {  // special case
     if( sa == NULL )  {
       TTypeList< TSAtomPList > rings;
       try  {  
@@ -724,13 +734,14 @@ void TXApp::PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont)
 }
 //..............................................................................
 TXApp::CalcVolumeInfo TXApp::CalcVolume(const ElementRadii* radii)  {
-  const size_t ac = FXFile->GetLattice().AtomCount();
-  const size_t bc = FXFile->GetLattice().BondCount();
+  ASObjectProvider& objects = XFile().GetLattice().GetObjects();
+  const size_t ac = objects.atoms.Count();
+  const size_t bc = objects.bonds.Count();
   for( size_t i=0; i < bc; i++ )
-    FXFile->GetLattice().GetBond(i).SetTag(0);
+    objects.bonds[i].SetTag(0);
   double Vi=0, Vt=0;
   for( size_t i=0; i < ac; i++ )  {
-    TSAtom& SA = FXFile->GetLattice().GetAtom(i);
+    TSAtom& SA = objects.atoms[i];
     if( SA.IsDeleted() || !SA.CAtom().IsAvailable() )  continue;
     if( SA.GetType() == iQPeakZ )  continue;
     const double R1 = GetVdWRadius(SA, radii);

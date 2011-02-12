@@ -63,7 +63,7 @@ void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
   }
 }
 
-void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
+void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
      const short Group, const cm_Element& atomType, TAtomEnvi* pivoting )
 {
   TAsymmUnit& au = *envi.GetBase().CAtom().GetParent();
@@ -92,7 +92,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       if( envi.Count() == 1 )  {
         NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom(envi.GetCAtom(0));
         envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(*NA, NEnvi);
-        NEnvi.Exclude( envi.GetBase().CAtom() );
+        NEnvi.Exclude(envi.GetBase().CAtom());
         // best approximation, though not really required (one atom in plane of the subs and two - out)...
         if( NEnvi.Count() >= 2 )  {
           RotVec = (NEnvi.GetBase().crd() - envi.GetBase().crd()).Normalise();
@@ -102,7 +102,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
           Vec1 = M * Vec1;
 
           Vec2 = RotVec.XProdVec(Vec1).Normalise();
-          olx_create_rotation_matrix(M1, Vec2, cos(M_PI*109.4/180) );
+          olx_create_rotation_matrix(M1, Vec2, cos(M_PI*109.4/180));
 
           RotVec = M1 * RotVec;
           RotVec *= dis;

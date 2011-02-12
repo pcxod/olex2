@@ -26,7 +26,7 @@ void TSettingsFile::LoadSettings(const olxstr& fileName)  {
         Lines[i] = pn;
       }
       else  {
-        Lines[i] = EmptyString;
+        Lines[i].SetLength(0);
         Lines.GetObject(i) = false;
         Params.GetValue(ind) = pv;
       }

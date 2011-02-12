@@ -191,7 +191,7 @@ public:
     const size_t ind = IndexOf(key);
     if( ind != InvalidIndex )
       return Data[ind]->Object;
-    throw TFunctionFailedException(__OlxSourceInfo, "no object at specified location" );
+    throw TFunctionFailedException(__OlxSourceInfo, "no object at specified location");
   }
 //..............................................................................
   const EntryType& Add(const A& key, const B& Object)  {
@@ -244,7 +244,7 @@ public:
       typedef TSortedListEntry<SC,ObjectClass,olxstrComparator<caseinsensitive> > PListEntry;
     public:
       inline const olxstr& GetString(size_t i) const {  return PList::GetKey(i);  }
-      inline const PListEntry& Add(const SC& s, const ObjectClass& v = *(ObjectClass*)NULL )  {
+      inline const PListEntry& Add(const SC& s, const ObjectClass& v=*(ObjectClass*)NULL)  {
         return PList::Add(s, v);
       }
       template <class T>
@@ -276,7 +276,7 @@ public:
     public:
       inline const SC& GetString(size_t i) const {  return PList::GetKey(i);  }
       template <class T>
-      inline const PListEntry& Add(const T& key, const SC& v = EmptyString )  {
+      inline const PListEntry& Add(const T& key, const SC& v=EmptyString())  {
         return PList::Add(key, v);
       }
     };

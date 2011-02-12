@@ -12,7 +12,7 @@ namespace cif_dp {
     ParsingException(const olxstr& location, const olxstr& msg, size_t lineNumber) :
       LineNumber(lineNumber),
       TBasicException(location, olxstr("Failed to parse CIF because ") << msg << " at CIF#" << lineNumber)  {}
-    ParsingException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString) :
+    ParsingException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString()) :
       TBasicException(location, cause, msg )  {}
     virtual const char* GetNiceName() const {  return "CIF reading";  }
     virtual IEObject* Replicate() const {  return new ParsingException(*this);  }
@@ -54,6 +54,7 @@ namespace cif_dp {
   };
   struct cetString : public IStringCifEntry  {
     olxstr value;
+    static const olxstr empty_value;
     bool quoted;
     cetString(const cetString& v) : value(v.value), quoted(v.quoted)  {}
     cetString(const olxstr& _val);
@@ -139,6 +140,8 @@ namespace cif_dp {
     olxstr name;
   public:
     cetTable()  {}
+    //takes comma separated list of column names
+    cetTable(const olxstr& cols);
     cetTable(const cetTable& v);
     virtual ~cetTable()  {  Clear();  }
     void Clear();
@@ -160,7 +163,7 @@ namespace cif_dp {
     virtual ICifEntry* Replicate() const {  return new cetTable(*this);  }
     virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
     template <class List> static olxstr GenerateName(const List& l)  {
-      if( l.IsEmpty() )  return EmptyString;
+      if( l.IsEmpty() )  return EmptyString();
       if( l.Count() == 1 )  return l[0];
       olxstr name = l[0].CommonSubString(l[1]);
       size_t min_len = olx_min(l[0].Length(), l[1].Length());
@@ -241,8 +244,12 @@ namespace cif_dp {
     //............................................................................
     //Load the object from a file.
     virtual void LoadFromStrings(const TStrList& Strings);
-    //Saves the data to a file and returns true if successful and false in the case of failure
-    virtual void SaveToStrings(TStrList& Strings);
+    //Saves the data to a strings
+    virtual TStrList& SaveToStrings(TStrList& Strings) const;
+    TStrList SaveToStrings() const {
+      TStrList out;
+      return SaveToStrings(out);
+    }
     //Finds a value by name
     inline size_t Count() const {  return data.Count();  }
     CifBlock& operator [] (size_t i) const {  return data[i];  }

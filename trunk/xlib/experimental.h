@@ -61,7 +61,7 @@ public:
   void LibRadiation(const TStrObjList& Params, TMacroError& E);
   void LibSize(const TStrObjList& Params, TMacroError& E);
   
-  class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndXlibNamespace()

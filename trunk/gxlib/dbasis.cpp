@@ -41,7 +41,7 @@ void TDBasis::SetAsymmUnit(TAsymmUnit& au)  {
   }
 }
 //..............................................................................
-void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TDBasis::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -236,7 +236,7 @@ void TDBasis::FromDataItem(const TDataItem& di)  {
 //..............................................................................
 void TDBasis::ListPrimitives(TStrList &List) const {}
 //..............................................................................
-void TDBasis::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar) {}
+void TDBasis::UpdatePrimitives(int32_t Mask) {}
 //..............................................................................
 void TDBasis::UpdateLabel()  {
   for( int i=0; i < 3; i++ )
@@ -245,9 +245,7 @@ void TDBasis::UpdateLabel()  {
 //..............................................................................
 void TDBasis::SetVisible(bool v)  {
   AGDrawObject::SetVisible(v);
-  for( int i=0; i < 3; i++ )  {
+  for( int i=0; i < 3; i++ )
     Labels[i]->SetVisible(v);
-    Labels[i]->SetDeleted(false);
-  }
 }
 //..............................................................................

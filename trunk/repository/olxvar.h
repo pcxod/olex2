@@ -103,7 +103,7 @@ class TOlxVars : public IEObject  {
       throw TFunctionFailedException(__OlxSourceInfo, exc,
         olxstr("Exception occured while setting variable '") << name <<'\'');
     }
-    TOlxVarChangeData vcd(name, EmptyString, value);
+    TOlxVarChangeData vcd(name, EmptyString(), value);
     OnVarChange->Execute(NULL, &vcd);
   }
 
@@ -111,7 +111,7 @@ class TOlxVars : public IEObject  {
     for( size_t i=0; i < Vars.Count(); i++ )
       if( Vars.GetObject(i).GetObj()  == value )
         return Vars.GetString(i);
-    return EmptyString;
+    return EmptyString();
   }
 
   template <class T>
@@ -175,7 +175,7 @@ public:
     return (Instance == NULL) ? InvalidIndex : Instance->Vars.IndexOf(name);
   }
   static inline const olxstr& FindVarName(PyObject *pyObj) {
-    return (Instance == NULL) ? EmptyString : Instance->_FindName(pyObj);
+    return (Instance == NULL) ? EmptyString() : Instance->_FindName(pyObj);
   }
 };
 #else  // _NO_PYTHON

@@ -75,7 +75,8 @@ public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
     double MaxD, MinD, LimDmin, LimDmax, 
-      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI;
+      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s;
+    mat3d HKLF_mat;
     int MERG;
     //vec3i maxInd, minInd;
     size_t FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
@@ -94,6 +95,8 @@ public:
       SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
       LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
       MaxI = hs.MaxI;         MinI = hs.MinI;
+      HKLF_m = hs.HKLF_m;     HKLF_s = hs.HKLF_s;
+      HKLF_mat = hs.HKLF_mat;
       FilteredOff = hs.FilteredOff;
       IntensityTransformed = hs.IntensityTransformed;
       TotalReflections = hs.TotalReflections;
@@ -109,6 +112,9 @@ public:
       MergeStats::SetDefaults();
       MaxD = MinD = LimDmax = LimDmin = 0;
       MaxI = MinI = 0;
+      HKLF_m = def_HKLF_m;
+      HKLF_s = def_HKLF_s;
+      HKLF_mat.I();
       FilteredOff = IntensityTransformed = OmittedByUser = 0;
       TotalReflections = OmittedReflections = 0;
       MERG = def_MERG;
@@ -122,7 +128,6 @@ public:
 protected:
   mutable HklStat _HklStat;
   mutable TRefList _Reflections;  // ALL un-merged reflections
-  mutable TRefPList _FriedelPairs;  // references form the _Reflections
   mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
   mutable TIntList _Redundancy;
   mutable int _FriedelPairCount;  // the numbe of pairs only
@@ -336,10 +341,10 @@ of components 1 ... m
   InfoTab& GetInfoTab(size_t i)  {  return InfoTables[i];  }
   void DeleteInfoTab(size_t i)  {  InfoTables.Delete(i);  }
   InfoTab& AddHTAB();
-  InfoTab& AddRTAB(const olxstr& codename, const olxstr& resi=EmptyString);
+  InfoTab& AddRTAB(const olxstr& codename, const olxstr& resi=EmptyString());
   bool ValidateInfoTab(const InfoTab& it);
   // adss new symmetry matrics, used in restraints/constraints 
-  const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString);
+  const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString());
   //removes the matrix or decriments the reference count
   void RemUsedSymm(const smatd& matr);
   // returns the number of the used symmetry matrices
@@ -432,6 +437,8 @@ of components 1 ... m
   }
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
+  // updates refinable params - BASF, FVAR, WGHT, returns false if objects mismatch
+  bool Update(const RefinementModel& rm);
 
   size_t FragCount() const {  return Frags.Count();  }
   Fragment& GetFrag(size_t i)  {  return *Frags.GetValue(i);  }
@@ -456,7 +463,7 @@ of components 1 ... m
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
-    if( MERG != 0 && HKLF != 5 )  {
+    if( MERG != 0 && HKLF != 5 && BASF.IsEmpty() )  {
       bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
       stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, 
         Omits, mergeFP);
@@ -471,8 +478,7 @@ of components 1 ... m
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
-    stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out,
-      Omits, !sp.IsCentrosymmetric());
+    stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, Omits, true);
     return AdjustIntensity(out, stats);
   }
   // P-1 merged, filtered
@@ -481,7 +487,7 @@ of components 1 ... m
     TRefList refs;
     FilterHkl(refs, stats);
     smatd_list ml;
-    ml.AddNew().I() *= -1;
+    ml.AddNew().I();
     stats = RefMerger::Merge<smatd_list,Merger>(ml, refs, out, Omits, true);
     return AdjustIntensity(out, stats);
   }
@@ -509,11 +515,6 @@ of components 1 ... m
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   // adjust intensity of reflections according to OMIT
   HklStat& AdjustIntensity(TRefList& out, HklStat& stats) const;
-  // returns un-filtered, un-merged list of the Friedel pairs
-  const TRefPList& GetFriedelPairs() const  {
-    GetReflections();
-    return _FriedelPairs;
-  }
   /* returns redundancy information, like list[0] is the number of reflections collected once
      list[1] = number of reflections collected wtice etc */
   const TIntList& GetRedundancyInfo() const {
@@ -581,6 +582,10 @@ of components 1 ... m
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
   
+  void LibOSF(const TStrObjList& Params, TMacroError& E);
+  void LibFVar(const TStrObjList& Params, TMacroError& E);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
+
   struct ReleasedItems {
     TSimpleRestraintPList restraints;
     TPtrList<TSameGroup> sameList;

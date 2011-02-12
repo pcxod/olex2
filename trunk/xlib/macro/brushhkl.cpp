@@ -56,7 +56,7 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
   olxstr HklFN(XApp.LocateHklFile());
 
   if( HklFN.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate HKL file" );
+    E.ProcessingError(__OlxSrcInfo, "could not locate HKL file");
     return;
   }
   THklFile Hkl;
@@ -65,19 +65,15 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(au);
   if( sg == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "Undefined space group" );
+    E.ProcessingError(__OlxSrcInfo, "Undefined space group");
     return;
   }
 
   const bool useFriedelLaw = Options.Contains("f");
   smatd_list ml;
-  sg->GetMatrices(ml, mattAll^mattIdentity);
-  if( !sg->IsCentrosymmetric() && useFriedelLaw )  {
-    smatd I;
-    I.r.I();
-    I.r *= -1;
-    ml.InsertCCopy(0, I);  // merge wil search for it ...
-  }
+  sg->GetMatrices(ml, mattAll^(mattIdentity|mattCentering));
+  if( !sg->IsCentrosymmetric() && useFriedelLaw )
+    ml.InsertNew(0).r.I() *= -1;
 
   TPtrList< HklBrushRef > refs, eqs;
   refs.SetCapacity( Hkl.RefCount() );
@@ -90,7 +86,7 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
   eqs.Add(refs[0]);  // reference reflection
   for( size_t i=0; i < refs.Count(); )  {
     while( (++i < refs.Count()) && (eqs[0]->CompareTo(*refs[i]) == 0) )
-      eqs.Add( refs[i] );
+      eqs.Add(refs[i]);
     // do mergings etc
     if( eqs.Count() > 3)  {
       eqs.QuickSorter.SortSF(eqs, HklBrushRef::CompareSig);
@@ -101,16 +97,16 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     if( i >= refs.Count() )  break;
     eqs.Clear();
-    eqs.Add( refs[i] );
+    eqs.Add(refs[i]);
   }
   // keep the order in which equivalent refs are next to each other
   TRefPList toSave;
-  toSave.SetCapacity( refs.Count() );
-  int deletedRefs = 0;
+  toSave.SetCapacity(refs.Count());
+  size_t deletedRefs = 0;
   for( size_t i=0; i < refs.Count(); i++ )  {
     toSave.Add( refs[i]->ref );
     if( refs[i]->Deleted && refs[i]->ref->GetTag() >= 0 )  {
-      refs[i]->ref->SetTag( -refs[i]->ref->GetTag() );
+      refs[i]->ref->SetTag(-refs[i]->ref->GetTag());
       deletedRefs++;
     }
     delete refs[i];

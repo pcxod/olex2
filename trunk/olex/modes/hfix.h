@@ -27,11 +27,11 @@ public:
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
       int n = TAfixGroup::GetN(Hfix);
-      if( TAfixGroup::IsFitted(Hfix) && (n == 6 || n == 9) )  {
-        TGlXApp::GetGXApp()->AutoAfixRings(Hfix, &XA->Atom(), true);
+      if( TAfixGroup::IsFittedRing(Hfix) )  {
+        TGlXApp::GetGXApp()->AutoAfixRings(Hfix, XA, true);
       }
       else if( Hfix == 0 )  {  // special case
-        TCAtom& ca = XA->Atom().CAtom();
+        TCAtom& ca = XA->CAtom();
         if( ca.GetDependentAfixGroup() != NULL )
           ca.GetDependentAfixGroup()->Clear();
         else if( ca.DependentHfixGroupCount() != 0 )  {
@@ -43,7 +43,7 @@ public:
       }
       else
         TGlXApp::GetMainForm()->executeMacro(
-        olxstr("hadd ") << Hfix << " #c" << XA->Atom().CAtom().GetId());
+        olxstr("hadd ") << Hfix << " #c" << XA->CAtom().GetId());
       return true;
     }
     return false;

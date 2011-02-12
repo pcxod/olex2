@@ -117,7 +117,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   EllpId = S.EllpId;
   SetUiso(S.GetUiso());
   SetUisoEsd(S.GetUisoEsd());
-  SetUisoScale( S.GetUisoScale() );
+  SetUisoScale(S.GetUisoScale());
   if( S.UisoOwner != NULL )  {
     UisoOwner = Parent->FindCAtomById(S.UisoOwner->GetId());
     if( UisoOwner == NULL )
@@ -141,8 +141,10 @@ void TCAtom::Assign(const TCAtom& S)  {
 //..............................................................................
 int TCAtom::GetAfix() const {
   if( ParentAfixGroup == NULL )  {
-    if( DependentAfixGroup != NULL && (DependentAfixGroup->IsFitted() || DependentAfixGroup->GetM() == 0) )
+    if( DependentAfixGroup != NULL && (DependentAfixGroup->HasExcplicitPivot() ||
+      DependentAfixGroup->GetM() == 0) )  {
       return DependentAfixGroup->GetAfix();
+    }
     //if( DependentHfixGroup != NULL && !DependentHfixGroup->IsRiding() )
     //  return DependentHfixGroup->GetAfix();
     return 0;
@@ -283,14 +285,14 @@ void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool>& chars)  {
     if( str[i] <= '9' && str[i] >= '0' )  {
       if( !Char.IsEmpty() )      {
         chars.Add(Char, true);
-        Char = EmptyString;
+        Char.SetLength(0);
       }
       Dig << str[i];
     }
     else  {
       if( !Dig.IsEmpty() )  {
         chars.Add(Dig, false);
-        Dig = EmptyString;
+        Dig.SetLength(0);
       }
       Char << str[i];
     }

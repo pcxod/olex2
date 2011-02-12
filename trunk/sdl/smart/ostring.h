@@ -16,23 +16,20 @@ typedef TTSString<TWString, wchar_t> olxwstr;
   typedef TTSString<TCString, char > olxstr;
 #endif
 
-extern const olxstr &EmptyString;
-extern const olxstr &FalseString;
-extern const olxstr &TrueString;
-extern const olxstr &NullString;
+extern const olxstr &EmptyString();
+extern const olxstr &FalseString();
+extern const olxstr &TrueString();
 
-extern const olxcstr &CEmptyString;
-extern const olxcstr &CFalseString;
-extern const olxcstr &CTrueString;
-extern const olxcstr &CNullString;
+extern const olxcstr &CEmptyString();
+extern const olxcstr &CFalseString();
+extern const olxcstr &CTrueString();
 
-extern const olxwstr &WEmptyString;
-extern const olxwstr &WFalseString;
-extern const olxwstr &WTrueString;
-extern const olxwstr &WNullString;
+extern const olxwstr &WEmptyString();
+extern const olxwstr &WFalseString();
+extern const olxwstr &WTrueString();
 #endif
 
-template <bool CaseInsensetive>  class olxstrComparator  {
+template <bool CaseInsensetive> class olxstrComparator  {
 public:
   template <class S1, class S2>  static inline int Compare(const S1& A, const S2& B)  {
     return CaseInsensetive ? A.Comparei(B): A.Compare(B);

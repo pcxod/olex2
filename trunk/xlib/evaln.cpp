@@ -62,7 +62,7 @@ int TSOperation::LoadFromExpression(const olxstr &Exp)  {
           Opr->Function = true;
           Opr->Expandable = true;
           Opr->Func = o;
-          o = EmptyString;
+          o.SetLength(0);
           ob = 1;
           cb = 0;
           i++;
@@ -82,7 +82,7 @@ int TSOperation::LoadFromExpression(const olxstr &Exp)  {
 new_Op:
             if( !o.IsEmpty() )  {  
               Opr->Param = o;
-              o = EmptyString;
+              o.SetLength(0);
             }
             else if( op == fMinus )  {
               Opr->ChSig = !Opr->ChSig; // subsequent -- :)

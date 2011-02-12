@@ -14,21 +14,21 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
   SL.Add(olxstr("CHEM    ") << GetRM().GetUserContentStr() );
 
   Tmp = "CELL ";
-              Tmp << GetAsymmUnit().Axes()[0].GetV();
-  Tmp << ' '; Tmp << GetAsymmUnit().Axes()[1].GetV();
-  Tmp << ' '; Tmp << GetAsymmUnit().Axes()[2].GetV();
-  Tmp << ' '; Tmp << GetAsymmUnit().Angles()[0].GetV();
-  Tmp << ' '; Tmp << GetAsymmUnit().Angles()[1].GetV();
-  Tmp << ' '; Tmp << GetAsymmUnit().Angles()[2].GetV();
+              Tmp << GetAsymmUnit().GetAxes()[0];
+  Tmp << ' '; Tmp << GetAsymmUnit().GetAxes()[1];
+  Tmp << ' '; Tmp << GetAsymmUnit().GetAxes()[2];
+  Tmp << ' '; Tmp << GetAsymmUnit().GetAngles()[0];
+  Tmp << ' '; Tmp << GetAsymmUnit().GetAngles()[1];
+  Tmp << ' '; Tmp << GetAsymmUnit().GetAngles()[2];
   SL.Add(Tmp);
 
   Tmp = "CELLSD "; Tmp << GetAsymmUnit().GetZ();
-  Tmp << ' ' << GetAsymmUnit().Axes()[0].GetE();
-  Tmp << ' ' << GetAsymmUnit().Axes()[1].GetE();
-  Tmp << ' ' << GetAsymmUnit().Axes()[2].GetE();
-  Tmp << ' ' << GetAsymmUnit().Angles()[0].GetE();
-  Tmp << ' ' << GetAsymmUnit().Angles()[1].GetE();
-  Tmp << ' ' << GetAsymmUnit().Angles()[2].GetE();
+  Tmp << ' ' << GetAsymmUnit().GetAxisEsds()[0];
+  Tmp << ' ' << GetAsymmUnit().GetAxisEsds()[1];
+  Tmp << ' ' << GetAsymmUnit().GetAxisEsds()[2];
+  Tmp << ' ' << GetAsymmUnit().GetAngleEsds()[0];
+  Tmp << ' ' << GetAsymmUnit().GetAngleEsds()[1];
+  Tmp << ' ' << GetAsymmUnit().GetAngleEsds()[2];
   SL.Add(Tmp);
 
   SL.Add("MORPH   ") << GetMorph();
@@ -83,23 +83,23 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Clear();
   params.Strtok( Cell, ' ');
   if( params.Count() >= 6 )  {
-    GetAsymmUnit().Axes()[0].V() = params[0].ToDouble();
-    GetAsymmUnit().Axes()[1].V() = params[1].ToDouble();
-    GetAsymmUnit().Axes()[2].V() = params[2].ToDouble();
-    GetAsymmUnit().Angles()[0].V() = params[3].ToDouble();
-    GetAsymmUnit().Angles()[1].V() = params[4].ToDouble();
-    GetAsymmUnit().Angles()[2].V() = params[5].ToDouble();
+    GetAsymmUnit().GetAxes()[0] = params[0].ToDouble();
+    GetAsymmUnit().GetAxes()[1] = params[1].ToDouble();
+    GetAsymmUnit().GetAxes()[2] = params[2].ToDouble();
+    GetAsymmUnit().GetAngles()[0] = params[3].ToDouble();
+    GetAsymmUnit().GetAngles()[1] = params[4].ToDouble();
+    GetAsymmUnit().GetAngles()[2] = params[5].ToDouble();
     GetAsymmUnit().InitMatrices();
   }
   params.Clear();
   params.Strtok( CellSd, ' ');
   if( params.Count() >= 6 )  {
-    GetAsymmUnit().Axes()[0].E() = params[0].ToDouble();
-    GetAsymmUnit().Axes()[1].E() = params[1].ToDouble();
-    GetAsymmUnit().Axes()[2].E() = params[2].ToDouble();
-    GetAsymmUnit().Angles()[0].E() = params[3].ToDouble();
-    GetAsymmUnit().Angles()[1].E() = params[4].ToDouble();
-    GetAsymmUnit().Angles()[2].E() = params[5].ToDouble();
+    GetAsymmUnit().GetAxisEsds()[0] = params[0].ToDouble();
+    GetAsymmUnit().GetAxisEsds()[1] = params[1].ToDouble();
+    GetAsymmUnit().GetAxisEsds()[2] = params[2].ToDouble();
+    GetAsymmUnit().GetAngleEsds()[0] = params[3].ToDouble();
+    GetAsymmUnit().GetAngleEsds()[1] = params[4].ToDouble();
+    GetAsymmUnit().GetAngleEsds()[2] = params[5].ToDouble();
   }
   params.Clear();
   params.Strtok( Size, ' ');
@@ -133,10 +133,11 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
 
 bool TP4PFile::Adopt(TXFile& f)  {
   GetRM().Assign(f.GetRM(), false );
-  GetAsymmUnit().Angles() = f.GetAsymmUnit().Angles();
-  GetAsymmUnit().Axes() = f.GetAsymmUnit().Axes();
+  GetAsymmUnit().GetAxes() = f.GetAsymmUnit().GetAxes();
+  GetAsymmUnit().GetAxisEsds() = f.GetAsymmUnit().GetAxisEsds();
+  GetAsymmUnit().GetAngles() = f.GetAsymmUnit().GetAngles();
+  GetAsymmUnit().GetAngleEsds() = f.GetAsymmUnit().GetAngleEsds();
   Title = f.LastLoader()->GetTitle();
-
   SiteId  = "?";
   Morph   = SiteId;
   Color   = SiteId;

@@ -48,7 +48,7 @@ public:
     return !(year%4) && ((year%100) || !(year%400));
   }
 
-  static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndEsdlNamespace()

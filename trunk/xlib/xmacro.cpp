@@ -46,7 +46,7 @@ TActionQueue& XLibMacros::OnDelIns = XLibMacros::Actions.New("OnDelIns");
 TActionQueue& XLibMacros::OnAddIns = XLibMacros::Actions.New("OnAddIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
-  xlib_InitMacro(Run, EmptyString, fpAny^fpNone, "Runs provided macros (combined by '>>')");
+  xlib_InitMacro(Run, EmptyString(), fpAny^fpNone, "Runs provided macros (combined by '>>')");
   xlib_InitMacro(HklStat, "l-list the reflections&;m-merge reflection in current space group", fpAny|psFileLoaded, 
     "If no arguments provided, prints the statistics on the reflections as well as the ones used in the refinement.\
  If an expressions (condition) is given in the following form: x[ahbkcl], meaning that x=ah+bk+cl;\
@@ -57,7 +57,7 @@ void XLibMacros::Export(TLibrary& lib)  {
  data sets, removes equivalents with high sigma");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(SG, "a", fpNone|fpOne, "suggest space group");
-  xlib_InitMacro(SGE, EmptyString, fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use" );
+  xlib_InitMacro(SGE, EmptyString(), fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
 "Prints a scale vs resolution graph for current file (fcf file must exist in current folder)");
@@ -70,98 +70,102 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(TestSymm, "e-tolerance limit", fpNone|psFileLoaded, "Tests current \
   structure for missing symmetry");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(VATA, EmptyString, fpAny|psFileLoaded,
-"Compares current model with the cif file and write the report to provided file (appending)" );
+  xlib_InitMacro(VATA, EmptyString(), fpAny|psFileLoaded,
+"Compares current model with the cif file and write the report to provided file (appending)");
   xlib_InitMacro(Clean, "npd-promotes at maximum given number of atoms a call [0]\
 &;f-does not run 'fuse' after the completion\
 &;aq-disables analysis of the Q-peaks based on thresholds\
 &;at-disables lonely atom types assignment to O and Cl", fpNone,
-"Tidies up current model" );
+"Tidies up current model");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(AtomInfo, EmptyString, fpAny|psFileLoaded,
-"Searches information for given atoms in the database" );
+  xlib_InitMacro(AtomInfo, EmptyString(), fpAny|psFileLoaded,
+"Searches information for given atoms in the database");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Compaq, "a-assembles broken fragments&;c-similar as with no options, but considers atom-to-atom distances\
 &;q-moves Q-peaks to the atoms, atoms are not affected", 
     fpNone|psFileLoaded,
 "Moves all atoms or fragments of the asymmetric unit as close to each other as possible. If no options provided, all fragments\
- are assembled around the largest one." );
+ are assembled around the largest one.");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Envi, "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;cs-leaves selection unchanged",
     fpNone|fpOne|fpTwo,
-"This macro prints environment of any particular atom. Default search radius is 2.7A."  );
+"This macro prints environment of any particular atom. Default search radius is 2.7A.");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(AddSE, EmptyString, (fpAny^fpNone)|psFileLoaded,
-"Tries to add a new symmetry element to current space group to form a new one. [-1] is for center of symmetry" );
+  xlib_InitMacro(AddSE, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+"Tries to add a new symmetry element to current space group to form a new one. [-1] is for center of symmetry");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|fpOne|psFileLoaded,
 "Re-initialises the connectivity list. If a number is provided, atoms of the same type connected by bonds shorter\
- than the provided number are merged into one atom with center at the centroid formed by all removed atoms" );
-  xlib_InitMacro(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
+ than the provided number are merged into one atom with center at the centroid formed by all removed atoms");
+  xlib_InitMacro(Flush, EmptyString(), fpNone|fpOne, "Flushes log streams");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EXYZ, "eadp-sets the equivalent anisotropic parameter constraint for the shared site",
     fpAny|psCheckFileTypeIns,
 "Adds a new element to the given/selected site. Takes one selected atom and element types\
  as any subsequent argument. Alternatively can take a few selected aoms of different type to be modelled\
- as the type swapping disorder." );
+ as the type swapping disorder.");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(EADP, EmptyString, fpAny|psCheckFileTypeIns,
-"Forces EADP/Uiso of provided atoms to be constrained the same" );
+  xlib_InitMacro(EADP, EmptyString(), fpAny|psCheckFileTypeIns,
+"Forces EADP/Uiso of provided atoms to be constrained the same");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded, "converts cif to a document" );
-  xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded, "creates a table from a cif" );
-  xlib_InitMacro(CifMerge, EmptyString, (fpAny^fpNone)|psFileLoaded,
-  "Merges loaded or provided as first argument cif with other cif(s)" );
-  xlib_InitMacro(CifExtract, EmptyString, fpTwo|psFileLoaded, "extract a list of items from one cif to another" );
-  xlib_InitMacro(CifCreate, EmptyString, fpNone|psFileLoaded, "Creates cif from current file, variance-covariance matrix should be available" );
+  xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded, "converts cif to a document");
+  xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded, "creates a table from a cif");
+  xlib_InitMacro(CifMerge, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+  "Merges loaded or provided as first argument cif with other cif(s)");
+  xlib_InitMacro(CifExtract, EmptyString(), fpTwo|psFileLoaded, "extract a list of items from one cif to another");
+  xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded, "Creates cif from current file, variance-covariance matrix should be available");
+  xlib_InitMacro(FcfCreate, "scale-[external],simple or regression", (fpAny^fpNone)|psFileLoaded,
+    "Creates fcf from current file. Expects a number as in the shelx list number as the first argument, the second "
+    "argument is the output file name filename().fcf is default"
+    );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(VoidE, EmptyString, fpNone|psFileLoaded, "calculates number of electrons in the voids area" );
+  xlib_InitMacro(VoidE, EmptyString(), fpNone|psFileLoaded, "calculates number of electrons in the voids area");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(ChangeSG, EmptyString, fpAny^fpNone|psFileLoaded,
+  xlib_InitMacro(ChangeSG, EmptyString(), fpAny^fpNone|psFileLoaded,
     "[shift] SG. Changes space group of current structure, applying given shit prior (if provided) to\
  the change of symmetry of the unit cell");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]"
     "&;g-generates found interactions", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
-    "Adds HTAB instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
+    "Adds HTAB instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(HAdd, EmptyString, fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms, however\
- the ring atoms are treated separately and added all the time" );
-  xlib_InitMacro(HImp, EmptyString, (fpAny^fpNone)|psFileLoaded, "Increases, decreases length of H-bonds.\
- Arguments: value [H atoms]. Value might be +/- to specify to increase/decrease current value" );
+  xlib_InitMacro(HAdd, EmptyString(), fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms, however\
+ the ring atoms are treated separately and added all the time");
+  xlib_InitMacro(HImp, EmptyString(), (fpAny^fpNone)|psFileLoaded, "Increases, decreases length of H-bonds.\
+ Arguments: value [H atoms]. Value might be +/- to specify to increase/decrease current value");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(FixUnit, EmptyString, fpNone|fpOne|psFileLoaded, "Sets SFAc and UNIT to current content of the asymmetric unit.\
+  xlib_InitMacro(FixUnit, EmptyString(), fpNone|fpOne|psFileLoaded, "Sets SFAc and UNIT to current content of the asymmetric unit.\
  Takes Z', with default value of 1.");
-  xlib_InitMacro(GenDisp, EmptyString, fpNone|fpOne|psFileLoaded, "Generates anisotropic dispertion parameters for current radiation wavelength");
+  xlib_InitMacro(GenDisp, EmptyString(), fpNone|fpOne|psFileLoaded, "Generates anisotropic dispertion parameters for current radiation wavelength");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(AddIns,EmptyString, (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file" );
-  xlib_InitMacro(DelIns, EmptyString, fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided" );
-  xlib_InitMacro(LstIns, EmptyString, fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file" );
-  xlib_InitMacro(FixHL, EmptyString, fpNone|psFileLoaded, "Fixes hydrogen atom labels" );
-  xlib_InitMacro(Fix, EmptyString, (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
-  xlib_InitMacro(Free, EmptyString, (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
-  xlib_InitMacro(Isot,EmptyString , fpAny|psFileLoaded,
+  xlib_InitMacro(AddIns,EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file");
+  xlib_InitMacro(DelIns, EmptyString(), fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided");
+  xlib_InitMacro(LstIns, EmptyString(), fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file");
+  xlib_InitMacro(FixHL, EmptyString(), fpNone|psFileLoaded, "Fixes hydrogen atom labels");
+  xlib_InitMacro(Fix, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu");
+  xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu");
+  xlib_InitMacro(Isot,EmptyString() , fpAny|psFileLoaded,
 "makes provided atoms isotropic, if no arguments provided, current selection or all atoms become isotropic");
   xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded, 
-"makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered" );
+"makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered");
 xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fpOne|psFileLoaded, 
-    "Saves current model to a file. By default an ins file is saved and loaded" );
-  xlib_InitMacro(LS, EmptyString, fpOne|fpTwo|psCheckFileTypeIns, "Sets refinement method and/or the number of iterations.");
-  xlib_InitMacro(Plan, EmptyString, fpOne|psCheckFileTypeIns, "Sets the number of Fourier peaks to be found from the difference map");
-  xlib_InitMacro(UpdateWght, EmptyString, fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
-  xlib_InitMacro(User, EmptyString, fpNone|fpOne, "Changes current folder");
-  xlib_InitMacro(Dir, EmptyString, fpNone|fpOne, "Lists current folder. A file name mask may be provided");
-  xlib_InitMacro(LstVar, EmptyString, fpAny, "Lists all defined variables. Accepts * based masks" );
-  xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks" );
-  xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks" );
-  xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
-  xlib_InitMacro(SGS, EmptyString, fpAny^fpNone|psFileLoaded,
+    "Saves current model to a file. By default an ins file is saved and loaded");
+  xlib_InitMacro(LS, EmptyString(), fpOne|fpTwo|psCheckFileTypeIns, "Sets refinement method and/or the number of iterations.");
+  xlib_InitMacro(Plan, EmptyString(), fpOne|psCheckFileTypeIns, "Sets the number of Fourier peaks to be found from the difference map");
+  xlib_InitMacro(UpdateWght, EmptyString(), fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
+  xlib_InitMacro(User, EmptyString(), fpNone|fpOne, "Changes current folder");
+  xlib_InitMacro(Dir, EmptyString(), fpNone|fpOne, "Lists current folder. A file name mask may be provided");
+  xlib_InitMacro(LstVar, EmptyString(), fpAny, "Lists all defined variables. Accepts * based masks");
+  xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks");
+  xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks");
+  xlib_InitMacro(LstFS, EmptyString(), fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
+  xlib_InitMacro(SGS, EmptyString(), fpAny^fpNone|psFileLoaded,
  "Changes current space group settings using provided cell setting (if applicable) and axis, or 9\
  transformation matrix elements and the space group symbol. If the transformed HKL file is required,\
  it should be provided as the last argument (like test.hkl)");
-  xlib_InitMacro(ASR, EmptyString, fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
-  xlib_InitMacro(Describe, EmptyString, fpNone^psFileLoaded, "Describes current refinement in a human readable form");
-  xlib_InitMacro(Sort, EmptyString, fpAny^psFileLoaded, "Sorts atoms of the default residue. Atom sort arguments:\
+  xlib_InitMacro(ASR, EmptyString(), fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
+  xlib_InitMacro(Describe, EmptyString(), fpNone^psFileLoaded, "Describes current refinement in a human readable form");
+  xlib_InitMacro(Sort, EmptyString(), fpAny^psFileLoaded, "Sorts atoms of the default residue. Atom sort arguments:\
  m - atomic weight; l - label, considering numbers; p - part, 0 is first followed by all positive parts in ascending order and then negative ones;\
  h - to treat hydrogen atoms independent of the pivot atom.\
  Moiety sort arguments: s - size, h - by heaviest atom, m - molecular weight. Usage: sort [+atom_sort_type] or [Atoms] [moiety [+moety sort type] [moiety atoms]].\
@@ -170,26 +174,26 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  Note that when sorting atoms, any subsequent sort type operates inside the groups created by the preceeding sort types.");
   xlib_InitMacro(SGInfo, "c-include lattice centering matrices&;i-include inversion generated matrices if any", fpNone|fpOne, 
     "Prints space group information.");
-  xlib_InitMacro(SAInfo, EmptyString, fpAny, "Finds and prints space groups which include any of the provided systematic absences in the form 'b~~', '~b~' or '~~b'");
+  xlib_InitMacro(SAInfo, EmptyString(), fpAny, "Finds and prints space groups which include any of the provided systematic absences in the form 'b~~', '~b~' or '~~b'");
   xlib_InitMacro(Inv, "f-force inversion for non-centrosymmetric space groups", fpAny|psFileLoaded, "Inverts whole structure or provided fragments of the structure");
-  xlib_InitMacro(Push, EmptyString, (fpAny^(fpNone|fpOne|fpTwo))|psFileLoaded, "Shifts the sctructure (or provided fragments) by the provided translation");
-  xlib_InitMacro(Transform, EmptyString, fpAny|psFileLoaded, "Transforms the structure or provided fragments according to the given matrix\
+  xlib_InitMacro(Push, EmptyString(), (fpAny^(fpNone|fpOne|fpTwo))|psFileLoaded, "Shifts the sctructure (or provided fragments) by the provided translation");
+  xlib_InitMacro(Transform, EmptyString(), fpAny|psFileLoaded, "Transforms the structure or provided fragments according to the given matrix\
  (a11, a12, a13, a21, a22, a23, a31, a32, a33, t1, t2, t3)");
-  xlib_InitMacro(Standardise, EmptyString, fpNone|fpOne|psFileLoaded, "Standardises atom coordinates (similar to HKL standardisation procedure). If '0' is provided as\
+  xlib_InitMacro(Standardise, EmptyString(), fpNone|fpOne|psFileLoaded, "Standardises atom coordinates (similar to HKL standardisation procedure). If '0' is provided as\
  argument, the asymmetric unit content is arranged as close to (0,0,0), while being inside the unit cell as possible");
-  xlib_InitMacro(FitCHN, EmptyString, (fpAny^(fpNone|fpOne)),
+  xlib_InitMacro(FitCHN, EmptyString(), (fpAny^(fpNone|fpOne)),
     "Fits CHN analysis for given formula and observed data given a lits of possible solvents. A mixture of up to 3 solvents only considered,\
  however any number of observed elements can be provided.\
- Example: FitCHN C12H22O11 C:40.1 H:6 N:0 H2O CCl3H" );
-  xlib_InitMacro(CalcCHN, EmptyString, fpNone|fpOne, "Calculates CHN composition of current structure or for provided formula" );
-  xlib_InitMacro(CalcMass, EmptyString, fpNone|fpOne, "Calculates Mass spectrum of current structure or for provided formula" );
-  xlib_InitMacro(Omit, EmptyString, fpOne|fpTwo|fpThree|psCheckFileTypeIns, 
+ Example: FitCHN C12H22O11 C:40.1 H:6 N:0 H2O CCl3H");
+  xlib_InitMacro(CalcCHN, EmptyString(), fpNone|fpOne, "Calculates CHN composition of current structure or for provided formula");
+  xlib_InitMacro(CalcMass, EmptyString(), fpNone|fpOne, "Calculates Mass spectrum of current structure or for provided formula");
+  xlib_InitMacro(Omit, EmptyString(), fpOne|fpTwo|fpThree|psCheckFileTypeIns, 
     "removes any particular reflection from the refinement list. If a single number is provided,\
  all reflections with delta(F^2)/esd greater than given number are omitted");
   xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;rem-exclude remarks", 
     fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
   xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site");
-  xlib_InitMacroA(Close, @Close, EmptyString, fpNone|psFileLoaded, "Closes currently loaded file");
+  xlib_InitMacroA(Close, @Close, EmptyString(), fpNone|psFileLoaded, "Closes currently loaded file");
   xlib_InitMacro(PiPi, "g-generates using found symmetry operations&;r-ring content [C6,NC5]",
     fpNone|fpTwo|psFileLoaded, "Analysis of the pi-pi interactions (experimental).\
  The procedure searches for flat reqular C6 or NC5 rings and prints information for the ones where the\
@@ -199,9 +203,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
     "&;o-use occupancy of the atoms in the integration",
     fpAny|psFileLoaded,
     "Prints molecular volume, surface area and other information for visible/selected atoms");
-  xlib_InitMacro(RTab, EmptyString, (fpAny^fpNone)|psCheckFileTypeIns,
+  xlib_InitMacro(RTab, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
     "Adds RTAB with givn name for provided atoms/selection");
-  xlib_InitMacro(HklMerge, EmptyString, fpAny|psFileLoaded,
+  xlib_InitMacro(HklMerge, EmptyString(), fpAny|psFileLoaded,
     "Merges current HKL file (ehco HKLSrc()) to given file name. "
     "Warning: if no arguments provided, the current file is overwritten");
   xlib_InitMacro(HklAppend, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
@@ -209,6 +213,15 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(HklExclude, "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided\
  indexes in any reflection. The default is in any one reflection" , fpAny,
  "excludes reflections with give indexes from the hkl file -h=1;2 : all reflections where h=1 or 2");
+  xlib_InitMacro(HklImport, "batch-for separator formatted file specifies that there is a batch number",
+    (fpAny^(fpNone|fpOne|fpTwo|fpThree)),
+    "Creates a Shelx compatible 44488(4) file format from given source. Valid arguments:"
+    "fixed and separator. For example: 'HklImport in.hkl fixed 7 7 7 9 9 out.hkl' or 'HklImport in.hkl "
+    "separator \' \'' out.hkl"
+   );
+  xlib_InitMacroA(Update, @update, EmptyString(), fpAny,
+    "Reads given file and if the atoms list of loaded file matches the atom list of the given file "
+    "the atomic coordinates, FVAR and BASF values are updated.");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -235,18 +248,18 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitFunc(SG, fpNone|fpOne, "Returns space group of currently loaded file.\
  Also takes a string template, where %# is replaced with SG number, %n - short name,\
  %N - full name, %h - html representation of the short name, %H - same as %h for full name,\
- %s - syngony, %HS -Hall symbol" );
-  xlib_InitFunc(SGS, fpNone|fpOne|psFileLoaded, "Returns current space settings" );
+ %s - syngony, %HS -Hall symbol");
+  xlib_InitFunc(SGS, fpNone|fpOne|psFileLoaded, "Returns current space settings");
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(ATA, fpAny|psFileLoaded, "Test current structure against database.\
-  (Atom Type Assignment). Returns true if any atom type changed" );
+  (Atom Type Assignment). Returns true if any atom type changed");
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(FATA, fpAny|psFileLoaded, "Calculates the diff Fourier map and integrates it to find artifacts around atoms.\
-  (Fourier Atom Type Analysis). Returns true if any atom type changed" );
+  (Fourier Atom Type Analysis). Returns true if any atom type changed");
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(VSS, fpOne|psFileLoaded, "Validate Structure or Solution.\
   Takes a boolean value. If value is true, the number of tested atoms is limited\
- by the 18A rule. Returns proportion of know atom types to the all atoms number." );
+ by the 18A rule. Returns proportion of know atom types to the all atoms number.");
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
@@ -254,14 +267,16 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(Lst, fpOne|psCheckFileTypeIns, "returns a value from the Lst file");
 //_________________________________________________________________________________________________________________________
-  xlib_InitFunc(Crd, fpAny|psFileLoaded, "returns center of given (selected) atoms in cartesian coordinates");
-  xlib_InitFunc(CCrd, fpAny|psFileLoaded, "returns center of given (selected) atoms in fractional coordinates");
+  xlib_InitFunc(Crd, fpAny|psFileLoaded, "Returns center of given (selected) atoms in cartesian coordinates");
+  xlib_InitFunc(CCrd, fpAny|psFileLoaded, "Returns center of given (selected) atoms in fractional coordinates");
+  xlib_InitFunc(CalcR, fpNone|fpOne|psFileLoaded, "Calculates R1, R1 for I/sig >2 and wR2. "
+    "If 'print' is provided - prints detailed info");
 }
 //..............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   smatd tm;
   if( !Parse<TStrObjList>(Cmds, "mivd", true,&tm.r, &tm.t) )  {
-    Error.ProcessingError(__OlxSrcInfo, "invalid transformation matrix" );
+    Error.ProcessingError(__OlxSrcInfo, "invalid transformation matrix");
     return;
   }
   TXApp& xapp = TXApp::GetInstance();
@@ -273,7 +288,7 @@ void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMac
 void XLibMacros::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   vec3d pnt;
   if( !Parse<TStrObjList>(Cmds, "vd", true, &pnt) )  {
-    Error.ProcessingError(__OlxSrcInfo, "invalid translation" );
+    Error.ProcessingError(__OlxSrcInfo, "invalid translation");
     return;
   }
   TXApp& xapp = TXApp::GetInstance();
@@ -291,11 +306,11 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TSpaceGroup* sg = NULL;
   try  { sg = &xapp.XFile().GetLastLoaderSG();  }
   catch(...)  {
-    Error.ProcessingError(__OlxSrcInfo, "unknown file space group" );
+    Error.ProcessingError(__OlxSrcInfo, "unknown file space group");
     return;
   }
   if( !sg->IsCentrosymmetric() &&  !Force )  {
-    Error.ProcessingError(__OlxSrcInfo, "non-centrosymmetric space group, use -f to force" );
+    Error.ProcessingError(__OlxSrcInfo, "non-centrosymmetric space group, use -f to force");
     return;
   }
   TSAtomPList atoms;
@@ -313,11 +328,11 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( Cmds.IsEmpty() )  {
     TPtrList<TSpaceGroup> hits, bl_hits;
     for( size_t i=0; i < sl.SymmElementCount(); i++ )
-      ref.Add( & sl.GetSymmElement(i) );
+      ref.Add(sl.GetSymmElement(i));
     for( size_t i=0; i < sl.SGCount(); i++ )  {
       sl.GetGroup(i).SplitIntoElements(ref, sg_elm);
       if( sg_elm.IsEmpty() )
-        hits.Add( &sl.GetGroup(i) );
+        hits.Add(&sl.GetGroup(i));
       else
         sg_elm.Clear();
     }
@@ -340,7 +355,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   else  {
     TPSTypeList<size_t, TSpaceGroup*> hits, bl_hits;
     for( size_t i=0; i < Cmds.Count(); i++ )  {
-      TSymmElement* se = sl.FindSymmElement( olxstr(Cmds[i]).Replace('~', '-') );
+      TSymmElement* se = sl.FindSymmElement(olxstr(Cmds[i]).Replace('~', '-'));
       if( se == NULL )  {
         E.ProcessingError(__OlxSrcInfo, olxstr("Unknown symmetry element: ") << Cmds[i]);
         return;
@@ -350,7 +365,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     for( size_t i=0; i < sl.SGCount(); i++ )  {
       sl.GetGroup(i).SplitIntoElements(ref, sg_elm);
       if( !sg_elm.IsEmpty() )  {
-        hits.Add( sg_elm.Count(), &sl.GetGroup(i) );
+        hits.Add(sg_elm.Count(), &sl.GetGroup(i));
         sg_elm.Clear();
       }
     }
@@ -376,7 +391,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     log.NewEntry() << "Exact matche(s)"; 
     TPtrList<TSymmElement> all_elm;
     for( size_t i=0; i < sl.SymmElementCount(); i++ )
-      all_elm.Add( & sl.GetSymmElement(i) );
+      all_elm.Add(sl.GetSymmElement(i));
     olxstr exact_match;
     for( size_t i=0; i < hits.Count(); i++ )  {
       if( hits.GetKey(i) == ref.Count() )  {
@@ -408,19 +423,19 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     TSymmLib& symlib = TSymmLib::GetInstance();
     for( size_t i=0; i < symlib.BravaisLatticeCount(); i++ )  {
       TBravaisLattice& bl = symlib.GetBravaisLattice(i);
-      bl.FindSpaceGroups( sgList );
+      bl.FindSpaceGroups(sgList);
       TBasicApp::NewLogEntry() << "------------------- " << bl.GetName() << " --- "  << sgList.Count();
       olxstr tmp, tmp1;
       TPSTypeList<int, TSpaceGroup*> SortedSG;
       for( size_t j=0; j < sgList.Count(); j++ )
-        SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
+        SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
-        tmp <<tmp1.Format(15, true, ' ');
-        tmp1 = EmptyString;
+        tmp << tmp1.Format(15, true, ' ');
+        tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
-          tmp = EmptyString;
+          tmp.SetLength(0);
         }
       }
       TBasicApp::NewLogEntry() << tmp;
@@ -428,8 +443,8 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
     return;
   }
-  bool Identity = Options.Contains("i"), 
-       Centering = Options.Contains("c");
+  const bool Inversion = Options.Contains("i"), 
+    Centering = Options.Contains("c");
   TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Cmds[0]);
   bool LaueClassPG = false;
   if( sg == NULL )  {
@@ -452,10 +467,10 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
         tmp << tmp1.Format(15, true, ' ');
-        tmp1 = EmptyString;
+        tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
-          tmp = EmptyString;
+          tmp.SetLength(0);
         }
       }
       TBasicApp::NewLogEntry() << tmp;
@@ -468,14 +483,14 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       TSymmLib::GetInstance().FindPointGroupGroups(*sg, sgList);
       TPSTypeList<int, TSpaceGroup*> SortedSG;
       for( size_t j=0; j < sgList.Count(); j++ )
-        SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
+        SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
         tmp << tmp1.Format(15, true, ' ');
-        tmp1 = EmptyString;
+        tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
-          tmp = EmptyString;
+          tmp.SetLength(0);
         }
       }
       TBasicApp::NewLogEntry() << tmp;
@@ -488,7 +503,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TBasicApp::NewLogEntry() << (sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrosymmetric");
   TBasicApp::NewLogEntry() << "Hall symbol: " << sg->GetHallSymbol();
 
-  TSymmLib::GetInstance().GetGroupByNumber( sg->GetNumber(), AllGroups );
+  TSymmLib::GetInstance().GetGroupByNumber(sg->GetNumber(), AllGroups);
   if( AllGroups.Count() > 1 )  {
     TBasicApp::NewLogEntry() << "Alternative settings:";
     olxstr tmp;
@@ -503,9 +518,9 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TBasicApp::NewLogEntry() << "Laue class: " << sg->GetLaueClass().GetBareName();
   TBasicApp::NewLogEntry() << "Point group: " << sg->GetPointGroup().GetBareName();
   short Flags = mattAll;
-  if( !Centering )  Flags ^= (mattCentering|mattTranslation);
-  if( !Identity )  Flags ^= mattIdentity;
-  sg->GetMatrices( SGMatrices, Flags );
+  if( !Centering )  Flags ^= mattCentering;
+  if( !Inversion )  Flags ^= mattInversion;
+  sg->GetMatrices(SGMatrices, Flags);
 
   TTTable<TStrList> tab(SGMatrices.Count(), 2);
 
@@ -600,7 +615,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     for( size_t i=0; i < redInfo.Count(); i++ )
       if( redInfo[i] != 0 )
         red_cnt++;
-    tab.Resize( red_cnt, 2 );
+    tab.Resize(red_cnt, 2);
     tab.ColName(0) = "Times measured";
     tab.ColName(1) = "Count";
     red_cnt = 0;
@@ -648,7 +663,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       j--;
       olxstr strV;
       while( j != InvalidIndex && !(tmp[j] >= 'a' && tmp[j] <= 'z' ) )  {
-        strV.Insert( (olxch)tmp[j], 0 );
+        strV.Insert((olxch)tmp[j], 0);
         j--;
       }
       if( !strV.IsEmpty() && !(strV == "+") && !(strV == "-") )
@@ -674,7 +689,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     for( size_t j=0; j < Cmds.Count(); j ++ )  {
       int v = olx_round(ref.GetH()*con[j][0] +
                     ref.GetK()*con[j][1] +
-                    ref.GetL()*con[j][2] );
+                    ref.GetL()*con[j][2]);
       if( con[j][3] == 0 )  {
         if( v != 0 ) {
           fulfilled = false;
@@ -760,8 +775,9 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   TArrayList< AnAssociation2<TCAtom const*, smatd> > all;
   size_t h_indexes[4];
-  for( size_t i=0; i < lat.AtomCount(); i++ )  {
-    TSAtom& sa = lat.GetAtom(i);
+  const ASObjectProvider& objects = lat.GetObjects();
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     const cm_Element& elm = sa.GetType();
     if( elm.GetMr() < 3.5 )  // H,D,Q
       continue;
@@ -796,7 +812,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         if( c_a < min_ang )  {  // > 150 degrees
           if( sa.GetType() == iCarbonZ )  {
             InfoTab& it_d = rm.AddRTAB(sa.GetType().symbol + ca.GetType().symbol);
-            it_d.AddAtom( &sa.CAtom(), NULL );
+            it_d.AddAtom(&sa.CAtom(), NULL);
             const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
               transforms.AddCCopy(*mt);
@@ -805,8 +821,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
               TBasicApp::NewLogEntry() << it_d.InsStr() << " d=" << olxstr::FormatFloat(3, d);
 
             InfoTab& it_a = rm.AddRTAB(sa.GetType().symbol + ca.GetType().symbol);
-            it_a.AddAtom( &sa.CAtom(), NULL );
-            it_a.AddAtom( &sa.Node(h_indexes[k]).CAtom(), NULL );
+            it_a.AddAtom(&sa.CAtom(), NULL);
+            it_a.AddAtom(&sa.Node(h_indexes[k]).CAtom(), NULL);
             it_a.AddAtom(const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it_a) )
               TBasicApp::NewLogEntry() << it_a.InsStr() << " a=" << olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI);
@@ -828,11 +844,12 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = TXApp::GetInstance().XFile().GetLattice();
     const TUnitCell& uc = xlatt.GetUnitCell();
+    const ASObjectProvider& objects = xlatt.GetObjects();
     for( size_t i=0; i < transforms.Count(); i++ )
       uc.InitMatrixId(transforms[i]);
     TCAtomPList iatoms;
-    for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
-      TSAtom& sa = xlatt.GetAtom(i);
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.IsDeleted() )  continue;
       if( sa.IsAUAtom() )
         iatoms.Add(sa.CAtom());
@@ -844,7 +861,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp &XApp = TXApp::GetInstance();
   if( XApp.XFile().GetLattice().IsGenerated() )  {
-    Error.ProcessingError(__OlxSrcInfo, "command is not applicable to grown structure");
+    Error.ProcessingError(__OlxSrcInfo, "not applicable to grown structure");
     return;
   }
   int Hfix = 0;
@@ -877,8 +894,8 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         for( size_t i=0; i < AE.Count(); i++ )  {
           if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
             if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex )  {
-              parts.Add( AE.GetCAtom(i).GetPart() );
-              occu.Add( rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof) );
+              parts.Add(AE.GetCAtom(i).GetPart());
+              occu.Add(rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof));
             }
         }
         if( parts.Count() < 2 )  {
@@ -904,7 +921,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             smatd* eqiv = NULL;
             for( size_t j=0; j < AE.Count(); j++ )  {
               if( &AE.GetCAtom(j) == &AE.GetBase().CAtom() )  {
-                const double d = AE.GetCrd(j).DistanceTo(AE.GetBase().crd() );
+                const double d = AE.GetCrd(j).DistanceTo(AE.GetBase().crd());
                 if( d > 1.6 )  {
                   eqiv = new smatd(AE.GetMatrix(j));
                   AE.Delete(j);
@@ -925,7 +942,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             if( afix != -1 )  {
               xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex), NULL, &generated);
               for( size_t j=0; j < generated.Count(); j++ )  {
-                generated[j]->SetPart( parts[i] );
+                generated[j]->SetPart(parts[i]);
                 rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
               }
               if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL )
@@ -969,7 +986,7 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   Cmds.Delete(0);
 
   TSAtomPList satoms;
-  XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
+  XApp.FindSAtoms(Cmds.Text(' '), satoms, true);
   const double delta = XApp.XFile().GetLattice().GetDelta();
   for( size_t i=0; i < satoms.Count(); i++ )  {
     if( satoms[i]->GetType() != iHydrogenZ )
@@ -987,9 +1004,9 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       XApp.NewLogEntry() << "Skipping " << h.GetLabel();
       continue;
     }
-    vec3d v( h.crd() - attached->crd() );
+    vec3d v(h.crd() - attached->crd());
     if( increase || decrease )
-      v.NormaliseTo( v.Length() + val );
+      v.NormaliseTo(v.Length() + val);
     else
       v.NormaliseTo(val);
     v += attached->crd();
@@ -1055,9 +1072,8 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else if( vars.Equalsi( "OCCU" ) )  {
-    TLattice& latt = xapp.XFile().GetLattice();
-    for( size_t i=0; i < latt.AtomCount(); i++ )
-      latt.GetAtom(i).SetTag(0);
+    const ASObjectProvider& objects = xapp.XFile().GetLattice().GetObjects();
+    objects.atoms.ForEach(ACollectionItem::TagSetter<>(0));
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->GetTag() != 0 )  continue;
       TSAtomPList neighbours;
@@ -1145,9 +1161,9 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
   TRefList refs;
   double res = Options.FindValue("r", "0.5").ToDouble();
   TArrayList<compd > F;
-  olxstr err( SFUtil::GetSF(refs, F, SFUtil::mapTypeObs, 
+  olxstr err(SFUtil::GetSF(refs, F, SFUtil::mapTypeObs, 
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
-    (Options.FindValue("s", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple) );
+    (Options.FindValue("s", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple));
   if( !err.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
@@ -1159,7 +1175,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
   //xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace, RefMerger::ShelxMerger>(
   //  xapp.XFile().GetUnitCell().GetSymSpace(), refs);
   TTypeList< AnAssociation2<double,double> > gd;
-  gd.SetCapacity( refs.Count() );
+  gd.SetCapacity(refs.Count());
   double max_2t = 0, min_2t=180;
   for( size_t i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
@@ -1203,10 +1219,10 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Tmp = TEFile::AddPathDelimeter(CurrentDir) + Tmp;
   TEBitArray removedSAtoms, removedCAtoms;
   if( TEFile::ExtractFileExt(Tmp).Equalsi("ins"))  {  // kill Q peak in the ins file
-    TLattice& latt = XApp.XFile().GetLattice();
-    removedSAtoms.SetSize(latt.AtomCount());
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
+    ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
+    removedSAtoms.SetSize(objects.atoms.Count());
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.GetType() == iQPeakZ && !sa.IsDeleted() )  {
         sa.SetDeleted(true);
         removedSAtoms.SetTrue(i);
@@ -1237,10 +1253,10 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Sort = true;  // forse reading the file
   }
   if( !removedSAtoms.IsEmpty() )  {  // need to restore, a bit of mess here...
-    TLattice& latt = XApp.XFile().GetLattice();
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
+    ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
       if( removedSAtoms.Get(i) )
-        latt.GetAtom(i).SetDeleted(false);
+        objects.atoms[i].SetDeleted(false);
     }
     TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -1259,8 +1275,9 @@ void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
     const double th = Cmds[0].ToDouble();
     TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
-    for( size_t i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
+    ASObjectProvider& objects = latt.GetObjects();
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.IsDeleted() )  continue;
       if( sa.BondCount() == 0 )  continue;
       sa.SortBondsByLengthAsc();
@@ -1307,7 +1324,7 @@ void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   // if instruction is parsed, it goes to current model, otherwise i stays in the ins file
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   if( !Ins.AddIns(TStrList(Cmds), TXApp::GetInstance().XFile().GetRM()) )  {
-    Error.ProcessingError(__OlxSrcInfo, olxstr("could not add instruction: ") << Cmds.Text(' ') );
+    Error.ProcessingError(__OlxSrcInfo, olxstr("could not add instruction: ") << Cmds.Text(' '));
     return;
   }
 }
@@ -1342,9 +1359,9 @@ void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError
   int ls = -1;
   XLibMacros::ParseNumbers<int,TStrObjList>(Cmds, 1, &ls);
   if( ls != -1 )  
-    TXApp::GetInstance().XFile().GetRM().SetIterations( (int)ls);
+    TXApp::GetInstance().XFile().GetRM().SetIterations((int)ls);
   if( !Cmds.IsEmpty() )
-    TXApp::GetInstance().XFile().GetRM().SetRefinementMethod( Cmds[0] );
+    TXApp::GetInstance().XFile().GetRM().SetRefinementMethod(Cmds[0]);
 }
 //..............................................................................
 void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1371,7 +1388,7 @@ void XLibMacros::macUser(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macDir(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr Filter( Cmds.IsEmpty() ? olxstr("*.*")  : Cmds[0] );
+  olxstr Filter(Cmds.IsEmpty() ? olxstr("*.*")  : Cmds[0]);
   TFileList fl;
   TEFile::ListCurrentDirEx(fl, Filter, sefFile|sefDir);
   TTTable<TStrList> tab(fl.Count(), 4);
@@ -1408,10 +1425,10 @@ void XLibMacros::macLstMac(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TTypeList<TStrMask> masks;
   for( size_t i=0; i < Cmds.Count(); i++ )
     masks.AddNew(Cmds[i]);
-  if( masks.IsEmpty() )  masks.AddNew(EmptyString);
+  if( masks.IsEmpty() )  masks.AddNew(EmptyString());
   // end masks creation
   TBasicFunctionPList macros;
-  TXApp::GetInstance().GetLibrary().ListAllMacros( macros );
+  TXApp::GetInstance().GetLibrary().ListAllMacros(macros);
   for( size_t i=0; i < macros.Count(); i++ )  {
     ABasicFunction* func = macros[i];
     bool add = false;
@@ -1432,10 +1449,10 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TTypeList<TStrMask> masks;
   for( size_t i=0; i < Cmds.Count(); i++ )
     masks.AddNew(Cmds[i]);
-  if( masks.IsEmpty() )  masks.AddNew(EmptyString);
+  if( masks.IsEmpty() )  masks.AddNew(EmptyString());
   // end masks creation
   TBasicFunctionPList functions;
-  TXApp::GetInstance().GetLibrary().ListAllFunctions( functions );
+  TXApp::GetInstance().GetLibrary().ListAllFunctions(functions);
   for( size_t i=0; i < functions.Count(); i++ )  {
     ABasicFunction* func = functions[i];
     bool add = false;
@@ -1453,9 +1470,9 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const olxstr& resHKL_FN)  {
   TXApp& xapp = TXApp::GetInstance();
-  TBasicApp::NewLogEntry() << "Cell choice trasformation matrix:" << NewLineSequence <<
-    tm[0].ToString() << NewLineSequence <<
-    tm[1].ToString() << NewLineSequence <<
+  TBasicApp::NewLogEntry() << "Cell choice trasformation matrix:" << NewLineSequence() <<
+    tm[0].ToString() << NewLineSequence() <<
+    tm[1].ToString() << NewLineSequence() <<
     tm[2].ToString();
   TBasicApp::NewLogEntry() << "New space group: " << new_sg.GetName();
   const mat3d tm_t(mat3d::Transpose(tm));
@@ -1464,10 +1481,10 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
   const mat3d i_tm(tm.Inverse());
   const mat3d f2c = mat3d::Transpose((mat3d::Transpose(au.GetCellToCartesian())*tm));
   mat3d ax_err;
-  ax_err[0] = vec3d(olx_sqr(au.Axes()[0].GetE()), olx_sqr(au.Axes()[1].GetE()), olx_sqr(au.Axes()[2].GetE()));
+  ax_err[0] = vec3d::Qrt(au.GetAxisEsds());
   ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
   mat3d an_err;
-  an_err[0] = vec3d(olx_sqr(au.Angles()[0].GetE()), olx_sqr(au.Angles()[1].GetE()), olx_sqr(au.Angles()[2].GetE()));
+  an_err[0] = vec3d::Qrt(au.GetAngleEsds());
   an_err[1] = an_err[0];  an_err[2] = an_err[0];
   // prepare positive matrix for error estimation
   mat3d tm_p(tm);
@@ -1477,12 +1494,12 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
         tm_p[i][j] = - tm_p[i][j];
   ax_err *= tm_p;
   an_err *= tm_p;
-  au.Axes()[0].V() = f2c[0].Length();  au.Axes()[0].E() = sqrt(ax_err[0][0]);
-  au.Axes()[1].V() = f2c[1].Length();  au.Axes()[1].E() = sqrt(ax_err[1][1]);
-  au.Axes()[2].V() = f2c[2].Length();  au.Axes()[2].E() = sqrt(ax_err[2][2]);
-  au.Angles()[0].V() = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[0].E() = sqrt(an_err[0][0]);
-  au.Angles()[1].V() = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[1].E() = sqrt(an_err[1][1]);
-  au.Angles()[2].V() = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.Angles()[2].E() = sqrt(an_err[2][2]);
+  au.GetAxes()[0] = f2c[0].Length();  au.GetAxisEsds()[0] = sqrt(ax_err[0][0]);
+  au.GetAxes()[1] = f2c[1].Length();  au.GetAxisEsds()[1] = sqrt(ax_err[1][1]);
+  au.GetAxes()[2] = f2c[2].Length();  au.GetAxisEsds()[2] = sqrt(ax_err[2][2]);
+  au.GetAngles()[0] = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.GetAngleEsds()[0] = sqrt(an_err[0][0]);
+  au.GetAngles()[1] = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.GetAngleEsds()[1] = sqrt(an_err[1][1]);
+  au.GetAngles()[2] = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.GetAngleEsds()[2] = sqrt(an_err[2][2]);
   const mat3d old_cac = au.GetCartesianToCell();
   au.InitMatrices();
   const mat3d elptm = mat3d::Transpose(au.GetCellToCartesian())*i_tm*mat3d::Transpose(old_cac);
@@ -1492,12 +1509,13 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
     if( ca.GetEllipsoid() != NULL )
       ca.GetEllipsoid()->MultMatrix(elptm);
   }
-  TBasicApp::NewLogEntry() << "New cell: " << au.Axes()[0].ToString() << 
-    ' ' << au.Axes()[1].ToString() << 
-    ' ' << au.Axes()[2].ToString() <<
-    ' '  << au.Angles()[0].ToString() << 
-    ' '  << au.Angles()[1].ToString() << 
-    ' '  << au.Angles()[2].ToString();
+  TBasicApp::NewLogEntry() << "New cell: " <<
+    TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString() << ' ' <<
+    TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString() << ' ' <<
+    TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString() << ' '  <<
+    TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString() << ' '  <<
+    TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString() << ' '  <<
+    TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString();
   TBasicApp::NewLogEntry(logError) << "Cell esd's are estimated!";
   if( !resHKL_FN.IsEmpty() )  {
     olxstr hkl_fn(xapp.LocateHklFile());
@@ -1596,7 +1614,7 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( sg_set.GetTrasformation(n_ai, tm) )  {
     TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG(sgs, n_ai.GetAxis());
     if( new_sg == NULL && n_ai.GetAxis() == "abc" )
-      new_sg = XLibMacros_macSGS_FindSG(sgs, EmptyString);
+      new_sg = XLibMacros_macSGS_FindSG(sgs, EmptyString());
     if( new_sg == NULL )  {
       E.ProcessingError(__OlxSrcInfo, "Could not locate space group for given settings");
       return;
@@ -1614,7 +1632,7 @@ void XLibMacros::macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TTypeList<TStrMask> masks;
   for( size_t i=0; i < Cmds.Count(); i++ )
     masks.AddNew(Cmds[i]);
-  if( masks.IsEmpty() )  masks.AddNew(EmptyString);
+  if( masks.IsEmpty() )  masks.AddNew(EmptyString());
   // end masks creation
   TTTable<TStrList> tab(TOlxVars::VarCount(), 3);
   tab.ColName(0) = "Name";
@@ -1652,7 +1670,7 @@ void XLibMacros::macLstFS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TTypeList<TStrMask> masks;
   for( size_t i=0; i < Cmds.Count(); i++ )
     masks.AddNew(Cmds[i]);
-  if( masks.IsEmpty() )  masks.AddNew(EmptyString);
+  if( masks.IsEmpty() )  masks.AddNew(EmptyString());
   // end masks creation
   double tc = 0;
   TTTable<TStrList> tab(TFileHandlerManager::Count(), 4);
@@ -1725,24 +1743,24 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacro
 void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
-  if( !xapp.FindSAtoms(EmptyString, atoms, false, true) )  {
+  if( !xapp.FindSAtoms(EmptyString(), atoms, false, true) )  {
     E.ProcessingError(__OlxSrcInfo, "No atoms provided");
     return;
   }
   if( atoms.Count() == 1 && Cmds.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "Please specify additional atom type(s)" );
+    E.ProcessingError(__OlxSrcInfo, "Please specify additional atom type(s)");
     return;
   }
   if( atoms.Count() > 1 )  {
     if( !Cmds.IsEmpty() )  {
-      E.ProcessingError(__OlxSrcInfo, "No arguments is expected" );
+      E.ProcessingError(__OlxSrcInfo, "No arguments is expected");
       return;
     }
     else  {
       ElementDict elms;
       for( size_t i=0; i < atoms.Count(); i++ )  {
         if( elms.IndexOf(&atoms[i]->GetType()) != InvalidIndex )  {
-          E.ProcessingError(__OlxSrcInfo, "Atoms of different type are expected" );
+          E.ProcessingError(__OlxSrcInfo, "Atoms of different type are expected");
           return;
         }
       }
@@ -1835,14 +1853,14 @@ void XLibMacros::macEADP(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TXApp& xapp = TXApp::GetInstance();
   xapp.FindSAtoms(Cmds.Text(' '), atoms, false, true);
   if( atoms.Count() < 2 )  {
-    E.ProcessingError(__OlxSrcInfo, "not enough atoms provided" );
+    E.ProcessingError(__OlxSrcInfo, "not enough atoms provided");
     return;
   }
   // validate that atoms of the same type
   bool allIso = (atoms[0]->GetEllipsoid() == NULL);
   for( size_t i=1; i < atoms.Count(); i++ )  {
     if( (atoms[i]->GetEllipsoid() == NULL) != allIso )  {
-      E.ProcessingError(__OlxSrcInfo, "mixed atoms types (aniso and iso)" );
+      E.ProcessingError(__OlxSrcInfo, "mixed atoms types (aniso and iso)");
       return;
     }
   }
@@ -1874,7 +1892,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( Cmds.Count() == 1 )  {
     smatd_list ml;
     sg->GetMatrices(ml, mattAll);
-    ml.SetCapacity( ml.Count()*2 );
+    ml.SetCapacity(ml.Count()*2);
     const size_t mc = ml.Count();
     for( size_t i=0; i < mc; i++ )  {
       ml.AddCCopy(ml[i]);
@@ -1889,7 +1907,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   else if( Cmds.Count() == 2 )  {
     TSAtomPList atoms;
-    xapp.FindSAtoms(EmptyString, atoms);
+    xapp.FindSAtoms(EmptyString(), atoms);
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       for( size_t j=i+1; j < au.AtomCount(); j++ )  {
         if( au.GetAtom(j).IsDeleted() )  continue;
@@ -1930,7 +1948,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     trans *= -1;
     m.t = trans;
     TSAtomPList atoms;
-    xapp.FindSAtoms(EmptyString, atoms);
+    xapp.FindSAtoms(EmptyString(), atoms);
     xapp.XFile().GetLattice().TransformFragments(atoms, m);
     au.ChangeSpaceGroup(*sg);
     xapp.XFile().LastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
@@ -2005,7 +2023,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( au.GetAtom(i).GetType() == *Exceptions[j] )
       {  skip = true;  break;  }
     }
-    if( !skip )  allAtoms.Add( &au.GetAtom(i) );
+    if( !skip )  allAtoms.Add(au.GetAtom(i));
   }
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
     if( SA.CAtom().GetId() == allAtoms[i]->GetId() )
@@ -2019,7 +2037,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         au.CellToCartesian(V);
         if( V.Length() == 0 )  // symmetrical equivalent?
           continue;
-        rowData.Add( AnAssociation3<TCAtom*, vec3d, smatd>(allAtoms[i], V, m) );
+        rowData.Add(AnAssociation3<TCAtom*, vec3d, smatd>(allAtoms[i], V, m));
       }
     }
     delete L;
@@ -2050,7 +2068,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         table[i][j+2] = '-';
     }
   }
-  TBasicApp::NewLogEntry() << table.CreateTXTList(EmptyString, true, true, ' ');
+  TBasicApp::NewLogEntry() << table.CreateTXTList(EmptyString(), true, true, ' ');
 }
 //..............................................................................
 void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroError &E)  {
@@ -2063,7 +2081,7 @@ void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroError &E)  {
   }
   if( Params[0] == "-1" )  {
     if( !sg->IsCentrosymmetric() )  {
-      E.SetRetVal( sg->GetName() );
+      E.SetRetVal(sg->GetName());
       return;
     }
     smatd_list ml;
@@ -2072,9 +2090,9 @@ void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroError &E)  {
     for( size_t i=0; i < TSymmLib::GetInstance().SGCount(); i++ )  {
       double st=0;
       if( TSymmLib::GetInstance().GetGroup(i).Compare(ml, st) )
-        sglist.Add(st, &TSymmLib::GetInstance().GetGroup(i) );
+        sglist.Add(st, &TSymmLib::GetInstance().GetGroup(i));
     }
-    E.SetRetVal( sglist.IsEmpty() ? sg->GetName() : sglist.GetObject(0)->GetName() );
+    E.SetRetVal(sglist.IsEmpty() ? sg->GetName() : sglist.GetObject(0)->GetName());
   }
 }
 //..............................................................................
@@ -2084,20 +2102,20 @@ void XLibMacros::funFileName(const TStrObjList &Params, TMacroError &E)  {
     Tmp = TEFile::ExtractFileName(Params[0]);
   else  {
     if( TXApp::GetInstance().XFile().HasLastLoader() )
-      Tmp = TEFile::ExtractFileName( TXApp::GetInstance().XFile().GetFileName() );
+      Tmp = TEFile::ExtractFileName(TXApp::GetInstance().XFile().GetFileName());
     else
       Tmp = NoneString;
   }
-  E.SetRetVal(TEFile::ChangeFileExt(Tmp, EmptyString));
+  E.SetRetVal(TEFile::ChangeFileExt(Tmp, EmptyString()));
 }
 //..............................................................................
 void XLibMacros::funFileExt(const TStrObjList &Params, TMacroError &E)  {
   olxstr Tmp;
   if( !Params.IsEmpty() )
-    E.SetRetVal( TEFile::ExtractFileExt(Params[0]) );
+    E.SetRetVal(TEFile::ExtractFileExt(Params[0]));
   else  {
     if( TXApp::GetInstance().XFile().HasLastLoader() )
-      E.SetRetVal( TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()) );
+      E.SetRetVal(TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()));
     else
       E.SetRetVal(NoneString);
   }
@@ -2106,10 +2124,10 @@ void XLibMacros::funFileExt(const TStrObjList &Params, TMacroError &E)  {
 void XLibMacros::funFilePath(const TStrObjList &Params, TMacroError &E)  {
   olxstr Tmp;
   if( !Params.IsEmpty() )
-    Tmp = TEFile::ExtractFilePath( Params[0] );
+    Tmp = TEFile::ExtractFilePath(Params[0]);
   else  {
     if( TXApp::GetInstance().XFile().HasLastLoader() )
-      Tmp = TEFile::ExtractFilePath( TXApp::GetInstance().XFile().GetFileName() );
+      Tmp = TEFile::ExtractFilePath(TXApp::GetInstance().XFile().GetFileName());
     else
       Tmp = NoneString;
   }
@@ -2121,10 +2139,10 @@ void XLibMacros::funFilePath(const TStrObjList &Params, TMacroError &E)  {
 void XLibMacros::funFileDrive(const TStrObjList &Params, TMacroError &E)  {
   olxstr Tmp;
   if( !Params.IsEmpty() )
-    E.SetRetVal( TEFile::ExtractFileDrive(Params[0]) );
+    E.SetRetVal(TEFile::ExtractFileDrive(Params[0]));
   else  {
     if( TXApp::GetInstance().XFile().HasLastLoader() )
-      E.SetRetVal( TEFile::ExtractFileDrive(TXApp::GetInstance().XFile().GetFileName()) );
+      E.SetRetVal(TEFile::ExtractFileDrive(TXApp::GetInstance().XFile().GetFileName()));
     else
       E.SetRetVal(NoneString);
   }
@@ -2132,13 +2150,13 @@ void XLibMacros::funFileDrive(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 void XLibMacros::funFileFull(const TStrObjList &Params, TMacroError &E)  {
   if( TXApp::GetInstance().XFile().HasLastLoader() )
-    E.SetRetVal( TXApp::GetInstance().XFile().GetFileName() );
+    E.SetRetVal(TXApp::GetInstance().XFile().GetFileName());
   else
     E.SetRetVal(NoneString);
 }
 //..............................................................................
 void XLibMacros::funIsFileLoaded(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( TXApp::GetInstance().XFile().HasLastLoader() );
+  E.SetRetVal(TXApp::GetInstance().XFile().HasLastLoader());
 }
 //..............................................................................
 void XLibMacros::funTitle(const TStrObjList& Params, TMacroError &E)  {
@@ -2149,51 +2167,51 @@ void XLibMacros::funTitle(const TStrObjList& Params, TMacroError &E)  {
       E.SetRetVal(Params[0]);
   }
   else
-    E.SetRetVal( TXApp::GetInstance().XFile().LastLoader()->GetTitle() );
+    E.SetRetVal(TXApp::GetInstance().XFile().LastLoader()->GetTitle());
 }
 //..............................................................................
 void XLibMacros::funIsFileType(const TStrObjList& Params, TMacroError &E) {
   if( Params[0].Equalsi("ins") )  {
     E.SetRetVal( TXApp::GetInstance().CheckFileType<TIns>() && 
-      TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()).Equalsi("ins") );
+      TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()).Equalsi("ins"));
   }
   else if( Params[0].Equalsi("res") )  {
     E.SetRetVal( TXApp::GetInstance().CheckFileType<TIns>() && 
-      TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()).Equalsi("res")  );
+      TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()).Equalsi("res"));
   }
   else if( Params[0].Equalsi("ires") )  {
-    E.SetRetVal( TXApp::GetInstance().CheckFileType<TIns>() );
+    E.SetRetVal(TXApp::GetInstance().CheckFileType<TIns>());
   }
   else if( Params[0].Equalsi("cif") )  {
-    E.SetRetVal( TXApp::GetInstance().CheckFileType<TCif>() );
+    E.SetRetVal(TXApp::GetInstance().CheckFileType<TCif>());
   }
   else if( Params[0].Equalsi("p4p") )  {
-    E.SetRetVal( TXApp::GetInstance().CheckFileType<TP4PFile>() );
+    E.SetRetVal(TXApp::GetInstance().CheckFileType<TP4PFile>());
   }
   else if( Params[0].Equalsi("mol") )  {
-    E.SetRetVal( TXApp::GetInstance().CheckFileType<TMol>() );
+    E.SetRetVal(TXApp::GetInstance().CheckFileType<TMol>());
   }
   else if( Params[0].Equalsi("xyz") )  {
-    E.SetRetVal( TXApp::GetInstance().CheckFileType<TMol>() );
+    E.SetRetVal(TXApp::GetInstance().CheckFileType<TMol>());
   }
   else if( Params[0].Equalsi("crs") )  {
-    E.SetRetVal( TXApp::GetInstance().CheckFileType<TCRSFile>() );
+    E.SetRetVal(TXApp::GetInstance().CheckFileType<TCRSFile>());
   }
   else
-    E.SetRetVal( false );
+    E.SetRetVal(false);
 }
 //..............................................................................
 void XLibMacros::funBaseDir(const TStrObjList& Params, TMacroError &E)  {
-  olxstr tmp( TBasicApp::GetBaseDir() );
+  olxstr tmp(TBasicApp::GetBaseDir());
   // remove the trailing backslash, as it causes a lot of problems with
   // passing parameters to other programs:
   // windows parser assumes that \" is " and does wrong parsing...
-  if( !tmp.IsEmpty() )  tmp.SetLength( tmp.Length()-1 );
-  E.SetRetVal( tmp );
+  if( !tmp.IsEmpty() )  tmp.SetLength(tmp.Length()-1);
+  E.SetRetVal(tmp);
 }
 //..............................................................................
 void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( TXApp::GetInstance().XFile().GetRM().GetRefinementMethod() );
+  E.SetRetVal(TXApp::GetInstance().XFile().GetRM().GetRefinementMethod());
 }
 //..............................................................................
 void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
@@ -2212,7 +2230,7 @@ void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
   }
   //E.SetRetVal(E.IsSuccessful());
   // we do not care about result, but nothing should be printed on the html...
-  E.SetRetVal(EmptyString);
+  E.SetRetVal(EmptyString());
 }
 //..............................................................................
 void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
@@ -2265,14 +2283,14 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
     if( insv != 0 )
       E.SetRetVal(insv->Text(' '));
     else
-      E.SetRetVal(EmptyString);
+      E.SetRetVal(EmptyString());
   }
 }
 //..............................................................................
 void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
   RefinementModel& rm  = TXApp::GetInstance().XFile().GetRM();
   if( rm.GetSolutionMethod().IsEmpty() && Params.Count() == 1 )
-    E.SetRetVal( Params[0] );
+    E.SetRetVal(Params[0]);
   else
     E.SetRetVal(rm.GetSolutionMethod());
 }
@@ -2288,7 +2306,7 @@ bool XLibMacros_funSGNameIsNextSub(const olxstr& name, size_t i)  {
 }
 olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   olxstr res;
-  res.SetCapacity( name.Length() + 20 );
+  res.SetCapacity(name.Length() + 20);
   for( size_t i=0; i < name.Length(); i++ )  {
     if( XLibMacros_funSGNameIsNextSub(name, i+1) )  {
       res << name[i];
@@ -2340,11 +2358,11 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
         else
           Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg->GetName()));
     }
-    E.SetRetVal( Tmp );
+    E.SetRetVal(Tmp);
   }
   else  {
-    E.SetRetVal( NAString );
-//    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file" );
+    E.SetRetVal(NAString);
+//    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file");
     return;
   }
 }
@@ -2354,7 +2372,7 @@ void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroError &E)  {
   TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
   const olxstr& axis =  sg.GetAxis();
   if( axis.IsEmpty() )
-    E.SetRetVal<olxstr>( "standard" );
+    E.SetRetVal<olxstr>("standard");
   else  {
     if( axis.Length() == 2 )  {  // axis + cell choice
       E.SetRetVal(olxstr(axis.CharAt(0)) << ": cell choice " << axis.CharAt(1));
@@ -2367,9 +2385,9 @@ void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroError &E)  {
 //..............................................................................
 void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroError &E)  {
   if( Params.Count() == 1 )
-    TXApp::GetInstance().XFile().GetRM().SetHKLSource( Params[0] );
+    TXApp::GetInstance().XFile().GetRM().SetHKLSource(Params[0]);
   else
-    E.SetRetVal( TXApp::GetInstance().XFile().GetRM().GetHKLSource() );
+    E.SetRetVal(TXApp::GetInstance().XFile().GetRM().GetHKLSource());
 }
 //..............................................................................
 void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2395,7 +2413,7 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   // resolvind the index file
   if( !TEFile::Exists(CifDictionaryFile) )  {
-    Error.ProcessingError(__OlxSrcInfo, "CIF dictionary does not exist" );
+    Error.ProcessingError(__OlxSrcInfo, "CIF dictionary does not exist");
     return;
   }
 
@@ -2414,18 +2432,18 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 
   TStrList SL, Dic;
-  olxstr RF( Options.FindValue("n", EmptyString) );
+  olxstr RF(Options.FindValue("n", EmptyString()));
   if( RF.IsEmpty() )  {
-    RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString);
+    RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString());
     RF << "_doc";
   }
   RF = TEFile::ChangeFileExt(RF, TEFile::ExtractFileExt(TN));
 
-  SL.LoadFromFile( TN );
-  Dic.LoadFromFile( CifDictionaryFile );
+  SL.LoadFromFile(TN);
+  Dic.LoadFromFile(CifDictionaryFile);
   for( size_t i=0; i < SL.Count(); i++ )
     Cif->ResolveParamsFromDictionary(Dic, SL[i], '%', &XLibMacros::CifResolve);
-  TUtf8File::WriteLines( RF, SL, false );
+  TUtf8File::WriteLines(RF, SL, false);
   TBasicApp::NewLogEntry(logInfo) << "Document name: " << RF;
 }
 //..............................................................................
@@ -2435,7 +2453,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   olxstr CifDictionaryFile(xapp.GetCifTemplatesDir() + "cifindex.dat");
   if( Cmds.IsEmpty() )  {
     if( !TEFile::Exists(CifTablesFile) )  {
-      Error.ProcessingError(__OlxSrcInfo, "tables definition file is not found" );
+      Error.ProcessingError(__OlxSrcInfo, "tables definition file is not found");
       return;
     }
 
@@ -2457,7 +2475,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       }
     }
     else  {
-      Error.ProcessingError(__OlxSrcInfo, "tables definition node is not found" );
+      Error.ProcessingError(__OlxSrcInfo, "tables definition node is not found");
       return;
     }
     return;
@@ -2469,7 +2487,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   else  {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if( TEFile::Exists(cifFN ) )  {
-      Cif1.LoadFromFile(cifFN );
+      Cif1.LoadFromFile(cifFN);
     }
     else
         throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
@@ -2485,7 +2503,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   Dic.LoadFromFile(CifDictionaryFile);
   olxstr RF(Options.FindValue('n'));
   if( RF.IsEmpty() )  {
-    RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString);
+    RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString());
     RF << "_tables";
   }
   RF = TEFile::ChangeFileExt(RF, "html");
@@ -2706,7 +2724,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
   if( !TEFile::Exists(Dictionary) )  {  // check if the dictionary exists
     Dictionary = xapp.GetCifTemplatesDir();  Dictionary << Cmds[0];
     if( !TEFile::Exists(Dictionary) )  {
-      Error.ProcessingError(__OlxSrcInfo, "dictionary file does not exists" );
+      Error.ProcessingError(__OlxSrcInfo, "dictionary file does not exists");
       return;
     }
   }
@@ -2774,7 +2792,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     if( au.GetAtom(i).GetType() == iQPeakZ )
       au.GetAtom(i).SetDeleted(true);
   }
-  TLattice latt;
+  TLattice latt(*(new SObjectProvider));
   latt.GetAsymmUnit().SetRefMod(&xapp.XFile().GetRM());
   latt.GetAsymmUnit().Assign(xapp.XFile().GetAsymmUnit());
   for( size_t i=0; i < latt.GetAsymmUnit().AtomCount(); i++ )  {
@@ -2788,14 +2806,15 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   latt.GetAsymmUnit().DetachAtomType(iQPeakZ, true);
   latt.Init();
   latt.CompaqAll();
+  ASObjectProvider& objects = latt.GetObjects();
 
   latt.GrowFragments(false, NULL);
 
   cif_dp::cetTable& bonds = cif.AddLoopDef(
     "_geom_bond_atom_site_label_1,_geom_bond_atom_site_label_2,_geom_bond_distance,"
     "_geom_bond_site_symmetry_2,_geom_bond_publ_flag");
-  for( size_t i=0; i < latt.BondCount(); i++ )  {
-    TSBond& b = latt.GetBond(i);
+  for( size_t i=0; i < objects.bonds.Count(); i++ )  {
+    TSBond& b = objects.bonds[i];
     if( b.A().GetType().GetMr() < 3 || b.A().IsDeleted() )  {
       b.SetTag(0);
       continue;
@@ -2806,8 +2825,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     }
     b.SetTag(-1);
   }
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& a = latt.GetAtom(i);
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& a = objects.atoms[i];
     if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
     for( size_t j=0; j < a.BondCount(); j++ )  {
       TSBond& b = a.Bond(j);
@@ -2828,8 +2847,8 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   cif_dp::cetTable& angles = cif.AddLoopDef(
     "_geom_angle_atom_site_label_1,_geom_angle_atom_site_label_2,_geom_angle_atom_site_label_3,"
     "_geom_angle,_geom_angle_site_symmetry_1,_geom_angle_site_symmetry_3,_geom_angle_publ_flag");
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& a = latt.GetAtom(i);
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& a = objects.atoms[i];
     if( a.GetType().GetMr()  < 3 || a.IsDeleted() || !a.IsAUAtom() )  continue;
     for( size_t j=0; j < a.NodeCount(); j++ )  {
       TSAtom& b = a.Node(j);
@@ -2924,6 +2943,105 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
   cif.SaveToFile(TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif"));
 }
 //..............................................................................
+void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& xapp = TXApp::GetInstance();
+  const int list_n = Cmds[0].ToInt();
+  const olxstr fn = (Cmds.Count() > 1 ? Cmds.Text(' ', 1) :
+    TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf"));
+  RefinementModel::HklStat ms;
+  TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
+  TRefList refs;
+  olxstr col_names = "_refln_index_h,_refln_index_k,_refln_index_l,";
+  if( list_n == 4 )  {
+    ms = xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+    col_names << "_refln_F_squared_calc,_refln_F_squared_meas,_refln_F_squared_sigma,_refln_observed_status";
+  }
+  else if( list_n == 3 )  {
+    ms = xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+    col_names << "_refln_F_meas,_refln_F_sigma,_refln_A_calc,_refln_B_calc";
+  }
+  else  {
+    Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported list number: ") << list_n);
+    return;
+  }
+  TArrayList<compd> F;
+  F.SetCount(refs.Count());
+  //xapp.CalcSF(refs, F);
+  //SFUtil::CalcSF(xapp.XFile(), refs, F, xapp.XFile().GetRM().GetMERG() != 4);
+  SFUtil::CalcSF(xapp.XFile(), refs, F);
+  double scale_k = 1, scale_a = 0;
+  olxstr scale_str = Options.FindValue("scale", "external");
+  if( scale_str.Equalsi("external") )
+    scale_k = 1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+  else if( scale_str.Equalsi("simple") )
+    scale_k = SFUtil::CalcF2Scale(F, refs);
+  else if( scale_str.Equalsi("regression") )
+    SFUtil::CalcF2Scale(F, refs, scale_k, scale_a);
+  else  {
+    Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported scale: ") << scale_str);
+    return;
+  }
+  TCifDP fcf_dp;
+  CifBlock& cif_data = fcf_dp.Add(TEFile::ExtractFileName(fn).Replace(' ', EmptyString()));
+  cif_data.Add(new cetNamedString("_olex2_title", xapp.XFile().LastLoader()->GetTitle()));
+  cif_data.Add(new cetNamedString("_shelx_refln_list_code", list_n));
+
+  const TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
+  cif_data.Add(new cetNamedString("_cell_length_a", TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString()));
+  cif_data.Add(new cetNamedString("_cell_length_b", TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString()));
+  cif_data.Add(new cetNamedString("_cell_length_c", TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString()));
+  cif_data.Add(new cetNamedString("_cell_angle_alpha", TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString()));
+  cif_data.Add(new cetNamedString("_cell_angle_beta", TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString()));
+  cif_data.Add(new cetNamedString("_cell_angle_gamma", TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString()));
+
+  const TUnitCell& uc = xapp.XFile().GetUnitCell();
+  cetTable* sym_tab = new cetTable("_space_group_symop_id,_space_group_symop_operation_xyz");
+  for( size_t i=0; i < uc.MatrixCount(); i++ )  {
+    CifRow& r = sym_tab->AddRow();
+    r[0] = new cetString(i+1);
+    r[1] = new cetString(TSymmParser::MatrixToSymmEx(uc.GetMatrix(i)));
+  }
+  cif_data.Add(sym_tab);
+
+  cetTable* ref_tab = new cetTable(col_names);
+  cif_data.Add(ref_tab);
+
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    TReflection& r = refs[i];
+    const double Fo2 = r.GetI()*scale_k + scale_a;
+    const double sigFo2 = r.GetS()*scale_k;
+    CifRow& row = ref_tab->AddRow();
+    row[0] = new cetString(r.GetH());
+    row[1] = new cetString(r.GetK());
+    row[2] = new cetString(r.GetL());
+    if( list_n == 3 )  {
+      double Fo, s_m;
+      //http://www.iucr.org/__data/iucr/cif/software/xtal/xtal372htmlman/html/refcal-desc.html
+      if( Fo2 <= 0 )  {
+        Fo = 0;
+        s_m = sqrt(sigFo2); // xtal 3.7.2
+      }
+      else  {
+        Fo = sqrt(Fo2);
+        s_m = sqrt(Fo2+sigFo2) - Fo; // xtal 3.7.2
+        //s_m = sigFo2/(Fo + sqrt(sigFo2+Fo2));  // sxtal 3.7
+        //s_m = Fo2 < sigFo2 ? sigFo2 : sigFo2/(2*Fo); // crystals
+      }
+      row[3] = new cetString(Fo);
+      row[4] = new cetString(s_m);
+      row[5] = new cetString(F[i].Re());
+      row[6] = new cetString(sp.IsCentrosymmetric() ? 0.0 : F[i].Im());
+    }
+    else if( list_n == 4 )  {
+      row[3] = new cetString(olxstr::FormatFloat(2, F[i].qmod()));
+      row[4] = new cetString(olxstr::FormatFloat(2, Fo2));
+      row[5] = new cetString(olxstr::FormatFloat(2, sigFo2));
+      row[6] = new cetString('o');
+    }
+  }
+  TCStrList(fcf_dp.SaveToStrings()).SaveToFile(fn);
+}
+//..............................................................................
 struct XLibMacros_StrF  {
   int h, k, l;
   double ps;
@@ -2962,7 +3080,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //    }
 //  }
 //  TCif cif;
-//  cif.LoadFromFile( fcffn );
+//  cif.LoadFromFile(fcffn);
 ////  F000 = cif.GetSParam("_exptl_crystal_F_000").ToDouble();
 //  TCifLoop* hklLoop = cif.FindLoop("_refln");
 //  if( hklLoop == NULL )  {
@@ -2982,8 +3100,8 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //      E.ProcessingError(__OlxSrcInfo, "list 3 fcf file is expected");
 //      return;
 //  }
-//  refs.SetCapacity( hklLoop->GetTable().RowCount() );
-//  F.SetCount( hklLoop->GetTable().RowCount() );
+//  refs.SetCapacity(hklLoop->GetTable().RowCount());
+//  F.SetCount(hklLoop->GetTable().RowCount());
 //  for( size_t i=0; i < hklLoop->GetTable().RowCount(); i++ )  {
 //    TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->GetTable()[i];
 //    TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
@@ -3140,7 +3258,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //  XApp.GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
 //  XApp.GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
 //  XApp.GetLog() << ( olxstr("Structure occupies (A^3) ") << olxstr::FormatFloat(3, structurePoints*vol/mapVol) << '\n');
-//  int minLevel = olx_round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
+//  int minLevel = olx_round(pow( 6*mapVol*3/(4*M_PI*vol), 1./3));
 //  XApp.GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
 //  // calculate new structure factors
 //  double Re = 0, Te=0, F0 = 0;
@@ -3177,12 +3295,12 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //        }
 //      }
 //    }
-////    ref.SetI( sqrt(A*A+B*B)/100 );
+////    ref.SetI(sqrt(A*A+B*B)/100);
 ////  }
 ////  TCStrList sl;
 ////  for( int i=0;  i < refs.Count(); i++ )
-////    sl.Add( refs[i].ToString() );
-////  sl.SaveToFile( "test.hkl" );
+////    sl.Add(refs[i].ToString());
+////  sl.SaveToFile("test.hkl");
 //  XApp.GetLog() << "Voids         " << Re*vol/(mapVol) << "e-\n";
 ////  XApp.GetLog() << "F000 calc     " << Te*vol/(mapVol) << "e-\n";
 //  XApp.GetLog() << "F000 (formula)" << F000 << "e-\n";
@@ -3256,7 +3374,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     if( !tm.IsI() )  {
       TBasicApp::NewLogEntry() << "EXPERIMENTAL: transformations considering b unique";
-      ChangeCell(tm, *sg, EmptyString);
+      ChangeCell(tm, *sg, EmptyString());
     }
     else  {
       TBasicApp::NewLogEntry() << "The transformation is not supported";
@@ -3441,11 +3559,11 @@ void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options, TMacro
     Msg << olxstr::FormatFloat(3, C*100./Mr) <<
       " H: " << olxstr::FormatFloat(3, H*100./Mr) <<
       " N: " << olxstr::FormatFloat(3, N*100./Mr);
-    TBasicApp::NewLogEntry() << Msg << NewLineSequence;
-    TBasicApp::NewLogEntry() << "Full composition:" << NewLineSequence << chn.Composition();
+    TBasicApp::NewLogEntry() << Msg << NewLineSequence();
+    TBasicApp::NewLogEntry() << "Full composition:" << NewLineSequence() << chn.Composition();
     return;
   }
-  chn.LoadFromExpression(xapp.XFile().GetAsymmUnit().SummFormula(EmptyString));
+  chn.LoadFromExpression(xapp.XFile().GetAsymmUnit().SummFormula(EmptyString()));
   chn.CHN(C, H, N, Mr);
   TBasicApp::NewLogEntry() << "Molecular weight: " << Mr;
   olxstr Msg("C: ");
@@ -3453,7 +3571,7 @@ void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options, TMacro
     " H: " << olxstr::FormatFloat(3, H*100./Mr) <<
     " N: " << olxstr::FormatFloat(3, N*100./Mr);
   TBasicApp::NewLogEntry() << Msg;
-  TBasicApp::NewLogEntry() << "Full composition:" << NewLineSequence << chn.Composition();
+  TBasicApp::NewLogEntry() << "Full composition:" << NewLineSequence() << chn.Composition();
 }
 //..............................................................................
 void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3472,7 +3590,7 @@ void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   else  {
     olxstr err;
-    if( !ip.Calc(xapp.XFile().GetAsymmUnit().SummFormula(EmptyString), err, true, 0.5) )  {
+    if( !ip.Calc(xapp.XFile().GetAsymmUnit().SummFormula(EmptyString()), err, true, 0.5) )  {
       Error.ProcessingError(__OlxSrcInfo, "could not parse the given expression: ") << err;
       return;
     }
@@ -3590,7 +3708,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   TTypeList<XLibMacros_ChnFitData> list;
   const double Mw = chne.CHN(calc);
-  olxstr names[4] = {chne.SummFormula(EmptyString), EmptyString, EmptyString, EmptyString};
+  olxstr names[4] = {chne.SummFormula(EmptyString()), EmptyString(), EmptyString(), EmptyString()};
   ematd m(obs.Count(), 3), chn(4, obs.Count()+1);
   evecd p(obs.Count());
   olxstr fit_info_from = "Fitting ", fit_info_to;
@@ -3609,7 +3727,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   for( size_t i=0; i < solvents.Count(); i++ )  {
     chne.LoadFromExpression(solvents[i]);
     const double mw = chne.CHN(calc);
-    names[1] = chne.SummFormula(EmptyString);
+    names[1] = chne.SummFormula(EmptyString());
     for( size_t i1=0; i1 < obs.Count(); i1++ )  {
       m[i1][0] = obs.GetValue(i1)*mw - calc.GetValue(i1);
       chn[1][i1] = calc.GetValue(i1);
@@ -3620,7 +3738,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
     for( size_t j = i+1; j < solvents.Count(); j++ )  {
       chne.LoadFromExpression(solvents[j]);
       const double mw1 = chne.CHN(calc);
-      names[2] = chne.SummFormula(EmptyString);
+      names[2] = chne.SummFormula(EmptyString());
       for( size_t i1=0; i1 < obs.Count(); i1++ )  {
         m[i1][1] = obs.GetValue(i1)*mw1 - calc.GetValue(i1);
         chn[2][i1] = calc.GetValue(i1);
@@ -3631,7 +3749,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
       for( size_t k=j+1; k < solvents.Count(); k++ )  {
         chne.LoadFromExpression(solvents[k]);
         const double mw2 = chne.CHN(calc);
-        names[3] = chne.SummFormula(EmptyString);
+        names[3] = chne.SummFormula(EmptyString());
         for( size_t i1=0; i1 < obs.Count(); i1++ )  {
           m[i1][2] = obs.GetValue(i1)*mw2 - calc.GetValue(i1);
           chn[3][i1] = calc.GetValue(i1);
@@ -3786,12 +3904,12 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   IOlexProcessor* op = IOlexProcessor::GetInstance();
   olxstr newSg(Options.FindValue('s')), 
          content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
-         fileName(Options.FindValue('f') );
+         fileName(Options.FindValue('f'));
   xapp.XFile().UpdateAsymmUnit();
   TIns *Ins = (TIns*)xapp.XFile().FindFormat("ins");
   if( xapp.CheckFileType<TP4PFile>() )  {
     if( !newSg.Length() )  {
-      E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
+      E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
       return;
     }
     Ins->Adopt(xapp.XFile());
@@ -3800,7 +3918,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     TSpaceGroup* sg = xapp.XFile().GetLastLoader<TCRSFile>().GetSG();
     if( newSg.IsEmpty() )  {
       if( sg == NULL )  {
-        E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
+        E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
         return;
       }
       else  {
@@ -3817,7 +3935,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       if( op->executeFunction(content, content) )
         Ins->GetRM().SetUserFormula(content);
       if( Ins->GetRM().GetUserContent().IsEmpty() )  {
-        E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify" );
+        E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify");
         return;
       }
     }
@@ -3830,9 +3948,9 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       return;
     }
     Ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
-    newSg = EmptyString;
+    newSg.SetLength(0);
     newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
-    olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(xapp.XFile().GetFileName()), EmptyString) );
+    olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(xapp.XFile().GetFileName()), EmptyString()));
     Ins->SetTitle( titl << " in " << sg->GetName() << " #" << sg->GetNumber());
   }
   if( fileName.IsEmpty() )
@@ -3880,7 +3998,7 @@ void XLibMacros::macClose(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //..............................................................................
 void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
-  TLattice latt;
+  TLattice latt(*(new SObjectProvider));
   RefinementModel rm(latt.GetAsymmUnit());
   latt.GetAsymmUnit().SetRefMod(&rm);
   rm.Assign(xapp.XFile().GetRM(), true);
@@ -3924,7 +4042,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     const double rms = TSPlane::CalcRMS(rings[i]);
     if( rms > 0.05 || !TNetwork::IsRingRegular(rings[i]) )  {
       olxstr rc = "Plane #";
-      rc << ++plance_cnt << NewLineSequence;
+      rc << ++plance_cnt << NewLineSequence();
       for( size_t j=0; j < rings[i].Count(); j++ )  {
         rc << rings[i][j]->GetGuiLabel();
         if( j < 5 )
@@ -3946,7 +4064,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       continue;
     }
     olxstr rc = "Plane #";
-    rc << ++plance_cnt << NewLineSequence;
+    rc << ++plance_cnt << NewLineSequence();
     for( size_t j=0; j < rings[i].Count(); j++ )  {
       rc << rings[i][j]->GetGuiLabel();
       if( j < 5 )
@@ -4029,12 +4147,13 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   if( Options.Contains('g') && !transforms.IsEmpty() )  {
     TLattice& xlatt = xapp.XFile().GetLattice();
+    ASObjectProvider& objects = xlatt.GetObjects();
     const TUnitCell& uc = xlatt.GetUnitCell();
     for( size_t i=0; i < transforms.Count(); i++ )
       uc.InitMatrixId(transforms[i]);
     TCAtomPList iatoms;
-    for( size_t i=0; i < xlatt.AtomCount(); i++ )  {
-      TSAtom& sa = xlatt.GetAtom(i);
+    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+      TSAtom& sa = objects.atoms[i];
       if( sa.IsDeleted() )  continue;
       if( sa.IsAUAtom() )
         iatoms.Add(sa.CAtom());
@@ -4046,7 +4165,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::funCrd(const TStrObjList& Params, TMacroError &E) {
   TSAtomPList Atoms;
   if( !TXApp::GetInstance().FindSAtoms(Params.Text(' '), Atoms, true, true) ) {
-    E.ProcessingError(__OlxSrcInfo, "could not find any atoms" );
+    E.ProcessingError(__OlxSrcInfo, "could not find any atoms");
     return;
   }
   vec3d center;
@@ -4061,7 +4180,7 @@ void XLibMacros::funCrd(const TStrObjList& Params, TMacroError &E) {
 void XLibMacros::funCCrd(const TStrObjList& Params, TMacroError &E)  {
   TSAtomPList Atoms;
   if( !TXApp::GetInstance().FindSAtoms(Params.Text(' '), Atoms, true, true) ) {
-    E.ProcessingError(__OlxSrcInfo, "could not find any atoms" );
+    E.ProcessingError(__OlxSrcInfo, "could not find any atoms");
     return;
   }
   vec3d ccenter;
@@ -4209,18 +4328,18 @@ void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
 //..............................................................................
 void XLibMacros::macHklAppend(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TIntList h, k, l;
-  bool combine = Options.FindValue("c", TrueString).ToBool();
-  TStrList toks( Options.FindValue('h', EmptyString), ';');
+  bool combine = Options.FindValue("c", TrueString()).ToBool();
+  TStrList toks( Options.FindValue('h', EmptyString()), ';');
   for( size_t i=0; i < toks.Count(); i++ )
-    h.Add( toks[i].ToInt() );
+    h.Add(toks[i].ToInt());
   toks.Clear();
-  toks.Strtok( Options.FindValue('k', EmptyString), ';');
+  toks.Strtok( Options.FindValue('k', EmptyString()), ';');
   for( size_t i=0; i < toks.Count(); i++ )
-    k.Add( toks[i].ToInt() );
+    k.Add(toks[i].ToInt());
   toks.Clear();
-  toks.Strtok( Options.FindValue('l', EmptyString), ';');
+  toks.Strtok( Options.FindValue('l', EmptyString()), ';');
   for( size_t i=0; i < toks.Count(); i++ )
-    l.Add( toks[i].ToInt() );
+    l.Add(toks[i].ToInt());
 
   const olxstr hklSrc = TXApp::GetInstance().LocateHklFile();
   if( !TEFile::Exists( hklSrc ) )  {
@@ -4267,16 +4386,16 @@ void XLibMacros::macHklAppend(TStrObjList &Cmds, const TParamList &Options, TMac
 //..............................................................................
 void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TIntList h, k, l;
-  const bool combine = Options.FindValue("c", TrueString).ToBool();
-  TStrList toks(Options.FindValue('h', EmptyString), ';');
+  const bool combine = Options.FindValue("c", TrueString()).ToBool();
+  TStrList toks(Options.FindValue('h', EmptyString()), ';');
   for( size_t i=0; i < toks.Count(); i++ )
     h.Add(toks[i].ToInt());
   toks.Clear();
-  toks.Strtok(Options.FindValue('k', EmptyString), ';');
+  toks.Strtok(Options.FindValue('k', EmptyString()), ';');
   for( size_t i=0; i < toks.Count(); i++ )
     k.Add(toks[i].ToInt());
   toks.Clear();
-  toks.Strtok(Options.FindValue('l', EmptyString), ';');
+  toks.Strtok(Options.FindValue('l', EmptyString()), ';');
   for( size_t i=0; i < toks.Count(); i++ )
     l.Add(toks[i].ToInt());
 
@@ -4318,5 +4437,119 @@ void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options, TMa
   }
   Hkl.SaveToFile(hklSrc);
   TBasicApp::NewLogEntry() << c << " reflections excluded";
+}
+//..............................................................................
+void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TStrList lines;
+  lines.LoadFromFile(Cmds[0]);
+  const olxstr out_name = Cmds.GetLastString();
+  Cmds.Delete(Cmds.Count()-1);
+  if( Cmds[1].Equalsi("fixed") )  {
+    TSizeList format;
+    for( size_t i=2; i < Cmds.Count(); i++ )
+      format.Add(Cmds[i].ToSizeT());
+    if( format.Count() < 5 || format.Count() > 6 )  {
+      E.ProcessingError(__OlxSrcInfo, "5 or 6 numbers are expected");
+      return;
+    }
+    TRefList refs;
+    for( size_t i=0; i < lines.Count(); i++ )  {
+      TStrList toks;
+      if( toks.StrtokF(lines[i], format) < format.Count() )
+        continue;
+      TReflection& r = refs.AddNew(
+        toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt()
+        );
+      r.SetI(toks[3].ToDouble());
+      r.SetS(toks[4].ToDouble());
+      if( format.Count() == 6 )
+        r.SetFlag(toks[5].ToInt());
+    }
+    THklFile::SaveToFile(out_name, refs);
+  }
+  else if( Cmds[1].Equalsi("separator") )  {
+    if( Cmds[2].IsEmpty() )  {
+      E.ProcessingError(__OlxSrcInfo, "non-empty separator is expected");
+      return;
+    }
+    const bool has_batch = Options.Contains("batch");
+    TRefList refs;
+    const olxch sep = Cmds[2].CharAt(0);
+    for( size_t i=0; i < lines.Count(); i++ )  {
+      TStrList toks(lines[i], sep);
+      if( toks.Count() < 5 )  continue;
+      TReflection& r = refs.AddNew(
+        toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt()
+        );
+      r.SetI(toks[3].ToDouble());
+      r.SetS(toks[4].ToDouble());
+      if( has_batch && toks.Count() >= 6 )
+        r.SetFlag(toks[5].ToInt());
+    }
+    THklFile::SaveToFile(out_name, refs);
+  }
+  else  {
+    E.ProcessingError(__OlxSrcInfo, olxstr("undefined keyword: ") << Cmds[1]);
+  }
+}
+//..............................................................................
+void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXApp& app = TXApp::GetInstance();
+  olx_object_ptr<TXFile> xf((TXFile*)app.XFile().Replicate());
+  xf.p->p->LoadFromFile(Cmds.Text(' '));
+  RefinementModel &this_rm = app.XFile().GetRM(),
+    &that_rm = xf.p->p->GetRM();
+  if( !this_rm.Update(that_rm) )  {
+    E.ProcessingError(__OlxSrcInfo, "Asymmetric units do not match");
+    return;
+  }
+  app.XFile().EndUpdate();
+}
+//..............................................................................
+void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TRefList refs;
+  TArrayList<compd> F;
+  TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
+  RefinementModel::HklStat ms =
+    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+  F.SetCount(refs.Count());
+  SFUtil::CalcSF(xapp.XFile(), refs, F);
+  //xapp.CalcSF(refs, F);
+  double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+  double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
+  size_t r1p_cnt=0;
+  TDoubleList wght = xapp.XFile().GetRM().used_weight;
+  while( wght.Count() < 6 )
+    wght.Add(0);
+  wght[5] = 1./3;
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    TReflection& r = refs[i];
+    const double Fc2 = F[i].qmod();
+    const double Fc = sqrt(Fc2);
+    const double Fo2 = r.GetI()*scale_k;
+    const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
+    const double sigFo2 = r.GetS()*scale_k;
+    const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
+    const double w = 1./(olx_sqr(sigFo2) + olx_sqr(wght[0]*P) + wght[1]*P + wght[2]);
+    wR2u += w*olx_sqr(Fo2-Fc2);
+    wR2d += w*olx_sqr(Fo2);
+    R1u += olx_abs(Fo-Fc);
+    R1d += Fo;
+    if( Fo2/sigFo2 >= 2 )  {
+      R1up += olx_abs(Fo-Fc);
+      R1dp += Fo;
+      r1p_cnt++;
+    }
+  }
+  double wR2 = sqrt(wR2u/wR2d);
+  double R1 = R1u/R1d;
+  double R1p = R1up/R1dp;
+  if( !Params.IsEmpty() && Params[0].Equalsi("print") )  {
+    xapp.NewLogEntry() << "R1 = " << olxstr::FormatFloat(4, R1);
+    xapp.NewLogEntry() << "R1 (I/sig >= 2, " << r1p_cnt << ") = " << olxstr::FormatFloat(4, R1p);
+    xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, wR2);
+  }
+  E.SetRetVal(olxstr(R1) << ',' << R1p << ',' << wR2);
 }
 //..............................................................................

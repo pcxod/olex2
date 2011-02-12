@@ -291,7 +291,7 @@ void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
         i--;
       }
       else  {
-        olxstr RefFieldName(EmptyString);
+        olxstr RefFieldName(EmptyString());
         olxstr *RefFieldValue = DotField(Tmp, RefFieldName);
         if( RefFieldValue == NULL )  {
           if( Log != NULL )
@@ -315,7 +315,7 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
   bool itemsadded = false;
   if( GetParent() != NULL )  {
     if( Data.Length() != 0 )
-      Data << NewLineSequence;
+      Data << NewLineSequence();
     for( int i=0; i < Level-1; i++ )    Data << ' ';
     Data << '<' << Name << ' ';
     if( !Value.IsEmpty() )  {
@@ -341,7 +341,7 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
   }
   if( GetParent() != NULL )  {
     if( itemsadded )  {
-      Data << NewLineSequence;
+      Data << NewLineSequence();
       for( int i=0; i < Level-1; i++ )
         Data << ' ';
       Data << '>';

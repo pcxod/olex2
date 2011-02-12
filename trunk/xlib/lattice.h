@@ -18,6 +18,7 @@ BeginXlibNamespace()
 class TLattice: public IEObject  {
 private:
   TNetwork* Network;  // for internal use only
+  ASObjectProvider& Objects;
 private:
   /* generates matrices in volume {VFrom, VTo} and leaves only matrices, which
   transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
@@ -28,27 +29,18 @@ private:
   // generates matrices from -4 to 4 which generate aunit within the rad sphere
   size_t GenerateMatrices(smatd_plist& Result, const vec3d& center, double rad);
   smatd_plist Matrices;    // list of all matrices
-  TSAtomPList  Atoms;      // list of all atoms
-  TSBondPList  Bonds;      // list of all bonds
   TNetPList    Fragments;
-  TSPlanePList Planes;
-  AtomRegistry atomRegistry;
   TTypeList<TSPlane::Def> PlaneDefs;
   void GenerateBondsAndFragments(TArrayList<vec3d> *crd);
 protected:
   TActionQList Actions;
-  bool Generated;
   void Generate(TCAtomPList* Template, bool ClearCont);  // generates atoms using current matrices list
-  void GenerateAtoms( const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices);
   void ClearFragments();
   void ClearAtoms();
   void ClearMatrices();
-  void ClearBonds();
-  void ClearPlanes();
+  void ClearBonds()  {  Objects.bonds.Clear();  }
+  void ClearPlanes()  {  Objects.planes.Clear();  }
 
-  void AddSBond(TSBond* B);
-  void AddSAtom(TSAtom* A);
-  void AddSPlane(TSPlane* P);
   void BuildAtomRegistry();
 
   class TUnitCell*  UnitCell;
@@ -56,23 +48,20 @@ protected:
   double Delta, DeltaI;
   // if Template is specified, the CAtoms are taken from there instead of AsymmUnit
   void DoGrow(const TSAtomPList& Atoms, bool GrowShell, TCAtomPList* Template);
-  // fills the list with atoms of asymmertic unit
-  // the atoms have to be deleted with a call to delete
-  void ListAsymmUnit(TSAtomPList& res, TCAtomPList* Template);
   // removes existing TSAtoms with TCAtom's masked
   void BuildPlanes();
   void InitBody();
   void Disassemble(bool create_planes=true);
-  TSAtom& GenerateAtom(TCAtom& a, smatd& symop);
+  TSAtom& GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net = NULL);
   static void _CreateFrags(TCAtom& start, TCAtomPList& dest);
 public:
-  TLattice();
+  TLattice(ASObjectProvider& ObjectProvider);
   virtual ~TLattice();
 
   TActionQueue &OnStructureGrow, &OnStructureUniq, &OnDisassemble,
     &OnAtomsDeleted;
 
-  // this is does not have any usefull data - just for functions call!!!
+  // this does not have any usefull data
   inline TNetwork& GetNetwork() const {  return *Network; }
 
   void Clear(bool ClearUnitCell);
@@ -95,8 +84,8 @@ public:
   // generates atoms within sphere volume at center
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
     bool ClearCont);
-  // checks if the data alreade have been generated
-  inline bool IsGenerated() const  {  return Generated && (Matrices.Count() > 1);  }
+  // checks if there are more than one matrix
+  inline bool IsGenerated() const {  return !(Matrices.Count() == 1 && Matrices[0]->IsFirst());  }
 
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
   size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
@@ -128,28 +117,21 @@ public:
   const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
   smatd& GetMatrix(size_t i)  {  return *Matrices[i];  }
 
-  inline size_t AtomCount() const {  return Atoms.Count();  }
-  inline TSAtom& GetAtom(size_t i) const {  return *Atoms[i];  }
-  const TSAtomPList& GetAtoms() const {  return Atoms;  }
+  ASObjectProvider& GetObjects()  {  return Objects;  }
+  const ASObjectProvider& GetObjects() const {  return Objects;  }
+
   TSAtom* FindSAtom(const olxstr &Label) const;
   TSAtom* FindSAtom(const TCAtom& ca) const;
   TSAtom* FindSAtom(const TSAtom::Ref& id) const {
-    for( size_t i=0; i < Atoms.Count(); i++ )
-      if( (*Atoms[i]) == id )
-        return Atoms[i];
+    for( size_t i=0; i < Objects.atoms.Count(); i++ )
+      if( Objects.atoms[i] == id )
+        return &Objects.atoms[i];
     return NULL;
   }
   //
-  const AtomRegistry& GetAtomRegistry() const {  return atomRegistry;  }
+  const AtomRegistry& GetAtomRegistry() const {  return Objects.atomRegistry;  }
   void RestoreAtom(const TSAtom::FullRef& id);
 
-  inline size_t BondCount() const {  return Bonds.Count();  }
-  inline TSBond& GetBond(size_t i) const {  return *Bonds[i];  }
-  const TSBondPList& GetBonds() const {  return Bonds;  }
-
-  inline size_t PlaneCount() const {  return Planes.Count(); }
-  inline TSPlane& GetPlane(size_t i) const {  return *Planes[i];  }
-  const TSPlanePList& GetPlanes() const {  return Planes;  }
   // for the grown structure might return more than one plane
   TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0, bool regular=false);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
@@ -229,7 +211,7 @@ public:
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);
   void LibGetMoiety(const TStrObjList& Params, TMacroError& E);
-  TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndXlibNamespace()

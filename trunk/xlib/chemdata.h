@@ -242,7 +242,7 @@ public:
   // extracts symbol from a label, like C for C1 or Cr for Cr2
   static const olxstr& ExtractSymbol(const olxstr& label)  {
     cm_Element* type = FindBySymbolEx(label);
-    return type == NULL ? EmptyString : type->symbol;
+    return type == NULL ? EmptyString() : type->symbol;
   }
   // returns true if labels is a symbol
   static bool IsElement(const olxstr& label) {  return FindBySymbol(label) != NULL;  }

@@ -123,7 +123,7 @@ bool parser_util::is_expandable(const olxstr& exp)  {
 //...........................................................................
 olxstr parser_util::unescape(const olxstr& exp)  {
   //return exp;
-  olxstr out( EmptyString, exp.Length());
+  olxstr out(EmptyString(), exp.Length());
   for( size_t i=0; i < exp.Length(); i++ )  {
     if( exp.CharAt(i) == '\\' )  {
       if( ++i >= exp.Length() )  break;

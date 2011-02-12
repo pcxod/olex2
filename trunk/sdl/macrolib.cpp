@@ -16,7 +16,7 @@ void TEMacroLib::Init()  {
     "Returns last error"));
   lib.RegisterFunction<TEMacroLib>(new TFunction<TEMacroLib>(this,  &TEMacroLib::funLogLevel, "LogLevel", fpNone|fpOne,
     "Returns/sets log level, default is 'm' - for macro, accepts/returns 'm', 'mf' or 'f'"));
-  lib.RegisterMacro<TEMacroLib>(new TMacro<TEMacroLib>(this,  &TEMacroLib::macIF, "IF", EmptyString, fpAny^fpNone,
+  lib.RegisterMacro<TEMacroLib>(new TMacro<TEMacroLib>(this,  &TEMacroLib::macIF, "IF", EmptyString(), fpAny^fpNone,
     "'if' construct"));
 }
 //..............................................................................................
@@ -184,17 +184,18 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
     ind = Command.FirstIndexOf('|', ind1+1);
   }
   // end processing environment variables
-  // special treatment of pyhton commands
-  TParamList::StrtokParams(Command, ' ', Cmds);
-  //  CommandCS = Cmds[0];
-  //  Command = CommandCS.LowerCase();
-  Command = Cmds[0];
+  TParamList::StrtokParams(Command, ' ', Cmds, false);
+  Command = unquote(Cmds[0]);
   Cmds.Delete(0);
   for( size_t i = 0; i < Cmds.Count(); i++ )  {
     if( Cmds[i].IsEmpty() )  continue;
-    if( Cmds[i].CharAt(0) == '-' && !Cmds[i].IsNumber() )  {  // an option
+    bool quoted = is_quote(Cmds[i].CharAt(0));
+    if( quoted )
+      Cmds[i] = unquote(Cmds[i]);
+    if( Cmds[i].IsEmpty() )  continue;
+    if( Cmds[i].CharAt(0) == '-' && !Cmds[i].IsNumber() && !quoted )  {  // an option
       if( Cmds[i].Length() > 1 &&
-        ((Cmds[i].CharAt(1) >= '0' && Cmds[i].CharAt(1) <= '9') || Cmds[i].CharAt(1) == '-') )  // cannot start from number
+        (olxstr::o_isdigit(Cmds[i].CharAt(1)) || Cmds[i].CharAt(1) == '-') )  // cannot start from number
         continue;
       if( Cmds[i].Length() > 1 )  {
         Options.FromString(Cmds[i].SubStringFrom(1), '=');
@@ -274,7 +275,7 @@ void TEMacroLib::ParseMacro(const TDataItem& macro_def, TEMacro& macro)  {
   if( di != NULL )  {
     for( size_t i=0; i < di->ItemCount(); i++ )  {
       const TDataItem& tdi = di->GetItem(i);
-      macro.AddArg(tdi.GetFieldValue("name", EmptyString), tdi.GetFieldValue("def"));
+      macro.AddArg(tdi.GetFieldValue("name", EmptyString()), tdi.GetFieldValue("def"));
     }
   }
   di = macro_def.FindItem("onterminate");

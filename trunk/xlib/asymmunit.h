@@ -3,7 +3,6 @@
 #include "xbase.h"
 #include "ematrix.h"
 #include "threex3.h"
-#include "evpoint.h"
 #include "macroerror.h"
 #include "srestraint.h"
 #include "ellipsoid.h"
@@ -35,10 +34,10 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
     must call _UpdateConnInfo */
   bool Assigning;
   class TLattice*   Lattice;    // parent lattice
-  TEVPointD  FAxes;    // axes with errors
-  TEVPointD  FAngles;    // angles + errors
-  vec3d   RAxes;     // reciprical axes
-  vec3d   RAngles;    // reciprical angles
+  vec3d Axes, AxisEsds;    // axes and esds
+  vec3d Angles, AngleEsds;    // angles and esds
+  vec3d RAxes;     // reciprical axes
+  vec3d RAngles;    // reciprical angles
   // this list holds the list of all atoms which are not deleted
 protected:
   TActionQList Actions;
@@ -52,10 +51,14 @@ public:
   virtual ~TAsymmUnit();
 
   inline TLattice& GetLattice() const {  return *Lattice;  }
-  inline TEVPointD& Axes()  {  return FAxes;  }
-  inline TEVPointD& Angles()  {  return FAngles;  }
-  inline const TEVPointD& GetAxes() const {  return FAxes;  }
-  inline const TEVPointD& GetAngles() const {  return FAngles;  }
+  inline vec3d& GetAxes()  {  return Axes;  }
+  inline vec3d& GetAxisEsds()  {  return AxisEsds;  }
+  inline vec3d& GetAngles()  {  return Angles;  }
+  inline vec3d& GetAngleEsds()  {  return AngleEsds;  }
+  inline const vec3d& GetAxes() const {  return Axes;  }
+  inline const vec3d& GetAxisEsds() const {  return AxisEsds;  }
+  inline const vec3d& GetAngles() const {  return Angles;  }
+  inline const vec3d& GetAngleEsds() const {  return AngleEsds;  }
   inline const vec3d& GetRAxes() const {  return RAxes;  }
   inline const vec3d& GetRAngles() const {  return RAngles;  }
   double CalcCellVolume() const;
@@ -143,7 +146,7 @@ public:
   
   void Clear();
   //creates a new residue
-  TResidue& NewResidue(const olxstr& RClass, int number, const olxstr& alias = EmptyString);
+  TResidue& NewResidue(const olxstr& RClass, int number, const olxstr& alias=EmptyString());
   inline size_t ResidueCount() const {  return Residues.Count()+1;  }
   inline TResidue& GetResidue(size_t i) const { return (i==0) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i-1];  }
   TResidue* NextResidue(const TResidue& r) const;
@@ -277,7 +280,7 @@ public:
   void LibSetZprime(const TStrObjList& Params, TMacroError& E);
   void LibFormula(const TStrObjList& Params, TMacroError& E);
   void LibWeight(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndXlibNamespace()

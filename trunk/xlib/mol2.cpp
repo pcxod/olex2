@@ -14,6 +14,9 @@ const olxstr TMol2::BondNames[] = {"1", "2", "3", "am", "ar", "du", "un", "nc"};
 void TMol2::Clear()  {
   GetAsymmUnit().Clear();
   Bonds.Clear();
+  GetAsymmUnit().GetAxes() = vec3d(1,1,1);
+  GetAsymmUnit().GetAngles() = vec3d(90,90,90);
+  GetAsymmUnit().InitMatrices();
 }
 //..............................................................................
 olxstr TMol2::MOLAtom(TCAtom& A)  {
@@ -50,16 +53,15 @@ olxstr TMol2::MOLBond(TMol2Bond& B)  {
 void TMol2::SaveToStrings(TStrList& Strings)  {
   Strings.Add("@<TRIPOS>MOLECULE");
   Strings.Add(GetTitle());
-  Strings.Add( GetAsymmUnit().AtomCount() )  <<
-    '\t' << Bonds.Count() << "\t1";
+  Strings.Add(GetAsymmUnit().AtomCount())  << '\t' << Bonds.Count() << "\t1";
   Strings.Add("SMALL");
   Strings.Add("NO_CHARGES");
-  Strings.Add(EmptyString);
+  Strings.Add(EmptyString());
   Strings.Add("@<TRIPOS>ATOM");
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
     Strings.Add( MOLAtom(GetAsymmUnit().GetAtom(i) ) );
   if( !Bonds.IsEmpty() )  {
-    Strings.Add(EmptyString);
+    Strings.Add(EmptyString());
     Strings.Add("@<TRIPOS>BOND");
     for( size_t i=0; i < Bonds.Count(); i++ )
       Strings.Add( MOLBond(Bonds[i]) );
@@ -68,14 +70,7 @@ void TMol2::SaveToStrings(TStrList& Strings)  {
 //..............................................................................
 void TMol2::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-  Title = "OLEX: imported from TRIPOS MOL2";
-  GetAsymmUnit().Axes()[0] = 1;
-  GetAsymmUnit().Axes()[1] = 1;
-  GetAsymmUnit().Axes()[2] = 1;
-  GetAsymmUnit().Angles()[0] = 90;
-  GetAsymmUnit().Angles()[1] = 90;
-  GetAsymmUnit().Angles()[2] = 90;
-  GetAsymmUnit().InitMatrices();
+  Title = "OLEX2: imported from TRIPOS MOL2";
   bool AtomsCycle = false, BondsCycle = false;
   olxdict<int, TCAtom*, TPrimitiveComparator> atoms;
   for( size_t i=0; i < Strings.Count(); i++ )  {
@@ -122,9 +117,9 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
 //..............................................................................
 bool TMol2::Adopt(TXFile& XF)  {
   Clear();
- TLattice& latt = XF.GetLattice();
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& sa = latt.GetAtom(i);
+  const ASObjectProvider& objects = XF.GetLattice().GetObjects();
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     if( !sa.IsAvailable() )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);
@@ -132,8 +127,8 @@ bool TMol2::Adopt(TXFile& XF)  {
     a.SetType(sa.GetType());
     sa.SetTag(i);
   }
-  for( size_t i=0; i < latt.BondCount(); i++ )  {
-    TSBond& sb = latt.GetBond(i);
+  for( size_t i=0; i < objects.bonds.Count(); i++ )  {
+    TSBond& sb = objects.bonds[i];
     if( !sb.IsAvailable() )  continue;
     TMol2Bond& mb = Bonds.AddNew(Bonds.Count());
     mb.a1 = &GetAsymmUnit().GetAtom(sb.A().GetTag());

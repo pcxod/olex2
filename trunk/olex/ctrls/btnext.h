@@ -20,12 +20,12 @@ namespace ctrl_ext  {
       OnDown(Actions.New(evt_on_check_id)),
       Down(false),
       ActionQueue(NULL),
-      OnClickStr(EmptyString),
-      OnUpStr(EmptyString),
-      OnDownStr(EmptyString),
-      DependMode(EmptyString),
-      Hint(EmptyString),
-      Data(EmptyString)  {  SetToDelete(false);  }
+      OnClickStr(EmptyString()),
+      OnUpStr(EmptyString()),
+      OnDownStr(EmptyString()),
+      DependMode(EmptyString()),
+      Hint(EmptyString()),
+      Data(EmptyString())  {  SetToDelete(false);  }
     virtual ~AButtonBase() {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);

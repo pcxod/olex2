@@ -8,7 +8,7 @@
 
 BeginXlibNamespace()
 
-const short 
+const unsigned short 
   satom_Deleted    = 0x0001,
   satom_Grown      = 0x0002,
   satom_Standalone = 0x0004;
@@ -39,7 +39,8 @@ public:
   virtual ~TSAtom();
   void Assign(const TSAtom& S);
   // Is/Set
-  DefPropBFIsSet(Deleted, Flags, satom_Deleted)
+  virtual bool IsDeleted() const {  return  (Flags&satom_Deleted) != 0;  }
+  virtual void SetDeleted(bool v)  {  olx_set_bit(v, Flags, satom_Deleted);  }
   DefPropBFIsSet(Standalone, Flags, satom_Standalone)
 
   bool IsAvailable() const {  return !(IsDeleted() || FCAtom->IsDetached());  }

@@ -79,7 +79,7 @@ class TOlexViewer : public olex::IOlexProcessor {
   olxstr DataDir;
 protected:
   virtual TStrList GetPluginList() const {  return TStrList();  }
-  virtual olxstr TranslateString(const olxstr& str) const {  return EmptyString;  }
+  virtual olxstr TranslateString(const olxstr& str) const {  return EmptyString();  }
   virtual bool IsControl(const olxstr& cname) const {  return false;  }
 public:
   TOlexViewer(HDC windowDC, int w, int h);
@@ -108,7 +108,7 @@ public:
     virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName);
 
     virtual const olxstr& getDataDir() const;
-    virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=NullString) const;
+    virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=EmptyString()) const;
     virtual void setVar(const olxstr &name, const olxstr &val) const;
 
   static TOlexViewer* Instance;

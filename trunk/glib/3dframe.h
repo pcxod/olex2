@@ -38,7 +38,7 @@ public:
     SetRoteable(true);
   }
   size_t GetId() const {  return Id;  }
-  void Create(const olxstr& cName, const ACreationParams* cpar);
+  void Create(const olxstr& cName);
   virtual bool GetDimensions(vec3d&, vec3d&)  {  return false;  }
   virtual bool Orient(TGlPrimitive&);
   vec3d& GetA()  {  return A;  }
@@ -64,7 +64,7 @@ protected:
   }
 public:
   T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName);
-  void Create(const olxstr& cName, const ACreationParams* cpar);
+  void Create(const olxstr& cName);
   virtual bool GetDimensions(vec3d& _mn, vec3d& _mx)  {
     for( int i=0; i < 8; i++ )
       vec3d::UpdateMinMax(edges[i], _mn, _mx);
@@ -75,11 +75,6 @@ public:
     AGDrawObject::SetVisible(v);
     for( int i=0; i < 6; i++ )
       Faces[i].SetVisible(v);
-  }
-  virtual void SetDeleted(bool v)  {
-    AGDrawObject::SetDeleted(v);
-    for( int i=0; i < 6; i++ )
-      Faces[i].SetDeleted(v);
   }
   virtual bool Orient(TGlPrimitive&)  {
     SetBasis();

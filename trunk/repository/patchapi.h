@@ -50,7 +50,7 @@ public:
       if( fc.Count() == 1 )
         return TEFile::ExpandRelativePath(fc[0]);
     }
-    return EmptyString;
+    return EmptyString();
   }
   static olxstr GetUpdaterPIDFileName()  {  return TBasicApp::GetBaseDir() + "pid.update";  }
   static const char* GetUpdaterCmdFileName()  {  return "__cmds.update";  }
@@ -62,8 +62,8 @@ public:
 
   static const char* GetTagFileName()  {  return "olex2.tag";  }
   static const char* GetPatchFolder()  {  return "patch";  }
-  //reads current repository tag, returns EmptyString in the case of error
-  static olxstr ReadRepositoryTag(const olxstr& base_dir=EmptyString);
+  //reads current repository tag, returns EmptyString() in the case of error
+  static olxstr ReadRepositoryTag(const olxstr& base_dir=EmptyString());
   /* return 'AppData/Olex2Data/' or OLEX2_DATADIR if defined (gets same value as
   the argument of the GetCurrentSharedDir
   */
@@ -77,7 +77,7 @@ public:
 #endif
   }
   // composes new shared dir and saves its info
-  static olxstr ComposeNewSharedDir(const olxstr& shared_dir, const olxstr& _base_dir=EmptyString)  {
+  static olxstr ComposeNewSharedDir(const olxstr& shared_dir, const olxstr& _base_dir=EmptyString())  {
     olxstr new_shared_dir = shared_dir;
     const olxstr base_dir = _base_dir.IsEmpty() ? TBasicApp::GetBaseDir() :
       TEFile::AddPathDelimeter(_base_dir);
@@ -95,7 +95,7 @@ public:
   programs which may be installed and using this API
   */
   static olxstr GetCurrentSharedDir(olxstr* DataDir=NULL);
-  static void SaveLocationInfo(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {
+  static void SaveLocationInfo(const olxstr& shared_dir, const olxstr& base_dir=EmptyString())  {
     TCStrList location_file_content;
     location_file_content.Add(TEFile::AddPathDelimeter((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir))) 
       << patcher::PatchAPI::ReadRepositoryTag();

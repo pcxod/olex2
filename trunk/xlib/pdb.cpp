@@ -13,12 +13,12 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
   int iq[6];
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
   sprintf(bf, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d",
-    GetAsymmUnit().Axes()[0].V(),
-    GetAsymmUnit().Axes()[1].V(),
-    GetAsymmUnit().Axes()[2].V(),
-    GetAsymmUnit().Angles()[0].V(),
-    GetAsymmUnit().Angles()[1].V(),
-    GetAsymmUnit().Angles()[2].V(),
+    GetAsymmUnit().GetAxes()[0],
+    GetAsymmUnit().GetAxes()[1],
+    GetAsymmUnit().GetAxes()[2],
+    GetAsymmUnit().GetAngles()[0],
+    GetAsymmUnit().GetAngles()[1],
+    GetAsymmUnit().GetAngles()[2],
     sg == NULL ? "P1" : sg->GetFullName().c_str(),
     GetAsymmUnit().GetZ());
   Strings.Add(bf);
@@ -122,12 +122,10 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       toks.StrtokF(Strings[i], CrystF);
       if( toks.Count() < 7 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
-      GetAsymmUnit().Axes()[0] = toks[1].ToDouble();
-      GetAsymmUnit().Axes()[1] = toks[2].ToDouble();
-      GetAsymmUnit().Axes()[2] = toks[3].ToDouble();
-      GetAsymmUnit().Angles()[0] = toks[4].ToDouble();
-      GetAsymmUnit().Angles()[1] = toks[5].ToDouble();
-      GetAsymmUnit().Angles()[2] = toks[6].ToDouble();
+      GetAsymmUnit().GetAxes() = vec3d(
+        toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
+      GetAsymmUnit().GetAngles() = vec3d(
+        toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble());
       GetAsymmUnit().InitMatrices();
       if( toks.Count() > 8 )  {
         TSymmLib& sl = TSymmLib::GetInstance();
@@ -192,17 +190,19 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
 bool TPdb::Adopt(TXFile& XF)  {
   Clear();
   // init AU
-  GetAsymmUnit().Axes() = XF.GetAsymmUnit().Axes();
-  GetAsymmUnit().Angles() = XF.GetAsymmUnit().Angles();
+  GetAsymmUnit().GetAxes() = XF.GetAsymmUnit().GetAxes();
+  GetAsymmUnit().GetAxisEsds() = XF.GetAsymmUnit().GetAxisEsds();
+  GetAsymmUnit().GetAngles() = XF.GetAsymmUnit().GetAngles();
+  GetAsymmUnit().GetAngleEsds() = XF.GetAsymmUnit().GetAngleEsds();
   for( size_t i=0; i < XF.GetAsymmUnit().MatrixCount(); i++ )
     GetAsymmUnit().AddMatrix(XF.GetAsymmUnit().GetMatrix(i));
   GetAsymmUnit().SetLatt(XF.GetAsymmUnit().GetLatt());
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   GetAsymmUnit().InitMatrices();
 
-  TLattice& latt = XF.GetLattice();
-  for( size_t i=0; i < latt.AtomCount(); i++ )  {
-    TSAtom& sa = latt.GetAtom(i);
+  const ASObjectProvider& objects = XF.GetLattice().GetObjects();
+  for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    TSAtom& sa = objects.atoms[i];
     if( !sa.IsAvailable() )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);

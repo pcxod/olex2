@@ -85,7 +85,7 @@ elif env['TOOL'] == 'gnu':
 elif env['TOOL'] == 'intel':
     Tool('intelc')(env)
 env.Append(CCFLAGS = ['-D_UNICODE', '-DUNICODE'])
-env.Append(CPPPATH = ['alglib', 'sdl', 'glib', 'gxlib', 
+env.Append(CPPPATH = ['sdl', 'glib', 'gxlib', 
                       'repository', 'xlib'])
 out_dir = 'build/scons/' 
 if sys.platform[:3] == 'win':
@@ -140,13 +140,14 @@ except:
   print 'Unfortunately could not update the revision information'
 ################################################################################################
 #get file lists
-alglib = Glob('./alglib/*.cpp')
 sdl = Glob('./sdl/*.cpp')
 sdl_exp = Glob('./sdl/exparse/*.cpp')
 sdl_smart = Glob('./sdl/smart/*.cpp')
+sdl_math = Glob('./sdl/math/*.cpp')
 xlib = Glob('./xlib/*.cpp')
 xlib_henke = Glob('./xlib/henke/*.cpp')
 xlib_macro = Glob('./xlib/macro/*.cpp')
+xlib_absorpc = Glob('./xlib/absorpc/*.cpp')
 glib = Glob('./glib/*.cpp')
 gxlib = Glob('./gxlib/*.cpp')
 olex2 = Glob('./olex/*.cpp')
@@ -232,30 +233,9 @@ if sys.platform[:3] == 'win':
     #env.Append(LINKFLAGS=['/MACHINE:X64', '/DEBUG']) #this emits debug info...
     env.Append(LINKFLAGS=['/MACHINE:X64'])
     env['TARGET_ARCH'] = 'x86_64'
-    #lib_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\x64',
-              #r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib\amd64']
-    #for p in lib_64:
-      #if os.path.exists(p):
-        #env.Append(LIBPATH=[p])  
-    #inc_64 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include',
-              #r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\include']
-    #for p in inc_64:
-      #if os.path.exists(p):
-        #env.Append(CPPPATH=[p])
-    #env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin\x64' +\
-                         #os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\amd64' +\
-                         #os.pathsep + env['ENV']['PATH']
   else:
     env.Append(LINKFLAGS=['/MACHINE:X86'])
     env['TARGET_ARCH'] = 'x86'
-    #lib_32 = [r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib',
-              #r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\lib']
-    #for p in lib_32:
-      #if os.path.exists(p):
-        #env.Append(LIBPATH=[p])  
-    #env['ENV']['PATH'] = r'C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin' +\
-                         #os.pathsep + r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin' +\
-                         #os.pathsep + env['ENV']['PATH']
   # generic libs
   env.Append(LIBS = Split(""" mapi32 glu32 user32 opengl32 gdi32 ole32 
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
@@ -290,17 +270,17 @@ else:
     
 #sdl
 sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart) +\
-  fileListToStringList('sdl/exparse', sdl_exp)
+  fileListToStringList('sdl/exparse', sdl_exp) + fileListToStringList('sdl/math', sdl_math)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
 env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
              
 env.Append(LIBPATH=[out_dir+'lib'])
 env.Append(LIBS = ['sdl'])
 
-generic_files = fileListToStringList('alglib', alglib) + \
-                fileListToStringList('xlib', xlib) + \
+generic_files = fileListToStringList('xlib', xlib) + \
                 fileListToStringList('xlib/macro', xlib_macro) + \
-                fileListToStringList('xlib/henke', xlib_henke)
+                fileListToStringList('xlib/henke', xlib_henke) + \
+                fileListToStringList('xlib/absorpc', xlib_absorpc)
 generic_files = processFileNameList(generic_files, env, out_dir+'generic')
 
 olex2c_env = env.Clone()

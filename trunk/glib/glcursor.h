@@ -17,7 +17,7 @@ protected:
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
 public:
   TGlCursor(TGlRenderer& Render, const olxstr& collectionName, bool TextStyle = true);
-  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  void Create(const olxstr& cName=EmptyString());
   virtual ~TGlCursor() {}
 
   void SetPosition(float x, float y)  {  X = x;  Y = y;  }

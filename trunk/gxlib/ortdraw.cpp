@@ -17,7 +17,7 @@ ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
 a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL), elpm(NULL),
 draw_style(0)
 {
-  const TSAtom& sa = atom.Atom();
+  const TSAtom& sa = atom;
   if( sa.GetEllipsoid() != NULL )  {
     mat3f& _elpm = *(new mat3f(sa.GetEllipsoid()->GetMatrix()));
     _elpm[0] *= sa.GetEllipsoid()->GetSX();
@@ -31,14 +31,14 @@ draw_style(0)
   }
   draw_rad = (float)atom.GetDrawScale()*parent.DrawScale;
   crd = parent.ProjectPoint(sa.crd());
-  sphere_color = atom.Atom().GetType().def_color;
+  sphere_color = atom.GetType().def_color;
   const TGraphicsStyle& style = atom.GetPrimitives().GetStyle();
   size_t lmi = style.IndexOfMaterial("Sphere");
   if( lmi != InvalidIndex )  {
     TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
     sphere_color = glm.AmbientF.GetRGB();
   }
-  rim_color = atom.Atom().GetType().def_color;
+  rim_color = atom.GetType().def_color;
   lmi = style.IndexOfMaterial("Rims");
   if( lmi != InvalidIndex )  {
     TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
@@ -114,7 +114,7 @@ void ort_atom::render_standalone(PSWriter& pw) const {
 
 bool ort_atom::IsSpherical() const {
   bool res = !(p_elpm != NULL && (atom.DrawStyle() == adsEllipsoid || atom.DrawStyle() == adsOrtep));
-  if( !res && atom.Atom().GetEllipsoid()->IsNPD() )
+  if( !res && atom.GetEllipsoid()->IsNPD() )
     return true;
   return res;
 }
@@ -124,7 +124,7 @@ void ort_atom::render(PSWriter& pw) const {
   pw.translate(crd);
   pw.lineWidth(parent.ElpLineWidth);
   if( mask == 16 && atom.DrawStyle() == adsStandalone )  {
-    if( atom.Atom().IsStandalone() )
+    if( atom.IsStandalone() )
       render_standalone(pw);
   }
   else if( !IsSpherical() )
@@ -176,7 +176,7 @@ void ort_bond::render(PSWriter& pw) const {
   if( (draw_style&ortep_color_bond) == 0 )
     pw.color(0);
   else if( (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) == 0 )
-    pw.color(atom_a.atom.Atom().GetType() > atom_b.atom.Atom().GetType() ?
+    pw.color(atom_a.atom.GetType() > atom_b.atom.GetType() ?
       atom_a.sphere_color : atom_b.sphere_color);
   _render(pw, 1, mask);
   pw.translate(-atom_a.crd);
@@ -208,7 +208,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   dir_vec.Normalise();
   const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
   mat3f rot_mat;
-  const vec3f touch_point = (atom_b.atom.Atom().crd() - atom_a.atom.Atom().crd()).Normalise();
+  const vec3f touch_point = (atom_b.atom.crd() - atom_a.atom.crd()).Normalise();
   if( olx_abs(1.0f-olx_abs(touch_point[2])) < 1e-3 )  // degenerated case...
     olx_create_rotation_matrix_(rot_mat, vec3f(0, 1, 0).Normalise(), touch_point[2]);
   else
@@ -526,14 +526,17 @@ void OrtDraw::Render(const olxstr& fileName)  {
   Init(pw);
   TTypeList<a_ort_object> objects;
   TPtrList<vec3f> all_points;
-  objects.SetCapacity(app.AtomCount()+app.BondCount());
-  for( size_t i=0; i < app.AtomCount(); i++ )  {
-    if( app.GetAtom(i).IsDeleted() ) // have to keep hidden atoms, as those might be used by bonds!
+  TGXApp::AtomIterator ai = app.GetAtoms();
+  TGXApp::BondIterator bi = app.GetBonds();
+  objects.SetCapacity(ai.count+bi.count);
+  while( ai.HasNext() )  {
+    TXAtom& xa = ai.Next();
+    if( xa.IsDeleted() ) // have to keep hidden atoms, as those might be used by bonds!
       continue;
-    app.GetAtom(i).Atom().SetTag(objects.Count());
-    ort_atom *a = new ort_atom(*this, app.GetAtom(i));
+    xa.SetTag(objects.Count());
+    ort_atom *a = new ort_atom(*this, xa);
     a->draw_style |= ortep_atom_rims;
-    if( app.GetAtom(i).DrawStyle() == adsOrtep )
+    if( xa.DrawStyle() == adsOrtep )
       a->draw_style |= ortep_atom_quads;
     if( (ColorMode&ortep_color_lines) )
       a->draw_style |= ortep_color_lines;
@@ -607,13 +610,13 @@ void OrtDraw::Render(const olxstr& fileName)  {
     }
   }
 
-  for( size_t i=0; i < app.BondCount(); i++ )  {
-    const TXBond& xb = app.GetBond(i);
+  while( bi.HasNext() )  {
+    const TXBond& xb = bi.Next();
     if( xb.IsDeleted() || !xb.IsVisible() )
       continue;
-    const ort_atom& a1 = (const ort_atom&)objects[xb.Bond().A().GetTag()];
-    const ort_atom& a2 = (const ort_atom&)objects[xb.Bond().B().GetTag()];
-    ort_bond *b = new ort_bond(*this, app.GetBond(i), a1, a2);
+    const ort_atom& a1 = (const ort_atom&)objects[xb.A().GetTag()];
+    const ort_atom& a2 = (const ort_atom&)objects[xb.B().GetTag()];
+    ort_bond *b = new ort_bond(*this, xb, a1, a2);
     if( (ColorMode&ortep_color_bond) != 0 )
       b->draw_style |= ortep_color_bond;
     objects.Add(b);
@@ -669,28 +672,32 @@ void OrtDraw::Render(const olxstr& fileName)  {
   TPtrList<const TXGlLabel> Labels;
   for( size_t i=0; i < app.LabelCount(); i++ )  {
     const TXGlLabel& glxl = app.GetLabel(i);
-    if( !glxl.IsDeleted() && glxl.IsVisible() )
+    if( glxl.IsVisible() )
       Labels.Add(glxl);
   }
-  for( size_t i=0; i < app.AtomCount(); i++ )  {
-    if( app.GetAtom(i).GetLabel().IsVisible() )
-      Labels.Add(app.GetAtom(i).GetLabel());
+  ai.Reset();
+  while( ai.HasNext() )  {
+    TXAtom& xa = ai.Next();
+    if( xa.GetGlLabel().IsVisible() )
+      Labels.Add(xa.GetGlLabel());
   }
-  for( size_t i=0; i < app.BondCount(); i++ )  {
-    if( app.GetBond(i).GetLabel().IsVisible() )
-      Labels.Add(app.GetBond(i).GetLabel());
+  bi.Reset();
+  while( bi.HasNext() )  {
+    TXBond& xb = bi.Next();
+    if( xb.GetGlLabel().IsVisible() )
+      Labels.Add(xb.GetGlLabel());
   }
   if( app.DUnitCell().IsVisible() )  {
     for( size_t i=0; i < app.DUnitCell().LabelCount(); i++ )  {
       const TXGlLabel& glxl = app.DUnitCell().GetLabel(i);
-      if( !glxl.IsDeleted() && glxl.IsVisible() )
+      if( glxl.IsVisible() )
         Labels.Add(glxl);
     }
   }
   if( app.DBasis().IsVisible() )  {
     for( size_t i=0; i < app.DBasis().LabelCount(); i++ )  {
       const TXGlLabel& glxl = app.DBasis().GetLabel(i);
-      if( !glxl.IsDeleted() && glxl.IsVisible() )
+      if( glxl.IsVisible() )
         Labels.Add(glxl);
     }
   }
@@ -747,7 +754,7 @@ void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2, float 
 }
 
 float OrtDraw::GetBondRad(const ort_bond& b, uint32_t mask) const {
-  float r = (b.bond.Bond().A().GetType() == iHydrogenZ || b.bond.Bond().B().GetType() < iHydrogenZ) ? 
+  float r = (b.bond.A().GetType() == iHydrogenZ || b.bond.B().GetType() < iHydrogenZ) ? 
     BondRad*HBondScale : BondRad;
   if( (mask&((1<<13)|(1<<12)|(1<<11)|(1<<7)|(1<<6))) != 0 )  //even thinner for line or "balls" bond
     r /= 4;

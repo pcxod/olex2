@@ -10,6 +10,7 @@
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
+const olxstr cetString::empty_value("''");
 
 void TCifDP::Clear()  {
   data.Clear();
@@ -25,7 +26,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
   if( !context.lines[start].StartsFromi("loop_") )  return false;
   TStrList& Lines = context.lines;
   if( context.current_block == NULL )
-    context.current_block = &Add(EmptyString);
+    context.current_block = &Add(EmptyString());
   cetTable& table = *(new cetTable);
   TStrList loop_data;
   bool parse_header = true;
@@ -106,7 +107,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
     if( line.IsEmpty() )  continue;
     if( line.CharAt(0) == '#')  {
       if( context.current_block == NULL )
-        context.current_block = &Add(EmptyString);
+        context.current_block = &Add(EmptyString());
       context.current_block->Add(new cetComment(line.SubStringFrom(1)));
       continue;
     }
@@ -114,7 +115,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
     const size_t src_line = i;
     if( line.CharAt(0) == '_' )  {  // parameter
       if( context.current_block == NULL )
-        context.current_block = &Add(EmptyString);
+        context.current_block = &Add(EmptyString());
       TStrList toks;
       CIFToks(line, toks);
       if( toks.Count() >= 3 && toks[2].CharAt(0) == '#' )  {
@@ -179,7 +180,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
     else if( line.StartsFromi("save_" ) )  {
       if( line.Length() > 5 )  {
         context.current_block = &Add(line.SubStringFrom(5),
-          context.current_block == NULL ? &Add(EmptyString) : context.current_block);
+          context.current_block == NULL ? &Add(EmptyString()) : context.current_block);
       }  // close the block
       else if( context.current_block != NULL && context.current_block->parent != NULL )
         context.current_block = context.current_block->parent;
@@ -190,9 +191,10 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
   Format();
 }
 //..............................................................................
-void TCifDP::SaveToStrings(TStrList& Strings)  {
+TStrList& TCifDP::SaveToStrings(TStrList& Strings) const {
   for( size_t i=0; i < data.Count(); i++ )
     data[i].ToStrings(Strings);
+  return Strings;
 }
 //..............................................................................
 size_t TCifDP::CIFToks(const olxstr& exp, TStrList& out)  {
@@ -251,6 +253,11 @@ void cetTable::AddCol(const olxstr& col_name)  {
         name.SetLength(u_ind);
     }
   }
+}
+cetTable::cetTable(const olxstr& cols)  {
+  const TStrList toks(cols, ',');
+  for( size_t i=0; i < toks.Count(); i++ )
+    AddCol(toks[i]);
 }
 void cetTable::Clear()  {
   for( size_t i=0; i < data.RowCount(); i++ )
@@ -388,7 +395,7 @@ void cetString::ToStrings(TStrList& list) const {
   if( quoted )
     line << '\'' << value << '\'';
   else
-    line << value;
+    line << (value.IsEmpty() ? empty_value : value);
 }
 //..............................................................................
 void cetNamedString::ToStrings(TStrList& list) const {
@@ -396,16 +403,16 @@ void cetNamedString::ToStrings(TStrList& list) const {
     list.Add(name);
     if( quoted )
       list.Add('\'') << value << '\'';
-    else
-      list.Add(value);
+    else 
+      list.Add(value.IsEmpty() ? empty_value : value);
   }
   else  {
     olxstr& tmp = list.Add(name);
     tmp.Format(34, true, ' ');
     if( quoted )
       tmp << '\'' << value << '\'';
-    else
-      tmp << value;
+    else  
+      tmp << (value.IsEmpty() ? empty_value : value);
   }
 }
 //..............................................................................
@@ -425,7 +432,7 @@ ICifEntry& CifBlock::Add(ICifEntry* p)  {
   if( !p->HasName() || p->GetName().IsEmpty() )  {  // only comments are allowed to have not name
     if( !EsdlInstanceOf(*p, cetComment) )
       throw TInvalidArgumentException(__OlxSourceInfo, "name");
-    return *params.Add(EmptyString, p).Object;
+    return *params.Add(EmptyString(), p).Object;
   }
   const olxstr& pname = p->GetName();
   const size_t i = param_map.IndexOf(pname);
@@ -510,7 +517,7 @@ void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
   params.Clear();
   for( size_t i=0; i < groups.Count(); i++ )  {
     for( size_t j=0; j < groups[i].items.Count()-1; j++ )
-      params.Add(EmptyString, groups[i].items[j]);
+      params.Add(EmptyString(), groups[i].items[j]);
     params.Add(groups[i].name, groups[i].items.GetLast());
   }
 }

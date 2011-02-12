@@ -108,12 +108,12 @@ olxstr AGlScene::MetaFont::GetIdString() const {
     return BuildOlexFontId(FileName, Size, Fixed, Bold, Italic);
   if( IsVectorFont(OriginalId) )
     return olxstr('@') << Size;
-  return EmptyString;
+  return EmptyString();
 }
 //..............................................................................
 olxstr AGlScene::MetaFont::GetFileIdString() const {
   if( IsOlexFont(OriginalId) ) 
-    return BuildOlexFontId(EmptyString, Size, Fixed, Bold, Italic);
+    return BuildOlexFontId(EmptyString(), Size, Fixed, Bold, Italic);
   throw TInvalidArgumentException(__OlxSourceInfo, "Olex2 font is expected");
 }
 

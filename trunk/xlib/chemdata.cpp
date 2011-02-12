@@ -705,7 +705,8 @@ static const cm_Isotope _cm_isotope_U[] = {
   {234.040947, 0.000055, &_cm_neutron_U234}, 
   {235.043924, 0.0072, &_cm_neutron_U235}, 
   {238.050785, 0.992745, &_cm_neutron_U238}};
-static const cm_Gaussians _cm_gaussians_H(0.489918, 0.262003, 0.196767, 0.049879, 20.6593, 7.74039, 49.5519, 2.20159, 0.001305);
+//static const cm_Gaussians _cm_gaussians_H(0.489918, 0.262003, 0.196767, 0.049879, 20.6593, 7.74039, 49.5519, 2.20159, 0.001305);
+static const cm_Gaussians _cm_gaussians_H(0.493002, 0.322912, 0.140191, 0.040810, 10.5109, 26.1257, 3.14236, 57.7997, 0.003038);
 static const cm_Gaussians _cm_gaussians_He(0.8734, 0.6309, 0.3112, 0.178, 9.1037, 3.3568, 22.9276, 0.9821, 0.0064);
 static const cm_Gaussians _cm_gaussians_Li(1.1282, 0.7508, 0.6175, 0.4653, 3.9546, 1.0524, 85.3905, 168.261, 0.0377);
 static const cm_Gaussians _cm_gaussians_Be(1.5919, 1.1278, 0.5391, 0.7029, 43.6427, 1.8623, 103.483, 0.542, 0.0385);
@@ -1092,7 +1093,7 @@ ContentList& XElementLib::ParseElementString(const olxstr& su, ContentList& res)
           for( size_t i=0; i < toks.Count()-1; i++ )
             ExpandShortcut(toks[i], res);
           ExpandShortcut(toks[toks.Count() -1], res, cnt.ToDouble());
-          cnt = EmptyString;
+          cnt.SetLength(0);
         }
         nowCnt = false;
         elm = su[i];

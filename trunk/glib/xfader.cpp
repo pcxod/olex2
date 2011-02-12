@@ -29,7 +29,7 @@ TXFader::~TXFader()  {
     delete [] Foreground;
 }
 //..............................................................................
-void TXFader::Create(const olxstr& cName, const ACreationParams* cpar)  {
+void TXFader::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
