@@ -276,7 +276,7 @@ void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TResidue>& list) {
   }
 }
 //..............................................................................
-TResidue* TAsymmUnit::NextResidue(const TResidue& r) const {  return ((r.GetId()-1) == Residues.Count()) ? NULL : &Residues[r.GetId()+1];  }
+TResidue* TAsymmUnit::NextResidue(const TResidue& r) const {  return ((r.GetId()+1) == Residues.Count()) ? NULL : &Residues[r.GetId()+1];  }
 //..............................................................................
 TResidue* TAsymmUnit::PrevResidue(const TResidue& r) const {  
   return (r.GetId() == 0) ? NULL : ((r.GetId() == 0) ? &const_cast<TAsymmUnit*>(this)->MainResidue : &Residues[r.GetId()-1]);  

@@ -26,7 +26,7 @@ public:
 struct ort_atom : public a_ort_object {
   const TXAtom& atom;
   vec3f crd;
-  mat3f *p_elpm, *p_ielpm;
+  mat3f *p_elpm, *p_ielpm, *elpm;
   double draw_rad;
   uint16_t draw_style;
   uint32_t sphere_color, rim_color, mask;
@@ -34,6 +34,7 @@ struct ort_atom : public a_ort_object {
   ~ort_atom()  {
     if( p_elpm != NULL )  delete p_elpm;
     if( p_ielpm != NULL )  delete p_ielpm;
+    if( elpm != NULL )  delete elpm;
   }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return crd[2];  }

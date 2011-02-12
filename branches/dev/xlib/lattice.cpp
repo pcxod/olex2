@@ -1994,12 +1994,13 @@ void TLattice::FromDataItem(TDataItem& item)  {
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
   GetAsymmUnit().FromDataItem(item.FindRequiredItem("AUnit"));
+  GetUnitCell().InitMatrices();
   const TDataItem& mat = item.FindRequiredItem("Matrices");
   Matrices.SetCapacity(mat.ItemCount());
   for( size_t i=0; i < mat.ItemCount(); i++ )  {
     smatd* m = new smatd;
     TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue(), *m);
-    Matrices.Add(m);
+    GetUnitCell().InitMatrixId(*Matrices.Add(m));
     m->SetRawId(mat.GetItem(i).GetRequiredField("id").ToUInt());
   }
   // precreate fragments
@@ -2025,10 +2026,6 @@ void TLattice::FromDataItem(TDataItem& item)  {
   // load fragments
   for( size_t i=0; i < frags.ItemCount(); i++ )
     Fragments[i]->FromDataItem(frags.GetItem(i));
-  GetUnitCell().InitMatrices();
-  //int eqc = GetUnitCell().FindSymmEq(0.1, true, false, false); // find and not remove
-  //GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
-  //Disassemble();
   TDataItem& planes = item.FindRequiredItem("Planes");
   for( size_t i=0; i < planes.ItemCount(); i++ )  {
     TSPlane& p = Objects.planes.New(Network);

@@ -182,7 +182,7 @@ public:
     data[0] /= (T)v[0];  data[1] /= (T)v[1];  data[2] /= (T)v[2];  
     return *this;
   }
-#ifndef __BORLANDC__ // stupid compiler
+#ifndef __BORLANDC__ // does not really work with templates well
   template <class AT> inline TVector3<T>& operator += (AT v)  {
     data[0] += (T)v;  data[1] += (T)v;  data[2] += (T)v;
     return *this;
@@ -231,7 +231,7 @@ public:
     return TVector3<T>(data[0]/v[0], data[1]/v[1], data[2]/v[2]);
   }
 
-#ifndef __BORLANDC__ // stupid compiler
+#ifndef __BORLANDC__
   template <class AT> inline TVector3<T> operator + (AT v) const {
     return TVector3<T>(data[0]+v, data[1]+v, data[2]+v);
   }
@@ -309,15 +309,8 @@ public:
 template <class T> class TMatrix33  {
 protected:
   TVector3<T> data[3];
-  TMatrix33(bool v)  { 
-    if( v )  
-      data[0][0] = data[0][1] = data[0][2] = data[1][0] = data[1][1] = data[1][2] = data[2][0] = data[2][1] = data[2][2] = 0; 
-  }
-
 public:
-  TMatrix33()  {  
-    data[0][0] = data[0][1] = data[0][2] = data[1][0] = data[1][1] = data[1][2] = data[2][0] = data[2][1] = data[2][2] = 0; 
-  }
+  TMatrix33()  {}
   TMatrix33(T xx, T xy, T xz, T yx, T yy, T yz, T zx, T zy, T zz)  {
     data[0][0] = xx;  data[0][1] = xy;  data[0][2] = xz;
     data[1][0] = yx;  data[1][1] = yy;  data[1][2] = yz;
@@ -382,7 +375,7 @@ public:
                          data[2][0]*v[0][1] + data[2][1]*v[1][1] + data[2][2]*v[2][1],
                          data[2][0]*v[0][2] + data[2][1]*v[1][2] + data[2][2]*v[2][2]);
   }
-  template <class AT> TMatrix33<T>& operator *= (const TMatrix33<AT>& v) {
+  template <class AT> TMatrix33<T>& operator *= (const TMatrix33<AT>& v)  {
     T bf[] = { data[0][0]*v[0][0] + data[0][1]*v[1][0] + data[0][2]*v[2][0],
                          data[0][0]*v[0][1] + data[0][1]*v[1][1] + data[0][2]*v[2][1],
                          data[0][0]*v[0][2] + data[0][1]*v[1][2] + data[0][2]*v[2][2],
@@ -397,7 +390,7 @@ public:
     data[2][0] = bf[6];  data[2][1] = bf[7];  data[2][2] = bf[8];
     return *this;
   }
-  inline static TMatrix33 Transpose (const TMatrix33& v) {
+  inline static TMatrix33 Transpose (const TMatrix33& v)  {
     return TMatrix33<T>(v[0][0], v[1][0], v[2][0], 
                         v[0][1], v[1][1], v[2][1], 
                         v[0][2], v[1][2], v[2][2]);
@@ -407,17 +400,10 @@ public:
                         -data[1][0], -data[1][1], -data[1][2], 
                         -data[2][0], -data[2][1], -data[2][2]);
   }
-  template <class AT> inline static
-  TMatrix33<AT>& Transpose (const TMatrix33& src, TMatrix33<AT>& dest) {
-    dest[0][0] = src[0][0];  dest[0][1] = src[1][0];  dest[0][2] = src[2][0];
-    dest[1][0] = src[0][1];  dest[1][1] = src[1][1];  dest[1][2] = src[2][1];
-    dest[2][0] = src[0][2];  dest[2][1] = src[1][2];  dest[2][2] = src[2][2];
-    return dest;
-  }
-  inline TMatrix33<T>& Transpose() {
-    T v = data[0][1];  data[0][1] = data[1][0];  data[1][0] = v; 
-    v = data[0][2];    data[0][2] = data[2][0];  data[2][0] = v; 
-    v = data[1][2];    data[1][2] = data[2][1];  data[2][1] = v; 
+  inline TMatrix33<T>& Transpose()  {
+    olx_swap(data[0][1], data[1][0]);
+    olx_swap(data[0][2], data[2][0]);
+    olx_swap(data[1][2], data[2][1]);
     return *this;
   }
 
@@ -428,7 +414,7 @@ public:
     return *this;
   }
   // normalises each vector
-  inline TMatrix33<T>& Normalise() {
+  inline TMatrix33<T>& Normalise()  {
     data[0].Normalise();
     data[1].Normalise();
     data[2].Normalise();
@@ -440,7 +426,7 @@ public:
   inline bool IsI() const {
     return (data[0][0] == 1 && data[1][1] == 1 && data[2][2] == 1 && 
             data[0][1] == 0 && data[0][2] == 0 && data[1][0] == 0 &&
-            data[1][2] == 0 && data[2][0] == 0 && data[2][1] == 0 ) ? true : false;
+            data[1][2] == 0 && data[2][0] == 0 && data[2][1] == 0);
   }
   inline TMatrix33<T>& Null()  {
     data[0].Null();  data[1].Null();  data[2].Null();
@@ -448,7 +434,7 @@ public:
   }
 
   inline bool operator == (const TMatrix33<T>& v) const {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? true : false;
+    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]);
   }
   inline bool operator != (const TMatrix33<T>& v) const {  return !(operator == (v));  }
 
@@ -483,8 +469,8 @@ public:
                         data[1][0] + v[1][0], data[1][1] + v[1][1], data[1][2] + v[1][2],
                         data[2][0] + v[2][0], data[2][1] + v[2][1], data[2][2] + v[2][2]);
   }
-#ifndef __BORLANDC__ // really annoying - would use same for the Matrix33!
-  template <class AT> inline TMatrix33<T>& operator *= (AT v) {
+#ifndef __BORLANDC__ // would use same for the Matrix33!
+  template <class AT> inline TMatrix33<T>& operator *= (AT v)  {
     data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
     data[1][0] *= v;  data[1][1] *= v;  data[1][2] *= v;
     data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
@@ -531,25 +517,24 @@ public:
              data[2][0]*data[0][1] - data[2][1]*data[0][0],
              data[1][1]*data[0][0] - data[1][0]*data[0][1])/=Determinant();
   }
-  template <class AT> TVector3<AT>  operator * (const TVector3<AT>& a) const  {
+  template <class AT> TVector3<AT>  operator * (const TVector3<AT>& a) const {
     return TVector3<AT>(a[0]*data[0][0] + a[1]*data[0][1] + a[2]*data[0][2],
                         a[0]*data[1][0] + a[1]*data[1][1] + a[2]*data[1][2],
                         a[0]*data[2][0] + a[1]*data[2][1] + a[2]*data[2][2]);
   }
   static void  EigenValues(TMatrix33& A, TMatrix33& I)  {
     size_t i, j;
-    double a = 2;
+    T a = 2;
     while( olx_abs(a) > 1e-15 )  {
       MatMaxX(A, i, j);
       multMatrix(A, I, i, j);
       a = MatMaxX(A, i, j);
     }
   }
-
-      // used in the Jacoby eigenvalues search procedure
 protected: 
+// used in the Jacoby eigenvalues search procedure
   static inline T MatMaxX(const TMatrix33& m, size_t &i, size_t &j )  {
-    double c = olx_abs(m[0][1]);
+    const T c = olx_abs(m[0][1]);
     i = 0;  j = 1;
     if( olx_abs(m[0][2]) > c )  {
       j = 2;  
@@ -562,8 +547,8 @@ protected:
     return c;
   }
   static inline void multMatrix(TMatrix33& D, TMatrix33& E, size_t i, size_t j)  {
-    double cf, sf, cdf, sdf;
-    static const double sqr2 = sqrt(2.0)/2;
+    T cf, sf, cdf, sdf;
+    static const T sqr2 = (T)sqrt(2.0)/2;
     if( D[i][i] == D[j][j] )  {
       cdf = 0;
       cf  = sqr2;
@@ -571,24 +556,24 @@ protected:
       sdf = olx_sign(D[i][j]);
     }
     else  {
-      double tdf = 2*D[i][j]/(D[j][j] - D[i][i]);
-      double r = tdf*tdf;
+      T tdf = 2*D[i][j]/(D[j][j] - D[i][i]);
+      T r = tdf*tdf;
       cdf = sqrt( 1.0/(1+r) );
       cf  = sqrt( (1+cdf)/2.0);
       sdf = (sqrt( r/(1+r) ) * olx_sign(tdf));
       sf  = (sqrt((1-cdf)/2.0)*olx_sign(tdf));
     }
-    const double ij = D[i][j], ii = D[i][i], jj = D[j][j];
+    const T ij = D[i][j], ii = D[i][i], jj = D[j][j];
     D[i][j] = D[j][i] = 0;
     D[i][i] = (ii*cf*cf + jj*sf*sf - ij*sdf);
     D[j][j] = (ii*sf*sf + jj*cf*cf + ij*sdf);
     
     for( size_t t=0; t < 3; t++ )  {
-      const double eit = E[i][t], ejt = E[j][t];
-      E[i][t] = eit*cf - ejt*sf; //i
-      E[j][t] = eit*sf + ejt*cf;   //j
+      const T eit = E[i][t], ejt = E[j][t];
+      E[i][t] = eit*cf - ejt*sf;  //i
+      E[j][t] = eit*sf + ejt*cf;  //j
       if((t != i) && (t != j ) )  {
-        const double dit = D[i][t], djt = D[j][t];
+        const T dit = D[i][t], djt = D[j][t];
         D[i][t] = D[t][i] = dit*cf - djt*sf;
         D[j][t] = D[t][j] = dit*sf + djt*cf;
       }
@@ -597,7 +582,7 @@ protected:
 public:
   // solves a set of equations by the Cramer rule {equation arr.c = b }, returns c
   static TVector3<T> CramerSolve(const TMatrix33<T>& arr, const TVector3<T>& b) {
-    double det = arr.Determinant();
+    T det = arr.Determinant();
     if( det == 0 )  throw TDivException(__OlxSourceInfo);
     // det( {b[0], a12, a13}, {b[1], a22, a23}, {b[2], a32, a33} )/det
     return TVector3<T>( b[0]*(arr[1][1]*arr[2][2] - arr[1][2]*arr[2][1]) - 
@@ -613,8 +598,8 @@ public:
                         b[0]*(arr[1][0]*arr[2][1] - arr[1][1]*arr[2][0]))/det;
   }
   // solves a set of equations by the Gauss method {equation arr.c = b ?c }
-  static void GaussSolve(TMatrix33<T>& arr, TVector3<T>& b, TVector3<T>& c) {
-    MatrixElementsSort(arr, b );
+  static TVector3<T> GaussSolve(TMatrix33<T>& arr, TVector3<T>& b) {
+    MatrixElementsSort(arr, b);
     for ( size_t j = 1; j < 3; j++ )
       for( size_t i = j; i < 3; i++ )  {
         if( arr[i][j-1] == 0 )  continue;
@@ -627,9 +612,9 @@ public:
       }
     if( arr[2][2]==0)
       throw TFunctionFailedException(__OlxSourceInfo, "dependent set of equations");
-
+    TVector3<T> c;
     c[2] = b[2]/arr[2][2];
-    for( size_t j = 1; j != ~0; j-- )  {
+    for( size_t j = 1; j != InvalidIndex; j-- )  {
       for( size_t k1=1; k1 < 4-j; k1++ )  {
         if( k1 == (3-j) )
           for( size_t i=2; i > 3-k1; i-- )  
@@ -637,6 +622,7 @@ public:
       }
       c[j]= b[j]/arr[j][j];
      }
+    return c;
    }
 
 protected:  // used in GaussSolve to sort the matrix

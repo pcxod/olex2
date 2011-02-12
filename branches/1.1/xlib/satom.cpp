@@ -125,7 +125,7 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   size_t ca_id = item.GetRequiredField("atom_id").ToSizeT();
   CAtom( latt.GetAsymmUnit().GetAtom(ca_id) );
   const TDataItem& matrices = item.FindRequiredItem("Matrices");
-  Matrices.SetCapacity( matrices.FieldCount() );
+  Matrices.SetCapacity(matrices.FieldCount());
   for( size_t i=0; i < matrices.FieldCount(); i++ )  {
     const size_t mi = matrices.GetField(i).ToSizeT();
     Matrices.Add(latt.GetMatrix(mi));
