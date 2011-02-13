@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Header Files\sdl">
+      <UniqueIdentifier>{f0b1eeb5-aaaa-4025-ac48-081bca30e39f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\xlib">
+      <UniqueIdentifier>{f48374f3-d4c9-47dd-abc9-6db225a95483}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\repository\fsext.cpp">
@@ -27,5 +33,37 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\sdl\tests\encoding_test.h">
+      <Filter>Header Files\sdl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sdl\tests\file_test.h">
+      <Filter>Header Files\sdl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sdl\tests\matrix_test.h">
+      <Filter>Header Files\sdl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sdl\tests\sort_test.h">
+      <Filter>Header Files\sdl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sdl\tests\spline_test.h">
+      <Filter>Header Files\sdl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sdl\tests\string_test.h">
+      <Filter>Header Files\sdl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sdl\tests\sys_test.h">
+      <Filter>Header Files\sdl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xlib\tests\mat_id_test.h">
+      <Filter>Header Files\xlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xlib\tests\symmparser_test.h">
+      <Filter>Header Files\xlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xlib\tests\vcov_test.h">
+      <Filter>Header Files\xlib</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

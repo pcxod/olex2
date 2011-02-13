@@ -147,7 +147,7 @@ BOOL CInstallerDlg::OnInitDialog()  {
   olex2_install_path = TShellUtil::GetSpecialFolderLocation(
     user_is_admin ? fiSysProgramFiles : fiDesktop) << "Olex2";
   wnd::set_text(this, IDC_TE_INSTALL_PATH, olex2_install_path);
-  wnd::set_text(this, IDC_TE_PROXY, EmptyString);
+  wnd::set_text(this, IDC_TE_PROXY, EmptyString());
   wnd::set_enabled(this, IDC_TE_PROXY, false);
   check_box::set_checked(this, IDC_R_ALWAYS, true);
   check_box::set_checked(this, IDC_CB_SHORTCUT, true);
@@ -211,7 +211,7 @@ HCURSOR CInstallerDlg::OnQueryDragIcon()  {
 
 void CInstallerDlg::OnBnClickedBtnChoosePath()  {
   olxstr dir( TShellUtil::PickFolder("Please select installation folder",
-    TShellUtil::GetSpecialFolderLocation(fiSysProgramFiles), EmptyString) );
+    TShellUtil::GetSpecialFolderLocation(fiSysProgramFiles), EmptyString()));
   if( !dir.IsEmpty() )  {
     olex2_install_path = dir << "\\Olex2";
     SetInstallationPath(dir << '-' << olex2_install_tag);
@@ -881,29 +881,29 @@ olxstr CInstallerDlg::ReadTag(const olxstr& repo) const {
     if( TEFile::IsDir(repo) )  {
       const olxstr urepo = TEFile::UnixPath(repo);
       const size_t i = urepo.LastIndexOf('/');
-      if( i == InvalidIndex )  return EmptyString;
+      if( i == InvalidIndex )  return EmptyString();
       const size_t j = urepo.FirstIndexOf('-', i+1);
-      if( j == InvalidIndex )  return EmptyString;
+      if( j == InvalidIndex )  return EmptyString();
       return urepo.SubStringFrom(j+1);
     }
     else  {
       try  {
         TWinZipFileSystem zfs(repo);
         IInputStream* is = zfs.OpenFile("olex2.tag");
-        if( is == NULL )  return EmptyString;
+        if( is == NULL )  return EmptyString();
         TStrList sl;
         sl.LoadFromTextStream(*is);
         delete is;
-        if( sl.IsEmpty() )  return EmptyString;
+        if( sl.IsEmpty() )  return EmptyString();
         return sl[0];
       }
-      catch(...)  {  return EmptyString;  }
+      catch(...)  {  return EmptyString();  }
     }
   }
   else  {
     const olxstr urepo = TEFile::UnixPath(repo);
     const size_t i = urepo.LastIndexOf('/');
-    if( i == InvalidIndex )  return EmptyString;
+    if( i == InvalidIndex )  return EmptyString();
     return urepo.SubStringFrom(i+1);
   }
 }

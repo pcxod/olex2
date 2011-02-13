@@ -12,7 +12,7 @@ public:
 public:
   virtual BOOL InitInstance();
   bool IsOlex2Installed() const {  return olex2_installed;  }
-  olxstr LocateBaseDir(const olxstr& install_tag=EmptyString);
+  olxstr LocateBaseDir(const olxstr& install_tag=EmptyString());
   const olxstr& GetOlex2InstalledPath() const {  return olex2_installed_path;  }
   void SetOlex2InstalledPath(const olxstr& v)  {
     if( !v.IsEmpty() )
