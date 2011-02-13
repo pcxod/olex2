@@ -210,7 +210,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   mat3f rot_mat;
   const vec3f touch_point = (atom_b.atom.crd() - atom_a.atom.crd()).Normalise();
   if( olx_abs(1.0f-olx_abs(touch_point[2])) < 1e-3 )  // degenerated case...
-    olx_create_rotation_matrix_(rot_mat, vec3f(0, 1, 0).Normalise(), touch_point[2]);
+    rot_mat.I();
   else
     olx_create_rotation_matrix_(rot_mat,
       vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);

@@ -308,6 +308,18 @@
   <ItemGroup>
     <None Include="ReadMe.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\sdl\tests\encoding_test.h" />
+    <ClInclude Include="..\..\sdl\tests\file_test.h" />
+    <ClInclude Include="..\..\sdl\tests\matrix_test.h" />
+    <ClInclude Include="..\..\sdl\tests\sort_test.h" />
+    <ClInclude Include="..\..\sdl\tests\spline_test.h" />
+    <ClInclude Include="..\..\sdl\tests\string_test.h" />
+    <ClInclude Include="..\..\sdl\tests\sys_test.h" />
+    <ClInclude Include="..\..\xlib\tests\mat_id_test.h" />
+    <ClInclude Include="..\..\xlib\tests\symmparser_test.h" />
+    <ClInclude Include="..\..\xlib\tests\vcov_test.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

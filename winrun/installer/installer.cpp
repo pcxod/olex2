@@ -120,7 +120,7 @@ BOOL CInstallerApp::InitInstance()  {
 olxstr CInstallerApp::LocateBaseDir(const olxstr& install_tag)  {
   CRegKey rc;
   olex2_installed = false;
-  olex2_installed_path = EmptyString;
+  olex2_installed_path = EmptyString();
   olxstr app_name("olex2-");
   app_name << install_tag << ".exe";
   try  {
@@ -139,7 +139,7 @@ olxstr CInstallerApp::LocateBaseDir(const olxstr& install_tag)  {
   }
   catch( ... )  {}
   if( !TEFile::Exists(olex2_installed_path) )
-    olex2_installed_path = EmptyString;
+    olex2_installed_path = EmptyString();
   else
     olex2_installed = true;
   if( olex2_installed_path.IsEmpty() )  {

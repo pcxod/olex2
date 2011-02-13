@@ -1,10 +1,28 @@
 #include "vcov.h"
+#include "ins.h"
 
 namespace test {
 
 void vcov_test(OlxTests& t)  {
   t.description = __OlxSrcInfo;
   TXApp& app = TXApp::GetInstance();
+  // trying to register the extension name throws an exception
+  try  {  app.XFile().RegisterFileFormat(new TIns, "res"); }
+  catch(const TExceptionBase& )  {}
+  TEFile tf(app.GetBaseDir() + "vcov_test.res", "w+b");
+  tf.Write(
+    "CELL 0.7 12.3 10 4.7 90 123 78\n"
+    "ZERR 2 0.01 0.03 0.008 0.1 0.13 0.17\n"
+    "LATT 1\n"
+    "SFAC C\n"
+    "UNIT 1\n"
+    "C1 1 0.33 0.25 0.66 1 0.25\n"
+    "HKLF 4\n"
+    "END"
+    );
+  tf.SetTemporary(true);
+  tf.Flush();
+  app.XFile().LoadFromFile(tf.GetName());
   if( app.XFile().GetLattice().GetObjects().atoms.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "could not complete test: at least 1 atom is needed");
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
