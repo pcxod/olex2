@@ -155,6 +155,7 @@ olex2_html = Glob('./olex/html/*.cpp')
 olex2_ctrls = Glob('./olex/ctrls/*.cpp')
 unirun = Glob('./unirun/*.cpp')
 olex2c = Split("""./olex2c/olex2c.cpp""")
+tests = Glob('./tests/tests/*.cpp')
 
 np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cpp
                          ./repository/url.cpp          ./repository/wxzipfs.cpp
@@ -189,6 +190,10 @@ for file in gxlib:
   item_index += 1
 
 unirun_env = None
+#this is common for all
+env.Append(LIBPATH=[out_dir+'lib'])
+env.Append(LIBS = ['sdl'])
+
 if sys.platform[:3] == 'win':
   #http://www.scons.org/wiki/EmbedManifestIntoTarget
   #embedd manifest...
@@ -262,6 +267,7 @@ else:
 #!!!
     env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
     unirun_env = env.Clone()
+    tests_env = env.Clone()
     env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --ldflags")
   except:
@@ -274,17 +280,15 @@ sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart',
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
 env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
              
-env.Append(LIBPATH=[out_dir+'lib'])
-env.Append(LIBS = ['sdl'])
-
-generic_files = fileListToStringList('xlib', xlib) + \
+generic_files_list = fileListToStringList('xlib', xlib) + \
                 fileListToStringList('xlib/macro', xlib_macro) + \
                 fileListToStringList('xlib/henke', xlib_henke) + \
                 fileListToStringList('xlib/absorpc', xlib_absorpc)
-generic_files = processFileNameList(generic_files, env, out_dir+'generic')
+generic_files = processFileNameList(generic_files_list, env, out_dir+'generic')
 
 olex2c_env = env.Clone()
 if sys.platform[:3] == 'win':
+  tests_env = env.Clone()
   wx_env = env.Clone()
   wx_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
   wx_env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
@@ -303,8 +307,6 @@ if sys.platform[:3] == 'win':
   olex2_env = wx_env.Clone()
   unirun_env = wx_env.Clone()
 else:
-  unirun_env.Append(LIBPATH=[out_dir+'lib'])
-  unirun_env.Append(LIBS=['sdl'])
   olex2_env = env
 
 olex2_files = fileListToStringList('glib', glib) + \
@@ -332,6 +334,17 @@ unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 if sys.platform[:3] == 'win':
   unirun_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/unirun.pdb'])
 unirun_env.Program(out_dir+'exe/unirun', unirun_files)
+
+tests_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
+tests_files = generic_files_list + fileListToStringList('tests/tests', tests)
+tests_files.append('./repository/olxvar.cpp')
+tests_files.append('./repository/fsext.cpp')
+if sys.platform[:3] == 'win':
+  tests_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/tests.pdb'])
+  tests_files.append('./repository/winzipfs.cpp')
+  tests_files.append('./repository/unzip.cpp')
+tests_files = processFileNameList(tests_files, tests_env, out_dir+'tests')
+tests_env.Program(out_dir+'exe/tests', tests_files)
 
 # make olex2c?
 olex2c_files = processFileNameList(olex2c+np_repository+py_repository, olex2c_env, out_dir+'olex2c')
