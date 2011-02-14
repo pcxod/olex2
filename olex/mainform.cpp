@@ -1685,12 +1685,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( MouseMoveTimeElapsed < 2500 )
       MouseMoveTimeElapsed += FTimer->GetInterval();
     if( MouseMoveTimeElapsed > 500 && MouseMoveTimeElapsed < 5000 )  {
-      if( !_UseGlTooltip )  {
-        AquireTooltipValue();
+      AquireTooltipValue();
+      if( !_UseGlTooltip )
         FGlCanvas->SetToolTip(Tooltip.u_str());
-      }
-      else if( GlTooltip != NULL && GlTooltip->IsVisible() )  {
-        AquireTooltipValue();
+      else if( GlTooltip != NULL )  {
         if( Tooltip.IsEmpty() )  {
           if( GlTooltip->IsVisible() )  {
             GlTooltip->SetVisible(false);

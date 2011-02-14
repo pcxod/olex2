@@ -157,7 +157,8 @@ void TGlTextBox::Fit()  {
   }
   else if( FBuffer.Count() == 1 )  {
     const TTextRect tr = GetFont().GetTextRect(FBuffer[0]);
-    Height = (uint16_t)olx_round(tr.height);
+    // add 3 extra pixels for better presentation...
+    Height = (uint16_t)olx_round(tr.height)+3;
     Width = (uint16_t)olx_round(tr.width);
   }
   else  {
