@@ -1656,11 +1656,14 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
   }
   else  {
-    TGXApp::BondIterator bi = FXApp->GetBonds();
-    while( bi.HasNext() )  {
-      TXBond& xb = bi.Next();
-      if( xb.GetType() != sotHBond )
-        bonds.Add(xb);
+    FXApp->GetBonds(Cmds.Text(' ', 1), bonds);
+    if( bonds.IsEmpty() )  {  // get all non-H
+      TGXApp::BondIterator bi = FXApp->GetBonds();
+      while( bi.HasNext() )  {
+        TXBond& xb = bi.Next();
+        if( xb.GetType() != sotHBond )
+          bonds.Add(xb);
+      }
     }
     FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
   }
