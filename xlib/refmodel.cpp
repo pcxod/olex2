@@ -1126,37 +1126,31 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
   {
     return false;
   }
-  size_t ac = 0;
-  aunit.ComplyToResidues();
-  for( size_t i=0; i < aunit.AtomCount(); i++ )  {
-    TCAtom &this_a = aunit.GetAtom(i);
-    if( this_a.IsDeleted() )  continue;
-    TCAtom *that_a = &rm.aunit.GetAtom(ac);
-    while( that_a->IsDeleted() )  {
-      if( ++ac >= rm.aunit.AtomCount() )
-        return false;
-      that_a = &rm.aunit.GetAtom(ac);
+  for( size_t i=0; i < rm.aunit.AtomCount(); i++ )  {
+    const TCAtom& a = rm.aunit.GetAtom(i);
+    if( a.IsDeleted() )  continue;
+    TCAtom* this_a = NULL;
+    for( size_t j=0; j < aunit.AtomCount(); j++ )  {
+      if( aunit.GetAtom(j).GetLabel().Equalsi(a.GetLabel()) )  {
+        this_a = &aunit.GetAtom(j);
+        break;
+      }
     }
-    if( that_a->GetType() != this_a.GetType() )
-      return false;
-    ac++;
-    if( ac >= rm.aunit.AtomCount() )
-      return false;
+    if( this_a == NULL )  {// new atom?
+      this_a = &aunit.NewAtom();
+      this_a->SetLabel(a.GetLabel(), false);
+      this_a->SetType(a.GetType());
+    }
+    this_a->SetDeleted(false);
+    this_a->ccrd() = a.ccrd();
+    this_a->ccrdEsd() = a.ccrdEsd();
+    this_a->SetOccu(a.GetOccu());
+    this_a->SetOccuEsd(a.GetOccuEsd());
+    this_a->SetUiso(a.GetUiso());
+    this_a->SetUisoEsd(a.GetUisoEsd());
+    this_a->SetQPeak(a.GetQPeak());
   }
-  // need to implement addition of  new atoms, like q-peaks
-  ac = 0;
-  for( size_t i=0; i < aunit.AtomCount(); i++ )  {
-    TCAtom &this_a = aunit.GetAtom(i);
-    if( this_a.IsDeleted() )  continue;
-    TCAtom &that_a = rm.aunit.GetAtom(ac);
-    this_a.ccrd() = that_a.ccrd();
-    this_a.ccrdEsd() = that_a.ccrdEsd();
-    this_a.SetOccu(that_a.GetOccu());
-    this_a.SetOccuEsd(that_a.GetOccuEsd());
-    this_a.SetUiso(that_a.GetUiso());
-    this_a.SetUisoEsd(that_a.GetUisoEsd());
-    ac++;
-  }
+
   for( size_t i=0; i < aunit.EllpCount(); i++ )
     aunit.GetEllp(i) = rm.aunit.GetEllp(i);
 
@@ -1165,6 +1159,8 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
   BASF = rm.BASF;
   for( size_t i=0; i < Vars.VarCount(); i++ )
     Vars.GetVar(i).SetValue(rm.Vars.GetVar(i).GetValue());
+  // update Q-peak scale...
+  aunit.InitData();
   return true;
 }
 //..............................................................................

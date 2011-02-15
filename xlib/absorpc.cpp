@@ -99,6 +99,18 @@ cm_Absorption_Coefficient_Reg::cm_Absorption_Coefficient_Reg()  {
 double cm_Absorption_Coefficient_Reg::_CalcForE(double eV,
   const cm_Absorption_Coefficient* ac, double (cm_Absorption_Coefficient::*f)() const) const {
   eV /= 1e6;
+  double t_ev = eV;
+  long k = 1000; // 'cut' energy to 3 significant digits
+  while( int(t_ev) == 0 )  {
+    t_ev *= 10;
+    k *= 10;
+  }
+  while( int (t_ev) > 10 )  {
+    t_ev /= 10;
+    k /= 10;
+  }
+  if( k != 0 )
+    eV = double((long)(eV*k))/k;
   if( ac == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "undefined absorption data");
   if( eV < ac[0].energy )
@@ -113,6 +125,9 @@ double cm_Absorption_Coefficient_Reg::_CalcForE(double eV,
   }
   if( ac->energy == 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
+  // matches the entry?
+  if( olx_abs(ac->energy-eV) < 1e-3/k )
+    return (ac->*f)();
   // go left
   size_t l_cnt = cnt-1;
   while( l_cnt > 0 && (cnt-l_cnt) < 4 && _ac[l_cnt].energy != 0 )  {

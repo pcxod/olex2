@@ -203,7 +203,6 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
 }
 //..............................................................................
 void TXFile::UpdateAsymmUnit()  {
-  //TLattice *L = GetLattice();
   TBasicCFile* LL = FLastLoader;
   if( LL->IsNative() )
     return;
@@ -376,7 +375,6 @@ void TXFile::ValidateTabs()  {
 void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
-
   TBasicCFile *LL = FLastLoader;
   if( !Loader->IsNative() )  {
     if( LL != Loader ) {
@@ -395,9 +393,8 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
     Cause = exc.Replicate();
   }
   OnFileSave.Exit(this);
-  if( Cause != NULL )  {
+  if( Cause != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
-  }
 }
 //..............................................................................
 void TXFile::Close()  {
