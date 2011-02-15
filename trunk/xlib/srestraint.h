@@ -22,6 +22,9 @@ class TSimpleRestraint : public IEObject, public IXVarReferencer  {
   bool AllNonHAtoms;
   short ListType;
   TCAtomGroup InvolvedAtoms;
+  bool AtomsEqual(const TGroupCAtom& a1, const TGroupCAtom& a2)  {
+    return AtomsEqual(a1.GetAtom(), a1.GetMatrix(), a2.GetAtom(), a2.GetMatrix());
+  }
   bool AtomsEqual(TCAtom* a1, const smatd* m1, TCAtom* a2, const smatd* m2)  {
     if( a1 == a2 )  {
       if( (m1 == NULL && m2 == NULL) || ((m1 != NULL && m2 != NULL)  &&
@@ -37,12 +40,14 @@ protected:
   void SetId(size_t id)  {  Id = id;  }
 public:
   TSimpleRestraint(TSRestraintList& parent, size_t id, const short listType);
-
-  virtual ~TSimpleRestraint()  {  Clear();  }
+  virtual ~TSimpleRestraint()  {}
   void AddAtoms(const TCAtomGroup& atoms);
   void AddAtom(TCAtom& aa, const smatd* ma);
-  void AddAtomPair(TCAtom& aa, const smatd* ma,
-                   TCAtom& ab, const smatd* mb);
+  void AddAtom(TGroupCAtom& a)  {  AddAtom(*a.GetAtom(), a.GetMatrix());  }
+  void AddAtomPair(TCAtom& aa, const smatd* ma, TCAtom& ab, const smatd* mb)  {
+    AddAtom(aa, ma);
+    AddAtom(ab, mb);
+  }
 
   const TSRestraintList& GetParent() const {  return Parent;  }
   TSRestraintList& GetParent()  {  return Parent;  }
@@ -51,10 +56,10 @@ public:
   void Validate();
   void Clear();
 
-  void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
+  void OnCAtomCrdChange(TCAtom* ca, const smatd& matr);
 
   // removes dublicated information depending on the list type
-  void Substruct(TSimpleRestraint& sr);
+  void Subtract(TSimpleRestraint& sr);
 
   // copies data from a restraon, but with atoms from the thisAU
   void Assign(const TSimpleRestraint&);
@@ -127,7 +132,7 @@ public:
   virtual ~TSRestraintList()  {}
   TSimpleRestraint& AddNew()  {  return Restraints.Add(new TSimpleRestraint(*this, Restraints.Count(), RestraintListType));  }
   // function checks uniquesness of the restraint data - previously defined values are removed
-  void ValidateRestraint( TSimpleRestraint& sr);
+  void ValidateRestraint(TSimpleRestraint& sr);
   void ValidateAll()  {
     for( size_t i=0; i < Restraints.Count(); i++ )
       Restraints[i].Validate();
@@ -138,7 +143,7 @@ public:
   void Restore(TSimpleRestraint& sr);
 
   const RefinementModel& GetRM() const {  return RefMod;  }
-  RefinementModel& GetRM()             {  return RefMod;  }
+  RefinementModel& GetRM()  {  return RefMod;  }
 
   void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
   

@@ -1730,7 +1730,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
     srl = &rm.rFLAT;
     DefEsd = 0.1;
     RequiredParams = 0;  AcceptsParams = 1;
-    Vals[0] = &DefEsd; ;
+    Vals[0] = &DefEsd;
   }
   else if( ins_name.Equalsi("DELU") )  {
     srl = &rm.rDELU;
@@ -1821,9 +1821,9 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
           if( j != 0 )
             srl->ValidateRestraint(*sr1);
           sr1 = &srl->AddNew();
-          sr1->SetEsd( sr.GetEsd() );
-          sr1->SetEsd1( sr.GetEsd1() );
-          sr1->SetValue( sr.GetValue() );
+          sr1->SetEsd(sr.GetEsd());
+          sr1->SetEsd1(sr.GetEsd1());
+          sr1->SetValue(sr.GetValue());
         }
       }
       else
