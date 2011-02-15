@@ -28,15 +28,9 @@ void TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
   const smatd* tm = NULL;
   if( ma != NULL )  {
     if( !ma->r.IsI() || ma->t.QLength() != 0 ) 
-      tm = &Parent.GetRM().AddUsedSymm( *ma );
+      tm = &Parent.GetRM().AddUsedSymm(*ma);
   }
-  InvolvedAtoms.AddNew( &aa, tm );
-}
-//..............................................................................
-void TSimpleRestraint::AddAtomPair(TCAtom& aa, const smatd* ma,
-                                   TCAtom& ab, const smatd* mb)  {
-  AddAtom(aa, ma);
-  AddAtom(ab, mb);
+  InvolvedAtoms.AddNew(&aa, tm);
 }
 //..............................................................................
 void TSimpleRestraint::Validate()  {
@@ -44,37 +38,37 @@ void TSimpleRestraint::Validate()  {
     if( InvolvedAtoms.IsNull(i) )  continue;
     if( InvolvedAtoms[i].GetAtom()->IsDeleted() )  {
       if( InvolvedAtoms[i].GetMatrix() != NULL )
-        Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
+        Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i].GetMatrix());
       InvolvedAtoms.NullItem(i);
       if( ListType == rltBonds )  {
         size_t ei = i + ((i%2)==0 ? 1 : -1);
         if( InvolvedAtoms[ei].GetMatrix() != NULL )
-          Parent.GetRM().RemUsedSymm( *InvolvedAtoms[ei].GetMatrix() );
+          Parent.GetRM().RemUsedSymm(*InvolvedAtoms[ei].GetMatrix());
         InvolvedAtoms.NullItem(ei);
       }
       else if( ListType == rltAngles )  {
         if( (i%3) == 0 )  {
           if( InvolvedAtoms[i+1].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i+1].GetMatrix() );
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i+1].GetMatrix());
           InvolvedAtoms.NullItem(i+2);
           if( InvolvedAtoms[i+2].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i+2].GetMatrix() );
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i+2].GetMatrix());
           InvolvedAtoms.NullItem(i+2);
         }
         else if( (i%3) == 1 )  {
           if( InvolvedAtoms[i-1].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i-1].GetMatrix() );
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i-1].GetMatrix());
           InvolvedAtoms.NullItem(i+1);
           if( InvolvedAtoms[i+1].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i+1].GetMatrix() );
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i+1].GetMatrix());
           InvolvedAtoms.NullItem(i+1);
         }
         else if( (i%3) == 2 )  {
           if( InvolvedAtoms[i-1].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i-1].GetMatrix() );
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i-1].GetMatrix());
           InvolvedAtoms.NullItem(i-2);
           if( InvolvedAtoms[i-2].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i-2].GetMatrix() );
+            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i-2].GetMatrix());
           InvolvedAtoms.NullItem(i-2);
         }
       }
@@ -92,7 +86,7 @@ void TSimpleRestraint::Validate()  {
 void TSimpleRestraint::Delete()  {
   for( size_t i=0; i < InvolvedAtoms.Count(); i++ )  {
     if( InvolvedAtoms[i].GetMatrix() != NULL )
-      Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
+      Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i].GetMatrix());
   }
   InvolvedAtoms.Clear();
 }
@@ -125,28 +119,26 @@ void TSimpleRestraint::Assign(const TSimpleRestraint& sr)  {
 
   if( &au == &tau )  {
     for( size_t i=0; i < sr.InvolvedAtoms.Count(); i++ )
-      AddAtom( *sr.InvolvedAtoms[i].GetAtom(), sr.InvolvedAtoms[i].GetMatrix() );
+      AddAtom(sr.InvolvedAtoms[i]);
   }
   else  {
     for( size_t i=0; i < sr.InvolvedAtoms.Count(); i++ )  {
-      TCAtom* aa = tau.FindCAtomById( sr.InvolvedAtoms[i].GetAtom()->GetId() );
+      TCAtom* aa = tau.FindCAtomById(sr.InvolvedAtoms[i].GetAtom()->GetId());
       if( aa == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units do not match");
-      AddAtom( *aa, sr.InvolvedAtoms[i].GetMatrix() );
+      AddAtom(*aa, sr.InvolvedAtoms[i].GetMatrix());
     }
   }
 }
 //..............................................................................
-void TSimpleRestraint::Substruct( TSimpleRestraint& sr )  {
+void TSimpleRestraint::Subtract(TSimpleRestraint& sr)  {
   if( sr.GetListType() != ListType )
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
-  if( ListType == rltAtoms || ListType == rltGroup )  {
+  if( ListType == rltAtoms )  { // do not substruct groups though: #312..
     size_t del_count = 0;
     for( size_t i=0; i < InvolvedAtoms.Count(); i++ )  {
       for( size_t j=0; j < sr.InvolvedAtoms.Count(); j++ )  {
-        if( AtomsEqual(InvolvedAtoms[i].GetAtom(), InvolvedAtoms[i].GetMatrix(),
-                       sr.InvolvedAtoms[j].GetAtom(), sr.InvolvedAtoms[j].GetMatrix()) )
-        {
+        if( AtomsEqual(InvolvedAtoms[i], sr.InvolvedAtoms[j]) )  {
           if( InvolvedAtoms[i].GetMatrix() != NULL )
             Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i].GetMatrix());
           InvolvedAtoms.Delete(i--);
@@ -164,10 +156,10 @@ void TSimpleRestraint::Substruct( TSimpleRestraint& sr )  {
   else if( ListType == rltBonds )  {
     for( size_t i=0; i < InvolvedAtoms.Count(); i+=2 )  {
       for( size_t j=0; j < sr.InvolvedAtoms.Count(); j+=2 )  {
-        if( (AtomsEqual(InvolvedAtoms[i].GetAtom(), InvolvedAtoms[i].GetMatrix(), sr.InvolvedAtoms[j].GetAtom(), sr.InvolvedAtoms[j].GetMatrix()) &&
-             AtomsEqual(InvolvedAtoms[i+1].GetAtom(), InvolvedAtoms[i+1].GetMatrix(), sr.InvolvedAtoms[j+1].GetAtom(), sr.InvolvedAtoms[j+1].GetMatrix())) ||
-            (AtomsEqual(InvolvedAtoms[i].GetAtom(), InvolvedAtoms[i].GetMatrix(), sr.InvolvedAtoms[j+1].GetAtom(), sr.InvolvedAtoms[j+1].GetMatrix()) &&
-             AtomsEqual(InvolvedAtoms[i+1].GetAtom(), InvolvedAtoms[i+1].GetMatrix(), sr.InvolvedAtoms[j].GetAtom(), sr.InvolvedAtoms[j].GetMatrix())) )
+        if( (AtomsEqual(InvolvedAtoms[i], sr.InvolvedAtoms[j]) &&
+             AtomsEqual(InvolvedAtoms[i+1], sr.InvolvedAtoms[j+1])) ||
+            (AtomsEqual(InvolvedAtoms[i], sr.InvolvedAtoms[j+1]) &&
+             AtomsEqual(InvolvedAtoms[i+1], sr.InvolvedAtoms[j])) )
         {
           if( InvolvedAtoms[i].GetMatrix() != NULL )
             Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i].GetMatrix());
@@ -183,7 +175,7 @@ void TSimpleRestraint::Substruct( TSimpleRestraint& sr )  {
   }
 }
 //..............................................................................
-void TSimpleRestraint::OnCAtomCrdChange( TCAtom* ca, const smatd& matr )  {
+void TSimpleRestraint::OnCAtomCrdChange(TCAtom* ca, const smatd& matr)  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
@@ -205,7 +197,8 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
     if( InvolvedAtoms[i].GetAtom()->IsDeleted() )  continue;
     TDataItem& atom = atoms.AddItem(atom_id++);
     atom.AddField("atom_id", InvolvedAtoms[i].GetAtom()->GetTag());
-    atom.AddField("eqiv_id", InvolvedAtoms[i].GetMatrix() == NULL ? ~0 : InvolvedAtoms[i].GetMatrix()->GetId());
+    atom.AddField("eqiv_id",
+      InvolvedAtoms[i].GetMatrix() == NULL ? InvalidIndex : InvolvedAtoms[i].GetMatrix()->GetId());
   }
 }
 //..............................................................................
@@ -278,7 +271,7 @@ void TSRestraintList::Assign(const TSRestraintList& rl)  {
   }
 }
 //..............................................................................
-void TSRestraintList::ValidateRestraint( TSimpleRestraint& sr )  {
+void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
   if( sr.GetListType() != RestraintListType )
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
   size_t AllAtomsInd = InvalidIndex;
@@ -297,7 +290,7 @@ void TSRestraintList::ValidateRestraint( TSimpleRestraint& sr )  {
     for( size_t i=0; i < Restraints.Count(); i++ )  {
       if( &Restraints[i] == &sr )
         continue;
-      Restraints[i].Substruct(sr);
+      Restraints[i].Subtract(sr);
     }
   }
 }
@@ -358,6 +351,6 @@ PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject
 #endif//..............................................................................
 void TSRestraintList::FromDataItem(TDataItem& item) {
   for( size_t i=0; i < item.ItemCount(); i++ )
-    AddNew().FromDataItem( item.GetItem(i) );
+    AddNew().FromDataItem(item.GetItem(i));
 }
 //..............................................................................
