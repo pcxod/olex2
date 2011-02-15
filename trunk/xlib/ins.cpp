@@ -820,7 +820,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
             << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
         for( size_t j=0; j < sg.GetDependent(i).Count(); j++ )
           tmp << ' ' << sg.GetDependent(i)[j].GetResiLabel();
-        HyphenateIns( tmp, sl );
+        HyphenateIns(tmp, sl);
       }
       for( size_t i=0; i < sg.Count(); i++ )
         _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
@@ -1076,7 +1076,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
   for( size_t i=0; i < atoms.Count(); i++ )  {
     cm_Element* elm = XElementLib::FindBySymbolEx(atoms[i].GetName());
     if( elm == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << atoms[i].GetName() );
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << atoms[i].GetName());
     size_t index = BasicAtoms.IndexOf(elm);
     if( index == InvalidIndex )  {
       GetRM().AddUserContent(*elm, 1.0);
@@ -1351,150 +1351,64 @@ void StoreUsedSymIndex(TUIntList& il, const smatd* m, RefinementModel& rm)  {
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
                           RefinementModel::ReleasedItems* processed, RefinementModel& rm)  {
   size_t oindex = SL.Count();
-
-  olxstr Tmp;
-  TUIntList usedSymm;
-  // fixed distances
-  for( size_t i=0; i < rm.rDFIX.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rDFIX[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    Tmp = "DFIX ";
-    Tmp << rm.Vars.GetParam(sr, 0) << ' ' << sr.GetEsd();
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
-    }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
-  }
-  // similar distances
-  for( size_t i=0; i < rm.rSADI.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rSADI[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    Tmp = "SADI ";
-    Tmp << sr.GetEsd();
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
-    }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
-  }
-  // fixed "angles"
-  for( size_t i=0; i < rm.rDANG.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rDANG[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    Tmp = "DANG ";
-    Tmp << olxstr::FormatFloat(3, rm.Vars.GetParam(sr, 0)) << ' ' << sr.GetEsd();
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
-    }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
-  }
-  // fixed chiral atomic volumes
-  for( size_t i=0; i < rm.rCHIV.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rCHIV[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    Tmp = "CHIV ";
-    Tmp << rm.Vars.GetParam(sr, 0) << ' ' << sr.GetEsd();
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
-    }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
-  }
+  typedef AnAssociation2<TSRestraintList*,RCInfo> ResInfo;
+  TStrPObjList<olxstr, ResInfo> restraints;
+  // fixed distances, has value, one esd, no atom limit
+  restraints.Add("DFIX", ResInfo(&rm.rDFIX, RCInfo(1, 1, -1)));
+  // similar distances, no value, one esd, no atom limit
+  restraints.Add("SADI", ResInfo(&rm.rSADI, RCInfo(0, 1, -1)));
+  // fixed "angles", has value, one esd, no atom limit
+  restraints.Add("DANG", ResInfo(&rm.rDANG, RCInfo(1, 1, -1)));
+  /* fixed chiral atomic volumes, has value, one esd, no atom limit - volume
+  restrained for each atom */
+  restraints.Add("CHIV", ResInfo(&rm.rCHIV, RCInfo(1, 1, -1)));
   // planar groups
-  for( size_t i=0; i < rm.rFLAT.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rFLAT[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    if( sr.AtomCount() < 4 )  continue;
-    Tmp = "FLAT ";
-    Tmp << sr.GetEsd();
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
-    }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
-  }
+  restraints.Add("FLAT", ResInfo(&rm.rFLAT, RCInfo(0, 1, 4)));
   // rigid bond restraint
-  for( size_t i=0; i < rm.rDELU.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rDELU[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    Tmp = "DELU ";
-    Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
-    }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
-  }
+  restraints.Add("DELU", ResInfo(&rm.rDELU, RCInfo(0, 2, -1)));
   // similar U restraint
-  for( size_t i=0; i < rm.rSIMU.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rSIMU[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    Tmp = "SIMU ";
-    Tmp << sr.GetEsd() << ' ' << sr.GetEsd1() << ' ' << sr.GetValue();
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
-    }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
-  }
+  restraints.Add("SIMU", ResInfo(&rm.rSIMU, RCInfo(-1, 2, -1)));
   // Uanis restraint to behave like Uiso
-  for( size_t i=0; i < rm.rISOR.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rISOR[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    Tmp = "ISOR ";
-    Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
-    }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
-  }
+  restraints.Add("ISOR", ResInfo(&rm.rISOR, RCInfo(0, 2, -1)));
   // equivalent EADP constraint
-  for( size_t i=0; i < rm.rEADP.Count(); i++ )  {
-    TSimpleRestraint& sr = rm.rEADP[i];
-    sr.Validate();
-    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
-    if( sr.AtomCount() < 2 )  continue;
-    Tmp = "EADP";
-    for( size_t j=0; j < sr.AtomCount(); j++ )  {
-      Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
-      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+  restraints.Add("EADP", ResInfo(&rm.rEADP, RCInfo(0, 0, 2, false)));
+
+  TUIntList usedSymm;
+  for( size_t i=0; i < restraints.Count(); i++ )  {
+    ResInfo& r = restraints.GetObject(i);
+    for( size_t j=0; j < r.GetA()->Count(); j++ )  {
+      TSimpleRestraint& sr = (*r.A())[j];
+      const RCInfo& ri = r.GetB();
+      sr.Validate();
+      if( !Ins_ProcessRestraint(atoms, sr) )  continue;
+      if( (int)sr.AtomCount() < ri.atom_limit )  // has lower atom count limit?
+        continue;
+      olxstr line = restraints[i];
+      if( ri.has_value > 0 )  // has value and is first?
+        line << ' ' << rm.Vars.GetParam(sr, 0);
+      if( ri.esd_cnt > 0 )  // uses Esd?
+        line << ' ' << sr.GetEsd();
+      if( ri.esd_cnt > 1 )  // has extra Esd?
+        line << ' ' << sr.GetEsd1();
+      if( ri.has_value < 0 )  // has value and is last?
+        line << ' ' << rm.Vars.GetParam(sr, 0);
+      for( size_t j=0; j < sr.AtomCount(); j++ )  {
+        if( ri.full_label )
+          line << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+        else
+          line << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
+        StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      }
+      HyphenateIns(line, SL);
+      if( processed != NULL )  
+        processed->restraints.Add(sr);
     }
-    HyphenateIns(Tmp, SL);
-    if( processed != NULL )  
-      processed->restraints.Add( &sr );
   }
   // equivalent EXYZ constraint
   for( size_t i=0; i < rm.ExyzGroups.Count(); i++ )  {
     TExyzGroup& sr = rm.ExyzGroups[i];
     if( sr.IsEmpty() )  continue;
-    Tmp = "EXYZ";
+    olxstr Tmp = "EXYZ";
     for( size_t j=0; j < sr.Count(); j++ )  {
       if( sr[j].IsDeleted() )  continue;
       Tmp << ' ' << sr[j].GetLabel();
@@ -1503,10 +1417,10 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   }
   // store the rest of eqiv ...
   for( size_t i=0; i < rm.UsedSymmCount(); i++ )
-    StoreUsedSymIndex( usedSymm, &rm.GetUsedSymm(i), rm);
+    StoreUsedSymIndex(usedSymm, &rm.GetUsedSymm(i), rm);
   // save
   for( size_t i=0; i < usedSymm.Count(); i++ )  {
-    Tmp = "EQIV ";
+    olxstr Tmp = "EQIV ";
     Tmp << '$' << (i+1) << ' ' << TSymmParser::MatrixToSymm( rm.GetUsedSymm(usedSymm[i]) );
     SL.Insert(oindex+i, Tmp  );
   }
@@ -1524,7 +1438,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   else  {
     SortedPtrList<const Fragment, TPointerPtrComparator> saved;
     for( size_t i=0; i < atoms->Count(); i++ )  {
-      const int m = TAfixGroup::GetM( (*atoms)[i]->GetAfix() );
+      const int m = TAfixGroup::GetM((*atoms)[i]->GetAfix());
       if( m < 17 )  continue;
       const Fragment* frag = rm.FindFragByCode(m);
       if( frag == NULL )
@@ -1534,7 +1448,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       frag->ToStrings(SL);
     }
   }
-  SL.Add(EmptyString());
+  SL.Add();
 }
 //..............................................................................
 void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {

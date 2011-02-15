@@ -12,6 +12,9 @@ from 1 keV to 20 MeV. The mu/rho values are taken from the current photon intera
 database at the National Institute of Standards and Technology, and the muen/rho values
 are based on the new calculations by Seltzer described in Radiation Research 136, 147
 (1993).
+
+Three extra points, specifically for the Cu-a, Ag-a and Mo-ka radiation international
+tables are also added
 */
 
 BeginXlibNamespace()

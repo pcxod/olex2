@@ -2977,8 +2977,8 @@ void TMainForm::macDang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   TSimpleRestraint* dang = &FXApp->XFile().GetRM().rDANG.AddNew();
-  dang->SetValue( fixLen );
-  dang->SetEsd( esd );
+  dang->SetValue(fixLen);
+  dang->SetEsd(esd);
   if( (Atoms.Count()%2) != 0 )  {
     E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected" );
     return;
@@ -2986,13 +2986,13 @@ void TMainForm::macDang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   for( size_t i=0; i < Atoms.Count(); i += 2 )  {
     TXAtom* XA = Atoms[i];
     TXAtom* XA1 = Atoms[i+1];
-    dang->AddAtomPair( XA->CAtom(), &XA->GetMatrix(0),
+    dang->AddAtomPair(XA->CAtom(), &XA->GetMatrix(0),
       XA1->CAtom(), &XA1->GetMatrix(0));
     if( dang->AtomCount() >= 12 )  {
       FXApp->XFile().GetRM().rDANG.ValidateRestraint(*dang);
       dang = &FXApp->XFile().GetRM().rDANG.AddNew();
-      dang->SetValue( fixLen );
-      dang->SetEsd( esd );
+      dang->SetValue(fixLen);
+      dang->SetEsd(esd);
     }
   }
   FXApp->XFile().GetRM().rDANG.ValidateRestraint(*dang);
@@ -3015,7 +3015,7 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( sel.Count() > 1 ) {
       for( size_t i=0; i < sel.Count(); i += 2 )  {
         if( !EsdlInstanceOf(sel[i], TXBond) || !EsdlInstanceOf(sel[i+1], TXBond) ) {
-          E.ProcessingError(__OlxSrcInfo, "bonds only expected" );
+          E.ProcessingError(__OlxSrcInfo, "bonds only expected");
           return;
         }
         const TSBond& sba = (TXBond&)sel[i];
@@ -3024,7 +3024,7 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
                     ((&sba.A() == &sbb.B() || &sba.B() == &sbb.B()) ? &sbb.B() : 
                       NULL );
         if( sa == NULL )  {
-          E.ProcessingError(__OlxSrcInfo, "some bonds do not share atom" );
+          E.ProcessingError(__OlxSrcInfo, "some bonds do not share atom");
           return;
         }
         satoms.Add(sba.Another(*sa));
@@ -3033,7 +3033,7 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     else
-      E.ProcessingError(__OlxSrcInfo, "no atoms or bonds provided" );
+      E.ProcessingError(__OlxSrcInfo, "no atoms or bonds provided");
   }
   else
     satoms.AddList(xatoms);
@@ -3051,8 +3051,8 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     TSimpleRestraint* dfix = &FXApp->XFile().GetRM().rDFIX.AddNew();
-    dfix->SetValue( dfixLenA );
-    dfix->SetEsd( esd );
+    dfix->SetValue(dfixLenA);
+    dfix->SetEsd(esd);
     dfix->AddAtomPair(satoms[i]->CAtom(), &satoms[i]->GetMatrix(0),
                       satoms[i+1]->CAtom(), &satoms[i+1]->GetMatrix(0) );
     if( dfixLenB != dfixLenA )  {
@@ -3060,16 +3060,20 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       dfix = &FXApp->XFile().GetRM().rDFIX.AddNew();
     }
     dfix->AddAtomPair(satoms[i+1]->CAtom(), &satoms[i+1]->GetMatrix(0),
-                      satoms[i+2]->CAtom(), &satoms[i+2]->GetMatrix(0) );
+                      satoms[i+2]->CAtom(), &satoms[i+2]->GetMatrix(0));
     FXApp->XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
     
 
     TSimpleRestraint* dang = &FXApp->XFile().GetRM().rDANG.AddNew();
-    dang->SetValue( sqrt(olx_sqr(dfixLenA) + olx_sqr(dfixLenB) - 2*dfixLenA*dfixLenB*cos(angle*M_PI/180)) );
+    dang->SetValue(
+      olx_round(
+        sqrt(olx_sqr(dfixLenA) + olx_sqr(dfixLenB) - 2*dfixLenA*dfixLenB*cos(angle*M_PI/180)),
+        1000)
+      );
     dang->SetEsd(esd*2);
     dang->AddAtom(satoms[i]->CAtom(), &satoms[i]->GetMatrix(0) );
     //dang->AddAtom(Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix(0) );
-    dang->AddAtom(satoms[i+2]->CAtom(), &satoms[i+2]->GetMatrix(0) );
+    dang->AddAtom(satoms[i+2]->CAtom(), &satoms[i+2]->GetMatrix(0));
     FXApp->XFile().GetRM().rDANG.ValidateRestraint(*dang);
   }
 }
