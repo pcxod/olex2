@@ -1638,9 +1638,12 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
   }
   else  {
-    for( size_t i=0; i < FXApp->BondCount(); i++ )  {
-      if( FXApp->GetBond(i).Bond().GetType() != sotHBond )
-        bonds.Add(FXApp->GetBond(i));
+    FXApp->GetBonds(Cmds.Text(' ', 1), bonds);
+    if( bonds.IsEmpty() )  {
+      for( size_t i=0; i < FXApp->BondCount(); i++ )  {
+        if( FXApp->GetBond(i).Bond().GetType() != sotHBond )
+          bonds.Add(FXApp->GetBond(i));
+      }
     }
     FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
   }

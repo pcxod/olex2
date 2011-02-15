@@ -27,7 +27,7 @@ public:
     *this = ed;
   }
   ExperimentalDetails& operator = (const ExperimentalDetails& ed) {
-    Radiation = ed.Radiation;
+    SetRadiation(ed.Radiation);
     TempValue = ed.TempValue;
     CrystalSize = ed.CrystalSize;
     return *this;
