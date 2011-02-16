@@ -864,9 +864,8 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
       Points.AddNew(atoms[i], 1);
   }
 
-  TSPlane& Plane = Objects.planes.New(Network);
-  Plane.Init(Points);
-  return &Plane;
+  Objects.planes.New(Network).Init(Points);
+  return &Objects.planes.Detach(Objects.planes.Count()-1);
 }
 //..............................................................................
 void TLattice::UpdatePlaneDefinitions()  {
