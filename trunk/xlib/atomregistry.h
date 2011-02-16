@@ -18,6 +18,7 @@ public:
   inline void DeleteLast()  {  Delete(Count()-1);  }
   virtual void Clear() = 0;
   virtual void Null(size_t i) = 0;
+  virtual obj_t& Detach(size_t i) = 0;
   virtual void Pack() = 0;
   virtual void IncCapacity(size_t v) = 0;
   inline bool IsEmpty() const {  return Count() == 0;  }
@@ -44,6 +45,7 @@ public:
   virtual void Delete(size_t i)  {  list.Delete(i);  }
   virtual void Clear()  {  list.Clear();  }
   virtual void Null(size_t i)  {  list.Null(i);  }
+  virtual act_t& Detach(size_t i) {  return (act_t&)list.Detach(i);  }
   virtual void Pack()  {  list.Pack();  }
   virtual void IncCapacity(size_t v)  {  list.IncCapacity(v);  }
   template <class Functor> const ObjectCaster& ForEach(const Functor& f) const {
@@ -80,6 +82,11 @@ public:
   virtual void Null(size_t i)  {
     delete items[i];
     items.Set(i, NULL);
+  }
+  virtual obj_t& Detach(size_t i)  {
+    obj_t* rv = items[i];
+    items.Delete(i);
+    return *rv;
   }
   virtual void Pack()  {
     items.Pack();
