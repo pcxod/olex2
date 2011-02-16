@@ -1032,6 +1032,7 @@ void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TCAtomPList catoms(atoms, TSAtom::CAtomAccessor<>());
   if( !Options.Contains("h") )
     catoms.Pack(TCAtom::TypeAnalyser<>(iHydrogenZ));
+  catoms.Pack(TCAtom::TypeAnalyser<>(iQPeakZ));
   TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, true);
 }
 //..............................................................................

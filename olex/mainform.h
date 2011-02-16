@@ -93,6 +93,7 @@ enum  {
   ID_AtomSelRings,
   
   ID_PlaneActivate,
+  ID_BondViewAlong,
 
   ID_FragmentHide,  // fragment menu
   ID_FragmentShowOnly,
@@ -343,12 +344,11 @@ protected:
   void OnAtomTypePTable(wxCommandEvent& event);
   void OnAtom(wxCommandEvent& event); // general handler
 
+  void OnBond(wxCommandEvent& event);
   void OnPlane(wxCommandEvent& event); // general handler
 
   void OnSelection(wxCommandEvent& event);
-
   void OnGraphicsStyle(wxCommandEvent& event);
-  
   void OnPictureExport(wxCommandEvent& event);
 
   // view menu
@@ -388,7 +388,7 @@ private:
   DefMacro(TelpV)
   DefMacro(Labels)
   DefMacro(SetEnv)
-  DefMacro(Activate)
+  DefMacro(SetView)
   DefMacro(Info)
   DefMacro(Help)
   DefMacro(Matr)

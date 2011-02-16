@@ -45,6 +45,15 @@ public:
     for( size_t i=0; i < list.Count(); i++ )
       Add(*list[i], false);
   }
+  template <class obj_t, class list_t> list_t& Extract(list_t& l) const {
+    for( size_t i=0; i < Objects.Count(); i++ )
+      if( EsdlInstanceOf(*Objects[i], obj_t) )
+        l.Add((obj_t*)Objects[i]);
+    return l;
+  }
+  template <class obj_t> TPtrList<obj_t>& Extract(TPtrList<obj_t>& l) const {
+    return Extract<obj_t,TPtrList<obj_t> >(l);
+  }
   void Remove(AGDrawObject& G);
   void RemoveHidden();
 

@@ -244,6 +244,8 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomSelRings, TMainForm::OnAtom)
 
   EVT_MENU(ID_PlaneActivate, TMainForm::OnPlane)
+  
+  EVT_MENU(ID_BondViewAlong, TMainForm::OnBond)
 
   EVT_MENU(ID_View100, TMainForm::OnViewAlong)
   EVT_MENU(ID_View010, TMainForm::OnViewAlong)
@@ -551,7 +553,8 @@ f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupa
   this_InitMacroD(SetEnv, EmptyString(), fpTwo,
 "Sets an environmental variable");
 
-  this_InitMacroD(Activate, EmptyString(), fpOne, "Sets current normal to the normal of the selected plane");
+  this_InitMacroD(SetView, "c-center", fpAny,
+    "Sets view normal to the normal of the selected plane, to a bond or mean line");
   this_InitMacroD(Info, "s-sorts the atom list", fpAny, "Prints out information for provided [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
 "Prints available information. If no arguments provided prints available commands");
@@ -1093,13 +1096,14 @@ separated values of Atom Type and radius, an entry a line");
   miBondInfo = pmBond->FindItemByPosition(0);
   pmBond->Append(ID_MenuTang, wxT("TANG"), pmTang);
   pmBond->AppendSeparator();
+  pmBond->Append(ID_BondViewAlong, wxT("View along"));
   pmBond->Append(ID_GraphicsKill, wxT("Delete"));
   pmBond->AppendSeparator();
   pmBond->Append(ID_MenuFragment, wxT("Fragment"), pmFragment->Clone());
   pmBond->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
   pmBond->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
 // setting plane menu
-  pmPlane->Append(ID_PlaneActivate, wxT("Activate"));
+  pmPlane->Append(ID_PlaneActivate, wxT("View along normal"));
   pmPlane->Append(ID_GraphicsKill, wxT("Delete"));
   pmPlane->Append(1, wxT("Graphics"), pmGraphics->Clone());
   pmPlane->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());

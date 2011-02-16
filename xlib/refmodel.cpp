@@ -1153,7 +1153,8 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
 
   for( size_t i=0; i < aunit.EllpCount(); i++ )
     aunit.GetEllp(i) = rm.aunit.GetEllp(i);
-
+  
+  Vars.Assign(rm.Vars);
   used_weight = rm.used_weight;
   proposed_weight = rm.proposed_weight;
   BASF = rm.BASF;

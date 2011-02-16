@@ -493,7 +493,7 @@ void TMainForm::OnShowAll(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnModelCenter(wxCommandEvent& event)  {
-  FXApp->CenterModel();
+  ProcessMacro("center");
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -526,21 +526,33 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnPlane(wxCommandEvent& event)  {
-  TXPlane *XP = (TXPlane*)FObjectUnderMouse;
-  if( !XP )  return;
-  switch( event.GetId() )  {
-    case ID_PlaneActivate:
-    ProcessMacro(olxstr("activate ") << XP->GetPrimitives().GetName());
-    break;
+  TXPlane *XP = dynamic_cast<TXPlane*>(FObjectUnderMouse);
+  if( XP == NULL )  return;
+  if( event.GetId() == ID_PlaneActivate )  {
+    const vec3d& n = XP->GetNormal();
+    const vec3d& c = XP->GetCenter();
+    ProcessMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
+     << ' ' << c[0] << ' ' << c[1] << ' ' << c[2]);
+  }
+}
+//..............................................................................
+void TMainForm::OnBond(wxCommandEvent& event)  {
+  TXBond *xb = dynamic_cast<TXBond*>(FObjectUnderMouse);
+  if( xb == NULL )  return;
+  if( event.GetId() == ID_BondViewAlong )  {
+    const vec3d n = (xb->B().crd()-xb->A().crd()).Normalise();
+    const vec3d c = (xb->B().crd()+xb->A().crd())/2;
+    ProcessMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
+     << ' ' << c[0] << ' ' << c[1] << ' ' << c[2]);
   }
 }
 //..............................................................................
 void TMainForm::OnSelection(wxCommandEvent& m)  {
   if( m.GetId() == ID_SelGroup )
-      ProcessMacro("group");
+    ProcessMacro("group");
   else if( m.GetId() == ID_SelUnGroup )  {
-  TGlGroup *GlR = NULL;
-  if( FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
+    TGlGroup *GlR = NULL;
+    if( FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
       FXApp->UnGroup(*((TGlGroup*)FObjectUnderMouse));
     else      
       FXApp->UnGroupSelection();

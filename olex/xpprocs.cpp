@@ -1287,16 +1287,69 @@ void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 }
 //..............................................................................
-void TMainForm::macActivate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TXPlane *XP = FXApp->XPlane(Cmds[0]);
-  if( XP != NULL )  {
-    FXApp->GetRender().GetBasis().OrientNormal(XP->GetNormal());
-    FXApp->SetGridDepth(XP->GetCenter());
-    FXApp->Draw();
+void TMainForm::macSetView(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  const bool do_center = Options.Contains('c');
+  bool process = false, has_center = true;
+  vec3d center, normal;
+  if( Cmds.IsEmpty() )  {
+    TGlGroup& g = FXApp->GetSelection();
+    if( g.Count() == 1 )  {
+      if( EsdlInstanceOf(g[0], TXPlane) )  {
+        TXPlane& xp = (TXPlane&)g[0];
+        normal = xp.GetNormal();
+        center = xp.GetCenter();
+        process = true;
+      }
+      else if( EsdlInstanceOf(g[0], TXBond) )  {
+        TXBond& xb = (TXBond&)g[0];
+        normal = vec3d(xb.B().crd()-xb.A().crd()).Normalise();
+        center = (xb.B().crd()+xb.A().crd())/2;
+        process = true;
+      }
+    }
   }
   else  {
-    Error.ProcessingError(__OlxSrcInfo, "could not find specified plane: ") << Cmds[0];
-    return;
+    if( Cmds.Count() == 3 && Cmds[0].IsNumber() && Cmds[1].IsNumber() && Cmds[2].IsNumber() )  {
+      normal = vec3d(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble()).Normalise();
+      process = true;
+      has_center = false;
+    }
+    else if( Cmds.Count() == 6 &&
+             Cmds[0].IsNumber() && Cmds[1].IsNumber() && Cmds[2].IsNumber() &&
+             Cmds[3].IsNumber() && Cmds[4].IsNumber() && Cmds[5].IsNumber() )
+    {
+      normal = vec3d(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble()).Normalise();
+      center = vec3d(Cmds[3].ToDouble(), Cmds[4].ToDouble(), Cmds[5].ToDouble());
+      process = true;
+    }
+  }
+  if( !process )  {
+    TXAtomPList xatoms;
+    FindXAtoms(Cmds, xatoms, true, false);
+    if( xatoms.Count() < 2 )  {
+      Error.ProcessingError(__OlxSrcInfo, "At least two atoms are required");
+      return;
+    }
+    process = true;
+    if( xatoms.Count() == 2 )  {
+      center = (xatoms[0]->crd()+xatoms[1]->crd())/2;
+      normal = (xatoms[1]->crd()-xatoms[0]->crd()).Normalise();
+    }
+    else  {
+      TSAtomPList satoms(xatoms, StaticCastAccessor<TSAtom>());
+      mat3d params;
+      vec3d rms;
+      TSPlane::CalcPlanes(satoms, params, rms, center);
+      normal = params[2];
+    }
+  }
+  if( process )  {
+    FXApp->GetRender().GetBasis().OrientNormal(normal);
+    if( do_center && has_center )
+      FXApp->GetRender().GetBasis().SetCenter(-center);
+    if( FXApp->XGrid().IsVisible() && has_center )
+      FXApp->SetGridDepth(center);
+    FXApp->Draw();
   }
 }
 //..............................................................................
