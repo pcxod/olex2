@@ -574,7 +574,7 @@ public:     void CalcProbFactor(float Prob);
   TSPlane *TmpPlane(TXAtomPList* Atoms=NULL, double weightExtent=0); 
   void DeletePlane(TXPlane* plane);
   void ClearPlanes();
-  TXPlane *XPlane(const olxstr& PlaneName);
+  TXPlane *FindPlane(const olxstr& PlaneName);
 
   TXLine& AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
   TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);

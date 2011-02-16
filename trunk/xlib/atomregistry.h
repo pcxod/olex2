@@ -19,6 +19,7 @@ public:
   virtual void Clear() = 0;
   virtual void Null(size_t i) = 0;
   virtual obj_t& Detach(size_t i) = 0;
+  virtual obj_t& Attach(obj_t& o) = 0;
   virtual void Pack() = 0;
   virtual void IncCapacity(size_t v) = 0;
   inline bool IsEmpty() const {  return Count() == 0;  }
@@ -46,6 +47,7 @@ public:
   virtual void Clear()  {  list.Clear();  }
   virtual void Null(size_t i)  {  list.Null(i);  }
   virtual act_t& Detach(size_t i) {  return (act_t&)list.Detach(i);  }
+  virtual act_t& Attach(act_t& o) {  return (act_t&)list.Attach(o);  }
   virtual void Pack()  {  list.Pack();  }
   virtual void IncCapacity(size_t v)  {  list.IncCapacity(v);  }
   template <class Functor> const ObjectCaster& ForEach(const Functor& f) const {
@@ -88,6 +90,7 @@ public:
     items.Delete(i);
     return *rv;
   }
+  virtual obj_t& Attach(obj_t& o) {  return *items.Add(o);  }
   virtual void Pack()  {
     items.Pack();
     UpdateOwnerIds();

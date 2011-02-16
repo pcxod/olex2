@@ -832,12 +832,13 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
         }
       }
       else  {
+        Objects.planes.Attach(*Plane);
         rv.Add(Plane);
         Plane->_SetDefId(PlaneDefs.Count()-1);
       }
     }
     else
-      Objects.planes.DeleteLast();
+      delete Plane;
   }
   return rv;
 }
@@ -1910,7 +1911,7 @@ void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
   else  {
     evecd ee(6);
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetEllipsoid() == NULL )  {
+      if( atoms[i]->GetEllipsoid() == NULL)  {
         ee[0] = ee[1] = ee[2] = atoms[i]->GetUiso();
         atoms[i]->UpdateEllp(ee);
       }

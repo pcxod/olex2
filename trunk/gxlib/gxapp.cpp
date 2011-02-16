@@ -1953,7 +1953,7 @@ TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool regular, double weightExtent)
   return planes.IsEmpty() ? NULL : static_cast<TXPlane*>(planes[0]);
 }
 //..............................................................................
-TXPlane *TGXApp::XPlane(const olxstr &PlaneName)  {
+TXPlane *TGXApp::FindPlane(const olxstr &PlaneName)  {
   PlaneIterator pi(*this);
   while( pi.HasNext() )  {
     TXPlane& p = pi.Next();
