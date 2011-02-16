@@ -137,6 +137,14 @@ namespace math  {
         v += a(i)*b(i);
       return v;
     }
+    // this way the rounding error is smaller than in a simple loop
+    template<typename T1, typename T2, typename FT> FT& dot_prod(const T1& a, const T2& b, FT& v)  {
+      v = 0;
+      const size_t sz = a.Caunt();
+      for( size_t i=0; i < sz; i++ )
+        v += a(i)*b(i);
+      return v;
+    }
     template <typename T> void swap_rows(T& m, size_t i, size_t j)  {
       const size_t sz = m.ColCount();
       for( size_t x=0; x < sz; x++ )
@@ -191,26 +199,30 @@ namespace math  {
         TBasicApp::NewLogEntry() << line;
       }
     }
-    template <typename FT> struct Mul  {
+    template <typename FT> struct _Mul  {
       const FT k;
-      Mul(FT _k) : k(_k)  {}
+      _Mul(FT _k) : k(_k)  {}
       void operator ()(FT& f) const {  f *= k;  }
     };
-    template <typename FT> struct Div  {
+    template <typename FT> struct _Div  {
       const FT k;
-      Div(FT _k) : k(_k)  {}
+      _Div(FT _k) : k(_k)  {}
       void operator ()(FT& f) const {  f /= k;  }
     };
-    template <typename FT> struct Add  {
+    template <typename FT> struct _Add  {
       const FT k;
-      Add(FT _k) : k(_k)  {}
+      _Add(FT _k) : k(_k)  {}
       void operator ()(FT& f) const {  f += k;  }
     };
-    template <typename FT> struct Sub  {
+    template <typename FT> struct _Sub  {
       const FT k;
-      Sub(FT _k) : k(_k)  {}
+      _Sub(FT _k) : k(_k)  {}
       void operator ()(FT& f) const {  f -= k;  }
     };
+    template <typename FT> _Mul<FT> Mul(FT v)  {  return _Mul<FT>(v);  }
+    template <typename FT> _Add<FT> Add(FT v)  {  return _Add<FT>(v);  }
+    template <typename FT> _Div<FT> Div(FT v)  {  return _Div<FT>(v);  }
+    template <typename FT> _Sub<FT> Sub(FT v)  {  return _Sub<FT>(v);  }
     struct ChSig  {
       template <typename FT> void operator ()(FT& f) const {  f = -f;  }
     };
@@ -237,7 +249,7 @@ namespace math  {
       mx = olx_max(olx_abs(alpha), olx_abs(xnorm));
       const FT beta = mx*sqrt(olx_sqr(alpha/mx)+olx_sqr(xnorm/mx));
       const FT v0 = (alpha <= 0 ? alpha - beta : -xnorm/(alpha + beta)*xnorm);
-      proxy<FT>::vec(v,1, v.Count()).ForEach(alg::Mul<FT>(1/v0));
+      proxy<FT>::vec(v,1, v.Count()).ForEach(alg::Mul(1/v0));
       v(0) = beta;
       return 2/(olx_sqr(xnorm/v0)+1);
     }
@@ -363,7 +375,7 @@ namespace math  {
             }
             m(j,i) = v + m(j,j)*tmp(j);
           }
-          proxy<FT>::col(m, i, 0, i).ForEach(alg::Mul<FT>(diag_v));
+          proxy<FT>::col(m, i, 0, i).ForEach(alg::Mul(diag_v));
         }
       }
     }
@@ -386,7 +398,7 @@ namespace math  {
             }
             m(j,i) = v + m(j,j)*tmp(j);
           }
-          proxy<FT>::col(m, i, i+1, m.RowCount()).ForEach(alg::Mul<FT>(diag_v));
+          proxy<FT>::col(m, i, i+1, m.RowCount()).ForEach(alg::Mul(diag_v));
         }
       }
     }
@@ -410,7 +422,7 @@ namespace math  {
           if( pivot_index != i )
             alg::swap_rows(m, pivot_index, i);
           if( i < min_d-1 )
-            proxy<FT>::col(m, i, i+1).ForEach(alg::Mul<FT>(1./m(i,i)));
+            proxy<FT>::col(m, i, i+1).ForEach(alg::Mul(1./m(i,i)));
         }
         if( i < m.RowCount()-1 )  {
           for( size_t j=i+1; j < m.RowCount(); j++ )  {
@@ -1291,6 +1303,52 @@ namespace math  {
       }
     }
   };
+  template <typename FT>
+  struct Cholesky  {
+    template <typename MatT>
+    static bool Decompose(MatT& m, bool upper)  {
+      const size_t n = m.RowCount();
+      if( upper )  {
+        for( size_t i=0; i < n; i++ )  {
+          FT v = 0;
+          for( size_t j=0; j < i; j++ )
+            v += olx_sqr(m(j, i));
+          FT mii = m(i,i) - v;
+          if( mii < 0 )
+            return false;
+          mii = m(i,i) = sqrt(mii);
+          if( i < n-1 )  {
+            for( size_t j=0; j < i; j++ )  {
+              for( size_t k=i+1; k < n; k++ )
+                m(i,k) -= m(j,k)*m(j,i);
+            }
+            proxy<FT>::row(m, i, i+1).ForEach(alg::Mul(1/mii));
+          }
+        }
+      }
+      else  {
+        for( size_t i=0; i < n; i++ )  {
+          FT v = 0;
+          for( size_t j=0; j < i; j++ )
+            v += olx_sqr(m(i, j));
+          FT mii = m(i,i) - v;
+          if( mii < 0 )
+            return false;
+          mii = m(i,i) = sqrt(mii);
+          if( i < n-1 )  {
+            for( size_t j=i+1; j < n; j++ )  {
+              FT dp = 0;
+              for( size_t k=0; k < i; k++ )
+                dp += m(j,k)*m(i,k);
+              m(j,i) -= dp;
+            }
+            proxy<FT>::col(m, i, i+1).ForEach(alg::Mul(1/mii));
+          }
+        }
+      }
+      return true;
+    }
+  };  // end of Cholesky
 }; // end namespace math
 
 EndEsdlNamespace()

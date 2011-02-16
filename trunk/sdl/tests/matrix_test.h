@@ -222,4 +222,37 @@ void TestSVD(OlxTests& t)  {
   }
 }
 //...........................................................................................
+void TestCholesky(OlxTests& t)  {
+  t.description = __OlxSrcInfo;
+  double mv[3][3] = {
+    {25, 15, -5},
+    {15, 18, 0},
+    {-5, 0, 11}
+  };
+  ematd m1(3,3);
+  m1.Assign(mv, 3, 3);
+  const ematd om(m1);
+  math::Cholesky<double>::Decompose(m1, true);
+  ematd m2(3,3);
+  m2.Assign(mv, 3, 3);
+  math::Cholesky<double>::Decompose(m2, false);
+  ematd l(3,3), u(3,3);
+  for( int i=0; i < 3; i++ )  {
+    for( int j=i; j < 3; j++ )  {
+      if( olx_abs(m1(i,j)-m2(j,i)) > 1e-14 )
+        throw TFunctionFailedException(__OlxSrcInfo, "LL != UU");
+      if( i == j && m1(i,j) < 0 )
+        throw TFunctionFailedException(__OlxSrcInfo, "m(i,i) < 0");
+      l(j,i) = u(i,j) = m1(i,j);
+    }
+  }
+  const ematd r = l*u;
+  for( int i=0; i < 3; i++ )  {
+    for( int j=0; j < 3; j++ )  {
+      if( olx_abs(om(i,j)-r(i,j)) > 1e-14 )
+        throw TFunctionFailedException(__OlxSrcInfo, "m != LxL*");
+    }
+  }
+}
+//...........................................................................................
 };  //namespace test

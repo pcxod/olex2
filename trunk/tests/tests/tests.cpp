@@ -38,7 +38,8 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::TestSVD).
     Add(&test::TestInvert).
     Add(&test::TestLU).
-    Add(&test::TestQR);
+    Add(&test::TestQR).
+    Add(&test::TestCholesky);
   tests.Add(&test::spline_test);
   tests.Add(&full_smatd_id<>::Tests).Add(&test::rotation_id_test);
   tests.Add(&test::symm_parser_tests);
