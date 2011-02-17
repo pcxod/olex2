@@ -66,19 +66,24 @@ void TMainForm::OnViewAlong(wxCommandEvent& event) {
 }
 //..............................................................................
 void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
-  TXAtom *XA = (TXAtom*)FObjectUnderMouse;
+  TXAtom *XA = dynamic_cast<TXAtom*>(FObjectUnderMouse);
   if( XA == NULL )  return;
   olxstr Tmp = ((event.GetId() == ID_AtomOccuFix) ? "fix " : 
                 (event.GetId() == ID_AtomOccuFree) ? "free " : "fix ");
   Tmp << "occu ";
+  double val = 0;
   switch( event.GetId() )  {
-    case ID_AtomOccu1:   Tmp << "1";  break;
-    case ID_AtomOccu34:  Tmp << "0.75";  break;
-    case ID_AtomOccu12:  Tmp << "0.5";  break;
-    case ID_AtomOccu13:  Tmp << "0.33333";  break;
-    case ID_AtomOccu14:  Tmp << "0.25";  break;
+    case ID_AtomOccu1:   val = 1;  break;
+    case ID_AtomOccu34:  val = 0.75;  break;
+    case ID_AtomOccu12:  val = 0.5;  break;
+    case ID_AtomOccu13:  val = 1./3;  break;
+    case ID_AtomOccu14:  val = 0.25;  break;
     case ID_AtomOccuFix:   break;
     case ID_AtomOccuFree:  break;
+  }
+  if( val != 0 )  {
+    val /= XA->CAtom().GetDegeneracy();
+    Tmp << val;
   }
   if( XA->IsSelected() )  
     Tmp << " sel";

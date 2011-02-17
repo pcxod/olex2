@@ -97,7 +97,8 @@ cm_Absorption_Coefficient_Reg::cm_Absorption_Coefficient_Reg()  {
 }
 
 double cm_Absorption_Coefficient_Reg::_CalcForE(double eV,
-  const cm_Absorption_Coefficient* ac, double (cm_Absorption_Coefficient::*f)() const) const {
+  cm_Absorption_Entry& ac, double (cm_Absorption_Coefficient::*f)() const) const
+{
   eV /= 1e6;
   double t_ev = eV;
   long k = 1000; // 'cut' energy to 3 significant digits
@@ -111,54 +112,74 @@ double cm_Absorption_Coefficient_Reg::_CalcForE(double eV,
   }
   if( k != 0 )
     eV = double((long)(eV*k))/k;
-  if( ac == NULL )
+  if( &ac == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "undefined absorption data");
-  if( eV < ac[0].energy )
-    throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
-  if( eV == ac[0].energy )
-    return ac[0].muen_over_rho;
-  size_t cnt = 0;
-  const cm_Absorption_Coefficient* _ac = ac;
-  while( ac->energy < eV && ac->energy != 0 )  {
-    cnt++;
-    ac++;
+  if( ac.size == 0 )  {  // update the size
+    const cm_Absorption_Coefficient* _ac = ac.data;
+    while( (++_ac)->energy != 0 )
+      ac.size++;
   }
-  if( ac->energy == 0 )
+  if( eV < ac.data[0].energy || eV > ac.data[ac.size].energy )
     throw TInvalidArgumentException(__OlxSourceInfo, "energy is out of range");
+  if( eV == ac.data[0].energy )
+    return (ac.data[0].*f)();
+  size_t i_start = 0, i_end = ac.size-1;
+  while( i_start != i_end-1 )  {
+    const size_t mid = (i_end+i_start)/2;
+    if( ac.data[mid].energy > eV )
+      i_end = mid;
+    else
+      i_start = mid;
+  }
   // matches the entry?
-  if( olx_abs(ac->energy-eV) < 1e-3/k )
-    return (ac->*f)();
+  if( olx_abs(ac.data[i_start].energy-eV) < 1e-3/k )
+    return (ac.data[i_start].*f)();
+  TTypeList<AnAssociation2<double,double> > left, right;
   // go left
-  size_t l_cnt = cnt-1;
-  while( l_cnt > 0 && (cnt-l_cnt) < 4 && _ac[l_cnt].energy != 0 )  {
-    if( _ac[l_cnt-1].energy == _ac[l_cnt].energy )  // absorption edge
+  for( size_t i=i_start-1; i != InvalidIndex; i-- )  {
+    const double v = (ac.data[i].*f)();
+    if( v == 0 )  continue;  // no value
+    // absorption edge
+    if( !left.IsEmpty() && left.GetLast().GetA() == ac.data[i].energy )
       break;
-    l_cnt--;
+    left.AddNew(ac.data[i].energy, v);
+    if( left.Count() > 3 )
+      break;
   }
   // go right
-  size_t r_cnt = cnt+1;
-  while( (r_cnt-cnt) < 4 && _ac[r_cnt].energy != 0 )  {
-    if( _ac[r_cnt+1].energy == _ac[r_cnt].energy )  // absorption edge
+  for( size_t i=i_start+1; i < ac.size; i++ )  {
+    const double v = (ac.data[i].*f)();
+    if( v == 0 )  continue;  // no value
+    // absorption edge
+    if( !right.IsEmpty() && right.GetLast().GetA() == ac.data[i].energy )
       break;
-    r_cnt++;
+    right.AddNew(ac.data[i].energy, v);
+    if( right.Count() > 3 )
+      break;
   }
-  if( (r_cnt-l_cnt) >= 5 )  {  // use spline interpolation
+  if( (left.Count()+right.Count()) >= 1 )  {  // use spline interpolation
     math::spline::Spline3<double> s;
-    s.x.Resize(r_cnt-l_cnt);
-    s.y.Resize(r_cnt-l_cnt);
-    for( size_t i=l_cnt; i < r_cnt; i++ )  {
-      s.x(i-l_cnt) = _ac[i].energy;
-      s.y(i-l_cnt) = (_ac[i].*f)();
+    s.x.Resize(left.Count()+right.Count()+1);
+    s.y.Resize(s.x.Count());
+    size_t index = 0;
+    for( size_t i=0; i < left.Count(); i++, index++ )  {
+      s.x[index] = left[i].GetA();
+      s.y[index] = left[i].GetB();
     }
-    return math::spline::Builder<double>::akima(s).interpolate(eV);
+    s.x[index] = ac.data[i_start].energy;
+    s.y[index++] = (ac.data[i_start].*f)();
+    for( size_t i=0; i < right.Count(); i++, index++ )  {
+      s.x[index] = right[i].GetA();
+      s.y[index] = right[i].GetB();
+    }
+    if( s.x.Count() >= 5 )  // Akima
+      return math::spline::Builder<double>::akima(s).interpolate(eV);
+    else if( s.x.Count() >= 3 ) // Ctmull-Rom
+      return math::spline::Builder<double>::catmull_rom(
+        s, math::spline::boundary_type_parabolic, 0.5).interpolate(eV);
+    else  // linear
+      return math::spline::Builder<double>::linear(s).interpolate(eV);
   }
-  if( ac->energy > eV )  {    
-    if( (ac->*f)() == ((ac-1)->*f)() )
-      return ac->muen_over_rho;
-    const double k = (eV-(ac-1)->energy)/(ac->energy - (ac-1)->energy);
-    return ((ac-1)->*f)() + k*((ac->*f)()-((ac-1)->*f)());
-  }
-  else if( ac->energy == eV )
-    return ac->muen_over_rho;
-  throw TFunctionFailedException(__OlxSourceInfo, "cannot happen");
+  // most probably on the absorption edge... other option - throw an exception...
+  return (ac.data[i_start].*f)();
 }

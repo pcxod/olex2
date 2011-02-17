@@ -335,10 +335,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\stdafx.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\tests.cpp"
 				>
 			</File>

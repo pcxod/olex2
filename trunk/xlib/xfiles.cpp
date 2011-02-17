@@ -553,12 +553,12 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
   double mu=0;
   for( size_t i=0; i < cont.Count(); i++ )  {
     double v = ac.CalcMuOverRhoForE(
-      GetRM().expl.GetRadiationEnergy(), ac.locate(cont[i].element.symbol));
+      GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
     mu += (cont[i].count*cont[i].element.GetMr())*v;
   }
   mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume();
   mu /= 6.022142;
-  E.SetRetVal(mu);
+  E.SetRetVal(olxstr::FormatFloat(3,mu));
 }
 //..............................................................................
 TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
