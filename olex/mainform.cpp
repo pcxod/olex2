@@ -1077,7 +1077,7 @@ separated values of Atom Type and radius, an entry a line");
 
   pmAtom->Append(ID_MenuAtomType, wxT("Type"), pmAtomType);
   pmAtom->Append(ID_MenuAtomConn, wxT("Bonds"), pmAtomConn);
-  pmAtom->Append(ID_MenuAtomOccu, wxT("Occupancy"), pmAtomOccu);
+  pmAtom->Append(ID_MenuAtomOccu, wxT("Chemical occupancy"), pmAtomOccu);
   pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrow, wxT("Grow"));

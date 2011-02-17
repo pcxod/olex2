@@ -13,7 +13,7 @@ database at the National Institute of Standards and Technology, and the muen/rho
 are based on the new calculations by Seltzer described in Radiation Research 136, 147
 (1993).
 
-Three extra points, specifically for the Cu-a, Ag-a and Mo-ka radiation international
+Three extra points, specifically for the Cu-ka, Ag-ka and Mo-ka radiation international
 tables are also added
 */
 
@@ -25,21 +25,30 @@ struct cm_Absorption_Coefficient {
   double GetMuEnOverRho() const {  return muen_over_rho;  }
 };
 
+struct cm_Absorption_Entry  {
+  const cm_Absorption_Coefficient* data;
+  size_t size;
+  cm_Absorption_Entry(const cm_Absorption_Coefficient* _data) :
+    data(_data), size(0)  {}
+  cm_Absorption_Entry() : data(NULL), size(0)  {}
+};
+
 struct cm_Absorption_Coefficient_Reg  {
-  olxdict<olxstr, const cm_Absorption_Coefficient*, olxstrComparator<true> > entries;
+  olxdict<olxstr, cm_Absorption_Entry, olxstrComparator<true> > entries;
   cm_Absorption_Coefficient_Reg();
-  const cm_Absorption_Coefficient* locate(const olxstr& symbol)  {
-    return entries.Find(symbol, NULL);
+  cm_Absorption_Entry* locate(const olxstr& symbol)  {
+    const size_t i = entries.IndexOf(symbol);
+    return i == InvalidIndex ? NULL : &entries.GetValue(i);
   }
   // cm^2/g
-  double CalcMuOverRhoForE(double eV, const cm_Absorption_Coefficient* ac) const {
+  double CalcMuOverRhoForE(double eV, cm_Absorption_Entry& ac) const {
     return _CalcForE(eV, ac, &cm_Absorption_Coefficient::GetMuOverRho);
   }
   // cm^2/g
-  double CalcMuenOverRhoForE(double eV, const cm_Absorption_Coefficient* ac)  {
+  double CalcMuenOverRhoForE(double eV, cm_Absorption_Entry& ac)  {
     return _CalcForE(eV, ac, &cm_Absorption_Coefficient::GetMuEnOverRho);
   }
-  double _CalcForE(double eV, const cm_Absorption_Coefficient* ac,
+  double _CalcForE(double eV, cm_Absorption_Entry& ac,
     double (cm_Absorption_Coefficient::*f)() const) const;
 };
 

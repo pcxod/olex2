@@ -1305,10 +1305,11 @@ namespace math  {
   };
   template <typename FT>
   struct Cholesky  {
+    /* if upper is true, UxUt decomposition, otherwise LxLt */
     template <typename MatT>
     static bool Decompose(MatT& m, bool upper)  {
       const size_t n = m.RowCount();
-      if( upper )  {
+      if( upper )  {  //Cholesky–Crout
         for( size_t i=0; i < n; i++ )  {
           FT v = 0;
           for( size_t j=0; j < i; j++ )
@@ -1326,7 +1327,7 @@ namespace math  {
           }
         }
       }
-      else  {
+      else  {  //Cholesky–Banachiewicz
         for( size_t i=0; i < n; i++ )  {
           FT v = 0;
           for( size_t j=0; j < i; j++ )
