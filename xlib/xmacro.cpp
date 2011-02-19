@@ -29,6 +29,7 @@
 #include "vcov.h"
 #include "esphere.h"
 #include "symmcon.h"
+#include "md5.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -2385,10 +2386,24 @@ void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroError &E)  {
 }
 //..............................................................................
 void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
   if( Params.Count() == 1 )
-    TXApp::GetInstance().XFile().GetRM().SetHKLSource(Params[0]);
-  else
-    E.SetRetVal(TXApp::GetInstance().XFile().GetRM().GetHKLSource());
+    xapp.XFile().GetRM().SetHKLSource(Params[0]);
+  else  {
+    olxstr fn = xapp.XFile().GetRM().GetHKLSource();
+    if( TEFile::Exists(fn) )  {  // check the format...
+      TEFile f(fn, "rb");
+      if( !THklFile::IsHKLFileLine(f.ReadLine()) )  {
+        f.Close();
+        fn = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(fn)) << MD5::Digest(fn) << ".hkl";
+        if( !TEFile::Exists(fn) )  {
+          TBasicApp::NewLogEntry() << "Creating HKL file...";
+          THklFile::SaveToFile(fn, xapp.XFile().GetRM().GetReflections());
+        }
+      }
+    }
+    E.SetRetVal(fn);
+  }
 }
 //..............................................................................
 void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3472,7 +3487,10 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TBasicApp::NewLogEntry() << "Univocal space group choice: " << sg->GetName();
     }
     else  {
-      op->executeMacroEx("Wilson", E);
+      olxstr cmd = "Wilson";
+      if( !Cmds.IsEmpty() )
+        cmd << " '" << Cmds[0] << '\'';
+      op->executeMacroEx(cmd, E);
       bool centro = E.GetRetVal().ToBool();
       TBasicApp::NewLogEntry() << "Searching for centrosymmetric group: " << centro;
       for( size_t i=0; i < sgs.Count(); i++ )  {
@@ -3503,6 +3521,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( E.IsSuccessful() )  {
     op->executeMacroEx(olxstr("reap '") << fn << '\'', E);
     if( E.IsSuccessful() )  { 
+      OlxStateVar _var(VarName_ResetLock());
       op->executeMacroEx(olxstr("solve"), E);
       // this will reset zoom!
       op->executeMacroEx(olxstr("fuse"), E);
@@ -3899,7 +3918,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( !(xapp.CheckFileType<TIns>() ||
         xapp.CheckFileType<TP4PFile>() ||
         xapp.CheckFileType<TCRSFile>()  )  )  return;
-  if( TOlxVars::IsVar("internal_tref") )
+  if( TOlxVars::IsVar(VarName_InternalTref()) || TOlxVars::IsVar(VarName_ResetLock()))
     return;
   using namespace olex;
   IOlexProcessor* op = IOlexProcessor::GetInstance();
@@ -3909,7 +3928,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   xapp.XFile().UpdateAsymmUnit();
   TIns *Ins = (TIns*)xapp.XFile().FindFormat("ins");
   if( xapp.CheckFileType<TP4PFile>() )  {
-    if( !newSg.Length() )  {
+    if( newSg.IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
       return;
     }
@@ -3941,7 +3960,6 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       }
     }
   }
-
   if( !newSg.IsEmpty() )  {
     TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(newSg);
     if( !sg )  {

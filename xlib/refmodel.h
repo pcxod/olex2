@@ -494,7 +494,7 @@ of components 1 ... m
   // P1 merged, unfiltered
   template <class Merger> HklStat GetAllP1RefList(TRefList& out)  {
     HklStat stats;
-    TRefList refs( GetReflections() );
+    TRefList refs(GetReflections());
     ApplyMatrix(refs, HKLF_mat);
     vec3i_list empty_omits;
     stats = RefMerger::MergeInP1<Merger>(refs, out, empty_omits);
@@ -509,7 +509,7 @@ of components 1 ... m
     return AdjustIntensity(out, stats);
   }
   // if none of the above functions help, try this ones
-  // return complete list of unmerged reflections (HKLF matrix, if any is NOT applied)
+  // return complete list of unmerged reflections (HKLF matrix, if any, is applied)
   const TRefList& GetReflections() const;
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);

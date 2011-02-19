@@ -5,6 +5,7 @@
 #include "hkl.h"
 #include "lst.h"
 #include "ins.h"
+#include "cif.h"
 #include "emath.h"
 #include "efile.h"
 #include "estrlist.h"
@@ -41,9 +42,57 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       FormatInitialised = false;
     int Tag = 1;
     SL.LoadFromFile(FN);
+    if( SL.IsEmpty() )
+      throw TEmptyFileException(__OlxSrcInfo, FN);
+    {  // validate if 'real' HKL, not fcf
+      if( !IsHKLFileLine(SL[0]) )  {
+        TCif cif;
+        try  {  cif.LoadFromStrings(SL);  }
+        catch(TExceptionBase& e) {
+          throw TFunctionFailedException(__OlxSrcInfo, e, "unsupported file format");
+        }
+        // find firt data block with reflections...
+        cif_dp::cetTable* hklLoop = NULL;
+        for( size_t i = 0; i < cif.BlockCount(); i++ )  {
+          hklLoop = cif.GetBlock(i).table_map.Find("_refln", NULL);
+          if( hklLoop != NULL )  {
+            cif.SetCurrentBlock(i);
+            break;
+          }
+        }
+        if( hklLoop == NULL )
+          throw TInvalidArgumentException(__OlxSourceInfo, "no hkl loop found");
+        const size_t hInd = hklLoop->ColIndex("_refln_index_h");
+        const size_t kInd = hklLoop->ColIndex("_refln_index_k");
+        const size_t lInd = hklLoop->ColIndex("_refln_index_l");
+        const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
+        const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
+        if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex )  {
+          TInvalidArgumentException(__OlxSourceInfo, "could not locate <h k l meas sigma> data");
+        }
+        for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
+          const cif_dp::CifRow& r = (*hklLoop)[i];
+          Refs.Add(
+            new TReflection(
+            r[hInd]->GetStringValue().ToInt(),
+            r[kInd]->GetStringValue().ToInt(),
+            r[lInd]->GetStringValue().ToInt(),
+            r[mInd]->GetStringValue().ToDouble(),
+            r[sInd]->GetStringValue().ToDouble()
+            ));
+          UpdateMinMax(*Refs.GetLast());
+        }
+        if( ins != NULL && cif.FindEntry("_cell_length_a") != NULL )  {
+          ins->GetRM().Assign(cif.GetRM(), true);
+          if( ins_initialised != NULL )
+            *ins_initialised = true;
+        }
+        return true;
+      }
+    }
     const bool apply_basis = !Basis.IsI();
     const size_t line_cnt = SL.Count();
-    Refs.SetCapacity( line_cnt );
+    Refs.SetCapacity(line_cnt);
     for( size_t i=0; i < line_cnt; i++ )  {
       const olxcstr& line = SL[i];
       if( !ZeroRead && line.Length() < 28 )  continue;

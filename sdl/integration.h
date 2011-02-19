@@ -16,23 +16,21 @@
   #endif
 #endif
 
-
-
 #include "library.h"
 
-namespace olex
-{
-  const short mtNone      = 0,
-              mtInfo      = 1,
-              mtWarning   = 2,
-              mtError     = 3,
-              mtException = 4;
+namespace olex {
+  const short
+    mtNone      = 0,
+    mtInfo      = 1,
+    mtWarning   = 2,
+    mtError     = 3,
+    mtException = 4;
 
   class IOlexProcessor  {
     static IOlexProcessor* Instance;
   public:
     IOlexProcessor()  {  Instance = this;  }
-    virtual ~IOlexProcessor()  {  ;  }
+    virtual ~IOlexProcessor()  {}
     // uses custom macro error to set args, get rv
     virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er) = 0;
     // a shortcut to above
@@ -60,7 +58,7 @@ namespace olex
 
   class IOlexRunnable : public IEObject  {
   public:
-    virtual ~IOlexRunnable()  {  ;  }
+    virtual ~IOlexRunnable()  {}
     virtual bool Run( IOlexProcessor& olexProcessor ) = 0;
   };
   class OlexPort : public IEObject  {
@@ -69,7 +67,8 @@ namespace olex
   public:
     OlexPort()  {  OlexRunnable = NULL;  }
     ~OlexPort()  {
-      if( OlexRunnable )  delete OlexRunnable;
+      if( OlexRunnable != NULL )
+        delete OlexRunnable;
     }
   //............................................................................
     static void SetOlexRunnable( IOlexRunnable* o_r )  {  OlexRunnable = o_r;  }
@@ -77,7 +76,6 @@ namespace olex
     static DllExport IOlexRunnable* GetOlexRunnable();
   //............................................................................
   };
-
 };  // end namespace olex
 
 #endif

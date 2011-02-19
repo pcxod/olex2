@@ -11,10 +11,6 @@
   #pragma warning( disable : 654 )
 #endif
  
-//#include "estrlist.h"
-//TODO: fix that header and then re-include it #include "edlist.h"
-//---------------------------------------------------------------------------
-
 BeginEsdlNamespace()
 
 class IDataInputStream;
@@ -26,7 +22,7 @@ class IDataInputStream: public IInputStream  {
     return v;
   }
 public:
-  virtual ~IDataInputStream() {  ;  }
+  virtual ~IDataInputStream() {}
   virtual void Read(void *Data, size_t size) = 0;
   virtual inline void Read(olxcstr& whr, size_t size)  {
     whr.AppendFromStream(*this, size);
@@ -38,6 +34,22 @@ public:
     T v;
     Read(&v, sizeof(T));
     return v;
+  }
+  olxcstr ReadLine()  {
+    char c;
+    olxcstr rv;
+    rv.SetIncrement(64);
+    while( GetAvailableSizeT() > 0 )  {
+      if( readType(c) == '\r' || c == '\n' )  {
+        if( c == '\r' && GetAvailableSizeT() > 0 )  {  // check what is next
+          if( readType(c) != '\n' )  // rewind
+            SetPosition(GetPosition()-1);
+        }
+        return rv;
+      }
+      rv << c;
+    }
+    return rv;
   }
   inline char&                   operator >> ( char& v )                   {  return readType(v);  }
   inline unsigned char&          operator >> ( unsigned char& v )          {  return readType(v);  }
