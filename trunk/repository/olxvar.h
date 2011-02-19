@@ -3,6 +3,7 @@
 
 #include "estlist.h"
 #include "actions.h"
+#include "bapp.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -231,4 +232,30 @@ public:
   }
 };
 #endif  // _NO_PYTHON
+/* a convinience object: sets var withi given name on the creation and unsets on destruction
+thread safe - synchronised */
+class OlxStateVar  {
+  olxstr name, prev_val;
+  bool was_set, restored;
+public:
+  OlxStateVar(const olxstr& _name) : name(_name), restored(false)  {
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+    size_t i = TOlxVars::VarIndex(_name);
+    if( i != InvalidIndex )  {
+      prev_val = TOlxVars::GetVarStr(i);
+      was_set = true;
+    }
+    TOlxVars::SetVar(name, TrueString());
+  }
+  ~OlxStateVar()  {  Restore();  }
+  void Restore()  {
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+    if( restored )  return;
+    if( was_set )
+      TOlxVars::SetVar(name, prev_val);
+    else
+      TOlxVars::UnsetVar(name);
+    restored = true;
+  }
+};
 #endif

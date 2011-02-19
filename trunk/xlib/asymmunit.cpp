@@ -81,7 +81,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   Latt = C.GetLatt();
 
   for( size_t i = 0; i < C.MatrixCount(); i++ )
-    Matrices.AddNew( C.GetMatrix(i) );
+    Matrices.AddNew(C.GetMatrix(i));
   
   for( size_t i = 0; i < C.EllpCount(); i++ )
     this->NewEllp() = C.GetEllp(i);
@@ -581,9 +581,6 @@ size_t TAsymmUnit::CountElements(const olxstr& Symbol) const  {
 void TAsymmUnit::Sort(TCAtomPList* list) {
  // sorting by four params
   if( list == NULL )  list = &MainResidue.Atoms;
-  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
-  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
-  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
   TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
 }
 //..............................................................................

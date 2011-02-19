@@ -4603,7 +4603,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         }
         else  {
           FXApp->XFile().SetLastLoader(ins);
-          ins->Clear();
+          FXApp->XFile().LastLoaderChanged();
           FXApp->XFile().GetRM().SetHKLSource(file_n.file_name);  // make sure tha SGE finds the related HKL
           TMacroError er;
           Macros.ProcessMacro(olxstr("SGE '") << TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', er);
@@ -4616,6 +4616,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               if( sg != NULL ) break;
               s_sg = s_inp;
             }
+            ins = (TIns*)FXApp->XFile().FindFormat("ins");
             ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
             if( ins->GetRM().GetUserContent().IsEmpty() )  {
               s_inp = "getuserinput(1, \'Please, enter cell content\', \'C1')";
@@ -5352,7 +5353,8 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr cinsFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ins");
   olxstr cresFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res");
   olxstr clstFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "lst");
-  TOlxVars::SetVar("internal_tref", TrueString());
+  
+  OlxStateVar _var(XLibMacros::VarName_InternalTref());
   try  {
     for( size_t i=0; i < Solutions.Count(); i++ )  {
       TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
@@ -5388,7 +5390,7 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( !Cmds.IsEmpty() )
     exName = Cmds[0];
   else
-    exName = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "hkl" );
+    exName = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "hkl");
 
   if( TEFile::Exists(exName) )  {
     E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");

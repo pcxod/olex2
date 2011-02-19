@@ -257,27 +257,25 @@ public:
   static int Compare(const TCAtom* a1, const TCAtom* a2)  {
     if( a1->GetFragmentId() != a2->GetFragmentId() )  return a1->GetFragmentId() - a2->GetFragmentId();
     if( a1->GetResiId() != a2->GetResiId() )  return olx_cmp(a1->GetResiId(),a2->GetResiId());
-    // asc sort by label
+    // by label
     if( a1->GetType() == a2->GetType() )
       return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());
-    // desc sort my weight
-    if( (a1->GetType().GetMr() - a2->GetType().GetMr()) < 0 )  return 1;
-    return -1;
+    // by weight
+    return olx_cmp(a1->GetType().GetMr(), a2->GetType().GetMr());
   }
 };
 //..............................................................................
 class TCAtomPCenterComparator  {
 public:
   static int Compare(const TCAtom* a1, const TCAtom* a2)  {
-    const double p = a1->ccrd().QLength() - a2->ccrd().QLength();
-    return (p < 0 ? -1 :(p > 0 ? 1 : 0));
+    return olx_cmp(a1->ccrd().QLength(), a2->ccrd().QLength());
   }
 };
 //..............................................................................
 class TCAtomTagComparator  {
 public:
   static int Compare(const TCAtom* a1, const TCAtom* a2)  {
-    return (a1->GetTag() < a2->GetTag() ? -1 : (a1->GetTag() > a2->GetTag() ? 1 : 0));
+    return olx_cmp(a1->GetTag(), a2->GetTag());
   }
 };
 //..............................................................................
@@ -305,8 +303,5 @@ public:
 //....................................................................................
 typedef TTypeList<TGroupCAtom> TCAtomGroup;
 //..............................................................................
-
-
 EndXlibNamespace()
 #endif
-

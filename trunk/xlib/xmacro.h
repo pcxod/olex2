@@ -245,6 +245,8 @@ public:
   }
   static void Export(class TLibrary& lib);
   static TActionQueue &OnDelIns, &OnAddIns;
+  static olxstr VarName_ResetLock()  {  return "olx_lock_reset";  }
+  static olxstr VarName_InternalTref()  {  return "olx_internal_tref";  }
 
 protected:
   class TEnviComparator  {
