@@ -238,7 +238,7 @@ class OlxStateVar  {
   olxstr name, prev_val;
   bool was_set, restored;
 public:
-  OlxStateVar(const olxstr& _name) : name(_name), restored(false)  {
+  OlxStateVar(const olxstr& _name) : name(_name), restored(false), was_set(false)  {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     size_t i = TOlxVars::VarIndex(_name);
     if( i != InvalidIndex )  {

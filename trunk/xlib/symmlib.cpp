@@ -1514,6 +1514,3 @@ TSymmElement*  TSymmLib::FindSymmElement(const olxstr& name) const {
     if( SymmetryElements[i].GetName() == name )  return &SymmetryElements[i];
   return NULL;
 }
-
-
-
