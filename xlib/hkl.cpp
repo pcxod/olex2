@@ -283,7 +283,6 @@ void THklFile::Append(const THklFile& hkls)  {
 //..............................................................................
 bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append)  {
   if( refs.IsEmpty() )  return true;
-
   if( Append && TEFile::Exists(FN) )  {
     THklFile F;
     F.LoadFromFile(FN);
@@ -291,20 +290,27 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
     F.SaveToFile(FN);
   }
   else  {
+    double scale = 0;
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      if( refs[i]->GetI() > scale )
+        scale = refs[i]->GetI();
+    }
+    scale = (scale > 99999 ? 99999/scale : 1);
     TEFile out(FN, "w+b");
     TReflection NullRef(0, 0, 0, 0, 0);
     if( refs[0]->GetFlag() != NoFlagSet )
       NullRef.SetFlag(0);
     const size_t ref_str_len = NullRef.ToString().Length();
-    olx_array_ptr<char> ref_bf(new char[ref_str_len+1]);
+    const size_t bf_sz = ref_str_len+1; 
+    olx_array_ptr<char> ref_bf(new char[bf_sz]);
     for( size_t i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() > 0 )
-        out.Writecln(refs[i]->ToCBuffer(ref_bf), ref_str_len);
+        out.Writecln(refs[i]->ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
     }
-    out.Writecln(NullRef.ToCBuffer(ref_bf), ref_str_len);
+    out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
     for( size_t i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() < 0 )
-        out.Writecln(refs[i]->ToCBuffer(ref_bf), ref_str_len);
+        out.Writecln(refs[i]->ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
     }
   }
   return true;
@@ -312,20 +318,27 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
 //..............................................................................
 bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   if( refs.IsEmpty() )  return true;
+  double scale = 0;
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    if( refs[i].GetI() > scale )
+      scale = refs[i].GetI();
+  }
+  scale = (scale > 99999 ? 99999/scale : 1);
   TEFile out(FN, "w+b");
   TReflection NullRef(0, 0, 0, 0, 0);
   if( refs[0].GetFlag() != NoFlagSet )
     NullRef.SetFlag(0);
   const size_t ref_str_len = NullRef.ToString().Length();
-  olx_array_ptr<char> ref_bf(new char[ref_str_len+1]);
+  const size_t bf_sz = ref_str_len+1; 
+  olx_array_ptr<char> ref_bf(new char[bf_sz]);
   for( size_t i=0; i < refs.Count(); i++ )  {
     if( refs[i].GetTag() > 0 )
-      out.Writecln(refs[i].ToCBuffer(ref_bf), ref_str_len);
+      out.Writecln(refs[i].ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
   }
-  out.Writecln(NullRef.ToCBuffer(ref_bf), ref_str_len);
+  out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
   for( size_t i=0; i < refs.Count(); i++ )  {
     if( refs[i].GetTag() < 0 )
-      out.Writecln(refs[i].ToCBuffer(ref_bf), ref_str_len);
+      out.Writecln(refs[i].ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
   }
   return true;
 }

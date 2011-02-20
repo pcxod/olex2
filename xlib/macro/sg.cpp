@@ -74,8 +74,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   size_t laueHitCount = 0;
   for( size_t i=0; i < LaueClassStats.Count(); i++ )  {
     if( LaueClassStats[i].GetCount() != 0 )  {
-      averageLaueHit += ( LaueClassStats[i].GetSummI()/LaueClassStats[i].GetCount() );
-      laueHitCount ++;
+      averageLaueHit += (LaueClassStats[i].GetSummI()/LaueClassStats[i].GetCount());
+      laueHitCount++;
     }
   }
   if( laueHitCount != 0 )
@@ -89,12 +89,12 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   for( size_t i=0; i < LaueClassStats.Count(); i++ )  {
     laueTab[i][0] = LaueClassStats[i].GetSpaceGroup().GetBareName();
     if( LaueClassStats[i].GetCount() != 0 )  {
-      double dv = LaueClassStats[i].GetSummI()/LaueClassStats[i].GetCount();
-      laueTab[i][1] = olxstr::FormatFloat(2, dv );
+      const double dv = LaueClassStats[i].GetSummI()/LaueClassStats[i].GetCount();
+      laueTab[i][1] = olxstr::FormatFloat(2, dv);
       laueTab[i][1] << '(' << olxstr::FormatFloat(2, LaueClassStats[i].GetSummSI()/LaueClassStats[i].GetCount() ) << ')';
       if( dv < averageLaueHit/2 )  {
         laueTab[i][3] = '+';
-        CalculatedLaueClasses.Add( &LaueClassStats[i].GetSpaceGroup() );
+        CalculatedLaueClasses.Add(&LaueClassStats[i].GetSpaceGroup());
       }
       else
         laueTab[i][3] = '-';
@@ -133,10 +133,12 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
     if( !found )  {
-      XApp.NewLogEntry() << "An alternative symmetry found: " <<
-        CalculatedLaueClasses[i]->GetBravaisLattice().GetName();
+      CalculatedLaueClasses[i] = NULL;
+      //XApp.NewLogEntry() << "An alternative symmetry found: " <<
+      //  CalculatedLaueClasses[i]->GetBravaisLattice().GetName();
     }
   }
+  CalculatedLaueClasses.Pack();
   // evaluete and print systematic absences; also fill the Present elements list
   TPSTypeList<double, TCLattice*> SortedLatticeHits;
   TPtrList<TSpaceGroup>  SGToConsider;
@@ -199,7 +201,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       ChosenLats.Add( SortedLatticeHits.GetObject(i) );
   }
   if( ChosenLats.IsEmpty() )
-    ChosenLats.Add( SortedLatticeHits.GetObject(0) );
+    ChosenLats.Add(SortedLatticeHits.GetObject(0));
 
   for( size_t i=0; i < LatticeHits.Count(); i++ )  {
     latTab[i][0] = LatticeHits[i].GetObject()->GetSymbol();

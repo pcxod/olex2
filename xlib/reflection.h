@@ -311,8 +311,8 @@ public:
   DefPropP(double, I)
   DefPropP(double, S)
 //..............................................................................
-  // returns a string: h k l ...
-  TIString ToString() const  {
+  // returns a string: h k l I S [f]
+  TIString ToString() const {
     static char bf[128];
 #ifdef _MSC_VER
     if( Flag == NoFlagSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
@@ -323,24 +323,24 @@ public:
 #endif
     return olxstr(bf);
   }
-  //writes string to the provided buffer (should be at least 33 bytes long)
-  char* ToCBuffer(char* bf) const  {
+  //writes string to the provided buffer (should be at least 29 bytes long)
+  char* ToCBuffer(char* bf, size_t sz, double k) const {
 #ifdef _MSC_VER
-    if( Flag == NoFlagSet )  sprintf_s(bf, 29, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-    else                     sprintf_s(bf, 33, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
+    if( Flag == NoFlagSet )  sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
+    else                     sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, Flag);
 #else
-    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
+    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
+    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, Flag);
 #endif
     return bf;
   }
 //..............................................................................
-  // return a string like: tag. h k l ...
-  olxstr ToNString() const  {
+  // return a string like: tag. h k l I S [f]
+  olxstr ToNString() const {
     olxstr Str(GetTag(), 80);
     Str << '.';
     Str.Format(7, true, ' ');
-    return Str + ToString();
+    return Str << ToString();
   }
 //..............................................................................
   bool FromString(const olxstr& Str)  {
