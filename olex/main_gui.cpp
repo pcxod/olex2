@@ -81,10 +81,8 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
     case ID_AtomOccuFix:   break;
     case ID_AtomOccuFree:  break;
   }
-  if( val != 0 )  {
-    val /= XA->CAtom().GetDegeneracy();
+  if( val != 0 )
     Tmp << val;
-  }
   if( XA->IsSelected() )  
     Tmp << " sel";
   else                  

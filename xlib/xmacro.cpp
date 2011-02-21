@@ -1095,7 +1095,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             neighbours[j]->CAtom().SetOccu(1./neighbours[j]->CAtom().GetDegeneracy());
         }
         else
-          neighbours[j]->CAtom().SetOccu(var_val);
+          neighbours[j]->CAtom().SetOccu(var_val/neighbours[j]->CAtom().GetDegeneracy());
       }
     }
   }
