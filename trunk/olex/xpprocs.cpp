@@ -2631,34 +2631,43 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  RefinementModel& rm = FXApp->XFile().GetRM();
-  TXAtomPList xatoms;
-  for( size_t i=0; i < FXApp->GetSelection().Count(); i++ )  {
-    if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )
-      xatoms.Add( (TXAtom&)FXApp->GetSelection()[i] );
-  }
-  if( Cmds.IsEmpty() && xatoms.IsEmpty() )  {
-    olxstr tmp = "Free variables: ";
-    rm.Vars.Validate();
-    TBasicApp::NewLogEntry() << rm.Vars.GetFVARStr();
-    return;
-  }
   double fvar = -1101;
   XLibMacros::ParseNumbers<double>(Cmds, 1, &fvar);
-  if( xatoms.IsEmpty() )
-    FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
+  RefinementModel& rm = FXApp->XFile().GetRM();
+  TXAtomPList xatoms;
+  FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
+  if( Cmds.IsEmpty() && xatoms.IsEmpty() )  {
+    rm.Vars.Validate();
+    TBasicApp::NewLogEntry() << "Free variables: " << rm.Vars.GetFVARStr();
+    return;
+  }
+  if( xatoms.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, "Empty atom list");
+    return;
+  }
   if( fvar == 0 )  {
     for( size_t i=0; i < xatoms.Count(); i++ )
       rm.Vars.FreeParam(xatoms[i]->CAtom(), catom_var_name_Sof);
   }
   else if( xatoms.Count() == 2 && fvar == -1101 )  {
     XVar& xv = rm.Vars.NewVar();
-    rm.Vars.AddVarRef(xv, xatoms[0]->CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
-    rm.Vars.AddVarRef(xv, xatoms[1]->CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
+    rm.Vars.AddVarRef(xv, xatoms[0]->CAtom(), catom_var_name_Sof, relation_AsVar,
+      1.0/xatoms[0]->CAtom().GetDegeneracy());
+    rm.Vars.AddVarRef(xv, xatoms[1]->CAtom(), catom_var_name_Sof, relation_AsOneMinusVar,
+      1.0/xatoms[1]->CAtom().GetDegeneracy());
   }
   else  {
-    for( size_t i=0; i < xatoms.Count(); i++ )
-      rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof, fvar);
+    // 11, 10.5, 21 etc
+    if( olx_abs(fvar-olx_round(fvar)) > 1e-3 )  {
+      for( size_t i=0; i < xatoms.Count(); i++ )
+        rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof, fvar);
+    }
+    else  {
+      for( size_t i=0; i < xatoms.Count(); i++ )  {
+        rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof,
+          fvar*10+xatoms[i]->CAtom().GetOccu());
+      }
+    }
   }
 }
 //..............................................................................
@@ -2701,7 +2710,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TXAtomPList Atoms;
   FindXAtoms(Cmds,Atoms, true, !Options.Contains("cs") );
   if( partCount == 0 || (Atoms.Count()%partCount) != 0 )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong number of parts" );
+    E.ProcessingError(__OlxSrcInfo, "wrong number of parts");
     return;
   }
   XVar* xv = NULL;
@@ -2735,15 +2744,20 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       if( linkOccu )  {
         if( partCount == 2 )  {
-          if( i )  
-            rm.Vars.AddVarRef(*xv, Atoms[j]->CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
-          else     
-            rm.Vars.AddVarRef(*xv, Atoms[j]->CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
+          if( i != 0 )    {
+            rm.Vars.AddVarRef(*xv, Atoms[j]->CAtom(), catom_var_name_Sof, relation_AsVar,
+              1.0/Atoms[j]->CAtom().GetDegeneracy());
+          }
+          else  {     
+            rm.Vars.AddVarRef(*xv, Atoms[j]->CAtom(), catom_var_name_Sof, relation_AsOneMinusVar,
+             1.0/Atoms[j]->CAtom().GetDegeneracy());
+          }
         }
         if( partCount > 2 )  {
           if( Atoms[j]->CAtom().GetVarRef(catom_var_name_Sof) == NULL )  {
             XVar& nv = rm.Vars.NewVar(1./Atoms.Count());
-            rm.Vars.AddVarRef(nv, Atoms[j]->CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
+            rm.Vars.AddVarRef(nv, Atoms[j]->CAtom(), catom_var_name_Sof, relation_AsVar,
+              1.0/Atoms[j]->CAtom().GetDegeneracy());
           }
           leq->AddMember(Atoms[j]->CAtom().GetVarRef(catom_var_name_Sof)->Parent);
         }
@@ -3604,7 +3618,6 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     direction *= Length;
     direction /= 2;
     FXApp->XFile().GetAsymmUnit().CartesianToCell(direction);
-
     TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
     CA1.Assign(*CA);
     CA1.SetSameId(~0);
@@ -3612,7 +3625,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     CA1.ccrd() += direction;
     CA1.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a'), false);
     // link occupancies
-    rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1.0);
+    rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1);
     CA1.SetOccu(0.5);
     ProcessedAtoms.Add(CA1);
     TCAtom& CA2 = *CA;
@@ -3620,7 +3633,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     CA2.ccrd() -= direction;
     CA2.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b'), false);
     // link occupancies
-    rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+    rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1);
     CA2.SetOccu(0.5);
     ProcessedAtoms.Add(CA2);
     TSimpleRestraint* sr = NULL;

@@ -20,18 +20,6 @@ protected:
           atoms.Add((TXAtom&)sel[i]);
         }
       }
-      //if( atoms.Count() > 1 )  {
-      //  cr /= atoms.Count();
-      //  for( size_t i=0; i < atoms.Count(); i++ )  {
-      //    c = atoms[i]->Atom().crd();
-      //    c += atoms[i]->Basis.GetCenter();
-      //    c -= cr;
-      //    c *= atoms[i]->Basis.GetMatrix();
-      //    c += cr;
-      //    atoms[i]->Atom().crd() = c;
-      //    atoms[i]->Basis.Reset();
-      //  }
-      //}
     }
   }
   void UpdateCrds() const {
@@ -88,13 +76,13 @@ public:
       return;
     }
     TCAtomPList to_isot;
-    XVar& xv = rm.Vars.NewVar(0.5);
+    XVar& xv = rm.Vars.NewVar(0.75);
     for( size_t i=0; i < SplitAtoms.Count(); i++ )  {
       TXAtom& a = *SplitAtoms[i].GetA();
       TXAtom& b = *SplitAtoms[i].GetB();
       to_isot.Add(a.CAtom());
-      rm.Vars.AddVarRef(xv, a.CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
-      rm.Vars.AddVarRef(xv, b.CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
+      rm.Vars.AddVarRef(xv, a.CAtom(), catom_var_name_Sof, relation_AsVar, 1);
+      rm.Vars.AddVarRef(xv, b.CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1);
       int part = a.CAtom().GetPart();
       if( part == 0 )  part ++;
       a.CAtom().SetPart(part);
