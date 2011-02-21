@@ -3618,6 +3618,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     direction *= Length;
     direction /= 2;
     FXApp->XFile().GetAsymmUnit().CartesianToCell(direction);
+    const double sp = 1./CA->GetDegeneracy();
     TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
     CA1.Assign(*CA);
     CA1.SetSameId(~0);
@@ -3625,16 +3626,16 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     CA1.ccrd() += direction;
     CA1.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a'), false);
     // link occupancies
-    rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1);
-    CA1.SetOccu(0.5);
+    rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, sp);
+    CA1.SetOccu(0.5*sp);
     ProcessedAtoms.Add(CA1);
     TCAtom& CA2 = *CA;
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
     CA2.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b'), false);
     // link occupancies
-    rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1);
-    CA2.SetOccu(0.5);
+    rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, sp);
+    CA2.SetOccu(0.5*sp);
     ProcessedAtoms.Add(CA2);
     TSimpleRestraint* sr = NULL;
     if( cr.IsEmpty() );

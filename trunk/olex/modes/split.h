@@ -81,14 +81,15 @@ public:
       TXAtom& a = *SplitAtoms[i].GetA();
       TXAtom& b = *SplitAtoms[i].GetB();
       to_isot.Add(a.CAtom());
-      rm.Vars.AddVarRef(xv, a.CAtom(), catom_var_name_Sof, relation_AsVar, 1);
-      rm.Vars.AddVarRef(xv, b.CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1);
+      const double sp = 1./a.CAtom().GetDegeneracy();
+      rm.Vars.AddVarRef(xv, a.CAtom(), catom_var_name_Sof, relation_AsVar, sp);
+      rm.Vars.AddVarRef(xv, b.CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, sp);
       int part = a.CAtom().GetPart();
       if( part == 0 )  part ++;
       a.CAtom().SetPart(part);
-      a.CAtom().SetOccu(0.75);
+      a.CAtom().SetOccu(0.75*sp);
       b.CAtom().SetPart(part+1);
-      b.CAtom().SetOccu(0.25);
+      b.CAtom().SetOccu(0.25*sp);
       TSimpleRestraint* sr = NULL;
       if( ReCon.IsEmpty() );
       else if( ReCon == "eadp" )
