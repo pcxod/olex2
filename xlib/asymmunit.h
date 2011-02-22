@@ -219,8 +219,8 @@ public:
   the procedure. try_invert - try the fitting of the inverted set of coordinates */
   void FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> >& atoms,
     const vec3d_list& crds, bool try_invert);
-  // returns next available part istruction in atoms
-  int GetNextPart() const;
+  // returns next available positive/negative part
+  int GetNextPart(bool negative=false) const;
 
   DefPropP(RefinementModel*, RefMod)
 // IXVarReferencerContainer implementation

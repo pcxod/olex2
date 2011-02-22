@@ -21,6 +21,21 @@
   #include "pyext.h"
 #endif
 
+TXGrid::TContextClear::TContextClear(TGlRenderer& r)  {
+  r.OnClear.Add(this);
+}
+//..............................................................................
+bool TXGrid::TContextClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+  TXGrid::_ResetLists();
+  return true;
+}
+//..............................................................................
+bool TXGrid::TContextClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+  return true;
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
 TXGrid* TXGrid::Instance = NULL;
 
 void TXGrid::DrawQuad16(double points[4][4])  {
@@ -140,9 +155,10 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   AGDrawObject::SetSelectable(false);
+  new TContextClear(Parent);
   Mask = NULL;
   Instance = this;
-  Extended = false;
+  Boxed = Extended = false;
   RenderMode = planeRenderModeFill;
 #ifndef _NO_PYTHON
   PythonExt::GetInstance()->Register(&TXGrid::PyInit);
@@ -176,6 +192,7 @@ TXGrid::~TXGrid()  {
   Clear();
   DeleteObjects();
   delete Info;
+  Instance = NULL;
 }
 //..............................................................................
 void TXGrid::Clear()  {  DeleteObjects();  }
@@ -220,6 +237,8 @@ void TXGrid::Create(const olxstr& cName)  {
   glpC->SetProperties(GS.GetMaterial("Contour plane", 
     TGlMaterial("1029;3628944717;645955712")));
   glpC->Vertices.SetCount(4);
+  if( !olx_is_valid_index(PListId) )
+    RescaleSurface();
 }
 //..............................................................................
 void TXGrid::CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) const {
@@ -472,10 +491,6 @@ void TXGrid::DeleteObjects()  {
     delete Mask;
     Mask = NULL;
   }
-  if( olx_is_valid_index(PListId) )  {
-    olx_gl::deleteLists(PListId, 2);
-    PListId = NListId = ~0;
-  }
   if( ContourData != NULL )  {
     for( size_t i=0; i < MaxDim; i++ )
       delete [] ContourData[i];
@@ -517,6 +532,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
 //..............................................................................
 void TXGrid::SetScale(float v)  {
   const bool _3d = Is3D();
+  Boxed = false;
   if( _3d && MinHole != MaxHole )  {
     if( v >= MinHole && v <= MaxHole )  {
       Info->Clear();
@@ -527,7 +543,7 @@ void TXGrid::SetScale(float v)  {
   }
   Scale = v;
   UpdateInfo();
-  if( _3d )  {
+  if( _3d && ED != NULL )  {
     p_triangles.Clear();
     p_normals.Clear();
     p_vertices.Clear();
@@ -542,7 +558,7 @@ void TXGrid::SetScale(float v)  {
       const vec3f tr = XApp->Get3DFrame().GetEdge(0);
       const smatdd g2c(XApp->Get3DFrame().GetNormals()/SZ, XApp->Get3DFrame().GetEdge(0));
       const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
-      MapUtil::Cell2Cart(MapUtil::MapGetter<float,1>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
+      MapUtil::Cell2Cart(MapUtil::MapGetter<float,2>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
       CIsoSurface IS(points);
       IS.GenerateSurface(Scale);
       p_vertices = IS.VertexList();
@@ -563,6 +579,7 @@ void TXGrid::SetScale(float v)  {
           n_normals[i] = n_normals[i]*rm;
       }
       delete &points;
+      Boxed = true;
     }
     else  {
       CIsoSurface IS(*ED);
@@ -696,23 +713,13 @@ void TXGrid::UpdateInfo()  {
   Info->Fit();
 }
 //..............................................................................
-void TXGrid::GlContextChange()  {
-  if( ED == NULL )
-    return;
-  if( !olx_is_valid_index(PListId)  )  {
-    olx_gl::deleteLists(PListId, 2);
-    PListId = NListId = ~0;
-  }
-  SetScale(Scale);
-}
-//..............................................................................
 void TXGrid::RescaleSurface()  {
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
   if( !olx_is_valid_index(PListId) )  {
-    PListId = olx_gl::genLists(2);
-    NListId = PListId+1;
+    PListId = Parent.NewListId();
+    NListId = Parent.NewListId();
   }
-  if( XApp->Get3DFrame().IsVisible() )  {
+  if( Boxed )  {
     for( int li = 0; li <= 1; li++ )  {
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
@@ -730,12 +737,6 @@ void TXGrid::RescaleSurface()  {
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
       olx_gl::endList();
     }
-    //p_vertices.Clear();
-    //p_triangles.Clear();
-    //p_normals.Clear();
-    //n_vertices.Clear();
-    //n_triangles.Clear();
-    //n_normals.Clear();
   }
   else if( Mask != NULL )  {
     vec3d pts[3];
@@ -774,12 +775,6 @@ void TXGrid::RescaleSurface()  {
       olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
       olx_gl::endList();
     }
-    p_vertices.Clear();
-    p_triangles.Clear();
-    p_normals.Clear();
-    n_vertices.Clear();
-    n_triangles.Clear();
-    n_normals.Clear();
   }
   else  {
     if( Extended )  {
@@ -843,12 +838,6 @@ void TXGrid::RescaleSurface()  {
         olx_gl::endList();
       }
     }
-    p_vertices.Clear();
-    p_triangles.Clear();
-    p_normals.Clear();
-    n_vertices.Clear();
-    n_triangles.Clear();
-    n_normals.Clear();
   }
 }
 //..............................................................................

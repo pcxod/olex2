@@ -52,7 +52,7 @@ class TXGrid: public AGDrawObject  {
   void RescaleSurface();
   TGlTextBox* Info;
   short RenderMode;
-  bool Extended;
+  bool Extended, Boxed;
   vec3f ExtMin, ExtMax;
   TGlPrimitive* glpP, *glpN, *glpC;
   // these will keep the masked objects
@@ -79,6 +79,18 @@ protected:
   }
   // updates the text information regarding current map
   void UpdateInfo();
+  class TContextClear: public AActionHandler  {
+  public:
+    TContextClear(TGlRenderer& Render);
+    virtual ~TContextClear()  {}
+    bool Enter(const IEObject *Sender, const IEObject *Data);
+    bool Exit(const IEObject *Sender, const IEObject *Data);
+  };
+  static void _ResetLists()  {
+    if( Instance != NULL )  {
+      Instance->PListId = Instance->NListId = ~0;
+    }
+  }
 public:
   TXGrid(const olxstr& collectionName, TGXApp* xapp);
   virtual ~TXGrid();
@@ -132,9 +144,6 @@ public:
   DefPropP(float, MaxHole)
   DefPropP(float, MinVal)
   DefPropP(float, MaxVal)
-
-  // recreates the lists, for draing on a different context
-  void GlContextChange();
 
   inline bool IsEmpty() const {  return ED == NULL;  }
   short GetRenderMode() const {  return RenderMode;  }

@@ -40,14 +40,6 @@ const int
   xatom_DisksId       = 5,
   xatom_CrossId       = 6;
 
-class TXAtomStylesClear: public AActionHandler  {
-public:
-  TXAtomStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear.Add(this);  }
-  virtual ~TXAtomStylesClear()  {  ;  }
-  bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
-  bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
-};
-
 class TXAtom: public TSAtom, public AGlMouseHandlerImp  {
 private:
   short FDrawStyle, FRadius;
@@ -57,7 +49,6 @@ private:
     RimsIndex, 
     DisksIndex,
     CrossIndex;
-  friend class TXAtomStylesClear;
   struct Poly {
     TArrayList<vec3f> vecs;
     TTypeList<vec3f> norms;
@@ -78,7 +69,6 @@ protected:
   void ValidateRadius(TGraphicsStyle& GS);
   void ValidateDS(TGraphicsStyle& GS);
   static void ValidateAtomParams();
-  static TXAtomStylesClear *FXAtomStylesClear;
   static int OrtepSpheres;  // 8 glLists
   vec3d Center;
   virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
@@ -89,6 +79,23 @@ protected:
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
+
+  class TStylesClear: public AActionHandler  {
+  public:
+    TStylesClear(TGlRenderer& Render)  {  Render.OnStylesClear.Add(this);  }
+    virtual ~TStylesClear()  {}
+    bool Enter(const IEObject *Sender, const IEObject *Data);
+    bool Exit(const IEObject *Sender, const IEObject *Data);
+  };
+  static TStylesClear *OnStylesClear;
+  class TContextClear: public AActionHandler  {
+  public:
+    TContextClear(TGlRenderer& Render);
+    virtual ~TContextClear()  {}
+    bool Enter(const IEObject *Sender, const IEObject *Data);
+    bool Exit(const IEObject *Sender, const IEObject *Data);
+  };
+  static void ClearStaticObjects()  {  FStaticObjects.Clear();  }
 public:
   TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
@@ -183,19 +190,11 @@ public:
   void OnPrimitivesCleared();
   static void Quality(const short Val);
 
-  static void Init(TGlRenderer* glr)  {
-    if( FXAtomStylesClear == NULL ) 
-      FXAtomStylesClear = new TXAtomStylesClear(glr);
-  }
-  
   void SetPolyhedronType(short type);
   int GetPolyhedronType();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
-  static void ClearStaticObjects()  {
-    FStaticObjects.Clear();
-  }
 };
 
 EndGxlNamespace()

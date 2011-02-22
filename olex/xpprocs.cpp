@@ -607,7 +607,9 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     SetPixelFormat(dDC, PixelFormat, &pfd);
   HGLRC dglc = wglCreateContext(dDC);
   FXApp->GetRender().Resize(0, 0, BmpWidth, BmpHeight, res);
+  FXApp->GetRender().BeforeContextChange();
   wglMakeCurrent(dDC, dglc);
+  FXApp->GetRender().AfterContextChange();
   FBitmapDraw = true;
   FGlConsole->SetVisible(false);
   FXApp->BeginDrawBitmap(res);
@@ -619,7 +621,9 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   wglDeleteContext(dglc);
   DeleteDC(dDC);
+  FXApp->GetRender().BeforeContextChange();
   wglMakeCurrent(hDC, glc);
+  FXApp->GetRender().AfterContextChange();
   FXApp->GetRender().Resize(vpLeft, vpTop, vpWidth, vpHeight, 1);
   FGlConsole->SetVisible(true);
   FXApp->FinishDrawBitmap();
@@ -2034,6 +2038,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TDataFile DF;
     DF.LoadFromXLFile(FN, NULL);
     LoadScene(DF.Root(), FXApp->GetRender().LightModel);
+    FXApp->UpdateLabels();
   }
   else if( Cmds[0].Equalsi("view") )  {
     olxstr FN = Cmds.Text(' ', 1);
@@ -2706,11 +2711,31 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   const size_t partCount = Options.FindValue("p", "1").ToSizeT();
   XLibMacros::ParseNumbers<int>(Cmds, 1, &part);
   const bool linkOccu = Options.Contains("lo");
+  const bool copy = Options.Contains("c");
 
   TXAtomPList Atoms;
   FindXAtoms(Cmds,Atoms, true, !Options.Contains("cs") );
   if( partCount == 0 || (Atoms.Count()%partCount) != 0 )  {
     E.ProcessingError(__OlxSrcInfo, "wrong number of parts");
+    return;
+  }
+  if( copy )  {
+    if( part == DefNoPart ) 
+      part = rm.aunit.GetNextPart(true);
+    XVar& xv = rm.Vars.NewVar(0.5);
+    for( size_t i=0; i < Atoms.Count(); i++ )  {
+      if( !Atoms[i]->GetMatrix(0).IsFirst() )  {
+        TCAtom& ca = rm.aunit.NewAtom();
+        ca.Assign(Atoms[i]->CAtom());
+        ca.SetPart(-1);
+        ca.ccrd() = Atoms[i]->ccrd();
+        rm.Vars.AddVarRef(xv, Atoms[i]->CAtom(), catom_var_name_Sof, relation_AsVar,
+          1.0/Atoms[i]->CAtom().GetDegeneracy());
+        rm.Vars.AddVarRef(xv, ca, catom_var_name_Sof, relation_AsVar,
+          1.0/Atoms[i]->CAtom().GetDegeneracy());
+      }
+    }
+    FXApp->XFile().EndUpdate();
     return;
   }
   XVar* xv = NULL;
@@ -2725,7 +2750,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 
   if( part == DefNoPart ) 
-    part = FXApp->XFile().GetLattice().GetAsymmUnit().GetNextPart();
+    part = rm.aunit.GetNextPart();
 
   for( size_t i=0; i < partCount; i++ )  {
     for( size_t j=(Atoms.Count()/partCount)*i; j < (Atoms.Count()/partCount)*(i+1); j++ )  {

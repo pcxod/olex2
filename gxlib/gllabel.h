@@ -36,7 +36,7 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
   inline const olxstr& GetLabel() const {  return FLabel;  }
   void SetLabel(const olxstr& L);
-  void Update()  {  SetLabel(GetLabel());  }
+  void UpdateLabel()  {  SetLabel(GetLabel());  }
   const TTextRect& GetRect() const {  return text_rect;  }
   vec3d GetRasterPosition() const;
   vec3d GetVectorPosition() const;
