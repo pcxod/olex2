@@ -364,6 +364,7 @@ void TGXApp::CreateObjects(bool centerModel)  {
   const vec3d glCenter = FGlRender->GetBasis().GetCenter();
   FLabels->Clear();
   ClearXObjects();
+  FGlRender->ClearObjects();
   FGlRender->SetSceneComplete(false);
 
   for( size_t i=0; i < IndividualCollections.Count(); i++ )
@@ -1278,7 +1279,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   }
   else if( MsgId == ID_OnUniq || MsgId == ID_OnGrow )  {
     if( MsgSubId == msiEnter )  {
-      FGlRender->Clear();
+      FGlRender->ClearObjects();
       ClearXObjects();
     }
     else if( MsgSubId == msiExit )  {
@@ -1334,8 +1335,8 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
         StoreLabels();
         ObjectsStored = true;
       }
-      //FGlRender->Clear();
-      //ClearXObjects();
+      FGlRender->ClearObjects();
+      ClearXObjects();
     }
     else if( MsgSubId == msiExit )  {
       //GetRender().SetBasis(basis);

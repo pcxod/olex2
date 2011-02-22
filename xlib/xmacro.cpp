@@ -30,6 +30,7 @@
 #include "esphere.h"
 #include "symmcon.h"
 #include "md5.h"
+#include "absorpc.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -137,7 +138,8 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(FixUnit, EmptyString(), fpNone|fpOne|psFileLoaded, "Sets SFAc and UNIT to current content of the asymmetric unit.\
  Takes Z', with default value of 1.");
-  xlib_InitMacro(GenDisp, EmptyString(), fpNone|fpOne|psFileLoaded, "Generates anisotropic dispertion parameters for current radiation wavelength");
+  xlib_InitMacro(GenDisp, "f-generates full SFAC instructions", fpNone|fpOne|psFileLoaded,
+    "Generates anisotropic dispertion parameters for current radiation wavelength");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(AddIns,EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file");
   xlib_InitMacro(DelIns, EmptyString(), fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided");
@@ -1732,13 +1734,35 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  const bool full = Options.Contains('f');
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   const ContentList& content = rm.GetUserContent();
   const double en = rm.expl.GetRadiationEnergy();
-  for( size_t i=0; i < content.Count(); i++ )  {
-    XScatterer* sc = new XScatterer(content[i].element.symbol);
-    sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
-    rm.AddSfac(*sc);
+  if( !full )  {
+    for( size_t i=0; i < content.Count(); i++ )  {
+      XScatterer* sc = new XScatterer(content[i].element.symbol);
+      sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
+      rm.AddSfac(*sc);
+    }
+  }
+  else  {
+    cm_Absorption_Coefficient_Reg ac;
+    for( size_t i=0; i < content.Count(); i++ )  {
+      XScatterer* sc = new XScatterer(content[i].element, en);
+      sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
+      try  {
+        double absorpc = ac.CalcMuOverRhoForE(en, *ac.locate(content[i].element.symbol));
+        CXConnInfo& ci = rm.Conn.GetConnInfo(content[i].element);
+        sc->SetMu(absorpc*content[i].element.GetMr()/0.6022142);
+        sc->SetR(ci.r);
+        sc->SetWeight(content[i].element.GetMr());
+        delete &ci;
+      }
+      catch(...)  {
+        TBasicApp::NewLogEntry() << "COuld not locate absorption data for: " << content[i].element.symbol;
+      }
+      rm.AddSfac(*sc);
+    }
   }
 }
 //..............................................................................

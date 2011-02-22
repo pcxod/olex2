@@ -514,8 +514,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         XScatterer* sc = new XScatterer(lb);
         sc->SetGaussians(
           cm_Gaussians(
-            Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble(), Toks[5].ToDouble(),
-            Toks[6].ToDouble(), Toks[7].ToDouble(), Toks[8].ToDouble(), Toks[9].ToDouble(),
+            Toks[2].ToDouble(), Toks[4].ToDouble(), Toks[6].ToDouble(), Toks[8].ToDouble(),
+            Toks[3].ToDouble(), Toks[5].ToDouble(), Toks[7].ToDouble(), Toks[9].ToDouble(),
             Toks[10].ToDouble())
           );
         sc->SetFpFdp(compd(Toks[11].ToDouble(), Toks[12].ToDouble()));
