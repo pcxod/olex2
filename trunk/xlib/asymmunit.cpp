@@ -584,13 +584,21 @@ void TAsymmUnit::Sort(TCAtomPList* list) {
   TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
 }
 //..............................................................................
-int TAsymmUnit::GetNextPart() const {
-  int part = 0;
-  for( size_t i=0; i < AtomCount(); i++ )
-    if( GetAtom(i).GetPart() > part )
-      part = GetAtom(i).GetPart();
-
-  return part+1;
+int TAsymmUnit::GetNextPart(bool neg) const {
+  if( !neg )  {
+    int part = 0;
+    for( size_t i=0; i < AtomCount(); i++ )
+      if( GetAtom(i).GetPart() > part )
+        part = GetAtom(i).GetPart();
+    return part+1;
+  }
+  else  {
+    int part = 0;
+    for( size_t i=0; i < AtomCount(); i++ )
+      if( GetAtom(i).GetPart() < part )
+        part = GetAtom(i).GetPart();
+    return part-1;
+  }
 }
 //..............................................................................
 void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {

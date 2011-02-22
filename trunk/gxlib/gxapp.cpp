@@ -97,7 +97,6 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //..............................................................................
-TXBondStylesClear::~TXBondStylesClear()  {}
 
 class xappXFileLoad: public AActionHandler  {
   TGXApp *FParent;
@@ -272,8 +271,6 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
   FDUnitCell->SetVisible(false);
   FDBasis = new TDBasis(*FGlRender, "DBasis");
   FDBasis->SetVisible(false);
-  TXAtom::Init(FGlRender);
-  TXBond::Init(FGlRender);
   FProbFactor = 50;
   ExtraZoom = 1.25;
 
@@ -302,10 +299,10 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
 TGXApp::~TGXApp()  {
   XFile().GetLattice().OnAtomsDeleted.Remove(this);
   Clear();
-  delete FGlRender;
   delete FLabels;
   delete FHklFile;
   delete FXGrid;
+  delete FGlRender;
   delete FGlMouse;
 }
 //..............................................................................
@@ -365,9 +362,6 @@ void TGXApp::CreateObjects(bool centerModel)  {
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
   const vec3d glCenter = FGlRender->GetBasis().GetCenter();
-  TXAtom::ClearStaticObjects();
-  TXBond::ClearStaticObjects();
-  FGlRender->ClearPrimitives();
   FLabels->Clear();
   ClearXObjects();
   FGlRender->SetSceneComplete(false);
@@ -2752,27 +2746,20 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   olx_gl::get(GL_LINE_WIDTH, &LW);
   olx_gl::lineWidth(LW*resolution);
   CreateObjects(false);
-  FXGrid->GlContextChange();
+  UpdateLabels();
 }
 //..............................................................................
 void TGXApp::FinishDrawBitmap()  {
   FLabels->Clear();
   GetRender().GetScene().RestoreFontScale();
   CreateObjects(false);
-  FXGrid->GlContextChange();
+  UpdateLabels();
 }
 //..............................................................................
 void TGXApp::UpdateLabels()  {
-  for( size_t i=0; i < XLabels.Count(); i++ )
-    XLabels[i].SetLabel(XLabels[i].GetLabel());
-  AtomIterator ai(*this);
-  while( ai.HasNext() )
-    ai.Next().UpdateLabel();
-  BondIterator bi(*this);
-  while( bi.HasNext() )
-    bi.Next().UpdateLabel();
-  for( size_t i=0; i < LooseObjects.Count(); i++ )
-    LooseObjects[i]->UpdateLabel();
+  TGlRenderer& r = GetRender();
+  for( size_t i=0; i < r.ObjectCount(); i++ )
+    r.GetObject(i).UpdateLabel();
 }
 //..............................................................................
 uint64_t TGXApp::Draw()  {
@@ -3964,14 +3951,15 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   TXAtom::DefRad(0);
   TXAtom::DefDS(0);
 
+  FGlRender->GetStyles().FromDataItem(item.FindRequiredItem("Style"), true);
+
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
   TDataItem* overlays = item.FindItem("Overlays");
   if( overlays != NULL )  {
     for( size_t i=0; i < overlays->ItemCount(); i++ )
       NewOverlayedXFile().FromDataItem(overlays->GetItem(i));
   }
-  FGlRender->GetStyles().FromDataItem(item.FindRequiredItem("Style"), true);
-  
+ 
   IndividualCollections.Clear();
   TDataItem& ind_col = item.FindRequiredItem("ICollections");
   for( size_t i=0; i < ind_col.FieldCount(); i++ )

@@ -10,13 +10,29 @@
 #include "unitcell.h"
 
 //..............................................................................
-bool TXBondStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+bool TXBond::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
   TXBond::FBondParams = NULL;
+  TXBond::ClearStaticObjects();
   return true;
 }
 //..............................................................................
-bool TXBondStylesClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+bool TXBond::TStylesClear::Exit(const IEObject *Sender, const IEObject *Data)  {
   TXBond::ValidateBondParams();
+  TXBond::ClearStaticObjects();
+  return true;
+}
+//..............................................................................
+//..............................................................................
+TXBond::TContextClear::TContextClear(TGlRenderer& Render)  {
+  Render.OnClear.Add(this);
+}
+//..............................................................................
+bool TXBond::TContextClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+  TXBond::ClearStaticObjects();
+  return true;
+}
+//..............................................................................
+bool TXBond::TContextClear::Exit(const IEObject *Sender, const IEObject *Data)  {
   return true;
 }
 //..............................................................................
@@ -26,7 +42,7 @@ bool TXBondStylesClear::Exit(const IEObject *Sender, const IEObject *Data)  {
 TStrPObjList<olxstr,TGlPrimitive*> TXBond::FStaticObjects;
 TArrayList<TGlPrimitiveParams>  TXBond::FPrimitiveParams;
 TGraphicsStyle* TXBond::FBondParams=NULL;
-TXBondStylesClear *TXBond::FXBondStylesClear=NULL;
+TXBond::TStylesClear *TXBond::OnStylesClear=NULL;
 //..............................................................................
 TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   TSBond(net),
@@ -38,6 +54,10 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   Params()[4] = 0.8;
   Label = new TXGlLabel(GetParent(), PLabelsCollectionName);
   Label->SetVisible(false);
+  if( OnStylesClear == NULL )  {
+    OnStylesClear = new TStylesClear(R);
+    new TContextClear(R);
+  }
 }
 //..............................................................................
 TXBond::~TXBond()  {

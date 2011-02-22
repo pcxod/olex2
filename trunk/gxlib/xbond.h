@@ -11,19 +11,10 @@ BeginGxlNamespace()
 
 class TXAtom;
 
-class TXBondStylesClear: public AActionHandler  {
-public:
-  TXBondStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear.Add(this);  }
-  virtual ~TXBondStylesClear();
-  bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
-  bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
-};
-
 class TXBond: public TSBond, public AGDrawObject  {
 private:
   TXGlLabel* Label;
   short FDrawStyle;
-  friend class TXBondStylesClear;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
@@ -32,10 +23,23 @@ protected:
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
   static void ValidateBondParams();
   static TGraphicsStyle *FBondParams;
-  static TXBondStylesClear *FXBondStylesClear;
   virtual bool IsMaskSaveable() const {  return false;  }
   virtual bool IsStyleSaveable() const {  return false; }
   virtual bool IsRadiusSaveable() const {  return false; }
+  class TStylesClear: public AActionHandler  {
+  public:
+    TStylesClear(TGlRenderer& Render)  {  Render.OnStylesClear.Add(this);  }
+    bool Enter(const IEObject *Sender, const IEObject *Data);
+    bool Exit(const IEObject *Sender, const IEObject *Data);
+  };
+  static TStylesClear *OnStylesClear;
+  class TContextClear: public AActionHandler  {
+  public:
+    TContextClear(TGlRenderer& Render);
+    bool Enter(const IEObject *Sender, const IEObject *Data);
+    bool Exit(const IEObject *Sender, const IEObject *Data);
+  };
+  static void ClearStaticObjects()  {  FStaticObjects.Clear();  }
 public:
   TXBond(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName=EmptyString());
@@ -93,16 +97,8 @@ public:
   // should be called when atom coordinates have changed
   virtual void Update();
 
-  static void Init(TGlRenderer* glr)  {
-    if( FXBondStylesClear == NULL ) 
-      FXBondStylesClear = new TXBondStylesClear(glr);
-  }
-
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
-  static void ClearStaticObjects()  {
-    FStaticObjects.Clear();
-  }
 };
 
 EndGxlNamespace()

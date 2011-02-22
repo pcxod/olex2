@@ -11,7 +11,28 @@
 #include "log.h"
 #include "estrbuffer.h"
 
-UseGlNamespace();
+UseGlNamespace()
+//............................................................................//
+GLuint TGlRenderer::TGlListManager::NewList()  {
+  if( Pos >= Lists.Count()*Inc )  {
+    GLuint s = olx_gl::genLists(Inc);
+    if( s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION )
+      throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
+    Lists.Add(s);
+  }
+  const GLuint lp = Lists.GetLast() + Pos%Inc;
+  Pos++;
+  return lp;
+}
+//..............................................................................
+void TGlRenderer::TGlListManager::Clear()  {
+  for( size_t i=0; i < Lists.Count(); i+= Inc )
+    olx_gl::deleteLists(Lists[i], Inc);
+  Pos = 0;
+  Lists.Clear();
+}
+//..............................................................................
+//..............................................................................
 //..............................................................................
 TGraphicsStyles* TGlRenderer::FStyles = NULL;
 //..............................................................................
@@ -19,6 +40,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   StereoRightColor(1, 0, 0, 1), StereoLeftColor(0, 1, 1, 1),
   OnDraw(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_DRAW)),
   OnStylesClear(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_CLEAR_STYLES)),
+  OnClear(TBasicApp::GetInstance().NewActionQueue("GL_CLEAR")),
   Top(0), Left(0), Width((int)width), Height((int)height), OWidth(0)
 {
   CompiledListId = -1;
@@ -88,36 +110,13 @@ void TGlRenderer::InitLights()  {
   LightModel.Init();
 }
 //..............................................................................
-void TGlRenderer::ClearPrimitives()  {
-  ClearGroups();
-  FSelection->Clear();
-  FListManager.ClearLists();
-  if( CompiledListId != -1 )  {
-    olx_gl::deleteLists(CompiledListId, 1);
-    CompiledListId = -1;
-  }
-  for( size_t i=0; i < FCollections.Count(); i++ )
-    delete FCollections.GetObject(i);
-  FCollections.Clear();
-  for( size_t i=0; i < Primitives.ObjectCount(); i++ )
-    delete &Primitives.GetObject(i);
-  for( size_t i=0; i < Primitives.PropertiesCount(); i++ )
-    delete &Primitives.GetProperties(i);
-  Primitives.Clear();
-  FTranslucentIdentityObjects.Clear();
-  FTranslucentObjects.Clear();
-  FIdentityObjects.Clear();
-  FGObjects.Clear();
-  ClearMinMax();
-  ReleaseGlImage();
-}
-//..............................................................................
 void TGlRenderer::Clear()  {
+  OnClear.Enter(this);
   FSelection->Clear();
   for( size_t i=0; i < FGroups.Count(); i++ )
     delete FGroups[i];
   FGroups.Clear();
-  FListManager.ClearLists();
+  ListManager.Clear();
   if( CompiledListId != -1 )  {
     olx_gl::deleteLists(CompiledListId, 1);
     CompiledListId = -1;
@@ -133,11 +132,11 @@ void TGlRenderer::Clear()  {
   FTranslucentIdentityObjects.Clear();
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
-  // the function automaticallt removes the objects and their properties
   FGObjects.Clear();
   //ResetBasis();
   ClearMinMax();
   ReleaseGlImage();
+  OnClear.Exit(this);
 }
 //..............................................................................
 void TGlRenderer::ReleaseGlImage()  {
@@ -187,7 +186,7 @@ void TGlRenderer::_OnStylesLoaded()  {
     GO[i]->OnPrimitivesCleared();
     GO[i]->SetCreated(false);
   }
-  ClearPrimitives();
+  Clear();
   for( size_t i=0; i < GO.Count(); i++ )  {
     if( !GO[i]->IsCreated() )   {  // some loose objects as labels can be created twice otherwise
       GO[i]->Create();
@@ -971,47 +970,7 @@ void TGlRenderer::CleanUpStyles()  {// removes styles, which are not used by any
   GetStyles().RemoveStylesByTag(0);
   OnStylesClear.Exit(this);
 }
-//...........TGLLISTMANAGER...................................................//
 //............................................................................//
-//............................................................................//
-//............................................................................//
-TGlListManager::TGlListManager()  {
-  FInc = 10;
-  FPos = 0;
-}
-//..............................................................................
-TGlListManager::~TGlListManager()  {
-  ClearLists();
-}
-//..............................................................................
-unsigned int TGlListManager::NewList()  {
-  if( FPos >= Lists.Count() )  {
-    GLuint s = olx_gl::genLists(10);
-    if( s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION )
-      throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
-    for( int i=0; i < 10; i++ )
-      Lists.Add(s+i);
-  }
-  return Lists[FPos ++];
-}
-//..............................................................................
-void TGlListManager::ClearLists()  {
-  for( size_t i=0; i < Lists.Count(); i+= FInc )
-    olx_gl::deleteLists(Lists[i], FInc);
-  FPos = 0;
-  Lists.Clear();
-}
-//..............................................................................
-void TGlListManager::ReserveRange(unsigned int count)  {
-  ClearLists();
-  GLint s = olx_gl::genLists(count);
-  if( s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION )
-    throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
-  for( unsigned int i=0; i < count; i++ )
-    Lists.Add( s+i );
-  FPos = (unsigned int)Lists.Count();
-}
-//..............................................................................
 TGraphicsStyles& TGlRenderer::_GetStyles()  {
   if( TGlRenderer::FStyles == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "Object is not initialised");
@@ -1077,6 +1036,17 @@ void TGlRenderer::SetLineWidth(double lw) {
   olx_gl::lineWidth(LineWidth);
 }
 //..............................................................................
+void TGlRenderer::BeforeContextChange()  {
+  //OnClear.Enter(this);
+  Clear();
+  //OnClear.SetEnabled(false);
+}
+//..............................................................................
+void TGlRenderer::AfterContextChange()  {
+  //OnClear.SetEnabled(true);
+  //OnClear.Exit(this);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
@@ -1089,8 +1059,8 @@ void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options, T
     E.ProcessingError(__OlxSrcInfo, "please specify a number in range [1-90]" );
     return;
   }
-  float v = (float)Cmds[0].ToDouble();
-  if( v < 0.5 )  v = 1;
+  double v = Cmds[0].ToDouble();
+  if( v < 0.5f )  v = 1;
   if( v > 180 )  v = 180;
 
   SetPerspectiveAngle(v);
@@ -1254,4 +1224,3 @@ decrements current zoom by provided value") );
   return lib;
 }
 //..............................................................................
-

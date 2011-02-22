@@ -33,19 +33,6 @@ const uint8_t
 class AGDrawObject;
 class TGlGroup;
 
-class TGlListManager  {
-  GLuint FInc, FPos;
-  TArrayList<GLuint> Lists;
-public:
-  TGlListManager();
-  virtual ~TGlListManager();
-  GLuint NewList();
-  void ClearLists();
-  void ReserveRange(unsigned int count);
-  GLuint Count() const {  return FPos; }
-  GLuint GetList(size_t index) const {  return Lists[index]; }
-};
-
 class TGlRenderer : public IEObject  {
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;  // a list of all groups of primitives
   TSStrPObjList<olxcstr,TGPCollection*, false> FCollections;
@@ -76,7 +63,6 @@ class TGlRenderer : public IEObject  {
   int Width, Height, OWidth;
   int Left, Top;
   double LineWidth;
-  TGlListManager FListManager;
   int CompiledListId;
 protected:
   void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
@@ -95,11 +81,20 @@ protected:
   TGlOption StereoLeftColor, StereoRightColor;
   mutable double SceneDepth;
   bool ATI;
+
+  class TGlListManager  {
+    GLuint Inc, Pos;
+    TArrayList<GLuint> Lists;
+  public:
+    TGlListManager(GLuint inc=16) : Inc(inc), Pos(0)  {}
+    virtual ~TGlListManager()  {  Clear();  }
+    GLuint NewList();
+    void Clear();
+  } ListManager;
 public:
   TGlRenderer(AGlScene *S, size_t width, size_t height);
   virtual ~TGlRenderer();
   void Clear();
-  void ClearPrimitives();
   AGlScene& GetScene() const {  return *FScene;  }
   // the functions set current matrix
   void SetView(int x, int y, bool Identity, bool Select, short Res);
@@ -134,7 +129,8 @@ public:
   
   TGlLightModel LightModel;
   TActionQueue &OnDraw, // register your handler to swap buffers etc
-    &OnStylesClear;  // Enter and Exit are called
+    &OnStylesClear,  // Enter and Exit are called
+    &OnClear;
 
   void Resize(size_t h, size_t w);
   void Resize(int Left, int Top, size_t h, size_t w, float Zoom);
@@ -196,6 +192,11 @@ public:
   void ReleaseGlImage();  // use to realease the internal memory allocated by the image
 
   void Draw();
+  // to be called if the underlying OpenGl Context is about to change
+  void BeforeContextChange();
+  // to be called if the underlying OpenGl Context has changed
+  void AfterContextChange();
+
   AGDrawObject* SelectObject(int x, int y, int depth=0);
   class TGlPrimitive* SelectPrimitive(int x, int y);
 
@@ -227,7 +228,7 @@ public:
   void ClearSelection();
   void SelectAll(bool Select);
   void InvertSelection();
-  GLuint NewListId()  {  return FListManager.NewList(); }
+  GLuint NewListId()  {  return ListManager.NewList();  }
 
   void operator = (const TGlRenderer &G);
   TGPCollection& NewCollection(const olxstr &Name);
@@ -299,7 +300,6 @@ public:
   void LibBasis(const TStrObjList& Params, TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
-
 
 EndGlNamespace()
 #endif

@@ -624,9 +624,13 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
   this_InitMacro(Fvar, , (fpAny)|psCheckFileTypeIns);
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
-  this_InitMacroD(Part, "p-number of parts&;lo-link ocupancy of given atoms through FVAR's",
-    fpAny|psFileLoaded, "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking\
- occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
+  this_InitMacroD(Part,
+    "p-number of parts&;lo-link ocupancy of given atoms through FVAR's&;"
+    "c-creates a copy of all grown atoms to which applied in the asymmetric unit and "
+    "automatically links occupancies with the original atoms",
+    fpAny|psFileLoaded,
+    "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking "
+    "occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
   this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");

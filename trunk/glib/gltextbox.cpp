@@ -69,9 +69,8 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     TGlFont& Fnt = GetFont();
     const double rscale = Parent.GetExtraZoom()*Parent.GetViewZoom();
     const uint16_t th = Fnt.TextHeight(EmptyString());
-    const double GlLeft = ((Left+GetCenter()[0])*rscale - (double)Parent.GetWidth()/2) + 0.1;
-    const double GlTop = ((double)Parent.GetHeight()/2 -
-      (Top-GetCenter()[1]+Height)*rscale) + 0.1;
+    const double GlLeft = ((Left+GetCenter()[0])*rscale - Parent.GetWidth()/2.0) + 0.1;
+    const double GlTop = (Parent.GetHeight()/2.0 - (Top-GetCenter()[1])*rscale-Height) + 0.1;
     const double LineSpacer = (0.05+LineSpacing-1)*th;
     const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1./Parent.GetExtraZoom();
     bool mat_changed = false;
@@ -94,16 +93,17 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     return true;
   }
   else  {
-    double Scale = Parent.GetScale();
-    const double hw = Parent.GetWidth()*Scale/2;
-    const double hh = Parent.GetHeight()*Scale/2;
-    Scale = Scale*Parent.GetExtraZoom()*Parent.GetViewZoom();
+    double Scale = Parent.GetScale(),
+      es = Parent.GetExtraZoom()*Parent.GetViewZoom();
+    Scale *= es;
+    const double hw = Parent.GetWidth()/(2*es), w = Width/es;
+    const double hh = Parent.GetHeight()/(2*es), h = Height/es;
     double xx = GetCenter()[0], xy = -GetCenter()[1];
-    const double z = Z-0.1;
-    P.Vertices[0] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, z);
-    P.Vertices[1] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+xy)*Scale, z);
-    P.Vertices[2] = vec3d((Left+xx)*Scale-hw, hh-(Top+xy)*Scale, z);
-    P.Vertices[3] = vec3d((Left+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, z); 
+    const double z = Z-0.01;
+    P.Vertices[0] = vec3d((Left+w+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, z);
+    P.Vertices[1] = vec3d((Left+w+xx-hw)*Scale, -(Top+xy-hh)*Scale, z);
+    P.Vertices[2] = vec3d((Left+xx-hw)*Scale, -(Top+xy-hh)*Scale, z);
+    P.Vertices[3] = vec3d((Left+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, z); 
     return false;
   }
 }

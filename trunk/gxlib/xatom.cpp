@@ -20,13 +20,29 @@
 #include "glutil.h"
 
 //..............................................................................
-bool TXAtomStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
+bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
   TXAtom::FAtomParams = NULL; 
+  TXAtom::ClearStaticObjects();
   return true; 
 }
 //..............................................................................
-bool TXAtomStylesClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+bool TXAtom::TStylesClear::Exit(const IEObject *Sender, const IEObject *Data)  {
   TXAtom::ValidateAtomParams();
+  TXAtom::ClearStaticObjects();
+  return true;
+}
+//..............................................................................
+//..............................................................................
+TXAtom::TContextClear::TContextClear(TGlRenderer& Render)  {
+  Render.OnClear.Add(this);
+}
+//..............................................................................
+bool TXAtom::TContextClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
+  TXAtom::ClearStaticObjects();
+  return true; 
+}
+//..............................................................................
+bool TXAtom::TContextClear::Exit(const IEObject *Sender, const IEObject *Data)  {
   return true;
 }
 //..............................................................................
@@ -42,7 +58,7 @@ short TXAtom::FDefRad = 0;
 short TXAtom::FDefDS = 0;
 int TXAtom::OrtepSpheres = -1;
 TGraphicsStyle* TXAtom::FAtomParams=NULL;
-TXAtomStylesClear *TXAtom::FXAtomStylesClear=NULL;
+TXAtom::TStylesClear *TXAtom::OnStylesClear=NULL;
 uint8_t TXAtom::PolyhedronIndex = ~0;
 uint8_t TXAtom::SphereIndex = ~0;
 uint8_t TXAtom::SmallSphereIndex = ~0;
@@ -66,11 +82,13 @@ TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
   Params()[0] = 1;
   Params()[1] = 1;
   // the objects will be automatically deleted by the corresponding action collections
-  if( FStaticObjects.IsEmpty() )  
-    CreateStaticObjects(Render);
   Label = new TXGlLabel(Render, PLabelsCollectionName);
   Label->SetOffset(crd());
   Label->SetVisible(false);
+  if( OnStylesClear == NULL )  {
+    OnStylesClear = new TStylesClear(Render);
+    new TContextClear(Render);
+  }
 }
 //..............................................................................
 TXAtom::~TXAtom()  {

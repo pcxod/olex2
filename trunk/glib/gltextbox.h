@@ -38,6 +38,7 @@ public:
   void SetTop(int top);
   int GetTop() const {  return Top;  }
   void Fit();
+  virtual void UpdateLabel()  {  Fit();  }
 
   DefPropP(uint16_t, FontIndex)
   DefPropP(uint16_t, MaxStringLength)

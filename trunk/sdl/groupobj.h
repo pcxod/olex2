@@ -34,7 +34,7 @@ public:
     if( index != InvalidIndex )  
       Objects.Delete(index);
   }
-  
+  void ClearObjects()  {  Objects.Clear();  }
   void SetObjectCapacity(size_t cap)  {  Objects.SetCapacity(cap);  }
   void SetObjectIncrement(size_t inc) {  Objects.SetIncrement(inc);  }
 
@@ -76,6 +76,7 @@ public:
   AGroupObject& AddObject(AGO const& O)  {  return *Objects.Add(O);  }
   inline AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
   // access to the lists
+  TPtrList<AGroupObject>& GetObjects()  {  return Objects;  }
   const TPtrList<AGroupObject>& GetObjects() const {  return Objects;  }
   const TPtrList<AGOProperties>& GetProperties() const {  return Props;  }
   inline size_t ObjectCount() const {  return Objects.Count(); }
