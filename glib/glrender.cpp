@@ -148,15 +148,7 @@ void TGlRenderer::ClearObjects()  {
     CompiledListId = -1;
   }
   for( size_t i=0; i < FCollections.Count(); i++ )
-    delete FCollections.GetObject(i);
-  FCollections.Clear();
-  for( size_t i=0; i < Primitives.ObjectCount(); i++ )
-    Primitives.GetObject(i);
-  for( size_t i=0; i < Primitives.PropertiesCount(); i++ )
-    Primitives.GetProperties(i).ClearObjects();
-  FTranslucentIdentityObjects.Clear();
-  FTranslucentObjects.Clear();
-  FIdentityObjects.Clear();
+    FCollections.GetObject(i)->ClearObjects();
   FGObjects.Clear();
   ClearMinMax();
   ReleaseGlImage();

@@ -244,7 +244,7 @@ void TXAtom::Create(const olxstr& cName)  {
   if( GetType() == iQPeakZ )  {
     Legend = GetLabelLegend(*this);
     GPC = Parent.FindCollection(Legend);
-    if( GPC == NULL || GPC->ObjectCount() == 0 )  {  // if the collection is empty, need to fill it...
+    if( GPC == NULL || GPC->PrimitiveCount() == 0 )  {  // if the collection is empty, need to fill it...
       if( GPC == NULL )
         GPC = &Parent.NewCollection(Legend);
       GPC->GetStyle().SetSaveable(false);

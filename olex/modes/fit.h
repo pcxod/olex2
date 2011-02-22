@@ -10,7 +10,7 @@ enum  {
 class TFitMode : public AEventsDispatcher, public AMode  {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
-  bool Initialised;
+  bool Initialised, DoSplit;
   class OnUniqHandler : public AActionHandler {
     TFitMode& fit_mode;
   public:
@@ -23,7 +23,7 @@ class TFitMode : public AEventsDispatcher, public AMode  {
   double AngleInc;
   OnUniqHandler* uniq_handler;
 public:
-  TFitMode(size_t id) : AMode(id), Initialised(false), AngleInc(0)  {
+  TFitMode(size_t id) : AMode(id), Initialised(false), AngleInc(0), DoSplit(false)  {
     uniq_handler = new OnUniqHandler(*this);
     TGlXApp::GetGXApp()->OnObjectsCreate.Add(this, mode_fit_create, msiExit);
     TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble, msiEnter);
@@ -33,6 +33,7 @@ public:
   }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     AtomsToMatch.Clear();
+    DoSplit = Options.Contains('s');
     TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     TXAtomPList xatoms;
     TPtrList<AGDrawObject> xbonds;
@@ -129,7 +130,7 @@ public:
   }
   virtual bool AddAtoms(const TXAtomPList& atoms)  {
     Atoms.AddList(atoms);
-    group->AddAtoms(atoms);
+    group->AddAtoms(atoms, DoSplit);
     group->SetSelected(true);
     return true;
   }

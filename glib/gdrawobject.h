@@ -42,7 +42,7 @@ public:
     return mn;
   }
 
-  void  SetPrimitives(TGPCollection& GPC)  {  Primitives = &GPC;  }
+  void SetPrimitives(TGPCollection& GPC)  {  Primitives = &GPC;  }
   inline TGPCollection& GetPrimitives() const {  return *Primitives;  }
 
   inline const olxstr& GetCollectionName() const {  return CollectionName;  }

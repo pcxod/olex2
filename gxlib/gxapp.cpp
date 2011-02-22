@@ -3552,8 +3552,8 @@ TGlBitmap* TGXApp::FindGlBitmap(const olxstr& name)  {
 //..............................................................................
 TGlBitmap* TGXApp::CreateGlBitmap(const olxstr& name,
   int left, int top, int width, int height,
-  unsigned char* RGBa, unsigned int format)  {
-
+  unsigned char* RGBa, unsigned int format)
+{
   TGlBitmap* glB = FindGlBitmap(name);
   if( glB == NULL )  {
     glB = new TGlBitmap(*FGlRender, name, left, top, width, height, RGBa, format );
@@ -3580,11 +3580,11 @@ void TGXApp::DeleteGlBitmap(const olxstr& name)  {
   }
   if( glb != NULL )  {
     //GlBitmaps.Delete(index);
-    size_t ind = ObjectsToCreate.IndexOf( (AGDrawObject*)glb );
+    size_t ind = ObjectsToCreate.IndexOf((AGDrawObject*)glb);
     if( ind != InvalidIndex )
       ObjectsToCreate.Delete(ind);
-    glb->GetPrimitives().RemoveObject( *glb );
-    FGlRender->RemoveObject( *glb );
+    glb->GetPrimitives().RemoveObject(*glb);
+    FGlRender->RemoveObject(*glb);
     delete glb;
   }
 }
