@@ -95,6 +95,7 @@ public:
   TGlRenderer(AGlScene *S, size_t width, size_t height);
   virtual ~TGlRenderer();
   void Clear();
+  void ClearObjects();
   AGlScene& GetScene() const {  return *FScene;  }
   // the functions set current matrix
   void SetView(int x, int y, bool Identity, bool Select, short Res);

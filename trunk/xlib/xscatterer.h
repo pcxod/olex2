@@ -22,7 +22,7 @@ public:
   // creates a dummy scatterer
   XScatterer(const olxstr& lbl) : Label(lbl), mu(0), r(0), wt(0), source(NULL), set_items(0)  {}
   // creates scatterer from the library
-  XScatterer(const cm_Element& src, double energy) : mu(0), set_items()  {  
+  XScatterer(const cm_Element& src, double energy) : mu(0), set_items(0)  {  
     SetSource(src, energy);
   }
   // searches for the scatterer in the library and initialises data. If scatterer no found, throws exception
@@ -117,8 +117,8 @@ public:
     }
     else if( set_items == setAll ) {
       olxstr rv("SFAC ", 100);
-      rv << Label << ' ' << gaussians.a1 << ' ' << gaussians.a2 << ' ' << gaussians.a3 << ' ' <<
-        gaussians.a4 << ' ' << -gaussians.b1 << ' ' << -gaussians.b2 << ' ' << -gaussians.b3 << ' ' <<
+      rv << Label << ' ' << gaussians.a1 << ' ' << -gaussians.b1 << ' ' << gaussians.a2 << ' ' <<
+        -gaussians.b2<< ' ' << gaussians.a3 << ' ' << -gaussians.b3 << ' ' << gaussians.a4 << ' ' <<
         -gaussians.b4 << ' ' << gaussians.c <<  ' ' << fpfdp.GetRe() << ' ' << fpfdp.GetIm() << ' ' <<
         mu << ' ' << r << ' ' << wt;
       return rv;
