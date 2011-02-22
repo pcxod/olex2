@@ -5322,7 +5322,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 void TMainForm::macDeleteBitmap(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  FXApp->DeleteGlBitmap( Cmds[0] );
+  FXApp->DeleteGlBitmap(Cmds[0]);
 }
 //..............................................................................
 void TMainForm::ChangeSolution(int sol)  {

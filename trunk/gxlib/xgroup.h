@@ -22,6 +22,7 @@ more transparent, however, it could use the TEBasis in the following way:
 */
 class TXGroup : public TGlGroup, public AGlMouseHandler {
   vec3d RotationCenter, RotationDir;
+  vec3d_alist original_crd;
   TXAtomPList Atoms;
   double AngleInc, AngleAcc;
 protected:
@@ -30,35 +31,56 @@ protected:
       TGlGroup::DoDraw(SelectPrimitives, SelectObjects);
       return;
     }
-    for( size_t i=0; i < Count(); i++ )  {
-      AGDrawObject& G = GetObject(i);
-      if( !G.IsVisible() )  continue;
-      if( G.IsGroup() )    {
-        TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
-        if( group != NULL )  {
-          group->Draw(SelectPrimitives, SelectObjects);
-          continue;
+    for( int ditr=0; ditr < 2; ditr++ )  {
+      if( ditr == 0 )  {
+        if( !original_crd.IsEmpty() )  {
+          for( size_t i=0; i < original_crd.Count(); i++ )
+            olx_swap(original_crd[i], Atoms[i]->crd());
+          for( size_t i=0; i < Count(); i++ )
+            GetObject(i).Update();
         }
+        else
+          continue;
       }
-      const size_t pc = G.GetPrimitives().PrimitiveCount();
-      for( size_t j=0; j < pc; j++ )  {
-        TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
-        TGlMaterial glm = GlP.GetProperties();
-        glm.SetFlags(glm.GetFlags()|sglmColorMat|sglmShininessF|sglmSpecularF);
-        glm.AmbientF *= 0.75;
-        glm.AmbientF = glm.AmbientF.GetRGB() | 0x007070;
-        glm.ShininessF = 32;
-        glm.SpecularF = 0xff00;
-        glm.Init(false);
-        if( SelectObjects )     olx_gl::loadName((GLuint)G.GetTag());
-        if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
-        olx_gl::pushMatrix();
-        if( G.Orient(GlP) )  {
-          olx_gl::popMatrix();
-          continue;
+      else  if( !original_crd.IsEmpty() )  {
+        for( size_t i=0; i < original_crd.Count(); i++ )
+          olx_swap(original_crd[i], Atoms[i]->crd());
+        for( size_t i=0; i < Count(); i++ )
+          GetObject(i).Update();
+      }
+      for( size_t i=0; i < Count(); i++ )  {
+        AGDrawObject& G = GetObject(i);
+        if( !G.IsVisible() )  continue;
+        if( G.IsGroup() )    {
+          TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
+          if( group != NULL )  {
+            group->Draw(SelectPrimitives, SelectObjects);
+            continue;
+          }
         }
-        GlP.Draw();
-        olx_gl::popMatrix();
+        const size_t pc = G.GetPrimitives().PrimitiveCount();
+        for( size_t j=0; j < pc; j++ )  {
+          TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
+          TGlMaterial glm = GlP.GetProperties();
+          glm.SetFlags(glm.GetFlags()|sglmColorMat|sglmShininessF|sglmSpecularF);
+          glm.AmbientF *= 0.75;
+          if( ditr == 1 )
+            glm.AmbientF = glm.AmbientF.GetRGB() | 0x007070;
+          else
+            glm.AmbientF = glm.AmbientF.GetRGB() | 0x700070;
+          glm.ShininessF = 32;
+          glm.SpecularF = 0xff00;
+          glm.Init(false);
+          if( SelectObjects )     olx_gl::loadName((GLuint)G.GetTag());
+          if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+          olx_gl::pushMatrix();
+          if( G.Orient(GlP) )  {
+            olx_gl::popMatrix();
+            continue;
+          }
+          GlP.Draw();
+          olx_gl::popMatrix();
+        }
       }
     }
   }
@@ -125,9 +147,18 @@ public:
     SetMoveable(true);
     SetRoteable(true);
   }
-  void AddAtoms(const TPtrList<TXAtom>& atoms)  {
+  void AddAtoms(const TPtrList<TXAtom>& atoms, bool draw_original)  {
     TGlGroup::AddObjects(atoms);
-    Atoms.AddList(atoms);
+    if( draw_original )  {
+      Atoms.SetCapacity(atoms.Count());
+      original_crd.SetCount(atoms.Count());
+      for( size_t i=0; i < atoms.Count(); i++ )  {
+        Atoms.Add(atoms[i]);
+        original_crd[i] = atoms[i]->crd();
+      }
+    }
+    else
+      Atoms.AddList(atoms);
     UpdateRotationCenter();
   }
   void Clear()  {

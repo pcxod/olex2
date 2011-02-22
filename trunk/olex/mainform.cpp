@@ -659,7 +659,7 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(Mode, 
 "a-[name] autocomplete\n&;\
 p-[name] prefix\n&;\
-s-[grow] short interactions; [name] suffix\n&;\
+s-[grow] short interactions; [name] suffix; [fit] split&;\
 t-[name] type\n&;\
 c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;\
 r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms; "
