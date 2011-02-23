@@ -116,10 +116,12 @@ void TDUnitCell::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
-  if( GPC.PrimitiveCount() != 0 )  {  // GetDimensions will be called 
+  if( GPC.PrimitiveCount() != 0 )  {  // GetDimensions will be called
     FGlP = GPC.FindPrimitiveByName("Lines");
     if( FGlP != NULL )  {
       GPC.AddObject(*this);
+      for( int i=0; i < 4; i++ )
+        Labels[i]->Create();
       return;
     }
     GPC.ClearPrimitives();

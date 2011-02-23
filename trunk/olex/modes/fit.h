@@ -62,11 +62,16 @@ public:
   }
   void Finalise() {
     TGXApp& app = *TGlXApp::GetGXApp();
-    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    app.GetRender().ReplaceSelection<TGlGroup>();
+    Initialised = false;
     RefinementModel& rm = app.XFile().GetRM();
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
     XVar& xv = rm.Vars.NewVar(0.75);
     if( DoSplit )  {
+      TCAtomPList to_iso;
       for( size_t i=0; i < Atoms.Count(); i++ )  {
+        if( Atoms[i]->crd().QDistanceTo(original_crds[i]) < 1e-3 )
+          continue;
         TXAtom* nxa = app.AddAtom(Atoms[i]);
         if( nxa == NULL )  continue;
         TCAtom& na = nxa->CAtom();
@@ -94,16 +99,15 @@ public:
         // set coordinates
         na.ccrd() = au.Fractionalise(Atoms[i]->crd());
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(original_crds[i]);
+        to_iso.Add(Atoms[i]->CAtom());
       }
+      app.XFile().GetLattice().SetAnis(to_iso, false);
     }
     else  {
       for( size_t i=0; i < Atoms.Count(); i++ )
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
+      app.XFile().GetLattice().Init();
     }
-    app.GetRender().ReplaceSelection<TGlGroup>();
-    Initialised = false;
-    // need to update symm eq etc
-    app.XFile().GetLattice().Init();
   }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {

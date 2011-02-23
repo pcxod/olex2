@@ -46,9 +46,12 @@ void TDBasis::Create(const olxstr& cName)  {
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  if( GPC.PrimitiveCount() != 0 )  return;
+  if( GPC.PrimitiveCount() != 0 )  {
+    for( int i=0; i < 3; i++ )
+      Labels[i]->Create();
+    return;
+  }
   TGraphicsStyle& GS = GPC.GetStyle();
-
   mat3d m = AU->GetCellToCartesian();
   if( m[0].QLength() < 1.e-6 )
     m.I();
