@@ -65,8 +65,10 @@ void TGlConsole::Create(const olxstr& cName)  {
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  if( GPC.PrimitiveCount() != 0 )  return;
-
+  if( GPC.PrimitiveCount() != 0 )  {
+    FCursor->Create();
+    return;
+  }
   TGraphicsStyle& GS = GPC.GetStyle();
   FLinesToShow = GS.GetParam("LinesToShow", FLinesToShow, true).ToInt();
   FLineSpacing = GS.GetParam("LineSpacing", "0", true).ToDouble();
