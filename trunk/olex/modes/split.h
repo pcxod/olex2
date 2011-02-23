@@ -126,6 +126,7 @@ public:
         }
       if( split )  {
         TXAtom* xa = TGlXApp::GetGXApp()->AddAtom(XA);
+        const TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
         if( xa != NULL )  {
           xa->SetMoveable(true);
           xa->SetRoteable(true);
@@ -135,17 +136,16 @@ public:
           XA->CAtom().SetPart(part);
           xa->CAtom().SetPart(part+1);
           xa->crd() += 0.5;
-          vec3d c = xa->crd();
-          TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(c);
+          vec3d c = au.Fractionalise(xa->crd());
           xa->CAtom().ccrd() = c;
           xa->ccrd() = c;
           olxstr new_l = XA->GetLabel();
-          olxch lc = olxstr::o_tolower(new_l.GetLast() );
-          if( lc >= 'a' && lc <= 'z' )
+          olxch lc = olxstr::o_tolower(new_l.GetLast());
+          if( olxstr::o_isalpha(lc) )
             new_l[new_l.Length()-1] = ++lc;
           else
             new_l << 'a';
-          xa->CAtom().SetLabel(TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->CAtom(), new_l), false);
+          xa->CAtom().SetLabel(au.CheckLabel(&xa->CAtom(), new_l), false);
           if( xa->GetType() == iQPeakZ )
             xa->CAtom().SetQPeak(1.0);
           TGlXApp::GetGXApp()->XFile().GetLattice().UpdateConnectivity();

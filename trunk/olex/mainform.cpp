@@ -2948,6 +2948,7 @@ void TMainForm::OnMouseMove(int x, int y)  {
 bool TMainForm::OnMouseDown(int x, int y, short Flags, short Buttons) {
   MousePositionX = x;
   MousePositionY = y;
+  MouseMoveTimeElapsed = 5000;
   return false;
 }
 bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
@@ -3015,6 +3016,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
   }
   MousePositionX = x;
   MousePositionY = y;
+  MouseMoveTimeElapsed = 5000;
   return false;
 }
 //..............................................................................

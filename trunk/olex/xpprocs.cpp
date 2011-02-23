@@ -3469,6 +3469,7 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     for( size_t i=0; i < Options.Count(); i++ )
       tmp << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
     CallbackFunc(OnModeChangeCBName, tmp);
+    FXApp->EnableSelection(md == NULL);
   }
   ChangingMode = false;
 }
@@ -4312,6 +4313,10 @@ void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if( Modes->GetCurrent() != NULL )  {
+    TBasicApp::NewLogEntry(logError) << "Unavailable in a mode";
+    return;
+  }
   if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
     FXApp->GetRender().ClearSelection();
     TStrList out;
