@@ -22,8 +22,9 @@ more transparent, however, it could use the TEBasis in the following way:
 */
 class TXGroup : public TGlGroup, public AGlMouseHandler {
   vec3d RotationCenter, RotationDir;
-  vec3d_alist original_crd;
+  const vec3d_alist* original_crds;
   TXAtomPList Atoms;
+  TXBondPList Bonds;
   double AngleInc, AngleAcc;
 protected:
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
@@ -33,22 +34,22 @@ protected:
     }
     for( int ditr=0; ditr < 2; ditr++ )  {
       if( ditr == 0 )  {
-        if( !original_crd.IsEmpty() )  {
-          for( size_t i=0; i < original_crd.Count(); i++ )
-            olx_swap(original_crd[i], Atoms[i]->crd());
-          for( size_t i=0; i < Count(); i++ )
-            GetObject(i).Update();
+        if( original_crds != NULL && original_crds->Count() == Atoms.Count() )  {
+          for( size_t i=0; i < Atoms.Count(); i++ )
+            olx_swap((*original_crds)[i], Atoms[i]->crd());
+          for( size_t i=0; i < Bonds.Count(); i++ )
+            Bonds[i]->Update();
         }
         else
           continue;
       }
-      else  if( !original_crd.IsEmpty() )  {
-        for( size_t i=0; i < original_crd.Count(); i++ )
-          olx_swap(original_crd[i], Atoms[i]->crd());
-        for( size_t i=0; i < Count(); i++ )
-          GetObject(i).Update();
+      else  if( original_crds != NULL && original_crds->Count() == Atoms.Count() )  {
+        for( size_t i=0; i < Atoms.Count(); i++ )
+          olx_swap((*original_crds)[i], Atoms[i]->crd());
+        for( size_t i=0; i < Bonds.Count(); i++ )
+          Bonds[i]->Update();
       }
-      for( size_t i=0; i < Count(); i++ )  {
+      for( size_t i=0; i < TGlGroup::Count(); i++ )  {
         AGDrawObject& G = GetObject(i);
         if( !G.IsVisible() )  continue;
         if( G.IsGroup() )    {
@@ -106,8 +107,8 @@ protected:
       olx_create_rotation_matrix(m, RotationDir, cos(angle), sin(angle));
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->crd() = (Atoms[i]->crd()-RotationCenter)*m+RotationCenter;
-    for( size_t i=0; i < Count(); i++ )
-      GetObject(i).Update();
+    for( size_t i=0; i < Bonds.Count(); i++ )
+      Bonds[i]->Update();
     return true;
   }
   virtual bool DoZoom(double, bool)  {  return false;  }
@@ -141,36 +142,46 @@ protected:
 public:
   TXGroup(TGlRenderer& R, const olxstr& colName) :
     TGlGroup(R, colName),
-    AngleInc(0),
-    AngleAcc(0)
+    AngleInc(0), AngleAcc(0),
+    original_crds(NULL)
   {
     SetMoveable(true);
     SetRoteable(true);
   }
-  void AddAtoms(const TPtrList<TXAtom>& atoms, bool draw_original)  {
+  void AddAtoms(const TPtrList<TXAtom>& atoms)  {
+    original_crds = NULL;
     TGlGroup::AddObjects(atoms);
-    if( draw_original )  {
-      Atoms.SetCapacity(atoms.Count());
-      original_crd.SetCount(atoms.Count());
-      for( size_t i=0; i < atoms.Count(); i++ )  {
-        Atoms.Add(atoms[i]);
-        original_crd[i] = atoms[i]->crd();
-      }
-    }
-    else
-      Atoms.AddList(atoms);
+    Atoms.SetCapacity(atoms.Count());
+    for( size_t i=0; i < atoms.Count(); i++ )
+      Bonds.AddList(Atoms.Add(atoms[i])->GetBonds(), StaticCastAccessor<TXBond>());
+    Bonds.ForEach(ACollectionItem::IndexTagSetter<>());
+    Bonds.Pack(
+      olx_alg::olx_or(
+        ACollectionItem::IndexTagAnalyser<>(),
+        AGDrawObject::FlagsAnalyser(sgdoHidden)
+      )
+    );
+    TGlGroup::AddObjects(Bonds);
     UpdateRotationCenter();
   }
+  // beware the life time of the objects here!
+  void SetOrgiginalCrds(const vec3d_alist& vec)  {  original_crds = &vec;  }
   void Clear()  {
     TGlGroup::Clear();
     Atoms.Clear();
+    Bonds.Clear();
+    original_crds = NULL;
   }
   void Update()  {
+    original_crds = NULL;
     Atoms.Clear();
-    for( size_t i=0; i < Count(); i++ )  {
+    Bonds.Clear();
+    for( size_t i=0; i < TGlGroup::Count(); i++ )  {
       AGDrawObject& G = GetObject(i);
       if( EsdlInstanceOf(G, TXAtom) )
         Atoms.Add((TXAtom&)G);
+      else if( EsdlInstanceOf(G, TXBond) )
+        Bonds.Add((TXBond&)G);
     }
   }
   void UpdateRotationCenter()  {

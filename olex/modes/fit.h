@@ -10,6 +10,7 @@ enum  {
 class TFitMode : public AEventsDispatcher, public AMode  {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
+  vec3d_alist original_crds;
   bool Initialised, DoSplit;
   class OnUniqHandler : public AActionHandler {
     TFitMode& fit_mode;
@@ -32,24 +33,23 @@ public:
     TGlXApp::GetGXApp()->EnableSelection(false);
   }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
-    AtomsToMatch.Clear();
+    if( TGlXApp::GetGXApp()->XFile().GetLattice().IsGenerated() )  {
+      TBasicApp::NewLogEntry(logError) << "Unavailable for grown structures";
+      return false;
+    }
     DoSplit = Options.Contains('s');
+    AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     TXAtomPList xatoms;
-    TPtrList<AGDrawObject> xbonds;
-    TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
-    for( size_t i=0; i < sel.Count(); i++ )  {
-      if( EsdlInstanceOf(sel[i], TXAtom) )
-        xatoms.Add((TXAtom&)sel[i]);
-      else if( EsdlInstanceOf(sel[i], TXBond) )
-        xbonds.Add(sel[i]);
-    }
+    TGlXApp::GetGXApp()->GetSelection().Extract(xatoms);
+    original_crds.SetCount(xatoms.Count());
+    for( size_t i=0; i < xatoms.Count(); i++ )
+      original_crds[i] = xatoms[i]->crd();
     group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
     AngleInc = Options.FindValue("r", "0").ToDouble();
     group->SetAngleInc(AngleInc*M_PI/180);
     AddAtoms(xatoms);
-    for( size_t i=0; i < xbonds.Count(); i++ )
-      TGlXApp::GetGXApp()->GetRender().Select(*xbonds[i]);
+    group->SetOrgiginalCrds(original_crds);
     return (Initialised = true);
   }
   ~TFitMode()  {
@@ -64,10 +64,41 @@ public:
     TGXApp& app = *TGlXApp::GetGXApp();
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     RefinementModel& rm = app.XFile().GetRM();
-    for( size_t i=0; i < Atoms.Count(); i++ )  {
-      Atoms[i]->CAtom().ccrd() = Atoms[i]->crd();
-      Atoms[i]->ccrd() = au.CartesianToCell(Atoms[i]->CAtom().ccrd());
-      rm.Vars.FixParam(Atoms[i]->CAtom(), catom_var_name_Sof);
+    XVar& xv = rm.Vars.NewVar(0.75);
+    if( DoSplit )  {
+      for( size_t i=0; i < Atoms.Count(); i++ )  {
+        TXAtom* nxa = app.AddAtom(Atoms[i]);
+        if( nxa == NULL )  continue;
+        TCAtom& na = nxa->CAtom();
+        // set parts
+        int part = Atoms[i]->CAtom().GetPart();
+        if( part == 0 )  part ++;
+        Atoms[i]->CAtom().SetPart(part);
+        na.SetPart(part+1);
+        // link occupancies
+        const double sp = 1./Atoms[i]->CAtom().GetDegeneracy();
+        rm.Vars.AddVarRef(xv, Atoms[i]->CAtom(), catom_var_name_Sof, relation_AsVar, sp);
+        rm.Vars.AddVarRef(xv, na, catom_var_name_Sof, relation_AsOneMinusVar, sp);
+        Atoms[i]->CAtom().SetOccu(0.75*sp);
+        na.SetOccu(0.25*sp);
+        // set label
+        olxstr new_l = Atoms[i]->GetLabel();
+        olxch lc = olxstr::o_tolower(new_l.GetLast());
+        if( olxstr::o_isalpha(lc) )
+          new_l[new_l.Length()-1] = ++lc;
+        else
+          new_l << 'a';
+        na.SetLabel(au.CheckLabel(&na, new_l), false);
+        if( na.GetType() == iQPeakZ )
+          na.SetQPeak(1.0);
+        // set coordinates
+        na.ccrd() = au.Fractionalise(Atoms[i]->crd());
+        Atoms[i]->CAtom().ccrd() = au.Fractionalise(original_crds[i]);
+      }
+    }
+    else  {
+      for( size_t i=0; i < Atoms.Count(); i++ )
+        Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
     }
     app.GetRender().ReplaceSelection<TGlGroup>();
     Initialised = false;
@@ -94,10 +125,8 @@ public:
     if( msg == mode_fit_disassemble )  {
       if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
         return true;
-      for( size_t i=0; i < Atoms.Count(); i++ )  {
-        Atoms[i]->CAtom().ccrd() = Atoms[i]->crd();
-        Atoms[i]->ccrd() = au.CartesianToCell(Atoms[i]->CAtom().ccrd());
-      }
+      for( size_t i=0; i < Atoms.Count(); i++ )
+        Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
       Atoms.Clear();
       AtomsToMatch.Clear();
       TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
@@ -107,14 +136,9 @@ public:
         group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
         group->SetAngleInc(AngleInc*M_PI/180);
       }
-      for( size_t i=0; i < group->Count(); i++ )  {
-        if( EsdlInstanceOf(group->GetObject(i), TXAtom) )  {
-          TXAtom* xa = Atoms.Add((TXAtom&)group->GetObject(i));
-          xa->CAtom().ccrd() = xa->crd();
-          xa->ccrd() = au.CartesianToCell(xa->CAtom().ccrd());
-        }
-      }
+      group->Extract(Atoms);
       group->Update();
+      group->SetOrgiginalCrds(original_crds);
       group->SetSelected(true);
     }
     return true;
@@ -130,7 +154,7 @@ public:
   }
   virtual bool AddAtoms(const TXAtomPList& atoms)  {
     Atoms.AddList(atoms);
-    group->AddAtoms(atoms, DoSplit);
+    group->AddAtoms(atoms);
     group->SetSelected(true);
     return true;
   }

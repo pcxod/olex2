@@ -1273,9 +1273,11 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
 bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
   static bool ObjectsStored = false, LoadingFile = false, Disassembling = false;
   if( MsgId == ID_OnSelect )  {
-    const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
-    if(  !(SData->From == SData->To) )
-      Select(SData->From, SData->To);
+    if( FGlMouse->IsSelectionEnabled() )  {
+      const TSelectionInfo* SData = dynamic_cast<const TSelectionInfo*>(Data);
+      if(  !(SData->From == SData->To) )
+        Select(SData->From, SData->To);
+    }
   }
   else if( MsgId == ID_OnUniq || MsgId == ID_OnGrow )  {
     if( MsgSubId == msiEnter )  {
