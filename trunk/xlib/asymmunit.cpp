@@ -1070,53 +1070,56 @@ void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
     GetRefMod()->Vars.SetParam(a, catom_var_name_Sof, val);
 }
 //..............................................................................
+void TAsymmUnit::_UpdateQPeaks()  {
+  TPSTypeList<double, TCAtom*> sortedPeaks;
+  size_t ac = CAtoms.Count();
+  for( size_t i=0; i < ac; i++ )  {
+    if( CAtoms[i]->GetType() != iQPeakZ || CAtoms[i]->IsDeleted() )  continue;
+    sortedPeaks.Add(CAtoms[i]->GetQPeak(), CAtoms[i]);
+  }
+  ac = sortedPeaks.Count();
+  size_t ind = InvalidIndex;
+  for( size_t i=0; i < ac; i++ )
+    sortedPeaks.GetObject(i)->SetLabel(olxstr('Q') << olxstr(ac-i), false);
+  MinQPeak = sortedPeaks.GetKey(0);
+  MaxQPeak = sortedPeaks.GetLast().Comparable;
+}
+//..............................................................................
 void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
+  const bool is_q_peak = Params[0].IsNumber();
   if( Lattice != NULL )  {
     vec3d test_pos(crd);
-    TCAtom* ca = Lattice->GetUnitCell().FindOverlappingAtom(test_pos, 0.3);
+    TCAtom* ca = Lattice->GetUnitCell().FindOverlappingAtom(test_pos, is_q_peak, 0.01);
     if( ca != NULL )  {
+      if( is_q_peak )  {
+        ca->SetDeleted(false);
+        ca->SetQPeak(Params[0].ToDouble());
+        _UpdateQPeaks();
+        E.SetRetVal(ca->GetId());
+        return;
+      }
       E.SetRetVal(-1);
       return;
     }
   }
   size_t QPeakIndex = InvalidIndex;
   double qPeak = 0;
-  olxstr qLabel("Q");
-  if( Params[0].IsNumber() )  {
-    TPSTypeList<double, TCAtom*> sortedPeaks;
-    qPeak = Params[0].ToDouble();
-    size_t ac = CAtoms.Count();
-    for( size_t i=0; i < ac; i++ )  {
-      if( CAtoms[i]->GetType() != iQPeakZ || CAtoms[i]->IsDeleted() )  continue;
-      sortedPeaks.Add(CAtoms[i]->GetQPeak(), CAtoms[i]);
-    }
-    sortedPeaks.Add(qPeak, NULL);
-    ac = sortedPeaks.Count();
-    for( size_t i=0; i < ac; i++ )  {
-      if( sortedPeaks.GetObject(i) != NULL )
-        sortedPeaks.GetObject(i)->SetLabel(qLabel + olxstr(ac-i), false);
-    }
-    QPeakIndex = ac - sortedPeaks.IndexOf(qPeak);
-    MinQPeak = sortedPeaks.GetKey(0);
-    MaxQPeak = sortedPeaks.GetLast().Comparable;
-  }
-
   TCAtom& ca = this->NewAtom();
-  if( QPeakIndex != InvalidIndex )  {
-    ca.SetLabel(qLabel << olxstr(QPeakIndex), false);
+  if( is_q_peak )  {
     ca.SetType(XElementLib::GetByIndex(iQPeakIndex));
-    ca.SetQPeak(qPeak);
-    ca.SetOccu(1./Lattice->GetUnitCell().GetPositionMultiplicity(crd));
-    GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof,
-      1./Lattice->GetUnitCell().GetPositionMultiplicity(crd));
-    GetRefMod()->Vars.FixParam(ca, catom_var_name_Sof);
-    GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);
-    for( short i=0; i < 3; i++ )
-      GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, crd[i]);
+    ca.SetQPeak(Params[0].ToDouble());
+    _UpdateQPeaks();
   }
   else
     ca.SetLabel(Params[0]);
+  ca.SetOccu(1./Lattice->GetUnitCell().GetPositionMultiplicity(crd));
+  GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof,
+    1./Lattice->GetUnitCell().GetPositionMultiplicity(crd));
+  GetRefMod()->Vars.FixParam(ca, catom_var_name_Sof);
+  GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);
+  for( short i=0; i < 3; i++ )
+    GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, crd[i]);
   E.SetRetVal(AtomCount() - 1);
   ca.AssignEllp(NULL);
 }

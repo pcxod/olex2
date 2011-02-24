@@ -1761,20 +1761,28 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       bi.Next().GetGlLabel().SetVisible(false);
   }
   else  {
-    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h')),
-      Selected;
-    if( Atoms.IsEmpty() )  return;
-    for( size_t i=0; i < Atoms.Count(); i++ )
-      if( Atoms[i]->IsSelected() )
-        Selected.Add(Atoms[i]);
-    TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
-    if( todel.IsEmpty() )
-      return;
-    FXApp->GetLog() << "Deleting ";
-    for( size_t i=0; i < todel.Count(); i++ )
-      FXApp->GetLog() << todel[i]->GetLabel() << ' ';
-    FXApp->NewLogEntry();
-    FUndoStack->Push(FXApp->DeleteXAtoms(todel));
+    if( Options.Contains("au") )  {
+      TCAtomPList atoms;
+      FXApp->FindCAtoms(Cmds.Text(' '), atoms, false);
+      for( size_t i=0; i < atoms.Count(); i++ )
+        atoms[i]->SetDeleted(true);
+    }
+    else  {
+      TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, false),
+        Selected;
+      if( Atoms.IsEmpty() )  return;
+      for( size_t i=0; i < Atoms.Count(); i++ )
+        if( Atoms[i]->IsSelected() )
+          Selected.Add(Atoms[i]);
+      TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
+      if( todel.IsEmpty() )
+        return;
+      FXApp->GetLog() << "Deleting ";
+      for( size_t i=0; i < todel.Count(); i++ )
+        FXApp->GetLog() << todel[i]->GetLabel() << ' ';
+      FXApp->NewLogEntry();
+      FUndoStack->Push(FXApp->DeleteXAtoms(todel));
+    }
   }
 }
 //..............................................................................

@@ -263,18 +263,18 @@ protected:
   TTypeList<long> Solutions;
   int CurrentSolution;
   olxstr SolutionFolder;
-  void ChangeSolution( int sol );
+  void ChangeSolution(int sol);
 
   // helper functions ...
   void CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS);
   void UpdateInfoBox();
 public:
-  bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString()) {  
+  bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString(), bool quiet=false) {  
     TMacroError err;
     err.SetLocation(location);
     //cmd = exparse::parser_util::unescape(cmd);
     const bool rv = Macros.ProcessFunction(cmd, err, false);  
-    AnalyseError(err);
+    AnalyseErrorEx(err, quiet);
     return rv;
   }
   bool ProcessMacro(const olxstr& cmd, const olxstr& location=EmptyString())  {
@@ -304,7 +304,8 @@ public:
   bool PopupMenu(wxMenu* menu, int x, int y)  {  return PopupMenu(menu, wxPoint(x,y));  }
 protected:
   void PostCmdHelp(const olxstr &Cmd, bool Full=false);
-  void AnalyseError(TMacroError& error);
+  void AnalyseErrorEx(TMacroError& error, bool queit=false);
+  void AnalyseError(TMacroError& error)  {  AnalyseErrorEx(error);  }
 
   void OnSize(wxSizeEvent& event);
 

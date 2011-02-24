@@ -45,6 +45,7 @@ protected:
   TResidue& MainResidue;
   class RefinementModel* RefMod;
   static const olxstr IdName;
+  void _UpdateQPeaks();
 public:
 
   TAsymmUnit(TLattice* L);

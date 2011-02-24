@@ -26,6 +26,7 @@ class TUnitCell: public IEObject  {
   atoms are excluded only if deleted, availability is not counted */
   void _FindInRange(const vec3d& center, double R,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
+    bool find_deleted=false,
     const TCAtomPList* atoms=NULL) const;
   /* macro FindBinding, if the atoms is NULL, atoms of the asymmetric unit are taken and atoms are excluded
   only if deleted, availability is not counted */
@@ -127,7 +128,7 @@ public:
     TArrayList<association>& out, const TCAtomPList* atoms=NULL) const
   {
     TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
-    _FindInRange(center, R, res, atoms);
+    _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
       out[i].A() = res[i].A();
@@ -156,7 +157,7 @@ public:
     TArrayList<association>& out, const TCAtomPList* atoms=NULL) const
   {
     TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
-    _FindInRange(center, R, res, atoms);
+    _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
       out[i].A() = res[i].A();
@@ -331,7 +332,7 @@ public:
   // finds an atom at given position
   TCAtom* FindCAtom(const vec3d& center) const;
   /* finds an atom within delta of the given position */
-  TCAtom* FindOverlappingAtom(const vec3d& position, double delta) const;
+  TCAtom* FindOverlappingAtom(const vec3d& position, bool find_deleted, double delta) const;
   size_t GetPositionMultiplicity(const vec3d& p) const {
     return GetPositionMultiplicity(MatrixList(*this), p);
   }
