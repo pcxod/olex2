@@ -994,12 +994,12 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 }
 //....................................................................................................
 #ifndef _NO_PYTHON
-PyObject* RefinementModel::PyExport(bool export_connectivity)  {
+PyObject* RefinementModel::PyExport(bool export_conn)  {
   PyObject* main = PyDict_New(), 
     *hklf = PyDict_New(), 
     *eq = PyTuple_New(UsedSymm.Count());
   TPtrList<PyObject> atoms, equivs;
-  PythonExt::SetDictItem(main, "aunit", aunit.PyExport(atoms));
+  PythonExt::SetDictItem(main, "aunit", aunit.PyExport(atoms, export_conn));
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
   for( size_t i=0; i < UsedSymm.Count(); i++ )  {
     smatd& m = UsedSymm.GetValue(i).symop;
@@ -1083,25 +1083,6 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     PythonExt::SetDictItem(shel, "high", Py_BuildValue("d", SHEL_hr));
   }
   PythonExt::SetDictItem(main, "conn", Conn.PyExport());
-  // attach the connectivity...
-  if( export_connectivity )  {
-    TAtomEnvi ae;
-    TLattice& lat = aunit.GetLattice();
-    TUnitCell& uc = aunit.GetLattice().GetUnitCell();
-    ASObjectProvider& objects = lat.GetObjects();
-    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
-      TSAtom& sa = objects.atoms[i];
-      if( sa.IsDeleted() || sa.GetType() == iQPeakZ )  continue;
-      // make sure that only AU atoms go to 
-      if( !sa.IsAUAtom() )  continue;
-      uc.GetAtomEnviList(sa, ae);
-      if( PyDict_GetItemString(atoms[sa.CAtom().GetTag()], "neighbours") != NULL )
-        continue;
-      PythonExt::SetDictItem(atoms[sa.CAtom().GetTag()], "neighbours", ae.PyExport(atoms) );
-      ae.Clear();
-    }
-  }
-  //
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);

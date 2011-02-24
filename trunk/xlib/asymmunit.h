@@ -249,7 +249,7 @@ public:
 //
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
-  PyObject* PyExport(TPtrList<PyObject>& atoms);
+  PyObject* PyExport(TPtrList<PyObject>& atoms, bool export_conn);
 #endif
   void FromDataItem(TDataItem& item);
 

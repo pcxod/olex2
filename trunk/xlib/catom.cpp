@@ -204,7 +204,7 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
 }
 //..............................................................................
 #ifndef _NO_PYTHON
-PyObject* TCAtom::PyExport()  {
+PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "label", PythonExt::BuildString(Label));
   PythonExt::SetDictItem(main, "type", PythonExt::BuildString(Type->symbol));
@@ -232,6 +232,38 @@ PyObject* TCAtom::PyExport()  {
   }
   if( *Type == iQPeakZ )
     PythonExt::SetDictItem(main, "peak", Py_BuildValue("d", QPeak));
+  if( export_attached_sites )  {
+    size_t cnt = 0;
+    for( size_t i=0; i < AttachedSites.Count(); i++ )  {
+      if( !AttachedSites[i].atom->IsDeleted() )
+        cnt++;
+    }
+    PyObject* neighbours = PyTuple_New(cnt);
+    const TAsymmUnit& au = *Parent;
+    cnt = 0;
+    for( size_t i=0; i < AttachedSites.Count(); i++ )  {
+      Site& s = AttachedSites[i];
+      if( s.atom->IsDeleted() )  continue;
+      const smatd& mat = s.matrix;
+      const vec3d crd = au.Orthogonalise(mat*s.atom->ccrd());
+      if( mat.IsFirst() )
+        PyTuple_SetItem(neighbours, cnt++, Py_BuildValue("i", s.atom->GetTag()));
+      else  {
+        PyTuple_SetItem(neighbours, cnt++, 
+          Py_BuildValue("OOO", Py_BuildValue("i", s.atom->GetTag()),
+            Py_BuildValue("(ddd)", crd[0], crd[1], crd[2]),
+            Py_BuildValue("(iii)(iii)(iii)(ddd)", 
+              mat.r[0][0], mat.r[0][1], mat.r[0][2],
+              mat.r[1][0], mat.r[1][1], mat.r[1][2],
+              mat.r[2][0], mat.r[2][1], mat.r[2][2],
+              mat.t[0], mat.t[1], mat.t[2]
+            )
+          )
+        );
+      }
+    }
+    PythonExt::SetDictItem(main, "neighbours", neighbours);
+  }
   return main;
 }
 #endif
