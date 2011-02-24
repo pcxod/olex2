@@ -369,7 +369,7 @@ PyObject* pyReadFile(PyObject* self, PyObject* args)  {
   if( !PythonExt::ParseTuple(args, "w", &name) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
   IInputStream* io = TFileHandlerManager::GetInputStream(name);
-  if( !name.IsEmpty() && (io = TFileHandlerManager::GetInputStream(name)) != NULL )  {
+  if( !name.IsEmpty() && io != NULL )  {
     const size_t is = io->GetAvailableSizeT();
     char * bf = new char [is + 1];
     io->Read(bf, is);
@@ -378,7 +378,12 @@ PyObject* pyReadFile(PyObject* self, PyObject* args)  {
     delete io;
     return po;
   }
-  return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "File does not exist");
+  if( io != NULL )  {
+    delete io;
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Empty file name");
+  }
+  else
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "File does not exist");
 }
 
 static PyMethodDef OLEXFS_Methods[] = {
