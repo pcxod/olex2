@@ -727,7 +727,7 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
 }
 //..............................................................................
 #ifndef _NO_PYTHON
-PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
+PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn)  {
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);
   PyObject* main = PyDict_New(), *cell = PyDict_New();
@@ -773,7 +773,7 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
     atom_cnt = 0;
     for( size_t j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() || r[j].GetType() == iQPeakZ )  continue;
-      PyObject* atom = _atoms.Add(r[j].PyExport());
+      PyObject* atom = _atoms.Add(r[j].PyExport(export_conn));
       PythonExt::SetDictItem(atom, "aunit_id", Py_BuildValue("i", r[j].GetId()));
       PyTuple_SetItem(atoms, atom_cnt++, atom);
     }

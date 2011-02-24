@@ -228,7 +228,7 @@ public:
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
 #ifndef _NO_PYTHON
-  PyObject* PyExport();
+  PyObject* PyExport(bool export_attached_sites);
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
   template <class Accessor=DirectAccessor> struct FlagsAnalyser  {
