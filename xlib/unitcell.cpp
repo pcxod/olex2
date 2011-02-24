@@ -456,7 +456,8 @@ smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
 }
 //..............................................................................
 void TUnitCell::_FindInRange(const vec3d& to, double R, 
-  TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, const TCAtomPList* _atoms) const
+  TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, bool find_deleted,
+  const TCAtomPList* _atoms) const
 {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   const TCAtomPList& atoms = (_atoms == NULL ? au.GetAtoms() : *_atoms);
@@ -465,7 +466,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
   const size_t mc = Matrices.Count();
   for( size_t i=0; i < ac; i++ )  {
     const TCAtom& a = *atoms[i];
-    if( a.IsDeleted() )  continue;
+    if( a.IsDeleted() && !find_deleted )  continue;
     for( size_t j=0; j < mc; j++ )  {
       vec3d vec = Matrices[j] * a.ccrd();
       vec3d V1(vec-to);
@@ -611,9 +612,9 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   }
 }
 //..............................................................................
-TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, double delta) const {
+TCAtom* TUnitCell::FindOverlappingAtom(const vec3d& pos, bool find_deleted, double delta) const {
   TTypeList< AnAssociation3<TCAtom*,smatd,vec3d> > res;
-  _FindInRange(pos, delta, res);
+  _FindInRange(pos, delta, res, find_deleted);
   if( res.IsEmpty() )
     return NULL;
   if( res.Count() == 1 )

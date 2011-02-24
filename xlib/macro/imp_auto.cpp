@@ -707,7 +707,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
     const MapUtil::peak& peak = Peaks[i];
     const vec3d cnt = norm*peak.center; 
     const double ed = peak.summ/peak.count;
-    TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.5);
+    TCAtom* oa = uc.FindOverlappingAtom(cnt, false, 0.5);
     if( oa != NULL && oa->GetType() != iQPeakZ )  {
       atoms[oa->GetTag()].B() += ed;
       atoms[oa->GetTag()].C()++;

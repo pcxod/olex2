@@ -121,7 +121,7 @@ TAG_HANDLER_PROC(tag)  {
 
   olxstr src = tag.GetParam(wxT("SRC")).c_str();
 
-  TGlXApp::GetMainForm()->ProcessFunction(src);
+  TGlXApp::GetMainForm()->ProcessFunction(src, EmptyString(), true);
 
   if( TZipWrapper::IsZipFile(THtml::SwitchSource) && !TZipWrapper::IsZipFile(src) )
     src = TZipWrapper::ComposeFileName(THtml::SwitchSource, src);
@@ -158,9 +158,10 @@ TAG_HANDLER_END(IMAGE)
 // input tag
 TAG_HANDLER_BEGIN(INPUT, "INPUT")
 TAG_HANDLER_PROC(tag)  {
-  olxstr TagName = tag.GetParam(wxT("TYPE")).c_str();
+  const olxstr TagName = tag.GetParam(wxT("TYPE")).c_str();
   olxstr ObjectName, Value, Data, Tmp, Label;
   ObjectName = tag.GetParam(wxT("NAME")).c_str();
+  const olxstr SrcInfo = olxstr(__OlxSrcInfo) << " for input '" << TagName << '[' << ObjectName << "]'";
   int valign = -1, halign = -1, 
     fl=0,
     ax=100, ay=20;
@@ -169,7 +170,7 @@ TAG_HANDLER_PROC(tag)  {
   wxWindow* CreatedWindow = NULL;
   try  {
     Tmp = tag.GetParam(wxT("WIDTH")).c_str();
-    TGlXApp::GetMainForm()->ProcessFunction(Tmp);
+    TGlXApp::GetMainForm()->ProcessFunction(Tmp, SrcInfo, false);
     if( !Tmp.IsEmpty() )  {
       if( Tmp.EndsWith('%') )  {
         ax = 0;
@@ -182,7 +183,7 @@ TAG_HANDLER_PROC(tag)  {
       width_set = true;
     }
     Tmp = tag.GetParam(wxT("HEIGHT")).c_str();
-    TGlXApp::GetMainForm()->ProcessFunction(Tmp);
+    TGlXApp::GetMainForm()->ProcessFunction(Tmp, SrcInfo, false);
     if( !Tmp.IsEmpty() )  {
       if( Tmp.EndsWith('%') )  {
         ay = 0;
@@ -273,7 +274,7 @@ TAG_HANDLER_PROC(tag)  {
   }
 
   Value = tag.GetParam(wxT("VALUE")).c_str();
-  TGlXApp::GetMainForm()->ProcessFunction(Value);
+  TGlXApp::GetMainForm()->ProcessFunction(Value, SrcInfo, true);
   Data = tag.GetParam(wxT("DATA")).c_str();
 /******************* TEXT CONTROL *********************************************/
   if( TagName.Equalsi("text") )  {
@@ -437,7 +438,7 @@ TAG_HANDLER_PROC(tag)  {
 #endif    
     if( tag.HasParam(wxT("ITEMS")) )  {
       olxstr Items = tag.GetParam(wxT("ITEMS")).c_str();
-      TGlXApp::GetMainForm()->ProcessFunction(Items);
+      TGlXApp::GetMainForm()->ProcessFunction(Items, SrcInfo, true);
       TStrList SL(Items, ';');
       if( SL.IsEmpty() )
         Box->AddObject(EmptyString());  // fix the bug in wxWidgets (if Up pressed, crass occurs)
@@ -608,7 +609,7 @@ TAG_HANDLER_PROC(tag)  {
     if( (flags&wxTR_HIDE_ROOT) == 0 && tag.HasParam(wxT("ROOTLABEL")) )
       Tree->SetItemText(Tree->GetRootItem(), tag.GetParam(wxT("ROOTLABEL")));
     olxstr src = tag.GetParam(wxT("SRC")).c_str();
-    TGlXApp::GetMainForm()->ProcessFunction(src);
+    TGlXApp::GetMainForm()->ProcessFunction(src, SrcInfo, true);
     IInputStream* ios = TFileHandlerManager::GetInputStream(src);
     Tree->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Tree;
@@ -669,7 +670,7 @@ TAG_HANDLER_PROC(tag)  {
       TBasicApp::NewLogEntry(logError) << "THTML: list can have only src or items";
     else if( srcTag ) {
       olxstr src = tag.GetParam(wxT("SRC")).c_str();
-      TGlXApp::GetMainForm()->ProcessFunction(src);
+      TGlXApp::GetMainForm()->ProcessFunction(src, SrcInfo, true);
       IInputStream* ios = TFileHandlerManager::GetInputStream(src);
       if( ios == NULL )
         TBasicApp::NewLogEntry(logError) << "THTML: could not locate list source: \'" << src <<  '\'';
@@ -684,7 +685,7 @@ TAG_HANDLER_PROC(tag)  {
     }
     else if( itemsTag )  {
       olxstr items = tag.GetParam(wxT("ITEMS")).c_str();
-      TGlXApp::GetMainForm()->ProcessFunction(items);
+      TGlXApp::GetMainForm()->ProcessFunction(items, SrcInfo, true);
       itemsList.Strtok(items, ';');
     }
     TListBox *List = new TListBox(m_WParser->GetWindowInterface()->GetHTMLWindow());
@@ -744,11 +745,11 @@ TAG_HANDLER_PROC(tag)  {
       olxstr bgc, fgc;
       if( tag.HasParam(wxT("BGCOLOR")) )  {
         bgc = tag.GetParam( wxT("BGCOLOR") ).c_str();
-        TGlXApp::GetMainForm()->ProcessFunction(bgc);
+        TGlXApp::GetMainForm()->ProcessFunction(bgc, SrcInfo, false);
       }
       if( tag.HasParam(wxT("FGCOLOR")) )  {
         fgc = tag.GetParam( wxT("FGCOLOR") ).c_str();
-        TGlXApp::GetMainForm()->ProcessFunction(fgc);
+        TGlXApp::GetMainForm()->ProcessFunction(fgc, SrcInfo, false);
       }
 
       if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {

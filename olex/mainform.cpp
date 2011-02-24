@@ -582,7 +582,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(BRad, EmptyString(), fpAny^fpNone, "Sets provided [all] bonds radius to given number (first argument)");
 
   this_InitMacroD(Hide, EmptyString(), fpAny, "Hides selected objects or provided atom names (no atom related objects as bonds are hidden automatically)");
-  this_InitMacroD(Kill, "h-kill hidden atoms", fpAny^fpNone, "deletes provided [selected] atoms");
+  this_InitMacroD(Kill, "au-kill atoms in the asymmetric unit (disregarding visibility/availability)."
+    " This option is intended for internal use - the model is not rebuilt after its execution",
+    fpAny^fpNone, "Deletes provided [selected] atoms");
 
   this_InitMacroD(Exec, "s-synchronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command");
   this_InitMacroD(Shell, "", fpNone|fpOne, "if no arguments launches a new interactive shell,\
@@ -3224,21 +3226,18 @@ TPopupData* TMainForm::FindHtmlEx(const olxstr& popupName) const {
   return FPopups[popupName];
 }
 //..............................................................................
-void TMainForm::AnalyseError(TMacroError& error)  {
+void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
   if( !error.IsSuccessful() )  {
     if( error.IsProcessingException() )
       TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<  error.GetInfo();
     else if( !error.GetInfo().IsEmpty() )  {
-      //if( !error.DoesFunctionExist() && (FMode&mSilent) != 0 )  {
-      //  TBasicApp::NewLogEntry(logInfo)(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
-      //  while( !error.GetStack().IsEmpty() )
-      //    TBasicApp::NewLogEntry(logInfo)(  (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars()) );
-      //  return;
-      //}
-      TBasicApp::NewLogEntry(logError) << error.GetLocation() << ": " <<  error.GetInfo();
+      TBasicApp::NewLogEntry(quiet ? logInfo : logError) << error.GetLocation() << ": "
+        <<  error.GetInfo();
     }
-    while( !error.GetStack().IsEmpty() )
-      TBasicApp::NewLogEntry() << '\t' << error.GetStack().Pop().TrimWhiteChars();
+    while( !error.GetStack().IsEmpty() )  {
+      TBasicApp::NewLogEntry(quiet ? logInfo : logDefault) << '\t'
+        << error.GetStack().Pop().TrimWhiteChars();
+    }
   }
 }
 //..............................................................................

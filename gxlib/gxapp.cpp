@@ -1405,7 +1405,6 @@ void TGXApp::XAtomsByType(const cm_Element& AI, TXAtomPList& res, bool FindHidde
 }
 //..............................................................................
 void TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask, TCAtomPList& List)  {
-  bool found;
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
   olxstr Name = StrMask.ToUpperCase();
@@ -1415,7 +1414,7 @@ void TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask, TCAtomPList& List)  {
     if( CA.IsDeleted() )  continue;
     if( CA.GetLabel().Length() != Name.Length() )  continue;
     olxstr Tmp = CA.GetLabel().ToUpperCase();
-    found = true;
+    bool found = true;
     for( size_t j=0; j < Name.Length(); j++ )  {
       if( !(Mask & (0x0001<<j)) )  {
         if( Name.CharAt(j) != Tmp.CharAt(j) )  {
