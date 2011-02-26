@@ -26,8 +26,8 @@ EXE_DIR = $(CWD)/bin/
 OLEX_INS := $(HOME)/olex
 OLEX_BIN := $(HOME)/bin
 find_files = $(wildcard *.cpp)
-VPATH = xlib:alglib:sdl:sdl/smart:sdl/exparse:xlib/macro:xlib/henke:glib:gxlib
-OBJ := xlib alglib sdl sdl/smart sdl/exparse xlib/macro xlib/henke glib gxlib
+VPATH = xlib:alglib:sdl:sdl/smart:sdl/exparse:xlib/macro:xlib/henke:xlib/absorpc:glib:gxlib
+OBJ := xlib alglib sdl sdl/smart sdl/exparse xlib/macro xlib/henke xlib/absorpc glib gxlib
 NPY_CPP_REPO = filesystem.cpp shellutil.cpp url.cpp httpfs.cpp wxzipfs.cpp fsext.cpp pyext.cpp IsoSurface.cpp eprocess.cpp updateapi.cpp patchapi.cpp cdsfs.cpp
 OBJ_CPP_REPO := hkl_py.cpp olxvar.cpp py_core.cpp $(NPY_CPP_REPO)
 NPY_OBJ_REPO := $(addprefix $(OBJ_DIR), $(NPY_CPP_REPO))
@@ -42,6 +42,7 @@ obj_sdl_smart_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/smart/*.cp
 obj_sdl_exparse_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/exparse/*.cpp)))
 obj_xlib_macro_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/macro/*.cpp)))
 obj_xlib_henke_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/henke/*.cpp)))
+obj_xlib_absorpc_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/absorpc/*.cpp)))
 obj_glib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard glib/*.cpp)))
 obj_gxlib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard gxlib/*.cpp)))
 OBJ_UNIRUN := $(addprefix $(OBJ_DIR)unirun/,$(notdir $(wildcard unirun/*.cpp)))
@@ -77,7 +78,7 @@ all :
 	@echo "Type make install to install"
 
 .PHONY : objs
-objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_sdl_exparse obj_xlib_macro obj_xlib_henke obj_glib obj_gxlib obj_repository
+objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_sdl_exparse obj_xlib_macro obj_xlib_henke obj_xlib_absorpc obj_glib obj_gxlib obj_repository
 
 obj:
 	@if test ! -d $(OBJ_DIR); then mkdir $(OBJ_DIR); else echo "obj directory already present"; fi;
@@ -123,6 +124,12 @@ obj_xlib_henke: obj $(obj_xlib_henke_files:.cpp=.s)
 
 $(obj_xlib_henke_files:.cpp=.s):
 	$(CC) $(SRC_DIR)xlib/henke/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
+
+.PHONY : obj_xlib_absorpc
+obj_xlib_absorpc: obj $(obj_xlib_absorpc_files:.cpp=.s)
+
+$(obj_xlib_absorpc_files:.cpp=.s):
+	$(CC) $(SRC_DIR)xlib/absorpc/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
 
 .PHONY : obj_glib
 obj_glib: obj $(obj_glib_files:.cpp=.s)
