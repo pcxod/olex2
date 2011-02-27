@@ -81,12 +81,14 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
     loop_data.Add(Lines[start]);
   }
   
-  try  {  table.DataFromStrings(loop_data);  }
+  try  {
+    table.DataFromStrings(loop_data);
+    context.current_block->Add(table);
+  }
   catch(const TExceptionBase& e)  {
     delete &table;
     throw ParsingException(__OlxSourceInfo, e);
   }
-  context.current_block->Add(table);
   start--;
   return true;
 }

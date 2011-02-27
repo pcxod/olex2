@@ -101,6 +101,8 @@ namespace SymSpace  {
     vec3d_list vertices;
   };
   template <class SP> static Info GetInfo(const SP& sp)  {
+    if( sp.Count() == 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "at least one matrix is expected");
     Info rv;
     rv.latt = -1;
     rv.centrosymmetric = false;
