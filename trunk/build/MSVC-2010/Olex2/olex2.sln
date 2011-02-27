@@ -315,6 +315,7 @@ Global
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|Win32.ActiveCfg = Unicode-debug|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|Win32.Build.0 = Unicode-debug|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|x64.ActiveCfg = Unicode-debug|x64
+		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-debug|x64.Build.0 = Unicode-debug|x64
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
 		{F32F8997-7CEA-489A-9A59-3119CE043C7C}.Unicode-release|x64.ActiveCfg = Unicode-release|Win32

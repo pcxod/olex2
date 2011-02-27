@@ -272,11 +272,15 @@ void TCif::Initialize()  {
     }
   }
   try  {
-    TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
-    if( sg != NULL )
-      GetAsymmUnit().ChangeSpaceGroup(*sg);
-    else
+    if( Matrices.IsEmpty() )
       GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
+    else  {
+      TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
+      if( sg != NULL )
+        GetAsymmUnit().ChangeSpaceGroup(*sg);
+      else
+        GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
+    }
   }
   catch(...)  {
     GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
