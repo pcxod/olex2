@@ -471,7 +471,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         else if( m == 0 && !TAfixGroup::IsDependent(afix) )  {
           // generic container then, besides, 5 is dependent atom of rigid group
           cx.AfixGroups.Push(AnAssociation3<int,TAfixGroup*,bool>(-1, afixg, false));
-          cx.SetNextPivot = TAfixGroup::HasExcplicitPivot(afix); // if not riding
+          cx.SetNextPivot = TAfixGroup::HasExcplicitPivot(afix) || !TAfixGroup::HasPivot(n);  // if not riding
         }
         if( !cx.SetNextPivot )  {
           if( cx.LastNonH == NULL  )

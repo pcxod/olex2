@@ -53,7 +53,7 @@ public:
   int GetM() const {  return GetM(Afix);  }
   int GetN() const {  return GetN(Afix);  }
   bool IsSizable() const {  return IsSizable(Afix);  }
-  bool IsRoting() const {  return IsRoting(Afix);  }
+  bool IsRotating() const {  return IsRotating(Afix);  }
   bool IsRefinable() const {  return IsRefinable(Afix);  }
   bool IsUnbound() const {  return IsUnbound(Afix);  }
   bool HasExcplicitPivot() const {  return HasExcplicitPivot(Afix);  }
@@ -83,10 +83,15 @@ public:
     const int n = GetN(afix), m = GetM(afix);
     return (n == 6 || n == 9);
   }
-  // these require an explicit pivot
+  // these require an implicit pivot (outside the group)
   static bool HasImplicitPivot(int afix)  {
     const int n = GetN(afix);
     return (n == 3 || n == 4 || n == 5 || n == 7 || n == 8);
+  }
+  // these are just 'service' AFIX...
+  static bool HasPivot(int afix)  {
+    const int n = GetN(afix), m = GetM(afix);
+    return !(n == 1 || n == 2);
   }
   static bool IsRiding(int afix)  {
     return (HasImplicitPivot(afix) || IsDependent(afix));
@@ -97,7 +102,7 @@ public:
     return (n == 4 || n == 8 || n == 9);
   }
   //free rotating or pivoted rotating
-  static bool IsRoting(int afix)  {
+  static bool IsRotating(int afix)  {
     const int n = GetN(afix);
     return (n == 6 || n == 7 || n == 8 || n == 9);
   }
