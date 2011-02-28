@@ -235,7 +235,7 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   if( export_attached_sites )  {
     size_t cnt = 0;
     for( size_t i=0; i < AttachedSites.Count(); i++ )  {
-      if( !AttachedSites[i].atom->IsDeleted() )
+      if( AttachedSites[i].atom->GetTag() >= 0 )
         cnt++;
     }
     PyObject* neighbours = PyTuple_New(cnt);
@@ -243,7 +243,7 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
     cnt = 0;
     for( size_t i=0; i < AttachedSites.Count(); i++ )  {
       Site& s = AttachedSites[i];
-      if( s.atom->IsDeleted() )  continue;
+      if( s.atom->GetTag()  < 0 )  continue;
       const smatd& mat = s.matrix;
       const vec3d crd = au.Orthogonalise(mat*s.atom->ccrd());
       if( mat.IsFirst() )

@@ -112,7 +112,7 @@ template <int base=12> struct full_smatd_id  {
     smatd m(mat3d(0, 1, 1, 1, 0, 1, 0, 0, 0), vec3d(-1./base, 10000./base, -21./base));
     uint64_t id = full_smatd_id::get(m);
     smatd id_r = full_smatd_id::get(id);
-    if( !(m == id_r) )  {
+    if( m.r != id_r.r || m.t.QDistanceTo(id_r.t) > 1e-15 )  {
       math::alg::print0_2(m.r, "Source:");
       math::alg::print0_1(m.t);
       math::alg::print0_2(id_r.r, "Result:");
@@ -122,7 +122,7 @@ template <int base=12> struct full_smatd_id  {
     uint64_t i_id = full_smatd_id::negate(id);
     smatd i_id_r = full_smatd_id::get(i_id);
     i_id_r *= -1;
-    if( !(m == i_id_r) )  {
+    if( m.r != i_id_r.r || m.t.QDistanceTo(i_id_r.t) > 1e-15 )  {
       math::alg::print0_2(m.r, "Source:");
       math::alg::print0_1(m.t);
       math::alg::print0_2(id_r.r, "Result:");
