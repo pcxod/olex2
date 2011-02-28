@@ -3768,7 +3768,7 @@ void TMainForm::ProcessHandler::AfterPrint() {
 //..............................................................................
 void TMainForm::ProcessHandler::OnWait() {
   parent.FParent->Dispatch();
-  parent.Dispatch(ID_TIMER, -1, (AActionHandler*)&parent, NULL);
+  TBasicApp::GetInstance().OnTimer.Execute(&(AEventsDispatcher&)parent);
 }
 //..............................................................................
 void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {

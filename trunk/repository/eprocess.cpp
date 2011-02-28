@@ -404,8 +404,6 @@ void* TIStream::Entry()  {
     }
   }
   return NULL;
-  // a small problem - if there is a prompt line printed by the program, it will not 
-  //be added to the list until enter is pressed ...
 }
 //..............................................................................
 #endif  // for __WXWIDGETS__
