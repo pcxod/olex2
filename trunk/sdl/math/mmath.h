@@ -356,26 +356,19 @@ namespace math  {
   // returns false for singular matrix
   template <typename MatT, typename FT>
   static bool InvertTriagular(MatT& m, bool upper, bool hasUnitDiag)  {
-    TVector<FT> tmp(m.RowCount());
     if( upper )  {
       for( size_t i=0; i < m.RowCount(); i++ )  {
         FT diag_v = -1;
         if( !hasUnitDiag )  {
           if( m(i,i) == 0 )
             return false;
-          diag_v = -(m(i,i) = 1./m(i,i));
+          diag_v = -(m(i,i) = 1/m(i,i));
         }
-        if( i > 0 )  {
-          alg::copy(tmp, proxy<FT>::col(m, i, 0, i));
-          for( size_t j=0; j < i; j++ )  {
-            FT v = 0.0;
-            if( j < i-1 )  {
-              for( size_t k=j+1; k < i; k++ )
-                v += m(j,k)*tmp(k);
-            }
-            m(j,i) = v + m(j,j)*tmp(j);
-          }
-          proxy<FT>::col(m, i, 0, i).ForEach(alg::Mul(diag_v));
+        for( size_t j=0; j < i; j++ )  {
+          m(j,i) *= m(j,j);
+          for( size_t k=j+1; k < i; k++ )
+            m(j,i) += m(j,k)*m(k,i);
+          m(j,i) *= diag_v;
         }
       }
     }
@@ -385,20 +378,13 @@ namespace math  {
         if( !hasUnitDiag )  {
           if( m(i,i) == 0 )
             return false;
-          diag_v = -(m(i,i) = 1./m(i,i));
+          diag_v = -(m(i,i) = 1/m(i,i));
         }
-        if( i < m.RowCount()-1 )  {
-          for( size_t j=i+1; j < m.RowCount(); j++ )
-            tmp(j) = m(j,i);
-          for( size_t j=i+1; j < m.RowCount(); j++ )  {
-            FT v = 0.0;
-            if( j > i+1 )  {
-              for( size_t k=i+1; k < j; k++ )
-                v += m(j,k)*tmp(k);
-            }
-            m(j,i) = v + m(j,j)*tmp(j);
-          }
-          proxy<FT>::col(m, i, i+1, m.RowCount()).ForEach(alg::Mul(diag_v));
+        for( size_t j=i+1; j < m.RowCount(); j++ )  {
+          m(j,i) *= m(j,j);
+          for( size_t k=i+1; k < j; k++ )
+            m(j,i) += m(j,k)*m(k,i);
+          m(j,i) *= diag_v;
         }
       }
     }
@@ -422,13 +408,11 @@ namespace math  {
           if( pivot_index != i )
             alg::swap_rows(m, pivot_index, i);
           if( i < min_d-1 )
-            proxy<FT>::col(m, i, i+1).ForEach(alg::Mul(1./m(i,i)));
+            proxy<FT>::col(m, i, i+1).ForEach(alg::Mul(1/m(i,i)));
         }
-        if( i < m.RowCount()-1 )  {
-          for( size_t j=i+1; j < m.RowCount(); j++ )  {
-            for( size_t k=i+1; k < m.RowCount(); k++ )
-              m(j,k) -= m(j,i)*m(i,k);
-          }
+        for( size_t j=i+1; j < m.RowCount(); j++ )  {
+          for( size_t k=i+1; k < m.RowCount(); k++ )
+            m(j,k) -= m(j,i)*m(i,k);
         }
       }
     }
@@ -437,18 +421,16 @@ namespace math  {
       if( !InvertTriagular<MatT, FT>(m, true, false) )
         return false;
       TVector<FT> tmp(m.RowCount());
-      for( size_t i=m.RowCount()-1; i != InvalidIndex; i-- )  {
+      for( size_t i=m.RowCount()-2; i != InvalidIndex; i-- )  {
         for( size_t j=i+1; j < m.RowCount(); j++ )  {
           tmp(j) = m(j,i);
           m(j,i) = 0.0;
         }
-        if( i < m.RowCount()-1 )  {
-          for( size_t j=0; j < m.RowCount(); j++ )  {
-            FT v = 0;
-            for( size_t k=i+1; k < m.RowCount(); k++ )
-              v += m(j,k)*tmp(k);
-            m(j,i) -= v;
-          }
+        for( size_t j=0; j < m.RowCount(); j++ )  {
+          FT v = 0;
+          for( size_t k=i+1; k < m.RowCount(); k++ )
+            v += m(j,k)*tmp(k);
+          m(j,i) -= v;
         }
       }
       for( size_t i=m.RowCount()-1; i != InvalidIndex; i-- )  {
