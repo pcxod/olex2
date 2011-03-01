@@ -162,7 +162,7 @@ public:
       FParent->XFile().GetLattice().ClearPlaneDefinitions();
       FParent->ClearGroupDefinitions();
     }
-    //FParent->XGrid().Clear();
+    FParent->XGrid().Clear();
     B = FParent->GetRender().GetBasis();
     FParent->GetRender().Clear();
     FParent->HklFile().Clear();
