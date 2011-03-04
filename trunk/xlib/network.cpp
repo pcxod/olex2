@@ -21,6 +21,7 @@
 #include "edict.h"
 #include "emath.h"
 #include "refmodel.h"
+#include "index_range.h"
 
 #undef GetObject
 
@@ -961,30 +962,48 @@ bool TNetwork::RingInfo::IsSingleCSubstituted() const  {
 //..............................................................................
 void TNetwork::ToDataItem(TDataItem& item) const {
   item.AddField("net_id", Network == NULL ? -1 : Network->GetTag());
-  TDataItem& nodes = item.AddItem("Nodes");
+  //TDataItem& nodes = item.AddItem("Nodes");
+  IndexRange::Builder rb;
   for( size_t i=0; i < Nodes.Count(); i++ )  {
     if( Nodes[i]->IsDeleted() )  continue;
-    nodes.AddField("node_id", Nodes[i]->GetTag());
+    rb << Nodes[i]->GetTag();
+    //nodes.AddField("node_id", Nodes[i]->GetTag());
   }
-  TDataItem& bonds = item.AddItem("Bonds");
+  item.AddField("node_range", rb.GetString(true));
+  //TDataItem& bonds = item.AddItem("Bonds");
   for( size_t i=0; i < Bonds.Count(); i++ )  {
     if( Bonds[i]->IsDeleted() )  continue;
-    bonds.AddField("bond_id", Bonds[i]->GetTag());
+    rb << Bonds[i]->GetTag();
+    //bonds.AddField("bond_id", Bonds[i]->GetTag());
   }
+  item.AddField("bond_range", rb.GetString(true));
 }
 //..............................................................................
 void TNetwork::FromDataItem(const TDataItem& item) {
   const int net_id = item.GetRequiredField("net_id").ToInt();
   Network = (net_id == -1 ? NULL : &Lattice->GetFragment(net_id));
-  const TDataItem& nodes = item.FindRequiredItem("Nodes");
-  Nodes.SetCapacity(nodes.FieldCount());
+  const TDataItem* _nodes = item.FindItem("Nodes");
   ASObjectProvider& objects = Lattice->GetObjects();
-  for( size_t i=0; i < nodes.FieldCount(); i++ )
-    Nodes.Add(objects.atoms[nodes.GetField(i).ToInt()])->SetFragmentId(Nodes.Count());
-  const TDataItem& bonds = item.FindRequiredItem("Bonds");
-  Bonds.SetCapacity(bonds.FieldCount());
-  for( size_t i=0; i < bonds.FieldCount(); i++ )
-    Bonds.Add(objects.bonds[bonds.GetField(i).ToInt()])->SetFragmentId(Bonds.Count());
+  if( _nodes != NULL )  {
+    const TDataItem& nodes = *_nodes;
+    Nodes.SetCapacity(nodes.FieldCount());
+    for( size_t i=0; i < nodes.FieldCount(); i++ )
+      Nodes.Add(objects.atoms[nodes.GetField(i).ToInt()])->SetFragmentId(Nodes.Count());
+    const TDataItem& bonds = item.FindRequiredItem("Bonds");
+    Bonds.SetCapacity(bonds.FieldCount());
+    for( size_t i=0; i < bonds.FieldCount(); i++ )
+      Bonds.Add(objects.bonds[bonds.GetField(i).ToInt()])->SetFragmentId(Bonds.Count());
+  }
+  else {  // index range then
+    IndexRange::RangeItr ai(item.GetRequiredField("node_range"));
+    Nodes.SetCapacity(ai.CalcSize());
+    while( ai.HasNext() )
+      Nodes.Add(objects.atoms[ai.Next()]);
+    IndexRange::RangeItr bi(item.GetRequiredField("bond_range"));
+    Bonds.SetCapacity(bi.CalcSize());
+    while( bi.HasNext() )
+      Bonds.Add(objects.bonds[bi.Next()]);
+  }
 }
 //..............................................................................
 ContentList TNetwork::GetContentList() const {

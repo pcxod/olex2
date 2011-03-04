@@ -8,6 +8,8 @@ public:
   ACollectionItem()  {  CollectionItemTag = -1;  }
   virtual ~ACollectionItem()  {  ;  }
   index_t GetTag() const {  return CollectionItemTag;  }
+  index_t GetTag(const ACollectionItem& i) const {  i.GetTag();  }
+  index_t GetTag(const ACollectionItem* i) const {  i->GetTag();  }
   void SetTag(index_t v) { CollectionItemTag = v;  }
   index_t IncTag()  {  return ++CollectionItemTag;  }
   index_t DecTag()  {  return --CollectionItemTag;  }
@@ -34,6 +36,11 @@ public:
   template <class Accessor=DirectAccessor> struct IndexTagSetter  {
     template <class Item> static inline void OnItem(Item& o, size_t i)  {
       Accessor::Access(o).SetTag(i);
+    }
+  };
+  template <class Accessor=DirectAccessor> struct TagAccessor  {
+    template <class Item> static inline index_t Access(const Item& o)  {
+      return GetTag(Accessor::Access(o));
     }
   };
 

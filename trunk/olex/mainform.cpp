@@ -821,7 +821,8 @@ separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
     "Creates a projection of the fragment of the provided atom onto a spehere");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded, "Internal routine for synchronisation");
-  this_InitMacroD(SAME, "i-invert the graphs", fpAny|psFileLoaded, "Creates SAME for two fragments (two selected atoms or two\
+  this_InitMacroD(SAME, "i-invert the graphs&;e-expand SAME into the list of SADI",
+    fpAny|psFileLoaded, "Creates SAME instruction for two fragments (two selected atoms or two\
  atoms provided) or number_of_groups and groups following each another (or selection)");
   this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded, "Creates residue with given class name and optionally number and adds selected\
  or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues");

@@ -1113,10 +1113,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\erange.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\etime.cpp"
 				>
 			</File>
@@ -1283,10 +1279,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\erange.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\eshared.h"
 				>
 			</File>
@@ -1336,6 +1328,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\groupobj.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\index_range.h"
 				>
 			</File>
 			<File
@@ -1627,6 +1623,10 @@
 				</File>
 				<File
 					RelativePath="..\..\..\sdl\tests\file_test.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\tests\irange_test.h"
 					>
 				</File>
 				<File

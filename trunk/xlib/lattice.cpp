@@ -2204,8 +2204,18 @@ olxstr TLattice::CalcMoiety() const {
   // apply Z multiplier...
   const double zp_mult = (double)GetUnitCell().MatrixCount()/olx_max(au.GetZ(), 1);
   if( zp_mult != 1 )  {
-    for( size_t i=0; i < frags.Count(); i++ )
-      frags[i].A() *= zp_mult;
+    for( size_t i=0; i < frags.Count(); i++ )  {
+      const TCAtomPList& l = cfrags[frags[i].GetC()];
+      SortedObjectList<uint32_t, TPrimitiveComparator> grow_dirs;
+      for( size_t j=0; j < l.Count(); j++ )  {
+        TCAtom& a = *l[j];
+        for( size_t k=0; k < a.AttachedSiteCount(); k++ )
+          grow_dirs.AddUnique(a.GetAttachedSite(k).matrix.GetId());
+      }
+      frags[i].A() *= zp_mult/grow_dirs.Count();
+      for( size_t j=0; j < frags[i].GetB().Count(); j++ )
+        frags[i].B()[j].count *= grow_dirs.Count();
+    }
   }
   olxstr rv;
   for( size_t i=0; i < frags.Count(); i++ )  {
