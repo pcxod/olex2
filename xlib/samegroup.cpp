@@ -1,6 +1,7 @@
 #include "samegroup.h"
 #include "asymmunit.h"
 #include "refmodel.h"
+#include "index_range.h"
 
 void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
   Clear();
@@ -37,17 +38,18 @@ TCAtom& TSameGroup::Add(TCAtom& ca)  {
 void TSameGroup::ToDataItem(TDataItem& item) const {
   item.AddField("esd12", Esd12);
   item.AddField("esd13", Esd13);
-  int atom_id = 0;
-  TDataItem& atoms = item.AddItem("atoms");
+  size_t atom_id = 0;
+  IndexRange::Builder rb;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() ) continue;
-    atoms.AddItem(atom_id++, Atoms[i]->GetTag() );
+    rb << Atoms[i]->GetTag();
   }
+  item.AddField("atom_range", rb.GetString(true));
   TDataItem& dep = item.AddItem("dependent");
   for( size_t i=0; i < Dependent.Count(); i++ )
-    item.AddItem(atom_id++, Dependent[i]->GetId() );
+    item.AddItem(atom_id++, Dependent[i]->GetId());
   if( ParentGroup != NULL )
-    item.AddField("parent", ParentGroup->GetId() );
+    item.AddField("parent", ParentGroup->GetId());
 }
 //..............................................................................
 #ifndef _NO_PYTHON
@@ -63,12 +65,12 @@ PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups, TP
   atom_cnt = 0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
-    PyTuple_SetItem(atoms, atom_cnt++, Py_BuildValue("i", Atoms[i]->GetTag()) );
+    PyTuple_SetItem(atoms, atom_cnt++, Py_BuildValue("i", Atoms[i]->GetTag()));
   }
   PythonExt::SetDictItem(main, "atoms", atoms);
   PyObject* dependent = PyTuple_New(Dependent.Count());
   for( size_t i=0; i < Dependent.Count(); i++ )
-    PyTuple_SetItem(dependent, i, Py_BuildValue("i", Dependent[i]->GetTag()) );
+    PyTuple_SetItem(dependent, i, Py_BuildValue("i", Dependent[i]->GetTag()));
   PythonExt::SetDictItem(main, "dependent", dependent);
   if( ParentGroup != NULL )
     PythonExt::SetDictItem(main, "parent", Py_BuildValue("i", ParentGroup->GetTag()));
@@ -80,12 +82,20 @@ void TSameGroup::FromDataItem(TDataItem& item) {
   Clear();
   Esd12 = item.GetRequiredField("esd12").ToDouble();
   Esd13 = item.GetRequiredField("esd13").ToDouble();
-  TDataItem& atoms = item.FindRequiredItem("atoms");
-  for( size_t i=0; i < atoms.ItemCount(); i++ )
-    Add( Parent.RM.aunit.GetAtom(atoms.GetItem(i).GetValue().ToInt()) );
+  TAsymmUnit& au = Parent.RM.aunit;
+  const TDataItem* _atoms = item.FindItem("atoms");
+  if( _atoms != NULL )  {
+    for( size_t i=0; i < _atoms->ItemCount(); i++ )
+      Add(au.GetAtom(_atoms->GetItem(i).GetValue().ToSizeT()));
+  }
+  else  {  // index range then
+    IndexRange::RangeItr ai(item.GetRequiredField("atom_range"));
+    while( ai.HasNext() )
+      Add(au.GetAtom(ai.Next()));
+  }
   TDataItem& dep = item.FindRequiredItem("dependent");
   for( size_t i=0; i < dep.ItemCount(); i++ )
-    AddDependent( Parent[dep.GetItem(i).GetValue().ToInt()] );
+    AddDependent(Parent[dep.GetItem(i).GetValue().ToInt()]);
   const olxstr p_id = item.GetFieldValue("parent");
   if( !p_id.IsEmpty() )
     ParentGroup = &Parent[p_id.ToInt()];

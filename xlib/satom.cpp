@@ -5,7 +5,7 @@
 #include "symmparser.h"
 #include "unitcell.h"
 #include "pers_util.h"
-
+#include "index_range.h"
           
 //----------------------------------------------------------------------------//
 // TSAtom function bodies
@@ -16,8 +16,6 @@ TSAtom::TSAtom(TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
   Flags = 0;
 }
 //..............................................................................
-TSAtom::~TSAtom()  {  }
-//..............................................................................
 void  TSAtom::CAtom(TCAtom& S)  {
   FCAtom = &S;
   FCCenter = S.ccrd();
@@ -25,13 +23,11 @@ void  TSAtom::CAtom(TCAtom& S)  {
 }
 //..............................................................................
 int TSAtom::_SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2)  {
-  const double diff = b1->QLength() - b2->QLength();
-  return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  return olx_cmp(b1->QLength(), b2->QLength());
 }
 //..............................................................................
 int TSAtom::_SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2)  {
-  const double diff = b2->QLength() - b1->QLength();
-  return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  return olx_cmp(b2->QLength(), b1->QLength());
 }
 //..............................................................................
 void TSAtom::Assign(const TSAtom& S)  {
@@ -91,16 +87,17 @@ void TSAtom::ToDataItem(TDataItem& item) const {
   item.AddField("crd", PersUtil::VecToStr(FCenter));
   item.AddField("flags", Flags);
   if( Network->GetTag() >= 0 )  {
-    TDataItem& nodes = item.AddItem("Nodes");
+    IndexRange::Builder rb;
     for( size_t i=0; i < Nodes.Count(); i++ )  {
       if( Nodes[i]->IsDeleted() )  continue;
-      nodes.AddField("node_id", Nodes[i]->GetTag());
+      rb << Nodes[i]->GetTag();
     }
-    TDataItem& bonds = item.AddItem("Bonds");
+    item.AddField("node_range", rb.GetString(true));
     for( size_t i=0; i < Bonds.Count(); i++ )  {
       if( Bonds[i]->IsDeleted() )  continue;
-      bonds.AddField("bond_id", Bonds[i]->GetTag());
+      rb << Bonds[i]->GetTag();
     }
+    item.AddField("bond_range", rb.GetString(true));
   }
   item.AddField("atom_id", FCAtom->GetTag());
   TDataItem& matrices = item.AddItem("Matrices");
@@ -112,15 +109,28 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   const size_t net_id = item.GetRequiredField("net_id").ToInt();
   Network = &parent.GetFragment(net_id);
   if( net_id != InvalidIndex )  {
-    const TDataItem& nodes = item.FindRequiredItem("Nodes");
-    Nodes.SetCapacity(nodes.FieldCount());
     ASObjectProvider& objects = parent.GetObjects();
-    for( size_t i=0; i < nodes.FieldCount(); i++ )
-      Nodes.Add(objects.atoms[nodes.GetField(i).ToSizeT()]);
-    const TDataItem& bonds = item.FindRequiredItem("Bonds");
-    Bonds.SetCapacity(bonds.FieldCount());
-    for( size_t i=0; i < bonds.FieldCount(); i++ )
-      Bonds.Add(objects.bonds[bonds.GetField(i).ToSizeT()]);
+    const TDataItem* _nodes = item.FindItem("Nodes");
+    if( _nodes != NULL )  {
+      const TDataItem& nodes = *_nodes;
+      Nodes.SetCapacity(nodes.FieldCount());
+      for( size_t i=0; i < nodes.FieldCount(); i++ )
+        Nodes.Add(objects.atoms[nodes.GetField(i).ToSizeT()]);
+      const TDataItem& bonds = item.FindRequiredItem("Bonds");
+      Bonds.SetCapacity(bonds.FieldCount());
+      for( size_t i=0; i < bonds.FieldCount(); i++ )
+        Bonds.Add(objects.bonds[bonds.GetField(i).ToSizeT()]);
+    }
+    else  {  // index range then
+      IndexRange::RangeItr ai(item.GetRequiredField("node_range"));
+      Nodes.SetCapacity(ai.CalcSize());
+      while( ai.HasNext() )
+        Nodes.Add(objects.atoms[ai.Next()]);
+      IndexRange::RangeItr bi(item.GetRequiredField("bond_range"));
+      Bonds.SetCapacity(bi.CalcSize());
+      while( bi.HasNext() )
+        Bonds.Add(objects.bonds[bi.Next()]);
+    }
   }
   TLattice& latt = Network->GetLattice();
   const size_t ca_id = item.GetRequiredField("atom_id").ToSizeT();

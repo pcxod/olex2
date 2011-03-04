@@ -36,7 +36,7 @@ protected:
   static int _SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2);
 public:
   TSAtom(TNetwork* N);
-  virtual ~TSAtom();
+  virtual ~TSAtom()  {}
   void Assign(const TSAtom& S);
   // Is/Set
   virtual bool IsDeleted() const {  return  (Flags&satom_Deleted) != 0;  }

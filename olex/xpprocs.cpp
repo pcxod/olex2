@@ -8914,9 +8914,18 @@ void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroError &E)  {
     Dictionary.SetCurrentLanguage(DictionaryFile, Params[0] );
 }
 //..............................................................................
+void macSAME_expand(const TArrayList<TSAtomPList>& groups)  {
+  throw TNotImplementedException(__OlxSourceInfo);
+  //TXApp& xapp = TXApp::GetInstance();
+  //xapp.XFile().GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+  //for( size_t i=0; i < groups[0].Count(); i++ )  {
+  //  for( size_t 
+  //}
+}
 void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
-  bool invert = Options.Contains("i");
+  const bool invert = Options.Contains("i"),
+    expand = Options.Contains("e");
   size_t groups_count = InvalidSize;
   if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
     groups_count = Cmds[0].ToSizeT();
@@ -8936,44 +8945,67 @@ void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     //got the pairs now...
-    TSameGroup& sg = FXApp->XFile().GetRM().rSAME.New();
-    for( size_t i=0; i < netA.NodeCount(); i++ )  {
-      netA.Node(i).SetTag(-1);
-      netB.Node(i).SetTag(-1);
+    if( expand )  {
+      TArrayList<TSAtomPList> groups(2);
+      groups[0].SetCapacity(res.Count());
+      groups[1].SetCapacity(res.Count());
+      for( size_t i=0; i < res.Count(); i++ )  {
+        if( netA.Node(res[i].GetA()).GetType().GetMr() < 3.5 )  continue;
+        groups[0].Add(netA.Node(res[i].GetA()));
+        groups[1].Add(netB.Node(res[i].GetB()));
+      }
+      macSAME_expand(groups);
     }
-    for( size_t i=0; i < res.Count(); i++ )  {
-      if( netA.Node(res[i].GetA()).GetType().GetMr() < 3.5 || netA.Node(res[i].GetA()).GetTag() == 0 )
-        continue;
-      sg.Add( netA.Node(res[i].GetA()).CAtom() );
-      netA.Node(res[i].GetA()).SetTag(0);
-      TBasicApp::GetLog() << netA.Node(res[i].GetA()).GetLabel() << ' ';
+    else  {
+      TSameGroup& sg = FXApp->XFile().GetRM().rSAME.New();
+      for( size_t i=0; i < netA.NodeCount(); i++ )  {
+        netA.Node(i).SetTag(-1);
+        netB.Node(i).SetTag(-1);
+      }
+      for( size_t i=0; i < res.Count(); i++ )  {
+        if( netA.Node(res[i].GetA()).GetType().GetMr() < 3.5 || netA.Node(res[i].GetA()).GetTag() == 0 )
+          continue;
+        sg.Add(netA.Node(res[i].GetA()).CAtom());
+        netA.Node(res[i].GetA()).SetTag(0);
+        TBasicApp::GetLog() << netA.Node(res[i].GetA()).GetLabel() << ' ';
+      }
+      TBasicApp::NewLogEntry();
+      TSameGroup& d_sg = FXApp->XFile().GetRM().rSAME.NewDependent(sg);
+      for( size_t i=0; i < res.Count(); i++ )  {
+        if( netB.Node(res[i].GetB()).GetType().GetMr() < 3.5 || netB.Node(res[i].GetB()).GetTag() == 0 )
+          continue;
+        d_sg.Add( netB.Node(res[i].GetB()).CAtom() );
+        netB.Node(res[i].GetB()).SetTag(0);
+        TBasicApp::GetLog() << netB.Node(res[i].GetB()).GetLabel() << ' ';
+      }
+      TBasicApp::NewLogEntry();
     }
-    TBasicApp::NewLogEntry();
-    TSameGroup& d_sg = FXApp->XFile().GetRM().rSAME.NewDependent(sg);
-    for( size_t i=0; i < res.Count(); i++ )  {
-      if( netB.Node(res[i].GetB()).GetType().GetMr() < 3.5 || netB.Node(res[i].GetB()).GetTag() == 0 )
-        continue;
-      d_sg.Add( netB.Node(res[i].GetB()).CAtom() );
-      netB.Node(res[i].GetB()).SetTag(0);
-      TBasicApp::GetLog() << netB.Node(res[i].GetB()).GetLabel() << ' ';
-    }
-    TBasicApp::NewLogEntry();
   }
   else if( groups_count != InvalidSize && (atoms.Count()%groups_count) == 0 )  {
-    TPtrList<TSameGroup> deps;
-    TSameGroup& sg = FXApp->XFile().GetRM().rSAME.New();
-    for( size_t i=0; i < groups_count-1; i++ )
-      deps.Add( FXApp->XFile().GetRM().rSAME.NewDependent(sg) );
     const size_t cnt = atoms.Count()/groups_count;
-    for( size_t i=0; i < cnt; i++ )  {
-      sg.Add(atoms[i]->CAtom());
-      for( size_t j=1; j < groups_count; j++ )
-        deps[j-1]->Add(atoms[cnt*j+i]->CAtom());
+    if( expand )  {
+      TArrayList<TSAtomPList> groups(groups_count);
+      for( size_t i=0; i < cnt; i++ )  {
+        for( size_t j=0; j < groups_count; j++ )
+          groups[j].Add(atoms[cnt*j+i]);
+      }
+      macSAME_expand(groups);
     }
-    TBasicApp::NewLogEntry() << "SAME instruction is added";
+    else  {
+      TPtrList<TSameGroup> deps;
+      TSameGroup& sg = FXApp->XFile().GetRM().rSAME.New();
+      for( size_t i=0; i < groups_count-1; i++ )
+        deps.Add(FXApp->XFile().GetRM().rSAME.NewDependent(sg));
+      for( size_t i=0; i < cnt; i++ )  {
+        sg.Add(atoms[i]->CAtom());
+        for( size_t j=1; j < groups_count; j++ )
+          deps[j-1]->Add(atoms[cnt*j+i]->CAtom());
+      }
+      TBasicApp::NewLogEntry() << "SAME instruction is added";
+    }
   }
   else  {
-    E.ProcessingError(__OlxSrcInfo, "inlvaid input arguments");
+    E.ProcessingError(__OlxSrcInfo, "invalid input arguments");
   }
 }
 //..............................................................................

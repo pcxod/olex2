@@ -21,6 +21,7 @@
 #include "tests/mat_id_test.h"
 #include "tests/symmparser_test.h"
 #include "tests/vcov_test.h"
+#include "tests/irange_test.h"
 
 class Listener : public AActionHandler  {
 public:
@@ -64,6 +65,7 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::symm_parser_tests);
   tests.Add(&smatd::Tests);
   tests.Add(&test::vcov_test);
+  tests.Add(&test::IndexRangeTest);
   tests.run();
   if( argc > 1 )  {
     olxstr data_dir = argv[1];
