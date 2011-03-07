@@ -72,9 +72,6 @@
     <ClCompile Include="..\..\..\sdl\ememstream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\sdl\erange.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\sdl\etime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -198,9 +195,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\ellist.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\erange.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\esort.h">
@@ -480,6 +474,12 @@
       <Filter>Header Files\tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\sys_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\index_range.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\irange_test.h">
       <Filter>Header Files\tests</Filter>
     </ClInclude>
   </ItemGroup>

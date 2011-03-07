@@ -354,30 +354,32 @@ PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
 }
   //..............................................................................
 static PyMethodDef CORE_Methods[] = {
-  {"UpdateRepository", pyUpdateRepository, METH_VARARGS, "Updates specified local repository from the http one. Takes the following arguments: \
-the index file name, destination folder (relative to the basedir)"},
-  {"GetPluginList", pyGetPlugins, METH_VARARGS, "returns a list of installed plugins"},
-  {"ExportFunctionList", pyExpFun, METH_VARARGS, "exports a list of olex functions and their description"},
-  {"ExportMacroList", pyExpMac, METH_VARARGS, "exports a list of olex macros and their description"},
-  {"IsVar", pyIsVar, METH_VARARGS, "returns boolean value if specified variable exists"},
-  {"VarCount", pyVarCount, METH_VARARGS, "returns the number of variables"},
-  {"VarValue", pyGetVar, METH_VARARGS, "returns specified variable value"},
-  {"SetVar", pySetVar, METH_VARARGS, "sets value of specified variable"},
-  {"UnsetVar", pyUnsetVar, METH_VARARGS, "unsets specified variable. Returns True if the variable existed,\
- False if it did not xust and None if an error occured"},
-  {"FindValue", pyVarValue, METH_VARARGS, "returns value of specified variable or empty string"},
-  {"FindObject", pyVarObject, METH_VARARGS, "returns value of specified variable as an object"},
-  {"VarName", pyGetVarName, METH_VARARGS, "returns name of specified variable"},
-  {"FindVarName", pyFindGetVarName, METH_VARARGS, "returns name of variable name corresponding to provided object"},
-  {"Translate", pyTranslate, METH_VARARGS, "returns translated version of provided string"},
+  {"UpdateRepository", pyUpdateRepository, METH_VARARGS,
+  "Updates specified local repository from the http one. Takes the following arguments: "
+  "the index file name, destination folder (relative to the basedir)"},
+  {"GetPluginList", pyGetPlugins, METH_VARARGS, "Returns a list of installed plugins"},
+  {"ExportFunctionList", pyExpFun, METH_VARARGS, "Exports a list of olex functions and their description"},
+  {"ExportMacroList", pyExpMac, METH_VARARGS, "Exports a list of olex macros and their description"},
+  {"IsVar", pyIsVar, METH_VARARGS, "Returns boolean value if specified variable exists"},
+  {"VarCount", pyVarCount, METH_VARARGS, "Returns the number of variables"},
+  {"VarValue", pyGetVar, METH_VARARGS, "Returns specified variable value"},
+  {"SetVar", pySetVar, METH_VARARGS, "Sets value of specified variable"},
+  {"UnsetVar", pyUnsetVar, METH_VARARGS,
+  "Unsets specified variable. Returns True if the variable existed, "
+  "False if it did not exist and None if an error occured"},
+  {"FindValue", pyVarValue, METH_VARARGS, "Returns value of specified variable or empty string"},
+  {"FindObject", pyVarObject, METH_VARARGS, "Returns value of specified variable as an object"},
+  {"VarName", pyGetVarName, METH_VARARGS, "Returns name of specified variable"},
+  {"FindVarName", pyFindGetVarName, METH_VARARGS, "Returns name of variable name corresponding to provided object"},
+  {"Translate", pyTranslate, METH_VARARGS, "Returns translated version of provided string"},
   {"DescribeRefinement", pyDescRef, METH_VARARGS, "Returns a string describing current refinement model"},
   {"GetRefinementModel", pyRefModel, METH_VARARGS, "Returns refinement model as python object"},
   {"GetHklStat", pyHklStat, METH_VARARGS, "Returns HKL statistics"},
-  {"SGInfo", pySGInfo, METH_VARARGS, "Returns current/give space group information"},
-  {"GetVdWRadii", pyGetVdWRadii, METH_VARARGS, "Returns Van der Waals radii for elments of current model"},
+  {"SGInfo", pySGInfo, METH_VARARGS, "Returns current/given space group information"},
+  {"GetVdWRadii", pyGetVdWRadii, METH_VARARGS, "Returns Van der Waals radii for elements of current model"},
   {NULL, NULL, 0, NULL}
    };
 
 void OlexPyCore::PyInit()  {
-  Py_InitModule( "olex_core", CORE_Methods );
+  Py_InitModule("olex_core", CORE_Methods);
 }
