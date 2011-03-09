@@ -2649,13 +2649,9 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   RefinementModel& rm = FXApp->XFile().GetRM();
   TXAtomPList xatoms;
   FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
-  if( Cmds.IsEmpty() )  {
+  if( fvar == -1101 && xatoms.Count() != 2 )  {
     rm.Vars.Validate();
     TBasicApp::NewLogEntry() << "Free variables: " << rm.Vars.GetFVARStr();
-    return;
-  }
-  if( xatoms.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "Empty atom list");
     return;
   }
   if( fvar == 0 )  {

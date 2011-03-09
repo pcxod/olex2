@@ -371,6 +371,11 @@ void THtml::OnNavigation(wxNavigationKeyEvent& event)  {
 }
 //..............................................................................
 void THtml::OnChar(wxKeyEvent& event)  {
+  //Ctrl+c
+  if( event.m_controlDown && event.GetKeyCode() == 'c'-'a'+1 )  {
+    CopySelection();
+    return;
+  }
   wxWindow* parent = GetParent();
   if( parent != NULL )  {
     wxDialog* dlg = dynamic_cast<wxDialog*>(parent);
