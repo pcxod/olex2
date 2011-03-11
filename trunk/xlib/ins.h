@@ -158,6 +158,8 @@ public:
       }
       else if( Toks[0].Equalsi("MERG") && Toks.Count() == 2 )
         rm.SetMERG(Toks[1].ToInt());
+      else if( Toks[0].Equalsi("EXTI") )
+        rm.SetEXTI(Toks.Count() == 1 ? 0.0 : Toks[1].ToDouble());
       else if( Toks[0].Equalsi("SIZE") && (Toks.Count() == 4) )
         rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble());
       else if( Toks[0].Equalsi("BASF") && (Toks.Count() > 1) )

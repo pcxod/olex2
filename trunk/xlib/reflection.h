@@ -11,26 +11,21 @@ class TReflection: public ACollectionItem  {
   bool Centric, Absent;
   short Multiplicity;
   int Flag;  // shelx 'batch number'
-public:
-  TReflection(const TReflection& r)  {
-    *this = r;
-  }
-  TReflection(int h, int k, int l) : hkl(h,k,l)  {
-    I = S = 0;
-    Absent = Centric = false;
-    Multiplicity = 1;
-    SetTag(1);
-    Flag = NoFlagSet;
-  }
-  TReflection(int h, int k, int l, double I, double S, int flag=NoFlagSet) : hkl(h,k,l) {
-    this->I = I;
-    this->S = S;
+  void _init(int flag=NoFlagSet)  {
     Absent = Centric = false;
     Multiplicity = 1;
     SetTag(1);
     Flag = flag;
   }
-  virtual ~TReflection()  {  }
+public:
+  TReflection(const TReflection& r)  {  *this = r;  }
+  TReflection(int h, int k, int l) : hkl(h,k,l), I(0), S(0)  {  _init();  }
+  TReflection(const vec3i& _hkl) : hkl(_hkl), I(0), S(0)  {  _init();  }
+  TReflection(int h, int k, int l, double _I, double _S, int flag=NoFlagSet) :
+    hkl(h,k,l), I(_I), S(_S)  {  _init(flag);  }
+  TReflection(const vec3i& _hkl, double _I, double _S, int flag=NoFlagSet) :
+    hkl(_hkl), I(_I), S(_S)  {  _init(flag);  }
+  virtual ~TReflection()  {}
   //TReflection& operator = (const TLstRef& R);
   TReflection& operator = (const TReflection &r)  {
     hkl = r.hkl;
@@ -60,23 +55,27 @@ public:
       return ( ((int)v[0] == -hkl[0]) && ((int)v[1] == -hkl[1]) && ((int)v[2] == -hkl[2]) );
     }
   // generates symmetry equivalent miller index and stores it in res
-  template <class VC, class MC> void MulHkl(VC& res, const MC& mat) const {
+  template <class VC, class MC> VC& MulHkl(VC& res, const MC& mat) const {
     res[0] = (hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
     res[1] = (hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
     res[2] = (hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
+    return res;
   }
+  template <class MC> vec3i MulHkl(const MC& mat) const {
+    return vec3i(
+      hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0],
+      hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1],
+      hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
+  }
+  vec3i MulHkl(const smatd& mat) const {  return MulHkl(mat.r);  }
   template <class MC> vec3i operator * (const MC& mat) const {
     return vec3i(
-      (int)(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]),
-      (int)(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]),
-      (int)(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]));
+      hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0],
+      hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1],
+      hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
   }
   // generates index of an equivalen reflection
-  template <class V> void MulHkl(V& res, const smatd& mat) const {
-    res[0] = (hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0]);
-    res[1] = (hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1]);
-    res[2] = (hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
-  }
+  template <class VC> VC& MulHkl(VC& res, const smatd& mat) const {  return MulHkl(res, mat.r);  }
   vec3i operator * (const smatd& mat) const {
     return vec3i(
       hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0],
@@ -84,25 +83,31 @@ public:
       hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
   }
   // generates an equivalent using rounding on the resulting indexes
-  template <class VC, class MC> void MulHklR(VC& res, const MC& mat) const {
+  template <class VC, class MC> VC& MulHklR(VC& res, const MC& mat) const {
     res[0] = olx_round(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
     res[1] = olx_round(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
     res[2] = olx_round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
+    return res;
+  }
+  template <class MC> vec3i MulHklR(const MC& mat) const {
+    return vec3i(
+      olx_round(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]),
+      olx_round(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]),
+      olx_round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]));
   }
   // generates an equivalent using rounding on the resulting indexes
-  template <class V> void MulHklR(V& res, const smatdd& mat) const {
-    res[0] = olx_round(hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0]);
-    res[1] = olx_round(hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1]);
-    res[2] = olx_round(hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
-  }
+  template <class VC> VC& MulHklR(VC& res, const smatdd& mat) const {  return MulHklR(res, mat.r);  }
 //..............................................................................
   /* replaces hkl with standard hkl accroding to provided matrices. 
   Also performs the reflection analysis, namely:
   Initialises Absent flag
   */
   template <class MatList> void StandardiseFP(const MatList& ml)  {
+    Absent = StandardiseFP(hkl, ml);
+  }
+  template <class MatList> bool StandardiseFP(vec3i& hkl, const MatList& ml)  {
     vec3i hklv = -hkl, new_hkl = hkl;
-    Absent = false;
+    bool absent = false;
     if( (hklv[2] > hkl[2]) ||
       ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
       ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
@@ -110,7 +115,7 @@ public:
       new_hkl = hklv;
     }
     for( size_t i=0; i < ml.Count(); i++ )  {
-      MulHkl(hklv, ml[i]);
+      hklv = hkl*ml[i].r;
       if( (hklv[2] > new_hkl[2]) ||
         ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
         ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
@@ -127,20 +132,23 @@ public:
     }
     hkl = new_hkl;
     for( size_t i=0; i < ml.Count(); i++ )  {
-      MulHkl(hklv, ml[i]);
-      if( EqHkl(hklv) )  {  // only if there is no change
-        const double ps = PhaseShift(ml[i]);
-        Absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
-        if( Absent )
-          break;
+      hklv = hkl*ml[i].r;
+      if( hkl == hklv )  {  // only if there is no change
+        const double ps = ml[i].t.DotProd(hkl);
+        absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
+        if( absent )  break;
       }
     }
+    return absent;
   }
   template <class MatList> void Standardise(const MatList& ml)  {
-    vec3i hklv, new_hkl = hkl;
-    Absent = false;
+    Absent = Standardise(hkl, ml);
+  }
+  template <class MatList> static bool Standardise(vec3i& hkl, const MatList& ml)  {
+    vec3i new_hkl = hkl;
+    bool absent = false;
     for( size_t i=0; i < ml.Count(); i++ )  {
-      MulHkl(hklv, ml[i]);
+      vec3i hklv = hkl*ml[i].r;
         if( (hklv[2] > new_hkl[2]) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
@@ -150,19 +158,22 @@ public:
     }
     hkl = new_hkl;
     for( size_t i=0; i < ml.Count(); i++ )  {
-      MulHkl(hklv, ml[i]);
-      if( EqHkl(hklv) )  {  // only if there is no change
-        const double ps = PhaseShift(ml[i]);
-        Absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
-        if( Absent )
-          break;
+      vec3i hklv = hkl*ml[i].r;
+      if( hkl == hklv )  {  // only if there is no change
+        const double ps = ml[i].t.DotProd(hkl);
+        absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
+        if( absent )  break;
       }
     }
+    return absent;
   }
   template <bool centro> void StandardiseEx(const SymSpace::InfoEx& info)  {
+    Absent = StandardiseEx<centro>(hkl, info);
+  }
+  template <bool centro> static bool StandardiseEx(vec3i& hkl, const SymSpace::InfoEx& info)  {
+    bool absent = false;
     if( centro )  {
       vec3i hklv = -hkl, new_hkl = hkl;
-      Absent = false;
       if( (hklv[2] > hkl[2]) ||
         ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
         ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
@@ -170,7 +181,7 @@ public:
         new_hkl = hklv;
       }
       for( size_t i=0; i < info.matrices.Count(); i++ )  {
-        MulHkl(hklv, info.matrices[i]);
+        hklv = hkl*info.matrices[i].r;
         if( (hklv[2] > new_hkl[2]) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
@@ -188,10 +199,9 @@ public:
       hkl = new_hkl;
     }
     else  {
-      vec3i hklv, new_hkl = hkl;
-      Absent = false;
+      vec3i new_hkl = hkl;
       for( size_t i=0; i < info.matrices.Count(); i++ )  {
-        MulHkl(hklv, info.matrices[i]);
+        vec3i hklv = hkl*info.matrices[i].r;
         if( (hklv[2] > new_hkl[2]) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
@@ -201,34 +211,31 @@ public:
       }
       hkl = new_hkl;
     }
-    vec3i hklv;
     for( size_t i=0; i < info.matrices.Count(); i++ )  {
-      MulHkl(hklv, info.matrices[i]);
-      if( EqHkl(hklv) || (centro && EqNegHkl(hklv)) )  {
+      vec3i hklv = hkl*info.matrices[i].r;
+      if( hkl == hklv || (centro && hkl == -hklv) )  {
         const double ps = info.matrices[i].t.DotProd(hkl);
-        if( !(Absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )  {
+        if( !(absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )  {
           for( size_t j=0; j < info.vertices.Count(); j++ )  {
             const double ps = (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
-            if( Absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
+            if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
               break;
           }
         }
-        if( Absent )
-          break;
+        if( absent )  break;
       }
     }
-    if( !Absent )  {  // check for Identity and centering
+    if( !absent )  {  // check for Identity and centering
       for( size_t i=0; i < info.vertices.Count(); i++ )  {
         const double ps = info.vertices[i].DotProd(hkl);
-        if( Absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
+        if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
           break;
       }
     }
+    return absent;
   }
 //..............................................................................
-  inline double PhaseShift(const smatd& m) const {  
-    return m.t.DotProd(hkl);  
-  }
+  inline double PhaseShift(const smatd& m) const {  return m.t.DotProd(hkl);  }
 //..............................................................................
   /* analyses if this reflection is centric, systematically absent and its multiplicity */
   template <class MatList> void Analyse(const MatList& ml)  {
@@ -250,23 +257,15 @@ public:
     }
   }
 //..............................................................................
-  inline bool IsSymmetric(const smatd& m) const {
-    vec3i hklv;
-    MulHkl(hklv, m);
-    return EqHkl(hklv);
-  }
+  inline bool IsSymmetric(const smatd& m) const {  return EqHkl(MulHkl(m.r));  }
 //..............................................................................
-  inline bool IsCentrosymmetric(const smatd& m) const {
-    vec3i hklv;
-    MulHkl(hklv, m);
-    return EqNegHkl(hklv);
-  }
+  inline bool IsCentrosymmetric(const smatd& m) const {  return EqNegHkl(MulHkl(m.r));  }
 //..............................................................................
   template <class MatList> bool IsAbsent(const MatList& ml) const {
     for( size_t i=0; i < ml.Count(); i++ )  {
       if( IsSymmetric(ml[i]) )  {
-        double l = PhaseShift(ml[i]);
-        if( olx_abs( l - olx_round(l) ) > 0.01 )  
+        const double l = PhaseShift(ml[i]);
+        if( olx_abs(l - olx_round(l)) > 0.01 )  
           return true;
       }
     }

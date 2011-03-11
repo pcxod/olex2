@@ -168,13 +168,18 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  it should be provided as the last argument (like test.hkl)");
   xlib_InitMacro(ASR, EmptyString(), fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
   xlib_InitMacro(Describe, EmptyString(), fpNone^psFileLoaded, "Describes current refinement in a human readable form");
-  xlib_InitMacro(Sort, EmptyString(), fpAny^psFileLoaded, "Sorts atoms of the default residue. Atom sort arguments:\
- m - atomic weight; l - label, considering numbers; p - part, 0 is first followed by all positive parts in ascending order and then negative ones;\
- h - to treat hydrogen atoms independent of the pivot atom.\
- Moiety sort arguments: s - size, h - by heaviest atom, m - molecular weight. Usage: sort [+atom_sort_type] or [Atoms] [moiety [+moety sort type] [moiety atoms]].\
- If just 'moiety' is provided - the atoms will be split into the moieties without sorting.\
- Example: sort +ml F2 F1 moiety +s - will sort atoms by atomic weight and label, put F1 after F2 and form moieties sorted by size.\
- Note that when sorting atoms, any subsequent sort type operates inside the groups created by the preceeding sort types.");
+  xlib_InitMacro(Sort, EmptyString(), fpAny^psFileLoaded,
+  "Sorts atoms of the default residue. Atom sort arguments: "
+  "\n\tm - atomic weight\n\tl - label, considering numbers\n\tp - part, 0 is first followed by all positive "
+  "parts in ascending order and then negative ones\n\th - to treat hydrogen atoms independent of the pivot "
+  "atom\n\ts - nun-numerical labes suffix\n\tz - number after the atom symbol\n"
+  "Moiety sort arguments:\n\ts - size\n\th - by heaviest atom\n\tm - molecular weight\nUsage: sort "
+  "[+atom_sort_type] or [Atoms] [moiety [+moety sort type] [moiety atoms]]. If just 'moiety' is provided - "
+  "the atoms will be split into the moieties without sorting.\n"
+  "Example: sort +ml F2 F1 moiety +s - will sort atoms by atomic weight and label, put F1 after F2 and form "
+  "moieties sorted by size. Note that when sorting atoms, any subsequent sort type operates inside the "
+  "groups created by the preceeding sort types."
+ );
   xlib_InitMacro(SGInfo, "c-include lattice centering matrices&;i-include inversion generated matrices if any", fpNone|fpOne, 
     "Prints space group information.");
   xlib_InitMacro(SAInfo, EmptyString(), fpAny, "Finds and prints space groups which include any of the provided systematic absences in the form 'b~~', '~b~' or '~~b'");
@@ -4552,23 +4557,74 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
   TRefList refs;
-  TArrayList<compd> F;
+  TArrayList<double> Fsq;
   TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
-  RefinementModel::HklStat ms =
-    xapp.XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
-  F.SetCount(refs.Count());
-  SFUtil::CalcSF(xapp.XFile(), refs, F);
-  //xapp.CalcSF(refs, F);
-  double scale_k =1./olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
+  RefinementModel& rm = xapp.XFile().GetRM();
+  const TDoubleList& basf = rm.GetBASF();
+  if( !basf.IsEmpty() )  {
+    RefinementModel::HklStat ms =
+      rm.GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+    TArrayList<compd> F(refs.Count());
+    Fsq.SetCount(refs.Count());
+    SFUtil::CalcSF(xapp.XFile(), refs, F);
+    for( size_t i=0; i < F.Count(); i++ )
+      Fsq[i] = F[i].qmod();
+    TArrayList<double> Fsq_o = Fsq;
+    SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
+    const double tf = basf[0];
+    mat3i tm = mat3d::Transpose(rm.GetTWIN_mat());
+    TArray3D<TReflection*> hkl3d(ms.MinIndexes, ms.MaxIndexes);
+    hkl3d.FastInitWith(0);
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      hkl3d(refs[i].GetHkl()) = &refs[i];
+      refs[i].SetTag(i);
+    }
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      TReflection& ref_a = refs[i];
+      if( ref_a.GetTag() < 0 )  continue;
+      ref_a.SetTag(-1);
+      vec3i ni = ref_a * tm;
+      if( info_ex.centrosymmetric )
+        TReflection::StandardiseEx<true>(ni, info_ex);
+      else
+        TReflection::StandardiseEx<false>(ni, info_ex);
+      if( ni == ref_a.GetHkl() )
+        ;
+      else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
+        TReflection& ref_b = *hkl3d(ni);
+        if( ref_b.GetTag() < 0 )
+          continue;
+        Fsq[i] = (1-tf)*Fsq_o[i] + tf*Fsq_o[ref_b.GetTag()];
+        Fsq[ref_b.GetTag()] = tf*Fsq_o[i] + (1-tf)*Fsq_o[ref_b.GetTag()];
+        ref_b.SetTag(-1);
+      }
+    }
+  }
+  else  {
+    RefinementModel::HklStat ms =
+      rm.GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+    TArrayList<compd> F(refs.Count());
+    Fsq.SetCount(refs.Count());
+    SFUtil::CalcSF(xapp.XFile(), refs, F);
+    for( size_t i=0; i < F.Count(); i++ )
+      Fsq[i] = F[i].qmod();
+  }
+  double scale_k =1./olx_sqr(rm.Vars.GetVar(0).GetValue());
   double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
   size_t r1p_cnt=0;
-  TDoubleList wght = xapp.XFile().GetRM().used_weight;
+  TDoubleList wght = rm.used_weight;
   while( wght.Count() < 6 )
     wght.Add(0);
   wght[5] = 1./3;
+  const double exti = rm.HasEXTI() ? rm.GetEXTI() : 0;
   for( size_t i=0; i < refs.Count(); i++ )  {
     TReflection& r = refs[i];
-    const double Fc2 = F[i].qmod();
+    double Fc2 = Fsq[i];
+    if( exti != 0 )  {
+      const double l = rm.expl.GetRadiation();
+      double x = sp.HklToCart(r.GetHkl()).QLength()*l*l/4;
+      Fc2 /= sqrt(1+0.0005*exti*Fc2*l*l*l/sqrt(olx_max(0,x*(1-x))));
+    }
     const double Fc = sqrt(Fc2);
     const double Fo2 = r.GetI()*scale_k;
     const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
@@ -4589,7 +4645,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   double R1 = R1u/R1d;
   double R1p = R1up/R1dp;
   if( !Params.IsEmpty() && Params[0].Equalsi("print") )  {
-    xapp.NewLogEntry() << "R1 = " << olxstr::FormatFloat(4, R1);
+    xapp.NewLogEntry() << "R1 (All, " << refs.Count() << ") = " << olxstr::FormatFloat(4, R1);
     xapp.NewLogEntry() << "R1 (I/sig >= 2, " << r1p_cnt << ") = " << olxstr::FormatFloat(4, R1p);
     xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, wR2);
   }

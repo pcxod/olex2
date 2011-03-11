@@ -1520,13 +1520,12 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   for( size_t i=0; i < Ins.Count(); i++ )  {
     TInsList* L = Ins.GetObject(i);
     if( L == NULL )  continue;  // if load failed
-    // skip rems and print them at the end
-    //if( Ins[i].StartsFrom("REM") )  continue;
-    olxstr tmp = L->IsEmpty() ? EmptyString() : L->Text(' ');
-    HyphenateIns(Ins[i]+' ', tmp , SL);
+    HyphenateIns(Ins[i]+' ', L->Text(' ') , SL);
   }
   SL << Skipped;
-//  for( size_t i=0; i < Skipepd.Count(); i++ )
+
+  if( GetRM().HasEXTI() )
+    SL.Add("EXTI ") << GetRM().GetEXTI();
 
   _SaveHklInfo(SL, false);
 
@@ -1536,7 +1535,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
     if( i+1 < RefMod.used_weight.Count() )
       wght << ' ';
   }
-  if( RefMod.used_weight.Count() == 0 )  
+  if( RefMod.used_weight.IsEmpty() )  
     wght << "0.1";
   _SaveFVar(RefMod, SL);
 }
