@@ -585,21 +585,21 @@ size_t RefinementModel::ProcessOmits(TRefList& refs)  {
   return processed;
 }
 //....................................................................................................
-void RefinementModel::Detwin(TRefList& refs, const HklStat& st, const SymSpace::InfoEx& info_ex) const {
+void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
+  const SymSpace::InfoEx& info_ex) const
+{
   if( BASF.Count() == 1 )  {
+    if( olx_abs(BASF[0]-0.5) < 1e-3 )  return;
     const double fb = BASF[0]/(1-2*BASF[0]), fa = (1-BASF[0])/(1-2*BASF[0]);
     mat3i tm = mat3d::Transpose(GetTWIN_mat());
     TArray3D<TReflection*> hkl3d(st.MinIndexes, st.MaxIndexes);
     hkl3d.FastInitWith(0);
-    for( size_t i=0; i < refs.Count(); i++ )  {
+    for( size_t i=0; i < refs.Count(); i++ )
       hkl3d(refs[i].GetHkl()) = &refs[i];
-      refs[i].SetTag(0);
-    }
     TRefList dtr;
     dtr.SetCapacity(refs.Count());
     for( size_t i=0; i < refs.Count(); i++ )  {
       TReflection& ref_a = refs[i];
-      if( ref_a.GetTag() != 0 )  continue;
       ref_a.SetTag(1);
       vec3i ni = ref_a * tm;
       TReflection::StandardiseEx<true>(ni, info_ex);
@@ -607,17 +607,85 @@ void RefinementModel::Detwin(TRefList& refs, const HklStat& st, const SymSpace::
         dtr.AddNew(ref_a);
       else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
         TReflection& ref_b = *hkl3d(ni);
-        if( ref_b.GetTag() != 0 )  continue;
-        ref_b.SetTag(1);
         TReflection& nr_a = dtr.AddNew(ref_a);
         nr_a.SetI(fa*ref_a.GetI() - fb*ref_b.GetI());
         nr_a.SetS(sqrt(olx_sqr(fa*ref_a.GetS())+olx_sqr(fb*ref_b.GetS())));
-        TReflection& nr_b = dtr.AddNew(ref_b);
-        nr_b.SetI(fa*ref_b.GetI() - fb*ref_a.GetI());
-        nr_b.SetS(sqrt(olx_sqr(fa*ref_b.GetS())+olx_sqr(fb*ref_a.GetS())));
       }
     }
     refs = dtr;
+  }
+}
+//....................................................................................................
+void RefinementModel::DetwinRatio(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
+  const SymSpace::InfoEx& info_ex) const
+{
+  if( BASF.Count() == 1 )  {
+    if( refs.Count() != F.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
+    const double x = BASF[0];
+    mat3i tm = mat3d::Transpose(GetTWIN_mat());
+    TArray3D<TReflection*> hkl3d(st.MinIndexes, st.MaxIndexes);
+    hkl3d.FastInitWith(0);
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      hkl3d(refs[i].GetHkl()) = &refs[i];
+      refs[i].SetTag(i);
+    }
+    TRefList dtr;
+    dtr.SetCapacity(refs.Count());
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      TReflection& ref_a = refs[i];
+      vec3i ni = ref_a * tm;
+      TReflection::StandardiseEx<true>(ni, info_ex);
+      if( ni == ref_a.GetHkl() )
+        dtr.AddNew(ref_a);
+      else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
+        TReflection& ref_b = *hkl3d(ni);
+        const double Fa = F[i].qmod(), Fb = F[ref_b.GetTag()].qmod();
+        double fa = Fa*(1-x)/(Fa*(1-x)+Fb*x);
+        double fb = Fa*x/(Fb*(1-x)+Fa*x);
+        TReflection& nr_a = dtr.AddNew(ref_a);
+        nr_a.SetI(fa*ref_a.GetI() + fb*ref_b.GetI());
+        nr_a.SetS(sqrt(olx_sqr(fa*ref_a.GetS())+olx_sqr(fb*ref_b.GetS())));
+      }
+    }
+    refs = dtr;
+  }
+}
+//....................................................................................................
+void RefinementModel::DetwinFraction(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
+  const SymSpace::InfoEx& info_ex) const
+{
+  if( !BASF.IsEmpty() )  {
+    if( refs.Count() != F.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
+    mat3i tm = GetTWIN_mat();
+    TArray3D<TReflection*> hkl3d(st.MinIndexes, st.MaxIndexes);
+    hkl3d.FastInitWith(0);
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      hkl3d(refs[i].GetHkl()) = &refs[i];
+      refs[i].SetTag(i);
+    }
+    double pi = 0;  // 'prime' reflection index
+    for( size_t bi=0; bi < BASF.Count(); bi++ )
+      pi += BASF[bi];
+    pi = 1-pi;
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      TReflection& r = refs[i];
+      double d=0;
+      vec3i hkl = r.GetHkl();
+      for( size_t bi=0; bi < BASF.Count(); bi++ )  {
+        vec3i ni = (hkl = tm*hkl);
+        TReflection::StandardiseEx<true>(ni, info_ex);
+        if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )
+          d += F[hkl3d(ni)->GetTag()].qmod()*BASF[bi];
+      }
+      if( d != 0 )  {
+        double f = F[r.GetTag()].qmod();
+        f = f/(f*pi+d);
+        r.SetS(r.GetS()*f);
+        r.SetI(r.GetI()*f);
+      }
+    }
   }
 }
 //....................................................................................................

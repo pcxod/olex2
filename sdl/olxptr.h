@@ -51,4 +51,10 @@ template <typename ptr> struct olx_array_ptr  {
   ptr* operator ()()  {  return p->p;  }
   operator ptr* ()  {  return p->p;  }
 };
+
+template <class P> P& olx_ref(P* p)  {  return *p;  }
+template <class P> const P& olx_ref(const P* p)  {  return *p;  }
+template <class P> P& olx_ref(P& p)  {  return p;  }
+template <class P> const P& olx_ref(const P& p)  {  return p;  }
+
 #endif

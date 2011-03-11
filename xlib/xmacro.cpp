@@ -4562,8 +4562,11 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   RefinementModel& rm = xapp.XFile().GetRM();
   const TDoubleList& basf = rm.GetBASF();
   if( !basf.IsEmpty() )  {
-    RefinementModel::HklStat ms =
-      rm.GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+    RefinementModel::HklStat ms;
+    if( rm.GetHKLF() == 5 || rm.GetHKLF() == 6 )
+      ms = rm.GetAllP1RefList<RefMerger::ShelxMerger>(refs);
+    else
+      ms = rm.GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
     TArrayList<compd> F(refs.Count());
     Fsq.SetCount(refs.Count());
     SFUtil::CalcSF(xapp.XFile(), refs, F);
@@ -4575,6 +4578,11 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     mat3i tm = mat3d::Transpose(rm.GetTWIN_mat());
     TArray3D<TReflection*> hkl3d(ms.MinIndexes, ms.MaxIndexes);
     hkl3d.FastInitWith(0);
+    //for( size_t i=0; i < refs.Count(); i++ )  {
+    //  if( refs[i].GetFlag() != 1 )
+    //    refs.NullItem(i);
+    //}
+    //refs.Pack();
     for( size_t i=0; i < refs.Count(); i++ )  {
       hkl3d(refs[i].GetHkl()) = &refs[i];
       refs[i].SetTag(i);
