@@ -11,6 +11,7 @@
 #include "fragment.h"
 #include "symmlib.h"
 #include "edict.h"
+#include "symspace.h"
 
 BeginXlibNamespace()
 
@@ -61,9 +62,11 @@ protected:
   double HKLF_s, HKLF_wt, HKLF_m;
   double OMIT_s, OMIT_2t;
   double SHEL_lr, SHEL_hr;
+  double EXTI;
   mat3d TWIN_mat;
   int TWIN_n;
-  bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified;
+  bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified,
+    EXTI_set;
   vec3i_list Omits;
   TDoubleList BASF;
   TPtrList<XVarReference> BASF_Vars;
@@ -231,6 +234,10 @@ public:
   bool UseFdp() const {  return MERG != 4;  }
   void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
   bool HasMERG() const {  return MERG_set;  }
+  
+  double GetEXTI() const {  return EXTI;  }
+  void SetEXTI(double v)  {  EXTI = v;  EXTI_set = true;  }
+  bool HasEXTI() const {  return EXTI_set;  }
   
   double GetOMIT_s() const {  return OMIT_s;  }
   void SetOMIT_s(double v)  {  OMIT_s = v;  OMIT_set = true;  }
@@ -463,7 +470,7 @@ of components 1 ... m
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
-    if( MERG != 0 && HKLF != 5 && BASF.IsEmpty() )  {
+    if( MERG != 0 && HKLF != 5 )  {
       bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
       stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, 
         Omits, mergeFP);
@@ -473,12 +480,14 @@ of components 1 ... m
     return AdjustIntensity(out, stats);
   }
   // Friedel pairs always merged
-  template <class SymSpace, class Merger>
-  HklStat GetFourierRefList(const SymSpace& sp, TRefList& out) {
+  template <class Symm, class Merger>
+  HklStat GetFourierRefList(const Symm& sp, TRefList& out) {
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
-    stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, Omits, true);
+    stats = RefMerger::Merge<Symm,Merger>(sp, refs, out, Omits, true);
+    SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
+    Detwin(out, stats, info_ex);
     return AdjustIntensity(out, stats);
   }
   // P-1 merged, filtered
@@ -521,6 +530,7 @@ of components 1 ... m
     GetReflections();
     return _Redundancy;
   }
+  void Detwin(TRefList& refs, const HklStat& st, const SymSpace::InfoEx& info_ex) const;
   // returns the number of pairs - has no relation to the lsi of
   int GetFriedelPairCount() const {
     GetReflections();
@@ -584,6 +594,7 @@ of components 1 ... m
   
   void LibOSF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
+  void LibEXTI(const TStrObjList& Params, TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
   struct ReleasedItems {

@@ -235,10 +235,9 @@ void THklFile::InitHkl3D()  {
 }
 //..............................................................................
 void THklFile::AllRefs(const TReflection& R, const smatd_list& ml, TRefPList& Res)  {
-  vec3i hklv;
   vec3i_list ri;
   for( size_t i=0; i < ml.Count(); i++ )  {
-    R.MulHkl(hklv, ml[i]);
+    vec3i hklv = R.MulHkl(ml[i]);
     // check if the range of the reflection is valid
     if( !vec3i::IsInRangeExc(hklv, MinHkl, MaxHkl) )
       continue;

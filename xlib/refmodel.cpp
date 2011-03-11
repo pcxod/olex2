@@ -50,6 +50,8 @@ void RefinementModel::SetDefaults() {
   SHEL_hr = def_SHEL_hr;
   SHEL_lr = def_SHEL_lr;
   HKLF_set = MERG_set = OMIT_set = TWIN_set = SHEL_set = false;
+  EXTI_set = false;
+  EXTI = 0;
   TWIN_n = def_TWIN_n;
   TWIN_mat.I() *= -1;
 }
@@ -171,6 +173,8 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   TWIN_n = rm.TWIN_n;
   TWIN_set = rm.TWIN_set;
   BASF = rm.BASF;
+  EXTI_set = rm.EXTI_set;
+  EXTI = rm.EXTI;
   for( size_t i=0; i < BASF.Count(); i++ )
     BASF_Vars.Add(NULL);
   HKLSource = rm.HKLSource;
@@ -581,6 +585,42 @@ size_t RefinementModel::ProcessOmits(TRefList& refs)  {
   return processed;
 }
 //....................................................................................................
+void RefinementModel::Detwin(TRefList& refs, const HklStat& st, const SymSpace::InfoEx& info_ex) const {
+  if( BASF.Count() == 1 )  {
+    const double fb = BASF[0]/(1-2*BASF[0]), fa = (1-BASF[0])/(1-2*BASF[0]);
+    mat3i tm = mat3d::Transpose(GetTWIN_mat());
+    TArray3D<TReflection*> hkl3d(st.MinIndexes, st.MaxIndexes);
+    hkl3d.FastInitWith(0);
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      hkl3d(refs[i].GetHkl()) = &refs[i];
+      refs[i].SetTag(0);
+    }
+    TRefList dtr;
+    dtr.SetCapacity(refs.Count());
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      TReflection& ref_a = refs[i];
+      if( ref_a.GetTag() != 0 )  continue;
+      ref_a.SetTag(1);
+      vec3i ni = ref_a * tm;
+      TReflection::StandardiseEx<true>(ni, info_ex);
+      if( ni == ref_a.GetHkl() )
+        dtr.AddNew(ref_a);
+      else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
+        TReflection& ref_b = *hkl3d(ni);
+        if( ref_b.GetTag() != 0 )  continue;
+        ref_b.SetTag(1);
+        TReflection& nr_a = dtr.AddNew(ref_a);
+        nr_a.SetI(fa*ref_a.GetI() - fb*ref_b.GetI());
+        nr_a.SetS(sqrt(olx_sqr(fa*ref_a.GetS())+olx_sqr(fb*ref_b.GetS())));
+        TReflection& nr_b = dtr.AddNew(ref_b);
+        nr_b.SetI(fa*ref_b.GetI() - fb*ref_a.GetI());
+        nr_b.SetS(sqrt(olx_sqr(fa*ref_b.GetS())+olx_sqr(fb*ref_a.GetS())));
+      }
+    }
+    refs = dtr;
+  }
+}
+//....................................................................................................
 void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<TSimpleRestraint>* b_res) {
   Validate();
   int sec_num = 0;
@@ -900,6 +940,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
   item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
+  item.AddItem("EXTI", EXTI_set).AddField("val", EXTI);
   Conn.ToDataItem(item.AddItem("CONN"));
   item.AddField("UserContent", GetUserContentStr());
   // restore matrix tags
@@ -966,18 +1007,26 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   TSymmParser::SymmToMatrix(twin.GetRequiredField("mat"), tmp_m);
   TWIN_mat = tmp_m.r;
   TWIN_n = twin.GetRequiredField("n").ToInt();
-
-  TDataItem& merge = item.FindRequiredItem("MERG");
-  MERG_set = merge.GetValue().ToBool();
-  MERG = merge.GetRequiredField("val").ToInt();
-
-  TDataItem& shel = *item.FindItem("SHEL");
-  if( &shel != NULL )  {
-    SHEL_set = shel.GetValue().ToBool();
-    SHEL_lr = shel.GetRequiredField("low").ToDouble();
-    SHEL_hr = shel.GetRequiredField("high").ToDouble();
+  {
+    TDataItem& merge = item.FindRequiredItem("MERG");
+    MERG_set = merge.GetValue().ToBool();
+    MERG = merge.GetRequiredField("val").ToInt();
   }
-
+  {
+    TDataItem& shel = *item.FindItem("SHEL");
+    if( &shel != NULL )  {
+      SHEL_set = shel.GetValue().ToBool();
+      SHEL_lr = shel.GetRequiredField("low").ToDouble();
+      SHEL_hr = shel.GetRequiredField("high").ToDouble();
+    }
+  }
+  {
+    TDataItem& exti = *item.FindItem("EXTI");
+    if( &exti != NULL )  {
+      EXTI_set = exti.GetValue().ToBool();
+      EXTI = exti.GetRequiredField("val").ToDouble();
+    }
+  }
   // restraints and BASF may use some of the vars...  
   Vars.FromDataItem( item.FindRequiredItem("LEQS") );
   Conn.FromDataItem( item.FindRequiredItem("CONN") );
@@ -1082,6 +1131,9 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
     PythonExt::SetDictItem(shel, "low", Py_BuildValue("d", SHEL_lr));
     PythonExt::SetDictItem(shel, "high", Py_BuildValue("d", SHEL_hr));
   }
+  if( EXTI_set )
+    PythonExt::SetDictItem(main, "exti", Py_BuildValue("f", EXTI));
+
   PythonExt::SetDictItem(main, "conn", Conn.PyExport());
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
@@ -1171,6 +1223,17 @@ void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
     Vars.GetVar(i).SetValue(Params[1].ToDouble());
 }
 //..............................................................................
+void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E) {
+  if( Params.IsEmpty() )  {
+    if( EXTI_set )
+      E.SetRetVal(EXTI);
+    else
+      E.SetRetVal<olxstr>("n/a");
+  }
+  else
+    SetEXTI(Params[0].ToDouble());
+}
+//..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
   lib->RegisterFunction<RefinementModel>(
@@ -1179,5 +1242,8 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<RefinementModel>(
     new TFunction<RefinementModel>(this, &RefinementModel::LibFVar, "FVar", fpOne|fpTwo,
 "Returns/sets FVAR referred by index") );
+  lib->RegisterFunction<RefinementModel>(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI, "Exti", fpNone|fpOne,
+"Returns/sets EXTI") );
   return lib;
 }

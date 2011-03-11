@@ -1102,6 +1102,7 @@
     <ClInclude Include="..\..\..\xlib\symmlib.h" />
     <ClInclude Include="..\..\..\xlib\symmparser.h" />
     <ClInclude Include="..\..\..\xlib\symmtest.h" />
+    <ClInclude Include="..\..\..\xlib\symspace.h" />
     <ClInclude Include="..\..\..\xlib\tls.h" />
     <ClInclude Include="..\..\..\xlib\unitcell.h" />
     <ClInclude Include="..\..\..\xlib\vcov.h" />

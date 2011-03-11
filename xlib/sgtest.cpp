@@ -89,17 +89,14 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
       }
     }
   }
-  vec3i hklv;
   const size_t umnt_cnt = UniqMatricesNT.Count();
   for( size_t i=0; i < umnt_cnt; i++ )  {
     const mat3i& m = UniqMatricesNT[i].GetA();
     const size_t ref_cnt = Refs.Count();
     for( size_t j=0; j < ref_cnt; j++ )  {
       if( Refs[j].GetI() < AverageI )  continue;
-
-      Refs[j].MulHkl(hklv, m);
+      vec3i hklv = Refs[j].MulHkl(m);
       if( !vec3i::IsInRangeExc(hklv, minInd, maxInd) )  continue;
-
       if( !Refs[j].EqHkl(hklv) )  {
         const TReflection* ref = Hkl3D(hklv);
         if( ref == NULL )  
