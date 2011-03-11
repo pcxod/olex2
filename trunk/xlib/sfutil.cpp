@@ -153,6 +153,11 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     //sw.start("Calculation structure factors A");
     //fastsymm version is just about 10% faster...
     CalcSF(xapp.XFile(), refs, F);
+    SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
+    xapp.XFile().GetRM().DetwinFraction(refs, F, ms, info_ex);
+    //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);
+    //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
+    xapp.XFile().GetRM().CorrectExtiForF(refs, F, sp);
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F

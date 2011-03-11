@@ -11,7 +11,6 @@
 #include "fragment.h"
 #include "symmlib.h"
 #include "edict.h"
-#include "symspace.h"
 
 BeginXlibNamespace()
 
@@ -486,8 +485,6 @@ of components 1 ... m
     TRefList refs;
     FilterHkl(refs, stats);
     stats = RefMerger::Merge<Symm,Merger>(sp, refs, out, Omits, true);
-    SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
-    Detwin(out, stats, info_ex);
     return AdjustIntensity(out, stats);
   }
   // P-1 merged, filtered
@@ -504,7 +501,6 @@ of components 1 ... m
   template <class Merger> HklStat GetAllP1RefList(TRefList& out)  {
     HklStat stats;
     TRefList refs(GetReflections());
-    ApplyMatrix(refs, HKLF_mat);
     vec3i_list empty_omits;
     stats = RefMerger::MergeInP1<Merger>(refs, out, empty_omits);
     return stats;
@@ -530,7 +526,36 @@ of components 1 ... m
     GetReflections();
     return _Redundancy;
   }
-  void Detwin(TRefList& refs, const HklStat& st, const SymSpace::InfoEx& info_ex) const;
+  // uses algebraic relation, only for one component
+  void DetwinAlgebraic(TRefList& refs, const HklStat& st, const SymSpace::InfoEx& info_ex) const;
+  // uses fraction proportinla to Fc^2, only for one component
+  void DetwinRatio(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
+    const SymSpace::InfoEx& info_ex) const;
+  // uses Fo^2/=Fc^2/sum(Fc^2_twin_domains)
+  void DetwinFraction(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
+    const SymSpace::InfoEx& info_ex) const;
+  template <class RefList, class FList, class SymSpace>
+  void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const {
+    if( !EXTI_set || EXTI == 0 ) return;
+    if( refs.Count() != F.Count() )
+      throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
+    const double l = expl.GetRadiation();
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      const double x = sp.HklToCart(olx_ref(refs[i]).GetHkl()).QLength()*l*l/4;
+      F[i] *= pow(1+0.0005*EXTI*F[i].qmod()*l*l*l/sqrt(olx_max(0,x*(1-x))), -0.25);
+    }
+  }
+  template <class RefList, class FsqList, class SymSpace>
+  void CorrectExtiForFsq(const RefList& refs, FsqList& Fsq, const SymSpace& sp) const {
+    if( !EXTI_set || EXTI == 0 ) return;
+    if( refs.Count() != Fsq.Count() )
+      throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
+    const double l = expl.GetRadiation();
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      const double x = sp.HklToCart(olx_ref(refs[i]).GetHkl()).QLength()*l*l/4;
+      Fsq[i] /= sqrt(1+0.0005*EXTI*Fsq[i]*l*l*l/sqrt(olx_max(0,x*(1-x))));
+    }
+  }
   // returns the number of pairs - has no relation to the lsi of
   int GetFriedelPairCount() const {
     GetReflections();
@@ -540,9 +565,8 @@ of components 1 ... m
   void ApplyMatrix(TRefList& refs, const mat3d& m)  {
     if( m.IsI() )  return;
     const size_t rc = refs.Count();
-    for( size_t i=0; i < rc; i++ )  {
+    for( size_t i=0; i < rc; i++ )
       refs[i].SetHkl((HKLF_mat*vec3d(refs[i].GetHkl())).Round<int>());
-    }
   }
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
     try {  return *RefContainers[id_name];  }
