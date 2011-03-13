@@ -60,14 +60,8 @@ class RefMerger {
     if( mergeFP )
       info_ex.centrosymmetric = true; 
     const size_t ref_cnt = refs.Count();
-    if( info_ex.centrosymmetric )  {
-      for( size_t i=0; i < ref_cnt; i++ )
-        refs[i]->StandardiseEx<true>(info_ex);
-    }
-    else  {
-      for( size_t i=0; i < ref_cnt; i++ )
-        refs[i]->StandardiseEx<false>(info_ex);
-    }
+    for( size_t i=0; i < ref_cnt; i++ )
+      refs[i]->Standardise(info_ex);
     stats.FriedelOppositesMerged = info_ex.centrosymmetric;
     // standartise reflection indexes according to provided list of symmetry operators
     // sort the list
@@ -94,7 +88,7 @@ class RefMerger {
           stats.ReflectionAPotMax = merged_count;
         if( !ref->IsAbsent() )  {
           // the reflection is replicated if only one in the list
-          MergerOut mo = RefListMerger::Merge( refs, from, i );
+          MergerOut mo = RefListMerger::Merge(refs, from, i);
           if( merged_count > 1 )  {
             SI_tot += mo.sumI;
             Sdiff += mo.sumDiff;
@@ -103,9 +97,9 @@ class RefMerger {
                 stats.InconsistentEquivalents ++;
                 mo.ref->SetTag(-1);  // mark as unusable
               }
-              mo.ref->SetS( mo.sigInt );
+              mo.ref->SetS(mo.sigInt);
             }
-            mo.ref->SetFlag( ref->GetFlag() );
+            mo.ref->SetFlag(ref->GetFlag());
           }
           output.Add(mo.ref).Analyse(ml);
           if( mo.ref->IsCentric() )
@@ -137,14 +131,8 @@ class RefMerger {
     if( mergeFP )
       info_ex.centrosymmetric = true; 
     const size_t ref_cnt = refs.Count();
-    if( info_ex.centrosymmetric )  {
-      for( size_t i=0; i < ref_cnt; i++ )
-        refs[i]->StandardiseEx<true>(info_ex);
-    }
-    else  {
-      for( size_t i=0; i < ref_cnt; i++ )
-        refs[i]->StandardiseEx<false>(info_ex);
-    }
+    for( size_t i=0; i < ref_cnt; i++ )
+      refs[i]->Standardise(info_ex);
     stats.FriedelOppositesMerged = info_ex.centrosymmetric;
     // sort the list
     TReflection::SortList(refs);
@@ -210,7 +198,7 @@ class RefMerger {
     const size_t ref_cnt = refs.Count();
     // sort the list
     TReflection::SortList(refs);
-    output.SetCapacity( ref_cnt ); // better more that none :)
+    output.SetCapacity(ref_cnt); // better more that none :)
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
@@ -414,47 +402,35 @@ public:
   static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output, 
     const vec3i_list& omits, bool mergeFP)  
   {
-    TRefPList refs(Refs.Count());  // list of replicated reflections
-    for( size_t i=0; i < Refs.Count(); i++ )
-      refs[i] = TReflection::RefP(Refs[i]);
+    TRefPList refs(Refs, DirectAccessor());
     return _DoMerge<MatList,RefListMerger>(ml, refs, omits, output, mergeFP);
   }
   /* Functions gets the statistic on the list of provided reflections (which get stantardised) */
   template <class MatList, class RefListMerger, class RefList> 
   static MergeStats DryMerge(const MatList& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
-    TRefPList refs(Refs.Count());  // list of replicated reflections
-    for( size_t i=0; i < Refs.Count(); i++ )
-      refs[i] = TReflection::RefP(Refs[i]);
+    TRefPList refs(Refs, DirectAccessor());
     return _DryMerge<MatList,RefListMerger>(ml, refs, omits, mergeFP);
   }
   /* The function merges provided reflections in P1 and strores the result in the output */
   template <class RefListMerger, class RefList> 
   static MergeStats MergeInP1(const RefList& Refs, TRefList& output, const vec3i_list& omits)  {
-    TPtrList<const TReflection> refs(Refs.Count());
-    for( size_t i=0; i < Refs.Count(); i++ )
-      refs[i] = TReflection::GetRefP(Refs[i]);
+    TPtrList<const TReflection> refs(Refs, DirectAccessor());
     return _DoMergeInP1<RefListMerger>(refs, omits, output);
   }
   template <class RefListMerger, class RefList> 
   static MergeStats DryMergeInP1(const RefList& Refs, const vec3i_list& omits)  {
-    TPtrList<const TReflection> refs(Refs.Count());
-    for( size_t i=0; i < Refs.Count(); i++ )
-      refs[i] = TReflection::GetRefP(Refs[i]);
+    TPtrList<const TReflection> refs(Refs, DirectAccessor());
     return _DryMergeInP1<RefListMerger>(refs, omits);
   }
   /* The function filters out systematic absences */
   template <class MatList, class RefList> 
   static MergeStats SGFilter(const MatList& ml, RefList& Refs, TRefList& output, const vec3i_list& omits)  {
-    TRefPList refs(Refs.Count());
-    for( size_t i=0; i < Refs.Count(); i++ )
-      refs[i] = TReflection::RefP(Refs[i]);
+    TRefPList refs(Refs, DirectAccessor());
     return _DoSGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits, output);
   }
   template <class MatList, class RefList> 
   static MergeStats DrySGFilter(const MatList& ml, RefList& Refs, const vec3i_list& omits)  {
-    TRefPList refs(Refs.Count());
-    for( size_t i=0; i < Refs.Count(); i++ )
-      refs[i] = TReflection::RefP(Refs[i]);
+    TRefPList refs(Refs, DirectAccessor());
     return _DoDrySGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits);
   }
 

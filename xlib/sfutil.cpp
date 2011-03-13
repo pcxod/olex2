@@ -144,19 +144,90 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     double av = 0;
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
-    RefinementModel::HklStat ms =
-      xapp.XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
-    F.SetCount(refs.Count());
-    //THklFile::SaveToFile("e:/1.tmp", refs);
-    sw.start("Calculating structure factors");
-    //xapp.CalcSF(refs, F);
-    //sw.start("Calculation structure factors A");
-    //fastsymm version is just about 10% faster...
-    CalcSF(xapp.XFile(), refs, F);
     SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
-    xapp.XFile().GetRM().DetwinFraction(refs, F, ms, info_ex);
+    info_ex.centrosymmetric = true;
+    RefinementModel& rm = xapp.XFile().GetRM();
+    if( rm.GetHKLF() < 5 )  {
+      RefinementModel::HklStat ms =
+        rm.GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+      F.SetCount(refs.Count());
+      sw.start("Calculating structure factors");
+      //xapp.CalcSF(refs, F);
+      //sw.start("Calculation structure factors A");
+      //fastsymm version is just about 10% faster...
+      CalcSF(xapp.XFile(), refs, F);
+      xapp.XFile().GetRM().DetwinFraction(refs, F, ms, info_ex);
+    }
+    else  {
+      const TDoubleList& basf = rm.GetBASF();
+
+      double pi = 0;  // 'prime' reflection fraction
+      for( size_t bi=0; bi < basf.Count(); bi++ )
+        pi += basf[bi];
+      pi = 1-pi;
+
+      TRefList all_refs;
+      RefinementModel::HklStat ms;
+      rm.FilterHkl(all_refs, ms);
+      const vec3i_list& omits = rm.GetOmits();
+      refs.SetCapacity(all_refs.Count());
+      ms = rm.GetreflectionStat();
+      vec3i mi = ms.FileMinInd, mx = ms.FileMaxInd;
+      vec3i::UpdateMinMax(vec3i::Abs(mi), mi, mx);
+      vec3i::UpdateMinMax(-mx, mi, mx);
+      TArray3D<size_t> hkl3d(mi, mx);
+      hkl3d.FastInitWith(-1);
+      vec3i_list miller_indices;
+      for( size_t i=0; i < all_refs.Count(); i++ )  {
+        vec3i hkl = TReflection::Standardise(all_refs[i].GetHkl(), info_ex);
+        if( TReflection::IsAbsent(hkl, info_ex) || omits.IndexOf(hkl) != InvalidIndex )  {
+          all_refs[i].SetTag(-1);
+          continue;
+        }
+        if( hkl3d(hkl) == InvalidIndex )  {
+          all_refs[i].SetTag(hkl3d(hkl) = miller_indices.Count());
+          miller_indices.AddCCopy(hkl);
+        }
+        else
+          all_refs[i].SetTag(hkl3d(hkl));
+        if( all_refs[i].GetFlag() >= 0 )
+          refs.AddCCopy(all_refs[i]);
+      }
+      F.SetCount(miller_indices.Count());
+      SFUtil::CalcSF(xapp.XFile(), miller_indices, F);
+      size_t ind=0;
+      for( size_t i=0; i < all_refs.Count(); i++ )  {
+        if( all_refs[i].GetTag() < 0 )  continue;
+        double d = 0;
+        while( i < all_refs.Count() && all_refs[i].GetFlag() < 0 )  {
+          const size_t bi = olx_abs(all_refs[i].GetFlag())-2;
+          if( bi < basf.Count() )
+            d += basf[bi]*F[all_refs[i].GetTag()].qmod();
+          i++;
+        }
+        if( i < all_refs.Count() && all_refs[i].GetFlag() >= 0 )  {
+          const size_t bi = olx_abs(all_refs[i].GetFlag())-1;
+          if( bi > basf.Count() )  continue;
+          double k = bi == 0 ? pi : basf[bi-1];
+          double f = F[all_refs[i].GetTag()].qmod();
+          f = f/(k*f+d);
+          TReflection& r = refs[ind++];
+          r.SetS(r.GetS()*f);
+          r.SetI(r.GetI()*f);
+          r.SetFlag(NoFlagSet);
+        }
+      }
+      all_refs = refs;
+      refs.Clear();
+      ms = RefMerger::Merge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, all_refs, refs, omits, true);
+      F.SetCount(refs.Count());
+      SFUtil::CalcSF(xapp.XFile(), refs, F);
+      all_refs.Clear();
+    }
+   
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);
     //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
+
     xapp.XFile().GetRM().CorrectExtiForF(refs, F, sp);
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
@@ -234,7 +305,9 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
   }
 }
 //...........................................................................................
-void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
+void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
+  TArrayList<TEComplex<double> >& F)
+{
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
   catch(...)  {
@@ -261,28 +334,3 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComp
   delete [] U;
 }
 //...........................................................................................
-void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TEComplex<double> >& F)  {
-  TSpaceGroup* sg = NULL;
-  try  { sg = &xfile.GetLastLoaderSG();  }
-  catch(...)  {
-    throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
-  }
-  ISF_Util* sf_util = GetSF_Util_Instance(*sg);
-  if( sf_util == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
-  TAsymmUnit& au = xfile.GetAsymmUnit();
-  double *U = new double[6*au.AtomCount() + 1];
-  TPtrList<TCAtom> alist;
-  ElementPList scatterers;
-  PrepareCalcSF(au, U, scatterers, alist);
-
-  sf_util->Calculate(
-    xfile.GetRM().expl.GetRadiationEnergy(), 
-    refs, au.GetHklToCartesian(), 
-    F, scatterers, 
-    alist, 
-    U
-  );
-  delete sf_util;
-  delete [] U;
-}

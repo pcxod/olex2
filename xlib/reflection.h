@@ -102,50 +102,13 @@ public:
   Also performs the reflection analysis, namely:
   Initialises Absent flag
   */
-  template <class MatList> void StandardiseFP(const MatList& ml)  {
-    Absent = StandardiseFP(hkl, ml);
-  }
-  template <class MatList> bool StandardiseFP(vec3i& hkl, const MatList& ml)  {
-    vec3i hklv = -hkl, new_hkl = hkl;
-    bool absent = false;
-    if( (hklv[2] > hkl[2]) ||
-      ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
-      ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
-    {
-      new_hkl = hklv;
-    }
-    for( size_t i=0; i < ml.Count(); i++ )  {
-      hklv = hkl*ml[i].r;
-      if( (hklv[2] > new_hkl[2]) ||
-        ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
-      {
-        new_hkl = hklv;
-      }
-      hklv *= -1;
-      if( (hklv[2] > new_hkl[2]) ||
-        ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-        ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
-      {
-        new_hkl = hklv;
-      }
-    }
-    hkl = new_hkl;
-    for( size_t i=0; i < ml.Count(); i++ )  {
-      hklv = hkl*ml[i].r;
-      if( hkl == hklv )  {  // only if there is no change
-        const double ps = ml[i].t.DotProd(hkl);
-        absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
-        if( absent )  break;
-      }
-    }
-    return absent;
-  }
   template <class MatList> void Standardise(const MatList& ml)  {
-    Absent = Standardise(hkl, ml);
+    hkl = Standardise(hkl, ml)
+    Absent = IsAbsent(hkl, ml);
   }
-  template <class MatList> static bool Standardise(vec3i& hkl, const MatList& ml)  {
-    vec3i new_hkl = hkl;
+//..............................................................................
+  template <class MatList> static vec3i Standardise(const vec3i& _hkl, const MatList& ml)  {
+    vec3i new_hkl = _hkl;
     bool absent = false;
     for( size_t i=0; i < ml.Count(); i++ )  {
       vec3i hklv = hkl*ml[i].r;
@@ -156,23 +119,30 @@ public:
         new_hkl = hklv;
       }
     }
-    hkl = new_hkl;
+    return new_hkl;
+  }
+//..............................................................................
+  template <class MatList> static bool IsAbsent(const vec3i& hkl)  {
     for( size_t i=0; i < ml.Count(); i++ )  {
       vec3i hklv = hkl*ml[i].r;
       if( hkl == hklv )  {  // only if there is no change
         const double ps = ml[i].t.DotProd(hkl);
-        absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
-        if( absent )  break;
+        if( olx_abs( ps - olx_round(ps) ) > 0.01 )
+          return true;
       }
     }
-    return absent;
+    return false;
   }
-  template <bool centro> void StandardiseEx(const SymSpace::InfoEx& info)  {
-    Absent = StandardiseEx<centro>(hkl, info);
+//..............................................................................
+//..............................................................................
+  void Standardise(const SymSpace::InfoEx& info)  {
+    hkl = Standardise(hkl, info);
+    Absent = IsAbsent(hkl, info);
   }
-  template <bool centro> static bool StandardiseEx(vec3i& hkl, const SymSpace::InfoEx& info)  {
-    bool absent = false;
-    if( centro )  {
+//..............................................................................
+  static vec3i Standardise(const vec3i& _hkl, const SymSpace::InfoEx& info)  {
+    vec3i hkl = _hkl;
+    if( info.centrosymmetric )  {
       vec3i hklv = -hkl, new_hkl = hkl;
       if( (hklv[2] > hkl[2]) ||
         ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
@@ -211,28 +181,33 @@ public:
       }
       hkl = new_hkl;
     }
+    return hkl;
+  }
+//..............................................................................
+  static bool IsAbsent(const vec3i& hkl, const SymSpace::InfoEx& info)  {
+    bool absent = false;
     for( size_t i=0; i < info.matrices.Count(); i++ )  {
       vec3i hklv = hkl*info.matrices[i].r;
-      if( hkl == hklv || (centro && hkl == -hklv) )  {
+      if( hkl == hklv || (info.centrosymmetric && hkl == -hklv) )  {
         const double ps = info.matrices[i].t.DotProd(hkl);
         if( !(absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )  {
           for( size_t j=0; j < info.vertices.Count(); j++ )  {
             const double ps = (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
             if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
-              break;
+              return true;
           }
         }
-        if( absent )  break;
+        if( absent )  return true;
       }
     }
     if( !absent )  {  // check for Identity and centering
       for( size_t i=0; i < info.vertices.Count(); i++ )  {
         const double ps = info.vertices[i].DotProd(hkl);
         if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
-          break;
+          return true;
       }
     }
-    return absent;
+    return false;
   }
 //..............................................................................
   inline double PhaseShift(const smatd& m) const {  return m.t.DotProd(hkl);  }
@@ -377,22 +352,63 @@ public:
     return false;
   }
   // a top diagonal matrix is expected
-  vec3d ToCart(const mat3d& m) const {
+  vec3d ToCart(const mat3d& m) const {  return ToCart(hkl, m);  }
+  static vec3d ToCart(const vec3d& hkl, const mat3d& m) {
     return vec3d(
       hkl[0]*m[0][0],
       hkl[0]*m[0][1] + hkl[1]*m[1][1],
       hkl[0]*m[0][2] + hkl[1]*m[1][2] + hkl[2]*m[2][2]
     );
   }
-  // standartisation functions
-  static inline const TReflection& GetRef(const TReflection& r) {  return r;  }
-  static inline const TReflection& GetRef(const TReflection* r) {  return *r;  }
-  static inline const TReflection* GetRefP(const TReflection& r) {  return &r;  }
-  static inline const TReflection* GetRefP(const TReflection* r) {  return r;  }
-  static inline TReflection& Ref(TReflection& r) {  return r;  }
-  static inline TReflection& Ref(TReflection* r) {  return *r;  }
-  static inline TReflection* RefP(TReflection& r) {  return &r;  }
-  static inline TReflection* RefP(TReflection* r) {  return r;  }
+
+  template <class Ref> static double GetF(const Ref& _r) {
+    const TReflection& r = olx_get_ref(_r);
+    return r.GetI() <= 0 ? 0 : sqrt(r.GetI());
+  }
+  static double GetF(const double& _f) {  return _f;  }
+  template <class Ref> static double GetFsq(const Ref& _r) {
+    return olx_get_ref(_r).GetI();
+  }
+  static double GetFsq(const double& _fsq) {  return _fsq;  }
+  template <class Ref> static const vec3i& GetHkl(const Ref& _r) {
+    return olx_get_ref(_r).GetHkl();
+  }
+  static const vec3i& GetHkl(const vec3i& _hkl) {  return _hkl;  }
+  static vec3i& GetHkl(vec3i& _hkl) {  return _hkl;  }
+};
+
+class IMillerIndexList {
+public:
+  virtual size_t Count() const = 0;
+  virtual vec3i operator [] (size_t i) const = 0;
+};
+
+// generates miller indices in given range
+class MillerIndexArray : public IMillerIndexList {
+  vec3i min_i, max_i;
+  size_t h_sz, hk_sz, hkl_sz;
+public:
+  MillerIndexArray(const vec3i& mi, const vec3i& mx) : min_i(mi), max_i(mx) {
+    h_sz = (mx[0]-mi[0]+1);
+    hk_sz = h_sz*(mx[1]-mi[1]+1);
+    hkl_sz = hk_sz*(mx[2]-mi[2]+1);
+  }
+  size_t Count() const {  return hkl_sz;  }
+  vec3i operator [] (size_t i) const {
+    size_t pi = i/hk_sz, ipi = i%hk_sz;
+    return vec3i(
+      min_i[0]+(int)(ipi%h_sz),
+      min_i[1]+(int)(ipi/h_sz),
+      min_i[2]+(int)pi);
+  }
+};
+// could be wrapper around list of vec3i or TReflection
+template <class RefList> class MillerIndexList : public IMillerIndexList {
+  const RefList& src;
+public:
+  MillerIndexList(const RefList& r) : src(r)  {}
+  size_t Count() const {  return src.Count();  }
+  vec3i operator [] (size_t i) const {  return TReflection::GetHkl(src[i]); } 
 };
 
 typedef TPtrList<TReflection> TRefPList;

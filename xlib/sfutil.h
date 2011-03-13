@@ -29,16 +29,6 @@ namespace SFUtil {
   const static double EQ_PI = 8*M_PI*M_PI;
   const static double TQ_PI = 2*M_PI*M_PI;
   
-  static inline double GetReflectionF(const TReflection* r) {  return r->GetI() <= 0 ? 0 : sqrt(r->GetI());  }
-  static inline double GetReflectionF(const TReflection& r) {  return r.GetI() <=0 ? 0 : sqrt(r.GetI());  }
-  static inline double GetReflectionF(const double& r) {  return r;  }
-  static inline double GetReflectionF2(const TReflection* r) {  return r->GetI();  }
-  static inline double GetReflectionF2(const TReflection& r) {  return r.GetI();  }
-  static inline double GetReflectionF2(const double& r) {  return r;  }
-  static inline const vec3i& GetReflectionHkl(const TReflection* r) {  return r->GetHkl();  }
-  static inline const vec3i& GetReflectionHkl(const TReflection& r) {  return r.GetHkl();  }
-  static inline const vec3i& GetReflectionHkl(const vec3i& r) {  return r;  }
-
   struct StructureFactor  {
     vec3i hkl;  // hkl indexes
     double ps;  // phase shift
@@ -52,9 +42,7 @@ namespace SFUtil {
     virtual void Expand(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, TArrayList<StructureFactor>& out) const = 0;
     /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6 elements of Ucif or Uiso for each 
     atom  */
-    virtual void Calculate(double eV, const TRefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U) const = 0;
-    virtual void Calculate(double eV, const TRefPList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
+    virtual void Calculate(double eV, const IMillerIndexList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
       const ElementPList& scatterers, const TCAtomPList& atoms, const double* U) const = 0;
     virtual size_t GetSGOrder() const = 0;
   };
@@ -68,7 +56,7 @@ namespace SFUtil {
     double sF2o = 0, sF2c = 0;
     const size_t f_cnt = F.Count();
     for( size_t i=0; i < f_cnt; i++ )  {
-      sF2o += GetReflectionF(refs[i]);
+      sF2o += TReflection::GetF(refs[i]);
       sF2c += F[i].mod();
     }
     return sF2c/sF2o;
@@ -78,7 +66,7 @@ namespace SFUtil {
     double sF2o = 0, sF2c = 0;
     const size_t f_cnt = F.Count();
     for( size_t i=0; i < f_cnt; i++ )  {
-      sF2o += GetReflectionF2(refs[i]);
+      sF2o += TReflection::GetFsq(refs[i]);
       sF2c += F[i].qmod();
     }
     return sF2c/sF2o;
@@ -88,7 +76,7 @@ namespace SFUtil {
     double sx = 0, sy = 0, sxs = 0, sxy = 0;
     const size_t f_cnt = F.Count();
     for( size_t i=0; i < f_cnt; i++ )  {
-      const double I = GetReflectionF(refs[i]);
+      const double I = TReflection::GetF(refs[i]);
       const double qm = F[i].mod();
       sx += I;
       sy += qm;
@@ -103,7 +91,7 @@ namespace SFUtil {
     double sx = 0, sy = 0, sxs = 0, sxy = 0;
     const size_t f_cnt = F.Count();
     for( size_t i=0; i < f_cnt; i++ )  {
-      const double I = GetReflectionF2(refs[i]);
+      const double I = TReflection::GetFsq(refs[i]);
       const double qm = F[i].qmod();
       sx += I;
       sy += qm;
@@ -114,7 +102,8 @@ namespace SFUtil {
     a = (sy - k*sx)/f_cnt;
   }
   // expands structure factors to P1 for given space group
-  void ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, const TSpaceGroup& sg, TArrayList<StructureFactor>& out);
+  void ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
+    const TSpaceGroup& sg, TArrayList<StructureFactor>& out);
   template <class RefList, class MatList>
   void ExpandToP1(const RefList& hkl_list, const TArrayList<compd>& F, const MatList& ml,
     TArrayList<StructureFactor>& out)
@@ -126,7 +115,7 @@ namespace SFUtil {
       for( size_t j=0; j < ml_cnt; j++ )  {
         const smatd& m = ml[j];
         const size_t ind = off+j;
-        const vec3i& hkl = GetReflectionHkl(hkl_list[i]);
+        vec3i hkl = TReflection::GetHkl(hkl_list[i]);
         out[ind].hkl = hkl*m.r;
         out[ind].ps = m.t.DotProd(hkl);
         if( out[ind].ps != 0 )  {
@@ -146,9 +135,11 @@ namespace SFUtil {
     short mapType, short sfOrigin = sfOriginOlex2, short scaleType = scaleSimple,
     double scale = 0);
   // calculates the structure factors for given reflections
-  void CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<compd>& F);
-  // calculates the structure factors for given reflections
-  void CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<compd>& F);
+  template <class IndexList>
+  void CalcSF(const TXFile& xfile, const IndexList& refs, TArrayList<compd>& F)  {
+    _CalcSF(xfile, MillerIndexList<IndexList>(refs), F);
+  }
+  void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs, TArrayList<compd>& F);
   // returns an instance according to __OLX_USE_FASTSYMM, must be deleted with delete
   ISF_Util* GetSF_Util_Instance(const TSpaceGroup& sg);
 
@@ -188,7 +179,7 @@ namespace SFUtil {
       sg::GenUniqueHkl(hkl, out, ps);
     }
     template <class RefList, bool centro> struct SFCalculateTask  {
-      const RefList& refs;
+      const IMillerIndexList& refs;
       const mat3d& hkl2c;
       TArrayList<compd>& F;
       TArrayList<compd> fo;
@@ -199,7 +190,7 @@ namespace SFUtil {
       const TCAtomPList& atoms;
       const double* U;
       const SF_Util& parent;
-      SFCalculateTask(const SF_Util& _parent, const RefList& _refs, const mat3d& _hkl2c,
+      SFCalculateTask(const SF_Util& _parent, const IMillerIndexList& _refs, const mat3d& _hkl2c,
         TArrayList<compd>& _F, const ElementPList& _scatterers,
         const TCAtomPList& _atoms, const double* _U, const TArrayList<compd>& _fpfdp) :
         parent(_parent), refs(_refs), hkl2c(_hkl2c), F(_F), scatterers(_scatterers),
@@ -208,9 +199,9 @@ namespace SFUtil {
       {}
       virtual ~SFCalculateTask()  {}
       void Run(size_t i)  {
-        const TReflection& ref = TReflection::GetRef(refs[i]);
-        const double d_s2 = ref.ToCart(hkl2c).QLength()*0.25;
-        parent._generateu(ref.GetHkl(), rv, ps);
+        const vec3i hkl = refs[i];  //make a copy, safer
+        const double d_s2 = TReflection::ToCart(hkl, hkl2c).QLength()*0.25;
+        parent._generateu(hkl, rv, ps);
         for( size_t j=0; j < scatterers.Count(); j++)  {
           fo[j] = scatterers[j]->gaussians->calc_sq(d_s2);
           fo[j] += fpfdp[j];
@@ -307,7 +298,7 @@ namespace SFUtil {
         }
       }
     }
-    virtual void Calculate(double eV, const TRefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
+    virtual void Calculate(double eV, const IMillerIndexList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
       const ElementPList& scatterers, const TCAtomPList& atoms, 
       const double* U) const 
     {
@@ -324,25 +315,6 @@ namespace SFUtil {
       else  {
         SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
         TListIteratorManager<SFCalculateTask<TRefList, false> >
-          tasks(task, refs.Count(), tLinearTask, 50);
-      }
-    }
-    virtual void Calculate(double eV, const TRefPList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U) const 
-    {
-      TArrayList<compd> fpfdp(scatterers.Count());
-      for( size_t i=0; i < scatterers.Count(); i++ )  {
-        fpfdp[i] = scatterers[i]->CalcFpFdp(eV);
-        fpfdp[i] -= scatterers[i]->z;
-      }
-      if( centrosymmetric )  {
-        SFCalculateTask<TRefPList, true> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
-        TListIteratorManager<SFCalculateTask<TRefPList, true> >
-          tasks(task, refs.Count(), tLinearTask, 50);
-      }
-      else  {
-        SFCalculateTask<TRefPList, false> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
-        TListIteratorManager<SFCalculateTask<TRefPList, false> >
           tasks(task, refs.Count(), tLinearTask, 50);
       }
     }
