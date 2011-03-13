@@ -194,9 +194,6 @@
     <ClInclude Include="..\..\..\sdl\egc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\ellist.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\esort.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -481,6 +478,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\irange_test.h">
       <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\ellist.h">
+      <Filter>Header Files\containers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -4557,54 +4557,86 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
   TRefList refs;
-  TArrayList<double> Fsq;
+  evecd Fsq;
   TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
   RefinementModel& rm = xapp.XFile().GetRM();
   const TDoubleList& basf = rm.GetBASF();
   if( !basf.IsEmpty() )  {
-    RefinementModel::HklStat ms;
-    if( rm.GetHKLF() == 5 || rm.GetHKLF() == 6 )
-      ms = rm.GetAllP1RefList<RefMerger::ShelxMerger>(refs);
-    else
-      ms = rm.GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
-    TArrayList<compd> F(refs.Count());
-    Fsq.SetCount(refs.Count());
-    SFUtil::CalcSF(xapp.XFile(), refs, F);
-    for( size_t i=0; i < F.Count(); i++ )
-      Fsq[i] = F[i].qmod();
-    TArrayList<double> Fsq_o = Fsq;
+    double pi = 0;  // 'prime' reflection fraction
+    for( size_t bi=0; bi < basf.Count(); bi++ )
+      pi += basf[bi];
+    pi = 1-pi;
     SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
-    const double tf = basf[0];
-    mat3i tm = mat3d::Transpose(rm.GetTWIN_mat());
-    TArray3D<TReflection*> hkl3d(ms.MinIndexes, ms.MaxIndexes);
-    hkl3d.FastInitWith(0);
-    //for( size_t i=0; i < refs.Count(); i++ )  {
-    //  if( refs[i].GetFlag() != 1 )
-    //    refs.NullItem(i);
-    //}
-    //refs.Pack();
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      hkl3d(refs[i].GetHkl()) = &refs[i];
-      refs[i].SetTag(i);
-    }
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      TReflection& ref_a = refs[i];
-      if( ref_a.GetTag() < 0 )  continue;
-      ref_a.SetTag(-1);
-      vec3i ni = ref_a * tm;
-      if( info_ex.centrosymmetric )
-        TReflection::StandardiseEx<true>(ni, info_ex);
-      else
-        TReflection::StandardiseEx<false>(ni, info_ex);
-      if( ni == ref_a.GetHkl() )
-        ;
-      else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
-        TReflection& ref_b = *hkl3d(ni);
-        if( ref_b.GetTag() < 0 )
+    if( rm.GetHKLF() >= 5 )  {
+      TRefList all_refs;
+      RefinementModel::HklStat ms;
+      rm.FilterHkl(all_refs, ms);
+      const vec3i_list& omits = rm.GetOmits();
+      refs.SetCapacity(all_refs.Count());
+      ms = rm.GetreflectionStat();
+      TArray3D<size_t> hkl3d(ms.FileMinInd, ms.FileMaxInd);
+      hkl3d.FastInitWith(-1);
+      vec3i_list miller_indices;
+      for( size_t i=0; i < all_refs.Count(); i++ )  {
+        vec3i hkl = TReflection::Standardise(all_refs[i].GetHkl(), info_ex);
+        if( TReflection::IsAbsent(hkl, info_ex) || omits.IndexOf(hkl) != InvalidIndex )  {
+          all_refs[i].SetTag(-1);
           continue;
-        Fsq[i] = (1-tf)*Fsq_o[i] + tf*Fsq_o[ref_b.GetTag()];
-        Fsq[ref_b.GetTag()] = tf*Fsq_o[i] + (1-tf)*Fsq_o[ref_b.GetTag()];
-        ref_b.SetTag(-1);
+        }
+        if( hkl3d(hkl) == InvalidIndex )  {
+          all_refs[i].SetTag(hkl3d(hkl) = miller_indices.Count());
+          miller_indices.AddCCopy(hkl);
+        }
+        else
+          all_refs[i].SetTag(hkl3d(hkl));
+        if( all_refs[i].GetFlag() >= 0 )
+          refs.AddCCopy(all_refs[i]);
+      }
+      TArrayList<compd> F(miller_indices.Count());
+      Fsq.Resize(refs.Count());
+      SFUtil::CalcSF(xapp.XFile(), miller_indices, F);
+      size_t ind=0;
+      for( size_t i=0; i < all_refs.Count(); i++ )  {
+        if( all_refs[i].GetTag() < 0 )  continue;
+        while( i < all_refs.Count() && all_refs[i].GetFlag() < 0 )  {
+          const size_t bi = olx_abs(all_refs[i].GetFlag())-2;
+          if( bi < basf.Count() )
+            Fsq[ind] += basf[bi]*F[all_refs[i].GetTag()].qmod();
+          i++;
+        }
+        if( i < all_refs.Count() && all_refs[i].GetFlag() >= 0 )  {
+          const size_t bi = olx_abs(all_refs[i].GetFlag())-1;
+          if( bi > basf.Count() )  continue;
+          double k = bi == 0 ? pi : basf[bi-1];
+          Fsq[ind++] += k*F[all_refs[i].GetTag()].qmod();
+        }
+      }
+    }
+    else  {
+      RefinementModel::HklStat ms =
+        rm.GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+      TArrayList<compd> F(refs.Count());
+      Fsq.Resize(refs.Count());
+      SFUtil::CalcSF(xapp.XFile(), refs, F);
+      for( size_t i=0; i < F.Count(); i++ )
+        Fsq[i] = F[i].qmod();
+      const double tf = basf[0];
+      mat3i tm = mat3d::Transpose(rm.GetTWIN_mat());
+      TArray3D<TReflection*> hkl3d(ms.MinIndexes, ms.MaxIndexes);
+      hkl3d.FastInitWith(0);
+      for( size_t i=0; i < refs.Count(); i++ )  {
+        hkl3d(refs[i].GetHkl()) = &refs[i];
+        refs[i].SetTag(i);
+      }
+      for( size_t i=0; i < refs.Count(); i++ )  {
+        TReflection& ref_a = refs[i];
+        vec3i ni = TReflection::Standardise(ref_a * tm, info_ex);
+        if( ni == ref_a.GetHkl() )
+          ;
+        else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
+          TReflection& ref_b = *hkl3d(ni);
+          Fsq[i] = (1-tf)*F[i].qmod() + tf*F[ref_b.GetTag()].qmod();
+        }
       }
     }
   }
@@ -4612,7 +4644,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     RefinementModel::HklStat ms =
       rm.GetRefinementRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
     TArrayList<compd> F(refs.Count());
-    Fsq.SetCount(refs.Count());
+    Fsq.Resize(refs.Count());
     SFUtil::CalcSF(xapp.XFile(), refs, F);
     for( size_t i=0; i < F.Count(); i++ )
       Fsq[i] = F[i].qmod();

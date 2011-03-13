@@ -516,6 +516,8 @@ of components 1 ... m
   // if none of the above functions help, try this ones
   // return complete list of unmerged reflections (HKLF matrix, if any, is applied)
   const TRefList& GetReflections() const;
+  // this will be only valid if any list of the reflections was called
+  const HklStat& GetreflectionStat() const {  return _HklStat;  } 
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   // adjust intensity of reflections according to OMIT
@@ -541,7 +543,7 @@ of components 1 ... m
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
     const double l = expl.GetRadiation();
     for( size_t i=0; i < refs.Count(); i++ )  {
-      const double x = sp.HklToCart(olx_ref(refs[i]).GetHkl()).QLength()*l*l/4;
+      const double x = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
       F[i] *= pow(1+0.0005*EXTI*F[i].qmod()*l*l*l/sqrt(olx_max(0,x*(1-x))), -0.25);
     }
   }
@@ -552,16 +554,17 @@ of components 1 ... m
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
     const double l = expl.GetRadiation();
     for( size_t i=0; i < refs.Count(); i++ )  {
-      const double x = sp.HklToCart(olx_ref(refs[i]).GetHkl()).QLength()*l*l/4;
+      const double x = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
       Fsq[i] /= sqrt(1+0.0005*EXTI*Fsq[i]*l*l*l/sqrt(olx_max(0,x*(1-x))));
     }
   }
-  // returns the number of pairs - has no relation to the lsi of
+  // returns the number of pairs
   int GetFriedelPairCount() const {
     GetReflections();
     return _FriedelPairCount;
   }
-  // applies the HKLF matrix trnsformation
+  vec3i CalcMaxHklIndex(double two_theta=60) const;
+  // applies a transformation
   void ApplyMatrix(TRefList& refs, const mat3d& m)  {
     if( m.IsI() )  return;
     const size_t rc = refs.Count();

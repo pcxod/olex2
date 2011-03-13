@@ -1144,21 +1144,20 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
     cx.SetNextPivot = false;
     return;
   }
-  //if( cx.AfixGroups.Current().GetA() == 0 )  {
-  //  cx.AfixGroups.Pop();
-  //}
-  //else  {
-  if( cx.AfixGroups.Current().GetC() )  {
-    if( a.GetType() != iHydrogenZ )  {
+  if( cx.AfixGroups.Current().GetA() == 0 )
+    cx.AfixGroups.Pop();
+  else  {
+    if( cx.AfixGroups.Current().GetC() )  {
+      if( a.GetType() != iHydrogenZ )  {
+        cx.AfixGroups.Current().A()--;
+        cx.AfixGroups.Current().B()->AddDependent(a);
+      }
+    }
+    else  {
       cx.AfixGroups.Current().A()--;
       cx.AfixGroups.Current().B()->AddDependent(a);
     }
   }
-  else  {
-    cx.AfixGroups.Current().A()--;
-    cx.AfixGroups.Current().B()->AddDependent(a);
-  }
-//    }
 }
 //..............................................................................
 TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
@@ -1167,7 +1166,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     atom = &cx.au.NewAtom(cx.Resi);
   for( short j=0; j < 3; j ++ )
     cx.rm.Vars.SetParam(*atom, catom_var_name_X+j, Toks[2+j].ToDouble());
-  atom->SetPart( cx.Part );
+  atom->SetPart(cx.Part);
   // update the context
   cx.Last = atom;
   if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )
@@ -1209,8 +1208,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       cx.LastWithU = atom;
       if( cx.ToAnis > 0 )  {
         cx.ToAnis--;
-        size_t qes = sizeof(QE);
-        memset(&QE[0], 0, qes);
+        memset(&QE[0], 0, sizeof(QE));
         QE[0] = QE[1] = QE[2] = atom->GetUiso();
         atom->UpdateEllp(QE);
       }

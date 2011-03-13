@@ -397,15 +397,7 @@ const TRefList& RefinementModel::GetReflections() const {
     for( size_t i=0; i < hkl_cnt; i++ )  {
       hf[i].SetI(hf[i].GetI()*HKLF_s);
       hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
-      if( HKLF == 5 )  {
-        if( hf[i].GetFlag() < 0 )  {
-          while( ++i < hkl_cnt && hf[i].GetFlag() < 0 )
-            ;
-          i--;
-          continue;
-        }
-      }
-      else  // enforce to clear the batch number...
+      if( HKLF < 5 )  // enforce to clear the batch number...
         hf[i].SetFlag(NoFlagSet);
       TReflection& r = _Reflections.AddNew(hf[i]);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
@@ -601,8 +593,7 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
     for( size_t i=0; i < refs.Count(); i++ )  {
       TReflection& ref_a = refs[i];
       ref_a.SetTag(1);
-      vec3i ni = ref_a * tm;
-      TReflection::StandardiseEx<true>(ni, info_ex);
+      vec3i ni = TReflection::Standardise(ref_a*tm, info_ex);
       if( ni == ref_a.GetHkl() )
         dtr.AddNew(ref_a);
       else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
@@ -634,8 +625,7 @@ void RefinementModel::DetwinRatio(TRefList& refs, const TArrayList<compd>& F, co
     dtr.SetCapacity(refs.Count());
     for( size_t i=0; i < refs.Count(); i++ )  {
       TReflection& ref_a = refs[i];
-      vec3i ni = ref_a * tm;
-      TReflection::StandardiseEx<true>(ni, info_ex);
+      vec3i ni = TReflection::Standardise(ref_a*tm, info_ex);
       if( ni == ref_a.GetHkl() )
         dtr.AddNew(ref_a);
       else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
@@ -665,7 +655,7 @@ void RefinementModel::DetwinFraction(TRefList& refs, const TArrayList<compd>& F,
       hkl3d(refs[i].GetHkl()) = &refs[i];
       refs[i].SetTag(i);
     }
-    double pi = 0;  // 'prime' reflection index
+    double pi = 0;  // 'prime' reflection fraction
     for( size_t bi=0; bi < BASF.Count(); bi++ )
       pi += BASF[bi];
     pi = 1-pi;
@@ -674,8 +664,7 @@ void RefinementModel::DetwinFraction(TRefList& refs, const TArrayList<compd>& F,
       double d=0;
       vec3i hkl = r.GetHkl();
       for( size_t bi=0; bi < BASF.Count(); bi++ )  {
-        vec3i ni = (hkl = tm*hkl);
-        TReflection::StandardiseEx<true>(ni, info_ex);
+        vec3i ni = TReflection::Standardise((hkl = tm*hkl), info_ex);
         if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )
           d += F[hkl3d(ni)->GetTag()].qmod()*BASF[bi];
       }
@@ -1264,6 +1253,16 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
   // update Q-peak scale...
   aunit.InitData();
   return true;
+}
+//..............................................................................
+vec3i RefinementModel::CalcMaxHklIndex(double two_theta) const {
+  double t = 2*sin(two_theta*M_PI/360)/expl.GetRadiation();
+  const mat3d& h2x = aunit.GetHklToCartesian();
+  vec3d rv(
+    t/h2x[0].Length(),
+    t/h2x[1].Length(),
+    t/h2x[2].Length());
+  return vec3i(rv);
 }
 //..............................................................................
 //..............................................................................
