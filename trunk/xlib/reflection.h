@@ -103,7 +103,7 @@ public:
   Initialises Absent flag
   */
   template <class MatList> void Standardise(const MatList& ml)  {
-    hkl = Standardise(hkl, ml)
+    hkl = Standardise(hkl, ml);
     Absent = IsAbsent(hkl, ml);
   }
 //..............................................................................
@@ -111,7 +111,7 @@ public:
     vec3i new_hkl = _hkl;
     bool absent = false;
     for( size_t i=0; i < ml.Count(); i++ )  {
-      vec3i hklv = hkl*ml[i].r;
+      vec3i hklv = _hkl*ml[i].r;
         if( (hklv[2] > new_hkl[2]) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
@@ -122,7 +122,7 @@ public:
     return new_hkl;
   }
 //..............................................................................
-  template <class MatList> static bool IsAbsent(const vec3i& hkl)  {
+  template <class MatList> static bool IsAbsent(const vec3i& hkl, const MatList& ml)  {
     for( size_t i=0; i < ml.Count(); i++ )  {
       vec3i hklv = hkl*ml[i].r;
       if( hkl == hklv )  {  // only if there is no change

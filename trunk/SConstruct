@@ -343,6 +343,8 @@ if sys.platform[:3] == 'win':
   tests_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/tests.pdb'])
   tests_files.append('./repository/winzipfs.cpp')
   tests_files.append('./repository/unzip.cpp')
+else:
+  tests_files.append('./repository/wxzipfs.cpp')
 tests_files = processFileNameList(tests_files, tests_env, out_dir+'tests')
 tests_env.Program(out_dir+'exe/tests', tests_files)
 
