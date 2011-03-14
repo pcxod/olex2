@@ -318,5 +318,10 @@ template <typename float_type>
 #endif  
 }
 
+template <typename src_t, typename dest_t>
+void olx_update_min_max(const src_t& src, dest_t& min_v, dest_t& max_v)  {
+  if( src < min_v )  min_v = src;
+  if( src > max_v )  max_v = src;
+}
 EndEsdlNamespace()
 #endif

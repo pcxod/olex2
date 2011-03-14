@@ -3941,8 +3941,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
         Hkl.AllRefs(ref, matrices, Hkls);
 
         for( size_t j=0; j < Hkls.Count(); j++ )
-          SL.Add( Hkls[j]->ToNString());
-
+          SL.Add(Hkls[j]->ToNString());
         SL.Add();
       }
     }

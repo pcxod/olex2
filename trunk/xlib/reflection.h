@@ -3,16 +3,17 @@
 #include "symspace.h"
 BeginXlibNamespace()
 
-const int NoFlagSet = 0xF0FA;
-
 class TReflection: public ACollectionItem  {
+public:
+  static const int NoBatchSet = 0xF0FA;
+private:
   vec3i hkl;
   double I, S;
-  bool Centric, Absent;
+  bool Centric, Absent, Omitted;
   short Multiplicity;
   int Flag;  // shelx 'batch number'
-  void _init(int flag=NoFlagSet)  {
-    Absent = Centric = false;
+  void _init(int flag=NoBatchSet)  {
+    Omitted = Absent = Centric = false;
     Multiplicity = 1;
     SetTag(1);
     Flag = flag;
@@ -21,9 +22,9 @@ public:
   TReflection(const TReflection& r)  {  *this = r;  }
   TReflection(int h, int k, int l) : hkl(h,k,l), I(0), S(0)  {  _init();  }
   TReflection(const vec3i& _hkl) : hkl(_hkl), I(0), S(0)  {  _init();  }
-  TReflection(int h, int k, int l, double _I, double _S, int flag=NoFlagSet) :
+  TReflection(int h, int k, int l, double _I, double _S, int flag=NoBatchSet) :
     hkl(h,k,l), I(_I), S(_S)  {  _init(flag);  }
-  TReflection(const vec3i& _hkl, double _I, double _S, int flag=NoFlagSet) :
+  TReflection(const vec3i& _hkl, double _I, double _S, int flag=NoBatchSet) :
     hkl(_hkl), I(_I), S(_S)  {  _init(flag);  }
   virtual ~TReflection()  {}
   //TReflection& operator = (const TLstRef& R);
@@ -32,9 +33,10 @@ public:
     I = r.I;  S = r.S;
     Centric = r.Centric;
     Absent = r.Absent;
+    Omitted = r.Omitted;
     Multiplicity = r.Multiplicity;
     Flag = r.Flag;
-    this->SetTag( r.GetTag() );
+    SetTag(r.GetTag());
     return *this;
   }
   //bool operator == (const TReflection &r) const {  return CompareTo(r) == 0; }
@@ -140,75 +142,9 @@ public:
     Absent = IsAbsent(hkl, info);
   }
 //..............................................................................
-  static vec3i Standardise(const vec3i& _hkl, const SymSpace::InfoEx& info)  {
-    vec3i hkl = _hkl;
-    if( info.centrosymmetric )  {
-      vec3i hklv = -hkl, new_hkl = hkl;
-      if( (hklv[2] > hkl[2]) ||
-        ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
-        ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )
-      {
-        new_hkl = hklv;
-      }
-      for( size_t i=0; i < info.matrices.Count(); i++ )  {
-        hklv = hkl*info.matrices[i].r;
-        if( (hklv[2] > new_hkl[2]) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
-        {
-          new_hkl = hklv;
-        }
-        hklv *= -1;
-        if( (hklv[2] > new_hkl[2]) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
-        {
-          new_hkl = hklv;
-        }
-      }
-      hkl = new_hkl;
-    }
-    else  {
-      vec3i new_hkl = hkl;
-      for( size_t i=0; i < info.matrices.Count(); i++ )  {
-        vec3i hklv = hkl*info.matrices[i].r;
-        if( (hklv[2] > new_hkl[2]) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
-        {
-          new_hkl = hklv;
-        }
-      }
-      hkl = new_hkl;
-    }
-    return hkl;
-  }
+  static vec3i Standardise(const vec3i& _hkl, const SymSpace::InfoEx& info);
 //..............................................................................
-  static bool IsAbsent(const vec3i& hkl, const SymSpace::InfoEx& info)  {
-    bool absent = false;
-    for( size_t i=0; i < info.matrices.Count(); i++ )  {
-      vec3i hklv = hkl*info.matrices[i].r;
-      if( hkl == hklv || (info.centrosymmetric && hkl == -hklv) )  {
-        const double ps = info.matrices[i].t.DotProd(hkl);
-        if( !(absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )  {
-          for( size_t j=0; j < info.vertices.Count(); j++ )  {
-            const double ps = (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
-            if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
-              return true;
-          }
-        }
-        if( absent )  return true;
-      }
-    }
-    if( !absent )  {  // check for Identity and centering
-      for( size_t i=0; i < info.vertices.Count(); i++ )  {
-        const double ps = info.vertices[i].DotProd(hkl);
-        if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
-          return true;
-      }
-    }
-    return false;
-  }
+  static bool IsAbsent(const vec3i& hkl, const SymSpace::InfoEx& info);
 //..............................................................................
   inline double PhaseShift(const smatd& m) const {  return m.t.DotProd(hkl);  }
 //..............................................................................
@@ -273,8 +209,9 @@ public:
   // these values are intialised by Analyse
   DefPropBIsSet(Centric)
   DefPropBIsSet(Absent)
+  DefPropBIsSet(Omitted)
   DefPropP(short, Multiplicity)
-  inline void IncMultiplicity()  {  Multiplicity++;  }
+  void IncMultiplicity()  {  Multiplicity++;  }
 //..............................................................................
   DefPropP(int, Flag)
 //..............................................................................
@@ -286,73 +223,22 @@ public:
   DefPropP(double, S)
 //..............................................................................
   // returns a string: h k l I S [f]
-  TIString ToString() const {
-    static char bf[128];
-#ifdef _MSC_VER
-    if( Flag == NoFlagSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-    else                     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
-#else
-    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
-#endif
-    return olxstr(bf);
-  }
+  TIString ToString() const;
   //writes string to the provided buffer (should be at least 29 bytes long)
-  char* ToCBuffer(char* bf, size_t sz, double k) const {
-#ifdef _MSC_VER
-    if( Flag == NoFlagSet )  sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
-    else                     sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, Flag);
-#else
-    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
-    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, Flag);
-#endif
-    return bf;
-  }
+  char* ToCBuffer(char* bf, size_t sz, double k) const;
 //..............................................................................
   // return a string like: tag. h k l I S [f]
   olxstr ToNString() const {
-    olxstr Str(GetTag(), 80);
-    Str << '.';
-    Str.Format(7, true, ' ');
-    return Str << ToString();
+    olxstr Str(IsOmitted() ? '-' : '+', 80);
+    Str << '.' << GetTag();
+    return (Str.Format(7, true, ' ') << ToString());
   }
 //..............................................................................
-  bool FromString(const olxstr& Str)  {
-    TStrList Toks(Str, ' ');
-    if( Toks.Count() > 5 )  {
-      hkl[0] = Toks[1].ToInt();
-      hkl[1] = Toks[2].ToInt();
-      hkl[2] = Toks[3].ToInt();
-      I = Toks[4].ToDouble();
-      S = Toks[5].ToDouble();
-      if( Toks.Count() > 6 )
-        Flag = Toks[6].ToInt();
-      return true;
-    }
-    return false;
-  }
-//..............................................................................
-  bool FromNString(const olxstr& str)  {
-    TStrList Toks(str, ' ');
-    if( Toks.Count() > 5 )  {
-      if( Toks[0].CharAt(Toks[0].Length()-1) != '.' )  return false;
-      Toks[0].SetLength(Toks[0].Length()-1);
-
-      SetTag(Toks[0].ToInt());
-
-      hkl[0] = Toks[1].ToInt();
-      hkl[1] = Toks[2].ToInt();
-      hkl[2] = Toks[3].ToInt();
-      I = Toks[4].ToDouble();
-      S = Toks[5].ToDouble();
-      if( Toks.Count() > 6 )
-        Flag = Toks[6].ToInt();
-      return true;
-    }
-    return false;
-  }
+  bool FromString(const olxstr& Str);
+  bool FromNString(const olxstr& str);
   // a top diagonal matrix is expected
   vec3d ToCart(const mat3d& m) const {  return ToCart(hkl, m);  }
+//..............................................................................
   static vec3d ToCart(const vec3d& hkl, const mat3d& m) {
     return vec3d(
       hkl[0]*m[0][0],
@@ -360,7 +246,7 @@ public:
       hkl[0]*m[0][2] + hkl[1]*m[1][2] + hkl[2]*m[2][2]
     );
   }
-
+//..............................................................................
   template <class Ref> static double GetF(const Ref& _r) {
     const TReflection& r = olx_get_ref(_r);
     return r.GetI() <= 0 ? 0 : sqrt(r.GetI());

@@ -31,6 +31,8 @@
 #include "symmcon.h"
 #include "md5.h"
 #include "absorpc.h"
+#include "twinning.h"
+#include "refutil.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -4568,49 +4570,31 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     pi = 1-pi;
     SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
     if( rm.GetHKLF() >= 5 )  {
-      TRefList all_refs;
-      RefinementModel::HklStat ms;
-      rm.FilterHkl(all_refs, ms);
-      const vec3i_list& omits = rm.GetOmits();
-      refs.SetCapacity(all_refs.Count());
-      ms = rm.GetreflectionStat();
-      TArray3D<size_t> hkl3d(ms.FileMinInd, ms.FileMaxInd);
-      hkl3d.FastInitWith(-1);
-      vec3i_list miller_indices;
-      for( size_t i=0; i < all_refs.Count(); i++ )  {
-        vec3i hkl = TReflection::Standardise(all_refs[i].GetHkl(), info_ex);
-        if( TReflection::IsAbsent(hkl, info_ex) || omits.IndexOf(hkl) != InvalidIndex )  {
-          all_refs[i].SetTag(-1);
-          continue;
-        }
-        if( hkl3d(hkl) == InvalidIndex )  {
-          all_refs[i].SetTag(hkl3d(hkl) = miller_indices.Count());
-          miller_indices.AddCCopy(hkl);
-        }
-        else
-          all_refs[i].SetTag(hkl3d(hkl));
-        if( all_refs[i].GetFlag() >= 0 )
-          refs.AddCCopy(all_refs[i]);
-      }
-      TArrayList<compd> F(miller_indices.Count());
+      twinning::HKLF5 hklf5_refs(rm, info_ex, &refs);
+      const TRefList& all_refs = rm.GetReflections();
+      twinning::general twin_generator(rm.GetReflections());
+      TArrayList<compd> F(hklf5_refs.unique_indices.Count());
       Fsq.Resize(refs.Count());
-      SFUtil::CalcSF(xapp.XFile(), miller_indices, F);
-      size_t ind=0;
-      for( size_t i=0; i < all_refs.Count(); i++ )  {
-        if( all_refs[i].GetTag() < 0 )  continue;
-        while( i < all_refs.Count() && all_refs[i].GetFlag() < 0 )  {
-          const size_t bi = olx_abs(all_refs[i].GetFlag())-2;
+      SFUtil::CalcSF(xapp.XFile(), hklf5_refs.unique_indices, F);
+      for( size_t i=0; i < refs.Count(); i++ )  {
+        const TReflection& r = refs[i];
+        twinning::general::Iterator itr(twin_generator, r.GetTag());
+        while( itr.HasNext() )  {
+          const TReflection& tmate = itr.Next();
+          if( tmate.GetTag() < 0 )  continue;
+          const size_t bi = olx_abs(tmate.GetFlag())-2;
           if( bi < basf.Count() )
-            Fsq[ind] += basf[bi]*F[all_refs[i].GetTag()].qmod();
-          i++;
+            Fsq[i] += basf[bi]*F[tmate.GetTag()].qmod();
         }
-        if( i < all_refs.Count() && all_refs[i].GetFlag() >= 0 )  {
-          const size_t bi = olx_abs(all_refs[i].GetFlag())-1;
-          if( bi > basf.Count() )  continue;
-          double k = bi == 0 ? pi : basf[bi-1];
-          Fsq[ind++] += k*F[all_refs[i].GetTag()].qmod();
+        const TReflection& prime_ref = all_refs[r.GetTag()];
+        if( prime_ref.GetTag() < 0 )  continue;
+        const size_t bi = olx_abs(prime_ref.GetFlag())-1;
+        if( bi <= basf.Count() )  {
+          double k = (bi == 0 ? pi : basf[bi-1]);
+          Fsq[i] += k*F[prime_ref.GetTag()].qmod();
         }
       }
+      rm.AdjustIntensity(refs, hklf5_refs.ms);
     }
     else  {
       RefinementModel::HklStat ms =

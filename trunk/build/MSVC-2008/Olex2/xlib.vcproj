@@ -1078,6 +1078,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\reflection.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\refmodel.cpp"
 				>
 			</File>
@@ -2953,6 +2957,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\tls.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\twinning.h"
 				>
 			</File>
 			<File

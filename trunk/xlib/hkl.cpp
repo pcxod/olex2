@@ -116,7 +116,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
         const int h = line.SubString(0,4).ToInt(),
           k = line.SubString(4,4).ToInt(),
           l = line.SubString(8,4).ToInt();
-        if( (h|k|l) == 0 )  {  // end of the reflections included into calculations
+        if( h == 0 && k == 0 && l == 0 )  {  // end of the reflections included into calculations
           ZeroRead = true;
           Tag = -1;
           continue;
@@ -128,6 +128,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
             :
             new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
           ref->SetTag(Tag);
+          ref->SetOmitted(ZeroRead);
           if( apply_basis )
             ref->SetHkl(Basis*vec3d(ref->GetHkl()));
           UpdateMinMax(*ref);
@@ -209,7 +210,7 @@ void THklFile::UpdateRef(const TReflection& R)  {
   size_t ind = olx_abs(R.GetTag())-1;
   if( ind >= Refs.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
-  Refs[ind]->SetTag( R.GetTag() );
+  Refs[ind]->SetOmitted(R.IsOmitted());
 }
 //..............................................................................
 int THklFile::HklCmp(const TReflection* R1, const TReflection* R2)  {
@@ -297,18 +298,18 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
     scale = (scale > 99999 ? 99999/scale : 1);
     TEFile out(FN, "w+b");
     TReflection NullRef(0, 0, 0, 0, 0);
-    if( refs[0]->GetFlag() != NoFlagSet )
+    if( refs[0]->GetFlag() != TReflection::NoBatchSet )
       NullRef.SetFlag(0);
     const size_t ref_str_len = NullRef.ToString().Length();
     const size_t bf_sz = ref_str_len+1; 
     olx_array_ptr<char> ref_bf(new char[bf_sz]);
     for( size_t i=0; i < refs.Count(); i++ )  {
-      if( refs[i]->GetTag() > 0 )
+      if( !refs[i]->IsOmitted() )
         out.Writecln(refs[i]->ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
     }
     out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
     for( size_t i=0; i < refs.Count(); i++ )  {
-      if( refs[i]->GetTag() < 0 )
+      if( refs[i]->IsOmitted() )
         out.Writecln(refs[i]->ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
     }
   }
@@ -325,18 +326,18 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   scale = (scale > 99999 ? 99999/scale : 1);
   TEFile out(FN, "w+b");
   TReflection NullRef(0, 0, 0, 0, 0);
-  if( refs[0].GetFlag() != NoFlagSet )
+  if( refs[0].GetFlag() != TReflection::NoBatchSet )
     NullRef.SetFlag(0);
   const size_t ref_str_len = NullRef.ToString().Length();
   const size_t bf_sz = ref_str_len+1; 
   olx_array_ptr<char> ref_bf(new char[bf_sz]);
   for( size_t i=0; i < refs.Count(); i++ )  {
-    if( refs[i].GetTag() > 0 )
+    if( !refs[i].IsOmitted() )
       out.Writecln(refs[i].ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
   }
   out.Writecln(NullRef.ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
   for( size_t i=0; i < refs.Count(); i++ )  {
-    if( refs[i].GetTag() < 0 )
+    if( refs[i].IsOmitted() )
       out.Writecln(refs[i].ToCBuffer(ref_bf, bf_sz, scale), ref_str_len);
   }
   return true;

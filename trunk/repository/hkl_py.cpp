@@ -60,7 +60,7 @@ PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
       return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, "Failed to parse the (iiiddi) tuple");
     if( test_flag == -1 )  
        test_flag = flag;
-    else if( test_flag == NoFlagSet && flag != NoFlagSet )  {
+    else if( test_flag == TReflection::NoBatchSet && flag != TReflection::NoBatchSet )  {
       return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo,
         "Error: reflections with and without batch numbers are provided");
     }
