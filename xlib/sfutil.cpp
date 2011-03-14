@@ -5,6 +5,8 @@
 #include "hkl.h"
 #include "unitcell.h"
 #include "estopwatch.h"
+#include "twinning.h"
+#include "refutil.h"
 
 using namespace SFUtil;
 
@@ -160,69 +162,46 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     }
     else  {
       const TDoubleList& basf = rm.GetBASF();
-
       double pi = 0;  // 'prime' reflection fraction
       for( size_t bi=0; bi < basf.Count(); bi++ )
         pi += basf[bi];
       pi = 1-pi;
-
-      TRefList all_refs;
-      RefinementModel::HklStat ms;
-      rm.FilterHkl(all_refs, ms);
-      const vec3i_list& omits = rm.GetOmits();
-      refs.SetCapacity(all_refs.Count());
-      ms = rm.GetreflectionStat();
-      vec3i mi = ms.FileMinInd, mx = ms.FileMaxInd;
-      vec3i::UpdateMinMax(vec3i::Abs(mi), mi, mx);
-      vec3i::UpdateMinMax(-mx, mi, mx);
-      TArray3D<size_t> hkl3d(mi, mx);
-      hkl3d.FastInitWith(-1);
-      vec3i_list miller_indices;
-      for( size_t i=0; i < all_refs.Count(); i++ )  {
-        vec3i hkl = TReflection::Standardise(all_refs[i].GetHkl(), info_ex);
-        if( TReflection::IsAbsent(hkl, info_ex) || omits.IndexOf(hkl) != InvalidIndex )  {
-          all_refs[i].SetTag(-1);
-          continue;
-        }
-        if( hkl3d(hkl) == InvalidIndex )  {
-          all_refs[i].SetTag(hkl3d(hkl) = miller_indices.Count());
-          miller_indices.AddCCopy(hkl);
-        }
-        else
-          all_refs[i].SetTag(hkl3d(hkl));
-        if( all_refs[i].GetFlag() >= 0 )
-          refs.AddCCopy(all_refs[i]);
-      }
-      F.SetCount(miller_indices.Count());
-      SFUtil::CalcSF(xapp.XFile(), miller_indices, F);
+      twinning::HKLF5 hklf5_refs(rm, info_ex, &refs);
+      const TArray3D<size_t>& hkl3d = *hklf5_refs.F_indices;
+      const TRefList& all_refs = rm.GetReflections();
+      twinning::general twin_generator(all_refs);
+      TArrayList<compd> Fc(hklf5_refs.unique_indices.Count());
+      SFUtil::CalcSF(xapp.XFile(), hklf5_refs.unique_indices, Fc);
       size_t ind=0;
-      for( size_t i=0; i < all_refs.Count(); i++ )  {
-        if( all_refs[i].GetTag() < 0 )  continue;
+      for( size_t i=0; i < refs.Count(); i++ )  {
+        TReflection& r = refs[i];
+        twinning::general::Iterator itr(twin_generator, r.GetTag());
         double d = 0;
-        while( i < all_refs.Count() && all_refs[i].GetFlag() < 0 )  {
-          const size_t bi = olx_abs(all_refs[i].GetFlag())-2;
+        while( itr.HasNext() )  {
+          const TReflection& tmate = itr.Next();
+          if( tmate.GetTag() < 0  ) // absent?
+            continue;
+          const size_t bi = olx_abs(tmate.GetFlag())-2;
           if( bi < basf.Count() )
-            d += basf[bi]*F[all_refs[i].GetTag()].qmod();
-          i++;
+            d += basf[bi]*Fc[tmate.GetTag()].qmod();
         }
-        if( i < all_refs.Count() && all_refs[i].GetFlag() >= 0 )  {
-          const size_t bi = olx_abs(all_refs[i].GetFlag())-1;
-          if( bi > basf.Count() )  continue;
-          double k = bi == 0 ? pi : basf[bi-1];
-          double f = F[all_refs[i].GetTag()].qmod();
-          f = f/(k*f+d);
-          TReflection& r = refs[ind++];
-          r.SetS(r.GetS()*f);
-          r.SetI(r.GetI()*f);
-          r.SetFlag(NoFlagSet);
-        }
+        const size_t bi = olx_abs(r.GetFlag())-1;
+        if( bi > basf.Count() )  continue;
+        double k = bi == 0 ? pi : basf[bi-1];
+        double f = Fc[all_refs[r.GetTag()].GetTag()].qmod();
+        f = f/(k*f+d);
+        r.SetS(r.GetS()*f);
+        r.SetI(r.GetI()*f);
+        r.SetFlag(TReflection::NoBatchSet);
       }
-      all_refs = refs;
-      refs.Clear();
-      ms = RefMerger::Merge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, all_refs, refs, omits, true);
+      TRefPList to_merge(refs, DirectAccessor());
+      refs.ReleaseAll();
+      RefMerger::Merge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(
+        sp, to_merge, refs, rm.GetOmits(), true);
+      to_merge.DeleteItems(false);
       F.SetCount(refs.Count());
-      SFUtil::CalcSF(xapp.XFile(), refs, F);
-      all_refs.Clear();
+      for( size_t i=0; i < refs.Count(); i++ )
+        F[i] = Fc[hkl3d(refs[i].GetHkl())];
     }
    
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);

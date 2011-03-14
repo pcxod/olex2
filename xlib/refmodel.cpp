@@ -8,6 +8,7 @@
 #include "xapp.h"
 #include "refmerge.h"
 #include "infotab.h"
+#include "refutil.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
   rDFIX(*this, rltBonds, "dfix"), 
@@ -398,7 +399,7 @@ const TRefList& RefinementModel::GetReflections() const {
       hf[i].SetI(hf[i].GetI()*HKLF_s);
       hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
       if( HKLF < 5 )  // enforce to clear the batch number...
-        hf[i].SetFlag(NoFlagSet);
+        hf[i].SetFlag(TReflection::NoBatchSet);
       TReflection& r = _Reflections.AddNew(hf[i]);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
       if( rl == NULL )
@@ -479,60 +480,21 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
 //....................................................................................................
 RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementModel::HklStat& stats)  {
   const TRefList& all_refs = GetReflections();
-  const mat3d& hkl2c = aunit.GetHklToCartesian();
   // swap the values if in wrong order
   if( SHEL_hr > SHEL_lr )
     olx_swap(SHEL_hr, SHEL_lr);
-  const double h_o_s = 0.5*OMIT_s, two_sin_2t = 2*sin(OMIT_2t*M_PI/360.0);
-  double min_d = expl.GetRadiation()/( two_sin_2t == 0 ? 1e-6 : two_sin_2t);
-  if( SHEL_set && SHEL_hr > min_d )
-    min_d = SHEL_hr;
-  const double min_qd = min_d*min_d;  // maximum d squared
-  const double max_qd = SHEL_lr*SHEL_lr;
+  RefUtil::ResolutionAndSigmaFilter rsf(*this, stats);
   const size_t ref_cnt = all_refs.Count();
   out.SetCapacity(ref_cnt);
-  stats.MinD = 100;
-  stats.MaxD = -100;
-  stats.MaxI = -100;
-  stats.MinI = 100;
-  //apply OMIT transformation and filtering and calculate spacing limits
   for( size_t i=0; i < ref_cnt; i++ )  {
     const TReflection& r = all_refs[i];
-    if( r.GetTag() < 0 )  {
-      _HklStat.OmittedReflections++;
+    if( r.IsOmitted() )  {
+      stats.OmittedReflections++;
       continue;
     }
-    const vec3i& chkl = r.GetHkl();
-    vec3d hkl(chkl[0]*hkl2c[0][0],
-      chkl[0]*hkl2c[0][1] + chkl[1]*hkl2c[1][1],
-      chkl[0]*hkl2c[0][2] + chkl[1]*hkl2c[1][2] + chkl[2]*hkl2c[2][2]);
-    const double qd = 1./hkl.QLength();
-    if( qd > _HklStat.MaxD )  stats.MaxD = qd;
-    if( qd < _HklStat.MinD )  stats.MinD = qd;
-    // OMIT and SHEL filtering by res 
-    if( h_o_s > 0 && r.GetI() < h_o_s*r.GetS() )  {
-      stats.FilteredOff++;
-      continue;
-    }
-    if( qd < max_qd && qd > min_qd )  {
-      TReflection& new_ref = out.AddNew(r);
-      if( new_ref.GetI() > stats.MaxI )
-        stats.MaxI = new_ref.GetI();
-      if( new_ref.GetI() < stats.MinI )
-        stats.MinI = new_ref.GetI();
-    }
-    else
-      stats.FilteredOff++;
+    if( !rsf.IsOutside(r) )
+      out.AddCCopy(r);
   }
-  stats.LimDmax = sqrt(max_qd);
-  stats.LimDmin = sqrt(min_qd);
-  stats.MaxD = sqrt(stats.MaxD);
-  stats.MinD = sqrt(stats.MinD);
-  stats.MERG = MERG;
-  stats.OMIT_s = OMIT_s;
-  stats.OMIT_2t = OMIT_2t;
-  stats.SHEL_lr = SHEL_lr;
-  stats.SHEL_hr = SHEL_hr;
   stats.TotalReflections = out.Count();
   return stats;
 }
