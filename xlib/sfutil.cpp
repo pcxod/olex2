@@ -166,42 +166,10 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       for( size_t bi=0; bi < basf.Count(); bi++ )
         pi += basf[bi];
       pi = 1-pi;
-      twinning::HKLF5 hklf5_refs(rm, info_ex, &refs);
-      const TArray3D<size_t>& hkl3d = *hklf5_refs.F_indices;
-      const TRefList& all_refs = rm.GetReflections();
-      twinning::general twin_generator(all_refs);
+      twinning::HKLF5 hklf5_refs(rm, info_ex);
       TArrayList<compd> Fc(hklf5_refs.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), hklf5_refs.unique_indices, Fc);
-      size_t ind=0;
-      for( size_t i=0; i < refs.Count(); i++ )  {
-        TReflection& r = refs[i];
-        twinning::general::Iterator itr(twin_generator, r.GetTag());
-        double d = 0;
-        while( itr.HasNext() )  {
-          const TReflection& tmate = itr.Next();
-          if( tmate.GetTag() < 0  ) // absent?
-            continue;
-          const size_t bi = olx_abs(tmate.GetFlag())-2;
-          if( bi < basf.Count() )
-            d += basf[bi]*Fc[tmate.GetTag()].qmod();
-        }
-        const size_t bi = olx_abs(r.GetFlag())-1;
-        if( bi > basf.Count() )  continue;
-        double k = bi == 0 ? pi : basf[bi-1];
-        double f = Fc[all_refs[r.GetTag()].GetTag()].qmod();
-        f = f/(k*f+d);
-        r.SetS(r.GetS()*f);
-        r.SetI(r.GetI()*f);
-        r.SetFlag(TReflection::NoBatchSet);
-      }
-      TRefPList to_merge(refs, DirectAccessor());
-      refs.ReleaseAll();
-      RefMerger::Merge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(
-        sp, to_merge, refs, rm.GetOmits(), true);
-      to_merge.DeleteItems(false);
-      F.SetCount(refs.Count());
-      for( size_t i=0; i < refs.Count(); i++ )
-        F[i] = Fc[hkl3d(refs[i].GetHkl())];
+      hklf5_refs.detwin_and_merge(refs, Fc, &F);
     }
    
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);

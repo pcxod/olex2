@@ -399,7 +399,7 @@ const TRefList& RefinementModel::GetReflections() const {
       hf[i].SetI(hf[i].GetI()*HKLF_s);
       hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
       if( HKLF < 5 )  // enforce to clear the batch number...
-        hf[i].SetFlag(TReflection::NoBatchSet);
+        hf[i].SetBatch(TReflection::NoBatchSet);
       TReflection& r = _Reflections.AddNew(hf[i]);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
       if( rl == NULL )
@@ -610,7 +610,7 @@ void RefinementModel::DetwinFraction(TRefList& refs, const TArrayList<compd>& F,
   if( !BASF.IsEmpty() )  {
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    mat3i tm = GetTWIN_mat();
+    mat3i tm = mat3i::Transpose(GetTWIN_mat());
     TArray3D<TReflection*> hkl3d(st.MinIndexes, st.MaxIndexes);
     hkl3d.FastInitWith(0);
     for( size_t i=0; i < refs.Count(); i++ )  {

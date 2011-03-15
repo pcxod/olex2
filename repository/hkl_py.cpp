@@ -30,12 +30,12 @@ PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
   for( size_t i=0; i < hkl.RefCount(); i++ )  {
     PyObject* ref = PyTuple_New(7);
     PyTuple_SetItem(rv, i, ref);
-    PyTuple_SetItem(ref, 0, Py_BuildValue("i", hkl[i].GetH()) );
-    PyTuple_SetItem(ref, 1, Py_BuildValue("i", hkl[i].GetK()) );
-    PyTuple_SetItem(ref, 2, Py_BuildValue("i", hkl[i].GetL()) );
-    PyTuple_SetItem(ref, 3, Py_BuildValue("d", hkl[i].GetI()) );
-    PyTuple_SetItem(ref, 4, Py_BuildValue("d", hkl[i].GetS()) );
-    PyTuple_SetItem(ref, 5, Py_BuildValue("i", hkl[i].GetFlag()) );
+    PyTuple_SetItem(ref, 0, Py_BuildValue("i", hkl[i].GetH()));
+    PyTuple_SetItem(ref, 1, Py_BuildValue("i", hkl[i].GetK()));
+    PyTuple_SetItem(ref, 2, Py_BuildValue("i", hkl[i].GetL()));
+    PyTuple_SetItem(ref, 3, Py_BuildValue("d", hkl[i].GetI()));
+    PyTuple_SetItem(ref, 4, Py_BuildValue("d", hkl[i].GetS()));
+    PyTuple_SetItem(ref, 5, Py_BuildValue("i", hkl[i].GetBatch()));
     PyTuple_SetItem(ref, 6, Py_BuildValue("b", hkl[i].GetTag() >= 0) );
   }
   return rv;

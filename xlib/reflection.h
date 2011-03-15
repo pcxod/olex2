@@ -5,42 +5,48 @@ BeginXlibNamespace()
 
 class TReflection: public ACollectionItem  {
 public:
-  static const int NoBatchSet = 0xF0FA;
+  static const int16_t NoBatchSet = 0xFE;
+  static const uint32_t
+    FlagMask  = 0x000000FF, FlagLen  = 8,
+    MultMask  = 0x0000FF00, MultLen  = 8, MultOff = FlagLen,
+    BatchMask = 0xFFFF0000, BatchLen = 16, BatchOff = FlagLen+MultLen;
+  static const uint16_t
+    bitCentric = 0x0001,
+    bitAbsent  = 0x0002,
+    bitOmitted = 0x0004;
 private:
   vec3i hkl;
   double I, S;
-  bool Centric, Absent, Omitted;
-  short Multiplicity;
-  int Flag;  // shelx 'batch number'
-  void _init(int flag=NoBatchSet)  {
-    Omitted = Absent = Centric = false;
-    Multiplicity = 1;
+  uint32_t Flags; // first 8 bits - flags, next 8 - multiplicity, then batch number
+  void _init(int batch=NoBatchSet)  {
+    _reset_flags(0, 1, batch);
     SetTag(1);
-    Flag = flag;
+  }
+  void _reset_flags(int flags, int mult, int batch)  {
+    Flags = flags|(mult<<MultOff)|(batch<<BatchOff);
   }
 public:
   TReflection(const TReflection& r)  {  *this = r;  }
+  TReflection(const TReflection& r, const vec3i& _hkl, int batch_n=NoBatchSet)  {
+    *this = r;
+    hkl = _hkl;
+    SetBatch(batch_n);
+  }
   TReflection(int h, int k, int l) : hkl(h,k,l), I(0), S(0)  {  _init();  }
   TReflection(const vec3i& _hkl) : hkl(_hkl), I(0), S(0)  {  _init();  }
-  TReflection(int h, int k, int l, double _I, double _S, int flag=NoBatchSet) :
-    hkl(h,k,l), I(_I), S(_S)  {  _init(flag);  }
-  TReflection(const vec3i& _hkl, double _I, double _S, int flag=NoBatchSet) :
-    hkl(_hkl), I(_I), S(_S)  {  _init(flag);  }
+  TReflection(int h, int k, int l, double _I, double _S, int batch=NoBatchSet) :
+    hkl(h,k,l), I(_I), S(_S)  {  _init(batch);  }
+  TReflection(const vec3i& _hkl, double _I, double _S, int batch=NoBatchSet) :
+    hkl(_hkl), I(_I), S(_S)  {  _init(batch);  }
   virtual ~TReflection()  {}
-  //TReflection& operator = (const TLstRef& R);
   TReflection& operator = (const TReflection &r)  {
     hkl = r.hkl;
-    I = r.I;  S = r.S;
-    Centric = r.Centric;
-    Absent = r.Absent;
-    Omitted = r.Omitted;
-    Multiplicity = r.Multiplicity;
-    Flag = r.Flag;
+    I = r.I;
+    S = r.S;
+    Flags = r.Flags;
     SetTag(r.GetTag());
     return *this;
   }
-  //bool operator == (const TReflection &r) const {  return CompareTo(r) == 0; }
-
   inline int GetH() const {  return hkl[0];  }
   inline void SetH(int v)   {  hkl[0] = v;  }
   inline int GetK() const {  return hkl[1];  }
@@ -106,12 +112,11 @@ public:
   */
   template <class MatList> void Standardise(const MatList& ml)  {
     hkl = Standardise(hkl, ml);
-    Absent = IsAbsent(hkl, ml);
+    SetAbsent(IsAbsent(hkl, ml));
   }
 //..............................................................................
   template <class MatList> static vec3i Standardise(const vec3i& _hkl, const MatList& ml)  {
     vec3i new_hkl = _hkl;
-    bool absent = false;
     for( size_t i=0; i < ml.Count(); i++ )  {
       vec3i hklv = _hkl*ml[i].r;
         if( (hklv[2] > new_hkl[2]) ||
@@ -136,10 +141,13 @@ public:
     return false;
   }
 //..............................................................................
+  template <class MatList> bool IsAbsent(const MatList& ml) const {
+    return IsAbsent(hkl, ml);
+  }
 //..............................................................................
   void Standardise(const SymSpace::InfoEx& info)  {
     hkl = Standardise(hkl, info);
-    Absent = IsAbsent(hkl, info);
+    SetAbsent(IsAbsent(hkl, info));
   }
 //..............................................................................
   static vec3i Standardise(const vec3i& _hkl, const SymSpace::InfoEx& info);
@@ -151,40 +159,29 @@ public:
   /* analyses if this reflection is centric, systematically absent and its multiplicity */
   template <class MatList> void Analyse(const MatList& ml)  {
     vec3i hklv;
-    Multiplicity = 1;
-    Centric = false;
-    Absent = false;
+    _reset_flags(0, 1, GetBatch());
     for( size_t i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
       if( EqHkl(hklv) )  {  // symmetric reflection
         IncMultiplicity();
-        if( !Absent )  {
+        if( !IsAbsent() )  {
           const double l = PhaseShift(ml[i]);
-          Absent = (olx_abs( l - olx_round(l) ) > 0.01);
+          SetAbsent(olx_abs(l - olx_round(l)) > 0.01);
         }
       }
-      else if( !Centric && EqNegHkl(hklv) )  // centric reflection
-        Centric = true;
+      else if( !IsCentric() && EqNegHkl(hklv) )  // centric reflection
+        SetCentric(true);
     }
   }
+//..............................................................................
+  void Analyse(const SymSpace::InfoEx& info);
 //..............................................................................
   inline bool IsSymmetric(const smatd& m) const {  return EqHkl(MulHkl(m.r));  }
 //..............................................................................
   inline bool IsCentrosymmetric(const smatd& m) const {  return EqNegHkl(MulHkl(m.r));  }
 //..............................................................................
-  template <class MatList> bool IsAbsent(const MatList& ml) const {
-    for( size_t i=0; i < ml.Count(); i++ )  {
-      if( IsSymmetric(ml[i]) )  {
-        const double l = PhaseShift(ml[i]);
-        if( olx_abs(l - olx_round(l)) > 0.01 )  
-          return true;
-      }
-    }
-    return false;
-  }
-//..............................................................................
   int CompareTo(const TReflection &r) const {
-    int res = Flag - r.Flag;  // prioritise by batch number
+    int res = GetBatch() - r.GetBatch();  // prioritise by batch number
     if( res == 0 )  {
       res = hkl[2] - r.hkl[2];
       if( res == 0 )  {
@@ -207,18 +204,20 @@ public:
   }
 //..............................................................................
   // these values are intialised by Analyse
-  DefPropBIsSet(Centric)
-  DefPropBIsSet(Absent)
-  DefPropBIsSet(Omitted)
-  DefPropP(short, Multiplicity)
-  void IncMultiplicity()  {  Multiplicity++;  }
+  DefPropBFIsSet(Centric, Flags, bitCentric)
+  DefPropBFIsSet(Absent, Flags, bitAbsent)
+  DefPropBFIsSet(Omitted, Flags, bitOmitted)
 //..............................................................................
-  DefPropP(int, Flag)
+  uint8_t GetMultiplicity() const {  return (uint8_t)((Flags&0xff00)>>MultOff);  }
+  void SetMultiplicity(uint8_t v)  {  Flags = (Flags&~MultMask)|((uint32_t)v<<MultOff);  }
+  void IncMultiplicity()  {  SetMultiplicity(GetMultiplicity()+1);  }
+//..............................................................................
+  int16_t GetBatch() const {  return (int16_t)((Flags&BatchMask)>>BatchOff);  }
+  void SetBatch(int16_t v)  {  Flags = (Flags&~BatchMask)|((uint32_t)v<<BatchOff);  }
 //..............................................................................
   vec3i& GetHkl()  {  return hkl;  }
   const vec3i& GetHkl() const {  return hkl;  }
   TReflection& SetHkl(const vec3i& _hkl)  {  hkl = _hkl;  return *this;  }
-  
   DefPropP(double, I)
   DefPropP(double, S)
 //..............................................................................

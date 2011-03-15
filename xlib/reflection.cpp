@@ -1,7 +1,12 @@
 #include "reflection.h"
 
 #ifdef __GNUC__
-  const int TReflection::NoBatchSet;
+  const int16_t TReflection::NoBatchSet;
+  static const uint32_t
+    FlagMask, FlagLen,
+    MultMask, MultLen, MultOff,
+    BatchMask, BatchLen = 16, BatchOff;
+  static const uint16_t bitCentric, bitAbsent, bitOmitted;
 #endif
 
 vec3i TReflection::Standardise(const vec3i& _hkl, const SymSpace::InfoEx& info)  {
@@ -83,7 +88,7 @@ bool TReflection::FromString(const olxstr& Str)  {
     I = Toks[4].ToDouble();
     S = Toks[5].ToDouble();
     if( Toks.Count() > 6 )
-      Flag = Toks[6].ToInt();
+      SetBatch(Toks[6].ToInt());
     return true;
   }
   return false;
@@ -102,7 +107,7 @@ bool TReflection::FromNString(const olxstr& str)  {
     I = Toks[4].ToDouble();
     S = Toks[5].ToDouble();
     if( Toks.Count() > 6 )
-      Flag = Toks[6].ToInt();
+      SetBatch(Toks[6].ToInt());
     return true;
   }
   return false;
@@ -112,23 +117,60 @@ bool TReflection::FromNString(const olxstr& str)  {
 TIString TReflection::ToString() const {
   static char bf[128];
 #ifdef _MSC_VER
-  if( Flag == NoBatchSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-  else                     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
+  if( GetBatch() == NoBatchSet )
+    sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
+  else
+    sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, GetBatch());
 #else
-  if( Flag == NoBatchSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-  else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
+  if( GetBatch() == NoBatchSet )
+    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
+  else
+    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, GetBatch());
 #endif
   return olxstr(bf);
 }
 //..............................................................................
 char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
 #ifdef _MSC_VER
-  if( Flag == NoBatchSet )  sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
-  else                     sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, Flag);
+  if( GetBatch() == NoBatchSet )
+    sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
+  else
+    sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, GetBatch());
 #else
-  if( Flag == NoBatchSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
-  else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, Flag);
+  if( GetBatch() == NoBatchSet )
+    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
+  else
+    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, GetBatch());
 #endif
   return bf;
+}
+//..............................................................................
+void TReflection::Analyse(const SymSpace::InfoEx& info)  {
+  _reset_flags(0, 1, GetBatch());
+  if( info.centrosymmetric )
+    SetCentric(true);
+  for( size_t i=0; i < info.matrices.Count(); i++ )  {
+    vec3i hklv = hkl*info.matrices[i].r;
+    if( hkl == hklv )  {
+      int m = GetMultiplicity(), inc = 1+info.vertices.Count();
+      if( info.centrosymmetric )  inc *= 2;
+      SetMultiplicity(m+inc);
+      if( !IsAbsent() )  {
+        const double ps = info.matrices[i].t.DotProd(hkl);
+        bool absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
+        if( !absent )  {
+          for( size_t j=0; j < info.vertices.Count(); j++ )  {
+            const double ps = (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
+            if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
+              SetAbsent(true);
+          }
+        }
+        else
+          SetAbsent(true);
+      }
+    }
+    else if( !info.centrosymmetric && hkl == -hklv )
+      SetCentric(true);
+  }
 }
 //..............................................................................
