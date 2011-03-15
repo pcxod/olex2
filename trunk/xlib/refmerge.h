@@ -48,17 +48,13 @@ struct MergeStats  {
 };
 //..............................................................................
 class RefMerger {
-  template <class MatList, class RefListMerger> 
-  static MergeStats _DoMerge(const MatList& ml, TRefPList& refs, const vec3i_list& omits, 
-    TRefList& output, bool mergeFP)
+  template <class RefListMerger> 
+  static MergeStats _DoMerge(const SymSpace::InfoEx& info_ex, TRefPList& refs,
+    const vec3i_list& omits, TRefList& output)
   {
     if( refs.IsEmpty() )
       throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
-    // search for the inversion matrix
-    SymSpace::InfoEx info_ex = SymSpace::Compact(ml);
-    if( mergeFP )
-      info_ex.centrosymmetric = true; 
     const size_t ref_cnt = refs.Count();
     for( size_t i=0; i < ref_cnt; i++ )
       refs[i]->Standardise(info_ex);
@@ -99,9 +95,9 @@ class RefMerger {
               }
               mo.ref->SetS(mo.sigInt);
             }
-            mo.ref->SetFlag(ref->GetFlag());
+            mo.ref->SetBatch(ref->GetBatch());
           }
-          output.Add(mo.ref).Analyse(ml);
+          output.Add(mo.ref).Analyse(info_ex);
           if( mo.ref->IsCentric() )
             stats.CentricReflections++;
           SS += mo.ref->GetS();
@@ -121,15 +117,14 @@ class RefMerger {
     stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
     return stats;
   }
-  template <class MatList, class RefListMerger> 
-  static MergeStats _DryMerge(const MatList& ml, TRefPList& refs, const vec3i_list& omits, bool mergeFP)  {
+  template <class RefListMerger> 
+  static MergeStats _DryMerge(const SymSpace::InfoEx& info_ex, TRefPList& refs,
+    const vec3i_list& omits)
+  {
     if( refs.IsEmpty() )
       throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
     // standartise reflection indexes according to provided list of symmetry operators
-    SymSpace::InfoEx info_ex = SymSpace::Compact(ml);
-    if( mergeFP )
-      info_ex.centrosymmetric = true; 
     const size_t ref_cnt = refs.Count();
     for( size_t i=0; i < ref_cnt; i++ )
       refs[i]->Standardise(info_ex);
@@ -167,7 +162,7 @@ class RefMerger {
               mo.rSig = mo.sigInt;
             }
           }
-          ref->Analyse(ml);
+          ref->Analyse(info_ex);
           if( ref->IsCentric() )
             stats.CentricReflections++;
           SS += mo.rSig;
@@ -220,8 +215,8 @@ class RefMerger {
         if( !ref->IsAbsent() )  {
           for( size_t j=from; j < i; j++ )  {
             TReflection& _r = output.AddCCopy(*refs[j]);
-            _r.SetCentric( ref->IsCentric() );
-            _r.SetMultiplicity( ref->GetMultiplicity() );
+            _r.SetCentric(ref->IsCentric());
+            _r.SetMultiplicity(ref->GetMultiplicity());
             stats.MeanIOverSigma += _r.GetI()/_r.GetS();
             vec3i::UpdateMinMax(_r.GetHkl(), stats.MinIndexes, stats.MaxIndexes);
           }
@@ -289,7 +284,9 @@ class RefMerger {
   }
 
   template <class RefListMerger>
-  static MergeStats _DoMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits, TRefList& output)  {
+  static MergeStats _DoMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits,
+    TRefList& output)
+  {
     if( refs.IsEmpty() )
       throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
@@ -325,9 +322,9 @@ class RefMerger {
               stats.InconsistentEquivalents ++;
               mo.ref->SetTag(-1);  // mark as unusable
             }
-            mo.ref->SetS( mo.sigInt );
+            mo.ref->SetS(mo.sigInt);
           }
-          mo.ref->SetFlag( ref->GetFlag() );
+          mo.ref->SetBatch(ref->GetBatch());
         }
         output.Add(mo.ref);
         SS += mo.ref->GetS();
@@ -402,14 +399,31 @@ public:
   static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output, 
     const vec3i_list& omits, bool mergeFP)  
   {
+    SymSpace::InfoEx info_ex = SymSpace::Compact(ml);
+    if( mergeFP )  info_ex.centrosymmetric = true; 
     TRefPList refs(Refs, DirectAccessor());
-    return _DoMerge<MatList,RefListMerger>(ml, refs, omits, output, mergeFP);
+    return _DoMerge<RefListMerger>(info_ex, refs, omits, output);
+  }
+  template <class RefListMerger, class RefList> 
+  static MergeStats Merge(const SymSpace::InfoEx& si, RefList& Refs, TRefList& output, 
+    const vec3i_list& omits)  
+  {
+    TRefPList refs(Refs, DirectAccessor());
+    return _DoMerge<RefListMerger>(si, refs, omits, output);
   }
   /* Functions gets the statistic on the list of provided reflections (which get stantardised) */
   template <class MatList, class RefListMerger, class RefList> 
   static MergeStats DryMerge(const MatList& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
+    SymSpace::InfoEx info_ex = SymSpace::Compact(ml);
+    if( mergeFP )
+      info_ex.centrosymmetric = true; 
     TRefPList refs(Refs, DirectAccessor());
-    return _DryMerge<MatList,RefListMerger>(ml, refs, omits, mergeFP);
+    return _DryMerge<RefListMerger>(info_ex, refs, omits);
+  }
+  template <class RefListMerger, class RefList> 
+  static MergeStats DryMerge(const SymSpace::InfoEx& si, RefList& Refs, const vec3i_list& omits)  {
+    TRefPList refs(Refs, DirectAccessor());
+    return _DryMerge<RefListMerger>(info_ex, refs, omits, mergeFP);
   }
   /* The function merges provided reflections in P1 and strores the result in the output */
   template <class RefListMerger, class RefList> 

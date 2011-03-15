@@ -4513,7 +4513,7 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options, TMac
       r.SetI(toks[3].ToDouble());
       r.SetS(toks[4].ToDouble());
       if( format.Count() == 6 )
-        r.SetFlag(toks[5].ToInt());
+        r.SetBatch(toks[5].ToInt());
     }
     THklFile::SaveToFile(out_name, refs);
   }
@@ -4534,7 +4534,7 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options, TMac
       r.SetI(toks[3].ToDouble());
       r.SetS(toks[4].ToDouble());
       if( has_batch && toks.Count() >= 6 )
-        r.SetFlag(toks[5].ToInt());
+        r.SetBatch(toks[5].ToInt());
     }
     THklFile::SaveToFile(out_name, refs);
   }
@@ -4570,31 +4570,11 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     pi = 1-pi;
     SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
     if( rm.GetHKLF() >= 5 )  {
-      twinning::HKLF5 hklf5_refs(rm, info_ex, &refs);
-      const TRefList& all_refs = rm.GetReflections();
-      twinning::general twin_generator(rm.GetReflections());
+      twinning::HKLF5 hklf5_refs(rm, info_ex);
       TArrayList<compd> F(hklf5_refs.unique_indices.Count());
-      Fsq.Resize(refs.Count());
       SFUtil::CalcSF(xapp.XFile(), hklf5_refs.unique_indices, F);
-      for( size_t i=0; i < refs.Count(); i++ )  {
-        const TReflection& r = refs[i];
-        twinning::general::Iterator itr(twin_generator, r.GetTag());
-        while( itr.HasNext() )  {
-          const TReflection& tmate = itr.Next();
-          if( tmate.GetTag() < 0 )  continue;
-          const size_t bi = olx_abs(tmate.GetFlag())-2;
-          if( bi < basf.Count() )
-            Fsq[i] += basf[bi]*F[tmate.GetTag()].qmod();
-        }
-        const TReflection& prime_ref = all_refs[r.GetTag()];
-        if( prime_ref.GetTag() < 0 )  continue;
-        const size_t bi = olx_abs(prime_ref.GetFlag())-1;
-        if( bi <= basf.Count() )  {
-          double k = (bi == 0 ? pi : basf[bi-1]);
-          Fsq[i] += k*F[prime_ref.GetTag()].qmod();
-        }
-      }
-      rm.AdjustIntensity(refs, hklf5_refs.ms);
+      hklf5_refs.calc_fsq(F, Fsq);
+      refs = hklf5_refs.reflections;
     }
     else  {
       RefinementModel::HklStat ms =
@@ -4602,10 +4582,8 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       TArrayList<compd> F(refs.Count());
       Fsq.Resize(refs.Count());
       SFUtil::CalcSF(xapp.XFile(), refs, F);
-      for( size_t i=0; i < F.Count(); i++ )
-        Fsq[i] = F[i].qmod();
-      const double tf = basf[0];
-      mat3i tm = mat3d::Transpose(rm.GetTWIN_mat());
+
+      twinning::merohedral twin_generator(refs, rm.GetBASF(), rm.GetTWIN_mat(), rm.GetTWIN_n());
       TArray3D<TReflection*> hkl3d(ms.MinIndexes, ms.MaxIndexes);
       hkl3d.FastInitWith(0);
       for( size_t i=0; i < refs.Count(); i++ )  {
@@ -4613,13 +4591,18 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
         refs[i].SetTag(i);
       }
       for( size_t i=0; i < refs.Count(); i++ )  {
-        TReflection& ref_a = refs[i];
-        vec3i ni = TReflection::Standardise(ref_a * tm, info_ex);
-        if( ni == ref_a.GetHkl() )
-          ;
-        else if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
-          TReflection& ref_b = *hkl3d(ni);
-          Fsq[i] = (1-tf)*F[i].qmod() + tf*F[ref_b.GetTag()].qmod();
+        twinning::merohedral::Iterator itr(twin_generator, i);
+        Fsq[i] = pi*F[refs[i].GetTag()].qmod();
+        while( itr.HasNext() )  {
+          TReflection tmate = itr.Next();
+          vec3i ni = TReflection::Standardise(tmate.GetHkl(), info_ex);
+          if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
+            const size_t bi = olx_abs(tmate.GetBatch())-1;
+            if( bi <= basf.Count() )  {
+              double k = (bi == 0 ? pi : basf[bi-1]);
+              Fsq[i] += k*F[hkl3d(ni)->GetTag()].qmod();
+            }
+          }
         }
       }
     }

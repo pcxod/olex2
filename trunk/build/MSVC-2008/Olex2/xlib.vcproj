@@ -3023,6 +3023,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\xlib\tests\reflection_test.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\xlib\tests\symmparser_test.h"
 					>
 				</File>

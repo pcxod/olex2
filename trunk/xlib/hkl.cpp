@@ -298,8 +298,8 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
     scale = (scale > 99999 ? 99999/scale : 1);
     TEFile out(FN, "w+b");
     TReflection NullRef(0, 0, 0, 0, 0);
-    if( refs[0]->GetFlag() != TReflection::NoBatchSet )
-      NullRef.SetFlag(0);
+    if( refs[0]->GetBatch() != TReflection::NoBatchSet )
+      NullRef.SetBatch(0);
     const size_t ref_str_len = NullRef.ToString().Length();
     const size_t bf_sz = ref_str_len+1; 
     olx_array_ptr<char> ref_bf(new char[bf_sz]);
@@ -326,8 +326,8 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   scale = (scale > 99999 ? 99999/scale : 1);
   TEFile out(FN, "w+b");
   TReflection NullRef(0, 0, 0, 0, 0);
-  if( refs[0].GetFlag() != TReflection::NoBatchSet )
-    NullRef.SetFlag(0);
+  if( refs[0].GetBatch() != TReflection::NoBatchSet )
+    NullRef.SetBatch(0);
   const size_t ref_str_len = NullRef.ToString().Length();
   const size_t bf_sz = ref_str_len+1; 
   olx_array_ptr<char> ref_bf(new char[bf_sz]);
