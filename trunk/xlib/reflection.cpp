@@ -1,6 +1,6 @@
 #include "reflection.h"
 
-#ifdef __GNUC__
+#ifdef __GNUC___
   const int16_t TReflection::NoBatchSet;
   static const uint32_t
     FlagMask, FlagLen,
