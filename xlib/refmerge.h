@@ -423,7 +423,7 @@ public:
   template <class RefListMerger, class RefList> 
   static MergeStats DryMerge(const SymSpace::InfoEx& si, RefList& Refs, const vec3i_list& omits)  {
     TRefPList refs(Refs, DirectAccessor());
-    return _DryMerge<RefListMerger>(info_ex, refs, omits, mergeFP);
+    return _DryMerge<RefListMerger>(si, refs, omits);
   }
   /* The function merges provided reflections in P1 and strores the result in the output */
   template <class RefListMerger, class RefList> 
