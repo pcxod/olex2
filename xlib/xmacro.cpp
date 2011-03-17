@@ -4563,18 +4563,21 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
   RefinementModel& rm = xapp.XFile().GetRM();
   const TDoubleList& basf = rm.GetBASF();
+  SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
+  double basf0 = 0;
+  for( size_t bi=0; bi < rm.GetBASF().Count(); bi++ )
+    basf0 += rm.GetBASF()[bi];
+  basf0 = 1-basf0;
+  TDoubleList scales;
+  scales << basf0 <<  rm.GetBASF();
   if( !basf.IsEmpty() )  {
-    double pi = 0;  // 'prime' reflection fraction
-    for( size_t bi=0; bi < basf.Count(); bi++ )
-      pi += basf[bi];
-    pi = 1-pi;
-    SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
     if( rm.GetHKLF() >= 5 )  {
-      twinning::HKLF5 hklf5_refs(rm, info_ex);
-      TArrayList<compd> F(hklf5_refs.unique_indices.Count());
-      SFUtil::CalcSF(xapp.XFile(), hklf5_refs.unique_indices, F);
-      hklf5_refs.calc_fsq(F, Fsq);
-      refs = hklf5_refs.reflections;
+      twinning::general twin(info_ex, rm.GetReflections(),
+        RefUtil::ResolutionAndSigmaFilter(rm), scales);
+      TArrayList<compd> F(twin.unique_indices.Count());
+      SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, F);
+      twin.calc_fsq(F, Fsq);
+      refs = twin.reflections;
     }
     else  {
       RefinementModel::HklStat ms =
@@ -4582,29 +4585,8 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       TArrayList<compd> F(refs.Count());
       Fsq.Resize(refs.Count());
       SFUtil::CalcSF(xapp.XFile(), refs, F);
-
-      twinning::merohedral twin_generator(refs, rm.GetBASF(), rm.GetTWIN_mat(), rm.GetTWIN_n());
-      TArray3D<TReflection*> hkl3d(ms.MinIndexes, ms.MaxIndexes);
-      hkl3d.FastInitWith(0);
-      for( size_t i=0; i < refs.Count(); i++ )  {
-        hkl3d(refs[i].GetHkl()) = &refs[i];
-        refs[i].SetTag(i);
-      }
-      for( size_t i=0; i < refs.Count(); i++ )  {
-        twinning::merohedral::Iterator itr(twin_generator, i);
-        Fsq[i] = pi*F[refs[i].GetTag()].qmod();
-        while( itr.HasNext() )  {
-          TReflection tmate = itr.Next();
-          vec3i ni = TReflection::Standardise(tmate.GetHkl(), info_ex);
-          if( hkl3d.IsInRange(ni) && hkl3d(ni) != NULL )  {
-            const size_t bi = olx_abs(tmate.GetBatch())-1;
-            if( bi <= basf.Count() )  {
-              double k = (bi == 0 ? pi : basf[bi-1]);
-              Fsq[i] += k*F[hkl3d(ni)->GetTag()].qmod();
-            }
-          }
-        }
-      }
+      twinning::merohedral twin(info_ex, refs, ms, scales, rm.GetTWIN_mat(), rm.GetTWIN_n());
+      twin.calc_fsq(F, Fsq);
     }
   }
   else  {

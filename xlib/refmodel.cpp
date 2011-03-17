@@ -483,7 +483,8 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
   // swap the values if in wrong order
   if( SHEL_hr > SHEL_lr )
     olx_swap(SHEL_hr, SHEL_lr);
-  RefUtil::ResolutionAndSigmaFilter rsf(*this, stats);
+  RefUtil::ResolutionAndSigmaFilter rsf(*this);
+  rsf.SetStats(stats);
   const size_t ref_cnt = all_refs.Count();
   out.SetCapacity(ref_cnt);
   for( size_t i=0; i < ref_cnt; i++ )  {

@@ -637,6 +637,7 @@
     <ClCompile Include="..\..\..\xlib\network.cpp" />
     <ClCompile Include="..\..\..\xlib\p4p.cpp" />
     <ClCompile Include="..\..\..\xlib\pdb.cpp" />
+    <ClCompile Include="..\..\..\xlib\reflection.cpp" />
     <ClCompile Include="..\..\..\xlib\refmodel.cpp" />
     <ClCompile Include="..\..\..\xlib\rm_base.cpp" />
     <ClCompile Include="..\..\..\xlib\samegroup.cpp" />
@@ -1104,6 +1105,7 @@
     <ClInclude Include="..\..\..\xlib\symmtest.h" />
     <ClInclude Include="..\..\..\xlib\symspace.h" />
     <ClInclude Include="..\..\..\xlib\tls.h" />
+    <ClInclude Include="..\..\..\xlib\twinning.h" />
     <ClInclude Include="..\..\..\xlib\unitcell.h" />
     <ClInclude Include="..\..\..\xlib\vcov.h" />
     <ClInclude Include="..\..\..\xlib\xapp.h" />

@@ -517,7 +517,7 @@ of components 1 ... m
   // return complete list of unmerged reflections (HKLF matrix, if any, is applied)
   const TRefList& GetReflections() const;
   // this will be only valid if any list of the reflections was called
-  const HklStat& GetreflectionStat() const {  return _HklStat;  } 
+  const HklStat& GetReflectionStat() const {  return _HklStat;  } 
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   // adjust intensity of reflections according to OMIT
