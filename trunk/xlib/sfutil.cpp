@@ -161,15 +161,16 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       xapp.XFile().GetRM().DetwinFraction(refs, F, ms, info_ex);
     }
     else  {
-      const TDoubleList& basf = rm.GetBASF();
+      TDoubleList scales = rm.GetBASF();
       double pi = 0;  // 'prime' reflection fraction
-      for( size_t bi=0; bi < basf.Count(); bi++ )
-        pi += basf[bi];
-      pi = 1-pi;
-      twinning::HKLF5 hklf5_refs(rm, info_ex);
-      TArrayList<compd> Fc(hklf5_refs.unique_indices.Count());
-      SFUtil::CalcSF(xapp.XFile(), hklf5_refs.unique_indices, Fc);
-      hklf5_refs.detwin_and_merge(refs, Fc, &F);
+      for( size_t bi=0; bi < scales.Count(); bi++ )
+        pi += scales[bi];
+      scales.Insert(0, 1-pi);
+      twinning::general twin(info_ex, rm.GetReflections(),
+        RefUtil::ResolutionAndSigmaFilter(rm), scales);
+      TArrayList<compd> Fc(twin.unique_indices.Count());
+      SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, Fc);
+      twin.detwin_and_merge(twinning::detwinner_shelx(), RefMerger::ShelxMerger(), refs, Fc, &F);
     }
    
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);

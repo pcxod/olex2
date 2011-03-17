@@ -7,97 +7,186 @@
 BeginXlibNamespace()
 namespace twinning  {
 
+  struct twin_mate_calc {
+    compd fc;
+    double scale;
+    twin_mate_calc(const compd& _fc, double _scale) : fc(_fc), scale(_scale)  {}
+    twin_mate_calc() : scale(0)  {}
+    double f_sq_calc() const {  return fc.qmod()*scale;  }
+  };
+  struct detwin_result {
+    double f_sq, sig;
+    detwin_result() : f_sq(0), sig(0)  {} 
+    detwin_result(double _f_sq, double _sig) : f_sq(_f_sq), sig(_sig) {}
+  };
+  struct twin_mate_full : public twin_mate_calc, public detwin_result {
+    twin_mate_full(const compd& _fc, double _f_sq, double _sig, double _scale)
+      : twin_mate_calc(_fc, _scale), detwin_result(_f_sq, _sig)  {}
+    twin_mate_full() {}
+  };
+
+  struct detwinner_shelx  {
+    template <typename twin_generator_t> detwin_result detwin(const twin_generator_t& itr) const {
+      twin_mate_full pr = itr.NextFull();
+      double sum_f_sq=0;
+      while( itr.HasNext() )
+        sum_f_sq += itr.NextCalc().f_sq_calc();
+      double s = pr.fc.qmod();
+      s = s/(s*pr.scale+sum_f_sq);
+      return detwin_result(pr.f_sq*s, pr.sig*s);
+    }
+  };
+
+  template <typename twin_iterator> struct twin_mate_generator {
+    const twin_iterator& itr;
+    const TDoubleList& scales;
+    const TArrayList<compd>& Fc;
+    twin_mate_generator(const twin_iterator& _itr, const TDoubleList& _scales,
+      const TArrayList<compd>& _Fc)
+      : itr(_itr), scales(_scales), Fc(_Fc)  {}
+    bool HasNext() const {  return itr.HasNext();  }
+    twin_mate_full NextFull() const {
+      TReflection r = itr.Next();
+      if( r.GetTag() < 0 )
+        return twin_mate_full();
+      if( (size_t)r.GetTag() > Fc.Count() )
+        throw TIndexOutOfRangeException(__OlxSourceInfo, r.GetTag(), 0, Fc.Count());
+      const size_t bi = olx_abs(r.GetBatch())-1;
+      return twin_mate_full(
+        Fc[r.GetTag()], r.GetI(), r.GetS(), bi < scales.Count() ? scales[bi] : 0);
+    }
+    twin_mate_calc NextCalc() const {
+      TReflection r = itr.Next();
+      if( r.GetTag() < 0 )
+        return twin_mate_calc();
+      if( (size_t)r.GetTag() > Fc.Count() )
+        throw TIndexOutOfRangeException(__OlxSourceInfo, r.GetTag(), 0, Fc.Count());
+      const size_t bi = olx_abs(r.GetBatch())-1;
+      return twin_mate_calc(Fc[r.GetTag()], bi < scales.Count() ? scales[bi] : 0);
+    }
+  };
+
+  template <typename twin_calc_generator_t>
+  double calc_f_sq(const twin_calc_generator_t& tw)  {
+    double res = tw.NextCalc().f_sq_calc();
+    while( tw.HasNext() )
+      res += tw.NextCalc().f_sq_calc();
+    return res;
+  }
+  
   struct merohedral  {
-    struct Iterator  {
+    struct iterator  {
       const merohedral& parent;
-      int current;
       const size_t src_index;
-      vec3i index;
-      Iterator(const merohedral& _parent, size_t _src_index)
+      mutable int current;
+      mutable vec3i index;
+      iterator(const merohedral& _parent, size_t _src_index)
         : parent(_parent),
           src_index(_src_index),
           index(parent.all_refs[src_index].GetHkl()),
-          current(1) {}
+          current(0) {}
       bool HasNext() const {  return current < olx_abs(parent.n);  }
-      TReflection Next() {
+      TReflection Next() const {
         int i = current++;
         if( parent.n < 0 && i == olx_abs(parent.n)/2 )
           index = -index;
-        return TReflection(parent.all_refs[src_index], (index = parent.matrix*index), -(i+1));
+        TReflection rv = (i == 0 ? TReflection(parent.all_refs[src_index], index, 1)
+          : TReflection(parent.all_refs[src_index], (index = parent.matrix*index), -(i+1)));
+        index_t tag = -1;
+        vec3i ni = (i == 0 ? index : TReflection::Standardise(index, parent.sym_info));
+        if( parent.hkl_to_ref_map.IsInRange(ni) )
+          tag = parent.hkl_to_ref_map(ni);
+        rv.SetTag(tag);
+        return rv;
       }
     };
-    merohedral(const TRefList& _all_refs, const TDoubleList& _scales,
-      const mat3i& tm, int _n)
-      : all_refs(_all_refs), scales(_scales), matrix(tm), n(_n)  {}
+    merohedral(const SymSpace::InfoEx& _sym_info, const TRefList& _all_refs,
+      RefinementModel::HklStat& _ms, const TDoubleList& _scales, const mat3i& tm, int _n)
+      : sym_info(_sym_info), all_refs(_all_refs), ms(_ms),
+        scales(_scales),
+        hkl_to_ref_map(_ms.MinIndexes, _ms.MaxIndexes),
+        matrix(tm), n(_n)
+    {
+      hkl_to_ref_map.FastInitWith(-1);
+      for( size_t i=0; i < all_refs.Count(); i++ )  {
+        hkl_to_ref_map(all_refs[i].GetHkl()) = i;
+        all_refs[i].SetTag(i);
+      }
+    }
+    template <typename detwinner_t>
+    void detwin(const detwinner_t& dt, TRefList& out, const TArrayList<compd>& Fc)  {
+      out = all_refs;
+      for( size_t i=0; i < out.Count(); i++ )  {
+        TReflection& r = out[i];
+        iterator itr(*this, i);
+        detwin_result res = dt.detwin(twin_mate_generator<iterator>(itr, scales, Fc));
+        r.SetI(res.f_sq);
+        r.SetS(res.sig);
+        r.SetBatch(TReflection::NoBatchSet);
+      }
+
+    }
+    void calc_fsq(const TArrayList<compd>& Fc, evecd& Fsq)  {
+      Fsq.Resize(all_refs.Count());
+      for( size_t i=0; i < all_refs.Count(); i++ )  {
+        Fsq[i] = calc_f_sq(
+          twin_mate_generator<iterator>(iterator(*this, i), scales, Fc));
+      }
+    }
+    const SymSpace::InfoEx& sym_info;
+    const TRefList& all_refs;
+    RefinementModel::HklStat ms;
+    const TDoubleList& scales;
+    TArray3D<size_t> hkl_to_ref_map;
     mat3i matrix;
     int n;
-    const TRefList& all_refs;
-    const TDoubleList& scales;
   };
   /**/
   struct general  {
-    struct Iterator  {
+    struct iterator  {
       const general& parent;
-      size_t current;
-      Iterator(const general& _parent, size_t start) : parent(_parent), current(start)  {}
+      mutable size_t current;
+      const size_t off;
+      iterator(const general& _parent, size_t start) : parent(_parent), off(start), current(0)  {}
       bool HasNext() const {
-        return (current > 0 && parent.all_refs[current-1].GetBatch() < 0);
+        return ( current == 0 ||
+          ((off-current) > 0 && parent.all_refs[off-current].GetBatch() < 0));
       }
-      const TReflection& Next() {
-        return parent.all_refs[--current];
+      const TReflection& Next() const {
+        return parent.all_refs[off-current++];
       }
     };
-    general(const TRefList& _all_refs, const TDoubleList& _scales)
-      : all_refs(_all_refs), scales(_scales)  {}
-    const TRefList& all_refs;
-    const TDoubleList& scales;
-  };
-
-  struct HKLF5  {
-    TArray3D<size_t>* F_indices;
-    const RefinementModel& rm;
-    RefinementModel::HklStat ms;
-    const SymSpace::InfoEx& sym_info;
-    vec3i_list unique_indices;
-    TRefList reflections;
-    double basf0;
-    HKLF5(const RefinementModel& _rm, const SymSpace::InfoEx& _sym_info)
-    : rm(_rm), sym_info(_sym_info),
-      F_indices(NULL)
+    general(const SymSpace::InfoEx& _sym_info, const TRefList& _all_refs,
+      const RefUtil::ResolutionAndSigmaFilter& filter, const TDoubleList& _scales)
+      : sym_info(_sym_info), all_refs(_all_refs),
+        scales(_scales),
+        F_indices(NULL)
     {
-      basf0 = 0;
-      for( size_t bi=0; bi < rm.GetBASF().Count(); bi++ )
-        basf0 += rm.GetBASF()[bi];
-      basf0 = 1-basf0;
-
-      const TRefList& all_refs = rm.GetReflections();
-      ms = rm.GetreflectionStat();
-      vec3i mi = ms.FileMinInd, mx = ms.FileMaxInd;
+      vec3i mi(100,100,100), mx = -mi;
+      for( size_t i=0; i < all_refs.Count(); i++ )
+        vec3i::UpdateMinMax(all_refs[i].GetHkl(), mi, mx);
       vec3i::UpdateMinMax(TReflection::Standardise(mi, sym_info), mi, mx);
       vec3i::UpdateMinMax(TReflection::Standardise(mx, sym_info), mi, mx);
       TArray3D<size_t>& hkl3d = *(F_indices = new TArray3D<size_t>(mi, mx));
       F_indices->FastInitWith(-1);
-      RefUtil::ResolutionAndSigmaFilter rsf(rm, ms);
-      const vec3i_list& omits = rm.GetOmits();
       reflections.Clear().SetCapacity(all_refs.Count());
       for( size_t i=all_refs.Count()-1; i != InvalidIndex; i-- )  {
         if( all_refs[i].IsOmitted() )  {
           ms.OmittedByUser++;
           continue;
         }
-        if( rsf.IsOutside(all_refs[i]) )  {
+        if( filter.IsOutside(all_refs[i]) )  {
           all_refs[i].SetTag(-1);
           continue;
         }
         vec3i hkl = TReflection::Standardise(all_refs[i].GetHkl(), sym_info);
-        if( TReflection::IsAbsent(hkl, sym_info) || omits.IndexOf(hkl) != InvalidIndex )  {
+        if( TReflection::IsAbsent(hkl, sym_info) || filter.IsOmitted(hkl) )  {
           if( all_refs[i].GetBatch() > 0 )  {
             size_t j=i;
             bool all_absent = true;
             while( --j != InvalidIndex && all_refs[j].GetBatch() < 0 )  {
               if( !TReflection::IsAbsent(all_refs[j].GetHkl(), sym_info) &&
-                omits.IndexOf(TReflection::Standardise(
-                  all_refs[j].GetHkl(), sym_info)) == InvalidIndex )
+                !filter.IsOmitted(TReflection::Standardise(all_refs[j].GetHkl(), sym_info)))
               {
                 all_absent = false;
                 break;
@@ -120,68 +209,42 @@ namespace twinning  {
         if( all_refs[i].GetBatch() >= 0 )
           reflections.AddCCopy(all_refs[i]).SetTag(i);
       }
-      rm.AdjustIntensity(reflections, ms);
+      reflections.ForEach(RefUtil::ResolutionAndSigmaFilter::IntensityModifier(filter));
     }
-    ~HKLF5()  {
+    ~general()  {
       if( F_indices != NULL )
         delete F_indices;
     }
-    void calc_fsq(const TArrayList<compd>& F, evecd& Fsq)  {
-      const TRefList& all_refs = rm.GetReflections();
-      general twin_generator(all_refs, rm.GetBASF());
+    void calc_fsq(const TArrayList<compd>& Fc, evecd& Fsq)  {
       Fsq.Resize(reflections.Count());
-      const TDoubleList& basf = rm.GetBASF();
       for( size_t i=0; i < reflections.Count(); i++ )  {
-        const TReflection& r = reflections[i];
-        twinning::general::Iterator itr(twin_generator, r.GetTag());
-        while( itr.HasNext() )  {
-          TReflection tmate = itr.Next();
-          if( tmate.GetTag() < 0 )  continue;
-          const size_t bi = olx_abs(tmate.GetBatch())-2;
-          if( bi < basf.Count() )
-            Fsq[i] += basf[bi]*F[tmate.GetTag()].qmod();
-        }
-        const TReflection& prime_ref = all_refs[r.GetTag()];
-        if( prime_ref.GetTag() < 0 )  // is absent?
-          continue;
-        const size_t bi = olx_abs(prime_ref.GetBatch())-1;
-        if( bi <= basf.Count() )  {
-          double k = (bi == 0 ? basf0 : basf[bi-1]);
-          Fsq[i] += k*F[prime_ref.GetTag()].qmod();
-        }
+        iterator itr(*this, reflections[i].GetTag());
+        Fsq[i] = calc_f_sq(twin_mate_generator<iterator>(itr, scales, Fc));
       }
     }
-    void detwin_and_merge(TRefList& out, const TArrayList<compd>& Fc, TArrayList<compd>* pF)  {
-      const TRefList& all_refs = rm.GetReflections();
-      twinning::general twin_generator(all_refs, rm.GetBASF());
-      const TDoubleList& basf = rm.GetBASF();
+
+    template <typename detwinner_t>
+    void detwin(const detwinner_t& dt, TRefList& out, const TArrayList<compd>& Fc)  {
       out = reflections;
       for( size_t i=0; i < out.Count(); i++ )  {
         TReflection& r = out[i];
-        twinning::general::Iterator itr(twin_generator, r.GetTag());
-        double d = 0;
-        while( itr.HasNext() )  {
-          TReflection tmate = itr.Next();
-          if( tmate.GetTag() < 0  ) // absent?
-            continue;
-          const size_t bi = olx_abs(tmate.GetBatch())-2;
-          if( bi < basf.Count() )
-            d += basf[bi]*Fc[tmate.GetTag()].qmod();
-        }
-        const size_t bi = olx_abs(r.GetBatch())-1;
-        if( bi > basf.Count() )  continue;
-        double k = bi == 0 ? basf0 : basf[bi-1];
-        double f = Fc[all_refs[r.GetTag()].GetTag()].qmod();
-        f = f/(k*f+d);
-        r.SetS(r.GetS()*f);
-        r.SetI(r.GetI()*f);
+        twinning::general::iterator itr(*this, r.GetTag());
+        detwin_result res = dt.detwin(twin_mate_generator<iterator>(itr, scales, Fc));
+        r.SetI(res.f_sq);
+        r.SetS(res.sig);
         r.SetBatch(TReflection::NoBatchSet);
       }
+    }
+    template <typename detwinner_t, typename merger_t>
+    void detwin_and_merge(const detwinner_t& dt, const merger_t& merger, TRefList& out,
+      const TArrayList<compd>& Fc, TArrayList<compd>* pF)
+    {
+      detwin(dt, out, Fc);
       TRefPList to_merge(out, DirectAccessor());
       out.ReleaseAll();
       SymSpace::InfoEx si = sym_info;
       si.centrosymmetric = true;
-      RefMerger::Merge<RefMerger::ShelxMerger>(sym_info, to_merge, out, rm.GetOmits());
+      RefMerger::Merge<merger_t>(sym_info, to_merge, out, vec3i_list());
       to_merge.DeleteItems(false);
       if( pF != NULL )  {
         TArrayList<compd>& F = *pF;
@@ -196,6 +259,13 @@ namespace twinning  {
         }
       }
     }
+    const SymSpace::InfoEx& sym_info;
+    const TRefList& all_refs;
+    TRefList reflections;
+    vec3i_list unique_indices;
+    RefinementModel::HklStat ms;
+    const TDoubleList& scales;
+    TArray3D<size_t>* F_indices;
   };
 }; //end of the twinning namespace
 EndXlibNamespace()

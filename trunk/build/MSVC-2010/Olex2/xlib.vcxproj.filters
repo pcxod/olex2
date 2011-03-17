@@ -771,6 +771,9 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zr.cpp">
       <Filter>Source Files\absorpc</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\reflection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -999,6 +1002,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\symspace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\twinning.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
