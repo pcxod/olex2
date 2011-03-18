@@ -509,12 +509,12 @@ public:
         if( j == (sz-i) )  {
           for( size_t k=0; k < b.ColCount(); k++ )  {
             for( size_t l=sz-1; l > sz-j; l-- )
-              b[i][k] -= arr[i][l]*c[l];
+              b[i][k] -= arr[i][l]*b[l][k];
           }
         }
       }
       for( size_t j=0; j < b.ColCount(); j++ )
-        b[i][j] =/ arr[i][i];
+        b[i][j] /= arr[i][i];
      }
    }
 
