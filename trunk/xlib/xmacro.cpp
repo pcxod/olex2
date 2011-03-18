@@ -52,11 +52,14 @@ TActionQueue& XLibMacros::OnAddIns = XLibMacros::Actions.New("OnAddIns");
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Run, EmptyString(), fpAny^fpNone, "Runs provided macros (combined by '>>')");
   xlib_InitMacro(HklStat, "l-list the reflections&;m-merge reflection in current space group", fpAny|psFileLoaded, 
-    "If no arguments provided, prints the statistics on the reflections as well as the ones used in the refinement.\
- If an expressions (condition) is given in the following form: x[ahbkcl], meaning that x=ah+bk+cl;\
- the subsequent expressions are combined using logical 'and' operator. For instance 0[2l] expression means: to find all\
- reflections where 2l = 0. The function operates on all P1 merged reflections after\
- filtering by SHEL and OMIT, -m option merges the reflections in current space group");
+ "If no arguments provided, prints the statistics on all reflections as well as the ones used in the "
+ "refinement. If an expressions (condition) is given in the following form: x[ahbkcl], meaning that "
+ "x=ah+bk+cl for x equals 0, ((ah+bk+cl) mod x) equals 0 for positove x and not equals 0 for negative "
+ "x; the subsequent expressions are combined using logical 'and' operator. For instance 2[l] expression "
+ "means: to find all reflections where l is even, the expression -2[l] means to find all reflections "
+ "with odd l, 0[h-l] - reflections where h equals to l etc. The function operates on all P1 merged "
+ "reflections after filtering by SHEL and OMIT, -m option merges the reflections in current space group"
+ );
   xlib_InitMacro(HklBrush, "f-consider Friedel law", fpAny, "for high redundancy\
  data sets, removes equivalents with high sigma");
 //_________________________________________________________________________________________________________________________
@@ -685,7 +688,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
           con[i][hkli] = 1.0;
       }
       if( con[i][hkli] == 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "illegal value: ") << Cmds[i];
+        Error.ProcessingError(__OlxSrcInfo, "illigal value: ") << Cmds[i];
         return;
       }
       j++;
@@ -3672,7 +3675,7 @@ void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacr
 //..............................................................................
 evecd XLibMacros_fit_chn_calc(const ematd& m, const evecd& p, size_t cnt)  {
   ematd _m(m.Vectors(), cnt), _mt(cnt, m.Vectors());
-  evecd _v(m.Vectors()), res(cnt);
+  evecd _v(m.Vectors());
   for( size_t i=0; i < m.Vectors(); i++ )  {
     for( size_t j=0; j < cnt; j++ )  {
       _m[i][j] = m[i][j];
@@ -3681,15 +3684,15 @@ evecd XLibMacros_fit_chn_calc(const ematd& m, const evecd& p, size_t cnt)  {
     _v[i] = p[i];
   }
   ematd nm = _mt*_m;
-  evecd nv = _mt*_v;
+  evecd res = _mt*_v;
   if( cnt == 1 )  {
     if( nm[0][0] == 0 )
       res[0] = -1;
     else
-      res[0] = nv[0]/nm[0][0];
+      res[0] = res[0]/nm[0][0];
   }
   else  {  
-    try  {  ematd::GaussSolve(nm, nv, res);  }
+    try  {  ematd::GaussSolve(nm, res);  }
     catch(...)  {
       for( size_t i=0; i < res.Count(); i++ )
         res[i] = -1.0;
