@@ -23,8 +23,8 @@ public:
   static double LS1D(const ematd& data, evecd& solutions,
               const TTypeList<OneArgFunc>& dervs,
               OneArgFunc func)  {
-    ematd a( dervs.Count(), dervs.Count() );
-    evecd r( dervs.Count() ), increments(dervs.Count());
+    ematd a(dervs.Count(), dervs.Count());
+    evecd r(dervs.Count());
     for( size_t j=0; j < dervs.Count(); j++ )  {
       for( size_t i=0; i< dervs.Count(); i++ )  {
         for( size_t k=0; k < data.Vectors();k++ )
@@ -33,13 +33,13 @@ public:
      for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0]) * ( data[k][1]-func(data[k][0]) );
     }
-    ematd::GaussSolve(a, r, increments);
+    ematd::GaussSolve(a, r);
     for( size_t i=0; i < dervs.Count(); i++ )
-      solutions += increments[i];
+      solutions += r[i];
 
     double sdiff = 0, sval = 0;
     for( size_t i=0; i < data.Elements(); i++ ) {
-      double v = olx_abs(data[i][1] - func( data[i][0] ) );  // |Y - Ycalc|, f depends on colutions
+      double v = olx_abs(data[i][1] - func(data[i][0]));  // |Y - Ycalc|, f depends on colutions
       sdiff += v*v;
       sval += (data[i][1] * data[i][1]);  // Y^2
     }
@@ -53,23 +53,23 @@ public:
   static double LS2D(const ematd& data, evecd& solutions,
               const TTypeList<TwoArgFunc>& dervs,
               TwoArgFunc func)  {
-    ematd a( dervs.Count(), dervs.Count() );
-    evecd r( dervs.Count() ), increments(dervs.Count());
+    ematd a(dervs.Count(), dervs.Count());
+    evecd r(dervs.Count());
     for( size_t j=0; j < dervs.Count(); j++ )  {
       for( size_t i=0; i< dervs.Count(); i++ )  {
-        for( size_t k=0; k< data.Vectors();k++ )
-          a[i][j] += dervs[i]( data[k][0], data[k][1] ) * dervs[j]( data[k][0], data[k][1] );
+        for( size_t k=0; k < data.Vectors(); k++ )
+          a[i][j] += dervs[i](data[k][0], data[k][1]) * dervs[j](data[k][0], data[k][1]);
      }
      for( size_t k=0; k < data.Vectors(); k++ )
-       r[j] += dervs[j](data[k][0], data[k][1]) * ( data[k][2]-func(data[k][0], data[k][1]) );
+       r[j] += dervs[j](data[k][0], data[k][1]) * (data[k][2]-func(data[k][0], data[k][1]));
     }
-    ematd::GaussSolve(a, r, increments);
+    ematd::GaussSolve(a, r);
     for( size_t i=0; i < dervs.Count(); i++ )
-      solutions += increments[i];
+      solutions += r[i];
 
     double sdiff = 0, sval = 0;
     for( size_t i=0; i < data.Vectors(); i++ )  {
-      double v = olx_abs(data[i][2] - func( data[i][0], data[i][1] ) );  // |Y - Ycalc|, f depends on colutions
+      double v = olx_abs(data[i][2] - func(data[i][0], data[i][1]));  // |Y - Ycalc|, f depends on colutions
       sdiff = v*v;
       sval += (data[i][2] * data[i][2]);  // Y^2
     }
@@ -83,8 +83,8 @@ public:
   static double LS3D(const ematd& data, evecd& solutions,
               const TTypeList<ThreeArgFunc>& dervs,
               ThreeArgFunc func)  {
-    ematd a( dervs.Count(), dervs.Count() );
-    evecd r( dervs.Count() ), increments(dervs.Count());
+    ematd a(dervs.Count(), dervs.Count());
+    evecd r(dervs.Count());
     for( size_t j=0; j < dervs.Count(); j++ )  {
       for( size_t i=0; i< dervs.Count(); i++ )  {
         for( size_t k=0; k< data.Vectors(); k++ )  {
@@ -94,9 +94,9 @@ public:
      for( size_t k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0], data[k][1], data[k][2]) * ( data[k][3]-func(data[k][0], data[k][1], data[k][2]) );
     }
-    ematd::GaussSolve(a, r, increments);
+    ematd::GaussSolve(a, r);
     for( size_t i=0; i < dervs.Count(); i++ )
-      solutions += increments[i];
+      solutions += r[i];
 
     double sdiff = 0, sval = 0;
     for( size_t i=0; i < data.Vectors(); i++ )  {
@@ -114,24 +114,24 @@ public:
   static double LSND(const ematd& data, evecd& solutions,
               const TTypeList<VecArgFunc>& dervs,
               VecArgFunc func)  {
-    ematd a( dervs.Count(), dervs.Count() );
-    evecd r( dervs.Count() ), increments(dervs.Count());
+    ematd a(dervs.Count(), dervs.Count());
+    evecd r(dervs.Count());
     for( size_t j=0; j < dervs.Count(); j++ )  {
       for( size_t i=0; i< dervs.Count(); i++ )  {
         for( size_t k=0; k< data.Vectors(); k++ )  {
-          a[i][j] += dervs[i]( data[k] ) * dervs[j]( data[k] );
+          a[i][j] += dervs[i](data[k] ) * dervs[j](data[k]);
         }
      }
      for( size_t k=0; k < data.Vectors(); k++ )
-       r[j] += dervs[j](data[k]) * ( data[k][data.Elements()-1]-func(data[k]) );
+       r[j] += dervs[j](data[k]) * (data[k][data.Elements()-1]-func(data[k]));
     }
-    ematd::GaussSolve(a, r, increments);
+    ematd::GaussSolve(a, r);
     for( size_t i=0; i < dervs.Count(); i++ )
-      solutions[i] = increments[i];
+      solutions[i] = r[i];
 
     double sdiff = 0, sval = 0;
     for( size_t i=0; i < data.Vectors(); i++ )  {
-      double v = olx_abs(data[i][data.Elements()-1] - func( data[i] ) );  // |Y - Ycalc|, f depends on colutions
+      double v = olx_abs(data[i][data.Elements()-1] - func(data[i]));  // |Y - Ycalc|, f depends on colutions
       sdiff += v*v;
       sval += (data[i][data.Elements()-1] * data[i][data.Elements()-1]);  // Y^2
     }

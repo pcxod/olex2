@@ -459,50 +459,85 @@ public:
    return c;
   }
 
-  // solves a set of equations by the Gauss method {equation arr.b = c }
-  static void GaussSolve(TMatrix<MatType>& arr, TVector<MatType>& b, TVector<MatType>& c) {
+  // solves a set of equations by the Gauss method {equation arr.c = b }
+  static void GaussSolve(TMatrix<MatType>& arr, TVector<MatType>& b) {
     const size_t sz = arr.Elements();
-    MatrixElementsSort(arr, b );
-    for ( size_t j = 1; j < sz; j++ )
+    MatrixElementsSort(arr, b);
+    for ( size_t j = 1; j < sz; j++ )  {
       for( size_t i = j; i < sz; i++ )  {
-        if( arr[i][j-1] ==0 )  continue;
-        b[i]  *= -(arr[j-1][j-1]/arr[i][j-1]);
-        arr.MulRow(i, -(arr[j-1][j-1]/arr[i][j-1]));
-        arr.AddRows( i, j-1);
-        b[i]+=b[j-1];
+        if( arr[i][j-1] == 0 )  continue;
+        const MatType k = -arr[j-1][j-1]/arr[i][j-1];
+        arr.MulRow(i, k);
+        arr.AddRows(i, j-1);
+        b[i] *= k;
+        b[i] += b[j-1];
       }
-    if( arr[sz-1][sz-1]==0)
+    }
+ 
+    if( arr[sz-1][sz-1]==0 )
       throw TFunctionFailedException(__OlxSourceInfo, "dependent set of equations");
 
-    c[sz-1] = b[sz-1]/arr[sz-1][sz-1];
-    for( size_t j = sz-2; j != ~0; j-- )  {
+    for( size_t j = sz-1; j != ~0; j-- )  {
       for( size_t k1=1; k1 < sz-j+1; k1++ )  {
         if( k1 == (sz-j) )
           for( size_t i=sz-1; i > sz-k1; i-- )
-            b[j]-=arr[j][i]*c[i];
+            b[j] -= arr[j][i]*b[i];
       }
-      c[j]= b[j]/arr[j][j];
+      b[j] /= arr[j][j];
      }
    }
 
-      // used in GaussSolve to sort the matrix
-  static void MatrixElementsSort(TMatrix<MatType>& arr, TVector<MatType>& b)  {
-    const size_t dim = arr.Elements();
-    MatType *bf = new MatType[dim];
-    for( size_t i = 0; i < dim; i++ )  {
-      for( size_t j = 0; j < dim; j++ )
-        bf[j] = olx_abs(arr[j][i]);
-      size_t n;
-      TVector<MatType>::ArrayMax(bf, n, dim);
-      if( n != i )  {
-        arr.SwapRows(i,n);
-        olx_swap(b[i], b[n]);
+  // exteded version
+  static void GaussSolve(TMatrix<MatType>& arr, TMatrix<MatType>& b) {
+    const size_t sz = arr.Elements();
+    MatrixElementsSort(arr, b);
+    for ( size_t j = 1; j < sz; j++ )  {
+      for( size_t i = j; i < sz; i++ )  {
+        if( arr[i][j-1] == 0 )  continue;
+        const MatType k = -arr[j-1][j-1]/arr[i][j-1];
+        arr.MulRow(i, k);
+        arr.AddRows(i, j-1);
+        b.MulRow(i, k);
+        b.AddRows(i, j-1);
       }
     }
-    delete [] bf;
+    if( arr[sz-1][sz-1]==0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "dependent set of equations");
+
+    for( size_t i = sz-1; i != ~0; i-- )  {
+      for( size_t j=1; j < sz-i+1; j++ )  {
+        if( j == (sz-i) )  {
+          for( size_t k=0; k < b.ColCount(); k++ )  {
+            for( size_t l=sz-1; l > sz-j; l-- )
+              b[i][k] -= arr[i][l]*c[l];
+          }
+        }
+      }
+      for( size_t j=0; j < b.ColCount(); j++ )
+        b[i][j] =/ arr[i][i];
+     }
+   }
+
+  // used in GaussSolve to sort the matrix
+  static void MatrixElementsSort(TMatrix<MatType>& arr, TVector<MatType>& b)  {
+    const size_t dim = arr.Elements();
+    for( size_t i = 0; i < dim; i++ )  {
+      size_t max_i=0;
+      MatType max_v = arr[0][i];
+      for( size_t j = 1; j < dim; j++ )  {
+        if( arr[j][i] > max_v )  {
+          max_i = j;
+          max_v = arr[j][i];
+        }
+      }
+      if( max_i != i )  {
+        arr.SwapRows(i, max_i);
+        olx_swap(b[i], b[max_i]);
+      }
+    }
   }
 
-  /* A polynomial least square analysis of XY pairs strored in matrix[2][n]
+  /* A polynomial least square analysis of XY pairs stored in matrix[2][n]
    extent is the polynom extent (1-is for line)
    params will contain the fitting parameters
    the return value is the RMS - root mean square of the fit
@@ -512,7 +547,6 @@ public:
     if( xy.Elements() < extent )
       throw TInvalidArgumentException(__OlxSourceInfo, "not enough data");
     TMatrix<MatType> s(extent, extent);
-    TVector<MatType> r(extent);
     param.Resize(extent);
 
     for( size_t i = 0; i < extent; i++ )  {
@@ -536,19 +570,19 @@ public:
       MatType a = 0;
       for( size_t j=0; j < xy.Elements(); j++ )  {
         if( xy[0][j] == 0 )  continue;
-        a += (MatType)(xy[1][j]*pow( MSVCC(xy[0][j]), MSVCC(i) ) );
+        a += (MatType)(xy[1][j]*pow( MSVCC(xy[0][j]), MSVCC(i)));
       }
-      r[i] = a;
+      param[i] = a;
     }
     // fill the bottom off diagonal part
     for( size_t i = 0; i < extent; i++ )
       for( size_t j = i+1; j < extent; j++ )
         s[j][i] = s[i][j];
 
-    GaussSolve(s, r, param);
+    GaussSolve(s, param);
     double rms = 0;
     for( size_t i=0; i < xy.Elements(); i++ )
-      rms += olx_sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]));
+      rms += olx_sqr(xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]));
     return (rms > 0) ? sqrt(rms)/xy.Elements() : 0;
   }
 

@@ -14,6 +14,12 @@ namespace twinning  {
     twin_mate_calc() : scale(0)  {}
     double f_sq_calc() const {  return fc.qmod()*scale;  }
   };
+  struct twin_mate_obs {
+    double f_obs_sq, sig_obs, scale;
+    twin_mate_obs(double _f_obs_sq, double _sig_obs, double _scale)
+      : f_obs_sq(_f_obs_sq), sig_obs(_sig_obs), scale(_scale)  {}
+    twin_mate_obs() : f_obs_sq(0), sig_obs(0), scale(0)  {}
+  };
   struct detwin_result {
     double f_sq, sig;
     detwin_result() : f_sq(0), sig(0)  {} 
@@ -26,7 +32,8 @@ namespace twinning  {
   };
 
   struct detwinner_shelx  {
-    template <typename twin_generator_t> detwin_result detwin(const twin_generator_t& itr) const {
+    template <typename twin_generator_t>
+    static detwin_result detwin(const twin_generator_t& itr)  {
       twin_mate_full pr = itr.NextFull();
       double sum_f_sq=0;
       while( itr.HasNext() )
@@ -34,6 +41,28 @@ namespace twinning  {
       double s = pr.fc.qmod();
       s = s/(s*pr.scale+sum_f_sq);
       return detwin_result(pr.f_sq*s, pr.sig*s);
+    }
+  };
+
+  struct detwinner_algebraic  {
+    template <typename twin_generator_t>
+    static detwin_result detwin(const twin_generator_t& itr)  {
+      TTypeList<twin_mate_obs> all;
+      while( itr.HasNext() )
+        all.AddCCopy(itr.NextObs());
+
+      if( all.Count() == 1 )
+        return detwin_result(all[0].f_obs_sq*all[0].scale, all[0].sig_obs*all[0].scale);
+      ematd m(all.Count(), all.Count()), r(all.Count(), 2);
+      for( size_t i=0; i < all.Count(); i++ )  {
+        size_t s = i;
+        for( size_t j=0; j < all.Count(); j++, s++ )
+          m[i][s >= all.Count() ? s-all.Count(): s] = all[i].scale;
+        r[i][0] = all[i].f_obs_sq;
+        r[i][1] = olx_sqr(all[i].sig_obs);
+      }
+      ematd::GaussSolve(m, r);
+      return detwin_result(r[0][0], sqrt(r[0][1]));
     }
   };
 
@@ -64,6 +93,9 @@ namespace twinning  {
       const size_t bi = olx_abs(r.GetBatch())-1;
       return twin_mate_calc(Fc[r.GetTag()], bi < scales.Count() ? scales[bi] : 0);
     }
+  };
+
+  template <typename twin_iterator> struct obs_twin_mate_generator {
   };
 
   template <typename twin_calc_generator_t>
