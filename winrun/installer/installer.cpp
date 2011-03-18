@@ -75,6 +75,7 @@ BOOL CInstallerApp::InitInstance()  {
     try  {
       bapp.NewLogEntry(logInfo, true) << "Copying '" << module_name << "' into '" << copy_name;
       do_run = TEFile::Copy(module_name, copy_name, true);
+      do_run = TEFile::Exists(copy_name);
     }
     catch(const TExceptionBase&)  {
       bapp.NewLogEntry(logInfo, true) << "Copying failed";
