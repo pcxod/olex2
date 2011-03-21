@@ -284,6 +284,25 @@ public:
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
   const TDoubleList& GetBASF() const {  return BASF;  }
+  // returns a list of [1-sum(basf), basf[0], basf[1],...] - complete scales
+  TDoubleList GetScales() const {
+    if( !GetBASF().IsEmpty() )  {
+      double pi = 0;  // 'prime' reflection fraction
+      for( size_t bi=0; bi < GetBASF().Count(); bi++ )
+        pi += GetBASF()[bi];
+      return TDoubleList() << 1-pi << GetBASF();
+    }
+    else  {
+      if( GetTWIN_n() != 0 )  {  // all the fractions are the same
+        double f = 1./olx_abs(GetTWIN_n());
+        TDoubleList rv(olx_abs(GetTWIN_n()));
+        for( size_t i=0; i < rv.Count(); i++ )
+          rv[i] = f;
+        return rv;
+      }
+    }
+    return TDoubleList();
+  }
   olxstr GetBASFStr() const;
   
   template <class list> void SetTWIN(const list& twin) {
@@ -528,13 +547,13 @@ of components 1 ... m
     GetReflections();
     return _Redundancy;
   }
-  // uses algebraic relation, only for one component
+  // uses algebraic relation
   void DetwinAlgebraic(TRefList& refs, const HklStat& st, const SymSpace::InfoEx& info_ex) const;
-  // uses fraction proportinla to Fc^2, only for one component
-  void DetwinRatio(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
+  // convinience method for mrehedral::detwin<> with  detwin_mixed
+  void DetwinMixed(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
     const SymSpace::InfoEx& info_ex) const;
-  // uses Fo^2/=Fc^2/sum(Fc^2_twin_domains)
-  void DetwinFraction(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
+  // convinience method for mrehedral::detwin<> with  detwin_shelx
+  void DetwinShelx(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
     const SymSpace::InfoEx& info_ex) const;
   template <class RefList, class FList, class SymSpace>
   void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const {

@@ -53,6 +53,7 @@ public:
   virtual IEObject* Replicate() const {  return new TArrayList(*this);  }
 //..............................................................................
   template <class List> TArrayList& Assign(const List& list)  {
+    if( (void*)this == (void*)&list )  return *this;
     SetCount(list.Count());
     for( size_t i=0; i < FCount; i++ )
       Items[i] = list[i];

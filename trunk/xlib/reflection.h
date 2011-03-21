@@ -27,6 +27,10 @@ private:
   }
 public:
   TReflection(const TReflection& r)  {  *this = r;  }
+  TReflection(const TReflection& r, int bacth_n)  {
+    *this = r;
+    SetBatch(bacth_n);
+  }
   TReflection(const TReflection& r, const vec3i& _hkl, int batch_n=NoBatchSet)  {
     *this = r;
     hkl = _hkl;

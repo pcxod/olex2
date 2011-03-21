@@ -488,7 +488,7 @@ public:
    }
 
   // exteded version
-  static void GaussSolve(TMatrix<MatType>& arr, TMatrix<MatType>& b) {
+  static bool GaussSolve(TMatrix<MatType>& arr, TMatrix<MatType>& b) {
     const size_t sz = arr.Elements();
     MatrixElementsSort(arr, b);
     for ( size_t j = 1; j < sz; j++ )  {
@@ -501,9 +501,7 @@ public:
         b.AddRows(i, j-1);
       }
     }
-    if( arr[sz-1][sz-1]==0 )
-      throw TFunctionFailedException(__OlxSourceInfo, "dependent set of equations");
-
+    if( arr[sz-1][sz-1]==0 )  return false;
     for( size_t i = sz-1; i != ~0; i-- )  {
       for( size_t j=1; j < sz-i+1; j++ )  {
         if( j == (sz-i) )  {
@@ -516,6 +514,7 @@ public:
       for( size_t j=0; j < b.ColCount(); j++ )
         b[i][j] /= arr[i][i];
      }
+    return true;
    }
 
   // used in GaussSolve to sort the matrix
@@ -533,6 +532,24 @@ public:
       if( max_i != i )  {
         arr.SwapRows(i, max_i);
         olx_swap(b[i], b[max_i]);
+      }
+    }
+  }
+  // extended version of above...
+  static void MatrixElementsSort(TMatrix<MatType>& arr, TMatrix<MatType>& b)  {
+    const size_t dim = arr.Elements();
+    for( size_t i = 0; i < dim; i++ )  {
+      size_t max_i=0;
+      MatType max_v = arr[0][i];
+      for( size_t j = 1; j < dim; j++ )  {
+        if( arr[j][i] > max_v )  {
+          max_i = j;
+          max_v = arr[j][i];
+        }
+      }
+      if( max_i != i )  {
+        arr.SwapRows(i, max_i);
+        b.SwapRows(i, max_i);
       }
     }
   }
