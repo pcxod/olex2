@@ -255,9 +255,8 @@ public:
     }
   }
 //..............................................................................
-  /* copy - creates new copies of the objest, be careful as the copy constructor
-   must exist  */
-  TTypeListExt& operator = (const TTypeListExt& list)  {
+  template <class alist> TTypeListExt& Assign(const alist& list)  {
+    if( (void*)this == (void*)&list )  return *this;
     for( size_t i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.SetCount( list.Count() );
@@ -268,13 +267,12 @@ public:
 //..............................................................................
   /* copy - creates new copies of the objest, be careful as the copy constructor
    must exist  */
+  TTypeListExt& operator = (const TTypeListExt& list)  {  return Assign(list);  }
+//..............................................................................
+  /* copy - creates new copies of the objest, be careful as the copy constructor
+   must exist  */
   template <class alist> TTypeListExt& operator = (const alist& list)  {
-    for( size_t i=0; i < List.Count(); i++ )
-      delete (DestructCast*)List[i];
-    List.SetCount( list.Count() );
-    for( size_t i=0; i < list.Count(); i++ ) 
-      List[i] =  new T(list[i]);
-    return *this;
+    return Assign(list);
   }
 //..............................................................................
   inline TTypeListExt& SetCapacity(size_t v)  {

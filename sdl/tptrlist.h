@@ -100,6 +100,7 @@ public:
   virtual IEObject* Replicate() const {  return new TPtrList(*this);  }
 //..............................................................................
   inline TPtrList& Assign(const TPtrList& list)  {
+    if( (void*)this == (void*)&list )  return *this;
     SetCount(list.Count());
     memcpy(Items, list.Items, list.Count()*sizeof(T*));
     FCount = list.Count();

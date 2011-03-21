@@ -158,14 +158,12 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       //sw.start("Calculation structure factors A");
       //fastsymm version is just about 10% faster...
       CalcSF(xapp.XFile(), refs, F);
-      xapp.XFile().GetRM().DetwinFraction(refs, F, ms, info_ex);
+      xapp.XFile().GetRM().DetwinShelx(refs, F, ms, info_ex);
+      //xapp.XFile().GetRM().DetwinMixed(refs, F, ms, info_ex);
+      //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
     }
     else  {
-      TDoubleList scales = rm.GetBASF();
-      double pi = 0;  // 'prime' reflection fraction
-      for( size_t bi=0; bi < scales.Count(); bi++ )
-        pi += scales[bi];
-      scales.Insert(0, 1-pi);
+      TDoubleList scales = rm.GetScales();
       twinning::general twin(info_ex, rm.GetReflections(),
         RefUtil::ResolutionAndSigmaFilter(rm), scales);
       TArrayList<compd> Fc(twin.unique_indices.Count());
