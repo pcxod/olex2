@@ -454,7 +454,7 @@ ICifEntry& CifBlock::Add(ICifEntry* p)  {
         TBasicApp::NewLogEntry(logWarning) << "Changing table type for " << pname;
       }
     }
-    const size_t oi = params.IndexOf(pname);
+    const size_t oi = params.IndexOfi(pname);
     delete params.GetObject(oi);
     params.GetObject(oi) = p;
     param_map.GetValue(i) = p;
@@ -468,7 +468,7 @@ bool CifBlock::Remove(const olxstr& pname)  {
   const size_t ti = table_map.IndexOf(pname);
   if( ti != InvalidIndex )
     table_map.Delete(ti);
-  const size_t oi = params.IndexOf(pname);
+  const size_t oi = params.IndexOfi(pname);
   delete params.GetObject(oi);
   params.Delete(oi);
   return true;
@@ -487,7 +487,7 @@ void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name)  {
     table_map.Delete(ti);
     table_map.Add(new_name, (cetTable*)val);
   }
-  const size_t oi = params.IndexOf(old_name);
+  const size_t oi = params.IndexOfi(old_name);
   params[oi] = new_name;
 }
 void CifBlock::ToStrings(TStrList& list) const {

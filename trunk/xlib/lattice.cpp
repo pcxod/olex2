@@ -2221,11 +2221,11 @@ olxstr TLattice::CalcMoiety() const {
   for( size_t i=0; i < frags.Count(); i++ )  {
     if( !rv.IsEmpty() )  rv << ", ";
     if( frags[i].GetA() != 1 )
-      rv << frags[i].GetA() << '(';
+      rv << olx_round(frags[i].GetA(), 100) << '(';
     for( size_t j=0; j < frags[i].GetB().Count(); j++ )  {
       rv << frags[i].GetB()[j].element.symbol;
       if( frags[i].GetB()[j].count != 1 )
-        rv << olx_round(frags[i].GetB()[j].count, 10000);
+        rv << olx_round(frags[i].GetB()[j].count, 100);
       if( (j+1) < frags[i].GetB().Count() )
         rv << ' ';
     }
