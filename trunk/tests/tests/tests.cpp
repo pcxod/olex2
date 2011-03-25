@@ -88,6 +88,21 @@ int main(int argc, char* argv[]) {
       try  {
         TCif cif;
         cif.LoadFromFile(files[i]);
+        bool report = false;
+        for( size_t ai=0; ai < cif.GetAsymmUnit().AtomCount(); ai++ )  {
+          const TCAtom& ca = cif.GetAsymmUnit().GetAtom(ai);
+          vec3d crd_esd = ca.ccrdEsd()*10000;
+          if( crd_esd[0] >= 20 || crd_esd[1] >= 20 || crd_esd[2] >= 20 ||
+            ca.GetUisoEsd()*1000 >= 20 )
+          {
+            report = true;
+            break;
+          }
+        }
+        if( report )  {
+          xapp.NewLogEntry() << "This file is potentially affected by the esd formatting error: '" <<
+            files[i] << '\'';
+        }
       }
       catch(const TExceptionBase& e)  {
         TStrList out;

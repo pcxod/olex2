@@ -225,7 +225,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
     for( size_t j=0; j < al.Count(); j++ )  {
       olxstr Labl = al[j]->GetType().symbol + Name;
       if( Labl.Length() >= 4 )
-        Labl.SetLength(3);
+        Labl.SetLength( al.Count() > 1 ? 3 : 4);
       else if( Labl.Length() < 3 && parts.Count() > 1 )
         Labl << (char)('a'+i);  // part ID
       if( al.Count() > 1 )

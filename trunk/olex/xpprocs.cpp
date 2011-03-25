@@ -9007,9 +9007,13 @@ void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
   olxstr resi_class = Cmds[0];
-  Cmds.Delete(0);
   int resi_number = 0;
-  if( Cmds.Count() > 0  && Cmds[0].IsNumber() )  {
+  if( resi_class.IsNumber() )  {
+    resi_number = resi_class.ToInt();
+    resi_class.SetLength(0);
+  }
+  Cmds.Delete(0);
+  if( resi_number == 0 && (Cmds.Count() > 0  && Cmds[0].IsNumber()) )  {
     resi_number = olx_abs(Cmds[0].ToInt());
     Cmds.Delete(0);
   }

@@ -177,7 +177,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   "Sorts atoms of the default residue. Atom sort arguments: "
   "\n\tm - atomic weight\n\tl - label, considering numbers\n\tp - part, 0 is first followed by all positive "
   "parts in ascending order and then negative ones\n\th - to treat hydrogen atoms independent of the pivot "
-  "atom\n\ts - nun-numerical labes suffix\n\tz - number after the atom symbol\n"
+  "atom\n\ts - nun-numerical labels suffix\n\tz - number after the atom symbol\n"
   "Moiety sort arguments:\n\ts - size\n\th - by heaviest atom\n\tm - molecular weight\nUsage: sort "
   "[+atom_sort_type] or [Atoms] [moiety [+moety sort type] [moiety atoms]]. If just 'moiety' is provided - "
   "the atoms will be split into the moieties without sorting.\n"
