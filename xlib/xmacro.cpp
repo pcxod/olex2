@@ -143,7 +143,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(FixUnit, EmptyString(), fpNone|fpOne|psFileLoaded, "Sets SFAc and UNIT to current content of the asymmetric unit.\
  Takes Z', with default value of 1.");
-  xlib_InitMacro(GenDisp, "f-generates full SFAC instructions", fpNone|fpOne|psFileLoaded,
+  xlib_InitMacro(GenDisp, "f-generates full SFAC instructions&;n-for neutron data", fpNone|fpOne|psFileLoaded,
     "Generates anisotropic dispertion parameters for current radiation wavelength");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(AddIns,EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file");
@@ -1744,7 +1744,8 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  const bool full = Options.Contains('f');
+  const bool neutron = Options.Contains('n');
+  const bool full = Options.Contains('f') || neutron;
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   const ContentList& content = rm.GetUserContent();
   const double en = rm.expl.GetRadiationEnergy();
@@ -1769,7 +1770,16 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options, TMacro
         delete &ci;
       }
       catch(...)  {
-        TBasicApp::NewLogEntry() << "COuld not locate absorption data for: " << content[i].element.symbol;
+        TBasicApp::NewLogEntry() << "Could not locate absorption data for: " << content[i].element.symbol;
+      }
+      if( neutron )  {
+        if( content[i].element.neutron_scattering == NULL )  {
+          TBasicApp::NewLogEntry() << "Could not locate neutron data for: " << content[i].element.symbol;
+        }
+        else  {
+          sc->SetGaussians(
+            cm_Gaussians(0,0,0,0,0,0,0,0,content[i].element.neutron_scattering->coh.GetRe()));
+        }
       }
       rm.AddSfac(*sc);
     }
