@@ -1622,6 +1622,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\sdl\tests\evalue_test.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\sdl\tests\file_test.h"
 					>
 				</File>
