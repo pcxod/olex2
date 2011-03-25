@@ -2658,12 +2658,14 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     for( size_t i=0; i < xatoms.Count(); i++ )
       rm.Vars.FreeParam(xatoms[i]->CAtom(), catom_var_name_Sof);
   }
-  else if( xatoms.Count() == 2 && fvar == -1101 )  {
+  else if( (xatoms.Count()%2)==0 && fvar == -1101 )  {
     XVar& xv = rm.Vars.NewVar();
-    rm.Vars.AddVarRef(xv, xatoms[0]->CAtom(), catom_var_name_Sof, relation_AsVar,
-      1.0/xatoms[0]->CAtom().GetDegeneracy());
-    rm.Vars.AddVarRef(xv, xatoms[1]->CAtom(), catom_var_name_Sof, relation_AsOneMinusVar,
-      1.0/xatoms[1]->CAtom().GetDegeneracy());
+    for( size_t i=0; i < xatoms.Count()/2; i++ )  {
+      TCAtom& a = xatoms[i]->CAtom();
+      rm.Vars.AddVarRef(xv, a, catom_var_name_Sof, relation_AsVar, 1.0/a.GetDegeneracy());
+      TCAtom& b = xatoms[xatoms.Count()/2+i]->CAtom();
+      rm.Vars.AddVarRef(xv, b, catom_var_name_Sof, relation_AsOneMinusVar, 1.0/b.GetDegeneracy());
+    }
   }
   else  {
     // 11, 10.5, 21 etc
