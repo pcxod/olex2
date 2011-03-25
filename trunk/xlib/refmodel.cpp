@@ -37,6 +37,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   RefContainers(TAsymmUnit::_GetIdName(), &aunit);
   //RefContainers(aunit.GetIdName(), &aunit);
   RefContainers(GetIdName(), this);
+  au.SetRefMod(this);
 }
 //....................................................................................................
 void RefinementModel::SetDefaults() {

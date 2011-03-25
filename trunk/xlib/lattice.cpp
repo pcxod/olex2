@@ -2209,8 +2209,10 @@ olxstr TLattice::CalcMoiety() const {
       SortedObjectList<uint32_t, TPrimitiveComparator> grow_dirs;
       for( size_t j=0; j < l.Count(); j++ )  {
         TCAtom& a = *l[j];
-        for( size_t k=0; k < a.AttachedSiteCount(); k++ )
-          grow_dirs.AddUnique(a.GetAttachedSite(k).matrix.GetId());
+        for( size_t k=0; k < a.AttachedSiteCount(); k++ )  {
+          if( a.GetAttachedSite(k).atom->GetType() != iQPeakZ )
+            grow_dirs.AddUnique(a.GetAttachedSite(k).matrix.GetId());
+        }
       }
       frags[i].A() *= zp_mult/grow_dirs.Count();
       for( size_t j=0; j < frags[i].GetB().Count(); j++ )
