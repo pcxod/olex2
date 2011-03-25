@@ -66,7 +66,8 @@ protected:
   static void _ProcessAfix0(ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL) 
   static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
-    TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl, TIndexList* index=NULL, bool checkSame=true);
+    TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl,
+    TIndexList* index=NULL, bool checkSame=true, bool checkResi=true);
   static void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
   void _FinishParsing(ParseContext& cx);

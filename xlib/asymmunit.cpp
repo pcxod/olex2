@@ -91,7 +91,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
     NewResidue(resi.GetClassName(), resi.GetNumber(), resi.GetAlias()); 
   }
   for( size_t i = 0; i < C.AtomCount(); i++ )
-    NewAtom( &GetResidue(C.GetAtom(i).GetResiId()) ).SetId(i);
+    NewAtom(&GetResidue(C.GetAtom(i).GetResiId())).SetId(i);
   
   for( size_t i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& ca = GetAtom(i);
@@ -244,11 +244,12 @@ void TAsymmUnit::InitData()  {
 //..............................................................................
 TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, const olxstr& alias)  {
   for( size_t i=0; i < Residues.Count(); i++ )
-    if( Residues[i].GetNumber() == number )  {
+    if( Residues[i].GetNumber() == number && Residues[i].GetClassName() == RClass )  {
       return Residues[i];
-      //throw TInvalidArgumentException(__OlxSourceInfo, "dublicated residue number");
     }
-  return Residues.Add( new TResidue(*this, (uint32_t)Residues.Count(), RClass, number, alias) );
+  return Residues.Add(
+    new TResidue(*this, (uint32_t)Residues.Count()+1, RClass, number, alias)
+  );
 }
 //..............................................................................
 void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TResidue>& list) {
@@ -266,10 +267,10 @@ void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TResidue>& list) {
     }
   }
   else  {
-    if( resi.Length() == 1 && resi.CharAt(0) == '*' )  {  //special case
+    if( resi == '*' )  {  //special case
       for( size_t i=0; i < Residues.Count(); i++ )
-        list.Add( Residues[i] );
-      list.Add( &MainResidue );
+        list.Add(Residues[i]);
+      list.Add(MainResidue);
     }
     for( size_t i=0; i < Residues.Count(); i++ )
       if( Residues[i].GetClassName().Equalsi(resi) || Residues[i].GetAlias().Equalsi(resi) ) 
@@ -1151,7 +1152,8 @@ void TAsymmUnit::LibFormula(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibWeight(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(olxstr::FormatFloat(2, MolWeight()));
+  double m = (Params.Count() == 1 ? Params[0].ToDouble() : 1./olx_max(GetZPrime(), 0.01));
+  E.SetRetVal(olxstr::FormatFloat(2, MolWeight()*m));
 }
 //..............................................................................
 
@@ -1213,7 +1215,7 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
 "Sets Z' for the structure"  ) );
   lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibFormula, "GetFormula", fpNone,
 "Returns chemical formula of the asymmetric unit") );
-  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibWeight, "GetWeight", fpNone,
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibWeight, "GetWeight", fpNone|fpOne,
 "Returns molecular mass of the asymmetric unit") );
   return lib;
 }

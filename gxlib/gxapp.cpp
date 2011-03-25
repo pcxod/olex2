@@ -1658,7 +1658,8 @@ TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, boo
   return undo;
 }
 //..............................................................................
-TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& Name, bool CheckLabel)  {
+TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name, bool CheckLabel)  {
+  olxstr Name = _Name;
   bool checkBonds = (XA.GetType() == iQPeakZ);
   cm_Element* elm = XElementLib::FindBySymbolEx(Name);
   if( elm == NULL )
@@ -1666,6 +1667,8 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& Name, bool CheckLabel)  {
   TNameUndo *undo = new TNameUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
   olxstr oldL = XA.GetLabel();
   bool recreate = ((elm == NULL) ? true : XA.GetType() != *elm);
+  if( Name.Length() == elm->symbol.Length() && oldL.StartsFromi(XA.GetType().symbol) )
+    Name = elm->symbol + oldL.SubStringFrom(XA.GetType().symbol.Length());
   XA.CAtom().SetLabel(
     CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA.CAtom(), Name) : Name, false);
   if( oldL != XA.GetLabel() || *elm != XA.GetType() )

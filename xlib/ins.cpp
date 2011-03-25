@@ -483,12 +483,15 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     }
   }
   else if( Toks[0].Equalsi("RESI") )  {
-    if( Toks.Count() < 3 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "wrong number of arguments for a residue");
+    if( Toks.Count() < 2 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "number of arguments for RESI");
     if( Toks[1].IsNumber() )
       cx.Resi = &cx.au.NewResidue(EmptyString(), Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString());
-    else
+    else if( Toks.Count() > 2 )  {
+      if( !Toks[2].IsNumber() )
+        throw TInvalidArgumentException(__OlxSourceInfo, "number for RESI");
       cx.Resi = &cx.au.NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString());
+    }
   }
   else if( Toks[0].Equalsi("SFAC") )  {
     bool expandedSfacProcessed = false;
@@ -806,9 +809,16 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
 //..............................................................................
 void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
   TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl,
-  TIndexList* index, bool checkSame)
+  TIndexList* index, bool checkSame, bool checkResi)
 {
   if( a.IsDeleted() || a.IsSaved() )  return;
+  if( checkResi && a.GetResiId() != 0 )  {
+    const TResidue& resi = rm.aunit.GetResidue(a.GetResiId());
+    sl.Add(resi.ToString());
+    for( size_t i=0; i < resi.Count(); i++ )
+      _SaveAtom(rm, resi[i], part, afix, sfac, sl, index, true, false);
+    return;
+  }
   if( checkSame && olx_is_valid_index(a.GetSameId()) )  {  // "
     TSameGroup& sg = rm.rSAME[a.GetSameId()];
     if( sg.IsValidForSave() )  {
@@ -823,7 +833,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         HyphenateIns(tmp, sl);
       }
       for( size_t i=0; i < sg.Count(); i++ )
-        _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
+        _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false, true);
       return;
     }
   }
@@ -1055,10 +1065,6 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TI
   }
   for( size_t i=0; i < CAtoms.Count(); i++ )  {
     if( CAtoms[i]->IsSaved() )  continue;
-    if( CAtoms[i]->GetResiId() != resi && CAtoms[i]->GetResiId() != 0 )  {
-      size_t resi = CAtoms[i]->GetResiId();
-      SL.Add(rm.aunit.GetResidue(CAtoms[i]->GetResiId()).ToString());
-    }
     TCAtom& ac = *CAtoms[i];
     if( ac.GetParentAfixGroup() != NULL && 
       !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
