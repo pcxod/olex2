@@ -1062,7 +1062,13 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
     Py_BuildValue("(ddd)(ddd)(ddd)", HKLF_mat[0][0], HKLF_mat[0][1], HKLF_mat[0][2],
     HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
     HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
-  PythonExt::SetDictItem(main, "hklf", hklf );
+  if( HKLF > 4 )  {  // special case, twin entry also has BASF!
+    PyObject* basf = PyTuple_New(BASF.Count());
+    for( size_t i=0; i < BASF.Count(); i++ )
+      PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
+    PythonExt::SetDictItem(hklf, "basf", basf);
+  }
+  PythonExt::SetDictItem(main, "hklf", hklf);
   {
     PyObject* uweight = PyTuple_New(used_weight.Count());
     PyObject* pweight = PyTuple_New(proposed_weight.Count());
