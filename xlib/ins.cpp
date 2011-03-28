@@ -662,32 +662,24 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
 }
 //..............................................................................
 void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res)  {
-  olxstr Tmp = Ins, Tmp1;
-  if( Tmp.Length() > 80 )  {
-    while ( Tmp.Length() > 80 )  {
-      size_t spindex = Tmp.LastIndexOf(' ', 80-InsName.Length()-2);
+  olxstr Tmp = Ins;
+  if( Tmp.Length() > 80-InsName.Length() )  {
+    while( Tmp.Length() > 80-InsName.Length() )  {
+      size_t spindex = Tmp.LastIndexOf(' ', 80-InsName.Length());
       if( spindex != InvalidIndex && spindex > 0 )  {
-        Tmp1 = Tmp.SubStringTo(spindex);
-        Tmp1.Insert(InsName, 0);
-        Res.Add(Tmp1);
-        Tmp.Delete(0, spindex+1); // remove the space
+        Res.Add(InsName + Tmp.SubStringTo(spindex));
+        Tmp = Tmp.SubStringFrom(spindex+1);
       }
       else  {
-        Tmp1 = Tmp.SubStringTo(80-InsName.Length()-2);
-        Tmp1.Insert(InsName, 0);
-        Res.Add(Tmp1);
-        Tmp.Delete(0, 80-InsName.Length()-2);
+        Res.Add(InsName + Tmp.SubStringTo(80-InsName.Length()-2));
+        Tmp = Tmp.SubStringFrom(80-InsName.Length()-2);
       }
     }
-    if( Tmp.Length() != 0 ) {
-      Tmp.Insert(InsName, 0);
-      Res.Add(Tmp);
-    }
+    if( !Tmp.IsEmpty() )
+      Res.Add(InsName + Tmp);
   }
-  else  {
-    Tmp.Insert(InsName, 0);
-    Res.Add(Tmp);
-  }
+  else
+    Res.Add(InsName + Tmp);
 }
 //..............................................................................
 void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {

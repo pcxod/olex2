@@ -502,16 +502,13 @@ void TGXApp::CenterView(bool calcZoom)  {
   double weight = 0;
   vec3d center;
   vec3d maX(-100, -100, -100), miN(100, 100, 100);
-  for( size_t i=0; i <= OverlayedXFiles.Count(); i++ )  {
-    const TLattice& latt = (i == OverlayedXFiles.Count() ? XFile() : OverlayedXFiles[i]).GetLattice();
-    const size_t ac = latt.GetObjects().atoms.Count();
-    for( size_t j=0; j < ac; j++ )  {
-      const TSAtom& a = latt.GetObjects().atoms[j];
-      if( a.IsAvailable() )  {
-        center += a.crd();
-        vec3d::UpdateMinMax(a.crd(), miN, maX);
-        weight += 1;
-      }
+  AtomIterator ai = GetAtoms();
+  while( ai.HasNext() )  {
+    const TXAtom& a = ai.Next();
+    if( a.IsVisible() )  {
+      center += a.crd();
+      vec3d::UpdateMinMax(a.crd(), miN, maX);
+      weight += 1;
     }
   }
   if( weight == 0 )  return;

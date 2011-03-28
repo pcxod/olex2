@@ -1866,7 +1866,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 0 )
+  if( Cmds.IsEmpty() )
     wxShell();
   else  {
 #ifdef __WIN32__
