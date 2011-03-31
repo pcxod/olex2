@@ -556,7 +556,7 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
       GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
     mu += (cont[i].count*cont[i].element.GetMr())*v;
   }
-  mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume();
+  mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume()/GetAsymmUnit().GetZPrime();
   mu /= 6.022142;
   E.SetRetVal(olxstr::FormatFloat(3,mu));
 }

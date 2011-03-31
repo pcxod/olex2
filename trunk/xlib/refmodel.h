@@ -204,6 +204,8 @@ public:
     if( hklf.IsEmpty() )
       throw TInvalidArgumentException(__OlxSourceInfo, "empty HKLF");  
     HKLF = hklf[0].ToInt();
+    if( HKLF > 4 )
+      MERG = 0;
     if( hklf.Count() > 1 )
       HKLF_s = hklf[1].ToDouble();
     if( hklf.Count() > 10 )  {

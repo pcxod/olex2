@@ -124,6 +124,59 @@ public:
     }
     return rv;
   }
+  void ToDataItem(TDataItem& di) const {
+    di.SetValue(Type == infotab_htab ? "HTAB" : (Type == infotab_rtab ? "RTAB" : "MPLA"));
+    di.AddField("resi", ResiName);
+    di.AddField("param", ParamName);
+    TDataItem& ais = di.AddItem("atoms");
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      if( !atoms[i].GetAtom()->IsDeleted() )  {
+        TDataItem& ai = ais.AddItem("atom", atoms[i].GetAtom()->GetTag());
+        if( atoms[i].GetMatrix() != NULL )
+          ai.AddField("matrix", atoms[i].GetMatrix()->GetId());
+      }
+    }
+  }
+
+  void FromDataItem(const TDataItem& di, RefinementModel& rm)  {
+    if( di.GetValue() == "HTAB")
+      Type = infotab_htab;
+    else if( di.GetValue() == "RTAB")
+      Type = infotab_rtab;
+    else
+      Type = infotab_mpla;
+    ResiName = di.GetFieldValue("resi");
+    ParamName = di.GetFieldValue("param");
+    const TDataItem& ais = di.FindRequiredItem("atoms");
+    for( size_t i=0; i < ais.ItemCount(); i++ )  {
+      const TDataItem& ai = ais.GetItem(i);
+      size_t atom_id = ai.GetValue().ToSizeT();
+      olxstr matr_id = ai.GetFieldValue("matrix");
+      AddAtom(&rm.aunit.GetAtom(atom_id),
+        matr_id.IsEmpty() ? NULL : &rm.GetUsedSymm(matr_id.ToSizeT()));
+    }
+  }
+#ifndef _NO_PYTHON
+  PyObject* PyExport()  {
+    PyObject* main = PyDict_New();
+    PythonExt::SetDictItem(main, "type",
+      PythonExt::BuildString(Type == infotab_htab ? "HTAB" : (Type == infotab_rtab ? "RTAB" : "MPLA")));
+    PythonExt::SetDictItem(main, "param_name", PythonExt::BuildString(ParamName));
+    size_t ac_cnt = 0;
+    for( size_t i=0; i < atoms.Count(); i++ )
+      if( !atoms[i].GetAtom()->IsDeleted() )
+        ac_cnt++;
+    PyObject* pya = PyTuple_New(ac_cnt);
+    ac_cnt = 0;
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      PyTuple_SetItem(pya, ac_cnt++,
+        Py_BuildValue("(i,i)", atoms[i].GetAtom()->GetTag(),
+          atoms[i].GetMatrix() == NULL ? -1 : atoms[i].GetMatrix()->GetId()));
+    }
+    PythonExt::SetDictItem(main, "atoms", pya);
+    return main;
+  }
+#endif
 };
 EndXlibNamespace()
 
