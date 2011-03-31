@@ -1116,9 +1116,7 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
     PythonExt::SetDictItem(main, "exti", Py_BuildValue("f", EXTI));
 
   PythonExt::SetDictItem(main, "conn", Conn.PyExport());
-  // restore matrix tags
-  for( size_t i=0; i < UsedSymm.Count(); i++ )
-    UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
+
   if( !SfacData.IsEmpty() )  {
     PyObject* sfac = PyDict_New();
     for( size_t i=0; i < SfacData.Count(); i++ )
@@ -1126,6 +1124,26 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
         SfacData.GetValue(i)->PyExport());
     PythonExt::SetDictItem(main, "sfac", sfac);
   }
+
+  size_t inft_cnt=0;
+  for( size_t i=0; i < InfoTables.Count(); i++ )
+    if( InfoTables[i].IsValid() )
+      inft_cnt++;
+
+  PyObject* info_tabs = PyTuple_New(inft_cnt);
+  if( inft_cnt > 0 )  {
+    inft_cnt = 0;
+    for( size_t i=0; i < InfoTables.Count(); i++ )  {
+      if( InfoTables[i].IsValid() )  {
+        PyTuple_SetItem(info_tabs, inft_cnt++, InfoTables[i].PyExport());
+      }
+    }
+  }
+  PythonExt::SetDictItem(main, "info_tables", info_tabs);
+
+  // restore matrix tags
+  for( size_t i=0; i < UsedSymm.Count(); i++ )
+    UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
   return main;
 }
 #endif

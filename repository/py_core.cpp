@@ -287,8 +287,12 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
     PythonExt::SetDictItem(out, "Rint", Py_BuildValue("d", hs.Rint));
     PythonExt::SetDictItem(out, "Rsigma", Py_BuildValue("d", hs.Rsigma));
     PythonExt::SetDictItem(out, "MeanIOverSigma", Py_BuildValue("d", hs.MeanIOverSigma));
-    PythonExt::SetDictItem(out, "MaxIndexes", Py_BuildValue("(iii)", hs.MaxIndexes[0], hs.MaxIndexes[1], hs.MaxIndexes[2]) );
-    PythonExt::SetDictItem(out, "MinIndexes", Py_BuildValue("(iii)", hs.MinIndexes[0], hs.MinIndexes[1], hs.MinIndexes[2]) );
+    PythonExt::SetDictItem(out, "MaxIndexes", Py_BuildValue("(iii)", hs.MaxIndexes[0], hs.MaxIndexes[1], hs.MaxIndexes[2]));
+    PythonExt::SetDictItem(out, "MinIndexes", Py_BuildValue("(iii)", hs.MinIndexes[0], hs.MinIndexes[1], hs.MinIndexes[2]));
+    PythonExt::SetDictItem(out, "FileMaxIndexes", Py_BuildValue("(iii)",
+      hs.FileMaxInd[0], hs.FileMaxInd[1], hs.FileMaxInd[2]));
+    PythonExt::SetDictItem(out, "FileMinIndexes", Py_BuildValue("(iii)",
+      hs.FileMinInd[0], hs.FileMinInd[1], hs.FileMinInd[2]));
     PythonExt::SetDictItem(out, "ReflectionAPotMax", Py_BuildValue("i", hs.ReflectionAPotMax));
     PythonExt::SetDictItem(out, "FriedelPairCount", Py_BuildValue("i", xapp.XFile().GetRM().GetFriedelPairCount()));
 
