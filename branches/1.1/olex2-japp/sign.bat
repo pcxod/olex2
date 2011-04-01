@@ -1,1 +1,0 @@
-jarsigner -keystore compstore olex2vj.jar signFiles
