@@ -17,12 +17,16 @@ class InfoTab : public IEObject {  // need to cast to delete
   RefinementModel& RM;
   short Type;
 public:
-  InfoTab(RefinementModel& rm, short type, const olxstr& paramName=EmptyString(), const olxstr& resiName=EmptyString()) : 
-      RM(rm), Type(type), ParamName(paramName), ResiName(resiName) {  }
+  InfoTab(RefinementModel& rm, short type, const olxstr& paramName=EmptyString(),
+    const olxstr& resiName=EmptyString())
+    : RM(rm), Type(type), ParamName(paramName), ResiName(resiName) {}
   
-  InfoTab(RefinementModel& rm, const InfoTab& it) : RM(rm)  {  
-    this->operator = (it);
+  InfoTab(RefinementModel& rm, const TDataItem& di) : RM(rm) {
+    FromDataItem(di, rm);
   }
+
+  InfoTab(RefinementModel& rm, const InfoTab& it) : RM(rm)  {  this->operator = (it);  }
+
   virtual ~InfoTab()  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( atoms[i].GetMatrix() != NULL ) 
