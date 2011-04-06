@@ -3335,7 +3335,10 @@ void TMainForm::SetProgramState(bool val, uint32_t state, const olxstr& data )  
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
   AGDrawObject *G = FXApp->SelectObject(x, y);
-  if( G == NULL )  return true;
+  if( G == NULL )  {
+    ProcessMacro("sel -u");
+    return true;
+  }
   if( EsdlInstanceOf(*G, TGlBitmap) )  {
     TGlBitmap* glB = (TGlBitmap*)G;
     if( !(glB->GetLeft() > 0) )  {
@@ -3362,6 +3365,9 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
     if( ProcessFunction(label) && !label.IsEmpty() )
       ((TXGlLabel*)G)->SetLabel(label);
 
+  }
+  else if( EsdlInstanceOf(*G, TXAtom) )  {
+    FXApp->SelectFragments(TNetPList() << &((TXAtom*)G)->GetNetwork(), true);
   }
   FXApp->Draw();
   return true;
