@@ -761,6 +761,19 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     else
       max_d = 2.9;
   }
+  TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  TStrList current;
+  for( size_t i=0; i < rm.InfoTabCount(); i++ )  {
+    InfoTab& it = rm.GetInfoTab(i);
+    if( it.IsValid() && it.GetType() == infotab_htab )
+      current.Add(it.InsStr()) << " d=" << olx_round(au.Orthogonalise(
+      it.GetAtom(0).ccrd()-it.GetAtom(1).ccrd()).Length(), 1000);
+  }
+  if( !current.IsEmpty() )  {
+    TBasicApp::NewLogEntry() << "List of current HTAB instructions: ";
+    TBasicApp::NewLogEntry() << current;
+  }
   smatd_list transforms;
   TIntList bais;
   bais.Add(iNitrogenZ);
@@ -781,8 +794,6 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         bais.Add(e->z);
     }
   }
-  TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
-  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   TLattice& lat = TXApp::GetInstance().XFile().GetLattice();
   TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
@@ -2967,6 +2978,11 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
       for( size_t j=0; j < envi.Count(); j++ )  {
         if( envi.GetType(j) != iHydrogenZ)  continue;
+        // check if the D-H-A angle makes sense...
+        double ang = (au.Orthogonalise(d->ccrd())-envi.GetCrd(j)).CAngle(
+          au.Orthogonalise(a->ccrd())-envi.GetCrd(j));
+        if( ang >= 0 )  // <= 90
+          continue;
         CifRow& row = hbonds.AddRow();
         row.Set(0, new AtomCifEntry(*d->GetAtom()));
         row.Set(1, new AtomCifEntry(envi.GetCAtom(j)));
@@ -3394,6 +3410,11 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
   TAsymmUnit& au = latt.GetAsymmUnit();
   if( au.AtomCount() == 0 )  {
     E.ProcessingError(__OlxSrcInfo, "Empty asymmetric unit");
+    return;
+  }
+  if( xapp.XFile().GetRM().UsedSymmCount() != 0 )  {
+    E.ProcessingError(__OlxSrcInfo,
+      "Please remove used symmetry (EQIV) instructions before using this operation");
     return;
   }
   TSpaceGroup& from_sg = xapp.XFile().GetLastLoaderSG();
