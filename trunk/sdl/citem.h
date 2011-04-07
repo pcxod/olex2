@@ -48,23 +48,26 @@ public:
   // creates a list of unique items
   template <class Accessor=DirectAccessor>
   struct Unique  {
-    template <class List> Unique(List& list)  {
+    template <class List> Unique(List& list)  {  Do(list);  }
+    template <class List> static List& Do(List& list)  {
       list.ForEach(IndexTagSetter<Accessor>());
       list.Pack(IndexTagAnalyser<Accessor>());
+      return list;
     }
   };
   // exludes a set of items from a list of items
   template <class AccessorA=DirectAccessor, class AccessorB=DirectAccessor>
   struct Exclude  {
     template <class ListA, class ListB> Exclude(ListA& from, const ListB& set)  {
+      Do(from, set);
+    }
+    template <class ListA, class ListB> static
+    ListA& Do(ListA& from, const ListB& set)
+    {
       from.ForEach(TagSetter<AccessorA>(0));
       set.ForEach(TagSetter<AccessorB>(1));
       from.Pack(TagAnalyser<AccessorA>(1));
-    }
-    template <class List> Exclude(List& from, const List& set)  {
-      from.ForEach(TagSetter<>(0));
-      set.ForEach(TagSetter<>(1));
-      from.Pack(TagAnalyser<>(1));
+      return from;
     }
   };
 };
