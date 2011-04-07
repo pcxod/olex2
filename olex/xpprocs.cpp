@@ -950,11 +950,9 @@ void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
     return;
   }
-  TNetPList L, L1;
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    L.Add(Atoms[i]->GetNetwork());
-  FXApp->InvertFragmentsList(L, L1);
-  FXApp->FragmentsVisible(L1, false);
+  TNetPList L(Atoms, FunctionAccessor::Make(&TXAtom::GetNetwork));
+  FXApp->FragmentsVisible(FXApp->InvertFragmentsList(
+    ACollectionItem::Unique<>::Do(L)), false);
   FXApp->CenterView(true);
   TimePerFrame = FXApp->Draw();
 }
@@ -1736,7 +1734,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TGlGroup& sel = FXApp->GetSelection();
     olxstr out;
     for( size_t i=0; i < sel.Count(); i++ )  {
-      Objects.Add( sel[i] );
+      Objects.Add(sel[i]);
       if( EsdlInstanceOf(sel[i], TXAtom) )
         out << ((TXAtom&)sel[i]).GetLabel();
       else
@@ -2804,7 +2802,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TXAtomPList Atoms;
   XLibMacros::ParseNumbers<int>(Cmds, 1, &afix);
   if( afix == -1 )  {
-    E.ProcessingError(__OlxSrcInfo, "afix should be specified" );
+    E.ProcessingError(__OlxSrcInfo, "afix should be specified");
     return;
   }
   olxstr positions;
@@ -2918,10 +2916,20 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     else if( afix == 1 || afix == 2 ) {
+      olxstr atom_names;
       for( size_t i=0; i < Atoms.Count(); i++ )  {
         TCAtom& ca = Atoms[i]->CAtom();
         if( ca.GetAfix() == 0 )
           rm.AfixGroups.New(&ca, afix);
+        else  {
+          if( !atom_names.IsEmpty() )
+            atom_names << ' ';
+          atom_names << ca.GetLabel();
+        }
+      }
+      if( !atom_names.IsEmpty() )  {
+        TBasicApp::NewLogEntry(logError) << "Could not process AFIX for the following atoms:";
+        TBasicApp::NewLogEntry() << atom_names;
       }
     }
     else if( !Atoms.IsEmpty() )  {
@@ -4322,7 +4330,12 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     TBasicApp::NewLogEntry(logError) << "Unavailable in a mode";
     return;
   }
-  if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
+  if( Cmds.Count() >= 1 && Cmds[0].Equalsi("frag") )  {
+    TNetPList nets(FindXAtoms(Cmds.SubListFrom(1), false, false),
+      FunctionAccessor::Make(&TXAtom::GetNetwork));
+    FXApp->SelectFragments(ACollectionItem::Unique<>::Do(nets), !Options.Contains('u'));
+  }
+  else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
     FXApp->GetRender().ClearSelection();
     TStrList out;
     TCAtomPList a_res;

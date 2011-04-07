@@ -83,7 +83,10 @@ public:
     if( !v )
       Label->SetVisible(false);
   }
-  virtual bool IsDeleted() const {  return TSBond::IsDeleted();  }
+  void Delete()  {
+    TSBond::SetDeleted(true);
+    SetVisible(false);
+  }
   void ListDrawingStyles(TStrList &List);
 
   uint32_t GetPrimitiveMask() const;

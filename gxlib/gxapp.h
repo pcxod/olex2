@@ -638,7 +638,7 @@ public:     void CalcProbFactor(float Prob);
   TUndoData* SetGraphicsVisible(AGDObjList& G, bool v );
 
   void FragmentsVisible(const TNetPList& Networks, bool V);
-  size_t InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);
+  TNetPList InvertFragmentsList(const TNetPList& Fragments);
   void SelectFragmentsAtoms(const TNetPList& frags, bool v);
   void SelectFragmentsBonds(const TNetPList& frags, bool v);
   void SelectFragments(const TNetPList& frags, bool v);

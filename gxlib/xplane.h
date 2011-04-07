@@ -29,9 +29,9 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {  return false; }
   bool OnMouseMove(const IEObject *Sender, const TMouseData& Data){  return false; }
 
-  bool IsDeleted() const {  return TSPlane::IsDeleted();  }
-  void SetDeleted(bool v)  {
-    TSPlane::SetDeleted(v);
+  void Delete(bool v)  {
+    TSPlane::SetDeleted(true);
+    SetVisible(false);
   }
 };
 

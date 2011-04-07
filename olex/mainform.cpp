@@ -3367,7 +3367,23 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
 
   }
   else if( EsdlInstanceOf(*G, TXAtom) )  {
-    FXApp->SelectFragments(TNetPList() << &((TXAtom*)G)->GetNetwork(), true);
+    TNetwork& n = ((TXAtom*)G)->GetNetwork();
+    size_t sel_cnt=0, cnt = 0;
+    for( size_t i=0; i < n.NodeCount(); i++ )  {
+      TXAtom& a = (TXAtom&)n.Node(i);
+      if( !a.IsVisible() )  continue;
+      cnt++;
+      if( a.IsSelected() )  sel_cnt++;
+    }
+    for( size_t i=0; i < n.BondCount(); i++ )  {
+      TXBond& b = (TXBond&)n.Bond(i);
+      if( !b.IsVisible() )  continue;
+      cnt++;
+      if( b.IsSelected() )  sel_cnt++;
+    }
+    if( cnt > 0 )  {
+      FXApp->SelectFragments(TNetPList() << &n, ((double)sel_cnt/cnt) < .75);
+    }
   }
   FXApp->Draw();
   return true;

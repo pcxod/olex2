@@ -1124,18 +1124,16 @@ TGlGroup& TGXApp::GroupFragments(const TNetPList& Fragments, const olxstr groupN
   return *GetRender().GroupSelection(groupName);
 }
 //..............................................................................
-size_t TGXApp::InvertFragmentsList(const TNetPList& SF, TNetPList& Result)  {
+TNetPList TGXApp::InvertFragmentsList(const TNetPList& SF)  {
+  TNetPList res;
   TLattice& L = XFile().GetLattice();
-  size_t fc=0;
   L.GetFragments().ForEach(ACollectionItem::TagSetter<>(1));
   SF.ForEach(ACollectionItem::TagSetter<>(0));
   for( size_t i=0; i < L.FragmentCount(); i++ )  {
-    if( L.GetFragment(i).GetTag() != 0 )  {
-      Result.Add(L.GetFragment(i));
-      fc++;
-    }
+    if( L.GetFragment(i).GetTag() != 0 )
+      res.Add(L.GetFragment(i));
   }
-  return fc;
+  return res;
 }
 //..............................................................................
 void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)  {
@@ -2079,12 +2077,12 @@ TUndoData* TGXApp::DeleteXObjects(AGDObjList& L)  {
     if( EsdlInstanceOf(*L[i], TXAtom) )  
       atoms.Add((TXAtom*)L[i]);
     else if( EsdlInstanceOf(*L[i], TXPlane) )  {
-      ((TXPlane*)L[i])->SetDeleted(true);
+      ((TXPlane*)L[i])->Delete(true);
       planes_deleted = true;
     }
     else if( EsdlInstanceOf(*L[i], TXBond) )  {
       TXBond* xb = (TXBond*)L[i];
-      xb->SetVisible(false);
+      xb->Delete();
     }
     else
       L[i]->SetVisible(false);
