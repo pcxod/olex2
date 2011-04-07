@@ -821,9 +821,10 @@ olxstr& TEFile::TrimPathDelimeterI(olxstr &Path)  {
 }
 //..............................................................................
 bool TEFile::IsAbsolutePath(const olxstr& Path)  {
-  if( Path.Length() < 2 )  return false;
+  if( Path.Length() < 1 )  return false;
 #ifdef __WIN32__
   if( Path[1] == ':' )  return true;
+  if( Path.Length() < 2 )  return false;
   if( Path[0] == '\\' && Path[1] == '\\' )  return true;
   return false;
 #else

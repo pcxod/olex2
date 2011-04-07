@@ -252,7 +252,7 @@ protected:
   TPopupData* GetPopup(const olxstr& name);
 
   void PreviewHelp(const olxstr& Cmd);
-  olxstr ExpandCommand(const olxstr &Cmd);
+  olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
   // click-name states
   uint32_t ProgramState;
