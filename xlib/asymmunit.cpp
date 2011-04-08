@@ -506,8 +506,11 @@ double TAsymmUnit::GetZPrime() const {
 //..............................................................................
 double TAsymmUnit::MolWeight() const  {
   double Mw = 0;
-  for( size_t i=0; i < AtomCount(); i++ )
+  for( size_t i=0; i < AtomCount(); i++ )  {
+    if( GetAtom(i).IsDeleted() )  continue;
     Mw += GetAtom(i).GetOccu()*GetAtom(i).GetType().GetMr();
+
+  }
   return Mw;
 }
 //..............................................................................
@@ -556,7 +559,7 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
 }
 //..............................................................................
 olxstr TAsymmUnit::ValidateLabel(const olxstr &Label) const  {
-  olxstr LB( (Label.Length() > 4) ? Label.SubStringTo(4) : Label );
+  olxstr LB((Label.Length() > 4) ? Label.SubStringTo(4) : Label);
   int cnt=0;
   for( size_t i=0; i < AtomCount(); i++ )  {
     const TCAtom& CA = GetAtom(i);
@@ -574,7 +577,7 @@ size_t TAsymmUnit::CountElements(const olxstr& Symbol) const  {
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("unknown element: '") << Symbol << '\'');
   size_t cnt = 0;
   for( size_t i=0; i < AtomCount(); i++ )
-    if( GetAtom(i).GetType() == *elm )
+    if( !GetAtom(i).IsDeleted() && GetAtom(i).GetType() == *elm )
       cnt++;
   return cnt;
 }
@@ -589,14 +592,14 @@ int TAsymmUnit::GetNextPart(bool neg) const {
   if( !neg )  {
     int part = 0;
     for( size_t i=0; i < AtomCount(); i++ )
-      if( GetAtom(i).GetPart() > part )
+      if( !GetAtom(i).IsDeleted() && GetAtom(i).GetPart() > part )
         part = GetAtom(i).GetPart();
     return part+1;
   }
   else  {
     int part = 0;
     for( size_t i=0; i < AtomCount(); i++ )
-      if( GetAtom(i).GetPart() < part )
+      if( !GetAtom(i).IsDeleted() && GetAtom(i).GetPart() < part )
         part = GetAtom(i).GetPart();
     return part-1;
   }
