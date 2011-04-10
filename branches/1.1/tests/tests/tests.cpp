@@ -41,7 +41,7 @@ public:
 };
 
 int main(int argc, char* argv[]) {
-	TXApp xapp(argv[0]);
+	TXApp xapp(TXApp::GuessBaseDir(argv[0]));
   xapp.XFile().RegisterFileFormat(new TIns, "ins");
   xapp.GetLog().AddStream(new TOutStream, true);
   xapp.GetLog().AddStream(TUtf8File::Create(xapp.GetBaseDir()+"log.out", false), true);

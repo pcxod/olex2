@@ -247,7 +247,7 @@ void TLattice::BuildPlanes()  {
       TSPlane* p = pd.FromAtomRegistry(Objects, i, Network, *Matrices[j]);
       if( p != NULL ) {
         bool uniq = true;
-        for( size_t k=0; k < Objects.planes.Count(); k++ )  {
+        for( size_t k=0; k < Objects.planes.Count()-1; k++ )  {
           if( Objects.planes[k].GetCenter().QDistanceTo(p->GetCenter()) < 1e-6 )  {
             uniq = false;
             break;

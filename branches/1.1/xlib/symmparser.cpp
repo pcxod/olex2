@@ -13,7 +13,7 @@ bool TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
   bool res = true;
   str_stack stack;
   M.Null();
-  TStrList toks(S.ToUpperCase(), ',');
+  TStrList toks(S.ToUpperCase().DeleteChars(' '), ',');
   if( toks.Count() != 3 )
     throw TFunctionFailedException(__OlxSourceInfo,
          olxstr("Operation sign is missing or operation is incomplete while parsing \"") << S << '\"');

@@ -918,14 +918,22 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddItem("EXTI", EXTI_set).AddField("val", EXTI);
   Conn.ToDataItem(item.AddItem("CONN"));
   item.AddField("UserContent", GetUserContentStr());
-  // restore matrix tags
-  for( size_t i=0; i < UsedSymm.Count(); i++ )
-    UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
+
+  TDataItem& info_tables = item.AddItem("INFO_TABLES");
+  size_t info_tab_cnt=0;
+  for( size_t i=0; i < InfoTables.Count(); i++ )  {
+    if( InfoTables[i].IsValid() )
+      InfoTables[i].ToDataItem(info_tables.AddItem(++info_tab_cnt));
+  }
+
   if( !SfacData.IsEmpty() )  {
     TDataItem& sfacs = item.AddItem("SFAC");
     for( size_t i=0; i < SfacData.Count(); i++ )
       SfacData.GetValue(i)->ToDataItem(sfacs);      
   }
+  // restore matrix tags
+  for( size_t i=0; i < UsedSymm.Count(); i++ )
+    UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
@@ -1006,6 +1014,12 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   Vars.FromDataItem( item.FindRequiredItem("LEQS") );
   Conn.FromDataItem( item.FindRequiredItem("CONN") );
   SetUserFormula(item.GetFieldValue("UserContent"), false);
+  
+  TDataItem* info_tables = item.FindItem("INFO_TABLES");
+  if( info_tables != NULL )  {
+    for( size_t i=0; i < info_tables->ItemCount(); i++ )
+      InfoTables.Add(new InfoTab(*this, info_tables->GetItem(i)));
+  }
   TDataItem* sfac = item.FindItem("SFAC");
   if( sfac != NULL )  {
     for( size_t i=0; i < sfac->ItemCount(); i++ )  {

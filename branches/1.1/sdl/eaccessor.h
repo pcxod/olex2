@@ -52,4 +52,30 @@ template <typename CastType> struct DynamicCastAccessor  {
   }
 };
 
+struct FunctionAccessor {
+  template <typename rv_t, typename base_t> struct ConstFunctionAccessor_  {
+    rv_t (base_t::*func)() const;
+    ConstFunctionAccessor_(rv_t (base_t::*_func)() const) : func(_func)  {}
+    template <typename item_t> rv_t Access(const item_t& it) const {
+      return (olx_get_ref(it).*func)();    
+    }
+  };
+  template <typename rv_t, typename base_t> struct FunctionAccessor_  {
+    rv_t (base_t::*func)();
+    FunctionAccessor_(rv_t (base_t::*_func)()) : func(_func)  {}
+    template <typename item_t> rv_t Access(item_t& it) const {
+      return (olx_get_ref(it).*func)();    
+    }
+  };
+
+  template <typename rv_t, typename base_t> static
+  ConstFunctionAccessor_<rv_t,base_t> Make(rv_t (base_t::*func)() const)  {
+    return ConstFunctionAccessor_<rv_t,base_t>(func);
+  }
+  template <typename rv_t, typename base_t> static
+  FunctionAccessor_<rv_t,base_t> Make(rv_t (base_t::*func)())  {
+    return FunctionAccessor_<rv_t,base_t>(func);
+  }
+};
+
 #endif

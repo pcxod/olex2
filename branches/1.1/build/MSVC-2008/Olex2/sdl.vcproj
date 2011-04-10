@@ -1251,6 +1251,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\eaccessor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\ebase.h"
 				>
 			</File>

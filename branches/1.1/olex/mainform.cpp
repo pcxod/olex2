@@ -2103,15 +2103,15 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     Cmd = FGlConsole->GetCommand();
     size_t spi = Cmd.LastIndexOf(' ');
     if( spi != InvalidIndex )  {
-      FullCmd = ExpandCommand(Cmd.SubStringFrom(spi+1));
+      FullCmd = ExpandCommand(Cmd.SubStringFrom(spi+1), true);
       if( FullCmd != Cmd.SubStringFrom(spi+1) )
         FullCmd = Cmd.SubStringTo(spi+1) << FullCmd;
       else
         FullCmd.SetLength(0);
     }
     else
-      FullCmd = ExpandCommand(Cmd);
-    if( FullCmd.Length() && (FullCmd != Cmd) )
+      FullCmd = ExpandCommand(Cmd, false);
+    if( !FullCmd.IsEmpty() && (FullCmd != Cmd) )
       FGlConsole->SetCommand(FullCmd);
     TimePerFrame = FXApp->Draw();
     return;
@@ -2302,10 +2302,27 @@ void TMainForm::OnResize()  {
   FInfoBox->SetLeft(0);
 }
 //..............................................................................
-olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
+olxstr TMainForm::ExpandCommand(const olxstr &Cmd, bool inc_files)  {
   if( Cmd.IsEmpty() )  return Cmd;
   olxstr FullCmd(Cmd.ToLowerCase());
   TStrList all_cmds;
+  if( inc_files )  {
+    TStrList names;
+    olxstr path = TEFile::ExpandRelativePath(Cmd, TEFile::CurrentDir());
+    if( !path.IsEmpty() && TEFile::IsAbsolutePath(path) )  {
+      size_t lsi = path.LastIndexOf(TEFile::GetPathDelimeter());
+      if( lsi != InvalidIndex )  {
+        olxstr dir_name = path.SubStringTo(lsi+1);
+        if( TEFile::Exists(dir_name) )  {
+          TEFile::ListDir(dir_name, names, olxstr(path.SubStringFrom(lsi+1)) << '*', sefReadWrite);
+          for( size_t i=0; i < names.Count(); i++ )
+            all_cmds.Add(dir_name +names[i]);
+        }
+      }
+    }
+    else
+      TEFile::ListCurrentDir(all_cmds, olxstr(Cmd) << '*', sefReadWrite);
+  }
   if( !Cmd.IsEmpty() )
     Macros.FindSimilarNames(Cmd, all_cmds);
   TBasicLibraryPList libs;
@@ -3335,7 +3352,10 @@ void TMainForm::SetProgramState(bool val, uint32_t state, const olxstr& data )  
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
   AGDrawObject *G = FXApp->SelectObject(x, y);
-  if( G == NULL )  return true;
+  if( G == NULL )  {
+    ProcessMacro("sel -u");
+    return true;
+  }
   if( EsdlInstanceOf(*G, TGlBitmap) )  {
     TGlBitmap* glB = (TGlBitmap*)G;
     if( !(glB->GetLeft() > 0) )  {
@@ -3362,6 +3382,25 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
     if( ProcessFunction(label) && !label.IsEmpty() )
       ((TXGlLabel*)G)->SetLabel(label);
 
+  }
+  else if( EsdlInstanceOf(*G, TXAtom) )  {
+    TNetwork& n = ((TXAtom*)G)->GetNetwork();
+    size_t sel_cnt=0, cnt = 0;
+    for( size_t i=0; i < n.NodeCount(); i++ )  {
+      TXAtom& a = (TXAtom&)n.Node(i);
+      if( !a.IsVisible() )  continue;
+      cnt++;
+      if( a.IsSelected() )  sel_cnt++;
+    }
+    for( size_t i=0; i < n.BondCount(); i++ )  {
+      TXBond& b = (TXBond&)n.Bond(i);
+      if( !b.IsVisible() )  continue;
+      cnt++;
+      if( b.IsSelected() )  sel_cnt++;
+    }
+    if( cnt > 0 )  {
+      FXApp->SelectFragments(TNetPList() << &n, ((double)sel_cnt/cnt) < .75);
+    }
   }
   FXApp->Draw();
   return true;

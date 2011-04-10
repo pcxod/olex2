@@ -252,7 +252,7 @@ protected:
   TPopupData* GetPopup(const olxstr& name);
 
   void PreviewHelp(const olxstr& Cmd);
-  olxstr ExpandCommand(const olxstr &Cmd);
+  olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
   // click-name states
   uint32_t ProgramState;
@@ -803,11 +803,16 @@ public:
   wxMenu* GeneralPopup()        {  return pmMenu; }
 //..............................................................................
 // TMainForm interface
-  void GlCanvas( TGlCanvas *GC) {  FGlCanvas = GC;  }
+  void GlCanvas(TGlCanvas *GC) {  FGlCanvas = GC;  }
   TGlCanvas * GlCanvas()        {  return FGlCanvas;  }
   void XApp( TGXApp *XA);
   TGXApp *XApp()         {  return FXApp; }
   bool FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect);
+  TXAtomPList FindXAtoms(const TStrObjList &Cmds,bool GetAll, bool unselect)  {
+    TXAtomPList atoms;
+    FindXAtoms(Cmds, atoms, GetAll, unselect);
+    return atoms;
+  }
 //..............................................................................
 // General interface
 //..............................................................................
