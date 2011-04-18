@@ -204,6 +204,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   }
   vec3f dir_vec = atom_b.crd-atom_a.crd;
   const float b_len = dir_vec.Length();
+  if( b_len < 1e-3 )  return;
   const float brad = parent.GetBondRad(*this, mask)*bond.GetRadius();
   dir_vec.Normalise();
   const float pers_scale = 1.0-olx_sqr(dir_vec[2]);

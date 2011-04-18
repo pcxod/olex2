@@ -235,7 +235,7 @@ void TGlPrimitive::Draw()  {
   if( Type == sgloText )  {
 #ifdef _DEBUG
     if( Font == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "undefiend font");
+      throw TFunctionFailedException(__OlxSourceInfo, "undefined font");
 #endif
     if( !(String == NULL || Font == NULL || String->IsEmpty()) )  {
       if( Font->IsVectorFont() )  {

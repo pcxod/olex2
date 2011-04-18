@@ -438,6 +438,9 @@ void TdlgMatProp::OnPaste(wxCommandEvent& event)  {
 void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
   TGXApp::GetInstance().GetRender().GetScene().ShowFontDialog(
     Object->GetPrimitives().GetPrimitive(FCurrentMaterial).GetFont());
+  TGPCollection& gpc = Object->GetPrimitives();
+  for( size_t i=0; i < gpc.ObjectCount(); i++ )
+    gpc.GetObject(i).UpdateLabel();
 }
 //..............................................................................
 

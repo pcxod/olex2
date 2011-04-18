@@ -79,9 +79,7 @@ public:
       return (timestamp == fi.timestamp && size == fi.size && name == fi.name);
     }
     // comparison operator
-    bool operator != (const FileID& fi)  {
-      return !(timestamp == fi.timestamp && size == fi.size && name == fi.name);
-    }
+    bool operator != (const FileID& fi)  {  return !(*this == fi);  }
     // assignment operator
     FileID& operator = (const FileID& fi)  {
       name = fi.name;

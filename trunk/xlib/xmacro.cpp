@@ -1515,8 +1515,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
   mat3d tm_p(tm);
   for( size_t i=0; i < 3; i++ )
     for( size_t j=0; j < 3; j++ )
-      if( tm_p[i][j] < 0 ) 
-        tm_p[i][j] = - tm_p[i][j];
+      tm_p[i][j] = olx_abs(tm_p[i][j]);
   ax_err *= tm_p;
   an_err *= tm_p;
   au.GetAxes()[0] = f2c[0].Length();  au.GetAxisEsds()[0] = sqrt(ax_err[0][0]);
@@ -1542,29 +1541,30 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
     TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString() << ' '  <<
     TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString();
   TBasicApp::NewLogEntry(logError) << "Cell esd's are estimated!";
+  bool save = false;
   if( !resHKL_FN.IsEmpty() )  {
     olxstr hkl_fn(xapp.LocateHklFile());
     if( !hkl_fn.IsEmpty() )  {
       THklFile hklf;
       hklf.LoadFromFile(hkl_fn);
-      for( size_t i=0; i < hklf.RefCount(); i++ )  {
-        vec3d hkl(hklf[i].GetH(), hklf[i].GetK(), hklf[i].GetL());
-        hkl = tm_t * hkl;
-        hklf[i].SetH(olx_round(hkl[0]));
-        hklf[i].SetK(olx_round(hkl[1]));
-        hklf[i].SetL(olx_round(hkl[2]));
-      }
+      for( size_t i=0; i < hklf.RefCount(); i++ )
+        hklf[i].SetHkl((tm_t * vec3d(hklf[i].GetHkl())).Round<int>());
       hklf.SaveToFile(resHKL_FN);
       xapp.XFile().GetRM().SetHKLSource(resHKL_FN);
+      save = true;
     }
     else
       TBasicApp::NewLogEntry(logError) << "Could not locate source HKL file";
   }
+  else  {
+    const mat3d hklf_mat = tm_t*xapp.XFile().LastLoader()->GetRM().GetHKLF_mat();
+    xapp.XFile().LastLoader()->GetRM().SetHKLF_mat(hklf_mat);
+  }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
   xapp.XFile().LastLoaderChanged();
-  // keep the settings, as the hkl file has changed, so if user exists... inconsistency
-  xapp.XFile().SaveToFile(xapp.XFile().GetFileName(), false);
+  if( save )
+    xapp.XFile().SaveToFile(xapp.XFile().GetFileName(), false);
 }
 //..............................................................................
 TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs, const olxstr& axis)  {
