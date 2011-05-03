@@ -134,7 +134,7 @@ void TSimpleRestraint::Assign(const TSimpleRestraint& sr)  {
 void TSimpleRestraint::Subtract(TSimpleRestraint& sr)  {
   if( sr.GetListType() != ListType )
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
-  if( ListType == rltAtoms )  { // do not substruct groups though: #312..
+  if( ListType == rltAtoms )  { // do not subtract groups though: #312..
     size_t del_count = 0;
     for( size_t i=0; i < InvolvedAtoms.Count(); i++ )  {
       for( size_t j=0; j < sr.InvolvedAtoms.Count(); j++ )  {
