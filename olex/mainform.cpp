@@ -1469,18 +1469,23 @@ void TMainForm::AquireTooltipValue()  {
 #endif
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
-      Tooltip = ((TXBond*)G)->A().GetLabel();
-      Tooltip << '-' << ((TXBond*)G)->B().GetLabel() << ": ";
+      TXBond& xb = *(TXBond*)G;
+      Tooltip = xb.A().GetLabel();
+      Tooltip << '-' << xb.B().GetLabel() << ": ";
       if( FXApp->CheckFileType<TCif>() )  {
-        TSBond& sb = *(TXBond*)G;
-        ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>().GetDataManager().Match(sb.A(), sb.B());
+        ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>().GetDataManager().Match(xb.A(), xb.B());
         if( cv != NULL )
           Tooltip << cv->GetValue().ToString();
         else
-          Tooltip << olxstr::FormatFloat(3, sb.Length());
+          Tooltip << olxstr::FormatFloat(3, xb.Length());
       }
       else
-        Tooltip << olxstr::FormatFloat(3, ((TXBond*)G)->Length());
+        Tooltip << olxstr::FormatFloat(3, xb.Length());
+#ifdef _DEBUG
+      vec3d n = (xb.A().crd()-xb.B().crd()).Normalise();
+      Tooltip << "\nn: " << olx_round(n[0], 1000) << ',' << olx_round(n[1], 1000) <<
+        ',' << olx_round(n[2], 1000);
+#endif
     } 
     else if( EsdlInstanceOf( *G, TXReflection) )  {
       Tooltip = ((TXReflection*)G)->GetHKL()[0];

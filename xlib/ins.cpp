@@ -301,6 +301,12 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
       }
     }
+    else if( toks.Count() > 5 && toks[0].Equalsi("REM") &&
+      toks[1].Equalsi("olex2.shared_rotated_adp") )
+    {
+      shared_rotated_adp_constraint::FromToks(toks.SubListFrom(2), cx.rm,
+        cx.rm.SharedRotatedADPs.items);
+    }
     else  {
       TInsList* Param = new TInsList(toks);
       Ins.GetObject(i) = Param;
@@ -1398,6 +1404,12 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       HyphenateIns(line, SL);
       if( processed != NULL )  
         processed->restraints.Add(sr);
+    }
+  }
+  // shared rotated ADPs
+  for( size_t i=0; i < rm.SharedRotatedADPs.items.Count(); i++ )  {
+    if( rm.SharedRotatedADPs.items[i].IsValid() )  {
+      HyphenateIns(rm.SharedRotatedADPs.items[i].ToInsStr(rm), SL);
     }
   }
   // equivalent EXYZ constraint

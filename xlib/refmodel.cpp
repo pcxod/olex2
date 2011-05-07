@@ -12,15 +12,15 @@
 #include "twinning.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
-  rDFIX(*this, rltBonds, "dfix"), 
-  rDANG(*this, rltBonds, "dang"), 
-  rSADI(*this, rltBonds, "sadi"), 
-  rCHIV(*this, rltAtoms, "chiv"), 
-  rFLAT(*this, rltGroup, "flat"), 
-  rDELU(*this, rltAtoms, "delu"), 
-  rSIMU(*this, rltAtoms, "simu"), 
-  rISOR(*this, rltAtoms, "isor"), 
-  rEADP(*this, rltAtoms, "eadp"), 
+  rDFIX(*this, rltBonds, "dfix"),
+  rDANG(*this, rltBonds, "dang"),
+  rSADI(*this, rltBonds, "sadi"),
+  rCHIV(*this, rltAtoms, "chiv"),
+  rFLAT(*this, rltGroup, "flat"),
+  rDELU(*this, rltAtoms, "delu"),
+  rSIMU(*this, rltAtoms, "simu"),
+  rISOR(*this, rltAtoms, "isor"),
+  rEADP(*this, rltAtoms, "eadp"),
   ExyzGroups(*this), 
   AfixGroups(*this), 
   rSAME(*this),
@@ -78,6 +78,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   rISOR.Clear();
   rEADP.Clear();
   ExyzGroups.Clear();
+  SharedRotatedADPs.Clear();
   if( (clear_mask & rm_clear_SAME) != 0 )
     rSAME.Clear();
   //ExyzGroups.Clear();
@@ -205,6 +206,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
+  SharedRotatedADPs.Assign(*this, rm.SharedRotatedADPs);
   // restraunts have to be copied first, as some may refer to vars
   Vars.Assign( rm.Vars );
 
@@ -1067,6 +1069,8 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   PythonExt::SetDictItem(main, "simu", rSIMU.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, "isor", rISOR.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, "eadp", rEADP.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, "shared_rotated_adp",
+    SharedRotatedADPs.PyExport());
 
   PythonExt::SetDictItem(hklf, "value", Py_BuildValue("i", HKLF));
   PythonExt::SetDictItem(hklf, "s", Py_BuildValue("d", HKLF_s));

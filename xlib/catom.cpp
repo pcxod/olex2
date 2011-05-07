@@ -449,7 +449,7 @@ SiteSymmCon TCAtom::GetSiteConstraints() const {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
+olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm) const  {
   olxstr name(Atom->GetLabel());
   if( Atom->GetResiId() == 0 )  {
     if( Matrix != NULL )
@@ -463,7 +463,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
   return name;
 }
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const int resiId) const  {
+olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const int resiId) const  {
   olxstr name(Atom->GetLabel());
   if( Atom->GetResiId() == 0 || 
     Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiId )  
@@ -479,7 +479,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const int resiId) const  {
   return name;
 }
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) const  {
+olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const olxstr& resiName) const  {
   if( resiName.IsEmpty() )
     return GetFullLabel(rm);
 
