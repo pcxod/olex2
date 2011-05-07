@@ -11,6 +11,7 @@
 #include "fragment.h"
 #include "symmlib.h"
 #include "edict.h"
+#include "constraints_ext.h"
 
 BeginXlibNamespace()
 
@@ -150,6 +151,7 @@ public:
                   rSIMU,  // similar Uij (SIMU)
                   rISOR,  // Uij components approximate to isotropic behavior (ISOR)
                   rEADP;  // equivalent adp, constraint
+  ConstraintContainer<shared_rotated_adp_constraint> SharedRotatedADPs;
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;
