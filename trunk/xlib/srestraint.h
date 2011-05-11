@@ -10,11 +10,12 @@ class TAsymmUnit;
 class RefinementModel;
 class TSRestraintList;
 // restraint atom list types
-const short rltNone   = 0, //default value for the constructor...
+const short rltNone   = 0, // default value for the constructor...
             rltAtoms  = 1, // set of independent atoms
-            rltBonds  = 2, // set of "bonds" - atom pairs
-            rltAngles = 3, // set of "angles" - atom triples
-            rltGroup  = 4; // atoms represent a group
+            rltGroup2 = 2, // set of "bonds" - atom pairs
+            rltGroup3 = 3, // set of "angles" - atom triplets
+            rltGroup4 = 4, // dihedrals
+            rltGroup  = 5; // atoms represent a group
 
 class TSimpleRestraint : public IEObject, public IXVarReferencer  {
   double Value, Esd, Esd1;

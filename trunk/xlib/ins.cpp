@@ -1374,6 +1374,10 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   restraints.Add("ISOR", ResInfo(&rm.rISOR, RCInfo(0, 2, -1)));
   // equivalent EADP constraint
   restraints.Add("EADP", ResInfo(&rm.rEADP, RCInfo(0, 0, 2, false)));
+  restraints.Add(olxstr("REM ") << rm.rAngle.GetIdName(),
+    ResInfo(&rm.rAngle, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rDihedralAngle.GetIdName(),
+    ResInfo(&rm.rDihedralAngle, RCInfo(1, 1, -1, true)));
 
   TUIntList usedSymm;
   for( size_t i=0; i < restraints.Count(); i++ )  {
@@ -1471,12 +1475,15 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
   restraints.Add(&rm.rSIMU); 
   restraints.Add(&rm.rISOR); 
   restraints.Add(&rm.rEADP); 
+  restraints.Add(&rm.rAngle); 
+  restraints.Add(&rm.rDihedralAngle); 
   for( size_t i=0; i < restraints.Count(); i++ )  {
     TSRestraintList& srl = *restraints[i];
     for( size_t j=0; j < srl.Count(); j++ )  {
       TSimpleRestraint& sr = srl[j];
       for( size_t k=0; k < sr.AtomCount(); k++ )
-        sr.GetAtom(k).GetAtom()->SetLabel(rm.aunit.ValidateLabel(sr.GetAtom(k).GetAtom()->GetLabel()), false);
+        sr.GetAtom(k).GetAtom()->SetLabel(
+        rm.aunit.ValidateLabel(sr.GetAtom(k).GetAtom()->GetLabel()), false);
     }
   }
   // equivalent EXYZ constraint
@@ -1599,7 +1606,9 @@ void TIns::ParseHeader(const TStrList& in)  {
   _FinishParsing(cx);
 }
 //..............................................................................
-bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
+bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
+  if( _toks.IsEmpty() )  return false;
+  TStrList toks(_toks);
   if( toks[0].Equalsi("EQIV") && toks.Count() >= 3 )  {
     smatd SymM;
     TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2), SymM);
@@ -1611,6 +1620,11 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
   bool AcceptsAll = false;
   double Esd1Mult = 0, DefVal = 0, DefEsd = 0, DefEsd1 = 0;
   double *Vals[] = {&DefVal, &DefEsd, &DefEsd1};
+  bool use_var_manager = true;
+  if( toks[0].Equalsi("REM") && toks.Count() > 1 && toks[1].StartsFromi("olex2.") )  {
+    toks.Delete(0);
+    use_var_manager = false;
+  }
   // extract residue
   olxstr resi, ins_name = toks[0];
   size_t resi_ind = toks[0].IndexOf('_');
@@ -1682,6 +1696,18 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
     srl = &rm.rEADP;
     RequiredParams = 0;  AcceptsParams = 0;
   }
+  else if( ins_name.Equalsi("olex2.restraint.angle") )  {
+    srl = &rm.rAngle;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.02;
+    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
+  else if( ins_name.Equalsi("olex2.restraint.dihedral") )  {
+    srl = &rm.rDihedralAngle;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.02;
+    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
   else
     srl = NULL;
   if( srl != NULL )  {
@@ -1712,7 +1738,10 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
         index = 2; 
       }
     }
-    rm.Vars.SetParam(sr, 0, DefVal);
+    if( use_var_manager )
+      rm.Vars.SetParam(sr, 0, DefVal);
+    else
+      sr.SetValue(DefVal);
     sr.SetEsd(DefEsd);
     if( Vals[0] == &DefEsd )
       sr.SetEsd1( (index <= 2) ? DefEsd*Esd1Mult : DefEsd1 );
@@ -1730,7 +1759,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
         TBasicApp::NewLogEntry(logException) << ex.GetException()->GetError();
         return false;
       }
-      if( sr.GetListType() == rltBonds && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )  {
+      if( sr.GetListType() == rltGroup2 && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )  {
         TBasicApp::NewLogEntry(logError) << "Wrong restraint parameters list: " << toks.Text(' ');
         return false;
       }

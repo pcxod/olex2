@@ -12,15 +12,17 @@
 #include "twinning.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
-  rDFIX(*this, rltBonds, "dfix"),
-  rDANG(*this, rltBonds, "dang"),
-  rSADI(*this, rltBonds, "sadi"),
+  rDFIX(*this, rltGroup2, "dfix"),
+  rDANG(*this, rltGroup2, "dang"),
+  rSADI(*this, rltGroup2, "sadi"),
   rCHIV(*this, rltAtoms, "chiv"),
   rFLAT(*this, rltGroup, "flat"),
   rDELU(*this, rltAtoms, "delu"),
   rSIMU(*this, rltAtoms, "simu"),
   rISOR(*this, rltAtoms, "isor"),
   rEADP(*this, rltAtoms, "eadp"),
+  rAngle(*this, rltGroup3, "olex2.restraint.angle"),
+  rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral"),
   ExyzGroups(*this), 
   AfixGroups(*this), 
   rSAME(*this),
@@ -77,6 +79,8 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   rDELU.Clear();
   rISOR.Clear();
   rEADP.Clear();
+  rAngle.Clear();
+  rDihedralAngle.Clear();
   ExyzGroups.Clear();
   SharedRotatedADPs.Clear();
   if( (clear_mask & rm_clear_SAME) != 0 )
@@ -203,6 +207,8 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rDELU.Assign(rm.rDELU);
   rISOR.Assign(rm.rISOR);
   rEADP.Assign(rm.rEADP);
+  rAngle.Assign(rm.rAngle);
+  rDihedralAngle.Assign(rm.rDihedralAngle);
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
@@ -293,6 +299,8 @@ void RefinementModel::Validate() {
   rSIMU.ValidateAll();
   rISOR.ValidateAll();
   rEADP.ValidateAll();
+  rAngle.ValidateAll();
+  rDihedralAngle.ValidateAll();
   ExyzGroups.ValidateAll();
   AfixGroups.ValidateAll();
   Vars.Validate();
@@ -903,6 +911,8 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   rSIMU.ToDataItem(item.AddItem("SIMU"));
   rISOR.ToDataItem(item.AddItem("ISOR"));
   rEADP.ToDataItem(item.AddItem("EADP"));
+  rAngle.ToDataItem(item.AddItem(rAngle.GetIdName()));
+  rDihedralAngle.ToDataItem(item.AddItem(rDihedralAngle.GetIdName()));
   
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
   hklf.AddField("s", HKLF_s);
@@ -971,6 +981,13 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   rSIMU.FromDataItem(item.FindRequiredItem("SIMU"));
   rISOR.FromDataItem(item.FindRequiredItem("ISOR"));
   rEADP.FromDataItem(item.FindRequiredItem("EADP"));
+  {
+    TDataItem* i = item.FindItem(rAngle.GetIdName());
+    if( i != NULL )  {
+      rAngle.FromDataItem(*i);
+      rDihedralAngle.FromDataItem(item.FindRequiredItem(rDihedralAngle.GetIdName()));
+    }
+  }
 
   TDataItem& hklf = item.FindRequiredItem("HKLF");
   HKLF = hklf.GetValue().ToInt();
@@ -1069,6 +1086,9 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   PythonExt::SetDictItem(main, "simu", rSIMU.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, "isor", rISOR.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, "eadp", rEADP.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, rAngle.GetIdName().u_str(), rAngle.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, rDihedralAngle.GetIdName().u_str(),
+    rDihedralAngle.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, "shared_rotated_adp",
     SharedRotatedADPs.PyExport());
 
