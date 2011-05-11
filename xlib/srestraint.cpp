@@ -34,43 +34,33 @@ void TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
 }
 //..............................................................................
 void TSimpleRestraint::Validate()  {
-  for( size_t i=0; i < InvolvedAtoms.Count(); i++ )  {
-    if( InvolvedAtoms.IsNull(i) )  continue;
-    if( InvolvedAtoms[i].GetAtom()->IsDeleted() )  {
-      if( InvolvedAtoms[i].GetMatrix() != NULL )
-        Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i].GetMatrix());
-      InvolvedAtoms.NullItem(i);
-      if( ListType == rltBonds )  {
-        size_t ei = i + ((i%2)==0 ? 1 : -1);
-        if( InvolvedAtoms[ei].GetMatrix() != NULL )
-          Parent.GetRM().RemUsedSymm(*InvolvedAtoms[ei].GetMatrix());
-        InvolvedAtoms.NullItem(ei);
+  size_t group_cnt = 1;      
+  if( ListType == rltGroup2 )
+    group_cnt = 2;
+  else if( ListType == rltGroup3 )
+    group_cnt = 3;
+  else if( ListType == rltGroup4 )
+    group_cnt = 4;
+  else if( ListType == rltGroup )
+    group_cnt = InvolvedAtoms.Count();
+  
+  for( size_t i=0; i < InvolvedAtoms.Count(); i+=group_cnt )  {
+    bool valid = true;
+    for( size_t j=i; j < group_cnt; j++ )  {
+      if( j >= InvolvedAtoms.Count() || InvolvedAtoms.IsNull(j) ||
+          InvolvedAtoms[j].GetAtom()->IsDeleted() )
+      {
+        valid = false;
+        break;
       }
-      else if( ListType == rltAngles )  {
-        if( (i%3) == 0 )  {
-          if( InvolvedAtoms[i+1].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i+1].GetMatrix());
-          InvolvedAtoms.NullItem(i+2);
-          if( InvolvedAtoms[i+2].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i+2].GetMatrix());
-          InvolvedAtoms.NullItem(i+2);
-        }
-        else if( (i%3) == 1 )  {
-          if( InvolvedAtoms[i-1].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i-1].GetMatrix());
-          InvolvedAtoms.NullItem(i+1);
-          if( InvolvedAtoms[i+1].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i+1].GetMatrix());
-          InvolvedAtoms.NullItem(i+1);
-        }
-        else if( (i%3) == 2 )  {
-          if( InvolvedAtoms[i-1].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i-1].GetMatrix());
-          InvolvedAtoms.NullItem(i-2);
-          if( InvolvedAtoms[i-2].GetMatrix() != NULL )
-            Parent.GetRM().RemUsedSymm(*InvolvedAtoms[i-2].GetMatrix());
-          InvolvedAtoms.NullItem(i-2);
-        }
+    }
+    if( !valid )  {
+      for( size_t j=i; j < group_cnt; j++ )  {
+        if( j >= InvolvedAtoms.Count() )  break;
+        if( InvolvedAtoms.IsNull(j) )  continue;
+        if( InvolvedAtoms[j].GetMatrix() != NULL )
+          Parent.GetRM().RemUsedSymm(*InvolvedAtoms[j].GetMatrix());
+        InvolvedAtoms.NullItem(j);
       }
     }
   }
@@ -153,7 +143,7 @@ void TSimpleRestraint::Subtract(TSimpleRestraint& sr)  {
       Delete();
     }
   }
-  else if( ListType == rltBonds )  {
+  else if( ListType == rltGroup2 )  {
     for( size_t i=0; i < InvolvedAtoms.Count(); i+=2 )  {
       for( size_t j=0; j < sr.InvolvedAtoms.Count(); j+=2 )  {
         if( (AtomsEqual(InvolvedAtoms[i], sr.InvolvedAtoms[j]) &&

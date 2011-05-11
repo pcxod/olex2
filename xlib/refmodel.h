@@ -150,7 +150,9 @@ public:
                   rDELU,  // rigid bond restraints (DELU)
                   rSIMU,  // similar Uij (SIMU)
                   rISOR,  // Uij components approximate to isotropic behavior (ISOR)
-                  rEADP;  // equivalent adp, constraint
+                  rEADP,  // equivalent adp, constraint
+                  rAngle,
+                  rDihedralAngle;
   ConstraintContainer<shared_rotated_adp_constraint> SharedRotatedADPs;
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
