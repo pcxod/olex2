@@ -93,6 +93,20 @@ void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func,
     olxstr('\'') << olxwstr(src, src_len) << '\'');
 }
 //................................................................................................
+void TExceptionBase::ThrowInvalidBoolFormat(const char* file, const char* func, int line, 
+    const char* src, size_t src_len)
+{
+  throw TInvalidBoolException(FormatSrc(file,func,line),
+    olxstr('\'') << olxcstr(src, src_len) << '\'');
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidBoolFormat(const char* file, const char* func, int line, 
+    const wchar_t* src, size_t src_len)
+{
+  throw TInvalidBoolException(FormatSrc(file,func,line),
+    olxstr('\'') << olxwstr(src, src_len) << '\'');
+}
+//................................................................................................
 const TBasicException* TExceptionBase::GetException() const {
   const TBasicException* exc = dynamic_cast<const TBasicException*>(this);
   if( exc == NULL )

@@ -961,9 +961,17 @@ public:
   unsigned int ToUInt() const {  return o_atoui<unsigned int>( T::Data(), T::_Length, 10);  }
   bool IsUInt() const {  return o_isuint(T::Data(), T::_Length);  }
   //............................................................................
-  size_t ToSizeT() const {  return o_atoui<size_t>( T::Data(), T::_Length, 10);  }
+  size_t ToSizeT() const {  return o_atoui<size_t>(T::Data(), T::_Length, 10);  }
   //............................................................................
-  bool ToBool() const {  return (Comparei(TrueString()) == 0);  }
+  bool ToBool() const {
+    if( Equalsi(TrueString()) )  return true;
+    else if( Equalsi(FalseString()) )  return false;
+    else
+      TExceptionBase::ThrowInvalidBoolFormat(__POlxSourceInfo, T::Data(), T::_Length);
+    return false; // to avoid compiler warning
+  }
+  //............................................................................
+  bool IsBool() const { return Equalsi(TrueString()) || Equalsi(FalseString());  }
   //............................................................................
   // no '\0' at the end, got to do it ourselves
   template <class FT> static FT o_atof(const TC* data, size_t len) {
@@ -1634,6 +1642,27 @@ public:
   static olxwstr CStr2WStr(const olxcstr& str);
   //............................................................................
   virtual IEObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
+  //............................................................................
+  // streaming helper
+  template <typename sep_t> struct SeperatedStream {
+    TTSString& dest;
+    sep_t separator;
+    SeperatedStream(TTSString& str, const sep_t& sep) : dest(str), separator(sep) {}
+    template <typename T>
+    SeperatedStream& operator << (const T& v)  {
+      if( !dest.IsEmpty() ) dest << separator;
+      dest << v;
+      return *this;
+    }
+  };
+
+  template <typename sep_t>
+  SeperatedStream<sep_t> Stream(const sep_t& separator) {
+    return SeperatedStream<sep_t>(*this, separator);
+  }
+
+  template <typename sep_t>
+  TTSString(const SeperatedStream<sep_t>& str)  {  InitFromString(str.dest);  }
   //............................................................................
 };
 

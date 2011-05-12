@@ -152,12 +152,14 @@ public:
                   rISOR,  // Uij components approximate to isotropic behavior (ISOR)
                   rEADP,  // equivalent adp, constraint
                   rAngle,
-                  rDihedralAngle;
-  ConstraintContainer<shared_rotated_adp_constraint> SharedRotatedADPs;
+                  rDihedralAngle,
+                  rFixedUeq;
+  ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;
-
+  // restraints and constraints register
+  olxdict<olxstr, IConstraintContainer*, olxstrComparator<false> > rcRegister;
   // removes references to all deleted atoms
   void Validate();
   // creates a human readable description of the refinement
@@ -652,6 +654,7 @@ of components 1 ... m
   void LibOSF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);
+  void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
   struct ReleasedItems {
@@ -664,4 +667,3 @@ of components 1 ... m
 EndXlibNamespace()
 
 #endif
-

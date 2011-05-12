@@ -60,7 +60,7 @@ public:
   // as in the current item
   template <class T> TDataItem* FindItemi(const T& Name) const {  return Items.FindObjecti(Name);  }
   template <class T> TDataItem* FindItem(const T& Name)  const {  return Items.FindObject(Name);  }
-  template <class T> TDataItem& FindRequiredItem(const T& Name)   const {  
+  template <class T> TDataItem& FindRequiredItem(const T& Name) const {  
     size_t i = Items.IndexOf(Name);
     if( i == InvalidIndex )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required item does not exist: ") << Name);
