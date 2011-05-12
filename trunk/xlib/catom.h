@@ -42,6 +42,7 @@ class TAfixGroups;
 class TExyzGroup;
 class TExyzGroups;
 struct CXConnInfo;
+class RefinementModel;
 
 class TCAtom: public ACollectionItem, public IXVarReferencer  {
 public:
@@ -293,13 +294,15 @@ public:
   vec3d ccrd() const { return Matrix == NULL ? Atom->ccrd() : *Matrix*Atom->ccrd();  }
   DefPropC(olxstr, Name)
   // if atom's Residue is default or residue number equals to ResiNumber - it it dropped
-  olxstr GetFullLabel(const class RefinementModel& rm, const int ResiNumber) const;
+  olxstr GetFullLabel(const RefinementModel& rm, const int ResiNumber) const;
   /* if Resiname is number - calls the function above with ResiNumber.ToInt(), else if it is empty - calls
     the single argument function, otherwise compares the atoms' residue name with ResiName and
     if the names match - drops it
   */
-  olxstr GetFullLabel(const class RefinementModel& rm, const olxstr& ResiName) const;
-  olxstr GetFullLabel(const class RefinementModel& rm) const;
+  olxstr GetFullLabel(const RefinementModel& rm, const olxstr& ResiName) const;
+  olxstr GetFullLabel(const RefinementModel& rm) const;
+  void ToDataItem(TDataItem& di) const;
+  TGroupCAtom& FromDataItem(const TDataItem& di, const RefinementModel& rm);
 };
 //....................................................................................
 typedef TTypeList<TGroupCAtom> TCAtomGroup;

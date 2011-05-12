@@ -64,7 +64,7 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
         (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() && ag[i+1].GetMatrix()->t.IsNull()) || 
         ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL )  
       {
-        TBasicApp::NewLogEntry(logError) << "Dummy  BIND, skipping " <<
+        TBasicApp::NewLogEntry(logError) << "Dummy BIND, skipping " <<
           ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
         continue;
       }

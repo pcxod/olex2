@@ -302,10 +302,11 @@ void TIns::_FinishParsing(ParseContext& cx)  {
       }
     }
     else if( toks.Count() > 5 && toks[0].Equalsi("REM") &&
-      toks[1].Equalsi("olex2.shared_rotated_adp") )
+      toks[1].Equalsi("olex2.constraint.rotated_adp") )
     {
-      shared_rotated_adp_constraint::FromToks(toks.SubListFrom(2), cx.rm,
+      rotated_adp_constraint::FromToks(toks.SubListFrom(2), cx.rm,
         cx.rm.SharedRotatedADPs.items);
+      Ins.Delete(i--);
     }
     else  {
       TInsList* Param = new TInsList(toks);
@@ -1378,6 +1379,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     ResInfo(&rm.rAngle, RCInfo(1, 1, -1, true)));
   restraints.Add(olxstr("REM ") << rm.rDihedralAngle.GetIdName(),
     ResInfo(&rm.rDihedralAngle, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rFixedUeq.GetIdName(),
+    ResInfo(&rm.rFixedUeq, RCInfo(1, 1, -1, true)));
 
   TUIntList usedSymm;
   for( size_t i=0; i < restraints.Count(); i++ )  {
@@ -1466,17 +1469,18 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
 void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
   // fixed distances
   TPtrList<TSRestraintList> restraints;
-  restraints.Add(&rm.rDFIX); 
-  restraints.Add(&rm.rSADI); 
-  restraints.Add(&rm.rDANG); 
-  restraints.Add(&rm.rCHIV); 
-  restraints.Add(&rm.rFLAT); 
-  restraints.Add(&rm.rDELU); 
-  restraints.Add(&rm.rSIMU); 
-  restraints.Add(&rm.rISOR); 
-  restraints.Add(&rm.rEADP); 
-  restraints.Add(&rm.rAngle); 
-  restraints.Add(&rm.rDihedralAngle); 
+  restraints.Add(&rm.rDFIX);
+  restraints.Add(&rm.rSADI);
+  restraints.Add(&rm.rDANG);
+  restraints.Add(&rm.rCHIV);
+  restraints.Add(&rm.rFLAT);
+  restraints.Add(&rm.rDELU);
+  restraints.Add(&rm.rSIMU);
+  restraints.Add(&rm.rISOR);
+  restraints.Add(&rm.rEADP);
+  restraints.Add(&rm.rAngle);
+  restraints.Add(&rm.rDihedralAngle);
+  restraints.Add(&rm.rFixedUeq);
   for( size_t i=0; i < restraints.Count(); i++ )  {
     TSRestraintList& srl = *restraints[i];
     for( size_t j=0; j < srl.Count(); j++ )  {
@@ -1620,15 +1624,15 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   bool AcceptsAll = false;
   double Esd1Mult = 0, DefVal = 0, DefEsd = 0, DefEsd1 = 0;
   double *Vals[] = {&DefVal, &DefEsd, &DefEsd1};
-  bool use_var_manager = true;
+  bool use_var_manager = true, check_resi = true;
   if( toks[0].Equalsi("REM") && toks.Count() > 1 && toks[1].StartsFromi("olex2.") )  {
     toks.Delete(0);
-    use_var_manager = false;
+    check_resi = use_var_manager = false;
   }
   // extract residue
   olxstr resi, ins_name = toks[0];
-  size_t resi_ind = toks[0].IndexOf('_');
-  if( resi_ind != InvalidIndex )  {
+  const size_t resi_ind = toks[0].IndexOf('_');
+  if( check_resi && resi_ind != InvalidIndex )  {
     resi = toks[0].SubStringFrom(resi_ind+1);
     ins_name = toks[0].SubStringTo(resi_ind);
   }
@@ -1696,14 +1700,20 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
     srl = &rm.rEADP;
     RequiredParams = 0;  AcceptsParams = 0;
   }
-  else if( ins_name.Equalsi("olex2.restraint.angle") )  {
+  else if( ins_name.Equalsi(rm.rAngle.GetIdName()) )  {
     srl = &rm.rAngle;
     RequiredParams = 1;  AcceptsParams = 2;
     DefEsd = 0.02;
     Vals[0] = &DefVal;  Vals[1] = &DefEsd;
   }
-  else if( ins_name.Equalsi("olex2.restraint.dihedral") )  {
+  else if( ins_name.Equalsi(rm.rDihedralAngle.GetIdName()) )  {
     srl = &rm.rDihedralAngle;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.02;
+    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
+  else if( ins_name.Equalsi(rm.rFixedUeq.GetIdName()) )  {
+    srl = &rm.rFixedUeq;
     RequiredParams = 1;  AcceptsParams = 2;
     DefEsd = 0.02;
     Vals[0] = &DefVal;  Vals[1] = &DefEsd;

@@ -513,6 +513,18 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const olxstr& resiNa
   return name;
 }
 //..............................................................................
+void TGroupCAtom::ToDataItem(TDataItem& di) const {
+  di.AddField("atom_id", Atom->GetTag()).AddField("matr_id", Matrix == NULL ? -1 : Matrix->GetId());
+}
+//..............................................................................
+TGroupCAtom& TGroupCAtom::FromDataItem(const TDataItem& di, const RefinementModel& rm)  {
+  Atom = &rm.aunit.GetAtom(di.GetRequiredField("atom_id").ToSizeT());
+  int m_id = di.GetRequiredField("matr_id").ToInt();
+  if( m_id != -1 )
+    Matrix = &rm.GetUsedSymm(m_id);
+  return *this;
+}
+//..............................................................................
 IXVarReferencerContainer& TCAtom::GetParentContainer() const {  return *Parent;  }
 //..............................................................................
 double TCAtom::GetValue(size_t var_index) const {

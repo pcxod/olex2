@@ -320,6 +320,10 @@ public:
     const char* src, size_t src_len);
   static void ThrowInvalidFloatFormat(const char* file, const char* function, int line, 
     const wchar_t* src, size_t src_len);
+  static void ThrowInvalidBoolFormat(const char* file, const char* function, int line, 
+    const char* src, size_t src_len);
+  static void ThrowInvalidBoolFormat(const char* file, const char* function, int line, 
+    const wchar_t* src, size_t src_len);
   static TIString FormatSrc(const char* file, const char* func, int line);
   static void SetAutoLogging(bool v)  {  AutoLog = v;  }
   static bool GetAutoLogging()  {  return AutoLog;  }
