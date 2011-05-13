@@ -1648,8 +1648,8 @@ public:
     TTSString& dest;
     sep_t separator;
     SeperatedStream(TTSString& str, const sep_t& sep) : dest(str), separator(sep) {}
-    template <typename T>
-    SeperatedStream& operator << (const T& v)  {
+    template <typename val_t>
+    SeperatedStream& operator << (const val_t& v)  {
       if( !dest.IsEmpty() ) dest << separator;
       dest << v;
       return *this;
