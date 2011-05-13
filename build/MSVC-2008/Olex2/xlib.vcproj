@@ -2840,6 +2840,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\label_corrector.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\lattice.h"
 				>
 			</File>

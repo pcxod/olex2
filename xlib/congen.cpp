@@ -4,6 +4,7 @@
 #include "network.h"
 #include "unitcell.h"
 #include "lattice.h"
+#include "label_corrector.h"
 
 AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
   Distances(GenId(fgCH3, 1), 0.96);
@@ -44,21 +45,19 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
 void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
     vec3d_list& Crds, const olxstr& StartingName)
 {
-  vec3d v;
-  bool IncLabel = (Crds.Count() != 1);
+  LabelCorrector lc(au);
+  const bool IncLabel = (Crds.Count() != 1);
   for( size_t i=0; i < Crds.Count(); i++ )  {
-    v = Crds[i];
-    au.CartesianToCell(v);
     TCAtom& CA = au.NewAtom();
+    CA.ccrd() = au.Orthogonalise(Crds[i]);
+    CA.SetType(XElementLib::GetByIndex(iHydrogenIndex));
     if( IncLabel )  {
-      size_t j = i;
-      olxstr lbl = (StartingName + (char)('a' + j));
-      CA.SetLabel(au.CheckLabel(&CA, lbl), false);
+      olxstr lbl = (StartingName + (char)('a' + i));
+      CA.SetLabel(lbl, false);
     }
     else
-      CA.SetLabel(au.CheckLabel(&CA, StartingName), false);
-    CA.SetType(XElementLib::GetByIndex(iHydrogenIndex));
-    CA.ccrd() = v;
+      CA.SetLabel(StartingName, false);
+    lc.CorrectGlobal(CA);
     created.Add(CA);
   }
 }

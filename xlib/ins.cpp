@@ -26,6 +26,7 @@
 #include "sortedlist.h"
 #include "infotab.h"
 #include "catomlist.h"
+#include "label_corrector.h"
 
 #undef AddAtom
 #undef GetObject
@@ -916,6 +917,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
+    LabelCorrector lc;
     for( size_t j=0; j < residue.Count(); j++ )  {
       if( residue[j].IsDeleted() )  continue;
       residue[j].SetSaved(false);
@@ -926,15 +928,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
           GetRM().AddUserContent(residue[j].GetType().symbol, 1.0);
         }
       }
-      if( residue[j].GetLabel().Length() > 4 ) 
-        residue[j].SetLabel(GetAsymmUnit().CheckLabel(&residue[j], residue[j].GetLabel()), false);
-      for( size_t k=j+1; k < residue.Count(); k++ )  {
-        if( residue[k].IsDeleted() )  continue;
-        if( residue[j].GetPart() != residue[k].GetPart() && 
-            residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
-        if( residue[j].GetLabel().Equalsi(residue[k].GetLabel()) ) 
-          residue[k].SetLabel(GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel()), false);
-      }
+      lc.Correct(residue[j]);
     }
   }
   
@@ -1481,20 +1475,19 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
   restraints.Add(&rm.rAngle);
   restraints.Add(&rm.rDihedralAngle);
   restraints.Add(&rm.rFixedUeq);
+  LabelCorrector lc(rm.aunit);
   for( size_t i=0; i < restraints.Count(); i++ )  {
     TSRestraintList& srl = *restraints[i];
     for( size_t j=0; j < srl.Count(); j++ )  {
-      TSimpleRestraint& sr = srl[j];
-      for( size_t k=0; k < sr.AtomCount(); k++ )
-        sr.GetAtom(k).GetAtom()->SetLabel(
-        rm.aunit.ValidateLabel(sr.GetAtom(k).GetAtom()->GetLabel()), false);
+      for( size_t k=0; k < srl[j].AtomCount(); k++ )
+        lc.CorrectGlobal(*srl[j].GetAtom(k).GetAtom());
     }
   }
   // equivalent EXYZ constraint
   for( size_t i=0; i < rm.ExyzGroups.Count(); i++ )  {
     TExyzGroup& sr = rm.ExyzGroups[i];
     for( size_t j=0; j < sr.Count(); j++ )
-      sr[j].SetLabel(rm.aunit.ValidateLabel(sr[j].GetLabel()), false);
+      lc.CorrectGlobal(sr[j]);
   }
 }
 //..............................................................................
