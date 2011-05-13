@@ -59,6 +59,7 @@ public:
   inline void Clear()  {  SortedL::Clear();  }
   inline size_t Count() const {  return SortedL::Count();  }
   inline bool IsEmpty() const {  return SortedL::IsEmpty();  }
+  inline void SetCapacity(size_t c)  {  SortedL::SetCapacity(c);  }
   inline VType& GetValue(size_t ind)  {  return SortedL::operator[] (ind).val;  }
   inline const VType& GetValue(size_t ind) const {  return SortedL::operator[] (ind).val;  }
   inline const KType& GetKey(size_t ind) const {  return SortedL::operator[] (ind).key;  }

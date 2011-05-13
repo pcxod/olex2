@@ -17,6 +17,7 @@
 #include "refmodel.h"
 #include "residue.h"
 #include "math/align.h"
+#include "label_corrector.h"
 
 #undef GetObject
 
@@ -554,19 +555,6 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
       if( c < 'z' )  return CheckLabel(ca, LB, '0', 'a', (char)(c+1));
       throw TFunctionFailedException(__OlxSourceInfo, "cannot create label");
     }
-  }
-  return LB;
-}
-//..............................................................................
-olxstr TAsymmUnit::ValidateLabel(const olxstr &Label) const  {
-  olxstr LB((Label.Length() > 4) ? Label.SubStringTo(4) : Label);
-  int cnt=0;
-  for( size_t i=0; i < AtomCount(); i++ )  {
-    const TCAtom& CA = GetAtom(i);
-    if( !CA.IsDeleted() && CA.GetLabel().Equalsi(Label) )
-       cnt++;
-    if( cnt > 1 )
-      return CheckLabel(NULL, LB);
   }
   return LB;
 }

@@ -8,6 +8,7 @@
 #include "olxvar.h"
 #include "symmlib.h"
 #include "cdsfs.h"
+#include "label_corrector.h"
 #undef GetObject
 
 using namespace olex;
@@ -163,23 +164,10 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
     if( !PyArg_ParseTuple(args, "b", &calc_connectivity) )
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "b");
   }
-  // make the labels unique...
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
-  for( size_t i=0; i < au.ResidueCount(); i++ )  {
-    TResidue& residue = au.GetResidue(i);
-    for( size_t j=0; j < residue.Count(); j++ )  {
-      if( residue[j].IsDeleted() )  continue;
-      if( residue[j].GetLabel().Length() > 4 ) 
-        residue[j].SetLabel(au.CheckLabel(&residue[j], residue[j].GetLabel()), false);
-      for( size_t k=j+1; k < residue.Count(); k++ )  {
-        if( residue[k].IsDeleted() )  continue;
-        if( residue[j].GetPart() != residue[k].GetPart() && 
-            residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
-        if( residue[j].GetLabel().Equalsi(residue[k].GetLabel()) ) 
-          residue[k].SetLabel(au.CheckLabel(&residue[k], residue[k].GetLabel()), false);
-      }
-    }
-  }
+  // make the labels unique inside residues...
+  for( size_t i=0; i < au.ResidueCount(); i++ )
+    LabelCorrector().CorrectAll(au.GetResidue(i));
   return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
 }
 //..............................................................................
