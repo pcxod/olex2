@@ -4718,6 +4718,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     catch(const TExceptionBase& exc)  { 
+      FXApp->XFile().Close();
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     if( FXApp->XFile().HasLastLoader() )  {

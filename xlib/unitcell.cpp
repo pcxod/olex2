@@ -119,7 +119,7 @@ void  TUnitCell::InitMatrices()  {
         }
       }
       if( index == InvalidIndex )
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+        throw TFunctionFailedException(__OlxSourceInfo, "assert: incomplete space group");
       MulDest[i][j] = (uint8_t)index;
     }
     {
@@ -135,7 +135,7 @@ void  TUnitCell::InitMatrices()  {
         }
       }
       if( index == InvalidIndex )
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+        throw TFunctionFailedException(__OlxSourceInfo, "assert: incomplete space group");
       InvDest[i] = (uint8_t)index;
     }
   }
