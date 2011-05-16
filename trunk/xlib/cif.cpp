@@ -32,6 +32,7 @@ void TCif::Clear()  {
   DataManager.Clear();
   Matrices.Clear();
   MatrixMap.Clear();
+  data_provider.Clear();
 }
 //..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings)  {
@@ -582,22 +583,27 @@ bool TCif::Adopt(TXFile& XF)  {
     SetParam("_exptl_crystal_size_min", XF.GetRM().expl.GetCrystalSize()[2], false);
   }
   // HKL section
-  const RefinementModel::HklStat& hkl_stat = XF.GetRM().GetMergeStat();
-  SetParam("_diffrn_reflns_number", hkl_stat.TotalReflections-hkl_stat.SystematicAbsentcesRemoved, false);
-  SetParam("_reflns_number_total", hkl_stat.UniqueReflections, false);
-  const char* hkl = "hkl";
-  for( int i=0; i < 3; i++ )  {
-    SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_min", hkl_stat.FileMinInd[i], false);
-    SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_max", hkl_stat.FileMaxInd[i], false);
-  }
-  if( hkl_stat.MaxD > 0 )
-    SetParam("_diffrn_reflns_theta_min",
+  try {
+    const RefinementModel::HklStat& hkl_stat = XF.GetRM().GetMergeStat();
+    SetParam("_diffrn_reflns_number", hkl_stat.TotalReflections-hkl_stat.SystematicAbsentcesRemoved, false);
+    SetParam("_reflns_number_total", hkl_stat.UniqueReflections, false);
+    const char* hkl = "hkl";
+    for( int i=0; i < 3; i++ )  {
+      SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_min", hkl_stat.FileMinInd[i], false);
+      SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_max", hkl_stat.FileMaxInd[i], false);
+    }
+    if( hkl_stat.MaxD > 0 )
+      SetParam("_diffrn_reflns_theta_min",
       olxstr::FormatFloat(2, asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MaxD))*180/M_PI), false);
-  if( hkl_stat.MinD > 0 )
-    SetParam("_diffrn_reflns_theta_max",
+    if( hkl_stat.MinD > 0 )
+      SetParam("_diffrn_reflns_theta_max",
       olxstr::FormatFloat(2, asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MinD))*180/M_PI), false);
-  SetParam("_diffrn_reflns_av_R_equivalents", olxstr::FormatFloat(4, hkl_stat.Rint), false);
-  SetParam("_diffrn_reflns_av_unetI/netI", olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
+    SetParam("_diffrn_reflns_av_R_equivalents", olxstr::FormatFloat(4, hkl_stat.Rint), false);
+    SetParam("_diffrn_reflns_av_unetI/netI", olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
+  }
+  catch(const TExceptionBase&)  {
+    TBasicApp::NewLogEntry() << __OlxSrcInfo << ": failed to update HKL statistics section of the CIF";
+  }
   if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
     SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
   TSpaceGroup& sg = XF.GetLastLoaderSG();
