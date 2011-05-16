@@ -49,7 +49,7 @@ void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
   const bool IncLabel = (Crds.Count() != 1);
   for( size_t i=0; i < Crds.Count(); i++ )  {
     TCAtom& CA = au.NewAtom();
-    CA.ccrd() = au.Orthogonalise(Crds[i]);
+    CA.ccrd() = au.Fractionalise(Crds[i]);
     CA.SetType(XElementLib::GetByIndex(iHydrogenIndex));
     if( IncLabel )  {
       olxstr lbl = (StartingName + (char)('a' + i));
