@@ -32,7 +32,6 @@ void TCif::Clear()  {
   DataManager.Clear();
   Matrices.Clear();
   MatrixMap.Clear();
-  data_provider.Clear();
 }
 //..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings)  {
@@ -553,8 +552,9 @@ bool TCif::Adopt(TXFile& XF)  {
   GetRM().Assign(XF.GetRM(), true);
   Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString());
 
-  block_index = 0;
+  data_provider.Clear();
   data_provider.Add(Title.Replace(' ', "%20"));
+  block_index = 0;
   SetParam("_audit_creation_method", "OLEX2", true);
   SetParam("_chemical_name_systematic", "?", true);
   SetParam("_chemical_name_common", "?", true);
