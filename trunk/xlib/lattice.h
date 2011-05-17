@@ -92,6 +92,9 @@ public:
         const vec3d& MFrom, const vec3d& MTo);
   // finds matrices to be used for the next grow operation in GrowFragments
   void GetGrowMatrices(smatd_list& res) const;
+  /* finds all matrices unique to the unit cell which complete a given fragment */
+  SortedObjectList<smatd, smatd::ContainerIdComparator>
+    GetFragmentGrowMatrices(const TCAtomPList& fragment) const;
   /* grows all atoms which can be grown, if GrowShells is true, only immediate environment
   of the atoms which can grow is generated */
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
