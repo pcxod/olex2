@@ -119,9 +119,9 @@ struct LabelCorrector  {
       uniq_labels.Add(li->label);
       li->inc();
     }
-    else  {
+    else if( lo == NULL ) {
       throw TFunctionFailedException(__OlxSourceInfo,
-        "Incorerctly intialised object - use the right constructor");
+        "Incorrectly intialised object - use the right constructor");
     }
   }
 };
