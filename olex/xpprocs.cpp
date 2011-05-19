@@ -1512,10 +1512,21 @@ void TMainForm::macQual(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TXAtomPList Atoms;
-  FindXAtoms(Cmds, Atoms, true, true);
-  olxstr name;
+  bool process_atoms = true;
   vec3d from, to;
+  if( Cmds.IsEmpty() || (Cmds.Count() == 1 && Cmds[0].Equalsi("sel")) )  {
+    TGlGroup& sel = FXApp->GetSelection();
+    if( sel.Count() == 2 )  {
+      if( EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXPlane) )  {
+        from = ((TXPlane&)sel[0]).GetCenter();
+        to = ((TXPlane&)sel[1]).GetCenter();
+        process_atoms = false;
+      }
+    }
+  }
+  TXAtomPList Atoms;
+  if( process_atoms )
+    FindXAtoms(Cmds, Atoms, true, true);
   if( Atoms.Count() > 2 )  {
     TSAtomPList satoms(Atoms, StaticCastAccessor<TSAtom>());
     mat3d params;
@@ -1540,13 +1551,13 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     from = Atoms[0]->crd();
     to = Atoms[1]->crd();
   }
-  else  {
+  else if( process_atoms ) {
     Error.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
     return;
   }
   FXApp->GetRender().GetBasis().OrientNormal(to-from);
   if( !Options.Contains('n') )
-    FXApp->AddLine(name, from, to);
+    FXApp->AddLine(EmptyString(), from, to);
   FXApp->Draw();
 }
 //..............................................................................
