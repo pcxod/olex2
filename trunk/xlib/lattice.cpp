@@ -787,7 +787,7 @@ TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   vec3d cc, ce;
   double aan = 0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
-    cc += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetOccu();
+    cc += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetChemOccu();
     ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd())*Atoms[i]->CAtom().GetOccu();
     aan += Atoms[i]->CAtom().GetChemOccu();
   }
