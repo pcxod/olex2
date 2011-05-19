@@ -397,7 +397,8 @@ void TGXApp::CreateObjects(bool centerModel)  {
 
   ObjectCaster<TSPlane,TXPlane> latt_planes = XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>();
   for( size_t i=0; i < latt_planes.Count(); i++ )  {
-    latt_planes[i].Create();
+    TXPlane& xp = latt_planes[i];
+    xp.Create(olxstr("TXPlane") << xp.GetDefId());
   }
   double cell[] = {  
     XFile().GetAsymmUnit().GetAxes()[0],

@@ -13,6 +13,8 @@ void TXPlane::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
+  if( GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0 )
+    GPC.ClearPrimitives();
   GPC.AddObject(*this);
   const mat3d& m = GetBasis();
   Params().Resize(16);
