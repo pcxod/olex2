@@ -1912,7 +1912,9 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
 }
 //..............................................................................
 TXLine& TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge)  {
-  TXLine *XL = new TXLine(*FGlRender, Name, base, edge);
+  TXLine *XL = new TXLine(*FGlRender,
+    Name.IsEmpty() ? olxstr("TXLine") << LooseObjects.Count() : Name,
+    base, edge);
   XL->Create();
   LooseObjects.Add(XL);
   return *XL;
