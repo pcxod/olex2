@@ -13,6 +13,7 @@
 #include "emath.h"
 #include "olxmps.h"
 #include "arrays.h"
+#include "etable.h"
 #undef GetObject
 //---------------------------------------------------------------------------
 // TUnitCell function bodies
@@ -140,6 +141,18 @@ void  TUnitCell::InitMatrices()  {
     }
   }
   UpdateEllipsoids();
+#if defined(_DEBUG) && 0
+  TTable m_tab(mc, mc), i_tab(1, mc);
+  for( size_t i=0; i < mc; i++ )  {
+    i_tab.ColName(i) = i;
+    i_tab[0][i] = InvDest[i];
+    for( size_t j=0; j < mc; j++ )  {
+      m_tab[i][j] = MulDest[i][j];
+    }
+  }
+  TBasicApp::GetLog() << m_tab.CreateTXTList("Space group multiplication table", false, false, ' ');
+  TBasicApp::GetLog() << i_tab.CreateTXTList("Space inversion table", true, false, ' ');
+#endif
 }
 //..............................................................................
 void TUnitCell::UpdateEllipsoids()  {

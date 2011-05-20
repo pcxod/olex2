@@ -390,9 +390,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         dis = -dis;
         Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() + (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
         RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec( envi.GetCrd(1) - envi.GetBase().crd() ).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3));
         crds.AddNew(M*Vec1);
-        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3));
         crds.AddNew(M*Vec1);
         // final 90 degree rotation
         olx_create_rotation_matrix(M, Vec1, 0, 1);
@@ -445,11 +445,11 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         Vec1 = (envi.GetCrd(0)-envi.GetBase().crd()).Normalise();
         Vec2 = (envi.GetCrd(1)-envi.GetBase().crd()).Normalise();
         Vec3 = (envi.GetCrd(2)-envi.GetBase().crd()).Normalise();
-        crds.AddNew( (Vec1+Vec2+Vec3).Normalise() );
+        crds.AddNew((Vec1+Vec2+Vec3).Normalise());
         Vec1 -= Vec2;
         Vec3 -= Vec2;
         Vec3 = Vec1.XProdVec(Vec3);
-        Vec3.NormaliseTo( crds[0].CAngle(Vec3) < 0 ? dis : -dis);
+        Vec3.NormaliseTo(crds[0].CAngle(Vec3) < 0 ? dis : -dis);
         crds[0] = (Vec3 += envi.GetBase().crd());
       }
       break;
@@ -459,9 +459,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         // summ vector
         Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() + (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
         RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec( envi.GetCrd(1) - envi.GetBase().crd() ).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3));
         crds.AddNew(M*Vec1);
-        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3));
         crds.AddNew(M*Vec1);
         // final 90 degree rotation
         olx_create_rotation_matrix(M, Vec1, 0, 1);

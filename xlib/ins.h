@@ -234,7 +234,11 @@ public:
   template <class List> static List& Preprocess(List& l)  {
     // combine lines
     for( size_t i=0; i < l.Count(); i++ )  {
-      if( l[i].EndsWith('=') && !l[i].StartsFromi("REM") )  {
+      if( l[i].EndsWith('=') &&
+          (!l[i].StartsFromi("REM") ||
+            l[i].IndexOf("olex2.restraint.") != InvalidIndex ||
+            l[i].IndexOf("olex2.constraint.") != InvalidIndex ))
+      {
         l[i].SetLength(l[i].Length()-1);
         if( (i+1) < l.Count() )  {
           l[i] << l[i+1];
