@@ -66,10 +66,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   ParseContext cx(GetRM());
   TStrList Toks, InsFile(FileContent);
   for( size_t i=0; i < InsFile.Count(); i++ )  {
-    InsFile[i].Trim(' ').\
-      Trim('\0').\
+    InsFile[i].Trim(' ').
+      Trim('\0').
+      Trim('\r').
       Replace('\t', ' ').
-      DeleteSequencesOf(' ').\
+      DeleteSequencesOf(' ').
       Trim(' ');
   }
   Preprocess(InsFile);
