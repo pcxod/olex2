@@ -1375,6 +1375,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     ResInfo(&rm.rDihedralAngle, RCInfo(1, 1, -1, true)));
   restraints.Add(olxstr("REM ") << rm.rFixedUeq.GetIdName(),
     ResInfo(&rm.rFixedUeq, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rSimilarUeq.GetIdName(),
+    ResInfo(&rm.rSimilarUeq, RCInfo(0, 1, -1, false)));
 
   TUIntList usedSymm;
   for( size_t i=0; i < restraints.Count(); i++ )  {
@@ -1475,6 +1477,7 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
   restraints.Add(&rm.rAngle);
   restraints.Add(&rm.rDihedralAngle);
   restraints.Add(&rm.rFixedUeq);
+  restraints.Add(&rm.rSimilarUeq);
   LabelCorrector lc(rm.aunit);
   for( size_t i=0; i < restraints.Count(); i++ )  {
     TSRestraintList& srl = *restraints[i];
@@ -1710,6 +1713,12 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
     RequiredParams = 1;  AcceptsParams = 2;
     DefEsd = 0.02;
     Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
+  else if( ins_name.Equalsi(rm.rSimilarUeq.GetIdName()) )  {
+    srl = &rm.rSimilarUeq;
+    RequiredParams = 0;  AcceptsParams = 1;
+    DefEsd = 0.02;
+    Vals[0] = &DefEsd;
   }
   else
     srl = NULL;

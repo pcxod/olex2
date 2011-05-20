@@ -153,7 +153,8 @@ public:
                   rEADP,  // equivalent adp, constraint
                   rAngle,
                   rDihedralAngle,
-                  rFixedUeq;
+                  rFixedUeq,
+                  rSimilarUeq;
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;

@@ -24,6 +24,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rAngle(*this, rltGroup3, "olex2.restraint.angle"),
   rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral"),
   rFixedUeq(*this, rltAtoms, "olex2.restraint.u_eq"),
+  rSimilarUeq(*this, rltAtoms, "olex2.restraint.u_eq.similar"),
   ExyzGroups(*this), 
   AfixGroups(*this), 
   rSAME(*this),
@@ -84,6 +85,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   rAngle.Clear();
   rDihedralAngle.Clear();
   rFixedUeq.Clear();
+  rSimilarUeq.Clear();
   ExyzGroups.Clear();
   SharedRotatedADPs.Clear();
   if( (clear_mask & rm_clear_SAME) != 0 )
@@ -213,6 +215,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rAngle.Assign(rm.rAngle);
   rDihedralAngle.Assign(rm.rDihedralAngle);
   rFixedUeq.Assign(rm.rFixedUeq);
+  rSimilarUeq.Assign(rm.rSimilarUeq);
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
@@ -306,6 +309,7 @@ void RefinementModel::Validate() {
   rAngle.ValidateAll();
   rDihedralAngle.ValidateAll();
   rFixedUeq.ValidateAll();
+  rSimilarUeq.ValidateAll();
   ExyzGroups.ValidateAll();
   AfixGroups.ValidateAll();
   Vars.Validate();
@@ -919,6 +923,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   rAngle.ToDataItem(item.AddItem(rAngle.GetIdName()));
   rDihedralAngle.ToDataItem(item.AddItem(rDihedralAngle.GetIdName()));
   rFixedUeq.ToDataItem(item.AddItem(rFixedUeq.GetIdName()));
+  rSimilarUeq.ToDataItem(item.AddItem(rSimilarUeq.GetIdName()));
   SharedRotatedADPs.ToDataItem(item.AddItem(SharedRotatedADPs.GetName()));
   
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
@@ -994,6 +999,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
       rAngle.FromDataItem(*i);
       rDihedralAngle.FromDataItem(item.FindRequiredItem(rDihedralAngle.GetIdName()));
       rFixedUeq.FromDataItem(item.FindRequiredItem(rFixedUeq.GetIdName()));
+      rSimilarUeq.FromDataItem(item.FindRequiredItem(rSimilarUeq.GetIdName()));
     }
     SharedRotatedADPs.FromDataItem(item.FindRequiredItem(SharedRotatedADPs.GetName()), *this);
   }
@@ -1100,6 +1106,8 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
     rDihedralAngle.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, rFixedUeq.GetIdName(),
     rFixedUeq.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, rSimilarUeq.GetIdName(),
+    rSimilarUeq.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, SharedRotatedADPs.GetName(),
     SharedRotatedADPs.PyExport());
 
