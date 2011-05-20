@@ -282,13 +282,14 @@ public class ClientHandler extends Thread {
       String mapping = fileMapping.get(files[i].getName());
       if( mapping == null )
           mapping = ".";
-      pr.println("<tr><td><a href=\"" +
+      pr.println("<tr><td><a href=\"/" +
         files[i].getName() + 
         (files[i].isDirectory() ? "/" : "") + "\">" +
         name + "&nbsp;&nbsp;</a></td><td>");
       pr.print(mapping + "&nbsp;&nbsp;</td><td>");
-      pr.print((new java.text.SimpleDateFormat()).format(new Date(files[i].lastModified())) +
-              "&nbsp;&nbsp;</td><td>");
+      pr.print(
+        (new java.text.SimpleDateFormat("yyyy.MM.dd hh::mm::ss")).
+          format(new Date(files[i].lastModified())) + "&nbsp;&nbsp;</td><td>");
       if( files[i].isFile() )  {
         pr.print(files[i].length());
         pr.print("&nbsp;&nbsp;</td><td>" + Main.getFileHash(files[i].getAbsolutePath()));
