@@ -174,7 +174,7 @@ void Index::Search(const TStrObjList &Params, TMacroError &E)  {
 }
 //.............................................................................
 void Index::Update(const TStrObjList &Params, TMacroError &E)  {
-  //throw TNotImplementedException(__OlxSourceInfo);
+  throw TNotImplementedException(__OlxSourceInfo);
   if( Params.IsEmpty() )  {
     TBasicApp &app = TBasicApp::GetInstance();
     olxstr shared_dir = app.GetSharedDir();

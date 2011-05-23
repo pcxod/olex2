@@ -41,7 +41,11 @@ public:
       PSChar(const olxcstr& _id) : id(_id) {}
     };
     TTypeList<PSChar> definitions;
-    olxdict<size_t, size_t, TPrimitiveComparator> def_dict;
+    olxdict<uint32_t, size_t, TPrimitiveComparator> def_dict;
+    // only very limited number of olxch range is supported in vector fonts
+    static uint32_t make_id(olxch ch, uint16_t font_size)  {
+      return ((uint32_t(ch) << 16) | font_size);
+    }
   };
 protected:
   class AGlScene& Parent;
