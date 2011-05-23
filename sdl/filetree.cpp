@@ -27,7 +27,7 @@ void TFileTree::Folder::Expand(TOnProgress& pg)  {
 //  TBasicApp::GetLog() << "E: "  << FullPath << ". found: "  << Files.Count() << '\n';
   for( size_t i=0; i < Files.Count(); i++ )  {
     if( (Files[i].GetAttributes() & sefDir) == sefDir )  {
-      Folders.Add( new Folder(FileTree, FullPath + Files[i].GetName(), this)).Expand(pg);
+      Folders.Add(new Folder(FileTree, Files[i], FullPath + Files[i].GetName(), this)).Expand(pg);
       Files.NullItem(i);
     }
   }
@@ -231,7 +231,7 @@ void TFileTree::Folder::Synchronise(TFileTree::Folder& f, TOnProgress& onSync) {
     size_t ind = FindSortedIndexOf( f.Files, Files[i].GetName() );
     if( ind == InvalidIndex )  {
       olxstr nf(f.FullPath + Files[i].GetName());
-      onSync.SetAction( olxstr("New file: ") << FullPath << Files[i].GetName() );
+      onSync.SetAction(olxstr("New file: ") << FullPath << Files[i].GetName());
       if( FileTree.CopyFile( olxstr(FullPath) << Files[i].GetName(), nf) )  {
         bool res = TEFile::SetFileTimes(nf, Files[i].GetLastAccessTime(), Files[i].GetModificationTime());
         if( !res )
@@ -243,17 +243,24 @@ void TFileTree::Folder::Synchronise(TFileTree::Folder& f, TOnProgress& onSync) {
       }
     }
     else if(Files[i].GetModificationTime() != f.Files[ind].GetModificationTime() )  {
-      onSync.SetAction( olxstr("Changed file: ") << FullPath << Files[i].GetName() );
+      onSync.SetAction(olxstr("Changed file: ") << FullPath << Files[i].GetName());
       FileTree.OnSynchronise->Execute(NULL, &onSync);
     }
   }
   for( size_t i=0; i < Folders.Count(); i++ )  {
-    size_t ind = FindSortedIndexOf( f.Folders, Folders[i].Name );
+    size_t ind = FindSortedIndexOf(f.Folders, Folders[i].Name);
     if( ind == InvalidIndex )  {
-      onSync.SetAction( olxstr("New folder: ") << FullPath << Folders[i].Name );
+      onSync.SetAction(olxstr("New folder: ") << FullPath << Folders[i].Name);
       FileTree.OnSynchronise->Execute(NULL, &onSync);
-      TEFile::MakeDir( olxstr(f.FullPath)  <<  Folders[i].Name);
-      Folders[i].Synchronise(f.Folders.Add( new Folder(FileTree, olxstr(f.FullPath)  <<  Folders[i].Name, &f)), onSync);
+      olxstr fn = olxstr(f.FullPath)  <<  Folders[i].Name;
+      TEFile::MakeDir(fn);
+      bool res =
+        TEFile::SetFileTimes(fn, Folders[i].GetLastAccessTime(), Folders[i].GetModificationTime());
+      if( !res )
+        throw TFunctionFailedException(__OlxSourceInfo, "settime");
+      Folders[i].Synchronise(
+        f.Folders.Add(
+          new Folder(FileTree, Folders[i], olxstr(f.FullPath)  <<  Folders[i].Name, &f)), onSync);
       f.Folders.QuickSorter.SortSF(f.Folders, &CompareFolders);
     }
     else
@@ -304,11 +311,42 @@ void TFileTree::Folder::ListFiles(TStrList& out, const olxstr& _mask) const {
   if( !toks.IsEmpty() )  {
     TTypeList<TEFile::TFileNameMask> mask;
     for( size_t i=0; i < toks.Count(); i++ )
-      mask.AddNew( toks[i] );
+      mask.AddNew(toks[i]);
     ListFilesEx(out, &mask);
   }
   else
     ListFilesEx(out, NULL);
+}
+//......................................................................................
+size_t TFileTree::Folder::CountFilesEx(const TTypeList<TEFile::TFileNameMask>* _mask) const {
+  size_t cnt = 0;
+  if( _mask != NULL && !_mask->IsEmpty() )   {
+    for( size_t i=0; i < Files.Count(); i++ )  {
+      for( size_t j=0; j < _mask->Count(); j++ )  {
+        if( (*_mask)[j].DoesMatch(Files[i].GetName()) )  {
+          cnt++;
+          break;
+        }
+      }
+    }
+  }
+  else
+    cnt = Files.Count();
+  for( size_t i=0; i < Folders.Count(); i++ )
+    cnt += Folders[i].CountFilesEx(_mask);
+  return cnt;
+}
+//......................................................................................
+size_t TFileTree::Folder::CountFiles(const olxstr& _mask) const {
+  TStrList toks(_mask, ";");
+  if( !toks.IsEmpty() )  {
+    TTypeList<TEFile::TFileNameMask> mask;
+    for( size_t i=0; i < toks.Count(); i++ )
+      mask.AddNew(toks[i]);
+    return CountFilesEx(&mask);
+  }
+  else
+    return CountFilesEx(NULL);
 }
 //______________________________________________________________________________________
 //______________________________________________________________________________________

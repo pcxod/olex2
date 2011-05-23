@@ -468,9 +468,9 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
       E.SetRetVal( (int)RGB(wc.Red(), wc.Green(), wc.Blue()) );
     }
     else if( Params[0].Equalsi("hex") )  {
-      char* bf = new char [35];
-      sprintf( bf, "#%.2x%.2x%.2x", wc.Red(), wc.Green(), wc.Blue());
-      E.SetRetVal(olxcstr::FromExternal(bf, olxstr::o_strlen(bf)));
+      olx_array_ptr<char> p(olx_malloc<char>(8));
+      sprintf(p(), "#%.2x%.2x%.2x", wc.Red(), wc.Green(), wc.Blue());
+      E.SetRetVal<olxstr>(p());
     }
   }
   else

@@ -13,7 +13,6 @@
 
 #ifdef __WIN32__
   #include <winbase.h>
-  #include <malloc.h>
   #include <io.h>
   #include <direct.h>
   #define OLXSTR(A) (A).u_str()

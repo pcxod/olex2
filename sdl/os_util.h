@@ -38,7 +38,7 @@ BeginEsdlNamespace()
      size_t sz;
      OLX_GETENV(&sz, NULL, 0, name.u_str());
      if( sz == 0 )  return EmptyString();
-     val = new olxch[sz];
+     val = olx_malloc<olxch>(sz);
      OLX_GETENV(&sz, val, sz, name.u_str());
      return olxstr::FromExternal(val, sz-1);
    }
@@ -73,7 +73,7 @@ static bool IsWow64()  {
      return getenv(name.c_str());
    }
 #endif
-// a convinience function
+// a convenience function
 static bool olx_setenv(const olxstr& v)  {
   size_t ei = v.IndexOf('=');
   if( ei == InvalidIndex )  return false;
@@ -115,7 +115,8 @@ struct olx_critical_section  {
 /* 'scope critical section' to be used for automatic management of small portions of code.
 use it like:
   {
-    volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());  // make sure that optimised does not delete it at once...
+    // make sure that optimiser does not delete it at once...
+    volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
     { code.. }
   }
 */

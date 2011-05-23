@@ -120,7 +120,7 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
         DWORD sz = 0;
         if( RegQueryValueEx(key, olxT("ProgramFilesDir"), NULL, NULL, NULL, &sz) != ERROR_SUCCESS )
           return EmptyString();
-        olxch* data = new olxch[sz/sizeof(olxch)+1];
+        olxch* data = olx_malloc<olxch>(sz/sizeof(olxch)+1);
         if( RegQueryValueEx(key, olxT("ProgramFilesDir"), NULL, NULL, (LPBYTE)data, &sz) != ERROR_SUCCESS )
         {
           delete [] data;
@@ -206,11 +206,11 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
 
   if(  pidlBrowse )  {
     olxstr retVal;
-    if( SHGetPathFromIDList( pidlBrowse, path ) )
+    if( SHGetPathFromIDList(pidlBrowse, path) )
       retVal = path;
 
-    shellMalloc->Free( pidlBrowse );
-    shellMalloc->Free( path );
+    shellMalloc->Free(pidlBrowse);
+    shellMalloc->Free(path);
     return retVal;
   }
   return EmptyString();
