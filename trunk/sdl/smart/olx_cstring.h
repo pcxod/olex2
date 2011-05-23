@@ -43,7 +43,7 @@ protected:
 #endif
     size_t len = strlen(bf);
     checkBufferForModification(_Length + len);
-    memcpy(&SData->Data[_Length], bf, len);
+    olx_memcpy(&SData->Data[_Length], bf, len);
     _Length += len;
     return *this;
   }
@@ -138,7 +138,7 @@ public:
     [C++ Error] olx_istring.h(112): E2034 Cannot convert 'const wchar_t *' to 'const char *' */
   inline TCString& Append(const char *data, size_t len)  {
     checkBufferForModification(_Length + len);
-    memcpy( &SData->Data[_Start+_Length], data, len*CharSize);
+    olx_memcpy( &SData->Data[_Start+_Length], data, len);
     _Length += len;
     return *this;
   }
@@ -261,7 +261,7 @@ public:
       Entry* en = Head;
       size_t read = 0;
       while( en != NULL )  {
-        memcpy(&v[read], &en->Data->Data[en->Start], en->Length);
+        olx_memcpy(&v[read], &en->Data->Data[en->Start], en->Length);
         read += en->Length;
         en = en->Next;
       }

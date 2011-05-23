@@ -67,13 +67,15 @@ smatd_list TUnitCell::MulMatrices(const smatd_list& in, const smatd& transform) 
   return out;
 }
 //..............................................................................
+double TUnitCell::CalcVolume(const vec3d& sides, const vec3d& angles)  {
+  static const double k = M_PI/180;
+  const vec3d cs(cos(angles[0]*k), cos(angles[1]*k), cos(angles[2]*k));
+  return sides.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
+}
+//..............................................................................
 double TUnitCell::CalcVolume() const {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  static const double k = M_PI/180;
-  const vec3d ang = au.GetAngles()*k;
-  const vec3d ax = au.GetAxes();
-  const vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
-  return ax.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
+  return CalcVolume(au.GetAxes(), au.GetAngles());
 }
 //..............................................................................
 TEValue<double> TUnitCell::CalcVolumeEx() const {

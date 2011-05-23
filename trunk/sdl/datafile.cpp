@@ -90,7 +90,7 @@ void TDataFile::SaveToXLFile(const olxstr &DataFile)  {
   FileName = DataFile;
   TEStrBuffer bf(1024*32);
   FRoot->SaveToStrBuffer(bf);
-  TUtf8File::Create( DataFile, bf.ToString() );
+  TUtf8File::Create(DataFile, bf.ToString());
 }
 //..............................................................................
 

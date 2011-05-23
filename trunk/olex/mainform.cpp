@@ -83,6 +83,7 @@
 #include "filetree.h"
 #include "md5.h"
 #include "olxth.h"
+#include "lcells.h"
 
 #ifdef __GNUC__
   #undef Bool
@@ -941,6 +942,7 @@ separated values of Atom Type and radius, an entry a line");
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
   Library.AttachLibrary(TETime::ExportLibrary());
+  Library.AttachLibrary(lcells::Index::ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
   Library.AttachLibrary(XA->XFile().ExportLibrary());

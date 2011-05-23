@@ -241,7 +241,7 @@ template <typename T>
     return s;
   }
   void ToString(olxcstr& cstr) const {
-    cstr.SetCapacity( cstr.Length() + Length);
+    cstr.SetCapacity(cstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
     if( en == NULL )  return;
     while( en != NULL )  {
@@ -250,7 +250,7 @@ template <typename T>
     }
   }
   void ToString(olxwstr& wstr) const {
-    wstr.SetCapacity( wstr.Length() + Length);
+    wstr.SetCapacity(wstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
     if( en == NULL )  return;
     while( en != NULL )  {

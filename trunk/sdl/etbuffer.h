@@ -22,9 +22,7 @@ protected:
 public:
   TTBuffer(size_t capacity=DefBufferSize)  {
     Size = 0;  Capacity = olx_max(1, capacity);
-    _Data = (T*)malloc(capacity*sizeof(T));
-    if( _Data == NULL )
-      throw TOutOfMemoryException(__OlxSourceInfo);
+    _Data = olx_malloc<T>(capacity);
   }
 
   TTBuffer(T* memoryBlockToOwn, size_t size)  {
@@ -39,37 +37,22 @@ public:
       _Data = NULL;
       return;
     }
-    _Data = (T*)malloc(Size*sizeof(T));
-    if( _Data == NULL )
-      throw TOutOfMemoryException(__OlxSourceInfo);
-    memcpy(_Data, entry.GetData(), Size*sizeof(T));
+    _Data = olx_malloc<T>(Size);
+    olx_memcpy(_Data, entry.GetData(), Size);
   }
 
-  virtual ~TTBuffer()  {
-    if( _Data != NULL )
-      free(_Data);
-  }
+  virtual ~TTBuffer()  {  olx_free(_Data);  }
 
   // this function must be used to allocate the memory provieded for the object
-  static T* Alloc(size_t count) {
-    T* memb = (T*)malloc(count*sizeof(T));
-    if( memb == NULL )
-      throw TOutOfMemoryException(__OlxSourceInfo);
-    return memb;
-  }
+  static T* Alloc(size_t count) {  return olx_malloc<T>(count);  }
   // this function must be used to allocate the memory provided for the object
   static TTBuffer* New(const T *bf, size_t count) {
-    T* memb = (T*)malloc(count*sizeof(T));
-    if( memb == NULL )
-      throw TOutOfMemoryException(__OlxSourceInfo);
-    return new TTBuffer(memb, count);
+    return new TTBuffer(olx_malloc<T>(count), count);
   }
 
   void SetCapacity(size_t newSize)  {
     if( (newSize == 0)  || (newSize <= Capacity) )  return;
-    _Data = (T*)realloc(_Data, newSize*sizeof(T));
-    if( _Data == NULL )
-      throw TOutOfMemoryException(__OlxSourceInfo);
+    _Data = olx_realloc(_Data, newSize);
     Capacity = newSize;
   }
 
@@ -89,9 +72,9 @@ public:
     if( (Capacity - Size) < count )
       SetCapacity((Capacity - Size) + count + increment);
     // move the region to overwrite
-    memcpy(&_Data[offset+count], &_Data[offset], count*sizeof(T));
+    olx_memcpy(&_Data[offset+count], &_Data[offset], count);
     // write the memory block
-    memcpy(&_Data[offset], arr, count*sizeof(T));
+    olx_memcpy(&_Data[offset], arr, count);
     Size += count;
     return Size;
   }
@@ -102,11 +85,11 @@ public:
     size_t written = count;
     if( Capacity-Size < count )  {
       written = Capacity-Size;
-      memcpy(&_Data[Size], arr, written*sizeof(T));
+      olx_memcpy(&_Data[Size], arr, written);
       Size = Capacity;
     }
     else  {
-      memcpy(&_Data[Size], arr, written*sizeof(T));
+      olx_memcpy(&_Data[Size], arr, written);
       Size += written;
     }
     return written;
@@ -118,11 +101,11 @@ public:
     size_t written = count;
     if( Capacity-offset < count )  {
       written = Capacity-offset;
-      memcpy(&_Data[offset], arr, written*sizeof(T));
+      olx_memcpy(&_Data[offset], arr, written);
       Size = Capacity;
     }
     else  {
-      memcpy(&_Data[offset], arr, written*sizeof(T));
+      olx_memcpy(&_Data[offset], arr, written);
       if( offset+count > Size )
         Size = offset+count;
     }
@@ -133,10 +116,10 @@ public:
     size_t read = count;
     if( (Size-offset) < count )  {
       read = Size-offset;
-      memcpy(arr, &_Data[offset], read*sizeof(T));
+      olx_memcpy(arr, &_Data[offset], read);
     }
     else  {
-      memcpy(arr, &_Data[offset], read*sizeof(T));
+      olx_memcpy(arr, &_Data[offset], read);
     }
     return read;
   }

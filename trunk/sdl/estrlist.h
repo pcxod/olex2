@@ -254,7 +254,8 @@ public:
   // convenience methods
   TTStrList& LoadFromTextArray(char *bf, size_t bf_sz, bool take_ownership)  {
     Clear();
-    const olxcstr str = take_ownership ? olxcstr(olxcstr::FromExternal(bf, bf_sz)) : olxcstr((const char*)bf, bf_sz);
+    const olxcstr str = take_ownership ? olxcstr(olxcstr::FromExternal(bf, bf_sz))
+      : olxcstr((const char*)bf, bf_sz);
     Strtok(str, '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
     for( size_t i=0; i < Count(); i++ )
       if( GetString(i).EndsWith('\r') )  
@@ -265,7 +266,7 @@ public:
     Clear();
     size_t fl = io.GetAvailableSizeT();
     if( fl == 0 )  return *this;
-    char * bf = new char [fl+1];
+    char *bf = olx_malloc<char>(fl+1);
     io.Read(bf, fl);
     return LoadFromTextArray(bf, fl, true);
   }

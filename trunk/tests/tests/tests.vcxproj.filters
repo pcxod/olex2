@@ -65,5 +65,8 @@
     <ClInclude Include="..\..\xlib\tests\vcov_test.h">
       <Filter>Header Files\xlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xlib\tests\cell_reduction_test.h">
+      <Filter>Header Files\xlib</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

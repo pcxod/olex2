@@ -25,6 +25,12 @@
     <Filter Include="Source Files\absorpc">
       <UniqueIdentifier>{28d8c66d-46cd-4e44-9b50-9556b6fda351}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\lcells">
+      <UniqueIdentifier>{7f143de7-37ff-4d81-8194-390e95395d11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lcells">
+      <UniqueIdentifier>{1b488925-7e9b-4510-b686-18a23cfbe044}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp">
@@ -777,6 +783,9 @@
     <ClCompile Include="..\..\..\xlib\constraints_ext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\lcells.cpp">
+      <Filter>Source Files\lcells</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -1009,6 +1018,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\twinning.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\cell_reduction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\lcells.h">
+      <Filter>Header Files\lcells</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

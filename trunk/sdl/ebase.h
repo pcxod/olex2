@@ -73,11 +73,27 @@ public:\
 
 BeginEsdlNamespace()
 
-static const size_t InvalidIndex = (size_t)(~0);
-static const size_t InvalidSize = (size_t)(~0);
+static const size_t InvalidIndex = size_t(~0);
+static const size_t InvalidSize = size_t(~0);
 // validates if unsigned number is valid... since the move to size_t etc...
-template <typename int_t> static bool olx_is_valid_index(const int_t& v)  {  return v != (int_t)~0;  }
-template <typename int_t> static bool olx_is_valid_size(const int_t& v)  {  return v != (int_t)~0;  }
+template <typename int_t> static bool olx_is_valid_index(const int_t& v)  {
+  return v != int_t(~0);
+}
+template <typename int_t> static bool olx_is_valid_size(const int_t& v)  {
+  return v != int_t(~0);
+}
+// wrap memory management functions
+extern void *olx_malloc_(size_t sz);  // throws TOutOfMemoryException 
+extern void *olx_realloc_(void * a, size_t sz);  // throws TOutOfMemoryException 
+template <typename T> T *olx_malloc(size_t sz) {  return (T*)olx_malloc_(sz*sizeof(T));  }
+template <typename T> T *olx_realloc(T *a, size_t sz) {  return (T*)olx_realloc_(a, sz*sizeof(T));  }
+template <typename T> void olx_free(T *a) {  if( a != NULL )  free(a);  }
+template <typename T> T *olx_memcpy(T *dest, const T *src, size_t sz) {
+  return (T *)memcpy(dest, src, sz*sizeof(T));
+}
+template <typename T> T *olx_memmove(T *dest, const T *src, size_t sz) {
+  return (T *)memmove(dest, src, sz*sizeof(T));
+}
 // string base
 template <class T> class TTIString {
 public:
@@ -87,22 +103,22 @@ public:
     unsigned int RefCnt;
     size_t Length;
     Buffer(size_t len, const T *data=NULL, size_t tocopy=0)  {
-      Data = ((len != 0) ? (T*)malloc(len*CharSize) : (T*)NULL);
+      Data = ((len != 0) ? olx_malloc<T>(len) : (T*)NULL);
       if( data != NULL )
-        memcpy(Data, data, tocopy*CharSize);
+        olx_memcpy(Data, data, tocopy);
       RefCnt = 1;
       Length = len;
     }
-    // creates object from external array, must be created with new
+    // creates object from external array, must be created with malloc
     Buffer(T *data, size_t len)  {
       Data = data;
       RefCnt = 1;
       Length = len;
     }
-    ~Buffer()  {  if( Data != NULL )  free(Data);  }
+    ~Buffer()  {  olx_free(Data);  }
     void SetCapacity(size_t newlen)  {
       if( newlen > Length )  {
-        Data = (T*)realloc(Data, newlen*CharSize);
+        Data = olx_realloc(Data, newlen);
         Length = newlen;
       }
     }
@@ -120,7 +136,8 @@ protected:
       SData = new Buffer(newSize + _Increment);
     else if( SData->RefCnt > 1 )  {
       SData->RefCnt--;
-      Buffer *newData = new Buffer(newSize + _Increment, &SData->Data[_Start], olx_min(_Length, newSize));
+      Buffer *newData = new Buffer(newSize + _Increment, &SData->Data[_Start],
+        olx_min(_Length, newSize));
       SData = newData;
       _Start = 0;
     }
@@ -130,7 +147,7 @@ protected:
       _Start = 0;
     }
     if( SData->Length < newSize )
-      SData->SetCapacity( (size_t)(newSize*1.5)+_Increment );
+      SData->SetCapacity((size_t)(newSize*1.5)+_Increment);
   }
 public:
   TTIString(const TTIString& str) {
@@ -178,7 +195,7 @@ public:
    string length + 1 for the end of string char  */
   T *Read(T *v)  {
     if( SData == NULL ) return NULL;
-    memcpy(v, &SData->Data[_Start], _Length*CharSize);
+    olx_memcpy(v, &SData->Data[_Start], _Length);
     v[_Length] = L'\0';
     return v;
   }
