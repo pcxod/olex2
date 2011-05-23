@@ -57,20 +57,21 @@ public:
 
 template <class ListClass, class Comparator, typename TypeClass>
 class TTSortedList : public TTSortedListBase<ListClass, Comparator, TypeClass> {
+  typedef TTSortedListBase<ListClass, Comparator, TypeClass> parent_t;
 public:
   TTSortedList() {}
-  TTSortedList(const TTSortedList& l) : TTSortedListBase<ListClass, Comparator, TypeClass>(l)  {}
+  TTSortedList(const TTSortedList& l) : parent_t(l)  {}
   // adds an item to the list and returns it's index
   size_t Add(const TypeClass& entry)  {
-    return sorted::Add(list, Comparator(), entry);
+    return sorted::Add(parent_t::list, Comparator(), entry);
   }
   /* adds an item only if not already in the list, returns true if the item is added, pos is is 
   initialised with the item index */
   bool AddUnique(const TypeClass& entry, size_t* pos = NULL)  {
-    return sorted::AddUnique(list, Comparator(), entry, pos);
+    return sorted::AddUnique(parent_t::list, Comparator(), entry, pos);
   }
   TTSortedList& operator = (const TTSortedList& _list)  {
-    TTSortedListBase<ListClass, Comparator, TypeClass>::operator = (_list);
+    parent_t::operator = (_list);
     return *this;
   }
 };
@@ -78,25 +79,29 @@ public:
 template <typename TypeClass, class Comparator>
 class SortedTypeList
   : public TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass> {
+  typedef TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass> parent_t;
 public:
   SortedTypeList() {}
-  SortedTypeList(const SortedTypeList& l)
-    : TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass>(l)  {}
+  SortedTypeList(const SortedTypeList& l) : parent_t(l)  {}
   // adds an item to the list and returns it's index
-  size_t Add(TypeClass* entry)  {  return sorted::Add(list, Comparator(), *entry);  }
-  size_t Add(TypeClass& entry)  {  return sorted::Add(list, Comparator(), entry);  }
+  size_t Add(TypeClass* entry)  {
+    return sorted::Add(parent_t::list, Comparator(), *entry);
+  }
+  size_t Add(TypeClass& entry)  {
+    return sorted::Add(parent_t::list, Comparator(), entry);
+  }
   /* adds an item only if not already in the list, returns true if the item is added, pos is is 
   initialised with the item index, if item is already in the list - it is deleted and the list
   will not be modified */
   bool AddUnique(TypeClass* entry, size_t* pos = NULL)  {  return AddUnique(*entry, pos);  }
   bool AddUnique(TypeClass& entry, size_t* pos = NULL)  {
-    if( sorted::AddUnique(list, Comparator(), entry, pos) )
+    if( sorted::AddUnique(parent_t::list, Comparator(), entry, pos) )
       return true;
     delete &entry;
     return false;
   }
   SortedTypeList& operator = (const SortedTypeList& _list)  {
-    TTSortedListBase<ListClass, Comparator, TypeClass>::operator = (_list);
+    parent_t::operator = (_list);
     return *this;
   }
 };
