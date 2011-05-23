@@ -116,7 +116,7 @@ public:
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
-  void FromDataItem(TDataItem& item);
+  void FromDataItem(const TDataItem& item);
   friend class TSRestraintList;
 };
 
@@ -171,7 +171,11 @@ public:
   #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
-  void FromDataItem(TDataItem& item);
+  void FromDataItem(const TDataItem& item);
+  void FromDataItem(const TDataItem* item)  {
+    if( item != NULL )
+      FromDataItem(*item);
+  }
 };
 
 typedef TTypeList<TSimpleRestraint> TSimpleRestraintList;
