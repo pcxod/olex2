@@ -124,10 +124,14 @@ void TSameGroupList::Restore(TSameGroup& sg)  {
 }
 //..........................................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {
-  item.AddField("n", Groups.Count());
-  for( size_t i=0; i < Groups.Count(); i++ ) 
-    if( Groups[i].IsValidForSave() )
-      Groups[i].ToDataItem( item.AddItem(i) );
+  size_t cnt=0;
+  for( size_t i=0; i < Groups.Count(); i++ )  {
+    if( Groups[i].IsValidForSave() )  {
+      Groups[i].ToDataItem(item.AddItem(i));
+      cnt++;
+    }
+  }
+  item.AddField("n", cnt);
 }
 //..............................................................................
 #ifndef _NO_PYTHON
@@ -139,13 +143,14 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
   }
   if( id == 0 )
     return PythonExt::PyNone();
-  PyObject* main = PyTuple_New( id );
+  PyObject* main = PyTuple_New(id);
   TPtrList<PyObject> allGroups;
   for( size_t i=0; i < id; i++ )
-    PyTuple_SetItem(main, i, allGroups.Add( PyDict_New() ) );
+    PyTuple_SetItem(main, i, allGroups.Add(PyDict_New()));
+  id = 0;
   for( size_t i=0; i < Groups.Count(); i++ ) 
     if( Groups[i].IsValidForSave() )
-      Groups[i].PyExport(allGroups[i], allGroups, _atoms);
+      Groups[i].PyExport(allGroups[id++], allGroups, _atoms);
   return main;
 }
 #endif
@@ -154,7 +159,7 @@ void TSameGroupList::FromDataItem(TDataItem& item) {
   Clear();
   size_t n = item.GetRequiredField("n").ToSizeT();
   if( n != item.ItemCount() )
-    throw TFunctionFailedException(__OlxSourceInfo, "number of groups doe snot match the number of items");
+    throw TFunctionFailedException(__OlxSourceInfo, "number of groups does not match the number of items");
   for( size_t i=0; i < n; i++ )
     New();
   for( size_t i=0; i < n; i++ )

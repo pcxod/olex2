@@ -52,6 +52,11 @@ public:
   TUnitCell(TLattice* L);
   virtual ~TUnitCell();
 
+  static double CalcVolume(const vec3d& sides, const vec3d& angles);
+  template <typename vec_t>
+  static double CalcVolume(const vec_t v)  {
+    return CalcVolume(vec3d(v[0], v[1], v[2]), vec3d(v[3], v[4], v[5]));
+  }
   double CalcVolume()  const;
   TEValue<double> CalcVolumeEx() const;
   inline TLattice& GetLattice() const {  return *Lattice;  }

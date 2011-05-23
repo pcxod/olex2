@@ -596,7 +596,9 @@
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp" />
     <ClCompile Include="..\..\..\xlib\asymmunit.cpp" />
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
+    <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\hall.cpp" />
+    <ClCompile Include="..\..\..\xlib\lcells.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\brushhkl.cpp" />
     <ClCompile Include="..\..\..\xlib\catom.cpp" />
     <ClCompile Include="..\..\..\xlib\catomlist.cpp" />
@@ -1050,6 +1052,7 @@
     <ClInclude Include="..\..\..\xlib\beevers-lipson.h" />
     <ClInclude Include="..\..\..\xlib\catom.h" />
     <ClInclude Include="..\..\..\xlib\catomlist.h" />
+    <ClInclude Include="..\..\..\xlib\cell_reduction.h" />
     <ClInclude Include="..\..\..\xlib\chembase.h" />
     <ClInclude Include="..\..\..\xlib\chemdata.h" />
     <ClInclude Include="..\..\..\xlib\chnexp.h" />
@@ -1074,6 +1077,7 @@
     <ClInclude Include="..\..\..\xlib\ins.h" />
     <ClInclude Include="..\..\..\xlib\ipattern.h" />
     <ClInclude Include="..\..\..\xlib\lattice.h" />
+    <ClInclude Include="..\..\..\xlib\lcells.h" />
     <ClInclude Include="..\..\..\xlib\leq.h" />
     <ClInclude Include="..\..\..\xlib\lst.h" />
     <ClInclude Include="..\..\..\xlib\maputil.h" />

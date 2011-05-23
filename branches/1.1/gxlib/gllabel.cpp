@@ -25,16 +25,22 @@ void TXGlLabel::Create(const olxstr& cName)  {
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   text_rect = GetFont().GetTextRect(FLabel);
-  if( GPC.PrimitiveCount() != 0 )  return;
+  if( GPC.PrimitiveCount() != 0 )  {
+    TGlPrimitive* glpText = GPC.FindPrimitiveByName("Text");
+    if( glpText != NULL )
+      glpText->SetFont(&GetFont());
+    return;
+  }
 
   TGraphicsStyle& GS = GPC.GetStyle();
   GS.SetPersistent(true);
-  TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
+  TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);
   glpPlane.SetProperties(GS.GetMaterial("Plane", TGlMaterial("3077;2131693327;427259767")));
   glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties(GS.GetMaterial("Text", TGlMaterial("2049;0.000,0.000,0.000,1.000")));
+  glpText.SetFont(&GetFont());
   glpText.Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................

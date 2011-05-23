@@ -597,6 +597,7 @@
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
     <ClCompile Include="..\..\..\xlib\catomlist.cpp" />
     <ClCompile Include="..\..\..\xlib\cifdp.cpp" />
+    <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\hall.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\brushhkl.cpp" />
     <ClCompile Include="..\..\..\xlib\catom.cpp" />
@@ -637,6 +638,7 @@
     <ClCompile Include="..\..\..\xlib\network.cpp" />
     <ClCompile Include="..\..\..\xlib\p4p.cpp" />
     <ClCompile Include="..\..\..\xlib\pdb.cpp" />
+    <ClCompile Include="..\..\..\xlib\reflection.cpp" />
     <ClCompile Include="..\..\..\xlib\refmodel.cpp" />
     <ClCompile Include="..\..\..\xlib\rm_base.cpp" />
     <ClCompile Include="..\..\..\xlib\samegroup.cpp" />

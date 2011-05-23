@@ -986,6 +986,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\constraints_ext.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\crs.cpp"
 				>
 			</File>
@@ -2764,6 +2768,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\constraints_ext.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\crs.h"
 				>
 			</File>
@@ -2829,6 +2837,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\ipattern.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\label_corrector.h"
 				>
 			</File>
 			<File

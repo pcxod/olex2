@@ -109,7 +109,7 @@ template <class SC>
     if( T::SData != NULL )  {
       if( T::SData->RefCnt == 1 )  { // owed by this object
         T::SData->SetCapacity(T::_Length);
-        memcpy(T::SData->Data, str, T::_Length * T::CharSize);
+        olx_memcpy(T::SData->Data, str, T::_Length);
       }
       else  {
         T::SData->RefCnt--;
@@ -170,7 +170,7 @@ public:
   //............................................................................
   template <typename AC> TTSString(const AC& v) : T(v)  {}
   //............................................................................
-  // creates a string from external array allocated with new
+  // creates a string from external array allocated with alloc
   static TTSString FromExternal(TC* data, size_t len)  {
     TTSString rv;
     rv._Length = len;
@@ -961,9 +961,17 @@ public:
   unsigned int ToUInt() const {  return o_atoui<unsigned int>( T::Data(), T::_Length, 10);  }
   bool IsUInt() const {  return o_isuint(T::Data(), T::_Length);  }
   //............................................................................
-  size_t ToSizeT() const {  return o_atoui<size_t>( T::Data(), T::_Length, 10);  }
+  size_t ToSizeT() const {  return o_atoui<size_t>(T::Data(), T::_Length, 10);  }
   //............................................................................
-  bool ToBool() const {  return (Comparei(TrueString()) == 0);  }
+  bool ToBool() const {
+    if( Equalsi(TrueString()) )  return true;
+    else if( Equalsi(FalseString()) )  return false;
+    else
+      TExceptionBase::ThrowInvalidBoolFormat(__POlxSourceInfo, T::Data(), T::_Length);
+    return false; // to avoid compiler warning
+  }
+  //............................................................................
+  bool IsBool() const { return Equalsi(TrueString()) || Equalsi(FalseString());  }
   //............................................................................
   // no '\0' at the end, got to do it ourselves
   template <class FT> static FT o_atof(const TC* data, size_t len) {
@@ -1051,7 +1059,7 @@ public:
     }
     else  {
       T::checkBufferForModification(T::_Length);
-      memmove( &T::Data()[from], &T::Data()[from+count], (T::_Length-from-count)*T::CharSize);
+      olx_memmove( &T::Data()[from], &T::Data()[from+count], T::_Length-from-count);
       T::DecLength(count);
     }
     return *this;
@@ -1136,15 +1144,15 @@ public:
   static size_t o_strins(const TC* wht, size_t wht_len, TC* to, size_t to_len, size_t at, size_t amount=1)  {
     size_t toshift = wht_len*amount;
     if( at < to_len )
-      memmove(&to[at+toshift], &to[at], (to_len - at)*T::CharSize);
+      olx_memmove(&to[at+toshift], &to[at], to_len - at);
     for( size_t i=0; i < amount; i++ )
-      memcpy(&to[at+wht_len*i], wht, wht_len*T::CharSize);
+      olx_memcpy(&to[at+wht_len*i], wht, wht_len);
     return toshift;
   }
   //............................................................................
   static size_t o_chrins(TC wht, TC* to, size_t to_len, size_t at, size_t amount=1)  {
     if( at < to_len )
-      memmove(&to[at+amount], &to[at], (to_len - at)*T::CharSize);
+      olx_memmove(&to[at+amount], &to[at], to_len - at);
     //memset(to, wht, CharSize*amount);
     for( size_t i=0; i < amount; i++ )
       to[at+i] = wht;
@@ -1229,7 +1237,7 @@ public:
       }
       if( found )  {
         if( with_len != wht_len )  {
-          memmove(&whr[i+with_len], &whr[i+wht_len], (whr_len-i-wht_len)*T::CharSize);
+          olx_memmove(&whr[i+with_len], &whr[i+wht_len], whr_len-i-wht_len);
           whr_len -= (wht_len-with_len);
         }
         for( size_t j=0;  j < with_len; j++ )
@@ -1258,7 +1266,7 @@ public:
       }
       if( found )  {
         if( wht_len != 1 )  {
-          memmove(&whr[i+1], &whr[i+wht_len], (whr_len-i-wht_len)*T::CharSize);
+          olx_memmove(&whr[i+1], &whr[i+wht_len], whr_len-i-wht_len);
           whr_len -= (wht_len-1);
         }
         whr[i] = with;
@@ -1276,7 +1284,7 @@ public:
     for( size_t i=0; i < whr_len; i++ )  {
       if( whr[i] == wht )  {
         if( with_len != 1 )  {
-          memmove(&whr[i+with_len], &whr[i+1], (whr_len-i-1)*T::CharSize);
+          olx_memmove(&whr[i+with_len], &whr[i+1], whr_len-i-1);
           whr_len -= (1-with_len);
         }
         for( size_t j=0;  j < with_len; j++ )
@@ -1596,7 +1604,7 @@ public:
   void ToBinaryStream(IOutputStream& os) const {
     uint32_t len = (uint32_t)(CodeLength(T::CharSize, T::_Length));
     os.Write(&len, sizeof(uint32_t));
-    os.Write( (void*)T::Data(), T::_Length*T::CharSize );
+    os.Write((void*)T::Data(), T::_Length*T::CharSize);
   }
   //............................................................................
   static TTSString CharStr(TC ch, size_t count)  {
@@ -1634,6 +1642,27 @@ public:
   static olxwstr CStr2WStr(const olxcstr& str);
   //............................................................................
   virtual IEObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
+  //............................................................................
+  // streaming helper
+  template <typename sep_t> struct SeperatedStream {
+    TTSString& dest;
+    sep_t separator;
+    SeperatedStream(TTSString& str, const sep_t& sep) : dest(str), separator(sep) {}
+    template <typename val_t>
+    SeperatedStream& operator << (const val_t& v)  {
+      if( !dest.IsEmpty() ) dest << separator;
+      dest << v;
+      return *this;
+    }
+  };
+
+  template <typename sep_t>
+  SeperatedStream<sep_t> Stream(const sep_t& separator) {
+    return SeperatedStream<sep_t>(*this, separator);
+  }
+
+  template <typename sep_t>
+  TTSString(const SeperatedStream<sep_t>& str)  {  InitFromString(str.dest);  }
   //............................................................................
 };
 

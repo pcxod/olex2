@@ -82,7 +82,7 @@ TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
   TDataItem* root = &Root();
   TStrList SL(DotName, '.');
   for( size_t i=0; i < SL.Count(); i++ )  {
-    root = root->FindItem( SL[i] );
+    root = root->FindItem(SL[i]);
     if( root == NULL )  {
       if( Log != NULL )  
         Log->Add(olxstr("Unresolved reference: ") << DotName);
@@ -98,10 +98,10 @@ olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName)  {
   olxstr *Str=NULL;
   for( size_t i=0; i < SL.Count(); i++ )  {
     PrevItem = root;
-    root = root->FindItem( SL[i] );
+    root = root->FindItem(SL[i]);
     if( root == NULL )  {
       RefFieldName = SL[i];
-      Str = PrevItem->FieldPtr( SL[i] );
+      Str = PrevItem->FieldPtr(SL[i]);
       break;
     }
   }
@@ -144,7 +144,7 @@ void TDataItem::AddContent(TDataItem& DI, bool extend)  {
   }
   else  {
     for( size_t i=0; i < DI.ItemCount(); i++ )  {
-      TDataItem *di = FindItem( DI.GetItem(i).GetName() );
+      TDataItem *di = FindItem(DI.GetItem(i).GetName());
       if( di != NULL )
         DeleteItem(di);
       AddItem(DI.GetItem(i)).SetParent(this);
@@ -218,8 +218,7 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
     }
 
     if( ch == '>' )  return i;
-    if( ch == '/' )  continue;
-    if( ch == '\\' ) continue;
+    if( ch == '/' || ch == '\\' ) continue;
     if( !olxstr::o_iswhitechar(ch) )   {
       olxstr FieldName, FieldValue;
       if( is_quote(ch) )  {  // item value
@@ -286,7 +285,7 @@ void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
       if( DI != NULL )  {
         AddItem(*DI);
         if( Log != NULL )
-          Log->Add( olxstr("Resolved: ") << Tmp);
+          Log->Add(olxstr("Resolved: ") << Tmp);
         Fields.Delete(i);  // might be very slow !!!
         i--;
       }

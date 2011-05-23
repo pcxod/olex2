@@ -482,6 +482,9 @@
     <ClInclude Include="..\..\..\sdl\ellist.h">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\sorted.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

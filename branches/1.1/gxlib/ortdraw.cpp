@@ -204,6 +204,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   }
   vec3f dir_vec = atom_b.crd-atom_a.crd;
   const float b_len = dir_vec.Length();
+  if( b_len < 1e-3 )  return;
   const float brad = parent.GetBondRad(*this, mask)*bond.GetRadius();
   dir_vec.Normalise();
   const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
@@ -227,8 +228,13 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
     // this is there the touch_point ends up after projecting onto the ellipsoid
     const vec3f tp = etm*touch_point;
     // create rotation to compensate for the elliptical distrortion
-    olx_create_rotation_matrix_(
-      erm, tp.XProdVec(touch_point).Normalise(), tp.CAngle(touch_point));
+    const float erm_ca = tp.CAngle(touch_point);
+    if( erm_ca != 1 )  {
+      olx_create_rotation_matrix_(
+        erm, tp.XProdVec(touch_point).Normalise(), tp.CAngle(touch_point));
+    }
+    else
+      erm.I();
     rot_mat *= erm;
     // this is the corrected location of the touch point...
     const vec3f off = (etm*pv)*parent.ProjMatr;

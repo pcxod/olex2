@@ -16,12 +16,12 @@ public:
 
   virtual ~TEStrBuffer()  {}
 
-  inline TEStrBuffer& operator << (const olxch* str )  {
+  inline TEStrBuffer& operator << (const olxch* str)  {
     Write(str, olxstr::o_strlen(str));
     return *this;
   }
 
-  inline TEStrBuffer& operator << (const olxstr& str )  {
+  inline TEStrBuffer& operator << (const olxstr& str)  {
     Write(str.raw_str(), str.Length());
     return *this;
   }

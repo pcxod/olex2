@@ -397,7 +397,8 @@ void TGXApp::CreateObjects(bool centerModel)  {
 
   ObjectCaster<TSPlane,TXPlane> latt_planes = XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>();
   for( size_t i=0; i < latt_planes.Count(); i++ )  {
-    latt_planes[i].Create();
+    TXPlane& xp = latt_planes[i];
+    xp.Create(olxstr("TXPlane") << xp.GetDefId());
   }
   double cell[] = {  
     XFile().GetAsymmUnit().GetAxes()[0],
@@ -1911,7 +1912,9 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
 }
 //..............................................................................
 TXLine& TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge)  {
-  TXLine *XL = new TXLine(*FGlRender, Name, base, edge);
+  TXLine *XL = new TXLine(*FGlRender,
+    Name.IsEmpty() ? olxstr("TXLine") << LooseObjects.Count() : Name,
+    base, edge);
   XL->Create();
   LooseObjects.Add(XL);
   return *XL;

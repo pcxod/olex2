@@ -13,13 +13,11 @@ template <class T> class TPtrList : public IEObject  {
   T **Items;
   inline void Allocate()  {
     if( FCapacity == 0 )  {
-      if( Items!= NULL )  {
-        free(Items);
-        Items = 0;
-      }
+      olx_free(Items);
+      Items = NULL;
     }
     else
-      Items = (T**)realloc((void*)Items, FCapacity*sizeof(T*));
+      Items = olx_realloc<T*>(Items, FCapacity);
   }
 
   void init(size_t size)  {
@@ -64,15 +62,12 @@ public:
       Set(i, accessor.Access(list[i]));
   }
 //..............................................................................
-  virtual ~TPtrList()  {
-    if( Items != NULL )
-      free(Items);
-  }
+  virtual ~TPtrList()  {  olx_free(Items);  }
 //..............................................................................
   //deletes the objects and clears the list
   inline void Clear()  {  
     if( Items != NULL )  {
-      free(Items);
+      olx_free(Items);
       Items = NULL;
       FCount = FCapacity = 0;
     }
@@ -464,15 +459,15 @@ public:
     return InvalidIndex;
   }
 //..............................................................................
-  TPtrList& Rearrange(const TSizeList& indexes)  {
+  TPtrList& Rearrange(const TSizeList& indices)  {
     if( FCount < 2 )  return *this;
-    if( FCount != indexes.Count() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "indexes size");
+    if( FCount != indices.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "indices size");
     // allocate the list of NULLs
-    T** ni = (T**)malloc(FCount*sizeof(T*));
+    T** ni = olx_malloc<T*>(FCount);
     for( size_t i=0; i < FCount; i++ )
-      ni[i] = Items[indexes[i]];
-    free(Items);
+      ni[i] = Items[indices[i]];
+    olx_free(Items);
     Items = ni;
     return *this;
   }

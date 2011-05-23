@@ -449,7 +449,7 @@ SiteSymmCon TCAtom::GetSiteConstraints() const {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
+olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm) const  {
   olxstr name(Atom->GetLabel());
   if( Atom->GetResiId() == 0 )  {
     if( Matrix != NULL )
@@ -463,7 +463,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
   return name;
 }
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const int resiId) const  {
+olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const int resiId) const  {
   olxstr name(Atom->GetLabel());
   if( Atom->GetResiId() == 0 || 
     Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiId )  
@@ -479,7 +479,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const int resiId) const  {
   return name;
 }
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) const  {
+olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const olxstr& resiName) const  {
   if( resiName.IsEmpty() )
     return GetFullLabel(rm);
 
@@ -511,6 +511,18 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) co
     }
   }
   return name;
+}
+//..............................................................................
+void TGroupCAtom::ToDataItem(TDataItem& di) const {
+  di.AddField("atom_id", Atom->GetTag()).AddField("matr_id", Matrix == NULL ? -1 : Matrix->GetId());
+}
+//..............................................................................
+TGroupCAtom& TGroupCAtom::FromDataItem(const TDataItem& di, const RefinementModel& rm)  {
+  Atom = &rm.aunit.GetAtom(di.GetRequiredField("atom_id").ToSizeT());
+  int m_id = di.GetRequiredField("matr_id").ToInt();
+  if( m_id != -1 )
+    Matrix = &rm.GetUsedSymm(m_id);
+  return *this;
 }
 //..............................................................................
 IXVarReferencerContainer& TCAtom::GetParentContainer() const {  return *Parent;  }

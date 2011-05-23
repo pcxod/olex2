@@ -12,15 +12,19 @@
 #include "twinning.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
-  rDFIX(*this, rltBonds, "dfix"), 
-  rDANG(*this, rltBonds, "dang"), 
-  rSADI(*this, rltBonds, "sadi"), 
-  rCHIV(*this, rltAtoms, "chiv"), 
-  rFLAT(*this, rltGroup, "flat"), 
-  rDELU(*this, rltAtoms, "delu"), 
-  rSIMU(*this, rltAtoms, "simu"), 
-  rISOR(*this, rltAtoms, "isor"), 
-  rEADP(*this, rltAtoms, "eadp"), 
+  rDFIX(*this, rltGroup2, "dfix"),
+  rDANG(*this, rltGroup2, "dang"),
+  rSADI(*this, rltGroup2, "sadi"),
+  rCHIV(*this, rltAtoms, "chiv"),
+  rFLAT(*this, rltGroup, "flat"),
+  rDELU(*this, rltAtoms, "delu"),
+  rSIMU(*this, rltAtoms, "simu"),
+  rISOR(*this, rltAtoms, "isor"),
+  rEADP(*this, rltAtoms, "eadp"),
+  rAngle(*this, rltGroup3, "olex2.restraint.angle"),
+  rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral"),
+  rFixedUeq(*this, rltAtoms, "olex2.restraint.u_eq"),
+  rSimilarUeq(*this, rltAtoms, "olex2.restraint.u_eq.similar"),
   ExyzGroups(*this), 
   AfixGroups(*this), 
   rSAME(*this),
@@ -35,6 +39,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   RefContainers(rDFIX.GetIdName(), &rDFIX);
   RefContainers(rDANG.GetIdName(), &rDANG);
   RefContainers(TAsymmUnit::_GetIdName(), &aunit);
+  rcRegister.Add(SharedRotatedADPs.GetName(), &SharedRotatedADPs);
   //RefContainers(aunit.GetIdName(), &aunit);
   RefContainers(GetIdName(), this);
   au.SetRefMod(this);
@@ -77,7 +82,12 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   rDELU.Clear();
   rISOR.Clear();
   rEADP.Clear();
+  rAngle.Clear();
+  rDihedralAngle.Clear();
+  rFixedUeq.Clear();
+  rSimilarUeq.Clear();
   ExyzGroups.Clear();
+  SharedRotatedADPs.Clear();
   if( (clear_mask & rm_clear_SAME) != 0 )
     rSAME.Clear();
   //ExyzGroups.Clear();
@@ -202,9 +212,14 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rDELU.Assign(rm.rDELU);
   rISOR.Assign(rm.rISOR);
   rEADP.Assign(rm.rEADP);
+  rAngle.Assign(rm.rAngle);
+  rDihedralAngle.Assign(rm.rDihedralAngle);
+  rFixedUeq.Assign(rm.rFixedUeq);
+  rSimilarUeq.Assign(rm.rSimilarUeq);
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
+  SharedRotatedADPs.Assign(*this, rm.SharedRotatedADPs);
   // restraunts have to be copied first, as some may refer to vars
   Vars.Assign( rm.Vars );
 
@@ -291,6 +306,10 @@ void RefinementModel::Validate() {
   rSIMU.ValidateAll();
   rISOR.ValidateAll();
   rEADP.ValidateAll();
+  rAngle.ValidateAll();
+  rDihedralAngle.ValidateAll();
+  rFixedUeq.ValidateAll();
+  rSimilarUeq.ValidateAll();
   ExyzGroups.ValidateAll();
   AfixGroups.ValidateAll();
   Vars.Validate();
@@ -901,6 +920,11 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   rSIMU.ToDataItem(item.AddItem("SIMU"));
   rISOR.ToDataItem(item.AddItem("ISOR"));
   rEADP.ToDataItem(item.AddItem("EADP"));
+  rAngle.ToDataItem(item.AddItem(rAngle.GetIdName()));
+  rDihedralAngle.ToDataItem(item.AddItem(rDihedralAngle.GetIdName()));
+  rFixedUeq.ToDataItem(item.AddItem(rFixedUeq.GetIdName()));
+  rSimilarUeq.ToDataItem(item.AddItem(rSimilarUeq.GetIdName()));
+  SharedRotatedADPs.ToDataItem(item.AddItem(SharedRotatedADPs.GetName()));
   
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
   hklf.AddField("s", HKLF_s);
@@ -969,6 +993,13 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   rSIMU.FromDataItem(item.FindRequiredItem("SIMU"));
   rISOR.FromDataItem(item.FindRequiredItem("ISOR"));
   rEADP.FromDataItem(item.FindRequiredItem("EADP"));
+  {
+    rAngle.FromDataItem(item.FindItem(rAngle.GetIdName()));
+    rDihedralAngle.FromDataItem(item.FindItem(rDihedralAngle.GetIdName()));
+    rFixedUeq.FromDataItem(item.FindItem(rFixedUeq.GetIdName()));
+    rSimilarUeq.FromDataItem(item.FindItem(rSimilarUeq.GetIdName()));
+    SharedRotatedADPs.FromDataItem(item.FindItem(SharedRotatedADPs.GetName()), *this);
+  }
 
   TDataItem& hklf = item.FindRequiredItem("HKLF");
   HKLF = hklf.GetValue().ToInt();
@@ -1067,6 +1098,15 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   PythonExt::SetDictItem(main, "simu", rSIMU.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, "isor", rISOR.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, "eadp", rEADP.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, rAngle.GetIdName(), rAngle.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, rDihedralAngle.GetIdName(),
+    rDihedralAngle.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, rFixedUeq.GetIdName(),
+    rFixedUeq.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, rSimilarUeq.GetIdName(),
+    rSimilarUeq.PyExport(atoms, equivs));
+  PythonExt::SetDictItem(main, SharedRotatedADPs.GetName(),
+    SharedRotatedADPs.PyExport());
 
   PythonExt::SetDictItem(hklf, "value", Py_BuildValue("i", HKLF));
   PythonExt::SetDictItem(hklf, "s", Py_BuildValue("d", HKLF_s));
@@ -1246,7 +1286,7 @@ void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
     Vars.GetVar(i).SetValue(Params[1].ToDouble());
 }
 //..............................................................................
-void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E) {
+void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
     if( EXTI_set )
       E.SetRetVal(EXTI);
@@ -1255,6 +1295,15 @@ void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E) {
   }
   else
     SetEXTI(Params[0].ToDouble());
+}
+//..............................................................................
+void RefinementModel::LibUpdateCRParams(const TStrObjList& Params, TMacroError& E)  {
+  IConstraintContainer* cc = rcRegister.Find(Params[0], NULL);
+  if( cc == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, olxstr("Undefined container for: '") << Params[0] << '\'');
+    return;
+  }
+  cc->UpdateParams(Params[1].ToSizeT(), Params.SubListFrom(2));
 }
 //..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
@@ -1268,5 +1317,9 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<RefinementModel>(
     new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI, "Exti", fpNone|fpOne,
 "Returns/sets EXTI") );
+  lib->RegisterFunction<RefinementModel>(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibUpdateCRParams, "UpdateCR",
+      fpAny^(fpNone|fpOne|fpTwo),
+"Updates constraint or restraint parameters (name, index, {values})") );
   return lib;
 }

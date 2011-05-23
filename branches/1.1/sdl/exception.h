@@ -166,10 +166,17 @@ public:
   virtual IEObject* Replicate() const {  return new TDivException(*this);  }
 };
 //.........................................................................................
-class TInvalidNumberException: public TBasicException {
+class TInvalidFormatException: public TBasicException {
+public:
+  TInvalidFormatException(const olxstr& location, const olxstr& msg):
+    TBasicException(location, msg)  {}
+  virtual IEObject* Replicate() const {  return new TInvalidFormatException(*this);  }
+};
+
+class TInvalidNumberException: public TInvalidFormatException {
 public:
   TInvalidNumberException(const olxstr& location, const olxstr& msg):
-    TBasicException(location, msg)  {}
+    TInvalidFormatException(location, msg)  {}
   virtual IEObject* Replicate() const {  return new TInvalidNumberException(*this);  }
 };
 
@@ -195,6 +202,14 @@ public:
     TInvalidNumberException(location, str)  {}
   virtual const char* GetNiceName() const {  return "Invalid float format";  }
   virtual IEObject* Replicate() const {  return new TInvalidFloatNumberException(*this);  }
+};
+//.........................................................................................
+class TInvalidBoolException : public TInvalidFormatException {
+public:
+  TInvalidBoolException(const olxstr& location, const olxstr& str):
+    TInvalidFormatException(location, str)  {}
+  virtual const char* GetNiceName() const {  return "Invalid boolean format";  }
+  virtual IEObject* Replicate() const {  return new TInvalidBoolException(*this);  }
 };
 //.........................................................................................
 

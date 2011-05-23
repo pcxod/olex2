@@ -457,6 +457,27 @@ void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template, 
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
+SortedObjectList<smatd, smatd::ContainerIdComparator>
+  TLattice::GetFragmentGrowMatrices(const TCAtomPList& l) const
+{
+  SortedObjectList<smatd, smatd::ContainerIdComparator> res;
+  smatd_list all; // we need a non-sorted list to implement 'recursion'
+  const TUnitCell& uc = GetUnitCell();
+  res.Add(uc.GetMatrix(0));
+  all.AddNew(uc.GetMatrix(0));
+  for( size_t i=0; i < all.Count(); i++ )  {
+    for( size_t j=0; j < l.Count(); j++ )  {
+      TCAtom& a = *l[j];
+      for( size_t k=0; k < a.AttachedSiteCount(); k++ )  {
+        smatd m = uc.MulMatrix(a.GetAttachedSite(k).matrix, all[i]);
+        if( res.AddUnique(m) )
+          all.AddNew(m);  // recursion
+      }
+    }
+  }
+  return res;
+}
+//..............................................................................
 void TLattice::GetGrowMatrices(smatd_list& res) const {
   const TUnitCell& uc = GetUnitCell();
   const size_t ac = Objects.atoms.Count();
@@ -766,7 +787,7 @@ TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   vec3d cc, ce;
   double aan = 0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
-    cc += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetOccu();
+    cc += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetChemOccu();
     ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd())*Atoms[i]->CAtom().GetOccu();
     aan += Atoms[i]->CAtom().GetChemOccu();
   }
@@ -820,7 +841,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
           TSPlane* p = pd.FromAtomRegistry(Objects, PlaneDefs.Count()-1, Network, *Matrices[i]);
           if( p != NULL )  {
             bool uniq = true;
-            for( size_t j=0; j < Objects.planes.Count(); j++ )  {
+            for( size_t j=0; j < Objects.planes.Count()-1; j++ )  {
               if( Objects.planes[j].GetCenter().QDistanceTo(p->GetCenter()) < 1e-6 )  {
                 uniq = false;
                 break;
@@ -828,6 +849,8 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
             }
             if( !uniq )
               Objects.planes.DeleteLast();
+            else
+              rv.Add(p);
           }
         }
       }
@@ -1156,15 +1179,26 @@ template <int run>
 size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)  {
   if( run == 1 && ca.GetType() == iQPeakZ )  return 0;
   size_t cnt = 0;
-  for( size_t j=0; j < ca.AttachedSiteCount(); j++ )  {
-    TCAtom::Site& site = ca.GetAttachedSite(j);
-    if( site.atom->GetTag() != 0  )
-      continue;
-    site.atom->SetTag(1);
+  for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
+    TCAtom::Site& site = ca.GetAttachedSite(i);
+    if( site.atom->GetTag() != 0  )  continue;
     if( !matr.IsFirst() )  {
       cnt++;
       site.matrix = uc.MulMatrix(site.matrix, matr);
     }
+    else if( site.atom->GetFragmentId() == ca.GetFragmentId() )  {
+      TPSTypeList<double, TCAtom*> sorted_al;
+      const TAsymmUnit& au = *ca.GetParent();
+      for( size_t j=0; j < site.atom->AttachedSiteCount(); j++ )  {
+        TCAtom::Site& st = site.atom->GetAttachedSite(j);
+        if( st.atom->GetTag() != 0 || !st.matrix.IsFirst() )  continue;
+        sorted_al.Add(au.Orthogonalise(ca.ccrd()-st.atom->ccrd()).Length(), st.atom);
+      }
+      if( sorted_al.IsEmpty() || sorted_al.GetObject(0) != &ca )
+        continue;
+    }
+    site.atom->SetTag(1);
+    site.atom->SetFragmentId(ca.GetFragmentId());
     site.atom->ccrd() = site.matrix*site.atom->ccrd();
     if( site.atom->GetEllipsoid() != NULL )
       *site.atom->GetEllipsoid() = uc.GetEllipsoid(site.matrix.GetContainerId(), site.atom->GetId());
@@ -1184,6 +1218,7 @@ void TLattice::CompaqAll()  {
       continue;
     cnt += TLattice_CompaqAll_Process<1>(uc, sa.CAtom(), uc.GetMatrix(0));
   }
+  // prcess Q-peaks
   for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
     TSAtom& sa = Objects.atoms[i];
     if( sa.CAtom().GetTag() != 0 || !sa.CAtom().IsAvailable() )
@@ -2206,17 +2241,11 @@ olxstr TLattice::CalcMoiety() const {
   if( zp_mult != 1 )  {
     for( size_t i=0; i < frags.Count(); i++ )  {
       const TCAtomPList& l = cfrags[frags[i].GetC()];
-      SortedObjectList<uint32_t, TPrimitiveComparator> grow_dirs;
-      for( size_t j=0; j < l.Count(); j++ )  {
-        TCAtom& a = *l[j];
-        for( size_t k=0; k < a.AttachedSiteCount(); k++ )  {
-          if( a.GetAttachedSite(k).atom->GetType() != iQPeakZ )
-            grow_dirs.AddUnique(a.GetAttachedSite(k).matrix.GetId());
-        }
-      }
-      frags[i].A() *= zp_mult/grow_dirs.Count();
+      const size_t generators = GetFragmentGrowMatrices(l).Count();
+      const int gd = int(generators == 0 ? 1 : generators);
+      frags[i].A() *= zp_mult/gd;
       for( size_t j=0; j < frags[i].GetB().Count(); j++ )
-        frags[i].B()[j].count *= grow_dirs.Count();
+        frags[i].B()[j].count *= gd;
     }
   }
   olxstr rv;

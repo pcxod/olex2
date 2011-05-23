@@ -11,6 +11,7 @@
 #include "fragment.h"
 #include "symmlib.h"
 #include "edict.h"
+#include "constraints_ext.h"
 
 BeginXlibNamespace()
 
@@ -149,11 +150,17 @@ public:
                   rDELU,  // rigid bond restraints (DELU)
                   rSIMU,  // similar Uij (SIMU)
                   rISOR,  // Uij components approximate to isotropic behavior (ISOR)
-                  rEADP;  // equivalent adp, constraint
+                  rEADP,  // equivalent adp, constraint
+                  rAngle,
+                  rDihedralAngle,
+                  rFixedUeq,
+                  rSimilarUeq;
+  ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;
-
+  // restraints and constraints register
+  olxdict<olxstr, IConstraintContainer*, olxstrComparator<false> > rcRegister;
   // removes references to all deleted atoms
   void Validate();
   // creates a human readable description of the refinement
@@ -221,7 +228,12 @@ public:
   int GetHKLF() const {  return HKLF;  }
   void SetHKLF(int v)  {  HKLF = v;  HKLF_set = true;  }
   const mat3d& GetHKLF_mat() const {  return HKLF_mat;  }
-  void SetHKLF_mat(const mat3d& v) {  HKLF_mat = v;  HKLF_set = true;  }
+  void SetHKLF_mat(const mat3d& v) {
+    if( HKLF_mat != v ) // make sure it gets applied to the reflections
+      _Reflections.Clear();
+    HKLF_mat = v;
+    HKLF_set = true;
+  }
   double GetHKLF_s() const {  return HKLF_s;  }
   void SetHKLF_s(double v)  {  HKLF_s = v;  HKLF_set = true;  }
   double GetHKLF_wt() const {  return HKLF_wt;  }
@@ -643,6 +655,7 @@ of components 1 ... m
   void LibOSF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);
+  void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
   struct ReleasedItems {
@@ -655,4 +668,3 @@ of components 1 ... m
 EndXlibNamespace()
 
 #endif
-

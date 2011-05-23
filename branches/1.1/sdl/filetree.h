@@ -18,12 +18,12 @@ public:
     TDiffFolder(const FT* src=NULL, const FT* dest=NULL) : Src(src), Dest(dest)  {  }
   };
 ///////////////////////////////////////////////////////////////////////////////////////
-  class Folder  {
+  class Folder : public TFileListItem {
     TFileList Files;
     TFileTree& FileTree;
     TTypeList<Folder> Folders;
     Folder* Parent;
-    olxstr FullPath, Name;
+    olxstr FullPath;
     typedef TDiffFolder<Folder> DiffFolder;
 #ifdef __WIN32__
     static int CompareFiles(const TFileListItem* i1, const TFileListItem* i2)  {
@@ -82,19 +82,21 @@ public:
 #endif
     void _ExpandNewFolder(DiffFolder& df, bool is_src) const;
   public:
-    Folder(TFileTree& fileTree, const olxstr& fullPath, Folder* parent = NULL) :
-      Parent(parent), FileTree(fileTree)  
+    Folder(TFileTree& fileTree, const TFileListItem& info, const olxstr& fullPath,
+      Folder* parent = NULL)
+      :  TFileListItem(info), Parent(parent), FileTree(fileTree)  
     {
       FullPath = TEFile::OSPath(fullPath);
       TEFile::AddPathDelimeterI(FullPath);
-      size_t ind = FullPath.LastIndexOf(TEFile::GetPathDelimeter(), FullPath.Length()-1);
-      if( ind != InvalidIndex )
-        Name = FullPath.SubStringFrom(ind+1, 1);
+      //size_t ind = FullPath.LastIndexOf(TEFile::GetPathDelimeter(), FullPath.Length()-1);
+      //if( ind != InvalidIndex )
+      //  Name = FullPath.SubStringFrom(ind+1, 1);
     }
-    const olxstr& GetName() const {  return Name;  }
     const olxstr& GetFullPath() const {  return FullPath;  }
     size_t FileCount() const {  return Files.Count();  }
     const TFileListItem& GetFile(size_t i) const {  return Files[i];  }
+    size_t FolderCount() const {  return Folders.Count();  }
+    const Folder& GetFolder(size_t i) const {  return Folders[i];  }
     void NullFileEntry(size_t i) const {  Files.NullItem(i);  }
     bool IsEmpty() const {  return Files.IsEmpty() && Folders.IsEmpty();  }
     // calculates total size of the tree
@@ -124,6 +126,8 @@ public:
     // the function fills the list with full file names (recursively)
     void ListFilesEx(TStrList& out, const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
     void ListFiles(TStrList& out, const olxstr& _mask) const;
+    size_t CountFilesEx(const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
+    size_t CountFiles(const olxstr& _mask) const;
   };
 ///////////////////////////////////////////////////////////////////////////////////////
 public:
@@ -141,7 +145,7 @@ public:
     *OnCompare, // called when files are being compared
     *OnDelete;  // called when recursive folder deletion is executed
 
-  TFileTree(const olxstr& root) : Root(*this, root)  {
+  TFileTree(const olxstr& root) : Root(*this, TFileListItem(), root)  {
     OnExpand = &Actions.New("ON_EXPAND");
     OnSynchronise = &Actions.New("ON_SYNC");
     OnFileCopy = &Actions.New("ON_FCOPY");

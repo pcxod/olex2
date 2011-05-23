@@ -5,6 +5,7 @@
 #include "typelist.h"
 #include "tptrlist.h"
 #include "emath.h"
+#include "istream.h"
 #ifdef QLength
   #undef QLength
 #endif
@@ -20,6 +21,18 @@ protected:
   VecType *FData;
 public:
   TVector()  {  Fn = 0;  FData = NULL;  }
+
+  TVector(const VecType& a, const VecType& b, const VecType& c)  {
+    Fn = 3;  FData = new VecType[Fn];
+    FData[0] = a;  FData[1] = b;  FData[2] = c;
+  }
+  TVector(const VecType& a, const VecType& b, const VecType& c, const VecType& d,
+          const VecType& e, const VecType& f)
+  {
+    Fn = 6;  FData = new VecType[Fn];
+    FData[0] = a;  FData[1] = b;  FData[2] = c;
+    FData[3] = d;  FData[4] = e;  FData[5] = f;
+  }
 
   template <typename AType> TVector(const TVector<AType>& V)  {
     Fn = V.Count();
@@ -84,25 +97,21 @@ public:
     return FData[Fn-1];
   }
 
+  template <typename vec_t>
+  static vec_t& Null(vec_t& v, size_t sz)  {  
+    for( size_t i=0; i < sz; i++ )  v[i] = 0;
+    return v;
+  }
+  template <typename vec_t> static vec_t& Null(vec_t& v)  {
+    return Null(v, v.Count());
+  }
   TVector& Null()  {  
-    for( size_t i=0; i < Fn; i++ )
-      FData[i] = 0;
+    Null(FData, Fn);
     return *this;
   }
 
-  VecType Length() const {  return (VecType)sqrt((double)QLength());  }
-
-  VecType QLength() const {
-    if( Fn == 0 )
-      throw TFunctionFailedException(__OlxSourceInfo, "empty vector");
-    VecType l = 0;
-    for( size_t i=0; i < Fn; i++ )
-      l += FData[i]*FData[i];
-    return l;
-  }
-
   int Compare(const TVector& v) const {
-    const size_t l = olx_min(this->Count(), v.Count() );
+    const size_t l = olx_min(this->Count(), v.Count());
     for( size_t i=0; i < l; i++ )  {
       if( FData[i] < v[i] )  return -1;
       if( FData[i] > v[i] )  return 1;
@@ -110,45 +119,96 @@ public:
     return olx_cmp(Count(), v.Count());
   }
 
-  TVector& Normalise() {
-    const VecType l = Length();
-    if( l == 0 )  throw TDivException(__OlxSourceInfo);
-    for( size_t i=0; i < Fn; i++ )
-      FData[i] /= l;
-    return *this;
-  }
 
-  template <typename AT> VecType CAngle(const AT& V) const {
-    if( Fn != V.Count() )  
-      throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
-    double l = Length(), v=0;
-    l *= V.Length();
-    if( l == 0 )  throw TDivException(__OlxSourceInfo);
-    for( size_t i=0; i < Fn; i++ )
-      v += FData[i]*V[i];
-    return (VecType)(v/l);
-  }
+  template <typename vec_t>
+  static VecType Length(const vec_t& v, size_t cnt)  {  return QLength(v, cnt);  }
+  template <typename vec_t>
+  static VecType Length(const vec_t& v)  {  return QLength(v);  }
+  VecType Length() const {  return (VecType)sqrt((double)QLength());  }
 
-  template <typename AT> VecType QDistanceTo(const AT& V) const {
-    if( Fn != V.Count() )  
-      throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
-    VecType v = 0;
-    for( size_t i=0; i < Fn; i++ )
-      v += olx_sqr(FData[i]-V[i]);
+  template <typename vec_t> VecType QLength(const vec_t& v, size_t cnt)  {
+    if( cnt == 0 )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    VecType l = 0;
+    for( size_t i=0; i < cnt; i++ )  l += olx_sqr(v[i]);
+    return l;
+  }
+  template <typename vec_t> VecType QLength(const vec_t& v)  {  return QLength(v, v.Count());  }
+  VecType QLength() const {  return QLength(*this);  }
+
+  template <typename vec_t>
+  static vec_t& Normalise(vec_t& v, size_t cnt)  {
+    const VecType l = Length(v, cnt);
+    if( l == 0 )  throw TDivException(__OlxSourceInfo);
+    for( size_t i=0; i < cnt; i++ )  v[i] /= l;
     return v;
   }
+  template <typename vec_t>
+  static vec_t& Normalise(vec_t& v)  {  return Normalise(v, v.Count());  }
+  TVector& Normalise()  {  return Normalise(*this);  }
 
-  template <typename AT> VecType DotProd(const AT& V) const {
-    if( Fn != V.Count() )  
-      throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
+  template <typename vec1_t, typename vec2_t>
+  static VecType CAngle(const vec1_t& a, const vec2_t& b, size_t cnt)  {
+    if( cnt == 0 )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    const VecType l = sqrt(QLength(a, cnt)*QLength(b, cnt));
+    if( l == 0 )  throw TDivException(__OlxSourceInfo);
     VecType v = 0;
-    for( size_t i=0; i < Fn; i++ )
-      v += FData[i]*V[i];
+    for( size_t i=0; i < cnt; i++ )  v += a[i]*b[i];
+    return v/l;
+  }
+  template <typename vec1_t, typename vec2_t>
+  static VecType CAngle(const vec1_t& a, const vec2_t& b)  {
+    const size_t  cnt = a.Count();
+    if( cnt != b.Count() )  
+      throw TFunctionFailedException(__OlxSourceInfo, "vector size differs");
+    return CAngle(a, b, cnt);
+  }
+  template <typename AT> VecType CAngle(const AT& V) const {  return CAngle(*this, V);  }
+  
+  template <typename vec1_t, typename vec2_t>
+  static VecType QDistance(const vec1_t& a, const vec2_t& b, size_t cnt)  {
+    if( cnt == 0 )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    VecType v = 0;
+    for( size_t i=0; i < cnt; i++ )  v += olx_sqr(a[i]-b[i]);
     return v;
   }
+  template <typename vec1_t, typename vec2_t>
+  static VecType QDistance(const vec1_t& a, const vec2_t& b)  {
+    const size_t  cnt = a.Count();
+    if( cnt != b.Count() )  
+      throw TFunctionFailedException(__OlxSourceInfo, "vector size differs");
+    return QDistance(a, b, cnt);
+  }
+  template <typename AT> VecType QDistanceTo(const AT& v) const {  return QDistance(*this, v);  }
 
-  template <typename AT> VecType DistanceTo(const AT& V) const {
-    return (VecType)sqrt((double)QDistanceTo(V));  // cast needed for the case of int
+  template <typename vec1_t, typename vec2_t>
+  static VecType DotProd(const vec1_t& a, const vec2_t& b, size_t cnt)  {
+    if( cnt == 0 )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    VecType v = 0;
+    for( size_t i=0; i < cnt; i++ )  v += a[i]*b[i];
+    return v;
+  }
+  template <typename vec1_t, typename vec2_t>
+  static VecType DotProd(const vec1_t& a, const vec2_t& b)  {
+    const size_t  cnt = a.Count();
+    if( cnt != b.Count() )  
+      throw TFunctionFailedException(__OlxSourceInfo, "vector size differs");
+    return DotProd(a, b, cnt);
+  }
+  template <typename AT> VecType DotProd(const AT& v) const {  return DotProd(*this, v);  }
+
+  template <typename vec1_t, typename vec2_t>
+  VecType Distance(const vec1_t& a, const vec2_t& b, size_t cnt) const {
+    return sqrt(QDistance(a, b, cnt));
+  }
+  template <typename vec1_t, typename vec2_t>
+  static VecType Distance(const vec1_t& a, const vec2_t& b)  {
+    const size_t  cnt = a.Count();
+    if( cnt != b.Count() )  
+      throw TFunctionFailedException(__OlxSourceInfo, "vector size differs");
+    return sqrt(QDistanceTo(a, b, cnt));
+  }
+  template <typename AT> VecType DistanceTo(const AT& v) const {
+    return sqrt(QDistance(*this, v));
   }
 
   template <typename AType> TVector& operator = (const AType& a)  {
@@ -292,7 +352,17 @@ public:
   inline TIString ToString() const {  return StrRepr<olxstr>();  }
   inline olxcstr  ToCStr() const {  return StrRepr<olxcstr>();  }
   inline olxwstr  ToWStr() const {  return StrRepr<olxwstr>();  }
-
+  void ToStream(IOutputStream& out) const {
+    uint32_t sz = (uint32_t)Fn; //TODO: check overflow
+    out.Write(&sz, sizeof(sz));
+    out.Write(FData, sizeof(VecType)*Fn);
+  }
+  void FromStream(IInputStream& in)  {
+    uint32_t sz;
+    in >> sz;
+    Resize(sz);
+    in.Read(FData, sz);
+  }
   TVector& Resize(size_t newsize)  {
     if( newsize <= Fn )
       Fn = newsize;
@@ -330,7 +400,7 @@ public:
     return b;
   }
   // searches minimum of an array
-  static VecType  ArrayMin(const VecType* a, size_t& n, size_t sz)  {
+  static VecType ArrayMin(const VecType* a, size_t& n, size_t sz)  {
     VecType b;
     b = a[0];
     n = 0;

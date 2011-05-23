@@ -8,7 +8,7 @@ template <class MC, class VC> class TSymmMat {
 public:
   TSymmMat() : Id(~0) {  }
   // copy constructor
-  TSymmMat(const TSymmMat<MC,VC>& v) : 
+  TSymmMat(const TSymmMat& v) : 
     r(v.r), 
     t(v.t),
     Id(v.Id) {  }
@@ -27,22 +27,22 @@ public:
     return TVector3<VC>(r*a).operator +=(t);
   }
   
-  inline TSymmMat<MC,VC> operator * (const TSymmMat<MC,VC>& v) const {
-    return TSymmMat<MC,VC>(v.r*r, v*t);
+  inline TSymmMat operator * (const TSymmMat& v) const {
+    return TSymmMat(v.r*r, v*t);
   }
 
-  inline TSymmMat<MC,VC>& operator *= (const TSymmMat<MC,VC>& v)  {
+  inline TSymmMat& operator *= (const TSymmMat& v)  {
     r *= v.r;
     t = v * t;
     return *this;
   }
 
-  inline bool operator == (const TSymmMat<MC,VC>& v) const {
+  inline bool operator == (const TSymmMat& v) const {
     return (r == v.r && t == v.t);
   }
   /* compares rotational part directly, but does distance comparison for translation 
   to prevent rounding errors influence*/
-  bool EqualExt(const TSymmMat<MC,VC>& v) const {
+  bool EqualExt(const TSymmMat& v) const {
     return (r == v.r && t.QDistanceTo(v.t) < 1e-6);
   }
   
@@ -66,7 +66,7 @@ public:
     t *= v;
   }
   
-  inline TSymmMat<MC,VC>& I()  {
+  inline TSymmMat& I()  {
     r.I();
     t.Null();
     return *this;
@@ -75,19 +75,19 @@ public:
     return (r.IsI() && t.QLength() < 1e-6);
   }
   
-  inline TSymmMat<MC,VC>& Null()  {
+  inline TSymmMat& Null()  {
     r.Null();
     t.Null();
     return *this;
   }
   
-  inline TSymmMat<MC,VC> Inverse() const  {
-    TSymmMat<MC,VC> rv(r.Inverse(), t*-1);
+  inline TSymmMat Inverse() const  {
+    TSymmMat rv(r.Inverse(), t*-1);
     rv.t = rv.r * rv.t;
     return rv;
   }
   
-  static inline TSymmMat<MC,VC>& Inverse(TSymmMat<MC,VC>& m)  {
+  static inline TSymmMat& Inverse(TSymmMat& m)  {
     m.r = m.r.Inverse();
     m.t = ((m.r*m.t) *= -1);
     return m;
@@ -114,8 +114,8 @@ public:
   static int8_t GetTy(uint32_t id) {  return (int8_t)(128-(int8_t)((id&0x0000FF00) >> 8));  }
   static int8_t GetTz(uint32_t id) {  return (int8_t)(128-(int8_t)(id&0x000000FF));  }
   static vec3i GetT(uint32_t id)  {  return vec3i(GetTx(id), GetTy(id), GetTz(id));  }
-  static TSymmMat<MC,VC> FromId(uint32_t id, const TSymmMat<MC,VC>& ref)  {
-    TSymmMat<MC,VC> rv(ref);
+  static TSymmMat FromId(uint32_t id, const TSymmMat& ref)  {
+    TSymmMat rv(ref);
     rv.t[0] += GetTx(id);
     rv.t[1] += GetTy(id);
     rv.t[2] += GetTz(id);
@@ -128,7 +128,7 @@ public:
   static uint32_t GenerateId(uint8_t id, const vec3i& t) {
     return ((uint32_t)id<<24)|((uint32_t)(0x80-t[0])<<16)|((uint32_t)(0x80-t[1])<<8)|(uint32_t)(0x80-t[2]);
   }
-  static uint32_t GenerateId(uint8_t container_id, const TSymmMat<MC,VC>& m, const TSymmMat<MC,VC>& ref)  {
+  static uint32_t GenerateId(uint8_t container_id, const TSymmMat& m, const TSymmMat& ref)  {
     vec3i t(ref.t - m.t);
     uint32_t rv = ((uint32_t)container_id << 24);
     rv |= ((uint32_t)(0x80-t[0]) << 16);
@@ -136,6 +136,16 @@ public:
     rv |= (uint32_t)(0x80-t[2]);
     return rv;
   }
+  struct IdComparator {
+    static int Compare(const TSymmMat& a, const TSymmMat& b)  {
+      return olx_cmp(a.GetId(), b.GetId());
+    }
+  };
+  struct ContainerIdComparator {
+    static int Compare(const TSymmMat& a, const TSymmMat& b)  {
+      return olx_cmp(a.GetContainerId(), b.GetContainerId());
+    }
+  };
   static void Tests(OlxTests& t)  {
     t.description = __OlxSrcInfo;
     const uint32_t id_1 = GenerateId(0, -56, -43, -21);

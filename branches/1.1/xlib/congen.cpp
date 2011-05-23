@@ -4,6 +4,7 @@
 #include "network.h"
 #include "unitcell.h"
 #include "lattice.h"
+#include "label_corrector.h"
 
 AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
   Distances(GenId(fgCH3, 1), 0.96);
@@ -44,21 +45,19 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
 void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
     vec3d_list& Crds, const olxstr& StartingName)
 {
-  vec3d v;
-  bool IncLabel = (Crds.Count() != 1);
+  LabelCorrector lc(au);
+  const bool IncLabel = (Crds.Count() != 1);
   for( size_t i=0; i < Crds.Count(); i++ )  {
-    v = Crds[i];
-    au.CartesianToCell(v);
     TCAtom& CA = au.NewAtom();
+    CA.ccrd() = au.Fractionalise(Crds[i]);
+    CA.SetType(XElementLib::GetByIndex(iHydrogenIndex));
     if( IncLabel )  {
-      size_t j = i;
-      olxstr lbl = (StartingName + (char)('a' + j));
-      CA.SetLabel(au.CheckLabel(&CA, lbl), false);
+      olxstr lbl = (StartingName + (char)('a' + i));
+      CA.SetLabel(lbl, false);
     }
     else
-      CA.SetLabel(au.CheckLabel(&CA, StartingName), false);
-    CA.SetType(XElementLib::GetByIndex(iHydrogenIndex));
-    CA.ccrd() = v;
+      CA.SetLabel(StartingName, false);
+    lc.CorrectGlobal(CA);
     created.Add(CA);
   }
 }
@@ -391,9 +390,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         dis = -dis;
         Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() + (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
         RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec( envi.GetCrd(1) - envi.GetBase().crd() ).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3));
         crds.AddNew(M*Vec1);
-        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3));
         crds.AddNew(M*Vec1);
         // final 90 degree rotation
         olx_create_rotation_matrix(M, Vec1, 0, 1);
@@ -446,11 +445,11 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         Vec1 = (envi.GetCrd(0)-envi.GetBase().crd()).Normalise();
         Vec2 = (envi.GetCrd(1)-envi.GetBase().crd()).Normalise();
         Vec3 = (envi.GetCrd(2)-envi.GetBase().crd()).Normalise();
-        crds.AddNew( (Vec1+Vec2+Vec3).Normalise() );
+        crds.AddNew((Vec1+Vec2+Vec3).Normalise());
         Vec1 -= Vec2;
         Vec3 -= Vec2;
         Vec3 = Vec1.XProdVec(Vec3);
-        Vec3.NormaliseTo( crds[0].CAngle(Vec3) < 0 ? dis : -dis);
+        Vec3.NormaliseTo(crds[0].CAngle(Vec3) < 0 ? dis : -dis);
         crds[0] = (Vec3 += envi.GetBase().crd());
       }
       break;
@@ -460,9 +459,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         // summ vector
         Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() + (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
         RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec( envi.GetCrd(1) - envi.GetBase().crd() ).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI/3), sin(M_PI/3));
         crds.AddNew(M*Vec1);
-        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3) );
+        olx_create_rotation_matrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3));
         crds.AddNew(M*Vec1);
         // final 90 degree rotation
         olx_create_rotation_matrix(M, Vec1, 0, 1);

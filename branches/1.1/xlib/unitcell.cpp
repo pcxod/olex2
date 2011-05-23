@@ -13,6 +13,7 @@
 #include "emath.h"
 #include "olxmps.h"
 #include "arrays.h"
+#include "etable.h"
 #undef GetObject
 //---------------------------------------------------------------------------
 // TUnitCell function bodies
@@ -66,13 +67,15 @@ smatd_list TUnitCell::MulMatrices(const smatd_list& in, const smatd& transform) 
   return out;
 }
 //..............................................................................
+double TUnitCell::CalcVolume(const vec3d& sides, const vec3d& angles)  {
+  static const double k = M_PI/180;
+  const vec3d cs(cos(angles[0]*k), cos(angles[1]*k), cos(angles[2]*k));
+  return sides.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
+}
+//..............................................................................
 double TUnitCell::CalcVolume() const {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  static const double k = M_PI/180;
-  const vec3d ang = au.GetAngles()*k;
-  const vec3d ax = au.GetAxes();
-  const vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
-  return ax.Prod()*sqrt(1-cs.QLength() + 2*cs.Prod());
+  return CalcVolume(au.GetAxes(), au.GetAngles());
 }
 //..............................................................................
 TEValue<double> TUnitCell::CalcVolumeEx() const {
@@ -119,7 +122,7 @@ void  TUnitCell::InitMatrices()  {
         }
       }
       if( index == InvalidIndex )
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+        throw TFunctionFailedException(__OlxSourceInfo, "assert: incomplete space group");
       MulDest[i][j] = (uint8_t)index;
     }
     {
@@ -135,11 +138,23 @@ void  TUnitCell::InitMatrices()  {
         }
       }
       if( index == InvalidIndex )
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+        throw TFunctionFailedException(__OlxSourceInfo, "assert: incomplete space group");
       InvDest[i] = (uint8_t)index;
     }
   }
   UpdateEllipsoids();
+#if defined(_DEBUG) && 0
+  TTable m_tab(mc, mc), i_tab(1, mc);
+  for( size_t i=0; i < mc; i++ )  {
+    i_tab.ColName(i) = i;
+    i_tab[0][i] = InvDest[i];
+    for( size_t j=0; j < mc; j++ )  {
+      m_tab[i][j] = MulDest[i][j];
+    }
+  }
+  TBasicApp::GetLog() << m_tab.CreateTXTList("Space group multiplication table", false, false, ' ');
+  TBasicApp::GetLog() << i_tab.CreateTXTList("Space inversion table", true, false, ' ');
+#endif
 }
 //..............................................................................
 void TUnitCell::UpdateEllipsoids()  {

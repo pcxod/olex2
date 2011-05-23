@@ -951,7 +951,7 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   cnt /= (float)wght;
   plane.Init(pa);
   plane.GetCenter();
-  // this might fail if one of the atoms is on at the palce center 
+  // this might fail if one of the atoms is at the center 
   PlaneSort::Sorter sp;
   try  {  sp.DoSort(plane);  }
   catch( ... )  {

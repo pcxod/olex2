@@ -492,7 +492,7 @@ void TGlRenderer::Draw()  {
 }
 //..............................................................................
 void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives)  {
-#ifdef _DEBUG
+#if defined(_DEBUG) && 0
   for( size_t i=0; i < PrimitiveCount(); i++ )  {
     GetPrimitive(i).SetFont(NULL);
     GetPrimitive(i).SetString(NULL);

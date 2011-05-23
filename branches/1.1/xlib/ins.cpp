@@ -26,6 +26,7 @@
 #include "sortedlist.h"
 #include "infotab.h"
 #include "catomlist.h"
+#include "label_corrector.h"
 
 #undef AddAtom
 #undef GetObject
@@ -65,10 +66,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   ParseContext cx(GetRM());
   TStrList Toks, InsFile(FileContent);
   for( size_t i=0; i < InsFile.Count(); i++ )  {
-    InsFile[i].Trim(' ').\
-      Trim('\0').\
+    InsFile[i].Trim(' ').
+      Trim('\0').
+      Trim('\r').
       Replace('\t', ' ').
-      DeleteSequencesOf(' ').\
+      DeleteSequencesOf(' ').
       Trim(' ');
   }
   Preprocess(InsFile);
@@ -300,6 +302,13 @@ void TIns::_FinishParsing(ParseContext& cx)  {
       catch(const TExceptionBase& e)  {
         TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
       }
+    }
+    else if( toks.Count() > 5 && toks[0].Equalsi("REM") &&
+      toks[1].Equalsi("olex2.constraint.rotated_adp") )
+    {
+      rotated_adp_constraint::FromToks(toks.SubListFrom(2), cx.rm,
+        cx.rm.SharedRotatedADPs.items);
+      Ins.Delete(i--);
     }
     else  {
       TInsList* Param = new TInsList(toks);
@@ -909,6 +918,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
+    LabelCorrector lc;
     for( size_t j=0; j < residue.Count(); j++ )  {
       if( residue[j].IsDeleted() )  continue;
       residue[j].SetSaved(false);
@@ -919,15 +929,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
           GetRM().AddUserContent(residue[j].GetType().symbol, 1.0);
         }
       }
-      if( residue[j].GetLabel().Length() > 4 ) 
-        residue[j].SetLabel(GetAsymmUnit().CheckLabel(&residue[j], residue[j].GetLabel()), false);
-      for( size_t k=j+1; k < residue.Count(); k++ )  {
-        if( residue[k].IsDeleted() )  continue;
-        if( residue[j].GetPart() != residue[k].GetPart() && 
-            residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
-        if( residue[j].GetLabel().Equalsi(residue[k].GetLabel()) ) 
-          residue[k].SetLabel(GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel()), false);
-      }
+      lc.Correct(residue[j]);
     }
   }
   
@@ -1368,6 +1370,14 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   restraints.Add("ISOR", ResInfo(&rm.rISOR, RCInfo(0, 2, -1)));
   // equivalent EADP constraint
   restraints.Add("EADP", ResInfo(&rm.rEADP, RCInfo(0, 0, 2, false)));
+  restraints.Add(olxstr("REM ") << rm.rAngle.GetIdName(),
+    ResInfo(&rm.rAngle, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rDihedralAngle.GetIdName(),
+    ResInfo(&rm.rDihedralAngle, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rFixedUeq.GetIdName(),
+    ResInfo(&rm.rFixedUeq, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rSimilarUeq.GetIdName(),
+    ResInfo(&rm.rSimilarUeq, RCInfo(0, 1, -1, false)));
 
   TUIntList usedSymm;
   for( size_t i=0; i < restraints.Count(); i++ )  {
@@ -1398,6 +1408,12 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       HyphenateIns(line, SL);
       if( processed != NULL )  
         processed->restraints.Add(sr);
+    }
+  }
+  // shared rotated ADPs
+  for( size_t i=0; i < rm.SharedRotatedADPs.items.Count(); i++ )  {
+    if( rm.SharedRotatedADPs.items[i].IsValid() )  {
+      HyphenateIns(rm.SharedRotatedADPs.items[i].ToInsStr(rm), SL);
     }
   }
   // equivalent EXYZ constraint
@@ -1450,28 +1466,32 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
 void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
   // fixed distances
   TPtrList<TSRestraintList> restraints;
-  restraints.Add(&rm.rDFIX); 
-  restraints.Add(&rm.rSADI); 
-  restraints.Add(&rm.rDANG); 
-  restraints.Add(&rm.rCHIV); 
-  restraints.Add(&rm.rFLAT); 
-  restraints.Add(&rm.rDELU); 
-  restraints.Add(&rm.rSIMU); 
-  restraints.Add(&rm.rISOR); 
-  restraints.Add(&rm.rEADP); 
+  restraints.Add(&rm.rDFIX);
+  restraints.Add(&rm.rSADI);
+  restraints.Add(&rm.rDANG);
+  restraints.Add(&rm.rCHIV);
+  restraints.Add(&rm.rFLAT);
+  restraints.Add(&rm.rDELU);
+  restraints.Add(&rm.rSIMU);
+  restraints.Add(&rm.rISOR);
+  restraints.Add(&rm.rEADP);
+  restraints.Add(&rm.rAngle);
+  restraints.Add(&rm.rDihedralAngle);
+  restraints.Add(&rm.rFixedUeq);
+  restraints.Add(&rm.rSimilarUeq);
+  LabelCorrector lc(rm.aunit);
   for( size_t i=0; i < restraints.Count(); i++ )  {
     TSRestraintList& srl = *restraints[i];
     for( size_t j=0; j < srl.Count(); j++ )  {
-      TSimpleRestraint& sr = srl[j];
-      for( size_t k=0; k < sr.AtomCount(); k++ )
-        sr.GetAtom(k).GetAtom()->SetLabel(rm.aunit.ValidateLabel(sr.GetAtom(k).GetAtom()->GetLabel()), false);
+      for( size_t k=0; k < srl[j].AtomCount(); k++ )
+        lc.CorrectGlobal(*srl[j].GetAtom(k).GetAtom());
     }
   }
   // equivalent EXYZ constraint
   for( size_t i=0; i < rm.ExyzGroups.Count(); i++ )  {
     TExyzGroup& sr = rm.ExyzGroups[i];
     for( size_t j=0; j < sr.Count(); j++ )
-      sr[j].SetLabel(rm.aunit.ValidateLabel(sr[j].GetLabel()), false);
+      lc.CorrectGlobal(sr[j]);
   }
 }
 //..............................................................................
@@ -1587,7 +1607,9 @@ void TIns::ParseHeader(const TStrList& in)  {
   _FinishParsing(cx);
 }
 //..............................................................................
-bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
+bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
+  if( _toks.IsEmpty() )  return false;
+  TStrList toks(_toks);
   if( toks[0].Equalsi("EQIV") && toks.Count() >= 3 )  {
     smatd SymM;
     TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2), SymM);
@@ -1599,10 +1621,15 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
   bool AcceptsAll = false;
   double Esd1Mult = 0, DefVal = 0, DefEsd = 0, DefEsd1 = 0;
   double *Vals[] = {&DefVal, &DefEsd, &DefEsd1};
+  bool use_var_manager = true, check_resi = true;
+  if( toks[0].Equalsi("REM") && toks.Count() > 1 && toks[1].StartsFromi("olex2.") )  {
+    toks.Delete(0);
+    check_resi = use_var_manager = false;
+  }
   // extract residue
   olxstr resi, ins_name = toks[0];
-  size_t resi_ind = toks[0].IndexOf('_');
-  if( resi_ind != InvalidIndex )  {
+  const size_t resi_ind = toks[0].IndexOf('_');
+  if( check_resi && resi_ind != InvalidIndex )  {
     resi = toks[0].SubStringFrom(resi_ind+1);
     ins_name = toks[0].SubStringTo(resi_ind);
   }
@@ -1670,6 +1697,30 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
     srl = &rm.rEADP;
     RequiredParams = 0;  AcceptsParams = 0;
   }
+  else if( ins_name.Equalsi(rm.rAngle.GetIdName()) )  {
+    srl = &rm.rAngle;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.02;
+    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
+  else if( ins_name.Equalsi(rm.rDihedralAngle.GetIdName()) )  {
+    srl = &rm.rDihedralAngle;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.02;
+    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
+  else if( ins_name.Equalsi(rm.rFixedUeq.GetIdName()) )  {
+    srl = &rm.rFixedUeq;
+    RequiredParams = 1;  AcceptsParams = 2;
+    DefEsd = 0.02;
+    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+  }
+  else if( ins_name.Equalsi(rm.rSimilarUeq.GetIdName()) )  {
+    srl = &rm.rSimilarUeq;
+    RequiredParams = 0;  AcceptsParams = 1;
+    DefEsd = 0.02;
+    Vals[0] = &DefEsd;
+  }
   else
     srl = NULL;
   if( srl != NULL )  {
@@ -1700,7 +1751,10 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
         index = 2; 
       }
     }
-    rm.Vars.SetParam(sr, 0, DefVal);
+    if( use_var_manager )
+      rm.Vars.SetParam(sr, 0, DefVal);
+    else
+      sr.SetValue(DefVal);
     sr.SetEsd(DefEsd);
     if( Vals[0] == &DefEsd )
       sr.SetEsd1( (index <= 2) ? DefEsd*Esd1Mult : DefEsd1 );
@@ -1718,7 +1772,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& toks)  {
         TBasicApp::NewLogEntry(logException) << ex.GetException()->GetError();
         return false;
       }
-      if( sr.GetListType() == rltBonds && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )  {
+      if( sr.GetListType() == rltGroup2 && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )  {
         TBasicApp::NewLogEntry(logError) << "Wrong restraint parameters list: " << toks.Text(' ');
         return false;
       }

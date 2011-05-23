@@ -2,6 +2,20 @@
 
 UseEsdlNamespace()
 
+void *GlobalEsdlFunction(olx_malloc_)(size_t sz)  {
+  void *r = malloc(sz);
+  if( sz != 0 && r == NULL )
+    throw TOutOfMemoryException(__OlxSourceInfo);
+  return r;
+}
+//................................................................................................
+void *GlobalEsdlFunction(olx_realloc_)(void *a, size_t sz)  {
+  void *r = realloc(a, sz);
+  if( sz != 0 && r == NULL )
+    throw TOutOfMemoryException(__OlxSourceInfo);
+  return r;
+}
+//................................................................................................
 TIString IEObject::ToString() const {  throw TNotImplementedException(__OlxSourceInfo);  }
 IEObject* IEObject::Replicate() const {  throw TNotImplementedException(__OlxSourceInfo);  }
 bool TExceptionBase::AutoLog = false;
@@ -29,7 +43,7 @@ bool TExceptionBase::AutoLog = false;
 #else
   const TIString& EsdlObject(NewLineSequence)()  {  return CNewLineSequence();  }
 #endif
-
+//................................................................................................
 AReferencible::~AReferencible()  {
   if( This_RefCount != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "reference count is not zero");
@@ -90,6 +104,20 @@ void TExceptionBase::ThrowInvalidFloatFormat(const char* file, const char* func,
     const wchar_t* src, size_t src_len)
 {
   throw TInvalidFloatNumberException(FormatSrc(file,func,line),
+    olxstr('\'') << olxwstr(src, src_len) << '\'');
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidBoolFormat(const char* file, const char* func, int line, 
+    const char* src, size_t src_len)
+{
+  throw TInvalidBoolException(FormatSrc(file,func,line),
+    olxstr('\'') << olxcstr(src, src_len) << '\'');
+}
+//................................................................................................
+void TExceptionBase::ThrowInvalidBoolFormat(const char* file, const char* func, int line, 
+    const wchar_t* src, size_t src_len)
+{
+  throw TInvalidBoolException(FormatSrc(file,func,line),
     olxstr('\'') << olxwstr(src, src_len) << '\'');
 }
 //................................................................................................

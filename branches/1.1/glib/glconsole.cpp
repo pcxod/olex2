@@ -90,7 +90,7 @@ size_t TGlConsole::CalcScrollDown() const {
                LineSpacer = (0.05+FLineSpacing)*th;
   const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
   vec3d T(GlLeft*Scale, GlTop*Scale, 0);
-  if( FBuffer[FTxtPos].IsEmpty() )
+  if( FTxtPos < FBuffer.Count() && FBuffer[FTxtPos].IsEmpty() )
     T[1] -= 0.5*th*Scale;
   TGlOption CC = Parent.LightModel.GetClearColor();
   size_t lines = 0;
@@ -135,7 +135,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
                LineSpacer = (0.05+FLineSpacing)*th;
   const double MaxZ = -(Parent.GetMaxRasterZ()-0.002);
   const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
-  if( olx_is_valid_index(FTxtPos) )  {
+  if( FTxtPos < FBuffer.Count() )  {
     vec3d T(GlLeft*Scale, GlTop*Scale, MaxZ);
     if( FBuffer[FTxtPos].IsEmpty() )
       T[1] -= 0.5*th*Scale;
@@ -290,7 +290,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     else if( Key == WXK_PAGEUP )  {
       if( FTxtPos < LinesVisible-1 )
         FTxtPos = FBuffer.IsEmpty() ? ~0 : 0;
-      else
+      else if( olx_is_valid_index(FTxtPos) )
         FTxtPos -= (LinesVisible-1);
     }
     SetInsertPosition(FCommand.Length());
