@@ -1158,13 +1158,14 @@ const olxcstr& TGlFont::DefinePSChar(olxch ch, const double& drawScale,
                                TGlFont::PSRenderContext& context) const
 {
   if( ch < 32 || ch > 126 )  return CEmptyString();
-  const size_t _ind = context.def_dict.IndexOf(ch);
+  const uint32_t ch_id = PSRenderContext::make_id(ch, PointSize);
+  const size_t _ind = context.def_dict.IndexOf(ch_id);
   if( _ind != InvalidIndex )
     return context.definitions[context.def_dict.GetValue(_ind)].id;
   size_t ch_ind = ch;
-  context.def_dict.Add(ch, context.definitions.Count());
-  TCStrList& def = context.definitions.AddNew(olxcstr("char_") << ch_ind).definition;
-  def.Add("  /char_") << ch_ind << "  {";
+  context.def_dict.Add(ch_id, context.definitions.Count());
+  TCStrList& def = context.definitions.AddNew(olxcstr("char_") << ch_id).definition;
+  def.Add("  /char_") << ch_id << "  {";
   ch_ind -= 32;
   bool path_started = false;
   double scalex = (double)PointSize/15;
