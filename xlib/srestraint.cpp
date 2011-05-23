@@ -223,7 +223,7 @@ PyObject* TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObjec
   return main;
 }
 #endif//..............................................................................
-void TSimpleRestraint::FromDataItem(TDataItem& item) {
+void TSimpleRestraint::FromDataItem(const TDataItem& item) {
   AllNonHAtoms = item.GetRequiredField("allNonH").ToBool();
   Esd = item.GetRequiredField("esd").ToDouble();
   Esd1 = item.GetRequiredField("esd1").ToDouble();
@@ -339,7 +339,7 @@ PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject
   return main;
 }
 #endif//..............................................................................
-void TSRestraintList::FromDataItem(TDataItem& item) {
+void TSRestraintList::FromDataItem(const TDataItem& item) {
   for( size_t i=0; i < item.ItemCount(); i++ )
     AddNew().FromDataItem(item.GetItem(i));
 }

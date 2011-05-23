@@ -85,6 +85,11 @@ public:
     }
     return di;
   }
+  void FromDataItem(const TDataItem* di, const RefinementModel& rm)  {
+    Clear();
+    if( di != NULL )
+      FromDataItem(*di, rm);
+  }
   void FromDataItem(const TDataItem& di, const RefinementModel& rm)  {
     Clear();
     for( size_t i=0; i < di.ItemCount(); i++ )

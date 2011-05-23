@@ -994,14 +994,11 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   rISOR.FromDataItem(item.FindRequiredItem("ISOR"));
   rEADP.FromDataItem(item.FindRequiredItem("EADP"));
   {
-    TDataItem* i = item.FindItem(rAngle.GetIdName());
-    if( i != NULL )  {
-      rAngle.FromDataItem(*i);
-      rDihedralAngle.FromDataItem(item.FindRequiredItem(rDihedralAngle.GetIdName()));
-      rFixedUeq.FromDataItem(item.FindRequiredItem(rFixedUeq.GetIdName()));
-      rSimilarUeq.FromDataItem(item.FindRequiredItem(rSimilarUeq.GetIdName()));
-    }
-    SharedRotatedADPs.FromDataItem(item.FindRequiredItem(SharedRotatedADPs.GetName()), *this);
+    rAngle.FromDataItem(item.FindItem(rAngle.GetIdName()));
+    rDihedralAngle.FromDataItem(item.FindItem(rDihedralAngle.GetIdName()));
+    rFixedUeq.FromDataItem(item.FindItem(rFixedUeq.GetIdName()));
+    rSimilarUeq.FromDataItem(item.FindItem(rSimilarUeq.GetIdName()));
+    SharedRotatedADPs.FromDataItem(item.FindItem(SharedRotatedADPs.GetName()), *this);
   }
 
   TDataItem& hklf = item.FindRequiredItem("HKLF");
