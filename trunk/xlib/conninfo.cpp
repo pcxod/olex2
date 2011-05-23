@@ -285,8 +285,10 @@ void ConnInfo::ToDataItem(TDataItem& item) const {
   for( size_t i=0; i < TypeInfo.Count(); i++ )
     TypeInfo.GetValue(i).ToDataItem(ti_item.AddItem(TypeInfo.GetValue(i).atomType->symbol));
   TDataItem& ai_item = item.AddItem("ATOM");
-  for( size_t i=0; i < AtomInfo.Count(); i++ ) 
+  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+    if( AtomInfo.GetValue(i).atom->IsDeleted() )  continue;
     AtomInfo.GetValue(i).ToDataItem(ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
+  }
 }
 //........................................................................
 void ConnInfo::FromDataItem(const TDataItem& item)  {
@@ -300,7 +302,7 @@ void ConnInfo::FromDataItem(const TDataItem& item)  {
   }
   TDataItem& ai_item = item.FindRequiredItem("ATOM");
   for( size_t i=0; i < ai_item.ItemCount(); i++ )  {
-    TCAtom& ca = rm.aunit.GetAtom(ai_item.GetItem(i).GetName().ToInt());
+    TCAtom& ca = rm.aunit.GetAtom(ai_item.GetItem(i).GetName().ToSizeT());
     AtomInfo.Add(&ca).FromDataItem(ai_item.GetItem(i), rm, ca);
   }
 }
