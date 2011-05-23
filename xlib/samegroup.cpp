@@ -143,13 +143,14 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
   }
   if( id == 0 )
     return PythonExt::PyNone();
-  PyObject* main = PyTuple_New( id );
+  PyObject* main = PyTuple_New(id);
   TPtrList<PyObject> allGroups;
   for( size_t i=0; i < id; i++ )
-    PyTuple_SetItem(main, i, allGroups.Add( PyDict_New() ) );
+    PyTuple_SetItem(main, i, allGroups.Add(PyDict_New()));
+  id = 0;
   for( size_t i=0; i < Groups.Count(); i++ ) 
     if( Groups[i].IsValidForSave() )
-      Groups[i].PyExport(allGroups[i], allGroups, _atoms);
+      Groups[i].PyExport(allGroups[id++], allGroups, _atoms);
   return main;
 }
 #endif
