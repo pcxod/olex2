@@ -310,6 +310,10 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         cx.rm.SharedRotatedADPs.items);
       Ins.Delete(i--);
     }
+    else if( toks[0].Equalsi("REM") && toks[1].Equalsi("olex2.direction") )  {
+      adirection::FromToks(toks.SubListFrom(2), cx.rm, cx.rm.Directions.items);
+      Ins.Delete(i--);
+    }
     else  {
       TInsList* Param = new TInsList(toks);
       Ins.GetObject(i) = Param;
@@ -1349,6 +1353,13 @@ void StoreUsedSymIndex(TUIntList& il, const smatd* m, RefinementModel& rm)  {
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
                           RefinementModel::ReleasedItems* processed, RefinementModel& rm)  {
   size_t oindex = SL.Count();
+  // shared rotated ADPs etc
+  for( size_t i=0; i < rm.rcList.Count(); i++ )  {
+    TStrList tmp = rm.rcList[i]->ToInsList(rm);
+    for( size_t j=0; j < tmp.Count(); j++ )
+      HyphenateIns(tmp[j], SL);
+  }
+
   typedef AnAssociation2<TSRestraintList*,RCInfo> ResInfo;
   TStrPObjList<olxstr, ResInfo> restraints;
   // fixed distances, has value, one esd, no atom limit
@@ -1408,12 +1419,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       HyphenateIns(line, SL);
       if( processed != NULL )  
         processed->restraints.Add(sr);
-    }
-  }
-  // shared rotated ADPs
-  for( size_t i=0; i < rm.SharedRotatedADPs.items.Count(); i++ )  {
-    if( rm.SharedRotatedADPs.items[i].IsValid() )  {
-      HyphenateIns(rm.SharedRotatedADPs.items[i].ToInsStr(rm), SL);
     }
   }
   // equivalent EXYZ constraint
