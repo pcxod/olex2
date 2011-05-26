@@ -216,9 +216,13 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
 
   wxStaticBox *Box2 = new wxStaticBox(this, -1, wxT("Light model"));
   wxStaticBoxSizer *SizerLM = new wxStaticBoxSizer(Box2, wxHORIZONTAL);
-
+#if !wxCHECK_VERSION(2,9,0)
+  wxGridSizer *SizerLM1 = new wxGridSizer(2, 2);
+  wxFlexGridSizer *SizerLM2 = new wxFlexGridSizer(2, 2);
+#else
   wxGridSizer *SizerLM1 = new wxGridSizer(2, 2, wxDefaultSize);
   wxFlexGridSizer *SizerLM2 = new wxFlexGridSizer(2, 2, wxDefaultSize);
+#endif
 
   SizerLM1->Add( cbLocalV, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0 ); //light model second column
   SizerLM1->Add( cbTwoSide, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0 );

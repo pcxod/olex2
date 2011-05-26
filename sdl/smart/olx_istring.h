@@ -1140,8 +1140,33 @@ public:
     return rn;
   }
   //............................................................................
+  // removes a string from another; returns number of replacements
+  template <typename OC, typename AC>
+  static size_t o_strdstr(OC* whr, size_t whr_len, const AC* wht, size_t wht_len)  {
+    size_t cnt = 0;
+    for( size_t i=0; i < whr_len; i++ )  {                              
+      if( i+wht_len > whr_len )  return cnt;
+      bool found = true;
+      for( size_t j=0;  j < wht_len; j++ )  {
+        if( whr[i+j] != wht[j] )  {
+          found = false;
+          break;
+        }
+      }
+      if( found )  {
+        cnt++;
+        const size_t si = i+wht_len;
+        for( size_t j=si; j < whr_len; j++ )
+          whr[j-wht_len] = whr[j];
+        whr_len -= wht_len;
+        i--;
+      }
+    }
+    return cnt;
+  }
   //removes a set of chars from string and return the number of removed chars
-  template <typename AC> static size_t o_strdchs(TC* whr, size_t whr_len, const AC* wht, size_t wht_len)  {
+  template <typename AC>
+  static size_t o_strdchs(TC* whr, size_t whr_len, const AC* wht, size_t wht_len)  {
     size_t rn = 0;
     for( size_t i=0; i < whr_len; i++ )  {
       bool found = false;
@@ -1160,14 +1185,20 @@ public:
   //............................................................................
   template <typename AC> TTSString& DeleteChars(AC wht)  {
     T::checkBufferForModification(T::_Length);
-    T::DecLength( o_strdch(T::Data(), T::_Length, wht) );
+    T::DecLength(o_strdch(T::Data(), T::_Length, wht));
+    return *this;
+  }
+  //............................................................................
+  TTSString& DeleteStrings(const TTSString& wht)  {
+    T::checkBufferForModification(T::_Length);
+    T::DecLength(o_strdstr(T::Data(), T::_Length, wht.Data(), wht._Length)*wht._Length);
     return *this;
   }
   //............................................................................
   // deletes a set of chars
   TTSString& DeleteCharSet(const TTSString& wht)  {
     T::checkBufferForModification(T::_Length);
-    T::DecLength( o_strdchs(T::Data(), T::_Length, wht.raw_str(), wht.Length()) );
+    T::DecLength(o_strdchs(T::Data(), T::_Length, wht.raw_str(), wht.Length()));
     return *this;
   }
   //............................................................................
@@ -1259,9 +1290,9 @@ public:
   }
   // replaces a string with another, returns number of replacements
   template <typename OC, typename AC>
-  static size_t o_strrplstr(const OC* wht, const size_t wht_len,
-                         const AC* with, const size_t with_len,
-                         TC* whr, size_t whr_len)  {
+  static size_t o_strrplstr(const OC* wht, size_t wht_len,
+    const AC* with, size_t with_len, TC* whr, size_t whr_len)
+  {
     if( wht_len > whr_len )  return 0;
     size_t cnt = 0;
     for( size_t i=0; i < whr_len; i++ )  {                              
@@ -1288,7 +1319,7 @@ public:
   }
   //............................................................................
   template <typename OC, typename AC>
-  static size_t o_strrplch(const OC* wht, const size_t wht_len,
+  static size_t o_strrplch(const OC* wht, size_t wht_len,
                          AC with,
                          TC* whr, size_t whr_len)  {
     if( wht_len > whr_len )  return 0;
@@ -1316,7 +1347,7 @@ public:
   //............................................................................
   template <typename OC, typename AC>
   static size_t o_chrplstr(OC wht,
-                         const AC* with, const size_t with_len,
+                         const AC* with, size_t with_len,
                          TC* whr, size_t whr_len)  {
     size_t cnt = 0;
     for( size_t i=0; i < whr_len; i++ )  {
@@ -1401,7 +1432,10 @@ public:
   template <typename OC, typename AC>
   TTSString& Replace(OC wht, const AC* with, size_t with_l=~0)  {
     size_t extra_len = 0, with_len = (with_l == ~0 ? o_strlen(with) : with_l);
-    if( with_len == 0 )  return *this;
+    if( with_len == 0 )  {
+      T::_Length -= o_strdch(T::Data(), T::_Length, wht);
+      return *this;
+    }
     if( with_len > 1 )  {
       extra_len = (with_len - 1) * o_chrcnt(wht, T::Data(), T::_Length);
       if( extra_len == 0 )  return *this;
@@ -1420,7 +1454,10 @@ public:
     size_t extra_len = 0,
       with_len = (with_l == ~0 ? o_strlen(with) : with_l),
       wht_len = (wht_l == ~0 ? o_strlen(wht) : wht_l);
-    if( with_len == 0 )  return *this;
+    if( with_len == 0 ) {
+      T::_Length -= o_strdstr(T::Data(), T::_Length, wht, wht_len)*wht_len;
+      return *this;
+    }
     if( wht_len < with_len )  {
       extra_len = (with_len - wht_len) * o_strcnt(wht, wht_len, T::Data(), T::_Length);
       if( extra_len == 0 )  return *this;
