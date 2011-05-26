@@ -40,6 +40,9 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   RefContainers(rDANG.GetIdName(), &rDANG);
   RefContainers(TAsymmUnit::_GetIdName(), &aunit);
   rcRegister.Add(SharedRotatedADPs.GetName(), &SharedRotatedADPs);
+  rcRegister.Add(Directions.GetName(), &Directions);
+  rcList.Add(&Directions);
+  rcList.Add(&SharedRotatedADPs);
   //RefContainers(aunit.GetIdName(), &aunit);
   RefContainers(GetIdName(), this);
   au.SetRefMod(this);
@@ -87,7 +90,8 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   rFixedUeq.Clear();
   rSimilarUeq.Clear();
   ExyzGroups.Clear();
-  SharedRotatedADPs.Clear();
+  for( size_t i=0; i < rcRegister.Count(); i++ )
+    rcRegister.GetValue(i)->Clear();
   if( (clear_mask & rm_clear_SAME) != 0 )
     rSAME.Clear();
   //ExyzGroups.Clear();
@@ -195,7 +199,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   SolutionMethod = rm.SolutionMethod;
 
   for( size_t i=0; i < rm.Frags.Count(); i++ )
-    Frags(rm.Frags.GetKey(i), new Fragment( *rm.Frags.GetValue(i) ) );
+    Frags(rm.Frags.GetKey(i), new Fragment(*rm.Frags.GetValue(i)));
 
   if( AssignAUnit )
     aunit.Assign(rm.aunit);
@@ -219,7 +223,8 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
-  SharedRotatedADPs.Assign(*this, rm.SharedRotatedADPs);
+  for( size_t i=0; i < rcList.Count(); i++ )
+    rcList[i]->Assign(*this, *rm.rcList[i]);
   // restraunts have to be copied first, as some may refer to vars
   Vars.Assign( rm.Vars );
 
@@ -924,7 +929,10 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   rDihedralAngle.ToDataItem(item.AddItem(rDihedralAngle.GetIdName()));
   rFixedUeq.ToDataItem(item.AddItem(rFixedUeq.GetIdName()));
   rSimilarUeq.ToDataItem(item.AddItem(rSimilarUeq.GetIdName()));
-  SharedRotatedADPs.ToDataItem(item.AddItem(SharedRotatedADPs.GetName()));
+  for( size_t i=0; i < rcRegister.Count(); i++ )  {
+    rcRegister.GetValue(i)->ToDataItem(
+      item.AddItem(rcRegister.GetValue(i)->GetName()));
+  }
   
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
   hklf.AddField("s", HKLF_s);
@@ -998,7 +1006,10 @@ void RefinementModel::FromDataItem(TDataItem& item) {
     rDihedralAngle.FromDataItem(item.FindItem(rDihedralAngle.GetIdName()));
     rFixedUeq.FromDataItem(item.FindItem(rFixedUeq.GetIdName()));
     rSimilarUeq.FromDataItem(item.FindItem(rSimilarUeq.GetIdName()));
-    SharedRotatedADPs.FromDataItem(item.FindItem(SharedRotatedADPs.GetName()), *this);
+    for( size_t i=0; i < rcRegister.Count(); i++ )  {
+      rcRegister.GetValue(i)->FromDataItem(
+        item.FindItem(rcRegister.GetValue(i)->GetName()), *this);
+    }
   }
 
   TDataItem& hklf = item.FindRequiredItem("HKLF");
@@ -1105,8 +1116,10 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
     rFixedUeq.PyExport(atoms, equivs));
   PythonExt::SetDictItem(main, rSimilarUeq.GetIdName(),
     rSimilarUeq.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, SharedRotatedADPs.GetName(),
-    SharedRotatedADPs.PyExport());
+  for( size_t i=0; i < rcRegister.Count(); i++ )  {
+    PythonExt::SetDictItem(main, rcRegister.GetValue(i)->GetName(),
+      rcRegister.GetValue(i)->PyExport());
+  }
 
   PythonExt::SetDictItem(hklf, "value", Py_BuildValue("i", HKLF));
   PythonExt::SetDictItem(hklf, "s", Py_BuildValue("d", HKLF_s));
@@ -1259,6 +1272,13 @@ vec3i RefinementModel::CalcMaxHklIndex(double two_theta) const {
     t/h2x[1].Length(),
     t/h2x[2].Length());
   return vec3i(rv);
+}
+//..............................................................................
+adirection& RefinementModel::DirectionById(const olxstr &id)  {
+  for( size_t i = 0; i < Directions.items.Count(); i++ )
+    if( Directions.items[i].id.Equalsi(id) )
+      return Directions.items[i];
+  throw TInvalidArgumentException(__OlxSourceInfo, "direction ID");
 }
 //..............................................................................
 //..............................................................................
