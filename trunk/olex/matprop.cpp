@@ -149,7 +149,11 @@ void TdlgMatProp::Init()  {
     Sizer0->Add(cbBlend, 1, wxEXPAND | wxALL, Border);
   }
 
+#if !wxCHECK_VERSION(2,9,0)
+  wxFlexGridSizer *grid = new wxFlexGridSizer(6, 7);
+#else
   wxFlexGridSizer *grid = new wxFlexGridSizer(6, 7, wxDefaultSize);
+#endif
   grid->Add(new wxStaticText(this, -1, wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
   grid->Add(new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
   grid->Add(new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);

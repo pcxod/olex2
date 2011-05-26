@@ -1,5 +1,27 @@
 namespace test {
 
+void ReplaceTest(OlxTests& t)  {
+  t.description = __FUNC__;
+  olxstr a("abcdef");
+  if( a.Replace("abc", "cba") != "cbadef" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if( a.Replace('a', "aa") != "cbaadef" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if( a.Replace('a', "aa") != "cbaaaadef" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if( a.Replace("aa", "h") != "cbhhdef" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if( a.Replace("h", EmptyString()) != "cbdef" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  a = "abcwwwbcawww";
+  if( a.DeleteStrings("www") != "abcbca" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if( a.DeleteChars('a') != "bcbc" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if( a.DeleteCharSet("abc") != "" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+}
+
 void IsNumberTest(OlxTests& t)  {
   t.description = __FUNC__;
   olxstr valid_num_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ", 
@@ -36,4 +58,7 @@ void IsNumberTest(OlxTests& t)  {
   }
 }
 //...................................................................................................
+void StringTests(OlxTests& t)  {
+  t.Add(&ReplaceTest).Add(&IsNumberTest);
+}
 };  //namespace test
