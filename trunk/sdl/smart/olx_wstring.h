@@ -111,7 +111,7 @@ public:
 //..........................................................................................
   TWString(const TTIString<char>& str);
   // primitive Type constructors
-  template <typename T> TWString(const T &v)  {  setTypeValue( printFormat(v), v);  }
+  template <typename T> TWString(const T &v)  {  setTypeValue(printFormat(v), v);  }
   // float numbers need trimming of the 0000
   TWString(const float& v)  {
     setTypeValue( printFormat(v), v);

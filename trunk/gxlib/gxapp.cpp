@@ -253,7 +253,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
 #ifdef __WXWIDGETS__
   TwxGlScene *GlScene = new TwxGlScene(GetBaseDir() + "etc/Fonts/");
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
-  GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
 #else
   TWGlScene *GlScene = new TWGlScene();
   GlScene->CreateFont("Default", "@20").SetMaterial(glm);
@@ -4092,9 +4092,9 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   olxstr entryModel("model"), entryGrid("grid");
 
   while( (zen = zin->GetNextEntry()) != NULL )  {
-    if( entryModel == zen->GetName().c_str() )
+    if( entryModel == zen->GetName() )
       model = zen;
-    else if( entryGrid == zen->GetName().c_str() )
+    else if( entryGrid == zen->GetName() )
       grid = zen;
     else
       delete zen;

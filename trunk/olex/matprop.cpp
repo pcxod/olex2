@@ -149,7 +149,7 @@ void TdlgMatProp::Init()  {
     Sizer0->Add(cbBlend, 1, wxEXPAND | wxALL, Border);
   }
 
-  wxFlexGridSizer *grid = new wxFlexGridSizer(6, 7);
+  wxFlexGridSizer *grid = new wxFlexGridSizer(6, 7, wxDefaultSize);
   grid->Add(new wxStaticText(this, -1, wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
   grid->Add(new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
   grid->Add(new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
@@ -341,8 +341,8 @@ void TdlgMatProp::Update(TGlMaterial &Glm)  {
   Glm.SpecularB = tcSpecB->WI.GetColor();
   Glm.SpecularB[3] = (double)scSpecB->GetValue()/100;
 
-  Glm.ShininessF = olxstr(tcShnF->GetValue().c_str()).ToInt();
-  Glm.ShininessB = olxstr(tcShnB->GetValue().c_str()).ToInt();
+  Glm.ShininessF = olxstr(tcShnF->GetValue()).ToInt();
+  Glm.ShininessB = olxstr(tcShnB->GetValue()).ToInt();
 }
 //..............................................................................
 void TdlgMatProp::OnOK(wxCommandEvent& event)  {

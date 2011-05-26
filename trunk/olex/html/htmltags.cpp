@@ -17,7 +17,7 @@
 TAG_HANDLER_BEGIN(SWITCHINFOS, "SWITCHINFOS")
 TAG_HANDLER_PROC(tag)  {
   THtml::SwitchSources.Push( THtml::SwitchSource );
-  THtml::SwitchSource = tag.GetParam(wxT("SRC")).c_str();
+  THtml::SwitchSource = tag.GetParam(wxT("SRC"));
   return true;
 }
 TAG_HANDLER_END(SWITCHINFOS)
@@ -37,7 +37,7 @@ TAG_HANDLER_PROC(tag)  {
       EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )  
     {
       THtmlImageCell* ic = (THtmlImageCell*)m_WParser->GetContainer()->GetLastChild();
-      TStrList toks( tag.GetParam(wxT("COORDS")).c_str(), ',');
+      TStrList toks(tag.GetParam(wxT("COORDS")), ',');
       if( toks.Count() == 4 )
         ic->AddRect(
           toks[0].ToInt(), 
@@ -60,7 +60,7 @@ TAG_HANDLER_PROC(tag)  {
       EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )  
     {
       THtmlImageCell* ic = (THtmlImageCell*)m_WParser->GetContainer()->GetLastChild();
-      TStrList toks( tag.GetParam(wxT("COORDS")).c_str(), ',');
+      TStrList toks(tag.GetParam(wxT("COORDS")), ',');
       if( toks.Count() == 3 )
         ic->AddCircle(
           toks[0].ToInt(), 
@@ -82,10 +82,10 @@ TAG_HANDLER_PROC(tag)  {
   int fl = 0;
   wxString text = tag.GetParam(wxT("TEXT")),
            mapName = tag.GetParam(wxT("USEMAP"));
-  olxstr ObjectName = tag.GetParam(wxT("NAME")).c_str(),
+  olxstr ObjectName = tag.GetParam(wxT("NAME")),
     Tmp;
   try  {
-    Tmp = tag.GetParam(wxT("WIDTH")).c_str();
+    Tmp = tag.GetParam(wxT("WIDTH"));
     if( !Tmp.IsEmpty() )  {
       if( Tmp.EndsWith('%') )  {
         ax = (int)Tmp.SubStringTo(Tmp.Length()-1).ToDouble();
@@ -94,7 +94,7 @@ TAG_HANDLER_PROC(tag)  {
       else
         ax = (int)Tmp.ToDouble();
     }
-    Tmp = tag.GetParam(wxT("HEIGHT")).c_str();
+    Tmp = tag.GetParam(wxT("HEIGHT"));
     if( !Tmp.IsEmpty() )  {
       if( Tmp.EndsWith('%') )  {
         ay = (int)Tmp.SubStringTo(Tmp.Length()-1).ToDouble();
@@ -119,7 +119,7 @@ TAG_HANDLER_PROC(tag)  {
     if( textH > ay )  ay = textH;
   }
 
-  olxstr src = tag.GetParam(wxT("SRC")).c_str();
+  olxstr src = tag.GetParam(wxT("SRC"));
 
   TGlXApp::GetMainForm()->ProcessFunction(src, EmptyString(), true);
 
@@ -158,9 +158,9 @@ TAG_HANDLER_END(IMAGE)
 // input tag
 TAG_HANDLER_BEGIN(INPUT, "INPUT")
 TAG_HANDLER_PROC(tag)  {
-  const olxstr TagName = tag.GetParam(wxT("TYPE")).c_str();
+  const olxstr TagName = tag.GetParam(wxT("TYPE"));
   olxstr ObjectName, Value, Data, Tmp, Label;
-  ObjectName = tag.GetParam(wxT("NAME")).c_str();
+  ObjectName = tag.GetParam(wxT("NAME"));
   const olxstr SrcInfo = olxstr(__OlxSrcInfo) << " for input '" << TagName << '[' << ObjectName << "]'";
   int valign = -1, halign = -1, 
     fl=0,
@@ -169,7 +169,7 @@ TAG_HANDLER_PROC(tag)  {
   AOlxCtrl* CreatedObject = NULL;
   wxWindow* CreatedWindow = NULL;
   try  {
-    Tmp = tag.GetParam(wxT("WIDTH")).c_str();
+    Tmp = tag.GetParam(wxT("WIDTH"));
     TGlXApp::GetMainForm()->ProcessFunction(Tmp, SrcInfo, false);
     if( !Tmp.IsEmpty() )  {
       if( Tmp.EndsWith('%') )  {
@@ -182,7 +182,7 @@ TAG_HANDLER_PROC(tag)  {
         ax = (int)Tmp.ToDouble();
       width_set = true;
     }
-    Tmp = tag.GetParam(wxT("HEIGHT")).c_str();
+    Tmp = tag.GetParam(wxT("HEIGHT"));
     TGlXApp::GetMainForm()->ProcessFunction(Tmp, SrcInfo, false);
     if( !Tmp.IsEmpty() )  {
       if( Tmp.EndsWith('%') )  {
@@ -232,7 +232,7 @@ TAG_HANDLER_PROC(tag)  {
     else if( va.CmpNoCase(wxT("bottom")) == 0 )
       valign = wxHTML_ALIGN_BOTTOM;
   }
-  Label = tag.GetParam(wxT("LABEL")).c_str();
+  Label = tag.GetParam(wxT("LABEL"));
 
   wxHtmlLinkInfo* LinkInfo = NULL;
   if( !Label.IsEmpty() )  {
@@ -273,9 +273,9 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 
-  Value = tag.GetParam(wxT("VALUE")).c_str();
+  Value = tag.GetParam(wxT("VALUE"));
   TGlXApp::GetMainForm()->ProcessFunction(Value, SrcInfo, true);
-  Data = tag.GetParam(wxT("DATA")).c_str();
+  Data = tag.GetParam(wxT("DATA"));
 /******************* TEXT CONTROL *********************************************/
   if( TagName.Equalsi("text") )  {
     int flags = wxWANTS_CHARS;
@@ -303,19 +303,19 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
 
     if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Text->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
+      Text->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")));
       Text->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONLEAVE")) )  {
-      Text->SetOnLeaveStr( tag.GetParam(wxT("ONLEAVE")).c_str() );
+      Text->SetOnLeaveStr(tag.GetParam(wxT("ONLEAVE")));
       Text->OnLeave.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONENTER")) )  {
-      Text->SetOnEnterStr( tag.GetParam(wxT("ONENTER")).c_str() );
+      Text->SetOnEnterStr(tag.GetParam(wxT("ONENTER")));
       Text->OnEnter.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONRETURN")) )  {
-      Text->SetOnReturnStr( tag.GetParam(wxT("ONRETURN")).c_str() );
+      Text->SetOnReturnStr(tag.GetParam(wxT("ONRETURN")));
       Text->OnReturn.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
   }
@@ -336,15 +336,15 @@ TAG_HANDLER_PROC(tag)  {
     long flags = 0;
     if( tag.HasParam(wxT("FIT")) )  flags |= wxBU_EXACTFIT;
     if( tag.HasParam(wxT("FLAT")) )  flags |= wxNO_BORDER;
-    olxstr buttonImage = tag.GetParam(wxT("IMAGE")).c_str();
+    olxstr buttonImage = tag.GetParam(wxT("IMAGE"));
     if( !buttonImage.IsEmpty() )  {
       if( buttonImage.IndexOf(',') != InvalidIndex )  {
         TImgButton* ibtn = new TImgButton(m_WParser->GetWindowInterface()->GetHTMLWindow());
         ibtn->SetImages(buttonImage, width_set ? ax : -1, height_set ? ay : -1);
         if( tag.HasParam(wxT("ENABLED")) )
-          ibtn->SetEnabled(olxstr(tag.GetParam(wxT("ENABLED")).c_str()).ToBool());
+          ibtn->SetEnabled(olxstr(tag.GetParam(wxT("ENABLED"))).ToBool());
         if( tag.HasParam(wxT("DOWN")) )
-          ibtn->SetDown(olxstr(tag.GetParam(wxT("DOWN")).c_str()).ToBool());
+          ibtn->SetDown(olxstr(tag.GetParam(wxT("DOWN"))).ToBool());
         CreatedWindow = ibtn;
         Btn = ibtn;
       }
@@ -400,23 +400,23 @@ TAG_HANDLER_PROC(tag)  {
     CreatedObject = Btn;
     Btn->SetData(Data);
     if( tag.HasParam(wxT("ONCLICK")) )  {
-      Btn->SetOnClickStr( tag.GetParam(wxT("ONCLICK")).c_str() );
+      Btn->SetOnClickStr(tag.GetParam(wxT("ONCLICK")));
       Btn->OnClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDOWN")) )  {
-      Btn->SetOnUpStr( tag.GetParam(wxT("ONUP")).c_str() );
+      Btn->SetOnUpStr(tag.GetParam(wxT("ONUP")));
       Btn->OnUp.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDOWN")) )  {
-      Btn->SetOnDownStr( tag.GetParam(wxT("ONDOWN")).c_str() );
+      Btn->SetOnDownStr(tag.GetParam(wxT("ONDOWN")));
       Btn->OnDown.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( TGlXApp::GetMainForm()->GetHtml()->GetShowTooltips() )
-      Btn->SetHint(tag.GetParam(wxT("HINT")).c_str());
+      Btn->SetHint(tag.GetParam(wxT("HINT")));
     if( tag.HasParam(wxT("DOWN")) )
       Btn->SetDown( tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")) == 0 );
 
-    olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT")).c_str();
+    olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
     if( !modeDependent.IsEmpty() )
       Btn->SetActionQueue(TGlXApp::GetMainForm()->OnModeChange, modeDependent);
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(CreatedWindow, fl));
@@ -437,7 +437,7 @@ TAG_HANDLER_PROC(tag)  {
     Box->WI.SetHeight( ay );
 #endif    
     if( tag.HasParam(wxT("ITEMS")) )  {
-      olxstr Items = tag.GetParam(wxT("ITEMS")).c_str();
+      olxstr Items = tag.GetParam(wxT("ITEMS"));
       TGlXApp::GetMainForm()->ProcessFunction(Items, SrcInfo, true);
       TStrList SL(Items, ';');
       if( SL.IsEmpty() )
@@ -452,19 +452,19 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetText(Value);
     Box->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Box->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
+      Box->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")));
       Box->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONLEAVE")) )  {
-      Box->SetOnLeaveStr( tag.GetParam(wxT("ONLEAVE")).c_str() );
+      Box->SetOnLeaveStr(tag.GetParam(wxT("ONLEAVE")));
       Box->OnLeave.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONENTER")) )  {
-      Box->SetOnEnterStr( tag.GetParam(wxT("ONENTER")).c_str() );
+      Box->SetOnEnterStr(tag.GetParam(wxT("ONENTER")));
       Box->OnEnter.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONRETURN")) )  {
-      Box->SetOnReturnStr( tag.GetParam(wxT("ONRETURN")).c_str() );
+      Box->SetOnReturnStr(tag.GetParam(wxT("ONRETURN")));
       Box->OnReturn.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
@@ -501,7 +501,7 @@ TAG_HANDLER_PROC(tag)  {
     Spin->WI.SetWidth(ax);
     Spin->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Spin->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
+      Spin->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")));
       Spin->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
@@ -538,11 +538,11 @@ TAG_HANDLER_PROC(tag)  {
     }
     Track->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Track->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")).c_str());
+      Track->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")));
       Track->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONMOUSEUP")) )  {
-      Track->SetOnMouseUpStr(tag.GetParam(wxT("ONMOUSEUP")).c_str());
+      Track->SetOnMouseUpStr(tag.GetParam(wxT("ONMOUSEUP")));
       Track->OnMouseUp.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
@@ -572,7 +572,7 @@ TAG_HANDLER_PROC(tag)  {
     Box->WI.SetHeight(ay);
     Box->SetCaption(Value);
     if( tag.HasParam(wxT("CHECKED")) )  {
-      Tmp = tag.GetParam(wxT("CHECKED")).c_str();
+      Tmp = tag.GetParam(wxT("CHECKED"));
       if( Tmp.IsEmpty() )
         Box->SetChecked(true);
       else
@@ -581,19 +581,19 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetData(Data);
     // binding events
     if( tag.HasParam(wxT("ONCLICK")) )  {
-      Box->SetOnClickStr( tag.GetParam(wxT("ONCLICK")).c_str() );
+      Box->SetOnClickStr(tag.GetParam(wxT("ONCLICK")));
       Box->OnClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONCHECK")) )  {
-      Box->SetOnCheckStr( tag.GetParam(wxT("ONCHECK")).c_str() );
+      Box->SetOnCheckStr(tag.GetParam(wxT("ONCHECK")));
       Box->OnCheck.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONUNCHECK")) )  {
-      Box->SetOnUncheckStr( tag.GetParam(wxT("ONUNCHECK")).c_str() );
+      Box->SetOnUncheckStr(tag.GetParam(wxT("ONUNCHECK")));
       Box->OnUncheck.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("MODEDEPENDENT")) )
-      Box->SetActionQueue(TGlXApp::GetMainForm()->OnModeChange, tag.GetParam(wxT("MODEDEPENDENT")).c_str());
+      Box->SetActionQueue(TGlXApp::GetMainForm()->OnModeChange, tag.GetParam(wxT("MODEDEPENDENT")));
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
   }
 /******************* TREE CONTROL *********************************************/
@@ -608,7 +608,7 @@ TAG_HANDLER_PROC(tag)  {
 
     if( (flags&wxTR_HIDE_ROOT) == 0 && tag.HasParam(wxT("ROOTLABEL")) )
       Tree->SetItemText(Tree->GetRootItem(), tag.GetParam(wxT("ROOTLABEL")));
-    olxstr src = tag.GetParam(wxT("SRC")).c_str();
+    olxstr src = tag.GetParam(wxT("SRC"));
     TGlXApp::GetMainForm()->ProcessFunction(src, SrcInfo, true);
     IInputStream* ios = TFileHandlerManager::GetInputStream(src);
     Tree->SetFont(m_WParser->GetDC()->GetFont());
@@ -622,15 +622,15 @@ TAG_HANDLER_PROC(tag)  {
     Tree->SetPopup(menu);
     Tree->SetData( Data );
     if( tag.HasParam(wxT("ONSELECT")) )  {
-      Tree->SetOnSelectStr( tag.GetParam(wxT("ONSELECT")).c_str() );
+      Tree->SetOnSelectStr(tag.GetParam(wxT("ONSELECT")));
       Tree->OnSelect.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONITEM")) )  {
-      Tree->SetOnItemActivateStr( tag.GetParam(wxT("ONITEM")).c_str() );
+      Tree->SetOnItemActivateStr(tag.GetParam(wxT("ONITEM")));
       Tree->OnDblClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( (flags&wxTR_EDIT_LABELS) != 0 && tag.HasParam(wxT("ONEDIT")) )  {
-      Tree->SetOnEditStr( tag.GetParam(wxT("ONEDIT")).c_str() );
+      Tree->SetOnEditStr(tag.GetParam(wxT("ONEDIT")));
       Tree->OnEdit.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Tree, fl));
@@ -655,10 +655,10 @@ TAG_HANDLER_PROC(tag)  {
       if( sel.IsEmpty() )  {
         sel = tag.GetParam(wxT("VALUE"));
         if( !sel.IsEmpty() )
-          Tree->SelectByLabel(sel.c_str());
+          Tree->SelectByLabel(sel);
       }
       else
-          Tree->SelectByData(sel.c_str());
+          Tree->SelectByData(sel);
     }
   }
 /******************* LIST CONTROL *********************************************/
@@ -669,7 +669,7 @@ TAG_HANDLER_PROC(tag)  {
     if( srcTag && itemsTag )
       TBasicApp::NewLogEntry(logError) << "THTML: list can have only src or items";
     else if( srcTag ) {
-      olxstr src = tag.GetParam(wxT("SRC")).c_str();
+      olxstr src = tag.GetParam(wxT("SRC"));
       TGlXApp::GetMainForm()->ProcessFunction(src, SrcInfo, true);
       IInputStream* ios = TFileHandlerManager::GetInputStream(src);
       if( ios == NULL )
@@ -684,7 +684,7 @@ TAG_HANDLER_PROC(tag)  {
       }
     }
     else if( itemsTag )  {
-      olxstr items = tag.GetParam(wxT("ITEMS")).c_str();
+      olxstr items = tag.GetParam(wxT("ITEMS"));
       TGlXApp::GetMainForm()->ProcessFunction(items, SrcInfo, true);
       itemsList.Strtok(items, ';');
     }
@@ -698,11 +698,11 @@ TAG_HANDLER_PROC(tag)  {
     List->AddItems(itemsList);
     // binding events
     if( tag.HasParam(wxT("ONSELECT")) )  {
-      List->SetOnSelectStr( tag.GetParam(wxT("ONSELECT")).c_str() );
+      List->SetOnSelectStr(tag.GetParam(wxT("ONSELECT")));
       List->OnSelect.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDBLCLICK")) )  {
-      List->SetOnDblClickStr( tag.GetParam(wxT("ONDBLCLICK")).c_str() );
+      List->SetOnDblClickStr(tag.GetParam(wxT("ONDBLCLICK")));
       List->OnDblClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     // creating cell
@@ -744,11 +744,11 @@ TAG_HANDLER_PROC(tag)  {
       CreatedWindow->Hide();
       olxstr bgc, fgc;
       if( tag.HasParam(wxT("BGCOLOR")) )  {
-        bgc = tag.GetParam( wxT("BGCOLOR") ).c_str();
+        bgc = tag.GetParam( wxT("BGCOLOR") );
         TGlXApp::GetMainForm()->ProcessFunction(bgc, SrcInfo, false);
       }
       if( tag.HasParam(wxT("FGCOLOR")) )  {
-        fgc = tag.GetParam( wxT("FGCOLOR") ).c_str();
+        fgc = tag.GetParam( wxT("FGCOLOR") );
         TGlXApp::GetMainForm()->ProcessFunction(fgc, SrcInfo, false);
       }
 
@@ -756,7 +756,7 @@ TAG_HANDLER_PROC(tag)  {
         TComboBox* Box = (TComboBox*)CreatedWindow;
         if( !bgc.IsEmpty() )  {
           wxColor bgCl = wxColor(bgc.u_str());
-          Box->SetBackgroundColour(bgCl);
+          //Box->SetBackgroundColour(bgCl);
 #ifdef __WIN32__          
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetBackgroundColour(bgCl);
@@ -766,7 +766,7 @@ TAG_HANDLER_PROC(tag)  {
         }
         if( !fgc.IsEmpty() )  {
           wxColor fgCl = wxColor(bgc.u_str());
-          Box->SetForegroundColour(fgCl);
+          //Box->SetForegroundColour(fgCl);
 #ifdef __WIN32__          
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetForegroundColour( fgCl );

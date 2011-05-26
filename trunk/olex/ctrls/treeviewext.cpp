@@ -32,7 +32,7 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
   StartEvtProcessing()
-    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnEditStr()).Replace("~label~", event.GetLabel().c_str()));
+    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnEditStr()).Replace("~label~", event.GetLabel()));
   EndEvtProcessing()
 }
 //..............................................................................
@@ -158,7 +158,7 @@ void TTreeView::RestoreState(const olxstr& state)  {
 }
 //..............................................................................
 wxTreeItemId TTreeView::_FindByLabel(const wxTreeItemId& root, const olxstr& label) const {
-  if( label == GetItemText(root).c_str() )  return root;
+  if( label == GetItemText(root) )  return root;
   if( !HasChildren(root) )  return wxTreeItemId();
   wxTreeItemIdValue cookie;
   wxTreeItemId ch_id = GetFirstChild(root, cookie);

@@ -6422,7 +6422,7 @@ void TMainForm::funChooseDir(const TStrObjList& Params, TMacroError &E) {
   if( Params.Count() > 1 )  defPath = Params[1];
   wxDirDialog dlg(this, title.u_str(), defPath.u_str());
   if( dlg.ShowModal() == wxID_OK )
-    E.SetRetVal<olxstr>(dlg.GetPath().c_str());
+    E.SetRetVal<olxstr>(dlg.GetPath());
   else
     E.ProcessingError(__OlxSrcInfo, EmptyString());
 }
@@ -7621,7 +7621,7 @@ void TMainForm::funChooseFont(const TStrObjList &Params, TMacroError &E)  {
         fntId = Params[1];
       else  {
         wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);
-        fntId = Font.GetNativeFontInfoDesc().c_str();
+        fntId = Font.GetNativeFontInfoDesc();
       }
     }
     else

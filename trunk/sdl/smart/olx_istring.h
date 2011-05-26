@@ -4,6 +4,10 @@
 #include <wctype.h>
 #include <math.h>
 
+#ifdef __WXWIDGETS__
+  #include "wx/string.h"
+#endif
+
 #define CharSizeMask 0xE0000000
 #define LengthMask   ~0xE0000000
 #define CodeLength(CharSize, Length)   ((((size_t)CharSize) << 29) | (Length))
@@ -122,7 +126,7 @@ template <class SC>
   }
 
 public:
-  TTSString() : T()  {  }
+  TTSString() : T()  {}
   //............................................................................
   TTSString(const TTSString& str, size_t start, size_t length) {
     T::SData = str.SData;
@@ -168,6 +172,9 @@ public:
 
   template <class T1, typename TC1> TTSString(const TTSString<T1,TC1>& v) : T((const T1&)v)  {  }
   //............................................................................
+#if defined(__WXWIDGETS__)
+  TTSString(const wxString& v)  {  InitFromCharStr((const olxch*)v.c_str(), v.Length());  }
+#endif
   template <typename AC> TTSString(const AC& v) : T(v)  {}
   //............................................................................
   // creates a string from external array allocated with alloc
@@ -198,12 +205,17 @@ public:
     T::Append(data, len);
     return *this;
   }
-  TTSString& operator << (TC* const& v)      { return Append(v, o_strlen(v));  }
-  TTSString& operator << (const TC* v)        { return Append(v, o_strlen(v));  }
-  TTSString& operator << (const TTSString& v) { return Append(v.Data(), v.Length());  }
+#if defined(__WXWIDGETS__)
+  TTSString& operator << (const wxString& v)  {
+    return Append((const olxch*)v.c_str(), v.Length());
+  }
+#endif
+  TTSString& operator << (TC* const& v)  { return Append(v, o_strlen(v));  }
+  TTSString& operator << (const TC* v)  { return Append(v, o_strlen(v));  }
+  TTSString& operator << (const TTSString& v)  { return Append(v.Data(), v.Length());  }
   template <class T1, typename TC1>
   TTSString& operator << (const TTSString<T1,TC1>& v) { return Append(v.raw_str(), v.Length());  }
-  TTSString& operator << (const bool& v)      { return operator << (v ? TrueString() : FalseString());  }
+  TTSString& operator << (const bool& v)  { return operator << (v ? TrueString() : FalseString());  }
   //............................................................................
   //............................................................................
   TTSString& operator = (const TTIString<TC>& v)   {
@@ -220,6 +232,11 @@ public:
     if( T::SData != NULL )  T::SData->RefCnt++;
     return *this;
   }
+#if defined(__WXWIDGETS__)
+ TTSString& operator = (const wxString& v)  {
+   return AssignCharStr((const olxch*)v.c_str(), v.Length());
+ }
+#endif
   template <class AC> TTSString& operator = (const AC& v)   { T::operator = (v);  return *this; }
   //............................................................................
   //............................................................................
@@ -449,6 +466,11 @@ public:
     const int res = o_memcmpi(wht, with, olx_min(len_a, len_b));
     return (res != 0 ? res : (len_a < len_b ? -1 : 1));
   }
+#if defined(__WXWIDGETS__)
+ int Compare(const wxString& v) const {
+   return o_strcmp(T::Data(), T::_Length, (const olxch*)v.c_str(), v.Length());
+ }
+#endif
   int Compare(const TTSString& v) const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length);  }
   int Compare(const wchar_t& v) const { 
     if( T::_Length == 0 )  return -1;
@@ -458,6 +480,11 @@ public:
   int Compare(const char& v) const {  return Compare((wchar_t)v);  }
   int Compare(const char* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v));  }
   int Compare(const wchar_t* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v));  }
+#if defined(__WXWIDGETS__)
+ int Comparei(const wxString& v) const {
+   return o_strcmpi(T::Data(), T::_Length, (const olxch*)v.c_str(), v.Length());
+ }
+#endif
   int Comparei(const TTSString& v) const { return o_strcmpi(T::Data(), T::_Length, v.Data(), v._Length);  }
   int Comparei(const wchar_t& v) const { 
     if( T::_Length == 0 )  return -1;
@@ -544,7 +571,9 @@ public:
   }
   //............................................................................
   //............................................................................
-  TTSString operator + (const TC* v) const { return (TTSString<T,TC>&)TTSString<T,TC>(*this).Append(v, o_strlen(v)); }
+  TTSString operator + (const TC* v) const {
+    return (TTSString<T,TC>&)TTSString<T,TC>(*this).Append(v, o_strlen(v));
+  }
   //............................................................................
   TTSString operator + (TC v) const { return (TTSString<T,TC>(*this) << v); }
   //............................................................................
@@ -689,8 +718,12 @@ public:
     return o_strposri(T::Data(), olx_min(from, T::_Length), wht.Data(), wht._Length);
   }
 #ifdef __BORLANDC__
-  size_t IndexOf(const TC* wht) const {  return o_strpos( T::Data(), T::_Length, wht, o_strlen(wht));  }
-  size_t IndexOfi(const TC* wht) const {  return o_strposi( T::Data(), T::_Length, wht, o_strlen(wht));  }
+  size_t IndexOf(const TC* wht) const {
+    return o_strpos( T::Data(), T::_Length, wht, o_strlen(wht));
+  }
+  size_t IndexOfi(const TC* wht) const {
+    return o_strposi( T::Data(), T::_Length, wht, o_strlen(wht));
+  }
   size_t IndexOf(TC wht) const { return o_chrpos( T::Data(), T::_Length, wht);  }
   size_t IndexOfi(TC wht) const { return o_chrposi( T::Data(), T::_Length, wht);  }
   size_t FirstIndexOf(const TC* wht, size_t from = 0) const {
@@ -729,15 +762,19 @@ public:
   }
 #else
   template <typename AC> size_t IndexOf(const AC* wht) const {
-    return o_strpos( T::Data(), T::_Length, wht, o_strlen(wht));
+    return o_strpos(T::Data(), T::_Length, wht, o_strlen(wht));
   }
   template <typename AC> size_t IndexOfi(const AC* wht) const {
     return o_strposi(T::Data(), T::_Length, wht, o_strlen(wht));
   }
-  template <typename AC> size_t IndexOf(AC wht) const { return o_chrpos( T::Data(), T::_Length, wht);  }
-  template <typename AC> size_t IndexOfi(AC wht) const { return o_chrposi( T::Data(), T::_Length, wht);  }
+  template <typename AC> size_t IndexOf(AC wht) const {
+    return o_chrpos( T::Data(), T::_Length, wht);
+  }
+  template <typename AC> size_t IndexOfi(AC wht) const {
+    return o_chrposi( T::Data(), T::_Length, wht);
+  }
 
-  template <typename AC> size_t FirstIndexOf(const AC* wht, size_t from = 0) const {
+  template <typename AC> size_t FirstIndexOf(const AC* wht, size_t from=0) const {
     size_t i = o_strpos(&T::Data()[from], T::_Length-from, wht, o_strlen(wht));
     return ((i==InvalidIndex) ? InvalidIndex : (i + from));
   }
@@ -755,10 +792,10 @@ public:
   }
 
   template <typename AC> bool IsSubStringAt(const AC* wht, size_t pos) const {
-    return o_issubstr(T::Data(), T::_Length, pos, wht, o_strlen(wht) );
+    return o_issubstr(T::Data(), T::_Length, pos, wht, o_strlen(wht));
   }
   template <typename AC> bool IsSubStringAti(const AC* wht, size_t pos) const {
-    return o_issubstri(T::Data(), T::_Length, pos, wht, o_strlen(wht) );
+    return o_issubstri(T::Data(), T::_Length, pos, wht, o_strlen(wht));
   }
 
   template <typename AC> size_t LastIndexOf(const AC* wht, size_t from = InvalidIndex) const {
@@ -776,7 +813,8 @@ public:
 #endif // __BORLANDC__
   //............................................................................
   // function checks for preceding radix encoding
-  template <typename IT> static IT o_atois(const TC* data, size_t len, bool& negative, unsigned short Rad=10) {
+  template <typename IT>
+  static IT o_atois(const TC* data, size_t len, bool& negative, unsigned short Rad=10) {
     if( len == 0 )    
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     size_t sts = 0; // string start, end
@@ -1308,93 +1346,38 @@ public:
     }
     return cnt;
   }
-  //............................................................................
-  TTSString& Replace(const TTSString& wht, const TTSString& with)  {
-    size_t extra_len = 0;
-    if( wht._Length < with._Length )  {
-      extra_len = (with._Length - wht._Length) * o_strcnt(wht.Data(), wht._Length, T::Data(), T::_Length);
-      if( extra_len == 0 )  return *this;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_strrplstr(wht.Data(), wht._Length, with.raw_str(), with._Length, T::Data(), T::_Length);
-    T::_Length -= (wht._Length - with._Length)*rv;
-    return *this;
-  }
 #ifndef __BORLANDC__ // what use of templates when this does not get them???
   //............................................................................
+#if defined(__WXWIDGETS__)
+  template <typename OC> TTSString& Replace(OC wht, const wxString &with)  {
+    return Replace(wht, (const olxch*)with.c_str(), with.Length());
+  }
+  template <typename OC> TTSString& Replace(const OC* wht, const wxString &with)  {
+    return Replace(wht, ~0, (const olxch*)with.c_str(), with.Length());
+  }
+  TTSString& Replace(const TTSString &wht, const wxString &with)  {
+    return Replace(wht.Data(), wht._Length, (const olxch*)with.c_str(), with.Length());
+  }
+#endif
+  //............................................................................
+  TTSString& Replace(const TTSString& wht, const TTSString& with)  {
+    return Replace(wht.Data(), wht._Length, with.Data(), with._Length);
+  }
+  //............................................................................
   template <typename AC> TTSString& Replace(const TTSString& wht, const AC* with)  {
-    size_t extra_len = 0, with_len = o_length(with);
-    if( wht._Length < with_len )  {
-      extra_len = (with_len - wht._Length) * o_strcnt(wht.Data(), wht._Length, T::Data(), T::_Length);
-      if( extra_len == 0 )  return *this;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_strrplstr(wht.Data(), wht._Length, with, o_length(with), T::Data(), T::_Length);
-    T::_Length -= (wht._Length - with_len)*rv;
-    return *this;
+    return Replace(wht.Data(), wht._Length, with, ~0);
   }
   //............................................................................
   template <typename AC> TTSString& Replace(const TTSString& wht, AC with)  {
-    T::checkBufferForModification(T::_Length);
-    size_t rv = o_strrplch(wht.Data(), wht._Length, with, T::Data(), T::_Length);
-    T::_Length -= (wht._Length - 1)*rv;
-    return *this;
-  }
-  //............................................................................
-  template <typename OC, typename AC> TTSString& Replace(const OC* wht, const AC* with)  {
-    size_t extra_len = 0, with_len = o_strlen(with), wht_len = o_strlen(wht);
-    if( wht_len < with_len )  {
-      extra_len = (with_len - wht_len) * o_strcnt(wht, wht_len, T::Data(), T::_Length);
-      if( extra_len == 0 )  return *this;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_strrplstr(wht, o_strlen(wht), with, o_strlen(with), T::Data(), T::_Length);
-    T::_Length -= (wht_len - with_len)*rv;
-    return *this;
-  }
-  //............................................................................
-  template <typename OC, typename AC> TTSString& Replace(const OC* wht, AC with)  {
-    size_t wht_len = o_strlen(wht);
-    T::checkBufferForModification(T::_Length);
-    size_t rv = o_strrplch(wht, wht_len, with, T::Data(), T::_Length);
-    T::_Length -= (wht_len - 1)*rv;
-    return *this;
+    return Replace(wht.Data(), wht._Length, with);
   }
   //............................................................................
   template <typename OC> TTSString& Replace(const OC* wht, const TTSString& with)  {
-    size_t extra_len = 0, wht_len = o_strlen(wht);
-    if( wht_len < with._Length )  {
-      extra_len = (with._Length - wht_len) * o_strcnt(wht, wht_len, T::Data(), T::_Length);
-      if( extra_len == 0 )  return *this;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_strrplstr(wht, o_strlen(wht), with.raw_str(), with._Length, T::Data(), T::_Length);
-    T::_Length -= (wht_len - with._Length)*rv;
-    return *this;
+    return Replace(wht, ~0, with.Data(), with._Length);
   }
   //............................................................................
   template <typename OC> TTSString& Replace(OC wht, const TTSString& with)  {
-    size_t extra_len = 0;
-    if( with._Length > 1 )  {
-      extra_len = (with._Length - 1) * o_chrcnt(wht, T::Data(), T::_Length);
-      if( extra_len == 0 )  return *this;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_chrplstr(wht, with.Data(), with._Length, T::Data(), T::_Length);
-    T::_Length -= (1 - with._Length)*rv;
-    return *this;
-  }
-  //............................................................................
-  template <typename OC, typename AC> TTSString& Replace(OC wht, const AC* with)  {
-    size_t extra_len = 0, with_len = o_strlen(with);
-    if( with_len > 1 )  {
-      extra_len = (with_len - 1) * o_chrcnt(wht, T::Data(), T::_Length);
-      if( extra_len == 0 )  return *this;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_chrplstr(wht, with, o_strlen(with), T::Data(), T::_Length);
-    T::_Length -= (1 - with_len)*rv;
-    return *this;
+    return Replace(wht, with.Data(), with._Length);
   }
   //............................................................................
   template <typename OC, typename AC> TTSString& Replace(OC wht, AC with)  {
@@ -1402,7 +1385,52 @@ public:
     o_chrplch(wht, with, T::Data(), T::_Length);
     return *this;
   }
-#else  // what else to do... dummy compiler, just 4 functions will do (str,str), (ch,str), (str,ch) and (ch,ch)
+  //............................................................................
+  template <typename OC, typename AC>
+  TTSString& Replace(const OC* wht, AC with)  {  return Replace(wht, ~0, with);  }
+  //............................................................................
+  template <typename OC, typename AC>
+  TTSString& Replace(const OC* wht, size_t wht_l, AC with)  {
+    size_t wht_len = wht_l == ~0 ? o_strlen(wht) : wht_l;
+    T::checkBufferForModification(T::_Length);
+    size_t rv = o_strrplch(wht, wht_len, with, T::Data(), T::_Length);
+    T::_Length -= (wht_len - 1)*rv;
+    return *this;
+  }
+  //............................................................................
+  template <typename OC, typename AC>
+  TTSString& Replace(OC wht, const AC* with, size_t with_l=~0)  {
+    size_t extra_len = 0, with_len = (with_l == ~0 ? o_strlen(with) : with_l);
+    if( with_len == 0 )  return *this;
+    if( with_len > 1 )  {
+      extra_len = (with_len - 1) * o_chrcnt(wht, T::Data(), T::_Length);
+      if( extra_len == 0 )  return *this;
+    }
+    T::checkBufferForModification(T::_Length+extra_len);
+    size_t rv = o_chrplstr(wht, with, with_len, T::Data(), T::_Length);
+    T::_Length -= (1 - with_len)*rv;
+    return *this;
+  }
+  //............................................................................
+  template <typename OC, typename AC>
+  TTSString& Replace(const OC* wht, const AC* with)  {  return Replace(wht, ~0, with, ~0);  }
+  //............................................................................
+  template <typename OC, typename AC>
+  TTSString& Replace(const OC* wht, size_t wht_l, const AC* with, size_t with_l)  {
+    size_t extra_len = 0,
+      with_len = (with_l == ~0 ? o_strlen(with) : with_l),
+      wht_len = (wht_l == ~0 ? o_strlen(wht) : wht_l);
+    if( with_len == 0 )  return *this;
+    if( wht_len < with_len )  {
+      extra_len = (with_len - wht_len) * o_strcnt(wht, wht_len, T::Data(), T::_Length);
+      if( extra_len == 0 )  return *this;
+    }
+    T::checkBufferForModification(T::_Length+extra_len);
+    size_t rv = o_strrplstr(wht, wht_len, with, with_len, T::Data(), T::_Length);
+    T::_Length -= (wht_len - with_len)*rv;
+    return *this;
+  }
+#else  // just 4 functions will do (str,str), (ch,str), (str,ch) and (ch,ch)
   TTSString& Replace(olxch wht, const TTSString& with)  {
     size_t extra_len = 0;
     if( with._Length > 1 )  {

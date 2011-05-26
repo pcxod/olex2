@@ -83,9 +83,9 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
 TdlgUpdateOptions::~TdlgUpdateOptions() {}
 //..............................................................................
 void TdlgUpdateOptions::OnOK(wxCommandEvent& event)  {
-  uapi.GetSettings().proxy = tcProxy->GetValue().c_str();
-  uapi.GetSettings().repository = uapi.TrimTagPart(cbRepository->GetValue().c_str());
-  uapi.GetSettings().update_interval = rbUpdateInterval->GetStringSelection().c_str();
+  uapi.GetSettings().proxy = tcProxy->GetValue();
+  uapi.GetSettings().repository = uapi.TrimTagPart(cbRepository->GetValue());
+  uapi.GetSettings().update_interval = rbUpdateInterval->GetStringSelection();
   uapi.GetSettings().ask_for_update = !cbQueryUpdate->GetValue();
   uapi.GetSettings().Save();
   EndModal(wxID_OK);

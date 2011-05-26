@@ -51,14 +51,15 @@ namespace ctrl_ext  {
   protected:
     virtual wxWindow* GetParent() const {  return wxButton::GetParent();  }
   public:
-    TButton(wxWindow* parent, wxWindowID id=-1, const wxString& label = wxEmptyString, const wxPoint& pos = wxDefaultPosition, 
+    TButton(wxWindow* parent, wxWindowID id=-1, const wxString& label=wxEmptyString,
+      const wxPoint& pos=wxDefaultPosition,
       const wxSize& size = wxDefaultSize, long style = 0) :
         wxButton(parent, id, label, pos, size, style),
         AButtonBase(this)  {}
     virtual ~TButton() {}
 
     void SetCaption(const olxstr &l)  {  wxButton::SetLabel(l.u_str());  }
-    olxstr GetCaption() const { return wxButton::GetLabel().c_str();  }
+    olxstr GetCaption() const { return wxButton::GetLabel();  }
 
     DECLARE_CLASS(TButton)
     DECLARE_EVENT_TABLE()
@@ -72,8 +73,9 @@ namespace ctrl_ext  {
   public:
     virtual wxWindow* GetParent() const {  return wxBitmapButton::GetParent();  }
   public:
-    TBmpButton(wxWindow* parent, wxWindowID id=-1, const wxBitmap& bitmap=wxNullBitmap, const wxPoint& pos = wxDefaultPosition, 
-      const wxSize& size = wxDefaultSize, long style = wxBU_AUTODRAW) :
+    TBmpButton(wxWindow* parent, wxWindowID id=-1, const wxBitmap& bitmap=wxNullBitmap,
+      const wxPoint& pos=wxDefaultPosition, 
+      const wxSize& size=wxDefaultSize, long style=wxBU_AUTODRAW) :
         wxBitmapButton(parent, -1, bitmap, pos, size, style),
         AButtonBase(this)  {}
     virtual ~TBmpButton() {}

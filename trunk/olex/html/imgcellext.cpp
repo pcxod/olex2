@@ -61,7 +61,7 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
             if( mapname.IsEmpty() )
               TBasicApp::NewLogEntry(logError) << "Invalid image";
             else
-              TBasicApp::NewLogEntry(logError) << "Invalid image with map: " << mapname.c_str();
+              TBasicApp::NewLogEntry(logError) << "Invalid image with map: " << mapname;
           }
         }
       }

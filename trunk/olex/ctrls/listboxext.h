@@ -36,13 +36,13 @@ namespace ctrl_ext  {
 
     olxstr ItemsToString(const olxstr &separator);
 
-    inline olxstr GetItem(int i)   {  return wxListBox::GetString(i).c_str();  }
-    inline void *GetObject(int i)    {   return wxListBox::GetClientData(i);  }
-    inline int Count()         const {  return wxListBox::GetCount();  }
+    inline olxstr GetItem(int i)  {  return wxListBox::GetString(i);  }
+    inline void *GetObject(int i)  {   return wxListBox::GetClientData(i);  }
+    inline int Count() const {  return wxListBox::GetCount();  }
 
     olxstr GetValue() const  {
       int index = GetSelection();
-      return (index == -1) ? EmptyString() : olxstr(wxListBox::GetString(index).c_str());
+      return (index == -1) ? EmptyString() : olxstr(wxListBox::GetString(index));
     }
 
     TActionQueue &OnDblClick, &OnSelect;

@@ -43,7 +43,7 @@ TZipWrapper::TZipWrapper(const olxstr &zipName, bool useCache) : zip_name(zipNam
   FInputStream = new wxZipInputStream(new wxFileInputStream(zipName.u_str()));
   wxZipEntry *entry;
   while( (entry = FInputStream->GetNextEntry() ) != NULL )
-    FEntries.Add(TEFile::UnixPath(entry->GetName().c_str()), entry);
+    FEntries.Add(TEFile::UnixPath(entry->GetName()), entry);
 }
 //..............................................................................
 TZipWrapper::TZipWrapper(TEFile* file, bool useCache) :
@@ -54,10 +54,10 @@ TZipWrapper::TZipWrapper(TEFile* file, bool useCache) :
   UseCache = useCache;
   if( file == NULL )  return;
   wxfile = new wxFile( file->FileNo() );
-  FInputStream = new wxZipInputStream( new wxFileInputStream(*wxfile) );
+  FInputStream = new wxZipInputStream(new wxFileInputStream(*wxfile));
   wxZipEntry *entry;
   while( (entry = FInputStream->GetNextEntry() ) != NULL )
-    FEntries.Add(TEFile::UnixPath(entry->GetName().c_str()), entry);
+    FEntries.Add(TEFile::UnixPath(entry->GetName()), entry);
 }
 //..............................................................................
 TZipWrapper::~TZipWrapper()  {

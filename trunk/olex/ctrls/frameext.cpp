@@ -8,14 +8,14 @@ IMPLEMENT_CLASS(TMainFrame, wxFrame)
 TMainFrame* TMainFrame::MainFrameInstance = NULL;
 
 void TMainFrame::RestorePosition(wxWindow *Window)  {  // restores previously saved position
-  size_t ind = WindowPos.IndexOf(Window->GetName().c_str());
+  size_t ind = WindowPos.IndexOf(Window->GetName());
   if ( ind == InvalidIndex )  return;
-  TWindowInfo &wi = WindowPos[Window->GetName().c_str()];
+  TWindowInfo &wi = WindowPos[Window->GetName()];
   Window->Move(wi.x, wi.y);
 }
 //..............................................................................
 void TMainFrame::SavePosition(wxWindow *Window)  {  //saves current position of the window on screen
-  TWindowInfo &wi = WindowPos.Add(Window->GetName().c_str());
+  TWindowInfo &wi = WindowPos.Add(Window->GetName());
   Window->GetPosition(&(wi.x), &(wi.y));
 }
 //..............................................................................
@@ -60,7 +60,7 @@ olxstr TMainFrame::PickFile(const olxstr &Caption, const olxstr &Filter,
   wxFileDialog *dlgFile = new wxFileDialog( this, Caption.u_str(), DefFolder.u_str(), wxString(),
     PortableFilter(Filter).u_str(), Style);
   if( dlgFile->ShowModal() ==  wxID_OK )
-    FN = dlgFile->GetPath().c_str();
+    FN = dlgFile->GetPath();
   delete dlgFile;
   return FN;
 }

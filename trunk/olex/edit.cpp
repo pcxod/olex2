@@ -51,8 +51,6 @@ void TdlgEdit::SetText(const olxstr& text)  {
   Text->SetValue(text.u_str());
 }
 //..............................................................................
-olxstr TdlgEdit::GetText()  {
-  return Text->GetValue().c_str();
-}
+olxstr TdlgEdit::GetText()  {  return Text->GetValue();  }
 //..............................................................................
 
