@@ -89,7 +89,7 @@ public:
   olxstr GetIdString() const {
     long fs = 10;
     cbSize->GetValue().ToLong(&fs);
-    return TwxGlScene::MetaFont::BuildOlexFontId( cbFileName->GetValue().c_str(), 
+    return TwxGlScene::MetaFont::BuildOlexFontId(cbFileName->GetValue(), 
       (int)fs, 
       cbFixed->IsChecked(),
       cbBold->IsChecked(),
@@ -189,7 +189,7 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
     Font.SetPointSize(10);
   if( half_size )
     Font.SetPointSize(Font.GetPointSize()*3/4);
-  glf.SetIdString(Font.GetNativeFontInfoDesc().c_str());
+  glf.SetIdString(Font.GetNativeFontInfoDesc());
   glf.SetPointSize(Font.GetPointSize());
   TPtrList<wxImage> Images;
   int ImageW = Font.GetPointSize()*2;
@@ -356,11 +356,11 @@ TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
   }
 
   while( (zen = zin->GetNextEntry()) != NULL )  {
-    if( entryName == zen->GetName().c_str() )
+    if( entryName == zen->GetName() )
       break;
     delete zen;
   }
-  if( zen == NULL || (entryName != zen->GetName().c_str()) )  {
+  if( zen == NULL || entryName != zen->GetName() )  {
     delete zin;
     throw TFunctionFailedException(__OlxSourceInfo, "invalid font description");
   }
@@ -427,7 +427,7 @@ void TwxGlScene::ScaleFonts(double scale)  {
       ((wxFontBase&)font).SetNativeFontInfo(_GetFont(i).GetIdString().u_str());
       int sz = (int)(font.GetPointSize()*scale);
       font.SetPointSize( sz < 2 ? 2 : sz );
-      fontId = font.GetNativeFontInfoDesc().c_str();
+      fontId = font.GetNativeFontInfoDesc();
     }
     CreateFont(_GetFont(i).GetName(), fontId);
   }
@@ -449,7 +449,7 @@ void TwxGlScene::RestoreFontScale()  {
       wxFont font;
       ((wxFontBase&)font).SetNativeFontInfo(_GetFont(i).GetIdString().u_str());
       font.SetPointSize(FontSizes[i]);
-      fontId = font.GetNativeFontInfoDesc().c_str();
+      fontId = font.GetNativeFontInfoDesc();
     }
     CreateFont(_GetFont(i).GetName(), fontId);
   }
@@ -483,8 +483,8 @@ olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc)  {
     if( fD.ShowModal() == wxID_OK )  {
       Fnt = fD.GetFontData().GetChosenFont();
       if( glf != NULL )  // recreate if provided
-        CreateFont(glf->GetName(), Fnt.GetNativeFontInfoDesc().c_str());
-      rv = Fnt.GetNativeFontInfoDesc().c_str();
+        CreateFont(glf->GetName(), Fnt.GetNativeFontInfoDesc());
+      rv = Fnt.GetNativeFontInfoDesc();
     }
   }
   return rv;
@@ -512,7 +512,7 @@ olxstr TwxGlScene::MetaFont::GetIdString() const {
   f.SetStyle(Italic ? wxFONTSTYLE_ITALIC: wxFONTSTYLE_NORMAL);
   f.SetWeight(Bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL);
   f.SetPointSize(Size);
-  return f.GetNativeFontInfoDesc().c_str();
+  return f.GetNativeFontInfoDesc();
 }
 //..............................................................................
 #endif // __WXWIDGETS__

@@ -36,10 +36,10 @@ namespace ctrl_ext  {
     TActionQueue &OnClick, &OnCheck, &OnUncheck;
 
     inline void SetCaption(const olxstr &T)  {  SetLabel(T.u_str()); }
-    inline olxstr GetCaption()         const {  return GetLabel().c_str(); }
+    inline olxstr GetCaption() const {  return GetLabel(); }
 
-    inline bool IsChecked()           const {  return wxCheckBox::IsChecked();  }
-    inline void SetChecked(bool v)          {  wxCheckBox::SetValue(v);  }
+    inline bool IsChecked() const {  return wxCheckBox::IsChecked();  }
+    inline void SetChecked(bool v)  {  wxCheckBox::SetValue(v);  }
 
     DECLARE_CLASS(TCheckBox)
     DECLARE_EVENT_TABLE()

@@ -39,10 +39,10 @@ void THtmlSwitch::UpdateFileIndex()  {
       Strings[i].Replace("#switch_name", Name);
       if( ParentSwitch != NULL )  {
         Strings[i].Replace("#parent_name", ParentSwitch->GetName()).\
-                   Replace( "#parent_file", ParentSwitch->GetCurrentFile() );
+                   Replace( "#parent_file", ParentSwitch->GetCurrentFile());
       }
       for( size_t j=0; j < Params.Count(); j++ )
-        Strings[i].Replace(olxstr('#') << Params.GetName(j), Params.GetValue(j) );
+        Strings[i].Replace(olxstr('#') << Params.GetName(j), Params.GetValue(j));
     } // end of parameter replacement
   }
   ParentHtml->CheckForSwitches(*this, TZipWrapper::IsZipFile(FN));

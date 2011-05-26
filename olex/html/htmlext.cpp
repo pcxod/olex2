@@ -135,7 +135,7 @@ THtml::~THtml()  {
 void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
   if( !MouseDown )  return;
   MouseDown = false;
-  olxstr Href = link.GetHref().c_str();
+  olxstr Href = link.GetHref();
   size_t ind = Href.FirstIndexOf('%');
   while( ind != InvalidIndex && ((ind+2) < Href.Length()) )  {
     int val = Href.SubString(ind+1, 2).RadInt<int>(16);
@@ -151,7 +151,7 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
 //..............................................................................
 wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const
 {
-  olxstr Url = url.c_str();
+  olxstr Url = url;
   if( !OnURL.Execute(this, &Url) )  return wxHTML_OPEN;
   return wxHTML_BLOCK;
 }
@@ -539,11 +539,11 @@ bool THtml::LoadPage(const wxString &file)  {
   
   if( IsPageLocked() )  {
     PageLoadRequested = true;
-    PageRequested = file.c_str();
+    PageRequested = file;
     return true;
   }
 
-  olxstr File(file.c_str()), TestFile(file.c_str());
+  olxstr File(file), TestFile(file);
   olxstr Path = TEFile::ExtractFilePath(File);
   TestFile = TEFile::ExtractFileName(File);
   if( Path.Length() > 1 )  {
@@ -558,8 +558,8 @@ bool THtml::LoadPage(const wxString &file)  {
   else
     TestFile = WebFolder + Path + TestFile;
 
-  if( !TZipWrapper::IsValidFileName(TestFile) && !TFileHandlerManager::Exists(file.c_str()) )  {
-    throw TFileDoesNotExistException(__OlxSourceInfo, file.c_str() );
+  if( !TZipWrapper::IsValidFileName(TestFile) && !TFileHandlerManager::Exists(file) )  {
+    throw TFileDoesNotExistException(__OlxSourceInfo, file);
   }
   Root->Clear();
   Root->ClearFiles();
@@ -709,9 +709,9 @@ bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin, boo
 void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
   wxHtmlLinkInfo *Link = Cell->GetLink(x, y);
   if( Link != NULL )  {
-    olxstr Href = Link->GetTarget().c_str();
+    olxstr Href = Link->GetTarget();
     if( Href.IsEmpty() )
-      Href = Link->GetHref().c_str();
+      Href = Link->GetHref();
 
     size_t ind = Href.FirstIndexOf('%');
     while( ind != InvalidIndex && ((ind+2) < Href.Length()) )  {
@@ -733,7 +733,7 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
     }
     if( ShowTooltips )  {
       wxToolTip *tt = GetToolTip();
-      wxString wxs( Href.Replace("#href", Link->GetHref().c_str()).u_str() );
+      wxString wxs(Href.Replace("#href", Link->GetHref()).u_str() );
       if( tt == NULL || tt->GetTip() != wxs )  {
         SetToolTip( wxs );
       }
@@ -1350,7 +1350,7 @@ void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
   else if( EsdlInstanceOf(*Obj, TTreeView) )  {
     TTreeView* T = (TTreeView*)Obj;
     wxTreeItemId ni = T->GetSelection();
-    rV = T->GetItemText(ni).c_str();
+    rV = T->GetItemText(ni);
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object type: ")  << EsdlObjectName(*Obj);
@@ -1577,7 +1577,7 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
   wxw->SetForegroundColour(fgc);
   if( EsdlInstanceOf(*wxw, TComboBox) )  {
     TComboBox* Box = (TComboBox*)wxw;
-    Box->SetForegroundColour(fgc);
+    //Box->SetForegroundColour(fgc);
 #ifdef __WIN32__
     if( Box->GetPopupControl() != NULL )
       Box->GetPopupControl()->GetControl()->SetForegroundColour(fgc);
@@ -1619,11 +1619,11 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funGetFontName(const TStrObjList &Params, TMacroError &E)  {
-  E.SetRetVal<olxstr>( this->GetParser()->GetFontFace().c_str() );
+  E.SetRetVal<olxstr>(GetParser()->GetFontFace());
 }
 //..............................................................................
 void THtml::funGetBorders(const TStrObjList &Params, TMacroError &E)  {
-  E.SetRetVal( GetBorders() );
+  E.SetRetVal(GetBorders());
 }
 //..............................................................................
 void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
@@ -1851,9 +1851,9 @@ void THtml::TObjectsState::SaveState()  {
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {  
       TComboBox* cb = (TComboBox*)obj;  
-      props->Add("val", cb->GetValue().c_str() );
-      props->Add("items", cb->ItemsToString(';') );
-      props->Add("data", cb->GetData() );
+      props->Add("val", cb->GetValue());
+      props->Add("items", cb->ItemsToString(';'));
+      props->Add("data", cb->GetData());
     }
     else if( EsdlInstanceOf(*obj, TListBox) )  {  
       TListBox* lb = (TListBox*)obj;  
@@ -1874,8 +1874,8 @@ void THtml::TObjectsState::SaveState()  {
       ;
     // stroring the control colours, it is generic 
     if( win != NULL )  {
-      props->Add("fg", win->GetForegroundColour().GetAsString(wxC2S_HTML_SYNTAX).c_str() );
-      props->Add("bg", win->GetBackgroundColour().GetAsString(wxC2S_HTML_SYNTAX).c_str() );
+      props->Add("fg", win->GetForegroundColour().GetAsString(wxC2S_HTML_SYNTAX));
+      props->Add("bg", win->GetBackgroundColour().GetAsString(wxC2S_HTML_SYNTAX));
     }
   }
 }
@@ -1978,7 +1978,7 @@ void THtml::TObjectsState::RestoreState()  {
         TComboBox* Box = (TComboBox*)win;
         if( !fg.IsEmpty() )  {
           wxColor fgCl = wxColor(fg.u_str());
-          Box->SetForegroundColour(fgCl);
+          //Box->SetForegroundColour(fgCl);
 #ifdef __WIN32__
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetForegroundColour(fgCl);
@@ -1988,7 +1988,7 @@ void THtml::TObjectsState::RestoreState()  {
         }
         if( !bg.IsEmpty() )  {
           wxColor bgCl = wxColor(bg.u_str());
-          Box->SetBackgroundColour(bgCl);
+          //Box->SetBackgroundColour(bgCl);
 #ifdef __WIN32__					
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgCl);

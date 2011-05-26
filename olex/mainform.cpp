@@ -1264,15 +1264,15 @@ void TMainForm::StartupInit()  {
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRender().GetScene();
-  gls.CreateFont("Default", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
-  gls.CreateFont("Help", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
-  gls.CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
-  gls.CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
+  gls.CreateFont("Help", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
+  gls.CreateFont("Notes", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
+  gls.CreateFont("Labels", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.RegisterFontForType<TXAtom>(
-    gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc().c_str())).SetMaterial(glm);
+    gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
   gls.RegisterFontForType<TXBond>(
-    gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc().c_str())).SetMaterial(glm);
-  gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+    gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
+  gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.RegisterFontForType<TDBasis>(gls._GetFont(4));
   gls.RegisterFontForType<TDUnitCell>(gls._GetFont(4));
   gls.RegisterFontForType<TXGlLabels>(gls._GetFont(3));
@@ -2057,7 +2057,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
         wxTextDataObject data;
         wxTheClipboard->GetData(data);
         olxstr cmdl = FGlConsole->GetCommand();
-        olxstr content = data.GetText().c_str();
+        olxstr content = data.GetText();
         if( !ImportFrag(content) )  {
         olxstr trimmed_content = content;
         trimmed_content.Trim(' ').Trim('\n').Trim('\r');
@@ -3769,7 +3769,7 @@ void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
 //..............................................................................
 bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames)  {
   if( filenames.Count() != 1 )  return false;
-  const olxstr fn = filenames[0].c_str();
+  const olxstr fn = filenames[0];
   try  {
     if( parent.FXApp->XFile().FindFormat(TEFile::ExtractFileExt(fn)) == NULL )
       return false;
