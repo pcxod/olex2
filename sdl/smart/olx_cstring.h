@@ -29,6 +29,8 @@ public:
     inline char GetValue() const {  return Instance->CharAt(Index);  }
     inline operator char () const {  return Instance->CharAt(Index);  }
     inline void operator = (char v)  {  Instance->Set(Index, v);  }
+    inline bool operator == (wchar_t v)  {  return v == Instance->CharAt(Index);  }
+    inline bool operator == (char v)  {  return v == Instance->CharAt(Index);  }
   };
 protected:
 //..............................................................................
