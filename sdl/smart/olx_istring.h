@@ -173,7 +173,7 @@ public:
   template <class T1, typename TC1> TTSString(const TTSString<T1,TC1>& v) : T((const T1&)v)  {  }
   //............................................................................
 #if defined(__WXWIDGETS__)
-  TTSString(const wxString& v)  {  InitFromCharStr((const olxch*)v.c_str(), v.Length());  }
+  TTSString(const wxString& v)  {  InitFromCharStr((const TC*)v.c_str(), v.Length());  }
 #endif
   template <typename AC> TTSString(const AC& v) : T(v)  {}
   //............................................................................
@@ -207,7 +207,7 @@ public:
   }
 #if defined(__WXWIDGETS__)
   TTSString& operator << (const wxString& v)  {
-    return Append((const olxch*)v.c_str(), v.Length());
+    return Append((const TC*)v.c_str(), v.Length());
   }
 #endif
   TTSString& operator << (TC* const& v)  { return Append(v, o_strlen(v));  }
@@ -234,7 +234,7 @@ public:
   }
 #if defined(__WXWIDGETS__)
  TTSString& operator = (const wxString& v)  {
-   return AssignCharStr((const olxch*)v.c_str(), v.Length());
+   return AssignCharStr((const TC*)v.c_str(), v.Length());
  }
 #endif
   template <class AC> TTSString& operator = (const AC& v)   { T::operator = (v);  return *this; }
@@ -468,7 +468,7 @@ public:
   }
 #if defined(__WXWIDGETS__)
  int Compare(const wxString& v) const {
-   return o_strcmp(T::Data(), T::_Length, (const olxch*)v.c_str(), v.Length());
+   return o_strcmp(T::Data(), T::_Length, (const TC*)v.c_str(), v.Length());
  }
 #endif
   int Compare(const TTSString& v) const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length);  }
@@ -482,7 +482,7 @@ public:
   int Compare(const wchar_t* v) const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v));  }
 #if defined(__WXWIDGETS__)
  int Comparei(const wxString& v) const {
-   return o_strcmpi(T::Data(), T::_Length, (const olxch*)v.c_str(), v.Length());
+   return o_strcmpi(T::Data(), T::_Length, (const TC*)v.c_str(), v.Length());
  }
 #endif
   int Comparei(const TTSString& v) const { return o_strcmpi(T::Data(), T::_Length, v.Data(), v._Length);  }
@@ -1381,13 +1381,13 @@ public:
   //............................................................................
 #if defined(__WXWIDGETS__)
   template <typename OC> TTSString& Replace(OC wht, const wxString &with)  {
-    return Replace(wht, (const olxch*)with.c_str(), with.Length());
+    return Replace(wht, (const TC*)with.c_str(), with.Length());
   }
   template <typename OC> TTSString& Replace(const OC* wht, const wxString &with)  {
-    return Replace(wht, ~0, (const olxch*)with.c_str(), with.Length());
+    return Replace(wht, ~0, (const TC*)with.c_str(), with.Length());
   }
   TTSString& Replace(const TTSString &wht, const wxString &with)  {
-    return Replace(wht.Data(), wht._Length, (const olxch*)with.c_str(), with.Length());
+    return Replace(wht.Data(), wht._Length, (const TC*)with.c_str(), with.Length());
   }
 #endif
   //............................................................................

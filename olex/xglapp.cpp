@@ -235,6 +235,7 @@ bool TGlXApp::Dispatch()  {
 //int TGlXApp::MainLoop()  {
 //  while( wxApp::Pending() )  wxApp::Dispatch();
   //TBasicApp::GetInstance().OnTimer->Clear();
+
 //  return wxApp::MainLoop();
 //}
 //..............................................................................
@@ -252,7 +253,7 @@ void TGlXApp::OnNavigation(wxNavigationKeyEvent& event)  {
 }
 //..............................................................................
 void TGlXApp::OnIdle(wxIdleEvent& event)  {
-  wxApp::OnIdle(event);
+  event.Skip();
 }
 //..............................................................................
 
