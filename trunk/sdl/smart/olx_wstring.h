@@ -26,7 +26,6 @@ public:
     inline wchar_t GetValue() const {  return Instance->CharAt(Index);  }
     inline operator wchar_t () const {  return Instance->CharAt(Index);  }
     inline void operator = (wchar_t v)  {  Instance->Set(Index, v);  }
-    inline void operator = (char v)  {  Instance->Set(Index, v);  }
     inline bool operator == (wchar_t v)  {  return v == Instance->CharAt(Index);  }
     inline bool operator == (char v)  {  return v == Instance->CharAt(Index);  }
   };
