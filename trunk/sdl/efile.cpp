@@ -124,7 +124,7 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
     const olxstr& tmp = toks[0];
     if( tmp.Length() > str.Length() )  return false;
     for( size_t i=0; i < tmp.Length(); i++ )
-     if( tmp[i] != '?' && tmp[i] != str[i] )  return false;
+     if( tmp.CharAt(i) != '?' && tmp.CharAt(i) != str.CharAt(i) )  return false;
     start = tmp.Length();
     if( toks.Count() == 1 )  
       return tmp.Length() == str.Length() ? true : mask[ mask.Length()-1] == '*';
@@ -133,7 +133,7 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
     olxstr& tmp = toks[toks.Count()-1];
     if( tmp.Length() > (str.Length()-start) )  return false;
     for( size_t i=0; i < tmp.Length(); i++ )
-     if( !(tmp[i] == '?' || tmp[i] == str[str.Length()-tmp.Length() + i]) )  return false;
+     if( !(tmp.CharAt(i) == '?' || tmp.CharAt(i) == str.CharAt(str.Length()-tmp.Length() + i)) )  return false;
     end = str.Length() - tmp.Length();
 
     if( toks.Count() == 1 )  return true;
@@ -144,8 +144,8 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
     bool found = false;
     for( size_t j=start; j < end; j++ )  {
       if( (str.Length() - j) < tmp.Length() )  return false;
-      if( tmp[off] == '?' || str[j] == tmp[off] )  {
-        while( tmp[off] == '?' || tmp[off] == str[j+off] )  {
+      if( tmp.CharAt(off) == '?' || str.CharAt(j) == tmp.CharAt(off) )  {
+        while( tmp.CharAt(off) == '?' || tmp.CharAt(off) == str.CharAt(j+off) )  {
           off++;
           if( off == tmp.Length() )  break;
         }

@@ -672,10 +672,11 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       if( hkli == -1 )  {
         Error.ProcessingError(__OlxSrcInfo, "incorrect construct: ") << Cmds[i];
         return;
+
       }
       j--;
       olxstr strV;
-      while( j != InvalidIndex && !(tmp[j] >= 'a' && tmp[j] <= 'z' ) )  {
+      while( j != InvalidIndex && !(tmp.CharAt(j) >= 'a' && tmp.CharAt(j) <= 'z' ) )  {
         strV.Insert((olxch)tmp[j], 0);
         j--;
       }
@@ -890,6 +891,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   int Hfix = 0;
   if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
+
     Hfix = Cmds[0].ToInt();
     Cmds.Delete(0);
   }

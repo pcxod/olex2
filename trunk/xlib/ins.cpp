@@ -704,7 +704,7 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
     if( spindex != InvalidIndex && spindex > 0 )  {
       if( added )  Tmp1 = ' ';
       Tmp1 << Tmp.SubStringTo(spindex);
-      if( Tmp1.Length() && Tmp1[Tmp1.Length()-1] != ' ')
+      if( !Tmp1.IsEmpty() && Tmp1.GetLast() != ' ')
         Tmp1 << ' ';
       Tmp1 << '=';
       Res.Add(Tmp1);
@@ -1538,6 +1538,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   }
   GetRM().Conn.ToInsList(SL);
   // copy "unknown" instructions except rems
+
   for( size_t i=0; i < Ins.Count(); i++ )  {
     TInsList* L = Ins.GetObject(i);
     if( L == NULL )  continue;  // if load failed
