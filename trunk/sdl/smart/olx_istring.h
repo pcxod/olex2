@@ -4,6 +4,10 @@
 #include <wctype.h>
 #include <math.h>
 
+#ifdef __WXWIDGETS__
+  #include "wx/string.h"
+#endif
+
 #define CharSizeMask 0xE0000000
 #define LengthMask   ~0xE0000000
 #define CodeLength(CharSize, Length)   ((((size_t)CharSize) << 29) | (Length))
@@ -44,13 +48,6 @@
 
 #include "olx_wstring.h"
 #include "olx_cstring.h"
-
-#ifdef __WXWIDGETS__
-  #include "wx/string.h"
-  #ifdef _UNICODE
-    static bool operator == (olxch a, char b)  {  return a == b;  }
-  #endif
-#endif
 
 BeginEsdlNamespace()
 
