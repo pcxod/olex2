@@ -167,6 +167,10 @@ public:
   size_t RawLen() const { return _Length*CharSize;  }
   // length in items
   size_t Length() const { return _Length;  }
+  // for internal: use with caution!
+  inline Buffer *Data_() const {  return SData;  }
+  // for internal stuff
+  size_t Start_() const { return _Start;  }
   // standard api requires terminating '\0'; the use of raw_str and Length() is preferable
   const T * u_str() const {
     if( SData == NULL ) return NULL;
@@ -201,10 +205,6 @@ public:
   }
   // this does not help in GCC, 
   template <typename,typename> friend class TTSString;
-#ifdef __GNUC__
-  Buffer* GetBuffer() const {  return SData;  }  // it is mutable
-  size_t Start() const { return _Start; }
-#endif
 };
 
 template <typename T> const unsigned short TTIString<T>::CharSize = sizeof(T);
@@ -406,6 +406,21 @@ public:
     }
   };
 };
+
+/* swaps two objects using a temporary variable (copy constructor must be 
+ available for complex types) */
+template <typename obj> inline void olx_swap(obj& o1, obj& o2)  {
+  obj tmp = o1;
+  o1 = o2;
+  o2 = tmp;
+}
+// returns 10^val, cannot put it to emath due to dependencies...
+template <typename FT> FT olx_pow10(size_t val)  {
+  if( val == 0 )  return 1;
+  FT rv = 10;
+  while( --val > 0 ) rv *=10;
+  return rv;
+}
 
 #include "olxptr.h"
 #include "eaccessor.h"

@@ -646,16 +646,13 @@ void TLattice::GrowAtoms(const TCAtomPList& atoms, const smatd_list& matrices)  
     for( size_t j=0; j < Matrices.Count(); j++ )  {
       if( Matrices[j]->GetId() == matrices[i].GetId() )  {
         found = true;
-        TBasicApp::NewLogEntry() << "Skipping " <<
-          TSymmParser::MatrixToSymmEx(matrices[i]) << " - already used";
+        addedMatrices.Add(Matrices[j]);
         break;
       }
     }
     if( !found )
       addedMatrices.Add(Matrices.Add(new smatd(matrices[i])));
   }
-  if( matrices.Count() != addedMatrices.Count() )
-    TBasicApp::NewLogEntry() << "Use grow -w for already used matrices";
   if( addedMatrices.IsEmpty() )  return;
   OnStructureGrow.Enter(this);
   Objects.atoms.IncCapacity(atoms.Count()*addedMatrices.Count());

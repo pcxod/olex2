@@ -338,15 +338,15 @@ public:
 
   void Print() const {
     for( size_t i = 0; i < Fn; i ++ )
-      printf("%05.4e\t", FData[i] );
+      printf("%05.4e\t", FData[i]);
   }
 
   template <typename SC> SC StrRepr() const {
+    if( Fn == 0 )  return SC();
     SC rv;
-    for( size_t i=0; i < Fn; i++ )  {
-      rv << FData[i];
-      if( (i+1) < Fn )  rv << ',' << ' ';
-    }
+    rv << FData[0];
+    for( size_t i=1; i < Fn; i++ )
+      rv << ", " << FData[i];
     return rv;
   }
   inline TIString ToString() const {  return StrRepr<olxstr>();  }
@@ -361,7 +361,7 @@ public:
     uint32_t sz;
     in >> sz;
     Resize(sz);
-    in.Read(FData, sz);
+    in.Read(FData, sizeof(VecType)*sz);
   }
   TVector& Resize(size_t newsize)  {
     if( newsize <= Fn )

@@ -40,15 +40,18 @@ public:
   // traces back to the original cause
   TBasicException* GetSource() const;
   virtual IEObject* Replicate() const = 0;
-  template <class List>
-    List& GetStackTrace(List& output) const {
-      TBasicException const* cause = this;
-      while( cause != NULL )  {
-        output.Insert(0, cause->GetFullMessage());
-        cause = cause->GetCause();
-      }
-      return output;
+  template <class List> List& GetStackTrace(List& output) const {
+    TBasicException const* cause = this;
+    while( cause != NULL )  {
+      output.Add(cause->GetFullMessage());
+      cause = cause->GetCause();
     }
+    return olx_reverse(output);
+  }
+  template <class List> List GetStackTrace() const {
+    List o;
+    return GetStackTrace(o);
+  }
   olxstr GetFullMessage() const;
 };
 
