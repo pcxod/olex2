@@ -29,7 +29,7 @@ public:
   virtual ~TCLattice()  {  }
   size_t VectorCount() const {  return Vectors.Count();  }
   const vec3d& GetVector(size_t i) const {  return Vectors[i];  }
-  /** retunrs the multiplicity imposed by latt instruction, considers
+  /** returns the multiplicity imposed by latt instruction, considers
   inversion for positive number (will multiply returned value by 2 for
   positive numbers)
   */
@@ -50,6 +50,39 @@ public:
     }
     if( latt > 0 )  count *= 2;
     return count;
+  }
+  /* returns numerical representation of lattice symbol */
+  static short LattForSymbol(olxch latt)  {
+    switch( olxstr::o_toupper(latt) )  {
+      case 'P': return 1;
+      case 'I': return 2;
+      case 'A': return 5;
+      case 'B': return 6;
+      case 'C': return 7;
+      case 'S': return 8;
+      case 'T': return 9;
+      case 'R': return 3;
+      case 'F': return 4;
+      default:
+        throw TIncorrectLattExc(__OlxSourceInfo, latt);
+    }
+  }
+  /* returns symbolic representation of lattice centering */
+  static char SymbolForLatt(short latt)  {
+    size_t count = 0;
+    switch( latt )  {
+      case 1:  return 'P';
+      case 2:  return 'I';
+      case 5:  return 'A';
+      case 6:  return 'B';
+      case 7:  return 'C';
+      case 8:  return 'S';
+      case 9:  return 'T';
+      case 3:  return 'R';
+      case 4:  return 'F';
+      default:
+        throw TIncorrectLattExc(__OlxSourceInfo, latt);
+    }
   }
   const olxstr& GetName() const {  return Name; }
   const olxstr& GetSymbol() const {  return Symbol; }

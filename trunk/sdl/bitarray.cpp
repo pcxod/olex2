@@ -9,7 +9,7 @@ TEBitArray::TEBitArray()  {  FData = NULL;  FCount = FCharCount = 0;  }
 //..............................................................................
 TEBitArray::TEBitArray(size_t size)  {
   FData = NULL;
-  SetSize( size );
+  SetSize(size);
 }
 //..............................................................................
 TEBitArray::TEBitArray(const TEBitArray& arr)  {
@@ -56,7 +56,7 @@ void TEBitArray::SetSize(size_t newSize)  {
   FCount = newSize;
   FCharCount = newSize/8 + 1;
   FData = new unsigned char [FCharCount];
-  memset(FData, 0, FCharCount );
+  memset(FData, 0, FCharCount);
 }
 //..............................................................................
 void TEBitArray::Clear()  {

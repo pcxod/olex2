@@ -51,24 +51,19 @@
 
 BeginEsdlNamespace()
 
-// returns 10^val, cannot put it to emath due to dependencies...
-template <typename FT> FT olx_pow10(size_t val)  {
-  if( val == 0 )  return 1;
-  FT rv = 10;
-  while( --val > 0 ) rv *=10;
-  return rv;
-}
-
 #ifndef __BORLANDC__
 template <class,typename> class TTSString;
 
 typedef TTSString<TCString, char> olxcstr;
 typedef TTSString<TWString, wchar_t> olxwstr;
-
+typedef TTStrBuffer<wchar_t, olxwstr> olxwstr_buf;
+typedef TTStrBuffer<char, olxcstr> olxcstr_buf;
 #ifdef _UNICODE
   typedef TTSString<TWString, wchar_t> olxstr;
+  typedef olxwstr_buf olxstr_buf;
 #else
   typedef TTSString<TCString, char > olxstr;
+  typedef olxcstr_buf olxstr_buf;
 #endif
 
 extern const olxstr &EmptyString();
@@ -93,15 +88,9 @@ template <class T, typename TC> class TTSString : public T  {
   }
 template <class SC>
   void InitFromString(const SC& str)  {
-#ifdef __GNUC__
-    T::SData = str.GetBuffer();
+    T::SData = str.Data_();
     T::_Length = str.Length();
-    T::_Start = str.Start();
-#else
-    T::SData = str.SData;
-    T::_Length = str._Length;
-    T::_Start = str._Start;
-#endif
+    T::_Start = str.Start_();
     if( T::SData != NULL )  
       T::SData->RefCnt++;
     T::_Increment = 8;
@@ -220,15 +209,9 @@ public:
   //............................................................................
   TTSString& operator = (const TTIString<TC>& v)   {
     if( T::SData != NULL && --T::SData->RefCnt == 0 )  delete T::SData;
-#ifdef __GNUC__
-    T::_Start = v.Start();
+    T::_Start = v.Start_();
     T::_Length = v.Length();
-    T::SData = v.GetBuffer();
-#else
-    T::_Start = v._Start;
-    T::_Length = v._Length;
-    T::SData = v.SData;
-#endif
+    T::SData = v.Data_();
     if( T::SData != NULL )  T::SData->RefCnt++;
     return *this;
   }
@@ -1728,6 +1711,15 @@ public:
 
   template <typename sep_t>
   TTSString(const SeperatedStream<sep_t>& str)  {  InitFromString(str.dest);  }
+  
+  TTSString(const  TTStrBuffer<TC,T>  &buf)  {
+    T::_Start = 0;
+    T::_Increment = 8;
+    T::_Length = buf.CalcSize();
+    TC *arr = olx_malloc<TC>(T::_Length);
+    buf.Read(arr);
+    T::SData = new struct T::Buffer(arr, T::_Length);
+  }
   //............................................................................
 };
 

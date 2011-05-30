@@ -48,4 +48,15 @@ struct ListFilter  {
   }
 };
 
+// the items must have copy constructors
+template <typename seq_t> static seq_t &olx_reverse(seq_t &seq, size_t sz)  {
+  const size_t hsz = sz/2;
+  for( size_t i=0; i < hsz; i++ )
+    olx_swap(seq[i], seq[sz-1-i]);
+  return seq;
+}
+template <class seq_t> static seq_t &olx_reverse(seq_t &seq)  {
+  return olx_reverse(seq, seq.Count());
+}
+
 #endif

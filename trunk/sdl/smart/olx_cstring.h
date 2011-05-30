@@ -182,7 +182,7 @@ public:
   }
 //..........................................................................................
 protected:
-  inline char * Data()     const {  return ((SData==NULL) ? NULL :&SData->Data[_Start]);  }
+  inline char *Data() const {  return ((SData==NULL) ? NULL :&SData->Data[_Start]);  }
 public:
   const wchar_t * wc_str() const;
   inline const char *u_str() const { return ((SData==NULL) ? "" : TTIString<char>::u_str());  }
@@ -213,78 +213,9 @@ public:
   //............................................................................
   virtual TIString ToString() const;
   //............................................................................
-  friend class TCStrBuffer;
 };
 
-
-/* string buffer, reuses memory allocated by any posted TCString entry */
-class TCStrBuffer {
-  struct Entry {
-    TCString::Buffer* Data;
-    size_t Start, Length;
-    Entry* Next;
-  };
-  size_t Length;
-  Entry *Head, *Tail;
-public:
-  TCStrBuffer()  {
-    Tail = Head = NULL;
-    Length = 0;
-  }
-  TCStrBuffer(const TCString& v)  {
-    Tail = Head = new Entry;
-    Tail->Data = v.SData;
-    Tail->Start = v._Start;
-    Length = Tail->Length = v._Length;
-    Tail->Next = NULL;
-    v.SData->RefCnt++;
-  }
-  virtual ~TCStrBuffer()  {
-    Entry* en = Head;
-    while( en != NULL )  {
-      Head = en->Next;
-      if( --en->Data->RefCnt == 0 )
-        delete en->Data;
-      delete en;
-      en = Head;
-    }
-  }
-
-  TCStrBuffer& operator << (const TCString& v)  {
-    if( Head == NULL )
-      Tail = Head = new Entry;
-    else  {
-      Tail->Next = new Entry;
-      Tail = Tail->Next;
-      Tail->Next = NULL;
-    }
-    Tail->Data = v.SData;
-    Tail->Start = v._Start;
-    Length += (Tail->Length = v._Length);
-    Tail->Next = NULL;
-    v.SData->RefCnt++;
-
-    return *this;
-  }
-
-  char *Read(char *v)  {
-    if( Head == NULL )
-      v[0] = '\0';
-    else  {
-      Entry* en = Head;
-      size_t read = 0;
-      while( en != NULL )  {
-        olx_memcpy(&v[read], &en->Data->Data[en->Start], en->Length);
-        read += en->Length;
-        en = en->Next;
-      }
-      v[read] = '\0';
-    }
-    return v;
-  }
-};
+#include "strbuf.h"
 
 EndEsdlNamespace()
-
 #endif
-

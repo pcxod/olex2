@@ -226,77 +226,9 @@ public:
   //............................................................................
   virtual TIString ToString() const;
   //............................................................................
-  friend class TWStrBuffer;
 };
 
+#include "strbuf.h"
 
-/* string buffer, reuses memory allocated by any posted TCString entry */
-class TWStrBuffer {
-  struct Entry {
-    TWString::Buffer* Data;
-    size_t Start, Length;
-    Entry* Next;
-  };
-  size_t Length;
-  Entry *Head, *Tail;
-public:
-  TWStrBuffer()  {
-    Tail = Head = NULL;
-    Length = 0;
-  }
-  TWStrBuffer(const TWString& v)  {
-    Tail = Head = new Entry;
-    Tail->Data = v.SData;
-    Tail->Start = v._Start;
-    Length = Tail->Length = v._Length;
-    Tail->Next = NULL;
-    v.SData->RefCnt++;
-  }
-  virtual ~TWStrBuffer()  {
-    Entry* en = Head;
-    while( en != NULL )  {
-      Head = en->Next;
-      if( --en->Data->RefCnt == 0 )
-        delete en->Data;
-      delete en;
-      en = Head;
-    }
-  }
-
-  TWStrBuffer& operator << (const TWString& v)  {
-    if( Head == NULL )  {
-      Tail = Head = new Entry;
-    }
-    else  {
-      Tail->Next = new Entry;
-      Tail = Tail->Next;
-      Tail->Next = NULL;
-    }
-    Tail->Data = v.SData;
-    Tail->Start = v._Start;
-    Length += (Tail->Length = v._Length);
-    Tail->Next = NULL;
-    v.SData->RefCnt++;
-
-    return *this;
-  }
-
-  wchar_t *Read(wchar_t *v)  {
-    if( Head == NULL )
-      v[0] = '\0';
-    else  {
-      Entry* en = Head;
-      size_t read = 0;
-      while( en != NULL )  {
-        olx_memcpy(&v[read], &en->Data->Data[en->Start], en->Length);
-        read += en->Length;
-        en = en->Next;
-      }
-      v[read] = '\0';
-    }
-    return v;
-  }
-};
 EndEsdlNamespace()
-
 #endif
