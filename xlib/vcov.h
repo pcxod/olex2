@@ -277,15 +277,15 @@ protected:
     vec3d evaluate() const {  return b-a;  }
   };
   template <class VT, class WT> struct PlaneNormalEvaluator  {
-    VT& values;
-    WT& weights;
-    PlaneNormalEvaluator(VT& _v, WT& _w) : values(_v), weights(_w)  {}
+    VT values;
+    WT weights;
+    PlaneNormalEvaluator(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
     vec3d evaluate() const {  return CalcPlane(values, weights).normal;  }
   };
   template <class VT, class WT> struct Plane  {
-    VT& values;
-    WT& weights;
-    Plane(VT& _v, WT& _w) : values(_v), weights(_w)  {}
+    VT values;
+    WT weights;
+    Plane(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
     double calc() const {  return CalcPlane(values, weights).rmsd;  }
   };
   // torsion angle
