@@ -3108,7 +3108,7 @@ bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
 //..............................................................................
 void TMainForm::OnInternalIdle()  {
   if( Destroying )  return;
-  FParent->Yield();
+  wxWindow::UpdateWindowUI();
 #if !defined(__WIN32__)  
   if( !StartupInitialised )
     StartupInit();

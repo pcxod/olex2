@@ -106,7 +106,7 @@ struct DummySwapListener  {
   static void OnSwap(size_t i, size_t j)  {}
 };
 template <typename List> struct SyncSwapListener  {
-  mutable List& list;
+  List& list;
   SyncSwapListener(List& _list) : list(_list)  {}
   void OnSwap(size_t i, size_t j) const {  list.Swap(i, j);  }
 };

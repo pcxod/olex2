@@ -10,12 +10,13 @@
 #endif
 
 #include "../ebase.h"
+#include "../linked_operators.h"
 
 BeginEsdlNamespace()
 
 class TWString : public TTIString<wchar_t>, public IEObject {
 public:
-  class CharW  {
+  class CharW : public linked_operators<wchar_t, CharW, char> {
     size_t Index;
     TWString *Instance;
   public:
@@ -24,21 +25,14 @@ public:
       Instance = inst;
     }
     inline wchar_t GetValue() const {  return Instance->CharAt(Index);  }
-    inline operator wchar_t () const {  return Instance->CharAt(Index);  }
-    inline void operator = (wchar_t v)  {  Instance->Set(Index, v);  }
-    inline bool operator == (char v)  {  return v == Instance->CharAt(Index);  }
-    inline bool operator != (char v)  {  return v != Instance->CharAt(Index);  }
-    inline bool operator > (char v)  {  return v > Instance->CharAt(Index);  }
-    inline bool operator >= (char v)  {  return v >= Instance->CharAt(Index);  }
-    inline bool operator < (char v)  {  return v < Instance->CharAt(Index);  }
-    inline bool operator <= (char v)  {  return v <= Instance->CharAt(Index);  }
-
-    inline bool operator == (const CharW &v)  {  return v.GetValue() == Instance->CharAt(Index);  }
-    inline bool operator != (const CharW &v)  {  return v.GetValue() != Instance->CharAt(Index);  }
-    inline bool operator > (const CharW &v)  {  return v.GetValue() > Instance->CharAt(Index);  }
-    inline bool operator >= (const CharW &v)  {  return v.GetValue() >= Instance->CharAt(Index);  }
-    inline bool operator < (const CharW &v)  {  return v.GetValue() < Instance->CharAt(Index);  }
-    inline bool operator <= (const CharW &v)  {  return v.GetValue() <= Instance->CharAt(Index);  }
+    void SetValue(wchar_t v)  {  Instance->Set(Index, v);  }
+    CharW& operator = (wchar_t v)  {  Instance->Set(Index, v);  return *this;  }
+    CharW& operator = (int v)  {  Instance->Set(Index, wchar_t(v));  return *this;  }
+    CharW& operator = (char v)  {  Instance->Set(Index, v);  return *this;  }
+    CharW& operator = (const CharW &v)  {
+      Instance->Set(Index, v.GetValue());
+      return *this;
+    }
   };
 protected:
 //..............................................................................
