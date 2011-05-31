@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "../ebase.h"
+#include "../linked_operators.h"
 
 BeginEsdlNamespace()
 
@@ -18,7 +19,7 @@ BeginEsdlNamespace()
 /* this class uses reference counting to reduce number of memory reallocations*/
 class TCString : public TTIString<char>, public IEObject{
 public:
-  class CharW  {
+  class CharW : public linked_operators<char, CharW, wchar_t> {
     size_t Index;
     TCString *Instance;
   public:
@@ -27,21 +28,12 @@ public:
       Instance = inst;
     }
     inline char GetValue() const {  return Instance->CharAt(Index);  }
-    inline operator char () const {  return Instance->CharAt(Index);  }
-    inline void operator = (char v)  {  Instance->Set(Index, v);  }
-    inline bool operator == (wchar_t v)  {  return v == Instance->CharAt(Index);  }
-    inline bool operator != (wchar_t v)  {  return v != Instance->CharAt(Index);  }
-    inline bool operator > (wchar_t v)  {  return v > Instance->CharAt(Index);  }
-    inline bool operator >= (wchar_t v)  {  return v >= Instance->CharAt(Index);  }
-    inline bool operator < (wchar_t v)  {  return v < Instance->CharAt(Index);  }
-    inline bool operator <= (wchar_t v)  {  return v <= Instance->CharAt(Index);  }
-
-    inline bool operator == (const CharW &v)  {  return v.GetValue() == Instance->CharAt(Index);  }
-    inline bool operator != (const CharW &v)  {  return v.GetValue() != Instance->CharAt(Index);  }
-    inline bool operator > (const CharW &v)  {  return v.GetValue() > Instance->CharAt(Index);  }
-    inline bool operator >= (const CharW &v)  {  return v.GetValue() >= Instance->CharAt(Index);  }
-    inline bool operator < (const CharW &v)  {  return v.GetValue() < Instance->CharAt(Index);  }
-    inline bool operator <= (const CharW &v)  {  return v.GetValue() <= Instance->CharAt(Index);  }
+    inline void SetValue(char v) {  Instance->Set(Index, v);  }
+    CharW& operator = (char v)  {  Instance->Set(Index, v);  return *this;  }
+    CharW& operator = (const CharW &v)  {
+      Instance->Set(Index, v.GetValue());
+      return *this;
+    }
   };
 protected:
 //..............................................................................
