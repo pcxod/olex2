@@ -515,7 +515,7 @@ bool THtml::ProcessPageLoadRequest()  {
   PageLoadRequested = false;
   bool res = false;
   if( !PageRequested.IsEmpty() )
-    res = LoadPage( PageRequested.u_str() );
+    res = LoadPage(PageRequested.u_str());
   else
     res = UpdatePage();
   PageRequested.SetLength(0);
@@ -530,7 +530,7 @@ bool THtml::ReloadPage()  {
   }
   Objects.Clear();
   Traversables.Clear();
-  return  LoadPage(FileName.u_str());
+  return LoadPage(FileName.u_str());
 }
 //..............................................................................
 bool THtml::LoadPage(const wxString &file)  {
@@ -611,7 +611,7 @@ bool THtml::UpdatePage()  {
   InFocus = NULL;
   int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
   wxHtmlWindow::GetViewStart(&xPos, &yPos);
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__linux__)
   wxHtmlWindow::Freeze();
 #else
   Hide();
@@ -619,7 +619,7 @@ bool THtml::UpdatePage()  {
   SetPage(Res.Text(' ').u_str());
   ObjectsState.RestoreState();
   wxHtmlWindow::Scroll(xPos, yPos);
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__linux__)
   Thaw();
 #else
   Show();
@@ -2048,6 +2048,7 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
     props->Add("height");
   }
   else if( type == typeid(TComboBox) )  {  
+
     props->Add("val");
     props->Add("items");
   }
