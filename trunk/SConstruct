@@ -244,7 +244,7 @@ if sys.platform[:3] == 'win':
   # generic libs
   env.Append(LIBS = Split(""" mapi32 glu32 user32 opengl32 gdi32 ole32 
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
-                             kernel32 wsock32 Iphlpapi.lib"""))
+                             kernel32 wsock32 Iphlpapi winspool"""))
   env.Append(LIBPATH = [pyFolder+'libs'])
 else:
   if env['TOOL'] != 'intel':
@@ -294,15 +294,15 @@ if sys.platform[:3] == 'win':
   wx_env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
   if not debug:
     wx_env.Append(LIBS = Split("""wxexpat wxjpeg wxpng wxtiff wxzlib 
-                               wxbase28u wxbase28u_net wxmsw28u_gl   
-                               wxmsw28u_html wxmsw28u_core 
-                               wxmsw28u_adv wxregexu"""))
+                               wxbase29u wxbase29u_net wxmsw29u_gl   
+                               wxmsw29u_html wxmsw29u_core 
+                               wxmsw29u_adv wxregexu"""))
     wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswu'])
   else:
     wx_env.Append(LIBS = Split("""wxexpat wxjpeg wxpng wxtiff wxzlib 
-                               wxbase28ud wxbase28ud_net wxmsw28ud_gl   
-                               wxmsw28ud_richtext wxmsw28ud_html wxmsw28ud_core 
-                               wxmsw28ud_adv wxregexud"""))
+                               wxbase29ud wxbase29ud_net wxmsw29ud_gl   
+                               wxmsw29ud_richtext wxmsw29ud_html wxmsw29ud_core 
+                               wxmsw29ud_adv wxregexud"""))
     wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud'])
   olex2_env = wx_env.Clone()
   unirun_env = wx_env.Clone()
