@@ -1261,6 +1261,7 @@ separated values of Atom Type and radius, an entry a line");
 //..............................................................................
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
+  StartupInitialised = true;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRender().GetScene();
@@ -1415,7 +1416,6 @@ void TMainForm::StartupInit()  {
   }
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
-  StartupInitialised = true;
 }
 //..............................................................................
 void TMainForm::AquireTooltipValue()  {
@@ -2042,6 +2042,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   }
   // Ctrl + Up, Down - browse solutions
   if( (Fl & sssCtrl) != 0  )  {
+
     if( m.m_keyCode == WXK_UP && ((FMode&mSolve) == mSolve) )  {
       ChangeSolution(CurrentSolution - 1);
       return;
@@ -3277,7 +3278,6 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
     olxstr macro( AccMenus.GetValue(evt.GetId())->GetCommand() );
     if( !macro.IsEmpty() )  {
       TStrList sl;
-      bool checked = AccMenus.GetValue(evt.GetId())->IsChecked();
       sl.Strtok( macro, ">>");
       for( size_t i=0; i < sl.Count(); i++ )  {
         if( !ProcessMacro(sl[i]) )
