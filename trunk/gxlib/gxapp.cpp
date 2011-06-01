@@ -1992,9 +1992,10 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
   const vec3d right_shift = FGlRender->GetBasis().GetMatrix()*vec3d(1, 0, 0);
   const size_t ac = XFile().GetLattice().GetObjects().atoms.Count();
   const size_t bc = XFile().GetLattice().GetObjects().bonds.Count();
+  const vec3d shift = cnt1-cnt2+right_shift*(R1+R2);
   for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
     TSAtom& sa = latt.GetObjects().atoms[i];
-    sa.crd() = sa.crd()-cnt2+cnt1+right_shift*(R1+R2);
+    sa.crd() += shift;
   }
   XFile().GetLattice().AddLatticeContent(latt);
   if( FLabels->IsVisible() )
