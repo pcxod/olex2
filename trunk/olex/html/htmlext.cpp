@@ -696,13 +696,13 @@ bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin, boo
     if( cb->GetTextCtrl() != NULL )
       ew = cb->GetTextCtrl();
   }
-  Traversables.Add( new AnAssociation2<AOlxCtrl*,wxWindow*>(Object, ew) );
+  Traversables.Add(Association::New(Object, ew));
 #else
-  Traversables.Add( new AnAssociation2<AOlxCtrl*,wxWindow*>(Object,wxWin) );
+  Traversables.Add(Association::New(Object,wxWin));
 #endif
   if( Name.IsEmpty() )  return true;  // an anonymous object
   if( Objects.IndexOf(Name) != InvalidIndex )  return false;
-  Objects.Add(Name, AnAssociation3<AOlxCtrl*, wxWindow*,bool>(Object, wxWin, Manage) );
+  Objects.Add(Name, Association::Create(Object, wxWin, Manage));
   return true;
 }
 //..............................................................................
@@ -753,7 +753,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.Count() > 2 && !Cmds[1].IsNumber() )  {
     html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
     if( html == NULL )  {
-      Error.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
+      Error.ProcessingError(__OlxSrcInfo, "undefined popup: ").quote() << Cmds[0];
       return;
     }
     Cmds.Delete(0);
@@ -779,7 +779,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     else if( itemName.FirstIndexOf('*') == InvalidIndex )  {
       THtmlSwitch* sw = rootSwitch.FindSwitch(itemName);
       if( sw == NULL )  {
-        Error.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ") << itemName;
+        Error.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ").quote() << itemName;
         return;
       }
       Switches.Add(sw);
@@ -845,13 +845,13 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
   THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Params[0]) : this;
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
   }
   olxstr itemName( (Params.Count() == 1) ? Params[0] : Params[1] );
   THtmlSwitch *sw = html->GetRoot().FindSwitch(itemName);
   if( sw == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ") << itemName;
+    E.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ").quote() << itemName;
     return;
   }
   if( sw->GetFileIndex() == InvalidIndex )
@@ -870,10 +870,10 @@ void THtml::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
 void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
   THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Params[0]) : this;
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
   }
-  olxstr itemName( (Params.Count() == 1) ? Params[0] : Params[1] );
+  olxstr itemName((Params.Count() == 1) ? Params[0] : Params[1]);
   E.SetRetVal(html->GetRoot().FindSwitch(itemName) != NULL);
 }
 //..............................................................................
@@ -906,7 +906,7 @@ void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void THtml::macUpdateHtml(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
   html->UpdatePage();
@@ -919,7 +919,7 @@ void THtml::macSetFonts(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
   html->SetBorders(Cmds.GetLastString().ToInt());
@@ -928,7 +928,7 @@ void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
   html->LoadPage( html->GetHomePage().u_str() );
@@ -937,7 +937,7 @@ void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void THtml::macHtmlReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
   html->ReloadPage();
@@ -946,7 +946,7 @@ void THtml::macHtmlReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
   html->LoadPage( Cmds.GetLastString().u_str() );
@@ -965,7 +965,7 @@ void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E
 void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
   TStrList SL;
@@ -975,7 +975,7 @@ void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( ObjectsState.FindProperties(Cmds[0]) != NULL )  {
-    E.ProcessingError(__OlxSrcInfo, olxstr("control ") << Cmds[0] << " already exists");
+    E.ProcessingError(__OlxSrcInfo, "control ").quote() << Cmds[0] << " already exists";
     return;
   }
   TSStrStrList<olxstr,false>* props = NULL;
@@ -1047,28 +1047,22 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
   return EmptyString();
 }
 void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  const AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(objName);
+  Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
+  if( c.html == NULL )  return;
+  if( c.ctrl == NULL )  {
+    TSStrStrList<olxstr,false>* props = c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
-      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
+      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
     if( props->IndexOf("val") == InvalidIndex )  {
-      E.ProcessingError(__OlxSrcInfo,  "object definition does not have value for: ") << objName;
+      E.ProcessingError(__OlxSrcInfo,  "object definition does not have value for: ").quote() << c.ctrl_name;
       return;
     }
     E.SetRetVal((*props)["val"]);
   }
   else
-    E.SetRetVal(GetObjectValue(Obj));
+    E.SetRetVal(c.html->GetObjectValue(c.ctrl));
 }
 //..............................................................................
 void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
@@ -1105,22 +1099,16 @@ void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
   else  return;
 }
 void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(objName);
+  Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
+  if( c.html == NULL )  return;
+  if( c.ctrl == NULL )  {
+    TSStrStrList<olxstr,false>* props = c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
-      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
+      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
     if( props->IndexOf("val") == InvalidIndex )  {
-      E.ProcessingError(__OlxSrcInfo,  "object definition does not accept value for: ") << objName;
+      E.ProcessingError(__OlxSrcInfo,  "object definition does not accept value for: ").quote() << c.ctrl_name;
       return;
     }
     if( (*props)["type"] == EsdlClassName(TTrackBar) || (*props)["type"] == EsdlClassName(TSpinCtrl) )  {
@@ -1136,8 +1124,8 @@ void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
       (*props)["val"] = Params[1];
   }
   else  {
-    html->SetObjectValue(Obj, Params[1]);
-    html->Refresh();
+    c.html->SetObjectValue(c.ctrl, Params[1]);
+    c.html->Refresh();
   }
 }
 //..............................................................................
@@ -1153,40 +1141,24 @@ const olxstr& THtml::GetObjectData(const AOlxCtrl *Obj)  {
   return EmptyString();
 }
 void THtml::funGetData(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  const AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(objName);
+  Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
+  if( c.html == NULL )  return;
+  if( c.ctrl == NULL )  {
+    TSStrStrList<olxstr,false>* props = c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
-      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
+      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
     E.SetRetVal( (*props)["data"] );
   }
   else
-    E.SetRetVal( html->GetObjectData(Obj) );
+    E.SetRetVal(c.html->GetObjectData(c.ctrl));
 }
 //..............................................................................
 void THtml::funGetItems(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  const AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
-  }
-  E.SetRetVal( html->GetObjectItems(Obj) );
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
+  E.SetRetVal(c.html->GetObjectItems(c.ctrl));
 }
 //..............................................................................
 olxstr THtml::GetObjectImage(const AOlxCtrl* Obj)  {
@@ -1249,13 +1221,11 @@ bool THtml::SetObjectItems(AOlxCtrl* Obj, const olxstr& src)  {
 
   if( EsdlInstanceOf(*Obj, TComboBox) )  {
     ((TComboBox*)Obj)->Clear();
-    TStrList items(src, ';');
-    ((TComboBox*)Obj)->AddItems( items );
+    ((TComboBox*)Obj)->AddItems(TStrList(src, ';'));
   }
   else if( EsdlInstanceOf(*Obj, TListBox) )  {
     ((TListBox*)Obj)->Clear();
-    TStrList items(src, ';');
-    ((TListBox*)Obj)->AddItems( items )  ;
+    ((TListBox*)Obj)->AddItems(TStrList(src, ';'));
   }
   else  {
     TBasicApp::NewLogEntry(logError) << "SetItems: unsupported object type";
@@ -1275,19 +1245,33 @@ void THtml::SetObjectData(AOlxCtrl *Obj, const olxstr& Data)  {
   if( EsdlInstanceOf(*Obj, TTreeView) )  {  ((TTreeView*)Obj)->SetData(Data);  return;  }
 }
 void THtml::funSetData(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
+  c.html->SetObjectData(c.ctrl, Params[1]);
+}
+//..............................................................................
+THtml::Control THtml::FindControl(const olxstr &name, TMacroError& me, short needs,
+  const char* location)
+{
+  const size_t ind = name.IndexOf('.');
+  THtml* html = (ind == InvalidIndex) ? this
+    : TGlXApp::GetMainForm()->FindHtml(name.SubStringTo(ind));
+  olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind+1);
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
+    me.ProcessingError(location, "could not locate specified popup: ").quote() <<
+      name.SubStringTo(ind);
+    return Control(NULL, NULL, NULL, objName);
   }
-  AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
+  if( objName.Equals("self") )  {
+    if( needs == 1 )
+      me.ProcessingError(__OlxSrcInfo, "wrong control name: ").quote() << objName;
+    return Control(html, NULL, this, objName);
   }
-  html->SetObjectData(Obj, Params[1]);
+  const size_t ci = html->Objects.IndexOf(objName);
+  if( ci == InvalidIndex && needs != 0 )
+    me.ProcessingError(__OlxSrcInfo, "wrong html object name: ").quote() << objName;
+  return Control(html, ci == InvalidIndex ? NULL : html->GetObject(ci),
+    ci == InvalidIndex ? NULL : html->GetWindow(ci), objName);
 }
 //..............................................................................
 bool THtml::GetObjectState(const AOlxCtrl *Obj, const olxstr& state)  {
@@ -1307,18 +1291,12 @@ bool THtml::GetObjectState(const AOlxCtrl *Obj, const olxstr& state)  {
     return false;
 }
 void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  const AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(objName);
+  Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
+  if( c.html == NULL )  return;
+  if( c.ctrl == NULL )  {
+    TSStrStrList<olxstr,false>* props = c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
-      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << objName;
+      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ").quote() << c.ctrl_name;
       return;
     }
     if( Params.Count() == 1 )
@@ -1327,61 +1305,41 @@ void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
       E.SetRetVal((*props)[Params[1]]);
   }
   else
-    E.SetRetVal(html->GetObjectState(Obj, Params.Count() == 1 ? EmptyString() : Params[1]));
+    E.SetRetVal(c.html->GetObjectState(c.ctrl, Params.Count() == 1 ? EmptyString() : Params[1]));
 }
 //..............................................................................
 void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  const AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
-  }
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
   olxstr rV;
-  if( EsdlInstanceOf(*Obj, TButton) )  rV = ((TButton*)Obj)->GetCaption();
-  else if( EsdlInstanceOf(*Obj, TLabel) )   rV = ((TLabel*)Obj)->GetCaption();
-  else if( EsdlInstanceOf(*Obj, TCheckBox) )   rV = ((TCheckBox*)Obj)->GetCaption();
-  else if( EsdlInstanceOf(*Obj, TTreeView) )  {
-    TTreeView* T = (TTreeView*)Obj;
+  if( EsdlInstanceOf(*c.ctrl, TButton) )  rV = ((TButton*)c.ctrl)->GetCaption();
+  else if( EsdlInstanceOf(*c.ctrl, TLabel) )   rV = ((TLabel*)c.ctrl)->GetCaption();
+  else if( EsdlInstanceOf(*c.ctrl, TCheckBox) )   rV = ((TCheckBox*)c.ctrl)->GetCaption();
+  else if( EsdlInstanceOf(*c.ctrl, TTreeView) )  {
+    TTreeView* T = (TTreeView*)c.ctrl;
     wxTreeItemId ni = T->GetSelection();
     rV = T->GetItemText(ni);
   }
   else  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object type: ")  << EsdlObjectName(*Obj);
+    E.ProcessingError(__OlxSrcInfo, "wrong html object type: ").quote()  << EsdlObjectName(*c.ctrl);
     return;
   }
   E.SetRetVal(rV);
 }
 //..............................................................................
 void THtml::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  const AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
-  }
-  if( EsdlInstanceOf(*Obj, TButton) )       ((TButton*)Obj)->SetCaption(Params[1]);
-  else if( EsdlInstanceOf(*Obj, TLabel) )   ((TLabel*)Obj)->SetCaption(Params[1]);
-  else if( EsdlInstanceOf(*Obj, TCheckBox) )   ((TCheckBox*)Obj)->SetCaption(Params[1]);
-  else if( EsdlInstanceOf(*Obj, TTreeView) )  {
-    TTreeView* T = (TTreeView*)Obj;
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
+  if( EsdlInstanceOf(*c.ctrl, TButton) )  ((TButton*)c.ctrl)->SetCaption(Params[1]);
+  else if( EsdlInstanceOf(*c.ctrl, TLabel) )  ((TLabel*)c.ctrl)->SetCaption(Params[1]);
+  else if( EsdlInstanceOf(*c.ctrl, TCheckBox) )  ((TCheckBox*)c.ctrl)->SetCaption(Params[1]);
+  else if( EsdlInstanceOf(*c.ctrl, TTreeView) )  {
+    TTreeView* T = (TTreeView*)c.ctrl;
     wxTreeItemId ni = T->GetSelection();
     T->SetItemText(ni, Params[1].u_str());
   }
   else  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object type: ")  << EsdlObjectName(*Obj);
+    E.ProcessingError(__OlxSrcInfo, "wrong html object type: ").quote()  << EsdlObjectName(*c.ctrl);
     return;
   }
 }
@@ -1401,49 +1359,23 @@ void THtml::SetObjectState(AOlxCtrl *Obj, bool State, const olxstr& state_name) 
 }
 //..............................................................................
 void THtml::funSetImage(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
-  }
-  if( !html->SetObjectImage(Obj, Params[1]) )  {
-    E.ProcessingError(__OlxSrcInfo, "could not set image for the object: ")  << objName;
-  }
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
+  if( !c.html->SetObjectImage(c.ctrl, Params[1]) )
+    E.ProcessingError(__OlxSrcInfo, "could not set image for the object: ").quote()  << c.ctrl_name;
 }
 //..............................................................................
 void THtml::funGetImage(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  const AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
-  }
-  E.SetRetVal(html->GetObjectImage(Obj));
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
+  E.SetRetVal(c.html->GetObjectImage(c.ctrl));
 }
 //..............................................................................
 void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  FocusedControl = objName;
-  InFocus = html->FindObjectWindow(objName);
+  Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
+  if( c.html == NULL )  return;
+  FocusedControl = c.ctrl_name;
+  InFocus = c.wnd;
   if( InFocus == NULL )  // not created yet?
     return;
   if( EsdlInstanceOf(*InFocus, TTextEdit) )
@@ -1461,19 +1393,13 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 void THtml::funSelect(const TStrObjList &Params, TMacroError &E)  {
   bool by_label = Params.Count() == 3 ? Params[2].ToBool() : true;
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  AOlxCtrl* Obj = html->FindObject(objName);
-  if( Obj == NULL || !EsdlInstanceOf(*Obj, TTreeView) )  {
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
+  if( !EsdlInstanceOf(*c.ctrl, TTreeView) )  {
     E.ProcessingError(__OlxSrcInfo, "incompatible object type");
     return;
   }
-  TTreeView* tv = (TTreeView*)Obj;
+  TTreeView* tv = (TTreeView*)c.ctrl;
   if( by_label )
     tv->SelectByLabel(Params[1]);
   else
@@ -1481,23 +1407,17 @@ void THtml::funSelect(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return false;
-  }
+  Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
+  if( c.html == NULL )  return false;
   const bool state = Params.GetLastString().ToBool();
-  AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    TSStrStrList<olxstr,false>* props = html->ObjectsState.FindProperties(Params[0]);
+  if( c.ctrl == NULL )  {
+    TSStrStrList<olxstr,false>* props = c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
-      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
+      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ").quote() << c.ctrl_name;
       return false;
     }
     if( props->IndexOf("checked") == InvalidIndex )  {
-      E.ProcessingError(__OlxSrcInfo, "object definition does have state for: ") << objName;
+      E.ProcessingError(__OlxSrcInfo, "object definition does have state for: ").quote() << c.ctrl_name;
       return false;
     }
     if( Params.Count() == 2 )
@@ -1506,7 +1426,7 @@ bool THtml::SetState(const TStrObjList &Params, TMacroError &E)  {
       (*props)[Params[1]] = state;
   }
   else
-    html->SetObjectState(Obj, state, (Params.Count() == 2 ? EmptyString() : Params[1]));
+    c.html->SetObjectState(c.ctrl, state, (Params.Count() == 2 ? EmptyString() : Params[1]));
   return true;
 }
 //..............................................................................
@@ -1530,19 +1450,9 @@ void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funSetItems(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  AOlxCtrl *Obj = html->FindObject(objName);
-  if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
-  }
-  html->SetObjectItems(Obj, Params[1]);
+  Control c = FindControl(Params[0], E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
+  c.html->SetObjectItems(c.ctrl, Params[1]);
 }
 //..............................................................................
 void THtml::funSaveData(const TStrObjList &Params, TMacroError &E)  {
@@ -1555,28 +1465,18 @@ void THtml::funLoadData(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   if( !ObjectsState.LoadFromFile(Params[0]) )  {
-    E.ProcessingError(__OlxSrcInfo, "error occured while processing file" );
+    E.ProcessingError(__OlxSrcInfo, "error occured while processing file");
     return;
   }
 }
 //..............................................................................
 void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  wxWindow *wxw = html->FindObjectWindow(objName);
-  if( wxw == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
-  }
+  Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
+  if( c.html == NULL || c.wnd == NULL )  return;
   const wxColor fgc = wxColor(Params[1].u_str());
-  wxw->SetForegroundColour(fgc);
-  if( EsdlInstanceOf(*wxw, TComboBox) )  {
-    TComboBox* Box = (TComboBox*)wxw;
+  c.wnd->SetForegroundColour(fgc);
+  if( EsdlInstanceOf(*c.wnd, TComboBox) )  {
+    TComboBox* Box = (TComboBox*)c.wnd;
     //Box->SetForegroundColour(fgc);
 #ifdef __WIN32__
     if( Box->GetPopupControl() != NULL )
@@ -1585,26 +1485,16 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
       Box->GetTextCtrl()->SetForegroundColour(fgc);
 #endif				
   }
-  wxw->Refresh();
+  c.wnd->Refresh();
 }
 //..............................................................................
 void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml( Params[0].SubStringTo(ind) );
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  wxWindow *wxw = html->FindObjectWindow(objName);
-  if( wxw == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-    return;
-  }
+  Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
+  if( c.html == NULL || c.wnd == NULL )  return;
   const wxColor bgc(Params[1].u_str());
-  wxw->SetBackgroundColour(bgc);
-  if( EsdlInstanceOf(*wxw, TComboBox) )  {
-    TComboBox* Box = (TComboBox*)wxw;
+  c.wnd->SetBackgroundColour(bgc);
+  if( EsdlInstanceOf(*c.wnd, TComboBox) )  {
+    TComboBox* Box = (TComboBox*)c.wnd;
 #ifdef __WIN32__
     if( Box->GetPopupControl() != NULL )
       Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgc);
@@ -1615,7 +1505,7 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
   //else if( EsdlInstanceOf(*wxw, TTrackBar) )  {
   //  TTrackBar* Bar = (TTrackBar*)wxw;
   //}
-  wxw->Refresh();
+  c.wnd->Refresh();
 }
 //..............................................................................
 void THtml::funGetFontName(const TStrObjList &Params, TMacroError &E)  {
@@ -1629,11 +1519,11 @@ void THtml::funGetBorders(const TStrObjList &Params, TMacroError &E)  {
 void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
   TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
   if( pd == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
   }
   if( !pd->Dialog->IsModal() )  {
-    E.ProcessingError(__OlxSrcInfo, "non-modal html window");
+    E.ProcessingError(__OlxSrcInfo, "non-modal html window: ").quote() << Params[0];
     return;
   }
   pd->Dialog->EndModal(Params[1].ToInt());
@@ -1642,124 +1532,52 @@ void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
 void THtml::funShowModal(const TStrObjList &Params, TMacroError &E)  {
   TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
   if( pd == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
   }
   E.SetRetVal(pd->Dialog->ShowModal());
 }
 //..............................................................................
 void THtml::funWidth(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  if( objName.Equals("self") )  {
-    if( Params.Count() == 1 )
-      E.SetRetVal(html->GetSize().GetWidth());
-    else
-      html->SetSize(-1, -1, Params[1].ToInt(), -1);
-  }
-  else  {  
-    wxWindow *wxw = html->FindObjectWindow(objName);
-    if( wxw == NULL )  {
-      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-      return;
-    }
-    if( Params.Count() == 1 )
-      E.SetRetVal(wxw->GetSize().GetWidth());
-    else
-      wxw->SetSize(-1, -1, Params[1].ToInt(), -1);
-  }
+  Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
+  if( c.html == NULL || c.wnd == NULL )  return;
+  if( Params.Count() == 1 )
+    E.SetRetVal(c.wnd->GetSize().GetWidth());
+  else
+    c.wnd->SetSize(-1, -1, Params[1].ToInt(), -1);
 }
 //..............................................................................
 void THtml::funHeight(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  if( objName.Equals("self") )  {
-    if( Params.Count() == 1 )
-      E.SetRetVal(html->GetSize().GetHeight());
-    else
-      html->SetSize(-1, -1, -1, Params[1].ToInt());
-  }
-  else  {  
-    wxWindow *wxw = html->FindObjectWindow(objName);
-    if( wxw == NULL )  {
-      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-      return;
-    }
-    if( Params.Count() == 1 )
-      E.SetRetVal(wxw->GetSize().GetHeight());
-    else
-      wxw->SetSize(-1, -1, -1, Params[1].ToInt());
-  }
+  Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
+  if( c.html == NULL || c.wnd == NULL )  return;
+  if( Params.Count() == 1 )
+    E.SetRetVal(c.wnd->GetSize().GetHeight());
+  else
+    c.wnd->SetSize(-1, -1, -1, Params[1].ToInt());
 }
 //..............................................................................
 void THtml::funClientWidth(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  if( objName.Equals("self") )  {
-    if( Params.Count() == 1 )
-      E.SetRetVal(html->GetClientSize().GetWidth());
-    else
-      html->SetClientSize(Params[1].ToInt(), -1);
-  }
-  else  {  
-    wxWindow *wxw = html->FindObjectWindow(objName);
-    if( wxw == NULL )  {
-      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-      return;
-    }
-    if( Params.Count() == 1 )
-      E.SetRetVal(wxw->GetClientSize().GetWidth());
-    else
-      wxw->SetClientSize(Params[1].ToInt(), -1);
-  }
+  Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
+  if( c.html == NULL || c.wnd == NULL )  return;
+  if( Params.Count() == 1 )
+    E.SetRetVal(c.wnd->GetClientSize().GetWidth());
+  else
+    c.wnd->SetClientSize(Params[1].ToInt(), -1);
 }
 //..............................................................................
 void THtml::funClientHeight(const TStrObjList &Params, TMacroError &E)  {
-  const size_t ind = Params[0].IndexOf('.');
-  THtml* html = (ind == InvalidIndex) ? this : TGlXApp::GetMainForm()->FindHtml(Params[0].SubStringTo(ind));
-  olxstr objName = (ind == InvalidIndex) ? Params[0] : Params[0].SubStringFrom(ind+1);
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
-    return;
-  }
-  if( objName.Equals("self") )  {
-    if( Params.Count() == 1 )
-      E.SetRetVal(html->GetClientSize().GetHeight());
-    else
-      html->SetClientSize(-1, Params[1].ToInt());
-  }
-  else  {  
-    wxWindow *wxw = html->FindObjectWindow(objName);
-    if( wxw == NULL )  {
-      E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
-      return;
-    }
-    if( Params.Count() == 1 )
-      E.SetRetVal(wxw->GetClientSize().GetHeight());
-    else
-      wxw->SetClientSize(-1, Params[1].ToInt());
-  }
+  Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
+  if( c.html == NULL || c.wnd == NULL )  return;
+  if( Params.Count() == 1 )
+    E.SetRetVal(c.wnd->GetClientSize().GetHeight());
+  else
+    c.wnd->SetClientSize(-1, Params[1].ToInt());
 }
 //..............................................................................
 void THtml::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
   TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
   if( pd == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
   }
   if( Params.Count() == 1 )
@@ -1771,7 +1589,7 @@ void THtml::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
 void THtml::funContainerHeight(const TStrObjList &Params, TMacroError &E)  {
   TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
   if( pd == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
   }
   if( Params.Count() == 1 )

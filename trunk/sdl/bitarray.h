@@ -60,6 +60,11 @@ public:
 #endif
     FData[intIndex] &= ~bitIndex;
   }
+  void Swap(size_t i, size_t j)  {
+    const bool i_v = Get(i);
+    Set(i, Get(j));
+    Set(j, i_v);
+  }
   void SetAll(bool v);
   inline const unsigned char* GetData() const {  return FData;  }
   inline size_t CharCount() const {  return FCharCount;  }

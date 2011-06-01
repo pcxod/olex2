@@ -1059,6 +1059,7 @@
     <ClInclude Include="..\..\..\xlib\congen.h" />
     <ClInclude Include="..\..\..\xlib\connext.h" />
     <ClInclude Include="..\..\..\xlib\conninfo.h" />
+    <ClInclude Include="..\..\..\xlib\constraints_ext.h" />
     <ClInclude Include="..\..\..\xlib\crs.h" />
     <ClInclude Include="..\..\..\xlib\ellipsoid.h" />
     <ClInclude Include="..\..\..\xlib\envilist.h" />

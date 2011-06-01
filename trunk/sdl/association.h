@@ -24,6 +24,7 @@ public:
   void SetA(const Ac& a)  {  this->a = a;  }
   void SetB(const Bc& b)  {  this->b = b;  }
 };
+
 template <class Ac, class Bc, class Cc>
 class AnAssociation3 : public AnAssociation2<Ac,Bc>  {
   Cc c;
@@ -43,6 +44,7 @@ public:
   const Cc& GetC() const {  return c;  }
   void SetC(const Cc& c)  {  this->c = c;  }
 };
+
 template <class Ac, class Bc, class Cc, class Dc>
 class AnAssociation4 : public AnAssociation3<Ac,Bc,Cc> {
   Dc d;
@@ -66,16 +68,30 @@ public:
 
 struct Association  {
   template <class Ac, class Bc>
-  static AnAssociation2<Ac,Bc> Create(const Ac& _a, const Bc& _b)  {
-    return AnAssociation2<Ac,Bc>(_a, _b);
+  static AnAssociation2<Ac,Bc> Create(const Ac& a, const Bc& b)  {
+    return AnAssociation2<Ac,Bc>(a, b);
+  }
+  template <class Ac, class Bc>
+  static AnAssociation2<Ac,Bc> *New(const Ac& a, const Bc& b)  {
+    return new AnAssociation2<Ac,Bc>(a, b);
   }
   template <class Ac, class Bc, class Cc>
-  static AnAssociation3<Ac,Bc,Cc> Create(const Ac& _a, const Bc& _b, const Cc& _c)  {
-    return AnAssociation3<Ac,Bc,Cc>(_a, _b, _c);
+  static AnAssociation3<Ac,Bc,Cc> Create(const Ac& a, const Bc& b, const Cc& c)  {
+    return AnAssociation3<Ac,Bc,Cc>(a, b, c);
+  }
+  template <class Ac, class Bc, class Cc>
+  static AnAssociation3<Ac,Bc,Cc> *New(const Ac& a, const Bc& b, const Cc& c)  {
+    return new AnAssociation3<Ac,Bc,Cc>(a, b, c);
   }
   template <class Ac, class Bc, class Cc, class Dc>
-  static AnAssociation4<Ac,Bc,Cc,Dc> Create(const Ac& _a, const Bc& _b, const Cc& _c, const Dc& _d)  {
-    return AnAssociation4<Ac,Bc,Cc,Dc>(_a, _b, _c, _d);
+  static AnAssociation4<Ac,Bc,Cc,Dc>
+  Create(const Ac& a, const Bc& b, const Cc& c, const Dc& d)  {
+    return AnAssociation4<Ac,Bc,Cc,Dc>(a, b, c, d);
+  }
+  template <class Ac, class Bc, class Cc, class Dc>
+  static AnAssociation4<Ac,Bc,Cc,Dc> *
+  New(const Ac& a, const Bc& b, const Cc& c, const Dc& d)  {
+    return new AnAssociation4<Ac,Bc,Cc,Dc>(a, b, c, d);
   }
 };
 

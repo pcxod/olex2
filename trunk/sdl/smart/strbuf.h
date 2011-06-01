@@ -9,18 +9,18 @@ class TTStrBuffer {
     size_t Start, Length;
     Entry* Next;
   };
-  size_t Length;
+  size_t _Length;
   Entry *Head, *Tail;
 public:
   TTStrBuffer()  {
     Tail = Head = NULL;
-    Length = 0;
+    _Length = 0;
   }
   TTStrBuffer(const str_t& v)  {
     Tail = Head = new Entry;
     Tail->Data = v.Data_();
     Tail->Start = v.Start_();
-    Length = Tail->Length = v.Length();
+    _Length = Tail->Length = v.Length();
     Tail->Next = NULL;
     Tail->Data->RefCnt++;
   }
@@ -35,16 +35,6 @@ public:
     }
   }
 
-  size_t CalcSize() const {
-    size_t sz = 0;
-    Entry* en = Head;
-    while( en != NULL )  {
-      sz += en->Length;
-      en = en->Next;
-    }
-    return sz;
-  }
-
   TTStrBuffer& operator << (const str_t& v)  {
     if( v.Data_() == NULL )  return *this;
     if( Head == NULL )  {
@@ -57,12 +47,12 @@ public:
     }
     Tail->Data = v.Data_();
     Tail->Start = v.Start_();
-    Length += (Tail->Length = v.Length());
+    _Length += (Tail->Length = v.Length());
     Tail->Next = NULL;
     Tail->Data->RefCnt++;
     return *this;
   }
-  // writes the EOL - size of v should be CalcSize()+1
+  // writes the EOL - size of v should be Length()+1
   char_t *Read(char_t *v) const {
     if( Head == NULL )
       v[0] = L'\0';
@@ -79,23 +69,20 @@ public:
     return v;
   }
   // writes the EOL - size of v should be CalcSize()+1
-  char_t *ReverseRead(char_t *v, size_t sz=~0) const {
-    if( Head == NULL )
-      v[0] = L'\0';
-    else  {
-      if( sz == ~0 )
-        sz = CalcSize();
+  char_t *ReverseRead(char_t *v) const {
+    if( Head != NULL )  {
       Entry* en = Head;
-      size_t x = sz-1;
+      size_t x = _Length-1;
       while( en != NULL )  {
         for( size_t i=en->Length; i != 0; i--, x-- )
           v[x] = en->Data->Data[i-1];
         en = en->Next;
       }
-      v[sz] = L'\0';
     }
+    v[_Length] = L'\0';
     return v;
   }
+  size_t Length() const {  return _Length;  }
   Entry *GetHead() {  return Head;  }
   const Entry *GetHead() const {  return Head;  }
 };

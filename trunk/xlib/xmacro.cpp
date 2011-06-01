@@ -1880,26 +1880,44 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       processed.Add(atoms[i]->CAtom());
     }
   }
-  for( size_t i=0; i < groups.Count(); i++ )  {
-    if( groups[i]->Count() > 1 )  {
-      TSimpleRestraint* sr = set_eadp ? &rm.rEADP.AddNew() : NULL;
-      XLEQ* leq = NULL;
-      if( groups[i]->Count() == 2 )  {
-        XVar& vr = rm.Vars.NewVar();
-        rm.Vars.AddVarRef(vr, (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
-        rm.Vars.AddVarRef(vr, (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
-      }
-      else
-        leq = &rm.Vars.NewEquation();
-      for( size_t j=0; j < groups[i]->Count(); j++ )  {
-        if( (*groups[i])[j].IsDeleted() )  continue;
-        if( leq != NULL )  {
-          XVar& vr = rm.Vars.NewVar(1./groups[i]->Count());
-          rm.Vars.AddVarRef(vr, (*groups[i])[j], catom_var_name_Sof, relation_AsVar, 1.0); 
-          leq->AddMember(vr);
+  // special case - cross-link 4 atoms by one variable
+  if( groups.Count() == 2 && groups[0]->Count() == 2 && groups[1]->Count() )  {
+    TSimpleRestraint* sr = set_eadp ? &rm.rEADP.AddNew() : NULL;
+    XLEQ* leq = NULL;
+    XVar& vr = rm.Vars.NewVar();
+    rm.Vars.AddVarRef(vr, (*groups[0])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
+    rm.Vars.AddVarRef(vr, (*groups[0])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+    rm.Vars.AddVarRef(vr, (*groups[1])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
+    rm.Vars.AddVarRef(vr, (*groups[1])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+    if( sr != NULL )  {
+      sr->AddAtom((*groups[0])[0], NULL);
+      sr->AddAtom((*groups[0])[1], NULL);
+      sr->AddAtom((*groups[1])[0], NULL);
+      sr->AddAtom((*groups[1])[1], NULL);
+    }
+  }
+  else  {
+    for( size_t i=0; i < groups.Count(); i++ )  {
+      if( groups[i]->Count() > 1 )  {
+        TSimpleRestraint* sr = set_eadp ? &rm.rEADP.AddNew() : NULL;
+        XLEQ* leq = NULL;
+        if( groups[i]->Count() == 2 )  {
+          XVar& vr = rm.Vars.NewVar();
+          rm.Vars.AddVarRef(vr, (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
+          rm.Vars.AddVarRef(vr, (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
         }
-        if( sr != NULL )
-          sr->AddAtom((*groups[i])[j], NULL);
+        else
+          leq = &rm.Vars.NewEquation();
+        for( size_t j=0; j < groups[i]->Count(); j++ )  {
+          if( (*groups[i])[j].IsDeleted() )  continue;
+          if( leq != NULL )  {
+            XVar& vr = rm.Vars.NewVar(1./groups[i]->Count());
+            rm.Vars.AddVarRef(vr, (*groups[i])[j], catom_var_name_Sof, relation_AsVar, 1.0); 
+            leq->AddMember(vr);
+          }
+          if( sr != NULL )
+            sr->AddAtom((*groups[i])[j], NULL);
+        }
       }
     }
   }
