@@ -4729,7 +4729,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     catch(const TExceptionBase& exc)  { 
-      FXApp->XFile().Close();
+      // manual recovery of the situation...
+      FXApp->XFile().GetRM().Clear(rm_clear_ALL);
+      FXApp->XFile().GetLattice().Clear(true);
+      FXApp->CreateObjects(true);
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     if( FXApp->XFile().HasLastLoader() )  {
@@ -4797,7 +4800,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( !Tmp.IsEmpty() && !(Tmp == XLibMacros::CurrentDir) )  {
         if( !TEFile::ChangeDir(Tmp) )  {
           TBasicApp::NewLogEntry() << "Cannot change current folder '" << TEFile::CurrentDir() <<
-          "'  to '" << Tmp;
+          "' to '" << Tmp;
         }
         else  {
           if( !Blind )  
