@@ -27,7 +27,7 @@ private:
   wxWindow* InFocus;
   TActionQList Actions;
 protected:
-  olxstr  WebFolder, FileName, HomePage;   // the base of all web files
+  olxstr WebFolder, FileName, HomePage;   // the base of all web files
   olxstr NormalFont, FixedFont;
   void OnLinkClicked(const wxHtmlLinkInfo& link);
   wxHtmlOpeningStatus OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const;
@@ -139,6 +139,17 @@ protected:
   void GetTraversibleIndeces(index_t& current, index_t& another, bool forward) const;
   void DoNavigate(bool forward);
   static TLibrary* Library;
+  struct Control {
+    THtml *html;
+    AOlxCtrl *ctrl;
+    wxWindow *wnd;
+    olxstr ctrl_name;
+    Control(THtml *h, AOlxCtrl *c, wxWindow *w, const olxstr &cn)
+      : html(h), ctrl(c), wnd(w), ctrl_name(cn) {}
+  };
+  // needed = 0 - nothing, 1 - AOlxCtrl, 2 - wxWidow, 3 - both
+  Control FindControl(const olxstr &name, TMacroError& me,
+    short needed, const char* location);
 public:
   THtml(wxWindow *Parent, ALibraryContainer* LC, int flags=4);
   virtual ~THtml();

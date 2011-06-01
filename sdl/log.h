@@ -64,7 +64,7 @@ public:
 //..............................................................................
   struct LogEntry  {
     TLog& parent;
-    olxstr buffer;
+    olxstr_buf buffer;
     int evt;
     LogEntry(TLog& _parent, int evt, bool annotate);
     ~LogEntry();

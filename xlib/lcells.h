@@ -84,9 +84,8 @@ namespace lcells {
           res << '/' << p->name;
           p = p->parent;
         }
-        const size_t sz = res.CalcSize();
         return olxstr::FromExternal(
-          res.ReverseRead(olx_malloc<olxch>(sz+1)), sz);
+          res.ReverseRead(olx_malloc<olxch>(res.Length()+1)), res.Length());
       }
     };
     struct ResultEntry : public CellInfo {
@@ -130,7 +129,7 @@ namespace lcells {
       FolderEntry(FolderEntry *parent, const olxstr &name, uint64_t modified)
         : Entry(parent, name, modified)  {}
       void Init(const TFileTree::Folder &folder);
-      void Update(const TFileTree::Folder &folder);
+      size_t Update(const TFileTree::Folder &folder);
       IDataOutputStream &ToStream(IDataOutputStream &out) const {
         out << (uint32_t)entries.Count();
         for( size_t i=0; i < entries.Count(); i++ )
@@ -169,6 +168,7 @@ namespace lcells {
       }
     };
     FolderEntry root;
+    uint64_t LastUpdated;
     Index();
     static SortedObjectList<olxstr, olxstrComparator<false> > masks;
     static char file_sig[];
@@ -177,11 +177,16 @@ namespace lcells {
         TEFile::ExtractFileExt(file_name).ToLowerCase()) != InvalidIndex;
     }
     void Create(const olxstr &folder, const olxstr& index_name);
+    void PrintInfo() const;
+    static void PrintResults(const TTypeList<ResultEntry> & results);
     static void Update(const olxstr& index_name);
+    static olxstr DefaultIndex()  {  return TBasicApp::GetSharedDir() + "lcells.ind";  }
     void SaveToFile(const olxstr &file_name) const;
     Index &LoadFromFile(const olxstr &file_name);
-    TTypeList<ResultEntry> Search(const CellInfo &cell) const;
-    //SortedObjectList<Entry, Entry::NameComparator> entries;
+    TTypeList<ResultEntry> Search(const CellInfo &cell, double vol_diff,
+      bool filter_by_dimensions) const;
+    static TTypeList<ResultEntry> Search(const olxstr &index_name,
+      const TStrObjList &Params, double vol_diff);
     static void Search(TStrObjList &Params, const TParamList &Options, TMacroError &E);
     static void Search(const TStrObjList &Params, TMacroError &E);
     static void Update(const TStrObjList &Params, TMacroError &E);

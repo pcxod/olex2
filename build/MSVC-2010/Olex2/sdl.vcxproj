@@ -691,6 +691,7 @@
     <ClInclude Include="..\..\..\sdl\integration.h" />
     <ClInclude Include="..\..\..\sdl\istream.h" />
     <ClInclude Include="..\..\..\sdl\library.h" />
+    <ClInclude Include="..\..\..\sdl\linked_operators.h" />
     <ClInclude Include="..\..\..\sdl\log.h" />
     <ClInclude Include="..\..\..\sdl\macroerror.h" />
     <ClInclude Include="..\..\..\sdl\macrolib.h" />

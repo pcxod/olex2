@@ -2,6 +2,7 @@
 #include "symmparser.h"
 #include "symspace.h"
 #include "math/composite.h"
+#include "xapp.h"
 
 using namespace lcells;
 
@@ -52,34 +53,34 @@ olx_object_ptr<TTypeList<CellInfo> > CellReader::read(const olxstr &fn)  {
         catch(...)  {}
       }
     }
-    else if( ext == "ins" || ext == "res" || ext == "p4p") {
+    else if( ext == "ins" || ext == "res") {
       CellInfo rv;
-      size_t found_cnt = 0;
+      bool cell_found = false, latt_found = false;
       for( size_t i=0; i < lines.Count(); i++ )  {
-        if( lines[i].Equalsi("cell") )  {
+        if( !cell_found && lines[i].StartsFromi("cell") )  {
           TStrList toks(lines[i], ' ');
           if( toks.Count() == 8 )  {
-            rv.cell[0] = toks[2].ToDouble();
-            rv.cell[1] = toks[3].ToDouble();
-            rv.cell[2] = toks[4].ToDouble();
-            rv.cell[3] = toks[5].ToDouble();
-            rv.cell[4] = toks[6].ToDouble();
-            rv.cell[5] = toks[7].ToDouble();
-            found_cnt ++;
+            const size_t st = 2;
+            rv.cell[0] = toks[st].ToDouble();
+            rv.cell[1] = toks[st+1].ToDouble();
+            rv.cell[2] = toks[st+2].ToDouble();
+            rv.cell[3] = toks[st+3].ToDouble();
+            rv.cell[4] = toks[st+4].ToDouble();
+            rv.cell[5] = toks[st+5].ToDouble();
+            cell_found = true;
           }
         }
-        else if( lines[i].StartsFromi("latt") )  {
+        else if( cell_found && lines[i].StartsFromi("latt") )  {
           TStrList toks(lines[i], ' ');
           if( toks.Count() == 2 )  {
-            rv.lattice = toks[1].ToInt();
-            found_cnt ++;
+            rv.lattice = olx_abs(toks[1].ToInt());
+            latt_found = true;
+            break;
           }
         }
-        if( found_cnt == 2 )  {
-          rvl.AddCCopy(rv);
-          return r_;
-        }
       }
+      if( cell_found && latt_found )
+        rvl.AddCCopy(rv);
     }
   }
   catch(const TExceptionBase &e)  {
@@ -154,7 +155,6 @@ Index::Index()  {
     masks.Add("cif");
     masks.Add("ins");
     masks.Add("res");
-    masks.Add("p4p");
   }
 }
 //.............................................................................
@@ -171,12 +171,14 @@ void Index::Create(const olxstr &folder, const olxstr& index_name)  {
   TBasicApp::NewLogEntry() << "  files";
   root.name = TEFile::UnixPath(folder);
   root.Init(ft.GetRoot());
+  LastUpdated = TETime::EpochTime();
   SaveToFile(index_name);
 }
 //.............................................................................
 void Index::SaveToFile(const olxstr &file_name) const {
   TEFile f(file_name + ".tmp", "w+b");
   f.Write(&file_sig[0], 3);
+  f << LastUpdated;
   uint16_t stream_flags=0;
   f << stream_flags;
   root.ToStream(f);
@@ -191,6 +193,7 @@ Index &Index::LoadFromFile(const olxstr &file_name) {
   if( olxstr::o_strcmp(sig, 3, file_sig, 3) != 0 )  {
     throw TFunctionFailedException(__OlxSourceInfo, "File signarure mismatches");
   }
+  in >> LastUpdated;
   // does nothing for now
   uint16_t stream_flags=0;
   in >> stream_flags;
@@ -202,15 +205,27 @@ Index &Index::LoadFromFile(const olxstr &file_name) {
 void Index::Update(const olxstr &index)  {
   Index ind;
   ind.LoadFromFile(index);
+  ind.PrintInfo();
+  size_t cnt = ind.root.TotalCount();
   TFileTree ft(ind.root.name);
   TBasicApp::NewLogEntry() << "Searching files in '" << ind.root.name << "' - this may take a while...";
   TBasicApp::GetInstance().Update();
   ft.Expand();
-  ind.root.Update(ft.GetRoot());
+  TBasicApp::NewLogEntry() << "Updated: " << ind.root.Update(ft.GetRoot()) << " entries";
+  ind.LastUpdated = TETime::EpochTime();
   ind.SaveToFile(index);
+  size_t cnt1 = ind.root.TotalCount();
+  if( cnt1 > cnt )
+    TBasicApp::NewLogEntry() << "Added: " << cnt1-cnt << " new entries";
 }
 //.............................................................................
-void Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
+void Index::PrintInfo() const {
+  TBasicApp::NewLogEntry() << "Last updated: " << TETime::FormatDateTime(LastUpdated);
+  TBasicApp::NewLogEntry() << "Number of entries: " << root.TotalCount();
+}
+//.............................................................................
+size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
+  size_t updated_cnt = 0;
   folders.QuickSorter.Sort<Entry::NameComparator>(folders);
   entries.QuickSorter.Sort<Entry::NameComparator>(entries);
   ConstSlice<TTypeList<FileEntry>, FileEntry>
@@ -227,6 +242,7 @@ void Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
     }
     else  {
       if( entries[fi].modified != f.GetModificationTime() )  {
+        updated_cnt++;
         TBasicApp::NewLogEntry() << "Updated file: " << folder.GetFullPath() << f.GetName();
         entries[fi].cells = CellReader::read(folder.GetFullPath()+f.GetName())();
         entries[fi].modified = f.GetModificationTime();
@@ -246,6 +262,7 @@ void Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
     else
       folders[fi].Update(f);
   }
+  return updated_cnt;
 }
 //.............................................................................
 void Index::FolderEntry::Init(const TFileTree::Folder &folder)  {
@@ -267,8 +284,9 @@ void Index::FolderEntry::Init(const TFileTree::Folder &folder)  {
   }
 }
 //.............................................................................
-TTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell) const {
-  const double diff = 5;
+TTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell, double diff,
+  bool filter_by_dimensions) const
+{
   TTypeList<ResultEntry> all, res;
   all.SetCapacity(root.TotalCount());
   root.Expand(all);
@@ -298,11 +316,8 @@ TTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell) const {
     usage.SetTrue(j);
     res.AddCCopy(all[j]);
   }
-  //
-  res.QuickSorter.Sort<TComparablePtrComparator>(res);
-  ConstSlice<TTypeList<Index::ResultEntry>, ResultEntry> res_slice(res, 0, res.Count());
   // search by cell volume
-  all.QuickSorter.Sort<CellInfo::VolumeComparator>(all);
+  all.QuickSorter.Sort(all, CellInfo::VolumeComparator(), SyncSwapListener<TEBitArray>(usage));
   const size_t vi = sorted::FindInsertIndex(all, CellInfo::VolumeComparator(), to_search);
   // go right
   for( size_t j=vi+1; j < all.Count(); j++ )  {
@@ -318,62 +333,113 @@ TTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell) const {
     if( !usage[j] )
       res.AddCCopy(all[j]);
   }
+  if( filter_by_dimensions )  {
+    const double dd = pow(diff, 1./3);
+    for( size_t i=0; i < res.Count(); i++ )  {
+      evecd c = Niggli::reduce_const(cell.lattice, cell.cell);
+      bool match = true;
+      for( int j=0; j < 6; j++ )  {
+        if( olx_abs(to_search.cell[j]-c[j]) > (j < 3 ? dd : dd/90) ) {
+          match = false;
+          break;
+        }
+      }
+      if( !match )
+        res.NullItem(i);
+    }
+    res.Pack();
+  }
   return res;
 }
 //.............................................................................
-//.............................................................................
-//.............................................................................
-void Index::Search(TStrObjList &Params, const TParamList &Options, TMacroError &E)  {
-  throw TNotImplementedException(__OlxSourceInfo);
+void Index::PrintResults(const TTypeList<ResultEntry> & res)  {
+  size_t cell_num=0;
+  TTable tab(res.Count()*2, 3);
+  for( size_t i=0; i < res.Count(); i++ )  {
+    if( i > 0 && res[i].cell == res[i-1].cell )  {
+      if( TEFile::ChangeFileExt(res[i].file_name, EmptyString()).Equalsi(
+        TEFile::ChangeFileExt(res[i-1].file_name, EmptyString())) )
+        continue;
+    }
+    tab[i*2][0] = olxstr(++cell_num).Format(2, false, ' ') << ". " << res[i].file_name;
+
+    TBasicApp::NewLogEntry() << olxstr(++cell_num).Format(2, false, ' ') << ". " << res[i].file_name;
+    TBasicApp::NewLogEntry() << "  " << res[i].cell.ToString()
+      << ", " << TCLattice::SymbolForLatt(res[i].lattice)  << " ["
+      << olxstr::FormatFloat(2, res[i].volume) << "A^3]";
+    evecd rc = Niggli::reduce_const(res[i].lattice, res[i].cell);
+    if( rc.QDistanceTo(res[i].cell) < 1e-6 )  continue;
+    TBasicApp::NewLogEntry() << "  Niggli cell: " << rc.ToString() << " ["
+      << olxstr::FormatFloat(2, res[i].niggle_volume) << "A^3]";
+  }
 }
 //.............................................................................
-void Index::Search(const TStrObjList &Params, TMacroError &E)  {
-  olxstr index = TBasicApp::GetSharedDir() + "lcells.ind";
-  if( Params.Count() == 8 )
-    index = Params[7];
-
+TTypeList<Index::ResultEntry> IndexSearch(const olxstr &index_name,
+  const TStrObjList &Cmds, double vol_diff)
+{
   CellInfo cell;
-  cell.cell[0] = Params[0].ToDouble();
-  cell.cell[1] = Params[1].ToDouble();
-  cell.cell[2] = Params[2].ToDouble();
-  cell.cell[3] = Params[3].ToDouble();
-  cell.cell[4] = Params[4].ToDouble();
-  cell.cell[5] = Params[5].ToDouble();
-  cell.volume = TUnitCell::CalcVolume(cell.cell);
-  cell.niggle_volume = TUnitCell::CalcVolume(
-    Niggli::reduce_const(cell.lattice, cell.cell));
+  if( Cmds.IsEmpty() )  {
+    TXApp& app = TXApp::GetInstance();
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    for( int i=0; i < 3; i++ )  {
+      cell.cell[i] = au.GetAxes()[i];
+      cell.cell[3+i] = au.GetAngles()[i];
+    }
+    cell.lattice = olx_abs(au.GetLatt());
+    cell.volume = TUnitCell::CalcVolume(cell.cell);
+    const evecd reduced = Niggli::reduce_const(cell.lattice, cell.cell);
+    cell.niggle_volume = TUnitCell::CalcVolume(reduced);
+  }
+  else if( Cmds.Count() == 1 )  {
+    TTypeList<CellInfo> r = CellReader::read(Cmds[0])();
+    if( r.Count() >= 1 )
+      cell = r[0];
+  }
+  else if( Cmds.Count() == 7 )  {
+    cell.cell[0] = Cmds[0].ToDouble();
+    cell.cell[1] = Cmds[1].ToDouble();
+    cell.cell[2] = Cmds[2].ToDouble();
+    cell.cell[3] = Cmds[3].ToDouble();
+    cell.cell[4] = Cmds[4].ToDouble();
+    cell.cell[5] = Cmds[5].ToDouble();
+    cell.lattice = TCLattice::LattForSymbol(Cmds[6].CharAt(0));
+    cell.volume = TUnitCell::CalcVolume(cell.cell);
+    cell.niggle_volume = TUnitCell::CalcVolume(
+      Niggli::reduce_const(cell.lattice, cell.cell));
+  }
+  if( cell.volume == 0 )
+    return TTypeList<Index::ResultEntry>();
   TBasicApp::NewLogEntry() << "Searching cell:";
   TBasicApp::NewLogEntry() << "  " << cell.cell.ToString() << ", "
     << TCLattice::SymbolForLatt(cell.lattice);
-  TBasicApp::NewLogEntry() << "  Cell volume: " << olx_round(cell.volume, 100);
-  TBasicApp::NewLogEntry() << "  Reduced cell volume: " << olx_round(cell.niggle_volume, 100);
-  int latt_sig = 1;
-  olxch latt = Params[6].CharAt(0);
-  if( Params[6].Length() == 2 )  {
-    latt_sig = Params[6].CharAt(0) == '-' ? -1 : 1;
-    latt = Params[6].CharAt(1);
-  }
-  cell.lattice = TCLattice::LattForSymbol(latt)*latt_sig;
-  TTypeList<ResultEntry> res = Index().LoadFromFile(index).Search(cell);
-  
-  for( size_t i=0; i < res.Count(); i++ )  {
-    TBasicApp::NewLogEntry() << olxstr(i+1).Format(2, false, ' ') << ". " << res[i].file_name;
-    TBasicApp::NewLogEntry() << "  " << res[i].cell.ToString()
-      << ", " << TCLattice::SymbolForLatt(res[i].lattice);
-    TBasicApp::NewLogEntry() << "  Cell volume: " << olxstr::FormatFloat(2, res[i].volume);
-    if( olx_abs(res[i].volume -res[i].niggle_volume) > 1.e-3 )
-      TBasicApp::NewLogEntry() << "  Reduced cell volume: " << olxstr::FormatFloat(2, res[i].niggle_volume);
-  }
+  TBasicApp::NewLogEntry() << "  Niggli cell: "
+    << Niggli::reduce_const(cell.lattice, cell.cell).ToString();
+  TBasicApp::NewLogEntry() << "  Cell volume: " << olxstr::FormatFloat(2, cell.volume);
+  TBasicApp::NewLogEntry() << "  Reduced cell volume: " << olxstr::FormatFloat(2, cell.niggle_volume);
+  return Index().LoadFromFile(index_name).Search(cell, vol_diff, true);
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+void Index::Search(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  const double vd = Options.FindValue('d', '1').ToDouble();
+  Index::PrintResults(IndexSearch(DefaultIndex(), Cmds, vd)); 
+}
+//.............................................................................
+void Index::Search(const TStrObjList &Params, TMacroError &E)  {
+  Index::PrintResults(IndexSearch(DefaultIndex(), Params, 1)); 
 }
 //.............................................................................
 void Index::Update(const TStrObjList &Params, TMacroError &E)  {
-  olxstr index = TBasicApp::GetSharedDir() + "lcells.ind";
-  if( Params.Count() == 2 )
-    index = Params[1];
+  const olxstr index = DefaultIndex();
   if( TEFile::Exists(index) )
     Index::Update(index);
-  else
-    Index().Create(Params[0], index);
+  else  {
+    if( Params.IsEmpty() )
+      E.ProcessingError(__OlxSrcInfo, "please provide a folder name to create index from");
+    else
+      Index().Create(Params[0], index);
+  }
 }
 //.............................................................................
 TLibrary* Index::ExportLibrary(const olxstr& name)  {
@@ -383,12 +449,13 @@ TLibrary* Index::ExportLibrary(const olxstr& name)  {
     "Searches given cell")
     );
   lib->RegisterStaticFunction(
-    new TStaticFunction(Index::Update, "Update", fpOne|fpTwo,
+    new TStaticFunction(Index::Update, "Update", fpOne|fpNone,
     "Updates index from given/original folder")
     );
-  //lib.RegisterStaticMacro(
-  //  new TStaticMacro(&Index::Search, "Search", "", fpSix, "")
-  //);
+  lib->RegisterStaticMacro(
+    new TStaticMacro(&Index::Search, "Search", "d-deviation [1 A^3]", fpNone|fpOne|fpTwo|fpSeven,
+    "Searches current cell, cell from given file, or given cell")
+  );
   return lib;
 }
 //.............................................................................

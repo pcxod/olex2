@@ -34,12 +34,11 @@
   #define olx_wcscmpn  wcsncmp
   #if defined(__MAC__)
     static int olx_wcscmpni(const wchar_t* s1, const wchar_t* s2, size_t len)  {
-	    for( size_t i=0; i < len; i++ )  {
+      for( size_t i=0; i < len; i++ )  {
         const int diff = towlower(s1[i]) - towlower(s2[i]); 
-	      if( diff != 0 )
-          return diff; 
-  	  }
-	    return 0;
+        if( diff != 0 )  return diff; 
+      }
+      return 0;
     } 
   #else
     #define olx_wcscmpni wcsncasecmp
@@ -1704,19 +1703,38 @@ public:
     }
   };
 
+  template <typename sep_t> struct Encloser {
+    TTSString& dest;
+    sep_t s, e;
+    Encloser(TTSString& str, const sep_t& _s, const sep_t& _e) : dest(str), s(_s), e(_e) {}
+    template <typename val_t>
+    TTSString& operator << (const val_t& v)  {
+      return dest << s << v << e;
+    }
+  };
+
   template <typename sep_t>
-  SeperatedStream<sep_t> Stream(const sep_t& separator) {
+  SeperatedStream<sep_t> stream(const sep_t& separator) {
     return SeperatedStream<sep_t>(*this, separator);
+  }
+
+  template <typename sep_t>
+  Encloser<sep_t> enclose(const sep_t& front, const sep_t& rear) {
+    return Encloser<sep_t>(*this, front, rear);
+  }
+
+  Encloser<TC> quote(TC quote_char='\'') {
+    return Encloser<TC>(*this, quote_char, quote_char);
   }
 
   template <typename sep_t>
   TTSString(const SeperatedStream<sep_t>& str)  {  InitFromString(str.dest);  }
   
-  TTSString(const  TTStrBuffer<TC,T>  &buf)  {
+  TTSString(const TTStrBuffer<TC,TTSString<T,TC> > &buf)  {
     T::_Start = 0;
     T::_Increment = 8;
-    T::_Length = buf.CalcSize();
-    TC *arr = olx_malloc<TC>(T::_Length);
+    T::_Length = buf.Length();
+    TC *arr = olx_malloc<TC>(T::_Length+1);
     buf.Read(arr);
     T::SData = new struct T::Buffer(arr, T::_Length);
   }
