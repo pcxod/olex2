@@ -347,7 +347,7 @@ void THtml::DoNavigate(bool forward)  {
 #ifdef __WIN32__
           || Objects.GetValue(i).GetB() == InFocus->GetParent()
 #endif
-				)  
+        )
       {
         FocusedControl = Objects.GetKey(i);
         break;
@@ -611,7 +611,7 @@ bool THtml::UpdatePage()  {
   InFocus = NULL;
   int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
   wxHtmlWindow::GetViewStart(&xPos, &yPos);
-#if defined(__WIN32__) || defined(__linux__)
+#if defined(__WIN32__) || (defined(__linux__) && wxCHECK_VERSION(9,0,0))
   wxHtmlWindow::Freeze();
 #else
   Hide();
@@ -619,7 +619,7 @@ bool THtml::UpdatePage()  {
   SetPage(Res.Text(' ').u_str());
   ObjectsState.RestoreState();
   wxHtmlWindow::Scroll(xPos, yPos);
-#if defined(__WIN32__) || defined(__linux__)
+#if defined(__WIN32__) || (defined(__linux__) && wxCHECK_VERSION(9,0,0))
   Thaw();
 #else
   Show();
