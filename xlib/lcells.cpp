@@ -353,25 +353,28 @@ TTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell, double diff,
 }
 //.............................................................................
 void Index::PrintResults(const TTypeList<ResultEntry> & res)  {
-  size_t cell_num=0;
-  TTable tab(res.Count()*2, 3);
+  size_t cell_num=0, rows_processes=0;
+  TTable tab(0, 3);
   for( size_t i=0; i < res.Count(); i++ )  {
     if( i > 0 && res[i].cell == res[i-1].cell )  {
       if( TEFile::ChangeFileExt(res[i].file_name, EmptyString()).Equalsi(
         TEFile::ChangeFileExt(res[i-1].file_name, EmptyString())) )
         continue;
     }
-    tab[i*2][0] = olxstr(++cell_num).Format(2, false, ' ') << ". " << res[i].file_name;
-
-    TBasicApp::NewLogEntry() << olxstr(++cell_num).Format(2, false, ' ') << ". " << res[i].file_name;
-    TBasicApp::NewLogEntry() << "  " << res[i].cell.ToString()
-      << ", " << TCLattice::SymbolForLatt(res[i].lattice)  << " ["
-      << olxstr::FormatFloat(2, res[i].volume) << "A^3]";
+    TStrList& row = tab.AddRow();
+    row[0] = ++cell_num;
+    row[1] = res[i].file_name;
+    TStrList& row1 = tab.AddRow();
+    row1[1] << res[i].cell.ToString() << ", " << TCLattice::SymbolForLatt(res[i].lattice);
+    row1[2] << olxstr::FormatFloat(2, res[i].volume) << "A^3";
     evecd rc = Niggli::reduce_const(res[i].lattice, res[i].cell);
     if( rc.QDistanceTo(res[i].cell) < 1e-6 )  continue;
-    TBasicApp::NewLogEntry() << "  Niggli cell: " << rc.ToString() << " ["
-      << olxstr::FormatFloat(2, res[i].niggle_volume) << "A^3]";
+    TStrList& row2 = tab.AddRow();
+    row2[0] = "  Niggle cell";
+    row2[1] << rc.ToString();
+    row2[2] << olxstr::FormatFloat(2, res[i].niggle_volume) << "A^3";
   }
+  TBasicApp::GetLog() << tab.CreateTXTList("Search results", true, false, ' ');
 }
 //.............................................................................
 TTypeList<Index::ResultEntry> IndexSearch(const olxstr &index_name,
