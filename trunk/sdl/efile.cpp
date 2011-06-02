@@ -100,7 +100,7 @@ const olxstr TEFile::AllFilesMask("*.*");
 //----------------------------------------------------------------------------//
 // TFileNameMask function bodies
 //----------------------------------------------------------------------------//
-void TEFile::TFileNameMask::Build(const olxstr& msk )  {
+void TEFile::TFileNameMask::Build(const olxstr& msk)  {
   mask = msk.ToLowerCase();
   toks.Strtok( mask, '*');
   if( !mask.IsEmpty() )  {
