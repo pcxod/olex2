@@ -139,6 +139,14 @@ public:
     return writeType(printFormat(v), v);
   }
   TWString& TrimFloat()  {
+    size_t fp_pos = InvalidIndex;
+    for( size_t i=0; i < _Length; i++ )  {
+      if( CharAt(i) == L'.' )  {
+        fp_pos = i;
+        break;
+      }
+    }
+    if( fp_pos == InvalidIndex )  return *this;
     while( _Length > 1 && CharAt(_Length-1) == L'0' )  _Length--;
     if( _Length > 0 && CharAt(_Length-1) == L'.'  )  _Length--;
     return *this;
