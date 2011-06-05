@@ -1882,18 +1882,19 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   // special case - cross-link 4 atoms by one variable
   if( groups.Count() == 2 && groups[0]->Count() == 2 && groups[1]->Count() )  {
-    TSimpleRestraint* sr = set_eadp ? &rm.rEADP.AddNew() : NULL;
     XLEQ* leq = NULL;
     XVar& vr = rm.Vars.NewVar();
-    rm.Vars.AddVarRef(vr, (*groups[0])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
-    rm.Vars.AddVarRef(vr, (*groups[0])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+    rm.Vars.AddVarRef(vr, (*groups[0])[0], catom_var_name_Sof, relation_AsVar, 1.0);
+    rm.Vars.AddVarRef(vr, (*groups[0])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
     rm.Vars.AddVarRef(vr, (*groups[1])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
     rm.Vars.AddVarRef(vr, (*groups[1])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
-    if( sr != NULL )  {
-      sr->AddAtom((*groups[0])[0], NULL);
-      sr->AddAtom((*groups[0])[1], NULL);
-      sr->AddAtom((*groups[1])[0], NULL);
-      sr->AddAtom((*groups[1])[1], NULL);
+    if( set_eadp )  {
+      rm.rEADP.AddNew()
+        .AddAtom((*groups[0])[0], NULL)
+        .AddAtom((*groups[0])[1], NULL);
+      rm.rEADP.AddNew()
+        .AddAtom((*groups[1])[0], NULL)
+        .AddAtom((*groups[1])[1], NULL);
     }
   }
   else  {

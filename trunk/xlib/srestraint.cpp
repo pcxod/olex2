@@ -22,7 +22,7 @@ void TSimpleRestraint::AddAtoms(const TCAtomGroup& atoms)  {
     InvolvedAtoms.AddNew(atoms[i].GetAtom(), atoms[i].GetMatrix());
 }
 //..............................................................................
-void TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
+TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
   if( aa.GetParent() != &Parent.GetRM().aunit  )
     throw TInvalidArgumentException(__OlxSourceInfo, "mismatching asymmetric unit");
   const smatd* tm = NULL;
@@ -31,6 +31,7 @@ void TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
       tm = &Parent.GetRM().AddUsedSymm(*ma);
   }
   InvolvedAtoms.AddNew(&aa, tm);
+  return *this;
 }
 //..............................................................................
 void TSimpleRestraint::Validate()  {
