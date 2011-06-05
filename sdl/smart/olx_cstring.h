@@ -103,7 +103,7 @@ protected:
   inline const char* printFormat(const long double)            const {  return "%Lf";  }
 public:
   TCString();
-  TCString(const wchar_t *wstr );
+  TCString(const wchar_t *wstr);
 //..........................................................................................
   TCString(const class TWString& astr);
 //..........................................................................................
@@ -125,6 +125,14 @@ public:
     return writeType(printFormat(v), v);
   }
   TCString& TrimFloat()  {
+    size_t fp_pos = InvalidIndex;
+    for( size_t i=0; i < _Length; i++ )  {
+      if( CharAt(i) == '.' )  {
+        fp_pos = i;
+        break;
+      }
+    }
+    if( fp_pos == InvalidIndex )  return *this;
     while( _Length > 1 && CharAt(_Length-1) == '0' )  _Length--;
     if( _Length > 0 && CharAt(_Length-1) == '.'  )  _Length--;
     return *this;
@@ -155,7 +163,7 @@ public:
     return *this;
   }
 //..........................................................................................
-  TCString& operator = (const TWString& astr);  // cannot make it inle - froward reference
+  TCString& operator = (const TWString& astr);  // cannot make it inline - forward reference
   inline TCString& operator = (const wchar_t* v)  {  return AssignWCharStr(v);  }
   inline TCString& operator = (wchar_t* const& v) { return AssignWCharStr(v);  }
 //..........................................................................................
@@ -178,7 +186,7 @@ protected:
 public:
   const wchar_t * wc_str() const;
   inline const char *u_str() const { return ((SData==NULL) ? "" : TTIString<char>::u_str());  }
-  inline const char * c_str()  const {  return u_str();  }
+  inline const char * c_str() const {  return u_str();  }
   inline CharW operator[] (size_t i)  {
 #ifdef _DEBUG
     if( i >= _Length )
