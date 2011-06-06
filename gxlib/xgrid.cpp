@@ -817,7 +817,7 @@ void TXGrid::RescaleSurface()  {
     }
     else  {
       for( int li = 0; li <= 1; li++ )  {
-        TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+        TTypeList<vec3f> verts = (li == 0 ? p_vertices : n_vertices);
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
         const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
         for( size_t i=0; i < verts.Count(); i++ )  {
