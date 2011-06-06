@@ -207,7 +207,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -219,7 +219,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -234,7 +234,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -246,7 +246,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_d;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -259,7 +259,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;NDEBUG;_CONSOLE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -271,7 +271,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_ud;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_ud;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <SubSystem>Console</SubSystem>
@@ -292,7 +292,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;NDEBUG;_CONSOLE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -304,7 +304,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>advapi32.lib;kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY64_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_ud;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY64_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_ud;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <SubSystem>Console</SubSystem>
@@ -325,7 +325,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;_CONSOLE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -340,7 +340,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_u;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_u;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -364,7 +364,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;_CONSOLE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -379,7 +379,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_u;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_u;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -400,7 +400,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CONSOLE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -415,7 +415,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_us;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_us;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -438,7 +438,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CONSOLE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -453,7 +453,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_us;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_us;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -473,7 +473,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -488,7 +488,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -512,7 +512,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -527,7 +527,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -548,7 +548,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;_CONSOLE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -563,7 +563,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_u;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_u;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -587,7 +587,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WIN32__;_CONSOLE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -602,7 +602,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;shell32.lib;ole32.lib;wsock32.lib;Iphlpapi.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_u;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OLX_PY_DIR)\libs;$(SolutionDir)$(Configuration)\lib;$(SolutionDir)\lib_u;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>

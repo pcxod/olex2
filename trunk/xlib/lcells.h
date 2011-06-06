@@ -80,8 +80,9 @@ namespace lcells {
       olxstr FullName() const {
         olxstr_buf res = name;
         Entry *p = parent;
+        olxstr ss = '.';
         while( p != NULL )  {
-          res << '/' << p->name;
+          res << ss << p->name;
           p = p->parent;
         }
         return olxstr::FromExternal(

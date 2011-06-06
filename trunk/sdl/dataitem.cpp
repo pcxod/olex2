@@ -66,16 +66,17 @@ TEStrBuffer& TDataItem::writeFullName(TEStrBuffer& bf) const {
 }
 //..............................................................................
 olxstr TDataItem::GetFullName()  {
-  if( GetParent() == NULL )
-    return Name;
-  TStrList SL;
-  SL.Add( Name );
-  TDataItem *P = GetParent();
-  while( P->GetParent() != NULL )  {
-    SL.Insert(0, P->GetName());
-    P = P->GetParent();
+  if( GetParent() == NULL )  return GetName();
+
+  olxstr_buf res = GetName();
+  olxstr ds = '.';
+  TDataItem *p = GetParent();
+  while( p != NULL )  {
+    res << ds << p->GetName();
+    p = p->GetParent();
   }
-  return SL.Text('.');
+  return olxstr::FromExternal(
+          res.ReverseRead(olx_malloc<olxch>(res.Length()+1)), res.Length());
 }
 //..............................................................................
 TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
