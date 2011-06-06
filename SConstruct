@@ -210,14 +210,30 @@ if sys.platform[:3] == 'win':
   wxFolder = GetOption('wxFolder')
   if not wxFolder:
     if architecture == '64bit':
-      wxFolder = os.environ.get('WX64_DIR')
+      wxFolder = os.environ.get('OLX_WX64_DIR')
     else:
-      wxFolder = os.environ.get('WX_DIR')
+      wxFolder = os.environ.get('OLX_WX_DIR')
   if not wxFolder:
-    print 'Please provide --wxdir=wxWidgets_root_folder or set WX_DIR system variable to point to wxWidgets root folder'
+    print 'Please provide --wxdir=wxWidgets_root_folder or set OLX_WX_DIR system variable to point to wxWidgets root folder'
     Exit(0)
   if wxFolder[-1] != '/' or wxFolder[-1] != '\\':
     wxFolder += '/'
+
+  AddOption('--wxver',
+            dest='wxVersion',
+            type='string',
+            nargs=1,
+            action='store',
+            metavar='WXVER',
+            default='',
+            help='wxWidgets version: 28, 29')
+  wxVersion = GetOption('wxVersion')
+  if not wxVersion:
+    wxVersion = os.environ.get('OLX_WX_VER')
+  if not wxVersion:
+    print 'Please provide --wxver=number or set OLX_WX_VER system variable'
+    Exit(0)
+
   pyFolder = os.path.split(sys.executable)[0] + '\\'
   if not debug:
     #cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', '/bigobj', '/fp:fast', '/GF']
@@ -293,17 +309,18 @@ if sys.platform[:3] == 'win':
   wx_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
   wx_env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
   if not debug:
-    wx_env.Append(LIBS = Split("""wxexpat wxjpeg wxpng wxtiff wxzlib 
-                               wxbase29u wxbase29u_net wxmsw29u_gl   
-                               wxmsw29u_html wxmsw29u_core 
-                               wxmsw29u_adv wxregexu"""))
+    wx_libs = """wxexpat wxjpeg wxpng wxtiff wxzlib 
+                 wxbase$$u wxbase$$u_net wxmsw$$u_gl   
+                 wxmsw$$u_html wxmsw$$u_core 
+                 wxmsw$$u_adv wxregexu"""
     wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswu'])
   else:
-    wx_env.Append(LIBS = Split("""wxexpat wxjpeg wxpng wxtiff wxzlib 
-                               wxbase29ud wxbase29ud_net wxmsw29ud_gl   
-                               wxmsw29ud_richtext wxmsw29ud_html wxmsw29ud_core 
-                               wxmsw29ud_adv wxregexud"""))
+    wx_libs = """wxexpat wxjpeg wxpng wxtiff wxzlib 
+                 wxbase$$ud wxbase$$ud_net wxmsw$$ud_gl   
+                 wxmsw$$ud_richtext wxmsw$$ud_html wxmsw$$ud_core 
+                 wxmsw$$ud_adv wxregexud"""
     wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud'])
+  wx_env.Append(LIBS = Split(wx_libs.replace('$$', wxVersion)))
   olex2_env = wx_env.Clone()
   unirun_env = wx_env.Clone()
 else:
