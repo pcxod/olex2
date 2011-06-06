@@ -377,7 +377,8 @@ void TGXApp::CreateObjects(bool centerModel)  {
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
     xa.Create();
-    xa.SetVisible(!FStructureVisible ? false : xa.CAtom().IsAvailable());  
+    xa.SetVisible(!FStructureVisible ? false
+      : (xa.IsAvailable() && xa.CAtom().IsAvailable()));  
   }
   
   sw.start("Bonds creation");
@@ -1204,6 +1205,8 @@ void TGXApp::AllVisible(bool V)  {
     while( bi.HasNext() )  bi.Next().SetVisible(false);
   }
   else  {
+    AtomIterator ai(*this);
+    while( ai.HasNext() )  ai.Next().SetMasked(false);
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
@@ -2885,8 +2888,12 @@ void TGXApp::_maskInvisible()  {
   AtomIterator ai(*this);
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
-    if( !xa.IsVisible() )  continue;
-    vis.SetTrue(xa.CAtom().GetId());
+    if( !xa.IsVisible() )  {
+      xa.SetMasked(true);
+      continue;
+    }
+    else
+      vis.SetTrue(xa.CAtom().GetId());
   }
   for( size_t i=0; i < vis.Count(); i++ )
     au.GetAtom(i).SetMasked(!vis[i]);

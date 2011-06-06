@@ -350,7 +350,7 @@ void TLattice::GenerateCell()  {
     const smatd& m = uc.GetMatrix(i);
     for( size_t j=0; j < au.AtomCount(); j++ )  {
       TCAtom& ca = au.GetAtom(j);
-      if( ca.IsDeleted() )  continue;
+      if( !ca.IsAvailable() )  continue;
       TSAtom& sa = Objects.atoms.New(Network);
       sa.CAtom(ca);
       sa.ccrd() = m*ca.ccrd();

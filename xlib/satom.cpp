@@ -20,6 +20,7 @@ void  TSAtom::CAtom(TCAtom& S)  {
   FCAtom = &S;
   FCCenter = S.ccrd();
   FEllipsoid = S.GetEllipsoid();
+  SetMasked(S.IsMasked());
 }
 //..............................................................................
 int TSAtom::_SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2)  {
