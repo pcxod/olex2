@@ -90,17 +90,23 @@ void TGlCanvas::InitGL()  {
   if( FXApp != NULL )  
     FXApp->Init();
 }
- //..............................................................................
-void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
+//..............................................................................
+short TGlCanvas::EncodeEvent(const wxMouseEvent &evt, bool update_button)  {
   short Fl = 0;
-  MouseButton = 0;
-  if( me.m_altDown )  Fl |= sssAlt;
-  if( me.m_shiftDown )  Fl |= sssShift;
-  if( me.m_controlDown )  Fl |= sssCtrl;
-  if( me.ButtonDown(1) )  MouseButton = smbLeft;
-  else if( me.ButtonDown(2) )  MouseButton = smbMiddle;
-  else if( me.ButtonDown(3) )  MouseButton = smbRight;
-
+  if( evt.m_altDown )  Fl |= sssAlt;
+  if( evt.m_shiftDown )  Fl |= sssShift;
+  if( evt.m_controlDown )  Fl |= sssCtrl;
+  if( update_button )  {
+    MouseButton = 0;
+    if( evt.LeftIsDown() )  MouseButton = smbLeft;
+    if( evt.MiddleIsDown() )  MouseButton |= smbMiddle;
+    if( evt.RightIsDown() )  MouseButton |= smbRight;
+  }
+  return Fl;
+}
+//..............................................................................
+void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
+  short Fl = EncodeEvent(me);
   FParent->OnMouseDown(me.m_x, me.m_y, Fl, MouseButton);
   FXApp->MouseDown(me.m_x, me.m_y, Fl, MouseButton);
   AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
@@ -118,11 +124,9 @@ void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
 //..............................................................................
 void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   me.Skip();
-  short Fl = 0;
-  if( me.m_altDown )  Fl |= sssAlt;
-  if( me.m_shiftDown )  Fl |= sssShift;
-  if( me.m_controlDown )  Fl |= sssCtrl;
-
+  short mb = MouseButton;
+  short Fl = EncodeEvent(me, true);
+  MouseButton ^= mb;
   int left = 0, top = 0;
 #ifdef __MAC__  // a solution for MAC's single button
   int os_mask = sssCtrl;
@@ -169,11 +173,7 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
-  short Fl = 0;
-  if( me.m_altDown )  Fl |= sssAlt;
-  if( me.m_shiftDown )  Fl |= sssShift;
-  if( me.m_controlDown )  Fl |= sssCtrl;
-
+  short Fl = EncodeEvent(me, false);
   if( MouseButton == 0 )  
     FParent->OnMouseMove(me.m_x, me.m_y);
   if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  {  // check if a handler for the event is found
@@ -186,14 +186,7 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
-  short Fl = 0;
-  if( me.m_altDown )  Fl |= sssAlt;
-  if( me.m_shiftDown )  Fl |= sssShift;
-  if( me.m_controlDown )  Fl |= sssCtrl;
-  if( me.ButtonDown(1) )  MouseButton = smbLeft;
-  else if( me.ButtonDown(2) )  MouseButton = smbMiddle;
-  else if( me.ButtonDown(3) )  MouseButton = smbRight;
-
+  short Fl = EncodeEvent(me);
   if( FXApp != NULL && !FXApp->DblClick() )
     FParent->OnMouseDblClick(me.m_x, me.m_y, Fl, MouseButton);
 }

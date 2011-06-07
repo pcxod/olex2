@@ -15,6 +15,7 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   SetHandler(smbLeft, 0, meRotateXY);
   SetHandler(smbLeft, sssCtrl, meRotateZ);
   SetHandler(smbLeft, sssShift|sssCtrl, meMoveXY);
+  SetHandler(smbLeft|smbRight, 0, meMoveXY);
   //SetHandler( smbLeft, sssAlt, meMoveZ);
 
   SetHandler(smbRight, 0, meZoom);
