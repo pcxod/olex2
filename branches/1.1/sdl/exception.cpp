@@ -33,7 +33,7 @@ UseEsdlNamespace()
 //    cause = cause->GetCause();
 //  return cause;
 //}
-
+//.............................................................................
 TBasicException::~TBasicException()  {
   if( GetAutoLogging() )  {
     if( TBasicApp::HasInstance() )  {
@@ -59,4 +59,4 @@ olxstr TBasicException::GetFullMessage() const {
     rv << ' ' << Message << " at " << Location;
   return rv;
 }
-
+//.............................................................................

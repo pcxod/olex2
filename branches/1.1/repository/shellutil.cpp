@@ -152,15 +152,15 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
     olxstr retVal;
     switch( folderId )  {
       case fiAppData:
-        retVal = wxStandardPaths().GetUserDataDir().c_str();
+        retVal = wxStandardPaths().GetUserDataDir();
       break;
       case fiMyDocuments:
-        retVal = wxStandardPaths().GetDocumentsDir().c_str();
+        retVal = wxStandardPaths().GetDocumentsDir();
       break;
       default:
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
     }
-    return TEFile::AddPathDelimeterI( retVal );
+    return TEFile::AddPathDelimeterI(retVal);
   #endif
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
@@ -218,7 +218,7 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
   #ifdef __WXWIDGETS__
   wxDirDialog dd(NULL, Title.u_str(), SelectedFolder.u_str());
   if( dd.ShowModal() == wxID_OK )
-    return dd.GetPath().c_str();
+    return dd.GetPath();
   return EmptyString();
   #endif
   throw TNotImplementedException(__OlxSourceInfo);

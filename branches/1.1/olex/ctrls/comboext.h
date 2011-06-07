@@ -53,7 +53,7 @@ namespace ctrl_ext {
     void Clear();
     void AddObject( const olxstr &Item, IEObject *Data = NULL);
 
-    olxstr GetItem(int i) const {  return GetString(i).c_str();  }
+    olxstr GetItem(int i) const {  return GetString(i);  }
     const IEObject* GetObject(int i);
 
     /*if a list item is constructed like 'name<-value' the pair is added as single

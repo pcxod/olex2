@@ -272,28 +272,28 @@ protected:
     const vec3d& evaluate() const {  return point;  }
   };
   struct VectorProxy  {
-    const vec3d &a, &b;
-    VectorProxy(const vec3d& _a, const vec3d& _b) : a(_a), b(_b)  {}
+    vec3d &a, &b;
+    VectorProxy(vec3d& _a, vec3d& _b) : a(_a), b(_b)  {}
     vec3d evaluate() const {  return b-a;  }
   };
   template <class VT, class WT> struct PlaneNormalEvaluator  {
-    const VT& values;
-    const WT& weights;
+    VT values;
+    WT weights;
     PlaneNormalEvaluator(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
     vec3d evaluate() const {  return CalcPlane(values, weights).normal;  }
   };
   template <class VT, class WT> struct Plane  {
-    const VT& values;
-    const WT& weights;
+    VT values;
+    WT weights;
     Plane(const VT& _v, const WT& _w) : values(_v), weights(_w)  {}
     double calc() const {  return CalcPlane(values, weights).rmsd;  }
   };
   // torsion angle
   template <class aT, class bT, class cT, class dT> struct TorsionAngle  {
-    const aT& a;
-    const bT& b;
-    const cT& c;
-    const dT& d;
+    aT a;
+    bT b;
+    cT c;
+    dT d;
     TorsionAngle(const aT& _a, const bT& _b, const cT& _c, const dT& _d) : a(_a), b(_b), c(_c), d(_d)  {}
     double calc() const {
       return olx_dihedral_angle(a.evaluate(), b.evaluate(), c.evaluate(), d.evaluate());
@@ -305,10 +305,10 @@ protected:
   };
   // tetrahedron volume
   template <class aT, class bT, class cT, class dT> struct TetrahedronVolume  {
-    const aT& a;
-    const bT& b;
-    const cT& c;
-    const dT& d;
+    aT a;
+    bT b;
+    cT c;
+    dT d;
     TetrahedronVolume(const aT& _a, const bT& _b, const cT& _c, const dT& _d) : a(_a), b(_b), c(_c), d(_d)  {}
     double calc() const {
       return olx_tetrahedron_volume(a.evaluate(), b.evaluate(), c.evaluate(), d.evaluate());
@@ -316,9 +316,9 @@ protected:
   };
   // angle between 3 points
   template <class aT, class bT, class cT> struct Angle3  {
-    const aT& a;
-    const bT& b;
-    const cT& c;
+    aT a;
+    bT b;
+    cT c;
     Angle3(const aT& _a, const bT& _b, const cT& _c) : a(_a), b(_b), c(_c)  {}
     double calc() const {
       const vec3d c2 = b.evaluate();
@@ -330,8 +330,8 @@ protected:
   };
   // angle between 2 vectors
   template <class aT, class bT> struct Angle2  {
-    const aT& a;
-    const bT& b;
+    aT a;
+    bT b;
     Angle2(const aT& _a, const bT& _b) : a(_a), b(_b)  {}
     double calc() const {
       const double ca = a.evaluate().CAngle(b.evaluate());
@@ -342,8 +342,8 @@ protected:
   };
   // point centroid to point distance
   template <class aT, class bT> struct Distance  {
-    const aT& a;
-    const bT& b;
+    aT a;
+    bT b;
     Distance(const aT& _a, const bT& _b) : a(_a), b(_b)  {}
     double calc() const {  return a.evaluate().DistanceTo(b.evaluate());  }
   };
@@ -604,10 +604,7 @@ public:
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
     CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
     TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt> tha(
-        pnt_pt(ch.points[0]),
-        pnt_pt(ch.points[1]),
-        pnt_pt(ch.points[2]),
-        pnt_pt(ch.points[3]));
+      pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2]), pnt_pt(ch.points[3]));
     TEValueD rv = ch.DoCalc(tha);
     rv.V() = tha.calc_signed();
     return rv;

@@ -61,7 +61,7 @@ namespace sorted {
 
   template <class ListClass, class Comparator, typename KeyC>
   size_t FindIndexOf(const ListClass &list, const Comparator &cmp, const KeyC &entity) {
-    if( list.IsEmpty() )  return InvalidIndex;
+    if( list.Count() == 0 )  return InvalidIndex;
     if( list.Count() == 1 )  
       return cmp.Compare(list[0],entity) == 0 ? 0 : InvalidIndex;
     size_t from = 0, to = list.Count()-1;
@@ -92,7 +92,7 @@ namespace sorted {
 
   template <class ListClass, class Comparator, typename TypeClass>
   size_t Add(ListClass &list, const Comparator &cmp, TypeClass entry)  {
-    if( list.IsEmpty() )     {  list.Add(entry);  return 0;  }
+    if( list.Count() == 0 )  {  list.Add(entry);  return 0;  }
     if( list.Count() == 1 )  {
       const int cmp_val = cmp.Compare(list[0], entry);
       if(  cmp_val < 0 )     {  list.Add(entry);  return 1;  }
@@ -112,7 +112,7 @@ namespace sorted {
 
   template <class ListClass, class Comparator, typename TypeClass>
   bool AddUnique(ListClass &list, const Comparator &cmp, TypeClass entry, size_t *pos = NULL)  {
-    if( list.IsEmpty() )  {  
+    if( list.Count() == 0 )  {  
       list.Add(entry);  
       if( pos != NULL )  *pos = 0;
       return true;  

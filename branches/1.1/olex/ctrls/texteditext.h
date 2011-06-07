@@ -32,7 +32,7 @@ namespace ctrl_ext  {
       OnReturnStr(EmptyString())  {}
     virtual ~TTextEdit()  {}
 
-    olxstr GetText() const {  return wxTextCtrl::GetValue().c_str(); }
+    olxstr GetText() const {  return wxTextCtrl::GetValue(); }
     void SetText(const olxstr &T)  {  wxTextCtrl::SetValue(T.u_str()); }
 
     inline bool IsReadOnly() const {   return WI.HasWindowStyle(wxTE_READONLY);  }

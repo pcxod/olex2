@@ -66,13 +66,6 @@ template <typename float_t> inline int olx_cmp_float(float_t v1, float_t v2, flo
 template <typename num> inline num olx_abs(num n)  {
   return n < 0 ? -n : n;
 }
-/* swaps two objects using a temporary variable (copy constructor must be 
- available for complex types) */
-template <typename obj> inline void olx_swap(obj& o1, obj& o2)  {
-  obj tmp = o1;
-  o1 = o2;
-  o2 = tmp;
-}
 // return pow2
 template <typename num> inline num olx_sqr(num n) {  return n*n;  } 
 
@@ -110,8 +103,8 @@ template <class VC>
   // dihedral angle in degrees [0..180], throws an exception
 template <class VC>
   double olx_dihedral_angle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
-    const VC a( (v1-v2).XProdVec(v3-v2) ), 
-             b( (v2-v3).XProdVec(v4-v3) ); 
+    const VC a((v1-v2).XProdVec(v3-v2)), 
+             b((v2-v3).XProdVec(v4-v3)); 
     if( a.QLength()*b.QLength() < 1e-15 )
       throw TDivException(__OlxSourceInfo);
     return acos(a.CAngle(b))*180/M_PI;

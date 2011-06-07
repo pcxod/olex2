@@ -29,10 +29,16 @@ namespace lcells {
       static int Compare(const CellInfo &a, const CellInfo &b)  {
         return olx_cmp(a.volume, b.volume);
       }
+      static int Compare(const CellInfo *a, const CellInfo *b)  {
+        return olx_cmp(a->volume, b->volume);
+      }
     };
     struct ReducedVolumeComparator {
       static int Compare(const CellInfo &a, const CellInfo &b)  {
         return olx_cmp(a.niggle_volume, b.niggle_volume);
+      }
+      static int Compare(const CellInfo *a, const CellInfo *b)  {
+        return olx_cmp(a->niggle_volume, b->niggle_volume);
       }
     };
   };
@@ -41,6 +47,7 @@ namespace lcells {
     static olx_object_ptr<TTypeList<CellInfo> > read(const olxstr &fn);
     static olxstr GetCifParamAsString(const cif_dp::CifBlock &block, const olxstr &Param);
     static int ExtractLattFromSymmetry(const cif_dp::CifBlock &block);
+    static double ToDouble(const olxstr &str);
   };
 
   struct Index {
@@ -63,13 +70,37 @@ namespace lcells {
         static int Compare(const Entry &a, const Entry &b) {
           return olxstrComparator<false>::Compare(a.name, b.name);
         }
+        static int Compare(const Entry *a, const Entry *b) {
+          return olxstrComparator<false>::Compare(a->name, b->name);
+        }
+        static int Compare(const Entry &a, const olxstr &b) {
+          return olxstrComparator<false>::Compare(a.name, b);
+        }
       };
+      olxstr FullName() const {
+        olxstr_buf res = name;
+        Entry *p = parent;
+        olxstr ss = '.';
+        while( p != NULL )  {
+          res << ss << p->name;
+          p = p->parent;
+        }
+        return olxstr::FromExternal(
+          res.ReverseRead(olx_malloc<olxch>(res.Length()+1)), res.Length());
+      }
+    };
+    struct ResultEntry : public CellInfo {
+      ResultEntry(const olxstr &_file_name, const CellInfo &c)
+        : file_name(_file_name), CellInfo(c)
+      {}
+      int Compare(const ResultEntry &e) const {  return file_name.Compare(e.file_name);  }
+      olxstr file_name;
     };
     struct FolderEntry;
     struct FileEntry : public Entry {
       TArrayList<CellInfo> cells;
-      FileEntry(FolderEntry& p) : Entry(&p)  {}
-      FileEntry(FolderEntry& p, const olxstr& name, uint64_t modified)
+      FileEntry(FolderEntry &p) : Entry(&p)  {}
+      FileEntry(FolderEntry &p, const olxstr &name, uint64_t modified)
         : Entry(&p, name, modified)  {}
       IDataOutputStream &ToStream(IDataOutputStream &out) const {
         out << (uint32_t)cells.Count();
@@ -77,7 +108,7 @@ namespace lcells {
           cells[i].ToStream(out);
         return Entry::ToStream(out);
       }
-      FileEntry& FromStream(IDataInputStream &in)  {
+      FileEntry &FromStream(IDataInputStream &in)  {
         uint32_t sz;
         in >> sz;
         cells.SetCount(sz);
@@ -86,15 +117,20 @@ namespace lcells {
         Entry::FromStream(in);
         return *this;
       }
+      void Expand(TTypeList<ResultEntry> &all) const {
+        for( size_t i=0; i < cells.Count(); i++ )
+          all.Add(new ResultEntry(FullName(), cells[i]));
+      }
     };
     struct FolderEntry : public Entry {
-      //TTypeList<FileEntry> entries;
-      SortedTypeList<FileEntry, Entry::NameComparator> entries;
+      TTypeList<FileEntry> entries;
+      //SortedTypeList<FileEntry, Entry::NameComparator> entries;
       TTypeList<FolderEntry> folders;
-      FolderEntry(FolderEntry* parent=NULL) : Entry(parent)  {}
-      FolderEntry(FolderEntry* parent, const olxstr& name, uint64_t modified)
+      FolderEntry(FolderEntry *parent=NULL) : Entry(parent)  {}
+      FolderEntry(FolderEntry *parent, const olxstr &name, uint64_t modified)
         : Entry(parent, name, modified)  {}
-      void Init(const TFileTree::Folder& folder);
+      void Init(const TFileTree::Folder &folder);
+      size_t Update(const TFileTree::Folder &folder);
       IDataOutputStream &ToStream(IDataOutputStream &out) const {
         out << (uint32_t)entries.Count();
         for( size_t i=0; i < entries.Count(); i++ )
@@ -115,15 +151,43 @@ namespace lcells {
         in >> sz;
         folders.SetCapacity(sz);
         for( uint32_t i=0; i < sz; i++ )
-          folders.Add(new FolderEntry(*this)).FromStream(in);
+          folders.Add(new FolderEntry(this)).FromStream(in);
         Entry::FromStream(in);
         return *this;
       }
+      size_t TotalCount() const {
+        size_t cnt = entries.Count();
+        for( size_t i=0; i < folders.Count(); i++ )
+          cnt += folders[i].TotalCount();
+        return cnt;
+      }
+      void Expand(TTypeList<ResultEntry> &all) const {
+        for( size_t i=0; i < entries.Count(); i++ )
+          entries[i].Expand(all);
+        for( size_t i=0; i < folders.Count(); i++ )
+          folders[i].Expand(all);
+      }
     };
-
     FolderEntry root;
-    void Create(const olxstr &folder);
-    //SortedObjectList<Entry, Entry::NameComparator> entries;
+    uint64_t LastUpdated;
+    Index();
+    static SortedObjectList<olxstr, olxstrComparator<false> > masks;
+    static char file_sig[];
+    static bool ConsiderFile(const olxstr &file_name) {
+      return masks.IndexOf(
+        TEFile::ExtractFileExt(file_name).ToLowerCase()) != InvalidIndex;
+    }
+    void Create(const olxstr &folder, const olxstr& index_name);
+    void PrintInfo() const;
+    static void PrintResults(const TTypeList<ResultEntry> & results);
+    static void Update(const olxstr& index_name);
+    static olxstr DefaultIndex()  {  return TBasicApp::GetSharedDir() + "lcells.ind";  }
+    void SaveToFile(const olxstr &file_name) const;
+    Index &LoadFromFile(const olxstr &file_name);
+    TTypeList<ResultEntry> Search(const CellInfo &cell, double vol_diff,
+      bool filter_by_dimensions) const;
+    static TTypeList<ResultEntry> Search(const olxstr &index_name,
+      const TStrObjList &Params, double vol_diff);
     static void Search(TStrObjList &Params, const TParamList &Options, TMacroError &E);
     static void Search(const TStrObjList &Params, TMacroError &E);
     static void Update(const TStrObjList &Params, TMacroError &E);

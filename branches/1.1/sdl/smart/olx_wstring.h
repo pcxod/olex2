@@ -10,12 +10,13 @@
 #endif
 
 #include "../ebase.h"
+#include "../linked_operators.h"
 
 BeginEsdlNamespace()
 
 class TWString : public TTIString<wchar_t>, public IEObject {
 public:
-  class CharW  {
+  class CharW : public linked_operators<wchar_t, CharW, char> {
     size_t Index;
     TWString *Instance;
   public:
@@ -24,8 +25,14 @@ public:
       Instance = inst;
     }
     inline wchar_t GetValue() const {  return Instance->CharAt(Index);  }
-    inline operator wchar_t () const {  return Instance->CharAt(Index);  }
-    inline void operator = (wchar_t v)  {  Instance->Set(Index, v);  }
+    void SetValue(wchar_t v)  {  Instance->Set(Index, v);  }
+    CharW& operator = (wchar_t v)  {  Instance->Set(Index, v);  return *this;  }
+    CharW& operator = (int v)  {  Instance->Set(Index, wchar_t(v));  return *this;  }
+    CharW& operator = (char v)  {  Instance->Set(Index, v);  return *this;  }
+    CharW& operator = (const CharW &v)  {
+      Instance->Set(Index, v.GetValue());
+      return *this;
+    }
   };
 protected:
 //..............................................................................
@@ -111,7 +118,7 @@ public:
 //..........................................................................................
   TWString(const TTIString<char>& str);
   // primitive Type constructors
-  template <typename T> TWString(const T &v)  {  setTypeValue( printFormat(v), v);  }
+  template <typename T> TWString(const T &v)  {  setTypeValue(printFormat(v), v);  }
   // float numbers need trimming of the 0000
   TWString(const float& v)  {
     setTypeValue( printFormat(v), v);
@@ -132,6 +139,14 @@ public:
     return writeType(printFormat(v), v);
   }
   TWString& TrimFloat()  {
+    size_t fp_pos = InvalidIndex;
+    for( size_t i=0; i < _Length; i++ )  {
+      if( CharAt(i) == L'.' )  {
+        fp_pos = i;
+        break;
+      }
+    }
+    if( fp_pos == InvalidIndex )  return *this;
     while( _Length > 1 && CharAt(_Length-1) == L'0' )  _Length--;
     if( _Length > 0 && CharAt(_Length-1) == L'.'  )  _Length--;
     return *this;
@@ -213,77 +228,9 @@ public:
   //............................................................................
   virtual TIString ToString() const;
   //............................................................................
-  friend class TWStrBuffer;
 };
 
+#include "strbuf.h"
 
-/* string buffer, reuses memory allocated by any posted TCString entry */
-class TWStrBuffer {
-  struct Entry {
-    TWString::Buffer* Data;
-    size_t Start, Length;
-    Entry* Next;
-  };
-  size_t Length;
-  Entry *Head, *Tail;
-public:
-  TWStrBuffer()  {
-    Tail = Head = NULL;
-    Length = 0;
-  }
-  TWStrBuffer(const TWString& v)  {
-    Tail = Head = new Entry;
-    Tail->Data = v.SData;
-    Tail->Start = v._Start;
-    Length = Tail->Length = v._Length;
-    Tail->Next = NULL;
-    v.SData->RefCnt++;
-  }
-  virtual ~TWStrBuffer()  {
-    Entry* en = Head;
-    while( en != NULL )  {
-      Head = en->Next;
-      if( --en->Data->RefCnt == 0 )
-        delete en->Data;
-      delete en;
-      en = Head;
-    }
-  }
-
-  TWStrBuffer& operator << (const TWString& v)  {
-    if( Head == NULL )  {
-      Tail = Head = new Entry;
-    }
-    else  {
-      Tail->Next = new Entry;
-      Tail = Tail->Next;
-      Tail->Next = NULL;
-    }
-    Tail->Data = v.SData;
-    Tail->Start = v._Start;
-    Length += (Tail->Length = v._Length);
-    Tail->Next = NULL;
-    v.SData->RefCnt++;
-
-    return *this;
-  }
-
-  wchar_t *Read(wchar_t *v)  {
-    if( Head == NULL )
-      v[0] = '\0';
-    else  {
-      Entry* en = Head;
-      size_t read = 0;
-      while( en != NULL )  {
-        olx_memcpy(&v[read], &en->Data->Data[en->Start], en->Length);
-        read += en->Length;
-        en = en->Next;
-      }
-      v[read] = '\0';
-    }
-    return v;
-  }
-};
 EndEsdlNamespace()
-
 #endif

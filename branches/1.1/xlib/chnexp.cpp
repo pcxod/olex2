@@ -138,30 +138,30 @@ void TCHNExp::CalcSummFormula(TStrPObjList<olxstr,double>& E) const {
 //..............................................................................
 void TCHNExp::LoadFromExpression(const olxstr &E1)  {
   olxstr NExp, ECount, Element, SMult,
-           E( olxstr::DeleteChars(E1, ' '));
+           E(olxstr::DeleteChars(E1, ' '));
   bool ElementDefined = false;
   short ob, cb; // open and close brackets
   Clear();
   for( size_t i=0; i < E.Length(); i++ )  {
-    if( E[i] == '(' )   {
+    if( E.CharAt(i) == '(' )   {
       NExp.SetLength(0);
       SMult.SetLength(0);
       ob = 1;
       cb = 0;
       i++;
       while( cb != ob )  {
-        if( E[i] == ')' )      cb++;
-        if( E[i] == '(' )      ob++;
+        if( E.CharAt(i) == ')' )      cb++;
+        if( E.CharAt(i) == '(' )      ob++;
         if( cb == ob )        break;
-        NExp << E[i];
+        NExp << E.CharAt(i);
         i++;
         if( i >= E.Length() )
           throw TFunctionFailedException(__OlxSourceInfo, "brackets count mismatch");
       }
       if( i < (E.Length()-1) )  {
         i++;
-        while( (E[i] <= '9' && E[i] >= '0') || E[i] == '.' )  {
-          SMult << E[i];
+        while( (E.CharAt(i) <= '9' && E.CharAt(i) >= '0') || E.CharAt(i) == '.' )  {
+          SMult << E.CharAt(i);
           i++;
           if( i >= E.Length() )  break;
         }
@@ -176,9 +176,9 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
       }
       continue;
     }
-    if( (E[i] <= '9' && E[i] >= '0') || E[i] == '.' )  {
+    if( (E.CharAt(i) <= '9' && E.CharAt(i) >= '0') || E.CharAt(i) == '.' )  {
       if( ElementDefined )
-        ECount << E[i];
+        ECount << E.CharAt(i);
       else
         throw TFunctionFailedException(__OlxSourceInfo, "Number of fragments should follow the fragment");
     }
@@ -193,8 +193,8 @@ void TCHNExp::LoadFromExpression(const olxstr &E1)  {
           Exp.Add(Element, 1.0);
       }
       Element.SetLength(0);
-      while( (E[i] <= 'Z' && E[i] >= 'A') || (E[i] <= 'z' && E[i] >= 'a'))  {
-        Element << E[i];
+      while( (E.CharAt(i) <= 'Z' && E.CharAt(i) >= 'A') || (E.CharAt(i) <= 'z' && E.CharAt(i) >= 'a'))  {
+        Element << E.CharAt(i);
         i++;
         if( Element.Length() == 2 )  {  // CD
           if( !XElementLib::IsElement(Element) )  {  // CC-D

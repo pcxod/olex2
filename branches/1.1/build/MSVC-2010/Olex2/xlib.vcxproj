@@ -196,7 +196,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
@@ -221,7 +221,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -239,7 +239,7 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -260,7 +260,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -285,7 +285,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -310,7 +310,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -334,7 +334,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
@@ -362,7 +362,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -383,7 +383,7 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
@@ -407,7 +407,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -435,7 +435,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -463,7 +463,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY64_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -1059,6 +1059,7 @@
     <ClInclude Include="..\..\..\xlib\congen.h" />
     <ClInclude Include="..\..\..\xlib\connext.h" />
     <ClInclude Include="..\..\..\xlib\conninfo.h" />
+    <ClInclude Include="..\..\..\xlib\constraints_ext.h" />
     <ClInclude Include="..\..\..\xlib\crs.h" />
     <ClInclude Include="..\..\..\xlib\ellipsoid.h" />
     <ClInclude Include="..\..\..\xlib\envilist.h" />

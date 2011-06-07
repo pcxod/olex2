@@ -253,7 +253,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
 #ifdef __WXWIDGETS__
   TwxGlScene *GlScene = new TwxGlScene(GetBaseDir() + "etc/Fonts/");
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
-  GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
 #else
   TWGlScene *GlScene = new TWGlScene();
   GlScene->CreateFont("Default", "@20").SetMaterial(glm);
@@ -377,7 +377,8 @@ void TGXApp::CreateObjects(bool centerModel)  {
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
     xa.Create();
-    xa.SetVisible(!FStructureVisible ? false : xa.CAtom().IsAvailable());  
+    xa.SetVisible(!FStructureVisible ? false
+      : (xa.IsAvailable() && xa.CAtom().IsAvailable()));  
   }
   
   sw.start("Bonds creation");
@@ -1204,6 +1205,8 @@ void TGXApp::AllVisible(bool V)  {
     while( bi.HasNext() )  bi.Next().SetVisible(false);
   }
   else  {
+    AtomIterator ai(*this);
+    while( ai.HasNext() )  ai.Next().SetMasked(false);
     TAsymmUnit& au = XFile().GetAsymmUnit();
     for( size_t i=0; i < au.AtomCount(); i++ )
       au.GetAtom(i).SetMasked(false);
@@ -1992,9 +1995,10 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
   const vec3d right_shift = FGlRender->GetBasis().GetMatrix()*vec3d(1, 0, 0);
   const size_t ac = XFile().GetLattice().GetObjects().atoms.Count();
   const size_t bc = XFile().GetLattice().GetObjects().bonds.Count();
+  const vec3d shift = cnt1-cnt2+right_shift*(R1+R2);
   for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
     TSAtom& sa = latt.GetObjects().atoms[i];
-    sa.crd() = sa.crd()-cnt2+cnt1+right_shift*(R1+R2);
+    sa.crd() += shift;
   }
   XFile().GetLattice().AddLatticeContent(latt);
   if( FLabels->IsVisible() )
@@ -2884,8 +2888,12 @@ void TGXApp::_maskInvisible()  {
   AtomIterator ai(*this);
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
-    if( !xa.IsVisible() )  continue;
-    vis.SetTrue(xa.CAtom().GetId());
+    if( !xa.IsVisible() )  {
+      xa.SetMasked(true);
+      continue;
+    }
+    else
+      vis.SetTrue(xa.CAtom().GetId());
   }
   for( size_t i=0; i < vis.Count(); i++ )
     au.GetAtom(i).SetMasked(!vis[i]);
@@ -3606,6 +3614,7 @@ void TGXApp::SetActiveXFile(size_t i)  {
   FXFile->GetLattice().OnAtomsDeleted.TakeOver(OverlayedXFiles[i].GetLattice().OnAtomsDeleted);
   AlignOverlayedXFiles();
   CreateObjects(true);
+  DUnitCell().SetReciprocal(false);
 }
 //..............................................................................
 void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR, vec3d& cnt)  {
@@ -4092,9 +4101,9 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   olxstr entryModel("model"), entryGrid("grid");
 
   while( (zen = zin->GetNextEntry()) != NULL )  {
-    if( entryModel == zen->GetName().c_str() )
+    if( entryModel == zen->GetName() )
       model = zen;
-    else if( entryGrid == zen->GetName().c_str() )
+    else if( entryGrid == zen->GetName() )
       grid = zen;
     else
       delete zen;

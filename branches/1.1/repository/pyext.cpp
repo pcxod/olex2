@@ -34,7 +34,7 @@ public:
     OnCallEnter();
     PyObject* arglist = NULL;
     if( !Params.IsEmpty() )  {
-      arglist = PyTuple_New( Params.Count() );
+      arglist = PyTuple_New(Params.Count());
       for( size_t i=0; i < Params.Count(); i++ )
         PyTuple_SetItem(arglist, i, PythonExt::BuildString(Params[i]));
     }

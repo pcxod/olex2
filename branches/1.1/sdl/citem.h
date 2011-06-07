@@ -5,11 +5,11 @@
 class ACollectionItem : public IEObject  {
   index_t CollectionItemTag;
 public:
-  ACollectionItem()  {  CollectionItemTag = -1;  }
-  virtual ~ACollectionItem()  {  ;  }
+  ACollectionItem() : CollectionItemTag(-1) {}
+  virtual ~ACollectionItem()  {}
   index_t GetTag() const {  return CollectionItemTag;  }
-  index_t GetTag(const ACollectionItem& i) const {  i.GetTag();  }
-  index_t GetTag(const ACollectionItem* i) const {  i->GetTag();  }
+  static index_t GetTag(const ACollectionItem& i) {  return i.GetTag();  }
+  static index_t GetTag(const ACollectionItem* i) {  return i->GetTag();  }
   void SetTag(index_t v) { CollectionItemTag = v;  }
   index_t IncTag()  {  return ++CollectionItemTag;  }
   index_t DecTag()  {  return --CollectionItemTag;  }

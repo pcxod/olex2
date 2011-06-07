@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
   xapp.GetLog().AddStream(new TOutStream, true);
   xapp.GetLog().AddStream(TUtf8File::Create(xapp.GetBaseDir()+"log.out", false), true);
   OlxTests tests;
-  tests.Add(&test::IsNumberTest);
+  tests.Add(&test::StringTests);
   tests.Add(&test::ListTests<TArrayList<int> >).
     Add(&test::ListTests<TTypeList<int> >).
     Add(&test::DirectionalListTest);

@@ -310,6 +310,10 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         cx.rm.SharedRotatedADPs.items);
       Ins.Delete(i--);
     }
+    else if( toks[0].Equalsi("REM") && toks[1].Equalsi("olex2.direction") )  {
+      adirection::FromToks(toks.SubListFrom(2), cx.rm, cx.rm.Directions.items);
+      Ins.Delete(i--);
+    }
     else  {
       TInsList* Param = new TInsList(toks);
       Ins.GetObject(i) = Param;
@@ -700,7 +704,7 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
     if( spindex != InvalidIndex && spindex > 0 )  {
       if( added )  Tmp1 = ' ';
       Tmp1 << Tmp.SubStringTo(spindex);
-      if( Tmp1.Length() && Tmp1[Tmp1.Length()-1] != ' ')
+      if( !Tmp1.IsEmpty() && Tmp1.GetLast() != ' ')
         Tmp1 << ' ';
       Tmp1 << '=';
       Res.Add(Tmp1);
@@ -1349,6 +1353,13 @@ void StoreUsedSymIndex(TUIntList& il, const smatd* m, RefinementModel& rm)  {
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
                           RefinementModel::ReleasedItems* processed, RefinementModel& rm)  {
   size_t oindex = SL.Count();
+  // shared rotated ADPs etc
+  for( size_t i=0; i < rm.rcList.Count(); i++ )  {
+    TStrList tmp = rm.rcList[i]->ToInsList(rm);
+    for( size_t j=0; j < tmp.Count(); j++ )
+      HyphenateIns(tmp[j], SL);
+  }
+
   typedef AnAssociation2<TSRestraintList*,RCInfo> ResInfo;
   TStrPObjList<olxstr, ResInfo> restraints;
   // fixed distances, has value, one esd, no atom limit
@@ -1408,12 +1419,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       HyphenateIns(line, SL);
       if( processed != NULL )  
         processed->restraints.Add(sr);
-    }
-  }
-  // shared rotated ADPs
-  for( size_t i=0; i < rm.SharedRotatedADPs.items.Count(); i++ )  {
-    if( rm.SharedRotatedADPs.items[i].IsValid() )  {
-      HyphenateIns(rm.SharedRotatedADPs.items[i].ToInsStr(rm), SL);
     }
   }
   // equivalent EXYZ constraint
@@ -1533,6 +1538,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   }
   GetRM().Conn.ToInsList(SL);
   // copy "unknown" instructions except rems
+
   for( size_t i=0; i < Ins.Count(); i++ )  {
     TInsList* L = Ins.GetObject(i);
     if( L == NULL )  continue;  // if load failed

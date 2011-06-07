@@ -1261,18 +1261,19 @@ separated values of Atom Type and radius, an entry a line");
 //..............................................................................
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
+  StartupInitialised = true;
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRender().GetScene();
-  gls.CreateFont("Default", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
-  gls.CreateFont("Help", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
-  gls.CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
-  gls.CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+  gls.CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
+  gls.CreateFont("Help", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
+  gls.CreateFont("Notes", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
+  gls.CreateFont("Labels", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.RegisterFontForType<TXAtom>(
-    gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc().c_str())).SetMaterial(glm);
+    gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
   gls.RegisterFontForType<TXBond>(
-    gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc().c_str())).SetMaterial(glm);
-  gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str()).SetMaterial(glm);
+    gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
+  gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.RegisterFontForType<TDBasis>(gls._GetFont(4));
   gls.RegisterFontForType<TDUnitCell>(gls._GetFont(4));
   gls.RegisterFontForType<TXGlLabels>(gls._GetFont(3));
@@ -1415,7 +1416,6 @@ void TMainForm::StartupInit()  {
   }
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
-  StartupInitialised = true;
 }
 //..............................................................................
 void TMainForm::AquireTooltipValue()  {
@@ -2042,6 +2042,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   }
   // Ctrl + Up, Down - browse solutions
   if( (Fl & sssCtrl) != 0  )  {
+
     if( m.m_keyCode == WXK_UP && ((FMode&mSolve) == mSolve) )  {
       ChangeSolution(CurrentSolution - 1);
       return;
@@ -2057,7 +2058,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
         wxTextDataObject data;
         wxTheClipboard->GetData(data);
         olxstr cmdl = FGlConsole->GetCommand();
-        olxstr content = data.GetText().c_str();
+        olxstr content = data.GetText();
         if( !ImportFrag(content) )  {
         olxstr trimmed_content = content;
         trimmed_content.Trim(' ').Trim('\n').Trim('\r');
@@ -3108,7 +3109,7 @@ bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
 //..............................................................................
 void TMainForm::OnInternalIdle()  {
   if( Destroying )  return;
-  FParent->Yield();
+  wxWindow::UpdateWindowUI();
 #if !defined(__WIN32__)  
   if( !StartupInitialised )
     StartupInit();
@@ -3277,7 +3278,6 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
     olxstr macro( AccMenus.GetValue(evt.GetId())->GetCommand() );
     if( !macro.IsEmpty() )  {
       TStrList sl;
-      bool checked = AccMenus.GetValue(evt.GetId())->IsChecked();
       sl.Strtok( macro, ">>");
       for( size_t i=0; i < sl.Count(); i++ )  {
         if( !ProcessMacro(sl[i]) )
@@ -3769,7 +3769,7 @@ void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
 //..............................................................................
 bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames)  {
   if( filenames.Count() != 1 )  return false;
-  const olxstr fn = filenames[0].c_str();
+  const olxstr fn = filenames[0];
   try  {
     if( parent.FXApp->XFile().FindFormat(TEFile::ExtractFileExt(fn)) == NULL )
       return false;

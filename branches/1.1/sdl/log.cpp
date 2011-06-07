@@ -29,8 +29,9 @@ TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate) : parent(_paren
 //..............................................................................
 TLog::LogEntry::~LogEntry()  {
   buffer << NewLineSequence();
+  olxstr res = buffer;
   if( evt == logDefault )  {
-    parent << buffer;
+    parent << res;
     //parent.Flush();
   }
   else  {
@@ -52,8 +53,8 @@ TLog::LogEntry::~LogEntry()  {
       ac = &parent.OnInfo;
       break;
     }
-    if( !ac->Enter(&parent, &buffer) )  {
-      parent << buffer;
+    if( !ac->Enter(&parent, &res) )  {
+      parent << res;
       //parent.Flush();
     }
     ac->Exit(&parent);

@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "../ebase.h"
+#include "../linked_operators.h"
 
 BeginEsdlNamespace()
 
@@ -18,7 +19,7 @@ BeginEsdlNamespace()
 /* this class uses reference counting to reduce number of memory reallocations*/
 class TCString : public TTIString<char>, public IEObject{
 public:
-  class CharW  {
+  class CharW : public linked_operators<char, CharW, wchar_t> {
     size_t Index;
     TCString *Instance;
   public:
@@ -27,8 +28,12 @@ public:
       Instance = inst;
     }
     inline char GetValue() const {  return Instance->CharAt(Index);  }
-    inline operator char () const {  return Instance->CharAt(Index);  }
-    inline void operator = (char v)  {  Instance->Set(Index, v);  }
+    inline void SetValue(char v) {  Instance->Set(Index, v);  }
+    CharW& operator = (char v)  {  Instance->Set(Index, v);  return *this;  }
+    CharW& operator = (const CharW &v)  {
+      Instance->Set(Index, v.GetValue());
+      return *this;
+    }
   };
 protected:
 //..............................................................................
@@ -98,7 +103,7 @@ protected:
   inline const char* printFormat(const long double)            const {  return "%Lf";  }
 public:
   TCString();
-  TCString(const wchar_t *wstr );
+  TCString(const wchar_t *wstr);
 //..........................................................................................
   TCString(const class TWString& astr);
 //..........................................................................................
@@ -120,6 +125,14 @@ public:
     return writeType(printFormat(v), v);
   }
   TCString& TrimFloat()  {
+    size_t fp_pos = InvalidIndex;
+    for( size_t i=0; i < _Length; i++ )  {
+      if( CharAt(i) == '.' )  {
+        fp_pos = i;
+        break;
+      }
+    }
+    if( fp_pos == InvalidIndex )  return *this;
     while( _Length > 1 && CharAt(_Length-1) == '0' )  _Length--;
     if( _Length > 0 && CharAt(_Length-1) == '.'  )  _Length--;
     return *this;
@@ -150,7 +163,7 @@ public:
     return *this;
   }
 //..........................................................................................
-  TCString& operator = (const TWString& astr);  // cannot make it inle - froward reference
+  TCString& operator = (const TWString& astr);  // cannot make it inline - forward reference
   inline TCString& operator = (const wchar_t* v)  {  return AssignWCharStr(v);  }
   inline TCString& operator = (wchar_t* const& v) { return AssignWCharStr(v);  }
 //..........................................................................................
@@ -169,11 +182,11 @@ public:
   }
 //..........................................................................................
 protected:
-  inline char * Data()     const {  return ((SData==NULL) ? NULL :&SData->Data[_Start]);  }
+  inline char *Data() const {  return ((SData==NULL) ? NULL :&SData->Data[_Start]);  }
 public:
   const wchar_t * wc_str() const;
   inline const char *u_str() const { return ((SData==NULL) ? "" : TTIString<char>::u_str());  }
-  inline const char * c_str()  const {  return u_str();  }
+  inline const char * c_str() const {  return u_str();  }
   inline CharW operator[] (size_t i)  {
 #ifdef _DEBUG
     if( i >= _Length )
@@ -200,78 +213,9 @@ public:
   //............................................................................
   virtual TIString ToString() const;
   //............................................................................
-  friend class TCStrBuffer;
 };
 
-
-/* string buffer, reuses memory allocated by any posted TCString entry */
-class TCStrBuffer {
-  struct Entry {
-    TCString::Buffer* Data;
-    size_t Start, Length;
-    Entry* Next;
-  };
-  size_t Length;
-  Entry *Head, *Tail;
-public:
-  TCStrBuffer()  {
-    Tail = Head = NULL;
-    Length = 0;
-  }
-  TCStrBuffer(const TCString& v)  {
-    Tail = Head = new Entry;
-    Tail->Data = v.SData;
-    Tail->Start = v._Start;
-    Length = Tail->Length = v._Length;
-    Tail->Next = NULL;
-    v.SData->RefCnt++;
-  }
-  virtual ~TCStrBuffer()  {
-    Entry* en = Head;
-    while( en != NULL )  {
-      Head = en->Next;
-      if( --en->Data->RefCnt == 0 )
-        delete en->Data;
-      delete en;
-      en = Head;
-    }
-  }
-
-  TCStrBuffer& operator << (const TCString& v)  {
-    if( Head == NULL )
-      Tail = Head = new Entry;
-    else  {
-      Tail->Next = new Entry;
-      Tail = Tail->Next;
-      Tail->Next = NULL;
-    }
-    Tail->Data = v.SData;
-    Tail->Start = v._Start;
-    Length += (Tail->Length = v._Length);
-    Tail->Next = NULL;
-    v.SData->RefCnt++;
-
-    return *this;
-  }
-
-  char *Read(char *v)  {
-    if( Head == NULL )
-      v[0] = '\0';
-    else  {
-      Entry* en = Head;
-      size_t read = 0;
-      while( en != NULL )  {
-        olx_memcpy(&v[read], &en->Data->Data[en->Start], en->Length);
-        read += en->Length;
-        en = en->Next;
-      }
-      v[read] = '\0';
-    }
-    return v;
-  }
-};
+#include "strbuf.h"
 
 EndEsdlNamespace()
-
 #endif
-

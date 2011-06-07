@@ -43,11 +43,15 @@ public:
   TSimpleRestraint(TSRestraintList& parent, size_t id, const short listType);
   virtual ~TSimpleRestraint()  {}
   void AddAtoms(const TCAtomGroup& atoms);
-  void AddAtom(TCAtom& aa, const smatd* ma);
-  void AddAtom(TGroupCAtom& a)  {  AddAtom(*a.GetAtom(), a.GetMatrix());  }
-  void AddAtomPair(TCAtom& aa, const smatd* ma, TCAtom& ab, const smatd* mb)  {
+  TSimpleRestraint &AddAtom(TCAtom& aa, const smatd* ma);
+  TSimpleRestraint &AddAtom(TGroupCAtom& a)  {
+    return AddAtom(*a.GetAtom(), a.GetMatrix());
+  }
+  TSimpleRestraint &AddAtomPair(TCAtom& aa, const smatd* ma,
+    TCAtom& ab, const smatd* mb)
+  {
     AddAtom(aa, ma);
-    AddAtom(ab, mb);
+    return AddAtom(ab, mb);
   }
 
   const TSRestraintList& GetParent() const {  return Parent;  }

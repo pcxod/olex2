@@ -7,24 +7,102 @@ BeginXlibNamespace()
 
 class RefinementModel;
 
+static const uint16_t
+  direction_static = 0,
+  direction_vector = 1,
+  direction_normal = 2;
+struct adirection : public AReferencible {
+  olxstr id;
+  static olxstr type_names[];
+  adirection() {}
+  adirection(const olxstr &_id) : id(_id) {}
+  virtual vec3d get() const = 0;
+
+  static adirection* FromDataItem(const TDataItem& di,
+    const RefinementModel& rm);
+  static void FromToks(const TStrList& toks, RefinementModel& rm,
+    TTypeList<adirection>& out);
+  virtual void ToDataItem(TDataItem& di) const = 0;
+  virtual bool IsValid() const = 0;
+  virtual adirection* DoCopy(RefinementModel& rm) const = 0;
+  virtual olxstr ToInsStr(const RefinementModel& rm) const = 0;
+  static adirection* Copy(RefinementModel& rm, const adirection& c) {
+    return c.DoCopy(rm);
+  }
+  virtual adirection* CreateFromDataItem(const TDataItem& di,
+    const RefinementModel& rm) const = 0;
+#ifndef _NO_PYTHON
+  virtual PyObject* PyExport() const = 0;
+#endif
+  static const olxstr& GetName();
+  static const olxstr &EncodeType(uint16_t type);
+  static uint16_t DecodeType(const olxstr& type);
+  void UpdateParams(const TStrList& toks) {}
+};
+
+struct static_direction : public adirection {
+  vec3d value;
+  static_direction() {}
+  static_direction(const olxstr& id, const vec3d &_value)
+    : adirection(id), value(_value) {}
+  virtual vec3d get() const {  return value;  }
+  virtual bool IsValid() const {  return true;  }
+  virtual adirection* DoCopy(RefinementModel& rm) const {
+    return new static_direction(id, value);
+  }
+  virtual adirection* CreateFromDataItem(const TDataItem& di,
+    const RefinementModel& rm) const;
+  virtual olxstr ToInsStr(const RefinementModel& rm) const;
+  virtual void ToDataItem(TDataItem& di) const;
+#ifndef _NO_PYTHON
+  virtual PyObject* PyExport() const;
+#endif
+};
+
+struct direction : public adirection {
+  TCAtomGroup atoms;
+  uint16_t type;
+  direction() {}
+  direction(const olxstr &id, const TCAtomGroup &_atoms,
+    uint16_t _type)
+  : adirection(id),
+    atoms(_atoms),
+    type(_type)
+  {}
+  virtual vec3d get() const;
+  virtual adirection* DoCopy(RefinementModel& rm) const;
+  virtual adirection* CreateFromDataItem(const TDataItem& di,
+    const RefinementModel& rm) const;
+  virtual bool IsValid() const {
+    for( size_t i=0; i < atoms.Count(); i++ )
+      if( atoms[i].GetAtom()->IsDeleted() )
+        return false;
+    return true;
+  }
+  olxstr ToInsStr(const RefinementModel& rm) const;
+
+  void ToDataItem(TDataItem& di) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport() const;
+#endif
+};
+
 struct rotated_adp_constraint  {
   const TCAtom &source, &destination;
-  TGroupCAtom dir_from, dir_to;
+  const adirection &dir;
   double angle;
   bool refine_angle;
   rotated_adp_constraint(TCAtom &_source, TCAtom &_destination,
-    const TGroupCAtom& _dir_from, const TGroupCAtom& _dir_to,
+    adirection &_dir,
     double _angle, bool _refine_angle)
   : source(_source),
     destination(_destination),
-    dir_from(_dir_from),
-    dir_to(_dir_to),
+    dir(_dir),
     angle(_angle),
     refine_angle(_refine_angle)
   {}
   bool IsValid() const {
-    return !(dir_from.GetAtom()->IsDeleted() || dir_to.GetAtom()->IsDeleted() ||
-      source.IsDeleted() || destination.IsDeleted());
+    return !(!dir.IsValid() || source.IsDeleted() || destination.IsDeleted());
   }
   olxstr ToInsStr(const RefinementModel& rm) const;
   static void FromToks(const TStrList& toks, RefinementModel& rm,
@@ -44,9 +122,18 @@ struct rotated_adp_constraint  {
 
 class IConstraintContainer {
 public:
+  virtual ~IConstraintContainer() {}
   virtual void FromToks(const TStrList& toks, RefinementModel& rm) = 0;
   virtual TStrList ToInsList(const RefinementModel& rm) const = 0;
   virtual void UpdateParams(size_t index, const TStrList& toks) = 0;
+  virtual const olxstr& GetName() const = 0;
+  virtual void Clear() = 0;
+  virtual TDataItem& ToDataItem(TDataItem& di) const = 0;
+  virtual void FromDataItem(const TDataItem* di, const RefinementModel& rm) = 0;
+  virtual void Assign(RefinementModel& rm, const IConstraintContainer& c) = 0;
+#ifndef _NO_PYTHON
+  virtual PyObject* PyExport() const = 0;
+#endif
 };
 
 template <typename constraint_t>
@@ -62,16 +149,19 @@ public:
     items.Pack();
   }
   void Clear()  {  items.Clear();  }
-  void Assign(RefinementModel& rm, const ConstraintContainer& c) {
+  void Assign(RefinementModel& rm, const IConstraintContainer& cn_) {
+    const ConstraintContainer* cn =
+      dynamic_cast<const ConstraintContainer*>(&cn_);
     items.Clear();
-    for( size_t i=0; i < c.items.Count(); i++ )
-      items.Add(constraint_t::Copy(rm, c.items[i]));
+    for( size_t i=0; i < cn->items.Count(); i++ )
+      items.Add(constraint_t::Copy(rm, cn->items[i]));
   }
   void FromToks(const TStrList& toks, RefinementModel& rm)  {
     constraint_t::FromToks(toks, rm, items);
   }
   TStrList ToInsList(const RefinementModel& rm) const {
     TStrList out;
+    out.SetCapacity(items.Count());
     for( size_t i=0; i < items.Count(); i++ )
       if( items[i].IsValid() )
         out.Add(items[i].ToInsStr(rm));
@@ -115,7 +205,7 @@ public:
     return all;
   }
 #endif
-  static const olxstr& GetName() {  return constraint_t::GetName();  }
+  const olxstr& GetName() const {  return constraint_t::GetName();  }
   TTypeList<constraint_t> items;
 };
 

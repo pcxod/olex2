@@ -22,7 +22,7 @@ namespace ctrl_ext  {
     TActionQueue &OnClick;
 
     inline void SetCaption(const olxstr &T) {  SetLabel(T.u_str()); }
-    inline olxstr GetCaption()        const {  return GetLabel().c_str(); }
+    inline olxstr GetCaption() const {  return GetLabel(); }
 
     DECLARE_CLASS(TLabel)
     DECLARE_EVENT_TABLE()

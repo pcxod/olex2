@@ -141,7 +141,8 @@ bool TGlXApp::OnInit()  {
   int *gl_attr = TGlCanvas::GetGlAttributes(
     !str_glAttr.IsEmpty() && str_glAttr.Equalsi("TRUE"),
     str_glStereo.IsEmpty() || str_glStereo.Equalsi("TRUE"));
-  MainForm->GlCanvas(new TGlCanvas(MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
+  MainForm->GlCanvas(new TGlCanvas(
+    MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS")));
   // create an instance of the XApplication
   olxstr BaseDir(argv[0]);
   // 2008.09.29
@@ -168,7 +169,7 @@ bool TGlXApp::OnInit()  {
     pid_file = new TEFile(olxstr(XApp->GetBaseDir()) << pid << '.' << patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b");
   }
   for( int i=0; i < argc; i++ )
-    XApp->Arguments.Add(argv[i]);
+    XApp->Arguments.Add(olxstr(argv[i]));
   for( size_t i=0; i < XApp->Arguments.Count(); i++ )  {
     if( XApp->Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
       XApp->Options.FromString(XApp->Arguments[i], '=');
@@ -234,6 +235,7 @@ bool TGlXApp::Dispatch()  {
 //int TGlXApp::MainLoop()  {
 //  while( wxApp::Pending() )  wxApp::Dispatch();
   //TBasicApp::GetInstance().OnTimer->Clear();
+
 //  return wxApp::MainLoop();
 //}
 //..............................................................................
@@ -251,7 +253,7 @@ void TGlXApp::OnNavigation(wxNavigationKeyEvent& event)  {
 }
 //..............................................................................
 void TGlXApp::OnIdle(wxIdleEvent& event)  {
-  wxApp::OnIdle(event);
+  event.Skip();
 }
 //..............................................................................
 

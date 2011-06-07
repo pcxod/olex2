@@ -93,9 +93,9 @@ const IEObject* TComboBox::GetObject(int i)  {
 }
 //..............................................................................
 olxstr TComboBox::GetText() const {
-  olxstr cv = GetValue().c_str();
+  olxstr cv = GetValue();
   for( unsigned int i=0; i < GetCount(); i++ )  {
-    if( cv == GetString(i).c_str() )  {
+    if( cv == GetString(i) )  {
       TDataObj* res = (TDataObj*)GetClientData(i);
       return (res != NULL && res->Delete) ? res->Data->ToString() : cv;
     }
@@ -106,7 +106,7 @@ olxstr TComboBox::GetText() const {
 olxstr TComboBox::ItemsToString(const olxstr &sep)  {
   olxstr rv;
   for( unsigned int i=0; i < GetCount(); i++ )  {
-    rv << GetString(i).c_str();
+    rv << GetString(i);
     TDataObj* res = (TDataObj*)GetClientData(i);
     if( res != NULL && res->Delete )
       rv << "<-" << res->Data->ToString();
