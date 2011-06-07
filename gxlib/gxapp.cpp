@@ -3614,6 +3614,7 @@ void TGXApp::SetActiveXFile(size_t i)  {
   FXFile->GetLattice().OnAtomsDeleted.TakeOver(OverlayedXFiles[i].GetLattice().OnAtomsDeleted);
   AlignOverlayedXFiles();
   CreateObjects(true);
+  DUnitCell().SetReciprocal(false);
 }
 //..............................................................................
 void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR, vec3d& cnt)  {

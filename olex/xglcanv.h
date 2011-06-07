@@ -20,6 +20,7 @@ private:
   class TMainForm *FParent;
   wxGLContext* Context;
   static int* glAttrib;
+  short EncodeEvent(const wxMouseEvent &evt, bool update_button=true);
 public:
   TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1, const wxPoint& pos = wxDefaultPosition,
     const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxT("TGlCanvas"));

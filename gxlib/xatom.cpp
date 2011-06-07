@@ -514,7 +514,7 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
   M.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF |
               sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB);
   M.AmbientF = Cl;
-  M.DiffuseF =  Mask ^ Cl;
+  M.DiffuseF = Mask ^ Cl;
   M.SpecularF = 0xffffffff;
   M.ShininessF = 12;
   M.ShininessB = M.ShininessF;
@@ -531,7 +531,7 @@ void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
 //  |  sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmEmissionB);
   Cl = Atom.GetType().def_color;
   M.AmbientF = Cl;
-  M.DiffuseF =  Mask ^ Cl;
+  M.DiffuseF = Mask ^ Cl;
   M.SpecularF = 0xffffffff;
   M.EmissionF =  0x14141414;
   M.ShininessF = 12;
