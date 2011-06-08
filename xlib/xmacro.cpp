@@ -2864,7 +2864,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     TCAtom& a = _au.GetAtom(i);
     if( a.GetEllipsoid() != NULL )  {
       TEllipsoid& elp = *a.GetEllipsoid();
-      a.SetUiso(elp.GetUiso());
+      a.SetUiso(elp.GetUeq());
       if( a.GetUisoEsd() == 0 )  {
         double esd = 0;
         for( int j=0; j < 3; j++ )

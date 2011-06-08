@@ -1465,7 +1465,7 @@ void TMainForm::AquireTooltipValue()  {
           Tooltip << "free): " << TEValueD(ca.GetUiso(), ca.GetUisoEsd()).ToString();
       }
       else
-        Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetUiso());
+        Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
 #ifdef _DEBUG
       Tooltip << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
 #endif
