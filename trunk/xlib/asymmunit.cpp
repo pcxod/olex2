@@ -880,7 +880,7 @@ void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  E.SetRetVal( GetAtom(index).GetUiso() );
+  E.SetRetVal(GetAtom(index).GetUiso());
 }
 //..............................................................................
 void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
@@ -968,7 +968,7 @@ void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
     }
   }
   else  {
-    E.ProcessingError(__OlxSrcInfo, "a number is expected" );
+    E.ProcessingError(__OlxSrcInfo, "a number is expected");
     E.SetRetVal(E.GetInfo());
     return;
   }
@@ -1027,6 +1027,7 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
         V[i] = GetRefMod()->Vars.SetParam(ca, catom_var_name_U11+i, val);
     }
     ca.GetEllipsoid()->Initialise(V);
+    ca.SetUiso(ca.GetEllipsoid()->GetUeq());
   }
   else if( (ca.GetEllipsoid() == NULL) && (Params.Count() == 2) ) {
     XVarReference* vr = ca.GetVarRef(catom_var_name_Uiso);

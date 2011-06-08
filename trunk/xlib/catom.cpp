@@ -295,7 +295,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
       E[i] = ev.GetE();  Q[i] = ev.GetV();
     }
     EllpId = Parent->NewEllp().Initialise(Q,E).GetId();
-    Uiso = GetEllipsoid()->GetUiso();
+    Uiso = GetEllipsoid()->GetUeq();
   }
   else  {
     EllpId = InvalidIndex;

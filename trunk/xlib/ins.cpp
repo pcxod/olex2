@@ -1189,7 +1189,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       atom->SetUiso(0);
     }
     else
-      atom->SetUiso(atom->GetEllipsoid()->GetUiso());
+      atom->SetUiso(atom->GetEllipsoid()->GetUeq());
     cx.LastWithU = atom;
   }
   else  {
