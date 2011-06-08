@@ -1529,6 +1529,33 @@ void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
   }
 }
 //..............................................................................
+SortedElementPList TGXApp::DecodeTypes(const olxstr &types) const {
+  SortedElementPList res;
+  if( types.StartsFrom('*') )  {
+    const TAsymmUnit &au = XFile().GetAsymmUnit();
+    for( size_t i=0; i < au.AtomCount(); i++ )
+      res.AddUnique(&au.GetAtom(i).GetType());
+    if( types.Length() == 1 )  return res;
+    TStrList exc(types.SubStringFrom(types.CharAt(1) == '-' ? 2 : 1), ',');
+    for( size_t i=0; i < exc.Count(); i++ )  {
+      const cm_Element *elm = XElementLib::FindBySymbol(exc[i]);
+      if( elm == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << exc[i]);
+      res.Remove(elm);
+    }
+  }
+  else  {
+    TStrList tps(types, ',');
+    for( size_t i=0; i < tps.Count(); i++ )  {
+      const cm_Element *elm = XElementLib::FindBySymbol(tps[i]);
+      if( elm == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << tps[i]);
+      res.AddUnique(elm);
+    }
+  }
+  return res;
+}
+//..............................................................................
 TXAtomPList TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection, bool FindHidden)  {
   TXAtomPList rv;
   if( Atoms.IsEmpty() )  {  // return selection/all atoms
@@ -1593,13 +1620,9 @@ TXAtomPList TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection, bool Fi
         }
       }
       if( Tmp.CharAt(0) == '$' )  {
-        Tmp = Tmp.SubStringFrom(1);
-        if( !Tmp.IsEmpty() )  {
-          cm_Element* elm = XElementLib::FindBySymbol(Tmp);
-          if( elm == NULL )
-            throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << Tmp);
-          XAtomsByType(*elm, rv, FindHidden);
-        }
+        SortedElementPList elms = DecodeTypes(Tmp.SubStringFrom(1));
+        for( size_t ei=0; ei < elms.Count(); ei++ )
+          XAtomsByType(*elms[ei], rv, FindHidden);
         continue;
       }
       size_t ind = Tmp.FirstIndexOf('?');
@@ -1851,13 +1874,9 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
     Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   }
   else  {
-    TAsymmUnit& au = XFile().GetAsymmUnit();
-    size_t ac = 0;
-    for(size_t i = 0; i < au.AtomCount(); i++ )
-      if( !au.GetAtom(i).IsDeleted() )
-        ac++;
-
-    TTTable<TStrList> Table(ac, 11);
+    TCAtomPList atoms;
+    FindCAtoms(Atoms, atoms, false);
+    TTTable<TStrList> Table(atoms.Count(), 11);
     Table.ColName(0) = "Atom";
     Table.ColName(1) = "Type";
     Table.ColName(2) = "X";
@@ -1868,23 +1887,21 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
     Table.ColName(7) = "Peak";
     Table.ColName(8) = "R-bond";
     Table.ColName(9) = "R-VdW";
-    ac = 0;
-    for(size_t i = 0; i < au.AtomCount(); i++ )  {
-      const TCAtom& A = au.GetAtom(i);
-      if( A.IsDeleted() )  continue;
-      Table[ac][0] = A.GetLabel();
-      Table[ac][1] = A.GetType().symbol;
-      Table[ac][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
-      Table[ac][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
-      Table[ac][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
-      Table[ac][5] = olxstr::FormatFloat(3, A.GetUiso());
-      Table[ac][6] = olxstr::FormatFloat(3, A.GetChemOccu());
+    for(size_t i = 0; i < atoms.Count(); i++ )  {
+      const TCAtom& A = *atoms[i];
+      Table[i][0] = A.GetLabel();
+      Table[i][1] = A.GetType().symbol;
+      Table[i][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
+      Table[i][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
+      Table[i][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
+      Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
+      Table[i][6] = olxstr::FormatFloat(3, A.GetChemOccu());
       if( A.GetType() == iQPeakZ )
-        Table[ac][7] = olxstr::FormatFloat(3, A.GetQPeak());
+        Table[i][7] = olxstr::FormatFloat(3, A.GetQPeak());
       else
-        Table[ac][7] = '-';
-      Table[ac][8] = A.GetConnInfo().r;
-      Table[ac++][9] = A.GetType().r_vdw;
+        Table[i][7] = '-';
+      Table[i][8] = A.GetConnInfo().r;
+      Table[i][9] = A.GetType().r_vdw;
     }
     Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   }
@@ -2321,13 +2338,9 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
       continue;
     }
     if( Tmp.CharAt(0) == '$' )  {
-      Tmp = Tmp.SubStringFrom(1);
-      if( Tmp.Length() != 0 )  {
-        cm_Element* elm = XElementLib::FindBySymbol(Tmp);
-        if( elm == NULL )
-          throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << Tmp);
-        CAtomsByType(*elm, List);
-      }
+      SortedElementPList elms = DecodeTypes(Tmp.SubStringFrom(1));
+      for( size_t ei=0; ei < elms.Count(); ei++ )
+        CAtomsByType(*elms[ei], List);
       continue;
     }
     size_t ind = Tmp.FirstIndexOf('?');

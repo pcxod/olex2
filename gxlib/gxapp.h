@@ -524,6 +524,7 @@ protected:
   void GetSelectedXAtoms(TXAtomPList& List, bool Clear=true);
   void GetSelectedCAtoms(TCAtomPList& List, bool Clear=true);
 public:
+  SortedElementPList DecodeTypes(const olxstr &types) const;
   TXAtom* GetXAtom(const olxstr& AtomName, bool Clear);
   void GetXAtoms(const olxstr& AtomName, TXAtomPList& res);
   void GetXBonds(const olxstr& BondName, TXBondPList& res);

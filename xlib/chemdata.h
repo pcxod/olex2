@@ -201,6 +201,8 @@ struct ElementCount {
 };
 
 typedef TPtrList<const cm_Element> ElementPList;
+typedef SortedPtrList<const cm_Element, TPrimitivePtrComparator>
+  SortedElementPList;
 typedef TTypeList<ElementCount> ContentList;
 typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementRadii;
 typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementDict;
