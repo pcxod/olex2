@@ -203,7 +203,7 @@ bool TPdb::Adopt(TXFile& XF)  {
   const ASObjectProvider& objects = XF.GetLattice().GetObjects();
   for( size_t i=0; i < objects.atoms.Count(); i++ )  {
     TSAtom& sa = objects.atoms[i];
-    if( !sa.IsAvailable() )  continue;
+    if( !sa.IsAvailable() || sa.GetType() == iQPeakZ )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);
     a.ccrd() = sa.crd();
