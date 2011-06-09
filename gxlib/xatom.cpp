@@ -217,15 +217,16 @@ void TXAtom::CalcRad(short DefRadius)  {
 }
 //..............................................................................
 void TXAtom::ValidateRadius(TGraphicsStyle& GS)  {
-  Params()[1] = GS.GetParam("Z", DefZoom()).ToDouble();
-  short dr = GS.GetParam("DR", DefRad()).ToInt();
+  Params()[1] = GS.GetNumParam("Z", DefZoom());
+  short dr = GS.GetNumParam("DR", DefRad());
   CalcRad(dr);
 }
 void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
-  DrawStyle(GS.GetParam("DS", DefDS()).ToInt());
+  DrawStyle(GS.GetNumParam("DS", DefDS()));
 }
 //..............................................................................
 void TXAtom::Create(const olxstr& cName)  {
+  SetCreated(true);
   olxstr Legend;
   if( !cName.IsEmpty() )  {
     SetCollectionName(cName);
@@ -263,7 +264,7 @@ void TXAtom::Create(const olxstr& cName)  {
     else  {
       if( GPC->PrimitiveCount() != 0 )  {
         GPC->AddObject(*this);
-        if( (GPC->GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt() & (1 << PolyhedronIndex)) != 0 )
+        if( (GPC->GetStyle().GetNumParam(GetPrimitiveMaskName(), 0) & (1 << PolyhedronIndex)) != 0 )
           CreatePolyhedron(true);
         ValidateRadius(GPC->GetStyle());
         ValidateDS(GPC->GetStyle());
@@ -613,15 +614,15 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   olxstr Legend("Atoms");
   TGraphicsStyle& GS= Parent.GetStyles().NewStyle(Legend, true);
-  double SphereQ   = GS.GetParam("SphereQ", "15", true).ToDouble();
-  double RimR = GS.GetParam("RimR", "1.02", true).ToDouble();  // radius
-  double RimW = GS.GetParam("RimW", "0.05", true).ToDouble();  // width
-  double RimQ = GS.GetParam("RimQ", SphereQ, true).ToDouble();  // quality
+  double SphereQ = GS.GetNumParam("SphereQ", 15.0, true);
+  double RimR = GS.GetNumParam("RimR", 1.02, true);  // radius
+  double RimW = GS.GetNumParam("RimW", 0.05, true);  // width
+  double RimQ = GS.GetNumParam("RimQ", SphereQ, true);  // quality
 
-  double DiskIR = GS.GetParam("DiskIR", "0", true).ToDouble();  // inner radius for disks
-  double DiskOR = GS.GetParam("DiskOR", RimR, true).ToDouble();  // outer radius
-  double DiskQ = GS.GetParam("DiskQ", RimQ, true).ToDouble();  // quality
-  double DiskS = GS.GetParam("DiskS", RimW, true).ToDouble();  // separation
+  double DiskIR = GS.GetNumParam("DiskIR", 0.0, true);  // inner radius for disks
+  double DiskOR = GS.GetNumParam("DiskOR", RimR, true);  // outer radius
+  double DiskQ = GS.GetNumParam("DiskQ", RimQ, true);  // quality
+  double DiskS = GS.GetNumParam("DiskS", RimW, true);  // separation
 
 //..............................
   // create sphere
@@ -796,7 +797,7 @@ void TXAtom::SetZoom(double V)  {
 }
 //..............................................................................
 uint32_t TXAtom::GetPrimitiveMask() const {
-  return GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToUInt();
+  return GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(), 0u);
 }
 //..............................................................................
 void TXAtom::OnPrimitivesCleared()  {
@@ -842,7 +843,7 @@ short TXAtom::DefRad()  {
   if( FDefRad != 0 )  
     return FDefRad;
   ValidateAtomParams();
-  FDefRad = FAtomParams->GetParam("DefR", darPers, true).ToInt();
+  FDefRad = FAtomParams->GetNumParam("DefR", darPers, true);
   return FDefRad;
 }
 //..............................................................................
@@ -850,32 +851,32 @@ short TXAtom::DefDS()  {
   if( FDefDS != 0 )  
     return FDefDS;
   ValidateAtomParams();
-  FDefDS = FAtomParams->GetParam("DefDS", adsSphere, true).ToInt();
+  FDefDS = FAtomParams->GetNumParam("DefDS", adsSphere, true);
   return FDefDS;
 }
 //..............................................................................
 int TXAtom::DefMask()  {
   ValidateAtomParams();
-  return FAtomParams->GetParam("DefMask", "5", true).ToInt();
+  return FAtomParams->GetNumParam("DefMask", 5, true);
 }
 //..............................................................................
 float TXAtom::TelpProb()  {
   if( FTelpProb != 0 )  
     return FTelpProb;
   ValidateAtomParams();
-  FTelpProb = (float)FAtomParams->GetParam("TelpP", "1", true).ToDouble();
+  FTelpProb = FAtomParams->GetNumParam("TelpP", 1.0f, true);
   return FTelpProb;
 }
 //..............................................................................
 float TXAtom::DefZoom()  {
   ValidateAtomParams();
-  return (float)FAtomParams->GetParam("DefZ", "1", true).ToDouble();
+  return FAtomParams->GetNumParam("DefZ", 1.0f, true);
 }
 //..............................................................................
 float TXAtom::GetQPeakScale()  {
   if( FQPeakScale != 0 )  return FQPeakScale;
   ValidateAtomParams();
-  return (float)FAtomParams->GetParam("QPeakScale", "3", true).ToDouble();
+  return FAtomParams->GetNumParam("QPeakScale", 3.0f, true);
 }
 //..............................................................................
 void TXAtom::SetQPeakScale(float V)  {
@@ -888,7 +889,7 @@ void TXAtom::SetQPeakScale(float V)  {
 float TXAtom::GetQPeakSizeScale()  {
   if( FQPeakSizeScale != 0 )  return FQPeakSizeScale;
   ValidateAtomParams();
-  return (float)FAtomParams->GetParam("QPeakSizeScale", "1", true).ToDouble();
+  return FAtomParams->GetNumParam("QPeakSizeScale", 1.0f, true);
 }
 //..............................................................................
 void TXAtom::SetQPeakSizeScale(float V)  {
@@ -1055,7 +1056,7 @@ void TXAtom::CreatePolyhedron(bool v)  {
     bound.Add(Node(i));
   }
   if( bound.Count() < 4 )  return;
-  int type = GetPrimitives().GetStyle().GetParam(PolyTypeName, "0", true).ToInt();
+  int type = GetPrimitives().GetStyle().GetNumParam(PolyTypeName, 0, true);
   if( type != polyAuto && type != polyNone )  {
     CreatePoly(bound, type);
     return;
@@ -1099,7 +1100,7 @@ void TXAtom::CreatePolyhedron(bool v)  {
 void TXAtom::SetPolyhedronType(short type)  {
   olxstr& str_type = GetPrimitives().GetStyle().GetParam(PolyTypeName, "0", true);
   int int_type = str_type.ToInt();
-  int int_mask = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt();
+  int int_mask = GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(), 0);
   if( type == polyNone )  {
     if( (int_mask & (1 << PolyhedronIndex)) != 0 )
       UpdatePrimitives(int_mask & ~(1 << PolyhedronIndex) );
@@ -1123,7 +1124,7 @@ void TXAtom::SetPolyhedronType(short type)  {
 }
 //..............................................................................
 int TXAtom::GetPolyhedronType()  {
-  int int_mask = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt();
+  int int_mask = GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(), 0);
   return (int_mask & (1 << PolyhedronIndex)) == 0 ? polyNone :
     GetPrimitives().GetStyle().GetParam(PolyTypeName, "0", true).ToInt();
 }

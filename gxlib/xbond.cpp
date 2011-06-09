@@ -91,6 +91,7 @@ void TXBond::Update()  {
 }
 //..............................................................................
 void TXBond::Create(const olxstr& cName)  {
+  SetCreated(true);
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   if( FStaticObjects.IsEmpty() )  
@@ -106,21 +107,21 @@ void TXBond::Create(const olxstr& cName)  {
     GPC = &Parent.NewCollection(NewL);
   else if( GPC->PrimitiveCount() != 0 )  {
     GPC->AddObject(*this);
-    Params()[4] = GPC->GetStyle().GetParam("R", "1").ToDouble();
+    Params()[4] = GPC->GetStyle().GetNumParam("R", 1.0);
     return;
   }
   TGraphicsStyle& GS = GPC->GetStyle();
 //  GS.SetSaveable( GPC->Name().CharCount('.') == 0 );
   GS.SetSaveable(IsStyleSaveable());
 
-  const int PrimitiveMask = GS.GetParam(GetPrimitiveMaskName(),
-    (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable()).ToInt();
+  const int PrimitiveMask = GS.GetNumParam(GetPrimitiveMaskName(),
+    (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
 
   GPC->AddObject(*this);
   if( PrimitiveMask == 0 )  
     return;  // nothing to create then...
 
-  Params()[4]= GS.GetParam("R", Params()[4]).ToDouble();
+  Params()[4]= GS.GetNumParam("R", Params()[4]);
 
   for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
     if( (PrimitiveMask & (1<<i)) != 0 )    {
@@ -140,6 +141,8 @@ void TXBond::Create(const olxstr& cName)  {
         else  {
           TGlMaterial RGlM;
           if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
+            if( !A().IsCreated() )
+              A().Create();
             const size_t mi = A().Style().IndexOfMaterial("Sphere");
             if( mi != InvalidIndex )
               RGlM = A().Style().GetPrimitiveStyle(mi).GetProperties();
@@ -147,6 +150,8 @@ void TXBond::Create(const olxstr& cName)  {
               TXAtom::GetDefSphereMaterial(A(), RGlM);
           }
           else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
+            if( !B().IsCreated() )
+              B().Create();
             const size_t mi = B().Style().IndexOfMaterial("Sphere");
             if( mi != InvalidIndex )
               RGlM = B().Style().GetPrimitiveStyle(mi).GetProperties();
@@ -206,8 +211,8 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   ValidateBondParams();
-  double ConeQ = FBondParams->GetParam("ConeQ", "15", true).ToDouble();
-  double ConeStipples = FBondParams->GetParam("ConeStipples", "6", true).ToDouble();
+  double ConeQ = FBondParams->GetNumParam("ConeQ", 15.0, true);
+  double ConeStipples = FBondParams->GetNumParam("ConeStipples", 6.0, true);
 //..............................
   // create single color cylinder
   if( (GlP = FStaticObjects.FindObject("Single cone")) == NULL )  {
@@ -483,8 +488,8 @@ void TXBond::SetRadius(float V)  {
 }
 //..............................................................................
 uint32_t TXBond::GetPrimitiveMask() const {
-  return GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(),
-    (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable()).ToUInt();
+  return GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(),
+    (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
 }
 //..............................................................................
 void TXBond::OnPrimitivesCleared()  {
@@ -506,7 +511,7 @@ void TXBond::DefMask(int V)  {
 //..............................................................................
 int TXBond::DefMask()  {
   ValidateBondParams();
-  return FBondParams->GetParam("DefM", "7", true).ToInt();
+  return FBondParams->GetNumParam("DefM", 7, true);
 }
 //..............................................................................
 bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
