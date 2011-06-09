@@ -703,6 +703,7 @@
     <ClInclude Include="..\..\..\sdl\olxptr.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_istring.h" />
+    <ClInclude Include="..\..\..\sdl\smart\olx_strcvt.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_wstring.h" />
     <ClInclude Include="..\..\..\sdl\olxmps.h" />
     <ClInclude Include="..\..\..\sdl\olxth.h" />

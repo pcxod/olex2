@@ -1,6 +1,7 @@
 //----------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
+#include "bapp.h"
 #include "styles.h"
 #include "glmaterial.h"
 #include "glrender.h"
@@ -248,6 +249,16 @@ void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks)  {
   }
 }
 //..............................................................................
+void TGraphicsStyle::_TrimFloats()  {
+  for( size_t i=0; i < Params.Count(); i++ )  {
+    if( Params.GetObject(i).val.IsNumber() )  {
+      Params.GetObject(i).val.TrimFloat();
+    }
+  }
+  for( size_t i=0; i < Styles.Count(); i++ )
+    Styles.GetObject(i)->_TrimFloats();
+}
+//..............................................................................
 //------------------------------------------------------------------------------
 //TGraphicsStyles implementation
 //------------------------------------------------------------------------------
@@ -339,11 +350,21 @@ bool TGraphicsStyles::FromDataItem(const TDataItem& Item, bool merge)  {
   LinkFile = Item.GetFieldValue("LinkFile");
   Version = Item.GetFieldValue("Version", "0").ToInt();
   SI = Item.FindItem("Root");
-  if( SI != NULL )  
+  if( SI != NULL )  {
     Root->FromDataItem(*SI);
+    if( Version == 0 )  {  // imported ?
+      Root->_TrimFloats();
+    }
+  }
   for( size_t i=0; i < mats.Count(); i++ )
     delete mats[i];
-  Renderer._OnStylesLoaded();
+  try  {
+    Renderer._OnStylesLoaded();
+  }
+  catch(const TExceptionBase &e)  {
+    Renderer.Clear();
+    throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
   return true;
 }
 //..............................................................................
