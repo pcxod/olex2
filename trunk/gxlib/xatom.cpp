@@ -797,7 +797,7 @@ void TXAtom::SetZoom(double V)  {
 }
 //..............................................................................
 uint32_t TXAtom::GetPrimitiveMask() const {
-  return GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(), 0u);
+  return GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(), 0);
 }
 //..............................................................................
 void TXAtom::OnPrimitivesCleared()  {

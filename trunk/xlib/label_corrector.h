@@ -88,7 +88,7 @@ struct LabelCorrector  {
       while( uniq_labels.IndexOf(li->label) != InvalidIndex )
         li->inc();
       a.SetLabel(li->label, false);
-      uniq_labels.Add(li->label);
+      uniq_labels.Add(li->label, &a);
       li->inc();
     }
     else

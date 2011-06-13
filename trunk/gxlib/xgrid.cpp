@@ -474,6 +474,7 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ)  {
 void TXGrid::DeleteObjects()  {
   if( ED != NULL )  {
     delete ED;
+    MaxX = MaxY = MaxZ = 0;
     ED = NULL;
   }
   if( TextData != NULL )  {
@@ -1165,12 +1166,30 @@ PyObject* pySetValue(PyObject* self, PyObject* args)  {
   return PythonExt::PyNone();
 }
 //..............................................................................
+PyObject *pyGetValue(PyObject *self, PyObject* args)  {
+  int i, j, k;
+  if( !PyArg_ParseTuple(args, "iii", &i, &j, &k) )
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iii");
+  TXGrid *g = TXGrid::GetInstance();
+  if( g->Data() == NULL || !g->Data()->IsInRange(i,j,k) )
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "index - out of range");
+  return Py_BuildValue("f", g->GetValue(i,j,k));
+}
+//..............................................................................
 PyObject* pyInit(PyObject* self, PyObject* args)  {
   int i, j, k;
   if( !PyArg_ParseTuple(args, "iii", &i, &j, &k) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iii");
   TXGrid::GetInstance()->InitGrid(i, j, k);
   return PythonExt::PyTrue();
+}
+//..............................................................................
+PyObject *pyGetSize(PyObject *self, PyObject* args)  {
+  TXGrid *g = TXGrid::GetInstance();
+  if( g->Data() == NULL )
+    return Py_BuildValue("iii", 0, 0, 0);
+  return Py_BuildValue("iii",
+    g->Data()->Length1(), g->Data()->Length2(), g->Data()->Length3());
 }
 //..............................................................................
 PyObject* pySetMinMax(PyObject* self, PyObject* args)  {
@@ -1217,8 +1236,10 @@ PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
 
 static PyMethodDef XGRID_Methods[] = {
   {"Init", pyInit, METH_VARARGS, "initialises grid memory"},
+  {"GetSize", pyGetSize, METH_VARARGS, "returns size of the grid"},
   {"Import", pyImport, METH_VARARGS, "imports grid from an array"},
-  {"SetValue", pySetValue, METH_VARARGS, "sets grid iso-level"},
+  {"SetValue", pySetValue, METH_VARARGS, "sets grid value"},
+  {"GetValue", pyGetValue, METH_VARARGS, "gets grid value"},
   {"SetMinMax", pySetMinMax, METH_VARARGS, "sets minimum and maximum vaues of the grid"},
   {"SetHole", pySetHole, METH_VARARGS, "sets minimum and maximum vaues of the grid to be avoided"},
   {"IsVisible", pyIsVisible, METH_VARARGS, "returns grid visibility status"},

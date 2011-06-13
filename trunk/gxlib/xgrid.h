@@ -109,11 +109,11 @@ public:
     return ED->Data[i][j][k];
   }
   template <class T> void SetValue(const T& ind, float v)  {
-      ED->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = v;
-    }
+    ED->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = v;
+  }
   template <class T> inline float GetValue(const T& v) const {
-      return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
-    }
+    return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
+  }
   
   // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
   void AdjustMap();
