@@ -31,13 +31,21 @@ void TDUserObj::Create(const olxstr& cName)  {
 
   TGraphicsStyle& GS = GPC->GetStyle();
   TGlPrimitive& GlP = GPC->NewPrimitive("Object", Type);
-  GlP.SetProperties( GS.GetMaterial("Object", GlM) );
-
-
+  GlP.SetProperties(GS.GetMaterial("Object", GlM));
   if( Type == sgloSphere )  {
-    GlP.Params[0] = 0.2/1.5;  
-    GlP.Params[1] = 6;  
-    GlP.Params[2] = 6;
+    if( Vertices != NULL && Vertices->Count() == 3 )  {
+      Params().Resize(16);
+      for( int i=0; i < 3; i++ )  {
+        for( int j=0; j < 3; j++ )  {
+            Params()[i*4+j] = (*Vertices)[i][j];
+        }
+      }
+      Params()[15] = 1;
+    }
+    GlP.Params[0] = 1;  
+    GlP.Params[1] = 25;  
+    GlP.Params[2] = 25;
+    GlP.Compile();
   }
   else  {
     if( Vertices != NULL )
@@ -48,13 +56,22 @@ void TDUserObj::Create(const olxstr& cName)  {
 }
 bool TDUserObj::Orient(TGlPrimitive& P)  {
   olx_gl::translate(Basis.GetCenter());
-  if( Type == sgloSphere && Vertices != NULL )  {
-    for( size_t i=0; i < Vertices->Count(); i++ )  {
-      olx_gl::translate((*Vertices)[i]);
-      P.Draw();
-    }
-    return true;
-  }    
+  olx_gl::scale(Basis.GetZoom());
+  if( Type == sgloSphere )  {
+    if( Params().Count() == 16 )
+      olx_gl::orient(Params().GetRawData());
+    else if( Params().Count() == 1 )
+      olx_gl::scale(Params()[0]);
+  }
+  else  {
+    if( Type == sgloSphere && Vertices != NULL )  {
+      for( size_t i=0; i < Vertices->Count(); i++ )  {
+        olx_gl::translate((*Vertices)[i]);
+        P.Draw();
+      }
+      return true;
+    }    
+  }
   return false;
 }
 
