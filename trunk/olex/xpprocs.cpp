@@ -872,6 +872,161 @@ void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroE
   od.Render(Cmds[0]);
 }
 //..............................................................................
+void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TGlRenderer &r = FXApp->GetRender();
+  olxdict<TGlMaterial*, olxstr, TPrimitiveComparator> materials;
+  olxdict<TXAtom*, olxstr, TPrimitiveComparator> sph_materials;
+  TStrList out;
+  out.Add("global_settings {");
+  TGlOption cl_amb = r.LightModel.GetAmbientColor();
+  cl_amb *= 10;
+  out.Add(" ambient_light rgb<") << cl_amb[0] << ',' << cl_amb[1] << ',' << cl_amb[2] << '>';
+  out.Add("}");
+
+  TGlOption cl_clear = r.LightModel.GetClearColor();
+  out.Add("background { color rgb<") << cl_clear[0] << ',' << cl_clear[1] << ',' << cl_clear[2] << "> }";
+  out.Add("camera {");
+  out.Add(" location <0,0,25>");
+  out.Add(" angle 25");
+  out.Add(" up <0,0,1>");
+  out.Add(" right <-") << (float)r.GetWidth()/r.GetHeight() << "0,0>";
+  out.Add(" look_at <0,0,0>");
+  out.Add("}");
+  for( size_t i=0; i < 8; i++ )  {
+    TGlLight &l = r.LightModel.GetLight(i);
+    if( !l.IsEnabled() )  continue;
+    out.Add("light_source {");
+    TGlOption lp = l.GetPosition();
+    out.Add(" <") << lp[0] << ',' << lp[1] << ',' << lp[2] << ">";
+    lp = l.GetDiffuse();
+    if( lp.IsEmpty() )
+      lp = l.GetAmbient();
+    if( lp.IsEmpty() )
+      lp = l.GetSpecular();
+    lp *= 1.5;
+    out.Add(" color rgb<") << lp[0] << ',' << lp[1] << ',' << lp[2] << ">";
+    out.Add("}");
+  }
+
+  out.Add("#declare obj_sph=object{ sphere {<0,0,0>, 1} }");
+  out.Add("#declare obj_rim_x=object{ cylinder {<0.05,0,0>, <-0.05,0,0>, 1} }");
+  out.Add("#declare obj_rim_y=object{ cylinder {<0,0.05,0>, <0,-0.05,0>, 1} }");
+  out.Add("#declare obj_rim_z=object{ cylinder {<0,0,0.05>, <0,0,-0.05>, 1} }");
+  out.Add("#declare brad=0.1;");
+  TGXApp::AtomIterator ai = FXApp->GetAtoms();
+  out.Add("union {");
+  while( ai.HasNext() )  {
+    TXAtom &a = ai.Next();
+    if( !a.IsVisible() )  continue;
+    const TGraphicsStyle& style = a.GetPrimitives().GetStyle();
+    olxstr sph_mat_name;
+    if( a.GetType() == iQPeakZ )  {
+      if( a.GetPrimitives().PrimitiveCount() == 0 )  continue;
+      TGlMaterial &glm = a.GetPrimitives().GetPrimitive(0).GetProperties(); 
+      size_t lmi = materials.IndexOf(&glm);
+      if( lmi == InvalidIndex )
+        sph_mat_name = materials.Add(&glm, olxstr("mat") << (materials.Count()+1));
+      else
+        sph_mat_name = materials.GetValue(lmi);
+      sph_materials(&a, sph_mat_name);
+    }
+    else  {
+      size_t lmi = style.IndexOfMaterial("Sphere");
+      if( lmi != InvalidIndex )  {
+        TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
+        lmi = materials.IndexOf(&glm);
+        if( lmi == InvalidIndex )
+          sph_mat_name = materials.Add(&glm, olxstr("mat") << (materials.Count()+1));
+        else
+          sph_mat_name = materials.GetValue(lmi);
+        sph_materials(&a, sph_mat_name);
+      }
+    }
+    out.Add(" object {");
+    vec3d c = a.crd() + r.GetBasis().GetCenter();
+    //c /= r.GetBasis().GetZoom();
+    if( (a.DrawStyle() == adsEllipsoid || a.DrawStyle() == adsOrtep) &&
+        a.GetEllipsoid() != NULL )
+    {
+      olxstr rim_mat_name;
+      size_t lmi = style.IndexOfMaterial("Rims");
+      if( lmi != InvalidIndex )  {
+        TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
+        lmi = materials.IndexOf(&glm);
+        if( lmi == InvalidIndex )
+          rim_mat_name = materials.Add(&glm, olxstr("mat") << (materials.Count()+1));
+        else
+          rim_mat_name = materials.GetValue(lmi);
+      }
+      out.Add("  union {");
+      out.Add("   object { obj_sph texture {") << sph_mat_name << "}}";
+      out.Add("   object { obj_rim_x texture {") << rim_mat_name << "}}";
+      out.Add("   object { obj_rim_y texture {") << rim_mat_name << "}}";
+      out.Add("   object { obj_rim_z texture {") << rim_mat_name << "}}";
+      out.Add("  }");
+    }
+    else  {
+      out.Add("  obj_sph");
+      out.Add("  texture {") << sph_mat_name << '}';
+    }
+    double ds = a.GetDrawScale();
+    if( a.GetEllipsoid() != NULL )  {
+      out.Add("  scale <")
+        << ds*a.GetEllipsoid()->GetSX() << ','
+        << ds*a.GetEllipsoid()->GetSY() << ','
+        << ds*a.GetEllipsoid()->GetSZ() << '>';
+      mat3d m = a.GetEllipsoid()->GetMatrix();
+      out.Add("  transform {");
+      out.Add("   matrix <") << m[0][0] << ',' << m[0][1] << ',' << m[0][2] << ',';
+      out.Add("    ")  << m[1][0] << ',' << m[1][1] << ',' << m[1][2] << ',';
+      out.Add("    ")  << m[2][0] << ',' << m[2][1] << ',' << m[2][2] << ',';
+      out.Add("    0,0,0>");
+      out.Add("   }");
+    }
+    else  {
+      out.Add("  scale <") << ds << ',' << ds << ',' << ds << '>';
+    }
+    out.Add("  translate <") << c[0] << ',' << c[1] << ',' << c[2] << '>';
+    out.Add(" }");
+  }
+  TGXApp::BondIterator bi = FXApp->GetBonds();
+  while( bi.HasNext() )  {
+    TXBond &b = bi.Next();
+    if( !b.IsVisible() )  continue;
+    //TGPCollection &gpc = b.GetPrimitives();
+    //for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+    //  TGlPrimitive &glp = gpc.GetPrimitive(i);
+    //  glp.
+    //}
+    out.Add(" object {");
+    out.Add("  union {");
+    out.Add("   object { cylinder {");
+    vec3d v = b.A().crd() + r.GetBasis().GetCenter();
+    out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << '>';
+    v = (b.A().crd()+b.B().crd())/2 + r.GetBasis().GetCenter();
+    out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << ">, brad}";
+    out.Add("    texture {") << sph_materials[&b.A()] << '}';
+    out.Add("   }");
+    out.Add("   object { cylinder {");
+    v = (b.A().crd()+b.B().crd())/2 + r.GetBasis().GetCenter();
+    out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << '>';
+    v = b.B().crd() + r.GetBasis().GetCenter();
+    out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << ">, brad}";
+    out.Add("    texture {") << sph_materials[&b.B()] << '}';
+    out.Add("   }");
+    out.Add(" }}");
+  }
+  out.Add("}");
+  TStrList mat_out, scene_out;
+  //scene_out.Add("");
+  for( size_t i=0; i < materials.Count(); i++ )  {
+    mat_out.Add("#declare ") << materials.GetValue(i) << '=';
+    mat_out.Add(materials.GetKey(i)->ToPOV());
+  }
+
+  TCStrList(mat_out << out).SaveToFile(Cmds[0]);
+}
+//..............................................................................
 void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TTTable<TStrList> Table;
   olxstr Tmp = Cmds.Text(' '), clipbrd;

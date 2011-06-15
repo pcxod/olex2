@@ -217,12 +217,16 @@ olxstr TGlMaterial::ToPOV() const {
   bf << olxT("texture {\n");
   if( (Flags & sglmAmbientF) != 0 )  {
     bf << olxT("  pigment { color rgb<");
-    bf << olxstr(AmbientF[0]) << olxT(", ") << olxstr(AmbientF[1])
-      << olxT(", ") << olxstr(AmbientF[2]) << olxT("> }\n");
+    bf << olxstr(AmbientF[0]) << olxT(',') << olxstr(AmbientF[1])
+      << olxT(',') << olxstr(AmbientF[2]) << olxT('>');
+    if( (Flags & sglmDiffuseF) != 0 && (Flags & sglmTransparent) != 0 && DiffuseF[3] != 1 )
+      bf << olxT(" filter ") << olxstr(DiffuseF[3]);
+    bf << olxT("}\n");
   }
   bf << olxT("  finish {\n");
-  if( (Flags & sglmDiffuseF) != 0 )
+  if( (Flags & sglmDiffuseF) != 0 )  {
     bf << olxT("    diffuse ") << olxstr(DiffuseF.GetMean()) << olxT('\n');
+  }
   if( (Flags & sglmSpecularF) != 0 )  {
     //if( !SpecularF.IsGrey() )
     //  bf << olxT("  metallic\n");
