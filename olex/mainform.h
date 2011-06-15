@@ -364,6 +364,7 @@ private:
   DefMacro(PictPS)
   DefMacro(PictTEX)
   DefMacro(PictS)
+  DefMacro(PictPR)
   DefMacro(Bang)
   DefMacro(Grow)
   DefMacro(Uniq)

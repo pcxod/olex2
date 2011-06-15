@@ -462,6 +462,8 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Experimental tex/pgf rendering");
   this_InitMacroD(PictS, "a-view angle [6]&;s-separation between the images in % [10]&;h-output image height [screen*resolution]", fpOne|fpTwo|psFileLoaded, 
     "Experimental stereoscopic picture output");
+  this_InitMacroD(PictPR, "", fpOne|psFileLoaded, 
+    "Experimental PovRay output");
   // contains an accumulation buffer. prints only when '\n' is encountered
   this_InitMacroD(Post, EmptyString(), fpAny,
 "Prints a string, but only after a new line character is encountered");
