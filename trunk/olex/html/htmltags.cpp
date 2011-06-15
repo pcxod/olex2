@@ -172,12 +172,8 @@ TAG_HANDLER_PROC(tag)  {
     Tmp = tag.GetParam(wxT("WIDTH"));
     TGlXApp::GetMainForm()->ProcessFunction(Tmp, SrcInfo, false);
     if( !Tmp.IsEmpty() )  {
-      if( Tmp.EndsWith('%') )  {
-        ax = 0;
-        float _ax = Tmp.SubStringTo(Tmp.Length()-1).ToFloat<float>()/100;
-        _ax *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetWidth();
-        ax = (int)_ax;
-      }
+      if( Tmp.EndsWith('%') )
+        fl = Tmp.SubStringTo(Tmp.Length()-1).ToFloat<float>();
       else
         ax = (int)Tmp.ToDouble();
       width_set = true;
@@ -562,7 +558,7 @@ TAG_HANDLER_PROC(tag)  {
   else if( TagName.Equalsi("checkbox") )  {
     TCheckBox *Box = new TCheckBox( 
       m_WParser->GetWindowInterface()->GetHTMLWindow(), tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
-    Box->SetFont( m_WParser->GetDC()->GetFont());
+    Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
     wxa->centreX.Absolute(0);
     Box->SetConstraints(wxa);
