@@ -20,7 +20,7 @@ public:
     data[3] = (float)a;  
   }
   TGlOption(const TGlOption& o)  {  *this = o;  }
-  TGlOption(uint32_t rgba)       {  *this = rgba;  }
+  TGlOption(uint32_t rgba)  {  *this = rgba;  }
 
   TGlOption& operator = (const TGlOption& o)  {
     data[0] = o.data[0];  
@@ -62,7 +62,7 @@ public:
     return TGlOption(data[0]*v, data[1]*v, data[2]*v, data[3]*v); 
   }
   TGlOption operator + (const TGlOption& v) const {
-    return TGlOption( data[0]+v[0], data[1]+v[1], data[2]+v[2], data[3]+v[3]);
+    return TGlOption(data[0]+v[0], data[1]+v[1], data[2]+v[2], data[3]+v[3]);
   }
   TGlOption& operator -= (const TGlOption& v) {
     data[0] -= v[0];
@@ -94,7 +94,10 @@ public:
              olx_abs(data[2]-v[2]) > 1e-5 || olx_abs(data[3]-v[3]) > 1e-5);
   }
   bool operator != (const TGlOption& v) const {  return !(*this == v);  }
-
+  bool IsGrey() const {
+    return olx_abs(data[0]-data[1]) < 1e-5 && olx_abs(data[0]-data[2]);
+  }
+  float GetMean() const {  return (data[0]+data[1]+data[2])/3.0f;  }
   TIString ToString() const;
   bool FromString(const olxstr& S);
 };

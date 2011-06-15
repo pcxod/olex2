@@ -7389,12 +7389,12 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
 void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds[0].Equalsi("cell") && Cmds.Count() == 2 )  {
     if( !TEFile::Exists( Cmds[1] )  )  {
-      Error.ProcessingError(__OlxSrcInfo, "file does not exist" );
+      Error.ProcessingError(__OlxSrcInfo, "file does not exist");
       return;
     }
     TBasicCFile* bcf = FXApp->XFile().FindFormat( TEFile::ExtractFileExt(Cmds[1]) );
     if( bcf == NULL )  {
-      Error.ProcessingError(__OlxSrcInfo, "unknown file format" );
+      Error.ProcessingError(__OlxSrcInfo, "unknown file format");
       return;
     }
     bcf = (TBasicCFile*)bcf->Replicate();
@@ -7413,7 +7413,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       bcf->GetAsymmUnit().GetAngles()[2]
     };
     duc->Init(cell);
-    FXApp->AddObjectToCreate( duc );
+    FXApp->AddObjectToCreate(duc);
     TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(bcf->GetAsymmUnit());
     UserCells.Add(AnAssociation2<TDUnitCell*, TSpaceGroup*>(duc, sg));
     duc->Create();
@@ -7423,7 +7423,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     TDUnitCell* uc = NULL;
     TSpaceGroup* sg = NULL;
     if( !Cmds[2].IsNumber() )  {
-      Error.ProcessingError(__OlxSrcInfo, "invalid unit cell reference" );
+      Error.ProcessingError(__OlxSrcInfo, "invalid unit cell reference");
       return;
     }
     int cr = Cmds[2].ToInt()-1;
@@ -7436,28 +7436,49 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       sg = UserCells[cr].B();
     }
     else {
-      Error.ProcessingError(__OlxSrcInfo, "invalid unit cell reference" );
+      Error.ProcessingError(__OlxSrcInfo, "invalid unit cell reference");
       return;
     }
     smatd_list ml;
-    sg->GetMatrices( ml, mattAll );
+    sg->GetMatrices(ml, mattAll);
     vec3d_list p, allPoints;
 
     if( Cmds[0].Equalsi("sphere") )  {
-      if( (Cmds.Count()-3)%3 != 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments" );
-        return;
-      }
-      for( size_t i=3; i < Cmds.Count(); i+= 3 ) 
-        p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
-      main_GenerateCrd(p, ml, allPoints);
-      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
-      for( size_t i=0; i < allPoints.Count(); i++ )
-        data[i] = allPoints[i] * uc->GetCellToCartesian();
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloSphere, Cmds[1]);
-      uo->SetVertices(&data);
-      FXApp->AddObjectToCreate( uo );
-      uo->Create();
+      try  {
+        if( Cmds.Count() == 4 )
+          uo->Params().Resize(1)[0] = Cmds[3].ToDouble();
+        else if( Cmds.Count() == 7 )  {
+          uo->Params().Resize(1)[0] = Cmds[3].ToDouble();
+          uo->Basis.Translate(
+            vec3d(Cmds[4].ToDouble(), Cmds[5].ToDouble(), Cmds[6].ToDouble()));
+        }
+        else  {
+          delete uo;
+          uo = NULL;
+        }
+        if( uo != NULL )  {
+          FXApp->AddObjectToCreate(uo);
+          uo->SetZoomable(true);
+          //uo->SetMove2D(true);
+          uo->SetMoveable(true);
+          uo->Create();
+        }
+      }
+      catch(const TExceptionBase &e)  {
+        delete uo;
+        throw TFunctionFailedException(__OlxSourceInfo, e);
+      }
+      //for( size_t i=3; i < Cmds.Count(); i+=3 ) 
+      //  p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
+      //main_GenerateCrd(p, ml, allPoints);
+      //TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
+      //for( size_t i=0; i < allPoints.Count(); i++ )
+      //  data[i] = allPoints[i] * uc->GetCellToCartesian();
+      //TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloSphere, Cmds[1]);
+      //uo->SetVertices(&data);
+      //FXApp->AddObjectToCreate(uo);
+      //uo->Create();
     }
     else if( Cmds[0].Equalsi("line") )  {
       if( (Cmds.Count()-3)%6 != 0 )  {
@@ -7798,8 +7819,12 @@ void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined material ") << Params[0]);
     return;
   }
-  else
-    E.SetRetVal(mat->ToString());
+  else  {
+    if( Params.Count() == 2 )
+      E.SetRetVal(mat->ToPOV());
+    else
+      E.SetRetVal(mat->ToString());
+  }
 }
 //..............................................................................
 void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

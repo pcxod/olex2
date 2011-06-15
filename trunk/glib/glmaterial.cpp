@@ -3,7 +3,7 @@
 //---------------------------------------------------------------------------//
 #include "glmaterial.h"
 #include "dataitem.h"
-#include "egc.h"
+#include "estrbuffer.h"
 
 UseGlNamespace();
 //..............................................................................
@@ -212,4 +212,28 @@ void TGlMaterial::FromString(const olxstr& str)  {
     ShininessB = toks[ind++].ToInt();
 }
 //..............................................................................
-
+olxstr TGlMaterial::ToPOV() const {
+  TEStrBuffer bf;
+  bf << olxT("texture {\n");
+  if( (Flags & sglmAmbientF) != 0 )  {
+    bf << olxT("  pigment { color rgb<");
+    bf << olxstr(AmbientF[0]) << olxT(", ") << olxstr(AmbientF[1])
+      << olxT(", ") << olxstr(AmbientF[2]) << olxT("> }\n");
+  }
+  bf << olxT("  finish {\n");
+  if( (Flags & sglmDiffuseF) != 0 )
+    bf << olxT("    diffuse ") << olxstr(DiffuseF.GetMean()) << olxT('\n');
+  if( (Flags & sglmSpecularF) != 0 )  {
+    //if( !SpecularF.IsGrey() )
+    //  bf << olxT("  metallic\n");
+    const float k = DiffuseF.IsGrey() ? 1 : DiffuseF.GetMean();
+    bf << olxT("    specular ") << olxstr(SpecularF.GetMean()*k) << olxT('\n');
+  }
+  if( (Flags & sglmShininessF) != 0 )  {
+    bf << olxT("    roughness ") << olxstr(1./(double(ShininessF)+0.00001))
+      << olxT('\n');
+  }
+  bf << olxT("}}\n");
+  return bf.ToString();
+}
+//..............................................................................
