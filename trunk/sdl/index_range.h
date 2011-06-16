@@ -15,7 +15,7 @@ struct IndexRange  {
     TStrList toks;
     size_t i, start, end;
     RangeItr(const olxstr& r) : toks(r, ','), i(0), start(1), end(0)  {}
-    bool HasNext() const {  return (toks.Count() > i || start < end);  }
+    bool HasNext() const {  return (toks.Count() > i || start <= end);  }
     size_t Next()  {
       if( start <= end )  {  return start++;  }
       const olxstr& s = toks[i++];
