@@ -3,7 +3,8 @@ namespace test {
 
 void IndexRangeTest(OlxTests& t)  {
   t.description = __FUNC__;
-  olxstr range = "1-6,9,12-15,20,999-1000,10-20";
+  olxstr range = "1-6,9,12-15,20,999-1000,10-20",
+    range1 = "14-18,40-44";
   TSizeList rmatch;
   IndexRange::Builder builder;
   for( size_t i=1; i <= 6; i++ )  {
@@ -39,6 +40,15 @@ void IndexRangeTest(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, "str results mismatch");
   if( range != builder.GetString() )
     throw TFunctionFailedException(__OlxSourceInfo, "builder str results mismatch");
+
+  IndexRange::RangeItr itr1 = IndexRange::GetIterator(range1);
+  cnt = 0;
+  while( itr1.HasNext() )  {
+    cnt++;
+    itr1.Next();
+  }
+  if( cnt != itr1.CalcSize() )
+    throw TFunctionFailedException(__OlxSourceInfo, "itr size mismatch");
 }
 //...................................................................................................
 };  //namespace test
