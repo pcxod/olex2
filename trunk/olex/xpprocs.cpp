@@ -944,7 +944,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
     out.Add(" object {");
     vec3d c = a.crd() + r.GetBasis().GetCenter();
-    //c /= r.GetBasis().GetZoom();
+    double ds = a.GetDrawScale();
     if( (a.DrawStyle() == adsEllipsoid || a.DrawStyle() == adsOrtep) &&
         a.GetEllipsoid() != NULL )
     {
@@ -964,13 +964,6 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       out.Add("   object { obj_rim_y texture {") << rim_mat_name << "}}";
       out.Add("   object { obj_rim_z texture {") << rim_mat_name << "}}";
       out.Add("  }");
-    }
-    else  {
-      out.Add("  obj_sph");
-      out.Add("  texture {") << sph_mat_name << '}';
-    }
-    double ds = a.GetDrawScale();
-    if( a.GetEllipsoid() != NULL )  {
       out.Add("  scale <")
         << ds*a.GetEllipsoid()->GetSX() << ','
         << ds*a.GetEllipsoid()->GetSY() << ','
@@ -984,6 +977,8 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       out.Add("   }");
     }
     else  {
+      out.Add("  obj_sph");
+      out.Add("  texture {") << sph_mat_name << '}';
       out.Add("  scale <") << ds << ',' << ds << ',' << ds << '>';
     }
     out.Add("  translate <") << c[0] << ',' << c[1] << ',' << c[2] << '>';
