@@ -517,12 +517,10 @@ void TGroupCAtom::ToDataItem(TDataItem& di) const {
   di.AddField("atom_id", Atom->GetTag()).AddField("matr_id", Matrix == NULL ? -1 : Matrix->GetId());
 }
 //..............................................................................
-TGroupCAtom& TGroupCAtom::FromDataItem(const TDataItem& di, const RefinementModel& rm)  {
+void TGroupCAtom::FromDataItem(const TDataItem& di, const RefinementModel& rm)  {
   Atom = &rm.aunit.GetAtom(di.GetRequiredField("atom_id").ToSizeT());
   int m_id = di.GetRequiredField("matr_id").ToInt();
-  if( m_id != -1 )
-    Matrix = &rm.GetUsedSymm(m_id);
-  return *this;
+  Matrix = (m_id == -1 ? NULL :&rm.GetUsedSymm(m_id));
 }
 //..............................................................................
 IXVarReferencerContainer& TCAtom::GetParentContainer() const {  return *Parent;  }

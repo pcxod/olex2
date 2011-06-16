@@ -223,7 +223,7 @@ adirection* direction::CreateFromDataItem(const TDataItem& di,
   TCAtomGroup agroup;
   agroup.SetCapacity(di.ItemCount());
   for( size_t i=0; i < di.ItemCount(); i++ )
-    agroup.Add(TGroupCAtom().FromDataItem(di.GetItem(i), rm));
+    agroup.Add(new TGroupCAtom(di.GetItem(i), rm));
   return new direction(di.GetRequiredField("id"), agroup, type);
 }
 //...................................................................................
