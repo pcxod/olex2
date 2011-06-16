@@ -285,10 +285,15 @@ class TGroupCAtom  {
   const smatd* Matrix;
   olxstr Name;
 public:
-  TGroupCAtom() : Atom(NULL), Matrix(NULL)  {  }
-  TGroupCAtom(TCAtom* a, const smatd* m=NULL) : Atom(a), Matrix(m)  { }
-  TGroupCAtom(const olxstr& name, TCAtom* a, const smatd* m=NULL) : Name(name), Atom(a), Matrix(m)  { }
-  TGroupCAtom(const TGroupCAtom& ga) : Atom(ga.Atom), Matrix(ga.Matrix), Name(ga.Name)  { }
+  TGroupCAtom() : Atom(NULL), Matrix(NULL)  {}
+  TGroupCAtom(TCAtom* a, const smatd* m=NULL) : Atom(a), Matrix(m)  {}
+  TGroupCAtom(const olxstr& name, TCAtom* a, const smatd* m=NULL)
+    : Name(name), Atom(a), Matrix(m)  {}
+  TGroupCAtom(const TGroupCAtom& ga)
+    : Atom(ga.Atom), Matrix(ga.Matrix), Name(ga.Name)  {}
+  TGroupCAtom(const TDataItem& di, const RefinementModel& rm)  {
+    FromDataItem(di, rm);
+  }
   DefPropP(TCAtom*, Atom)
   inline const smatd* GetMatrix() const {  return Matrix;  }
   vec3d ccrd() const { return Matrix == NULL ? Atom->ccrd() : *Matrix*Atom->ccrd();  }
@@ -302,7 +307,7 @@ public:
   olxstr GetFullLabel(const RefinementModel& rm, const olxstr& ResiName) const;
   olxstr GetFullLabel(const RefinementModel& rm) const;
   void ToDataItem(TDataItem& di) const;
-  TGroupCAtom& FromDataItem(const TDataItem& di, const RefinementModel& rm);
+  void FromDataItem(const TDataItem& di, const RefinementModel& rm);
 };
 //....................................................................................
 typedef TTypeList<TGroupCAtom> TCAtomGroup;

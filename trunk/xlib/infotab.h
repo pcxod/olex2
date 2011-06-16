@@ -60,8 +60,10 @@ public:
     ParamName = it.ParamName;
     Type = it.Type;
     for( size_t i=0; i < it.atoms.Count(); i++ )  {
-      if( it.atoms[i].GetMatrix() != NULL )
-        atoms.Add( new TGroupCAtom(&RM.aunit.GetAtom(it.atoms[i].GetAtom()->GetId()), &RM.AddUsedSymm(*it.atoms[i].GetMatrix()) ) );
+      if( it.atoms[i].GetMatrix() != NULL )  {
+        atoms.Add(new TGroupCAtom(&RM.aunit.GetAtom(it.atoms[i].GetAtom()->GetId()),
+          &RM.AddUsedSymm(*it.atoms[i].GetMatrix())));
+      }
       else
         atoms.Add(new TGroupCAtom(&RM.aunit.GetAtom(it.atoms[i].GetAtom()->GetId())));
     }
