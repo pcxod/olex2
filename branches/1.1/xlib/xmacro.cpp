@@ -4299,7 +4299,8 @@ void XLibMacros::funCCrd(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSAtomPList atoms;
-  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true, true) )
+  TXApp &app = TXApp::GetInstance();
+  if( !app.FindSAtoms(Cmds.Text(' '), atoms, true, true) )
     return;
   typedef double float_type; // for generation >= 8, double ,ust be used...
   typedef TVector3<float_type> vec_type;
@@ -4313,6 +4314,7 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
 
   float_type volume_p = 0, volume_a = 0, area_p = 0, area_a = 0;
   TArrayList<int8_t> t_map(atoms.Count()*triags.Count());
+  app.PrintVdWRadii(ElementRadii(), app.XFile().GetAsymmUnit().GetContentList());
   for( size_t i=0; i < atoms.Count(); i++ )  {
     const float_type r = (float_type)atoms[i]->GetType().r_vdw;
     volume_p += (float_type)olx_sphere_volume(r);

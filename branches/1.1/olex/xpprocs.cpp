@@ -2014,9 +2014,10 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->GetRender().ClearSelection();
     // this forces the object creation, so if there is anything wrong...
     try  {  FXApp->GetRender().GetStyles().FromDataItem(*F.Root().FindItem("style"), false);  }
-    catch(...)  {
+    catch(const TExceptionBase &e)  {
       FXApp->GetRender().GetStyles().Clear();
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
+      TBasicApp::NewLogEntry(logError) << e.GetException()->GetStackTrace<TStrList>();
     }
     FXApp->CreateObjects(true);
     FXApp->CenterView(true);
@@ -4424,7 +4425,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     TIntList parts;
     for( size_t i=0; Cmds.Count(); i++ )  {
       if( Cmds[i].IsNumber() )  {
-        parts.Add( Cmds[i].ToInt() );
+        parts.Add(Cmds[i].ToInt());
         Cmds.Delete(i--);
       }
       else
@@ -9135,10 +9136,15 @@ void main_CreateWBox(TGXApp& app, const TSAtomPList& atoms, double (*weight_c)(c
   }
   for( int i=0; i < 24; i++ )
     poly_d[i] = bs.center + faces[i];
+  //TDUserObj* uo = new TDUserObj(app.GetRender(), sgloSphere, olxstr("wbox") << obj_cnt++);
+  //TArrayList<vec3f>& sph_m = *(new TArrayList<vec3f>(3));
+  //sph_m[0] = px;  sph_m[1] = py;  sph_m[2] = -pz;
+  //uo->SetVertices(&sph_m);
+  //uo->Basis.Translate(bs.center);
   TDUserObj* uo = new TDUserObj(app.GetRender(), sgloQuads, olxstr("wbox") << obj_cnt++);
   uo->SetVertices(&poly_d);
   uo->SetNormals(&poly_n);
-  app.AddObjectToCreate( uo );
+  app.AddObjectToCreate(uo);
   uo->SetMaterial("1029;2566914048;2574743415");
   uo->Create();
   if( print_info )

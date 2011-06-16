@@ -1,7 +1,5 @@
-//---------------------------------------------------------------------------
-
-#ifndef stylesH
-#define stylesH
+#ifndef __olx_gl_styles_H
+#define __olx_gl_styles_H
 #include "glmaterial.h"
 #include "dataitem.h"
 
@@ -92,6 +90,8 @@ protected:
     return def;
   }
   TGlMaterial& CreatePrimitiveMaterial(const olxstr& pname, const TGlMaterial& glm);
+  // used in import of old styles v < 2
+  void _TrimFloats();
 public:
   TGraphicsStyle(TGraphicsStyles& parent, TGraphicsStyle* parent_style, const olxstr& name) :
   Parent(parent), 
@@ -176,6 +176,13 @@ public:
     }
     Params.GetObject(index).saveable = saveable;
     return Params.GetObject(index).val;
+  }
+  /* convenience method, defval defines the type for the conversion,
+  be careful with floats 0.0 to int will throw an exception */
+  template <class T, class T1>
+  T1 GetNumParam(const T& name, const T1& defval, bool saveable=false)  {
+    try  {  return olx_str_to_num<T1>()(GetParam(name, defval, saveable));  }
+    catch(...)  {  return defval;  }
   }
 
   bool operator == (const TGraphicsStyle& GS) const;

@@ -2978,10 +2978,14 @@ void TGXApp::ShowPart(const TIntList& parts, bool show)  {
   AtomIterator ai(*this);
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
-    if( parts.IndexOf(xa.CAtom().GetPart()) != InvalidIndex )
+    if( parts.IndexOf(xa.CAtom().GetPart()) != InvalidIndex )  {
       xa.SetVisible(show);
-    else
+      xa.SetMasked(!show);
+    }
+    else  {
       xa.SetVisible(!show);
+      xa.SetMasked(show);
+    }
     if( xa.IsVisible() )
       xa.SetVisible(xa.IsAvailable());
   }

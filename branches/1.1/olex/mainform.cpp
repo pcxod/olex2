@@ -917,7 +917,7 @@ separated values of Atom Type and radius, an entry a line");
  information provided, initialises the dialog with that font; the first argument may be just 'olex2' or 'system' to\
  enforce choosing the Olex2/System font (the font information can be provided ib the second argument then)");
   this_InitFuncD(GetFont, fpOne, "Returns specified font");
-  this_InitFuncD(GetMaterial, fpOne, "Returns specified material");
+  this_InitFuncD(GetMaterial, fpOne|fpTwo, "Returns material of specified object");
   this_InitFuncD(ChooseMaterial, fpNone|fpOne, "Brings up a dialog to edit\
   default or provided material");
 
@@ -3434,6 +3434,23 @@ olxstr TMainForm::TranslateString(const olxstr& str) const {
   size_t ind = phrase.FirstIndexOf('%');
   while( ind != InvalidIndex )  {
     if( ind+1 >= phrase.Length() )  return phrase;
+    // analyse the %..
+    size_t pi = ind;
+    while( --pi != InvalidIndex &&
+      (olxstr::o_isdigit(phrase.CharAt(pi)) || phrase.CharAt(pi) == '.') )
+      ;
+    if( pi != ind-1 && pi != InvalidIndex )  {
+      if( phrase.CharAt(pi) == '\'' || phrase.CharAt(pi) == '\"' )  {
+        if( ind < phrase.Length() && phrase.CharAt(pi) == phrase.CharAt(ind+1) )  {
+          ind = phrase.FirstIndexOf('%', ind+1);
+          continue;
+        }
+      }
+      if( phrase.CharAt(pi) == '=' )  {
+        ind = phrase.FirstIndexOf('%', ind+1);
+        continue;
+      }
+    }
     size_t ind1 = phrase.FirstIndexOf('%', ind+1);
     if( ind1 == InvalidIndex )  return phrase;
     if( ind1 == ind+1 )  { // %%

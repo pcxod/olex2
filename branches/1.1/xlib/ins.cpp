@@ -918,7 +918,8 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 void TIns::SaveToStrings(TStrList& SL)  {
   TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
   for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
-    BasicAtoms.Add(GetRM().GetUserContent()[i].element.symbol, &GetRM().GetUserContent()[i].element);
+    BasicAtoms.Add(GetRM().GetUserContent()[i].element.symbol,
+      &GetRM().GetUserContent()[i].element);
   }
   for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TResidue& residue = GetAsymmUnit().GetResidue(i);
@@ -926,7 +927,8 @@ void TIns::SaveToStrings(TStrList& SL)  {
     for( size_t j=0; j < residue.Count(); j++ )  {
       if( residue[j].IsDeleted() )  continue;
       residue[j].SetSaved(false);
-      size_t spindex = BasicAtoms.IndexOfObject(&residue[j].GetType());  // fix the SFAC, if wrong
+      // fix the SFAC, if wrong
+      size_t spindex = BasicAtoms.IndexOfObject(&residue[j].GetType());
       if( spindex == InvalidIndex )  {
         if( residue[j].GetType() != iQPeakZ )  {
           BasicAtoms.Add(residue[j].GetType().symbol, &residue[j].GetType());

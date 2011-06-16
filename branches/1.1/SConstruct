@@ -275,10 +275,10 @@ else:
   try: 
     if sys.platform[:6] == 'darwin':
       env.Append(CCFLAGS = '-D__MAC__')
-      env.ParseConfig("wx-config --cxxflags --unicode --libs gl,core,html,net,aui")
+      env.ParseConfig("wx-config --cxxflags --version=2.8 --unicode --libs gl,core,html,net,aui")
       env.Append(FRAMEWORKS=['OpenGL', 'AGL', 'Python'])
     else:
-      env.ParseConfig("wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui")
+      env.ParseConfig("wx-config --cxxflags --version=2.8 --unicode --libs gl,core,html,net,aui")
       env.Append(LIBS=['libGL', 'libGLU'])
 #!!!
     env.Append(CCFLAGS = ['-D__WXWIDGETS__'])

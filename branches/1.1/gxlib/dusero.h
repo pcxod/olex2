@@ -11,7 +11,6 @@ class TDUserObj: public AGlMouseHandlerImp  {
   TArrayList<vec3f>* Vertices, *Normals;
   TGlMaterial GlM;
 protected:
-  TEBasis Basis;
   virtual bool DoTranslate(const vec3d& t) {  Basis.Translate(t);  return true;  }
   virtual bool DoRotate(const vec3d& vec, double angle) {  Basis.Rotate(vec, angle);  return true;  }
   virtual bool DoZoom(double zoom, bool inc)  {
@@ -26,12 +25,14 @@ public:
     if( Normals != NULL )   delete Normals;
   }
   void SetVertices(TArrayList<vec3f>* vertices)  {  Vertices = vertices;  }
-  void SetNormals(TArrayList<vec3f>* normals)    {  Normals = normals;  }
+  void SetNormals(TArrayList<vec3f>* normals)  {  Normals = normals;  }
   void SetMaterial(const olxstr& mat)  {  GlM.FromString(mat);  }
   void SetMaterial(const TGlMaterial& glm)  {  GlM = glm;  }
   void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
+
+  TEBasis Basis;
 };
 
 EndGxlNamespace()
