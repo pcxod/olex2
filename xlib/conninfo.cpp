@@ -263,7 +263,7 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
         continue;
       const smatd* sm = _aci.BondsToCreate[j].matr == NULL ? NULL :
                         &rm.AddUsedSymm(*_aci.BondsToCreate[j].matr);
-      aci.BondsToCreate.Add( new CXBondInfo(*ca, sm) );
+      aci.BondsToCreate.Add(new CXBondInfo(*ca, sm));
     }
     for( size_t j=0; j < _aci.BondsToRemove.Count(); j++ )  {
       ca = rm.aunit.FindCAtomById(_aci.BondsToRemove[j].to.GetId());
@@ -273,11 +273,11 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
         continue;
       const smatd* sm = _aci.BondsToRemove[j].matr == NULL ? NULL :
                         &rm.AddUsedSymm(*_aci.BondsToRemove[j].matr);
-      aci.BondsToRemove.Add( new CXBondInfo(*ca, sm) );
+      aci.BondsToRemove.Add(new CXBondInfo(*ca, sm));
     }
   }
   for( size_t i=0; i < ci.TypeInfo.Count(); i++ ) 
-    TypeInfo.Add( ci.TypeInfo.GetKey(i), ci.TypeInfo.GetValue(i) );
+    TypeInfo.Add(ci.TypeInfo.GetKey(i), ci.TypeInfo.GetValue(i));
 }
 //........................................................................
 void ConnInfo::ToDataItem(TDataItem& item) const {
@@ -378,42 +378,45 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
   if( eqiv1 == NULL || (eqiv1->r.IsI() && eqiv1->t.IsNull()) )  {
     if( release && eqiv1 != NULL )
       rm.RemUsedSymm(*eqiv1);
-    return eqiv2;
+    return (eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) ? NULL : eqiv2);
   }
+  smatd mat;
   if( &rm.aunit.GetLattice() == NULL )  {  // no lattice?
     if( eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) )  {
-      smatd mat(eqiv1->Inverse());
+      mat = eqiv1->Inverse();
       if( release )  {
         rm.RemUsedSymm(*eqiv1);
         if( eqiv2 != NULL )
           rm.RemUsedSymm(*eqiv2);
       }
-      return &rm.AddUsedSymm(mat);
     }
-    smatd mat = ((*eqiv2)*eqiv1->Inverse());
-    if( release )  {
-      rm.RemUsedSymm(*eqiv1);
-      rm.RemUsedSymm(*eqiv2);
-    }
-    return &rm.AddUsedSymm(mat);
-  }
-  const TUnitCell& uc = rm.aunit.GetLattice().GetUnitCell();
-  if( eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) )  {
-    smatd mat(uc.InvMatrix(*eqiv1));
-    if( release )  {
-      rm.RemUsedSymm(*eqiv1);
-      if( eqiv2 != NULL )
+    else  {
+      mat = ((*eqiv2)*eqiv1->Inverse());
+      if( release )  {
+        rm.RemUsedSymm(*eqiv1);
         rm.RemUsedSymm(*eqiv2);
+      }
     }
-    return &rm.AddUsedSymm(mat);
   }
-  //((*eqiv2)*eqiv1->Inverse());
-  smatd mat = uc.MulMatrix(*eqiv2, uc.InvMatrix(*eqiv1));
-  if( release )  {
-    rm.RemUsedSymm(*eqiv1);
-    rm.RemUsedSymm(*eqiv2);
+  else {
+    const TUnitCell& uc = rm.aunit.GetLattice().GetUnitCell();
+    if( eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) )  {
+      mat = uc.InvMatrix(*eqiv1);
+      if( release )  {
+        rm.RemUsedSymm(*eqiv1);
+        if( eqiv2 != NULL )
+          rm.RemUsedSymm(*eqiv2);
+      }
+    }
+    else  {
+      mat = uc.MulMatrix(*eqiv2, uc.InvMatrix(*eqiv1));
+      if( release )  {
+        rm.RemUsedSymm(*eqiv1);
+        rm.RemUsedSymm(*eqiv2);
+      }
+    }
   }
-  return &rm.AddUsedSymm(mat);
+  return ((mat.r.IsI() && mat.t.IsNull()) ? NULL : &rm.AddUsedSymm(mat));
 }
 //........................................................................
 void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
@@ -455,22 +458,14 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
   }
   if( ind == InvalidIndex )  {
     // validate the bonds to create
-    bool exists = false;
     for( size_t i=0; i < AtomInfo.Count(); i++ )  {
       ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv);
       if( ind != InvalidIndex )  {
         AtomInfo.GetValue(i).BondsToCreate.Delete(ind);
-        exists = true;
         break;
       }
     }
-    if( !exists )  {  // if was added - then it might not exist?
-      AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
-      if( eqiv == NULL )  // these to be processed first
-        ai.BondsToRemove.Insert(0, new CXBondInfo(a2, eqiv));
-      else
-        ai.BondsToRemove.Add(new CXBondInfo(a2, eqiv));
-    }
+    AtomInfo.Add(&a1, AtomConnInfo(a1)).BondsToRemove.Add(new CXBondInfo(a2, eqiv));
   }
 }
 //........................................................................
@@ -485,7 +480,7 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
       for( size_t j=0; j < ci.BondsToRemove.Count(); j++ )  {
         if( ci.BondsToRemove[j].to == a )  {
           if( ci.BondsToRemove[j].matr == NULL )
-            toDelete.AddCCopy(ci.BondsToRemove[j]);
+            toDelete.Add(new CXBondInfo(ca, NULL));
           else  {
             const smatd matr = uc.InvMatrix(*ci.BondsToRemove[j].matr);
             bool uniq = true;
@@ -548,7 +543,7 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item) const {
   for( size_t i=0; i < BondsToRemove.Count(); i++ )  {
     if( BondsToRemove[i].to.IsDeleted() )
       continue;
-    TDataItem& bi = ab.AddItem("bi");
+    TDataItem& bi = db.AddItem("bi");
     bi.AddField("to", BondsToRemove[i].to.GetTag());
     if( BondsToRemove[i].matr != NULL )
       bi.AddField("eqiv", BondsToRemove[i].matr->GetId());
@@ -560,7 +555,7 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item, RefinementModel
   maxBonds = item.GetRequiredField("b").ToInt();
   TDataItem& ab = item.FindRequiredItem("ADDBOND");
   for( size_t i=0; i < ab.ItemCount(); i++ )  {
-    TCAtom& ca = rm.aunit.GetAtom( ab.GetItem(i).GetRequiredField("to").ToInt() );
+    TCAtom& ca = rm.aunit.GetAtom(ab.GetItem(i).GetRequiredField("to").ToInt());
     const olxstr& eq = ab.GetItem(i).GetFieldValue("eqiv");
     smatd const* eqiv = NULL;
     if( !eq.IsEmpty() )  { 
@@ -571,14 +566,14 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item, RefinementModel
   }
   TDataItem& db = item.FindRequiredItem("DELBOND");
   for( size_t i=0; i < db.ItemCount(); i++ )  {
-    TCAtom& ca = rm.aunit.GetAtom( db.GetItem(i).GetRequiredField("to").ToInt() );
+    TCAtom& ca = rm.aunit.GetAtom(db.GetItem(i).GetRequiredField("to").ToInt());
     const olxstr& eq = db.GetItem(i).GetFieldValue("eqiv");
     smatd const* eqiv = NULL;
     if( !eq.IsEmpty() )  { 
-      eqiv = &rm.GetUsedSymm( eq.ToInt() );
+      eqiv = &rm.GetUsedSymm(eq.ToInt());
       rm.AddUsedSymm(*eqiv);  // persist
     }
-    BondsToRemove.Add( new CXBondInfo(ca, eqiv) );
+    BondsToRemove.Add(new CXBondInfo(ca, eqiv));
   }
 }
 //........................................................................
