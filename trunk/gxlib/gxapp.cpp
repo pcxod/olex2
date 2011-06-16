@@ -214,7 +214,7 @@ public:
     return false;
   }
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    if( state == 1 )  // somehing went not as expected? trye to recover then...
+    if( state == 1 )  // somehing went not as expected? try to recover then...
       FParent->CreateObjects(true);
     state = 3;
     FParent->GetRender().SetBasis(B);
@@ -377,8 +377,10 @@ void TGXApp::CreateObjects(bool centerModel)  {
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
     xa.Create();
-    xa.SetVisible(!FStructureVisible ? false
-      : (xa.IsAvailable() && xa.CAtom().IsAvailable()));  
+    if( !xa.IsDeleted() )  {
+      xa.SetVisible(!FStructureVisible ? false
+        : (xa.IsAvailable() && xa.CAtom().IsAvailable()));  
+    }
   }
   
   sw.start("Bonds creation");
@@ -386,7 +388,8 @@ void TGXApp::CreateObjects(bool centerModel)  {
     TXBond& xb = bi.Next();
     xb.Update();
     xb.Create(TXBond::GetLegend(xb, 2));
-    xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
+    if( !xb.IsDeleted() )
+      xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
     if( xb.IsVisible() )  {
       if( xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ )
         xb.SetVisible(FQPeakBondsVisible);
