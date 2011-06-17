@@ -2674,9 +2674,9 @@ void TMainForm::LoadScene(const TDataItem& Root, TGlLightModel& FLM) {
     TDataItem& fi = I->GetItem(i);
     // compatibility conversion...
     if( fi.GetName() == "Console" )
-      FXApp->GetRender().GetScene().CreateFont("Default", fi.GetFieldValue("id") );
+      FXApp->GetRender().GetScene().CreateFont("Default", fi.GetFieldValue("id"));
     else
-      FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
+      FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id"));
   }
   I = Root.FindItem("Materials");
   if( I != NULL )  {

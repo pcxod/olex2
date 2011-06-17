@@ -116,7 +116,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   TPtrList<TGlBitmap> GlBitmaps;
   TTypeListExt<TXGlLabel, IEObject> XLabels;
   TXGlLabels *FLabels;
-
+  TTypeListExt<TXLine, AGDrawObject> Lines;
   // have to manage memory ourselves - base class is used
   AGDObjList LooseObjects;
   AGDObjList ObjectsToCreate;
@@ -577,7 +577,8 @@ public:     void CalcProbFactor(float Prob);
   void ClearPlanes();
   TXPlane *FindPlane(const olxstr& PlaneName);
 
-  TXLine& AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
+  TXLine &AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
+  void ClearLines()  {  Lines.Clear();  }
   TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);
   AGDrawObject* FindLooseObject(const olxstr& Name);
 

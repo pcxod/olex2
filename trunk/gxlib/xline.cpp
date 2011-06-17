@@ -6,6 +6,7 @@
 #include "xline.h"
 #include "gpcollection.h"
 #include "xatom.h"
+#include "pers_util.h"
 
 //----------------------------------------------------------------------------//
 // TXLine function bodies
@@ -14,10 +15,16 @@ TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName, const vec3d& base, 
   TXBond(NULL, r, collectionName),
   FBase(base), FEdge(edge)
 {
-  vec3d C(edge - base);
-  GetGlLabel().SetOffset((base+edge)/2);
-  GetGlLabel().SetLabel(olxstr::FormatFloat(3, C.Length()));
-  GetGlLabel().SetVisible(true);
+  Init();
+}
+//..............................................................................
+void TXLine::Init(bool update_label) {
+  vec3d C(FEdge - FBase);
+  if( update_label )  {
+    GetGlLabel().SetOffset((FBase+FEdge)/2);
+    GetGlLabel().SetLabel(olxstr::FormatFloat(3, C.Length()));
+    GetGlLabel().SetVisible(true);
+  }
   if( !C.IsNull() )  {
     Params()[3] = C.Length();
     C.Normalise();
@@ -26,29 +33,6 @@ TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName, const vec3d& base, 
     Params()[2] = C[0];
   }
 }
-//..............................................................................
-void TXLine::Create(const olxstr& cName)  {
-  //if( !cName.IsEmpty() )  
-  //  SetCollectionName(cName);
-
-  //TGPCollection* GPC = Parent.FindCollection( GetCollectionName() );
-  //if( GPC == NULL || GPC->PrimitiveCount() == 0 )  {
-  //  TXBond::Create();
-  //  TGraphicsStyle& GS = Primitives()->GetStyle();
-
-  //  for( int i=0; i < GetPrimitives().PrimitiveCount(); i++ )  {
-  //    TGlPrimitive& GlP = GetPrimitives().GetPrimitive(i);
-  //    TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(GlP->GetName()));
-  //    GlM->SetIdentityDraw( false );
-  //    GlP->SetProperties(GlM);
-  //  }
-  //}
-  //else  
-  //  GPC->AddObject(this);
-  TXBond::Create(cName);
-}
-//..............................................................................
-TXLine::~TXLine(){}
 //..............................................................................
 bool TXLine::Orient(TGlPrimitive& GlP)  {
   olxstr Length = olxstr::FormatFloat(3, Params()[3]);
@@ -71,11 +55,21 @@ bool TXLine::Orient(TGlPrimitive& GlP)  {
   return false;
 } 
 //..............................................................................
-void TXLine::Radius(float V)  {
-  Params()[4] = V;
+void TXLine::ToDataItem(TDataItem &di) const {
+  di.SetValue(GetCollectionName());
+  di.AddField("r", GetRadius())
+    .AddField("base", PersUtil::VecToStr(FBase))
+    .AddField("edge", PersUtil::VecToStr(FEdge))
+    ;
+  GetGlLabel().ToDataItem(di.AddItem("Label"));
 }
 //..............................................................................
-void TXLine::Length(float V)  {
-  Params()[3] = V;
+void TXLine::FromDataItem(const TDataItem &di)  {
+  SetCollectionName(di.GetValue());
+  FBase = PersUtil::FloatVecFromStr(di.GetRequiredField("base"));
+  FEdge = PersUtil::FloatVecFromStr(di.GetRequiredField("edge"));
+  SetRadius(di.GetRequiredField("r").ToDouble());
+  GetGlLabel().FromDataItem(di.FindRequiredItem("Label"));
+  Init(false);
 }
 //..............................................................................

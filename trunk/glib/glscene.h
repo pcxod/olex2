@@ -22,10 +22,10 @@ protected:
   /* The function creates or replaces a font (if exists under the same name)  */
   virtual TGlFont& DoCreateFont(TGlFont& glf, bool half_size) const = 0;
 public:
-  AGlScene();
+  AGlScene() : FParent(NULL) {}
   virtual ~AGlScene();
   inline TGlRenderer *Parent()  {  return FParent;  }
-  /* must be called by TGlrender */
+  /* must be called by TGlRender */
   void Parent(TGlRenderer *P)  {  FParent = P; }
   /* The function creates or replaces a font (if exists under the same name)  */
   TGlFont& CreateFont(const olxstr& name, const olxstr& fntDescription);
@@ -106,6 +106,9 @@ public:
     inline bool IsUnderlined() const {  return Underlined;  }
     DefPropP(short, Size)
   };
+
+  void ToDataItem(TDataItem &di) const;
+  void FromDataItem(const TDataItem &di);
 };
 
 EndGlNamespace()
