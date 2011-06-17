@@ -772,6 +772,7 @@
     <ClInclude Include="..\..\..\gxlib\ortdraw.h" />
     <ClInclude Include="..\..\..\gxlib\ortdrawtex.h" />
     <ClInclude Include="..\..\..\gxlib\oxmfile.h" />
+    <ClInclude Include="..\..\..\gxlib\povdraw.h" />
     <ClInclude Include="..\..\..\gxlib\wglscene.h" />
     <ClInclude Include="..\..\..\gxlib\wxglscene.h" />
     <ClInclude Include="..\..\..\gxlib\xatom.h" />

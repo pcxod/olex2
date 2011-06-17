@@ -1088,28 +1088,30 @@ void TXAtom::CreatePolyhedron(bool v)  {
       if( olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2] )
         deviating_x++;
     }
-    if( deviating < 3 || deviating_x < 3 )  // a proper polyhedra
+    if( deviating < 3 || deviating_x < 3 )  {  // a proper polyhedra
       CreatePoly(bound, polyRegular);
+    }
     else  // two polyhedra of atom outside..
       CreatePoly(bound, polyBipyramid, &normals[2], &pc);
   }
   else  // atom outside
     CreatePoly(bound, polyPyramid);
+  GetPrimitives().GetStyle().SetParam(PolyTypeName, polyAuto, true);
 }
 //..............................................................................
 void TXAtom::SetPolyhedronType(short type)  {
-  olxstr& str_type = GetPrimitives().GetStyle().GetParam(PolyTypeName, "0", true);
+  olxstr& str_type = GetPrimitives().GetStyle().GetParam(PolyTypeName, "1", true);
   int int_type = str_type.ToInt();
   int int_mask = GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(), 0);
   if( type == polyNone )  {
     if( (int_mask & (1 << PolyhedronIndex)) != 0 )
-      UpdatePrimitives(int_mask & ~(1 << PolyhedronIndex) );
+      UpdatePrimitives(int_mask & ~(1 << PolyhedronIndex));
   }
   else  {
     if( int_type != type || (int_mask & (1 << PolyhedronIndex)) == 0 )  {
       str_type = type;
       if( (int_mask & (1 << PolyhedronIndex)) == 0 )
-        UpdatePrimitives(int_mask | (1 << PolyhedronIndex) );
+        UpdatePrimitives(int_mask | (1 << PolyhedronIndex));
       else  {
         GetPrimitives().ClearPrimitives();
         GetPrimitives().RemoveObject(*this);
