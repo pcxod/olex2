@@ -142,6 +142,7 @@
 #include "glutil.h"
 #include "refutil.h"
 #include "absorpc.h"
+#include "povdraw.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -874,6 +875,7 @@ void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TGlRenderer &r = FXApp->GetRender();
+  pov::CrdTransformer crdc(r.GetBasis());
   olxdict<TGlMaterial*, olxstr, TPrimitiveComparator> materials;
   olxdict<TXAtom*, olxstr, TPrimitiveComparator> sph_materials;
   TStrList out;
@@ -886,7 +888,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TGlOption cl_clear = r.LightModel.GetClearColor();
   out.Add("background { color rgb<") << cl_clear[0] << ',' << cl_clear[1] << ',' << cl_clear[2] << "> }";
   out.Add("camera {");
-  out.Add(" location <0,0,25>");
+  out.Add(" location <0,0,") << 3./r.GetBasis().GetZoom() << '>';
   out.Add(" angle 25");
   out.Add(" up <0,0,1>");
   out.Add(" right <-") << (float)r.GetWidth()/r.GetHeight() << "0,0>";
@@ -943,7 +945,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       }
     }
     out.Add(" object {");
-    vec3d c = a.crd() + r.GetBasis().GetCenter();
+    vec3d c = crdc.crd(a.crd());
     double ds = a.GetDrawScale();
     if( (a.DrawStyle() == adsEllipsoid || a.DrawStyle() == adsOrtep) &&
         a.GetEllipsoid() != NULL )
@@ -968,7 +970,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         << ds*a.GetEllipsoid()->GetSX() << ','
         << ds*a.GetEllipsoid()->GetSY() << ','
         << ds*a.GetEllipsoid()->GetSZ() << '>';
-      mat3d m = a.GetEllipsoid()->GetMatrix();
+      mat3d m = crdc.matr(a.GetEllipsoid()->GetMatrix());
       out.Add("  transform {");
       out.Add("   matrix <") << m[0][0] << ',' << m[0][1] << ',' << m[0][2] << ',';
       out.Add("    ")  << m[1][0] << ',' << m[1][1] << ',' << m[1][2] << ',';
@@ -983,6 +985,31 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
     out.Add("  translate <") << c[0] << ',' << c[1] << ',' << c[2] << '>';
     out.Add(" }");
+    if( a.GetPolyhedronType() != polyNone && a.GetPolyhedron() != NULL )  {
+      olxstr poly_mat_name;
+      size_t lmi = style.IndexOfMaterial("Polyhedron");
+      if( lmi != InvalidIndex )  {
+        TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
+        lmi = materials.IndexOf(&glm);
+        if( lmi == InvalidIndex )
+          poly_mat_name = materials.Add(&glm, olxstr("mat") << (materials.Count()+1));
+        else
+          poly_mat_name = materials.GetValue(lmi);
+        sph_materials(&a, poly_mat_name);
+      }
+      TXAtom::Poly &p = *a.GetPolyhedron();
+      out.Add(" union { //") << a.GetLabel();
+      for( size_t i=0; i < p.faces.Count(); i++ )  {
+        out.Add("  smooth_triangle {");
+        for( int j=0; j < 3; j++ )  {
+          out.Add("   ") << pov::to_str(crdc.crd(p.vecs[p.faces[i][j]]))
+            << pov::to_str(crdc.normal(p.norms[i]));
+        }
+        out.Add("   texture {") << poly_mat_name << '}';
+        out.Add("  }");
+      }
+      out.Add(" }");
+    }
   }
   TGXApp::BondIterator bi = FXApp->GetBonds();
   while( bi.HasNext() )  {
@@ -996,16 +1023,16 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     out.Add(" object {");
     out.Add("  union {");
     out.Add("   object { cylinder {");
-    vec3d v = b.A().crd() + r.GetBasis().GetCenter();
+    vec3d v = crdc.crd(b.A().crd());
     out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << '>';
-    v = (b.A().crd()+b.B().crd())/2 + r.GetBasis().GetCenter();
+    v = crdc.crd((b.A().crd()+b.B().crd())/2);
     out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << ">, brad}";
     out.Add("    texture {") << sph_materials[&b.A()] << '}';
     out.Add("   }");
     out.Add("   object { cylinder {");
-    v = (b.A().crd()+b.B().crd())/2 + r.GetBasis().GetCenter();
+    v = crdc.crd((b.A().crd()+b.B().crd())/2);
     out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << '>';
-    v = b.B().crd() + r.GetBasis().GetCenter();
+    v = crdc.crd(b.B().crd());
     out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << ">, brad}";
     out.Add("    texture {") << sph_materials[&b.B()] << '}';
     out.Add("   }");

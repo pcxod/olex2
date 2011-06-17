@@ -41,6 +41,12 @@ const int
   xatom_CrossId       = 6;
 
 class TXAtom: public TSAtom, public AGlMouseHandlerImp  {
+public:
+  struct Poly {
+    TArrayList<vec3f> vecs;
+    TTypeList<vec3f> norms;
+    TTypeList<TVector3<size_t> > faces;
+  };
 private:
   short FDrawStyle, FRadius;
   static uint8_t PolyhedronIndex, 
@@ -49,11 +55,6 @@ private:
     RimsIndex, 
     DisksIndex,
     CrossIndex;
-  struct Poly {
-    TArrayList<vec3f> vecs;
-    TTypeList<vec3f> norms;
-    TTypeList<TVector3<size_t> > faces;
-  };
   Poly* Polyhedron;
   TXGlLabel* Label;
   void CreatePolyhedron(bool v);
@@ -110,8 +111,8 @@ public:
   void UpdateLabel()  {  GetGlLabel().Update();  }
   inline TXAtom& Node(size_t i) const {  return (TXAtom&)TSAtom::Node(i); }
   inline TXBond& Bond(size_t i) const {  return (TXBond&)TSAtom::Bond(i); }
-
-  static olxstr GetLegend(const TSAtom& A, const short Level=2); // returns full legend with symm code
+  // returns full legend with symm code
+  static olxstr GetLegend(const TSAtom& A, const short Level=2);
   // returns level of the given legend (number of '.', basically)
   static uint16_t LegendLevel(const olxstr& legend);
   static olxstr GetLabelLegend(const TSAtom& A);
@@ -192,6 +193,7 @@ public:
 
   void SetPolyhedronType(short type);
   int GetPolyhedronType();
+  Poly *GetPolyhedron() const {  return Polyhedron;  }
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
