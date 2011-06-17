@@ -6,9 +6,6 @@
 
 UseGlNamespace();
 //..............................................................................
-//..............................................................................
-AGlScene::AGlScene() : FParent(NULL) {}
-//..............................................................................
 AGlScene::~AGlScene()  {
   Fonts.DeleteItems();
   SmallFonts.DeleteItems();
@@ -53,6 +50,20 @@ TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription) 
     SmallFonts.Add(new TGlFont(*this, SmallFonts.Count(), name))->SetIdString(fntDescription);
   }
   return *fnt;
+}
+//..............................................................................
+void AGlScene::ToDataItem(TDataItem &di) const {
+  FParent->LightModel.ToDataItem(di.AddItem("LightModel"));
+  TDataItem &fonts = di.AddItem("Fonts");
+  for( size_t i=0; i < FontCount(); i++ )
+    fonts.AddItem(_GetFont(i).GetName(), _GetFont(i).GetIdString());
+}
+//..............................................................................
+void AGlScene::FromDataItem(const TDataItem &di)  {
+  FParent->LightModel.FromDataItem(di.FindRequiredItem("LightModel"));
+  TDataItem &fonts = di.FindRequiredItem("Fonts");
+  for( size_t i=0; i < fonts.ItemCount(); i++ )
+    CreateFont(fonts.GetItem(i).GetName(), fonts.GetItem(i).GetValue());
 }
 //..............................................................................
 //..............................................................................
