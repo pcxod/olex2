@@ -47,6 +47,7 @@ const unsigned int   fpNone  = 0x00000001,
                      fpNine  = 0x00000200,
                      fpTen   = 0x00000400,
                      fpAny   = 0x0000ffff,
+                     fpCheckAny = 0x0000f000,
 
                      fpSpecialCheckA = 0x00010000,
                      fpSpecialCheckB = 0x00020000,
@@ -102,7 +103,7 @@ public:
 
 class ABasicLibrary  {
 public:
-  virtual ~ABasicLibrary()  {  ;  }
+  virtual ~ABasicLibrary()  {}
   virtual bool CheckProgramState(unsigned int state) = 0;
   virtual ALibraryContainer* GetOwner() const = 0;
   virtual ABasicLibrary* GetParentLibrary() const = 0;
@@ -116,11 +117,11 @@ class ABasicFunction: public IEObject  {
   olxstr Name;
   olxstr Description;
 protected:
-  void SetName( const olxstr& n )  {  Name = n;  }
+  void SetName(const olxstr& n)  {  Name = n;  }
   void ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxstr>& list);
   olxstr OptionsToString(const TCSTypeList<olxstr,olxstr>& list) const;
 public:
-  virtual ~ABasicFunction()  {  ;  }
+  virtual ~ABasicFunction()  {}
   virtual void Run(const TStrObjList& Params, TMacroError& E) = 0;
   virtual void Run(TStrObjList& Params, const TParamList& options, TMacroError& E) = 0;
   virtual unsigned int GetArgStateMask() const = 0;
@@ -151,9 +152,9 @@ template <class Base>
       BaseClassInstance = baseClassInstance;
       Func = func;
       SetName(funcName);
-      SetDescription( desc );
+      SetDescription(desc);
     }
-    virtual ~TFunction()  {  ;  }
+    virtual ~TFunction()  {}
 
     virtual ABasicFunction* Replicate() const  {
       return new TFunction<Base>(BaseClassInstance, Func, GetName(), ArgStateMask, GetDescription());
@@ -173,13 +174,13 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << '(';
       const size_t argC = Params.Count();
-      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
+      if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
       // the special checks are in the high word
-      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
-        E.WrongState( *this );
+      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
+        E.WrongState(*this);
         return;
       }
       try  {
@@ -202,8 +203,8 @@ template <class Base>
     void (*Func)(const TStrObjList& Params, TMacroError& E);
     olxstr RunSignature;
   public:
-    TStaticFunction( void (*func)(const TStrObjList& Params, TMacroError& E),
-               const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString() )
+    TStaticFunction(void (*func)(const TStrObjList& Params, TMacroError& E),
+               const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString())
     {
       ArgStateMask = argc;
       Func = func;
@@ -230,12 +231,12 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << '(';
       size_t argC = Params.Count();
-      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
+      if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
       if( (ArgStateMask&0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
-        E.WrongState( *this );
+        E.WrongState(*this);
         return;
       }
       try  {
@@ -293,7 +294,7 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << ' ';
       const size_t argC = Params.Count();
-      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
+      if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
@@ -343,14 +344,14 @@ template <class Base>
     olxstr RunSignature;
     TCSTypeList<olxstr,olxstr> ValidOptions;
   public:
-    TStaticMacro( void (*macro)(TStrObjList& Params, const TParamList &Options, TMacroError& E),
+    TStaticMacro(void (*macro)(TStrObjList& Params, const TParamList &Options, TMacroError& E),
                const olxstr& macroName, const olxstr& validOptions,
                unsigned int argc, const olxstr& desc=EmptyString())
     {
       ArgStateMask = argc;
       Macro = macro;
-      SetName( macroName );
-      SetDescription( desc );
+      SetName(macroName);
+      SetDescription(desc);
       ParseOptions(validOptions, ValidOptions);
     }
 
@@ -373,7 +374,7 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << ' ';
       const size_t argC = Params.Count();
-      if( (ArgStateMask & fpAny) != fpAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
+      if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
@@ -384,7 +385,7 @@ template <class Base>
         }
       }
       if( (ArgStateMask & 0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
-        E.WrongState( *this );
+        E.WrongState(*this);
         return;
       }
       try  {
