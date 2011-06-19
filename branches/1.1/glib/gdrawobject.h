@@ -47,7 +47,8 @@ public:
 
   inline const olxstr& GetCollectionName() const {  return CollectionName;  }
 
-  inline evecd& Params()  {  return FParams;  }
+  evecd& Params()  {  return FParams;  }
+  const evecd& Params() const {  return FParams;  }
 
   inline TGlRenderer& GetParent() const {  return Parent;  }
   virtual bool Orient(class TGlPrimitive& P) = 0;

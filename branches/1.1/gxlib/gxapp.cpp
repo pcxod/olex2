@@ -432,6 +432,14 @@ void TGXApp::CreateObjects(bool centerModel)  {
   }
   XLabels.Pack();
 
+  for( size_t i=0; i < Lines.Count(); i++ )  {
+    if( Lines[i].IsVisible() )  
+      Lines[i].Create();
+    else
+      Lines.NullItem(i);
+  }
+  Lines.Pack();
+
   for( size_t i=0; i < LooseObjects.Count(); i++ )  {
     if( !LooseObjects[i]->IsVisible() )  {
       delete LooseObjects[i];
@@ -1300,6 +1308,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
       SelectionCopy[0].Clear();
       StoreGroup(GetSelection(), SelectionCopy[0]);
       StoreLabels();
+      ClearLines();
       LoadingFile = true;
     }
     else if( MsgSubId == msiExit )
@@ -1308,6 +1317,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   else if( MsgId == ID_OnFileClose )  {
     if( MsgSubId == msiExit )  {
       ClearLabels();
+      ClearLines();
       XGrid().Clear();
       CreateObjects(false);
       GetRender().SetZoom(GetRender().CalcZoom());
@@ -1939,8 +1949,7 @@ TXLine& TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge
     Name.IsEmpty() ? olxstr("TXLine") << LooseObjects.Count() : Name,
     base, edge);
   XL->Create();
-  LooseObjects.Add(XL);
-  return *XL;
+  return Lines.Add(XL);
 }
 //..............................................................................
 AGDrawObject* TGXApp::FindLooseObject(const olxstr &Name)  {
@@ -3872,6 +3881,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   styles.Add(TXAtom::GetParamStyle());
   styles.Add(TXBond::GetParamStyle());
   FGlRender->GetStyles().ToDataItem(item.AddItem("Style"), styles);
+  FGlRender->GetScene().ToDataItem(item.AddItem("Scene"));
   TDataItem& ind_col = item.AddItem("ICollections");
   for( size_t i=0; i < IndividualCollections.Count(); i++ )
     ind_col.AddField( olxstr("col_") << i, IndividualCollections[i]);
@@ -3968,6 +3978,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     }
   }
 
+  TDataItem &lines = item.AddItem("Lines");
+  size_t l_cnt=0;
+  for( size_t i=0; i < Lines.Count(); i++ )  {
+    if( Lines[i].IsVisible() )
+      Lines[i].ToDataItem(lines.AddItem(++l_cnt));
+  }
+
   TDataItem& renderer = item.AddItem("Renderer");
   renderer.AddField("min", PersUtil::VecToStr(FGlRender->MinDim()));
   renderer.AddField("max", PersUtil::VecToStr(FGlRender->MaxDim()));
@@ -3977,6 +3994,8 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FGlRender->Clear();
   ClearXObjects();
   ClearLabels();
+  ClearLines();
+  LabelInfo.Clear();
   ClearGroupDefinitions();
   OverlayedXFiles.Clear();
   TXAtom::TelpProb(0);  //force re-reading
@@ -3984,6 +4003,9 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   TXAtom::DefDS(0);
 
   FGlRender->GetStyles().FromDataItem(item.FindRequiredItem("Style"), true);
+  TDataItem *scene_item = item.FindItem("Scene");
+  if( scene_item != NULL )
+    FGlRender->GetScene().FromDataItem(*scene_item);
 
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
   TDataItem* overlays = item.FindItem("Overlays");
@@ -4003,6 +4025,12 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   FXGrid->FromDataItem(item.FindRequiredItem("Grid"), zis);
   FDBasis->FromDataItem(item.FindRequiredItem("DBasis"));
+
+  TDataItem *lines = item.FindItem("Lines");
+  if( lines != NULL )  {
+    for( size_t i=0; i < lines->ItemCount(); i++ )
+      Lines.Add(new TXLine(*FGlRender)).FromDataItem(lines->GetItem(i));
+  }
 
   TDataItem& visibility = item.FindRequiredItem("Visibility");
   FHydrogensVisible = visibility.GetRequiredField("h_atoms").ToBool();

@@ -2022,6 +2022,7 @@ void TLattice::ToDataItem(TDataItem& item) const  {
 }
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {
+  TActionQueueLock ql(&OnAtomsDeleted);
   Clear(true);
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
@@ -2079,7 +2080,8 @@ void TLattice::FromDataItem(TDataItem& item)  {
   }
   GetAsymmUnit()._UpdateConnInfo();
   GetUnitCell().FindSymmEq();
-  //GetUnitCell().FindSymmEq();
+  for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
+    GetAsymmUnit().GetAtom(i).SetDeleted(false);
   BuildAtomRegistry();
 }
 //..............................................................................
