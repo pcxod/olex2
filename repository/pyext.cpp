@@ -128,21 +128,39 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
   return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Undefined object");
 }
 //..............................................................................
+TLibrary *FindOrCreateLibrary(const olxstr& name)  {
+  TLibrary *lib = PythonExt::GetInstance()->GetBindLibrary();
+  if( lib == NULL )  return lib;
+  if( !name.IsEmpty() )  {
+    TStrList toks(name, '.');
+    for( size_t i=0; i < toks.Count(); i++ )  {
+      TLibrary *sl = lib->GetLibraryByName(toks[i]);
+      if( sl == NULL )
+        sl = lib->AddLibrary(toks[i]);
+      lib = sl;
+    }
+  }
+  return lib;
+}
+//..............................................................................
 PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
   PyObject* fun;
+  olxstr lib_name;
   bool profile = false;
-  if( !PyArg_ParseTuple(args, "O|b", &fun, &profile) )
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O|b");
+  if( !PythonExt::ParseTuple(args, "O|bw", &fun, &profile, &lib_name) )
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O|bw");
   if( !PyCallable_Check(fun) )
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Parameter must be callable");
-  if( PythonExt::GetInstance()->GetBindLibrary() == NULL )
+  TLibrary *lib = FindOrCreateLibrary(lib_name);
+  if( lib == NULL )
     return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, 
     "Olex2 binding python library is not initialised...");
 
-  TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete( new TFuncWrapper(fun, true, profile) );
+  TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete(
+    new TFuncWrapper(fun, true, profile));
   try  {
-    PythonExt::GetInstance()->GetBindLibrary()->RegisterFunction(
-      new TFunction<TFuncWrapper>(fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny), true );
+    lib->RegisterFunction(new TFunction<TFuncWrapper>(
+      fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny), true);
     return Py_BuildValue("b", true);
   }
   catch( const TExceptionBase& exc )  {
@@ -184,18 +202,21 @@ PyObject* runUnregisterCallback(PyObject* self, PyObject* args)  {
 PyObject* runRegisterMacro(PyObject* self, PyObject* args)  {
   olxstr validOptions;
   PyObject* fun;
+  olxstr lib_name;
   bool profile = false;
-  if( !PythonExt::ParseTuple(args, "Ow|b", &fun, &validOptions, &profile) )
+  if( !PythonExt::ParseTuple(args, "Ow|bw", &fun, &validOptions, &profile, &lib_name) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "Ow|b");
   if( !PyCallable_Check(fun) )
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Parameter must be callable");
-  if( PythonExt::GetInstance()->GetBindLibrary() == NULL )
+  TLibrary *lib = FindOrCreateLibrary(lib_name);
+  if( lib == NULL )
     return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, 
     "Olex2 binding python library is not initialised...");
-  TMacroWrapper* mw = PythonExt::GetInstance()->AddToDelete( new TMacroWrapper(fun, profile) );
+  TMacroWrapper* mw = PythonExt::GetInstance()->AddToDelete(
+    new TMacroWrapper(fun, profile));
   try  {
-    PythonExt::GetInstance()->GetBindLibrary()->RegisterMacro(
-      new TMacro<TMacroWrapper>(mw, &TMacroWrapper::Call, PyEval_GetFuncName(fun), validOptions, fpAny), true );
+    lib->RegisterMacro(new TMacro<TMacroWrapper>(
+      mw, &TMacroWrapper::Call, PyEval_GetFuncName(fun), validOptions, fpAny), true);
     return Py_BuildValue("b", true);
   }
   catch( const TExceptionBase& exc )  {
@@ -362,7 +383,7 @@ PythonExt::~PythonExt()  {
 void PythonExt::CheckInitialised()  {
   if( !Py_IsInitialized() )  {
     Py_Initialize();
-    Py_InitModule( "olex", Methods );
+    Py_InitModule("olex", Methods);
     for( size_t i=0; i < ToRegister.Count(); i++ )
       (*ToRegister[i])();
   }
@@ -463,14 +484,15 @@ TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
   PythonExt::GetOlexProcessor()->GetLibrary().AttachLibrary(BindLibrary=new TLibrary("spy"));
   Library = new TLibrary(name.IsEmpty() ? olxstr("py") : name);
   Library->RegisterStaticFunction(
-    new TStaticFunction(::Export, "Export", fpOne, "Exports library to a python file") );
+    new TStaticFunction(::Export, "Export", fpOne, "Exports library to a python file"));
   Library->RegisterMacro<PythonExt>(
-    new TMacro<PythonExt>(this, &PythonExt::macReset, "Reset", EmptyString(), fpNone) );
+    new TMacro<PythonExt>(this, &PythonExt::macReset, "Reset", EmptyString(), fpNone));
   Library->RegisterMacro<PythonExt>(
-    new TMacro<PythonExt>(this, &PythonExt::macRun, "Run", EmptyString(), fpAny^fpNone, "Runs provided file") );
+    new TMacro<PythonExt>(this, &PythonExt::macRun, "Run", EmptyString(),
+    fpAny^fpNone, "Runs provided file"));
   Library->RegisterFunction<PythonExt>(
     new TFunction<PythonExt>(this, &PythonExt::funLogLevel, "LogLevel", fpNone|fpOne,
-    "Sets log level - default is macro, look at LogLevel for more information") );
+    "Sets log level - default is macro, look at LogLevel for more information"));
   return Library;
 }
 
