@@ -24,6 +24,7 @@ private:
   olxstr PageRequested;
   wxWindow* InFocus;
   TActionQList Actions;
+  olxstr PopupName;
 protected:
   olxstr WebFolder, FileName, HomePage;   // the base of all web files
   olxstr NormalFont, FixedFont;
@@ -149,9 +150,11 @@ protected:
   Control FindControl(const olxstr &name, TMacroError& me,
     short needed, const char* location);
 public:
-  THtml(wxWindow *Parent, ALibraryContainer* LC, int flags=4);
+  THtml(wxWindow *Parent, ALibraryContainer* LC,
+    const olxstr &pop_name=EmptyString(), int flags=4);
   virtual ~THtml();
 
+  const olxstr &GetPopupName() const {  return PopupName;  }
   void OnKeyDown(wxKeyEvent &event);  
   void OnChar(wxKeyEvent &event);  
   void OnNavigation(wxNavigationKeyEvent &event);  
@@ -159,10 +162,10 @@ public:
   void SetSwitchState(THtmlSwitch &sw, size_t state);
 
   int GetBorders() const {  return wxHtmlWindow::m_Borders;  }
-  void SetFonts(const olxstr &normal, const olxstr &fixed )  {
+  void SetFonts(const olxstr &normal, const olxstr &fixed)  {
     this->NormalFont = normal;
     this->FixedFont = fixed;
-    wxHtmlWindow::SetFonts( normal.u_str(), fixed.u_str() );
+    wxHtmlWindow::SetFonts(normal.u_str(), fixed.u_str());
   }
   void GetFonts(olxstr &normal, olxstr &fixed)  {
     normal = this->NormalFont;

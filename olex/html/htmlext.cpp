@@ -33,9 +33,9 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_SIZE(THtml::OnSizeEvt)
 END_EVENT_TABLE()
 //..............................................................................
-THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, int flags) :
+THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, const olxstr &pop_name, int flags) :
   wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, flags),
-  WI(this), ObjectsState(*this),
+  PopupName(pop_name), WI(this), ObjectsState(*this),
   InFocus(NULL),
   OnLink(Actions.New("ONLINK")),
   OnURL(Actions.New("ONURL")),
@@ -301,7 +301,7 @@ void THtml::GetTraversibleIndeces(index_t& current, index_t& another, bool forwa
 }
 //..............................................................................
 void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
-  // prevent pae re-loading and object deletion
+  // prevent page re-loading and object deletion
   TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
