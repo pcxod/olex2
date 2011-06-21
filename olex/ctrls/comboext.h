@@ -21,6 +21,7 @@ namespace ctrl_ext {
     void ChangeEvent(wxCommandEvent& event);
     void EnterPressedEvent(wxCommandEvent& event);
     olxstr Data, OnChangeStr, OnLeaveStr, OnEnterStr, OnReturnStr;
+    olxstr StrValue;
   protected:
     void _AddObject( const olxstr &Item, IEObject* Data, bool Delete);
 #ifdef __WIN32__
@@ -76,6 +77,9 @@ namespace ctrl_ext {
     void SetReadOnly(bool v)   {  
       v ? WI.AddWindowStyle(wxCB_READONLY) : WI.DelWindowStyle(wxCB_READONLY);  
     }
+
+    void HandleOnLeave();
+    void HandleOnEnter();
 
     TActionQueue &OnChange, &OnLeave, &OnEnter, &OnReturn;
 

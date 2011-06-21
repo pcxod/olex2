@@ -312,8 +312,7 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
       ((TTextEdit*)prev)->OnLeave.Execute(prev, &s);
     }
     else if( EsdlInstanceOf(*prev, TComboBox) )  {
-      olxstr s = ((TComboBox*)prev)->GetOnLeaveStr();
-      ((TComboBox*)prev)->OnLeave.Execute(prev, &s);
+      ((TComboBox*)prev)->HandleOnLeave();
     }
   }
   if( next != NULL )  {
@@ -323,8 +322,7 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
       ((TTextEdit*)next)->SetSelection(-1,-1);
     }
     else if( EsdlInstanceOf(*next, TComboBox) )  {
-      olxstr s = ((TComboBox*)next)->GetOnEnterStr();
-      ((TComboBox*)next)->OnEnter.Execute(next, &s);
+      ((TComboBox*)next)->HandleOnEnter();
       ((TComboBox*)next)->SetSelection(-1,-1);
     }
   }

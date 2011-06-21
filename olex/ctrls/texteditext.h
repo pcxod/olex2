@@ -14,6 +14,7 @@ namespace ctrl_ext  {
     void LeaveEvent(wxFocusEvent& event);
     void EnterEvent(wxFocusEvent& event);
     olxstr Data, OnChangeStr, OnLeaveStr, OnEnterStr, OnReturnStr;
+    olxstr StrValue;
   public:
     TTextEdit(wxWindow *Parent, int style=0) :
       wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style),
@@ -33,7 +34,10 @@ namespace ctrl_ext  {
     virtual ~TTextEdit()  {}
 
     olxstr GetText() const {  return wxTextCtrl::GetValue(); }
-    void SetText(const olxstr &T)  {  wxTextCtrl::SetValue(T.u_str()); }
+    void SetText(const olxstr &T)  {
+      StrValue = T;
+      wxTextCtrl::SetValue(StrValue.u_str());
+    }
 
     inline bool IsReadOnly() const {   return WI.HasWindowStyle(wxTE_READONLY);  }
     inline void SetReadOnly(bool v)  {  WI.AddWindowStyle(wxTE_READONLY);  }

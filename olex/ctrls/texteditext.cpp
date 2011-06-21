@@ -23,6 +23,7 @@ void TTextEdit::ClickEvent(wxMouseEvent& event)  {
 }
 //..............................................................................
 void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
+  StrValue = GetText();
   StartEvtProcessing()
     OnChange.Execute(this);
   EndEvtProcessing()
@@ -30,7 +31,6 @@ void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
 //..............................................................................
 void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
   StartEvtProcessing()
-    OnChange.Execute(this, &GetOnChangeStr());
     OnReturn.Execute(this, &GetOnReturnStr());
   EndEvtProcessing()
 }
@@ -52,14 +52,20 @@ void TTextEdit::CharEvent(wxKeyEvent& event)  {
 }
 //..............................................................................
 void TTextEdit::LeaveEvent(wxFocusEvent& event)  {
+  olxstr v = GetText();
+  bool changed = (v != StrValue);
   StartEvtProcessing()
-   OnLeave.Execute(this, &GetOnLeaveStr());
+    if( changed )  {
+      OnChange.Execute(this, &GetOnChangeStr());
+      StrValue = v;
+    }
+    OnLeave.Execute(this, &GetOnLeaveStr());
   EndEvtProcessing()
 }
 //..............................................................................
 void TTextEdit::EnterEvent(wxFocusEvent& event)  {
   StartEvtProcessing()
-   OnEnter.Execute(this, &GetOnEnterStr());
+    OnEnter.Execute(this, &GetOnEnterStr());
   EndEvtProcessing()
 }
 //..............................................................................
