@@ -14,7 +14,6 @@ BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
 #else
 BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
 #endif
-//  EVT_TEXT(-1, TComboBox::ChangeEvent)
   EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
   EVT_TEXT_ENTER(-1, TComboBox::EnterPressedEvent)
 END_EVENT_TABLE()
@@ -31,7 +30,8 @@ TComboBox::~TComboBox()  {
 }
 //..............................................................................
 void TComboBox::SetText(const olxstr& T)  {  
-  SetValue( T.u_str() );  
+  StrValue = T;
+  SetValue(StrValue.u_str());  
 #ifdef __WIN32__
   if( GetTextCtrl() != NULL )
     GetTextCtrl()->SetInsertionPoint(0);
@@ -39,6 +39,7 @@ void TComboBox::SetText(const olxstr& T)  {
 }
 //..............................................................................
 void TComboBox::Clear() {
+  StrValue.SetLength(0);
   for( unsigned int i=0; i < GetCount(); i++ )  {
     TDataObj* d_o = (TDataObj*)GetClientData(i);
     if( d_o != NULL )  {
@@ -74,12 +75,12 @@ void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
   StartEvtProcessing()
-    OnChange.Execute(this, &GetOnChangeStr());
     OnReturn.Execute(this, &GetOnReturnStr());
   EndEvtProcessing()
 }
 //..............................................................................
 void TComboBox::ChangeEvent(wxCommandEvent& event)  {
+  StrValue = GetValue();
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
   StartEvtProcessing()
@@ -121,11 +122,29 @@ void TComboBox::AddItems(const TStrList& EL) {
     size_t ind = EL[i].IndexOf( "<-" );
     if(  ind != InvalidIndex )  {
       olxstr tmp = EL[i].SubStringFrom(ind + 2);
-      _AddObject( EL[i].SubStringTo(ind), tmp.Replicate(), true);
+      _AddObject(EL[i].SubStringTo(ind), tmp.Replicate(), true);
     }
     else
-      _AddObject( EL[i], NULL, false );
+      _AddObject(EL[i], NULL, false);
   }
+}
+//..............................................................................
+void TComboBox::HandleOnLeave()  {
+  olxstr v = GetValue();
+  bool changed = (v != StrValue);
+  StartEvtProcessing()
+    if( changed )  {
+      OnChange.Execute(this, &GetOnChangeStr());
+      StrValue = v;
+    }
+    OnLeave.Execute(this, &GetOnLeaveStr());
+  EndEvtProcessing()
+}
+//..............................................................................
+void TComboBox::HandleOnEnter()  {
+  StartEvtProcessing()
+    OnEnter.Execute(this, &GetOnEnterStr());
+  EndEvtProcessing()
 }
 //..............................................................................
 #ifdef __WIN32__
