@@ -302,7 +302,6 @@ generic_files_list = fileListToStringList('xlib', xlib) + \
                 fileListToStringList('xlib/absorpc', xlib_absorpc)
 generic_files = processFileNameList(generic_files_list, env, out_dir+'generic')
 
-olex2c_env = env.Clone()
 if sys.platform[:3] == 'win':
   tests_env = env.Clone()
   wx_env = env.Clone()
@@ -364,19 +363,6 @@ else:
   tests_files.append('./repository/wxzipfs.cpp')
 tests_files = processFileNameList(tests_files, tests_env, out_dir+'tests')
 tests_env.Program(out_dir+'exe/tests', tests_files)
-
-# make olex2c?
-olex2c_files = processFileNameList(olex2c+np_repository+py_repository, olex2c_env, out_dir+'olex2c')
-if sys.platform[:3] == 'win':
-  res_file = out_dir + 'olex2c/app.res'
-  olex2c_files = olex2c_files + processFileNameList(olex2c_win, olex2c_env, out_dir+'olex2c')
-  olex2c_files = olex2c_files + olex2c_env.RES(res_file, 'olex2c/app.rc')
-  olex2c_env.Append(RCFLAGS=['/l 0x809'])
-  olex2c_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/olex2c.pdb'])
-else:
-  olex2c_env.Append(LIBS=['readline'])
-
-olex2c_env.Program(out_dir+'exe/olex2c', generic_files + olex2c_files)
 
 try:
   import _imaging
