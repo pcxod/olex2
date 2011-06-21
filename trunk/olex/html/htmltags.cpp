@@ -179,7 +179,11 @@ TAG_HANDLER_PROC(tag)  {
   AOlxCtrl* CreatedObject = NULL;
   wxWindow* CreatedWindow = NULL;
   olxdict<olxstr,olxstr, olxstrComparator<false> > macro_map;
-  macro_map.Add("~name~", ObjectName);
+  // init the shortcuts
+  {
+    olxstr pn = TGlXApp::GetMainForm()->GetHtml()->GetPopupName();
+    macro_map.Add("~name~", pn.IsEmpty() ? ObjectName : (pn << '.' << ObjectName));
+  }
   try  {
     Tmp = tag.GetParam(wxT("WIDTH"));
     TGlXApp::GetMainForm()->ProcessFunction(Tmp, SrcInfo, false);
@@ -765,13 +769,16 @@ TAG_HANDLER_PROC(tag)  {
     }
 #endif
     if( m_WParser->GetActualColor().IsOk() )
-      CreatedWindow->SetForegroundColour( m_WParser->GetActualColor() );
+      CreatedWindow->SetForegroundColour(m_WParser->GetActualColor());
     if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
-      CreatedWindow->SetBackgroundColour( m_WParser->GetContainer()->GetBackgroundColour() );
+      CreatedWindow->SetBackgroundColour(m_WParser->GetContainer()->GetBackgroundColour());
   }
   if( CreatedObject != NULL )  {
-    if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
+    if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(
+      ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
+    {
       TBasicApp::NewLogEntry(logError) << "HTML: duplicated object \'" << ObjectName << '\'';
+    }
     if( CreatedWindow != NULL && !ObjectName.IsEmpty() )  {
       CreatedWindow->Hide();
       olxstr bgc, fgc;

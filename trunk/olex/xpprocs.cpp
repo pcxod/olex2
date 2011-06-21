@@ -5079,9 +5079,6 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   // check if the popup already exists
   TPopupData *pd = GetPopup(Cmds[0]);
   if( pd != NULL )  {
-    //pd->Dialog->SetWindowStyle( iBorder );
-    //pd->Dialog->SetSize(x, y, width, height, wxSIZE_USE_EXISTING);
-    //pd->Dialog->SetTitle( title );
     THtml* ph = FHtml;
     FHtml = pd->Html;
     try  {  pd->Html->LoadPage(Cmds[1].u_str());  }
@@ -5089,7 +5086,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     FHtml = ph;
     pd->Html->SetHomePage(TutorialDir + Cmds[1]);
     if( Options.Contains('w') && Options.Contains('h') )  {
-#ifdef __WXGTK__  // any aother way to forse move ???
+#ifdef __WXGTK__  // any another way to force move ???
       pd->Dialog->SetSize(5000, 5000, 0, 0);
 #endif
       pd->Dialog->SetSize(x, y, width, height);
@@ -5103,9 +5100,8 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   TDialog *dlg = new TDialog(this, title.u_str(), wxT("htmlPopupWindow"), wxPoint(x,y),
     wxSize(width, height), iBorder);
-  THtml *html1 = new THtml(dlg, FXApp);
+  THtml *html1 = new THtml(dlg, FXApp, Cmds[0]);
   dlg->OnResize.Add(html1, html_parent_resize, msiExecute);
-//  html1->WI.AddWindowStyle(wxTAB_TRAVERSAL);
   html1->SetWebFolder(TutorialDir);
   html1->SetHomePage(TutorialDir + Cmds[1]);
   html1->SetMovable(false);
