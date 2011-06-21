@@ -1,7 +1,5 @@
 #ifndef __olx_httpfs_H
 #define __olx_httpfs_H
-/* POSIX HTTP file fetching utility,
-(c) O Dolomanov, 2004-2009 */
 #include "ebase.h"
 #ifdef __WIN32__
   #include <winsock.h>
@@ -15,7 +13,9 @@
 #include "url.h"
 #include "efile.h"
 #include "edict.h"
-//  #pragma link "../..lib/psdk/mswsock.lib"
+
+/* POSIX HTTP file fetching utility,
+*/
 
 const uint16_t  // extra request headers
   httpHeaderESession = 0x0001,

@@ -1,21 +1,14 @@
-//---------------------------------------------------------------------------
 #include "fsext.h"
 #include "ememstream.h"
 #include "etime.h"
 #include "egc.h"
 #include "eutf8.h"
 
-#ifdef __BORLANDC__
-  #pragma hdrstop
-  #include <winbase.h>
-#endif
-
 #ifndef _NO_PYTHON
 #include "pyext.h"
 #endif
 
 #include "wxzipfs.h"
-//#include "wxzipfsext.h"
 
   const int16_t TFileHandlerManager::FVersion = 0x0001;
   const char TFileHandlerManager::FSignature[]="ODF_"; // olex data file?

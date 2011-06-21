@@ -1,8 +1,6 @@
-#ifndef __SMART_OLX_STR
-#define __SMART_OLX_STR
-
+#ifndef __olx_sdl_ostr_H
+#define __olx_sdl_ostr_H
 #include "olx_istring.h"
-
 BeginEsdlNamespace()
 
 #ifdef __BORLANDC__

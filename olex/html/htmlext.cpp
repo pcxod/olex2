@@ -1,13 +1,10 @@
 #include "htmlext.h"
-
 #include "estack.h"
 #include "exparse/exptree.h"
 #include "htmlswitch.h"
 #include "imgcellext.h"
 #include "../mainform.h"
-
 #include "wx/tooltip.h"
-
 #include "../xglapp.h"
 #include "../obase.h"
 #include "utf8file.h"
@@ -1906,4 +1903,3 @@ void THtml::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroError &
   Groups.AddNew(Cmds);
 }
 //..............................................................................
-

@@ -1,19 +1,10 @@
-//---------------------------------------------------------------------------//
-// TXFiles: TIns - basic procedures for the SHELX instruction files
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-#include <stdlib.h>
-
 #include "ins.h"
-
 #include "bapp.h"
 #include "log.h"
-
 #include "catom.h"
 #include "ellipsoid.h"
 #include "unitcell.h"
 #include "symmparser.h"
-
 #include "efile.h"
 #include "lst.h"
 #include "p4p.h"
@@ -32,9 +23,6 @@
 #undef GetObject
 #undef Object
 
-//----------------------------------------------------------------------------//
-// TIns function bodies
-//----------------------------------------------------------------------------//
 TIns::TIns()  {  LoadQPeaks = true;  }
 //..............................................................................
 TIns::~TIns()  {  Clear();  }
@@ -1805,4 +1793,3 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   }
   return false;
 }
-

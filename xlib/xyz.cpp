@@ -1,9 +1,4 @@
-//---------------------------------------------------------------------------//
-// TXyz - basic class for loading XYZ files
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "xyz.h"
-
 #include "catom.h"
 #include "unitcell.h"
 

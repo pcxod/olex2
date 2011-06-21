@@ -1,21 +1,9 @@
-//---------------------------------------------------------------------------//
-// see TIniStream implementation for details
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include <string.h>
 #include "ememstream.h"
 #include "exception.h"
 #include "efile.h"
-
-
 UseEsdlNamespace()
-//----------------------------------------------------------------------------//
-//TStream function bodies
-//----------------------------------------------------------------------------//
+
 TEMemoryStream::TEMemoryStream(IInputStream& is) :
   TDirectionalList<char>(OlxIStream::CheckSizeT(is.GetSize()+1))
 {
@@ -101,4 +89,3 @@ void TEMemoryStream::LoadFromFile(const olxstr& FN)  {
   file >> *this;
   SetPosition(0);
 }
-

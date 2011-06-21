@@ -1,12 +1,7 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "glmaterial.h"
 #include "dataitem.h"
 #include "estrbuffer.h"
 
-UseGlNamespace();
-//..............................................................................
 const TGlOption GlobalGlFunction(BlackColor);
 //..............................................................................
 bool TGlMaterial::operator == (const AGOProperties &G) const  {

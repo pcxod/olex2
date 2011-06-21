@@ -2,7 +2,6 @@
 #define __olx_updateoptions_H
 #include "ctrls.h"
 #include "updateapi.h"
-//---------------------------------------------------------------------------
 
 class TdlgUpdateOptions: public TDialog  {
   wxStaticText *stProxy, *stProxyUser, *stProxyPasswd, 

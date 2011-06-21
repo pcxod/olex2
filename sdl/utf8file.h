@@ -1,8 +1,9 @@
-#ifndef __OLX__UTF8_FILE__
-#define __OLX__UTF8_FILE__
+#ifndef __olx_sdl_utf8file_H
+#define __olx_sdl_utf8file_H
 #include "efile.h"
 #include "eutf8.h"
 #include "estrlist.h"
+BeginEsdlNamespace()
 
 class TUtf8File : public TEFile  {
 protected:
@@ -156,4 +157,5 @@ public:
 
 };
 
+EndEsdlNamespace()
 #endif

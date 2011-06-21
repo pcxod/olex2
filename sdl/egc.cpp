@@ -1,12 +1,8 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "egc.h"
 #include "bapp.h"
 
-  TEGC* TEGC::Instance = NULL;
-  volatile bool TEGC::RemovalManaged = false;
+TEGC* TEGC::Instance = NULL;
+volatile bool TEGC::RemovalManaged = false;
 //..............................................................................
 TEGC::TEGC()  {
   // force TBasicApp::OnIdle to delete this object
@@ -124,5 +120,3 @@ bool TEGC::RemoveObject(OEntry& head, IEObject* obj)  {
   return false;
 }
 //..............................................................................
-
-

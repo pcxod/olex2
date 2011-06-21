@@ -1,16 +1,8 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "xfader.h"
 #include "glmaterial.h"
 #include "glrender.h"
 #include "gpcollection.h"
 #include "glprimitive.h"
-
-UseGlNamespace()
-//..............................................................................
-//..............................................................................
 
 TXFader::TXFader(TGlRenderer& R, const olxstr& collectionName):
   AGDrawObject(R, collectionName)  
@@ -223,4 +215,3 @@ class TLibrary*  TXFader::ExportLibrary(const olxstr& name)  {
   AGDrawObject::ExportLibrary(*lib);
   return lib;
 }
-

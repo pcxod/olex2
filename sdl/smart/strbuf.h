@@ -87,4 +87,3 @@ public:
   const Entry *GetHead() const {  return Head;  }
 };
 #endif
-

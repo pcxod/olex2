@@ -3,8 +3,6 @@
 #include "gloption.h"
 #include "emath.h"
 #include "estlist.h"
-
-//---------------------------------------------------------------------------
 BeginGlNamespace()
 
 const GLint

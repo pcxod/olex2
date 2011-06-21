@@ -1,11 +1,12 @@
 #ifndef __olx_file_tree_H
 #define __olx_file_tree_H
-
 #include "efile.h"
 #include "actions.h"
 #include "utf8file.h"
 #undef CopyFile
+
 BeginEsdlNamespace()
+
 class TFileTree  {
 public:
   typedef TPtrList<const TFileListItem> TFilePtrList;
@@ -245,7 +246,5 @@ public:
   friend class TFileTree::Folder;
 };
 
-
 EndEsdlNamespace()
 #endif
-

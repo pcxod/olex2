@@ -1,10 +1,9 @@
-/* (c) O. Dolomanov, 2009 */
 #ifndef __olx_xl_xlcongen_H
 #define __olx_xl_xlcongen_H
 #include "congen.h"
 #include "ins.h"
-
 BeginXlibNamespace()
+
 class TXlConGen : public AConstraintGenerator {
 public:
   TXlConGen(RefinementModel& rm) : AConstraintGenerator(rm) {}

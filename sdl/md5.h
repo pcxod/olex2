@@ -1,13 +1,11 @@
 #ifndef __olx_sdl_md5_H
 #define __olx_sdl_md5_H
 #include "hashing.h"
-/* MD5 message digest implementation, for reference look at:
-  http://en.wikipedia.org/wiki/MD5
-  (c) O Dolomanov, 2009
-*/
-
 BeginEsdlNamespace()
 
+/* MD5 message digest implementation, for reference look at:
+  http://en.wikipedia.org/wiki/MD5
+*/
 class MD5Impl  {
   unsigned char digest[16];
   uint32_t state[4], bf[16];

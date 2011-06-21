@@ -10,10 +10,11 @@
 #endif
 
 BeginEsdlNamespace()
+
 // default buffer size, to be rational to avoid overhead with data associated with new
 // int *i = new int takes more memory than just int!
 const size_t DefBufferSize = 1024;
-//---------------------------------------------------------------------------
+
 template <typename T>
 class TTBuffer : public AReferencible  {
   size_t Size, Capacity;
@@ -170,4 +171,3 @@ public:
 
 EndEsdlNamespace()
 #endif
-

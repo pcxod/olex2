@@ -3,7 +3,6 @@
 #include "gxbase.h"
 #include "gdrawobject.h"
 #include "IsoSurface.h"
-
 BeginGxlNamespace()
 
 class TXBlob: public AGDrawObject  {
@@ -21,7 +20,6 @@ public:
   TTypeList<vec3f> normals;
   TTypeList<IsoTriangle> triangles;
 };
-
 
 EndGxlNamespace()
 #endif

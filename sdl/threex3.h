@@ -1,4 +1,3 @@
-/* (c) O. Dolomanov, 2008 */
 #ifndef __olx_sdl_3x3
 #define __olx_sdl_3x3
 #include "emath.h"
@@ -678,5 +677,4 @@ protected:  // used in GaussSolve to sort the matrix
   typedef TPtrList<mat3d> mat3d_plist;
 
 EndEsdlNamespace()
-
 #endif

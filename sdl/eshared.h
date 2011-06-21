@@ -1,8 +1,8 @@
-// (c) O. Dolomanov, 2010
 #ifndef __olx_sdl_shared_H
 #define __olx_sdl_shared_H
 #include "ebase.h"
 BeginEsdlNamespace()
+
 // not synchronised, i.e. thread safe yet
 template <class Data> class Shared  {
   struct Share {

@@ -1,11 +1,10 @@
-// generic sorted list
-#ifndef __olxs_sptr_list_H
-#define __olxs_sptr_list_H
+#ifndef __olxsdl_sortedlist_H
+#define __olxsdl_sortedlist_H
 #include "typelist.h"
 #include "sorted.h"
-
 BeginEsdlNamespace()
 
+// generic sorted list
 template <class ListClass, class Comparator, typename TypeClass> class TTSortedListBase {
 protected:
   ListClass list;
@@ -182,4 +181,3 @@ public:
 
 EndEsdlNamespace()
 #endif
-

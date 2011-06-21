@@ -1,12 +1,6 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "groupobj.h"
-
 UseEsdlNamespace()
-//----------------------------------------------------------------------------//
-// TGroupObject
-//----------------------------------------------------------------------------//
+
 AGOProperties& AGroupObject::SetProperties( const AGOProperties& C)  {
   return *(Properties = Parent.NewProps(*this, Properties, C));
 }
@@ -87,4 +81,3 @@ AGOProperties* TObjectGroup::NewProps(AGroupObject& Sender, AGOProperties* OldPr
   }
 }
 //..............................................................................
-

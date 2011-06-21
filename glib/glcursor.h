@@ -4,7 +4,6 @@
 #include "gdrawobject.h"
 #include "actions.h"
 #include "macroerror.h"
-
 BeginGlNamespace()
 
 class TGlCursor: public AGDrawObject, AEventsDispatcher  {

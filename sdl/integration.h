@@ -1,5 +1,5 @@
-#ifndef Olex_Integration_H_
-#define Olex_Integration_H_
+#ifndef __olx_sld_integration_H
+#define __olx_sld_integration_H
 
 #ifdef HAVE_GCCVISIBILITYPATCH
   #define DllExport __attribute__ ((visibility("default")))
@@ -79,4 +79,3 @@ namespace olex {
 };  // end namespace olex
 
 #endif
- 

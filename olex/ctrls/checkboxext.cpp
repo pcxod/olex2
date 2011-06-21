@@ -47,4 +47,3 @@ void TCheckBox::ClickEvent(wxCommandEvent &event)  {
       OnUncheck.Execute((AOlxCtrl*)this, &GetOnUncheckStr());
   EndEvtProcessing()
 }
-

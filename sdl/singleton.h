@@ -1,10 +1,8 @@
 #ifndef __olx_singleton__H
 #define __olx_singleton__H
-
 #include "ebase.h"
 #include "edict.h"
 #include "olxth.h"
-
 BeginEsdlNamespace()
 
 /* the Impl class must provide the GetInstance method, which will allow it to monitor

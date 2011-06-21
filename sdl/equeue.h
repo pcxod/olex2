@@ -1,13 +1,13 @@
-/* very simple queue implementation, (c) Dolomanov, 2008 
-  performs as a 
-  queue (Push,Pop) alternatively (PushLast, PopFirst)
-  stack (PushFirst, PopFirst:pop)
-*/
-#ifndef __olx_queue_h
-#define __olx_queue_h
+#ifndef __olx_sdl_queue_h
+#define __olx_sdl_queue_h
 #include "ebase.h"
 BeginEsdlNamespace()
 
+/* very simple queue implementation,
+  performs as a
+  queue (Push,Pop) alternatively (PushLast, PopFirst)
+  stack (PushFirst, PopFirst:pop)
+*/
 template <class T> class TQueue  {
   struct item  {
     item* next;
@@ -70,4 +70,3 @@ public:
 
 EndEsdlNamespace()
 #endif
-

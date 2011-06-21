@@ -1,18 +1,11 @@
-//----------------------------------------------------------------------------//
-// namespace TEObjects: lists
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
-#ifndef sstrlistH
-#define sstrlistH
-//---------------------------------------------------------------------------
+#ifndef __olx_sdl_sstrlistH
+#define __olx_sdl_sstrlistH
 #include "ebase.h"
 #include "string.h"
 #include "estrlist.h"
-
 BeginEsdlNamespace()
 
-class TSStringList: public TEStringList
-{
+class TSStringList: public TEStringList {
   bool FCI;
 protected:
   // insert functions break the functionality of the object, so they are here

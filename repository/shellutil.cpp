@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "shellutil.h"
 #include "efile.h"
 #include "exception.h"
@@ -31,8 +27,6 @@
 
 //#undef __WIN32__  // compilation test for wxWidgets
 
-
-//..............................................................................
 bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
        const olxstr& ObjectPath,const olxstr& description, bool AddRunAs)  {
 #ifdef __WIN32__
@@ -299,4 +293,3 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
   freeifaddrs(ifaddrs);
 #endif
 }
-

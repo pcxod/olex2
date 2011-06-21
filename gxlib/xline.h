@@ -2,7 +2,6 @@
 #define __olx_gxl_xline_H
 #include "xbond.h"
 #include "xatom.h"
-
 BeginGxlNamespace()
 
 class TXLine: public TXBond  {
@@ -33,4 +32,3 @@ public:
 
 EndGxlNamespace()
 #endif
- 

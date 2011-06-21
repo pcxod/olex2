@@ -1,10 +1,9 @@
-#ifndef __olx_test_suit_H
-#define __olx_test_suit_H
-/* a very simple test functions wrapper. */
+#ifndef __olx_sdl_test_suit_H
+#define __olx_sdl_test_suit_H
 #include "typelist.h"
-
 BeginEsdlNamespace()
 
+/* a very simple test functions wrapper. */
 struct OlxTests  {
 private:
   struct ITestFunc  {

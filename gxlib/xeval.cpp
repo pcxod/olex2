@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "xeval.h"
 
 /* automaticaly generated code  */
@@ -61,4 +57,3 @@ TTGlGroupEvaluatorFactory::TTGlGroupEvaluatorFactory(IEvaluatorFactory *factoryR
   for( size_t i=0; i < tSelBEvaluatorFactory->EvaluatorCount(); i++ )
     Evaluators.Add(olxstr("b.") << tSelBEvaluatorFactory->EvaluatorName(i), tSelBEvaluatorFactory->Evaluator(i)->NewInstance(tSelBEvaluator));
 }
-

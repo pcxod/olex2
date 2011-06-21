@@ -1,13 +1,9 @@
-//---------------------------------------------------------------------------//
-// Binominal polynomial routins
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "poly.h"
 #include "exception.h"
 #include "emath.h"
-
 UseEsdlNamespace()
-//----------------------------------------------------------------------------//
+
+// Binominal polynomial routins
 int TSPoint::SPointsSortA(const TSPoint* I, const TSPoint* I1)  {
   if( I->Y < I1->Y )  return 1;
   if( I->Y > I1->Y )  return -1;
@@ -215,4 +211,3 @@ TPolynom* TPolynom::Qrt() const {
   return NP;
 }
 //..............................................................................
-

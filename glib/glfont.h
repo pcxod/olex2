@@ -6,7 +6,6 @@
 #include "bitarray.h"
 #include "threex3.h"
 #include "edict.h"
-
 BeginGlNamespace()
 
 struct TFontCharSize  {
@@ -129,5 +128,4 @@ public:
 };
 
 EndGlNamespace()
-
 #endif

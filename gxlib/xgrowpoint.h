@@ -3,7 +3,6 @@
 #include "xbond.h"
 #include "catom.h"
 #include "satom.h"
-
 BeginGxlNamespace()
 
 class TXGrowPoint : public AGDrawObject  {
@@ -31,4 +30,3 @@ public:
 
 EndGxlNamespace()
 #endif
- 

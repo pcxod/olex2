@@ -1,29 +1,22 @@
-//---------------------------------------------------------------------------//
-// namespace TXClasses: TLattice
-// (c) Oleg V. Dolomanov, 2004
 #include "lattice.h"
 #include "asymmunit.h"
 #include "unitcell.h"
 #include "network.h"
-
 #include "sbond.h"
 #include "splane.h"
 #include "ellipsoid.h"
-
 #include "bapp.h"
 #include "log.h"
-
 #include "emath.h"
 #include "congen.h"
-
 #include "estlist.h"
 #include "library.h"
-
 #include "olxmps.h"
 #include "estrbuffer.h"
 #include "symmparser.h"
 
 #undef GetObject
+
 // sorts largest -> smallest
 int TLattice_SortAtomsById(const TSAtom* a1, const TSAtom* a2)  {
   return olx_cmp(a1->CAtom().GetId(), a2->CAtom().GetId());
@@ -32,9 +25,7 @@ int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
   const double d = A1->crd().QLength() - A2->crd().QLength();
   return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
 }
-//---------------------------------------------------------------------------
-// TLattice function bodies
-//---------------------------------------------------------------------------
+
 TLattice::TLattice(ASObjectProvider& ObjectProvider) :
   OnStructureGrow(Actions.New("STRGEN")),
   OnStructureUniq(Actions.New("STRUNIQ")),

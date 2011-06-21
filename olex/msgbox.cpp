@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// gradient colours properties dialog
-// (c) Oleg V. Dolomanov, 2006
-//----------------------------------------------------------------------------//
 #include "msgbox.h"
 #include "icons/exception.xpm"
 #include "icons/exclamation.xpm"

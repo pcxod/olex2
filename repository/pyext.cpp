@@ -3,12 +3,10 @@
 #include "bapp.h"
 #include "log.h"
 #include "fsext.h"
-
 #include "estrlist.h"
 #include "function.h"
 #include "macroerror.h"
 #include "eutf8.h"
-
 #include <stdarg.h>
 
 // egc cannot be used here as python can be finalised before egc is called

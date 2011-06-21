@@ -1,18 +1,15 @@
-//----------------------------------------------------------------------------//
-// gradient colours properties dialog
-// (c) Oleg V. Dolomanov, 2006
-//----------------------------------------------------------------------------//
 #include "dgrad.h"
 #include "wx/colordlg.h"
 #include "glbackground.h"
 #include "gxapp.h"
 
+// gradient colours properties dialog
 BEGIN_EVENT_TABLE(TdlgGradient, TDialog)
   EVT_BUTTON(wxID_OK, TdlgGradient::OnOK)
 END_EVENT_TABLE()
 
 TdlgGradient::TdlgGradient(TMainFrame *ParentFrame):
-  TDialog(ParentFrame, wxT("Gradient"), EsdlClassName(TdlgGradient).u_str() )
+  TDialog(ParentFrame, wxT("Gradient"), EsdlClassName(TdlgGradient).u_str())
 {                 
   AActionHandler::SetToDelete(false);
   short Border = 3;
@@ -94,4 +91,3 @@ void TdlgGradient::OnOK(wxCommandEvent& event)  {
   EndModal(wxID_OK);
 }
 //..............................................................................
-

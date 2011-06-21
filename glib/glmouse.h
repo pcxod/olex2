@@ -2,7 +2,6 @@
 #define __olx_gl_glmouse_H
 #include "glbase.h"
 #include "tptrlist.h"
-
 BeginGlNamespace()
 
 // mouse listner constants

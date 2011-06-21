@@ -1,5 +1,4 @@
 #ifdef __WXWIDGETS__
-
 #include "wxzipfs.h"
 #include "efile.h"
 #include "bapp.h"
@@ -7,7 +6,6 @@
 #include "ememstream.h"
 
 olxstr TZipWrapper::ZipUrlSignature = "@zip:";
-//---------------------------------------------------------------------------
 //..............................................................................
 TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
   olxstr entryName( TEFile::UnixPath(EM) );
@@ -235,5 +233,4 @@ bool TwxZipFileSystem::ExtractAll(const olxstr& dest)  {
   return zip.ExtractAll(dest);
 }
 //..............................................................................
-
 #endif // __WXWIDGETS__

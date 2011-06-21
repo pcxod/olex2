@@ -1,10 +1,8 @@
 #include "olx_cstring.h"
 #include "olx_wstring.h"
 #include <locale.h>
-
 #include "../egc.h"
 
-//..............................................................................
 TWString::TWString()  {
   SData = NULL;
   _Start = _Length = 0;
@@ -119,4 +117,3 @@ TWString& TWString::operator = (const TCString& astr)  {
 #else
   TIString TWString::ToString() const {  return TCString(*this);  }
 #endif
-

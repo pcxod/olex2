@@ -1,12 +1,8 @@
-//---------------------------------------------------------------------------
-
-#ifndef glclipplaneH
-#define glclipplaneH
-
+#ifndef __olx_gl_glclipplane_H
+#define __olx_gl_glclipplane_H
 #include "glbase.h"
 #include "evector.h"
 #include "glrender.h"
-
 BeginGlNamespace()
 
 class TGlClipPlane  {
@@ -39,4 +35,3 @@ public:
 
 EndGlNamespace()
 #endif
-

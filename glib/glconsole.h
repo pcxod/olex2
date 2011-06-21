@@ -6,7 +6,6 @@
 #include "actions.h"
 #include "macroerror.h"
 #include "datastream.h"
-
 BeginGlNamespace()
 
 class TGlConsole: public AGDrawObject, 
@@ -115,7 +114,6 @@ public:
   void LibCommand(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
-
 
 EndGlNamespace()
 #endif

@@ -5,7 +5,6 @@
 #include "gloption.h"
 #include "glprimitive.h"
 #include "gltexture.h"
-
 BeginGlNamespace()
 
 class TGlBackground: public AGDrawObject  {
@@ -35,5 +34,4 @@ public:
 
 
 EndGlNamespace()
-
 #endif

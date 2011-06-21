@@ -503,4 +503,3 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
   envi.GetBase().CAtom().SetHAttached(!crds.IsEmpty());
   DoGenerateAtom(created, au, crds, tmp);
 }
-

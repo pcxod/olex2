@@ -1,8 +1,6 @@
-/* Graphics extensions, (c) Oleg Dolomanov 2009 */
 #ifndef __olx_glutil_H
 #define __olx_glutil_H
 #include "esphere.h"
-
 BeginGlNamespace()
 
 template <typename float_type, class FaceProvider> class GlSphereEx :

@@ -1,11 +1,7 @@
-//---------------------------------------------------------------------------
-
-#ifndef datafileH
-#define datafileH
-
+#ifndef __olx_sdl_datafile_H
+#define __olx_sdl_datafile_H
 #include "ebase.h"
 #include "estrlist.h"
-
 BeginEsdlNamespace()
 
 class TDataFile: public IEObject  {

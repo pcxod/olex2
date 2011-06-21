@@ -1,9 +1,7 @@
 #ifndef __olx_gl_option_H
 #define __olx_gl_option_H
-
 #include "glbase.h"
 #include "emath.h"
-
 BeginGlNamespace()
 
 class TGlOption: public IEObject  {

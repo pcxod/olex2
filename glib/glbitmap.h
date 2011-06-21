@@ -2,7 +2,6 @@
 #define __olx_gl_bitmap_H
 #include "glbase.h"
 #include "glmousehandler.h"
-
 BeginGlNamespace()
 
 class TGlBitmap : public AGlMouseHandlerImp  {

@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TXBond
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "xbond.h"
 #include "gpcollection.h"
 #include "xatom.h"
@@ -9,7 +5,6 @@
 #include "symmparser.h"
 #include "unitcell.h"
 
-//..............................................................................
 bool TXBond::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
   TXBond::FBondParams = NULL;
   TXBond::ClearStaticObjects();

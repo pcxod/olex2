@@ -1,6 +1,5 @@
-#ifndef shellutilH
-#define shellutilH
-
+#ifndef __olx_shellutil_H
+#define __olx_shellutil_H
 #include "ebase.h"
 #include "estrlist.h"
 #include "typelist.h"

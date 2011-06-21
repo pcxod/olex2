@@ -1,5 +1,5 @@
-#ifndef sparesrH
-#define sparesrH
+#ifndef __olx_sld_sparesr_H
+#define __olx_sld_sparesr_H
 #include "tptrlist.h"
 #include "estlist.h"
 #include "estrlist.h"
@@ -613,7 +613,5 @@ public:
   bool Evaluate()  {  return Root->Evaluate();  }
   const TStrList& Errors() const  {  return FErrors;  }
 };
-
-/******************************************************************************/
 
 #endif

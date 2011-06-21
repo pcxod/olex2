@@ -1,5 +1,5 @@
-#ifndef functionH
-#define functionH
+#ifndef __olx_sdl_function_H
+#define __olx_sdl_function_H
 
 #define DefMacro(macroName) void mac##macroName(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);
 #define DefFunc(funcName) void fun##funcName(const TStrObjList &Cmds, TMacroError &E);
@@ -27,7 +27,6 @@
 
 #include "macroerror.h"
 #include "tptrlist.h"
-//---------------------------------------------------------------------------
 BeginEsdlNamespace()
 
 /* these constans specify the number of parameters (bytes [0..3]
@@ -420,6 +419,6 @@ template <class Base>
 
   typedef TPtrList<ABasicFunction> TBasicFunctionPList;
   typedef TPtrList<ABasicLibrary> TBasicLibraryPList;
-EndEsdlNamespace()
 
+EndEsdlNamespace()
 #endif

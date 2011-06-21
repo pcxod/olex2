@@ -1,12 +1,10 @@
-//---------------------------------------------------------------------------
-#ifndef typelistH
-#define typelistH
+#ifndef __olx_sdl_typelist_H
+#define __olx_sdl_typelist_H
 #include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
 #include "talist.h"
 #include "tptrlist.h"
-
 BeginEsdlNamespace()
 
 template <class T, class DestructCast> class TTypeListExt : public IEObject  {

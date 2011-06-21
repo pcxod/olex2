@@ -108,5 +108,3 @@ void TXLattice::SetFixed(bool v )  {
   SetMove2D(v);
   Fixed = v;
 }
-
-

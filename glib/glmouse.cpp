@@ -1,13 +1,8 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "glmouse.h"
 #include "glrender.h"
 #include "dframe.h"
 #include "glgroup.h"
 
-UseGlNamespace()
-//..............................................................................
 TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   FSX = FSY = 0;
   FDblClick = FButtonDown = false;
@@ -238,5 +233,3 @@ void GlobalGlFunction( meZoom(TGlMouse *G, int dx, int dy) )  {
   G->SetAction(glmaZoom);
 }
 //..............................................................................
-
- 

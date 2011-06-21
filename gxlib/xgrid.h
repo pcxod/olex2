@@ -14,7 +14,6 @@
 #include "xblob.h"
 #include "symmat.h"
 #include "maputil.h"
-
 BeginGxlNamespace()
 
 const short

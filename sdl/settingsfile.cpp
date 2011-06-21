@@ -2,7 +2,6 @@
 #include "utf8file.h"
 #include "exception.h"
 
-//..............................................................................
 void TSettingsFile::LoadSettings(const olxstr& fileName)  {
   Clear();
   TEFile::CheckFileExists(__OlxSourceInfo, fileName);
@@ -44,4 +43,3 @@ void TSettingsFile::SaveSettings(const olxstr& fileName)  {
   }
 }
 //..............................................................................
-

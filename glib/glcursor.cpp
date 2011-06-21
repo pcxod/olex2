@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TGlCursor - a console cursor
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #define ID_TIMER 1000
 #include "glcursor.h"
 #include "glrender.h"
@@ -79,4 +75,3 @@ TLibrary*  TGlCursor::ExportLibrary(const olxstr& name)  {
   return lib;
 }
 //..............................................................................
-

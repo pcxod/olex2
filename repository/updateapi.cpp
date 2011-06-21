@@ -7,7 +7,6 @@
 #include "datafile.h"
 #include "dataitem.h"
 #include "patchapi.h"
-
 #include "cdsfs.h"
 
 #if defined(__WIN32__) && !defined(__WXWIDGETS__)
@@ -530,4 +529,3 @@ olxstr UpdateAPI::GetInstallationFileName()  {
   return "portable-gui.zip";
 #endif
 }
-

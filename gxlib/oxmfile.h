@@ -1,11 +1,9 @@
-#ifndef oxmFileH
-#define oxmFileH
-
+#ifndef __olx_gxl_oxmFile_H
+#define __olx_gxl_oxmFile_H
 #include "gxapp.h"
-
-// Olex2 model file
 BeginGxlNamespace()
 
+// Olex2 model file
 class TOXMFile : public TBasicCFile  {
   TGXApp& gxapp;
 public:
@@ -32,5 +30,4 @@ public:
 };
 
 EndGxlNamespace()
-
 #endif

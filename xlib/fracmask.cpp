@@ -62,4 +62,3 @@ void FractMask::FromDataItem(const TDataItem& di, IInputStream& is)  {
     }
   }
 }
-

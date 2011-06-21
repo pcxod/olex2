@@ -3,7 +3,6 @@
 #include "glbase.h"
 #include "tptrlist.h"
 #include "estrlist.h"
-
 BeginGlNamespace()
 
 class TGlPrimitive;
@@ -64,4 +63,3 @@ public:
 
 EndGlNamespace()
 #endif
-

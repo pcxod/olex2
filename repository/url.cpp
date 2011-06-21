@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "url.h"
 #include "encodings.h"
 #include "eutf8.h"
@@ -142,5 +138,3 @@ olxcstr TUrl::GenerateHTTPAuthString(const olxstr& user, const olxstr& pass)  {
   return (buf << encoding::base64::encode(TUtf8::Encode(toencode)));
 }
 //............................................................................//
-
-

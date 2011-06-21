@@ -4,8 +4,8 @@
 #include "glgroup.h"
 #include "xatom.h"
 #include "xbond.h"
-
 BeginGxlNamespace()
+
 /* The group now updates the atom coordinates in real time to make the process
 more transparent, however, it could use the TEBasis in the following way:
   virtual bool DoTranslate(const vec3d& t)  {  Basis.Translate(t);  return true;  }

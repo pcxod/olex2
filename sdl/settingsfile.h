@@ -1,15 +1,14 @@
-#ifndef settingsfileH
-#define settingsfileH
-
+#ifndef __olx_sdl_settingsfile_H
+#define __olx_sdl_settingsfile_H
 #include "edict.h"
 #include "estrlist.h"
-//---------------------------------------------------------------------------
 BeginEsdlNamespace()
+
 /* reads settings file, considering lines having no assignment operator or lines starting from
 '#' as comments. The white spaces will be trimmed for parameter names and values. 
 The file structure will be peserved upon saving (besides white spaces for param name/value).
 If there are duplicate entries, the most recent value will be kept
-(c) O Dolomanov, 2004-2009 */
+*/
 class TSettingsFile: public IEObject  {
   olxdict<olxstr, olxstr, olxstrComparator<true> > Params;
   TTOStringList<olxstr,bool,TObjectStrListData<olxstr,bool> > Lines;

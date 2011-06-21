@@ -1,10 +1,7 @@
-// (c) O. Dolomanov, 2004
 #ifndef __olx_sdl_sortedTL_H
 #define __olx_sdl_sortedTL_H
 #include "tptrlist.h"
-#ifdef GetObject
-  #undef GetObject
-#endif
+#undef GetObject
 
 BeginEsdlNamespace()
 

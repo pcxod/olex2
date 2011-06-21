@@ -1,5 +1,4 @@
 #include "library.h"
-
 UseEsdlNamespace()
 
 TLibrary::TLibrary(const olxstr& libraryName, ALibraryContainer* owner)  {
@@ -272,5 +271,3 @@ void TLibrary::ListAllMacros(TBasicFunctionPList& store)  {
     GetLibraryByIndex(i)->ListAllMacros(store);
 }
 //..............................................................................
-
-

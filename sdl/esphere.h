@@ -1,10 +1,10 @@
-/* Sphere triangulation routines, (c) O Dolomanov 2009-10 */
+/* Sphere triangulation routines */
 #ifndef __olx_esphere_H
 #define __olx_esphere_H
 #include "threex3.h"
 #include "typelist.h"
-
 BeginEsdlNamespace()
+
 // simple structure to contain three indeces to vertices 
 struct IndexTriangle {
   TVector3<size_t> vertices;

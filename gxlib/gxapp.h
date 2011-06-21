@@ -1,10 +1,8 @@
 #ifndef __olx_gxl_gxapp_H
 #define __olx_gxl_gxapp_H
 #include "gxbase.h"
-
 #include "xapp.h"
 #include "etable.h"
-
 #include "symmlib.h"
 #include "undo.h"
 #include "bitarray.h"
@@ -14,7 +12,6 @@
 #include "3dframe.h"
 #include "glfont.h"
 #include "styles.h"
-
 #include "xatom.h"
 #include "xbond.h"
 #include "xplane.h"

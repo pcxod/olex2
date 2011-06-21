@@ -1,10 +1,8 @@
-// (c) O. Dolomanov, 2004
 #ifndef __olx_sdl_ptrlist_H
 #define __olx_sdl_ptrlist_H
 #include <string.h>
 #include <stdlib.h>
 #include "talist.h"
-
 BeginEsdlNamespace()
 
 template <class T> class TPtrList : public IEObject  {

@@ -1,13 +1,9 @@
-/* Map utilities 
- (c) O Dolomanov, 2008
-*/
 #ifndef __olx_xl_map_util_H
 #define __olx_xl_map_util_H
 #include "xbase.h"
 #include "arrays.h"
 #include "estack.h"
 #undef QLength
-
 BeginXlibNamespace()
 
 class MapUtil  {

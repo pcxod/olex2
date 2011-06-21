@@ -2,7 +2,6 @@
 #define __olx_gxl_powdraw_H
 #include "gxbase.h"
 #include "ebasis.h"
-
 BeginGxlNamespace()
 
 namespace pov {
@@ -27,8 +26,6 @@ namespace pov {
     }
   };
 };
-
-
 
 EndGxlNamespace()
 #endif

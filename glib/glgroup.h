@@ -3,7 +3,6 @@
 #include "glbase.h"
 #include "sortedlist.h"
 #include "gdrawobject.h"
-
 BeginGlNamespace()
 
 class TGlGroup: public AGDrawObject {

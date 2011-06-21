@@ -6,7 +6,7 @@
 #undef QLength
 
 BeginEsdlNamespace()
-//---------------------------------------------------------------------------
+
 // returns corresponding character for sign
 template <typename T> inline olxch olx_sign_char(const T& p)  {  return (p<0) ? olxT('-') : olxT('+');  }
 // determines the sign of a number
@@ -316,5 +316,6 @@ void olx_update_min_max(const src_t& src, dest_t& min_v, dest_t& max_v)  {
   if( src < min_v )  min_v = src;
   if( src > max_v )  max_v = src;
 }
+
 EndEsdlNamespace()
 #endif

@@ -1,10 +1,5 @@
-//----------------------------------------------------------------------------//
-// TXGrid
-// (c) Oleg V. Dolomanov, 2006
-//----------------------------------------------------------------------------//
 #include "xgrid.h"
 #include "gpcollection.h"
-
 #include "styles.h"
 #include "glmaterial.h"
 #include "glrender.h"

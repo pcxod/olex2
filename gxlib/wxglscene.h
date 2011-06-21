@@ -1,14 +1,13 @@
 #ifndef _xl_wxglsceneH
 #define _xl_wxglsceneH
-
 #include "gxbase.h"
+
 #if defined (__WXWIDGETS__)
 #include "glfont.h"
 #include "glscene.h"
 #include "wx/glcanvas.h"
 #include "wx/wx.h"
 #include "wx/image.h"
-
 BeginGxlNamespace()
 
 class TwxGlScene: public AGlScene  {
@@ -49,9 +48,5 @@ public:
 };
 
 EndGxlNamespace()
-
-#endif
-#endif
-//---------------------------------------------------------------------------
-
-
+#endif // wxwidgets
+#endif // guard

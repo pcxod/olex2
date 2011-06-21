@@ -1,12 +1,11 @@
-#ifndef olx_sdl_mps_H
-#define olx_sdl_mps_H
+#ifndef __olx_sdl_mps_H
+#define __olx_sdl_mps_H
 #include "exception.h"
 #include "bapp.h"
 #include "actions.h"
 #include "evector.h"
 #include "olxthpool.h"
 #include "etime.h"
-
 BeginEsdlNamespace()
 
 const short

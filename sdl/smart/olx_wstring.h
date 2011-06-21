@@ -1,6 +1,5 @@
-#ifndef __SMART_W_STR
-#define __SMART_W_STR
-
+#ifndef __olx_sdl_wstr_H
+#define __olx_sdl_wstr_H
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -11,7 +10,6 @@
 
 #include "../ebase.h"
 #include "../linked_operators.h"
-
 BeginEsdlNamespace()
 
 class TWString : public TTIString<wchar_t>, public IEObject {

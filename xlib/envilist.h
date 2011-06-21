@@ -1,4 +1,3 @@
-/* (c) O. Dolomanov, 2006 */
 #ifndef __olx_xl_envilist_H
 #define __olx_xl_envilist_H
 #include "xbase.h"
@@ -6,7 +5,6 @@
 #include "typelist.h"
 #include "tptrlist.h"
 #include "satom.h"
-
 BeginXlibNamespace()
 
 class TAtomEnvi  {

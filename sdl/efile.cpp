@@ -1,6 +1,3 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "efile.h"
 #include "filetree.h"
 #include <string.h>
@@ -1155,4 +1152,3 @@ TLibrary*  TEFile::ExportLibrary(const olxstr& name)  {
 "Returns an absolute path to a folder relative to the basedir; arguments are (base=basedir,path)") );
   return lib;
 }
-

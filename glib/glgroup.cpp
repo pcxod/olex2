@@ -1,16 +1,11 @@
-//----------------------------------------------------------------------------//
-// TGlGroup - a group of drawing objects
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "glgroup.h"
 #include "glrender.h"
 #include "glmouse.h"
 #include "gpcollection.h"
 #include "styles.h"
 #include "glprimitive.h"
-
 UseGlNamespace()
-//..............................................................................
+
 TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
 {

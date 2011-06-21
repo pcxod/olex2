@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TGlConsole - a console
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "glconsole.h"
 #include "glrender.h"
 #include "actions.h"
@@ -10,12 +6,9 @@
 #include "glfont.h"
 #include "glmouse.h"
 #include "glprimitive.h"
-
 #include "styles.h"
-
 #include "integration.h"
 #include "bapp.h"
-
 // keyboard constanst, silly to include here, but...
 #include "wx/defs.h"
 
@@ -24,7 +17,6 @@
   in previous position!  ...
 */
 
-//..............................................................................
 TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName),
   OnCommand(Actions.New("ONCOMMAND")),
@@ -678,4 +670,3 @@ TLibrary* TGlConsole::ExportLibrary(const olxstr& name)  {
   lib->AttachLibrary(FCursor->ExportLibrary());
   return lib;
 }
-

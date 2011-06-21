@@ -1,9 +1,8 @@
-#ifndef duserobjH
-#define duserobjH
+#ifndef __olx_glx_duserobj_H
+#define __olx_glx_duserobj_H
 #include "gxbase.h"
 #include "glmousehandler.h"
 #include "ematrix.h"
-
 BeginGxlNamespace()
 
 class TDUserObj: public AGlMouseHandlerImp  {

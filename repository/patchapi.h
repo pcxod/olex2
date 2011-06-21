@@ -7,6 +7,7 @@
 #include "bapp.h"
 #include "md5.h"
 #include "utf8file.h"
+
 namespace patcher  {
 const short
   papi_OK            = 0,

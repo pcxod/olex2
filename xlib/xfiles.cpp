@@ -1,16 +1,9 @@
-//---------------------------------------------------------------------------//
-// namespace TXFiles: TBasicCFile - basic chemical file (INS, CIF, MOL, PDB, etc)
-// TXFile - format independent crsytallographic file
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "xfiles.h"
 #include "efile.h"
 #include "xapp.h"
 #include "unitcell.h"
-
 #include "catom.h"
 #include "library.h"
-
 #include "ins.h"
 #include "crs.h"
 #include "cif.h"
@@ -23,9 +16,7 @@ enum {
   XFILE_SG_Change,
   XFILE_UNIQ
 };
-//---------------------------------------------------------------------------
-// TBasicCFile function bodies
-//---------------------------------------------------------------------------
+
 TBasicCFile::TBasicCFile() : RefMod(AsymmUnit), AsymmUnit(NULL)  {  
   AsymmUnit.SetRefMod(&RefMod);
 }

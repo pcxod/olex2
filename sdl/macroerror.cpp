@@ -1,12 +1,6 @@
-//---------------------------------------------------------------------------
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "macroerror.h"
 #include "function.h"
 
-//..............................................................................
 TMacroError::TMacroError()  {
   DeleteObject = false;
   ProcessError = 0;

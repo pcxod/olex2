@@ -1,7 +1,6 @@
 #include "olxthpool.h"
 #include "bapp.h"
 
-
 TTypeList<TThreadSlot> TThreadPool::tasks;
 olx_critical_section TThreadPool::crit_sect;
 size_t TThreadPool::current_task = 0;
@@ -82,4 +81,3 @@ void TThreadPool::DoRun()  {
   }
   current_task = 0;
 }
-

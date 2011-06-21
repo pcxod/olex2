@@ -2,7 +2,6 @@
 #define __olx_exp_tree_H
 #include "../tptrlist.h"
 #include "../estrlist.h"
-
 BeginEsdlNamespace()
 
 namespace exparse  {
@@ -162,5 +161,4 @@ namespace exparse  {
 };  // end namespace exparse
 
 EndEsdlNamespace()
-
 #endif

@@ -3,7 +3,6 @@
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "actions.h"
-
 BeginGlNamespace()
 
 // this class is passed a aparameter to the OSelect handlers

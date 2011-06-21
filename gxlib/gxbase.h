@@ -1,4 +1,3 @@
-// (c) Oleg V. Dolomanov, 2004
 #ifndef __olx_gxl_base_H
 #define __olx_gxl_base_H
 #include "ebase.h"
@@ -9,7 +8,6 @@
 #define UseGxlNamespace()  using namespace gxlib;
 #define GlobalGxlFunction(fun)     gxlib::fun
 #define GxlObject(obj)     gxlib::obj
-
 
 BeginGxlNamespace()
 

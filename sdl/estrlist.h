@@ -1,6 +1,3 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #ifndef olx_sdl_strlist_H
 #define olx_sdl_strlist_H
 #include "typelist.h"
@@ -12,6 +9,7 @@
 #undef GetObject
 
 BeginEsdlNamespace()
+
 class TEFile;
 template <class SC> struct TSingleStringWrapper  {
   SC String;
@@ -583,7 +581,6 @@ public:
   }
 };
 
-
 typedef TStrPObjList<olxstr, IEObject*> TStrObjList;
 typedef TStrPObjList<olxcstr, IEObject*> TCStrObjList;
 typedef TStrPObjList<olxwstr, IEObject*> TWStrObjList;
@@ -595,8 +592,6 @@ typedef TTOStringList<olxwstr, olxwstr, TObjectStrListData<olxwstr,olxwstr> > TW
 typedef TTStrList<olxstr, TSingleStringWrapper<olxstr> > TStrList;
 typedef TTStrList<olxcstr, TSingleStringWrapper<olxcstr> > TCStrList;
 typedef TTStrList<olxwstr, TSingleStringWrapper<olxwstr> > TWStrList;
-
-//template <class T>  class TStrPObj
 
 EndEsdlNamespace()
 #endif

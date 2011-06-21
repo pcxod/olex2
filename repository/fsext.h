@@ -1,5 +1,5 @@
-#ifndef fsextH
-#define fsextH
+#ifndef __olx_fsext_H
+#define __olx_fsext_H
 
 #ifdef __WXWIDGETS__
   #include <wx/filesys.h>

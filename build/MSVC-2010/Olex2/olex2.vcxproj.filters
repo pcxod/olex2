@@ -48,9 +48,6 @@
     <ClCompile Include="..\..\..\olex\dgrad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\repository\eaccell.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\olex\edit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

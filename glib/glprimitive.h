@@ -4,7 +4,6 @@
 #include "glclipplane.h"
 #include "ematrix.h"
 #include "ebasis.h"
-
 BeginGlNamespace()
 
 // primitve types
@@ -248,4 +247,3 @@ struct TGlPrimitiveParams  {
 
 EndGlNamespace()
 #endif
-

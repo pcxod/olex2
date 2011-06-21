@@ -1,11 +1,11 @@
-#ifndef __olx_log_H
-#define __olx_log_H
+#ifndef __olx_sdl_log_H
+#define __olx_sdl_log_H
 #include "tptrlist.h"
 #include "egc.h"
 #include "datastream.h"
 #include "actions.h"
-
 BeginEsdlNamespace()
+
 enum  {
   logDefault,
   logInfo,

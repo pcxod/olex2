@@ -1,17 +1,13 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #ifndef __olx_sdl_evalue_H
 #define __olx_sdl_evalue_H
 #include <math.h>
 #include "exception.h"
 #include "evalue.h"
 #include "emath.h"
-
 BeginEsdlNamespace()
 
 template <typename> class TEVPoint;
-//---------------------------------------------------------------------------
+
 template <class EType> class TEValue: public IEObject  {
   EType FV, FE;
 public:
@@ -244,5 +240,6 @@ template <typename FloatT> struct TEPoint3 {
     return *this;
   }
 };
+
 EndEsdlNamespace()
 #endif

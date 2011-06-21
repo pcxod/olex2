@@ -1,6 +1,3 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "glprimitive.h"
 #include "glmaterial.h"
 #include "glrender.h"
@@ -8,8 +5,6 @@
 #include "glfont.h"
 #include "gltexture.h"
 
-UseGlNamespace();
-//..............................................................................
 TGlPrimitive::TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short type):
   AGroupObject(ParentG), Renderer(ParentR)
 {

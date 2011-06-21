@@ -1,17 +1,9 @@
-//----------------------------------------------------------------------------//
-// DlgGenerate implementation
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "dgenopt.h"
 #include "ctrls/frameext.h"
-//----------------------------------------------------------------------------//
-// TdlgGenerate function bodies
-//----------------------------------------------------------------------------//
-//enum { cbAChange, cbBChange, cbCChange };
+
 BEGIN_EVENT_TABLE(TdlgGenerate, TDialog)
   EVT_BUTTON(wxID_OK, TdlgGenerate::OnOK)
 END_EVENT_TABLE()
-
 //..............................................................................
 TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame) :
   TDialog(ParentFrame, wxT("Generation options"), wxT("dlgGenerate"))

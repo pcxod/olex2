@@ -1,13 +1,6 @@
-//----------------------------------------------------------------------------//
-// TXGrowLine
-// (c) Oleg V. Dolomanov, 2006
-//----------------------------------------------------------------------------//
 #include "xgrowpoint.h"
 #include "gpcollection.h"
 
-//----------------------------------------------------------------------------//
-// TXGrowLine function bodies
-//----------------------------------------------------------------------------//
 TXGrowPoint::TXGrowPoint(TGlRenderer& R, const olxstr& collectionName, const vec3d& center,
   const smatd& transform) : AGDrawObject(R, collectionName)  
 {
@@ -83,4 +76,3 @@ bool TXGrowPoint::GetDimensions(vec3d &Max, vec3d &Min)  {
   return true;
 }
 //..............................................................................
-

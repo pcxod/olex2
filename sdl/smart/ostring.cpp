@@ -1,6 +1,5 @@
 #include "ostring.h"
 
-
 const olxcstr &esdl::CEmptyString()  {
   static olxcstr rv("");
   return rv;

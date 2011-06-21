@@ -7,7 +7,6 @@
 #include "dbasis.h"
 #include "xgrid.h"
 #include "conrec.h"
-//
 #include "sfutil.h"
 #include "unitcell.h"
 #include "maputil.h"
@@ -766,4 +765,3 @@ float OrtDraw::GetBondRad(const ort_bond& b, uint32_t mask) const {
     r /= 4;
   return r;
 }
-

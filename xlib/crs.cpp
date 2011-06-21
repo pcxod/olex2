@@ -1,7 +1,6 @@
 #include "crs.h"
 #include "ins.h"
 #include "asymmunit.h"
-
 #include "symmlib.h"
 
 TCRSFile::TCRSFile()  {
@@ -121,4 +120,3 @@ bool TCRSFile::Adopt(TXFile& f)  {
   return true;
 }
 //..............................................................................
-

@@ -1,8 +1,8 @@
 #ifndef __OLX__BTREE
 #define __OLX__BTREE
 #include "etraverse.h"
-
 BeginEsdlNamespace()
+
 template <typename C, typename O>  class BTree  {
 public:
   struct Entry  {

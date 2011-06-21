@@ -1,7 +1,3 @@
-//---------------------------------------------------------------------------//
-// TDataItem
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "dataitem.h"
 #include "estrbuffer.h"
 #include "exparse/exptree.h"
@@ -11,7 +7,6 @@ static olxstr DoubleQuoteCode("&2E;");
 UseEsdlNamespace()
 using namespace exparse::parser_util;
 
-//..............................................................................
 TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val) : Name(nm), Value(val)  {
   if( Prnt != NULL )  {
     Level = Prnt->GetLevel()+1;
@@ -394,5 +389,3 @@ void TDataItem::Validate(TStrList& Log)  {
     }
   }
 }
-
-

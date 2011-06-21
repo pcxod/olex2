@@ -1,13 +1,11 @@
 #ifndef olx_func_wrap_H
 #define olx_func_wrap_H
-
 #include "../ebase.h"
 #include "../typelist.h"
 #include "../edict.h"
 #include "../estlist.h"
 #include "evaluable.h"
 #include <typeinfo>
-
 BeginEsdlNamespace()
 
 namespace exparse  {
@@ -456,6 +454,6 @@ namespace exparse  {
     bool is_empty() const {  return functions.is_empty() && globals.is_empty() && wrap_functions.is_empty();  }
   };
 };  // end exparse namespace
-EndEsdlNamespace()
 
+EndEsdlNamespace()
 #endif

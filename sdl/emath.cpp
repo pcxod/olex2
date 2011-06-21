@@ -1,10 +1,7 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include <math.h>
 #include "emath.h"
 #include "exception.h"
-//..............................................................................
+
 double GlobalEsdlFunction(olx_newton_solve)(double (*f)(double), double (*df)(double), double point)  {
   double ex1 = 100,
          x = point;
@@ -55,4 +52,3 @@ unsigned int GlobalEsdlFunction(olx_gcd)(unsigned int u, unsigned int v)  {
   while( v != 0 );
   return u << shift;
 }
-

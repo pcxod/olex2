@@ -291,4 +291,3 @@ bool AtomRefList::IsExpandable(RefinementModel& rm, const short list_type) const
   }
   return ac != 0;
 }
-

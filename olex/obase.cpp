@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "obase.h"
 #include "xglapp.h"
 #include "mainform.h"
@@ -204,5 +200,3 @@ bool TStateChange::CheckStatus(const olxstr& stateName, const olxstr& stateData)
 bool TStateChange::CheckStatus(uint32_t state, const olxstr& stateData) {
   return TGlXApp::GetMainForm()->CheckState(state, stateData);
 }
-
-

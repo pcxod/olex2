@@ -1,14 +1,4 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "bapp.h"
-
-// for InterlockedIncrement in
-#if defined __WIN32__ && __BORLANDC__
-  #include <winbase.h>
-#endif
-
 #include "wxglscene.h"
 #include "exception.h"
 #include "glfont.h"
@@ -516,4 +506,3 @@ olxstr TwxGlScene::MetaFont::GetIdString() const {
 }
 //..............................................................................
 #endif // __WXWIDGETS__
-

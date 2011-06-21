@@ -1,8 +1,8 @@
 #ifndef __olx_encodings_H
 #define __olx_encodings_H
 #include "ebase.h"
-
 BeginEsdlNamespace()
+
 namespace encoding  {
   namespace base64  {
     static const char *_base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";

@@ -1,9 +1,7 @@
-/* (c) O. Dolomanov 2009 */
 #ifndef __olx_xl_congen_H
 #define __olx_xl_congen_H
 #include "envilist.h"
 #include "refmodel.h"
-
 BeginXlibNamespace()
 
 // fixable groups

@@ -1,6 +1,5 @@
 #ifndef __olx_image_cell_ext_H
 #define __olx_image_cell_ext_H
-
 #include "estrlist.h"
 #include "emath.h"
 #include "wx/wxhtml.h"

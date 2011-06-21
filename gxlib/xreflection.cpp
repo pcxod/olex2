@@ -1,8 +1,3 @@
-//----------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
-// TXReflection
-// (c) Oleg V. Dolomanov, 2006
-//----------------------------------------------------------------------------//
 #include "xreflection.h"
 #include "gpcollection.h"
 #include "glrender.h"
@@ -10,9 +5,6 @@
 #include "glmaterial.h"
 #include "glprimitive.h"
 
-//----------------------------------------------------------------------------//
-// TXReflection function bodies
-//----------------------------------------------------------------------------//
 TXReflection::TXReflection(TGlRenderer& r, const olxstr& collectionName, double minI, double maxI,
                             const TReflection& R, const TAsymmUnit& au) :
   AGDrawObject(r, collectionName)

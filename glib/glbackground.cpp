@@ -1,14 +1,9 @@
-//----------------------------------------------------------------------------//
-// TDFrame - a drawing object for selection frame
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "glbackground.h"
 #include "glmaterial.h"
 #include "gpcollection.h"
 #include "styles.h"
-
 UseGlNamespace()
-//..............................................................................
+
 TGlBackground::TGlBackground(TGlRenderer& r, const olxstr& collectionName, bool ceiling):
   AGDrawObject(r, collectionName)
 {

@@ -1,6 +1,6 @@
-// (c) O Dolomanov 2004-2010
 #ifndef __olx_sdl_association_H
 #define __olx_sdl_association_H
+
 // an association template; association of any complexity can be build from this :)
 // but for more flexibility still Association3 is provided
 template <class Ac, class Bc>

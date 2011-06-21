@@ -1,14 +1,8 @@
-//----------------------------------------------------------------------------//
-// TXGrowLine
-// (c) Oleg V. Dolomanov, 2006
-//----------------------------------------------------------------------------//
 #include "xgrowline.h"
 #include "gpcollection.h"
 #include "asymmunit.h"
 #include "xatom.h"
-//----------------------------------------------------------------------------//
-// TXGrowLine function bodies
-//----------------------------------------------------------------------------//
+
 TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TXAtom& A,
   TCAtom& CA, const smatd& transform) :
   TXBond(NULL, r, collectionName),

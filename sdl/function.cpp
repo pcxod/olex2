@@ -1,13 +1,7 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "function.h"
 #include "egc.h"
-
 UseEsdlNamespace()
 
-//..............................................................................
 olxstr ABasicLibrary::GetQualifiedName() const  {
   olxstr res = GetName();
   ABasicLibrary* lib = this->GetParentLibrary();
@@ -95,4 +89,3 @@ olxstr ABasicFunction::OptionsToString(const TCSTypeList<olxstr,olxstr>& list) c
   return rv;
 }
 //..............................................................................
-

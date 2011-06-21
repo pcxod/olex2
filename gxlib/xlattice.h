@@ -3,7 +3,6 @@
 #include "gxbase.h"
 #include "glmousehandler.h"
 #include "asymmunit.h"
-
 BeginGxlNamespace()
 
 class TXLattice: public AGlMouseHandlerImp  {

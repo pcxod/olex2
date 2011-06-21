@@ -1,5 +1,5 @@
-#ifndef _olx_macrolib
-#define _olx_macrolib
+#ifndef __olx_sdl_macrolib
+#define __olx_sdl_macrolib
 #include "bapp.h"
 #include "estrlist.h"
 #include "datafile.h"
@@ -7,7 +7,6 @@
 #include "integration.h"
 #include "library.h"
 #include "estack.h"
-
 BeginEsdlNamespace()
 
 const uint8_t
@@ -184,5 +183,6 @@ public:
   void ProcessMacro(const olxstr& Cmd, TMacroError& Error);
   DefPropP(uint8_t, LogLevel)
 };
+
 EndEsdlNamespace()
 #endif

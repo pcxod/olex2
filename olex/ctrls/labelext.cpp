@@ -1,6 +1,7 @@
 #include "labelext.h"
 #include "frameext.h"
 #include "egc.h"
+
 using namespace ctrl_ext;
 IMPLEMENT_CLASS(TLabel, wxStaticText)
 
@@ -13,4 +14,3 @@ void TLabel::ClickEvent(wxCommandEvent& event)  {
     OnClick.Execute(this, &TEGC::New<olxstr>( GetOnClickStr() ));
   EndEvtProcessing()
 }
-

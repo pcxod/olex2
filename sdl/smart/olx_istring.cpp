@@ -34,4 +34,3 @@ olxwstr esdl::TTSString<T,TC>::CStr2WStr(const olxcstr& str)  {  return CStr2WSt
 
 template class esdl::TTSString<TCString, char>;
 template class esdl::TTSString<TWString, wchar_t>;
-

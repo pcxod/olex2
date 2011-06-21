@@ -4,7 +4,6 @@
 #include "gllight.h"
 #include "gloption.h"
 #include "library.h"
-
 BeginGlNamespace()
 
 const char

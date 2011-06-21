@@ -1,6 +1,3 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #ifndef __olx_matrix_H
 #define __olx_matrix_H
 #include <cmath>
@@ -28,7 +25,6 @@ BeginEsdlNamespace()
 template <typename> class TMatrix;
 template <typename> class TVector;
 
-//------------------------------------------------------------------------------
 template <class MatType> class TMatrix: public ACollectionItem  {
   size_t Fn, Fm;
   void  Clear()  {
@@ -668,7 +664,6 @@ public:
     }
   }
 };
-//------------------------------------------------------------------------------
 
   typedef TMatrix<float> ematf;
   typedef TMatrix<double> ematd;
@@ -680,4 +675,3 @@ public:
 
 EndEsdlNamespace()
 #endif
-

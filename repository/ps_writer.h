@@ -1,6 +1,3 @@
-/* A simple postscript file interface 
-(c) Oleg Dolomanov, 2009
-*/
 #ifndef _olx_ps_writerH
 #define _olx_ps_writerH
 #include "efile.h"
@@ -13,6 +10,8 @@
 #  define psw_sprintf sprintf
 #endif
 
+/* A simple postscript file interface 
+*/
 class PSWriter  {
   TEFile out;
   char bf[80];
@@ -312,7 +311,6 @@ public:
       stippledQuad(sidea[j-1], sideb[j-1], sideb[j], sidea[j], parts, func);
     stippledQuad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0], parts, func);
   }
-  //..........................................................................
   //..........................................................................
   template <typename vec_t, typename float_t>
   void arc(const vec_t& center, const float_t& rad, const float_t startAngle, const float_t& endAngle)  {

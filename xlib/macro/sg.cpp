@@ -1,17 +1,12 @@
 #include "egc.h"
 #include "xmacro.h"
-
 #include "hkl.h"
 #include "sgtest.h"
-
 #include "log.h"
 #include "etable.h"
-
 #include "integration.h"
-
 using namespace olex;
 
-//..............................................................................
 void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp &XApp = TXApp::GetInstance();
   TPtrList<TSpaceGroup>* rv = NULL;

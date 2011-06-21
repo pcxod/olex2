@@ -1,17 +1,7 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "glclipplane.h"
 #include "glrender.h"
-
 UseGlNamespace();
-//..............................................................................
-//..............................................................................
+
 TGlClipPlane::TGlClipPlane( int Id, TGlClipPlanes *Parent, float A, float B, float C, float D ) : FEq(4)  {
   FParent = Parent;
   FEq[0] = A;
@@ -48,5 +38,3 @@ void TGlClipPlanes::Enable(bool v)  {
     else         FParent->EnableClipPlane(FPlanes[i], false);
   }
 }
-
-

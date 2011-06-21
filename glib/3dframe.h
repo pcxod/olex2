@@ -1,10 +1,10 @@
-// (c) O Dolomanov 2010
 #ifndef __olx_gl_3dframe_H
 #define __olx_gl_3dframe_H
 #include "glmousehandler.h"
 #include "glrender.h"
 #include "styles.h"
 #include "glprimitive.h"
+BeginGlNamespace()
 
 class A3DFrameCtrl  {
 public:
@@ -128,4 +128,5 @@ public:
   }
 };
 
+EndGlNamespace()
 #endif

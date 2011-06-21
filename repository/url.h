@@ -1,8 +1,6 @@
-#ifndef urlH
-#define urlH
-
+#ifndef __olx_urlH
+#define __olx_urlH
 #include "exception.h"
-//---------------------------------------------------------------------------
 
 class TUrl : public IEObject  {
   unsigned int Port;

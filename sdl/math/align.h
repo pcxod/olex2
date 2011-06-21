@@ -1,4 +1,3 @@
-// (c) O. Dolomanov, 2010
 #ifndef __olx_sdl_align_H
 #define __olx_sdl_align_H
 #include "../threex3.h"
@@ -137,5 +136,6 @@ namespace align  {
     size_t Count() const {  return count;  }
   };
 };  // end namespace align
+
 EndEsdlNamespace()
 #endif

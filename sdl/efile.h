@@ -4,7 +4,6 @@
 #include "estrlist.h"
 #include "efilelist.h"
 #include "datastream.h"
-
 BeginEsdlNamespace()
 
 // search flags

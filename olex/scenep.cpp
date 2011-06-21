@@ -1,19 +1,11 @@
-//----------------------------------------------------------------------------//
-// scene properties dialog
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "scenep.h"
 #include "wx/fontdlg.h"
 #include "wx/colordlg.h"
-
 #include "gxapp.h"
-
 #include "glfont.h"
 #include "glscene.h"
-
 #include "efile.h"
 
-//..............................................................................
 BEGIN_EVENT_TABLE(TdlgSceneProps, TDialog)
   EVT_BUTTON(wxID_OK, TdlgSceneProps::OnOK)
   EVT_BUTTON(wxID_CANCEL, TdlgSceneProps::OnCancel)
@@ -439,4 +431,3 @@ void TdlgSceneProps::SaveToFile(TGlLightModel &FLM, const olxstr &FN)  {
   }
 }
 //..............................................................................
-
