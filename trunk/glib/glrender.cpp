@@ -1,6 +1,3 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "glrender.h"
 #include "glgroup.h"
 #include "styles.h"
@@ -11,8 +8,6 @@
 #include "log.h"
 #include "estrbuffer.h"
 
-UseGlNamespace()
-//............................................................................//
 GLuint TGlRenderer::TGlListManager::NewList()  {
   if( Pos >= Lists.Count()*Inc )  {
     GLuint s = olx_gl::genLists(Inc);

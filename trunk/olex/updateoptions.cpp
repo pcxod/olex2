@@ -91,4 +91,3 @@ void TdlgUpdateOptions::OnOK(wxCommandEvent& event)  {
   EndModal(wxID_OK);
 }
 //..............................................................................
-

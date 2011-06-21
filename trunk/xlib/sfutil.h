@@ -1,16 +1,11 @@
-/* Structure factor utilities 
- (c) O Dolomanov, 2008
-*/
 #ifndef __structure_factor_h
 #define __structure_factor_h
-
 #include "xapp.h"
 #include "emath.h"
 #include "fastsymm.h"
 #include "symmlib.h"
 #include "chemdata.h"
 #include "olxmps.h"
-
 BeginXlibNamespace()
 
 namespace SFUtil {

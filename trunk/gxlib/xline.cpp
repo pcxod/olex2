@@ -1,16 +1,8 @@
-//----------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
-// TXLine
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "xline.h"
 #include "gpcollection.h"
 #include "xatom.h"
 #include "pers_util.h"
 
-//----------------------------------------------------------------------------//
-// TXLine function bodies
-//----------------------------------------------------------------------------//
 TXLine::TXLine(TGlRenderer& r, const olxstr& collectionName, const vec3d& base, const vec3d& edge): 
   TXBond(NULL, r, collectionName),
   FBase(base), FEdge(edge)

@@ -4,10 +4,8 @@
 #include "cif.h"
 #include "p4p.h"
 #include "crs.h"
-
 #include "egc.h"
 #include "log.h"
-
 #include "xmacro.h"
 #include "symmlib.h"
 #include "unitcell.h"

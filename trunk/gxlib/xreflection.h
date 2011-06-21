@@ -3,7 +3,6 @@
 #include "gxbase.h"
 #include "gdrawobject.h"
 #include "hkl.h"
-
 BeginGxlNamespace()
 
 class TXReflection: public AGDrawObject  {
@@ -31,4 +30,3 @@ public:
 
 EndGxlNamespace()
 #endif
- 

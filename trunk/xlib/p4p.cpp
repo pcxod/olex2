@@ -153,4 +153,3 @@ bool TP4PFile::Adopt(TXFile& f)  {
   catch( ... )  {  }
   return true;
 }
-

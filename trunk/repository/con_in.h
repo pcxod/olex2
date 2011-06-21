@@ -1,6 +1,5 @@
 #ifndef __olx_console_interface_H
 #define __olx_console_interface_H
-
 #include "estack.h"
 
 #ifdef __WIN32__ 
@@ -95,5 +94,4 @@ public:
   }
 };
 #endif  // __WIN32__
-
 #endif

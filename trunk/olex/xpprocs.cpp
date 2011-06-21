@@ -1,6 +1,3 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004-2009
-//----------------------------------------------------------------------------//
 #ifdef _SVN_REVISION_AVAILABLE
 #  include "../svn_revision.h"
 #endif
@@ -76,13 +73,11 @@
 #include "cdsfs.h"
 #include "wxzipfs.h"
 
-#include "sls.h"
+#include "tls.h"
 
 #include "cmdline.h"
 
 #include "xlcongen.h"
-
-#include "tls.h"
 
 #include "arrays.h"
 #include "estrbuffer.h"

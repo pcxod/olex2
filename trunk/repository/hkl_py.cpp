@@ -1,6 +1,5 @@
 #include "hkl_py.h"
 
-
 PyMethodDef hkl_py::Methods[] = {
   {"Read", hkl_py::Read, METH_VARARGS, "reads an HKL file and returns a tuple of the reflections"},
   {"Write", hkl_py::Write, METH_VARARGS, "writes provided tuple to an hkl file"},
@@ -10,7 +9,6 @@ PyMethodDef hkl_py::Methods[] = {
 void hkl_py::PyInit()  {
   Py_InitModule( "olex_hkl", Methods );
 }
-
 //..................................................................................................
 PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
   olxstr fn;

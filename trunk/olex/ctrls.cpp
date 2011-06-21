@@ -1,6 +1,3 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004-2009
-//----------------------------------------------------------------------------//
 #include "ctrls.h"
 
 IMPLEMENT_CLASS(TDialog, wxDialog)
@@ -10,9 +7,6 @@ BEGIN_EVENT_TABLE(TDialog, wxDialog)
   EVT_SIZE(TDialog::OnSizeEvt)
 END_EVENT_TABLE()
 
-//----------------------------------------------------------------------------//
-// TDialog implementation
-//----------------------------------------------------------------------------//
 TDialog::TDialog(TMainFrame *Parent, const wxString &Title, const wxString &ClassName,
       const wxPoint& position, const wxSize& size, int style) :
   wxDialog(Parent, -1,  Title, position, size, style, ClassName),
@@ -31,4 +25,3 @@ void TDialog::OnSizeEvt(wxSizeEvent& event)  {
   event.Skip();
   OnResize.Execute(this, NULL);
 }
-

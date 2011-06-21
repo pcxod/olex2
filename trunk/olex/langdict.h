@@ -1,6 +1,5 @@
-#ifndef langdictH
-#define langdictH
-
+#ifndef __olx_langdict_H
+#define __olx_langdict_H
 #include "estlist.h"
 #include "estrlist.h"
 #include "wx/wx.h"
@@ -23,5 +22,3 @@ public:
 };
 
 #endif
-
-

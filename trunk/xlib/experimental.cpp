@@ -2,7 +2,6 @@
 #include "dataitem.h"
 #include "pers_util.h"
 
-//..................................................................................................
 bool ExperimentalDetails::SetTemp(const olxstr& t)  {
   if( t.IsEmpty() )  return false;
   olxch last_d = olxstr::o_toupper(t.GetLast());

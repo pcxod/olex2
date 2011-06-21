@@ -1,14 +1,9 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "gpcollection.h"
 #include "glrender.h"
 #include "gdrawobject.h"
 #include "styles.h"
 #include "glprimitive.h"
 
-UseGlNamespace();
-//..............................................................................
 void TGPCollection::ClearPrimitives()  {
   for( size_t i=0; i < Parent.PrimitiveCount(); i++ )
     Parent.GetPrimitive(i).SetTag(-1);
@@ -61,4 +56,3 @@ void TGPCollection::SetStyle(TGraphicsStyle *S)  {
       S->SetMaterial(GlP.GetName(), GlP.GetProperties());
   }
 }
-

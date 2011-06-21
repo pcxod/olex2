@@ -7,7 +7,6 @@
 #include "macroerror.h"
 #include "gpcollection.h"
 #include "glmaterial.h"
-
 BeginGlNamespace()
 
 const unsigned short

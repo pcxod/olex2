@@ -1,12 +1,6 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "chnexp.h"
 #include "chemdata.h"
 
-//---------------------------------------------------------------------------
-//..............................................................................
 void TCHNExp::Clear()  {
   Exp.Clear();
   Dependencies.Clear();

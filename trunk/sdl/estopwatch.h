@@ -3,7 +3,6 @@
 #include "etime.h"
 #include "bapp.h"
 #include "etable.h"
-
 BeginEsdlNamespace()
 
 class TStopWatch  {
@@ -54,5 +53,3 @@ public:
 
 EndEsdlNamespace()
 #endif
-
-

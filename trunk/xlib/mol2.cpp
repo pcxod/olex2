@@ -1,16 +1,12 @@
-//---------------------------------------------------------------------------//
-// TMol2 - basic procedures for loading Tripos MOL2 files
-// (c) Oleg V. Dolomanov, 2009
-//---------------------------------------------------------------------------//
 #include "mol2.h"
-
 #include "catom.h"
 #include "unitcell.h"
 #include "estrlist.h"
 #include "exception.h"
 
+// TMol2 - basic procedures for loading Tripos MOL2 files
 const olxstr TMol2::BondNames[] = {"1", "2", "3", "am", "ar", "du", "un", "nc"};
-//----------------------------------------------------------------------------//
+//..............................................................................
 void TMol2::Clear()  {
   GetAsymmUnit().Clear();
   Bonds.Clear();
@@ -139,4 +135,3 @@ bool TMol2::Adopt(TXFile& XF)  {
   return true;
 }
 //..............................................................................
- 

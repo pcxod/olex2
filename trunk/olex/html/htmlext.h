@@ -1,6 +1,5 @@
-#ifndef htmlextH
-#define htmlextH
-
+#ifndef __olx_htmlext_H
+#define __olx_htmlext_H
 #include "estrlist.h"
 #include "bapp.h"
 #include "paramlist.h"
@@ -8,7 +7,6 @@
 #include "../wininterface.h"
 #include "wx/wxhtml.h"
 #include "wx/dynarray.h"
-
 #include "library.h"
 #include "edict.h"
 #include "../ctrls/olxctrlbase.h"

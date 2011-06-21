@@ -1,8 +1,7 @@
-#ifndef __olxs_persistence_util_H
-#define __olxs_persistence_util_H
+#ifndef __olx_sdl_persistence_util_H
+#define __olx_sdl_persistence_util_H
 #include "threex3.h"
 #include "estrlist.h"
-
 BeginEsdlNamespace()
 
 namespace PersUtil {
@@ -68,5 +67,4 @@ namespace PersUtil {
 };
 
 EndEsdlNamespace()
-
 #endif

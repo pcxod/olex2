@@ -1,6 +1,5 @@
-// simple OS utilities... (c) O DOlomanov, 2009
-#ifndef __olx_os_util_H
-#define __olx_os_util_H
+#ifndef __olx_sdl_os_util_H
+#define __olx_sdl_os_util_H
 #include "ebase.h"
 #ifdef __BORLANDC__  // time_t definition...
   #include <time.h>
@@ -21,6 +20,7 @@
 
 BeginEsdlNamespace()
 
+// simple OS utilities...
 #ifdef __WIN32__
 #  ifdef _MSC_VER
 #    ifdef _UNICODE
@@ -140,5 +140,4 @@ static void olx_sleep(time_t msec)  {
 }
 
 EndEsdlNamespace()
-
 #endif

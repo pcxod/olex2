@@ -43,9 +43,7 @@ public:
   }
   inline size_t Length() const {  return GetLength();  }
   inline olxch& operator [] (size_t i)  {  return Get(i);  }
-
 };
 
 EndEsdlNamespace()
 #endif
-

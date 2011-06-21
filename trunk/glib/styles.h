@@ -2,7 +2,6 @@
 #define __olx_gl_styles_H
 #include "glmaterial.h"
 #include "dataitem.h"
-
 BeginGlNamespace()
 
 class TGraphicsStyles;

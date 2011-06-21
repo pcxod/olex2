@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TDBasis - a drawing object for basis
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "dbasis.h"
 #include "gpcollection.h"
 #include "glrender.h"
@@ -10,10 +6,9 @@
 #include "glprimitive.h"
 #include "pers_util.h"
 
-//..............................................................................
 TDBasis::TDBasis(TGlRenderer& Render, const olxstr& collectionName) : 
-AGlMouseHandlerImp(Render, collectionName),
-Zoom(1.0)
+  AGlMouseHandlerImp(Render, collectionName),
+  Zoom(1.0)
 {
   SetMove2D(true);
   SetMoveable(true);

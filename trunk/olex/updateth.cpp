@@ -1,10 +1,8 @@
 #include "mainform.h"
-
 #include "updateth.h"
 #include "updateapi.h"
 #include "patchapi.h"
 #include "log.h"
-
 
 UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
   srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0),

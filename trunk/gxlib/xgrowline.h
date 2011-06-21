@@ -3,7 +3,6 @@
 #include "xbond.h"
 #include "catom.h"
 #include "satom.h"
-
 BeginGxlNamespace()
 
 class TXGrowLine : public TXBond  {
@@ -40,4 +39,3 @@ public:
 
 EndGxlNamespace()
 #endif
- 

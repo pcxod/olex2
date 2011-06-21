@@ -1,15 +1,9 @@
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include <math.h>
-//#include <mem.h>
 #include "log.h"
 #include "evaln.h"
 #include "bapp.h"
 #include "emath.h"
 
-//---------------------------------------------------------------------------
 TSOperation::TSOperation( TSOperation *P, TStrPObjList<olxstr, TSOperation*> *Vars,
     TStrList *Funcs, TDoubleList* IVars)  {
   ToCalc = NULL;
@@ -267,5 +261,3 @@ void TSOperation::MDCalculate()  {
   if( Right )
     Right->MDCalculate();
 }
-/***************************************************************************/
-/***************************************************************************/

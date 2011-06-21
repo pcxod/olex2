@@ -1,5 +1,4 @@
 /* Beevers-Lipson Fourier summation 
- (c) O Dolomanov, 2008
 */
 #ifndef __beevers_lipson_h
 #define __beevers_lipson_h
@@ -8,7 +7,6 @@
 #include "sfutil.h"
 #include "arrays.h"
 #include "olxmps.h"
-
 BeginXlibNamespace()
 
 class BVFourier {

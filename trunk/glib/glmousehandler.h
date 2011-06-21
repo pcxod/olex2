@@ -3,7 +3,6 @@
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "ebasis.h"
-
 BeginGlNamespace()
 
 // TGlMouseListner flags

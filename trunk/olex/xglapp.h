@@ -1,5 +1,5 @@
-#ifndef xglAppH
-#define xglAppH
+#ifndef __olx_xglApp_H
+#define __olx_xglApp_H
 #include "wx/wx.h"
 #include "gxapp.h"
 
@@ -28,5 +28,4 @@ public:
 };
 
 DECLARE_APP(TGlXApp);
-
 #endif

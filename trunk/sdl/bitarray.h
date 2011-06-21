@@ -2,7 +2,6 @@
 #define __olx_sdl_bitarray_H
 #include "exception.h"
 #include "istream.h"
-
 BeginEsdlNamespace()
 
 class TEBitArray: public IEObject  {

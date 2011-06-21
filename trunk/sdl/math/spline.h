@@ -2,9 +2,9 @@
 #define __olx_sdl_math_spline_H
 #include "../evector.h"
 #include "../emath.h"
-// inspired by ALGLIB, wikipedia and original sources
 BeginEsdlNamespace()
 
+// inspired by ALGLIB, wikipedia and original sources
 namespace math  {  namespace spline {
   const short
     boundary_type_periodic = 0,
@@ -243,5 +243,6 @@ namespace math  {  namespace spline {
     }
   };
 }}; //end of the math::spline
+
 EndEsdlNamespace()
 #endif

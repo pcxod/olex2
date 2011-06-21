@@ -1,9 +1,7 @@
 #include "olx_wstring.h"
 #include "olx_cstring.h"
-
 #include "../egc.h"
 
-//..............................................................................
 TCString::TCString()  {
   SData = NULL;
   _Start = _Length = 0;
@@ -75,5 +73,3 @@ TCString& TCString::operator << (const CharW &v)  {
 #else
   TIString TCString::ToString() const {  return *this;  }
 #endif
-
-

@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TAsymmUnit: a collection of symmetry independent atoms
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "asymmunit.h"
 #include "catom.h"
 #include "ellipsoid.h"
@@ -33,9 +29,6 @@ public:
 
 const olxstr TAsymmUnit::IdName("catom");
 
-//----------------------------------------------------------------------------//
-// TAsymmetricUnit function bodies
-//----------------------------------------------------------------------------//
 TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
   OnSGChange(Actions.New("AU_SG_CHANGE"))
 {
@@ -1212,5 +1205,3 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   return lib;
 }
 //..............................................................................
-//..............................................................................
-

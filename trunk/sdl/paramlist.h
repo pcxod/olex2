@@ -1,20 +1,15 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
-#ifndef paramlistH
-#define paramlistH
-//---------------------------------------------------------------------------
+#ifndef __olx_sdl_paramlist_H
+#define __olx_sdl_paramlist_H
 #include "ebase.h"
 #include "exparse/exptree.h"
 #undef GetObject
 BeginEsdlNamespace()
 
-//---------------------------------------------------------------------------
 class TParamList: protected TStrStrList  {
 public:
-  TParamList();
+  TParamList() {}
   TParamList(const TParamList& v);
-  virtual ~TParamList();
+  virtual ~TParamList() {}
   inline void Clear()  {  TStrStrList::Clear(); }
   inline size_t Count() const {  return TStrStrList::Count();  };
   inline bool IsEmpty() const {  return TStrStrList::IsEmpty();  }

@@ -1,7 +1,6 @@
 #ifndef __olx_expvalue_H
 #define __olx_expvalue_H
 #include "../ebase.h"
-
 BeginEsdlNamespace()
 
 namespace exparse  {
@@ -62,6 +61,4 @@ namespace exparse  {
 };  // end namespace exparse
 
 EndEsdlNamespace()
-
 #endif
-

@@ -1,12 +1,9 @@
 #include "egc.h"
 #include "xmacro.h"
-
 #include "hkl.h"
 #include "symmlib.h"
-
 #include "log.h"
 
-//..............................................................................
 struct HklBrushRef  {
   TReflection* ref;
   int H, K, L;

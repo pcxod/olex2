@@ -1,9 +1,7 @@
 #include "ciftab.h"
 #include "cif.h"
 
-//----------------------------------------------------------------------------//
 // TLLTBondSort function bodies - bond sorting procedure in TLinkedLoopTable
-//----------------------------------------------------------------------------//
 int TLLTBondSort::Compare(const CifTabBond *I, const CifTabBond *I1)  {
   double v;
   if( (SortType & cCifTabSortLength) != 0 )  {  // length, Mr, Label

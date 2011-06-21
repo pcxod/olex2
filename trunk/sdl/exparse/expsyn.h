@@ -1,8 +1,6 @@
-#ifndef __olx_exparse_syntax_H
-#define __olx_exparse_syntax_H
-
+#ifndef __olx_sdl_exparse_syntax_H
+#define __olx_sdl_exparse_syntax_H
 #include "funcwrap.h"
-
 BeginEsdlNamespace()
 
 namespace exparse  {
@@ -31,5 +29,4 @@ namespace exparse  {
 };  // namespace exparse
 
 EndEsdlNamespace()
-
 #endif

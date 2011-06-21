@@ -1,9 +1,7 @@
 #ifndef xrestraintH
 #define xrestraintH
 #include "gxbase.h"
-
 BeginGxlNamespace()
-
 
 /*
 class TXConsraint: public AGDrawObject  { // TGlMouseListener
@@ -95,7 +93,6 @@ public:
   void Quality(const short Val);
 
 };
-      */
+*/
 EndGxlNamespace()
-
 #endif

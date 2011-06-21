@@ -1,11 +1,3 @@
-//---------------------------------------------------------------------------//
-// namespace TXFiles: TLst - lst file parser
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "lst.h"
 #include "efile.h"
 #include "etable.h"
@@ -22,10 +14,7 @@ int SortTrefTries(const TTrefTry* I1, const TTrefTry* I2) {
   }
   return res;
 }
-
-//----------------------------------------------------------------------------//
-// TInsCFile function bodies
-//----------------------------------------------------------------------------//
+//..............................................................................
 TLst::TLst()  {
   FR1 = FwR2 = FS = FRS = 0;
   FParams = FTotalRefs = FUniqRefs = 0;
@@ -432,6 +421,3 @@ void TLst::SynchroniseOmits(RefinementModel& rm)  {
     }
   }
 }
-
-
- 

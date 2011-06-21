@@ -1,6 +1,3 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #ifndef __olx_xl_base_H
 #define __olx_xl_base_H
 
@@ -10,12 +7,10 @@
 #define UseXlibNamespace()  using namespace xlib;
 #define GlobalXlibFunction( fun )     xlib::fun
 #define XlibObject( obj )     xlib::obj
-
 #include "ebase.h"
 #include "tptrlist.h"
 #include "dataitem.h"
 #include "threex3.h"
-
 BeginXlibNamespace()
 
 const short

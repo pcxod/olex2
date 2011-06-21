@@ -1,16 +1,12 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
-#ifndef estackH
-#define estackH
-//---------------------------------------------------------------------------
+#ifndef __olx_sdl_estack_H
+#define __olx_sdl_estack_H
 #include "ebase.h"
 #include "string.h"
 #include "typelist.h"
 #include "exception.h"
-
 BeginEsdlNamespace()
-// the simplet stack implementation
+
+// the simplest stack implementation
 template <class T> class TStack  {
   struct item  {
     item* prev;
@@ -97,4 +93,3 @@ public:
 
 EndEsdlNamespace()
 #endif
-

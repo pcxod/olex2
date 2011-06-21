@@ -411,4 +411,3 @@ void XVarManager::FromDataItem(const TDataItem& item) {
     References[i].referencer.SetVarRef(References[i].var_index, &References[i]);
 }
 //.................................................................................................
-

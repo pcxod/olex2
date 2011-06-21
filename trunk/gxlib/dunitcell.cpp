@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TDUnitCell - a drawing object for unit cell
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "dunitcell.h"
 #include "glprimitive.h"
 #include "glmaterial.h"
@@ -9,9 +5,8 @@
 #include "gpcollection.h"
 #include "styles.h"
 
-//...........................................................................
 TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) : 
-AGDrawObject(R, collectionName)
+  AGDrawObject(R, collectionName)
 {
   SetSelectable(false);
   Reciprocal = false;

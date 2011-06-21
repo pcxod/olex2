@@ -1,8 +1,8 @@
 #ifndef __olx_sdl_linked_operators
 #define __olx_sdl_linked_operators
 #include "ebase.h"
-
 BeginEsdlNamespace()
+
 template<typename h_t, class heir_t, typename a_t>
 class linked_operators {
 public:
@@ -135,5 +135,6 @@ template <typename a_t, class heir_t, typename h_t>
 static bool operator <= (a_t v, const linked_operators<heir_t,h_t,a_t> &h) {
   return v <= h.GetValue();
 }
+
 EndEsdlNamespace()
 #endif

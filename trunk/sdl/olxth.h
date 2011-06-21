@@ -1,12 +1,11 @@
-#ifndef __olx_thread_H
-#define __olx_thread_H
-
+#ifndef __olx_sdl_thread_H
+#define __olx_sdl_thread_H
 #include "exception.h"
 #include "os_util.h"
 #include "actions.h"
 #include "egc.h"
-
 BeginEsdlNamespace()
+
 // converts function (taking no arguents) to a thread - ready function
 template <class T> struct ThreadFunctionConverter  {
 #ifdef __WIN32__
@@ -171,5 +170,6 @@ public:
 #endif
   }
 };
+
 EndEsdlNamespace()
 #endif

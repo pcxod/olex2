@@ -1,7 +1,6 @@
 #ifndef __olx_sdl_thread_pool_H
 #define __olx_sdl_thread_pool_H
 #include "olxth.h"
-
 BeginEsdlNamespace()
 
 // a Task interface
@@ -47,5 +46,6 @@ public:
   static void DoRun();
   //static void AllocateTasks(
 };
+
 EndEsdlNamespace()
 #endif

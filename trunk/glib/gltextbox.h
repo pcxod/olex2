@@ -3,7 +3,6 @@
 #include "glbase.h"
 #include "estrlist.h"
 #include "glmousehandler.h"
-
 BeginGlNamespace()
 
 class TGlTextBox: public AGlMouseHandlerImp  {
@@ -53,5 +52,4 @@ public:
 
 
 EndGlNamespace()
-
 #endif

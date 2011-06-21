@@ -2,7 +2,6 @@
 #define __olx_sdl_edlist_H
 #include "exception.h"
 #include "etbuffer.h"
-
 BeginEsdlNamespace()
 
 template <typename T>
@@ -262,4 +261,3 @@ template <typename T>
   
 EndEsdlNamespace()
 #endif
-

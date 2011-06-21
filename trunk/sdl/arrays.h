@@ -9,8 +9,8 @@
 #endif
 #include "evector.h"
 #include "threex3.h"
-
 BeginEsdlNamespace()
+
 /*
   These arrays are only suitable for primitive types, as memset zeroes the initialised arrays.
   These arrays are just for convinience, as the Data attribute is publically exposed for the 

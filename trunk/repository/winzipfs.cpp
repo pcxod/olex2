@@ -1,14 +1,8 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "winzipfs.h"
 
 #ifdef __WIN32__ // non-portable code
-
 #include "efile.h"
 #include "bapp.h"
-
 #include "io.h"
 #include "sys/stat.h"
 

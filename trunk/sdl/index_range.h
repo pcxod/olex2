@@ -1,15 +1,13 @@
-/* a class to represent a list of (partly) sequential indices with sequences
-presented only by the boundary indices.
-(c) O. Dolomanov, 2004-2010
-*/
 #ifndef __olx_sdl_index_range_H
 #define __olx_sdl_index_range_H
 #include "typelist.h"
 #include "estrlist.h"
 #include "citem.h"
-
 BeginEsdlNamespace()
 
+/* a class to represent a list of (partly) sequential indices with sequences
+presented only by the boundary indices.
+*/
 struct IndexRange  {
   struct RangeItr {
     TStrList toks;
@@ -151,5 +149,4 @@ struct IndexRange  {
 };
 
 EndEsdlNamespace()
-
 #endif

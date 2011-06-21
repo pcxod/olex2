@@ -1,13 +1,7 @@
-//----------------------------------------------------------------------------//
-// TGlMouseListner - an implementation of GDrawObject which responde to mouse events
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "glmousehandler.h"
 #include "glmouse.h"
 #include "glrender.h"
 
-UseGlNamespace()
-//..............................................................................
 bool AGlMouseHandler::EventHandler::OnMouseDown(AGlMouseHandler& Sender, const TMouseData& Data)  {
   SX = Data.DownX;
   SY = Data.DownY;
@@ -102,4 +96,3 @@ bool AGlMouseHandler::EventHandler::OnMouseMove(AGlMouseHandler& Sender, const T
   return (MouseHandled = res);
 }
 //..............................................................................
-

@@ -1,42 +1,30 @@
-//---------------------------------------------------------------------------
-#ifndef eSTListH
-#define eSTListH
+#ifndef __olx_sdl_tslist_H
+#define __olx_sdl_tslist_H
 #include "talist.h"
-
 #undef GetObject
-
 BeginEsdlNamespace()
-//---------------------------------------------------------------------------
 
 template <class ComparableClass, class Comparator>
 class TSimpleSortedListEntry {
   ComparableClass _Comparable;
 public:
   TSortedListEntry(const ComparableClass& c) : _Comparable(c) {  }
-  //..........................................................................
   TSortedListEntry(const TSortedListEntry& entry) :
     _Comparable(entry._Comparable )  {  }
-  //..........................................................................
   TSortedListEntry()  {  }
-  //..........................................................................
   virtual ~TSortedListEntry()  {  }
-  //..........................................................................
   inline TSortedListEntry& operator = (const TSortedListEntry& entry)  {
     _Comparable = entry._Comparable;
     return *this;
   }
-  //..........................................................................
   inline const ComparableClass& GetComparable()   {  return _Comparable;  }
-  //..........................................................................
   inline int Compare( TSortedListEntry& entry ) const {
     return Comparator::template Compare<ComparableClass>(_Comparable, entry._Comparable );  }
-  //..........................................................................
   inline int Compare(const ComparableClass& entity) const {
     return Comparator::template Compare<ComparableClass>(_Comparable, entity );
   }
 };
 
-//---------------------------------------------------------------------------
 template <class T>
 class TSGTSList : public IEObject  {  // simple generic template sorted list
   TArrayList<T> Data;
@@ -78,11 +66,8 @@ protected:
     }
     return -1;
   }
-//..............................................................................
 public:
-  TTSList()  {  }
-//..............................................................................
-  /* copy constructor */
+  TTSList()  {}
   TTSList(const TTSList& list)  {
     Data.SetCount( list.Count() );
     for( int i=0; i < list.Data.Count(); i++ )
@@ -90,11 +75,8 @@ public:
   }
 
   virtual ~TTSList()  {  }
-//..............................................................................
   inline void Clear()  {  Data.Clear();  }
-//..............................................................................
   int IndexOf(const T& cmpbl) const {  return FindIndexOf(cmpbl);  }
-//..............................................................................
   // retrives indexes of all entries with same key and returns the number of added entries
   int GetIndexes(const T& cmpbl, TIntList& il)  {
     if( Data.IsEmpty() )  return 0;

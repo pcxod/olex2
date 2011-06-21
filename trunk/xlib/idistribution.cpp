@@ -1,13 +1,8 @@
-//----------------------------------------------------------------------------//
-// namespace TChemObj: TIDistribution
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "idistribution.h"
 #include "ipattern.h"
 #include "chemdata.h"
 #include "emath.h"
 
-//..............................................................................
 bool PAddEvaluator(const TPolynomMember& PM)  {
   static double MaxC = 0;
   //if( !PM )  {
@@ -217,4 +212,3 @@ void TIDistribution::Calc(TPolySerie& S)  {
   Root.Evail(S, M, W);
 }
 //..............................................................................
-

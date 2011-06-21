@@ -46,4 +46,3 @@ void LibraryRegistry::CompileTest()  {
   EvaluableFactory factory;
   cr.call(factory, ts, "test", args);
 }
-

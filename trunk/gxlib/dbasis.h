@@ -2,7 +2,6 @@
 #define __olx_gxl_dbasis_H
 #include "gllabel.h"
 #include "asymmunit.h"
-
 BeginGxlNamespace()
 
 class TDBasis: public AGlMouseHandlerImp, public TXGlLabel::ICrdTransformer  {

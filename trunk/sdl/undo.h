@@ -1,14 +1,6 @@
-//---------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-//---------------------------------------------------------------------------
-#ifndef undoH
-#define undoH
-
+#ifndef __olx_sdl_undo_H
+#define __olx_sdl_undo_H
 #include "tptrlist.h"
-//#include "eobjects.h"
-
 BeginEsdlNamespace()
 
 class IUndoAction;
@@ -81,6 +73,6 @@ public:
     (*SFunc)(Data);
   }
 };
-EndEsdlNamespace()
 
+EndEsdlNamespace()
 #endif

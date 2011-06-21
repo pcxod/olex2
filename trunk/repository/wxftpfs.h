@@ -1,11 +1,11 @@
-#ifndef wxFtpFSH
-#define wxFtpFSH
+#ifndef __olx_wxFtpFS_H
+#define __olx_wxFtpFS_H
 #include "filesystem.h"
 #include "url.h"
 #include "wxzipfs.h"
 #include "wx/protocol/ftp.h"
 #include "ememstream.h"
-//---------------------------------------------------------------------------
+
 class TwxFtpFileSystem : public AFileSystem  {
   TUrl Url;
   wxFTP Ftp;

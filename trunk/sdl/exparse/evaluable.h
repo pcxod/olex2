@@ -1,5 +1,5 @@
-#ifndef __olx_evaluable_H
-#define __olx_evaluable_H
+#ifndef __olx_sdl_evaluable_H
+#define __olx_sdl_evaluable_H
 #include "../ebase.h"
 #include "../edict.h"
 #include "expvalue.h"
@@ -201,5 +201,4 @@ namespace exparse  {
 };  // end namespace exparse
 
 EndEsdlNamespace()
-
 #endif

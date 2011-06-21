@@ -2,9 +2,6 @@
 #define __olx_ort_Draw_Tex_H
 #include "gxapp.h"
 #include "tex_writer.h"
-#include <string.h>
-#include <math.h>
-#include <map>
 
 using namespace std;
 

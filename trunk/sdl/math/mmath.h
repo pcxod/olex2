@@ -2,10 +2,10 @@
 #define __olx_sdl_math_lu_H
 #include "../ematrix.h"
 #include "../bapp.h"
+BeginEsdlNamespace()
+
 /* most of the procedures are inspired by ALGLIB and LAPACK, some things, the Householder
 reflection generation in particular - inspired by smtxb code by Luc Bourhis */
-
-BeginEsdlNamespace()
 
 namespace math  {
   template <typename CT, typename FT> struct mat_col  {

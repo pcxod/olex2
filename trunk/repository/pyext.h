@@ -207,5 +207,4 @@ public:
   static bool ParseTuple(PyObject* tuple, const char* format, ...);
 };
 
-
 #endif

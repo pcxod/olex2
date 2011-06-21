@@ -4,7 +4,6 @@
 #include "glrender.h"
 #include "gdrawobject.h"
 #include "splane.h"
-
 BeginGxlNamespace()
 
 class TXPlane: public TSPlane, public AGDrawObject  {
@@ -37,4 +36,3 @@ public:
 
 EndGxlNamespace()
 #endif
- 

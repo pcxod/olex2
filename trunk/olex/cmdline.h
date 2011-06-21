@@ -1,6 +1,5 @@
-#ifndef cmdlineH
-#define cmdlineH
-
+#ifndef __olx_cmdline_H
+#define __olx_cmdline_H
 #include "ctrls.h"
 
 class TCmdLine : public TTextEdit, public AActionHandler  {

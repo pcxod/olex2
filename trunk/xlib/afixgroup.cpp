@@ -1,5 +1,6 @@
 #include "afixgroup.h"
 #include "refmodel.h"
+
 const olxstr TAfixGroup::m_names[] = {
   EmptyString(),
   "ternary CH",

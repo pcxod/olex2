@@ -1,15 +1,9 @@
-//----------------------------------------------------------------------------//
-// namespace TEObjects: Stream
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
-#ifndef ememstreamH
-#define ememstreamH
+#ifndef __olx_ememstream_H
+#define __olx_ememstream_H
 #include "ebase.h"
 #include "edlist.h"
 #include "estrlist.h"
 #include "datastream.h"
-//---------------------------------------------------------------------------
-
 BeginEsdlNamespace()
 
 class TEMemoryStream: protected TDirectionalList<char>, 
@@ -106,6 +100,3 @@ public:
 
 EndEsdlNamespace()
 #endif
-
-
-

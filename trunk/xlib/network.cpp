@@ -1,21 +1,13 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "network.h"
 #include "satom.h"
 #include "sbond.h"
-
 #include "actions.h"
-
 #include "lattice.h"
 #include "unitcell.h"
 #include "asymmunit.h"
-
 #include "bapp.h"
 #include "log.h"
-
 #include "egraph.h"
-
 #include "olxmps.h"
 #include "estopwatch.h"
 #include "edict.h"
@@ -25,9 +17,6 @@
 
 #undef GetObject
 
-//---------------------------------------------------------------------------
-// TNetwork function bodies
-//---------------------------------------------------------------------------
 TNetwork::TNetwork(TLattice* P, TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
   Lattice = P;
   SetTag(-1);

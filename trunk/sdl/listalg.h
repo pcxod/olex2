@@ -1,5 +1,5 @@
-#ifndef __olx_sdl_listAlg_H
-#define __olx_sdl_listAlg_H
+#ifndef __olx_sdl_list_alg_H
+#define __olx_sdl_list_alg_H
 
 struct ListCaster  {
   template <class To> struct SimpleCast  {

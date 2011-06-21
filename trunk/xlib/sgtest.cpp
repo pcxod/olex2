@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "sgtest.h"
 #include "edlist.h"
 #include "tptrlist.h"
@@ -444,4 +440,3 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
       SGHits[i].GetC() );
   }
 }
-

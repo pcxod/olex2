@@ -4,9 +4,7 @@
 #include "estlist.h"
 #include "tptrlist.h"
 #include "typelist.h"
-
 #undef GetObject
-
 BeginEsdlNamespace()
 
 const short

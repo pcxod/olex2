@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// crystallographic symmetry library
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include <stdlib.h>
 #include "symmlib.h"
 #include "dataitem.h"

@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TGXApp
-// (c) Oleg V. Dolomanov, 2004-2009
-//----------------------------------------------------------------------------//
 #include "dunitcell.h"
 #include "dbasis.h"
 #include "xreflection.h"
@@ -12,22 +8,17 @@
 #include "xgrowline.h"
 #include "xgrowpoint.h"
 #include "xgrid.h"
-
 #include "gxapp.h"
 #include "log.h"
 #include "xeval.h"
-
 #include "network.h"
 #include "unitcell.h"
 #include "symmparser.h"
-
 #include "efile.h"
-
 #include "xlattice.h"
 #include "egc.h"
 #include "eutf8.h"
 #include "ememstream.h"
-
 #include "gpcollection.h"
 #include "estopwatch.h"
 #include "pers_util.h"
@@ -4250,4 +4241,3 @@ void TGXApp::SelectAll(bool Select)  {
   Draw();
 }
 //..............................................................................
-

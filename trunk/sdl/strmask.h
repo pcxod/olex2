@@ -1,7 +1,8 @@
-#ifndef __olx_str_mask_h
-#define __olx_str_mask_h
+#ifndef __olx_sdl_str_mask_h
+#define __olx_sdl_str_mask_h
 #include "ebase.h"
 BeginEsdlNamespace()
+
 class TStrMask {
   bool matchAll, matchAny, matchEnd, matchStart, matchBoth;
   olxstr mask, start, end;
@@ -57,6 +58,6 @@ public:
     return false;
   }
 };
+
 EndEsdlNamespace()
 #endif
-

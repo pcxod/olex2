@@ -4,7 +4,6 @@
 #include "datafile.h"
 #include "gloption.h"
 #include "library.h"
-
 BeginGlNamespace()
 
 class TGlLight : public IEObject  {

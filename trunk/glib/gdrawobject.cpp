@@ -1,13 +1,9 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "gdrawobject.h"
 #include "glprimitive.h"
 #include "gpcollection.h"
 #include "styles.h"
-
 UseGlNamespace()
-//..............................................................................
+
 AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
   Parent(parent)
 {

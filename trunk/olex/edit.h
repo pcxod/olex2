@@ -1,5 +1,5 @@
-#ifndef olx_editdlg_H
-#define olx_editdlg_H
+#ifndef __olx_editdlg_H
+#define __olx_editdlg_H
 #include "ctrls.h"
 
 class TdlgEdit: public wxDialog  {
@@ -14,4 +14,3 @@ public:
   TWindowInterface WI;
 };
 #endif
- 

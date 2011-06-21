@@ -1,5 +1,5 @@
-#ifndef CISOSURFACE_H
-#define CISOSURFACE_H
+#ifndef __olx_isosurface_H
+#define __olx_isosurface_H
 /* Modified by O. Dolomanov, 2007.11 to fit to Olex2 development framework */
 
 // File Name: CIsoSurface.h
@@ -213,5 +213,4 @@ protected:
   static const unsigned int m_edgeTable[256];
   static const int m_triTable[256][16];
 };
-#endif // CISOSURFACE_H
-
+#endif // guard

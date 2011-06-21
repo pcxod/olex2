@@ -1,11 +1,11 @@
 #ifndef __olx_socketfs_H
 #define __olx_socketfs_H
-/* POSIX socket based file fetching utility,
-(c) O Dolomanov, 2010 */
 #include "httpfs.h"
 #include "md5.h"
 #include "eutf8.h"
 
+/* POSIX socket based file fetching utility
+*/
 class TSocketFS: public THttpFileSystem  {
 protected:
   static bool UseLocalFS;
@@ -63,5 +63,3 @@ public:
 };
 
 #endif
- 
-

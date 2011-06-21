@@ -1,10 +1,8 @@
 #ifndef __olx_wxzip_fs_H
 #define __olx_wxzip_fs_H
-
 #include "filesystem.h"
 
 #ifdef __WXWIDGETS__
-
 #include <wx/zipstrm.h>
 #include <wx/mstream.h>
 #include <wx/wfstream.h>
@@ -14,7 +12,7 @@ struct TZipEntry  {
   olxstr ZipName;
   olxstr EntryName;
 };
-//---------------------------------------------------------------------------
+
 class TZipWrapper  {
   wxZipInputStream *FInputStream;
   wxFile *wxfile;

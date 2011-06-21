@@ -4,12 +4,11 @@
 #include "estrlist.h"
 #include "glfont.h"
 #include "edict.h"
-
 #ifdef CreateFont
   #undef CreateFont
 #endif
-
 BeginGlNamespace()
+
 class TGlFont;
 /* abstarct class */
 class AGlScene: public IEObject  {

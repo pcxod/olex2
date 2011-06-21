@@ -1,9 +1,5 @@
-// if this is not inluded: internal compiler error at 0xc19d9e with base 0xc10000
-#include "egc.h"
-
 #include "auto.h"
 #include "ins.h"
-
 #include "integration.h"
 #include "xmacro.h"
 #include "sortedlist.h"
@@ -791,4 +787,3 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   }
   E.SetRetVal(found_cnt != 0);
 }
-

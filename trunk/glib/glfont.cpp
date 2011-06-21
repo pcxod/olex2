@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TGlFont - a text font 
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "glfont.h"
 #include "exception.h"
 #include "emath.h"
@@ -9,10 +5,10 @@
 #include "exparse/exptree.h"
 #include "glscene.h"
 #include "glrender.h"
+UseGlNamespace()
 
 using namespace exparse::parser_util;
-UseGlNamespace()
-//..............................................................................
+
 TGlFont::TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _SmallId) :
   Parent(parent), Id(_Id), Name(name), SmallId(_SmallId)
 {

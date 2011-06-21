@@ -1,6 +1,3 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "xplane.h"
 #include "estlist.h"
 #include "planesort.h"
@@ -8,7 +5,6 @@
 #include "styles.h"
 #include "gpcollection.h"
 
-//..............................................................................
 void TXPlane::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);

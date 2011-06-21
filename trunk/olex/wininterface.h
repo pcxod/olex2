@@ -1,10 +1,8 @@
 #ifndef _WinInterfaceH
 #define _WinInterfaceH
-
 #include <wx/wx.h>
 #include "ebase.h"
 #include "gldefs.h"
-
 
 class TWindowInterface  {
   wxWindow *Window;
@@ -55,4 +53,3 @@ public:
 };
 
 #endif
-

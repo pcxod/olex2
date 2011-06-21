@@ -1,11 +1,3 @@
-//---------------------------------------------------------------------------//
-// TDataFile
-// (c) Oleg V. Dolomanov, 2004-2009
-//---------------------------------------------------------------------------//
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 #include "dataitem.h"
 #include "datafile.h"
 #include "efile.h"
@@ -15,8 +7,6 @@
 
 UseEsdlNamespace()
 using namespace exparse::parser_util;
-//..............................................................................
-//..............................................................................
 
 TDataFile::TDataFile()  {
   FRoot = new TDataItem(NULL, "Root");
@@ -25,7 +15,6 @@ TDataFile::TDataFile()  {
 TDataFile::~TDataFile()  {
   delete FRoot;
 }
-//..............................................................................
 //..............................................................................
 bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
   olxwstr in;
@@ -93,5 +82,3 @@ void TDataFile::SaveToXLFile(const olxstr &DataFile)  {
   TUtf8File::Create(DataFile, bf.ToString());
 }
 //..............................................................................
-
-

@@ -616,7 +616,6 @@
     <ClCompile Include="..\..\..\sdl\groupobj.cpp" />
     <ClCompile Include="..\..\..\sdl\hashing.cpp" />
     <ClCompile Include="..\..\..\sdl\integration.cpp" />
-    <ClCompile Include="..\..\..\sdl\ipbase.cpp" />
     <ClCompile Include="..\..\..\sdl\istream.cpp" />
     <ClCompile Include="..\..\..\sdl\library.cpp" />
     <ClCompile Include="..\..\..\sdl\log.cpp" />

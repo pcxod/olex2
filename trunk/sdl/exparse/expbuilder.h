@@ -1,11 +1,9 @@
-#ifndef __olx_exparse_expbuilder_H
-#define __olx_exparse_expbuilder_H
-
+#ifndef __olx_sdl_exparse_expbuilder_H
+#define __olx_sdl_exparse_expbuilder_H
 #include "builtins.h"
 #include "exptree.h"
 #include "explib.h"
 #include "context.h"
-
 BeginEsdlNamespace()
 
 namespace exparse  {
@@ -33,5 +31,4 @@ namespace exparse  {
 };  // end exparse namespace
 
 EndEsdlNamespace()
-
 #endif

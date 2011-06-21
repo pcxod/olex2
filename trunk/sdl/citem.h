@@ -1,6 +1,6 @@
-// (c) O Dolomanov, 2004-2010
 #ifndef __olx_sdl_collectionItem_H
 #define __olx_sdl_collectionItem_H
+
 // implements data for collection item
 class ACollectionItem : public IEObject  {
   index_t CollectionItemTag;

@@ -1,14 +1,11 @@
 #include "egc.h"
 #include "xmacro.h"
-
 #include "hkl.h"
 #include "unitcell.h"
 #include "symmlib.h"
-
 #include "etable.h"
 #include "emath.h"
 
-//..............................................................................
 struct TWilsonRef  {
   double ds, Fo2, Fe2;
   static int SortByDs(const TWilsonRef& r1, const TWilsonRef& r2)  {

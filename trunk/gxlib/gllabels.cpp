@@ -1,15 +1,9 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "gllabels.h"
 #include "xatom.h"
 #include "gxapp.h"
 #include "asymmunit.h"
 #include "refmodel.h"
 
-//----------------------------------------------------------------------------//
-// TXGlLabels function bodies
-//----------------------------------------------------------------------------//
 TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
   AGDrawObject(Render, collectionName)
 {
@@ -245,4 +239,3 @@ bool TXGlLabels::IsLabelMarked(size_t i) const {
 //..............................................................................
 TGlFont& TXGlLabels::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
 //..............................................................................
-

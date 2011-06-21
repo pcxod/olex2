@@ -1,6 +1,5 @@
 #ifndef __olx_update_api_H
 #define __olx_update_api_H
-
 #include "filesystem.h"
 #include "bapp.h"
 #include "settingsfile.h"

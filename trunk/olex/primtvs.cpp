@@ -1,12 +1,8 @@
-//----------------------------------------------------------------------------//
-// primitives dialog
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "primtvs.h"
 #include "styles.h"
 #include "xbond.h"
 #include "xatom.h"
-//..............................................................................
+
 BEGIN_EVENT_TABLE(TdlgPrimitive, TDialog)
   EVT_BUTTON(wxID_OK, TdlgPrimitive::OnOK)
 END_EVENT_TABLE()
@@ -65,4 +61,3 @@ void TdlgPrimitive::OnOK(wxCommandEvent& event)  {
   EndModal(wxID_OK);
 }
 //..............................................................................
-

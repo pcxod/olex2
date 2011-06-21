@@ -1,7 +1,6 @@
-#ifndef __OLX_STRCONV__
-#define __OLX_STRCONV__
+#ifndef __olx_sdl_strconv_H
+#define __olx_sdl_strconv_H
 #include "ebase.h"
-
 BeginEsdlNamespace()
 
 static olxcstr WC2MB(const olxwstr& wstr)  {
@@ -12,7 +11,7 @@ static olxcstr WC2MB(const olxwstr& wstr)  {
   cstr.SetLength(n);
   return cstr;
 }
-  //............................................................................
+
 static olxwstr MB2WC(const olxcstr& cstr)  {
   olxwstr wstr(WEmptyString(), cstr.Length());  // better more than less ... /MB_CUR_MAX not sure if gonna work
   size_t n=0;

@@ -1,14 +1,9 @@
-//----------------------------------------------------------------------------//
-// Blob object
-// (c) Oleg V. Dolomanov, 2009
-//----------------------------------------------------------------------------//
 #include "xblob.h"
 #include "glprimitive.h"
 #include "glmaterial.h"
 #include "glrender.h"
 #include "gpcollection.h"
 #include "styles.h"
-
 
 TXBlob::TXBlob(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
@@ -49,4 +44,3 @@ bool TXBlob::Orient(TGlPrimitive& P)  {
   olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
   return true;
 }
-

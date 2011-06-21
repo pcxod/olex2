@@ -1,5 +1,4 @@
-//#define __OLX_USE_FASTSYMM
-
+// use to switch fast symm on #define __OLX_USE_FASTSYMM
 #include "sfutil.h"
 #include "cif.h"
 #include "hkl.h"

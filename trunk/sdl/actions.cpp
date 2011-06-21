@@ -1,13 +1,7 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "actions.h"
 #include "exception.h"
-
 UseEsdlNamespace()
-//------------------------------------------------------------------------------
-//TActionQueue function bodies
-//------------------------------------------------------------------------------
+
 TActionQueue::TActionQueue(TActionQList* parent, const olxstr& name) : Name(name)  {
   if( parent == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "Please, use TActionQList to create actions");
@@ -189,6 +183,3 @@ void TActionQList::Clear()  {
   }
   Queues.Clear();
 }
-
-
-

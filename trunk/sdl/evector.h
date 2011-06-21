@@ -420,8 +420,6 @@ public:
     return c;
   }
 };
-//------------------------------------------------------------------------------
-
 
   typedef TVector<float> evecf;
   typedef TVector<double> evecd;

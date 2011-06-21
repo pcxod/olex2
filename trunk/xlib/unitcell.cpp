@@ -1,7 +1,3 @@
-//---------------------------------------------------------------------------//
-// TUnitCell: a collection of matrices and ellipoids
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "unitcell.h"
 #include "asymmunit.h"
 #include "lattice.h"
@@ -15,9 +11,7 @@
 #include "arrays.h"
 #include "etable.h"
 #undef GetObject
-//---------------------------------------------------------------------------
-// TUnitCell function bodies
-//---------------------------------------------------------------------------
+
 TUnitCell::TUnitCell(TLattice *L)  {  Lattice = L;  }
 //..............................................................................
 TUnitCell::~TUnitCell()  {  Clear();  }
@@ -1028,4 +1022,3 @@ class TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
   return lib;
 }
 //..............................................................................
-

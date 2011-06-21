@@ -2,7 +2,6 @@
 #include "exception.h"
 #include "egc.h"
 #include "encodings.h"
-
 UseEsdlNamespace()
 
 TEBitArray::TEBitArray()  {  FData = NULL;  FCount = FCharCount = 0;  }
@@ -173,4 +172,3 @@ olxstr TEBitArray::FormatString(uint16_t bitsInSegment) const {
   return StrRepr;
 }
 //..............................................................................
-

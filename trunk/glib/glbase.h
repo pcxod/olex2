@@ -1,5 +1,5 @@
-#ifndef glbaseH
-#define glbaseH
+#ifndef __olx_gl_glbase_H
+#define __olx_gl_glbase_H
 
 #define BeginGlNamespace()  namespace glObj {
 #define EndGlNamespace()  };\
@@ -18,6 +18,7 @@
   #include <GL/gl.h>
   #include <GL/glu.h>
 #endif
+BeginGlNamespace()
 
 struct olx_gl  {
   template <typename MC> static void orient(const MC& m)  {
@@ -328,4 +329,6 @@ struct olx_gl  {
   static void flush()  {  glFlush();  }
   static const GLubyte* getString(GLenum name)  {  return glGetString(name);  }
 };
+
+EndGlNamespace()
 #endif

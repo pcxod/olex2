@@ -1,9 +1,8 @@
-#ifndef __olx_ddl_macroerror_H
-#define __olx_ddl_macroerror_H
+#ifndef __olx_sdl_macroerror_H
+#define __olx_sdl_macroerror_H
 #include "exception.h"
 #include "ptypes.h"
 #include "estack.h"
-
 BeginEsdlNamespace()
 
 class ABasicFunction;

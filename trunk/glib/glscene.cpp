@@ -1,11 +1,6 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "glscene.h"
 #include "glrender.h"
 
-UseGlNamespace();
-//..............................................................................
 AGlScene::~AGlScene()  {
   Fonts.DeleteItems();
   SmallFonts.DeleteItems();
@@ -127,4 +122,3 @@ olxstr AGlScene::MetaFont::GetFileIdString() const {
     return BuildOlexFontId(EmptyString(), Size, Fixed, Bold, Italic);
   throw TInvalidArgumentException(__OlxSourceInfo, "Olex2 font is expected");
 }
-

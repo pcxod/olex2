@@ -1,7 +1,6 @@
 #ifndef __olx_hashing__H
 #define __olx_hashing__H
 #include "ebase.h"
-
 BeginEsdlNamespace()
 
 struct HashingUtils  {

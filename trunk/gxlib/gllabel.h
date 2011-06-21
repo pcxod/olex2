@@ -4,7 +4,6 @@
 #include "glmousehandler.h"
 #include "glfont.h"
 #include "dataitem.h"
-
 BeginGxlNamespace()
 
 class TXGlLabel: public AGlMouseHandlerImp  {

@@ -1,5 +1,5 @@
-#ifndef eTraverseH
-#define eTraverseH
+#ifndef __olx_sdl_traverse_H
+#define __olx_sdl_traverse_H
 #include "ebase.h"
 
 BeginEsdlNamespace()
@@ -95,5 +95,3 @@ public:
 };
 EndEsdlNamespace()
 #endif
-
- 

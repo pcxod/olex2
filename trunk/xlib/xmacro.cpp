@@ -1,13 +1,11 @@
 #include "xmacro.h"
 #include "xapp.h"
-
 #include "p4p.h"
 #include "mol.h"
 #include "crs.h"
 #include "ins.h"
 #include "cif.h"
 #include "hkl.h"
-
 #include "unitcell.h"
 #include "symmtest.h"
 #include "integration.h"

@@ -1,14 +1,9 @@
-//----------------------------------------------------------------------------//
-// TGlApp implementation
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "xglapp.h"
 #include "xglcanv.h"
 #include "mainform.h"
 #include "wx/progdlg.h"
 #include "wx/datetime.h"
 #include "wx/tooltip.h"
-
 #include "ins.h"
 #include "mol.h"
 #include "cif.h"
@@ -24,8 +19,8 @@
 #include "shellutil.h"
 #include "patchapi.h"
 #include "cdsfs.h"
-
 #include "efile.h"
+
 #ifndef __WIN32__
   #include "icons/olex2.xpm"
   #include <unistd.h>

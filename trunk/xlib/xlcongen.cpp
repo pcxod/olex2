@@ -1,11 +1,6 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "xlcongen.h"
 #include "unitcell.h"
 
-//..............................................................................
 bool TXlConGen::FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values)  {
   throw TNotImplementedException( __OlxSourceInfo );
 }
@@ -221,4 +216,3 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
   return false;
 }
 //..............................................................................
-

@@ -1,4 +1,3 @@
-/* c 2004 Oleg V. Dolomanov */
 #ifndef __olx_sdl_evailn_H
 #define __olx_sdl_evailn_H
 #include <math.h>

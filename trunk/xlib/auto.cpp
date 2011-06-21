@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "auto.h"
 #include "bapp.h"
 #include "log.h"
@@ -10,7 +6,6 @@
 #include "symmlib.h"
 #include "cif.h"
 #include "etime.h"
-
 #include "olxmps.h"
 #include "egc.h"
 #include "eutf8.h"
@@ -1529,5 +1524,3 @@ TLibrary*  TAutoDB::ExportLibrary(const olxstr& name)  {
   return lib;
 }
 //..............................................................................
-
-

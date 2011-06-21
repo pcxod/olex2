@@ -10,18 +10,14 @@
 #include "actions.h"
 #include "threex3.h"
 #include "library.h"
-
 #include "tptrlist.h"
 #include "talist.h"
 #include "macroerror.h"
-
 #include "paramlist.h"
 #include "gpcollection.h"
 #include "glgroup.h"
-
 #undef DrawText
 #undef GetObject
-
 BeginGlNamespace()
 
 const uint8_t

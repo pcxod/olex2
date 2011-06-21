@@ -7,10 +7,6 @@
 #include "pers_util.h"
 #include "index_range.h"
           
-//----------------------------------------------------------------------------//
-// TSAtom function bodies
-//----------------------------------------------------------------------------//
-
 TSAtom::TSAtom(TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
   SetType(sotAtom);
   Flags = 0;

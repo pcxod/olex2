@@ -1,9 +1,5 @@
-//----------------------------------------------------------------------------//
-// DlgGenerate implementation
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "ptable.h"
-//..............................................................................
+
 TPTableDlg::TPTableDlg(TMainFrame *Parent) :
   TDialog(Parent, wxT("Periodic table"), EsdlClassName(TPTableDlg).u_str() )  
 {
@@ -91,4 +87,3 @@ bool TPTableDlg::Execute(const IEObject *Sender, const IEObject *Data)  {
   wxDialog::EndModal(wxID_OK);
   return true;
 }
-

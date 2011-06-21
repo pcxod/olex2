@@ -508,4 +508,3 @@ uint64_t TFileTree::CalcMergeSize(const DiffFolder& df)  {
   return sz;
 }
 //......................................................................................
-

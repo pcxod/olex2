@@ -5,7 +5,6 @@
 #include "tptrlist.h"
 #include "estrlist.h"
 #include "exception.h"
-
 BeginEsdlNamespace()
 
 class TEStrBuffer;
@@ -142,6 +141,3 @@ public:
 
 EndEsdlNamespace()
 #endif
-
-
-

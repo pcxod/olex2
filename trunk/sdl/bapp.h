@@ -4,7 +4,6 @@
 #include "os_util.h"
 #include "library.h"
 #include "log.h"
-
 BeginEsdlNamespace()
 
 // app event registry, these might not be implemented

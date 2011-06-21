@@ -3,7 +3,7 @@
 /*
 Adopted procedure, source:  C derivation from the fortran version of CONREC by Paul Bourke
 (http://local.wasp.uwa.edu.au/~pbourke/papers/conrec/)
-
+Contains original documentation.
 */
 template <typename Float> struct Contour {
   // feedback support structures

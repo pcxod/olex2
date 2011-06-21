@@ -1,15 +1,11 @@
-//---------------------------------------------------------------------------//
-// Binominal polynomial routins
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #ifndef __olx_sdl_poly_H
 #define __olx_sdl_poly_H
 #include <math.h>
 #include <stdlib.h>
 #include "typelist.h"
-//---------------------------------------------------------------------------
 BeginEsdlNamespace()
 
+// Binominal polynomial routins
 struct TSPoint  {
   double X, Y;
   TSPoint(const double& a, const double& b) : X(a), Y(b) {  }

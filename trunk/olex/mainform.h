@@ -1,24 +1,18 @@
-//............................................................................//
 #ifndef _xl_mainformH
 #define _xl_mainformH
-//............................................................................//
 #include "wx/wx.h"
 #include "wx/dnd.h"
 #include "wx/process.h"
 #include "wx/thread.h"
-
 #include "gxapp.h"
 #include "ctrls.h"
 #include "eprocess.h"
 #include "undo.h"
-//#include "framemaker.h"
 #include "glconsole.h"
 #include "datafile.h"
 #include "gltextbox.h"
-
 #include "integration.h"
 #include "macroerror.h"
-
 #include "library.h"
 #include "eaccell.h"
 #include "estlist.h"

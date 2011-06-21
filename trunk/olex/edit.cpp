@@ -1,10 +1,7 @@
-//----------------------------------------------------------------------------//
-// edit text dialog dialog
-// (c) Oleg V. Dolomanov, 2006
-//----------------------------------------------------------------------------//
 #include "edit.h"
 #include <wx/font.h>
 
+// edit text dialog dialog
 TdlgEdit::TdlgEdit(TMainFrame *ParentFrame, bool MultiLine):
   //TDialog(ParentFrame, -1, wxT("Edit"), wxT("dlgEdit"))
   wxDialog(ParentFrame, -1,  wxT("Edit"), wxPoint(0, 0), wxDefaultSize, wxMAXIMIZE_BOX | wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, wxT("dlgEdit")), WI(this)
@@ -53,4 +50,3 @@ void TdlgEdit::SetText(const olxstr& text)  {
 //..............................................................................
 olxstr TdlgEdit::GetText()  {  return Text->GetValue();  }
 //..............................................................................
-

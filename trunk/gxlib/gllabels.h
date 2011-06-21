@@ -5,7 +5,6 @@
 #include "bitarray.h"
 #include "glfont.h"
 #include "glmaterial.h"
-
 BeginGxlNamespace()
 
 class TXAtom;

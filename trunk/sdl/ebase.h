@@ -1,18 +1,15 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #ifndef __olx_sdl_base_H
 #define __olx_sdl_base_H
 #include <typeinfo>
 #include <string.h>
 #include <stdlib.h>
 
-  #define EsdlClassNameT(class)  typeid(class).name()
-  #define EsdlObjectNameT(object)  typeid(object).name()
-  #define EsdlClassName(class)  olxstr(typeid(class).name())
-  #define EsdlObjectName(object)  olxstr(typeid(object).name())
+#define EsdlClassNameT(class)  typeid(class).name()
+#define EsdlObjectNameT(object)  typeid(object).name()
+#define EsdlClassName(class)  olxstr(typeid(class).name())
+#define EsdlObjectName(object)  olxstr(typeid(object).name())
 
-  #define EsdlInstanceOf( class, className )  (typeid(class) == typeid(className))
+#define EsdlInstanceOf( class, className )  (typeid(class) == typeid(className))
 
 // defines a primitive type property
 #define DefPropP(Type, Name) \

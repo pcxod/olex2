@@ -4,7 +4,6 @@
 #include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
-
 BeginEsdlNamespace()
 
 template <class T> class TArrayList : public AReferencible  {

@@ -1,5 +1,5 @@
-#ifndef efilelistH
-#define efilelistH
+#ifndef __olx_sdl_efilelist_H
+#define __olx_sdl_efilelist_H
 #include "ebase.h"
 #include "typelist.h"
 #include "etime.h"
@@ -72,5 +72,4 @@ BeginEsdlNamespace()
   typedef TTypeList<TFileListItem> TFileList;
 
 EndEsdlNamespace()
-
 #endif

@@ -1,14 +1,7 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-  #include <mem.h>
-#else
-  #include <memory.h>
-#endif
-
+#include <memory.h>
 #include <time.h>
 
 #include "etime.h"
-//#include "estring.h"
 #include "library.h"
 #include "estrlist.h"
 

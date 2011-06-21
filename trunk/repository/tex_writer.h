@@ -1,12 +1,11 @@
-/* A simple postscript file interface 
-(c) Oleg Dolomanov, 2009
-*/
 #ifndef _olx_tex_writerH
 #define _olx_tex_writerH
 #include "efile.h"
 #include "glbase.h"
 #include "threex3.h"
 
+/* A simple postscript file interface 
+*/
 class TEXWriter  {
   TEFile out;
   char bf[80];
@@ -35,7 +34,6 @@ public:
     out.Writeln("\\newcommand{\\whitespace}{1pt}");
     out.Writeln("");   
   }
-  //..........................................................................
   void Writenl(const char* bf)  {
     out.Writeln(bf);
   }  

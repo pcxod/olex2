@@ -1,9 +1,9 @@
-#ifndef __olx_exparse_builins_H
-#define __olx_exparse_builins_H
+#ifndef __olx_sdl_exparse_builins_H
+#define __olx_sdl_exparse_builins_H
 #include "evaluable.h"
 #include "../emath.h"
-
 BeginEsdlNamespace()
+
 namespace exparse  {
 
   struct BuiltInsFactory {

@@ -93,9 +93,6 @@
     <ClCompile Include="..\..\..\sdl\integration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\sdl\ipbase.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\sdl\istream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

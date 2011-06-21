@@ -3,7 +3,6 @@
 #include "threex3.h"
 #include "gllabel.h"
 #include "glprimitive.h"
-
 BeginGxlNamespace()
 
 class TDUnitCell: public AGDrawObject  {

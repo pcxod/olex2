@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TGlXLabel - a drawing object for text label
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "gllabel.h"
 #include "gpcollection.h"
 #include "styles.h"

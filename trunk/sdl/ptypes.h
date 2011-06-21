@@ -1,7 +1,6 @@
 #ifndef __olx_sdl_ptypes_H
 #define __olx_sdl_ptypes_H
 #include "egc.h"
-
 BeginEsdlNamespace()
 
 // primtive type wrapper template
@@ -43,5 +42,4 @@ public:
 };
 
 EndEsdlNamespace()
-
 #endif

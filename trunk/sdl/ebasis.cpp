@@ -1,15 +1,11 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "ebasis.h"
 #include "dataitem.h"
-
 UseEsdlNamespace()
+
 // static data
 float TEBasis::FMData[16];
 float TEBasis::FMDataT[16];
-// TBasis function bodies
-//----------------------------------------------------------------------------//
+
 TEBasis::TEBasis() {  Reset();  }
 //..............................................................................
 TEBasis::TEBasis(const TEBasis &B)  {
@@ -121,4 +117,3 @@ bool TEBasis::FromDataItem(const TDataItem& Item)  {
     FZoom = z;
   return true;
 }
-

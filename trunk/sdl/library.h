@@ -1,9 +1,7 @@
 #ifndef __olx_sdl_library_H
 #define __olx_sdl_library_H
 #include "function.h"
-#ifdef GetObject
-  #undef GetObject
-#endif
+#undef GetObject
 
 BeginEsdlNamespace()
 
@@ -131,5 +129,4 @@ public:
 };
 
 EndEsdlNamespace()
-
 #endif

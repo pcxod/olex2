@@ -1,7 +1,3 @@
-//---------------------------------------------------------------------------//
-// namespace TXClasses: TCAtom - basic crystalographic atom
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "catom.h"
 #include "ellipsoid.h"
 #include "exception.h"
@@ -11,10 +7,9 @@
 #include "residue.h"
 #include "symmcon.h"
 
-olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof", "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
-//----------------------------------------------------------------------------//
-// TCAtom function bodies
-//----------------------------------------------------------------------------//
+olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof",
+  "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
+
 TCAtom::TCAtom(TAsymmUnit* _Parent) : Parent(_Parent)  {
   Part   = 0;
   Occu   = 1;

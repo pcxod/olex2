@@ -1,7 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "envilist.h"
 
 void TAtomEnvi::ApplySymm(const smatd& sym)  {
@@ -36,5 +32,3 @@ PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
   return neighbours;
 }
 #endif
-
- 

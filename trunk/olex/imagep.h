@@ -1,8 +1,7 @@
-#ifndef imagepH
-#define imagepH
+#ifndef __olx_imagepH
+#define __olx_imagepH
 
 class TProcessImage  {
-
 public:
    // takes a 3x3 filter
    static void FilterBW(unsigned char *Image, int width, int height, int bytePerColour,
@@ -17,4 +16,3 @@ public:
           int BgColour);
 };
 #endif
- 

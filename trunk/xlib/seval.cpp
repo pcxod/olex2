@@ -48,4 +48,3 @@ TTBasicAtomInfoEvaluatorFactory::TTBasicAtomInfoEvaluatorFactory(IEvaluatorFacto
   // register new instance of TBaiZEvaluator
   Evaluators.Add("z", new TBaiZEvaluator(this));
 }
-

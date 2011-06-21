@@ -1,7 +1,3 @@
-//---------------------------------------------------------------------------//
-// namespace TXFiles: THkl - basic procedures for the SHELX HKL files
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
 #include "hkl.h"
 #include "lst.h"
 #include "ins.h"
@@ -13,7 +9,6 @@
 #include "ematrix.h"
 #include "symmlib.h"
 
-//..............................................................................
 void THklFile::Clear()  {
   Refs.DeleteItems().Clear();
   Clear3D();
@@ -343,5 +338,3 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   return true;
 }
 //..............................................................................
-
-

@@ -1,7 +1,7 @@
-#ifndef etimeH
-#define etimeH
+#ifndef __olx_sdl_etime_H
+#define __olx_sdl_etime_H
 #include "ebase.h"
-//---------------------------------------------------------------------------
+
 #ifdef __WIN32__
   #ifdef __BORLANDC__ // this if for time_t definition
     #include <time.h>
@@ -9,8 +9,8 @@
 #else
   #include <sys/time.h>
 #endif
-BeginEsdlNamespace()
 
+BeginEsdlNamespace()
 
 const long HoursADay   = 24,
            MinsADay    = HoursADay * 60,
@@ -48,7 +48,7 @@ public:
     return !(year%4) && ((year%100) || !(year%400));
   }
 
-  static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
+  static class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndEsdlNamespace()

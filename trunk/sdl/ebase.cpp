@@ -1,5 +1,4 @@
 #include "exception.h"
-
 UseEsdlNamespace()
 
 void *GlobalEsdlFunction(olx_malloc_)(size_t sz)  {

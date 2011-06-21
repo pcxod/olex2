@@ -2,6 +2,7 @@
 #define __olx_sdl_sorted_H
 #include "ebase.h"
 BeginEsdlNamespace()
+
 namespace sorted {
 
   template <class ListClass, class Comparator, typename TypeClass>
@@ -152,5 +153,6 @@ namespace sorted {
     return true;
   }
 };  // end namespace sorted
+
 EndEsdlNamespace()
 #endif

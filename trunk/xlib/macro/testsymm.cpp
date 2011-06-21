@@ -1,13 +1,10 @@
 #include "egc.h"
 #include "xmacro.h"
-
 #include "hkl.h"
-
 #include "symmtest.h"
 #include "symmparser.h"
 #include "symmlib.h"
 
-//..............................................................................
 bool NormalisevectorView(vec3d& v ) {
   double tol = 0.05;
   bool res = true;
@@ -181,5 +178,3 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   XApp.NewLogEntry() << line;
 }
-
-

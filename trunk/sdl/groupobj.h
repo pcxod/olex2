@@ -1,8 +1,5 @@
-//---------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//---------------------------------------------------------------------------//
-#ifndef groupobjH
-#define groupobjH
+#ifndef __olx_sdl_groupobj_H
+#define __olx_sdl_groupobj_H
 #include "ebase.h"
 #include "tptrlist.h"
 #undef GetObject
@@ -106,5 +103,6 @@ public:
   inline OC& GetObject(size_t index) const {  return *(OC*)Objects[index]; }
   inline PC& GetProperties(size_t index) const {  return *(PC*)Props[index]; }
 };
+
 EndEsdlNamespace()
 #endif

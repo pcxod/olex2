@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TGlTextBox - a text box
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "gltextbox.h"
 #include "styles.h"
 #include "glrender.h"
@@ -9,8 +5,6 @@
 #include "glprimitive.h"
 #include "glfont.h"
 
-UseGlNamespace()
-//..............................................................................
 TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
   AGlMouseHandlerImp(Render, collectionName)
 {

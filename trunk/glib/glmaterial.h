@@ -5,7 +5,6 @@
 #include "gloption.h"
 #include "datafile.h"
 #include "emath.h"
-
 BeginGlNamespace()
 
 extern const TGlOption BlackColor;
@@ -95,5 +94,4 @@ public:
 };
 
 EndGlNamespace()
-
 #endif

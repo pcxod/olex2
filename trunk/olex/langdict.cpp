@@ -1,21 +1,10 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "langdict.h"
 #include "efile.h"
 #include "egc.h"
 #include "bapp.h"
 #include "log.h"
-
 #include "etbuffer.h"
 
-#ifndef uiStr  // ansi string to wxString in unicode
-  #define uiStr(v)  (wxString((v).u_str()))
-  #define uiStrT(v) (wxString(v, *wxConvUI))
-#endif
-
-//..............................................................................
 TLangDict::TLangDict()  {
   CurrentLanguageEncodingStr = "ISO8859-1";
 }
@@ -121,4 +110,3 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
   }
 }
 //..............................................................................
-

@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// User object - a drawing object for unit cell
-// (c) Oleg V. Dolomanov, 2004-8
-//----------------------------------------------------------------------------//
 #include "dusero.h"
 #include "glprimitive.h"
 #include "glmaterial.h"
@@ -74,4 +70,3 @@ bool TDUserObj::Orient(TGlPrimitive& P)  {
   }
   return false;
 }
-

@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TXAtom  - a drawing object for atom
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "xatom.h"
 #include "glprimitive.h"
 #include "gpcollection.h"
@@ -9,17 +5,14 @@
 #include "ellipsoid.h"
 #include "symmparser.h"
 #include "network.h"
-
 #include "asymmunit.h"
 #include "unitcell.h"
 #include "lattice.h"
 #include "planesort.h"
-
 #include "glgroup.h"
 #include "exyzgroup.h"
 #include "glutil.h"
 
-//..............................................................................
 bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
   TXAtom::FAtomParams = NULL; 
   TXAtom::ClearStaticObjects();

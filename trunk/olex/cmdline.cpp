@@ -1,13 +1,8 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-#endif
-
 #include "cmdline.h"
-//TODO: have to move these constants to sometwhere more accessible !!
 #include "glmouse.h"
 #include "bapp.h"
 
-  static bool DoCheckPosition = false;
+static bool DoCheckPosition = false;
 
 TCmdLine::TCmdLine( wxWindow* parent, int flags ) :
   TTextEdit(parent, flags),
@@ -94,4 +89,3 @@ bool TCmdLine::Execute(const IEObject *Sender, const IEObject *Data)  {
   return false;
 }
 //..............................................................................
-

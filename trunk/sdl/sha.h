@@ -1,13 +1,11 @@
 #ifndef __olx_sdl_sha_H
 #define __olx_sdl_sha_H
 #include "hashing.h"
-/* SHA-1 message digest implementation, for reference look at:
-  http://en.wikipedia.org/wiki/SHA_hash_functions
-  (c) O Dolomanov, 2009
-*/
-
 BeginEsdlNamespace()
 
+/* SHA-1 message digest implementation, for reference look at:
+  http://en.wikipedia.org/wiki/SHA_hash_functions
+*/
 class SHA1Impl  {
   unsigned char digest[20];
   uint32_t state[5], bf[80];

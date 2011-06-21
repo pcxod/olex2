@@ -1,6 +1,5 @@
-#ifndef __SMART_C_STR
-#define __SMART_C_STR
-
+#ifndef __olx_sdl_cstr_H
+#define __olx_sdl_cstr_H
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,10 +10,7 @@
 
 #include "../ebase.h"
 #include "../linked_operators.h"
-
 BeginEsdlNamespace()
-
-//template <class,typename> class TTSString;
 
 /* this class uses reference counting to reduce number of memory reallocations*/
 class TCString : public TTIString<char>, public IEObject{

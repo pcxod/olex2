@@ -1,12 +1,12 @@
+#ifndef __olx_sdl_utf8_H
+#define __olx_sdl_utf8_H
+#include "ebase.h"
+#include "edlist.h"
+BeginEsdlNamespace()
+
 /* original code by Marius Bancila at
 http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451/
 */
-
-#ifndef __OLX__UTF8__
-#define __OLX__UTF8__
-
-#include "ebase.h"
-#include "edlist.h"
 
 #define  UTF8_MASKBITS                0x3F
 #define  UTF8_MASKBYTE                0x80
@@ -15,8 +15,6 @@ http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451/
 #define  UTF8_MASK4BYTES              0xF0
 #define  UTF8_MASK5BYTES              0xF8
 #define  UTF8_MASK6BYTES              0xFC
-
-BeginEsdlNamespace()
 
 class TUtf8  {
   olxcstr (*EncodeFunc)(const void* arr, size_t len);
@@ -199,7 +197,6 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
     return str;
 }
 };
+
 EndEsdlNamespace()
-
 #endif
-

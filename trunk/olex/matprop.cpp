@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// material properties dialog
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "matprop.h"
 #include "wx/colordlg.h"
 #include "wx/fontdlg.h"
@@ -9,7 +5,8 @@
 #include "glgroup.h"
 #include "xatom.h"
 #include "xbond.h"
-//..............................................................................
+
+// material properties dialog
 enum  {
   ID_COPY = 1,
   ID_PASTE,
@@ -447,4 +444,3 @@ void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
     gpc.GetObject(i).UpdateLabel();
 }
 //..............................................................................
-

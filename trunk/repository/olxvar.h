@@ -1,6 +1,5 @@
-#ifndef olxvarH
-#define olxvarH
-
+#ifndef __olx_olxvar_H
+#define __olx_olxvar_H
 #include "estlist.h"
 #include "actions.h"
 #include "bapp.h"

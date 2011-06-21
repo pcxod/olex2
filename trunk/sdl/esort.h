@@ -1,8 +1,8 @@
-#ifndef eSortH
-#define eSortH
+#ifndef __olx_sdl_esort_H
+#define __olx_sdl_esort_H
 #include "ebase.h"
-
 BeginEsdlNamespace()
+
 /* a comparator for primitive types, or object having < and > operators only
    the comparison might call both operators, so use the TComparableComparator
    for whose objects which implement Compare function to improve the speed
@@ -184,7 +184,6 @@ protected:
   const Comparator& cmp;
 };
 //.........................................................................................................................
-//.........................................................................................................................
 template <class ListClass, class ItemClass, class Accessor> class ListQuickSorter  {
 public:
   template <class Comparator>
@@ -262,8 +261,6 @@ public:
         DummySwapListener()).Sort();
   }
 };
-//.........................................................................................................................
+
 EndEsdlNamespace()
 #endif
-
-

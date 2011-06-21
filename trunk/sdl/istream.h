@@ -1,8 +1,5 @@
-//----------------------------------------------------------------------------//
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
-#ifndef __OLX_IStream_H
-#define __OLX_IStream_H
+#ifndef __olx_sdl_istream_H
+#define __olx_sdl_istream_H
 BeginEsdlNamespace()
 
 class OlxIStream;

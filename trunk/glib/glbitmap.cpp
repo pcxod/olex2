@@ -4,7 +4,6 @@
 #include "gltexture.h"
 #include "glprimitive.h"
 
-
 TGlBitmap::TGlBitmap(TGlRenderer& Render, const olxstr& collectionName,
   int left, int top, unsigned int width, unsigned int height,
   unsigned char* RGB, GLenum format) : 

@@ -1,15 +1,11 @@
-//----------------------------------------------------------------------------//
-// TDFrame - a drawing object for selection frame
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "dframe.h"
 #include "glmaterial.h"
 #include "gpcollection.h"
 #include "glmouse.h"
 #include "glprimitive.h"
-
 UseGlNamespace()
-//..............................................................................
+
+// TDFrame - a drawing object for selection frame
 TDFrame::TDFrame(TGlRenderer& Render, const olxstr& collectionName) :
   AGDrawObject(Render, collectionName),
   OnSelect(Actions.New("ONSELECT"))
@@ -94,4 +90,3 @@ bool TDFrame::Orient(TGlPrimitive& P)  {
   return false;
 }
 //..............................................................................
-

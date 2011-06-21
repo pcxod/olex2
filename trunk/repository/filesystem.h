@@ -1,9 +1,7 @@
 #ifndef olx_filesysteH
 #define olx_filesysteH
-
 #include "estrlist.h"
 #include "actions.h"
-
 #include "url.h"
 #include "etime.h"
 #include "estlist.h"

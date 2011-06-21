@@ -1,7 +1,3 @@
-//----------------------------------------------------------------------------//
-// TXApplication - a wraper for basic crystallographic graphic application
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "bapp.h"
 #include "log.h"
 #include "efile.h"
@@ -18,9 +14,7 @@ UseEsdlNamespace()
 
 TBasicApp* TBasicApp::Instance = NULL;
 olx_critical_section TBasicApp::app_cs;
-//----------------------------------------------------------------------------//
-//TBasicApp function bodies
-//----------------------------------------------------------------------------//
+
 TBasicApp::TBasicApp(const olxstr& FileName) : OnProgress(Actions.New("PROGRESS")),
   OnTimer(Actions.New("TIMER")), OnIdle(Actions.New("IDLE"))
 {

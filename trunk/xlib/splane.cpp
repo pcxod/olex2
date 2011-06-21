@@ -1,7 +1,3 @@
-//---------------------------------------------------------------------------//
-// TSPlane implementation
-// (c) Oleg V. Dolomanov, 2004
-//----------------------------------------------------------------------------//
 #include "splane.h"
 #include "ematrix.h"
 #include "satom.h"
@@ -10,7 +6,6 @@
 #include "unitcell.h"
 #include "pers_util.h"
 
-//..............................................................................
 double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
   if( atoms.Count() < 3 )  return -1;
   vec3d p, c;

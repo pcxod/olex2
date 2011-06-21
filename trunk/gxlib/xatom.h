@@ -7,7 +7,6 @@
 #include "styles.h"
 #include "ellipsoid.h"
 #include "satom.h"
-
 BeginGxlNamespace()
 
 class TXBond;
