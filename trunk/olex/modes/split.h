@@ -1,3 +1,11 @@
+/*****************************************************************************************
+* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                                          *
+*                                                                                        *
+*  This file is part of the Olex2 Crystallographic refinement package.                   *
+*                                                                                        *
+* This source file is distributed under terms of the licence located in the root folder. *
+******************************************************************************************/
+
 #ifndef __OLX_SPLIT_MODE_H
 #define __OLX_SPLIT_MODE_H
 
