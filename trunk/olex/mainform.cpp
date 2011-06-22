@@ -1209,7 +1209,7 @@ separated values of Atom Type and radius, an entry a line");
   XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
-  FHtml = new THtml(this, FXApp, 4|wxVSCROLL|wxALWAYS_SHOW_SB);
+  FHtml = new THtml(this, FXApp, EmptyString(), 4|wxVSCROLL|wxALWAYS_SHOW_SB);
 
   FHtml->OnLink.Add(this, ID_ONLINK);
   FHtml->OnKey.Add(this, ID_HTMLKEY);

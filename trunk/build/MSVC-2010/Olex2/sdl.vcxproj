@@ -683,6 +683,7 @@
     <ClInclude Include="..\..\..\sdl\evector.h" />
     <ClInclude Include="..\..\..\sdl\exception.h" />
     <ClInclude Include="..\..\..\sdl\filetree.h" />
+    <ClInclude Include="..\..\..\sdl\file_filter.h" />
     <ClInclude Include="..\..\..\sdl\function.h" />
     <ClInclude Include="..\..\..\sdl\groupobj.h" />
     <ClInclude Include="..\..\..\sdl\hashing.h" />
@@ -722,7 +723,6 @@
     <ClInclude Include="..\..\..\sdl\sorted.h" />
     <ClInclude Include="..\..\..\sdl\sortedlist.h" />
     <ClInclude Include="..\..\..\sdl\sparser.h" />
-    <ClInclude Include="..\..\..\sdl\sstrlist.h" />
     <ClInclude Include="..\..\..\sdl\strconv.h" />
     <ClInclude Include="..\..\..\sdl\strmask.h" />
     <ClInclude Include="..\..\..\sdl\talist.h" />

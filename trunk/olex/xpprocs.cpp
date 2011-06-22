@@ -147,7 +147,7 @@
 #include "refutil.h"
 #include "absorpc.h"
 #include "povdraw.h"
-//#include "base_2d.h"
+#include "file_filter.h"
 //#include "gl2ps/gl2ps.c"
 
 static const olxstr StartMatchCBName("startmatch");
@@ -4785,22 +4785,16 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       file_n.file_name = XLibMacros::CurrentDir + file_n.file_name;
   }
   else  {
+    FileFilter ff;
+    ff.AddAll("ins;cif;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
+    ff.Add("*.mol", "MDL MOL");
+    ff.Add("*.mas", "XD master");
+    ff.Add("*.mol2", "Tripos MOL2");
+    if( !OverlayXFile )
+      ff.Add("*.oxm", "Olex2 model");
     file_n.file_name = PickFile("Open File",
-        olxstr("All supported files|*.ins;*.cif;*.res;*.mol;*.xyz;*.p4p;*.mas;*.crs;*pdb;*.fco;*.fcf;*.hkl;*.oxm;*.mol2")  <<
-          "|INS files (*.ins)|*.ins"  <<
-          "|Olex2 model files (*.oxm)|*.oxm"  <<
-          "|CIF files (*.cif)|*.cif" <<
-          "|MDL MOL files (*.mol)|*.mol" <<
-          "|Tripos MOL2 files (*.mol2)|*.mol2" <<
-          "|XYZ files (*.xyz)|*.xyz" <<
-          "|P4P files (*.p4p)|*.p4p" <<
-          "|PDB files (*.pdb)|*.pdb" <<
-          "|XD Master files (*.mas)|*.mas" <<
-          "|CRS files (*.crs)|*.crs" <<
-          "|FCO files (*.fco)|*.fco" <<
-          "|FCF files (*.fcf)|*.fcf" <<
-          "|HKL files (*.hkl)|*.hkl",
-          XLibMacros::CurrentDir, true);
+      ff.GetString(),
+      XLibMacros::CurrentDir, true);
   }
   
   if( !file_n.file_name.IsEmpty() )  {  // the dialog has been successfully executed

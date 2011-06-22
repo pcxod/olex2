@@ -1342,12 +1342,6 @@ bool Ins_ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
       return true;
   return false;
 }
-void StoreUsedSymIndex(TUIntList& il, const smatd* m, RefinementModel& rm)  {
-  if( m == NULL )  return;
-  unsigned int ind = (unsigned int)rm.UsedSymmIndex(*m);
-  if( il.IndexOf(ind) == InvalidIndex )
-    il.Add(ind);
-}
 
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
                           RefinementModel::ReleasedItems* processed, RefinementModel& rm)  {
@@ -1389,7 +1383,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   restraints.Add(olxstr("REM ") << rm.rSimilarUeq.GetIdName(),
     ResInfo(&rm.rSimilarUeq, RCInfo(0, 1, -1, false)));
 
-  TUIntList usedSymm;
   for( size_t i=0; i < restraints.Count(); i++ )  {
     ResInfo& r = restraints.GetObject(i);
     for( size_t j=0; j < r.GetA()->Count(); j++ )  {
@@ -1413,7 +1406,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
           line << ' ' << sr.GetAtom(j).GetFullLabel(rm);
         else
           line << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
-        StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
       }
       HyphenateIns(line, SL);
       if( processed != NULL )  
@@ -1431,14 +1423,11 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     }
     HyphenateIns(Tmp, SL);
   }
-  // store the rest of eqiv ...
-  for( size_t i=0; i < rm.UsedSymmCount(); i++ )
-    StoreUsedSymIndex(usedSymm, &rm.GetUsedSymm(i), rm);
-  // save
-  for( size_t i=0; i < usedSymm.Count(); i++ )  {
+  // store the eqiv ...
+  for( size_t i=0; i < rm.UsedSymmCount(); i++ )  {
     olxstr Tmp = "EQIV ";
-    Tmp << '$' << (i+1) << ' ' << TSymmParser::MatrixToSymm( rm.GetUsedSymm(usedSymm[i]) );
-    SL.Insert(oindex+i, Tmp  );
+    Tmp << '$' << (i+1) << ' ' << TSymmParser::MatrixToSymm(rm.GetUsedSymm(i));
+    SL.Insert(oindex+i, Tmp);
   }
   for( size_t i=0; i < rm.Vars.EquationCount(); i++ )  {
     if( !rm.Vars.GetEquation(i).Validate() )  continue;
@@ -1617,7 +1606,12 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   TStrList toks(_toks);
   if( toks[0].Equalsi("EQIV") && toks.Count() >= 3 )  {
     smatd SymM;
-    TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2), SymM);
+    try  {
+      TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2), SymM);
+    }
+    catch(const TExceptionBase &e)  {
+      throw TFunctionFailedException(__OlxSourceInfo, e, "to parse EQIV");
+    }
     rm.AddUsedSymm(SymM, toks[1]);
     return true;
   }
