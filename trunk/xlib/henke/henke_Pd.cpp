@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "../henke.h"
 #define NOVAL cm_Anomalous_Henke::Undefined
 const cm_Anomalous_Henke XlibObject(_cm_henke_Pd)[] = {
