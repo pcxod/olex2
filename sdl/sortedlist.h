@@ -7,8 +7,8 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __olxsdl_sortedlist_H
-#define __olxsdl_sortedlist_H
+#ifndef __olx_sdl_sortedlist_H
+#define __olx_sdl_sortedlist_H
 #include "typelist.h"
 #include "sorted.h"
 BeginEsdlNamespace()
@@ -19,7 +19,7 @@ protected:
   ListClass list;
   struct Proxy  {
     TypeClass& value;
-    Proxy(TypeClass& val) : value(val) {  }
+    Proxy(TypeClass& val) : value(val) {}
     operator TypeClass& () {  return value;  }
     operator const TypeClass& () const {  return value;  }
     TypeClass& operator = (const TypeClass& v)  {
@@ -30,7 +30,7 @@ protected:
   Proxy GetProxyObject(int i)  {  return Proxy(list[i]);  }
 public:
   TTSortedListBase() {}
-  TTSortedListBase(const TTSortedListBase& l) : list(l.list)  {  }
+  TTSortedListBase(const TTSortedListBase& l) : list(l.list)  {}
 
   bool IsEmpty() const {  return list.IsEmpty();  }
   size_t Count() const {  return list.Count();  }
@@ -139,7 +139,7 @@ public:
   }
   void Add(const ObjectClass& obj)  {  list.Add(new ObjectClass(obj));  }
   void Insert(size_t index, const ObjectClass& obj)  {
-    list.Insert(index, new ObjectClass(obj) );
+    list.Insert(index, new ObjectClass(obj));
   }
   void Clear()  {
     for( size_t i=0; i < list.Count(); i++ )

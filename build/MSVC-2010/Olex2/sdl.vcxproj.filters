@@ -434,9 +434,6 @@
     <ClInclude Include="..\..\..\sdl\ecomplex.h">
       <Filter>Header Files\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\sstrlist.h">
-      <Filter>Header Files\containers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\talist.h">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
@@ -490,6 +487,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\smart\olx_strcvt.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\file_filter.h">
+      <Filter>Header Files\io</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -12,8 +12,6 @@
 #include "gxapp.h"
 #include "tex_writer.h"
 
-using namespace std;
-
 class OrtDrawTex  {
 private:
   struct OrtAtom {

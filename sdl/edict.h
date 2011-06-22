@@ -7,8 +7,8 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __olx_dictH
-#define __olx_dictH
+#ifndef __olx_sdl_dict_H
+#define __olx_sdl_dict_H
 #include "sortedlist.h"
 
 template <typename key_c, typename val_c, class Comparator> struct DictEntry {
@@ -107,7 +107,11 @@ public:
     return false;
   }
   void Delete(size_t ind)  {  SortedL::Delete(ind);  }
-
 };
+
+// a string to type association....
+template <typename VType, bool case_sensitive=false> class olxstr_dict
+  : public olxdict<olxstr, VType, olxstrComparator<case_sensitive> > {};
+
 
 #endif
