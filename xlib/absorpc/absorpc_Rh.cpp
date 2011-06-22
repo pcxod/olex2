@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "../absorpc.h"
 const cm_Absorption_Coefficient XlibObject(_cm_absorpc_Rh)[] = {
   {1.00000E-03, 6.169E+03, 6.160E+03},

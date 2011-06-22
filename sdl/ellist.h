@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 /* primitive directional lists, optimised for sequential access, the right cleanup class must be
 chosen to avoid memory leaks! */
 #ifndef __olx_sdl_linkedlist_H
