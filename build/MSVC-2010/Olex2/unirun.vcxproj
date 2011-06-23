@@ -536,14 +536,13 @@
     <ClCompile Include="..\..\..\repository\cdsfs.cpp" />
     <ClCompile Include="..\..\..\repository\filesystem.cpp" />
     <ClCompile Include="..\..\..\repository\httpfs.cpp" />
+    <ClCompile Include="..\..\..\repository\wxzipfs.cpp" />
+    <ClCompile Include="..\..\..\repository\zipfs.cpp" />
     <ClCompile Include="..\..\..\unirun\main.cpp" />
     <ClCompile Include="..\..\..\repository\patchapi.cpp" />
     <ClCompile Include="..\..\..\repository\shellutil.cpp" />
-    <ClCompile Include="..\..\..\repository\unzip.cpp" />
     <ClCompile Include="..\..\..\repository\updateapi.cpp" />
     <ClCompile Include="..\..\..\repository\url.cpp" />
-    <ClCompile Include="..\..\..\repository\winzipfs.cpp" />
-    <ClCompile Include="..\..\..\repository\wxzipfs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\repository\httpfs.h" />
