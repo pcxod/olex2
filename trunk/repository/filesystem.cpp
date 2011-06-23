@@ -15,12 +15,7 @@
 #include "tptrlist.h"
 #include "estack.h"
 #include "md5.h"
-
-#ifdef __WXWIDGETS__
-  #include "wxzipfs.h"
-#elif __WIN32__
-  #include "winzipfs.h"
-#endif
+#include "zipfs.h"
 
 #undef GetObject
 
@@ -800,19 +795,14 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const  {
 //..............................................................................
 bool TFSIndex::ProcessActions(TFSItem& item)  {
   const TStrList& actions = item.GetActions();
-#ifdef __WXWIDGETS__
-  typedef TwxZipFileSystem ZipFS;
-#elif __WIN32__
-  typedef TWinZipFileSystem ZipFS;
-#endif
   bool res= true;
   if( actions.IndexOfi("extract") != InvalidIndex )  {
-    ZipFS zp(DestFS->GetBase() + item.GetFullName());
-    zp.OnProgress.Add(new TActionProxy(OnAction));
-    OnBreak.Add(&zp);
-    try  {  res = zp.ExtractAll(DestFS->GetBase());  }
+    olx_object_ptr<AZipFS> fs(ZipFSFactory::GetInstance(DestFS->GetBase() + item.GetFullName(), false));
+    fs().OnProgress.Add(new TActionProxy(OnAction));
+    OnBreak.Add(&fs());
+    try  {  res = fs().ExtractAll(DestFS->GetBase());  }
     catch(...)  {  res = false;  }
-    OnBreak.Remove(&zp);
+    OnBreak.Remove(&fs());
   }
   if( res && actions.IndexOfi("delete") != InvalidIndex )
     item.DelFile();

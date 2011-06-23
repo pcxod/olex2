@@ -30,22 +30,19 @@
     <ClCompile Include="..\..\..\repository\shellutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\repository\unzip.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\repository\updateapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\repository\url.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\repository\winzipfs.cpp">
+    <ClCompile Include="..\..\..\repository\cdsfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\repository\wxzipfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\repository\cdsfs.cpp">
+    <ClCompile Include="..\..\..\repository\zipfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
