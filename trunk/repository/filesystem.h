@@ -119,8 +119,8 @@ public:
   bool HasAccess(uint16_t access) const {  return (Access & access) != 0;  }
   DefPropP(TFSIndex*, Index)
   // returns a base at which the file system is initalised
-  inline const olxstr& GetBase() const  {  return FBase; }
-  inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddPathDelimeter(b); }
+  inline const olxstr& GetBase() const  {  return FBase;  }
+  inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddPathDelimeter(b);  }
 
   // depends on the file system implementation
   virtual void DoBreak()  {  Break = true;  }

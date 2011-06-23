@@ -17,14 +17,15 @@
 #include "dataitem.h"
 #include "patchapi.h"
 #include "cdsfs.h"
+#include "zipfs.h"
 
-#if defined(__WIN32__) && !defined(__WXWIDGETS__)
-  #include "winzipfs.h"
-  typedef TWinZipFileSystem ZipFS;
-#else
-  #include "wxzipfs.h"
-  typedef TwxZipFileSystem ZipFS;
-#endif
+//#if defined(__WIN32__) && !defined(__WXWIDGETS__)
+//  #include "winzipfs.h"
+//  typedef TWinZipFileSystem ZipFS;
+//#else
+//  #include "wxzipfs.h"
+//  typedef TwxZipFileSystem ZipFS;
+//#endif
 #ifdef __WXWIDGETS__
   #include "wxftpfs.h"
 #endif
@@ -54,7 +55,7 @@ short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
   short res = updater::uapi_NoSource;
   AFileSystem* srcFS = FindActiveUpdateRepositoryFS(&res);
   if( srcFS == NULL )  return res;
-  srcFS->SetBase( AddTagPart(srcFS->GetBase(), false) );
+  srcFS->SetBase(AddTagPart(srcFS->GetBase(), false));
   // evaluate properties
   TStrList props;
   EvaluateProperties(props);
@@ -83,14 +84,14 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     try  {
       if( !PatchAPI::LockUpdater() )
         return updater::uapi_Busy;
-      ZipFS zfs(inst_zip_fn, false);
+      olx_object_ptr<AZipFS> zfs(ZipFSFactory::GetInstance(inst_zip_fn, false));
       if( p_lsnr != NULL )  {
-        zfs.OnProgress.Add(p_lsnr);
+        zfs().OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
-      if( !zfs.Exists(patcher::PatchAPI::GetTagFileName()) )
+      if( !zfs().Exists(patcher::PatchAPI::GetTagFileName()) )
         return updater::uapi_InvaildRepository;
-      zfs.ExtractAll(TBasicApp::GetBaseDir());
+      zfs().ExtractAll(TBasicApp::GetBaseDir());
       settings.repository = GetDefaultRepositories()[0];
       settings.last_updated = TETime::EpochTime();
       settings.Save();
@@ -98,7 +99,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
       return updater::uapi_OK;
     }
     catch( const TExceptionBase& exc )  {
-      log.Add( exc.GetException()->GetFullMessage() );
+      log.Add(exc.GetException()->GetFullMessage());
       PatchAPI::UnlockUpdater();
       return updater::uapi_InstallError;
     }
@@ -116,9 +117,9 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
   }
   IInputStream* src_s = NULL;
   short res = updater::uapi_OK;
-  try {  src_s = fs->OpenFile( fs->GetBase() + src_fn ); }
+  try {  src_s = fs->OpenFile(fs->GetBase() + src_fn);  }
   catch( const TExceptionBase& exc )  {
-    log.Add( exc.GetException()->GetFullMessage() );
+    log.Add(exc.GetException()->GetFullMessage());
     res = updater::uapi_InvaildRepository;
   }
   if( src_s == NULL )
@@ -137,12 +138,12 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     src_s = NULL;
     src_f.Close();
     {  // make sure the zipfs goes before deleting the file
-      ZipFS zfs(src_fn, false);
+      olx_object_ptr<AZipFS> zfs(ZipFSFactory::GetInstance(src_fn, false));
       if( p_lsnr != NULL )  {
-        zfs.OnProgress.Add(p_lsnr);
+        zfs().OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
-      zfs.ExtractAll(TBasicApp::GetBaseDir());
+      zfs().ExtractAll(TBasicApp::GetBaseDir());
     }
     delete fs;
     fs = NULL;
@@ -202,8 +203,8 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
     is = NULL;
     src_f.Close();
     {  // make sure the zipfs goes before deleting the file
-      ZipFS zfs(zip_fn, false);
-      TFSIndex fsi(zfs);
+      olx_object_ptr<AZipFS> zfs(ZipFSFactory::GetInstance(zip_fn, false));
+      TFSIndex fsi(zfs());
       TOSFileSystem osf(TBasicApp::GetBaseDir());
       osf.RemoveAccessRight(afs_DeleteAccess);
       TStrList props;
@@ -317,7 +318,7 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy) 
       if( TEFile::ExtractFileExt(repo).Equalsi("zip") )  {
         if( !TEFile::IsAbsolutePath(repo) )
           repo = TBasicApp::GetBaseDir() + repo;
-        FS = new ZipFS(repo, false);
+        FS = ZipFSFactory::GetInstance(repo, false);
       }
       else if( TEFile::IsDir(repo) )
         FS = new TOSFileSystem(repo);
@@ -353,7 +354,7 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
   if( TEFile::Exists(repo) )  {
     if( TEFile::ExtractFileExt(repo).Equalsi("zip") )  {
       if( TEFile::FileAge(repo) > settings.last_updated )
-        return new ZipFS(repo, false);
+        return ZipFSFactory::GetInstance(repo, false);
     }
     else if( TEFile::IsDir(repo) )
       return new TOSFileSystem(AddTagPart(repo, true));

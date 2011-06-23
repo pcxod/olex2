@@ -29,6 +29,7 @@
 #include "patchapi.h"
 #include "cdsfs.h"
 #include "efile.h"
+#include "wxzipfs.h"
 
 #ifndef __WIN32__
   #include "icons/olex2.xpm"
@@ -140,6 +141,8 @@ bool TGlXApp::OnInit()  {
 
   // KUBUNTU opengl does not want any parameters :)
   TEGC::Initialise();  // prepare Olex2 API...
+  // register wxWidgets to handle ZIP files
+  TwxZipFileSystem::RegisterFactory();
   olxstr str_glAttr = olx_getenv("OLEX2_GL_DEFAULT"),
          str_glStereo = olx_getenv("OLEX2_GL_STEREO");
   int *gl_attr = TGlCanvas::GetGlAttributes(

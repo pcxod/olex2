@@ -45,34 +45,34 @@ IInputStream* TWinZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   GetTempFileName(Tmp.u_str(), olxT("zip"), 0, TmpFN);
   olxstr tmp_fn(TmpFN);
 
-  Progress.SetMax( TEFile::FileLength(TmpFN) );
+  Progress.SetMax(TEFile::FileLength(TmpFN));
   OnProgress.Enter(this, &Progress);
-  Progress.SetAction( olxstr("Extracting ") << Source );
+  Progress.SetAction(olxstr("Extracting ") << Source);
   Progress.SetPos(0);
   Progress.SetMax(1);
 
   UnzipItem(zip, zindex, tmp_fn.u_str() );
   chmod( tmp_fn.c_str(), S_IREAD|S_IWRITE);
 
-  Progress.SetMax( TEFile::FileLength(tmp_fn) );
+  Progress.SetMax(TEFile::FileLength(tmp_fn));
   OnProgress.Enter(this, &Progress);
   Progress.SetAction("Done");
-  Progress.SetPos( TEFile::FileLength(tmp_fn) );
+  Progress.SetPos(TEFile::FileLength(tmp_fn));
   OnProgress.Exit(this, &Progress);
-  TmpFiles.Add( TmpFN );
+  TmpFiles.Add(TmpFN);
   return new TEFile(TmpFN, "rb");
 }
 //..............................................................................
 bool TWinZipFileSystem::ExtractAll(const olxstr& dest)  {
   ZIPENTRY ze;
-  olxstr extractPath( TEFile::AddPathDelimeter(dest) );
+  olxstr extractPath(TEFile::AddPathDelimeter(dest));
   // -1 gives overall information about the zipfile
   GetZipItem(zip, -1, &ze);
   int numitems = ze.index;
   TOnProgress Progress;
-  Progress.SetAction( olxstr("Unpacking ") << zip_name << "...");
-  Progress.SetMax( numitems );
-  OnProgress.Enter( NULL, &Progress );
+  Progress.SetAction(olxstr("Unpacking ") << zip_name << "...");
+  Progress.SetMax(numitems);
+  OnProgress.Enter(NULL, &Progress);
   for( int zi=0; zi < numitems; zi++ )  {
     if( this->Break )
       break;
