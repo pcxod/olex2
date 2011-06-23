@@ -22,9 +22,9 @@ public:
     const size_t di = ext.LastIndexOf('.');
     if( di == InvalidIndex )  return ext;
     olxstr rv(EmptyString(), ext.Length()*2+3);
-    rv << ext.SubStringTo(di+1);
-    for( size_t k=di+1; k < ext.Length(); k++ )
-      rv << '[' << olxstr::o_tolower(ext.CharAt(k)) << olxstr::o_toupper(ext.CharAt(k)) << ']';
+    rv << ext.SubStringTo(di);  //skip the dot
+    for( size_t i=di+1; i < ext.Length(); i++ )
+      rv << '[' << olxstr::o_tolower(ext.CharAt(i)) << olxstr::o_toupper(ext.CharAt(i)) << ']';
     return rv;
 #endif
   }
