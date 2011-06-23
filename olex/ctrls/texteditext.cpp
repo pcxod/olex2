@@ -32,7 +32,7 @@ void TTextEdit::ClickEvent(wxMouseEvent& event)  {
 }
 //..............................................................................
 void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
-  StrValue = GetText();
+  //StrValue = GetText();
   StartEvtProcessing()
     OnChange.Execute(this);
   EndEvtProcessing()

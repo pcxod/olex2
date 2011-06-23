@@ -870,6 +870,7 @@
     <ClCompile Include="..\..\..\olex\html\htmlswitch.cpp" />
     <ClCompile Include="..\..\..\olex\html\htmltags.cpp" />
     <ClCompile Include="..\..\..\olex\html\imgcellext.cpp" />
+    <ClCompile Include="..\..\..\repository\zipfs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h" />
@@ -930,6 +931,7 @@
     <ClInclude Include="..\..\..\olex\html\htmlswitch.h" />
     <ClInclude Include="..\..\..\olex\html\imgcellext.h" />
     <ClInclude Include="..\..\..\olex\html\widgetcellext.h" />
+    <ClInclude Include="..\..\..\repository\zipfs.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\olex\app.rc" />

@@ -186,6 +186,9 @@
     <ClCompile Include="..\..\..\repository\cdsfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\repository\zipfs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
@@ -360,6 +363,9 @@
       <Filter>html\headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\repository\cdsfs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\repository\zipfs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

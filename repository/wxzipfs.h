@@ -9,13 +9,13 @@
 
 #ifndef __olx_wxzip_fs_H
 #define __olx_wxzip_fs_H
-#include "filesystem.h"
 
 #ifdef __WXWIDGETS__
 #include <wx/zipstrm.h>
 #include <wx/mstream.h>
 #include <wx/wfstream.h>
 #include "fsext.h"
+#include "zipfs.h"
 
 struct TZipEntry  {
   olxstr ZipName;
@@ -60,8 +60,11 @@ public:
   void DoBreak()  {  Break = true;  }
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class TwxZipFileSystem: public AFileSystem  {
+class TwxZipFileSystem: public AZipFS  {
   TZipWrapper zip;
+  static AZipFS *instance_maker(const olxstr& filename, bool UseCache)  {
+    return new TwxZipFileSystem(filename, UseCache);
+  }
 protected:
   // proxying functions
   virtual bool Enter(const IEObject *Sender, const IEObject *Data) {  
@@ -112,6 +115,11 @@ public:
   virtual bool AdoptStream(IInputStream& in, const olxstr& as){  throw TNotImplementedException(__OlxSourceInfo);  }
   virtual bool NewDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
   virtual bool ChangeDir(const olxstr& DN)   {  throw TNotImplementedException(__OlxSourceInfo);  }
+
+  // registers this object to handle ZIP files
+  static void RegisterFactory() {
+    ZipFSFactory::Register(&TwxZipFileSystem::instance_maker);
+  }
 };
 
 class TwxInputStreamWrapper : public IInputStream {

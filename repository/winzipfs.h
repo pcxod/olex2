@@ -14,12 +14,16 @@
   #include <windows.h>
   #include "filesystem.h"
   #include "unzip.h"
+  #include "zipfs.h"
 
 /* windows specific ZIP file extracting, creation (not implemented yet) utility
 */
-class TWinZipFileSystem: public AFileSystem  {
+class TWinZipFileSystem: public AZipFS {
   HZIP zip;
   TStrList TmpFiles;
+  static AZipFS *instance_maker(const olxstr& filename, bool unused)  {
+    return new TWinZipFileSystem(filename, unused);
+  }
 protected:
   olxstr zip_name;
   virtual bool _DoDelFile(const olxstr& f) {  return false;  }
@@ -42,6 +46,10 @@ public:
 
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);
+  }
+  // registers this object to handle ZIP files
+  static void RegisterFactory() {
+    ZipFSFactory::Register(&TWinZipFileSystem::instance_maker);
   }
 };
 
