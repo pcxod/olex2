@@ -1,0 +1,40 @@
+ <reap help="Load a Cxxxrystallographic File££"
+   <body
+      <args <arg0 name="file name" def="">>
+      <cmd
+        <cmd1 cmd="@reap %1">
+	<cmd2 cmd="itemstate title 1">
+        <cmd3 cmd="updatehtml">
+      \>
+    >
+  >
+
+ <fredl help="Load a Crystallographic File"
+   <body
+      <args <arg0 name="file name" def="">>
+      <cmd
+        <cmd1 cmd="@reap %1">
+	<cmd2 cmd="itemstate title 1">
+        <cmd3 cmd="updatehtml">
+      \>
+    >
+  >
+
+
+
+ <autolisten help="cxcxc"
+   <body
+      <args <arg0 name="file name" def="filefull()">>
+      <cmd
+        <cmd1 cmd="listen %1">
+
+      \>
+       <onlisten
+         <cmd0 cmd="clear"\>
+         <cmd1 cmd="silent on"\>
+         <cmd2 cmd="updatehtml"\>
+         <cmd3 cmd="load style auto"\>
+         <cmd4 cmd="syncbc"\>
+       \>      	
+    >
+  >
