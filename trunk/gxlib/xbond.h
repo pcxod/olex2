@@ -82,6 +82,8 @@ public:
   void ListPrimitives(TStrList &List) const;
   // fills the list with proposal primitives to construct object
   TGraphicsStyle* Style();
+  // updates primitive properties from atoms
+  void UpdateStyle();
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);

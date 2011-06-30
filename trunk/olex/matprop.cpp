@@ -67,17 +67,14 @@ void TdlgMatProp::Init()  {
     }
     cbPrimitives->SetValue(gpc.GetPrimitive(0).GetName().u_str());
     cbPrimitives->OnChange.Add(this);
-    if( (EsdlInstanceOf(*Object,TXAtom) || EsdlInstanceOf(*Object, TXBond)) )  {
+    if( EsdlInstanceOf(*Object,TXAtom) )  {
       const uint16_t current_level = TXAtom::LegendLevel(Object->GetPrimitives().GetName());
       wxArrayString choices;
       if( current_level == 0 )
-        choices.Add(wxT("Type"));
+        choices.Add(wxT("Atom Type"));
       if( current_level <= 1 )
-        choices.Add(wxT("Name"));
-      if( EsdlInstanceOf(*Object,TXAtom) )
-        choices.Add(wxT("Atom"));
-      else
-        choices.Add(wxT("Bond"));
+        choices.Add(wxT("Atom Name"));
+      choices.Add(wxT("Individual Atom"));
       cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition, wxDefaultSize, choices, wxCB_READONLY);
     }
   }
@@ -139,9 +136,10 @@ void TdlgMatProp::Init()  {
     Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     Sizer0->Add(new wxStaticText(this, -1, wxT("Primitive: ")), 0, wxEXPAND | wxALL, Border);
     Sizer0->Add(cbPrimitives, 0, wxFIXED_MINSIZE | wxALL, Border);
-    Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 0, wxEXPAND | wxALL, Border);
-    if( cbApplyTo != NULL )
+    if( cbApplyTo != NULL )  {
+      Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 0, wxEXPAND | wxALL, Border);
       Sizer0->Add(cbApplyTo, 0, wxFIXED_MINSIZE | wxALL, Border);
+    }
     Sizer0->Add(new wxButton(this, ID_COPY, wxT("Copy  Mat.")), 1, wxEXPAND | wxALL, Border);
     Sizer0->Add(new wxButton(this, ID_PASTE, wxT("Paste Mat.")), 1, wxEXPAND | wxALL, Border);
     bEditFont = new wxButton(this, ID_EDITFONT, wxT("Edit Font"));
@@ -368,10 +366,14 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
       TGlGroup& gl = app.GetSelection();
       TGPCollection* ogpc = &Object->GetPrimitives();
       SortedPtrList<TGPCollection, TPointerPtrComparator> uniqCol;
+      const bool is_bond = EsdlInstanceOf(*Object, TXBond);
       if( cbApplyTo == NULL || cbApplyTo->GetSelection() == 0 )  {
         for( size_t i=0; i < gl.Count(); i++ )  {
-          if( EsdlInstanceOf(gl[i], *Object) )
+          if( EsdlInstanceOf(gl[i], *Object) )  {
+            if( is_bond )
+              app.Individualise(((TXBond&)gl[i]), 3);
             uniqCol.AddUnique(&gl[i].GetPrimitives());
+          }
         }
       }
       else  {
@@ -391,41 +393,38 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
             uniqCol.AddUnique(&atoms[i]->GetPrimitives());
         }
         else  {
-          app.Individualise(bonds, cl+cbApplyTo->GetSelection());
+          app.Individualise(bonds, 3);
           for( size_t i=0; i < bonds.Count(); i++ )
             uniqCol.AddUnique(&bonds[i]->GetPrimitives());
         }
       }
       for( size_t i=0; i < uniqCol.Count(); i++ )  {
-        if( uniqCol[i] != ogpc )  {
-          for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
-            TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(ogpc->GetPrimitive(j).GetName());
-            if( glp != NULL )  {
-              glp->SetProperties(Materials[j]);
-              uniqCol[i]->GetStyle().SetMaterial(glp->GetName(), Materials[j]);
-            }
-          }
-        }
-        else  {
-          for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
-            ogpc->GetPrimitive(j).SetProperties(Materials[j]);
-            ogpc->GetStyle().SetMaterial(ogpc->GetPrimitive(j).GetName(), Materials[j]);
+        for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
+          TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(ogpc->GetPrimitive(j).GetName());
+          if( glp != NULL )  {
+            glp->SetProperties(Materials[j]);
+            uniqCol[i]->GetStyle().SetMaterial(glp->GetName(), Materials[j]);
           }
         }
       }
     }
     else  {
+      if( EsdlInstanceOf(*Object, TXBond) )
+        app.Individualise(*((TXBond*)Object), 3);
       if( cbApplyTo != NULL && cbApplyTo->GetSelection() != 0 )  {
         if( EsdlInstanceOf(*Object, TXAtom) )
           app.Individualise(*((TXAtom*)Object), cl + cbApplyTo->GetSelection());
-        else if( EsdlInstanceOf(*Object, TXBond) )
-          app.Individualise(*((TXBond*)Object), cl + cbApplyTo->GetSelection());
       }
       TGPCollection& gpc = Object->GetPrimitives();
       for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
         gpc.GetPrimitive(i).SetProperties(Materials[i]);
         gpc.GetStyle().SetMaterial(gpc.GetPrimitive(i).GetName(), Materials[i]);
       }
+    }
+    if( EsdlInstanceOf(*Object, TXAtom) )  {
+      TGXApp::BondIterator bi = app.GetBonds();
+      while( bi.HasNext() )
+        bi.Next().UpdateStyle();
     }
   }
   else  {

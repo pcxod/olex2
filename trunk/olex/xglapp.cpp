@@ -100,11 +100,11 @@ public:
     if( Progress != NULL )  {
       wxSize ds = Progress->GetSize();
       ds.SetWidth(400);
-      Progress->SetSize( ds );
+      Progress->SetSize(ds);
 
       // this is to prevent wxWidgets popping an assertion  dialogue
       if( A->GetPos() > A->GetMax() )
-        A->SetPos( A->GetMax() );
+        A->SetPos(A->GetMax());
 
       Progress->Update((int)A->GetPos(), A->GetAction().u_str());
     }
@@ -177,6 +177,7 @@ bool TGlXApp::OnInit()  {
   }
   for( int i=0; i < argc; i++ )
     XApp->Arguments.Add(olxstr(argv[i]));
+
   for( size_t i=0; i < XApp->Arguments.Count(); i++ )  {
     if( XApp->Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
       XApp->Options.FromString(XApp->Arguments[i], '=');
