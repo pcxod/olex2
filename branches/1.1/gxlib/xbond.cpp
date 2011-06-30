@@ -115,7 +115,6 @@ void TXBond::Create(const olxstr& cName)  {
     return;
   }
   TGraphicsStyle& GS = GPC->GetStyle();
-//  GS.SetSaveable( GPC->Name().CharCount('.') == 0 );
   GS.SetSaveable(IsStyleSaveable());
 
   const int PrimitiveMask = GS.GetNumParam(GetPrimitiveMaskName(),
@@ -126,19 +125,19 @@ void TXBond::Create(const olxstr& cName)  {
     return;  // nothing to create then...
 
   Params()[4]= GS.GetNumParam("R", Params()[4]);
-
+  const uint16_t legend_level = TXAtom::LegendLevel(GetPrimitives().GetName());
   for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
     if( (PrimitiveMask & (1<<i)) != 0 )    {
       TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
       TGlPrimitive& GlP = GPC->NewPrimitive(FStaticObjects[i], sgloCommandList);
-      /* copy the default drawing style tag*/
+      /* copy the default drawing style tag source */
       GlP.Params.Resize(GlP.Params.Count()+1);
       GlP.Params.GetLast() = SGlP->Params.GetLast();
 
       GlP.StartList();
       GlP.CallList(SGlP);
       GlP.EndList();
-      TGlMaterial* style_mat = GS.FindMaterial(FStaticObjects[i]);
+      TGlMaterial* style_mat = legend_level == 3 ? GS.FindMaterial(FStaticObjects[i]) : NULL;
       if( IsValid() )  {
         if( style_mat != NULL )
           GlP.SetProperties(*style_mat);
@@ -162,11 +161,58 @@ void TXBond::Create(const olxstr& cName)  {
             else
               TXAtom::GetDefSphereMaterial(B(), RGlM);
           }
-          GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
+          if( legend_level == 4 )
+            GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
+          else // must be updated from atoms always
+            GlP.SetProperties(RGlM);
         }
       }
       else  {  // no atoms
         GlP.SetProperties(GS.GetMaterial(FStaticObjects[i],
+          TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
+      }
+    }
+  }
+}
+//..............................................................................
+void TXBond::UpdateStyle()  {
+  TGPCollection &gpc = GetPrimitives();
+  const uint16_t legend_level = TXAtom::LegendLevel(gpc.GetName());
+  if( legend_level == 3 )  // is user managed?
+    return;
+  TGraphicsStyle& GS = gpc.GetStyle();
+  const int PrimitiveMask = GS.GetNumParam(GetPrimitiveMaskName(),
+    (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
+  for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
+    if( (PrimitiveMask & (1<<i)) != 0 )    {
+      TGlPrimitive *SGlP = FStaticObjects.GetObject(i);
+      TGlPrimitive *GlP = gpc.FindPrimitiveByName(FStaticObjects[i]);
+      if( GlP == NULL )  // must not ever happen...
+        continue;
+      if( IsValid() )  {
+        TGlMaterial RGlM;
+        if( SGlP->Params.GetLast() == ddsDefAtomA || SGlP->Params.GetLast() == ddsDef )  {
+          if( !A().IsCreated() )
+            A().Create();
+          const size_t mi = A().Style().IndexOfMaterial("Sphere");
+          if( mi != InvalidIndex )
+            RGlM = A().Style().GetPrimitiveStyle(mi).GetProperties();
+          else
+            TXAtom::GetDefSphereMaterial(A(), RGlM);
+        }
+        else if( SGlP->Params.GetLast() == ddsDefAtomB )  {
+          if( !B().IsCreated() )
+            B().Create();
+          const size_t mi = B().Style().IndexOfMaterial("Sphere");
+          if( mi != InvalidIndex )
+            RGlM = B().Style().GetPrimitiveStyle(mi).GetProperties();
+          else
+            TXAtom::GetDefSphereMaterial(B(), RGlM);
+        }
+        GlP->SetProperties(RGlM);
+      }
+      else  {  // no atoms
+        GlP->SetProperties(GS.GetMaterial(FStaticObjects[i],
           TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
       }
     }
@@ -480,7 +526,8 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   L << '.' << TSymmParser::MatrixToSymmCode(sp, A->GetMatrix(0)) <<
     '-' <<
     TSymmParser::MatrixToSymmCode(sp, B->GetMatrix(0));
-  return L;
+  if( level == 2 )  return L;
+  return L << ".u";
 }
 //..............................................................................
 void TXBond::SetRadius(float V)  {

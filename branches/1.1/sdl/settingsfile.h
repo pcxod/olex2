@@ -19,7 +19,7 @@ The file structure will be peserved upon saving (besides white spaces for param 
 If there are duplicate entries, the most recent value will be kept
 */
 class TSettingsFile: public IEObject  {
-  olxdict<olxstr, olxstr, olxstrComparator<true> > Params;
+  olxstr_dict<olxstr, true> Params;
   TTOStringList<olxstr,bool,TObjectStrListData<olxstr,bool> > Lines;
 protected:
   void Clear()  {  
@@ -32,16 +32,14 @@ public:
   void LoadSettings(const olxstr& fileName);
   void SaveSettings(const olxstr& fileName);
   virtual ~TSettingsFile() {}
-
+  // iteration functions
   inline size_t ParamCount() const {  return Params.Count();  }
   const olxstr& ParamName(size_t i) const {  return Params.GetKey(i);  }
   const olxstr& ParamValue(size_t i) const {  return Params.GetValue(i);  }
-
   // 
   template <class SC>
-  inline const olxstr& GetParam(const SC& paramName, const olxstr& defVal=EmptyString() ) const {
-    size_t index = Params.IndexOf(paramName);
-    return index == InvalidIndex ? defVal : Params.GetValue(index);
+  inline const olxstr& GetParam(const SC& paramName, const olxstr& defVal=EmptyString()) const {
+    return Params.Find(paramName, defVal);
   }
   // convinience operator, same as GetParam
   template <class SC>

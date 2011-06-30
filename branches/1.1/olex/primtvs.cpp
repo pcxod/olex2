@@ -25,14 +25,20 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
   if( (EsdlInstanceOf(Object,TXAtom) || EsdlInstanceOf(Object, TXBond)) )  {
     const uint16_t current_level = TXAtom::LegendLevel(Object.GetPrimitives().GetName());
     wxArrayString choices;
-    if( current_level == 0 )
-      choices.Add(wxT("Type"));
-    if( current_level <= 1 )
-      choices.Add(wxT("Name"));
-    if( EsdlInstanceOf(Object,TXAtom) )
-      choices.Add(wxT("Atom"));
-    else
-      choices.Add(wxT("Bond"));
+    if( EsdlInstanceOf(Object,TXAtom) )  {
+      if( current_level == 0 )
+        choices.Add(wxT("Atom Type"));
+      if( current_level <= 1 )
+        choices.Add(wxT("Atom Name"));
+      choices.Add(wxT("Individual Atom"));
+    }
+    else {
+      if( current_level == 0 )
+        choices.Add(wxT("Bond by Atom Types"));
+      if( current_level <= 1 )
+        choices.Add(wxT("Bond by Atom Names"));
+      choices.Add(wxT("Individual Bond"));
+    }
     cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition, wxDefaultSize, choices, wxCB_READONLY);
     wxBoxSizer* Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 1, wxEXPAND|wxALL, border);

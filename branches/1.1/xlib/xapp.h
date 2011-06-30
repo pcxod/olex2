@@ -89,7 +89,7 @@ public:
     TBasicApp& bai = TBasicApp::GetInstance();
     TXApp* xai = dynamic_cast<TXApp*>(&bai);
     if( xai == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "unsuitabe application instance");
+      throw TFunctionFailedException(__OlxSourceInfo, "unsuitable application instance");
     return *xai;
   }
   // calculates structure factors for current structure, F.Count must be greater or equal to the ref.Count

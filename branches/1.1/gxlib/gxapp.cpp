@@ -367,8 +367,10 @@ void TGXApp::CreateObjects(bool centerModel)  {
   FGlRender->ClearObjects();
   FGlRender->SetSceneComplete(false);
 
-  for( size_t i=0; i < IndividualCollections.Count(); i++ )
-    FGlRender->NewCollection(IndividualCollections[i]);
+  for( size_t i=0; i < IndividualCollections.Count(); i++ )  {
+    if( FGlRender->FindCollection(IndividualCollections[i]) == NULL )
+      FGlRender->NewCollection(IndividualCollections[i]);
+  }
 
   sw.start("Atoms creation");
   AtomIterator ai = GetAtoms();
@@ -387,7 +389,7 @@ void TGXApp::CreateObjects(bool centerModel)  {
   while( bi.HasNext() )  {
     TXBond& xb = bi.Next();
     xb.Update();
-    xb.Create(TXBond::GetLegend(xb, 2));
+    xb.Create(TXBond::GetLegend(xb, 3));
     if( !xb.IsDeleted() )
       xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
     if( xb.IsVisible() )  {
@@ -3084,9 +3086,11 @@ void TGXApp::Individualise(const TXAtomPList& atoms, short _level, int32_t mask)
     if( _level == -1 )  {
       const int al = olx_max(TXAtom::LegendLevel(bond.A().GetPrimitives().GetName()),
         TXAtom::LegendLevel(bond.B().GetPrimitives().GetName()));
-      if( al < cl || al >= 2 )  continue;
+      if( al < cl || al >= 3 )  continue;
       cl = al;
     }
+    else
+      cl = _level;
     const olxstr leg = xbonds[i]->GetLegend(*xbonds[i], cl);
     TGPCollection* indCol = FGlRender->FindCollection(leg);
     if( &xbonds[i]->GetPrimitives() == indCol )  
@@ -3119,16 +3123,16 @@ void TGXApp::Collectivise(TXAtom& XA, short _level, int32_t mask)  {
 void TGXApp::Individualise(TXBond& XB, short _level, int32_t mask)  {
   TXBond const* bonds[] = {&XB};
   const int level = TXAtom::LegendLevel(XB.GetPrimitives().GetName());
-  if( level == 0 )  return;
+  if( level >= 3 )  return;
   Individualise(TXBondPList(1, bonds), _level == -1 ? level+1 : _level, mask);
 }
 //..............................................................................
 void TGXApp::Individualise(const TXBondPList& bonds, short _level, int32_t mask) {
-  if( bonds.IsEmpty() || _level > 2 )  return;
+  if( bonds.IsEmpty() || _level > 3 )  return;
   for( size_t i=0; i < bonds.Count(); i++ )  {
     TXBond& b = *bonds[i];
     const int cl = TXAtom::LegendLevel(b.GetPrimitives().GetName()); 
-    if( cl >= 2 )  {
+    if( cl >= 3 )  {
       if( mask >= 0 )
         b.UpdatePrimitives(mask);
     }
