@@ -98,6 +98,7 @@ void meMoveZ(TGlMouse *, int dx, int dy);
 void meRotateXY(TGlMouse *, int dx, int dy);
 void meRotateZ(TGlMouse *, int dx, int dy);
 void meZoom(TGlMouse *, int dx, int dy);
+void meZoomI(TGlMouse *, int dx, int dy);
 
 EndGlNamespace()
 #endif

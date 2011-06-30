@@ -8,6 +8,7 @@
 ******************************************************************************/
 
 #include "glmouse.h"
+#include "bapp.h"
 #include "glrender.h"
 #include "dframe.h"
 #include "glgroup.h"
@@ -20,9 +21,11 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   SetHandler(smbLeft, sssCtrl, meRotateZ);
   SetHandler(smbLeft, sssShift|sssCtrl, meMoveXY);
   SetHandler(smbLeft|smbRight, 0, meMoveXY);
-  //SetHandler( smbLeft, sssAlt, meMoveZ);
-
-  SetHandler(smbRight, 0, meZoom);
+  //SetHandler(smbLeft, sssAlt, meMoveZ);
+  if( !TBasicApp::GetInstance().Options.FindValue("InvertMouse", FalseString()).ToBool() )
+    SetHandler(smbRight, 0, meZoom);
+  else
+    SetHandler(smbRight, 0, meZoomI);
   // an alternative for MAC...
   SetHandler(smbLeft, sssAlt, meZoom);
   FDFrame = Frame;
@@ -238,7 +241,14 @@ void GlobalGlFunction( meRotateZ(TGlMouse *G, int dx, int dy) )  {
 void GlobalGlFunction( meZoom(TGlMouse *G, int dx, int dy) )  {
   TGlRenderer *R = G->Parent();
   static const double df = 600;
-  R->SetZoom( R->GetZoom() + (double)dx/df- (double)dy/df);
+  R->SetZoom(R->GetZoom() + (double)dx/df - (double)dy/df);
+  G->SetAction(glmaZoom);
+}
+//..............................................................................
+void GlobalGlFunction( meZoomI(TGlMouse *G, int dx, int dy) )  {
+  TGlRenderer *R = G->Parent();
+  static const double df = 600;
+  R->SetZoom(R->GetZoom() - (double)dx/df + (double)dy/df);
   G->SetAction(glmaZoom);
 }
 //..............................................................................

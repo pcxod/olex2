@@ -12,6 +12,7 @@
 #include "efile.h"
 #include "etime.h"
 #include "egc.h"
+#include "settingsfile.h"
 
 #ifdef __WIN32__
   #define OLX_STR(a) (a).u_str()
@@ -38,6 +39,15 @@ TBasicApp::TBasicApp(const olxstr& FileName) : OnProgress(Actions.New("PROGRESS"
   // attach GC to the instance, if detached...
   TEGC::Initialise();
   SetBaseDir(FileName);
+  try {
+    olxstr options_file = GetBaseDir() + ".options";
+    if( TEFile::Exists(options_file) )  {
+      TSettingsFile sf(options_file);
+      for( size_t i=0; i < sf.ParamCount(); i++ )
+        Options.AddParam(sf.ParamName(i), sf.ParamValue(i), false);
+    }
+  }
+  catch(...)  {}
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {

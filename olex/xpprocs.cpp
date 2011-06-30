@@ -2200,6 +2200,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
       TBasicApp::NewLogEntry(logError) << e.GetException()->GetStackTrace<TStrList>();
     }
+    FXApp->ClearIndividualCollections();
     FXApp->CreateObjects(true);
     FXApp->CenterView(true);
     FN = FXApp->GetRender().GetStyles().GetLinkFile();
