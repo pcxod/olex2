@@ -947,26 +947,29 @@ void TLattice::UpdateAsymmUnit()  {
       continue;
     }
     // find the original atom, or symmetry equivalent if removed
-    TSAtom* OA = NULL;
-    const size_t lst_c = l.Count();
-    for( size_t j=0; j < lst_c; j++ )  {
-      TSAtom* A = l[j];
-      const size_t am_c = A->MatrixCount();
-      for( size_t k=0; k < am_c; k++ )  {
-        const smatd& m = A->GetMatrix(k);
-        if( m.IsFirst() )  {  // the original atom
-          OA = A;  
-          break; 
-        }
-        if( OA != NULL )  break;
-      }
-    }
-    if( OA == NULL )
-      OA = l[0];
-    ca.SetDeleted(false);
-    if( OA->GetEllipsoid() )
-      ca.UpdateEllp(*OA->GetEllipsoid());
-    ca.ccrd() = OA->ccrd();
+    // !2011.07.01
+    // this bit bites for grown structures - the basis must be changed for all
+    // atoms and symetry operators
+    //TSAtom* OA = NULL;
+    //const size_t lst_c = l.Count();
+    //for( size_t j=0; j < lst_c; j++ )  {
+    //  TSAtom* A = l[j];
+    //  const size_t am_c = A->MatrixCount();
+    //  for( size_t k=0; k < am_c; k++ )  {
+    //    const smatd& m = A->GetMatrix(k);
+    //    if( m.IsFirst() )  {  // the original atom
+    //      OA = A;  
+    //      break; 
+    //    }
+    //  }
+    //  if( OA != NULL )  break;
+    //}
+    //if( OA == NULL )
+    //  OA = l[0];
+    //ca.SetDeleted(false);
+    //if( OA->GetEllipsoid() )
+    //  ca.UpdateEllp(*OA->GetEllipsoid());
+    //ca.ccrd() = OA->ccrd();
   }
 }
 //..............................................................................

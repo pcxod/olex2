@@ -324,23 +324,23 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
 
     if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Text->SetOnChangeStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map));
+      Text->OnChange.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Text->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONLEAVE")) )  {
-      Text->SetOnLeaveStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map));
+      Text->OnLeave.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map);
       Text->OnLeave.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONENTER")) )  {
-      Text->SetOnEnterStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map));
+      Text->OnEnter.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map);
       Text->OnEnter.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONRETURN")) )  {
-      Text->SetOnReturnStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map));
+      Text->OnReturn.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map);
       Text->OnReturn.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
   }
@@ -425,18 +425,16 @@ TAG_HANDLER_PROC(tag)  {
     CreatedObject = Btn;
     Btn->SetData(Data);
     if( tag.HasParam(wxT("ONCLICK")) )  {
-      Btn->SetOnClickStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCLICK")), macro_map));
+      Btn->OnClick.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCLICK")), macro_map);
       Btn->OnClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDOWN")) )  {
-      Btn->SetOnUpStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONUP")), macro_map));
+      Btn->OnUp.data = ExpandMacroShortcuts(tag.GetParam(wxT("ONUP")), macro_map);
       Btn->OnUp.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDOWN")) )  {
-      Btn->SetOnDownStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONDOWN")),macro_map));
+      Btn->OnDown.data = ExpandMacroShortcuts(tag.GetParam(wxT("ONDOWN")),macro_map);
       Btn->OnDown.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( TGlXApp::GetMainForm()->GetHtml()->GetShowTooltips() )  {
@@ -482,23 +480,23 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetText(Value);
     Box->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Box->SetOnChangeStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map));
+      Box->OnChange.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Box->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONLEAVE")) )  {
-      Box->SetOnLeaveStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map));
+      Box->OnLeave.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map);
       Box->OnLeave.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONENTER")) )  {
-      Box->SetOnEnterStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map));
+      Box->OnEnter.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map);
       Box->OnEnter.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONRETURN")) )  {
-      Box->SetOnReturnStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map));
+      Box->OnReturn.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map);
       Box->OnReturn.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
@@ -517,7 +515,7 @@ TAG_HANDLER_PROC(tag)  {
 /******************* SPIN CONTROL *********************************************/
   else if( TagName.Equalsi("spin") )  {
     TSpinCtrl *Spin = new TSpinCtrl(m_WParser->GetWindowInterface()->GetHTMLWindow());
-    Spin->SetFont( m_WParser->GetDC()->GetFont());
+    Spin->SetFont(m_WParser->GetDC()->GetFont());
     Spin->SetForegroundColour(m_WParser->GetDC()->GetTextForeground());
     int min=0, max = 100;
     if( tag.HasParam( wxT("MIN") ) )
@@ -535,8 +533,8 @@ TAG_HANDLER_PROC(tag)  {
     Spin->WI.SetWidth(ax);
     Spin->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Spin->SetOnChangeStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map));
+      Spin->OnChange.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Spin->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
@@ -573,13 +571,13 @@ TAG_HANDLER_PROC(tag)  {
     }
     Track->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
-      Track->SetOnChangeStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map));
+      Track->OnChange.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Track->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONMOUSEUP")) )  {
-      Track->SetOnMouseUpStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONMOUSEUP")), macro_map));
+      Track->OnMouseUp.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONMOUSEUP")), macro_map);
       Track->OnMouseUp.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
@@ -618,18 +616,18 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetData(Data);
     // binding events
     if( tag.HasParam(wxT("ONCLICK")) )  {
-      Box->SetOnClickStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCLICK")), macro_map));
+      Box->OnClick.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCLICK")), macro_map);
       Box->OnClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONCHECK")) )  {
-      Box->SetOnCheckStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHECK")), macro_map));
+      Box->OnCheck.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHECK")), macro_map);
       Box->OnCheck.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONUNCHECK")) )  {
-      Box->SetOnUncheckStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONUNCHECK")), macro_map));
+      Box->OnUncheck.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONUNCHECK")), macro_map);
       Box->OnUncheck.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("MODEDEPENDENT")) )
@@ -662,18 +660,18 @@ TAG_HANDLER_PROC(tag)  {
     Tree->SetPopup(menu);
     Tree->SetData( Data );
     if( tag.HasParam(wxT("ONSELECT")) )  {
-      Tree->SetOnSelectStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONSELECT")), macro_map));
+      Tree->OnSelect.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONSELECT")), macro_map);
       Tree->OnSelect.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONITEM")) )  {
-      Tree->SetOnItemActivateStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONITEM")), macro_map));
+      Tree->OnDblClick.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONITEM")), macro_map);
       Tree->OnDblClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( (flags&wxTR_EDIT_LABELS) != 0 && tag.HasParam(wxT("ONEDIT")) )  {
-      Tree->SetOnEditStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONEDIT")), macro_map));
+      Tree->OnEdit.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONEDIT")), macro_map);
       Tree->OnEdit.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Tree, fl));
@@ -741,13 +739,13 @@ TAG_HANDLER_PROC(tag)  {
     List->AddItems(itemsList);
     // binding events
     if( tag.HasParam(wxT("ONSELECT")) )  {
-      List->SetOnSelectStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONSELECT")), macro_map));
+      List->OnSelect.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONSELECT")), macro_map);
       List->OnSelect.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( tag.HasParam(wxT("ONDBLCLICK")) )  {
-      List->SetOnDblClickStr(
-        ExpandMacroShortcuts(tag.GetParam(wxT("ONDBLCLICK")), macro_map));
+      List->OnDblClick.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONDBLCLICK")), macro_map);
       List->OnDblClick.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     // creating cell

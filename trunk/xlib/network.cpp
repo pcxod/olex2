@@ -97,14 +97,14 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
     if( sa.IsDeleted() )  continue;
     for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSite(j);
-      const smatd m = sa.GetMatrix(0).IsFirst() ? site.matrix :
-        uc.MulMatrix(site.matrix, sa.GetMatrix(0));
+      const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix(0));
       TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
       if( a == NULL )  {
         for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
           const smatd m1 = uc.MulMatrix(site.atom->GetEquiv(k), m);
           TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m1.GetId()));
-          if( a != NULL )  break;
+          if( a != NULL )
+            break;
         }
       }
       if( a != NULL && !a->IsDeleted() )

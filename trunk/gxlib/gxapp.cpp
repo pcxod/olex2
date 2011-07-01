@@ -3107,24 +3107,21 @@ void TGXApp::Individualise(const TXAtomPList& atoms, short _level, int32_t mask)
 }
 //..............................................................................
 void TGXApp::Individualise(TXAtom& XA, short _level, int32_t mask)  {
-  TXAtom const* atoms[] = {&XA};
   const int level = TXAtom::LegendLevel(XA.GetPrimitives().GetName());
   if( level >= 2 )  return;
-  Individualise(TXAtomPList(1, atoms), _level == -1 ? level+1 : _level, mask);
+  Individualise(TXAtomPList() << XA, _level == -1 ? level+1 : _level, mask);
 }
 //..............................................................................
 void TGXApp::Collectivise(TXAtom& XA, short _level, int32_t mask)  {
-  TXAtom const* atoms[] = {&XA};
   const int level = TXAtom::LegendLevel(XA.GetPrimitives().GetName());
   if( level == 0 )  return;
-  Collectivise(TXAtomPList(1, atoms), _level == -1 ? level-1 : _level, mask);
+  Collectivise(TXAtomPList() << XA, _level == -1 ? level-1 : _level, mask);
 }
 //..............................................................................
 void TGXApp::Individualise(TXBond& XB, short _level, int32_t mask)  {
-  TXBond const* bonds[] = {&XB};
   const int level = TXAtom::LegendLevel(XB.GetPrimitives().GetName());
   if( level >= 3 )  return;
-  Individualise(TXBondPList(1, bonds), _level == -1 ? level+1 : _level, mask);
+  Individualise(TXBondPList() << XB, _level == -1 ? level+1 : _level, mask);
 }
 //..............................................................................
 void TGXApp::Individualise(const TXBondPList& bonds, short _level, int32_t mask) {
@@ -3168,8 +3165,7 @@ void TGXApp::Individualise(const TXBondPList& bonds, short _level, int32_t mask)
 }
 //..............................................................................
 void TGXApp::Collectivise(TXBond& XB, short level, int32_t mask)  {
-  TXBond const* bonds[] = {&XB};
-  Collectivise(TXBondPList(1, bonds),
+  Collectivise(TXBondPList() << XB,
     level == -1 ? TXAtom::LegendLevel(XB.GetPrimitives().GetName())+1 : level, mask);
 }
 //..............................................................................

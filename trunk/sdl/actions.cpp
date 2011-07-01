@@ -156,6 +156,13 @@ TActionQueue& TActionQList::New(const olxstr& name)  {
   return *Q;
 }
 //..............................................................................
+TActionQueue& TActionQList::Add(TActionQueue *q)  {
+  if( Queues.IndexOf(q->GetName()) != InvalidIndex )
+    throw TFunctionFailedException(__OlxSourceInfo, "the queue already exists");
+  Queues.Add(q->GetName(), q);
+  return *q;
+}
+//..............................................................................
 bool TActionQList::Execute(const olxstr& Name, const IEObject* Sender, const IEObject* Data)  {
   TActionQueue* Q = Queues[Name];
   if( Q == NULL )
