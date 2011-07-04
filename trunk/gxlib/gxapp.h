@@ -192,6 +192,7 @@ public:
   };
   AtomIterator GetAtoms() const {  return AtomIterator(*this);  }
   BondIterator GetBonds() const {  return BondIterator(*this);  }
+  PlaneIterator GetPlanes() const {  return PlaneIterator(*this);  }
 protected:
   TGlRenderer* FGlRender;
   TXFader* Fader;
@@ -589,9 +590,9 @@ public:     void CalcProbFactor(float Prob);
   AGDrawObject* FindLooseObject(const olxstr& Name);
 
   TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
-
-  TXAtom *AddCentroid(TXAtomPList& Atoms);
-  TXAtom* AddAtom(TXAtom* templ=NULL);
+  // will return generated symmetry equivalents too
+  TXAtomPList AddCentroid(TXAtomPList& Atoms);
+  TXAtom *AddAtom(TXAtom* templ=NULL);
   // adopts atoms of the auinit and returns newly created atoms and bonds
   void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds);
   void SelectAtoms(const olxstr& Names, bool Invert=false);

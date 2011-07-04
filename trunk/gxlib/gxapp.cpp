@@ -2004,13 +2004,17 @@ void TGXApp::ClearPlanes()  {
     pi.Next().SetDeleted(true);
 }
 //..............................................................................
-TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
+TXAtomPList TGXApp::AddCentroid(TXAtomPList& Atoms)  {
   if( Atoms.Count() < 2 )  return NULL;
-  TXAtom *a = static_cast<TXAtom*>(XFile().GetLattice().NewCentroid(TSAtomPList(Atoms, DirectAccessor())));
-  XFile().GetRM().Conn.Disconnect(a->CAtom());
-  a->Create();
-  a->Params()[0] = a->GetType().r_pers;
-  return a;
+  TXAtomPList centroids(
+    XFile().GetLattice().NewCentroid(TSAtomPList(Atoms, DirectAccessor())),
+    StaticCastAccessor<TXAtom>());
+  for( size_t i=0; i < centroids.Count(); i++ )  {
+    XFile().GetRM().Conn.Disconnect(centroids[i]->CAtom());
+    centroids[i]->Create();
+    centroids[i]->Params()[0] = centroids[i]->GetType().r_pers;
+  }
+  return centroids;
 }
 //..............................................................................
 void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds) {
