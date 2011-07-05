@@ -99,7 +99,8 @@ public:
   // gets an ellipsoid for an atom by asymmetric unit Id and a matrix associated with it
   const TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId) const {  return *Ellipsoids[AUId][MatrixId];  }
   TEllipsoid& GetEllipsoid(size_t MatrixId, size_t AUId)  {  return *Ellipsoids[AUId][MatrixId];  }
-  void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
+  // adds a new row to ellipsoids, intialised with NULLs
+  void AddEllipsoid(size_t n=1);
   void ClearEllipsoids();
   // (re)caches the ellipsoids from the aunit
   void UpdateEllipsoids();

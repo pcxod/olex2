@@ -635,13 +635,13 @@ void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
 void TNetwork::FindRings(const ElementPList& ringContent, TTypeList<TSAtomPList>& res)  {
   if( ringContent.IsEmpty() )  return;
   TSAtomPList all;
-  all.SetCapacity( NodeCount() );
+  all.SetCapacity(NodeCount());
   for( size_t i=0; i < NodeCount(); i++ )  {
     TSAtom& sa = Node(i);
     sa.SetTag(0);
     if( sa.IsDeleted() ) continue;
     if( sa.NodeCount() > 1 )  // a ring node must have at least two bonds!
-      all.Add( &sa );
+      all.Add(sa);
   }
   // we have to keep the order of the ring atoms, so need an extra 'rings' array
   TSAtomPList ring;

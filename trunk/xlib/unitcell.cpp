@@ -31,9 +31,11 @@ void TUnitCell::ClearEllipsoids()  {
   Ellipsoids.Clear();
 }
 //..............................................................................
-void TUnitCell::AddEllipsoid()  {
-  Ellipsoids.SetCount(Ellipsoids.Count() + 1);
-  Ellipsoids.GetLast().SetCount(Matrices.Count());
+void TUnitCell::AddEllipsoid(size_t n)  {
+  size_t st = Ellipsoids.Count();
+  Ellipsoids.SetCount(Ellipsoids.Count() + n);
+  for( size_t i=0; i < n; i++ )
+    Ellipsoids[i+st].SetCount(Matrices.Count());
 }
 //..............................................................................
 void TUnitCell::Clear()  {

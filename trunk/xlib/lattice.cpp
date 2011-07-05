@@ -780,25 +780,29 @@ TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
   return NULL;
 }
 //..............................................................................
-TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
+TSAtomPList TLattice::NewCentroid(const TSAtomPList& Atoms)  {
+  TSAtomPList rv;
+  if( Atoms.IsEmpty() )  return rv;
   vec3d cc, ce;
-  double aan = 0;
+  const smatd itm = UnitCell->InvMatrix(Atoms[0]->GetMatrix(0));
   for( size_t i=0; i < Atoms.Count(); i++ )  {
-    cc += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetChemOccu();
-    ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd())*Atoms[i]->CAtom().GetOccu();
-    aan += Atoms[i]->CAtom().GetChemOccu();
+    cc += itm*Atoms[i]->ccrd();
+    ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd());
   }
-  if( aan == 0 )  return NULL;
   ce.Sqrt();
-  ce /= aan;
-  cc /= aan;
+  ce /= Atoms.Count();
+  cc /= Atoms.Count();
   try  {
     TCAtom& CCent = AsymmUnit->NewCentroid(cc);
     GetUnitCell().AddEllipsoid();
-    TSAtom& c = GenerateAtom(CCent, *Matrices[0]);
-    CCent.ccrdEsd() = ce;
-    GetUnitCell().AddEllipsoid();
-    return &c;
+    rv.SetCapacity(Matrices.Count());
+    for( size_t i=0; i < Matrices.Count(); i++ )  {
+      TSAtom& c = GenerateAtom(CCent, *Matrices[i]);
+      CCent.ccrdEsd() = ce;
+      GetUnitCell().AddEllipsoid();
+      rv << c;
+    }
+    return rv;
   }
   catch(const TExceptionBase& exc)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
@@ -1795,10 +1799,7 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rc
 }
 //..............................................................................
 void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  {
-  if( IsGenerated() )  {
-    TBasicApp::NewLogEntry(logError) << "Hadd is not applicable to grown structure";
-    return;
-  }
+  const size_t au_cnt = GetAsymmUnit().AtomCount();
   ElementPList CTypes;
   CTypes.Add(XElementLib::FindBySymbol("C"));
   CTypes.Add(XElementLib::FindBySymbol("N"));
@@ -1822,9 +1823,14 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   rcont.GetLast() = CTypes[1];
   _ProcessRingHAdd(cg, rcont, atoms); // Py
 
+  TAsymmUnit &au = GetAsymmUnit();
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    if( atoms[i]->IsDeleted() || !atoms[i]->CAtom().IsAvailable() )  continue;
-
+    if( atoms[i]->IsDeleted() || !atoms[i]->CAtom().IsAvailable() ||
+      atoms[i]->CAtom().GetTag() != 0 )
+      continue;
+    // mark the atoms processed
+    atoms[i]->CAtom().SetTag(1);
     bool consider = false;
     for( size_t j=0; j < CTypes.Count(); j++ )  {
       if( atoms[i]->GetType() == *CTypes[j] )  {
@@ -1852,6 +1858,12 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
     if( !consider )  continue;
     _AnalyseAtomHAdd(cg, *atoms[i], ProcessingAtoms);
   }
+  // normalise the coordinates and update unitcell's ellipsoids
+  GetUnitCell().AddEllipsoid(au.AtomCount()-au_cnt);
+  GetUnitCell().FindSymmEq();
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+  for( size_t i=au_cnt; i < au.AtomCount(); i++ )
+    GenerateAtom(au.GetAtom(i), *Matrices[0]);
 }
 //..............................................................................
 void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {

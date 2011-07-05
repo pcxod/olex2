@@ -1323,12 +1323,12 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
       SL.Add("SHEL ") << GetRM().GetSHELStr();
     if( GetRM().HasTWIN() )
       SL.Add("TWIN ") << GetRM().GetTWINStr();
-  }
-  if( GetRM().HasOMIT() )
-    SL.Add("OMIT ") << GetRM().GetOMITStr();
-  for( size_t i=0; i < GetRM().OmittedCount(); i++ )  {
-    const vec3i& r = GetRM().GetOmitted(i);
-    SL.Add("OMIT ") << r[0] << ' ' << r[1] << ' ' << r[2];
+    if( GetRM().HasOMIT() )
+      SL.Add("OMIT ") << GetRM().GetOMITStr();
+    for( size_t i=0; i < GetRM().OmittedCount(); i++ )  {
+      const vec3i& r = GetRM().GetOmitted(i);
+      SL.Add("OMIT ") << r[0] << ' ' << r[1] << ' ' << r[2];
+    }
   }
   if( !GetRM().GetHKLSource().IsEmpty() )  // update html source string
     HyphenateIns("REM ", olxstr("<HKL>") << olxstr(GetRM().GetHKLSource()).Replace(' ', "%20")<< "</HKL>", SL);
