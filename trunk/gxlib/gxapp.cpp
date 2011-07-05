@@ -2120,6 +2120,8 @@ TUndoData* TGXApp::DeleteXObjects(AGDObjList& L)  {
       atoms.Add((TXAtom*)L[i]);
     else if( EsdlInstanceOf(*L[i], TXPlane) )  {
       ((TXPlane*)L[i])->Delete(true);
+      if( L[i]->GetPrimitives().ObjectCount() == 1 )
+        L[i]->GetPrimitives().ClearPrimitives();
       planes_deleted = true;
     }
     else if( EsdlInstanceOf(*L[i], TXBond) )  {
