@@ -2005,7 +2005,7 @@ void TGXApp::ClearPlanes()  {
 }
 //..............................................................................
 TXAtomPList TGXApp::AddCentroid(TXAtomPList& Atoms)  {
-  if( Atoms.Count() < 2 )  return NULL;
+  if( Atoms.Count() < 2 )  return TXAtomPList();
   TXAtomPList centroids(
     XFile().GetLattice().NewCentroid(TSAtomPList(Atoms, DirectAccessor())),
     StaticCastAccessor<TXAtom>());
