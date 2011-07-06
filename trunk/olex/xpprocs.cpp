@@ -2854,20 +2854,20 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     XVar& xv = rm.Vars.NewVar();
     for( size_t i=0; i < xatoms.Count()/2; i++ )  {
       TCAtom& a = xatoms[i]->CAtom();
-      for( size_t j=0; j < a.DependentHfixGroupCount(); j++ )  {
-        TAfixGroup &ag = a.GetDependentHfixGroup(j);
-        for( size_t k=0; k < ag.Count(); k++ )  {
-          rm.Vars.AddVarRef(xv, ag[k], catom_var_name_Sof,
+      if( a.DependentHfixGroupCount() == 1 )  {
+        TAfixGroup &ag = a.GetDependentHfixGroup(0);
+        for( size_t j=0; j < ag.Count(); j++ )  {
+          rm.Vars.AddVarRef(xv, ag[j], catom_var_name_Sof,
             relation_AsVar, 1.0/a.GetDegeneracy());
         }
       }
       rm.Vars.AddVarRef(xv, a, catom_var_name_Sof, relation_AsVar, 1.0/a.GetDegeneracy());
 
       TCAtom& b = xatoms[xatoms.Count()/2+i]->CAtom();
-      for( size_t j=0; j < b.DependentHfixGroupCount(); j++ )  {
-        TAfixGroup &ag = b.GetDependentHfixGroup(j);
-        for( size_t k=0; k < ag.Count(); k++ )  {
-          rm.Vars.AddVarRef(xv, ag[k], catom_var_name_Sof,
+      if( b.DependentHfixGroupCount() == 1 )  {
+        TAfixGroup &ag = b.GetDependentHfixGroup(0);
+        for( size_t j=0; j < ag.Count(); j++ )  {
+          rm.Vars.AddVarRef(xv, ag[j], catom_var_name_Sof,
             relation_AsOneMinusVar, 1.0/b.GetDegeneracy());
         }
       }
@@ -2880,20 +2880,20 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       for( size_t i=0; i < xatoms.Count(); i++ )  {
         rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof,
           fvar+xatoms[i]->CAtom().GetOccu());
-        for( size_t j=0; j < xatoms[i]->CAtom().DependentHfixGroupCount(); j++ )  {
-          TAfixGroup &ag = xatoms[i]->CAtom().GetDependentHfixGroup(j);
-          for( size_t k=0; k < ag.Count(); k++ )
-            rm.Vars.SetParam(ag[k], catom_var_name_Sof, fvar+xatoms[i]->CAtom().GetOccu());
+        if( xatoms[i]->CAtom().DependentHfixGroupCount() == 1 )  {
+          TAfixGroup &ag = xatoms[i]->CAtom().GetDependentHfixGroup(0);
+          for( size_t j=0; j < ag.Count(); j++ )
+            rm.Vars.SetParam(ag[j], catom_var_name_Sof, fvar+xatoms[i]->CAtom().GetOccu());
         }
       }
     }
     else  { // set to fvar directly
       for( size_t i=0; i < xatoms.Count(); i++ )  {
         rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof, fvar);
-        for( size_t j=0; j < xatoms[i]->CAtom().DependentHfixGroupCount(); j++ )  {
-          TAfixGroup &ag = xatoms[i]->CAtom().GetDependentHfixGroup(j);
-          for( size_t k=0; k < ag.Count(); k++ )
-            rm.Vars.SetParam(ag[k], catom_var_name_Sof, fvar);
+        if( xatoms[i]->CAtom().DependentHfixGroupCount() == 1 )  {
+          TAfixGroup &ag = xatoms[i]->CAtom().GetDependentHfixGroup(0);
+          for( size_t j=0; j < ag.Count(); j++ )
+            rm.Vars.SetParam(ag[j], catom_var_name_Sof, fvar);
         }
       }
     }
