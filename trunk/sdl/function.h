@@ -55,7 +55,6 @@ const unsigned int   fpNone  = 0x00000001,
                      fpNine  = 0x00000200,
                      fpTen   = 0x00000400,
                      fpAny   = 0x0000ffff,
-                     fpCheckAny = 0x0000f000,
 
                      fpSpecialCheckA = 0x00010000,
                      fpSpecialCheckB = 0x00020000,
@@ -147,7 +146,7 @@ public:
     const size_t argC = Params.Count(),
       arg_m = (0x0001 << argC);
     unsigned int ArgStateMask = GetArgStateMask();
-    if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask&arg_m) == 0)  {
+    if( (ArgStateMask&fpAny) != fpAny && (ArgStateMask&arg_m) == 0)  {
       E.WrongArgCount(*this, argC);
       return false;
     }

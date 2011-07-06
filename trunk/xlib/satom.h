@@ -21,7 +21,8 @@ const unsigned short
   satom_Deleted    = 0x0001,
   satom_Grown      = 0x0002,
   satom_Standalone = 0x0004,
-  satom_Masked     = 0x0008;
+  satom_Masked     = 0x0008,
+  satom_Processed  = 0x0010;  // generic bit
 
 class TSAtom : public TBasicNode<class TNetwork, TSAtom, class TSBond>  {
 private:
@@ -53,6 +54,7 @@ public:
   virtual void SetDeleted(bool v)  {  olx_set_bit(v, Flags, satom_Deleted);  }
   DefPropBFIsSet(Standalone, Flags, satom_Standalone)
   DefPropBFIsSet(Masked, Flags, satom_Masked)
+  DefPropBFIsSet(Processed, Flags, satom_Processed)
 
   bool IsAvailable() const {
     return !(IsDeleted() || IsMasked() || FCAtom->IsDetached());

@@ -1858,7 +1858,6 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
     if( !consider )  continue;
     _AnalyseAtomHAdd(cg, *atoms[i], ProcessingAtoms);
   }
-  // normalise the coordinates and update unitcell's ellipsoids
   GetUnitCell().AddEllipsoid(au.AtomCount()-au_cnt);
   GetUnitCell().FindSymmEq();
   au.GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));

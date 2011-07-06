@@ -23,23 +23,23 @@ template <class T> class TQueue  {
     T data;
     item(const T& v) : data(v), next(NULL)  {}
   };
-  item* cur, *last;
+  item *first, *last;
   int _count;
 public:
-  TQueue() : cur(NULL), last(NULL), _count(0)  {}
+  TQueue() : first(NULL), last(NULL), _count(0)  {}
   ~TQueue()  {  Clear();  }
   void Clear()  {
-    while( cur != NULL )  {
-      item* p = cur->next;
-      delete cur;
-      cur = p;
+    while( first != NULL )  {
+      item* p = first->next;
+      delete first;
+      first = p;
     }
     _count = 0;
   }
   inline T& Push(const T& v)  {
     item* ni = new item(v);
-    if( cur == NULL )  {
-      cur = last = ni;
+    if( first == NULL )  {
+      first = last = ni;
     }
     else  {
       last->next = ni;
@@ -50,30 +50,42 @@ public:
   }
   inline T& PushLast(const T& v)  {  return Push(v);  }
   inline T PopFirst()  {  return Pop();  }
+  inline T& Last() const {
+    if( last == NULL )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "queue is empty");
+    return last->data;
+  }
+  inline T& First() const {
+    if( first == NULL )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "queue is empty");
+    return first->data;
+  }
   inline T& PushFirst(const T& v)  {
     item* ni = new item(v);
-    if( cur == NULL )  {
-      cur = last = ni;
+    if( first == NULL )  {
+      first = last = ni;
     }
     else  {
-      ni->next = cur;
-      cur = ni;
+      ni->next = first;
+      first = ni;
     }
     _count++;
-    return cur->data;
+    return first->data;
   }
-  T Pop()  { 
-    if( cur != NULL )  { 
-      item* i = cur->next;
-      T rv = cur->data;
-      delete cur;
-      cur = i;
+  T Pop()  {
+    if( first != NULL )  { 
+      item* i = first->next;
+      T rv = first->data;
+      delete first;
+      first = i;
       _count--;
       return rv;
     }
-    TExceptionBase::ThrowFunctionFailed(__FILE__, __FUNC__, __LINE__, "queue is empty");
+    TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "queue is empty");
+    // make the compiler happy
+    return T();
   }
-  inline bool IsEmpty() const {  return cur == NULL;  }
+  inline bool IsEmpty() const {  return _count == 0;  }
   inline int Count() const {  return _count;  }
 };
 
