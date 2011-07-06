@@ -18,7 +18,7 @@ template <typename T, class cleanupClass=DummyCleanup<T> >
 class TUDTypeList : public TLinkedList<T, cleanupClass> {
   typedef TLinkedList<T, cleanupClass> parent_t;
   mutable size_t pos;
-  mutable parent_t::Entry *cur;
+  mutable typename parent_t::Entry *cur;
 public:
   TUDTypeList() : pos(InvalidIndex), cur(NULL) {}
   virtual ~TUDTypeList()  {  Clear();  }
@@ -32,9 +32,8 @@ public:
     pos = InvalidIndex;
     return *this;
   }
-  size_t Count() const {  return parent_t::Count();  }
   T& operator [] (size_t ind) const {
-    if( ind >= count )
+    if( ind >= parent_t::count )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid index");
     if( pos == (ind-1) )
       return Next();
@@ -44,7 +43,7 @@ public:
       return cur->data;
     }
     pos = 0;
-    cur = first;
+    cur = parent_t::first;
     while( ind-- != 1 )  {
       cur = cur->next;
       pos++;
