@@ -632,13 +632,12 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   as close to the cell center as possible");
 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
-  this_InitMacroD(Fvar, EmptyString(), (fpAny)|psCheckFileTypeIns, "Assigns/relsease occupancy of "
+  this_InitMacroD(Fvar, EmptyString(), (fpAny)|psCheckFileTypeIns, "Assigns/release occupancy of "
     "given atoms. Examples:\n-'fvar' for a selection of even number atoms, will create a new variable and "
-    "link occupancies of the first half of the selection to the occupancy other half of the selection. "
-    "\n-'fvar 2' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied by "
+    "link occupancies of the first half of the selection to occupancy the other half of the selection. "
+    "\n-'fvar 20' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied by "
     "current value of the occupancy of the given atoms.\n-'fvar 20.5' will link occupancy of the given "
-    "atoms to the value of the 2nd FVAR multiplied by 0.5.\nNote that to set occupancy to the value of "
-    "the 2nd variable, the occupancy of the selected atoms has to be fixed at one using 'fix occu 1'");
+    "atoms to the value of the 2nd FVAR multiplied by 0.5.");
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
   this_InitMacroD(Part,
     "p-number of parts&;lo-link ocupancy of given atoms through FVAR's&;"
