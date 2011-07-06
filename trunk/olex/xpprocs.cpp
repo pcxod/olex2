@@ -2883,7 +2883,7 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( xatoms[i]->CAtom().DependentHfixGroupCount() == 1 )  {
           TAfixGroup &ag = xatoms[i]->CAtom().GetDependentHfixGroup(0);
           for( size_t j=0; j < ag.Count(); j++ )
-            rm.Vars.SetParam(ag[j], catom_var_name_Sof, fvar+xatoms[i]->CAtom().GetOccu());
+            rm.Vars.SetParam(ag[j], catom_var_name_Sof, fvar+ag[j].GetOccu());
         }
       }
     }
