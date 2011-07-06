@@ -1792,6 +1792,10 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
         sr.AddAtoms(agroup);
     }
     srl->ValidateRestraint(sr);
+    if( !Ins_ProcessRestraint(NULL, sr) && DoPreserveInvalid() )  {
+      TBasicApp::NewLogEntry() << (olxstr("Preseving invalid instruction: ").quote() << toks.Text(' '));
+      return false;
+    }
     return true;
   }
   return false;
