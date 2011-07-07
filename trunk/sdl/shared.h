@@ -84,7 +84,7 @@ public:
   }
   void IncCapacity(size_t v)  {
     on_modify();
-    p->p->Setcapcity(p->p->GetCount()+i);  
+    p->p->Setcapcity(p->p->GetCount()+v);  
   }
   shared_base& operator = (const shared_base &a) {
     if( p != NULL && --p->ref_cnt == 0 )  {

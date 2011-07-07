@@ -1362,7 +1362,8 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
 }
 //..............................................................................
 SharedPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
-  return TCAtomPList(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
+  TCAtomPList rv(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
+  return rv;
 }
 //..............................................................................
 void TGXApp::RestoreSelection()  {
@@ -1393,7 +1394,7 @@ SharedPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
 }
 //..............................................................................
 SharedPtrList<TCAtom> TGXApp::CAtomsByType(const cm_Element& AI)  {
-  return ListFilter::Filter(XFile().GetLattice().GetAsymmUnit().GetAtoms(),
+  return &ListFilter::Filter(XFile().GetLattice().GetAsymmUnit().GetAtoms(),
     *(new TCAtomPList),
     olx_alg::olx_and(
       olx_alg::olx_not(TCAtom::FlagsAnalyser<>(catom_flag_Deleted)),
@@ -1423,7 +1424,7 @@ SharedPtrList<TCAtom> TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask)  {
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
   olxstr Name = StrMask.ToUpperCase();
-  TAsymmUnit& AU= XFile().GetLattice().GetAsymmUnit();
+  TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
   TCAtomPList l;
   for( size_t i=0; i < AU.AtomCount(); i++ )  {
     TCAtom& CA = AU.GetAtom(i);
@@ -2340,7 +2341,7 @@ void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
 //..............................................................................
 SharedPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection)  {
   if( Atoms.IsEmpty() )  {
-    TCAtomPList &list = GetSelectedCAtoms(ClearSelection).Release();
+    TCAtomPList list = GetSelectedCAtoms(ClearSelection).Release();
     if( !list.IsEmpty() )  return list;
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
     list.SetCapacity(list.Count() + AU.AtomCount());
@@ -2355,7 +2356,7 @@ SharedPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelectio
   }
   TStrList Toks(Atoms, ' ');
   olxstr Tmp;
-  TCAtomPList &list = *(new TCAtomPList);
+  TCAtomPList list;
   for( size_t i = 0; i < Toks.Count(); i++ )  {
     Tmp = Toks[i];
     if( Tmp.Equalsi("sel") )  {
