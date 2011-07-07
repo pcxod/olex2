@@ -13,9 +13,12 @@
 #include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
+#include "shared.h"
 BeginEsdlNamespace()
 
-template <class T> class TArrayList : public AReferencible  {
+template <typename> class SharedArrayList;
+
+template <class T> class TArrayList : public IEObject {
 private:
   size_t FCount, FCapacity;
   size_t FIncrement;
@@ -42,6 +45,10 @@ public:
       Items[i] = list.Items[i];
   }
 //..............................................................................
+  TArrayList(const SharedArrayList<T>& list) : Items(NULL)  {
+    TakeOver(list.Release(), true);
+  }
+//..............................................................................
   /* copies values from an array of size elements  */
   TArrayList(size_t size, const T* array)  {
    init(size);
@@ -58,6 +65,19 @@ public:
   //deletes the objects and clears the list
   inline void Clear()  {  SetCount(0);  }
 //..............................................................................
+  TArrayList &TakeOver(const SharedArrayList<T>& list, bool do_delete=false)  {
+    if( Items != NULL )  delete [] Items;
+    TArrayList &l = list.Release();
+    FCount = l.FCount;
+    FCapacity = l.FCapacity;
+    FIncrement = l.FIncrement;
+    Items = l.Items;
+    l.FCount = l.FCapacity = 0;
+    l.Items = NULL;
+    if( do_delete )  delete &l;
+    return *this;
+  }
+//..............................................................................
   virtual IEObject* Replicate() const {  return new TArrayList(*this);  }
 //..............................................................................
   template <class List> TArrayList& Assign(const List& list)  {
@@ -70,6 +90,10 @@ public:
 //..............................................................................
   template <class List> inline TArrayList& operator = (const List& list)  {
     return Assign(list);
+  }
+//..............................................................................
+  inline TArrayList& operator = (const SharedArrayList<T>& list)  {
+    return TakeOver(list.Release(), true);
   }
 //..............................................................................
   inline TArrayList& operator = (const TArrayList& list)  {
@@ -88,11 +112,9 @@ public:
     return AddList(list);
   }
 //..............................................................................
-  const T& Add(const T& Obj)  {
+  T& Add(const T& Obj)  {
     if( FCapacity == FCount )  SetCapacity((size_t)(1.5*FCount + FIncrement));
-    Items[FCount] = Obj;
-    FCount ++;
-    return Obj;
+    return (Items[FCount++] = Obj);
   }
 //..............................................................................
   TArrayList& operator << (const T& o) {  Add(o);  return *this;  }
@@ -316,11 +338,26 @@ template <class T>
   TListTraverser<TArrayList<T> > TArrayList<T>::Traverser;
 #endif
 
-  typedef TArrayList<int> TIntList;
-  typedef TArrayList<unsigned int> TUIntList;
-  typedef TArrayList<size_t> TSizeList;
-  typedef TArrayList<index_t> TIndexList;
-  typedef TArrayList<double> TDoubleList;
+typedef TArrayList<int> TIntList;
+typedef TArrayList<unsigned int> TUIntList;
+typedef TArrayList<size_t> TSizeList;
+typedef TArrayList<index_t> TIndexList;
+typedef TArrayList<double> TDoubleList;
+
+template <typename item_t>
+class SharedArrayList : public shared_array<TArrayList<item_t>, item_t> {
+  typedef TArrayList<item_t> arr_t;
+  typedef shared_array<arr_t, item_t> parent_t;
+public:
+  SharedArrayList() {}
+  SharedArrayList(SharedArrayList &l) : parent_t(l) {}
+  SharedArrayList(arr_t *arr) : parent_t(arr) {}
+  SharedArrayList(arr_t &arr) : parent_t(arr) {}
+  SharedArrayList &operator = (const SharedArrayList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
 
 EndEsdlNamespace()
 #endif

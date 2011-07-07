@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_egraph_H
 #define __olx_sdl_egraph_H
 #include "typelist.h"
+#include "talist.h"
 #include "etraverse.h"
 #include "emath.h"
 #include "edict.h"

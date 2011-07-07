@@ -2840,8 +2840,8 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   XLibMacros::ParseNumbers<double>(Cmds, 1, &fvar);
   RefinementModel& rm = FXApp->XFile().GetRM();
   TXAtomPList xatoms;
-  FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
-  if( fvar == -1101 && (xatoms.Count()%2) != 0 )  {
+  FindXAtoms(Cmds, xatoms, false, !Options.Contains("cs"));
+  if( fvar == -1101 && ((xatoms.Count()%2) != 0 || xatoms.IsEmpty()) )  {
     rm.Vars.Validate();
     TBasicApp::NewLogEntry() << "Free variables: " << rm.Vars.GetFVARStr();
     return;
@@ -2851,27 +2851,29 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       rm.Vars.FreeParam(xatoms[i]->CAtom(), catom_var_name_Sof);
   }
   else if( (xatoms.Count()%2)==0 && fvar == -1101 )  {
-    XVar& xv = rm.Vars.NewVar();
-    for( size_t i=0; i < xatoms.Count()/2; i++ )  {
-      TCAtom& a = xatoms[i]->CAtom();
-      if( a.DependentHfixGroupCount() == 1 )  {
-        TAfixGroup &ag = a.GetDependentHfixGroup(0);
-        for( size_t j=0; j < ag.Count(); j++ )  {
-          rm.Vars.AddVarRef(xv, ag[j], catom_var_name_Sof,
-            relation_AsVar, 1.0/a.GetDegeneracy());
+    if( !xatoms.IsEmpty() )  {
+      XVar& xv = rm.Vars.NewVar();
+      for( size_t i=0; i < xatoms.Count()/2; i++ )  {
+        TCAtom& a = xatoms[i]->CAtom();
+        if( a.DependentHfixGroupCount() == 1 )  {
+          TAfixGroup &ag = a.GetDependentHfixGroup(0);
+          for( size_t j=0; j < ag.Count(); j++ )  {
+            rm.Vars.AddVarRef(xv, ag[j], catom_var_name_Sof,
+              relation_AsVar, 1.0/a.GetDegeneracy());
+          }
         }
-      }
-      rm.Vars.AddVarRef(xv, a, catom_var_name_Sof, relation_AsVar, 1.0/a.GetDegeneracy());
+        rm.Vars.AddVarRef(xv, a, catom_var_name_Sof, relation_AsVar, 1.0/a.GetDegeneracy());
 
-      TCAtom& b = xatoms[xatoms.Count()/2+i]->CAtom();
-      if( b.DependentHfixGroupCount() == 1 )  {
-        TAfixGroup &ag = b.GetDependentHfixGroup(0);
-        for( size_t j=0; j < ag.Count(); j++ )  {
-          rm.Vars.AddVarRef(xv, ag[j], catom_var_name_Sof,
-            relation_AsOneMinusVar, 1.0/b.GetDegeneracy());
+        TCAtom& b = xatoms[xatoms.Count()/2+i]->CAtom();
+        if( b.DependentHfixGroupCount() == 1 )  {
+          TAfixGroup &ag = b.GetDependentHfixGroup(0);
+          for( size_t j=0; j < ag.Count(); j++ )  {
+            rm.Vars.AddVarRef(xv, ag[j], catom_var_name_Sof,
+              relation_AsOneMinusVar, 1.0/b.GetDegeneracy());
+          }
         }
+        rm.Vars.AddVarRef(xv, b, catom_var_name_Sof, relation_AsOneMinusVar, 1.0/b.GetDegeneracy());
       }
-      rm.Vars.AddVarRef(xv, b, catom_var_name_Sof, relation_AsOneMinusVar, 1.0/b.GetDegeneracy());
     }
   }
   else  {
@@ -2938,7 +2940,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   const bool copy = Options.Contains("c");
 
   TXAtomPList Atoms;
-  FindXAtoms(Cmds,Atoms, true, !Options.Contains("cs") );
+  FindXAtoms(Cmds,Atoms, false, !Options.Contains("cs") );
   if( partCount == 0 || (Atoms.Count()%partCount) != 0 )  {
     E.ProcessingError(__OlxSrcInfo, "wrong number of parts");
     return;

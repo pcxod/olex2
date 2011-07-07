@@ -49,8 +49,7 @@ public:
     DoSplit = Options.Contains('s');
     AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
-    TXAtomPList xatoms;
-    TGlXApp::GetGXApp()->GetSelection().Extract(xatoms);
+    TXAtomPList xatoms = TGlXApp::GetGXApp()->GetSelection().Extract<TXAtom>();
     original_crds.SetCount(xatoms.Count());
     for( size_t i=0; i < xatoms.Count(); i++ )
       original_crds[i] = xatoms[i]->crd();
@@ -149,7 +148,7 @@ public:
         group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
         group->SetAngleInc(AngleInc*M_PI/180);
       }
-      group->Extract(Atoms);
+      Atoms = group->Extract<TXAtom>();
       group->Update();
       group->SetOrgiginalCrds(original_crds);
       group->SetSelected(true);

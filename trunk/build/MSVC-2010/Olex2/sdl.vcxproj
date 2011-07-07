@@ -702,6 +702,7 @@
     <ClInclude Include="..\..\..\sdl\math\spline.h" />
     <ClInclude Include="..\..\..\sdl\md5.h" />
     <ClInclude Include="..\..\..\sdl\olxptr.h" />
+    <ClInclude Include="..\..\..\sdl\shared.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_istring.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_strcvt.h" />
@@ -717,7 +718,6 @@
     <ClInclude Include="..\..\..\sdl\ptypes.h" />
     <ClInclude Include="..\..\..\sdl\settingsfile.h" />
     <ClInclude Include="..\..\..\sdl\sha.h" />
-    <ClInclude Include="..\..\..\sdl\shared.h" />
     <ClInclude Include="..\..\..\sdl\singleton.h" />
     <ClInclude Include="..\..\..\sdl\sls.h" />
     <ClInclude Include="..\..\..\sdl\smart\strbuf.h" />

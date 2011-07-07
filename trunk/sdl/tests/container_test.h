@@ -10,6 +10,8 @@
 #include "../ellist.h"
 #include "../equeue.h"
 #include "../estack.h"
+#include "../typelist.h"
+#include "../talist.h"
 
 namespace test {
 
@@ -141,13 +143,78 @@ void QueueTest(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
 }
 //.........................................................................
+void SharedListTest(OlxTests& t)  {
+  SharedArrayList<int> aalist(new TArrayList<int>(10)), calist, balist(calist);
+  SharedTypeList<int> atlist, btlist(atlist), ctlist(atlist);
+  SharedPtrList<const int> aplist, bplist;
+  for( size_t i=0; i < aalist.Count(); i++ )  {
+    aalist[i] = i;
+    atlist.Add(new int) = i;
+    aplist.Add(&(const int&)aalist[i]);
+  }
+  calist = aalist;
+  for( size_t i=0; i < aalist.Count(); i++ )  {
+    if( aalist[i] != calist[i] )
+      throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+    if( atlist[i] != aalist[i] )
+      throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+    if( atlist[i] != *aplist[i] )
+      throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+
+  if( !btlist.IsEmpty() || !balist.IsEmpty() )  // original is empty
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+
+  aalist[0] = 10;
+  if( aalist[0] != 10 || calist[0] != 0 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+
+  balist = calist;
+  balist[1] = 9;
+  if( aalist[1] != 1 || balist[1] != 9 || calist[1] != 1 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+
+  if( *aplist[0] != 0 || *aplist[1] != 1 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+
+  // finally will modify the original
+  calist[0] = 10;
+  calist[1] = 9;
+
+  if( *aplist[0] != 10 || *aplist[1] != 9 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+
+  TArrayList<int> al = aalist, // release reference through copy constructor
+    al1;
+  al1 = balist; // release reference through assignmnet
+  if( aalist.IsValid() || balist.IsValid() )
+    throw TFunctionFailedException(__OlxSourceInfo, "Release failed");
+  if( al.Count() != 10 || al1.Count() != 10 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+
+  TTypeList<int> tl = atlist, tl1;
+  tl1 = btlist;
+  if( atlist.IsValid() || btlist.IsValid() )
+    throw TFunctionFailedException(__OlxSourceInfo, "Release failed");
+  if( tl.Count() != 10 || tl1.Count() != 0 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+
+  TPtrList<const int> pl = aplist, pl1;
+  pl1 = bplist;
+  if( aplist.IsValid() || bplist.IsValid() )
+    throw TFunctionFailedException(__OlxSourceInfo, "Release failed");
+  if( pl.Count() != 10 || pl1.Count() != 0 )
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+}
+//.........................................................................
 void ContainerTests(OlxTests& t)  {
   t.Add(&test::ListTests<TArrayList<int> >)
     .Add(&test::ListTests<TTypeList<int> >)
     .Add(&test::DirectionalListTest)
     .Add(&test::LinkedlListTest).
     Add(&test::QueueTest).
-    Add(&test::StackTest);
+    Add(&test::StackTest).
+    Add(&test::SharedListTest);
 }
 //.........................................................................
 };  // namespace test

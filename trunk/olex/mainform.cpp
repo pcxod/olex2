@@ -2003,14 +2003,19 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
 }
 //..............................................................................
 void TMainForm::OnChar(wxKeyEvent& m)  {
-  short Fl=0, inc=3;
+  short Fl=0;
   olxstr Cmd, FullCmd;
   if( m.m_altDown )      Fl |= sssAlt;
   if( m.m_shiftDown )    Fl |= sssShift;
   if( m.m_controlDown )  Fl |= sssCtrl;
   // Alt + Up,Down,Left, Right - rotation, +Shift - speed
   if( ((Fl & sssShift)) || (Fl & sssAlt) )  {
-    if( (Fl & sssShift) )  inc = 7;
+    int inc = 3;
+    double zoom_inc = 0.01;
+    if( (Fl & sssShift) )  {
+      inc *= 3;
+      zoom_inc *= 3;
+    }
     if( m.m_keyCode == WXK_UP )  {
       FXApp->GetRender().RotateX(FXApp->GetRender().GetBasis().GetRX()+inc);
       TimePerFrame = FXApp->Draw();
@@ -2032,18 +2037,18 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
       return;
     }
     if( m.m_keyCode == WXK_END )  {
-      if( FXApp->GetRender().GetZoom()+inc/3 < 400 )  {
-        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()+inc/3);
+      if( FXApp->GetRender().GetZoom()+zoom_inc < 100 )  {
+        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()+zoom_inc);
         TimePerFrame = FXApp->Draw();
         return;
       }
     }
     if( m.m_keyCode == WXK_HOME )  {
-      if( FXApp->GetRender().GetZoom()-inc/3 >= 0 )  {
-        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()-inc/3);
-        TimePerFrame = FXApp->Draw();
-        return;
-      }
+      double z = FXApp->GetRender().GetZoom()-zoom_inc;
+      if( z <= 0 ) z = 0.001;
+      FXApp->GetRender().SetZoom(z);
+      TimePerFrame = FXApp->Draw();
+      return;
     }
   }
   // Ctrl + Up, Down - browse solutions
