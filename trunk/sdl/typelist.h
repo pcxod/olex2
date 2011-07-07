@@ -461,7 +461,7 @@ class SharedTypeList : public shared_list<TTypeList<item_t>, item_t> {
   typedef shared_list<lst_t, item_t> parent_t;
 public:
   SharedTypeList() {}
-  SharedTypeList(SharedTypeList &l) : parent_t(l) {}
+  SharedTypeList(const SharedTypeList &l) : parent_t(l) {}
   SharedTypeList(lst_t *lst) : parent_t(lst) {}
   SharedTypeList(lst_t &lst) : parent_t(lst) {}
   SharedTypeList &operator = (const SharedTypeList &l) {

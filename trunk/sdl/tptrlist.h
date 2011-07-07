@@ -528,7 +528,7 @@ class SharedPtrList : public shared_ptr_list<TPtrList<item_t>, item_t> {
   typedef shared_ptr_list<lst_t, item_t> parent_t;
 public:
   SharedPtrList() {}
-  SharedPtrList(SharedPtrList &l) : parent_t(l) {}
+  SharedPtrList(const SharedPtrList &l) : parent_t(l) {}
   SharedPtrList(lst_t *lst) : parent_t(lst) {}
   SharedPtrList(lst_t &lst) : parent_t(lst) {}
   SharedPtrList &operator = (const SharedPtrList &l) {

@@ -106,10 +106,10 @@ public:
   shared_list(list_t *l) : _parent_t(l) {}
   shared_list(list_t &l) : _parent_t(l) {}
   item_t &Add(item_t *i)  {
-    if( p == NULL )
-      throw_invalid(__POlxSourceInfo);
-    on_modify();
-    return p->p->Add(i);
+    if( _parent_t::p == NULL )
+      _parent_t::throw_invalid(__POlxSourceInfo);
+    _parent_t::on_modify();
+    return _parent_t::p->p->Add(i);
   }
   item_t &Add(item_t &i)  {  return Add(&i);  };
   shared_list& operator = (const shared_list &a) {
@@ -127,10 +127,10 @@ public:
   shared_ptr_list(list_t *l) : _parent_t(l) {}
   shared_ptr_list(list_t &l) : _parent_t(l) {}
   item_t *Add(item_t *i)  {
-    if( p == NULL )
-      throw_invalid(__POlxSourceInfo);
-    on_modify();
-    return p->p->Add(i);
+    if( _parent_t::p == NULL )
+      _parent_t::throw_invalid(__POlxSourceInfo);
+    _parent_t::on_modify();
+    return _parent_t::p->p->Add(i);
   }
   item_t *Add(item_t &i)  {  return Add(&i);  }
   shared_ptr_list& operator = (const shared_ptr_list &a) {
@@ -149,8 +149,8 @@ public:
   shared_array(array_t &l) : _parent_t(l) {}
   item_t &Add(const item_t &i)  {
     if( _parent_t::p == NULL )
-      throw_invalid(__POlxSourceInfo);
-    on_modify();
+      _parent_t::throw_invalid(__POlxSourceInfo);
+    _parent_t::on_modify();
     return _parent_t::p->p->Add(i);
   }
   shared_array& operator = (const shared_array &a) {

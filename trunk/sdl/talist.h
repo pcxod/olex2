@@ -350,7 +350,7 @@ class SharedArrayList : public shared_array<TArrayList<item_t>, item_t> {
   typedef shared_array<arr_t, item_t> parent_t;
 public:
   SharedArrayList() {}
-  SharedArrayList(SharedArrayList &l) : parent_t(l) {}
+  SharedArrayList(const SharedArrayList &l) : parent_t(l) {}
   SharedArrayList(arr_t *arr) : parent_t(arr) {}
   SharedArrayList(arr_t &arr) : parent_t(arr) {}
   SharedArrayList &operator = (const SharedArrayList &l) {
