@@ -2878,12 +2878,12 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     // 10, 20, 30, etc: set to fvar+occu
     if( olx_abs(fvar-olx_round(fvar)) < 1e-3 && (olx_round(fvar)%10) == 0 )  {
       for( size_t i=0; i < xatoms.Count(); i++ )  {
-        rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof,
-          fvar+xatoms[i]->CAtom().GetOccu());
+        const double ov = xatoms[i]->CAtom().GetOccu();
+        rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof, fvar+ov);
         if( xatoms[i]->CAtom().DependentHfixGroupCount() == 1 )  {
           TAfixGroup &ag = xatoms[i]->CAtom().GetDependentHfixGroup(0);
           for( size_t j=0; j < ag.Count(); j++ )
-            rm.Vars.SetParam(ag[j], catom_var_name_Sof, fvar+ag[j].GetOccu());
+            rm.Vars.SetParam(ag[j], catom_var_name_Sof, fvar+ov);
         }
       }
     }
