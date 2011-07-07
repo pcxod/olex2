@@ -78,6 +78,11 @@ public:
     return *this;
   }
 //..............................................................................
+  TTypeListExt &TakeOver(TTypeListExt& l, bool do_delete=false)  {
+    List.TakeOver(l.List);
+    if( do_delete )  delete &l;
+  }
+//..............................................................................
 /*  virtual IEObject* Replicate() const  {
     TTypeListExt<T, DestructCast>* list = new TTypeListExt<T, DestructCast>( Count() );
     for( size_t i=0; i < Count(); i++ )

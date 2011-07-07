@@ -60,7 +60,7 @@ public:
     return l;
   }
   template <class obj_t> SharedPtrList<obj_t> Extract() const {
-    return SharedPtrList<obj_t>(&Extract<obj_t,TPtrList<obj_t> >(
+    return SharedPtrList<obj_t>(Extract<obj_t,TPtrList<obj_t> >(
       *(new TPtrList<obj_t>)));
   }
   void Remove(AGDrawObject& G);

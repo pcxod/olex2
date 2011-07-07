@@ -1361,12 +1361,8 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   return false;
 }
 //..............................................................................
-void TGXApp::GetSelectedCAtoms(TCAtomPList& List, bool Clear)  {
-  TXAtomPList xAtoms;
-  GetSelectedXAtoms(xAtoms, Clear);
-  List.SetCapacity( xAtoms.Count() );
-  for( size_t i=0; i < xAtoms.Count(); i++ )
-    List.Add(xAtoms[i]->CAtom());
+SharedPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
+  return TCAtomPList(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
 }
 //..............................................................................
 void TGXApp::RestoreSelection()  {
@@ -1377,9 +1373,10 @@ void TGXApp::RestoreSelection()  {
   RestoreGroup(GetSelection(), SelectionCopy[1]);
 }
 //..............................................................................
-void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
+SharedPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
   TPtrList<TGlGroup> S;
   S.Add(GetSelection());
+  TXAtomPList rv;
   for( size_t i=0; i < S.Count(); i++ )  {
     TGlGroup& Sel = *S[i];
     for( size_t j=0; j < Sel.Count(); j++ )  {
@@ -1387,42 +1384,47 @@ void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
       if( GO.IsGroup() )  // another group
         S.Add((TGlGroup&)GO);  
       else if( EsdlInstanceOf(GO, TXAtom) )
-        List.Add((TXAtom&)GO);
+        rv.Add((TXAtom&)GO);
     }
   }
   if( Clear )  
     SelectAll(false);
+  return rv;
 }
 //..............................................................................
-void TGXApp::CAtomsByType(const cm_Element& AI, TCAtomPList& res)  {
-  ListFilter::Filter(XFile().GetLattice().GetAsymmUnit().GetAtoms(), res,
+SharedPtrList<TCAtom> TGXApp::CAtomsByType(const cm_Element& AI)  {
+  return ListFilter::Filter(XFile().GetLattice().GetAsymmUnit().GetAtoms(),
+    *(new TCAtomPList),
     olx_alg::olx_and(
       olx_alg::olx_not(TCAtom::FlagsAnalyser<>(catom_flag_Deleted)),
       TCAtom::TypeAnalyser<>(AI)));
 }
 //..............................................................................
-void TGXApp::XAtomsByType(const cm_Element& AI, TXAtomPList& res, bool FindHidden) {
+SharedPtrList<TXAtom> TGXApp::XAtomsByType(const cm_Element& AI, bool FindHidden) {
   //ListFilter::Filter(XAtoms, res,
   //  olx_alg::and(
   //    olx_alg::Bool(!FindHidden),
   //    olx_alg::and(
   //      AGDrawObject::FlagsAnalyser(sgdoVisible),
   //      TSAtom::TypeAnalyser<>(AI))));
+  TXAtomPList l;
   AtomIterator ai(*this);
+  l.SetCapacity(ai.count);
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
     if( !FindHidden && !xa.IsVisible() )  continue;
-    if( xa.GetType() == AI )  {
-      res.Add(xa);
-    }
+    if( xa.GetType() == AI )
+      l.Add(xa);
   }
+  return l;
 }
 //..............................................................................
-void TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask, TCAtomPList& List)  {
+SharedPtrList<TCAtom> TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask)  {
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
   olxstr Name = StrMask.ToUpperCase();
   TAsymmUnit& AU= XFile().GetLattice().GetAsymmUnit();
+  TCAtomPList l;
   for( size_t i=0; i < AU.AtomCount(); i++ )  {
     TCAtom& CA = AU.GetAtom(i);
     if( CA.IsDeleted() )  continue;
@@ -1438,8 +1440,9 @@ void TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask, TCAtomPList& List)  {
       }
     }
     if( found )
-      List.Add(CA);
+      l.Add(CA);
   }
+  return l;
 }
 //..............................................................................
 void TGXApp::GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template)  {
@@ -1447,11 +1450,12 @@ void TGXApp::GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template)  {
 }
 //..............................................................................
 void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
-  TCAtomPList satoms(atoms, TSAtom::CAtomAccessor<>());
-  FXFile->GetLattice().GrowAtoms(satoms, matrices);
+  FXFile->GetLattice().GrowAtoms(
+    TCAtomPList(atoms, TSAtom::CAtomAccessor<>()), matrices);
 }
 //..............................................................................
-void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
+SharedPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName)  {
+  TXAtomPList res;
   if( AtomName.StartsFrom("#c") )  {  // TCAtom.Id
     const size_t id = AtomName.SubStringFrom(2).ToSizeT();
     AtomIterator ai(*this);
@@ -1480,9 +1484,11 @@ void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
         res.Add(xa);
     }
   }
+  return res;
 }
 //..............................................................................
-void TGXApp::GetXBonds(const olxstr& BondName, TXBondPList& res)  {
+SharedPtrList<TXBond> TGXApp::GetXBonds(const olxstr& BondName)  {
+  TXBondPList res;
   if( BondName.StartsFrom("#t") )  {  // SBond.LatId
     size_t id = BondName.SubStringFrom(2).ToSizeT();
     BondIterator bi(*this);
@@ -1502,12 +1508,12 @@ void TGXApp::GetXBonds(const olxstr& BondName, TXBondPList& res)  {
         res.Add(xb);
     }
   }
+  return res;
 }
 //..............................................................................
 TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
   if( AtomName.Equalsi("sel" ) )  {
-    TXAtomPList L;
-    GetSelectedXAtoms(L, clearSelection);
+    TXAtomPList L = GetSelectedXAtoms(clearSelection);
     if( L.Count() != 1 )  return NULL;
     return L[0];
   }
@@ -1520,10 +1526,11 @@ TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
   return NULL;
 }
 //..............................................................................
-void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
+SharedPtrList<TXAtom>  TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
   olxstr Tmp, Name(StrMask.ToUpperCase());
+  TXAtomPList rv;
   AtomIterator ai(*this);
   while( ai.HasNext() )  {
     TXAtom& XA = ai.Next();
@@ -1540,8 +1547,9 @@ void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
       }
     }
     if( found )
-      List.Add(XA);
+      rv.Add(XA);
   }
+  return rv;
 }
 //..............................................................................
 SortedElementPList TGXApp::DecodeTypes(const olxstr &types) const {
@@ -1571,9 +1579,12 @@ SortedElementPList TGXApp::DecodeTypes(const olxstr &types) const {
   return res;
 }
 //..............................................................................
-TXAtomPList TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection, bool FindHidden)  {
+SharedPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection,
+  bool FindHidden)
+{
   TXAtomPList rv;
   if( Atoms.IsEmpty() )  {  // return selection/all atoms
+    TXAtomPList rv;
     TGlGroup& sel = GetRender().GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  {
       if( EsdlInstanceOf(sel[i], TXAtom) )
@@ -1596,7 +1607,7 @@ TXAtomPList TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection, bool Fi
     for( size_t i = 0; i < Toks.Count(); i++ )  {
       olxstr Tmp = Toks[i];
       if( Tmp.Equalsi("sel") )  {
-        GetSelectedXAtoms(rv, ClearSelection);
+        rv += GetSelectedXAtoms(ClearSelection);
         continue;
       }
       if( Tmp.Equalsi("to") || Tmp.Equalsi(">") )  {
@@ -1637,7 +1648,7 @@ TXAtomPList TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection, bool Fi
       if( Tmp.CharAt(0) == '$' )  {
         SortedElementPList elms = DecodeTypes(Tmp.SubStringFrom(1));
         for( size_t ei=0; ei < elms.Count(); ei++ )
-          XAtomsByType(*elms[ei], rv, FindHidden);
+          rv += XAtomsByType(*elms[ei], FindHidden);
         continue;
       }
       size_t ind = Tmp.FirstIndexOf('?');
@@ -1650,10 +1661,10 @@ TXAtomPList TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection, bool Fi
             j = ind;
           }
         }
-        XAtomsByMask(Tmp, mask, rv);
+        rv += XAtomsByMask(Tmp, mask);
         continue;
       }
-      GetXAtoms(Tmp, rv);
+      rv += GetXAtoms(Tmp);
     }
   }
   return rv;
@@ -1889,8 +1900,7 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
     Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   }
   else  {
-    TCAtomPList atoms;
-    FindCAtoms(Atoms, atoms, false);
+    TCAtomPList atoms = FindCAtoms(Atoms, false);
     TTTable<TStrList> Table(atoms.Count(), 11);
     Table.ColName(0) = "Atom";
     Table.ColName(1) = "Type";
@@ -2261,9 +2271,7 @@ bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings)  {
 void TGXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
   ElementPList ring;
   if( Condition.Equalsi("sel") )  {
-    TXAtomPList L;
-    GetSelectedXAtoms(L, false);
-    TSAtomPList SAtoms(L, DirectAccessor());
+    TSAtomPList SAtoms(GetSelectedXAtoms(false), DirectAccessor());
     SAtoms.ForEach(ACollectionItem::TagSetter<>(0));
     while( GetRing(SAtoms, rings) )
       ;
@@ -2320,47 +2328,44 @@ void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
 }
 //..............................................................................
 void TGXApp::ExpandSelection(TCAtomGroup& atoms)  {
-  TXAtomPList xatoms;
-  GetSelectedXAtoms(xatoms, GetDoClearSelection());
+  TXAtomPList xatoms = GetSelectedXAtoms(GetDoClearSelection());
+  atoms.SetCapacity(atoms.Count() + xatoms.Count());
   for( size_t i=0; i < xatoms.Count(); i++ )
     atoms.AddNew(&xatoms[i]->CAtom(), &xatoms[i]->GetMatrix(0));
 }
 //..............................................................................
 void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
-  TXAtomPList xatoms;
-  GetSelectedXAtoms(xatoms, GetDoClearSelection());
-  atoms.SetCapacity(atoms.Count()+xatoms.Count());
-  for( size_t i=0; i < xatoms.Count(); i++ )
-    atoms.Add(*xatoms[i]);
+  atoms.AddList(GetSelectedXAtoms(GetDoClearSelection()), DirectAccessor());
 }
 //..............................................................................
-void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelection)  {
+SharedPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection)  {
   if( Atoms.IsEmpty() )  {
-    GetSelectedCAtoms(List, ClearSelection);
-    if( !List.IsEmpty() )  return;
+    TCAtomPList &list = GetSelectedCAtoms(ClearSelection).Release();
+    if( !list.IsEmpty() )  return list;
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
-    List.SetCapacity(List.Count() + AU.AtomCount());
+    list.SetCapacity(list.Count() + AU.AtomCount());
     for( size_t i=0; i < AU.ResidueCount(); i++ )  {
       TResidue& resi = AU.GetResidue(i);
       for( size_t j=0; j < resi.Count(); j++ )  {
         if( !resi[j].IsDeleted() )
-          List.Add(resi[j]);
+          list.Add(resi[j]);
       }
     }
-    return;
+    return list;
   }
   TStrList Toks(Atoms, ' ');
   olxstr Tmp;
+  TCAtomPList &list = *(new TCAtomPList);
   for( size_t i = 0; i < Toks.Count(); i++ )  {
     Tmp = Toks[i];
     if( Tmp.Equalsi("sel") )  {
-      GetSelectedCAtoms(List, ClearSelection);
+      list.AddList(GetSelectedCAtoms(ClearSelection), DirectAccessor());
       continue;
     }
     if( Tmp.CharAt(0) == '$' )  {
       SortedElementPList elms = DecodeTypes(Tmp.SubStringFrom(1));
       for( size_t ei=0; ei < elms.Count(); ei++ )
-        CAtomsByType(*elms[ei], List);
+        list += CAtomsByType(*elms[ei]);
       continue;
     }
     size_t ind = Tmp.FirstIndexOf('?');
@@ -2373,13 +2378,14 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
           j = ind;
         }
       }
-      CAtomsByMask(Tmp, mask, List);
+      list += CAtomsByMask(Tmp, mask);
       continue;
     }
     TCAtom* A = XFile().GetAsymmUnit().FindCAtom(Tmp);
     if( A != NULL && !A->IsDeleted() )
-      List.Add(A);
+      list.Add(A);
   }
+  return list;
 }
 //..............................................................................
 bool TGXApp::AreLabelsVisible()    const {  return FLabels->IsVisible(); }

@@ -161,6 +161,8 @@ public:
     return *this;
   }
 //..............................................................................
+  inline TPtrList& AddList(const SharedPtrList<T>& list)  {  return AddList(list.GetList());  }
+//..............................................................................
   template <class List> TPtrList& AddList(const List& l)  {
     const size_t off = FCount;
     SetCount(l.Count() + FCount);
@@ -169,7 +171,9 @@ public:
     return *this;
   }
 //..............................................................................
-  template <class List, class Accessor> TPtrList& AddList(const List& l, const Accessor& accessor)  {
+  template <class List, class Accessor> TPtrList& AddList(const List& l,
+    const Accessor& accessor)
+  {
     const size_t off = FCount;
     SetCount(l.Count() + FCount);
     for( size_t i=0; i < l.Count(); i++ )

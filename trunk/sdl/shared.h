@@ -55,7 +55,9 @@ public:
   shared_base() : p(new olx_ptr<cont_t>(new cont_t))  {}
   shared_base(const shared_base &l)  : p(l.p->inc_ref())  {}
   shared_base(cont_t *l) : p (new olx_ptr<cont_t>(l)) {}
-  shared_base(cont_t &l) : p(new olx_ptr<cont_t>(&l)) {}
+  shared_base(cont_t &l) : p(new olx_ptr<cont_t>(new cont_t)) {
+    p->p->TakeOver(l);
+  }
   ~shared_base()  {
     if( p != NULL && --p->ref_cnt == 0 ) {
       delete p->p;
@@ -66,9 +68,23 @@ public:
   const item_t &operator [] (size_t i) const {  return (*p->p)[i];  }
   size_t Count() const {  return p == NULL ? 0 : p->p->Count();  }
   bool IsEmpty() const {  return Count() == 0;  }
+  operator const cont_t &() const {
+    if( p == NULL )
+      throw_invalid(__POlxSourceInfo);
+    return *p->p;
+  }
+  const cont_t& GetList() const {
+    if( p == NULL )
+      throw_invalid(__POlxSourceInfo);
+    return *p->p;
+  }
   void Delete(size_t i)  {
     on_modify();
     p->p->Delete(i);  
+  }
+  void IncCapacity(size_t v)  {
+    on_modify();
+    p->p->Setcapcity(p->p->GetCount()+i);  
   }
   shared_base& operator = (const shared_base &a) {
     if( p != NULL && --p->ref_cnt == 0 )  {

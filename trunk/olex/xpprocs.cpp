@@ -1082,7 +1082,7 @@ void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroErro
        GrowContent = Options.Contains('w');
   TCAtomPList TemplAtoms;
   if( Options.Contains('t') )
-    FXApp->FindCAtoms(olxstr(Options['t']).Replace(',', ' '), TemplAtoms);
+    TemplAtoms = FXApp->FindCAtoms(olxstr(Options['t']).Replace(',', ' '));
   if( Cmds.IsEmpty() )  {  // grow fragments
     if( GrowContent ) 
       FXApp->GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
@@ -1343,7 +1343,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
     TCAtomPList TemplAtoms;
     if( !Cmds.IsEmpty() )
-      FXApp->FindCAtoms(Cmds.Text(' '), TemplAtoms);
+      TemplAtoms = FXApp->FindCAtoms(Cmds.Text(' '));
 
     if( number_count == 6 || number_count == 0 || number_count == 2 )  {
       if( number_count == 2 )  {
@@ -1952,8 +1952,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     if( Options.Contains("au") )  {
-      TCAtomPList atoms;
-      FXApp->FindCAtoms(Cmds.Text(' '), atoms, false);
+      TCAtomPList atoms = FXApp->FindCAtoms(Cmds.Text(' '), false);
       for( size_t i=0; i < atoms.Count(); i++ )
         atoms[i]->SetDeleted(true);
     }
@@ -3844,8 +3843,8 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   olxstr cr(Options.FindValue("r", EmptyString()).ToLowerCase());
-  TCAtomPList Atoms;
-  FXApp->FindCAtoms(Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' '), Atoms, true);
+  TCAtomPList Atoms =
+    FXApp->FindCAtoms(Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' '), true);
   if( Atoms.IsEmpty() )  return;
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
@@ -9080,8 +9079,7 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( (Cmds.Count() == 1 && Cmds[0].IsNumber()) || 
         (Cmds.Count() == 2 && Cmds[0].IsNumber() && Cmds[1].IsNumber()) )  
     {
-      TCAtomPList atoms;
-      FXApp->FindCAtoms("sel", atoms, false);
+      TCAtomPList atoms = FXApp->FindCAtoms("sel", false);
       if( atoms.IsEmpty() )  return;
       for( size_t i=0; i < atoms.Count(); i++ )
         lst.Add("#c") << atoms[i]->GetId();

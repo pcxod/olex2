@@ -524,20 +524,21 @@ public:
   void SetPackMode(short v, const olxstr& atoms);
   //
 protected:
-  void XAtomsByMask(const olxstr& Name, int Mask, TXAtomPList& List);
-  void CAtomsByMask(const olxstr& Name, int Mask, TCAtomPList& List);
-  void XAtomsByType(const cm_Element& AI, TXAtomPList& List, bool FindHidden=false);
-  void CAtomsByType(const cm_Element& AI, TCAtomPList& List);
-  void GetSelectedXAtoms(TXAtomPList& List, bool Clear=true);
-  void GetSelectedCAtoms(TCAtomPList& List, bool Clear=true);
+  SharedPtrList<TXAtom> XAtomsByMask(const olxstr& Name, int Mask);
+  SharedPtrList<TCAtom> CAtomsByMask(const olxstr& Name, int Mask);
+  SharedPtrList<TXAtom> XAtomsByType(const cm_Element& AI, bool FindHidden=false);
+  SharedPtrList<TCAtom> CAtomsByType(const cm_Element& AI);
+  SharedPtrList<TXAtom> GetSelectedXAtoms(bool Clear=true);
+  SharedPtrList<TCAtom> GetSelectedCAtoms(bool Clear=true);
 public:
   SortedElementPList DecodeTypes(const olxstr &types) const;
   TXAtom* GetXAtom(const olxstr& AtomName, bool Clear);
-  void GetXAtoms(const olxstr& AtomName, TXAtomPList& res);
-  void GetXBonds(const olxstr& BondName, TXBondPList& res);
+  SharedPtrList<TXAtom> GetXAtoms(const olxstr& AtomName);
+  SharedPtrList<TXBond> GetXBonds(const olxstr& BondName);
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
-  void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
-  TXAtomPList FindXAtoms(const olxstr& Atoms, bool ClearSelection=true, bool FindHidden=false);
+  SharedPtrList<TCAtom> FindCAtoms(const olxstr& Atoms, bool ClearSelection=true);
+  SharedPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool ClearSelection=true,
+    bool FindHidden=false);
 
   //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   //const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
