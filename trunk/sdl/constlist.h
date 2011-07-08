@@ -20,7 +20,7 @@ protected:
     TExceptionBase::ThrowFunctionFailed(file, function, line, "uninitialised object");
   }
 public:
-  const_list(const const_list &l) : p(l.p == NULL > NULL : l.p->inc_ref())  {}
+  const_list(const const_list &l) : p(l.p == NULL ? NULL : l.p->inc_ref())  {}
   const_list(cont_t *l) : p (new olx_ptr<cont_t>(l)) {}
   const_list(cont_t &l) : p(new olx_ptr<cont_t>(new cont_t)) {
     p->p->TakeOver(l);
