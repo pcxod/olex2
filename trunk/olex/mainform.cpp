@@ -595,9 +595,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
     fpAny^fpNone, "Deletes provided [selected] atoms");
 
   this_InitMacroD(Exec, "s-synchronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command");
-  this_InitMacroD(Shell, "", fpNone|fpOne, "if no arguments launches a new interactive shell,\
-  otherwise runs provided file in the interactive shell (on windows ShellExecute is\
-  used to avoid flickering console)");
+  this_InitMacroD(Shell, "", fpAny,
+    "If no arguments launches a new interactive shell, otherwise runs provided file in the interactive "
+    "shell (on windows ShellExecute is used to avoid flickering console)");
   this_InitMacro(Save, , fpAny^fpNone);
   this_InitMacro(Load, , fpAny^fpNone);
   this_InitMacro(Link, , fpNone|fpOne);
@@ -632,12 +632,19 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   as close to the cell center as possible");
 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
-  this_InitMacroD(Fvar, EmptyString(), (fpAny)|psCheckFileTypeIns, "Assigns/release occupancy of "
-    "given atoms. Examples:\n-'fvar' for a selection of even number atoms, will create a new variable and "
-    "link occupancies of the first half of the selection to occupancy the other half of the selection. "
-    "\n-'fvar 20' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied by "
-    "current value of the occupancy of the given atoms.\n-'fvar 20.5' will link occupancy of the given "
-    "atoms to the value of the 2nd FVAR multiplied by 0.5.");
+  this_InitMacroD(Fvar, EmptyString(), fpAny|psCheckFileTypeIns, "Assigns/release occupancy for "
+    "given atoms. Examples:"
+    "\n-'fvar' if nothing is selected will print current values of the variables. For a selection "
+    "of even number atoms, will create a new variable and link occupancies of the first half of "
+    "the selection to occupancy the other half of the selection. "
+    "\n-'fvar 0' - makes occupancy of provided atoms refineable"
+    "\n-'fvar 1' - fixes occupancy of provided atoms at current value"
+    "\n-'fvar 1 1' - fixes occupancy of provided atoms at chemical occupancy of 1"
+    "\n-'fvar 2' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied by "
+    "current value of the occupancy of the given atoms, or, if occupancy already linked to a variable "
+    "- it will replace the variable index."
+    "\n-'fvar 2 0.5' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied "
+    "by 0.5.");
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
   this_InitMacroD(Part,
     "p-number of parts&;lo-link ocupancy of given atoms through FVAR's&;"

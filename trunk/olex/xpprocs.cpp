@@ -2049,7 +2049,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else if( !Process->Execute() )  {
-    Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
+    Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
     delete Process;
   }
 }
@@ -2058,30 +2058,32 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.IsEmpty() )
     wxShell();
   else  {
+    olxstr cmd = Cmds.Text(' ');
 #ifdef __WIN32__
-    ShellExecute((HWND)this->GetHWND(), wxT("open"), Cmds[0].u_str(), NULL, TEFile::CurrentDir().u_str(), SW_SHOWNORMAL);
+    ShellExecute((HWND)this->GetHWND(), wxT("open"), cmd.u_str(), NULL,
+      TEFile::CurrentDir().u_str(), SW_SHOWNORMAL);
 #else
-    if( Cmds[0].StartsFrom("http") || Cmds[0].StartsFrom("https") || Cmds[0].EndsWith(".htm") || 
-        Cmds[0].EndsWith(".html") || Cmds[0].EndsWith(".php") || Cmds[0].EndsWith(".asp") )
+    if( cmd.StartsFrom("http") || cmd.StartsFrom("https") || cmd.EndsWith(".htm") || 
+        cmd.EndsWith(".html") || cmd.EndsWith(".php") || cmd.EndsWith(".asp") )
     {
-      Macros.ProcessMacro( olxstr("exec -o getvar(defbrowser) '") << Cmds[0] << '\'', Error);
+      Macros.ProcessMacro(olxstr("exec -o getvar(defbrowser) '") << cmd << '\'', Error);
     }
 # ifdef __linux__
-    else if( Cmds[0].EndsWith(".pdf") )  {
+    else if( cmd.EndsWith(".pdf") )  {
       wxString dskpAttr;
       wxGetEnv(wxT("DESKTOP_SESSION"), &dskpAttr);
       if (dskpAttr.Contains(wxT("gnome")))
-        Macros.ProcessMacro( olxstr("exec -o gnome-open '") << Cmds[0] << '\'', Error);
+        Macros.ProcessMacro(olxstr("exec -o gnome-open '") << cmd << '\'', Error);
       else if (dskpAttr.Contains(wxT("kde")))
-        Macros.ProcessMacro( olxstr("exec -o konqueror '") << Cmds[0] << '\'', Error);
+        Macros.ProcessMacro(olxstr("exec -o konqueror '") << cmd << '\'', Error);
       else if (dskpAttr.Contains(wxT("xfce")))
-        Macros.ProcessMacro( olxstr("exec -o thunar '") << Cmds[0] << '\'', Error);
+        Macros.ProcessMacro(olxstr("exec -o thunar '") << cmd << '\'', Error);
       else
-        Macros.ProcessMacro( olxstr("exec -o getvar(defbrowser) '") << Cmds[0] << '\'', Error);
+        Macros.ProcessMacro(olxstr("exec -o getvar(defbrowser) '") << cmd << '\'', Error);
     }
 # endif
     else
-      Macros.ProcessMacro( olxstr("exec -o getvar(defexplorer) '") << Cmds[0] << '\'', Error);
+      Macros.ProcessMacro(olxstr("exec -o getvar(defexplorer) '") << cmd << '\'', Error);
 #endif
   }
 }
@@ -2835,66 +2837,91 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  double fvar = -1101;
-  XLibMacros::ParseNumbers<double>(Cmds, 1, &fvar);
+  double fvar = -1101, k = -1;
+  XLibMacros::ParseNumbers<double>(Cmds, 2, &fvar, &k);
+  if( k < 0 && olx_abs(fvar-olx_round(fvar)) > 1e-1 )  {
+    double fvv = int(fvar)/10;
+    k = olx_abs(fvar - fvv*10);
+    fvar = fvv;
+  }
   RefinementModel& rm = FXApp->XFile().GetRM();
-  TXAtomPList xatoms;
-  FindXAtoms(Cmds, xatoms, false, !Options.Contains("cs"));
-  if( fvar == -1101 && ((xatoms.Count()%2) != 0 || xatoms.IsEmpty()) )  {
+  TCAtomPList _atoms(FindXAtoms(Cmds, false, !Options.Contains("cs")),
+    TXAtom::CAtomAccessor<>());
+  ACollectionItem::Unique<>::Do(_atoms);
+  _atoms.ForEach(ACollectionItem::TagSetter<>(0));
+  for( size_t i=0; i < _atoms.Count(); i++ )  {
+    if( _atoms[i]->DependentHfixGroupCount() == 1 )  {
+      TAfixGroup &ag = _atoms[i]->GetDependentHfixGroup(0);
+      for( size_t j=0; j < ag.Count(); j++ )
+        ag[j].SetTag(1);
+    }
+  }
+  TCAtomPList atoms;
+  ListFilter::Filter(_atoms, atoms, ACollectionItem::TagAnalyser<>(0));
+  if( fvar == -1101 && ((atoms.Count()%2) != 0 || atoms.IsEmpty()) )  {
     rm.Vars.Validate();
     TBasicApp::NewLogEntry() << "Free variables: " << rm.Vars.GetFVARStr();
     return;
   }
-  if( fvar == 0 )  {
-    for( size_t i=0; i < xatoms.Count(); i++ )
-      rm.Vars.FreeParam(xatoms[i]->CAtom(), catom_var_name_Sof);
-  }
-  else if( (xatoms.Count()%2)==0 && fvar == -1101 )  {
-    if( !xatoms.IsEmpty() )  {
+  if( (atoms.Count()%2)==0 && fvar == -1101 )  {
+    if( !atoms.IsEmpty() )  {
       XVar& xv = rm.Vars.NewVar();
-      for( size_t i=0; i < xatoms.Count()/2; i++ )  {
-        TCAtom& a = xatoms[i]->CAtom();
+      for( size_t i=0; i < atoms.Count()/2; i++ )  {
+        TCAtom& a = *atoms[i];
         if( a.DependentHfixGroupCount() == 1 )  {
           TAfixGroup &ag = a.GetDependentHfixGroup(0);
           for( size_t j=0; j < ag.Count(); j++ )  {
             rm.Vars.AddVarRef(xv, ag[j], catom_var_name_Sof,
-              relation_AsVar, 1.0/a.GetDegeneracy());
+              relation_AsVar, 1.0/ag[j].GetDegeneracy());
           }
         }
         rm.Vars.AddVarRef(xv, a, catom_var_name_Sof, relation_AsVar, 1.0/a.GetDegeneracy());
 
-        TCAtom& b = xatoms[xatoms.Count()/2+i]->CAtom();
+        TCAtom& b = *atoms[atoms.Count()/2+i];
         if( b.DependentHfixGroupCount() == 1 )  {
           TAfixGroup &ag = b.GetDependentHfixGroup(0);
           for( size_t j=0; j < ag.Count(); j++ )  {
             rm.Vars.AddVarRef(xv, ag[j], catom_var_name_Sof,
-              relation_AsOneMinusVar, 1.0/b.GetDegeneracy());
+              relation_AsOneMinusVar, 1.0/ag[j].GetDegeneracy());
           }
         }
-        rm.Vars.AddVarRef(xv, b, catom_var_name_Sof, relation_AsOneMinusVar, 1.0/b.GetDegeneracy());
+        rm.Vars.AddVarRef(xv, b, catom_var_name_Sof, relation_AsOneMinusVar,
+          1.0/b.GetDegeneracy());
       }
     }
   }
   else  {
-    // 10, 20, 30, etc: set to fvar+occu
-    if( olx_abs(fvar-olx_round(fvar)) < 1e-3 && (olx_round(fvar)%10) == 0 )  {
-      for( size_t i=0; i < xatoms.Count(); i++ )  {
-        const double ov = xatoms[i]->CAtom().GetOccu();
-        rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof, fvar+ov);
-        if( xatoms[i]->CAtom().DependentHfixGroupCount() == 1 )  {
-          TAfixGroup &ag = xatoms[i]->CAtom().GetDependentHfixGroup(0);
-          for( size_t j=0; j < ag.Count(); j++ )
-            rm.Vars.SetParam(ag[j], catom_var_name_Sof, fvar+ov);
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      XVarReference *v_ref = atoms[i]->GetVarRef(catom_var_name_Sof);
+      double val;
+      if( k < 0 )  {
+        if( v_ref != NULL )  {
+          val = (v_ref->relation_type == relation_None ?
+            atoms[i]->GetOccu() : v_ref->coefficient);
         }
+        else
+          val = atoms[i]->GetOccu();
       }
-    }
-    else  { // set to fvar directly
-      for( size_t i=0; i < xatoms.Count(); i++ )  {
-        rm.Vars.SetParam(xatoms[i]->CAtom(), catom_var_name_Sof, fvar);
-        if( xatoms[i]->CAtom().DependentHfixGroupCount() == 1 )  {
-          TAfixGroup &ag = xatoms[i]->CAtom().GetDependentHfixGroup(0);
-          for( size_t j=0; j < ag.Count(); j++ )
-            rm.Vars.SetParam(ag[j], catom_var_name_Sof, fvar);
+      else
+        val = k/atoms[i]->GetDegeneracy();
+      rm.Vars.SetParam(*atoms[i], catom_var_name_Sof,
+        olx_sign(fvar)*(olx_abs(fvar)*10+val));
+      if( atoms[i]->DependentHfixGroupCount() == 1 )  {
+        TAfixGroup &ag = atoms[i]->GetDependentHfixGroup(0);
+        for( size_t j=0; j < ag.Count(); j++ )  {
+          v_ref = ag[j].GetVarRef(catom_var_name_Sof);
+          if( k < 0 )  {
+            if( v_ref != NULL )  {
+              val = (v_ref->relation_type == relation_None ?
+                ag[j].GetOccu() : v_ref->coefficient);
+            }
+            else
+              val = ag[j].GetOccu();
+          }
+          else
+            val = k/ag[j].GetDegeneracy();
+          rm.Vars.SetParam(ag[j], catom_var_name_Sof,
+            olx_sign(fvar)*(olx_abs(fvar)*10+val));
         }
       }
     }
@@ -4646,6 +4673,33 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       for( size_t i=1; i < parts.Count(); i++ )
         cond << "||xatom.part==" << parts[i];
       FXApp->SelectAtomsWhere(cond);
+    }
+  }
+  else if( Cmds.Count() > 1 && Cmds[0].Equalsi("fvar") )  {
+    Cmds.Delete(0);
+    TIntList fvars;
+    for( size_t i=0; Cmds.Count(); i++ )  {
+      if( Cmds[i].IsNumber() )  {
+        fvars.Add(Cmds[i].ToInt());
+        Cmds.Delete(i--);
+      }
+      else
+        break;
+    }
+    if( !fvars.IsEmpty() )  {
+      TGXApp::AtomIterator ai = FXApp->GetAtoms();
+      while( ai.HasNext() )  {
+        TXAtom &a = ai.Next();
+        XVarReference *ref = a.CAtom().GetVarRef(catom_var_name_Sof);
+        if( ref == NULL )  continue;
+        int v = int(ref->Parent.GetId());
+        if( ref->relation_type == relation_AsOneMinusVar )
+          v *= -1;
+        for( size_t i=0; i < fvars.Count(); i++ )  {
+          if( fvars[i] == v )
+            FXApp->GetRender().Select(a, true);
+        }
+      }
     }
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("isot") )  {

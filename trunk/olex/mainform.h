@@ -812,7 +812,7 @@ public:
   void XApp( TGXApp *XA);
   TGXApp *XApp()         {  return FXApp; }
   bool FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect);
-  TXAtomPList FindXAtoms(const TStrObjList &Cmds,bool GetAll, bool unselect)  {
+  SharedPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds,bool GetAll, bool unselect)  {
     TXAtomPList atoms;
     FindXAtoms(Cmds, atoms, GetAll, unselect);
     return atoms;
