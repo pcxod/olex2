@@ -497,6 +497,9 @@
     <ClInclude Include="..\..\..\sdl\shared.h">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\constlist.h">
+      <Filter>Header Files\containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

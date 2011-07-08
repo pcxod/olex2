@@ -1361,7 +1361,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   return false;
 }
 //..............................................................................
-SharedPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
+ConstPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
   TCAtomPList rv(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
   return rv;
 }
@@ -1374,7 +1374,7 @@ void TGXApp::RestoreSelection()  {
   RestoreGroup(GetSelection(), SelectionCopy[1]);
 }
 //..............................................................................
-SharedPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
+ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
   TPtrList<TGlGroup> S;
   S.Add(GetSelection());
   TXAtomPList rv;
@@ -1393,7 +1393,7 @@ SharedPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
   return rv;
 }
 //..............................................................................
-SharedPtrList<TCAtom> TGXApp::CAtomsByType(const cm_Element& AI)  {
+ConstPtrList<TCAtom> TGXApp::CAtomsByType(const cm_Element& AI)  {
   return &ListFilter::Filter(XFile().GetLattice().GetAsymmUnit().GetAtoms(),
     *(new TCAtomPList),
     olx_alg::olx_and(
@@ -1401,7 +1401,7 @@ SharedPtrList<TCAtom> TGXApp::CAtomsByType(const cm_Element& AI)  {
       TCAtom::TypeAnalyser<>(AI)));
 }
 //..............................................................................
-SharedPtrList<TXAtom> TGXApp::XAtomsByType(const cm_Element& AI, bool FindHidden) {
+ConstPtrList<TXAtom> TGXApp::XAtomsByType(const cm_Element& AI, bool FindHidden) {
   //ListFilter::Filter(XAtoms, res,
   //  olx_alg::and(
   //    olx_alg::Bool(!FindHidden),
@@ -1420,7 +1420,7 @@ SharedPtrList<TXAtom> TGXApp::XAtomsByType(const cm_Element& AI, bool FindHidden
   return l;
 }
 //..............................................................................
-SharedPtrList<TCAtom> TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask)  {
+ConstPtrList<TCAtom> TGXApp::CAtomsByMask(const olxstr &StrMask, int Mask)  {
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
   olxstr Name = StrMask.ToUpperCase();
@@ -1455,7 +1455,7 @@ void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
     TCAtomPList(atoms, TSAtom::CAtomAccessor<>()), matrices);
 }
 //..............................................................................
-SharedPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName)  {
+ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName)  {
   TXAtomPList res;
   if( AtomName.StartsFrom("#c") )  {  // TCAtom.Id
     const size_t id = AtomName.SubStringFrom(2).ToSizeT();
@@ -1488,7 +1488,7 @@ SharedPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName)  {
   return res;
 }
 //..............................................................................
-SharedPtrList<TXBond> TGXApp::GetXBonds(const olxstr& BondName)  {
+ConstPtrList<TXBond> TGXApp::GetXBonds(const olxstr& BondName)  {
   TXBondPList res;
   if( BondName.StartsFrom("#t") )  {  // SBond.LatId
     size_t id = BondName.SubStringFrom(2).ToSizeT();
@@ -1527,7 +1527,7 @@ TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
   return NULL;
 }
 //..............................................................................
-SharedPtrList<TXAtom>  TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
+ConstPtrList<TXAtom>  TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
   olxstr Tmp, Name(StrMask.ToUpperCase());
@@ -1580,12 +1580,11 @@ SortedElementPList TGXApp::DecodeTypes(const olxstr &types) const {
   return res;
 }
 //..............................................................................
-SharedPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection,
+ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection,
   bool FindHidden)
 {
   TXAtomPList rv;
   if( Atoms.IsEmpty() )  {  // return selection/all atoms
-    TXAtomPList rv;
     TGlGroup& sel = GetRender().GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  {
       if( EsdlInstanceOf(sel[i], TXAtom) )
@@ -2015,8 +2014,8 @@ void TGXApp::ClearPlanes()  {
     pi.Next().SetDeleted(true);
 }
 //..............................................................................
-TXAtomPList TGXApp::AddCentroid(TXAtomPList& Atoms)  {
-  if( Atoms.Count() < 2 )  return TXAtomPList();
+ConstPtrList<TXAtom> TGXApp::AddCentroid(const TXAtomPList& Atoms)  {
+  if( Atoms.Count() < 2 )  return new TXAtomPList;
   TXAtomPList centroids(
     XFile().GetLattice().NewCentroid(TSAtomPList(Atoms, DirectAccessor())),
     StaticCastAccessor<TXAtom>());
@@ -2339,7 +2338,7 @@ void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
   atoms.AddList(GetSelectedXAtoms(GetDoClearSelection()), DirectAccessor());
 }
 //..............................................................................
-SharedPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection)  {
+ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection)  {
   if( Atoms.IsEmpty() )  {
     TCAtomPList list = GetSelectedCAtoms(ClearSelection).Release();
     if( !list.IsEmpty() )  return list;

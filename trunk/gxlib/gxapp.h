@@ -524,20 +524,20 @@ public:
   void SetPackMode(short v, const olxstr& atoms);
   //
 protected:
-  SharedPtrList<TXAtom> XAtomsByMask(const olxstr& Name, int Mask);
-  SharedPtrList<TCAtom> CAtomsByMask(const olxstr& Name, int Mask);
-  SharedPtrList<TXAtom> XAtomsByType(const cm_Element& AI, bool FindHidden=false);
-  SharedPtrList<TCAtom> CAtomsByType(const cm_Element& AI);
-  SharedPtrList<TXAtom> GetSelectedXAtoms(bool Clear=true);
-  SharedPtrList<TCAtom> GetSelectedCAtoms(bool Clear=true);
+  ConstPtrList<TXAtom> XAtomsByMask(const olxstr& Name, int Mask);
+  ConstPtrList<TCAtom> CAtomsByMask(const olxstr& Name, int Mask);
+  ConstPtrList<TXAtom> XAtomsByType(const cm_Element& AI, bool FindHidden=false);
+  ConstPtrList<TCAtom> CAtomsByType(const cm_Element& AI);
+  ConstPtrList<TXAtom> GetSelectedXAtoms(bool Clear=true);
+  ConstPtrList<TCAtom> GetSelectedCAtoms(bool Clear=true);
 public:
   SortedElementPList DecodeTypes(const olxstr &types) const;
   TXAtom* GetXAtom(const olxstr& AtomName, bool Clear);
-  SharedPtrList<TXAtom> GetXAtoms(const olxstr& AtomName);
-  SharedPtrList<TXBond> GetXBonds(const olxstr& BondName);
+  ConstPtrList<TXAtom> GetXAtoms(const olxstr& AtomName);
+  ConstPtrList<TXBond> GetXBonds(const olxstr& BondName);
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
-  SharedPtrList<TCAtom> FindCAtoms(const olxstr& Atoms, bool ClearSelection=true);
-  SharedPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool ClearSelection=true,
+  ConstPtrList<TCAtom> FindCAtoms(const olxstr& Atoms, bool ClearSelection=true);
+  ConstPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool ClearSelection=true,
     bool FindHidden=false);
 
   //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
@@ -592,7 +592,7 @@ public:     void CalcProbFactor(float Prob);
 
   TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
   // will return generated symmetry equivalents too
-  TXAtomPList AddCentroid(TXAtomPList& Atoms);
+  ConstPtrList<TXAtom> AddCentroid(const TXAtomPList& Atoms);
   TXAtom *AddAtom(TXAtom* templ=NULL);
   // adopts atoms of the auinit and returns newly created atoms and bonds
   void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds);

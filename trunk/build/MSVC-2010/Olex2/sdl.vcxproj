@@ -646,6 +646,7 @@
     <ClInclude Include="..\..\..\sdl\bapp.h" />
     <ClInclude Include="..\..\..\sdl\bitarray.h" />
     <ClInclude Include="..\..\..\sdl\citem.h" />
+    <ClInclude Include="..\..\..\sdl\constlist.h" />
     <ClInclude Include="..\..\..\sdl\datafile.h" />
     <ClInclude Include="..\..\..\sdl\dataitem.h" />
     <ClInclude Include="..\..\..\sdl\datastream.h" />

@@ -807,12 +807,12 @@ public:
   wxMenu* GeneralPopup()        {  return pmMenu; }
 //..............................................................................
 // TMainForm interface
-  void GlCanvas(TGlCanvas *GC) {  FGlCanvas = GC;  }
-  TGlCanvas * GlCanvas()        {  return FGlCanvas;  }
+  void GlCanvas(TGlCanvas *GC)  {  FGlCanvas = GC;  }
+  TGlCanvas * GlCanvas()  {  return FGlCanvas;  }
   void XApp( TGXApp *XA);
-  TGXApp *XApp()         {  return FXApp; }
+  TGXApp *XApp()  {  return FXApp; }
   bool FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect);
-  SharedPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds,bool GetAll, bool unselect)  {
+  ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds,bool GetAll, bool unselect)  {
     TXAtomPList atoms;
     FindXAtoms(Cmds, atoms, GetAll, unselect);
     return atoms;

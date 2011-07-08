@@ -144,6 +144,7 @@ void QueueTest(OlxTests& t)  {
 }
 //.........................................................................
 void SharedListTest(OlxTests& t)  {
+  t.description = __FUNC__;
   SharedArrayList<int> aalist(new TArrayList<int>(10)), calist, balist(calist);
   SharedTypeList<int> atlist, btlist(atlist), ctlist(atlist);
   SharedPtrList<const int> aplist, bplist;
@@ -207,6 +208,49 @@ void SharedListTest(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
 }
 //.........................................................................
+struct ConstListTest {
+  ConstPtrList<int> f() {
+    TPtrList<int> rv(10);
+    for( int i=0; i < 10; i++ )  rv[i] = new int(i);
+    return rv;
+  }
+  ConstArrayList<int> f1() {
+    TArrayList<int> rv(10);
+    for( int i=0; i < 10; i++ )  rv[i] = i;
+    return rv;
+  }
+  ConstTypeList<int> f2() {
+    TTypeList<int> rv;
+    for( int i=0; i < 10; i++ )  rv.AddNew(i);
+    return rv;
+  }
+  void ContainerTests(OlxTests& t) {
+    t.description = __OlxSrcInfo;
+    TPtrList<int> pl = f();
+    if( pl.Count() != 10 )
+      throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+    for( int i=0; i < pl.Count(); i++ )  {
+      if( *pl[i] != i )
+        throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+    }
+    pl.DeleteItems(false);
+    TArrayList<int> al = f1();
+    if( al.Count() != 10 )
+      throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+    for( int i=0; i < 10; i++ )  {
+      if( al[i] != i )
+        throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+    }
+    TTypeList<int> tl = f2();
+    if( tl.Count() != 10 )
+      throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+    for( int i=0; tl.Count() < 10; i++ )  {
+      if( tl[i] != i )
+        throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+    }
+  }
+};
+//.........................................................................
 void ContainerTests(OlxTests& t)  {
   t.Add(&test::ListTests<TArrayList<int> >)
     .Add(&test::ListTests<TTypeList<int> >)
@@ -214,7 +258,8 @@ void ContainerTests(OlxTests& t)  {
     .Add(&test::LinkedlListTest).
     Add(&test::QueueTest).
     Add(&test::StackTest).
-    Add(&test::SharedListTest);
+    Add(&test::SharedListTest).
+    Add(new ConstListTest, &ConstListTest::ContainerTests);
 }
 //.........................................................................
 };  // namespace test

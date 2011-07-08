@@ -10,12 +10,14 @@
 #ifndef __olx_sdl_ptrlist_H
 #define __olx_sdl_ptrlist_H
 #include "shared.h"
+#include "constlist.h"
 #include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
 BeginEsdlNamespace()
 
 template <typename> class SharedPtrList;
+template <typename> class ConstPtrList;
 
 template <class T> class TPtrList : public IEObject  {
   size_t FCount, FCapacity;
@@ -63,6 +65,10 @@ public:
   }
 //..............................................................................
   TPtrList(const SharedPtrList<T>& list) : Items(NULL) {
+    TakeOver(list.Release(), true);
+  }
+//..............................................................................
+  TPtrList(const ConstPtrList<T>& list) : Items(NULL) {
     TakeOver(list.Release(), true);
   }
 //..............................................................................
@@ -154,6 +160,11 @@ public:
     return TakeOver(l.Release(), true);
   }
 //..............................................................................
+  inline TPtrList& operator = (const ConstPtrList<T>& l)  {
+    olx_free(Items);
+    return TakeOver(l.Release(), true);
+  }
+//..............................................................................
   inline TPtrList& AddList(const TPtrList& list)  {
     SetCapacity(list.Count() + FCount);
     memcpy(&Items[FCount], list.Items, list.Count()*sizeof(T*));
@@ -162,6 +173,8 @@ public:
   }
 //..............................................................................
   inline TPtrList& AddList(const SharedPtrList<T>& list)  {  return AddList(list.GetList());  }
+//..............................................................................
+  inline TPtrList& AddList(const ConstPtrList<T>& list)  {  return AddList(list.GetList());  }
 //..............................................................................
   template <class List> TPtrList& AddList(const List& l)  {
     const size_t off = FCount;
@@ -536,6 +549,20 @@ public:
   SharedPtrList(lst_t *lst) : parent_t(lst) {}
   SharedPtrList(lst_t &lst) : parent_t(lst) {}
   SharedPtrList &operator = (const SharedPtrList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
+
+template <typename item_t>
+class ConstPtrList : public const_list<TPtrList<item_t>, item_t*> {
+  typedef TPtrList<item_t> lst_t;
+  typedef const_list<lst_t, item_t*> parent_t;
+public:
+  ConstPtrList(const ConstPtrList &l) : parent_t(l) {}
+  ConstPtrList(lst_t *lst) : parent_t(lst) {}
+  ConstPtrList(lst_t &lst) : parent_t(lst) {}
+  ConstPtrList &operator = (const ConstPtrList &l) {
     parent_t::operator = (l);
     return *this;
   }

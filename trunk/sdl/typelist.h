@@ -16,6 +16,7 @@
 BeginEsdlNamespace()
 
 template <typename> class SharedTypeList;
+template <typename> class ConstTypeList;
 
 template <class T, class DestructCast> class TTypeListExt : public IEObject  {
 private:
@@ -54,6 +55,12 @@ public:
     delete &l;
   }
 //..............................................................................
+  TTypeListExt(const ConstTypeList<T>& list)  {
+    TTypeListExt &l = list.Release();
+    List.TakeOver(l.List);
+    delete &l;
+  }
+//..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the copy
    constructor must exist for nonpointer objects */
   template <class alist> TTypeListExt(const alist& list ) : List(list.Count())  {
@@ -81,6 +88,7 @@ public:
   TTypeListExt &TakeOver(TTypeListExt& l, bool do_delete=false)  {
     List.TakeOver(l.List);
     if( do_delete )  delete &l;
+    return *this;
   }
 //..............................................................................
 /*  virtual IEObject* Replicate() const  {
@@ -288,12 +296,20 @@ public:
    must exist  */
   TTypeListExt& operator = (const TTypeListExt& list)  {  return Assign(list);  }
 //..............................................................................
-  TTypeListExt & operator = (const SharedTypeList<T>& list)  {
+  template <class wrapper_t> TTypeListExt &_Assign_Wrapper(const wrapper_t& list)  {
     Clear();
     TTypeListExt &l = list.Release();
     List.TakeOver(l.List);
     delete &l;
     return *this;
+  }
+  
+  TTypeListExt & operator = (const SharedTypeList<T>& list)  {
+    return _Assign_Wrapper(list);
+  }
+//..............................................................................
+  TTypeListExt & operator = (const ConstTypeList<T>& list)  {
+    return _Assign_Wrapper(list);
   }
 //..............................................................................
   /* copy - creates new copies of the objest, be careful as the copy constructor
@@ -470,6 +486,20 @@ public:
   SharedTypeList(lst_t *lst) : parent_t(lst) {}
   SharedTypeList(lst_t &lst) : parent_t(lst) {}
   SharedTypeList &operator = (const SharedTypeList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
+
+template <typename item_t>
+class ConstTypeList : public const_list<TTypeList<item_t>, item_t> {
+  typedef TTypeList<item_t> lst_t;
+  typedef const_list<lst_t, item_t> parent_t;
+public:
+  ConstTypeList(const ConstTypeList &l) : parent_t(l) {}
+  ConstTypeList(lst_t *lst) : parent_t(lst) {}
+  ConstTypeList(lst_t &lst) : parent_t(lst) {}
+  ConstTypeList &operator = (const ConstTypeList &l) {
     parent_t::operator = (l);
     return *this;
   }

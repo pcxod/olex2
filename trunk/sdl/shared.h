@@ -53,7 +53,7 @@ protected:
   }
 public:
   shared_base() : p(new olx_ptr<cont_t>(new cont_t))  {}
-  shared_base(const shared_base &l)  : p(l.p->inc_ref())  {}
+  shared_base(const shared_base &l) : p(l.p == NULL ? NULL : l.p->inc_ref())  {}
   shared_base(cont_t *l) : p (new olx_ptr<cont_t>(l)) {}
   shared_base(cont_t &l) : p(new olx_ptr<cont_t>(new cont_t)) {
     p->p->TakeOver(l);
