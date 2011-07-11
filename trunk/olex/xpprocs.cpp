@@ -1915,13 +1915,21 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     AGDObjList Objects;
     TGlGroup& sel = FXApp->GetSelection();
     olxstr out;
+    bool group_deletion = false;
     for( size_t i=0; i < sel.Count(); i++ )  {
-      Objects.Add(sel[i]);
       if( EsdlInstanceOf(sel[i], TXAtom) )
         out << ((TXAtom&)sel[i]).GetLabel();
+      if( EsdlInstanceOf(sel[i], TGlGroup) )  {
+        if( !group_deletion )  {
+          group_deletion = true;
+          TBasicApp::NewLogEntry() << "Please use 'ungroup' to delete groups";
+        }
+        continue;        
+      }
       else
-        out << sel[i].GetCollectionName();
+        out << sel[i].GetPrimitives().GetName();
       out << ' ';
+      Objects.Add(sel[i]);
     }
     if( !out.IsEmpty()  )  {
       FXApp->NewLogEntry() << "Deleting " << out;
