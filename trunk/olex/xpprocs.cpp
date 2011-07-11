@@ -1810,7 +1810,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macCent(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  FXApp->AddCentroid(FindXAtoms(Cmds, true, true).GetList());
+  FXApp->AddCentroid(FindXAtoms(Cmds, true, true).GetObject());
 }
 //..............................................................................
 void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error){
@@ -4522,7 +4522,7 @@ void TMainForm::macIndividualise(TStrObjList &Cmds, const TParamList &Options, T
     FXApp->Individualise(bonds);
   }
   else
-    FXApp->Individualise(FindXAtoms(Cmds, false, false).GetList());
+    FXApp->Individualise(FindXAtoms(Cmds, false, false).GetObject());
 }
 //..............................................................................
 void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4540,7 +4540,7 @@ void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TM
     FXApp->Collectivise(bonds);
   }
   else
-    FXApp->Collectivise(FindXAtoms(Cmds, false, false).GetList());
+    FXApp->Collectivise(FindXAtoms(Cmds, false, false).GetObject());
 }
 //..............................................................................
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -5004,7 +5004,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
                 ins.Adopt(FXApp->XFile());
                 ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile( insFileName );
-                Macros.ProcessMacro( olxstr("@reap \'") << insFileName << '\'', er);
+                Macros.ProcessMacro(olxstr("@reap \'") << insFileName << '\'', er);
                 if( !er.IsProcessingError() )
                   Macros.ProcessMacro("reset", er);
                 FXApp->Draw();

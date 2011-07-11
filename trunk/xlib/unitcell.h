@@ -241,15 +241,19 @@ public:
   */
   void BuildStructureMap_Direct(TArray3D<short>& map, double delta, short value, 
     ElementRadii* radii, const TCAtomPList* _template = NULL);
+  /* builds boolean mask for atoms types, mdim - the dimensions of the grdi to which the 
+  masks will be applied, delta - extra added value for Rs */
+  const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
+    BuildAtomMasks(const vec3s& dim, ElementRadii* radii, double delta=0) const;
   // much faster, but less 'precise' version
   void BuildStructureMap_Masks(TArray3D<short>& map, double delta, short value, 
-    ElementRadii* radii, const TCAtomPList* _template = NULL);
+    ElementRadii* radii, const TCAtomPList* _template = NULL) const;
   /**/
   void BuildDistanceMap_Direct(TArray3D<short>& map, double delta, short value, 
-    ElementRadii* radii, const TCAtomPList* _template = NULL);
+    ElementRadii* radii, const TCAtomPList* _template = NULL) const;
   // much faster, but less 'precise' version
   void BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short value, 
-    ElementRadii* radii, const TCAtomPList* _template = NULL);
+    ElementRadii* radii, const TCAtomPList* _template = NULL) const;
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
@@ -263,8 +267,10 @@ public:
     TSymmLib::GetInstance().ExpandLatt(out, MatrixListAdaptor<TAsymmUnit>(au), latt);
   }
   // association should be AnAssociation2+<vec3d,TCAtom*,+>, generates all atoms of the aunit
-  template <class Association> void GenereteAtomCoordinates(TTypeList<Association>& list, bool IncludeH, 
-                    const TCAtomPList* _template = NULL) const  {
+  template <class Association> void GenereteAtomCoordinates(
+    TTypeList<Association>& list, bool IncludeH,
+    const TCAtomPList* _template = NULL) const
+  {
     TCAtomPList& atoms = (_template == NULL ? *(new TCAtomPList) : *const_cast<TCAtomPList*>(_template));
     if( _template == NULL )  {
       list.SetCapacity(Lattice->GetAsymmUnit().AtomCount()*Matrices.Count());
@@ -301,7 +307,7 @@ public:
       for( size_t j=i+1; j < lc; j++ )  {
         if( list.IsNull(j) )  continue;
         if( (distances[j] - distances[i]) > 0.1 )  break;
-        const double d = list[i].GetA().QDistanceTo( list[j].GetA() );
+        const double d = list[i].GetA().QDistanceTo(list[j].GetA());
         if( d < 0.00001 )  {
           list.NullItem(j);
           continue;
@@ -316,7 +322,9 @@ public:
   /* expands atom coordinates with +/-1 if one of the fractional coordinates is less the lim or greater than 1-lim
   This function is used in the BuildStructure map function to take into account atoms which are near the cell sides
   */
-  template <class Association> void ExpandAtomCoordinates(TTypeList<Association>& list, const double lim)  {
+  template <class Association> void ExpandAtomCoordinates(
+    TTypeList<Association>& list, const double lim) const
+  {
     list.SetCapacity( list.Count()*7 );
     const double c_min = lim, c_max = 1.0 -lim;
     const size_t all_ac = list.Count();

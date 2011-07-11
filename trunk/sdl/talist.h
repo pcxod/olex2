@@ -117,9 +117,9 @@ public:
     return *this;
   }
 //..............................................................................
-  TArrayList& AddList(const SharedArrayList<T>& list)  {  AddList(list.GetList());  }
+  TArrayList& AddList(const SharedArrayList<T>& list)  {  AddList(list.GetObject());  }
 //..............................................................................
-  TArrayList& AddList(const ConstArrayList<T>& list)  {  AddList(list.GetList());  }
+  TArrayList& AddList(const ConstArrayList<T>& list)  {  AddList(list.GetObject());  }
 //..............................................................................
   template <class List> inline TArrayList& operator += (const List& list)  {
     return AddList(list);

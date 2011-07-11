@@ -172,9 +172,9 @@ public:
     return *this;
   }
 //..............................................................................
-  inline TPtrList& AddList(const SharedPtrList<T>& list)  {  return AddList(list.GetList());  }
+  inline TPtrList& AddList(const SharedPtrList<T>& list)  {  return AddList(list.GetObject());  }
 //..............................................................................
-  inline TPtrList& AddList(const ConstPtrList<T>& list)  {  return AddList(list.GetList());  }
+  inline TPtrList& AddList(const ConstPtrList<T>& list)  {  return AddList(list.GetObject());  }
 //..............................................................................
   template <class List> TPtrList& AddList(const List& l)  {
     const size_t off = FCount;
