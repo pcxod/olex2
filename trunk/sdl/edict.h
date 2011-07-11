@@ -131,7 +131,7 @@ class const_olxdict : public const_dict<
   typedef olxdict<key_t,val_t,Comparator> dict_t;
   typedef const_dict<dict_t,key_t,val_t> parent_t;
 public:
-  const_olxdict(const_olxdict &d) : parent_t(d) {}
+  const_olxdict(const const_olxdict &d) : parent_t(d) {}
   const_olxdict(dict_t &d) : parent_t(d) {}
   const_olxdict(dict_t *d) : parent_t(d) {}
   const_olxdict &operator = (const const_olxdict &d) {

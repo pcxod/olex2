@@ -69,7 +69,7 @@ public:
   const_list(const const_list &l) : _parent_t(l) {}
   const_list(cont_t *l) : _parent_t(l) {}
   const_list(cont_t &l) : _parent_t(l) {}
-  const item_t &operator [] (size_t i) const {  return (*p->p)[i];  }
+  const item_t &operator [] (size_t i) const {  return (*_parent_t::p->p)[i];  }
   size_t Count() const {  return _parent_t::p == NULL ? 0 : _parent_t::p->p->Count();  }
   bool IsEmpty() const {  return Count() == 0;  }
   const_list& operator = (const const_list &a) {
@@ -85,8 +85,8 @@ public:
   const_dict(const const_dict &l) : _parent_t(l) {}
   const_dict(dict_t *l) : _parent_t(l) {}
   const_dict(dict_t &l) : _parent_t(l) {}
-  const key_t &GetKey(size_t i) const {  return p->p->GetKey(i);  }
-  const val_t &GetValue(size_t i) const {  return p->p->GetValue(i);  }
+  const key_t &GetKey(size_t i) const {  return _parent_t::p->p->GetKey(i);  }
+  const val_t &GetValue(size_t i) const {  return _parent_t::p->p->GetValue(i);  }
   size_t Count() const {  return _parent_t::p == NULL ? 0 : _parent_t::p->p->Count();  }
   bool IsEmpty() const {  return Count() == 0;  }
   const_dict& operator = (const const_dict &a) {
