@@ -90,15 +90,15 @@ ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
       if( cell_found && latt_found )
         rvl.Add(rv);
     }
+    for( size_t i=0; i < rvl.Count(); i++ )  {
+      rvl[i].volume = TUnitCell::CalcVolume(rvl[i].cell);
+      rvl[i].niggle_volume = TUnitCell::CalcVolume(
+        Niggli::reduce_const(rvl[i].lattice, rvl[i].cell));
+    }
   }
   catch(const TExceptionBase &e)  {
     TBasicApp::NewLogEntry(logError) << fn << ": ";
     TBasicApp::NewLogEntry() << e.GetException()->GetStackTrace<TStrList>();
-  }
-  for( size_t i=0; i < rvl.Count(); i++ )  {
-    rvl[i].volume = TUnitCell::CalcVolume(rvl[i].cell);
-    rvl[i].niggle_volume = TUnitCell::CalcVolume(
-      Niggli::reduce_const(rvl[i].lattice, rvl[i].cell));
   }
   return rvl;
 }
