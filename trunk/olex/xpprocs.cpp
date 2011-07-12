@@ -9457,11 +9457,15 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macCenter(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.Count() == 3 && Cmds[0].IsNumber() && Cmds[1].IsNumber() && Cmds[2].IsNumber() )
-    FXApp->GetRender().GetBasis().SetCenter(vec3d(-Cmds[0].ToDouble(), -Cmds[1].ToDouble(), -Cmds[2].ToDouble()));
+  if( Cmds.Count() == 3 && Cmds[0].IsNumber() && Cmds[1].IsNumber() && Cmds[2].IsNumber() )  {
+    FXApp->GetRender().GetBasis().SetCenter(
+     -vec3d(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble()));
+  }
   else  {
-    if( Options.Contains('z') )
-      FXApp->GetRender().GetBasis().SetZoom(FXApp->GetRender().CalcZoom());
+    if( Options.Contains('z') )  {
+      FXApp->GetRender().GetBasis().SetZoom(
+        FXApp->GetRender().CalcZoom()*FXApp->GetExtraZoom());
+    }
     else  {
       TXAtomPList atoms;
       if( !FindXAtoms(Cmds, atoms, true, true) )

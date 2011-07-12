@@ -955,7 +955,7 @@ separated values of Atom Type and radius, an entry a line");
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
   Library.AttachLibrary(TETime::ExportLibrary());
-  Library.AttachLibrary(lcells::Index::ExportLibrary());
+  Library.AttachLibrary(lcells::IndexManager::ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
   Library.AttachLibrary(XA->XFile().ExportLibrary());
