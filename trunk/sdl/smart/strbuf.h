@@ -84,7 +84,7 @@ public:
       size_t x = _Length-1;
       while( en != NULL )  {
         for( size_t i=en->Length; i != 0; i--, x-- )
-          v[x] = en->Data->Data[i-1];
+          v[x] = en->Data->Data[en->Start+i-1];
         en = en->Next;
       }
     }
