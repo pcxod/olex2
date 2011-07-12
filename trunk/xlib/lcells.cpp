@@ -512,7 +512,7 @@ void IndexManager::SaveConfig(const olxstr &file_name) {
     df.SaveToXLFile(file_name);
   }
   catch(...)  {
-    TBasicApp::NewLogEntry() << "Faield lcells to save configuration";
+    TBasicApp::NewLogEntry() << "Failed to save configuration";
   }
 }
 //.............................................................................
@@ -559,7 +559,8 @@ void IndexManager::Update(const olxstr &cfg_name, const olxstr &folder_name,
         Index().Create(indices[i].root, indices[i].index_file_name);
       }
     }
-    catch(...)  {
+    catch(const TExceptionBase &e)  {
+      TBasicApp::NewLogEntry() << e.GetException()->GetStackTrace<TStrList>();
       TBasicApp::NewLogEntry(logException) <<
         (olxstr("Failed to create: ").quote() << indices[i].index_file_name);
     }

@@ -2776,19 +2776,18 @@ void TMainForm::macMove(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "wrong atom - ") << Cmds[0];
     return;
   }
-  if( !B )  {
+  if( B == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "wrong atom - " ) << Cmds[1];
     return;
   }
-  bool copy = Options.Contains('c');
-  FXApp->MoveFragment(A, B, copy);
+  FXApp->MoveFragment(A, B, Options.Contains('c'));
 }
 //..............................................................................
 void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   TEBasis basis = FXApp->GetRender().GetBasis();
   if( Cmds.Count() == 2 )  {
     bool v = Cmds[1].ToBool();
-    if( Cmds[0] == "a" )  {
+    if( Cmds[0] == 'a' )  {
       if( v && !FXApp->AreHydrogensVisible() )  {
         TStateChange sc(prsHVis, true);
         FXApp->SetHydrogensVisible(true);
@@ -2800,7 +2799,7 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
     }
-    else if( Cmds[0] == "b" )  {
+    else if( Cmds[0] == 'b' )  {
       if( v && !FXApp->AreHBondsVisible() )  {
         TStateChange sc(prsHBVis, true);
         FXApp->SetHBondsVisible(true);
@@ -3184,12 +3183,13 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macRRings(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TTypeList< TSAtomPList > rings;
-  try  {  FXApp->FindRings(Cmds[0], rings);  }
-  catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
-
   double l = 1.39, e = 0.001;
   XLibMacros::ParseNumbers<double>(Cmds, 2, &l, &e);
+
+  TTypeList<TSAtomPList> rings;
+  olxstr cmd = Cmds.IsEmpty() ? olxstr("sel") : Cmds[0];
+  try  {  FXApp->FindRings(cmd, rings);  }
+  catch(const TExceptionBase& exc)  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
 
   for( size_t i=0; i < rings.Count(); i++ )  {
     TSimpleRestraint& dfix = FXApp->XFile().GetRM().rDFIX.AddNew();

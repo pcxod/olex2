@@ -663,8 +663,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
 "Adds a ShelX compatible angle restraint");
   this_InitMacroD(Sadi, EmptyString(), fpAny|psCheckFileTypeIns,
 "Similar distances restraint");
-  this_InitMacroD(RRings,"s-esd&;cs-do not clear selection" , fpAny^fpNone,
-"Makes all provided rings [like C6 or NC5] regular (flat and all distances similar)");
+  this_InitMacroD(RRings,"cs-do not clear selection" , fpAny,
+"Makes all provided rings [like C6 or NC5] regular (flat and all distances similar). If a selection "
+"is given - the whole rings must be selected");
   this_InitMacroD(Flat, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
 "Forces flat group restraint for at least 4 provided atoms");
   this_InitMacroD(Chiv, "cs- do not clear selection", fpAny|psCheckFileTypeIns,

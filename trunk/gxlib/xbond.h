@@ -65,7 +65,7 @@ public:
   TXAtom& Another(const TSAtom& a) const {  return (TXAtom&)TSBond::Another(a);  }
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
-  void UpdateLabel()  {  GetGlLabel().Update();  }
+  void UpdateLabel()  {  GetGlLabel().UpdateLabel();  }
   // creates legend up three levels (0 to 2)
   static olxstr GetLegend(const TSBond& B, const short level);
 

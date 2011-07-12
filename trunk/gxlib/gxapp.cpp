@@ -2245,7 +2245,7 @@ bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings)  {
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i]->GetTag() == 0 )  {  // unused atom
       ring = &rings.AddNew();
-      ring->Add( atoms[i] );
+      ring->Add(atoms[i]);
       atoms[i]->SetTag(1);
       starta = i+1;
       break;
@@ -2764,6 +2764,7 @@ void TGXApp::RestoreLabels()  {
     xbonds[i]->GetGlLabel().TranslateBasis(
       LabelInfo.centers[xatoms.Count()+i]-xbonds[i]->GetGlLabel().GetCenter());
   }
+  LabelInfo.Clear();
 }
 //..............................................................................
 void TGXApp::RestoreGroups()  {
