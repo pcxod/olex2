@@ -37,6 +37,12 @@ void cell_reduction_test(OlxTests& t)  {
   Niggli::reduce(7, cell);
   if( cell.DistanceTo(evecd(5.04549, 12.7923, 29.3711, 77.7182, 85.0727, 78.6263)) > 1e-3)
     throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  // Acta Cryst. (1976), A32, 297-298, this reduction does not match the one in the paper
+  evecd cell1(3, 5.196, 2, 103.55, 109.28, 134.53);
+  Niggli::reduce(1, cell1);
+  //if( cell1.DistanceTo(evecd(2, 3, 3, 60, 75.31, 70.32)) > 1) - this is in the paper
+  if( cell1.DistanceTo(evecd(2, 3, 3.05, 115.315, 93.909, 109.28)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
   return;
 }
 };  //namespace test

@@ -276,7 +276,7 @@ size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
         Init(f);
     }
     else
-      folders[fi].Update(f);
+      updated_cnt += folders[fi].Update(f);
   }
   return updated_cnt;
 }
