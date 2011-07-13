@@ -3753,11 +3753,8 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
 PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
   olxstr title, str;
   int flags = 0;
-  if( !PythonExt::ParseTuple(args, "iww", &flags, &title, &str) ||
-      title.IsEmpty() || str.IsEmpty() )
-  {
+  if( !PythonExt::ParseTuple(args, "iww", &flags, &title, &str) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iww");
-  }
   const bool MultiLine = (flags != 1);
   TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);
   dlg->SetTitle(title.u_str());

@@ -1049,8 +1049,8 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     mat_out.Add("#declare ") << materials.GetValue(i) << '=';
     mat_out.Add(materials.GetKey(i)->ToPOV());
   }
-
-  TCStrList(mat_out << out).SaveToFile(Cmds[0]);
+  olxstr file_name = Cmds[0].EndsWith(".pov") ? Cmds[0] : olxstr(Cmds[0]) << ".pov");
+  TCStrList(mat_out << out).SaveToFile(file_name);
 }
 //..............................................................................
 void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

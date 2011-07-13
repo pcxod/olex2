@@ -47,44 +47,19 @@ struct Niggli {
   }
   static void reduce(short _latt, vec3d& sides, vec3d& angles)  {
     double R[6];
-    mat3d tm;
     vec3d cs(cos(angles[0]/180.0*M_PI), cos(angles[1]/180.0*M_PI), cos(angles[2]/180.0*M_PI));
     double cosa = cs[2];
     double sina = sin(angles[2]/180.0*M_PI);
     double vol = sides.Prod()*sqrt(1-cs.QLength()+2*cs.Prod());
     // Acta Cryst. (2004). A60, 1–6
     EpsilonComparator cmp(1e-5*pow(vol, 1./3));
-    switch(_latt)  {
-    case 1:  // P
-      tm.I();
-      break;
-    case 2:  // I
-      tm = mat3d(0, 1, 1, 0, 1, 0);
-      break;
-    case 3:  // R
-      tm = mat3d(1, 0, 1, -1, 1, 1, 0, -1, 1);
-      break;
-    case 4:  // F
-      tm = mat3d(-1, 1, 1, -1, 1, -1);
-      break;
-    case 5:  // A
-      tm = mat3d(-1, 0, 0, -1, 1, 1);
-      break;
-    case 6:  // B
-      tm = mat3d(-1, 0, 1, -1, 0, 1);
-      break;
-    case 7:  // C
-      tm = mat3d(1, 1, 0, -1, 0, -1);
-      break;
-    default:
-      throw TInvalidArgumentException(__OlxSourceInfo, "latt");
-    }
 
     mat3d metr_m(
       olx_sqr(sides[0]), sides[0]*sides[1]*cs[2], sides[0]*sides[2]*cs[1],
       olx_sqr(sides[1]), sides[1]*sides[2]*cs[0],
       olx_sqr(sides[2]));
 
+    mat3d tm = TCLattice::FromPrimitive(_latt);
     tm = tm.Inverse();
     metr_m = mat3d::Transpose(tm)*metr_m*tm;
 
