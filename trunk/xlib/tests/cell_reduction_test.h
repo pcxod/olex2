@@ -43,6 +43,43 @@ void cell_reduction_test(OlxTests& t)  {
   //if( cell1.DistanceTo(evecd(2, 3, 3, 60, 75.31, 70.32)) > 1) - this is in the paper
   if( cell1.DistanceTo(evecd(2, 3, 3.05, 115.315, 93.909, 109.28)) > 1e-3)
     throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  evecd cell2(17.1947, 17.1947, 84.661, 90, 90, 120);
+  Niggli::reduce(3, cell2); //R
+  if( cell2.DistanceTo(evecd(17.1947, 17.1947, 29.9155, 73.2984, 73.2984, 60)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  cell2 = evecd(17.1947, 17.1947, 84.661, 90, 90, 120);
+  Niggli::reduce(1, cell2); //P
+  if( cell2.DistanceTo(evecd(17.1947, 17.1947, 84.661, 90, 90, 120)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  cell2 = evecd(17.1947, 17.1947, 84.661, 90, 90, 120);
+  Niggli::reduce(2, cell2);  //I
+  if( cell2.DistanceTo(evecd(17.1947, 17.1947, 43.1947, 84.2886, 78.5194, 60)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  cell2 = evecd(17.1947, 17.1947, 84.661, 90, 90, 120);
+  Niggli::reduce(4, cell2);  //F
+  if( cell2.DistanceTo(evecd(8.59735, 14.891, 43.1947, 99.9257, 95.7114, 90)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  cell2 = evecd(17.1947, 17.1947, 84.661, 90, 90, 120);
+  Niggli::reduce(5, cell2); //A
+  if( cell2.DistanceTo(evecd(17.1947, 17.1947, 43.1947, 84.2886, 78.5194, 60)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  cell2 = evecd(17.1947, 17.1947, 84.661, 90, 90, 120);
+  Niggli::reduce(6, cell2);  //B
+  if( cell2.DistanceTo(evecd(17.1947, 17.1947, 43.1947, 84.2886, 78.5194, 60)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  cell2 = evecd(17.1947, 17.1947, 84.661, 90, 90, 120);
+  Niggli::reduce(7, cell2); //C
+  if( cell2.DistanceTo(evecd(8.59735, 14.891, 84.661, 90, 90, 90)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  // cctbx tests
+  cell2 = evecd(12.7366, 29.2300, 5.0242, 94.6570, 100.8630, 99.7561);
+  Niggli::reduce(1, cell2);
+  if( cell2.DistanceTo(evecd(5.0242, 12.7366, 29.23, 99.7561, 94.657, 100.863)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
+  cell2 = evecd(12.7806, 12.7366, 29.457, 103.42, 103.57, 22.71);
+  Niggli::reduce(1, cell2);
+  if( cell2.DistanceTo(evecd(5.0242, 12.7366, 29.23, 99.7561, 94.657, 100.863)) > 1e-3)
+    throw TFunctionFailedException(__OlxSourceInfo, "result mismatch expectations");
   return;
 }
 };  //namespace test
