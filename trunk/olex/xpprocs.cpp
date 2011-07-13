@@ -1049,7 +1049,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     mat_out.Add("#declare ") << materials.GetValue(i) << '=';
     mat_out.Add(materials.GetKey(i)->ToPOV());
   }
-  olxstr file_name = Cmds[0].EndsWith(".pov") ? Cmds[0] : olxstr(Cmds[0]) << ".pov");
+  olxstr file_name = (Cmds[0].EndsWith(".pov") ? Cmds[0] : olxstr(Cmds[0]) << ".pov");
   TCStrList(mat_out << out).SaveToFile(file_name);
 }
 //..............................................................................
@@ -1121,6 +1121,7 @@ void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FXApp->GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
     else
       FXApp->GrowAtoms(Cmds.Text(' '), GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+
   }
 }
 //..............................................................................
@@ -1729,6 +1730,7 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     from = Atoms[0]->crd();
     to = Atoms[1]->crd();
   }
+
   else if( process_atoms ) {
     Error.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
     return;
