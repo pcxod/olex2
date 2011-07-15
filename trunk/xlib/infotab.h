@@ -184,7 +184,7 @@ public:
   PyObject* PyExport()  {
     PyObject* main = PyDict_New();
     PythonExt::SetDictItem(main, "type",
-      PythonExt::BuildString(GetName());
+      PythonExt::BuildString(GetName()));
     PythonExt::SetDictItem(main, "param_name", PythonExt::BuildString(ParamName));
     size_t ac_cnt = 0;
     for( size_t i=0; i < atoms.Count(); i++ )
