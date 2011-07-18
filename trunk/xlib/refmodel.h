@@ -231,6 +231,10 @@ public:
       for( int i=0; i < 9; i++ )
         HKLF_mat[i/3][i%3] = hklf[2+i].ToDouble();
     }
+    else if( hklf.Count() > 2 )  {
+      TBasicApp::NewLogEntry(logError) <<
+        (olxstr("Invalid HKLF matrix ignored: ").quote() << hklf.Text(' ', 2));
+    }
     if( hklf.Count() > 11 )
       HKLF_wt = hklf[11].ToDouble();
     if( hklf.Count() > 12 )
