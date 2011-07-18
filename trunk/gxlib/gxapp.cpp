@@ -4044,13 +4044,13 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     for( size_t i=0; i < lines->ItemCount(); i++ )
       Lines.Add(new TXLine(*FGlRender)).FromDataItem(lines->GetItem(i));
   }
+  
 
   TDataItem& visibility = item.FindRequiredItem("Visibility");
   FHydrogensVisible = visibility.GetRequiredField("h_atoms").ToBool();
   FHBondsVisible = visibility.GetRequiredField("h_bonds").ToBool();
   FQPeaksVisible = visibility.GetRequiredField("q_atoms").ToBool();
   FQPeakBondsVisible = visibility.GetRequiredField("q_bonds").ToBool();
-
   CreateObjects(true);
 
   FDBasis->SetVisible(visibility.GetRequiredField("basis").ToBool());
@@ -4151,17 +4151,15 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   TEFile::CheckFileExists(__OlxSourceInfo, fileName);
   wxFileInputStream fis(fileName.u_str());
   char sig[3];
-  wxZipInputStream* zin = new wxZipInputStream(fis);
+  wxZipInputStream zin(fis);
   fis.Read(sig, 3);
-  if( olxstr::o_memcmp(sig, "oxm", 3) != 0 )  {
-    delete zin;
+  if( olxstr::o_memcmp(sig, "oxm", 3) != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file signature");
-  }
 
   wxZipEntry* model = NULL, *grid = NULL, *zen;
   olxstr entryModel("model"), entryGrid("grid");
 
-  while( (zen = zin->GetNextEntry()) != NULL )  {
+  while( (zen = zin.GetNextEntry()) != NULL )  {
     if( entryModel == zen->GetName() )
       model = zen;
     else if( entryGrid == zen->GetName() )
@@ -4169,23 +4167,22 @@ void TGXApp::LoadModel(const olxstr& fileName) {
     else
       delete zen;
   }
-  if( model == NULL || grid == NULL )  {
-    delete zin;
+  if( model == NULL || grid == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid model file description");
-  }
-  zin->OpenEntry(*model);
-  uint32_t contentLen = zin->GetLength();
+  zin.OpenEntry(*model);
+  uint32_t contentLen = zin.GetLength();
   unsigned char * bf = new unsigned char[contentLen + 1];
-  zin->Read(bf, contentLen);
-  zin->CloseEntry();
+  zin.Read(bf, contentLen);
   TEMemoryInputStream ms(bf, contentLen);
   TDataFile df;
   df.LoadFromTextStream(ms);
   delete [] bf;
-  zin->OpenEntry(*grid);
-  TwxInputStreamWrapper in(*zin);
-  try  {  FromDataItem(df.Root().FindRequiredItem("olex_model"), in);  }
-  catch( const TExceptionBase& exc )  {
+  zin.OpenEntry(*grid);
+  TwxInputStreamWrapper in(zin);
+  try  {
+    FromDataItem(df.Root().FindRequiredItem("olex_model"), in);
+  }
+  catch(const TExceptionBase& exc)  {
     NewLogEntry(logException) << "Failed to load model: " << exc.GetException()->GetError();
     FXFile->SetLastLoader(NULL);
     FXFile->LastLoaderChanged();
@@ -4193,7 +4190,6 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   }
   delete model;
   delete grid;
-  delete zin;
 #else
   throw TNotImplementedException(__OlxSourceInfo);
 #endif

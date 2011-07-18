@@ -172,6 +172,7 @@ public:
   // restraints and constraints register
   olxdict<olxstr, IConstraintContainer*, olxstrComparator<false> > rcRegister;
   TPtrList<IConstraintContainer> rcList;  // when order matters
+  TPtrList<TSRestraintList> rcList1;
   // removes references to all deleted atoms
   void Validate();
   // creates a human readable description of the refinement
@@ -412,7 +413,7 @@ of components 1 ... m
   // initialises ID's of the matrices to conform to the unit cell, this called by TLattice
   void UpdateUsedSymm(const class TUnitCell& uc);
   // throws an exception if not found
-  adirection& DirectionById(const olxstr &id);
+  adirection& DirectionById(const olxstr &id) const;
   // adds new custom scatterer (created with new, will be deleted)
   void AddSfac(XScatterer& sc);
   // returns number of custom scatterers

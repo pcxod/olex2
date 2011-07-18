@@ -879,18 +879,19 @@ void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TGlRenderer &r = FXApp->GetRender();
+  const TAsymmUnit &au = FXApp->XFile().GetAsymmUnit();
   pov::CrdTransformer crdc(r.GetBasis());
   olxdict<TGlMaterial*, olxstr, TPrimitiveComparator> materials;
-  olxdict<TXAtom*, olxstr, TPrimitiveComparator> sph_materials;
+  olxdict<AGDrawObject*, olxstr, TPrimitiveComparator> sph_materials;
   TStrList out;
   out.Add("global_settings {");
   TGlOption cl_amb = r.LightModel.GetAmbientColor();
   cl_amb *= 10;
-  out.Add(" ambient_light rgb<") << cl_amb[0] << ',' << cl_amb[1] << ',' << cl_amb[2] << '>';
+  out.Add(" ambient_light ") << pov::to_str(cl_amb);
   out.Add("}");
 
   TGlOption cl_clear = r.LightModel.GetClearColor();
-  out.Add("background { color rgb<") << cl_clear[0] << ',' << cl_clear[1] << ',' << cl_clear[2] << "> }";
+  out.Add("background { color ") << pov::to_str(cl_clear) << " }";
   out.Add("camera {");
   out.Add(" location <0,0,") << 3./r.GetBasis().GetZoom() << '>';
   out.Add(" angle 25");
@@ -903,14 +904,14 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( !l.IsEnabled() )  continue;
     out.Add("light_source {");
     TGlOption lp = l.GetPosition();
-    out.Add(" <") << lp[0] << ',' << lp[1] << ',' << lp[2] << ">";
+    out.Add(" ") << pov::to_str(lp, false);
     lp = l.GetDiffuse();
     if( lp.IsEmpty() )
       lp = l.GetAmbient();
     if( lp.IsEmpty() )
       lp = l.GetSpecular();
     lp *= 1.5;
-    out.Add(" color rgb<") << lp[0] << ',' << lp[1] << ',' << lp[2] << ">";
+    out.Add(" color ") << pov::to_str(lp);
     out.Add("}");
   }
 
@@ -987,7 +988,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       out.Add("  texture {") << sph_mat_name << '}';
       out.Add("  scale <") << ds << ',' << ds << ',' << ds << '>';
     }
-    out.Add("  translate <") << c[0] << ',' << c[1] << ',' << c[2] << '>';
+    out.Add("  translate ") << pov::to_str(c);
     out.Add(" }");
     if( a.GetPolyhedronType() != polyNone && a.GetPolyhedron() != NULL )  {
       olxstr poly_mat_name;
@@ -1028,19 +1029,67 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     out.Add("  union {");
     out.Add("   object { cylinder {");
     vec3d v = crdc.crd(b.A().crd());
-    out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << '>';
+    out.Add("    ") << pov::to_str(v);
     v = crdc.crd((b.A().crd()+b.B().crd())/2);
-    out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << ">, brad}";
+    out.Add("    ") << pov::to_str(v) << ", brad}";
     out.Add("    texture {") << sph_materials[&b.A()] << '}';
     out.Add("   }");
     out.Add("   object { cylinder {");
     v = crdc.crd((b.A().crd()+b.B().crd())/2);
-    out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << '>';
+    out.Add("    ") << pov::to_str(v);
     v = crdc.crd(b.B().crd());
-    out.Add("    <") << v[0] << ',' << v[1] << ',' << v[2] << ">, brad}";
+    out.Add("    ") << pov::to_str(v) << ", brad}";
     out.Add("    texture {") << sph_materials[&b.B()] << '}';
     out.Add("   }");
     out.Add(" }}");
+  }
+  if( FXApp->XGrid().IsVisible() && !FXApp->XGrid().IsEmpty() )  {
+    TGraphicsStyle &style = FXApp->XGrid().GetPrimitives().GetStyle();
+    size_t lmi = style.IndexOfMaterial("+Surface");
+    olxstr poly_mat_name;
+    if( lmi != InvalidIndex )  {
+      TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
+      lmi = materials.IndexOf(&glm);
+      if( lmi == InvalidIndex )
+        poly_mat_name = materials.Add(&glm, olxstr("mat") << (materials.Count()+1));
+      else
+        poly_mat_name = materials.GetValue(lmi);
+      sph_materials(&FXApp->XGrid(), poly_mat_name);
+    }
+    const vec3s dim = FXApp->XGrid().GetDimVec();
+    out.Add(" object {");
+    out.Add("  mesh2 {");
+    const TTypeList<vec3f> &v = FXApp->XGrid().GetPVertices();
+    const TTypeList<vec3f> &n = FXApp->XGrid().GetPNormals();
+    const TTypeList<IsoTriangle> &t = FXApp->XGrid().GetPTriangles();
+    out.SetCapacity(out.Count()+v.Count()+n.Count()+t.Count());
+    out.Add("   vertex_vectors { ") << v.Count() << ',';
+    for( size_t j=0; j < v.Count(); j++ )  {
+      vec3f _v = v[j];
+      _v = crdc.crd(au.Orthogonalise(_v /= dim));
+      out.Add("    ") << pov::to_str(_v);
+    }
+    out.Add("   }");
+    out.Add("   normal_vectors { ") << n.Count() << ',';
+    for( size_t j=0; j < n.Count(); j++ )  {
+      out.Add("    ") << pov::to_str(n[j]);
+    }
+    out.Add("   }");
+    out.Add("   face_indices { ") << t.Count() << ',';
+    for( size_t j=0; j < t.Count(); j++ )  {
+      out.Add("    ") << '<' << t[j].pointID[0] << ','
+        << t[j].pointID[1] << ',' << t[j].pointID[2] << '>';
+    }
+    out.Add("   }");
+    out.Add("   normal_indices { ") << t.Count() << ',';
+    for( size_t j=0; j < t.Count(); j++ )  {
+      out.Add("    ") << '<' << t[j].pointID[0] << ','
+        << t[j].pointID[1] << ',' << t[j].pointID[2] << '>';
+    }
+    out.Add("   }");
+    out.Add("  }");
+    out.Add("  texture {") << poly_mat_name << '}';
+    out.Add(" }");
   }
   out.Add("}");
   TStrList mat_out, scene_out;
@@ -6675,6 +6724,7 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  return;
   TXApp& xapp = TXApp::GetInstance();
   //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
   ////xapp.XFile().GetRM().FilterHkl(refs, ms);

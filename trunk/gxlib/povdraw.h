@@ -10,14 +10,21 @@
 #ifndef __olx_gxl_powdraw_H
 #define __olx_gxl_powdraw_H
 #include "gxbase.h"
+#include "gloption.h"
 #include "ebasis.h"
 BeginGxlNamespace()
 
 namespace pov {
   template <typename NumT>
-  olxstr to_str(const TVector3<NumT>& v)  {
-    olxstr rv(EmptyString(), 64);
-    return rv << '<' << v[0] << ',' << v[1] << ',' << v[2] << '>';
+  olxstr to_str(const TVector3<NumT> &v)  {
+    return olxstr(EmptyString(), 64) << '<' << v[0] << ',' << v[1] << ',' << v[2] << '>';
+  }
+  olxstr to_str(const TGlOption &v, bool color=true)  {
+    if( color )
+      //return olxstr::FromCStr(olxT("rgb<"), 64) << v[0] << ',' << v[1] << ',' << v[2] << '>';
+      return olxstr(EmptyString(), 64) << "rgb<" << v[0] << ',' << v[1] << ',' << v[2] << '>';
+    else
+      return olxstr(EmptyString(), 64) << '<' << v[0] << ',' << v[1] << ',' << v[2] << '>';
   }
   struct CrdTransformer  {
     TEBasis basis;
