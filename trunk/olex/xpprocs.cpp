@@ -881,7 +881,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TGlRenderer &r = FXApp->GetRender();
   const TAsymmUnit &au = FXApp->XFile().GetAsymmUnit();
   pov::CrdTransformer crdc(r.GetBasis());
-  olxdict<TGlMaterial*, olxstr, TPrimitiveComparator> materials;
+  olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> materials;
   olxdict<AGDrawObject*, olxstr, TPrimitiveComparator> sph_materials;
   TStrList out;
   out.Add("global_settings {");
@@ -920,6 +920,7 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   out.Add("#declare obj_rim_y=object{ cylinder {<0,0.05,0>, <0,-0.05,0>, 1} }");
   out.Add("#declare obj_rim_z=object{ cylinder {<0,0,0.05>, <0,0,-0.05>, 1} }");
   out.Add("#declare brad=0.1;");
+  out << TXBond::PovDeclare();
   TGXApp::AtomIterator ai = FXApp->GetAtoms();
   out.Add("union {");
   while( ai.HasNext() )  {
@@ -1020,76 +1021,11 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   while( bi.HasNext() )  {
     TXBond &b = bi.Next();
     if( !b.IsVisible() )  continue;
-    //TGPCollection &gpc = b.GetPrimitives();
-    //for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
-    //  TGlPrimitive &glp = gpc.GetPrimitive(i);
-    //  glp.
-    //}
-    out.Add(" object {");
-    out.Add("  union {");
-    out.Add("   object { cylinder {");
-    vec3d v = crdc.crd(b.A().crd());
-    out.Add("    ") << pov::to_str(v);
-    v = crdc.crd((b.A().crd()+b.B().crd())/2);
-    out.Add("    ") << pov::to_str(v) << ", brad}";
-    out.Add("    texture {") << sph_materials[&b.A()] << '}';
-    out.Add("   }");
-    out.Add("   object { cylinder {");
-    v = crdc.crd((b.A().crd()+b.B().crd())/2);
-    out.Add("    ") << pov::to_str(v);
-    v = crdc.crd(b.B().crd());
-    out.Add("    ") << pov::to_str(v) << ", brad}";
-    out.Add("    texture {") << sph_materials[&b.B()] << '}';
-    out.Add("   }");
-    out.Add(" }}");
+    uint32_t pm = b.GetPrimitiveMask();
+    out << b.ToPov(materials);
   }
   if( FXApp->XGrid().IsVisible() && !FXApp->XGrid().IsEmpty() )  {
-    TGraphicsStyle &style = FXApp->XGrid().GetPrimitives().GetStyle();
-    size_t lmi = style.IndexOfMaterial("+Surface");
-    olxstr poly_mat_name;
-    if( lmi != InvalidIndex )  {
-      TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
-      lmi = materials.IndexOf(&glm);
-      if( lmi == InvalidIndex )
-        poly_mat_name = materials.Add(&glm, olxstr("mat") << (materials.Count()+1));
-      else
-        poly_mat_name = materials.GetValue(lmi);
-      sph_materials(&FXApp->XGrid(), poly_mat_name);
-    }
-    const vec3s dim = FXApp->XGrid().GetDimVec();
-    out.Add(" object {");
-    out.Add("  mesh2 {");
-    const TTypeList<vec3f> &v = FXApp->XGrid().GetPVertices();
-    const TTypeList<vec3f> &n = FXApp->XGrid().GetPNormals();
-    const TTypeList<IsoTriangle> &t = FXApp->XGrid().GetPTriangles();
-    out.SetCapacity(out.Count()+v.Count()+n.Count()+t.Count());
-    out.Add("   vertex_vectors { ") << v.Count() << ',';
-    for( size_t j=0; j < v.Count(); j++ )  {
-      vec3f _v = v[j];
-      _v = crdc.crd(au.Orthogonalise(_v /= dim));
-      out.Add("    ") << pov::to_str(_v);
-    }
-    out.Add("   }");
-    out.Add("   normal_vectors { ") << n.Count() << ',';
-    for( size_t j=0; j < n.Count(); j++ )  {
-      out.Add("    ") << pov::to_str(n[j]);
-    }
-    out.Add("   }");
-    out.Add("   face_indices { ") << t.Count() << ',';
-    for( size_t j=0; j < t.Count(); j++ )  {
-      out.Add("    ") << '<' << t[j].pointID[0] << ','
-        << t[j].pointID[1] << ',' << t[j].pointID[2] << '>';
-    }
-    out.Add("   }");
-    out.Add("   normal_indices { ") << t.Count() << ',';
-    for( size_t j=0; j < t.Count(); j++ )  {
-      out.Add("    ") << '<' << t[j].pointID[0] << ','
-        << t[j].pointID[1] << ',' << t[j].pointID[2] << '>';
-    }
-    out.Add("   }");
-    out.Add("  }");
-    out.Add("  texture {") << poly_mat_name << '}';
-    out.Add(" }");
+    out << FXApp->XGrid().ToPov(materials);
   }
   out.Add("}");
   TStrList mat_out, scene_out;
@@ -1874,8 +1810,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( (Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds") ) && Cmds.Count() > 1 )  {
     int Mask = Cmds[1].ToInt();
-    TXBondPList Bonds;
-    FXApp->GetBonds(Cmds.Text(' ', 2), Bonds);
+    TXBondPList Bonds = FXApp->GetBonds(Cmds.Text(' ', 2), false);
     FXApp->UpdateBondPrimitives(Mask, 
       (Bonds.IsEmpty() && FXApp->GetSelection().Count() == 0) ? NULL : &Bonds, 
       Cmds[0].Equalsi("hbonds"));
@@ -1944,7 +1879,7 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
   }
   else  {
-    FXApp->GetBonds(Cmds.Text(' ', 1), bonds);
+    bonds = FXApp->GetBonds(Cmds.Text(' ', 1), true);
     if( bonds.IsEmpty() )  {  // get all non-H
       TGXApp::BondIterator bi = FXApp->GetBonds();
       while( bi.HasNext() )  {
@@ -9203,8 +9138,14 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     for( size_t i=0; i < glg.Count(); i++ )  {
       if( EsdlInstanceOf(glg[i], TXBond) )  {
         TXBond& sb = (TXBond&)glg[i];
-        pairs.Add(&sb.A());
-        pairs.Add(&sb.B());
+        pairs.Add(sb.A());
+        pairs.Add(sb.B());
+      }
+      else if( EsdlInstanceOf(glg[i], TXAtom) &&
+        i+1 < glg.Count() && EsdlInstanceOf(glg[i+1], TXAtom) )
+      {
+        pairs.Add((TXAtom&)glg[i]);
+        pairs.Add((TXAtom&)glg[++i]);
       }
     }
   }

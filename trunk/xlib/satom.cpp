@@ -150,6 +150,9 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   FCCenter = *Matrices[0] * FCCenter;
   FCenter = PersUtil::FloatVecFromStr(item.GetRequiredField("crd"));
   Flags = item.GetRequiredField("flags").ToInt();
-  //latt.GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
+  if( CAtom().GetEllipsoid() != NULL )  {
+    SetEllipsoid(&latt.GetUnitCell().GetEllipsoid(
+      GetMatrix(0).GetContainerId(), CAtom().GetId()));
+  }
 }
 //..............................................................................

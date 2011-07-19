@@ -358,7 +358,7 @@ size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1
   if( key == &a1 )  {
     for( size_t i=0; i < list.Count(); i++ )  {
       if( list[i].to == a2 )  {
-        if( list[i].matr == NULL ) // this is special case - generic bond suppression... && eqiv == NULL )
+        if( list[i].matr == NULL && eqiv == NULL )
           return i;
         if( list[i].matr != NULL && eqiv != NULL && *list[i].matr == *eqiv )  
           return i;
@@ -437,22 +437,15 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
       break;
   }
   if( ind == InvalidIndex )  {
-    // validate the bonds to delete
-    bool exists = false;
-    for( size_t i=0; i < AtomInfo.Count(); i++ )  {
-      ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
-      if( ind != InvalidIndex )  {
-        AtomInfo.GetValue(i).BondsToRemove.Delete(ind);
-        exists = true;
-        break;
-      }
-    }
-    if( !exists )  {  // if was deleted - may be already exists?
-      AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
-      if( eqiv == NULL )  // these to be processed first
-        ai.BondsToCreate.Insert(0, new CXBondInfo(a2, eqiv));
-      else
-        ai.BondsToCreate.Add(new CXBondInfo(a2, eqiv));
+    AtomInfo.Add(&a1, AtomConnInfo(a1))
+      .BondsToCreate.Add(new CXBondInfo(a2, eqiv));
+  }
+  // validate the bonds to delete
+  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
+    if( ind != InvalidIndex )  {
+      AtomInfo.GetValue(i).BondsToRemove.Delete(ind);
+      break;
     }
   }
 }
@@ -488,38 +481,38 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
     if( ca != a )  {
       for( size_t j=0; j < ci.BondsToRemove.Count(); j++ )  {
         if( ci.BondsToRemove[j].to == a )  {
-          if( ci.BondsToRemove[j].matr == NULL )
-            toDelete.Add(new CXBondInfo(ca, NULL));
-          else  {
-            const smatd matr = uc.InvMatrix(*ci.BondsToRemove[j].matr);
-            bool uniq = true;
-            for( size_t k=0; k < toDelete.Count(); k++ )  {
-              if( toDelete[k].matr != NULL && toDelete[k].to == a && toDelete[k].matr->GetId() == matr.GetId() )  {
-                uniq = false;
-                break;
-              }
+          const smatd matr = ci.BondsToRemove[j].matr == NULL ? uc.GetMatrix(0) :
+            uc.InvMatrix(*ci.BondsToRemove[j].matr);
+          bool uniq = true;
+          for( size_t k=0; k < toDelete.Count(); k++ )  {
+            if( toDelete[k].to == a && 
+              ((toDelete[k].matr != NULL && toDelete[k].matr->GetId() == matr.GetId()) ||
+                toDelete[k].matr == NULL && ci.BondsToRemove[j].matr == NULL))
+            {
+              uniq = false;
+              break;
             }
-            if( uniq )
-              toDelete.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
           }
+          if( uniq )
+            toDelete.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
         }
       }
       for( size_t j=0; j < ci.BondsToCreate.Count(); j++ )  {
         if( ci.BondsToCreate[j].to == a )  {
-          if( ci.BondsToCreate[j].matr == NULL )
-            toCreate.AddCCopy(ci.BondsToCreate[j]);
-          else  {
-            const smatd matr = uc.InvMatrix(*ci.BondsToCreate[j].matr);
-            bool uniq = true;
-            for( size_t k=0; k < toCreate.Count(); k++ )  {
-              if( toCreate[k].matr != NULL && toCreate[k].to == a && toCreate[k].matr->GetId() == matr.GetId() )  {
-                uniq = false;
-                break;
-              }
+          const smatd matr = ci.BondsToCreate[j].matr == NULL ? uc.GetMatrix(0) :
+            uc.InvMatrix(*ci.BondsToCreate[j].matr);
+          bool uniq = true;
+          for( size_t k=0; k < toCreate.Count(); k++ )  {
+            if( toCreate[k].to == a && 
+              ((toCreate[k].matr != NULL && toCreate[k].matr->GetId() == matr.GetId()) ||
+                toCreate[k].matr == NULL && ci.BondsToCreate[j].matr == NULL))
+            {
+              uniq = false;
+              break;
             }
-            if( uniq )
-              toCreate.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
           }
+          if( uniq )
+            toCreate.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
         }
       }
     }

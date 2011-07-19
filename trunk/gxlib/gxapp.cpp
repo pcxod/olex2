@@ -2417,11 +2417,14 @@ void TGXApp::ClearLabels()  {
   XLabels.Clear();
 }
 //..............................................................................
-void TGXApp::GetBonds(const olxstr& Bonds, TXBondPList& List)  {
+ConstPtrList<TXBond> TGXApp::GetBonds(const olxstr& Bonds, bool inc_lines)  {
+  TXBondPList List;
   if( Bonds.IsEmpty() || Bonds.Equalsi("sel") )  {
     TGlGroup& sel = GetRender().GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  {
       if( EsdlInstanceOf(sel[i], TXBond) )
+        List.Add((TXBond&)sel[i]);
+      else if( inc_lines && EsdlInstanceOf(sel[i], TXLine) )
         List.Add((TXBond&)sel[i]);
       else if( EsdlInstanceOf(sel[i], TXAtom) ) {
         TXAtom& xa = ((TXAtom&)sel[i]);
@@ -2429,19 +2432,17 @@ void TGXApp::GetBonds(const olxstr& Bonds, TXBondPList& List)  {
           List.Add(xa.Bond(j));
       }
     }
-    List.ForEach(ACollectionItem::IndexTagSetter<>());
-    List.Pack(ACollectionItem::IndexTagAnalyser<>());
-    return;
+    return ACollectionItem::Unique<>::Do(List);
   }
   TGPCollection *GPC = GetRender().FindCollection(Bonds);
-  if( GPC == NULL )  return;
+  if( GPC == NULL )  return List;
   for( size_t i=0; i < GPC->ObjectCount(); i++ )  {
-    if( i == 0 )  {  // check if the right type !
-      if( !EsdlInstanceOf(GPC->GetObject(0), TXBond) )  
-        return;
-    }
+    // check if the right type !
+    if( i == 0 &&  !EsdlInstanceOf(GPC->GetObject(0), TXBond) )  
+      return List;
     List.Add((TXBond&)GPC->GetObject(i));
   }
+  return List;
 }
 //..............................................................................
 void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
@@ -4074,6 +4075,10 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     while( bi.HasNext() )
       bi.Next().GetGlLabel().FromDataItem(bond_labels->GetItem(i++));
   }
+  //// restore 
+  //BondIterator bonds = GetBonds();
+  //while( bonds.HasNext() )
+  //  bonds.Next().Update();
   const TDataItem& groups = item.FindRequiredItem("Groups");
   // pre-create all groups
   GroupDict.Clear();

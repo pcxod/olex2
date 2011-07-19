@@ -13,7 +13,7 @@
 #include "xatom.h"
 BeginGxlNamespace()
 
-class TXLine: public TXBond  {
+class TXLine: protected TXBond  {
   vec3d FBase, FEdge;
   void Init(bool update_label=true);
 public:
@@ -27,6 +27,11 @@ public:
 
   vec3d& Base()  {  return FBase;  }
   vec3d& Edge()  {  return FEdge;  }
+
+  bool IsVisible() const {  return TXBond::IsVisible();  }
+  void SetVisible(bool v) {  TXBond::SetVisible(v);  }
+
+  double Length() const {  return FBase.DistanceTo(FEdge);  }
 
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
   bool Orient(TGlPrimitive& P);
