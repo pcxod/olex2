@@ -165,11 +165,14 @@ public:
   TSAtom* Find(const TSAtom::Ref& ref) const {
     if( data == NULL )  return NULL;
     const vec3i t = smatd::GetT(ref.matrix_id);
-    if( !data->registry.IsInRange(t) ) return false;
+    if( !data->registry.IsInRange(t) ) return NULL;
     TArrayList<TSAtomPList*>* aum_slice = data->registry.Value(t);
     if( aum_slice == NULL )  return NULL;
     TSAtomPList* au_slice = (*aum_slice)[smatd::GetContainerId(ref.matrix_id)];
-    if( au_slice == NULL ) return false;
+    // the latter condition - if AU is the same but some objects use Q-peaks and
+    // their number differs
+    if( au_slice == NULL || au_slice->Count() <= ref.catom_id)
+      return NULL;
     return (*au_slice)[ref.catom_id];
   }
   //..................................................................................................

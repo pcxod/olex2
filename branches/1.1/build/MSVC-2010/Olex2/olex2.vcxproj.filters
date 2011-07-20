@@ -189,6 +189,12 @@
     <ClCompile Include="..\..\..\repository\zipfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\olex\ctrls\colorext.cpp">
+      <Filter>ctrl\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\olex\ctrls\datectrlext.cpp">
+      <Filter>ctrl\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
@@ -367,6 +373,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\repository\zipfs.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\olex\ctrls\colorext.h">
+      <Filter>ctrl\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\olex\ctrls\datectrlext.h">
+      <Filter>ctrl\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

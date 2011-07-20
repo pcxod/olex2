@@ -815,6 +815,8 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\olex\cmdline.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls.cpp" />
+    <ClCompile Include="..\..\..\olex\ctrls\colorext.cpp" />
+    <ClCompile Include="..\..\..\olex\ctrls\datectrlext.cpp" />
     <ClCompile Include="..\..\..\olex\dgenopt.cpp" />
     <ClCompile Include="..\..\..\olex\dgrad.cpp" />
     <ClCompile Include="..\..\..\olex\main_gui.cpp" />
@@ -875,6 +877,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h" />
     <ClInclude Include="..\..\..\olex\ctrls.h" />
+    <ClInclude Include="..\..\..\olex\ctrls\colorext.h" />
+    <ClInclude Include="..\..\..\olex\ctrls\datectrlext.h" />
     <ClInclude Include="..\..\..\olex\dgenopt.h" />
     <ClInclude Include="..\..\..\olex\dgrad.h" />
     <ClInclude Include="..\..\..\olex\edit.h" />

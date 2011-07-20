@@ -57,5 +57,7 @@ using namespace ctrl_ext;
 #include "ctrls/spinctrlext.h"
 #include "ctrls/listboxext.h"
 #include "ctrls/checkboxext.h"
+#include "ctrls/datectrlext.h"
+#include "ctrls/colorext.h"
 
 #endif

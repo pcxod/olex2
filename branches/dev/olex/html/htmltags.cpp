@@ -344,6 +344,73 @@ TAG_HANDLER_PROC(tag)  {
       Text->OnReturn.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
   }
+/******************* DATE CONTROL *****************************************/
+  if( TagName.Equalsi("date") )  {
+    int flags = wxDP_SPIN;
+    if( tag.HasParam(wxT("dropdown")) )  {
+      flags = wxDP_DROPDOWN;
+    }
+    TDateCtrl *DT = new TDateCtrl(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
+    DT->SetFont(m_WParser->GetDC()->GetFont());
+    CreatedObject = DT;
+    CreatedWindow = DT;
+    DT->SetSize(ax, ay);
+    DT->SetData(Data);
+    wxDateTime dt;
+    dt.ParseDate(Value.u_str());
+    if( dt.IsValid() )
+      DT->SetValue(dt);
+    else {
+      TBasicApp::NewLogEntry(logError) << (
+        olxstr("Invalid format for date and time: ").quote() << Value);
+    }
+    if( !Label.IsEmpty() )  {
+      wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
+      THtml::WordCell* wc = new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
+      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
+      wc->SetDescent(0);
+      contC->InsertCell( wc );
+      contC->InsertCell(new wxHtmlWidgetCell(DT, fl));
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
+    }
+    else
+      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(DT, fl));
+
+    if( tag.HasParam(wxT("ONCHANGE")) )  {
+      DT->OnChange.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
+      DT->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+    }
+  }
+/******************* COLOR CONTROL *******************************************/
+  if( TagName.Equalsi("color") )  {
+    TColorCtrl *CC = new TColorCtrl(m_WParser->GetWindowInterface()->GetHTMLWindow());
+    CC->SetFont(m_WParser->GetDC()->GetFont());
+    CreatedObject = CC;
+    CreatedWindow = CC;
+    CC->SetSize(ax, ay);
+    CC->SetData(Data);
+    CC->SetValue(wxColor(Value.u_str()));
+    if( !Label.IsEmpty() )  {
+      wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
+      THtml::WordCell* wc = new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
+      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
+      wc->SetDescent(0);
+      contC->InsertCell( wc );
+      contC->InsertCell(new wxHtmlWidgetCell(CC, fl));
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
+    }
+    else
+      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(CC, fl));
+
+    if( tag.HasParam(wxT("ONCHANGE")) )  {
+      CC->OnChange.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
+      CC->OnChange.Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+    }
+  }
 /******************* LABEL ***************************************************/
   else if( TagName.Equalsi("label") )  {
     TLabel *Text = new TLabel(m_WParser->GetWindowInterface()->GetHTMLWindow(), Value);

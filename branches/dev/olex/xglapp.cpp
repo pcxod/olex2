@@ -138,7 +138,6 @@ bool TGlXApp::OnInit()  {
 #else
   MainForm->SetIcon(wxIcon(mainicon_xpm));
 #endif
-
   // KUBUNTU opengl does not want any parameters :)
   TEGC::Initialise();  // prepare Olex2 API...
   // register wxWidgets to handle ZIP files
