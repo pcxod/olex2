@@ -53,7 +53,7 @@ namespace lcells {
   };
 
   struct CellReader {
-    static olx_object_ptr<TTypeList<CellInfo> > read(const olxstr &fn);
+    static ConstArrayList<CellInfo> read(const olxstr &fn);
     static olxstr GetCifParamAsString(const cif_dp::CifBlock &block, const olxstr &Param);
     static int ExtractLattFromSymmetry(const cif_dp::CifBlock &block);
     static double ToDouble(const olxstr &str);
@@ -89,7 +89,7 @@ namespace lcells {
       olxstr FullName() const {
         olxstr_buf res = name;
         Entry *p = parent;
-        olxstr ss = '.';
+        olxstr ss = '/';
         while( p != NULL )  {
           res << ss << p->name;
           p = p->parent;
@@ -189,17 +189,32 @@ namespace lcells {
     void Create(const olxstr &folder, const olxstr& index_name);
     void PrintInfo() const;
     static void PrintResults(const TTypeList<ResultEntry> & results);
-    static void Update(const olxstr& index_name);
+    static olxstr Update(const olxstr& index_name, const olxstr &root=EmptyString());
     static olxstr DefaultIndex()  {  return TBasicApp::GetSharedDir() + "lcells.ind";  }
     void SaveToFile(const olxstr &file_name) const;
     Index &LoadFromFile(const olxstr &file_name);
-    TTypeList<ResultEntry> Search(const CellInfo &cell, double vol_diff,
+    ConstTypeList<ResultEntry> Search(const CellInfo &cell, double vol_diff,
       bool filter_by_dimensions) const;
-    static TTypeList<ResultEntry> Search(const olxstr &index_name,
-      const TStrObjList &Params, double vol_diff);
+  };
+  // multiple indices manager
+  struct IndexManager {
+    struct Item {
+      olxstr root;  // new index root
+      olxstr index_file_name; // index file name
+      bool update;  // should index be updated?
+    };
+    TTypeList<Item> indices;
+
+    void LoadConfig(const olxstr &file_name);
+    void SaveConfig(const olxstr &file_name);
+
+    static olxstr DefaultCfgName()  {  return TBasicApp::GetSharedDir() + "lcells.xld";  }
+    void Update(const olxstr &cfg_name, const olxstr &folder_name, const olxstr &index_name);
+    static ConstTypeList<Index::ResultEntry> Search(const olxstr &cfg_name,
+      const TStrObjList &Cmds, double vol_diff);
     static void Search(TStrObjList &Params, const TParamList &Options, TMacroError &E);
     static void Search(const TStrObjList &Params, TMacroError &E);
-    static void Update(const TStrObjList &Params, TMacroError &E);
+    static void Update(TStrObjList &Params, const TParamList &Options, TMacroError &E);
     static TLibrary* ExportLibrary(const olxstr &name=EmptyString());
   };
 };

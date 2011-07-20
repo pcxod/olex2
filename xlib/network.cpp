@@ -97,14 +97,14 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
     if( sa.IsDeleted() )  continue;
     for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSite(j);
-      const smatd m = sa.GetMatrix(0).IsFirst() ? site.matrix :
-        uc.MulMatrix(site.matrix, sa.GetMatrix(0));
+      const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix(0));
       TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
       if( a == NULL )  {
         for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
           const smatd m1 = uc.MulMatrix(site.atom->GetEquiv(k), m);
           TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m1.GetId()));
-          if( a != NULL )  break;
+          if( a != NULL )
+            break;
         }
       }
       if( a != NULL && !a->IsDeleted() )
@@ -635,13 +635,13 @@ void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
 void TNetwork::FindRings(const ElementPList& ringContent, TTypeList<TSAtomPList>& res)  {
   if( ringContent.IsEmpty() )  return;
   TSAtomPList all;
-  all.SetCapacity( NodeCount() );
+  all.SetCapacity(NodeCount());
   for( size_t i=0; i < NodeCount(); i++ )  {
     TSAtom& sa = Node(i);
     sa.SetTag(0);
     if( sa.IsDeleted() ) continue;
     if( sa.NodeCount() > 1 )  // a ring node must have at least two bonds!
-      all.Add( &sa );
+      all.Add(sa);
   }
   // we have to keep the order of the ring atoms, so need an extra 'rings' array
   TSAtomPList ring;
@@ -719,6 +719,10 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
     if( rings.IsNull(i) )
       res.NullItem(resCount + i);
   }
+  for( size_t i=0; i < res.Count(); i++ )  {
+    if( !res.IsNull(i) && !IsRingPrimitive(res[i]) )
+      res.NullItem(i);
+  }
   res.Pack();
 }
 //..............................................................................
@@ -765,7 +769,7 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
   res.Pack();
 }
 //..............................................................................
-TNetwork::RingInfo& TNetwork::AnalyseRing( const TSAtomPList& ring, TNetwork::RingInfo& ri )  {
+TNetwork::RingInfo& TNetwork::AnalyseRing(const TSAtomPList& ring, TNetwork::RingInfo& ri)  {
   int pivot = -1, pivot_count = 0;
   double maxmw = 0;
   for( size_t i=0; i < ring.Count(); i++ )  {
@@ -806,12 +810,79 @@ TNetwork::RingInfo& TNetwork::AnalyseRing( const TSAtomPList& ring, TNetwork::Ri
   for( size_t i=0; i < ri.Substituted.Count(); i++ )  {
     for( size_t j=0;  j < ri.Ternary.Count(); j++ )  {
       if( ring[ri.Substituted[i]]->IsConnectedTo( *ring[ri.Ternary[j]] ) )  {
-        ri.Alpha.Add( ri.Substituted[i] );
+        ri.Alpha.Add(ri.Substituted[i]);
         break;
       }
     }
   }
   return ri;
+}
+//..............................................................................
+index_t TNetwork::ShortestDistance(TSAtom &a, TSAtom &b)  {
+  if( a.IsConnectedTo(b) )  return 0;
+  TSAtomPList &atoms = a.GetNetwork().Nodes;
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    atoms[i]->SetProcessed(false);
+    atoms[i]->SetTag(0);
+  }
+  ////
+  typedef TLinkedList<TSAtom*> list_t;
+  olx_object_ptr<list_t> la_ptr(new list_t), lb_ptr(new list_t);
+  la_ptr().Add(&a)->SetTag(1);
+  lb_ptr().Add(&b)->SetTag(1);
+  while( true )  {
+    olx_object_ptr<list_t> laa_ptr(new list_t), lbb_ptr(new list_t);
+    list_t::Iterator ia = la_ptr().GetIterator();
+    while( ia.HasNext() )  {
+      TSAtom *sa = ia.Next();
+      if( sa->IsProcessed() || sa->GetTag() < 0 )
+        return olx_abs(sa->GetTag())*2-2;
+      for( size_t i=0; i < sa->NodeCount(); i++ )  {
+        TSAtom *n = &sa->Node(i);
+        if( n->GetTag() > 0 )
+          return sa->GetTag() + n->GetTag() - 2;
+        if( n->GetTag() < 0 )  continue;
+        laa_ptr().Add(n)->SetTag(sa->GetTag() + 1);
+      }
+      // mark the front
+      sa->SetTag(-sa->GetTag());
+      sa->SetProcessed(true);
+    }
+    list_t::Iterator ib = lb_ptr().GetIterator();
+    while( ib.HasNext() )  {
+      TSAtom *sa = ib.Next();
+      if( sa->IsProcessed() || sa->GetTag() < 0 )
+        return olx_abs(sa->GetTag())*2-2;
+      for( size_t i=0; i < sa->NodeCount(); i++ )  {
+        TSAtom *n = &sa->Node(i);
+        if( n->GetTag() > 0 )
+          return n->GetTag() + sa->GetTag() - 2;
+        if( n->GetTag() < 0 )  continue;
+        lbb_ptr().Add(n)->SetTag(sa->GetTag() + 1);
+      }
+      sa->SetTag(-sa->GetTag());
+      sa->SetProcessed(true);
+    }
+    la_ptr = laa_ptr;
+    lb_ptr = lbb_ptr;
+  }
+  throw TFunctionFailedException(__OlxSourceInfo, "Unreachable");
+}
+//..............................................................................
+bool TNetwork::IsRingPrimitive(const TSAtomPList& ring)  {
+  if( ring.Count() == 3 )  return true;
+  const size_t cnt = ((ring.Count()%2)==0 ? ring.Count()/2 : ring.Count()/2+1);
+  for( size_t i=0; i < cnt; i++ )  {
+    for( size_t j=2; j < ring.Count()-2; j++ )  {
+      size_t ind = (i+j)%ring.Count();
+      size_t ds = olx_abs(index_t(ind-i-1));
+      size_t rd = olx_min(ds, ring.Count()-ds-2);
+      size_t sd = ShortestDistance(*ring[i], *ring[ind]);
+      if( sd < rd )
+        return false;
+    }
+  }
+  return true;
 }
 //..............................................................................
 bool TNetwork::IsRingRegular(const TSAtomPList& ring)  {

@@ -12,9 +12,11 @@
 #include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
-#include "talist.h"
 #include "tptrlist.h"
 BeginEsdlNamespace()
+
+template <typename> class SharedTypeList;
+template <typename> class ConstTypeList;
 
 template <class T, class DestructCast> class TTypeListExt : public IEObject  {
 private:
@@ -35,9 +37,10 @@ protected:
   };
 public:
   // creates a new empty objects
-  TTypeListExt() {  }
+  TTypeListExt() {}
   // allocates size elements (can be accessed diretly)
-  TTypeListExt(size_t size) : List(size)  {  }
+  TTypeListExt(size_t size) : List(size)  {}
+  TTypeListExt(int size) : List(size)  {}
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the copy
    constructor must exist for nonpointer objects */
@@ -46,11 +49,23 @@ public:
       List[i] =  new T(list[i]);
   }
 //..............................................................................
+  TTypeListExt(const SharedTypeList<T>& list)  {
+    TTypeListExt &l = list.Release();
+    List.TakeOver(l.List);
+    delete &l;
+  }
+//..............................................................................
+  TTypeListExt(const ConstTypeList<T>& list)  {
+    TTypeListExt &l = list.Release();
+    List.TakeOver(l.List);
+    delete &l;
+  }
+//..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the copy
    constructor must exist for nonpointer objects */
   template <class alist> TTypeListExt(const alist& list ) : List(list.Count())  {
     for( size_t i=0; i < list.Count(); i++ )
-      List[i] =  new T(list[i]);
+      List[i] = new T(list[i]);
   }
 //..............................................................................
   /* copies values from an array of size elements  */
@@ -67,6 +82,12 @@ public:
     for( size_t i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.Clear();
+    return *this;
+  }
+//..............................................................................
+  TTypeListExt &TakeOver(TTypeListExt& l, bool do_delete=false)  {
+    List.TakeOver(l.List);
+    if( do_delete )  delete &l;
     return *this;
   }
 //..............................................................................
@@ -149,7 +170,6 @@ public:
       delete (DestructCast*)List[index];
     return *(List[index] = new T(Obj));
   }
-//..............................................................................
 //..............................................................................
   // assigned copy inserted
   inline T& InsertACopy(size_t index, const T& Obj)  {  
@@ -276,6 +296,22 @@ public:
    must exist  */
   TTypeListExt& operator = (const TTypeListExt& list)  {  return Assign(list);  }
 //..............................................................................
+  template <class wrapper_t> TTypeListExt &_Assign_Wrapper(const wrapper_t& list)  {
+    Clear();
+    TTypeListExt &l = list.Release();
+    List.TakeOver(l.List);
+    delete &l;
+    return *this;
+  }
+  
+  TTypeListExt & operator = (const SharedTypeList<T>& list)  {
+    return _Assign_Wrapper(list);
+  }
+//..............................................................................
+  TTypeListExt & operator = (const ConstTypeList<T>& list)  {
+    return _Assign_Wrapper(list);
+  }
+//..............................................................................
   /* copy - creates new copies of the objest, be careful as the copy constructor
    must exist  */
   template <class alist> TTypeListExt& operator = (const alist& list)  {
@@ -359,7 +395,8 @@ public:
   /* rearranges the list according to provided indexes. Indexes must be unique unless
     objects are pointers
   */
-  TTypeListExt& Rearrange(const TSizeList& indexes)  {
+  template <class size_t_list_t>
+  TTypeListExt& Rearrange(const size_t_list_t& indexes)  {
     List.Rearrange(indexes);
     return *this;
   }
@@ -411,9 +448,17 @@ template <class T>
     TTypeList() : TTypeListExt<T,T>()  {  }
     TTypeList(const size_t size) : TTypeListExt<T,T>(size)  {  }
     TTypeList(const TTypeList& list) : TTypeListExt<T,T>(list)  {  }
+    TTypeList(const SharedTypeList<T>& list) : TTypeListExt<T,T>(list)  {  }
     template <class alist> TTypeList(const alist& list ) : TTypeListExt<T,T>(list)  {  }
     TTypeList(size_t size, const T* array) : TTypeListExt<T,T>(size, array)  {  }
-    TTypeList& operator = (const TTypeList& list)  { TTypeListExt<T,T>::operator = (list);  return *this;  }
+    TTypeList& operator = (const TTypeList& list)  {
+      TTypeListExt<T,T>::operator = (list);
+      return *this;
+    }
+    TTypeList& operator = (const SharedTypeList<T>& list)  {
+      TTypeListExt<T,T>::operator = (list);
+      return *this;
+    }
     template <class alist> TTypeList& operator = (const alist& list)  { 
       TTypeListExt<T,T>::operator = (list);  
       return *this;  
@@ -429,6 +474,36 @@ ListBubbleSorter<TTypeListExt<T,DestructCast>,const T*,
 template <class T, typename DestructCast>
   TListTraverser<TTypeListExt<T,DestructCast> > TTypeListExt<T,DestructCast>::Traverser;
 #endif
+
+
+template <typename item_t>
+class SharedTypeList : public shared_list<TTypeList<item_t>, item_t> {
+  typedef TTypeList<item_t> lst_t;
+  typedef shared_list<lst_t, item_t> parent_t;
+public:
+  SharedTypeList() {}
+  SharedTypeList(const SharedTypeList &l) : parent_t(l) {}
+  SharedTypeList(lst_t *lst) : parent_t(lst) {}
+  SharedTypeList(lst_t &lst) : parent_t(lst) {}
+  SharedTypeList &operator = (const SharedTypeList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
+
+template <typename item_t>
+class ConstTypeList : public const_list<TTypeList<item_t>, item_t> {
+  typedef TTypeList<item_t> lst_t;
+  typedef const_list<lst_t, item_t> parent_t;
+public:
+  ConstTypeList(const ConstTypeList &l) : parent_t(l) {}
+  ConstTypeList(lst_t *lst) : parent_t(lst) {}
+  ConstTypeList(lst_t &lst) : parent_t(lst) {}
+  ConstTypeList &operator = (const ConstTypeList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
 
 EndEsdlNamespace()
 #endif

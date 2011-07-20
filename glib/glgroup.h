@@ -59,8 +59,9 @@ public:
         l.Add((obj_t*)Objects[i]);
     return l;
   }
-  template <class obj_t> TPtrList<obj_t>& Extract(TPtrList<obj_t>& l) const {
-    return Extract<obj_t,TPtrList<obj_t> >(l);
+  template <class obj_t> SharedPtrList<obj_t> Extract() const {
+    return SharedPtrList<obj_t>(Extract<obj_t,TPtrList<obj_t> >(
+      *(new TPtrList<obj_t>)));
   }
   void Remove(AGDrawObject& G);
   void RemoveHidden();

@@ -98,7 +98,7 @@ struct direction : public adirection {
 
 struct rotated_adp_constraint  {
   const TCAtom &source, &destination;
-  const adirection &dir;
+  adirection &dir;
   double angle;
   bool refine_angle;
   rotated_adp_constraint(TCAtom &_source, TCAtom &_destination,
@@ -109,7 +109,12 @@ struct rotated_adp_constraint  {
     dir(_dir),
     angle(_angle),
     refine_angle(_refine_angle)
-  {}
+  {
+    _dir.IncRef();
+  }
+  ~rotated_adp_constraint()  {
+    dir.DecRef();
+  }
   bool IsValid() const {
     return !(!dir.IsValid() || source.IsDeleted() || destination.IsDeleted());
   }
@@ -136,6 +141,7 @@ public:
   virtual TStrList ToInsList(const RefinementModel& rm) const = 0;
   virtual void UpdateParams(size_t index, const TStrList& toks) = 0;
   virtual const olxstr& GetName() const = 0;
+  virtual void ValidateAll() = 0;
   virtual void Clear() = 0;
   virtual TDataItem& ToDataItem(TDataItem& di) const = 0;
   virtual void FromDataItem(const TDataItem* di, const RefinementModel& rm) = 0;
@@ -151,7 +157,7 @@ public:
   ConstraintContainer() {}
   ~ConstraintContainer() {}
   // validates all the constraints and removes the invalid ones
-  void Validate()  {
+  void ValidateAll()  {
     for( size_t i=0; i < items.Count(); i++ )
       if( !items[i].IsValid() )
         items.NullItem(i);

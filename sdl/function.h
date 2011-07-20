@@ -55,7 +55,6 @@ const unsigned int   fpNone  = 0x00000001,
                      fpNine  = 0x00000200,
                      fpTen   = 0x00000400,
                      fpAny   = 0x0000ffff,
-                     fpCheckAny = 0x0000f000,
 
                      fpSpecialCheckA = 0x00010000,
                      fpSpecialCheckB = 0x00020000,
@@ -143,6 +142,21 @@ public:
   virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const = 0;
   virtual const olxstr& GetRuntimeSignature() const = 0;
   virtual ABasicFunction* Replicate() const = 0;
+  bool ValidateState(const TStrObjList &Params, TMacroError &E)  {
+    const size_t argC = Params.Count(),
+      arg_m = (0x0001 << argC);
+    unsigned int ArgStateMask = GetArgStateMask();
+    if( (ArgStateMask&fpAny) != fpAny && (ArgStateMask&arg_m) == 0)  {
+      E.WrongArgCount(*this, argC);
+      return false;
+    }
+    // the special checks are in the high word
+    if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
+      E.WrongState(*this);
+      return false;
+    }
+    return true;
+  }
 };
 //------------------------------------------------------------------------------
 template <class Base>
@@ -162,8 +176,6 @@ template <class Base>
       SetName(funcName);
       SetDescription(desc);
     }
-    virtual ~TFunction()  {}
-
     virtual ABasicFunction* Replicate() const  {
       return new TFunction<Base>(BaseClassInstance, Func, GetName(), ArgStateMask, GetDescription());
     }
@@ -179,24 +191,16 @@ template <class Base>
     virtual const olxstr& GetRuntimeSignature() const {  return RunSignature;  }
 
     virtual void Run(const TStrObjList &Params, class TMacroError& E)  {
-      RunSignature = GetName();
-      RunSignature << '(';
+      if( !ValidateState(Params, E) )  return;
       const size_t argC = Params.Count();
-      if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
-        E.WrongArgCount(*this, argC);
-        return;
-      }
-      // the special checks are in the high word
-      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
-        E.WrongState(*this);
-        return;
-      }
       try  {
-         for( size_t i=0; i < argC; i++ )  {
-           RunSignature << '[' << Params[i] << ']';
-           if( i < (argC-1) )  RunSignature << ", ";
-         }
-         RunSignature << ')';
+        RunSignature = olxstr(GetName(), 128);
+        RunSignature << '(';
+        for( size_t i=0; i < argC; i++ )  {
+          RunSignature << '[' << Params[i] << ']';
+          if( i < (argC-1) )  RunSignature << ", ";
+        }
+        RunSignature << ')';
         (BaseClassInstance->*Func)(Params, E);
       }
       catch( TExceptionBase& exc )  {
@@ -216,10 +220,9 @@ template <class Base>
     {
       ArgStateMask = argc;
       Func = func;
-      SetName( funcName );
-      SetDescription( desc );
+      SetName(funcName);
+      SetDescription(desc);
     }
-    virtual ~TStaticFunction()  {  ;  }
 
     virtual ABasicFunction* Replicate() const  {
       return new TStaticFunction(Func, GetName(), ArgStateMask, GetDescription());
@@ -236,23 +239,16 @@ template <class Base>
     virtual const olxstr& GetRuntimeSignature() const {  return RunSignature;  }
 
     virtual void Run(const TStrObjList &Params, class TMacroError& E)  {
-      RunSignature = GetName();
-      RunSignature << '(';
-      size_t argC = Params.Count();
-      if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
-        E.WrongArgCount(*this, argC);
-        return;
-      }
-      if( (ArgStateMask&0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
-        E.WrongState(*this);
-        return;
-      }
+      if( !ValidateState(Params, E) )  return;
+      const size_t argC = Params.Count();
       try  {
-         for( size_t i=0; i < argC; i++ )  {
-           RunSignature << '['  << Params[i] << ']';
-           if( i < (argC-1) )  RunSignature << ", ";
-         }
-         RunSignature << ')';
+        RunSignature = olxstr(GetName(), 128);
+        RunSignature << '(';
+        for( size_t i=0; i < argC; i++ )  {
+          RunSignature << '['  << Params[i] << ']';
+          if( i < (argC-1) )  RunSignature << ", ";
+        }
+        RunSignature << ')';
         Func(Params, E);
       }
       catch( TExceptionBase& exc )  {
@@ -278,12 +274,10 @@ template <class Base>
       ArgStateMask = argc;
       BaseClassInstance = baseClassInstance;
       Macro = macro;
-      SetName( macroName );
-      SetDescription( desc );
+      SetName(macroName);
+      SetDescription(desc);
       ParseOptions(validOptions, ValidOptions);
     }
-
-    virtual ~TMacro()  {   }
 
     virtual ABasicFunction* Replicate() const  {
       return new TMacro<Base>(BaseClassInstance, Macro, GetName(),
@@ -299,32 +293,25 @@ template <class Base>
     virtual const olxstr& GetRuntimeSignature() const {  return RunSignature;  }
 
     virtual void Run(TStrObjList &Params, const TParamList &Options, class TMacroError& E)  {
-      RunSignature = GetName();
-      RunSignature << ' ';
+      if( !ValidateState(Params, E) )  return;
       const size_t argC = Params.Count();
-      if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
-        E.WrongArgCount(*this, argC);
-        return;
-      }
       for( size_t i=0; i < Options.Count(); i++ )  {
         if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
           E.WrongOption(*this, Options.GetName(i) );
           return;
         }
       }
-      if( (ArgStateMask & 0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
-        E.WrongState( *this );
-        return;
-      }
       try  {
-         for( size_t i=0; i < argC; i++ )  {
-           RunSignature << '[' << Params[i] << ']';
-           if( i < (argC-1) )  RunSignature << ", ";
-         }
-         RunSignature << ' ';
-         for( size_t i=0; i < Options.Count(); i++ )  {
-           RunSignature << '{' << Options.GetName(i) << '=' << Options.GetValue(i) << '}';
-         }
+        RunSignature = olxstr(GetName(), 128);
+        RunSignature << ' ';
+        for( size_t i=0; i < argC; i++ )  {
+          RunSignature << '[' << Params[i] << ']';
+          if( i < (argC-1) )  RunSignature << ", ";
+        }
+        RunSignature << ' ';
+        for( size_t i=0; i < Options.Count(); i++ )  {
+          RunSignature << '{' << Options.GetName(i) << '=' << Options.GetValue(i) << '}';
+        }
         (BaseClassInstance->*Macro)(Params, Options, E);
       }
       catch( TExceptionBase& exc )  {
@@ -363,8 +350,6 @@ template <class Base>
       ParseOptions(validOptions, ValidOptions);
     }
 
-    virtual ~TStaticMacro()  {  ;  }
-
     virtual ABasicFunction* Replicate() const  {
       return new TStaticMacro(Macro, GetName(), OptionsToString(ValidOptions),
                               ArgStateMask, GetDescription() );
@@ -379,32 +364,25 @@ template <class Base>
     virtual const olxstr& GetRuntimeSignature() const {  return RunSignature;  }
 
     virtual void Run(TStrObjList &Params, const TParamList &Options, class TMacroError& E)  {
-      RunSignature = GetName();
-      RunSignature << ' ';
+      if( !ValidateState(Params, E) )  return;
       const size_t argC = Params.Count();
-      if( (ArgStateMask&fpCheckAny) != fpCheckAny && (ArgStateMask & (0x0001 << argC)) == 0)  {
-        E.WrongArgCount(*this, argC);
-        return;
-      }
       for( size_t i=0; i < Options.Count(); i++ )  {
         if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
-          E.WrongOption(*this, Options.GetName(i) );
+          E.WrongOption(*this, Options.GetName(i));
           return;
         }
       }
-      if( (ArgStateMask & 0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
-        E.WrongState(*this);
-        return;
-      }
       try  {
-         for( size_t i=0; i < argC; i++ )  {
-           RunSignature << '[' << Params[i] <<  ']';
-           if( i < (argC-1) )  RunSignature << ", ";
-         }
-         RunSignature << ' ';
-         for( size_t i=0; i < Options.Count(); i++ )  {
-           RunSignature << '{' << Options.GetName(i) << '=' << Options.GetValue(i) << '}';
-         }
+        RunSignature = olxstr(GetName(), 128);
+        RunSignature << ' ';
+        for( size_t i=0; i < argC; i++ )  {
+          RunSignature << '[' << Params[i] <<  ']';
+          if( i < (argC-1) )  RunSignature << ", ";
+        }
+        RunSignature << ' ';
+        for( size_t i=0; i < Options.Count(); i++ )  {
+          RunSignature << '{' << Options.GetName(i) << '=' << Options.GetValue(i) << '}';
+        }
         (*Macro)(Params, Options, E);
       }
       catch( TExceptionBase& exc )  {

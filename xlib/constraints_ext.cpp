@@ -57,11 +57,11 @@ const olxstr& rotated_adp_constraint::GetName()  {
 }
 //...................................................................................
 void rotated_adp_constraint::ToDataItem(TDataItem& di) const {
-  di.AddField("source", source.GetTag()).
-    AddField("destination", destination.GetTag()).
-    AddField("angle", angle).
-    AddField("refine_angle", refine_angle);
-  dir.ToDataItem(di.AddItem("dir"));
+  di.AddField("source", source.GetTag())
+    .AddField("destination", destination.GetTag())
+    .AddField("angle", angle)
+    .AddField("refine_angle", refine_angle)
+    .AddField("dir_id", dir.id);
 }
 //...................................................................................
 rotated_adp_constraint* rotated_adp_constraint::FromDataItem(
@@ -70,7 +70,7 @@ rotated_adp_constraint* rotated_adp_constraint::FromDataItem(
   return new rotated_adp_constraint(
     rm.aunit.GetAtom(di.GetRequiredField("source").ToSizeT()),
     rm.aunit.GetAtom(di.GetRequiredField("destination").ToSizeT()),
-      *adirection::FromDataItem(di.FindRequiredItem("dir"), rm),
+      rm.DirectionById(di.GetRequiredField("dir_id")),
       di.GetRequiredField("angle").ToDouble(),
       di.GetRequiredField("refine_angle").ToBool()
     );

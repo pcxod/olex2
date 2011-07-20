@@ -31,9 +31,11 @@ void TUnitCell::ClearEllipsoids()  {
   Ellipsoids.Clear();
 }
 //..............................................................................
-void TUnitCell::AddEllipsoid()  {
-  Ellipsoids.SetCount(Ellipsoids.Count() + 1);
-  Ellipsoids.GetLast().SetCount(Matrices.Count());
+void TUnitCell::AddEllipsoid(size_t n)  {
+  size_t st = Ellipsoids.Count();
+  Ellipsoids.SetCount(Ellipsoids.Count() + n);
+  for( size_t i=0; i < n; i++ )
+    Ellipsoids[i+st].SetCount(Matrices.Count());
 }
 //..............................................................................
 void TUnitCell::Clear()  {
@@ -721,12 +723,9 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
   TBasicApp::GetInstance().Update();
 }
 //..................................................................................
-void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, short val, 
-                                  ElementRadii* radii, const TCAtomPList* _template)
+const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
+  TUnitCell::BuildAtomMasks(const vec3s& dim, ElementRadii* radii, double delta) const
 {
-  TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
-  GenereteAtomCoordinates(allAtoms, true, _template);
-  const vec3s dim = map.GetSize();
   // angstrem per pixel scale
   double capp = Lattice->GetAsymmUnit().GetAxes()[2]/dim[2],
          bapp = Lattice->GetAsymmUnit().GetAxes()[1]/dim[1],
@@ -738,7 +737,7 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
   const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
   olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).IsDeleted() )  continue;
+    if( au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ )  continue;
     size_t ind = scatterers.IndexOf(au.GetAtom(i).GetType().index);
     if( ind != InvalidIndex )  continue;
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
@@ -757,6 +756,22 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
     }
     scatterers.Add(au.GetAtom(i).GetType().index, spm);
   }
+  return scatterers;
+}
+//..................................................................................
+void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, short val, 
+  ElementRadii* radii, const TCAtomPList* _template) const
+{
+  TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
+  GenereteAtomCoordinates(allAtoms, true, _template);
+  const vec3s dim = map.GetSize();
+  // angstrem per pixel scale
+  double capp = Lattice->GetAsymmUnit().GetAxes()[2]/dim[2],
+         bapp = Lattice->GetAsymmUnit().GetAxes()[1]/dim[1],
+         aapp = Lattice->GetAsymmUnit().GetAxes()[0]/dim[0];
+  // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
+  olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers =
+    BuildAtomMasks(dim, radii, delta);
   vec3i aa[8];
   for( size_t i=0; i < allAtoms.Count(); i++ )  {
     TArray3D<bool>* spm = scatterers[allAtoms[i].GetB()->GetType().index];
@@ -795,7 +810,7 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
 }
 //..................................................................................
 void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, short val, 
-                                  ElementRadii* _radii, const TCAtomPList* _template)
+  ElementRadii* _radii, const TCAtomPList* _template) const
 {
   TTypeList< AnAssociation3<vec3f,TCAtom*, float> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
@@ -885,7 +900,7 @@ void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
 }
 //..................................................................................
 void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short val, 
-                                  ElementRadii* radii, const TCAtomPList* _template)
+  ElementRadii* radii, const TCAtomPList* _template) const
 {
   const vec3s dims = map.GetSize();
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();

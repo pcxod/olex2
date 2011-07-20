@@ -1079,8 +1079,14 @@ void TAsymmUnit::_UpdateQPeaks()  {
   size_t ind = InvalidIndex;
   for( size_t i=0; i < ac; i++ )
     sortedPeaks.GetObject(i)->SetLabel(olxstr('Q') << olxstr(ac-i), false);
-  MinQPeak = sortedPeaks.GetKey(0);
-  MaxQPeak = sortedPeaks.GetLast().Comparable;
+  if( ac )  {
+    MinQPeak = sortedPeaks.GetKey(0);
+    MaxQPeak = sortedPeaks.GetLast().Comparable;
+  }
+  else  {
+    MaxQPeak = -1000;
+    MinQPeak = 1000;
+  }
 }
 //..............................................................................
 void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
@@ -1090,7 +1096,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     vec3d test_pos(crd);
     TCAtom* ca = Lattice->GetUnitCell().FindOverlappingAtom(test_pos, is_q_peak, 0.01);
     if( ca != NULL )  {
-      if( is_q_peak )  {
+      if( is_q_peak && ca->GetType() == iQPeakZ )  {
         ca->SetDeleted(false);
         ca->SetQPeak(Params[0].ToDouble());
         _UpdateQPeaks();

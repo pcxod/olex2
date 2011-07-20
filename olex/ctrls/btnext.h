@@ -17,40 +17,31 @@ namespace ctrl_ext  {
     bool Down;
   protected:
     void _ClickEvent();
-    olxstr OnClickStr, Data, OnUpStr, OnDownStr, DependMode, Hint;
+    olxstr Data, DependMode, Hint;
     TActionQueue *ActionQueue;
     virtual wxWindow* GetParent() const = 0;
     void _SetDown(bool v)  {  Down = v;  }
   public:
     AButtonBase(wxWindow* this_wnd) :
       AOlxCtrl(this_wnd),
-      OnClick(Actions.New(evt_on_click_id)),
-      OnUp(Actions.New(evt_on_uncheck_id)),
-      OnDown(Actions.New(evt_on_check_id)),
+      OnClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_click_id)),
+      OnUp(AOlxCtrl::ActionQueue::New(Actions, evt_on_uncheck_id)),
+      OnDown(AOlxCtrl::ActionQueue::New(Actions, evt_on_check_id)),
       Down(false),
-      ActionQueue(NULL),
-      OnClickStr(EmptyString()),
-      OnUpStr(EmptyString()),
-      OnDownStr(EmptyString()),
-      DependMode(EmptyString()),
-      Hint(EmptyString()),
-      Data(EmptyString())  {  SetToDelete(false);  }
+      ActionQueue(NULL)  {  SetToDelete(false);  }
     virtual ~AButtonBase() {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
     bool Execute(const IEObject *Sender, const IEObject *Data);
     void OnRemove()  {  ActionQueue = NULL;  }
 
-    DefPropC(olxstr, OnClickStr) // passed to OnClick event
-    DefPropC(olxstr, Data)       // data associated with object
-    DefPropC(olxstr, OnUpStr)   // passed to OnUp event
-    DefPropC(olxstr, OnDownStr) // passed to OnDown event
-    DefPropC(olxstr, Hint) // passed to OnDown event
+    DefPropC(olxstr, Data)
+    DefPropC(olxstr, Hint)
 
     bool IsDown() const {  return Down;  }
     void SetDown(bool v);
 
-    TActionQueue &OnClick, &OnUp, &OnDown;
+    AOlxCtrl::ActionQueue &OnClick, &OnUp, &OnDown;
   };
 
   class TButton: public wxButton, public AButtonBase {
@@ -65,7 +56,6 @@ namespace ctrl_ext  {
       const wxSize& size = wxDefaultSize, long style = 0) :
         wxButton(parent, id, label, pos, size, style),
         AButtonBase(this)  {}
-    virtual ~TButton() {}
 
     void SetCaption(const olxstr &l)  {  wxButton::SetLabel(l.u_str());  }
     olxstr GetCaption() const { return wxButton::GetLabel();  }
@@ -87,7 +77,6 @@ namespace ctrl_ext  {
       const wxSize& size=wxDefaultSize, long style=wxBU_AUTODRAW) :
         wxBitmapButton(parent, -1, bitmap, pos, size, style),
         AButtonBase(this)  {}
-    virtual ~TBmpButton() {}
 
     DefPropC(olxstr, Source)
 

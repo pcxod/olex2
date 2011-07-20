@@ -37,11 +37,11 @@ bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
     SetChecked( mc->CheckStatus(DependMode) );
   }
   StartEvtProcessing()
-    OnClick.Execute((AOlxCtrl*)this, &GetOnClickStr());
+    OnClick.Execute((AOlxCtrl*)this);
     if( IsChecked() )
-      OnCheck.Execute((AOlxCtrl*)this, &GetOnCheckStr());
+      OnCheck.Execute((AOlxCtrl*)this);
     else
-      OnUncheck.Execute((AOlxCtrl*)this, &GetOnUncheckStr());
+      OnUncheck.Execute((AOlxCtrl*)this);
   EndEvtProcessing()
 
   return true;
@@ -49,10 +49,10 @@ bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
 //..............................................................................
 void TCheckBox::ClickEvent(wxCommandEvent &event)  {
   StartEvtProcessing()
-    OnClick.Execute((AOlxCtrl*)this, &GetOnClickStr());
+    OnClick.Execute((AOlxCtrl*)this);
     if( IsChecked() )
-      OnCheck.Execute((AOlxCtrl*)this, &GetOnCheckStr());
+      OnCheck.Execute((AOlxCtrl*)this);
     else
-      OnUncheck.Execute((AOlxCtrl*)this, &GetOnUncheckStr());
+      OnUncheck.Execute((AOlxCtrl*)this);
   EndEvtProcessing()
 }

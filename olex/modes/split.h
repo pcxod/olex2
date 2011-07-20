@@ -150,7 +150,7 @@ public:
           xa->ccrd() = c;
           olxstr new_l = XA->GetLabel();
           olxch lc = olxstr::o_tolower(new_l.GetLast());
-          if( olxstr::o_isalpha(lc) )
+          if( olxstr::o_isalpha(lc) && new_l.Length() > 1 )
             new_l[new_l.Length()-1] = ++lc;
           else
             new_l << 'a';

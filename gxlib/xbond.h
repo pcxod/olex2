@@ -65,7 +65,7 @@ public:
   TXAtom& Another(const TSAtom& a) const {  return (TXAtom&)TSBond::Another(a);  }
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
-  void UpdateLabel()  {  GetGlLabel().Update();  }
+  void UpdateLabel()  {  GetGlLabel().UpdateLabel();  }
   // creates legend up three levels (0 to 2)
   static olxstr GetLegend(const TSBond& B, const short level);
 
@@ -111,6 +111,9 @@ public:
   // should be called when atom coordinates have changed
   virtual void Update();
 
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
+  virtual const vec3d &GetBaseCrd() const;
+  static TStrList PovDeclare();
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
 };

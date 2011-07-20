@@ -21,6 +21,7 @@
 #include "glgroup.h"
 #include "exyzgroup.h"
 #include "glutil.h"
+#include "povdraw.h"
 
 bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
   TXAtom::FAtomParams = NULL; 
@@ -610,21 +611,108 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
   }
 }
 //..............................................................................
+TStrList TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPrimitiveComparator> &materials) const
+{
+  TStrList out;
+  if( DrawStyle() == adsStandalone && !IsStandalone() )
+    return out;
+  out.Add(" object { union {");
+  const TGPCollection &gpc = GetPrimitives();
+  for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+    TGlPrimitive &glp = gpc.GetPrimitive(i);
+    if( glp.GetName() == "Polyhedron" )
+      continue;
+    if( GetEllipsoid() == NULL &&
+        (glp.GetName() == "Disks" || glp.GetName() == "Rims" ) )
+      continue;
+    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
+    out.Add("  object {") << "atom_" << glp.GetName().ToLowerCase().Replace(' ', '_')
+      << " texture {" << p_mat << "}}";
+  }
+  pov::CrdTransformer crdc(Parent.GetBasis());
+  out.Add("  }");
+  if( (DrawStyle() == adsEllipsoid || DrawStyle() == adsOrtep) &&
+      GetEllipsoid() != NULL )
+  {
+    mat3d m = GetEllipsoid()->GetMatrix()*GetDrawScale();
+    m[0] *= GetEllipsoid()->GetSX();
+    m[1] *= GetEllipsoid()->GetSY();
+    m[2] *= GetEllipsoid()->GetSZ();
+    out.Add("  transform {");
+    out.Add("   matrix") << pov::to_str(crdc.matr(m), crdc.crd(crd()));
+    out.Add("   }");
+  }
+  else {
+    out.Add("  scale ") << GetDrawScale();
+    out.Add("  translate") << pov::to_str(crdc.crd(crd()));
+  }
+  out.Add(" }");
+  if( GetPolyhedronType() != polyNone && GetPolyhedron() != NULL )  {
+    olxstr poly_mat_name = pov::get_mat_name("Polyhedron",
+      GetPrimitives().GetStyle(), materials);
+    TXAtom::Poly &p = *GetPolyhedron();
+    out.Add(" union { //") << GetLabel();
+    for( size_t i=0; i < p.faces.Count(); i++ )  {
+      out.Add("  smooth_triangle {");
+      for( int j=0; j < 3; j++ )  {
+        out.Add("   ") << pov::to_str(crdc.crd(p.vecs[p.faces[i][j]]))
+          << pov::to_str(crdc.normal(p.norms[i]));
+      }
+      out.Add("   texture {") << poly_mat_name << '}';
+      out.Add("  }");
+    }
+    out.Add(" }");
+  }
+  return out;
+}
+//..............................................................................
+TStrList TXAtom::PovDeclare()  {
+  TStrList out;
+  out.Add("#declare atom_sphere=object{ sphere {<0,0,0>, 1} }");
+  out.Add("#declare atom_small_sphere=object{ sphere {<0,0,0>, 0.5} }");
+  out.Add("#declare atom_rims=object{ disc {<0,0,1><0,0,1>, 0.1} }");
+  const double RimR = FAtomParams->GetNumParam("RimR", 1.02, true);  // radius
+  const double RimW = FAtomParams->GetNumParam("RimW", 0.05, true);  // width
+  out.Add("#declare atom_rims=object{ union {");
+  out.Add(" cylinder {<") << RimW << ",0,0>, <-" << RimW << ",0,0>, " << RimR << '}';
+  out.Add(" cylinder {<0,") << RimW << ",0>, <0,-" << RimW << ",0>, " << RimR << '}';
+  out.Add(" cylinder {<0,0,") << RimW << ">, <0,0,-" << RimW << ">, " << RimR << '}';
+  out.Add("}}");
+
+  double DiskIR = FAtomParams->GetNumParam("DiskIR", 0.0, true);  // inner radius for disks
+  double DiskOR = FAtomParams->GetNumParam("DiskOR", RimR, true);  // outer radius
+  double DiskS = FAtomParams->GetNumParam("DiskS", RimW, true);  // separation
+  out.Add("#declare atom_disks=object{ union {");
+  out.Add(" disc {<") << DiskS << ",0,0>, <-1,0,0>, " << DiskOR << ',' << DiskIR << '}';
+  out.Add(" disc {<-") << DiskS << ",0,0>, <1,0,0>, " << DiskOR << ',' << DiskIR << '}';
+  out.Add(" disc {<0,") << DiskS << ",0>, <0,-1,0>, " << DiskOR << ',' << DiskIR << '}';
+  out.Add(" disc {<0,-") << DiskS << ",0>, <0,1,0>, " << DiskOR << ',' << DiskIR << '}';
+  out.Add(" disc {<0,0,") << DiskS << ">, <0,0,-1>, " << DiskOR << ',' << DiskIR << '}';
+  out.Add(" disc {<0,0,-") << DiskS << ">, <0,0,1>, " << DiskOR << ',' << DiskIR << '}';
+  out.Add("}}");
+  out.Add("#declare atom_cross=object{ union {");
+  out.Add(" cylinder {<-1,0,0>, <1,0,0>, 0.05}");
+  out.Add(" cylinder {<0,-1,0>, <0,1,0>, 0.05}");
+  out.Add(" cylinder {<0,0,-1>, <0,0,1>, 0.05}");
+  out.Add("}}");
+  return out;
+}
+//..............................................................................
 void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   TGlMaterial GlM;
   TGlPrimitiveParams *PParams;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
-  olxstr Legend("Atoms");
-  TGraphicsStyle& GS= Parent.GetStyles().NewStyle(Legend, true);
-  double SphereQ = GS.GetNumParam("SphereQ", 15.0, true);
-  double RimR = GS.GetNumParam("RimR", 1.02, true);  // radius
-  double RimW = GS.GetNumParam("RimW", 0.05, true);  // width
-  double RimQ = GS.GetNumParam("RimQ", SphereQ, true);  // quality
+  ValidateAtomParams();
+  double SphereQ = FAtomParams->GetNumParam("SphereQ", 15.0, true);
+  double RimR = FAtomParams->GetNumParam("RimR", 1.02, true);  // radius
+  double RimW = FAtomParams->GetNumParam("RimW", 0.05, true);  // width
+  double RimQ = FAtomParams->GetNumParam("RimQ", SphereQ, true);  // quality
 
-  double DiskIR = GS.GetNumParam("DiskIR", 0.0, true);  // inner radius for disks
-  double DiskOR = GS.GetNumParam("DiskOR", RimR, true);  // outer radius
-  double DiskQ = GS.GetNumParam("DiskQ", RimQ, true);  // quality
-  double DiskS = GS.GetNumParam("DiskS", RimW, true);  // separation
+  double DiskIR = FAtomParams->GetNumParam("DiskIR", 0.0, true);  // inner radius for disks
+  double DiskOR = FAtomParams->GetNumParam("DiskOR", RimR, true);  // outer radius
+  double DiskQ = FAtomParams->GetNumParam("DiskQ", RimQ, true);  // quality
+  double DiskS = FAtomParams->GetNumParam("DiskS", RimW, true);  // separation
 
 //..............................
   // create sphere
@@ -1127,7 +1215,7 @@ void TXAtom::SetPolyhedronType(short type)  {
   }
 }
 //..............................................................................
-int TXAtom::GetPolyhedronType()  {
+int TXAtom::GetPolyhedronType() const {
   int int_mask = GetPrimitives().GetStyle().GetNumParam(GetPrimitiveMaskName(), 0);
   return (int_mask & (1 << PolyhedronIndex)) == 0 ? polyNone :
     GetPrimitives().GetStyle().GetParam(PolyTypeName, "0", true).ToInt();

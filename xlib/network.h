@@ -16,6 +16,7 @@
 #include "tptrlist.h"
 #include "conninfo.h"
 #include "atomregistry.h"
+#include "linked_list.h"
 
 BeginXlibNamespace()
 
@@ -150,15 +151,18 @@ public:
 
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);
-  // inverttion must be specified for the permutational graph match
+  static bool IsRingPrimitive(const TSAtomPList& ring);
+  // invertion must be specified for the permutational graph match
   bool DoMatch(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert,
     double (*weight_calculator)(const TSAtom&));
-  bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, const TSizeList& rootsToSkip);
+  bool IsSubgraphOf(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res,
+    const TSizeList& rootsToSkip);
 
 protected:
   static int TNetwork_SortRingAtoms(const TSAtom* a, const TSAtom* b)  {
     return (int)(a->GetTag()-b->GetTag());
   }
+  static index_t ShortestDistance(TSAtom &a, TSAtom &b);
   static bool TryRing(TSAtom& sa, TSAtomPList& ring, const ElementPList& ringContent, size_t level=1);
   static bool TryRing(TSAtom& sa, TSAtomPList& ring, size_t level=1);
 // tries to find the ring in given direction
@@ -184,7 +188,9 @@ public:
       Alpha;          // susbtituted next to a ternary atom 
     TTypeList<TSAtomPList> Substituents;
     bool HasAfix;
-    RingInfo() : HeaviestSubsType(NULL), MaxSubsANode(0), HeaviestSubsIndex(InvalidIndex), HasAfix(false)  {  }
+    RingInfo()
+      : HeaviestSubsType(NULL), MaxSubsANode(0),
+        HeaviestSubsIndex(InvalidIndex), HasAfix(false)  {}
     RingInfo& Clear()  {
       MaxSubsANode = 0;
       HeaviestSubsIndex = InvalidIndex;

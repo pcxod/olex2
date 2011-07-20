@@ -260,9 +260,6 @@
     <ClInclude Include="..\..\..\sdl\ptypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\shared.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\singleton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -473,9 +470,6 @@
     <ClInclude Include="..\..\..\sdl\tests\irange_test.h">
       <Filter>Header Files\tests</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\ellist.h">
-      <Filter>Header Files\containers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\sorted.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -490,6 +484,21 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\file_filter.h">
       <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\container_test.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\linked_list.h">
+      <Filter>Header Files\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\ellist.h">
+      <Filter>Header Files\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\shared.h">
+      <Filter>Header Files\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\constlist.h">
+      <Filter>Header Files\containers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

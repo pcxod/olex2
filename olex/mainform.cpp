@@ -595,9 +595,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
     fpAny^fpNone, "Deletes provided [selected] atoms");
 
   this_InitMacroD(Exec, "s-synchronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command");
-  this_InitMacroD(Shell, "", fpNone|fpOne, "if no arguments launches a new interactive shell,\
-  otherwise runs provided file in the interactive shell (on windows ShellExecute is\
-  used to avoid flickering console)");
+  this_InitMacroD(Shell, "", fpAny,
+    "If no arguments launches a new interactive shell, otherwise runs provided file in the interactive "
+    "shell (on windows ShellExecute is used to avoid flickering console)");
   this_InitMacro(Save, , fpAny^fpNone);
   this_InitMacro(Load, , fpAny^fpNone);
   this_InitMacro(Link, , fpNone|fpOne);
@@ -632,13 +632,19 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   as close to the cell center as possible");
 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
-  this_InitMacroD(Fvar, EmptyString(), (fpAny)|psCheckFileTypeIns, "Assigns/relsease occupancy of "
-    "given atoms. Examples:\n-'fvar' for a selection of even number atoms, will create a new variable and "
-    "link occupancies of the first half of the selection to the occupancy other half of the selection. "
+  this_InitMacroD(Fvar, EmptyString(), fpAny|psCheckFileTypeIns, "Assigns/release occupancy for "
+    "given atoms. Examples:"
+    "\n-'fvar' if nothing is selected will print current values of the variables. For a selection "
+    "of even number atoms, will create a new variable and link occupancies of the first half of "
+    "the selection to occupancy the other half of the selection. "
+    "\n-'fvar 0' - makes occupancy of provided atoms refineable"
+    "\n-'fvar 1' - fixes occupancy of provided atoms at current value"
+    "\n-'fvar 1 1' - fixes occupancy of provided atoms at chemical occupancy of 1"
     "\n-'fvar 2' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied by "
-    "current value of the occupancy of the given atoms.\n-'fvar 20.5' will link occupancy of the given "
-    "atoms to the value of the 2nd FVAR multiplied by 0.5.\nNote that to set occupancy to the value of "
-    "the 2nd variable, the occupancy of the selected atoms has to be fixed at one using 'fix occu 1'");
+    "current value of the occupancy of the given atoms, or, if occupancy already linked to a variable "
+    "- it will replace the variable index."
+    "\n-'fvar 2 0.5' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied "
+    "by 0.5.");
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
   this_InitMacroD(Part,
     "p-number of parts&;lo-link ocupancy of given atoms through FVAR's&;"
@@ -657,8 +663,9 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
 "Adds a ShelX compatible angle restraint");
   this_InitMacroD(Sadi, EmptyString(), fpAny|psCheckFileTypeIns,
 "Similar distances restraint");
-  this_InitMacroD(RRings,"s-esd&;cs-do not clear selection" , fpAny^fpNone,
-"Makes all provided rings [like C6 or NC5] regular (flat and all distances similar)");
+  this_InitMacroD(RRings,"cs-do not clear selection" , fpAny,
+"Makes all provided rings [like C6 or NC5] regular (flat and all distances similar). If a selection "
+"is given - the whole rings must be selected");
   this_InitMacroD(Flat, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
 "Forces flat group restraint for at least 4 provided atoms");
   this_InitMacroD(Chiv, "cs- do not clear selection", fpAny|psCheckFileTypeIns,
@@ -949,7 +956,7 @@ separated values of Atom Type and radius, an entry a line");
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
   Library.AttachLibrary(TETime::ExportLibrary());
-  Library.AttachLibrary(lcells::Index::ExportLibrary());
+  Library.AttachLibrary(lcells::IndexManager::ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
   Library.AttachLibrary(XA->XFile().ExportLibrary());
@@ -2004,14 +2011,19 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
 }
 //..............................................................................
 void TMainForm::OnChar(wxKeyEvent& m)  {
-  short Fl=0, inc=3;
+  short Fl=0;
   olxstr Cmd, FullCmd;
   if( m.m_altDown )      Fl |= sssAlt;
   if( m.m_shiftDown )    Fl |= sssShift;
   if( m.m_controlDown )  Fl |= sssCtrl;
   // Alt + Up,Down,Left, Right - rotation, +Shift - speed
   if( ((Fl & sssShift)) || (Fl & sssAlt) )  {
-    if( (Fl & sssShift) )  inc = 7;
+    int inc = 3;
+    double zoom_inc = 0.01;
+    if( (Fl & sssShift) )  {
+      inc *= 3;
+      zoom_inc *= 3;
+    }
     if( m.m_keyCode == WXK_UP )  {
       FXApp->GetRender().RotateX(FXApp->GetRender().GetBasis().GetRX()+inc);
       TimePerFrame = FXApp->Draw();
@@ -2033,18 +2045,18 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
       return;
     }
     if( m.m_keyCode == WXK_END )  {
-      if( FXApp->GetRender().GetZoom()+inc/3 < 400 )  {
-        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()+inc/3);
+      if( FXApp->GetRender().GetZoom()+zoom_inc < 100 )  {
+        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()+zoom_inc);
         TimePerFrame = FXApp->Draw();
         return;
       }
     }
     if( m.m_keyCode == WXK_HOME )  {
-      if( FXApp->GetRender().GetZoom()-inc/3 >= 0 )  {
-        FXApp->GetRender().SetZoom(FXApp->GetRender().GetZoom()-inc/3);
-        TimePerFrame = FXApp->Draw();
-        return;
-      }
+      double z = FXApp->GetRender().GetZoom()-zoom_inc;
+      if( z <= 0 ) z = 0.001;
+      FXApp->GetRender().SetZoom(z);
+      TimePerFrame = FXApp->Draw();
+      return;
     }
   }
   // Ctrl + Up, Down - browse solutions
@@ -3741,11 +3753,8 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
 PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
   olxstr title, str;
   int flags = 0;
-  if( !PythonExt::ParseTuple(args, "iww", &flags, &title, &str) ||
-      title.IsEmpty() || str.IsEmpty() )
-  {
+  if( !PythonExt::ParseTuple(args, "iww", &flags, &title, &str) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iww");
-  }
   const bool MultiLine = (flags != 1);
   TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);
   dlg->SetTitle(title.u_str());

@@ -64,15 +64,11 @@ public:
   inline TDirectionalListEntry* AddEntry(T* memoryBlockToOwn, size_t size)  {
     if( NextEntry != NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
-    TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>(memoryBlockToOwn, size);
-    NextEntry = e;
-    return e;
+    return (NextEntry = new TDirectionalListEntry<T>(memoryBlockToOwn, size));
   }
 
   inline TDirectionalListEntry* AddEntry(const TDirectionalListEntry& entry)  {
-    TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>(entry);
-    NextEntry = e;
-    return e;
+    return (NextEntry = new TDirectionalListEntry<T>(entry));
   }
 
   inline TDirectionalListEntry* GetNext() const {  return NextEntry;  }
@@ -194,7 +190,7 @@ template <typename T>
   }
 
   // writes starting from offset overwriting existing data
-  TDirectionalList& Write( const T* Data, size_t offset, size_t length )  {
+  TDirectionalList& Write(const T* Data, size_t offset, size_t length)  {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Length+1);
 #endif
@@ -208,7 +204,7 @@ template <typename T>
     size_t written = entry->Write(Data, firstOffset, length);
     while( written < length )  {
       if( entry->GetNext() == NULL )  {
-        // allocate one big chank of memory
+        // allocate one big chunk of memory
         entry = entry->AddEntry(olx_max(length-written, SegmentSize));
         Tail = entry;
       }
@@ -219,7 +215,7 @@ template <typename T>
     return *this;
   }
 
-  const TDirectionalList& Read( T* Data, size_t from, size_t length )  const {
+  const TDirectionalList& Read(T* Data, size_t from, size_t length) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, Length+1);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+length, 0, Length+1);
@@ -248,23 +244,23 @@ template <typename T>
     ToString(s);
     return s;
   }
-  void ToString(olxcstr& cstr) const {
+  olxcstr& ToString(olxcstr& cstr) const {
     cstr.SetCapacity(cstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
-    if( en == NULL )  return;
     while( en != NULL )  {
       cstr.Append(en->GetData(), en->GetSize());
       en = en->GetNext();
     }
+    return cstr;
   }
-  void ToString(olxwstr& wstr) const {
+  olxwstr& ToString(olxwstr& wstr) const {
     wstr.SetCapacity(wstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
-    if( en == NULL )  return;
     while( en != NULL )  {
       wstr.Append(en->GetData(), en->GetSize());
       en = en->GetNext();
     }
+    return wstr;
   }
 };
   

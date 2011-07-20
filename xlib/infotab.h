@@ -18,7 +18,8 @@ BeginXlibNamespace()
 const short 
   infotab_htab = 1,
   infotab_rtab = 2,
-  infotab_mpla = 3;
+  infotab_mpla = 3,
+  infotab_bond = 4;
 
 class InfoTab : public IEObject {  // need to cast to delete
   olxstr ResiName, ParamName;
@@ -106,13 +107,19 @@ public:
       if( !atoms[i].GetAtom()->IsDeleted() )
         ac++;
     if( Type == infotab_htab && ac == 2 )  return true;
+    if( Type == infotab_bond && ac == 2 )  return true;
     if( Type == infotab_rtab && ac >= 1 && ac <= 4 && !ParamName.IsEmpty() )  return true;
     if( Type == infotab_mpla && ac >= 3 )  return true;
     return false;
   }
 
+  olxstr GetName() const {
+    return olxstr(Type == infotab_htab ? "HTAB" :
+      (Type == infotab_rtab ? "RTAB" : (Type == infotab_mpla ? "MPLA" : "BOND")));
+  }
+
   olxstr InsStr() const {
-    olxstr rv = (Type == infotab_htab ? "HTAB" : (Type == infotab_rtab ? "RTAB" : "MPLA"));
+    olxstr rv = GetName();
     if( !ResiName.IsEmpty() )  {
       rv << '_' << ResiName;
       rv << ' ' << ParamName;
@@ -140,7 +147,7 @@ public:
     return rv;
   }
   void ToDataItem(TDataItem& di) const {
-    di.SetValue(Type == infotab_htab ? "HTAB" : (Type == infotab_rtab ? "RTAB" : "MPLA"));
+    di.SetValue(GetName());
     di.AddField("resi", ResiName);
     di.AddField("param", ParamName);
     TDataItem& ais = di.AddItem("atoms");
@@ -158,8 +165,10 @@ public:
       Type = infotab_htab;
     else if( di.GetValue() == "RTAB")
       Type = infotab_rtab;
-    else
+    else if( di.GetValue() == "MPLA")
       Type = infotab_mpla;
+    else
+      Type = infotab_bond;
     ResiName = di.GetFieldValue("resi");
     ParamName = di.GetFieldValue("param");
     const TDataItem& ais = di.FindRequiredItem("atoms");
@@ -175,7 +184,7 @@ public:
   PyObject* PyExport()  {
     PyObject* main = PyDict_New();
     PythonExt::SetDictItem(main, "type",
-      PythonExt::BuildString(Type == infotab_htab ? "HTAB" : (Type == infotab_rtab ? "RTAB" : "MPLA")));
+      PythonExt::BuildString(GetName()));
     PythonExt::SetDictItem(main, "param_name", PythonExt::BuildString(ParamName));
     size_t ac_cnt = 0;
     for( size_t i=0; i < atoms.Count(); i++ )

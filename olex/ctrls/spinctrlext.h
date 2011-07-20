@@ -22,20 +22,14 @@ namespace ctrl_ext  {
     void LeaveEvent(wxFocusEvent& event);
     void EnterEvent(wxFocusEvent& event);
     void EnterPressedEvent(wxCommandEvent& event);
-    olxstr Data, OnChangeStr;
+    olxstr Data;
   public:
     TSpinCtrl(wxWindow *Parent, const wxSize& sz=wxDefaultSize): 
       wxSpinCtrl(Parent, -1, wxEmptyString, wxDefaultPosition, sz),
       AOlxCtrl(this),  
-      OnChange(Actions.New(evt_change_id)),
-      Data(EmptyString()),
-      OnChangeStr(EmptyString())
-    {
-    }
-    virtual ~TSpinCtrl()  {}
+      OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))  {}
 
-    DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event
-    DefPropC(olxstr, Data) // data associated with the object
+    DefPropC(olxstr, Data)
 
     int GetValue() const {  return wxSpinCtrl::GetValue(); }
     void SetValue(int v) { 
@@ -43,7 +37,7 @@ namespace ctrl_ext  {
       wxSpinCtrl::SetValue(v); 
     }
 
-    TActionQueue &OnChange;
+    AOlxCtrl::ActionQueue &OnChange;
 
     DECLARE_CLASS(TSpinCtrl)
     DECLARE_EVENT_TABLE()

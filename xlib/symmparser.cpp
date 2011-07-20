@@ -115,7 +115,7 @@ next_oper:
     }
     return true;
   }
-  catch(const TExceptionBase &e)  {
+  catch(const TExceptionBase&)  {
     if( res == false )
       throw;
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("to parse SYMM card ").quote() << S);

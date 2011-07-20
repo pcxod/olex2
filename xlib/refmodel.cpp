@@ -21,15 +21,15 @@
 #include "twinning.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
-  rDFIX(*this, rltGroup2, "dfix"),
-  rDANG(*this, rltGroup2, "dang"),
-  rSADI(*this, rltGroup2, "sadi"),
-  rCHIV(*this, rltAtoms, "chiv"),
-  rFLAT(*this, rltGroup, "flat"),
-  rDELU(*this, rltAtoms, "delu"),
-  rSIMU(*this, rltAtoms, "simu"),
-  rISOR(*this, rltAtoms, "isor"),
-  rEADP(*this, rltAtoms, "eadp"),
+  rDFIX(*this, rltGroup2, "DFIX"),
+  rDANG(*this, rltGroup2, "DANG"),
+  rSADI(*this, rltGroup2, "SADI"),
+  rCHIV(*this, rltAtoms, "CHIV"),
+  rFLAT(*this, rltGroup, "FLAT"),
+  rDELU(*this, rltAtoms, "DELU"),
+  rSIMU(*this, rltAtoms, "SIMU"),
+  rISOR(*this, rltAtoms, "ISOR"),
+  rEADP(*this, rltAtoms, "EADP"),
   rAngle(*this, rltGroup3, "olex2.restraint.angle"),
   rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral"),
   rFixedUeq(*this, rltAtoms, "olex2.restraint.u_eq"),
@@ -52,6 +52,9 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rcRegister.Add(Directions.GetName(), &Directions);
   rcList.Add(&Directions);
   rcList.Add(&SharedRotatedADPs);
+  rcList1 << rDFIX <<rDANG << rSADI << rCHIV << rFLAT << rDELU
+    << rSIMU << rISOR  << rEADP <<
+    rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq;
   //RefContainers(aunit.GetIdName(), &aunit);
   RefContainers(GetIdName(), this);
   au.SetRefMod(this);
@@ -84,20 +87,8 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   for( size_t i=0; i < Frags.Count(); i++ )
     delete Frags.GetValue(i);
   Frags.Clear();
-
-  rDFIX.Clear();
-  rDANG.Clear();
-  rSADI.Clear();
-  rCHIV.Clear();
-  rFLAT.Clear();
-  rSIMU.Clear();
-  rDELU.Clear();
-  rISOR.Clear();
-  rEADP.Clear();
-  rAngle.Clear();
-  rDihedralAngle.Clear();
-  rFixedUeq.Clear();
-  rSimilarUeq.Clear();
+  for( size_t i=0; i < rcList1.Count(); i++ )
+    rcList1[i]->Clear();
   ExyzGroups.Clear();
   for( size_t i=0; i < rcRegister.Count(); i++ )
     rcRegister.GetValue(i)->Clear();
@@ -216,33 +207,23 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   for( size_t i=0; i < rm.UsedSymm.Count(); i++ )
     AddUsedSymm(rm.UsedSymm.GetValue(i).symop, rm.UsedSymm.GetKey(i));
 
-  rDFIX.Assign(rm.rDFIX);
-  rDANG.Assign(rm.rDANG);
-  rSADI.Assign(rm.rSADI);
-  rCHIV.Assign(rm.rCHIV);
-  rFLAT.Assign(rm.rFLAT);
-  rSIMU.Assign(rm.rSIMU);
-  rDELU.Assign(rm.rDELU);
-  rISOR.Assign(rm.rISOR);
-  rEADP.Assign(rm.rEADP);
-  rAngle.Assign(rm.rAngle);
-  rDihedralAngle.Assign(rm.rDihedralAngle);
-  rFixedUeq.Assign(rm.rFixedUeq);
-  rSimilarUeq.Assign(rm.rSimilarUeq);
+  for( size_t i=0; i < rcList1.Count(); i++ )
+    rcList1[i]->Assign(*rm.rcList1[i]);
+
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
   for( size_t i=0; i < rcList.Count(); i++ )
     rcList[i]->Assign(*this, *rm.rcList[i]);
-  // restraunts have to be copied first, as some may refer to vars
-  Vars.Assign( rm.Vars );
+  // restraints have to be copied first, as some may refer to vars
+  Vars.Assign(rm.Vars);
 
   Conn.Assign(rm.Conn);
   aunit._UpdateConnInfo();
 
   for( size_t i=0; i < rm.InfoTables.Count(); i++ )  {
     if( rm.InfoTables[i].IsValid() )
-      InfoTables.Add( new InfoTab(*this, rm.InfoTables[i]) );
+      InfoTables.Add(new InfoTab(*this, rm.InfoTables[i]));
   }
 
   for( size_t i=0; i < rm.SfacData.Count(); i++ )
@@ -311,19 +292,12 @@ InfoTab& RefinementModel::AddRTAB(const olxstr& codename, const olxstr& resi) {
 }
 //....................................................................................................
 void RefinementModel::Validate() {
-  rDFIX.ValidateAll();
-  rDANG.ValidateAll();
-  rSADI.ValidateAll();
-  rCHIV.ValidateAll();
-  rFLAT.ValidateAll();
-  rDELU.ValidateAll();
-  rSIMU.ValidateAll();
-  rISOR.ValidateAll();
-  rEADP.ValidateAll();
-  rAngle.ValidateAll();
-  rDihedralAngle.ValidateAll();
-  rFixedUeq.ValidateAll();
-  rSimilarUeq.ValidateAll();
+  for( size_t i=0; i < rcList1.Count(); i++ )
+    rcList1[i]->ValidateAll();
+  // this is to be done in reverse ordedr - Directions are first and if invalid must
+  // removed first!!
+  for( size_t i=rcList.Count(); i != 0; i-- )
+    rcList[i-1]->ValidateAll();
   ExyzGroups.ValidateAll();
   AfixGroups.ValidateAll();
   Vars.Validate();
@@ -925,23 +899,10 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   AfixGroups.ToDataItem(item.AddItem("AFIX"));
   ExyzGroups.ToDataItem(item.AddItem("EXYZ"));
   rSAME.ToDataItem(item.AddItem("SAME"));
-  rDFIX.ToDataItem(item.AddItem("DFIX"));
-  rDANG.ToDataItem(item.AddItem("DANG"));
-  rSADI.ToDataItem(item.AddItem("SADI"));
-  rCHIV.ToDataItem(item.AddItem("CHIV"));
-  rFLAT.ToDataItem(item.AddItem("FLAT"));
-  rDELU.ToDataItem(item.AddItem("DELU"));
-  rSIMU.ToDataItem(item.AddItem("SIMU"));
-  rISOR.ToDataItem(item.AddItem("ISOR"));
-  rEADP.ToDataItem(item.AddItem("EADP"));
-  rAngle.ToDataItem(item.AddItem(rAngle.GetIdName()));
-  rDihedralAngle.ToDataItem(item.AddItem(rDihedralAngle.GetIdName()));
-  rFixedUeq.ToDataItem(item.AddItem(rFixedUeq.GetIdName()));
-  rSimilarUeq.ToDataItem(item.AddItem(rSimilarUeq.GetIdName()));
-  for( size_t i=0; i < rcRegister.Count(); i++ )  {
-    rcRegister.GetValue(i)->ToDataItem(
-      item.AddItem(rcRegister.GetValue(i)->GetName()));
-  }
+  for( size_t i=0; i < rcList1.Count(); i++ )
+    rcList1[i]->ToDataItem(item.AddItem(rcList1[i]->GetIdName()));
+  for( size_t i=0; i < rcList.Count(); i++ )
+    rcList[i]->ToDataItem(item.AddItem(rcList[i]->GetName()));
   
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
   hklf.AddField("s", HKLF_s);
@@ -1001,25 +962,10 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   AfixGroups.FromDataItem(item.FindRequiredItem("AFIX"));
   ExyzGroups.FromDataItem(item.FindRequiredItem("EXYZ"));
   rSAME.FromDataItem(item.FindRequiredItem("SAME"));
-  rDFIX.FromDataItem(item.FindRequiredItem("DFIX"));
-  rDANG.FromDataItem(item.FindRequiredItem("DANG"));
-  rSADI.FromDataItem(item.FindRequiredItem("SADI"));
-  rCHIV.FromDataItem(item.FindRequiredItem("CHIV"));
-  rFLAT.FromDataItem(item.FindRequiredItem("FLAT"));
-  rDELU.FromDataItem(item.FindRequiredItem("DELU"));
-  rSIMU.FromDataItem(item.FindRequiredItem("SIMU"));
-  rISOR.FromDataItem(item.FindRequiredItem("ISOR"));
-  rEADP.FromDataItem(item.FindRequiredItem("EADP"));
-  {
-    rAngle.FromDataItem(item.FindItem(rAngle.GetIdName()));
-    rDihedralAngle.FromDataItem(item.FindItem(rDihedralAngle.GetIdName()));
-    rFixedUeq.FromDataItem(item.FindItem(rFixedUeq.GetIdName()));
-    rSimilarUeq.FromDataItem(item.FindItem(rSimilarUeq.GetIdName()));
-    for( size_t i=0; i < rcRegister.Count(); i++ )  {
-      rcRegister.GetValue(i)->FromDataItem(
-        item.FindItem(rcRegister.GetValue(i)->GetName()), *this);
-    }
-  }
+  for( size_t i=0; i < rcList1.Count(); i++ )
+    rcList1[i]->FromDataItem(item.FindRequiredItem(rcList1[i]->GetIdName()));
+  for( size_t i=0; i < rcList.Count(); i++ )
+    rcList[i]->FromDataItem(item.FindItem(rcList[i]->GetName()), *this);
 
   TDataItem& hklf = item.FindRequiredItem("HKLF");
   HKLF = hklf.GetValue().ToInt();
@@ -1109,26 +1055,12 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   PythonExt::SetDictItem(main, "afix", AfixGroups.PyExport(atoms));
   PythonExt::SetDictItem(main, "exyz", ExyzGroups.PyExport(atoms));
   PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms));
-  PythonExt::SetDictItem(main, "dfix", rDFIX.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, "dang", rDANG.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, "sadi", rSADI.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, "chiv", rCHIV.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, "flat", rFLAT.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, "delu", rDELU.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, "simu", rSIMU.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, "isor", rISOR.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, "eadp", rEADP.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, rAngle.GetIdName(), rAngle.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, rDihedralAngle.GetIdName(),
-    rDihedralAngle.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, rFixedUeq.GetIdName(),
-    rFixedUeq.PyExport(atoms, equivs));
-  PythonExt::SetDictItem(main, rSimilarUeq.GetIdName(),
-    rSimilarUeq.PyExport(atoms, equivs));
-  for( size_t i=0; i < rcRegister.Count(); i++ )  {
-    PythonExt::SetDictItem(main, rcRegister.GetValue(i)->GetName(),
-      rcRegister.GetValue(i)->PyExport());
+  for( size_t i=0; i < rcList1.Count(); i++ )  {
+    PythonExt::SetDictItem(main, rcList1[i]->GetIdName().ToLowerCase(),
+      rcList1[i]->PyExport(atoms, equivs));
   }
+  for( size_t i=0; i < rcList.Count(); i++ )
+    PythonExt::SetDictItem(main, rcList[i]->GetName(), rcList[i]->PyExport());
 
   PythonExt::SetDictItem(hklf, "value", Py_BuildValue("i", HKLF));
   PythonExt::SetDictItem(hklf, "s", Py_BuildValue("d", HKLF_s));
@@ -1283,7 +1215,7 @@ vec3i RefinementModel::CalcMaxHklIndex(double two_theta) const {
   return vec3i(rv);
 }
 //..............................................................................
-adirection& RefinementModel::DirectionById(const olxstr &id)  {
+adirection& RefinementModel::DirectionById(const olxstr &id) const {
   for( size_t i = 0; i < Directions.items.Count(); i++ )
     if( Directions.items[i].id.Equalsi(id) )
       return Directions.items[i];

@@ -15,11 +15,11 @@
 #include "outstream.h"
 #include "edict.h"
 #include "olxth.h"
-#include "ellist.h"
 #include "symmat.h"
 #include "filetree.h"
 #include "cif.h"
 //..............................
+#include "tests/container_test.h"
 #include "tests/sort_test.h"
 #include "tests/encoding_test.h"
 #include "tests/string_test.h"
@@ -57,9 +57,7 @@ int main(int argc, char* argv[]) {
   xapp.GetLog().AddStream(TUtf8File::Create(xapp.GetBaseDir()+"log.out", false), true);
   OlxTests tests;
   tests.Add(&test::StringTests);
-  tests.Add(&test::ListTests<TArrayList<int> >).
-    Add(&test::ListTests<TTypeList<int> >).
-    Add(&test::DirectionalListTest);
+  tests.Add(&test::ContainerTests);
   tests.Add(&test::MD5Test).
     Add(&test::SHA1Test).
     Add(&test::SHA2Test);

@@ -29,19 +29,19 @@ END_EVENT_TABLE()
 
 void TTreeView::ItemActivateEvent(wxTreeEvent& event)  {
   StartEvtProcessing()
-    OnDblClick.Execute(this, &GetOnItemActivateStr());
+    OnDblClick.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
 void TTreeView::SelectionEvent(wxTreeEvent& event) {
   StartEvtProcessing()
-    OnSelect.Execute(this, &GetOnSelectStr());
+    OnSelect.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
   StartEvtProcessing()
-    OnSelect.Execute(this, &TEGC::New<olxstr>(GetOnEditStr()).Replace("~label~", event.GetLabel()));
+    OnSelect.Execute(this, &TEGC::New<olxstr>(OnSelect.data).Replace("~label~", event.GetLabel()));
   EndEvtProcessing()
 }
 //..............................................................................

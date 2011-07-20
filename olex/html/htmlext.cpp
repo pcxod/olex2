@@ -129,6 +129,7 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, const olxstr &pop_name, in
     this_InitFuncD(ClientHeight, fpOne|fpTwo, "Returns/sets client height of an HTML window (use 'self' to address the window itself)");
     this_InitFuncD(ContainerWidth, fpOne|fpTwo, "Returns/sets width of a popup window");
     this_InitFuncD(ContainerHeight, fpOne|fpTwo, "Returns/sets height of a popup window");
+    this_InitFuncD(Call, fpOne, "Calls event of specified control, expects [popup.]control.event");
   }
 }
 //..............................................................................
@@ -314,7 +315,7 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
   TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
-      olxstr s = ((TTextEdit*)prev)->GetOnLeaveStr();
+      olxstr s = ((TTextEdit*)prev)->OnLeave.data;
       ((TTextEdit*)prev)->OnLeave.Execute(prev, &s);
     }
     else if( EsdlInstanceOf(*prev, TComboBox) )  {
@@ -323,7 +324,7 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
   }
   if( next != NULL )  {
     if( EsdlInstanceOf(*next, TTextEdit) )  {
-      olxstr s = ((TTextEdit*)next)->GetOnEnterStr();
+      olxstr s = ((TTextEdit*)next)->OnEnter.data;
       ((TTextEdit*)next)->OnEnter.Execute(next, &s);
       ((TTextEdit*)next)->SetSelection(-1,-1);
     }
@@ -1910,5 +1911,25 @@ void THtml::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroError &
     return;
   }
   Groups.AddNew(Cmds);
+}
+//..............................................................................
+void THtml::funCall(const TStrObjList &Params, TMacroError &E)  {
+  const size_t d_cnt = Params[0].CharCount('.');
+  olxstr ctrl_name, evt_name;
+  if( d_cnt >= 1 )  {
+    const size_t si = Params[0].IndexOf('.');
+    evt_name = Params[0].SubStringFrom(si+1);
+    ctrl_name = Params[0].SubStringTo(si);
+  }
+  else  {
+    E.ProcessingError(__OlxSrcInfo, "Invalid expression: ").quote() << Params[0];
+    return;
+  }
+  Control c = FindControl(ctrl_name, E, 1, __OlxSrcInfo);
+  if( c.html == NULL || c.ctrl == NULL )  return;
+  TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
+  if( !c.ctrl->ExecuteActionQueue(evt_name) )
+    E.ProcessingError(__OlxSrcInfo, "Failed to execute: ").quote() << Params[0];
+  TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
 }
 //..............................................................................

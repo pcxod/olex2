@@ -68,9 +68,9 @@ void TMenuItem::SetActionQueue(TActionQueue& q, const olxstr& dependMode, short 
 void TMenuItem::ValidateState()  {
   if( DependentOn != 0 && IsCheckable() && !DependMode.IsEmpty() )  {  
     if( DependentOn == ModeDependent )
-      Check( TModeChange::CheckStatus(DependMode, OnModeChangeCmd) );
+      Check(TModeChange::CheckStatus(DependMode, OnModeChangeCmd));
     else if( DependentOn == StateDependent )
-      Check( TStateChange::CheckStatus(DependMode, OnModeChangeCmd) );
+      Check(TStateChange::CheckStatus(DependMode, OnModeChangeCmd));
   }
 }
 //..............................................................................
@@ -78,12 +78,12 @@ bool TMenuItem::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {
     const TModeChange* mc = (const TModeChange*)Data;
     if( this->IsCheckable() )
-      Check( mc->CheckStatus(DependMode, OnModeChangeCmd) );
+      Check(mc->CheckStatus(DependMode, OnModeChangeCmd));
   }
   if( Data && EsdlInstanceOf(*Data, TStateChange) )  {
     TStateChange* sc = (TStateChange*)Data;
     if( this->IsCheckable() )
-      Check( sc->CheckStatus(DependMode, OnModeChangeCmd) );
+      Check(sc->CheckStatus(DependMode, OnModeChangeCmd));
   }
   return true;
 }

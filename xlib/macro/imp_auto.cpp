@@ -637,7 +637,9 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   Error.SetRetVal((double)ValidatedAtomCount*100/AtomCount);
 }
 //..............................................................................
-double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3d& crd)  {
+double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,
+  const TArray3D<bool> &mask)
+{
   TRefList refs;
   TArrayList<compd> F;
   TArrayList<SFUtil::StructureFactor> P1SF;
@@ -647,23 +649,24 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3d& crd)  {
   const vec3s dim = map.GetSize();
   const vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
   BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, dim, uc.CalcVolume());
-  TArrayList<MapUtil::peak> _Peaks;
-  TTypeList<MapUtil::peak> Peaks;
-  MapUtil::Integrate<float>(map.Data, dim, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
-  MapUtil::MergePeaks(sym_space, norm, _Peaks, Peaks);
+  //TArrayList<MapUtil::peak> _Peaks;
+  //TTypeList<MapUtil::peak> Peaks;
+  //MapUtil::Integrate<float>(map.Data, dim, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
+  //MapUtil::MergePeaks(sym_space, norm, _Peaks, Peaks);
 
-  double sum=0;
-  size_t count=0;
-  for( size_t i=0; i < Peaks.Count(); i++ )  {
-    const MapUtil::peak& peak = Peaks[i];
-    const vec3d cnt = norm*peak.center; 
-    const double ed = peak.summ/peak.count;
-    if( uc.FindClosestDistance(crd, cnt) < 1.0 )  {
-      sum += ed;
-      count++;
-    }
-  }
-  return count == 0 ? 0 : sum/count;
+  //double sum=0;
+  //size_t count=0;
+  //for( size_t i=0; i < Peaks.Count(); i++ )  {
+  //  const MapUtil::peak& peak = Peaks[i];
+  //  const vec3d cnt = norm*peak.center; 
+  //  const double ed = peak.summ/peak.count;
+  //  if( uc.FindClosestDistance(crd, cnt) < 1.0 )  {
+  //    sum += ed;
+  //    count++;
+  //  }
+  //}
+  //return count == 0 ? 0 : sum/count;
+  return MapUtil::IntegrateMask(map.Data, map.GetSize(), p, mask);
 }
 
 void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
@@ -691,7 +694,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
   const size_t PointCount = dim.Prod();
-  TArrayList<AnAssociation3<TCAtom*,double, int> > atoms(au.AtomCount());
+  TArrayList<AnAssociation3<TCAtom*,double, size_t> > atoms(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     atoms[i].A() = &au.GetAtom(i);
     atoms[i].B() = 0;
@@ -705,18 +708,36 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   TArrayList<MapUtil::peak> _Peaks;
   TTypeList<MapUtil::peak> Peaks;
   sw.start("Integrating P1 map: ");
-  MapUtil::Integrate<float>(map.Data, dim, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
-  MapUtil::MergePeaks(sym_space, norm, _Peaks, Peaks);
-  sw.stop();
-  for( size_t i=0; i < Peaks.Count(); i++ )  {
-    const MapUtil::peak& peak = Peaks[i];
-    const vec3d cnt = norm*peak.center; 
-    const double ed = peak.summ/peak.count;
-    TCAtom* oa = uc.FindOverlappingAtom(cnt, false, 0.5);
-    if( oa != NULL && oa->GetType() != iQPeakZ )  {
-      atoms[oa->GetTag()].B() += ed;
-      atoms[oa->GetTag()].C()++;
+  ElementRadii radii;
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    if( radii.IndexOf(&au.GetAtom(i).GetType()) == InvalidIndex )  {
+      radii.Add(&au.GetAtom(i).GetType(), au.GetAtom(i).GetType().r_vdw*0.5);
     }
+  }
+  olxdict<short, TArray3D<bool>*, TPrimitiveComparator> atom_masks =
+    uc.BuildAtomMasks(map.GetSize(), &radii, 0);
+  TSizeList mask_sizes(atom_masks.Count());
+  for( size_t i=0; i < atom_masks.Count(); i++ )  {
+    TArray3D<bool> &mask = *atom_masks.GetValue(i);
+    size_t cnt = 0;
+    for( size_t ix=0; ix < mask.Length1(); ix++ )  {
+      for( size_t iy=0; iy < mask.Length2(); iy++ )
+        for( size_t iz=0; iz < mask.Length3(); iz++ )
+          if( mask.Data[ix][iy][iz] )
+            cnt++;
+    }
+    mask_sizes[i] = cnt;
+  }
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    if( atoms[i].GetA()->IsDeleted() || atoms[i].GetA()->GetType() == iQPeakZ )
+      continue;
+    vec3i p = (atoms[i].A()->ccrd()*map.GetSize()).Round<int>();
+    size_t ti = atom_masks.IndexOf(atoms[i].GetA()->GetType().index);
+    atoms[i].B() = MapUtil::IntegrateMask(map.Data, map.GetSize(), p,
+      *atom_masks.GetValue(ti));
+    atoms[i].C() = mask_sizes[ti];
+    TBasicApp::NewLogEntry() << atoms[i].GetA()->GetLabel()
+      << ": " << atoms[i].GetB()/mask_sizes[ti];
   }
   const double minEd = mi.sigma*3;
   for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -725,18 +746,24 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
       if( olx_abs(ed) < minEd )  continue;
       double p_ed = 0, n_ed  = 0; 
       const cm_Element& original_type = atoms[i].GetA()->GetType();
+      const size_t ti = atom_masks.IndexOf(original_type.index);
+      TArray3D<bool> &mask = *atom_masks.GetValue(ti);
       cm_Element* n_e = XElementLib::NextZ(original_type);
       if( n_e != NULL )  {
         atoms[i].GetA()->SetType(*n_e);
         sw.start("Trying next element");
-        n_ed = TryPoint(map, xapp.XFile().GetUnitCell(), atoms[i].GetA()->ccrd());
+        n_ed = TryPoint(map, xapp.XFile().GetUnitCell(),
+          (atoms[i].GetA()->ccrd()*map.GetSize()).Round<int>(),
+          mask)/mask_sizes[ti];
         sw.stop();
       }
       cm_Element* p_e = XElementLib::PrevZ(original_type);
       if( p_e != NULL )  {
         sw.start("Trying previous element");
         atoms[i].GetA()->SetType(*p_e);
-        p_ed = TryPoint(map, xapp.XFile().GetUnitCell(), atoms[i].GetA()->ccrd());
+        p_ed = TryPoint(map, xapp.XFile().GetUnitCell(),
+          (atoms[i].GetA()->ccrd()*map.GetSize()).Round<int>(),
+          mask)/mask_sizes[ti];
         sw.stop();
       }
       atoms[i].GetA()->SetType(original_type);
@@ -755,7 +782,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
         }
         else if( n_ed != 0 && p_ed != 0 )  {
           if( olx_sign(n_ed) != olx_sign(p_ed) )  {
-            const double r = ed/(olx_abs(n_ed)+olx_abs(p_ed));
+            const double r = 2*ed/(olx_abs(n_ed)+olx_abs(p_ed));
             if( olx_abs(r) > 0.5 )  {
               found_cnt++;
               if( r > 0 )  {
@@ -787,6 +814,8 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
       }
     }
   }
+  for( size_t i=0; i < atom_masks.Count(); i++ )
+    delete atom_masks.GetValue(i);
   sw.print(xapp.NewLogEntry(logInfo));
   if( found_cnt == 0 )
     TBasicApp::NewLogEntry() << "No problems were found";
