@@ -143,10 +143,17 @@ public:
   void SetDepth(const vec3d& v);
   float GetDepth() const {  return Depth;  }
   vec3s GetDimVec() const {  return vec3s(MaxX, MaxY, MaxZ);  }
-  inline size_t GetPlaneSize() const {  return MaxDim;  }
+  size_t GetPlaneSize() const {  return MaxDim;  }
   /* v=2^n values are acepted only (64, 128, 256, etc to be compatible with textures) */
   void SetPlaneSize(size_t v);
   float GetSize() const {  return Size;  }
+
+  const TTypeList<vec3f> &GetPVertices() const {  return p_vertices;  }
+  const TTypeList<vec3f> &GetPNormals() const {  return p_normals;  }
+  const TTypeList<IsoTriangle> &GetPTriangles() const {  return p_triangles;  }
+  const TTypeList<vec3f> &GetNVertices() const {  return n_vertices;  }
+  const TTypeList<vec3f> &GetNNormals() const {  return n_normals;  }
+  const TTypeList<IsoTriangle> &GetNTriangles() const {  return n_triangles;  }
   
   DefPropP(float, MinHole)
   DefPropP(float, MaxHole)
@@ -192,6 +199,7 @@ public:
   void FromDataItem(const TDataItem& item, IInputStream& zis);
   // creates a blob at given screen coordinates (raster position)
   TXBlob* CreateBlob(int x, int y) const;
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
 protected:
   struct TPlaneCalculationTask  {
     float **data, ***src_data;

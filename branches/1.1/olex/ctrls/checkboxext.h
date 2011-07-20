@@ -22,27 +22,20 @@ namespace ctrl_ext  {
     TCheckBox(wxWindow *Parent, long style=0) :
       wxCheckBox(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style),
       AOlxCtrl(this),
-      OnClick(Actions.New(evt_on_click_id)),
-      OnCheck(Actions.New(evt_on_check_id)),
-      OnUncheck(Actions.New(evt_on_uncheck_id)),
-      ActionQueue(NULL),
-      Data(EmptyString()),
-      OnCheckStr(EmptyString()),
-      OnUncheckStr(EmptyString()),
-      OnClickStr(EmptyString()),
-      DependMode(EmptyString())  {  SetToDelete(false);  }
+      OnClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_click_id)),
+      OnCheck(AOlxCtrl::ActionQueue::New(Actions, evt_on_check_id)),
+      OnUncheck(AOlxCtrl::ActionQueue::New(Actions, evt_on_uncheck_id)),
+      ActionQueue(NULL)  {  SetToDelete(false);  }
+
     virtual ~TCheckBox()  {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
     bool Execute(const IEObject *Sender, const IEObject *Data);
     void OnRemove()  {  ActionQueue = NULL;  }
 
-    DefPropC(olxstr, Data)       // data associated with the object
-    DefPropC(olxstr, OnUncheckStr)   // this is passed to the OnUncheck event
-    DefPropC(olxstr, OnCheckStr)    // this is passed to the OnCheck event
-    DefPropC(olxstr, OnClickStr) // this is passed to the OnClick event
+    DefPropC(olxstr, Data)
 
-    TActionQueue &OnClick, &OnCheck, &OnUncheck;
+    AOlxCtrl::ActionQueue &OnClick, &OnCheck, &OnUncheck;
 
     inline void SetCaption(const olxstr &T)  {  SetLabel(T.u_str()); }
     inline olxstr GetCaption() const {  return GetLabel(); }

@@ -9,10 +9,15 @@
 
 #ifndef __olx_sdl_ptrlist_H
 #define __olx_sdl_ptrlist_H
-#include <string.h>
-#include <stdlib.h>
-#include "talist.h"
+#include "shared.h"
+#include "constlist.h"
+#include "esort.h"
+#include "etraverse.h"
+#include "exception.h"
 BeginEsdlNamespace()
+
+template <typename> class SharedPtrList;
+template <typename> class ConstPtrList;
 
 template <class T> class TPtrList : public IEObject  {
   size_t FCount, FCapacity;
@@ -59,6 +64,14 @@ public:
     memcpy(Items, list.Items, list.Count()*sizeof(T*));
   }
 //..............................................................................
+  TPtrList(const SharedPtrList<T>& list) : Items(NULL) {
+    TakeOver(list.Release(), true);
+  }
+//..............................................................................
+  TPtrList(const ConstPtrList<T>& list) : Items(NULL) {
+    TakeOver(list.Release(), true);
+  }
+//..............................................................................
   /* copies values from an array of size elements  */
   TPtrList(size_t size, const T** array)  {  init_from_array(size, array);  }
   TPtrList(int size, const T** array)  {  init_from_array(size, array);  }
@@ -99,6 +112,18 @@ public:
     return *this;
   }
 //..............................................................................
+  TPtrList &TakeOver(TPtrList& l, bool do_delete=false)  {
+    olx_free(Items);
+    FCount = l.FCount;
+    FCapacity = l.FCapacity;
+    FIncrement = l.FIncrement;
+    Items = l.Items;
+    l.FCount = l.FCapacity = 0;
+    l.Items = NULL;
+    if( do_delete )  delete &l;
+    return *this;
+  }
+//..............................................................................
   virtual IEObject* Replicate() const {  return new TPtrList(*this);  }
 //..............................................................................
   inline TPtrList& Assign(const TPtrList& list)  {
@@ -116,7 +141,8 @@ public:
     return *this;
   }
 //..............................................................................
-  template <class List, class Accessor> TPtrList& Assign(const List& l, const Accessor& accessor)  {
+  template <class List, class Accessor>
+  TPtrList& Assign(const List& l, const Accessor& accessor)  {
     SetCount(l.Count());
     for( size_t i=0; i < l.Count(); i++ )
       Set(i, accessor.Access(l[i]));
@@ -129,12 +155,26 @@ public:
     return Assign(l);
   }
 //..............................................................................
+  inline TPtrList& operator = (const SharedPtrList<T>& l)  {
+    olx_free(Items);
+    return TakeOver(l.Release(), true);
+  }
+//..............................................................................
+  inline TPtrList& operator = (const ConstPtrList<T>& l)  {
+    olx_free(Items);
+    return TakeOver(l.Release(), true);
+  }
+//..............................................................................
   inline TPtrList& AddList(const TPtrList& list)  {
     SetCapacity(list.Count() + FCount);
     memcpy(&Items[FCount], list.Items, list.Count()*sizeof(T*));
     FCount += list.Count();
     return *this;
   }
+//..............................................................................
+  inline TPtrList& AddList(const SharedPtrList<T>& list)  {  return AddList(list.GetObject());  }
+//..............................................................................
+  inline TPtrList& AddList(const ConstPtrList<T>& list)  {  return AddList(list.GetObject());  }
 //..............................................................................
   template <class List> TPtrList& AddList(const List& l)  {
     const size_t off = FCount;
@@ -144,7 +184,9 @@ public:
     return *this;
   }
 //..............................................................................
-  template <class List, class Accessor> TPtrList& AddList(const List& l, const Accessor& accessor)  {
+  template <class List, class Accessor> TPtrList& AddList(const List& l,
+    const Accessor& accessor)
+  {
     const size_t off = FCount;
     SetCount(l.Count() + FCount);
     for( size_t i=0; i < l.Count(); i++ )
@@ -466,7 +508,8 @@ public:
     return InvalidIndex;
   }
 //..............................................................................
-  TPtrList& Rearrange(const TSizeList& indices)  {
+  template <class size_t_list_t>
+  TPtrList& Rearrange(const size_t_list_t &indices)  {
     if( FCount < 2 )  return *this;
     if( FCount != indices.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "indices size");
@@ -495,6 +538,35 @@ ListBubbleSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor> TPtrList<
 template <class T>
   TListTraverser<TPtrList<T> > TPtrList<T>::Traverser;
 #endif
+
+template <typename item_t>
+class SharedPtrList : public shared_ptr_list<TPtrList<item_t>, item_t> {
+  typedef TPtrList<item_t> lst_t;
+  typedef shared_ptr_list<lst_t, item_t> parent_t;
+public:
+  SharedPtrList() {}
+  SharedPtrList(const SharedPtrList &l) : parent_t(l) {}
+  SharedPtrList(lst_t *lst) : parent_t(lst) {}
+  SharedPtrList(lst_t &lst) : parent_t(lst) {}
+  SharedPtrList &operator = (const SharedPtrList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
+
+template <typename item_t>
+class ConstPtrList : public const_list<TPtrList<item_t>, item_t*> {
+  typedef TPtrList<item_t> lst_t;
+  typedef const_list<lst_t, item_t*> parent_t;
+public:
+  ConstPtrList(const ConstPtrList &l) : parent_t(l) {}
+  ConstPtrList(lst_t *lst) : parent_t(lst) {}
+  ConstPtrList(lst_t &lst) : parent_t(lst) {}
+  ConstPtrList &operator = (const ConstPtrList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
 
 EndEsdlNamespace()
 #endif

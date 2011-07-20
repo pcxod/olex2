@@ -13,6 +13,7 @@
 #include "lattice.h"
 #include "symmparser.h"
 #include "unitcell.h"
+#include "povdraw.h"
 
 bool TXBond::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
   TXBond::FBondParams = NULL;
@@ -257,6 +258,92 @@ void TXBond::Quality(const short Val)  {
 //..............................................................................
 void TXBond::ListDrawingStyles(TStrList &L){  return; }
 //..............................................................................
+const vec3d &TXBond::GetBaseCrd() const {
+  if( !IsValid() )
+    throw TFunctionFailedException(__OlxSourceInfo, "atoms are not defined");
+  return A().crd();
+}
+//..............................................................................
+TStrList TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPrimitiveComparator> &materials) const
+{
+  TStrList out;
+  if( olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3 )
+    return out;
+  out.Add(" object { union {");
+  const TGPCollection &gpc = GetPrimitives();
+  for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+    TGlPrimitive &glp = gpc.GetPrimitive(i);
+    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
+    out.Add("  object {") << "bond_" << glp.GetName().ToLowerCase().Replace(' ', '_')
+      << " texture {" << p_mat << "}}";
+  }
+  out.Add("  }");
+  mat3d m;
+  olx_create_rotation_matrix(m, vec3d(Params()[1], Params()[2], 0).Normalise(),
+    cos(Params()[0]*M_PI/180));
+  m[0] *= Params()[4];
+  m[1] *= Params()[4];
+  m[2] *= Params()[3];
+  m *= Parent.GetBasis().GetMatrix();
+  vec3d t = pov::CrdTransformer(Parent.GetBasis()).crd(GetBaseCrd());
+  out.Add("  transform {");
+  out.Add("   matrix") << pov::to_str(m, t);
+  out.Add("   }");
+  out.Add(" }");
+  return out;
+}
+//..............................................................................
+TStrList TXBond::PovDeclare()  {
+  TStrList out;
+  out.Add("#declare bond_single_cone=object{ cylinder {<0,0,0>, <0,0,1>, 0.1} }");
+  out.Add("#declare bond_top_disk=object{ disc {<0,0,1><0,0,1>, 0.1} }");
+  out.Add("#declare bond_bottom_disk=object{ disc {<0,0,0><0,0,-1>, 0.1} }");
+  out.Add("#declare bond_middle_disk=object{ disc {<0,0,0.5><0,0,1>, 0.1} }");
+  out.Add("#declare bond_bottom_cone=object{ cylinder {<0,0,0>, <0,0,0.5>, 0.1} }");
+  out.Add("#declare bond_top_cone=object{ cylinder {<0,0,0.5>, <0,0,1>, 0.1} }");
+  out.Add("#declare bond_bottom_line=object{ cylinder {<0,0,0>, <0,0,0.5>, 0.01} }");
+  out.Add("#declare bond_top_line=object{ cylinder {<0,0,0.5>, <0,0,1>, 0.01} }");
+
+  double ConeStipples = FBondParams->GetNumParam("ConeStipples", 6.0, true);
+  out.Add("#declare bond_stipple_cone=object { union {");
+  for( double i=0; i < ConeStipples; i++ )  {
+    out.Add(" disc {<0,0,") << i/ConeStipples << "><0,0,-1>, 0.1}";
+    out.Add(" cylinder {<0,0,") << i/ConeStipples << ">, <0,0,"
+      << (i+0.5)/ConeStipples << ">, 0.1}";
+    out.Add(" disc {<0,0,") << (double)(i+0.5)/ConeStipples << "><0,0,1>, 0.1}";
+  }
+  out.Add("}}");
+  
+  out.Add("#declare bond_bottom_stipple_cone=object { union {");
+  for( double i=0; i < ConeStipples/2; i++ )  {
+    out.Add(" disc {<0,0,") << (i+0.5)/ConeStipples << "><0,0,-1>, 0.1}";
+    out.Add(" cylinder {<0,0,") << (i+0.5)/ConeStipples << ">, <0,0,"
+      << (i+1)/ConeStipples << ">, 0.1}";
+    out.Add(" disc {<0,0,") << (i+1)/ConeStipples << "><0,0,1>, 0.1}";
+  }
+  out.Add("}}");
+
+  out.Add("#declare bond_top_stipple_cone=object { union {");
+  for( int i=0; i < ConeStipples/2; i++ )  {
+    out.Add(" disc {<0,0,") << ((i+0.5)/ConeStipples+0.5) << "><0,0,-1>, 0.1}";
+    out.Add(" cylinder {<0,0,") << ((i+0.5)/ConeStipples+0.5) << ">, <0,0,"
+      << ((i+1)/ConeStipples+0.5) << ">, 0.1}";
+    out.Add(" disc {<0,0,") << ((i+1)/ConeStipples+0.5) << "><0,0,1>, 0.1}";
+  }
+  out.Add("}}");
+
+  out.Add("#declare bond_balls_bond=object { union {");
+  for( int i=0; i < 12; i++ )
+    out.Add(" sphere {<0,0,") << (double)i/12 << ">, 0.02}";
+  out.Add("}}");
+
+  out.Add("#declare bond_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
+  out.Add("#declare bond_stippled_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
+  
+  return out;
+}
+//..............................................................................
 void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
@@ -455,7 +542,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create stipped ball bond
   CL = (float)(1.0/(12.0));
-  if( (GlP = FStaticObjects.FindObject("Sphere")) == NULL )  {
+  if( (GlP = FStaticObjects.FindObject("Balls bond")) == NULL )  {
     GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Balls bond", GlP);
   }

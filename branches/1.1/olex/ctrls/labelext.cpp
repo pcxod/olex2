@@ -20,6 +20,6 @@ END_EVENT_TABLE()
 //..............................................................................
 void TLabel::ClickEvent(wxCommandEvent& event)  {
   StartEvtProcessing()
-    OnClick.Execute(this, &TEGC::New<olxstr>( GetOnClickStr() ));
+    OnClick.Execute(this);
   EndEvtProcessing()
 }

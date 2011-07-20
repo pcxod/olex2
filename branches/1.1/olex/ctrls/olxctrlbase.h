@@ -33,6 +33,34 @@ namespace ctrl_ext  {
     TActionQList Actions;
   public:
     TWindowInterface WI;
+    class ActionQueue : public TActionQueue {
+      public:
+        ActionQueue(TActionQList &parent, const olxstr &name)
+          : TActionQueue(&parent, name)
+        {
+          parent.Add(this);
+        }
+        bool Execute(const IEObject *Sender, const IEObject *Data=NULL)  {
+          return TActionQueue::Execute(Sender, Data == NULL ? &data : Data);
+        }
+        static ActionQueue& New(TActionQList &parent, const olxstr &name)  {
+          return *(new ActionQueue(parent, name));
+        }
+        olxstr data;
+    };
+    bool ExecuteActionQueue(const olxstr &name) const {
+      ActionQueue *q = dynamic_cast<ActionQueue *>(
+        Actions.Find(name.ToUpperCase()));
+      if( q == NULL )  return false;
+      olxstr data = GetActionQueueData(*q);
+      q->Execute(this, &data);
+      return true;
+    }
+  protected:
+    // use this to do any required substitutions
+    virtual olxstr GetActionQueueData(const ActionQueue &q) const {
+      return q.data;
+    }
   };
 
   const size_t UnknownSwitchState = (size_t)(-2);
@@ -58,8 +86,6 @@ namespace ctrl_ext  {
     wxKeyEvent* Event;
   public:
     TKeyEvent(wxKeyEvent& evt)  {  Event = &evt;  }
-    virtual ~TKeyEvent()  {  ;  }
-
     wxKeyEvent& GetEvent()    const {  return *Event;  }
     void SetEvent(wxKeyEvent& evt)  {  Event = &evt;  }
   };

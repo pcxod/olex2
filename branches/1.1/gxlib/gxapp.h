@@ -192,6 +192,7 @@ public:
   };
   AtomIterator GetAtoms() const {  return AtomIterator(*this);  }
   BondIterator GetBonds() const {  return BondIterator(*this);  }
+  PlaneIterator GetPlanes() const {  return PlaneIterator(*this);  }
 protected:
   TGlRenderer* FGlRender;
   TXFader* Fader;
@@ -377,7 +378,7 @@ public:
   inline TDBasis& DBasis()  {  return *FDBasis; }
   inline THklFile& HklFile()  {  return *FHklFile; }
   inline TDFrame& DFrame()  {  return *FDFrame; }
-  inline TXGrid& XGrid()  {  return *FXGrid;  }
+  inline TXGrid& XGrid() const {  return *FXGrid;  }
   inline T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
 
   // this function to be used to get all networks, including th overlayed files
@@ -523,20 +524,21 @@ public:
   void SetPackMode(short v, const olxstr& atoms);
   //
 protected:
-  void XAtomsByMask(const olxstr& Name, int Mask, TXAtomPList& List);
-  void CAtomsByMask(const olxstr& Name, int Mask, TCAtomPList& List);
-  void XAtomsByType(const cm_Element& AI, TXAtomPList& List, bool FindHidden=false);
-  void CAtomsByType(const cm_Element& AI, TCAtomPList& List);
-  void GetSelectedXAtoms(TXAtomPList& List, bool Clear=true);
-  void GetSelectedCAtoms(TCAtomPList& List, bool Clear=true);
+  ConstPtrList<TXAtom> XAtomsByMask(const olxstr& Name, int Mask);
+  ConstPtrList<TCAtom> CAtomsByMask(const olxstr& Name, int Mask);
+  ConstPtrList<TXAtom> XAtomsByType(const cm_Element& AI, bool FindHidden=false);
+  ConstPtrList<TCAtom> CAtomsByType(const cm_Element& AI);
+  ConstPtrList<TXAtom> GetSelectedXAtoms(bool Clear=true);
+  ConstPtrList<TCAtom> GetSelectedCAtoms(bool Clear=true);
 public:
   SortedElementPList DecodeTypes(const olxstr &types) const;
   TXAtom* GetXAtom(const olxstr& AtomName, bool Clear);
-  void GetXAtoms(const olxstr& AtomName, TXAtomPList& res);
-  void GetXBonds(const olxstr& BondName, TXBondPList& res);
+  ConstPtrList<TXAtom> GetXAtoms(const olxstr& AtomName);
+  ConstPtrList<TXBond> GetXBonds(const olxstr& BondName);
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
-  void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
-  TXAtomPList FindXAtoms(const olxstr& Atoms, bool ClearSelection=true, bool FindHidden=false);
+  ConstPtrList<TCAtom> FindCAtoms(const olxstr& Atoms, bool ClearSelection=true);
+  ConstPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool ClearSelection=true,
+    bool FindHidden=false);
 
   //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   //const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
@@ -568,7 +570,7 @@ public:
 
   void SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms=NULL);
 
-  void GetBonds(const olxstr& Bonds, TXBondPList& List);
+  ConstPtrList<TXBond> GetBonds(const olxstr& Bonds, bool inc_lines);
 
   void AtomRad(const olxstr& Rad, TXAtomPList* Atoms=NULL); // pers, sfil
   void AtomZoom(float Zoom, TXAtomPList* Atoms=NULL);  // takes %
@@ -589,9 +591,9 @@ public:     void CalcProbFactor(float Prob);
   AGDrawObject* FindLooseObject(const olxstr& Name);
 
   TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
-
-  TXAtom *AddCentroid(TXAtomPList& Atoms);
-  TXAtom* AddAtom(TXAtom* templ=NULL);
+  // will return generated symmetry equivalents too
+  ConstPtrList<TXAtom> AddCentroid(const TXAtomPList& Atoms);
+  TXAtom *AddAtom(TXAtom* templ=NULL);
   // adopts atoms of the auinit and returns newly created atoms and bonds
   void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds);
   void SelectAtoms(const olxstr& Names, bool Invert=false);
@@ -683,6 +685,8 @@ public:     void CalcProbFactor(float Prob);
 
   void SaveModel(const olxstr& file_name) const;
   void LoadModel(const olxstr& file_name);
+
+  TStrList ToPov() const;
 //..............................................................................
   static TGXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();

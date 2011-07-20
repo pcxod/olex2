@@ -15,11 +15,10 @@
 
 using namespace lcells;
 
-olx_object_ptr<TTypeList<CellInfo> > CellReader::read(const olxstr &fn)  {
+ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
   TStrList lines;
   lines.LoadFromFile(fn);
-  olx_object_ptr<TTypeList<CellInfo> > r_(new TTypeList<CellInfo>);
-  TTypeList<CellInfo> &rvl = r_;
+  TArrayList<CellInfo> rvl;
   const olxstr ext = TEFile::ExtractFileExt(fn).ToLowerCase();
   try {
     if( ext == "cif" )  {
@@ -56,7 +55,7 @@ olx_object_ptr<TTypeList<CellInfo> > CellReader::read(const olxstr &fn)  {
             rv.cell[4] = ToDouble(GetCifParamAsString(block, "_cell_angle_beta"));
             rv.cell[5] = ToDouble(GetCifParamAsString(block, "_cell_angle_gamma"));
             rv.lattice = latt;
-            rvl.AddCCopy(rv);
+            rvl.Add(rv);
           }
         }
         catch(...)  {}
@@ -89,19 +88,19 @@ olx_object_ptr<TTypeList<CellInfo> > CellReader::read(const olxstr &fn)  {
         }
       }
       if( cell_found && latt_found )
-        rvl.AddCCopy(rv);
+        rvl.Add(rv);
+    }
+    for( size_t i=0; i < rvl.Count(); i++ )  {
+      rvl[i].volume = TUnitCell::CalcVolume(rvl[i].cell);
+      rvl[i].niggle_volume = TUnitCell::CalcVolume(
+        Niggli::reduce_const(rvl[i].lattice, rvl[i].cell));
     }
   }
   catch(const TExceptionBase &e)  {
     TBasicApp::NewLogEntry(logError) << fn << ": ";
     TBasicApp::NewLogEntry() << e.GetException()->GetStackTrace<TStrList>();
   }
-  for( size_t i=0; i < rvl.Count(); i++ )  {
-    rvl[i].volume = TUnitCell::CalcVolume(rvl[i].cell);
-    rvl[i].niggle_volume = TUnitCell::CalcVolume(
-      Niggli::reduce_const(rvl[i].lattice, rvl[i].cell));
-  }
-  return r_;
+  return rvl;
 }
 //.............................................................................
 double CellReader::ToDouble(const olxstr &str)  {
@@ -211,9 +210,16 @@ Index &Index::LoadFromFile(const olxstr &file_name) {
   return *this;
 }
 //.............................................................................
-void Index::Update(const olxstr &index)  {
+olxstr Index::Update(const olxstr &index, const olxstr &root)  {
+  if( !root.IsEmpty() && !TEFile::Exists(root) )  {
+    TBasicApp::NewLogEntry(logError) <<
+      (olxstr("Given mounting point does not exist: ").quote() << root);
+    return root;
+  }
   Index ind;
   ind.LoadFromFile(index);
+  if( !root.IsEmpty() )
+    ind.root.name = root;
   ind.PrintInfo();
   size_t cnt = ind.root.TotalCount();
   TFileTree ft(ind.root.name);
@@ -226,6 +232,7 @@ void Index::Update(const olxstr &index)  {
   size_t cnt1 = ind.root.TotalCount();
   if( cnt1 > cnt )
     TBasicApp::NewLogEntry() << "Added: " << cnt1-cnt << " new entries";
+  return ind.root.name;
 }
 //.............................................................................
 void Index::PrintInfo() const {
@@ -247,13 +254,13 @@ size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
     if( fi == InvalidIndex )  {
       TBasicApp::NewLogEntry() << "New file added: " << folder.GetFullPath() << f.GetName();
       entries.Add(new FileEntry(*this, f.GetName(), f.GetModificationTime())).cells =
-        CellReader::read(folder.GetFullPath()+f.GetName())();
+        CellReader::read(folder.GetFullPath()+f.GetName());
     }
     else  {
       if( entries[fi].modified != f.GetModificationTime() )  {
         updated_cnt++;
         TBasicApp::NewLogEntry() << "Updated file: " << folder.GetFullPath() << f.GetName();
-        entries[fi].cells = CellReader::read(folder.GetFullPath()+f.GetName())();
+        entries[fi].cells = CellReader::read(folder.GetFullPath()+f.GetName());
         entries[fi].modified = f.GetModificationTime();
       }
     }
@@ -269,7 +276,7 @@ size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
         Init(f);
     }
     else
-      folders[fi].Update(f);
+      updated_cnt += folders[fi].Update(f);
   }
   return updated_cnt;
 }
@@ -280,8 +287,8 @@ void Index::FolderEntry::Init(const TFileTree::Folder &folder)  {
   modified = folder.GetModificationTime();
   for( size_t i=0; i < folder.FileCount(); i++ )  {
     const TFileListItem &f = folder.GetFile(i);
-    TTypeList<CellInfo> res = CellReader::read(folder.GetFullPath()+f.GetName())();
-    if( res.IsEmpty() )  continue;
+    if( !ConsiderFile(f.GetName()) )  continue;
+    ConstArrayList<CellInfo> res = CellReader::read(folder.GetFullPath()+f.GetName());
     FileEntry &fe = entries.Add(
       new FileEntry(*this, f.GetName(), f.GetModificationTime()));
     fe.cells = res;
@@ -293,14 +300,14 @@ void Index::FolderEntry::Init(const TFileTree::Folder &folder)  {
   }
 }
 //.............................................................................
-TTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell, double diff,
+ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell, double diff,
   bool filter_by_dimensions) const
 {
   TTypeList<ResultEntry> all, res;
   all.SetCapacity(root.TotalCount());
   root.Expand(all);
   TEBitArray usage(all.Count());
-/* alternative to use the usgae flags would be something like this:
+/* alternative to use the usage flags would be something like this:
   res.QuickSorter.Sort<TComparablePtrComparator>(res);
   ConstSlice<TTypeList<Index::ResultEntry>, ResultEntry> res_slice(res, 0, res.Count());
 ...
@@ -361,7 +368,7 @@ TTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell, double diff,
   return res;
 }
 //.............................................................................
-void Index::PrintResults(const TTypeList<ResultEntry> & res)  {
+void Index::PrintResults(const TTypeList<ResultEntry> &res)  {
   size_t cell_num=0, rows_processes=0;
   TTable tab(0, 3);
   for( size_t i=0; i < res.Count(); i++ )  {
@@ -386,7 +393,7 @@ void Index::PrintResults(const TTypeList<ResultEntry> & res)  {
   TBasicApp::GetLog() << tab.CreateTXTList("Search results", true, false, ' ');
 }
 //.............................................................................
-TTypeList<Index::ResultEntry> IndexSearch(const olxstr &index_name,
+ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
   const TStrObjList &Cmds, double vol_diff)
 {
   CellInfo cell;
@@ -403,7 +410,7 @@ TTypeList<Index::ResultEntry> IndexSearch(const olxstr &index_name,
     cell.niggle_volume = TUnitCell::CalcVolume(reduced);
   }
   else if( Cmds.Count() == 1 )  {
-    TTypeList<CellInfo> r = CellReader::read(Cmds[0])();
+    TArrayList<CellInfo> r = CellReader::read(Cmds[0]);
     if( r.Count() >= 1 )
       cell = r[0];
   }
@@ -419,8 +426,9 @@ TTypeList<Index::ResultEntry> IndexSearch(const olxstr &index_name,
     cell.niggle_volume = TUnitCell::CalcVolume(
       Niggli::reduce_const(cell.lattice, cell.cell));
   }
+  TTypeList<Index::ResultEntry> res;
   if( cell.volume == 0 )
-    return TTypeList<Index::ResultEntry>();
+    return res;
   TBasicApp::NewLogEntry() << "Searching cell:";
   TBasicApp::NewLogEntry() << "  " << cell.cell.ToString() << ", "
     << TCLattice::SymbolForLatt(cell.lattice);
@@ -428,44 +436,225 @@ TTypeList<Index::ResultEntry> IndexSearch(const olxstr &index_name,
     << Niggli::reduce_const(cell.lattice, cell.cell).ToString();
   TBasicApp::NewLogEntry() << "  Cell volume: " << olxstr::FormatFloat(2, cell.volume);
   TBasicApp::NewLogEntry() << "  Reduced cell volume: " << olxstr::FormatFloat(2, cell.niggle_volume);
-  return Index().LoadFromFile(index_name).Search(cell, vol_diff, true);
+  IndexManager im;
+  im.LoadConfig(cfg_name);
+  for( size_t i=0; i < im.indices.Count(); i++ )  {
+    try  {
+      if( !TEFile::Exists(im.indices[i].index_file_name) )  {
+        TBasicApp::NewLogEntry(logError) <<
+          (olxstr("Skipping incomplete index: ").quote() << im.indices[i].index_file_name);
+        continue;
+      }
+      Index ind;
+      ind.LoadFromFile(im.indices[i].index_file_name);
+      if( !im.indices[i].root.IsEmpty() )  {
+        if( !TEFile::Exists(im.indices[i].root) )  {
+          TBasicApp::NewLogEntry(logError) <<
+            (olxstr("Skipping invalid index root: ").quote() << im.indices[i].root);
+          continue;
+        }
+      }
+      if( !im.indices[i].root.IsEmpty() )
+        ind.root.name = im.indices[i].root;
+      res.AddListC(ind.Search(cell, vol_diff, true));
+    }
+    catch(...)  {
+      TBasicApp::NewLogEntry(logException) <<
+        (olxstr("Failed to search: ").quote() << im.indices[i].root);
+    }
+  }
+  return res;
 }
 //.............................................................................
 //.............................................................................
-//.............................................................................
-void Index::Search(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  const double vd = Options.FindValue('d', '1').ToDouble();
-  Index::PrintResults(IndexSearch(DefaultIndex(), Cmds, vd)); 
-}
-//.............................................................................
-void Index::Search(const TStrObjList &Params, TMacroError &E)  {
-  Index::PrintResults(IndexSearch(DefaultIndex(), Params, 1)); 
-}
-//.............................................................................
-void Index::Update(const TStrObjList &Params, TMacroError &E)  {
-  const olxstr index = DefaultIndex();
-  if( TEFile::Exists(index) )
-    Index::Update(index);
-  else  {
-    if( Params.IsEmpty() )
-      E.ProcessingError(__OlxSrcInfo, "please provide a folder name to create index from");
-    else
-      Index().Create(Params[0], index);
+void IndexManager::LoadConfig(const olxstr &file_name)  {
+  if( !TEFile::Exists(file_name) )  {
+    if( TEFile::Exists(Index::DefaultIndex()) )  {
+      Item &itm = indices.AddNew();
+      itm.index_file_name =
+        TEFile::CreateRelativePath(Index::DefaultIndex(), TBasicApp::GetSharedDir());
+      itm.update = true;
+    }
+  }
+  else {
+    TDataFile df;
+    df.LoadFromXLFile(file_name);
+    TDataItem &root = df.Root().FindRequiredItem("indices");
+    for( size_t i=0; i < root.ItemCount(); i++ )  {
+      TDataItem &idx = root.GetItem(i);
+      olxstr fn = idx.GetRequiredField("file");
+      if( !TEFile::IsAbsolutePath(fn) )
+        fn = TEFile::ExpandRelativePath(fn, TBasicApp::GetSharedDir());
+      olxstr root = idx.GetRequiredField("root");
+      if( !TEFile::Exists(fn) && (root.IsEmpty() || !TEFile::Exists(root)))  {
+        TBasicApp::NewLogEntry(logError) << (olxstr("Missing index file removed: ").quote() << fn);
+        continue;
+      }
+      Item &itm = indices.AddNew();
+      itm.index_file_name = fn;
+      itm.root = root;
+      itm.update = idx.GetRequiredField("update").ToBool();
+    }
   }
 }
 //.............................................................................
-TLibrary* Index::ExportLibrary(const olxstr& name)  {
+void IndexManager::SaveConfig(const olxstr &file_name) {
+  if( indices.IsEmpty() )  return;
+  try {
+    TDataFile df;
+    TDataItem &root = df.Root().AddItem("indices");
+    for( size_t i=0; i < indices.Count(); i++ )  {
+      root.AddItem(i+1).AddField("file",
+        TEFile::CreateRelativePath(indices[i].index_file_name, TBasicApp::GetSharedDir()))
+        .AddField("root", indices[i].root)
+        .AddField("update", indices[i].update);
+    }
+    df.SaveToXLFile(file_name);
+  }
+  catch(...)  {
+    TBasicApp::NewLogEntry() << "Failed to save configuration";
+  }
+}
+//.............................................................................
+void IndexManager::Update(const olxstr &cfg_name, const olxstr &folder_name,
+  const olxstr &index_name)
+{
+  LoadConfig(cfg_name);
+  SortedObjectList<olxstr, olxstrComparator<true> > roots;
+  for( size_t i=0; i < indices.Count(); i++ )  {
+    if( !indices[i].update ) continue;
+    try  {
+      if( TEFile::Exists(indices[i].index_file_name) )  {
+        indices[i].root = Index::Update(indices[i].index_file_name, indices[i].root);
+        roots.Add(TEFile::UnixPath(indices[i].root));
+      }
+    }
+    catch(...)  {
+      TBasicApp::NewLogEntry(logException) <<
+        (olxstr("Failed to update: ").quote() << indices[i].index_file_name);
+    }
+  }
+  if( !folder_name.IsEmpty() && TEFile::Exists(folder_name) && !index_name.IsEmpty() )  {
+    if( roots.IndexOf(TEFile::UnixPath(folder_name)) != InvalidIndex )  {
+      TBasicApp::NewLogEntry() <<
+        (olxstr("Skipping duplicate mounting point: ").quote() << folder_name);
+    }
+    else  {
+      Item &itm = indices.AddNew();
+      itm.root = folder_name;
+      itm.update = true;
+      itm.index_file_name = index_name;
+    }
+  }
+  for( size_t i=0; i < indices.Count(); i++ )  {
+    if( !indices[i].update ) continue;
+    try  {
+      if( !TEFile::Exists(indices[i].index_file_name) )  {
+        if( roots.IndexOf(TEFile::UnixPath(indices[i].root)) != InvalidIndex )  {
+          TBasicApp::NewLogEntry() <<
+            (olxstr("Skipping duplicate mounting point: ").quote() << indices[i].root);
+          indices.NullItem(i);
+          continue;
+        }
+        Index().Create(indices[i].root, indices[i].index_file_name);
+      }
+    }
+    catch(const TExceptionBase &e)  {
+      TBasicApp::NewLogEntry() << e.GetException()->GetStackTrace<TStrList>();
+      TBasicApp::NewLogEntry(logException) <<
+        (olxstr("Failed to create: ").quote() << indices[i].index_file_name);
+    }
+  }
+  indices.Pack();
+}
+//.............................................................................
+//.............................................................................
+void IndexManager::Search(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  const double vd = Options.FindValue('d', '1').ToDouble();
+  Index::PrintResults(Search(DefaultCfgName(), Cmds, vd)); 
+}
+//.............................................................................
+void IndexManager::Search(const TStrObjList &Params, TMacroError &E)  {
+  TTypeList<Index::ResultEntry> res = Search(DefaultCfgName(), Params, 1);
+  if( !Params.IsEmpty() && Params[0].ToBool() )
+    Index::PrintResults(res);
+  olxstr_buf bf;
+  olxstr cs = ',';
+  for( size_t i=0; i < res.Count(); i++ )  {
+    bf << res[i].file_name;
+    if( i+1 < res.Count() )
+      bf << cs;
+  }
+  E.SetRetVal<olxstr>(bf);
+}
+//.............................................................................
+void IndexManager::Update(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  olxstr cfg_name, folder_name, index_name;
+  if( Cmds.Count() == 0 )  {
+    if( !(TEFile::Exists(DefaultCfgName()) || TEFile::Exists(Index::DefaultIndex())) )  {
+      E.ProcessingError(__OlxSrcInfo, "Please provide a folder to index");
+      return;
+    }
+    cfg_name = DefaultCfgName();
+  }
+  else if( Cmds.Count() == 1 )  {
+    if( TEFile::IsDir(Cmds[0]) )  {
+      if( TEFile::Exists(Index::DefaultIndex()) )  {
+        E.ProcessingError(__OlxSrcInfo, "Default index already exists, please provide new index name");
+        return;
+      }
+      cfg_name = DefaultCfgName();
+      folder_name = Cmds[0];
+      index_name = Index::DefaultIndex();
+    }
+    else if( !TEFile::Exists(Cmds[0]) )  {
+      E.ProcessingError(__OlxSrcInfo, "Invalid configuration name: ").quote() << Cmds[0];
+      return;
+    }
+    else
+      cfg_name = Cmds[0]; 
+  }
+  else if( Cmds.Count() == 2 )  {
+    if( TEFile::IsDir(Cmds[0]) )  {
+      cfg_name = DefaultCfgName();
+      folder_name = Cmds[0];
+      index_name = Cmds[1];
+    }
+    else  {
+      E.ProcessingError(__OlxSrcInfo, "A folder and index name are expected");
+      return;
+    }
+  }
+  else if( Cmds.Count() == 3 )  {
+    cfg_name = Cmds[0];
+    folder_name = Cmds[1];
+    index_name = Cmds[2];
+  }
+  if( !index_name.IsEmpty() && !TEFile::IsAbsolutePath(index_name) )  {
+    index_name = TEFile::ExpandRelativePath(index_name, TBasicApp::GetSharedDir());
+    if( !TEFile::IsAbsolutePath(index_name) )
+      index_name = TBasicApp::GetSharedDir() + index_name;
+  }
+  IndexManager im;
+  im.Update(cfg_name, folder_name, index_name);
+  im.SaveConfig(cfg_name);
+}
+//.............................................................................
+TLibrary* IndexManager::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("lcells") : name);
   lib->RegisterStaticFunction(
-    new TStaticFunction(Index::Search, "Search", fpSeven|fpEight,
+    new TStaticFunction(&IndexManager::Search, "Search",
+    fpNone|fpOne|fpTwo|fpSeven,
     "Searches given cell")
     );
-  lib->RegisterStaticFunction(
-    new TStaticFunction(Index::Update, "Update", fpOne|fpNone,
-    "Updates index from given/original folder")
+  lib->RegisterStaticMacro(
+    new TStaticMacro(&IndexManager::Update, "Update", EmptyString(),
+    fpThree|fpTwo|fpOne|fpNone,
+    "Updates/creates indices using default/given configuration. To create an index, pass a folder name.")
     );
   lib->RegisterStaticMacro(
-    new TStaticMacro(&Index::Search, "Search", "d-deviation [1 A^3]", fpNone|fpOne|fpTwo|fpSeven,
+    new TStaticMacro(&IndexManager::Search, "Search", "d-deviation [1 A^3]",
+    fpNone|fpOne|fpTwo|fpSeven,
     "Searches current cell, cell from given file, or given cell")
   );
   return lib;

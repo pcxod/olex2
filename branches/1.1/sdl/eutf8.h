@@ -90,7 +90,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
         bf.Write((uint8_t)(UTF8_MASKBYTE | input[i] & UTF8_MASKBITS));
       }
     }
-    olxcstr str(CEmptyString(), bf.GetLength() );
+    olxcstr str(CEmptyString(), bf.GetLength());
     bf.ToString(str);
     return str;
   }
@@ -114,12 +114,12 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
       }
       bf.Write(ch);
     }
-    olxwstr str(WEmptyString(), bf.GetLength() );
+    olxwstr str(WEmptyString(), bf.GetLength());
     bf.ToString(str);
     return str;
   }
 
-  static olxcstr Encode4( const void* vinput, size_t len )  {
+  static olxcstr Encode4(const void* vinput, size_t len)  {
     const uint32_t* input = (const uint32_t*)vinput;
     TDirectionalList<char> bf(len);
     for( size_t i=0; i < len; i++ )  {
@@ -156,7 +156,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
         bf.Write((uint8_t)(UTF8_MASKBYTE | input[i] & UTF8_MASKBITS));
       }
     }
-    olxcstr str(CEmptyString(), bf.GetLength() );
+    olxcstr str(CEmptyString(), bf.GetLength());
     bf.ToString(str);
     return str;
   }
@@ -201,7 +201,7 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
       }
       bf.Write(ch);
     }
-    olxwstr str(WEmptyString(), bf.GetLength() );
+    olxwstr str(WEmptyString(), bf.GetLength());
     bf.ToString(str);
     return str;
 }

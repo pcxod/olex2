@@ -52,8 +52,9 @@ struct ListFilter  {
     }
   };
   template <class SrcList, class ResList, class Condition>
-  static void Filter(const SrcList& src, ResList& dest, const Condition& cond)  {
+  static ResList& Filter(const SrcList& src, ResList& dest, const Condition& cond)  {
     src.ForEach(_Filter<ResList, Condition>(dest, cond));
+    return dest;
   }
 };
 

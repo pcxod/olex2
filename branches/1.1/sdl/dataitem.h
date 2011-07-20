@@ -48,7 +48,7 @@ protected:
   TEStrBuffer& writeFullName(TEStrBuffer& bf) const;
 public:
   TDataItem(TDataItem *Parent, const olxstr& Name, const olxstr& value=EmptyString());
-  virtual ~TDataItem() {  Clear();  }
+  virtual ~TDataItem();
   void Clear();
   void Sort();  // sorts fields and items - improve the access by name performance
   void ResolveFields(TStrList* Log); // resolves referenced fields
@@ -66,12 +66,18 @@ public:
   TDataItem* GetAnyItemCI(const olxstr& Name) const;
   // returns an item by name using recursive search within subitems as well
   // as in the current item
-  template <class T> TDataItem* FindItemi(const T& Name) const {  return Items.FindObjecti(Name);  }
-  template <class T> TDataItem* FindItem(const T& Name)  const {  return Items.FindObject(Name);  }
+  template <class T> TDataItem* FindItemi(const T& Name) const {
+    return Items.FindObjecti(Name);
+  }
+  template <class T> TDataItem* FindItem(const T& Name) const {
+    return Items.FindObject(Name);
+  }
   template <class T> TDataItem& FindRequiredItem(const T& Name) const {  
     size_t i = Items.IndexOf(Name);
-    if( i == InvalidIndex )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required item does not exist: ") << Name);
+    if( i == InvalidIndex )  {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("Required item does not exist: ") << Name);
+    }
     return *Items.GetObject(i);  
   }
 
@@ -79,14 +85,16 @@ public:
   const TDataItem& GetItem(size_t index) const {  return *Items.GetObject(index); }
   void FindSimilarItems(const olxstr& StartsFrom, TPtrList<TDataItem>& List);
   inline size_t ItemCount() const {  return Items.Count(); }
-  template <class T> bool ItemExists(const T &Name) const {  return Items.IndexOf(Name) != InvalidIndex;  }
-  size_t IndexOf(TDataItem *I) const {  return Items.IndexOfObject(I); };
+  template <class T> bool ItemExists(const T &Name) const {
+    return Items.IndexOf(Name) != InvalidIndex;
+  }
+  size_t IndexOf(TDataItem *I) const {  return Items.IndexOfObject(I); }
 
   TDataItem& AddField(const olxstr& Name, const olxstr& Data)  {
     Fields.Add(Name, Data);
     return *this;
   }
-  inline size_t FieldCount() const                 {  return Fields.Count(); }
+  inline size_t FieldCount() const {  return Fields.Count();  }
 
   template <class T> size_t FieldIndex(const T& Name) const {  return Fields.IndexOf(Name);  }
   template <class T> size_t FieldIndexi(const T& Name) const {  return Fields.IndexOfi(Name);  }
@@ -94,7 +102,7 @@ public:
   const olxstr& GetField(size_t i) const {  return Fields.GetObject(i); }
   // the filed will not be decoded
   const olxstr& FieldName(size_t i) const {  return Fields.GetString(i); }
-  // if field does not exist, a new one added
+  // if field does not exist, a new one is added
   void SetField(const olxstr& fieldName, const olxstr& newValue) {
     const size_t i = Fields.IndexOf(fieldName);
     if( i == InvalidIndex )

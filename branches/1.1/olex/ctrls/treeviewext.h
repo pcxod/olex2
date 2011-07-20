@@ -26,7 +26,7 @@ namespace ctrl_ext  {
   };
 
   class TTreeView: public wxGenericTreeCtrl, public AOlxCtrl  {
-    olxstr Data, OnItemActivateStr, OnSelectStr, OnEditStr;
+    olxstr Data;
   protected:
     void SelectionEvent(wxTreeEvent& event);
     void ItemActivateEvent(wxTreeEvent& event);
@@ -46,21 +46,16 @@ namespace ctrl_ext  {
       wxGenericTreeCtrl(Parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, flags), 
       AOlxCtrl(this),
       Popup(NULL),
-      OnSelect(Actions.New(evt_on_select_id)),
-      OnDblClick(Actions.New(evt_on_dbl_click_id)),
-      OnEdit(Actions.New(evt_change_id)),
-      Data(EmptyString()),
-      OnItemActivateStr(EmptyString()),
-      OnSelectStr(EmptyString())  {}
+      OnSelect(AOlxCtrl::ActionQueue::New(Actions, evt_on_select_id)),
+      OnDblClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_dbl_click_id)),
+      OnEdit(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))  {}
+
     virtual ~TTreeView()  {
       ClearData();
       if( Popup != NULL )  delete Popup;
     }
 
-    DefPropC(olxstr, Data)       // data associated with the object
-    DefPropC(olxstr, OnItemActivateStr) // this is passed to the OnDoubleClick event
-    DefPropC(olxstr, OnSelectStr) // this is passed to the OnSelect
-    DefPropC(olxstr, OnEditStr) // this is passed to the OnEdit
+    DefPropC(olxstr, Data)
     DefPropP(wxMenu*, Popup)
 
     void SelectByLabel(const olxstr& label);
@@ -70,7 +65,7 @@ namespace ctrl_ext  {
     olxstr SaveState() const;
     void RestoreState(const olxstr& state);
 
-    TActionQueue &OnDblClick, &OnSelect, &OnEdit;
+    AOlxCtrl::ActionQueue &OnDblClick, &OnSelect, &OnEdit;
 
     DECLARE_CLASS(TTreeView)
     DECLARE_EVENT_TABLE()

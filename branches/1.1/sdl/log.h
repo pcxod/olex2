@@ -9,7 +9,7 @@
 
 #ifndef __olx_sdl_log_H
 #define __olx_sdl_log_H
-#include "tptrlist.h"
+#include "talist.h"
 #include "egc.h"
 #include "datastream.h"
 #include "actions.h"

@@ -205,6 +205,8 @@ namespace SymSpace  {
     InfoEx rv;
     rv.centrosymmetric = false;
     int latt = -1;
+    if( sp.Count() == 0 )  // invalid
+      throw TInvalidArgumentException(__OlxSourceInfo, "matrix number");
     if( sp.Count() == 1 )  {  // P?
       if( !sp[0].r.IsI() || !sp[0].t.IsNull() )
         throw TInvalidArgumentException(__OlxSourceInfo, "identity matrix");

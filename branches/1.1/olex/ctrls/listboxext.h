@@ -20,24 +20,18 @@ namespace ctrl_ext  {
     TActionQList *FActions;
     void ClickEvent(wxMouseEvent& event);
     void ItemSelectEvent(wxCommandEvent& event);
-    olxstr Data, OnDblClickStr, OnSelectStr;
+    olxstr Data;
   public:
     TListBox(wxWindow *Parent) :
       wxListBox(Parent, -1), 
       AOlxCtrl(this),
-      OnSelect(Actions.New(evt_on_select_id)),
-      OnDblClick(Actions.New(evt_on_dbl_click_id)),
-      Data(EmptyString()),
-      OnDblClickStr(EmptyString()),
-      OnSelectStr(EmptyString())  {}
-    virtual ~TListBox() {}
+      OnSelect(AOlxCtrl::ActionQueue::New(Actions, evt_on_select_id)),
+      OnDblClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_dbl_click_id))  {}
 
-    DefPropC(olxstr, Data)       // data associated with the object
-    DefPropC(olxstr, OnDblClickStr) // this is passed to the OnDoubleClick event
-    DefPropC(olxstr, OnSelectStr) // this is passed to the OnSelect
+    DefPropC(olxstr, Data)
 
     void AddObject(const olxstr &Name, void *Data=NULL)  {
-        wxListBox::Append(Name.u_str(), Data);
+      wxListBox::Append(Name.u_str(), Data);
     }
     inline void Clear()  {  wxListBox::Clear();  }
 
@@ -54,7 +48,7 @@ namespace ctrl_ext  {
       return (index == -1) ? EmptyString() : olxstr(wxListBox::GetString(index));
     }
 
-    TActionQueue &OnDblClick, &OnSelect;
+    ActionQueue &OnDblClick, &OnSelect;
 
     DECLARE_CLASS(TListBox)
     DECLARE_EVENT_TABLE()

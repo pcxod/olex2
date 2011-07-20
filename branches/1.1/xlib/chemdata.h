@@ -267,6 +267,80 @@ public:
   /* sorts the content list, so that C comes first, then H and then by Z descending;
   returns a reference to th provide ContentList */
   static ContentList& SortContentList(ContentList& cl);
+
+  // checks if given element is in main group 1-8
+  static bool IsGroup(int group, const cm_Element &e)  {
+    if( group < 3 )  {
+      return e.z == (group+2) || e.z == (group+10) || e.z == (group+18) ||
+        e.z == (group+36) || e.z == (group+54) || e.z == (group+86);
+    }
+    if( group == 8 && e.z == 2 )
+      return true;
+    return e.z == (group+2) || e.z == (group+10) || e.z == (group+28) ||
+      e.z == (group+46) || e.z == (group+78) || e.z == (group+110);
+  }
+  /* checks if given element is in sub-group 1-10, Lanthanised are
+  considered to be in group #1 */
+  static bool IsTtransitionalGroup(int group, const cm_Element &e) {
+    if( e.z >= 21 && e.z <= 30 )  {
+      int z = e.z > 28 ? e.z-11 : e.z; 
+      return z == (group+18);
+    }
+    else if( e.z >= 39 && e.z <= 48 )  {
+      int z = e.z > 46 ? e.z-11 : e.z; 
+      return z == (group+36);
+    }
+    else if( e.z >= 57 && e.z <= 80 )  {
+      if( e.z < 72 )
+        return group == 1;
+      int z = e.z > 78 ? e.z-11 : e.z; 
+      return z == (group+68);
+    }
+    return false;
+  }
+  // Sc->Zn, Y->Cd, Hf->Hg, lanthanides excluded
+  static bool IsTransitionalMetal(const cm_Element &e)  {
+    return (e.z >= 21 && e.z <= 30) || 
+      (e.z >= 39 && e.z <= 48) ||
+      (e.z >= 72 && e.z <= 80);
+  }
+  // Al, Ga, In, Sn, Tl, Pb, Bi
+  static bool IsPostTransitionalMetal(const cm_Element &e)  {
+    return e.z == 13 || e.z == 31 || e.z == 49 || e.z == 50 ||
+      e.z == 81 || e.z == 82 || e.z == 83;
+  }
+  // B, Si, Ge, As, Sb, Te
+  static bool IsMetalloid(const cm_Element &e)  {
+    return e.z == 5 || e.z == 14 || e.z == 32 || e.z == 33 ||
+      e.z == 51 || e.z == 52;
+  }
+
+  static bool IsMetal(const cm_Element &e) {
+    return IsTransitionalMetal(e) || IsPostTransitionalMetal(e);
+  }
+  // Li->Fr
+  static bool IsGroup1(const cm_Element &e) {  return IsGroup(1, e);  }
+  // Be->Ra
+  static bool IsGroup2(const cm_Element &e) {  return IsGroup(2, e);  }
+  // B->Tl
+  static bool IsGroup3(const cm_Element &e) {  return IsGroup(3, e);  }
+  // C->Pb
+  static bool IsGroup4(const cm_Element &e) {  return IsGroup(4, e);  }
+  // N->Bi
+  static bool IsGroup5(const cm_Element &e) {  return IsGroup(5, e);  }
+  // O->Po
+  static bool IsGroup6(const cm_Element &e) {  return IsGroup(6, e);  }
+  static bool IsChalcogen(const cm_Element &e)  {  return IsGroup6(e);  }
+  // F->At
+  static bool IsGroup7(const cm_Element &e) {  return IsGroup(7, e);  }
+  static bool IsHalogen(const cm_Element &e)  {  return IsGroup7(e);  }
+  // La->Lu
+  static bool IsLanthanide(const cm_Element &e)  {  return e.z >= 57 && e.z <= 71;  }
+  // Ac->Lr
+  static bool IsActinide(const cm_Element &e)  {  return e.z >= 89 && e.z <= 103;  }
+  // He->Rn
+  static bool IsGroup8(const cm_Element &e) {  return IsGroup(8, e);  }
+
 };
 
 EndXlibNamespace()

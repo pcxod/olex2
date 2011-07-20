@@ -41,6 +41,8 @@ public:
     TSPlane::SetDeleted(true);
     SetVisible(false);
   }
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
+  static TStrList PovDeclare();
 };
 
 EndGxlNamespace()

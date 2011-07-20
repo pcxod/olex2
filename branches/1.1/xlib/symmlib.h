@@ -50,6 +50,8 @@ public:
       case 7: count = 2;  break;  // C Centered (C);
       case 8:  // S Centered
       case 9:  // T Centered
+      case 10:  // D Centered
+      case 11:  // H Centered
       case 3: count = 3;  break;  // R Centered
       case 4: count = 4;  break;  // Face Centered (F)
       default:
@@ -68,6 +70,8 @@ public:
       case 'C': return 7;
       case 'S': return 8;
       case 'T': return 9;
+      case 'D': return 10;
+      case 'H': return 11;
       case 'R': return 3;
       case 'F': return 4;
       default:
@@ -76,7 +80,6 @@ public:
   }
   /* returns symbolic representation of lattice centering */
   static char SymbolForLatt(short latt)  {
-    size_t count = 0;
     switch( latt )  {
       case 1:  return 'P';
       case 2:  return 'I';
@@ -85,6 +88,8 @@ public:
       case 7:  return 'C';
       case 8:  return 'S';
       case 9:  return 'T';
+      case 10:  return 'D';
+      case 11:  return 'H';
       case 3:  return 'R';
       case 4:  return 'F';
       default:
@@ -102,7 +107,9 @@ public:
   }
   size_t BravaisLatticeCount() const {  return BravaisLattices.Count();  }
   TBravaisLattice& GetBravaisLattice(size_t i) const {  return *BravaisLattices[i];  }
-  
+  // returns a transformation to this lattice from primitive lattice
+  static mat3d FromPrimitive(int latt);
+  mat3d FromPrimitive() const {  return FromPrimitive(Latt);  }
   class TIncorrectLattExc: public TBasicException  {
     short Latt;
     public:

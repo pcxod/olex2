@@ -21,19 +21,20 @@ END_EVENT_TABLE()
 //..............................................................................
 void TListBox::ClickEvent(wxMouseEvent& event)  {
   StartEvtProcessing()
-    OnDblClick.Execute(this, &GetOnDblClickStr());
+    OnDblClick.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
 void TListBox::ItemSelectEvent(wxCommandEvent& event)  {
-  if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, GetValue());
+  if( !Data.IsEmpty() )
+    TOlxVars::SetVar(Data, GetValue());
   StartEvtProcessing()
-    OnSelect.Execute(this, &GetOnSelectStr());
+    OnSelect.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
 olxstr TListBox::ItemsToString(const olxstr &sep)  {
-  olxstr rv;
+  olxstr_buf rv;
   for( unsigned int i=0; i < GetCount(); i++ )  {
     rv << GetString(i);
     if( (i+1) < GetCount() )

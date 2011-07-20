@@ -125,15 +125,24 @@ public:
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
-  template <class StrLst> static void ParseRestraints(RefinementModel& rm, StrLst& SL)  {
-      TStrList Toks;
-      for( size_t i =0; i < SL.Count(); i++ )  {
-        Toks.Clear();
-        Toks.Strtok(SL[i], ' ');
+  template <class StrLst> static
+  void ParseRestraints(RefinementModel& rm, StrLst& SL)  {
+    bool preserve = DoPreserveInvalid();
+    for( size_t i =0; i < SL.Count(); i++ )  {
+      TStrList Toks(SL[i], ' ');
+      try  {
         if( ParseRestraint(rm, Toks) )
           SL[i].SetLength(0);
       }
+      catch(const TExceptionBase &e)  {
+        TBasicApp::NewLogEntry(logError) << e.GetException()->GetStackTrace<TStrList>();
+        if( preserve )
+          SL[i] = olxstr("REM ") << SL[i];
+        else
+          SL[i].SetLength(0);
+      }
     }
+  }
 //..............................................................................
   /* parses a single line instruction, which does not depend on context (as SYMM) 
     this is used internally by ParseIns and AddIns    */
@@ -282,6 +291,10 @@ public:
   inline const olxstr& InsName(size_t i) const {  return Ins[i];  }
   inline const TInsList& InsParams(size_t i)  {  return *Ins.GetObject(i); }
   void DelIns(size_t i);
+  static bool DoPreserveInvalid() {
+    return TBasicApp::GetInstance().Options
+      .FindValue("preserve_invalid_ins", FalseString()).ToBool();
+  }
   virtual IEObject* Replicate() const {  return new TIns;  }
 };
 

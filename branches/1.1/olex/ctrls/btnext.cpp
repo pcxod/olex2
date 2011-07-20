@@ -35,29 +35,22 @@ void AButtonBase::SetDown(bool v)  {
   StartEvtProcessing()
   if( Down )  {
     Down = false;
-    if( !GetOnUpStr().IsEmpty() )
-      OnUp.Execute((AOlxCtrl*)this, &GetOnUpStr());
+    OnUp.Execute((AOlxCtrl*)this);
   }
   else  {
     Down = true;
-    if( !GetOnDownStr().IsEmpty() )
-      OnDown.Execute((AOlxCtrl*)this, &GetOnDownStr());
+    OnDown.Execute((AOlxCtrl*)this);
   }
   EndEvtProcessing()
 }
 //..............................................................................
 void AButtonBase::_ClickEvent()  {
   StartEvtProcessing()
-    if( Down )  {
-      if( !GetOnUpStr().IsEmpty() )
-        OnUp.Execute((AOlxCtrl*)this, &GetOnUpStr());
-    }
-    // we cannot check if the string is empty - it will be most of the time!
-    OnClick.Execute((AOlxCtrl*)this, &GetOnClickStr());
-    if( !Down )  {
-      if( !GetOnDownStr().IsEmpty() )
-        OnDown.Execute((AOlxCtrl*)this, &GetOnDownStr());
-    }
+    if( Down )
+      OnUp.Execute((AOlxCtrl*)this);
+    OnClick.Execute((AOlxCtrl*)this);
+    if( !Down )
+      OnDown.Execute((AOlxCtrl*)this);
     Down = !Down;
   EndEvtProcessing()
 }
@@ -172,11 +165,9 @@ void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
     state = stDown;
     Paint();
     ProcessingOnDown = true;
-    if( !GetOnDownStr().IsEmpty() )
-      OnDown.Execute((AOlxCtrl*)this, &GetOnDownStr());
+    OnDown.Execute((AOlxCtrl*)this);
     if( !MouseIn )  {
-      if( !GetOnUpStr().IsEmpty() )
-        OnUp.Execute((AOlxCtrl*)this, &GetOnUpStr());
+      OnUp.Execute((AOlxCtrl*)this);
       state = stUp;
       Paint();
     }
@@ -187,10 +178,8 @@ void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
 void TImgButton::MouseUpEvent(wxMouseEvent& event)  {
  if( state == stDisabled || state == stUp || state == stHover )  return;
   StartEvtProcessing()
-    if( !GetOnUpStr().IsEmpty() )
-      OnUp.Execute((AOlxCtrl*)this, &GetOnUpStr());
-    if( !GetOnClickStr().IsEmpty() )
-      OnClick.Execute((AOlxCtrl*)this, &GetOnClickStr());
+    OnUp.Execute((AOlxCtrl*)this);
+    OnClick.Execute((AOlxCtrl*)this);
     state = stUp;
     Paint();
   EndEvtProcessing()

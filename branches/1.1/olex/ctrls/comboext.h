@@ -29,10 +29,10 @@ namespace ctrl_ext {
     };
     void ChangeEvent(wxCommandEvent& event);
     void EnterPressedEvent(wxCommandEvent& event);
-    olxstr Data, OnChangeStr, OnLeaveStr, OnEnterStr, OnReturnStr;
+    olxstr Data;
     olxstr StrValue;
   protected:
-    void _AddObject( const olxstr &Item, IEObject* Data, bool Delete);
+    void _AddObject(const olxstr &Item, IEObject* Data, bool Delete);
 #ifdef __WIN32__
     virtual void OnDrawItem( wxDC& dc, const wxRect& rect, int item, int flags ) const;
     virtual wxCoord OnMeasureItem( size_t item ) const;
@@ -49,15 +49,10 @@ namespace ctrl_ext {
         wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER),
 #endif
       AOlxCtrl(this),
-      OnChange(Actions.New(evt_change_id)),
-      OnLeave(Actions.New(evt_on_mouse_leave_id)),
-      OnEnter(Actions.New(evt_on_mouse_enter_id)),
-      OnReturn(Actions.New(evt_on_return_id)),
-      Data(EmptyString()),
-      OnChangeStr(EmptyString()),
-      OnLeaveStr(EmptyString()),
-      OnEnterStr(EmptyString()),
-      OnReturnStr(EmptyString()) {}
+      OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
+      OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
+      OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id)),
+      OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id)) {}
     virtual ~TComboBox();
 
     void Clear();
@@ -76,11 +71,7 @@ namespace ctrl_ext {
     olxstr GetText() const;
     void SetText(const olxstr &text);
 
-    DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange Event
     DefPropC(olxstr, Data)
-    DefPropC(olxstr, OnLeaveStr) // this is passed to the OnChange event
-    DefPropC(olxstr, OnEnterStr) // this is passed when the control becomes focused
-    DefPropC(olxstr, OnReturnStr) // this is passed when return is pressed
 
     bool IsReadOnly() const {   return WI.HasWindowStyle(wxCB_READONLY);  }
     void SetReadOnly(bool v)   {  
@@ -90,7 +81,7 @@ namespace ctrl_ext {
     void HandleOnLeave();
     void HandleOnEnter();
 
-    TActionQueue &OnChange, &OnLeave, &OnEnter, &OnReturn;
+    ActionQueue &OnChange, &OnLeave, &OnEnter, &OnReturn;
 
     DECLARE_CLASS(TComboBox)
     DECLARE_EVENT_TABLE()

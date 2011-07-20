@@ -13,6 +13,7 @@
 #include "glprimitive.h"
 #include "styles.h"
 #include "gpcollection.h"
+#include "povdraw.h"
 
 void TXPlane::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
@@ -87,14 +88,60 @@ void TXPlane::Create(const olxstr& cName)  {
 //..............................................................................
 bool TXPlane::Orient(TGlPrimitive& P)  {
   olx_gl::translate(GetCenter());
-  olx_gl::orient(Params().GetRawData());
-  if( P.GetType() != sgloSphere )
+  if( P.GetType() != sgloSphere )  {
+    olx_gl::orient(Params().GetRawData());
     olx_gl::normal(GetNormal());
+  }
   return false;
 }
 //..............................................................................
 void TXPlane::ListPrimitives(TStrList &List) const {
   List.Add("Plane");
   List.Add("Centroid");
+}
+//..............................................................................
+TStrList TXPlane::PovDeclare()  {
+  TStrList out;
+  out.Add("#declare plane_centroid=object{ sphere {<0,0,0>, 0.25} }");
+  return out;
+}
+//..............................................................................
+TStrList TXPlane::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPrimitiveComparator> &materials) const
+{
+  TStrList out;
+   pov::CrdTransformer crdc(Parent.GetBasis());
+  out.Add(" object { union {");
+  const TGPCollection &gpc = GetPrimitives();
+  for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+    TGlPrimitive &glp = gpc.GetPrimitive(i);
+    if( glp.GetType() == sgloPolygon )  {
+      out.Add("   object { union {");
+      vec3d zv = vec3d(),
+        n = crdc.normal(GetNormal());
+      const mat3d &m = GetBasis();
+      for( size_t j=0; j < glp.Vertices.Count(); j++ )  {
+        out.Add("    smooth_triangle {");
+        out.Add("     ") << pov::to_str(zv) << pov::to_str(n);
+        out.Add("     ") << pov::to_str(crdc.normal(glp.Vertices[j]*m)) << pov::to_str(n);
+        out.Add("     ") << pov::to_str(
+          crdc.normal(glp.Vertices[j == glp.Vertices.Count()-1 ? 0 : j+1]*m))
+          << pov::to_str(n);
+        out.Add("     }");
+      }
+      out.Add("    }");
+    }
+    else {
+      out.Add("   object {") << "plane_"
+        << glp.GetName().ToLowerCase().Replace(' ', '_');
+    }
+    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
+    out.Add("    texture {") << pov::get_mat_name(glp.GetProperties(), materials) << '}';
+    out.Add("   }");
+  }
+  out.Add("  }");
+  out.Add("  translate ") << pov::to_str(crdc.crd(GetCenter()));
+  out.Add(" }");
+  return out;
 }
 //..............................................................................

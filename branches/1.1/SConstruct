@@ -282,9 +282,9 @@ else:
       env.ParseConfig("wx-config --cxxflags --version=2.8 --unicode --libs gl,core,html,net,aui")
       env.Append(LIBS=['libGL', 'libGLU'])
 #!!!
+    tests_env = env.Clone()
     env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
     unirun_env = env.Clone()
-    tests_env = env.Clone()
     env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --ldflags")
   except:

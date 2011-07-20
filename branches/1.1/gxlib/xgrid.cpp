@@ -20,6 +20,7 @@
 #include "pers_util.h"
 #include "maputil.h"
 #include "ememstream.h"
+#include "povdraw.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -718,6 +719,137 @@ void TXGrid::UpdateInfo()  {
   Info->Fit();
 }
 //..............................................................................
+TStrList TXGrid::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPrimitiveComparator> &materials) const
+{
+  TGraphicsStyle &style = GetPrimitives().GetStyle();
+  const olxstr p_mat_name = pov::get_mat_name("-Surface", style, materials),
+    n_mat_name = pov::get_mat_name("+Surface", style, materials);
+  TStrList out;
+  pov::CrdTransformer crdc(Parent.GetBasis());
+  out.Add(" object {");
+  out.Add("  union {");
+  const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
+  if( Boxed )  {
+    for( int li = 0; li <= 1; li++ )  {
+      out.Add("  object { mesh {");
+      const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      for( size_t i=0; i < trians.Count(); i++ )  {
+        out.Add("    smooth_triangle {");
+        for( int j=0; j < 3; j++ )  {
+          out.Add("    ") << pov::to_str(crdc.crd(verts[trians[i].pointID[j]]))
+            << pov::to_str(crdc.normal(norms[trians[i].pointID[j]]));
+        }
+        out.Add("    }");
+      }
+      out.Add("  }");
+      out.Add("  texture {") << (li == 0 ? p_mat_name : n_mat_name) << "}}";
+    }
+  }
+  else if( Mask != NULL )  {
+    vec3d pts[3];
+    for( int li = 0; li <= 1; li++ )  {
+      const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      out.Add("  object { mesh {");
+      for( int x=-1; x <= 1; x++ )  {
+        for( int y=-1; y <= 1; y++ )  {
+          for( int z=-1; z <= 1; z++ )  {
+            for( size_t i=0; i < trians.Count(); i++ )  {
+              bool draw = true;
+              for( int j=0; j < 3; j++ )  {
+                pts[j] = verts[trians[i].pointID[j]];
+                pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ;
+                pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;
+                if( !Mask->Get(pts[j]) )  {
+                  draw = false;
+                  break;
+                }
+                au.CellToCartesian(pts[j]);
+              }
+              if( !draw )  continue;
+              out.Add("    smooth_triangle {");
+              for( int j=0; j < 3; j++ )  {
+                out.Add("    ") << pov::to_str(crdc.crd(pts[j]))
+                  << pov::to_str(crdc.normal(norms[trians[i].pointID[j]]));
+              }
+              out.Add("    }");
+            }
+          }
+        }
+      }
+      out.Add("  }");
+      out.Add("  texture {") << (li == 0 ? p_mat_name : n_mat_name) << "}}";
+    }
+  }
+  else  {
+    if( Extended )  {
+      vec3d pts[3]; // ext drawing
+      for( int li = 0; li <= 1; li++ )  {
+        out.Add("  object { mesh {");
+        const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+        const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+        for( float x=ExtMin[0]; x < ExtMax[0]; x++ )  {
+          for( float y=ExtMin[1]; y < ExtMax[1]; y++ )  {
+            for( float z=ExtMin[2]; z < ExtMax[2]; z++ )  {
+              for( size_t i=0; i < trians.Count(); i++ )  {
+                bool draw = true;
+                for( int j=0; j < 3; j++ )  {
+                  pts[j] = verts[trians[i].pointID[j]];                      // ext drawing
+                  pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ; // ext drawing
+                  pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;    // ext drawing
+                  if( pts[j][0] > ExtMax[0] || pts[j][1] > ExtMax[1] || pts[j][2] > ExtMax[2] )  {
+                    draw = false;
+                    break;
+                  }
+                  au.CellToCartesian(pts[j]);                                // ext drawing
+                }
+                if( !draw )  continue;
+                out.Add("    smooth_triangle {");
+                for( int j=0; j < 3; j++ )  {
+                  out.Add("    ") << pov::to_str(crdc.crd(pts[j]))
+                    << pov::to_str(crdc.normal(norms[trians[i].pointID[j]]));
+                }
+                out.Add("    }");
+              }
+            }
+          }
+        }
+        out.Add("  }");
+        out.Add("  texture {") << (li == 0 ? p_mat_name : n_mat_name) << "}}";
+      }
+    }
+    else  {
+      for( int li = 0; li <= 1; li++ )  {
+        out.Add("  object { mesh {");
+        TTypeList<vec3f> verts = (li == 0 ? p_vertices : n_vertices);
+        const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+        for( size_t i=0; i < verts.Count(); i++ )  {
+          verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;
+          au.CellToCartesian(verts[i]);
+        }
+        for( size_t i=0; i < trians.Count(); i++ )  {
+          out.Add("    smooth_triangle {");
+          for( int j=0; j < 3; j++ )  {
+            out.Add("    ") << pov::to_str(crdc.crd(verts[trians[i].pointID[j]]))
+              << pov::to_str(crdc.normal(norms[trians[i].pointID[j]]));
+          }
+          out.Add("    }");
+        }
+        out.Add("  }");
+        out.Add("  texture {") << (li == 0 ? p_mat_name : n_mat_name) << "}}";
+      }
+    }
+  }
+  out.Add(" }}");
+  return out;
+}
+//..............................................................................
 void TXGrid::RescaleSurface()  {
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
   if( !olx_is_valid_index(PListId) )  {
@@ -1088,6 +1220,7 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
     Mask = new FractMask;
     Mask->FromDataItem(*maski, zis);
   }
+  AdjustMap();
   InitIso();
 }
 //..............................................................................

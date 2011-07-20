@@ -535,15 +535,22 @@ void TXFile::LibDataCount(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TXFile::LibCurrentData(const TStrObjList& Params, TMacroError& E)  {
-  throw TNotImplementedException(__OlxSourceInfo);
+  TCif &cif = *(TCif*)FLastLoader;
+  if( Params.IsEmpty() )
+    E.SetRetVal(cif.GetBlockIndex());
+  else
+    cif.SetCurrentBlock(Params[0].ToInt());
 }
 //..............................................................................
 void TXFile::LibDataName(const TStrObjList& Params, TMacroError& E)  {
-  if( Params.IsEmpty() )  {
-    E.SetRetVal(((TCif*)FLastLoader)->GetDataName());
-  }
+  int i = Params[0].ToInt();
+  TCif &cif = *(TCif*)FLastLoader;
+  if( i < 0 )
+    E.SetRetVal(cif.GetDataName());
   else  {
-    ((TCif*)FLastLoader)->RenameCurrentBlock(Params[0]);
+    if( i >= cif.BlockCount() )
+      throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, cif.BlockCount());
+    E.SetRetVal(cif.GetBlock(i).GetName());
   }
 }
 //..............................................................................
@@ -589,12 +596,12 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
 "Returns number of available data sets") );
 
   lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataName, "DataName",
-    fpNone|fpOne|psCheckFileTypeCif,
-"Returns/Sets data name for current CIF block") );
-  
-  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataName, "CurrentData",
     fpOne|psCheckFileTypeCif,
-"Changes current data block within the CIF") );
+"Returns data name for given CIF block") );
+  
+  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibCurrentData, "CurrentData",
+    fpNone|fpOne|psCheckFileTypeCif,
+"Returns current data index or changes current data block within the CIF") );
   lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
     fpNone|psFileLoaded,
 "Changes current data block within the CIF") );

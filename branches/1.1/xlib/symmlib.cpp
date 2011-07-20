@@ -532,55 +532,85 @@ TCLattice::TCLattice(int latt)  {
   switch( abs(Latt) )  {
    case 1:
     Name = "Primitive";
-    Symbol = "P";
+    Symbol = 'P';
     break;
    case 2:      // Body Centered (I)
     Name = "Body Centered";
-    Symbol = "I";
+    Symbol = 'I';
     Vectors.AddNew<double,double,double>(0.5, 0.5, 0.5);
     break;
    case 3:      // R Centered
     Name = "R Centered";
-    Symbol = "R";
+    Symbol = 'R';
     Vectors.AddNew<double,double,double>(2./3., 1./3., 1./3.);
     Vectors.AddNew<double,double,double>(1./3., 2./3., 2./3.);
     break;
    case 8:      // S Centered
     Name = "S Centered";
-    Symbol = "S";
+    Symbol = 'S';
     Vectors.AddNew<double,double,double>(1./3., 1./3., 2./3.);
     Vectors.AddNew<double,double,double>(2./3., 2./3., 1./3.);
     break;
    case 9:      // T Centered
     Name = "T Centered";
-    Symbol = "T";
+    Symbol = 'T';
     Vectors.AddNew<double,double,double>(1./3., 2./3., 1./3.);
     Vectors.AddNew<double,double,double>(2./3., 1./3., 2./3.);
     break;
+   case 10:      // D Centered
+    Name = "D Centered";
+    Symbol = 'D';
+    Vectors.AddNew<double,double,double>(1./3., 1./3., 1./3.);
+    Vectors.AddNew<double,double,double>(2./3., 2./3., 2./3.);
+    break;
+   case 11:      // H Centered
+    Name = "H Centered";
+    Symbol = 'H';
+    Vectors.AddNew<double,double,double>(2./3., 1./3., 0);
+    Vectors.AddNew<double,double,double>(1./3., 2./3., 0);
+    break;
    case 4:      // Face Centered (F)
     Name = "Face Centered";
-    Symbol = "F";
+    Symbol = 'F';
     Vectors.AddNew<double,double,double>(0, 0.5, 0.5);
     Vectors.AddNew<double,double,double>(0.5, 0, 0.5);
     Vectors.AddNew<double,double,double>(0.5, 0.5, 0);
     break;
    case 5:      // A Centered (A)
     Name = "A Centered";
-    Symbol = "A";
+    Symbol = 'A';
     Vectors.AddNew<double,double,double>(0, 0.5, 0.5);
     break;
    case 6:      // B Centered (B)
     Name = "B Centered";
-    Symbol = "B";
+    Symbol = 'B';
     Vectors.AddNew<double,double,double>(0.5, 0, 0.5);
     break;
    case 7:      // C Centered (C);
     Name = "C Centered";
-    Symbol = "C";
+    Symbol = 'C';
     Vectors.AddNew<double,double,double>(0.5, 0.5, 0);
     break;
    default:
     throw new TIncorrectLattExc(__OlxSourceInfo, Latt);
+  }
+}
+//..............................................................................
+mat3d TCLattice::FromPrimitive(int latt)  {
+  switch( latt )  {
+  case 1:  return mat3d().I();
+  case 2:  return mat3d(0, 1, 1, 0, 1, 0);
+  case 5:  return mat3d(-1, 0, 0, -1, 1, 1);
+  case 6:  return mat3d(-1, 0, 1, -1, 0, 1);
+  case 7:  return mat3d(1, 1, 0, -1, 1, 0, 0, 0, 1).Transpose();
+  //case 8:  return 'S';
+  case 9:  return mat3d(-1, 1, 0, 0, -1, -1, -1, -1, 1).Transpose();
+  case 10: return mat3d(1, 0, 1, 0, 1, 1, -1, -1, 1).Transpose();
+  case 11:  return mat3d(1, -1, 0, 1, 2, 0, 0, 0, 1).Transpose();
+  case 3:  return mat3d(1, -1, 0, 0, 1, -1, 1, 1, 1).Transpose();
+  case 4:  return mat3d(-1, 1, 1, -1, 1, -1);
+  default:
+    throw TIncorrectLattExc(__OlxSourceInfo, latt);
   }
 }
 //..............................................................................

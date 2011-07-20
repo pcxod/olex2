@@ -27,7 +27,7 @@ void TSpinCtrl::SpinChangeEvent(wxSpinEvent& event)  {
   if( val == Value ) return;
   Value = val;
   StartEvtProcessing()
-    OnChange.Execute(this, &GetOnChangeStr());
+    OnChange.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
@@ -36,7 +36,7 @@ void TSpinCtrl::TextChangeEvent(wxCommandEvent& event)  {
   if( val == Value ) return;
   Value = val;
   StartEvtProcessing()
-   OnChange.Execute(this, &GetOnChangeStr());
+   OnChange.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
@@ -45,7 +45,7 @@ void TSpinCtrl::LeaveEvent(wxFocusEvent& event)  {
   if( val == Value ) return;
   Value = val;
   StartEvtProcessing()
-   OnChange.Execute(this, &GetOnChangeStr());
+   OnChange.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
@@ -56,7 +56,7 @@ void TSpinCtrl::EnterPressedEvent(wxCommandEvent& event)  {
   if( val == Value ) return;
   Value = val;
   StartEvtProcessing()
-   OnChange.Execute(this, &GetOnChangeStr());
+   OnChange.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................

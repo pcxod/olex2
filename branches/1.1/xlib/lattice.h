@@ -149,7 +149,7 @@ public:
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
   //the plane must be deleted by the caller !
   TSPlane* TmpPlane(const TSAtomPList& Atoms, double weightExtent=0);
-  TSAtom* NewCentroid(const TSAtomPList& Atoms);
+  TSAtomPList NewCentroid(const TSAtomPList& Atoms);
   TSAtom* NewAtom(const vec3d& center);
 
   void SetAnis(const TCAtomPList& atoms, bool anis);

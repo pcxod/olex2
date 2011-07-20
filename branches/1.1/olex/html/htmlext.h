@@ -131,6 +131,7 @@ protected:
     DefFunc(ClientHeight)
     DefFunc(ContainerWidth)
     DefFunc(ContainerHeight)
+    DefFunc(Call)
 
   olxstr GetObjectValue(const AOlxCtrl *Object);
   const olxstr& GetObjectData(const AOlxCtrl *Object);

@@ -11,6 +11,8 @@
 #define __olx_sdl_dict_H
 #include "sortedlist.h"
 
+template <typename, typename, typename> class const_olxdict;
+
 template <typename key_c, typename val_c, class Comparator> struct DictEntry {
   key_c key;
   mutable val_c val;
@@ -48,9 +50,17 @@ public:
     for( size_t i=0; i < cnt; i++ )
       Add(_values[i].key, _values[i].value);
   }
-  olxdict(const olxdict& ad) : SortedL(ad) {  }
+  olxdict(const olxdict& ad) : SortedL(ad) {}
+  olxdict(const const_olxdict<KType,VType,Comparator>& ad) {
+    SortedL::TakeOver(ad.Release(), true);
+  }
+  void TakeOver(olxdict &d)  {  SortedL::TakeOver(d);  }
   olxdict& operator = (const olxdict& ad)  {
     SortedL::operator = (ad);
+    return *this;
+  }
+  olxdict& operator = (const const_olxdict<KType,VType,Comparator>& ad)  {
+    SortedL::TakeOver(ad.Release(), true);
     return *this;
   }
   template <class T> VType& operator [] (const T& key) const {
@@ -113,5 +123,20 @@ public:
 template <typename VType, bool case_sensitive=false> class olxstr_dict
   : public olxdict<olxstr, VType, olxstrComparator<case_sensitive> > {};
 
-
+// const_dict
+template <typename key_t, typename val_t, class Comparator>
+class const_olxdict : public const_dict<
+  olxdict<key_t,val_t,Comparator>, key_t, val_t>
+{
+  typedef olxdict<key_t,val_t,Comparator> dict_t;
+  typedef const_dict<dict_t,key_t,val_t> parent_t;
+public:
+  const_olxdict(const const_olxdict &d) : parent_t(d) {}
+  const_olxdict(dict_t &d) : parent_t(d) {}
+  const_olxdict(dict_t *d) : parent_t(d) {}
+  const_olxdict &operator = (const const_olxdict &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
+};
 #endif

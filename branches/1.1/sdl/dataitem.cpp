@@ -29,15 +29,18 @@ TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val) : Nam
   Data = NULL;
 }
 //..............................................................................
+TDataItem::~TDataItem() {
+  Clear();
+}
+//..............................................................................
 void TDataItem::Clear()  {
   Fields.Clear();
   for( size_t i=0; i < Items.Count(); i++ )  {
-    if( Items.GetObject(i)->GetRefCount() < 1 ) 
+    if( Items.GetObject(i)->DecRef() == 0 )
       delete Items.GetObject(i);
     else  {
       if( Items.GetObject(i)->GetParent() == this )
         Items.GetObject(i)->SetParent(NULL);
-      Items.GetObject(i)->DecRef();
     }
   }
   Items.Clear();
@@ -70,8 +73,8 @@ TEStrBuffer& TDataItem::writeFullName(TEStrBuffer& bf) const {
 }
 //..............................................................................
 olxstr TDataItem::GetFullName()  {
-  if( GetParent() == NULL )  return GetName();
-
+  if( GetParent() == NULL )
+    return GetName();
   olxstr_buf res = GetName();
   olxstr ds = '.';
   TDataItem *p = GetParent();
@@ -90,7 +93,7 @@ TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
     root = root->FindItem(SL[i]);
     if( root == NULL )  {
       if( Log != NULL )  
-        Log->Add(olxstr("Unresolved reference: ") << DotName);
+        Log->Add("Unresolved reference: ") << DotName;
       break;
     }
   }
@@ -138,7 +141,7 @@ TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name) const {
 void TDataItem::AddContent(TDataItem& DI, bool extend)  {
   if( extend )  {
     for( size_t i=0; i < DI.ItemCount(); i++ )  {
-      TDataItem *di = FindItem( DI.GetItem(i).GetName() );
+      TDataItem *di = FindItem(DI.GetItem(i).GetName());
       if( di != NULL )  {
         for( size_t j=0; j < DI.GetItem(i).ItemCount(); j++ )
           di->AddItem(DI.GetItem(i).GetItem(j)).SetParent(di);
@@ -159,18 +162,17 @@ void TDataItem::AddContent(TDataItem& DI, bool extend)  {
 //..............................................................................
 void TDataItem::DeleteItem(TDataItem *Item)  {
   if( Item->GetParent() != this )  {
-    if( Item->GetParent() )
+    if( Item->GetParent() != NULL )
       Item->GetParent()->DeleteItem(Item);
     return;
   }
   size_t index = Items.IndexOfObject(Item);
-  if( index != InvalidIndex )  Items.Delete(index);
-  if( Item->GetRefCount() < 1 )
+  if( index != InvalidIndex )
+    Items.Delete(index);
+  if( Item->DecRef() == 0 )
     delete Item;
-  else  {
-   Item->DecRef();
+  else
    Item->SetParent(NULL);
-  }
 }
 //..............................................................................
 TDataItem& TDataItem::AddItem(const olxstr &Name, TDataItem *Reference)  {
@@ -181,7 +183,7 @@ TDataItem& TDataItem::AddItem(const olxstr &Name, TDataItem *Reference)  {
 //..............................................................................
 TDataItem& TDataItem::AddItem(TDataItem& Item)  {
   Items.Add(Item.GetName(), &Item);
-  if( Item.GetParent() == NULL)
+  if( Item.GetParent() == NULL )
     Item.SetParent(this);
   Item.IncRef();
   return Item;
@@ -191,10 +193,7 @@ TDataItem& TDataItem::AddItem(const olxstr& name, const olxstr& val)  {
 //  if( !(Name == "!--") )  // comment
 //    if( ItemExists(Name) )
 //      BasicApp->Log->Exception(olxstr("TDataItem: dublicate definition: ") + Name, false);
-  TDataItem *DI = new TDataItem(this, name, val);
-  AddItem(*DI);
-  DI->DecRef(); //!!!
-  return *DI;
+  return AddItem(*(new TDataItem(this, name, val)));
 }
 //..............................................................................
 size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log)  {
@@ -302,7 +301,7 @@ void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
             Log->Add(olxstr("UNRESOLVED: ") << Tmp);
         }
         else  {
-          if( Log)  Log->Add(olxstr("Resolved field: ") << Tmp);
+          if( Log )  Log->Add(olxstr("Resolved field: ") << Tmp);
           Fields[i] = RefFieldName;
           Fields.GetObject(i) = *RefFieldValue;
         }
@@ -387,14 +386,14 @@ void TDataItem::Validate(TStrList& Log)  {
   olxstr Tmp;
   for( size_t i=0; i < ItemCount(); i++ )  {
     if( GetItem(i).GetParent() != NULL && (GetItem(i).GetParent() != this) )  {
-      Tmp = "Reffered item from ";
+      Tmp = "Referred item from ";
       Tmp << this->GetFullName() << "->" << GetItem(i).GetFullName();
-      Log.Add( Tmp );
+      Log.Add(Tmp);
     }
     if( GetItem(i).GetParent() == NULL )  {
       Tmp = "Item with null Parent: ";
       Tmp << GetItem(i).GetFullName();
-      Log.Add( Tmp );
+      Log.Add(Tmp);
     }
   }
 }

@@ -84,7 +84,7 @@ void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
   StartEvtProcessing()
-    OnReturn.Execute(this, &GetOnReturnStr());
+    OnReturn.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
@@ -93,7 +93,7 @@ void TComboBox::ChangeEvent(wxCommandEvent& event)  {
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
   StartEvtProcessing()
-    OnChange.Execute(this, &GetOnChangeStr());
+    OnChange.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
@@ -143,16 +143,16 @@ void TComboBox::HandleOnLeave()  {
   bool changed = (v != StrValue);
   StartEvtProcessing()
     if( changed )  {
-      OnChange.Execute(this, &GetOnChangeStr());
+      OnChange.Execute(this);
       StrValue = v;
     }
-    OnLeave.Execute(this, &GetOnLeaveStr());
+    OnLeave.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................
 void TComboBox::HandleOnEnter()  {
   StartEvtProcessing()
-    OnEnter.Execute(this, &GetOnEnterStr());
+    OnEnter.Execute(this);
   EndEvtProcessing()
 }
 //..............................................................................

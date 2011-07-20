@@ -116,7 +116,7 @@ public:
   index_t DecTag()  {  return TSAtom::DecTag();  }
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
-  void UpdateLabel()  {  GetGlLabel().Update();  }
+  void UpdateLabel()  {  GetGlLabel().UpdateLabel();  }
   inline TXAtom& Node(size_t i) const {  return (TXAtom&)TSAtom::Node(i); }
   inline TXBond& Bond(size_t i) const {  return (TXBond&)TSAtom::Bond(i); }
   // returns full legend with symm code
@@ -200,8 +200,11 @@ public:
   static void Quality(const short Val);
 
   void SetPolyhedronType(short type);
-  int GetPolyhedronType();
+  int GetPolyhedronType() const;
   Poly *GetPolyhedron() const {  return Polyhedron;  }
+
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
+  static TStrList PovDeclare();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);

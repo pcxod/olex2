@@ -54,7 +54,7 @@ protected:
         peak.summ += data[norm_cent[0]][norm_cent[1]][norm_cent[2]];
         vec3i pt = norm_cent, _pt = cent;
         for( int di=0; di < 3; di++ )  {
-          pt[di] = (norm_cent[di]+1)%dim[di];
+          pt[di] = (norm_cent[di]+1)%(int)dim[di];
           if( pt[di] < 0 )  pt[di] += (int)dim[di];
           if( mask[pt[0]][pt[1]][pt[2]] )  continue;
           if( ref_val < 0 )  {
@@ -69,7 +69,7 @@ protected:
             stack.Push(_pt);
             mask[pt[0]][pt[1]][pt[2]] = true;
           }
-          pt[di] = (norm_cent[di]-1)%dim[di];
+          pt[di] = (norm_cent[di]-1)%(int)dim[di];
           if( pt[di] < 0 )  pt[di] += (int)dim[di];
           if( mask[pt[0]][pt[1]][pt[2]] )  continue;
           if( ref_val < 0 )  {
@@ -91,7 +91,7 @@ protected:
       new_cent /= peak.count;
       peak.center = new_cent.Round<size_t>();
       for( size_t i=0; i < 3; i++ )
-        peak.center[i] = peak.center[i]%dim[i]; 
+        peak.center[i] = peak.center[i]%(int)dim[i]; 
     }
   }
 
@@ -112,6 +112,29 @@ public:
       }
     }
     peak_search<MapT>(map, dim, pos_level, Mask, Peaks);
+  }
+  // a simple map integration, considering the peaks and holes as spheres
+  template <typename MapT> static double IntegrateMask(MapT*** const map, const vec3s& dim, 
+    const vec3i &_p, const TArray3D<bool> &mask)
+  {
+    const TVector3<index_t> d(mask.Length1()+mask.GetMin1(),
+      mask.Length2()+mask.GetMin2(),
+      mask.Length3()+mask.GetMin3());
+    double val = 0;
+    for( index_t ix=mask.GetMin1(); ix < d[0]; ix++ )  {
+      for( index_t iy=mask.GetMin2(); iy < d[1]; iy++ )  {
+        for( index_t iz=mask.GetMin3(); iz < d[2]; iz++ )  {
+          if( !mask(ix, iy, iz) )  continue;
+          TVector3<index_t> p(_p[0]+ix, _p[1]+iy, _p[2]+iz);
+          for( int i=0; i < 3; i++ )  {
+            if( (p[i] %= (int)dim[i]) < 0 )
+              p[i] += (int)dim[i];
+          }
+          val += map[p[0]][p[1]][p[2]];
+        }
+      }
+    }
+    return val;
   }
   /* a flood fill based algorithm to find undulating channels, which however come and exit at one of the 
   3 crystallographic directions */

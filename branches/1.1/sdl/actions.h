@@ -128,10 +128,14 @@ private:
 public:
   TActionQList()  {}
   virtual ~TActionQList() {  Clear();  }
-  /* is used to create a new named actions queue
+  /* Creates a new named actions queue
     throws an exception if the queue already exists: use Exists to check
   */
   TActionQueue& New(const olxstr& Name);
+  /* Adds given queue to the list
+    throws an exception if the queue name is not unique: use Exists to check
+  */
+  TActionQueue& Add(TActionQueue *queue);
   // executes a named queue
   bool Execute(const olxstr& Name, const IEObject* Sender, const IEObject* Data=NULL);
 

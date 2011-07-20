@@ -172,6 +172,7 @@ public:
   // restraints and constraints register
   olxdict<olxstr, IConstraintContainer*, olxstrComparator<false> > rcRegister;
   TPtrList<IConstraintContainer> rcList;  // when order matters
+  TPtrList<TSRestraintList> rcList1;
   // removes references to all deleted atoms
   void Validate();
   // creates a human readable description of the refinement
@@ -229,6 +230,10 @@ public:
     if( hklf.Count() > 10 )  {
       for( int i=0; i < 9; i++ )
         HKLF_mat[i/3][i%3] = hklf[2+i].ToDouble();
+    }
+    else if( hklf.Count() > 2 )  {
+      TBasicApp::NewLogEntry(logError) <<
+        (olxstr("Invalid HKLF matrix ignored: ").quote() << hklf.Text(' ', 2));
     }
     if( hklf.Count() > 11 )
       HKLF_wt = hklf[11].ToDouble();
@@ -412,7 +417,7 @@ of components 1 ... m
   // initialises ID's of the matrices to conform to the unit cell, this called by TLattice
   void UpdateUsedSymm(const class TUnitCell& uc);
   // throws an exception if not found
-  adirection& DirectionById(const olxstr &id);
+  adirection& DirectionById(const olxstr &id) const;
   // adds new custom scatterer (created with new, will be deleted)
   void AddSfac(XScatterer& sc);
   // returns number of custom scatterers

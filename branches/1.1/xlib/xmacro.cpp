@@ -893,12 +893,11 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp &XApp = TXApp::GetInstance();
   if( XApp.XFile().GetLattice().IsGenerated() )  {
-    Error.ProcessingError(__OlxSrcInfo, "not applicable to grown structure");
+    Error.ProcessingError(__OlxSrcInfo, "not applicable to grown structures");
     return;
   }
   int Hfix = 0;
   if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
-
     Hfix = Cmds[0].ToInt();
     Cmds.Delete(0);
   }
@@ -995,7 +994,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
   q_draw.Unlock();
-  XApp.XFile().GetLattice().Init();
+  XApp.XFile().GetLattice().UpdateConnectivity();
   delete XApp.FixHL();
 }
 //..............................................................................
@@ -4062,8 +4061,8 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     Ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
     newSg.SetLength(0);
     newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
-    olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(xapp.XFile().GetFileName()), EmptyString()));
-    Ins->SetTitle( titl << " in " << sg->GetName() << " #" << sg->GetNumber());
+    olxstr titl(TEFile::ChangeFileExt(TEFile::ExtractFileName(xapp.XFile().GetFileName()), EmptyString()));
+    Ins->SetTitle(titl << " in " << sg->GetName() << " #" << sg->GetNumber());
   }
   if( fileName.IsEmpty() )
     fileName = xapp.XFile().GetFileName();

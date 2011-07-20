@@ -31,7 +31,11 @@ protected:
 public:
   TTSortedListBase() {}
   TTSortedListBase(const TTSortedListBase& l) : list(l.list)  {}
-
+  void TakeOver(TTSortedListBase &l, bool do_delete=false)  {
+    list.TakeOver(l.list);
+    if( do_delete )
+      delete &l;
+  }
   bool IsEmpty() const {  return list.IsEmpty();  }
   size_t Count() const {  return list.Count();  }
   const TypeClass& operator [] (size_t i)  const {  return list[i];  }
@@ -126,6 +130,11 @@ public:
       Add(li[i]);
   }
   ~TObjectList() {  Clear();  }
+  void TakeOver(TObjectList &l, bool do_delete=false)  {
+    list.TakeOver(l.list);
+    if( do_delete )
+      delete &l;
+  }
   ObjectClass& operator [] (size_t i) const {  return *list[i];  }
   ObjectClass& GetLast() const {  return *list.GetLast();  }
   size_t Count() const {  return list.Count();  }
