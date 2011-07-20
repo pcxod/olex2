@@ -895,8 +895,8 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   out.Add("camera {");
   out.Add(" location <0,0,") << 3./r.GetBasis().GetZoom() << '>';
   out.Add(" angle 25");
-  out.Add(" up <0,0,1>");
-  out.Add(" right <-") << (float)r.GetWidth()/r.GetHeight() << "0,0>";
+  out.Add(" up 1");
+  out.Add(" right -4/3");
   out.Add(" look_at <0,0,0>");
   out.Add("}");
   for( size_t i=0; i < 8; i++ )  {
