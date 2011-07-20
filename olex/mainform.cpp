@@ -1862,6 +1862,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           ;
         else if( EsdlInstanceOf(*Sender, TSpinCtrl) )
           ;
+        else if( EsdlInstanceOf(*Sender, TDateCtrl) )
+          ;
         else
           FGlCanvas->SetFocus();
       }

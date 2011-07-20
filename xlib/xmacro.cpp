@@ -279,7 +279,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(VSS, fpOne|psFileLoaded, "Validate Structure or Solution.\
   Takes a boolean value. If value is true, the number of tested atoms is limited\
- by the 18A rule. Returns proportion of know atom types to the all atoms number.");
+ by the 18A rule. Returns proportion of known atom types to the all atoms number.");
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________

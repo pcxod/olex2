@@ -1049,6 +1049,13 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
       return EmptyString();
     return olx_td->GetData()->ToString();
   }
+  if( EsdlInstanceOf(*Obj, TDateCtrl) )  {
+    return ((TDateCtrl*)Obj)->GetValue().Format(wxT("%d/%m/%Y"));
+  }
+  if( EsdlInstanceOf(*Obj, TColorCtrl) )  {
+    wxColor c = ((TColorCtrl*)Obj)->GetColour();
+    return RGBA(c.Red(), c.Green(), c.Blue(), c.Alpha());
+  }
   return EmptyString();
 }
 void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
@@ -1101,7 +1108,16 @@ void THtml::SetObjectValue(AOlxCtrl *Obj, const olxstr& Value)  {
     if( index >=0 && index < L->Count() )
       L->SetString(index, Value.u_str());
   }
-  else  return;
+  else if( EsdlInstanceOf(*Obj, TDateCtrl) )  {
+    wxDateTime dt;
+    dt.ParseDateTime(Value.u_str());
+    ((TDateCtrl*)Obj)->SetValue(dt);
+  }
+  else if( EsdlInstanceOf(*Obj, TColorCtrl) )  {
+    ((TColorCtrl*)Obj)->SetColour(wxColor(Value.u_str()));
+  }
+  else
+    return;
 }
 void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
