@@ -200,8 +200,11 @@ public:
   static void Quality(const short Val);
 
   void SetPolyhedronType(short type);
-  int GetPolyhedronType();
+  int GetPolyhedronType() const;
   Poly *GetPolyhedron() const {  return Polyhedron;  }
+
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
+  static TStrList PovDeclare();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);

@@ -378,7 +378,7 @@ public:
   inline TDBasis& DBasis()  {  return *FDBasis; }
   inline THklFile& HklFile()  {  return *FHklFile; }
   inline TDFrame& DFrame()  {  return *FDFrame; }
-  inline TXGrid& XGrid()  {  return *FXGrid;  }
+  inline TXGrid& XGrid() const {  return *FXGrid;  }
   inline T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
 
   // this function to be used to get all networks, including th overlayed files
@@ -685,6 +685,8 @@ public:     void CalcProbFactor(float Prob);
 
   void SaveModel(const olxstr& file_name) const;
   void LoadModel(const olxstr& file_name);
+
+  TStrList ToPov() const;
 //..............................................................................
   static TGXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();

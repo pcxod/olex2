@@ -258,6 +258,12 @@ void TXBond::Quality(const short Val)  {
 //..............................................................................
 void TXBond::ListDrawingStyles(TStrList &L){  return; }
 //..............................................................................
+const vec3d &TXBond::GetBaseCrd() const {
+  if( !IsValid() )
+    throw TFunctionFailedException(__OlxSourceInfo, "atoms are not defined");
+  return A().crd();
+}
+//..............................................................................
 TStrList TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
   TPrimitiveComparator> &materials) const
 {
@@ -280,7 +286,7 @@ TStrList TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
   m[1] *= Params()[4];
   m[2] *= Params()[3];
   m *= Parent.GetBasis().GetMatrix();
-  vec3d t = pov::CrdTransformer(Parent.GetBasis()).crd(A().crd());
+  vec3d t = pov::CrdTransformer(Parent.GetBasis()).crd(GetBaseCrd());
   out.Add("  transform {");
   out.Add("   matrix") << pov::to_str(m, t);
   out.Add("   }");

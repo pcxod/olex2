@@ -33,6 +33,7 @@
 #include "pers_util.h"
 #include "planesort.h"
 #include "cif.h"
+#include "povdraw.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -4262,5 +4263,82 @@ void TGXApp::SelectAll(bool Select)  {
   GetRender().SelectAll(Select);
   _UpdateGroupIds();
   Draw();
+}
+//..............................................................................
+TStrList TGXApp::ToPov() const {
+  TGlRenderer &r = GetRender();
+  const TAsymmUnit &au = XFile().GetAsymmUnit();
+  pov::CrdTransformer crdc(r.GetBasis());
+  olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> materials;
+  olxdict<AGDrawObject*, olxstr, TPrimitiveComparator> sph_materials;
+  TStrList out;
+  out.Add("global_settings {");
+  TGlOption cl_amb = r.LightModel.GetAmbientColor();
+  cl_amb *= 10;
+  out.Add(" ambient_light ") << pov::to_str(cl_amb);
+  out.Add("}");
+
+  TGlOption cl_clear = r.LightModel.GetClearColor();
+  out.Add("background { color ") << pov::to_str(cl_clear) << " }";
+  out.Add("camera {");
+  out.Add(" location <0,0,") << 3./r.GetBasis().GetZoom() << '>';
+  out.Add(" angle 25");
+  out.Add(" up 1");
+  out.Add(" right -4/3");
+  out.Add(" look_at <0,0,0>");
+  out.Add("}");
+  for( size_t i=0; i < 8; i++ )  {
+    TGlLight &l = r.LightModel.GetLight(i);
+    if( !l.IsEnabled() )  continue;
+    out.Add("light_source {");
+    TGlOption lp = l.GetPosition();
+    out.Add(" ") << pov::to_str(lp, false);
+    lp = l.GetDiffuse();
+    if( lp.IsEmpty() )
+      lp = l.GetAmbient();
+    if( lp.IsEmpty() )
+      lp = l.GetSpecular();
+    lp *= 1.5;
+    out.Add(" color ") << pov::to_str(lp);
+    out.Add("}");
+  }
+
+  out << TXAtom::PovDeclare();
+  out << TXBond::PovDeclare();
+  out << TXPlane::PovDeclare();
+  TGXApp::AtomIterator ai = GetAtoms();
+  out.Add("union {");
+  while( ai.HasNext() )  {
+    TXAtom &a = ai.Next();
+    if( a.IsVisible() )
+      out << a.ToPov(materials);
+  }
+  TGXApp::BondIterator bi = GetBonds();
+  while( bi.HasNext() )  {
+    TXBond &b = bi.Next();
+    if( b.IsVisible() )
+      out << b.ToPov(materials);
+  }
+  TGXApp::PlaneIterator pi = GetPlanes();
+  while( pi.HasNext() )  {
+    TXPlane &p = pi.Next();
+    if( p.IsVisible() )
+      out << p.ToPov(materials);
+  }
+  for( size_t i=0; i < Lines.Count(); i++ )  {
+    if( Lines[i].IsVisible() )
+      out << Lines[i].ToPov(materials);
+  }
+  if( XGrid().IsVisible() && !XGrid().IsEmpty() )
+    out << XGrid().ToPov(materials);
+
+  out.Add("}");
+  TStrList mat_out, scene_out;
+  //scene_out.Add("");
+  for( size_t i=0; i < materials.Count(); i++ )  {
+    mat_out.Add("#declare ") << materials.GetValue(i) << '=';
+    mat_out.Add(materials.GetKey(i)->ToPOV());
+  }
+  return mat_out << out;
 }
 //..............................................................................
