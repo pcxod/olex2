@@ -1,0 +1,198 @@
+
+<fields 
+ <file help="Name of current file." switch0=" full: full file name" switch1=" name: file name without path and extension" switch2=" ext - file extension without dot character in the beginning" switch3=" path - file path" \>
+ <dir help="Current dir with trailing backslash" \>
+ <fileopen help="Value is replace with the file chosen in a File Open dialog" switch0=" filter: specifies the filter for the dialog" switch1=" caption: specifies the caption for the dialog" switch2=" save: specifies if the dialog for save or open procedures" \>
+\>
+<xl_macro reap fredl autolisten 
+ <refine help="Launches refine program. Syntax: refine [l.s.=-1] [plan=-1]" 
+  <body 
+   <args 
+    <arg0 name="l.s." def="-1" \>
+    <arg1 name="plan" def="-1" \>
+   \>
+   <cmd 
+    <cmd0 "l.s. %1"\>
+    <cmd1 "plan %2"\>
+    <cmd3 "silent on"\>
+    <cmd4 "file filename().ins"\>
+    <cmd5 "exec xl filename()"\>
+   \>
+   <onterminate 
+    <cmd0 cmd="reap filename().res" \>
+    <cmd1 cmd="silent off" \>
+   \>
+   <onlisten \>
+  \>
+ \>
+ <auto help="Launches Autosolve." 
+  <body 
+   <args \>
+   <cmd 
+    <cmd0 "listen auto.res"\>
+    <cmd1 "silent on"\>
+    <cmd2 "file filename().res"\>
+    <cmd4 "exec auto\test_run.exe filefull()"\>
+   \>
+   <onterminate 
+    <stop "stop"\>
+    <silenton "silent off"\>
+    <cmd0 cmd="reap filename().res" \>
+   \>
+  \>
+ \>
+ <edit help="Launches notepad for the file with name of current file and extension passed as parameter" 
+  <body 
+   <args 
+    <arg0 name="File extension" def="fileext()" \>
+   \>
+   <cmd 
+    <cmd0 cmd="listen filefull()" \>
+    <cmd2 cmd="silent on" \>
+    <cmd3 cmd="exec -o notepad filename().%1" \>
+   \>
+   <onterminate 
+    <cmd0 cmd="silent off" \>
+    <cmd1 cmd="stop" \>
+   \>
+   <onlisten 
+    <cmd0 cmd="grow" \>
+   \>
+  \>
+ \>
+ <xl help="Launches refine program. Syntax: refine [l.s.=-1] [plan=-1]" xl_macro.refine.body \>
+ <telp help="Default telp macro" 
+  <body 
+   <args 
+    <arg0 name="Prob_factor" def="-1" \>
+   \>
+   <cmd 
+    <cmd0 cmd="ads elp" \>
+    <cmd1 cmd="arad isot" \>
+    <cmd2 cmd="mask atoms 5 elp" \>
+    <cmd3 cmd="mask atoms 1 sph" \>
+    <cmd4 cmd="telpv %1" \>
+   \>
+  \>
+ \>
+ <pers help="Default pers macro" 
+  <body 
+   <args 
+    <arg0 name="File extension" def="ins" \>
+   \>
+   <cmd 
+    <cmd0 cmd="ads sph" \>
+    <cmd1 cmd="arad pers" \>
+    <cmd2 cmd="mask atoms 1" \>
+    <cmd3 cmd="mask bonds 48" \>
+   \>
+  \>
+ \>
+ <sfil help="Default pers macro" 
+  <body 
+   <cmd 
+    <cmd0 cmd="ads sph" \>
+    <cmd1 cmd="arad sfil" \>
+    <cmd2 cmd="mask atoms 1" \>
+    <cmd3 cmd="mask bonds 0" \>
+   \>
+  \>
+ \>
+ <proj help="Default wireframe macro" 
+  <body 
+   <args 
+    <arg0 name="File extension" def="ins" \>
+   \>
+   <cmd 
+    <cmd0 cmd="mask atoms 0" \>
+    <cmd1 cmd="mask bonds 192" \>
+   \>
+  \>
+ \>
+ <bondbc help="Bicloured bonds" 
+  <body 
+   <args 
+    <arg0 name="File extension" def="ins" \>
+   \>
+   <cmd 
+    <cmd1 cmd="mask bonds 48" \>
+   \>
+  \>
+ \>
+ <bondsc help="SIngle color bonds" 
+  <body 
+   <args 
+    <arg0 name="File extension" def="ins" \>
+   \>
+   <cmd 
+    <cmd1 cmd="mask bonds 1" \>
+   \>
+  \>
+ \>
+ <hadd help="Add Hydrogen Atoms Geometrically" 
+  <body 
+   <args 
+    <arg0 name="File extension" def="ins" \>
+   \>
+   <cmd 
+    <cmd cmd="exec xp filename()" \>
+    <cmd1 cmd="windowcmd XRAYFWClass fmol/n nl" \>
+    <cmd1 cmd="windowcmd XRAYFWClass fmol/n nl" \>
+    <cmd1 cmd="windowcmd XRAYFWClass hadd nl" \>
+    <cmd2 cmd="windowcmd XRAYFWClass file filename() nl nl" \>
+    <cmd3 cmd="windowcmd XRAYFWClass nl exit nl" \>
+    <cmd4 cmd="wait 500" \>
+    <cmd4 cmd="reap filename().ins" \>
+   \>
+  \>
+ \>
+ <fred help="Single color bonds" 
+  <body 
+   <args 
+    <arg0 name="File extension" def="ins" \>
+   \>
+   <cmd 
+    <cmd cmd="exec -o xp filename()" \>
+    <cmd4 cmd="wait 200" \>
+    <cmd1 cmd="windowcmd XRAYFWClass fmol/n nl" \>
+    <cmd1 cmd="windowcmd XRAYFWClass telp 0 -50 nl" \>
+    <cmd1 cmd="windowcmd XRAYFWClass a " \>
+    <cmd1 cmd="windowcmd XRAYFWClass a " \>
+    <cmd1 cmd="windowcmd XRAYFWClass a " \>
+    <cmd1 cmd="windowcmd XRAYFWClass a " \>
+    <cmd1 cmd="windowcmd XRAYFWClass a " \>
+    <cmd1 cmd="windowcmd XRAYFWClass nl " \>
+    <cmd4 cmd="wait 2000" \>
+    <cmd1 cmd="windowcmd XRAYFWClass e " \>
+    <cmd1 cmd="windowcmd XRAYFWClass nl" \>
+    <cmd3 cmd="windowcmd XRAYFWClass nl exit nl" \>
+   \>
+  \>
+ \>
+ <spacetest help="prints command line arguments" 
+  <body 
+   <args 
+    <arg0 name="file name" def="" \>
+    <arg1 name="options" def="" \>
+   \>
+   <cmd 
+    <cmd4 cmd="exec -o 'basedir()\a.bat' 'filefull()' 'filefull()v' '%1' '%2'" \>
+    <cmd4 cmd="exec -o 'basedir()\a.bat' 'filefull()' 'basedir()a' '%1' '%2'" \>
+   \>
+  \>
+ \>
+ <onstartup help="startup macro" 
+  <body 
+   <args 
+    <arg0 name="file name" def="" \>
+    <arg1 name="options" def="" \>
+   \>
+   <cmd 
+    <cmd4 cmd="echo WELCOME to OLEXII!" \>
+   \>
+   <onabort 
+    <cmd "ceiling off"\>
+   \>
+  \>
+ \>
+\>
