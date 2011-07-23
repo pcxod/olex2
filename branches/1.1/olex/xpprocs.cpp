@@ -1563,9 +1563,10 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
     return;
   }
-  FXApp->GetRender().GetBasis().OrientNormal(to-from);
   if( !Options.Contains('n') )
     FXApp->AddLine(EmptyString(), from, to);
+  else
+    FXApp->GetRender().GetBasis().OrientNormal(to-from);
   FXApp->Draw();
 }
 //..............................................................................
