@@ -308,10 +308,10 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell, double dif
   root.Expand(all);
   TEBitArray usage(all.Count());
 /* alternative to use the usage flags would be something like this:
-  res.QuickSorter.Sort<TComparablePtrComparator>(res);
+  res.QuickSorter.Sort<TComparableComparator>(res);
   ConstSlice<TTypeList<Index::ResultEntry>, ResultEntry> res_slice(res, 0, res.Count());
 ...
-    if( sorted::FindIndexOf(res_slice, TComparablePtrComparator(), all[j]) == InvalidIndex )
+    if( sorted::FindIndexOf(res_slice, TComparableComparator(), all[j]) == InvalidIndex )
 */
   CellInfo to_search = cell;
   // search by niggli volume

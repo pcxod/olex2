@@ -127,7 +127,7 @@ public:
     _parent_t::on_modify();
     return _parent_t::p->p->Add(i);
   }
-  item_t &Add(item_t &i)  {  return Add(&i);  };
+  item_t &Add(item_t &i)  {  return Add(&i);  }
   shared_list& operator = (const shared_list &a) {
     _parent_t::operator = (a);
     return *this;

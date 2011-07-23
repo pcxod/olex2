@@ -264,8 +264,8 @@ const vec3d &TXBond::GetBaseCrd() const {
   return A().crd();
 }
 //..............................................................................
-TStrList TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPrimitiveComparator> &materials) const
+const_strlist TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPointerComparator> &materials) const
 {
   TStrList out;
   if( olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3 )
@@ -294,7 +294,7 @@ TStrList TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
   return out;
 }
 //..............................................................................
-TStrList TXBond::PovDeclare()  {
+const_strlist TXBond::PovDeclare()  {
   TStrList out;
   out.Add("#declare bond_single_cone=object{ cylinder {<0,0,0>, <0,0,1>, 0.1} }");
   out.Add("#declare bond_top_disk=object{ disc {<0,0,1><0,0,1>, 0.1} }");

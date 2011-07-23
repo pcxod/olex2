@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_sortedTL_H
 #define __olx_sdl_sortedTL_H
 #include "tptrlist.h"
+#include "sorted.h"
 #undef GetObject
 
 BeginEsdlNamespace()
@@ -18,22 +19,21 @@ template <class ComparableClass, class ObjectClass, class Comparator>
 struct TSortedListEntry {
   ComparableClass Comparable;
   mutable ObjectClass Object;
-  TSortedListEntry(const ComparableClass& c, const ObjectClass& o ) :
+  TSortedListEntry(const ComparableClass& c, const ObjectClass& o) :
   Comparable(c), 
     Object(o) {}
-  TSortedListEntry(const TSortedListEntry& entry) :
-  Comparable(entry.Comparable),
-    Object(entry.Object)  {}
+  TSortedListEntry(const TSortedListEntry& entry)
+    : Comparable(entry.Comparable), Object(entry.Object)  {}
   virtual ~TSortedListEntry()  {}
   inline TSortedListEntry& operator = (const TSortedListEntry& entry)  {
     Comparable = entry.Comparable;
     Object = entry.Object;
     return *this;
   }
-  inline int Compare(TSortedListEntry& entry) const {
+  inline int Compare(const TSortedListEntry& entry) const {
     return Comparator::Compare(Comparable, entry.Comparable);  
   }
-  template <class T> inline int Compare(const T& key ) const {
+  template <class T> inline int Compare(const T& key) const {
     return Comparator::Compare(Comparable, key);
   }
 };
@@ -56,43 +56,11 @@ protected:
     }
   };
   template <class T>
-  size_t FindInsertIndex(const T& key, size_t from=InvalidIndex, size_t to=InvalidIndex)  {
-    if( from == InvalidIndex ) from = 0;
-    if( to == InvalidIndex )   to = Count()-1;
-    if( to == from ) return to;
-    if( (to-from) == 1 )  return from;
-    int resfrom = Data[from]->Compare(key),
-      resto   = Data[to]->Compare(key);
-    if( resfrom == 0 )  return from;
-    if( resto == 0 )    return to;
-    if( resfrom < 0 && resto > 0 )  {
-      size_t index = (to+from)/2;
-      int res = Data[index]->Compare(key);
-      if( res < 0 )  return FindInsertIndex(key, index, to);
-      if( res > 0 )  return FindInsertIndex(key, from, index);
-      if( res == 0 ) return index;
-    }
-    return InvalidIndex;
+  size_t FindInsertIndex(const T& key)  {
+    return sorted::FindInsertIndex(Data, TComparableComparator(), key);
   }
   template <class T> size_t FindIndexOf(const T& key) const {
-    if( Data.IsEmpty() )  return InvalidIndex;
-    if( Data.Count() == 1 )  
-      return (!Data[0]->Compare(key)) ? 0 : InvalidIndex;
-    size_t from = 0, to = Count()-1;
-    if( Data[from]->Compare(key) == 0 )  return from;
-    if( Data[to]->Compare(key) == 0 )  return to;
-    while( true ) {
-      size_t index = (to+from)/2;
-      int res = Data[index]->Compare(key);
-      if( index == from || index == to)  
-        return InvalidIndex;
-      if( res < 0 )  from = index;
-      else
-        if( res > 0 )  to  = index;
-        else
-          if( res == 0 )  return index;
-    }
-    return InvalidIndex;
+    return sorted::FindIndexOf(Data, TComparableComparator(), key);
   }
 //..............................................................................
 public:
@@ -183,7 +151,6 @@ public:
 //..............................................................................
   inline B& GetObject(size_t index) const {  return Data[index]->Object;  }
 //..............................................................................
-//..............................................................................
   inline const EntryType& GetLast() const {  return *Data.GetLast();  }
 //..............................................................................
   inline const A& GetLastKey() const {  return Data.GetLast()->Comparable;  }
@@ -224,7 +191,7 @@ public:
           delete entry;
           throw TIndexOutOfRangeException(__OlxSourceInfo, pos, 0, Count()-1);
         }
-        Data.Insert(pos+1, entry);
+        Data.Insert(pos, entry);
       }
     }
     return *entry;

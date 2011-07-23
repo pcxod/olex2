@@ -3875,7 +3875,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( list.IsEmpty() )
     TBasicApp::NewLogEntry() << "Could not fit provided data";
   else  {
-    list.QuickSorter.Sort<TComparablePtrComparator>(list);
+    list.QuickSorter.Sort<TComparableComparator>(list);
     TETable tab(list.Count(), 3);
     tab.ColName(0) = "Formula";
     tab.ColName(1) = "CHN";

@@ -43,7 +43,7 @@ public:
   const vec3d &GetBaseCrd() const {  return FBase;  }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
-  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const {
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPointerComparator> &materials) const {
     return TXBond::ToPov(materials);
   }
 };

@@ -33,16 +33,23 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
   void ListPrimitives(TStrList& List) const;
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data){  return true; }
-  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {  return false; }
-  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data){  return false; }
+  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
+    return true;
+  }
+  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
+    return false;
+  }
+  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
+    return false;
+  }
 
   void Delete(bool v)  {
     TSPlane::SetDeleted(true);
     SetVisible(false);
   }
-  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
-  static TStrList PovDeclare();
+  const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
+    TPointerComparator> &materials) const;
+  static const_strlist PovDeclare();
 };
 
 EndGxlNamespace()

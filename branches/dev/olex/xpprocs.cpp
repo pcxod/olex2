@@ -6375,7 +6375,7 @@ void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroE
         }
       }
       const size_t thc = (atoms.Count()-2)*2;
-      tetrahedra.QuickSorter.Sort<TComparablePtrComparator>(tetrahedra);
+      tetrahedra.QuickSorter.Sort<TComparableComparator>(tetrahedra);
       for( size_t j=0; j < tetrahedra.Count(); j++ )  {
         TBasicApp::NewLogEntry() << "Tetrahedron " << j+1 <<  ' ' << tetrahedra[j].GetName() 
           << " V = " << tetrahedra[j].GetVolume();

@@ -29,7 +29,7 @@ enum {
 class THtml: public wxHtmlWindow, public AEventsDispatcher  {
 private:
   bool Movable, PageLoadRequested, ShowTooltips;
-  olxdict<const IEObject*, int, TPointerPtrComparator> Locks;
+  olxdict<const IEObject*, int, TPointerComparator> Locks;
   olxstr PageRequested;
   wxWindow* InFocus;
   TActionQList Actions;

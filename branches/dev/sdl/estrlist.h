@@ -19,26 +19,30 @@
 
 BeginEsdlNamespace()
 
+template <typename, typename> class const_tstrlist;
+template <typename, typename, typename> class const_tstrobjlist;
 class TEFile;
+
 template <class SC> struct TSingleStringWrapper  {
   SC String;
-  TSingleStringWrapper() {  }
-  template <class T> TSingleStringWrapper(const T& str) : String(str)  {  }
-  virtual ~TSingleStringWrapper() {  ;  }
+  TSingleStringWrapper() {}
+  template <class T> TSingleStringWrapper(const T& str) : String(str)  {}
+  virtual ~TSingleStringWrapper() {}
 };
 
-template <class T, bool CaseInsensetive>  class TStringWrapperComparator  {
+template <class T, bool CaseInsensetive> class TStringWrapperComparator  {
 public:
-  static inline int Compare(const T* A, const T* B )  {
-   return (CaseInsensetive) ? A->String.Comparei( B->String ) :
-                              A->String.Compare( B->String );
+  static inline int Compare(const T* A, const T* B)  {
+   return (CaseInsensetive) ? A->String.Comparei(B->String)
+     : A->String.Compare(B->String);
   }
 };
 // string class, string container class
 template <class SC, class T> class TTStrList : public IEObject {
 protected:
   TPtrList<T> Strings;
-  template <class StrClass> size_t FindIndexOf(const StrClass& Str, bool CI) const  {
+  template <class StrClass>
+  size_t FindIndexOf(const StrClass& Str, bool CI) const {
     if( CI )  {
       for( size_t i=0; i < Count(); i++ )
         if( Strings[i]->String.Equalsi(Str) )
@@ -52,17 +56,20 @@ protected:
     return InvalidIndex;
   }
 public:
-  TTStrList()  { }
+  TTStrList()  {}
 
   template <class SC1, class T1> TTStrList(const TTStrList<SC1,T1>& list)  {
-    Strings.SetCapacity( list.Count() );
+    Strings.SetCapacity(list.Count());
     for( size_t i=0; i < list.Count(); i++ )
       Add(list[i]);
   }
   TTStrList(const TTStrList& list)  {
-    Strings.SetCapacity( list.Count() );
+    Strings.SetCapacity(list.Count());
     for( size_t i=0; i < list.Count(); i++ )
       Add(list[i]);
+  }
+  TTStrList(const const_tstrlist<SC,T> &list)  {
+    TakeOver(list.Release(), true);
   }
   TTStrList(size_t count)  {
     Strings.SetCapacity( count );
@@ -77,7 +84,15 @@ public:
   TTStrList(const SC& string, olxch sep, bool skip_sequences=true)  {
     Strtok(string, sep, skip_sequences);
   }
+  
   virtual ~TTStrList()  {  Clear();  }
+
+  TTStrList &TakeOver(TTStrList &d, bool do_delete=false)  {
+    Strings.TakeOver(d.Strings);
+    if( do_delete )  delete &d;
+    return *this;
+  }
+
   TTStrList& SetCount(size_t nc)  {
     if( nc < Strings.Count() )  {
       for( size_t i=nc; i < Strings.Count(); i++ )
@@ -100,26 +115,48 @@ public:
   inline bool IsEmpty() const {  return Strings.IsEmpty();  }
   inline SC& Add()  {  return Strings.Add(new T)->String;  }
   inline SC& Add(const SC& str)  {  return Strings.Add(new T(str))->String;  }
-  inline SC& Add(const char* str)  {  return Strings.Add(new T(str))->String;  }
-  inline SC& Add(const wchar_t* str)  {  return Strings.Add(new T(str))->String;  }
+  inline SC& Add(const char* str)  {
+    return Strings.Add(new T(str))->String;
+  }
+  inline SC& Add(const wchar_t* str)  {
+    return Strings.Add(new T(str))->String;
+  }
 
-  inline TTStrList& operator << (const SC& str)  {  Strings.Add(new T(str));  return *this;  }
-  inline TTStrList& operator << (const char* str)  {  Strings.Add(new T(str));  return *this;  }
-  inline TTStrList& operator << (const wchar_t* str)  {  Strings.Add(new T(str));  return *this;  }
+  inline TTStrList& operator << (const SC& str)  {
+    Strings.Add(new T(str));
+    return *this;
+  }
+  inline TTStrList& operator << (const char* str)  {
+    Strings.Add(new T(str));
+    return *this;
+  }
+  inline TTStrList& operator << (const wchar_t* str)  {
+    Strings.Add(new T(str));
+    return *this;
+  }
   template <class SC1, class T1> 
   TTStrList& operator << (const TTStrList<SC1,T1>& list)  {
-    Strings.SetCapacity( Count() + list.Count() );
+    Strings.SetCapacity(Count() + list.Count());
     for( size_t i=0; i < list.Count(); i++ )
-      Add( list[i] );
+      Add(list[i]);
     return *this;
+  }
+  TTStrList& operator << (const const_tstrlist<SC,T>& list)  {
+    return *this << list.GetObject();
   }
 
   inline SC& Insert(size_t i)  {  return Strings.Insert(i, new T)->String;  }
-  inline SC& Insert(size_t i, const SC& S)  {  return Strings.Insert(i, new T(S))->String;  }
-  inline SC& Insert(size_t i, const char* S)  {  return Strings.Insert(i, new T(S))->String;  }
-  inline SC& Insert(size_t i, const wchar_t* S)  {  return Strings.Insert(i, new T(S))->String;  }
+  inline SC& Insert(size_t i, const SC& S)  {
+    return Strings.Insert(i, new T(S))->String;
+  }
+  inline SC& Insert(size_t i, const char* S)  {
+    return Strings.Insert(i, new T(S))->String;
+  }
+  inline SC& Insert(size_t i, const wchar_t* S)  {
+    return Strings.Insert(i, new T(S))->String;
+  }
   template <class SC1, class T1> 
-  inline void Insert(size_t i, const TTStrList<SC1,T1>& list)      {
+  inline void Insert(size_t i, const TTStrList<SC1,T1>& list)  {
     if( list.IsEmpty() )  return;
     Strings.Insert(i, list.Count() );
     for( size_t j=0; j < list.Count(); j++ )
@@ -139,8 +176,10 @@ public:
   }
   void DeleteRange(size_t from, size_t count)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, Strings.Count());
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, Strings.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from, 0, Strings.Count());
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from+count, 0, Strings.Count()+1);
 #endif
     for( size_t i=0; i < count; i++ )
       delete Strings[from+i];
@@ -149,8 +188,10 @@ public:
 
   TTStrList& SubList(size_t from, size_t count, TTStrList& SL) const {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, Strings.Count()+1);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, Strings.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from, 0, Strings.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from+count, 0, Strings.Count()+1);
 #endif
     SL.Strings.SetCapacity(SL.Count()+count);
     for( size_t i=0; i < count; i++ )
@@ -158,17 +199,18 @@ public:
     return SL;
   }
 
-  TTStrList SubListFrom(size_t offset) const {
+  const_tstrlist<SC,T> SubListFrom(size_t offset) const {
     TTStrList SL;
     return SubList(offset, Strings.Count()-offset, SL);
   }
 
-  TTStrList SubListTo(size_t to) const {
+  const_tstrlist<SC,T> SubListTo(size_t to) const {
     TTStrList SL;
     return SubList(0, to, SL);
   }
 
-  template <class SC1, class T1> TTStrList& Assign(const TTStrList<SC1,T1>& S)  {
+  template <class SC1, class T1>
+  TTStrList& Assign(const TTStrList<SC1,T1>& S)  {
       Clear();
       for( size_t i=0; i < S.Count(); i++ )
         Add(S.GetString(i));
@@ -207,7 +249,9 @@ public:
   TTStrList& CombineLines(const SC& LineContinuationDel)  {
     for( size_t i=0; i < Count(); i++ )  {
       if( GetString(i).EndsWith(LineContinuationDel) )  {
-        GetString(i).Delete( GetString(i).Length()-LineContinuationDel.Length(), LineContinuationDel.Length());
+        GetString(i).Delete(
+          GetString(i).Length()-LineContinuationDel.Length(),
+          LineContinuationDel.Length());
         if( (i+1) < Count() )  {
           GetString(i) << GetString(i+1);
           Delete(i+1);
@@ -229,20 +273,28 @@ public:
     Strings.Pack();
     return *this;
   }
+
   template <class StrClass>
-  inline size_t IndexOf(const StrClass& C) const {  return FindIndexOf(C, false);  }
+  inline size_t IndexOf(const StrClass& C) const {
+    return FindIndexOf(C, false);
+  }
+
   template <class StrClass>
-  inline size_t IndexOfi(const StrClass& C) const {  return FindIndexOf(C, true);  }
+  inline size_t IndexOfi(const StrClass& C) const {
+    return FindIndexOf(C, true);
+  }
   
   template <class StrClass>
   size_t FindIndexes(const StrClass& C, TSizeList& rv, bool CI) const {
     size_t cc = rv.Count();
     for( size_t i=0; i < Count(); i++ )
       if( Strings[i]->String.Compare(C, CI) == 0 )
-          rv.Add(i);
+        rv.Add(i);
     return rv.Count() - cc;
   }
-  SC Text(const SC& Sep, size_t start=InvalidIndex, size_t end = InvalidIndex) const  {
+  SC Text(const SC& Sep, size_t start=InvalidIndex,
+    size_t end=InvalidIndex) const
+  {
     if( start == InvalidIndex )  start = 0;
     if( end == InvalidIndex )    end = Strings.Count();
     size_t tc=1, slen = Sep.Length();
@@ -261,9 +313,11 @@ public:
   // convenience methods
   TTStrList& LoadFromTextArray(char *bf, size_t bf_sz, bool take_ownership)  {
     Clear();
-    const olxcstr str = take_ownership ? olxcstr(olxcstr::FromExternal(bf, bf_sz))
+    const olxcstr str = take_ownership
+      ? olxcstr(olxcstr::FromExternal(bf, bf_sz))
       : olxcstr((const char*)bf, bf_sz);
-    Strtok(str, '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
+    // must preserve the new lines on Linux!!! 2008.08.17
+    Strtok(str, '\n', false);
     for( size_t i=0; i < Count(); i++ )
       if( GetString(i).EndsWith('\r') )  
         GetString(i).SetLength(GetString(i).Length()-1);
@@ -307,33 +361,52 @@ public:
     return SaveToTextStream(file);
   }
 
-  virtual TIString ToString() const  {   return Text(NewLineSequence()).ToString();  }
+  virtual TIString ToString() const {
+    return Text(NewLineSequence()).ToString();
+  }
 
   TTStrList& operator = (const TTStrList& list)  {  return Assign(list);  }
+  TTStrList &operator = (const const_tstrlist<SC,T> &list)  {
+    return TakeOver(list.Relase(), true);
+  }
 
-  template <class comparator>
-    void BubleSort()  {  TPtrList<T>::BubleSorter.template Sort<comparator>(Strings);  }
-  void BubleSortSF(int (*f)(const T* a, const T* b) )  {
+  template <class comparator> void BubleSort()  {
+    TPtrList<T>::BubleSorter.template Sort<comparator>(Strings);
+  }
+
+  void BubleSortSF(int (*f)(const T* a, const T* b))  {
     TPtrList<T>::BubleSorter.template SortSF(Strings, f);
   }
-  template <class BaseClass>
-    void BubleSortMF(BaseClass& baseClassInstance, int (BaseClass::*f)(const T* a, const T* b) )  {
-      TPtrList<T>::BubleSorter.template SortMF<BaseClass>(Strings, baseClassInstance, f);
-    }
 
-  template <class Comparator>
-    void QuickSort()  {  TPtrList<T>::QuickSorter.template Sort<Comparator>(Strings);  }
-  void QuickSortSF(int (*f)(const T* a, const T* b) )  {
+  template <class BaseClass> void BubleSortMF(
+    BaseClass& baseClassInstance, int (BaseClass::*f)(const T* a, const T* b))
+  {
+    TPtrList<T>::BubleSorter.template SortMF<BaseClass>(
+      Strings, baseClassInstance, f);
+  }
+
+  template <class Comparator> void QuickSort()  {
+    TPtrList<T>::QuickSorter.template Sort<Comparator>(Strings);
+  }
+
+  void QuickSortSF(int (*f)(const T* a, const T* b))  {
     TPtrList<T>::QuickSorter.template SortSF(Strings, f);
   }
-  template <class BaseClass>
-    void QuickSortMF(BaseClass& baseClassInstance, int (BaseClass::*f)(const T* a, const T* b) )  {
-      TPtrList<T>::QuickSorter.template SortMF<BaseClass>(Strings, baseClassInstance, f);
-    }
+
+  template <class BaseClass> void QuickSortMF(
+    BaseClass& baseClassInstance, int (BaseClass::*f)(const T* a, const T* b))
+  {
+    TPtrList<T>::QuickSorter.template SortMF<BaseClass>(
+      Strings, baseClassInstance, f);
+  }
 
   void QSort(bool ci)  {
-    if( ci )  TPtrList<T>::QuickSorter.template Sort<TStringWrapperComparator<T,true> >(Strings);
-    else      TPtrList<T>::QuickSorter.template Sort<TStringWrapperComparator<T,false> >(Strings);
+    if( ci )
+      TPtrList<T>::QuickSorter.template
+        Sort<TStringWrapperComparator<T,true> >(Strings);
+    else 
+      TPtrList<T>::QuickSorter.template
+        Sort<TStringWrapperComparator<T,false> >(Strings);
   }
 
   size_t StrtokF(const SC& Str, const TSizeList& indexes)  {
@@ -353,6 +426,7 @@ public:
     }
     return cnt;
   }
+
   TTStrList& Strtok(const SC& Str, olxch Sep, bool SkipSequences = true)  {
     SC Tmp(Str);
     size_t ind = Tmp.IndexOf(Sep);
@@ -379,8 +453,7 @@ public:
       Add(Tmp);
     return *this;
   }
-  // similar to previous implementation, the list is passed as one of the parameters
-  // takes a string as a separator
+  // similar to previous implementation, takes string as a separator
   TTStrList& Strtok(const SC& Str, const SC& Sep)  {
     SC Tmp(Str);
     const size_t sepl = Sep.Length();
@@ -426,23 +499,28 @@ public:
 template <class SC, typename OC> 
 struct TPrimitiveStrListData : public TSingleStringWrapper<SC>  {
   OC Object;
-  TPrimitiveStrListData() : Object(0) {  }
+  TPrimitiveStrListData() : Object(0) {}
   template <class T> TPrimitiveStrListData(const T& str, const OC& obj = 0)
-    : TSingleStringWrapper<SC>(str), Object(obj) {  }
-  virtual ~TPrimitiveStrListData()  {  }
+    : TSingleStringWrapper<SC>(str), Object(obj) {}
+  virtual ~TPrimitiveStrListData()  {}
 };
 
-template <class SC, typename OC> struct TObjectStrListData : public TSingleStringWrapper<SC>  {
+template <class SC, typename OC> struct TObjectStrListData
+  : public TSingleStringWrapper<SC>
+{
   OC Object;
-  TObjectStrListData()  {  }
-  template <class S> TObjectStrListData(const S& str ) : TSingleStringWrapper<SC>(str)  {  }
-  template <class S> TObjectStrListData(const S& str, const OC& obj )
-    : TSingleStringWrapper<SC>(str), Object(obj)  {  }
-  virtual ~TObjectStrListData()  {  }
+  TObjectStrListData()  {}
+  template <class S>
+  TObjectStrListData(const S& str) : TSingleStringWrapper<SC>(str)  {}
+  template <class S> TObjectStrListData(const S& str, const OC& obj)
+    : TSingleStringWrapper<SC>(str), Object(obj)  {}
+  virtual ~TObjectStrListData()  {}
 };
 
 
-template <class SC, class OC, class GC> class TTOStringList: public TTStrList<SC,GC>  {
+template <class SC, class OC, class GC> class TTOStringList
+  : public TTStrList<SC,GC>
+{
   typedef TTStrList<SC,GC> PList;
 public:
   // creates empty list
@@ -461,9 +539,12 @@ public:
     for( size_t i=0; i < list.Count(); i++ )
       Add(list[i], list.GetObject(i));
   }
+  TTOStringList(const const_tstrobjlist<SC,OC,GC> &list)  {
+    PList::Strings.TakeOver(list.Relase(), true);
+  }
   // creates a list with strtok entries in it
-  TTOStringList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL) :
-    TTStrList<SC,GC>(string, sep)
+  TTOStringList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL)
+    : TTStrList<SC,GC>(string, sep)
   {
     if( objects != NULL )  {
       for( size_t i=0; i < objects->Count(); i++ )  {
@@ -473,8 +554,8 @@ public:
     }
   }
   // creates a list with strtok entries in it
-  TTOStringList(const SC& string, char sep, TTypeList<OC>* objects = NULL) :
-    TTStrList<SC,GC>(string, sep)
+  TTOStringList(const SC& string, char sep, TTypeList<OC>* objects = NULL)
+    : TTStrList<SC,GC>(string, sep)
   {
     if( objects != NULL )  {
       for( size_t i=0; i < objects->Count(); i++ )  {
@@ -485,7 +566,8 @@ public:
   }
   virtual ~TTOStringList()  {}
 
-  TTOStringList& SubList(size_t offset, size_t count, TTOStringList& SL) const {
+  TTOStringList& SubList(size_t offset, size_t count, TTOStringList& SL) const
+  {
     for( size_t i=offset; i < offset+count; i++ )
       SL.Add(PList::GetString(i), GetObject(i));
     return SL;
@@ -501,15 +583,16 @@ public:
     return SubList(0, to, SL);
   }
 
-  template <class SC1, class T1> TTOStringList& Assign(const TTStrList<SC1,T1>& S)  {
-      PList::Clear();
-      PList::SetCapacity(S.Count());
-      for( size_t i=0; i < S.Count(); i++ )
-        Add(S[i]);
-      return *this;
-    }
+  template <class SC1, class T1>
+  TTOStringList& Assign(const TTStrList<SC1,T1>& S)  {
+    PList::Clear();
+    PList::SetCapacity(S.Count());
+    for( size_t i=0; i < S.Count(); i++ )
+      Add(S[i]);
+    return *this;
+  }
 
-   TTOStringList& Assign(const TTOStringList& S)  {
+  TTOStringList& Assign(const TTOStringList& S)  {
     PList::Clear();
     PList::AddList(S);
     return *this;
@@ -523,10 +606,14 @@ public:
 
   GC& Add()  {  return *PList::Strings.Add(new GC);  }
   GC& Add(const SC& S)  {  return *PList::Strings.Add(new GC(S));  }
-  GC& Add(const SC& S, const OC& Object)  {  return *PList::Strings.Add(new GC(S,Object));  }
-  GC& Insert(size_t i, const SC& S)  {  return *PList::Strings.Insert(i, new GC(S));  }
+  GC& Add(const SC& S, const OC& Object)  {
+    return *PList::Strings.Add(new GC(S,Object));
+  }
+  GC& Insert(size_t i, const SC& S)  {
+    return *PList::Strings.Insert(i, new GC(S));
+  }
   GC& Insert(size_t i, const SC& S, const OC& O)  {
-    return *PList::Strings.Insert(i, new GC(S,O) );
+    return *PList::Strings.Insert(i, new GC(S,O));
   }
   inline GC& Set(size_t i, const SC& S, const OC& O)  {  
     delete PList::Strings[i];
@@ -535,7 +622,14 @@ public:
 
   inline OC& GetObject(size_t i) const { return PList::Strings[i]->Object;  }
 
-  TTOStringList& operator = (const TTOStringList& list)  {  return Assign(list);  }
+  TTOStringList& operator = (const TTOStringList& list)  {
+    return Assign(list);
+  }
+
+  TTOStringList *operator = (const const_tstrobjlist<SC,OC,GC> &list)  {
+    PList::Strings.TakeOver(list.Relase(), true);
+    return *this;
+  }
 
   size_t IndexOfObject(const OC& C) const {
     for( size_t i=0; i < PList::Count(); i++ )
@@ -543,8 +637,8 @@ public:
         return i;
     return InvalidIndex;
   }
-  // the find function with this signature work only for objects; for pointers it
-  // causes a lot of trouble
+  // the find function with this signature work only for objects;
+  // for pointers it causes a lot of trouble
   template <class StrClass> const OC& FindObject(const StrClass& Name) const {
     size_t in = PList::IndexOf(Name);
     return (in != InvalidIndex) ? PList::Strings[in]->Object : *(OC*)NULL;
@@ -562,22 +656,24 @@ template <class SC, typename OC> class TStrPObjList:
   typedef TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> > PList;
 public:
   TStrPObjList()  {}
-  TStrPObjList(size_t count) : PList(count)  { 
-    for( size_t i=0; i < PList::Count(); i++ )
-      PList::GetObject(i) = NULL;
+  TStrPObjList(size_t count) : PList(count)  {}
+  TStrPObjList(const
+    const_tstrobjlist<SC,OC,TPrimitiveStrListData<SC,OC> > &list)
+  {
+    PList::Strings.TakeOver(list.Relase(), true);
   }
 
-  template <class SC1, class T1> TStrPObjList(const TTStrList<SC1,T1>& list) : 
-    PList(list) {}
+  template <class SC1, class T1> TStrPObjList(const TTStrList<SC1,T1>& list)
+    : PList(list) {}
 
-  TStrPObjList(const TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >& list) :
-    PList(list)  {}
+  TStrPObjList(const TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >& list)
+    : PList(list)  {}
 
-  TStrPObjList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL) :
-    PList(string, sep, objects)  {}
+  TStrPObjList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL)
+    : PList(string, sep, objects)  {}
 
-  TStrPObjList(const SC& string, char sep, TTypeList<OC>* objects = NULL) :
-    PList(string, sep, objects)  {}
+  TStrPObjList(const SC& string, char sep, TTypeList<OC>* objects = NULL)
+    : PList(string, sep, objects)  {}
 
   template <class StrClass> inline OC FindObject(const StrClass& Name) const {
     const size_t in = PList::IndexOf(Name);
@@ -588,19 +684,94 @@ public:
     const size_t in = PList::IndexOfi(Name);
     return (in != InvalidIndex) ? PList::Strings[in]->Object : NULL;
   }
+
+  TStrPObjList &operator = (const
+    const_tstrobjlist<SC,OC,TPrimitiveStrListData<SC,OC> > &list)
+  {
+    PList::Strings.TakeOver(list.Relase(), true);
+    return *this;
+  }
+};
+
+// const_strlist
+template <typename str_t, typename item_t>
+class const_tstrlist : public const_list<
+  TTStrList<str_t,item_t>, str_t>
+{
+  typedef TTStrList<str_t,item_t> list_t;
+  typedef const_list<list_t,str_t> parent_t;
+public:
+  const_tstrlist(const const_tstrlist &d) : parent_t(d) {}
+  const_tstrlist(list_t &d) : parent_t(d) {}
+  const_tstrlist(list_t *d) : parent_t(d) {}
+  const_tstrlist &operator = (const const_tstrlist &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
+  str_t Text(const str_t& Sep, size_t start=InvalidIndex,
+    size_t end=InvalidIndex) const
+  {
+    return parent_t::GetObject().Text(Sep, start, end);
+  }
+};
+
+// const_strobjlist
+template <typename str_t, typename obj_t, typename item_t>
+class const_tstrobjlist : public const_list<
+  TTOStringList<str_t,obj_t,item_t>, str_t>
+{
+  typedef TTOStringList<str_t,obj_t,item_t> list_t;
+  typedef const_list<list_t,str_t> parent_t;
+public:
+  const_tstrobjlist(const const_tstrobjlist &d) : parent_t(d) {}
+  const_tstrobjlist(list_t &d) : parent_t(d) {}
+  const_tstrobjlist(list_t *d) : parent_t(d) {}
+  const_tstrobjlist &operator = (const const_tstrobjlist &d) {
+    parent_t::operator = (d);
+    return *this;
+  }
+  const obj_t& GetObject(size_t i) const {
+    return parent_t::GetObject().GetObject(i);
+  }
+  str_t Text(const str_t& Sep, size_t start=InvalidIndex,
+    size_t end=InvalidIndex) const
+  {
+    return parent_t::GetObject().Text(Sep, start, end);
+  }
 };
 
 typedef TStrPObjList<olxstr, IEObject*> TStrObjList;
+typedef const_tstrobjlist<olxstr,IEObject*,
+  TPrimitiveStrListData<olxstr,IEObject*> > const_strobjlist;
 typedef TStrPObjList<olxcstr, IEObject*> TCStrObjList;
+typedef const_tstrobjlist<olxcstr,IEObject*,
+  TPrimitiveStrListData<olxcstr,IEObject*> > const_cstrobjlist;
 typedef TStrPObjList<olxwstr, IEObject*> TWStrObjList;
+typedef const_tstrobjlist<olxwstr,IEObject*,
+  TPrimitiveStrListData<olxwstr,IEObject*> > const_wstrobjlist;
 
-typedef TTOStringList<olxstr, olxstr, TObjectStrListData<olxstr,olxstr> > TStrStrList;
-typedef TTOStringList<olxcstr, olxcstr, TObjectStrListData<olxcstr,olxcstr> > TCStrCStrList;
-typedef TTOStringList<olxwstr, olxwstr, TObjectStrListData<olxwstr,olxwstr> > TWStrWStrList;
+typedef TTOStringList<olxstr, olxstr, TObjectStrListData<olxstr,olxstr> >
+  TStrStrList;
+typedef const_tstrobjlist<olxstr, olxstr, TObjectStrListData<olxstr,olxstr> >
+  const_strstrlist;
+typedef TTOStringList<olxcstr, olxcstr, TObjectStrListData<olxcstr,olxcstr> >
+  TCStrCStrList;
+typedef 
+  const_tstrobjlist<olxcstr, olxcstr, TObjectStrListData<olxcstr,olxcstr> >
+  const_cstrcstrlist;
+typedef TTOStringList<olxwstr, olxwstr, TObjectStrListData<olxwstr,olxwstr> >
+  TWStrWStrList;
+typedef
+  const_tstrobjlist<olxwstr, olxwstr, TObjectStrListData<olxwstr,olxwstr> >
+  const_wstrwstrlist;
 
 typedef TTStrList<olxstr, TSingleStringWrapper<olxstr> > TStrList;
+typedef const_tstrlist<olxstr, TSingleStringWrapper<olxstr> > const_strlist;
 typedef TTStrList<olxcstr, TSingleStringWrapper<olxcstr> > TCStrList;
+typedef const_tstrlist<olxcstr, TSingleStringWrapper<olxstr> > const_cstrlist;
 typedef TTStrList<olxwstr, TSingleStringWrapper<olxwstr> > TWStrList;
+typedef const_tstrlist<olxwstr, TSingleStringWrapper<olxstr> > const_wstrlist;
+
 
 EndEsdlNamespace()
 #endif

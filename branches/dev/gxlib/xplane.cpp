@@ -100,14 +100,14 @@ void TXPlane::ListPrimitives(TStrList &List) const {
   List.Add("Centroid");
 }
 //..............................................................................
-TStrList TXPlane::PovDeclare()  {
+const_strlist TXPlane::PovDeclare()  {
   TStrList out;
   out.Add("#declare plane_centroid=object{ sphere {<0,0,0>, 0.25} }");
   return out;
 }
 //..............................................................................
-TStrList TXPlane::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPrimitiveComparator> &materials) const
+const_strlist TXPlane::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPointerComparator> &materials) const
 {
   TStrList out;
    pov::CrdTransformer crdc(Parent.GetBasis());

@@ -183,7 +183,7 @@ public:
 /* A choice of comprators is provided:
   TPrimitiveComparator - for sorting Objects 
   TComparableComparator - for sorting objects having Compare method returning -,+,0
-  TPointerPtrComparator - for sorting pointer adresses
+  TPointerComparator - for sorting pointer adresses
 */
 template <class ObjectClass, class Comparator> 
 class SortedPtrList : public TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*> {

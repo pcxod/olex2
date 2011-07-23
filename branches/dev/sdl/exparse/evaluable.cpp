@@ -27,7 +27,7 @@ const IEvaluable::operator_dict::Entry ANumberEvaluator::cast_operators_table[] 
   ANumberEvaluator::create_operator_entry<float>(),
   ANumberEvaluator::create_operator_entry<double>()
 };
-olxdict<std::type_info const*, IEvaluable::cast_operator, TPointerPtrComparator> 
+olxdict<std::type_info const*, IEvaluable::cast_operator, TPointerComparator> 
   ANumberEvaluator::cast_operators( 
     ANumberEvaluator::cast_operators_table, 
     sizeof(ANumberEvaluator::cast_operators_table)/sizeof(ANumberEvaluator::cast_operators_table[0]) 

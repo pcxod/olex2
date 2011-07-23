@@ -26,7 +26,7 @@ static _auto_BI _autoMaxBond[] = {
   {iFluorineIndex, 1},
 };
 
-typedef SortedPtrList<const cm_Element, TPointerPtrComparator> SortedElementList;
+typedef SortedPtrList<const cm_Element, TPointerComparator> SortedElementList;
 // helper function
 size_t imp_auto_AtomCount(const TAsymmUnit& au)  {
   size_t ac = 0;

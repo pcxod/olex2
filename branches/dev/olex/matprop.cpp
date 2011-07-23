@@ -365,7 +365,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
     else if( Object->IsSelected() )  {
       TGlGroup& gl = app.GetSelection();
       TGPCollection* ogpc = &Object->GetPrimitives();
-      SortedPtrList<TGPCollection, TPointerPtrComparator> uniqCol;
+      SortedPtrList<TGPCollection, TPointerComparator> uniqCol;
       const bool is_bond = EsdlInstanceOf(*Object, TXBond);
       if( cbApplyTo == NULL || cbApplyTo->GetSelection() == 0 )  {
         for( size_t i=0; i < gl.Count(); i++ )  {

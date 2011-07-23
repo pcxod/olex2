@@ -4269,7 +4269,7 @@ TStrList TGXApp::ToPov() const {
   TGlRenderer &r = GetRender();
   const TAsymmUnit &au = XFile().GetAsymmUnit();
   pov::CrdTransformer crdc(r.GetBasis());
-  olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> materials;
+  olxdict<const TGlMaterial*, olxstr, TPointerComparator> materials;
   olxdict<AGDrawObject*, olxstr, TPrimitiveComparator> sph_materials;
   TStrList out;
   out.Add("global_settings {");

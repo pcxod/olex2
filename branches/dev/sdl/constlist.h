@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_constlist_H
 #define __olx_sdl_constlist_H
 #include "ebase.h"
+#undef GetObject
 BeginEsdlNamespace()
 
 template <class obj_t>
@@ -31,7 +32,7 @@ public:
       delete p;
     }
   }
-  operator const obj_t &() const {  return GetObject();  }
+  //operator const obj_t &() const {  return GetObject();  }
   const obj_t& GetObject() const {
     if( p == NULL )
       throw_invalid(__POlxSourceInfo);

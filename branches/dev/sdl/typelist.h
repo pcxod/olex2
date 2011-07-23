@@ -50,9 +50,7 @@ public:
   }
 //..............................................................................
   TTypeListExt(const SharedTypeList<T>& list)  {
-    TTypeListExt &l = list.Release();
-    List.TakeOver(l.List);
-    delete &l;
+    TakeOver(list.Release(), true);
   }
 //..............................................................................
   TTypeListExt(const ConstTypeList<T>& list)  {
@@ -298,10 +296,7 @@ public:
 //..............................................................................
   template <class wrapper_t> TTypeListExt &_Assign_Wrapper(const wrapper_t& list)  {
     Clear();
-    TTypeListExt &l = list.Release();
-    List.TakeOver(l.List);
-    delete &l;
-    return *this;
+    return TakeOver(list.Release(), true);
   }
   
   TTypeListExt & operator = (const SharedTypeList<T>& list)  {

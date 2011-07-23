@@ -332,7 +332,8 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("incomplete AFIX group") <<
         (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString()) );
       else
-        TBasicApp::NewLogEntry(logWarning) << "Possibly incorrect AFIX " << cx.AfixGroups.Current().GetB()->GetAfix() <<
+        TBasicApp::NewLogEntry(logWarning) << "Possibly incorrect AFIX "
+          << cx.AfixGroups.Current().GetB()->GetAfix() <<
         (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString());
     }
     if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )
@@ -1441,7 +1442,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       rm.GetFrag(i).ToStrings(SL);
   }
   else  {
-    SortedPtrList<const Fragment, TPointerPtrComparator> saved;
+    SortedPtrList<const Fragment, TPointerComparator> saved;
     for( size_t i=0; i < atoms->Count(); i++ )  {
       const int m = TAfixGroup::GetM((*atoms)[i]->GetAfix());
       if( m < 17 )  continue;

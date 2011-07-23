@@ -255,7 +255,7 @@ protected:
   void RestoreLabels();
   TTypeList<GroupData> GroupDefs;
   GroupData SelectionCopy[2];
-  olxdict<TGlGroup*,size_t, TPointerPtrComparator> GroupDict;
+  olxdict<TGlGroup*,size_t, TPointerComparator> GroupDict;
   // stores numeric references
   void RestoreGroup(TGlGroup& glg, const GroupData& group);
   void RestoreGroups();

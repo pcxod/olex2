@@ -219,7 +219,7 @@ public:
 private:
   /* there coud be many processes running at the same time, however only one process
   a time can be redirected (i.e. get input) and only one process to wait for... */
-  SortedPtrList<AProcess, TPointerPtrComparator> Processes;
+  SortedPtrList<AProcess, TPointerComparator> Processes;
   AProcess* Redirected, *Current, *Last;
 protected:
   IProcessHandler& OutputHandler;

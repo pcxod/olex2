@@ -62,7 +62,9 @@ double TSPlane::CalcWeightedRMSD() const {
   return sqrt(qd/qw);
 }
 //..............................................................................
-bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center) {
+bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
+  vec3d& center)
+{
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )
@@ -89,7 +91,8 @@ void TSPlane::ToDataItem(TDataItem& item) const {
   size_t cnt = 0;
   for( size_t i=0; i < Crds.Count(); i++ )  {
     if( Crds[i].GetA()->IsDeleted() )  continue;
-    item.AddItem(cnt++, Crds[i].GetB()).AddField("atom_id", Crds[i].GetA()->GetTag()); 
+    item.AddItem(cnt++, Crds[i].GetB()).AddField("atom_id",
+      Crds[i].GetA()->GetTag()); 
   }
 }
 //..............................................................................
@@ -108,7 +111,9 @@ void TSPlane::FromDataItem(const TDataItem& item)  {
   SetRegular(item.GetFieldValue("regular", FalseString()).ToBool());
 }
 //..............................................................................
-TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.IsRegular())  {
+TSPlane::Def::Def(const TSPlane& plane)
+  : atoms(plane.Count()), regular(plane.IsRegular())
+{
   for( size_t i=0; i < plane.Count(); i++ )
     atoms.Set(i, new DefData(plane.GetAtom(i).GetRef(), plane.GetWeight(i)));
   if( plane.Count() == 0 )  return;
@@ -121,7 +126,7 @@ TSPlane::Def::Def(const TSPlane& plane) : atoms(plane.Count()), regular(plane.Is
         uc.GetMatrix(smatd::GetContainerId(atoms[i].ref.matrix_id))), im).GetId();
     }
   }
-  atoms.QuickSorter.Sort<TComparablePtrComparator>(atoms);
+  atoms.QuickSorter.Sort<TComparableComparator>(atoms);
 }
 //..............................................................................
 void TSPlane::Def::DefData::ToDataItem(TDataItem& item) const {
@@ -147,7 +152,9 @@ void TSPlane::Def::FromDataItem(const TDataItem& item)  {
     atoms.AddNew(item.GetItem(i));
 }
 //..............................................................................
-TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id, TNetwork* parent, const smatd& matr) const {
+TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
+  TNetwork* parent, const smatd& matr) const
+{
   TTypeList<AnAssociation2<TSAtom*, double> > points;
   mat3d equiv;
   equiv.I();
@@ -178,3 +185,4 @@ TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id, TNe
   p.SetRegular(regular);
   return &p;
 }
+//..............................................................................

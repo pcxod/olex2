@@ -216,7 +216,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   }
   else if( event.GetId() == ID_GraphicsSelect )  {
     if( FObjectUnderMouse->IsSelected() )  {
-      SortedPtrList<TGPCollection, TPrimitiveComparator> colls;
+      SortedPtrList<TGPCollection, TPointerComparator> colls;
       TGlGroup& sel = FXApp->GetSelection();
       for( size_t i=0; i < sel.Count(); i++ )  {
         TGPCollection& gpc = sel.GetObject(i).GetPrimitives();

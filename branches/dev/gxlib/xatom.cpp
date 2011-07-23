@@ -611,8 +611,8 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
   }
 }
 //..............................................................................
-TStrList TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPrimitiveComparator> &materials) const
+const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPointerComparator> &materials) const
 {
   TStrList out;
   if( DrawStyle() == adsStandalone && !IsStandalone() )
@@ -667,7 +667,7 @@ TStrList TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
   return out;
 }
 //..............................................................................
-TStrList TXAtom::PovDeclare()  {
+const_strlist TXAtom::PovDeclare()  {
   TStrList out;
   out.Add("#declare atom_sphere=object{ sphere {<0,0,0>, 1} }");
   out.Add("#declare atom_small_sphere=object{ sphere {<0,0,0>, 0.5} }");

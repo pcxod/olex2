@@ -24,7 +24,7 @@ class AGlScene: public IEObject  {
 private:
   olxdict<olxstr, TGlFont*, olxstrComparator<false> > FontsDict;
   TPtrList<TGlFont> Fonts, SmallFonts;
-  olxdict<std::type_info const*, size_t, TPointerPtrComparator> FontRegistry; 
+  olxdict<std::type_info const*, size_t, TPointerComparator> FontRegistry; 
 protected:
   class TGlRenderer *FParent;
   /* The function creates or replaces a font (if exists under the same name)  */
