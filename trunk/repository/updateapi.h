@@ -55,7 +55,7 @@ struct SettingsFile  {
     proxy = settings["proxy"];
     repository = settings["repository"];
     update_interval = settings["update"];
-    const olxstr& last_update_str = settings.GetParam("lastupdate", "0");
+    const olxstr last_update_str = settings.GetParam("lastupdate", "0");
     if( last_update_str.IsEmpty() )
       last_updated = 0;
     else
