@@ -245,6 +245,7 @@ public:
   masks will be applied, delta - extra added value for Rs */
   const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
     BuildAtomMasks(const vec3s& dim, ElementRadii* radii, double delta=0) const;
+  olx_object_ptr<TArray3D<bool> > BuildAtomMask(const vec3s& dim, double r) const;
   // much faster, but less 'precise' version
   void BuildStructureMap_Masks(TArray3D<short>& map, double delta, short value, 
     ElementRadii* radii, const TCAtomPList* _template = NULL) const;

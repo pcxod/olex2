@@ -723,6 +723,34 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
   TBasicApp::GetInstance().Update();
 }
 //..................................................................................
+olx_object_ptr<TArray3D<bool> > TUnitCell::BuildAtomMask(const vec3s& dim,
+  double r) const
+{
+  // angstrem per pixel scale
+  double capp = Lattice->GetAsymmUnit().GetAxes()[2]/dim[2],
+         bapp = Lattice->GetAsymmUnit().GetAxes()[1]/dim[1],
+         aapp = Lattice->GetAsymmUnit().GetAxes()[0]/dim[0];
+  // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const double sin_a = sin(au.GetAngles()[0]*M_PI/180);
+  const double sin_b = sin(au.GetAngles()[1]*M_PI/180);
+  const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
+  const double sr = r*r;
+  int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp);
+  int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp);
+  int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/aapp);
+  TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
+  for( int x=-ad; x <= ad; x ++ )  {
+    for( int y=-bd; y <= bd; y ++ )  {
+      for( int z=-cd; z <= cd; z ++ )  {
+        vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1], (double)z/dim[2]));
+        spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
+      }
+    }
+  }
+  return spm;
+}
+//..................................................................................
 const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
   TUnitCell::BuildAtomMasks(const vec3s& dim, ElementRadii* radii, double delta) const
 {

@@ -18,7 +18,16 @@ ConstTypeList<Result> analysis::AnalyseADP(const TLattice &latt)  {
 }
 //.............................................................................
 ConstTypeList<Result> analysis::AnalyseEDMap(TLattice &latt)  {
-  return EDMapAnalysis().Analyse(latt);
+  EDMapAnalysis ed_analysis;
+  ElementPList elements;
+  elements.Add(latt.GetObjects().atoms[0].GetType());
+  elements.Add(XElementLib::PrevZ(latt.GetObjects().atoms[0].GetType()));
+  elements.Add(XElementLib::NextZ(latt.GetObjects().atoms[0].GetType()));
+  TTypeList<AnAssociation2<const cm_Element*, double> > res =
+    ed_analysis.TryAtomType(latt, latt.GetObjects().atoms[0].CAtom(), elements);
+  for( size_t i=0; i < res.Count(); i++ )
+    TBasicApp::NewLogEntry() << res[i].GetA()->symbol << ": " << res[i].GetB();
+  return ed_analysis.Analyse(latt);
 }
 //.............................................................................
 ConstTypeList<Result> analysis::AnalyseGeometry(const TLattice &latt)  {

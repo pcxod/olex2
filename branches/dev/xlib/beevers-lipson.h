@@ -26,13 +26,13 @@ public:
   typedef TArrayList<SFUtil::StructureFactor> SFList;
 
   template <class FloatT> static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, const vec3i& dim, double vol)
+      FloatT*** map, const vec3s& dim, double vol)
   {
     return Calculate<FloatT, BVFourier::TCalcEDMTask<FloatT> >(F, map, dim, vol);
   }
 
   template <class FloatT> static MapInfo CalcPatt(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, const vec3i& dim, double vol)
+      FloatT*** map, const vec3s& dim, double vol)
   {
     return Calculate<FloatT, BVFourier::TCalcPattTask<FloatT> >(F, map, dim, vol);
   }
