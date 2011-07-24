@@ -31,6 +31,12 @@
     <Filter Include="Source Files\lcells">
       <UniqueIdentifier>{1b488925-7e9b-4510-b686-18a23cfbe044}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\analysis">
+      <UniqueIdentifier>{047ab915-5ced-4c8d-b224-c385270cd8fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\analysis">
+      <UniqueIdentifier>{3ec6fcea-6e4c-4338-a844-1b94304b8bb0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp">
@@ -786,6 +792,9 @@
     <ClCompile Include="..\..\..\xlib\lcells.cpp">
       <Filter>Source Files\lcells</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\analysis\analysis.cpp">
+      <Filter>Source Files\analysis</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -1030,6 +1039,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\label_corrector.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\analysis\analysis.h">
+      <Filter>Header Files\analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\analysis\ed_analysis.h">
+      <Filter>Header Files\analysis</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

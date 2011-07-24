@@ -57,8 +57,6 @@ public:
   TPtrList(size_t size)  {  init(size);  }
   TPtrList(int size)  {  init(size);  }
 //..............................................................................
-  /* copy constuctor - creates new copies of the objest, be careful as the assignement
-   operator must exist for nonpointer objects */
   TPtrList(const TPtrList& list)  {
     init(list.Count());
     memcpy(Items, list.Items, list.Count()*sizeof(T*));
@@ -76,7 +74,8 @@ public:
   TPtrList(size_t size, const T** array)  {  init_from_array(size, array);  }
   TPtrList(int size, const T** array)  {  init_from_array(size, array);  }
 //..............................................................................
-  template <class List, class Accessor> TPtrList(const List& list, const Accessor& accessor)  {
+  template <class List, class Accessor>
+  TPtrList(const List& list, const Accessor& accessor)  {
     init(list.Count());
     for( size_t i=0; i < list.Count(); i++ )
       Set(i, accessor.Access(list[i]));
@@ -149,32 +148,36 @@ public:
     return *this;
   }
 //..............................................................................
-  inline TPtrList& operator = (const TPtrList& l)  {  return Assign(l);  }
+  TPtrList& operator = (const TPtrList& l)  {  return Assign(l);  }
 //..............................................................................
   template <class List> inline TPtrList& operator = (const List& l)  {
     return Assign(l);
   }
 //..............................................................................
-  inline TPtrList& operator = (const SharedPtrList<T>& l)  {
+  TPtrList& operator = (const SharedPtrList<T>& l)  {
     olx_free(Items);
     return TakeOver(l.Release(), true);
   }
 //..............................................................................
-  inline TPtrList& operator = (const ConstPtrList<T>& l)  {
+  TPtrList& operator = (const ConstPtrList<T>& l)  {
     olx_free(Items);
     return TakeOver(l.Release(), true);
   }
 //..............................................................................
-  inline TPtrList& AddList(const TPtrList& list)  {
+  TPtrList& AddList(const TPtrList& list)  {
     SetCapacity(list.Count() + FCount);
     memcpy(&Items[FCount], list.Items, list.Count()*sizeof(T*));
     FCount += list.Count();
     return *this;
   }
 //..............................................................................
-  inline TPtrList& AddList(const SharedPtrList<T>& list)  {  return AddList(list.GetObject());  }
+  TPtrList& AddList(const SharedPtrList<T>& list)  {
+    return AddList(list.GetObject());
+  }
 //..............................................................................
-  inline TPtrList& AddList(const ConstPtrList<T>& list)  {  return AddList(list.GetObject());  }
+  TPtrList& AddList(const ConstPtrList<T>& list)  {
+    return AddList(list.GetObject());
+  }
 //..............................................................................
   template <class List> TPtrList& AddList(const List& l)  {
     const size_t off = FCount;
@@ -233,7 +236,8 @@ public:
 //..............................................................................
   inline T*& Insert(size_t index, T* pObj=NULL)  {
 #ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+  TIndexOutOfRangeException::ValidateRange(
+    __POlxSourceInfo, index, 0, FCount+1);
 #endif
     checkSize();
     memmove(&Items[index+1], &Items[index], (FCount-index)*sizeof(T*));
@@ -246,7 +250,8 @@ public:
 //..............................................................................
   TPtrList& Insert(size_t index, const TPtrList& list)  {
 #ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+  TIndexOutOfRangeException::ValidateRange(
+    __POlxSourceInfo, index, 0, FCount+1);
 #endif
     SetCapacity(FCount + FIncrement + list.Count());
     const size_t lc = list.Count();
@@ -258,7 +263,8 @@ public:
 //..............................................................................
   template <class List> TPtrList& Insert(size_t index, const List& list)  {
 #ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+  TIndexOutOfRangeException::ValidateRange(
+    __POlxSourceInfo, index, 0, FCount+1);
 #endif
     SetCapacity(FCount + FIncrement + list.Count());
     const size_t lc = list.Count();
@@ -271,7 +277,8 @@ public:
 //..............................................................................
   inline TPtrList& Insert(size_t index, size_t cnt)  {
 #ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+  TIndexOutOfRangeException::ValidateRange(
+    __POlxSourceInfo, index, 0, FCount+1);
 #endif
     SetCapacity(FCount + FIncrement + cnt);
     memmove(&Items[index+cnt], &Items[index], (FCount-index)*sizeof(T*));
@@ -281,7 +288,8 @@ public:
 //..............................................................................
   inline void NullItem(size_t index) const {
 #ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
+  TIndexOutOfRangeException::ValidateRange(
+    __POlxSourceInfo, index, 0, FCount);
 #endif
     Items[index] = NULL;
   }
@@ -302,7 +310,8 @@ public:
 //..............................................................................
   inline T*& GetLast() const {
 #ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, FCount-1, 0, FCount);
+  TIndexOutOfRangeException::ValidateRange(
+    __POlxSourceInfo, FCount-1, 0, FCount);
 #endif
     return Items[FCount-1];
   }
@@ -311,7 +320,8 @@ public:
     if( v < FCapacity )  return *this;
     FCapacity = v;
     Allocate();
-    memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*));  // initialise the rest of items to NULL
+     // initialise the rest of items to NULL
+    memset(&Items[FCount], 0, (FCapacity-FCount)*sizeof(T*)); 
     return *this;
   }
 //..............................................................................
@@ -322,7 +332,8 @@ public:
 //..............................................................................
   void Delete(size_t index)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, index, 0, FCount);
 #endif
     for( size_t i=index+1; i < FCount; i++ )
       Items[i-1] = Items[i];
@@ -331,8 +342,10 @@ public:
 //..............................................................................
   void DeleteRange(size_t from, size_t count)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, FCount+1);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from+count, 0, FCount+1);
 #endif
     const size_t copy_cnt = FCount-from-count;
     for( size_t i=0; i < copy_cnt; i++ )
@@ -342,20 +355,25 @@ public:
 //..............................................................................
   TPtrList SubList(size_t from, size_t count) const {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, List.Count()+1);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, List.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from, 0, List.Count()+1);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from+count, 0, List.Count()+1);
 #endif
     TPtrList rv(count);
     memcpy(rv.Items, Items[from], count*sizeof(T*));
     return rv;
   }
 //..............................................................................
-  inline TPtrList SubListFrom(size_t start) const {  return SubList(start, FCount-start);  }
+  inline TPtrList SubListFrom(size_t start) const {
+    return SubList(start, FCount-start);
+  }
 //..............................................................................
   inline TPtrList SubListTo(size_t to) const {  return SubList(0, to);  }
 //..............................................................................
-  /*removes given item from the list, returns if the item existed. If there are more
-  than 1 the same item in the list, only the first one will be removed */
+  /*removes given item from the list, returns if the item existed. If there
+  are more than 1 the same item in the list, only the first one will be removed
+  */
   inline bool Remove(const T* pObj)  {
     const size_t i = IndexOf(pObj);
     if( i == InvalidIndex )  return false;
@@ -532,9 +550,11 @@ public:
 
 #ifndef __BORLANDC__
 template <class T>
-ListQuickSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor> TPtrList<T>::QuickSorter;
+ListQuickSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor>
+  TPtrList<T>::QuickSorter;
 template <class T>
-ListBubbleSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor> TPtrList<T>::BubleSorter;
+ListBubbleSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor>
+  TPtrList<T>::BubleSorter;
 template <class T>
   TListTraverser<TPtrList<T> > TPtrList<T>::Traverser;
 #endif

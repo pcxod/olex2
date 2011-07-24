@@ -19,8 +19,8 @@
 
 BeginEsdlNamespace()
 
-template <typename, typename> class const_tstrlist;
-template <typename, typename, typename> class const_tstrobjlist;
+template <typename, typename> class ConstStrList;
+template <typename, typename, typename> class ConstStrObjList;
 class TEFile;
 
 template <class SC> struct TSingleStringWrapper  {
@@ -68,7 +68,7 @@ public:
     for( size_t i=0; i < list.Count(); i++ )
       Add(list[i]);
   }
-  TTStrList(const const_tstrlist<SC,T> &list)  {
+  TTStrList(const ConstStrList<SC,T> &list)  {
     TakeOver(list.Release(), true);
   }
   TTStrList(size_t count)  {
@@ -141,7 +141,7 @@ public:
       Add(list[i]);
     return *this;
   }
-  TTStrList& operator << (const const_tstrlist<SC,T>& list)  {
+  TTStrList& operator << (const ConstStrList<SC,T>& list)  {
     return *this << list.GetObject();
   }
 
@@ -199,12 +199,12 @@ public:
     return SL;
   }
 
-  const_tstrlist<SC,T> SubListFrom(size_t offset) const {
+  ConstStrList<SC,T> SubListFrom(size_t offset) const {
     TTStrList SL;
     return SubList(offset, Strings.Count()-offset, SL);
   }
 
-  const_tstrlist<SC,T> SubListTo(size_t to) const {
+  ConstStrList<SC,T> SubListTo(size_t to) const {
     TTStrList SL;
     return SubList(0, to, SL);
   }
@@ -366,7 +366,7 @@ public:
   }
 
   TTStrList& operator = (const TTStrList& list)  {  return Assign(list);  }
-  TTStrList &operator = (const const_tstrlist<SC,T> &list)  {
+  TTStrList &operator = (const ConstStrList<SC,T> &list)  {
     return TakeOver(list.Relase(), true);
   }
 
@@ -539,7 +539,7 @@ public:
     for( size_t i=0; i < list.Count(); i++ )
       Add(list[i], list.GetObject(i));
   }
-  TTOStringList(const const_tstrobjlist<SC,OC,GC> &list)  {
+  TTOStringList(const ConstStrObjList<SC,OC,GC> &list)  {
     PList::Strings.TakeOver(list.Relase(), true);
   }
   // creates a list with strtok entries in it
@@ -626,7 +626,7 @@ public:
     return Assign(list);
   }
 
-  TTOStringList *operator = (const const_tstrobjlist<SC,OC,GC> &list)  {
+  TTOStringList *operator = (const ConstStrObjList<SC,OC,GC> &list)  {
     PList::Strings.TakeOver(list.Relase(), true);
     return *this;
   }
@@ -658,7 +658,7 @@ public:
   TStrPObjList()  {}
   TStrPObjList(size_t count) : PList(count)  {}
   TStrPObjList(const
-    const_tstrobjlist<SC,OC,TPrimitiveStrListData<SC,OC> > &list)
+    ConstStrObjList<SC,OC,TPrimitiveStrListData<SC,OC> > &list)
   {
     PList::Strings.TakeOver(list.Relase(), true);
   }
@@ -686,7 +686,7 @@ public:
   }
 
   TStrPObjList &operator = (const
-    const_tstrobjlist<SC,OC,TPrimitiveStrListData<SC,OC> > &list)
+    ConstStrObjList<SC,OC,TPrimitiveStrListData<SC,OC> > &list)
   {
     PList::Strings.TakeOver(list.Relase(), true);
     return *this;
@@ -695,16 +695,16 @@ public:
 
 // const_strlist
 template <typename str_t, typename item_t>
-class const_tstrlist : public const_list<
+class ConstStrList : public const_list<
   TTStrList<str_t,item_t>, str_t>
 {
   typedef TTStrList<str_t,item_t> list_t;
   typedef const_list<list_t,str_t> parent_t;
 public:
-  const_tstrlist(const const_tstrlist &d) : parent_t(d) {}
-  const_tstrlist(list_t &d) : parent_t(d) {}
-  const_tstrlist(list_t *d) : parent_t(d) {}
-  const_tstrlist &operator = (const const_tstrlist &d) {
+  ConstStrList(const ConstStrList &d) : parent_t(d) {}
+  ConstStrList(list_t &d) : parent_t(d) {}
+  ConstStrList(list_t *d) : parent_t(d) {}
+  ConstStrList &operator = (const ConstStrList &d) {
     parent_t::operator = (d);
     return *this;
   }
@@ -717,16 +717,16 @@ public:
 
 // const_strobjlist
 template <typename str_t, typename obj_t, typename item_t>
-class const_tstrobjlist : public const_list<
+class ConstStrObjList : public const_list<
   TTOStringList<str_t,obj_t,item_t>, str_t>
 {
   typedef TTOStringList<str_t,obj_t,item_t> list_t;
   typedef const_list<list_t,str_t> parent_t;
 public:
-  const_tstrobjlist(const const_tstrobjlist &d) : parent_t(d) {}
-  const_tstrobjlist(list_t &d) : parent_t(d) {}
-  const_tstrobjlist(list_t *d) : parent_t(d) {}
-  const_tstrobjlist &operator = (const const_tstrobjlist &d) {
+  ConstStrObjList(const ConstStrObjList &d) : parent_t(d) {}
+  ConstStrObjList(list_t &d) : parent_t(d) {}
+  ConstStrObjList(list_t *d) : parent_t(d) {}
+  ConstStrObjList &operator = (const ConstStrObjList &d) {
     parent_t::operator = (d);
     return *this;
   }
@@ -741,36 +741,36 @@ public:
 };
 
 typedef TStrPObjList<olxstr, IEObject*> TStrObjList;
-typedef const_tstrobjlist<olxstr,IEObject*,
+typedef ConstStrObjList<olxstr,IEObject*,
   TPrimitiveStrListData<olxstr,IEObject*> > const_strobjlist;
 typedef TStrPObjList<olxcstr, IEObject*> TCStrObjList;
-typedef const_tstrobjlist<olxcstr,IEObject*,
+typedef ConstStrObjList<olxcstr,IEObject*,
   TPrimitiveStrListData<olxcstr,IEObject*> > const_cstrobjlist;
 typedef TStrPObjList<olxwstr, IEObject*> TWStrObjList;
-typedef const_tstrobjlist<olxwstr,IEObject*,
+typedef ConstStrObjList<olxwstr,IEObject*,
   TPrimitiveStrListData<olxwstr,IEObject*> > const_wstrobjlist;
 
 typedef TTOStringList<olxstr, olxstr, TObjectStrListData<olxstr,olxstr> >
   TStrStrList;
-typedef const_tstrobjlist<olxstr, olxstr, TObjectStrListData<olxstr,olxstr> >
+typedef ConstStrObjList<olxstr, olxstr, TObjectStrListData<olxstr,olxstr> >
   const_strstrlist;
 typedef TTOStringList<olxcstr, olxcstr, TObjectStrListData<olxcstr,olxcstr> >
   TCStrCStrList;
 typedef 
-  const_tstrobjlist<olxcstr, olxcstr, TObjectStrListData<olxcstr,olxcstr> >
+  ConstStrObjList<olxcstr, olxcstr, TObjectStrListData<olxcstr,olxcstr> >
   const_cstrcstrlist;
 typedef TTOStringList<olxwstr, olxwstr, TObjectStrListData<olxwstr,olxwstr> >
   TWStrWStrList;
 typedef
-  const_tstrobjlist<olxwstr, olxwstr, TObjectStrListData<olxwstr,olxwstr> >
+  ConstStrObjList<olxwstr, olxwstr, TObjectStrListData<olxwstr,olxwstr> >
   const_wstrwstrlist;
 
 typedef TTStrList<olxstr, TSingleStringWrapper<olxstr> > TStrList;
-typedef const_tstrlist<olxstr, TSingleStringWrapper<olxstr> > const_strlist;
+typedef ConstStrList<olxstr, TSingleStringWrapper<olxstr> > const_strlist;
 typedef TTStrList<olxcstr, TSingleStringWrapper<olxcstr> > TCStrList;
-typedef const_tstrlist<olxcstr, TSingleStringWrapper<olxstr> > const_cstrlist;
+typedef ConstStrList<olxcstr, TSingleStringWrapper<olxstr> > const_cstrlist;
 typedef TTStrList<olxwstr, TSingleStringWrapper<olxwstr> > TWStrList;
-typedef const_tstrlist<olxwstr, TSingleStringWrapper<olxstr> > const_wstrlist;
+typedef ConstStrList<olxwstr, TSingleStringWrapper<olxstr> > const_wstrlist;
 
 
 EndEsdlNamespace()

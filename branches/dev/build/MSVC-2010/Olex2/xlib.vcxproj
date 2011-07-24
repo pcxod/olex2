@@ -594,6 +594,7 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zn.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zr.cpp" />
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp" />
+    <ClCompile Include="..\..\..\xlib\analysis\analysis.cpp" />
     <ClCompile Include="..\..\..\xlib\asymmunit.cpp" />
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
     <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
@@ -1044,6 +1045,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h" />
+    <ClInclude Include="..\..\..\xlib\analysis\analysis.h" />
+    <ClInclude Include="..\..\..\xlib\analysis\ed_analysis.h" />
     <ClInclude Include="..\..\..\xlib\asymmunit.h" />
     <ClInclude Include="..\..\..\xlib\atomref.h" />
     <ClInclude Include="..\..\..\xlib\atomregistry.h" />

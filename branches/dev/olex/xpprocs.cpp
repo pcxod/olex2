@@ -147,6 +147,7 @@
 #include "refutil.h"
 #include "absorpc.h"
 #include "file_filter.h"
+#include "analysis/analysis.h"
 //#include "gl2ps/gl2ps.c"
 
 static const olxstr StartMatchCBName("startmatch");
@@ -6503,6 +6504,10 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TTypeList<analysis::Result> res = analysis::AnalyseEDMap(FXApp->XFile().GetLattice());
+  for( size_t i=0; i < res.Count(); i++ )  {
+    TBasicApp::NewLogEntry() << res[i].atom.GetLabel() << ": " << res[i].proposed.symbol;
+  }
   return;
   TXApp& xapp = TXApp::GetInstance();
   //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
