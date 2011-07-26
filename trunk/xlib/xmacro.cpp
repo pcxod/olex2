@@ -366,6 +366,7 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     xapp.XFile().GetAsymmUnit().ChangeSpaceGroup(*sg);
+    xapp.XFile().LastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
     xapp.XFile().EndUpdate();
   }
 }
