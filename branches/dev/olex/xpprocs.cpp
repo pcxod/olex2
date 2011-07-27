@@ -5363,10 +5363,13 @@ void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options, TMac
     SaveSettings(DataDir + FLastSettingsFile);
 }
 //..............................................................................
-void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  wxFSFile* inf = TFileHandlerManager::GetFSFileHandler( Cmds[1] );
+void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  wxFSFile* inf = TFileHandlerManager::GetFSFileHandler(Cmds[1]);
   if( inf == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ") << Cmds[1];
+    E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ").quote() <<
+      Cmds[1];
     return;
   }
   wxImage img(*inf->GetStream());
@@ -5405,7 +5408,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
   }
   bool Created = (FXApp->FindGlBitmap(Cmds[0]) == NULL);
 
-  TGlBitmap* glB = FXApp->CreateGlBitmap( Cmds[0], 0, 0, swidth, sheight, RGBData, bmpType);
+  TGlBitmap* glB = FXApp->CreateGlBitmap(Cmds[0], 0, 0, swidth, sheight, RGBData, bmpType);
   delete [] RGBData;
 
   int Top = FInfoBox->IsVisible() ? (FInfoBox->GetTop() + FInfoBox->GetHeight()) : 0;
@@ -6504,9 +6507,16 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TTypeList<analysis::Result> res = analysis::AnalyseEDMap(FXApp->XFile().GetLattice());
+  TTypeList<analysis::Result> res;
+  //res = analysis::AnalyseEDMap(FXApp->XFile().GetLattice());
+  //for( size_t i=0; i < res.Count(); i++ )  {
+  //  TBasicApp::NewLogEntry() << res[i].atom.GetLabel() << ": " << res[i].proposed.symbol;
+  //}
+  TBasicApp::NewLogEntry() << "G+ED";
+  res = analysis::AnalyseGeometry(FXApp->XFile().GetLattice());
   for( size_t i=0; i < res.Count(); i++ )  {
     TBasicApp::NewLogEntry() << res[i].atom.GetLabel() << ": " << res[i].proposed.symbol;
+    res[i].atom.SetType(res[i].proposed);
   }
   return;
   TXApp& xapp = TXApp::GetInstance();

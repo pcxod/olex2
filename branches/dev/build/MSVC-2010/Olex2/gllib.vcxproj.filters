@@ -84,6 +84,9 @@
     <ClCompile Include="..\..\..\glib\3dframe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\glib\glpixels.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\glib\dframe.h">
@@ -165,6 +168,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\glib\3dframe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\glib\glpixels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

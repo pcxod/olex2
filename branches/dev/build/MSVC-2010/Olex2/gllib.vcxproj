@@ -500,6 +500,7 @@
     <ClCompile Include="..\..\..\glib\glmouse.cpp" />
     <ClCompile Include="..\..\..\glib\glmousehandler.cpp" />
     <ClCompile Include="..\..\..\glib\gloption.cpp" />
+    <ClCompile Include="..\..\..\glib\glpixels.cpp" />
     <ClCompile Include="..\..\..\glib\glprimitive.cpp" />
     <ClCompile Include="..\..\..\glib\glrender.cpp" />
     <ClCompile Include="..\..\..\glib\glscene.cpp" />
@@ -528,6 +529,7 @@
     <ClInclude Include="..\..\..\glib\glmousehandler.h" />
     <ClInclude Include="..\..\..\glib\globj.h" />
     <ClInclude Include="..\..\..\glib\gloption.h" />
+    <ClInclude Include="..\..\..\glib\glpixels.h" />
     <ClInclude Include="..\..\..\glib\glprimitive.h" />
     <ClInclude Include="..\..\..\glib\glrender.h" />
     <ClInclude Include="..\..\..\glib\glscene.h" />

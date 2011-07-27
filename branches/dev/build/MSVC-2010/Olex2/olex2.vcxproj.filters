@@ -34,6 +34,9 @@
     <Filter Include="html\sources">
       <UniqueIdentifier>{d45944dd-ebe3-4596-ac15-e0f745cc1a27}</UniqueIdentifier>
     </Filter>
+    <Filter Include="nui">
+      <UniqueIdentifier>{b40ea884-b494-4ad5-a30a-d5317ef3a255}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\olex\cmdline.cpp">
@@ -194,6 +197,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\olex\ctrls\datectrlext.cpp">
       <Filter>ctrl\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\olex\nui\nui.cpp">
+      <Filter>nui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -379,6 +385,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\olex\ctrls\datectrlext.h">
       <Filter>ctrl\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\olex\nui\nui.h">
+      <Filter>nui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

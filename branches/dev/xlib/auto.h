@@ -283,7 +283,7 @@ private:
   int BAIDelta; // maximim element promotion
   double URatio; // ratio beyond which search for element promotion
 public:
-  /* the instance must be created with Replcate to aoid any problems.
+  /* the instance must be created with Replicate to avoid problems
    It will be deleted by this object
   */
   TAutoDB(TXFile& xfile, ALibraryContainer& lc);
@@ -296,7 +296,11 @@ protected:
   void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
     double& Uiso, AnalysisStat& stat, ElementPList* proposed_atoms = NULL);
   // a helper function to check C-O and C-N
-  void A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1, const cm_Element& e2, double threshold);
+  void A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
+    const cm_Element& e2, double threshold);
+  // returns bitmask, 1 - a1 should be changed, 2 - a2
+  short CheckA2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
+    const cm_Element& e2, double threshold);
 public:
   void AnalyseStructure(const olxstr& LastFileName, TLattice& latt, 
     TAtomTypePermutator* permutator, AnalysisStat& stat, ElementPList* proposed_atoms = NULL);
@@ -312,71 +316,80 @@ public:
   DefPropP(double, URatio)
 
   template <class NodeClass>
-    struct THitStruct {
-      double Fom;
-      NodeClass* Node;
-      THitStruct( NodeClass* node, double fom )  {
-        Node = node;
-        Fom = fom;
-      }
-      static int SortByFOMFunc(const THitStruct<NodeClass>* a,
-                               const THitStruct<NodeClass>* b)  {
-        double d = a->Fom - b->Fom;
-        if( d < 0 )  return -1;
-        if( d > 0 )  return 1;
-        return 0;
-      }
-    };
+  struct THitStruct {
+    double Fom;
+    NodeClass* Node;
+    THitStruct(NodeClass* node, double fom)  {
+      Node = node;
+      Fom = fom;
+    }
+    static int SortByFOMFunc(const THitStruct<NodeClass>* a,
+      const THitStruct<NodeClass>* b)
+    {
+      return olx_cmp(a->Fom, b->Fom);
+    }
+  };
+  
   template <class NodeClass>
-    struct THitList {
-      TTypeList< THitStruct<NodeClass> > hits;
-      const cm_Element* Type;
-      double meanFom;
-      static int SortByFOMFunc(const THitList<NodeClass>* a,
-                               const THitList<NodeClass>* b)  {
+  struct THitList {
+    TTypeList< THitStruct<NodeClass> > hits;
+    const cm_Element* Type;
+    double meanFom;
+    static int SortByFOMFunc(const THitList<NodeClass>* a,
+      const THitList<NodeClass>* b)  {
         const size_t nc = olx_min(a->hits.Count(), b->hits.Count());
-        //nc = olx_min(1, nc);
         double foma = 0, fomb = 0;
         for( size_t i=0; i < nc; i++ )  {
           foma += a->hits[i].Fom;
           fomb += b->hits[i].Fom;
         }
-        foma -= fomb;
-        if( foma < 0 )  return -1;
-        if( foma > 0 )  return 1;
-        return 0;
-      }
-      static int SortByCountFunc(const THitList<NodeClass>* a,
-                                 const THitList<NodeClass>* b)  {
+        return olx_cmp(foma, fomb);
+    }
+    static int SortByCountFunc(const THitList<NodeClass>* a,
+      const THitList<NodeClass>* b)  {
         return olx_cmp(b->hits.Count(), a->hits.Count());
-      }
-      THitList(const cm_Element& type, NodeClass* node, double fom)  {
-        Type = &type;
-        hits.AddNew(node, fom);
-        meanFom = 0;
-      }
-      double MeanFom()  {
-        if( meanFom != 0 )  return meanFom;
-        for( size_t i=0; i < hits.Count(); i++ )
-          meanFom += hits[i].Fom;
-        return meanFom /= hits.Count();
-      }
-      double MeanFomN(size_t cnt)  {
-        double mf = 0;
-        for( size_t i=0; i < cnt; i++ )
-          mf += hits[i].Fom;
-        return mf /= cnt;
-      }
-      void Sort()  {  hits.QuickSorter.SortSF(hits, THitStruct<NodeClass>::SortByFOMFunc);  }
-    };
+    }
+    THitList(const cm_Element& type, NodeClass* node, double fom)  {
+      Type = &type;
+      hits.AddNew(node, fom);
+      meanFom = 0;
+    }
+    double MeanFom()  {
+      if( meanFom != 0 )  return meanFom;
+      for( size_t i=0; i < hits.Count(); i++ )
+        meanFom += hits[i].Fom;
+      return meanFom /= hits.Count();
+    }
+    double MeanFomN(size_t cnt)  {
+      double mf = 0;
+      for( size_t i=0; i < cnt; i++ )
+        mf += hits[i].Fom;
+      return mf /= cnt;
+    }
+    void Sort()  {  hits.QuickSorter.SortSF(hits, THitStruct<NodeClass>::SortByFOMFunc);  }
+  };
+  struct Type  {
+    double fom;
+    const cm_Element &type;
+    Type(double _fom, const cm_Element &_type)
+      : fom(_fom), type(_type) {}
+  };
   struct TGuessCount  {
     TCAtom* atom;
-    TTypeList<THitList<TAutoDBNode> >* list1;
-    TTypeList<THitList<TAutoDBNetNode> >* list2;
-    TTypeList<THitList<TAutoDBNetNode> >* list3;
+    TTypeList<THitList<TAutoDBNode> > list1;
+    TTypeList<THitList<TAutoDBNetNode> > list2;
+    TTypeList<THitList<TAutoDBNetNode> > list3;
+  };
+  struct TAnalysisResult {
+    TCAtom* atom;
+    TTypeList<Type> list1, list2, list3, 
+      enforced;
   };
   void ValidateResult(const olxstr& fileName, const TLattice& au, TStrList& report);
+
+  ConstTypeList<TAnalysisResult> AnalyseStructure(TLattice& latt);
 protected:
+  ConstTypeList<TAnalysisResult> AnalyseNet(TNetwork& net);
   // hits must be sorted beforehand!
   void AnalyseUiso(TCAtom& ca, const TTypeList<THitList<TAutoDBNode> >& list, AnalysisStat& stat, 
     bool heavier, bool lighter, ElementPList* proposed_atoms = NULL);

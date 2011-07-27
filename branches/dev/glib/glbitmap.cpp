@@ -30,10 +30,9 @@ AGlMouseHandlerImp(Render, collectionName)
   SetSelectable(false);
   SetRoteable(false);
   SetZoomable(false);
+  TextureId = ~0;
   if( RGB != NULL )
     Init(RGB, format);
-  else
-    TextureId = ~0;
 }
 //.............................................................................
 void TGlBitmap::Init(unsigned char* RGB, GLenum format)  {

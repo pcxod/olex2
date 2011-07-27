@@ -299,6 +299,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
   OnStateChange(Actions.New("ONSTATECHANGE")),
   _ProcessHandler(*this)
 {
+  nui_interface = NULL;
   _UpdateThread = NULL;
 	ActionProgress = UpdateProgress = NULL;
   SkipSizing = false;
@@ -1271,6 +1272,14 @@ separated values of Atom Type and radius, an entry a line");
 #ifdef __WIN32__
   rth.Join(true);
 #endif
+  try  {
+    nui_interface = olx_nui::Initialise();
+    if( nui_interface != NULL )
+      nui_interface->InitProcessing(olx_nui::INUI::processSkeleton);
+  }
+  catch(const TExceptionBase &e)  {
+    FXApp->NewLogEntry(logError) << e.GetException()->GetError();
+  }
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1641,6 +1650,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer.SetEnabled(false);
+    if( nui_interface != NULL )  {
+      nui_interface->DoProcessing();
+    }
     // execute tasks ...
     for( size_t i=0; i < Tasks.Count(); i++ )  {
       if(  (TETime::Now() - Tasks[i].LastCalled) > Tasks[i].Interval )  {

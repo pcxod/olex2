@@ -29,6 +29,7 @@
 #include "updateth.h"
 #include "macrolib.h"
 #include "exparse/exptree.h"
+#include "nui/nui.h"
 
 #define  ID_FILE0 100
 
@@ -271,6 +272,7 @@ protected:
   // helper functions ...
   void CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS);
   void UpdateInfoBox();
+  olx_nui::INUI *nui_interface;
 public:
   bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString(), bool quiet=false) {  
     TMacroError err;

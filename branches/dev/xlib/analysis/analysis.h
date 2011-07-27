@@ -22,7 +22,7 @@ namespace analysis {
   };
   ConstTypeList<Result> AnalyseADP(const TLattice &latt);
   ConstTypeList<Result> AnalyseEDMap(TLattice &latt);
-  ConstTypeList<Result> AnalyseGeometry(const TLattice &latt);
+  ConstTypeList<Result> AnalyseGeometry(TLattice &latt);
 };
 EndXlibNamespace()
 #endif
