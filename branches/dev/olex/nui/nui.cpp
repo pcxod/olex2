@@ -377,6 +377,7 @@ void Kinect::processVideo()  {
     pixels->SetData(640, 480, pBuffer, GL_RGBA); 
   }
   NuiImageStreamReleaseFrame(hVideoStream, pImageFrame);
+  TGXApp::GetInstance().Draw();
 }
 /*****************************************************************************/
 void Kinect::processSkeleton()  {
@@ -411,6 +412,7 @@ void Kinect::processSkeleton()  {
       }
     }
   }
+  TGXApp::GetInstance().Draw();
 }
 /*****************************************************************************/
 /*****************************************************************************/

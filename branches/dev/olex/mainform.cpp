@@ -1275,7 +1275,8 @@ separated values of Atom Type and radius, an entry a line");
   try  {
     nui_interface = olx_nui::Initialise();
     if( nui_interface != NULL )
-      nui_interface->InitProcessing(olx_nui::INUI::processSkeleton);
+      nui_interface->InitProcessing(olx_nui::INUI::processSkeleton
+      |olx_nui::INUI::processVideo);
   }
   catch(const TExceptionBase &e)  {
     FXApp->NewLogEntry(logError) << e.GetException()->GetError();
