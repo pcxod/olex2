@@ -16,12 +16,6 @@
 #include "gxapp.h"
 
 using namespace olx_nui;
-#ifdef __GNUC__
-const short
-  INUI::processVideo    = 0x0001,
-  INUI::processSkeleton = 0x0002,
-  INUI::processDepth    = 0x0004;
-#endif
 /*****************************************************************************/
 INUI *olx_nui::Initialise() {
 #if defined (__WIN32__) && !defined(_WIN64)
