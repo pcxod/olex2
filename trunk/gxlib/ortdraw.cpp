@@ -172,6 +172,16 @@ ort_bond::ort_bond(const OrtDraw& parent, const TXBond& _bond, const ort_atom& a
 }
 
                                                   
+uint32_t ort_bond::get_color(int primitive, uint32_t def) const {
+  TGlPrimitive *glp = bond.GetPrimitives().FindPrimitiveByName(
+    TXBond::StaticPrimitives()[primitive]);
+  if( (draw_style&ortep_color_bond) == 0 )  {
+    return glp == NULL ? 0 :
+    (glp->GetProperties().AmbientF.GetRGB() == def ? 0
+    : glp->GetProperties().AmbientF.GetRGB());
+  }
+  return glp == NULL ? def : glp->GetProperties().AmbientF.GetRGB();
+}
 void ort_bond::render(PSWriter& pw) const {
   uint32_t mask = bond.GetPrimitiveMask();
   if( mask == 0 )  return;
@@ -183,28 +193,34 @@ void ort_bond::render(PSWriter& pw) const {
   }
   if( (draw_style&ortep_color_bond) == 0 )
     pw.color(0);
-  else if( (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) == 0 )
-    pw.color(atom_a.atom.GetType() > atom_b.atom.GetType() ?
+  else if( (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) == 0 )  {
+    uint32_t def = (atom_a.atom.GetType() > atom_b.atom.GetType() ?
       atom_a.sphere_color : atom_b.sphere_color);
+    int pi[] = {0,1,2,3,8,11,12,13};
+    for( int i=0; i < sizeof(pi)/sizeof(pi[0]); i++ )  {
+      if( (mask&(1<<pi[i])) != 0 )  {
+        pw.color(get_color(pi[i], def));
+        break;
+      }
+    }
+  }
   _render(pw, 1, mask);
   pw.translate(-atom_a.crd);
 }
 void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   if( mask == (1<<12) || mask == (1<<13) || (mask&((1<<6)|(1<<7))) != 0 )  {
     pw.lineWidth(scalex);
-    if( (draw_style&ortep_color_bond) != 0 )  {
-      if( (mask&(1<<6)) !=0 )  {
-        pw.color(atom_a.sphere_color);
-        pw.drawLine(NullVec, (atom_b.crd-atom_a.crd)/2);
-      }
-      if( (mask&(1<<7)) !=0 )  {
-        pw.color(atom_b.sphere_color);
-        pw.drawLine((atom_b.crd-atom_a.crd)/2, (atom_b.crd-atom_a.crd));
-      }
+    if( (mask&(1<<6)) !=0 )  {
+      pw.color(get_color(6, atom_a.sphere_color));
+      pw.drawLine(NullVec, (atom_b.crd-atom_a.crd)/2);
+    }
+    if( (mask&(1<<7)) !=0 )  {
+      pw.color(get_color(7, atom_b.sphere_color));
+      pw.drawLine((atom_b.crd-atom_a.crd)/2, (atom_b.crd-atom_a.crd));
     }
     if( mask == (1<<13) )
       pw.custom("[8 8] 0 setdash");
-    if( (mask&((1<<12)|(1<<13))) != 0 || (draw_style&ortep_color_bond) == 0 )
+    if( (mask&((1<<12)|(1<<13))) != 0 )
       pw.drawLine(NullVec, atom_b.crd-atom_a.crd);
     if( mask == (1<<13) )
       pw.custom("[] 0 setdash");
@@ -261,7 +277,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
       parent.BondProjF[j] += dir_vec*off_len;
     }
   }
-  if( scalex < 1.1 && (draw_style&ortep_color_bond) != 0 &&
+  if( scalex < 1.1 &&
     (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) != 0 )
   {
     for( uint16_t i=0; i < parent.BondDiv; i++ )  {
@@ -269,23 +285,61 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
       parent.BondProjM[i][1] = (parent.BondProjT[i][1]+parent.BondProjF[i][1])/2;
       parent.BondProjM[i][2] = (parent.BondProjT[i][2]+parent.BondProjF[i][2])/2;
     }
-    if( (mask&((1<<4)|(1<<6)|(1<<9))) != 0 )  {
-      pw.color(atom_a.sphere_color);
-      if( (mask&(1<<9)) != 0 )
-        pw.drawQuads(parent.BondProjF, parent.BondProjM, 8, &PSWriter::fill);
-      else
-        pw.drawQuads(parent.BondProjF, parent.BondProjM, &PSWriter::fill);
+    if( &atom_a.atom == &bond.A() )  { // normal rendering
+      if( (mask&((1<<4)|(1<<6)|(1<<9))) != 0 )  {
+        if( (mask&(1<<4)) != 0 )
+          pw.color(get_color(4, atom_a.sphere_color));
+        else if( (mask&(1<<6)) != 0 )
+          pw.color(get_color(6, atom_a.sphere_color));
+        else if( (mask&(1<<9)) != 0 )
+          pw.color(get_color(9, atom_a.sphere_color));
+        if( (mask&(1<<9)) != 0 )
+          pw.drawQuads(parent.BondProjF, parent.BondProjM, 8, &PSWriter::fill);
+        else
+          pw.drawQuads(parent.BondProjF, parent.BondProjM, &PSWriter::fill);
+      }
+      if( (mask&((1<<5)|(1<<7)|(1<<10))) != 0 )  {
+        if( (mask&(1<<5)) != 0 )
+          pw.color(get_color(5, atom_b.sphere_color));
+        else if( (mask&(1<<7)) != 0 )
+          pw.color(get_color(7, atom_b.sphere_color));
+        else if( (mask&(1<<10)) != 0 )
+          pw.color(get_color(10, atom_b.sphere_color));
+        if( (mask&(1<<10)) != 0 )
+          pw.drawQuads(parent.BondProjM, parent.BondProjT, 8, &PSWriter::fill);
+        else
+          pw.drawQuads(parent.BondProjM, parent.BondProjT, &PSWriter::fill);
+      }
     }
-    if( (mask&((1<<5)|(1<<7)|(1<<10))) != 0 )  {
-      pw.color(atom_b.sphere_color);
-      if( (mask&(1<<10)) != 0 )
-        pw.drawQuads(parent.BondProjM, parent.BondProjT, 8, &PSWriter::fill);
-      else
-        pw.drawQuads(parent.BondProjM, parent.BondProjT, &PSWriter::fill);
+    else  {  // reverse rendering
+      if( (mask&((1<<5)|(1<<7)|(1<<10))) != 0 )  {
+        if( (mask&(1<<5)) != 0 )
+          pw.color(get_color(5, atom_a.sphere_color));
+        else if( (mask&(1<<7)) != 0 )
+          pw.color(get_color(7, atom_a.sphere_color));
+        else if( (mask&(1<<10)) != 0 )
+          pw.color(get_color(10, atom_a.sphere_color));
+        if( (mask&(1<<10)) != 0 )
+          pw.drawQuads(parent.BondProjF, parent.BondProjM, 8, &PSWriter::fill);
+        else
+          pw.drawQuads(parent.BondProjF, parent.BondProjM, &PSWriter::fill);
+      }
+      if( (mask&((1<<4)|(1<<6)|(1<<9))) != 0 )  {
+        if( (mask&(1<<4)) != 0 )
+          pw.color(get_color(4, atom_b.sphere_color));
+        else if( (mask&(1<<6)) != 0 )
+          pw.color(get_color(6, atom_b.sphere_color));
+        else if( (mask&(1<<9)) != 0 )
+          pw.color(get_color(9, atom_b.sphere_color));
+        if( (mask&(1<<9)) != 0 )
+          pw.drawQuads(parent.BondProjM, parent.BondProjT, 8, &PSWriter::fill);
+        else
+          pw.drawQuads(parent.BondProjM, parent.BondProjT, &PSWriter::fill);
+      }
     }
   }
   else  {
-    if( (mask&((1 << 13)|(1<<11)|(1<<10)|(1<<9)|(1<<8))) != 0)
+    if( (mask&((1<<13)|(1<<11)|(1<<10)|(1<<9)|(1<<8))) != 0)
       pw.drawQuads(parent.BondProjF, parent.BondProjT, 16, &PSWriter::fill);
     else
       pw.drawQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);

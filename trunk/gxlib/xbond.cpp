@@ -227,10 +227,6 @@ bool TXBond::Orient(TGlPrimitive& GlP)  {
   return false;
 }
 //..............................................................................
-TGraphicsStyle* TXBond::Style()  {
-  return NULL;
-}
-//..............................................................................
 void TXBond::ListParams(TStrList &List, TGlPrimitive *Primitive)  {
 }
 //..............................................................................
@@ -345,6 +341,7 @@ TStrList TXBond::PovDeclare()  {
 }
 //..............................................................................
 void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
+  ClearStaticObjects();
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   ValidateBondParams();
@@ -352,22 +349,19 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   double ConeStipples = FBondParams->GetNumParam("ConeStipples", 6.0, true);
 //..............................
   // create single color cylinder
-  if( (GlP = FStaticObjects.FindObject("Single cone")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCylinder);
-    FStaticObjects.Add("Single cone", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCylinder);
+  FStaticObjects.Add("Single cone", GlP);
+
   GlP->Params[0] = 0.1;  GlP->Params[1] = 0.1;  GlP->Params[2] = 1;
   GlP->Params[3] = ConeQ;   GlP->Params[4] = 1;
   GlP->Compile();
-
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create top disk
-  if( (GlP = FStaticObjects.FindObject("Top disk")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Top disk", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Top disk", GlP);
+
   GlPRC1 = &Parent.NewPrimitive(sgloDisk); 
   GlPRC1->Params[0] = 0;  GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = ConeQ;
   GlPRC1->Params[3] = 1;
@@ -382,10 +376,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomB;
 //..............................
   // create bottom disk
-  if( (GlP = FStaticObjects.FindObject("Bottom disk")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloDisk);
-    FStaticObjects.Add("Bottom disk", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloDisk);
+  FStaticObjects.Add("Bottom disk", GlP);
+
   GlP->SetQuadricOrientation(GLU_INSIDE);
   GlP->Params[0] = 0;  GlP->Params[1] = 0.1;  GlP->Params[2] = ConeQ;
   GlP->Params[3] = 1;
@@ -395,10 +388,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create middle disk
-  if( (GlP = FStaticObjects.FindObject("Middle disk")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Middle disk", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Middle disk", GlP);
+
   GlPRC1 = &Parent.NewPrimitive(sgloDisk);
   GlPRC1->Params[0] = 0;  GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = ConeQ;
   GlPRC1->Params[3] = 1;
@@ -413,10 +405,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create bottom cylinder
-  if( (GlP = FStaticObjects.FindObject("Bottom cone")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCylinder);
-    FStaticObjects.Add("Bottom cone", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCylinder);
+  FStaticObjects.Add("Bottom cone", GlP);
+
   GlP->Params[0] = 0.1;  GlP->Params[1] = 0.1;  GlP->Params[2] = 0.5;
   GlP->Params[3] = ConeQ;   GlP->Params[4] = 1;
   GlP->Compile();
@@ -425,10 +416,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create top cylinder
-  if( (GlP = FStaticObjects.FindObject("Top cone")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Top cone", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Top cone", GlP);
+
   GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = 0.1;    GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = 0.5;
   GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
@@ -442,10 +432,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomB;
 //..............................
   // create bottom line
-  if( (GlP = FStaticObjects.FindObject("Bottom line")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Bottom line", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Bottom line", GlP);
+
   GlP->StartList();
     olx_gl::begin(GL_LINES);
       olx_gl::vertex(0, 0, 0);
@@ -456,10 +445,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create top line
-  if( (GlP = FStaticObjects.FindObject("Top line")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Top line", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Top line", GlP);
+
   GlP->StartList();
     olx_gl::begin(GL_LINES);
       olx_gl::vertex(0.0f, 0.0f, 0.5f);
@@ -471,10 +459,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create stipple cone
   float CL = (float)(1.0/(2*ConeStipples));
-  if( (GlP = FStaticObjects.FindObject("Stipple cone")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Stipple cone", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Stipple cone", GlP);
+
   GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = 0.1;    GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = CL;
   GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
@@ -504,10 +491,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.GetLast() = ddsDef;
   //..............................
-  if( (GlP = FStaticObjects.FindObject("Bottom stipple cone")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Bottom stipple cone", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Bottom stipple cone", GlP);
+
   GlP->StartList();
   olx_gl::translate(0.0f, 0.0f, CL/2);
   for( int i=0; i < ConeStipples/2; i++ )  {
@@ -522,10 +508,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.GetLast() = ddsDefAtomA;
   //..............................
-  if( (GlP = FStaticObjects.FindObject("Top stipple cone")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Top stipple cone", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Top stipple cone", GlP);
+
   GlP->StartList();
   olx_gl::translate(0.0f, 0.0f, (float)(0.5 + CL/2));
   for( int i=0; i < ConeStipples/2; i++ )  {
@@ -542,10 +527,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create stipped ball bond
   CL = (float)(1.0/(12.0));
-  if( (GlP = FStaticObjects.FindObject("Balls bond")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Balls bond", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Balls bond", GlP);
+
   GlPRC1 = &Parent.NewPrimitive(sgloSphere);
   GlPRC1->Params[0] = 0.02;    GlPRC1->Params[1] = 5;  GlPRC1->Params[2] = 5;
   GlPRC1->Compile();
@@ -560,10 +544,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDef;
 //..............................
   // create line
-  if( (GlP = FStaticObjects.FindObject("Line")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Line", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Line", GlP);
+
   GlP->StartList();
     olx_gl::begin(GL_LINES);
       olx_gl::vertex(0, 0, 0);
@@ -574,10 +557,9 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
 //..............................
   // create stippled line
-  if( (GlP = FStaticObjects.FindObject("Stippled line")) == NULL )  {
-    GlP = &Parent.NewPrimitive(sgloCommandList);
-    FStaticObjects.Add("Stippled line", GlP);
-  }
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Stippled line", GlP);
+
   GlP->StartList();
     olx_gl::enable(GL_LINE_STIPPLE);
     olx_gl::lineStipple(1, 0xf0f0);

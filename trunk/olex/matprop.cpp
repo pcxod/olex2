@@ -34,7 +34,7 @@ TGlMaterial TdlgMatProp::MaterialCopy;
 TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
-  Material = NULL;
+  //Material = NULL;
   Object = &object;
   Init();
 }
@@ -42,7 +42,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
 TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
-  Material = &mat;
+  //Material = &mat;
   Object = NULL;
   Init();
   Materials[0] = mat;
@@ -59,11 +59,10 @@ void TdlgMatProp::Init()  {
   if( Object != NULL && Object->GetPrimitives().PrimitiveCount() > 1 )  {
     cbPrimitives = new TComboBox(this, true);
     TGPCollection& gpc = Object->GetPrimitives();
-    Materials = new TGlMaterial[gpc.PrimitiveCount()+1];
     for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
       TGlPrimitive& GlP = gpc.GetPrimitive(i);
       cbPrimitives->AddObject(GlP.GetName(), &GlP);
-      Materials[i] = GlP.GetProperties();
+      Materials.AddCCopy(GlP.GetProperties());
     }
     cbPrimitives->SetValue(gpc.GetPrimitive(0).GetName().u_str());
     cbPrimitives->OnChange.Add(this);
@@ -80,15 +79,14 @@ void TdlgMatProp::Init()  {
   }
   else  {
     cbPrimitives = NULL;
-    Materials = new TGlMaterial[1];
     if( Object != NULL )  {
       if( EsdlInstanceOf(*Object, TGlGroup) )  {
-        Materials[0] = ((TGlGroup*)Object)->GetGlM();
+        Materials.AddCCopy(((TGlGroup*)Object)->GetGlM());
         cbBlend = new wxCheckBox(this, -1, wxT("Override color (Use front ambient transparency for blending)"));
         cbBlend->SetValue(!((TGlGroup*)Object)->IsBlended());
       }
       else if( Object->GetPrimitives().PrimitiveCount() != 0 )
-        Materials[0] = Object->GetPrimitives().GetPrimitive(0).GetProperties();
+        Materials.AddCCopy(Object->GetPrimitives().GetPrimitive(0).GetProperties());
     }
   }
   long flags = 0; //wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;
@@ -225,7 +223,6 @@ void TdlgMatProp::Init()  {
 }
 //..............................................................................
 TdlgMatProp::~TdlgMatProp()  {
-  delete [] Materials;
   if( cbPrimitives != NULL )  
     cbPrimitives->OnChange.Clear();
   scTrans->OnChange.Clear();
@@ -400,7 +397,10 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
       }
       for( size_t i=0; i < uniqCol.Count(); i++ )  {
         for( size_t j=0; j < ogpc->PrimitiveCount(); j++ )  {
-          TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(ogpc->GetPrimitive(j).GetName());
+          if( j >= Materials.Count() )  // just in case...
+            break;
+          TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(
+            ogpc->GetPrimitive(j).GetName());
           if( glp != NULL )  {
             glp->SetProperties(Materials[j]);
             uniqCol[i]->GetStyle().SetMaterial(glp->GetName(), Materials[j]);
@@ -409,14 +409,25 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
       }
     }
     else  {
-      if( EsdlInstanceOf(*Object, TXBond) )
-        app.Individualise(*((TXBond*)Object), 3);
+      /* we have to re-enfoce the primitive mask as the new collection can have
+      different size!
+      */
+      if( EsdlInstanceOf(*Object, TXBond) )  {
+        const uint32_t pmask = ((TXBond*)Object)->GetPrimitiveMask();
+        app.Individualise(*((TXBond*)Object), 3, pmask);
+      }
       if( cbApplyTo != NULL && cbApplyTo->GetSelection() != 0 )  {
-        if( EsdlInstanceOf(*Object, TXAtom) )
-          app.Individualise(*((TXAtom*)Object), cl + cbApplyTo->GetSelection());
+        if( EsdlInstanceOf(*Object, TXAtom) )  {
+          const uint32_t pmask = ((TXAtom*)Object)->GetPrimitiveMask();
+          app.Individualise(
+            *((TXAtom*)Object), cl + cbApplyTo->GetSelection(), pmask);
+        }
       }
       TGPCollection& gpc = Object->GetPrimitives();
       for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+        // this should not happens, since the mask is re-enforced...
+        if( i >= Materials.Count() )
+          break;
         gpc.GetPrimitive(i).SetProperties(Materials[i]);
         gpc.GetStyle().SetMaterial(gpc.GetPrimitive(i).GetName(), Materials[i]);
       }
@@ -426,9 +437,6 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
       while( bi.HasNext() )
         bi.Next().UpdateStyle();
     }
-  }
-  else  {
-    *Material = Materials[0];
   }
 //  FDrawObject->UpdatePrimitives(24);
   EndModal(wxID_OK);
