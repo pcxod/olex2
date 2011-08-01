@@ -333,12 +333,42 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "non-centrosymmetric space group, use -f to force");
     return;
   }
+  olxstr_dict<olxstr> specials;
+  specials.Add("P31", "P32");
+  specials.Add("P3121", "P3221");
+  specials.Add("P3112", "P3212");
+  specials.Add("P61", "P65");
+  specials.Add("P62", "P64");
+  specials.Add("P6122", "P6522");
+  specials.Add("P6222", "P6422");
+  specials.Add("P41", "P43");
+  specials.Add("P4122", "P4322");
+  specials.Add("P41212", "P43212");
+  specials.Add("P4132", "P4321");
+  // remap the reverse
+  size_t s_c = specials.Count();
+  for( size_t i=0; i < s_c; i++ )
+    specials.Add(specials.GetValue(i), specials.GetKey(i));
+
   TSAtomPList atoms;
   xapp.FindSAtoms(Cmds.Text(' '), atoms, true);
   smatd tm;
   tm.I() *= -1;
   tm.t = sg->GetInversionCenter()*(-2);
   xapp.XFile().GetLattice().TransformFragments(atoms, tm);
+  s_c = specials.IndexOf(sg->GetName());
+  if( s_c != InvalidIndex )  {
+    TBasicApp::NewLogEntry() << "Changing spacegroup from "
+      << specials.GetKey(s_c) << " to " << specials.GetValue(s_c);
+    sg = TSymmLib::GetInstance().FindGroup(specials.GetValue(s_c));
+    if( sg == NULL )  {
+      Error.ProcessingError(__OlxSrcInfo, "Failed to locate necessary space group");
+      return;
+    }
+    xapp.XFile().GetAsymmUnit().ChangeSpaceGroup(*sg);
+    xapp.XFile().LastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
+    xapp.XFile().EndUpdate();
+  }
 }
 //..............................................................................
 void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
