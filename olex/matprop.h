@@ -29,7 +29,7 @@ protected:
   void OnOK(wxCommandEvent& event);
   bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
   void OnRemove()  {}
-  TGlMaterial *Materials, *Material;
+  TTypeList<TGlMaterial> Materials;
   AGDrawObject* Object;
   int FCurrentMaterial;
   void Init(const TGlMaterial& GlM);

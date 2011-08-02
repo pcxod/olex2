@@ -65,6 +65,7 @@ struct ort_bond : public a_ort_object  {
   virtual float get_z() const {  return (atom_a.crd[2]+atom_b.crd[2])/2;  }
 protected:
   void _render(PSWriter&, float scalex, uint32_t mask) const;
+  uint32_t get_color(int primitive, uint32_t def) const;
 };
 
 struct ort_line : public a_ort_object  {
