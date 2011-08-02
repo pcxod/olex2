@@ -60,6 +60,7 @@ bool Skeleton::Orient(TGlPrimitive& P)  {
     return true;
   static bool rendering = false, left_down = false, right_down = false;
   if( rendering )  return true;
+  rendering = true;
   double scale = Parent.GetScale();
   vec3d vs1(Parent.GetWidth(), Parent.GetHeight(), 0);
   vec3d vs(-vs1/2);
@@ -190,6 +191,8 @@ bool Skeleton::Orient(TGlPrimitive& P)  {
     pts[NUI_SKELETON_POSITION_WRIST_LEFT]+lwp_n,
     pts[NUI_SKELETON_POSITION_WRIST_LEFT]-lwp_n,
     pts[NUI_SKELETON_POSITION_ELBOW_LEFT]-lsp_n);
+
+  rendering = false;
   return true;
 }
 /*****************************************************************************/
@@ -206,7 +209,7 @@ void Skeleton::DrawQuad(const vec3d &p1, const vec3d &p2,
     double ca = org.CAngle(vec);
     vec = org.XProdVec(vec);
     // negative - vec is on the right, positive - on the left, if ca == 0, vec == (0,0,0)
-    double vo = (ca == -1 ? 0 : vec.Normalise()[2]);
+    double vo = (ca <= 0.999 ? 0 : vec.Normalise()[2]);
     if( ca >= 0 )  { // -90 to 90
       if( vo < 0 )  // -90 to 0 3->4
         sorted.Add(3.0 + ca, pts[i]);

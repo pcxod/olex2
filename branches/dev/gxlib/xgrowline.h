@@ -18,7 +18,7 @@ class TXGrowLine : public TXBond  {
   TXAtom& _XAtom;
   TCAtom& _CAtom;
   smatd Transform;
-  vec3d FEdge, FBase;
+  vec3d FEdge;
 protected:
   virtual bool IsMaskSaveable() const {  return true;  }
   virtual bool IsStyleSaveable() const {  return true;  }
@@ -27,7 +27,6 @@ public:
   TXGrowLine(TGlRenderer& Render, const olxstr& collectionName, TXAtom& A,
              TCAtom& CA, const smatd& transform);
   void Create(const olxstr& cName=EmptyString());
-  virtual ~TXGrowLine();
 
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
 
@@ -44,6 +43,8 @@ public:
   TXAtom& XAtom() const {  return _XAtom;  }
   TCAtom& CAtom() const {  return _CAtom;  }
   const smatd& GetTransform() const {  return Transform;  }
+  const vec3d &GetEdge() const {  return FEdge;  }
+  const vec3d &GetBaseCrd() const;
 };
 
 EndGxlNamespace()

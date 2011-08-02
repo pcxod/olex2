@@ -586,6 +586,13 @@ void TGXApp::Quality(const short V)  {
   TXAtom::CreateStaticObjects(*FGlRender);
   TXBond::Quality(V);
   TXBond::CreateStaticObjects(*FGlRender);
+  AtomIterator ai = GetAtoms();
+  while( ai.HasNext() )
+    ai.Next().GetPrimitives().ClearPrimitives();
+  BondIterator bi = GetBonds();
+  while( bi.HasNext() )
+    bi.Next().GetPrimitives().ClearPrimitives();
+  CreateObjects(false);
   Draw();
 }
 //..............................................................................
@@ -1528,7 +1535,7 @@ TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
   return NULL;
 }
 //..............................................................................
-ConstPtrList<TXAtom>  TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
+ConstPtrList<TXAtom> TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
   if( StrMask.Length() > 32 )
     throw TInvalidArgumentException(__OlxSourceInfo, "mask is too long");
   olxstr Tmp, Name(StrMask.ToUpperCase());
@@ -4328,6 +4335,10 @@ TStrList TGXApp::ToPov() const {
   for( size_t i=0; i < Lines.Count(); i++ )  {
     if( Lines[i].IsVisible() )
       out << Lines[i].ToPov(materials);
+  }
+  for( size_t i=0; i < XGrowLines.Count(); i++ )  {
+    if( XGrowLines[i].IsVisible() )
+      out << XGrowLines[i].ToPov(materials);
   }
   if( XGrid().IsVisible() && !XGrid().IsEmpty() )
     out << XGrid().ToPov(materials);

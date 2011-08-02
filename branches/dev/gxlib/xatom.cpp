@@ -115,19 +115,17 @@ TXAtom::~TXAtom()  {
 }
 //..............................................................................
 void TXAtom::Quality(const short V)  {
-  olxstr Legend("Atoms");
-  TGraphicsStyle& GS = TGlRenderer::_GetStyles().NewStyle(Legend, true);
+  ValidateAtomParams();
+  olxstr &SphereQ   = FAtomParams->GetParam("SphereQ", EmptyString(), true);
+  olxstr &RimQ = FAtomParams->GetParam("RimQ", EmptyString(), true);  // quality
+  olxstr &DiskQ = FAtomParams->GetParam("DiskQ", EmptyString(), true);  // quality
 
-  olxstr &SphereQ   = GS.GetParam("SphereQ", EmptyString(), true);
-  olxstr &RimQ = GS.GetParam("RimQ", EmptyString(), true);  // quality
-  olxstr &DiskQ = GS.GetParam("DiskQ", EmptyString(), true);  // quality
-
-  olxstr &RimR = GS.GetParam("RimR", EmptyString(), true);  // radius
-  olxstr &RimW = GS.GetParam("RimW", EmptyString(), true);  // width
+  olxstr &RimR = FAtomParams->GetParam("RimR", EmptyString(), true);  // radius
+  olxstr &RimW = FAtomParams->GetParam("RimW", EmptyString(), true);  // width
 
   //olxstr &DiskIR = GS.ParameterValue("DiskIR", EmptyString());  // inner radius for disks
-  olxstr &DiskOR = GS.GetParam("DiskOR", EmptyString(), true);  // outer radius
-  olxstr &DiskS = GS.GetParam("DiskS", EmptyString(), true);  // separation
+  olxstr &DiskOR = FAtomParams->GetParam("DiskOR", EmptyString(), true);  // outer radius
+  olxstr &DiskS = FAtomParams->GetParam("DiskS", EmptyString(), true);  // separation
 
   RimR = 1.02;
   DiskQ  = RimQ;
@@ -700,6 +698,7 @@ const_strlist TXAtom::PovDeclare()  {
 }
 //..............................................................................
 void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
+  ClearStaticObjects();
   TGlMaterial GlM;
   TGlPrimitiveParams *PParams;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
@@ -716,16 +715,14 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
 
 //..............................
   // create sphere
-  if( (GlP = FStaticObjects.FindObject("Sphere")) == NULL )
-    FStaticObjects.Add("Sphere", GlP = &Parent.NewPrimitive(sgloSphere));
+  FStaticObjects.Add("Sphere", GlP = &Parent.NewPrimitive(sgloSphere));
   GlP->Params[0] = 1;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count()+1);
   GlP->Params.GetLast() = ddsDefSphere;
 //..............................
   // create a small sphere
-  if( (GlP = FStaticObjects.FindObject("Small sphere")) == NULL )
-    FStaticObjects.Add("Small sphere", GlP = &Parent.NewPrimitive(sgloSphere));
+  FStaticObjects.Add("Small sphere", GlP = &Parent.NewPrimitive(sgloSphere));
   GlP->Params[0] = 0.5;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count()+1);
@@ -737,8 +734,7 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
     GlPRC1->Params[3] = RimQ; GlPRC1->Params[4] = 1;
   GlPRC1->Compile();
 
-  if( (GlP = FStaticObjects.FindObject("Rims")) == NULL )
-    FStaticObjects.Add("Rims", GlP = &Parent.NewPrimitive(sgloCommandList));
+  FStaticObjects.Add("Rims", GlP = &Parent.NewPrimitive(sgloCommandList));
   GlP->StartList();
   GlP->CallList(GlPRC1);
   olx_gl::rotate(90, 1, 0, 0);
@@ -769,8 +765,7 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   GlPRD2->Params[2] = DiskQ;   GlPRD1->Params[3] = 1;
   GlPRD2->Compile();
 
-  if( (GlP = FStaticObjects.FindObject("Disks")) == NULL )
-    FStaticObjects.Add("Disks", GlP = &Parent.NewPrimitive(sgloCommandList));
+  FStaticObjects.Add("Disks", GlP = &Parent.NewPrimitive(sgloCommandList));
   GlP->StartList();
   GlP->CallList(GlPRD2);
   olx_gl::translate(0.0, 0.0, DiskS);    GlP->CallList(GlPRD1);
@@ -797,8 +792,7 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   FPrimitiveParams.Add(PParams);
 //..............................
   // create cross
-  if( (GlP = FStaticObjects.FindObject("Cross")) == NULL )
-    FStaticObjects.Add("Cross", GlP = &Parent.NewPrimitive(sgloLines));
+  FStaticObjects.Add("Cross", GlP = &Parent.NewPrimitive(sgloLines));
   GlP->Vertices.SetCount(6);
   GlP->Vertices[0][0] = -1; 
   GlP->Vertices[1][0] =  1; 
@@ -811,8 +805,7 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefSphere;
 //..............................
   // polyhedron - dummy
-  if( (FStaticObjects.FindObject("Polyhedron")) == NULL )
-    FStaticObjects.Add("Polyhedron", GlP = &Parent.NewPrimitive(sgloMacro));
+  FStaticObjects.Add("Polyhedron", GlP = &Parent.NewPrimitive(sgloMacro));
   GlP->Params.Resize(GlP->Params.Count()+1);
   GlP->Params.GetLast() = ddsDefSphere;
 // init indexes after all are added

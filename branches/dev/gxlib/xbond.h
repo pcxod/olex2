@@ -75,13 +75,18 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false; }
 
-  void ListParams(TStrList &List, TGlPrimitive *Primitive);
   // for parameters of a specific primitive
-  void ListParams(TStrList &List);
+  void ListParams(TStrList &List, TGlPrimitive *Primitive);
   // for internal object parameters
-  void ListPrimitives(TStrList &List) const;
+  void ListParams(TStrList &List);
   // fills the list with proposal primitives to construct object
-  TGraphicsStyle* Style();
+  void ListPrimitives(TStrList &List) const;
+  /* returns a list of static primitives. This list has the same order as
+  primtives masks, so primitives names can be obtained for any particular mask
+  */
+  static const TStrPObjList<olxstr,TGlPrimitive*> &StaticPrimitives() {
+    return FStaticObjects;
+  }
   // updates primitive properties from atoms
   void UpdateStyle();
 

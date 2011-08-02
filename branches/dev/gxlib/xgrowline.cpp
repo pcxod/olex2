@@ -20,11 +20,9 @@ TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TXAtom& A,
     _CAtom(CA)
 {
   AGDrawObject::SetSelectable(false);
-  vec3d C = transform * CA.ccrd();
-  CA.GetParent()->CellToCartesian(C);
-  FBase = A.crd();
-  FEdge = C;
-  C -= FBase;
+  FEdge = transform * CA.ccrd();
+  CA.GetParent()->CellToCartesian(FEdge);
+  vec3d C = FEdge - A.crd();
   if( !C.IsNull() )  {
     Params()[3] = C.Length();
     C.Normalise();
@@ -44,10 +42,8 @@ void TXGrowLine::Create(const olxstr& cName)  {
   TXBond::Create(cName);
 }
 //..............................................................................
-TXGrowLine::~TXGrowLine()  {}
-//..............................................................................
 bool TXGrowLine::Orient(TGlPrimitive& GlP)  {
-  olx_gl::translate(FBase);
+  olx_gl::translate(_XAtom.crd());
   olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
   olx_gl::scale(Params()[4], Params()[4], Params()[3]);
   return false;
@@ -60,4 +56,6 @@ void TXGrowLine::Radius(float V)  {
 void TXGrowLine::Length(float V)  {
   Params()[3] = V;
 }
+//..............................................................................
+const vec3d &TXGrowLine::GetBaseCrd() const {  return _XAtom.crd();  }
 //..............................................................................

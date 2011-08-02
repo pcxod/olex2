@@ -1146,7 +1146,7 @@ TLibrary*  TEFile::ExportLibrary(const olxstr& name)  {
 "Changes current folder to provided folder") );
   lib->RegisterStaticFunction( new TStaticFunction( ::MkDir, "MkDir", fpOne,
 "Creates specified folder") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::OSPath, "ospath", fpOne,
+  lib->RegisterStaticFunction( new TStaticFunction( ::OSPath, "OSPath", fpOne,
 "Returns OS specific path for provided path") );
   lib->RegisterStaticFunction( new TStaticFunction( ::Which, "Which", fpOne,
 "Tries to find a particular file looking at current folder, PATH and program folder") );
