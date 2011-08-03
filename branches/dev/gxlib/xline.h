@@ -35,7 +35,7 @@ public:
 
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
   bool Orient(TGlPrimitive& P);
-  void SetRadius(double V)  {  Params()[4] = V;  }
+  void SetRadius(double V)  {  TXBond::SetRadius(V);  }
   double GetRadius() const {  return Params()[4]; }
   void SetLength(double V)  {  Params()[3] = V;  }
   double GetLength() const {  return Params()[3]; }

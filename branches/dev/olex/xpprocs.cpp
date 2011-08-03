@@ -9690,8 +9690,10 @@ void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError
   TGXApp::BondIterator bi = FXApp->GetBonds();
   while( bi.HasNext() )  {
     TXBond &b = bi.Next();
-    if( b.A().GetTag() == 2 && b.B().GetTag() == 1 )
+    if( b.A().GetTag() == 2 && b.B().GetTag() == 1 )  {
       b.SetVisible(false);
+      b.SetDeleted(true);
+    }
   }
 }
 //..............................................................................
