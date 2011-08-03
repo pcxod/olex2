@@ -137,13 +137,21 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
       }
       if( a != NULL && !a->IsDeleted() )  {
         bool process = true;
+        double min_cs = 0;
         for( size_t k=0; k < a->NodeCount(); k++ )  {
-          if( a->Node(k).GetType() != iQPeakZ && sa.IsConnectedTo(a->Node(k)) )  {
-            process = false;
-            break;
+          if( a->Node(k).GetType() != iQPeakZ )  {
+            if( sa.IsConnectedTo(a->Node(k)) )  {
+              process = false;
+              break;
+            }
+            else  {
+              double cs = (a->Node(k).crd()-a->crd()).CAngle(sa.crd()-a->crd());
+              if( cs < min_cs )
+                min_cs = cs;
+            }
           }
         }
-        if( !process )  continue;
+        if( !process || min_cs >= 0 )  continue;
         TSBond& B = objects.bonds.New(&Lattice->GetNetwork());
         B.SetType(sotHBond);
         B.SetA(sa);
