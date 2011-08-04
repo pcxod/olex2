@@ -785,7 +785,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     E.ProcessingError(__OlxSrcInfo, "operation is not applicable to the grown structure");
     return;
   }
-  double max_d = 2.9, min_ang = 150.0;
+  double max_d = 2.9, min_ang = TXApp::GetMinHBondAngle();
   size_t cnt = XLibMacros::ParseNumbers<double,TStrObjList>(Cmds, 2, &max_d, &min_ang);
   if( cnt == 1 )  {
     if( max_d > 10 )  {

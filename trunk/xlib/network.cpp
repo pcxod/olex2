@@ -14,7 +14,7 @@
 #include "lattice.h"
 #include "unitcell.h"
 #include "asymmunit.h"
-#include "bapp.h"
+#include "xapp.h"
 #include "log.h"
 #include "egraph.h"
 #include "olxmps.h"
@@ -87,6 +87,8 @@ void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Fra
 }
 //..............................................................................
 void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
+  //define the cosine of minimum allowed angle
+  const double cos_th = cos(TXApp::GetMinHBondAngle()*M_PI/180);
   const TUnitCell& uc = Lattice->GetUnitCell();
   const size_t ac = objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
@@ -137,21 +139,21 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
       }
       if( a != NULL && !a->IsDeleted() )  {
         bool process = true;
-        double min_cs = 0;
-        for( size_t k=0; k < a->NodeCount(); k++ )  {
-          if( a->Node(k).GetType() != iQPeakZ )  {
-            if( sa.IsConnectedTo(a->Node(k)) )  {
+        double min_cs = cos_th;
+        for( size_t k=0; k < sa.NodeCount(); k++ )  {
+          if( sa.Node(k).GetType() != iQPeakZ )  {
+            if( a->IsConnectedTo(sa.Node(k)) )  {
               process = false;
               break;
             }
             else  {
-              double cs = (a->Node(k).crd()-a->crd()).CAngle(sa.crd()-a->crd());
+              double cs = (sa.Node(k).crd()-sa.crd()).CAngle(a->crd()-sa.crd());
               if( cs < min_cs )
                 min_cs = cs;
             }
           }
         }
-        if( !process || min_cs >= 0 )  continue;
+        if( !process || min_cs >= cos_th )  continue;
         TSBond& B = objects.bonds.New(&Lattice->GetNetwork());
         B.SetType(sotHBond);
         B.SetA(sa);
@@ -160,7 +162,6 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
         sa.AddBond(B);
       }
     }
-
   }
   CreateBondsAndFragments(objects, Frags);
 }

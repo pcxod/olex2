@@ -1096,13 +1096,15 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     vec3d test_pos(crd);
     TCAtom* ca = Lattice->GetUnitCell().FindOverlappingAtom(test_pos, is_q_peak, 0.01);
     if( ca != NULL )  {
-      if( is_q_peak && ca->GetType() == iQPeakZ )  {
+      if( is_q_peak && (ca->GetType() == iQPeakZ || ca->IsDeleted()))  {
         ca->SetDeleted(false);
+        ca->SetType(XElementLib::GetByIndex(iQPeakIndex));
         ca->SetQPeak(Params[0].ToDouble());
         _UpdateQPeaks();
         E.SetRetVal(ca->GetId());
         return;
       }
+      // q-peak on an atom - skip
       E.SetRetVal(-1);
       return;
     }
