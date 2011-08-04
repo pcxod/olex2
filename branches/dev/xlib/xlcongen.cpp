@@ -95,10 +95,10 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
       case fgOH2:
         dis = Distances[GenId(fgOH2,0)];
         if( CreatedAtoms.Count() == 2 )  {
-          //if( envi.Count() == 1 )
-          //  afix = 7;
-          //else
-          //  afix = 6;
+          if( envi.Count() == 1 )
+            afix = 7;
+          else
+            afix = 6;
         }
         else if( CreatedAtoms.Count() == 1 && envi.GetBase().CAtom().GetDegeneracy() == 2 )  {
           sr = &RefMod.rDFIX.AddNew();
