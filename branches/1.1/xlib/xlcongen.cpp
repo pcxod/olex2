@@ -10,11 +10,15 @@
 #include "xlcongen.h"
 #include "unitcell.h"
 
-bool TXlConGen::FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values)  {
+bool TXlConGen::FixParam(const short paramMask, TStrList& res,
+  const TCAtomPList& atoms, const TFixedValueList& values)
+{
   throw TNotImplementedException( __OlxSourceInfo );
 }
 //..............................................................................
-void TXlConGen::AnalyseMultipart(const TAtomEnvi& envi, const TTypeList<TCAtomPList>& parts)  {
+void TXlConGen::AnalyseMultipart(const TAtomEnvi& envi,
+  const TTypeList<TCAtomPList>& parts)
+{
   size_t cnt = 0;
   for( size_t i=0; i < parts.Count(); i++ )  {
     if( !parts[i].IsEmpty() && parts[i][0]->GetParentAfixGroup() != NULL &&
@@ -26,7 +30,9 @@ void TXlConGen::AnalyseMultipart(const TAtomEnvi& envi, const TTypeList<TCAtomPL
   if( cnt > 1 )  {  // have to change the refineable groups to riding group...
     for( size_t i=0; i < parts.Count(); i++ )  {
       if( parts[i].IsEmpty() )  continue;
-      if( parts[i][0]->GetParentAfixGroup() != NULL && parts[i][0]->GetParentAfixGroup()->IsRefinable() )  {
+      if( parts[i][0]->GetParentAfixGroup() != NULL &&
+          parts[i][0]->GetParentAfixGroup()->IsRefinable() )
+      {
         const int m = parts[i][0]->GetParentAfixGroup()->GetM();
         if( m == 13 )
           parts[i][0]->GetParentAfixGroup()->SetAfix(33);
@@ -40,7 +46,9 @@ void TXlConGen::AnalyseMultipart(const TAtomEnvi& envi, const TTypeList<TCAtomPL
   //else if( envi.GetBase().GetType() == iOxygenZ && envi.Count()
 }
 //..............................................................................
-bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
+bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
+    const cm_Element& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)
+{
   try  {
     TSimpleRestraint* sr;
     TCAtomPList CreatedAtoms;
@@ -50,7 +58,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
       return false;
     bool negative_part = false;
     double occu_mult = 1.0, dis;
-    short afix = 0;
+    short afix = -1;
     switch( Group )  {
       case fgNH3:
       case fgCH3:
@@ -87,24 +95,10 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
       case fgOH2:
         dis = Distances[GenId(fgOH2,0)];
         if( CreatedAtoms.Count() == 2 )  {
-          //afix = 6;
-          sr = &RefMod.rDFIX.AddNew();
-          sr->SetEsd(0.01);
-          sr->SetValue(dis);
-          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
-          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
-
-          sr = &RefMod.rDANG.AddNew();
-          sr->SetEsd(0.02);
-          sr->SetValue(dis*sqrt(2-2*cos(109.4*M_PI/180)));
-          sr->AddAtomPair(*CreatedAtoms[1], NULL, *CreatedAtoms[0], NULL);
-
-          if( envi.Count() == 1 )  {
-            sr = &RefMod.rSADI.AddNew();
-            sr->SetEsd(0.02);
-            sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
-            sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[1], NULL);
-          }
+          //if( envi.Count() == 1 )
+          //  afix = 7;
+          //else
+          //  afix = 6;
         }
         else if( CreatedAtoms.Count() == 1 && envi.GetBase().CAtom().GetDegeneracy() == 2 )  {
           sr = &RefMod.rDFIX.AddNew();
@@ -160,27 +154,8 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& at
         if( envi.Count() == 1 )  {
           if( pivoting != NULL )
             afix = 93;
-          else  {
-            if( CreatedAtoms.Count() == 2 )  {
-              sr = &RefMod.rDFIX.AddNew();
-              sr->SetEsd(0.02);
-              sr->SetValue(0.86);
-              sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
-              sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
-
-              sr = &RefMod.rDANG.AddNew();
-              sr->SetEsd(0.04);
-              sr->SetValue(1.40);
-              sr->AddAtomPair(*CreatedAtoms[1], NULL, *CreatedAtoms[0], NULL);
-
-              if( envi.Count() == 1 )  {
-                sr = &RefMod.rSADI.AddNew();
-                sr->SetEsd(0.02);
-                sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
-                sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[1], NULL);
-              }
-            }
-          }
+          else  if( CreatedAtoms.Count() == 2 )
+            afix = 7;
         }
         else if( envi.Count() == 2 )
           afix = 23;

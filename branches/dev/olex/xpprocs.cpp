@@ -2973,6 +2973,8 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( afix == 0 )  {
       for( size_t i=0; i < Atoms.Count(); i++ )  {
         TCAtom& ca = Atoms[i]->CAtom();
+        if( ca.GetAfix() == -1 )
+          continue;
         if( ca.GetAfix() == 1 || ca.GetAfix() == 2 )  {
           if( ca.GetDependentAfixGroup() != NULL )
             ca.GetDependentAfixGroup()->Clear();
@@ -2981,8 +2983,10 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( ca.GetDependentAfixGroup() != NULL )
           ca.GetDependentAfixGroup()->Clear();
         else if( ca.DependentHfixGroupCount() != 0 )  {
-          for( size_t j=0; j < ca.DependentHfixGroupCount(); j++ )
-            ca.GetDependentHfixGroup(j).Clear();
+          for( size_t j=0; j < ca.DependentHfixGroupCount(); j++ )  {
+            if( ca.GetDependentHfixGroup(j).GetAfix() != -1 )
+              ca.GetDependentHfixGroup(j).Clear();
+          }
         }
         else if( ca.GetParentAfixGroup() != NULL )
           ca.GetParentAfixGroup()->Clear();
@@ -3816,7 +3820,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
       if( released.sameList.IndexOf(sg) != InvalidIndex )  continue;
       released.sameList.Add( &sg );
       for( size_t k=0; k < sg.Count(); k++ )
-        CAtoms.Add( &sg[k] );
+        CAtoms.Add(sg[k]);
     }
   }
 
@@ -3845,7 +3849,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   // make sure that the list is unique
   TXApp::UnifyPAtomList(CAtoms);
-  FXApp->XFile().GetAsymmUnit().Sort( &CAtoms );
+  FXApp->XFile().GetAsymmUnit().Sort(&CAtoms);
   TStrList SL;
   TStrPObjList<olxstr, TStrList* > RemovedIns;
   SL.Add("REM please do not modify atom names inside the instructions - they will be updated ");
@@ -3951,7 +3955,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
   TStrList SL;
   FXApp->XFile().UpdateAsymmUnit();  // synchronise au's
-  Ins.SaveHeader(SL, true);
+  Ins.SaveHeader(SL, true, false);
   SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
 
   TdlgEdit *dlg = new TdlgEdit(this, true);
@@ -7817,24 +7821,34 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
   else {
     size_t di = Cmds[0].IndexOf('.');
     bool found = false;
-    if( di != InvalidIndex )  {
-      TGPCollection* gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
-      if( gpc != NULL )  {
-        TGlPrimitive* glp = gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
+    olxstr col_name = di != InvalidIndex ? Cmds[0].SubStringTo(di) : Cmds[0];
+    olxstr prm_name = di != InvalidIndex ? Cmds[0].SubStringFrom(di+1)
+      : EmptyString();
+    TGPCollection* gpc = FXApp->GetRender().FindCollection(col_name);
+    if( gpc != NULL )  {
+      if( !prm_name.IsEmpty() )  {
+        TGlPrimitive* glp = gpc->FindPrimitiveByName(prm_name);
         if( glp != NULL )  {
           glp->SetProperties(glm);
-          gpc->GetStyle().SetMaterial(Cmds[0].SubStringFrom(di+1), glm);
+          gpc->GetStyle().SetMaterial(prm_name, glm);
           found = true;
         }
       }
-      else  {  // modify the style if exists
-        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
-        if( gs != NULL )  {
-          mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
-          if( mat != NULL )  {
-            *mat = glm;
-            found = true;
-          }
+      else {
+        for( size_t i=0; i < gpc->ObjectCount(); i++ )  {
+          TGlGroup *glg = dynamic_cast<TGlGroup*>(&gpc->GetObject(i));
+          if( glg != NULL )
+            glg->SetGlM(glm);
+        }
+      }
+    }
+    else  {  // try to modify the style then, if exists
+      TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
+      if( gs != NULL )  {
+        mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
+        if( mat != NULL )  {
+          *mat = glm;
+          found = true;
         }
       }
     }

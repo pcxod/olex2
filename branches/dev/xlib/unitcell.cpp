@@ -224,7 +224,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
           Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
         }
-        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd, Latt->GetDeltaI()) )  { // interatcion
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd, Latt->GetDeltaI()) )  { // interaction
           Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
           Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
         }

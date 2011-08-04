@@ -95,7 +95,7 @@ public:
   // these require an implicit pivot (outside the group)
   static bool HasImplicitPivot(int afix)  {
     const int n = GetN(afix);
-    return (n == 3 || n == 4 || n == 5 || n == 7 || n == 8);
+    return (n == 3 || n == 4 || n == 5 || n == 7 || n == 8 || afix == -1);
   }
   // these are just 'service' AFIX...
   static bool HasPivot(int afix)  {
@@ -130,6 +130,11 @@ public:
   TCAtom& AddDependent(TCAtom& a)  {
     Dependent.Add(&a);
     a.SetParentAfixGroup(this);
+    return a;
+  }
+  TCAtom& RemoveDependent(TCAtom& a)  {
+    Dependent.Remove(&a);
+    a.SetParentAfixGroup(NULL);
     return a;
   }
   int GetAfix() const {  return Afix;  }

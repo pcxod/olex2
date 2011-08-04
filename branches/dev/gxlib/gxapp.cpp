@@ -558,10 +558,13 @@ void TGXApp::CalcProbFactor(float Prob)  {
 //  AtomZoom(ProbFactor);
 }
 //..............................................................................
-/* finds such a value of x at wich the value of integral 4*pi*exp(-x/2)*x^2 is Prob/100 of the max value, which is sqrt(8*pi^3),
-max returned value is around 10 */
+/* finds such a value of x at wich the value of integral 4*pi*exp(-x/2)*x^2 is
+Prob/100 of the max value, which is sqrt(8*pi^3), max returned value is around
+10 
+*/
 float TGXApp::ProbFactor(float Prob)  {
-  static const double max_val = sqrt(8*M_PI*M_PI*M_PI)/(4*M_PI*100.0);  // max of 4pi*int(0,inf)(exp(-x/2)*x^2dx) [/(4*pi*100)]
+  // max of 4pi*int(0,inf)(exp(-x/2)*x^2dx) [/(4*pi*100)]
+  static const double max_val = sqrt(8*M_PI*M_PI*M_PI)/(4*M_PI*100.0);
   const double t_val = Prob * max_val, inc = 1e-4;
   double ProbFactor = 0, summ = 0;
   while( summ < t_val )  {

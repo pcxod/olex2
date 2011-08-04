@@ -813,3 +813,8 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
   return rv;
 }
 //..............................................................................
+double TXApp::GetMinHBondAngle()  {
+  return TBasicApp::GetInstance().Options
+    .FindValue("hbond_min_angle", "120").ToDouble();
+}
+//..............................................................................

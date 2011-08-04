@@ -124,7 +124,8 @@ public:
   void ValidateRestraintsAtomNames(RefinementModel& rm);
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
-    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
+    RefinementModel::ReleasedItems* processed, RefinementModel& rm,
+    bool write_internals);
   template <class StrLst> static
   void ParseRestraints(RefinementModel& rm, StrLst& SL)  {
     bool preserve = DoPreserveInvalid();
@@ -283,7 +284,8 @@ public:
     return l;   
   }
   // spits out all instructions, including CELL, FVAR, etc
-  void SaveHeader(TStrList& out, bool ValidateRestraintNames);
+  void SaveHeader(TStrList& out, bool ValidateRestraintNames,
+    bool write_internals);
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
 

@@ -785,7 +785,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     E.ProcessingError(__OlxSrcInfo, "operation is not applicable to the grown structure");
     return;
   }
-  double max_d = 2.9, min_ang = 150.0;
+  double max_d = 2.9, min_ang = TXApp::GetMinHBondAngle();
   size_t cnt = XLibMacros::ParseNumbers<double,TStrObjList>(Cmds, 2, &max_d, &min_ang);
   if( cnt == 1 )  {
     if( max_d > 10 )  {
@@ -1183,7 +1183,12 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         for( short j=0; j < 6; j++ )
           xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_U11+j);
       }
-      atoms[i]->CAtom().SetUisoOwner(NULL);
+      if( atoms[i]->CAtom().GetUisoOwner() != NULL )  {
+        TAfixGroup *ag = atoms[i]->CAtom().GetParentAfixGroup();
+        if( ag != NULL && ag->GetAfix() == -1 )
+          ag->RemoveDependent(atoms[i]->CAtom());
+        atoms[i]->CAtom().SetUisoOwner(NULL);
+      }
     }
   }
   else if( vars.Equalsi( "OCCU" ) )  {

@@ -137,6 +137,8 @@ public:
         alist[i] = NULL;
     alist.Pack();
   }
+  // the returned value (in degrees) must be cached if used in loops etc
+  static double GetMinHBondAngle();
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
