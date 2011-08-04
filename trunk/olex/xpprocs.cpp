@@ -7802,24 +7802,34 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
   else {
     size_t di = Cmds[0].IndexOf('.');
     bool found = false;
-    if( di != InvalidIndex )  {
-      TGPCollection* gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
-      if( gpc != NULL )  {
-        TGlPrimitive* glp = gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
+    olxstr col_name = di != InvalidIndex ? Cmds[0].SubStringTo(di) : Cmds[0];
+    olxstr prm_name = di != InvalidIndex ? Cmds[0].SubStringFrom(di+1)
+      : EmptyString();
+    TGPCollection* gpc = FXApp->GetRender().FindCollection(col_name);
+    if( gpc != NULL )  {
+      if( !prm_name.IsEmpty() )  {
+        TGlPrimitive* glp = gpc->FindPrimitiveByName(prm_name);
         if( glp != NULL )  {
           glp->SetProperties(glm);
-          gpc->GetStyle().SetMaterial(Cmds[0].SubStringFrom(di+1), glm);
+          gpc->GetStyle().SetMaterial(prm_name, glm);
           found = true;
         }
       }
-      else  {  // modify the style if exists
-        TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
-        if( gs != NULL )  {
-          mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
-          if( mat != NULL )  {
-            *mat = glm;
-            found = true;
-          }
+      else {
+        for( size_t i=0; i < gpc->ObjectCount(); i++ )  {
+          TGlGroup *glg = dynamic_cast<TGlGroup*>(&gpc->GetObject(i));
+          if( glg != NULL )
+            glg->SetGlM(glm);
+        }
+      }
+    }
+    else  {  // try to modify the style then, if exists
+      TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
+      if( gs != NULL )  {
+        mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
+        if( mat != NULL )  {
+          *mat = glm;
+          found = true;
         }
       }
     }
