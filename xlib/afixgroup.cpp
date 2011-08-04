@@ -120,7 +120,7 @@ olxstr TAfixGroup::Describe() const {
 //..............................................................................
 TIString TAfixGroup::ToString() const {
   olxstr rv;
-  rv<< Pivot->GetLabel() << '(';
+  rv << Pivot->GetLabel() << '(';
   size_t dep_cnt = 0;
   for( size_t i=0; i < Dependent.Count(); i++ )  {
     if( Dependent[i]->IsDeleted() )  continue;
@@ -143,7 +143,7 @@ bool TAfixGroup::IsEmpty() const {
   }
   if( IsFixedGroup() && dep_cnt != Dependent.Count() )
     return true;
-  return false;
+  return dep_cnt == 0;
 }
 //..............................................................................
 //..............................................................................
