@@ -2972,6 +2972,8 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( afix == 0 )  {
       for( size_t i=0; i < Atoms.Count(); i++ )  {
         TCAtom& ca = Atoms[i]->CAtom();
+        if( ca.GetAfix() == -1 )
+          continue;
         if( ca.GetAfix() == 1 || ca.GetAfix() == 2 )  {
           if( ca.GetDependentAfixGroup() != NULL )
             ca.GetDependentAfixGroup()->Clear();
@@ -2980,8 +2982,10 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( ca.GetDependentAfixGroup() != NULL )
           ca.GetDependentAfixGroup()->Clear();
         else if( ca.DependentHfixGroupCount() != 0 )  {
-          for( size_t j=0; j < ca.DependentHfixGroupCount(); j++ )
-            ca.GetDependentHfixGroup(j).Clear();
+          for( size_t j=0; j < ca.DependentHfixGroupCount(); j++ )  {
+            if( ca.GetDependentHfixGroup(j).GetAfix() != -1 )
+              ca.GetDependentHfixGroup(j).Clear();
+          }
         }
         else if( ca.GetParentAfixGroup() != NULL )
           ca.GetParentAfixGroup()->Clear();
@@ -3815,7 +3819,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
       if( released.sameList.IndexOf(sg) != InvalidIndex )  continue;
       released.sameList.Add( &sg );
       for( size_t k=0; k < sg.Count(); k++ )
-        CAtoms.Add( &sg[k] );
+        CAtoms.Add(sg[k]);
     }
   }
 
@@ -3844,7 +3848,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   // make sure that the list is unique
   TXApp::UnifyPAtomList(CAtoms);
-  FXApp->XFile().GetAsymmUnit().Sort( &CAtoms );
+  FXApp->XFile().GetAsymmUnit().Sort(&CAtoms);
   TStrList SL;
   TStrPObjList<olxstr, TStrList* > RemovedIns;
   SL.Add("REM please do not modify atom names inside the instructions - they will be updated ");
@@ -3950,7 +3954,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
   TStrList SL;
   FXApp->XFile().UpdateAsymmUnit();  // synchronise au's
-  Ins.SaveHeader(SL, true);
+  Ins.SaveHeader(SL, true, false);
   SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
 
   TdlgEdit *dlg = new TdlgEdit(this, true);

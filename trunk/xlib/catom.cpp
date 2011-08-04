@@ -155,13 +155,23 @@ int TCAtom::GetAfix() const {
   }
   if( ParentAfixGroup->HasExcplicitPivot() )
     return (ParentAfixGroup->GetAfix()/10)*10 + 5;
-  else
-    return ParentAfixGroup->GetAfix();
+  else  {
+    int a = ParentAfixGroup->GetAfix();
+#ifdef _DEBUG
+    return a;
+#else
+    return a == -1 ? 0 : a;
+#endif
+  }
 }
 //..............................................................................
-TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == InvalidIndex ? NULL : &Parent->GetEllp(EllpId);  }
+TEllipsoid* TCAtom::GetEllipsoid() const {
+  return EllpId == InvalidIndex ? NULL : &Parent->GetEllp(EllpId);
+}
 //..............................................................................
-void TCAtom::AssignEllp(TEllipsoid* NV) {  NV == NULL ? EllpId = InvalidIndex : EllpId = NV->GetId();  }
+void TCAtom::AssignEllp(TEllipsoid* NV)  {
+  EllpId = (NV == NULL ? InvalidIndex : NV->GetId());
+}
 //..............................................................................
 void TCAtom::UpdateEllp(const TEllipsoid &NV) {
   double Q[6], E[6];

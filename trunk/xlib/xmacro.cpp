@@ -1183,7 +1183,12 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         for( short j=0; j < 6; j++ )
           xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_U11+j);
       }
-      atoms[i]->CAtom().SetUisoOwner(NULL);
+      if( atoms[i]->CAtom().GetUisoOwner() != NULL )  {
+        TAfixGroup *ag = atoms[i]->CAtom().GetParentAfixGroup();
+        if( ag != NULL && ag->GetAfix() == -1 )
+          ag->RemoveDependent(atoms[i]->CAtom());
+        atoms[i]->CAtom().SetUisoOwner(NULL);
+      }
     }
   }
   else if( vars.Equalsi( "OCCU" ) )  {
