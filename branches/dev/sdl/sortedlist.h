@@ -13,21 +13,13 @@
 #include "sorted.h"
 BeginEsdlNamespace()
 
+template <typename, typename> class ConstSortedObjectList;
+template <typename, typename> class ConstSortedPtrList;
 // generic sorted list
-template <class ListClass, class Comparator, typename TypeClass> class TTSortedListBase {
+template <class ListClass, class Comparator, typename TypeClass>
+class TTSortedListBase {
 protected:
   ListClass list;
-  struct Proxy  {
-    TypeClass& value;
-    Proxy(TypeClass& val) : value(val) {}
-    operator TypeClass& () {  return value;  }
-    operator const TypeClass& () const {  return value;  }
-    TypeClass& operator = (const TypeClass& v)  {
-      throw TFunctionFailedException(__OlxSourceInfo, "cannot modify constant object");
-    }
-  };
-  // to be used by dirived objcts if necessary
-  Proxy GetProxyObject(int i)  {  return Proxy(list[i]);  }
 public:
   TTSortedListBase() {}
   TTSortedListBase(const TTSortedListBase& l) : list(l.list)  {}
@@ -69,21 +61,22 @@ public:
 
 template <class ListClass, class Comparator, typename TypeClass>
 class TTSortedList : public TTSortedListBase<ListClass, Comparator, TypeClass> {
-  typedef TTSortedListBase<ListClass, Comparator, TypeClass> parent_t;
+  typedef TTSortedListBase<ListClass, Comparator, TypeClass> __parent_t;
 public:
   TTSortedList() {}
-  TTSortedList(const TTSortedList& l) : parent_t(l)  {}
+  TTSortedList(const TTSortedList& l) : __parent_t(l)  {}
   // adds an item to the list and returns it's index
   size_t Add(const TypeClass& entry)  {
-    return sorted::Add(parent_t::list, Comparator(), entry);
+    return sorted::Add(__parent_t::list, Comparator(), entry);
   }
-  /* adds an item only if not already in the list, returns true if the item is added, pos is is 
-  initialised with the item index */
+  /* adds an item only if not already in the list, returns true if the item is
+  added, pos is is initialised with the item index
+  */
   bool AddUnique(const TypeClass& entry, size_t* pos = NULL)  {
-    return sorted::AddUnique(parent_t::list, Comparator(), entry, pos);
+    return sorted::AddUnique(__parent_t::list, Comparator(), entry, pos);
   }
   TTSortedList& operator = (const TTSortedList& _list)  {
-    parent_t::operator = (_list);
+    __parent_t::operator = (_list);
     return *this;
   }
 };
@@ -91,29 +84,31 @@ public:
 template <typename TypeClass, class Comparator>
 class SortedTypeList
   : public TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass> {
-  typedef TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass> parent_t;
+  typedef TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass> _parent_t;
 public:
   SortedTypeList() {}
-  SortedTypeList(const SortedTypeList& l) : parent_t(l)  {}
+  SortedTypeList(const SortedTypeList& l) : _parent_t(l)  {}
   // adds an item to the list and returns it's index
   size_t Add(TypeClass* entry)  {
-    return sorted::Add(parent_t::list, Comparator(), *entry);
+    return sorted::Add(_parent_t::list, Comparator(), *entry);
   }
   size_t Add(TypeClass& entry)  {
-    return sorted::Add(parent_t::list, Comparator(), entry);
+    return sorted::Add(_parent_t::list, Comparator(), entry);
   }
   /* adds an item only if not already in the list, returns true if the item is added, pos is is 
   initialised with the item index, if item is already in the list - it is deleted and the list
   will not be modified */
-  bool AddUnique(TypeClass* entry, size_t* pos = NULL)  {  return AddUnique(*entry, pos);  }
+  bool AddUnique(TypeClass* entry, size_t* pos = NULL)  {
+    return AddUnique(*entry, pos);
+  }
   bool AddUnique(TypeClass& entry, size_t* pos = NULL)  {
-    if( sorted::AddUnique(parent_t::list, Comparator(), entry, pos) )
+    if( sorted::AddUnique(_parent_t::list, Comparator(), entry, pos) )
       return true;
     delete &entry;
     return false;
   }
   SortedTypeList& operator = (const SortedTypeList& _list)  {
-    parent_t::operator = (_list);
+    _parent_t::operator = (_list);
     return *this;
   }
 };
@@ -129,7 +124,7 @@ public:
     for( size_t i=0; i < li.Count(); i++ )
       Add(li[i]);
   }
-  ~TObjectList() {  Clear();  }
+  ~TObjectList()  {  list.DeleteItems();  }
   void TakeOver(TObjectList &l, bool do_delete=false)  {
     list.TakeOver(l.list);
     if( do_delete )
@@ -151,8 +146,7 @@ public:
     list.Insert(index, new ObjectClass(obj));
   }
   void Clear()  {
-    for( size_t i=0; i < list.Count(); i++ )
-      delete list[i];
+    list.DeleteItems();
     list.Clear();
   }
   void Delete(size_t ind)  {
@@ -169,13 +163,25 @@ public:
   TComparableComparator - for objects having Compare method returning -,+,0
 */
 template <class ObjectClass, class Comparator> 
-class SortedObjectList : public TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass> {
+class SortedObjectList
+  : public TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass> {
+  typedef TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass>
+    _parent_t;
 public:
   SortedObjectList() {}
   SortedObjectList(const SortedObjectList& l) : 
     TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass>(l) {}
+  SortedObjectList(const ConstSortedObjectList<ObjectClass,Comparator>& l)  {
+    _parent_t::TakeOver(l.Release(), true);
+  }
   SortedObjectList& operator = (const SortedObjectList& l)  {
-    TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass>::operator = (l);
+    _parent_t::operator = (l);
+    return *this;
+  }
+  SortedObjectList& operator = (
+    const ConstSortedObjectList<ObjectClass,Comparator>& l)
+  {
+    _parent_t::TakeOver(l.Release, true);
     return *this;
   }
 };
@@ -186,13 +192,59 @@ public:
   TPointerComparator - for sorting pointer adresses
 */
 template <class ObjectClass, class Comparator> 
-class SortedPtrList : public TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*> {
+class SortedPtrList
+  : public TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*> {
+  typedef TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*>
+    _parent_t;
 public:
   SortedPtrList() {}
   SortedPtrList(const SortedPtrList& l) : 
     TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*>(l) {}
+  SortedPtrList(const ConstSortedPtrList<ObjectClass,Comparator>& l)  {
+    _parent_t::TakeOver(l.Release(), true);
+  }
   SortedPtrList& operator = (const SortedPtrList& l)  {
-    TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*>::operator = (l);
+    _parent_t::operator = (l);
+    return *this;
+  }
+  SortedPtrList& operator = (
+    const ConstSortedPtrList<ObjectClass,Comparator>& l)
+  {
+    _parent_t::TakeOver(l.Release(), true);
+    return *this;
+  }
+};
+
+// ConstSortedObjectList
+template <typename obj_t, class Comparator>
+class ConstSortedObjectList
+  : public const_list<SortedObjectList<obj_t,Comparator>, obj_t>
+{
+  typedef SortedObjectList<obj_t,Comparator> list_t;
+  typedef const_list<list_t, obj_t> parent_t;
+public:
+  ConstSortedObjectList(const ConstSortedObjectList &l) : parent_t(l) {}
+  ConstSortedObjectList(list_t &l) : parent_t(l) {}
+  ConstSortedObjectList(list_t *l) : parent_t(l) {}
+  ConstSortedObjectList &operator = (const ConstSortedObjectList &l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
+
+// ConstSortedPtrList
+template <typename obj_t, class Comparator>
+class ConstSortedPtrList
+  : public const_list<SortedPtrList<obj_t,Comparator>, obj_t*>
+{
+  typedef SortedPtrList<obj_t,Comparator> list_t;
+  typedef const_list<list_t, obj_t*> parent_t;
+public:
+  ConstSortedPtrList(const ConstSortedPtrList &l) : parent_t(l) {}
+  ConstSortedPtrList(list_t &l) : parent_t(l) {}
+  ConstSortedPtrList(list_t *l) : parent_t(l) {}
+  ConstSortedPtrList &operator = (const ConstSortedPtrList &l) {
+    parent_t::operator = (l);
     return *this;
   }
 };

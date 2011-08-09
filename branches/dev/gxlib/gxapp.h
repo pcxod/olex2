@@ -531,7 +531,6 @@ protected:
   ConstPtrList<TXAtom> GetSelectedXAtoms(bool Clear=true);
   ConstPtrList<TCAtom> GetSelectedCAtoms(bool Clear=true);
 public:
-  SortedElementPList DecodeTypes(const olxstr &types) const;
   TXAtom* GetXAtom(const olxstr& AtomName, bool Clear);
   ConstPtrList<TXAtom> GetXAtoms(const olxstr& AtomName);
   ConstPtrList<TXBond> GetXBonds(const olxstr& BondName);

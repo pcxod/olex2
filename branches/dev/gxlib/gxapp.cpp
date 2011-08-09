@@ -1564,33 +1564,6 @@ ConstPtrList<TXAtom> TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
   return rv;
 }
 //..............................................................................
-SortedElementPList TGXApp::DecodeTypes(const olxstr &types) const {
-  SortedElementPList res;
-  if( types.StartsFrom('*') )  {
-    const TAsymmUnit &au = XFile().GetAsymmUnit();
-    for( size_t i=0; i < au.AtomCount(); i++ )
-      res.AddUnique(&au.GetAtom(i).GetType());
-    if( types.Length() == 1 )  return res;
-    TStrList exc(types.SubStringFrom(types.CharAt(1) == '-' ? 2 : 1), ',');
-    for( size_t i=0; i < exc.Count(); i++ )  {
-      const cm_Element *elm = XElementLib::FindBySymbol(exc[i]);
-      if( elm == NULL )
-        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << exc[i]);
-      res.Remove(elm);
-    }
-  }
-  else  {
-    TStrList tps(types, ',');
-    for( size_t i=0; i < tps.Count(); i++ )  {
-      const cm_Element *elm = XElementLib::FindBySymbol(tps[i]);
-      if( elm == NULL )
-        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << tps[i]);
-      res.AddUnique(elm);
-    }
-  }
-  return res;
-}
-//..............................................................................
 ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection,
   bool FindHidden)
 {
@@ -1657,7 +1630,8 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection
         }
       }
       if( Tmp.CharAt(0) == '$' )  {
-        SortedElementPList elms = DecodeTypes(Tmp.SubStringFrom(1));
+        SortedElementPList elms = TAtomReference::DecodeTypes(
+          Tmp.SubStringFrom(1), XFile().GetAsymmUnit());
         for( size_t ei=0; ei < elms.Count(); ei++ )
           rv += XAtomsByType(*elms[ei], FindHidden);
         continue;
@@ -2374,7 +2348,8 @@ ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection
       continue;
     }
     if( Tmp.CharAt(0) == '$' )  {
-      SortedElementPList elms = DecodeTypes(Tmp.SubStringFrom(1));
+      SortedElementPList elms = TAtomReference::DecodeTypes(
+        Tmp.SubStringFrom(1), XFile().GetAsymmUnit());
       for( size_t ei=0; ei < elms.Count(); ei++ )
         list += CAtomsByType(*elms[ei]);
       continue;

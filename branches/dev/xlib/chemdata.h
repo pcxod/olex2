@@ -210,19 +210,25 @@ struct ElementCount {
 };
 
 typedef TPtrList<const cm_Element> ElementPList;
-typedef SortedPtrList<const cm_Element, TPrimitiveComparator>
+typedef SortedPtrList<const cm_Element, TPointerComparator>
   SortedElementPList;
+typedef ConstSortedPtrList<const cm_Element, TPointerComparator>
+  ConstSortedElementPList;
 typedef TTypeList<ElementCount> ContentList;
-typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementRadii;
-typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementDict;
+typedef olxdict<const cm_Element*, double, TPointerComparator> ElementRadii;
+typedef olxdict<const cm_Element*, double, TPointerComparator> ElementDict;
 
 // sorts elemnt pointers by Z descending 
 struct ElementPZSorter  {
-  static int Compare(const cm_Element* s1, const cm_Element* s2)  {  return s2->z - s1->z;  }
+  static int Compare(const cm_Element* s1, const cm_Element* s2)  {
+    return s2->z - s1->z;
+  }
 };
 // sorts elemnt pointers by symbol ascending
 struct ElementPSymbolSorter  {
-  static int Compare(const cm_Element* s1, const cm_Element* s2)  {  return s1->symbol.Compare(s2->symbol);  }
+  static int Compare(const cm_Element* s1, const cm_Element* s2)  {
+    return s1->symbol.Compare(s2->symbol);
+  }
 };
 
 
