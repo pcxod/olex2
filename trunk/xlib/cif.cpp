@@ -738,10 +738,19 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             }
           }
           else if( Val.CharAt(0) == '_' )  {
-            IStringCifEntry* Params = FindParam<IStringCifEntry>(Val);
+            olxstr val_name = Val, new_line = ' ';
+            const size_t c_i = Val.IndexOf(',');
+            if( c_i != InvalidIndex )  {
+              val_name = Val.SubStringTo(c_i);
+              new_line = Val.SubStringFrom(c_i+1);
+            }
+            IStringCifEntry* Params = FindParam<IStringCifEntry>(val_name);
             olxstr Tmp = 'N';
-            if( Params != NULL && Params->Count() != 0 )  
+            if( Params != NULL && Params->Count() != 0 )  {
               Tmp = (*Params)[0];
+              for( size_t pi=1; pi < Params->Count(); pi++ )
+                Tmp << new_line << (*Params)[pi];
+            }
             String.Delete(start, end-start+1);
             String.Insert(Tmp, start);
             i = start + Tmp.Length() - 1;
