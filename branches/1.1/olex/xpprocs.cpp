@@ -2595,22 +2595,13 @@ void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macMove(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  if( Cmds.IsEmpty() )  {
+  TXAtomPList atoms = FindXAtoms(Cmds, false, !Options.Contains("cs"));
+  if( atoms.IsEmpty() )
     FXApp->MoveToCenter();
-    return;
-  }
-  bool clearSelection = !Options.Contains("cs");
-  TXAtom *A = FXApp->GetXAtom(Cmds[0], clearSelection);
-  TXAtom *B = FXApp->GetXAtom(Cmds[1], clearSelection);
-  if( A == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong atom - ") << Cmds[0];
-    return;
-  }
-  if( B == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong atom - " ) << Cmds[1];
-    return;
-  }
-  FXApp->MoveFragment(A, B, Options.Contains('c'));
+  else if( atoms.Count() == 2 )
+    FXApp->MoveFragment(atoms[0], atoms[1], Options.Contains('c'));
+  else
+    E.ProcessingError(__OlxSrcInfo, "Two or none atoms is expected");
 }
 //..............................................................................
 void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
