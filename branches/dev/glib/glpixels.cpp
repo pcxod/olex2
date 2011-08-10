@@ -65,9 +65,9 @@ void TGlPixels::Init(unsigned char *data, int w, int h)  {
       for( int j=0; j < w; j++ )  {
         const int src_i = ((h-i)*w+j)*4;
         const int dest_i = (i*w+j)*4;
-        Data[dest_i+0] = data[src_i+0];
+        Data[dest_i+0] = data[src_i+2];
         Data[dest_i+1] = data[src_i+1];
-        Data[dest_i+2] = data[src_i+2];
+        Data[dest_i+2] = data[src_i+0];
         Data[dest_i+3] = 0xff;
       }
       //memcpy(&Data[i], &data[i], w*4);

@@ -41,17 +41,18 @@ void Skeleton::Create(const olxstr& cName) {
   TGraphicsStyle& GS = GPC.GetStyle();
   TGlMaterial GlM;
   GlM.SetFlags(0);   
-  GlM.ShininessF = 128;
-  GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmIdentityDraw);
+  //GlM.ShininessF = 128;
+  GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|
+    sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmIdentityDraw);
   //GlM.SetFlags(sglmAmbientF|sglmDiffuseF);
-  GlM.AmbientF = 0x800f0f0f;
-  GlM.DiffuseF = 0x800f0f0f;
-  GlM.SpecularF = 0x808080;
+  GlM.AmbientF = GlM.AmbientB = 0x800f0f0f;
+  GlM.DiffuseF = GlM.DiffuseB = 0x800f0f0f;
+  GlM.SpecularF = GlM.SpecularB = 0x808080;
 
   TGlPrimitive& GlP = GPC.NewPrimitive("Sphere", sgloSphere);
   GlP.SetProperties(GlM);
   //GlP.SetProperties(GS.GetMaterial(GlP.GetName(), GlM));
-  GlP.Params[0] = 0.01;  GlP.Params[1] = 10;  GlP.Params[2] = 10;
+  GlP.Params[0] = 0.01;  GlP.Params[1] = 8;  GlP.Params[2] = 8;
   Compile();
 }
 /*****************************************************************************/
@@ -133,65 +134,191 @@ bool Skeleton::Orient(TGlPrimitive& P)  {
       //  Parent.Select(*o, false);
     }
   }
-  olx_gl::begin(GL_TRIANGLES);
-  olx_gl::vertex(pts[NUI_SKELETON_POSITION_HIP_RIGHT]);
-  olx_gl::vertex(pts[NUI_SKELETON_POSITION_HIP_CENTER]);
-  olx_gl::vertex(pts[NUI_SKELETON_POSITION_HIP_LEFT]);
-  olx_gl::end();
+  try  {
+    double head_r = (pts[NUI_SKELETON_POSITION_HEAD]-
+      pts[NUI_SKELETON_POSITION_SHOULDER_CENTER]).Length()/2;
+    const int head_sec = 25;
+    vec3d head_v = pts[NUI_SKELETON_POSITION_HEAD];
+    head_v[0] += head_r;
+    olx_gl::begin(GL_TRIANGLE_FAN);
+    olx_gl::vertex(pts[NUI_SKELETON_POSITION_HEAD]);
+    for( int i=0; i <= head_sec; i++ )  {
+      double ang = i*2*M_PI/head_sec;
+      vec3d v(head_r*cos(ang), head_r*sin(ang), 0);
+      olx_gl::vertex(pts[NUI_SKELETON_POSITION_HEAD]+v);
+    }
+    olx_gl::end();
 
-  olx_gl::begin(GL_POLYGON);
-  olx_gl::vertex(pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT]);
-  olx_gl::vertex(pts[NUI_SKELETON_POSITION_SHOULDER_CENTER]);
-  olx_gl::vertex(pts[NUI_SKELETON_POSITION_SHOULDER_LEFT]);
-  olx_gl::vertex(pts[NUI_SKELETON_POSITION_SPINE]);
-  olx_gl::end();
+    vec3d shoulder_line(pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT]-
+      pts[NUI_SKELETON_POSITION_SHOULDER_LEFT]);
+    vec3d hip_line(pts[NUI_SKELETON_POSITION_HIP_RIGHT]-
+      pts[NUI_SKELETON_POSITION_HIP_LEFT]);
+    vec3d spine_line(pts[NUI_SKELETON_POSITION_SPINE]-
+      pts[NUI_SKELETON_POSITION_SHOULDER_CENTER]);
+    vec3d right_shoulder_line(pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT]-
+      pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]);
+    vec3d right_wrist_line(pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]-
+      pts[NUI_SKELETON_POSITION_WRIST_RIGHT]);
+    vec3d left_shoulder_line(pts[NUI_SKELETON_POSITION_SHOULDER_LEFT]-
+      pts[NUI_SKELETON_POSITION_ELBOW_LEFT]);
+    vec3d left_wrist_line(pts[NUI_SKELETON_POSITION_ELBOW_LEFT]-
+      pts[NUI_SKELETON_POSITION_WRIST_LEFT]);
 
-  // right arm
-  // polygon for right shoulder
-  vec3d rsp = (pts[NUI_SKELETON_POSITION_ELBOW_RIGHT] - 
-    pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT]);
-  vec3d rsp_n = (rsp*mat3d(0,-1,0, 1,0,0, 0,0,1)).NormaliseTo(
-    rsp.Length()/5);
+    vec3d right_thight_line(pts[NUI_SKELETON_POSITION_HIP_RIGHT]-
+      pts[NUI_SKELETON_POSITION_KNEE_RIGHT]);
+    vec3d right_shin_line(pts[NUI_SKELETON_POSITION_KNEE_RIGHT]-
+      pts[NUI_SKELETON_POSITION_ANKLE_RIGHT]);
 
-  DrawQuad(
-    pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT]+rsp_n,
-    pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]+rsp_n,
-    pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]-rsp_n,
-    pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT]-rsp_n);
-  // right wrist
-  vec3d rwp = (pts[NUI_SKELETON_POSITION_WRIST_RIGHT] - 
-    pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]);
-  vec3d rwp_n = (rwp*mat3d(0,-1,0, 1,0,0, 0,0,1)).NormaliseTo(
-    rwp.Length()/5);
+    vec3d left_thight_line(pts[NUI_SKELETON_POSITION_HIP_LEFT]-
+      pts[NUI_SKELETON_POSITION_KNEE_LEFT]);
+    vec3d left_shin_line(pts[NUI_SKELETON_POSITION_KNEE_LEFT]-
+      pts[NUI_SKELETON_POSITION_ANKLE_LEFT]);
 
-  DrawQuad(
-    pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]+rsp_n,
-    pts[NUI_SKELETON_POSITION_WRIST_RIGHT]+rwp_n,
-    pts[NUI_SKELETON_POSITION_WRIST_RIGHT]-rwp_n,
-    pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]-rsp_n);
+    if( shoulder_line.QLength() > 0 &&
+      hip_line.QLength() > 0 &&
+      spine_line.QLength() > 0 &&
+      right_shoulder_line.QLength() > 0 &&
+      left_shoulder_line.QLength() > 0 &&
+      right_wrist_line.QLength() > 0 &&
+      left_wrist_line.QLength() > 0 )
+    {
+      olx_gl::begin(GL_TRIANGLES);
+      olx_gl::vertex(pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT]);
+      olx_gl::vertex(pts[NUI_SKELETON_POSITION_SHOULDER_CENTER]);
+      olx_gl::vertex(pts[NUI_SKELETON_POSITION_SHOULDER_LEFT]);
+      // neck
+      olx_gl::vertex(pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT] +
+        (pts[NUI_SKELETON_POSITION_SHOULDER_CENTER]-
+        pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT])*0.75);
+      olx_gl::vertex(pts[NUI_SKELETON_POSITION_HEAD]);
+      olx_gl::vertex(pts[NUI_SKELETON_POSITION_SHOULDER_LEFT] +
+        (pts[NUI_SKELETON_POSITION_SHOULDER_CENTER]-
+        pts[NUI_SKELETON_POSITION_SHOULDER_LEFT])*0.75);
+      olx_gl::end();
 
-  // left arm
-  // polygon for left shoulder
-  vec3d lsp = (pts[NUI_SKELETON_POSITION_ELBOW_LEFT] -
-    pts[NUI_SKELETON_POSITION_SHOULDER_LEFT]);
-  vec3d lsp_n = (lsp*mat3d(0,-1,0, 1,0,0, 0,0,1)).NormaliseTo(
-    lsp.Length()/5);
+      vec3d half_spine_line_normal =
+        (spine_line*mat3d(0,-1,0, 1,0,0, 0,0,1)).NormaliseTo(
+        (shoulder_line.Length()+hip_line.Length())/8); // make a bit slimmer
 
-  DrawQuad(
-    pts[NUI_SKELETON_POSITION_SHOULDER_LEFT]+lsp_n,
-    pts[NUI_SKELETON_POSITION_ELBOW_LEFT]+lsp_n,
-    pts[NUI_SKELETON_POSITION_ELBOW_LEFT]-lsp_n,
-    pts[NUI_SKELETON_POSITION_SHOULDER_LEFT]-lsp_n);
+      // body bottom
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_SPINE] - half_spine_line_normal,
+        pts[NUI_SKELETON_POSITION_SPINE] + half_spine_line_normal,
+        pts[NUI_SKELETON_POSITION_HIP_LEFT],
+        pts[NUI_SKELETON_POSITION_HIP_RIGHT]
+      );
+      // body top
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT],
+        pts[NUI_SKELETON_POSITION_SHOULDER_LEFT],
+        pts[NUI_SKELETON_POSITION_SPINE] + half_spine_line_normal,
+        pts[NUI_SKELETON_POSITION_SPINE] - half_spine_line_normal
+        );
 
-  vec3d lwp = (pts[NUI_SKELETON_POSITION_WRIST_LEFT] -
-    pts[NUI_SKELETON_POSITION_ELBOW_LEFT]);
-  vec3d lwp_n = (rwp*mat3d(0,-1,0, 1,0,0, 0,0,1)).NormaliseTo(
-    lwp.Length()/5);
-  DrawQuad(pts[NUI_SKELETON_POSITION_ELBOW_LEFT]+lsp_n,
-    pts[NUI_SKELETON_POSITION_WRIST_LEFT]+lwp_n,
-    pts[NUI_SKELETON_POSITION_WRIST_LEFT]-lwp_n,
-    pts[NUI_SKELETON_POSITION_ELBOW_LEFT]-lsp_n);
+      vec3d body_left_side = pts[NUI_SKELETON_POSITION_SPINE] +
+        half_spine_line_normal - pts[NUI_SKELETON_POSITION_SHOULDER_LEFT];
+      vec3d body_right_side = pts[NUI_SKELETON_POSITION_SPINE] -
+        half_spine_line_normal - pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
 
+      // right arm
+      // polygon for right shoulder
+      vec3d rsp_n = (right_shoulder_line*mat3d(0,-1,0, 1,0,0, 0,0,1))
+        .NormaliseTo(right_shoulder_line.Length()/5);
+      if( rsp_n.CAngle(body_right_side) < 0 )
+        rsp_n *= -1;
+
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_ELBOW_RIGHT],
+        pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT],
+        pts[NUI_SKELETON_POSITION_SHOULDER_RIGHT]+body_right_side/3,
+        pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]+rsp_n
+        );
+      // right wrist
+      vec3d rwp_n = (right_wrist_line*mat3d(0,-1,0, 1,0,0, 0,0,1))
+        .NormaliseTo(right_wrist_line.Length()/5);
+      if( rwp_n.CAngle(rsp_n) < 0 )
+        rwp_n *= -1;
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_ELBOW_RIGHT],
+        pts[NUI_SKELETON_POSITION_ELBOW_RIGHT]+rsp_n,
+        pts[NUI_SKELETON_POSITION_WRIST_RIGHT]+rwp_n,
+        pts[NUI_SKELETON_POSITION_WRIST_RIGHT]
+      );
+
+      // left arm
+      // polygon for left shoulder
+      vec3d lsp_n = (left_shoulder_line*mat3d(0,-1,0, 1,0,0, 0,0,1))
+        .NormaliseTo(left_shoulder_line.Length()/5);
+      if( lsp_n.CAngle(body_left_side) < 0 )
+        lsp_n *= -1;
+
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_SHOULDER_LEFT],
+        pts[NUI_SKELETON_POSITION_ELBOW_LEFT],
+        pts[NUI_SKELETON_POSITION_ELBOW_LEFT]+lsp_n,
+        pts[NUI_SKELETON_POSITION_SHOULDER_LEFT]+body_left_side/3
+        );
+
+      vec3d lwp_n = (left_wrist_line*mat3d(0,-1,0, 1,0,0, 0,0,1))
+        .NormaliseTo(left_wrist_line.Length()/5);
+      if( lwp_n.CAngle(lsp_n) < 0 )
+        lwp_n *= -1;
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_ELBOW_LEFT],
+        pts[NUI_SKELETON_POSITION_WRIST_LEFT],
+        pts[NUI_SKELETON_POSITION_WRIST_LEFT]+lwp_n,
+        pts[NUI_SKELETON_POSITION_ELBOW_LEFT]+lsp_n
+        );
+
+      // right leg
+      // polygon for right thight
+      vec3d rtp_n = (right_thight_line*mat3d(0,-1,0, 1,0,0, 0,0,1))
+        .NormaliseTo(right_thight_line.Length()/10);
+      if( rtp_n.CAngle(hip_line) > 0 )
+        rtp_n *= -1;
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_HIP_RIGHT],
+        pts[NUI_SKELETON_POSITION_HIP_RIGHT]-hip_line/2,
+        pts[NUI_SKELETON_POSITION_KNEE_RIGHT]+rtp_n,
+        pts[NUI_SKELETON_POSITION_KNEE_RIGHT]
+        );
+      // right shin
+      vec3d rshp_n = (right_shin_line*mat3d(0,-1,0, 1,0,0, 0,0,1))
+        .NormaliseTo(right_shin_line.Length()/10);
+      if( rshp_n.CAngle(rtp_n) < 0 )
+        rshp_n *= -1;
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_KNEE_RIGHT],
+        pts[NUI_SKELETON_POSITION_KNEE_RIGHT]+rtp_n,
+        pts[NUI_SKELETON_POSITION_ANKLE_RIGHT]+rshp_n,
+        pts[NUI_SKELETON_POSITION_ANKLE_RIGHT]
+        );
+
+      // left leg
+      // polygon for left thight
+      vec3d ltp_n = (left_thight_line*mat3d(0,-1,0, 1,0,0, 0,0,1))
+        .NormaliseTo(left_thight_line.Length()/10);
+      if( ltp_n.CAngle(hip_line) < 0 )
+        ltp_n *= -1;
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_HIP_LEFT],
+        pts[NUI_SKELETON_POSITION_KNEE_LEFT],
+        pts[NUI_SKELETON_POSITION_KNEE_LEFT]+ltp_n,
+        pts[NUI_SKELETON_POSITION_HIP_LEFT]+hip_line/2
+        );
+      // left shin
+      vec3d lshp_n = (left_shin_line*mat3d(0,-1,0, 1,0,0, 0,0,1))
+        .NormaliseTo(left_shin_line.Length()/5);
+      if( lshp_n.CAngle(ltp_n) < 0 )
+        lshp_n *= -1;
+      DrawQuad(
+        pts[NUI_SKELETON_POSITION_KNEE_LEFT],
+        pts[NUI_SKELETON_POSITION_ANKLE_LEFT],
+        pts[NUI_SKELETON_POSITION_ANKLE_LEFT]+lshp_n,
+        pts[NUI_SKELETON_POSITION_KNEE_LEFT]+ltp_n);
+      }
+  }
+  catch(...)  {}
   rendering = false;
   return true;
 }
@@ -199,36 +326,13 @@ bool Skeleton::Orient(TGlPrimitive& P)  {
 void Skeleton::DrawQuad(const vec3d &p1, const vec3d &p2,
     const vec3d &p3, const vec3d &p4)
 {
-  TPSTypeList<double, const vec3d*> sorted;
-  vec3d center = (p1+p2+p3+p4)/4;
-  sorted.Add(0, &p1);
-  vec3d org(p1-center);
-  const vec3d *pts[3] = {&p2, &p3, &p4};
-  for( int i=0; i < 3; i++ )  {
-    vec3d vec = *pts[i] - center;
-    double ca = org.CAngle(vec);
-    vec = org.XProdVec(vec);
-    // negative - vec is on the right, positive - on the left, if ca == 0, vec == (0,0,0)
-    double vo = (ca <= 0.999 ? 0 : vec.Normalise()[2]);
-    if( ca >= 0 )  { // -90 to 90
-      if( vo < 0 )  // -90 to 0 3->4
-        sorted.Add(3.0 + ca, pts[i]);
-      else  // 0 to 90 0->1
-        sorted.Add(1.0 - ca, pts[i]);
-    }
-    else if( ca > -1 ) {  // 90-270
-      if( vo < 0 )  // 180 to 270 2->3
-        sorted.Add(3.0 + ca, pts[i]);
-      else  // 90 to 180 1->2
-        sorted.Add(1.0 - ca, pts[i]);
-    }
-    else  {  //-1, special case
-      sorted.Add(2, pts[i]);
-    }
-  }
   olx_gl::begin(GL_QUADS);
-  for( int i=0; i < 4; i++ )
-    olx_gl::vertex(*sorted.GetObject(i));
+  for( int i=0; i < 4; i++ )  {
+    olx_gl::vertex(p1);
+    olx_gl::vertex(p2);
+    olx_gl::vertex(p3);
+    olx_gl::vertex(p4);
+  }
   olx_gl::end();
 }
 /*****************************************************************************/
@@ -246,6 +350,7 @@ void Kinect::InitProcessing(short flags)  {
     if( pixels == NULL )  {
       TGXApp &app = TGXApp::GetInstance();
       pixels = new TGlPixels(app.GetRender(), "kinet_pixels", 0, 0, 0, 0, 0, 0);
+      pixels->SetVisible(false);
       app.AddObjectToCreate(pixels)->Create();
     }
   }
@@ -377,7 +482,8 @@ void Kinect::processVideo()  {
   pTexture->LockRect(0, &LockedRect, NULL, 0);
   if( LockedRect.Pitch != 0 )  {
     BYTE *pBuffer = (BYTE*) LockedRect.pBits;
-    pixels->SetData(640, 480, pBuffer, GL_RGBA); 
+    if( pixels->IsVisible() )
+      pixels->SetData(640, 480, pBuffer, GL_RGBA); 
   }
   NuiImageStreamReleaseFrame(hVideoStream, pImageFrame);
   TGXApp::GetInstance().Draw();
