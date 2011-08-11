@@ -3654,6 +3654,14 @@ const olxstr& TMainForm::GetStructureOlexFolder()  {
 void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
     FHtml->LockPageLoad(caller);
+  else  {
+    for( size_t i=0; i < FPopups.Count(); i++ )  {
+      if( FPopups.GetObject(i)->Html == wnd )  {
+        FPopups.GetObject(i)->Html->LockPageLoad(caller);
+        break;
+      }
+    }
+  }
 }
 //..............................................................................
 void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
