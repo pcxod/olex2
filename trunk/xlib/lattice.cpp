@@ -1180,9 +1180,11 @@ void TLattice::Compaq()  {
 }
 //..............................................................................
 template <int run>
-size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)  {
+size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)
+{
   if( run == 1 && ca.GetType() == iQPeakZ )  return 0;
   size_t cnt = 0;
+  ca.SetTag(1);
   for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
     TCAtom::Site& site = ca.GetAttachedSite(i);
     if( site.atom->GetTag() != 0  )  continue;
@@ -1190,22 +1192,19 @@ size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr) 
       cnt++;
       site.matrix = uc.MulMatrix(site.matrix, matr);
     }
-    else if( site.atom->GetFragmentId() == ca.GetFragmentId() )  {
-      TPSTypeList<double, TCAtom*> sorted_al;
-      const TAsymmUnit& au = *ca.GetParent();
-      for( size_t j=0; j < site.atom->AttachedSiteCount(); j++ )  {
-        TCAtom::Site& st = site.atom->GetAttachedSite(j);
-        if( st.atom->GetTag() != 0 || !st.matrix.IsFirst() )  continue;
-        sorted_al.Add(au.Orthogonalise(ca.ccrd()-st.atom->ccrd()).Length(), st.atom);
-      }
-      if( sorted_al.IsEmpty() || sorted_al.GetObject(0) != &ca )
-        continue;
+    /* if already attached and not here - then just skip */
+    else if( site.atom->GetFragmentId() == ca.GetFragmentId() &&
+            !site.matrix.IsFirst() )
+    {
+      continue;
     }
     site.atom->SetTag(1);
     site.atom->SetFragmentId(ca.GetFragmentId());
     site.atom->ccrd() = site.matrix*site.atom->ccrd();
-    if( site.atom->GetEllipsoid() != NULL )
-      *site.atom->GetEllipsoid() = uc.GetEllipsoid(site.matrix.GetContainerId(), site.atom->GetId());
+    if( site.atom->GetEllipsoid() != NULL )  {
+      *site.atom->GetEllipsoid() = uc.GetEllipsoid(
+        site.matrix.GetContainerId(), site.atom->GetId());
+    }
     if( site.atom->IsAvailable() )
       cnt += TLattice_CompaqAll_Process<run>(uc, *site.atom, site.matrix);
   }
@@ -1222,7 +1221,7 @@ void TLattice::CompaqAll()  {
       continue;
     cnt += TLattice_CompaqAll_Process<1>(uc, sa.CAtom(), uc.GetMatrix(0));
   }
-  // prcess Q-peaks
+  // process Q-peaks
   for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
     TSAtom& sa = Objects.atoms[i];
     if( sa.CAtom().GetTag() != 0 || !sa.CAtom().IsAvailable() )
