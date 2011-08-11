@@ -1657,6 +1657,22 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     // end tasks ...
     if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
       GetHtml()->ProcessPageLoadRequest();
+    THtml *main_html = FHtml;
+    try  {
+      for( size_t pi=0; pi < FPopups.Count(); pi++ )  {
+        if( FPopups.GetObject(pi)->Html->IsPageLoadRequested() &&
+            !FPopups.GetObject(pi)->Html->IsPageLocked() )
+        {
+          FHtml = FPopups.GetObject(pi)->Html;
+          FPopups.GetObject(pi)->Html->ProcessPageLoadRequest();
+        }
+      }
+    }
+    catch(const TExceptionBase &e)  {
+      TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
+    }
+    FHtml = main_html;
+
     FTimer->OnTimer.SetEnabled(true);
     if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
       static time_t FileMT = TEFile::FileAge(FListenFile);
@@ -3667,6 +3683,14 @@ void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
 void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
     FHtml->UnlockPageLoad(caller);
+  else  {
+    for( size_t i=0; i < FPopups.Count(); i++ )  {
+      if( FPopups.GetObject(i)->Html == wnd )  {
+        FPopups.GetObject(i)->Html->UnlockPageLoad(caller);
+        break;
+      }
+    }
+  }
 }
 //..............................................................................
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {
