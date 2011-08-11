@@ -112,7 +112,8 @@ public:
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
   void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
   void GrowAtoms(const TCAtomPList& Atoms, const smatd_list& matrices);
-  void GrowAtom(TCAtom& atom, const smatd& matrix);
+  // returns the atom (generated or exisiting)
+  TSAtom *GrowAtom(TCAtom& atom, const smatd& matrix);
   // adds new asymmetric unit transformed by the given symop 
   void Grow(const smatd& transform);
    /* generates content using current matrices, the current content stays */

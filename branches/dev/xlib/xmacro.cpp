@@ -95,11 +95,15 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(AtomInfo, EmptyString(), fpAny|psFileLoaded,
 "Searches information for given atoms in the database");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Compaq, "a-assembles broken fragments&;c-similar as with no options, but considers atom-to-atom distances\
-&;q-moves Q-peaks to the atoms, atoms are not affected", 
+  xlib_InitMacro(Compaq,
+    "a-assembles broken fragments&;c-similar as with no options, but considers "
+    "atom-to-atom distances&;q-moves Q-peaks to the atoms, atoms are not "
+    "affected&;m-assembles non-metallic parts of the structure first, then "
+    "moves metals to the closest atom",
     fpNone|psFileLoaded,
-"Moves all atoms or fragments of the asymmetric unit as close to each other as possible. If no options provided, all fragments\
- are assembled around the largest one.");
+"Moves all atoms or fragments of the asymmetric unit as close to each other as "
+"possible. If no options provided, all fragments are assembled around the "
+"largest one.");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Envi, "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;cs-leaves selection unchanged",
     fpNone|fpOne|fpTwo,
@@ -2102,6 +2106,34 @@ void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options, TMacroE
     TXApp::GetInstance().XFile().GetLattice().CompaqClosest();
   else if( Options.Contains('q') )  
     TXApp::GetInstance().XFile().GetLattice().CompaqQ();
+  else if( Options.Contains('m') )  {
+    TXFile &xf = TXApp::GetInstance().XFile();
+    TAsymmUnit &au = xf.GetAsymmUnit();
+    TIntList modified(au.AtomCount());
+    for( size_t i=0; i < au.AtomCount(); i++ )  {
+      TCAtom &a = au.GetAtom(i);
+      modified[i] = -100;
+      if( XElementLib::IsMetal(a.GetType()) )  {
+        modified[i] = a.GetConnInfo().maxBonds;
+        a.GetConnInfo().maxBonds = 0;
+      }
+      else if( a.GetType() == iQPeakZ && !a.IsDetached() )  {
+        modified[i] = -101;
+        a.SetDetached(true);
+      }
+    }
+    xf.GetLattice().Init();
+    xf.GetLattice().CompaqAll();
+    xf.GetLattice().CompaqClosest();
+    for( size_t i=0; i < au.AtomCount(); i++ )  {
+      if( modified[i] == -101 )
+        au.GetAtom(i).SetDetached(false);
+      else if( modified[i] != -100 )
+        au.GetAtom(i).GetConnInfo().maxBonds = modified[i];
+    }
+    xf.GetLattice().Init();
+    xf.GetLattice().CompaqQ();
+  }
   else
     TXApp::GetInstance().XFile().GetLattice().Compaq();
 }
