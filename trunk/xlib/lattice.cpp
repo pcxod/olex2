@@ -598,18 +598,16 @@ void TLattice::GrowFragments(bool GrowShells, TCAtomPList* Template)  {
     GrowAtoms(TmpAtoms, GrowShells, Template);
 }
 //..............................................................................
-void TLattice::GrowAtoms(const TSAtomPList& atoms, bool GrowShells, TCAtomPList* Template)  {
+void TLattice::GrowAtoms(const TSAtomPList& atoms, bool GrowShells,
+  TCAtomPList* Template)
+{
   if( atoms.IsEmpty() )  return;
-/* restore atom centres if were changed by some other procedure */
   DoGrow(atoms, GrowShells, Template);
 }
 //..............................................................................
 void TLattice::GrowAtom(TSAtom& Atom, bool GrowShells, TCAtomPList* Template)  {
   if( Atom.IsGrown() )  return;
-  TSAtomPList atoms;
-/* restore atom centres if were changed by some other procedure */
-  atoms.Add(&Atom);
-  DoGrow(atoms, GrowShells, Template);
+  DoGrow(TSAtomPList() << Atom, GrowShells, Template);
 }
 //..............................................................................
 void TLattice::GrowFragment(uint32_t FragId, const smatd& transform)  {
@@ -667,10 +665,12 @@ void TLattice::GrowAtoms(const TCAtomPList& atoms, const smatd_list& matrices)  
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::GrowAtom(TCAtom& atom, const smatd& matrix)  {
-  // check if the matices is unique
-  if( GetAtomRegistry().Find(TSAtom::Ref(atom.GetId(), matrix.GetId())) != NULL )
-    return;
+TSAtom *TLattice::GrowAtom(TCAtom& atom, const smatd& matrix)  {
+  // check if unique
+  TSAtom *a = GetAtomRegistry().Find(TSAtom::Ref(atom.GetId(), matrix.GetId()));
+  if( a != NULL && !a->IsDeleted() )  {
+    return a;
+  }
   smatd* m = NULL;
   bool found = false;
   for( size_t i=0; i < Matrices.Count(); i++ )  {
@@ -683,10 +683,11 @@ void TLattice::GrowAtom(TCAtom& atom, const smatd& matrix)  {
   if( !found )
     m = Matrices.Add(new smatd(matrix));
   OnStructureGrow.Enter(this);
-  GenerateAtom(atom, *m);
+  a = &GenerateAtom(atom, *m);
   RestoreCoordinates();
   Disassemble();
   OnStructureGrow.Exit(this);
+  return a;
 }
 //..............................................................................
 TSAtom& TLattice::GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net)  {
@@ -695,7 +696,8 @@ TSAtom& TLattice::GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net)  {
   SA.AddMatrix(&symop);
   SA.ccrd() = symop * SA.ccrd();
   GetAsymmUnit().CellToCartesian(SA.ccrd(), SA.crd());
-  SA.SetEllipsoid(&GetUnitCell().GetEllipsoid(symop.GetContainerId(), SA.CAtom().GetId()));
+  SA.SetEllipsoid(&GetUnitCell().GetEllipsoid(
+    symop.GetContainerId(), SA.CAtom().GetId()));
   return SA;
 }
 //..............................................................................
