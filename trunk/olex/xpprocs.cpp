@@ -2588,10 +2588,8 @@ void TMainForm::macFocus(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
-  FHtml->Update();
-  FXApp->Draw();
-  wxTheApp->Dispatch();
+  while( wxTheApp->Pending() )
+    wxTheApp->Dispatch();
 }
 //..............................................................................
 void TMainForm::macMove(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
