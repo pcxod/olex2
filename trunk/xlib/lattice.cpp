@@ -1257,8 +1257,12 @@ void TLattice::CompaqClosest()  {
       double minQD = 100000;
       smatd* transform = NULL;
       for( size_t j=0; j < neta_cnt; j++ )  {
+        if( !neta->Node(j).CAtom().IsAvailable() )
+          continue;
         const vec3d& crda = neta->Node(j).CAtom().ccrd();
         for( size_t k=0; k < netb_cnt; k++ )  {
+          if( !netb->Node(k).CAtom().IsAvailable() )
+            continue;
           const vec3d& crdb = netb->Node(k).CAtom().ccrd();
           double qd = 0;
           smatd* m = GetUnitCell().GetClosest(crda, crdb, true, &qd);
@@ -1332,24 +1336,28 @@ void TLattice::CompaqType(short type)  {
     if( transform == NULL )  continue;
     sa.ccrd() = sa.CAtom().ccrd() = (*transform * sa.ccrd());
     au.CellToCartesian(sa.CAtom().ccrd(), sa.crd());
-    if( sa.CAtom().GetEllipsoid() != NULL )
-      *sa.CAtom().GetEllipsoid() =
-        GetUnitCell().GetEllipsoid(transform->GetContainerId(), sa.CAtom().GetId());
+    if( sa.CAtom().GetEllipsoid() != NULL )  {
+      *sa.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(
+        transform->GetContainerId(), sa.CAtom().GetId());
+    }
     delete transform;
   }
   OnStructureUniq.Enter(this);
   Init();
   OnStructureUniq.Exit(this);
-  //RestoreADPs(false);
-  //UpdateConnectivity();
 }
 //..............................................................................
-void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
+void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
+  const smatd& transform)
+{
   if( IsGenerated() )  {
-    TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
+    TBasicApp::NewLogEntry(logError) <<
+      "Cannot perform this operation on grown structure";
     return;
   }
-  // transform may come with random Tag, so need to process ADP's manually - cannot pick from UC
+  /* transform may come with random Tag, so need to process ADP's manually -
+  cannot pick from UC
+  */
   const mat3d abc2xyz(mat3d::Transpose(GetAsymmUnit().GetCellToCartesian())),
               xyz2abc(mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
   const mat3d etm = abc2xyz*transform.r*xyz2abc;
@@ -1386,7 +1394,7 @@ void TLattice::UpdateConnectivityInfo()  {
 void TLattice::Disassemble(bool create_planes)  {
   if( Objects.atoms.IsEmpty() )  return;
   OnDisassemble.Enter(this);
-  // clear bonds & fargments
+  // clear bonds & fragments
   ClearBonds();
   ClearFragments();
   TArrayList<vec3d> ocrd(Objects.atoms.Count());
