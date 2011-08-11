@@ -262,18 +262,28 @@ public:
     return type == NULL ? EmptyString() : type->symbol;
   }
   // returns true if labels is a symbol
-  static bool IsElement(const olxstr& label) {  return FindBySymbol(label) != NULL;  }
+  static bool IsElement(const olxstr& label) {
+    return FindBySymbol(label) != NULL;
+  }
   // checks if p is a label starting from an element symbol
-  static bool IsAtom(const olxstr& label)  {  return (FindBySymbolEx(label) != NULL);  }
+  static bool IsAtom(const olxstr& label)  {
+    return (FindBySymbolEx(label) != NULL);
+  }
 
-  /* parses a string like C37H41P2BRhClO into a list of element names and their count,
-  the provided list is being appended to and not cleared; returns a reference to provided
-  ContentList*/
+  /* parses a string like C37H41P2BRhClO into a list of element names and their
+  count, the provided list is being appended to and not cleared; returns a
+  reference to provided ContentList
+  */
   static ContentList& ParseElementString(const olxstr& su, ContentList& cl);
-  /* sorts the content list, so that C comes first, then H and then by Z descending;
-  returns a reference to th provide ContentList */
+  /* sorts the content list, so that C comes first, then H and then by Z
+  descending; returns a reference to th provide ContentList
+  */
   static ContentList& SortContentList(ContentList& cl);
 
+  // checks if a string is a shortcut for element group
+  static bool IsElementShortcut(const olxstr& c)  {
+    return c.Equalsi('M') || c.Equalsi('X');
+  }
   // checks if given element is in main group 1-8
   static bool IsGroup(int group, const cm_Element &e)  {
     if( group < 3 )  {
@@ -341,9 +351,13 @@ public:
   static bool IsGroup7(const cm_Element &e) {  return IsGroup(7, e);  }
   static bool IsHalogen(const cm_Element &e)  {  return IsGroup7(e);  }
   // La->Lu
-  static bool IsLanthanide(const cm_Element &e)  {  return e.z >= 57 && e.z <= 71;  }
+  static bool IsLanthanide(const cm_Element &e)  {
+    return e.z >= 57 && e.z <= 71;
+  }
   // Ac->Lr
-  static bool IsActinide(const cm_Element &e)  {  return e.z >= 89 && e.z <= 103;  }
+  static bool IsActinide(const cm_Element &e)  {
+    return e.z >= 89 && e.z <= 103;
+  }
   // He->Rn
   static bool IsGroup8(const cm_Element &e) {  return IsGroup(8, e);  }
 

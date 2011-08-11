@@ -256,7 +256,8 @@ public:
         if( TAtomReference(toks[j], SelectionOwner)._Expand(
           rm, tmp_atoms, residues[i]) == 0 )
         {
-          if( i == 0 )  unprocessed.Add( toks[j] );
+          if( i == 0 )
+            unprocessed.Add(toks[j]);
           succeded = false;
           break;
         }
@@ -269,6 +270,22 @@ public:
       tmp_atoms.Clear();
     }
     return unprocessed.IsEmpty() ? EmptyString() : unprocessed.Text(' ');
+  }
+
+  /* decodes M to all metals, extensions are possible... */
+  static ConstSortedElementPList ExpandAcronym(const olxstr &type,
+    const TAsymmUnit & au)
+  {
+    SortedElementPList res;
+    for( size_t i=0; i < au.AtomCount(); i++ )  {
+      TCAtom &a = au.GetAtom(i);
+      if( a.IsDeleted() )  continue;
+      if( type.Equalsi('M') && XElementLib::IsMetal(a.GetType()) )
+        res.AddUnique(&a.GetType());
+      else if( type.Equalsi('X') && XElementLib::IsHalogen(a.GetType()) )
+        res.AddUnique(&a.GetType());
+    }
+    return res;
   }
   /*Returns a list of elements reffered like $C,O - all O and C or $*,C
   (alternatively: $*-C - all but C
@@ -284,20 +301,44 @@ public:
       TStrList exc(types.SubStringFrom(types.CharAt(1) == '-' ? 2 : 1), ',');
       for( size_t i=0; i < exc.Count(); i++ )  {
         const cm_Element *elm = XElementLib::FindBySymbol(exc[i]);
-        if( elm == NULL )
-          throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << exc[i]);
-        res.Remove(elm);
+        if( elm == NULL )  {
+          if( !XElementLib::IsElementShortcut(exc[i]) )  {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              olxstr("atom type=") << exc[i]);
+          }
+          ConstSortedElementPList elms = ExpandAcronym(exc[i], au);
+          for( size_t i=0; i < elms.Count(); i++ )
+            res.Remove(elms[i]);
+        }
+        else
+          res.Remove(elm);
       }
     }
     else  {
       TStrList tps(types, ',');
       for( size_t i=0; i < tps.Count(); i++ )  {
-        const cm_Element *elm = XElementLib::FindBySymbol(tps[i]);
+        bool subtract = tps[i].StartsFrom('-');
+        olxstr elm_name = subtract ? tps[i].SubStringFrom(1) : tps[i];
+        const cm_Element *elm = XElementLib::FindBySymbol(elm_name);
         if( elm == NULL )  {
-          throw TInvalidArgumentException(__OlxSourceInfo,
-            olxstr("atom type=") << tps[i]);
+          if( !XElementLib::IsElementShortcut(tps[i]) )  {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              olxstr("atom type=") << tps[i]);
+          }
+          ConstSortedElementPList elms = ExpandAcronym(tps[i], au);
+          for( size_t i=0; i < elms.Count(); i++ )  {
+            if( subtract )
+              res.Remove(elms[i]);
+            else
+              res.AddUnique(elms[i]);
+          }
         }
-        res.AddUnique(elm);
+        else  {
+          if( subtract )
+            res.Remove(elm);
+          else
+            res.AddUnique(elm);
+        }
       }
     }
     return res;

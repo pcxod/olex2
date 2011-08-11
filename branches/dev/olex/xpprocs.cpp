@@ -1063,7 +1063,18 @@ void TMainForm::macProcessCmd(TStrObjList &Cmds, const TParamList &Options, TMac
 }
 //..............................................................................
 void TMainForm::macWait(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olx_sleep(Cmds[0].ToInt());
+  int val = Cmds[0].ToInt();
+  if( Options.Contains('r') )  {
+    int iv = 50;
+    while( val > 0 )  {
+      while( wxTheApp->Pending() )
+        wxTheApp->Dispatch();
+      olx_sleep(iv);
+      val -= iv;
+    }
+  }
+  else
+    olx_sleep(val);
 }
 //..............................................................................
 void TMainForm::macSwapBg(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2589,10 +2600,8 @@ void TMainForm::macFocus(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
-  FHtml->Update();
-  FXApp->Draw();
-  wxTheApp->Dispatch();
+  while( wxTheApp->Pending() )
+    wxTheApp->Dispatch();
 }
 //..............................................................................
 void TMainForm::macMove(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {

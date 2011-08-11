@@ -18,7 +18,7 @@
 using namespace olx_nui;
 /*****************************************************************************/
 INUI *olx_nui::Initialise() {
-#if defined (__WIN32__) && !defined(_WIN64)
+#if defined (__WIN32__) && !defined(_WIN64) && defined(__OLX_USE_NUI__)
   Kinect *kinect = new Kinect;
   TEGC::AddP(kinect);
   kinect->Initialise();
@@ -29,7 +29,7 @@ INUI *olx_nui::Initialise() {
 /*****************************************************************************/
 /*****************************************************************************/
 /*****************************************************************************/
-#if defined(__WIN32__) && !defined(_WIN64)
+#if defined(__WIN32__) && !defined(_WIN64) && defined(__OLX_USE_NUI__)
 void Skeleton::Create(const olxstr& cName) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);

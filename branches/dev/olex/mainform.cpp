@@ -513,8 +513,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(ProcessCmd, EmptyString(), fpAny^(fpNone|fpOne),
 "Send a command to current process. 'nl' is translated to the new line char and\
  'sp' to the white space char");
-  this_InitMacroD(Wait, EmptyString(), fpOne,
-"Forces Olex2 to sleep for provided number of milliseconds");
+  this_InitMacroD(Wait, "r-during wait all events are processed", fpOne,
+"Forces Olex2 and calling process to sleep for provided number of milliseconds");
 
   this_InitMacroD(SwapBg, EmptyString(), fpNone,
 "Swaps current background to white or vice-versa");
@@ -1674,6 +1674,22 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     // end tasks ...
     if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
       GetHtml()->ProcessPageLoadRequest();
+    THtml *main_html = FHtml;
+    try  {
+      for( size_t pi=0; pi < FPopups.Count(); pi++ )  {
+        if( FPopups.GetObject(pi)->Html->IsPageLoadRequested() &&
+            !FPopups.GetObject(pi)->Html->IsPageLocked() )
+        {
+          FHtml = FPopups.GetObject(pi)->Html;
+          FPopups.GetObject(pi)->Html->ProcessPageLoadRequest();
+        }
+      }
+    }
+    catch(const TExceptionBase &e)  {
+      TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
+    }
+    FHtml = main_html;
+
     FTimer->OnTimer.SetEnabled(true);
     if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
       static time_t FileMT = TEFile::FileAge(FListenFile);
@@ -3671,11 +3687,27 @@ const olxstr& TMainForm::GetStructureOlexFolder()  {
 void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
     FHtml->LockPageLoad(caller);
+  else  {
+    for( size_t i=0; i < FPopups.Count(); i++ )  {
+      if( FPopups.GetObject(i)->Html == wnd )  {
+        FPopups.GetObject(i)->Html->LockPageLoad(caller);
+        break;
+      }
+    }
+  }
 }
 //..............................................................................
 void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
     FHtml->UnlockPageLoad(caller);
+  else  {
+    for( size_t i=0; i < FPopups.Count(); i++ )  {
+      if( FPopups.GetObject(i)->Html == wnd )  {
+        FPopups.GetObject(i)->Html->UnlockPageLoad(caller);
+        break;
+      }
+    }
+  }
 }
 //..............................................................................
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {

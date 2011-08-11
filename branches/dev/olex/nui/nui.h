@@ -34,7 +34,7 @@ public:
 
 INUI *Initialise();
 
-#if defined __WIN32__ && !defined(_WIN64)
+#if defined __WIN32__ && !defined(_WIN64) && defined(__OLX_USE_NUI__)
 #include <MSR_NuiApi.h>
 
 class Skeleton : public AGDrawObject {
