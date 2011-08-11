@@ -680,7 +680,7 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded);
 
   this_InitMacroD(Mode, 
-"a-[name] autocomplete\n&;\
+"a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only\n&;\
 p-[name] prefix\n&;\
 s-[grow] short interactions; [name] suffix; [fit] split&;\
 t-[name] type\n&;\
