@@ -828,29 +828,50 @@ separated values of Atom Type and radius, an entry a line");
  Angstrems&;i-integrates the map&;m-mask the structure", fpNone|psFileLoaded,
  "Calculates fourier map");
   this_InitMacroD(TestBinding, EmptyString(), fpAny, "Internal tests");
-  this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne, "Shows symmetry elements of the unitcell");
-  this_InitMacroD(Textm, EmptyString(), fpOne, "Runs subsequent commands stored in a text file");
-  this_InitMacroD(TestStat, EmptyString(), fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name");
-  this_InitMacroD(ExportFont, EmptyString(), fpTwo, "Exports given fonts into Olex2 portable format.\
- At maximum two fonts a file are supported: a fixed and a proportional font.\
- Example: ExportFont ChooseFont()&ChooseFont test.fnt");
+  this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne,
+    "Shows symmetry elements of the unitcell");
+  this_InitMacroD(Textm, EmptyString(), fpOne,
+    "Runs subsequent commands stored in a text file");
+  this_InitMacroD(TestStat, EmptyString(), fpOne,
+    "Test: runs statistical tests on structures in current folder. Expects a file name");
+  this_InitMacroD(ExportFont, EmptyString(), fpTwo,
+"Exports given fonts into Olex2 portable format. At maximum two fonts a file "
+"are supported: a fixed and a proportional font. Example: ExportFont "
+"ChooseFont()&ChooseFont test.fnt");
   this_InitMacroD(ImportFont, EmptyString(), fpTwo, "");
   this_InitMacroD(ImportFrag,
-"p-part to assign&;d-generate DFIX for 1-2 and 1-3 distances&;a-set specified AFIX to the imported fragment",
+"p-part to assign&;d-generate DFIX for 1-2 and 1-3 distances&;a-set specified "
+"AFIX to the imported fragment",
     fpNone|psFileLoaded, "Import a fragment to current structure");
-  this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded, "Exports selected fragment to an external file");
-  this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
-    "Creates a projection of the fragment of the provided atom onto a spehere");
-  this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded, "Internal routine for synchronisation");
-  this_InitMacroD(SAME, "i-invert the graphs&;e-expand SAME into the list of SADI",
-    fpAny|psFileLoaded, "Creates SAME instruction for two fragments (two selected atoms or two\
- atoms provided) or number_of_groups and groups following each another (or selection)");
-  this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded, "Creates residue with given class name and optionally number and adds selected\
- or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues");
-  this_InitMacroD(WBox, "w-use atomic mass instead of unit weights for atoms&;s-create separate boxes for fragments", 
-	(fpAny)|psFileLoaded, "Calculates wrapping box around provided box using the set of best, intermidiate and worst planes");
+  this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
+    "Exports selected fragment to an external file");
+  this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]",
+    fpNone|fpOne|psFileLoaded, 
+"Creates a projection of the fragment of the provided atom onto a spehere");
+  this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
+    "Internal routine for synchronisation");
+  this_InitMacroD(SAME,
+    "i-invert the graphs&;e-expand SAME into the list of SADI",
+    fpAny|psFileLoaded,
+"Creates SAME instruction for two fragments (two selected atoms or two atoms "
+"provided) or number_of_groups and groups following each another "
+"(or selection)");
+  this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded,
+"Creates residue with given class name and optionally number and adds selected"
+" or provided atoms into the residue. If provided residue class name is 'none'"
+", provided atoms are removed from their residues");
+  this_InitMacroD(WBox,
+"w-use atomic mass instead of unit weights for atoms&;s-create separate boxes "
+"for fragments", 
+	  (fpAny)|psFileLoaded,
+"Calculates wrapping box around provided box using the set of best, "
+"intermidiate and worst planes");
   this_InitMacroD(Center, "z-also recalculates the scene zoom", 
-	(fpAny)|psFileLoaded, "Sets the centre of rotation to given point");
+	  (fpAny)|psFileLoaded, "Sets the centre of rotation to given point");
+  this_InitMacroD(FlushFS, EmptyString(), 
+  	(fpOne|fpNone),
+"Saves current content of the virtual file system. If no parameters is given - "
+"the global state is saved. Possible arguments: global, structure");
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
@@ -3592,19 +3613,14 @@ void TMainForm::CallbackFunc(const olxstr& cbEvent, const olxstr& param)  {
   }
 }
 //..............................................................................
-//void TMainForm::CallbackMacro(const olxstr& cbEvent, TStrList& params, const TParamList &Options)  {
-//}
-//..............................................................................
-//void TMainForm::CallbackMacro(const olxstr& cbEvent, olxstr& param, const TParamList &Options)  {
-//}
-//..............................................................................
 void TMainForm::SaveVFS(short persistenceId)  {
   try  {
     olxstr dbFN;
     if( persistenceId == plStructure )  {
       if( !FXApp->XFile().HasLastLoader() )  return;
       dbFN = GetStructureOlexFolder();
-      dbFN << TEFile::ChangeFileExt( TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
+      dbFN << TEFile::ChangeFileExt(
+        TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
     else if(persistenceId == plGlobal )
       dbFN << DataDir << "global.odb";
@@ -3627,15 +3643,17 @@ void TMainForm::LoadVFS(short persistenceId)  {
     if( persistenceId == plStructure )  {
       if( !FXApp->XFile().HasLastLoader() )  return;
       dbFN = GetStructureOlexFolder();
-      dbFN << TEFile::ChangeFileExt( TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
+      dbFN << TEFile::ChangeFileExt(
+        TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
     else if(persistenceId == plGlobal )
       dbFN << DataDir << "global.odb";
-    else
-      throw TFunctionFailedException(__OlxSourceInfo, "undefined persistence level");
+    else  {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "undefined persistence level");
+    }
 
     if( !TEFile::Exists(dbFN ) )  return;
-
     try  {
       TEFile dbf(dbFN, "rb");
       TFileHandlerManager::LoadFromStream(dbf, persistenceId);
@@ -3646,7 +3664,7 @@ void TMainForm::LoadVFS(short persistenceId)  {
     }
   }
   catch(const TExceptionBase &e)  {
-    ShowAlert(e, "Failed to save VFS");
+    ShowAlert(e, "Failed to read VFS");
   }
 }
 //..............................................................................
@@ -3820,7 +3838,7 @@ static PyMethodDef CORE_Methods[] = {
    };
 //..............................................................................
 void TMainForm::PyInit()  {
-  Py_InitModule( "olex_gui", CORE_Methods );
+  Py_InitModule("olex_gui", CORE_Methods);
 }
 //..............................................................................
 void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
