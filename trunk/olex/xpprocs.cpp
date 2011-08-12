@@ -9603,3 +9603,21 @@ void TMainForm::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(XLibMacros::NAString);
 }
 //..............................................................................
+void TMainForm::macFlushFS(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  if( Cmds.IsEmpty() || Cmds[0].Equalsi("global") )  {
+    SaveVFS(plGlobal);
+  }
+  else if( Cmds[0].Equalsi("structure") )  {
+    if( !FXApp->XFile().HasLastLoader() )  {
+      E.ProcessingError(__OlxSrcInfo, "a loaded file is required");
+      return;
+    }
+    SaveVFS(plStructure);
+  }
+  else  {
+    E.ProcessingError(__OlxSrcInfo, "unknown option: ").quote() << Cmds[0];
+  }
+}
+//..............................................................................

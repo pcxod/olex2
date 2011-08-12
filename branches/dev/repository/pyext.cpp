@@ -202,7 +202,8 @@ PyObject* runUnregisterCallback(PyObject* self, PyObject* args)  {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wO");
   if( !PyCallable_Check(fun) )
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Parameter must be callable");
-  PythonExt::GetInstance()->GetOlexProcessor()->unregisterCallbackFunc(cbEvent, PyEval_GetFuncName(fun) );
+  PythonExt::GetInstance()->GetOlexProcessor()->unregisterCallbackFunc(
+    cbEvent, PyEval_GetFuncName(fun));
   return Py_BuildValue("b", true);
 }
 //..............................................................................
@@ -228,7 +229,7 @@ PyObject* runRegisterMacro(PyObject* self, PyObject* args)  {
   }
   catch( const TExceptionBase& exc )  {
     TStrList st;
-    exc.GetException()->GetStackTrace( st );
+    exc.GetException()->GetStackTrace(st);
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, st.Text('\n'));
   }
 }
