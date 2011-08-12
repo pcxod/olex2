@@ -34,7 +34,6 @@ TGlMaterial TdlgMatProp::MaterialCopy;
 TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
-  //Material = NULL;
   Object = &object;
   Init();
 }
@@ -42,11 +41,9 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, AGDrawObject& object) :
 TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
-  //Material = &mat;
   Object = NULL;
+  Materials.AddCCopy(mat);
   Init();
-  Materials[0] = mat;
-  Init(Materials[0]);
 }
 //..............................................................................
 void TdlgMatProp::Init()  {
