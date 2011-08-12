@@ -12,15 +12,18 @@
 #include "emath.h"
 
 TIString TGlOption::ToString() const  {
-  if( olx_abs(data[0]) >= 1 || olx_abs(data[1]) >= 1 || olx_abs(data[2]) >= 1 || olx_abs(data[3]) >= 1 )  {
-    olxstr Tmp(olxstr::FormatFloat(3, data[0]), 24);
-    Tmp << ',' << olxstr::FormatFloat(3, data[1]) <<
-           ',' << olxstr::FormatFloat(3, data[2]) <<
-           ',' << olxstr::FormatFloat(3, data[3]);
+  if( olx_abs(data[0]) > 1 || olx_abs(data[1]) > 1 || olx_abs(data[2]) > 1
+    || olx_abs(data[3]) > 1 )
+  {
+    olxstr Tmp(olxstr::FormatFloat(3, data[0]), 32);
+    Tmp.stream(',') <<
+      olxstr::FormatFloat(3, data[1]) <<
+      olxstr::FormatFloat(3, data[2]) <<
+      olxstr::FormatFloat(3, data[3]);
     return Tmp;
   }
   else  {
-    return olxstr((unsigned int)GetRGB());
+    return olxstr(GetRGB());
   }
 }
 //..............................................................................
@@ -28,10 +31,10 @@ bool TGlOption::FromString(const olxstr &S)  {
   if( S.FirstIndexOf(',') != InvalidIndex )  {
     TStrList SL(S, ',');
     if( SL.Count() != 4 )  return false;
-    data[0] = (float)SL[0].ToDouble();
-    data[1] = (float)SL[1].ToDouble();
-    data[2] = (float)SL[2].ToDouble();
-    data[3] = (float)SL[3].ToDouble();
+    data[0] = SL[0].ToFloat<float>();
+    data[1] = SL[1].ToFloat<float>();
+    data[2] = SL[2].ToFloat<float>();
+    data[3] = SL[3].ToFloat<float>();
   }
   else  {
     *this = S.SafeUInt<uint32_t>();
