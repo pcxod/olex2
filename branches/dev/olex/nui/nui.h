@@ -43,14 +43,15 @@ protected:
     const vec3d &p3, const vec3d &p4);
 public:
   Skeleton(TGlRenderer& Renderer, const olxstr& collectionName)
-    : AGDrawObject(Renderer, collectionName)
+  : AGDrawObject(Renderer, collectionName),
+    points(NUI_SKELETON_COUNT)
   {}
   void Create(const olxstr& cName=EmptyString());
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {
     return false;
   }
-  vec3d_alist points;
+  TArrayList<vec3d_alist> points;
 };
 
 class Kinect : public INUI {
