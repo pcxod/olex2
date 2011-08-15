@@ -87,17 +87,17 @@ protected:
   void ClearSwitchStates()  {  SwitchStates.Clear();  }
   // library
   DefMacro(ItemState)
-    DefMacro(UpdateHtml)
-    DefMacro(HtmlHome)
-    DefMacro(HtmlReload)
-    DefMacro(HtmlLoad)
-    DefMacro(HtmlDump)
+    DefMacro(Update)
+    DefMacro(Home)
+    DefMacro(Load)
+    DefMacro(Dump)
     DefMacro(Tooltips)
     DefMacro(SetFonts)
     DefMacro(SetBorders)
     DefMacro(DefineControl)
     DefMacro(Hide)
     DefMacro(Group)
+    DefMacro(LstObj)
 
     DefFunc(GetValue)
     DefFunc(GetData)
@@ -212,7 +212,6 @@ public:
   void SetHomePage(const olxstr& hp)  {  HomePage = hp;  }
 
   bool LoadPage(const wxString &File);
-  bool ReloadPage();
   bool UpdatePage();
   DefPropC(olxstr, WebFolder)
 

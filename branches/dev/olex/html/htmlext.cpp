@@ -19,9 +19,6 @@
 #include "utf8file.h"
 #include "wxzipfs.h"
 
-#define this_InitFunc(funcName, argc) \
-  (*THtml::Library).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc));\
-  (LC->GetLibrary()).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc))
 #define this_InitFuncD(funcName, argc, desc) \
   (*THtml::Library).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc, desc));\
   (LC->GetLibrary()).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc, desc))
@@ -59,41 +56,51 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, const olxstr &pop_name, in
   PageLoadRequested = false;
   if( LC && ! THtml::Library )  {
     THtml::Library = LC->GetLibrary().AddLibrary("html");
-
-    InitMacroA( *THtml::Library, THtml, ItemState, ItemState, u-does not update the html, fpAny^(fpNone|fpOne) );
-    InitMacro( LC->GetLibrary(), THtml, ItemState, u-does not update the html, fpAny^(fpNone|fpOne) );
-
-    InitMacroA( *THtml::Library, THtml, UpdateHtml, UpdateHtml, , fpNone|fpOne );
-    InitMacro( LC->GetLibrary(), THtml, UpdateHtml, , fpNone|fpOne );
-
-    InitMacroA( *THtml::Library, THtml, HtmlHome, Home, , fpNone|fpOne );
-    InitMacro( LC->GetLibrary(), THtml, HtmlHome, , fpNone|fpOne );
-
-    InitMacroA( *THtml::Library, THtml, HtmlReload, Reload, , fpNone|fpOne );
-    InitMacro( LC->GetLibrary(), THtml, HtmlReload, , fpNone|fpOne );
-
-    InitMacroA( *THtml::Library, THtml, HtmlLoad, Load, , fpOne|fpTwo );
-    InitMacro( LC->GetLibrary(), THtml, HtmlLoad, , fpOne|fpTwo );
-
-    InitMacroA( *THtml::Library, THtml, HtmlDump, Dump, , fpOne|fpTwo );
-    InitMacro( LC->GetLibrary(), THtml, HtmlDump, , fpOne|fpTwo );
-
-    InitMacroA( *THtml::Library, THtml, Tooltips, Tooltips, , fpNone|fpOne|fpTwo );
-    InitMacroA( LC->GetLibrary(), THtml, Tooltips, Htmltt, , fpNone|fpOne|fpTwo );
-
-    InitMacroD( *THtml::Library, THtml, SetFonts, EmptyString(), fpTwo,
+    InitMacroD(*THtml::Library, THtml, ItemState,
+      "u-does not update the html",
+      fpAny^(fpNone|fpOne),
+"Changes state of the HTML switch, accepts masks like '*-picture-*'"
+    );
+    InitMacroD(*THtml::Library, THtml, Update, EmptyString(),
+      fpNone|fpOne,
+      "Reloads the content of the main or given named HTML window"
+    );
+    InitMacroD(*THtml::Library, THtml, Home, EmptyString(), fpNone|fpOne,
+      "Reloads the page"
+    );
+    InitMacroD(*THtml::Library, THtml, Load, EmptyString(), fpOne|fpTwo,
+"Loads content into main or given HTML page. Example: load name file_name"
+    );
+    InitMacroD(*THtml::Library, THtml, Dump, EmptyString(), fpOne|fpTwo,
+      "Saves content of the main or given page into the file"
+    );
+    InitMacroD(*THtml::Library, THtml, Tooltips, EmptyString(),
+      fpNone|fpOne|fpTwo,
+"Enables or disables tooltip for HTML. If no arguments is given the state of "
+"tooltops for the main HTML is inverted. If a single boolean argument is given"
+" - the state of the tooltips is set to the given value, if the argument is "
+"not a boolean the state of the tooltips for HTML windows with given name is "
+"inverted. If two arguments are given - the first should be an HTML window "
+"name and the second - a boolean value. This function executes the htmltt "
+"state change event"
+      );
+    InitMacroD(*THtml::Library, THtml, SetFonts, EmptyString(), fpTwo,
       "Sets normal and fixed fonts to display HTML content");
-
     InitMacroD( *THtml::Library, THtml, SetBorders, EmptyString(), fpOne|fpTwo,
       "Sets borders between HTML content and window edges");
-    InitMacroD( *THtml::Library, THtml, DefineControl, 
-      "v-value&;i-tems&;c-checked/down&;bg-background color&;fg-foreground color;&;min-min value&;max-max value", 
-      fpTwo, "Defines a managed control properties");
-    InitMacroD( *THtml::Library, THtml, Hide, EmptyString(), 
+    InitMacroD(*THtml::Library, THtml, DefineControl, 
+"v-value&;i-tems&;c-checked/down&;bg-background color&;fg-foreground color"
+"&;min-min value&;max-max value", 
+      fpTwo,
+      "Defines a managed control properties"
+    );
+    InitMacroD(*THtml::Library, THtml, Hide, EmptyString(), 
       fpOne, "Hides an Html popup window");
-    InitMacroD( *THtml::Library, THtml, Group, EmptyString(), 
+    InitMacroD(*THtml::Library, THtml, Group, EmptyString(), 
       fpAny^(fpNone|fpOne), "Creates an exclusive group of buttons");
-
+    InitMacroD(*THtml::Library, THtml, LstObj, EmptyString(), 
+      fpAny^(fpNone|fpOne),
+      "Prints the list of available HTML objects");
     this_InitFuncD(GetValue, fpOne, "Returns value of specified object");
     this_InitFuncD(GetData, fpOne, "Returns data associated with specified object");
     this_InitFuncD(GetState, fpOne|fpTwo, "Returns state of the checkbox or a button.\
@@ -527,17 +534,6 @@ bool THtml::ProcessPageLoadRequest()  {
   return res;
 }
 //..............................................................................
-bool THtml::ReloadPage()  {
-  if( IsPageLocked() )  {
-    PageLoadRequested = true;
-    PageRequested = FileName;
-    return true;
-  }
-  Objects.Clear();
-  Traversables.Clear();
-  return LoadPage(FileName.u_str());
-}
-//..............................................................................
 bool THtml::LoadPage(const wxString &file)  {
   if( file.IsEmpty() )
     return false;
@@ -601,8 +597,7 @@ bool THtml::UpdatePage()  {
   else
     Path = WebFolder;
 
-  olxstr oldPath( TEFile::CurrentDir() );
-
+  olxstr oldPath(TEFile::CurrentDir());
   TEFile::ChangeDir(WebFolder);
 
   for( size_t i=0; i < Root->SwitchCount(); i++ )  // reload switches
@@ -890,31 +885,31 @@ void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
 //..............................................................................
 void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.IsEmpty() )  {
-    SetShowTooltips( !GetShowTooltips() );
+    SetShowTooltips(!GetShowTooltips());
   }
   else if( Cmds.Count() == 1 )  {
-    if( Cmds[0].Equalsi("true") || Cmds[0].Equalsi("false") )
-      this->SetShowTooltips( Cmds[0].ToBool() );
+    if( Cmds[0].IsBool() )
+      this->SetShowTooltips(Cmds[0].ToBool());
     else  {
-      THtml* html = TGlXApp::GetMainForm()->FindHtml( Cmds[0] );
+      THtml* html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
       if( html == NULL )  return;
-      html->SetShowTooltips( !html->GetShowTooltips() );
+      html->SetShowTooltips(!html->GetShowTooltips());
     }
   }
   else  {
-    THtml* html = TGlXApp::GetMainForm()->FindHtml( Cmds[0] );
+    THtml* html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
     if( html != NULL )
-      html->SetShowTooltips( Cmds[1].ToBool(), Cmds[0] );
+      html->SetShowTooltips(Cmds[1].ToBool(), Cmds[0]);
   }
 }
 //..............................................................................
-void THtml::macUpdateHtml(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void THtml::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
-  html->UpdatePage();
+  html->LoadPage(html->FileName.u_str());
 }
 //..............................................................................
 void THtml::macSetFonts(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -930,35 +925,26 @@ void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   html->SetBorders(Cmds.GetLastString().ToInt());
 }
 //..............................................................................
-void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void THtml::macHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
-  html->LoadPage( html->GetHomePage().u_str() );
+  html->LoadPage(html->GetHomePage().u_str());
 }
 //..............................................................................
-void THtml::macHtmlReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
-  if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
-    return;
-  }
-  html->ReloadPage();
-}
-//..............................................................................
-void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void THtml::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
   }
-  html->LoadPage( Cmds.GetLastString().u_str() );
+  html->LoadPage(Cmds.GetLastString().u_str());
 }
 //..............................................................................
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TPopupData *html = TGlXApp::GetMainForm()->FindHtmlEx(Cmds[0]);
+  TPopupData *html = TGlXApp::GetMainForm()->Popups.Find(Cmds[0], NULL);
   if( html == NULL )  {
     //E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -967,7 +953,7 @@ void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E
     html->Dialog->Show(false);
 }
 //..............................................................................
-void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void THtml::macDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
@@ -1538,7 +1524,7 @@ void THtml::funGetBorders(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  TPopupData *pd = TGlXApp::GetMainForm()->Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -1551,7 +1537,7 @@ void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funShowModal(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  TPopupData *pd = TGlXApp::GetMainForm()->Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -1596,7 +1582,7 @@ void THtml::funClientHeight(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  TPopupData *pd = TGlXApp::GetMainForm()->Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -1608,7 +1594,7 @@ void THtml::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funContainerHeight(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  TPopupData *pd = TGlXApp::GetMainForm()->Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -1947,5 +1933,20 @@ void THtml::funCall(const TStrObjList &Params, TMacroError &E)  {
   if( !c.ctrl->ExecuteActionQueue(evt_name) )
     E.ProcessingError(__OlxSrcInfo, "Failed to execute: ").quote() << Params[0];
   TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
+}
+//..............................................................................
+void THtml::macLstObj(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TStrList all;
+  all.SetCapacity(Objects.Count());
+  for( size_t i=0; i < Objects.Count(); i++ )
+    all.Add(Objects.GetKey(i));
+  const TMainForm &mf = *TGlXApp::GetMainForm();
+  for( size_t i=0; i < mf.Popups.Count(); i++ )  {
+    THtml &h = *mf.Popups.GetValue(i)->Html;
+    all.SetCapacity(all.Count()+h.Objects.Count());
+    for( size_t j=0; j < h.Objects.Count(); j++ )
+      all.Add(mf.Popups.GetKey(i)) << '.' << h.Objects.GetKey(j);
+  }
+  TBasicApp::NewLogEntry() << all;
 }
 //..............................................................................

@@ -231,7 +231,6 @@ protected:
 
   TTypeList<TScheduledTask> Tasks;
 
-  TSStrPObjList<olxstr,TPopupData*, true> FPopups;
   class TGlCanvas *FGlCanvas;
   TGXApp* FXApp;
   TDataFile FHelpFile, FMacroFile, FPluginFile;
@@ -253,7 +252,6 @@ protected:
   void AquireTooltipValue();
 
   void ClearPopups();
-  TPopupData* GetPopup(const olxstr& name);
 
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
@@ -753,8 +751,8 @@ public:
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const  {  return FHtmlPanelWidth;  }
   inline THtml* GetHtml()  const {  return FHtml; }
+  olxstr_dict<TPopupData*, true> Popups;
   THtml* FindHtml(const olxstr& popupName) const;
-  TPopupData* FindHtmlEx(const olxstr& popupName) const;
   inline const olxstr& GetCurrentLanguageEncodingStr() const {
     return Dictionary.GetCurrentLanguageEncodingStr();
   }

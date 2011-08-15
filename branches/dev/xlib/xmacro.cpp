@@ -4145,7 +4145,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( op != NULL )  {
     op->executeMacroEx(olxstr("@reap \'") << FN << '\'', E);
     if( E.IsSuccessful() )
-      op->executeMacro("htmlreload");
+      op->executeMacro("html.Update");
   }
 }
 //..............................................................................

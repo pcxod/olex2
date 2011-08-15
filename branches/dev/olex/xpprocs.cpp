@@ -2375,13 +2375,13 @@ void TMainForm::macHtmlPanelVisible(TStrObjList &Cmds, const TParamList &Options
   }
   else if( Cmds.Count() == 2 ) {
     bool show = Cmds[0].ToBool();
-    TPopupData *pd = GetPopup( Cmds[1] );
+    TPopupData *pd = Popups.Find(Cmds[1], NULL);
     if( pd != NULL )  {
       if( show && !pd->Dialog->IsShown() )  pd->Dialog->Show();
       if( !show && pd->Dialog->IsShown() )  pd->Dialog->Hide();
     }
     else  {
-      E.ProcessingError(__OlxSrcInfo, "undefined popup name" );
+      E.ProcessingError(__OlxSrcInfo, "undefined popup name");
     }
   }
 }
@@ -4688,6 +4688,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       file_n.file_name = XLibMacros::CurrentDir + file_n.file_name;
   }
   else  {
+    if( !IsVisible() )  return;
     FileFilter ff;
     ff.AddAll("ins;cif;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
     ff.Add("*.mol", "MDL MOL");
@@ -4983,7 +4984,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( iBorder == 0 )
     iBorder = wxNO_BORDER;
   // check if the popup already exists
-  TPopupData *pd = GetPopup(Cmds[0]);
+  TPopupData *pd = Popups.Find(Cmds[0], NULL);
   if( pd != NULL )  {
     THtml* ph = FHtml;
     FHtml = pd->Html;
@@ -5019,7 +5020,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   pd->Dialog = dlg;
   pd->Html = html1;
 
-  FPopups.Add(Cmds[0], pd);
+  Popups.Add(Cmds[0], pd);
   THtml* ph = FHtml;
   FHtml = html1;
   try  {  html1->LoadPage(Cmds[1].u_str());  }

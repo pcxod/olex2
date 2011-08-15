@@ -1697,12 +1697,12 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       GetHtml()->ProcessPageLoadRequest();
     THtml *main_html = FHtml;
     try  {
-      for( size_t pi=0; pi < FPopups.Count(); pi++ )  {
-        if( FPopups.GetObject(pi)->Html->IsPageLoadRequested() &&
-            !FPopups.GetObject(pi)->Html->IsPageLocked() )
+      for( size_t pi=0; pi < Popups.Count(); pi++ )  {
+        if( Popups.GetValue(pi)->Html->IsPageLoadRequested() &&
+            !Popups.GetValue(pi)->Html->IsPageLocked() )
         {
-          FHtml = FPopups.GetObject(pi)->Html;
-          FPopups.GetObject(pi)->Html->ProcessPageLoadRequest();
+          FHtml = Popups.GetValue(pi)->Html;
+          Popups.GetValue(pi)->Html->ProcessPageLoadRequest();
         }
       }
     }
@@ -3130,15 +3130,11 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
 }
 //..............................................................................
 void TMainForm::ClearPopups()  {
-  for( size_t i=0; i < FPopups.Count(); i++ )  {
-    delete FPopups.GetObject(i)->Dialog;
-    delete FPopups.GetObject(i);
+  for( size_t i=0; i < Popups.Count(); i++ )  {
+    Popups.GetValue(i)->Dialog->Destroy();
+    delete Popups.GetValue(i);
   }
-  FPopups.Clear();
-}
-//..............................................................................
-TPopupData* TMainForm::GetPopup(const olxstr& name)  {
-  return FPopups[name];
+  Popups.Clear();
 }
 //..............................................................................
 bool TMainForm::CheckMode(size_t mode, const olxstr& modeData)  {
@@ -3153,13 +3149,13 @@ bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
   if( state == prsHtmlVis )  {
     if( stateData.IsEmpty() )
       return FHtmlMinimized;
-    TPopupData* pp = GetPopup( stateData );
+    TPopupData* pp = Popups.Find(stateData, NULL);
     return (pp != NULL) ? pp->Dialog->IsShown() : false;
   }
   if( state == prsHtmlTTVis )  {
     if( stateData.IsEmpty() )
       return FHtml->GetShowTooltips();
-    TPopupData* pp = GetPopup(stateData);
+    TPopupData* pp = Popups.Find(stateData, NULL);
     return (pp != NULL) ? pp->Html->GetShowTooltips() : false;
   }
   if( state == prsPluginInstalled )  {
@@ -3316,7 +3312,7 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
       return NULL;
     }
   }
-  catch( TExceptionBase& exc )  {
+  catch(const TExceptionBase& exc)  {
     me.ProcessingException(*Fun, exc);
     AnalyseError(me);
     return NULL;
@@ -3325,12 +3321,8 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
 }
 //..............................................................................
 THtml* TMainForm::FindHtml(const olxstr& popupName) const {
-  TPopupData* pd = FPopups[popupName];
+  TPopupData* pd = Popups.Find(popupName, NULL);
   return pd ? pd->Html : NULL;
-}
-//..............................................................................
-TPopupData* TMainForm::FindHtmlEx(const olxstr& popupName) const {
-  return FPopups[popupName];
 }
 //..............................................................................
 void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
@@ -3706,9 +3698,9 @@ void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
     FHtml->LockPageLoad(caller);
   else  {
-    for( size_t i=0; i < FPopups.Count(); i++ )  {
-      if( FPopups.GetObject(i)->Html == wnd )  {
-        FPopups.GetObject(i)->Html->LockPageLoad(caller);
+    for( size_t i=0; i < Popups.Count(); i++ )  {
+      if( Popups.GetValue(i)->Html == wnd )  {
+        Popups.GetValue(i)->Html->LockPageLoad(caller);
         break;
       }
     }
@@ -3719,9 +3711,9 @@ void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  
   if( wnd == FHtml )
     FHtml->UnlockPageLoad(caller);
   else  {
-    for( size_t i=0; i < FPopups.Count(); i++ )  {
-      if( FPopups.GetObject(i)->Html == wnd )  {
-        FPopups.GetObject(i)->Html->UnlockPageLoad(caller);
+    for( size_t i=0; i < Popups.Count(); i++ )  {
+      if( Popups.GetValue(i)->Html == wnd )  {
+        Popups.GetValue(i)->Html->UnlockPageLoad(caller);
         break;
       }
     }
