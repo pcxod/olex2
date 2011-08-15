@@ -425,8 +425,7 @@ int PythonExt::RunPython(const olxstr& script)  {
 }
 //..............................................................................
 void ExportLib(const olxstr &_root, const TLibrary& Lib)  {
-  if( Lib.LibraryCount() == 0 && Lib.FunctionCount() == 0
-      && Lib.MacroCount() == 0 )
+  if( Lib.IsEmpty() )
     return;
 
   olxstr root = TEFile::AddPathDelimeter(_root);
@@ -436,8 +435,9 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib)  {
   out.Write("import sys\n");
   out.Write("import olex\n");
   for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
-    out.Write(
-      olxcstr("import ") << Lib.GetLibraryByIndex(i)->GetName() << '\n');
+    TLibrary &lib = *Lib.GetLibraryByIndex(i);
+    if( !lib.IsEmpty() )
+      out.Write(olxcstr("import ") << lib.GetName() << '\n');
   }
   for( size_t i=0; i < Lib.FunctionCount(); i++ )  {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
@@ -453,8 +453,8 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib)  {
     out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ') << '\n');
   }
   for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
-    ExportLib(root + Lib.GetLibraryByIndex(i)->GetName(),
-      *Lib.GetLibraryByIndex(i));
+    TLibrary &lib = *Lib.GetLibraryByIndex(i);
+    ExportLib(root + lib.GetName(),  lib);
   }
 }
 //..............................................................................
@@ -464,6 +464,8 @@ void Export(const TStrObjList& Cmds, TMacroError& E)  {
   // clean up legacy export
   if( TEFile::Exists(Cmds[0]+".py") )
     TEFile::DelFile(Cmds[0]+".py");
+  if( TEFile::Exists(Cmds[0]+".pyc") )
+    TEFile::DelFile(Cmds[0]+".pyc");
   ExportLib(Cmds[0], o_r->GetLibrary());
 }
 //..............................................................................

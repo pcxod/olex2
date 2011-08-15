@@ -120,11 +120,21 @@ public:
   void ListAllFunctions(TBasicFunctionPList& store);
   void ListAllMacros(TBasicFunctionPList& store);
 
+  bool IsEmpty() const {
+    if( MacroCount() == 0 && FunctionCount() == 0 )  {
+      for( size_t i=0; i < LibraryCount(); i++ )
+        if( !GetLibraryByIndex(i)->IsEmpty() )
+          return false;
+      return true;
+    }
+    return false;
+  }
+
   class TDuplicateEntry : public TBasicException  {
   public:
     TDuplicateEntry(const olxstr& location, const olxstr& entry, const olxstr& entryType) :
       TBasicException(location, olxstr("Duplicate ") << entryType << '-' << entry)
-      {  ;  }
+      {}
     virtual IEObject* Replicate() const {  return new TDuplicateEntry(*this);  }
   };
 
@@ -132,7 +142,7 @@ public:
   public:
     TLibraryNotFound(const olxstr& location, const olxstr& libName) :
       TBasicException(location, olxstr("Library ") << libName << " not found")
-      {  ;  }
+      {}
     virtual IEObject* Replicate() const {  return new TLibraryNotFound(*this);  }
   };
 };
