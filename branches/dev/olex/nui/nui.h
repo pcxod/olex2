@@ -41,6 +41,9 @@ class Skeleton : public AGDrawObject {
 protected:
   void DrawQuad(const vec3d &p1, const vec3d &p2,
     const vec3d &p3, const vec3d &p4);
+  void DrawLimp(const vec3d &shoulder, const vec3d &wrist,
+    const vec3d &body, const vec3d &p_shoulder, const vec3d &p_elbow,
+    const vec3d &p_wrist, bool cw);
 public:
   Skeleton(TGlRenderer& Renderer, const olxstr& collectionName)
   : AGDrawObject(Renderer, collectionName),

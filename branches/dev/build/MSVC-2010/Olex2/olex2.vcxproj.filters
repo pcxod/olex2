@@ -201,6 +201,9 @@
     <ClCompile Include="..\..\..\olex\nui\nui.cpp">
       <Filter>nui</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\olex\nui\skeleton.cpp">
+      <Filter>nui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
