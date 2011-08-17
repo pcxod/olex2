@@ -1901,8 +1901,32 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
         TBasicApp::NewLogEntry(logException) << ex.GetException()->GetError();
         return false;
       }
-      if( sr.GetListType() == rltGroup2 && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )  {
-        TBasicApp::NewLogEntry(logError) << "Wrong restraint parameters list: " << toks.Text(' ');
+      int expected = 0;
+      if( sr.GetListType() == rltGroup2 &&
+          (agroup.Count() == 0 || (agroup.Count()%2)!=0) )
+      {
+        expected = 2;
+      }
+      else if( sr.GetListType() == rltGroup3 &&
+              (agroup.Count() == 0 || (agroup.Count()%3)!=0) )
+      {
+        expected = 3;
+      }
+      else if( sr.GetListType() == rltGroup4 &&
+              (agroup.Count() == 0 || (agroup.Count()%4)!=0) )
+      {
+        expected = 4;
+      }
+      if( expected != 0 )  {
+        olxstr str_sz;
+        switch( expected ) {
+        case 2: str_sz = "pairs";  break;
+        case 3: str_sz = "triplets";  break;
+        case 4: str_sz = "quadruplets";  break;
+        }
+        TBasicApp::NewLogEntry(logError)
+          << "Wrong restraint parameters list - a list of " << str_sz
+          << " is expected: " << toks.Text(' ');
         return false;
       }
       if( ins_name.Equalsi("FLAT") )  {  // a special case again...
