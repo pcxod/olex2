@@ -905,13 +905,31 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   if( checkSame && olx_is_valid_index(a.GetSameId()) )  {  // "
     TSameGroup& sg = rm.rSAME[a.GetSameId()];
     if( sg.IsValidForSave() )  {
+      bool overlap = false;
+      for( size_t i=0; i < sg.DependentCount(); i++ )  {
+        if( !sg.GetDependent(i).IsValidForSave() )
+          continue;
+        if( sg.DoOverlap(sg.GetDependent(i)) )  {
+          overlap = true;
+          break;
+        }
+        for( size_t j=i+1; j < sg.DependentCount(); j++ )  {
+          if( !sg.GetDependent(j).IsValidForSave() )
+            continue;
+          if( sg.GetDependent(i).DoOverlap(sg.GetDependent(j)) )  {
+            overlap = true;
+            break;
+          }
+        }
+        if( overlap )  break;
+      }
       for( size_t i=0; i < sg.DependentCount(); i++ )  {
         if( !sg.GetDependent(i).IsValidForSave() )
           continue;
         olxstr tmp("SAME ");
         tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' ' 
             << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
-        if( sg.GetDependent(i).Count() > 1 &&
+        if( !overlap && sg.GetDependent(i).Count() > 1 &&
           sg.GetDependent(i).AreAllAtomsUnique() )
         {
           tmp << ' ' << sg.GetDependent(i)[0].GetResiLabel() << " > "
