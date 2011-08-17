@@ -99,6 +99,15 @@ public:
         dep_cnt++;
     return dep_cnt != 0;
   }
+  // returns true if contains only unique atoms
+  bool AreAllAtomsUnique() const {
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetTag(i);
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      if( Atoms[i]->GetTag() != i )
+        return false;
+    return true;
+  }
 
   double Esd12, Esd13;
 

@@ -911,8 +911,16 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         olxstr tmp("SAME ");
         tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' ' 
             << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
-        for( size_t j=0; j < sg.GetDependent(i).Count(); j++ )
-          tmp << ' ' << sg.GetDependent(i)[j].GetResiLabel();
+        if( sg.GetDependent(i).Count() > 1 &&
+          sg.GetDependent(i).AreAllAtomsUnique() )
+        {
+          tmp << ' ' << sg.GetDependent(i)[0].GetResiLabel() << " > "
+            << sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetResiLabel();
+        }
+        else  {
+          for( size_t j=0; j < sg.GetDependent(i).Count(); j++ )
+            tmp << ' ' << sg.GetDependent(i)[j].GetResiLabel();
+        }
         HyphenateIns(tmp, sl);
       }
       for( size_t i=0; i < sg.Count(); i++ )
