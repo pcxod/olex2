@@ -74,6 +74,8 @@ protected:
   short Action;
   bool SelectionEnabled;
   class TGlGroup* FindObjectGroup(const AGDrawObject& obj);
+  // to distinguish clicking on an object 
+  int ClickThreshold;
 public:
   TGlMouse(TGlRenderer *Parent, TDFrame *Frame);
   virtual ~TGlMouse();

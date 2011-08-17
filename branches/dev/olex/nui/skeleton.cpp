@@ -47,67 +47,14 @@ void Skeleton::Create(const olxstr& cName) {
 bool Skeleton::Orient(TGlPrimitive& P)  {
   if( points.Count() != NUI_SKELETON_COUNT )
     return true;
-  static bool rendering = false, left_down = false, right_down = false;
+  static bool rendering = false;
   if( rendering )  return true;
   rendering = true;
   double scale = Parent.GetScale();
-  vec3d vs1(Parent.GetWidth(), Parent.GetHeight(), 0);
-  vec3d vs(-vs1/2);
-  vs1[2] = 1;
-  //int left_elbow_y = 0, right_elbow_y = 0;
-  //if( points.Count() > NUI_SKELETON_POSITION_ELBOW_RIGHT )
-  //  right_elbow_y = points[NUI_SKELETON_POSITION_ELBOW_RIGHT][1];
-  //if( points.Count() > NUI_SKELETON_POSITION_ELBOW_LEFT )
-  //  left_elbow_y = points[NUI_SKELETON_POSITION_ELBOW_LEFT][1];
   for( size_t si = 0; si < points.Count(); si++ )  {
     if( points[si].Count() != NUI_SKELETON_POSITION_COUNT )
       continue;
-    vec3d_alist pts(points[si].Count());
-    vec3d lh_p, rh_p, h_p;
-    for( size_t i=0; i < points[si].Count(); i++ )  {
-      pts[i] = (vs + points[si][i]*vs1)*scale;
-      if( i == NUI_SKELETON_POSITION_HAND_RIGHT )
-        rh_p = pts[i]*vs1;
-      else  if( i == NUI_SKELETON_POSITION_HAND_LEFT )
-        lh_p = pts[i]*vs1;
-      else  if( i == NUI_SKELETON_POSITION_HEAD )
-        h_p = pts[i]*vs1;
-      pts[i][2] = 0;
-    }
-    lh_p[1] = vs[1] - lh_p[1];
-    rh_p[1] = vs[1] - rh_p[1];
-    h_p[1] = vs[1] - h_p[1];
-
-    if( h_p[2]-rh_p[2] > 2 )  {
-      if( !right_down )  {
-        Parent.Background()->RB(0xff);
-        right_down = true;
-        TGXApp::GetInstance().MouseDown(rh_p[0], rh_p[1], 0, smbRight);
-      }
-      else  {
-        TGXApp::GetInstance().MouseMove(rh_p[0], rh_p[1], 0);
-      }
-    }
-    else if( right_down )  {
-      Parent.Background()->RB(0xffffff);
-      TGXApp::GetInstance().MouseUp(rh_p[0], rh_p[1], 0, smbRight);
-      right_down = false;
-    }
-    if( h_p[2]-lh_p[2] > 2 )  {
-      if( !left_down )  {
-        Parent.Background()->LT(0xff);
-        left_down = true;
-        TGXApp::GetInstance().MouseDown(lh_p[0], lh_p[1], 0, smbLeft);
-      }
-      else  {
-        TGXApp::GetInstance().MouseMove(lh_p[0], lh_p[1], 0);
-      }
-    }
-    else if( left_down )  {
-      Parent.Background()->LT(0xffffff);
-      TGXApp::GetInstance().MouseUp(lh_p[0], lh_p[1], 0, smbLeft);
-      left_down = false;
-    }
+    vec3d_alist pts = points[si];
 
     for( size_t i=0; i < points[si].Count(); i++ )  {
       olx_gl::translate(pts[i]);

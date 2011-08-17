@@ -121,15 +121,13 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
   // extract and remove atom types
   for( size_t i=0; i < ins.Count(); i++ )  {
     if( ins[i].CharAt(0) == '$' )  {
-      cm_Element* elm = XElementLib::FindBySymbol(ins[i].SubStringFrom(1));
-      if( elm == NULL )  {
-        TBasicApp::NewLogEntry(logError) << "Undefined atom type in CONN: " << ins[i].SubStringFrom(1);
-        ins.Delete(i--);
-        continue;
+      ConstSortedElementPList elms = TAtomReference::DecodeTypes(
+        ins[i].SubStringFrom(1), rm.aunit);
+      for( size_t ei=0; ei < elms.Count(); ei++ )  {
+        TypeConnInfo& ci = TypeInfo.Add(elms[ei], TypeConnInfo(*elms[ei]));
+        ci.maxBonds = maxB;
+        ci.r = r;
       }
-      TypeConnInfo& ci = TypeInfo.Add(elm, TypeConnInfo(*elm) );
-      ci.maxBonds = maxB;
-      ci.r = r;
       ins.Delete(i--);
     }
   }

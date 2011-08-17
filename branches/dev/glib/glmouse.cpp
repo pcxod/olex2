@@ -26,6 +26,8 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
     SetHandler(smbRight, 0, meZoom);
   else
     SetHandler(smbRight, 0, meZoomI);
+  ClickThreshold = TBasicApp::GetInstance().Options
+    .FindValue("click_threshold", "2").ToInt();
   // an alternative for MAC...
   SetHandler(smbLeft, sssAlt, meZoom);
   FDFrame = Frame;
@@ -53,8 +55,8 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
       else
         res = MData.Object->OnMouseUp(this, MData);
       if( res == false && SelectionEnabled && Shift == 0 && button == smbLeft &&
-          (olx_abs(MData.DownX-MData.UpX) <= 2) &&
-          (olx_abs(MData.DownY-MData.UpY) <=2 ) )  // right click
+          (olx_abs(MData.DownX-MData.UpX) <= ClickThreshold) &&
+          (olx_abs(MData.DownY-MData.UpY) <= ClickThreshold) )  // right click
       {
         if( PColl != NULL && PColl != &FParent->GetSelection() ) 
           FParent->Select(*PColl); 

@@ -182,6 +182,7 @@ void Kinect::processVideo()  {
 }
 /*****************************************************************************/
 void Kinect::processSkeleton()  {
+  static bool left_down = false, right_down = false;
   if( !HasSkeleton || skeleton == NULL )   return;
   HasSkeleton = false;
   NUI_SKELETON_FRAME SkeletonFrame;
@@ -193,16 +194,20 @@ void Kinect::processSkeleton()  {
     }
   }
 
-  //sk.points.Clear();
-  if( bFoundSkeleton )  {
-    //for( size_t i=0; i < skeleton->points.Count(); i++ )
-    //  skeleton->points[i].Clear();
+  if( bFoundSkeleton )
     return;
-  }
 
   // smooth out the skeleton data
+  TGlRenderer &r = skeleton->GetParent();
+  double scale = r.GetScale(),
+    max_z = r.GetMaxRasterZ();
+  vec3d vs1(r.GetWidth(), r.GetHeight(), 0);
+  vec3d vs(-vs1/2), pvs(-vs);
+  vs1[2] = 1;
+  vec3d lh_p, rh_p, h_p;
+
   NuiTransformSmooth(&SkeletonFrame, NULL);
-  for( int i = 0 ; i < NUI_SKELETON_COUNT ; i++ )  {
+  for( int i = 0; i < NUI_SKELETON_COUNT; i++ )  {
     if( SkeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED )  {
       float x, y;
       USHORT z;
@@ -210,13 +215,60 @@ void Kinect::processSkeleton()  {
       for( int j=0; j < NUI_SKELETON_POSITION_COUNT; j++ )  {
         NuiTransformSkeletonToDepthImageF(
           SkeletonFrame.SkeletonData[i].SkeletonPositions[j], &x, &y, &z);
-        skeleton->points[i][j][0] = x;
-        skeleton->points[i][j][1] = 1-y;
-        skeleton->points[i][j][2] = (double)z;
+        vec3d pt = (vs + vec3d(x, 1-y, z)*vs1)*scale;
+        if( j == NUI_SKELETON_POSITION_HAND_RIGHT )
+          rh_p = pt*vs1;
+        else  if( j == NUI_SKELETON_POSITION_HAND_LEFT )
+          lh_p = pt*vs1;
+        else  if( j == NUI_SKELETON_POSITION_HEAD )
+          h_p = pt*vs1;
+        pt[2] = max_z-0.01;
+        skeleton->points[i][j] = pt;
       }
     }
     else
       skeleton->points[i].Clear();
+  }
+  rh_p[1] = pvs[1] - rh_p[1];
+  h_p[1] = pvs[1] - h_p[1];
+  lh_p[1] = pvs[1] - lh_p[1];
+  rh_p[0] = pvs[0] + rh_p[0];
+  h_p[0] = pvs[0] + h_p[0];
+  lh_p[0] = pvs[0] + lh_p[0];
+  if( h_p[2]-rh_p[2] > 3 )  {
+    if( !right_down )  {
+      r.Background()->RB(0x0000ff);
+      right_down = true;
+      short f = smbRight;
+      if( left_down )
+        f |= smbLeft;
+      TGXApp::GetInstance().MouseDown(rh_p[0], rh_p[1], 0, f);
+    }
+    else  {
+      TGXApp::GetInstance().MouseMove(lh_p[0], lh_p[1], 0);
+    }
+  }
+  else if( right_down )  {
+    r.Background()->RB(0xffffff);
+    TGXApp::GetInstance().MouseUp(rh_p[0], rh_p[1], 0, smbRight);
+    right_down = false;
+  }
+  if( h_p[2]-lh_p[2] > 3 )  {
+    if( !left_down )  {
+      r.Background()->LT(0x0000ff);
+      short f = smbLeft;
+      if( right_down )
+        f |= smbRight;
+      TGXApp::GetInstance().MouseDown(lh_p[0], lh_p[1], 0, f);
+    }
+    else  {
+      TGXApp::GetInstance().MouseMove(lh_p[0], lh_p[1], 0);
+    }
+  }
+  else if( left_down )  {
+    r.Background()->LT(0xffffff);
+    TGXApp::GetInstance().MouseUp(lh_p[0], lh_p[1], 0, smbLeft);
+    left_down = false;
   }
   TGXApp::GetInstance().Draw();
 }
