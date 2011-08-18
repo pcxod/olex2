@@ -4555,7 +4555,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
   else if( Options.IsEmpty() )  {  // print labels of selected atoms
     size_t period=5;
     TXAtomPList Atoms = FXApp->FindXAtoms("sel", false);
-    if( Atoms.IsEmpty() )  {
+    if( Atoms.IsEmpty() && Cmds.Count() == 1 )  {
       TGPCollection* gpc = FXApp->GetRender().FindCollection(Cmds[0]);
       if( gpc != NULL )  {
         for( size_t i=0; i < gpc->ObjectCount(); i++ )

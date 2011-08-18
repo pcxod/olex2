@@ -38,7 +38,7 @@ protected:
       Atoms[i]->SetSameId(~0);
   }
 public:
-  TSameGroup(uint16_t id, TSameGroupList& parent) : Id(id), Parent(parent)  { 
+  TSameGroup(uint16_t id, TSameGroupList& parent) : Id(id), Parent(parent)  {
     Esd12 = 0.02;
     Esd13 = 0.04;
     ParentGroup = NULL;
@@ -99,6 +99,17 @@ public:
         dep_cnt++;
     return dep_cnt != 0;
   }
+  // returns true if contains only unique atoms
+  bool AreAllAtomsUnique() const {
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetTag(i);
+    for( size_t i=0; i < Atoms.Count(); i++ )
+      if( Atoms[i]->GetTag() != i )
+        return false;
+    return true;
+  }
+
+  bool DoOverlap(const TSameGroup &g) const;
 
   double Esd12, Esd13;
 

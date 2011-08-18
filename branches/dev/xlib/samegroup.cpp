@@ -110,6 +110,17 @@ void TSameGroup::FromDataItem(TDataItem& item) {
     ParentGroup = &Parent[p_id.ToInt()];
 }
 //..........................................................................................
+bool TSameGroup::DoOverlap(const TSameGroup &g) const {
+  for( size_t i=0; i < Atoms.Count(); i++ )
+    Atoms[i]->SetTag(0);
+  for( size_t i=0; i < g.Atoms.Count(); i++ )
+    g.Atoms[i]->SetTag(1);
+  for( size_t i=0; i < Atoms.Count(); i++ )
+    if( Atoms[i]->GetTag() != 0 )
+      return true;
+  return false;
+}
+//..........................................................................................
 //..........................................................................................
 //..........................................................................................
 void TSameGroupList::Release(TSameGroup& sg)  {

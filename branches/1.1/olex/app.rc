@@ -38,14 +38,14 @@ MAINICON           ICON         "olex2.ico"
     BEGIN
         BLOCK "080904e4"
         BEGIN
-            VALUE "CompanyName", "Durham University\0"
+            VALUE "CompanyName", "OlexSys\0"
             VALUE "FileDescription", "Olex2 executable\0"
-            VALUE "FileVersion", "1.0.0.0\0"
+            VALUE "FileVersion", "1.5.1.2\0"
             VALUE "InternalName", "Olex2\0"
-            VALUE "LegalCopyright", "Copyright (c) Oleg Dolomanov, Horst Puschmann & Richard Gildea, 2004-2009\0"
+            VALUE "LegalCopyright", "Copyright (c) OlexSys, Oleg Dolomanov and Horst Puschmann, 2004-2011\0"
             VALUE "OriginalFilename", "Olex2.exe\0"
             VALUE "ProductName", "Olex2\0"
-            VALUE "ProductVersion", "1.4.1.1\0"
+            VALUE "ProductVersion", "1.5.1.2\0"
         END
     END
     BLOCK "VarFileInfo"
