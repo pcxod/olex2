@@ -103,6 +103,17 @@ Kinect *Kinect::Initialise()  {
   if( FAILED(hr) )
     throw_failed(__OlxSourceInfo, hr, "video stream");
 
+  const olxstr fn = TBasicApp::GetBaseDir() + ".nui";
+  if( TEFile::Exists(fn) )  {
+    TStrList sl;
+    sl.LoadFromFile(fn);
+    for( size_t i=0; i < sl.Count(); i++ )  {
+      size_t ei = sl[i].IndexOf('=');
+      if( ei != InvalidIndex )
+        commands.Add(sl[i].SubStringTo(ei), sl[i].SubStringFrom(ei+1));
+    }
+  }
+
   listener = new ListenerThread(*this);
   listener->Start();
   return this;
@@ -204,7 +215,12 @@ void Kinect::processSkeleton()  {
   vec3d vs1(r.GetWidth(), r.GetHeight(), 0);
   vec3d vs(-vs1/2), pvs(-vs);
   vs1[2] = 1;
-  vec3d lh_p, rh_p, h_p;
+  vec3d_alist points(5);
+  vec3d &lh_p = points[0],
+    &rh_p = points[1],
+    &h_p = points[2],
+    &re_p = points[3],
+    &le_p = points[4];
 
   NuiTransformSmooth(&SkeletonFrame, NULL);
   for( int i = 0; i < NUI_SKELETON_COUNT; i++ )  {
@@ -218,10 +234,14 @@ void Kinect::processSkeleton()  {
         vec3d pt = (vs + vec3d(x, 1-y, z)*vs1)*scale;
         if( j == NUI_SKELETON_POSITION_HAND_RIGHT )
           rh_p = pt*vs1;
-        else  if( j == NUI_SKELETON_POSITION_HAND_LEFT )
+        else if( j == NUI_SKELETON_POSITION_HAND_LEFT )
           lh_p = pt*vs1;
-        else  if( j == NUI_SKELETON_POSITION_HEAD )
+        else if( j == NUI_SKELETON_POSITION_HEAD )
           h_p = pt*vs1;
+        else if( j == NUI_SKELETON_POSITION_ELBOW_RIGHT )
+          re_p = pt*vs1;
+        else if( j == NUI_SKELETON_POSITION_ELBOW_LEFT )
+          le_p = pt*vs1;
         pt[2] = max_z-0.01;
         skeleton->points[i][j] = pt;
       }
@@ -229,47 +249,69 @@ void Kinect::processSkeleton()  {
     else
       skeleton->points[i].Clear();
   }
-  rh_p[1] = pvs[1] - rh_p[1];
-  h_p[1] = pvs[1] - h_p[1];
-  lh_p[1] = pvs[1] - lh_p[1];
-  rh_p[0] = pvs[0] + rh_p[0];
-  h_p[0] = pvs[0] + h_p[0];
-  lh_p[0] = pvs[0] + lh_p[0];
-  if( h_p[2]-rh_p[2] > 3 )  {
-    if( !right_down )  {
-      r.Background()->RB(0xff00);
-      right_down = true;
-      short f = smbRight;
-      if( left_down )
-        f |= smbLeft;
-      TGXApp::GetInstance().MouseDown(rh_p[0], rh_p[1], 0, f);
-    }
-    else  {
-      TGXApp::GetInstance().MouseMove(lh_p[0], lh_p[1], 0);
+  for( size_t i=0; i < points.Count(); i++ )  {
+    points[i][1] = pvs[1] - points[i][1];
+    points[i][0] = pvs[0] + points[i][0];
+  }
+  // hands crossed up
+  if( rh_p[0] < lh_p[0] && re_p[1] > rh_p[1]  && le_p[1] > lh_p[1] )  {
+    if( last_command != "cross_up" )  {
+      olxstr cmd = commands.Find("cross_up", EmptyString());
+      last_command = "cross_up";
+      if( !cmd.IsEmpty() )  {
+        olex::IOlexProcessor *op = IOlexProcessor::GetInstance();
+        op->executeMacro(cmd);
+      }
     }
   }
-  else if( right_down )  {
-    r.Background()->RB(0xffffff);
-    TGXApp::GetInstance().MouseUp(rh_p[0], rh_p[1], 0, smbRight);
-    right_down = false;
-  }
-  if( h_p[2]-lh_p[2] > 3 )  {
-    if( !left_down )  {
-      r.Background()->LT(0xff00);
-      left_down = true;
-      short f = smbLeft;
-      if( right_down )
-        f |= smbRight;
-      TGXApp::GetInstance().MouseDown(lh_p[0], lh_p[1], 0, f);
-    }
-    else  {
-      TGXApp::GetInstance().MouseMove(lh_p[0], lh_p[1], 0);
+  if( rh_p[0] < lh_p[0] && re_p[1] < rh_p[1]  && le_p[1] < lh_p[1] )  {
+    if( last_command != "cross_down" )  {
+      olxstr cmd = commands.Find("cross_down", EmptyString());
+      last_command = "cross_down";
+      if( !cmd.IsEmpty() )  {
+        olex::IOlexProcessor *op = IOlexProcessor::GetInstance();
+        op->executeMacro(cmd);
+      }
     }
   }
-  else if( left_down )  {
-    r.Background()->LT(0xffffff);
-    TGXApp::GetInstance().MouseUp(lh_p[0], lh_p[1], 0, smbLeft);
-    left_down = false;
+  else  {
+    last_command.SetLength(0);
+    if( h_p[2]-rh_p[2] > 3 )  {
+      if( !right_down )  {
+        r.Background()->RB(0xff00);
+        right_down = true;
+        short f = smbRight;
+        if( left_down )
+          f |= smbLeft;
+        TGXApp::GetInstance().MouseDown(rh_p[0], rh_p[1], 0, f);
+      }
+      else  {
+        TGXApp::GetInstance().MouseMove(rh_p[0], rh_p[1], 0);
+      }
+    }
+    else if( right_down )  {
+      r.Background()->RB(0xffffff);
+      TGXApp::GetInstance().MouseUp(rh_p[0], rh_p[1], 0, smbRight);
+      right_down = false;
+    }
+    if( h_p[2]-lh_p[2] > 3 )  {
+      if( !left_down )  {
+        r.Background()->LT(0xff00);
+        left_down = true;
+        short f = smbLeft;
+        if( right_down )
+          f |= smbRight;
+        TGXApp::GetInstance().MouseDown(lh_p[0], lh_p[1], 0, f);
+      }
+      else  {
+        TGXApp::GetInstance().MouseMove(lh_p[0], lh_p[1], 0);
+      }
+    }
+    else if( left_down )  {
+      r.Background()->LT(0xffffff);
+      TGXApp::GetInstance().MouseUp(lh_p[0], lh_p[1], 0, smbLeft);
+      left_down = false;
+    }
   }
   TGXApp::GetInstance().Draw();
 }

@@ -761,7 +761,24 @@ olxstr TGXApp::GetSelectionInfo()  {
   try {
     double v;
     TGlGroup& Sel = FGlRender->GetSelection();
-    if( Sel.Count() == 2 )  {
+    if( Sel.Count() == 1 )  {
+      if( EsdlInstanceOf(Sel[0], TXBond) )  {
+        TXBond &b = ((TXBond&)Sel[0]);
+        Tmp = "Distance (";
+        Tmp << macSel_GetName2(b.A(), b.B()) << "): ";
+        if( CheckFileType<TCif>() )  {
+          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager()
+            .Match(b.A(), b.B());
+          if( cv != NULL )
+            Tmp << cv->GetValue().ToString();
+          else
+            Tmp << olxstr::FormatFloat(3, b.Length());
+        }
+        else
+          Tmp << olxstr::FormatFloat(3, b.Length());
+      }
+    }
+    else if( Sel.Count() == 2 )  {
       if( EsdlInstanceOf(Sel[0], TXAtom) &&
         EsdlInstanceOf(Sel[1], TXAtom) )
       {

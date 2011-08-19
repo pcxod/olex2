@@ -11,6 +11,7 @@
 #include "library.h"
 #include "olxth.h"
 #include "glpixels.h"
+#include "edict.h"
 
 namespace olx_nui {
 
@@ -77,6 +78,8 @@ protected:
   ListenerThread *listener;
   Skeleton *skeleton;
   TGlPixels *pixels;
+  olxstr last_command;
+  olxstr_dict<olxstr, true> commands;
 public:
   Kinect()
   : Initialised(false),
