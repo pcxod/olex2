@@ -15,27 +15,25 @@
 void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
   Clear();
   if( sg.Count() == 0 )  return;
-
   TAsymmUnit * au = sg[0].GetParent();
-
   if( au == &tau )  {
     for( size_t i=0; i < sg.Count(); i++ )
-      Add( const_cast<TCAtom&>(sg[i]) );
+      Add(const_cast<TCAtom&>(sg[i]));
   }
   else  {
     for( size_t i=0; i < sg.Count(); i++ )  {
-      TCAtom* aa = tau.FindCAtomById( sg[i].GetId() );
+      TCAtom* aa = tau.FindCAtomById(sg[i].GetId());
       if( aa == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units do not match");
-      Add( *aa );
+      Add(*aa);
     }
   }
   Esd12 = sg.Esd12;  
   Esd13 = sg.Esd13;  
   for( size_t i=0; i < sg.Dependent.Count(); i++ )
-    Dependent.Add( &Parent[ sg.Dependent[i]->Id ] );
+    Dependent.Add(Parent[sg.Dependent[i]->Id]);
   if( sg.GetParentGroup() != NULL )
-    ParentGroup = &Parent[ sg.GetParentGroup()->Id ];
+    ParentGroup = &Parent[sg.GetParentGroup()->Id];
 }
 //..........................................................................................
 TCAtom& TSameGroup::Add(TCAtom& ca)  {  
@@ -140,7 +138,7 @@ void TSameGroupList::Restore(TSameGroup& sg)  {
   Groups.Add(sg);
   if( sg.GetParentGroup() != NULL )
     sg.GetParentGroup()->AddDependent(sg);
-  sg.SetId( (uint16_t)(Groups.Count()-1) );
+  sg.SetId((uint16_t)(Groups.Count()-1));
 }
 //..........................................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {

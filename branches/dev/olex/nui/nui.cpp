@@ -237,7 +237,7 @@ void Kinect::processSkeleton()  {
   lh_p[0] = pvs[0] + lh_p[0];
   if( h_p[2]-rh_p[2] > 3 )  {
     if( !right_down )  {
-      r.Background()->RB(0x0000ff);
+      r.Background()->RB(0xff00);
       right_down = true;
       short f = smbRight;
       if( left_down )
@@ -255,7 +255,8 @@ void Kinect::processSkeleton()  {
   }
   if( h_p[2]-lh_p[2] > 3 )  {
     if( !left_down )  {
-      r.Background()->LT(0x0000ff);
+      r.Background()->LT(0xff00);
+      left_down = true;
       short f = smbLeft;
       if( right_down )
         f |= smbRight;
