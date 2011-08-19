@@ -106,7 +106,7 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
       while( ++i < Lines.Count() && !Lines[i].StartsFrom(';') )  continue;
       continue;
     }
-    Lines[i].DeleteSequencesOf<char>(' ').Trim(' ');
+    Lines[i].Replace('\t', ' ').DeleteSequencesOf<char>(' ').Trim(' ');
   }
   parse_context context(Lines);
   for( size_t i=0; i < Lines.Count(); i++ )  {
@@ -224,6 +224,11 @@ size_t TCifDP::CIFToks(const olxstr& exp, TStrList& out)  {
       out.Add(exp.SubString(start, i-start).TrimWhiteChars());
       start = i+1;
     }
+    else if( ch == '#' )  {
+      out.Add(exp.SubStringFrom(start));
+      start = exp.Length();
+      break;
+    }
   }
   if( start < exp.Length() )
     out.Add(exp.SubStringFrom(start).TrimWhiteChars());
@@ -248,17 +253,20 @@ void cetTable::AddCol(const olxstr& col_name)  {
     name = data.ColName(0).CommonSubString(data.ColName(1));
     size_t min_len = olx_min(data.ColName(0).Length(), data.ColName(1).Length());
     for( size_t i=2; i < data.ColCount(); i++ )  {
-      name = data.ColName(i).CommonSubString(name);
-      if( data.ColName(i).Length() < min_len )
-        min_len = data.ColName(i).Length();
+      olxstr n = data.ColName(i).CommonSubString(name);
+      if( n.Length() > 1 )  {
+        if( data.ColName(i).Length() < min_len )
+          min_len = data.ColName(i).Length();
+        name = n;
+      }
     }
-    if( name.IsEmpty() )
-      throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");
     if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
       const size_t u_ind = name.LastIndexOf('_');
       if( u_ind != InvalidIndex )
         name.SetLength(u_ind);
     }
+    if( name.IsEmpty() )
+      throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");
   }
 }
 cetTable::cetTable(const olxstr& cols)  {
@@ -316,8 +324,10 @@ void cetTable::DataFromStrings(TStrList& lines)  {
     }
     toks.Clear();
     TCifDP::CIFToks(lines[i], toks);
-    for( size_t j=0; j < toks.Count(); j++ )
-      cells.Add(new cetString(toks[j]));
+    for( size_t j=0; j < toks.Count(); j++ )  {
+      if( toks[j].CharAt(0) != '#' )
+        cells.Add(new cetString(toks[j]));
+    }
   }
   if( (cells.Count() % data.ColCount()) != 0 )  {
     for( size_t i=0; i < cells.Count(); i++ )  // clean up the memory
