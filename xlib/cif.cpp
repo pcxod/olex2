@@ -65,6 +65,26 @@ void TCif::_LoadCurrent()  {
     block_index = 0;
     return;  // nothing to initialise anyway... must be a dummy CIF
   }
+  // undo the changes
+  for( size_t i=0; i < data_provider.Count(); i++ )  {
+    CifBlock& d = data_provider[i];
+    for( size_t j=0; j < d.table_map.Count(); j++ )  {
+      cetTable& tab = *d.table_map.GetValue(j);
+      for( size_t k=0; k < tab.ColCount(); k++ )  {
+        if(  tab.ColName(k).IndexOf("atom_site") != InvalidIndex &&
+          tab.ColName(k).IndexOf("label") != InvalidIndex )
+        {
+          for( size_t l=0; l < tab.RowCount(); l++ )  {
+            if( EsdlInstanceOf(tab.Get(l, k), AtomCifEntry) ||
+                EsdlInstanceOf(tab.Get(l, k), AtomPartCifEntry) )
+            {
+              tab.Set(l, k, new cetString(tab.Get(l, k).GetStringValue()));
+            }
+          }
+        }
+      }
+    }
+  }
   CifBlock& cif_data = data_provider[block_index];
   Clear();
   /*search for the weigting sceme*************************************/

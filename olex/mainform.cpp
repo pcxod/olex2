@@ -1356,7 +1356,9 @@ void TMainForm::StartupInit()  {
         olxstr cmd;
         for( size_t i=0; i < sh->ItemCount(); i++ )  {
         TDataItem& item = sh->GetItem(i);
-        AccShortcuts.AddAccell(TranslateShortcut(item.GetFieldValue("key")), item.GetFieldValue("macro"));
+        AccShortcuts.AddAccell(
+          TranslateShortcut(item.GetFieldValue("key")),
+          item.GetFieldValue("macro"));
         // cannot execute it through a macro - functions get evaluated...
         //Macros.ProcessMacro(cmd, MacroError);
         }
@@ -2110,34 +2112,6 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
       return;
     }
   }
-  if( m.GetModifiers() == wxMOD_CMD && m.GetKeyCode() == 'v'-'a'+1 )  {  // paste Ctrl+V
-    if( wxTheClipboard->Open() )  {
-      if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
-        wxTextDataObject data;
-        wxTheClipboard->GetData(data);
-        olxstr cmdl = FGlConsole->GetCommand();
-        olxstr content = data.GetText();
-        if( !ImportFrag(content) )  {
-        olxstr trimmed_content = content;
-        trimmed_content.Trim(' ').Trim('\n').Trim('\r');
-          const size_t ip = FGlConsole->GetCmdInsertPosition();
-          if( ip >= cmdl.Length() )
-            cmdl << content;
-          else
-            cmdl.Insert(content, ip);
-          FGlConsole->SetCommand(cmdl);
-        }
-        TimePerFrame = FXApp->Draw();
-      }
-      wxTheClipboard->Close();
-    }
-    return;
-  }
-  if( (Fl&sssCtrl) && m.GetKeyCode() == 'z'-'a'+1 )  {  // Ctrl+Z
-    ProcessMacro("undo");
-    TimePerFrame = FXApp->Draw();
-    return;
-  }
   if( (Fl&sssCtrl) && m.GetKeyCode() == 'c'-'a'+1 )  {  // Ctrl+C
     if( _ProcessManager->GetRedirected() != NULL )  {
       if( _ProcessManager->GetRedirected()->Terminate() )
@@ -2245,6 +2219,7 @@ void TMainForm::OnKeyUp(wxKeyEvent& m)  {
 }
 //..............................................................................
 void TMainForm::OnKeyDown(wxKeyEvent& m)  {
+  m.Skip();
   if( FindFocus() != FGlCanvas )  {
     if( FHtml != 0 )  {
       THtml* htw = FHtml;
@@ -2265,28 +2240,57 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   }
   short Fl = 0;
   if( m.m_keyCode == WXK_CONTROL || m.m_keyCode == WXK_MENU || m.m_keyCode == WXK_SHIFT )  {
-    m.Skip();
     return;
   }
   if( m.m_altDown )      Fl |= sssAlt;
   if( m.m_shiftDown )    Fl |= sssShift;
   if( m.m_controlDown )  Fl |= sssCtrl;
-
-  if( !AccShortcuts.ValueExists( Fl<<16 | m.m_keyCode ) )  {
-    m.Skip();  return;
+  // process built-ins first
+  if( m.GetModifiers() == wxMOD_CMD )  {
+  // paste, Cmd+V, Ctrl+V
+    if( m.GetKeyCode() == 'V' )  {
+      if( wxTheClipboard->Open() )  {
+        if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
+          wxTextDataObject data;
+          wxTheClipboard->GetData(data);
+          olxstr cmdl = FGlConsole->GetCommand();
+          olxstr content = data.GetText();
+          if( !ImportFrag(content) )  {
+            olxstr trimmed_content = content;
+            trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+            const size_t ip = FGlConsole->GetCmdInsertPosition();
+            if( ip >= cmdl.Length() )
+              cmdl << content;
+            else
+              cmdl.Insert(content, ip);
+            FGlConsole->SetCommand(cmdl);
+          }
+          TimePerFrame = FXApp->Draw();
+        }
+        wxTheClipboard->Close();
+      }
+      return;
+    }
+  //undo, Cmd+Z, Ctrl+Z
+    else if( m.GetKeyCode() == 'Z' )  {
+      ProcessMacro("undo");
+      TimePerFrame = FXApp->Draw();
+      return;
+    }
+  }
+  if( !AccShortcuts.ValueExists(Fl<<16 | m.m_keyCode) )  {
+    return;
   }
   if( FGlConsole->WillProcessKey(m.GetKeyCode(), Fl) )  {
-    m.Skip();
     return;
   }
   olxstr Cmd = AccShortcuts.GetValue(Fl<<16 | m.m_keyCode);
   if( !Cmd.IsEmpty() )  {
     ProcessMacro(Cmd, __OlxSrcInfo);
     TimePerFrame = FXApp->Draw();
+    m.Skip(false);
     return;
   }
-
-  m.Skip();
 }
 //..............................................................................
 void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {

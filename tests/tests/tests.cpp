@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
             break;
           }
         }
-        if( report )  {
+        if( report && false )  {
           xapp.NewLogEntry() << "This file is potentially affected by the esd formatting error: '" <<
             files[i] << '\'';
         }

@@ -4826,9 +4826,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         olxstr insFileName = TEFile::ChangeFileExt(file_n.file_name, "ins");
         TMacroError er;
         if( !TEFile::Exists(hklFileName)  )  {
+          size_t block_index = cif.GetBlockIndex();
           if( cif.FindLoopGlobal("_refln", true) != NULL )  {
             er.SetRetVal(&cif);
-            Macros.ProcessMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er);
+            Macros.ProcessMacro(
+              olxstr("export ") << TEFile::ExtractFileName(hklFileName), er);
             if( !er.IsProcessingError() )  {
               if( !TEFile::Exists(insFileName) )  {
                 TIns ins;
@@ -4844,6 +4846,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             }
             else
               AnalyseError(er);
+            cif.SetCurrentBlock(block_index);
           }
         }
       }
