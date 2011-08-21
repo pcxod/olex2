@@ -268,8 +268,13 @@ void cetTable::AddCol(const olxstr& col_name)  {
     }
     if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
       const size_t u_ind = name.LastIndexOf('_');
-      if( u_ind != InvalidIndex )
+      if( u_ind != InvalidIndex && u_ind != 0 )
         name.SetLength(u_ind);
+      else  {
+        const size_t d_ind = name.LastIndexOf('.');
+        if( d_ind != InvalidIndex && d_ind != 0 )
+          name.SetLength(d_ind);
+      }
     }
     if( name.IsEmpty() )
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");

@@ -2236,7 +2236,6 @@ void TMainForm::OnKeyUp(wxKeyEvent& m)  {
 }
 //..............................................................................
 void TMainForm::OnKeyDown(wxKeyEvent& m)  {
-  m.Skip();
   if( FindFocus() != FGlCanvas )  {
     if( FHtml != 0 )  {
       THtml* htw = FHtml;
@@ -2251,12 +2250,12 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   }
   if( CmdLineVisible )  {
     if( this->FindFocus() != (wxWindow*)FCmdLine )  {
-      m.Skip(false);
       FCmdLine->EmulateKeyPress(m);
     }
   }
   short Fl = 0;
   if( m.m_keyCode == WXK_CONTROL || m.m_keyCode == WXK_MENU || m.m_keyCode == WXK_SHIFT )  {
+    m.Skip();
     return;
   }
   if( m.m_altDown )      Fl |= sssAlt;
@@ -2288,7 +2287,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
       }
       return;
     }
-  //undo, Cmd+Z, Ctrl+Z
+    //undo, Cmd+Z, Ctrl+Z
     else if( m.GetKeyCode() == 'Z' )  {
       ProcessMacro("undo");
       TimePerFrame = FXApp->Draw();
@@ -2296,18 +2295,20 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     }
   }
   if( !AccShortcuts.ValueExists(Fl<<16 | m.m_keyCode) )  {
+    m.Skip();
     return;
   }
   if( FGlConsole->WillProcessKey(m.GetKeyCode(), Fl) )  {
+    m.Skip();
     return;
   }
   olxstr Cmd = AccShortcuts.GetValue(Fl<<16 | m.m_keyCode);
   if( !Cmd.IsEmpty() )  {
     ProcessMacro(Cmd, __OlxSrcInfo);
     TimePerFrame = FXApp->Draw();
-    m.Skip(false);
     return;
   }
+  m.Skip();
 }
 //..............................................................................
 void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
@@ -3372,15 +3373,20 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
   if( !toks.Count() )  return -1;
   short Shift=0, Char = 0;
   for( size_t i=0; i < toks.Count() - 1; i++ )  {
-    if( ((Shift&sssCtrl)==0) && toks[i].Equalsi("Ctrl") )   {  Shift |= sssCtrl;  continue;  }
-    if( ((Shift&sssShift)==0) && toks[i].Equalsi("Shift") )  {  Shift |= sssShift;  continue;  }
-    if( ((Shift&sssAlt)==0) && toks[i].Equalsi("Alt") )    {  Shift |= sssAlt;  continue;  }
+    if( toks[i].Equalsi("Ctrl") )
+      Shift |= sssCtrl;
+    else if( toks[i].Equalsi("Shift") )
+      Shift |= sssShift;
+    else if( toks[i].Equalsi("Alt") )
+      Shift |= sssAlt;
+    else if( toks[i].Equalsi("Cmd") )
+      Shift |= sssCmd;
   }
   olxstr charStr = toks.GetLastString();
   // a char
   if( charStr.Length() == 1 ) {
     Char = charStr[0];
-    if( Char  >= 'a' && Char <= 'z' ) Char -= ('a'-'A');
+    if( Char >= 'a' && Char <= 'z' ) Char -= ('a'-'A');
     return ((Shift << 16)|Char);
   }
   if( charStr.CharAt(0) == 'F' && charStr.SubStringFrom(1).IsNumber() )  {

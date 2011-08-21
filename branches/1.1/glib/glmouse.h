@@ -20,7 +20,13 @@ const short
   smbRight  = 0x0004,
   sssCtrl   = 0x0001,
   sssShift  = 0x0002,
-  sssAlt    = 0x0004;
+  sssAlt    = 0x0004,
+#ifdef __MAC__
+  sssCmd    = 0x008
+#else
+  sssCmd    = sssCtrl
+#endif
+  ;
 //  mouse move events
 const short
   smeMoveXY   = 1,
