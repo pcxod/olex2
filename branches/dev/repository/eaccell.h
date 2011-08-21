@@ -9,11 +9,11 @@
 
 #ifndef __olx_eaccell_H
 #define __olx_eaccell_H
-#include "estlist.h"
-#include "dataitem.h"
+#include "edict.h"
+#include "bapp.h"
 
 template <class T> class TAccellList : public IEObject  {
-    TPSTypeList<int32_t, T> Entries;
+  olxdict<int32_t, T, TPrimitiveComparator> Entries;
   protected:
     int32_t LastId;
   public:
@@ -26,7 +26,7 @@ template <class T> class TAccellList : public IEObject  {
       const size_t ind = Entries.IndexOf(key);
       if( ind == InvalidIndex )
         throw TInvalidArgumentException(__OlxSourceInfo, "key");
-      return Entries.GetObject(ind);
+      return Entries.GetValue(ind);
     }
 
     bool ValueExists(int32_t key)  {
@@ -36,9 +36,11 @@ template <class T> class TAccellList : public IEObject  {
     void AddAccell(int32_t id, const T& value)  {
       const size_t ind = Entries.IndexOf(id);
       if( ind != InvalidIndex )
-        throw TInvalidArgumentException(__OlxSourceInfo, "duplicate ids");
-      Entries.Add(id, value);
-      LastId = id;
+        Entries.GetValue(ind) = value;
+      else  {
+        Entries.Add(id, value);
+        LastId = id;
+      }
     }
     void RemoveAccell(int32_t id) {
       const size_t ind = Entries.IndexOf(id);

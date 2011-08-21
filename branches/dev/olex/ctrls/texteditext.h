@@ -39,6 +39,7 @@ namespace ctrl_ext  {
     olxstr GetText() const {  return wxTextCtrl::GetValue(); }
     void SetText(const olxstr &T)  {
       StrValue = T;
+      TActionQueueLock ql(&OnChange);
       wxTextCtrl::SetValue(StrValue.u_str());
     }
 
