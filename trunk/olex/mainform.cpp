@@ -1356,7 +1356,9 @@ void TMainForm::StartupInit()  {
         olxstr cmd;
         for( size_t i=0; i < sh->ItemCount(); i++ )  {
         TDataItem& item = sh->GetItem(i);
-        AccShortcuts.AddAccell(TranslateShortcut(item.GetFieldValue("key")), item.GetFieldValue("macro"));
+        AccShortcuts.AddAccell(
+          TranslateShortcut(item.GetFieldValue("key")),
+          item.GetFieldValue("macro"));
         // cannot execute it through a macro - functions get evaluated...
         //Macros.ProcessMacro(cmd, MacroError);
         }
