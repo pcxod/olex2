@@ -194,6 +194,12 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
       else
         ; // should be error
     }
+    else if( line.StartsFrom(';') )  {
+      throw ParsingException(__OlxSourceInfo, "unnamed text block", i);
+    }
+    else if( line.StartsFrom('\'') )  {
+      throw ParsingException(__OlxSourceInfo, "unnamed text string", i);
+    }
   }
   Format();
 }
