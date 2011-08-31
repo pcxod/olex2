@@ -46,6 +46,10 @@ public:
   TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const {
     return TXBond::ToPov(materials);
   }
+  void UpdatePrimitives(int32_t mask)  {
+    TXBond::UpdatePrimitives(mask);
+  }
+  TGPCollection& GetPrimitives() const {  return TXBond::GetPrimitives();  }
 };
 
 EndGxlNamespace()
