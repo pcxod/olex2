@@ -21,6 +21,16 @@ void TXPlane::Create(const olxstr& cName)  {
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   if( GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0 )
     GPC.ClearPrimitives();
+  size_t deleted_cnt = 0;
+  for( size_t i=0; i < GPC.ObjectCount(); i++ )  {
+    if( EsdlInstanceOf(GPC.GetObject(i), TXPlane) &&
+      ((TXPlane&)GPC.GetObject(i)).IsDeleted() )
+    {
+      deleted_cnt++;
+    }
+  }
+  if( deleted_cnt == GPC.ObjectCount() )
+    GPC.ClearPrimitives();
   GPC.AddObject(*this);
   const mat3d& m = GetBasis();
   Params().Resize(16);
@@ -54,7 +64,7 @@ void TXPlane::Create(const olxstr& cName)  {
     if( !IsRegular() )  {
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
         const vec3d* crd = sp.sortedPlane.GetObject(i);
-        GlP.Vertices[i] = transform*(*crd-GetCenter());
+        GlP.Vertices[i] = transform*GetNormal().Normal((*crd-GetCenter()));
       }
     }
     else  {
