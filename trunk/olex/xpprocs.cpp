@@ -8081,10 +8081,10 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       q_draw->SetEnabled(false);
       q_draw_changed = true;
     }
-    FXApp->XFile().EndUpdate();
+    FXApp->XFile().GetLattice().Init();
+    Macros.ProcessMacro("compaq -q", E);
     if( q_draw != NULL && q_draw_changed )
       q_draw->SetEnabled(true);
-    Macros.ProcessMacro("compaq -q", E);
   }  // integration
   if( Options.Contains("m") )  {
     FractMask* fm = new FractMask;

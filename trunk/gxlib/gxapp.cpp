@@ -2351,7 +2351,7 @@ void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
 //..............................................................................
 ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection)  {
   if( Atoms.IsEmpty() )  {
-    TCAtomPList list = GetSelectedCAtoms(ClearSelection).Release();
+    TCAtomPList list = GetSelectedCAtoms(ClearSelection);
     if( !list.IsEmpty() )  return list;
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
     list.SetCapacity(list.Count() + AU.AtomCount());
