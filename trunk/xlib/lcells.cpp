@@ -453,7 +453,10 @@ ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
             (olxstr("Skipping invalid index root: ").quote() << im.indices[i].root);
           continue;
         }
+        im.indices[i].root = im.indices[i].root;
       }
+      else
+        im.indices[i].root = ind.root.name;
       if( !im.indices[i].root.IsEmpty() )
         ind.root.name = im.indices[i].root;
       res.AddListC(ind.Search(cell, vol_diff, true));
@@ -471,8 +474,7 @@ void IndexManager::LoadConfig(const olxstr &file_name)  {
   if( !TEFile::Exists(file_name) )  {
     if( TEFile::Exists(Index::DefaultIndex()) )  {
       Item &itm = indices.AddNew();
-      itm.index_file_name =
-        TEFile::CreateRelativePath(Index::DefaultIndex(), TBasicApp::GetSharedDir());
+      itm.index_file_name = Index::DefaultIndex();
       itm.update = true;
     }
   }

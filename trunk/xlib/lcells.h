@@ -68,10 +68,12 @@ namespace lcells {
       Entry(Entry *parent_, const olxstr &name_, uint64_t modified_)
         : parent(parent_), name(name_), modified(modified_)  {}
       IDataOutputStream &ToStream(IDataOutputStream &out) const {
-        return (out << name << modified);
+        return (out << TUtf8::Encode(name) << modified);
       }
       IDataInputStream& FromStream(IDataInputStream &in)  {
-        in >> name;
+        olxcstr c_name;
+        in >> c_name;
+        name = TUtf8::Decode(c_name);
         in >> modified;
         return in;
       }
