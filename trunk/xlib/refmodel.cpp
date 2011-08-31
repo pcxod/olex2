@@ -963,7 +963,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   ExyzGroups.FromDataItem(item.FindRequiredItem("EXYZ"));
   rSAME.FromDataItem(item.FindRequiredItem("SAME"));
   for( size_t i=0; i < rcList1.Count(); i++ )
-    rcList1[i]->FromDataItem(item.FindRequiredItem(rcList1[i]->GetIdName()));
+    rcList1[i]->FromDataItem(item.FindItem(rcList1[i]->GetIdName()));
   for( size_t i=0; i < rcList.Count(); i++ )
     rcList[i]->FromDataItem(item.FindItem(rcList[i]->GetName()), *this);
 
