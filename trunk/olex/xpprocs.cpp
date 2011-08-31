@@ -858,7 +858,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
 
-  od.Render(Cmds[0]);
+  od.Render(TEFile::ChangeFileExt(Cmds[0], "eps"));
   // restore atom draw styles
   ai.Reset();
   for( size_t i=0; ai.HasNext(); i++ )
