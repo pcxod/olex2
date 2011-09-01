@@ -928,6 +928,15 @@ olxstr TGXApp::GetSelectionInfo()  {
           Tmp << olxstr::FormatFloat(3, 
             olx_angle(p1.GetCenter(), p2.GetCenter(), p3.GetCenter()));
       }
+      else if( EsdlInstanceOf(Sel[0], TXPlane) &&
+        EsdlInstanceOf(Sel[1], TXAtom) &&
+        EsdlInstanceOf(Sel[2], TXPlane) )  {
+          TXPlane &p1 = ((TXPlane&)Sel[0]),
+            &p2 = ((TXPlane&)Sel[2]);
+          Tmp = "Angle between plane centroid - atom - plane centroid: ";
+          Tmp << olxstr::FormatFloat(3, 
+            olx_angle(p1.GetCenter(), ((TXAtom&)Sel[1]).crd(), p2.GetCenter()));
+      }
     }
     else if( Sel.Count() == 4 )  {
       if( EsdlInstanceOf(Sel[0], TXAtom) &&

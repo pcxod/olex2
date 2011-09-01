@@ -8734,6 +8734,20 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TBasicApp::NewLogEntry() << (values.Add("Angle between plane centroids: ") <<
           vcovc.Calc3PCAngle(a1, a2, a3).ToString());
       }
+      else if( EsdlInstanceOf(sel[0], TXPlane) &&
+              EsdlInstanceOf(sel[1], TXAtom) &&
+              EsdlInstanceOf(sel[2], TXPlane) )
+      {
+        TSPlane& p1 = (TXPlane&)sel[0];
+        TSAtom& a = (TXAtom&)sel[1];
+        TSPlane& p2 = (TXPlane&)sel[2];
+        TSAtomCPList a1, a2;
+        for( size_t i=0; i < p1.Count(); i++ )  a1.Add(p1.GetAtom(i));
+        for( size_t i=0; i < p2.Count(); i++ )  a2.Add(p2.GetAtom(i));
+        TBasicApp::NewLogEntry() << (
+          values.Add("Angle between plane centroid - atom - plane centroid: ")
+          << vcovc.CalcPCAPCAngle(a1, a, a2).ToString());
+      }
     }
     else if( sel.Count() == 4 )  {
       if( EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXAtom) && 
