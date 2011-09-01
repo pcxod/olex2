@@ -57,7 +57,7 @@ void TXPlane::Create(const olxstr& cName)  {
     if( !IsRegular() )  
       GlP.Vertices.SetCount(CrdCount());
     else                 
-      GlP.Vertices.SetCount(5);
+      GlP.Vertices.SetCount(4);
 
     PlaneSort::Sorter sp(*this);
     const mat3d transform = GetBasis();
@@ -77,8 +77,8 @@ void TXPlane::Create(const olxstr& cName)  {
       }
       vec3d marv(0, sqrt(maxrs), 0);
       mat3d rm;
-      olx_create_rotation_matrix(rm, vec3d(1,0,0), cos(M_PI*72.0/180));
-      for( int i=0; i < 5; i++ )  {
+      olx_create_rotation_matrix(rm, vec3d(1,0,0), cos(M_PI*(360/4)/180));
+      for( int i=0; i < 4; i++ )  {
         GlP.Vertices[i] = marv;    
         marv *= rm;
       }

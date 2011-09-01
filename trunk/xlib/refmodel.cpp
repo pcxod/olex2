@@ -201,13 +201,15 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   for( size_t i=0; i < rm.Frags.Count(); i++ )
     Frags(rm.Frags.GetKey(i), new Fragment(*rm.Frags.GetValue(i)));
 
-  if( AssignAUnit )  {
+  if( AssignAUnit )
     aunit.Assign(rm.aunit);
+
   /* need to copy the ID's before any restraints or info tabs use them or all
   gets broken... !!!  */
-    for( size_t i=0; i < rm.UsedSymm.Count(); i++ )
-      AddUsedSymm(rm.UsedSymm.GetValue(i).symop, rm.UsedSymm.GetKey(i));
+  for( size_t i=0; i < rm.UsedSymm.Count(); i++ )
+    AddUsedSymm(rm.UsedSymm.GetValue(i).symop, rm.UsedSymm.GetKey(i));
 
+  if( AssignAUnit || aunit.AtomCount() >= rm.aunit.AtomCount() )  {
     for( size_t i=0; i < rcList1.Count(); i++ )
       rcList1[i]->Assign(*rm.rcList1[i]);
 
