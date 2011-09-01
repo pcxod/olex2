@@ -26,8 +26,8 @@
     #define UTIME _wutime
     #define unlink _wunlink
     #define rmdir _wrmdir
-    #define STAT _wstat
-    #define STAT_STR _stat
+    #define STAT _wstati64
+    #define STAT_STR _stati64
     #define chmod _wchmod
     #define chdir _wchdir
     #define access _waccess
