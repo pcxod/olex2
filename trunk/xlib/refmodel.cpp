@@ -201,31 +201,32 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   for( size_t i=0; i < rm.Frags.Count(); i++ )
     Frags(rm.Frags.GetKey(i), new Fragment(*rm.Frags.GetValue(i)));
 
-  if( AssignAUnit )
+  if( AssignAUnit )  {
     aunit.Assign(rm.aunit);
-  // need to copy the ID's before any restraints or info tabs use them or all gets broken... !!! 
-  for( size_t i=0; i < rm.UsedSymm.Count(); i++ )
-    AddUsedSymm(rm.UsedSymm.GetValue(i).symop, rm.UsedSymm.GetKey(i));
+  /* need to copy the ID's before any restraints or info tabs use them or all
+  gets broken... !!!  */
+    for( size_t i=0; i < rm.UsedSymm.Count(); i++ )
+      AddUsedSymm(rm.UsedSymm.GetValue(i).symop, rm.UsedSymm.GetKey(i));
 
-  for( size_t i=0; i < rcList1.Count(); i++ )
-    rcList1[i]->Assign(*rm.rcList1[i]);
+    for( size_t i=0; i < rcList1.Count(); i++ )
+      rcList1[i]->Assign(*rm.rcList1[i]);
 
-  rSAME.Assign(aunit, rm.rSAME);
-  ExyzGroups.Assign(rm.ExyzGroups);
-  AfixGroups.Assign(rm.AfixGroups);
-  for( size_t i=0; i < rcList.Count(); i++ )
-    rcList[i]->Assign(*this, *rm.rcList[i]);
-  // restraints have to be copied first, as some may refer to vars
-  Vars.Assign(rm.Vars);
+    rSAME.Assign(aunit, rm.rSAME);
+    ExyzGroups.Assign(rm.ExyzGroups);
+    AfixGroups.Assign(rm.AfixGroups);
+    for( size_t i=0; i < rcList.Count(); i++ )
+      rcList[i]->Assign(*this, *rm.rcList[i]);
+    // restraints have to be copied first, as some may refer to vars
+    Vars.Assign(rm.Vars);
 
-  Conn.Assign(rm.Conn);
-  aunit._UpdateConnInfo();
+    Conn.Assign(rm.Conn);
+    aunit._UpdateConnInfo();
 
-  for( size_t i=0; i < rm.InfoTables.Count(); i++ )  {
-    if( rm.InfoTables[i].IsValid() )
-      InfoTables.Add(new InfoTab(*this, rm.InfoTables[i]));
+    for( size_t i=0; i < rm.InfoTables.Count(); i++ )  {
+      if( rm.InfoTables[i].IsValid() )
+        InfoTables.Add(new InfoTab(*this, rm.InfoTables[i]));
+    }
   }
-
   for( size_t i=0; i < rm.SfacData.Count(); i++ )
     SfacData(rm.SfacData.GetKey(i), new XScatterer(*rm.SfacData.GetValue(i)));
   UserContent = rm.UserContent;

@@ -20,7 +20,8 @@ class TCRSFile : public TBasicCFile  {
   bool SGInitialised;
 public:
   TCRSFile();
-  virtual ~TCRSFile()  {  }
+  ~TCRSFile()  {}
+  void Clear();
   class TSpaceGroup* GetSG();
 
   inline size_t FacesCount() const {  return Faces.Count();  }

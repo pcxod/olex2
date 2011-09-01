@@ -11,46 +11,44 @@
 #include "asymmunit.h"
 #include "symmlib.h"
 
-TP4PFile::TP4PFile() {}
-
-TP4PFile::~TP4PFile()  {}
-
+void TP4PFile::Clear()  {
+  GetRM().Clear(rm_clear_ALL);
+  GetAsymmUnit().Clear();
+}
+//.............................................................................
 void TP4PFile::SaveToStrings(TStrList& SL)  {
-  olxstr Tmp;
-
   SL.Add("FILEID Created by OLEX2");
-  SL.Add(olxstr("TITLE   ") << GetTitle() );
-  SL.Add(olxstr("CHEM    ") << GetRM().GetUserContentStr() );
+  SL.Add(olxstr("TITLE   ") << GetTitle());
+  SL.Add(olxstr("CHEM    ") << GetRM().GetUserContentStr());
 
-  Tmp = "CELL ";
-              Tmp << GetAsymmUnit().GetAxes()[0];
-  Tmp << ' '; Tmp << GetAsymmUnit().GetAxes()[1];
-  Tmp << ' '; Tmp << GetAsymmUnit().GetAxes()[2];
-  Tmp << ' '; Tmp << GetAsymmUnit().GetAngles()[0];
-  Tmp << ' '; Tmp << GetAsymmUnit().GetAngles()[1];
-  Tmp << ' '; Tmp << GetAsymmUnit().GetAngles()[2];
-  SL.Add(Tmp);
+  SL.Add("CELL").stream(' ')
+    << GetAsymmUnit().GetAxes()[0]
+    << GetAsymmUnit().GetAxes()[1]
+    << GetAsymmUnit().GetAxes()[2]
+    << GetAsymmUnit().GetAngles()[0]
+    << GetAsymmUnit().GetAngles()[1]
+    << GetAsymmUnit().GetAngles()[2];
 
-  Tmp = "CELLSD "; Tmp << GetAsymmUnit().GetZ();
-  Tmp << ' ' << GetAsymmUnit().GetAxisEsds()[0];
-  Tmp << ' ' << GetAsymmUnit().GetAxisEsds()[1];
-  Tmp << ' ' << GetAsymmUnit().GetAxisEsds()[2];
-  Tmp << ' ' << GetAsymmUnit().GetAngleEsds()[0];
-  Tmp << ' ' << GetAsymmUnit().GetAngleEsds()[1];
-  Tmp << ' ' << GetAsymmUnit().GetAngleEsds()[2];
-  SL.Add(Tmp);
+  SL.Add("CELLSD").stream(' ')
+    << GetAsymmUnit().GetZ()
+    << GetAsymmUnit().GetAxisEsds()[0]
+    << GetAsymmUnit().GetAxisEsds()[1]
+    << GetAsymmUnit().GetAxisEsds()[2]
+    << GetAsymmUnit().GetAngleEsds()[0]
+    << GetAsymmUnit().GetAngleEsds()[1]
+    << GetAsymmUnit().GetAngleEsds()[2];
 
   SL.Add("MORPH   ") << GetMorph();
   SL.Add("CCOLOR  ") << GetColor();
-  SL.Add("CSIZE  ") << GetRM().expl.GetCrystalSize()[0] 
-    << ' ' << GetRM().expl.GetCrystalSize()[0]
-    << ' ' << GetRM().expl.GetCrystalSize()[1]
-    << ' ' << GetRM().expl.GetCrystalSize()[2]
-    << ' ';
+  SL.Add("CSIZE ").stream(' ')
+    << GetRM().expl.GetCrystalSize()[0] 
+    << GetRM().expl.GetCrystalSize()[0]
+    << GetRM().expl.GetCrystalSize()[1]
+    << GetRM().expl.GetCrystalSize()[2];
     if( GetRM().expl.IsTemperatureSet() ) 
-      SL.GetLastString() << GetRM().expl.GetTempValue().ToString();
+      SL.GetLastString() << ' ' << GetRM().expl.GetTempValue().ToString();
     else
-      SL.GetLastString() << '0';
+      SL.GetLastString() << " 0";
     SL.Add("SOURCE  ") << GetRM().expl.GetRadiation();
   // save only if preset
   if( !SGString.IsEmpty() )
@@ -58,6 +56,7 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
 }
 
 void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
+  Clear();
   olxstr Cell, CellSd, Size, Source, chem;
   TStrPObjList<olxstr,olxstr*> params;
   params.Add("SITEID",  &SiteId);
@@ -141,7 +140,7 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
 }
 
 bool TP4PFile::Adopt(TXFile& f)  {
-  GetRM().Assign(f.GetRM(), false );
+  GetRM().Assign(f.GetRM(), false);
   GetAsymmUnit().GetAxes() = f.GetAsymmUnit().GetAxes();
   GetAsymmUnit().GetAxisEsds() = f.GetAsymmUnit().GetAxisEsds();
   GetAsymmUnit().GetAngles() = f.GetAsymmUnit().GetAngles();
