@@ -296,6 +296,8 @@ class TGroupCAtom  {
 public:
   TGroupCAtom() : Atom(NULL), Matrix(NULL)  {}
   TGroupCAtom(TCAtom* a, const smatd* m=NULL) : Atom(a), Matrix(m)  {}
+  TGroupCAtom(TCAtom& a, const smatd& m)
+    : Atom(&a), Matrix(m.IsFirst() ? NULL : &m)  {}
   TGroupCAtom(const olxstr& name, TCAtom* a, const smatd* m=NULL)
     : Name(name), Atom(a), Matrix(m)  {}
   TGroupCAtom(const TGroupCAtom& ga)

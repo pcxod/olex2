@@ -30,6 +30,13 @@ public:
   virtual ~a_ort_object(){}
   virtual void render(PSWriter&) const = 0;
   virtual float get_z() const = 0;
+  virtual void update_size(evecf &size) const {  return;  }
+  static void update_min_max(evecf &size, const vec3f& crd)  {
+    if( size[0] > crd[0] )  size[0] = crd[0];
+    if( size[2] < crd[0] )  size[2] = crd[0];
+    if( size[1] > crd[1] )  size[1] = crd[1];
+    if( size[3] < crd[1] )  size[3] = crd[1];
+  }
 };
 
 struct ort_atom : public a_ort_object {
@@ -47,6 +54,7 @@ struct ort_atom : public a_ort_object {
   }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return crd[2];  }
+  virtual void update_size(evecf &size) const;
   bool IsSpherical() const;
   bool IsSolid() const {  return mask != 0 && mask != 16;  }
 protected:
@@ -75,6 +83,10 @@ struct ort_line : public a_ort_object  {
     a_ort_object(parent), from(_from), to(_to), color(_color)  {}
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return (from[2]+to[2])/2;  }
+  void update_size(evecf &sz) const {
+    a_ort_object::update_min_max(sz, from);
+    a_ort_object::update_min_max(sz, to);
+  }
 };
 
 struct ort_poly : public a_ort_object  {
@@ -93,6 +105,10 @@ struct ort_poly : public a_ort_object  {
     for( size_t i=0; i < points.Count(); i++ )
       z += points[i][2];
     return points.IsEmpty() ? 0 : z/points.Count();
+  }
+  void update_size(evecf &sz) const {
+    for( size_t i=0; i < points.Count(); i++ )
+      a_ort_object::update_min_max(sz, points[i]);
   }
 };
 
@@ -115,6 +131,7 @@ struct ort_circle : public a_ort_object  {
   }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return center[2];  }
+  void update_size(evecf &sz) const;
 };
 
 struct ort_cone : public a_ort_object  {
@@ -132,6 +149,7 @@ struct ort_cone : public a_ort_object  {
     divs(5)  {  }
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return (bottom[2]+top[2])/2;  }
+  void update_size(evecf &sz) const;
 };
 
 class OrtDraw  {
@@ -139,7 +157,7 @@ private:
   static int OrtObjectsZSort(const a_ort_object* a1, const a_ort_object* a2)  {
     return olx_cmp_float(a1->get_z(), a2->get_z(), 1e-3f);
   }
-  float DrawScale, BondRad, LinearScale;
+  float DrawScale, BondRad, LinearScale, YOffset;
   mat3f ProjMatr, UnProjMatr;
   vec3f DrawOrigin, SceneOrigin;
   TGXApp& app;

@@ -18,8 +18,13 @@ BeginEsdlNamespace()
 
 class TFileTree  {
 public:
-  typedef TPtrList<const TFileListItem> TFilePtrList;
+  // expansion flags
+  static const short
+    efNone   = 0x0000, // exceptions will be re-thrown
+    efSafe   = 0x0001, // exceptions will be trapped
+    efReport = 0x0002; // exceptions will be reported
 
+  typedef TPtrList<const TFileListItem> TFilePtrList;
   template <class FT> struct TDiffFolder  {
     const FT *Src, *Dest;
     // the size is the same but some items might be missing
@@ -36,15 +41,19 @@ public:
     olxstr FullPath;
     typedef TDiffFolder<Folder> DiffFolder;
 #ifdef __WIN32__
-    static int CompareFiles(const TFileListItem* i1, const TFileListItem* i2)  {
+    static int CompareFiles(const TFileListItem* i1, const TFileListItem* i2)
+    {
       return i1->GetName().Comparei(i2->GetName());
     }
     static int CompareFolders(const Folder* i1, const Folder* i2)  {
       return i1->Name.Comparei(i2->Name);
     }
-    template <class T> static size_t FindSortedIndexOf(const T&list, const olxstr& entity) {
+    template <class T> static size_t FindSortedIndexOf(const T&list,
+      const olxstr& entity)
+    {
       if( list.Count() == 0 )  return InvalidIndex;
-      if( list.Count() == 1 )  return (list[0].GetName().Comparei(entity) == 0) ? 0 : InvalidIndex;
+      if( list.Count() == 1 )
+        return (list[0].GetName().Comparei(entity) == 0) ? 0 : InvalidIndex;
       size_t from = 0, to = list.Count()-1;
       if( list[from].GetName().Comparei(entity) == 0  )  return from;
       if( list[from].GetName().Comparei(entity) > 0 )  return InvalidIndex;
@@ -63,15 +72,19 @@ public:
       return InvalidIndex;
     }
 #else
-    static int CompareFiles(const TFileListItem* i1, const TFileListItem* i2)  {
+    static int CompareFiles(const TFileListItem* i1, const TFileListItem* i2)
+    {
       return i1->GetName().Compare(i2->GetName());
     }
     static int CompareFolders(const Folder* i1, const Folder* i2)  {
       return i1->Name.Compare(i2->Name);
     }
-    template <class T> static size_t FindSortedIndexOf(const T&list, const olxstr& entity) {
+    template <class T> static size_t FindSortedIndexOf(const T&list,
+      const olxstr& entity)
+    {
       if( list.Count() == 0 )  return InvalidIndex;
-      if( list.Count() == 1 )  return (list[0].GetName() == entity) ? 0 : InvalidIndex;
+      if( list.Count() == 1 )
+        return (list[0].GetName() == entity) ? 0 : InvalidIndex;
       size_t from = 0, to = list.Count()-1;
       if( list[from].GetName() == entity )  return from;
       if( list[from].GetName().Compare(entity) > 0 )  return InvalidIndex;
@@ -92,15 +105,12 @@ public:
 #endif
     void _ExpandNewFolder(DiffFolder& df, bool is_src) const;
   public:
-    Folder(TFileTree& fileTree, const TFileListItem& info, const olxstr& fullPath,
-      Folder* parent = NULL)
-      :  TFileListItem(info), Parent(parent), FileTree(fileTree)  
+    Folder(TFileTree& fileTree, const TFileListItem& info,
+      const olxstr& fullPath, Folder* parent = NULL)
+      : TFileListItem(info), Parent(parent), FileTree(fileTree)  
     {
       FullPath = TEFile::OSPath(fullPath);
       TEFile::AddPathDelimeterI(FullPath);
-      //size_t ind = FullPath.LastIndexOf(TEFile::GetPathDelimeter(), FullPath.Length()-1);
-      //if( ind != InvalidIndex )
-      //  Name = FullPath.SubStringFrom(ind+1, 1);
     }
     const olxstr& GetFullPath() const {  return FullPath;  }
     size_t FileCount() const {  return Files.Count();  }
@@ -113,33 +123,40 @@ public:
     uint64_t CalcSize() const;
     // returns total number of files in folders
     size_t CalcItemCount() const;
-    // reads the folder structure
-    void Expand(TOnProgress& pg);
-    // recursive deletion of the folder, must be expanded beforehand! throws TFunctionFailedException
+    // reads the folder structure, flags determine how exceptions is handled
+    void Expand(TOnProgress& pg, short flags);
+    /* recursive deletion of the folder, must be expanded beforehand! throws 
+    TFunctionFailedException
+    */
     void Delete(TOnProgress& pg, bool ContentOnly=false);
     // compares folders and returns the difference size
     uint64_t Compare(const Folder& f, TOnProgress& pg) const;
     // calculates the difference tree between the folders
     void CalcMergedTree(const Folder& f, DiffFolder& df) const;
     // merges the difference tree, possibly into a different location
-    void Merge(const DiffFolder& df, TOnProgress& onSync, const olxstr& _dest_n=EmptyString()) const;
+    void Merge(const DiffFolder& df, TOnProgress& onSync,
+      const olxstr& _dest_n=EmptyString()) const;
     // copies and overwrites existing files and timestamp
     bool CopyTo(const olxstr& _dest,
                 TOnProgress& OnSync,
                 bool do_throw,
                 void (*AfterCopy)(const olxstr& src, const olxstr& dest)=NULL
                 ) const;
-    // syncronises two folders - only updates files, does not delete anything (yet)
+    /* synchronises two folders - only updates files, does not delete anything
+    (yet) */
     void Synchronise(Folder& f, TOnProgress& onSync);
     // exports the folder index to a file
-    void ExportIndex(const olxstr& fileName, TStrList* list=NULL, size_t level=0) const;
+    void ExportIndex(const olxstr& fileName, TStrList* list=NULL,
+      size_t level=0) const;
     // the function fills the list with full file names (recursively)
-    void ListFilesEx(TStrList& out, const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
+    void ListFilesEx(TStrList& out,
+      const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
     void ListFiles(TStrList& out, const olxstr& _mask) const;
-    size_t CountFilesEx(const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
+    size_t CountFilesEx(
+      const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
     size_t CountFiles(const olxstr& _mask) const;
   };
-///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 public:
   typedef TFileTree::TDiffFolder<TFileTree::Folder> DiffFolder;
 protected:
@@ -170,10 +187,10 @@ public:
   bool CopyFile(const olxstr& from, const olxstr& to) const;
   // compares two files (platform independent, may fail on huge files)
   bool CompareFiles(const olxstr& from, const olxstr& to) const;
-  //............................................................................
+  //...........................................................................
   // calculates the number of bytes to be transfered when merging
   static uint64_t CalcMergeSize(const DiffFolder& df);
-  //............................................................................
+  //...........................................................................
   void Merge(const DiffFolder& df, const olxstr& dest=EmptyString() ) const {
     TOnProgress onSync;
     onSync.SetMax( CalcMergeSize(df) );
@@ -182,9 +199,9 @@ public:
     onSync.SetPos( onSync.GetMax() );
     OnSynchronise->Exit(NULL, &onSync);
   }
-  //............................................................................
-  /* if do_throw is true, the processes will be terminated on the first error else all what is
-  possible will be copied */
+  //...........................................................................
+  /* if do_throw is true, the processes will be terminated on the first error
+  else all what is possible will be copied */
   bool CopyTo(const olxstr& _dest, 
     void (*AfterCopy)(const olxstr& src, const olxstr& dest)=NULL, 
     bool do_throw=true)  
@@ -197,7 +214,7 @@ public:
     OnSynchronise->Exit(NULL, &OnSync);
     return res;
   }
-  //............................................................................
+  //...........................................................................
   // if do_throw is false no exceptions will be throws, also see above
   static bool Copy(const olxstr& src, const olxstr& dest, bool do_throw)  {
     try  {
@@ -209,14 +226,14 @@ public:
       return false;
     }
   }
-  //............................................................................
-  void Expand()  {
+  //...........................................................................
+  void Expand(short flags=efNone)  {
     TOnProgress onExp;
     OnExpand->Enter(NULL, &onExp);
-    Root.Expand(onExp);
+    Root.Expand(onExp, flags);
     OnSynchronise->Exit(NULL, &onExp);
   }
-  //............................................................................
+  //...........................................................................
   // if ContentOnly is true, the top folder is not deleted
   void Delete(bool ContentOnly=false)  {
     TOnProgress onDel;
@@ -226,13 +243,13 @@ public:
     onDel.SetPos( onDel.GetMax() );
     OnDelete->Exit(NULL, &onDel);
   }
-  //............................................................................
+  //...........................................................................
   static void Delete(const olxstr& fn, bool ContentOnly=false)  {
     TFileTree ft(fn);
     ft.Expand();
     ft.Delete(ContentOnly);
   }
-  //............................................................................
+  //...........................................................................
   uint64_t Compare(const TFileTree& ft) const {
     TOnProgress onCmp;
     OnCompare->Enter(NULL, &onCmp);
@@ -240,18 +257,18 @@ public:
     OnCompare->Exit(NULL, &onCmp);
     return sz;
   }
-  //............................................................................
+  //...........................................................................
   void CalcMergedTree(const TFileTree& ft, DiffFolder& df) const {
     Root.CalcMergedTree(ft.Root, df);
   }
-  //............................................................................
+  //...........................................................................
   void Synchronise(TFileTree& ft)  {
     TOnProgress onSync;
     OnSynchronise->Enter(NULL, &onSync);
     Root.Synchronise(ft.Root, onSync);
     OnSynchronise->Exit(NULL, &onSync);
   }
-  //............................................................................
+  //...........................................................................
   friend class TFileTree::Folder;
 };
 

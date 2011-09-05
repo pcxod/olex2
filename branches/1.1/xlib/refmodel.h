@@ -44,7 +44,9 @@ static uint32_t
   rm_clear_ALL  = 0xFFFFFFFF,
   rm_clear_DEF = (rm_clear_ALL^(rm_clear_SAME|rm_clear_AFIX|rm_clear_VARS));
 
-class RefinementModel : public IXVarReferencerContainer, public IXVarReferencer {
+class RefinementModel
+  : public IXVarReferencerContainer, public IXVarReferencer
+{
   // in INS file is EQUV command
   struct Equiv  {
     smatd symop;
@@ -80,9 +82,12 @@ protected:
   TDoubleList BASF;
   TPtrList<XVarReference> BASF_Vars;
   olxstr VarRefrencerId;
-  olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> > RefContainers;
+  olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> >
+    RefContainers;
   void SetDefaults();
   TTypeListExt<class InfoTab, IEObject> InfoTables;
+  // adds a givin direction (if unique) and returns its name
+  adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
@@ -176,7 +181,8 @@ public:
   // removes references to all deleted atoms
   void Validate();
   // creates a human readable description of the refinement
-  void Describe(TStrList& lst, TPtrList<TCAtom>* a_res = NULL, TPtrList<TSimpleRestraint>* b_res = NULL);
+  void Describe(TStrList& lst, TPtrList<TCAtom>* a_res = NULL,
+    TPtrList<TSimpleRestraint>* b_res = NULL);
 #ifndef _NO_PYTHON
   PyObject* PyExport(bool export_connectivity);
 #endif
@@ -674,6 +680,9 @@ of components 1 ... m
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);
   void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);
+  // restraints & constraints related functions
+  void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroError &E);
+
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
   struct ReleasedItems {

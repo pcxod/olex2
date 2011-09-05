@@ -67,6 +67,12 @@ public:
     template <class Item> static inline TCAtom& Access(Item* a)  {
       return Accessor::Access(*a).CAtom();
     }
+    template <class Item> inline TCAtom& operator ()(Item& a) const {
+      return Accessor::Access(a).CAtom();
+    }
+    template <class Item> inline TCAtom& operator ()(Item* a) const {
+      return Accessor::Access(*a).CAtom();
+    }
   };
   TCAtom& CAtom() const {  return *FCAtom;  }
   void CAtom(TCAtom& CA);

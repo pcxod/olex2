@@ -128,7 +128,10 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded, "converts cif to a document");
   xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded, "creates a table from a cif");
-  xlib_InitMacro(CifMerge, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+  xlib_InitMacro(CifMerge,
+    "u-updates atom treatment if the asymmetric units of currently loaded file"
+    " and of the CIF file match",
+    (fpAny^fpNone)|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
   xlib_InitMacro(CifExtract, EmptyString(), fpTwo|psFileLoaded, "extract a list of items from one cif to another");
   xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded, "Creates cif from current file, variance-covariance matrix should be available");
@@ -958,32 +961,40 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         TAtomEnvi AE;
         XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE);
         for( size_t i=0; i < AE.Count(); i++ )  {
-          if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
+          if( AE.GetCAtom(i).GetPart() != 0 &&
+              AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() )
+          {
             if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex )  {
               parts.Add(AE.GetCAtom(i).GetPart());
               occu.Add(rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof));
             }
+          }
         }
         if( parts.Count() < 2 )  {
           int afix = TXlConGen::ShelxToOlex(Hfix, AE);
           if( afix != -1 )  {
             TCAtomPList generated;
-            xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex), NULL, &generated);
-            if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL ) // hack to get desired Hfix...
+            xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex),
+              NULL, &generated);
+            if( !generated.IsEmpty() &&  // hack to get desired Hfix...
+                generated[0]->GetParentAfixGroup() != NULL )
+            {
               generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
+            }
           }
           else  {
-            XApp.NewLogEntry() << "Failed to translate HFIX code for " << satoms[aitr]->GetLabel() << 
-              " with " << AE.Count() << " bonds";
+            XApp.NewLogEntry() << "Failed to translate HFIX code for " <<
+              satoms[aitr]->GetLabel() << " with " << AE.Count() << " bonds";
           }
         }
         else  {
-          TCAtomPList generated;
           XApp.NewLogEntry() << "Processing " << parts.Count() << " parts";
           for( size_t i=0; i < parts.Count(); i++ )  {
             AE.Clear();
-            XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE, false, parts[i]);
-            //consider special case where the atom is bound to itself but very long bond > 1.6 A
+            XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE,
+              false, parts[i]);
+            /*consider special case where the atom is bound to itself but
+            very long bond > 1.6 A */
             smatd* eqiv = NULL;
             for( size_t j=0; j < AE.Count(); j++ )  {
               if( &AE.GetCAtom(j) == &AE.GetBase().CAtom() )  {
@@ -1000,24 +1011,30 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
               const smatd& e = rm.AddUsedSymm(*eqiv);
               rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(), NULL, &e, true);
               XApp.NewLogEntry() << "The atom" << satoms[aitr]->GetLabel() << 
-                " is connected to itself through symmetry, removing the symmetry generated bond";
+                " is connected to itself through symmetry, removing the"
+                " symmetry generated bond";
               delete eqiv;
             }
             //
             int afix = TXlConGen::ShelxToOlex(Hfix, AE);
             if( afix != -1 )  {
-              xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex), NULL, &generated);
+              TCAtomPList generated;
+              xlConGen.FixAtom(AE, afix,
+                XElementLib::GetByIndex(iHydrogenIndex), NULL, &generated);
               for( size_t j=0; j < generated.Count(); j++ )  {
                 generated[j]->SetPart(parts[i]);
                 rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
               }
-              if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL )
-                generated[0]->GetParentAfixGroup()->SetAfix(Hfix); // a hack again
-              generated.Clear();
+              if( !generated.IsEmpty() &&
+                  generated[0]->GetParentAfixGroup() != NULL )
+              {
+                // a hack again
+                generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
+              }
             }
             else  {
-              XApp.NewLogEntry() << "Failed to translate HFIX code for " << satoms[aitr]->GetLabel() << 
-                " with " << AE.Count() << " bonds";
+              XApp.NewLogEntry() << "Failed to translate HFIX code for " <<
+                satoms[aitr]->GetLabel() << " with " << AE.Count() << " bonds";
             }
           }
         }
@@ -1028,7 +1045,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
   q_draw.Unlock();
-  XApp.XFile().GetLattice().UpdateConnectivity();
+  XApp.XFile().GetLattice().Init();
   delete XApp.FixHL();
 }
 //..............................................................................
@@ -2724,7 +2741,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
           footer << "; ";
       }
       if( tab_count > 1 )
-        SL.Add("<p></p>");
+        SL.Add("<p>&nbsp;</p>");
       DT.CreateHTMLList(
         SL,
         Tmp,
@@ -2801,7 +2818,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   else  {
     for( size_t i=0; i < _Translation_count; i++ )
       Translations.AddNew(_Translations[i*2], _Translations[i*2+1]);
-    
   }
   const size_t _loop_names_to_skip_count = 3;
   static olxstr _loop_names_to_skip[_loop_names_to_skip_count] = {
@@ -2820,7 +2836,136 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   // normalise
   for( size_t i=0; i < Translations.Count(); i++ )
     Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
-
+  // update the atom_site loop and H treatment if AU match
+  if( Options.Contains('u') )  {
+    if( xapp.CheckFileType<TCif>() )  {
+      TBasicApp::NewLogEntry() <<
+        "Cannot update the CIF - the real refinement model is unknown";
+    }
+    else  {
+      const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+      const TAsymmUnit &tau = Cif->GetAsymmUnit();
+      bool match = (tau.AtomCount() <= au.AtomCount()), has_parts = false;
+      if( match )  {
+        size_t ind=0;
+        for( size_t i=0; i < tau.AtomCount(); i++, ind++ )  {
+          TCAtom& ta = tau.GetAtom(i);
+          while( ind < au.AtomCount() &&
+            (au.GetAtom(ind).IsDeleted() || au.GetAtom(ind).GetType() == iQPeakZ) )
+          {
+            ind++;
+          }
+          if( ind >= au.AtomCount() )  {
+            match = false;
+            break;
+          }
+          TCAtom &a = au.GetAtom(ind);
+          if( !a.GetLabel().Equalsi(ta.GetLabel()) ||
+            a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3 )
+          {
+            match = false;
+            break;
+          }
+          if( a.GetPart() != 0 )
+            has_parts = true;
+        }
+      }
+      if( !match )  {
+        TBasicApp::NewLogEntry() << "Could not update the atom information loop - "
+          "the asymmetric units mismatch";
+      }
+      else  {
+        cetTable* tab = Cif->FindLoop("_atom_site");
+        if( tab == NULL || tab->RowCount() != tau.AtomCount() )  {
+          TBasicApp::NewLogEntry() << "Could not locate the atom_site loop or"
+           " its content mismatches the asymmetric unit";
+        }
+        else  {
+          size_t rf_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
+          if( rf_ind == InvalidIndex )  {
+            tab->AddCol("_atom_site_refinement_flags_posn");
+            rf_ind = tab->ColCount()-1;
+          }
+          size_t dg_ind = tab->ColIndex("_atom_site_disorder_group");
+          if( dg_ind == InvalidIndex && has_parts )  {
+            tab->AddCol("_atom_site_disorder_group");
+            dg_ind = tab->ColCount()-1;
+          }
+          TIntList h_t;
+          size_t ri=0;
+          for( size_t i=0; i < au.AtomCount(); i++, ri++ )  {
+            while( i < au.AtomCount() &&
+              (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ) )
+            {
+              i++;
+            }
+            // last condition must not ever happen
+            if( i >= au.AtomCount() || ri >= tab->RowCount() )
+              break;
+            TCAtom &a = au.GetAtom(i);
+            if( a.GetType() == iHydrogenZ )  {
+              int& h = h_t.Add(0);
+              if( a.GetUisoOwner() != NULL )  {  // u constrained
+                h |= 0x0001;
+              }
+              if( a.GetParentAfixGroup() != NULL &&  // coordinates constrained
+                a.GetParentAfixGroup()->GetAfix() > 0 )
+              {
+                if( !a.GetParentAfixGroup()->IsRefinable() )
+                  h |= 0x0002;
+                else
+                  h |= 0x0004;
+              }
+            }
+            olxstr f;
+            if( a.GetParentAfixGroup() != NULL )  {
+              if( a.GetParentAfixGroup()->IsRefinable() )  {
+                f << 'G';
+              }
+              else if( a.GetParentAfixGroup()->IsRiding() )
+                f << 'R';
+            }
+            if( a.GetDegeneracy() != 1 )
+              f << 'S';
+            if( f.IsEmpty() )
+              tab->Set(ri, rf_ind, new cetString('.'));
+            else
+              tab->Set(ri, rf_ind, new cetString(f));
+            if( has_parts )  {
+              if( a.GetPart() == 0 )
+                tab->Set(ri, dg_ind, new cetString('.'));
+              else
+                tab->Set(ri, dg_ind, new cetString(a.GetPart()));
+            }
+          }
+          if( h_t.IsEmpty() )
+            Cif->SetParam("_refine_ls_hydrogen_treatment", "undef", false);
+          else  {
+            int v = h_t[0];
+            bool all_same = true;
+            for( size_t i=1; i < h_t.Count(); i++ )  {
+              if( h_t[i] != v )  {
+                all_same = false;
+                break;
+              }
+            }
+            if( all_same )  {
+              if( v == 1 )
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "refxyz", false);
+              else if( v == 2 )
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "refU", false);
+              else if( v == 4 )
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "noref", false);
+              else
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "constr", false);
+            }
+            else
+              Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
+          }
+        }
+      }
+    }
+  }
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);

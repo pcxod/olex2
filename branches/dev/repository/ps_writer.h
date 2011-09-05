@@ -26,22 +26,30 @@ class PSWriter  {
   char bf[80];
   uint32_t CurrentColor;
   float CurrentLineWidth;
+  uint64_t bounding_box_pos;
 public:
   typedef void (PSWriter::*RenderFunc)();
-  PSWriter(const olxstr& fileName) {
+  PSWriter(const olxstr& fileName, bool write_bounding_box)
+    : bounding_box_pos(InvalidIndex)
+  {
     CurrentColor = 0;
     CurrentLineWidth = 1;
     out.Open(fileName, "w+b");
     out.Writeln("%!PS-Adobe-2.0");
-    out.Writeln( "%%Title: Olex2 2D diagram" );
-    out.Writeln( "%%Pages: 1" );
-    out.Writeln( "%%Page: 1 1" );
-    out.Writeln( olxcstr( "%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()) );
-    out.Writeln( "%%Orientation: Portrait" );
-    out.Writeln( "%%DocumentPaperSizes: A4" );
-    out.Writeln( "%%EndComments" );
-    //out.Writeln( "0 0 0 setrgbcolor" );
-    //out.Writeln( "1 setlinewidth" );
+    out.Writeln("%%Title: Olex2 2D diagram");
+    out.Writeln("%%Pages: 1");
+    out.Writeln("%%Page: 1 1");
+    out.Writeln(olxcstr("%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()));
+    out.Writeln("%%Orientation: Portrait");
+    out.Writeln("%%DocumentPaperSizes: A4");
+    if( write_bounding_box )  {
+      bounding_box_pos = out.GetPosition();
+      olxcstr bb("%%BoundingBox: ");
+      bounding_box_pos += bb.Length();
+      bb << olxcstr::CharStr(' ', 4*12);
+      out.Writeln(bb);
+    }
+    out.Writeln("%%EndComments");
   }
   //..........................................................................
   void color(uint32_t rgb)  {
@@ -324,6 +332,16 @@ public:
   template <typename vec_t, typename float_t>
   void arc(const vec_t& center, const float_t& rad, const float_t startAngle, const float_t& endAngle)  {
     psw_sprintf(bf, "%f %f %f %f %f arc", (float)center[0], (float)center[1], (float)rad, (float)startAngle, (float)endAngle);
+    out.Writeln(bf);
+  }
+  //..........................................................................
+  void writeBoundingBox(const evecf &b)  {
+    if( !olx_is_valid_index(bounding_box_pos) )  {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "bounding box space must be reserved");
+    }
+    out.SetPosition(bounding_box_pos);
+    psw_sprintf(bf, "%3.3f %3.3f %3.3f %3.3f", b[0], b[1], b[2], b[3]);
     out.Writeln(bf);
   }
 };

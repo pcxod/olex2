@@ -16,46 +16,50 @@ TCRSFile::TCRSFile()  {
   SGInitialised = false;
 }
 //..............................................................................
+void TCRSFile::Clear()  {
+  GetRM().Clear(rm_clear_ALL);
+  GetAsymmUnit().Clear();
+  SGInitialised = false;
+}
+//..............................................................................
 TSpaceGroup* TCRSFile::GetSG()  {
   return SGInitialised ? TSymmLib::GetInstance().FindSG(GetAsymmUnit()) : NULL;
 }
 //..............................................................................
 void TCRSFile::SaveToStrings(TStrList& SL)  {
-  olxstr Tmp;
   SL.Add("TITLE   ") << GetTitle();
-  Tmp = "CELL ";
-  Tmp << GetRM().expl.GetRadiation() << ' ' <<
-  GetAsymmUnit().GetAxes()[0] << ' ' <<
-  GetAsymmUnit().GetAxes()[1] << ' ' <<
-  GetAsymmUnit().GetAxes()[2] << ' ' <<
-  GetAsymmUnit().GetAngles()[0] << ' ' <<
-  GetAsymmUnit().GetAngles()[1] << ' ' <<
-  GetAsymmUnit().GetAngles()[2];
-  SL.Add(Tmp);
+  SL.Add("CELL").stream(' ')
+    << GetRM().expl.GetRadiation()
+    << GetAsymmUnit().GetAxes()[0]
+    << GetAsymmUnit().GetAxes()[1]
+    << GetAsymmUnit().GetAxes()[2]
+    << GetAsymmUnit().GetAngles()[0]
+    << GetAsymmUnit().GetAngles()[1]
+    << GetAsymmUnit().GetAngles()[2];
 
-  Tmp = "ZERR ";
-  Tmp << GetAsymmUnit().GetZ() << ' ' <<
-  GetAsymmUnit().GetAxisEsds()[0] << ' ' <<
-  GetAsymmUnit().GetAxisEsds()[1] << ' ' <<
-  GetAsymmUnit().GetAxisEsds()[2] << ' ' <<
-  GetAsymmUnit().GetAngleEsds()[0] << ' ' <<
-  GetAsymmUnit().GetAngleEsds()[1] << ' ' <<
-  GetAsymmUnit().GetAngleEsds()[2];
-  SL.Add(Tmp);
+  SL.Add("ZERR").stream(' ')
+    << GetAsymmUnit().GetZ()
+    << GetAsymmUnit().GetAxisEsds()[0]
+    << GetAsymmUnit().GetAxisEsds()[1]
+    << GetAsymmUnit().GetAxisEsds()[2]
+    << GetAsymmUnit().GetAngleEsds()[0]
+    << GetAsymmUnit().GetAngleEsds()[1]
+    << GetAsymmUnit().GetAngleEsds()[2];
 
   TSpaceGroup* sg = GetSG();
   if( sg != NULL )  {
-    SL.Add("LATT ")  << sg->GetBravaisLattice().GetName() << ' ' << sg->GetLattice().GetSymbol();
+    SL.Add("LATT ")  << sg->GetBravaisLattice().GetName() << ' '
+      << sg->GetLattice().GetSymbol();
     SL.Add("SPGR ") << sg->GetName();
   }
   else
     throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
-  SL.Add(EmptyString());
+  SL.Add();
   TIns::SaveSfacUnit(GetRM(), GetRM().GetUserContent(), SL, SL.Count()-1);
 }
 //..............................................................................
 void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
-  SGInitialised = false;
+  Clear();
   olxstr Tmp, TmpUC, Cell, Zerr, Sg, fcId("FACE"), sfac, unit;
   TStrList toks;
   TStrPObjList<olxstr, olxstr*> params;
@@ -95,8 +99,10 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   toks.Strtok(Cell, ' ');
   if( toks.Count() >= 7 )  {
     GetRM().expl.SetRadiation(toks[0].ToDouble());
-    GetAsymmUnit().GetAxes() = vec3d(toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
-    GetAsymmUnit().GetAngles() = vec3d(toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble());
+    GetAsymmUnit().GetAxes() =
+      vec3d(toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
+    GetAsymmUnit().GetAngles() =
+      vec3d(toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble());
     GetAsymmUnit().InitMatrices();
     GetAsymmUnit().InitMatrices();
   }
@@ -104,8 +110,10 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   toks.Strtok( Zerr, ' ');
   if( toks.Count() >= 7 )  {
     GetAsymmUnit().SetZ(static_cast<short>(olx_round(toks[0].ToDouble())));
-    GetAsymmUnit().GetAxisEsds() = vec3d(toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
-    GetAsymmUnit().GetAngleEsds() = vec3d(toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble());
+    GetAsymmUnit().GetAxisEsds() =
+      vec3d(toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
+    GetAsymmUnit().GetAngleEsds() =
+      vec3d(toks[4].ToDouble(), toks[5].ToDouble(), toks[6].ToDouble());
   }
 
   Sg.DeleteChars(' ');

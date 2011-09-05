@@ -31,6 +31,9 @@
     <Filter Include="Source Files\lcells">
       <UniqueIdentifier>{1b488925-7e9b-4510-b686-18a23cfbe044}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{b0df0d83-cc94-446a-9c85-e150d33c7284}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\analysis">
       <UniqueIdentifier>{047ab915-5ced-4c8d-b224-c385270cd8fe}</UniqueIdentifier>
     </Filter>
@@ -1045,6 +1048,21 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\analysis\ed_analysis.h">
       <Filter>Header Files\analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\cell_reduction_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\mat_id_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\reflection_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\symmparser_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\vcov_test.h">
+      <Filter>tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -142,6 +142,27 @@ void ort_atom::render(PSWriter& pw) const {
   pw.translate(-crd);
 }
 
+void ort_atom::update_size(evecf &size) const {
+  if( mask == 0 )  return;
+  float mw, mh;
+  if( mask == 16 && atom.DrawStyle() == adsStandalone )  {
+    mw = mh = draw_rad*(parent.GetAtomOutlineSize()+1.0f);
+  }
+  else if( !IsSpherical() )  {
+    mw = sqrt(olx_sqr((*p_ielpm)[0][0])+olx_sqr((*p_ielpm)[0][1]))
+      *(parent.GetAtomOutlineSize()+1.0f);
+    mh = sqrt(olx_sqr((*p_ielpm)[1][0])+olx_sqr((*p_ielpm)[1][1]))
+      *(parent.GetAtomOutlineSize()+1.0f);
+  }
+  else  {
+    mw = mh = draw_rad*(parent.GetAtomOutlineSize()+1.0f);
+  }
+  if( size[0] > crd[0]-mw )  size[0] = crd[0]-mw;
+  if( size[1] > crd[1]-mh )  size[1] = crd[1]-mh;
+  if( size[2] < crd[0]+mw )  size[2] = crd[0]+mw;
+  if( size[3] < crd[1]+mh )  size[3] = crd[1]+mh;
+}
+
 
 void ort_atom::render_rims(PSWriter& pw) const {
   if( (draw_style&(ortep_color_lines|ortep_color_fill)) != 0 )
@@ -407,6 +428,21 @@ void ort_circle::render(PSWriter& pw) const {
   }
 }
 
+void ort_circle::update_size(evecf &sz) const {
+  if( basis == NULL )  {
+    a_ort_object::update_min_max(sz, vec3f(center[0]+r, center[1]+r, 0));
+    a_ort_object::update_min_max(sz, vec3f(center[0]-r, center[1]-r, 0));
+  }
+  else  {
+    mat3f b = *basis*r;
+    float hmx = sqrt(olx_sqr(b[0][0])+olx_sqr(b[0][1]))/2;
+    float hmy = sqrt(olx_sqr(b[1][0])+olx_sqr(b[1][1]))/2;
+    a_ort_object::update_min_max(sz, vec3f(center[0]+hmx, center[1]+hmy, 0));
+    a_ort_object::update_min_max(sz, vec3f(center[0]-hmx, center[1]-hmy, 0));
+  }
+}
+
+
 void ort_cone::render(PSWriter& pw) const {
   vec3f n = (top-bottom).Normalise();
   mat3f rm, basis = TEBasis::CalcBasis<vec3f,mat3f>(n);
@@ -422,6 +458,17 @@ void ort_cone::render(PSWriter& pw) const {
   pw.color(color);
   pw.drawQuads(b_crd, t_crd, &PSWriter::fill);
 }
+
+void ort_cone::update_size(evecf &sz) const {
+  vec3f _n = (top-bottom),
+    tr = vec3f(_n[0], -_n[1], 0).NormaliseTo(top_r),
+    tb = vec3f(_n[0], -_n[1], 0).NormaliseTo(bottom_r);
+  a_ort_object::update_min_max(sz, top+tr);
+  a_ort_object::update_min_max(sz, top-tr);
+  a_ort_object::update_min_max(sz, bottom+tb);
+  a_ort_object::update_min_max(sz, bottom-tb);
+}
+
 
 void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm, const vec3f& norm_vec) const {
   for( uint16_t j=0; j < ElpDiv; j++ )
@@ -520,10 +567,10 @@ void OrtDraw::Init(PSWriter& pw)  {
     pw.custom(fnt.c_str());
   }
 
-  pw.translate(0.0f, ((float)pw.GetHeight()-LinearScale*vp[3])/2);
+  YOffset = ((float)pw.GetHeight()-LinearScale*vp[3])/2;
+  pw.translate(0.0f, YOffset);
   pw.scale(LinearScale, LinearScale);
-  LinearScale = 1; // reset now
-  DrawScale = app.GetRender().GetBasis().GetZoom()/(LinearScale*app.GetRender().GetScale());
+  DrawScale = app.GetRender().GetBasis().GetZoom()/(app.GetRender().GetScale());
   BondRad = 0.05*DrawScale;
   SceneOrigin = basis.GetCenter();
   DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
@@ -590,7 +637,7 @@ Direct calculation:
     }
 */
 void OrtDraw::Render(const olxstr& fileName)  {
-  PSWriter pw(fileName);
+  PSWriter pw(fileName, true);
   Init(pw);
   TTypeList<a_ort_object> objects;
   TPtrList<vec3f> all_points;
@@ -643,7 +690,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
       vec3f mp = cm[i]*((float)(0.2*len[i]*b.GetZoom())), 
         ep = cm[i]*((float)((0.2*len[i]+0.8)*b.GetZoom()));
       
-      ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep, 0.2*DrawScale*b.GetZoom(), 0, 0); 
+      ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep,
+        0.2*DrawScale*b.GetZoom(), 0, 0); 
       objects.Add(arrow_cone);
       all_points.Add(arrow_cone->bottom);
       all_points.Add(arrow_cone->top);
@@ -652,7 +700,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
       const float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
       const float base_r = 0.075*DrawScale*b.GetZoom();
       ort_cone* axis_cone = new ort_cone(*this,
-        cnt+vec3f(cm[i]).NormaliseTo(sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))), // extra 3D effect for the central sphere
+        cnt+vec3f(cm[i]).NormaliseTo(// extra 3D effect for the central sphere
+          sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))),
         cnt+mp, 
         base_r, 
         base_r*pscale,
@@ -733,7 +782,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
       delete [] data[i];
   }
   objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
-
+  
   for( size_t i=0; i < objects.Count(); i++ )
     objects[i].render(pw);
 
@@ -769,7 +818,15 @@ void OrtDraw::Render(const olxstr& fileName)  {
         Labels.Add(glxl);
     }
   }
-  {  // labels rendering block
+  evecf boundary(4);
+  boundary[0] = 596;
+  boundary[1] = 842;
+  boundary[2] = -596;
+  boundary[3] = -842;
+  for( size_t i=0; i < objects.Count(); i++ )
+    objects[i].update_size(boundary);
+  // labels rendering block
+  {
     TGlFont::PSRenderContext context;
     TCStrList output;
     uint32_t prev_ps_color = 0;
@@ -785,6 +842,12 @@ void OrtDraw::Render(const olxstr& fileName)  {
       if( glf.IsVectorFont() )  {
         const double font_scale = DrawScale/app.GetRender().CalcZoom();
         vec3d crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
+        const TTextRect &r = Labels[i]->GetRect();
+        a_ort_object::update_min_max(boundary, vec3f(crd[0]+r.left*font_scale,
+          crd[1]+r.top*vector_scale, 0));
+        a_ort_object::update_min_max(boundary,
+          vec3f(crd[0]+(r.left+r.width)*font_scale,
+            crd[1]+(r.top+r.height)*font_scale, 0));
         if( color != prev_ps_color )  {
           output.Add(pw.color_str(color));
           prev_ps_color = color;
@@ -808,6 +871,18 @@ void OrtDraw::Render(const olxstr& fileName)  {
       pw.custom(output);
     }
   }
+  // scale a bit up
+  float scale_up = 1.10;
+  float mx = (boundary[2]+boundary[0])/2;
+  float my = (boundary[3]+boundary[1])/2;
+  boundary[0] = (boundary[0]-mx)*scale_up + mx;
+  boundary[1] = (boundary[1]-my)*scale_up + my;
+  boundary[2] = (boundary[2]-mx)*scale_up + mx;
+  boundary[3] = (boundary[3]-my)*scale_up + my;
+  boundary *= LinearScale;
+  boundary[1] += YOffset;
+  boundary[3] += YOffset;
+  pw.writeBoundingBox(boundary);
 }
 
 void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2, float z)  {

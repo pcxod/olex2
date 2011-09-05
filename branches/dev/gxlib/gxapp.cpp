@@ -945,6 +945,15 @@ olxstr TGXApp::GetSelectionInfo()  {
           Tmp << olxstr::FormatFloat(3, 
             olx_angle(p1.GetCenter(), p2.GetCenter(), p3.GetCenter()));
       }
+      else if( EsdlInstanceOf(Sel[0], TXPlane) &&
+        EsdlInstanceOf(Sel[1], TXAtom) &&
+        EsdlInstanceOf(Sel[2], TXPlane) )  {
+          TXPlane &p1 = ((TXPlane&)Sel[0]),
+            &p2 = ((TXPlane&)Sel[2]);
+          Tmp = "Angle between plane centroid - atom - plane centroid: ";
+          Tmp << olxstr::FormatFloat(3, 
+            olx_angle(p1.GetCenter(), ((TXAtom&)Sel[1]).crd(), p2.GetCenter()));
+      }
     }
     else if( Sel.Count() == 4 )  {
       if( EsdlInstanceOf(Sel[0], TXAtom) &&
@@ -1391,7 +1400,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
 //..............................................................................
 ConstPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
   TCAtomPList rv(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
-  return rv;
+  return rv;  // GCC needs this code!
 }
 //..............................................................................
 void TGXApp::RestoreSelection()  {
@@ -1520,6 +1529,7 @@ ConstPtrList<TXBond> TGXApp::GetXBonds(const olxstr& BondName)  {
   TXBondPList res;
   if( BondName.StartsFrom("#t") )  {  // SBond.LatId
     size_t id = BondName.SubStringFrom(2).ToSizeT();
+
     BondIterator bi(*this);
     while( bi.HasNext() )  {
       TXBond& xb = bi.Next();
@@ -2342,7 +2352,7 @@ void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
 //..............................................................................
 ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection)  {
   if( Atoms.IsEmpty() )  {
-    TCAtomPList list = GetSelectedCAtoms(ClearSelection).Release();
+    TCAtomPList list = GetSelectedCAtoms(ClearSelection);
     if( !list.IsEmpty() )  return list;
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
     list.SetCapacity(list.Count() + AU.AtomCount());
@@ -4079,6 +4089,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
       bi.Next().GetGlLabel().FromDataItem(bond_labels->GetItem(i++));
   }
   //// restore 
+
   //BondIterator bonds = GetBonds();
   //while( bonds.HasNext() )
   //  bonds.Next().Update();

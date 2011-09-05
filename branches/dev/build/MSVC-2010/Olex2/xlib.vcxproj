@@ -1113,6 +1113,11 @@
     <ClInclude Include="..\..\..\xlib\symmparser.h" />
     <ClInclude Include="..\..\..\xlib\symmtest.h" />
     <ClInclude Include="..\..\..\xlib\symspace.h" />
+    <ClInclude Include="..\..\..\xlib\tests\cell_reduction_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\mat_id_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\reflection_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\symmparser_test.h" />
+    <ClInclude Include="..\..\..\xlib\tests\vcov_test.h" />
     <ClInclude Include="..\..\..\xlib\tls.h" />
     <ClInclude Include="..\..\..\xlib\twinning.h" />
     <ClInclude Include="..\..\..\xlib\unitcell.h" />

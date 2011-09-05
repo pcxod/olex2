@@ -19,11 +19,11 @@ class MapUtil  {
 public:
   struct peak  { 
     uint32_t count;
-    vec3s center;
+    vec3i center;
     bool process;
     double summ;
     peak() : process(true), summ(0), count(0)  {}
-    peak(size_t _x, size_t _y, size_t _z) : process(true),  
+    peak(int _x, int _y, int _z) : process(true),  
       summ(0), count(0), center(_x, _y, _z) {}
   };
 protected:
@@ -37,7 +37,7 @@ protected:
     for( size_t mc=0; mc < maxima.Count(); mc++ )  {
       peak& peak = maxima[mc];
       if( mask[peak.center[0]][peak.center[1]][peak.center[2]] )  continue;
-      stack.Push( peak.center );
+      stack.Push(peak.center);
       const MapT& ref_val = data[peak.center[0]][peak.center[1]][peak.center[2]];
       vec3d new_cent;
       while( !stack.IsEmpty() )  {
@@ -46,7 +46,7 @@ protected:
         peak.count++;
         new_cent += cent;
         for( size_t i=0; i < 3; i++ )  {
-          norm_cent[i] = norm_cent[i]%dim[i]; 
+          norm_cent[i] = norm_cent[i]%(int)dim[i]; 
           if( norm_cent[i] < 0 )
             norm_cent[i] += (int)dim[i];
         }
@@ -55,41 +55,34 @@ protected:
         vec3i pt = norm_cent, _pt = cent;
         for( int di=0; di < 3; di++ )  {
           pt[di] = (norm_cent[di]+1)%(int)dim[di];
-          if( pt[di] < 0 )  pt[di] += (int)dim[di];
           if( mask[pt[0]][pt[1]][pt[2]] )  continue;
           if( ref_val < 0 )  {
-            if( data[pt[0]][pt[1]][pt[2]] < neg_level )  {
+            if( data[pt[0]][pt[1]][pt[2]] < neg_level ||
+                data[pt[0]][pt[1]][pt[2]] > pos_level )
+            {
               _pt[di] = cent[di]+1;
               stack.Push(_pt);
               mask[pt[0]][pt[1]][pt[2]] = true;
             }
           }
-          else if( data[pt[0]][pt[1]][pt[2]] > pos_level )  {
-            _pt[di] = cent[di]+1;
-            stack.Push(_pt);
-            mask[pt[0]][pt[1]][pt[2]] = true;
-          }
           pt[di] = (norm_cent[di]-1)%(int)dim[di];
           if( pt[di] < 0 )  pt[di] += (int)dim[di];
           if( mask[pt[0]][pt[1]][pt[2]] )  continue;
           if( ref_val < 0 )  {
-            if( data[pt[0]][pt[1]][pt[2]] < neg_level )  {
+            if( data[pt[0]][pt[1]][pt[2]] < neg_level ||
+                data[pt[0]][pt[1]][pt[2]] > pos_level )
+            {
               _pt[di] = cent[di]-1;
               stack.Push(_pt);
               mask[pt[0]][pt[1]][pt[2]] = true;
             }
-          }
-          else if( data[pt[0]][pt[1]][pt[2]] > pos_level )  {
-            _pt[di] = cent[di]-1;
-            stack.Push(_pt);
-            mask[pt[0]][pt[1]][pt[2]] = true;
           }
           _pt[di] = cent[di];  // restore the original value
           pt[di] = norm_cent[di];
         }
       }
       new_cent /= peak.count;
-      peak.center = new_cent.Round<size_t>();
+      peak.center = new_cent.Round<int>();
       for( size_t i=0; i < 3; i++ )
         peak.center[i] = peak.center[i]%(int)dim[i]; 
     }
@@ -291,7 +284,7 @@ public:
       }
       center /= toMerge.Count();
       center /= norm;
-      p.center = center.Round<int16_t>();
+      p.center = center.Round<int>();
     }
     for( size_t i=0; i < out.Count(); i++ )  {
       if( out[i].count == 0 )

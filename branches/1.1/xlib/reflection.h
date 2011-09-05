@@ -242,7 +242,7 @@ public:
   // return a string like: tag. h k l I S [f]
   olxstr ToNString() const {
     olxstr Str(IsOmitted() ? '-' : '+', 80);
-    Str << '.' << GetTag();
+    Str << olx_abs(GetTag()) << '.';
     return (Str.Format(7, true, ' ') << ToString());
   }
 //..............................................................................

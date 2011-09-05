@@ -1867,11 +1867,13 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
     if( !consider )  continue;
     _AnalyseAtomHAdd(cg, *atoms[i], ProcessingAtoms);
   }
+  /* // this might be useful for hadd on grown structures
   GetUnitCell().AddEllipsoid(au.AtomCount()-au_cnt);
   GetUnitCell().FindSymmEq();
   au.GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
   for( size_t i=au_cnt; i < au.AtomCount(); i++ )
     GenerateAtom(au.GetAtom(i), *Matrices[0]);
+    */
 }
 //..............................................................................
 void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
