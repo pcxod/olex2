@@ -765,7 +765,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
               new_line = Val.SubStringFrom(c_i+1);
             }
             IStringCifEntry* Params = FindParam<IStringCifEntry>(val_name);
-            olxstr Tmp = 'N';
+            olxstr Tmp = "<font color=red>N/A</font>";
             if( Params != NULL && Params->Count() != 0 )  {
               Tmp = (*Params)[0];
               for( size_t pi=1; pi < Params->Count(); pi++ )
@@ -825,7 +825,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
               IStringCifEntry* Params = FindParam<IStringCifEntry>(SVal);
               if( Params == NULL )  {
                 TBasicApp::NewLogEntry(logInfo) << "The parameter \'" << SVal << "' is not found";
-                value = 'N';
+                value = "<font color=red>N/A</font>";
               }
               else if( Params->Count() == 0 )  {
                 TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" << SVal << "' is not found";

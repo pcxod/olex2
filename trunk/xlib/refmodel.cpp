@@ -1374,7 +1374,8 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "could not add direction object");
     return;
   }
-  olx_plane::Sort(atoms, FunctionAccessor::MakeConst(&TSAtom::crd), center, normal);
+  olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
+    (const vec3d& (TSAtom::*)() const)&TSAtom::crd), center, normal);
   double ra = atoms.Count()*ang;
   for( size_t i=1; i < atoms.Count(); i++ )  {
     SharedRotatedADPs.items.Add(

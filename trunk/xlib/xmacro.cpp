@@ -2741,7 +2741,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
           footer << "; ";
       }
       if( tab_count > 1 )
-        SL.Add("<p></p>");
+        SL.Add("<p>&nbsp;</p>");
       DT.CreateHTMLList(
         SL,
         Tmp,
@@ -2818,7 +2818,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   else  {
     for( size_t i=0; i < _Translation_count; i++ )
       Translations.AddNew(_Translations[i*2], _Translations[i*2+1]);
-    
   }
   const size_t _loop_names_to_skip_count = 3;
   static olxstr _loop_names_to_skip[_loop_names_to_skip_count] = {
@@ -2882,9 +2881,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
            " its content mismatches the asymmetric unit";
         }
         else  {
-          size_t rf_ind = tab->ColIndex("_atom_site_refinement_flags");
+          size_t rf_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
           if( rf_ind == InvalidIndex )  {
-            tab->AddCol("_atom_site_refinement_flags");
+            tab->AddCol("_atom_site_refinement_flags_posn");
             rf_ind = tab->ColCount()-1;
           }
           size_t dg_ind = tab->ColIndex("_atom_site_disorder_group");
@@ -2892,12 +2891,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
             tab->AddCol("_atom_site_disorder_group");
             dg_ind = tab->ColCount()-1;
           }
-          size_t a_crd_ind[] = {
-            tab->ColIndex("_atom_site_fract_x"),
-            tab->ColIndex("_atom_site_fract_y"),
-            tab->ColIndex("_atom_site_fract_z")
-          };
-          size_t a_ue_q = tab->ColIndex("_atom_site_U_iso_or_equiv");
           TIntList h_t;
           size_t ri=0;
           for( size_t i=0; i < au.AtomCount(); i++, ri++ )  {
@@ -2914,27 +2907,19 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
               int& h = h_t.Add(0);
               if( a.GetUisoOwner() != NULL )  {  // u constrained
                 h |= 0x0001;
-                if( a_ue_q != InvalidIndex )  {  // get rid of esd
-                  tab->Set(ri, a_ue_q,
-                    new cetString(olxstr::FormatFloat(3, a.GetUiso())));
-                }
               }
               if( a.GetParentAfixGroup() != NULL &&  // coordinates constrained
-                a.GetParentAfixGroup()->GetAfix() > 0 &&
-                !a.GetParentAfixGroup()->IsRefinable() )
+                a.GetParentAfixGroup()->GetAfix() > 0 )
               {
-                for( int si=0; si < 3; si++ )  { // get rid of esds
-                  if( a_crd_ind[si] != InvalidIndex )  {
-                    tab->Set(ri, a_crd_ind[si],
-                    new cetString(olxstr::FormatFloat(4, a.ccrd()[si])));
-                  }
-                }
-                h |= 0x0002;
+                if( !a.GetParentAfixGroup()->IsRefinable() )
+                  h |= 0x0002;
+                else
+                  h |= 0x0004;
               }
             }
             olxstr f;
             if( a.GetParentAfixGroup() != NULL )  {
-              if( a.GetParentAfixGroup()->IsFittedGroup() )  {
+              if( a.GetParentAfixGroup()->IsRefinable() )  {
                 f << 'G';
               }
               else if( a.GetParentAfixGroup()->IsRiding() )
@@ -2969,6 +2954,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
                 Cif->SetParam("_refine_ls_hydrogen_treatment", "refxyz", false);
               else if( v == 2 )
                 Cif->SetParam("_refine_ls_hydrogen_treatment", "refU", false);
+              else if( v == 4 )
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "noref", false);
               else
                 Cif->SetParam("_refine_ls_hydrogen_treatment", "constr", false);
             }
