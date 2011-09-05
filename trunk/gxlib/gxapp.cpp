@@ -1382,7 +1382,8 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
 }
 //..............................................................................
 ConstPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
-  return TCAtomPList(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
+  TCAtomPList rv(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
+  return rv;  // GCC needs this code!
 }
 //..............................................................................
 void TGXApp::RestoreSelection()  {
@@ -1511,6 +1512,7 @@ ConstPtrList<TXBond> TGXApp::GetXBonds(const olxstr& BondName)  {
   TXBondPList res;
   if( BondName.StartsFrom("#t") )  {  // SBond.LatId
     size_t id = BondName.SubStringFrom(2).ToSizeT();
+
     BondIterator bi(*this);
     while( bi.HasNext() )  {
       TXBond& xb = bi.Next();
@@ -4095,6 +4097,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
       bi.Next().GetGlLabel().FromDataItem(bond_labels->GetItem(i++));
   }
   //// restore 
+
   //BondIterator bonds = GetBonds();
   //while( bonds.HasNext() )
   //  bonds.Next().Update();

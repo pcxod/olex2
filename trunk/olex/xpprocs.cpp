@@ -959,7 +959,7 @@ void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
     return;
   }
-  TNetPList L(Atoms, FunctionAccessor::Make(&TXAtom::GetNetwork));
+  TNetPList L(Atoms, FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
   FXApp->FragmentsVisible(FXApp->InvertFragmentsList(
     ACollectionItem::Unique<>::Do(L)), false);
   FXApp->CenterView(true);
@@ -1957,6 +1957,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
+
       if( !(ScenesDir.LowerCase() == Tmp.LowerCase()) )  {
         TBasicApp::NewLogEntry(logInfo) << "Scene parameters folder is changed to: " << Tmp;
         ScenesDir = Tmp;
@@ -4381,7 +4382,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   if( Cmds.Count() >= 1 && Cmds[0].Equalsi("frag") )  {
     TNetPList nets(FindXAtoms(Cmds.SubListFrom(1), false, false),
-      FunctionAccessor::Make(&TXAtom::GetNetwork));
+      FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
     FXApp->SelectFragments(ACollectionItem::Unique<>::Do(nets), !Options.Contains('u'));
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
