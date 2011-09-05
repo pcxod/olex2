@@ -128,7 +128,10 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded, "converts cif to a document");
   xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded, "creates a table from a cif");
-  xlib_InitMacro(CifMerge, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+  xlib_InitMacro(CifMerge,
+    "u-updates atom treatment if the asymmetric units of currently loaded file"
+    " and of the CIF file match",
+    (fpAny^fpNone)|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
   xlib_InitMacro(CifExtract, EmptyString(), fpTwo|psFileLoaded, "extract a list of items from one cif to another");
   xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded, "Creates cif from current file, variance-covariance matrix should be available");
@@ -2834,7 +2837,148 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   // normalise
   for( size_t i=0; i < Translations.Count(); i++ )
     Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
-
+  // update the atom_site loop and H treatment if AU match
+  if( Options.Contains('u') )  {
+    if( xapp.CheckFileType<TCif>() )  {
+      TBasicApp::NewLogEntry() <<
+        "Cannot update the CIF - the real refinement model is unknown";
+    }
+    else  {
+      const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+      const TAsymmUnit &tau = Cif->GetAsymmUnit();
+      bool match = (tau.AtomCount() <= au.AtomCount()), has_parts = false;
+      if( match )  {
+        size_t ind=0;
+        for( size_t i=0; i < tau.AtomCount(); i++, ind++ )  {
+          TCAtom& ta = tau.GetAtom(i);
+          while( ind < au.AtomCount() &&
+            (au.GetAtom(ind).IsDeleted() || au.GetAtom(ind).GetType() == iQPeakZ) )
+          {
+            ind++;
+          }
+          if( ind >= au.AtomCount() )  {
+            match = false;
+            break;
+          }
+          TCAtom &a = au.GetAtom(ind);
+          if( !a.GetLabel().Equalsi(ta.GetLabel()) ||
+            a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3 )
+          {
+            match = false;
+            break;
+          }
+          if( a.GetPart() != 0 )
+            has_parts = true;
+        }
+      }
+      if( !match )  {
+        TBasicApp::NewLogEntry() << "Could not update the atom information loop - "
+          "the asymmetric units mismatch";
+      }
+      else  {
+        cetTable* tab = Cif->FindLoop("_atom_site");
+        if( tab == NULL || tab->RowCount() != tau.AtomCount() )  {
+          TBasicApp::NewLogEntry() << "Could not locate the atom_site loop or"
+           " its content mismatches the asymmetric unit";
+        }
+        else  {
+          size_t rf_ind = tab->ColIndex("_atom_site_refinement_flags");
+          if( rf_ind == InvalidIndex )  {
+            tab->AddCol("_atom_site_refinement_flags");
+            rf_ind = tab->ColCount()-1;
+          }
+          size_t dg_ind = tab->ColIndex("_atom_site_disorder_group");
+          if( dg_ind == InvalidIndex && has_parts )  {
+            tab->AddCol("_atom_site_disorder_group");
+            dg_ind = tab->ColCount()-1;
+          }
+          size_t a_crd_ind[] = {
+            tab->ColIndex("_atom_site_fract_x"),
+            tab->ColIndex("_atom_site_fract_y"),
+            tab->ColIndex("_atom_site_fract_z")
+          };
+          size_t a_ue_q = tab->ColIndex("_atom_site_U_iso_or_equiv");
+          TIntList h_t;
+          size_t ri=0;
+          for( size_t i=0; i < au.AtomCount(); i++, ri++ )  {
+            while( i < au.AtomCount() &&
+              (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ) )
+            {
+              i++;
+            }
+            // last condition must not ever happen
+            if( i >= au.AtomCount() || ri >= tab->RowCount() )
+              break;
+            TCAtom &a = au.GetAtom(i);
+            if( a.GetType() == iHydrogenZ )  {
+              int& h = h_t.Add(0);
+              if( a.GetUisoOwner() != NULL )  {  // u constrained
+                h |= 0x0001;
+                if( a_ue_q != InvalidIndex )  {  // get rid of esd
+                  tab->Set(ri, a_ue_q,
+                    new cetString(olxstr::FormatFloat(3, a.GetUiso())));
+                }
+              }
+              if( a.GetParentAfixGroup() != NULL &&  // coordinates constrained
+                a.GetParentAfixGroup()->GetAfix() > 0 &&
+                !a.GetParentAfixGroup()->IsRefinable() )
+              {
+                for( int si=0; si < 3; si++ )  { // get rid of esds
+                  if( a_crd_ind[si] != InvalidIndex )  {
+                    tab->Set(ri, a_crd_ind[si],
+                    new cetString(olxstr::FormatFloat(4, a.ccrd()[si])));
+                  }
+                }
+                h |= 0x0002;
+              }
+            }
+            olxstr f;
+            if( a.GetParentAfixGroup() != NULL )  {
+              if( a.GetParentAfixGroup()->IsFittedGroup() )  {
+                f << 'G';
+              }
+              else if( a.GetParentAfixGroup()->IsRiding() )
+                f << 'R';
+            }
+            if( a.GetDegeneracy() != 1 )
+              f << 'S';
+            if( f.IsEmpty() )
+              tab->Set(ri, rf_ind, new cetString('.'));
+            else
+              tab->Set(ri, rf_ind, new cetString(f));
+            if( has_parts )  {
+              if( a.GetPart() == 0 )
+                tab->Set(ri, dg_ind, new cetString('.'));
+              else
+                tab->Set(ri, dg_ind, new cetString(a.GetPart()));
+            }
+          }
+          if( h_t.IsEmpty() )
+            Cif->SetParam("_refine_ls_hydrogen_treatment", "undef", false);
+          else  {
+            int v = h_t[0];
+            bool all_same = true;
+            for( size_t i=1; i < h_t.Count(); i++ )  {
+              if( h_t[i] != v )  {
+                all_same = false;
+                break;
+              }
+            }
+            if( all_same )  {
+              if( v == 1 )
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "refxyz", false);
+              else if( v == 2 )
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "refU", false);
+              else
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "constr", false);
+            }
+            else
+              Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
+          }
+        }
+      }
+    }
+  }
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);

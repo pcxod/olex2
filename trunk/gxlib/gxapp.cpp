@@ -1382,8 +1382,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
 }
 //..............................................................................
 ConstPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
-  TCAtomPList rv(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
-  return rv;
+  return TCAtomPList(GetSelectedXAtoms(Clear), TXAtom::CAtomAccessor<>());
 }
 //..............................................................................
 void TGXApp::RestoreSelection()  {

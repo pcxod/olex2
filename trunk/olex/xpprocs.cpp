@@ -9668,11 +9668,11 @@ void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError
     rings.Pack();
     ring_M.Pack();
   }
-  // prcess rings...  
+  // process rings...  
   if( rings.IsEmpty() )  return;
 
   TGXApp::AtomIterator ai = FXApp->GetAtoms();
-  while( ai.HasNext() ) 
+  while( ai.HasNext() )
     ai.Next().SetTag(0);
   for( size_t i=0; i < rings.Count(); i++ )  {
     vec3d c;
