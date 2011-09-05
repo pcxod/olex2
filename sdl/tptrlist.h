@@ -79,7 +79,7 @@ public:
   template <class List, class Accessor> TPtrList(const List& list, const Accessor& accessor)  {
     init(list.Count());
     for( size_t i=0; i < list.Count(); i++ )
-      Set(i, accessor.Access(list[i]));
+      Set(i, accessor(list[i]));
   }
 //..............................................................................
   virtual ~TPtrList()  {  olx_free(Items);  }
@@ -145,7 +145,7 @@ public:
   TPtrList& Assign(const List& l, const Accessor& accessor)  {
     SetCount(l.Count());
     for( size_t i=0; i < l.Count(); i++ )
-      Set(i, accessor.Access(l[i]));
+      Set(i, accessor(l[i]));
     return *this;
   }
 //..............................................................................
@@ -190,7 +190,7 @@ public:
     const size_t off = FCount;
     SetCount(l.Count() + FCount);
     for( size_t i=0; i < l.Count(); i++ )
-      Set(off+i, accessor.Access(l[i]));
+      Set(off+i, accessor(l[i]));
     return *this;
   }
 //..............................................................................

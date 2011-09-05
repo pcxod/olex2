@@ -19,6 +19,7 @@
 #include "infotab.h"
 #include "refutil.h"
 #include "twinning.h"
+#include "math/plane.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
   rDFIX(*this, rltGroup2, "DFIX"),
@@ -203,29 +204,32 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
 
   if( AssignAUnit )
     aunit.Assign(rm.aunit);
-  // need to copy the ID's before any restraints or info tabs use them or all gets broken... !!! 
+
+  /* need to copy the ID's before any restraints or info tabs use them or all
+  gets broken... !!!  */
   for( size_t i=0; i < rm.UsedSymm.Count(); i++ )
     AddUsedSymm(rm.UsedSymm.GetValue(i).symop, rm.UsedSymm.GetKey(i));
 
-  for( size_t i=0; i < rcList1.Count(); i++ )
-    rcList1[i]->Assign(*rm.rcList1[i]);
+  if( AssignAUnit || aunit.AtomCount() >= rm.aunit.AtomCount() )  {
+    for( size_t i=0; i < rcList1.Count(); i++ )
+      rcList1[i]->Assign(*rm.rcList1[i]);
 
-  rSAME.Assign(aunit, rm.rSAME);
-  ExyzGroups.Assign(rm.ExyzGroups);
-  AfixGroups.Assign(rm.AfixGroups);
-  for( size_t i=0; i < rcList.Count(); i++ )
-    rcList[i]->Assign(*this, *rm.rcList[i]);
-  // restraints have to be copied first, as some may refer to vars
-  Vars.Assign(rm.Vars);
+    rSAME.Assign(aunit, rm.rSAME);
+    ExyzGroups.Assign(rm.ExyzGroups);
+    AfixGroups.Assign(rm.AfixGroups);
+    for( size_t i=0; i < rcList.Count(); i++ )
+      rcList[i]->Assign(*this, *rm.rcList[i]);
+    // restraints have to be copied first, as some may refer to vars
+    Vars.Assign(rm.Vars);
 
-  Conn.Assign(rm.Conn);
-  aunit._UpdateConnInfo();
+    Conn.Assign(rm.Conn);
+    aunit._UpdateConnInfo();
 
-  for( size_t i=0; i < rm.InfoTables.Count(); i++ )  {
-    if( rm.InfoTables[i].IsValid() )
-      InfoTables.Add(new InfoTab(*this, rm.InfoTables[i]));
+    for( size_t i=0; i < rm.InfoTables.Count(); i++ )  {
+      if( rm.InfoTables[i].IsValid() )
+        InfoTables.Add(new InfoTab(*this, rm.InfoTables[i]));
+    }
   }
-
   for( size_t i=0; i < rm.SfacData.Count(); i++ )
     SfacData(rm.SfacData.GetKey(i), new XScatterer(*rm.SfacData.GetValue(i)));
   UserContent = rm.UserContent;
@@ -963,7 +967,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   ExyzGroups.FromDataItem(item.FindRequiredItem("EXYZ"));
   rSAME.FromDataItem(item.FindRequiredItem("SAME"));
   for( size_t i=0; i < rcList1.Count(); i++ )
-    rcList1[i]->FromDataItem(item.FindRequiredItem(rcList1[i]->GetIdName()));
+    rcList1[i]->FromDataItem(item.FindItem(rcList1[i]->GetIdName()));
   for( size_t i=0; i < rcList.Count(); i++ )
     rcList[i]->FromDataItem(item.FindItem(rcList[i]->GetName()), *this);
 
@@ -1222,6 +1226,25 @@ adirection& RefinementModel::DirectionById(const olxstr &id) const {
   throw TInvalidArgumentException(__OlxSourceInfo, "direction ID");
 }
 //..............................................................................
+adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t type)  {
+  olxstr dname;
+  if( type == direction_vector )
+    dname << 'v';
+  else if( type == direction_normal )
+    dname << 'n';
+  else  {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("direction type: ").quote() << type);
+  }
+  for( size_t i=0; i < atoms.Count(); i++ )
+    dname << atoms[i].GetFullLabel(*this);
+  for( size_t i=0; i < Directions.items.Count(); i++ )  {
+    if( Directions.items[i].id == dname )
+      return &Directions.items[i];
+  }
+  return &Directions.items.Add(new direction(dname, atoms, type));
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
@@ -1267,20 +1290,128 @@ void RefinementModel::LibUpdateCRParams(const TStrObjList& Params, TMacroError& 
   cc->UpdateParams(Params[1].ToSizeT(), Params.SubListFrom(2));
 }
 //..............................................................................
+void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  //throw TNotImplementedException(__OlxSourceInfo);
+  TSAtomPList atoms;
+  size_t n = Cmds.Count();
+  double ang = -1001;
+  if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
+    n = Cmds[0].ToSizeT();
+    Cmds.Delete(0);
+  }
+  if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
+    ang = Cmds[0].ToDouble();
+    Cmds.Delete(0);
+  }
+  TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms); 
+  if( atoms.Count() < 3 )  {
+    E.ProcessingError(__OlxSrcInfo, "At least three atoms are expected");
+    return;
+  }
+  if( ang == -1001 )
+    ang = 360./atoms.Count();
+  adirection *d = NULL;
+  vec3d center, normal;
+  // consider special cases... CF3, CM3 etc - need to find the bond direction
+  if( atoms.Count() == 3 )  {
+    TPtrList<TSAtom> cnt(atoms.Count());
+    for( size_t i=0; i < atoms.Count(); i++ )  {
+      for( size_t j=0; j < atoms[i]->NodeCount(); j++ )  {
+        TSAtom &a = atoms[i]->Node(j);
+        if( a.IsDeleted() || a.GetType() == iQPeakZ  || a.GetType() == iHydrogenZ )
+          continue;
+        if( cnt[i] != NULL )  {  // attached to more than 2 atoms, invalidate
+          cnt[i] = NULL;
+          break;
+        }
+        cnt[i] = &a;
+      }
+    }
+    bool valid_for_bond = (cnt[0] != NULL);
+    if( valid_for_bond )  {
+      for( size_t i=1; i < cnt.Count(); i++ )  {
+        if( cnt[i] == NULL || cnt[i] != cnt[0] )  {
+          valid_for_bond = false;
+          break;
+        }
+      }
+    }
+    if( valid_for_bond )  {
+      size_t p_ind = InvalidIndex;
+      for( size_t i=0; i < cnt[0]->NodeCount(); i++ )  {
+        TSAtom &a = cnt[0]->Node(i);
+        if( a.IsDeleted() || a.GetType() == iQPeakZ ||
+            atoms.IndexOf(a) != InvalidIndex )
+          continue;
+        if( p_ind != InvalidIndex )  {
+          p_ind = InvalidIndex;
+          break;
+        }
+        p_ind = i;
+      }
+      if( p_ind != InvalidIndex )  { // add the direction then
+        TCAtomGroup as;
+        as.Add(new TGroupCAtom(
+          cnt[0]->Node(p_ind).CAtom(), cnt[0]->Node(p_ind).GetMatrix(0)));
+        as.Add(new TGroupCAtom(cnt[0]->CAtom(), cnt[0]->GetMatrix(0)));
+        normal = (cnt[0]->crd()-cnt[0]->Node(p_ind).crd()).Normalise();
+        center = (atoms[0]->crd()+atoms[1]->crd()+atoms[2]->crd())/3;
+        d = AddDirection(as, direction_vector);
+      }
+    }
+  }
+  // create a normal direction
+  if( d == NULL )  {
+    TCAtomGroup as;
+    for( size_t i=0; i < atoms.Count(); i++ )
+      as.Add(new TGroupCAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix(0)));
+    d = AddDirection(as, direction_normal);
+    TSPlane::CalcPlane(atoms, normal, center);
+  }
+  if( d == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "could not add direction object");
+    return;
+  }
+  olx_plane::Sort(atoms, FunctionAccessor::MakeConst(
+    (const vec3d& (TSAtom::*)() const)&TSAtom::crd), center, normal);
+  double ra = atoms.Count()*ang;
+  for( size_t i=1; i < atoms.Count(); i++ )  {
+    SharedRotatedADPs.items.Add(
+      new rotated_adp_constraint(
+        atoms[0]->CAtom(), atoms[i]->CAtom(), *d, (ra-=ang), false));
+  }
+}
+//..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
   lib->RegisterFunction<RefinementModel>(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibOSF, "OSF", fpNone|fpOne,
-"Returns/sets OSF") );
+    new TFunction<RefinementModel>(this, &RefinementModel::LibOSF,
+      "OSF",
+      fpNone|fpOne,
+"Returns/sets OSF"));
   lib->RegisterFunction<RefinementModel>(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibFVar, "FVar", fpOne|fpTwo,
-"Returns/sets FVAR referred by index") );
+    new TFunction<RefinementModel>(this, &RefinementModel::LibFVar,
+      "FVar",
+      fpOne|fpTwo,
+"Returns/sets FVAR referred by index"));
   lib->RegisterFunction<RefinementModel>(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI, "Exti", fpNone|fpOne,
+    new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI,
+      "Exti",
+      fpNone|fpOne,
 "Returns/sets EXTI") );
   lib->RegisterFunction<RefinementModel>(
-    new TFunction<RefinementModel>(this, &RefinementModel::LibUpdateCRParams, "UpdateCR",
+    new TFunction<RefinementModel>(this, &RefinementModel::LibUpdateCRParams,
+      "UpdateCR",
       fpAny^(fpNone|fpOne|fpTwo),
 "Updates constraint or restraint parameters (name, index, {values})") );
+  lib->RegisterMacro<RefinementModel>(
+    new TMacro<RefinementModel>(this, &RefinementModel::LibShareADP,
+      "ShareADP", EmptyString(),
+      fpAny,
+"Creates a rotated ADP constraint for given atoms. Currently works only for "
+"T-X3 groups (X-CMe3, X-CF3 etc) and for rings"
+));
   return lib;
 }

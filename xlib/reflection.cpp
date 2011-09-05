@@ -106,7 +106,7 @@ bool TReflection::FromString(const olxstr& Str)  {
 bool TReflection::FromNString(const olxstr& str)  {
   TStrList Toks(str, ' ');
   if( Toks.Count() > 5 )  {
-    if( Toks[0].CharAt(Toks[0].Length()-1) != '.' )  return false;
+    if( Toks[0].GetLast() != '.' )  return false;
     Toks[0].SetLength(Toks[0].Length()-1);
     SetTag(Toks[0].ToInt());
     SetOmitted(GetTag() < 0);

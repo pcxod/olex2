@@ -858,7 +858,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
 
-  od.Render(Cmds[0]);
+  od.Render(TEFile::ChangeFileExt(Cmds[0], "eps"));
   // restore atom draw styles
   ai.Reset();
   for( size_t i=0; ai.HasNext(); i++ )
@@ -959,7 +959,7 @@ void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
     return;
   }
-  TNetPList L(Atoms, FunctionAccessor::Make(&TXAtom::GetNetwork));
+  TNetPList L(Atoms, FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
   FXApp->FragmentsVisible(FXApp->InvertFragmentsList(
     ACollectionItem::Unique<>::Do(L)), false);
   FXApp->CenterView(true);
@@ -1957,6 +1957,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
+
       if( !(ScenesDir.LowerCase() == Tmp.LowerCase()) )  {
         TBasicApp::NewLogEntry(logInfo) << "Scene parameters folder is changed to: " << Tmp;
         ScenesDir = Tmp;
@@ -4381,7 +4382,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   if( Cmds.Count() >= 1 && Cmds[0].Equalsi("frag") )  {
     TNetPList nets(FindXAtoms(Cmds.SubListFrom(1), false, false),
-      FunctionAccessor::Make(&TXAtom::GetNetwork));
+      FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
     FXApp->SelectFragments(ACollectionItem::Unique<>::Do(nets), !Options.Contains('u'));
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
@@ -8081,10 +8082,10 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       q_draw->SetEnabled(false);
       q_draw_changed = true;
     }
-    FXApp->XFile().EndUpdate();
+    FXApp->XFile().GetLattice().Init();
+    Macros.ProcessMacro("compaq -q", E);
     if( q_draw != NULL && q_draw_changed )
       q_draw->SetEnabled(true);
-    Macros.ProcessMacro("compaq -q", E);
   }  // integration
   if( Options.Contains("m") )  {
     FractMask* fm = new FractMask;
@@ -8733,6 +8734,20 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         for( size_t i=0; i < p3.Count(); i++ )  a3.Add(p3.GetAtom(i));
         TBasicApp::NewLogEntry() << (values.Add("Angle between plane centroids: ") <<
           vcovc.Calc3PCAngle(a1, a2, a3).ToString());
+      }
+      else if( EsdlInstanceOf(sel[0], TXPlane) &&
+              EsdlInstanceOf(sel[1], TXAtom) &&
+              EsdlInstanceOf(sel[2], TXPlane) )
+      {
+        TSPlane& p1 = (TXPlane&)sel[0];
+        TSAtom& a = (TXAtom&)sel[1];
+        TSPlane& p2 = (TXPlane&)sel[2];
+        TSAtomCPList a1, a2;
+        for( size_t i=0; i < p1.Count(); i++ )  a1.Add(p1.GetAtom(i));
+        for( size_t i=0; i < p2.Count(); i++ )  a2.Add(p2.GetAtom(i));
+        TBasicApp::NewLogEntry() << (
+          values.Add("Angle between plane centroid - atom - plane centroid: ")
+          << vcovc.CalcPCAPCAngle(a1, a, a2).ToString());
       }
     }
     else if( sel.Count() == 4 )  {
@@ -9604,6 +9619,89 @@ void TMainForm::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
   }
   catch(...)  {}
   E.SetRetVal(XLibMacros::NAString);
+}
+//..............................................................................
+void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TTypeList<TSAtomPList> rings;
+  TTypeList<TSAtomPList> ring_M;
+  bool check_metal = true;
+  ConstPtrList<TXAtom> atoms = FindXAtoms(Cmds, false, true);
+  if( atoms.IsEmpty() )  {
+    FXApp->FindRings("C5", rings);
+    FXApp->FindRings("C6", rings);
+    for( size_t i=0; i < rings.Count(); i++ )  {
+      if( !TNetwork::IsRingPrimitive(rings[i]) || !TNetwork::IsRingRegular(rings[i]) )
+        rings.NullItem(i);
+    }
+    rings.Pack();
+  }
+  else  {
+    rings.Add(new TSAtomPList(atoms, StaticCastAccessor<TSAtom>()));
+    TSAtomPList &metals = ring_M.AddNew();
+    for( size_t i=0; i < rings[0].Count(); i++ )  {
+      if( XElementLib::IsMetal(rings[0][i]->GetType()) )  {
+        check_metal = false;
+        metals.Add(rings[0][i]);
+        rings[0][i] = NULL;
+      }
+    }
+    rings[0].Pack();
+    if( rings[0].IsEmpty() )  return;
+    if( check_metal )
+      ring_M.Delete(0);
+  }
+  if( check_metal )  {
+    ring_M.SetCapacity(rings.Count());
+    for( size_t i=0; i < rings.Count(); i++ )  {
+      TSAtomPList &metals = ring_M.AddNew();
+      for( size_t j=0; j < rings[i].Count(); j++ )  {
+        for( size_t k=0; k < rings[i][j]->NodeCount(); k++ )  {
+          if( XElementLib::IsMetal(rings[i][j]->Node(k).GetType()) )  {
+            metals.Add(rings[i][j]->Node(k));
+          }
+        }
+      }
+      if( metals.IsEmpty() )  {
+        rings.NullItem(i);
+        ring_M.NullItem(ring_M.Count()-1);
+      }
+    }
+    rings.Pack();
+    ring_M.Pack();
+  }
+  // process rings...  
+  if( rings.IsEmpty() )  return;
+
+  TGXApp::AtomIterator ai = FXApp->GetAtoms();
+  while( ai.HasNext() )
+    ai.Next().SetTag(0);
+  for( size_t i=0; i < rings.Count(); i++ )  {
+    vec3d c;
+    for( size_t j=0; j < rings[i].Count(); j++ )  {
+      c += rings[i][j]->crd();
+      rings[i][j]->SetTag(1);
+    }
+    c /= rings[i].Count();
+    ACollectionItem::Unique<>::Do(ring_M[i]);
+    for( size_t j=0; j < ring_M[i].Count(); j++ )  {
+      TXLine &l = FXApp->AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
+        ring_M[i][j]->crd(), c);
+      TGraphicsStyle &ms = ((TXAtom*)ring_M[i][j])->GetPrimitives().GetStyle();
+      TGlMaterial *sm = ms.FindMaterial("Sphere");
+      if( sm != NULL )
+        l.GetPrimitives().GetStyle().SetMaterial(TXBond::StaticPrimitives()[9], *sm);
+      l.UpdatePrimitives((1<<9)|(1<<10));
+      l.SetRadius(0.5);
+      ring_M[i][j]->SetTag(2);
+    }
+    // hide replaced bonds
+  }
+  TGXApp::BondIterator bi = FXApp->GetBonds();
+  while( bi.HasNext() )  {
+    TXBond &b = bi.Next();
+    if( b.A().GetTag() == 2 && b.B().GetTag() == 1 )
+      b.SetVisible(false);
+  }
 }
 //..............................................................................
 void TMainForm::macFlushFS(TStrObjList &Cmds, const TParamList &Options,

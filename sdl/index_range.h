@@ -132,23 +132,23 @@ struct IndexRange  {
     olxstr rv;
     for( size_t i=0; i < list.Count(); i++ )  {
       if( i+1 == list.Count() )
-        return (rv << acc.Access(list[i]));
+        return (rv << acc(list[i]));
       size_t j = 1;
-      while( list[i] == (acc.Access(list[i+j])-j) )  {
+      while( list[i] == (acc(list[i+j])-j) )  {
         j++;
         if( (j + i) >= (list.Count()-1) )  {
           if( i != (j+i-1) )
-            return (rv << acc.Access(list[i]) << '-' << acc.Access(list[j+i]));
+            return (rv << acc(list[i]) << '-' << acc(list[j+i]));
           else
-            return (rv << acc.Access(list[i]));
+            return (rv << acc(list[i]));
         }
       }
       if( j == 1 )
-        rv << acc.Access(list[i]);
+        rv << acc(list[i]);
       else  {
-        rv << acc.Access(list[i]) <<  '-';
+        rv << acc(list[i]) <<  '-';
         i += (j - 1);
-        rv << acc.Access(list[i]);
+        rv << acc(list[i]);
       }
       if( i+1 < list.Count() )
         rv << ',';

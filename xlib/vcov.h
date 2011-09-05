@@ -685,6 +685,16 @@ public:
         cnt_et(crd_slice(ch.points, p1.Count()+p2.Count(), p3.Count()),
           weight_slice(ch.weights, p1.Count()+p2.Count(), p3.Count()))));
   }
+  // angle between plane centroid, atom, plane centroid
+  TEValue<double> CalcPCAPCAngle(const TSAtomCPList& p1, const TSAtom &a, const TSAtomCPList& p2)  {
+    CalcWHelper ch(*this, TSAtomCPList(p1) << p2 << a);
+    return ch.DoCalc(
+      Angle3<cnt_et, pnt_pt, cnt_et>(
+        cnt_et(crd_slice(ch.points, 0, p1.Count()), weight_slice(ch.weights, 0, p1.Count())),
+        pnt_pt(ch.points.GetLast()),
+        cnt_et(crd_slice(ch.points, p1.Count(), p2.Count()),
+          weight_slice(ch.weights, p1.Count(), p2.Count()))));
+  }
   //plane to another plane centroid distance
   TEValue<double> CalcP2PCDistance(const TSAtomCPList& p1, const TSAtomCPList& p2) {
     CalcWHelper ch(*this, TSAtomCPList(p1) << p2);

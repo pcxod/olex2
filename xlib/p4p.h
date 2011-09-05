@@ -22,9 +22,9 @@ class TP4PFile : public TBasicCFile  {
            Bravais,
            SGString;
 public:
-  TP4PFile();
-  virtual ~TP4PFile();
-
+  TP4PFile()  {}
+  ~TP4PFile()  {}
+  void Clear();
   const olxstr& GetColor() const {  return Color;  }
   const olxstr& GetSiteId() const {  return SiteId;  }
   const olxstr& GetMorph() const {  return Morph;  }

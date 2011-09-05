@@ -13,6 +13,7 @@
 #include "log.h"
 
 void TPdb::Clear()  {
+  GetRM().Clear(rm_clear_ALL);
   GetAsymmUnit().Clear();
 }
 //..............................................................................

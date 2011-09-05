@@ -31,7 +31,7 @@
     <Filter Include="Header Files\containers">
       <UniqueIdentifier>{a6a8f85b-b6d9-4bfa-b2ad-e3b30a8a71e8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\tests">
+    <Filter Include="tests">
       <UniqueIdentifier>{00ccf287-3420-42f3-89a4-fdaedc8aaa89}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -444,31 +444,31 @@
       <Filter>Header Files\math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\encoding_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\file_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\matrix_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\sort_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\spline_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\string_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\sys_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\index_range.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\irange_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\sorted.h">
       <Filter>Header Files</Filter>
@@ -486,7 +486,7 @@
       <Filter>Header Files\io</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\container_test.h">
-      <Filter>Header Files\tests</Filter>
+      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\linked_list.h">
       <Filter>Header Files\containers</Filter>

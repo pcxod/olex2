@@ -677,8 +677,12 @@ TAG_HANDLER_PROC(tag)  {
       Tmp = tag.GetParam(wxT("CHECKED"));
       if( Tmp.IsEmpty() )
         Box->SetChecked(true);
-      else
+      else if( Tmp.IsBool() )
         Box->SetChecked(Tmp.ToBool());
+      else  {
+        TBasicApp::NewLogEntry(logError) << 
+          (olxstr("Invalid value for boolean: ").quote() << Tmp);
+      }
     }
     Box->SetData(Data);
     // binding events

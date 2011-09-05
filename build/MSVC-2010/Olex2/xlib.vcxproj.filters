@@ -31,6 +31,9 @@
     <Filter Include="Source Files\lcells">
       <UniqueIdentifier>{1b488925-7e9b-4510-b686-18a23cfbe044}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{b0df0d83-cc94-446a-9c85-e150d33c7284}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp">
@@ -1030,6 +1033,21 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\label_corrector.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\cell_reduction_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\mat_id_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\reflection_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\symmparser_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\vcov_test.h">
+      <Filter>tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

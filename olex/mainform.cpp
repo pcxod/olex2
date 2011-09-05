@@ -538,7 +538,11 @@ void TMainForm::XApp(TGXApp *XA)  {
  and or (||) can be used to refine the selection");
 
   this_InitMacroD(Capitalise, "", (fpAny|psFileLoaded)^fpNone,
-    "Changes atom labels capitalisation for all/given/selected atoms. The first argument is the template like Aaaa");
+    "Changes atom labels capitalisation for all/given/selected atoms. The"
+    " first argument is the template like Aaaa");
+
+  this_InitMacroD(PiM, "", fpAny|psFileLoaded,
+    "Creates an illustration of a pi-system to metal bonds");
 
   this_InitMacroD(Esd, "label-creates a graphics label", fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\

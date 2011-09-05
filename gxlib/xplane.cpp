@@ -21,6 +21,16 @@ void TXPlane::Create(const olxstr& cName)  {
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   if( GPC.ObjectCount() == 0 && GPC.PrimitiveCount() != 0 )
     GPC.ClearPrimitives();
+  size_t deleted_cnt = 0;
+  for( size_t i=0; i < GPC.ObjectCount(); i++ )  {
+    if( EsdlInstanceOf(GPC.GetObject(i), TXPlane) &&
+      ((TXPlane&)GPC.GetObject(i)).IsDeleted() )
+    {
+      deleted_cnt++;
+    }
+  }
+  if( deleted_cnt == GPC.ObjectCount() )
+    GPC.ClearPrimitives();
   GPC.AddObject(*this);
   const mat3d& m = GetBasis();
   Params().Resize(16);
@@ -47,14 +57,14 @@ void TXPlane::Create(const olxstr& cName)  {
     if( !IsRegular() )  
       GlP.Vertices.SetCount(CrdCount());
     else                 
-      GlP.Vertices.SetCount(5);
+      GlP.Vertices.SetCount(4);
 
     PlaneSort::Sorter sp(*this);
     const mat3d transform = GetBasis();
     if( !IsRegular() )  {
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
         const vec3d* crd = sp.sortedPlane.GetObject(i);
-        GlP.Vertices[i] = transform*(*crd-GetCenter());
+        GlP.Vertices[i] = transform*GetNormal().Normal((*crd-GetCenter()));
       }
     }
     else  {
@@ -67,8 +77,8 @@ void TXPlane::Create(const olxstr& cName)  {
       }
       vec3d marv(0, sqrt(maxrs), 0);
       mat3d rm;
-      olx_create_rotation_matrix(rm, vec3d(1,0,0), cos(M_PI*72.0/180));
-      for( int i=0; i < 5; i++ )  {
+      olx_create_rotation_matrix(rm, vec3d(1,0,0), cos(M_PI*(360/4)/180));
+      for( int i=0; i < 4; i++ )  {
         GlP.Vertices[i] = marv;    
         marv *= rm;
       }
