@@ -131,7 +131,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CifMerge,
     "u-updates atom treatment if the asymmetric units of currently loaded file"
     " and of the CIF file match",
-    (fpAny^fpNone)|psFileLoaded,
+    fpAny|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
   xlib_InitMacro(CifExtract, EmptyString(), fpTwo|psFileLoaded, "extract a list of items from one cif to another");
   xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded, "Creates cif from current file, variance-covariance matrix should be available");
