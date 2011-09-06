@@ -2935,7 +2935,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
               if( a.GetPart() == 0 )
                 tab->Set(ri, dg_ind, new cetString('.'));
               else
-                tab->Set(ri, dg_ind, new cetString(a.GetPart()));
+                tab->Set(ri, dg_ind, new cetString((int)a.GetPart()));
             }
           }
           if( h_t.IsEmpty() )
