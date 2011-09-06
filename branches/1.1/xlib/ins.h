@@ -185,6 +185,8 @@ public:
         rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble());
       else if( Toks[0].Equalsi("BASF") && (Toks.Count() > 1) )
         rm.SetBASF(Toks.SubListFrom(1));
+      else if( Toks[0].Equalsi("DEFS") && (Toks.Count() > 1) )
+        rm.SetDEFS(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("OMIT") )
         rm.AddOMIT(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("SHEL") )

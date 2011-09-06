@@ -77,9 +77,9 @@ protected:
   mat3d TWIN_mat;
   int TWIN_n;
   bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified,
-    EXTI_set;
+    EXTI_set, DEFS_set;
   vec3i_list Omits;
-  TDoubleList BASF;
+  TDoubleList BASF, DEFS;
   TPtrList<XVarReference> BASF_Vars;
   olxstr VarRefrencerId;
   olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> >
@@ -384,6 +384,15 @@ of components 1 ... m
     BASF.Clear();
     BASF_Vars.Clear();
   }
+  // sets default esd values for restraints
+  template <class list> void SetDEFS(const list& bs)  {
+    size_t mc = olx_min(bs.Count(), DEFS.Count());
+    for( size_t i=0; i < mc; i++ )
+      DEFS[i] = bs[i].ToDouble();
+    DEFS_set = true;
+  }
+  olxstr GetDEFSStr() const;
+  bool IsDEFSSet() const {  return DEFS_set;  }
 
   DefPropC(olxstr, RefinementMethod)
   DefPropC(olxstr, SolutionMethod)
@@ -510,10 +519,12 @@ of components 1 ... m
     size_t ind = Frags.IndexOf(code);
     return ind == InvalidIndex ? NULL : Frags.GetValue(ind);
   }
-  Fragment& AddFrag(int code, double a=1, double b=1, double c=1, double al=90, double be=90, double ga=90) {
+  Fragment& AddFrag(int code, double a=1, double b=1, double c=1, double al=90,
+    double be=90, double ga=90)
+  {
     size_t ind = Frags.IndexOf(code);
     if( ind != InvalidIndex )
-      throw TFunctionFailedException(__OlxSourceInfo, "dublicated FRAG instruction");
+      throw TFunctionFailedException(__OlxSourceInfo, "duplicated FRAG instruction");
     return *Frags.Add(code, new Fragment(code, a, b, c, al, be, ga));
   }
   // the function does the atom fitting and clears the fragments
@@ -675,7 +686,12 @@ of components 1 ... m
 //
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
-  
+  // initialises default values for esd and if needs, value (SIMU)
+  TSimpleRestraint &SetRestraintDefaults(const TSRestraintList& container,
+    TSimpleRestraint &restraint) const;
+  // returns true if restraint parameters are default
+  bool IsDefaultRestraint(const TSRestraintList& container,
+    TSimpleRestraint &restraint) const;
   void LibOSF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);

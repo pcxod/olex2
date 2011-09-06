@@ -144,7 +144,7 @@ public:
     RestraintListType = restraintListType;  
   }
   virtual ~TSRestraintList()  {}
-  TSimpleRestraint& AddNew()  {  return Restraints.Add(new TSimpleRestraint(*this, Restraints.Count(), RestraintListType));  }
+  TSimpleRestraint& AddNew();
   // function checks uniquesness of the restraint data - previously defined values are removed
   void ValidateRestraint(TSimpleRestraint& sr);
   void ValidateAll()  {
