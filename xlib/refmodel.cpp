@@ -74,6 +74,8 @@ void RefinementModel::SetDefaults() {
   SHEL_hr = def_SHEL_hr;
   SHEL_lr = def_SHEL_lr;
   HKLF_set = MERG_set = OMIT_set = TWIN_set = SHEL_set = false;
+  DEFS_set = false;
+  DEFS << 0.02 << 0.1 << 0.01 << 0.04 << 1;
   EXTI_set = false;
   EXTI = 0;
   TWIN_n = def_TWIN_n;
@@ -107,6 +109,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   Omits.Clear();
   BASF.Clear();
   BASF_Vars.Clear();
+  DEFS.Clear();
   SetDefaults();
   expl.Clear();
   Vars.Clear();
@@ -191,6 +194,8 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   TWIN_n = rm.TWIN_n;
   TWIN_set = rm.TWIN_set;
   BASF = rm.BASF;
+  DEFS = rm.DEFS;
+  DEFS_set = rm.DEFS_set;
   EXTI_set = rm.EXTI_set;
   EXTI = rm.EXTI;
   for( size_t i=0; i < BASF.Count(); i++ )
@@ -247,6 +252,16 @@ olxstr RefinementModel::GetBASFStr() const {
   for( size_t i=0; i < BASF.Count(); i++ )  {
     rv << Vars.GetParam(*this, (short)i);
     if( (i+1) < BASF.Count() )
+      rv << ' ';
+  }
+  return rv;
+}
+//....................................................................................................
+olxstr RefinementModel::GetDEFSStr() const {
+  olxstr rv;
+  for( size_t i=0; i < DEFS.Count(); i++ )  {
+    rv << DEFS[i];
+    if( (i+1) < DEFS.Count() )
       rv << ' ';
   }
   return rv;
@@ -1245,6 +1260,89 @@ adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t typ
   return &Directions.items.Add(new direction(dname, atoms, type));
 }
 //..............................................................................
+TSimpleRestraint & RefinementModel::SetRestraintDefaults(
+  const TSRestraintList& container, TSimpleRestraint &r) const
+{
+  if( container.GetIdName().Equals("DFIX") )  {
+    r.SetEsd(DEFS[0]);
+  }
+  else if( container.GetIdName().Equals("DANG") )  {
+    r.SetEsd(DEFS[0]*2);
+  }
+  else if( container.GetIdName().Equals("SADI") )  {
+    r.SetEsd(DEFS[0]);
+  }
+  else if( container.GetIdName().Equals("CHIV") )  {
+    r.SetEsd(DEFS[1]);
+  }
+  else if( container.GetIdName().Equals("FLAT") )  {
+    r.SetEsd(DEFS[1]);
+  }
+  else if( container.GetIdName().Equals("DELU") )  {
+    r.SetEsd(DEFS[2]);
+    r.SetEsd1(DEFS[2]);
+  }
+  else if( container.GetIdName().Equals("SIMU") )  {
+    r.SetEsd(DEFS[3]);
+    r.SetEsd1(DEFS[3]*2);
+    r.SetValue(1.7);
+  }
+  else if( container.GetIdName().Equals("ISOR") )  {
+    r.SetEsd(0.1);
+    r.SetEsd1(0.2);
+  }
+  else if( container.GetIdName().Equals("olex2.restraint.angle") )  {
+    r.SetEsd(0.02);
+  }
+  else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
+    r.SetEsd(0.04);
+  }
+  else if( container.GetIdName().Equals("olex2.restraint.u_eq") )  {
+    r.SetEsd(0.1);
+  }
+  return r;
+}
+//..............................................................................
+bool RefinementModel::IsDefaultRestraint(const TSRestraintList& container,
+    TSimpleRestraint &r) const
+{
+  if( container.GetIdName().Equals("DFIX") )  {
+    return r.GetEsd() == DEFS[0];
+  }
+  else if( container.GetIdName().Equals("DANG") )  {
+    return r.GetEsd() == DEFS[0]*2;
+  }
+  else if( container.GetIdName().Equals("SADI") )  {
+    return r.GetEsd() == DEFS[0];
+  }
+  else if( container.GetIdName().Equals("CHIV") )  {
+    return r.GetEsd() == DEFS[1];
+  }
+  else if( container.GetIdName().Equals("FLAT") )  {
+    return r.GetEsd() == DEFS[1];
+  }
+  else if( container.GetIdName().Equals("DELU") )  {
+    return r.GetEsd() == DEFS[2] && r.GetEsd1() == DEFS[2];
+  }
+  else if( container.GetIdName().Equals("SIMU") )  {
+    return r.GetEsd() == DEFS[3] && r.GetEsd1() == DEFS[3]*2 &&
+      r.GetValue() == 1.7;
+  }
+  else if( container.GetIdName().Equals("ISOR") )  {
+    return r.GetEsd() == 0.1 && r.GetEsd1() == 0.2;
+  }
+  else if( container.GetIdName().Equals("olex2.restraint.angle") )  {
+    return r.GetEsd() == 0.02;
+  }
+  else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
+    return r.GetEsd() == 0.04;
+  }
+  else if( container.GetIdName().Equals("olex2.restraint.u_eq") )  {
+    return r.GetEsd() == 0.1;
+  }
+  return false;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
@@ -1281,10 +1379,13 @@ void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E)  {
     SetEXTI(Params[0].ToDouble());
 }
 //..............................................................................
-void RefinementModel::LibUpdateCRParams(const TStrObjList& Params, TMacroError& E)  {
+void RefinementModel::LibUpdateCRParams(const TStrObjList& Params,
+  TMacroError& E)
+{
   IConstraintContainer* cc = rcRegister.Find(Params[0], NULL);
   if( cc == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, olxstr("Undefined container for: '") << Params[0] << '\'');
+    E.ProcessingError(__OlxSrcInfo, olxstr("Undefined container for: '") <<
+      Params[0] << '\'');
     return;
   }
   cc->UpdateParams(Params[1].ToSizeT(), Params.SubListFrom(2));
@@ -1320,7 +1421,7 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
     for( size_t i=0; i < atoms.Count(); i++ )  {
       for( size_t j=0; j < atoms[i]->NodeCount(); j++ )  {
         TSAtom &a = atoms[i]->Node(j);
-        if( a.IsDeleted() || a.GetType() == iQPeakZ  || a.GetType() == iHydrogenZ )
+        if( a.IsDeleted() || a.GetType() == iQPeakZ || a.GetType() == iHydrogenZ )
           continue;
         if( cnt[i] != NULL )  {  // attached to more than 2 atoms, invalidate
           cnt[i] = NULL;

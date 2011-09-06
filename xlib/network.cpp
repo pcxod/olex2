@@ -626,7 +626,8 @@ void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
   for( size_t i=0; i < rings.Count(); i++ )  {
     if( rings.IsNull(i) )  continue;
     for( size_t j=i+1; j < rings.Count(); j++ )  {
-      if( rings.IsNull(j) )  continue;
+      if( rings.IsNull(j) || rings[i].Count() != rings[j].Count() )
+        continue;
       bool found = true;
       for( size_t k=0; k < rings[i].Count(); k++ )  {
         TSAtom* a = rings[i][k],

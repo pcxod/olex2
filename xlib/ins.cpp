@@ -1516,6 +1516,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   restraints.Add(olxstr("REM ") << rm.rSimilarUeq.GetIdName(),
     ResInfo(&rm.rSimilarUeq, RCInfo(0, 1, -1, false)));
 
+  if( rm.IsDEFSSet() )
+    SL.Add("DEFS ") << rm.GetDEFSStr();
   for( size_t i=0; i < restraints.Count(); i++ )  {
     ResInfo& r = restraints.GetObject(i);
     for( size_t j=0; j < r.GetA()->Count(); j++ )  {
@@ -1525,14 +1527,15 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       if( !Ins_ProcessRestraint(atoms, sr) )  continue;
       if( (int)sr.AtomCount() < ri.atom_limit )  // has lower atom count limit?
         continue;
+      bool def = rm.IsDefaultRestraint(*r.GetA(), sr);
       olxstr line = restraints[i];
       if( ri.has_value > 0 )  // has value and is first?
         line << ' ' << rm.Vars.GetParam(sr, 0);
-      if( ri.esd_cnt > 0 )  // uses Esd?
+      if( ri.esd_cnt > 0 && !def )  // uses Esd?
         line << ' ' << sr.GetEsd();
-      if( ri.esd_cnt > 1 )  // has extra Esd?
+      if( ri.esd_cnt > 1 && !def )  // has extra Esd?
         line << ' ' << sr.GetEsd1();
-      if( ri.has_value < 0 )  // has value and is last?
+      if( ri.has_value < 0 && !def )  // has value and is last?
         line << ' ' << rm.Vars.GetParam(sr, 0);
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
         if( ri.full_label )
@@ -1774,8 +1777,8 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   TSRestraintList* srl = NULL;
   short RequiredParams = 1, AcceptsParams = 1;
   bool AcceptsAll = false;
-  double Esd1Mult = 0, DefVal = 0, DefEsd = 0, DefEsd1 = 0;
-  double *Vals[] = {&DefVal, &DefEsd, &DefEsd1};
+  double Esd1Mult = 0, DefVal = 0, esd=0, esd1=0;
+  double *Vals[] = {&DefVal, &esd, &esd1};
   bool use_var_manager = true, check_resi = true;
   if( toks[0].Equalsi("REM") && toks.Count() > 1 && toks[1].StartsFromi("olex2.") )  {
     toks.Delete(0);
@@ -1796,56 +1799,48 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   else if( ins_name.Equalsi("DFIX") )  {
     srl = &rm.rDFIX;
     RequiredParams = 1;  AcceptsParams = 2;
-    DefEsd = 0.02;
-    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+    Vals[0] = &DefVal;  Vals[1] = &esd;
   }
   else if( ins_name.Equalsi("DANG") )  {
     srl = &rm.rDANG;
     RequiredParams = 1;  AcceptsParams = 2;
-    DefEsd = 0.04;
-    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+    Vals[0] = &DefVal;  Vals[1] = &esd;
   }
   else if( ins_name.Equalsi("SADI") )  {
     srl = &rm.rSADI;
     RequiredParams = 0;  AcceptsParams = 1;
-    DefEsd = 0.02;
-    Vals[0] = &DefEsd;
+    Vals[0] = &esd;
   }
   else if( ins_name.Equalsi("CHIV") )  {
     srl = &rm.rCHIV;
     RequiredParams = 1;  AcceptsParams = 2;
-    DefEsd = 0.1;
-    Vals[0] = &DefEsd;  Vals[1] = &DefVal;
+    Vals[0] = &DefVal;  Vals[1] = &esd;
   }
   else if( ins_name.Equalsi("FLAT") )  {
     srl = &rm.rFLAT;
-    DefEsd = 0.1;
     RequiredParams = 0;  AcceptsParams = 1;
-    Vals[0] = &DefEsd;
+    Vals[0] = &esd;
   }
   else if( ins_name.Equalsi("DELU") )  {
     srl = &rm.rDELU;
-    DefEsd = 0.01;  DefEsd1 = 0.01;
     Esd1Mult = 1;
     RequiredParams = 0;  AcceptsParams = 2;
-    Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;
+    Vals[0] = &esd;  Vals[1] = &esd1;
     AcceptsAll = true;
   }
   else if( ins_name.Equalsi("SIMU") )  {
     srl = &rm.rSIMU;
-    DefEsd = 0.04;  DefEsd1 = 0.08;
     Esd1Mult = 2;
     DefVal = 1.7;
     RequiredParams = 0;  AcceptsParams = 3;
-    Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;  Vals[2] = &DefVal;
+    Vals[0] = &esd;  Vals[1] = &esd1;  Vals[2] = &DefVal;
     AcceptsAll = true;
   }
   else if( ins_name.Equalsi("ISOR") )  {
     srl = &rm.rISOR;
-    DefEsd = 0.1;  DefEsd1 = 0.2;
     Esd1Mult = 2;
     RequiredParams = 0;  AcceptsParams = 2;
-    Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;
+    Vals[0] = &esd;  Vals[1] = &esd1;
     AcceptsAll = true;
   }
   else if( ins_name.Equalsi("EADP") )  {
@@ -1855,31 +1850,29 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   else if( ins_name.Equalsi(rm.rAngle.GetIdName()) )  {
     srl = &rm.rAngle;
     RequiredParams = 1;  AcceptsParams = 2;
-    DefEsd = 0.02;
-    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+    Vals[0] = &DefVal;  Vals[1] = &esd;
   }
   else if( ins_name.Equalsi(rm.rDihedralAngle.GetIdName()) )  {
     srl = &rm.rDihedralAngle;
     RequiredParams = 1;  AcceptsParams = 2;
-    DefEsd = 0.02;
-    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+    Vals[0] = &DefVal;  Vals[1] = &esd;
   }
   else if( ins_name.Equalsi(rm.rFixedUeq.GetIdName()) )  {
     srl = &rm.rFixedUeq;
     RequiredParams = 1;  AcceptsParams = 2;
-    DefEsd = 0.02;
-    Vals[0] = &DefVal;  Vals[1] = &DefEsd;
+    Vals[0] = &DefVal;  Vals[1] = &esd;
   }
   else if( ins_name.Equalsi(rm.rSimilarUeq.GetIdName()) )  {
     srl = &rm.rSimilarUeq;
     RequiredParams = 0;  AcceptsParams = 1;
-    DefEsd = 0.02;
-    Vals[0] = &DefEsd;
+    Vals[0] = &esd;
   }
   else
     srl = NULL;
   if( srl != NULL )  {
     TSimpleRestraint& sr = srl->AddNew();
+    esd = sr.GetEsd();
+    esd1 = sr.GetEsd1();
     size_t index = 1;
     if( toks.Count() > 1 && toks[1].IsNumber() )  {
       if( toks.Count() > 2 && toks[2].IsNumber() )  {
@@ -1910,11 +1903,11 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
       rm.Vars.SetParam(sr, 0, DefVal);
     else
       sr.SetValue(DefVal);
-    sr.SetEsd(DefEsd);
-    if( Vals[0] == &DefEsd )
-      sr.SetEsd1( (index <= 2) ? DefEsd*Esd1Mult : DefEsd1 );
+    sr.SetEsd(esd);
+    if( Vals[0] == &esd )
+      sr.SetEsd1((index <= 2) ? esd*Esd1Mult : esd1);
     else
-      sr.SetEsd1(DefEsd1);
+      sr.SetEsd1(esd1);
     if( AcceptsAll && toks.Count() <= index )  {
       sr.SetAllNonHAtoms(true);
     }
