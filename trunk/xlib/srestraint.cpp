@@ -323,30 +323,42 @@ void TSRestraintList::Release(TSimpleRestraint& sr)  {
 void TSRestraintList::ToDataItem(TDataItem& item) const {
   size_t rs_id = 0;
   for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )  continue;
+    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )
+      continue;
     Restraints[i].ToDataItem(item.AddItem(rs_id++));
   }
 }
 //..............................................................................
 #ifndef _NO_PYTHON
-PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv)  {
+PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms,
+  TPtrList<PyObject>& equiv)
+{
   size_t rs_cnt = 0;
   for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )  continue;
+    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )
+      continue;
     rs_cnt++;
   }
 
   PyObject* main = PyTuple_New( rs_cnt );
   rs_cnt = 0;
   for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )  continue;
+    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )
+      continue;
     PyTuple_SetItem(main, rs_cnt++, Restraints[i].PyExport(atoms, equiv) );
   }
   return main;
 }
-#endif//..............................................................................
+#endif
+//..............................................................................
 void TSRestraintList::FromDataItem(const TDataItem& item) {
   for( size_t i=0; i < item.ItemCount(); i++ )
     AddNew().FromDataItem(item.GetItem(i));
+}
+//..............................................................................
+TSimpleRestraint& TSRestraintList::AddNew()  {
+  TSimpleRestraint& r = Restraints.Add(
+    new TSimpleRestraint(*this, Restraints.Count(), RestraintListType));
+  return RefMod.SetRestraintDefaults(*this, r);
 }
 //..............................................................................
