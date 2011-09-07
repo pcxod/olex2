@@ -9677,6 +9677,7 @@ void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError
   bool check_metal = true;
   ConstPtrList<TXAtom> atoms = FindXAtoms(Cmds, false, true);
   if( atoms.IsEmpty() )  {
+    FXApp->FindRings("C4", rings);
     FXApp->FindRings("C5", rings);
     FXApp->FindRings("C6", rings);
     for( size_t i=0; i < rings.Count(); i++ )  {
@@ -9769,88 +9770,6 @@ void TMainForm::macFlushFS(TStrObjList &Cmds, const TParamList &Options,
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "unknown option: ").quote() << Cmds[0];
-  }
-}
-//..............................................................................
-void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TTypeList<TSAtomPList> rings;
-  TTypeList<TSAtomPList> ring_M;
-  bool check_metal = true;
-  ConstPtrList<TXAtom> atoms = FindXAtoms(Cmds, false, true);
-  if( atoms.IsEmpty() )  {
-    FXApp->FindRings("C5", rings);
-    FXApp->FindRings("C6", rings);
-    for( size_t i=0; i < rings.Count(); i++ )  {
-      if( !TNetwork::IsRingPrimitive(rings[i]) || !TNetwork::IsRingRegular(rings[i]) )
-        rings.NullItem(i);
-    }
-    rings.Pack();
-  }
-  else  {
-    rings.Add(new TSAtomPList(atoms, StaticCastAccessor<TSAtom>()));
-    TSAtomPList &metals = ring_M.AddNew();
-    for( size_t i=0; i < rings[0].Count(); i++ )  {
-      if( XElementLib::IsMetal(rings[0][i]->GetType()) )  {
-        check_metal = false;
-        metals.Add(rings[0][i]);
-        rings[0][i] = NULL;
-      }
-    }
-    rings[0].Pack();
-    if( rings[0].IsEmpty() )  return;
-    if( check_metal )
-      ring_M.Delete(0);
-  }
-  if( check_metal )  {
-    ring_M.SetCapacity(rings.Count());
-    for( size_t i=0; i < rings.Count(); i++ )  {
-      TSAtomPList &metals = ring_M.AddNew();
-      for( size_t j=0; j < rings[i].Count(); j++ )  {
-        for( size_t k=0; k < rings[i][j]->NodeCount(); k++ )  {
-          if( XElementLib::IsMetal(rings[i][j]->Node(k).GetType()) )  {
-            metals.Add(rings[i][j]->Node(k));
-          }
-        }
-      }
-      if( metals.IsEmpty() )  {
-        rings.NullItem(i);
-        ring_M.NullItem(ring_M.Count()-1);
-      }
-    }
-    rings.Pack();
-    ring_M.Pack();
-  }
-  // prcess rings...  
-  if( rings.IsEmpty() )  return;
-  rings[0][0]->GetNetwork().GetNodes().ForEach(ACollectionItem::TagSetter<>(0));
-  for( size_t i=0; i < rings.Count(); i++ )  {
-    vec3d c;
-    for( size_t j=0; j < rings[i].Count(); j++ )  {
-      c += rings[i][j]->crd();
-      rings[i][j]->SetTag(1);
-    }
-    c /= rings[i].Count();
-    ACollectionItem::Unique<>::Do(ring_M[i]);
-    for( size_t j=0; j < ring_M[i].Count(); j++ )  {
-      TXLine &l = FXApp->AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
-        ring_M[i][j]->crd(), c);
-      TGraphicsStyle &ms = ((TXAtom*)ring_M[i][j])->GetPrimitives().GetStyle();
-      TGlMaterial *sm = ms.FindMaterial("Sphere");
-      if( sm != NULL )
-        l.GetPrimitives().GetStyle().SetMaterial(TXBond::StaticPrimitives()[9], *sm);
-      l.UpdatePrimitives((1<<9)|(1<<10));
-      l.SetRadius(0.5);
-      ring_M[i][j]->SetTag(2);
-    }
-    // hide replaced bonds
-  }
-  TGXApp::BondIterator bi = FXApp->GetBonds();
-  while( bi.HasNext() )  {
-    TXBond &b = bi.Next();
-    if( b.A().GetTag() == 2 && b.B().GetTag() == 1 )  {
-      b.SetVisible(false);
-      b.SetDeleted(true);
-    }
   }
 }
 //..............................................................................

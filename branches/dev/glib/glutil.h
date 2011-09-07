@@ -9,6 +9,7 @@
 
 #ifndef __olx_glutil_H
 #define __olx_glutil_H
+#include "glbase.h"
 #include "esphere.h"
 BeginGlNamespace()
 
@@ -187,6 +188,30 @@ public:
       olx_gl::vertex(-disk_s/2, sf[0], sf[1]);
     }
     olx_gl::end();
+  }
+};
+
+struct GlTorus {
+  //reference: www.opengl.org/resources/code/samples/redbook/torus.c
+  // tr - tube radius, r - torus radius
+  static void Render(double tr, double r, size_t sc, size_t tsc)  {
+    static const double tpi = 2*M_PI;
+    for( size_t i = 0; i < sc; i++ ) {
+      olx_gl::begin(GL_QUAD_STRIP);
+      for( size_t j = 0; j <= tsc; j++ ) {
+        for( int k = 1; k >= 0; k-- ) {
+          double s = (i + k) % sc + 0.5;
+          double t = j % tsc;
+          double a = cos(s*tpi/sc),
+            b = cos(t*tpi/tsc),
+            c = sin(t*tpi/tsc),
+            d = sin(s*tpi/sc);
+          olx_gl::normal(a*b, a*c, d);
+          olx_gl::vertex((r+tr*a)*b, (r+tr*a)*c, tr*d);
+        }
+      }
+      olx_gl::end();
+    }
   }
 };
 EndGlNamespace()
