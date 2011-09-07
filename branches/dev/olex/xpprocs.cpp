@@ -7417,14 +7417,16 @@ void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TM
   ActiveLogFile->Writeln(olxstr("Olex2 log started on ") << TETime::FormatDateTime(TETime::Now()));
 }
 //..............................................................................
-void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !TEFile::Exists( Cmds[0] )  )  {
-    Error.ProcessingError(__OlxSrcInfo, "file does not exist" );
+void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  if( !TEFile::Exists(Cmds[0])  )  {
+    Error.ProcessingError(__OlxSrcInfo, "file does not exist");
     return;
   }
-  TBasicCFile* bcf = FXApp->XFile().FindFormat( TEFile::ExtractFileExt(Cmds[0]) );
+  TBasicCFile* bcf = FXApp->XFile().FindFormat(TEFile::ExtractFileExt(Cmds[0]));
   if( bcf == NULL )  {
-    Error.ProcessingError(__OlxSrcInfo, "unknown file format" );
+    Error.ProcessingError(__OlxSrcInfo, "unknown file format");
     return;
   }
   bcf = (TBasicCFile*)bcf->Replicate();
@@ -7433,7 +7435,7 @@ void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options, TMa
     delete bcf;
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  TXLattice& xl = FXApp->AddLattice("xlatt", bcf->GetAsymmUnit().GetCellToCartesian() );
+  TXLattice& xl = FXApp->AddLattice("xlatt", bcf->GetAsymmUnit().GetCellToCartesian());
   delete bcf;
   return;
 }
@@ -7505,7 +7507,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       Error.ProcessingError(__OlxSrcInfo, "file does not exist");
       return;
     }
-    TBasicCFile* bcf = FXApp->XFile().FindFormat( TEFile::ExtractFileExt(Cmds[1]) );
+    TBasicCFile* bcf = FXApp->XFile().FindFormat(TEFile::ExtractFileExt(Cmds[1]));
     if( bcf == NULL )  {
       Error.ProcessingError(__OlxSrcInfo, "unknown file format");
       return;
@@ -7608,7 +7610,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         data[i] = allPoints[i] * uc->GetCellToCartesian();
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloLines, Cmds[1]);
       uo->SetVertices(&data);
-      FXApp->AddObjectToCreate( uo );
+      FXApp->AddObjectToCreate(uo);
       uo->Create();
     }
     else if( Cmds[0].Equalsi("plane") )  {
@@ -7623,12 +7625,12 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         p.AddNew(Cmds[i+9].ToDouble(), Cmds[i+10].ToDouble(), Cmds[i+11].ToDouble());
       }
       main_GenerateCrd(p, ml, allPoints);
-      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count() ));
+      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
       for( size_t i=0; i < allPoints.Count(); i++ )
         data[i] = allPoints[i] * uc->GetCellToCartesian();
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, "user_plane");
       uo->SetVertices(&data);
-      FXApp->AddObjectToCreate( uo );
+      FXApp->AddObjectToCreate(uo);
       uo->Create();
     }
     else if( Cmds[0].Equalsi("poly") )  {
@@ -7869,9 +7871,9 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
       }
     }
     else  {  // try to modify the style then, if exists
-      TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(Cmds[0].SubStringTo(di));
+      TGraphicsStyle* gs = FXApp->GetRender().GetStyles().FindStyle(col_name);
       if( gs != NULL )  {
-        mat = gs->FindMaterial(Cmds[0].SubStringFrom(di+1));
+        mat = gs->FindMaterial(prm_name);
         if( mat != NULL )  {
           *mat = glm;
           found = true;
