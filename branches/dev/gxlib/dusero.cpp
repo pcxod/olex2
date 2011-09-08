@@ -28,7 +28,7 @@ void TDUserObj::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
-  TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
+  TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = &Parent.NewCollection(NewL);
   GPC->AddObject(*this);

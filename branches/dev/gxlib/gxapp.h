@@ -71,6 +71,7 @@ class TXAtom;
 class TXBond;
 class TXPlane;
 class TXLine;
+class TDRing;
 class TXGrowLine;
 class TXGrowPoint;
 class TXGlLabel;
@@ -121,6 +122,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   TTypeListExt<TXReflection, AGDrawObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
   TTypeListExt<TXGlLabel, IEObject> XLabels;
+  TTypeListExt<TDRing, AGDrawObject> Rings;
   TXGlLabels *FLabels;
   TTypeListExt<TXLine, AGDrawObject> Lines;
   // have to manage memory ourselves - base class is used
@@ -607,6 +609,9 @@ public:     void CalcProbFactor(float Prob);
   // these two create structure scope labels
   TXGlLabel& CreateLabel(const vec3d& center, const olxstr& T, uint16_t FontIndex);
   TXGlLabel& CreateLabel(const TXAtom& A, uint16_t FontIndex);
+  /* creates aromatic rings, if force is false - only creates if aromatic_rings
+  option is set to true */
+  void CreateRings(bool force=false, bool create=false);
   // recreated all labels (if any) in case if font size etc changed
   size_t LabelCount() const {  return XLabels.Count();  }
   TXGlLabel& GetLabel(size_t i)  {  return XLabels[i];  }

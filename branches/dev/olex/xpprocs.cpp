@@ -2446,6 +2446,7 @@ void TMainForm::macQPeakSizeScale(TStrObjList &Cmds, const TParamList &Options, 
 void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
   TXBondPList bonds;
+  TPtrList<TXLine> lines;
   if( Cmds.IsEmpty() )  {
     TGlGroup& sel = FXApp->GetSelection();
     for( size_t i=0; i < sel.Count(); i++)  {
@@ -2453,8 +2454,10 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         atoms.Add((TXAtom&)sel[i]);
       else if( EsdlInstanceOf(sel[i], TXBond) )
         bonds.Add((TXBond&)sel[i]);
+      else if( EsdlInstanceOf(sel[i], TXLine) )
+        lines.Add((TXLine&)sel[i]);
     }
-    if( atoms.IsEmpty() && bonds.IsEmpty() )  {
+    if( atoms.IsEmpty() && bonds.IsEmpty() && lines.IsEmpty() )  {
       TGXApp::AtomIterator ai = FXApp->GetAtoms();
       atoms.SetCapacity(ai.count);
       while( ai.HasNext() )  {
@@ -2542,6 +2545,9 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       labels.Add(l);
     }
   }
+  for( size_t i=0; i < lines.Count(); i++ )
+    lines[i]->GetGlLabel().SetVisible(true);
+
   for( size_t i=0; i < equivs.Count(); i++ )  {
     smatd m = FXApp->XFile().GetUnitCell().GetMatrix(smatd::GetContainerId(equivs[i]));
     m.t += smatd::GetT(equivs[i]);
@@ -9722,7 +9728,7 @@ void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   // process rings...  
   if( rings.IsEmpty() )  return;
-
+  const bool label = Options.Contains('l');
   TGXApp::AtomIterator ai = FXApp->GetAtoms();
   while( ai.HasNext() )
     ai.Next().SetTag(0);
@@ -9744,6 +9750,8 @@ void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError
       l.UpdatePrimitives((1<<9)|(1<<10));
       l.SetRadius(0.5);
       ring_M[i][j]->SetTag(2);
+      if( !label )
+        l.GetGlLabel().SetVisible(false);
     }
     // hide replaced bonds
   }
@@ -9771,5 +9779,11 @@ void TMainForm::macFlushFS(TStrObjList &Cmds, const TParamList &Options,
   else  {
     E.ProcessingError(__OlxSrcInfo, "unknown option: ").quote() << Cmds[0];
   }
+}
+//..............................................................................
+void TMainForm::macRingsCreate(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  FXApp->CreateRings(true, true);
 }
 //..............................................................................

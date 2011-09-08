@@ -72,6 +72,9 @@
     <ClCompile Include="..\..\..\gxlib\xreflection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\gxlib\dring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\gxlib\dbasis.h">
@@ -150,6 +153,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\gxlib\povdraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\dring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1608,17 +1608,20 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       double v1 = a.CAngle(b);  v1 = acos(v1)*180/M_PI;
       double v2 = a.CAngle(c);  v2 = acos(v2)*180/M_PI;
       double v3 = b.CAngle(c);  v3 = acos(v3)*180/M_PI;
-      double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
-      double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
-      double d3 = AE.GetCrd(2).DistanceTo( atom.crd() );
+      double d1 = AE.GetCrd(0).DistanceTo(atom.crd());
+      double d2 = AE.GetCrd(1).DistanceTo(atom.crd());
+      double d3 = AE.GetCrd(2).DistanceTo(atom.crd());
       if( (v1+v2+v3) < 350 && d1 > 1.45 && d2 > 1.45 && d3 > 1.45 )  {
         if( d1 > 1.75 || d2 > 1.75 || d3 > 1.75 )  {
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R2HN->M";
           cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
         else  {
-          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R3NH+";
-          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
+          // this excludes P-N bonds, http://www.olex2.org/olex2-bugs/359
+          if( d1 < 1.65 && d2 < 1.65 && d3 < 1.65 )  {
+            TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R3NH+";
+            cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
+          }
         }
       }
     }

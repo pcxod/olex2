@@ -50,6 +50,7 @@ public:
     TXBond::UpdatePrimitives(mask);
   }
   TGPCollection& GetPrimitives() const {  return TXBond::GetPrimitives();  }
+  TXGlLabel& GetGlLabel() const {  return TXBond::GetGlLabel();  }
 };
 
 EndGxlNamespace()

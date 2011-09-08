@@ -542,8 +542,10 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Changes atom labels capitalisation for all/given/selected atoms. The"
     " first argument is the template like Aaaa");
 
-  this_InitMacroD(PiM, "", fpAny|psFileLoaded,
+  this_InitMacroD(PiM, "l-display labels for the created lines", fpAny|psFileLoaded,
     "Creates an illustration of a pi-system to metal bonds");
+  this_InitMacroD(RingsCreate, "", fpAny|psFileLoaded,
+    "Creates aromatic rings for Ph, Py and Cp rings");
 
   this_InitMacroD(Esd, "label-creates a graphics label", fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\

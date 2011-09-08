@@ -34,6 +34,7 @@
 #include "planesort.h"
 #include "cif.h"
 #include "povdraw.h"
+#include "dring.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -452,6 +453,8 @@ void TGXApp::CreateObjects(bool centerModel)  {
       LooseObjects[i]->Create();
   }
   LooseObjects.Pack();
+  for( size_t i=0; i < Rings.Count(); i++ )
+    Rings[i].Create();
 
   FLabels->Init();
   FLabels->Create();
@@ -1364,6 +1367,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   }
   else if( MsgId == ID_OnDisassemble ) {
     if( MsgSubId == msiExit )  {
+      CreateRings();
       CreateObjects(false);
       Disassembling = false;
     }
@@ -1377,6 +1381,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
       }
       GetRender().ClearGroups();
       GetRender().ClearSelection();
+      Rings.Clear();
       Disassembling = true;
     }
   }
@@ -4357,5 +4362,43 @@ TStrList TGXApp::ToPov() const {
     mat_out.Add(materials.GetKey(i)->ToPOV());
   }
   return mat_out << out;
+}
+//..............................................................................
+void TGXApp::CreateRings(bool force, bool create)  {
+  if( !force &&
+    !TBasicApp::Options.FindValue("aromatic_rings", FalseString()).ToBool() )
+  {
+    return;
+  }
+  TGraphicsStyle *cgs = GetRender().GetStyles().FindStyle('C');
+  TGlMaterial *glm = NULL;
+  if( cgs != NULL )
+    glm = cgs->FindMaterial("Sphere");
+  
+  const TLattice &latt = XFile().GetLattice();
+  TTypeList<TSAtomPList> rings;
+  FindRings("C5", rings);
+  FindRings("C6", rings);
+  FindRings("NC5", rings);
+  for( size_t i=0; i < rings.Count(); i++ )  {
+    TDRing &r = *(new TDRing(GetRender(), olxstr("DRing_") << i));
+    Rings.Add(r);
+    vec3d normal, center;
+    TSPlane::CalcPlane(rings[i], normal, center);
+    r.Basis.OrientNormal(normal);
+    r.Basis.SetCenter(center);
+    double min_d = 100;
+    for( size_t j=0; j < rings[i].Count(); j++ )  {
+      const double qd = rings[i][j]->crd().QDistanceTo(center);
+      if( qd < min_d )
+        min_d = qd;
+    }
+    min_d = sqrt(min_d)*cos(M_PI/rings[i].Count())/r.GetRadius();
+    r.Basis.SetZoom(min_d*0.85);
+    if( glm != NULL )
+      r.material = *glm;
+    if( create )
+      r.Create();
+  }
 }
 //..............................................................................
