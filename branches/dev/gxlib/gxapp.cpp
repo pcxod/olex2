@@ -3830,7 +3830,7 @@ TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
   TXLattice *XL = new TXLattice(*FGlRender, Name);
   XL->SetLatticeBasis(basis);
   XL->Create();
-  LooseObjects.Add( XL );
+  LooseObjects.Add(XL);
   return *XL;
 }
 //..............................................................................

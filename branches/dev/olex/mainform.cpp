@@ -852,9 +852,10 @@ separated values of Atom Type and radius, an entry a line");
     fpNone|psFileLoaded, "Import a fragment to current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
     "Exports selected fragment to an external file");
-  this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]",
-    fpNone|fpOne|psFileLoaded, 
-"Creates a projection of the fragment of the provided atom onto a spehere");
+  this_InitMacroD(ProjSph, "g-sphere quality [6]",
+    fpAny|psFileLoaded, 
+"Creates a projection from the selected atom onto a spehere, coloring each "
+"point on the sphere with a unique color corresponding to fragments.");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
     "Internal routine for synchronisation");
   this_InitMacroD(SAME,

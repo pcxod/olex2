@@ -148,6 +148,7 @@
 #include "absorpc.h"
 #include "file_filter.h"
 #include "analysis/analysis.h"
+#include "dsphere.h"
 //#include "gl2ps/gl2ps.c"
 
 static const olxstr StartMatchCBName("startmatch");
@@ -8158,25 +8159,91 @@ void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacro
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
+struct PointAnalyser : public TDSphere::PointAnalyser {
+  const TLattice &latt;
+  TSAtom &center;
+  TArrayList<uint32_t> colors;
+  PointAnalyser(const TLattice &l, TXAtom &c)
+    : latt(l), center(c)
+  {
+    size_t max_net_id = 0;
+    for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
+      TSAtom &a = latt.GetObjects().atoms[i];
+      if( !a.IsAvailable() )  continue;
+      if( a.CAtom().GetFragmentId() > max_net_id )
+        max_net_id = a.CAtom().GetFragmentId();
+    }
+    colors.SetCount(max_net_id+1);
+    if( max_net_id >= 1 )  {
+      colors[0] = 0xff;
+      colors[1] = 0xff00;
+    }
+    if( max_net_id >= 2 )  {
+      colors[2] = 0xff0000;
+    }
+  }
+  uint32_t Analyse(const vec3f &p)  {
+    uint64_t cl = 0;
+    size_t cnt = 0;
+    for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
+      TSAtom &a = latt.GetObjects().atoms[i];
+      if( &a == &center || !a.IsAvailable() )
+        continue;
+      vec3f v = a.crd() - center.crd();
+      float dp = p.DotProd(v);
+      if( dp < 0 )
+        continue;
+      float d = (v-p*p.DotProd(v)).Length();
+      if( d < a.GetType().r_vdw )  {
+        cl += colors[a.CAtom().GetFragmentId()];
+        cnt++;
+      }
+    }
+    if( cnt == 0 )
+      cl = 0x00ffffff;
+    else if( cnt > 1 )
+      cl /= cnt;
+    if( GetAValue(cl) != 0 )
+      return cl;
+    return cl|(127<<24);
+  }
+};
 void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TArrayList<uint32_t> colors;
+  for( size_t i=0; i < Cmds.Count(); i++ )  {
+    if( Cmds[i].IsNumber() )  {
+      colors.Add(Cmds[i].SafeUInt<uint32_t>());
+      Cmds.Delete(i--);
+    }
+  }
   TXAtomPList xatoms = FindXAtoms(Cmds, false, true);
   if( xatoms.Count() != 1 )  {
     E.ProcessingError(__OlxSourceInfo, "one atom is expected");
     return;
   }
-  double R = Options.FindValue("r", "5").ToDouble();
-  vec3d shift = xatoms[0]->crd();
-  TNetwork& net = xatoms[0]->GetNetwork();
-  for( size_t i=0; i < net.NodeCount(); i++ )  {
-    TSAtom& sa = net.Node(i);
-    sa.crd() -= shift;
-    if( &sa != xatoms[0] )
-      sa.crd().NormaliseTo(R);
+  static size_t counter = 0;
+  PointAnalyser &pa = *new PointAnalyser(FXApp->XFile().GetLattice(), *xatoms[0]);
+  {
+    if( pa.colors.Count() == 1 && !colors.IsEmpty() )
+      pa.colors[0] = colors[0];
+    else  {
+      size_t cr = 0;
+      for( size_t i=0; i < colors.Count(); i++ )  {
+        if( xatoms[0]->CAtom().GetFragmentId() == i )
+          cr = 1;
+        if( i+cr >= pa.colors.Count() )
+          break;
+        pa.colors[i+cr] = colors[i];
+      }
+    }  
   }
-  FXApp->GetRender().GetBasis().NullCenter();
-  TGXApp::BondIterator bi = FXApp->GetBonds();
-  while( bi.HasNext() )
-    bi.Next().Update();
+  TDSphere *sph = new TDSphere(FXApp->GetRender(), pa, olxstr("Sph_") << ++counter);
+  sph->Create();
+  sph->Basis.SetCenter(xatoms[0]->crd());
+  sph->Basis.SetZoom(2);
+  sph->SetMoveable(true);
+  sph->SetZoomable(true);
+  FXApp->AddObjectToCreate(sph);
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

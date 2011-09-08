@@ -709,6 +709,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\gxlib\dbasis.cpp" />
     <ClCompile Include="..\..\..\gxlib\dring.cpp" />
+    <ClCompile Include="..\..\..\gxlib\dsphere.cpp" />
     <ClCompile Include="..\..\..\gxlib\dunitcell.cpp" />
     <ClCompile Include="..\..\..\gxlib\dusero.cpp" />
     <ClCompile Include="..\..\..\gxlib\gllabel.cpp" />
@@ -764,6 +765,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\gxlib\dbasis.h" />
     <ClInclude Include="..\..\..\gxlib\dring.h" />
+    <ClInclude Include="..\..\..\gxlib\dsphere.h" />
     <ClInclude Include="..\..\..\gxlib\dunitcell.h" />
     <ClInclude Include="..\..\..\gxlib\dusero.h" />
     <ClInclude Include="..\..\..\gxlib\gllabel.h" />
