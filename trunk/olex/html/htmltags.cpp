@@ -299,7 +299,7 @@ TAG_HANDLER_PROC(tag)  {
   Data = tag.GetParam(wxT("DATA"));
 /******************* TEXT CONTROL *********************************************/
   if( TagName.Equalsi("text") )  {
-    int flags = wxWANTS_CHARS;
+    int flags = wxWANTS_CHARS|wxTE_PROCESS_ENTER;
     if( tag.HasParam( wxT("MULTILINE") ) )  flags |= wxTE_MULTILINE;
     if( tag.HasParam( wxT("PASSWORD") ) )   flags |= wxTE_PASSWORD;
     TTextEdit *Text = new TTextEdit(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
