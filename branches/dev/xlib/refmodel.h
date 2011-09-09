@@ -170,6 +170,7 @@ public:
                   rFixedUeq,
                   rSimilarUeq;
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
+  ConstraintContainer<same_group_constraint> SameGroups;
   ConstraintContainer<adirection> Directions;
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;

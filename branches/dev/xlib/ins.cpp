@@ -309,6 +309,13 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         cx.rm.SharedRotatedADPs.items);
       Ins.Delete(i--);
     }
+    else if( toks.Count() > 5 && toks[0].Equalsi("REM") &&
+      toks[1].Equalsi("olex2.constraint.same_group") )
+    {
+      same_group_constraint::FromToks(toks.SubListFrom(2), cx.rm,
+        cx.rm.SameGroups.items);
+      Ins.Delete(i--);
+    }
     else if( toks[0].Equalsi("REM") && toks[1].Equalsi("olex2.direction") )  {
       adirection::FromToks(toks.SubListFrom(2), cx.rm, cx.rm.Directions.items);
       Ins.Delete(i--);

@@ -51,8 +51,10 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   RefContainers(TAsymmUnit::_GetIdName(), &aunit);
   rcRegister.Add(SharedRotatedADPs.GetName(), &SharedRotatedADPs);
   rcRegister.Add(Directions.GetName(), &Directions);
+  rcRegister.Add(SameGroups.GetName(), &SameGroups);
   rcList.Add(&Directions);
   rcList.Add(&SharedRotatedADPs);
+  rcList.Add(&SameGroups);
   rcList1 << rDFIX <<rDANG << rSADI << rCHIV << rFLAT << rDELU
     << rSIMU << rISOR  << rEADP <<
     rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq;
