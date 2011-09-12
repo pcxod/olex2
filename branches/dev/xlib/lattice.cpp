@@ -1988,10 +1988,13 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   GetAsymmUnit().ToDataItem(item.AddItem("AUnit"));
   TDataItem& mat = item.AddItem("Matrices");
   const size_t mat_c = Matrices.Count();
-  // save matrices, change matrix tags to the position in the list and remember old tags
+  /* save matrices, change matrix tags to the position in the list and remember
+    old tags
+  */
   TArrayList<uint32_t> m_tags(mat_c);
   for( size_t i=0; i < mat_c; i++ )  {
-    mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i])).AddField("id", Matrices[i]->GetId());
+    mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i]))
+      .AddField("id", Matrices[i]->GetId());
     m_tags[i] = Matrices[i]->GetId();
     Matrices[i]->SetRawId((uint32_t)i);
   }

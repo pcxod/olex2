@@ -503,14 +503,16 @@ of components 1 ... m
       TCAtom* ca = aunit.FindCAtom(exyz[i]);
       if( ca == NULL )  {
         gr.Clear();
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("unknown atom: ") << exyz[i]);
+        throw TFunctionFailedException(__OlxSourceInfo,
+          olxstr("unknown atom: ") << exyz[i]);
       }
       gr.Add(*ca);
     }
   }
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
-  // updates refinable params - BASF, FVAR, WGHT, returns false if objects mismatch
+  /* updates refinable params - BASF, FVAR, WGHT, returns false if objects
+  mismatch */
   bool Update(const RefinementModel& rm);
 
   size_t FragCount() const {  return Frags.Count();  }
@@ -524,8 +526,10 @@ of components 1 ... m
     double be=90, double ga=90)
   {
     size_t ind = Frags.IndexOf(code);
-    if( ind != InvalidIndex )
-      throw TFunctionFailedException(__OlxSourceInfo, "duplicated FRAG instruction");
+    if( ind != InvalidIndex )  {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "duplicated FRAG instruction");
+    }
     return *Frags.Add(code, new Fragment(code, a, b, c, al, be, ga));
   }
   // the function does the atom fitting and clears the fragments
@@ -582,8 +586,10 @@ of components 1 ... m
     stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
     return AdjustIntensity(out, stats);
   }
-  // if none of the above functions help, try this ones
-  // return complete list of unmerged reflections (HKLF matrix, if any, is applied)
+  /* if none of the above functions help, try this ones
+    return complete list of unmerged reflections (HKLF matrix, if any, is
+    applied)
+  */
   const TRefList& GetReflections() const;
   // this will be only valid if any list of the reflections was called
   const HklStat& GetReflectionStat() const {  return _HklStat;  } 
@@ -591,39 +597,47 @@ of components 1 ... m
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   // adjust intensity of reflections according to OMIT
   HklStat& AdjustIntensity(TRefList& out, HklStat& stats) const;
-  /* returns redundancy information, like list[0] is the number of reflections collected once
-     list[1] = number of reflections collected wtice etc */
+  /* returns redundancy information, like list[0] is the number of reflections
+     collected once list[1] = number of reflections collected wtice etc
+  */
   const TIntList& GetRedundancyInfo() const {
     GetReflections();
     return _Redundancy;
   }
   // uses algebraic relation
-  void DetwinAlgebraic(TRefList& refs, const HklStat& st, const SymSpace::InfoEx& info_ex) const;
+  void DetwinAlgebraic(TRefList& refs, const HklStat& st,
+    const SymSpace::InfoEx& info_ex) const;
   // convinience method for mrehedral::detwin<> with  detwin_mixed
   void DetwinMixed(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
     const SymSpace::InfoEx& info_ex) const;
   // convinience method for mrehedral::detwin<> with  detwin_shelx
-  void DetwinShelx(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
-    const SymSpace::InfoEx& info_ex) const;
+  void DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
+    const HklStat& st, const SymSpace::InfoEx& info_ex) const;
   template <class RefList, class FList, class SymSpace>
-  void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const {
+  void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const
+  {
     if( !EXTI_set || EXTI == 0 ) return;
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
     const double l = expl.GetRadiation();
     for( size_t i=0; i < refs.Count(); i++ )  {
-      const double x = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
-      F[i] *= pow(1+0.0005*EXTI*F[i].qmod()*l*l*l/sqrt(olx_max(0,x*(1-x))), -0.25);
+      const double x =
+        sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
+      F[i] *=
+        pow(1+0.0005*EXTI*F[i].qmod()*l*l*l/sqrt(olx_max(0,x*(1-x))), -0.25);
     }
   }
   template <class RefList, class FsqList, class SymSpace>
-  void CorrectExtiForFsq(const RefList& refs, FsqList& Fsq, const SymSpace& sp) const {
+  void CorrectExtiForFsq(const RefList& refs, FsqList& Fsq,
+    const SymSpace& sp) const
+  {
     if( !EXTI_set || EXTI == 0 ) return;
     if( refs.Count() != Fsq.Count() )
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
     const double l = expl.GetRadiation();
     for( size_t i=0; i < refs.Count(); i++ )  {
-      const double x = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
+      const double x
+        = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
       Fsq[i] /= sqrt(1+0.0005*EXTI*Fsq[i]*l*l*l/sqrt(olx_max(0,x*(1-x))));
     }
   }
@@ -663,7 +677,9 @@ of components 1 ... m
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     BASF_Vars[i] = var_ref;  
   }
-  virtual const IXVarReferencerContainer& GetParentContainer() const {  return *this;  }
+  virtual const IXVarReferencerContainer& GetParentContainer() const {
+    return *this;
+  }
   virtual double GetValue(size_t var_index) const {  
     if( var_index >= BASF.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
@@ -679,7 +695,9 @@ of components 1 ... m
 // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const {  return VarRefrencerId;  }
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {  return 0;  }
-  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {  return 0;  }
+  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
+    return 0;
+  }
   virtual IXVarReferencer& GetReferencer(size_t id) const {
     return const_cast<RefinementModel&>(*this);
   }
@@ -687,12 +705,13 @@ of components 1 ... m
 //
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
+  olxstr WriteInsExtras(const TCAtomPList* atoms,
+    bool write_internals) const;
+  void ReadInsExtras(const TStrList &items);
   // initialises default values for esd and if needs, value (SIMU)
-  TSimpleRestraint &SetRestraintDefaults(const TSRestraintList& container,
-    TSimpleRestraint &restraint) const;
+  TSimpleRestraint &SetRestraintDefaults(TSimpleRestraint &restraint) const;
   // returns true if restraint parameters are default
-  bool IsDefaultRestraint(const TSRestraintList& container,
-    TSimpleRestraint &restraint) const;
+  bool IsDefaultRestraint(const TSimpleRestraint &restraint) const;
   void LibOSF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);

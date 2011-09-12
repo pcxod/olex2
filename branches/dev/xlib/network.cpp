@@ -965,7 +965,6 @@ void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform, const TNetwork:
   if( atomsToTransform.IsEmpty() )  return;
   mat3d m;
   QuaternionToMatrix(ai.align_out.quaternions[0], m);
-  const mat3d tm = mat3d::Transpose(m);
   TUnitCell& uc = atomsToTransform[0]->GetNetwork().GetLattice().GetUnitCell();
   const TAsymmUnit& au = atomsToTransform[0]->GetNetwork().GetLattice().GetAsymmUnit();
   for( size_t i=0; i < atomsToTransform.Count(); i++ )  {
@@ -975,12 +974,14 @@ void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform, const TNetwork:
     atomsToTransform[i]->crd() = (v - ai.align_out.center_b)*m + ai.align_out.center_a;
     if( atomsToTransform[i]->GetEllipsoid() != NULL )  {
       if( atomsToTransform[i]->GetEllipsoid()->GetTag() != 0 )  {
-        TBasicApp::NewLogEntry(logError) << "Ellipsoid has already been rotated for: " << atomsToTransform[i]->GetLabel();
+        TBasicApp::NewLogEntry(logError) << "Ellipsoid has already been rotated for: "
+          << atomsToTransform[i]->GetLabel();
         continue;
       }
       uc.GetEllp(atomsToTransform[i]->GetEllipsoid()->GetId());
       atomsToTransform[i]->GetEllipsoid()->SetTag(1);
-      atomsToTransform[i]->GetEllipsoid()->MultMatrix(tm);
+      // ADP is ivariant under the inversion
+      atomsToTransform[i]->GetEllipsoid()->MultMatrix(m);
     }
   }
 }

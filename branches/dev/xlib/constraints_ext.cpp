@@ -48,7 +48,7 @@ PyObject* rotated_adp_constraint::PyExport() const {
 #endif
 //...................................................................................
 olxstr rotated_adp_constraint::ToInsStr(const RefinementModel& rm) const {
-  return olxstr("REM", 64).stream(' ') << GetName() << source.GetLabel()
+  return olxstr("", 64).stream(' ') << GetName() << source.GetLabel()
     << destination.GetLabel() << dir.id << angle << refine_angle;
 }
 //...................................................................................
@@ -180,13 +180,13 @@ PyObject *direction::PyExport() const {
 #endif
 //...................................................................................
 olxstr static_direction::ToInsStr(const RefinementModel& rm) const {
-  return olxstr("REM", 64).stream(' ') << GetName()
+  return olxstr("", 64).stream(' ') << GetName()
     << adirection::EncodeType(direction_static)
     << id << value[0] << value[1] << value[2];
 }
 //...................................................................................
 olxstr direction::ToInsStr(const RefinementModel& rm) const {
-  olxstr rv("REM", 64);
+  olxstr rv("", 64);
   rv.stream(' ') << GetName() << adirection::EncodeType(type) << id;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i].GetAtom()->IsDeleted() )  continue;
@@ -298,7 +298,7 @@ PyObject* same_group_constraint::PyExport() const {
 #endif
 //...................................................................................
 olxstr same_group_constraint::ToInsStr(const RefinementModel& rm) const {
-  olxstr rv("REM ");
+  olxstr rv;
   rv << GetName() << ' ' << groups.Count();
   for( size_t i=0; i < groups.Count(); i++ )  {
     for( size_t j=0; j < groups[i].Count(); j++ )

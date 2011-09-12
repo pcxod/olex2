@@ -8193,7 +8193,7 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
       float dp = p.DotProd(v);
       if( dp < 0 )
         continue;
-      float d = (v-p*p.DotProd(v)).Length();
+      float d = (v-p*dp).Length();
       if( d < a.GetType().r_vdw )  {
         cl += colors[a.CAtom().GetFragmentId()];
         cnt++;

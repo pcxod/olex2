@@ -180,7 +180,7 @@ class IConstraintContainer {
 public:
   virtual ~IConstraintContainer() {}
   virtual void FromToks(const TStrList& toks, RefinementModel& rm) = 0;
-  virtual TStrList ToInsList(const RefinementModel& rm) const = 0;
+  virtual const_strlist ToInsList(const RefinementModel& rm) const = 0;
   virtual void UpdateParams(size_t index, const TStrList& toks) = 0;
   virtual const olxstr& GetName() const = 0;
   virtual void ValidateAll() = 0;
@@ -216,7 +216,7 @@ public:
   void FromToks(const TStrList& toks, RefinementModel& rm)  {
     constraint_t::FromToks(toks, rm, items);
   }
-  TStrList ToInsList(const RefinementModel& rm) const {
+  const_strlist ToInsList(const RefinementModel& rm) const {
     TStrList out;
     out.SetCapacity(items.Count());
     for( size_t i=0; i < items.Count(); i++ )
