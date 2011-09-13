@@ -544,8 +544,6 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitMacroD(PiM, "l-display labels for the created lines", fpAny|psFileLoaded,
     "Creates an illustration of a pi-system to metal bonds");
-  this_InitMacroD(RingsCreate, "", fpAny|psFileLoaded,
-    "Creates aromatic rings for Ph, Py and Cp rings");
 
   this_InitMacroD(Esd, "label-creates a graphics label", fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\
@@ -880,6 +878,14 @@ separated values of Atom Type and radius, an entry a line");
   	(fpOne|fpNone),
 "Saves current content of the virtual file system. If no parameters is given - "
 "the global state is saved. Possible arguments: global, structure");
+
+  this_InitMacroD(ChemDraw, "", fpAny|psFileLoaded,
+    "Currently only creates aromatic rings for Ph, Py and Cp rings");
+  this_InitMacroD(Restrain, "", fpAny|psFileLoaded,
+    "Creates a restraint");
+  this_InitMacroD(Constrain, "", (fpAny^fpNone)|psFileLoaded,
+    "Creates a constraint");
+
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);

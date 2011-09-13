@@ -9848,9 +9848,157 @@ void TMainForm::macFlushFS(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TMainForm::macRingsCreate(TStrObjList &Cmds, const TParamList &Options,
+void TMainForm::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   FXApp->CreateRings(true, true);
+}
+//..............................................................................
+void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+}
+//..............................................................................
+void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  RefinementModel &rm = FXApp->XFile().GetRM();
+  if( Cmds[0].Equalsi("U") )  { // EADP
+    TXAtomPList atoms = FindXAtoms(Cmds, false, true);
+    if( atoms.Count() < 2 )  {
+      E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
+      return;
+    }
+    for( size_t i=0; i < atoms.Count(); i++ )
+      atoms[i]->SetTag(atoms[i]->CAtom().GetId());
+    ACollectionItem::Unique<>::Do(atoms);
+    // search optimisation
+    SortedPtrList<TCAtom, TPointerComparator> s_catoms;
+    for( size_t i=0; i < atoms.Count(); i++ )
+      s_catoms.AddUnique(&atoms[i]->CAtom());
+    TSimpleRestraint *e_sr = NULL;
+    for( size_t i=0; i < rm.rEADP.Count(); i++ )  {
+      TSimpleRestraint &sr = rm.rEADP[i];
+      for( size_t j=0; j < sr.AtomCount(); j++ )  {
+        if( s_catoms.IndexOf(sr.GetAtom(j).GetAtom()) != InvalidIndex )  {
+          e_sr = &sr;
+          break;
+        }
+        if( e_sr != NULL )  break;
+      }
+      if( e_sr != NULL )  break;
+    }
+    if( e_sr == NULL )
+      e_sr = &rm.rEADP.AddNew();
+    for( size_t i=0; i < atoms.Count(); i++ )
+      e_sr->AddAtom(atoms[i]->CAtom(), NULL);
+  }
+  else if( Cmds[0].Equalsi("site") || Cmds[0].Equalsi("xyz"))  { // EXYZ
+    TXAtomPList atoms = FindXAtoms(Cmds, false, true);
+    if( atoms.Count() < 2 )  {
+      E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
+      return;
+    }
+    for( size_t i=0; i < atoms.Count(); i++ )
+      atoms[i]->SetTag(atoms[i]->CAtom().GetId());
+    ACollectionItem::Unique<>::Do(atoms);
+    // search optimisation
+    SortedPtrList<TCAtom, TPointerComparator> s_catoms;
+    for( size_t i=0; i < atoms.Count(); i++ )
+      s_catoms.AddUnique(&atoms[i]->CAtom());
+    TExyzGroup *e_g = NULL;
+    for( size_t i=0; i < rm.rEADP.Count(); i++ )  {
+      TExyzGroup &sr = rm.ExyzGroups[i];
+      for( size_t j=0; j < sr.Count(); j++ )  {
+        if( s_catoms.IndexOf(&sr[j]) != InvalidIndex )  {
+          e_g = &sr;
+          break;
+        }
+        if( e_g != NULL )  break;
+      }
+      if( e_g != NULL )  break;
+    }
+    if( e_g == NULL )
+      e_g = &rm.ExyzGroups.New();
+    for( size_t i=0; i < atoms.Count(); i++ )
+      e_g->Add(atoms[i]->CAtom());
+  }
+  else if( Cmds[0].Equalsi("same") && // same group constraint
+          (Cmds.Count() > 1 && Cmds[1].Equalsi("group") ) )
+  {
+    size_t n=InvalidSize;
+    if( Cmds.Count() > 2 && Cmds[2].IsNumber() )  {
+      n = Cmds[2].ToSizeT();
+      Cmds.DeleteRange(0, 3);
+    }
+    else
+      Cmds.DeleteRange(0, 2);
+    TXAtomPList atoms = FindXAtoms(Cmds, false, true);
+    if( n != InvalidSize )  {
+      if( (atoms.Count()%n) != 0 )  {
+        E.ProcessingError(__OlxSrcInfo,
+          "number of atoms do not match the number given of groups");
+        return;
+      }
+      const size_t ag = atoms.Count()/n;
+      if( ag < 3 )  {
+        E.ProcessingError(__OlxSrcInfo,
+          "at least 3 atoms per group are expected");
+        return;
+      }
+      TTypeList<TCAtomPList> groups(n);
+      for( size_t i=0, ac=0; i < n; i++ )  {
+        TCAtomPList &al = groups.Set(i, new TCAtomPList(ag));
+        for( size_t j=0; j < ag; j++, ac++ )
+          al[j] = &atoms[ac]->CAtom();
+      }
+      FXApp->XFile().GetRM().SameGroups.items.AddNew(
+        ConstTypeList<TCAtomPList>(groups));
+    }
+    else if( atoms.Count() == 2 )  {
+      TTypeList<AnAssociation2<size_t, size_t> > res;
+      TNetwork &netA = atoms[0]->GetNetwork(),
+        &netB = atoms[1]->GetNetwork();
+      if( &netA == &netB )  {
+        E.ProcessingError(__OlxSrcInfo,
+          "please select atoms from different fragments");
+        return;
+      }
+      if( !netA.DoMatch(netB, res, false, &TSAtom::weight_unit) )  {
+        E.ProcessingError(__OlxSrcInfo, "fragments do not match");
+        return;
+      }
+      TTypeList<AnAssociation2<TSAtom*,TSAtom*> > matoms(res.Count());
+      for( size_t i=0; i < res.Count(); i++ )  {
+        matoms.Set(i, new AnAssociation2<TSAtom*,TSAtom*>(
+          &netA.Node(res[i].GetA()), &netB.Node(res[i].GetB())));
+      }
+      TNetwork::AlignInfo rv =
+        TNetwork::GetAlignmentRMSD(matoms, false, &TSAtom::weight_unit);
+
+      TTypeList<AnAssociation2<TSAtom*,TSAtom*> > imatoms(res.Count());
+      res.Clear();
+      netA.DoMatch(netB, res, true, &TSAtom::weight_unit);
+      for( size_t i=0; i < res.Count(); i++ )  {
+        imatoms.Set(i, new AnAssociation2<TSAtom*,TSAtom*>(
+          &netA.Node(res[i].GetA()), &netB.Node(res[i].GetB())));
+      }
+      TNetwork::AlignInfo irv =
+        TNetwork::GetAlignmentRMSD(imatoms, true, &TSAtom::weight_unit);
+
+      TTypeList<AnAssociation2<TSAtom*,TSAtom*> > &ma =
+        (rv.rmsd.GetV() < irv.rmsd.GetV() ? matoms : imatoms);
+      
+      TTypeList<TCAtomPList> groups;
+      groups.AddNew(ma.Count());
+      groups.AddNew(ma.Count());
+      for( size_t i=0; i < ma.Count(); i++ )  {
+        groups[0][i] = &ma[i].GetA()->CAtom();
+        groups[1][i] = &ma[i].GetB()->CAtom();
+      }
+      FXApp->XFile().GetRM().SameGroups.items.AddNew(
+        ConstTypeList<TCAtomPList>(groups));
+    }
+  }
 }
 //..............................................................................
