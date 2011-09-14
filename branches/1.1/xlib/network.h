@@ -78,7 +78,7 @@ public:
   }
 
   static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb, const smatd& sm)  {
-    if( ca.GetPart() < 0 || cb.GetPart() < 0 )
+    if( (ca.GetPart() < 0 || cb.GetPart() < 0) && ca.GetPart() == cb.GetPart() )
       return sm.IsFirst();  // is identity and no translation
     else if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
              (ca.GetPart() == cb.GetPart()) )

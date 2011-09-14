@@ -161,6 +161,8 @@ class XVarManager {
   TTypeList<XLEQ> Equations;
   TTypeList<XVarReference> References;  
   uint16_t NextVar;  // this controls there variables go in sebsequent calls
+  // flag to preserve variables if used by only one referencer, .options
+  bool preserve_fvars;
 public:
 
   class RefinementModel& RM;
@@ -278,6 +280,8 @@ public:
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif
   void FromDataItem(const TDataItem& item);
+
+  bool DoPreserveFVARs() const {  return preserve_fvars;  }
 };
 
 
