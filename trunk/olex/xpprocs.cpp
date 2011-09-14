@@ -4840,14 +4840,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       RefineDataTable(false, false);
       LoadVFS(plStructure);  // load virtual fs file
     }
-    catch(TEmptyFileException)  {  
-      Error.ProcessingError(__OlxSrcInfo, "empty file");
-      return;
-    }
     catch(const TExceptionBase& exc)  { 
       // manual recovery of the situation...
       FXApp->XFile().GetRM().Clear(rm_clear_ALL);
       FXApp->XFile().GetLattice().Clear(true);
+      FXApp->XFile().SetLastLoader(NULL);
       FXApp->CreateObjects(true);
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
