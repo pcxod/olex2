@@ -45,7 +45,7 @@ void TDSphere::Create(const olxstr& cName)  {
   TTypeList<TVector3<float> > vecs;
   TTypeList<IndexTriangle> triags;
   TArrayList<TVector3<float> > norms;
-  OlxSphere<float,OctahedronFP<vec3f>>::Generate(1.0, 6, vecs, triags, norms);
+  OlxSphere<float,OctahedronFP<vec3f> >::Generate(1.0, 6, vecs, triags, norms);
   const size_t tc = triags.Count();
   uint32_t last_cl = 0;
   GlP.StartList();
