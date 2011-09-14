@@ -159,9 +159,6 @@ enum  {
   ID_ADDINS,
   ID_VarChange,
 
-  ID_gl2ps,
-  
-  ID_PictureExport,
   ID_UpdateThreadTerminate,
   ID_UpdateThreadDownload,
   ID_UpdateThreadAction
@@ -353,7 +350,6 @@ protected:
 
   void OnSelection(wxCommandEvent& event);
   void OnGraphicsStyle(wxCommandEvent& event);
-  void OnPictureExport(wxCommandEvent& event);
 
   // view menu
   void OnHtmlPanel(wxCommandEvent& event);

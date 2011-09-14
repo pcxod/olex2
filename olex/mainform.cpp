@@ -288,8 +288,6 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 
   EVT_MENU(ID_GStyleSave, TMainForm::OnGraphicsStyle)
   EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
-
-  EVT_MENU(ID_gl2ps, TMainForm::OnPictureExport)
 END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent):
@@ -1038,7 +1036,6 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   MenuView->Append(miHtmlPanel);
 
   MenuStructure->Append(ID_StrGenerate, wxT("&Generate..."));
-  MenuStructure->Append(ID_PictureExport, wxT("&Export picture (experimental)"));
 
 // statusbar initialisation
   StatusBar = CreateStatusBar();
@@ -3870,15 +3867,6 @@ static PyMethodDef CORE_Methods[] = {
 //..............................................................................
 void TMainForm::PyInit()  {
   Py_InitModule("olex_gui", CORE_Methods);
-}
-//..............................................................................
-void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
-  //SaveVecDialog *dlg = new SaveVecDialog(this, FXApp);
-  //if ( dlg->Show() == wxID_OK ) {
-  //} 
-  //#include "savevecdialog.h"
-  
-  wxMessageBox(wxT("Under construction"));    
 }
 //..............................................................................
 //..............................................................................
