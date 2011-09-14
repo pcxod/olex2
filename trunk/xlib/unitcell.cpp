@@ -262,25 +262,22 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[i]->SetDeleted(true);
       }
       else  {
-        if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd,
+        smatd matr = Matrices[j];
+        matr.t += shift;
+        matr.SetId((uint8_t)j, shift);
+        if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
           Latt->GetDelta()) )
         {
-          smatd m = Matrices[j];
-          m.t += shift;
-          m.SetId((uint8_t)j, shift);
-          Atoms[ind]->AttachSite(Atoms[i], m);
+          Atoms[ind]->AttachSite(Atoms[i], matr);
           if( i != ind )
-            Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
+            Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
-        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd,
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
           Latt->GetDeltaI()) )
         {
-          smatd m = Matrices[j];
-          m.t += shift;
-          m.SetId((uint8_t)j, shift);
-          Atoms[ind]->AttachSiteI(Atoms[i], m);
+          Atoms[ind]->AttachSiteI(Atoms[i], matr);
           if( i != ind )
-            Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
+            Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
       }
     }
