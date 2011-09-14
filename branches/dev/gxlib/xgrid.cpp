@@ -562,9 +562,11 @@ void TXGrid::SetScale(float v)  {
       TArray3D<float>& points = *(new TArray3D<float>(vec3i(0,0,0), isz));
       const mat3f rm(XApp->Get3DFrame().GetNormals()/SZ);
       const vec3f tr = XApp->Get3DFrame().GetEdge(0);
-      const smatdd g2c(XApp->Get3DFrame().GetNormals()/SZ, XApp->Get3DFrame().GetEdge(0));
+      const smatdd g2c(XApp->Get3DFrame().GetNormals()/SZ,
+        XApp->Get3DFrame().GetEdge(0));
       const mat3d c2c = XApp->XFile().GetAsymmUnit().GetCartesianToCell();
-      MapUtil::Cell2Cart(MapUtil::MapGetter<float,2>(ED->Data, ED->GetSize()), points.Data, points.GetSize(), g2c, c2c);
+      MapUtil::Cell2Cart(MapUtil::MapGetter<float,2>(ED->Data, ED->GetSize()),
+        points.Data, points.GetSize(), g2c, c2c);
       CIsoSurface IS(points);
       IS.GenerateSurface(Scale);
       p_vertices = IS.VertexList();

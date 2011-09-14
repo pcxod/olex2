@@ -147,7 +147,6 @@
 #include "refutil.h"
 #include "absorpc.h"
 #include "file_filter.h"
-#include "analysis/analysis.h"
 #include "dsphere.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -4241,6 +4240,14 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       olxstr::FormatFloat(1, (double)i/resolution) << "A away from the surface " <<
       olxstr::FormatFloat(3, totalVol*vol/mapVol) << "(A^3)";
   }
+  if( Options.Contains('i') )  {
+    for( int i=0; i < dim[0]; i++ )  {
+      for( int j=0; j < dim[1]; j++ )  {
+        for( int k=0; k < dim[2]; k++ )
+          amap[i][j][k] = MaxLevel-amap[i][j][k];
+      }
+    }
+  }
   //// set map to view voids
   FXApp->XGrid().InitGrid(dim[0], dim[1], dim[2]);
   FXApp->XGrid().SetMinVal(0);
@@ -6544,17 +6551,6 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TTypeList<analysis::Result> res;
-  //res = analysis::AnalyseEDMap(FXApp->XFile().GetLattice());
-  //for( size_t i=0; i < res.Count(); i++ )  {
-  //  TBasicApp::NewLogEntry() << res[i].atom.GetLabel() << ": " << res[i].proposed.symbol;
-  //}
-  TBasicApp::NewLogEntry() << "G+ED";
-  res = analysis::AnalyseGeometry(FXApp->XFile().GetLattice());
-  for( size_t i=0; i < res.Count(); i++ )  {
-    TBasicApp::NewLogEntry() << res[i].atom.GetLabel() << ": " << res[i].proposed.symbol;
-    res[i].atom.SetType(res[i].proposed);
-  }
   return;
   TXApp& xapp = TXApp::GetInstance();
   //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();

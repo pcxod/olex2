@@ -201,8 +201,11 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
   const size_t mc = Matrices.Count();
   for( size_t i=ind; i < ac; i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
-    if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
+    if( Atoms[i]->GetExyzGroup() != NULL &&
+      Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() )
+    {
       continue;
+    }
     for( size_t j=0; j < mc; j++ )  {
       vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
       const vec3i shift = v.Round<int>();
@@ -220,13 +223,19 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           }
           Atoms[i]->SetDeleted(true);
         }
-        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd, Latt->GetDelta()) )  {  // bond
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
+          Latt->GetDelta()) )  // covalent bond
+        {
           Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
+          Atoms[i]->AttachSite(Atoms[ind],
+            Latt->GetUnitCell().InvMatrix(Matrices[j]));
         }
-        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd, Latt->GetDeltaI()) )  { // interaction
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
+          Latt->GetDeltaI()) )  // interaction
+        {
           Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
+          Atoms[i]->AttachSiteI(Atoms[ind],
+            Latt->GetUnitCell().InvMatrix(Matrices[j]));
         }
         continue;
       }
@@ -244,12 +253,18 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[ind]->SetDeleted(true);
           break;
         }
-        if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() || Atoms[i]->GetPart() < 0 )  continue;
+        if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() ||
+          Atoms[i]->GetPart() < 0 )
+        {
+          continue;
+        }
         if( Atoms[i]->GetParentAfixGroup() == NULL )
           Atoms[i]->SetDeleted(true);
       }
       else  {
-        if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd, Latt->GetDelta()) )  {
+        if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd,
+          Latt->GetDelta()) )
+        {
           smatd m = Matrices[j];
           m.t += shift;
           m.SetId((uint8_t)j, shift);
@@ -257,7 +272,9 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           if( i != ind )
             Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(m));
         }
-        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd, Latt->GetDeltaI()) )  {
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], Matrices[j], qd,
+          Latt->GetDeltaI()) )
+        {
           smatd m = Matrices[j];
           m.t += shift;
           m.SetId((uint8_t)j, shift);

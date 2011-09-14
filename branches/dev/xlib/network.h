@@ -61,24 +61,34 @@ public:
     return false;
   }
   static inline bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
-    if( (sa.CAtom().GetPart() < 0 || sb.CAtom().GetPart() < 0) && sa.CAtom().GetPart() == sb.CAtom().GetPart() )
+    if( (sa.CAtom().GetPart() < 0 || sb.CAtom().GetPart() < 0) &&
+         sa.CAtom().GetPart() == sb.CAtom().GetPart() )
+    {
       return HaveSharedMatrix(sa, sb);
+    }
     else if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 || 
              (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )
       return true;
     return false;
   }
-  static inline bool IsBondAllowed(const TSAtom& sa, const TCAtom& cb, const smatd& sm)  {
-    if( (sa.CAtom().GetPart() < 0 || cb.GetPart() < 0) && sa.CAtom().GetPart() == cb.GetPart() )
+  static inline bool IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
+    const smatd& sm)
+  {
+    if( (sa.CAtom().GetPart() < 0 || cb.GetPart() < 0) &&
+      sa.CAtom().GetPart() == cb.GetPart() )
+    {
       return sa.ContainsMatrix(sm.GetId());
+    }
     else if( sa.CAtom().GetPart() == 0 || cb.GetPart() == 0 || 
              (sa.CAtom().GetPart() == cb.GetPart()) )
       return true;
     return false;
   }
 
-  static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb, const smatd& sm)  {
-    if( ca.GetPart() < 0 || cb.GetPart() < 0 )
+  static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
+    const smatd& sm)
+  {
+    if( (ca.GetPart() < 0 || cb.GetPart() < 0) && ca.GetPart() == cb.GetPart() )
       return sm.IsFirst();  // is identity and no translation
     else if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
              (ca.GetPart() == cb.GetPart()) )
@@ -87,57 +97,84 @@ public:
   }
 
   static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb)  {
-    return (ca.GetPart() == 0 || cb.GetPart() == 0 || (ca.GetPart() == cb.GetPart()));
+    return (ca.GetPart() == 0 || cb.GetPart() == 0 ||
+            ca.GetPart() == cb.GetPart());
   }
 
   bool CBondExists(const TSAtom& A1, const TSAtom& CA2, const double& D) const;
   // considers quadratic distance
-  bool CBondExistsQ(const TSAtom& A1, const TSAtom& CA2, const double& qD) const;
+  bool CBondExistsQ(const TSAtom& A1, const TSAtom& CA2,
+    const double& qD) const;
 
-  bool CBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const;
+  bool CBondExists(const TCAtom& CA1, const TCAtom& CA2,
+    const smatd& sm, const double& D) const;
   // compares the quadratic distances
-  bool CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const;
+  bool CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2,
+    const smatd& sm, const double& qD) const;
   
-  bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const;
+  bool HBondExists(const TCAtom& CA1, const TCAtom& CA2,
+    const smatd& sm, const double& D) const;
   // compares the quadratic distances
-  bool HBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const;
+  bool HBondExistsQ(const TCAtom& CA1, const TCAtom& CA2,
+    const smatd& sm, const double& qD) const;
 
-  static bool BondExists(const TSAtom& a1, const TSAtom& a2, double D, double delta)  {
+  static bool BondExists(const TSAtom& a1, const TSAtom& a2, double D,
+    double delta)  {
     if(  D < (a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta) )
       return IsBondAllowed(a1, a2);
     return false;
   }
-  static bool BondExistsQ(const TSAtom& a1, const TSAtom& a2, double qD, double delta)  {
-    if(  qD < olx_sqr(a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta) )
+  static bool BondExistsQ(const TSAtom& a1, const TSAtom& a2, double qD,
+    double delta)
+  {
+    if(  qD < olx_sqr(
+      a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta) )
+    {
       return IsBondAllowed(a1, a2);
+    }
     return false;
   }
-  static bool BondExists(const TSAtom& a1, const TCAtom& a2, const smatd& m, double D, double delta)  {
+  static bool BondExists(const TSAtom& a1, const TCAtom& a2, const smatd& m,
+    double D, double delta)
+  {
     if(  D < (a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta) )
       return IsBondAllowed(a1, a2, m);
     return false;
   }
-  static bool BondExistsQ(const TSAtom& a1, const TCAtom& a2, const smatd& m, double qD, double delta)  {
-    if(  qD < olx_sqr(a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta) )
+  static bool BondExistsQ(const TSAtom& a1, const TCAtom& a2, const smatd& m,
+    double qD, double delta)
+  {
+    if(  qD < olx_sqr(
+      a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta) )
+    {
       return IsBondAllowed(a1, a2, m);
+    }
     return false;
   }
-  static bool BondExists(const TCAtom& a1, const TCAtom& a2, const smatd& m, double D, double delta)  {
+  static bool BondExists(const TCAtom& a1, const TCAtom& a2, const smatd& m,
+    double D, double delta)
+  {
     if( D < (a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
       return IsBondAllowed(a1, a2, m);
     return false;
   }
-  static bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, const smatd& m, double qD, double delta)  {
+  static bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, const smatd& m,
+    double qD, double delta)
+  {
     if( qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
       return IsBondAllowed(a1, a2, m);
     return false;
   }
-  static inline bool BondExists(const TCAtom& a1, const TCAtom& a2, double D, double delta)  {
+  static inline bool BondExists(const TCAtom& a1, const TCAtom& a2, double D,
+    double delta)
+  {
     if( D < (a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
       return IsBondAllowed(a1, a2);
     return false;
   }
-  static inline bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, double qD, double delta)  {
+  static inline bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, double qD,
+    double delta)
+  {
     if( qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
       return IsBondAllowed(a1, a2);
     return false;

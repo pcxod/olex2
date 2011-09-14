@@ -166,43 +166,66 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
   CreateBondsAndFragments(objects, Frags);
 }
 //..............................................................................
-bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const  {
-  if(  D < (CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDelta() ) )  {
+bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2,
+  const smatd& sm, const double& D) const
+{
+  if(  D < 
+    (CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDelta()) )
+  {
     return IsBondAllowed(CA1, CA2, sm);
   }
   return false;
 }
 //..............................................................................
-bool TNetwork::CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const  {
-  if(  qD < olx_sqr(CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDelta() ) )  {
+bool TNetwork::CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2,
+  const smatd& sm, const double& qD) const
+{
+  if(  qD < 
+    olx_sqr(CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDelta()) )
+  {
     return IsBondAllowed(CA1, CA2, sm);
   }
   return false;
 }
 //..............................................................................
-bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const  {
-  if(  D < (CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDeltaI() ) )  {
+bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2,
+  const smatd& sm, const double& D) const
+{
+  if(  D < 
+    (CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDeltaI()) )
+  {
     return IsBondAllowed(CA1, CA2, sm);
   }
   return false;
 }
 //..............................................................................
-bool TNetwork::HBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const  {
-  if(  qD < olx_sqr(CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDeltaI() ) )  {
+bool TNetwork::HBondExistsQ(const TCAtom& CA1, const TCAtom& CA2,
+  const smatd& sm, const double& qD) const  {
+  if(  qD < olx_sqr(
+    CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDeltaI()) )
+  {
     return IsBondAllowed(CA1, CA2, sm);
   }
   return false;
 }
 //..............................................................................
-bool TNetwork::CBondExists(const TSAtom& A1, const TSAtom& A2, const double& D) const  {
-  if(  D < (A1.CAtom().GetConnInfo().r + A2.CAtom().GetConnInfo().r + GetLattice().GetDelta() ) )  {
+bool TNetwork::CBondExists(const TSAtom& A1, const TSAtom& A2,
+  const double& D) const
+{
+  if(  D < (A1.CAtom().GetConnInfo().r +
+            A2.CAtom().GetConnInfo().r + GetLattice().GetDelta() ) )
+  {
     return IsBondAllowed(A1, A2);
   }
   return false;
 }
 //..............................................................................
-bool TNetwork::CBondExistsQ(const TSAtom& A1, const TSAtom& A2, const double& qD) const  {
-  if(  qD < olx_sqr(A1.CAtom().GetConnInfo().r + A2.CAtom().GetConnInfo().r + GetLattice().GetDelta() ) )  {
+bool TNetwork::CBondExistsQ(const TSAtom& A1, const TSAtom& A2,
+  const double& qD) const
+{
+  if(  qD < olx_sqr(A1.CAtom().GetConnInfo().r +
+                    A2.CAtom().GetConnInfo().r + GetLattice().GetDelta()) )
+  {
     return IsBondAllowed(A1, A2);
   }
   return false;
