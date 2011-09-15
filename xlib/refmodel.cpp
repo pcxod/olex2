@@ -1350,17 +1350,17 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   bool write_internals) const
 {
   TDataItem di(NULL, "root");
-  typedef AnAssociation2<const TSRestraintList&, TIns::RCInfo> ResInfo;
+  typedef AnAssociation2<const TSRestraintList*, TIns::RCInfo> ResInfo;
   TTypeList<ResInfo> restraints;
-  restraints.AddNew(rAngle, TIns::RCInfo(1, 1, -1, true));
-  restraints.AddNew(rDihedralAngle, TIns::RCInfo(1, 1, -1, true));
-  restraints.AddNew(rFixedUeq, TIns::RCInfo(1, 1, -1, true));
-  restraints.AddNew(rSimilarUeq, TIns::RCInfo(0, 1, -1, false));
+  restraints.AddNew(&rAngle, TIns::RCInfo(1, 1, -1, true));
+  restraints.AddNew(&rDihedralAngle, TIns::RCInfo(1, 1, -1, true));
+  restraints.AddNew(&rFixedUeq, TIns::RCInfo(1, 1, -1, true));
+  restraints.AddNew(&rSimilarUeq, TIns::RCInfo(0, 1, -1, false));
   TStrList rl;
   for( size_t i=0; i < restraints.Count(); i++ )  {
-    for( size_t j=0; j < restraints[i].GetA().Count(); j++ )  {
+    for( size_t j=0; j < restraints[i].GetA()->Count(); j++ )  {
       olxstr line = TIns::RestraintToString(
-        restraints[i].GetA()[j], restraints[i].GetB());
+        (*restraints[i].GetA())[j], restraints[i].GetB());
       if( !line.IsEmpty() )
         rl.Add(line);
     }
