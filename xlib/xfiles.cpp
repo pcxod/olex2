@@ -254,7 +254,7 @@ void TXFile::Sort(const TStrList& ins)  {
     olxstr sort;
     for( size_t i=0; i < ins.Count(); i++ )  {
       if( ins[i].CharAt(0) == '+' )
-        sort << ins[i].SubStringFrom(i);
+        sort << ins[i].SubStringFrom(1);
       else if( ins[i].Equalsi("moiety") )  {
         moiety_index = i;
         break;
