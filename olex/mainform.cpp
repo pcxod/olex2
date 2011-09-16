@@ -1980,7 +1980,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       if( ((olxstr*)Data)->Equalsi("OMIT") )  {
         BadReflectionsTable(false);
-        executeMacro("html.updatehtml");
+        executeMacro("html.update");
       }
     }
   }
@@ -1988,7 +1988,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       if( ((olxstr*)Data)->Equalsi("OMIT") )  {
         BadReflectionsTable(false);
-        executeMacro("html.updatehtml");
+        executeMacro("html.update");
       }
     }
   }
