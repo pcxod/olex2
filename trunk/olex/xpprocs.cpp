@@ -3927,7 +3927,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
       FXApp->XFile().GetRM().Vars.Clear();
       SL.Strtok(dlg->GetText(), '\n');
       TStrList NewIns;
-      TIns::UpdateAtomsFromStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, NewIns);
+      TIns::UpdateAtomsFromStrings(FXApp->XFile().GetRM(), atomIndex, SL, NewIns);
       // add new instructions
       if( Ins != NULL )  {
         for( size_t i=0; i < NewIns.Count(); i++ )  {
