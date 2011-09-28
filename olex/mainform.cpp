@@ -547,7 +547,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\
  matrix coming from the ShelXL refinement with negative 'MORE' like 'MORE -1' option");
   
-  this_InitMacroD(Name, "c-disables checking labels for duplications&;s-simply changes suffix\
+  this_InitMacroD(Name, "c-enables checking labels for duplications&;s-simply changes suffix\
   of provided atoms to the provided one (or none)&;cs-leaves current selection unchanged", fpOne | fpTwo,
 "Names atoms. If the 'sel' keyword is used and a number is provided as second argument\
  the numbering will happen in the order the atoms were selected (make sure -c option\
