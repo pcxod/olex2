@@ -108,18 +108,18 @@ public:
   void SaveForSolution(const olxstr& FileName, const olxstr& Method, const olxstr& comments, bool rems=true);
   void SavePattSolution( const olxstr& FileName, const TTypeList<class TPattAtom>& atoms,
                          const olxstr& comments );
-  /* reads a file containing just lines of atoms and updates the to the
-   provided Atoms, whic means that the number of atoms should be the same
-   as in SaveAtomsToFile and the order should be the same too
+  /* reads a file containing just lines of atoms and updates the provided
+   Atoms by index in the AU.
    Instructions are initialised with all unrecognised commands
-   @retutn error message or an empty string
   */
-  static void UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, const TIndexList& index, TStrList& SL, TStrList& Instructions);
+  static void UpdateAtomsFromStrings(RefinementModel& rm,
+    const TIndexList& index, TStrList& SL, TStrList& Instructions);
   /* saves some atoms to a plain ins format with no headers etc; to be used with
-    UpdateAtomsFromStrings. index is initialised with the order in which atoms saved
+    UpdateAtomsFromStrings. index is initialised with the order in which atom Ids
     this must be passed to UpdateAtomsFromString
   */
-  static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIndexList& index, TStrList& SL, 
+  static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
+    TIndexList& index, TStrList& SL, 
     RefinementModel::ReleasedItems* processed);
   void ValidateRestraintsAtomNames(RefinementModel& rm);
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);

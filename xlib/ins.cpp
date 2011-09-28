@@ -195,7 +195,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        TAtomReference ar( toks.Text(' ', from_ind) );
        TCAtomGroup ag;
        size_t atomAGroup;
-       try  {  ar.Expand( cx.rm, ag, resi, atomAGroup);  }
+       try  {  ar.Expand(cx.rm, ag, resi, atomAGroup);  }
        catch( const TExceptionBase& ex )  {
          throw TFunctionFailedException(__OlxSourceInfo,
            olxstr("invalid SAME instruction: ") << ex.GetException()->GetError());
@@ -991,7 +991,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetType())+1);
   HyphenateIns(_AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
   a.SetSaved(true);
-  if( index != NULL )  index->Add(a.GetTag());
+  if( index != NULL )  index->Add(a.GetId());
   for( size_t i=0; i < a.DependentHfixGroupCount(); i++ )  {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
     size_t sc = 0;
@@ -1091,23 +1091,24 @@ bool TIns::Adopt(TXFile& XF)  {
   return true;
 }
 //..............................................................................
-void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms,
+void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   const TIndexList& index, TStrList& SL, TStrList& Instructions)
 {
-  if( CAtoms.Count() != index.Count() )
-    throw TInvalidArgumentException(__OlxSourceInfo, "index");
-  if( CAtoms.IsEmpty() )  return;
+  if( index.IsEmpty() )  return;
   size_t atomCount = 0;
   ParseContext cx(rm);
   Preprocess(SL);
   //rm.FVAR.Clear();
-  for( size_t i=0; i < CAtoms.Count(); i++ )  {
-    if( CAtoms[i]->GetParentAfixGroup() != NULL )
-      CAtoms[i]->GetParentAfixGroup()->Clear();
-    if( CAtoms[i]->GetDependentAfixGroup() != NULL )
-      CAtoms[i]->GetDependentAfixGroup()->Clear();
-    if( CAtoms[i]->GetExyzGroup() != NULL )
-      CAtoms[i]->GetExyzGroup()->Clear();
+  for( size_t i=0; i < index.Count(); i++ )  {
+    if( i > rm.aunit.AtomCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
+    TCAtom &ca = rm.aunit.GetAtom(i);
+    if( ca.GetParentAfixGroup() != NULL )
+      ca.GetParentAfixGroup()->Clear();
+    if( ca.GetDependentAfixGroup() != NULL )
+      ca.GetDependentAfixGroup()->Clear();
+    if( ca.GetExyzGroup() != NULL )
+      ca.GetExyzGroup()->Clear();
   }
   for( size_t i=0; i < SL.Count(); i++ )  {
     olxstr Tmp = olxstr::DeleteSequencesOf<char>(SL[i], true);
@@ -1134,14 +1135,11 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms,
       if( elm == NULL ) // wrong SFAC
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown element symbol");
       TCAtom* atom = NULL;
-      if( (atomCount+1) > CAtoms.Count() )  {
-        if( CAtoms.GetLast()->GetParent() != NULL )
-          atom = &CAtoms.GetLast()->GetParent()->NewAtom(cx.Resi);
-        else
-          throw TInvalidArgumentException(__OlxSourceInfo, "uninitialised data provided");
+      if( (atomCount+1) > rm.aunit.AtomCount() )  {
+        atom = &rm.aunit.NewAtom(cx.Resi);
       }
       else  {
-        atom = CAtoms[index[atomCount]];
+        atom = &rm.aunit.GetAtom(index[atomCount]);
         if( cx.Resi != NULL )  
           cx.Resi->Add(*atom);
       }
@@ -1168,10 +1166,8 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
   size_t resi = InvalidIndex;
   SaveRestraints(SL, &CAtoms, processed, rm, false);
   _SaveFVar(rm, SL);
-  for( size_t i=0; i < CAtoms.Count(); i++ )  {
+  for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetSaved(false);
-    CAtoms[i]->SetTag(i);
-  }
   for( size_t i=0; i < CAtoms.Count(); i++ )  {
     if( CAtoms[i]->IsSaved() )  continue;
     TCAtom& ac = *CAtoms[i];

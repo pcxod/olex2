@@ -1119,19 +1119,30 @@ void TGXApp::SelectFragments(const TNetPList& frags, bool v)  {
 //..............................................................................
 void TGXApp::FragmentVisible(TNetwork *N, bool V)  {
   TXAtomPList XA;
+  SortedPtrList<TGlGroup, TPointerComparator> groups;
 //  OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), dynamic_cast<IEObject*>(N));
   XA.SetCapacity(N->NodeCount());
   for( size_t i=0; i < N->NodeCount(); i++ )
     XA.Add(static_cast<TXAtom&>(N->Node(i)));
-  for( size_t i=0; i < XA.Count(); i++ )
-    XA[i]->SetVisible(V);
+  for( size_t i=0; i < XA.Count(); i++ )  {
+    if( XA[i]->GetParentGroup() != NULL )
+      groups.AddUnique(XA[i]->GetParentGroup());
+    else
+      XA[i]->SetVisible(V);
+  }
 
   TXBondPList XB;
   XB.SetCapacity(N->BondCount());
   for( size_t i=0; i < N->BondCount(); i++ )
     XB.Add(static_cast<TXBond&>(N->Bond(i)));
-  for( size_t i=0; i < XB.Count(); i++ )
-    XB[i]->SetVisible(V);
+  for( size_t i=0; i < XB.Count(); i++ )  {
+    if( XB[i]->GetParentGroup() != NULL )
+      groups.AddUnique(XB[i]->GetParentGroup());
+    else
+      XB[i]->SetVisible(V);
+  }
+  for( size_t i=0; i < groups.Count(); i++ )
+    groups[i]->SetVisible(V);
 //  OnFragmentVisible->Exit(dynamic_cast<TBasicApp*>(this), dynamic_cast<IEObject*>(N));
 }
 //..............................................................................
@@ -1140,7 +1151,7 @@ void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V)  {
   for( size_t i=0; i < Frags.Count(); i++ )
     FragmentVisible(Frags[i], V);
   // synchronise the intermolecular bonds
-  SetHBondsVisible(FHBondsVisible);
+  SetHBondsVisible(FHBondsVisible, false);
   _maskInvisible();
   //  OnFragmentsVisible->Exit(this, dynamic_cast<IEObject*>(Frags));
   Draw();
@@ -2717,6 +2728,7 @@ void TGXApp::RestoreGroup(TGlGroup& glg, const GroupData& gd)  {
     if( xbonds[i] != NULL && xbonds[i]->IsVisible() )
       glg.Add(*xbonds[i], false);
   }
+  glg.SetVisible(gd.visible);
 }
 //..............................................................................
 void TGXApp::StoreGroup(const TGlGroup& glG, GroupData& gd)  {
@@ -2793,6 +2805,7 @@ void TGXApp::RestoreGroups()  {
   if( !SelectionCopy[0].IsEmpty() )
     RestoreGroup(GetSelection(), SelectionCopy[0]);
   GroupDict.Clear();
+  FGlRender->ClearGroups();
   for( size_t i=0; i < GroupDefs.Count(); i++ )
     FGlRender->NewGroup(GroupDefs[i].collectionName).Create(GroupDefs[i].collectionName);
   for( size_t i=0; i < GroupDefs.Count(); i++ )  {
@@ -2861,7 +2874,7 @@ void TGXApp::Compaq(bool All)  {
     FXFile->GetLattice().Compaq();
 }
 //..............................................................................
-void TGXApp::SetHBondsVisible(bool v)  {
+void TGXApp::SetHBondsVisible(bool v, bool update_groups)  {
   FHBondsVisible = v;
   if( !v )  {
     BondIterator bi(*this);
@@ -2878,7 +2891,8 @@ void TGXApp::SetHBondsVisible(bool v)  {
       if( xb.GetType() == sotHBond )
         xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
     }
-    RestoreGroups();
+    if( update_groups )
+      RestoreGroups();
   }
 }
 //..............................................................................
@@ -2916,7 +2930,7 @@ void TGXApp::SetQPeaksVisible(bool v)  {
   }
 }
 //..............................................................................
-void TGXApp::SetQPeakBondsVisible(bool v)  {
+void TGXApp::SetQPeakBondsVisible(bool v, bool update_groups)  {
   FQPeakBondsVisible = v;
   if( !v )  {
     BondIterator bi(*this);
@@ -2940,7 +2954,8 @@ void TGXApp::SetQPeakBondsVisible(bool v)  {
       if( xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ )
         xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
     }
-    RestoreGroups();
+    if( update_groups )
+      RestoreGroups();
   }
 }
 //..............................................................................
@@ -4227,7 +4242,6 @@ void TGXApp::GroupSelection(const olxstr& name)  {
   if( glg != NULL )  {
     StoreGroup(*glg, GroupDefs.AddNew());
     _UpdateGroupIds();
-    GroupDict(glg, GroupDefs.Count()-1);
     Draw();
   }
 }
@@ -4252,10 +4266,8 @@ void TGXApp::UnGroupSelection()  {
 //..............................................................................
 void TGXApp::UnGroup(TGlGroup& G)  {
   size_t i = GroupDict.IndexOf(&G);
-  if( i != InvalidIndex )  {
+  if( i != InvalidIndex )
     GroupDefs.Delete(GroupDict.GetValue(i));
-    GroupDict.Delete(i);
-  }
   GetRender().UnGroup(G);
   _UpdateGroupIds();
   Draw();
@@ -4264,9 +4276,11 @@ void TGXApp::UnGroup(TGlGroup& G)  {
 void TGXApp::_UpdateGroupIds()  {
   FGlRender->GetGroups().ForEach(ACollectionItem::IndexTagSetter<>());
   FGlRender->GetSelection().SetTag(-1);
+  GroupDict.Clear();
   for( size_t i=0; i < GroupDefs.Count(); i++ )  {
     TGlGroup* p = FGlRender->GetGroup(i).GetParentGroup();
-    GroupDefs[i].parent_id = (p == NULL ? -2 : p->GetTag()) ;
+    GroupDefs[i].parent_id = (p == NULL ? -2 : p->GetTag());
+    GroupDict(&FGlRender->GetGroup(i), i);
   }
 }
 //..............................................................................
