@@ -496,11 +496,11 @@ public:
   void Compaq(bool AtomicLevel);
   void SetHydrogensVisible(bool v);
   bool AreHydrogensVisible()  {  return FHydrogensVisible;  }
-  void SetHBondsVisible(bool v);
+  void SetHBondsVisible(bool v, bool update_groups=true);
   bool AreHBondsVisible()  {  return FHBondsVisible;  }
   void SetQPeaksVisible(bool v);
   bool AreQPeaksVisible()  {  return FQPeaksVisible;  }
-  void SetQPeakBondsVisible(bool v);
+  void SetQPeakBondsVisible(bool v, bool update_groups=true);
   bool AreQPeakBondsVisible()  {  return FQPeakBondsVisible;  }
   bool IsDisplayFrozen() const {  return DisplayFrozen;  }
   void SetDisplayFrozen(bool v)  {
