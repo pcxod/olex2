@@ -4381,10 +4381,14 @@ void TGXApp::CreateRings(bool force, bool create)  {
   FindRings("C6", rings);
   FindRings("NC5", rings);
   for( size_t i=0; i < rings.Count(); i++ )  {
+    vec3d normal, center;
+    if( TSPlane::CalcPlane(rings[i], normal, center) > 0.05 ||
+      !TNetwork::IsRingRegular(rings[i]) )
+    {
+      continue;
+    }
     TDRing &r = *(new TDRing(GetRender(), olxstr("DRing_") << i));
     Rings.Add(r);
-    vec3d normal, center;
-    TSPlane::CalcPlane(rings[i], normal, center);
     r.Basis.OrientNormal(normal);
     r.Basis.SetCenter(center);
     double min_d = 100;

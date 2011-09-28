@@ -9927,18 +9927,13 @@ void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
     else
       Cmds.DeleteRange(0, 2);
     TXAtomPList atoms = FindXAtoms(Cmds, false, true);
-    if( n != InvalidSize )  {
+    if( n != InvalidSize && atoms.Count() > n*3)  {
       if( (atoms.Count()%n) != 0 )  {
         E.ProcessingError(__OlxSrcInfo,
           "number of atoms do not match the number given of groups");
         return;
       }
       const size_t ag = atoms.Count()/n;
-      if( ag < 3 )  {
-        E.ProcessingError(__OlxSrcInfo,
-          "at least 3 atoms per group are expected");
-        return;
-      }
       TTypeList<TCAtomPList> groups(n);
       for( size_t i=0, ac=0; i < n; i++ )  {
         TCAtomPList &al = groups.Set(i, new TCAtomPList(ag));
