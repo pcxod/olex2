@@ -9040,12 +9040,21 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
       pairs.AddList(atoms);
   }
   if( !pairs.IsEmpty()  )  {
+    const smatd &fm = FXApp->XFile().GetUnitCell().GetMatrix(0);
     for( size_t i=0; i < pairs.Count(); i+=2 )  {
-      FXApp->XFile().GetRM().Conn.RemBond(
-        pairs[i]->CAtom(), pairs[i+1]->CAtom(),
-        &FXApp->XFile().GetRM().AddUsedSymm(pairs[i]->GetMatrix(0)),
-        &FXApp->XFile().GetRM().AddUsedSymm(pairs[i+1]->GetMatrix(0)), 
-        true);
+      TCAtom &a1 = pairs[i]->CAtom(),
+        &a2 = pairs[i+1]->CAtom();
+      for( size_t fasi=0; fasi <= a1.EquivCount(); fasi++ )  {
+        const smatd &m1 = (fasi == a1.EquivCount() ? fm : a1.GetEquiv(fasi));
+        for( size_t sasi=0; sasi <= a2.EquivCount(); sasi++ )  {
+          const smatd &m2 = (sasi == a2.EquivCount() ? fm : a2.GetEquiv(sasi));
+          FXApp->XFile().GetRM().Conn.RemBond(
+            a1, a2,
+            &FXApp->XFile().GetRM().AddUsedSymm(m1),
+            &FXApp->XFile().GetRM().AddUsedSymm(m2),
+            true);
+        }
+      }
     }
     FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetLattice().UpdateConnectivityInfo();
