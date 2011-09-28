@@ -1703,15 +1703,15 @@ void TGXApp::CheckQBonds(TXAtom& XA)  {
 //..............................................................................
 TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, bool CheckLabels)  {
   TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
-  olxstr oldL, newL;
   for( size_t i=0; i < xatoms.Count(); i++ )  {
-    oldL = xatoms[i]->GetLabel();
-    newL = xatoms[i]->GetType().symbol;
-    for( size_t j=xatoms[i]->GetType().symbol.Length(); j < oldL.Length(); j++ )
-      if( oldL[j] >= '0' && oldL[j] <= '9' )
+    const olxstr oldL = xatoms[i]->GetLabel();
+    olxstr newL = xatoms[i]->GetType().symbol;
+    for( size_t j=newL.Length(); j < oldL.Length(); j++ )  {
+      if( olxstr::o_isdigit(oldL.CharAt(j)) )
         newL << oldL[j];
       else
         break;
+    }
     newL << To;
     if( newL == oldL )  continue;
 
