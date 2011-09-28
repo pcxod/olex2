@@ -35,13 +35,7 @@ public:
     CurrentColor = 0;
     CurrentLineWidth = 1;
     out.Open(fileName, "w+b");
-    out.Writeln("%!PS-Adobe-2.0");
-    out.Writeln("%%Title: Olex2 2D diagram");
-    out.Writeln("%%Pages: 1");
-    out.Writeln("%%Page: 1 1");
-    out.Writeln(olxcstr("%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()));
-    out.Writeln("%%Orientation: Portrait");
-    out.Writeln("%%DocumentPaperSizes: A4");
+    out.Writeln("%!PS-Adobe-2.0 EPSF-1.2");
     if( write_bounding_box )  {
       bounding_box_pos = out.GetPosition();
       olxcstr bb("%%BoundingBox: ");
@@ -49,6 +43,12 @@ public:
       bb << olxcstr::CharStr(' ', 4*12);
       out.Writeln(bb);
     }
+    out.Writeln("%%Title: Olex2 2D diagram");
+    out.Writeln("%%Pages: 1");
+    out.Writeln("%%Page: 1 1");
+    out.Writeln(olxcstr("%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()));
+    out.Writeln("%%Orientation: Portrait");
+    out.Writeln("%%DocumentPaperSizes: A4");
     out.Writeln("%%EndComments");
   }
   //..........................................................................
@@ -341,7 +341,11 @@ public:
         "bounding box space must be reserved");
     }
     out.SetPosition(bounding_box_pos);
-    psw_sprintf(bf, "%3.3f %3.3f %3.3f %3.3f", b[0], b[1], b[2], b[3]);
+    psw_sprintf(bf, "%d %d %d %d",
+      olx_round(b[0]),
+      olx_round(b[1]),
+      olx_round(b[2]),
+      olx_round(b[3]));
     out.Writeln(bf);
   }
 };
