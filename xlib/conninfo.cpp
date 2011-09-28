@@ -364,23 +364,14 @@ size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1
           return i;
       }
     }
-    return InvalidIndex;
   }
   else if( eqiv == NULL )  {
     for( size_t i=0; i < list.Count(); i++ )  {
       if( list[i].to == a1 )
         return i;
     }
-    return InvalidIndex;
   }
-  else  {
-    smatd mat = eqiv->Inverse();
-    for( size_t i=0; i < list.Count(); i++ )  {
-      if( list[i].to == a1 && list[i].matr != NULL && *list[i].matr == mat )  
-        return i;
-    }
-    return InvalidIndex;
-  }
+  return InvalidIndex;
 }
 //........................................................................
 const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, bool release) const {
