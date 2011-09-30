@@ -35,7 +35,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rAngle(*this, rltGroup3, "olex2.restraint.angle"),
   rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral"),
   rFixedUeq(*this, rltAtoms, "olex2.restraint.u_eq"),
-  rSimilarUeq(*this, rltAtoms, "olex2.restraint.u_eq.similar"),
+  rSimilarUeq(*this, rltAtoms, "olex2.restraint.u_eq_similar"),
   ExyzGroups(*this), 
   AfixGroups(*this), 
   rSAME(*this),
@@ -1301,7 +1301,7 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
   else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
     r.SetEsd(0.04);
   }
-  else if( container.GetIdName().Equals("olex2.restraint.u_eq") )  {
+  else if( container.GetIdName().StartsFromi("olex2.restraint.u_eq") )  {
     r.SetEsd(0.1);
   }
   return r;
@@ -1340,7 +1340,7 @@ bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {
   else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
     return r.GetEsd() == 0.04;
   }
-  else if( container.GetIdName().Equals("olex2.restraint.u_eq") )  {
+  else if( container.GetIdName().StartsFromi("olex2.restraint.u_eq") )  {
     return r.GetEsd() == 0.1;
   }
   return false;
