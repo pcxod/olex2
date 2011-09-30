@@ -1511,14 +1511,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   restraints.Add("ISOR", ResInfo(&rm.rISOR, RCInfo(0, 2, -1)));
   // equivalent EADP constraint
   restraints.Add("EADP", ResInfo(&rm.rEADP, RCInfo(0, 0, 2, false)));
-  restraints.Add(olxstr("REM ") << rm.rAngle.GetIdName(),
-    ResInfo(&rm.rAngle, RCInfo(1, 1, -1, true)));
-  restraints.Add(olxstr("REM ") << rm.rDihedralAngle.GetIdName(),
-    ResInfo(&rm.rDihedralAngle, RCInfo(1, 1, -1, true)));
-  restraints.Add(olxstr("REM ") << rm.rFixedUeq.GetIdName(),
-    ResInfo(&rm.rFixedUeq, RCInfo(1, 1, -1, true)));
-  restraints.Add(olxstr("REM ") << rm.rSimilarUeq.GetIdName(),
-    ResInfo(&rm.rSimilarUeq, RCInfo(0, 1, -1, false)));
 
   if( rm.IsDEFSSet() )
     SL.Add("DEFS ") << rm.GetDEFSStr();
@@ -1756,8 +1748,7 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   double Esd1Mult = 0, DefVal = 0, esd=0, esd1=0;
   double *Vals[] = {&DefVal, &esd, &esd1};
   bool use_var_manager = true, check_resi = true;
-  if( toks[0].Equalsi("REM") && toks.Count() > 1 && toks[1].StartsFromi("olex2.") )  {
-    toks.Delete(0);
+  if( toks[0].StartsFromi("olex2.") )  {
     check_resi = use_var_manager = false;
   }
   // extract residue
