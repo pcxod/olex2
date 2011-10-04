@@ -34,8 +34,9 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rEADP(*this, rltAtoms, "EADP"),
   rAngle(*this, rltGroup3, "olex2.restraint.angle"),
   rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral"),
-  rFixedUeq(*this, rltAtoms, "olex2.restraint.u_eq"),
-  rSimilarUeq(*this, rltAtoms, "olex2.restraint.u_eq_similar"),
+  rFixedUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq"),
+  rSimilarUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq_similar"),
+  rSimilarAdpVolume(*this, rltAtoms, "olex2.restraint.adp_volume_similar"),
   ExyzGroups(*this), 
   AfixGroups(*this), 
   rSAME(*this),
@@ -58,7 +59,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rcList.Add(&SameGroups);
   rcList1 << rDFIX <<rDANG << rSADI << rCHIV << rFLAT << rDELU
     << rSIMU << rISOR  << rEADP <<
-    rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq;
+    rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq << rSimilarAdpVolume;
   //RefContainers(aunit.GetIdName(), &aunit);
   RefContainers(GetIdName(), this);
   au.SetRefMod(this);
@@ -1301,7 +1302,7 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
   else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
     r.SetEsd(0.04);
   }
-  else if( container.GetIdName().StartsFromi("olex2.restraint.u_eq") )  {
+  else if( container.GetIdName().StartsFromi("olex2.restraint.adp") )  {
     r.SetEsd(0.1);
   }
   return r;
@@ -1340,7 +1341,7 @@ bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {
   else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
     return r.GetEsd() == 0.04;
   }
-  else if( container.GetIdName().StartsFromi("olex2.restraint.u_eq") )  {
+  else if( container.GetIdName().StartsFromi("olex2.restraint.adp") )  {
     return r.GetEsd() == 0.1;
   }
   return false;
@@ -1356,6 +1357,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   restraints.AddNew(&rDihedralAngle, TIns::RCInfo(1, 1, -1, true));
   restraints.AddNew(&rFixedUeq, TIns::RCInfo(1, 1, -1, true));
   restraints.AddNew(&rSimilarUeq, TIns::RCInfo(0, 1, -1, false));
+  restraints.AddNew(&rSimilarAdpVolume, TIns::RCInfo(0, 1, -1, false));
   TStrList rl;
   for( size_t i=0; i < restraints.Count(); i++ )  {
     for( size_t j=0; j < restraints[i].GetA()->Count(); j++ )  {

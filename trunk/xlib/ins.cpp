@@ -1834,6 +1834,11 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
     RequiredParams = 0;  AcceptsParams = 1;
     Vals[0] = &esd;
   }
+  else if( ins_name.Equalsi(rm.rSimilarAdpVolume.GetIdName()) )  {
+    srl = &rm.rSimilarAdpVolume;
+    RequiredParams = 0;  AcceptsParams = 1;
+    Vals[0] = &esd;
+  }
   else
     srl = NULL;
   if( srl != NULL )  {

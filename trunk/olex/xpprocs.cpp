@@ -9863,25 +9863,35 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   RefinementModel &rm = FXApp->XFile().GetRM();
-  if( Cmds[0].Equalsi("Ueq") )  {
-    Cmds.Delete(0);
-    double value = -1;
-    if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
-      value = Cmds[0].ToDouble();
-      Cmds.Delete(0);
-    }
+  if( Cmds[0].Equalsi("ADP") && Cmds.Count() > 1 )  {
+    olxstr target = Cmds[1];
+    Cmds.DeleteRange(0, 2);
     TXAtomPList atoms = FindXAtoms(Cmds, false, true);
-    if( atoms.Count() < 2 && value < 0 )  {
-      E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
-      return;
-    }
+    double value = -1;
     TSimpleRestraint *r = NULL;
-    if( value > 0 )  {
-      r = &rm.rFixedUeq.AddNew();
-      r->SetValue(value);
+    if( target.Equalsi("Ueq") )  {
+      if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
+        value = Cmds[0].ToDouble();
+        Cmds.Delete(0);
+      }
+      if( atoms.Count() < 2 && value < 0 )  {
+        E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
+        return;
+      }
+      if( value > 0 )  {
+        r = &rm.rFixedUeq.AddNew();
+        r->SetValue(value);
+      }
+      else
+        r = &rm.rSimilarUeq.AddNew();
     }
-    else
-      r = &rm.rSimilarUeq.AddNew();
+    else if( target.Equalsi("volume") )  {
+      if( atoms.Count() < 2 )  {
+        E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
+        return;
+      }
+      r = &rm.rSimilarAdpVolume.AddNew();
+    }
     for( size_t i=0; i < atoms.Count(); i++ )
       r->AddAtom(atoms[i]->CAtom(), NULL);
   }
