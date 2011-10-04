@@ -1528,12 +1528,14 @@ void TMainForm::AquireTooltipValue()  {
         Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
 #ifdef _DEBUG
       Tooltip << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
-      if( xa.GetEllipsoid() == NULL )
-        Tooltip << "\nV: " << olx_sqr(xa.CAtom().GetUiso())*xa.CAtom().GetUiso()*4*M_PI/3;
+      if( xa.GetEllipsoid() == NULL )  {
+        Tooltip << "\nV: " << olxstr::FormatFloat(3,
+          pow(xa.CAtom().GetUiso(), 3)*4*M_PI/3, true);
+      }
       else {
-        Tooltip << "\nV: " << xa.GetEllipsoid()->GetSX()*
-          xa.GetEllipsoid()->GetSY()*
-          xa.GetEllipsoid()->GetSZ()*4*M_PI/3;
+        Tooltip << "\nV: " << olxstr::FormatFloat(3,
+          xa.GetEllipsoid()->GetValue(0)*xa.GetEllipsoid()->GetValue(1)*
+          xa.GetEllipsoid()->GetValue(2)*4*M_PI/3, true);
       }
 #endif
     }

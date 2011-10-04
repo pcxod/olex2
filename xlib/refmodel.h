@@ -168,7 +168,8 @@ public:
                   rAngle,
                   rDihedralAngle,
                   rFixedUeq,
-                  rSimilarUeq;
+                  rSimilarUeq,
+                  rSimilarAdpVolume;
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
   ConstraintContainer<same_group_constraint> SameGroups;
   ConstraintContainer<adirection> Directions;
