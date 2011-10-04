@@ -92,7 +92,7 @@ ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
     }
     for( size_t i=0; i < rvl.Count(); i++ )  {
       rvl[i].volume = TUnitCell::CalcVolume(rvl[i].cell);
-      rvl[i].niggle_volume = TUnitCell::CalcVolume(
+      rvl[i].niggli_volume = TUnitCell::CalcVolume(
         Niggli::reduce_const(rvl[i].lattice, rvl[i].cell));
     }
   }
@@ -330,14 +330,14 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell,
     all, CellInfo::ReducedVolumeComparator(), to_search);
   // go right
   for( size_t j=ni+1; j < all.Count(); j++ )  {
-    if( olx_abs(all[j].niggle_volume-cell.niggle_volume) > diff )
+    if( olx_abs(all[j].niggli_volume-cell.niggli_volume) > diff )
       break;
     usage.SetTrue(j);
     res.AddCCopy(all[j]);
   }
   // go left
   for( size_t j=ni; j != InvalidIndex; j-- )  {
-    if( olx_abs(all[j].niggle_volume-cell.niggle_volume) > diff )
+    if( olx_abs(all[j].niggli_volume-cell.niggli_volume) > diff )
       break;
     usage.SetTrue(j);
     res.AddCCopy(all[j]);
@@ -399,9 +399,9 @@ void Index::PrintResults(const TTypeList<ResultEntry> &res)  {
     evecd rc = Niggli::reduce_const(res[i].lattice, res[i].cell);
     if( rc.QDistanceTo(res[i].cell) < 1e-6 )  continue;
     TStrList& row2 = tab.AddRow();
-    row2[0] = "  Niggle cell";
+    row2[0] = "  Niggli cell";
     row2[1] << rc.ToString();
-    row2[2] << olxstr::FormatFloat(2, res[i].niggle_volume) << "A^3";
+    row2[2] << olxstr::FormatFloat(2, res[i].niggli_volume) << "A^3";
   }
   TBasicApp::GetLog() << tab.CreateTXTList("Search results", true, false, ' ');
 }
@@ -420,7 +420,7 @@ ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
     cell.lattice = olx_abs(au.GetLatt());
     cell.volume = TUnitCell::CalcVolume(cell.cell);
     const evecd reduced = Niggli::reduce_const(cell.lattice, cell.cell);
-    cell.niggle_volume = TUnitCell::CalcVolume(reduced);
+    cell.niggli_volume = TUnitCell::CalcVolume(reduced);
   }
   else if( Cmds.Count() == 1 )  {
     TArrayList<CellInfo> r = CellReader::read(Cmds[0]);
@@ -436,7 +436,7 @@ ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
     cell.cell[5] = Cmds[5].ToDouble();
     cell.lattice = TCLattice::LattForSymbol(Cmds[6].CharAt(0));
     cell.volume = TUnitCell::CalcVolume(cell.cell);
-    cell.niggle_volume = TUnitCell::CalcVolume(
+    cell.niggli_volume = TUnitCell::CalcVolume(
       Niggli::reduce_const(cell.lattice, cell.cell));
   }
   TTypeList<Index::ResultEntry> res;
@@ -450,7 +450,7 @@ ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
   TBasicApp::NewLogEntry() << "  Cell volume: "
     << olxstr::FormatFloat(2, cell.volume);
   TBasicApp::NewLogEntry() << "  Reduced cell volume: "
-    << olxstr::FormatFloat(2, cell.niggle_volume);
+    << olxstr::FormatFloat(2, cell.niggli_volume);
   IndexManager im;
   im.LoadConfig(cfg_name);
   for( size_t i=0; i < im.indices.Count(); i++ )  {
