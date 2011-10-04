@@ -1528,6 +1528,13 @@ void TMainForm::AquireTooltipValue()  {
         Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
 #ifdef _DEBUG
       Tooltip << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
+      if( xa.GetEllipsoid() == NULL )
+        Tooltip << "\nV: " << olx_sqr(xa.CAtom().GetUiso())*xa.CAtom().GetUiso()*4*M_PI/3;
+      else {
+        Tooltip << "\nV: " << xa.GetEllipsoid()->GetSX()*
+          xa.GetEllipsoid()->GetSY()*
+          xa.GetEllipsoid()->GetSZ()*4*M_PI/3;
+      }
 #endif
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
