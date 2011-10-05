@@ -9904,6 +9904,7 @@ void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
 {
   RefinementModel &rm = FXApp->XFile().GetRM();
   if( Cmds[0].Equalsi("U") )  { // EADP
+    Cmds.Delete(0);
     TXAtomPList atoms = FindXAtoms(Cmds, false, true);
     if( atoms.Count() < 2 )  {
       E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
@@ -9934,6 +9935,7 @@ void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
       e_sr->AddAtom(atoms[i]->CAtom(), NULL);
   }
   else if( Cmds[0].Equalsi("site") || Cmds[0].Equalsi("xyz"))  { // EXYZ
+    Cmds.Delete(0);
     TXAtomPList atoms = FindXAtoms(Cmds, false, true);
     if( atoms.Count() < 2 )  {
       E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");

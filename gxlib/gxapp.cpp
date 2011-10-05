@@ -1896,68 +1896,71 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
 }
 //..............................................................................
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
+  TTypeList<AnAssociation2<vec3d, TCAtom*> > atoms;
+  bool have_q = false;
   if( XFile().GetLattice().IsGenerated() )  {
     TXAtomPList AtomsList = FindXAtoms(Atoms, false);
-    TTTable<TStrList> Table(AtomsList.Count(), 11);
-    Table.ColName(0) = "Atom";
-    Table.ColName(1) = "Type";
-    Table.ColName(2) = "X";
-    Table.ColName(3) = "Y";
-    Table.ColName(4) = "Z";
-    Table.ColName(5) = "Ueq";
-    Table.ColName(6) = "ChemOccu";
-    Table.ColName(7) = "Peak";
-    Table.ColName(8) = "R-bond";
-    Table.ColName(9) = "R-VdW";
     for(size_t i = 0; i < AtomsList.Count(); i++ )  {
-      const TXAtom& A = *AtomsList[i];
-      Table[i][0] = A.GetGuiLabel();
-      Table[i][1] = A.GetType().symbol;
-      Table[i][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
-      Table[i][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
-      Table[i][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
-      Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
-      Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetChemOccu());
-      if( A.GetType() == iQPeakZ )
-        Table[i][7] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
-      else
-        Table[i][7] = '-';
-      Table[i][8] = A.CAtom().GetConnInfo().r;
-      Table[i][9] = A.CAtom().GetType().r_vdw;
+      atoms.Add(Association::New(AtomsList[i]->ccrd(), &AtomsList[i]->CAtom()));
+      if( AtomsList[i]->GetType() == iQPeakZ )
+        have_q = true;
     }
-    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   }
-  else  {
-    TCAtomPList atoms = FindCAtoms(Atoms, false);
-    TTTable<TStrList> Table(atoms.Count(), 11);
-    Table.ColName(0) = "Atom";
-    Table.ColName(1) = "Type";
-    Table.ColName(2) = "X";
-    Table.ColName(3) = "Y";
-    Table.ColName(4) = "Z";
-    Table.ColName(5) = "Ueq";
-    Table.ColName(6) = "ChemOccu";
-    Table.ColName(7) = "Peak";
-    Table.ColName(8) = "R-bond";
-    Table.ColName(9) = "R-VdW";
-    for(size_t i = 0; i < atoms.Count(); i++ )  {
-      const TCAtom& A = *atoms[i];
-      Table[i][0] = A.GetLabel();
-      Table[i][1] = A.GetType().symbol;
-      Table[i][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
-      Table[i][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
-      Table[i][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
-      Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
-      Table[i][6] = olxstr::FormatFloat(3, A.GetChemOccu());
-      if( A.GetType() == iQPeakZ )
-        Table[i][7] = olxstr::FormatFloat(3, A.GetQPeak());
-      else
-        Table[i][7] = '-';
-      Table[i][8] = A.GetConnInfo().r;
-      Table[i][9] = A.GetType().r_vdw;
+  else {
+    TCAtomPList catoms = FindCAtoms(Atoms, false);
+    for( size_t i=0; i < catoms.Count(); i++ )  {
+      atoms.Add(Association::New(catoms[i]->ccrd(), catoms[i]));
+      if( catoms[i]->GetType() == iQPeakZ )
+        have_q = true;
     }
-    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   }
+
+  TTTable<TStrList> Table(atoms.Count(), have_q ? 12 : 10);
+  Table.ColName(0) = "Atom";
+  Table.ColName(1) = "Type";
+  Table.ColName(2) = "X";
+  Table.ColName(3) = "Y";
+  Table.ColName(4) = "Z";
+  Table.ColName(5) = "Ueq";
+  Table.ColName(6) = "Um";
+  Table.ColName(8) = "Uvol";
+  Table.ColName(8) = "ChemOccu";
+  Table.ColName(9) = "R-bond";
+  Table.ColName(10) = "R-VdW";
+  if( have_q )
+    Table.ColName(11) = "Peak";
+  for(size_t i = 0; i < atoms.Count(); i++ )  {
+    const TCAtom& A = *atoms[i].GetB();
+    Table[i][0] = A.GetLabel();
+    Table[i][1] = A.GetType().symbol;
+    Table[i][2] = olxstr::FormatFloat(-3, atoms[i].GetA()[0]);
+    Table[i][3] = olxstr::FormatFloat(-3, atoms[i].GetA()[1]);
+    Table[i][4] = olxstr::FormatFloat(-3, atoms[i].GetA()[2]);
+    Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
+    if( A.GetEllipsoid() != NULL )  {
+      Table[i][6] << olxstr::FormatFloat(3,
+          pow(A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
+          A.GetEllipsoid()->GetSZ(), 2./3));
+      Table[i][7] << olxstr::FormatFloat(3,
+          A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
+          A.GetEllipsoid()->GetSZ()*4*M_PI/3);
+    }
+    else  {
+      Table[i][6] << '.';
+      Table[i][7] << olxstr::FormatFloat(3,
+          pow(A.GetUiso(), 3./2)*4*M_PI/3);
+    }
+    Table[i][8] = olxstr::FormatFloat(3, A.GetChemOccu());
+    Table[i][9] = A.GetConnInfo().r;
+    Table[i][10] = A.GetType().r_vdw;
+    if( have_q )  {
+      if( A.GetType() == iQPeakZ )
+        Table[i][11] = olxstr::FormatFloat(3, A.GetQPeak());
+      else
+        Table[i][11] = '-';
+    }
+  }
+  Table.CreateTXTList(Info, "Atom information", true, true, ' ');
 }
 //..............................................................................
 TXGlLabel& TGXApp::CreateLabel(const TXAtom& a, uint16_t FontIndex)  {
