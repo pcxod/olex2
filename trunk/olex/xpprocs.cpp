@@ -9866,14 +9866,14 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   if( Cmds[0].Equalsi("ADP") && Cmds.Count() > 1 )  {
     olxstr target = Cmds[1];
     Cmds.DeleteRange(0, 2);
-    TXAtomPList atoms = FindXAtoms(Cmds, false, true);
     double value = -1;
+    if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
+      value = Cmds[0].ToDouble();
+      Cmds.Delete(0);
+    }
+    TXAtomPList atoms = FindXAtoms(Cmds, false, true);
     TSimpleRestraint *r = NULL;
     if( target.Equalsi("Ueq") )  {
-      if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
-        value = Cmds[0].ToDouble();
-        Cmds.Delete(0);
-      }
       if( atoms.Count() < 2 && value < 0 )  {
         E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
         return;
@@ -9892,8 +9892,10 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
       }
       r = &rm.rSimilarAdpVolume.AddNew();
     }
-    for( size_t i=0; i < atoms.Count(); i++ )
-      r->AddAtom(atoms[i]->CAtom(), NULL);
+    if( r != NULL )  {
+      for( size_t i=0; i < atoms.Count(); i++ )
+        r->AddAtom(atoms[i]->CAtom(), NULL);
+    }
   }
 }
 //..............................................................................
