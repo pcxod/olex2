@@ -1530,12 +1530,12 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
       if( xa.GetEllipsoid() == NULL )  {
         Tooltip << "\nV: " << olxstr::FormatFloat(3,
-          pow(xa.CAtom().GetUiso(), 3)*4*M_PI/3, true);
+          pow(xa.CAtom().GetUiso(), 3./2)*4*M_PI/3, true);
       }
       else {
         Tooltip << "\nV: " << olxstr::FormatFloat(3,
-          xa.GetEllipsoid()->GetValue(0)*xa.GetEllipsoid()->GetValue(1)*
-          xa.GetEllipsoid()->GetValue(2)*4*M_PI/3, true);
+          xa.GetEllipsoid()->GetSX()*xa.GetEllipsoid()->GetSY()*
+          xa.GetEllipsoid()->GetSZ()*4*M_PI/3, true);
       }
 #endif
     }
