@@ -553,7 +553,7 @@ public:
       TEValueD(cnt[1], sqrt(vcov[1][1])),
       TEValueD(cnt[2], sqrt(vcov[2][2])));
   }
-  // analytical, http://salilab.org/modeller/manual/node458.html#SECTION001331300000000000000 
+  // analytical, http://salilab.org/modeller/8v0/manual/node248.html 
   TEValue<double> CalcAngleA(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
     TSAtom const * as[] = {&a1,&a2,&a3};
     CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 3));
@@ -584,7 +584,7 @@ public:
     return ch.DoCalc(
       Angle3<pnt_pt,pnt_pt,pnt_pt>(pnt_pt(ch.points[0]), pnt_pt(ch.points[1]), pnt_pt(ch.points[2])));
   }
-  // analytical,http://salilab.org/modeller/manual/node458.html#SECTION001331300000000000000
+  // analytical,http://salilab.org/modeller/8v0/manual/node248.html
   TEValue<double> CalcTAngleA(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
     CalcHelper ch(*this, ConstPlainVector<const TSAtom*>(as, 4));
