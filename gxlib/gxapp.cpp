@@ -1915,7 +1915,7 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
     }
   }
 
-  TTTable<TStrList> Table(atoms.Count(), have_q ? 12 : 10);
+  TTTable<TStrList> Table(atoms.Count(), have_q ? 12 : 11);
   Table.ColName(0) = "Atom";
   Table.ColName(1) = "Type";
   Table.ColName(2) = "X";
@@ -1923,7 +1923,7 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
   Table.ColName(4) = "Z";
   Table.ColName(5) = "Ueq";
   Table.ColName(6) = "Um";
-  Table.ColName(8) = "Uvol";
+  Table.ColName(7) = "Uvol";
   Table.ColName(8) = "ChemOccu";
   Table.ColName(9) = "R-bond";
   Table.ColName(10) = "R-VdW";
