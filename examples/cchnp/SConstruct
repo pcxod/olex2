@@ -56,7 +56,7 @@ elif env['TOOL'] == 'gnu':
 elif env['TOOL'] == 'intel':
   Tool('intelc')(env)
 env.Append(CCFLAGS = ['-D_UNICODE', '-DUNICODE', '-D_NO_PYTHON'])
-env.Append(CPPPATH = ['../alglib', '../sdl', '../repository', '../xlib'])
+env.Append(CPPPATH = ['../../sdl', '../../repository', '../../xlib'])
 out_dir = 'build/scons/' 
 if sys.platform[:3] == 'win':
   out_dir += 'msvc-' + env['MSVS_VERSION'] + '/'
@@ -107,17 +107,17 @@ except:
   print 'Unfortunately could not update the revision information'
 ################################################################################################
 #get file lists
-alglib = Glob('../alglib/*.cpp')
-sdl = Glob('../sdl/*.cpp')
-sdl_exp = Glob('../sdl/exparse/*.cpp')
-sdl_smart = Glob('../sdl/smart/*.cpp')
-xlib = Glob('../xlib/*.cpp')
-xlib_henke = Glob('../xlib/henke/*.cpp')
-xlib_macro = Glob('../xlib/macro/*.cpp')
+sdl = Glob('../../sdl/*.cpp')
+sdl_exp = Glob('../../sdl/exparse/*.cpp')
+sdl_smart = Glob('../../sdl/smart/*.cpp')
+xlib = Glob('../../xlib/*.cpp')
+xlib_henke = Glob('../../xlib/henke/*.cpp')
+xlib_absorpc = Glob('../../xlib/absorpc/*.cpp')
+xlib_macro = Glob('../../xlib/macro/*.cpp')
 chn = Glob('./*.cpp')
-np_repository = Split("""../repository/shellutil.cpp   ../repository/url.cpp
-                         ../repository/fsext.cpp       ../repository/eprocess.cpp
-                         ../repository/olxvar.cpp
+np_repository = Split("""../../repository/shellutil.cpp   ../../repository/url.cpp
+                         ../../repository/fsext.cpp       ../../repository/eprocess.cpp
+                         ../../repository/olxvar.cpp
                          """)
 
 #function to process file name list
@@ -178,18 +178,19 @@ else:
     Exit(1)
     
 #sdl
-sdl_files = fileListToStringList('../sdl', sdl) + fileListToStringList('../sdl/smart', sdl_smart) +\
-  fileListToStringList('../sdl/exparse', sdl_exp)
+sdl_files = fileListToStringList('../../sdl', sdl) +\
+  fileListToStringList('../../sdl/smart', sdl_smart) +\
+  fileListToStringList('../../sdl/exparse', sdl_exp)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
 env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
 
 env.Append(LIBPATH=[out_dir+'lib'])
 env.Append(LIBS = ['sdl'])
 
-generic_files = fileListToStringList('../alglib', alglib) + \
-                fileListToStringList('../xlib', xlib) + \
-                fileListToStringList('../xlib/macro', xlib_macro) + \
-                fileListToStringList('../xlib/henke', xlib_henke)
+generic_files = fileListToStringList('../../xlib', xlib) + \
+                fileListToStringList('../../xlib/macro', xlib_macro) + \
+                fileListToStringList('../../xlib/absorpc', xlib_absorpc) + \
+                fileListToStringList('../../xlib/henke', xlib_henke)
 generic_files = processFileNameList(generic_files, env, out_dir+'generic')
 
 chn_env = env.Clone()
