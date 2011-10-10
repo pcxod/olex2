@@ -90,6 +90,10 @@
 #include "olxth.h"
 #include "lcells.h"
 
+#ifdef _CUSTOM_BUILD_
+  #include "custom_base.h"
+#endif
+
 #ifdef __GNUC__
   #undef Bool
 #endif
@@ -999,7 +1003,9 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   Library.AttachLibrary(XA->GetFader().ExportLibrary());
   Library.AttachLibrary(XA->XGrid().ExportLibrary());
   Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
-
+#ifdef _CUSTOM_BUILD_
+  CustomCodeBase::Initialise(Library);
+#endif
   // menu initialisation
   MenuBar = new wxMenuBar;
 

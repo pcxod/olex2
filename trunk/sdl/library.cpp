@@ -30,7 +30,7 @@ TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner )  {
     throw TDuplicateEntry(__OlxSourceInfo, name, "library" );
   TLibrary* lib = new TLibrary(name, owner);
   Libraries.Add(name, lib);
-  lib->SetParentLibrary( this );
+  lib->SetParentLibrary(this);
   if( owner == NULL )
     lib->LibraryOwner = this->LibraryOwner;
   return lib;
@@ -51,6 +51,7 @@ void TLibrary::RegisterStaticMacro( TStaticMacro* func, bool replace )  {
     unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
     if( (func->GetArgStateMask() & argc) != 0 )  {
       if( replace )  {
+        delete Macros.GetObject(list[i]);
         Macros.Delete(list[i]);
         break;
       }
@@ -68,13 +69,14 @@ void TLibrary::RegisterStaticFunction( TStaticFunction* func, bool replace )  {
     unsigned int argc = Functions.GetObject(list[i])->GetArgStateMask();
     if( (func->GetArgStateMask() & argc) != 0 )  {
       if( replace )  {
+        delete Functions.GetObject(list[i]);
         Functions.Delete(list[i]);
         break;
       }
       throw TDuplicateEntry(__OlxSourceInfo, olxstr("function (same number of args)") << func->GetName(), "static function");
     }
   }
-  func->SetParentLibrary( *this );
+  func->SetParentLibrary(*this);
   Functions.Add(func->GetName(), func);
 }
 //..............................................................................

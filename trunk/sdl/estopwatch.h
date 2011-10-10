@@ -21,8 +21,8 @@ public:
   TStopWatch(const olxstr& functionName) : FunctionName(functionName) {
     steps.AddNew( TETime::msNow(), EmptyString(), 0);
   }
-  void start(const olxstr& name)  {
-    steps.AddNew(TETime::msNow(), name, 0);
+  olxstr &start(const olxstr& name)  {
+    return steps.AddNew(TETime::msNow(), name, 0).B();
   }
   void stop()  {
     steps.GetLast().C() = TETime::msNow();

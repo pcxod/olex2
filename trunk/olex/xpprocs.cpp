@@ -150,6 +150,10 @@
 #include "dsphere.h"
 //#include "gl2ps/gl2ps.c"
 
+#ifdef _CUSTOM_BUILD_
+  #include "custom_base.h"
+#endif
+
 static const olxstr StartMatchCBName("startmatch");
 static const olxstr OnMatchCBName("onmatch");
 static const olxstr OnModeChangeCBName("modechange");
@@ -4989,7 +4993,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //      FXApp->Draw();  // to update the scene just in case...
-    FGlConsole->SetCommand( FGlConsole->GetCommand() );  // force th eupdate
+    FGlConsole->SetCommand(FGlConsole->GetCommand());  // force th eupdate
     return;
   }
   else  {
@@ -5352,7 +5356,7 @@ void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E) {
   }
   if( cc >= FGlConsole->GetCommandCount() )
     cc = 0;
-  E.SetRetVal( FGlConsole->GetCommandByIndex(cc) );
+  E.SetRetVal(FGlConsole->GetCommandByIndex(cc));
 }
 //..............................................................................
 void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -6281,6 +6285,9 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
       rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
 #endif
       rv << " on " << TBasicApp::GetPlatformString();
+#ifdef _CUSTOM_BUILD_
+      rv << " for " << CustomCodeBase::GetName();
+#endif
       E.SetRetVal(rv);
     }
     else  {
