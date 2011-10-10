@@ -148,7 +148,6 @@ xlib = Glob('./xlib/*.cpp')
 xlib_henke = Glob('./xlib/henke/*.cpp')
 xlib_macro = Glob('./xlib/macro/*.cpp')
 xlib_absorpc = Glob('./xlib/absorpc/*.cpp')
-xlib_analysis = Glob('./xlib/analysis/*.cpp')
 glib = Glob('./glib/*.cpp')
 gxlib = Glob('./gxlib/*.cpp')
 olex2 = Glob('./olex/*.cpp')
@@ -302,8 +301,7 @@ env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
 generic_files_list = fileListToStringList('xlib', xlib) + \
                 fileListToStringList('xlib/macro', xlib_macro) + \
                 fileListToStringList('xlib/henke', xlib_henke) + \
-                fileListToStringList('xlib/absorpc', xlib_absorpc) + \
-                fileListToStringList('xlib/analysis', xlib_analysis)
+                fileListToStringList('xlib/absorpc', xlib_absorpc)
 generic_files = processFileNameList(generic_files_list, env, out_dir+'generic')
 
 if sys.platform[:3] == 'win':
