@@ -1423,6 +1423,7 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
   if( constraints != NULL )  {
     for( size_t i=0; i < constraints->ItemCount(); i++ )  {
       TStrList toks(constraints->GetItem(i).GetValue(), ' ');
+      if( toks.IsEmpty() )  continue;
       IConstraintContainer *cc = rcRegister.Find(toks[0], NULL);
       if( cc != NULL )  {
         cc->FromToks(toks.SubListFrom(1), *this);
@@ -1627,7 +1628,7 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
       "ShareADP", EmptyString(),
       fpAny,
 "Creates a rotated ADP constraint for given atoms. Currently works only for "
-"T-X3 groups (X-CMe3, X-CF3 etc) and for rings"
+"T-Xn groups (X-CMe3, X-CF3 etc) and for rings"
 ));
   return lib;
 }
