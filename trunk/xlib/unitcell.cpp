@@ -310,19 +310,21 @@ void TUnitCell::FindSymmEq() const  {
           ACA[i]->AttachSite(ACA[j], Matrices[0]);
           ACA[j]->AttachSite(ACA[i], Matrices[0]);
         }
-
       }
     }
   }
   else  {
     TSearchSymmEqTask searchTask(ACA, Matrices);
-    TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(), tQuadraticTask, 1000);
+    TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(),
+      tQuadraticTask, 1000);
     for( size_t i=0; i < ACA.Count(); i++ )
       ACA[i]->UpdateAttachedSites();
   }
 }
 //..............................................................................
-smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal, double* dist) const  {
+smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
+  bool ConsiderOriginal, double* dist) const
+{
   const smatd* minMatr = NULL;
   vec3i mint;
   double minD=10000;

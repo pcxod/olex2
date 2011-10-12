@@ -129,8 +129,10 @@ public:
     }
     EmptyFile = SameFile = false;
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
-      olxstr s1( TEFile::UnixPath(TEFile::ChangeFileExt(*(olxstr*)Data, EmptyString())) );
-      olxstr s2( TEFile::UnixPath(TEFile::ChangeFileExt(FParent->XFile().GetFileName(), EmptyString())) );
+      olxstr s1 = TEFile::UnixPath(TEFile::ChangeFileExt(
+        *(olxstr*)Data, EmptyString()));
+      olxstr s2 = TEFile::UnixPath(TEFile::ChangeFileExt(
+        FParent->XFile().GetFileName(), EmptyString()));
       if( s1 != s2 )  {
         FParent->ClearIndividualCollections();
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
@@ -188,8 +190,10 @@ public:
         break;
       }
     }
-    FParent->XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FParent->AreQPeaksVisible());
-    FParent->XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FParent->AreHydrogensVisible());
+    FParent->XFile().GetAsymmUnit().DetachAtomType(iQPeakZ,
+      !FParent->AreQPeaksVisible());
+    FParent->XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ,
+      !FParent->AreHydrogensVisible());
     if( sameAU )  {  // apply masks
       ac = 0;
       for( size_t i=0; i < au.AtomCount(); i++ )  {
