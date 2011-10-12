@@ -31,16 +31,8 @@ TNetwork::TNetwork(TLattice* P, TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBo
   SetTag(-1);
 }
 //..............................................................................
-// sorts atoms according to the distcance from {0,0,0}
-int AtomsSortByDistance(const TSAtom* A, const TSAtom* A1)  {
-  const double d = A->crd().QLength() - A1->crd().QLength();
-  if( d < 0 )  return -1;
-  if( d > 0 )  return 1;
-  return 0;
-}
-//..............................................................................
 void TNetwork::SortNodes()  {
-  Nodes.QuickSorter.SortSF(Nodes, AtomsSortByDistance);
+  Nodes.QuickSorter.Sort(Nodes, TSAtom::SortByDistance());
 }
 //..............................................................................
 void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Frags)  {

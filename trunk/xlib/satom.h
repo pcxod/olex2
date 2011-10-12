@@ -234,6 +234,14 @@ public:
       return Accessor::Access(o).GetType() == ref_type;
     }
   };
+
+  // sorts atoms according to the distcance from {0,0,0}
+  struct SortByDistance {
+    static int Compare(const TSAtom *A, const TSAtom *A1)  {
+      return olx_cmp(A->crd().QLength(), A1->crd().QLength());
+    }
+  };
+
 };
 
 typedef TTypeList<TSAtom> TSAtomList;
