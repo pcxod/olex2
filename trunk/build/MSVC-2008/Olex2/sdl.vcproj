@@ -299,7 +299,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug|Win32"
-			OutputDirectory="$(SolutionDir)\lib_ud"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
