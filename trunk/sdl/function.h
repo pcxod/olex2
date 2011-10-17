@@ -43,43 +43,44 @@ BeginEsdlNamespace()
    in bytes [4..7]. For example some functions can be executed only if a file
    is loaded...
 */
-const unsigned int   fpNone  = 0x00000001,
-                     fpOne   = 0x00000002,
-                     fpTwo   = 0x00000004,
-                     fpThree = 0x00000008,
-                     fpFour  = 0x00000010,
-                     fpFive  = 0x00000020,
-                     fpSix   = 0x00000040,
-                     fpSeven = 0x00000080,
-                     fpEight = 0x00000100,
-                     fpNine  = 0x00000200,
-                     fpTen   = 0x00000400,
-                     fpAny   = 0x0000ffff,
+const uint32_t
+  fpNone  = 0x00000001,
+  fpOne   = 0x00000002,
+  fpTwo   = 0x00000004,
+  fpThree = 0x00000008,
+  fpFour  = 0x00000010,
+  fpFive  = 0x00000020,
+  fpSix   = 0x00000040,
+  fpSeven = 0x00000080,
+  fpEight = 0x00000100,
+  fpNine  = 0x00000200,
+  fpTen   = 0x00000400,
+  fpAny   = 0x0000ffff,
 
-                     fpSpecialCheckA = 0x00010000,
-                     fpSpecialCheckB = 0x00020000,
-                     fpSpecialCheckC = 0x00040000,
-                     fpSpecialCheckD = 0x00080000,
-                     fpSpecialCheckE = 0x00080000,
-                     fpSpecialCheckF = 0x00080000
-                     // .... 1 << n
-                     ;
+  fpSpecialCheckA = 0x00010000,
+  fpSpecialCheckB = 0x00020000,
+  fpSpecialCheckC = 0x00040000,
+  fpSpecialCheckD = 0x00080000,
+  fpSpecialCheckE = 0x00080000,
+  fpSpecialCheckF = 0x00080000
+  // .... 1 << n
+  ;
 
 class ALibraryContainer: public IEObject  {
 private:
   struct TProgramStateDescriptor {
-    unsigned int StateBit;
+    uint32_t StateBit;
     olxstr StateDescription;
   };
   TPtrList<TProgramStateDescriptor> ProgramStates;
-  TProgramStateDescriptor* FindState(unsigned int stateBit)  {
+  TProgramStateDescriptor* FindState(uint32_t stateBit)  {
     for( size_t i=0; i < ProgramStates.Count(); i++ )
       if( ProgramStates[i]->StateBit == stateBit )
         return ProgramStates[i];
     return NULL;
   }
 protected:
-  void DefineState( unsigned int specialCheck, const olxstr& description)  {
+  void DefineState(uint32_t specialCheck, const olxstr& description)  {
     TProgramStateDescriptor* ps = new TProgramStateDescriptor;
     ps->StateBit = specialCheck;
     ps->StateDescription = description;
@@ -90,7 +91,7 @@ public:
     for( size_t i=0; i < ProgramStates.Count(); i++ )
       delete ProgramStates[i];
   }
-  olxstr GetStateName(unsigned int specialCheck)  {
+  olxstr GetStateName(uint32_t specialCheck)  {
     olxstr stateDescr;
     for( int i=16; i < 32; i++ )  {
       if( specialCheck & (1 << i) )  {
@@ -98,20 +99,20 @@ public:
         if( ps != NULL )
           stateDescr << '[' << ps->StateDescription << ']';
         else
-          throw TFunctionFailedException(__OlxSourceInfo, "unregistered state" );
+          throw TFunctionFailedException(__OlxSourceInfo, "unregistered state");
       }
     }
     return stateDescr;
   }
 
   virtual class TLibrary&  GetLibrary() = 0;
-  virtual bool CheckProgramState( unsigned int specialCheck ) = 0;
+  virtual bool CheckProgramState(uint32_t specialCheck) = 0;
 };
 
 class ABasicLibrary  {
 public:
   virtual ~ABasicLibrary()  {}
-  virtual bool CheckProgramState(unsigned int state) = 0;
+  virtual bool CheckProgramState(uint32_t state) = 0;
   virtual ALibraryContainer* GetOwner() const = 0;
   virtual ABasicLibrary* GetParentLibrary() const = 0;
   virtual const olxstr& GetName() const = 0;
@@ -130,8 +131,9 @@ protected:
 public:
   virtual ~ABasicFunction()  {}
   virtual void Run(const TStrObjList& Params, TMacroError& E) = 0;
-  virtual void Run(TStrObjList& Params, const TParamList& options, TMacroError& E) = 0;
-  virtual unsigned int GetArgStateMask() const = 0;
+  virtual void Run(TStrObjList& Params, const TParamList& options,
+    TMacroError& E) = 0;
+  virtual uint32_t GetArgStateMask() const = 0;
   const olxstr& GetName() const {  return Name;  }
   const olxstr& GetDescription() const {  return Description;  }
   void SetDescription(const olxstr& d) {  Description = d;  }
@@ -145,13 +147,15 @@ public:
   bool ValidateState(const TStrObjList &Params, TMacroError &E)  {
     const size_t argC = Params.Count(),
       arg_m = (0x0001 << argC);
-    unsigned int ArgStateMask = GetArgStateMask();
+    uint32_t ArgStateMask = GetArgStateMask();
     if( (ArgStateMask&fpAny) != fpAny && (ArgStateMask&arg_m) == 0)  {
       E.WrongArgCount(*this, argC);
       return false;
     }
     // the special checks are in the high word
-    if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
+    if( (ArgStateMask&0xFFFF0000) &&
+        !GetParentLibrary()->CheckProgramState(ArgStateMask) )
+    {
       E.WrongState(*this);
       return false;
     }
@@ -161,14 +165,15 @@ public:
 //------------------------------------------------------------------------------
 template <class Base>
   class TFunction: public ABasicFunction  {
-    unsigned int ArgStateMask;
+    uint32_t ArgStateMask;
     Base* BaseClassInstance;
     void (Base::*Func)(const TStrObjList& Params, TMacroError& E);
     olxstr RunSignature;
   public:
     TFunction(Base* baseClassInstance,
               void (Base::*func)(const TStrObjList& Params, TMacroError& E),
-              const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString())
+              const olxstr& funcName, uint32_t argc,
+              const olxstr& desc=EmptyString())
     {
       ArgStateMask = argc;
       BaseClassInstance = baseClassInstance;
@@ -177,10 +182,13 @@ template <class Base>
       SetDescription(desc);
     }
     virtual ABasicFunction* Replicate() const  {
-      return new TFunction<Base>(BaseClassInstance, Func, GetName(), ArgStateMask, GetDescription());
+      return new TFunction<Base>(BaseClassInstance, Func, GetName(),
+        ArgStateMask, GetDescription());
     }
 
-    virtual void Run(TStrObjList& Params, const TParamList& options, TMacroError& E)  {
+    virtual void Run(TStrObjList& Params, const TParamList& options,
+      TMacroError& E)
+    {
       throw TNotImplementedException(__OlxSourceInfo);
     }
 
@@ -207,16 +215,17 @@ template <class Base>
         E.ProcessingException(*this, exc);
       }
     };
-    virtual unsigned int GetArgStateMask() const  {  return ArgStateMask;  }
+    virtual uint32_t GetArgStateMask() const  {  return ArgStateMask;  }
   };
 //------------------------------------------------------------------------------
   class TStaticFunction: public ABasicFunction  {
-    unsigned int ArgStateMask;
+    uint32_t ArgStateMask;
     void (*Func)(const TStrObjList& Params, TMacroError& E);
     olxstr RunSignature;
   public:
     TStaticFunction(void (*func)(const TStrObjList& Params, TMacroError& E),
-               const olxstr& funcName, unsigned int argc, const olxstr& desc=EmptyString())
+               const olxstr& funcName, uint32_t argc,
+               const olxstr& desc=EmptyString())
     {
       ArgStateMask = argc;
       Func = func;
@@ -228,7 +237,9 @@ template <class Base>
       return new TStaticFunction(Func, GetName(), ArgStateMask, GetDescription());
     }
 
-    virtual void Run(TStrObjList& Params, const TParamList& options, TMacroError& E)  {
+    virtual void Run(TStrObjList& Params, const TParamList& options,
+      TMacroError& E)
+    {
       throw TNotImplementedException(__OlxSourceInfo);
     }
 
@@ -255,21 +266,23 @@ template <class Base>
         E.ProcessingException(*this, exc);
       }
     };
-    virtual unsigned int GetArgStateMask() const {  return ArgStateMask;  }
+    virtual uint32_t GetArgStateMask() const {  return ArgStateMask;  }
   };
 //------------------------------------------------------------------------------
 template <class Base>
   class TMacro: public ABasicFunction  {
-    unsigned int ArgStateMask;
+    uint32_t ArgStateMask;
     Base* BaseClassInstance;
-    void (Base::*Macro)(TStrObjList& Params, const TParamList &Options, TMacroError& E);
+    void (Base::*Macro)(TStrObjList& Params, const TParamList &Options,
+      TMacroError& E);
     olxstr RunSignature;
     TCSTypeList<olxstr,olxstr> ValidOptions;
   public:
-    TMacro( Base* baseClassInstance,
-               void (Base::*macro)(TStrObjList& Params, const TParamList &Options, TMacroError& E),
-               const olxstr& macroName, const olxstr& validOptions,
-               unsigned int argc, const olxstr& desc=EmptyString() )
+    TMacro(Base* baseClassInstance,
+           void (Base::*macro)(TStrObjList& Params,
+             const TParamList &Options, TMacroError& E),
+           const olxstr& macroName, const olxstr& validOptions,
+           uint32_t argc, const olxstr& desc=EmptyString() )
     {
       ArgStateMask = argc;
       BaseClassInstance = baseClassInstance;
@@ -281,10 +294,13 @@ template <class Base>
 
     virtual ABasicFunction* Replicate() const  {
       return new TMacro<Base>(BaseClassInstance, Macro, GetName(),
-                              OptionsToString(ValidOptions), ArgStateMask, GetDescription() );
+                              OptionsToString(ValidOptions), ArgStateMask,
+                              GetDescription() );
     }
 
-    virtual const TCSTypeList<olxstr,olxstr>& GetOptions()  const {  return ValidOptions;  }
+    virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const {
+      return ValidOptions;
+    }
 
     virtual void Run(const TStrObjList& Params, TMacroError& E)  {
       throw TNotImplementedException(__OlxSourceInfo);
@@ -292,7 +308,9 @@ template <class Base>
 
     virtual const olxstr& GetRuntimeSignature() const {  return RunSignature;  }
 
-    virtual void Run(TStrObjList &Params, const TParamList &Options, class TMacroError& E)  {
+    virtual void Run(TStrObjList &Params, const TParamList &Options,
+      TMacroError& E)
+    {
       if( !ValidateState(Params, E) )  return;
       const size_t argC = Params.Count();
       for( size_t i=0; i < Options.Count(); i++ )  {
@@ -310,7 +328,8 @@ template <class Base>
         }
         RunSignature << ' ';
         for( size_t i=0; i < Options.Count(); i++ )  {
-          RunSignature << '{' << Options.GetName(i) << '=' << Options.GetValue(i) << '}';
+          RunSignature << '{' << Options.GetName(i) << '=' <<
+            Options.GetValue(i) << '}';
         }
         (BaseClassInstance->*Macro)(Params, Options, E);
       }
@@ -318,7 +337,7 @@ template <class Base>
         E.ProcessingException(*this, exc);
       }
     };
-    virtual unsigned int GetArgStateMask() const {  return ArgStateMask;  }
+    virtual uint32_t GetArgStateMask() const {  return ArgStateMask;  }
     virtual olxstr GetSignature() const  {
       if( ValidOptions.Count() )  {
         olxstr res = ABasicFunction::GetSignature();
@@ -334,14 +353,16 @@ template <class Base>
   };
 //------------------------------------------------------------------------------
   class TStaticMacro: public ABasicFunction  {
-    unsigned int ArgStateMask;
-    void (*Macro)(TStrObjList& Params, const TParamList &Options, TMacroError& E);
+    uint32_t ArgStateMask;
+    void (*Macro)(TStrObjList& Params, const TParamList &Options,
+      TMacroError& E);
     olxstr RunSignature;
     TCSTypeList<olxstr,olxstr> ValidOptions;
   public:
-    TStaticMacro(void (*macro)(TStrObjList& Params, const TParamList &Options, TMacroError& E),
-               const olxstr& macroName, const olxstr& validOptions,
-               unsigned int argc, const olxstr& desc=EmptyString())
+    TStaticMacro(void (*macro)(TStrObjList& Params,
+                 const TParamList &Options, TMacroError& E),
+                 const olxstr& macroName, const olxstr& validOptions,
+                 uint32_t argc, const olxstr& desc=EmptyString())
     {
       ArgStateMask = argc;
       Macro = macro;
@@ -352,10 +373,12 @@ template <class Base>
 
     virtual ABasicFunction* Replicate() const  {
       return new TStaticMacro(Macro, GetName(), OptionsToString(ValidOptions),
-                              ArgStateMask, GetDescription() );
+                              ArgStateMask, GetDescription());
     }
 
-    virtual const TCSTypeList<olxstr,olxstr>& GetOptions()  const {  return ValidOptions;  }
+    virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const {
+      return ValidOptions;
+    }
 
     virtual void Run(const TStrObjList& Params, TMacroError& E)  {
       throw TNotImplementedException(__OlxSourceInfo);
@@ -363,7 +386,9 @@ template <class Base>
 
     virtual const olxstr& GetRuntimeSignature() const {  return RunSignature;  }
 
-    virtual void Run(TStrObjList &Params, const TParamList &Options, class TMacroError& E)  {
+    virtual void Run(TStrObjList &Params, const TParamList &Options,
+      TMacroError& E)
+    {
       if( !ValidateState(Params, E) )  return;
       const size_t argC = Params.Count();
       for( size_t i=0; i < Options.Count(); i++ )  {
@@ -381,7 +406,8 @@ template <class Base>
         }
         RunSignature << ' ';
         for( size_t i=0; i < Options.Count(); i++ )  {
-          RunSignature << '{' << Options.GetName(i) << '=' << Options.GetValue(i) << '}';
+          RunSignature << '{' << Options.GetName(i) << '=' <<
+            Options.GetValue(i) << '}';
         }
         (*Macro)(Params, Options, E);
       }
@@ -389,7 +415,7 @@ template <class Base>
         E.ProcessingException(*this, exc);
       }
     };
-    virtual unsigned int GetArgStateMask() const {  return ArgStateMask;  }
+    virtual uint32_t GetArgStateMask() const {  return ArgStateMask;  }
     virtual olxstr GetSignature() const  {
       if( ValidOptions.Count() )  {
         olxstr res = ABasicFunction::GetSignature();

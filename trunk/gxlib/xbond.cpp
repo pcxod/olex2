@@ -601,10 +601,12 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
 //..............................................................................
 void TXBond::SetRadius(float V)  {
   Params()[4] = V;
-  GetPrimitives().GetStyle().SetParam("R", V, IsRadiusSaveable());
-  // update radius for all members of the collection
-  for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
-    GetPrimitives().GetObject(i).Params()[4] = V;
+  if( this->Primitives != NULL )  {
+    GetPrimitives().GetStyle().SetParam("R", V, IsRadiusSaveable());
+    // update radius for all members of the collection
+    for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
+      GetPrimitives().GetObject(i).Params()[4] = V;
+  }
 }
 //..............................................................................
 uint32_t TXBond::GetPrimitiveMask() const {

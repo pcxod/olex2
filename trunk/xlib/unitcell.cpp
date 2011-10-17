@@ -752,14 +752,15 @@ olx_object_ptr<TArray3D<bool> > TUnitCell::BuildAtomMask(const vec3s& dim,
   const double sin_b = sin(au.GetAngles()[1]*M_PI/180);
   const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
   const double sr = r*r;
-  int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp);
-  int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp);
-  int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/aapp);
+  int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp)/2;
+  int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp)/2;
+  int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/aapp)/2;
   TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
   for( int x=-ad; x <= ad; x ++ )  {
     for( int y=-bd; y <= bd; y ++ )  {
       for( int z=-cd; z <= cd; z ++ )  {
-        vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1], (double)z/dim[2]));
+        vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1],
+          (double)z/dim[2]));
         spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
       }
     }
@@ -793,7 +794,8 @@ const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
     for( int x=-ad; x <= ad; x ++ )  {
       for( int y=-bd; y <= bd; y ++ )  {
         for( int z=-cd; z <= cd; z ++ )  {
-          vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1], (double)z/dim[2]));
+          vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1],
+            (double)z/dim[2]));
           spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
         }
       }
