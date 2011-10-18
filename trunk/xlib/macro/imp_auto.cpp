@@ -73,18 +73,11 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
 //    FileName = xapp.XFile().GetFileName();
 //  }
 //  if( AtomPermutator.IsActive() )  AtomPermutator.ReInit( xapp.XFile().GetAsymmUnit() );
-  olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
-  if( TAutoDB::GetInstance() == NULL )  {
-    TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
-    if( TEFile::Exists( autodbf ) )  {
-      TEFile dbf(autodbf, "rb");
-      TAutoDB::GetInstance()->LoadFromStream(dbf);
-    }
-  }
   if( !folder.IsEmpty() )  {
-    TAutoDB::GetInstance()->ProcessFolder(folder);
+    TAutoDB::GetInstance().ProcessFolder(folder);
+    olxstr autodbf(xapp.GetBaseDir() + "acidb.db");
     TEFile dbf(autodbf, "w+b");
-    TAutoDB::GetInstance()->SaveToStream(dbf);
+    TAutoDB::GetInstance().SaveToStream(dbf);
   }
 
   TLattice& latt = xapp.XFile().GetLattice();
@@ -100,7 +93,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   }
   TAutoDB::AnalysisStat stat;
   uint64_t st = TETime::msNow();
-  TAutoDB::GetInstance()->AnalyseStructure( xapp.XFile().GetFileName(), latt, 
+  TAutoDB::GetInstance().AnalyseStructure( xapp.XFile().GetFileName(), latt, 
     NULL, stat, elm_l.IsEmpty() ? NULL : &elm_l);
   st = TETime::msNow() - st;
   TBasicApp::NewLogEntry(logInfo) << "Elapsed time " << st << " ms";
@@ -119,33 +112,18 @@ void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options, TMacr
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList satoms;
   xapp.FindSAtoms( Cmds.Text(' '), satoms );
-  if( TAutoDB::GetInstance() == NULL )  {
-    TEGC::AddP(new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp));
-    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
-    if( TEFile::Exists( autodbf ) )  {
-      TEFile dbf(autodbf, "rb");
-      TAutoDB::GetInstance()->LoadFromStream( dbf );
-    }
-  }
   TStrList report;
   for( size_t i=0; i < satoms.Count(); i++ ) 
-    TAutoDB::GetInstance()->AnalyseNode(*satoms[i], report);
+    TAutoDB::GetInstance().AnalyseNode(*satoms[i], report);
   xapp.NewLogEntry() << report;
 }
 //..............................................................................
 void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   TEFile log(Cmds.Text(' '), "a+b");
-  if( TAutoDB::GetInstance() == NULL )  {
-    TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
-    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
-    if( TEFile::Exists( autodbf ) )  {
-      TEFile dbf(autodbf, "rb");
-      TAutoDB::GetInstance()->LoadFromStream( dbf );
-    }
-  }
   TStrList report;
-  TAutoDB::GetInstance()->ValidateResult( xapp.XFile().GetFileName(), xapp.XFile().GetLattice(), report);
+  TAutoDB::GetInstance().ValidateResult(
+    xapp.XFile().GetFileName(), xapp.XFile().GetLattice(), report);
   report.SaveToTextStream(log);
 }
 //..............................................................................
@@ -182,15 +160,6 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     StandAlone.Add(XElementLib::GetByIndex(iCalciumIndex));
   }
   helper_CleanBaiList(sfac, AvailableTypes);
-  if( TAutoDB::GetInstance() == NULL )  {
-    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
-    TEGC::AddP(new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ));
-    if( TEFile::Exists(autodbf) )  {
-      TEFile dbf(autodbf, "rb");
-      TAutoDB::GetInstance()->LoadFromStream(dbf);
-    }
-  }
-
   const bool runFuse = !Options.Contains("f");
   size_t changeNPD = ~0;
   if( Options.Contains("npd") )  {
@@ -335,8 +304,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 
   TDoubleList Uisos;
-  if( xapp.XFile().GetFileName() == TAutoDB::GetInstance()->GetLastFileName() )
-    Uisos.Assign(TAutoDB::GetInstance()->GetUisos());
+  if( xapp.XFile().GetFileName() == TAutoDB::GetInstance().GetLastFileName() )
+    Uisos.Assign(TAutoDB::GetInstance().GetUisos());
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     if( latt.GetFragment(i).NodeCount() > 7 )   { // skip up to PF6 or so for Uiso analysis
       while( Uisos.Count() <= i ) Uisos.Add(0.0);
@@ -374,7 +343,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
           }
         if( alone )  {
           bool assignHeaviest = false, assignLightest = false;
-          const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance()->GetStats();
+          const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance().GetStats();
           size_t ac = imp_auto_AtomCount(au);
           if( ac == 0 ) // this would be really strange
             ac++;
@@ -632,7 +601,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   for( size_t i=0; i < au.AtomCount(); i++ )
     au.GetAtom(i).SetLabel( au.CheckLabel(NULL, au.GetAtom(i).GetLabel()), false);
 //  TAutoDB::AnalysisStat stat;
-//  TAutoDB::GetInstance()->AnalyseStructure( xapp.XFile().GetFileName(), latt, 
+//  TAutoDB::GetInstance().AnalyseStructure( xapp.XFile().GetFileName(), latt, 
 //    NULL, stat, NULL);
   Error.SetRetVal((double)ValidatedAtomCount*100/AtomCount);
 }

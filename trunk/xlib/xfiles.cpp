@@ -20,6 +20,7 @@
 #include "atomsort.h"
 #include "infotab.h"
 #include "absorpc.h"
+#include "analysis.h"
 
 enum {
   XFILE_SG_Change,
@@ -611,6 +612,7 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   lib->AttachLibrary(Lattice.ExportLibrary());
   lib->AttachLibrary(RefMod.expl.ExportLibrary());
   lib->AttachLibrary(RefMod.ExportLibrary());
+  lib->AttachLibrary(Analysis::ExportLibrary());
   return lib;
 }
 //..............................................................................

@@ -1043,6 +1043,18 @@ cm_Element& XElementLib::GetByIndex(short ind) {
   return cm_Elements[ind];
 }
 //..............................................................................
+cm_Element* XElementLib::FindByZ(short z) {
+  if (z < 0 || z > iMaxElementIndex )  return NULL;
+  int idx = z;
+  while (cm_Elements[idx].z < z && ++idx < iMaxElementIndex)
+    ;
+  if (idx < iMaxElementIndex) return &cm_Elements[idx];
+  while (cm_Elements[idx].z > z && --idx > 0)
+    ;
+  if (idx >= 0) return &cm_Elements[idx];
+  return NULL;
+}
+//..............................................................................
 cm_Element* XElementLib::NextZ(const cm_Element& elm)  {
   if( elm.z == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "cannot iterrate the Q-peaks");
