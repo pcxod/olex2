@@ -1044,6 +1044,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h" />
+    <ClInclude Include="..\..\..\xlib\analysis.h" />
     <ClInclude Include="..\..\..\xlib\asymmunit.h" />
     <ClInclude Include="..\..\..\xlib\atomref.h" />
     <ClInclude Include="..\..\..\xlib\atomregistry.h" />

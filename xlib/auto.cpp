@@ -415,7 +415,7 @@ void TAutoDBNetNode::LoadFromStream( IDataInputStream& input )  {
 #endif
   int32_t ind;
   input >> ind;
-  FCenter = TAutoDB::GetInstance()->Node(ind);
+  FCenter = TAutoDB::GetInstance().Node(ind);
   input >> cnt;
   for( size_t i=0; i < cnt; i++ )  {
     input >> ind;
@@ -464,7 +464,7 @@ void TAutoDBNet::LoadFromStream( IDataInputStream& input )  {
   int32_t ind;
   int16_t cnt;
   input >> ind;
-  FReference = &TAutoDB::GetInstance()->Reference(ind);
+  FReference = &TAutoDB::GetInstance().Reference(ind);
   input >> cnt;
   for( uint16_t i=0; i < cnt; i++ )
     Nodes.Add( *( new TAutoDBNetNode(NULL)) );
@@ -1143,7 +1143,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
       node_lists[i] = 1;
     else
       node_lists[i] = 0;
-    sn->Node(i).SetId(i);
+    sn->Node(i).SetId((uint32_t)i);
   }
   // analysis of "confident", L3 and L2 atom types and Uiso
   for( size_t i=0; i < sn_count; i++ )  {
@@ -1302,7 +1302,11 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     TBasicApp::NewLogEntry(logInfo) << "Could not locate confident atom types";
   // assigning atom types according to L3 and L2 and printing stats
   for( size_t i=0; i < sn_count; i++ )  {
-    if( sn->Node(i).GetId() == 0 )  continue;
+    if( sn->Node(i).GetId() == 0 )  {
+      if (UisoCnt==0 && proposed_atoms==NULL && !guesses[i].list1.IsEmpty())
+        sn->Node(i).SetTag(guesses[i].list1[0].Type->index);
+      continue;
+    }
     tmp.SetLength(0);
     TTypeList< THitList<TAutoDBNetNode> > &guessN =
       !guesses[i].list3.IsEmpty() ? guesses[i].list3 : guesses[i].list2;
@@ -1725,6 +1729,19 @@ void TAtomTypePermutator::Permutate()  {
       }
     }
   }
+}
+//..............................................................................
+TAutoDB &TAutoDB::GetInstance()  {
+  if( Instance == NULL )  {
+    TXApp &app = TXApp::GetInstance();
+    olxstr autodbf(app.GetBaseDir() + "acidb.db");
+    TEGC::AddP(Instance=new TAutoDB(*((TXFile*)app.XFile().Replicate()), app));
+    if( TEFile::Exists( autodbf ) )  {
+      TEFile dbf(autodbf, "rb");
+      Instance->LoadFromStream(dbf);
+    }
+  }
+  return *Instance;
 }
 //..............................................................................
 //..............................................................................

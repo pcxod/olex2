@@ -1521,7 +1521,7 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macQual(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Options.IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong number of arguments" );
+    Error.ProcessingError(__OlxSrcInfo, "wrong number of arguments");
     return;
   }
   else  {
@@ -1529,12 +1529,14 @@ void TMainForm::macQual(TStrObjList &Cmds, const TParamList &Options, TMacroErro
      if( Options.GetName(0)[0] == 'm' ) { FXApp->Quality(qaMedium);  return; }
      if( Options.GetName(0)[0] == 'l' ) { FXApp->Quality(qaLow);  return; }
 
-    Error.ProcessingError(__OlxSrcInfo, "wrong argument" );
+    Error.ProcessingError(__OlxSrcInfo, "wrong argument");
     return;
   }
 }
 //..............................................................................
-void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   bool process_atoms = true;
   vec3d from, to;
   if( Cmds.IsEmpty() || (Cmds.Count() == 1 && Cmds[0].Equalsi("sel")) )  {
@@ -1543,6 +1545,16 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXPlane) )  {
         from = ((TXPlane&)sel[0]).GetCenter();
         to = ((TXPlane&)sel[1]).GetCenter();
+        process_atoms = false;
+      }
+      else if( EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXPlane) )  {
+        from = ((TXAtom&)sel[0]).crd();
+        to = ((TXPlane&)sel[1]).GetCenter();
+        process_atoms = false;
+      }
+      else if( EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) )  {
+        from = ((TXPlane&)sel[0]).GetCenter();
+        to = ((TXAtom&)sel[1]).crd();
         process_atoms = false;
       }
     }

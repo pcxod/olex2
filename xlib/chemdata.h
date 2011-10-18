@@ -250,6 +250,8 @@ public:
   static cm_Element* FindBySymbol(const olxstr& symbol);
   // for compatibility with old routines...
   static cm_Element& GetByIndex(short);
+  //
+  static cm_Element* FindByZ(short);
   // a label might be passed as C1 or Cr2
   static cm_Element* FindBySymbolEx(const olxstr& symbol);
   // returns element with Z+1

@@ -1049,6 +1049,9 @@
     <ClInclude Include="..\..\..\xlib\tests\vcov_test.h">
       <Filter>tests</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\xlib\analysis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

@@ -309,7 +309,7 @@ public:
   const AnalysisStat& GetStats() const {  return LastStat;  }
   inline const olxstr& GetLastFileName() const {  return LastFileName;  }
   void AnalyseNode(TSAtom& sa, TStrList& report);
-  inline static TAutoDB* GetInstance()  {  return Instance;  }
+  static TAutoDB &GetInstance();
   inline TAutoDBIdObject& Reference(size_t i)  {  return LocateFile(i);  }
   inline TAutoDBNode* Node(size_t i)  {  return LocateNode(i);  }
   DefPropP(int, BAIDelta)
