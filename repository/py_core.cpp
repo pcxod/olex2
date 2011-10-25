@@ -120,7 +120,7 @@ PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
 PyObject* pyExpFun(PyObject* self, PyObject* args)  {
   TBasicFunctionPList functions;
   IOlexProcessor::GetInstance()->GetLibrary().ListAllFunctions(functions);
-  PyObject* af = PyTuple_New( functions.Count() ), *f;
+  PyObject* af = PyTuple_New(functions.Count()), *f;
   for( size_t i=0; i < functions.Count(); i++ )  {
     ABasicFunction* func = functions[i];
     f = PyTuple_New(3);
@@ -257,7 +257,8 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
             m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
             m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]));
       }
-      PyTuple_SetItem(sysabs_out, i, Py_BuildValue("(OO)", PythonExt::BuildString(sg_elm[i]->GetName()), matr_out) );
+      PyTuple_SetItem(sysabs_out, i, Py_BuildValue("(OO)",
+        PythonExt::BuildString(sg_elm[i]->GetName()), matr_out));
     }
     PythonExt::SetDictItem(out, "SysAbs", sysabs_out);
   return out;
@@ -301,7 +302,8 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
     return out;
   }
   catch(const TExceptionBase& e)  {
-    return PythonExt::SetErrorMsg(PyExc_Exception, __OlxSourceInfo, e.GetException()->GetFullMessage());
+    return PythonExt::SetErrorMsg(PyExc_Exception, __OlxSourceInfo,
+      e.GetException()->GetFullMessage());
   }
 }
 //..............................................................................
@@ -315,11 +317,15 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
     proxy = settings["proxy"];
   }
   size_t lsi = index.LastIndexOf('/');
-  if( lsi == InvalidIndex )
-    return PythonExt::SetErrorMsg(PyExc_AttributeError, __OlxSourceInfo, "Invalid index file");
+  if( lsi == InvalidIndex ) {
+    return PythonExt::SetErrorMsg(PyExc_AttributeError, __OlxSourceInfo,
+      "Invalid index file");
+  }
   dest = TBasicApp::GetBaseDir() + dest;
-  if( !TEFile::MakeDirs(dest) )
-    return PythonExt::SetErrorMsg(PyExc_AttributeError, __OlxSourceInfo, "Could not create destination folder");
+  if( !TEFile::MakeDirs(dest) ) {
+    return PythonExt::SetErrorMsg(PyExc_AttributeError, __OlxSourceInfo,
+      "Could not create destination folder");
+  }
   index_fn = index.SubStringFrom(lsi+1);
   repos = index.SubStringTo(lsi+1);
   TUrl url(repos);
@@ -331,7 +337,8 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   TStrList properties;
   try  {  fsIndex.Synchronise(osFS, properties, NULL, NULL, NULL, index_fn);  }
   catch( const TExceptionBase& exc )  {
-    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, exc.GetException()->GetFullMessage());
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
+      exc.GetException()->GetFullMessage());
   }
   return Py_BuildValue("b", true);
 }
@@ -342,18 +349,42 @@ PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
   if( !PythonExt::ParseTuple(args, "|w", &radii_fn) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "|w");
   TXApp::ReadVdWRadii(radii_fn);
-  ContentList content = TXApp::GetInstance().XFile().GetAsymmUnit().GetContentList();
+  ContentList content =
+    TXApp::GetInstance().XFile().GetAsymmUnit().GetContentList();
   PyObject* dict = PyDict_New();
   for( size_t i=0; i < content.Count(); i++ )  {
     const size_t ei = radii.IndexOf(&content[i].element);
-    const double r = (ei == InvalidIndex ? content[i].element.r_vdw : radii.GetValue(ei));
+    const double r = (ei == InvalidIndex ? content[i].element.r_vdw
+      : radii.GetValue(ei));
     PyDict_SetItem(dict,
       PythonExt::BuildString(content[i].element.symbol),
       Py_BuildValue("f", r));
   }
   return dict;
 }
-  //..............................................................................
+//..............................................................................
+PyObject* pySetBadReflections(PyObject* self, PyObject* args)  {
+  PyObject *r, *l;
+  if( !PythonExt::ParseTuple(args, "O", &l) || !PyIter_Check(l) )
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
+  TTypeList<RefinementModel::BadReflection> bad_refs;
+  while (r = PyIter_Next(l)) {
+    RefinementModel::BadReflection br;
+    if (!PythonExt::ParseTuple(r, "iiiddd",
+          &br.index[0], &br.index[1], &br.index[2],
+          &br.Fo, &br.Fc, &br.esd))
+    {
+      Py_DECREF(r);
+      return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiiddd");
+    }
+    Py_DECREF(r);
+    bad_refs.AddCopy(br);
+  }
+  TXApp::GetInstance().XFile().GetRM().SetBadReflectionList(bad_refs);
+  
+  return PythonExt::PyNone();
+}
+//..............................................................................
 static PyMethodDef CORE_Methods[] = {
   {"UpdateRepository", pyUpdateRepository, METH_VARARGS,
   "Updates specified local repository from the http one. Takes the following arguments: "
@@ -378,6 +409,8 @@ static PyMethodDef CORE_Methods[] = {
   {"GetHklStat", pyHklStat, METH_VARARGS, "Returns HKL statistics"},
   {"SGInfo", pySGInfo, METH_VARARGS, "Returns current/given space group information"},
   {"GetVdWRadii", pyGetVdWRadii, METH_VARARGS, "Returns Van der Waals radii for elements of current model"},
+  {"SetBadReflections", pySetBadReflections, METH_VARARGS,
+    "Sets a list of bad reflections as iterable of (h k l Fo Fc esd)"},
   {NULL, NULL, 0, NULL}
    };
 

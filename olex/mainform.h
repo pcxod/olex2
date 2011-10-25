@@ -158,6 +158,7 @@ enum  {
   ID_DELINS,
   ID_ADDINS,
   ID_VarChange,
+  ID_BadReflectionSet,
 
   ID_UpdateThreadTerminate,
   ID_UpdateThreadDownload,

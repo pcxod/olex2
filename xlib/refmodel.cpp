@@ -40,6 +40,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   ExyzGroups(*this), 
   AfixGroups(*this), 
   rSAME(*this),
+  OnSetBadReflections(Actions.New("OnSetBadReflections")),
   aunit(au), 
   HklStatFileID(EmptyString(), 0, 0), 
   HklFileID(EmptyString(), 0, 0), 
@@ -111,6 +112,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   SolutionMethod.SetLength(0);
   HKLSource.SetLength(0);
   Omits.Clear();
+  BadReflections.Clear();
   BASF.Clear();
   BASF_Vars.Clear();
   DEFS.Clear();
@@ -194,6 +196,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   SHEL_hr = rm.SHEL_hr;
   SHEL_set = rm.SHEL_set;
   Omits = rm.Omits;
+  BadReflections = rm.BadReflections;
   TWIN_mat = rm.TWIN_mat;
   TWIN_n = rm.TWIN_n;
   TWIN_set = rm.TWIN_set;

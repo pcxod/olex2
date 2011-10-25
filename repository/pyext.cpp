@@ -598,6 +598,14 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
       }
         //throw TInvalidArgumentException(__OlxSourceInfo, "float is expected");
     }
+    else if( format[i] == 'd' )  {
+      double* fp = va_arg(argptr, double*);
+      if( !PyArg_Parse(io, "d", fp) )  {
+        va_end(argptr);       
+        return false;
+      }
+        //throw TInvalidArgumentException(__OlxSourceInfo, "float is expected");
+    }
     else if( format[i] == 'O' )  {
       PyObject** fp = va_arg(argptr, PyObject**);
       *fp = io;

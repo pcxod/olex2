@@ -45,7 +45,7 @@ static uint32_t
   rm_clear_DEF = (rm_clear_ALL^(rm_clear_SAME|rm_clear_AFIX|rm_clear_VARS));
 
 class RefinementModel
-  : public IXVarReferencerContainer, public IXVarReferencer
+  : public IXVarReferencerContainer, public IXVarReferencer, public IEObject
 {
   // in INS file is EQUV command
   struct Equiv  {
@@ -142,13 +142,27 @@ public:
     }
     size_t GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
   };
+
+  struct BadReflection {
+    vec3i index;
+    double Fo, Fc, esd;
+    BadReflection(const vec3i &_index, double _Fo, double _Fc, double _esd)
+    : index(_index), Fo(_Fo), Fc(_Fc), esd(_esd) {}
+    BadReflection() : Fo(0), Fc(0), esd(0) {}
+  };
+
 protected:
   mutable HklStat _HklStat;
   mutable TRefList _Reflections;  // ALL un-merged reflections
-  mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
+  // if this is not the HKLSource, statistics is recalculated
+  mutable TEFile::FileID HklStatFileID, HklFileID;
   mutable TIntList _Redundancy;
   mutable int _FriedelPairCount;  // the numbe of pairs only
+  TTypeList<BadReflection> BadReflections;
+  TActionQList Actions;
 public:
+
+  TActionQueue& OnSetBadReflections;
 
   TAsymmUnit& aunit;
 
@@ -288,7 +302,7 @@ public:
   const vec3i_list& GetOmits() const {  return Omits;  }
   template <class list> void AddOMIT(const list& omit)  {
     if( omit.Count() == 3 )  {  // reflection omit
-      Omits.AddNew( omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
+      Omits.AddNew(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
       OMITs_Modified = true;
     }
     else  {  // reflection transformation/filtering
@@ -304,6 +318,16 @@ public:
   }
   // processed user omits (hkl) and returns the number of removed reflections
   size_t ProcessOmits(TRefList& refs);
+
+  const TTypeList<BadReflection> &GetBadReflectionList() const {
+    return BadReflections;
+  }
+
+  void SetBadReflectionList(const ConstTypeList<BadReflection> &bad_refs) {
+    OnSetBadReflections.Enter(this);
+    BadReflections = bad_refs;
+    OnSetBadReflections.Exit(this);
+  }
 
   // SHEL reflection resolution filter low/high
   double GetSHEL_lr() const {  return SHEL_lr;  }
@@ -356,14 +380,15 @@ public:
   const mat3d& GetTWIN_mat()  const {  return TWIN_mat;  }
   void SetTWIN_mat(const mat3d& m)  {  TWIN_mat = m;  TWIN_set = true;  }
   /* ShelXL manual:
-If the racemic twinning is present at the same time as normal twinning, n should be doubled
-(because there are twice as many components as before) and given a negative sign (to
-indicate to the program that the inversion operator is to be applied multiplicatively with the
-specified TWIN matrix). The number of BASF parameters, if any, should be increased from
-m-1 to 2m-1 where m is the original number of components (equal to the new |n| divided by 2).
-The TWIN matrix is applied m-1 times to generate components 2 ... m from the prime
-reflection (component 1); components m+1 ... 2m are then generated as the Friedel opposites
-of components 1 ... m  
+If the racemic twinning is present at the same time as normal twinning, n
+should be doubled (because there are twice as many components as before) and
+given a negative sign (to indicate to the program that the inversion operator
+is to be applied multiplicatively with the specified TWIN matrix). The number
+of BASF parameters, if any, should be increased from m-1 to 2m-1 where m is the
+original number of components (equal to the new |n| divided by 2). The TWIN
+matrix is applied m-1 times to generate components 2 ... m from the prime
+reflection (component 1); components m+1 ... 2m are then generated as the
+Friedel opposites of components 1 ... m  
 */
   int GetTWIN_n() const {  return TWIN_n;  }
   void SetTWIN_n(int v)  {  TWIN_n = v;  TWIN_set = true;  }
@@ -402,7 +427,9 @@ of components 1 ... m
   void SetIterations(int v);
   void SetPlan(int v);
 
-  // clears restraints, SFAC and used symm but not AfixGroups, Exyzroups and Vars
+  /* clears restraints, SFAC and used symm but not AfixGroups, Exyzroups and
+  Vars
+  */
   void Clear(uint32_t clear_mask);
   // to be called by the Vars
   void ClearVarRefs();
@@ -422,8 +449,12 @@ of components 1 ... m
   // returns the number of the used symmetry matrices
   inline size_t UsedSymmCount() const {  return UsedSymm.Count();  }
   // returns used symmetry matric at specified index
-  inline const smatd& GetUsedSymm(size_t ind) const {  return UsedSymm.GetValue(ind).symop;  }
-  // return index of given symmetry matrix in the list or -1, if it is not in the list
+  inline const smatd& GetUsedSymm(size_t ind) const {
+    return UsedSymm.GetValue(ind).symop;
+  }
+  /* return index of given symmetry matrix in the list or -1, if it is not in
+  the list
+  */
   size_t UsedSymmIndex(const smatd& matr) const;
   // deletes all used symmetry matrices
   inline void ClearUsedSymm()  {  UsedSymm.Clear();  }
@@ -431,7 +462,9 @@ of components 1 ... m
     const size_t i = UsedSymm.IndexOf(name);
     return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i).symop);
   }
-  // initialises ID's of the matrices to conform to the unit cell, this called by TLattice
+  /* initialises ID's of the matrices to conform to the unit cell, this called
+  by TLattice
+  */
   void UpdateUsedSymm(const class TUnitCell& uc);
   // throws an exception if not found
   adirection& DirectionById(const olxstr &id) const;
@@ -440,7 +473,9 @@ of components 1 ... m
   // returns number of custom scatterers
   inline size_t SfacCount() const {  return SfacData.Count();  }
   // returns scatterer at specified index
-  inline XScatterer& GetSfacData(size_t i) const {  return *SfacData.GetValue(i);  }
+  inline XScatterer& GetSfacData(size_t i) const {
+    return *SfacData.GetValue(i);
+  }
   // finds scatterer by label, returns NULL if nothing found
   inline XScatterer* FindSfacData(const olxstr& label) const {
     size_t ind = SfacData.IndexOf(label);
@@ -459,9 +494,13 @@ of components 1 ... m
     for( size_t i=0; i < sfac.Count(); i++ )
       AddUserContent(sfac[i], 0);
   }
-  template <class StrLst> void SetUserContent(const StrLst& sfac, const StrLst& unit)  {
-    if( sfac.Count() != unit.Count() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "UNIT/SFAC lists mismatch");
+  template <class StrLst> void SetUserContent(const StrLst& sfac,
+    const StrLst& unit)
+  {
+    if( sfac.Count() != unit.Count() ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "UNIT/SFAC lists mismatch");
+    }
     UserContent.Clear();
     for( size_t i=0; i < sfac.Count(); i++ )
       AddUserContent(sfac[i], unit[i].ToDouble());
@@ -473,8 +512,10 @@ of components 1 ... m
     UserContent = cnt;
   }
   template <class StrLst> void SetUserContentSize(const StrLst& unit)  {
-    if( UserContent.Count() != unit.Count() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "UNIT/SFAC lists mismatch");
+    if( UserContent.Count() != unit.Count() ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "UNIT/SFAC lists mismatch");
+    }
     for( size_t i=0; i < UserContent.Count(); i++ )
       UserContent[i].count = unit[i].ToDouble();
   }
@@ -609,8 +650,8 @@ of components 1 ... m
   void DetwinAlgebraic(TRefList& refs, const HklStat& st,
     const SymSpace::InfoEx& info_ex) const;
   // convinience method for mrehedral::detwin<> with  detwin_mixed
-  void DetwinMixed(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
-    const SymSpace::InfoEx& info_ex) const;
+  void DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
+    const HklStat& st, const SymSpace::InfoEx& info_ex) const;
   // convinience method for mrehedral::detwin<> with  detwin_shelx
   void DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
     const HklStat& st, const SymSpace::InfoEx& info_ex) const;

@@ -52,7 +52,7 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
   // load Lst first, as it may have the error indicator
   olxstr lst_fn = TEFile::ChangeFileExt(fileName, "lst");
   if( TEFile::Exists(lst_fn) )  {
-    try  {  Lst.LoadFromFile(lst_fn);  }
+    try  { Lst.LoadFromFile(lst_fn); }
     catch(...)  {}
   }
   TBasicCFile::LoadFromFile(fileName);
@@ -165,6 +165,19 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     Clear();
     throw TInvalidArgumentException(__OlxSourceInfo, "empty CELL");
   }
+  // update the refinement model data
+  TTypeList<RefinementModel::BadReflection> bad_refs;
+  for (size_t i=0; i < Lst.DRefCount(); i++) {
+    const TLstRef &lr = Lst.DRef(i);
+    bad_refs.Add(
+      new RefinementModel::BadReflection(
+      vec3i(lr.H, lr.K, lr.L),
+      lr.Fo,
+      lr.Fc,
+      olx_abs(lr.Fo-lr.Fc)/lr.DF)
+      );
+  }
+  GetRM().SetBadReflectionList(bad_refs);
 }
 //..............................................................................
 void TIns::_ProcessSame(ParseContext& cx)  {

@@ -1201,8 +1201,10 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   TObjectVisibilityChange* VC = new TObjectVisibilityChange(this);
   XA->OnGraphicsVisible.Add(VC);
   // put correct captions to the menu
-  pmModel->SetLabel(ID_CellVisible, FXApp->IsCellVisible() ? wxT("Hide cell") : wxT("Show cell"));
-  pmModel->SetLabel(ID_BasisVisible, FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis"));
+  pmModel->SetLabel(ID_CellVisible, FXApp->IsCellVisible() ?
+    wxT("Hide cell") : wxT("Show cell"));
+  pmModel->SetLabel(ID_BasisVisible, FXApp->IsBasisVisible() ?
+    wxT("Hide basis") : wxT("Show basis"));
   TutorialDir = XA->GetBaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
   olxstr new_data_dir = patcher::PatchAPI::GetCurrentSharedDir(&DataDir);
@@ -1220,8 +1222,10 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
     if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
       // check if we have full access to all files in the dir...
       bool copy_old = !updater::UpdateAPI::IsNewInstallation();
-      if( !TEFile::MakeDirs(new_data_dir) )
-        TMainFrame::ShowAlert(olxstr("Failed to create: ") << new_data_dir, "ERROR", wxOK|wxICON_ERROR);
+      if( !TEFile::MakeDirs(new_data_dir) ) {
+        TMainFrame::ShowAlert(olxstr("Failed to create: ") << new_data_dir,
+          "ERROR", wxOK|wxICON_ERROR);
+      }
       else if( copy_old )
         TFileTree::Copy(DataDir, new_data_dir, false);
       if( !copy_old )
@@ -1298,6 +1302,7 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   TBasicApp::GetInstance().OnTimer.Add(this, ID_TIMER);
   FXApp->XFile().OnFileLoad.Add(this, ID_FileLoad);
   FXApp->XFile().OnFileClose.Add(this, ID_FileClose);
+  FXApp->XFile().GetRM().OnSetBadReflections.Add(this, ID_BadReflectionSet);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check(!FHtmlMinimized);
 #ifdef __WIN32__  
@@ -2006,6 +2011,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         executeMacro("html.update");
       }
     }
+  }
+  else if (MsgId == ID_BadReflectionSet) {
+    if (MsgSubId == msiExit)
+      BadReflectionsTable(false);
   }
   return res;
 }
@@ -2946,37 +2955,47 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
 //..............................................................................
 void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   static const olxstr BadRefsFile("badrefs.htm");
-  if( !Create || !FXApp->CheckFileType<TIns>() )  {
+  if( !Create ||
+    (!FXApp->CheckFileType<TIns>() &&
+      !(FXApp->XFile().HasLastLoader() && FXApp->XFile().LastLoader()->IsNative())) )
+  {
     TFileHandlerManager::AddMemoryBlock(BadRefsFile, NULL, 0, plStructure);
     return;
   }
-  TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
-  Lst.SynchroniseOmits( FXApp->XFile().GetRM() );
+  const TTypeList<RefinementModel::BadReflection> bad_refs =
+    FXApp->XFile().GetRM().GetBadReflectionList();
   TTTable<TStrList> Table;
   TStrList Output;
-  Table.Resize(Lst.DRefCount(), 5);
+  Table.Resize(bad_refs.Count(), 5);
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
   Table.ColName(3) = "(Fc<sup>2</sup>-Fo<sup>2</sup>)/esd";
-  for( size_t i=0; i < Lst.DRefCount(); i++ )  {
-    const TLstRef& Ref = Lst.DRef(i);
-    Table[i][0] = Ref.H;
-    Table[i][1] = Ref.K;
-    Table[i][2] = Ref.L;
-    Table[i][3] << ((Ref.Fc > Ref.Fo) ? '+' : '-');
-    if( Ref.DF >= 10 ) 
-      Table[i][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2, Ref.DF) << "</font>";
+  for( size_t i=0; i < bad_refs.Count(); i++ )  {
+    for (int j=0; j < 3; j++)
+      Table[i][j] = bad_refs[i].index[j];
+    double df = (bad_refs[i].Fc-bad_refs[i].Fo)/bad_refs[i].esd;
+    if( olx_abs(df) >= 10 ) {
+      Table[i][3] << "<font color=\'red\'>" <<
+        olxstr::FormatFloat(2, df) << "</font>";
+    }
     else  
-      Table[i][3] << olxstr::FormatFloat(2, Ref.DF);
-    if( Ref.Deleted )
+      Table[i][3] << olxstr::FormatFloat(2, df);
+    if( FXApp->XFile().GetRM().GetOmits().IndexOf(
+      bad_refs[i].index) != InvalidIndex )
+    {
       Table[i][4] << "Omitted";
-    else
-      Table[i][4] << "<a href='omit " << Ref.H <<  ' ' << Ref.K << ' ' << Ref.L << "\'>" << "omit" << "</a>";
+    }
+    else {
+      Table[i][4] << "<a href='omit " << bad_refs[i].index[0] <<  ' ' <<
+        bad_refs[i].index[1] << ' ' << bad_refs[i].index[2] << "\'>" <<
+        "omit" << "</a>";
+    }
   }
   Table.CreateHTMLList(Output, EmptyString(), true, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
-  TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(), plStructure);
+  TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(),
+    plStructure);
   if( TEFile::Exists(BadRefsFile) )
     TEFile::DelFile(BadRefsFile);
   //TUtf8File::WriteLines( BadRefsFile, Output, false );
