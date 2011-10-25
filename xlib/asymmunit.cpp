@@ -519,9 +519,9 @@ double TAsymmUnit::MolWeight() const  {
 //..............................................................................
 void TAsymmUnit::AddMatrix(const smatd& a)  {
   if( a.r.IsI() )
-    Matrices.InsertCCopy(0, a);
+    Matrices.InsertCopy(0, a);
   else
-    Matrices.AddCCopy(a);
+    Matrices.AddCopy(a);
 }
 //..............................................................................
 olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, char b, char c) const  {
@@ -602,7 +602,7 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
 
   Matrices.Clear();
   for( size_t i=0; i < sg.MatrixCount(); i++ )
-    Matrices.AddCCopy(sg.GetMatrix(i));
+    Matrices.AddCopy(sg.GetMatrix(i));
 }
 //..............................................................................
 double TAsymmUnit::CalcCellVolume() const {

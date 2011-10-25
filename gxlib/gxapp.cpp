@@ -87,7 +87,7 @@ public:
   TTypeList<TSAtom::FullRef> SAtomIds;
   TKillUndo(IUndoAction *action):TUndoData(action)  {  }
   virtual ~TKillUndo()  {  }
-  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCCopy(SA.GetFullRef());  }
+  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCopy(SA.GetFullRef());  }
 };
 class THideUndo: public TUndoData  {
 public:
@@ -2759,8 +2759,8 @@ void TGXApp::StoreLabels()  {
     TXAtom& xa = ai.Next();
     if( xa.GetGlLabel().IsVisible() )  {
       LabelInfo.atoms.Add(new TGXApp::AtomRef(xa.GetNetwork().GetLattice(), xa.GetRef()));
-      LabelInfo.labels.AddCCopy(xa.GetGlLabel().GetLabel());
-      LabelInfo.centers.AddCCopy(xa.GetGlLabel().GetCenter());
+      LabelInfo.labels.AddCopy(xa.GetGlLabel().GetLabel());
+      LabelInfo.centers.AddCopy(xa.GetGlLabel().GetCenter());
     }
   }
   BondIterator bi(*this);
@@ -2768,8 +2768,8 @@ void TGXApp::StoreLabels()  {
     TXBond& xb = bi.Next();
     if( xb.GetGlLabel().IsVisible() )  {
       LabelInfo.bonds.Add(new TGXApp::BondRef(xb.GetNetwork().GetLattice(), xb.GetRef()));
-      LabelInfo.labels.AddCCopy(xb.GetGlLabel().GetLabel());
-      LabelInfo.centers.AddCCopy(xb.GetGlLabel().GetCenter());
+      LabelInfo.labels.AddCopy(xb.GetGlLabel().GetLabel());
+      LabelInfo.centers.AddCopy(xb.GetGlLabel().GetCenter());
     }
   }
 }
@@ -3345,7 +3345,7 @@ void TGXApp::CreateXGrowPoints()  {
   smatd_plist matrices;
   smatd I;
   I.r.I();
-  UsedTransforms.AddCCopy(I);
+  UsedTransforms.AddCopy(I);
 
   vec3d MFrom(-1.5, -1.5, -1.5), MTo(2, 2, 2);
   vec3d VTo = (MTo+1).Round<int>();
@@ -3633,7 +3633,7 @@ void TGXApp::_CreateXGrowVLines()  {
 }
 //..............................................................................
 void TGXApp::Grow(const TXGrowPoint& growPoint)  {
-  UsedTransforms.AddCCopy(growPoint.GetTransform());
+  UsedTransforms.AddCopy(growPoint.GetTransform());
   XFile().GetLattice().Grow(growPoint.GetTransform());
 }
 //..............................................................................

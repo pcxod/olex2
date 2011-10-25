@@ -224,8 +224,8 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
     const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
     ci.r = aci.r < 0 ? ca.GetType().r_bonding : aci.r;
     ci.maxBonds = aci.maxBonds;
-    ci.BondsToCreate.AddListC(aci.BondsToCreate);
-    ci.BondsToRemove.AddListC(aci.BondsToRemove);
+    ci.BondsToCreate.AddList(aci.BondsToCreate);
+    ci.BondsToRemove.AddList(aci.BondsToRemove);
   } 
   // use defaults then
   if( ai_ind == InvalidIndex && ti_ind == InvalidIndex )  {
@@ -483,7 +483,7 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
             }
           }
           if( uniq )
-            toDelete.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
+            toDelete.Add(new CXBondInfo(ca, &ml.AddCopy(matr)));
         }
       }
       for( size_t j=0; j < ci.BondsToCreate.Count(); j++ )  {
@@ -501,17 +501,17 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
             }
           }
           if( uniq )
-            toCreate.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
+            toCreate.Add(new CXBondInfo(ca, &ml.AddCopy(matr)));
         }
       }
     }
     else  {  // own connectivity
       for( size_t i=0; i < ci.BondsToCreate.Count(); i++ )
         toCreate.Add(new CXBondInfo(ci.BondsToCreate[i].to,
-          ci.BondsToCreate[i].matr == NULL ? NULL : &ml.AddCCopy(*ci.BondsToCreate[i].matr)));
+          ci.BondsToCreate[i].matr == NULL ? NULL : &ml.AddCopy(*ci.BondsToCreate[i].matr)));
       for( size_t i=0; i < ci.BondsToRemove.Count(); i++ )
         toDelete.Add(new CXBondInfo(ci.BondsToRemove[i].to,
-          ci.BondsToRemove[i].matr == NULL ? NULL : &ml.AddCCopy(*ci.BondsToRemove[i].matr)));
+          ci.BondsToRemove[i].matr == NULL ? NULL : &ml.AddCopy(*ci.BondsToRemove[i].matr)));
     }
   }
   //for( size_t i=0; i < ml.Count(); i++ )

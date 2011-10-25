@@ -236,7 +236,10 @@ public:
   TSymmElement(const olxstr& name) : Name(name), SuperElement(NULL)  {}
   virtual ~TSymmElement()  {}
 
-  TSymmElement& AddMatrix(const smatd& m)  {  Matrices.AddCCopy(m);  return *this;  }
+  TSymmElement& AddMatrix(const smatd& m)  {
+    Matrices.AddCopy(m);
+    return *this;
+  }
   size_t  MatrixCount() const {  return Matrices.Count();  }
   smatd&  GetMatrix(size_t i) const {  return Matrices[i];  }
   const olxstr& GetName() const {  return Name;  }
@@ -301,7 +304,7 @@ public:
         return &(GetGroup(i));
     smatd_list all_ml;
     for( size_t i=0; i < sp.Count(); i++ )
-      all_ml.AddCCopy(sp[i]);
+      all_ml.AddCopy(sp[i]);
     return CreateNewFromExpanded(all_ml);
   }
   size_t FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res) const;
@@ -354,13 +357,13 @@ public:
     size_t mc = out.Count();
     if( _latt > 0 )  {
       for( size_t i=0; i < mc; i++ )
-        out.AddCCopy(out[i]) *= -1;
+        out.AddCopy(out[i]) *= -1;
     }
     mc = out.Count();
     for( size_t i=0; i < mc; i++ )  {
       const smatd& m = out[i];
       for( size_t j = 0; j < latt.VectorCount(); j++ )
-        out.AddCCopy(m).t += latt.GetVector(j);
+        out.AddCopy(m).t += latt.GetVector(j);
     }
     for( size_t i=0; i < out.Count(); i++ )
       out[i].t -= out[i].t.Floor<int>();

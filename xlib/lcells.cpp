@@ -333,14 +333,14 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell,
     if( olx_abs(all[j].niggli_volume-cell.niggli_volume) > diff )
       break;
     usage.SetTrue(j);
-    res.AddCCopy(all[j]);
+    res.AddCopy(all[j]);
   }
   // go left
   for( size_t j=ni; j != InvalidIndex; j-- )  {
     if( olx_abs(all[j].niggli_volume-cell.niggli_volume) > diff )
       break;
     usage.SetTrue(j);
-    res.AddCCopy(all[j]);
+    res.AddCopy(all[j]);
   }
   // search by cell volume
   all.QuickSorter.Sort(all, CellInfo::VolumeComparator(),
@@ -352,14 +352,14 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell,
     if( olx_abs(all[j].volume-cell.volume) > diff )
       break;
     if( !usage[j] )
-      res.AddCCopy(all[j]);
+      res.AddCopy(all[j]);
   }
   // go left
   for( size_t j=vi; j != InvalidIndex; j-- )  {
     if( olx_abs(all[j].volume-cell.volume) > diff )
       break;
     if( !usage[j] )
-      res.AddCCopy(all[j]);
+      res.AddCopy(all[j]);
   }
   if( filter_by_dimensions )  {
     const double dd = pow(diff, 1./3);
@@ -473,7 +473,7 @@ ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
       }
       else
         index_name = ind.root.name;
-      res.AddListC(ind.Search(cell, vol_diff, true));
+      res.AddList(ind.Search(cell, vol_diff, true));
     }
     catch(...)  {
       TBasicApp::NewLogEntry(logException) <<

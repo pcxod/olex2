@@ -161,7 +161,7 @@ void TReflection::Analyse(const SymSpace::InfoEx& info)  {
   for( size_t i=0; i < info.matrices.Count(); i++ )  {
     vec3i hklv = hkl*info.matrices[i].r;
     if( hkl == hklv )  {
-      int m = GetMultiplicity(), inc = 1+info.vertices.Count();
+      int m = GetMultiplicity(), inc = (int)(1+info.vertices.Count());
       if( info.centrosymmetric )  inc *= 2;
       SetMultiplicity(m+inc);
       if( !IsAbsent() )  {

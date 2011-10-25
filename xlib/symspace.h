@@ -239,7 +239,7 @@ namespace SymSpace  {
       }
       else if( olx_abs(t[0]) < 1e-6 && olx_abs(t[1]-0.5) < 1e-6 && olx_abs(t[2]-0.5) < 1e-6 )
         latt = 5; //'A';
-      rv.vertices.AddCCopy(t);
+      rv.vertices.AddCopy(t);
     }
     else if( min_a_group == 3 )  {
       vec3d t1 = groups.GetValue(0)[1]->t - groups.GetValue(0)[0]->t;
@@ -255,8 +255,8 @@ namespace SymSpace  {
       else if( olx_abs(t1[0]-1./3) < 1e-6 && olx_abs(t1[1]-2./3) < 1e-6 && olx_abs(t1[2]-1./3) < 1e-6  &&
         olx_abs(t2[0]-2./3) < 1e-6 && olx_abs(t2[1]-1./3) < 1e-6 && olx_abs(t2[2]-2./3) < 1e-6 )
         latt = 9; //'T';
-      rv.vertices.AddCCopy(t1);
-      rv.vertices.AddCCopy(t2);
+      rv.vertices.AddCopy(t1);
+      rv.vertices.AddCopy(t2);
     }
     else if( min_a_group )  {
       rv.vertices.AddNew(0, 0.5, 0.5);
@@ -292,7 +292,7 @@ namespace SymSpace  {
       TPtrList<const smatd>& l = groups.GetValue(i);
       for( size_t j=0; j < l.Count(); j++ )  {
         if( !l[j]->r.IsI() )
-          rv.matrices.AddCCopy(*l[j]).t -= l[j]->t.Floor<int>();
+          rv.matrices.AddCopy(*l[j]).t -= l[j]->t.Floor<int>();
       }
     }
     return rv;

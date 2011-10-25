@@ -2526,7 +2526,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( symm_tag == 1 || symm_tag == 2 )  {
         size_t pos = equivs.IndexOf(atoms[i]->GetMatrix(0).GetId());
         if( pos == InvalidIndex )  {
-          equivs.AddCCopy(atoms[i]->GetMatrix(0).GetId());
+          equivs.AddCopy(atoms[i]->GetMatrix(0).GetId());
           pos = equivs.Count()-1;
         }
         if( symm_tag == 1 )
@@ -4347,14 +4347,14 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
       TBasicApp::NewLogEntry() << Tmp;
       const char *Dir[] = {"000", "100", "010", "001", "110", "101", "011", "111"};
       TTypeList<vec3d> Points;
-      Points.AddCCopy(Z.Null());
-      Points.AddCCopy(cellM[0]);
-      Points.AddCCopy(cellM[1]);
-      Points.AddCCopy(cellM[2]);
-      Points.AddCCopy(cellM[0] + cellM[1]);
-      Points.AddCCopy(cellM[0] + cellM[2]);
-      Points.AddCCopy(cellM[1] + cellM[2]);
-      Points.AddCCopy(cellM[0] + cellM[1] + cellM[2]);
+      Points.AddCopy(Z.Null());
+      Points.AddCopy(cellM[0]);
+      Points.AddCopy(cellM[1]);
+      Points.AddCopy(cellM[2]);
+      Points.AddCopy(cellM[0] + cellM[1]);
+      Points.AddCopy(cellM[0] + cellM[2]);
+      Points.AddCopy(cellM[1] + cellM[2]);
+      Points.AddCopy(cellM[0] + cellM[1] + cellM[2]);
       for( size_t i=0; i < Points.Count(); i++ )  {
         for( size_t j = i+1; j < Points.Count(); j++ )  {
           Z = (Points[j]-Points[i]).Normalise();
@@ -5550,12 +5550,12 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         Lst.TrefTry(i-1).NQual == Lst.TrefTry(i).NQual )
       continue;
     }
-    Solutions.AddACopy(Lst.TrefTry(i).Try);
+    Solutions.AddCopy(Lst.TrefTry(i).Try);
     reps --;
     if( reps <=0 )  break;
   }
   SolutionFolder = TEFile::ExtractFilePath(FXApp->XFile().GetFileName() );
-  TEFile::AddPathDelimeterI( SolutionFolder ) << "olex_sol\\";
+  TEFile::AddPathDelimeterI(SolutionFolder) << "olex_sol\\";
   if( !TEFile::Exists( SolutionFolder ) )
     TEFile::MakeDir( SolutionFolder );
   olxstr cinsFN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ins");
@@ -6634,7 +6634,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //  TSpaceGroup& sg = sl.GetGroup(i);
   //  smatd_list ml, ml1;
   //  for( size_t j=0; j < sg.MatrixCount(); j++ )
-  //    ml.AddCCopy(sg.GetMatrix(j));
+  //    ml.AddCopy(sg.GetMatrix(j));
   //  sg.GetMatrices(ml1, mattAll);
   //  const olxstr hse = HallSymbol::Evaluate(
   //    sg.GetLattice().GetLatt()*(sg.IsCentrosymmetric() ? 1 : -1), ml);
@@ -7345,7 +7345,7 @@ void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( validSymm )  {
       Cmds.Delete(i--);
-      symm.AddCCopy(FXApp->XFile().GetUnitCell().InitMatrixId(matr));
+      symm.AddCopy(FXApp->XFile().GetUnitCell().InitMatrixId(matr));
     }
   }
   if( symm.IsEmpty() )  {
@@ -7476,11 +7476,11 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
       }
     }
     if( !found )  {
-      res.AddCCopy(v);
+      res.AddCopy(v);
       for( size_t j=1; j < p.Count(); j++ )  {
         v = sm[i] * p[j];
         v += t;
-        res.AddCCopy(v);
+        res.AddCopy(v);
       }
     }
   }
@@ -7506,12 +7506,12 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
             }
           }
           if( !found )  {
-            res.AddCCopy(v);
+            res.AddCopy(v);
             for( size_t j=1; j < p.Count(); j++ )  {
               v = res[i+j];
               v[0] += x;  v[1] += y;  v[2] += z;
               v += t;
-              res.AddCCopy(v);
+              res.AddCopy(v);
             }
           }
         }

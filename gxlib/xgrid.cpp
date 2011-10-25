@@ -1056,8 +1056,8 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   for( size_t i = 0; i < verts.Count(); i++ )  {
     if( verts[i] )  {
       new_ids[i] = xb->vertices.Count();
-      xb->vertices.AddCCopy(vertices[i]);
-      xb->normals.AddCCopy(normals[i]);
+      xb->vertices.AddCopy(vertices[i]);
+      xb->normals.AddCopy(normals[i]);
     }
     else
       new_ids[i] = ~0;

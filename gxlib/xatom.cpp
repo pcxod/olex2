@@ -1017,7 +1017,7 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {
       olx_swap(pl.faces[i][0], pl.faces[i][1]);
       n *= -1;
     }
-    pl.norms.AddCCopy(n);
+    pl.norms.AddCopy(n);
   }
 }
 vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {

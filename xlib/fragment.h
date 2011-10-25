@@ -113,7 +113,7 @@ public:
     olx_sincos(2*M_PI/sides, &sin_a, &cos_a);
     vec3d ps(cos_a, -sin_a, 0);
     for( size_t i=0; i < sides; i++ )  {
-      rv.AddCCopy(ps*norm);
+      rv.AddCopy(ps*norm);
       const double x = ps[0];
       ps[0] = (cos_a*x + sin_a*ps[1]);
       ps[1] = (cos_a*ps[1] - sin_a*x);
@@ -128,9 +128,9 @@ public:
       GenerateRegularRing(6, 1.39, rv);
     else if( frag_id == frag_id_naphthalene )  {
       GenerateRegularRing(6, 1.39, rv);
-      rv.AddCCopy(rv[0]);
+      rv.AddCopy(rv[0]);
       for( size_t i=3; i < 6; i++ )
-        rv.AddCCopy(rv[i]);
+        rv.AddCopy(rv[i]);
       const vec3d t = (rv[4]+rv[5]).NormaliseTo(1.39*2*cos(M_PI/6));
       for( size_t i=6; i < rv.Count(); i++ )
         rv[i] += t;

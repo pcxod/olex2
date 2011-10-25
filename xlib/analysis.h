@@ -77,7 +77,7 @@ public:
           hits = ares[i].list2;
         else  {
           hits = ares[i].list1;
-          hits.AddListC(ares[i].enforced);
+          hits.AddList(ares[i].enforced);
         }
         size_t m = olx_min(2, hits.Count());
         for (size_t j=0; j < m; j++) {
@@ -150,7 +150,8 @@ public:
       ft.Expand();
       TStrList files;
       ft.GetRoot().ListFiles(files, "*.cif");
-      TTypeList<TArrayList<int> > res(120, false);
+      TTypeList<TArrayList<double> > res(120, false);
+      TArrayList<int> tmp_array;
       for (size_t i=0; i < files.Count(); i++) {
         try {
           app.Update();
@@ -165,16 +166,23 @@ public:
             TSAtom &a = l.GetObjects().atoms[j];
             if (a.IsDeleted()) continue;
             if (res.IsNull(a.GetType().index)) {
-              res.Set(a.GetType().index, new TArrayList<int>(326));
-              for (size_t k=0; k < res[a.GetType().index].Count(); k++)
-                res[a.GetType().index][k] = 0;
+              res.Set(a.GetType().index, new TArrayList<double>(326, OlxZeroInitialiser()));
             }
+            tmp_array.SetCount(res[a.GetType().index].Count());
+            tmp_array.ForEach(OlxZeroInitialiser());
             TTypeList<AnAssociation2<const TCAtom *, vec3d> > envi;
             l.GetUnitCell().FindInRangeAC(a.ccrd(), 4.0, envi);
+            size_t cnt = 0;
             for (size_t ei=1; ei < envi.Count(); ei++) {
               double d = (envi[ei].GetB()-a.crd()).Length();
               if (d>0.75 && d<4) {
-                res[a.GetType().index][olx_round(100*(d-0.75))] ++;
+                tmp_array[olx_round(100*(d-0.75))] ++;
+                cnt++;
+              }
+            }
+            if (cnt > 0) {
+              for (size_t ai=0; ai < tmp_array.Count(); ai++) {
+                res[a.GetType().index][ai] += (double)tmp_array[ai]/cnt;
               }
             }
           }
@@ -190,7 +198,7 @@ public:
       bool header_saved = false;
       for (size_t i=0; i < res.Count(); i++) {
         if (res.IsNull(i)) continue;
-        int mv = 0;
+        double mv = 0;
         for (size_t j=0; j < res[i].Count(); j++) {
           if (res[i][j] > mv)
             mv = res[i][j];
@@ -203,12 +211,16 @@ public:
           }
           header_saved = true;
         }
+        TCStrList e_out;
         olxcstr &line = out.Add(XElementLib::GetByIndex((short)i).symbol);
         for (size_t j=0; j < res[i].Count(); j++) {
           line << ' ' << olxcstr::FormatFloat(2, (100.0*res[i][j])/mv);
+          e_out.Add((0.75 + (double)j/100)) << '\t' << (100.0*res[i][j])/mv;
         }
+        e_out.SaveToFile(olxstr("c:/tmp/") <<
+          XElementLib::GetByIndex((short)i).symbol << ".xlt");
       }
-      out.SaveToFile(olxstr("f:/ad.xlt"));
+      out.SaveToFile(olxstr("c:/ad.xlt"));
     }
     TSAtomPList res;
     app.FindSAtoms(EmptyString(), res, false);
@@ -219,29 +231,30 @@ public:
   static void funAnalyseR(const TStrObjList& Params, TMacroError& E)  {
     TXApp &app = TXApp::GetInstance();
     TStrList ad;
-    ad.LoadFromFile(olxstr("f:/ad.xlt"));
+    ad.LoadFromFile(olxstr("c:/ad.xlt"));
     TSAtomPList res;
     app.FindSAtoms(EmptyString(), res, false);
     if (res.Count() == 1) {
       TTypeList<AnAssociation2<const TCAtom *, vec3d> > envi;
       app.XFile().GetLattice().GetUnitCell().FindInRangeAC(
         res[0]->ccrd(), 4.0, envi);
+      envi.QuickSorter.Sort(envi, AC_Sort(res[0]->crd()));
       TTypeList<AnAssociation2<double, olxstr> > hits;
       for (size_t i=1; i < ad.Count(); i++) {
         TStrList lt(ad[i], ' ');
-        double sum = 1;
+        double sum = 0, weight=0;
         for (size_t ei=1; ei < envi.Count(); ei++) {
           double d = (envi[ei].GetB()-res[0]->crd()).Length();
           if (d>0.75 && d<4) {
             int ci = olx_round(100*(d-0.75));
             double tv = lt[ci+1].ToDouble();
-            /* need to sort the results by distance and put weight related to the
-            distance
-            */
-            sum += pow(tv/100, 1./(envi.Count()-1));
+            double w = 1./(100*olx_sqr(d*5));
+            sum += tv*w;
+            weight += w;
           }
         }
-        hits.AddNew(sqrt(sum)*100, lt[0]);
+        if (weight>0)
+          hits.AddNew(sum/weight, lt[0]);
       }
       hits.QuickSorter.SortSF(hits, &hr_sort);
       for (size_t i=0; i < hits.Count(); i++)

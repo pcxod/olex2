@@ -31,7 +31,7 @@ void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
   for( size_t i=0; i < atoms.Count(); i++ )
     points.AddNew(atoms[i].GetA()->crd(), atoms[i].GetB());
   _Init(points);
-  Crds.Clear().AddListC(atoms);
+  Crds.Clear().AddList(atoms);
 }
 //..............................................................................
 void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {

@@ -526,7 +526,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
       continue;
     }
     if( !rsf.IsOutside(r) )
-      out.AddCCopy(r);
+      out.AddCopy(r);
   }
   stats.TotalReflections = out.Count();
   return stats;
@@ -875,7 +875,7 @@ void RefinementModel::ProcessFrags()  {
           all_atoms[k+1] = &ag[k];
         for( size_t k=0; k < all_atoms.Count(); k++ )  {
           atoms.AddNew(all_atoms[k], (const cm_Element*)NULL, all_atoms[k]->ccrd().QLength() > 1e-6);
-          crds.AddCCopy((*frag)[k].crd);
+          crds.AddCopy((*frag)[k].crd);
         }
         aunit.FitAtoms(atoms, crds, false);
         ag.SetAfix(ag.GetN());
