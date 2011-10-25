@@ -4145,19 +4145,25 @@ void XLibMacros::macStandardise(TStrObjList &Cmds, const TParamList &Options, TM
   xapp.XFile().GetLattice().Uniq();
 }
 //..............................................................................
-void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   static olxstr sig("OMIT");
-  const TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
-  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  TXApp &app = TXApp::GetInstance();
+  const TIns& ins = app.XFile().GetLastLoader<TIns>();
+  RefinementModel& rm = app.XFile().GetRM();
   const TLst& Lst = ins.GetLst();
-  if( !Lst.IsLoaded() )  {  return;  }
   if( Cmds.Count() == 1 )  {
     if( Cmds[0].IsNumber() )  {
       const double th = Cmds[0].ToDouble();
-      for( size_t i=0; i < Lst.DRefCount(); i++ )  {
-        const TLstRef& r = Lst.DRef(i);
-        if( !r.Deleted && r.DF >= th )
-          rm.Omit(vec3i(r.H, r.K, r.L));
+      const TTypeList<RefinementModel::BadReflection> &bad_refs =
+        rm.GetBadReflectionList();
+      for( size_t i=0; i < bad_refs.Count(); i++ )  {
+        if( rm.GetOmits().IndexOf(bad_refs[i].index) == InvalidIndex &&
+          olx_abs(bad_refs[i].Fc-bad_refs[i].Fo)/bad_refs[i].esd >= th )
+        {
+          rm.Omit(bad_refs[i].index);
+        }
       }
     }
   }

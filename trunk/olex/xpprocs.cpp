@@ -4851,7 +4851,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       int64_t st = TETime::msNow();
       FXApp->LoadXFile(TXFile::ComposeName(file_n));
       st = TETime::msNow() - st;
-      TBasicApp::NewLogEntry(logInfo) << "Structure loaded in " << st << " ms" << NewLineSequence();
+      TBasicApp::NewLogEntry(logInfo) << "Structure loaded in " << st << " ms"
+        << NewLineSequence();
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
       LoadVFS(plStructure);  // load virtual fs file
@@ -4921,7 +4922,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 #else
       if( TEFile::ChangeFileExt(hkl_fn, EmptyString()) != TEFile::ChangeFileExt(src_fn, EmptyString()) )  {
 #endif
-        TBasicApp::NewLogEntry() << "Note that the associated HKL file differs from the loaded file name:";
+        TBasicApp::NewLogEntry() << "Note that the associated HKL file differs"
+          " from the loaded file name:";
         TBasicApp::NewLogEntry() << "SRC: " << src_fn;
         TBasicApp::NewLogEntry() << "HKL: " << hkl_fn;
       }
@@ -4931,8 +4933,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       olxstr Tmp = TEFile::ExtractFilePath(file_n.file_name);
       if( !Tmp.IsEmpty() && !(Tmp == XLibMacros::CurrentDir) )  {
         if( !TEFile::ChangeDir(Tmp) )  {
-          TBasicApp::NewLogEntry() << "Cannot change current folder '" << TEFile::CurrentDir() <<
-          "' to '" << Tmp;
+          TBasicApp::NewLogEntry() << "Cannot change current folder '" <<
+            TEFile::CurrentDir() << "' to '" << Tmp;
         }
         else  {
           if( !Blind )  
