@@ -42,7 +42,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGlMaterial& mat) :
   TDialog(ParentFrame, wxT("Material Parameters"), wxT("dlgMatProp"))
 {
   Object = NULL;
-  Materials.AddCCopy(mat);
+  Materials.AddCopy(mat);
   Init();
 }
 //..............................................................................
@@ -59,7 +59,7 @@ void TdlgMatProp::Init()  {
     for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
       TGlPrimitive& GlP = gpc.GetPrimitive(i);
       cbPrimitives->AddObject(GlP.GetName(), &GlP);
-      Materials.AddCCopy(GlP.GetProperties());
+      Materials.AddCopy(GlP.GetProperties());
     }
     cbPrimitives->SetValue(gpc.GetPrimitive(0).GetName().u_str());
     cbPrimitives->OnChange.Add(this);
@@ -78,12 +78,12 @@ void TdlgMatProp::Init()  {
     cbPrimitives = NULL;
     if( Object != NULL )  {
       if( EsdlInstanceOf(*Object, TGlGroup) )  {
-        Materials.AddCCopy(((TGlGroup*)Object)->GetGlM());
+        Materials.AddCopy(((TGlGroup*)Object)->GetGlM());
         cbBlend = new wxCheckBox(this, -1, wxT("Override color (Use front ambient transparency for blending)"));
         cbBlend->SetValue(!((TGlGroup*)Object)->IsBlended());
       }
       else if( Object->GetPrimitives().PrimitiveCount() != 0 )
-        Materials.AddCCopy(Object->GetPrimitives().GetPrimitive(0).GetProperties());
+        Materials.AddCopy(Object->GetPrimitives().GetPrimitive(0).GetProperties());
     }
   }
   long flags = 0; //wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;

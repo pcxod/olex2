@@ -20,6 +20,13 @@ BeginEsdlNamespace()
 template <typename> class SharedArrayList;
 template <typename> class ConstArrayList;
 
+struct OlxZeroInitialiser {
+  template <typename item_t>
+  void OnItem(item_t &item, size_t) const {
+    item = 0;
+  }
+};
+
 template <class T> class TArrayList : public IEObject {
 private:
   size_t FCount, FCapacity;
@@ -39,8 +46,16 @@ public:
   // allocates size elements (can be accessed diretly)
   TArrayList(size_t size)  {  init(size);  }
 //..............................................................................
-  /* copy constuctor - creates new copies of the objest, be careful as the assignement
-   operator must exist for nonpointer objects */
+  template <class init_t>
+  TArrayList(size_t size, const init_t &initialiser)  {
+    init(size);
+    for (size_t i=0; i < size; i++)
+      initialiser.OnItem(Items[i], i);
+  }
+//..............................................................................
+  /* copy constuctor - creates new copies of the objest, be careful as the
+  assignement operator must exist for nonpointer objects
+  */
   TArrayList(const TArrayList& list)  {
     init(list.Count());
     for( size_t i=0; i < FCount; i++ )
@@ -117,9 +132,13 @@ public:
     return *this;
   }
 //..............................................................................
-  TArrayList& AddList(const SharedArrayList<T>& list)  {  AddList(list.GetObject());  }
+  TArrayList& AddList(const SharedArrayList<T>& list)  {
+    AddList(list.GetObject());
+  }
 //..............................................................................
-  TArrayList& AddList(const ConstArrayList<T>& list)  {  AddList(list.GetObject());  }
+  TArrayList& AddList(const ConstArrayList<T>& list)  {
+    AddList(list.GetObject());
+  }
 //..............................................................................
   template <class List> inline TArrayList& operator += (const List& list)  {
     return AddList(list);
@@ -136,7 +155,8 @@ public:
 //..............................................................................
   T& Insert(size_t index, const T& Obj)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount+1);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, index, 0, FCount+1);
 #endif
     if( FCapacity == FCount )  SetCapacity((size_t)(1.5*FCount + FIncrement));
     const size_t diff = FCount - index;
@@ -164,7 +184,8 @@ public:
 //..............................................................................
   inline T& GetLast() const {
 #ifdef _DEBUG
-  TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, FCount-1, 0, FCount);
+  TIndexOutOfRangeException::ValidateRange(
+    __POlxSourceInfo, FCount-1, 0, FCount);
 #endif
     return Items[FCount-1];
   }
@@ -196,7 +217,8 @@ public:
 //..............................................................................
   void Delete(size_t index)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, index, 0, FCount);
 #endif
     for( size_t i=index+1; i < FCount; i++ )
       Items[i-1] = Items[i];
@@ -205,8 +227,10 @@ public:
 //..............................................................................
   void DeleteRange(size_t from, size_t count)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+count, 0, FCount+1);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from+count, 0, FCount+1);
 #endif
     const size_t copy_cnt = FCount-from-count;
     for( size_t i=0; i < copy_cnt; i++ )
@@ -282,8 +306,10 @@ public:
 //..............................................................................
   void Move(size_t from, size_t to)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, to, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, from, 0, FCount);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, to, 0, FCount);
 #endif
     T D = Items[from];
     if( from > to )  {
@@ -301,6 +327,14 @@ public:
   inline size_t Count() const {  return FCount;  }
 //..............................................................................
   inline bool IsEmpty() const {  return FCount == 0;  }
+//..............................................................................
+  template <class init_t>
+  TArrayList& SetCount(size_t v, const init_t &initialiser)  {
+    const size_t cnt = FCount;
+    SetCount(v);
+    for (size_t i=FCount; i < cnt; i++)
+      initialiser.OnItem(Items[i], i);
+  }
 //..............................................................................
   TArrayList& SetCount(size_t v)  {
     if( v > FCount )  {
@@ -344,9 +378,11 @@ public:
 
 #ifndef __BORLANDC__
 template <class T>
-ListQuickSorter<TArrayList<T>,T, typename TArrayList<T>::Accessor> TArrayList<T>::QuickSorter;
+ListQuickSorter<TArrayList<T>,T,
+  typename TArrayList<T>::Accessor> TArrayList<T>::QuickSorter;
 template <class T>
-ListBubbleSorter<TArrayList<T>,T, typename TArrayList<T>::Accessor> TArrayList<T>::BubleSorter;
+ListBubbleSorter<TArrayList<T>,T,
+  typename TArrayList<T>::Accessor> TArrayList<T>::BubleSorter;
 template <class T>
   TListTraverser<TArrayList<T> > TArrayList<T>::Traverser;
 #endif

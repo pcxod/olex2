@@ -19,9 +19,6 @@ template <typename> class SharedTypeList;
 template <typename> class ConstTypeList;
 
 template <class T, class DestructCast> class TTypeListExt : public IEObject  {
-private:
-  // initialisation function
-  inline T& Alloc(size_t i)  {  return *(List[i] = new T());  }
 protected:
   TPtrList<T> List;
   template <class Analyser> struct PackItemActor  {
@@ -38,7 +35,6 @@ protected:
 public:
   // creates a new empty objects
   TTypeListExt() {}
-  // allocates size elements (can be accessed diretly)
   TTypeListExt(size_t size, bool do_allocate=true) : List(size)  {
     if (do_allocate) {
       for (size_t i=0; i < size; i++) List[i] = new T();
@@ -99,32 +95,22 @@ public:
     return *this;
   }
 //..............................................................................
-/*  virtual IEObject* Replicate() const  {
-    TTypeListExt<T, DestructCast>* list = new TTypeListExt<T, DestructCast>( Count() );
-    for( size_t i=0; i < Count(); i++ )
-      list->Alloc(i) = *(T*)FList->Item(i);
-    return list;
-  }
-*/
+  //virtual IEObject* Replicate() const {
+  //  TTypeListExt* list =
+  //    new TTypeListExt(Count(), false);
+  //  for( size_t i=0; i < Count(); i++ )
+  //    list->List[i] = new T(*List[i]);
+  //  return list;
+  //}
 //..............................................................................
-  /* creates new copies of the objest, be careful as the assignement operator
-  must exist
+  /* creates new copies of the objest, be careful as the copy constructor must
+  exist
   */
-  template <class alist> void AddListA(const alist& list)  {
-    List.SetCapacity(list.Count() + List.Count());
-    for( size_t i=0; i < list.Count(); i++ )
-      *List.Add(new T()) = list[i];
-  }
-//..............................................................................
-  /* creates new copies of the objest, be careful as the copy constructor must exist  */
-  template <class alist> void AddListC(const alist& list)  {
+  template <class alist> void AddList(const alist& list)  {
     List.SetCapacity(list.Count() + List.Count());
     for( size_t i=0; i < list.Count(); i++ )
       List.Add(new T(list[i]));
   }
-//..............................................................................
-//  operator const TEList& () const { return *FList;  }
-//  TEList& c_list() { return *FList;  }
 //..............................................................................
   //adds a new object ito the list - will be deleted
   inline T& Add(T& Obj)  {  return *List.Add(&Obj);  }
@@ -161,37 +147,14 @@ public:
     return rv;
   }
 //..............................................................................
-  /* adds a copy of the object with default constructor and assign operator
-  "assigned copy"
-  */
-  inline T& AddACopy(const T& Obj)  {  
-    T& rv = AddNew();
-    rv = Obj;
-    return rv;
-  }
-//..............................................................................
-  //sets the listitem to an new object copied by the assignement operator
-  inline T& SetACopy(size_t index, const T& Obj)  {
-    if( List[index] != NULL )
-      delete (DestructCast*)List[index];
-    return (Alloc(index) = Obj);
-  }
-//..............................................................................
   // adds a copy of the object with copy constructor "copied copy"
-  inline T& AddCCopy(const T& Obj)  {  return AddNew<T>(Obj);  }
+  inline T& AddCopy(const T& Obj)  {  return AddNew<T>(Obj);  }
 //..............................................................................
   //sets the listitem to an new object copied by the copy constructor
-  inline T& SetCCopy(size_t index, const T& Obj)  {
+  inline T& SetCopy(size_t index, const T& Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(List[index] = new T(Obj));
-  }
-//..............................................................................
-  // assigned copy inserted
-  inline T& InsertACopy(size_t index, const T& Obj)  {  
-    T& rv = InsertNew(index);
-    rv = Obj;
-    return rv;  
   }
 //..............................................................................
   // insert anobject into thelist; the object will be deleted
@@ -200,7 +163,7 @@ public:
   inline T& Insert(size_t index, T* Obj)  {  return *List.Insert(index, Obj);  }
 //..............................................................................
   // copy constructor created copy is inserted
-  inline T& InsertCCopy(size_t index, const T& Obj)  {
+  inline T& InsertCopy(size_t index, const T& Obj)  {
     return InsertNew<T>(index, Obj);
   }
 //..............................................................................
@@ -322,7 +285,7 @@ public:
       delete (DestructCast*)List[i];
     List.SetCount(list.Count());
     for( size_t i=0; i < list.Count(); i++ ) 
-      List[i] =  new T(list[i]);
+      List[i] = new T(list[i]);
     return *this;
   }
 //..............................................................................

@@ -497,7 +497,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
         }
       }
       if( !found && res.IndexOf(m) == InvalidIndex )
-        res.AddCCopy(m);
+        res.AddCopy(m);
     }
   }
 }
@@ -837,7 +837,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
       }
     }
     if( !found )  {
-      PlaneDefs.AddCCopy(pd);
+      PlaneDefs.AddCopy(pd);
       if( IsGenerated() )  {
         delete Plane;
         for( size_t i=0; i < Matrices.Count(); i++ )  {

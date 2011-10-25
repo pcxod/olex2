@@ -911,7 +911,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
           smatd SymmMatr = SymmCodeToMatrix((*LT)[i][j]->GetStringValue());
           size_t matIndex = SymmList.IndexOf(SymmMatr);
           if( matIndex == InvalidIndex )  {
-            SymmList.AddCCopy(SymmMatr);
+            SymmList.AddCopy(SymmMatr);
             matIndex = SymmList.Count()-1;
           }
           for( size_t k=0; k < Table.ColCount(); k++ )  {

@@ -164,30 +164,30 @@ public:
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
     AtomIterator(const TGXApp& app)  {
-      objects.AddCCopy(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
         count += objects.GetLast().Count();
       }
     }
   };
   struct BondIterator : public TIterator<TSBond, TXBond>  {
     BondIterator(const TGXApp& app)  {
-      objects.AddCCopy(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
         count += objects.GetLast().Count();
       }
     }
   };
   struct PlaneIterator : public TIterator<TSPlane, TXPlane>  {
     PlaneIterator(const TGXApp& app)  {
-      objects.AddCCopy(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
         count += objects.GetLast().Count();
       }
     }

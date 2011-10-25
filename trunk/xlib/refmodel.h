@@ -283,7 +283,7 @@ public:
   bool HasOMIT() const {  return OMIT_set;  }
   size_t OmittedCount() const {  return Omits.Count();  }
   const vec3i& GetOmitted(size_t i) const {  return Omits[i];  }
-  void Omit(const vec3i& r)  {  Omits.AddCCopy(r);  OMITs_Modified = true;  }
+  void Omit(const vec3i& r)  {  Omits.AddCopy(r);  OMITs_Modified = true;  }
   void ClearOmits()  {  Omits.Clear();  OMITs_Modified = true;  }
   const vec3i_list& GetOmits() const {  return Omits;  }
   template <class list> void AddOMIT(const list& omit)  {

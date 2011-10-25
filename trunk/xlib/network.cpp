@@ -679,8 +679,8 @@ void TNetwork::FindRings(const ElementPList& ringContent, TTypeList<TSAtomPList>
       Node(j).SetTag(0);
     ring.Add(all[i]);
     if( TryRing(*all[i], ring, ringContent) )  {
-      res.AddCCopy(ring);
-      rings.AddCCopy(ring);
+      res.AddCopy(ring);
+      rings.AddCopy(ring);
     }
   }
   for( size_t i=0; i < NodeCount(); i++ )
@@ -733,8 +733,8 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
     if( TryRing(ringAtom, i, ring) )  {
       ring.Add(a);  // the ring is in reverse order
       ring.Add(ringAtom);
-      res.AddCCopy(ring);
-      rings.AddCCopy(ring);
+      res.AddCopy(ring);
+      rings.AddCopy(ring);
     }
   }
   for( size_t i=0; i < NodeCount(); i++ )
@@ -780,8 +780,8 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
     if( TryRing(ringAtom, i, ring, ringContent) )  {
       ring.Add(a);  // the ring is in reverse order
       ring.Add(ringAtom);
-      res.AddCCopy(ring);
-      rings.AddCCopy(ring);
+      res.AddCopy(ring);
+      rings.AddCopy(ring);
     }
   }
   for( size_t i=0; i < NodeCount(); i++ )

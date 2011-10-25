@@ -884,7 +884,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             it_d.AddAtom(&sa.CAtom(), NULL);
             const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
-              transforms.AddCCopy(*mt);
+              transforms.AddCopy(*mt);
             it_d.AddAtom(const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it_d) )
               TBasicApp::NewLogEntry() << it_d.InsStr() << " d=" << olxstr::FormatFloat(3, d);
@@ -901,7 +901,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             it.AddAtom(&sa.CAtom(), NULL);
             const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
-              transforms.AddCCopy(*mt);
+              transforms.AddCopy(*mt);
             it.AddAtom(const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it) )
               TBasicApp::NewLogEntry() << it.InsStr() << " d=" << olxstr::FormatFloat(3, d);
@@ -2035,7 +2035,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     ml.SetCapacity(ml.Count()*2);
     const size_t mc = ml.Count();
     for( size_t i=0; i < mc; i++ )  {
-      ml.AddCCopy(ml[i]);
+      ml.AddCopy(ml[i]);
       ml[i+mc] *= -1;
     }
     for( size_t i=0; i < TSymmLib::GetInstance().SGCount(); i++ )  {
@@ -4458,7 +4458,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
                   ", centroid-centroid distance: " << olxstr::FormatFloat(3, pccd) <<
                   ", shift distance " << olxstr::FormatFloat(3, shift);
                 if( transforms.IndexOf(mat) == -1 )
-                  transforms.AddCCopy(mat);
+                  transforms.AddCopy(mat);
               }
             }
           }

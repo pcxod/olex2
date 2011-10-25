@@ -1244,7 +1244,7 @@ void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)
       }
     }
     if( !found )
-      res.AddCCopy(shc[i]);
+      res.AddCopy(shc[i]);
   }
 }
 //..............................................................................

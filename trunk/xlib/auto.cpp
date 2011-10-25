@@ -650,7 +650,7 @@ void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
           netItem->Node = dbn;
           Nodes[dbn->NodeCount()-1].Add(dbn);
         }
-        netMatch.AddACopy(netItem);
+        netMatch.AddCopy(netItem);
       }
     }
   }
@@ -1102,7 +1102,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseStructure(TLattice& latt
 {
   TTypeList<TAutoDB::TAnalysisResult> res;
   for( size_t i=0; i < latt.FragmentCount(); i++ )
-    res.AddListC(AnalyseNet(latt.GetFragment(i)));
+    res.AddList(AnalyseNet(latt.GetFragment(i)));
   return res;
 }
 //..............................................................................

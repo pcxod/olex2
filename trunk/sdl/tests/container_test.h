@@ -17,7 +17,7 @@ namespace test {
 
 void _PrepareList(TTypeList<int>& il)  {
   for( int i=0; i < 10; i++ )
-    il.AddCCopy(i);
+    il.AddCopy(i);
 }
 void _PrepareList(TArrayList<int>& il)  {
   for( int i=0; i < 10; i++ )

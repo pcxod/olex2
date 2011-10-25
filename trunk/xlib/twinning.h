@@ -58,7 +58,7 @@ namespace twinning  {
     static detwin_result detwin(const twin_generator_t& itr)  {
       TTypeList<twin_mate_full> all;
       while( itr.HasNext() )
-        all.AddCCopy(itr.NextFull());
+        all.AddCopy(itr.NextFull());
       double f_sq = 0, s_sq = 0;
       for( size_t i=0; i < all.Count(); i++ )  {
         double dn = 0;
@@ -93,7 +93,7 @@ namespace twinning  {
       TTypeList<TReflection> all;
       evecd I(_m.ColCount()), S(_m.ColCount());
       while( itr.HasNext() )  {
-        TReflection& r = all.AddCCopy(itr.NextObs());
+        TReflection& r = all.AddCopy(itr.NextObs());
         const size_t si = olx_abs(r.GetBatch())-1;
         if( si >= _m.ColCount() )
           throw TInvalidArgumentException(__OlxSourceInfo, "batch number");
@@ -105,7 +105,7 @@ namespace twinning  {
       for( size_t i=0; i < all.Count(); i++ )  {
         if( i > 0 && all[i].GetHkl() == all[0].GetHkl() )
           continue;
-        TReflection& r = res.AddCCopy(all[i]);
+        TReflection& r = res.AddCopy(all[i]);
         r.SetI(I[i]);
         r.SetS(sqrt(S[i]));
       }
@@ -293,12 +293,12 @@ namespace twinning  {
         }
         if( hkl3d(hkl) == InvalidIndex )  {
           all_refs[i].SetTag(hkl3d(hkl) = unique_indices.Count());
-          unique_indices.AddCCopy(hkl);
+          unique_indices.AddCopy(hkl);
         }
         else
           all_refs[i].SetTag(hkl3d(hkl));
         if( all_refs[i].GetBatch() >= 0 )
-          reflections.AddCCopy(all_refs[i]).SetTag(i);
+          reflections.AddCopy(all_refs[i]).SetTag(i);
       }
       reflections.ForEach(RefUtil::ResolutionAndSigmaFilter::IntensityModifier(filter));
     }

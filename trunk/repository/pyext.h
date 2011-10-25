@@ -114,8 +114,8 @@ public:
   template <class T>
     inline T * AddToDelete(T* td)  {  return (T*)ToDelete.Add(td);  }
 
-  void Register( pyRegFunc regFunc )  {
-    ToRegister.AddACopy(regFunc);
+  void Register(pyRegFunc regFunc)  {
+    ToRegister.AddCopy(regFunc);
     if( Py_IsInitialized() )  {
       (*regFunc)();
     }
