@@ -2220,7 +2220,7 @@ olxstr TLattice::CalcMoiety() const {
     ElementDict _cld;
     for( size_t j=0; j < cfrags[i].Count(); j++ )
       _cld.Add(&cfrags[i][j]->GetType(), 0) += cfrags[i][j]->GetOccu();
-    ContentList cl(_cld.Count());
+    ContentList cl(_cld.Count(), false);
     for( size_t j=0; j < _cld.Count(); j++ )
       cl.Set(j, new ElementCount(*_cld.GetKey(j), _cld.GetValue(j)));
     XElementLib::SortContentList(cl);

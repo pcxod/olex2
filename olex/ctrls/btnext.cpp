@@ -203,7 +203,7 @@ void TImgButton::SetImages(const olxstr& src, int w, int h)  {
   width = w;
   height = h;
   const TStrList toks(src, ',');
-  TTypeList<wxImage> images((size_t)4);
+  TTypeList<wxImage> images(4, false);
   short imgState = 0;
   for( size_t i=0; i < toks.Count(); i++ )  {
     const size_t ei = toks[i].IndexOf('=');

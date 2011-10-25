@@ -165,7 +165,19 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
     Loader = (TBasicCFile*)Loader->Replicate();
     replicated = true;
   }
-  try  {  Loader->LoadFromFile(_fn);  }
+  try  {
+    Loader->LoadFromFile(_fn);
+    for (size_t i=0; i < Loader->GetAsymmUnit().AtomCount(); i++) {
+      TCAtom &a = Loader->GetAsymmUnit().GetAtom(i);
+      if (olx_abs(a.ccrd()[0]) > 127 ||
+          olx_abs(a.ccrd()[1]) > 127 ||
+          olx_abs(a.ccrd()[2]) > 127)
+      {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olxstr("atom coordinates for ").quote() << a.GetLabel());
+      }
+    }
+  }
   catch( const TExceptionBase& exc )  {
     if( replicated )  
       delete Loader;

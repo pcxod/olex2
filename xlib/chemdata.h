@@ -192,6 +192,8 @@ public:
 struct ElementCount {
   const cm_Element& element;
   double count;
+  ElementCount()
+    : element(*((const cm_Element*)NULL)), count(0) {}
   ElementCount(const cm_Element& _e, double _c) : element(_e), count(_c)  {}
   ElementCount(const ElementCount& e) : element(e.element), count(e.count)  {}
   ElementCount& operator += (double v) {
@@ -250,7 +252,7 @@ public:
   static cm_Element* FindBySymbol(const olxstr& symbol);
   // for compatibility with old routines...
   static cm_Element& GetByIndex(short);
-  //
+  // finds an element by Z
   static cm_Element* FindByZ(short);
   // a label might be passed as C1 or Cr2
   static cm_Element* FindBySymbolEx(const olxstr& symbol);
@@ -332,6 +334,11 @@ public:
     return e.z == 5 || e.z == 14 || e.z == 32 || e.z == 33 ||
       e.z == 51 || e.z == 52;
   }
+
+  // finds next element which belongs to the given group
+  static cm_Element *NextGroup(int group, const cm_Element *e);
+  // finds previous element which belongs to the given group
+  static cm_Element *PrevGroup(int group, const cm_Element *e);
 
   static bool IsMetal(const cm_Element &e) {
     return IsTransitionalMetal(e) || IsPostTransitionalMetal(e);

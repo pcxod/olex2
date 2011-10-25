@@ -30,8 +30,10 @@ class TSPlane : public TSObject<TNetwork>  {
   size_t DefId;
   void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
 public:
-  TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex) : TSObject<TNetwork>(Parent), 
-    Distance(0), wRMSD(0), Flags(0), DefId(def_id)  {}
+  TSPlane() :TSObject<TNetwork>(NULL) {}
+  TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex)
+    : TSObject<TNetwork>(Parent), Distance(0), wRMSD(0), Flags(0),
+      DefId(def_id)  {}
   virtual ~TSPlane()  {}
 
   DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
@@ -93,6 +95,7 @@ public:
     struct DefData {
       TSAtom::Ref ref;
       double weight;
+      DefData() {}
       DefData(const TSAtom::Ref& r, double w) : ref(r), weight(w)  {}
       DefData(const DefData& r) : ref(r.ref), weight(r.weight)  {}
       DefData(const TDataItem& item) : ref(~0,~0) {  FromDataItem(item);  }
@@ -113,6 +116,7 @@ public:
     TTypeList<DefData> atoms;
     bool regular;
   public:
+    Def() {}
     Def(const TSPlane& plane);
     Def(const Def& r) : atoms(r.atoms), regular(r.regular)  {}
     Def(const TDataItem& item)  {  FromDataItem(item);  }

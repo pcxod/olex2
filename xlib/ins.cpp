@@ -1085,7 +1085,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   Preprocess(SL);
   //rm.FVAR.Clear();
   for( size_t i=0; i < index.Count(); i++ )  {
-    if( i > rm.aunit.AtomCount() )
+    if( i >= rm.aunit.AtomCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
     TCAtom &ca = rm.aunit.GetAtom(i);
     if( ca.GetParentAfixGroup() != NULL )
