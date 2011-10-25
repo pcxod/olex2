@@ -2159,12 +2159,12 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           }
         }
         else
-          Error.ProcessingError(__OlxSrcInfo, "undefined radii name" );
+          Error.ProcessingError(__OlxSrcInfo, "undefined radii name");
       }
     }
   }
   else
-    Error.ProcessingError(__OlxSrcInfo, "undefined parameter" );
+    Error.ProcessingError(__OlxSrcInfo, "undefined parameter");
 }
 //..............................................................................
 void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

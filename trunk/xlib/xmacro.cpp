@@ -4405,7 +4405,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     max_d = Cmds[0].ToDouble();
     max_shift = Cmds[1].ToDouble();
   }
-  TTypeList<TSPlane> planes(rings.Count());
+  TTypeList<TSPlane> planes(rings.Count(), false);
   TArrayList<vec3d> plane_centres(rings.Count());
   const TUnitCell& uc = latt.GetUnitCell();
   const TAsymmUnit& au = latt.GetAsymmUnit();

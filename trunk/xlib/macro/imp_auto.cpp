@@ -47,7 +47,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
     folder.SetLength(0);
   }
   if( folder.IsEmpty() && olex::IOlexProcessor::GetInstance() != NULL )
-    olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
+    ;//olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
   // Qpeak rings analysis ...
   try  {
     TTypeList< TSAtomPList > rings;
@@ -63,16 +63,6 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   }
   catch( ... )  {  ;  }
   static olxstr FileName(xapp.XFile().GetFileName());
-//  static TAtomTypePermutator AtomPermutator;
-//  AtomPermutator.SetActive( false );
-//  AtomPermutator.SetActive( !Options.Contains("p") );
-//  if( !AtomPermutator.IsActive() )  AtomPermutator.Init();
-
-//  if( FileName != xapp.XFile().GetFileName() )  {
-//    AtomPermutator.Init();
-//    FileName = xapp.XFile().GetFileName();
-//  }
-//  if( AtomPermutator.IsActive() )  AtomPermutator.ReInit( xapp.XFile().GetAsymmUnit() );
   if( !folder.IsEmpty() )  {
     TAutoDB::GetInstance().ProcessFolder(folder);
     olxstr autodbf(xapp.GetBaseDir() + "acidb.db");
@@ -93,32 +83,35 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   }
   TAutoDB::AnalysisStat stat;
   uint64_t st = TETime::msNow();
-  TAutoDB::GetInstance().AnalyseStructure( xapp.XFile().GetFileName(), latt, 
+  TAutoDB::GetInstance().AnalyseStructure(xapp.XFile().GetFileName(), latt, 
     NULL, stat, elm_l.IsEmpty() ? NULL : &elm_l);
   st = TETime::msNow() - st;
   TBasicApp::NewLogEntry(logInfo) << "Elapsed time " << st << " ms";
 
-//  if( AtomPermutator.IsActive() )  AtomPermutator.Permutate();
   if( olex::IOlexProcessor::GetInstance() != NULL )
     olex::IOlexProcessor::GetInstance()->executeMacro("fuse");
   size_t ac = imp_auto_AtomCount(au);
-  if( ac == 0 )  // clearly something is wron gwhen it happens...
+  if( ac == 0 )  // clearly something is wrong when it happens...
     ac = 1;
-  Error.SetRetVal( olxstr(stat.AtomTypeChanges!=0) << ';' << 
+  Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' << 
     (double)stat.ConfidentAtomTypes*100/ac );
 }
 //..............................................................................
-void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList satoms;
-  xapp.FindSAtoms( Cmds.Text(' '), satoms );
+  xapp.FindSAtoms(Cmds.Text(' '), satoms);
   TStrList report;
   for( size_t i=0; i < satoms.Count(); i++ ) 
     TAutoDB::GetInstance().AnalyseNode(*satoms[i], report);
   xapp.NewLogEntry() << report;
 }
 //..............................................................................
-void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   TEFile log(Cmds.Text(' '), "a+b");
   TStrList report;
@@ -133,7 +126,9 @@ struct Main_BaiComparator {
       return a->Object->z - b->Object->z;
   }
 };
-void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list, SortedElementList& au_bais)  {
+void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list,
+  SortedElementList& au_bais)
+{
   TXApp& xapp = TXApp::GetInstance();
   if( xapp.CheckFileType<TIns>() )  {
     TIns& ins = xapp.XFile().GetLastLoader<TIns>();
@@ -147,7 +142,9 @@ void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list, SortedEle
   }
 }
 
-void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   TStrPObjList<olxstr,const cm_Element*> sfac;
   SortedElementList AvailableTypes;
@@ -196,8 +193,9 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( !SortedQPeaks.IsEmpty() )  {
       vals.AddNew<double, TCAtomPList*>(0, new TCAtomPList);
       for( size_t i=SortedQPeaks.Count()-1; i >=1; i-- )  {
-        if( (SortedQPeaks.GetKey(i) - SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.05 )  {
-          //FGlConsole->PostText( olxstr("Threshold here: ") << SortedQPeaks.GetObject(i)->GetLabel() );
+        if( (SortedQPeaks.GetKey(i) -
+             SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.05 )
+        {
           vals.GetLast().A() += SortedQPeaks.GetKey(i);
           vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
           cnt++;
@@ -261,10 +259,14 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     TTypeList<AnAssociation2<TCAtom*, vec3d> > neighbours;
     TAutoDBNode nd(*QPeaks[i], &neighbours);
     for( size_t j=0; j < nd.DistanceCount(); j++ )  {
-      if( nd.GetDistance(j) < (neighbours[j].GetA()->GetType().r_bonding+aqV) )  {  // at least an H-bond
+      // at least an H-bond
+      if( nd.GetDistance(j) < (neighbours[j].GetA()->GetType().r_bonding+aqV) )
+      {
         if( neighbours[j].GetA()->GetType() == iQPeakZ )  {
           if( nd.GetDistance(j) < 1 )  {
-            if( neighbours[j].GetA()->GetQPeak() < QPeaks[i]->CAtom().GetQPeak() )  {
+            if( neighbours[j].GetA()->GetQPeak() <
+                QPeaks[i]->CAtom().GetQPeak() )
+            {
               neighbours[j].GetA()->SetDeleted(true);
             }
           }
@@ -283,7 +285,9 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       }
     }
     if( nd.NodeCount() == 2 && nd.GetAngle(0) < 90 )  {
-      if( !neighbours[0].GetA()->IsDeleted() && !neighbours[1].GetA()->IsDeleted() )  {
+      if( !neighbours[0].GetA()->IsDeleted() &&
+          !neighbours[1].GetA()->IsDeleted() )
+      {
         QPeaks[i]->SetDeleted(true);
         QPeaks[i]->CAtom().SetDeleted(true);
         continue;

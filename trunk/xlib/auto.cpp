@@ -18,6 +18,7 @@
 #include "olxmps.h"
 #include "egc.h"
 #include "eutf8.h"
+#include "filetree.h"
 
 #undef GetObject
 
@@ -119,6 +120,26 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa,
   const TCAtom& ca = sa.CAtom();
   const TUnitCell& uc = sa.GetNetwork().GetLattice().GetUnitCell();
   const TAsymmUnit& au = sa.GetNetwork().GetLattice().GetAsymmUnit();
+  //TArrayList<AnAssociation2<const TCAtom *, vec3d> > res;
+  //uc.FindInRangeAC(sa.ccrd(), 2, res);
+  //for (size_t i=0; i < res.Count(); i++) {
+  //  if (res[i].GetB().QDistanceTo(sa.crd()) < 1e-3 ) {
+  //    continue;
+  //  }
+  //  bool unique = true;
+  //  for ( size_t j=0; j < AttachedNodes.Count(); j++) {
+  //    if (AttachedNodes[j].GetCenter().QDistanceTo(res[i].GetB()) < 1e-3) {
+  //      unique = false;
+  //      break;
+  //    }
+  //  }
+  //  if (!unique) continue;
+  //  if( atoms != NULL )
+  //    atoms->AddNew<TCAtom*, vec3d>(
+  //    const_cast<TCAtom*>(res[i].GetA()), res[i].GetB());
+  //  AttachedNodes.Add(new TAttachedNode(&res[i].GetA()->GetType(), res[i].GetB()));
+  //  
+  //}
   for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
     const TCAtom::Site& site = ca.GetAttachedSite(i);
     if( ca.IsDeleted() || site.atom->GetType() == iHydrogenZ )  continue;
@@ -478,11 +499,11 @@ void TAutoDBNet::LoadFromStream( IDataInputStream& input )  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-int UpdateNodeSortFunc( const TAutoDBNode* a, const TAutoDBNode* b )  {
+int UpdateNodeSortFunc(const TAutoDBNode* a, const TAutoDBNode* b)  {
   return a->UpdateCompare(*b);
 }
 //..............................................................................
-int SearchCompareFunc( const TAutoDBNode* a, const TAutoDBNode* b )  {
+int SearchCompareFunc(const TAutoDBNode* a, const TAutoDBNode* b)  {
   double v = a->SearchCompare(*b);
   if( v < 0 )  return -1;
   if( v > 0 )  return 1;
@@ -503,7 +524,7 @@ TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
     Nodes.AddNew();
   BAIDelta = -1;
   URatio = 1.3;
-  lc.GetLibrary().AttachLibrary( ExportLibrary() );
+  lc.GetLibrary().AttachLibrary(ExportLibrary());
 }
 //..............................................................................
 TAutoDB::~TAutoDB()  {
@@ -523,12 +544,11 @@ void TAutoDB::PrepareForSearch()  {
 //..............................................................................
 void TAutoDB::ProcessFolder(const olxstr& folder)  {
   if( !TEFile::Exists(folder) )  return;
-  olxstr currentDir = TEFile::CurrentDir();
   olxstr uf = TEFile::TrimPathDelimeter(folder);
-  TEFile::ChangeDir( uf );
-  TFileList files;
-  TEFile::ListCurrentDirEx(files, "*.cif", sefFile|sefDir);
-  if( files.IsEmpty() )  return;
+  TFileTree ft(uf);
+  ft.Expand();
+  TStrList files;
+  ft.GetRoot().ListFiles(files, "*.cif");
 
   TAutoDBFolder* dbfolder = NULL;
   size_t folderIndex = Folders.IndexOf(uf);
@@ -538,44 +558,55 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
     Folders.Add( uf, dbfolder );
   }
   TOnProgress progress;
-  progress.SetMax( files.Count() );
+  progress.SetMax(files.Count());
   for( size_t i=0; i < Nodes.Count(); i++ )  {
     Nodes[i].SetCapacity(Nodes[i].Count() + files.Count()*100);
     Nodes[i].SetIncrement(64*1024);
   }
   for( size_t i=0; i < files.Count(); i++ )  {
-    if( (files[i].GetAttributes() & sefFile) != 0 )  {
-      progress.SetPos(i);
-      if( dbfolder->Contains(files[i].GetName()) )  continue;
-      try  {
-        TBasicApp::NewLogEntry(logInfo) << "Processing " << files[i].GetName()
-          << "...";
-        XFile.LoadFromFile(files[i].GetName());
-        TCif& cif = XFile.GetLastLoader<TCif>();
-        olxstr r1 = cif.GetParamAsString("_refine_ls_R_factor_gt");
-        if( r1.Length() && r1.ToDouble() > 5 )  {
-          TBasicApp::NewLogEntry(logInfo) << "Skipped r1=" << r1;
-          continue;
-        }
-        olxstr shift = cif.GetParamAsString("_refine_ls_shift/su_max");
-        if( shift.Length() && shift.ToDouble() > 0.05 )  {
-          TBasicApp::NewLogEntry(logInfo) << "Skipped shift=" << shift;
-          continue;
-        }
-        olxstr gof = cif.GetParamAsString("_refine_ls_goodness_of_fit_ref");
-        if( gof.Length() && olx_abs(1-gof.ToDouble()) > 0.1 )  {
-          TBasicApp::NewLogEntry(logInfo) << "Skipped GOF=" << gof;
-          continue;
-        }
-        XFile.GetLattice().CompaqAll();
-        TAutoDBIdObject& adf = dbfolder->Add( files[i].GetName() );
-        for( size_t j=0; j < XFile.GetLattice().FragmentCount(); j++ )
-          ProcessNodes(&adf, XFile.GetLattice().GetFragment(j));
+    progress.SetPos(i);
+    if( dbfolder->Contains(files[i]) )  continue;
+    try  {
+      TBasicApp::NewLogEntry() << "Processing " << files[i] << "...";
+      XFile.LoadFromFile(files[i]);
+      TCif& cif = XFile.GetLastLoader<TCif>();
+      olxstr r1 = cif.GetParamAsString("_refine_ls_R_factor_gt");
+      if( r1.Length() && r1.ToDouble() > 5 )  {
+        TBasicApp::NewLogEntry() << "Skipped: r1=" << r1;
+        continue;
       }
-      catch( const TExceptionBase& exc )  {
-        TBasicApp::NewLogEntry(logError) << "Failed to process: " <<
-          exc.GetException()->GetError();
+      olxstr shift = cif.GetParamAsString("_refine_ls_shift/su_max");
+      if( shift.Length() && shift.ToDouble() > 0.05 )  {
+        TBasicApp::NewLogEntry() << "Skipped: shift=" << shift;
+        continue;
       }
+      olxstr gof = cif.GetParamAsString("_refine_ls_goodness_of_fit_ref");
+      if( gof.Length() && olx_abs(1-gof.ToDouble()) > 0.1 )  {
+        TBasicApp::NewLogEntry() << "Skipped: GOF=" << gof;
+        continue;
+      }
+      bool has_parts = false;
+      TAsymmUnit &au = XFile.GetAsymmUnit();
+      for (size_t ai=0; ai < au.AtomCount(); ai++) {
+        if (au.GetAtom(ai).GetPart() != 0) {
+          has_parts = true;
+          break;
+        }
+      }
+      if( has_parts )  {
+        TBasicApp::NewLogEntry() << "Skipped: contains disorder";
+        continue;
+      }
+      XFile.GetLattice().CompaqAll();
+      TAutoDBIdObject& adf = dbfolder->Add(files[i]);
+      for( size_t j=0; j < XFile.GetLattice().FragmentCount(); j++ )
+        ProcessNodes(&adf, XFile.GetLattice().GetFragment(j));
+    }
+    catch( const TExceptionBase& exc )  {
+      TStrList es;
+      exc.GetException()->GetStackTrace(es);
+      TBasicApp::NewLogEntry(logError) << "Failed to process: " << files[i];
+      TBasicApp::NewLogEntry(logError) << es;
     }
   }
   PrepareForSearch();
@@ -606,7 +637,7 @@ void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
         delete netItem;
       }
       else  {
-        TPtrList<TAutoDBNode>& segment = Nodes[ dbn->NodeCount()-1 ];
+        TPtrList<TAutoDBNode>& segment = Nodes[dbn->NodeCount()-1];
         for( size_t j=0; j < segment.Count(); j++ )  {
           if( segment[j]->IsSimilar(*dbn) )  {
             netItem->Node = segment[j];
@@ -712,7 +743,7 @@ TAutoDBNet* TAutoDB::BuildSearchNet(TNetwork& net, TSAtomPList& cas)  {
 }
 //..............................................................................
 void TAutoDB::SaveToStream( IDataOutputStream& output )  const {
-  output.Write( FileSignature, FileSignatureLength );
+  output.Write(FileSignature, FileSignatureLength);
   output << FileVersion;
   output << (uint16_t)0;  // file flags - flat for now
 
@@ -918,9 +949,8 @@ void TAutoDB::AnalyseStructure(const olxstr& lastFileName, TLattice& latt,
   stat.AtomDeltaConstrained = (BAIDelta != -1);
   Uisos.Clear();
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
-    Uisos.Add(0.0);
     AnalyseNet(latt.GetFragment(i), permutator,
-      Uisos[Uisos.Count()-1], stat, proposed_atoms);
+      Uisos.Add(0), stat, proposed_atoms);
   }
   LastStat = stat;
 }

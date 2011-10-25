@@ -49,8 +49,9 @@ public:
   inline bool operator == (const TSymmMat& v) const {
     return (r == v.r && t == v.t);
   }
-  /* compares rotational part directly, but does distance comparison for translation 
-  to prevent rounding errors influence*/
+  /* compares rotational part directly, but does distance comparison for
+  translation to prevent rounding errors influence
+  */
   bool EqualExt(const TSymmMat& v) const {
     return (r == v.r && t.QDistanceTo(v.t) < 1e-6);
   }
@@ -119,10 +120,18 @@ public:
   bool IsFirst() const {  return Id == 0x00808080;  }
   uint8_t GetContainerId() const {  return (uint8_t)(Id >> 24);  }
   static uint8_t GetContainerId(uint32_t id) {  return (uint8_t)(id >> 24);  }
-  static int8_t GetTx(uint32_t id) {  return (int8_t)(128-(int8_t)((id&0x00FF0000) >> 16));  }
-  static int8_t GetTy(uint32_t id) {  return (int8_t)(128-(int8_t)((id&0x0000FF00) >> 8));  }
-  static int8_t GetTz(uint32_t id) {  return (int8_t)(128-(int8_t)(id&0x000000FF));  }
-  static vec3i GetT(uint32_t id)  {  return vec3i(GetTx(id), GetTy(id), GetTz(id));  }
+  static int8_t GetTx(uint32_t id) {
+    return (int8_t)(128-(int8_t)((id&0x00FF0000) >> 16));
+  }
+  static int8_t GetTy(uint32_t id) {
+    return (int8_t)(128-(int8_t)((id&0x0000FF00) >> 8));
+  }
+  static int8_t GetTz(uint32_t id) {
+    return (int8_t)(128-(int8_t)(id&0x000000FF));
+  }
+  static vec3i GetT(uint32_t id)  {
+    return vec3i(GetTx(id), GetTy(id), GetTz(id));
+  }
   static TSymmMat FromId(uint32_t id, const TSymmMat& ref)  {
     TSymmMat rv(ref);
     rv.t[0] += GetTx(id);
@@ -132,12 +141,16 @@ public:
     return rv;
   }
   static uint32_t GenerateId(uint8_t id, int8_t ta, int8_t tb, int8_t tc) {
-    return ((uint32_t)id<<24)|((uint32_t)(0x80-ta)<<16)|((uint32_t)(0x80-tb)<<8)|(uint32_t)(0x80-tc);
+    return ((uint32_t)id<<24)|((uint32_t)(0x80-ta)<<16)|
+           ((uint32_t)(0x80-tb)<<8)|(uint32_t)(0x80-tc);
   }
   static uint32_t GenerateId(uint8_t id, const vec3i& t) {
-    return ((uint32_t)id<<24)|((uint32_t)(0x80-t[0])<<16)|((uint32_t)(0x80-t[1])<<8)|(uint32_t)(0x80-t[2]);
+    return ((uint32_t)id<<24)|((uint32_t)(0x80-t[0])<<16)|
+           ((uint32_t)(0x80-t[1])<<8)|(uint32_t)(0x80-t[2]);
   }
-  static uint32_t GenerateId(uint8_t container_id, const TSymmMat& m, const TSymmMat& ref)  {
+  static uint32_t GenerateId(uint8_t container_id, const TSymmMat& m,
+    const TSymmMat& ref)
+  {
     vec3i t(ref.t - m.t);
     uint32_t rv = ((uint32_t)container_id << 24);
     rv |= ((uint32_t)(0x80-t[0]) << 16);
@@ -159,13 +172,16 @@ public:
     t.description = __OlxSrcInfo;
     const uint32_t id_1 = GenerateId(0, -56, -43, -21);
     const uint32_t id_2 = GenerateId(0, vec3i(-56, -43, -21));
-    if( id_1 != id_2 )
-      throw TFunctionFailedException(__OlxSourceInfo, "ID generation mismatch");
+    if( id_1 != id_2 ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "ID generation mismatch");
+    }
     if( GetContainerId(id_1) != 0 )
       throw TFunctionFailedException(__OlxSourceInfo, "invalid ID");
     if( GetT(id_1)[0] != -56 || GetT(id_1)[1] != -43 || GetT(id_1)[2] != -21 )
       throw TFunctionFailedException(__OlxSourceInfo, "invalid T");
-    if( GetT(id_1)[0] != GetTx(id_1) || GetT(id_1)[1] != GetTy(id_1) || GetT(id_1)[2] != GetTz(id_1) )
+    if( GetT(id_1)[0] != GetTx(id_1) || GetT(id_1)[1] != GetTy(id_1) ||
+        GetT(id_1)[2] != GetTz(id_1) )
       throw TFunctionFailedException(__OlxSourceInfo, "invalid T");
   }
 };

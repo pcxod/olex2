@@ -37,8 +37,12 @@ public:
     Id = oid.GetId();
     return oid;
   }
-  inline bool operator == (const TAutoDBIdObject& oid) {  return Id == oid.GetId();  }
-  inline bool operator != (const TAutoDBIdObject& oid) {  return Id != oid.GetId();  }
+  inline bool operator == (const TAutoDBIdObject& oid) {
+    return Id == oid.GetId();
+  }
+  inline bool operator != (const TAutoDBIdObject& oid) {
+    return Id != oid.GetId();
+  }
   DefPropP(int32_t, Id)
 };
   typedef TPtrList<TAutoDBIdObject>  TAutoDBIdPList;
@@ -59,15 +63,21 @@ public:
     return dbf;
   }
   TAutoDBFolder(IDataInputStream& in)     {  LoadFromStream(in);  }
-  inline bool Contains(const olxstr& fileName )  {  return Files.IndexOf(fileName) != InvalidIndex;  }
+  inline bool Contains(const olxstr& fileName )  {
+    return Files.IndexOf(fileName) != InvalidIndex;
+  }
   TAutoDBIdObject& Add(const olxstr& fileName)  {
     TAutoDBIdObject* df = new TAutoDBIdObject();
     Files.Add(fileName, df );
     return *df;
   }
   inline size_t Count() const {  return Files.Count();  }
-  inline TAutoDBIdObject& GetIdObject(size_t ind) const {  return *Files.GetObject(ind);  }
-  inline const olxstr& GetObjectName(size_t ind) {  return Files.GetKey(ind);  }
+  inline TAutoDBIdObject& GetIdObject(size_t ind) const {
+    return *Files.GetObject(ind);
+  }
+  inline const olxstr& GetObjectName(size_t ind) {
+    return Files.GetKey(ind);
+  }
   void AssignIds(uint32_t base)  {
     for( size_t i=0; i < Files.Count(); i++ )
       Files.GetObject(i)->SetId((uint32_t)(base + i));
@@ -81,7 +91,8 @@ class TAttachedNode  {
   const cm_Element* Element;
   vec3d FCenter;
 public:
-  TAttachedNode(const cm_Element* element, const vec3d& c) : Element(element), FCenter(c)  {}
+  TAttachedNode(const cm_Element* element, const vec3d& c)
+    : Element(element), FCenter(c)  {}
   TAttachedNode(IDataInputStream& in);
   TAttachedNode()  {  Element = NULL;  }
   void SaveToStream(IDataOutputStream& output ) const;
@@ -103,7 +114,9 @@ class TAutoDBNode  {
   TTypeList<AnAssociation2<TAutoDBNet*,uint32_t> > Parents;
   evecd Params; // pre-calculated parameters
   void _PreCalc();
-  inline double CalcDistance(size_t i) const {  return AttachedNodes[i].GetCenter().DistanceTo(Center);  }
+  inline double CalcDistance(size_t i) const {
+    return AttachedNodes[i].GetCenter().DistanceTo(Center);
+  }
   double CalcAngle(size_t i, size_t j) const;
 protected:
   static int SortMetricsFunc(const TAttachedNode* a, const TAttachedNode* b);
@@ -119,17 +132,23 @@ public:
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
 
-  inline void AddParent(TAutoDBNet* net, uint32_t index) {  Parents.AddNew<TAutoDBNet*,uint32_t>(net,index);  }
+  inline void AddParent(TAutoDBNet* net, uint32_t index) {
+    Parents.AddNew<TAutoDBNet*,uint32_t>(net,index);
+  }
   inline size_t ParentCount() const {  return Parents.Count();  }
   inline TAutoDBNet* GetParent(size_t i) const {  return Parents[i].GetA();  }
   inline int GetParentIndex(size_t i) const {  return Parents[i].GetB();  }
 
   inline size_t NodeCount() const {  return AttachedNodes.Count();  }
-  inline const TAttachedNode& GetNode(size_t i) const {  return AttachedNodes[i];  }
+  inline const TAttachedNode& GetNode(size_t i) const {
+    return AttachedNodes[i];
+  }
   inline const cm_Element& GetType() const {  return *Element;  }
   inline size_t DistanceCount() const {  return AttachedNodes.Count();  }
   inline double GetDistance(size_t i) const {  return Params[i];  }
-  inline double GetAngle(size_t i) const {  return Params[AttachedNodes.Count()+i];  }
+  inline double GetAngle(size_t i) const {
+    return Params[AttachedNodes.Count()+i];
+  }
 
   void DecodeAngle(size_t index, size_t& nodea, size_t& nodeb)  {
     size_t cnt = AttachedNodes.Count(), itr = 0;
@@ -169,7 +188,8 @@ public:
   TAutoDBNode* Center() const {  return FCenter;  }
 
   bool IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel) const;
-  bool IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom, uint16_t* cindexes, bool ExtraLevel)  const;
+  bool IsMetricSimilar(const TAutoDBNetNode& nd, double& cfom,
+    uint16_t* cindexes, bool ExtraLevel)  const;
 
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
@@ -205,7 +225,9 @@ public:
       if( Nodes[i].Center() == nd )  return i;
     return InvalidIndex;
   }
-  static inline TAutoDBNet& GetCurrentlyLoading()  {  return *CurrentlyLoading;  }
+  static inline TAutoDBNet& GetCurrentlyLoading()  {
+    return *CurrentlyLoading;
+  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -303,7 +325,8 @@ protected:
     const cm_Element& e2, double threshold);
 public:
   void AnalyseStructure(const olxstr& LastFileName, TLattice& latt, 
-    TAtomTypePermutator* permutator, AnalysisStat& stat, ElementPList* proposed_atoms = NULL);
+    TAtomTypePermutator* permutator, AnalysisStat& stat,
+    ElementPList* proposed_atoms = NULL);
 
   inline const TDoubleList& GetUisos() const {  return Uisos;  }
   const AnalysisStat& GetStats() const {  return LastStat;  }
@@ -366,7 +389,9 @@ public:
         mf += hits[i].Fom;
       return mf /= cnt;
     }
-    void Sort()  {  hits.QuickSorter.SortSF(hits, THitStruct<NodeClass>::SortByFOMFunc);  }
+    void Sort()  {
+      hits.QuickSorter.SortSF(hits, THitStruct<NodeClass>::SortByFOMFunc);
+    }
   };
   struct Type  {
     double fom;
@@ -385,25 +410,28 @@ public:
     TTypeList<Type> list1, list2, list3, 
       enforced;
   };
-  void ValidateResult(const olxstr& fileName, const TLattice& au, TStrList& report);
+  void ValidateResult(const olxstr& fileName, const TLattice& au,
+    TStrList& report);
 
   ConstTypeList<TAnalysisResult> AnalyseStructure(TLattice& latt);
 protected:
   ConstTypeList<TAnalysisResult> AnalyseNet(TNetwork& net);
   // hits must be sorted beforehand!
-  void AnalyseUiso(TCAtom& ca, const TTypeList<THitList<TAutoDBNode> >& list, AnalysisStat& stat, 
-    bool heavier, bool lighter, ElementPList* proposed_atoms = NULL);
+  void AnalyseUiso(TCAtom& ca, const TTypeList<THitList<TAutoDBNode> >& list,
+    AnalysisStat& stat, 
+    bool heavier, bool lighter,
+    ElementPList* proposed_atoms = NULL);
   
   class TAnalyseNetNodeTask  {
     TTypeList< TPtrList<TAutoDBNode> >& Nodes;
     TTypeList<TGuessCount>& Guesses;
     TAutoDBNet& Network;
-    size_t LocateDBNodeIndex(const TPtrList<TAutoDBNode>& segment, TAutoDBNode* nd,
-      size_t from=InvalidIndex, size_t to=InvalidIndex);
+    size_t LocateDBNodeIndex(const TPtrList<TAutoDBNode>& segment,
+      TAutoDBNode* nd, size_t from=InvalidIndex, size_t to=InvalidIndex);
   public:
     TAnalyseNetNodeTask(TTypeList< TPtrList<TAutoDBNode> >& nodes,
                         TAutoDBNet& network, TTypeList<TGuessCount>& guesses) :
-      Nodes(nodes), Network(network), Guesses(guesses)  { }
+      Nodes(nodes), Network(network), Guesses(guesses)  {}
     void Run(size_t index);
     TAnalyseNetNodeTask* Replicate() const {
       return new TAnalyseNetNodeTask(Nodes, Network, Guesses);
@@ -413,15 +441,18 @@ protected:
   void LibBAIDelta(const TStrObjList& Params, TMacroError& E);
   void LibURatio(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list, AnalysisStat& stat, 
-                          bool heavier, bool lighter, ElementPList* proposed_atoms)  {
+///////////////////////////////////////////////////////////////////////////////
+template <class NodeType>
+bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
+  AnalysisStat& stat, bool heavier, bool lighter, ElementPList* proposed_atoms)
+{
   if( !lighter && !heavier )  return false;
-  olxstr tmp( ca.GetLabel() );
+  olxstr tmp = ca.GetLabel();
   tmp << ' ';
   const cm_Element* type = &ca.GetType();
   if( heavier )  {
-    TBasicApp::NewLogEntry(logInfo) << "Searching element heavier for " << ca.GetLabel();
+    TBasicApp::NewLogEntry(logInfo) << "Searching element heavier for " <<
+      ca.GetLabel();
     for( size_t j=0; j < list.Count(); j++ )  {
       if( list[j].Type->z > type->z )  {
         if( proposed_atoms != NULL )  {
@@ -436,13 +467,16 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
             break;
           }
         }
-        //              else  {
-        //              }
+        else {
+          type = list[j].Type;
+          break;
+        }
       }
     }
   }
   else if( lighter )  {
-    TBasicApp::NewLogEntry(logInfo) << "Searching element lighter for " << ca.GetLabel();
+    TBasicApp::NewLogEntry(logInfo) << "Searching element lighter for " <<
+      ca.GetLabel();
     for( size_t j=0; j < list.Count(); j++ )  {
       if( list[j].Type->z < type->z )  {
         if( proposed_atoms != NULL )  {
@@ -457,39 +491,25 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
             break;
           }
         }
-        //              else  {
-        //              }
+        else {
+          type = list[j].Type;
+          break;
+        }
       }
     }
   }
   for( size_t j=0; j < list.Count(); j++ )  {
     tmp << list[j].Type->symbol << '(' <<
-      olxstr::FormatFloat(3,1.0/(list[j].MeanFom()+0.001)) << ")" << list[j].hits[0].Fom;
+      olxstr::FormatFloat(3,1.0/(list[j].MeanFom()+0.001)) << ")" <<
+      list[j].hits[0].Fom;
     if( (j+1) < list.Count() )  tmp << ',';
   }
   if( type == NULL || *type == ca.GetType() )  return false;
-  int atc = stat.AtomTypeChanges;
-  if( proposed_atoms != NULL )  {
-    if( proposed_atoms->IndexOf(type) != InvalidIndex )  {
-      stat.AtomTypeChanges++;
-      ca.SetLabel(type->symbol, false);
-      ca.SetType(*type);
-    }
-  }
-  else if( BAIDelta != -1 )  {
-    if( abs(type->z - ca.GetType().z) < BAIDelta )  {
-      stat.AtomTypeChanges++;
-      ca.SetLabel(type->symbol, false);
-      ca.SetType(*type);
-    }
-  }
-  else  {
-    stat.AtomTypeChanges++;
-    ca.SetLabel(type->symbol, false);
-    ca.SetType(*type);
-  }
+  stat.AtomTypeChanges++;
+  ca.SetLabel(type->symbol, false);
+  ca.SetType(*type);
   TBasicApp::NewLogEntry(logInfo) << tmp;
-  return atc != stat.AtomTypeChanges;
+  return true;
 }
 
 };
