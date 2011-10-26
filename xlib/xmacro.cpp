@@ -2998,15 +2998,23 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
   }
   // generate moiety string if does not exist
-  Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
-  Cif->SetParam("_cell_formula_units_Z", xapp.XFile().GetAsymmUnit().GetZ(), false);
+  const olxstr cif_moiety = Cif->GetParamAsString("_chemical_formula_moiety");
+  if (cif_moiety.IsEmpty() || cif_moiety == '?') {
+    Cif->SetParam("_chemical_formula_moiety",
+      xapp.XFile().GetLattice().CalcMoiety(), true);
+  }
+  Cif->SetParam("_cell_formula_units_Z",
+    xapp.XFile().GetAsymmUnit().GetZ(), false);
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
-    Cif->SetParam("_space_group_crystal_system", sg->GetBravaisLattice().GetName().ToLowerCase(), true);
+    Cif->SetParam("_space_group_crystal_system",
+      sg->GetBravaisLattice().GetName().ToLowerCase(), true);
     Cif->SetParam("_space_group_name_Hall", sg->GetHallSymbol(), true);
     Cif->SetParam("_space_group_name_H-M_alt", sg->GetFullName(), true);
     Cif->SetParam("_space_group_IT_number", sg->GetNumber(), false);
-    if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
+    if( !sg->IsCentrosymmetric() &&
+        !Cif->ParamExists("_chemical_absolute_configuration") )
+    {
       bool flack_used = false;
       if( xapp.CheckFileType<TIns>() )  {
         const TIns& ins = xapp.XFile().GetLastLoader<TIns>();
