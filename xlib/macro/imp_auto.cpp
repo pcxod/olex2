@@ -47,7 +47,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
     folder.SetLength(0);
   }
   if( folder.IsEmpty() && olex::IOlexProcessor::GetInstance() != NULL )
-    ;//olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
+    olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
   // Qpeak rings analysis ...
   try  {
     TTypeList< TSAtomPList > rings;
@@ -194,10 +194,10 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
       vals.AddNew<double, TCAtomPList*>(0, new TCAtomPList);
       for( size_t i=SortedQPeaks.Count()-1; i >=1; i-- )  {
         if( (SortedQPeaks.GetKey(i) -
-             SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.05 )
+             SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.1 )
         {
           vals.GetLast().A() += SortedQPeaks.GetKey(i);
-          vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
+          vals.GetLast().B()->Add(SortedQPeaks.GetObject(i));
           cnt++;
           vals.GetLast().A() /= cnt;
           cnt = 0;
@@ -205,7 +205,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           continue;
         }
         vals.GetLast().A() += SortedQPeaks.GetKey(i);
-        vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
+        vals.GetLast().B()->Add(SortedQPeaks.GetObject(i));
         cnt ++;
       }
       vals.GetLast().B()->Add(SortedQPeaks.GetObject(0));
