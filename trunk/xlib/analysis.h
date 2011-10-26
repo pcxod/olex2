@@ -54,13 +54,36 @@ public:
         atoms.Add(a);
     }
     peaks.QuickSorter.SortSF(peaks, peak_sort);
-    size_t j=0;
-    while (atoms.Count() < mn && j < peaks.Count())
-      atoms.Add(peaks[j++]); 
-    for (size_t i=mn; i < atoms.Count(); i++)
-      atoms[i]->SetDeleted(true);
-    for (size_t i=j; i < peaks.Count(); i++)
-      peaks[i]->SetDeleted(true);
+    TTypeList<TCAtomPList> peak_ranges;
+    if (!peaks.IsEmpty())
+      peak_ranges.AddNew().Add(peaks.GetLast());
+    for (size_t i=peaks.Count()-2; i != InvalidIndex; i--) {
+      TCAtomPList &range = peak_ranges.GetLast();
+      TCAtom *cmpr = range.GetLast();
+      if (peaks[i]->GetQPeak()/cmpr->GetQPeak() < 1.25 &&
+          peaks[i]->GetQPeak()/range[0]->GetQPeak() < 2)
+        range.Add(peaks[i]);
+      else
+        peak_ranges.AddNew().Add(peaks[i]);
+    }
+    if (mn > atoms.Count()) {
+      size_t i = peak_ranges.Count();
+      while (--i !=InvalidIndex && mn > atoms.Count())
+        atoms.AddList(peak_ranges[i]);
+      for (; i != InvalidIndex; i--) {
+        TCAtomPList &range = peak_ranges[i];
+        for (size_t j=0; j < range.Count(); j++)
+          range[j]->SetDeleted(true);
+      }
+    }
+    else {
+      for (size_t i=mn; i < atoms.Count(); i++)
+        atoms[i]->SetDeleted(true);
+    }
+    if (atoms.Count() > mn*1.25) {
+      for (size_t i=mn; i < atoms.Count(); i++)
+        atoms[i]->SetDeleted(true);
+    }
     return true;
   }
 
@@ -91,39 +114,18 @@ public:
     return res;
   }
 
-  static double estimate_r(TLattice &latt, const TSAtom &a) {
-    TTypeList<AnAssociation2<const TCAtom *, vec3d> > res;
-    latt.GetUnitCell().FindInRangeAC(a.ccrd(), 3.0, res);
-    res.QuickSorter.Sort(res, AC_Sort(a.crd()));
-    double r = 0, ref_r = 0;
-    size_t cnt = 0;
-    if ( res.Count() > 1 ) {
-      r = ref_r = (res[1].GetB()-a.crd()).Length();
-      cnt++;
-    }
-    for (size_t i=2; i < res.Count(); i++) {
-      double d = (res[i].GetB()-a.crd()).Length();
-      if (d > 1.1*ref_r) break;
-      r += d;
-      cnt++;
-      ref_r = d;
-    }
-    if (cnt > 0)
-      r /= cnt;
-    return r;
-  }
-
   static void funTrim(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(trim_18(TXApp::GetInstance().XFile().GetAsymmUnit()));
   }
 
   static void funFindScale(const TStrObjList& Params, TMacroError& E)  {
+    bool apply = Params.IsEmpty() ? false : Params[0].ToBool();
     TLattice &latt = TXApp::GetInstance().XFile().GetLattice();
     double scale = find_scale(latt);
     if (scale > 0) {
       for (size_t i=0; i < latt.GetObjects().atoms.Count(); i++) {
         TSAtom &a = latt.GetObjects().atoms[i];
-        if (a.GetType() == iQPeakZ) {
+        if (a.GetType() == iQPeakZ && apply) {
           int z = olx_round(a.CAtom().GetQPeak()*scale);
           cm_Element *tp = XElementLib::FindByZ(z),
              *tp1 = NULL;
@@ -135,131 +137,12 @@ public:
             {
               tp1 = XElementLib::PrevGroup(7, tp);
             }
-            a.CAtom().SetType( tp1 == NULL ? *tp : *tp1);
+            a.CAtom().SetType(tp1 == NULL ? *tp : *tp1);
           }
         }
       }
     }
     E.SetRetVal(scale);
-  }
-
-  static void funEstomateR(const TStrObjList& Params, TMacroError& E)  {
-    TXApp &app = TXApp::GetInstance();
-    if (Params.Count()==1 && TEFile::IsDir(Params[0])) {
-      TFileTree ft(Params[0]);
-      ft.Expand();
-      TStrList files;
-      ft.GetRoot().ListFiles(files, "*.cif");
-      TTypeList<TArrayList<double> > res(120, false);
-      TArrayList<int> tmp_array;
-      for (size_t i=0; i < files.Count(); i++) {
-        try {
-          app.Update();
-          app.XFile().LoadFromFile(files[i]);
-          TLattice &l = app.XFile().GetLattice();
-          for (size_t j=0; j < l.GetObjects().atoms.Count(); j++) {
-            TSAtom &a = l.GetObjects().atoms[j];
-            if (a.GetType().z < 2)
-              a.CAtom().SetDeleted(true);
-          }
-          for (size_t j=0; j < l.GetObjects().atoms.Count(); j++) {
-            TSAtom &a = l.GetObjects().atoms[j];
-            if (a.IsDeleted()) continue;
-            if (res.IsNull(a.GetType().index)) {
-              res.Set(a.GetType().index, new TArrayList<double>(326, OlxZeroInitialiser()));
-            }
-            tmp_array.SetCount(res[a.GetType().index].Count());
-            tmp_array.ForEach(OlxZeroInitialiser());
-            TTypeList<AnAssociation2<const TCAtom *, vec3d> > envi;
-            l.GetUnitCell().FindInRangeAC(a.ccrd(), 4.0, envi);
-            size_t cnt = 0;
-            for (size_t ei=1; ei < envi.Count(); ei++) {
-              double d = (envi[ei].GetB()-a.crd()).Length();
-              if (d>0.75 && d<4) {
-                tmp_array[olx_round(100*(d-0.75))] ++;
-                cnt++;
-              }
-            }
-            if (cnt > 0) {
-              for (size_t ai=0; ai < tmp_array.Count(); ai++) {
-                res[a.GetType().index][ai] += (double)tmp_array[ai]/cnt;
-              }
-            }
-          }
-        }
-        catch(const TExceptionBase &e) {
-          app.NewLogEntry() << (olxstr("Processing: ").quote() << files[i]);
-          TStrList st;
-          e.GetException()->GetStackTrace(st);
-          app.NewLogEntry() << st;
-        }
-      }
-      TCStrList out;
-      bool header_saved = false;
-      for (size_t i=0; i < res.Count(); i++) {
-        if (res.IsNull(i)) continue;
-        double mv = 0;
-        for (size_t j=0; j < res[i].Count(); j++) {
-          if (res[i][j] > mv)
-            mv = res[i][j];
-        }
-        if (mv == 0) continue;
-        if (!header_saved) {
-          olxcstr &header = out.Add("Symbol");
-          for (size_t j=0; j < res[i].Count(); j++) {
-            header << ' ' << olxcstr::FormatFloat(2, (0.75 + (double)j/100));
-          }
-          header_saved = true;
-        }
-        TCStrList e_out;
-        olxcstr &line = out.Add(XElementLib::GetByIndex((short)i).symbol);
-        for (size_t j=0; j < res[i].Count(); j++) {
-          line << ' ' << olxcstr::FormatFloat(2, (100.0*res[i][j])/mv);
-          e_out.Add((0.75 + (double)j/100)) << '\t' << (100.0*res[i][j])/mv;
-        }
-        e_out.SaveToFile(olxstr("c:/tmp/") <<
-          XElementLib::GetByIndex((short)i).symbol << ".xlt");
-      }
-      out.SaveToFile(olxstr("c:/ad.xlt"));
-    }
-    TSAtomPList res;
-    app.FindSAtoms(EmptyString(), res, false);
-    if (res.Count() == 1)
-      E.SetRetVal(estimate_r(app.XFile().GetLattice(), *res[0]));
-  }
-
-  static void funAnalyseR(const TStrObjList& Params, TMacroError& E)  {
-    TXApp &app = TXApp::GetInstance();
-    TStrList ad;
-    ad.LoadFromFile(olxstr("c:/ad.xlt"));
-    TSAtomPList res;
-    app.FindSAtoms(EmptyString(), res, false);
-    if (res.Count() == 1) {
-      TTypeList<AnAssociation2<const TCAtom *, vec3d> > envi;
-      app.XFile().GetLattice().GetUnitCell().FindInRangeAC(
-        res[0]->ccrd(), 4.0, envi);
-      envi.QuickSorter.Sort(envi, AC_Sort(res[0]->crd()));
-      TTypeList<AnAssociation2<double, olxstr> > hits;
-      for (size_t i=1; i < ad.Count(); i++) {
-        TStrList lt(ad[i], ' ');
-        double sum = 0, weight=0;
-        for (size_t ei=1; ei < envi.Count(); ei++) {
-          double d = (envi[ei].GetB()-res[0]->crd()).Length();
-          if (d>0.75 && d<4) {
-            int ci = olx_round(100*(d-0.75));
-            double tv = lt[ci+1].ToDouble();
-            double w = 1./(100*olx_sqr(d*5));
-            sum += tv*w;
-            weight += w;
-          }
-        }
-        if (weight>0)
-          hits.AddNew(sum/weight, lt[0]);
-      }
-      hits.QuickSorter.SortSF(hits, &hr_sort);
-      for (size_t i=0; i < hits.Count(); i++)
-        TBasicApp::NewLogEntry() << hits[i].GetB() << ": " << hits[i].GetA();
-    }
   }
 
   static TLibrary *ExportLibrary(const olxstr& name="analysis")  {
@@ -273,16 +156,6 @@ public:
       new TStaticFunction(&Analysis::funFindScale, "Scale", fpNone|fpOne,
       "Scales the Q-peaks according to found fragments."
       "Returns the scale or 0")
-    );
-    lib->RegisterStaticFunction(
-      new TStaticFunction(&Analysis::funEstomateR, "EstimateR", fpNone|fpOne,
-      "Estimates radius of the given atom by analying its environment."
-      "Returns radius or 0")
-    );
-    lib->RegisterStaticFunction(
-      new TStaticFunction(&Analysis::funAnalyseR, "AnalyseR", fpNone|fpOne,
-      "Estimates radius of the given atom by analying its environment."
-      "Returns radius or 0")
     );
     return lib;
   }
