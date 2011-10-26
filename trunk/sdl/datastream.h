@@ -132,6 +132,7 @@ public:
   virtual void Flush()  { }
 
   inline IDataOutputStream& operator << ( char v )                   {  return writeType(v);  }
+  inline IDataOutputStream& operator << ( unsigned char v )          {  return writeType(v);  }
   inline IDataOutputStream& operator << ( short int v )              {  return writeType(v);  }
   inline IDataOutputStream& operator << ( unsigned short int v )     {  return writeType(v);  }
   inline IDataOutputStream& operator << ( int v )                    {  return writeType(v);  }

@@ -1044,14 +1044,16 @@ cm_Element& XElementLib::GetByIndex(short ind) {
 }
 //..............................................................................
 cm_Element* XElementLib::FindByZ(short z) {
-  if (z < 0 || z > iMaxElementIndex )  return NULL;
+  if (z <= 0 || z > iMaxElementIndex )  return NULL;
   int idx = z;
   while (cm_Elements[idx].z < z && ++idx < iMaxElementIndex)
     ;
-  if (idx < iMaxElementIndex) return &cm_Elements[idx];
+  if (idx < iMaxElementIndex && cm_Elements[idx].z == z)
+    return &cm_Elements[idx];
   while (cm_Elements[idx].z > z && --idx > 0)
     ;
-  if (idx >= 0) return &cm_Elements[idx];
+  if (idx >= 0 && cm_Elements[idx].z == z)
+    return &cm_Elements[idx];
   return NULL;
 }
 //..............................................................................
