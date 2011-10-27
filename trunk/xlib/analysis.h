@@ -20,18 +20,6 @@ class Analysis {
   static int peak_sort(const TCAtom *a1, const TCAtom *a2) {
     return olx_cmp(a2->GetQPeak(), a1->GetQPeak());
   }
-  struct AC_Sort {
-    vec3d center;
-    AC_Sort(const vec3d &_center) : center(_center) {}
-    int Compare(
-      const AnAssociation2<const TCAtom *, vec3d> *a1,
-      const AnAssociation2<const TCAtom *, vec3d> *a2) const
-    {
-      return olx_cmp(
-        center.QDistanceTo(a1->GetB()),
-        center.QDistanceTo(a2->GetB()));
-    }
-  };
   static int hr_sort(
     const AnAssociation2<double, olxstr> *a1,
     const AnAssociation2<double, olxstr> *a2)
