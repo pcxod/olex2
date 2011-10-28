@@ -177,13 +177,13 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\no_py\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">$(Configuration)\no-python\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(Platform)\$(Configuration)\no_py\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">$(Configuration)\no-python\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">$(Platform)\$(Configuration)\no_py\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\lib</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'">$(Configuration)\no-python\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|x64'">$(SolutionDir)$(Platform)\$(Configuration)\lib</OutDir>
