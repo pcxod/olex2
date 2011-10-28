@@ -493,6 +493,19 @@ public:
       Add(Str);
     return *this;
   }
+
+  template <class Functor> const TTStrList& ForEach(const Functor& f) const {
+    for( size_t i=0; i < Strings.Count(); i++ )
+      f.OnItem(*Strings[i], i);
+    return *this;
+  }
+
+  template <class Functor>
+  const TTStrList& ForEachString(const Functor& f) const {
+    for( size_t i=0; i < Strings.Count(); i++ )
+      f.OnItem(Strings[i]->String, i);
+    return *this;
+  }
 };
 
 
