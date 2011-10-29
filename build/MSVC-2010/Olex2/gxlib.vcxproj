@@ -243,7 +243,7 @@
     </Midl>
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswd;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\mswd;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -285,7 +285,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\msw;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\msw;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -421,7 +421,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\mswud;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;_NO_PYTHON;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>

@@ -16,7 +16,7 @@
 class TLangDict  {
   TSStrPObjList<olxstr,olxstr*, true> Records;
   olxstr CurrentLanguage, CurrentLanguageEncodingStr;
-  int CurrentLanguageIndex;
+  size_t CurrentLanguageIndex;
 protected:
   void Clear();
 public:
