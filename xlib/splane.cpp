@@ -37,10 +37,21 @@ void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
 void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
   vec3d rms;
   CalcPlanes(points, Normals, rms, Center, true);
-  Distance = GetNormal().DotProd(Center)/GetNormal().Length();
-  Normals[0].Normalise();
-  Normals[1] = (points[0].GetA() - Center).Normalise();
+  const double nl = GetNormal().Length();
+  Distance = GetNormal().DotProd(Center)/nl;
+  Normals[0] /= nl;
+  double max_qd = 0;
+  size_t m_i = 0;
+  for (size_t i=0; i < points.Count(); i++) {
+    double qd = (points[i].GetA() - Center).QLength();
+    if (qd > max_qd) {
+      m_i = i;
+      max_qd = qd;
+    }
+  }
+  Normals[1] = (points[m_i].GetA() - Center).Normalise();
   Normals[2] = Normals[0].XProdVec(Normals[1]).Normalise();
+  Normals[1] = Normals[2].XProdVec(Normals[0]).Normalise();
   wRMSD = rms[0];
 }
 //..............................................................................
