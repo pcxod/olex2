@@ -63,15 +63,14 @@ void TXPlane::Create(const olxstr& cName)  {
     const mat3d transform = GetBasis();
     if( !IsRegular() )  {
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
-        const vec3d* crd = sp.sortedPlane.GetObject(i);
-        GlP.Vertices[i] = transform*GetNormal().Normal((*crd-GetCenter()));
+        GlP.Vertices[i] = transform*GetNormal().Normal(
+          sp.sortedPlane[i]-GetCenter());
       }
     }
     else  {
       double maxrs = 0;
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
-        const vec3d* crd = sp.sortedPlane.GetObject(i);
-        const double qd = (*crd-GetCenter()).QLength();
+        const double qd = (sp.sortedPlane[i]-GetCenter()).QLength();
         if( qd > maxrs )
           maxrs = qd;
       }

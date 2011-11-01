@@ -1046,7 +1046,7 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   pl.vecs[start] = crd();
   pl.vecs[start+1] = plane.GetCenter();
   for( size_t i=0; i < sp.sortedPlane.Count(); i++ )
-    pl.vecs[start+i+2] = *sp.sortedPlane.GetObject(i);
+    pl.vecs[start+i+2] = sp.sortedPlane[i];
   // create the base
   for( size_t i=0; i < sp.sortedPlane.Count()-1; i++ )
     pl.faces.AddNew(start+1, start+i+2, start+i+3);

@@ -500,6 +500,9 @@
     <ClInclude Include="..\..\..\sdl\constlist.h">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\math\plane.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
