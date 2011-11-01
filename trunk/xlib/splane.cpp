@@ -44,7 +44,7 @@ void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
   double max_qd = 0;
   size_t m_i = 0;
   for (size_t i=0; i < points.Count(); i++) {
-    double qd = (points[0].GetA() - Center).QLength();
+    double qd = (points[i].GetA() - Center).QLength();
     if (qd > max_qd) {
       m_i = i;
       max_qd = qd;
