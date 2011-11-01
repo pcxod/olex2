@@ -135,7 +135,9 @@ void TXFile::LastLoaderChanged() {
   OnFileLoad.Exit(this, &FLastLoader->GetFileName());
 }
 //..............................................................................
-bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data) {
+bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
+  const IEObject* Data)
+{
   if( MsgId == XFILE_SG_Change )  {
     if( Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup) )
       throw TInvalidArgumentException(__OlxSourceInfo, "space group");
@@ -207,7 +209,9 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
     delete FLastLoader;
   }
   FLastLoader = Loader;
-  if( GetRM().GetHKLSource().IsEmpty() || !TEFile::Exists(GetRM().GetHKLSource()) )  {
+  if( GetRM().GetHKLSource().IsEmpty() ||
+     !TEFile::Exists(GetRM().GetHKLSource()) )
+  {
     olxstr src = TXApp::GetInstance().LocateHklFile();
     if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
       src.SetLength(0);
@@ -258,8 +262,9 @@ void TXFile::Sort(const TStrList& ins)  {
   if( h_cnt == 0 || del_h_cnt != 0 )  {
     keeph = false;
     if( del_h_cnt != 0 && free_h_cnt != 0 )  {
-      TBasicApp::NewLogEntry(logError) << "Hydrogen atoms, which are not attached using AFIX will "
-        "not be kept with pivot atom until the file is reloaded";
+      TBasicApp::NewLogEntry(logError) << "Hydrogen atoms, which are not "
+        "attached using AFIX will not be kept with pivot atom until the file "
+        "is reloaded";
     }
   }
   try {
@@ -325,7 +330,8 @@ void TXFile::Sort(const TStrList& ins)  {
     TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
   if( !FLastLoader->IsNative() )  {
-    AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
+    AtomSorter::SyncLists(list,
+      FLastLoader->GetAsymmUnit().GetResidue(0).GetAtomList());
     FLastLoader->GetAsymmUnit().ComplyToResidues();
   }
   // this changes Id's !!! so must be called after the SyncLists
@@ -364,7 +370,8 @@ void TXFile::ValidateTabs()  {
       }
     }
     if( !hasH )  {  
-      TBasicApp::NewLogEntry() << "Removing HTAB (donor has no H atoms): " << it.InsStr();
+      TBasicApp::NewLogEntry() << "Removing HTAB (donor has no H atoms): "
+        << it.InsStr();
       RefMod.DeleteInfoTab(i--);  
       continue;  
     }
@@ -391,8 +398,10 @@ void TXFile::SaveToFile(const olxstr& FN, bool Sort)  {
   TBasicCFile *LL = FLastLoader;
   if( !Loader->IsNative() )  {
     if( LL != Loader ) {
-      if( !Loader->Adopt(*this) )
-        throw TFunctionFailedException(__OlxSourceInfo, "could not adopt specified file format");
+      if( !Loader->Adopt(*this) ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "could not adopt specified file format");
+      }
     }
     else
       UpdateAsymmUnit();
@@ -511,10 +520,12 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
         E.ProcessingError(__OlxSrcInfo, "invalid formula syntax" );
         return;
       }
-      const cm_Element* elm = XElementLib::FindBySymbol(toks[i].SubStringTo(ind));
+      const cm_Element* elm =
+        XElementLib::FindBySymbol(toks[i].SubStringTo(ind));
       if( elm == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "element");
-      content.AddNew(*elm, toks[i].SubStringFrom(ind+1).ToDouble()*GetAsymmUnit().GetZ());
+      content.AddNew(*elm,
+        toks[i].SubStringFrom(ind+1).ToDouble()*GetAsymmUnit().GetZ());
     }
     if( content.IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "empty SFAC - check formula syntax");
@@ -531,7 +542,8 @@ void TXFile::LibEndUpdate(const TStrObjList& Params, TMacroError& E)  {
 void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
   TIns* oins = (TIns*)FLastLoader;
   TIns ins;
-  UpdateAsymmUnit();  // needs to be called to assign the loaderIds for new atoms
+  // needs to be called to assign the loaderIds for new atoms
+  UpdateAsymmUnit();
   ins.GetRM().Assign( GetRM(), true );
   ins.AddIns("FMAP 2", ins.GetRM());
   ins.GetRM().SetRefinementMethod("L.S.");
@@ -576,7 +588,8 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
       GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
     mu += (cont[i].count*cont[i].element.GetMr())*v;
   }
-  mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume()/GetAsymmUnit().GetZPrime();
+  mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume()/
+    GetAsymmUnit().GetZPrime();
   mu /= 6.022142;
   E.SetRetVal(olxstr::FormatFloat(3,mu));
 }
@@ -586,38 +599,56 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
 
   lib->RegisterFunction<TXFile>(
     new TFunction<TXFile>(this, &TXFile::LibGetFormula, "GetFormula",
-    fpNone|fpOne|fpTwo|psFileLoaded,
-"Returns a string for content of the asymmetric unit. Takes single or none parameters.\
- If parameter equals 'html' and html formatted string is returned, for 'list' parameter\
- a string like 'C:26,N:45' is returned. If no parameter is specified, just formula is returned") );
+      fpNone|fpOne|fpTwo|psFileLoaded,
+      "Returns a string for content of the asymmetric unit. Takes single or "
+      "none parameters. If parameter equals 'html' and html formatted string is" 
+      " returned, for 'list' parameter a string like 'C:26,N:45' is returned. "
+      "If no parameter is specified, just formula is returned")
+   );
 
-  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula",
-    fpOne|psCheckFileTypeIns,
-"Sets formula for current file, takes a string of the following form 'C:25,N:4'") );
+  lib->RegisterFunction<TXFile>(
+    new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula",
+      fpOne|psCheckFileTypeIns,
+      "Sets formula for current file, takes a string of the following form "
+      "'C:25,N:4'")
+  );
 
-  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate",
-    fpNone|psCheckFileTypeIns,
-"Must be called after the content of the asymmetric unit has changed - this function will\
- update the program state") );
+  lib->RegisterFunction<TXFile>(
+    new TFunction<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate",
+      fpNone|psCheckFileTypeIns,
+      "Must be called after the content of the asymmetric unit has changed - "
+      "this function will update the program state")
+  );
 
-  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution",
-    fpOne|psCheckFileTypeIns,
-"Saves current Q-peak model to provided file (res-file)") );
+  lib->RegisterFunction<TXFile>(
+    new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution",
+      fpOne|psCheckFileTypeIns,
+      "Saves current Q-peak model to provided file (res-file)")
+  );
 
-  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataCount, "DataCount",
-    fpNone|psFileLoaded,
-"Returns number of available data sets") );
+  lib->RegisterFunction<TXFile>(
+    new TFunction<TXFile>(this,  &TXFile::LibDataCount, "DataCount",
+      fpNone|psFileLoaded,
+      "Returns number of available data sets")
+  );
 
-  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibDataName, "DataName",
-    fpOne|psCheckFileTypeCif,
-"Returns data name for given CIF block") );
+  lib->RegisterFunction<TXFile>(
+    new TFunction<TXFile>(this,  &TXFile::LibDataName, "DataName",
+      fpOne|psCheckFileTypeCif,
+      "Returns data name for given CIF block")
+  );
   
-  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibCurrentData, "CurrentData",
-    fpNone|fpOne|psCheckFileTypeCif,
-"Returns current data index or changes current data block within the CIF") );
-  lib->RegisterFunction<TXFile>(new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
-    fpNone|psFileLoaded,
-"Changes current data block within the CIF") );
+  lib->RegisterFunction<TXFile>(
+    new TFunction<TXFile>(this,  &TXFile::LibCurrentData, "CurrentData",
+      fpNone|fpOne|psCheckFileTypeCif,
+      "Returns current data index or changes current data block within the CIF")
+  );
+  
+  lib->RegisterFunction<TXFile>(
+    new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
+      fpNone|psFileLoaded,
+      "Changes current data block within the CIF")
+  );
   
   lib->AttachLibrary(Lattice.GetAsymmUnit().ExportLibrary());
   lib->AttachLibrary(Lattice.GetUnitCell().ExportLibrary());
@@ -638,8 +669,10 @@ TXFile::NameArg TXFile::ParseName(const olxstr& fn)  {
   if( hi == InvalidIndex && ui == InvalidIndex )
     return rv;
   if( di != InvalidIndex )  {
-    if( hi != InvalidIndex && ui != InvalidIndex && di < hi && di < ui )
-      throw TInvalidArgumentException(__OlxSourceInfo, "only one data ID is allowed");
+    if( hi != InvalidIndex && ui != InvalidIndex && di < hi && di < ui ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "only one data ID is allowed");
+    }
     if( hi != InvalidIndex && di < hi )  {
       rv.data_name = fn.SubStringFrom(hi+1);
       rv.file_name = fn.SubStringTo(hi);
@@ -652,8 +685,10 @@ TXFile::NameArg TXFile::ParseName(const olxstr& fn)  {
     }
   }
   else  {
-    if( hi != InvalidIndex && ui != InvalidIndex )
-      throw TInvalidArgumentException(__OlxSourceInfo, "only one data ID is allowed");
+    if( hi != InvalidIndex && ui != InvalidIndex ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "only one data ID is allowed");
+    }
     if( hi != InvalidIndex )  {
       rv.data_name = fn.SubStringFrom(hi+1);
       rv.file_name = fn.SubStringTo(hi);

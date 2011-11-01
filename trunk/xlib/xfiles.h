@@ -32,7 +32,9 @@ public:
   RefinementModel& GetRM()  {  return RefMod;  }
   DefPropC(olxstr, Title)
   const olxstr& GetFileName() const {  return FileName; }
-  // this function could be constm but many file handlers might do some preprocessing of chanegs before flushing...
+  /* this function could be const, but many file handlers might do some
+  preprocessing of changes before flushing...
+  */
   virtual void SaveToStrings(TStrList& Strings) = 0;
   virtual void LoadFromStrings(const TStrList& Strings) = 0;
   virtual void SaveToFile(const olxstr& fileName);
@@ -54,7 +56,8 @@ protected:
   TStrPObjList<olxstr,TBasicCFile*> FileFormats;
   TBasicCFile *FLastLoader;
   TSpaceGroup* FSG;
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data=NULL);
   void ValidateTabs();
 public:
   TXFile(ASObjectProvider& Objects);
@@ -97,7 +100,9 @@ public:
   inline void SetLastLoader(TBasicCFile* ll)  {  FLastLoader = ll;  }
   // returns true if a file is loaded
   inline bool HasLastLoader() const {  return FLastLoader != NULL;  }
-  // returns lat loader object to access properties of the base class if type is not required
+  /* returns last loader object to access properties of the base class if type
+  is not required
+  */
   TBasicCFile* LastLoader() const {  return FLastLoader;  }
   void UpdateAsymmUnit();
   /* Generic sort procedure, taking string instructions...
@@ -109,7 +114,9 @@ public:
   // clears the last loader and the model
   void Close();
   // returns last loaded file name (if any) or empty string 
-  const olxstr& GetFileName() const {  return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString();  }
+  const olxstr& GetFileName() const {
+    return FLastLoader != NULL ? FLastLoader->GetFileName() : EmptyString();
+  }
 
   void EndUpdate();
   void LastLoaderChanged();  // performs complete reinitialisation
