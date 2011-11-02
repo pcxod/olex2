@@ -491,7 +491,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       sglist << FoundSpaceGroups[i]->GetName() << ';';
       tmp = "  ";
       tmp << FoundSpaceGroups[i]->GetName();
-      tmp.Format(10, true, ' ');
+      tmp.RightPadding(10, ' ', true);
       tmp << "(#" << FoundSpaceGroups[i]->GetNumber() << ", Laue class " <<
       FoundSpaceGroups[i]->GetLaueClass().GetBareName() << ", Point group " <<
       FoundSpaceGroups[i]->GetPointGroup().GetBareName() << ')';

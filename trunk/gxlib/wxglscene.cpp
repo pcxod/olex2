@@ -274,7 +274,7 @@ void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos)  {
     prefix << "rb";
   else
     prefix << "r";
-  prefix.Format(4, true, '_');
+  prefix.RightPadding(4, '_');
   for( int i=TwxGlScene_MinFontSize; i <= TwxGlScene_MaxFontSize; i+=1 )  {
     fnt.SetPointSize(i);
     TwxGlScene_RipFont(fnt, glf, ba);

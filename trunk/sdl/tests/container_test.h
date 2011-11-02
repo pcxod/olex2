@@ -12,6 +12,7 @@
 #include "../estack.h"
 #include "../typelist.h"
 #include "../talist.h"
+#include "../bitarray.h"
 
 namespace test {
 
@@ -251,6 +252,40 @@ struct ConstListTest {
   }
 };
 //.........................................................................
+void BitArrayTest(OlxTests& t)  {
+  t.description = __FUNC__;
+  TEBitArray br(16);
+  for (size_t i=0; i < br.Count(); i++) {
+    if ((i%2)==0)
+      br.SetTrue(i);
+  }
+  const char*res[17] = {
+    "101010101010101",
+    "11111111",
+    "0502050205",
+    "05050505",
+    "211021",
+    "021021005",
+    "085042001",
+    "085085",
+    "03410042",
+    "03410021",
+    "13650010",
+    "0136500005",
+    "0546100002",
+    "0546100001",
+    "021845",
+    "021845",
+    "021845"
+  };
+  for (int i=0; i < 17; i++) {
+    if (br.FormatString(i+1) != res[i]) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr(br.FormatString(i+1)) << " != " << res[i]);
+    }
+  }
+}
+//.........................................................................
 void ContainerTests(OlxTests& t)  {
   t.Add(&test::ListTests<TArrayList<int> >)
     .Add(&test::ListTests<TTypeList<int> >)
@@ -259,7 +294,8 @@ void ContainerTests(OlxTests& t)  {
     Add(&test::QueueTest).
     Add(&test::StackTest).
     Add(&test::SharedListTest).
-    Add(new ConstListTest, &ConstListTest::ContainerTests);
+    Add(new ConstListTest, &ConstListTest::ContainerTests).
+    Add(&test::BitArrayTest);
 }
 //.........................................................................
 };  // namespace test

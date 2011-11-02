@@ -655,7 +655,7 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   lib->AttachLibrary(Lattice.ExportLibrary());
   lib->AttachLibrary(RefMod.expl.ExportLibrary());
   lib->AttachLibrary(RefMod.ExportLibrary());
-  lib->AttachLibrary(Analysis::ExportLibrary());
+  lib->AttachLibrary(olx_analysis::Analysis::ExportLibrary());
   return lib;
 }
 //..............................................................................

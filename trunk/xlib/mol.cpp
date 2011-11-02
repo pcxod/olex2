@@ -29,8 +29,8 @@ olxstr TMol::MOLAtom(TCAtom& A)  {
   olxstr Tmp;
   const vec3d& v = A.ccrd();
   for( int i=0; i < 3; i++ )
-    Tmp << olxstr::FormatFloat(4, v[i]).Format(10, false, ' ');
-  Tmp << ' ' << olxstr(A.GetType().symbol).Format(3, true, ' ');
+    Tmp << olxstr::FormatFloat(4, v[i]).LeftPadding(10, ' ');
+  Tmp << ' ' << olxstr(A.GetType().symbol).RightPadding(3, ' ');
   for( int j=0; j < 12; j ++ )
     Tmp << "  0";
   return Tmp;
@@ -39,13 +39,13 @@ olxstr TMol::MOLAtom(TCAtom& A)  {
 olxstr TMol::MOLBond(TMolBond& B)  {
   olxstr Tmp, Tmp1;
   Tmp1 = B.AtomA+1;
-  Tmp1.Format(3, false, ' ');
+  Tmp1.LeftPadding(3, ' ');
   Tmp = Tmp1;
   Tmp1 = B.AtomB+1;
-  Tmp1.Format(3, false, ' ');
+  Tmp1.LeftPadding(3, ' ');
   Tmp << Tmp1;
   Tmp1 = B.BondType;
-  Tmp1.Format(3, false, ' '); // bond type single (1);
+  Tmp1.LeftPadding(3, ' '); // bond type single (1);
   Tmp << Tmp1;
   for( int j=0; j < 4; j ++ )
     Tmp << "  0";
@@ -58,10 +58,10 @@ void TMol::SaveToStrings(TStrList& Strings)  {
   Strings.Add(EmptyString());
   Strings.Add(EmptyString());
   Tmp1 = GetAsymmUnit().AtomCount();
-  Tmp1.Format(3, false, ' ');
+  Tmp1.LeftPadding(3, ' ');
   Tmp << Tmp1;
   Tmp1 = BondCount();
-  Tmp1.Format(3, false, ' ');
+  Tmp1.LeftPadding(3, ' ');
   Tmp << Tmp1;
   Tmp << "  0  0  0  0  0  0  0  0  0 V2000";
   Strings.Add(Tmp);
