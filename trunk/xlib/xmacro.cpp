@@ -1078,7 +1078,7 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     size_t ac = 0;
     for( size_t j=0; j < h.NodeCount(); j++ )  {
       TSAtom& n = h.Node(j);
-      if( !(n.IsDeleted() || n.GetType() == iQPeakZ) )  {
+      if( !(n.IsDeleted() || n.GetType().z < 2) )  {
         ac++;
         attached = &n;
       }
