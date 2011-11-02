@@ -403,7 +403,7 @@ void Index::PrintResults(const TTypeList<ResultEntry> &res)  {
     row2[1] << rc.ToString();
     row2[2] << olxstr::FormatFloat(2, res[i].niggli_volume) << "A^3";
   }
-  TBasicApp::GetLog() << tab.CreateTXTList("Search results", true, false, ' ');
+  TBasicApp::NewLogEntry() << tab.CreateTXTList("Search results", true, false, ' ');
 }
 //.............................................................................
 ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,

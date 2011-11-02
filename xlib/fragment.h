@@ -32,7 +32,7 @@ struct FragAtom {
     return *this;
   }
   olxstr ToString() const {
-    return (olxstr(label).Format(5, true, ' ') << "-1  "
+    return (olxstr(label).RightPadding(5, ' ', true) << "-1  "
       << olxstr::FormatFloat(-5, crd[0]) << ' '
       << olxstr::FormatFloat(-5, crd[1]) << ' '
       << olxstr::FormatFloat(-5, crd[2]));

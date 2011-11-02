@@ -1401,7 +1401,7 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           if( (i+j) >= FHelpItem->ItemCount() )
             break;
           Tmp << FHelpItem->GetItem(i+j).GetName();
-          Tmp.Format((j+1)*10, true, ' ');
+          Tmp.RightPadding((j+1)*10, ' ', true);
         }
         FGlConsole->PrintText(Tmp);
       }
@@ -1456,9 +1456,9 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     const mat3d& Matr = FXApp->GetRender().GetBasis().GetMatrix();
     for( size_t i=0; i < 3; i++ )  {
       olxstr Tmp;
-      Tmp << olxstr::FormatFloat(3, Matr[0][i]);  Tmp.Format(7, true, ' ');
-      Tmp << olxstr::FormatFloat(3, Matr[1][i]);  Tmp.Format(14, true, ' ');
-      Tmp << olxstr::FormatFloat(3, Matr[2][i]);  Tmp.Format(21, true, ' ');
+      Tmp << olxstr::FormatFloat(3, Matr[0][i]);  Tmp.RightPadding(7, ' ', true);
+      Tmp << olxstr::FormatFloat(3, Matr[1][i]);  Tmp.RightPadding(14, ' ', true);
+      Tmp << olxstr::FormatFloat(3, Matr[2][i]);  Tmp.RightPadding(21, ' ', true);
       TBasicApp::NewLogEntry() << Tmp;
     }
   }
@@ -2574,10 +2574,10 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     m.t += smatd::GetT(equivs[i]);
     olxstr line("$");
     line << (i+1);
-    line.Format(4, true, ' ') << TSymmParser::MatrixToSymmEx(m);
+    line.RightPadding(4, ' ', true) << TSymmParser::MatrixToSymmEx(m);
     if( i != 0 && (i%3) == 0 )
       TBasicApp::GetLog() << NewLineSequence();
-    TBasicApp::GetLog() << line.Format(26, true, ' ');
+    TBasicApp::GetLog() << line.RightPadding(26, ' ');
   }
   TBasicApp::GetLog() << NewLineSequence();
 
@@ -4625,7 +4625,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       for( size_t j=0; j < period; j++ )  {
         if( (j+i) >= Atoms.Count() )  break;
         Tmp << Atoms[i+j]->GetGuiLabel();
-        Tmp.Format((j+1)*14, true, ' ');
+        Tmp.RightPadding((j+1)*14, ' ', true);
       }
       if( !Tmp.IsEmpty() )
         TBasicApp::NewLogEntry() << Tmp;
@@ -4958,13 +4958,13 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           TBasicApp::NewLogEntry() << "The following atom(s) may be split:";
           for( size_t i=0; i < Lst.SplitAtomCount(); i++ )  {
             const TLstSplitAtom& SpA = Lst.SplitAtom(i);
-            Tmp = SpA.AtomName;  Tmp.Format(5, true, ' ');
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);  Tmp.Format(12, true, ' ');
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);  Tmp.Format(19, true, ' ');
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[2]);  Tmp.Format(26, true, ' ');
+            Tmp = SpA.AtomName;  Tmp.RightPadding(5, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);  Tmp.RightPadding(12, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);  Tmp.RightPadding(19, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[2]);  Tmp.RightPadding(26, ' ', true);
             Tmp << "& ";
-            Tmp << olxstr::FormatFloat(3, SpA.PositionB[0]);  Tmp.Format(35, true, ' ');
-            Tmp << olxstr::FormatFloat(3, SpA.PositionB[1]);  Tmp.Format(42, true, ' ');
+            Tmp << olxstr::FormatFloat(3, SpA.PositionB[0]);  Tmp.RightPadding(35, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionB[1]);  Tmp.RightPadding(42, ' ', true);
             Tmp << olxstr::FormatFloat(3, SpA.PositionB[2]);
             TBasicApp::NewLogEntry() << Tmp;
           }
@@ -4972,10 +4972,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( Lst.TrefTryCount() )  {
           TBasicApp::NewLogEntry() << "TREF tries:";
           olxstr Tmp1;
-          Tmp = "CFOM";  Tmp.Format(6, true, ' ');
+          Tmp = "CFOM";  Tmp.RightPadding(6, ' ', true);
           Tmp1 = Tmp;
-          Tmp = "NQual";  Tmp1 << Tmp.Format(10, true, ' ');
-          Tmp = "Try#";   Tmp1 << Tmp.Format(10, true, ' ');
+          Tmp = "NQual";  Tmp1 << Tmp.RightPadding(10, ' ', true);
+          Tmp = "Try#";   Tmp1 << Tmp.RightPadding(10, ' ', true);
           Tmp1 << "Semivariants";
           TBasicApp::NewLogEntry() << Tmp1;
           int tcount = 0;
@@ -4986,10 +4986,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
                 Lst.TrefTry(i-1).NQual == Lst.TrefTry(i).NQual )
                 continue;
             }
-            Tmp = Lst.TrefTry(i).CFOM;  Tmp.Format(6, true, ' ');
+            Tmp = Lst.TrefTry(i).CFOM;  Tmp.RightPadding(6, ' ', true);
             Tmp1 = Tmp;
-            Tmp = Lst.TrefTry(i).NQual;  Tmp1 << Tmp.Format(10, true, ' ');
-            Tmp = Lst.TrefTry(i).Try;    Tmp1 << Tmp.Format(10, true, ' ');
+            Tmp = Lst.TrefTry(i).NQual;  Tmp1 << Tmp.RightPadding(10, ' ', true);
+            Tmp = Lst.TrefTry(i).Try;    Tmp1 << Tmp.RightPadding(10, ' ', true);
             Tmp1 << Lst.TrefTry(i).Semivariants.FormatString(31);
             //Tmp1 += Lst.TrefTry(i).Semivariants.FormatString( Lst.TrefTry(i).Semivariants.Count() );
             TBasicApp::NewLogEntry() << Tmp1;
@@ -7228,7 +7228,7 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         Tmp1.SetLength(0);
         Tmp1 << '[' << sr.GetAtom(j).GetFullLabel(rm) << ',' << sr.GetAtom(j+1).GetFullLabel(rm) << ']';
-        Tmp << Tmp1.Format(11, true, ' ');
+        Tmp << Tmp1.RightPadding(11, ' ', true);
       }
       output.Add(Tmp);
     }
@@ -7245,7 +7245,7 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         Tmp1.SetLength(0);
         Tmp1 << '[' << sr.GetAtom(j).GetFullLabel(rm) << ',' << sr.GetAtom(j+1).GetFullLabel(rm) << ']';
-        Tmp << Tmp1.Format(11, true, ' ');
+        Tmp << Tmp1.RightPadding(11, ' ', true);
       }
       output.Add(Tmp);
     }
@@ -7262,7 +7262,7 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
         Tmp1.SetLength(0);
         Tmp1 << '[' << sr.GetAtom(j).GetFullLabel(rm) << ',' << sr.GetAtom(j+1).GetFullLabel(rm) << ']';
-        Tmp << Tmp1.Format(11, true, ' ');
+        Tmp << Tmp1.RightPadding(11, ' ', true);
       }
       output.Add(Tmp);
     }

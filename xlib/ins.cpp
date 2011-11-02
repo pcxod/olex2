@@ -1234,9 +1234,9 @@ void TIns::SavePattSolution(const olxstr& FileName,
   SL.Add(EmptyString());
   for( size_t i=0; i < atoms.Count(); i++ )  {
     olxstr& aline = SL.Add(atoms[i].GetName());
-    aline.Format(6, true, ' ');
+    aline.RightPadding(6, ' ', true);
     aline << (Sfacs[i]+1);
-    aline.Format(aline.Length()+4, true, ' ');
+    aline.RightPadding(aline.Length()+4, ' ', true);
     for( size_t j=0; j < 3; j++ )
       aline << olxstr::FormatFloat(-5, atoms[i].GetCrd()[j] ) << ' ';
     double v = atoms[i].GetOccup() + 10;
@@ -1339,13 +1339,13 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
 olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
   double v, Q[6];   // quadratic form of ellipsoid
   olxstr Tmp = CA.GetLabel();
-  Tmp.Format(6, true, ' ');
+  Tmp.RightPadding(6, ' ', true);
   if( SfacIndex < 0 )
     Tmp << CA.GetType().symbol;
   else
     Tmp << SfacIndex;
 
-  Tmp.Format(Tmp.Length()+4, true, ' ');
+  Tmp.RightPadding(Tmp.Length()+4, ' ', true);
   for( short j=0; j < 3; j++ )  {
     Tmp << olxstr::FormatFloat(-5,
       rm.Vars.GetParam(CA, catom_var_name_X+j)) << ' ';

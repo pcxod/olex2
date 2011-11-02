@@ -437,7 +437,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       olxstr tmp;
       for( size_t j=0; j < bl_hits.Count(); j++ )  {
         tmp = bl_hits.GetObject(j)->GetName();
-        tmp.Format(10, true, ' ');
+        tmp.RightPadding(10, ' ');
         tab[j/5][j%5] << tmp << ' ' << bl_hits.GetKey(j) << '/' << ref.Count();
       }
       tab.CreateTXTList(output, sl.GetBravaisLattice(i).GetName(), false, false, "  ");
@@ -488,7 +488,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
         SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
-        tmp << tmp1.Format(15, true, ' ');
+        tmp << tmp1.RightPadding(15, ' ', true);
         tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
@@ -523,7 +523,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       olxstr tmp, tmp1;
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
-        tmp << tmp1.Format(15, true, ' ');
+        tmp << tmp1.RightPadding(15, ' ', true);
         tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
@@ -543,7 +543,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
         SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
-        tmp << tmp1.Format(15, true, ' ');
+        tmp << tmp1.RightPadding(15, ' ', true);
         tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
@@ -1403,7 +1403,8 @@ void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   olxstr Tmp;
   for( size_t i=0; i < Ins.InsCount(); i++ )  {
     if( !remarks && Ins.InsName(i).Equalsi("REM") )  continue;
-    Tmp = i;  Tmp.Format(3, true, ' ');
+    Tmp = i;
+    Tmp.RightPadding(3, ' ', true);
     Tmp << Ins.InsName(i) << ' ' << Ins.InsParams(i).Text(' ');
     TBasicApp::NewLogEntry() << Tmp;
   }
@@ -2819,10 +2820,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     for( size_t i=0; i < _Translation_count; i++ )
       Translations.AddNew(_Translations[i*2], _Translations[i*2+1]);
   }
-  const size_t _loop_names_to_skip_count = 3;
-  static olxstr _loop_names_to_skip[_loop_names_to_skip_count] = {
-    "_atom_site", "_geom", "_space_group"
-  };
+  TStrList _loop_names_to_skip("_atom_site;_geom;_space_group", ';');
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
@@ -2987,13 +2985,17 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
       if( !e.HasName() )  continue;
       bool skip = false;
-      for( size_t k=0; k < _loop_names_to_skip_count; k++ )  {
-        if( e.GetName().StartsFromi(_loop_names_to_skip[k]) )  {
+      for( size_t k=0; k < _loop_names_to_skip.Count(); k++ )  {
+        olxstr i_name = e.GetName();
+        if(i_name.StartsFromi(_loop_names_to_skip[k]) &&
+          (i_name.Length()>_loop_names_to_skip[k].Length() &&
+           i_name.CharAt(_loop_names_to_skip[k].Length()) == '_'))
+        {
           skip = true;
           break;
         }
       }
-      if( ! skip )
+      if( !skip )
         Cif->SetParam(src[0].param_map.GetKey(j), e);
     }
   }
@@ -3931,7 +3933,7 @@ void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacr
     const TSPoint& point = ip.Point(i);
     if( point.Y < 0.001 )  break;
     olxstr Msg = point.X;
-    Msg.Format(11, true, ' ');
+    Msg.RightPadding(11, ' ');
     Msg << ": " << point.Y;
     xapp.NewLogEntry() << Msg;
   }
@@ -3942,7 +3944,7 @@ void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacr
     const TSPoint& point = ip.Point(i);
     if( point.Y < 1 )  continue;
     olxstr Msg = point.X;
-    Msg.Format(11, true, ' ');
+    Msg.RightPadding(11, ' ');
     Msg << "|";
     long yVal = olx_round(point.Y/2);
     for( long j=0; j < yVal; j++ )
@@ -4314,11 +4316,17 @@ void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   for( size_t i=0; i < atoms.Count(); i++ ) 
     atoms[i]->CAtom().SetTag(i);
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().GetDegeneracy() == 1)  continue;
+    if( atoms[i]->CAtom().GetTag() != i ||
+        atoms[i]->CAtom().GetDegeneracy() == 1)
+    {
+      continue;
+    }
     olxstr str(atoms[i]->CAtom().GetLabel());
-    TBasicApp::NewLogEntry() << str.Format(6, true, ' ') <<  atoms[i]->CAtom().GetDegeneracy();
+    TBasicApp::NewLogEntry() << str.RightPadding(6, ' ', true) <<
+      atoms[i]->CAtom().GetDegeneracy();
     for( size_t j=0; j < atoms[i]->CAtom().EquivCount(); j++ )  {
-      TBasicApp::NewLogEntry() << '\t' << TSymmParser::MatrixToSymmEx(atoms[i]->CAtom().GetEquiv(j));
+      TBasicApp::NewLogEntry() << '\t' <<
+        TSymmParser::MatrixToSymmEx(atoms[i]->CAtom().GetEquiv(j));
     }
     SiteSymmCon ssc = atoms[i]->CAtom().GetSiteConstraints();
     TBasicApp::GetLog() << "\tSite constraints: "; 

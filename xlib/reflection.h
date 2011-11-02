@@ -243,7 +243,7 @@ public:
   olxstr ToNString() const {
     olxstr Str(IsOmitted() ? '-' : '+', 80);
     Str << olx_abs(GetTag()) << '.';
-    return (Str.Format(7, true, ' ') << ToString());
+    return (Str.RightPadding(7, ' ', true) << ToString());
   }
 //..............................................................................
   bool FromString(const olxstr& Str);

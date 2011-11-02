@@ -789,6 +789,9 @@
     <ClCompile Include="..\..\..\xlib\lcells.cpp">
       <Filter>Source Files\lcells</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\analysis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">

@@ -151,33 +151,25 @@ TIString TEBitArray::ToString() const  {
 }
 //..............................................................................
 olxstr TEBitArray::FormatString(uint16_t bitsInSegment) const {
-  if( bitsInSegment == 0 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "bitsInSegment" );
+  if( bitsInSegment == 0 || bitsInSegment > 64)
+    throw TInvalidArgumentException(__OlxSourceInfo, "bitsInSegment");
   olxstr StrRepr;
-  StrRepr.SetCapacity( Count() + Count()/bitsInSegment + 1);
-//  for( size_t i=0; i < Count(); i++ )  {
-//    if( Get(i) )  StrRepr <<  '1';
-//    else          StrRepr <<  '0';
-//    if( !(i%bitsInSegment) && i )  StrRepr << ' ';
-//  }
-  uint32_t mask = 0;
-  size_t strlen=0;
-  for( uint16_t i=0; i < bitsInSegment/8+1; i++ )  {
-    if( !(i%3) )  strlen += 3;
-    else          strlen += 2;
-  }
+  StrRepr.SetCapacity(Count() + Count()/bitsInSegment + 1);
+  uint64_t mask = 0;
+  size_t strlen=bitsInSegment/3+1;
   for( size_t i=0; i < Count(); i++ )  {
-    if( !(i%bitsInSegment) )  {
-      if( i )  {
-        olxstr str(mask);
-        str.Format(strlen, false, '0');
-        StrRepr << str;// << ' ';
-      }
+    if( (i%bitsInSegment) == 0 && i > 0)  {
+      olxstr s(mask);
+      StrRepr << s.LeftPadding(strlen, '0');
       mask = 0;
     }
-    if( Get(i) )  mask |=  1 << (i%bitsInSegment);
+    if( Get(i) )
+      mask |=  (uint64_t)1 << (i%bitsInSegment);
   }
-  if( Count() % bitsInSegment ) StrRepr << mask;
+  if( mask != 0 ) {
+    olxstr s(mask);
+    StrRepr << s.LeftPadding(strlen, '0');
+  }
   return StrRepr;
 }
 //..............................................................................
