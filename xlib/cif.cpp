@@ -210,7 +210,7 @@ void TCif::Initialize()  {
       if( !temp.IsEmpty() && temp != '?' ) {
         TEValueD t_v(temp);
         t_v.V() -= 273.15;
-        GetRM().expl.SetTempValue(TEValueD(temp));
+        GetRM().expl.SetTempValue(t_v);
       }
       const olxstr radiation = GetParamAsString("_diffrn_radiation_wavelength");
       if( !radiation.IsEmpty() && radiation != '?' )
