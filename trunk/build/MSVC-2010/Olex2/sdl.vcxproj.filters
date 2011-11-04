@@ -503,6 +503,9 @@
     <ClInclude Include="..\..\..\sdl\math\plane.h">
       <Filter>Header Files\math</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\alg_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

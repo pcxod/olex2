@@ -20,13 +20,6 @@ BeginEsdlNamespace()
 template <typename> class SharedArrayList;
 template <typename> class ConstArrayList;
 
-struct OlxZeroInitialiser {
-  template <typename item_t>
-  void OnItem(item_t &item, size_t) const {
-    item = 0;
-  }
-};
-
 template <class T> class TArrayList : public IEObject {
 private:
   size_t FCount, FCapacity;

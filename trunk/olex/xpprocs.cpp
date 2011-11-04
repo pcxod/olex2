@@ -2701,19 +2701,18 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     fvar = fvv;
   }
   RefinementModel& rm = FXApp->XFile().GetRM();
-  TCAtomPList _atoms(FindXAtoms(Cmds, false, !Options.Contains("cs")),
+  TCAtomPList atoms(FindXAtoms(Cmds, false, !Options.Contains("cs")),
     TXAtom::CAtomAccessor<>());
-  ACollectionItem::Unique<>::Do(_atoms);
-  _atoms.ForEach(ACollectionItem::TagSetter<>(0));
-  for( size_t i=0; i < _atoms.Count(); i++ )  {
-    if( _atoms[i]->DependentHfixGroupCount() == 1 )  {
-      TAfixGroup &ag = _atoms[i]->GetDependentHfixGroup(0);
+  ACollectionItem::Unique<>::Do(atoms);
+  atoms.ForEach(ACollectionItem::TagSetter<>(0));
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    if( atoms[i]->DependentHfixGroupCount() == 1 )  {
+      TAfixGroup &ag = atoms[i]->GetDependentHfixGroup(0);
       for( size_t j=0; j < ag.Count(); j++ )
         ag[j].SetTag(1);
     }
   }
-  TCAtomPList atoms;
-  ListFilter::Filter(_atoms, atoms, ACollectionItem::TagAnalyser<>(0));
+  atoms.Pack(olx_alg::olx_not(ACollectionItem::TagAnalyser<>(0)));
   if( fvar == -1101 && ((atoms.Count()%2) != 0 || atoms.IsEmpty()) )  {
     rm.Vars.Validate();
     TBasicApp::NewLogEntry() << "Free variables: " << rm.Vars.GetFVARStr();

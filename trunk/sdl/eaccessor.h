@@ -28,17 +28,22 @@ struct DirectAccessor  {
     return item;
   }
 };
+
 template <typename CastType> struct CCastAccessor  {
-  template <typename Item> static inline const CastType& Access(const Item& item)  {
+  template <typename Item>
+  static inline const CastType& Access(const Item& item)  {
     return (const CastType&)item;
   }
-  template <typename Item> static inline CastType& Access(Item& item)  {
+  template <typename Item>
+  static inline CastType& Access(Item& item)  {
     return (CastType&)item;
   }
-  template <typename Item> static inline const CastType* Access(const Item* item)  {
+  template <typename Item>
+  static inline const CastType* Access(const Item* item)  {
     return (const CastType*)item;
   }
-  template <typename Item> static inline CastType* Access(Item* item)  {
+  template <typename Item>
+  static inline CastType* Access(Item* item)  {
     return (CastType*)item;
   }
 
@@ -153,6 +158,26 @@ struct FunctionAccessor {
   template <typename rv_t, typename base_t> static
   FunctionAccessor_<rv_t,base_t> Make(rv_t (base_t::*func)())  {
     return FunctionAccessor_<rv_t,base_t>(func);
+  }
+};
+
+template <typename item_t, class data_list_t>
+struct ConstIndexAccessor  {
+  const data_list_t &data;
+  ConstIndexAccessor(const data_list_t &data_) : data(data_) {}
+  template <typename IndexT>
+  inline const item_t& operator ()(const IndexT& idx) const {
+    return data[idx];
+  }
+};
+
+template <typename item_t, class data_list_t>
+struct IndexAccessor  {
+  data_list_t &data;
+  IndexAccessor(data_list_t &data_) : data(data_) {}
+  template <typename IndexT>
+  inline item_t& operator ()(const IndexT& idx) const {
+    return data[idx];
   }
 };
 

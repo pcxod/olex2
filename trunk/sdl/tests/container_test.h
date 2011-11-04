@@ -150,8 +150,8 @@ void SharedListTest(OlxTests& t)  {
   SharedTypeList<int> atlist, btlist(atlist), ctlist(atlist);
   SharedPtrList<const int> aplist, bplist;
   for( size_t i=0; i < aalist.Count(); i++ )  {
-    aalist[i] = i;
-    atlist.Add(new int) = i;
+    aalist[i] = int(i);
+    atlist.Add(new int) = int(i);
     aplist.Add(&(const int&)aalist[i]);
   }
   calist = aalist;
