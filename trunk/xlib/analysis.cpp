@@ -25,6 +25,32 @@ double alg::mean_u_eq(const TCAtomPList &atoms) {
   return (cnt > 1 ? v/cnt : v);
 }
 //.............................................................................
+olxstr alg::formula(const TCAtomPList &atoms, double mult) {
+  ElementPList elements;
+  ContentList cl;
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    const cm_Element& elm = atoms[i]->GetType();
+    if (atoms[i]->IsDeleted() || elm == iQPeakZ) continue;
+    const size_t ind = elements.IndexOf(elm);
+    if (ind == InvalidIndex)  {
+      cl.AddNew(elm, atoms[i]->GetOccu()*mult);
+      elements.Add(elm);
+    }
+    else
+      cl[ind] += atoms[i]->GetOccu()*mult;
+  }
+  XElementLib::SortContentList(cl);
+  olxstr rv;
+  for (size_t i=0; i < cl.Count(); i++)  {
+    rv << cl[i].element.symbol;
+    if( olx_abs(cl[i].count-1.0) > 1e-3 )
+      rv << olxstr::FormatFloat(3, cl[i].count).TrimFloat();
+    if( (i+1) < cl.Count() )
+      rv << ' ';
+  }
+  return rv;
+}
+//.............................................................................
 //.............................................................................
 void peaks::range::delete_all() {
   for (size_t i=0; i < peaks.Count(); i++)
@@ -120,14 +146,33 @@ void fragments::fragment::build_coordinate(
 }
 //.............................................................................
 ConstTypeList<vec3d> fragments::fragment::build_coordinates() const {
-  //pack();
-  vec3d_list set(atoms_.Count(), true);
-  if (atoms_.IsEmpty()) return set;
+  vec3d_list crds(atoms_.Count(), true);
+  if (atoms_.IsEmpty()) return crds;
   atoms_.ForEach(ACollectionItem::IndexTagSetter<>());
   build_coordinate(*atoms_[0],
     atoms_[0]->GetParent()->GetLattice().GetUnitCell().GetMatrix(0),
-    set);
-  return set;
+    crds);
+  if (generators.Count() > 1) { // grow missing coordinates
+    const TAsymmUnit &au = *atoms_[0]->GetParent();
+    crds.SetCapacity(crds.Count()*(generators.Count()));
+    const size_t crds_cnt = crds.Count();
+    for (size_t i=1; i < generators.Count(); i++) {
+      for (size_t j=0; j < crds_cnt; j++) {
+        vec3d v = au.Orthogonalise(
+          generators[i]*au.Fractionalise(crds[j]));
+        bool uniq = true;
+        for (size_t k=0; k < crds.Count(); k++) {
+          if (crds[k].Equals(v, 1e-3)) {
+            uniq = false;
+            break;
+          }
+        }
+        if (uniq)
+          crds.AddNew(v);
+      }
+    }
+  }
+  return crds;
 }
 //.............................................................................
 void fragments::fragment::init_generators() {
@@ -136,13 +181,34 @@ void fragments::fragment::init_generators() {
     atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_));
 }
 //.............................................................................
+bool fragments::fragment::is_polymeric() const {
+  if (generators.Count() < 3) return false;
+  smatd_list set(generators);
+  for (size_t i=1; i < set.Count(); i++) {
+    for (size_t j=i; j < set.Count(); j++) {
+      smatd m = set[i]*set[j];
+      bool uniq = true;
+      for (size_t k=0; k < set.Count(); k++) {
+        if (m.r == set[k].r) {
+          if (m.t.Equals(set[k].t, 1e-3)) {
+            uniq = false;
+            break;
+          }
+          else
+            return true;
+        }
+      }
+      if (uniq)
+        set.Add(m);
+    }
+  }
+  return false;
+}
+//.............................................................................
 bool fragments::fragment::is_regular() const {
   size_t ci = find_central_index();
   if (ci == InvalidIndex) return false;
   vec3d_list crds = build_coordinates();
-  if (is_polymeric()) { // grow missing coordinates
-    
-  }
   if (crds.Count() < 3) return true;
   if (crds.Count() == 3) { // check if 180 +- 10 degrees, linear arrangement
     TSizeList indices(3, list_init::index());
@@ -169,12 +235,41 @@ bool fragments::fragment::is_regular() const {
     if ((v1.CAngle(crds[indices[2]]-cnt)+0.5) > 0.16) return false; 
     return true;
   }
-  else { // spherical arrangement test
-    TSizeList indices(atoms_.Count()-1, list_init::index());
+  // some spherical arrangement test
+  else if (crds.Count() == 5 || crds.Count() == 7) {
+    TSizeList indices(crds.Count(), list_init::index());
     indices.Remove(ci);
     vec3d cnt = olx_mean<vec3d>::calc(
       indices, ConstIndexAccessor<vec3d, vec3d_list>(crds));
-
+    // check central atom is nearby the geometrical center
+    if (cnt.DistanceTo(crds[ci]) > 0.1) return false;
+    if (crds.Count() == 5) {
+      for (size_t i=0; i < indices.Count(); i++) {
+        vec3d pv = (crds[indices[i]]-crds[ci]);
+        for (size_t j=i+1; j < indices.Count(); j++) {
+          double ca = pv.CAngle((crds[indices[j]]-crds[ci]));
+          if ( olx_abs(ca+1./3) > 0.16) // cos(THA) = -1./3, +- 10
+            return false;
+        }
+      }
+      return true;
+    }
+    else {
+      size_t a90_cnt=0, a180_cnt=0;
+      for (size_t i=0; i < indices.Count(); i++) {
+        vec3d pv = (crds[indices[i]]-crds[ci]);
+        for (size_t j=i+1; j < indices.Count(); j++) {
+          double ca = pv.CAngle((crds[indices[j]]-crds[ci]));
+          if ( olx_abs(ca) < 0.17) // 90 +- 10
+            a90_cnt++;
+          else if ((ca+1) < 0.03) // 180 +- 10
+            a180_cnt++;
+          else
+            return false;
+        }
+      }
+      return a180_cnt == 3;
+    }
   }
   return false;
 }
@@ -183,7 +278,7 @@ size_t fragments::fragment::find_central_index() const {
   size_t idx = InvalidIndex;
   for (size_t i=0; i < atoms_.Count(); i++) {
     size_t sc = atoms_[i]->AttachedSiteCount();
-    if (sc == atoms_.Count())
+    if (sc >= atoms_.Count()-1 && sc != 1)
       idx = i;
     else if (sc != 1)
       return InvalidIndex;
@@ -197,28 +292,17 @@ bool fragments::fragment::is_flat() const {
   vec3d_list crds = build_coordinates();
   double rmsd = 0;
   const TAsymmUnit &au = *atoms_[0]->GetParent();
-  if (atoms_.Count() > 2) { 
-    TArrayList<AnAssociation2<vec3d, double> > points(crds.Count());
-    vec3d center;
-    rmsd = TSPlane::CalcPlane(points, n, center, plane_best);
-  }
-  else {
-    if (atoms_.Count() == 2)
-      n = crds[0]-crds[1];
-    else if (is_polymeric()) { // 1
-      n = crds[0] - au.Fractionalise(generators[0]*atoms_[0]->ccrd());
-    }
-  }
-  if (is_polymeric()) {
-    for (size_t i=0; i < generators.Count(); i++) {
-      vec3d tn = au.Orthogonalise(generators[i]*au.Fractionalise(n));
-      // are the transformed and the original normals colinear?
-      if (olx_abs(olx_abs(tn.CAngle(n))-1) > 0.02)
-        return false;
-    }
+  if (crds.Count() <= 3) { 
     return true;
   }
-  else {
+  else { 
+    TArrayList<AnAssociation2<vec3d, double> > points(crds.Count());
+    for (size_t i=0; i < crds.Count(); i++) {
+      points[i].A() = crds[i];
+      points[i].B() = 1;
+    }
+    vec3d center;
+    rmsd = TSPlane::CalcPlane(points, n, center, plane_best);
     return rmsd < 0.05;
   }
 }

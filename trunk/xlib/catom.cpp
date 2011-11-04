@@ -380,7 +380,7 @@ bool TCAtom::AttachSite(TCAtom* atom, const smatd& matrix)  {
         return false;
       const vec3d v1 = matrix*atom->ccrd();
       const vec3d v2 = AttachedSites[i].matrix*atom->ccrd();
-      if( v1.QDistanceTo(v2) < 1e-6 )
+      if (v1.Equals(v2, 1e-3))
         return false;
     }
   }
@@ -395,7 +395,7 @@ bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix)  {
         return false;
       const vec3d v1 = matrix*atom->ccrd();
       const vec3d v2 = AttachedSitesI[i].matrix*atom->ccrd();
-      if( v1.QDistanceTo(v2) < 1e-6 )
+      if (v1.Equals(v2, 1e-3))
         return false;
     }
   }
@@ -404,18 +404,32 @@ bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix)  {
 }
 //..............................................................................
 void TCAtom::UpdateAttachedSites()  {
+  // check if any symm eqivs were removed
+  bool removed = false;
+  for (size_t i=0; i < AttachedSites.Count(); i++) {
+    if (AttachedSites[i].atom->IsDeleted()) {
+      AttachedSites.NullItem(i);
+      removed = true;
+    }
+  }
+  if (removed)
+    AttachedSites.Pack();
+  // end of the removed eqivs test
   smatd_list ml;
   BondInfoList toCreate, toDelete;
   ConnInfo::Compile(*this, toCreate, toDelete, ml);
   smatd I;
   I.I().SetId(0);
-  for( size_t i=0; i < toCreate.Count(); i++ )
-    AttachSite(&toCreate[i].to, toCreate[i].matr == NULL ? I : *toCreate[i].matr);
+  for( size_t i=0; i < toCreate.Count(); i++ ) {
+    AttachSite(&toCreate[i].to,
+      toCreate[i].matr == NULL ? I : *toCreate[i].matr);
+  }
   for( size_t i=0; i < toDelete.Count(); i++ )  {
     for( size_t j=0; j < AttachedSites.Count(); j++ )  {
       if( &toDelete[i].to == AttachedSites[j].atom )  {
         if( (toDelete[i].matr == NULL && AttachedSites[j].matrix.IsFirst()) ||
-            (toDelete[i].matr != NULL && toDelete[i].matr->GetId() == AttachedSites[j].matrix.GetId()))
+            (toDelete[i].matr != NULL && 
+             toDelete[i].matr->GetId() == AttachedSites[j].matrix.GetId()))
         {
           AttachedSites.Delete(j);
           break;
@@ -425,10 +439,9 @@ void TCAtom::UpdateAttachedSites()  {
   }
   const CXConnInfo& ci = GetConnInfo();
   if( AttachedSites.Count() > (size_t)olx_abs(ci.maxBonds) )  {
-    if( ci.maxBonds < 0 )
-      AttachedSites.QuickSorter.SortMF<TCAtom>(AttachedSites, *this, &TCAtom::SortSitesByDistanceDsc);
-    else
-      AttachedSites.QuickSorter.SortMF<TCAtom>(AttachedSites, *this, &TCAtom::SortSitesByDistanceAsc);
+    AttachedSites.QuickSorter.SortMF<TCAtom>(AttachedSites, *this,
+      ci.maxBonds < 0 ? &TCAtom::SortSitesByDistanceDsc
+        : &TCAtom::SortSitesByDistanceAsc);
     // prevent q-peaks affecting the max number of bonds...
     uint16_t bc2set = olx_abs(ci.maxBonds);
     for( uint16_t j=0;  j < bc2set; j++ )  {

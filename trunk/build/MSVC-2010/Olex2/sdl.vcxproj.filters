@@ -167,9 +167,6 @@
     <ClInclude Include="..\..\..\sdl\actions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\arrays.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\bapp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -505,6 +502,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\tests\alg_test.h">
       <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\arrays.h">
+      <Filter>Header Files\containers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

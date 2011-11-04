@@ -107,7 +107,8 @@ TEValue<double> TUnitCell::CalcVolumeEx() const {
 void  TUnitCell::InitMatrices()  {
   MulDest.Clear();
   Matrices.Clear();
-  GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(), GetLattice().GetAsymmUnit().GetLatt() );
+  GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(),
+    GetLattice().GetAsymmUnit().GetLatt());
   const size_t mc = Matrices.Count();
   MulDest.SetCapacity(mc);
   InvDest.SetCount(mc);
@@ -126,8 +127,10 @@ void  TUnitCell::InitMatrices()  {
           }
         }
       }
-      if( index == InvalidIndex )
-        throw TFunctionFailedException(__OlxSourceInfo, "assert: incomplete space group");
+      if( index == InvalidIndex ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "assert: incomplete space group");
+      }
       MulDest[i][j] = (uint8_t)index;
     }
     {
@@ -142,8 +145,10 @@ void  TUnitCell::InitMatrices()  {
           }
         }
       }
-      if( index == InvalidIndex )
-        throw TFunctionFailedException(__OlxSourceInfo, "assert: incomplete space group");
+      if( index == InvalidIndex ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "assert: incomplete space group");
+      }
       InvDest[i] = (uint8_t)index;
     }
   }
@@ -157,8 +162,10 @@ void  TUnitCell::InitMatrices()  {
       m_tab[i][j] = MulDest[i][j];
     }
   }
-  TBasicApp::GetLog() << m_tab.CreateTXTList("Space group multiplication table", false, false, ' ');
-  TBasicApp::GetLog() << i_tab.CreateTXTList("Space inversion table", true, false, ' ');
+  TBasicApp::GetLog() <<
+    m_tab.CreateTXTList("Space group multiplication table", false, false, ' ');
+  TBasicApp::GetLog() <<
+    i_tab.CreateTXTList("Space inversion table", true, false, ' ');
 #endif
 }
 //..............................................................................
@@ -269,14 +276,14 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Latt->GetDelta()) )
         {
           Atoms[ind]->AttachSite(Atoms[i], matr);
-          if( i != ind )
+          if (i != ind)
             Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
           Latt->GetDeltaI()) )
         {
           Atoms[ind]->AttachSiteI(Atoms[i], matr);
-          if( i != ind )
+          if (i != ind)
             Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
       }

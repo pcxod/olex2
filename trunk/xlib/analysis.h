@@ -20,6 +20,7 @@ namespace olx_analysis {
 namespace alg {
   double mean_peak(const TCAtomPList &peaks);
   double mean_u_eq(const TCAtomPList &atoms);
+  olxstr formula(const TCAtomPList &atoms, double mult=1);
 }; // end namespace alg
 struct peaks {
   static int peak_sort(const TCAtom *a1, const TCAtom *a2) {
@@ -70,16 +71,20 @@ public:
     }
     TCAtomPList &atoms() { return atoms_; }
     const TCAtomPList &atoms() const { return atoms_; }
-    void set_atoms(const TCAtomPList &atoms) { atoms_ = atoms; }
+    void set_atoms(const TCAtomPList &atoms) {
+      atoms_ = atoms;
+      init_generators();
+    }
     bool is_regular() const;
     bool is_flat() const;
-    bool is_polymeric() const { return generators.Count() > 2; }
+    bool is_polymeric() const;
     fragment &pack() {
       atoms_.Pack(TCAtom::FlagsAnalyser<>(catom_flag_Deleted));
       return *this;
     }
     // works only for a group of atoms distributed around the central one
     size_t find_central_index() const;
+    olxstr formula() const { return alg::formula(atoms_); }
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
 };
