@@ -456,12 +456,12 @@ vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
   return P;
 }
 //..............................................................................
-/* since this is the AU, only the crystallographic occupancies must be summed up, atoms' 
-degenracy should not be taken into account ... */
+/* since this is the AU, only the crystallographic occupancies must be summed
+up, atoms' degeracy should not be taken into account ...
+*/
 ContentList TAsymmUnit::GetContentList(double mult) const {
   ElementPList elements;
   ContentList rv;
-  const cm_Element *Carbon=NULL, *Hydrogen=NULL;
   for( size_t i=0; i < AtomCount(); i++ )  {
     const cm_Element& elm = CAtoms[i]->GetType();
     if( CAtoms[i]->IsDeleted() || elm == iQPeakZ )  continue;

@@ -231,10 +231,89 @@ public:
   }
 };
 
-class  TArraysTest  {
-public:
-  static void Test();
-};
+namespace simple {
+  template <typename item_t>
+  struct array_1d {
+    item_t *data;
+    const size_t width;
+    array_1d()
+      : data(NULL), width(0)
+    {}
+    array_1d(size_t width_, bool init=true)
+      : width(width_)
+    {
+      data = new item_t[width];
+      if (init)
+        memset(data, 0, width*sizeof(item_t));
+    }
+    ~array_1d() {
+      if (data == NULL) return;
+      delete [] data;
+    }
+    item_t &operator [] (size_t i) { return data[i]; }
+    const item_t &operator [] (size_t i) const { return data[i]; }
+  };
+  // array [0..height][0..width]
+  template <typename item_t>
+  struct array_2d {
+    item_t **data;
+    const size_t height, width;
+    array_2d()
+      : data(NULL), height(0), width(0)
+    {}
+    array_2d(size_t height_, size_t width_, bool init=true)
+      : width(width_), height(height_)
+    {
+      data = new item_t*[height];
+      for (size_t i=0; i < height; i++)  {
+        data[i] = new item_t[width];
+        if (init)
+          memset(data[i], 0, width*sizeof(item_t));
+      }
+    }
+    ~array_2d() {
+      if (data == NULL) return;
+      for( size_t i=0; i < height; i++ )
+        delete [] data[i];
+      delete [] data;
+    }
+    item_t *operator [] (size_t i) { return data[i]; }
+    const item_t *operator [] (size_t i) const { return data[i]; }
+  };
 
+  template <typename item_t>
+  struct array_3d {
+    item_t ***data;
+    const size_t depth, height, width;
+    array_3d()
+      : data(NULL), depth(0), height(0), width(0)
+    {}
+    array_3d(size_t depth_, size_t height_, size_t width_, bool init=true)
+      : depth(depth_), height(height_), width(width_)
+    {
+      data = new item_t**[depth];
+      for (size_t i=0; i < depth; i++)  {
+        data[i] = new item_t*[height];
+        for (size_t j=0; j < height; j++) {
+          data[i][j] = new item_t[width];
+          if (init)
+            memset(data[i], 0, width*sizeof(item_t));
+        }
+      }
+    }
+    ~array_3d() {
+      if (data == NULL) return;
+      for( size_t i=0; i < depth; i++ ) {
+        for( size_t j=0; j < height; j++ )
+          delete [] data[i][j];
+        delete [] data[i];
+      }
+      delete [] data;
+    }
+    item_t **operator [] (size_t i) { return data[i]; }
+    const item_t **operator [] (size_t i) const { return data[i]; }
+  };
+
+}; // namspace simple
 EndEsdlNamespace()
 #endif
