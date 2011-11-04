@@ -17,12 +17,14 @@
 
 BeginXlibNamespace()
 namespace olx_analysis {
-
+namespace alg {
+  double mean_peak(const TCAtomPList &peaks);
+  double mean_u_eq(const TCAtomPList &atoms);
+}; // end namespace alg
 struct peaks {
   static int peak_sort(const TCAtom *a1, const TCAtom *a2) {
     return olx_cmp(a2->GetQPeak(), a1->GetQPeak());
   }
-  static double mean(const TCAtomPList &peaks);
   static ConstPtrList<TCAtom> extract(TAsymmUnit &au,
     bool *all_peaks=NULL);
   struct range {
@@ -31,8 +33,8 @@ struct peaks {
   public:
     TCAtomPList peaks;
     range() : mean(0) {}
-    double get_mean() const {
-      return (mean != 0) ? mean : (mean=peaks::mean(peaks));
+    double get_mean(bool update=false) const {
+      return (mean != 0 && !update) ? mean : (mean=alg::mean_peak(peaks));
     }
     void delete_all();
   };
@@ -47,6 +49,41 @@ struct peaks {
   static TCAtomPList &proximity_clean(TCAtomPList &peaks);
 };
 
+struct fragments {
+protected:
+  // recursive exansion helper function
+  static void expand_node(TCAtom &a, TCAtomPList &atoms);
+public:
+  struct fragment {
+  protected:
+    mutable double u_eq;
+    TCAtomPList atoms_;
+    smatd_list generators;
+    void init_generators();
+    static void build_coordinate(
+      TCAtom &a, const smatd &m, vec3d_list &res);
+    ConstTypeList<vec3d> build_coordinates() const;
+  public:
+    fragment() : u_eq(0) {}
+    double get_mean_u_eq(bool update=false) const {
+      return (u_eq != 0 && !update) ? u_eq : (u_eq=alg::mean_u_eq(atoms_));
+    }
+    TCAtomPList &atoms() { return atoms_; }
+    const TCAtomPList &atoms() const { return atoms_; }
+    void set_atoms(const TCAtomPList &atoms) { atoms_ = atoms; }
+    bool is_regular() const;
+    bool is_flat() const;
+    bool is_polymeric() const { return generators.Count() > 2; }
+    fragment &pack() {
+      atoms_.Pack(TCAtom::FlagsAnalyser<>(catom_flag_Deleted));
+      return *this;
+    }
+    // works only for a group of atoms distributed around the central one
+    size_t find_central_index() const;
+  };
+  static ConstTypeList<fragment> extract(TAsymmUnit &au);
+};
+
 class Analysis {
   static int hr_sort(
     const AnAssociation2<double, olxstr> *a1,
@@ -57,10 +94,16 @@ class Analysis {
 public:
   static bool trim_18(TAsymmUnit &au);
 
+  static bool analyse_u_eq(TAsymmUnit &au);
+
   static double find_scale(TLattice &latt);
 
   static void funTrim(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(trim_18(TXApp::GetInstance().XFile().GetAsymmUnit()));
+  }
+
+  static void funAnaluseUeq(const TStrObjList& Params, TMacroError& E)  {
+    E.SetRetVal(analyse_u_eq(TXApp::GetInstance().XFile().GetAsymmUnit()));
   }
 
   static void funFindScale(const TStrObjList& Params, TMacroError& E)  {
@@ -101,6 +144,11 @@ public:
       new TStaticFunction(&Analysis::funFindScale, "Scale", fpNone|fpOne,
       "Scales the Q-peaks according to found fragments."
       "Returns the scale or 0")
+    );
+    lib->RegisterStaticFunction(
+      new TStaticFunction(&Analysis::funAnaluseUeq, "AnalyseUeq", fpNone|fpOne,
+      ""
+      "")
     );
     return lib;
   }

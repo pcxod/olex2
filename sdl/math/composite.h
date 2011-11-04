@@ -11,8 +11,9 @@
 #define __olx_sdl_composite_H
 #include "../emath.h"
 
-/* a wrapper class to present a list of matrices as a single matrix. To be used with non empty
-list and matrices of the same dimensions */
+/* a wrapper class to present a list of matrices as a single matrix. To be used
+with non empty list and matrices of the same dimensions
+*/
 template <class List, typename NumT> class CompositeMatrix  {
   const List& matrices;
   const size_t row_sz, col_sz, m_row_sz, m_col_sz, col_cnt, row_cnt;
@@ -38,13 +39,15 @@ public:
   size_t ColCount() const {  return col_cnt;  }
   size_t RowCount() const {  return row_cnt;  }
 };
-/* a wrapper class to represent a list of vectors as a single vector. To be used with non empty
-list and all vectors of the same size */
+/* a wrapper class to represent a list of vectors as a single vector. To be
+used with non empty list and all vectors of the same size
+*/
 template <class List, typename NumT> class CompositeVector  {
   const List& vertices;
   const size_t vec_sz;
 public:
-  CompositeVector(const List& _vertices) : vertices(_vertices), vec_sz(vertices[0].Count()) {}
+  CompositeVector(const List& _vertices)
+    : vertices(_vertices), vec_sz(vertices[0].Count()) {}
   size_t Count() const {  return vertices.Count()*vec_sz;  }
   const NumT& Get(size_t i) const {  return  vertices[i/vec_sz][i%vec_sz];  }
   NumT& Get(size_t i)  {  return  vertices[i/vec_sz][i%vec_sz];  }
@@ -61,9 +64,15 @@ public:
   MatrixVector(const MatT& _matrix) :
 	 matrix(_matrix) , size(matrix.RowCount()*matrix.RowCount()) {}
   size_t Count() const {  return size;  }
-  const NumT& Get(size_t i) const {  return  matrix[i/matrix.ColCout()][i%matrix.ColCout()];  }
-  NumT& Get(size_t i)  {  return  matrix[i/matrix.ColCout()][i%matrix.ColCout()];  }
-  void Set(size_t i, const NumT& v)  {  matrix[i/matrix.ColCout()][i%matrix.ColCout()] = v;  }
+  const NumT& Get(size_t i) const {
+    return  matrix[i/matrix.ColCout()][i%matrix.ColCout()];
+  }
+  NumT& Get(size_t i)  {
+    return  matrix[i/matrix.ColCout()][i%matrix.ColCout()];
+  }
+  void Set(size_t i, const NumT& v)  {
+    matrix[i/matrix.ColCout()][i%matrix.ColCout()] = v;
+  }
   NumT& operator [] (size_t i)  {  return Get(i);  }
   const NumT& operator [] (size_t i) const {  return Get(i);  }
 };
@@ -73,7 +82,8 @@ template <typename NumT> class ConstPlainVector  {
   NumT const* data;
   const size_t size;
 public:
-  ConstPlainVector(const NumT* _data, size_t sz) :	data(_data) , size(sz) {}
+  ConstPlainVector(const NumT* _data, size_t sz)
+    :	data(_data) , size(sz) {}
   size_t Count() const {  return size;  }
   const NumT& Get(size_t i) const {  return  data[i];  }
   const NumT& operator [] (size_t i) const {  return Get(i);  }
@@ -98,7 +108,8 @@ template <class VT, typename ItemT> class Slice {
   const VT& data;
   const size_t offset, size;
 public:
-  Slice(const VT& _data, size_t off, size_t sz) : data(_data), offset(off), size(sz)  {}
+  Slice(const VT& _data, size_t off, size_t sz)
+    : data(_data), offset(off), size(sz)  {}
   size_t Count() const {  return size;  }
   const ItemT& Get(size_t i) const {  return  data[i+offset];  }
   ItemT& Get(size_t i)  {  return  data[i+offset];  }
@@ -111,7 +122,8 @@ template <class VT, typename ItemT> class ConstSlice {
   const VT& data;
   const size_t offset, size;
 public:
-  ConstSlice(const VT& _data, size_t off, size_t sz) : data(_data), offset(off), size(sz)  {}
+  ConstSlice(const VT& _data, size_t off, size_t sz)
+    : data(_data), offset(off), size(sz)  {}
   size_t Count() const {  return size;  }
   const ItemT& Get(size_t i) const {  return  data[i+offset];  }
   const ItemT& operator [] (size_t i) const {  return Get(i);  }

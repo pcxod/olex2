@@ -593,6 +593,7 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zn.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Zr.cpp" />
     <ClCompile Include="..\..\..\xlib\afixgroup.cpp" />
+    <ClCompile Include="..\..\..\xlib\analysis.cpp" />
     <ClCompile Include="..\..\..\xlib\asymmunit.cpp" />
     <ClCompile Include="..\..\..\xlib\auto.cpp" />
     <ClCompile Include="..\..\..\xlib\catomlist.cpp" />
@@ -772,6 +773,7 @@
     <ClCompile Include="..\..\..\xlib\henke\henke_Zr.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\xlib\analysis.h" />
     <ClInclude Include="..\..\..\xlib\asymmunit.h" />
     <ClInclude Include="..\..\..\xlib\atomref.h" />
     <ClInclude Include="..\..\..\xlib\auto.h" />
