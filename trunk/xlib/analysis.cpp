@@ -1,4 +1,5 @@
 #include "analysis.h"
+#include "equeue.h"
 
 using namespace olx_analysis;
 
@@ -304,6 +305,37 @@ bool fragments::fragment::is_flat() const {
     vec3d center;
     rmsd = TSPlane::CalcPlane(points, n, center, plane_best);
     return rmsd < 0.05;
+  }
+}
+//.............................................................................
+void fragments::fragment::breadth_first_tags(size_t start) {
+  if (atoms_.IsEmpty()) return;
+  atoms_.ForEach(ACollectionItem::TagSetter<>(-1));
+  TQueue<TCAtom*> queue;
+  if (start >= atoms_.Count())
+    start = 0;
+  atoms_[start]->SetTag(0);
+  for (size_t i=0; i < atoms_[start]->AttachedSiteCount(); i++) {
+    TCAtom::Site &st = atoms_[start]->GetAttachedSite(i);
+    queue.Push(st.atom);
+  }
+  queue.Push(NULL);
+  index_t tv = 1;
+  while (!queue.IsEmpty()) {
+    TCAtom *a = queue.Pop();
+    if (a == NULL) {
+      if (queue.IsEmpty()) break;
+      tv++;
+      queue.Push(NULL);
+      continue;
+    }
+    if (a->GetTag() != -1 ) continue;
+    a->SetTag(tv);
+    for (size_t i=0; i < a->AttachedSiteCount(); i++) {
+      TCAtom::Site &st = a->GetAttachedSite(i);
+      if (st.atom->GetTag() == -1)
+        queue.Push(st.atom);
+    }
   }
 }
 //.............................................................................

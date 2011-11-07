@@ -71,6 +71,8 @@ public:
     }
     TCAtomPList &atoms() { return atoms_; }
     const TCAtomPList &atoms() const { return atoms_; }
+    size_t count() const { return atoms_.Count(); }
+    TCAtom &operator [] (size_t i) const { return *atoms_[i]; }
     void set_atoms(const TCAtomPList &atoms) {
       atoms_ = atoms;
       init_generators();
@@ -85,6 +87,7 @@ public:
     // works only for a group of atoms distributed around the central one
     size_t find_central_index() const;
     olxstr formula() const { return alg::formula(atoms_); }
+    void breadth_first_tags(size_t start=InvalidIndex);
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
 };
