@@ -192,8 +192,6 @@ public:
 struct ElementCount {
   const cm_Element& element;
   double count;
-  ElementCount()
-    : element(*((const cm_Element*)NULL)), count(0) {}
   ElementCount(const cm_Element& _e, double _c) : element(_e), count(_c)  {}
   ElementCount(const ElementCount& e) : element(e.element), count(e.count)  {}
   ElementCount& operator += (double v) {
@@ -212,25 +210,19 @@ struct ElementCount {
 };
 
 typedef TPtrList<const cm_Element> ElementPList;
-typedef SortedPtrList<const cm_Element, TPointerComparator>
+typedef SortedPtrList<const cm_Element, TPrimitivePtrComparator>
   SortedElementPList;
-typedef ConstSortedPtrList<const cm_Element, TPointerComparator>
-  ConstSortedElementPList;
 typedef TTypeList<ElementCount> ContentList;
-typedef olxdict<const cm_Element*, double, TPointerComparator> ElementRadii;
-typedef olxdict<const cm_Element*, double, TPointerComparator> ElementDict;
+typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementRadii;
+typedef olxdict<const cm_Element*, double, TPrimitiveComparator> ElementDict;
 
 // sorts elemnt pointers by Z descending 
 struct ElementPZSorter  {
-  static int Compare(const cm_Element* s1, const cm_Element* s2)  {
-    return s2->z - s1->z;
-  }
+  static int Compare(const cm_Element* s1, const cm_Element* s2)  {  return s2->z - s1->z;  }
 };
 // sorts elemnt pointers by symbol ascending
 struct ElementPSymbolSorter  {
-  static int Compare(const cm_Element* s1, const cm_Element* s2)  {
-    return s1->symbol.Compare(s2->symbol);
-  }
+  static int Compare(const cm_Element* s1, const cm_Element* s2)  {  return s1->symbol.Compare(s2->symbol);  }
 };
 
 
@@ -252,8 +244,6 @@ public:
   static cm_Element* FindBySymbol(const olxstr& symbol);
   // for compatibility with old routines...
   static cm_Element& GetByIndex(short);
-  // finds an element by Z
-  static cm_Element* FindByZ(short);
   // a label might be passed as C1 or Cr2
   static cm_Element* FindBySymbolEx(const olxstr& symbol);
   // returns element with Z+1
@@ -266,28 +256,18 @@ public:
     return type == NULL ? EmptyString() : type->symbol;
   }
   // returns true if labels is a symbol
-  static bool IsElement(const olxstr& label) {
-    return FindBySymbol(label) != NULL;
-  }
+  static bool IsElement(const olxstr& label) {  return FindBySymbol(label) != NULL;  }
   // checks if p is a label starting from an element symbol
-  static bool IsAtom(const olxstr& label)  {
-    return (FindBySymbolEx(label) != NULL);
-  }
+  static bool IsAtom(const olxstr& label)  {  return (FindBySymbolEx(label) != NULL);  }
 
-  /* parses a string like C37H41P2BRhClO into a list of element names and their
-  count, the provided list is being appended to and not cleared; returns a
-  reference to provided ContentList
-  */
+  /* parses a string like C37H41P2BRhClO into a list of element names and their count,
+  the provided list is being appended to and not cleared; returns a reference to provided
+  ContentList*/
   static ContentList& ParseElementString(const olxstr& su, ContentList& cl);
-  /* sorts the content list, so that C comes first, then H and then by Z
-  descending; returns a reference to th provide ContentList
-  */
+  /* sorts the content list, so that C comes first, then H and then by Z descending;
+  returns a reference to th provide ContentList */
   static ContentList& SortContentList(ContentList& cl);
 
-  // checks if a string is a shortcut for element group
-  static bool IsElementShortcut(const olxstr& c)  {
-    return c.Equalsi('M') || c.Equalsi('X');
-  }
   // checks if given element is in main group 1-8
   static bool IsGroup(int group, const cm_Element &e)  {
     if( group < 3 )  {
@@ -335,11 +315,6 @@ public:
       e.z == 51 || e.z == 52;
   }
 
-  // finds next element which belongs to the given group
-  static cm_Element *NextGroup(int group, const cm_Element *e);
-  // finds previous element which belongs to the given group
-  static cm_Element *PrevGroup(int group, const cm_Element *e);
-
   static bool IsMetal(const cm_Element &e) {
     return IsTransitionalMetal(e) || IsPostTransitionalMetal(e);
   }
@@ -360,13 +335,9 @@ public:
   static bool IsGroup7(const cm_Element &e) {  return IsGroup(7, e);  }
   static bool IsHalogen(const cm_Element &e)  {  return IsGroup7(e);  }
   // La->Lu
-  static bool IsLanthanide(const cm_Element &e)  {
-    return e.z >= 57 && e.z <= 71;
-  }
+  static bool IsLanthanide(const cm_Element &e)  {  return e.z >= 57 && e.z <= 71;  }
   // Ac->Lr
-  static bool IsActinide(const cm_Element &e)  {
-    return e.z >= 89 && e.z <= 103;
-  }
+  static bool IsActinide(const cm_Element &e)  {  return e.z >= 89 && e.z <= 103;  }
   // He->Rn
   static bool IsGroup8(const cm_Element &e) {  return IsGroup(8, e);  }
 

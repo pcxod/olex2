@@ -20,7 +20,6 @@
 //simply a macro registry
 
 class XLibMacros  {
-public:
   static DefMacro(Run)
   static DefMacro(HklBrush)
   static DefMacro(HklStat)
@@ -136,6 +135,7 @@ public:
 
   static TActionQList Actions;
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg, const olxstr& resHKL_FN);
+public:
   static const olxstr NoneString;
   static const olxstr NAString;
   static olxstr CurrentDir;

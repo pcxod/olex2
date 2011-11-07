@@ -207,11 +207,8 @@ void TCif::Initialize()  {
           GetRM().expl.SetCrystalSize(mx.ToDouble(), md.ToDouble(), mn.ToDouble());
       }
       const olxstr temp = GetParamAsString("_diffrn_ambient_temperature");
-      if( !temp.IsEmpty() && temp != '?' ) {
-        TEValueD t_v(temp);
-        t_v.V() -= 273.15;
-        GetRM().expl.SetTempValue(t_v);
-      }
+      if( !temp.IsEmpty() && temp != '?' )
+        GetRM().expl.SetTempValue(TEValueD(temp));
       const olxstr radiation = GetParamAsString("_diffrn_radiation_wavelength");
       if( !radiation.IsEmpty() && radiation != '?' )
         GetRM().expl.SetRadiation(radiation.ToDouble());
@@ -599,10 +596,8 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_cell_volume", XF.GetUnitCell().CalcVolumeEx().ToString(), false);
   SetParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
 
-  TEValueD temp_v = XF.GetRM().expl.GetTempValue();
-  temp_v.V() += 273.15;
   SetParam("_diffrn_ambient_temperature",
-    XF.GetRM().expl.IsTemperatureSet() ? temp_v.ToString() : olxstr('?'), false);
+    XF.GetRM().expl.IsTemperatureSet() ? XF.GetRM().expl.GetTempValue().ToString() : olxstr('?'), false);
   SetParam("_diffrn_radiation_wavelength", XF.GetRM().expl.GetRadiation(), false);
   if( XF.GetRM().expl.GetCrystalSize().QLength() > 1.e-6 )  {
     SetParam("_exptl_crystal_size_max", XF.GetRM().expl.GetCrystalSize()[0], false);
@@ -916,7 +911,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
           smatd SymmMatr = SymmCodeToMatrix((*LT)[i][j]->GetStringValue());
           size_t matIndex = SymmList.IndexOf(SymmMatr);
           if( matIndex == InvalidIndex )  {
-            SymmList.AddCopy(SymmMatr);
+            SymmList.AddCCopy(SymmMatr);
             matIndex = SymmList.Count()-1;
           }
           for( size_t k=0; k < Table.ColCount(); k++ )  {

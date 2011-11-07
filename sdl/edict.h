@@ -10,7 +10,6 @@
 #ifndef __olx_sdl_dict_H
 #define __olx_sdl_dict_H
 #include "sortedlist.h"
-BeginEsdlNamespace()
 
 template <typename, typename, typename> class const_olxdict;
 
@@ -23,11 +22,11 @@ template <typename key_c, typename val_c, class Comparator> struct DictEntry {
   template <class T> int Compare(const T& key) const {
     return Comparator::Compare(this->key, key);
   }
-  DictEntry(const DictEntry& v) : key(v.key), val(v.val) {}
-  DictEntry(const key_c& k, const val_c& v) : key(k), val(v) {}
-  DictEntry(const key_c& k) : key(k) {}
-  template <class T> DictEntry(const T& k) : key(k) {}
-  DictEntry& operator = (const DictEntry& v) {
+  DictEntry(const DictEntry& v) : key(v.key), val(v.val) {  }
+  DictEntry(const key_c& k, const val_c& v) : key(k), val(v) {  }
+  DictEntry(const key_c& k) : key(k) {  }
+  template <class T> DictEntry(const T& k) : key(k) {  }
+  DictEntry& operator = (const DictEntry& v) {  
     key = v.key;
     val = v.val;
     return *this;
@@ -140,6 +139,4 @@ public:
     return *this;
   }
 };
-
-EndEsdlNamespace()
 #endif

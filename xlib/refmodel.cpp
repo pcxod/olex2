@@ -20,7 +20,6 @@
 #include "refutil.h"
 #include "twinning.h"
 #include "math/plane.h"
-#include "ins.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
   rDFIX(*this, rltGroup2, "DFIX"),
@@ -34,13 +33,11 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rEADP(*this, rltAtoms, "EADP"),
   rAngle(*this, rltGroup3, "olex2.restraint.angle"),
   rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral"),
-  rFixedUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq"),
-  rSimilarUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq_similar"),
-  rSimilarAdpVolume(*this, rltAtoms, "olex2.restraint.adp_volume_similar"),
+  rFixedUeq(*this, rltAtoms, "olex2.restraint.u_eq"),
+  rSimilarUeq(*this, rltAtoms, "olex2.restraint.u_eq.similar"),
   ExyzGroups(*this), 
   AfixGroups(*this), 
   rSAME(*this),
-  OnSetBadReflections(Actions.New("OnSetBadReflections")),
   aunit(au), 
   HklStatFileID(EmptyString(), 0, 0), 
   HklFileID(EmptyString(), 0, 0), 
@@ -54,13 +51,11 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   RefContainers(TAsymmUnit::_GetIdName(), &aunit);
   rcRegister.Add(SharedRotatedADPs.GetName(), &SharedRotatedADPs);
   rcRegister.Add(Directions.GetName(), &Directions);
-  rcRegister.Add(SameGroups.GetName(), &SameGroups);
   rcList.Add(&Directions);
   rcList.Add(&SharedRotatedADPs);
-  rcList.Add(&SameGroups);
   rcList1 << rDFIX <<rDANG << rSADI << rCHIV << rFLAT << rDELU
     << rSIMU << rISOR  << rEADP <<
-    rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq << rSimilarAdpVolume;
+    rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq;
   //RefContainers(aunit.GetIdName(), &aunit);
   RefContainers(GetIdName(), this);
   au.SetRefMod(this);
@@ -112,7 +107,6 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   SolutionMethod.SetLength(0);
   HKLSource.SetLength(0);
   Omits.Clear();
-  BadReflections.Clear();
   BASF.Clear();
   BASF_Vars.Clear();
   DEFS.Clear();
@@ -196,7 +190,6 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   SHEL_hr = rm.SHEL_hr;
   SHEL_set = rm.SHEL_set;
   Omits = rm.Omits;
-  BadReflections = rm.BadReflections;
   TWIN_mat = rm.TWIN_mat;
   TWIN_n = rm.TWIN_n;
   TWIN_set = rm.TWIN_set;
@@ -529,7 +522,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
       continue;
     }
     if( !rsf.IsOutside(r) )
-      out.AddCopy(r);
+      out.AddCCopy(r);
   }
   stats.TotalReflections = out.Count();
   return stats;
@@ -878,7 +871,7 @@ void RefinementModel::ProcessFrags()  {
           all_atoms[k+1] = &ag[k];
         for( size_t k=0; k < all_atoms.Count(); k++ )  {
           atoms.AddNew(all_atoms[k], (const cm_Element*)NULL, all_atoms[k]->ccrd().QLength() > 1e-6);
-          crds.AddCopy((*frag)[k].crd);
+          crds.AddCCopy((*frag)[k].crd);
         }
         aunit.FitAtoms(atoms, crds, false);
         ag.SetAfix(ag.GetN());
@@ -1268,9 +1261,8 @@ adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t typ
 }
 //..............................................................................
 TSimpleRestraint & RefinementModel::SetRestraintDefaults(
-  TSimpleRestraint &r) const
+  const TSRestraintList& container, TSimpleRestraint &r) const
 {
-  const TSRestraintList& container = r.GetParent();
   if( container.GetIdName().Equals("DFIX") )  {
     r.SetEsd(DEFS[0]);
   }
@@ -1305,14 +1297,15 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
   else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
     r.SetEsd(0.04);
   }
-  else if( container.GetIdName().StartsFromi("olex2.restraint.adp") )  {
+  else if( container.GetIdName().Equals("olex2.restraint.u_eq") )  {
     r.SetEsd(0.1);
   }
   return r;
 }
 //..............................................................................
-bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {
-  const TSRestraintList& container = r.GetParent();
+bool RefinementModel::IsDefaultRestraint(const TSRestraintList& container,
+    TSimpleRestraint &r) const
+{
   if( container.GetIdName().Equals("DFIX") )  {
     return r.GetEsd() == DEFS[0];
   }
@@ -1344,123 +1337,10 @@ bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {
   else if( container.GetIdName().Equals("olex2.restraint.dihedral") )  {
     return r.GetEsd() == 0.04;
   }
-  else if( container.GetIdName().StartsFromi("olex2.restraint.adp") )  {
+  else if( container.GetIdName().Equals("olex2.restraint.u_eq") )  {
     return r.GetEsd() == 0.1;
   }
   return false;
-}
-//..............................................................................
-olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
-  bool write_internals) const
-{
-  TDataItem di(NULL, "root");
-  typedef AnAssociation2<const TSRestraintList*, TIns::RCInfo> ResInfo;
-  TTypeList<ResInfo> restraints;
-  restraints.AddNew(&rAngle, TIns::RCInfo(1, 1, -1, true));
-  restraints.AddNew(&rDihedralAngle, TIns::RCInfo(1, 1, -1, true));
-  restraints.AddNew(&rFixedUeq, TIns::RCInfo(1, 1, -1, true));
-  restraints.AddNew(&rSimilarUeq, TIns::RCInfo(0, 1, -1, false));
-  restraints.AddNew(&rSimilarAdpVolume, TIns::RCInfo(0, 1, -1, false));
-  TStrList rl;
-  for( size_t i=0; i < restraints.Count(); i++ )  {
-    for( size_t j=0; j < restraints[i].GetA()->Count(); j++ )  {
-      olxstr line = TIns::RestraintToString(
-        (*restraints[i].GetA())[j], restraints[i].GetB());
-      if( !line.IsEmpty() )
-        rl.Add(line);
-    }
-  }
-  if( !rl.IsEmpty() )  {
-    TDataItem &ri = di.AddItem("restraints");
-    for( size_t i=0;  i < rl.Count(); i++ )
-      ri.AddItem("item", rl[i]);
-  }
-  rl.Clear();
-  for( size_t i=0; i < rcList.Count(); i++ )
-    rl << rcList[i]->ToInsList(*this);
-  if( write_internals )  {
-    bool has_int_groups = false;
-    for( size_t i=0; i < AfixGroups.Count(); i++ )  {
-      if( AfixGroups[i].GetAfix() == -1 && !AfixGroups[i].IsEmpty() )  {
-        has_int_groups = true;
-        break;
-      }
-    }
-    if( has_int_groups )  {
-      TDataItem &internals = di.AddItem("olex2.constraint.u_proxy");
-      for( size_t i=0; i < AfixGroups.Count(); i++ )  {
-        if( AfixGroups[i].GetAfix() == -1 && !AfixGroups[i].IsEmpty() )  {
-          olxstr line;
-          for( size_t j=0; j < AfixGroups[i].Count(); j++ )  {
-            if( AfixGroups[i][j].IsDeleted() )  continue;
-            line << ' ' << AfixGroups[i][j].GetLabel();
-          }
-          rl << line;
-        }
-      }
-    }
-  }
-  if( !rl.IsEmpty() )  {
-    TDataItem &ri = di.AddItem("constraints");
-    for( size_t i=0;  i < rl.Count(); i++ )
-      ri.AddItem("item", rl[i]);
-  }
-  TEStrBuffer bf;
-  di.SaveToStrBuffer(bf);
-  return bf.ToString();
-}
-//..............................................................................
-void RefinementModel::ReadInsExtras(const TStrList &items)  {
-  TDataItem di(NULL, EmptyString());
-  di.LoadFromString(0, items.Text(EmptyString()), NULL);
-  TDataItem *restraints = di.FindItem("restraints");
-  if( restraints != NULL )   {
-    for( size_t i=0; i < restraints->ItemCount(); i++ )  {
-      TStrList toks(restraints->GetItem(i).GetValue(), ' ');
-      if( !TIns::ParseRestraint(*this, toks) )  {
-        TBasicApp::NewLogEntry() << (olxstr(
-          "Invalid Olex2 restraint: ").quote()
-          << restraints->GetItem(i).GetValue());
-      }
-    }
-  }
-  TDataItem *constraints = di.FindItem("constraints");
-  if( constraints != NULL )  {
-    for( size_t i=0; i < constraints->ItemCount(); i++ )  {
-      TStrList toks(constraints->GetItem(i).GetValue(), ' ');
-      IConstraintContainer *cc = rcRegister.Find(toks[0], NULL);
-      if( cc != NULL )  {
-        cc->FromToks(toks.SubListFrom(1), *this);
-      }
-      else if( toks[0] == "olex2.constraint.u_proxy" )  {
-        TCAtom *ca = aunit.FindCAtom(toks[1]);
-        if( ca == NULL )  {
-          TBasicApp::NewLogEntry() << (olxstr(
-            "Invalid Olex2 constraint: ").quote()
-            << constraints->GetItem(i).GetValue());
-          continue;
-        }
-        if( ca->GetAfix() == -1 )  // already set
-          continue;
-        TAfixGroup& ag = AfixGroups.New(ca, -1);
-        for( size_t ti=2; ti < toks.Count(); ti++ )  {
-          ca = aunit.FindCAtom(toks[ti]);
-          if( ca == NULL )  {
-            TBasicApp::NewLogEntry(logError) << (olxstr(
-              "Warning - possibly invalid Olex2 constraint: ").quote()
-              << constraints->GetItem(i).GetValue());
-            continue;
-          }
-          ag.AddDependent(*ca);
-        }
-      }
-      else {
-        TBasicApp::NewLogEntry() << (olxstr(
-          "Unknown Olex2 constraint: ").quote()
-          << constraints->GetItem(i).GetValue());
-      }
-    }
-  }
 }
 //..............................................................................
 //..............................................................................

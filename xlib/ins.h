@@ -82,6 +82,15 @@ protected:
   void _FinishParsing(ParseContext& cx);
   // processes CONN, FREE and BIND, called from _FinishParsing
   void __ProcessConn(ParseContext& cx);
+  struct RCInfo  {
+    short has_value,  // +1 - true, goes first, -1 - true, goes last, 0 - false
+      esd_cnt, // 0,1,2
+      atom_limit; // -1, N, if atom count is fewer than value - skipped
+    bool full_label;
+    RCInfo(short _has_value, short _esd_cnt, short _atom_limit, bool _full_label=true) :
+      has_value(_has_value), esd_cnt(_esd_cnt), atom_limit(_atom_limit),
+      full_label(_full_label)  {}
+  };
 public:
   TIns();
   virtual ~TIns();
@@ -281,18 +290,6 @@ public:
     bool write_internals);
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
-
-  struct RCInfo  {
-    short has_value,  // +1 - true, goes first, -1 - true, goes last, 0 - false
-      esd_cnt, // 0,1,2
-      atom_limit; // -1, N, if atom count is fewer than value - skipped
-    bool full_label;
-    RCInfo(short _has_value, short _esd_cnt, short _atom_limit, bool _full_label=true) :
-      has_value(_has_value), esd_cnt(_esd_cnt), atom_limit(_atom_limit),
-      full_label(_full_label)  {}
-  };
-  static olxstr RestraintToString(const TSimpleRestraint &r, const RCInfo &ri,
-    const TCAtomPList *atoms=NULL);
 
   bool InsExists(const olxstr &Name);
   inline size_t InsCount() const {  return Ins.Count();  }

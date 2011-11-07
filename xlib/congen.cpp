@@ -107,8 +107,6 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
           olx_create_rotation_matrix(M, RotVec, -0.5);
 
           Vec1 = NEnvi.GetCrd(0)  - NEnvi.GetBase().crd();
-          if (olx_abs(olx_abs(Vec1.CAngle(RotVec))-1) < 1e-6)
-            Vec1 = NEnvi.GetCrd(1)  - NEnvi.GetBase().crd();
           Vec1 = M * Vec1;
 
           Vec2 = RotVec.XProdVec(Vec1).Normalise();

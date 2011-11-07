@@ -247,7 +247,7 @@ void THklFile::AllRefs(const TReflection& R, const smatd_list& ml, TRefPList& Re
     if( !vec3i::IsInRangeExc(hklv, MinHkl, MaxHkl) )
       continue;
     if( ri.IndexOf(hklv) == InvalidIndex )
-      ri.AddCopy(hklv);
+      ri.AddCCopy(hklv);
   }
   InitHkl3D();
   for( size_t j=0; j < ri.Count(); j++ )  {

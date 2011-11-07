@@ -116,10 +116,9 @@ public:
   // should be called when atom coordinates have changed
   virtual void Update();
 
-  const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials) const;
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
   virtual const vec3d &GetBaseCrd() const;
-  static const_strlist PovDeclare();
+  static TStrList PovDeclare();
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
 };

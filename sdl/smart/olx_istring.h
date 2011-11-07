@@ -1690,45 +1690,21 @@ public:
     return *this;
   }
   //...........................................................................
-  TTSString& Padding(size_t count, const TTSString& sep, bool right,
-    bool ensure_sep=false)
-  {
-    size_t extra = ((T::_Length >= count) ? 0 : count-T::_Length);
-    if (ensure_sep && extra == 0) {
-      if (!EndsWith(sep))
-        extra = 1;
-    }
-    if (extra !=0 ) {
-      T::checkBufferForModification(T::_Length + extra*sep._Length);
-      Insert(sep, right ? T::_Length : 0, extra);
-    }
+  TTSString& Format(size_t count, bool Right, const TTSString& sep)  {
+    size_t extra = count-((T::_Length > count) ? count-1 : T::_Length)*
+      sep._Length;
+    T::checkBufferForModification(T::_Length + extra);
+    if( T::_Length > count )  return (*this << sep);
+    Insert(sep, (Right) ? T::_Length : 0, count-T::_Length);
     return *this;
   }
   //...........................................................................
-  template <typename AC>
-  TTSString& Padding(size_t count, AC sep, bool right, bool ensure_sep=false)  {
-    size_t extra = ((T::_Length >= count) ? 0 : count-T::_Length);
-    if (ensure_sep && extra == 0) {
-      if (!StartsFrom(sep))
-        extra = 1;
-    }
-    if (extra !=0) {
-      checkBufferForModification(T::_Length + extra);
-      Insert(sep, right ? T::_Length : 0, extra);
-    }
+  TTSString& Format(size_t count, bool Right, char sep)  {
+    size_t extra = count-((T::_Length > count) ? count-1 : T::_Length);
+    checkBufferForModification(T::_Length + extra);
+    if( T::_Length > count )  return (*this << sep);
+    Insert(sep, (Right) ? T::_Length : 0, count - T::_Length);
     return *this;
-  }
-  //...........................................................................
-  template <typename sep_t>
-  TTSString& LeftPadding(size_t count, const sep_t& sep,
-    bool ensure_sep=false)  {
-    return Padding(count, sep, false, ensure_sep);
-  }
-  //...........................................................................
-  template <typename sep_t>
-  TTSString& RightPadding(size_t count, const sep_t& sep,
-    bool ensure_sep=false)  {
-    return Padding(count, sep, true, ensure_sep);
   }
   //...........................................................................
   static TTSString FormatFloat(int NumberOfDigits, double v,

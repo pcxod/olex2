@@ -160,18 +160,18 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
           trans = st.GetResults()[j].Center;
           if( i != 0 && !NormalisevectorView(trans) )  match = 0;  //delete
           if( i != 0 )
-            translations.AddCopy( trans );
+            translations.AddCCopy( trans );
           XApp.NewLogEntry() << st.GetResults()[j].Count()  << '\t' << trans.ToString();
         }
       }
 
       if( match < confth )  {
-        ElimateSGFromList(sglist, res, translations, false);
+        ElimateSGFromList( sglist, res, translations, false);
         continue;
       }
 
-      presentSymm.AddCopy(toTest.GetObject(i));
-      ElimateSGFromList(sglist, res, translations, true);
+      presentSymm.AddACopy( toTest.GetObject(i) );
+      ElimateSGFromList( sglist, res, translations, true);
 
       if( match >= confth )  {
         XApp.NewLogEntry() << "Related matrix: " << TSymmParser::MatrixToSymm(res);

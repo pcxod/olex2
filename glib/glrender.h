@@ -44,7 +44,7 @@ class TGlRenderer : public IEObject  {
 //  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
 //  TSPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
   TPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
-  typedef SortedPtrList<AGDrawObject, TPointerComparator> GObjectList;
+  typedef SortedPtrList<AGDrawObject, TPointerPtrComparator> GObjectList;
   GObjectList FGObjects;
   TPtrList<TGlGroup> FGroups;   // list of groups
   TGlGroup* FSelection;  // list of selected objects

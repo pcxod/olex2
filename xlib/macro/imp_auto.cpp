@@ -26,7 +26,7 @@ static _auto_BI _autoMaxBond[] = {
   {iFluorineIndex, 1},
 };
 
-typedef SortedPtrList<const cm_Element, TPointerComparator> SortedElementList;
+typedef SortedPtrList<const cm_Element, TPointerPtrComparator> SortedElementList;
 // helper function
 size_t imp_auto_AtomCount(const TAsymmUnit& au)  {
   size_t ac = 0;
@@ -63,11 +63,28 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   }
   catch( ... )  {  ;  }
   static olxstr FileName(xapp.XFile().GetFileName());
+//  static TAtomTypePermutator AtomPermutator;
+//  AtomPermutator.SetActive( false );
+//  AtomPermutator.SetActive( !Options.Contains("p") );
+//  if( !AtomPermutator.IsActive() )  AtomPermutator.Init();
+
+//  if( FileName != xapp.XFile().GetFileName() )  {
+//    AtomPermutator.Init();
+//    FileName = xapp.XFile().GetFileName();
+//  }
+//  if( AtomPermutator.IsActive() )  AtomPermutator.ReInit( xapp.XFile().GetAsymmUnit() );
+  olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
+  if( TAutoDB::GetInstance() == NULL )  {
+    TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
+    if( TEFile::Exists( autodbf ) )  {
+      TEFile dbf(autodbf, "rb");
+      TAutoDB::GetInstance()->LoadFromStream(dbf);
+    }
+  }
   if( !folder.IsEmpty() )  {
-    TAutoDB::GetInstance().ProcessFolder(folder);
-    olxstr autodbf(xapp.GetBaseDir() + "acidb.db");
+    TAutoDB::GetInstance()->ProcessFolder(folder);
     TEFile dbf(autodbf, "w+b");
-    TAutoDB::GetInstance().SaveToStream(dbf);
+    TAutoDB::GetInstance()->SaveToStream(dbf);
   }
 
   TLattice& latt = xapp.XFile().GetLattice();
@@ -83,40 +100,52 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   }
   TAutoDB::AnalysisStat stat;
   uint64_t st = TETime::msNow();
-  TAutoDB::GetInstance().AnalyseStructure(xapp.XFile().GetFileName(), latt, 
+  TAutoDB::GetInstance()->AnalyseStructure( xapp.XFile().GetFileName(), latt, 
     NULL, stat, elm_l.IsEmpty() ? NULL : &elm_l);
   st = TETime::msNow() - st;
   TBasicApp::NewLogEntry(logInfo) << "Elapsed time " << st << " ms";
 
+//  if( AtomPermutator.IsActive() )  AtomPermutator.Permutate();
   if( olex::IOlexProcessor::GetInstance() != NULL )
     olex::IOlexProcessor::GetInstance()->executeMacro("fuse");
   size_t ac = imp_auto_AtomCount(au);
-  if( ac == 0 )  // clearly something is wrong when it happens...
+  if( ac == 0 )  // clearly something is wron gwhen it happens...
     ac = 1;
-  Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' << 
+  Error.SetRetVal( olxstr(stat.AtomTypeChanges!=0) << ';' << 
     (double)stat.ConfidentAtomTypes*100/ac );
 }
 //..............................................................................
-void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
-{
+void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList satoms;
-  xapp.FindSAtoms(Cmds.Text(' '), satoms);
+  xapp.FindSAtoms( Cmds.Text(' '), satoms );
+  if( TAutoDB::GetInstance() == NULL )  {
+    TEGC::AddP(new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp));
+    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
+    if( TEFile::Exists( autodbf ) )  {
+      TEFile dbf(autodbf, "rb");
+      TAutoDB::GetInstance()->LoadFromStream( dbf );
+    }
+  }
   TStrList report;
   for( size_t i=0; i < satoms.Count(); i++ ) 
-    TAutoDB::GetInstance().AnalyseNode(*satoms[i], report);
+    TAutoDB::GetInstance()->AnalyseNode(*satoms[i], report);
   xapp.NewLogEntry() << report;
 }
 //..............................................................................
-void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
-{
+void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   TEFile log(Cmds.Text(' '), "a+b");
+  if( TAutoDB::GetInstance() == NULL )  {
+    TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
+    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
+    if( TEFile::Exists( autodbf ) )  {
+      TEFile dbf(autodbf, "rb");
+      TAutoDB::GetInstance()->LoadFromStream( dbf );
+    }
+  }
   TStrList report;
-  TAutoDB::GetInstance().ValidateResult(
-    xapp.XFile().GetFileName(), xapp.XFile().GetLattice(), report);
+  TAutoDB::GetInstance()->ValidateResult( xapp.XFile().GetFileName(), xapp.XFile().GetLattice(), report);
   report.SaveToTextStream(log);
 }
 //..............................................................................
@@ -126,9 +155,7 @@ struct Main_BaiComparator {
       return a->Object->z - b->Object->z;
   }
 };
-void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list,
-  SortedElementList& au_bais)
-{
+void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list, SortedElementList& au_bais)  {
   TXApp& xapp = TXApp::GetInstance();
   if( xapp.CheckFileType<TIns>() )  {
     TIns& ins = xapp.XFile().GetLastLoader<TIns>();
@@ -142,9 +169,7 @@ void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list,
   }
 }
 
-void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
-{
+void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   TStrPObjList<olxstr,const cm_Element*> sfac;
   SortedElementList AvailableTypes;
@@ -157,6 +182,15 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     StandAlone.Add(XElementLib::GetByIndex(iCalciumIndex));
   }
   helper_CleanBaiList(sfac, AvailableTypes);
+  if( TAutoDB::GetInstance() == NULL )  {
+    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
+    TEGC::AddP(new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ));
+    if( TEFile::Exists(autodbf) )  {
+      TEFile dbf(autodbf, "rb");
+      TAutoDB::GetInstance()->LoadFromStream(dbf);
+    }
+  }
+
   const bool runFuse = !Options.Contains("f");
   size_t changeNPD = ~0;
   if( Options.Contains("npd") )  {
@@ -193,11 +227,10 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     if( !SortedQPeaks.IsEmpty() )  {
       vals.AddNew<double, TCAtomPList*>(0, new TCAtomPList);
       for( size_t i=SortedQPeaks.Count()-1; i >=1; i-- )  {
-        if( (SortedQPeaks.GetKey(i) -
-             SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.1 )
-        {
+        if( (SortedQPeaks.GetKey(i) - SortedQPeaks.GetKey(i-1))/SortedQPeaks.GetKey(i) > 0.05 )  {
+          //FGlConsole->PostText( olxstr("Threshold here: ") << SortedQPeaks.GetObject(i)->GetLabel() );
           vals.GetLast().A() += SortedQPeaks.GetKey(i);
-          vals.GetLast().B()->Add(SortedQPeaks.GetObject(i));
+          vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
           cnt++;
           vals.GetLast().A() /= cnt;
           cnt = 0;
@@ -205,7 +238,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           continue;
         }
         vals.GetLast().A() += SortedQPeaks.GetKey(i);
-        vals.GetLast().B()->Add(SortedQPeaks.GetObject(i));
+        vals.GetLast().B()->Add( SortedQPeaks.GetObject(i));
         cnt ++;
       }
       vals.GetLast().B()->Add(SortedQPeaks.GetObject(0));
@@ -259,14 +292,10 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     TTypeList<AnAssociation2<TCAtom*, vec3d> > neighbours;
     TAutoDBNode nd(*QPeaks[i], &neighbours);
     for( size_t j=0; j < nd.DistanceCount(); j++ )  {
-      // at least an H-bond
-      if( nd.GetDistance(j) < (neighbours[j].GetA()->GetType().r_bonding+aqV) )
-      {
+      if( nd.GetDistance(j) < (neighbours[j].GetA()->GetType().r_bonding+aqV) )  {  // at least an H-bond
         if( neighbours[j].GetA()->GetType() == iQPeakZ )  {
           if( nd.GetDistance(j) < 1 )  {
-            if( neighbours[j].GetA()->GetQPeak() <
-                QPeaks[i]->CAtom().GetQPeak() )
-            {
+            if( neighbours[j].GetA()->GetQPeak() < QPeaks[i]->CAtom().GetQPeak() )  {
               neighbours[j].GetA()->SetDeleted(true);
             }
           }
@@ -285,9 +314,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     if( nd.NodeCount() == 2 && nd.GetAngle(0) < 90 )  {
-      if( !neighbours[0].GetA()->IsDeleted() &&
-          !neighbours[1].GetA()->IsDeleted() )
-      {
+      if( !neighbours[0].GetA()->IsDeleted() && !neighbours[1].GetA()->IsDeleted() )  {
         QPeaks[i]->SetDeleted(true);
         QPeaks[i]->CAtom().SetDeleted(true);
         continue;
@@ -308,8 +335,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   }
 
   TDoubleList Uisos;
-  if( xapp.XFile().GetFileName() == TAutoDB::GetInstance().GetLastFileName() )
-    Uisos.Assign(TAutoDB::GetInstance().GetUisos());
+  if( xapp.XFile().GetFileName() == TAutoDB::GetInstance()->GetLastFileName() )
+    Uisos.Assign(TAutoDB::GetInstance()->GetUisos());
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     if( latt.GetFragment(i).NodeCount() > 7 )   { // skip up to PF6 or so for Uiso analysis
       while( Uisos.Count() <= i ) Uisos.Add(0.0);
@@ -347,7 +374,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           }
         if( alone )  {
           bool assignHeaviest = false, assignLightest = false;
-          const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance().GetStats();
+          const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance()->GetStats();
           size_t ac = imp_auto_AtomCount(au);
           if( ac == 0 ) // this would be really strange
             ac++;
@@ -605,7 +632,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   for( size_t i=0; i < au.AtomCount(); i++ )
     au.GetAtom(i).SetLabel( au.CheckLabel(NULL, au.GetAtom(i).GetLabel()), false);
 //  TAutoDB::AnalysisStat stat;
-//  TAutoDB::GetInstance().AnalyseStructure( xapp.XFile().GetFileName(), latt, 
+//  TAutoDB::GetInstance()->AnalyseStructure( xapp.XFile().GetFileName(), latt, 
 //    NULL, stat, NULL);
   Error.SetRetVal((double)ValidatedAtomCount*100/AtomCount);
 }

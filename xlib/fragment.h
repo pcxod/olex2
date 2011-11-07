@@ -32,7 +32,7 @@ struct FragAtom {
     return *this;
   }
   olxstr ToString() const {
-    return (olxstr(label).RightPadding(5, ' ', true) << "-1  "
+    return (olxstr(label).Format(5, true, ' ') << "-1  "
       << olxstr::FormatFloat(-5, crd[0]) << ' '
       << olxstr::FormatFloat(-5, crd[1]) << ' '
       << olxstr::FormatFloat(-5, crd[2]));
@@ -113,7 +113,7 @@ public:
     olx_sincos(2*M_PI/sides, &sin_a, &cos_a);
     vec3d ps(cos_a, -sin_a, 0);
     for( size_t i=0; i < sides; i++ )  {
-      rv.AddCopy(ps*norm);
+      rv.AddCCopy(ps*norm);
       const double x = ps[0];
       ps[0] = (cos_a*x + sin_a*ps[1]);
       ps[1] = (cos_a*ps[1] - sin_a*x);
@@ -128,9 +128,9 @@ public:
       GenerateRegularRing(6, 1.39, rv);
     else if( frag_id == frag_id_naphthalene )  {
       GenerateRegularRing(6, 1.39, rv);
-      rv.AddCopy(rv[0]);
+      rv.AddCCopy(rv[0]);
       for( size_t i=3; i < 6; i++ )
-        rv.AddCopy(rv[i]);
+        rv.AddCCopy(rv[i]);
       const vec3d t = (rv[4]+rv[5]).NormaliseTo(1.39*2*cos(M_PI/6));
       for( size_t i=6; i < rv.Count(); i++ )
         rv[i] += t;

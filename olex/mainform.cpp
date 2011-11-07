@@ -90,10 +90,6 @@
 #include "olxth.h"
 #include "lcells.h"
 
-#ifdef _CUSTOM_BUILD_
-  #include "custom_base.h"
-#endif
-
 #ifdef __GNUC__
   #undef Bool
 #endif
@@ -292,6 +288,8 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 
   EVT_MENU(ID_GStyleSave, TMainForm::OnGraphicsStyle)
   EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
+
+  EVT_MENU(ID_gl2ps, TMainForm::OnPictureExport)
 END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent):
@@ -301,7 +299,6 @@ TMainForm::TMainForm(TGlXApp *Parent):
   OnStateChange(Actions.New("ONSTATECHANGE")),
   _ProcessHandler(*this)
 {
-  nui_interface = NULL;
   _UpdateThread = NULL;
 	ActionProgress = UpdateProgress = NULL;
   SkipSizing = false;
@@ -515,8 +512,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(ProcessCmd, EmptyString(), fpAny^(fpNone|fpOne),
 "Send a command to current process. 'nl' is translated to the new line char and\
  'sp' to the white space char");
-  this_InitMacroD(Wait, "r-during wait all events are processed", fpOne,
-"Forces Olex2 and calling process to sleep for provided number of milliseconds");
+  this_InitMacroD(Wait, EmptyString(), fpOne,
+"Forces Olex2 to sleep for provided number of milliseconds");
 
   this_InitMacroD(SwapBg, EmptyString(), fpNone,
 "Swaps current background to white or vice-versa");
@@ -544,7 +541,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Changes atom labels capitalisation for all/given/selected atoms. The"
     " first argument is the template like Aaaa");
 
-  this_InitMacroD(PiM, "l-display labels for the created lines", fpAny|psFileLoaded,
+  this_InitMacroD(PiM, "", fpAny|psFileLoaded,
     "Creates an illustration of a pi-system to metal bonds");
 
   this_InitMacroD(Esd, "label-creates a graphics label", fpAny|psFileLoaded,
@@ -795,12 +792,9 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
 
   this_InitMacroD(LstRes, EmptyString(), fpNone|psFileLoaded,
 "Prints all interpreted restrains for current structure");
-  this_InitMacroD(CalcVoid,
-    "d-distance from Van der Waals surface [0]&;r-resolution[0.2]&;p-precise"
-    " calculation&;i-invert the map for rendering",
-    fpNone|fpOne|psFileLoaded,
-"Calculates solvent accessible void and packing parameters; optionally accepts"
-" a file with space separated values of Atom Type and radius, an entry a line");
+  this_InitMacroD(CalcVoid, "d-distance from Van der Waals surface [0]&;r-resolution[0.2]&;p-precise calculation", fpNone|fpOne|psFileLoaded,
+"Calculates solvent accessible void and packing parameters; optionally accepts a file with space \
+separated values of Atom Type and radius, an entry a line");
   this_InitMacroD(Sgen, EmptyString(), (fpAny^fpNone)|psFileLoaded,
 "Grows the structure using provided atoms (all if none provided) and symmetry code");
   this_InitMacroD(LstSymm, EmptyString(), fpNone|psFileLoaded,
@@ -855,10 +849,9 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
     fpNone|psFileLoaded, "Import a fragment to current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
     "Exports selected fragment to an external file");
-  this_InitMacroD(ProjSph, "g-sphere quality [6]",
-    fpAny|psFileLoaded, 
-"Creates a projection from the selected atom onto a spehere, coloring each "
-"point on the sphere with a unique color corresponding to fragments.");
+  this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]",
+    fpNone|fpOne|psFileLoaded, 
+"Creates a projection of the fragment of the provided atom onto a spehere");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
     "Internal routine for synchronisation");
   this_InitMacroD(SAME,
@@ -883,14 +876,6 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   	(fpOne|fpNone),
 "Saves current content of the virtual file system. If no parameters is given - "
 "the global state is saved. Possible arguments: global, structure");
-
-  this_InitMacroD(ChemDraw, "", fpAny|psFileLoaded,
-    "Currently only creates aromatic rings for Ph, Py and Cp rings");
-  this_InitMacroD(Restrain, "", fpAny|psFileLoaded,
-    "Creates a restraint");
-  this_InitMacroD(Constrain, "", (fpAny^fpNone)|psFileLoaded,
-    "Creates a constraint");
-
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
@@ -1003,9 +988,7 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   Library.AttachLibrary(XA->GetFader().ExportLibrary());
   Library.AttachLibrary(XA->XGrid().ExportLibrary());
   Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
-#ifdef _CUSTOM_BUILD_
-  CustomCodeBase::Initialise(Library);
-#endif
+
   // menu initialisation
   MenuBar = new wxMenuBar;
 
@@ -1042,6 +1025,7 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   MenuView->Append(miHtmlPanel);
 
   MenuStructure->Append(ID_StrGenerate, wxT("&Generate..."));
+  MenuStructure->Append(ID_PictureExport, wxT("&Export picture (experimental)"));
 
 // statusbar initialisation
   StatusBar = CreateStatusBar();
@@ -1201,10 +1185,8 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   TObjectVisibilityChange* VC = new TObjectVisibilityChange(this);
   XA->OnGraphicsVisible.Add(VC);
   // put correct captions to the menu
-  pmModel->SetLabel(ID_CellVisible, FXApp->IsCellVisible() ?
-    wxT("Hide cell") : wxT("Show cell"));
-  pmModel->SetLabel(ID_BasisVisible, FXApp->IsBasisVisible() ?
-    wxT("Hide basis") : wxT("Show basis"));
+  pmModel->SetLabel(ID_CellVisible, FXApp->IsCellVisible() ? wxT("Hide cell") : wxT("Show cell"));
+  pmModel->SetLabel(ID_BasisVisible, FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis"));
   TutorialDir = XA->GetBaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
   olxstr new_data_dir = patcher::PatchAPI::GetCurrentSharedDir(&DataDir);
@@ -1222,10 +1204,8 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
     if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
       // check if we have full access to all files in the dir...
       bool copy_old = !updater::UpdateAPI::IsNewInstallation();
-      if( !TEFile::MakeDirs(new_data_dir) ) {
-        TMainFrame::ShowAlert(olxstr("Failed to create: ") << new_data_dir,
-          "ERROR", wxOK|wxICON_ERROR);
-      }
+      if( !TEFile::MakeDirs(new_data_dir) )
+        TMainFrame::ShowAlert(olxstr("Failed to create: ") << new_data_dir, "ERROR", wxOK|wxICON_ERROR);
       else if( copy_old )
         TFileTree::Copy(DataDir, new_data_dir, false);
       if( !copy_old )
@@ -1302,7 +1282,6 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   TBasicApp::GetInstance().OnTimer.Add(this, ID_TIMER);
   FXApp->XFile().OnFileLoad.Add(this, ID_FileLoad);
   FXApp->XFile().OnFileClose.Add(this, ID_FileClose);
-  FXApp->XFile().GetRM().OnSetBadReflections.Add(this, ID_BadReflectionSet);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check(!FHtmlMinimized);
 #ifdef __WIN32__  
@@ -1317,15 +1296,6 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
 #ifdef __WIN32__
   rth.Join(true);
 #endif
-  try  {
-    nui_interface = olx_nui::Initialise();
-    if( nui_interface != NULL )
-      nui_interface->InitProcessing(olx_nui::INUI::processSkeleton
-      |olx_nui::INUI::processVideo);
-  }
-  catch(const TExceptionBase &e)  {
-    FXApp->NewLogEntry(logError) << e.GetException()->GetError();
-  }
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1539,15 +1509,6 @@ void TMainForm::AquireTooltipValue()  {
         Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
 #ifdef _DEBUG
       Tooltip << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
-      if( xa.GetEllipsoid() == NULL )  {
-        Tooltip << "\nV: " << olxstr::FormatFloat(3,
-          pow(xa.CAtom().GetUiso(), 3./2)*4*M_PI/3, true);
-      }
-      else {
-        Tooltip << "\nV: " << olxstr::FormatFloat(3,
-          xa.GetEllipsoid()->GetSX()*xa.GetEllipsoid()->GetSY()*
-          xa.GetEllipsoid()->GetSZ()*4*M_PI/3, true);
-      }
 #endif
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
@@ -1707,9 +1668,6 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer.SetEnabled(false);
-    if( nui_interface != NULL )  {
-      nui_interface->DoProcessing();
-    }
     // execute tasks ...
     for( size_t i=0; i < Tasks.Count(); i++ )  {
       if(  (TETime::Now() - Tasks[i].LastCalled) > Tasks[i].Interval )  {
@@ -1728,12 +1686,12 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       GetHtml()->ProcessPageLoadRequest();
     THtml *main_html = FHtml;
     try  {
-      for( size_t pi=0; pi < Popups.Count(); pi++ )  {
-        if( Popups.GetValue(pi)->Html->IsPageLoadRequested() &&
-            !Popups.GetValue(pi)->Html->IsPageLocked() )
+      for( size_t pi=0; pi < FPopups.Count(); pi++ )  {
+        if( FPopups.GetObject(pi)->Html->IsPageLoadRequested() &&
+            !FPopups.GetObject(pi)->Html->IsPageLocked() )
         {
-          FHtml = Popups.GetValue(pi)->Html;
-          Popups.GetValue(pi)->Html->ProcessPageLoadRequest();
+          FHtml = FPopups.GetObject(pi)->Html;
+          FPopups.GetObject(pi)->Html->ProcessPageLoadRequest();
         }
       }
     }
@@ -2000,7 +1958,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       if( ((olxstr*)Data)->Equalsi("OMIT") )  {
         BadReflectionsTable(false);
-        executeMacro("html.update");
+        executeMacro("html.updatehtml");
       }
     }
   }
@@ -2008,13 +1966,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       if( ((olxstr*)Data)->Equalsi("OMIT") )  {
         BadReflectionsTable(false);
-        executeMacro("html.update");
+        executeMacro("html.updatehtml");
       }
     }
-  }
-  else if (MsgId == ID_BadReflectionSet) {
-    if (MsgSubId == msiExit)
-      BadReflectionsTable(false);
   }
   return res;
 }
@@ -2955,47 +2909,37 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
 //..............................................................................
 void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   static const olxstr BadRefsFile("badrefs.htm");
-  if( !Create ||
-    (!FXApp->CheckFileType<TIns>() &&
-      !(FXApp->XFile().HasLastLoader() && FXApp->XFile().LastLoader()->IsNative())) )
-  {
+  if( !Create || !FXApp->CheckFileType<TIns>() )  {
     TFileHandlerManager::AddMemoryBlock(BadRefsFile, NULL, 0, plStructure);
     return;
   }
-  const TTypeList<RefinementModel::BadReflection> bad_refs =
-    FXApp->XFile().GetRM().GetBadReflectionList();
+  TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
+  Lst.SynchroniseOmits( FXApp->XFile().GetRM() );
   TTTable<TStrList> Table;
   TStrList Output;
-  Table.Resize(bad_refs.Count(), 5);
+  Table.Resize(Lst.DRefCount(), 5);
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
   Table.ColName(3) = "(Fc<sup>2</sup>-Fo<sup>2</sup>)/esd";
-  for( size_t i=0; i < bad_refs.Count(); i++ )  {
-    for (int j=0; j < 3; j++)
-      Table[i][j] = bad_refs[i].index[j];
-    double df = (bad_refs[i].Fc-bad_refs[i].Fo)/bad_refs[i].esd;
-    if( olx_abs(df) >= 10 ) {
-      Table[i][3] << "<font color=\'red\'>" <<
-        olxstr::FormatFloat(2, df) << "</font>";
-    }
+  for( size_t i=0; i < Lst.DRefCount(); i++ )  {
+    const TLstRef& Ref = Lst.DRef(i);
+    Table[i][0] = Ref.H;
+    Table[i][1] = Ref.K;
+    Table[i][2] = Ref.L;
+    Table[i][3] << ((Ref.Fc > Ref.Fo) ? '+' : '-');
+    if( Ref.DF >= 10 ) 
+      Table[i][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2, Ref.DF) << "</font>";
     else  
-      Table[i][3] << olxstr::FormatFloat(2, df);
-    if( FXApp->XFile().GetRM().GetOmits().IndexOf(
-      bad_refs[i].index) != InvalidIndex )
-    {
+      Table[i][3] << olxstr::FormatFloat(2, Ref.DF);
+    if( Ref.Deleted )
       Table[i][4] << "Omitted";
-    }
-    else {
-      Table[i][4] << "<a href='omit " << bad_refs[i].index[0] <<  ' ' <<
-        bad_refs[i].index[1] << ' ' << bad_refs[i].index[2] << "\'>" <<
-        "omit" << "</a>";
-    }
+    else
+      Table[i][4] << "<a href='omit " << Ref.H <<  ' ' << Ref.K << ' ' << Ref.L << "\'>" << "omit" << "</a>";
   }
   Table.CreateHTMLList(Output, EmptyString(), true, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
-  TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(),
-    plStructure);
+  TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(), plStructure);
   if( TEFile::Exists(BadRefsFile) )
     TEFile::DelFile(BadRefsFile);
   //TUtf8File::WriteLines( BadRefsFile, Output, false );
@@ -3178,11 +3122,15 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
 }
 //..............................................................................
 void TMainForm::ClearPopups()  {
-  for( size_t i=0; i < Popups.Count(); i++ )  {
-    Popups.GetValue(i)->Dialog->Destroy();
-    delete Popups.GetValue(i);
+  for( size_t i=0; i < FPopups.Count(); i++ )  {
+    delete FPopups.GetObject(i)->Dialog;
+    delete FPopups.GetObject(i);
   }
-  Popups.Clear();
+  FPopups.Clear();
+}
+//..............................................................................
+TPopupData* TMainForm::GetPopup(const olxstr& name)  {
+  return FPopups[name];
 }
 //..............................................................................
 bool TMainForm::CheckMode(size_t mode, const olxstr& modeData)  {
@@ -3197,13 +3145,13 @@ bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
   if( state == prsHtmlVis )  {
     if( stateData.IsEmpty() )
       return FHtmlMinimized;
-    TPopupData* pp = Popups.Find(stateData, NULL);
+    TPopupData* pp = GetPopup( stateData );
     return (pp != NULL) ? pp->Dialog->IsShown() : false;
   }
   if( state == prsHtmlTTVis )  {
     if( stateData.IsEmpty() )
       return FHtml->GetShowTooltips();
-    TPopupData* pp = Popups.Find(stateData, NULL);
+    TPopupData* pp = GetPopup(stateData);
     return (pp != NULL) ? pp->Html->GetShowTooltips() : false;
   }
   if( state == prsPluginInstalled )  {
@@ -3360,7 +3308,7 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
       return NULL;
     }
   }
-  catch(const TExceptionBase& exc)  {
+  catch( TExceptionBase& exc )  {
     me.ProcessingException(*Fun, exc);
     AnalyseError(me);
     return NULL;
@@ -3369,8 +3317,12 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
 }
 //..............................................................................
 THtml* TMainForm::FindHtml(const olxstr& popupName) const {
-  TPopupData* pd = Popups.Find(popupName, NULL);
+  TPopupData* pd = FPopups[popupName];
   return pd ? pd->Html : NULL;
+}
+//..............................................................................
+TPopupData* TMainForm::FindHtmlEx(const olxstr& popupName) const {
+  return FPopups[popupName];
 }
 //..............................................................................
 void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
@@ -3751,9 +3703,9 @@ void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
   if( wnd == FHtml )
     FHtml->LockPageLoad(caller);
   else  {
-    for( size_t i=0; i < Popups.Count(); i++ )  {
-      if( Popups.GetValue(i)->Html == wnd )  {
-        Popups.GetValue(i)->Html->LockPageLoad(caller);
+    for( size_t i=0; i < FPopups.Count(); i++ )  {
+      if( FPopups.GetObject(i)->Html == wnd )  {
+        FPopups.GetObject(i)->Html->LockPageLoad(caller);
         break;
       }
     }
@@ -3764,9 +3716,9 @@ void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  
   if( wnd == FHtml )
     FHtml->UnlockPageLoad(caller);
   else  {
-    for( size_t i=0; i < Popups.Count(); i++ )  {
-      if( Popups.GetValue(i)->Html == wnd )  {
-        Popups.GetValue(i)->Html->UnlockPageLoad(caller);
+    for( size_t i=0; i < FPopups.Count(); i++ )  {
+      if( FPopups.GetObject(i)->Html == wnd )  {
+        FPopups.GetObject(i)->Html->UnlockPageLoad(caller);
         break;
       }
     }
@@ -3901,6 +3853,15 @@ static PyMethodDef CORE_Methods[] = {
 //..............................................................................
 void TMainForm::PyInit()  {
   Py_InitModule("olex_gui", CORE_Methods);
+}
+//..............................................................................
+void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
+  //SaveVecDialog *dlg = new SaveVecDialog(this, FXApp);
+  //if ( dlg->Show() == wxID_OK ) {
+  //} 
+  //#include "savevecdialog.h"
+  
+  wxMessageBox(wxT("Under construction"));    
 }
 //..............................................................................
 //..............................................................................

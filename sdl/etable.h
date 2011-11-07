@@ -20,8 +20,7 @@ template <class T> class TTTable: public IEObject  {
   TStrList ColNames, RowNames;
 public:
   TTTable()  {}
-  TTTable(const TTTable& t)
-    : Rows(t.Rows), ColNames(t.ColNames), RowNames(t.RowNames)  {}
+  TTTable(const TTTable& t) : Rows(t.Rows), ColNames(t.ColNames), RowNames(t.RowNames)  {}
   TTTable(size_t RowCnt, size_t ColCnt)  {  Resize(RowCnt, ColCnt);  }
 
   virtual ~TTTable()  {  Clear();  }
@@ -41,9 +40,7 @@ public:
     return *this;
   }
   TTTable& operator = (const TTTable& Table)  {  return Assign(Table);  }
-  template <class T1> TTTable& operator = (const TTTable<T1>& Table)  {
-    return Assign(Table);
-  }
+  template <class T1> TTTable& operator = (const TTTable<T1>& Table)  {  return Assign(Table);  }
 
   const TStrList& GetColNames() const {  return ColNames;  }
   const TStrList& GetRowNames() const {  return RowNames;  }
@@ -51,12 +48,8 @@ public:
   size_t ColCount() const {  return ColNames.Count();  }
   olxstr& ColName(size_t index) const { return ColNames[index];  }
   olxstr& RowName(size_t index) const {  return RowNames[index];  }
-  template <typename Str> size_t ColIndex(const Str& N) const {
-    return ColNames.IndexOf(N);
-  }
-  template <typename Str> size_t RowIndex(const Str& N) const {
-    return RowNames.IndexOf(N);
-  }
+  template <typename Str> size_t ColIndex(const Str& N) const {  return ColNames.IndexOf(N);  }
+  template <typename Str> size_t RowIndex(const Str& N) const {  return RowNames.IndexOf(N);  }
 
   void Resize(size_t RowCnt, size_t ColCnt)  {
     if( RowCnt != Rows.Count() )  {
@@ -169,9 +162,7 @@ public:
     olxstr Tmp;
     if( !Title.IsEmpty() )
       L.Add(olxstr("<p><b>") << Title << olxstr("</b></p>"));
-    if( Format )
-      L.Add("<table border=\"1\" width = \"100%\" cellpadding=\"0\" "
-            "cellspacing=\"0\" style=\"border-collapse: collapse\">");
+    if( Format )  L.Add("<table border=\"1\" width = \"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse: collapse\">");
     if( colNames )  {
       L.Add("<tr>");
       if( rowNames )  Tmp = "<td></td>";
@@ -191,7 +182,7 @@ public:
     return L;
   }
   
-  const_strlist CreateHTMLList(const olxstr &Title,
+  TStrList CreateHTMLList(const olxstr &Title,
     const olxstr& footer,
     bool colNames, bool rowNames,
     const olxstr& titlePAttr,
@@ -205,9 +196,8 @@ public:
     const olxstr& colSepAttr=EmptyString()) const
   {
     TStrList L;
-    return CreateHTMLList(L, Title, footer, colNames, rowNames, titlePAttr,
-      footerPAttr, tabAttr, rowAttr, thAttr, clAttr, Format, colCount,
-      colSepAttr);
+    return CreateHTMLList(L, Title, footer, colNames, rowNames, titlePAttr, footerPAttr, tabAttr,
+      rowAttr, thAttr, clAttr, Format, colCount, colSepAttr);
   }
   TStrList& CreateHTMLList(TStrList &L, const olxstr &Title,
     const olxstr& footer,
@@ -271,15 +261,11 @@ public:
       L.Add("<p ") << footerPAttr << '>' << footer << "</p>";
     return L;
   }
-  const_strlist CreateTXTList(const olxstr &Title, bool colNames, bool rowNames,
-    const olxstr& Sep) const
-  {
+  TStrList CreateTXTList(const olxstr &Title, bool colNames, bool rowNames, const olxstr& Sep) const {
     TStrList L;
     return CreateTXTList(L, Title, colNames, rowNames, Sep);
   }
-  TStrList& CreateTXTList(TStrList &L, const olxstr &Title, bool colNames,
-    bool rowNames, const olxstr& Sep) const
-  {
+  TStrList& CreateTXTList(TStrList &L, const olxstr &Title, bool colNames, bool rowNames, const olxstr& Sep) const {
     evecsz rowV(ColCount()+1);
     olxstr Tmp;
     L.Add(Title);
@@ -303,12 +289,12 @@ public:
     if( colNames )  {
       Tmp.SetLength(0);
       if( rowNames )  {
-        Tmp.RightPadding(rowV[0], ' ');
+        Tmp.Format(rowV[0], true, ' ');
         Tmp << Sep;
       }
       for( size_t i=0; i < ColCount(); i++ )  {
         Tmp << ColNames[i];
-        Tmp.RightPadding(rowV[i+1], ' ');
+        Tmp.Format(rowV[i+1], true, ' ');
         if( (i+1) < ColNames.Count() )  Tmp << Sep;
       }
       L.Add(Tmp);
@@ -316,7 +302,7 @@ public:
     for( size_t i=0; i < RowCount(); i++ )  {
       if( rowNames )  {
         Tmp = RowNames[i];
-        Tmp.RightPadding(rowV[0], ' ');
+        Tmp.Format(rowV[0], true, ' ');
         Tmp << Sep;
       }
       else
@@ -324,7 +310,7 @@ public:
 
       for( size_t j=0; j < ColCount(); j++ )  {
         Tmp << Rows[i][j];
-        Tmp.RightPadding(rowV[j+1], ' ');
+        Tmp.Format(rowV[j+1], true, ' ');
         if( (j+1) < ColCount() )  Tmp << Sep;
       }
       L.Add(Tmp);

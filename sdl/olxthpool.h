@@ -20,19 +20,16 @@ public:
   virtual void Run() = 0;
 };
 
-/* Instances of this class are supposed to be in a 'pool' and can be reused
-without the need to create new threads. This allows to vectorise little tasks,
-where thread creation time is longer that the actual task execution
-*/
+/* Instacnes of this class are supposed to be in a 'pool' and can be reused without the 
+need to create new threads. This allows to vectorise little tasks, where thread creation time 
+is longer that the actual task execution */
 class TThreadSlot : public AOlxThread  {
   ITask* task;
   volatile bool suspended;
 public:
   TThreadSlot() : suspended(false), task(NULL)  {}
   /* the thread automatically becomes suspended when the task is completed,
-  and even if a mnew task is set, it will remain suspended until Resume is
-  called
-  */
+  and even if a mnew task is set, it will remain suspended until Resume is called */
   virtual int Run();
   void SetTask(ITask& _task);
   bool IsSuspended() const;

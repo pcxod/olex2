@@ -35,15 +35,12 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
   Strings.Add("TITLE OLEX2 export");
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& a = GetAsymmUnit().GetAtom(i);
-    if (a.IsDeleted()) continue;
-    olxstr label = olxstr(a.GetType().symbol) << (i+1);
-    vec3d crd = GetAsymmUnit().Orthogonalise(a.ccrd());
     sprintf(bf, "ATOM  %5d %5s UNK     0   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s ",
       i+1,
-      label.c_str(),
-      crd[0],
-      crd[1],
-      crd[2],
+      a.GetLabel().c_str(),
+      a.ccrd()[0],
+      a.ccrd()[1],
+      a.ccrd()[2],
       a.GetOccu(),
       a.GetUiso(),
       a.GetType().symbol.c_str()
@@ -56,7 +53,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
       iq[j] = (int)(q[j]*10000);
     sprintf(bf, "ANISOU%5d %5s           %7d%7d%7d%7d%7d%7d      %2s ",
       i+1,
-      label.c_str(),
+      a.GetLabel().c_str(),
       iq[0],
       iq[1],
       iq[2],
@@ -158,7 +155,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
     }
     else if( line == "ATOM" )  {
       toks.Clear();
-      toks.StrtokF(Strings[i], AtomF);
+      toks.StrtokF( Strings[i], AtomF);
       if( toks.Count() < 13 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
       TCAtom& CA = GetAsymmUnit().NewAtom();
@@ -216,11 +213,10 @@ bool TPdb::Adopt(TXFile& XF)  {
   const ASObjectProvider& objects = XF.GetLattice().GetObjects();
   for( size_t i=0; i < objects.atoms.Count(); i++ )  {
     TSAtom& sa = objects.atoms[i];
-    if( !sa.IsAvailable() || sa.GetType() == iQPeakZ )
-      continue;
+    if( !sa.IsAvailable() || sa.GetType() == iQPeakZ )  continue;
     TCAtom& a = GetAsymmUnit().NewAtom();
     a.SetLabel(sa.GetLabel(), false);
-    a.ccrd() = sa.ccrd();
+    a.ccrd() = sa.crd();
     a.SetType(sa.GetType());
     TEllipsoid* se = sa.GetEllipsoid();
     if( se == NULL )  continue;

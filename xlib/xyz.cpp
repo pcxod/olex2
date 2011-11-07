@@ -33,7 +33,7 @@ void TXyz::SaveToStrings(TStrList& Strings)  {
     aline << ' ';
     const vec3d& v = CA.ccrd();
     for( int j=0; j < 3; j++ )
-      aline << olxstr::FormatFloat(4, v[j]).LeftPadding(10, ' ');
+      aline << olxstr::FormatFloat(4, v[j]).Format(10, false, ' ');
     cnt++;
   }
   Strings[0] = cnt;

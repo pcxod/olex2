@@ -34,7 +34,7 @@ namespace exparse  {
     }
     virtual IEvaluable* _evaluate() const = 0;
     typedef cast_result (*cast_operator)(const IEvaluable*);
-    typedef olxdict<std::type_info const*, cast_operator, TPointerComparator> operator_dict;
+    typedef olxdict<std::type_info const*, cast_operator, TPointerPtrComparator> operator_dict;
     // self casting...
     static cast_result self_cast(const IEvaluable* i)  {  return cast_result(i, false);  }
     virtual cast_operator get_cast_operator(const std::type_info&) const {
@@ -172,8 +172,8 @@ namespace exparse  {
   typedef TPrimitiveEvaluator<TPrimitiveInstance<double>,double> DoubleValue;
 
   struct EvaluableFactory  {
-    olxdict<std::type_info const*, IEvaluable*, TPointerComparator> types;
-    olxdict<std::type_info const*, struct IClassInfo*, TPointerComparator> classes;
+    olxdict<std::type_info const*, IEvaluable*, TPointerPtrComparator> types;
+    olxdict<std::type_info const*, struct IClassInfo*, TPointerPtrComparator> classes;
     template <class T> void add_ptype()  {
       types.Add(&typeid(T), new TPrimitiveEvaluator<TPrimitiveInstance<T>,T>(0));
     }

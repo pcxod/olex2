@@ -1043,56 +1043,24 @@ cm_Element& XElementLib::GetByIndex(short ind) {
   return cm_Elements[ind];
 }
 //..............................................................................
-cm_Element* XElementLib::FindByZ(short z) {
-  if (z <= 0 || z > iMaxElementIndex )  return NULL;
-  int idx = z;
-  while (cm_Elements[idx].z < z && ++idx < iMaxElementIndex)
-    ;
-  if (idx < iMaxElementIndex && cm_Elements[idx].z == z)
-    return &cm_Elements[idx];
-  while (cm_Elements[idx].z > z && --idx > 0)
-    ;
-  if (idx >= 0 && cm_Elements[idx].z == z)
-    return &cm_Elements[idx];
-  return NULL;
-}
-//..............................................................................
 cm_Element* XElementLib::NextZ(const cm_Element& elm)  {
   if( elm.z == -1 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "cannot iterate the Q-peaks");
-  size_t idx = elm.index;
-  while (++idx < cm_Element_Count && cm_Elements[idx].z != elm.z+1)
-    ;
-  return (idx < cm_Element_Count) ? &cm_Elements[idx] : NULL;
+    throw TInvalidArgumentException(__OlxSourceInfo, "cannot iterrate the Q-peaks");
+  if( elm.z < cm_Element_Count )  {
+    if( cm_Elements[elm.z].z == elm.z+1 )
+      return &cm_Elements[elm.z];
+  }
+  return NULL;
 }
 //..............................................................................
 cm_Element* XElementLib::PrevZ(const cm_Element& elm)  {
   if( elm.z == -1 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "cannot iterate the Q-peaks");
-  size_t idx = elm.index;
-  while (--idx != InvalidIndex && cm_Elements[idx].z != elm.z-1)
-    ;
-  return (idx != InvalidIndex) ? &cm_Elements[idx] : NULL;
-}
-//..............................................................................
-cm_Element *XElementLib::NextGroup(int group, const cm_Element *e) {
-  if (e == NULL) return NULL;
-  if (IsGroup(group, *e))
-    return &cm_Elements[e->index];
-  size_t idx = e->index;
-  while (++idx < cm_Element_Count && !IsGroup(group, cm_Elements[idx]))
-    ;
-  return (idx < cm_Element_Count) ? &cm_Elements[idx] : NULL;
-}
-//..............................................................................
-cm_Element *XElementLib::PrevGroup(int group, const cm_Element *e) {
-  if (e == NULL) return NULL;
-  if (IsGroup(group, *e))
-    return &cm_Elements[e->index];
-  size_t idx = e->index;
-  while (--idx != InvalidIndex && !IsGroup(group, cm_Elements[idx]))
-    ;
-  return (idx != InvalidIndex) ? &cm_Elements[idx] : NULL;
+    throw TInvalidArgumentException(__OlxSourceInfo, "cannot iterrate the Q-peaks");
+  if( elm.z > 1 )  {
+    if( cm_Elements[elm.z-2].z == elm.z-1 )
+      return &cm_Elements[elm.z-2];
+  }
+  return NULL;
 }
 //..............................................................................
 cm_Element* XElementLib::FindBySymbolEx(const olxstr& label)  {
@@ -1246,7 +1214,7 @@ void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)
       }
     }
     if( !found )
-      res.AddCopy(shc[i]);
+      res.AddCCopy(shc[i]);
   }
 }
 //..............................................................................

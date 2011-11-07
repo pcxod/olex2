@@ -63,14 +63,15 @@ void TXPlane::Create(const olxstr& cName)  {
     const mat3d transform = GetBasis();
     if( !IsRegular() )  {
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
-        GlP.Vertices[i] = transform*GetNormal().Normal(
-          sp.sortedPlane[i]-GetCenter());
+        const vec3d* crd = sp.sortedPlane.GetObject(i);
+        GlP.Vertices[i] = transform*GetNormal().Normal((*crd-GetCenter()));
       }
     }
     else  {
       double maxrs = 0;
       for( size_t i=0; i < sp.sortedPlane.Count(); i++ )  {
-        const double qd = (sp.sortedPlane[i]-GetCenter()).QLength();
+        const vec3d* crd = sp.sortedPlane.GetObject(i);
+        const double qd = (*crd-GetCenter()).QLength();
         if( qd > maxrs )
           maxrs = qd;
       }
@@ -109,14 +110,14 @@ void TXPlane::ListPrimitives(TStrList &List) const {
   List.Add("Centroid");
 }
 //..............................................................................
-const_strlist TXPlane::PovDeclare()  {
+TStrList TXPlane::PovDeclare()  {
   TStrList out;
   out.Add("#declare plane_centroid=object{ sphere {<0,0,0>, 0.25} }");
   return out;
 }
 //..............................................................................
-const_strlist TXPlane::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPointerComparator> &materials) const
+TStrList TXPlane::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPrimitiveComparator> &materials) const
 {
   TStrList out;
    pov::CrdTransformer crdc(Parent.GetBasis());

@@ -273,7 +273,7 @@ void TFileTree::Folder::Synchronise(TFileTree::Folder& f, TOnProgress& onSync)
           Files[i].GetModificationTime());
         if( !res )
           throw TFunctionFailedException(__OlxSourceInfo, "settime");
-        f.Files.AddCopy(Files[i]);
+        f.Files.AddCCopy(Files[i]);
         f.Files.QuickSorter.SortSF(f.Files, &CompareFiles);
         onSync.SetPos( onSync.GetPos() + Files[i].GetSize() );
         FileTree.OnSynchronise->Execute(NULL, &onSync);

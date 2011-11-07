@@ -161,7 +161,7 @@ public:
   // used by TUnitCell to initialise position symmetry
   void AddEquiv(const smatd& m)  {
     if( Equivs == NULL )  Equivs = new smatd_list;
-    Equivs->AddCopy(m);
+    Equivs->AddCCopy(m);
   }
   // number of non identity symmops under which the position is invariant
   size_t EquivCount() const {  return Equivs == NULL ? 0 : Equivs->Count();  }

@@ -16,7 +16,7 @@ BeginGlNamespace()
 
 class TGlGroup: public AGDrawObject {
   /* a sorted list, although would give some performace boost cannot be used here:
-    SortedPtrList<AGDrawObject, TPointerComparator> Objects;  // a list of grouped objects
+    SortedPtrList<AGDrawObject, TPointerPtrComparator> Objects;  // a list of grouped objects
     since the selection order influences a lot of functionality
   */
   AGDObjList Objects;  // a list of grouped objects

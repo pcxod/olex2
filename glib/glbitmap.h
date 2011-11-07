@@ -30,7 +30,6 @@ protected:
   }
   const vec3d& GetCenter() const {  return Center;  }
   double GetZoom() const {  return Zoom;  }
-  void Init(unsigned char* RGB, GLenum format);
 public:
   TGlBitmap(TGlRenderer& Render, const olxstr& collectionName,
     int left, int top, unsigned int width, unsigned int height,

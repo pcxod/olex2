@@ -153,7 +153,6 @@ gxlib = Glob('./gxlib/*.cpp')
 olex2 = Glob('./olex/*.cpp')
 olex2_html = Glob('./olex/html/*.cpp')
 olex2_ctrls = Glob('./olex/ctrls/*.cpp')
-olex2_nui = Glob('./olex/nui/*.cpp')
 unirun = Glob('./unirun/*.cpp')
 olex2c = Split("""./olex2c/olex2c.cpp""")
 tests = Glob('./tests/tests/*.cpp')
@@ -332,7 +331,6 @@ olex2_files = fileListToStringList('glib', glib) + \
               fileListToStringList('olex', olex2) + \
               fileListToStringList('olex/html', olex2_html) + \
               fileListToStringList('olex/ctrls', olex2_ctrls) + \
-              fileListToStringList('olex/nui', olex2_nui) + \
               np_repository + py_repository
 olex2_files = processFileNameList(olex2_files, olex2_env, out_dir+'olex')  
 #link in the res file...

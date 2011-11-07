@@ -497,7 +497,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
         }
       }
       if( !found && res.IndexOf(m) == InvalidIndex )
-        res.AddCopy(m);
+        res.AddCCopy(m);
     }
   }
 }
@@ -837,7 +837,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
       }
     }
     if( !found )  {
-      PlaneDefs.AddCopy(pd);
+      PlaneDefs.AddCCopy(pd);
       if( IsGenerated() )  {
         delete Plane;
         for( size_t i=0; i < Matrices.Count(); i++ )  {
@@ -1608,20 +1608,17 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       double v1 = a.CAngle(b);  v1 = acos(v1)*180/M_PI;
       double v2 = a.CAngle(c);  v2 = acos(v2)*180/M_PI;
       double v3 = b.CAngle(c);  v3 = acos(v3)*180/M_PI;
-      double d1 = AE.GetCrd(0).DistanceTo(atom.crd());
-      double d2 = AE.GetCrd(1).DistanceTo(atom.crd());
-      double d3 = AE.GetCrd(2).DistanceTo(atom.crd());
+      double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
+      double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
+      double d3 = AE.GetCrd(2).DistanceTo( atom.crd() );
       if( (v1+v2+v3) < 350 && d1 > 1.45 && d2 > 1.45 && d3 > 1.45 )  {
         if( d1 > 1.75 || d2 > 1.75 || d3 > 1.75 )  {
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R2HN->M";
           cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
         else  {
-          // this excludes P-N bonds, http://www.olex2.org/olex2-bugs/359
-          if( d1 < 1.65 && d2 < 1.65 && d3 < 1.65 )  {
-            TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R3NH+";
-            cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
-          }
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R3NH+";
+          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
     }
@@ -1988,13 +1985,10 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   GetAsymmUnit().ToDataItem(item.AddItem("AUnit"));
   TDataItem& mat = item.AddItem("Matrices");
   const size_t mat_c = Matrices.Count();
-  /* save matrices, change matrix tags to the position in the list and remember
-    old tags
-  */
+  // save matrices, change matrix tags to the position in the list and remember old tags
   TArrayList<uint32_t> m_tags(mat_c);
   for( size_t i=0; i < mat_c; i++ )  {
-    mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i]))
-      .AddField("id", Matrices[i]->GetId());
+    mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i])).AddField("id", Matrices[i]->GetId());
     m_tags[i] = Matrices[i]->GetId();
     Matrices[i]->SetRawId((uint32_t)i);
   }
@@ -2220,7 +2214,7 @@ olxstr TLattice::CalcMoiety() const {
     ElementDict _cld;
     for( size_t j=0; j < cfrags[i].Count(); j++ )
       _cld.Add(&cfrags[i][j]->GetType(), 0) += cfrags[i][j]->GetOccu();
-    ContentList cl(_cld.Count(), false);
+    ContentList cl(_cld.Count());
     for( size_t j=0; j < _cld.Count(); j++ )
       cl.Set(j, new ElementCount(*_cld.GetKey(j), _cld.GetValue(j)));
     XElementLib::SortContentList(cl);

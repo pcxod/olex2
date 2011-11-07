@@ -107,8 +107,7 @@ TEValue<double> TUnitCell::CalcVolumeEx() const {
 void  TUnitCell::InitMatrices()  {
   MulDest.Clear();
   Matrices.Clear();
-  GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(),
-    GetLattice().GetAsymmUnit().GetLatt());
+  GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(), GetLattice().GetAsymmUnit().GetLatt() );
   const size_t mc = Matrices.Count();
   MulDest.SetCapacity(mc);
   InvDest.SetCount(mc);
@@ -127,10 +126,8 @@ void  TUnitCell::InitMatrices()  {
           }
         }
       }
-      if( index == InvalidIndex ) {
-        throw TFunctionFailedException(__OlxSourceInfo,
-          "assert: incomplete space group");
-      }
+      if( index == InvalidIndex )
+        throw TFunctionFailedException(__OlxSourceInfo, "assert: incomplete space group");
       MulDest[i][j] = (uint8_t)index;
     }
     {
@@ -145,10 +142,8 @@ void  TUnitCell::InitMatrices()  {
           }
         }
       }
-      if( index == InvalidIndex ) {
-        throw TFunctionFailedException(__OlxSourceInfo,
-          "assert: incomplete space group");
-      }
+      if( index == InvalidIndex )
+        throw TFunctionFailedException(__OlxSourceInfo, "assert: incomplete space group");
       InvDest[i] = (uint8_t)index;
     }
   }
@@ -162,10 +157,8 @@ void  TUnitCell::InitMatrices()  {
       m_tab[i][j] = MulDest[i][j];
     }
   }
-  TBasicApp::GetLog() <<
-    m_tab.CreateTXTList("Space group multiplication table", false, false, ' ');
-  TBasicApp::GetLog() <<
-    i_tab.CreateTXTList("Space inversion table", true, false, ' ');
+  TBasicApp::GetLog() << m_tab.CreateTXTList("Space group multiplication table", false, false, ' ');
+  TBasicApp::GetLog() << i_tab.CreateTXTList("Space inversion table", true, false, ' ');
 #endif
 }
 //..............................................................................
@@ -208,11 +201,8 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
   const size_t mc = Matrices.Count();
   for( size_t i=ind; i < ac; i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
-    if( Atoms[i]->GetExyzGroup() != NULL &&
-      Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() )
-    {
+    if( Atoms[i]->GetExyzGroup() != NULL && Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() ) 
       continue;
-    }
     for( size_t j=0; j < mc; j++ )  {
       vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
       const vec3i shift = v.Round<int>();
@@ -230,19 +220,13 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           }
           Atoms[i]->SetDeleted(true);
         }
-        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
-          Latt->GetDelta()) )  // covalent bond
-        {
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd, Latt->GetDelta()) )  {  // bond
           Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSite(Atoms[ind],
-            Latt->GetUnitCell().InvMatrix(Matrices[j]));
+          Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
         }
-        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
-          Latt->GetDeltaI()) )  // interaction
-        {
+        else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd, Latt->GetDeltaI()) )  { // interaction
           Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSiteI(Atoms[ind],
-            Latt->GetUnitCell().InvMatrix(Matrices[j]));
+          Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(Matrices[j]));
         }
         continue;
       }
@@ -260,11 +244,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[ind]->SetDeleted(true);
           break;
         }
-        if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() ||
-          Atoms[i]->GetPart() < 0 )
-        {
-          continue;
-        }
+        if( Atoms[i]->GetPart() != Atoms[ind]->GetPart() || Atoms[i]->GetPart() < 0 )  continue;
         if( Atoms[i]->GetParentAfixGroup() == NULL )
           Atoms[i]->SetDeleted(true);
       }
@@ -276,14 +256,14 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Latt->GetDelta()) )
         {
           Atoms[ind]->AttachSite(Atoms[i], matr);
-          if (i != ind)
+          if( i != ind )
             Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
           Latt->GetDeltaI()) )
         {
           Atoms[ind]->AttachSiteI(Atoms[i], matr);
-          if (i != ind)
+          if( i != ind )
             Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
       }
@@ -317,21 +297,19 @@ void TUnitCell::FindSymmEq() const  {
           ACA[i]->AttachSite(ACA[j], Matrices[0]);
           ACA[j]->AttachSite(ACA[i], Matrices[0]);
         }
+
       }
     }
   }
   else  {
     TSearchSymmEqTask searchTask(ACA, Matrices);
-    TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(),
-      tQuadraticTask, 1000);
+    TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(), tQuadraticTask, 1000);
     for( size_t i=0; i < ACA.Count(); i++ )
       ACA[i]->UpdateAttachedSites();
   }
 }
 //..............................................................................
-smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
-  bool ConsiderOriginal, double* dist) const
-{
+smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal, double* dist) const  {
   const smatd* minMatr = NULL;
   vec3i mint;
   double minD=10000;
@@ -746,35 +724,6 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
   TBasicApp::GetInstance().Update();
 }
 //..................................................................................
-olx_object_ptr<TArray3D<bool> > TUnitCell::BuildAtomMask(const vec3s& dim,
-  double r) const
-{
-  // angstrem per pixel scale
-  double capp = Lattice->GetAsymmUnit().GetAxes()[2]/dim[2],
-         bapp = Lattice->GetAsymmUnit().GetAxes()[1]/dim[1],
-         aapp = Lattice->GetAsymmUnit().GetAxes()[0]/dim[0];
-  // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
-  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  const double sin_a = sin(au.GetAngles()[0]*M_PI/180);
-  const double sin_b = sin(au.GetAngles()[1]*M_PI/180);
-  const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
-  const double sr = r*r;
-  int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp)/2;
-  int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp)/2;
-  int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/aapp)/2;
-  TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
-  for( int x=-ad; x <= ad; x ++ )  {
-    for( int y=-bd; y <= bd; y ++ )  {
-      for( int z=-cd; z <= cd; z ++ )  {
-        vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1],
-          (double)z/dim[2]));
-        spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
-      }
-    }
-  }
-  return spm;
-}
-//..................................................................................
 const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
   TUnitCell::BuildAtomMasks(const vec3s& dim, ElementRadii* radii, double delta) const
 {
@@ -801,8 +750,7 @@ const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
     for( int x=-ad; x <= ad; x ++ )  {
       for( int y=-bd; y <= bd; y ++ )  {
         for( int z=-cd; z <= cd; z ++ )  {
-          vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1],
-            (double)z/dim[2]));
+          vec3d v = au.Orthogonalise(vec3d((double)x/dim[0], (double)y/dim[1], (double)z/dim[2]));
           spm->Data[x+ad][y+bd][z+cd] = (v.QLength() <= sr);
         }
       }

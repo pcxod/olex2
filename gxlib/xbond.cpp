@@ -260,8 +260,8 @@ const vec3d &TXBond::GetBaseCrd() const {
   return A().crd();
 }
 //..............................................................................
-const_strlist TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPointerComparator> &materials) const
+TStrList TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPrimitiveComparator> &materials) const
 {
   TStrList out;
   if( olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3 )
@@ -290,7 +290,7 @@ const_strlist TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
   return out;
 }
 //..............................................................................
-const_strlist TXBond::PovDeclare()  {
+TStrList TXBond::PovDeclare()  {
   TStrList out;
   out.Add("#declare bond_single_cone=object{ cylinder {<0,0,0>, <0,0,1>, 0.1} }");
   out.Add("#declare bond_top_disk=object{ disc {<0,0,1><0,0,1>, 0.1} }");
@@ -601,12 +601,10 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
 //..............................................................................
 void TXBond::SetRadius(float V)  {
   Params()[4] = V;
-  if( this->Primitives != NULL )  {
-    GetPrimitives().GetStyle().SetParam("R", V, IsRadiusSaveable());
-    // update radius for all members of the collection
-    for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
-      GetPrimitives().GetObject(i).Params()[4] = V;
-  }
+  GetPrimitives().GetStyle().SetParam("R", V, IsRadiusSaveable());
+  // update radius for all members of the collection
+  for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
+    GetPrimitives().GetObject(i).Params()[4] = V;
 }
 //..............................................................................
 uint32_t TXBond::GetPrimitiveMask() const {

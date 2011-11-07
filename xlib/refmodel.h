@@ -45,7 +45,7 @@ static uint32_t
   rm_clear_DEF = (rm_clear_ALL^(rm_clear_SAME|rm_clear_AFIX|rm_clear_VARS));
 
 class RefinementModel
-  : public IXVarReferencerContainer, public IXVarReferencer, public IEObject
+  : public IXVarReferencerContainer, public IXVarReferencer
 {
   // in INS file is EQUV command
   struct Equiv  {
@@ -142,27 +142,13 @@ public:
     }
     size_t GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
   };
-
-  struct BadReflection {
-    vec3i index;
-    double Fo, Fc, esd;
-    BadReflection(const vec3i &_index, double _Fo, double _Fc, double _esd)
-    : index(_index), Fo(_Fo), Fc(_Fc), esd(_esd) {}
-    BadReflection() : Fo(0), Fc(0), esd(0) {}
-  };
-
 protected:
   mutable HklStat _HklStat;
   mutable TRefList _Reflections;  // ALL un-merged reflections
-  // if this is not the HKLSource, statistics is recalculated
-  mutable TEFile::FileID HklStatFileID, HklFileID;
+  mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
   mutable TIntList _Redundancy;
   mutable int _FriedelPairCount;  // the numbe of pairs only
-  TTypeList<BadReflection> BadReflections;
-  TActionQList Actions;
 public:
-
-  TActionQueue& OnSetBadReflections;
 
   TAsymmUnit& aunit;
 
@@ -182,10 +168,8 @@ public:
                   rAngle,
                   rDihedralAngle,
                   rFixedUeq,
-                  rSimilarUeq,
-                  rSimilarAdpVolume;
+                  rSimilarUeq;
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
-  ConstraintContainer<same_group_constraint> SameGroups;
   ConstraintContainer<adirection> Directions;
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
@@ -297,12 +281,12 @@ public:
   bool HasOMIT() const {  return OMIT_set;  }
   size_t OmittedCount() const {  return Omits.Count();  }
   const vec3i& GetOmitted(size_t i) const {  return Omits[i];  }
-  void Omit(const vec3i& r)  {  Omits.AddCopy(r);  OMITs_Modified = true;  }
+  void Omit(const vec3i& r)  {  Omits.AddCCopy(r);  OMITs_Modified = true;  }
   void ClearOmits()  {  Omits.Clear();  OMITs_Modified = true;  }
   const vec3i_list& GetOmits() const {  return Omits;  }
   template <class list> void AddOMIT(const list& omit)  {
     if( omit.Count() == 3 )  {  // reflection omit
-      Omits.AddNew(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
+      Omits.AddNew( omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
       OMITs_Modified = true;
     }
     else  {  // reflection transformation/filtering
@@ -318,16 +302,6 @@ public:
   }
   // processed user omits (hkl) and returns the number of removed reflections
   size_t ProcessOmits(TRefList& refs);
-
-  const TTypeList<BadReflection> &GetBadReflectionList() const {
-    return BadReflections;
-  }
-
-  void SetBadReflectionList(const ConstTypeList<BadReflection> &bad_refs) {
-    OnSetBadReflections.Enter(this);
-    BadReflections = bad_refs;
-    OnSetBadReflections.Exit(this);
-  }
 
   // SHEL reflection resolution filter low/high
   double GetSHEL_lr() const {  return SHEL_lr;  }
@@ -380,15 +354,14 @@ public:
   const mat3d& GetTWIN_mat()  const {  return TWIN_mat;  }
   void SetTWIN_mat(const mat3d& m)  {  TWIN_mat = m;  TWIN_set = true;  }
   /* ShelXL manual:
-If the racemic twinning is present at the same time as normal twinning, n
-should be doubled (because there are twice as many components as before) and
-given a negative sign (to indicate to the program that the inversion operator
-is to be applied multiplicatively with the specified TWIN matrix). The number
-of BASF parameters, if any, should be increased from m-1 to 2m-1 where m is the
-original number of components (equal to the new |n| divided by 2). The TWIN
-matrix is applied m-1 times to generate components 2 ... m from the prime
-reflection (component 1); components m+1 ... 2m are then generated as the
-Friedel opposites of components 1 ... m  
+If the racemic twinning is present at the same time as normal twinning, n should be doubled
+(because there are twice as many components as before) and given a negative sign (to
+indicate to the program that the inversion operator is to be applied multiplicatively with the
+specified TWIN matrix). The number of BASF parameters, if any, should be increased from
+m-1 to 2m-1 where m is the original number of components (equal to the new |n| divided by 2).
+The TWIN matrix is applied m-1 times to generate components 2 ... m from the prime
+reflection (component 1); components m+1 ... 2m are then generated as the Friedel opposites
+of components 1 ... m  
 */
   int GetTWIN_n() const {  return TWIN_n;  }
   void SetTWIN_n(int v)  {  TWIN_n = v;  TWIN_set = true;  }
@@ -427,9 +400,7 @@ Friedel opposites of components 1 ... m
   void SetIterations(int v);
   void SetPlan(int v);
 
-  /* clears restraints, SFAC and used symm but not AfixGroups, Exyzroups and
-  Vars
-  */
+  // clears restraints, SFAC and used symm but not AfixGroups, Exyzroups and Vars
   void Clear(uint32_t clear_mask);
   // to be called by the Vars
   void ClearVarRefs();
@@ -449,12 +420,8 @@ Friedel opposites of components 1 ... m
   // returns the number of the used symmetry matrices
   inline size_t UsedSymmCount() const {  return UsedSymm.Count();  }
   // returns used symmetry matric at specified index
-  inline const smatd& GetUsedSymm(size_t ind) const {
-    return UsedSymm.GetValue(ind).symop;
-  }
-  /* return index of given symmetry matrix in the list or -1, if it is not in
-  the list
-  */
+  inline const smatd& GetUsedSymm(size_t ind) const {  return UsedSymm.GetValue(ind).symop;  }
+  // return index of given symmetry matrix in the list or -1, if it is not in the list
   size_t UsedSymmIndex(const smatd& matr) const;
   // deletes all used symmetry matrices
   inline void ClearUsedSymm()  {  UsedSymm.Clear();  }
@@ -462,9 +429,7 @@ Friedel opposites of components 1 ... m
     const size_t i = UsedSymm.IndexOf(name);
     return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i).symop);
   }
-  /* initialises ID's of the matrices to conform to the unit cell, this called
-  by TLattice
-  */
+  // initialises ID's of the matrices to conform to the unit cell, this called by TLattice
   void UpdateUsedSymm(const class TUnitCell& uc);
   // throws an exception if not found
   adirection& DirectionById(const olxstr &id) const;
@@ -473,9 +438,7 @@ Friedel opposites of components 1 ... m
   // returns number of custom scatterers
   inline size_t SfacCount() const {  return SfacData.Count();  }
   // returns scatterer at specified index
-  inline XScatterer& GetSfacData(size_t i) const {
-    return *SfacData.GetValue(i);
-  }
+  inline XScatterer& GetSfacData(size_t i) const {  return *SfacData.GetValue(i);  }
   // finds scatterer by label, returns NULL if nothing found
   inline XScatterer* FindSfacData(const olxstr& label) const {
     size_t ind = SfacData.IndexOf(label);
@@ -494,13 +457,9 @@ Friedel opposites of components 1 ... m
     for( size_t i=0; i < sfac.Count(); i++ )
       AddUserContent(sfac[i], 0);
   }
-  template <class StrLst> void SetUserContent(const StrLst& sfac,
-    const StrLst& unit)
-  {
-    if( sfac.Count() != unit.Count() ) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "UNIT/SFAC lists mismatch");
-    }
+  template <class StrLst> void SetUserContent(const StrLst& sfac, const StrLst& unit)  {
+    if( sfac.Count() != unit.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "UNIT/SFAC lists mismatch");
     UserContent.Clear();
     for( size_t i=0; i < sfac.Count(); i++ )
       AddUserContent(sfac[i], unit[i].ToDouble());
@@ -512,10 +471,8 @@ Friedel opposites of components 1 ... m
     UserContent = cnt;
   }
   template <class StrLst> void SetUserContentSize(const StrLst& unit)  {
-    if( UserContent.Count() != unit.Count() ) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        "UNIT/SFAC lists mismatch");
-    }
+    if( UserContent.Count() != unit.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "UNIT/SFAC lists mismatch");
     for( size_t i=0; i < UserContent.Count(); i++ )
       UserContent[i].count = unit[i].ToDouble();
   }
@@ -545,16 +502,14 @@ Friedel opposites of components 1 ... m
       TCAtom* ca = aunit.FindCAtom(exyz[i]);
       if( ca == NULL )  {
         gr.Clear();
-        throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("unknown atom: ") << exyz[i]);
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("unknown atom: ") << exyz[i]);
       }
       gr.Add(*ca);
     }
   }
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
-  /* updates refinable params - BASF, FVAR, WGHT, returns false if objects
-  mismatch */
+  // updates refinable params - BASF, FVAR, WGHT, returns false if objects mismatch
   bool Update(const RefinementModel& rm);
 
   size_t FragCount() const {  return Frags.Count();  }
@@ -568,10 +523,8 @@ Friedel opposites of components 1 ... m
     double be=90, double ga=90)
   {
     size_t ind = Frags.IndexOf(code);
-    if( ind != InvalidIndex )  {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "duplicated FRAG instruction");
-    }
+    if( ind != InvalidIndex )
+      throw TFunctionFailedException(__OlxSourceInfo, "duplicated FRAG instruction");
     return *Frags.Add(code, new Fragment(code, a, b, c, al, be, ga));
   }
   // the function does the atom fitting and clears the fragments
@@ -628,10 +581,8 @@ Friedel opposites of components 1 ... m
     stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
     return AdjustIntensity(out, stats);
   }
-  /* if none of the above functions help, try this ones
-    return complete list of unmerged reflections (HKLF matrix, if any, is
-    applied)
-  */
+  // if none of the above functions help, try this ones
+  // return complete list of unmerged reflections (HKLF matrix, if any, is applied)
   const TRefList& GetReflections() const;
   // this will be only valid if any list of the reflections was called
   const HklStat& GetReflectionStat() const {  return _HklStat;  } 
@@ -639,47 +590,39 @@ Friedel opposites of components 1 ... m
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
   // adjust intensity of reflections according to OMIT
   HklStat& AdjustIntensity(TRefList& out, HklStat& stats) const;
-  /* returns redundancy information, like list[0] is the number of reflections
-     collected once list[1] = number of reflections collected wtice etc
-  */
+  /* returns redundancy information, like list[0] is the number of reflections collected once
+     list[1] = number of reflections collected wtice etc */
   const TIntList& GetRedundancyInfo() const {
     GetReflections();
     return _Redundancy;
   }
   // uses algebraic relation
-  void DetwinAlgebraic(TRefList& refs, const HklStat& st,
-    const SymSpace::InfoEx& info_ex) const;
+  void DetwinAlgebraic(TRefList& refs, const HklStat& st, const SymSpace::InfoEx& info_ex) const;
   // convinience method for mrehedral::detwin<> with  detwin_mixed
-  void DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
-    const HklStat& st, const SymSpace::InfoEx& info_ex) const;
+  void DetwinMixed(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
+    const SymSpace::InfoEx& info_ex) const;
   // convinience method for mrehedral::detwin<> with  detwin_shelx
-  void DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
-    const HklStat& st, const SymSpace::InfoEx& info_ex) const;
+  void DetwinShelx(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
+    const SymSpace::InfoEx& info_ex) const;
   template <class RefList, class FList, class SymSpace>
-  void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const
-  {
+  void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const {
     if( !EXTI_set || EXTI == 0 ) return;
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
     const double l = expl.GetRadiation();
     for( size_t i=0; i < refs.Count(); i++ )  {
-      const double x =
-        sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
-      F[i] *=
-        pow(1+0.0005*EXTI*F[i].qmod()*l*l*l/sqrt(olx_max(0,x*(1-x))), -0.25);
+      const double x = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
+      F[i] *= pow(1+0.0005*EXTI*F[i].qmod()*l*l*l/sqrt(olx_max(0,x*(1-x))), -0.25);
     }
   }
   template <class RefList, class FsqList, class SymSpace>
-  void CorrectExtiForFsq(const RefList& refs, FsqList& Fsq,
-    const SymSpace& sp) const
-  {
+  void CorrectExtiForFsq(const RefList& refs, FsqList& Fsq, const SymSpace& sp) const {
     if( !EXTI_set || EXTI == 0 ) return;
     if( refs.Count() != Fsq.Count() )
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
     const double l = expl.GetRadiation();
     for( size_t i=0; i < refs.Count(); i++ )  {
-      const double x
-        = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
+      const double x = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
       Fsq[i] /= sqrt(1+0.0005*EXTI*Fsq[i]*l*l*l/sqrt(olx_max(0,x*(1-x))));
     }
   }
@@ -719,9 +662,7 @@ Friedel opposites of components 1 ... m
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     BASF_Vars[i] = var_ref;  
   }
-  virtual const IXVarReferencerContainer& GetParentContainer() const {
-    return *this;
-  }
+  virtual const IXVarReferencerContainer& GetParentContainer() const {  return *this;  }
   virtual double GetValue(size_t var_index) const {  
     if( var_index >= BASF.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
@@ -737,9 +678,7 @@ Friedel opposites of components 1 ... m
 // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const {  return VarRefrencerId;  }
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {  return 0;  }
-  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
-    return 0;
-  }
+  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {  return 0;  }
   virtual IXVarReferencer& GetReferencer(size_t id) const {
     return const_cast<RefinementModel&>(*this);
   }
@@ -747,13 +686,12 @@ Friedel opposites of components 1 ... m
 //
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
-  olxstr WriteInsExtras(const TCAtomPList* atoms,
-    bool write_internals) const;
-  void ReadInsExtras(const TStrList &items);
   // initialises default values for esd and if needs, value (SIMU)
-  TSimpleRestraint &SetRestraintDefaults(TSimpleRestraint &restraint) const;
+  TSimpleRestraint &SetRestraintDefaults(const TSRestraintList& container,
+    TSimpleRestraint &restraint) const;
   // returns true if restraint parameters are default
-  bool IsDefaultRestraint(const TSimpleRestraint &restraint) const;
+  bool IsDefaultRestraint(const TSRestraintList& container,
+    TSimpleRestraint &restraint) const;
   void LibOSF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);

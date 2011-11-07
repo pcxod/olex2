@@ -11,7 +11,6 @@
 #include "constraints_ext.h"
 #include "atomref.h"
 #include "pers_util.h"
-#include "index_range.h"
 
 void rotated_adp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
     TTypeList<rotated_adp_constraint>& out)
@@ -48,7 +47,7 @@ PyObject* rotated_adp_constraint::PyExport() const {
 #endif
 //...................................................................................
 olxstr rotated_adp_constraint::ToInsStr(const RefinementModel& rm) const {
-  return olxstr("", 64).stream(' ') << GetName() << source.GetLabel()
+  return olxstr("REM", 64).stream(' ') << GetName() << source.GetLabel()
     << destination.GetLabel() << dir.id << angle << refine_angle;
 }
 //...................................................................................
@@ -180,13 +179,12 @@ PyObject *direction::PyExport() const {
 #endif
 //...................................................................................
 olxstr static_direction::ToInsStr(const RefinementModel& rm) const {
-  return olxstr("", 64).stream(' ') << GetName()
-    << adirection::EncodeType(direction_static)
+  return olxstr("REM", 64).stream(' ') << GetName() << adirection::EncodeType(direction_static)
     << id << value[0] << value[1] << value[2];
 }
 //...................................................................................
 olxstr direction::ToInsStr(const RefinementModel& rm) const {
-  olxstr rv("", 64);
+  olxstr rv("REM", 64);
   rv.stream(' ') << GetName() << adirection::EncodeType(type) << id;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i].GetAtom()->IsDeleted() )  continue;
@@ -241,101 +239,4 @@ adirection* direction::CreateFromDataItem(const TDataItem& di,
 vec3d direction::get() const {
   return vec3d(0,0,0);
 }
-//...................................................................................
-//...................................................................................
-//...................................................................................
-void same_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
-    TTypeList<same_group_constraint>& out)
-{
-  if( toks.Count() < 7 )  return;
-  size_t gc = toks[0].ToUInt();
-  TAtomReference aref(toks.Text(' ', 1));
-  TCAtomGroup agroup;
-  size_t atomAGroup;
-  aref.Expand(rm, agroup, EmptyString(), atomAGroup);
-  if( (agroup.Count()%gc) != 0 || (agroup.Count()/gc < 3) )
-    throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
-  same_group_constraint &g = *new same_group_constraint;
-  atomAGroup = agroup.Count()/gc;
-  for( size_t i=0, cnt=0; i < gc; i++ )  {
-    TCAtomPList &l = g.groups.AddNew(atomAGroup);
-    for( size_t j=0; j < atomAGroup; j++, cnt++ )
-      l[j] = agroup[cnt].GetAtom();
-  }
-  out.Add(g);
-}
-//...................................................................................
-same_group_constraint* same_group_constraint::Copy(
-  RefinementModel& rm, const same_group_constraint& c)
-{
-  same_group_constraint &g = *new same_group_constraint;
-  for( size_t i=0; i < c.groups.Count(); i++ )  {
-    TCAtomPList &l = g.groups.AddNew(c.groups[i].Count());
-    for( size_t j=0; j < c.groups[i].Count(); j++ )  {
-      TCAtom* a = rm.aunit.FindCAtomById(c.groups[i][j]->GetId());
-      if( a == NULL )  {
-        delete &g;
-        throw TFunctionFailedException(__OlxSourceInfo,
-          "asymmetric units do not match");
-      }
-      l[j] = a;
-    }
-  }
-  return &g;
-}
-//...................................................................................
-#ifndef _NO_PYTHON
-PyObject* same_group_constraint::PyExport() const {
-  PyObject *gs = PyTuple_New(groups.Count());
-  for( size_t i=0; i < groups.Count(); i++ )  {
-    PyObject *g = PyTuple_New(groups[i].Count());
-    for( size_t j=0; j < groups[i].Count(); j++ )
-      PyTuple_SetItem(g, j, Py_BuildValue("i", groups[i][j]->GetTag()));
-    PyTuple_SetItem(gs, i, g);
-  }
-  return gs;
-}
-#endif
-//...................................................................................
-olxstr same_group_constraint::ToInsStr(const RefinementModel& rm) const {
-  olxstr rv;
-  rv << GetName() << ' ' << groups.Count();
-  for( size_t i=0; i < groups.Count(); i++ )  {
-    for( size_t j=0; j < groups[i].Count(); j++ )
-      rv << ' ' << groups[i][j]->GetLabel();
-  }
-  return rv;
-}
-//...................................................................................
-const olxstr& same_group_constraint::GetName()  {
-  static olxstr name("olex2.constraint.same_group");
-  return name;
-}
-//...................................................................................
-void same_group_constraint::ToDataItem(TDataItem& di) const {
-  di.SetValue(groups.Count());
-  IndexRange::Builder rb;
-  for( size_t i=0; i < groups.Count(); i++ )  {
-    for( size_t j=0; j < groups[i].Count(); j++ )
-      rb << groups[i][j]->GetTag();
-  }
-  di.AddField("atoms", rb.GetString());
-}
-//...................................................................................
-same_group_constraint* same_group_constraint::FromDataItem(
-  const TDataItem& di, const RefinementModel& rm)
-{
-  size_t n = di.GetValue().ToSizeT();
-  same_group_constraint &g = *new same_group_constraint;
-  IndexRange::RangeItr ai(di.GetRequiredField("atoms"));
-  size_t ag = n/ai.CalcSize();
-  for( size_t i=0; i < n; i++ )  {
-    TCAtomPList &l = g.groups.AddNew(ag);
-    for( size_t j=0; j < ag; j++ )
-      l[j] = &rm.aunit.GetAtom(ai.Next());
-  }
-  return &g;
-}
-//...................................................................................
-void same_group_constraint::UpdateParams(const TStrList& toks)  {}
 //...................................................................................

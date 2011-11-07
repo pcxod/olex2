@@ -29,7 +29,7 @@ enum {
 class THtml: public wxHtmlWindow, public AEventsDispatcher  {
 private:
   bool Movable, PageLoadRequested, ShowTooltips;
-  olxdict<const IEObject*, int, TPointerComparator> Locks;
+  olxdict<const IEObject*, int, TPointerPtrComparator> Locks;
   olxstr PageRequested;
   wxWindow* InFocus;
   TActionQList Actions;
@@ -87,17 +87,17 @@ protected:
   void ClearSwitchStates()  {  SwitchStates.Clear();  }
   // library
   DefMacro(ItemState)
-    DefMacro(Update)
-    DefMacro(Home)
-    DefMacro(Load)
-    DefMacro(Dump)
+    DefMacro(UpdateHtml)
+    DefMacro(HtmlHome)
+    DefMacro(HtmlReload)
+    DefMacro(HtmlLoad)
+    DefMacro(HtmlDump)
     DefMacro(Tooltips)
     DefMacro(SetFonts)
     DefMacro(SetBorders)
     DefMacro(DefineControl)
     DefMacro(Hide)
     DefMacro(Group)
-    DefMacro(LstObj)
 
     DefFunc(GetValue)
     DefFunc(GetData)
@@ -212,6 +212,7 @@ public:
   void SetHomePage(const olxstr& hp)  {  HomePage = hp;  }
 
   bool LoadPage(const wxString &File);
+  bool ReloadPage();
   bool UpdatePage();
   DefPropC(olxstr, WebFolder)
 

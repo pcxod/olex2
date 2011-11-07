@@ -52,42 +52,10 @@ struct ListFilter  {
     }
   };
   template <class SrcList, class ResList, class Condition>
-  static ResList& Filter(const SrcList& src, ResList& dest,
-    const Condition& cond)
-  {
+  static ResList& Filter(const SrcList& src, ResList& dest, const Condition& cond)  {
     src.ForEach(_Filter<ResList, Condition>(dest, cond));
     return dest;
   }
-};
-
-struct list_init {
-protected:
-  struct zero_ {
-    template <typename item_t>
-    void OnItem(item_t &item, size_t) const { item = 0; }
-  };
-
-  template <typename item_t>
-  struct value_ {
-    item_t val;
-    value_(item_t v) : val(v) {}
-    void OnItem(item_t &item, size_t) const { item = val; }
-  };
-
-  struct index_ {
-    template <typename item_t>
-    void OnItem(item_t &item, size_t i) const { item = item_t(i); }
-  };
-public:
-  // list item to a value initialiser
-  template <typename item_t>
-  static value_<item_t> value(item_t v) {
-    return value_<item_t>(v);
-  }
-  // list item to it's position in the list initialiser
-  static index_ index() { return index_(); }
-  // list item to zero initialiser
-  static zero_ zero() { return zero_(); }
 };
 
 // the items must have copy constructors

@@ -30,18 +30,11 @@ AGlMouseHandlerImp(Render, collectionName)
   SetSelectable(false);
   SetRoteable(false);
   SetZoomable(false);
-  TextureId = ~0;
-  if( RGB != NULL )
-    Init(RGB, format);
-}
-//.............................................................................
-void TGlBitmap::Init(unsigned char* RGB, GLenum format)  {
-  if( olx_is_valid_index(TextureId) )  return;
-  TextureId = Parent.GetTextureManager().Add2DTexture(
-    GetCollectionName(), 0, Width, Height, 0,
-      format, RGB);
 
-  TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
+  TextureId = Render.GetTextureManager().Add2DTexture(GetCollectionName(), 0, width, height, 0,
+                         format, RGB);
+
+  TGlTexture* tex = Render.GetTextureManager().FindTexture(TextureId);
   tex->SetEnvMode(tpeDecal);
   tex->SetSCrdWrapping(tpCrdClamp);
   tex->SetTCrdWrapping(tpCrdClamp);
@@ -50,14 +43,13 @@ void TGlBitmap::Init(unsigned char* RGB, GLenum format)  {
   tex->SetMinFilter(tpFilterLinear);
   tex->SetEnabled(true);
 }
-//.............................................................................
 void TGlBitmap::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
   //TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
   //olxstr Name = EsdlObjectName(*this) + tex->GetName();
-  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
 
@@ -85,19 +77,12 @@ void TGlBitmap::Create(const olxstr& cName)  {
   GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 0;
   GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 1;
 }
-//.............................................................................
+
 void TGlBitmap::ReplaceData(int width, int height, unsigned char* RGB, GLenum format) {
-  Width = width;
-  Height = height;
-  if( olx_is_valid_index(TextureId) )  {
-    TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
-    Parent.GetTextureManager().Replace2DTexture(
-      *tex, 0, width, height, 0, format, RGB);
-  }
-  else
-    Init(RGB, format);
+  TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
+  Parent.GetTextureManager().Replace2DTexture(*tex, 0, width, height, 0,
+                         format, RGB);
 }
-//.............................................................................
 bool TGlBitmap::Orient(TGlPrimitive& P)  {
   P.SetTextureId( TextureId );
   double hw = Parent.GetWidth()/2;
@@ -112,31 +97,27 @@ bool TGlBitmap::Orient(TGlPrimitive& P)  {
   olx_gl::scale(Parent.GetScale()*Parent.GetExtraZoom());
   return false;
 }
-//.............................................................................
+
 bool TGlBitmap::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 }
-//.............................................................................
+
 void TGlBitmap::SetWidth(unsigned int w)   {
   Width = w;
 //  Primitives()->Style()->ParameterValue("Width") = w;
 }
-//.............................................................................
 void TGlBitmap::SetHeight(unsigned int w)  {
   Height = w;
 //  Primitives()->Style()->ParameterValue("Height") = w;
 }
-//.............................................................................
 void TGlBitmap::SetLeft(int w)    {
   Left = w;
   GetPrimitives().GetStyle().SetParam("Left", w);
 }
-//.............................................................................
 void TGlBitmap::SetTop(int w)     {
   Top = w;
   GetPrimitives().GetStyle().SetParam("Top", w);
 }
-//.............................................................................
 void TGlBitmap::SetZ(double z)  {
   Z = z;
   GetPrimitives().GetStyle().SetParam("Z", z);

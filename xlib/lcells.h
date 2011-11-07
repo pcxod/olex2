@@ -19,18 +19,18 @@
 BeginXlibNamespace()
 namespace lcells {
   struct CellInfo {
-    double volume, niggli_volume;
+    double volume, niggle_volume;
     evecd cell;
     short lattice;
-    CellInfo() : cell(6), volume(0), niggli_volume(0), lattice(1)  {}
+    CellInfo() : cell(6), volume(0), niggle_volume(0), lattice(1)  {}
     IDataOutputStream &ToStream(IDataOutputStream &out) const {
-      out << volume << niggli_volume;
+      out << volume << niggle_volume;
       cell.ToStream(out);
       return out;
     }
     IDataInputStream& FromStream(IDataInputStream &in)  {
       in >> volume;
-      in >> niggli_volume;
+      in >> niggle_volume;
       cell.FromStream(in);
       return in;
     }
@@ -44,10 +44,10 @@ namespace lcells {
     };
     struct ReducedVolumeComparator {
       static int Compare(const CellInfo &a, const CellInfo &b)  {
-        return olx_cmp(a.niggli_volume, b.niggli_volume);
+        return olx_cmp(a.niggle_volume, b.niggle_volume);
       }
       static int Compare(const CellInfo *a, const CellInfo *b)  {
-        return olx_cmp(a->niggli_volume, b->niggli_volume);
+        return olx_cmp(a->niggle_volume, b->niggle_volume);
       }
     };
   };

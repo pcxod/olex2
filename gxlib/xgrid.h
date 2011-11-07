@@ -199,8 +199,7 @@ public:
   void FromDataItem(const TDataItem& item, IInputStream& zis);
   // creates a blob at given screen coordinates (raster position)
   TXBlob* CreateBlob(int x, int y) const;
-  const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials) const;
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
 protected:
   struct TPlaneCalculationTask  {
     float **data, ***src_data;

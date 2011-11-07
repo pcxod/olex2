@@ -43,14 +43,12 @@ obj_sdl_exparse_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/exparse/
 obj_xlib_macro_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/macro/*.cpp)))
 obj_xlib_henke_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/henke/*.cpp)))
 obj_xlib_absorpc_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/absorpc/*.cpp)))
-obj_xlib_analysis_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/analysis/*.cpp)))
 obj_glib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard glib/*.cpp)))
 obj_gxlib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard gxlib/*.cpp)))
 OBJ_UNIRUN := $(addprefix $(OBJ_DIR)unirun/,$(notdir $(wildcard unirun/*.cpp)))
 OBJ_OLEX := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/*.cpp)))
 OBJ_OLEX_HTML := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/html/*.cpp)))
 OBJ_OLEX_CTRLS := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/ctrls/*.cpp)))
-OBJ_OLEX_NUI := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/nui/*.cpp)))
 #######################################
 .DEFAULT_GOAL := all
 #######################################
@@ -78,8 +76,7 @@ all :
 	@echo "Type make install to install"
 
 .PHONY : objs
-objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_sdl_exparse obj_xlib_macro obj_xlib_henke\
-      obj_xlib_absorpc obj_xlib_analysis obj_glib obj_gxlib obj_repository
+objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_sdl_exparse obj_xlib_macro obj_xlib_henke obj_xlib_absorpc obj_glib obj_gxlib obj_repository
 
 obj:
 	@if test ! -d $(OBJ_DIR); then mkdir $(OBJ_DIR); else echo "obj directory already present"; fi;
@@ -132,12 +129,6 @@ obj_xlib_absorpc: obj $(obj_xlib_absorpc_files:.cpp=.s)
 $(obj_xlib_absorpc_files:.cpp=.s):
 	$(CC) $(SRC_DIR)xlib/absorpc/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
 
-.PHONY : obj_xlib_analysis
-obj_xlib_analysis: obj $(obj_xlib_analysis_files:.cpp=.s)
-
-$(obj_xlib_analysis_files:.cpp=.s):
-	$(CC) $(SRC_DIR)xlib/analysis/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
-
 .PHONY : obj_glib
 obj_glib: obj $(obj_glib_files:.cpp=.s)
 
@@ -183,7 +174,7 @@ $(EXE_DIR)unirun : bin $(OBJ_UNIRUN:.cpp=.s) $(obj_sdl_files:.cpp=.s) $(obj_sdl_
 
 .PHONY : olex
 olex : objs
-	+make obj_olex obj_olex_html obj_olex_ctrls obj_olex_nui
+	+make obj_olex obj_olex_html obj_olex_ctrls
 	+make $(EXE_DIR)olex
 
 .PHONY : obj_olex
@@ -204,17 +195,10 @@ obj_olex_ctrls: olex_obj_dir $(OBJ_OLEX_CTRLS:.cpp=.s)
 
 $(OBJ_OLEX_CTRLS:.cpp=.s):
 	$(CC) $(SRC_DIR)olex/ctrls/$(@F:.s=.cpp) -o $(OBJ_DIR)olex/$(@F) $(OPTS) $(CFLAGS)
-
-.PHONY : obj_olex_nui
-obj_olex_nui: olex_obj_dir $(OBJ_OLEX_NUI:.cpp=.s)
-
-$(OBJ_OLEX_NUI:.cpp=.s):
-	$(CC) $(SRC_DIR)olex/nui/$(@F:.s=.cpp) -o $(OBJ_DIR)olex/$(@F) $(OPTS) $(CFLAGS)
 ######
 
 $(EXE_DIR)olex: bin $(OBJ_OLEX:.cpp=.s) $(OBJ_OLEX_CTRLS:.cpp=.s) $(OBJ_OLEX_HTML:.cpp=.s)
-	$(CC) $(OBJ_DIR)*.s $(OBJ_OLEX:.cpp=.s) $(OBJ_OLEX_HTML:.cpp=.s)\
-        $(OBJ_OLEX_NUI:.cpp=.s) $(OBJ_OLEX_CTRLS:.cpp=.s) -o $(EXE_DIR)olex2 $(LDFLAGS)
+	$(CC) $(OBJ_DIR)*.s $(OBJ_OLEX:.cpp=.s) $(OBJ_OLEX_HTML:.cpp=.s) $(OBJ_OLEX_CTRLS:.cpp=.s) -o $(EXE_DIR)olex2 $(LDFLAGS)
 
 ############################################################################################
 # From here down is to do with installation and cleanup only

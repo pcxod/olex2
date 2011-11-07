@@ -436,7 +436,9 @@ void cetNamedString::ToStrings(TStrList& list) const {
   }
   else  {
     olxstr& tmp = list.Add(name);
-    tmp.RightPadding(34, ' ', true);
+    tmp.Format(34, true, ' ');
+    if (!tmp.EndsWith(' '))
+      tmp << ' ';
     if( quoted )
       tmp << '\'' << value << '\'';
     else  

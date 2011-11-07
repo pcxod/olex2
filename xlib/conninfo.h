@@ -57,8 +57,8 @@ protected:
     PyObject* PyExport();
 #endif
   };
-  olxdict<TCAtom*, AtomConnInfo, TPointerComparator> AtomInfo;
-  olxdict<const cm_Element*, TypeConnInfo, TPointerComparator> TypeInfo;
+  olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
+  olxdict<const cm_Element*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
   // 
   const smatd* GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, bool release) const;
 public:

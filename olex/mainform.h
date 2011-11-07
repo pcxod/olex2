@@ -29,7 +29,6 @@
 #include "updateth.h"
 #include "macrolib.h"
 #include "exparse/exptree.h"
-#include "nui/nui.h"
 
 #define  ID_FILE0 100
 
@@ -158,8 +157,10 @@ enum  {
   ID_DELINS,
   ID_ADDINS,
   ID_VarChange,
-  ID_BadReflectionSet,
 
+  ID_gl2ps,
+  
+  ID_PictureExport,
   ID_UpdateThreadTerminate,
   ID_UpdateThreadDownload,
   ID_UpdateThreadAction
@@ -229,6 +230,7 @@ protected:
 
   TTypeList<TScheduledTask> Tasks;
 
+  TSStrPObjList<olxstr,TPopupData*, true> FPopups;
   class TGlCanvas *FGlCanvas;
   TGXApp* FXApp;
   TDataFile FHelpFile, FMacroFile, FPluginFile;
@@ -250,6 +252,7 @@ protected:
   void AquireTooltipValue();
 
   void ClearPopups();
+  TPopupData* GetPopup(const olxstr& name);
 
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
@@ -268,7 +271,6 @@ protected:
   // helper functions ...
   void CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS);
   void UpdateInfoBox();
-  olx_nui::INUI *nui_interface;
 public:
   bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString(), bool quiet=false) {  
     TMacroError err;
@@ -351,6 +353,7 @@ protected:
 
   void OnSelection(wxCommandEvent& event);
   void OnGraphicsStyle(wxCommandEvent& event);
+  void OnPictureExport(wxCommandEvent& event);
 
   // view menu
   void OnHtmlPanel(wxCommandEvent& event);
@@ -565,9 +568,6 @@ private:
   DefMacro(Capitalise)
   DefMacro(FlushFS)
   DefMacro(PiM)
-  DefMacro(ChemDraw)
-  DefMacro(Restrain)
-  DefMacro(Constrain)
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////FUNCTIONS/////////////////////////////////////////
   DefFunc(FileLast)
@@ -751,8 +751,8 @@ public:
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const  {  return FHtmlPanelWidth;  }
   inline THtml* GetHtml()  const {  return FHtml; }
-  olxstr_dict<TPopupData*, true> Popups;
   THtml* FindHtml(const olxstr& popupName) const;
+  TPopupData* FindHtmlEx(const olxstr& popupName) const;
   inline const olxstr& GetCurrentLanguageEncodingStr() const {
     return Dictionary.GetCurrentLanguageEncodingStr();
   }

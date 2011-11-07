@@ -223,7 +223,7 @@ class RefMerger {
           stats.ReflectionAPotMax = merged_count;
         if( !ref->IsAbsent() )  {
           for( size_t j=from; j < i; j++ )  {
-            TReflection& _r = output.AddCopy(*refs[j]);
+            TReflection& _r = output.AddCCopy(*refs[j]);
             _r.SetCentric(ref->IsCentric());
             _r.SetMultiplicity(ref->GetMultiplicity());
             stats.MeanIOverSigma += _r.GetI()/_r.GetS();

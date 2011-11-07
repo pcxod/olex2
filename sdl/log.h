@@ -13,7 +13,6 @@
 #include "egc.h"
 #include "datastream.h"
 #include "actions.h"
-#include "estrlist.h"
 BeginEsdlNamespace()
 
 enum  {
@@ -62,8 +61,7 @@ public:
       Streams[i].A()->Write(str);
     return *this;
   }
-  template <class SC, class T>
-  TLog& operator << (const TTStrList<SC,T>& lst)  {
+  template <class SC, class T> TLog& operator << (const TTStrList<SC,T>& lst)  {
     Add(lst);
     return *this;
   }
@@ -87,13 +85,7 @@ public:
       buffer << NewLineSequence();
       return *this;
     }
-    template <class SC, class T>
-    LogEntry& operator << (const TTStrList<SC,T> &lst)  {
-      buffer << lst.Text(NewLineSequence());
-      return *this;
-    }
-    template <class SC, class T>
-    LogEntry& operator << (const ConstStrList<SC,T> &lst)  {
+    template <class SC, class T> LogEntry& operator << (const TTStrList<SC,T> &lst)  {
       buffer << lst.Text(NewLineSequence());
       return *this;
     }

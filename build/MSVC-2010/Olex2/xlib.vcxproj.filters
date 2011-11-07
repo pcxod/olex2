@@ -789,9 +789,6 @@
     <ClCompile Include="..\..\..\xlib\lcells.cpp">
       <Filter>Source Files\lcells</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\xlib\analysis.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -1051,9 +1048,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\tests\vcov_test.h">
       <Filter>tests</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\xlib\analysis.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

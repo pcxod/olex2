@@ -134,53 +134,11 @@ struct rotated_adp_constraint  {
 #endif
 };
 
-struct same_group_constraint  {
-protected:
-  same_group_constraint() {}
-public:
-  TTypeList<TCAtomPList> groups;
-  same_group_constraint(const ConstTypeList<TCAtomPList> &groups_)
-  : groups(groups_)
-  {}
-  bool IsValid()  {
-    size_t cnt=0;
-    for( size_t i=0; i < groups.Count(); i++ )  {
-      bool complete = true;
-      for( size_t j=0; j < groups[i].Count(); j++ )  {
-        if( groups[i][j]->IsDeleted() )  {
-          complete = false;
-          break;
-        }
-      }
-      if( complete )
-        cnt++;
-      else
-        groups.NullItem(i);
-    }
-    groups.Pack();
-    return cnt > 1;
-  }
-  olxstr ToInsStr(const RefinementModel& rm) const;
-  static void FromToks(const TStrList& toks, RefinementModel& rm,
-    TTypeList<same_group_constraint>& out);
-  static same_group_constraint*
-    Copy(RefinementModel& rm, const same_group_constraint& c);
-  static const olxstr& GetName();
-
-  void UpdateParams(const TStrList& toks);
-  void ToDataItem(TDataItem& di) const;
-  static same_group_constraint* FromDataItem(const TDataItem& di,
-    const RefinementModel& rm);
-#ifndef _NO_PYTHON
-  PyObject* PyExport() const;
-#endif
-};
-
 class IConstraintContainer {
 public:
   virtual ~IConstraintContainer() {}
   virtual void FromToks(const TStrList& toks, RefinementModel& rm) = 0;
-  virtual const_strlist ToInsList(const RefinementModel& rm) const = 0;
+  virtual TStrList ToInsList(const RefinementModel& rm) const = 0;
   virtual void UpdateParams(size_t index, const TStrList& toks) = 0;
   virtual const olxstr& GetName() const = 0;
   virtual void ValidateAll() = 0;
@@ -216,7 +174,7 @@ public:
   void FromToks(const TStrList& toks, RefinementModel& rm)  {
     constraint_t::FromToks(toks, rm, items);
   }
-  const_strlist ToInsList(const RefinementModel& rm) const {
+  TStrList ToInsList(const RefinementModel& rm) const {
     TStrList out;
     out.SetCapacity(items.Count());
     for( size_t i=0; i < items.Count(); i++ )

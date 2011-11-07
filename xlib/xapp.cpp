@@ -663,7 +663,7 @@ void TXApp::GetSymm(smatd_list& ml) const {
   const TUnitCell& uc = FXFile->GetUnitCell();
   ml.SetCapacity( ml.Count() + uc.MatrixCount() );
   for( size_t i=0; i < uc.MatrixCount(); i++ )
-    ml.AddCopy(uc.GetMatrix(i));
+    ml.AddCCopy(uc.GetMatrix(i));
 }
 //..............................................................................
 void TXApp::ToDataItem(TDataItem& item) const  {

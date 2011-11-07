@@ -360,7 +360,7 @@ olx_SGDef olx_SGLib[499]={
 {"P42/ncm", "P 42/n c m", "-P 4ac 2ac", "", 138, 1, "0.5-Y,+X,0.5+Z;0.5-X,0.5-Y,+Z;+Y,0.5-X,0.5+Z;0.5+X,-Y,0.5-Z;-X,0.5+Y,0.5-Z;0.5+Y,0.5+X,-Z;-Y,-X,-Z"}, 
 {"P42/nmc", "P 42/n m c", "-P 4ac 2a", "", 137, 1, "0.5-Y,+X,0.5+Z;0.5-X,0.5-Y,+Z;+Y,0.5-X,0.5+Z;0.5+X,-Y,-Z;-X,0.5+Y,-Z;0.5+Y,0.5+X,0.5-Z;-Y,-X,0.5-Z"}, 
 {"P42/nnm", "P 42/n n n", "-P 4ac 2bc", "", 134, 1, "0.5-Y,+X,0.5+Z;0.5-X,0.5-Y,+Z;+Y,0.5-X,0.5+Z;+X,0.5-Y,0.5-Z;0.5-X,+Y,0.5-Z;+Y,+X,-Z;0.5-Y,0.5-X,-Z"}, 
-{"P4212", "P 4 21 2", "P 4ab 2ab", "", 90, -1, "0.5-Y,0.5+X,+Z;-X,-Y,+Z;0.5+Y,0.5-X,+Z;0.5+X,0.5-Y,-Z;0.5-X,0.5+Y,-Z;+Y,+X,-Z;-Y,-X,-Z"}, 
+{"P4212", "P 42 1 2", "P 4ab 2ab", "", 90, -1, "0.5-Y,0.5+X,+Z;-X,-Y,+Z;0.5+Y,0.5-X,+Z;0.5+X,0.5-Y,-Z;0.5-X,0.5+Y,-Z;+Y,+X,-Z;-Y,-X,-Z"}, 
 {"P422", "P 4 2 2", "P 4 2", "", 89, -1, "-Y,+X,+Z;-X,-Y,+Z;+Y,-X,+Z;+X,-Y,-Z;-X,+Y,-Z;+Y,+X,-Z;-Y,-X,-Z"}, 
 {"P42212", "P 42 21 2", "P 4n 2n", "", 94, -1, "0.5-Y,0.5+X,0.5+Z;-X,-Y,+Z;0.5+Y,0.5-X,0.5+Z;0.5+X,0.5-Y,0.5-Z;0.5-X,0.5+Y,0.5-Z;+Y,+X,-Z;-Y,-X,-Z"}, 
 {"P4222", "P 42 2 2", "P 4c 2", "", 93, -1, "-Y,+X,0.5+Z;-X,-Y,+Z;+Y,-X,0.5+Z;+X,-Y,-Z;-X,+Y,-Z;+Y,+X,0.5-Z;-Y,-X,0.5-Z"}, 
@@ -631,7 +631,7 @@ TSpaceGroup::TSpaceGroup(const olxstr& Name, const olxstr& FullName, const olxst
 }
 //..............................................................................
 void TSpaceGroup::AddMatrix(const smatd& m)   {
-  Matrices.AddCopy(m);
+  Matrices.AddCCopy(m);
   if( !Translations )  {
     if( m.t[0] != 0 || m.t[1] != 0 || m.t[2] != 0 )
       Translations = true;
@@ -1054,7 +1054,7 @@ size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
   GetMatrices( allm, Flags );
   for( size_t i=0; i < allm.Count(); i++ )  {
     if( matrices.IndexOf(allm[i]) == InvalidIndex )  {
-      matrices.AddCopy(allm[i]);
+      matrices.AddCCopy(allm[i]);
       c++;
     }
   }
@@ -1093,7 +1093,7 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
           }
         }
         if( add )
-          matrices.AddCopy(mt).t += v;
+          matrices.AddCCopy(mt).t += v;
       }
     }
   }
@@ -1403,7 +1403,7 @@ TSpaceGroup* TSymmLib::CreateNewFromExpanded(const smatd_list& all_ml)  {
   SymSpace::Info si = SymSpace::GetInfo(all_ml);
   smatd_list ml;
   for( size_t i=0; i < si.matrices.Count(); i++ )
-    ml.AddCopy(*si.matrices[i]);
+    ml.AddCCopy(*si.matrices[i]);
   return CreateNewFromCompact(si.latt, ml);
 }
 //..............................................................................
@@ -1415,7 +1415,7 @@ TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
   }
   smatd_list all_ml;
   for( size_t i=0; i < AU.MatrixCount(); i++ )
-    all_ml.AddCopy(AU.GetMatrix(i));
+    all_ml.AddCCopy(AU.GetMatrix(i));
   return CreateNewFromCompact(AU.GetLatt(),all_ml);
 }
 //..............................................................................

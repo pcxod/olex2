@@ -87,88 +87,27 @@ protected:
         peak.center[i] = peak.center[i]%(int)dim[i]; 
     }
   }
+
 public:
   // a simple map integration, considering the peaks and holes as spheres
-  template <typename MapT> static void Integrate(MapT*** const map,
-    const vec3s& map_dim_,
-    const TArray3D<bool> &Mask,
-    MapT pos_level, TArrayList<MapUtil::peak>& Peaks)
+  template <typename MapT> static void Integrate(MapT*** const map, const vec3s& dim, 
+    MapT pos_level, TArrayList<MapUtil::peak>& Peaks)  
   {
-    const vec3i map_dim(map_dim_);
-    const vec3i dim_e = vec3i(Mask.GetSize());
+    TArray3D<bool> Mask(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
     const MapT neg_level = -pos_level; 
-    for( int ix=0; ix < dim_e[0]; ix++ )  {
-      for( int iy=0; iy < dim_e[1]; iy++ )  {
-        for( int iz=0; iz < dim_e[2]; iz++ )  {
-          if( Mask.Data[ix][iy][iz] )  continue;
+    for( size_t ix=0; ix < dim[0]; ix++ )  {
+      for( size_t iy=0; iy < dim[1]; iy++ )  {
+        for( size_t iz=0; iz < dim[2]; iz++ )  {
           const MapT& ref_val = map[ix][iy][iz];
-          if( ref_val > pos_level )  {
-            bool add = true;
-            for( int ii=-1; ii <=1; ii++ )  {
-              int ind_x = ix + ii;
-              if( ind_x < 0 ) ind_x += map_dim[0];
-              if( ind_x >= map_dim[0] ) ind_x -= map_dim[0];
-              for( int jj=-1; jj <=1; jj++ )  {
-                int ind_y = iy + jj;
-                if( ind_y < 0 ) ind_y += map_dim[1];
-                if( ind_y >= map_dim[1] ) ind_y -= map_dim[1];
-                for( int kk=-1; kk <=1; kk++ )  {
-                  int ind_z = iz + kk;
-                  if( ind_z < 0 ) ind_z += map_dim[2];
-                  if( ind_z >= map_dim[2] ) ind_z -= map_dim[2];
-                  if( map[ind_x][ind_y][ind_z] > ref_val )  {
-                    add = false;
-                    break;
-                  }
-                }
-                if( !add )  break;
-              }
-              if( !add )  break;
-            }
-            if( add )
-              Peaks.Add(peak(ix, iy, iz));
-          }
-          else if( ref_val < neg_level )  {
-            bool add = true;
-            for( int ii=-1; ii <=1; ii++ )  {
-              int ind_x = ix + ii;
-              if( ind_x < 0 ) ind_x += map_dim[0];
-              if( ind_x >= map_dim[0] ) ind_x -= map_dim[0];
-              for( int jj=-1; jj <=1; jj++ )  {
-                int ind_y = iy + jj;
-                if( ind_y < 0 ) ind_y += map_dim[1];
-                if( ind_y >= map_dim[1] ) ind_y -= map_dim[1];
-                for( int kk=-1; kk <=1; kk++ )  {
-                  int ind_z = iz + kk;
-                  if( ind_z < 0 ) ind_z += map_dim[2];
-                  if( ind_z >= map_dim[2] ) ind_z -= map_dim[2];
-                  if( map[ind_x][ind_y][ind_z] < ref_val )  {
-                    add = false;
-                    break;
-                  }
-                }
-                if( !add )  break;
-              }
-              if( !add )  break;
-            }
-            if( add )
-              Peaks.Add(peak(ix, iy, iz));
-          }
+          if( ref_val > pos_level || ref_val < neg_level )
+            Peaks.Add(peak(ix, iy, iz));
         }
       }
     }
-    peak_search<MapT>(map, map_dim_, pos_level, Mask, Peaks);
+    peak_search<MapT>(map, dim, pos_level, Mask, Peaks);
   }
   // a simple map integration, considering the peaks and holes as spheres
-  template <typename MapT> static void Integrate(MapT*** const map,
-    const vec3s& dim, MapT pos_level, TArrayList<MapUtil::peak>& Peaks)
-  {
-    TArray3D<bool> Mask(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
-    Integrate(map, dim, Mask, pos_level, Peaks); 
-  }
-  // a simple map integration, considering the peaks and holes as spheres
-  template <typename MapT> static double IntegrateMask(MapT*** const map,
-    const vec3s& dim, 
+  template <typename MapT> static double IntegrateMask(MapT*** const map, const vec3s& dim, 
     const vec3i &_p, const TArray3D<bool> &mask)
   {
     const TVector3<index_t> d(mask.Length1()+mask.GetMin1(),
@@ -190,11 +129,10 @@ public:
     }
     return val;
   }
-  /* a flood fill based algorithm to find undulating channels, which however
-  come and exit at one of the 3 crystallographic directions
-  */
-  template <typename map_type> static vec3i AnalyseChannels1(map_type*** map,
-    const vec3s& dim, map_type max_level)
+  /* a flood fill based algorithm to find undulating channels, which however come and exit at one of the 
+  3 crystallographic directions */
+  template <typename map_type> static vec3i AnalyseChannels1(map_type*** map, const vec3s& dim,
+    map_type max_level)
   {
     map_type*** map_copy = ReplicateMap(map, dim);
     vec3i dim_ind(0, 1, 2);
@@ -225,8 +163,7 @@ public:
         }
         while( !stack.IsEmpty() )  {
           pt = stack.Pop();
-          // a weak condition, needs more work
-          if( pt[dim_ind[0]] == dim[dim_ind[0]]-1 )  {
+          if( pt[dim_ind[0]] == dim[dim_ind[0]]-1 )  { // a weak condition, needs more work
             level_accessible = true;
             break;
           }
@@ -238,9 +175,7 @@ public:
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
             } 
             p[dim_ind[ii]] = pt[dim_ind[ii]]+1;
-            if( p[dim_ind[ii]] < (int)dim[dim_ind[ii]] && 
-                map[p[0]][p[1]][p[2]] >= res[dim_n] )
-            {
+            if( p[dim_ind[ii]] < (int)dim[dim_ind[ii]] && map[p[0]][p[1]][p[2]] >= res[dim_n] )  {
               stack.Push(p);
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
             } 
@@ -259,18 +194,11 @@ public:
     DeleteMap(map_copy, dim);
     return res;
   }
-  static int PeakPtrSortByCount(const MapUtil::peak* a, const MapUtil::peak* b)
-  {
-    return b->count - a->count;
-  }
-  static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {
-    return b.count - a.count;
-  }
+  static int PeakPtrSortByCount(const MapUtil::peak* a, const MapUtil::peak* b)  {  return b->count - a->count;  }
+  static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {  return b.count - a.count;  }
   static int PeakSortBySum(const MapUtil::peak* a, const MapUtil::peak* b)  {
-    return olx_cmp(b->summ, a->summ);
-  }
-  static int PeakSortBySum(const MapUtil::peak& a, const MapUtil::peak& b)  {
-    return olx_cmp(b.summ, a.summ);
+    double diff = b->summ - a->summ;
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0); 
   }
   static int PeakSortByWeight(const MapUtil::peak* a, const MapUtil::peak* b)  {
     if( a->count == 0 )
@@ -303,8 +231,7 @@ public:
         }
         if( (tmp[0] < v[0] ) ||  // standardise then ...
             (olx_abs(tmp[0]-v[0]) < 1e-5 && (tmp[1] < v[1])) ||
-            (olx_abs(tmp[0]-v[0]) < 1e-5 &&
-             olx_abs(tmp[1]-v[1]) < 1e-5 && (tmp[2] < v[2])) )    
+            (olx_abs(tmp[0]-v[0]) < 1e-5 && olx_abs(tmp[1]-v[1]) < 1e-5 && (tmp[2] < v[2])) )    
         {
           v = tmp;
           changes = true;
@@ -344,8 +271,7 @@ public:
             toMerge.Add(Peaks[j]);
             const vec3d mc = c-t;
             center += mc;
-            cmp_center = (cmp_center*toMerge.Count()+mc*0.25)/
-              ((double)toMerge.Count()+0.25);
+            cmp_center = (cmp_center*toMerge.Count()+mc*0.25)/((double)toMerge.Count()+0.25);
             Peaks[j].process = false;
             break;
           }
@@ -366,7 +292,7 @@ public:
     }
     out.Pack();
   }
-  //...........................................................................
+  //................................................................................................
   // map getter, accessing an integral map using fractional index
   template <typename mapT, int type> struct MapGetter  {
     mapT*** const src;
@@ -380,8 +306,7 @@ public:
     }
     MapGetter(mapT*** const _src, const vec3s& _dim) : src(_src), dim(_dim)  {}
     mapT Get(const vec3d& fractional_crd) const {
-      const vec3d p(fractional_crd[0]*dim[0], fractional_crd[1]*dim[1],
-        fractional_crd[2]*dim[2]);
+      const vec3d p(fractional_crd[0]*dim[0], fractional_crd[1]*dim[1], fractional_crd[2]*dim[2]);
       if( type == 0 )  {  // cropped index value
         const vec3i i = NormaliseIndex(p);
         return src[i[0]][i[1]][i[2]];
@@ -434,9 +359,7 @@ public:
       }
     }
   };
-  /* fills a grid in cartesian coordinates with values from the map of the unit
-  cell
-  */
+  /* fills a grid in cartesian coordinates with values from the map of the unit cell */
   template <class _MapGetter, typename dest_t> static dest_t*** Cell2Cart(
     const _MapGetter& src,
     dest_t*** dest, const vec3s& dest_d, const smatdd& grid_2_cart,
@@ -445,8 +368,7 @@ public:
     for( size_t i=0; i < dest_d[0]; i++ )  {
       for( size_t j=0; j < dest_d[1]; j++ )  {
         for( size_t k=0; k < dest_d[2]; k++ )  {
-          // cartesian coordinates from grid
-          const vec3d cc = vec3d(i,j,k)*grid_2_cart.r+grid_2_cart.t;
+          const vec3d cc = vec3d(i,j,k)*grid_2_cart.r+grid_2_cart.t;  // cartesian coordinates from grid
           const vec3d p(
             cc[0]*cart2cell[0][0] + cc[1]*cart2cell[1][0] + cc[2]*cart2cell[2][0],
             cc[1]*cart2cell[1][1] + cc[2]*cart2cell[2][1],
@@ -458,11 +380,9 @@ public:
     }
     return dest;
   }
-  //...........................................................................
+  //......................................................................................................
   // map allocation/deallocation/copying uitilities
-  template <typename map_type> static map_type*** ReplicateMap(
-    map_type*** const map, const vec3s& dim)
-  {
+  template <typename map_type> static map_type*** ReplicateMap(map_type*** const map, const vec3s& dim)  {
     map_type*** map_copy = new map_type**[dim[0]];
     for( size_t mi=0; mi < dim[0]; mi++ )  {
       map_copy[mi] = new map_type*[dim[1]];
@@ -485,9 +405,7 @@ public:
   }
   // a more generic case, cannot use memcpy
   template <typename dest_map_type, typename src_map_type>
-  static dest_map_type*** CopyMap(dest_map_type*** dest,
-    src_map_type*** const src, const vec3s& dim)
-  {
+  static dest_map_type*** CopyMap(dest_map_type*** dest, src_map_type*** const src, const vec3s& dim)  {
     for( size_t mi=0; mi < dim[0]; mi++ )  {
       for( size_t mj=0; mj < dim[1]; mj++ )  {
         for( size_t mk=0; mk < dim[2]; mk++ )  {
@@ -497,9 +415,7 @@ public:
     }
     return dest;
   }
-  template <typename map_type> static void DeleteMap(map_type*** map,
-    const vec3s& dim)
-  {
+  template <typename map_type> static void DeleteMap(map_type*** map, const vec3s& dim)  {
     for( size_t mi=0; mi < dim[0]; mi++ )  {
       for( size_t mj=0; mj < dim[1]; mj++ )
         delete [] map[mi][mj];

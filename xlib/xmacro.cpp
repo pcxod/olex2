@@ -437,7 +437,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       olxstr tmp;
       for( size_t j=0; j < bl_hits.Count(); j++ )  {
         tmp = bl_hits.GetObject(j)->GetName();
-        tmp.RightPadding(10, ' ');
+        tmp.Format(10, true, ' ');
         tab[j/5][j%5] << tmp << ' ' << bl_hits.GetKey(j) << '/' << ref.Count();
       }
       tab.CreateTXTList(output, sl.GetBravaisLattice(i).GetName(), false, false, "  ");
@@ -488,7 +488,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
         SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
-        tmp << tmp1.RightPadding(15, ' ', true);
+        tmp << tmp1.Format(15, true, ' ');
         tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
@@ -523,7 +523,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
       olxstr tmp, tmp1;
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
-        tmp << tmp1.RightPadding(15, ' ', true);
+        tmp << tmp1.Format(15, true, ' ');
         tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
@@ -543,7 +543,7 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
         SortedSG.Add(sgList[j]->GetNumber(), sgList[j]);
       for( size_t j=0; j < SortedSG.Count(); j++ )  {
         tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetKey(j) << ')';
-        tmp << tmp1.RightPadding(15, ' ', true);
+        tmp << tmp1.Format(15, true, ' ');
         tmp1.SetLength(0);
         if( tmp.Length() > 60 )  {
           TBasicApp::NewLogEntry() << tmp;
@@ -884,7 +884,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             it_d.AddAtom(&sa.CAtom(), NULL);
             const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
-              transforms.AddCopy(*mt);
+              transforms.AddCCopy(*mt);
             it_d.AddAtom(const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it_d) )
               TBasicApp::NewLogEntry() << it_d.InsStr() << " d=" << olxstr::FormatFloat(3, d);
@@ -901,7 +901,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             it.AddAtom(&sa.CAtom(), NULL);
             const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
-              transforms.AddCopy(*mt);
+              transforms.AddCCopy(*mt);
             it.AddAtom(const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it) )
               TBasicApp::NewLogEntry() << it.InsStr() << " d=" << olxstr::FormatFloat(3, d);
@@ -1078,7 +1078,7 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     size_t ac = 0;
     for( size_t j=0; j < h.NodeCount(); j++ )  {
       TSAtom& n = h.Node(j);
-      if( !(n.IsDeleted() || n.GetType().z < 2) )  {
+      if( !(n.IsDeleted() || n.GetType() == iQPeakZ) )  {
         ac++;
         attached = &n;
       }
@@ -1403,8 +1403,7 @@ void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   olxstr Tmp;
   for( size_t i=0; i < Ins.InsCount(); i++ )  {
     if( !remarks && Ins.InsName(i).Equalsi("REM") )  continue;
-    Tmp = i;
-    Tmp.RightPadding(3, ' ', true);
+    Tmp = i;  Tmp.Format(3, true, ' ');
     Tmp << Ins.InsName(i) << ' ' << Ins.InsParams(i).Text(' ');
     TBasicApp::NewLogEntry() << Tmp;
   }
@@ -2036,7 +2035,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     ml.SetCapacity(ml.Count()*2);
     const size_t mc = ml.Count();
     for( size_t i=0; i < mc; i++ )  {
-      ml.AddCopy(ml[i]);
+      ml.AddCCopy(ml[i]);
       ml[i+mc] *= -1;
     }
     for( size_t i=0; i < TSymmLib::GetInstance().SGCount(); i++ )  {
@@ -2820,7 +2819,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     for( size_t i=0; i < _Translation_count; i++ )
       Translations.AddNew(_Translations[i*2], _Translations[i*2+1]);
   }
-  TStrList _loop_names_to_skip("_atom_site;_geom;_space_group", ';');
+  const size_t _loop_names_to_skip_count = 3;
+  static olxstr _loop_names_to_skip[_loop_names_to_skip_count] = {
+    "_atom_site", "_geom", "_space_group"
+  };
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
@@ -2985,38 +2987,26 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
       if( !e.HasName() )  continue;
       bool skip = false;
-      for( size_t k=0; k < _loop_names_to_skip.Count(); k++ )  {
-        olxstr i_name = e.GetName();
-        if(i_name.StartsFromi(_loop_names_to_skip[k]) &&
-          (i_name.Length()>_loop_names_to_skip[k].Length() &&
-           i_name.CharAt(_loop_names_to_skip[k].Length()) == '_'))
-        {
+      for( size_t k=0; k < _loop_names_to_skip_count; k++ )  {
+        if( e.GetName().StartsFromi(_loop_names_to_skip[k]) )  {
           skip = true;
           break;
         }
       }
-      if( !skip )
+      if( ! skip )
         Cif->SetParam(src[0].param_map.GetKey(j), e);
     }
   }
   // generate moiety string if does not exist
-  const olxstr cif_moiety = Cif->GetParamAsString("_chemical_formula_moiety");
-  if (cif_moiety.IsEmpty() || cif_moiety == '?') {
-    Cif->SetParam("_chemical_formula_moiety",
-      xapp.XFile().GetLattice().CalcMoiety(), true);
-  }
-  Cif->SetParam("_cell_formula_units_Z",
-    xapp.XFile().GetAsymmUnit().GetZ(), false);
+  Cif->SetParam("_chemical_formula_moiety", xapp.XFile().GetLattice().CalcMoiety(), true);
+  Cif->SetParam("_cell_formula_units_Z", xapp.XFile().GetAsymmUnit().GetZ(), false);
   TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
   if( sg != NULL )  {
-    Cif->SetParam("_space_group_crystal_system",
-      sg->GetBravaisLattice().GetName().ToLowerCase(), true);
+    Cif->SetParam("_space_group_crystal_system", sg->GetBravaisLattice().GetName().ToLowerCase(), true);
     Cif->SetParam("_space_group_name_Hall", sg->GetHallSymbol(), true);
     Cif->SetParam("_space_group_name_H-M_alt", sg->GetFullName(), true);
     Cif->SetParam("_space_group_IT_number", sg->GetNumber(), false);
-    if( !sg->IsCentrosymmetric() &&
-        !Cif->ParamExists("_chemical_absolute_configuration") )
-    {
+    if( !sg->IsCentrosymmetric() && !Cif->ParamExists("_chemical_absolute_configuration") )  {
       bool flack_used = false;
       if( xapp.CheckFileType<TIns>() )  {
         const TIns& ins = xapp.XFile().GetLastLoader<TIns>();
@@ -3933,7 +3923,7 @@ void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacr
     const TSPoint& point = ip.Point(i);
     if( point.Y < 0.001 )  break;
     olxstr Msg = point.X;
-    Msg.RightPadding(11, ' ');
+    Msg.Format(11, true, ' ');
     Msg << ": " << point.Y;
     xapp.NewLogEntry() << Msg;
   }
@@ -3944,7 +3934,7 @@ void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacr
     const TSPoint& point = ip.Point(i);
     if( point.Y < 1 )  continue;
     olxstr Msg = point.X;
-    Msg.RightPadding(11, ' ');
+    Msg.Format(11, true, ' ');
     Msg << "|";
     long yVal = olx_round(point.Y/2);
     for( long j=0; j < yVal; j++ )
@@ -4097,7 +4087,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( list.IsEmpty() )
     TBasicApp::NewLogEntry() << "Could not fit provided data";
   else  {
-    list.QuickSorter.Sort<TComparableComparator>(list);
+    list.QuickSorter.Sort<TComparablePtrComparator>(list);
     TETable tab(list.Count(), 3);
     tab.ColName(0) = "Formula";
     tab.ColName(1) = "CHN";
@@ -4155,25 +4145,19 @@ void XLibMacros::macStandardise(TStrObjList &Cmds, const TParamList &Options, TM
   xapp.XFile().GetLattice().Uniq();
 }
 //..............................................................................
-void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
-{
+void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   static olxstr sig("OMIT");
-  TXApp &app = TXApp::GetInstance();
-  const TIns& ins = app.XFile().GetLastLoader<TIns>();
-  RefinementModel& rm = app.XFile().GetRM();
+  const TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   const TLst& Lst = ins.GetLst();
+  if( !Lst.IsLoaded() )  {  return;  }
   if( Cmds.Count() == 1 )  {
     if( Cmds[0].IsNumber() )  {
       const double th = Cmds[0].ToDouble();
-      const TTypeList<RefinementModel::BadReflection> &bad_refs =
-        rm.GetBadReflectionList();
-      for( size_t i=0; i < bad_refs.Count(); i++ )  {
-        if( rm.GetOmits().IndexOf(bad_refs[i].index) == InvalidIndex &&
-          olx_abs(bad_refs[i].Fc-bad_refs[i].Fo)/bad_refs[i].esd >= th )
-        {
-          rm.Omit(bad_refs[i].index);
-        }
+      for( size_t i=0; i < Lst.DRefCount(); i++ )  {
+        const TLstRef& r = Lst.DRef(i);
+        if( !r.Deleted && r.DF >= th )
+          rm.Omit(vec3i(r.H, r.K, r.L));
       }
     }
   }
@@ -4306,7 +4290,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( op != NULL )  {
     op->executeMacroEx(olxstr("@reap \'") << FN << '\'', E);
     if( E.IsSuccessful() )
-      op->executeMacro("html.Update");
+      op->executeMacro("htmlreload");
   }
 }
 //..............................................................................
@@ -4316,17 +4300,11 @@ void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   for( size_t i=0; i < atoms.Count(); i++ ) 
     atoms[i]->CAtom().SetTag(i);
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    if( atoms[i]->CAtom().GetTag() != i ||
-        atoms[i]->CAtom().GetDegeneracy() == 1)
-    {
-      continue;
-    }
+    if( atoms[i]->CAtom().GetTag() != i || atoms[i]->CAtom().GetDegeneracy() == 1)  continue;
     olxstr str(atoms[i]->CAtom().GetLabel());
-    TBasicApp::NewLogEntry() << str.RightPadding(6, ' ', true) <<
-      atoms[i]->CAtom().GetDegeneracy();
+    TBasicApp::NewLogEntry() << str.Format(6, true, ' ') <<  atoms[i]->CAtom().GetDegeneracy();
     for( size_t j=0; j < atoms[i]->CAtom().EquivCount(); j++ )  {
-      TBasicApp::NewLogEntry() << '\t' <<
-        TSymmParser::MatrixToSymmEx(atoms[i]->CAtom().GetEquiv(j));
+      TBasicApp::NewLogEntry() << '\t' << TSymmParser::MatrixToSymmEx(atoms[i]->CAtom().GetEquiv(j));
     }
     SiteSymmCon ssc = atoms[i]->CAtom().GetSiteConstraints();
     TBasicApp::GetLog() << "\tSite constraints: "; 
@@ -4427,7 +4405,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     max_d = Cmds[0].ToDouble();
     max_shift = Cmds[1].ToDouble();
   }
-  TTypeList<TSPlane> planes(rings.Count(), false);
+  TTypeList<TSPlane> planes(rings.Count());
   TArrayList<vec3d> plane_centres(rings.Count());
   const TUnitCell& uc = latt.GetUnitCell();
   const TAsymmUnit& au = latt.GetAsymmUnit();
@@ -4480,7 +4458,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
                   ", centroid-centroid distance: " << olxstr::FormatFloat(3, pccd) <<
                   ", shift distance " << olxstr::FormatFloat(3, shift);
                 if( transforms.IndexOf(mat) == -1 )
-                  transforms.AddCopy(mat);
+                  transforms.AddCCopy(mat);
               }
             }
           }

@@ -71,7 +71,6 @@ class TXAtom;
 class TXBond;
 class TXPlane;
 class TXLine;
-class TDRing;
 class TXGrowLine;
 class TXGrowPoint;
 class TXGlLabel;
@@ -122,7 +121,6 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   TTypeListExt<TXReflection, AGDrawObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
   TTypeListExt<TXGlLabel, IEObject> XLabels;
-  TTypeListExt<TDRing, AGDrawObject> Rings;
   TXGlLabels *FLabels;
   TTypeListExt<TXLine, AGDrawObject> Lines;
   // have to manage memory ourselves - base class is used
@@ -164,30 +162,30 @@ public:
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
     AtomIterator(const TGXApp& app)  {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+      objects.AddCCopy(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
         count += objects.GetLast().Count();
       }
     }
   };
   struct BondIterator : public TIterator<TSBond, TXBond>  {
     BondIterator(const TGXApp& app)  {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+      objects.AddCCopy(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
         count += objects.GetLast().Count();
       }
     }
   };
   struct PlaneIterator : public TIterator<TSPlane, TXPlane>  {
     PlaneIterator(const TGXApp& app)  {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+      objects.AddCCopy(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+        objects.AddCCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
         count += objects.GetLast().Count();
       }
     }
@@ -257,7 +255,7 @@ protected:
   void RestoreLabels();
   TTypeList<GroupData> GroupDefs;
   GroupData SelectionCopy[2];
-  olxdict<TGlGroup*,size_t, TPointerComparator> GroupDict;
+  olxdict<TGlGroup*,size_t, TPointerPtrComparator> GroupDict;
   // stores numeric references
   void RestoreGroup(TGlGroup& glg, const GroupData& group);
   void RestoreGroups();
@@ -533,6 +531,7 @@ protected:
   ConstPtrList<TXAtom> GetSelectedXAtoms(bool Clear=true);
   ConstPtrList<TCAtom> GetSelectedCAtoms(bool Clear=true);
 public:
+  SortedElementPList DecodeTypes(const olxstr &types) const;
   TXAtom* GetXAtom(const olxstr& AtomName, bool Clear);
   ConstPtrList<TXAtom> GetXAtoms(const olxstr& AtomName);
   ConstPtrList<TXBond> GetXBonds(const olxstr& BondName);
@@ -609,9 +608,6 @@ public:     void CalcProbFactor(float Prob);
   // these two create structure scope labels
   TXGlLabel& CreateLabel(const vec3d& center, const olxstr& T, uint16_t FontIndex);
   TXGlLabel& CreateLabel(const TXAtom& A, uint16_t FontIndex);
-  /* creates aromatic rings, if force is false - only creates if aromatic_rings
-  option is set to true */
-  void CreateRings(bool force=false, bool create=false);
   // recreated all labels (if any) in case if font size etc changed
   size_t LabelCount() const {  return XLabels.Count();  }
   TXGlLabel& GetLabel(size_t i)  {  return XLabels[i];  }

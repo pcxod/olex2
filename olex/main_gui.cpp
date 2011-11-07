@@ -24,7 +24,7 @@
 
 void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
   ProcessMacro("htmlpanelvisible");
-  ProcessMacro("html.update");
+  ProcessMacro("html.updatehtml");
 }
 //..............................................................................
 void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
@@ -216,7 +216,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   }
   else if( event.GetId() == ID_GraphicsSelect )  {
     if( FObjectUnderMouse->IsSelected() )  {
-      SortedPtrList<TGPCollection, TPointerComparator> colls;
+      SortedPtrList<TGPCollection, TPrimitiveComparator> colls;
       TGlGroup& sel = FXApp->GetSelection();
       for( size_t i=0; i < sel.Count(); i++ )  {
         TGPCollection& gpc = sel.GetObject(i).GetPrimitives();

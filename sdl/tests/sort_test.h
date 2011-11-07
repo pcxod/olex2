@@ -17,7 +17,7 @@ public:
     t.description << __FUNC__;
     TArrayList<int> al1(100), al2(100);
     TPtrList<int> pl1(100), pl2(100);
-    TTypeList<int> tl1(100, false), tl2(100, false);
+    TTypeList<int> tl1((size_t)100), tl2((size_t)100);
     for( size_t i=0; i < 100; i++ )  {
       al1[i] = al2[i] = rand();
       pl1[i] = &al1[i];  pl2[i] = &al2[i];

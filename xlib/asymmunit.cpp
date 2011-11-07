@@ -456,12 +456,12 @@ vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
   return P;
 }
 //..............................................................................
-/* since this is the AU, only the crystallographic occupancies must be summed
-up, atoms' degeracy should not be taken into account ...
-*/
+/* since this is the AU, only the crystallographic occupancies must be summed up, atoms' 
+degenracy should not be taken into account ... */
 ContentList TAsymmUnit::GetContentList(double mult) const {
   ElementPList elements;
   ContentList rv;
+  const cm_Element *Carbon=NULL, *Hydrogen=NULL;
   for( size_t i=0; i < AtomCount(); i++ )  {
     const cm_Element& elm = CAtoms[i]->GetType();
     if( CAtoms[i]->IsDeleted() || elm == iQPeakZ )  continue;
@@ -519,9 +519,9 @@ double TAsymmUnit::MolWeight() const  {
 //..............................................................................
 void TAsymmUnit::AddMatrix(const smatd& a)  {
   if( a.r.IsI() )
-    Matrices.InsertCopy(0, a);
+    Matrices.InsertCCopy(0, a);
   else
-    Matrices.AddCopy(a);
+    Matrices.AddCCopy(a);
 }
 //..............................................................................
 olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, char b, char c) const  {
@@ -602,7 +602,7 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
 
   Matrices.Clear();
   for( size_t i=0; i < sg.MatrixCount(); i++ )
-    Matrices.AddCopy(sg.GetMatrix(i));
+    Matrices.AddCCopy(sg.GetMatrix(i));
 }
 //..............................................................................
 double TAsymmUnit::CalcCellVolume() const {

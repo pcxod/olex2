@@ -43,39 +43,40 @@ public:
       TDirectionalList<char>::Write((const char*)D, Position, count);
     return (Position += count);
   }
-  template <class T> inline size_t Write(const T& data)  {
-    return IDataOutputStream::Write(data);
-  }
   // returns updated position
   virtual void Read(void *D, size_t count)  {
     TDirectionalList<char>::Read((char*)D, Position, count);
     Position += count;
   }
   void operator >> (IOutputStream &os);
-  
-  TEMemoryStream& operator << (IInputStream &is);
+  IOutputStream& operator << (IInputStream &is);
 
   // functions rewind to zero position saves and then restores the position
   void SaveToFile(const olxstr& FN);
   // functions rewind to zero after reading
   void LoadFromFile(const olxstr& FN);
-
-  template <class T> TEMemoryStream& operator >> (T& v)  {
-    Read(&v, sizeof(T));
+  template <class T> inline IDataInputStream& operator >> ( T& v )  {
+    Read( &v, sizeof(T) );
     return *this;
   }
-
-  TEMemoryStream& operator >> (TStrList& v)  {
+  inline IDataInputStream& operator >> ( olxstr& v )  {
+    v.FromBinaryStream(*this);
+    return *this;
+  }
+  IDataInputStream& operator >> ( TStrList& v )  {
     v << (IDataInputStream&)*this;
     return *this;
   }
 
-  template <class T> TEMemoryStream& operator << (const T& v)  {
-    Write(&v, sizeof(T));
+  template <class T> inline IDataOutputStream& operator << ( const T& v )  {
+    Write( &v, sizeof(T) );
     return *this;
   }
-
-  TEMemoryStream& operator << (const TStrList& v)  {
+  inline IDataOutputStream& operator << ( const olxstr& v )  {
+    v.ToBinaryStream(*this);
+    return *this;
+  }
+  IDataOutputStream& operator << ( const TStrList& v )  {
     v >> *this;
     return *this;
   }

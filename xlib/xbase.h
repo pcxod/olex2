@@ -106,9 +106,7 @@ public:
   inline NodeType& Node(size_t i) const {  return *Nodes[i]; }
   const TPtrList<NodeType>& GetNodes() const {  return Nodes;  }
   inline NodeType& AddNode(NodeType& N)  {  return *Nodes.Add(N);  }
-  inline bool IsConnectedTo(NodeType &N)  {
-    return Nodes.IndexOf(N) != InvalidIndex;
-  }
+  inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(N) != InvalidIndex;  }
   inline void NullNode(size_t i)  {  Nodes[i] = NULL; }
   inline bool NullNode(const NodeType& N)  {  
     size_t ind = Nodes.IndexOf(N);

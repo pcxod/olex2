@@ -121,13 +121,15 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
   // extract and remove atom types
   for( size_t i=0; i < ins.Count(); i++ )  {
     if( ins[i].CharAt(0) == '$' )  {
-      ConstSortedElementPList elms = TAtomReference::DecodeTypes(
-        ins[i].SubStringFrom(1), rm.aunit);
-      for( size_t ei=0; ei < elms.Count(); ei++ )  {
-        TypeConnInfo& ci = TypeInfo.Add(elms[ei], TypeConnInfo(*elms[ei]));
-        ci.maxBonds = maxB;
-        ci.r = r;
+      cm_Element* elm = XElementLib::FindBySymbol(ins[i].SubStringFrom(1));
+      if( elm == NULL )  {
+        TBasicApp::NewLogEntry(logError) << "Undefined atom type in CONN: " << ins[i].SubStringFrom(1);
+        ins.Delete(i--);
+        continue;
       }
+      TypeConnInfo& ci = TypeInfo.Add(elm, TypeConnInfo(*elm) );
+      ci.maxBonds = maxB;
+      ci.r = r;
       ins.Delete(i--);
     }
   }
@@ -224,8 +226,8 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
     const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
     ci.r = aci.r < 0 ? ca.GetType().r_bonding : aci.r;
     ci.maxBonds = aci.maxBonds;
-    ci.BondsToCreate.AddList(aci.BondsToCreate);
-    ci.BondsToRemove.AddList(aci.BondsToRemove);
+    ci.BondsToCreate.AddListC(aci.BondsToCreate);
+    ci.BondsToRemove.AddListC(aci.BondsToRemove);
   } 
   // use defaults then
   if( ai_ind == InvalidIndex && ti_ind == InvalidIndex )  {
@@ -483,7 +485,7 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
             }
           }
           if( uniq )
-            toDelete.Add(new CXBondInfo(ca, &ml.AddCopy(matr)));
+            toDelete.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
         }
       }
       for( size_t j=0; j < ci.BondsToCreate.Count(); j++ )  {
@@ -501,17 +503,17 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
             }
           }
           if( uniq )
-            toCreate.Add(new CXBondInfo(ca, &ml.AddCopy(matr)));
+            toCreate.Add(new CXBondInfo(ca, &ml.AddCCopy(matr)));
         }
       }
     }
     else  {  // own connectivity
       for( size_t i=0; i < ci.BondsToCreate.Count(); i++ )
         toCreate.Add(new CXBondInfo(ci.BondsToCreate[i].to,
-          ci.BondsToCreate[i].matr == NULL ? NULL : &ml.AddCopy(*ci.BondsToCreate[i].matr)));
+          ci.BondsToCreate[i].matr == NULL ? NULL : &ml.AddCCopy(*ci.BondsToCreate[i].matr)));
       for( size_t i=0; i < ci.BondsToRemove.Count(); i++ )
         toDelete.Add(new CXBondInfo(ci.BondsToRemove[i].to,
-          ci.BondsToRemove[i].matr == NULL ? NULL : &ml.AddCopy(*ci.BondsToRemove[i].matr)));
+          ci.BondsToRemove[i].matr == NULL ? NULL : &ml.AddCCopy(*ci.BondsToRemove[i].matr)));
     }
   }
   //for( size_t i=0; i < ml.Count(); i++ )

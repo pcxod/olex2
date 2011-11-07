@@ -21,25 +21,13 @@ namespace olx_plane {
   {
     if( points.IsEmpty() )  return;
     TArrayList<double> pvs(points.Count());
-    double max_qd = 0;
-    size_t m_i = 0;
-    for (size_t i=0; i < points.Count(); i++) {
-      double qd = (accessor(points[i])-center).QLength();
-      if (qd > max_qd) {
-        m_i = i;
-        max_qd = qd;
-      }
-    }
-    const vec_t origin = accessor(points[m_i])-center;
-    pvs[m_i] = 0; // origin value
-    for( size_t i=0; i < points.Count(); i++ )  {
-      if (i==m_i) continue;
+    const vec_t origin = accessor(points[0])-center;
+    pvs[0] = 0; // origin value
+    for( size_t i=1; i < points.Count(); i++ )  {
       vec_t vec = accessor(points[i]) - center;
       double ca = origin.CAngle(vec);
       vec = origin.XProdVec(vec);
-      /* negative - vec is on the right, positive - on the left, if ca == 0,
-      vec == (0,0,0)
-      */
+      // negative - vec is on the right, positive - on the left, if ca == 0, vec == (0,0,0)
       double vo = (ca == -1 ? 0 : vec.CAngle(normal));
       if( ca >= 0 )  { // -90 to 90
         if( vo < 0 )  // -90 to 0 3->4

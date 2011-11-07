@@ -25,12 +25,12 @@ TLibrary::~TLibrary()  {
     delete Libraries.GetObject(i);
 }
 //..............................................................................
-TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner)  {
+TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner )  {
   if( Libraries.IndexOf(name) != InvalidIndex )
     throw TDuplicateEntry(__OlxSourceInfo, name, "library" );
   TLibrary* lib = new TLibrary(name, owner);
   Libraries.Add(name, lib);
-  lib->SetParentLibrary(this);
+  lib->SetParentLibrary( this );
   if( owner == NULL )
     lib->LibraryOwner = this->LibraryOwner;
   return lib;
@@ -38,44 +38,44 @@ TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner)  {
 //..............................................................................
 void TLibrary::AttachLibrary( TLibrary* lib )  {
   if( Libraries.IndexOf(lib->GetName()) != InvalidIndex )
-    throw TDuplicateEntry(__OlxSourceInfo, lib->GetName(), "library");
+    throw TDuplicateEntry(__OlxSourceInfo, lib->GetName(), "library" );
   Libraries.Add(lib->GetName(), lib);
   lib->SetParentLibrary( this );
   lib->LibraryOwner = this->LibraryOwner;
 }
 //..............................................................................
-ABasicFunction *TLibrary::RegisterStatic(
-    TSStrPObjList<olxstr,ABasicFunction*, true> &container,
-    ABasicFunction* fm,
-    bool replace, bool do_return)
-{
+void TLibrary::RegisterStaticMacro( TStaticMacro* func, bool replace )  {
   TSizeList list;
-  ABasicFunction *rv = NULL;
-  container.GetIndexes(fm->GetName(), list);
+  Macros.GetIndexes(func->GetName(), list);
   for( size_t i=0; i < list.Count(); i++ )  {
-    uint32_t argc = container.GetObject(list[i])->GetArgStateMask();
-    if( (fm->GetArgStateMask() & argc) != 0 )  {
+    unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
+    if( (func->GetArgStateMask() & argc) != 0 )  {
       if( replace )  {
-        if( fm->GetDescription().IsEmpty() )  {
-          fm->SetDescription(
-            container.GetObject(list[i])->GetDescription());
-        }
-        if (do_return)
-          rv = container.GetObject(list[i]);
-        else
-          delete container.GetObject(list[i]);
-        container.Delete(list[i]);
+        Macros.Delete(list[i]);
         break;
       }
-      throw TDuplicateEntry(__OlxSourceInfo,
-        olxstr("macro/function (same number of args) ").quote() <<
-          fm->GetName(),
-        "static macro");
+      throw TDuplicateEntry(__OlxSourceInfo, olxstr("macro (same number of args)") << func->GetName(), "static macro");
     }
   }
-  fm->SetParentLibrary(*this);
-  container.Add(fm->GetName(), fm);
-  return rv;
+  func->SetParentLibrary(*this);
+  Macros.Add(func->GetName(), func);
+}
+//..............................................................................
+void TLibrary::RegisterStaticFunction( TStaticFunction* func, bool replace )  {
+  TSizeList list;
+  Functions.GetIndexes(func->GetName(), list);
+  for( size_t i=0; i < list.Count(); i++ )  {
+    unsigned int argc = Functions.GetObject(list[i])->GetArgStateMask();
+    if( (func->GetArgStateMask() & argc) != 0 )  {
+      if( replace )  {
+        Functions.Delete(list[i]);
+        break;
+      }
+      throw TDuplicateEntry(__OlxSourceInfo, olxstr("function (same number of args)") << func->GetName(), "static function");
+    }
+  }
+  func->SetParentLibrary( *this );
+  Functions.Add(func->GetName(), func);
 }
 //..............................................................................
 size_t TLibrary::LocateLocalFunctions( const olxstr& name, TBasicFunctionPList& store)  {
@@ -108,7 +108,7 @@ size_t TLibrary::LocateMacros(const olxstr& name, TBasicFunctionPList& store)  {
   return retVal;
 }
 //..............................................................................
-ABasicFunction* TLibrary::LocateFunction(const olxstr& name, uint32_t argc)  {
+ABasicFunction* TLibrary::LocateFunction(const olxstr& name, unsigned int argc)  {
   if( argc == 0 )  {
     const size_t index = Functions.IndexOf(name);
     return (index != InvalidIndex) ? Functions.GetObject(index) : NULL;
@@ -124,7 +124,7 @@ ABasicFunction* TLibrary::LocateFunction(const olxstr& name, uint32_t argc)  {
   }
 }
 //..............................................................................
-ABasicFunction* TLibrary::LocateMacro(const olxstr& name, uint32_t argc)  {
+ABasicFunction* TLibrary::LocateMacro(const olxstr& name, unsigned int argc)  {
   if( argc == 0 )  {
     const size_t index = Macros.IndexOf(name);
     return (index != InvalidIndex) ? Macros.GetObject( index ) : NULL;
@@ -140,7 +140,7 @@ ABasicFunction* TLibrary::LocateMacro(const olxstr& name, uint32_t argc)  {
   }
 }
 //..............................................................................
-ABasicFunction* TLibrary::FindFunction(const olxstr& name, uint32_t argc)  {
+ABasicFunction* TLibrary::FindFunction(const olxstr& name, unsigned int argc)  {
   if( name.IndexOf('.') != InvalidIndex )  {
     TLibrary* searchLib = this;
     TStrList libPath(name, '.') ;
@@ -154,7 +154,7 @@ ABasicFunction* TLibrary::FindFunction(const olxstr& name, uint32_t argc)  {
     return this->LocateFunction(name, argc);
 }
 //..............................................................................
-ABasicFunction* TLibrary::FindMacro(const olxstr& name, uint32_t argc)  {
+ABasicFunction* TLibrary::FindMacro(const olxstr& name, unsigned int argc)  {
   if( name.IndexOf('.') != InvalidIndex && !name.EndsWith('.') )  {
     TLibrary* searchLib = this;
     TStrList libPath(name, '.');
@@ -262,7 +262,7 @@ size_t TLibrary::FindSimilarLibraries(const olxstr& name, TBasicLibraryPList& st
     return this->LocateSimilarLibraries(name, store);
 }
 //..............................................................................
-bool TLibrary::CheckProgramState(uint32_t state)  {
+bool TLibrary::CheckProgramState(unsigned int state)  {
   return (LibraryOwner != NULL) ? LibraryOwner->CheckProgramState( state ) : true;
 }
 //..............................................................................

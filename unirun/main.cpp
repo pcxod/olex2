@@ -85,23 +85,21 @@ public:
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
-    TBasicApp::GetLog() <<
-      (olxstr("Downloading ") << A->GetAction() << "\n0%");
+    TBasicApp::GetLog() << (olxstr("Downloading ") << A->GetAction() << "\n0%");
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
-    TBasicApp::GetLog() <<
-      (olxstr("\r") << (int)(100*A->GetPos()/A->GetMax()) << '%');
+    TBasicApp::GetLog() << (olxstr("\r") << (int)(100*A->GetPos()/A->GetMax()) << '%');
 		fflush(NULL);
     return true;
   }
 };
 
 //---------------------------------------------------------------------------
+
 void DoRun();
-void DoLaunch();
 
 class MyApp: public wxAppConsole { 
   virtual bool OnInit() { 
@@ -112,12 +110,10 @@ class MyApp: public wxAppConsole {
 IMPLEMENT_APP_NO_MAIN(MyApp)
 int main(int argc, char** argv)  {
   MyApp app;
+  TBasicApp* bapp = NULL;
   int res = 0;
-  /* as soon as we create TBasicApp, this instance gets attached to it
-  */
-  wxAppConsole::SetInstance(&app);
+  wxAppConsole::SetInstance(&app); // as soon as we create TBasicApp, this instance gets attached to it
   TEGC::Initialise();
-  TOutStream out;
 #if defined(__WIN32__) && !defined(__WXWIDGETS__)
   #include "winzipfs.h"
   typedef TWinZipFileSystem ZipFS;
@@ -130,49 +126,55 @@ int main(int argc, char** argv)  {
 #endif
   ZipFS::RegisterFactory();
   try  {
-    bool print_help = false;
-    olxstr base_dir = argv[0], var_name = "OLEX2_DIR";
-    if( argc > 1 )  {
+    if( argc == 1 )  // no folder to update provided
+      bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR"));
+    else  {
       olxstr arg(argv[1]);
-      print_help = (arg == "-help" || arg == "/help" || arg == "--help");
-      if( !print_help )
-        base_dir = arg;
-      var_name.SetLength(0);
-    }
-    TBasicApp bapp(TBasicApp::GuessBaseDir(base_dir, var_name));
-    bapp.GetLog().AddStream(&out, false);
-    if( print_help ) {
-      TLog& log = bapp.GetLog();
-      log.NewEntry().nl() << "Unirun, Olex2 update/install program";
-      log.NewEntry() << "Compiled on " << __DATE__ << " at " << __TIME__;
-      log.NewEntry() << "Usage: unirun [olex2_gui_dir]";
-      log.NewEntry() << "If no arguments provided, the system variable "
-        "OLEX2_DIR will be checked first, if the variable is not set, "
-        "current folder will be updated";
-      log.NewEntry() << "(c) OlexSys, Oleg V. Dolomanov 2007-2011" <<
-        NewLineSequence();
-      return 0;
+#ifdef _WIN32
+      if( arg == "-help" || arg == "/help" )  {
+#else
+      if( arg == "--help" )  {
+#endif     
+        TBasicApp _bapp(TBasicApp::GuessBaseDir(argv[0], "") );
+        TLog& log = _bapp.GetLog();
+        log.AddStream( new TOutStream, true);
+        log.NewEntry().nl() << "Unirun, Olex2 update/install program";
+        log.NewEntry() << "Compiled on " << __DATE__ << " at " << __TIME__;
+        log.NewEntry() << "Usage: unirun [olex2_gui_dir]";
+        log.NewEntry() << "If no arguments provided, the system variable OLEX2_DIR will be checked "
+          "first, if the variable is not set, current folder will be updated";
+        log.NewEntry() << "(c) Oleg V. Dolomanov 2007-2009" << NewLineSequence();
+        return 0;
+      }
+      bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[1], ""));
     }
 		// parse out options
     for( int i=0; i < argc; i++ )
-      bapp.Arguments.Add(argv[i]);
-    for( size_t i=0; i < bapp.Arguments.Count(); i++ )  {
-      if( bapp.Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
-        bapp.Options.FromString(bapp.Arguments[i], '=');
-        bapp.Arguments.Delete(i--);
+      bapp->Arguments.Add(argv[i]);
+    for( size_t i=0; i < bapp->Arguments.Count(); i++ )  {
+      if( bapp->Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
+        bapp->Options.FromString(bapp->Arguments[i], '=');
+        bapp->Arguments.Delete(i--);
       }
     }
+    bapp->GetLog().AddStream(new TOutStream, true);
     DoRun();
-    if( bapp.Arguments.IndexOf("-run") == InvalidIndex )
-      DoLaunch();
   }
   catch(const TExceptionBase& exc)  {
-    TStrList err;
-    exc.GetException()->GetStackTrace(err);
-    out.Write(err.Text(NewLineSequence()));
+    if( bapp != NULL )  {
+      TStrList out;
+      exc.GetException()->GetStackTrace(out);
+      bapp->GetLog() << out;
+    }
     res = 1;
   }
-  out.Write(olxstr("Finished") << NewLineSequence());
+  if( bapp != NULL )  {
+    bapp->NewLogEntry().nl() << "Finished";
+    delete bapp;
+  }
+  else  {
+    cout << "\nFinished\n";
+  }
 #if defined(__WIN32__ ) && defined(_DEBUG)
   system("PAUSE");
 #endif
@@ -184,16 +186,14 @@ void DoRun()  {
     TStrList repos;
     updater::UpdateAPI api;
     olxstr repo;
-    TBasicApp::NewLogEntry() << "Installation folder: "
-      << TBasicApp::GetBaseDir();
+    TBasicApp::NewLogEntry() << "Installation folder: "  << TBasicApp::GetBaseDir();
     if( TBasicApp::GetInstance().Options.Contains("-tag") )  {
       olxstr tag = TBasicApp::GetInstance().Options["-tag"];
       if( tag.Equalsi("max") )  {
         TStrList tags;
         api.GetAvailableTags(tags, repo);
         if( tags.IsEmpty() )  {
-          TBasicApp::NewLogEntry() << "Could not locate any installation "
-            "repositories/tags, aborting...";
+          TBasicApp::NewLogEntry() << "Could not locate any installation repositories/tags, aborting...";
           return;
         }  
         double max_tag = 0;
@@ -211,8 +211,7 @@ void DoRun()  {
       else  {
         repo = api.FindActiveRepositoryUrl();
         if( repo.IsEmpty() )  {
-          TBasicApp::NewLogEntry() << "Could not locate any installation "
-            "repositories, aborting...";
+          TBasicApp::NewLogEntry() << "Could not locate any installation repositories, aborting...";
           return;
         }
         repo << tag;
@@ -221,14 +220,12 @@ void DoRun()  {
     else  {
       api.GetAvailableRepositories(repos);
       if( repos.IsEmpty() )  {
-        TBasicApp::NewLogEntry() << "Could not locate any installation "
-          "repositories, aborting...";
+        TBasicApp::NewLogEntry() << "Could not locate any installation repositories, aborting...";
         return;
       }
       repo = repos[0];
       if( repos.Count() >= 1 )  {
-        TBasicApp::NewLogEntry() << "Please choose the installation repository "
-          "or Cancel:";
+        TBasicApp::NewLogEntry() << "Please choose the installation repository or Cancel:";
         for( size_t i=0; i < repos.Count(); i++ )
           TBasicApp::GetLog() << (i+1) << ": " << repos[i].c_str() << '\n';
         TBasicApp::NewLogEntry() << (repos.Count()+1) << ": Cancel";
@@ -248,8 +245,7 @@ void DoRun()  {
     TBasicApp::NewLogEntry() << "Installing using: " << repo;
     short res = api.DoInstall(new TDProgress, new TEProgress, repo);
     if( res != updater::uapi_OK && res != updater::uapi_UptoDate )  {
-      TBasicApp::NewLogEntry() << "Installation has failed with error code: "
-        << res;
+      TBasicApp::NewLogEntry() << "Installation has failed with error code: " << res;
       TBasicApp::NewLogEntry() << api.GetLog();
     }
     else  {
@@ -259,37 +255,7 @@ void DoRun()  {
   else  {
     short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
     if( res != patcher::papi_OK )
-      TBasicApp::NewLogEntry() << "Update has failed with error code: "
-      << res;
+      TBasicApp::NewLogEntry() << "Update has failed with error code: " << res;
   }
-}
-
-void DoLaunch()  {
-  olxcstr bd = TBasicApp::GetBaseDir();
-  olxstr path = olx_getenv("PATH");
-  path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
-  olx_setenv("PATH", path);
-  olx_setenv("OLEX2_CCTBX_DIR", EmptyString());
-  olx_setenv("OLEX2_DIR", EmptyString());
-#ifdef __WIN32__
-  olx_setenv("PYTHONHOME", bd + "Python26");
-  const olxcstr cmdl = bd + "olex2.dll";
-#else
-#  ifdef __MAC__
-  bd << "olex2.app/Contents/MacOS/";
-  olx_setenv("OLEX2_DIR", bd);
-  static const olxcstr ld_var = "DYLD_LIBRARY_PATH";
-#  else
-  static const olxcstr ld_var = "LD_LIBRARY_PATH";
-#  endif
-  olxcstr ld_path;
-  ld_path << bd << "lib:" << bd << "Python26:" << bd << "cctbx/cctbx_build/lib";
-  olx_setenv(ld_var, ld_path);
-  olx_setenv("PYTHONHOME", bd + "Python26/python2.6");
-  const olxcstr cmdl = bd + "olex2_exe";
-#endif
-  TEFile::ChangeDir(bd);
-  execl(cmdl.u_str(), cmdl.u_str(), NULL);
-  TBasicApp::NewLogEntry(logError) << "Failed to launch Olex2";
 }
 

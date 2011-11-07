@@ -19,7 +19,6 @@
 #include "filetree.h"
 #include "cif.h"
 //..............................
-#include "tests/alg_test.h"
 #include "tests/container_test.h"
 #include "tests/sort_test.h"
 #include "tests/encoding_test.h"
@@ -52,7 +51,7 @@ public:
 };
 
 int main(int argc, char* argv[]) {
-  TXApp xapp(TXApp::GuessBaseDir(argv[0]));
+	TXApp xapp(TXApp::GuessBaseDir(argv[0]));
   xapp.XFile().RegisterFileFormat(new TIns, "ins");
   xapp.GetLog().AddStream(new TOutStream, true);
   xapp.GetLog().AddStream(TUtf8File::Create(xapp.GetBaseDir()+"log.out", false), true);
@@ -80,7 +79,6 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::reflection_tests);
   tests.Add(&test::EValueTests);
   tests.Add(&test::cell_reduction_test);
-  tests.Add(&test::AlgTests);
   tests.run();
   if( argc > 1 )  {
     olxstr data_dir = argv[1];

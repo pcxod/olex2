@@ -359,6 +359,6 @@ void TSRestraintList::FromDataItem(const TDataItem& item) {
 TSimpleRestraint& TSRestraintList::AddNew()  {
   TSimpleRestraint& r = Restraints.Add(
     new TSimpleRestraint(*this, Restraints.Count(), RestraintListType));
-  return RefMod.SetRestraintDefaults(r);
+  return RefMod.SetRestraintDefaults(*this, r);
 }
 //..............................................................................

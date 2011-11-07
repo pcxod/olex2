@@ -154,7 +154,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
                 if( bitIndex >= trtry.Semivariants.Count() )  break;
               }
             }
-            TrefTries.AddCopy(trtry);
+            TrefTries.AddCCopy(trtry);
             Toks.Clear();
             i++;
           }

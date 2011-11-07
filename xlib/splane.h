@@ -30,10 +30,8 @@ class TSPlane : public TSObject<TNetwork>  {
   size_t DefId;
   void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
 public:
-  TSPlane() :TSObject<TNetwork>(NULL) {}
-  TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex)
-    : TSObject<TNetwork>(Parent), Distance(0), wRMSD(0), Flags(0),
-      DefId(def_id)  {}
+  TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex) : TSObject<TNetwork>(Parent), 
+    Distance(0), wRMSD(0), Flags(0), DefId(def_id)  {}
   virtual ~TSPlane()  {}
 
   DefPropBFIsSet(Deleted, Flags, plane_flag_deleted)
@@ -49,16 +47,10 @@ public:
   inline const mat3d& GetBasis() const {  return Normals;  }
   inline const vec3d& GetCenter() const {  return Center; }
 
-  double DistanceTo(const vec3d& Crd) const {
-    return Crd.DotProd(GetNormal()) - Distance;
-  }
+  double DistanceTo(const vec3d& Crd) const {  return Crd.DotProd(GetNormal()) - Distance;  }
   double DistanceTo(const TSAtom& a) const {  return DistanceTo(a.crd());  }
-  double Angle(const vec3d& A, const vec3d& B) const {
-    return acos(GetNormal().CAngle(B-A))*180/M_PI;
-  }
-  double Angle(const vec3d& v) const {
-    return acos(GetNormal().CAngle(v))*180/M_PI;
-  }
+  double Angle(const vec3d& A, const vec3d& B) const {  return acos(GetNormal().CAngle(B-A))*180/M_PI;  }
+  double Angle(const vec3d& v) const {  return acos(GetNormal().CAngle(v))*180/M_PI;  }
   double Angle(const class TSBond& B) const;
   double Angle(const TSPlane& P) const {  return Angle(P.GetNormal());  }
   double GetD() const {  return Distance;  }
@@ -68,8 +60,7 @@ public:
   double CalcWeightedRMSD() const;
   double GetWeightedRMSD() const {  return wRMSD;  }
   double GetZ(const double& X, const double& Y) const {
-    return (GetNormal()[2] == 0) ? 0.0
-      : (GetNormal()[0]*X + GetNormal()[1]*Y + Distance)/GetNormal()[2];
+    return (GetNormal()[2] == 0) ? 0.0 : (GetNormal()[0]*X + GetNormal()[1]*Y + Distance)/GetNormal()[2];
   }
   size_t Count() const {  return Crds.Count();  }
   const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
@@ -78,16 +69,15 @@ public:
 
 // static members
   /* calculates all three planes - best, worst and the complimentary, 
-  the normals are sorted by rms ascending, so the best plane is at [0] and the
-  worst - at [2] Returns true if the function succeded (point cound > 2)
+  the normals are sorted by rms ascending, so the best plane is at [0] and the worst - at [2]
+  returns true if the function succeded (point cound > 2)
   */
   template <class List> static bool CalcPlanes(const List& Points, 
     mat3d& params, vec3d& rms, vec3d& center, bool sort=true);
   // a convinience function for non-weighted plane
-  static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
-    vec3d& center);
-  /* calculates the A,B and C for the best/worst plane Ax*By*Cz+D=0, D can be
-  calculated as D = center.DotProd({A,B,C})
+  static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center);
+  /* calculates the A,B and C for the best/worst plane Ax*By*Cz+D=0, D can be calculated as
+   D = center.DotProd({A,B,C})
    for the point, weight association
    returns sqrt(smallest eigen value/point.Count())
   */
@@ -103,7 +93,6 @@ public:
     struct DefData {
       TSAtom::Ref ref;
       double weight;
-      DefData() {}
       DefData(const TSAtom::Ref& r, double w) : ref(r), weight(w)  {}
       DefData(const DefData& r) : ref(r.ref), weight(r.weight)  {}
       DefData(const TDataItem& item) : ref(~0,~0) {  FromDataItem(item);  }
@@ -124,7 +113,6 @@ public:
     TTypeList<DefData> atoms;
     bool regular;
   public:
-    Def() {}
     Def(const TSPlane& plane);
     Def(const Def& r) : atoms(r.atoms), regular(r.regular)  {}
     Def(const TDataItem& item)  {  FromDataItem(item);  }
@@ -143,8 +131,7 @@ public:
       }
       return true;
     }
-    TSPlane* FromAtomRegistry(struct ASObjectProvider& ar, size_t def_id,
-      class TNetwork* parent, const smatd& matr) const;
+    TSPlane* FromAtomRegistry(struct ASObjectProvider& ar, size_t def_id, class TNetwork* parent, const smatd& matr) const;
     void ToDataItem(TDataItem& item) const;
     void FromDataItem(const TDataItem& item);
   };
@@ -161,16 +148,14 @@ public:
   typedef TTypeList<TSPlane> TSPlaneList;
   typedef TPtrList<TSPlane> TSPlanePList;
 
-/* RMSD will be 'valid', i.e. as equal to directly calculated only for
-unit/equal weights, otherwise it will become smaller than directly calculated
-one since the priority will be given to some points and
-RMSD'=(sum(w^2*distances^2)/sum(w^2))^0.5, where distance will be smaller for
-higher weights... there are functions to calculate both values 
+/* RMSD will be 'valid', i.e. as equal to directly claculated only for unit/equal weights,
+otherwise it will become smaller than directly calculated one since the priority will be given to
+some points and
+RMSD'=(sum(w^2*distances^2)/sum(w^2))^0.5, where distance will be smaller for higher weights...
+there are functions to calculate both values 
 */
 template <class List>  // AnAssociation2<vec3d, double> list, returning & on []
-bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
-  vec3d& center, bool sort)
-{
+bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms, vec3d& center, bool sort)  {
   if( Points.Count() < 3 )  return false;
   center.Null();
   double mass = 0, qmass = 0;
@@ -216,9 +201,7 @@ bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
 //..............................................................................
 // returns RMS or a negative number if an error occured
 template <class List>
-double TSPlane::CalcPlane(const List& Points, vec3d& Params, vec3d& center,
-  const short type)
-{
+double TSPlane::CalcPlane(const List& Points, vec3d& Params, vec3d& center, const short type)  {
   mat3d normals;
   vec3d rms;
   if( CalcPlanes(Points, normals, rms, center) )  {

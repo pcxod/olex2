@@ -34,7 +34,6 @@
 #include "planesort.h"
 #include "cif.h"
 #include "povdraw.h"
-#include "dring.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -87,7 +86,7 @@ public:
   TTypeList<TSAtom::FullRef> SAtomIds;
   TKillUndo(IUndoAction *action):TUndoData(action)  {  }
   virtual ~TKillUndo()  {  }
-  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCopy(SA.GetFullRef());  }
+  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCCopy(SA.GetFullRef());  }
 };
 class THideUndo: public TUndoData  {
 public:
@@ -129,10 +128,8 @@ public:
     }
     EmptyFile = SameFile = false;
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
-      olxstr s1 = TEFile::UnixPath(TEFile::ChangeFileExt(
-        *(olxstr*)Data, EmptyString()));
-      olxstr s2 = TEFile::UnixPath(TEFile::ChangeFileExt(
-        FParent->XFile().GetFileName(), EmptyString()));
+      olxstr s1( TEFile::UnixPath(TEFile::ChangeFileExt(*(olxstr*)Data, EmptyString())) );
+      olxstr s2( TEFile::UnixPath(TEFile::ChangeFileExt(FParent->XFile().GetFileName(), EmptyString())) );
       if( s1 != s2 )  {
         FParent->ClearIndividualCollections();
         FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
@@ -190,10 +187,8 @@ public:
         break;
       }
     }
-    FParent->XFile().GetAsymmUnit().DetachAtomType(iQPeakZ,
-      !FParent->AreQPeaksVisible());
-    FParent->XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ,
-      !FParent->AreHydrogensVisible());
+    FParent->XFile().GetAsymmUnit().DetachAtomType(iQPeakZ, !FParent->AreQPeaksVisible());
+    FParent->XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FParent->AreHydrogensVisible());
     if( sameAU )  {  // apply masks
       ac = 0;
       for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -457,8 +452,6 @@ void TGXApp::CreateObjects(bool centerModel)  {
       LooseObjects[i]->Create();
   }
   LooseObjects.Pack();
-  for( size_t i=0; i < Rings.Count(); i++ )
-    Rings[i].Create();
 
   FLabels->Init();
   FLabels->Create();
@@ -768,24 +761,7 @@ olxstr TGXApp::GetSelectionInfo()  {
   try {
     double v;
     TGlGroup& Sel = FGlRender->GetSelection();
-    if( Sel.Count() == 1 )  {
-      if( EsdlInstanceOf(Sel[0], TXBond) )  {
-        TXBond &b = ((TXBond&)Sel[0]);
-        Tmp = "Distance (";
-        Tmp << macSel_GetName2(b.A(), b.B()) << "): ";
-        if( CheckFileType<TCif>() )  {
-          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager()
-            .Match(b.A(), b.B());
-          if( cv != NULL )
-            Tmp << cv->GetValue().ToString();
-          else
-            Tmp << olxstr::FormatFloat(3, b.Length());
-        }
-        else
-          Tmp << olxstr::FormatFloat(3, b.Length());
-      }
-    }
-    else if( Sel.Count() == 2 )  {
+    if( Sel.Count() == 2 )  {
       if( EsdlInstanceOf(Sel[0], TXAtom) &&
         EsdlInstanceOf(Sel[1], TXAtom) )
       {
@@ -1382,7 +1358,6 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   }
   else if( MsgId == ID_OnDisassemble ) {
     if( MsgSubId == msiExit )  {
-      CreateRings();
       CreateObjects(false);
       Disassembling = false;
     }
@@ -1396,7 +1371,6 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
       }
       GetRender().ClearGroups();
       GetRender().ClearSelection();
-      Rings.Clear();
       Disassembling = true;
     }
   }
@@ -1611,6 +1585,33 @@ ConstPtrList<TXAtom> TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
   return rv;
 }
 //..............................................................................
+SortedElementPList TGXApp::DecodeTypes(const olxstr &types) const {
+  SortedElementPList res;
+  if( types.StartsFrom('*') )  {
+    const TAsymmUnit &au = XFile().GetAsymmUnit();
+    for( size_t i=0; i < au.AtomCount(); i++ )
+      res.AddUnique(&au.GetAtom(i).GetType());
+    if( types.Length() == 1 )  return res;
+    TStrList exc(types.SubStringFrom(types.CharAt(1) == '-' ? 2 : 1), ',');
+    for( size_t i=0; i < exc.Count(); i++ )  {
+      const cm_Element *elm = XElementLib::FindBySymbol(exc[i]);
+      if( elm == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << exc[i]);
+      res.Remove(elm);
+    }
+  }
+  else  {
+    TStrList tps(types, ',');
+    for( size_t i=0; i < tps.Count(); i++ )  {
+      const cm_Element *elm = XElementLib::FindBySymbol(tps[i]);
+      if( elm == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << tps[i]);
+      res.AddUnique(elm);
+    }
+  }
+  return res;
+}
+//..............................................................................
 ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection,
   bool FindHidden)
 {
@@ -1677,8 +1678,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection
         }
       }
       if( Tmp.CharAt(0) == '$' )  {
-        SortedElementPList elms = TAtomReference::DecodeTypes(
-          Tmp.SubStringFrom(1), XFile().GetAsymmUnit());
+        SortedElementPList elms = DecodeTypes(Tmp.SubStringFrom(1));
         for( size_t ei=0; ei < elms.Count(); ei++ )
           rv += XAtomsByType(*elms[ei], FindHidden);
         continue;
@@ -1900,71 +1900,68 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
 }
 //..............................................................................
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
-  TTypeList<AnAssociation2<vec3d, TCAtom*> > atoms;
-  bool have_q = false;
   if( XFile().GetLattice().IsGenerated() )  {
     TXAtomPList AtomsList = FindXAtoms(Atoms, false);
+    TTTable<TStrList> Table(AtomsList.Count(), 11);
+    Table.ColName(0) = "Atom";
+    Table.ColName(1) = "Type";
+    Table.ColName(2) = "X";
+    Table.ColName(3) = "Y";
+    Table.ColName(4) = "Z";
+    Table.ColName(5) = "Ueq";
+    Table.ColName(6) = "ChemOccu";
+    Table.ColName(7) = "Peak";
+    Table.ColName(8) = "R-bond";
+    Table.ColName(9) = "R-VdW";
     for(size_t i = 0; i < AtomsList.Count(); i++ )  {
-      atoms.Add(Association::New(AtomsList[i]->ccrd(), &AtomsList[i]->CAtom()));
-      if( AtomsList[i]->GetType() == iQPeakZ )
-        have_q = true;
-    }
-  }
-  else {
-    TCAtomPList catoms = FindCAtoms(Atoms, false);
-    for( size_t i=0; i < catoms.Count(); i++ )  {
-      atoms.Add(Association::New(catoms[i]->ccrd(), catoms[i]));
-      if( catoms[i]->GetType() == iQPeakZ )
-        have_q = true;
-    }
-  }
-
-  TTTable<TStrList> Table(atoms.Count(), have_q ? 12 : 11);
-  Table.ColName(0) = "Atom";
-  Table.ColName(1) = "Type";
-  Table.ColName(2) = "X";
-  Table.ColName(3) = "Y";
-  Table.ColName(4) = "Z";
-  Table.ColName(5) = "Ueq";
-  Table.ColName(6) = "Um";
-  Table.ColName(7) = "Uvol";
-  Table.ColName(8) = "ChemOccu";
-  Table.ColName(9) = "R-bond";
-  Table.ColName(10) = "R-VdW";
-  if( have_q )
-    Table.ColName(11) = "Peak";
-  for(size_t i = 0; i < atoms.Count(); i++ )  {
-    const TCAtom& A = *atoms[i].GetB();
-    Table[i][0] = A.GetLabel();
-    Table[i][1] = A.GetType().symbol;
-    Table[i][2] = olxstr::FormatFloat(-3, atoms[i].GetA()[0]);
-    Table[i][3] = olxstr::FormatFloat(-3, atoms[i].GetA()[1]);
-    Table[i][4] = olxstr::FormatFloat(-3, atoms[i].GetA()[2]);
-    Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
-    if( A.GetEllipsoid() != NULL )  {
-      Table[i][6] << olxstr::FormatFloat(3,
-          pow(A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
-          A.GetEllipsoid()->GetSZ(), 2./3));
-      Table[i][7] << olxstr::FormatFloat(3,
-          A.GetEllipsoid()->GetSX()*A.GetEllipsoid()->GetSY()*
-          A.GetEllipsoid()->GetSZ()*4*M_PI/3);
-    }
-    else  {
-      Table[i][6] << '.';
-      Table[i][7] << olxstr::FormatFloat(3,
-          pow(A.GetUiso(), 3./2)*4*M_PI/3);
-    }
-    Table[i][8] = olxstr::FormatFloat(3, A.GetChemOccu());
-    Table[i][9] = A.GetConnInfo().r;
-    Table[i][10] = A.GetType().r_vdw;
-    if( have_q )  {
+      const TXAtom& A = *AtomsList[i];
+      Table[i][0] = A.GetGuiLabel();
+      Table[i][1] = A.GetType().symbol;
+      Table[i][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
+      Table[i][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
+      Table[i][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
+      Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
+      Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetChemOccu());
       if( A.GetType() == iQPeakZ )
-        Table[i][11] = olxstr::FormatFloat(3, A.GetQPeak());
+        Table[i][7] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
       else
-        Table[i][11] = '-';
+        Table[i][7] = '-';
+      Table[i][8] = A.CAtom().GetConnInfo().r;
+      Table[i][9] = A.CAtom().GetType().r_vdw;
     }
+    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   }
-  Table.CreateTXTList(Info, "Atom information", true, true, ' ');
+  else  {
+    TCAtomPList atoms = FindCAtoms(Atoms, false);
+    TTTable<TStrList> Table(atoms.Count(), 11);
+    Table.ColName(0) = "Atom";
+    Table.ColName(1) = "Type";
+    Table.ColName(2) = "X";
+    Table.ColName(3) = "Y";
+    Table.ColName(4) = "Z";
+    Table.ColName(5) = "Ueq";
+    Table.ColName(6) = "ChemOccu";
+    Table.ColName(7) = "Peak";
+    Table.ColName(8) = "R-bond";
+    Table.ColName(9) = "R-VdW";
+    for(size_t i = 0; i < atoms.Count(); i++ )  {
+      const TCAtom& A = *atoms[i];
+      Table[i][0] = A.GetLabel();
+      Table[i][1] = A.GetType().symbol;
+      Table[i][2] = olxstr::FormatFloat(-3, A.ccrd()[0]);
+      Table[i][3] = olxstr::FormatFloat(-3, A.ccrd()[1]);
+      Table[i][4] = olxstr::FormatFloat(-3, A.ccrd()[2]);
+      Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
+      Table[i][6] = olxstr::FormatFloat(3, A.GetChemOccu());
+      if( A.GetType() == iQPeakZ )
+        Table[i][7] = olxstr::FormatFloat(3, A.GetQPeak());
+      else
+        Table[i][7] = '-';
+      Table[i][8] = A.GetConnInfo().r;
+      Table[i][9] = A.GetType().r_vdw;
+    }
+    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
+  }
 }
 //..............................................................................
 TXGlLabel& TGXApp::CreateLabel(const TXAtom& a, uint16_t FontIndex)  {
@@ -2398,8 +2395,7 @@ ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection
       continue;
     }
     if( Tmp.CharAt(0) == '$' )  {
-      SortedElementPList elms = TAtomReference::DecodeTypes(
-        Tmp.SubStringFrom(1), XFile().GetAsymmUnit());
+      SortedElementPList elms = DecodeTypes(Tmp.SubStringFrom(1));
       for( size_t ei=0; ei < elms.Count(); ei++ )
         list += CAtomsByType(*elms[ei]);
       continue;
@@ -2759,8 +2755,8 @@ void TGXApp::StoreLabels()  {
     TXAtom& xa = ai.Next();
     if( xa.GetGlLabel().IsVisible() )  {
       LabelInfo.atoms.Add(new TGXApp::AtomRef(xa.GetNetwork().GetLattice(), xa.GetRef()));
-      LabelInfo.labels.AddCopy(xa.GetGlLabel().GetLabel());
-      LabelInfo.centers.AddCopy(xa.GetGlLabel().GetCenter());
+      LabelInfo.labels.AddCCopy(xa.GetGlLabel().GetLabel());
+      LabelInfo.centers.AddCCopy(xa.GetGlLabel().GetCenter());
     }
   }
   BondIterator bi(*this);
@@ -2768,8 +2764,8 @@ void TGXApp::StoreLabels()  {
     TXBond& xb = bi.Next();
     if( xb.GetGlLabel().IsVisible() )  {
       LabelInfo.bonds.Add(new TGXApp::BondRef(xb.GetNetwork().GetLattice(), xb.GetRef()));
-      LabelInfo.labels.AddCopy(xb.GetGlLabel().GetLabel());
-      LabelInfo.centers.AddCopy(xb.GetGlLabel().GetCenter());
+      LabelInfo.labels.AddCCopy(xb.GetGlLabel().GetLabel());
+      LabelInfo.centers.AddCCopy(xb.GetGlLabel().GetCenter());
     }
   }
 }
@@ -3345,7 +3341,7 @@ void TGXApp::CreateXGrowPoints()  {
   smatd_plist matrices;
   smatd I;
   I.r.I();
-  UsedTransforms.AddCopy(I);
+  UsedTransforms.AddCCopy(I);
 
   vec3d MFrom(-1.5, -1.5, -1.5), MTo(2, 2, 2);
   vec3d VTo = (MTo+1).Round<int>();
@@ -3633,7 +3629,7 @@ void TGXApp::_CreateXGrowVLines()  {
 }
 //..............................................................................
 void TGXApp::Grow(const TXGrowPoint& growPoint)  {
-  UsedTransforms.AddCopy(growPoint.GetTransform());
+  UsedTransforms.AddCCopy(growPoint.GetTransform());
   XFile().GetLattice().Grow(growPoint.GetTransform());
 }
 //..............................................................................
@@ -3852,7 +3848,7 @@ TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
   TXLattice *XL = new TXLattice(*FGlRender, Name);
   XL->SetLatticeBasis(basis);
   XL->Create();
-  LooseObjects.Add(XL);
+  LooseObjects.Add( XL );
   return *XL;
 }
 //..............................................................................
@@ -4308,7 +4304,7 @@ TStrList TGXApp::ToPov() const {
   TGlRenderer &r = GetRender();
   const TAsymmUnit &au = XFile().GetAsymmUnit();
   pov::CrdTransformer crdc(r.GetBasis());
-  olxdict<const TGlMaterial*, olxstr, TPointerComparator> materials;
+  olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> materials;
   olxdict<AGDrawObject*, olxstr, TPrimitiveComparator> sph_materials;
   TStrList out;
   out.Add("global_settings {");
@@ -4383,47 +4379,5 @@ TStrList TGXApp::ToPov() const {
     mat_out.Add(materials.GetKey(i)->ToPOV());
   }
   return mat_out << out;
-}
-//..............................................................................
-void TGXApp::CreateRings(bool force, bool create)  {
-  if( !force &&
-    !TBasicApp::Options.FindValue("aromatic_rings", FalseString()).ToBool() )
-  {
-    return;
-  }
-  TGraphicsStyle *cgs = GetRender().GetStyles().FindStyle('C');
-  TGlMaterial *glm = NULL;
-  if( cgs != NULL )
-    glm = cgs->FindMaterial("Sphere");
-  
-  const TLattice &latt = XFile().GetLattice();
-  TTypeList<TSAtomPList> rings;
-  FindRings("C5", rings);
-  FindRings("C6", rings);
-  FindRings("NC5", rings);
-  for( size_t i=0; i < rings.Count(); i++ )  {
-    vec3d normal, center;
-    if( TSPlane::CalcPlane(rings[i], normal, center) > 0.05 ||
-      !TNetwork::IsRingRegular(rings[i]) )
-    {
-      continue;
-    }
-    TDRing &r = *(new TDRing(GetRender(), olxstr("DRing_") << i));
-    Rings.Add(r);
-    r.Basis.OrientNormal(normal);
-    r.Basis.SetCenter(center);
-    double min_d = 100;
-    for( size_t j=0; j < rings[i].Count(); j++ )  {
-      const double qd = rings[i][j]->crd().QDistanceTo(center);
-      if( qd < min_d )
-        min_d = qd;
-    }
-    min_d = sqrt(min_d)*cos(M_PI/rings[i].Count())/r.GetRadius();
-    r.Basis.SetZoom(min_d*0.85);
-    if( glm != NULL )
-      r.material = *glm;
-    if( create )
-      r.Create();
-  }
 }
 //..............................................................................

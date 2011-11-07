@@ -32,7 +32,7 @@ void TEMemoryStream::operator >> (IOutputStream &os)  {
   Position = GetLength();
 }
 //..............................................................................
-TEMemoryStream& TEMemoryStream::operator << (IInputStream &is)  {
+IOutputStream& TEMemoryStream::operator << (IInputStream &is)  {
   this->CheckInitialised();
   const size_t _off = GetLength() - Position;
   // we are not at the end of the stream ..

@@ -203,9 +203,8 @@ public:
   int GetPolyhedronType() const;
   Poly *GetPolyhedron() const {  return Polyhedron;  }
 
-  const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials) const;
-  static const_strlist PovDeclare();
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const;
+  static TStrList PovDeclare();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);

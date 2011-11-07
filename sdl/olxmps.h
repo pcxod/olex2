@@ -28,8 +28,7 @@ template <class TaskClass> class TArrayIterationItem : public ITask {
     uint16_t Id;
     TaskClass& Task;
   public:
-    TArrayIterationItem(TaskClass& task, size_t startIndex, size_t endIndex)
-      : Task(task)
+    TArrayIterationItem(TaskClass& task, size_t startIndex, size_t endIndex) : Task(task)
     {
       StartIndex = startIndex;
       EndIndex = endIndex;
@@ -58,8 +57,7 @@ template <class TaskClass> class TListIteratorManager {
           res[mt-1] = (int)(ListSize - (int)((mt-1)*res[0]));
       }
       else if( TaskType == tQuadraticTask )  {
-        const short mt = olx_min(4,
-          TBasicApp::GetInstance().GetMaxThreadCount());
+        const short mt = olx_min(4, TBasicApp::GetInstance().GetMaxThreadCount());
         res.Resize(mt);  // max 4 threads to support
         switch( mt )  {
           case 1:
@@ -84,18 +82,13 @@ template <class TaskClass> class TListIteratorManager {
             throw TInvalidArgumentException(__OlxSourceInfo, "thread count");
         }
       }
-      else {
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          "unknown task complexity");
-      }
+      else
+        throw TInvalidArgumentException(__OlxSourceInfo, "unknown task complexity");
     }
   public:
-    TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType,
-      size_t minSize)
-    {
+    TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType, size_t minSize)  {
       Tasks.Add(task);  // must not delete it!!!
-      // should we create parallel tasks then at all?
-      if( ListSize < minSize || TThreadPool::GetSlotsCount() == 1)  {
+      if( ListSize < minSize || TThreadPool::GetSlotsCount() == 1)  {  // should we create parallel tasks then at all?
         for( size_t i=0; i < ListSize; i++ )
           task.Run(i);
         return;
@@ -110,8 +103,7 @@ template <class TaskClass> class TListIteratorManager {
           Tasks.Add(*taskInstance);
         }
         TArrayIterationItem<TaskClass>& item = Items.Add(
-          new TArrayIterationItem<TaskClass>(*taskInstance,
-            startIndex, startIndex + ratios[i]));
+          new TArrayIterationItem<TaskClass>(*taskInstance, startIndex, startIndex + ratios[i]));
         startIndex += ratios[i];
         item.SetId((uint16_t)(Items.Count()-1));
         TThreadPool::AllocateTask(item);

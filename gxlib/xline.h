@@ -35,7 +35,7 @@ public:
 
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
   bool Orient(TGlPrimitive& P);
-  void SetRadius(double V)  {  TXBond::SetRadius(V);  }
+  void SetRadius(double V)  {  Params()[4] = V;  }
   double GetRadius() const {  return Params()[4]; }
   void SetLength(double V)  {  Params()[3] = V;  }
   double GetLength() const {  return Params()[3]; }
@@ -43,14 +43,13 @@ public:
   const vec3d &GetBaseCrd() const {  return FBase;  }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
-  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPointerComparator> &materials) const {
+  TStrList ToPov(olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials) const {
     return TXBond::ToPov(materials);
   }
   void UpdatePrimitives(int32_t mask)  {
     TXBond::UpdatePrimitives(mask);
   }
   TGPCollection& GetPrimitives() const {  return TXBond::GetPrimitives();  }
-  TXGlLabel& GetGlLabel() const {  return TXBond::GetGlLabel();  }
 };
 
 EndGxlNamespace()

@@ -47,10 +47,8 @@ int TThreadSlot::Run() {
 
 void TThreadPool::_checkThreadCount()  {
   int max_th = TBasicApp::GetInstance().GetMaxThreadCount();
-  if( max_th <= 0 ) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      "undefined number of possible threads");
-  }
+  if( max_th <= 0 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "undefined number of possible threads");
   while( tasks.Count() < (size_t)max_th )
     tasks.AddNew();
   while( tasks.Count() > (size_t)max_th )  {
@@ -63,10 +61,8 @@ void TThreadPool::_checkThreadCount()  {
 void TThreadPool::AllocateTask(ITask& task) {
   if( current_task == 0 )
     _checkThreadCount();
-  if( current_task >= tasks.Count() ) {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      "Number of requested and available slots mismatch");
-  }
+  if( current_task >= tasks.Count() )
+    throw TFunctionFailedException(__OlxSourceInfo, "Number of requested and available slots mismatch");
   tasks[current_task++].SetTask(task);
 }
 
@@ -77,8 +73,7 @@ void TThreadPool::DoRun()  {
     if( tasks[i].IsRunning() )
       tasks[i].Resume();
     else if( !tasks[i].Start() )  {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "Failed to start thread");
+      throw TFunctionFailedException(__OlxSourceInfo, "Failed to start thread");
     }
   }
   bool running = true;

@@ -33,7 +33,7 @@ public:
       if( XA.GetType() == iHydrogenZ )  {
         TSAtom* aa = NULL;
         for( size_t i=0; i < XA.NodeCount(); i++ )  {
-          if( XA.Node(i).GetType().z < 2 )  {
+          if( XA.Node(i).GetType() != iQPeakZ )  {
             if( aa == NULL )  aa = &XA.Node(i);
             else  {  // bad connectivity
               aa = NULL;

@@ -86,7 +86,7 @@ olxstr AGlScene::MetaFont::BuildOlexFontId(const olxstr& fileName, short size, b
     suffix << "rb";
   else
     suffix << "r";
-  suffix.RightPadding(4, '_');
+  suffix.Format(4, true, '_');
   return prefix << suffix << size;
 }
 //..............................................................................

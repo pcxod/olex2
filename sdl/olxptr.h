@@ -62,11 +62,7 @@ template <typename ptr> struct olx_array_ptr  {
 };
 
 template <class P> P& olx_get_ref(P* p)  {  return *p;  }
-static char *olx_get_ref(char *p)  {  return p;  }
-static wchar_t *olx_get_ref(wchar_t *p)  {  return p;  }
 template <class P> const P& olx_get_ref(const P* p)  {  return *p;  }
-static const char *olx_get_ref(const char *p)  {  return p;  }
-static const wchar_t *olx_get_ref(const wchar_t *p)  {  return p;  }
 template <class P> P& olx_get_ref(P& p)  {  return p;  }
 template <class P> const P& olx_get_ref(const P& p)  {  return p;  }
 

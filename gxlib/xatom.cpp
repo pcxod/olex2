@@ -609,8 +609,8 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
   }
 }
 //..............................................................................
-const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPointerComparator> &materials) const
+TStrList TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
+  TPrimitiveComparator> &materials) const
 {
   TStrList out;
   if( DrawStyle() == adsStandalone && !IsStandalone() )
@@ -665,7 +665,7 @@ const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
   return out;
 }
 //..............................................................................
-const_strlist TXAtom::PovDeclare()  {
+TStrList TXAtom::PovDeclare()  {
   TStrList out;
   out.Add("#declare atom_sphere=object{ sphere {<0,0,0>, 1} }");
   out.Add("#declare atom_small_sphere=object{ sphere {<0,0,0>, 0.5} }");
@@ -1017,7 +1017,7 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {
       olx_swap(pl.faces[i][0], pl.faces[i][1]);
       n *= -1;
     }
-    pl.norms.AddCopy(n);
+    pl.norms.AddCCopy(n);
   }
 }
 vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
@@ -1046,7 +1046,7 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   pl.vecs[start] = crd();
   pl.vecs[start+1] = plane.GetCenter();
   for( size_t i=0; i < sp.sortedPlane.Count(); i++ )
-    pl.vecs[start+i+2] = sp.sortedPlane[i];
+    pl.vecs[start+i+2] = *sp.sortedPlane.GetObject(i);
   // create the base
   for( size_t i=0; i < sp.sortedPlane.Count()-1; i++ )
     pl.faces.AddNew(start+1, start+i+2, start+i+3);

@@ -35,7 +35,7 @@ namespace pov {
       return olxstr(EmptyString(), 64) << '<' << v[0] << ',' << v[1] << ',' << v[2] << '>';
   }
   static olxstr get_mat_name(const olxstr &primitive_name, TGraphicsStyle &style,
-    olxdict<const TGlMaterial*, olxstr, TPointerComparator> &materials)
+    olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials)
   {
     olxstr mat_name;
     size_t lmi = style.IndexOfMaterial(primitive_name);
@@ -50,7 +50,7 @@ namespace pov {
     return mat_name;
   }
   static olxstr get_mat_name(const TGlMaterial& glm,
-    olxdict<const TGlMaterial*, olxstr, TPointerComparator> &materials)
+    olxdict<const TGlMaterial*, olxstr, TPrimitiveComparator> &materials)
   {
     size_t lmi = materials.IndexOf(&glm);
     return (lmi == InvalidIndex ? materials.Add(&glm, olxstr("mat") << (materials.Count()+1))

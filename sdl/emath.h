@@ -326,23 +326,5 @@ void olx_update_min_max(const src_t& src, dest_t& min_v, dest_t& max_v)  {
   if( src > max_v )  max_v = src;
 }
 
-template <typename item_t> struct olx_mean {
-  template <class list_t>
-  static item_t calc(const list_t &l) {
-    item_t rv(0);
-    for (size_t i=0; i < l.Count(); i++)
-      rv += l[i];
-    return l.Count() == 0 ? rv : rv/l.Count();
-  }
-
-  template <class list_t, class accessor_t>
-  static item_t calc(const list_t &l, const accessor_t &accessor) {
-    item_t rv(0);
-    for (size_t i=0; i < l.Count(); i++)
-      rv += accessor(l[i]);
-    return l.Count() == 0 ? rv : rv/l.Count();
-  }
-};
-
 EndEsdlNamespace()
 #endif

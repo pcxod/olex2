@@ -52,7 +52,7 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
   // load Lst first, as it may have the error indicator
   olxstr lst_fn = TEFile::ChangeFileExt(fileName, "lst");
   if( TEFile::Exists(lst_fn) )  {
-    try  { Lst.LoadFromFile(lst_fn); }
+    try  {  Lst.LoadFromFile(lst_fn);  }
     catch(...)  {}
   }
   TBasicCFile::LoadFromFile(fileName);
@@ -165,19 +165,6 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     Clear();
     throw TInvalidArgumentException(__OlxSourceInfo, "empty CELL");
   }
-  // update the refinement model data
-  TTypeList<RefinementModel::BadReflection> bad_refs;
-  for (size_t i=0; i < Lst.DRefCount(); i++) {
-    const TLstRef &lr = Lst.DRef(i);
-    bad_refs.Add(
-      new RefinementModel::BadReflection(
-      vec3i(lr.H, lr.K, lr.L),
-      lr.Fo,
-      lr.Fc,
-      olx_abs(lr.Fo-lr.Fc)/lr.DF)
-      );
-  }
-  GetRM().SetBadReflectionList(bad_refs);
 }
 //..............................................................................
 void TIns::_ProcessSame(ParseContext& cx)  {
@@ -194,8 +181,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        toks.Clear();
        toks.Strtok(sl[j], ' ');
        size_t resi_ind = toks[0].IndexOf('_');
-       olxstr resi( (resi_ind != InvalidIndex)
-         ? toks[0].SubStringFrom(resi_ind+1) : EmptyString());
+       olxstr resi( (resi_ind != InvalidIndex) ? toks[0].SubStringFrom(resi_ind+1) : EmptyString() );
        double esd1=0.02, esd2=0.04;
        size_t from_ind = 0;
        if( toks.Count() > 0 && toks[0].IsNumber() )  {
@@ -212,12 +198,10 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        try  {  ar.Expand(cx.rm, ag, resi, atomAGroup);  }
        catch( const TExceptionBase& ex )  {
          throw TFunctionFailedException(__OlxSourceInfo,
-           olxstr("invalid SAME instruction: ")
-            << ex.GetException()->GetError());
+           olxstr("invalid SAME instruction: ") << ex.GetException()->GetError());
        }
        if( ag.IsEmpty() )  {
-         TBasicApp::NewLogEntry(logError)
-           << "Invalid SAME atom list, removed: " << toks.Text(' ');
+         TBasicApp::NewLogEntry(logError) << "Invalid SAME atom list, removed: " << toks.Text(' ');
          //throw TFunctionFailedException(__OlxSourceInfo, "empty SAME atoms list");
        }
        else  {
@@ -290,8 +274,8 @@ void TIns::_FinishParsing(ParseContext& cx)  {
   __ProcessConn(cx);
   for( size_t i=0; i < Ins.Count(); i++ )  {
     TStrList toks(Ins[i], ' ');
-    if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
-         toks[0].StartsFromi("MPLA")) && toks.Count() > 2 )
+    if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") || toks[0].StartsFromi("MPLA")) && 
+      toks.Count() > 2 )
     {
       cx.rm.AddInfoTab(toks);
       Ins.Delete(i--);
@@ -318,18 +302,41 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
       }
     }
-    else if( toks.Count() == 2 && toks[0].Equalsi("REM") &&
-      toks[1].Equalsi("<olex2.extras>") )
+    else if( toks.Count() > 5 && toks[0].Equalsi("REM") &&
+      toks[1].Equalsi("olex2.constraint.rotated_adp") )
     {
-      TStrList extras;
-      size_t j = i;
-      while( ++j < Ins.Count() && !Ins[j].Equalsi("REM </olex2.extras>") )  {
-        if( Ins[j].StartsFromi("REM") )
-          extras.Add(Ins[j].SubStringFrom(3));
+      rotated_adp_constraint::FromToks(toks.SubListFrom(2), cx.rm,
+        cx.rm.SharedRotatedADPs.items);
+      Ins.Delete(i--);
+    }
+    else if( toks[0].Equalsi("REM") && toks[1].Equalsi("olex2.direction") )  {
+      adirection::FromToks(toks.SubListFrom(2), cx.rm, cx.rm.Directions.items);
+      Ins.Delete(i--);
+    }
+    else if( toks[0].Equalsi("REM") && toks[1].Equalsi("olex2.constraint.u_proxy")
+      && toks.Count() > 3 )  // rem name pivot {atoms}
+    {
+      Ins.Delete(i--);
+      TCAtom *ca = cx.au.FindCAtom(toks[2]);
+      if( ca->GetAfix() == -1 )  // already set
+        continue;
+      if( ca == NULL )  {
+        TBasicApp::NewLogEntry(logError) <<
+          "Warning - removing invalid internal instruction" <<
+          toks.Text(' ');
+        continue;
       }
-      Ins.DeleteRange(i, j-i+1);
-      cx.rm.ReadInsExtras(extras);
-      i--;
+      TAfixGroup& ag = cx.rm.AfixGroups.New(ca, -1);
+      for( size_t ti=3; ti < toks.Count(); ti++ )  {
+        ca = cx.au.FindCAtom(toks[ti]);
+        if( ca == NULL )  {
+          TBasicApp::NewLogEntry(logError) <<
+            "Warning - possibly invalid internal instruction " <<
+            toks.Text(' ');
+          continue;
+        }
+        ag.AddDependent(*ca);
+      }
     }
     else  {
       TInsList* Param = new TInsList(toks);
@@ -572,8 +579,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
           NumberCount++;
       }
       if( NumberCount > 0 && NumberCount < 14 )  {
-        TBasicApp::NewLogEntry(logError) << "Possibly not well formed SFAC "
-          << Toks[0];
+        TBasicApp::NewLogEntry(logError) << "Possibly not well formed SFAC " << Toks[0];
       }
       else  if( NumberCount == 14 )  {
         /* here we do not check if the Toks.String(1) is atom - itcould be a label ...
@@ -583,18 +589,16 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         cx.BasicAtoms.Add(Toks[1], XElementLib::FindBySymbol(Toks[1]));
         if( cx.BasicAtoms.GetLast().Object == NULL )  {
           throw TFunctionFailedException(__OlxSourceInfo,
-            olxstr("Could not find suitable scatterer for ").quote()
-              << Toks[1]);
+            olxstr("Could not find suitable scatterer for ").quote() << Toks[1]);
         }
         expandedSfacProcessed = true;
-        const olxstr lb(Toks[1].CharAt(0) == '$'
-          ? Toks[1].SubStringFrom(1) : Toks[1]);
+        const olxstr lb(Toks[1].CharAt(0) == '$' ? Toks[1].SubStringFrom(1) : Toks[1]);
         XScatterer* sc = new XScatterer(lb);
         sc->SetGaussians(
           cm_Gaussians(
-            Toks[2].ToDouble(), Toks[4].ToDouble(), Toks[6].ToDouble(),
-            Toks[8].ToDouble(), Toks[3].ToDouble(), Toks[5].ToDouble(),
-            Toks[7].ToDouble(), Toks[9].ToDouble(), Toks[10].ToDouble())
+            Toks[2].ToDouble(), Toks[4].ToDouble(), Toks[6].ToDouble(), Toks[8].ToDouble(),
+            Toks[3].ToDouble(), Toks[5].ToDouble(), Toks[7].ToDouble(), Toks[9].ToDouble(),
+            Toks[10].ToDouble())
           );
         sc->SetFpFdp(compd(Toks[11].ToDouble(), Toks[12].ToDouble()));
         sc->SetMu(Toks[13].ToDouble());
@@ -609,8 +613,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
           cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbol(Toks[j]));
           if( cx.BasicAtoms.GetLast().Object == NULL )  {
             throw TFunctionFailedException(__OlxSourceInfo,
-              olxstr("Could not find suitable scatterer for ").quote()
-                << Toks[j]);
+              olxstr("Could not find suitable scatterer for ").quote() << Toks[j]);
           }
           cx.rm.AddUserContent(Toks[j]);
         }
@@ -618,8 +621,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     }
   }
   else if( Toks[0].Equalsi("DISP") && Toks.Count() >= 4 )  {
-    const olxstr lb(Toks[1].CharAt(0) == '$'
-      ? Toks[1].SubStringFrom(1) : Toks[1]);
+    const olxstr lb(Toks[1].CharAt(0) == '$' ? Toks[1].SubStringFrom(1) : Toks[1]);
     XScatterer* sc = new XScatterer(lb);
     sc->SetFpFdp(compd(Toks[2].ToDouble(), Toks[3].ToDouble()));
     if( Toks.Count() >= 5 )
@@ -1098,7 +1100,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   Preprocess(SL);
   //rm.FVAR.Clear();
   for( size_t i=0; i < index.Count(); i++ )  {
-    if( i >= rm.aunit.AtomCount() )
+    if( i > rm.aunit.AtomCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
     TCAtom &ca = rm.aunit.GetAtom(i);
     if( ca.GetParentAfixGroup() != NULL )
@@ -1130,10 +1132,8 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
     }
     else  {
       cm_Element* elm = XElementLib::FindBySymbol(Toks[1]);
-      if( elm == NULL )  {// wrong SFAC
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          "unknown element symbol");
-      }
+      if( elm == NULL ) // wrong SFAC
+        throw TInvalidArgumentException(__OlxSourceInfo, "unknown element symbol");
       TCAtom* atom = NULL;
       if( (atomCount+1) > rm.aunit.AtomCount() )  {
         atom = &rm.aunit.NewAtom(cx.Resi);
@@ -1234,9 +1234,9 @@ void TIns::SavePattSolution(const olxstr& FileName,
   SL.Add(EmptyString());
   for( size_t i=0; i < atoms.Count(); i++ )  {
     olxstr& aline = SL.Add(atoms[i].GetName());
-    aline.RightPadding(6, ' ', true);
+    aline.Format(6, true, ' ');
     aline << (Sfacs[i]+1);
-    aline.RightPadding(aline.Length()+4, ' ', true);
+    aline.Format(aline.Length()+4, true, ' ');
     for( size_t j=0; j < 3; j++ )
       aline << olxstr::FormatFloat(-5, atoms[i].GetCrd()[j] ) << ' ';
     double v = atoms[i].GetOccup() + 10;
@@ -1339,13 +1339,13 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
 olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
   double v, Q[6];   // quadratic form of ellipsoid
   olxstr Tmp = CA.GetLabel();
-  Tmp.RightPadding(6, ' ', true);
+  Tmp.Format(6, true, ' ');
   if( SfacIndex < 0 )
     Tmp << CA.GetType().symbol;
   else
     Tmp << SfacIndex;
 
-  Tmp.RightPadding(Tmp.Length()+4, ' ', true);
+  Tmp.Format(Tmp.Length()+4, true, ' ');
   for( short j=0; j < 3; j++ )  {
     Tmp << olxstr::FormatFloat(-5,
       rm.Vars.GetParam(CA, catom_var_name_X+j)) << ' ';
@@ -1461,9 +1461,7 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
   }
 }
 //..............................................................................
-bool Ins_ProcessRestraint(const TCAtomPList* atoms,
-  const TSimpleRestraint& sr)
-{
+bool Ins_ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
   if( sr.AtomCount() == 0 && !sr.IsAllNonHAtoms() )  return false;
   if( atoms == NULL )  return true;
   for( size_t i=0; i < atoms->Count(); i++ )
@@ -1471,38 +1469,19 @@ bool Ins_ProcessRestraint(const TCAtomPList* atoms,
       return true;
   return false;
 }
-//..............................................................................
-olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
-  const TIns::RCInfo &ri, const TCAtomPList *atoms)
-{
-  if( !Ins_ProcessRestraint(atoms, sr) )  return EmptyString();
-  if( (int)sr.AtomCount() < ri.atom_limit )  // has lower atom count limit?
-    return EmptyString();
-  const RefinementModel &rm = sr.GetParent().GetRM();
-  bool def = rm.IsDefaultRestraint(sr);
-  olxstr line = sr.GetIdName();
-  if( ri.has_value > 0 )  // has value and is first?
-    line << ' ' << rm.Vars.GetParam(sr, 0);
-  if( ri.esd_cnt > 0 && !def )  // uses Esd?
-    line << ' ' << sr.GetEsd();
-  if( ri.esd_cnt > 1 && !def )  // has extra Esd?
-    line << ' ' << sr.GetEsd1();
-  if( ri.has_value < 0 && !def )  // has value and is last?
-    line << ' ' << rm.Vars.GetParam(sr, 0);
-  for( size_t j=0; j < sr.AtomCount(); j++ )  {
-    if( ri.full_label )
-      line << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-    else
-      line << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
-  }
-  return line;
-}
-//..............................................................................
+
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   RefinementModel::ReleasedItems* processed, RefinementModel& rm,
   bool write_internals)
 {
   size_t oindex = SL.Count();
+  // shared rotated ADPs etc
+  for( size_t i=0; i < rm.rcList.Count(); i++ )  {
+    TStrList tmp = rm.rcList[i]->ToInsList(rm);
+    for( size_t j=0; j < tmp.Count(); j++ )
+      HyphenateIns(tmp[j], SL);
+  }
+
   typedef AnAssociation2<TSRestraintList*,RCInfo> ResInfo;
   TStrPObjList<olxstr, ResInfo> restraints;
   // fixed distances, has value, one esd, no atom limit
@@ -1524,6 +1503,14 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   restraints.Add("ISOR", ResInfo(&rm.rISOR, RCInfo(0, 2, -1)));
   // equivalent EADP constraint
   restraints.Add("EADP", ResInfo(&rm.rEADP, RCInfo(0, 0, 2, false)));
+  restraints.Add(olxstr("REM ") << rm.rAngle.GetIdName(),
+    ResInfo(&rm.rAngle, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rDihedralAngle.GetIdName(),
+    ResInfo(&rm.rDihedralAngle, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rFixedUeq.GetIdName(),
+    ResInfo(&rm.rFixedUeq, RCInfo(1, 1, -1, true)));
+  restraints.Add(olxstr("REM ") << rm.rSimilarUeq.GetIdName(),
+    ResInfo(&rm.rSimilarUeq, RCInfo(0, 1, -1, false)));
 
   if( rm.IsDEFSSet() )
     SL.Add("DEFS ") << rm.GetDEFSStr();
@@ -1533,8 +1520,25 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       TSimpleRestraint& sr = (*r.A())[j];
       const RCInfo& ri = r.GetB();
       sr.Validate();
-      olxstr line = RestraintToString(sr, ri, atoms);
-      if( line.IsEmpty() )  continue;
+      if( !Ins_ProcessRestraint(atoms, sr) )  continue;
+      if( (int)sr.AtomCount() < ri.atom_limit )  // has lower atom count limit?
+        continue;
+      bool def = rm.IsDefaultRestraint(*r.GetA(), sr);
+      olxstr line = restraints[i];
+      if( ri.has_value > 0 )  // has value and is first?
+        line << ' ' << rm.Vars.GetParam(sr, 0);
+      if( ri.esd_cnt > 0 && !def )  // uses Esd?
+        line << ' ' << sr.GetEsd();
+      if( ri.esd_cnt > 1 && !def )  // has extra Esd?
+        line << ' ' << sr.GetEsd1();
+      if( ri.has_value < 0 && !def )  // has value and is last?
+        line << ' ' << rm.Vars.GetParam(sr, 0);
+      for( size_t j=0; j < sr.AtomCount(); j++ )  {
+        if( ri.full_label )
+          line << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+        else
+          line << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
+      }
       HyphenateIns(line, SL);
       if( processed != NULL )  
         processed->restraints.Add(sr);
@@ -1569,7 +1573,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       rm.GetFrag(i).ToStrings(SL);
   }
   else  {
-    SortedPtrList<const Fragment, TPointerComparator> saved;
+    SortedPtrList<const Fragment, TPointerPtrComparator> saved;
     for( size_t i=0; i < atoms->Count(); i++ )  {
       const int m = TAfixGroup::GetM((*atoms)[i]->GetAfix());
       if( m < 17 )  continue;
@@ -1583,13 +1587,24 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       frag->ToStrings(SL);
     }
   }
-  TStrList extras(
-    rm.WriteInsExtras(atoms, write_internals), NewLineSequence());
-  if( !extras.IsEmpty() )  {
-    SL.Add("REM <olex2.extras>");
-    for( size_t i=0; i < extras.Count(); i++ )
-     HyphenateIns("REM ", extras[i], SL);
-    SL.Add("REM </olex2.extras>");
+  if( write_internals )  {
+    bool has_int_groups = false;
+    for( size_t i=0; i < rm.AfixGroups.Count(); i++ )  {
+      if( rm.AfixGroups[i].GetAfix() == -1 && !rm.AfixGroups[i].IsEmpty() )  {
+        has_int_groups = true;
+        break;
+      }
+    }
+    if( has_int_groups )  {
+      for( size_t i=0; i < rm.AfixGroups.Count(); i++ )  {
+        if( rm.AfixGroups[i].GetAfix() == -1 && !rm.AfixGroups[i].IsEmpty() )  {
+          olxstr &l = SL.Add("REM olex2.constraint.u_proxy ")
+            << rm.AfixGroups[i].GetPivot().GetLabel();
+          for( size_t j=0; j < rm.AfixGroups[i].Count(); j++ )
+            l << ' ' << rm.AfixGroups[i][j].GetLabel();
+        }
+      }
+    }
   }
   SL.Add();
 }
@@ -1761,7 +1776,8 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   double Esd1Mult = 0, DefVal = 0, esd=0, esd1=0;
   double *Vals[] = {&DefVal, &esd, &esd1};
   bool use_var_manager = true, check_resi = true;
-  if( toks[0].StartsFromi("olex2.") )  {
+  if( toks[0].Equalsi("REM") && toks.Count() > 1 && toks[1].StartsFromi("olex2.") )  {
+    toks.Delete(0);
     check_resi = use_var_manager = false;
   }
   // extract residue
@@ -1844,11 +1860,6 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   }
   else if( ins_name.Equalsi(rm.rSimilarUeq.GetIdName()) )  {
     srl = &rm.rSimilarUeq;
-    RequiredParams = 0;  AcceptsParams = 1;
-    Vals[0] = &esd;
-  }
-  else if( ins_name.Equalsi(rm.rSimilarAdpVolume.GetIdName()) )  {
-    srl = &rm.rSimilarAdpVolume;
     RequiredParams = 0;  AcceptsParams = 1;
     Vals[0] = &esd;
   }
