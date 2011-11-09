@@ -259,7 +259,12 @@ public:
     TDoubleList& wght_out,
     double (*weight_calculator)(const TSAtom&));
 
-  static void DoAlignAtoms(const TSAtomPList& atomsToTransform, const AlignInfo& align_info);
+  static void DoAlignAtoms(const TSAtomPList& atomsToTransform,
+    const AlignInfo& align_info);
+  // new = (old-center)*m + shift
+  static void DoAlignAtoms(const TSAtomPList& atomsToTransform,
+    const vec3d &center,
+    const mat3d &m, const vec3d &shift);
   
   static TArrayList<align::pair>& AtomsToPairs(
     const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,

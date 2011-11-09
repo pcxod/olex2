@@ -109,12 +109,16 @@ namespace align  {
     return ao;
   }
   // returns unweighted RMSD
-  template <class List> double CalcRMSD(const List& pairs, const align::out& ao)  {
+  template <class List> double CalcRMSD(const List& pairs,
+    const align::out& ao)
+  {
     double rmsd = 0;
     mat3d m;
     QuaternionToMatrix(ao.quaternions[0], m);
-    for( size_t i=0; i < pairs.Count(); i++ )
-      rmsd += (pairs[i].GetValueA() - ao.center_a).QDistanceTo((pairs[i].GetValueB() - ao.center_b)*m);
+    for( size_t i=0; i < pairs.Count(); i++ ) {
+      rmsd += (pairs[i].GetValueA() - ao.center_a)
+        .QDistanceTo((pairs[i].GetValueB() - ao.center_b)*m);
+    }
     return sqrt(rmsd/pairs.Count());
   }
   // two lists to 'pair' adaptor
@@ -125,7 +129,8 @@ namespace align  {
     struct pair  {
       const ListsToPairAdaptor& parent;
       size_t index;
-      pair(const ListsToPairAdaptor& _parent, size_t i) : parent(_parent), index(i)  {}
+      pair(const ListsToPairAdaptor& _parent, size_t i)
+        : parent(_parent), index(i)  {}
       vec3d GetValueA() const {  return parent.vlist[index];  }
       double GetWeightA() const {  return parent.wlist[index];  }
       vec3d GetValueB() const {  return parent.vlist[parent.count+index];  }
@@ -144,7 +149,77 @@ namespace align  {
     }
     size_t Count() const {  return count;  }
   };
+
 };  // end namespace align
+
+template <typename FloatT=double>
+struct inertia {
+
+  struct unit_weight {
+    template <typename item_t>
+    FloatT operator() (const item_t &) const { return 1; }
+  };
+
+  struct out {
+    TVector3<FloatT> moments, center;
+    TMatrix33<FloatT> axis;
+    void sort() {
+      bool swaps = true;
+      while (swaps) {
+        swaps = false;
+        for (int i=0; i < 2; i++) {
+          if (moments[i] > moments[i+1]) {
+            olx_swap(axis[i], axis[i+1]);
+            olx_swap(moments[i], moments[i+1]);
+            swaps = true;
+          }
+        }
+      }
+      // keep the orientation system
+      axis[2] = axis[0].XProdVec(axis[1]).Normalise();
+    }
+  };
+
+  template <class list_t, class p_accessor_t, class w_accessor_t>
+  static out calc(const list_t &list,
+    const p_accessor_t &p_accessor,
+    const w_accessor_t &w_accessor)
+  {
+    out rv;
+    if (list.Count() < 2)
+      return rv;
+    FloatT w_sum = 0;
+    for (size_t i=0; i < list.Count(); i++) {
+      FloatT w = w_accessor(list[i]);
+      rv.center += p_accessor(list[i])*w;
+      w_sum += w;
+    }
+    rv.center /= w_sum;
+    TMatrix33<FloatT> I;
+    for (size_t i=0; i < list.Count(); i++) {
+      TVector3<FloatT> v =
+        (p_accessor(list[i]) - rv.center)*w_accessor(list[i]);
+      I[0][0] += (olx_sqr(v[1]) + olx_sqr(v[2]));
+      I[1][1] += (olx_sqr(v[0]) + olx_sqr(v[2]));
+      I[2][2] += (olx_sqr(v[0]) + olx_sqr(v[1]));
+      I[0][1] -= v[0]*v[1];
+      I[0][2] -= v[0]*v[2];
+      I[1][2] -= v[1]*v[2];
+    }
+    I[1][0] = I[0][1];
+    I[2][0] = I[0][2];
+    I[2][1] = I[1][2];
+    TMatrix33<FloatT>::EigenValues(I, rv.axis.I());
+    for (int i=0; i < 3; i++)
+      rv.moments[i] = I[i][i] < 0 ? 0 : sqrt(I[i][i]);
+    return rv;
+  }
+  // calcualtion with unit weights
+  template <class list_t, class accessor_t>
+  static out calc(const list_t &list, const accessor_t &accessor) {
+    return calc(list, accessor, unit_weight());
+  }
+};  // end struct inertia
 
 EndEsdlNamespace()
 #endif

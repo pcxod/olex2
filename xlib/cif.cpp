@@ -311,7 +311,16 @@ void TCif::Initialize()  {
     GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
   }
   try  {
-    GetRM().SetUserFormula(olxstr::DeleteChars(GetParamAsString("_chemical_formula_sum"), ' '));
+    TStrList frm(GetParamAsString("_chemical_formula_sum"), ' ');
+    for (size_t i=0; i < frm.Count(); i++) {
+      if ((frm[i].Length() == 1 && olxstr::o_isalpha(frm[i].CharAt(0))) ||
+          (frm[i].Length() == 2 && olxstr::o_isalpha(frm[i].CharAt(0)) &&
+            olxstr::o_isalpha(frm[i].CharAt(1))))
+      {
+        frm[i] << '1';
+      }
+    }
+    GetRM().SetUserFormula(frm.Text(EmptyString()));
   }
   catch(...)  {}
   

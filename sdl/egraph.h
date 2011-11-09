@@ -23,8 +23,6 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   bool RingNode, Root;
   size_t GroupIndex;
   mutable bool Passed, Mutable;
-  mutable TEGraphNode* PassedFor;
-  mutable TPtrList<NodeType> PassedForNodes;
   AssociatedOC Object;
   mutable olxdict<NodeType*, TTypeList<ConnInfo>, TPointerComparator> Connectivity;
 protected:
@@ -41,51 +39,24 @@ protected:
       rv += Nodes[i]->CountR();
     return rv;
   }
-  void Reset() const {
-    PassedFor = NULL;
-    PassedForNodes.Clear();
-    for( size_t i=0; i < Nodes.Count(); i++ )
-      Nodes[i]->Reset();
-  }
-  void _StoreGroupIndices(TSizeList& l) const {
-    l.Add(GroupIndex);
-    for( size_t i=0; i < Nodes.Count(); i++ )
-      Nodes[i]->_StoreGroupIndices(l);
-  }
-  void StoreGroupIndicesR(TSizeList& l) const {
-    l.Clear();
-    l.SetCapacity(CountR());
-    _StoreGroupIndices(l);
-  }
-  void StoreGroupIndices(TSizeList& l) const {
-    l.SetCapacity(Nodes.Count());
-    for( size_t i=0; i < Nodes.Count(); i++ )
-      l.Add(Nodes[i]->GroupIndex);
-  }
-  void _RestoreGroupIndices(const TSizeList& l, size_t& off)  {
-    GroupIndex = l[off++];
-    for( size_t i=0; i < Nodes.Count(); i++ )
-      Nodes[i]->_RestoreGroupIndices(l, off);
-  }
-  void RestoreGroupIndicesR(const TSizeList& l)  {
-    size_t off = 0;
-    _RestoreGroupIndices(l, off);
-  }
-  void RestoreGroupIndices(const TSizeList& l)  {
-    for( size_t i=0; i < Nodes.Count(); i++ )
-      Nodes[i]->GroupIndex = l[i];
-  }
+
   static int _SortNodesByTag(const NodeType* n1, const NodeType* n2) {
     return n1->GetTag() - n2->GetTag();
   }
-  template <class Analyser>
-  TTypeList<ConnInfo>& GetConnInfo(NodeType& node, Analyser& analyser) const {
+
+  TTypeList<ConnInfo>& GetConnInfo(NodeType& node) const {
     TTypeList<ConnInfo>& conn = Connectivity.Add(&node);
     if( !conn.IsEmpty() )  return conn;
     const size_t node_cnt = Count();
     for( size_t i=0; i < node_cnt; i++ )  {
-      for( size_t j=0; j < node_cnt; j++ )  {  // Count equals for both nodes
-        if( Nodes[i]->FullMatchEx( node[j], analyser, false ) )  {
+      for( size_t j=0; j < node_cnt; j++ )  {
+        if (Nodes[i]->GroupIndex == node[j].GroupIndex &&
+          Nodes[i]->GroupIndex != InvalidIndex)
+        {
+          if (!Nodes[i]->ShallowEquals(node[j])) {
+            throw TFunctionFailedException(__OlxSourceInfo,
+              "due to graph connectivity");
+          }
           bool found = false;
           for( size_t k=0; k < conn.Count(); k++ )  {
             if( conn[k].GetB().IndexOf(i) != InvalidIndex )  {
@@ -112,7 +83,9 @@ protected:
     return conn;
   }
 public:
-  static void GeneratePermutations(const TTypeList<ConnInfo>& conn, TTypeList<TSizeList>& res)  {
+  static void GeneratePermutations(const TTypeList<ConnInfo>& conn,
+    TTypeList<TSizeList>& res)
+  {
     TSizeList permutation;
     size_t total_perm = 1, 
         total_perm_size = 0,
@@ -145,11 +118,12 @@ public:
     }
   }
 public:
-  TEGraphNode(const IC& data, const AssociatedOC& object) : GroupIndex(InvalidIndex)  {
+  TEGraphNode(const IC& data, const AssociatedOC& object)
+    : GroupIndex(InvalidIndex)
+  {
     Data = data;
     Mutable = Root = Passed = RingNode = false;
     Object = object;
-    PassedFor = NULL;
   }
   ~TEGraphNode()  {  Nodes.DeleteItems(false);  }
   
@@ -176,44 +150,67 @@ public:
     if( i != j )
       Nodes.Swap(i,j);  
   }
-  bool IsShallowEqual(const TEGraphNode& node) const {
+  bool ShallowEquals(const TEGraphNode& node) const {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != Count() )  return false;
     return true;
   }
+  /* Checks if a graph node matches the other, on the way it rearranges nodes
+  so that nodes match by index like this[i] == that[i]
+  */
   bool DoMatch(TEGraphNode& node) const {
-    if( node.GetData() != GetData() )  return false;
-    //if( IsRingNode() )  return true;
-    if( node.Count() != Count() )  return false;
-    if( Count() == 0 )  return true;
+    if (!ShallowEquals(node)) return false;
     for( size_t i=0; i < node.Count(); i++ )
-      node[i].SetPassed( false );
-    TSizeList indeces(Count());
+      node[i].SetPassed(false);
+    TSizeList indices(Count());
     for( size_t i=0; i < Count(); i++ )  {
       bool Matched = false;
       for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
         if( node[j].IsPassed() )  continue;
         if( Nodes[i]->DoMatch(node[j]) )  {
           node[j].SetPassed(true);
-          indeces[i] = j;  // sorting the nodes to match
+          indices[i] = j;  // sorting the nodes to match
           Matched = true;
           break;
         }
       }
       if( !Matched )  return false;
     }
-    node.Nodes.Rearrange(indeces);
+    node.Nodes.Rearrange(indices);
+    return true;
+  }
+  /* Compares graphs to establish their equality */
+  bool DryMatch(TEGraphNode& node) const {
+    if (!ShallowEquals(node)) return false;
+    for( size_t i=0; i < node.Count(); i++ )
+      node[i].SetPassed(false);
+    for( size_t i=0; i < Count(); i++ )  {
+      bool Matched = false;
+      for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
+        if( node[j].IsPassed() )  continue;
+        if( Nodes[i]->DoMatch(node[j]) )  {
+          node[j].SetPassed(true);
+          Matched = true;
+          break;
+        }
+      }
+      if( !Matched )  return false;
+    }
     return true;
   }
 
-  template <class Analyser> bool FullMatch(TEGraphNode& node, Analyser& analyser) const {
+  template <class Analyser> bool FullMatch(TEGraphNode& node,
+    Analyser& analyser) const
+  {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != Count() )  return false;
     for( size_t i=0; i < Count(); i++ )  {
       size_t mc=0;
-      for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
-        // we cannot do node swapping here, since it will invalidate the matching indexes
-        if( Nodes[i]->FullMatch( node[j], analyser) )  {
+      for( size_t j=0; j < Count(); j++ )  {
+        /* we cannot do node swapping here, since it will invalidate the
+        matching indexes
+        */
+        if( Nodes[i]->FullMatch(node[j], analyser) )  {
            analyser.OnMatch(*this, node, i, j);
            mc++;
         }
@@ -222,6 +219,7 @@ public:
     }
     return true;
   }
+
   bool AnalyseMutability(TEGraphNode& node, double& permutations)  {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != Count() )  return false;
@@ -231,7 +229,9 @@ public:
       for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
         if( j > i )  // do consistent node ordering for all non-unique
           Nodes[i]->DoMatch(*Nodes[j]);
-        if( Nodes[i]->DoMatch(node[j]) && Nodes[i]->AnalyseMutability(node[j], permutations) )  {
+        if( Nodes[i]->DoMatch(node[j]) &&
+            Nodes[i]->AnalyseMutability(node[j], permutations) )
+        {
           if( node[j].GroupIndex == InvalidIndex )  {
             mc++;
             if( Nodes[i]->GroupIndex == InvalidIndex )
@@ -240,8 +240,11 @@ public:
               node[j].GroupIndex = Nodes[i]->GroupIndex;
           }
           else  {
-            if( Nodes[i]->GroupIndex != InvalidIndex && Nodes[i]->GroupIndex != node[j].GroupIndex )
+            if( Nodes[i]->GroupIndex != InvalidIndex &&
+                Nodes[i]->GroupIndex != node[j].GroupIndex )
+            {
               throw 1;
+            }
             Nodes[i]->GroupIndex = node[j].GroupIndex;
           }
         }
@@ -253,52 +256,23 @@ public:
     }
     return true;
   }
-  template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser, bool analyse = false)  {
+
+  template <class Analyser> bool FullMatchEx(TEGraphNode& node,
+    Analyser& analyser, bool analyse=false)
+  {
     if( IsRoot() )  {
       double permutations = 1;
       this->AnalyseMutability(node, permutations);
-      if( permutations > 1e10 )
+      if( permutations > 1e10 ) {
         throw TFunctionFailedException(__OlxSourceInfo, 
-          olxstr("Matching aborted due to high graph symmetry, number of permutations: ") << permutations);
-      Reset();
+          olxstr("Matching aborted due to high graph symmetry, number of "
+                 "permutations: ") << permutations);
+      }
     }
+    if (!ShallowEquals(node)) return false;
     const size_t node_cnt = Count();
-    if( node.GetData() != GetData() )  return false;
-    if( node.Count() != node_cnt )  return false;
     if( node_cnt == 0  )  return true;
-    if( (!analyse || !Mutable) && !IsRoot() )  {
-      if( PassedFor == &node )  {
-        node.Nodes = PassedForNodes;
-        for( size_t i=0; i < node_cnt; i++ )
-          if( !Nodes[i]->FullMatchEx(node[i], analyser, analyse) )  // this should never happen...
-            throw TFunctionFailedException(__OlxSourceInfo, "the matching has failed");
-        return true;
-      }
-      for( size_t i=0; i < node_cnt; i++ )
-        node[i].SetPassed(false);
-      TSizeList matches(node_cnt);
-      for( size_t i=0; i < node_cnt; i++ )  {
-        bool Matched = false;
-        for( size_t j=0; j < node_cnt; j++ )  {  // Count equals for both nodes
-          if( node[j].IsPassed() )  continue;
-          if( Nodes[i]->DoMatch(node[j]) )  {
-            node[j].SetPassed(true);
-            matches[i] = j;
-            Matched = true;
-            break;
-          }
-        }
-        if( !Matched )  return false;
-      }
-      node.Nodes.Rearrange(matches);
-      for( size_t i=0; i < node_cnt; i++ )
-        if( !Nodes[i]->FullMatchEx(node[i], analyser, analyse) )   // this should never happen...
-          throw TFunctionFailedException(__OlxSourceInfo, "the matching has failed");
-      PassedFor = &node;
-      PassedForNodes = node.Nodes;
-      return true;
-    }
-    TTypeList<ConnInfo>& conn = GetConnInfo(node, analyser);
+    TTypeList<ConnInfo>& conn = GetConnInfo(node);
     size_t dest_ind = 0;
     TSizeList dest(node_cnt);
     for( size_t i=0; i < conn.Count(); i++ )  {
@@ -344,53 +318,17 @@ public:
       analyser.OnFinish();
     return true;
   }
-  //template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser) const {
-  //  if( node.GetData() != GetData() )  return false;
-  //  if( node.Count() != Count() )  return false;
-  //  for( int i=0; i < Count(); i++ )
-  //    node[i].SetPassed(false);
-  //  for( int i=0; i < Count(); i++ )  {
-  //    int mc=0, bestIndex = -1;
-  //    double minRMS = 0;
-  //    for( int j=0; j < Count(); j++ )  {  // Count equals for both nodes
-  //      if( node[j].IsPassed() )  continue;
-  //      if( Nodes[i].FullMatchEx( node[j], analyser ) )  {
-  //        if( mc == 0 )
-  //          bestIndex = j;
-  //        else  {
-  //          if( mc == 1 )  {  // calculate the RMS only if more than 1 matches
-  //            node.SwapItems(i, bestIndex);
-  //            minRMS = analyser.CalcRMS();
-  //            node.SwapItems(i, bestIndex);
-  //          }
-  //          node.SwapItems(i, j);
-  //          const double RMS = analyser.CalcRMS();
-  //          if( RMS < minRMS )  {
-  //            bestIndex = j;
-  //            minRMS = RMS;
-  //          }
-  //          node.SwapItems(i, j);  // restore the node order
-  //        }
-  //        mc++;
-  //      }
-  //    }
-  //    if( mc == 0 )  return false;
-  //    node[bestIndex].SetPassed(true);
-  //    node.SwapItems(i, bestIndex);
-  //  }
-  //  return true;
-  //}
 
   bool IsSubgraphOf(TEGraphNode& node) const {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() < Count() )  return false;
     for( size_t i=0; i < node.Count(); i++ )
-      node[i].SetPassed( false );
+      node[i].SetPassed(false);
     for( size_t i=0; i < Count(); i++ )  {
       bool Matched = false;
-      for( size_t j=0; j < node.Count(); j++ )  {  // Count may not equal for nodes
-        if( Nodes[i]->IsSubgraphOf( node[j] ) )  {
-          node[j].SetPassed( true );
+      for( size_t j=0; j < node.Count(); j++ )  {
+        if( Nodes[i]->IsSubgraphOf(node[j]) )  {
+          node[j].SetPassed(true);
           if( i != j )  node.SwapItems(i, j);  // sorting the nodes to match
           Matched = true;
           break;
@@ -407,20 +345,23 @@ public:
 
 #ifndef __BORLANDC__
 template<typename IC, typename AssociatedOC>
-TGraphTraverser< TEGraphNode<IC,AssociatedOC> > TEGraphNode<IC,AssociatedOC>::Traverser;
+TGraphTraverser< TEGraphNode<IC,AssociatedOC> >
+  TEGraphNode<IC,AssociatedOC>::Traverser;
 #endif
 
-template <class IC, class AssociatedOC>  class TEGraph  {
+template <class IC, class AssociatedOC>
+class TEGraph {
   TEGraphNode<IC, AssociatedOC> Root;
 public:
-  TEGraph( const IC& Data, const AssociatedOC& obj) : Root(Data, obj)  {
+  TEGraph( const IC& Data, const AssociatedOC& obj) : Root(Data, obj) {
     Root.SetRoot(true);
   }
   TEGraphNode<IC, AssociatedOC>& GetRoot()  {  return Root;  }
 
-  inline size_t Count() const {  return 1;  }
-  inline const TEGraphNode<IC, AssociatedOC>& Item(size_t i)  const {  return Root;  }
+  size_t Count() const {  return 1;  }
 
-  static void CompileTest();
+  const TEGraphNode<IC, AssociatedOC>& Item(size_t i) const {
+    return Root;
+  }
 };
 #endif

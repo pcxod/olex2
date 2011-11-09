@@ -23,6 +23,7 @@
 #include "emath.h"
 #include "refmodel.h"
 #include "index_range.h"
+#include "equeue.h"
 
 #undef GetObject
 
@@ -244,9 +245,10 @@ public:
   void ClearData()  {  Data.SetLength(0);  }
 };
 
-void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot, 
-                     TEGraphNode<size_t,TSAtom*>& Root, 
-                     TTypeList< AnAssociation2<size_t, size_t> >& res)
+void ResultCollector(
+  TEGraphNode<size_t,TSAtom*>& subRoot, 
+  TEGraphNode<size_t,TSAtom*>& Root, 
+  TTypeList<AnAssociation2<size_t, size_t> >& res)
 {
   res.AddNew(subRoot.GetObject()->GetFragmentId(),
     Root.GetObject()->GetFragmentId());
@@ -260,11 +262,12 @@ void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot,
     }
   }
 }
-void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot,
-                     TEGraphNode<size_t,TSAtom*>& Root,
-                     TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res)
+void ResultCollector(
+  TEGraphNode<size_t,TSAtom*>& subRoot,
+  TEGraphNode<size_t,TSAtom*>& Root,
+  TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res)
 {
-  if( !subRoot.IsShallowEqual(Root) )  return;
+  if( !subRoot.ShallowEquals(Root) )  return;
   res.AddNew(subRoot.GetObject(), Root.GetObject());
   subRoot.GetObject()->SetTag(0);
   Root.GetObject()->SetTag(0);
@@ -272,42 +275,47 @@ void ResultCollector(TEGraphNode<size_t,TSAtom*>& subRoot,
     if( subRoot[i].GetObject()->GetTag() != 0 &&
       Root[i].GetObject()->GetTag() != 0 )
     {
-      ResultCollector(subRoot[i], Root[i], res );
+      ResultCollector(subRoot[i], Root[i], res);
     }
   }
 }
 
-void BreadthFirstTag(TSAtomPList& all, TSAtom* node)  {
-  for( size_t i=0; i < node->NodeCount(); i++ )  {
-    TSAtom& sa = node->Node(i);
-    if( sa.GetTag() != 0 )  continue;
-    all.Add(sa)->SetTag(node->GetTag() + 1);
-  }
-}
-void BreadthFirstTags(TSAtom* sa)  {
-  TSAtomPList all;
-  all.SetCapacity(sa->GetNetwork().NodeCount());
-  all.Add(sa);
-  sa->SetTag(1);
-  BreadthFirstTag(all, sa);
-  for( size_t i=0; i < all.Count(); i++ )  {
-    BreadthFirstTag(all, all[i]);
-    //all[i]->CAtom().SetLabel(all[i]->GetTag(), false);
-  }
-}
-
-void ExpandGraphNode(TEGraphNode<size_t,TSAtom*>& graphNode)  {
-  for( size_t i=0; i < graphNode.GetObject()->NodeCount(); i++ )  {
-    TSAtom& sa = graphNode.GetObject()->Node(i);
-    if( sa.GetTag() <= graphNode.GetObject()->GetTag() )  continue;
-    ExpandGraphNode(graphNode.NewNode((sa.NodeCount()<<16)|sa.GetType().z, &sa));  }
-}
-
 void BuildGraph(TEGraphNode<size_t,TSAtom*>& graphNode)  {
+  typedef TEGraphNode<size_t,TSAtom*> node_t;
   TNetwork& net = graphNode.GetObject()->GetNetwork();
-  net.GetNodes().ForEach(ACollectionItem::TagSetter<>(0));
-  BreadthFirstTags(graphNode.GetObject());
-  ExpandGraphNode(graphNode);
+  net.GetNodes().ForEach(ACollectionItem::TagSetter<>(-1));
+  TQueue<TSAtom*> aqueue;
+  aqueue.Push(graphNode.GetObject());
+  aqueue.Push(NULL);
+  index_t v = 0;
+  while (!aqueue.IsEmpty()) {
+    TSAtom *n = aqueue.Pop();
+    if (n == NULL) {
+      if (aqueue.IsEmpty()) break;
+      v++;
+      aqueue.Push(NULL);
+      continue;
+    }
+    if (n->GetTag() != -1) continue;
+    n->SetTag(v);
+    //n->CAtom().SetLabel(EmptyString(), false);
+    for (size_t i=0; i < n->NodeCount(); i++) {
+      if (n->Node(i).GetTag() == -1)
+        aqueue.Push(&n->Node(i));
+    }
+  }
+  TQueue<node_t*> queue;
+  queue.Push(&graphNode);
+  while (!queue.IsEmpty()) {
+    node_t *n = queue.Pop();
+    for (size_t i=0; i < n->GetObject()->NodeCount(); i++) {
+      TSAtom &sa = n->GetObject()->Node(i);
+      if (sa.GetTag() > n->GetObject()->GetTag()) {
+       // sa.CAtom().SetLabel(sa.CAtom().GetLabel() + "x", false);
+        queue.Push(&n->NewNode((sa.NodeCount()<<16)|sa.GetType().z, &sa));
+      }
+    }
+  }
 }
 
 struct GraphAnalyser  {
@@ -1013,17 +1021,30 @@ void TNetwork::PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >
   }
 }
 //..............................................................................
-void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform, const TNetwork::AlignInfo& ai)  {
+void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform,
+  const TNetwork::AlignInfo& ai)
+{
   if( atomsToTransform.IsEmpty() )  return;
   mat3d m;
   QuaternionToMatrix(ai.align_out.quaternions[0], m);
+  vec3d center = ai.align_out.center_b;
+  if (ai.inverted) {
+    m *= -1;
+    center *= -1;
+  }
+  DoAlignAtoms(atomsToTransform, center, m, ai.align_out.center_a);
+}
+//..............................................................................
+void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform,
+    const vec3d &center,
+    const mat3d &m, const vec3d &shift)
+{
+  if( atomsToTransform.IsEmpty() )  return;
   TUnitCell& uc = atomsToTransform[0]->GetNetwork().GetLattice().GetUnitCell();
-  const TAsymmUnit& au = atomsToTransform[0]->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au = uc.GetLattice().GetAsymmUnit();
   for( size_t i=0; i < atomsToTransform.Count(); i++ )  {
-    vec3d v = atomsToTransform[i]->ccrd();
-    if( ai.inverted )  v *= -1;
-    au.CellToCartesian(v);
-    atomsToTransform[i]->crd() = (v - ai.align_out.center_b)*m + ai.align_out.center_a;
+    vec3d v = au.Orthogonalise(atomsToTransform[i]->ccrd());
+    atomsToTransform[i]->crd() = (v - center)*m + shift;
     if( atomsToTransform[i]->GetEllipsoid() != NULL )  {
       if( atomsToTransform[i]->GetEllipsoid()->GetTag() != 0 )  {
         TBasicApp::NewLogEntry(logError) << "Ellipsoid has already been rotated for: "
@@ -1138,11 +1159,11 @@ void TNetwork::FromDataItem(const TDataItem& item) {
     IndexRange::RangeItr ai(item.GetRequiredField("node_range"));
     Nodes.SetCapacity(ai.CalcSize());
     while( ai.HasNext() )
-      Nodes.Add(objects.atoms[ai.Next()]);
+      Nodes.Add(objects.atoms[ai.Next()])->SetFragmentId(Nodes.Count());
     IndexRange::RangeItr bi(item.GetRequiredField("bond_range"));
     Bonds.SetCapacity(bi.CalcSize());
     while( bi.HasNext() )
-      Bonds.Add(objects.bonds[bi.Next()]);
+      Bonds.Add(objects.bonds[bi.Next()])->SetFragmentId(Bonds.Count());
   }
 }
 //..............................................................................
