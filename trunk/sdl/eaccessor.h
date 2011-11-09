@@ -150,6 +150,16 @@ struct FunctionAccessor {
       return (olx_get_ref(it).*func)();
     }
   };
+  template <typename rv_t, typename item_t>
+  struct StaticFunctionAccessor_  {
+    rv_t (*func)(const item_t &);
+    StaticFunctionAccessor_(rv_t (*_func)(const item_t &))
+      : func(_func)
+    {}
+    template <typename item_t> rv_t operator()(item_t& it) const {
+      return (*func)(olx_get_ref(it));
+    }
+  };
 
   template <typename rv_t, typename base_t> static
   ConstFunctionAccessor_<rv_t,base_t> MakeConst(rv_t (base_t::*func)() const)  {
@@ -158,6 +168,11 @@ struct FunctionAccessor {
   template <typename rv_t, typename base_t> static
   FunctionAccessor_<rv_t,base_t> Make(rv_t (base_t::*func)())  {
     return FunctionAccessor_<rv_t,base_t>(func);
+  }
+  template <typename rv_t, typename item_t> static
+  StaticFunctionAccessor_<rv_t,item_t>
+  MakeStatic(rv_t (*func)(const item_t &))  {
+    return StaticFunctionAccessor_<rv_t,item_t>(func);
   }
 };
 

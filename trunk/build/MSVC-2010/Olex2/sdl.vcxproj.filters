@@ -63,9 +63,6 @@
     <ClCompile Include="..\..\..\sdl\egc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\sdl\egraph.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\sdl\emath.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

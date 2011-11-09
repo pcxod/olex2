@@ -605,7 +605,6 @@
     <ClCompile Include="..\..\..\sdl\ebasis.cpp" />
     <ClCompile Include="..\..\..\sdl\efile.cpp" />
     <ClCompile Include="..\..\..\sdl\egc.cpp" />
-    <ClCompile Include="..\..\..\sdl\egraph.cpp" />
     <ClCompile Include="..\..\..\sdl\emath.cpp" />
     <ClCompile Include="..\..\..\sdl\ememstream.cpp" />
     <ClCompile Include="..\..\..\sdl\etime.cpp" />

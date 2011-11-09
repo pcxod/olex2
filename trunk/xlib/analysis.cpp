@@ -314,11 +314,7 @@ void fragments::fragment::breadth_first_tags(size_t start) {
   TQueue<TCAtom*> queue;
   if (start >= atoms_.Count())
     start = 0;
-  atoms_[start]->SetTag(0);
-  for (size_t i=0; i < atoms_[start]->AttachedSiteCount(); i++) {
-    TCAtom::Site &st = atoms_[start]->GetAttachedSite(i);
-    queue.Push(st.atom);
-  }
+  queue.Push(atoms_[start]);
   queue.Push(NULL);
   index_t tv = 1;
   while (!queue.IsEmpty()) {
