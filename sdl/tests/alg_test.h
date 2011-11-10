@@ -15,7 +15,7 @@ namespace test {
 void IndexAccessorTest(OlxTests& t)  {
   t.description = __FUNC__;
   double ta_[5] = {1, 2, 3, 4, 5}; 
-  TDoubleList ta(5, ta_);
+  TDoubleList ta(5, &ta_[0]);
   TSizeList indices(5, list_init::index());
   double v = olx_mean<double>::calc(ta);
   if (olx_abs(v-double(1+2+3+4+5)/5) > 1e-8)
