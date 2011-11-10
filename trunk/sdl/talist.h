@@ -70,6 +70,13 @@ public:
      Items[i] = array[i];
   }
 //..............................................................................
+  /* copies values from an array of size elements  */
+  TArrayList(size_t size, T* array)  {
+   init(size);
+   for( size_t i=0; i < FCount; i++ )
+     Items[i] = array[i];
+  }
+//..............................................................................
   //destructor - beware t40: error: expecthe objects are deleted!
   virtual ~TArrayList()  {
     if( Items != NULL )
