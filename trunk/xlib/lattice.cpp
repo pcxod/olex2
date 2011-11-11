@@ -1428,17 +1428,21 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
     TDoubleList occu;
     RefinementModel* rm = GetAsymmUnit().GetRefMod();
     for( size_t i=0; i < AE.Count(); i++ )  {
-      if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
+      if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() !=
+          AE.GetBase().CAtom().GetPart() )
+      {
         if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex )  {
           parts.Add(AE.GetCAtom(i).GetPart());
           occu.Add(rm->Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof));
         }
+      }
     }
     if( !parts.IsEmpty() )  {  // here we go..
       TTypeList<TCAtomPList> gen_atoms;
       ProcessingAtoms.Remove(atom);
       for( size_t i=0; i < parts.Count(); i++ )  {
-        _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i], &gen_atoms.AddNew());
+        _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i],
+          &gen_atoms.AddNew());
         TCAtomPList& gen = gen_atoms.GetLast();
         for( size_t j=0; j < gen.Count(); j++ )  {
           gen[j]->SetPart(parts[i]);
@@ -1454,10 +1458,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       // check acetilene
       double d = AE.GetCrd(0).DistanceTo(atom.crd());
       TSAtom* A = FindSAtom(AE.GetCAtom(0));
-      TAtomEnvi NAE;
-      if( A == 0 )
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate atom ") << AE.GetLabel(0) );
+      if( A == 0 ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          olxstr("Could not locate atom ").quote() << AE.GetLabel(0));
+      }
 
+      TAtomEnvi NAE;
       UnitCell->GetAtomEnviList(*A, NAE, false, part);
       if( A->GetType() == iCarbonZ && NAE.Count() == 2 && d < 1.2)  {
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XCH";
@@ -1471,11 +1477,29 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         else  {
           if( d < 1.25 )  {
             if( NAE.Count() > 1 ) {
-              TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": X=CH2";
-              cg.FixAtom(AE, fgCH2, h_elm, NULL, generated);
+              bool done = false;
+              if (NAE.Count() == 2) { // check acetilene again
+                vec3d v = (NAE.GetCAtom(0) == atom.CAtom() ? NAE.GetCrd(1)
+                  : NAE.GetCrd(0));
+                double ang = (v-NAE.GetBase().crd())
+                  .CAngle(atom.crd()-NAE.GetBase().crd());
+                if ((ang+1) < 0.03) {
+                  TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() <<
+                    ": XCH";
+                  cg.FixAtom(AE, fgCH1, h_elm, NULL, generated);
+                  done = true;
+                }
+              }
+              if (!done) {
+                TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() <<
+                  ": X=CH2";
+                cg.FixAtom(AE, fgCH2, h_elm, NULL, generated);
+              }
             }
-            else
-              TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": possibly X=CH2";
+            else {
+              TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() <<
+                ": possibly X=CH2";
+            }
           }
         }
       }
@@ -1502,7 +1526,8 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       }
     }
     else if( AE.Count() == 3 )  {
-      double v = olx_tetrahedron_volume( atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
+      double v = olx_tetrahedron_volume(
+        atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2));
       if( v > 0.3 )  {
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYZCH";
         cg.FixAtom(AE, fgCH1, h_elm, NULL, generated);
@@ -1537,10 +1562,11 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       else  if( d > 1.2 )  {  //else nitrile
         // have to check if double bond
         TSAtom* A = FindSAtom(AE.GetCAtom(0));
+        if( A == 0 ) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            olxstr("Could not locate atom ").quote() << AE.GetLabel(0));
+        }
         TAtomEnvi NAE;
-        if( A == 0 )
-          throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate atom ") << AE.GetLabel(0) );
-
         UnitCell->GetAtomEnviList(*A, NAE, false, part);
         NAE.Exclude(atom.CAtom());
 
@@ -1689,7 +1715,8 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           }
         }
         else if( d > 1.8 )  {  // coordination bond?
-          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": possibly M-OH2";
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() <<
+            ": possibly M-OH2";
           cg.FixAtom(AE, fgOH2, h_elm, NULL, generated);
         }
       }
@@ -1697,8 +1724,11 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
     else if( AE.Count() == 2 )  {
       const double d1 = AE.GetCrd(0).DistanceTo(atom.crd());
       const double d2 = AE.GetCrd(1).DistanceTo(atom.crd());
-      if( (d1 > 1.8 && d2 < 1.8 && d2 > 1.38) || (d2 > 1.8 && d1 < 1.8 && d1 > 1.38) )  {
-        TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": possibly M-O(H)R";
+      if( (d1 > 1.8 && d2 < 1.8 && d2 > 1.38) ||
+          (d2 > 1.8 && d1 < 1.8 && d1 > 1.38) )
+      {
+        TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() <<
+          ": possibly M-O(H)R";
         cg.FixAtom(AE, fgOH1, h_elm, NULL, generated);
       }
     }
@@ -1772,7 +1802,9 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
   return true;
 }
 //..............................................................................
-void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont, const TSAtomPList& atoms) {
+void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg,
+  const ElementPList& rcont, const TSAtomPList& atoms)
+{
   TTypeList<TSAtomPList> rings;
   cm_Element& h_elm = XElementLib::GetByIndex(iHydrogenIndex);
   for( size_t i=0; i < FragmentCount(); i++ )

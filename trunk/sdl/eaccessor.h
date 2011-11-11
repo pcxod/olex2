@@ -156,7 +156,8 @@ struct FunctionAccessor {
     StaticFunctionAccessor_(rv_t (*_func)(const item_t &))
       : func(_func)
     {}
-    rv_t operator()(item_t& it) const {
+    template <typename item_t_t>
+    rv_t operator()(item_t_t& it) const {
       return (*func)(olx_get_ref(it));
     }
   };
