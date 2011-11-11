@@ -136,24 +136,63 @@ template <typename CastType> struct DynamicCastAccessor  {
 };
 
 struct FunctionAccessor {
-  template <typename rv_t, typename base_t> struct ConstFunctionAccessor_  {
+  template <typename rv_t, typename base_t> struct ConstFunctionAccessorT_  {
+    typedef rv_t return_type;
     rv_t (base_t::*func)() const;
-    ConstFunctionAccessor_(rv_t (base_t::*_func)() const) : func(_func)  {}
+    ConstFunctionAccessorT_(rv_t (base_t::*_func)() const) : func(_func)  {}
     template <typename item_t> rv_t operator ()(const item_t& it) const {
       return (olx_get_ref(it).*func)();
     }
   };
-  template <typename rv_t, typename base_t> struct FunctionAccessor_  {
+  template <typename rv_t, typename base_t> struct ConstFunctionAccessorR_  {
+    typedef rv_t return_type;
+    rv_t &(base_t::*func)() const;
+    ConstFunctionAccessorR_(rv_t & (base_t::*_func)() const) : func(_func)  {}
+    template <typename item_t> rv_t & operator ()(const item_t& it) const {
+      return (olx_get_ref(it).*func)();
+    }
+  };
+  template <typename rv_t, typename base_t> struct ConstFunctionAccessorCR_  {
+    typedef rv_t return_type;
+    const rv_t &(base_t::*func)() const;
+    ConstFunctionAccessorCR_(const rv_t & (base_t::*_func)() const)
+      : func(_func)  {}
+    template <typename item_t>
+    const rv_t & operator ()(const item_t& it) const {
+      return (olx_get_ref(it).*func)();
+    }
+  };
+
+  template <typename rv_t, typename base_t> struct FunctionAccessorT_  {
+    typedef rv_t return_type;
     rv_t (base_t::*func)();
-    FunctionAccessor_(rv_t (base_t::*_func)()) : func(_func)  {}
+    FunctionAccessorT_(rv_t (base_t::*_func)()) : func(_func)  {}
     template <typename item_t> rv_t operator()(item_t& it) const {
       return (olx_get_ref(it).*func)();
     }
   };
+  template <typename rv_t, typename base_t> struct FunctionAccessorR_  {
+    typedef rv_t return_type;
+    rv_t &(base_t::*func)();
+    FunctionAccessorR_(rv_t & (base_t::*_func)()) : func(_func)  {}
+    template <typename item_t> rv_t & operator()(item_t& it) const {
+      return (olx_get_ref(it).*func)();
+    }
+  };
+  template <typename rv_t, typename base_t> struct FunctionAccessorCR_  {
+    typedef rv_t return_type;
+    const rv_t &(base_t::*func)();
+    FunctionAccessorCR_(const rv_t & (base_t::*_func)()) : func(_func)  {}
+    template <typename item_t> const rv_t & operator()(item_t& it) const {
+      return (olx_get_ref(it).*func)();
+    }
+  };
+
   template <typename rv_t, typename item_t>
-  struct StaticFunctionAccessor_  {
+  struct StaticFunctionAccessorT_  {
+    typedef rv_t return_type;
     rv_t (*func)(const item_t &);
-    StaticFunctionAccessor_(rv_t (*_func)(const item_t &))
+    StaticFunctionAccessorT_(rv_t (*_func)(const item_t &))
       : func(_func)
     {}
     template <typename item_t_t>
@@ -161,24 +200,83 @@ struct FunctionAccessor {
       return (*func)(olx_get_ref(it));
     }
   };
+  template <typename rv_t, typename item_t>
+  struct StaticFunctionAccessorR_  {
+    typedef rv_t return_type;
+    rv_t &(*func)(const item_t &);
+    StaticFunctionAccessorR_(rv_t & (*_func)(const item_t &))
+      : func(_func)
+    {}
+    template <typename item_t_t>
+    rv_t & operator()(item_t_t& it) const {
+      return (*func)(olx_get_ref(it));
+    }
+  };
+  template <typename rv_t, typename item_t>
+  struct StaticFunctionAccessorCR_  {
+    typedef rv_t return_type;
+    const rv_t &(*func)(const item_t &);
+    StaticFunctionAccessorCR_(const rv_t & (*_func)(const item_t &))
+      : func(_func)
+    {}
+    template <typename item_t_t>
+    const rv_t & operator()(item_t_t& it) const {
+      return (*func)(olx_get_ref(it));
+    }
+  };
 
   template <typename rv_t, typename base_t> static
-  ConstFunctionAccessor_<rv_t,base_t> MakeConst(rv_t (base_t::*func)() const)  {
+  ConstFunctionAccessorT_<rv_t,base_t> MakeConst(
+    rv_t (base_t::*func)() const)
+  {
     return ConstFunctionAccessor_<rv_t,base_t>(func);
   }
   template <typename rv_t, typename base_t> static
-  FunctionAccessor_<rv_t,base_t> Make(rv_t (base_t::*func)())  {
-    return FunctionAccessor_<rv_t,base_t>(func);
+  ConstFunctionAccessorR_<rv_t,base_t> MakeConst(
+    rv_t & (base_t::*func)() const)
+  {
+    return ConstFunctionAccessorR_<rv_t,base_t>(func);
+  }
+  template <typename rv_t, typename base_t> static
+  ConstFunctionAccessorCR_<rv_t,base_t> MakeConst(
+    const rv_t &(base_t::*func)() const)
+  {
+    return ConstFunctionAccessorCR_<rv_t,base_t>(func);
+  }
+
+  template <typename rv_t, typename base_t> static
+  FunctionAccessorT_<rv_t,base_t> Make(rv_t (base_t::*func)())  {
+    return FunctionAccessorT_<rv_t,base_t>(func);
+  }
+  template <typename rv_t, typename base_t> static
+  FunctionAccessorR_<rv_t,base_t> Make(rv_t & (base_t::*func)())  {
+    return FunctionAccessorR_<rv_t,base_t>(func);
+  }
+  template <typename rv_t, typename base_t> static
+  FunctionAccessorCR_<rv_t,base_t> Make(const rv_t & (base_t::*func)())  {
+    return FunctionAccessorCR_<rv_t,base_t>(func);
+  }
+
+  template <typename rv_t, typename item_t> static
+  StaticFunctionAccessorT_<rv_t,item_t>
+  MakeStatic(rv_t (*func)(const item_t &))  {
+    return StaticFunctionAccessorT_<rv_t,item_t>(func);
   }
   template <typename rv_t, typename item_t> static
-  StaticFunctionAccessor_<rv_t,item_t>
-  MakeStatic(rv_t (*func)(const item_t &))  {
-    return StaticFunctionAccessor_<rv_t,item_t>(func);
+  StaticFunctionAccessorR_<rv_t,item_t>
+  MakeStatic(rv_t & (*func)(const item_t &))  {
+    return StaticFunctionAccessorR_<rv_t,item_t>(func);
+  }
+  template <typename rv_t, typename item_t> static
+  StaticFunctionAccessorCR_<rv_t,item_t>
+  MakeStatic(const rv_t & (*func)(const item_t &))  {
+    return StaticFunctionAccessorCR_<rv_t,item_t>(func);
   }
 };
 
 template <typename item_t, class data_list_t>
 struct ConstIndexAccessor  {
+  typedef item_t return_type;
   const data_list_t &data;
   ConstIndexAccessor(const data_list_t &data_) : data(data_) {}
   template <typename IndexT>
@@ -189,6 +287,7 @@ struct ConstIndexAccessor  {
 
 template <typename item_t, class data_list_t>
 struct IndexAccessor  {
+  typedef item_t return_type;
   data_list_t &data;
   IndexAccessor(data_list_t &data_) : data(data_) {}
   template <typename IndexT>

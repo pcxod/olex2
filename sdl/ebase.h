@@ -354,14 +354,20 @@ public:
   const class TBasicException* GetException() const; 
 };
 
+#include "eaccessor.h"
+
 struct olx_alg  {
 protected:
 // logical NOT operator for an analyser
   template <class Analyser> struct not_  {
     const Analyser& analyser;
     not_(const Analyser& _analyser) : analyser(_analyser)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {  return !analyser.OnItem(o);  }
-    template <class Item> inline bool OnItem(const Item& o, size_t i) const {  return !analyser.OnItem(o, i);  }
+    template <class Item> bool OnItem(const Item& o) const {
+      return !analyser.OnItem(o);
+    }
+    template <class Item> bool OnItem(const Item& o, size_t i) const {
+      return !analyser.OnItem(o, i);
+    }
   };
   // logical AND operator for two analysers
   template <class AnalyserA, class AnalyserB> struct and_  {
@@ -369,10 +375,10 @@ protected:
     const AnalyserB& analyserB;
     and_(const AnalyserA& _analyserA, const AnalyserB& _analyserB) :
     analyserA(_analyserA), analyserB(_analyserB)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {
+    template <class Item> bool OnItem(const Item& o) const {
       return analyserA.OnItem(o) && analyserB.OnItem(o);
     }
-    template <class Item> inline bool OnItem(const Item& o, size_t i) const {
+    template <class Item> bool OnItem(const Item& o, size_t i) const {
       return analyserA.OnItem(o, i) && analyserB.OnItem(o, i);
     }
   };
@@ -382,32 +388,63 @@ protected:
     const AnalyserB& analyserB;
     or_(const AnalyserA& _analyserA, const AnalyserB& _analyserB) :
     analyserA(_analyserA), analyserB(_analyserB)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {
+    template <class Item> bool OnItem(const Item& o) const {
       return analyserA.OnItem(o) || analyserB.OnItem(o);
     }
-    template <class Item> inline bool OnItem(const Item& o, size_t i) const {
+    template <class Item> bool OnItem(const Item& o, size_t i) const {
       return analyserA.OnItem(o, i) || analyserB.OnItem(o, i);
     }
   };
+
+  template <class Accessor> struct minus_ {
+    const Accessor &accessor;
+    minus_(const Accessor &accessor_) : accessor(accessor_) {}
+    template <class Item>
+    typename Accessor::return_type OnItem(const Item& o) const {
+      return -accessor(o);
+    }
+    template <class Item>
+    typename Accessor::return_type OnItem(const Item& o, size_t) const {
+      return -accessor(o);
+    }
+    template <class Item>
+    typename Accessor::return_type operator () (const Item& o) const {
+      return -accessor(o);
+    }
+  };
 public:
-  template <class Analyser> static not_<Analyser> olx_not(const Analyser& a)  {
+  /* creates a new not logical operator */
+  template <class Analyser>
+  static not_<Analyser> olx_not(const Analyser& a)  {
     return not_<Analyser>(a);
   }
+  /* creates a new and logical operator */
   template <class AnalyserA, class AnalyserB>
-  static and_<AnalyserA, AnalyserB> olx_and(const AnalyserA& a, const AnalyserB& b)  {
+  static and_<AnalyserA, AnalyserB> olx_and(
+    const AnalyserA& a, const AnalyserB& b)
+  {
     return and_<AnalyserA, AnalyserB>(a, b);
   }
+  /* creates a new or logical operator */
   template <class AnalyserA, class AnalyserB>
-  static or_<AnalyserA, AnalyserB> olx_or(const AnalyserA& a, const AnalyserB& b)  {
+  static or_<AnalyserA, AnalyserB> olx_or(
+    const AnalyserA& a, const AnalyserB& b)
+  {
     return or_<AnalyserA, AnalyserB>(a, b);
   }
+  /* creates a new minus arithmetic functor/accessor */
+  template <class Accessor>
+  static minus_<Accessor> olx_minus(const Accessor& a)  {
+    return minus_<Accessor>(a);
+  }
+  /* creates a new static boolean value */
   struct olx_bool  {
     bool value;
     olx_bool(bool _value) : value(_value)  {}
-    template <typename Item> inline bool OnItem(const Item& o) const {
+    template <typename Item> bool OnItem(const Item& o) const {
       return value;
     }
-    template <typename Item> inline bool OnItem(const Item& o, size_t i) const {
+    template <typename Item> bool OnItem(const Item& o, size_t) const {
       return value;
     }
   };
@@ -429,7 +466,6 @@ template <typename FT> FT olx_pow10(size_t val)  {
 }
 
 #include "olxptr.h"
-#include "eaccessor.h"
 #include "association.h"
 #include "listalg.h"
 #include "citem.h"
