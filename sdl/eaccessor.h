@@ -229,7 +229,7 @@ struct FunctionAccessor {
   ConstFunctionAccessorT_<rv_t,base_t> MakeConst(
     rv_t (base_t::*func)() const)
   {
-    return ConstFunctionAccessor_<rv_t,base_t>(func);
+    return ConstFunctionAccessorT_<rv_t,base_t>(func);
   }
   template <typename rv_t, typename base_t> static
   ConstFunctionAccessorR_<rv_t,base_t> MakeConst(
