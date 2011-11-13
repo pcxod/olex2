@@ -11,126 +11,137 @@
 #define __olx_sdl_eaccessor_H
 
 struct DirectAccessor  {
-  template <typename Item>
-  static inline const Item& Access(const Item& item)  {
+  template <typename Item> static const Item& Access(const Item& item)  {
     return item;
   }
-  template <typename Item> static inline Item& Access(Item& item)  {
+  template <typename Item> static Item& Access(Item& item)  {
     return item;
   }
 
-  template <typename Item>
-  inline const Item& operator ()(const Item& item) const {
+  template <typename Item> const Item& operator ()(const Item& item) const {
     return item;
   }
-  template <typename Item>
-  inline Item& operator ()(Item& item) const {
+  template <typename Item> Item& operator ()(Item& item) const {
     return item;
   }
 };
 
+template <typename item_t>
+struct TDirectAccessor  {
+  typedef item_t return_type;
+
+  static const item_t& Access(const item_t& item) { return item; }
+  static item_t& Access(item_t& item) { return item; }
+
+  const item_t& operator ()(const item_t& item) const { return item; }
+  item_t& operator ()(item_t& item) const { return item; }
+};
+
 template <typename CastType> struct CCastAccessor  {
+  typedef CastType return_type;
   template <typename Item>
-  static inline const CastType& Access(const Item& item)  {
+  static const CastType& Access(const Item& item)  {
     return (const CastType&)item;
   }
   template <typename Item>
-  static inline CastType& Access(Item& item)  {
+  static CastType& Access(Item& item)  {
     return (CastType&)item;
   }
   template <typename Item>
-  static inline const CastType* Access(const Item* item)  {
+  static const CastType* Access(const Item* item)  {
     return (const CastType*)item;
   }
   template <typename Item>
-  static inline CastType* Access(Item* item)  {
+  static CastType* Access(Item* item)  {
     return (CastType*)item;
   }
 
   template <typename Item>
-  inline const CastType& operator ()(const Item& item) const {
+  const CastType& operator ()(const Item& item) const {
     return (const CastType&)item;
   }
   template <typename Item>
-  inline CastType& operator ()(Item& item) const {
+  CastType& operator ()(Item& item) const {
     return (CastType&)item;
   }
   template <typename Item>
-  inline const CastType* operator ()(const Item* item) const {
+  const CastType* operator ()(const Item* item) const {
     return (const CastType*)item;
   }
   template <typename Item>
-  inline CastType* operator ()(Item* item) const {
+  CastType* operator ()(Item* item) const {
     return (CastType*)item;
   }
 };
 template <typename CastType> struct StaticCastAccessor  {
+  typedef CastType return_type;
   template <typename Item>
-  static inline const CastType& Access(const Item& item)  {
+  static const CastType& Access(const Item& item)  {
     return static_cast<const CastType&>(item);
   }
   template <typename Item>
-  static inline CastType& Access(Item& item)  {
+  static CastType& Access(Item& item)  {
     return static_cast<CastType&>(item);
   }
   template <typename Item>
-  static inline const CastType* Access(const Item* item)  {
+  static const CastType* Access(const Item* item)  {
     return static_cast<const CastType*>(item);
   }
   template <typename Item>
-  static inline CastType* Access(Item* item)  {
+  static CastType* Access(Item* item)  {
     return static_cast<CastType*>(item);
   }
 
   template <typename Item>
-  inline const CastType& operator ()(const Item& item) const {
+  const CastType& operator ()(const Item& item) const {
     return static_cast<const CastType&>(item);
   }
   template <typename Item>
-  inline CastType& operator ()(Item& item) const {
+  CastType& operator ()(Item& item) const {
     return static_cast<CastType&>(item);
   }
   template <typename Item>
-  inline const CastType* operator ()(const Item* item) const {
+  const CastType* operator ()(const Item* item) const {
     return static_cast<const CastType*>(item);
   }
   template <typename Item>
-  inline CastType* operator ()(Item* item) const {
+  CastType* operator ()(Item* item) const {
     return static_cast<CastType*>(item);
   }
 };
 template <typename CastType> struct DynamicCastAccessor  {
+  typedef CastType return_type;
   template <typename Item>
-  static inline const CastType& Access(const Item& item)  {
+  static const CastType& Access(const Item& item)  {
     return dynamic_cast<const CastType&>(item);
   }
   template <typename Item>
-  static inline CastType& Access(Item& item)  {
+  static CastType& Access(Item& item)  {
     return dynamic_cast<CastType&>(item);
   }
   template <typename Item>
-  static inline const CastType* Access(const Item* item)  {
+  static const CastType* Access(const Item* item)  {
     return dynamic_cast<const CastType*>(item);
   }
   template <typename Item>
-  static inline CastType* Access(Item* item)  {
+  static CastType* Access(Item* item)  {
     return dynamic_cast<CastType*>(item);
   }
 
   template <typename Item>
-  inline const CastType& operator ()(const Item& item) const {
+  const CastType& operator ()(const Item& item) const {
     return dynamic_cast<const CastType&>(item);
   }
   template <typename Item>
-  inline CastType& operator ()(Item& item) const {
+  CastType& operator ()(Item& item) const {
     return dynamic_cast<CastType&>(item);
   }
   template <typename Item>
-  inline const CastType* operator ()(const Item* item) const {
+  const CastType* operator ()(const Item* item) const {
     return dynamic_cast<const CastType*>(item);
   }
   template <typename Item>
-  inline CastType* operator ()(Item* item) const {
+  CastType* operator ()(Item* item) const {
     return dynamic_cast<CastType*>(item);
   }
 };

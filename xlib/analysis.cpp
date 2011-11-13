@@ -240,8 +240,7 @@ bool fragments::fragment::is_regular() const {
   else if (crds.Count() == 5 || crds.Count() == 7) {
     TSizeList indices(crds.Count(), list_init::index());
     indices.Remove(ci);
-    vec3d cnt = olx_mean<vec3d>::calc(
-      indices, ConstIndexAccessor<vec3d, vec3d_list>(crds));
+    vec3d cnt = olx_mean(indices, ConstIndexAccessor<vec3d, vec3d_list>(crds));
     // check central atom is nearby the geometrical center
     if (cnt.DistanceTo(crds[ci]) > 0.1) return false;
     if (crds.Count() == 5) {
