@@ -288,7 +288,7 @@ class RefMerger {
     }
     stats.Rint = -1;
     stats.Rsigma = -1;
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections) ;
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
     return stats;
   }
 
