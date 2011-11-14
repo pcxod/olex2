@@ -61,38 +61,38 @@ public:
     return false;
   }
   static inline bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
-    if( (sa.CAtom().GetPart() < 0 || sb.CAtom().GetPart() < 0) &&
-         sa.CAtom().GetPart() == sb.CAtom().GetPart() )
+    if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 || 
+       (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )
     {
-      return HaveSharedMatrix(sa, sb);
-    }
-    else if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 || 
-             (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )
+      if ((sa.CAtom().GetPart() < 0 || sb.CAtom().GetPart() < 0))
+        return HaveSharedMatrix(sa, sb);
       return true;
+    }
     return false;
   }
   static inline bool IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
     const smatd& sm)
   {
-    if( (sa.CAtom().GetPart() < 0 || cb.GetPart() < 0) &&
-      sa.CAtom().GetPart() == cb.GetPart() )
+    if( sa.CAtom().GetPart() == 0 || cb.GetPart() == 0 || 
+       (sa.CAtom().GetPart() == cb.GetPart()) )
     {
-      return sa.ContainsMatrix(sm.GetId());
-    }
-    else if( sa.CAtom().GetPart() == 0 || cb.GetPart() == 0 || 
-             (sa.CAtom().GetPart() == cb.GetPart()) )
+      if ((sa.CAtom().GetPart() < 0 || cb.GetPart() < 0))
+        return sa.ContainsMatrix(sm.GetId());
       return true;
+    }
     return false;
   }
 
   static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
     const smatd& sm)
   {
-    if( (ca.GetPart() < 0 || cb.GetPart() < 0) && ca.GetPart() == cb.GetPart() )
-      return sm.IsFirst();  // is identity and no translation
-    else if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
-             (ca.GetPart() == cb.GetPart()) )
+    if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
+       (ca.GetPart() == cb.GetPart()) )
+    {
+      if ((ca.GetPart() < 0 || cb.GetPart() < 0))
+        return sm.IsFirst();
       return true;
+    }
     return false;
   }
 

@@ -1393,7 +1393,7 @@ TSpaceGroup* TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml)  {
   SG = new TSpaceGroup(uname, uname, uname,
     EmptyString(), -(++extra_added), GetLatticeByNumber(latt), (latt > 0));
   SpaceGroups.Add(uname, SG);
-  for( size_t i=1; i < ml.Count(); i++ )
+  for( size_t i=0; i < ml.Count(); i++ )
     SG->AddMatrix(ml[i]);
   InitRelations();
   return SG;
@@ -1402,9 +1402,9 @@ TSpaceGroup* TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml)  {
 TSpaceGroup* TSymmLib::CreateNewFromExpanded(const smatd_list& all_ml)  {
   SymSpace::Info si = SymSpace::GetInfo(all_ml);
   smatd_list ml;
-  for( size_t i=0; i < si.matrices.Count(); i++ )
+  for( size_t i=1; i < si.matrices.Count(); i++ )
     ml.AddCopy(*si.matrices[i]);
-  return CreateNewFromCompact(si.latt, ml);
+  return CreateNewFromCompact(si.centrosymmetric ? si.latt : -si.latt, ml);
 }
 //..............................................................................
 TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
