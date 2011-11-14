@@ -15,6 +15,8 @@
 BeginXlibNamespace()
 
 template <class, class> class ObjectCaster;
+/* Object provide interface
+*/
 template <class obj_t> class TIObjectProvider  {
 public:
   virtual ~TIObjectProvider()  {}
@@ -32,7 +34,8 @@ public:
   virtual void Pack() = 0;
   virtual void IncCapacity(size_t v) = 0;
   inline bool IsEmpty() const {  return Count() == 0;  }
-  template <class Functor> const TIObjectProvider& ForEach(const Functor& f) const {
+  template <class Functor>
+  const TIObjectProvider& ForEach(const Functor& f) const {
     for( size_t i=0; i < Count(); i++ )
       f.OnItem(Get(i), i);
     return *this;
@@ -41,8 +44,12 @@ public:
     return ObjectCaster<obj_t, act_t>(*this);
   }
 };
-
-template <class obj_t, class act_t> class ObjectCaster : public TIObjectProvider<act_t> {
+/* Object caster - object taking a list of objects and providing interface
+to access it as a list of another, related object type
+*/
+template <class obj_t, class act_t> class ObjectCaster
+  : public TIObjectProvider<act_t>
+{
   TIObjectProvider<obj_t>& list;
 protected:
   // dummy function...
@@ -59,14 +66,18 @@ public:
   virtual act_t& Attach(act_t& o) {  return (act_t&)list.Attach(o);  }
   virtual void Pack()  {  list.Pack();  }
   virtual void IncCapacity(size_t v)  {  list.IncCapacity(v);  }
-  template <class Functor> const ObjectCaster& ForEach(const Functor& f) const {
+  template <class Functor>
+  const ObjectCaster& ForEach(const Functor& f) const {
     for( size_t i=0; i < Count(); i++ )
       f.OnItem(Get(i), i);
     return *this;
   }
 };
-
-template <class obj_t> class TObjectProvider : public TIObjectProvider<obj_t> {
+/* Implementation of the object provide based on the pointer list
+*/
+template <class obj_t> class TObjectProvider
+  : public TIObjectProvider<obj_t>
+{
 protected:
   TPtrList<obj_t> items;
   void UpdateOwnerIds()  {
@@ -106,17 +117,20 @@ public:
   }
   virtual void IncCapacity(size_t v)  {  items.SetCapacity(items.Count()+v);  }
   inline bool IsEmpty() const {  return items.IsEmpty();  }
-  template <class Functor> const TObjectProvider& ForEach(const Functor& f) const {
+  template <class Functor>
+  const TObjectProvider& ForEach(const Functor& f) const {
     items.ForEach(f);
     return *this;
   }
 };
-
+/* TSAtom registry - an object for quick locating of atoms using their index in
+the asymmetric unit*/
 class AtomRegistry  {
   struct DataStruct  {
     TArray3D<TArrayList<TSAtomPList*>*> registry;
     mutable int ref_cnt;
-    DataStruct(const vec3i& mind, const vec3i& maxd) : registry(mind, maxd), ref_cnt(1) {} 
+    DataStruct(const vec3i& mind, const vec3i& maxd)
+      : registry(mind, maxd), ref_cnt(1) {} 
     ~DataStruct()  {
       for( size_t i=0; i < registry.Length1(); i++ )  {
         for( size_t j=0; j < registry.Length2(); j++ )  {
@@ -136,32 +150,32 @@ protected:
   DataStruct* data;
 public:
   typedef TArray3D<TArrayList<TSAtomPList*>*> RegistryType;
-  //..................................................................................................
+  //...........................................................................
   AtomRegistry() : data(NULL) {}
-  //..................................................................................................
+  //...........................................................................
   AtomRegistry(const AtomRegistry& r) : data(r.data) {  data->ref_cnt++;  }
-  //..................................................................................................
+  //...........................................................................
   RegistryType& Init(const vec3i& mind, const vec3i& maxd)  {
     if( data != NULL && --data->ref_cnt == 0 )
       delete data;
     data = new DataStruct(mind, maxd);
     return data->registry;
   }
-  //..................................................................................................
+  //...........................................................................
   ~AtomRegistry()  {
     if( data != NULL && --data->ref_cnt  == 0 )
       delete data;
   }
-  //..................................................................................................
+  //...........................................................................
   AtomRegistry& operator = (const AtomRegistry& ar)  {
     if( data != NULL && --data->ref_cnt == 0 )
       delete data;
     data = ar.data;
     return *this;
   }
-  //..................................................................................................
+  //...........................................................................
   RegistryType& GetRegistry()  {  return data->registry;  }
-  //..................................................................................................
+  //...........................................................................
   TSAtom* Find(const TSAtom::Ref& ref) const {
     if( data == NULL )  return NULL;
     const vec3i t = smatd::GetT(ref.matrix_id);
@@ -175,7 +189,7 @@ public:
       return NULL;
     return (*au_slice)[ref.catom_id];
   }
-  //..................................................................................................
+  //...........................................................................
   TSBond* Find(const TSBond::Ref& ref) const {
     TSAtom* a = Find(ref.a);
     if( a == NULL )  return NULL;
@@ -192,8 +206,11 @@ struct ASObjectProvider : public IEObject {
   TIObjectProvider<TSAtom>& atoms;
   TIObjectProvider<TSBond>& bonds;
   TIObjectProvider<class TSPlane>& planes;
-  ASObjectProvider(TIObjectProvider<TSAtom>& _as, TIObjectProvider<TSBond>& _bs, TIObjectProvider<TSPlane>& _ps) :
-  atoms(_as), bonds(_bs), planes(_ps)  {}
+  ASObjectProvider(
+    TIObjectProvider<TSAtom>& _as,
+    TIObjectProvider<TSBond>& _bs,
+    TIObjectProvider<TSPlane>& _ps)
+    : atoms(_as), bonds(_bs), planes(_ps)  {}
   //TObjectProvider<TNetwork> fragments;
   virtual IEObject* Replicate() const = 0;
 
