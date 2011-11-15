@@ -192,6 +192,19 @@ void TCif::Rename(const olxstr& old_name, const olxstr& new_name)  {
   data_provider[block_index].Rename(old_name, new_name);
 }
 //..............................................................................
+ConstPtrList<TCAtom> TCif::FindAtoms(const TStrList &names) {
+  TCAtomPList atoms;
+  for (size_t i=0; i < names.Count(); i++) {
+    if (atoms.Add(GetAsymmUnit().FindCAtom(names[i])) == NULL) {
+      TBasicApp::NewLogEntry(logError) <<
+        (olxstr("Undefined atom :").quote() << names[i]);
+      atoms.Clear();
+      break;
+    }
+  }
+  return atoms;
+}
+//..............................................................................
 void TCif::Initialize()  {
   olxstr Param;
   cetTable *ALoop, *Loop;
@@ -343,7 +356,8 @@ void TCif::Initialize()  {
   const size_t Degen = ALoop->ColIndex("_atom_site_symmetry_multiplicity");
   const size_t Part = ALoop->ColIndex("_atom_site_disorder_group");
   if( (ALabel|ACi[0]|ACi[1]|ACi[2]) == InvalidIndex )  {
-    TBasicApp::NewLogEntry(logError) << "Failed to locate required fields in atoms loop";
+    TBasicApp::NewLogEntry(logError) <<
+      "Failed to locate required fields in atoms loop";
     return;
   }
   const MatrixListAdaptor<TCif> MatrixList(*this);
@@ -356,8 +370,9 @@ void TCif::Initialize()  {
     else
       type = XElementLib::FindBySymbolEx(ALoop->Get(i, ALabel).GetStringValue());
     if( type == NULL )  {
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Undefined element: ") <<
-        ALoop->Get(i, ASymbol).GetStringValue());
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("Undefined element: ") <<
+          ALoop->Get(i, ASymbol).GetStringValue());
     }
     A.SetType(*type);
     for( int j=0; j < 3; j++ )  {
@@ -372,8 +387,11 @@ void TCif::Initialize()  {
       A.SetUiso(EValue.GetV());
       if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Uiso);
     }
-    if( APart != InvalidIndex && ALoop->Get(i, APart).GetStringValue().IsNumber() )
+    if( APart != InvalidIndex &&
+        ALoop->Get(i, APart).GetStringValue().IsNumber() )
+    {
       A.SetPart(ALoop->Get(i, APart).GetStringValue().ToInt());
+    }
     if( SiteOccu != InvalidIndex )  {
       EValue = ALoop->Get(i, SiteOccu).GetStringValue();
       A.SetOccu(EValue.GetV());
@@ -396,7 +414,7 @@ void TCif::Initialize()  {
     if( &GetLoop(i) == ALoop )  continue;
     cetTable& tab = GetLoop(i);
     for( size_t j=0; j < tab.ColCount(); j++ )  {
-      if(  tab.ColName(j).IndexOf("atom_site") != InvalidIndex &&
+      if( tab.ColName(j).IndexOf("atom_site") != InvalidIndex &&
         tab.ColName(j).IndexOf("label") != InvalidIndex )
       {
         for( size_t k=0; k < tab.RowCount(); k++ )  {
@@ -422,9 +440,12 @@ void TCif::Initialize()  {
 
   if( (ALabel|Ui[0]|Ui[1]|Ui[2]|Ui[3]|Ui[4]|Ui[5]) != InvalidIndex )  {
     for( size_t i=0; i < ALoop->RowCount(); i++ )  {
-      TCAtom* A = GetAsymmUnit().FindCAtom(ALoop->Get(i, ALabel).GetStringValue());
-      if( A == NULL )
-        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("wrong atom in the aniso loop ") << ALabel);
+      TCAtom* A = GetAsymmUnit().FindCAtom(
+        ALoop->Get(i, ALabel).GetStringValue());
+      if( A == NULL ) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olxstr("wrong atom in the aniso loop ").quote() << ALabel);
+      }
       for( int j=0; j < 6; j++ )  {
         EValue = ALoop->Get(i, Ui[j]).GetStringValue();
         Q[j] = EValue.GetV();  E[j] = EValue.GetE();
@@ -446,22 +467,20 @@ void TCif::Initialize()  {
       TEValueD ev;
       for( size_t i=0; i < ALoop->RowCount(); i++ )  {
         const CifRow& Row = (*ALoop)[i];
-        ACifValue* cv = NULL;
         ev = Row[BD]->GetStringValue();
-        if( Row[SymmA]->GetStringValue() == '.' )  {
-          cv = new CifBond(
-            *GetAsymmUnit().FindCAtom(Row[ALabel]->GetStringValue()),
-            *GetAsymmUnit().FindCAtom(Row[ALabel1]->GetStringValue()),
-            ev);
+        TCAtomPList atoms = FindAtoms(TStrList() <<
+          Row[ALabel]->GetStringValue() << Row[ALabel1]->GetStringValue());
+        if (atoms.Count() == 2) {
+          ACifValue* cv = NULL;
+          if( Row[SymmA]->GetStringValue() == '.' )  {
+            cv = new CifBond(*atoms[0], *atoms[1], ev);
+          }
+          else  {
+            cv = new CifBond(*atoms[0], *atoms[1],
+              SymmCodeToMatrix(Row[SymmA]->GetStringValue()), ev);
+          }
+          DataManager.AddValue(cv);
         }
-        else  {
-          cv = new CifBond(
-            *GetAsymmUnit().FindCAtom(Row[ALabel]->GetStringValue()),
-            *GetAsymmUnit().FindCAtom(Row[ALabel1]->GetStringValue()),
-            SymmCodeToMatrix(Row[SymmA]->GetStringValue()),
-            ev);
-        }
-        DataManager.AddValue(cv);
       }
     }
   }
@@ -475,22 +494,21 @@ void TCif::Initialize()  {
       TEValueD ev;
       for( size_t i=0; i < ALoop->RowCount(); i++ )  {
         const CifRow& Row = (*ALoop)[i];
-        ACifValue* cv = NULL;
         ev = Row[BD]->GetStringValue();
-        if( Row[SymmA]->GetStringValue() == '.' )  {
-          cv = new CifBond(
-            *GetAsymmUnit().FindCAtom(Row[ALabel]->GetStringValue()),
-            *GetAsymmUnit().FindCAtom(Row[ALabel1]->GetStringValue()),
-            ev);
+        TCAtomPList atoms = FindAtoms(TStrList() <<
+          Row[ALabel]->GetStringValue() << Row[ALabel1]->GetStringValue());
+        if (atoms.Count() == 2) {
+          ACifValue* cv = NULL;
+          if( Row[SymmA]->GetStringValue() == '.' )  {
+            cv = new CifBond(*atoms[0], *atoms[1], ev);
+          }
+          else  {
+            cv = new CifBond(*atoms[0], *atoms[1],
+              SymmCodeToMatrix(Row[SymmA]->GetStringValue()),
+              ev);
+          }
+          DataManager.AddValue(cv);
         }
-        else  {
-          cv = new CifBond(
-            *GetAsymmUnit().FindCAtom(Row[ALabel]->GetStringValue()),
-            *GetAsymmUnit().FindCAtom(Row[ALabel1]->GetStringValue()),
-            SymmCodeToMatrix(Row[SymmA]->GetStringValue()),
-            ev);
-        }
-        DataManager.AddValue(cv);
       }
     }
   }
@@ -508,25 +526,31 @@ void TCif::Initialize()  {
       im.I();
       for( size_t i=0; i < ALoop->RowCount(); i++ )  {
         const CifRow& Row = (*ALoop)[i];
-        ACifValue* cv = NULL;
         ev = Row[ind_a]->GetStringValue();
-        if( Row[ind_sl]->GetStringValue() == '.' && Row[ind_sr]->GetStringValue() == '.' )  {
-          cv = new CifAngle(
-            *GetAsymmUnit().FindCAtom(Row[ind_l]->GetStringValue()),
-            *GetAsymmUnit().FindCAtom(Row[ind_m]->GetStringValue()),
-            *GetAsymmUnit().FindCAtom(Row[ind_r]->GetStringValue()),
-            ev);
+        TCAtomPList atoms = FindAtoms(TStrList() <<
+          Row[ind_l]->GetStringValue() <<
+          Row[ind_m]->GetStringValue() <<
+          Row[ind_r]->GetStringValue());
+        if (atoms.Count() == 3) {
+          ACifValue* cv = NULL;
+          if( Row[ind_sl]->GetStringValue() == '.' &&
+              Row[ind_sr]->GetStringValue() == '.' )
+          {
+            cv = new CifAngle(*atoms[0], *atoms[1], *atoms[2], ev);
+          }
+          else  {
+            cv = new CifAngle(
+              *atoms[0],
+              *atoms[1],
+              *atoms[2],
+              Row[ind_sl]->GetStringValue() == '.' ? im
+                : SymmCodeToMatrix(Row[ind_sl]->GetStringValue()),
+              Row[ind_sr]->GetStringValue() == '.' ? im
+                : SymmCodeToMatrix(Row[ind_sr]->GetStringValue()),
+              ev);
+          }
+          DataManager.AddValue(cv);
         }
-        else  {
-          cv = new CifAngle(
-            *GetAsymmUnit().FindCAtom(Row[ind_l]->GetStringValue()),
-            *GetAsymmUnit().FindCAtom(Row[ind_m]->GetStringValue()),
-            *GetAsymmUnit().FindCAtom(Row[ind_r]->GetStringValue()),
-            Row[ind_sl]->GetStringValue() == '.' ? im : SymmCodeToMatrix(Row[ind_sl]->GetStringValue()),
-            Row[ind_sr]->GetStringValue() == '.' ? im : SymmCodeToMatrix(Row[ind_sr]->GetStringValue()),
-            ev);
-        }
-        DataManager.AddValue(cv);
       }
     }
   }
