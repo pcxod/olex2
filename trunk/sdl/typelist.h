@@ -65,15 +65,29 @@ public:
 //..............................................................................
   /* copy constuctor - creates new copies of the objest, be careful as the copy
    constructor must exist for nonpointer objects */
-  template <class alist> TTypeListExt(const alist& list )
+  template <class alist> TTypeListExt(const alist& list)
     : List(list.Count())
   {
     for( size_t i=0; i < list.Count(); i++ )
       List[i] = new T(list[i]);
   }
 //..............................................................................
+  /* copy constuctor - creates new copies of the objest, be careful as the copy
+   constructor must exist for nonpointer objects */
+  template <class list_t, class accessor_t> TTypeListExt(
+    const list_t& list, const accessor_t &accessor)
+    : List(list.Count())
+  {
+    for( size_t i=0; i < list.Count(); i++ )
+      List[i] = new T(accessor(list[i]));
+  }
+//..............................................................................
   /* copies values from an array of size elements  */
   TTypeListExt(size_t size, const T* array) : List(size)  {
+    for( size_t i=0; i < size; i++ )
+      List[i] = new T(array[i]);
+  }
+  TTypeListExt(size_t size, T* array) : List(size)  {
     for( size_t i=0; i < size; i++ )
       List[i] = new T(array[i]);
   }
@@ -433,7 +447,7 @@ public:
   // same as shrink if list size is larger
   TTypeListExt& SetCount(size_t v) {
     if (v < List.Count()) {
-      for (size_t i=0; i < List.Count(); i++) {
+      for (size_t i=v; i < List.Count(); i++) {
         if (List[i] != NULL)
           delete (DestructCast*)List[i];
       }
@@ -481,7 +495,11 @@ template <class T>
     TTypeList(const SharedTypeList<T>& list) : TTypeListExt<T,T>(list)  {}
     template <class alist> TTypeList(const alist& list)
       : TTypeListExt<T,T>(list)  {}
+    template <class list_t, class accessor_t>
+    TTypeList(const list_t& list, const accessor_t &acc)
+      : TTypeListExt<T,T>(list, acc)  {}
     TTypeList(size_t size, const T* array) : TTypeListExt<T,T>(size, array)  {}
+    TTypeList(size_t size, T* array) : TTypeListExt<T,T>(size, array)  {}
     TTypeList& operator = (const TTypeList& list)  {
       TTypeListExt<T,T>::operator = (list);
       return *this;

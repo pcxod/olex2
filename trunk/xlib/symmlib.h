@@ -12,7 +12,7 @@
 #include "log.h"
 #include "typelist.h"
 #include "asymmunit.h"
-#include "symspace.h"
+#include "hall.h"
 #undef GetObject
 BeginXlibNamespace()
 
@@ -80,21 +80,10 @@ public:
   }
   /* returns symbolic representation of lattice centering */
   static char SymbolForLatt(short latt)  {
-    switch( latt )  {
-      case 1:  return 'P';
-      case 2:  return 'I';
-      case 5:  return 'A';
-      case 6:  return 'B';
-      case 7:  return 'C';
-      case 8:  return 'S';
-      case 9:  return 'T';
-      case 10:  return 'D';
-      case 11:  return 'H';
-      case 3:  return 'R';
-      case 4:  return 'F';
-      default:
-        throw TIncorrectLattExc(__OlxSourceInfo, latt);
-    }
+    const char rv[12] = "PIRFABCSTDH"; // +\0
+    if (latt > 0 && latt < 12)
+      return rv[latt-1];
+    throw TIncorrectLattExc(__OlxSourceInfo, latt);
   }
   const olxstr& GetName() const {  return Name; }
   const olxstr& GetSymbol() const {  return Symbol; }
@@ -106,7 +95,9 @@ public:
     return *this;
   }
   size_t BravaisLatticeCount() const {  return BravaisLattices.Count();  }
-  TBravaisLattice& GetBravaisLattice(size_t i) const {  return *BravaisLattices[i];  }
+  TBravaisLattice& GetBravaisLattice(size_t i) const {
+    return *BravaisLattices[i];
+  }
   // returns a transformation to this lattice from primitive lattice
   static mat3d FromPrimitive(int latt);
   mat3d FromPrimitive() const {  return FromPrimitive(Latt);  }
@@ -114,11 +105,15 @@ public:
     short Latt;
     public:
       TIncorrectLattExc(const olxstr& location, int latt) :
-        TBasicException(location, olxstr("Incorrect Latt instruction: ") << latt) {
+        TBasicException(location,
+          olxstr("Incorrect Latt instruction: ") << latt)
+        {
           Latt = latt;  
         }
       short GetLatt() const  {  return Latt;  }
-      virtual IEObject* Replicate() const {  return new TIncorrectLattExc(*this);  }
+      virtual IEObject* Replicate() const {
+        return new TIncorrectLattExc(*this);
+      }
   };
 };
 
@@ -126,7 +121,7 @@ class TSpaceGroup : public IEObject {
   smatd_list Matrices;
   olxstr Name, FullName, Axis, HallSymbol;
   int Number;
-  TCLattice *Latt;
+  TCLattice& Latt;
   bool CentroSymmetric, Translations;
   TBravaisLattice* BravaisLattice;
   TSpaceGroup* LaueClass, *PointGroup;
@@ -135,8 +130,10 @@ class TSpaceGroup : public IEObject {
   static bool _checkTDS(const vec3d& t1, const vec3d& t2);
   static bool _checkTD(const vec3d& t1, const vec3d& t2);
 public:
-  TSpaceGroup(const olxstr& Name, const olxstr& FullName, const olxstr HallSymbol, 
-              const olxstr& Axis, int Number, TCLattice& L, bool Centrosymmetric);
+  TSpaceGroup(const smatd_list &matrices,
+    const olxstr& Name, const olxstr& FullName,
+    const olxstr& Axis, int Number, TCLattice& L,
+    bool Centrosymmetric, const olxstr hall_symbol=EmptyString());
   virtual ~TSpaceGroup()  {}
 
   void SetBravaisLattice(TBravaisLattice& bl)  {  BravaisLattice = &bl;  }
@@ -150,43 +147,14 @@ public:
   bool operator == (const smatd_list& matrices) const;
   // compares m.R and summs (delta(m.t))^2 into st;
   bool Compare(const smatd_list& matrices, double& st) const;
-
-  template <class SymSpace> bool EqualsSymSpace(const SymSpace& sp) const {
-    if( MatrixCount() > sp.Count() )  return false;
-    smatd_list allMatrices;
-    GetMatrices(allMatrices, mattAll );
-    if( allMatrices.Count() != sp.Count() )  return false;
-    for( size_t i=0; i  < allMatrices.Count(); i++ )
-      allMatrices[i].SetRawId(0);
-    for( size_t i=0; i  < allMatrices.Count(); i++ )  {
-      bool found = false;
-      const smatd& m = sp[i];
-      for( size_t j=0; j  < allMatrices.Count(); j++ )  {
-        smatd& m1 = allMatrices[j];
-        if( m1.GetId() != 0 )  continue;
-        if( m.r != m1.r )  continue;
-        vec3d tr = m.t - m1.t;
-        if( (tr -= tr.Round<int>()).IsNull(0.001) )  {
-          found = true;
-          m1.SetRawId(1);
-          break;
-        }
-      }
-      if( !found )  return false;
-    }
-    return true;
-  }
   bool EqualsWithoutTranslation(const TSpaceGroup& sg) const;
   bool IsSubElement(TSpaceGroup* symme )  const;
   // decomoses space group into symmetry elements using reference as the basis
-  void SplitIntoElements(TPtrList<TSymmElement>& reference, TPtrList<TSymmElement>& res);
-  static void SplitIntoElements(smatd_list& matrices, TPtrList<TSymmElement>& reference, TPtrList<TSymmElement>& res);
+  void SplitIntoElements(TPtrList<TSymmElement>& reference,
+    TPtrList<TSymmElement>& res);
+  static void SplitIntoElements(smatd_list& matrices,
+    TPtrList<TSymmElement>& reference, TPtrList<TSymmElement>& res);
   
-  void AddMatrix(const smatd& m);
-  void AddMatrix(int xx, int xy, int xz, 
-                 int yx, int yy, int yz, 
-                 int zx, int zy, int zz,
-                 double tx, double ty, double tz);
   size_t MatrixCount() const {  return Matrices.Count();  };
   smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
   int GetNumber() const {  return Number;  }
@@ -196,7 +164,7 @@ public:
   const olxstr& GetAxis() const {  return Axis;  }
   const olxstr& GetHallSymbol() const {  return HallSymbol;  }
 
-  TCLattice& GetLattice() const {  return *Latt;  }
+  const TCLattice& GetLattice() const {  return Latt;  }
   bool IsCentrosymmetric() const {  return CentroSymmetric;  }
   // retruns true if any matrix of the SG has a nonzero translation
   bool HasTranslations() const {  return Translations;  }
@@ -206,8 +174,10 @@ public:
   const vec3d& GetInversionCenter() const {  return InversionCenter;  }
 
   void GetMatrices(smatd_list& matrices, short Flags) const;
-  // fills a list of uniq transformations (3,3) without translation and returns
-  // the number of added matrices; the list is created from a call to GetMatrices(list, flag)
+  /* fills a list of uniq transformations (3,3) without translation and returns
+   the number of added matrices; the list is created from a call to
+   GetMatrices(list, flag)
+   */
   size_t GetUniqMatrices(smatd_list& matrices, short Flags) const;
 
   // this function finds a symmetry element in a list of matrices
@@ -253,9 +223,9 @@ class TBravaisLattice  {
   olxstr Name;
 public:
   TBravaisLattice(const olxstr& Name)  {  this->Name = Name;  }
-  virtual ~TBravaisLattice()  {  ;  }
+  virtual ~TBravaisLattice()  {}
 
-  const olxstr& GetName() const      {  return Name;  }
+  const olxstr& GetName() const {  return Name;  }
 
   TBravaisLattice& AddLattice(TCLattice* latt)  {
     Lattices.Add(latt);
@@ -271,12 +241,15 @@ public:
   TSpaceGroup& GetSymmetry(size_t i) const {  return *Symmetries[i];  }
   size_t SymmetryCount() const {  return Symmetries.Count();  }
 
-  // finds all space groups with this bravais lattice and returns the number of added to the list
+  /* finds all space groups with this bravais lattice and returns the number of
+  added to the list
+  */
   size_t FindSpaceGroups(TPtrList<TSpaceGroup>& SpaceGroups) const;
 
 };
-// this types is used to specify found bravais latteces: int < 0 - symmetry is lower
-// and int > 0 - symmetry is higher (normally never returned :))
+/* these types are used to specify found bravais latteces: int < 0 - symmetry
+is lower and int > 0 - symmetry is higher (normally never returned :))
+*/
 typedef AnAssociation2<TBravaisLattice*,int> TBravaisLatticeRef;
 
 class TSymmLib: public IEObject  {
@@ -284,12 +257,16 @@ class TSymmLib: public IEObject  {
   TStrPObjList<olxstr,TCLattice*> Lattices;
   TStrPObjList<olxstr,TBravaisLattice*> BravaisLattices;
   TPtrList<TSpaceGroup> PointGroups;
+  TTypeList<TPtrList<TSpaceGroup> > _PointGroups;
   TTypeList<TSymmElement> SymmetryElements;
+  olxstr_dict<TSpaceGroup*, false> hall_symbols;
   void InitRelations();
   static TSymmLib* Instance;
   int extra_added;
-  TSpaceGroup* CreateNewFromCompact(int latt, const smatd_list& compact_matrices);
-  TSpaceGroup* CreateNewFromExpanded(const smatd_list& expanded_matrices);
+  TSpaceGroup* CreateNewFromCompact(int latt,
+    const smatd_list& compact_matrices, const olxstr &hall_sb=EmptyString());
+  TSpaceGroup &InitSpaceGroup(TSpaceGroup &sg);
+  TSpaceGroup *CreateNew(const SymSpace::Info &si_info, const olxstr &hall_sb);
 public:
   // 21.06.2008, the file name is not used
   TSymmLib(const olxstr& FN=EmptyString());
@@ -298,20 +275,22 @@ public:
   TSpaceGroup* FindSG(const TAsymmUnit& AU);
 
   // searches for expanded space groups like in the CIF
-  template <class SymSpace> TSpaceGroup* FindSymSpace(const SymSpace& sp) {
-    for( size_t i=0; i < SGCount(); i++ )
-      if( GetGroup(i).EqualsSymSpace(sp) )
-        return &(GetGroup(i));
-    smatd_list all_ml;
-    for( size_t i=0; i < sp.Count(); i++ )
-      all_ml.AddCopy(sp[i]);
-    return CreateNewFromExpanded(all_ml);
+  template <class SymSpaceT>
+  TSpaceGroup* FindSymSpace(const SymSpaceT &sp) {
+    smatd_list all_ml(sp);
+    SymSpace::Info si = SymSpace::GetInfo(all_ml);
+    olxstr hs = HallSymbol::Evaluate(si);
+    TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
+    return sg == NULL ? CreateNew(si, hs) : sg;
   }
-  size_t FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res) const;
+  size_t FindBravaisLattices(TAsymmUnit& AU,
+    TTypeList<TBravaisLatticeRef>& res) const;
   // finds all space groups of specified point group
-  size_t FindPointGroupGroups(const TSpaceGroup& PointGroup, TPtrList<TSpaceGroup>& res) const;
+  size_t FindPointGroupGroups(const TSpaceGroup& PointGroup,
+    TPtrList<TSpaceGroup>& res) const;
   // finds all space groups of specified Laue class
-  size_t FindLaueClassGroups(const TSpaceGroup& LaueClass, TPtrList<TSpaceGroup>& res) const;
+  size_t FindLaueClassGroups(const TSpaceGroup& LaueClass,
+    TPtrList<TSpaceGroup>& res) const;
 
   size_t SGCount() const {  return SpaceGroups.Count();  }
   TSpaceGroup& GetGroup(size_t i) const {  return *SpaceGroups.GetObject(i);  }
@@ -321,11 +300,15 @@ public:
   }
 
   size_t SymmElementCount() const {  return SymmetryElements.Count();  }
-  TSymmElement& GetSymmElement(size_t i) const {  return SymmetryElements[i];  }
-  TSymmElement* FindSymmElement(const olxstr& name)  const;
+  TSymmElement& GetSymmElement(size_t i) const {
+    return SymmetryElements[i];
+  }
+  TSymmElement* FindSymmElement(const olxstr& name) const;
 
   size_t LatticeCount() const {  return Lattices.Count();  }
-  TCLattice& GetLatticeByIndex(size_t i) const {  return *Lattices.GetObject(i);  }
+  TCLattice& GetLatticeByIndex(size_t i) const {
+    return *Lattices.GetObject(i);
+  }
   TCLattice& GetLatticeByNumber(short latt) const {
     size_t l = olx_abs(latt)-1;
     if( l >= Lattices.Count() )
@@ -340,12 +323,16 @@ public:
   TSpaceGroup& GetPointGroup(size_t i) const {  return *PointGroups[i];  }
 
   size_t BravaisLatticeCount() const {  return BravaisLattices.Count();  }
-  TBravaisLattice&  GetBravaisLattice(size_t i) const {  return *BravaisLattices.GetObject(i);  }
-  TBravaisLattice *  FindBravaisLattice(const olxstr& Name)  const {
+  TBravaisLattice&  GetBravaisLattice(size_t i) const {
+    return *BravaisLattices.GetObject(i);
+  }
+  TBravaisLattice *FindBravaisLattice(const olxstr& Name) const {
     return BravaisLattices.FindObjecti(Name);
   }
 
-  template <typename MatList> void ExpandLatt(smatd_list& out, const MatList& ml, short _latt) const {
+  template <typename MatList> void ExpandLatt(smatd_list& out,
+    const MatList& ml, short _latt) const
+  {
     const TCLattice& latt = GetLatticeByNumber(_latt);
     out.SetCapacity(latt.VectorCount()*ml.Count()* (_latt > 0 ? 2 : 1));
     out.AddNew().r.I();
@@ -372,8 +359,10 @@ public:
   static bool IsInitialised()  {  return Instance != NULL;  }
 
   static TSymmLib& GetInstance()  {
-    if( Instance == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "object is not initialised");
+    if( Instance == NULL ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "object is not initialised");
+    }
     return *Instance;
   }
 };

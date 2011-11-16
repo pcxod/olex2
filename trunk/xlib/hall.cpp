@@ -80,7 +80,7 @@ olxstr HallSymbol::FindT(const vec3d& t, int order)  {
     }
   }
   const double m = 12./order;
-  return olxstr(" (") << t[0]*m << ',' << t[1]*m << ',' << t[2]*m << ')';
+  return olxstr(" (") << t[0]*m << ' ' << t[1]*m << ' ' << t[2]*m << ')';
   //throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to encode translation: ") << t.ToString());
 }
 //..........................................................................................
@@ -153,7 +153,7 @@ olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices)  {
   olxstr hs;
   if( latt > 0 )  hs << '-';
   hs << GetLatticeSymbol(latt);
-  if( matrices.IsEmpty() )
+  if( matrices.IsEmpty() || (matrices.Count() == 1 && matrices[0].IsI()))
     hs << ' ' << '1';
   else  {
     TTypeList<HallSymbol::symop> matrs;
@@ -180,6 +180,19 @@ olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices)  {
       if( FindR(hs, matrs, rot3, true) != 0 )
         FindR(hs, matrs, rotz1, true);
     }
+  }
+  return hs;
+}
+//..........................................................................................
+olxstr HallSymbol::Evaluate(const SymSpace::Info& si)  {
+  init();
+  olxstr hs = Evaluate(si.centrosymmetric ? si.latt : -si.latt,
+    si.matrices);
+  // explicit inversion
+  if (!si.inv_trans.IsNull(1e-3)) {
+    if (si.centrosymmetric) // must be!
+      hs = hs.SubStringFrom(1);
+    hs << " -1" << FindT(si.inv_trans, 12);
   }
   return hs;
 }

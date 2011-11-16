@@ -209,7 +209,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
   PythonExt::SetDictItem(out, "HallSymbol", PythonExt::BuildString(sg->GetHallSymbol()));
     PyObject* latt_out;
     PythonExt::SetDictItem(out, "Lattice", (latt_out=PyDict_New()));
-    TCLattice& latt = sg->GetLattice();
+    const TCLattice& latt = sg->GetLattice();
     PythonExt::SetDictItem(latt_out, "Name", PythonExt::BuildString(latt.GetName()));
     PythonExt::SetDictItem(latt_out, "Centering", PythonExt::BuildString(latt.GetSymbol()));
     PythonExt::SetDictItem(latt_out, "InsCode", Py_BuildValue("i", latt.GetLatt()));
