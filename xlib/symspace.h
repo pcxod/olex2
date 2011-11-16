@@ -110,8 +110,7 @@ namespace SymSpace  {
   }
   struct Info  {
     bool centrosymmetric;
-    /* holds references of the original object, be careful with const&
-    containers!
+    /* list of the compact matrices including the identity
     */
     smatd_list matrices;
     /* if not zero, all inversion of the symmetry operators also translates by

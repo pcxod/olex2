@@ -8,8 +8,9 @@
 ******************************************************************************/
 
 #include "hall.h"
+#include "symmlib.h"
+#include "symmparser.h"
 
-char HallSymbol::LattSymbols[] = "PIRFABCST";  // [abs(latt)-1]
 TTypeList<AnAssociation2<vec3d, olxstr> > HallSymbol::trans;
 TTypeList<AnAssociation2<int,olxstr> >
   HallSymbol::rotx,
@@ -19,8 +20,9 @@ TTypeList<AnAssociation2<int,olxstr> >
   HallSymbol::roty1,
   HallSymbol::rotz1,
   HallSymbol::rot3;
-//..........................................................................................
-
+olxstr_dict<int> HallSymbol::r_dict;
+olxstr_dict<vec3d*> HallSymbol::t_dict;
+//.............................................................................
 void HallSymbol::init()  {
   if( trans.IsEmpty() )  {
     trans.AddNew(vec3d(0.5, 0, 0), "a");
@@ -57,9 +59,21 @@ void HallSymbol::init()  {
     rotz1.AddNew(rotation_id::get(mat3d( 0, 1, 0,   1, 0, 0,   0, 0,-1)), "2\"");
 
     rot3.AddNew(rotation_id::get(mat3d( 0, 0, 1,   1, 0, 0,   0, 1, 0)), "3*");
+    
+    TPtrList<TTypeList<AnAssociation2<int,olxstr> > > rots;
+    rots << rotx << roty << rotz << rot3;
+    for (size_t i=0; i < rots.Count(); i++) {
+      for (size_t j=0; j < rots[i]->Count(); j++)
+        r_dict.Add((*rots[i])[j].GetB(), (*rots[i])[j].GetA());
+    }
+    r_dict.Add("1", rotation_id::get(mat3d().I()));
+    // a-b
+    r_dict.Add("2'", rotz1[0].GetA());
+    for (size_t i=0; i < trans.Count(); i++)
+      t_dict.Add(trans[i].GetB(), &trans[i].A());
   }
 }
-//..........................................................................................
+//.............................................................................
 olxstr HallSymbol::FindT(const vec3d& t, int order)  {
   for( size_t j=0; j < trans.Count(); j++ )  {
     if( trans[j].GetA().QDistanceTo(t) < 1e-6 )
@@ -81,9 +95,8 @@ olxstr HallSymbol::FindT(const vec3d& t, int order)  {
   }
   const double m = 12./order;
   return olxstr(" (") << t[0]*m << ' ' << t[1]*m << ' ' << t[2]*m << ')';
-  //throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to encode translation: ") << t.ToString());
 }
-//..........................................................................................
+//.............................................................................
 olxstr HallSymbol::FindTR(const vec3d& t, int order)  {
   const double v = t[0] != 0 ? t[0] : (t[1] != 0 ? t[1] : t[2]);
   if( v == 0 )  return EmptyString();
@@ -114,7 +127,7 @@ olxstr HallSymbol::FindTR(const vec3d& t, int order)  {
   }
   return FindT(t, order);
 }
-//..........................................................................................
+//.............................................................................
 int HallSymbol::FindR(olxstr& hs, TTypeList<symop>& matrs,
     const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full)
 {
@@ -147,12 +160,12 @@ int HallSymbol::FindR(olxstr& hs, TTypeList<symop>& matrs,
     matrs.Pack();
   return previous;
 }
-//..........................................................................................
+//.............................................................................
 olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices)  {
   init();
   olxstr hs;
   if( latt > 0 )  hs << '-';
-  hs << GetLatticeSymbol(latt);
+  hs << TCLattice::SymbolForLatt(olx_abs(latt));
   if( matrices.IsEmpty() || (matrices.Count() == 1 && matrices[0].IsI()))
     hs << ' ' << '1';
   else  {
@@ -196,4 +209,182 @@ olxstr HallSymbol::Evaluate(const SymSpace::Info& si)  {
   }
   return hs;
 }
-//..........................................................................................
+//.............................................................................
+vec3d HallSymbol::get_screw_axis_t(int dir, int order) {
+  vec3d rv;
+  rv[dir-1] = (double)order/12;
+  return rv;
+}
+//.............................................................................
+int HallSymbol::find_diagonal(int axis, olxch which) {
+  int index = which == '\'' ? 0 : 1;
+  if (axis == 1)  return rotx1[index].GetA();
+  if (axis == 2)  return roty1[index].GetA();
+  if (axis == 3)  return rotz1[index].GetA();
+  throw TInvalidArgumentException(__OlxSourceInfo, 
+    olxstr("axis direction: ") << axis << ", which: " << which);
+}
+//.............................................................................
+ConstTypeList<smatd> HallSymbol::Expand(const olxstr &_hs) {
+  smatd change_of_basis;
+  change_of_basis.r.I();
+  olxstr hs = _hs;
+  {
+    size_t obi = _hs.IndexOf('(');
+    if (obi != InvalidIndex) {
+      size_t cbi = _hs.FirstIndexOf(')', obi);
+      if (cbi == InvalidIndex) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          "change of basis notation");
+      }
+      hs = _hs.SubStringTo(obi);
+      olxstr cbs = _hs.SubString(obi+1, cbi-obi-1);
+      if (cbs.IndexOf(',') != InvalidIndex) {
+        try { TSymmParser::SymmToMatrix(cbs, change_of_basis); }
+        catch (const TExceptionBase &e) {
+          throw TFunctionFailedException(__OlxSourceInfo, e);
+        }
+      }
+      else {
+        TStrList toks(cbs, ' ');
+        if (toks.Count() != 3) {
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            "change of basis notation");
+        }
+        change_of_basis.t[0] = toks[0].ToDouble()/12;
+        change_of_basis.t[1] = toks[1].ToDouble()/12;
+        change_of_basis.t[2] = toks[2].ToDouble()/12;
+      }
+    }
+    
+  }
+  TStrList toks(hs, ' ');
+  if (toks.Count() < 1) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("Hall symbol: ").quote() << _hs);
+  }
+  smatd_list rv;
+  bool centric = toks[0].StartsFrom('-');
+  if (centric && toks[0].Length() == 1) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("Hall symbol: ").quote() << _hs);
+  }
+  int latt = TCLattice::LattForSymbol(toks[0].CharAt(centric ? 1 : 0)),
+    previous = 0, dir = 0;
+  for (size_t i=1; i < toks.Count(); i++) {
+    olxstr axis;
+    bool neg = toks[i].StartsFrom('-');
+    if (neg)
+      toks[i] = toks[i].SubStringFrom(1);
+    if (toks[i].Length() > 1 ) {
+      axis = toks[i].SubStringTo(2);
+      size_t ai = r_dict.IndexOf(axis);
+      if (ai == InvalidIndex) {
+        if (axis.CharAt(1) == '\'' || axis.CharAt(1) == '"' && dir != 0) {
+          previous = axis.CharAt(0)-'0';
+          smatd& m = rv.AddNew();
+          m.r = rotation_id::get(find_diagonal(dir, axis.CharAt(1)));
+          if (neg)
+            m.r *= -1;
+          toks[i] = toks[i].SubStringFrom(2);
+        }
+        else
+          axis.SetLength(0);
+      }
+      else {
+        previous = axis.CharAt(0)-'0';
+        smatd& m = rv.AddNew();
+        m.r = rotation_id::get(r_dict.GetValue(ai));
+        if (neg)
+          m.r *= -1;
+        toks[i] = toks[i].SubStringFrom(2);
+      }
+    }
+    if (axis.IsEmpty()) {
+      axis = toks[i].SubStringTo(1);
+      size_t ai = r_dict.IndexOf(axis);
+      int current = axis.CharAt(0)-'0';
+      if (ai == InvalidIndex) {
+        if (i == 1) {
+          axis << 'z';
+          dir = 3;
+        }
+        else if (i == 2) {
+          if (current == 2) {
+            if (previous == 2 || previous == 4) {
+              dir = 1;
+              axis << 'x';
+            }
+            else if (previous == 3 || previous == 6) {
+              axis << '\'';
+            }
+          }
+        }
+        else if (i == 3) {
+          if (current != 3) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              olxstr("Axis symbol: ").quote() << axis << " 3/3* is expected");
+          }
+          axis << '*';
+        }
+        ai = r_dict.IndexOf(axis);
+        if (ai == InvalidIndex) {
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            olxstr("Axis symbol: ").quote() << axis);
+        }
+      }
+      smatd& m = rv.AddNew();
+      m.r = rotation_id::get(r_dict.GetValue(ai));
+      if (neg)
+        m.r *= -1;
+      toks[i] = toks[i].SubStringFrom(1);
+      previous = axis.CharAt(0)-'0';
+    }
+    vec3d t;
+    for (size_t j=0; j < toks[i].Length(); j++) {
+      olxch t_s = toks[i].CharAt(j);
+      if (olxstr::o_isdigit(t_s)) {
+        t += get_screw_axis_t(dir, (t_s-'0')*12/(axis.CharAt(0)-'0'));
+      }
+      else {
+        size_t ti = t_dict.IndexOf(t_s);
+        if (ti == InvalidIndex) {
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            olxstr("Translation symbol: ").quote() << toks[i].CharAt(j));
+        }
+        t += *t_dict.GetValue(ti);
+      }
+    }
+    rv.GetLast().t += t;
+  }
+  SortedObjectList<int, TPrimitiveComparator> all;
+  smatd cob_i = change_of_basis.Inverse();
+  for (size_t i=0; i < rv.Count(); i++) {
+    rv[i] = cob_i*rv[i]*change_of_basis;
+    all.Add(rotation_id::get(rv[i].r));
+  }
+  const int i_id = r_dict['1'];
+  for (size_t i=0; i < rv.Count(); i++) {
+    for (size_t j=i; j < rv.Count(); j++) {
+      smatd m = rv[i]*rv[j];
+      m.t -= m.t.Floor<int>();
+      int id = rotation_id::get(m.r);
+      if (i_id == id) continue;
+      if (all.IndexOf(id) == InvalidIndex) {
+        all.Add(id);
+        rv.AddCopy(m);
+      }
+    }
+  }
+  rv.InsertNew(0).r.I();
+  smatd_list ml;
+  if (!centric)
+    latt *= -1;
+  TSymmLib::GetInstance().ExpandLatt(ml, rv, latt);
+  olxstr testr = Evaluate(ml);
+  TBasicApp::NewLogEntry() <<  "<-------------------------------" << testr;
+  for (size_t i=0; i < ml.Count(); i++)
+    TBasicApp::NewLogEntry() << TSymmParser::MatrixToSymmEx(ml[i]);
+  TBasicApp::NewLogEntry() <<  "------------------------------->";
+  return ml;
+}

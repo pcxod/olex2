@@ -23,21 +23,19 @@ protected:
     vec3d t;
   };
   static void init();
-  static char LattSymbols[];  // [abs(latt)-1]
   static TTypeList<AnAssociation2<vec3d, olxstr> > trans;
   //const TTypeList<AnAssociation2<mat3d, olxstr> > rotations;
   static TTypeList<AnAssociation2<int,olxstr> >
     rotx, roty, rotz, rotx1, roty1, rotz1, rot3;
-  static char GetLatticeSymbol(int latt)  {
-    const unsigned al = olx_abs(latt);
-    if( al > 9 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "latt");
-    return LattSymbols[al-1];
-  }
+  static olxstr_dict<int> r_dict;
+  static olxstr_dict<vec3d*> t_dict;
   static olxstr FindT(const vec3d& t, int order);
   static olxstr FindTR(const vec3d& t, int order);
   static int FindR(olxstr& hs, TTypeList<symop>& matrs,
     const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full);
+  static vec3d get_screw_axis_t(int dir, int order);
+  // dir - 1 for x, 2 for y, 3 for z, which - ' or "
+  static int find_diagonal(int dir, olxch which);
 public:
   // a compact list of matrices is taken
   static olxstr Evaluate(int latt, const smatd_list& matrices);
@@ -46,6 +44,7 @@ public:
     return Evaluate(SymSpace::GetInfo(matrices));
   }
   static olxstr Evaluate(const SymSpace::Info& si);
+  static ConstTypeList<smatd> Expand(const olxstr &hs);
 };
 
 EndXlibNamespace()

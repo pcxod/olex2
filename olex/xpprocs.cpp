@@ -6624,6 +6624,14 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if (!Cmds.IsEmpty())
+    HallSymbol::Expand(Cmds[0]);
+  //HallSymbol::Expand("P -2yac");
+  //HallSymbol::Expand("-P 2b 2b");
+  //HallSymbol::Expand("P 4ab 2ab -1ab");
+  //HallSymbol::Expand("P 32 2 (0 0 2)");
+  //HallSymbol::Expand("P 31 2\"");
+  //HallSymbol::Expand("-P 3* 2n");
   return;
   TXApp& xapp = TXApp::GetInstance();
   //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();

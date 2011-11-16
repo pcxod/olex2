@@ -40,7 +40,9 @@ namespace rotation_id {
         rv[i/3][i%3] = (id & (1<<(i+9))) ? -1 : 1;
     return rv;
   }
-  // generates an id for -matrix
+  /* generates an id for -matrix, bits matchign signs, signs^(bits<<9) -
+  inverts them
+  */
   static int negate(int id)  {
     return (id&0x1FF)|((id&0x3FE00)^((id&0x1FF)<<9));
   }
@@ -52,7 +54,55 @@ namespace rotation_id {
   static bool equals(int id1, int id2)  {
     return compare(id1, id2) == 0;
   }
-}; // end of the namespace rot_id
+}; // end of the namespace rotation_id
+
+/* space group matrix identifier - uses 13 bit for the rotation matrix and
+12 bits for the translation (all positive, < 12)
+*/
+namespace sg_mat_id {
+  // derived/using classes might need to know this
+  static const size_t
+    translation_size = 4,
+    size = rotation_id::size + 3*translation_size;
+  // generates id for a rotation matrix
+  static int get(const smatd& m) {
+    int mask = rotation_id::get(m.r);
+    for (int i=0; i < 3; i++) {
+      int v = olx_round((m.t[i]-olx_floor(m.t[i]))*12);
+      mask |= (v << (rotation_id::size+translation_size*i));
+    }
+    return mask;
+  }
+  // extracts translation from the id
+  static vec3d get_t(int id)  {
+    vec3d rv;
+    for (int i=0; i < 3; i++) {
+      int off = rotation_id::size+translation_size*i;
+      int v = (((id&(0xF<<off))>>off)&0xF);
+      rv[i] = (double)v/12;
+    }
+    return rv;
+  }
+  // generates a matrix from an id
+  static smatd get(int id)  {
+    smatd rv;
+    rv.r = rotation_id::get(id);
+    for (int i=0; i < 3; i++) {
+      int off = rotation_id::size+translation_size*i;
+      int v = (((id&(0xF<<off))>>off)&0xF);
+      rv.t[i] = (double)v/12;
+    }
+    return rv;
+  }
+  // compares only first 25 bits
+  static int compare(int id1, int id2)  {
+    return (id1&0x1FFFFFF)-(id2&0x1FFFFFF);
+  }
+  // compares only first 18 bits
+  static bool equals(int id1, int id2)  {
+    return compare(id1, id2) == 0;
+  }
+};
 
 /** Full Id stores the matrix rotation part in first 18 bits, although
 for any crystallographic rotation matrix 13 bits are needed (nine bits
@@ -115,29 +165,6 @@ template <int base=12> struct full_smatd_id  {
         rv[i] *= -1;
     }
     return rv;
-  }
-  static void Tests(OlxTests& t)  {
-    t.description = __OlxSrcInfo;
-    smatd m(mat3d(0, 1, 1, 1, 0, 1, 0, 0, 0), vec3d(-1./base, 10000./base, -21./base));
-    uint64_t id = full_smatd_id::get(m);
-    smatd id_r = full_smatd_id::get(id);
-    if( m.r != id_r.r || m.t.QDistanceTo(id_r.t) > 1e-15 )  {
-      math::alg::print0_2(m.r, "Source:");
-      math::alg::print0_1(m.t);
-      math::alg::print0_2(id_r.r, "Result:");
-      math::alg::print0_1(id_r.t);
-      throw TFunctionFailedException(__OlxSourceInfo, "m != id_r");
-    }
-    uint64_t i_id = full_smatd_id::negate(id);
-    smatd i_id_r = full_smatd_id::get(i_id);
-    i_id_r *= -1;
-    if( m.r != i_id_r.r || m.t.QDistanceTo(i_id_r.t) > 1e-15 )  {
-      math::alg::print0_2(m.r, "Source:");
-      math::alg::print0_1(m.t);
-      math::alg::print0_2(id_r.r, "Result:");
-      math::alg::print0_1(id_r.t);
-      throw TFunctionFailedException(__OlxSourceInfo, "m != -i_id_r");
-    }
   }
 };
 EndXlibNamespace()
