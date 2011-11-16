@@ -1,3 +1,4 @@
+
 /******************************************************************************
 * Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
 *                                                                             *
@@ -135,11 +136,13 @@ int main(int argc, char** argv)  {
     if( argc > 1 )  {
       olxstr arg(argv[1]);
       print_help = (arg == "-help" || arg == "/help" || arg == "--help");
-      if( !print_help )
+      if( !print_help && TEFile::Exists(arg) )  {
         base_dir = arg;
+      }
       var_name.SetLength(0);
     }
     TBasicApp bapp(TBasicApp::GuessBaseDir(base_dir, var_name));
+    bapp.GetLog().AddStream(&f_out, false);
     bapp.GetLog().AddStream(&out, false);
     if( print_help ) {
       TLog& log = bapp.GetLog();
@@ -276,7 +279,6 @@ void DoLaunch()  {
   const olxcstr cmdl = bd + "olex2.dll";
 #else
 #  ifdef __MAC__
-  bd << "olex2.app/Contents/MacOS/";
   olx_setenv("OLEX2_DIR", bd);
   static const olxcstr ld_var = "DYLD_LIBRARY_PATH";
 #  else
@@ -290,6 +292,6 @@ void DoLaunch()  {
 #endif
   TEFile::ChangeDir(bd);
   execl(cmdl.u_str(), cmdl.u_str(), NULL);
-  TBasicApp::NewLogEntry(logError) << "Failed to launch Olex2";
+  TBasicApp::NewLogEntry(logError) << "Failed to launch '" << cmdl << '\'';
 }
 
