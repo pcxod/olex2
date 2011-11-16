@@ -14,6 +14,7 @@
 #include "bapp.h"
 #include "hall.h"
 #include "symspace.h"
+//#include "bitarray.h"
 
 TSymmLib* TSymmLib::Instance = NULL;
 
@@ -1370,11 +1371,14 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
     _PointGroups[i] << PointGroups[i];
   _PointGroups[2] << FindGroup("P211") << FindGroup("P112");
   _PointGroups[3] << FindGroup("Pm11") << FindGroup("P11m");
+  _PointGroups[4] << FindGroup("P112/m") << FindGroup("P2/m11");
   _PointGroups[6] << FindGroup("P2mm") << FindGroup("Pm2m");
   _PointGroups[13] << FindGroup("P-4m2");
-  _PointGroups[17] << FindGroup("P312");
-  _PointGroups[18] << FindGroup("P31m");
-  _PointGroups[19] << FindGroup("P-31m");
+  _PointGroups[15] << FindGroup("R3:r");
+  _PointGroups[16] << FindGroup("R-3:r");
+  _PointGroups[17] << FindGroup("P312") <<  FindGroup("R32:r");
+  _PointGroups[18] << FindGroup("P31m") << FindGroup("R3m:r");
+  _PointGroups[19] << FindGroup("P-31m") << FindGroup("R-3m:r");
   _PointGroups[25] << FindGroup("P-6m2");
 
   InitRelations();
@@ -1452,7 +1456,7 @@ TSpaceGroup* TSymmLib::CreateNew(const SymSpace::Info& si,
       ml.AddCopy(si.matrices[i]);
   }
   if (si.inv_trans.IsNull(1e-3))
-    return CreateNewFromCompact(si.centrosymmetric ? si.latt : -si.latt, ml);
+    return CreateNewFromCompact(si.centrosymmetric ? si.latt : -si.latt, ml, hs);
   else {
     TSpaceGroup* SG = new TSpaceGroup(ml, hs, hs,
       EmptyString(), -(++extra_added), GetLatticeByNumber(si.latt), true, hs);
@@ -1582,8 +1586,26 @@ void TSymmLib::InitRelations()  {
       }
     }
   }
+//  TStrList o;
   for( size_t i=0; i < SGCount(); i++ )  {
     TSpaceGroup& sg = GetGroup(i);
+//    olxstr &l = o.Add("{\"") << sg.GetName() << "\", \"" <<
+//      sg.GetFullName() << "\", \"" << sg.GetAxis() << "\", " <<
+//      sg.GetNumber() << ", " <<
+//      sg.GetLattice().GetLatt()*(sg.IsCentrosymmetric() ? 1 : -1) <<
+//      ", \"";
+//    TEBitArray arr(sg_mat_id::size*sg.MatrixCount());
+//    for (size_t j=0; j < sg.MatrixCount(); j++) {
+//      for (int k=0; k < 3; k++)
+//        if (sg.GetMatrix(j).t[k] > 1)
+//          TBasicApp::NewLogEntry() << "Oups";
+//      int id = sg_mat_id::get(sg.GetMatrix(j));
+//      for (size_t k=0; k < sg_mat_id::size; k++) {
+//        if ((id&(1<<k)) != 0)
+//          arr.SetTrue(sg_mat_id::size*j+k);
+//      }
+//    }
+//    l << arr.ToBase64String() << "\"},";
     if( &sg.GetPointGroup() != NULL )  continue;
     TSpaceGroup* pg = NULL;
     for( size_t j=0; j < _PointGroups.Count(); j++ )  {
@@ -1595,15 +1617,9 @@ void TSymmLib::InitRelations()  {
       }
       if (pg != NULL) break;
     }
-    if( pg != NULL )  {
-      TPtrList<TSpaceGroup> allSG;
-      GetGroupByNumber(GetGroup(i).GetNumber(), allSG);
-      for( size_t j=0; j < allSG.Count(); j++ )  {
-        if( &allSG[j]->GetPointGroup() != NULL )
-          throw TFunctionFailedException(__OlxSourceInfo, "assert");
-        allSG[j]->SetPointGroup(*pg);
-      }
-    }
+//    TCStrList(o).SaveToFile("e:/2.txt");
+//    if( pg != NULL )
+//      sg.SetPointGroup(*pg);
   }
   // test
 #ifdef _DEBUG

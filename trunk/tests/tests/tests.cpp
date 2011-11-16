@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     Add(&test::TestQR).
     Add(&test::TestCholesky);
   tests.Add(&test::spline_test);
-  tests.Add(&full_smatd_id<>::Tests).Add(&test::rotation_id_test);
+  tests.Add(&test::MatIdTests);
   tests.Add(&test::symm_parser_tests);
   tests.Add(&smatd::Tests);
   tests.Add(&test::vcov_test);
