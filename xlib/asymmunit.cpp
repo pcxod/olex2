@@ -598,11 +598,20 @@ int TAsymmUnit::GetNextPart(bool neg) const {
 void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
   OnSGChange.Execute(this, &sg);
   Latt = sg.GetLattice().GetLatt();
-  if( !sg.IsCentrosymmetric() && Latt > 0 )  Latt = -Latt;
-
+  if( !sg.IsCentrosymmetric() && Latt > 0 )
+    Latt = -Latt;
   Matrices.Clear();
-  for( size_t i=0; i < sg.MatrixCount(); i++ )
-    Matrices.AddCopy(sg.GetMatrix(i));
+  if (sg.IsCentrosymmetric() && !sg.GetInversionCenter().IsNull(1e-3)) {
+    smatd_list ml;
+    sg.GetMatrices(ml, mattAll);
+    for (size_t i=1; i < ml.Count(); i++)
+      Matrices.AddCopy(ml[i]);
+    Latt = -sg.GetLattice().GetLatt();
+  }
+  else {
+    for( size_t i=0; i < sg.MatrixCount(); i++ )
+      Matrices.AddCopy(sg.GetMatrix(i));
+  }
 }
 //..............................................................................
 double TAsymmUnit::CalcCellVolume() const {

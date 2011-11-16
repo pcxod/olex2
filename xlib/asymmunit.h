@@ -66,17 +66,17 @@ public:
   TAsymmUnit(TLattice* L);
   virtual ~TAsymmUnit();
 
-  inline TLattice& GetLattice() const {  return *Lattice;  }
-  inline vec3d& GetAxes()  {  return Axes;  }
-  inline vec3d& GetAxisEsds()  {  return AxisEsds;  }
-  inline vec3d& GetAngles()  {  return Angles;  }
-  inline vec3d& GetAngleEsds()  {  return AngleEsds;  }
-  inline const vec3d& GetAxes() const {  return Axes;  }
-  inline const vec3d& GetAxisEsds() const {  return AxisEsds;  }
-  inline const vec3d& GetAngles() const {  return Angles;  }
-  inline const vec3d& GetAngleEsds() const {  return AngleEsds;  }
-  inline const vec3d& GetRAxes() const {  return RAxes;  }
-  inline const vec3d& GetRAngles() const {  return RAngles;  }
+  TLattice& GetLattice() const {  return *Lattice;  }
+  vec3d& GetAxes()  {  return Axes;  }
+  vec3d& GetAxisEsds()  {  return AxisEsds;  }
+  vec3d& GetAngles()  {  return Angles;  }
+  vec3d& GetAngleEsds()  {  return AngleEsds;  }
+  const vec3d& GetAxes() const {  return Axes;  }
+  const vec3d& GetAxisEsds() const {  return AxisEsds;  }
+  const vec3d& GetAngles() const {  return Angles;  }
+  const vec3d& GetAngleEsds() const {  return AngleEsds;  }
+  const vec3d& GetRAxes() const {  return RAxes;  }
+  const vec3d& GetRAngles() const {  return RAngles;  }
   double CalcCellVolume() const;
   /* estimates Z=Z'*sg.multiplicity according to 18.6A rule, partial occupancy
   implied double...
@@ -90,7 +90,7 @@ public:
   const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }
   const mat3d& GetHklToCartesian() const {  return Hkl2Cartesian; }
   template <typename VC, typename VC1>
-  inline VC& CellToCartesian(const VC& cell, VC1& crt) const {
+  VC& CellToCartesian(const VC& cell, VC1& crt) const {
     crt[0] = cell[0]*Cell2Cartesian[0][0] + cell[1]*Cell2Cartesian[1][0] +
       cell[2]*Cell2Cartesian[2][0];
     crt[1] = cell[1]*Cell2Cartesian[1][1] + cell[2]*Cell2Cartesian[2][1];
@@ -98,7 +98,7 @@ public:
     return crt;
     //Cartesian = Cell * Cell2Cartesian;
   }
-  template <class VC> inline VC& CellToCartesian(VC& crt) const {
+  template <class VC> VC& CellToCartesian(VC& crt) const {
     crt[0] = crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] +
       crt[2]*Cell2Cartesian[2][0];
     crt[1] = crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1];
@@ -106,21 +106,21 @@ public:
     return crt;
     //crt *= Cell2Cartesian;
   }
-  template <class VC> inline VC Orthogonalise(const VC& crt) const {
+  template <class VC> VC Orthogonalise(const VC& crt) const {
     return VC(
       crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] +
         crt[2]*Cell2Cartesian[2][0],
       crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1],
       crt[2]*Cell2Cartesian[2][2]);
   }
-  template <class VC> inline VC& CartesianToCell(VC& cll) const {
+  template <class VC> VC& CartesianToCell(VC& cll) const {
     cll[0] = cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] +
       cll[2]*Cartesian2Cell[2][0];
     cll[1] = cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1];
     cll[2] = cll[2]*Cartesian2Cell[2][2];
     return cll;
   }
-  template <class VC> inline VC Fractionalise(const VC& cll) const {
+  template <class VC> VC Fractionalise(const VC& cll) const {
     return VC(
       cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] +
         cll[2]*Cartesian2Cell[2][0],
@@ -177,8 +177,8 @@ public:
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number,
     const olxstr& alias=EmptyString());
-  inline size_t ResidueCount() const {  return Residues.Count()+1;  }
-  inline TResidue& GetResidue(size_t i) const {
+  size_t ResidueCount() const {  return Residues.Count()+1;  }
+  TResidue& GetResidue(size_t i) const {
     return (i==0) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i-1];
   }
   TResidue* NextResidue(const TResidue& r) const;
@@ -208,18 +208,19 @@ public:
   void DetachAtomType(short type, bool detach);
   /* removes all atoms marked as deleted */
   void PackAtoms();
-  inline TCAtom& GetAtom(size_t i) const {  return *CAtoms[i];  }
+  TCAtom& GetAtom(size_t i) const {  return *CAtoms[i];  }
   const TCAtomPList& GetAtoms() const {  return CAtoms;  }
   TCAtomPList& GetAtoms() {  return CAtoms;  }
-  inline size_t AtomCount() const { return CAtoms.Count();  }
+  size_t AtomCount() const { return CAtoms.Count();  }
 
-  inline size_t MatrixCount() const {  return Matrices.Count();  }
-  inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
+  size_t MatrixCount() const {  return Matrices.Count();  }
+  const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
   void ClearMatrices()  {  Matrices.Clear();  }
   void AddMatrix(const smatd& a);
+  const smatd_list& GetMatices() const {  return Matrices;  }
 
-  inline size_t EllpCount() const {  return Ellipsoids.Count();  }
-  inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i];  }
+  size_t EllpCount() const {  return Ellipsoids.Count();  }
+  TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i];  }
   void NullEllp(size_t i);
   void ClearEllps();
   void PackEllps();
@@ -245,8 +246,8 @@ public:
     char a='0', char b='a', char c='a') const;
 
   bool IsQPeakMinMaxInitialised() const {  return MaxQPeak != -1000;  }
-  inline double GetMaxQPeak() const {  return MaxQPeak;  }
-  inline double GetMinQPeak() const {  return MinQPeak;  }
+  double GetMaxQPeak() const {  return MaxQPeak;  }
+  double GetMinQPeak() const {  return MinQPeak;  }
   /* atoms should have at least three atoms for fitting. If the atoms.atom is
   NULL, atoms.element must be provided, if atoms.bool is false, the atom is not
   used in the fitting. The missing atoms will be initialised on successful

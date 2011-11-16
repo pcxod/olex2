@@ -12,6 +12,7 @@
 #include "mat_id.h"
 #include "edict.h"
 #include "symmat.h"
+#include "symspace.h"
 
 BeginXlibNamespace()
 
@@ -38,7 +39,13 @@ protected:
   static int FindR(olxstr& hs, TTypeList<symop>& matrs,
     const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full);
 public:
+  // a compact list of matrices is taken
   static olxstr Evaluate(int latt, const smatd_list& matrices);
+  // takes full list of matrices
+  static olxstr Evaluate(const smatd_list& matrices) {
+    return Evaluate(SymSpace::GetInfo(matrices));
+  }
+  static olxstr Evaluate(const SymSpace::Info& si);
 };
 
 EndXlibNamespace()

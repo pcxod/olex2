@@ -320,7 +320,10 @@ void TCif::Initialize()  {
         GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
     }
   }
-  catch(...)  {
+  catch (const TExceptionBase &e)  {
+    TStrList out;
+    e.GetException()->GetStackTrace(out);
+    TBasicApp::NewLogEntry(logInfo) << out;
     GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
   }
   try  {

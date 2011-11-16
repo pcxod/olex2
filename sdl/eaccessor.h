@@ -37,6 +37,21 @@ struct TDirectAccessor  {
   item_t& operator ()(item_t& item) const { return item; }
 };
 
+struct DereferenceAccessor  {
+  template <typename item_t>
+  const item_t& operator ()(const item_t* item) const { return *item; }
+  template <typename item_t>
+  item_t& operator ()(item_t* item) const { return *item; }
+};
+
+template <typename item_t>
+struct TDereferenceAccessor  {
+  typedef item_t return_type;
+
+  const item_t& operator ()(const item_t* item) const { return *item; }
+  item_t& operator ()(item_t* item) const { return *item; }
+};
+
 template <typename CastType> struct CCastAccessor  {
   typedef CastType return_type;
   template <typename Item>
