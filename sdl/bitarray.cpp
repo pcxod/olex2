@@ -17,6 +17,7 @@ TEBitArray::TEBitArray()  {  FData = NULL;  FCount = FCharCount = 0;  }
 //..............................................................................
 TEBitArray::TEBitArray(size_t size)  {
   FData = NULL;
+  FCharCount = FCount = 0;
   SetSize(size);
 }
 //..............................................................................
