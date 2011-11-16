@@ -64,7 +64,7 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
   if( !var_name.IsEmpty() )  {
     bd = olx_getenv(var_name);
   }
-  if( bd.IsEmpty() || !TEFile::Exists(bd) ) {
+  else {
 	  if( !TEFile::IsDir(path) )
       bd = TEFile::ExtractFilePath(path);
 		else
