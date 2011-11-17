@@ -142,7 +142,6 @@ int main(int argc, char** argv)  {
       var_name.SetLength(0);
     }
     TBasicApp bapp(TBasicApp::GuessBaseDir(base_dir, var_name));
-    bapp.GetLog().AddStream(&f_out, false);
     bapp.GetLog().AddStream(&out, false);
     if( print_help ) {
       TLog& log = bapp.GetLog();
