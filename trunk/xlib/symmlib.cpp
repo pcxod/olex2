@@ -1618,8 +1618,8 @@ void TSymmLib::InitRelations()  {
       if (pg != NULL) break;
     }
 //    TCStrList(o).SaveToFile("e:/2.txt");
-//    if( pg != NULL )
-//      sg.SetPointGroup(*pg);
+    if( pg != NULL )
+      sg.SetPointGroup(*pg);
   }
   // test
 #ifdef _DEBUG
