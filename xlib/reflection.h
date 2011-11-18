@@ -9,7 +9,7 @@
 
 #ifndef __OLEX_HKL_REFLECTION__
 #define __OLEX_HKL_REFLECTION__
-#include "symspace.h"
+#include "symmspace.h"
 BeginXlibNamespace()
 
 class TReflection: public ACollectionItem  {
@@ -158,14 +158,14 @@ public:
     return IsAbsent(hkl, ml);
   }
 //..............................................................................
-  void Standardise(const SymSpace::InfoEx& info)  {
+  void Standardise(const SymmSpace::InfoEx& info)  {
     hkl = Standardise(hkl, info);
     SetAbsent(IsAbsent(hkl, info));
   }
 //..............................................................................
-  static vec3i Standardise(const vec3i& _hkl, const SymSpace::InfoEx& info);
+  static vec3i Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info);
 //..............................................................................
-  static bool IsAbsent(const vec3i& hkl, const SymSpace::InfoEx& info);
+  static bool IsAbsent(const vec3i& hkl, const SymmSpace::InfoEx& info);
 //..............................................................................
   inline double PhaseShift(const smatd& m) const {  return m.t.DotProd(hkl);  }
 //..............................................................................
@@ -187,7 +187,7 @@ public:
     }
   }
 //..............................................................................
-  void Analyse(const SymSpace::InfoEx& info);
+  void Analyse(const SymmSpace::InfoEx& info);
 //..............................................................................
   inline bool IsSymmetric(const smatd& m) const {  return EqHkl(MulHkl(m.r));  }
 //..............................................................................

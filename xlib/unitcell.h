@@ -90,9 +90,8 @@ public:
   */
   smatd_list MulMatrices(const smatd_list& in, const smatd& transform) const;
   smatd MulMatrix(const smatd& m, const smatd& tr) const {
-    // rv*r = tr*(m*r) - this is how it is when applied to a vector....
-    smatd rv = m*tr;
-    const uint8_t index = MulDest[m.GetContainerId()][tr.GetContainerId()];
+    smatd rv = tr*m;
+    const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
     rv.SetId(index, (rv.t-Matrices[index].t).Round<int>());
     return rv;
   }
@@ -221,13 +220,13 @@ public:
     bool IncludeHBonds) const;
   
   typedef MatrixListAdaptor<TUnitCell> MatrixList;
-  typedef TSymSpace<TUnitCell::MatrixList> SymSpace;
+  typedef TSymmSpace<TUnitCell::MatrixList> SymmSpace;
 
   MatrixList GetMatrixList() const {  return MatrixList(*this);  }
 
-  SymSpace GetSymSpace() const {
+  SymmSpace GetSymmSpace() const {
     const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-    return SymSpace(MatrixList(*this),
+    return SymmSpace(MatrixList(*this),
       au.GetCartesianToCell(), au.GetCellToCartesian(), au.GetHklToCartesian(),
       au.GetLatt() > 0);
   }

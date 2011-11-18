@@ -62,8 +62,8 @@ smatd& TUnitCell::InitMatrixId(smatd& m) const {
 smatd_list TUnitCell::MulMatrices(const smatd_list& in, const smatd& transform) const {
   smatd_list out(in.Count());
   for( size_t i=0; i < in.Count(); i++ )  {
-    out.Set(i, new smatd(in[i]*transform));
-    const uint8_t index = MulDest[in[i].GetContainerId()][transform.GetContainerId()];
+    out.Set(i, new smatd(transform*in[i]));
+    const uint8_t index = MulDest[transform.GetContainerId()][in[i].GetContainerId()];
     const int8_t ta = (int8_t)(out[i].t[0]-Matrices[index].t[0]);
     const int8_t tb = (int8_t)(out[i].t[1]-Matrices[index].t[1]);
     const int8_t tc = (int8_t)(out[i].t[2]-Matrices[index].t[2]);

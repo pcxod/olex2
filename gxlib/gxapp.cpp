@@ -337,10 +337,12 @@ void TGXApp::CreateXRefs()  {
   vec3d mind = FGlRender->MinDim(),
         maxd = FGlRender->MaxDim();
   RefinementModel::HklStat stats = 
-    XFile().GetRM().GetRefinementRefList<TUnitCell::SymSpace,RefMerger::StandardMerger>(
-    XFile().GetUnitCell().GetSymSpace(), refs);
+    XFile().GetRM().GetRefinementRefList<
+    TUnitCell::SymmSpace,RefMerger::StandardMerger>(
+      XFile().GetUnitCell().GetSymmSpace(), refs);
   for( size_t i=0; i < refs.Count(); i++ )  {
-    TXReflection* xr = new TXReflection(*FGlRender, "XReflection", stats.MinI, stats.MaxI, refs[i],
+    TXReflection* xr = new TXReflection(*FGlRender, "XReflection",
+      stats.MinI, stats.MaxI, refs[i],
       FXFile->GetAsymmUnit());
     xr->Create();
     XReflections.Add(*xr);

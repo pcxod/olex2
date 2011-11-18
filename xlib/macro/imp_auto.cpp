@@ -616,7 +616,7 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,
   TRefList refs;
   TArrayList<compd> F;
   TArrayList<SFUtil::StructureFactor> P1SF;
-  const TUnitCell::SymSpace sym_space = uc.GetSymSpace();
+  const TUnitCell::SymmSpace sym_space = uc.GetSymmSpace();
   SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression);
   SFUtil::ExpandToP1(refs, F, sym_space, P1SF);
   const vec3s dim = map.GetSize();
@@ -657,7 +657,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   TUnitCell& uc = xapp.XFile().GetUnitCell();
   TArrayList<SFUtil::StructureFactor> P1SF;
-  const TUnitCell::SymSpace sym_space = uc.GetSymSpace();
+  const TUnitCell::SymmSpace sym_space = uc.GetSymmSpace();
   sw.start("Expanding structure factors to P1 (fast symm)");
   SFUtil::ExpandToP1(refs, F, sym_space, P1SF);
   sw.stop();

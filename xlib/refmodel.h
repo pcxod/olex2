@@ -648,13 +648,13 @@ Friedel opposites of components 1 ... m
   }
   // uses algebraic relation
   void DetwinAlgebraic(TRefList& refs, const HklStat& st,
-    const SymSpace::InfoEx& info_ex) const;
+    const SymmSpace::InfoEx& info_ex) const;
   // convinience method for mrehedral::detwin<> with  detwin_mixed
   void DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
-    const HklStat& st, const SymSpace::InfoEx& info_ex) const;
+    const HklStat& st, const SymmSpace::InfoEx& info_ex) const;
   // convinience method for mrehedral::detwin<> with  detwin_shelx
   void DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
-    const HklStat& st, const SymSpace::InfoEx& info_ex) const;
+    const HklStat& st, const SymmSpace::InfoEx& info_ex) const;
   template <class RefList, class FList, class SymSpace>
   void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const
   {

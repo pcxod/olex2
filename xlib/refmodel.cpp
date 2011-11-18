@@ -65,7 +65,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   RefContainers(GetIdName(), this);
   au.SetRefMod(this);
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::SetDefaults() {
   HKLF = 4;
   HKLF_s = def_HKLF_s;
@@ -86,7 +86,7 @@ void RefinementModel::SetDefaults() {
   TWIN_n = def_TWIN_n;
   TWIN_mat.I() *= -1;
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::Clear(uint32_t clear_mask) {
   for( size_t i=0; i < SfacData.Count(); i++ )
     delete SfacData.GetValue(i);
@@ -127,7 +127,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   if( (clear_mask & rm_clear_VARS) != 0 )
     Vars.ClearAll();
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::ClearVarRefs() {
   for( size_t i=0; i < RefContainers.Count(); i++ )  {
     IXVarReferencerContainer* rc = RefContainers.GetValue(i);
@@ -138,7 +138,7 @@ void RefinementModel::ClearVarRefs() {
     }
   }
 }
-//....................................................................................................
+//.............................................................................
 const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id)  {
   for( size_t i=0;  i < UsedSymm.Count(); i++ )  {
     if( UsedSymm.GetValue(i).symop == matr )  {
@@ -149,12 +149,12 @@ const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id)  
   return UsedSymm.Add(
     id.IsEmpty() ? (olxstr("$") << (UsedSymm.Count()+1)) : id, RefinementModel::Equiv(matr)).symop;
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
   for( size_t i=0;  i < UsedSymm.Count(); i++ )
     uc.InitMatrixId(UsedSymm.GetValue(i).symop);
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::RemUsedSymm(const smatd& matr)  {
   for( size_t i=0;  i < UsedSymm.Count(); i++ )  {
     if( UsedSymm.GetValue(i).symop == matr )  {
@@ -165,14 +165,14 @@ void RefinementModel::RemUsedSymm(const smatd& matr)  {
   }
   throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
 }
-//....................................................................................................
+//.............................................................................
 size_t RefinementModel::UsedSymmIndex(const smatd& matr) const {
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     if( UsedSymm.GetValue(i).symop == matr )
       return i;
   return InvalidIndex;
 }
-//....................................................................................................
+//.............................................................................
 RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignAUnit) {
   Clear(rm_clear_ALL);
   expl = rm.expl;
@@ -253,7 +253,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   
   return *this;
 }
-//....................................................................................................
+//.............................................................................
 olxstr RefinementModel::GetBASFStr() const {
   olxstr rv;
   for( size_t i=0; i < BASF.Count(); i++ )  {
@@ -263,7 +263,7 @@ olxstr RefinementModel::GetBASFStr() const {
   }
   return rv;
 }
-//....................................................................................................
+//.............................................................................
 olxstr RefinementModel::GetDEFSStr() const {
   olxstr rv;
   for( size_t i=0; i < DEFS.Count(); i++ )  {
@@ -273,7 +273,7 @@ olxstr RefinementModel::GetDEFSStr() const {
   }
   return rv;
 }
-//....................................................................................................
+//.............................................................................
 olxstr RefinementModel::GetTWINStr() const {
   olxstr rv;
   for( size_t i=0; i < 9; i++ )  {
@@ -284,21 +284,21 @@ olxstr RefinementModel::GetTWINStr() const {
   }
   return rv << TWIN_n;
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::SetIterations(int v)  {  
   if( LS.IsEmpty() ) 
     LS.Add(v);
   else
     LS[0] = v;  
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::SetPlan(int v)  {  
   if( PLAN.IsEmpty() )  
     PLAN.Add(v);
   else
     PLAN[0] = v;  
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::AddSfac(XScatterer& sc)  {
   const size_t i = SfacData.IndexOf(sc.GetLabel());
   if( i != InvalidIndex )  {
@@ -308,15 +308,15 @@ void RefinementModel::AddSfac(XScatterer& sc)  {
   else
     SfacData.Add(sc.GetLabel(), &sc);
 }
-//....................................................................................................
+//.............................................................................
 InfoTab& RefinementModel::AddHTAB() {
   return InfoTables.Add(new InfoTab(*this, infotab_htab));
 }
-//....................................................................................................
+//.............................................................................
 InfoTab& RefinementModel::AddRTAB(const olxstr& codename, const olxstr& resi) {
   return InfoTables.Add(new InfoTab(*this, infotab_rtab, codename, resi));
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::Validate() {
   for( size_t i=0; i < rcList1.Count(); i++ )
     rcList1[i]->ValidateAll();
@@ -332,7 +332,7 @@ void RefinementModel::Validate() {
       InfoTables.Delete(i--);
   }
 }
-//....................................................................................................
+//.............................................................................
 bool RefinementModel::ValidateInfoTab(const InfoTab& it)  {
   size_t it_ind = InvalidIndex;
   bool unique = true;
@@ -351,7 +351,7 @@ bool RefinementModel::ValidateInfoTab(const InfoTab& it)  {
   }
   return true;
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::AddInfoTab(const TStrList& l)  {
   size_t atom_start = 1;
   size_t resi_ind = l[0].IndexOf('_');
@@ -394,7 +394,7 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
     }
   }
 }
-//....................................................................................................
+//.............................................................................
 double RefinementModel::FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2)  {
   for(size_t i=0; i < rDFIX.Count(); i++ )  {
     for( size_t j=0; j < rDFIX[i].AtomCount(); j+=2 )  {
@@ -406,12 +406,12 @@ double RefinementModel::FindRestrainedDistance(const TCAtom& a1, const TCAtom& a
   }
   return -1;
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::SetHKLSource(const olxstr& src) {
   if( HKLSource == src )  return;
   HKLSource = src;
 }
-//....................................................................................................
+//.............................................................................
 const TRefList& RefinementModel::GetReflections() const {
   try {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
@@ -473,7 +473,7 @@ const TRefList& RefinementModel::GetReflections() const {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
 }
-//....................................................................................................
+//.............................................................................
 const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   // we need to take into the account MERG, HKLF and OMIT things here...
   try {
@@ -496,11 +496,13 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.SetDefaults();
       TRefList refs;
       FilterHkl(refs, _HklStat);
-      TUnitCell::SymSpace sp = aunit.GetLattice().GetUnitCell().GetSymSpace();
+      TUnitCell::SymmSpace sp =
+        aunit.GetLattice().GetUnitCell().GetSymmSpace();
       if( MERG != 0 && HKLF != 5 )  {
         bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
-        _HklStat = RefMerger::DryMerge<TUnitCell::SymSpace,RefMerger::ShelxMerger>(
-          sp, refs, Omits, mergeFP);
+        _HklStat = RefMerger::DryMerge<
+          TUnitCell::SymmSpace,RefMerger::ShelxMerger>(
+            sp, refs, Omits, mergeFP);
       }
       else
         _HklStat = RefMerger::DrySGFilter(sp, refs, Omits);
@@ -512,8 +514,10 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   }
   return _HklStat;
 }
-//....................................................................................................
-RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementModel::HklStat& stats)  {
+//.............................................................................
+RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
+  RefinementModel::HklStat& stats)
+{
   const TRefList& all_refs = GetReflections();
   // swap the values if in wrong order
   if( SHEL_hr > SHEL_lr )
@@ -534,7 +538,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
   stats.TotalReflections = out.Count();
   return stats;
 }
-//....................................................................................................
+//.............................................................................
 RefinementModel::HklStat& RefinementModel::AdjustIntensity(TRefList& out,
   RefinementModel::HklStat& stats) const
 {
@@ -551,7 +555,7 @@ RefinementModel::HklStat& RefinementModel::AdjustIntensity(TRefList& out,
   }
   return stats;
 }
-//....................................................................................................
+//.............................................................................
 size_t RefinementModel::ProcessOmits(TRefList& refs)  {
   if( Omits.IsEmpty() )  return 0;
   size_t processed = 0;
@@ -574,14 +578,15 @@ size_t RefinementModel::ProcessOmits(TRefList& refs)  {
     refs.Pack();
   return processed;
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
-  const SymSpace::InfoEx& info_ex) const
+  const SymmSpace::InfoEx& info_ex) const
 {
   using namespace twinning;
   if( !GetBASF().IsEmpty() )  {
     TDoubleList scales = GetScales();
-    merohedral tw(info_ex, refs, st, scales, mat3d::Transpose(GetTWIN_mat()), GetTWIN_n());
+    merohedral tw(info_ex, refs, st, scales,
+      mat3d::Transpose(GetTWIN_mat()), GetTWIN_n());
     detwinner_algebraic dtw(scales);
     TRefList dtr;
     dtr.SetCapacity(refs.Count());
@@ -589,8 +594,8 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
       if( refs[i].GetTag() < 0 )  continue;
       const size_t s = dtr.Count();
       dtw.detwin(
-        obs_twin_mate_generator<merohedral::iterator>(merohedral::iterator(tw, i), refs),
-        dtr);
+        obs_twin_mate_generator<merohedral::iterator>(
+          merohedral::iterator(tw, i), refs), dtr);
       for( size_t j=s; j < dtr.Count(); j++ )  {
         if( tw.hkl_to_ref_map(dtr[j].GetHkl()) )  {
           size_t ri = tw.hkl_to_ref_map(dtr[j].GetHkl());
@@ -604,9 +609,9 @@ void RefinementModel::DetwinAlgebraic(TRefList& refs, const HklStat& st,
     }
   }
 }
-//....................................................................................................
-void RefinementModel::DetwinMixed(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
-  const SymSpace::InfoEx& info_ex) const
+//.............................................................................
+void RefinementModel::DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
+  const HklStat& st, const SymmSpace::InfoEx& info_ex) const
 {
   using namespace twinning;
   if( !BASF.IsEmpty() )  {
@@ -616,9 +621,9 @@ void RefinementModel::DetwinMixed(TRefList& refs, const TArrayList<compd>& F, co
       detwin(detwinner_mixed(), refs, F);
   }
 }
-//....................................................................................................
-void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F, const HklStat& st,
-  const SymSpace::InfoEx& info_ex) const
+//.............................................................................
+void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
+  const HklStat& st, const SymmSpace::InfoEx& info_ex) const
 {
   using namespace twinning;
   if( !BASF.IsEmpty() )  {
@@ -628,8 +633,10 @@ void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F, co
       detwin(detwinner_shelx(), refs, F);
   }
 }
-//....................................................................................................
-void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<TSimpleRestraint>* b_res) {
+//.............................................................................
+void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res,
+  TPtrList<TSimpleRestraint>* b_res)
+{
   Validate();
   int sec_num = 0;
   if( (rDFIX.Count()|rDANG.Count()|rSADI.Count()) != 0 )  {
@@ -639,7 +646,8 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       if( b_res != NULL )  b_res->Add(&sr);
       olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
-        str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
+        str << sr.GetAtom(j).GetFullLabel(*this) << '-' <<
+          sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
           str << " = ";
       }
@@ -650,7 +658,8 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       if( b_res != NULL )  b_res->Add(&sr);
       olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
-        str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
+        str << sr.GetAtom(j).GetFullLabel(*this) << '-' <<
+          sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
           str << " = ";
       }
@@ -661,7 +670,8 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       if( b_res != NULL )  b_res->Add(&sr);
       olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
-        str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
+        str << sr.GetAtom(j).GetFullLabel(*this) << '-' <<
+          sr.GetAtom(j+1).GetFullLabel(*this);
         if( (j+2) < sr.AtomCount() )
           str << " ~ ";
       }
@@ -674,7 +684,8 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       TSimpleRestraint& sr = rCHIV[i];
       olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
-        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
+        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
+          a_res->Add(sr.GetAtom(j).GetAtom()); 
         str << sr.GetAtom(j).GetFullLabel(*this);
         if( (j+1) < sr.AtomCount() )
           str << ", ";
@@ -688,7 +699,8 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       TSimpleRestraint& sr = rFLAT[i];
       olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
-        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
+        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
+          a_res->Add(sr.GetAtom(j).GetAtom()); 
         str << sr.GetAtom(j).GetFullLabel(*this);
         if( (j+1) < sr.AtomCount() )
           str << ", ";
@@ -713,7 +725,8 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
             str << ", ";
         }
       }
-      str << ": with sigma for 1-2 distances of " << sr.GetEsd() << " and sigma for 1-3 distances of " <<
+      str << ": with sigma for 1-2 distances of " << sr.GetEsd() <<
+        " and sigma for 1-3 distances of " <<
         sr.GetEsd1();
     }
   }
@@ -727,7 +740,8 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       }
       else {
         for( size_t j=0; j < sr.AtomCount(); j++ )  {
-          if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
+          if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
+            a_res->Add(sr.GetAtom(j).GetAtom()); 
           str << "U(" << sr.GetAtom(j).GetFullLabel(*this) << ')';
           if( (j+2) < sr.AtomCount() )
             str << " ~ ";
@@ -745,19 +759,22 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       else {
         for( size_t j=0; j < sr.AtomCount(); j++ )  {
           if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )  continue;
-          if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
+          if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
+            a_res->Add(sr.GetAtom(j).GetAtom()); 
           str << "Uanis(" << sr.GetAtom(j).GetFullLabel(*this) << ") ~ Uiso";
           if( (j+1) < sr.AtomCount() )
             str << ", ";
         }
       }
-      str << ": with sigma of " << sr.GetEsd() << " and sigma for terminal atoms of " << sr.GetEsd1();
+      str << ": with sigma of " << sr.GetEsd() <<
+        " and sigma for terminal atoms of " << sr.GetEsd1();
     }
     for( size_t i=0; i < rEADP.Count(); i++ )  {
       TSimpleRestraint& sr = rEADP[i];
       olxstr& str = lst.Add(EmptyString());
       for( size_t j=0; j < sr.AtomCount(); j++ )  {
-        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
+        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
+          a_res->Add(sr.GetAtom(j).GetAtom()); 
         if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )
           str << "Uiso(";
         else 
@@ -822,13 +839,14 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
     olxstr ag_name = gl[0]->Describe();
     if( !ag_name.IsEmpty() )
       ag_name[0] = olxstr::o_toupper(ag_name.CharAt(0));
-    lst.Add(olxstr(sec_num) << '.' << (olxch)('a'+afix_sn++)) << ' ' << ag_name << ':';
+    lst.Add(olxstr(sec_num) << '.' << (olxch)('a'+afix_sn++)) << ' ' <<
+      ag_name << ':';
     olxstr& line = lst.Add(gl[0]->ToString());
     for( size_t j=1; j < gl.Count(); j++ )
       line << ", " << gl[j]->ToString();
   }
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::ProcessFrags()  {
   // generate missing atoms for the AFIX 59, 66
   olxdict<int, TPtrList<TAfixGroup>, TPrimitiveComparator> a_groups;
@@ -898,7 +916,7 @@ void RefinementModel::ProcessFrags()  {
     Frags.Delete(ind);
   }
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::ToDataItem(TDataItem& item) {
   // fields
   item.AddField("RefOutArg", PersUtil::NumberListToStr(PLAN));
@@ -963,7 +981,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
 }
-//....................................................................................................
+//.............................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
   Clear(rm_clear_ALL);
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
@@ -1053,7 +1071,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   }
   aunit._UpdateConnInfo();
 }
-//....................................................................................................
+//.............................................................................
 #ifndef _NO_PYTHON
 PyObject* RefinementModel::PyExport(bool export_conn)  {
   PyObject* main = PyDict_New(), 

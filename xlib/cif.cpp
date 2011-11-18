@@ -272,8 +272,14 @@ void TCif::Initialize()  {
     size_t iindex = Loop->ColIndex("_space_group_symop_id");
     if( sindex != InvalidIndex )  {
       for( size_t i=0; i < Loop->RowCount(); i++ )  {
-        if( !TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew()) )
-          throw TFunctionFailedException(__OlxSourceInfo, "could not process symmetry matrix");
+        try {
+          TSymmParser::SymmToMatrix(
+            Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew());
+        }
+        catch (const TExceptionBase &e) {
+          throw TFunctionFailedException(__OlxSourceInfo, e,
+            "could not process symmetry matrix");
+        }
         if( iindex == InvalidIndex )
           MatrixMap.Add(i+1, i);
         else
@@ -286,13 +292,20 @@ void TCif::Initialize()  {
     if( Loop == NULL )
       Loop = FindLoop("_symmetry_equiv_pos_as_xyz");
     if( Loop != NULL  )  {
-      cetTable& symop_tab = AddLoopDef("_space_group_symop_id,_space_group_symop_operation_xyz");
+      cetTable& symop_tab = AddLoopDef(
+        "_space_group_symop_id,_space_group_symop_operation_xyz");
       size_t sindex = Loop->ColIndex("_symmetry_equiv_pos_as_xyz");
       size_t iindex = Loop->ColIndex("_symmetry_equiv_pos_site_id");
       if( sindex != InvalidIndex )  {
         for( size_t i=0; i < Loop->RowCount(); i++ )  {
-          if( !TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew()) )
-            throw TFunctionFailedException(__OlxSourceInfo, "could not process symmetry matrix");
+          try {
+            TSymmParser::SymmToMatrix(
+              Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew());
+          }
+          catch (const TExceptionBase &e) {
+            throw TFunctionFailedException(__OlxSourceInfo, e,
+              "could not process symmetry matrix");
+          }
           CifRow& row = symop_tab.AddRow();
           if( iindex == InvalidIndex )  {
             MatrixMap.Add(i+1, i);
@@ -311,20 +324,24 @@ void TCif::Initialize()  {
   }
   try  {
     if( Matrices.IsEmpty() )
-      GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
+      GetAsymmUnit().ChangeSpaceGroup(
+      *TSymmLib::GetInstance().FindGroupByName("P1"));
     else  {
       TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
       if( sg != NULL )
         GetAsymmUnit().ChangeSpaceGroup(*sg);
-      else
-        GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
+      else {
+        GetAsymmUnit().ChangeSpaceGroup(
+          *TSymmLib::GetInstance().FindGroupByName("P1"));
+      }
     }
   }
   catch (const TExceptionBase &e)  {
     TStrList out;
     e.GetException()->GetStackTrace(out);
     TBasicApp::NewLogEntry(logInfo) << out;
-    GetAsymmUnit().ChangeSpaceGroup(*TSymmLib::GetInstance().FindGroup("P1"));
+    GetAsymmUnit().ChangeSpaceGroup(
+      *TSymmLib::GetInstance().FindGroupByName("P1"));
   }
   try  {
     TStrList frm(GetParamAsString("_chemical_formula_sum"), ' ');

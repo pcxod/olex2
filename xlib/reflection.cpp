@@ -18,7 +18,7 @@
   static const uint16_t bitCentric, bitAbsent, bitOmitted;
 #endif
 
-vec3i TReflection::Standardise(const vec3i& _hkl, const SymSpace::InfoEx& info)  {
+vec3i TReflection::Standardise(const vec3i& _hkl, const SymmSpace::InfoEx& info)  {
   vec3i hkl = _hkl;
   if( info.centrosymmetric )  {
     vec3i hklv = -hkl, new_hkl = hkl;
@@ -62,7 +62,7 @@ vec3i TReflection::Standardise(const vec3i& _hkl, const SymSpace::InfoEx& info) 
   return hkl;
 }
 //..............................................................................
-bool TReflection::IsAbsent(const vec3i& hkl, const SymSpace::InfoEx& info)  {
+bool TReflection::IsAbsent(const vec3i& hkl, const SymmSpace::InfoEx& info)  {
   bool absent = false;
   for( size_t i=0; i < info.matrices.Count(); i++ )  {
     vec3i hklv = hkl*info.matrices[i].r;
@@ -128,33 +128,43 @@ TIString TReflection::ToString() const {
 #ifdef _MSC_VER
   if( GetBatch() == NoBatchSet )
     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-  else
-    sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, GetBatch());
+  else {
+    sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i",
+      hkl[0], hkl[1], hkl[2], I, S, GetBatch());
+  }
 #else
   if( GetBatch() == NoBatchSet )
     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
-  else
-    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, GetBatch());
+  else {
+    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i",
+      hkl[0], hkl[1], hkl[2], I, S, GetBatch());
+  }
 #endif
   return olxstr(bf);
 }
 //..............................................................................
 char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
 #ifdef _MSC_VER
-  if( GetBatch() == NoBatchSet )
-    sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
-  else
-    sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, GetBatch());
+  if( GetBatch() == NoBatchSet ) {
+    sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf",
+      hkl[0], hkl[1], hkl[2], I*k, S*k);
+  }
+  else {
+    sprintf_s(bf, sz, "%4i%4i%4i%8.2lf%8.2lf%4i",
+      hkl[0], hkl[1], hkl[2], I*k, S*k, GetBatch());
+  }
 #else
   if( GetBatch() == NoBatchSet )
     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I*k, S*k);
-  else
-    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I*k, S*k, GetBatch());
+  else {
+    sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i",
+      hkl[0], hkl[1], hkl[2], I*k, S*k, GetBatch());
+  }
 #endif
   return bf;
 }
 //..............................................................................
-void TReflection::Analyse(const SymSpace::InfoEx& info)  {
+void TReflection::Analyse(const SymmSpace::InfoEx& info)  {
   _reset_flags(0, 1, GetBatch());
   if( info.centrosymmetric )
     SetCentric(true);
@@ -169,7 +179,8 @@ void TReflection::Analyse(const SymSpace::InfoEx& info)  {
         bool absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
         if( !absent )  {
           for( size_t j=0; j < info.vertices.Count(); j++ )  {
-            const double ps = (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
+            const double ps =
+              (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
             if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
               SetAbsent(true);
           }

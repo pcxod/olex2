@@ -7,19 +7,19 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __olx_xl_symspace_H
-#define __olx_xl_symspace_H
+#ifndef __olx_xl_symmspace_H
+#define __olx_xl_symmspace_H
 #include "edict.h"
 #include "mat_id.h"
 BeginXlibNamespace()
 
-template <class MatList> class TSymSpace  {
+template <class MatList> class TSymmSpace  {
   MatList ml;
   const mat3d &cart2cell, &cell2cart, &hkl2cart;
   bool centrosymmetric;
   size_t start;
 protected:
-  TSymSpace(const TSymSpace& sp, size_t _start) :
+  TSymmSpace(const TSymmSpace& sp, size_t _start) :
     ml(sp.ml),
     cart2cell(sp.cart2cell),
     cell2cart(sp.cell2cart),
@@ -27,7 +27,7 @@ protected:
     start(sp.start+_start),
     centrosymmetric(sp.centrosymmetric)  {}
 public:
-  TSymSpace(const MatList& _ml,
+  TSymmSpace(const MatList& _ml,
     const mat3d& _cart2cell,
     const mat3d& _cell2cart,
     const mat3d& _hkl2cart,
@@ -39,7 +39,7 @@ public:
       start(0),
       centrosymmetric(_centrosymmetric)  {}
 
-  TSymSpace(const TSymSpace& sp) :
+  TSymmSpace(const TSymmSpace& sp) :
     ml(sp.ml),
     cart2cell(sp.cart2cell),
     cell2cart(sp.cell2cart),
@@ -47,9 +47,9 @@ public:
     start(sp.start),
     centrosymmetric(sp.centrosymmetric)  {}
 
-  inline const smatd& operator [] (size_t i) const {  return ml[i+start];  }
-  inline size_t Count() const {  return ml.Count()-start;  }
-  inline bool IsEmpty() const {  return Count() == 0;  }
+  const smatd& operator [] (size_t i) const {  return ml[i+start];  }
+  size_t Count() const {  return ml.Count()-start;  }
+  bool IsEmpty() const {  return Count() == 0;  }
   bool IsCentrosymmetric() const {  return centrosymmetric;  }
   template <typename vec_type> vec3d Orthogonalise(const vec_type& v) const {
     return vec3d(
@@ -82,33 +82,35 @@ public:
       v[0]*hkl2cart[0][2] + v[1]*hkl2cart[1][2] + v[2]*hkl2cart[2][2]
     );
   }
-  TSymSpace<MatList> SubListFrom(size_t _start) const {  return TSymSpace<MatList>(*this, _start);  }
+  TSymmSpace<MatList> SubListFrom(size_t _start) const {
+    return TSymmSpace<MatList>(*this, _start);
+  }
 };
 
-// the adaptor for complex classes having MatrixCount()/GetMatrix(size_t) methods
+/* the adaptor for complex classes having MatrixCount()/GetMatrix(size_t)
+methods
+*/
 template <class MatrixContainer> class MatrixListAdaptor {
   const MatrixContainer& mc;
 public:
   MatrixListAdaptor(const MatrixContainer& _mc) : mc(_mc)  {}
   MatrixListAdaptor(const MatrixListAdaptor& mla) : mc(mla.mc)  {}
-  inline size_t Count() const {  return mc.MatrixCount();  }
-  inline bool IsEmpty() const {  return Count() == 0;  }
-  inline const smatd& operator [](size_t i) const {  return mc.GetMatrix(i);  }
+  size_t Count() const {  return mc.MatrixCount();  }
+  bool IsEmpty() const {  return Count() == 0;  }
+  const smatd& operator [](size_t i) const {  return mc.GetMatrix(i);  }
 };
 
-namespace SymSpace  {
-  static int sort_group(const smatd *m1, const smatd *m2) {
-    int r = olx_cmp(m1->t.QLength(), m2->t.QLength());
-    if (r == 0) {
-      if (m1->t[0] == 0 || m2->t[0] == 0) {
-        if (m1->t[0] == 0 && m2->t[0] == 0)
-          return olx_cmp(m1->t[1], m2->t[1]);
-        return olx_cmp(m1->t[0], m2->t[0]);
-      }
-    }
-    return r;
-  }
+namespace SymmSpace  {
+  
+  extern int sort_group(const smatd *m1, const smatd *m2);
+  
   struct Info  {
+  protected:
+    static int sort_matrix_list(const smatd *m1, const smatd *m2) {
+      return olx_cmp(rotation_id::get(m1->r), rotation_id::get(m2->r));
+    }
+    static vec3d normalise_t(const vec3d &t);
+  public:
     bool centrosymmetric;
     /* list of the compact matrices including the identity
     */
@@ -119,19 +121,30 @@ namespace SymSpace  {
     vec3d inv_trans;
     // always positive
     short latt;
-    // a list of lattice translations
-    vec3d_list translations;
+    bool operator == (const Info &info) const;
+    bool operator != (const Info &info) const {
+      return !this->operator==(info);
+    }
+    // makes sure that matrix list is sorted and translations are normalised
+    void normalise(const vec3d_list &translations);
+    // just sorts matrices
+    void normalise() {
+      matrices.QuickSorter.SortSF(matrices, &sort_matrix_list);
+    }
   };
   struct InfoEx  {  // has a list of translation vectors vs latt number
     bool centrosymmetric;
     smatd_list matrices;
     vec3d_list vertices;
   };
-  template <class SP> static Info GetInfo(const SP& sp)  {
+  template <class SP> static Info GetInfo(const SP& sp,
+    vec3d_list *translations_=NULL)
+  {
     if( sp.Count() == 0 ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "at least one matrix is expected");
     }
+    vec3d_list translations;
     Info rv;
     rv.latt = -1;
     rv.centrosymmetric = false;
@@ -181,7 +194,7 @@ namespace SymSpace  {
       {
         rv.latt = 5; //'A';
       }
-      rv.translations.AddCopy(t);
+      translations.AddCopy(t);
     }
     else if( min_a_group == 3 )  {
       vec3d t1 = groups.GetValue(0)[1].t - groups.GetValue(0)[0].t;
@@ -206,13 +219,13 @@ namespace SymSpace  {
       {
         rv.latt = 9; //'T';
       }
-      rv.translations.AddCopy(t1);
-      rv.translations.AddCopy(t2);
+      translations.AddCopy(t1);
+      translations.AddCopy(t2);
     }
     else if( min_a_group ) {
-      rv.translations.AddNew(0.0, 0.5, 0.5);
-      rv.translations.AddNew(0.5, 0.0, 0.5);
-      rv.translations.AddNew(0.5, 0.5, 0.0);
+      translations.AddNew(0.0, 0.5, 0.5);
+      translations.AddNew(0.5, 0.0, 0.5);
+      translations.AddNew(0.5, 0.5, 0.0);
       rv.latt = 4; //'F';
     }
     if( rv.latt < 0 ) {
@@ -265,21 +278,36 @@ namespace SymSpace  {
       for( size_t j=0; j < l.Count(); j++ )
         rv.matrices.AddCopy(l[j]);
     }
+    rv.normalise(translations);
+    if (translations_ != NULL) *translations_ = translations;
     return rv;
   }
-  // returns a compact form of symspace
+  // returns a compact form of SymmSpace
   template <class SP> static InfoEx Compact(const SP& sp)  {
     InfoEx rv;
-    Info info = GetInfo(sp);
+    Info info = GetInfo(sp, &rv.vertices);
     rv.centrosymmetric = info.centrosymmetric;
-    rv.vertices = info.translations;
     for (size_t i=0; i < info.matrices.Count(); i++)  {
       if (info.matrices[i].IsI())
         rv.matrices.AddCopy(info.matrices[i]);
     }
+    // expand -1 if not at (0,0,0)
+    if (!info.inv_trans.IsNull(1e-3)) {
+      rv.centrosymmetric = false;
+      // use info - it has the I
+      size_t mc = info.matrices.Count();
+      rv.matrices.SetCapacity(mc*2);
+      vec3d it = info.inv_trans*2;
+      for (size_t i=0; i < mc; i++) {
+        smatd &m = rv.matrices.AddCopy(info.matrices[i]);
+        m.r *= -1;
+        m.t += it;
+        m.t -= m.t.Floor<int>();
+      }
+    }
     return rv;
   }
-};  // end namespace SymSpace
+};  // end namespace SymmSpace
 
 EndXlibNamespace()
 #endif

@@ -117,7 +117,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   }
 
   Sg.DeleteChars(' ');
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroup(Sg);
+  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroupByName(Sg);
   if( sg != NULL )  {
     GetAsymmUnit().ChangeSpaceGroup(*sg);
     SGInitialised = true;

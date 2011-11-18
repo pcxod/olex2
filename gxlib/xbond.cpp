@@ -591,7 +591,8 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   if( level == 0 )  return L;
   L << '.' << A->GetLabel() << '-' << B->GetLabel();
   if( level == 1 )  return L;
-  TUnitCell::SymSpace sp = A->GetNetwork().GetLattice().GetUnitCell().GetSymSpace();
+  TUnitCell::SymmSpace sp =
+    A->GetNetwork().GetLattice().GetUnitCell().GetSymmSpace();
   L << '.' << TSymmParser::MatrixToSymmCode(sp, A->GetMatrix(0)) <<
     '-' <<
     TSymmParser::MatrixToSymmCode(sp, B->GetMatrix(0));

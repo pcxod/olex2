@@ -191,7 +191,7 @@ namespace twinning  {
         return rv;
       }
     };
-    merohedral(const SymSpace::InfoEx& _sym_info, const TRefList& _all_refs,
+    merohedral(const SymmSpace::InfoEx& _sym_info, const TRefList& _all_refs,
       const RefinementModel::HklStat& _ms, const TDoubleList& _scales, const mat3i& tm, int _n)
       : sym_info(_sym_info), all_refs(_all_refs), ms(_ms),
         scales(_scales),
@@ -224,7 +224,7 @@ namespace twinning  {
           twin_mate_generator<iterator>(iterator(*this, i), scales, Fc));
       }
     }
-    const SymSpace::InfoEx& sym_info;
+    const SymmSpace::InfoEx& sym_info;
     const TRefList& all_refs;
     RefinementModel::HklStat ms;
     TDoubleList scales;
@@ -247,7 +247,7 @@ namespace twinning  {
         return parent.all_refs[off-current++];
       }
     };
-    general(const SymSpace::InfoEx& _sym_info, const TRefList& _all_refs,
+    general(const SymmSpace::InfoEx& _sym_info, const TRefList& _all_refs,
       const RefUtil::ResolutionAndSigmaFilter& filter, const TDoubleList& _scales)
       : sym_info(_sym_info), all_refs(_all_refs),
         scales(_scales),
@@ -333,7 +333,7 @@ namespace twinning  {
       detwin(dt, out, Fc);
       TRefPList to_merge(out, DirectAccessor());
       out.ReleaseAll();
-      SymSpace::InfoEx si = sym_info;
+      SymmSpace::InfoEx si = sym_info;
       si.centrosymmetric = true;
       RefMerger::Merge<merger_t>(sym_info, to_merge, out, vec3i_list());
       to_merge.DeleteItems(false);
@@ -350,7 +350,7 @@ namespace twinning  {
         }
       }
     }
-    const SymSpace::InfoEx& sym_info;
+    const SymmSpace::InfoEx& sym_info;
     const TRefList& all_refs;
     TRefList reflections;
     vec3i_list unique_indices;

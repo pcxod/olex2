@@ -153,13 +153,14 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       return "could not locate hkl file";
     double av = 0;
     sw.start("Loading/Filtering/Merging HKL");
-    TUnitCell::SymSpace sp = xapp.XFile().GetUnitCell().GetSymSpace();
-    SymSpace::InfoEx info_ex = SymSpace::Compact(sp);
+    TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
+    SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
     info_ex.centrosymmetric = true;
     RefinementModel& rm = xapp.XFile().GetRM();
     if( rm.GetHKLF() < 5 )  {
       RefinementModel::HklStat ms =
-        rm.GetFourierRefList<TUnitCell::SymSpace,RefMerger::ShelxMerger>(sp, refs);
+        rm.GetFourierRefList<
+          TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
       F.SetCount(refs.Count());
       sw.start("Calculating structure factors");
       //xapp.CalcSF(refs, F);
@@ -176,7 +177,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         RefUtil::ResolutionAndSigmaFilter(rm), scales);
       TArrayList<compd> Fc(twin.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, Fc);
-      twin.detwin_and_merge(twinning::detwinner_shelx(), RefMerger::ShelxMerger(), refs, Fc, &F);
+      twin.detwin_and_merge(twinning::detwinner_shelx(),
+        RefMerger::ShelxMerger(), refs, Fc, &F);
     }
    
     //xapp.XFile().GetRM().DetwinRatio(refs, F, ms, info_ex);

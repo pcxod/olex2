@@ -24,7 +24,9 @@ class TSymmParser  {
     return -1;
   }
   
-  template <typename vc>  static vc& ExtractTranslation(const olxstr& str, vc& t)  {
+  template <typename vc>  static vc& ExtractTranslation(const olxstr& str,
+    vc& t)
+  {
     if( str.Length() == 3 )  {
       t[0] += (int)(str.CharAt(0)-'5');
       t[1] += (int)(str.CharAt(1)-'5');
@@ -35,8 +37,10 @@ class TSymmParser  {
       t[1] += (str.SubString(2, 2).ToInt()-50);
       t[2] += (str.SubString(4, 2).ToInt()-50);
     }
-    else
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong translation code: ") << str);
+    else {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("wrong translation code: ") << str);
+    }
     return t;
   }
   static olxstr FormatFloatEx(double f)  {
@@ -51,7 +55,7 @@ class TSymmParser  {
     if( base == 1 )  return rv << v;
     else             return rv << v << '/' << base;
   }
-  template <class SM> static olxstr _MatrixToSymm(const SM& M, bool fraction)  {
+  template <class SM> static olxstr _MatrixToSymm(const SM& M, bool fraction) {
     olxstr T, T1;
     for( int j=0; j < 3; j ++ )  {
       if( j != 0 )
@@ -82,7 +86,9 @@ class TSymmParser  {
   }
   // can take both TAsymmUnit or TUnitCell
   template <class SymSpace>
-  static smatd _SymmCodeToMatrix(const SymSpace& sp, const olxstr& Code, size_t* index=NULL)  {
+  static smatd _SymmCodeToMatrix(const SymSpace& sp, const olxstr& Code,
+    size_t* index=NULL)
+  {
     TStrList Toks(Code, '_');
     smatd mSymm;
     if( Toks.Count() == 1 )  {  // standard XP symm code like 3444
@@ -92,16 +98,22 @@ class TSymmParser  {
       }
       else  {
         size_t isymm = Toks[0].ToSizeT()-1;
-        if( isymm >= sp.Count() )
-          throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
+        if( isymm >= sp.Count() ) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            olxstr("wrong matrix index: ") << isymm);
+        }
         return sp[isymm];
       }
     }
-    if( Toks.Count() != 2 )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong code: ") << Code);
+    if( Toks.Count() != 2 ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("wrong code: ") << Code);
+    }
     const size_t isymm = Toks[0].ToSizeT()-1;
-    if( isymm >= sp.Count() )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
+    if( isymm >= sp.Count() ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("wrong matrix index: ") << isymm);
+    }
     mSymm = sp[isymm];
     if( index != NULL )  *index = isymm;
     vec3i t;
@@ -117,14 +129,21 @@ public:
   static olxstr MatrixToSymm(const smatd& M)  {
     return _MatrixToSymm(M, false);
   }
-    // Transforms matrix to standard SYMM operation (INS, CIF files), using fractions of 12 for translations
+  /* Transforms matrix to standard SYMM operation (INS, CIF files), using
+    fractions of 12 for translations
+    */
   static olxstr MatrixToSymmEx(const smatd& M)  {
     return _MatrixToSymm(M, true);
   }
-    // Transforms matrix to standard SYMM operation (INS, CIF files), using fractions of 12 for translations
+  /* Transforms matrix to standard SYMM operation (INS, CIF files), using
+  fractions of 12 for translations
+  */
   static olxstr MatrixToSymmEx(const mat3i& M);
     // Transforms standard SYMM operation (INS, CIF files) to matrix
-  static bool SymmToMatrix(const olxstr& symm, smatd& M);
+  static smatdd SymmToMatrix(const olxstr& symm);
+  static void SymmToMatrix(const olxstr &symm, smatd& M) {
+    M = SymmToMatrix(symm);
+  }
   // return a matrix representation of 1_555 or 1_505050 code for the unit cell
   static smatd SymmCodeToMatrix(const smatd_list& ml, const olxstr& Code)  {
     size_t index = InvalidIndex;
@@ -135,28 +154,39 @@ public:
   }
   template <class SymSpaceOwner>
   static smatd SymmCodeToMatrix(const SymSpaceOwner& u, const olxstr& Code)  {
-    return _SymmCodeToMatrix(u.GetSymSpace(), Code);
+    return _SymmCodeToMatrix(u.GetSymmSpace(), Code);
   }
-  /* return a string representation of a matrix like 1_555 or 1_505050 code in dependence on
-  the length of translations; Matrix->ContainerId must be set to the corerct index in the container!!! */
+  /* return a string representation of a matrix like 1_555 or 1_505050 code in
+  dependence on the length of translations; Matrix->ContainerId must be set to
+  the correct index in the container!!!
+  */
   template <class SymSpace>
   static olxstr MatrixToSymmCode(const SymSpace& sp, const smatd& M)  {
     vec3i Trans(sp[M.GetContainerId()].t - M.t);
     int baseVal = 5;
-    if( (olx_abs(Trans[0]) > 4) || (olx_abs(Trans[1]) > 4) || (olx_abs(Trans[1]) > 4) )
+    if( (olx_abs(Trans[0]) > 4) || (olx_abs(Trans[1]) > 4) ||
+        (olx_abs(Trans[1]) > 4) )
+    {
       baseVal = 50;
+    }
     static char bf[64];
 #ifdef _MSC_VER
-    sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+    sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1,
+      baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #else
-    sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+    sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1,
+      baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #endif
     return olxstr(bf);
   }
-  /*checks if the given string represents a symmetry operation (1_554, 1554, 1505149, x,y,z) 
-  works as a combination of the two following functions */
+  /*checks if the given string represents a symmetry operation
+  (1_554, 1554, 1505149, x,y,z) works as a combination of the two following
+  functions
+  */
   static bool IsSymm(const olxstr& s);
-  //checks if the given string represents a symmetry operation (1_554, 1554, 1505149)
+  /*checks if the given string represents a symmetry operation
+  (1_554, 1554, 1505149)
+  */
   static bool IsRelSymm(const olxstr& s);
   //checks if the given string represents a symmetry operation (x,y,z)
   static bool IsAbsSymm(const olxstr& s);

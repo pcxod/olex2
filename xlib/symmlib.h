@@ -27,15 +27,14 @@ class TBravaisLattice;
 class TSymmElement;
 
 class TCLattice  {
-  TTypeList<vec3d> Vectors;
+  vec3d_list Vectors;
   TPtrList<TBravaisLattice> BravaisLattices;
   olxstr Name, Symbol;
   short Latt;
 public:
   TCLattice(int Latt);
   virtual ~TCLattice()  {  }
-  size_t VectorCount() const {  return Vectors.Count();  }
-  const vec3d& GetVector(size_t i) const {  return Vectors[i];  }
+  const vec3d_list &GetVectors() const { return Vectors; }
   /** returns the multiplicity imposed by latt instruction, considers
   inversion for positive number (will multiply returned value by 2 for
   positive numbers)
@@ -143,8 +142,7 @@ public:
   void SetPointGroup(TSpaceGroup& lc)  {  PointGroup = &lc;  }
   TSpaceGroup& GetPointGroup() const {  return *PointGroup;  }
 
-  bool operator == (const TAsymmUnit& AU) const;
-  bool operator == (const smatd_list& matrices) const;
+  SymmSpace::Info GetInfo() const;
   // compares m.R and summs (delta(m.t))^2 into st;
   bool Compare(const smatd_list& matrices, double& st) const;
   bool EqualsWithoutTranslation(const TSpaceGroup& sg) const;
@@ -181,16 +179,17 @@ public:
   size_t GetUniqMatrices(smatd_list& matrices, short Flags) const;
 
   // this function finds a symmetry element in a list of matrices
-  static bool ContainsElement( const smatd_list& matrices, TSymmElement* symme);
+  static bool ContainsElement(const smatd_list& matrices, TSymmElement* symme);
   // this function is used to assign point groups to the space group
   bool ContainsElement(TSymmElement* symme);
   bool ContainsGroup(TSpaceGroup* symme);
-  typedef TSymSpace<smatd_list> SymSpace;
+  
+  typedef TSymmSpace<smatd_list> SymmSpace_;
 
-  SymSpace GetSymSpace(const TAsymmUnit& au) const {
+  SymmSpace_ GetSymSpace(const TAsymmUnit& au) const {
     smatd_list ml;
     GetMatrices(ml, mattAll);
-    return SymSpace(ml,
+    return SymmSpace_(ml,
       au.GetCartesianToCell(), au.GetCellToCartesian(), au.GetHklToCartesian(),
       IsCentrosymmetric());
   }
@@ -266,7 +265,7 @@ class TSymmLib: public IEObject  {
   TSpaceGroup* CreateNewFromCompact(int latt,
     const smatd_list& compact_matrices, const olxstr &hall_sb=EmptyString());
   TSpaceGroup &InitSpaceGroup(TSpaceGroup &sg);
-  TSpaceGroup *CreateNew(const SymSpace::Info &si_info, const olxstr &hall_sb);
+  TSpaceGroup *CreateNew(const SymmSpace::Info &si_info, const olxstr &hall_sb);
 public:
   // 21.06.2008, the file name is not used
   TSymmLib(const olxstr& FN=EmptyString());
@@ -275,10 +274,10 @@ public:
   TSpaceGroup* FindSG(const TAsymmUnit& AU);
 
   // searches for expanded space groups like in the CIF
-  template <class SymSpaceT>
-  TSpaceGroup* FindSymSpace(const SymSpaceT &sp) {
+  template <class SymmSpaceT>
+  TSpaceGroup* FindSymSpace(const SymmSpaceT &sp) {
     smatd_list all_ml(sp);
-    SymSpace::Info si = SymSpace::GetInfo(all_ml);
+    SymmSpace::Info si = SymmSpace::GetInfo(all_ml);
     olxstr hs = HallSymbol::Evaluate(si);
     TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
     return sg == NULL ? CreateNew(si, hs) : sg;
@@ -295,8 +294,14 @@ public:
   size_t SGCount() const {  return SpaceGroups.Count();  }
   TSpaceGroup& GetGroup(size_t i) const {  return *SpaceGroups.GetObject(i);  }
   void GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const;
-  TSpaceGroup* FindGroup(const olxstr& Name) const {
+  TSpaceGroup* FindGroupByName(const olxstr& Name) const {
     return SpaceGroups[Name];
+  }
+  TSpaceGroup* FindGroupByHallSymbol(const olxstr &hs,
+  TSpaceGroup *def=NULL) const
+ {
+    size_t i = hall_symbols.IndexOf(hs);
+    return i == InvalidIndex ? def : hall_symbols.GetValue(i);
   }
 
   size_t SymmElementCount() const {  return SymmetryElements.Count();  }
@@ -334,7 +339,7 @@ public:
     const MatList& ml, short _latt) const
   {
     const TCLattice& latt = GetLatticeByNumber(_latt);
-    out.SetCapacity(latt.VectorCount()*ml.Count()* (_latt > 0 ? 2 : 1));
+    out.SetCapacity(latt.GetVectors().Count()*ml.Count()* (_latt > 0 ? 2 : 1));
     out.AddNew().r.I();
     for( size_t i=0;  i < ml.Count(); i++ )  {
       const smatd& m = ml[i];
@@ -349,8 +354,8 @@ public:
     mc = out.Count();
     for( size_t i=0; i < mc; i++ )  {
       const smatd& m = out[i];
-      for( size_t j = 0; j < latt.VectorCount(); j++ )
-        out.AddCopy(m).t += latt.GetVector(j);
+      for( size_t j = 0; j < latt.GetVectors().Count(); j++ )
+        out.AddCopy(m).t += latt.GetVectors()[j];
     }
     for( size_t i=0; i < out.Count(); i++ )
       out[i].t -= out[i].t.Floor<int>();

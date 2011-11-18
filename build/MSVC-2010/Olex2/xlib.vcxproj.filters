@@ -792,6 +792,9 @@
     <ClCompile Include="..\..\..\xlib\analysis.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symmspace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -1019,9 +1022,6 @@
     <ClInclude Include="..\..\..\xlib\symmcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\xlib\symspace.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\xlib\twinning.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1053,6 +1053,12 @@
       <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\analysis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\hall_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symmspace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

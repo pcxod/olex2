@@ -9,7 +9,7 @@
 
 #include "lcells.h"
 #include "symmparser.h"
-#include "symspace.h"
+#include "symmspace.h"
 #include "math/composite.h"
 #include "xapp.h"
 
@@ -27,7 +27,8 @@ ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
       for( size_t db=0; db < cif.Count(); db++ )    {
         cif_dp::CifBlock& block = cif[db];
         try {
-          olxstr l = GetCifParamAsString(block, "_symmetry_space_group_name_h-m").ToLowerCase();
+          olxstr l = GetCifParamAsString(block,
+            "_symmetry_space_group_name_h-m").ToLowerCase();
           char latt = 0;
           if( l.IsEmpty() || l == '?' )  {  // go hard way then...
             latt = ExtractLattFromSymmetry(block);
@@ -48,12 +49,18 @@ ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
           }
           if( latt != 0 )  {
             CellInfo rv;
-            rv.cell[0] = ToDouble(GetCifParamAsString(block, "_cell_length_a"));
-            rv.cell[1] = ToDouble(GetCifParamAsString(block, "_cell_length_b"));
-            rv.cell[2] = ToDouble(GetCifParamAsString(block, "_cell_length_c"));
-            rv.cell[3] = ToDouble(GetCifParamAsString(block, "_cell_angle_alpha"));
-            rv.cell[4] = ToDouble(GetCifParamAsString(block, "_cell_angle_beta"));
-            rv.cell[5] = ToDouble(GetCifParamAsString(block, "_cell_angle_gamma"));
+            rv.cell[0] =
+              ToDouble(GetCifParamAsString(block, "_cell_length_a"));
+            rv.cell[1] =
+              ToDouble(GetCifParamAsString(block, "_cell_length_b"));
+            rv.cell[2] =
+              ToDouble(GetCifParamAsString(block, "_cell_length_c"));
+            rv.cell[3] =
+              ToDouble(GetCifParamAsString(block, "_cell_angle_alpha"));
+            rv.cell[4] =
+              ToDouble(GetCifParamAsString(block, "_cell_angle_beta"));
+            rv.cell[5] =
+              ToDouble(GetCifParamAsString(block, "_cell_angle_gamma"));
             rv.lattice = latt;
             rvl.Add(rv);
           }
@@ -108,9 +115,12 @@ double CellReader::ToDouble(const olxstr &str)  {
   return (i == InvalidIndex ? str : str.SubStringTo(i)).ToDouble();
 }
 //.............................................................................
-olxstr CellReader::GetCifParamAsString(const cif_dp::CifBlock &block, const olxstr &Param)  {
+olxstr CellReader::GetCifParamAsString(const cif_dp::CifBlock &block,
+  const olxstr &Param)
+{
   using namespace cif_dp;
-  IStringCifEntry* ce = dynamic_cast<IStringCifEntry*>(block.param_map.Find(Param, NULL));
+  IStringCifEntry* ce = dynamic_cast<IStringCifEntry*>(
+    block.param_map.Find(Param, NULL));
   if( ce == NULL || ce->Count() == 0 )  return EmptyString();
   olxstr rv = (*ce)[0];
   for( size_t i = 1; i < ce->Count(); i++ )
@@ -128,8 +138,8 @@ int CellReader::ExtractLattFromSymmetry(const cif_dp::CifBlock &block)  {
       size_t sindex = Loop->ColIndex("_space_group_symop_operation_xyz");
       if( sindex == InvalidIndex )  return 0;
       for( size_t i=0; i < Loop->RowCount(); i++ )  {
-        if( TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue(), matrices.AddNew()) )
-          return 1;
+        TSymmParser::SymmToMatrix(
+          Loop->Get(i, sindex).GetStringValue(), matrices.AddNew());
       }
     }
     else  {
@@ -140,13 +150,13 @@ int CellReader::ExtractLattFromSymmetry(const cif_dp::CifBlock &block)  {
         size_t sindex = Loop->ColIndex("_symmetry_equiv_pos_as_xyz");
         if( sindex == InvalidIndex )  return 0;
         for( size_t i=0; i < Loop->RowCount(); i++ )  {
-          if( !TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue(), matrices.AddNew()) )
-            return 0;
+          TSymmParser::SymmToMatrix(
+            Loop->Get(i, sindex).GetStringValue(), matrices.AddNew());
         }
       }
     }
     if( matrices.IsEmpty() )  return 0;
-    return SymSpace::GetInfo(matrices).latt;
+    return SymmSpace::GetInfo(matrices).latt;
   }
   catch(const TExceptionBase &e)  {
     TBasicApp::NewLogEntry() << e.GetException()->GetFullMessage();
@@ -403,7 +413,8 @@ void Index::PrintResults(const TTypeList<ResultEntry> &res)  {
     row2[1] << rc.ToString();
     row2[2] << olxstr::FormatFloat(2, res[i].niggli_volume) << "A^3";
   }
-  TBasicApp::NewLogEntry() << tab.CreateTXTList("Search results", true, false, ' ');
+  TBasicApp::NewLogEntry() <<
+    tab.CreateTXTList("Search results", true, false, ' ');
 }
 //.............................................................................
 ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
@@ -523,8 +534,9 @@ void IndexManager::SaveConfig(const olxstr &file_name) {
     TDataFile df;
     TDataItem &root = df.Root().AddItem("indices");
     for( size_t i=0; i < indices.Count(); i++ )  {
-      root.AddItem(i+1).AddField("file",
-        TEFile::CreateRelativePath(indices[i].index_file_name, TBasicApp::GetSharedDir()))
+      root.AddItem(i+1)
+        .AddField("file", TEFile::CreateRelativePath(
+          indices[i].index_file_name, TBasicApp::GetSharedDir()))
         .AddField("root", indices[i].root)
         .AddField("update", indices[i].update);
     }

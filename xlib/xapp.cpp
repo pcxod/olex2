@@ -22,15 +22,17 @@
 #include "maputil.h"
 #include "vcov.h"
 
-TXApp::TXApp(const olxstr &basedir, bool) : TBasicApp(basedir), Library(EmptyString(), this)  {}
+TXApp::TXApp(const olxstr &basedir, bool)
+  : TBasicApp(basedir), Library(EmptyString(), this)  {}
 //..............................................................................
-TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider, ASelectionOwner* selOwner) :
-  TBasicApp(basedir), Library(EmptyString(), this)
+TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
+  ASelectionOwner* selOwner)
+  : TBasicApp(basedir), Library(EmptyString(), this)
 {
   Init(objectProvider, selOwner);
 }
 //..............................................................................
-void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner)  {
+void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
   SelectionOwner = selOwner;
   try  {
     if( !TSymmLib::IsInitialised() )
@@ -39,7 +41,8 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner)  {
   catch( const TIOException& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FXFile = new TXFile(*(objectProvider == NULL ? new SObjectProvider : objectProvider));
+  FXFile = new TXFile(*(objectProvider == NULL ? new SObjectProvider
+    : objectProvider));
 
   DefineState(psFileLoaded, "Loaded file is expected");
   DefineState(psCheckFileTypeIns, "INS file is expected");
@@ -97,11 +100,14 @@ bool TXApp::CheckProgramState(unsigned int specialCheck)  {
    XFile().LastLoader()->IsNative()
    );
  else if( specialCheck & psCheckFileTypeP4P )
-   return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TP4PFile);
+   return (!XFile().HasLastLoader()) ? false
+    : EsdlInstanceOf(*XFile().LastLoader(), TP4PFile);
  else if( specialCheck & psCheckFileTypeCRS )
-   return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TCRSFile);
+   return (!XFile().HasLastLoader()) ? false
+    : EsdlInstanceOf(*XFile().LastLoader(), TCRSFile);
  else if( specialCheck & psCheckFileTypeCif )
-   return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TCif);
+   return (!XFile().HasLastLoader()) ? false
+    : EsdlInstanceOf(*XFile().LastLoader(), TCif);
   throw TFunctionFailedException(__OlxSourceInfo, "undefined state");
 }
 //..............................................................................
@@ -118,7 +124,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   }
   smatd_list ml;
   sg->GetMatrices(ml, mattAll^(mattCentering));
-  const int multiplier = sg->GetLattice().VectorCount()+1;
+  const int multiplier = sg->GetLattice().GetVectors().Count()+1;
 
   evecd quad(6);
   const static double EQ_PI = 8*M_PI*M_PI;
@@ -128,7 +134,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   double WaveLength = 0.71073;
 
   // the thermal ellipsoid scaling factors
-  double BM[6] = {hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(), 0, 0, 0};
+  double BM[6] = {hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(),
+    0, 0, 0};
   BM[3] = 2*BM[1]*BM[2];
   BM[4] = 2*BM[0]*BM[2];
   BM[5] = 2*BM[0]*BM[1];
@@ -147,7 +154,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     if( ind == InvalidIndex )  {
       scatterers.AddNew<const cm_Element*,compd,compd>(&ca.GetType(), 0, 0);
       bais.Add(ca.GetType());
-      scatterers.GetLast().C() = scatterers.GetLast().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
+      scatterers.GetLast().C() =
+        scatterers.GetLast().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
       scatterers.GetLast().C() -= scatterers.GetLast().GetA()->z;
       ind = scatterers.Count() - 1;
     }
@@ -179,7 +187,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       compd l;
       for( size_t k=0; k < m_cnt; k++ )  {
         const vec3d hkl = ref.GetHkl()*ml[k].r;
-        double tv = T_PI*(alist[j]->ccrd().DotProd(hkl) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
+        double tv = T_PI*(alist[j]->ccrd().DotProd(hkl) +
+          ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
         double ca, sa;
         olx_sincos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
@@ -240,7 +249,8 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       if( CheckLabel )  {
         TCAtom* CA;
         while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
-          if( CA == &al[j]->CAtom() || CA->IsDeleted() || CA->GetTag() < 0 )  break;
+          if( CA == &al[j]->CAtom() || CA->IsDeleted() || CA->GetTag() < 0 )
+            break;
           Labl = al[j]->GetType().symbol + Name;
           if( Labl.Length() >= 4 )  
             Labl.SetLength(3);
@@ -279,7 +289,8 @@ void TXApp::undoName(TUndoData *data)  {
 }
 //..............................................................................
 TUndoData* TXApp::FixHL()  {
-  TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TXApp>(this, &TXApp::undoName));
+  TNameUndo *undo = new TNameUndo(
+    new TUndoActionImplMF<TXApp>(this, &TXApp::undoName));
   olxdict<int,TSAtomPList,TPrimitiveComparator> frags;
   TIntList frag_id;
   TSAtomPList satoms;
@@ -295,7 +306,9 @@ TUndoData* TXApp::FixHL()  {
   const size_t ac = objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = objects.atoms[i];
-    if( !sa.CAtom().IsAvailable() || sa.GetType() == iQPeakZ || !sa.IsAUAtom() )  {
+    if( !sa.CAtom().IsAvailable() || sa.GetType() == iQPeakZ ||
+      !sa.IsAUAtom() )
+    {
       sa.SetTag(-1);
       continue;
     }
@@ -305,8 +318,11 @@ TUndoData* TXApp::FixHL()  {
       sa.CAtom().SetLabel(EmptyString(), false);
       continue;
     }
-    if( frag_id.IsEmpty() || frag_id.IndexOf(sa.CAtom().GetFragmentId()) != InvalidIndex )
+    if( frag_id.IsEmpty() ||
+        frag_id.IndexOf(sa.CAtom().GetFragmentId()) != InvalidIndex )
+    {
       frags.Add(sa.CAtom().GetFragmentId()).Add(sa);
+    }
   }
   if( frag_id.IsEmpty() )  {
     for( size_t i=0; i < frags.Count(); i++ )  {
@@ -346,7 +362,9 @@ bool RingsEq(const TSAtomPList& r1, const TSAtomPList& r2 )  {
   }
   return true;
 }
-void TXApp::RingContentFromStr(const olxstr& Condition, ElementPList& ringDesc)  {
+void TXApp::RingContentFromStr(const olxstr& Condition,
+  ElementPList& ringDesc)
+{
   TStrList toks;
   olxstr symbol, count;
   for( size_t i=0; i < Condition.Length(); i++ )  {
@@ -385,12 +403,14 @@ void TXApp::RingContentFromStr(const olxstr& Condition, ElementPList& ringDesc) 
 
   for( size_t i=0; i < toks.Count(); i++ )  {
     cm_Element* elm = XElementLib::FindBySymbol(toks[i]);
-    if( elm == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << toks[i]);
+    if( elm == NULL ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("Unknown element: ") << toks[i]);
+    }
     ringDesc.Add(elm);
   }
 }
-void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
+void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings) {
   ElementPList ring;
   // external ring connectivity
   TTypeList< ElementPList > extRing;
@@ -410,7 +430,9 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
   rings.Pack();
 }
 //..............................................................................
-bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll, bool ClearSelection)  {
+bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
+  bool ReturnAll, bool ClearSelection)
+{
   if( SelectionOwner != NULL )
     SelectionOwner->SetDoClearSelection(ClearSelection);
   TSAtomPList atoms;
@@ -432,7 +454,8 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
         toks.Delete(i);
         i--;
       }
-      else if( toks[i].IsNumber() )  {  // should not be here, but the parser will choke on it
+      // should not be here, but the parser will choke on it
+      else if( toks[i].IsNumber() )  {
         toks.Delete(i);
         i--;
       }
@@ -456,7 +479,8 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
             TSAtom& sa = objects.atoms[j];
             if( !sa.CAtom().IsAvailable() )  continue;
             if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
-            if( ag[i].GetMatrix() == NULL )  {  // get an atom from the asymm unit
+            // get an atom from the asymm unit
+            if( ag[i].GetMatrix() == NULL )  {
               if( sa.IsAUAtom() )
                 atoms.Add(sa);
             }
@@ -487,15 +511,20 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
   size_t pivot = (pivot_last ? ring.Count()-1 : 0);
   for( size_t i=0; i < ring.Count(); i++ )
     info << ' ' << ring[i]->GetLabel();
-  TBasicApp::NewLogEntry() << info << ". Chosen pivot atom is " << ring[pivot]->GetLabel();
+  TBasicApp::NewLogEntry() << info << ". Chosen pivot atom is " <<
+    ring[pivot]->GetLabel();
   if( ring[pivot]->CAtom().GetDependentAfixGroup() != NULL )
     ring[pivot]->CAtom().GetDependentAfixGroup()->Clear();
   TAfixGroup& ag = FXFile->GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
   for( size_t i=0; i < ring.Count(); i++ )  {  
     if( i == pivot )  continue;  // do not want to delete just created!
     TCAtom& ca = ring[i]->CAtom();
-    if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetAfix() == afix )  // if used in case to change order
+    // if used in case to change order
+    if( ca.GetDependentAfixGroup() != NULL &&
+      ca.GetDependentAfixGroup()->GetAfix() == afix )
+    {
       ca.GetDependentAfixGroup()->Clear();
+    }
   }
   if( pivot_last )  {
     for( size_t i=ring.Count()-2; i != InvalidIndex; i-- )
@@ -524,7 +553,9 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
         else if( m == 11 )
           FindRings("C10", rings);  
       }
-      catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
+      catch( const TExceptionBase& exc )  {
+        throw TFunctionFailedException(__OlxSourceInfo, exc);
+      }
       TNetwork::RingInfo ri;
       for( size_t i=0; i < rings.Count(); i++ )  {
         if( m != 11 && !TNetwork::IsRingRegular(rings[i]) )  continue;
@@ -533,12 +564,16 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
         if( ri.HasAfix || !olx_is_valid_index(ri.HeaviestSubsIndex) )  continue;
         if( m != 10 && ri.Substituted.Count() > 1 )  continue;
         if( m == 10 && ri.Substituted.Count() != 5 )  continue; // Cp*
-        size_t shift = (m == 10 ? 0 : ri.HeaviestSubsIndex+1); // do not allign to pivot for Cp* 
+        // do not allign to pivot for Cp* 
+        size_t shift = (m == 10 ? 0 : ri.HeaviestSubsIndex+1);
         rings[i].ShiftL(shift);  // pivot is the last one now
         if( m == 11 )  {  // validate and rearrange to figure of 8
           if( ri.Alpha.IndexOf(shift - 1) == InvalidIndex ) continue;
           if( ri.Ternary.Count() != 2 )  continue;
-          if( ri.Ternary.IndexOf( shift >= 2 ? shift-2 : rings[i].Count()-shift ) != InvalidIndex )  { // counter-clockwise direction
+          // counter-clockwise direction
+          if( ri.Ternary.IndexOf(
+              shift >= 2 ? shift-2 : rings[i].Count()-shift ) != InvalidIndex )
+          { 
             for( size_t j=0; j < (rings[i].Count()-1)/2; j++ )  {
               TSAtom* a = rings[i][j];
               rings[i][j] = rings[i][rings[i].Count()-j-2];
@@ -585,7 +620,8 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
       }
       TNetwork::RingInfo ri;
       TNetwork::AnalyseRing( rings[0], ri );
-      if( m == 11 )  {  // need to rearrage the ring to fit shelxl requirements as fihure of 8
+      // need to rearrage the ring to fit shelxl requirements as fihure of 8
+      if( m == 11 )  {
         if( ri.Alpha.IndexOf(rings[0].Count() - 1) == InvalidIndex )  {
           NewLogEntry() << "the alpha substituted atom is expected";
           return;
@@ -594,7 +630,8 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
           NewLogEntry() << "naphtalene ring should have two ternary atoms";
           return;
         }
-        if( ri.Ternary.IndexOf(rings[0].Count()-2) != InvalidIndex )  { // countr-clockwise direction to revert
+        // counter-clockwise direction to revert
+        if( ri.Ternary.IndexOf(rings[0].Count()-2) != InvalidIndex )  {
           for( size_t i=0; i < (rings[0].Count()-1)/2; i++ )  {
             TSAtom* a = rings[0][i];
             rings[0][i] = rings[0][rings[0].Count()-i-2];
@@ -640,7 +677,9 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
         }
         ni = i;
       }
-      // make sure that there is only one atom in the envi and it has proper Uiso
+      /* make sure that there is only one atom in the envi and it has proper
+      Uiso
+      */
       if( ni != InvalidIndex && sa.Node(ni).CAtom().GetUisoOwner() == NULL )  {
         rm.Vars.FreeParam(sa.CAtom(), catom_var_name_Uiso);
         sa.CAtom().SetUisoOwner(&sa.Node(ni).CAtom());
@@ -698,8 +737,10 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
     vcovc.ReadSmtbxMat(smtbx_fn);
     src_mat = "smtbx";
   }
-  else
-    throw TFunctionFailedException(__OlxSourceInfo, "could not find a variance-covariance matrix");
+  else {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "could not find a variance-covariance matrix");
+  }
   return src_mat;
 }
 //..............................................................................
@@ -730,13 +771,18 @@ ElementRadii TXApp::ReadVdWRadii(const olxstr& fileName)  {
 void TXApp::PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont)  {
   if( au_cont.IsEmpty() )  return;
   TBasicApp::NewLogEntry() << "Using the following element radii:";
-  TBasicApp::NewLogEntry() << "(Default radii source: http://www.ccdc.cam.ac.uk/products/csd/radii)";
+  TBasicApp::NewLogEntry() <<
+    "(Default radii source: http://www.ccdc.cam.ac.uk/products/csd/radii)";
   for( size_t i=0; i < au_cont.Count(); i++ )  {
     const size_t ei = radii.IndexOf(&au_cont[i].element);
-    if( ei == InvalidIndex )
-      TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' << au_cont[i].element.r_vdw;
-    else
-      TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' << radii.GetValue(ei);
+    if( ei == InvalidIndex ) {
+      TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' <<
+        au_cont[i].element.r_vdw;
+    }
+    else {
+      TBasicApp::NewLogEntry() << au_cont[i].element.symbol << '\t' <<
+        radii.GetValue(ei);
+    }
   }
 }
 //..............................................................................

@@ -11,7 +11,7 @@
 #define __olx_ref_util_H
 #include "xbase.h"
 #include "symmat.h"
-#include "symspace.h"
+#include "symmspace.h"
 #include "arrays.h"
 
 BeginXlibNamespace()

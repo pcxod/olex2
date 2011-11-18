@@ -4804,7 +4804,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           if( !TEFile::Exists(src_fn) )
             src_fn = TEFile::ChangeFileExt(file_n.file_name, "crs");
           if( !TEFile::Exists(src_fn) )  {
-            Error.ProcessingError(__OlxSrcInfo, "could not initialise CELL/SFAC from the hkl file");
+            Error.ProcessingError(__OlxSrcInfo,
+              "could not initialise CELL/SFAC from the hkl file");
             return;
           }
           else
@@ -4813,15 +4814,19 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         else  {
           FXApp->XFile().SetLastLoader(ins);
           FXApp->XFile().LastLoaderChanged();
-          FXApp->XFile().GetRM().SetHKLSource(file_n.file_name);  // make sure tha SGE finds the related HKL
+          // make sure tha SGE finds the related HKL
+          FXApp->XFile().GetRM().SetHKLSource(file_n.file_name);
           TMacroError er;
-          Macros.ProcessMacro(olxstr("SGE '") << TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', er);
+          Macros.ProcessMacro(olxstr("SGE '") <<
+            TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', er);
           if( !er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue()  )  {
-            olxstr s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"), s_sg(s_inp);
+            olxstr
+              s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"),
+              s_sg(s_inp);
             TSpaceGroup* sg = NULL;
             while( sg == NULL )  {
               ProcessFunction(s_sg);
-              sg = TSymmLib::GetInstance().FindGroup(s_sg);
+              sg = TSymmLib::GetInstance().FindGroupByName(s_sg);
               if( sg != NULL ) break;
               s_sg = s_inp;
             }
@@ -4835,13 +4840,19 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             else  {
               size_t sfac_count = ins->GetRM().GetUserContent().Count();
               TStrList unit;
-              for( size_t i=0; i < sfac_count; i++ )  
-                unit.Add((sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
+              for( size_t i=0; i < sfac_count; i++ ) {
+                unit.Add((sg->MatrixCount()+1)*
+                  (sg->GetLattice().GetVectors().Count()+1));
+              }
               ins->GetRM().SetUserContentSize(unit);
-              ins->GetAsymmUnit().SetZ((sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
+              ins->GetAsymmUnit().SetZ((sg->MatrixCount()+1)*
+                (sg->GetLattice().GetVectors().Count()+1));
             }
-            ins->SaveForSolution(TEFile::ChangeFileExt(file_n.file_name, "ins"), EmptyString(), EmptyString(), false);
-            Macros.ProcessMacro( olxstr("reap '") << TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', Error);
+            ins->SaveForSolution(
+              TEFile::ChangeFileExt(file_n.file_name, "ins"),
+              EmptyString(), EmptyString(), false);
+            Macros.ProcessMacro( olxstr("reap '") <<
+              TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', Error);
             Macros.ProcessMacro("solve", Error);
           }  // sge, if succeseded will run reap and solve
           return;
@@ -4871,7 +4882,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( FXApp->XFile().HasLastLoader() )  {
       FInfoBox->Clear();
-      if( FXApp->CheckFileType<TP4PFile>() || FXApp->CheckFileType<TCRSFile>() )  {
+      if( FXApp->CheckFileType<TP4PFile>() ||
+        FXApp->CheckFileType<TCRSFile>() )
+      {
         TMacroError er;
         if( TEFile::Exists( TEFile::ChangeFileExt(file_n.file_name, "ins") ) )
           Macros.ProcessMacro("SG", er);
@@ -4919,12 +4932,19 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       UpdateInfoBox();
       // check if the associated HKL file has the same name and location
-      olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
-      olxstr src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName()).DeleteSequencesOf(TEFile::GetPathDelimeter()); 
+      olxstr 
+        hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource())
+          .DeleteSequencesOf(TEFile::GetPathDelimeter()), 
+        src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName())
+          .DeleteSequencesOf(TEFile::GetPathDelimeter()); 
 #ifdef __WIN32__
-      if( !TEFile::ChangeFileExt(hkl_fn, EmptyString()).Equalsi(TEFile::ChangeFileExt(src_fn, EmptyString())) )  {
+      if( !TEFile::ChangeFileExt(hkl_fn, EmptyString()).Equalsi(
+          TEFile::ChangeFileExt(src_fn, EmptyString())) )
+      {
 #else
-      if( TEFile::ChangeFileExt(hkl_fn, EmptyString()) != TEFile::ChangeFileExt(src_fn, EmptyString()) )  {
+      if( TEFile::ChangeFileExt(hkl_fn, EmptyString()) !=
+          TEFile::ChangeFileExt(src_fn, EmptyString()) )
+      {
 #endif
         TBasicApp::NewLogEntry() << "Note that the associated HKL file differs"
           " from the loaded file name:";
@@ -4958,12 +4978,17 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           for( size_t i=0; i < Lst.SplitAtomCount(); i++ )  {
             const TLstSplitAtom& SpA = Lst.SplitAtom(i);
             Tmp = SpA.AtomName;  Tmp.RightPadding(5, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);  Tmp.RightPadding(12, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);  Tmp.RightPadding(19, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[2]);  Tmp.RightPadding(26, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);
+            Tmp.RightPadding(12, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);
+            Tmp.RightPadding(19, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[2]);
+            Tmp.RightPadding(26, ' ', true);
             Tmp << "& ";
-            Tmp << olxstr::FormatFloat(3, SpA.PositionB[0]);  Tmp.RightPadding(35, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionB[1]);  Tmp.RightPadding(42, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionB[0]);
+            Tmp.RightPadding(35, ' ', true);
+            Tmp << olxstr::FormatFloat(3, SpA.PositionB[1]);
+            Tmp.RightPadding(42, ' ', true);
             Tmp << olxstr::FormatFloat(3, SpA.PositionB[2]);
             TBasicApp::NewLogEntry() << Tmp;
           }
@@ -4987,14 +5012,16 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             }
             Tmp = Lst.TrefTry(i).CFOM;  Tmp.RightPadding(6, ' ', true);
             Tmp1 = Tmp;
-            Tmp = Lst.TrefTry(i).NQual;  Tmp1 << Tmp.RightPadding(10, ' ', true);
-            Tmp = Lst.TrefTry(i).Try;    Tmp1 << Tmp.RightPadding(10, ' ', true);
+            Tmp = Lst.TrefTry(i).NQual;
+            Tmp1 << Tmp.RightPadding(10, ' ', true);
+            Tmp = Lst.TrefTry(i).Try;
+            Tmp1 << Tmp.RightPadding(10, ' ', true);
             Tmp1 << Lst.TrefTry(i).Semivariants.FormatString(31);
-            //Tmp1 += Lst.TrefTry(i).Semivariants.FormatString( Lst.TrefTry(i).Semivariants.Count() );
             TBasicApp::NewLogEntry() << Tmp1;
             tcount ++;
             if( tcount > 5 && ( (i+1) < Lst.TrefTryCount()) )  {
-              TBasicApp::NewLogEntry() << "There are " << Lst.TrefTryCount() - i << " more tries";
+              TBasicApp::NewLogEntry() << "There are " <<
+                Lst.TrefTryCount() - i << " more tries";
               break;
             }
           }
@@ -5002,8 +5029,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( Lst.PattSolutionCount() > 1 )  {
           TBasicApp::NewLogEntry() << "There are " << Lst.PattSolutionCount()
             << " possible patterson solutions in the listing file";
-          TBasicApp::NewLogEntry() << "To browse possible solutions press Ctrl+Up and Ctrl+Down "
-            "buttons. Press Enter to choose a particular solution";
+          TBasicApp::NewLogEntry() << "To browse possible solutions press "
+            "Ctrl+Up and Ctrl+Down buttons. Press Enter to choose a particular"
+            " solution";
           FMode |= mSolve;
           CurrentSolution = -1;
         }
@@ -6625,7 +6653,7 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if (!Cmds.IsEmpty())
-    HallSymbol::Expand(Cmds[0]);
+    TBasicApp::NewLogEntry() << HallSymbol::Evaluate(HallSymbol::Expand(Cmds[0]));
   //HallSymbol::Expand("P -2yac");
   //HallSymbol::Expand("-P 2b 2b");
   //HallSymbol::Expand("P 4ab 2ab -1ab");
@@ -7372,14 +7400,17 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TBasicApp::NewLogEntry() << output;
 }
 //..............................................................................
-void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TUnitCell& uc = FXApp->XFile().GetLattice().GetUnitCell();
 
   TTTable<TStrList> tab(uc.MatrixCount(), 2);
   tab.ColName(0) = "Code";
   tab.ColName(1) = "Symm";
   for( size_t i=0; i < uc.MatrixCount(); i++ )  {
-    tab[i][0] = TSymmParser::MatrixToSymmCode(uc.GetSymSpace(), uc.GetMatrix(i));
+    tab[i][0] =
+      TSymmParser::MatrixToSymmCode(uc.GetSymmSpace(), uc.GetMatrix(i));
     tab[i][1] = TSymmParser::MatrixToSymm(uc.GetMatrix(i));
   }
   TStrList output;
@@ -7388,7 +7419,9 @@ void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
-void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXAtomPList Atoms;
   smatd_list symm;
   smatd matr;
@@ -7396,7 +7429,8 @@ void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     bool validSymm = false;
     if( TSymmParser::IsRelSymm(Cmds[i]) )  {
       try  {
-        matr = TSymmParser::SymmCodeToMatrix(FXApp->XFile().GetLattice().GetUnitCell(), Cmds[i]);
+        matr = TSymmParser::SymmCodeToMatrix(
+          FXApp->XFile().GetLattice().GetUnitCell(), Cmds[i]);
         validSymm = true;
       }
       catch( TExceptionBase& )  {}
@@ -8011,7 +8045,9 @@ void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
   }
 }
 //..............................................................................
-void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TStrList output;
   output.SetCapacity( FXApp->GetRender().CollectionCount() );
   for( size_t i=0; i < FXApp->GetRender().CollectionCount(); i++ )  {
@@ -8027,7 +8063,9 @@ void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TBasicApp::NewLogEntry() << output;
 }
 //..............................................................................
-void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   // space group matrix list
   TSpaceGroup* sg = NULL;
@@ -8036,7 +8074,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }
-  TUnitCell::SymSpace sp = FXApp->XFile().GetUnitCell().GetSymSpace();
+  TUnitCell::SymmSpace sp = FXApp->XFile().GetUnitCell().GetSymmSpace();
   olxstr hklFileName = FXApp->LocateHklFile();
   if( !TEFile::Exists(hklFileName) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
@@ -8044,8 +8082,8 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   TRefList refs;
   RefinementModel::HklStat stats =
-    FXApp->XFile().GetRM().GetFourierRefList<TUnitCell::SymSpace,RefMerger::StandardMerger>(
-    sp, refs);
+    FXApp->XFile().GetRM().GetFourierRefList<
+      TUnitCell::SymmSpace,RefMerger::StandardMerger>(sp, refs);
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   TArrayList<SFUtil::StructureFactor> P1SF(refs.Count()*sp.Count());
   size_t index = 0;
@@ -8062,7 +8100,8 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   const double resolution = 5;
   const vec3i dim(au.GetAxes()*resolution);
   FXApp->XGrid().InitGrid(dim);
-  BVFourier::MapInfo mi = BVFourier::CalcPatt(P1SF, FXApp->XGrid().Data()->Data, dim, vol);
+  BVFourier::MapInfo mi = BVFourier::CalcPatt(
+    P1SF, FXApp->XGrid().Data()->Data, dim, vol);
   FXApp->XGrid().AdjustMap();
   FXApp->XGrid().SetMinVal(mi.minVal);
   FXApp->XGrid().SetMaxVal(mi.maxVal);
@@ -8171,7 +8210,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
     //MapUtil::Integrate<float>(map.Data, dim, (mi.maxVal - mi.minVal)/2.5, Peaks);
     MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
-    MapUtil::MergePeaks(uc.GetSymSpace(), norm, Peaks, MergedPeaks);
+    MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
     MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     const int PointCount = dim.Prod();
     for( size_t i=0; i < MergedPeaks.Count(); i++ )  {

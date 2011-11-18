@@ -15,7 +15,7 @@
 template <class MC, class VC> class TSymmMat {
   uint32_t Id;
 public:
-  TSymmMat() : Id(~0) {  }
+  TSymmMat() : Id(~0) {}
   // copy constructor
   TSymmMat(const TSymmMat& v) : 
     r(v.r), 
@@ -29,34 +29,37 @@ public:
   // composing constructor
   template <typename AMC, typename AVC> 
   TSymmMat(const TMatrix33<AMC>& m, const TVector3<AVC>& v) :
-    r(m), t(v), Id(~0) {  }
+    r(m), t(v), Id(~0) {}
 
   template <class AT> 
-  inline TVector3<VC> operator * (const TVector3<AT>& a) const {
+  TVector3<VC> operator * (const TVector3<AT>& a) const {
     return TVector3<VC>(r*a).operator +=(t);
   }
   
-  inline TSymmMat operator * (const TSymmMat& v) const {
-    return TSymmMat(v.r*r, v*t);
+  TSymmMat operator * (const TSymmMat& v) const {
+    return TSymmMat(r*v.r, r*v.t+t);
   }
 
-  inline TSymmMat& operator *= (const TSymmMat& v)  {
+  TSymmMat& operator *= (const TSymmMat& v)  {
     r *= v.r;
-    t = v * t;
+    t = r*v.t+t;
     return *this;
   }
 
-  inline bool operator == (const TSymmMat& v) const {
+  bool operator == (const TSymmMat& v) const {
     return (r == v.r && t == v.t);
+  }
+  bool operator != (const TSymmMat& v) const {
+    return !this->operator == (v);
   }
   /* compares rotational part directly, but does distance comparison for
   translation to prevent rounding errors influence
   */
-  bool EqualExt(const TSymmMat& v) const {
-    return (r == v.r && t.QDistanceTo(v.t) < 1e-6);
+  bool Equals(const TSymmMat& v, VC eps=1e-3) const {
+    return (r == v.r && t.Equals(v.t, eps));
   }
   
-  inline TSymmMat& operator = (const TSymmMat& sm)  {
+  TSymmMat& operator = (const TSymmMat& sm)  {
     t = sm.t;
     r = sm.r;
     Id = sm.Id;
@@ -64,40 +67,40 @@ public:
   }
 
   template <class AMC, class AVC> 
-  inline TSymmMat& operator = (const TSymmMat<AMC,AVC>& sm)  {
+  TSymmMat& operator = (const TSymmMat<AMC,AVC>& sm)  {
     t = sm.t;
     r = sm.r;
-    Id = sm.Id;
+    Id = sm.GetId();
     return *this;
   }
   
-  template <class AT> inline void operator *= (AT v) {
+  template <class AT> void operator *= (AT v) {
     r *= v;
     t *= v;
   }
   
-  inline TSymmMat& I()  {
+  TSymmMat& I()  {
     r.I();
     t.Null();
     return *this;
   }
-  inline bool IsI() const  {
+  bool IsI() const  {
     return (r.IsI() && t.QLength() < 1e-6);
   }
   
-  inline TSymmMat& Null()  {
+  TSymmMat& Null()  {
     r.Null();
     t.Null();
     return *this;
   }
   
-  inline TSymmMat Inverse() const  {
+  TSymmMat Inverse() const  {
     TSymmMat rv(r.Inverse(), t*-1);
     rv.t = rv.r * rv.t;
     return rv;
   }
   
-  static inline TSymmMat& Inverse(TSymmMat& m)  {
+  static TSymmMat& Inverse(TSymmMat& m)  {
     m.r = m.r.Inverse();
     m.t = ((m.r*m.t) *= -1);
     return m;
