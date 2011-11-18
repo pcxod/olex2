@@ -58,7 +58,7 @@ struct MergeStats  {
 //..............................................................................
 class RefMerger {
   template <class RefListMerger> 
-  static MergeStats _DoMerge(const SymSpace::InfoEx& info_ex, TRefPList& refs,
+  static MergeStats _DoMerge(const SymmSpace::InfoEx& info_ex, TRefPList& refs,
     const vec3i_list& omits, TRefList& output)
   {
     if( refs.IsEmpty() )
@@ -127,7 +127,7 @@ class RefMerger {
     return stats;
   }
   template <class RefListMerger> 
-  static MergeStats _DryMerge(const SymSpace::InfoEx& info_ex, TRefPList& refs,
+  static MergeStats _DryMerge(const SymmSpace::InfoEx& info_ex, TRefPList& refs,
     const vec3i_list& omits)
   {
     if( refs.IsEmpty() )
@@ -408,13 +408,13 @@ public:
   static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output, 
     const vec3i_list& omits, bool mergeFP)  
   {
-    SymSpace::InfoEx info_ex = SymSpace::Compact(ml);
+    SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
     if( mergeFP )  info_ex.centrosymmetric = true; 
     TRefPList refs(Refs, DirectAccessor());
     return _DoMerge<RefListMerger>(info_ex, refs, omits, output);
   }
   template <class RefListMerger, class RefList> 
-  static MergeStats Merge(const SymSpace::InfoEx& si, RefList& Refs, TRefList& output, 
+  static MergeStats Merge(const SymmSpace::InfoEx& si, RefList& Refs, TRefList& output, 
     const vec3i_list& omits)  
   {
     TRefPList refs(Refs, DirectAccessor());
@@ -423,14 +423,14 @@ public:
   /* Functions gets the statistic on the list of provided reflections (which get stantardised) */
   template <class MatList, class RefListMerger, class RefList> 
   static MergeStats DryMerge(const MatList& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
-    SymSpace::InfoEx info_ex = SymSpace::Compact(ml);
+    SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
     if( mergeFP )
       info_ex.centrosymmetric = true; 
     TRefPList refs(Refs, DirectAccessor());
     return _DryMerge<RefListMerger>(info_ex, refs, omits);
   }
   template <class RefListMerger, class RefList> 
-  static MergeStats DryMerge(const SymSpace::InfoEx& si, RefList& Refs, const vec3i_list& omits)  {
+  static MergeStats DryMerge(const SymmSpace::InfoEx& si, RefList& Refs, const vec3i_list& omits)  {
     TRefPList refs(Refs, DirectAccessor());
     return _DryMerge<RefListMerger>(si, refs, omits);
   }

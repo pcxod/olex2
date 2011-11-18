@@ -655,6 +655,7 @@
     <ClCompile Include="..\..\..\xlib\symmlib.cpp" />
     <ClCompile Include="..\..\..\xlib\symmparser.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\testsymm.cpp" />
+    <ClCompile Include="..\..\..\xlib\symmspace.cpp" />
     <ClCompile Include="..\..\..\xlib\tls.cpp" />
     <ClCompile Include="..\..\..\xlib\unitcell.cpp" />
     <ClCompile Include="..\..\..\xlib\vcov.cpp" />

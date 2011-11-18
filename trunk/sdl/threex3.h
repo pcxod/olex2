@@ -367,8 +367,9 @@ public:
     return rv << ", " << data[1] << ", " << data[2];
   }
   inline TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline olxcstr  ToCStr()   const {  return StrRepr<olxcstr>();  }
-  inline olxwstr  ToWStr()   const {  return StrRepr<olxwstr>();  }
+  inline olxcstr ToCStr()   const {  return StrRepr<olxcstr>();  }
+  inline olxwstr ToWStr()   const {  return StrRepr<olxwstr>();  }
+  typedef T vect_t;
 };
 
 template <class T> class TMatrix33  {
@@ -716,6 +717,7 @@ public:
     return c;
    }
 
+  typedef T mat_t;
 protected:  // used in GaussSolve to sort the matrix
   static void MatrixElementsSort(TMatrix33<T>& arr, TVector3<T>& b)  {
     T bf[3];
@@ -732,7 +734,6 @@ protected:  // used in GaussSolve to sort the matrix
       }
     }
   }
-
 };
 
   typedef TVector3<float>  vec3f;

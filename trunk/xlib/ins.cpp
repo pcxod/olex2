@@ -142,8 +142,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   }
   smatd sm;
   for( size_t i=0; i < cx.Symm.Count(); i++ )  {
-    if( TSymmParser::SymmToMatrix(cx.Symm[i], sm) )
-      GetAsymmUnit().AddMatrix(sm);
+    TSymmParser::SymmToMatrix(cx.Symm[i], sm);
+    GetAsymmUnit().AddMatrix(sm);
   }
   // remove dublicated instructtions, rems ONLY
   for( size_t i = 0; i < Ins.Count(); i++ )  {
@@ -1732,8 +1732,8 @@ void TIns::ParseHeader(const TStrList& in)  {
   }
   smatd sm;
   for( size_t i=0; i < cx.Symm.Count(); i++ )  {
-    if( TSymmParser::SymmToMatrix(cx.Symm[i], sm) )
-      GetAsymmUnit().AddMatrix(sm);
+    TSymmParser::SymmToMatrix(cx.Symm[i], sm);
+    GetAsymmUnit().AddMatrix(sm);
   }
   Ins.Pack();
   ParseRestraints(cx.rm, Ins);

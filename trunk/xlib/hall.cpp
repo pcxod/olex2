@@ -197,7 +197,7 @@ olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices)  {
   return hs;
 }
 //..........................................................................................
-olxstr HallSymbol::Evaluate(const SymSpace::Info& si)  {
+olxstr HallSymbol::Evaluate(const SymmSpace::Info& si)  {
   init();
   olxstr hs = Evaluate(si.centrosymmetric ? si.latt : -si.latt,
     si.matrices);
@@ -225,10 +225,12 @@ int HallSymbol::find_diagonal(int axis, olxch which) {
     olxstr("axis direction: ") << axis << ", which: " << which);
 }
 //.............................................................................
-ConstTypeList<smatd> HallSymbol::Expand(const olxstr &_hs) {
-  smatd change_of_basis;
+SymmSpace::Info HallSymbol::Expand(const olxstr &_hs) {
+  smatdd change_of_basis;
   change_of_basis.r.I();
+  SymmSpace::Info info;
   olxstr hs = _hs;
+  // deal with the change of basis
   {
     size_t obi = _hs.IndexOf('(');
     if (obi != InvalidIndex) {
@@ -240,7 +242,7 @@ ConstTypeList<smatd> HallSymbol::Expand(const olxstr &_hs) {
       hs = _hs.SubStringTo(obi);
       olxstr cbs = _hs.SubString(obi+1, cbi-obi-1);
       if (cbs.IndexOf(',') != InvalidIndex) {
-        try { TSymmParser::SymmToMatrix(cbs, change_of_basis); }
+        try { change_of_basis = TSymmParser::SymmToMatrix(cbs); }
         catch (const TExceptionBase &e) {
           throw TFunctionFailedException(__OlxSourceInfo, e);
         }
@@ -263,14 +265,17 @@ ConstTypeList<smatd> HallSymbol::Expand(const olxstr &_hs) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("Hall symbol: ").quote() << _hs);
   }
-  smatd_list rv;
-  bool centric = toks[0].StartsFrom('-');
-  if (centric && toks[0].Length() == 1) {
+  info.centrosymmetric = toks[0].StartsFrom('-');
+  if (info.centrosymmetric && toks[0].Length() == 1) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("Hall symbol: ").quote() << _hs);
   }
-  int latt = TCLattice::LattForSymbol(toks[0].CharAt(centric ? 1 : 0)),
-    previous = 0, dir = 0;
+  const int ii_id = rotation_id::get(-mat3i().I());
+  const int i_id = r_dict['1'];
+  info.latt = TCLattice::LattForSymbol(
+      toks[0].CharAt(info.centrosymmetric ? 1 : 0));
+  int previous = 0, dir = 0;
+  SortedObjectList<int, TPrimitiveComparator> r_hash;
   for (size_t i=1; i < toks.Count(); i++) {
     olxstr axis;
     bool neg = toks[i].StartsFrom('-');
@@ -282,7 +287,7 @@ ConstTypeList<smatd> HallSymbol::Expand(const olxstr &_hs) {
       if (ai == InvalidIndex) {
         if (axis.CharAt(1) == '\'' || axis.CharAt(1) == '"' && dir != 0) {
           previous = axis.CharAt(0)-'0';
-          smatd& m = rv.AddNew();
+          smatd& m = info.matrices.AddNew();
           m.r = rotation_id::get(find_diagonal(dir, axis.CharAt(1)));
           if (neg)
             m.r *= -1;
@@ -293,7 +298,7 @@ ConstTypeList<smatd> HallSymbol::Expand(const olxstr &_hs) {
       }
       else {
         previous = axis.CharAt(0)-'0';
-        smatd& m = rv.AddNew();
+        smatd& m = info.matrices.AddNew();
         m.r = rotation_id::get(r_dict.GetValue(ai));
         if (neg)
           m.r *= -1;
@@ -333,7 +338,7 @@ ConstTypeList<smatd> HallSymbol::Expand(const olxstr &_hs) {
             olxstr("Axis symbol: ").quote() << axis);
         }
       }
-      smatd& m = rv.AddNew();
+      smatd& m = info.matrices.AddNew();
       m.r = rotation_id::get(r_dict.GetValue(ai));
       if (neg)
         m.r *= -1;
@@ -355,36 +360,44 @@ ConstTypeList<smatd> HallSymbol::Expand(const olxstr &_hs) {
         t += *t_dict.GetValue(ti);
       }
     }
-    rv.GetLast().t += t;
+    info.matrices.GetLast().t += t;
+    int m_id = rotation_id::get(info.matrices.GetLast().r);
+    if (m_id == ii_id) {
+      info.inv_trans = info.matrices.GetLast().t;
+      info.centrosymmetric = true;
+      info.matrices.Delete(info.matrices.Count()-1);
+    }
+    else if(m_id == i_id) {
+      if (info.matrices.GetLast().t.IsNull(1e-3))
+        info.matrices.Delete(info.matrices.Count()-1);
+    }
+    else
+      r_hash.Add(m_id);
   }
-  SortedObjectList<int, TPrimitiveComparator> all;
-  smatd cob_i = change_of_basis.Inverse();
-  for (size_t i=0; i < rv.Count(); i++) {
-    rv[i] = cob_i*rv[i]*change_of_basis;
-    all.Add(rotation_id::get(rv[i].r));
+  if (!change_of_basis.IsI()) {
+    smatd cob_i = change_of_basis.Inverse();
+    for (size_t i=0; i < info.matrices.Count(); i++) {
+      smatdd m = info.matrices[i];
+      m = change_of_basis*m*cob_i;
+      info.matrices[i].t = m.t;
+      for (int ii=0; ii < 3; ii++)
+        for (int jj=0; jj < 3; jj++)
+      info.matrices[i].r[ii][jj] = olx_round(m.r[ii][jj]);
+    }
   }
-  const int i_id = r_dict['1'];
-  for (size_t i=0; i < rv.Count(); i++) {
-    for (size_t j=i; j < rv.Count(); j++) {
-      smatd m = rv[i]*rv[j];
-      m.t -= m.t.Floor<int>();
+  for (size_t i=0; i < info.matrices.Count(); i++) {
+    for (size_t j=i; j < info.matrices.Count(); j++) {
+      smatd m = info.matrices[i]*info.matrices[j];
       int id = rotation_id::get(m.r);
       if (i_id == id) continue;
-      if (all.IndexOf(id) == InvalidIndex) {
-        all.Add(id);
-        rv.AddCopy(m);
+      if (r_hash.IndexOf(id) == InvalidIndex) {
+        r_hash.Add(id);
+        info.matrices.AddCopy(m);
       }
     }
   }
-  rv.InsertNew(0).r.I();
-  smatd_list ml;
-  if (!centric)
-    latt *= -1;
-  TSymmLib::GetInstance().ExpandLatt(ml, rv, latt);
-  olxstr testr = Evaluate(ml);
-  TBasicApp::NewLogEntry() <<  "<-------------------------------" << testr;
-  for (size_t i=0; i < ml.Count(); i++)
-    TBasicApp::NewLogEntry() << TSymmParser::MatrixToSymmEx(ml[i]);
-  TBasicApp::NewLogEntry() <<  "------------------------------->";
-  return ml;
+  info.matrices.InsertNew(0).r.I();
+  info.normalise(
+    TSymmLib::GetInstance().GetLatticeByNumber(info.latt).GetVectors());
+  return info;
 }

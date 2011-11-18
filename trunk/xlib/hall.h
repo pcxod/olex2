@@ -12,7 +12,7 @@
 #include "mat_id.h"
 #include "edict.h"
 #include "symmat.h"
-#include "symspace.h"
+#include "symmspace.h"
 
 BeginXlibNamespace()
 
@@ -41,10 +41,10 @@ public:
   static olxstr Evaluate(int latt, const smatd_list& matrices);
   // takes full list of matrices
   static olxstr Evaluate(const smatd_list& matrices) {
-    return Evaluate(SymSpace::GetInfo(matrices));
+    return Evaluate(SymmSpace::GetInfo(matrices));
   }
-  static olxstr Evaluate(const SymSpace::Info& si);
-  static ConstTypeList<smatd> Expand(const olxstr &hs);
+  static olxstr Evaluate(const SymmSpace::Info& si);
+  static SymmSpace::Info Expand(const olxstr &hs);
 };
 
 EndXlibNamespace()

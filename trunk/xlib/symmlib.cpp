@@ -13,7 +13,6 @@
 #include "symmparser.h"
 #include "bapp.h"
 #include "hall.h"
-#include "symspace.h"
 //#include "bitarray.h"
 
 TSymmLib* TSymmLib::Instance = NULL;
@@ -871,7 +870,7 @@ bool TSpaceGroup::EqualsWithoutTranslation (const TSpaceGroup& sg) const {
 }
 //..............................................................................
 bool TSpaceGroup::Compare(const smatd_list& matrices, double& st) const {
-  size_t mc = (MatrixCount()+1+Latt.VectorCount());
+  size_t mc = (MatrixCount()+1+Latt.GetVectors().Count());
   if( IsCentrosymmetric() )  mc *= 2;
   if( mc != matrices.Count() )  return false;
   smatd_list tm;
@@ -917,141 +916,16 @@ bool TSpaceGroup::Compare(const smatd_list& matrices, double& st) const {
   return true;
 }
 //..............................................................................
-bool TSpaceGroup::operator == (const smatd_list& matrices) const  {
-  size_t mc = (MatrixCount()+1+Latt.VectorCount());
-  if( IsCentrosymmetric() )  mc *= 2;
-  if( mc != matrices.Count() )  return false;
-  smatd_list tm;
-  tm.SetCapacity(mc);
-  this->GetMatrices(tm, mattAll);
-  vec3d translation;
-  for( size_t i=0; i  < mc; i++ )  // mark matrices as unused
-    tm[i].SetRawId(0);
-  for( size_t i=0; i  < mc; i++ )  {
-    bool found = false;
-    const smatd& m = matrices[i];
-    for( size_t j=0; j  < mc; j++ )  {
-      smatd& m1 = tm[j];
-      if( m1.GetId() == 1 )  continue;
-      bool equal = true;
-      for( size_t k=0; k < 3; k++ )  {
-        for( size_t l=0; l < 3; l++ )  {
-          if( m.r[k][l] != m1.r[k][l] )  {
-            equal = false;
-            break;
-          }
-        }
-        if( !equal )  break;
-      }
-      if( equal )  {
-        for( size_t k=0; k < 3; k++ )  {
-          translation[k] = m.t[k] - m1.t[k];
-          int iv = (int)translation[k];  translation[k] -= iv;
-          if( olx_abs(translation[k]) < 0.01 ||
-              olx_abs(translation[k]) >= 0.99 )
-          {
-            translation[k] = 0;
-          }
-        }
-        if( translation.QLength() < 0.004 )  {
-          found = true;
-          m1.SetRawId(1);
-        }
-        break;  
-      }
-    }
-    if( !found )  return false;
-  }
-  return true;
-}
-//..............................................................................
-bool TSpaceGroup::operator == (const TAsymmUnit& AU) const {
-  if( Latt.GetLatt() != abs(AU.GetLatt()) )  return false;
-  if( CentroSymmetric && (AU.GetLatt() < 0) )  return false;
-  if( (!CentroSymmetric) && (AU.GetLatt() > 0) )  return false;
-  if( MatrixCount() != AU.MatrixCount() )  return false;
-
-  const size_t mc = MatrixCount();
-  for( size_t i=0; i  < mc; i++ )
-    Matrices[i].SetRawId(0);
-
-  for( size_t i=0; i  < mc; i++ )  {
-    bool found = false;
-    const smatd& m = AU.GetMatrix(i);
-    for( size_t j=0; j  < mc; j++ )  {
-      smatd& m1 = Matrices[j];
-      if( m1.GetId() != 0 )  continue;
-      bool equal = true;
-      size_t matrixElements = 0;
-      size_t signChanges = 0;
-      for( size_t k=0; k < 3; k++ )  {
-        for( size_t l=0; l < 3; l++ )  {
-          if( m1.r[k][l] != 0 )  matrixElements++;
-          if( m.r[k][l] != m1.r[k][l] )  {
-            if( olx_abs(m.r[k][l]) != olx_abs(m1.r[k][l]) )  {
-              equal = false;
-              break;
-            }
-            else
-              signChanges++;
-          }
-        }
-        if( !equal )  break;
-      }
-
-      // have to consider sign change only for centrisymmetric groups
-      if( IsCentrosymmetric() )  {
-        if( !equal || ((signChanges != matrixElements) && (signChanges != 0)) )
-          continue;
-      }
-      else  {
-        if( !equal || (signChanges != 0) )  continue;
-      }
-      vec3d translation;
-      for( size_t k=0; k < 3; k++ )  {
-        translation[k] = m.t[k] - m1.t[k];
-        int iv = (int)translation[k];  translation[k] -= iv;
-        if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
-          translation[k] = 0;
-        if( translation[k] < 0 )
-          translation[k] += 1;
-      }
-      if( translation.Length() < 0.02 )  {  found = true;  break;  }
-      for( size_t k=0; k < Latt.VectorCount(); k++ )  {
-        if( translation.DistanceTo(Latt.GetVector(k)) < 0.02 )
-        {  found = true;  break;  }
-      }
-      if( found )  {  m1.SetRawId(1);  break;  }
-      if( CentroSymmetric )  {
-        equal = true;
-        for( size_t k=0; k < 3; k++ )  {
-          for( size_t l=0; l < 3; l++ )
-            if( m.r[k][l] != -m1.r[k][l] )  {  equal = false;  break;  }
-          if( !equal )  break;
-        }
-        if( !equal )  continue;
-        for( size_t k=0; k < 3; k++ )  {
-          translation[k] = m.t[k] - m1.t[k];
-          int iv = (int)translation[k];  translation[k] -= iv;
-          if( olx_abs(translation[k]) < 0.01 ||
-            olx_abs(translation[k]) >= 0.99 )
-          {
-            translation[k] = 0;
-          }
-          if( translation[k] < 0 )
-            translation[k] += 1;
-        }
-        if( translation.Length() < 0.02 )  {  found = true;  break;  }
-        for( size_t k=0; k < Latt.VectorCount(); k++ )  {
-          if( translation.DistanceTo(Latt.GetVector(k)) < 0.02 )
-          {  found = true;  break;  }
-        }
-        if( found )  {  m1.SetRawId(1);  break;  }
-      }
-    }
-    if( !found )  return false;
-  }
-  return true;
+SymmSpace::Info TSpaceGroup::GetInfo() const {
+  SymmSpace::Info info;
+  info.centrosymmetric = this->CentroSymmetric;
+  info.matrices = this->Matrices;
+  info.matrices.AddNew().I();
+  if (this->CentroSymmetric)
+    info.inv_trans = this->InversionCenter;
+  info.latt = GetLattice().GetLatt();
+  info.normalise(GetLattice().GetVectors());
+  return info;
 }
 //..............................................................................
 size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
@@ -1085,8 +959,8 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
   if( (Flags & mattCentering) == mattCentering )  {
     for( size_t i=0; i <= MatrixCount(); i++ )  {
       const smatd& mt = (i==0 ? matrices[0] : Matrices[i-1]);
-      for( size_t j=0; j < Latt.VectorCount(); j++ )  {
-        const vec3d& v = Latt.GetVector(j);
+      for( size_t j=0; j < Latt.GetVectors().Count(); j++ )  {
+        const vec3d& v = Latt.GetVectors()[j];
         bool add = true;
         if( (Flags & mattTranslation) == 0 && i != InvalidIndex )  {
           for( int k=0; k < 3; k++ )  {
@@ -1187,14 +1061,14 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   }
 ///////////////////////////////////////////////////////////////////////////////
   TBravaisLattice* BL = new TBravaisLattice("Triclinic");
-  BL->AddSymmetry( this->FindGroup("P-1") );
+  BL->AddSymmetry( this->FindGroupByName("P-1") );
   BL->AddLattice( FindLattice("P") );
   BravaisLattices.Add( BL->GetName(), BL );
 
   BL = new TBravaisLattice("Monoclinic");
-  BL->AddSymmetry( this->FindGroup("P2/m") );
-  BL->AddSymmetry( this->FindGroup("P112/m") );
-  BL->AddSymmetry( this->FindGroup("P2/m11") );
+  BL->AddSymmetry( this->FindGroupByName("P2/m") );
+  BL->AddSymmetry( this->FindGroupByName("P112/m") );
+  BL->AddSymmetry( this->FindGroupByName("P2/m11") );
   BL->AddLattice( FindLattice("P") );
   BL->AddLattice( FindLattice("A") );
   BL->AddLattice( FindLattice("B") );
@@ -1202,7 +1076,7 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   BravaisLattices.Add( BL->GetName(), BL );
 
   BL = new TBravaisLattice("Orthorhombic");
-  BL->AddSymmetry( this->FindGroup("Pmmm") );
+  BL->AddSymmetry( this->FindGroupByName("Pmmm") );
   BL->AddLattice( FindLattice("P") );
   BL->AddLattice( FindLattice("A") );
   BL->AddLattice( FindLattice("B") );
@@ -1212,107 +1086,107 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   BravaisLattices.Add( BL->GetName(), BL );
 
   BL = new TBravaisLattice("Tetragonal");
-  BL->AddSymmetry( this->FindGroup("P4/m") );
-  BL->AddSymmetry( this->FindGroup("P4/mmm") );
+  BL->AddSymmetry( this->FindGroupByName("P4/m") );
+  BL->AddSymmetry( this->FindGroupByName("P4/mmm") );
   BL->AddLattice( FindLattice("P") );
   BL->AddLattice( FindLattice("I") );
   BravaisLattices.Add( BL->GetName(), BL );
 
   BL = new TBravaisLattice("Trigonal");
-  BL->AddSymmetry( this->FindGroup("P-3") );
-  BL->AddSymmetry( this->FindGroup("P-3m1") );
-  BL->AddSymmetry( this->FindGroup("P-31m") );
-  BL->AddSymmetry( this->FindGroup("R3:r") );
-  BL->AddSymmetry( this->FindGroup("R32:r") );
+  BL->AddSymmetry( this->FindGroupByName("P-3") );
+  BL->AddSymmetry( this->FindGroupByName("P-3m1") );
+  BL->AddSymmetry( this->FindGroupByName("P-31m") );
+  BL->AddSymmetry( this->FindGroupByName("R3:r") );
+  BL->AddSymmetry( this->FindGroupByName("R32:r") );
   BL->AddLattice( FindLattice("P") );
   BL->AddLattice( FindLattice("R") );
   BravaisLattices.Add( BL->GetName(), BL );
 
   BL = new TBravaisLattice("Hexagonal");
-  BL->AddSymmetry( this->FindGroup("P6/m") );
-  BL->AddSymmetry( this->FindGroup("P6/mmm") );
+  BL->AddSymmetry( this->FindGroupByName("P6/m") );
+  BL->AddSymmetry( this->FindGroupByName("P6/mmm") );
   BL->AddLattice( FindLattice("P") );
   BravaisLattices.Add( BL->GetName(), BL );
 
   BL = new TBravaisLattice("Cubic");
-  BL->AddSymmetry( this->FindGroup("Pm-3") );
-  BL->AddSymmetry( this->FindGroup("Pm-3m") );
+  BL->AddSymmetry( this->FindGroupByName("Pm-3") );
+  BL->AddSymmetry( this->FindGroupByName("Pm-3m") );
   BL->AddLattice( FindLattice("P") );
   BL->AddLattice( FindLattice("I") );
   BL->AddLattice( FindLattice("F") );
   BravaisLattices.Add( BL->GetName(), BL );
 
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("2--", FindGroup("P211") );
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-2-", FindGroup("P2") );
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--2", FindGroup("P112") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("2--", FindGroupByName("P211") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-2-", FindGroupByName("P2") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--2", FindGroupByName("P112") );
   // 0.5+X,-Y,-Z
   TSymmElement& se_p2111 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "21--", FindGroup("P2111") );
+    "21--", FindGroupByName("P2111") );
   // -X,0.5+Y,-Z
   TSymmElement& se_p21 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "-21-", FindGroup("P21") );
+    "-21-", FindGroupByName("P21") );
   // -X,-Y,0.5+Z
   TSymmElement& se_p1121 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "--21", FindGroup("P1121") );
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("3", FindGroup("P3") );
+    "--21", FindGroupByName("P1121") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("3", FindGroupByName("P3") );
   //-Y,+X-Y,0.333+Z;+Y-X,-X,0.667+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("31", FindGroup("P31") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("31", FindGroupByName("P31") );
   // -Y,+X-Y,0.667+Z;+Y-X,-X,0.333+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("32", FindGroup("P32") );
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("4", FindGroup("P4") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("32", FindGroupByName("P32") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("4", FindGroupByName("P4") );
   //-Y,+X,0.25+Z;-X,-Y,0.5+Z;+Y,-X,0.75+Z
   TSymmElement& se_p41 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "41", FindGroup("P41") );
+    "41", FindGroupByName("P41") );
   //-Y,+X,0.5+Z;-X,-Y,+Z;+Y,-X,0.5+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("42", FindGroup("P42") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("42", FindGroupByName("P42") );
   // -Y,+X,0.75+Z;-X,-Y,0.5+Z;+Y,-X,0.25+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("43", FindGroup("P43") );
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("6", FindGroup("P6") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("43", FindGroupByName("P43") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("6", FindGroupByName("P6") );
   //-Y+X,+X,0.167+Z;-Y,+X-Y,0.333+Z;-X,-Y,0.5+Z;+Y-X,-X,0.667+Z;+Y,-X+Y,0.833+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("61", FindGroup("P61") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("61", FindGroupByName("P61") );
   //-Y+X,+X,0.333+Z;-Y,+X-Y,0.667+Z;-X,-Y,+Z;+Y-X,-X,0.333+Z;+Y,-X+Y,0.667+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("62", FindGroup("P62") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("62", FindGroupByName("P62") );
   //-Y+X,+X,0.5+Z;-Y,+X-Y,+Z;-X,-Y,0.5+Z;+Y-X,-X,+Z;+Y,-X+Y,0.5+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("63", FindGroup("P63") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("63", FindGroupByName("P63") );
   //-Y+X,+X,0.667+Z;-Y,+X-Y,0.333+Z;-X,-Y,+Z;+Y-X,-X,0.667+Z;+Y,-X+Y,0.333+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("64", FindGroup("P64") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("64", FindGroupByName("P64") );
   //-Y+X,+X,0.833+Z;-Y,+X-Y,0.667+Z;-X,-Y,0.5+Z;+Y-X,-X,0.333+Z;+Y,-X+Y,0.167+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("65", FindGroup("P65") );
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("65", FindGroupByName("P65") );
   
   // -X,0.5+Y,0.5+Z
   TSymmElement* se_n11 = &SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "n--", FindGroup("Pn11") );
+    "n--", FindGroupByName("Pn11") );
   //0.5+X,-Y,0.5+Z
   TSymmElement* se_n = &SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "-n-", FindGroup("Pn") );
+    "-n-", FindGroupByName("Pn") );
   //0.5+X,0.5+Y,-Z
   TSymmElement* se_11n = &SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "--n", FindGroup("P11n") );
+    "--n", FindGroupByName("P11n") );
   
   // 0.5+X,-Y,+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "-a-", FindGroup("Pa") ).SuperElement = se_n;
+    "-a-", FindGroupByName("Pa") ).SuperElement = se_n;
   //0.5+X,+Y,-Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "--a", FindGroup("P11a") ).SuperElement = se_11n;
+    "--a", FindGroupByName("P11a") ).SuperElement = se_11n;
 
   //-X,0.5+Y,+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "b--", FindGroup("Pb11") ).SuperElement = se_n11;
+    "b--", FindGroupByName("Pb11") ).SuperElement = se_n11;
   //+X,0.5+Y,-Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "--b", FindGroup("P11b") ).SuperElement = se_11n;
+    "--b", FindGroupByName("P11b") ).SuperElement = se_11n;
 
   //-X,+Y,0.5+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "c--", FindGroup("Pc11") ).SuperElement = se_n11;
+    "c--", FindGroupByName("Pc11") ).SuperElement = se_n11;
   //+X,-Y,0.5+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "-c-", FindGroup("Pc") ).SuperElement = se_n;
+    "-c-", FindGroupByName("Pc") ).SuperElement = se_n;
 
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("m--", FindGroup("Pm11") );
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-m-", FindGroup("Pm") );
-//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--m", FindGroup("P11m") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("m--", FindGroupByName("Pm11") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-m-", FindGroupByName("Pm") );
+//  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--m", FindGroupByName("P11m") );
 
   // xonstructing glide d planes
   smatd dMatt;
@@ -1330,56 +1204,56 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   d3.AddMatrix(dMatt);
 
   PointGroups <<
-    FindGroup("P1")  <<    //1
-    FindGroup("P-1") <<    //2
-    FindGroup("P2")  <<    //3
-    FindGroup("Pm")  <<    //4
-    FindGroup("P2/m") <<   //5
-    FindGroup("P222") <<   //6
-    FindGroup("Pmm2") <<   //7
-    FindGroup("Pmmm") <<   //8
-    FindGroup("P4") <<     //9
-    FindGroup("P-4") <<    //10
-    FindGroup("P4/m") <<   //11
-    FindGroup("P422") <<   //12
-    FindGroup("P4mm") <<   //13
-    FindGroup("P-42m") <<  //14
-    FindGroup("P4/mmm") << //15
+    FindGroupByName("P1")  <<    //1
+    FindGroupByName("P-1") <<    //2
+    FindGroupByName("P2")  <<    //3
+    FindGroupByName("Pm")  <<    //4
+    FindGroupByName("P2/m") <<   //5
+    FindGroupByName("P222") <<   //6
+    FindGroupByName("Pmm2") <<   //7
+    FindGroupByName("Pmmm") <<   //8
+    FindGroupByName("P4") <<     //9
+    FindGroupByName("P-4") <<    //10
+    FindGroupByName("P4/m") <<   //11
+    FindGroupByName("P422") <<   //12
+    FindGroupByName("P4mm") <<   //13
+    FindGroupByName("P-42m") <<  //14
+    FindGroupByName("P4/mmm") << //15
 
-    FindGroup("P3") <<     //16
-    FindGroup("P-3") <<    //17
-    FindGroup("P321") <<   //18
-    FindGroup("P3m1") <<   //19
-    FindGroup("P-3m1") <<  //20
+    FindGroupByName("P3") <<     //16
+    FindGroupByName("P-3") <<    //17
+    FindGroupByName("P321") <<   //18
+    FindGroupByName("P3m1") <<   //19
+    FindGroupByName("P-3m1") <<  //20
 
-    FindGroup("P6") <<     //21
-    FindGroup("P-6") <<    //22
-    FindGroup("P6/m") <<   //23
-    FindGroup("P622") <<   //24
-    FindGroup("P6mm") <<   //25
-    FindGroup("P-62m") <<  //26
-    FindGroup("P6/mmm") << //27
+    FindGroupByName("P6") <<     //21
+    FindGroupByName("P-6") <<    //22
+    FindGroupByName("P6/m") <<   //23
+    FindGroupByName("P622") <<   //24
+    FindGroupByName("P6mm") <<   //25
+    FindGroupByName("P-62m") <<  //26
+    FindGroupByName("P6/mmm") << //27
 
-    FindGroup("P23") <<    //28
-    FindGroup("Pm-3") <<   //29
-    FindGroup("P432") <<   //30
-    FindGroup("P-43m") <<  //31
-    FindGroup("Pm-3m");    //32
+    FindGroupByName("P23") <<    //28
+    FindGroupByName("Pm-3") <<   //29
+    FindGroupByName("P432") <<   //30
+    FindGroupByName("P-43m") <<  //31
+    FindGroupByName("Pm-3m");    //32
 
   _PointGroups.SetCount(PointGroups.Count());
   for (size_t i=0; i < PointGroups.Count(); i++)
     _PointGroups[i] << PointGroups[i];
-  _PointGroups[2] << FindGroup("P211") << FindGroup("P112");
-  _PointGroups[3] << FindGroup("Pm11") << FindGroup("P11m");
-  _PointGroups[4] << FindGroup("P112/m") << FindGroup("P2/m11");
-  _PointGroups[6] << FindGroup("P2mm") << FindGroup("Pm2m");
-  _PointGroups[13] << FindGroup("P-4m2");
-  _PointGroups[15] << FindGroup("R3:r");
-  _PointGroups[16] << FindGroup("R-3:r");
-  _PointGroups[17] << FindGroup("P312") <<  FindGroup("R32:r");
-  _PointGroups[18] << FindGroup("P31m") << FindGroup("R3m:r");
-  _PointGroups[19] << FindGroup("P-31m") << FindGroup("R-3m:r");
-  _PointGroups[25] << FindGroup("P-6m2");
+  _PointGroups[2] << FindGroupByName("P211") << FindGroupByName("P112");
+  _PointGroups[3] << FindGroupByName("Pm11") << FindGroupByName("P11m");
+  _PointGroups[4] << FindGroupByName("P112/m") << FindGroupByName("P2/m11");
+  _PointGroups[6] << FindGroupByName("P2mm") << FindGroupByName("Pm2m");
+  _PointGroups[13] << FindGroupByName("P-4m2");
+  _PointGroups[15] << FindGroupByName("R3:r");
+  _PointGroups[16] << FindGroupByName("R-3:r");
+  _PointGroups[17] << FindGroupByName("P312") <<  FindGroupByName("R32:r");
+  _PointGroups[18] << FindGroupByName("P31m") << FindGroupByName("R3m:r");
+  _PointGroups[19] << FindGroupByName("P-31m") << FindGroupByName("R-3m:r");
+  _PointGroups[25] << FindGroupByName("P-6m2");
 
   InitRelations();
 
@@ -1447,7 +1321,7 @@ TSpaceGroup &TSymmLib::InitSpaceGroup(TSpaceGroup &sg) {
   return sg;
 }
 //..............................................................................
-TSpaceGroup* TSymmLib::CreateNew(const SymSpace::Info& si,
+TSpaceGroup* TSymmLib::CreateNew(const SymmSpace::Info& si,
   const olxstr &hs)
 {
   smatd_list ml;
@@ -1472,7 +1346,7 @@ TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
   if (AU.GetLatt() == -1) {
     smatd_list ml = AU.GetMatices();
     ml.AddNew().I();
-    SymSpace::Info si = SymSpace::GetInfo(ml);
+    SymmSpace::Info si = SymmSpace::GetInfo(ml);
     olxstr hs = HallSymbol::Evaluate(si);
     TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
     return sg == NULL ? CreateNew(si, hs) : sg;

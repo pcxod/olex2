@@ -68,8 +68,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
 //    LaueClasses.AddACopy( &(TSymmLib::GetInstance()->GetPointGroup(i)) );
 //  }
 
-  //LaueClasses.Add( TSymmLib::GetInstance()->FindGroup("P112/m") );
-  //LaueClasses.Add( TSymmLib::GetInstance()->FindGroup("P2/m11") );
+  //LaueClasses.Add( TSymmLib::GetInstance()->FindGroupByName("P112/m") );
+  //LaueClasses.Add( TSymmLib::GetInstance()->FindGroupByName("P2/m11") );
 
   SGTest.MergeTest(LaueClasses, LaueClassStats);
   TPtrList<TSpaceGroup> CalculatedLaueClasses;
@@ -247,7 +247,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   // nor systematic absences in P-1!
   if( CalculatedLaueClasses.Count() == 1 &&
-      CalculatedLaueClasses[0] == SymmLib.FindGroup("P-1") )  {
+      CalculatedLaueClasses[0] == SymmLib.FindGroupByName("P-1") )  {
     PresentElements.Clear();
   }
   if( !PresentElements.IsEmpty() )  {
@@ -286,7 +286,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( sgMergeStat[i].GetCount() == 0 )  continue;
       double dv = sgMergeStat[i].GetSummI()/sgMergeStat[i].GetCount();
       const TSpaceGroup& sg = sgMergeStat[i].GetSpaceGroup();
-      double k = (double)((sg.MatrixCount()+1)*(sg.GetLattice().VectorCount()+1));
+      double k = (double)((sg.MatrixCount()+1)*
+        (sg.GetLattice().GetVectors().Count()+1));
       if( sg.IsCentrosymmetric() ) // add just 1, not multiply by 2 - leads to distrortion
         k++;
       dv /= k;
@@ -443,7 +444,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       olxstr amb_sg;
       for( size_t i=0; i < SATestResults.Count(); i++ )  {
         if( SATestResults[i].GetWeakCount() == 0 && 
-          (SATestResults[i].GetObject()->HasTranslations() || SATestResults[i].GetObject()->GetLattice().VectorCount() != 0) ) 
+          (SATestResults[i].GetObject()->HasTranslations() ||
+           !SATestResults[i].GetObject()->GetLattice().GetVectors().IsEmpty()) ) 
         {
           if( !amb_sg.IsEmpty() )
             amb_sg << ", ";
@@ -461,7 +463,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       // three hits from here
       for( size_t i=sortedSATestResults.Count()-1; i != InvalidIndex; i-- )  {
         if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
-          double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
+          double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/
+            sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
           if( v > SGTest.GetAverageI()/5 )
             break;
         }

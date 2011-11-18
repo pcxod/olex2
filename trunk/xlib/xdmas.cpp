@@ -79,8 +79,8 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
 
   smatd sm;
   for( size_t i=0; i < symm.Count(); i++ )  {
-    if( TSymmParser::SymmToMatrix(symm[i], sm) )
-      GetAsymmUnit().AddMatrix(sm);
+    TSymmParser::SymmToMatrix(symm[i], sm);
+    GetAsymmUnit().AddMatrix(sm);
   }
   
   for( size_t i=0; i < crds.Count(); i++ )  {

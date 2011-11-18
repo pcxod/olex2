@@ -13,7 +13,7 @@ namespace test {
 
 void rotation_id_test(OlxTests& t)  {
   t.description = __OlxSrcInfo;
-  mat3d m(0, 1, 1, 1, 0, 1, 0, 0, 0);
+  mat3d m(0, 1, 1, 1, 0, 1, 0, 0, -1);
   int id = rotation_id::get(m);
   mat3d id_r = rotation_id::get(id);
   if( m != id_r )
@@ -21,6 +21,8 @@ void rotation_id_test(OlxTests& t)  {
   int i_id = rotation_id::negate(id);
   mat3d i_id_r = rotation_id::get(i_id);
   if( m != -i_id_r )
+    throw TFunctionFailedException(__OlxSourceInfo, "m != -i_id_r");
+  if( id != rotation_id::negate(rotation_id::negate(id)) )
     throw TFunctionFailedException(__OlxSourceInfo, "m != -i_id_r");
 }
 

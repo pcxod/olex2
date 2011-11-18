@@ -15,7 +15,8 @@
 const char TSymmParser::Axis[] = {'X','Y','Z'};
 //..............................................................................
 // Transforms standard SYMM operation (INS, CIF files) to matrix
-bool TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
+smatdd TSymmParser::SymmToMatrix(const olxstr& S)  {
+  smatdd M;
   bool res = true;
   try {
     M.Null();
@@ -61,6 +62,7 @@ next_oper:
       p = stack.Pop();
       if( p == '-' )
         M.r[i][index] = -1;  // inversion
+      bool mul = (p == '*');
       if( stack.IsEmpty() )  continue;
       p = stack.Pop();
       op = IsAxis(p);
@@ -90,7 +92,10 @@ next_oper:
           else
             stack.Push(p);
         }
-        M.t[i] = ratio;  // translation
+        if (mul)
+          M.r[i][index] = ratio;
+        else
+          M.t[i] = ratio;  // translation
       }
       else
         goto next_oper;
@@ -113,11 +118,9 @@ next_oper:
       if( base != 1 )
         M.t[i] /= base;
     }
-    return true;
+    return M;
   }
   catch(const TExceptionBase&)  {
-    if( res == false )
-      throw;
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("to parse SYMM card ").quote() << S);
   }
 }
