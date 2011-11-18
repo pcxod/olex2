@@ -17,10 +17,12 @@
 BeginXlibNamespace()
 
 namespace RefUtil {
-  template <class MatList> size_t GetBijovetPairs(const TRefList& refs, const vec3i& min_indices,
-    const vec3i& max_indices, TRefPList& pos, TRefPList& neg, const MatList& ml)
+  template <class MatList>
+  size_t GetBijovetPairs(const TRefList& refs, const vec3i& min_indices,
+    const vec3i& max_indices, TRefPList& pos, TRefPList& neg,
+    const MatList& ml)
   {
-    SymSpace::InfoEx sp = SymSpace::Compact(ml);
+    SymmSpace::InfoEx sp = SymmSpace::Compact(ml);
     if( sp.centrosymmetric )
       return 0;
     pos.SetCapacity(refs.Count()/2);
