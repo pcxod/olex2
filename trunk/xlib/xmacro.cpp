@@ -4950,16 +4950,12 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   RefinementModel& rm = xapp.XFile().GetRM();
   const TDoubleList& basf = rm.GetBASF();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-  double basf0 = 0;
-  for( size_t bi=0; bi < rm.GetBASF().Count(); bi++ )
-    basf0 += rm.GetBASF()[bi];
-  basf0 = 1-basf0;
-  TDoubleList scales;
-  scales << basf0 <<  rm.GetBASF();
   if( !basf.IsEmpty() )  {
     if( rm.GetHKLF() >= 5 )  {
+      size_t tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
       twinning::general twin(info_ex, rm.GetReflections(),
-        RefUtil::ResolutionAndSigmaFilter(rm), scales);
+        RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASF(),
+        rm.GetTWIN_mat(), tn);
       TArrayList<compd> F(twin.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, F);
       twin.calc_fsq(F, Fsq);
@@ -4972,7 +4968,8 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       TArrayList<compd> F(refs.Count());
       Fsq.Resize(refs.Count());
       SFUtil::CalcSF(xapp.XFile(), refs, F);
-      twinning::merohedral twin(info_ex, refs, ms, scales, rm.GetTWIN_mat(),
+      twinning::merohedral twin(
+        info_ex, refs, ms, rm.GetBASF(), rm.GetTWIN_mat(),
         rm.GetTWIN_n());
       twin.calc_fsq(F, Fsq);
     }

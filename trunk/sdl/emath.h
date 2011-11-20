@@ -326,22 +326,46 @@ void olx_update_min_max(const src_t& src, dest_t& min_v, dest_t& max_v)  {
   if( src > max_v )  max_v = src;
 }
 
-template <typename item_t, class list_t>
-item_t olx_mean(const list_t &l) {
-  item_t rv(0);
-  for (size_t i=0; i < l.Count(); i++)
-    rv += l[i];
-  return l.Count() == 0 ? rv : rv/l.Count();
+
+template <class list_t>
+typename list_t::list_item_type olx_sum(const list_t &l,
+  size_t from=0, size_t to=InvalidIndex)
+{
+  typename list_t::list_item_type rv(0);
+  if (to == InvalidIndex) to = l.Count();
+  for (size_t i=from; i < to; i++) rv += l[i];
+  return rv;
+}
+template <class list_t, class accessor_t>
+static typename accessor_t::return_type olx_sum(
+  const list_t &l, const accessor_t &accessor,
+  size_t from=0, size_t to=InvalidIndex)
+{
+  typename accessor_t::return_type rv(0);
+  if (to == InvalidIndex) to = l.Count();
+  for (size_t i=0; i < to; i++) rv += accessor(l[i]);
+  return rv;
+}
+
+template <class list_t>
+typename list_t::list_item_type olx_mean(const list_t &l,
+  size_t from=0, size_t to=InvalidIndex)
+{
+  if (to == InvalidIndex) to = l.Count();
+  typename list_t::list_item_type rv = olx_sum(l, from, to);
+  size_t cnt = to-from;
+  return cnt == 0 ? rv : rv/cnt;
 }
 
 template <class list_t, class accessor_t>
 static typename accessor_t::return_type olx_mean(
-  const list_t &l, const accessor_t &accessor)
+  const list_t &l, const accessor_t &accessor,
+  size_t from=0, size_t to=InvalidIndex)
 {
-  typename accessor_t::return_type rv(0);
-  for (size_t i=0; i < l.Count(); i++)
-    rv += accessor(l[i]);
-  return l.Count() == 0 ? rv : rv/l.Count();
+  if (to == InvalidIndex) to = l.Count();
+  typename accessor_t::return_type rv = olx_sum(l, accessor, from, to);
+  size_t cnt = to-from;
+  return cnt == 0 ? rv : rv/cnt;
 }
 
 EndEsdlNamespace()

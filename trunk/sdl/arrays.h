@@ -44,21 +44,24 @@ public:
       Data[i] = val;
   }
 
-  inline void FastInitWith(const int val)  {  memset( Data, val, _Length*sizeof(AE) );  }
+  void FastInitWith(const int val)  {  memset( Data, val, _Length*sizeof(AE) );  }
 
   // direct access to "private" member
   AE* Data;
 
-  inline size_t Length() const {  return _Length;  }
+  size_t Length() const {  return _Length;  }
+  size_t Count() const { return _Length; }
   index_t GetMin() const {  return MinIndex;  }
-  inline bool IsInRange(index_t ind) const {  return ind >= MinIndex && ((ind-MinIndex) < _Length);  }
-  inline AE& operator [] (index_t index) const { return Value(index);  }
-  inline AE& Value(index_t index) const {
+  bool IsInRange(index_t ind) const {  return ind >= MinIndex && ((ind-MinIndex) < _Length);  }
+  AE& operator [] (index_t index) const { return Value(index);  }
+  AE& Value(index_t index) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index-MinIndex, 0, _Length);
 #endif
     return Data[index-MinIndex];
   }
+public:
+  typedef AE list_item_type;
 };
 
 // we do not use TArray1D< TArray1D > for performance reasons...
@@ -98,34 +101,34 @@ public:
       memset( Data[i], val, Height*sizeof(AE) );
   }
 
-  inline bool IsInRange(index_t x, index_t y) const {  
+  bool IsInRange(index_t x, index_t y) const {  
     return (x >= MinWidth && ((x-MinWidth) < Width)) &&
            (y >= MinHeight && ((y-MinHeight) < Height));  
   }
-  inline size_t GetWidth() const {  return Width;  }
-  inline size_t Length1() const {  return Width;  }
+  size_t GetWidth() const {  return Width;  }
+  size_t Length1() const {  return Width;  }
   index_t GetMin1() const {  return MinWidth;  }
-  inline size_t GetHeight() const {  return Height;  }
-  inline size_t Length2() const {  return Height;  }
+  size_t GetHeight() const {  return Height;  }
+  size_t Length2() const {  return Height;  }
   index_t GetMin2() const {  return MinHeight;  }
   // direct access to private member
   AE** Data;
 
-  inline const AE& Value(index_t x, index_t y) const {
+  const AE& Value(index_t x, index_t y) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, x-MinWidth, 0, Width);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, y-MinHeight, 0, Height);
 #endif
     return Data[x-MinWidth][y-MinHeight];
   }
-  inline const AE& operator () (index_t x, index_t y) const {  return Value(x, y);  }
+  const AE& operator () (index_t x, index_t y) const {  return Value(x, y);  }
   
   template <class VC>
-    inline AE& Value(const TVector<VC>& ind) const {
+    AE& Value(const TVector<VC>& ind) const {
       return Value((index_t)ind[0], (index_t)ind[1]);
     }
   template <class VC>
-    inline AE& operator () (const TVector<VC>& ind) const {
+    AE& operator () (const TVector<VC>& ind) const {
       return Value((index_t)ind[0], (index_t)ind[1]);
     }
 };
@@ -191,29 +194,29 @@ public:
         memset(Data[i][j], val, Depth*sizeof(AE));
   }
 
-  inline bool IsInRange(index_t x, index_t y, index_t z) const {  
+  bool IsInRange(index_t x, index_t y, index_t z) const {  
     return (x >= MinWidth && ((x-MinWidth) < (index_t)Width)) &&
            (y >= MinHeight && ((y-MinHeight) < (index_t)Height)) &&
            (z >= MinDepth && ((z-MinDepth) < (index_t)Depth));  
   }
-  template <class vec> inline bool IsInRange(const vec& ind) const {  
+  template <class vec> bool IsInRange(const vec& ind) const {  
     return IsInRange((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);
   }
   vec3s GetSize() const {  return vec3s(Width, Height, Depth);  }
-  inline size_t GetWidth() const {  return Width;  }
-  inline size_t Length1() const {  return Width;  }
+  size_t GetWidth() const {  return Width;  }
+  size_t Length1() const {  return Width;  }
   index_t GetMin1() const {  return MinWidth;  }
-  inline size_t GetHeight() const {  return Height;  }
-  inline size_t Length2() const {  return Height;  }
+  size_t GetHeight() const {  return Height;  }
+  size_t Length2() const {  return Height;  }
   index_t GetMin2() const {  return MinHeight;  }
-  inline size_t GetDepth() const {  return Depth;  }
-  inline size_t Length3() const {  return Depth;  }
+  size_t GetDepth() const {  return Depth;  }
+  size_t Length3() const {  return Depth;  }
   index_t GetMin3() const {  return MinDepth;  }
 
   // direct access to private member
   AE*** Data;
 
-  inline AE& Value(index_t x, index_t y, index_t z) const {
+  AE& Value(index_t x, index_t y, index_t z) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, x-MinWidth, 0, Width);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, y-MinHeight, 0, Height);
@@ -221,12 +224,12 @@ public:
 #endif
     return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
   }
-  inline AE& operator () (index_t x, index_t y, index_t z) const {  return Value(x,y,z);  }
+  AE& operator () (index_t x, index_t y, index_t z) const {  return Value(x,y,z);  }
 
-  template <class VC> inline AE& Value(const VC& ind) const {  
+  template <class VC> AE& Value(const VC& ind) const {  
     return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
   }
-  template <class VC> inline AE& operator () (const VC& ind) const {  
+  template <class VC> AE& operator () (const VC& ind) const {  
     return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
   }
 };
@@ -252,6 +255,9 @@ namespace simple {
     }
     item_t &operator [] (size_t i) { return data[i]; }
     const item_t &operator [] (size_t i) const { return data[i]; }
+    size_t Count() const { return width; }
+  public:
+    typedef item_t list_item_type;
   };
   // array [0..height][0..width]
   template <typename item_t>
@@ -313,7 +319,6 @@ namespace simple {
     item_t **operator [] (size_t i) { return data[i]; }
     const item_t **operator [] (size_t i) const { return data[i]; }
   };
-
 }; // namspace simple
 EndEsdlNamespace()
 #endif

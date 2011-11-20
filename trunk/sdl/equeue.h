@@ -24,7 +24,7 @@ template <class T> class TQueue  {
     item(const T& v) : data(v), next(NULL)  {}
   };
   item *first, *last;
-  int _count;
+  size_t _count;
 public:
   TQueue() : first(NULL), last(NULL), _count(0)  {}
   ~TQueue()  {  Clear();  }
@@ -36,7 +36,7 @@ public:
     }
     _count = 0;
   }
-  inline T& Push(const T& v)  {
+  T& Push(const T& v)  {
     item* ni = new item(v);
     if( first == NULL )  {
       first = last = ni;
@@ -48,19 +48,19 @@ public:
     _count++;
     return last->data;
   }
-  inline T& PushLast(const T& v)  {  return Push(v);  }
-  inline T PopFirst()  {  return Pop();  }
-  inline T& Last() const {
+  T& PushLast(const T& v)  {  return Push(v);  }
+  T PopFirst()  {  return Pop();  }
+  T& Last() const {
     if( last == NULL )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "queue is empty");
     return last->data;
   }
-  inline T& First() const {
+  T& First() const {
     if( first == NULL )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "queue is empty");
     return first->data;
   }
-  inline T& PushFirst(const T& v)  {
+  T& PushFirst(const T& v)  {
     item* ni = new item(v);
     if( first == NULL )  {
       first = last = ni;
@@ -85,8 +85,8 @@ public:
     // make the compiler happy
     return T();
   }
-  inline bool IsEmpty() const {  return _count == 0;  }
-  inline int Count() const {  return _count;  }
+  bool IsEmpty() const {  return _count == 0;  }
+  size_t Count() const {  return _count;  }
 };
 
 EndEsdlNamespace()

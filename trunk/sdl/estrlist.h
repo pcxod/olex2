@@ -506,6 +506,8 @@ public:
       f.OnItem(Strings[i]->String, i);
     return *this;
   }
+public:
+  typedef SC list_item_type;
 };
 
 

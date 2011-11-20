@@ -482,7 +482,10 @@ public:
   static ListBubbleSorter<TTypeListExt<T,DestructCast>,const T*, Accessor>
     BubleSorter;
   static TListTraverser<TTypeListExt<T,DestructCast> > Traverser;
+public:
+  typedef T item_t;
 };
+
 template <class T>
   class TTypeList : public TTypeListExt<T,T>  {
   public:
@@ -512,6 +515,8 @@ template <class T>
       TTypeListExt<T,T>::operator = (list);  
       return *this;  
     }
+  public:
+    typedef T list_item_type;
   };
 #ifndef __BORLANDC__
 template <class T, typename DestructCast>
@@ -541,6 +546,8 @@ public:
     parent_t::operator = (l);
     return *this;
   }
+public:
+  typedef item_t list_item_type;
 };
 
 template <typename item_t>
@@ -555,6 +562,8 @@ public:
     parent_t::operator = (l);
     return *this;
   }
+public:
+  typedef item_t list_item_type;
 };
 
 EndEsdlNamespace()

@@ -34,26 +34,26 @@ public:
   virtual ~TDirectionalListEntry()  {  delete Data;  }
 
   // returns the number of written elements
-  inline size_t Write(const T* data, size_t count)  {
+  size_t Write(const T* data, size_t count)  {
     return Data->Write(data, count);
   }
 
   // returns the number of written elements
-  inline size_t Write(const T* data, size_t offset, size_t count)  {
+  size_t Write(const T* data, size_t offset, size_t count)  {
     return Data->Write(data, offset, count);
   }
 
   // returns the number of read elements
-  inline size_t Read(T* data, size_t offset, size_t count) const {
+  size_t Read(T* data, size_t offset, size_t count) const {
     return Data->Read(data, offset, count);
   }
 
   // returns 1 if written and 0 otherwise
-  inline size_t Write(const T& entity)  {
+  size_t Write(const T& entity)  {
     return Data->Write(entity);
   }
 
-  inline TDirectionalListEntry* AddEntry(size_t size)  {
+  TDirectionalListEntry* AddEntry(size_t size)  {
     if( NextEntry != NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
     TDirectionalListEntry<T>* e = new TDirectionalListEntry<T>(size);
@@ -61,25 +61,25 @@ public:
     return e;
   }
 
-  inline TDirectionalListEntry* AddEntry(T* memoryBlockToOwn, size_t size)  {
+  TDirectionalListEntry* AddEntry(T* memoryBlockToOwn, size_t size)  {
     if( NextEntry != NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
     return (NextEntry = new TDirectionalListEntry<T>(memoryBlockToOwn, size));
   }
 
-  inline TDirectionalListEntry* AddEntry(const TDirectionalListEntry& entry)  {
+  TDirectionalListEntry* AddEntry(const TDirectionalListEntry& entry)  {
     return (NextEntry = new TDirectionalListEntry<T>(entry));
   }
 
-  inline TDirectionalListEntry* GetNext() const {  return NextEntry;  }
-  inline const T& Get(size_t ind ) const {  return Data->Get(ind);  }
-  inline T& Item(size_t ind )  {  return Data->Item(ind);  }
-  inline void Set(size_t ind, T& val )  {  Data->Set(ind, val);  }
-  inline const T* GetData() const {  return Data->GetData();  }
-  inline size_t GetSize() const {  return Data->GetSize();  }
-  inline size_t RawLen() const {  return Data->RawLen();  }
-  inline size_t GetCapacity() const {  return Data->GetCapacity();  }
-  };
+  TDirectionalListEntry* GetNext() const {  return NextEntry;  }
+  const T& Get(size_t ind ) const {  return Data->Get(ind);  }
+  T& Item(size_t ind )  {  return Data->Item(ind);  }
+  void Set(size_t ind, T& val )  {  Data->Set(ind, val);  }
+  const T* GetData() const {  return Data->GetData();  }
+  size_t GetSize() const {  return Data->GetSize();  }
+  size_t RawLen() const {  return Data->RawLen();  }
+  size_t GetCapacity() const {  return Data->GetCapacity();  }
+};
 
 template <typename T>
   class TDirectionalList : public IEObject  {
@@ -100,7 +100,7 @@ template <typename T>
         Tail = Head = new TDirectionalListEntry<T>(SegmentSize);
     }
 
-    inline size_t GetSegmentSize() const {  return SegmentSize;  }
+    size_t GetSegmentSize() const {  return SegmentSize;  }
     // updates the tail and the length of this object
     void UpdateLength() {
       TDirectionalListEntry<T>* entry = Head;
@@ -143,8 +143,8 @@ template <typename T>
     Length = 0;
   }
 
-  inline TDirectionalListEntry<T>* GetHead() const {  return Head;  }
-  inline TDirectionalListEntry<T>* GetTail() const {  return Tail;  }
+  TDirectionalListEntry<T>* GetHead() const {  return Head;  }
+  TDirectionalListEntry<T>* GetTail() const {  return Tail;  }
   /* returns the entry at specified position and updates position to in the found entry
      so that a caller can use this position to read directly from the entry */
   TDirectionalListEntry<T>* GetEntryAtPosition(size_t& pos) const {
@@ -158,9 +158,9 @@ template <typename T>
     return entry;
   }
 
-  inline size_t GetLength() const {  return Length;  }
+  size_t GetLength() const {  return Length;  }
 
-  inline bool IsEmpty() const {  return (Length == 0);  }
+  bool IsEmpty() const {  return (Length == 0);  }
 
   T& Get(size_t index)  {
 #ifdef _DEBUG
@@ -262,6 +262,8 @@ template <typename T>
     }
     return wstr;
   }
+public:
+  typedef T list_item_type;
 };
   
 EndEsdlNamespace()

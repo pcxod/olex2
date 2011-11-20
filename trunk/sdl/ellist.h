@@ -68,6 +68,8 @@ protected:
     pos++;
     return cur->data;
   }
+public:
+  typedef T list_item_type;
 };
 
 EndEsdlNamespace()
