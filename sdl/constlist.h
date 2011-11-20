@@ -61,6 +61,8 @@ public:
     return *rv;
   }
   bool IsValid() const {  return p != NULL;  }
+public:
+  typedef obj_t list_item_type;
 };
 
 template <class cont_t, typename item_t>
@@ -77,6 +79,8 @@ public:
     _parent_t:: operator = (a);
     return *this;
   }
+public:
+  typedef item_t list_item_type;
 };
 
 template <class dict_t, typename key_t, typename val_t>

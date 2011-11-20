@@ -185,14 +185,18 @@ namespace twinning  {
         int i = current++;
         if( parent.n < 0 && i == olx_abs(parent.n)/2 )
           index = -index;
-        TReflection rv = TReflection(parent.all_refs[src_index], index, (i+1)*(i==0 ? 1 : -1));
-        rv.SetTag(parent.hkl_to_ref_map.IsInRange(index) ? parent.hkl_to_ref_map(index) : -1);
+        TReflection rv = TReflection(
+          parent.all_refs[src_index], index, (i+1)*(i==0 ? 1 : -1));
+        rv.SetTag(
+          parent.hkl_to_ref_map.IsInRange(index) ? parent.hkl_to_ref_map(index)
+          : -1);
         index = TReflection::Standardise(parent.matrix*index, parent.sym_info);
         return rv;
       }
     };
     merohedral(const SymmSpace::InfoEx& _sym_info, const TRefList& _all_refs,
-      const RefinementModel::HklStat& _ms, const TDoubleList& _scales, const mat3i& tm, int _n)
+      const RefinementModel::HklStat& _ms, const TDoubleList& _scales,
+      const mat3i& tm, int _n)
       : sym_info(_sym_info), all_refs(_all_refs), ms(_ms),
         scales(_scales),
         hkl_to_ref_map(_ms.MinIndexes, _ms.MaxIndexes),
@@ -203,19 +207,22 @@ namespace twinning  {
         hkl_to_ref_map(all_refs[i].GetHkl()) = i;
         all_refs[i].SetTag(i);
       }
+      scales.Insert(0, 1-olx_sum(scales));
     }
     template <typename detwinner_t>
-    void detwin(const detwinner_t& dt, TRefList& out, const TArrayList<compd>& Fc)  {
+    void detwin(const detwinner_t& dt, TRefList& out,
+      const TArrayList<compd>& Fc)
+    {
       out = all_refs;
       for( size_t i=0; i < out.Count(); i++ )  {
         TReflection& r = out[i];
         iterator itr(*this, i);
-        detwin_result res = dt.detwin(twin_mate_generator<iterator>(itr, scales, Fc));
+        detwin_result res =
+          dt.detwin(twin_mate_generator<iterator>(itr, scales, Fc));
         r.SetI(res.f_sq);
         r.SetS(res.sig);
         r.SetBatch(TReflection::NoBatchSet);
       }
-
     }
     void calc_fsq(const TArrayList<compd>& Fc, evecd& Fsq)  {
       Fsq.Resize(all_refs.Count());
@@ -223,6 +230,22 @@ namespace twinning  {
         Fsq[i] = calc_f_sq(
           twin_mate_generator<iterator>(iterator(*this, i), scales, Fc));
       }
+    }
+    static ConstTypeList<mat3i> expand(const mat3i &m, int _n) {
+      mat3i_list rv;
+      if (_n ==0) return rv;
+      rv.AddCopy(m);
+      const size_t n = _n < 0 ? _n/2 : _n;
+      for (size_t i=2; i < n; i++)
+        rv.AddCopy(rv[i-1]*m);
+      if (_n < 0) {
+        rv.SetCapacity(rv.Count()*2+1);
+        size_t cnt = rv.Count();
+        for (size_t i=0; i < cnt; i++)
+          rv.AddCopy(rv[i]*-1);
+        rv.AddNew().I() *= -1;
+      }
+      return rv;
     }
     const SymmSpace::InfoEx& sym_info;
     const TRefList& all_refs;
@@ -236,28 +259,49 @@ namespace twinning  {
   struct general  {
     struct iterator  {
       const general& parent;
-      mutable size_t current;
+      mutable size_t current, current_mero;
       const size_t off;
-      iterator(const general& _parent, size_t start) : parent(_parent), off(start), current(0)  {}
+      iterator(const general& _parent, size_t start)
+        : parent(_parent), off(start), current(0), current_mero(0)  {}
       bool HasNext() const {
-        return ( current == 0 ||
-          ((off-current) > 0 && parent.all_refs[off-current].GetBatch() < 0));
+        return (current == 0 ||
+          ((off-current) != InvalidIndex &&
+            parent.all_refs[off-current].GetBatch() < 0));
       }
       TReflection Next() const {
+        if (current_mero < parent.mero_matrices.Count()) {
+          TReflection &src = parent.all_refs[off-current];
+          vec3i index = TReflection::Standardise(
+            parent.mero_matrices[current_mero++]*src.GetHkl(),
+            parent.sym_info);
+          int bn = int(olx_abs(src.GetBatch())+current_mero*parent.parts);
+          TReflection rv = TReflection(src, index,bn);
+          rv.SetTag(
+            parent.F_indices->IsInRange(index) ? (*parent.F_indices)(index)
+            : -1);
+          return rv;
+        }
+        current_mero = 0; //reset merohedral iterator
         return parent.all_refs[off-current++];
       }
     };
     general(const SymmSpace::InfoEx& _sym_info, const TRefList& _all_refs,
-      const RefUtil::ResolutionAndSigmaFilter& filter, const TDoubleList& _scales)
-      : sym_info(_sym_info), all_refs(_all_refs),
+      const RefUtil::ResolutionAndSigmaFilter& filter,
+      const TDoubleList& _scales,
+      const mat3i &mero_m=mat3i(),
+      int mero_n=0)
+      : sym_info(_sym_info),
+        all_refs(_all_refs),
         scales(_scales),
-        F_indices(NULL)
+        F_indices(NULL),
+        parts(1)
     {
       vec3i mi(100,100,100), mx = -mi;
-      for( size_t i=0; i < all_refs.Count(); i++ )
-        vec3i::UpdateMinMax(all_refs[i].GetHkl(), mi, mx);
-      vec3i::UpdateMinMax(TReflection::Standardise(mi, sym_info), mi, mx);
-      vec3i::UpdateMinMax(TReflection::Standardise(mx, sym_info), mi, mx);
+      vec3i_list s_refs(_all_refs.Count());
+      for( size_t i=0; i < all_refs.Count(); i++ ) {
+        s_refs[i] = TReflection::Standardise(all_refs[i].GetHkl(), sym_info);
+        vec3i::UpdateMinMax(s_refs[i], mi, mx);
+      }
       TArray3D<size_t>& hkl3d = *(F_indices = new TArray3D<size_t>(mi, mx));
       F_indices->FastInitWith(-1);
       reflections.Clear().SetCapacity(all_refs.Count());
@@ -270,14 +314,15 @@ namespace twinning  {
           all_refs[i].SetTag(-1);
           continue;
         }
-        vec3i hkl = TReflection::Standardise(all_refs[i].GetHkl(), sym_info);
+        const vec3i& hkl = s_refs[i];
         if( TReflection::IsAbsent(hkl, sym_info) || filter.IsOmitted(hkl) )  {
           if( all_refs[i].GetBatch() > 0 )  {
             size_t j=i;
             bool all_absent = true;
             while( --j != InvalidIndex && all_refs[j].GetBatch() < 0 )  {
               if( !TReflection::IsAbsent(all_refs[j].GetHkl(), sym_info) &&
-                !filter.IsOmitted(TReflection::Standardise(all_refs[j].GetHkl(), sym_info)))
+                !filter.IsOmitted(TReflection::Standardise(
+                  all_refs[j].GetHkl(), sym_info)))
               {
                 all_absent = false;
                 break;
@@ -300,7 +345,29 @@ namespace twinning  {
         if( all_refs[i].GetBatch() >= 0 )
           reflections.AddCopy(all_refs[i]).SetTag(i);
       }
-      reflections.ForEach(RefUtil::ResolutionAndSigmaFilter::IntensityModifier(filter));
+      reflections.ForEach(
+        RefUtil::ResolutionAndSigmaFilter::IntensityModifier(filter));
+      mero_matrices = merohedral::expand(mero_m, mero_n);
+      if (!mero_matrices.IsEmpty()) {
+        if (scales.Count() <= mero_matrices.Count()) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            "too few scale parameters");
+        }
+        parts = int(scales.Count() - mero_matrices.Count());
+        double pbs = 1-olx_sum(scales, 0, parts),
+          tbs = 1-olx_sum(scales, parts);
+        TDoubleList scs((parts+1)*(mero_matrices.Count()+1));
+        for( int i=0; i <= mero_matrices.Count(); i++) {
+          double s = (i == 0) ? tbs : scales[parts+i-1];
+          for (size_t j=0; j <= parts; j++) {
+            scs[i*(parts+1)+j] = (j == 0 ? pbs : scales[j-1])*s;
+          }
+        }
+        scales = scs;
+        parts++;
+      }
+      else
+        scales.Insert(0, 1-olx_sum(scales));
     }
     ~general()  {
       if( F_indices != NULL )
@@ -315,20 +382,23 @@ namespace twinning  {
     }
 
     template <typename detwinner_t>
-    void detwin(const detwinner_t& dt, TRefList& out, const TArrayList<compd>& Fc)  {
+    void detwin(const detwinner_t& dt, TRefList& out,
+      const TArrayList<compd>& Fc)
+    {
       out = reflections;
       for( size_t i=0; i < out.Count(); i++ )  {
         TReflection& r = out[i];
         twinning::general::iterator itr(*this, r.GetTag());
-        detwin_result res = dt.detwin(twin_mate_generator<iterator>(itr, scales, Fc));
+        detwin_result res = dt.detwin(
+          twin_mate_generator<iterator>(itr, scales, Fc));
         r.SetI(res.f_sq);
         r.SetS(res.sig);
         r.SetBatch(TReflection::NoBatchSet);
       }
     }
     template <typename detwinner_t, typename merger_t>
-    void detwin_and_merge(const detwinner_t& dt, const merger_t& merger, TRefList& out,
-      const TArrayList<compd>& Fc, TArrayList<compd>* pF)
+    void detwin_and_merge(const detwinner_t& dt, const merger_t& merger,
+      TRefList& out, const TArrayList<compd>& Fc, TArrayList<compd>* pF)
     {
       detwin(dt, out, Fc);
       TRefPList to_merge(out, DirectAccessor());
@@ -344,8 +414,10 @@ namespace twinning  {
         for( size_t i=0; i < out.Count(); i++ )  {
           size_t f_i;
           if( !hkl3d.IsInRange(out[i].GetHkl()) ||
-            (f_i = hkl3d(out[i].GetHkl())) == InvalidIndex )
-            throw TFunctionFailedException(__OlxSourceInfo, "merging does not match");
+            (f_i = hkl3d(out[i].GetHkl())) == InvalidIndex ) {
+            throw TFunctionFailedException(__OlxSourceInfo,
+              "merging does not match");
+          }
           F[i] = Fc[f_i];
         }
       }
@@ -357,6 +429,8 @@ namespace twinning  {
     RefinementModel::HklStat ms;
     TDoubleList scales;
     TArray3D<size_t>* F_indices;
+    mat3i_list mero_matrices;
+    int parts;
   };
 }; //end of the twinning namespace
 EndXlibNamespace()

@@ -80,6 +80,8 @@ public:
   };
 
   Iterator GetIterator() const {  return Iterator(*this);  }
+public:
+  typedef T item_t;
 };
 
 EndEsdlNamespace()

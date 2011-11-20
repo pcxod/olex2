@@ -428,6 +428,8 @@ public:
       c += coeff[i]*pow(arg,(double)i);
     return c;
   }
+public:
+  typedef VecType list_item_type;
 };
 
   typedef TVector<float> evecf;

@@ -53,10 +53,14 @@ public:
   // may be useful for copy constructors, etc
   const ListClass& GetList() const {  return list;  }
   // allows to remove multiple items using a condition
-  template <class PackAnalyser> void Pack(const PackAnalyser& pa)  {  list.Pack(pa);  }
-  template <class PackAnalyser> void PackEx(const PackAnalyser& pa)  {  list.PackEx(pa);  }
-  template <class Functor> void ForEach(const Functor& f) const {  list.ForEach(f);  }
-  template <class Functor> void ForEachEx(const Functor& f) const {  list.ForEachEx(f);  }
+  template <class PackAnalyser>
+  void Pack(const PackAnalyser& pa)  {  list.Pack(pa);  }
+  template <class PackAnalyser>
+  void PackEx(const PackAnalyser& pa)  {  list.PackEx(pa);  }
+  template <class Functor>
+  void ForEach(const Functor& f) const {  list.ForEach(f);  }
+  template <class Functor>
+  void ForEachEx(const Functor& f) const {  list.ForEachEx(f);  }
 };
 
 template <class ListClass, class Comparator, typename TypeClass>
@@ -156,6 +160,8 @@ public:
   }
   void SetCapacity(size_t cap)  {  list.SetCapacity(cap);  }
   void SetIncrement(size_t incr)  {  list.SetIncrement(incr);  }
+public:
+  typedef ObjectClass list_item_type;
 };
 //............................................................................................
 /* A choice of comprators is provided:
@@ -184,6 +190,8 @@ public:
     _parent_t::TakeOver(l.Release, true);
     return *this;
   }
+public:
+  typedef ObjectClass list_item_type;
 };
 //............................................................................................
 /* A choice of comprators is provided:
@@ -213,6 +221,8 @@ public:
     _parent_t::TakeOver(l.Release(), true);
     return *this;
   }
+public:
+  typedef ObjectClass list_item_type;
 };
 
 // ConstSortedObjectList
@@ -230,6 +240,8 @@ public:
     parent_t::operator = (l);
     return *this;
   }
+public:
+  typedef obj_t list_item_type;
 };
 
 // ConstSortedPtrList
@@ -247,6 +259,8 @@ public:
     parent_t::operator = (l);
     return *this;
   }
+public:
+  typedef obj_t list_item_type;
 };
 
 EndEsdlNamespace()

@@ -374,6 +374,8 @@ public:
   static ListQuickSorter<TArrayList<T>,T, Accessor> QuickSorter;
   static ListBubbleSorter<TArrayList<T>,T, Accessor> BubleSorter;
   static TListTraverser<TArrayList<T> > Traverser;
+public:
+  typedef T list_item_type;
 };
 
 #ifndef __BORLANDC__
@@ -406,6 +408,8 @@ public:
     parent_t::operator = (l);
     return *this;
   }
+public:
+  typedef item_t list_item_type;
 };
 
 template <typename item_t>
@@ -420,6 +424,8 @@ public:
     parent_t::operator = (l);
     return *this;
   }
+public:
+  typedef item_t list_item_type;
 };
 
 EndEsdlNamespace()

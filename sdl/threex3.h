@@ -33,30 +33,30 @@ public:
     data[0] = (T)v[0];  data[1] = (T)v[1];  data[2] = (T)v[2];
   }
 
-  inline T& operator [] (size_t i)  {  return data[i];  }
-  inline T const& operator [] (size_t i) const {  return data[i];  }
-  inline T& operator () (size_t i)  {  return data[i];  }
-  inline T const& operator () (size_t i) const {  return data[i];  }
-  inline const T* GetData() const {  return &data[0];  }
-  inline T QLength() const {
+  T& operator [] (size_t i)  {  return data[i];  }
+  T const& operator [] (size_t i) const {  return data[i];  }
+  T& operator () (size_t i)  {  return data[i];  }
+  T const& operator () (size_t i) const {  return data[i];  }
+  const T* GetData() const {  return &data[0];  }
+  T QLength() const {
     return (data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);
   }
-  inline T Length() const {  return sqrt(QLength());  }
-  inline static size_t Count()  {  return 3;  }
-  inline static bool IsEmpty()  {  return false;  }
-  inline static void Resize(size_t s)  {
+  T Length() const {  return sqrt(QLength());  }
+  static size_t Count()  {  return 3;  }
+  static bool IsEmpty()  {  return false;  }
+  static void Resize(size_t s)  {
     if( s != 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
   }
   
-  template <class AT> inline T QDistanceTo(const TVector3<AT>& v) const {
+  template <class AT> T QDistanceTo(const TVector3<AT>& v) const {
     return olx_sqr(data[0]-v[0]) +
       olx_sqr(data[1]-v[1]) + olx_sqr(data[2]-v[2]);
   }
-  template <class AT> inline T DistanceTo(const TVector3<AT>& v) const {
+  template <class AT> T DistanceTo(const TVector3<AT>& v) const {
     return sqrt(QDistanceTo(v));
   }
-  template <class AT> inline T CAngle(const TVector3<AT>& v) const {
+  template <class AT> T CAngle(const TVector3<AT>& v) const {
     T l = QLength()*v.QLength();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     l = (T)((data[0]*v[0]+data[1]*v[1]+data[2]*v[2])/sqrt(l));
@@ -66,65 +66,65 @@ public:
     return l;
   }
   // multiplies each element by itself
-  inline TVector3<T>& Qrt()  {
+  TVector3<T>& Qrt()  {
     data[0] *= data[0];
     data[1] *= data[1];
     data[2] *= data[2];
     return *this;
   }
   // multiplies each element by itself
-  static inline TVector3<T> Qrt(const TVector3<T>& v)  {
+  static TVector3<T> Qrt(const TVector3<T>& v)  {
     return TVector3<T>(v[0]*v[0], v[1]*v[1], v[2]*v[2]);
   }
   // takes square root of each element (must be >= 0!)
-  inline TVector3<T>& Sqrt()  {
+  TVector3<T>& Sqrt()  {
     data[0] = sqrt(data[0]);
     data[1] = sqrt(data[1]);
     data[2] = sqrt(data[2]);
     return *this;
   }
   // takes square root of each element (must be >= 0!)
-  static inline TVector3<T> Sqrt(const TVector3<T>& v)  {
+  static TVector3<T> Sqrt(const TVector3<T>& v)  {
     return TVector3<T>(v).Sqrt();
   }
   // takes absolute value of the vector elements
-  inline TVector3<T>& Abs()  {
+  TVector3<T>& Abs()  {
     data[0] = olx_abs(data[0]);
     data[1] = olx_abs(data[1]);
     data[2] = olx_abs(data[2]);
     return *this;
   }
   // returns a vector with absolute values of provided one
-  static inline TVector3<T> Abs(const TVector3<T>& v)  {
+  static TVector3<T> Abs(const TVector3<T>& v)  {
     return TVector3<T>(v).Abs();
   }
   // returns sum of vector elements
-  inline T Sum() const {  return data[0]+data[1]+data[2];  }
+  T Sum() const {  return data[0]+data[1]+data[2];  }
   // returns product of vector elements
-  inline T Prod() const {  return data[0]*data[1]*data[2];  }
+  T Prod() const {  return data[0]*data[1]*data[2];  }
   // returns sum of absolute values of vector elements
-  inline T AbsSum() const {
+  T AbsSum() const {
     return olx_abs(data[0])+olx_abs(data[1])+olx_abs(data[2]);
   }
   // rounds the vector elements
-  template <class AT> inline TVector3<AT> Round() const {
+  template <class AT> TVector3<AT> Round() const {
     return TVector3<AT>(
       olx_round_t<AT,T>(data[0]),
       olx_round_t<AT,T>(data[1]),
       olx_round_t<AT,T>(data[2]));
   }
   // floors the vector elements
-  template <class AT> inline TVector3<AT> Floor() const {
+  template <class AT> TVector3<AT> Floor() const {
     return TVector3<AT>(
       olx_floor_t<AT,T>(data[0]),
       olx_floor_t<AT,T>(data[1]),
       olx_floor_t<AT,T>(data[2]));
   }
-  template <class AT> inline T DotProd(const TVector3<AT>& v) const {
+  template <class AT> T DotProd(const TVector3<AT>& v) const {
     return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
   }
   // ax(bxc) = b(a.c) - c(a.b)
-  static inline TVector3<T> TripleProd(const TVector3<T>& a,
+  static TVector3<T> TripleProd(const TVector3<T>& a,
     const TVector3<T>& b, const TVector3<T>& c)
   {
     const double p1 = a.DotProd(c), p2 = a.DotProd(b);
@@ -134,11 +134,11 @@ public:
       b[2]*p1 - c[2]*p2);
   }
   // a*b*sin = a*b*(1-cos^2) = a*b - DotProd^2
-  template <class AT> inline T XProdVal(const TVector3<AT>& v) const {
+  template <class AT> T XProdVal(const TVector3<AT>& v) const {
     const T dp = DotProd(v); 
     return sqrt(QLength()*v.QLength()) - dp*dp;
   }
-  template <class AT> inline TVector3<T> XProdVec(const TVector3<AT>& v) const
+  template <class AT> TVector3<T> XProdVec(const TVector3<AT>& v) const
   {
     return TVector3<T>(
       data[1]*v[2] - data[2]*v[1], 
@@ -149,7 +149,7 @@ public:
   this vector) N = this*cos(this,point)*point.length/this.length =
   this*DotProd(this, point)/this.QLength
   */
-  template <class AT> inline TVector3<T> Normal(
+  template <class AT> TVector3<T> Normal(
     const TVector3<AT>& point) const
   {
     T m = QLength();
@@ -160,11 +160,11 @@ public:
       point[1]-data[1]*m,
       point[2]-data[2]*m);
   }
-  inline TVector3<T> operator -() const {
+  TVector3<T> operator -() const {
     return TVector3<T>(-data[0], -data[1], -data[2]);
   }
   // returns a reflection of this vector from a plane represented by normal
-  template <class AT> inline TVector3<T> Reflect(
+  template <class AT> TVector3<T> Reflect(
     const TVector3<AT>& normal) const
   {
     const T m = DotProd(normal)*2;
@@ -173,140 +173,140 @@ public:
       data[1] - normal[1]*m,
       data[2] - normal[2]*m);  
   }
-  inline TVector3<T>& Normalise()  {
+  TVector3<T>& Normalise()  {
     const T l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     return (*this /= l);
   }
-  inline TVector3<T>& NormaliseTo(T val)  {
+  TVector3<T>& NormaliseTo(T val)  {
     const T l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     return (*this *= (val/l));
   }
-  inline TVector3<T>& Null()  {
+  TVector3<T>& Null()  {
     data[0] = data[1] = data[2] = 0;
     return *this;
   }
-  inline bool IsNull() const {
+  bool IsNull() const {
     return (data[0] == 0 && data[1] == 0 && data[2] == 0);
   }
-  inline bool IsNull(T eps) const {
+  bool IsNull(T eps) const {
     return
       (olx_abs(data[0]) < eps &&
        olx_abs(data[1]) < eps &&
        olx_abs(data[2]) < eps);
   }
 
-  inline bool Equals(const TVector3<T>& v) const {
+  bool Equals(const TVector3<T>& v) const {
     return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]);
   }
-  inline bool operator == (const TVector3<T>& v) const {  return Equals(v);  }
-  inline bool operator != (const TVector3<T>& v) const {  return !Equals(v);  }
+  bool operator == (const TVector3<T>& v) const {  return Equals(v);  }
+  bool operator != (const TVector3<T>& v) const {  return !Equals(v);  }
   // approximately equals
-  inline bool Equals(const TVector3<T>& v, T eps) const {
+  bool Equals(const TVector3<T>& v, T eps) const {
     return (
       olx_abs(data[0]-v[0]) < eps &&
       olx_abs(data[1]-v[1]) < eps &&
       olx_abs(data[2]-v[2]) < eps);
   }
-  inline TVector3<T>& operator = (const TVector3<T>& v)  {
+  TVector3<T>& operator = (const TVector3<T>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];  
     return *this;
   }
   // any vector
-  template <class AT> inline TVector3<T>& operator = (const AT& v)  {
+  template <class AT> TVector3<T>& operator = (const AT& v)  {
     data[0] = (T)v[0];  data[1] = (T)v[1];  data[2] = (T)v[2];  
     return *this;
   }
   template <class AT>
-  inline TVector3<T>& operator += (const TVector3<AT>& v)  {
+  TVector3<T>& operator += (const TVector3<AT>& v)  {
     data[0] += (T)v[0];  data[1] += (T)v[1];  data[2] += (T)v[2];
     return *this;
   }
   template <class AT>
-  inline TVector3<T>& operator -= (const TVector3<AT>& v)  {
+  TVector3<T>& operator -= (const TVector3<AT>& v)  {
     data[0] -= (T)v[0];  data[1] -= (T)v[1];  data[2] -= (T)v[2];
     return *this;
   }
   template <class AT>
-  inline TVector3<T>& operator *= (const TVector3<AT>& v)  {
+  TVector3<T>& operator *= (const TVector3<AT>& v)  {
     data[0] *= (T)v[0];  data[1] *= (T)v[1];  data[2] *= (T)v[2];
     return *this;
   }
   template <class AT>
-  inline TVector3<T>& operator /= (const TVector3<AT>& v) {
+  TVector3<T>& operator /= (const TVector3<AT>& v) {
     data[0] /= (T)v[0];  data[1] /= (T)v[1];  data[2] /= (T)v[2];  
     return *this;
   }
 #ifndef __BORLANDC__ // does not really work with templates well
-  template <class AT> inline TVector3<T>& operator += (AT v)  {
+  template <class AT> TVector3<T>& operator += (AT v)  {
     data[0] += (T)v;  data[1] += (T)v;  data[2] += (T)v;
     return *this;
   }
-  template <class AT> inline TVector3<T>& operator -= (AT v)  {
+  template <class AT> TVector3<T>& operator -= (AT v)  {
     data[0] -= (T)v;  data[1] -= (T)v;  data[2] -= (T)v;
     return *this;
   }
-  template <class AT> inline TVector3<T>& operator *= (AT v)  {
+  template <class AT> TVector3<T>& operator *= (AT v)  {
     data[0] *= (T)v;  data[1] *= (T)v;  data[2] *= (T)v;
     return *this;
   }
-  template <class AT> inline TVector3<T>& operator /= (AT v)  {
+  template <class AT> TVector3<T>& operator /= (AT v)  {
     data[0] /= v;  data[1] /= v;  data[2] /= v;
     return *this;
   }
 #else
-  inline TVector3<T>& operator *= (double v)  {
+  TVector3<T>& operator *= (double v)  {
     data[0] *= v;  data[1] *= v;  data[2] *= v;
     return *this;
   }
-  inline TVector3<T>& operator += (double v)  {
+  TVector3<T>& operator += (double v)  {
     data[0] += v;  data[1] += v;  data[2] += v;
     return *this;
   }
-  inline TVector3<T>& operator -= (double v)  {
+  TVector3<T>& operator -= (double v)  {
     data[0] -= v;  data[1] -= v;  data[2] -= v;
     return *this;
   }
-  template <class AT> inline TVector3<T>& operator /= (double v)  {
+  template <class AT> TVector3<T>& operator /= (double v)  {
     data[0] /= v;  data[1] /= v;  data[2] /= v;
     return *this;
   }
 #endif
 
   template <class AT>
-  inline TVector3<T> operator + (const TVector3<AT>& v) const {
+  TVector3<T> operator + (const TVector3<AT>& v) const {
     return TVector3<T>(data[0]+v[0], data[1]+v[1], data[2]+v[2]);
   }
   template <class AT>
-  inline TVector3<T> operator - (const TVector3<AT>& v) const {
+  TVector3<T> operator - (const TVector3<AT>& v) const {
     return TVector3<T>(data[0]-v[0], data[1]-v[1], data[2]-v[2]);
   }
   template <class AT>
-  inline TVector3<T> operator * (const TVector3<AT>& v) const {
+  TVector3<T> operator * (const TVector3<AT>& v) const {
     return TVector3<T>(data[0]*v[0], data[1]*v[1], data[2]*v[2]);
   }
   template <class AT>
-  inline TVector3<T> operator / (const TVector3<AT>& v) const {
+  TVector3<T> operator / (const TVector3<AT>& v) const {
     return TVector3<T>(data[0]/v[0], data[1]/v[1], data[2]/v[2]);
   }
 
 #ifndef __BORLANDC__
-  template <class AT> inline TVector3<T> operator + (AT v) const {
+  template <class AT> TVector3<T> operator + (AT v) const {
     return TVector3<T>(data[0]+v, data[1]+v, data[2]+v);
   }
-  template <class AT> inline TVector3<T> operator - (AT v) const {
+  template <class AT> TVector3<T> operator - (AT v) const {
     return TVector3<T>(data[0]-v, data[1]-v, data[2]-v);
   }
-  template <class AT> inline TVector3<T> operator * (AT v) const {
+  template <class AT> TVector3<T> operator * (AT v) const {
     return TVector3<T>(data[0]*v, data[1]*v, data[2]*v);
   }
 #else
-  inline TVector3<T> operator * (double v) const {
+  TVector3<T> operator * (double v) const {
     return TVector3<T>(data[0]*v, data[1]*v, data[2]*v);
   }
 #endif
-  template <class AT> inline TVector3<T> operator / (AT v) const {
+  template <class AT> TVector3<T> operator / (AT v) const {
     return TVector3<T>(data[0]/v, data[1]/v, data[2]/v);
   }
 
@@ -366,10 +366,9 @@ public:
     SC rv(data[0], 100);
     return rv << ", " << data[1] << ", " << data[2];
   }
-  inline TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline olxcstr ToCStr()   const {  return StrRepr<olxcstr>();  }
-  inline olxwstr ToWStr()   const {  return StrRepr<olxwstr>();  }
-  typedef T vect_t;
+  TIString ToString() const {  return StrRepr<olxstr>();  }
+  olxcstr ToCStr()   const {  return StrRepr<olxcstr>();  }
+  olxwstr ToWStr()   const {  return StrRepr<olxwstr>();  }
 };
 
 template <class T> class TMatrix33  {
@@ -403,32 +402,32 @@ public:
     data[2][0] = (T)v[2][0]; data[2][1] = (T)v[2][1]; data[2][2] = (T)v[2][2];
   }
   
-  inline const TVector3<T>& operator [] (size_t i) const {  return data[i];  }
-  inline TVector3<T>& operator [] (size_t i)  {  return data[i];  } 
-  inline const TVector3<T>& Get(size_t i) const {  return data[i];  } 
-  inline const T& Get(size_t i, size_t j) const {  return data[i][j];  } 
-  inline void Set(size_t i, size_t j, const T& v) const {
+  const TVector3<T>& operator [] (size_t i) const {  return data[i];  }
+  TVector3<T>& operator [] (size_t i)  {  return data[i];  } 
+  const TVector3<T>& Get(size_t i) const {  return data[i];  } 
+  const T& Get(size_t i, size_t j) const {  return data[i][j];  } 
+  void Set(size_t i, size_t j, const T& v) const {
     return data[i][j] = v;
   } 
-  inline T& operator () (size_t i, size_t j)  {  return data[i][j];  }
-  inline const T& operator () (size_t i, size_t j) const {
+  T& operator () (size_t i, size_t j)  {  return data[i][j];  }
+  const T& operator () (size_t i, size_t j) const {
     return data[i][j];
   }
-  inline static size_t ColCount()  {  return 3;  }
-  inline static size_t RowCount()  {  return 3;  }
-  inline static bool IsEmpty()  {  return false;  }
-  inline static void Resize(size_t w, size_t h)  {
+  static size_t ColCount()  {  return 3;  }
+  static size_t RowCount()  {  return 3;  }
+  static bool IsEmpty()  {  return false;  }
+  static void Resize(size_t w, size_t h)  {
     if( w != 3 || h != 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
   }
-  inline void SwapRows(size_t i, size_t j)  {
+  void SwapRows(size_t i, size_t j)  {
     for( int _i=0; _i < 3; _i++ )  {
       const T tmp = data[i][_i];
       data[i][_i] = data[j][_i];
       data[j][_i] = tmp;
     }
   }
-  inline void SwapCols(size_t i, size_t j)  {
+  void SwapCols(size_t i, size_t j)  {
     for( int _i=0; _i < 3; _i++ )  {
       const T tmp = data[_i][i];
       data[_i][i] = data[_i][j];
@@ -464,132 +463,132 @@ public:
     data[2][0] = bf[6];  data[2][1] = bf[7];  data[2][2] = bf[8];
     return *this;
   }
-  inline static TMatrix33 Transpose (const TMatrix33& v)  {
+  static TMatrix33 Transpose (const TMatrix33& v)  {
     return TMatrix33<T>(v[0][0], v[1][0], v[2][0], 
                         v[0][1], v[1][1], v[2][1], 
                         v[0][2], v[1][2], v[2][2]);
   }
-  inline TMatrix33 operator -() const {
+  TMatrix33 operator -() const {
     return TMatrix33<T>(-data[0][0], -data[0][1], -data[0][2], 
                         -data[1][0], -data[1][1], -data[1][2], 
                         -data[2][0], -data[2][1], -data[2][2]);
   }
-  inline TMatrix33<T>& Transpose()  {
+  TMatrix33<T>& Transpose()  {
     olx_swap(data[0][1], data[1][0]);
     olx_swap(data[0][2], data[2][0]);
     olx_swap(data[1][2], data[2][1]);
     return *this;
   }
 
-  inline TMatrix33<T>& I()  {
+  TMatrix33<T>& I()  {
     data[0][0] = 1;  data[0][1] = 0;  data[0][2] = 0;
     data[1][0] = 0;  data[1][1] = 1;  data[1][2] = 0;
     data[2][0] = 0;  data[2][1] = 0;  data[2][2] = 1;
     return *this;
   }
   // normalises each vector
-  inline TMatrix33<T>& Normalise()  {
+  TMatrix33<T>& Normalise()  {
     data[0].Normalise();
     data[1].Normalise();
     data[2].Normalise();
     return *this;
   }
-  inline static TMatrix33<T> Normalise(const TMatrix33<T>& m)  {
+  static TMatrix33<T> Normalise(const TMatrix33<T>& m)  {
     return TMatrix33<T>(m).Normalise();
   }
-  inline bool IsI() const {
+  bool IsI() const {
     return (data[0][0] == 1 && data[1][1] == 1 && data[2][2] == 1 && 
             data[0][1] == 0 && data[0][2] == 0 && data[1][0] == 0 &&
             data[1][2] == 0 && data[2][0] == 0 && data[2][1] == 0);
   }
-  inline TMatrix33<T>& Null()  {
+  TMatrix33<T>& Null()  {
     data[0].Null();  data[1].Null();  data[2].Null();
     return *this;
   }
 
-  inline bool operator == (const TMatrix33<T>& v) const {
+  bool operator == (const TMatrix33<T>& v) const {
     return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]);
   }
-  inline bool operator != (const TMatrix33<T>& v) const {
+  bool operator != (const TMatrix33<T>& v) const {
     return !(operator == (v));
   }
 
-  inline TMatrix33<T>& operator = (const TMatrix33<T>& v)  {
+  TMatrix33<T>& operator = (const TMatrix33<T>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];
     return *this;
   }
 
   template <class AT>
-  inline TMatrix33<T>& operator = (const TMatrix33<AT>& v)  {
+  TMatrix33<T>& operator = (const TMatrix33<AT>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];
     return *this;
   }
   template <class AT>
-  inline TMatrix33<T>& operator -= (const TMatrix33<AT>& v)  {
+  TMatrix33<T>& operator -= (const TMatrix33<AT>& v)  {
     data[0] -= v[0];
     data[1] -= v[1];
     data[2] -= v[2];
     return *this;
   }
   template <class AT>
-  inline TMatrix33<T> operator - (const TMatrix33<AT>& v) const {
+  TMatrix33<T> operator - (const TMatrix33<AT>& v) const {
     return TMatrix33<T>(
       data[0][0] - v[0][0], data[0][1] - v[0][1], data[0][2] - v[0][2],
       data[1][0] - v[1][0], data[1][1] - v[1][1], data[1][2] - v[1][2],
       data[2][0] - v[2][0], data[2][1] - v[2][1], data[2][2] - v[2][2]);
   }
   template <class AT>
-  inline TMatrix33<T>& operator += (const TMatrix33<AT>& v)  {
+  TMatrix33<T>& operator += (const TMatrix33<AT>& v)  {
     data[0] += v[0];
     data[1] += v[1];
     data[2] += v[2];
     return *this;
   }
   template <class AT>
-  inline TMatrix33<T> operator + (const TMatrix33<AT>& v) const {
+  TMatrix33<T> operator + (const TMatrix33<AT>& v) const {
     return TMatrix33<T>(
       data[0][0] + v[0][0], data[0][1] + v[0][1], data[0][2] + v[0][2],
       data[1][0] + v[1][0], data[1][1] + v[1][1], data[1][2] + v[1][2],
       data[2][0] + v[2][0], data[2][1] + v[2][1], data[2][2] + v[2][2]);
   }
 #ifndef __BORLANDC__ // would use same for the Matrix33!
-  template <class AT> inline TMatrix33<T>& operator *= (AT v)  {
+  template <class AT> TMatrix33<T>& operator *= (AT v)  {
     data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
     data[1][0] *= v;  data[1][1] *= v;  data[1][2] *= v;
     data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
     return *this;
   }
-  template <class AT> inline TMatrix33<T> operator * (AT v) const {
+  template <class AT> TMatrix33<T> operator * (AT v) const {
     return TMatrix33<T>(data[0][0]*v, data[0][1]*v, data[0][2]*v,
                         data[1][0]*v, data[1][1]*v, data[1][2]*v,
                         data[2][0]*v, data[2][1]*v, data[2][2]*v);
   }
 #else
-  inline TMatrix33<T>& operator *= (double v) {
+  TMatrix33<T>& operator *= (double v) {
     data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
     data[1][0] *= v;  data[1][1] *= v;  data[1][2] *= v;
     data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
     return *this;
   }
 #endif
-  template <class AT> inline TMatrix33<T>& operator /= (AT v) {
+  template <class AT> TMatrix33<T>& operator /= (AT v) {
     data[0][0] /= v;  data[0][1] /= v;  data[0][2] /= v;
     data[1][0] /= v;  data[1][1] /= v;  data[1][2] /= v;
     data[2][0] /= v;  data[2][1] /= v;  data[2][2] /= v;
 	return *this;
   }
-  template <class AT> inline TMatrix33<T> operator / (AT v) const {
+  template <class AT> TMatrix33<T> operator / (AT v) const {
     return TMatrix33<T>(data[0][0]/v, data[0][1]/v, data[0][2]/v,
                         data[1][0]/v, data[1][1]/v, data[1][2]/v,
                         data[2][0]/v, data[2][1]/v, data[2][2]/v);
   }
-  inline T Trace() const {  return data[0][0]+data[1][1]+data[2][2];  }
-  inline T Determinant() const {
+  T Trace() const {  return data[0][0]+data[1][1]+data[2][2];  }
+  T Determinant() const {
     return data[0][0]*(data[1][1]*data[2][2] - data[1][2]*data[2][1]) - 
            data[0][1]*(data[1][0]*data[2][2] - data[1][2]*data[2][0]) +
            data[0][2]*(data[1][0]*data[2][1] - data[1][1]*data[2][0]);
   }
-  inline TMatrix33<T> Inverse()  const {
+  TMatrix33<T> Inverse()  const {
     return TMatrix33<T>(
       data[2][2]*data[1][1] - data[2][1]*data[1][2],
       data[2][1]*data[0][2] - data[2][2]*data[0][1],
@@ -618,7 +617,7 @@ public:
   }
 protected: 
 // used in the Jacoby eigenvalues search procedure
-  static inline T MatMaxX(const TMatrix33& m, size_t &i, size_t &j )  {
+  static T MatMaxX(const TMatrix33& m, size_t &i, size_t &j )  {
     const T c = olx_abs(m[0][1]);
     i = 0;  j = 1;
     if( olx_abs(m[0][2]) > c )  {
@@ -631,7 +630,7 @@ protected:
     }
     return c;
   }
-  static inline void multMatrix(TMatrix33& D, TMatrix33& E,
+  static void multMatrix(TMatrix33& D, TMatrix33& E,
     size_t i, size_t j)
   {
     T cf, sf, cdf, sdf;
@@ -717,7 +716,6 @@ public:
     return c;
    }
 
-  typedef T mat_t;
 protected:  // used in GaussSolve to sort the matrix
   static void MatrixElementsSort(TMatrix33<T>& arr, TVector3<T>& b)  {
     T bf[3];

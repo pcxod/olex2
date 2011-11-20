@@ -546,6 +546,8 @@ public:
   static ListQuickSorter<TPtrList<T>,const T*, Accessor> QuickSorter;
   static ListBubbleSorter<TPtrList<T>,const T*, Accessor> BubleSorter;
   static TListTraverser<TPtrList<T> > Traverser;
+public:
+  typedef T list_item_type;
 };
 
 #ifndef __BORLANDC__
@@ -572,6 +574,8 @@ public:
     parent_t::operator = (l);
     return *this;
   }
+public:
+  typedef item_t list_item_type;
 };
 
 template <typename item_t>
@@ -586,6 +590,8 @@ public:
     parent_t::operator = (l);
     return *this;
   }
+public:
+  typedef item_t list_item_type;
 };
 
 EndEsdlNamespace()

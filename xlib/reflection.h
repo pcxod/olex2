@@ -7,8 +7,8 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __OLEX_HKL_REFLECTION__
-#define __OLEX_HKL_REFLECTION__
+#ifndef __olx_xlib_reflection
+#define __olx_xlib_reflection
 #include "symmspace.h"
 BeginXlibNamespace()
 
@@ -26,7 +26,8 @@ public:
 private:
   vec3i hkl;
   double I, S;
-  uint32_t Flags; // first 8 bits - flags, next 8 - multiplicity, then batch number
+  // first 8 bits - flags, next 8 - multiplicity, then batch number
+  uint32_t Flags;
   void _init(int batch=NoBatchSet)  {
     _reset_flags(0, 1, batch);
     SetTag(1);
@@ -40,17 +41,18 @@ public:
     *this = r;
     SetBatch(bacth_n);
   }
-  TReflection(const TReflection& r, const vec3i& _hkl, int batch_n=NoBatchSet)  {
+  TReflection(const TReflection& r, const vec3i& _hkl, int batch_n=NoBatchSet)
+  {
     *this = r;
     hkl = _hkl;
     SetBatch(batch_n);
   }
   TReflection(int h, int k, int l) : hkl(h,k,l), I(0), S(0)  {  _init();  }
   TReflection(const vec3i& _hkl) : hkl(_hkl), I(0), S(0)  {  _init();  }
-  TReflection(int h, int k, int l, double _I, double _S, int batch=NoBatchSet) :
-    hkl(h,k,l), I(_I), S(_S)  {  _init(batch);  }
-  TReflection(const vec3i& _hkl, double _I, double _S, int batch=NoBatchSet) :
-    hkl(_hkl), I(_I), S(_S)  {  _init(batch);  }
+  TReflection(int h, int k, int l, double _I, double _S, int batch=NoBatchSet)
+    : hkl(h,k,l), I(_I), S(_S)  {  _init(batch);  }
+  TReflection(const vec3i& _hkl, double _I, double _S, int batch=NoBatchSet)
+    : hkl(_hkl), I(_I), S(_S)  {  _init(batch);  }
   virtual ~TReflection()  {}
   TReflection& operator = (const TReflection &r)  {
     hkl = r.hkl;
@@ -68,13 +70,15 @@ public:
   inline void SetL(int v)   {  hkl[2] = v;  }
 
   template <class VC>
-    inline bool EqHkl (const VC& v) const {
-      return ( ((int)v[0] == hkl[0]) && ((int)v[1] == hkl[1]) && ((int)v[2] == hkl[2]) );
-    }
+  bool EqHkl (const VC& v) const {
+    return ((int)v[0] == hkl[0]) && ((int)v[1] == hkl[1]) &&
+            ((int)v[2] == hkl[2]);
+  }
   template <class VC>
-    inline bool EqNegHkl (const VC& v) const {
-      return ( ((int)v[0] == -hkl[0]) && ((int)v[1] == -hkl[1]) && ((int)v[2] == -hkl[2]) );
-    }
+   bool EqNegHkl (const VC& v) const {
+    return ((int)v[0] == -hkl[0]) && ((int)v[1] == -hkl[1]) &&
+      ((int)v[2] == -hkl[2]);
+   }
   // generates symmetry equivalent miller index and stores it in res
   template <class VC, class MC> VC& MulHkl(VC& res, const MC& mat) const {
     res[0] = (hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
@@ -96,7 +100,9 @@ public:
       hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
   }
   // generates index of an equivalen reflection
-  template <class VC> VC& MulHkl(VC& res, const smatd& mat) const {  return MulHkl(res, mat.r);  }
+  template <class VC> VC& MulHkl(VC& res, const smatd& mat) const {
+    return MulHkl(res, mat.r);
+  }
   vec3i operator * (const smatd& mat) const {
     return vec3i(
       hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0],
@@ -117,7 +123,9 @@ public:
       olx_round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]));
   }
   // generates an equivalent using rounding on the resulting indexes
-  template <class VC> VC& MulHklR(VC& res, const smatdd& mat) const {  return MulHklR(res, mat.r);  }
+  template <class VC> VC& MulHklR(VC& res, const smatdd& mat) const {
+    return MulHklR(res, mat.r);
+  }
 //..............................................................................
   /* replaces hkl with standard hkl accroding to provided matrices. 
   Also performs the reflection analysis, namely:
@@ -128,13 +136,16 @@ public:
     SetAbsent(IsAbsent(hkl, ml));
   }
 //..............................................................................
-  template <class MatList> static vec3i Standardise(const vec3i& _hkl, const MatList& ml)  {
+  template <class MatList> static vec3i Standardise(const vec3i& _hkl,
+    const MatList& ml)
+  {
     vec3i new_hkl = _hkl;
     for( size_t i=0; i < ml.Count(); i++ )  {
       vec3i hklv = _hkl*ml[i].r;
         if( (hklv[2] > new_hkl[2]) ||
           ((hklv[2] == new_hkl[2]) && (hklv[1] > new_hkl[1])) ||
-          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) && (hklv[0] > new_hkl[0])) )
+          ((hklv[2] == new_hkl[2]) && (hklv[1] == new_hkl[1]) &&
+           (hklv[0] > new_hkl[0])) )
       {
         new_hkl = hklv;
       }
@@ -142,7 +153,9 @@ public:
     return new_hkl;
   }
 //..............................................................................
-  template <class MatList> static bool IsAbsent(const vec3i& hkl, const MatList& ml)  {
+  template <class MatList> static bool IsAbsent(const vec3i& hkl,
+    const MatList& ml)
+  {
     for( size_t i=0; i < ml.Count(); i++ )  {
       vec3i hklv = hkl*ml[i].r;
       if( hkl == hklv )  {  // only if there is no change
@@ -169,7 +182,9 @@ public:
 //..............................................................................
   inline double PhaseShift(const smatd& m) const {  return m.t.DotProd(hkl);  }
 //..............................................................................
-  /* analyses if this reflection is centric, systematically absent and its multiplicity */
+  /* analyses if this reflection is centric, systematically absent and its
+  multiplicity
+  */
   template <class MatList> void Analyse(const MatList& ml)  {
     vec3i hklv;
     _reset_flags(0, 1, GetBatch());
@@ -191,7 +206,9 @@ public:
 //..............................................................................
   inline bool IsSymmetric(const smatd& m) const {  return EqHkl(MulHkl(m.r));  }
 //..............................................................................
-  inline bool IsCentrosymmetric(const smatd& m) const {  return EqNegHkl(MulHkl(m.r));  }
+  inline bool IsCentrosymmetric(const smatd& m) const {
+    return EqNegHkl(MulHkl(m.r));
+  }
 //..............................................................................
   int CompareTo(const TReflection &r) const {
     int res = GetBatch() - r.GetBatch();  // prioritise by batch number
@@ -221,12 +238,18 @@ public:
   DefPropBFIsSet(Absent, Flags, bitAbsent)
   DefPropBFIsSet(Omitted, Flags, bitOmitted)
 //..............................................................................
-  uint8_t GetMultiplicity() const {  return (uint8_t)((Flags&0xff00)>>MultOff);  }
-  void SetMultiplicity(uint8_t v)  {  Flags = (Flags&~MultMask)|((uint32_t)v<<MultOff);  }
+  uint8_t GetMultiplicity() const {
+    return (uint8_t)((Flags&0xff00)>>MultOff);
+  }
+  void SetMultiplicity(uint8_t v)  {
+    Flags = (Flags&~MultMask)|((uint32_t)v<<MultOff);
+  }
   void IncMultiplicity()  {  SetMultiplicity(GetMultiplicity()+1);  }
 //..............................................................................
   int16_t GetBatch() const {  return (int16_t)((Flags&BatchMask)>>BatchOff);  }
-  void SetBatch(int16_t v)  {  Flags = (Flags&~BatchMask)|((uint32_t)v<<BatchOff);  }
+  void SetBatch(int16_t v)  {
+    Flags = (Flags&~BatchMask)|((uint32_t)v<<BatchOff);
+  }
 //..............................................................................
   vec3i& GetHkl()  {  return hkl;  }
   const vec3i& GetHkl() const {  return hkl;  }
@@ -306,7 +329,7 @@ template <class RefList> class MillerIndexList : public IMillerIndexList {
 public:
   MillerIndexList(const RefList& r) : src(r)  {}
   size_t Count() const {  return src.Count();  }
-  vec3i operator [] (size_t i) const {  return TReflection::GetHkl(src[i]); } 
+  vec3i operator [] (size_t i) const {  return TReflection::GetHkl(src[i]); }
 };
 
 typedef TPtrList<TReflection> TRefPList;
