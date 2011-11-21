@@ -17,7 +17,7 @@ void IndexAccessorTest(OlxTests& t)  {
   double ta_[5] = {1, 2, 3, 4, 5}; 
   TDoubleList ta(5, &ta_[0]);
   TSizeList indices(5, list_init::index());
-  double v = olx_mean<double>(ta);
+  double v = olx_mean(ta);
   if (olx_abs(v-double(1+2+3+4+5)/5) > 1e-8)
     throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
   ConstIndexAccessor<double, TDoubleList> la(ta);
@@ -38,7 +38,7 @@ void IndexAccessorTest(OlxTests& t)  {
   indices.ForEach(list_init::index());
   ConstIndexAccessor<vec3d, vec3d_alist> vla(vl);
   vl[0][0] = vl[1][1] = vl[2][2] = 3;
-  vec3d mv = olx_mean<vec3d>(vl);
+  vec3d mv = olx_mean(vl);
   if (mv.DistanceTo(olx_mean(indices, vla)) > 1e-8)
     throw TFunctionFailedException(__OlxSourceInfo, "unexpected result");
   if (mv.DistanceTo(vec3d(1)) > 1e-8)
