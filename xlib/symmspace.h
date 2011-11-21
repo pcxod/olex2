@@ -288,7 +288,7 @@ namespace SymmSpace  {
     Info info = GetInfo(sp, &rv.vertices);
     rv.centrosymmetric = info.centrosymmetric;
     for (size_t i=0; i < info.matrices.Count(); i++)  {
-      if (info.matrices[i].IsI())
+      if (!info.matrices[i].IsI())
         rv.matrices.AddCopy(info.matrices[i]);
     }
     // expand -1 if not at (0,0,0)
