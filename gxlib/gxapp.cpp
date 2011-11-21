@@ -1901,7 +1901,9 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
   return (v == 0) ? TCAtom::CompareAtomLabels(I1->GetLabel(), I2->GetLabel()) : v;
 }
 //..............................................................................
-void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
+void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
+  int precision, bool cart)
+{
   TTypeList<AnAssociation2<vec3d, TCAtom*> > atoms;
   bool have_q = false;
   if( XFile().GetLattice().IsGenerated() )  {
@@ -1920,7 +1922,9 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
         have_q = true;
     }
   }
-
+  if (olx_abs(precision) > 10)
+    precision = -10;
+  const TAsymmUnit &au = XFile().GetAsymmUnit();
   TTTable<TStrList> Table(atoms.Count(), have_q ? 12 : 11);
   Table.ColName(0) = "Atom";
   Table.ColName(1) = "Type";
@@ -1939,9 +1943,9 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
     const TCAtom& A = *atoms[i].GetB();
     Table[i][0] = A.GetLabel();
     Table[i][1] = A.GetType().symbol;
-    Table[i][2] = olxstr::FormatFloat(-3, atoms[i].GetA()[0]);
-    Table[i][3] = olxstr::FormatFloat(-3, atoms[i].GetA()[1]);
-    Table[i][4] = olxstr::FormatFloat(-3, atoms[i].GetA()[2]);
+    vec3d c = cart ? au.Orthogonalise(atoms[i].GetA()) : atoms[i].GetA();
+    for (int ci=0; ci < 3; ci++)
+      Table[i][2+ci] = olxstr::FormatFloat(precision, c[ci]);
     Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
     if( A.GetEllipsoid() != NULL )  {
       Table[i][6] << olxstr::FormatFloat(3,

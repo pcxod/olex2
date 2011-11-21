@@ -564,7 +564,8 @@ public:
   TUndoData* Name(TXAtom& Atom, const olxstr& Name, bool CheckLabels);
   TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To, bool CheckLabels);
 
-  void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort);
+  void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort,
+    int precision=3, bool cart=false);
 
   void UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms=NULL);
   void UpdateBondPrimitives(int Mask, TXBondPList* Bonds=NULL, bool HBondsOnly=false);

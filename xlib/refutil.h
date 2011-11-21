@@ -55,7 +55,7 @@ namespace RefUtil {
 
   class ResolutionAndSigmaFilter  {
     const RefinementModel& rm;
-    RefinementModel::HklStat *_stats;
+    mutable RefinementModel::HklStat *_stats;
     double h_o_s, min_d, max_d;
   public:
     ResolutionAndSigmaFilter(const RefinementModel& _rm) : rm(_rm), _stats(NULL)  {
@@ -69,7 +69,7 @@ namespace RefUtil {
         min_d = SHEL_hr;
       max_d = SHEL_lr;
     }
-    void SetStats(RefinementModel::HklStat &stats)  {
+    void SetStats(RefinementModel::HklStat &stats) const {
       _stats = &stats;
       stats.LimDmax = max_d;
       stats.LimDmin = min_d;

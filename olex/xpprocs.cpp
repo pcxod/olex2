@@ -1380,7 +1380,11 @@ void TMainForm::macSetView(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TStrList Output;
-  FXApp->InfoList(Cmds.IsEmpty() ? EmptyString() : Cmds.Text(' '), Output, Options.Contains("s"));
+  FXApp->InfoList(Cmds.IsEmpty() ? EmptyString() : Cmds.Text(' '),
+    Output, Options.Contains("p"),
+    Options.FindValue('p', "-3").ToInt(),
+    Options.Contains('f')
+    );
   TBasicApp::NewLogEntry() << Output;
 }
 //..............................................................................
