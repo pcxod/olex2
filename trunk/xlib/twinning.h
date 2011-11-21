@@ -296,6 +296,7 @@ namespace twinning  {
         F_indices(NULL),
         parts(1)
     {
+      filter.SetStats(ms);
       vec3i mi(100,100,100), mx = -mi;
       vec3i_list s_refs(_all_refs.Count());
       for( size_t i=0; i < all_refs.Count(); i++ ) {
@@ -314,6 +315,8 @@ namespace twinning  {
           all_refs[i].SetTag(-1);
           continue;
         }
+        if (all_refs[i].GetBatch() > 0)
+          ms.TotalReflections++;
         const vec3i& hkl = s_refs[i];
         if( TReflection::IsAbsent(hkl, sym_info) || filter.IsOmitted(hkl) )  {
           if( all_refs[i].GetBatch() > 0 )  {

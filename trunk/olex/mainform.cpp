@@ -570,7 +570,10 @@ f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupa
 
   this_InitMacroD(SetView, "c-center", fpAny,
     "Sets view normal to the normal of the selected plane, to a bond or mean line");
-  this_InitMacroD(Info, "s-sorts the atom list", fpAny, "Prints out information for provided [all] atoms");
+  this_InitMacroD(Info,
+    "s-sorts the atom list&;p-coordinate precision [3]&;f-print fractional "
+    "coordinates vs Cartesian [true]", fpAny,
+    "Prints out information for gived [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
 "Prints available information. If no arguments provided prints available commands");
   this_InitMacroD(Matr, EmptyString(), fpNone|fpOne|fpTwo|fpNine,

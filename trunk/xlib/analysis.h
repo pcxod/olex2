@@ -106,6 +106,9 @@ public:
 
   static double find_scale(TLattice &latt);
 
+  static const cm_Element &check_proposed_element(
+    TCAtom &a, const cm_Element &e);
+
   static void funTrim(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(trim_18(TXApp::GetInstance().XFile().GetAsymmUnit()));
   }

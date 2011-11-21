@@ -444,5 +444,26 @@ bool Analysis::analyse_u_eq(TAsymmUnit &au) {
   return false;
 }
 //.............................................................................
+const cm_Element &Analysis::check_proposed_element(
+    TCAtom &a, const cm_Element &e)
+{
+  TTypeList<AnAssociation2<const TCAtom*, vec3d> > res;
+  TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
+  uc.FindInRangeAC(a.ccrd(), e.r_vdw, res); 
+  vec3d center = a.GetParent()->Orthogonalise(a.ccrd());
+  res.QuickSorter.Sort(res, TUnitCell::AC_Sort(center));
+  size_t cnt = 0;
+  for (size_t i=1; i < res.Count(); i++) {
+    double d = center.DistanceTo(res[i].GetB());
+    if (d < e.r_vdw)
+      cnt++;
+  }
+  if (XElementLib::IsGroup8(e)) {
+    cm_Element *pe = XElementLib::FindByZ(e.z-1);
+    if (pe != NULL)
+      return *pe;
+  }
+  return e;
+}
 //.............................................................................
 //.............................................................................
