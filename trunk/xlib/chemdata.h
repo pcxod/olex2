@@ -341,7 +341,11 @@ public:
   static cm_Element *PrevGroup(int group, const cm_Element *e);
 
   static bool IsMetal(const cm_Element &e) {
-    return IsTransitionalMetal(e) || IsPostTransitionalMetal(e);
+    return 
+      IsTransitionalMetal(e) ||
+      IsPostTransitionalMetal(e) ||
+      IsLanthanide(e) ||
+      IsActinide(e);
   }
   // Li->Fr
   static bool IsGroup1(const cm_Element &e) {  return IsGroup(1, e);  }
