@@ -57,7 +57,9 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         continue;
       throw TFunctionFailedException(__OlxSourceInfo, "invalid matrix file");
     }
-    if( toks[4].Equals("BASF") )  continue;
+    if( toks[4].Equals("BASF") ||
+        toks[4].Equals("SWAT") ||
+        toks[4].Equals("HOPE") )  continue;
     if( toks[4].StartsFrom("FVAR") )  {
       if( toks.Count() != 6 )  continue;
       size_t var_ind = toks[5].ToSizeT();

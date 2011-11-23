@@ -61,6 +61,7 @@ void peaks::range::delete_all() {
 //.............................................................................
 ConstTypeList<peaks::range> peaks::analyse(const TCAtomPList &_peaks) {
   TTypeList<range> ranges;
+  if (_peaks.IsEmpty()) return ranges;
   TCAtomPList peaks = _peaks;
   peaks.QuickSorter.SortSF(peaks, peak_sort);
   if (!peaks.IsEmpty())
