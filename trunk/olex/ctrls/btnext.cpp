@@ -212,7 +212,8 @@ void TImgButton::SetImages(const olxstr& src, int w, int h)  {
       fn = toks[i].SubStringFrom(ei+1);
     wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(fn);
     if( fsFile == NULL )  {
-      TBasicApp::NewLogEntry(logError) << __OlxSrcInfo << ": could not locate image '" << fn << '\'';
+      TBasicApp::NewLogEntry(logError) << __OlxSrcInfo <<
+        ": could not locate image '" << fn << '\'';
       continue;
     }
     wxImage* img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
@@ -240,7 +241,9 @@ void TImgButton::SetImages(const olxstr& src, int w, int h)  {
   SetImages(images, imgState, w, h);
 }
 //..............................................................................
-void TImgButton::SetImages(const TTypeList<wxImage>& images, short imgState, int w, int h)  {
+void TImgButton::SetImages(const TTypeList<wxImage>& images, short imgState,
+  int w, int h)
+{
   if( images.IsEmpty() )  return;
   if( w == -1 )  w = images[0].GetWidth();
   if( h == -1 )  h = images[0].GetHeight();

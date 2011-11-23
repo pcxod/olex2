@@ -41,20 +41,23 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
   StartEvtProcessing()
-    OnSelect.Execute(this, &TEGC::New<olxstr>(OnSelect.data).Replace("~label~", event.GetLabel()));
+    OnSelect.Execute(this, &TEGC::New<olxstr>(OnSelect.data)
+      .Replace("~label~", event.GetLabel()));
   EndEvtProcessing()
 }
 //..............................................................................
-size_t TTreeView::ReadStrings(size_t& index, const wxTreeItemId* thisCaller, const TStrList& strings)  {
+size_t TTreeView::ReadStrings(size_t& index, const wxTreeItemId* thisCaller,
+  const TStrList& strings)
+{
   while( (index + 2) <= strings.Count() )  {
-    size_t level = strings[index].LeadingCharCount( '\t' );
+    size_t level = strings[index].LeadingCharCount('\t');
     index++;  // now index is on data string
     wxTreeItemId item;
     if( strings[index].Trim('\t').IsEmpty() )
-      item = AppendItem(*thisCaller, olxstr(strings[index-1]).Trim('\t').u_str() );
+      item = AppendItem(*thisCaller, olxstr(strings[index-1]).Trim('\t').u_str());
     else
       item = AppendItem(*thisCaller, olxstr(strings[index-1]).Trim('\t').u_str(), -1, -1,
-         new TTreeNodeData(new olxstr(strings[index])) );
+         new TTreeNodeData(new olxstr(strings[index])));
     index++;  // and now on the next item
     if( index < strings.Count() )  {
       size_t nextlevel = strings[index].LeadingCharCount('\t');
@@ -97,7 +100,9 @@ void TTreeView::OnContextMenu(wxCommandEvent& evt)  {
     CollapseAllChildren(GetSelection());
 }
 //..............................................................................
-size_t TTreeView::_SaveState(TEBitArray& res, const wxTreeItemId& item, size_t& counter) const {
+size_t TTreeView::_SaveState(TEBitArray& res, const wxTreeItemId& item,
+  size_t& counter) const
+{
   size_t selected = InvalidIndex;
   if( counter == 0 )  {
     if( (GetWindowStyle()&wxTR_HIDE_ROOT) == 0 )
@@ -134,7 +139,9 @@ olxstr TTreeView::SaveState() const {
   return (rv << ';' << selected);
 }
 //..............................................................................
-void TTreeView::_RestoreState(const TEBitArray& res, const wxTreeItemId& item, size_t& counter, size_t selected)  {
+void TTreeView::_RestoreState(const TEBitArray& res, const wxTreeItemId& item,
+  size_t& counter, size_t selected)
+{
   if( res[counter] )  Expand(item);
   if( selected == counter )  SelectItem(item, true);
   wxTreeItemIdValue cookie;

@@ -16,14 +16,16 @@ IMPLEMENT_CLASS(TMainFrame, wxFrame)
 
 TMainFrame* TMainFrame::MainFrameInstance = NULL;
 
-void TMainFrame::RestorePosition(wxWindow *Window)  {  // restores previously saved position
+// restores previously saved position
+void TMainFrame::RestorePosition(wxWindow *Window)  {
   size_t ind = WindowPos.IndexOf(Window->GetName());
   if ( ind == InvalidIndex )  return;
   TWindowInfo &wi = WindowPos[Window->GetName()];
   Window->Move(wi.x, wi.y);
 }
 //..............................................................................
-void TMainFrame::SavePosition(wxWindow *Window)  {  //saves current position of the window on screen
+//saves current position of the window on screen
+void TMainFrame::SavePosition(wxWindow *Window)  {
   TWindowInfo &wi = WindowPos.Add(Window->GetName());
   Window->GetPosition(&(wi.x), &(wi.y));
 }
@@ -50,8 +52,10 @@ olxstr TMainFrame::PortableFilter(const olxstr& filter)  {
         continue;
       }
       rv << masks[j].SubStringTo(di+1);
-      for( size_t k=di+1; k < masks[j].Length(); k++ )
-        rv << '[' << olxstr::o_tolower(masks[j].CharAt(k)) << olxstr::o_toupper(masks[j].CharAt(k)) << ']';
+      for( size_t k=di+1; k < masks[j].Length(); k++ ) {
+        rv << '[' << olxstr::o_tolower(masks[j].CharAt(k)) <<
+          olxstr::o_toupper(masks[j].CharAt(k)) << ']';
+      }
       if( j+1 < masks.Count() )
         rv << ';';
     }
@@ -82,8 +86,10 @@ void TMainFrame::ShowAlert(const TExceptionBase &e, const olxstr &msg, bool log)
   if( log )  {
     TStrList sl;
     e.GetException()->GetStackTrace(sl);
-    TBasicApp::NewLogEntry() << "Exception occured:" << NewLineSequence() << msg << NewLineSequence() << sl;
+    TBasicApp::NewLogEntry() << "Exception occured:" << NewLineSequence() <<
+      msg << NewLineSequence() << sl;
   }
   wxMessageBox(e.GetException()->GetError().u_str(),
-    (olxstr("Exception: ") << EsdlObjectName(*e.GetException())).u_str(), wxOK|wxICON_ERROR, MainFrameInstance);
+    (olxstr("Exception: ") << EsdlObjectName(*e.GetException())).u_str(),
+    wxOK|wxICON_ERROR, MainFrameInstance);
 }

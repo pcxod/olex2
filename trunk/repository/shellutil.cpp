@@ -170,15 +170,17 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
 }
 //..............................................................................
 #ifdef __WIN32__
-int __stdcall BrowseCallbackProc( HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)  {
+int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam,
+  LPARAM lpData)
+{
   if( uMsg == BFFM_INITIALIZED && lpData )
-    SendMessage( hwnd, BFFM_SETSELECTION, TRUE, lpData);
+    SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
   return 0;
 }
 #endif
 
-olxstr TShellUtil::PickFolder( const olxstr& Title,
-  const olxstr& SelectedFolder, const olxstr& RootFolder )  {
+olxstr TShellUtil::PickFolder(const olxstr& Title,
+  const olxstr& SelectedFolder, const olxstr& RootFolder)  {
 #ifdef __WIN32__
   LPMALLOC shellMalloc;
   if( SHGetMalloc(& shellMalloc ) != NOERROR )  return EmptyString();
@@ -194,8 +196,8 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
     desktopFolder->ParseDisplayName(NULL, NULL, wsz, &eaten, &rootFolder, NULL);
   }
   BROWSEINFO bi;
-  TCHAR* path = (TCHAR*)shellMalloc->Alloc( MAX_PATH*sizeof(TCHAR) );
-  memset( &bi, 0, sizeof(bi) );
+  TCHAR* path = (TCHAR*)shellMalloc->Alloc(MAX_PATH*sizeof(TCHAR));
+  memset(&bi, 0, sizeof(bi));
   bi.lpszTitle = Title.u_str();
   bi.pszDisplayName = path;
   bi.pidlRoot = rootFolder;
@@ -227,8 +229,10 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
 }
-//.....................................................................................
-bool TShellUtil::_MACFromArray(const unsigned char* bf, const char* name, MACInfo& mi, size_t len ,bool accept_empty)  {
+//.............................................................................
+bool TShellUtil::_MACFromArray(const unsigned char* bf, const char* name,
+  MACInfo& mi, size_t len ,bool accept_empty)
+{
   if( !accept_empty )  {
     uint32_t sum = 0;
     for( size_t i=0; i < len; i++ )
@@ -241,7 +245,7 @@ bool TShellUtil::_MACFromArray(const unsigned char* bf, const char* name, MACInf
     MAC[i] = bf[i];
   return true;
 }
-//.....................................................................................
+//.............................................................................
 //http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451 win
 //http://cboard.cprogramming.com/linux-programming/43261-ioctl-request-get-hw-address.html unix/linux
 //http://othermark.livejournal.com/3005.html mac/freebsd
@@ -254,8 +258,10 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
     return;
   PIP_ADAPTER_INFO pai = ai;
   do {
-    if( pai->AddressLength == 6 )
-      _MACFromArray( (unsigned char*)&pai->Address[0], (char*)&(pai->Description[0]), rv, 6, false);
+    if( pai->AddressLength == 6 ) {
+      _MACFromArray( (unsigned char*)&pai->Address[0],
+        (char*)&(pai->Description[0]), rv, 6, false);
+    }
     pai = pai->Next;
   }
   while( pai != NULL );
@@ -277,7 +283,8 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
       strncpy(ifreq.ifr_name, ifr->ifr_name,sizeof(ifreq.ifr_name));
       if( ioctl (sckt, SIOCGIFHWADDR, &ifreq) < 0 )
         return;
-      _MACFromArray( (unsigned char*)&ifreq.ifr_hwaddr.sa_data, (char*)&(ifreq.ifr_name[0]), rv, 6, false);
+      _MACFromArray( (unsigned char*)&ifreq.ifr_hwaddr.sa_data,
+        (char*)&(ifreq.ifr_name[0]), rv, 6, false);
     }
   }
 	close(sckt);
@@ -295,7 +302,8 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
       tmpia = tmpia->ifa_next;
       continue;
     }
-    _MACFromArray( (unsigned char*)LLADDR(sck_dl), (char*)&(tmpia->ifa_name[0]), rv, 6, false);
+    _MACFromArray( (unsigned char*)LLADDR(sck_dl),
+      (char*)&(tmpia->ifa_name[0]), rv, 6, false);
     tmpia = tmpia->ifa_next;
   }
   if( ifaddrs != NULL )

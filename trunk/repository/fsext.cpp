@@ -113,16 +113,20 @@ wxFSFile *TFileHandlerManager::_GetFSFileHandler( const olxstr &FN )  {
       FZipFiles.Add( ze.ZipName, zw );
     }
     wxInputStream *wxIS = zw->OpenWxEntry( ze.EntryName );
-    return wxIS == NULL ? NULL : new wxFSFile( wxIS, ze.EntryName.u_str(), st, es, wxDateTime((time_t)0));
+    return wxIS == NULL ? NULL : new wxFSFile(
+      wxIS, ze.EntryName.u_str(), st, es, wxDateTime((time_t)0));
   }
   else  {
     TMemoryBlock *mb = GetMemoryBlock( FN );
-    return mb == NULL ? NULL : new wxFSFile( new wxMemoryInputStream(mb->Buffer, mb->Length), es, st, es, wxDateTime((time_t)0));
+    return mb == NULL ? NULL : new wxFSFile(new wxMemoryInputStream(
+      mb->Buffer, mb->Length), es, st, es, wxDateTime((time_t)0));
   }
 }
 #endif
 //..............................................................................
-void TFileHandlerManager::_SaveToStream(IDataOutputStream& os, short persistenceMask)  {
+void TFileHandlerManager::_SaveToStream(IDataOutputStream& os,
+  short persistenceMask)
+{
   os.Write(FSignature, TFileHandlerManager_FSignatureLength);
   os << FVersion;
 
@@ -148,7 +152,9 @@ void TFileHandlerManager::_SaveToStream(IDataOutputStream& os, short persistence
   }
 }
 //..............................................................................
-void TFileHandlerManager::_LoadFromStream(IDataInputStream& is, short persistenceId)  {
+void TFileHandlerManager::_LoadFromStream(IDataInputStream& is,
+  short persistenceId)
+{
   // validation of the stream
   char fSignature[TFileHandlerManager_FSignatureLength+1];
   is.Read( fSignature, TFileHandlerManager_FSignatureLength );
@@ -221,11 +227,11 @@ void TFileHandlerManager::Clear(short persistenceMask)  {
     }
     else  {
       for( size_t i=0; i < FHandler->FMemoryBlocks.Count(); i++ )  {
-        if( (FHandler->FMemoryBlocks.GetObject(i)->PersistenceId & persistenceMask) != 0 )  {
-          delete [] FHandler->FMemoryBlocks.GetObject(i)->Buffer;
-          delete FHandler->FMemoryBlocks.GetObject(i);
-          FHandler->FMemoryBlocks.Delete(i);
-          i--;
+        TMemoryBlock *mb = FHandler->FMemoryBlocks.GetObject(i);
+        if( (mb->PersistenceId & persistenceMask) != 0 )  {
+          delete [] mb->Buffer;
+          delete mb;
+          FHandler->FMemoryBlocks.Delete(i--);
         }
       }
     }
@@ -270,9 +276,8 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
 }
 //..............................................................................
 void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
-                                               size_t length, short persistenceId)  {
-  //if( length <= 0 )  return;
-
+  size_t length, short persistenceId)
+{
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return FHandler->_AddMemoryBlock(name, bf, length, persistenceId );
 }
@@ -304,12 +309,16 @@ short TFileHandlerManager::GetPersistenceId(size_t i)  {
   return FHandler->FMemoryBlocks.GetObject(i)->PersistenceId;
 }
 //..............................................................................
-void TFileHandlerManager::SaveToStream(IDataOutputStream& os, short persistenceMask)  {
+void TFileHandlerManager::SaveToStream(IDataOutputStream& os,
+  short persistenceMask)
+{
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   FHandler->_SaveToStream(os, persistenceMask);
 }
 //..............................................................................
-void TFileHandlerManager::LoadFromStream(IDataInputStream& is, short persistenceId) {
+void TFileHandlerManager::LoadFromStream(IDataInputStream& is,
+  short persistenceId)
+{
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   FHandler->_LoadFromStream(is, persistenceId);
 }
@@ -321,15 +330,38 @@ bool TFileHandlerManager::Exists(const olxstr& fn)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TFileHandlerManager::LibExists(const TStrObjList& Params, TMacroError& E)  {
+void TFileHandlerManager::LibExists(const TStrObjList& Params,
+  TMacroError& E)
+{
   E.SetRetVal<bool>(IsMemoryBlock(Params[0]));
 }
+//..............................................................................
+void TFileHandlerManager::LibDump(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  const TMemoryBlock *mb = FindMemoryBlock(Cmds[0]);
+  if (mb == NULL) {
+    Error.ProcessingError(__OlxSrcInfo, "Could not locate: ").quote() <<
+      Cmds[0];
+    return;
+  }
+  TEFile o(Cmds[1], "w+b");
+  o.Write(mb->Buffer, mb->Length);
+}
+//..............................................................................
 TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
-  TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("fs") : name );
-  lib->RegisterFunction<TFileHandlerManager>(new TFunction<TFileHandlerManager>(FHandler,  
-    &TFileHandlerManager::LibExists, "Exists", fpOne,
-"returns true if the specified file exists on the virtual file system") );
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("fs") : name);
+  lib->RegisterFunction<TFileHandlerManager>(
+    new TFunction<TFileHandlerManager>(FHandler,  
+      &TFileHandlerManager::LibExists, "Exists", fpOne,
+    "Returns true if the specified file exists on the virtual file system")
+  );
+  lib->RegisterMacro<TFileHandlerManager>(
+    new TMacro<TFileHandlerManager>(FHandler,  
+      &TFileHandlerManager::LibDump, "Dump", EmptyString(), fpTwo,
+    "Saves a file in the VFS to the disk file")
+  );
   return lib;
 }
 
@@ -357,8 +389,11 @@ PyObject* pyNewFile(PyObject* self, PyObject* args)  {
   olxstr name;
   int persistenceId = 0;
   int length = 0;
-  if( !PythonExt::ParseTuple(args, "ws#|i", &name, &data, &length, &persistenceId) )
+  if( !PythonExt::ParseTuple(args, "ws#|i",
+        &name, &data, &length, &persistenceId) )
+  {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ws#|i");
+  }
   if( data != NULL && !name.IsEmpty() && length > 0 )  {
     TFileHandlerManager::AddMemoryBlock(name, data, length, persistenceId);
     return Py_BuildValue("b", true);
@@ -382,17 +417,26 @@ PyObject* pyReadFile(PyObject* self, PyObject* args)  {
   }
   if( io != NULL )  {
     delete io;
-    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Empty file name");
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
+      "Empty file name");
   }
   else
-    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "File does not exist");
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
+    "File does not exist");
 }
 
 static PyMethodDef OLEXFS_Methods[] = {
-  {"Exists", pyExists, METH_VARARGS, "returns true if specified file exists"},
-  {"Timestamp", pyTimestamp, METH_VARARGS, "returns timestamp (epoch time) of given file, if file does not exist, returns None"},
-  {"NewFile", pyNewFile, METH_VARARGS, "creates a new file (file_name, data,[persistence]), returns true if operation succeeded"},
-  {"ReadFile", pyReadFile, METH_VARARGS, "reads previously created file and reurns the content of the file or None, if error has occured"},
+  {"Exists", pyExists, METH_VARARGS,
+    "returns true if specified file exists"},
+  {"Timestamp", pyTimestamp, METH_VARARGS,
+    "returns timestamp (epoch time) of given file, if file does not exist, "
+    "returns None"},
+  {"NewFile", pyNewFile, METH_VARARGS,
+    "creates a new file (file_name, data,[persistence]), returns true if "
+    "operation succeeded"},
+  {"ReadFile", pyReadFile, METH_VARARGS,
+    "reads previously created file and reurns the content of the file or None, "
+    "if error has occured"},
   {NULL, NULL, 0, NULL}
    };
 
