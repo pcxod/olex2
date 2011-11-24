@@ -911,6 +911,10 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
+  if (Options.Contains('b')) {  // grow XGrowBonds only
+    FXApp->GrowBonds();
+    return;
+  }
   bool GrowShells = Options.Contains('s'),
        GrowContent = Options.Contains('w');
   TCAtomPList TemplAtoms;

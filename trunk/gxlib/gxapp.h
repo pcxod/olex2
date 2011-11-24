@@ -489,7 +489,7 @@ public:
   void ChangeAtomType(TXAtom *A, const olxstr& Element);
   void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
   void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
-
+  void GrowBonds();
   void MoveFragment(TXAtom* to, TXAtom* fragAtom, bool copy);
   void MoveFragment(const vec3d& to, TXAtom* fragAtom, bool copy);
   void MoveToCenter();

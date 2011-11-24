@@ -479,8 +479,9 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Bang, EmptyString(), fpAny | psFileLoaded,
 "Prints bonds and angles table for selected atoms");
   this_InitMacroD(Grow,
-"s-grow shells vs fragments&;w-grows the rest of the structure, using already applied generators&;t-grows\
- only provided atoms/atom types", fpAny | psFileLoaded,
+"s-grow shells vs fragments&;w-grows the rest of the structure, using already "
+"applied generators&;t-grows only provided atoms/atom types&;b-grows all "
+"visible grow bonds (when in a grow mode)", fpAny | psFileLoaded,
 "Grows whole structure or provided atoms only");
   this_InitMacroD(Uniq, EmptyString(), fpAny | psFileLoaded,
 "Shows only fragments specified by atom name(s) or selection");
