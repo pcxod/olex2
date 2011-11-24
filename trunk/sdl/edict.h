@@ -133,7 +133,7 @@ template <typename VType, bool case_sensitive=false> class olxstr_dict
 // const_dict
 template <typename key_t, typename val_t, class Comparator>
 class const_olxdict : public const_dict<
-  olxdict<key_t,val_t,Comparator>>
+  olxdict<key_t,val_t,Comparator> >
 {
   typedef olxdict<key_t,val_t,Comparator> dict_t;
   typedef const_dict<dict_t> parent_t;

@@ -589,7 +589,7 @@ public:
   // creates a list with strtok entries in it
   TTOStringList(const PList& strings, char sep, 
     TTypeList<object_type>* objects = NULL)
-    : TTStrList<SC,GC>(strings, sep)
+    : TTStrList<GC>(strings, sep)
   {
     if( objects != NULL )  {
       for( size_t i=0; i < objects->Count(); i++ )  {
@@ -737,6 +737,8 @@ class ConstStrList : public const_list<TTStrList<item_t> >
   typedef TTStrList<item_t> list_t;
   typedef const_list<list_t> parent_t;
 public:
+  typedef typename list_t::list_item_type list_item_type;
+
   ConstStrList(const ConstStrList &d) : parent_t(d) {}
   ConstStrList(list_t &d) : parent_t(d) {}
   ConstStrList(list_t *d) : parent_t(d) {}
@@ -749,7 +751,6 @@ public:
   {
     return parent_t::GetObject().Text(Sep, start, end);
   }
-   typename list_t::list_item_type list_item_type;
 };
 
 // const_strobjlist
@@ -758,6 +759,8 @@ class ConstStrObjList : public const_list<TTOStringList<item_t> > {
   typedef TTOStringList<item_t> list_t;
   typedef const_list<list_t> parent_t;
 public:
+  typedef typename list_t::list_item_type list_item_type;
+
   ConstStrObjList(const ConstStrObjList &d) : parent_t(d) {}
   ConstStrObjList(list_t &d) : parent_t(d) {}
   ConstStrObjList(list_t *d) : parent_t(d) {}
@@ -773,7 +776,6 @@ public:
   {
     return parent_t::GetObject().Text(Sep, start, end);
   }
-   typename list_t::list_item_type list_item_type;
 };
 
 typedef TStrPObjList<olxstr, IEObject*> TStrObjList;
