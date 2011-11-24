@@ -610,25 +610,37 @@ void TLattice::GrowAtom(TSAtom& Atom, bool GrowShells, TCAtomPList* Template)  {
   DoGrow(TSAtomPList() << Atom, GrowShells, Template);
 }
 //..............................................................................
-void TLattice::GrowFragment(uint32_t FragId, const smatd& transform)  {
+void TLattice::GrowFragment(uint32_t FragId, const smatd& transform) {
+  olxdict<uint32_t, smatd_list, TPrimitiveComparator> j;
+  j.Add(FragId).AddCopy(transform);
+  GrowFragments(j);
+}
+//..............................................................................
+void TLattice::GrowFragments(
+  const olxdict<uint32_t, smatd_list, TPrimitiveComparator> &job)
+{
+  olxdict<uint32_t, smatd*, TPrimitiveComparator> matrix_map;
   smatd *M = NULL;
   // check if the matix is unique
-  bool found = false;
-  for( size_t i=0; i < Matrices.Count(); i++ )  {
-    if( Matrices[i]->GetId() == transform.GetId() )  {
-      M = Matrices[i];
-      found = true;
-      break;
+  matrix_map.SetCapacity(Matrices.Count());
+  for (size_t i=0; i < Matrices.Count(); i++)
+    matrix_map.Add(Matrices[i]->GetId(), Matrices[i]);
+  for (size_t i=0; i < job.Count(); i++) {
+    const smatd_list &l = job.GetValue(i);
+    for (size_t j=0; j < l.Count(); j++) {
+      if (!matrix_map.HasKey(l[j].GetId()))
+        matrix_map.Add(l[j].GetId(), Matrices.Add(new smatd(l[j])));
     }
   }
-  if( !found )
-    M = Matrices.Add(new smatd(transform));
-
   OnStructureGrow.Enter(this);
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
-    if( ca.IsAvailable() && ca.GetFragmentId() == FragId )
-      GenerateAtom(ca, *M);
+    size_t fi = job.IndexOf(ca.GetFragmentId());
+    if (fi != InvalidIndex) {
+      const smatd_list &l = job.GetValue(fi);
+      for( size_t j=0; j < l.Count(); j++)
+        GenerateAtom(ca, *matrix_map[l[j].GetId()]);
+    }
   }
   RestoreCoordinates();
   Disassemble();

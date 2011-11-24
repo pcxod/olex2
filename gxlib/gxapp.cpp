@@ -4433,3 +4433,14 @@ void TGXApp::CreateRings(bool force, bool create)  {
   }
 }
 //..............................................................................
+void TGXApp::GrowBonds() {
+  olxdict<uint32_t, smatd_list, TPrimitiveComparator> transforms;
+  for (size_t i=0; i < XGrowLines.Count(); i++) {
+    if (XGrowLines[i].IsVisible()) {
+      transforms.Add(XGrowLines[i].CAtom().GetFragmentId())
+        .AddCopy(XGrowLines[i].GetTransform());
+    }
+  }
+  XFile().GetLattice().GrowFragments(transforms);
+}
+//..............................................................................

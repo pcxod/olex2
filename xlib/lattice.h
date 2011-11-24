@@ -30,20 +30,21 @@ private:
   ASObjectProvider& Objects;
 private:
   /* generates matrices in volume {VFrom, VTo} and leaves only matrices, which
-  transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
-  usually VFrom = olx_round(MFrom), VTo = olx_round(VFrom)
+  transform the center of gravity of the asymmertic unit within {MFrom, MTo}
+  volume usually VFrom = olx_round(MFrom), VTo = olx_round(VFrom)
   */
   size_t GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
   // generates matrices from -4 to 4 which generate aunit within the rad sphere
-  size_t GenerateMatrices(smatd_plist& Result, const vec3d& center, double rad);
+  size_t GenerateMatrices(smatd_plist& res, const vec3d& center, double rad);
   smatd_plist Matrices;    // list of all matrices
   TNetPList    Fragments;
   TTypeList<TSPlane::Def> PlaneDefs;
   void GenerateBondsAndFragments(TArrayList<vec3d> *crd);
 protected:
   TActionQList Actions;
-  void Generate(TCAtomPList* Template, bool ClearCont);  // generates atoms using current matrices list
+  // generates atoms using current matrices list
+  void Generate(TCAtomPList* Template, bool ClearCont);
   void ClearFragments();
   void ClearAtoms();
   void ClearMatrices();
@@ -55,7 +56,9 @@ protected:
   class TUnitCell*  UnitCell;
   class TAsymmUnit* AsymmUnit;
   double Delta, DeltaI;
-  // if Template is specified, the CAtoms are taken from there instead of AsymmUnit
+  /* if Template is specified, the CAtoms are taken from there instead of
+  AsymmUnit
+  */
   void DoGrow(const TSAtomPList& Atoms, bool GrowShell, TCAtomPList* Template);
   // removes existing TSAtoms with TCAtom's masked
   void BuildPlanes();
@@ -71,7 +74,7 @@ public:
     &OnAtomsDeleted;
 
   // this does not have any usefull data
-  inline TNetwork& GetNetwork() const {  return *Network; }
+  TNetwork& GetNetwork() const {  return *Network; }
 
   void Clear(bool ClearUnitCell);
   void Uniq(bool removeSymmEquivalents = false);
@@ -85,8 +88,11 @@ public:
   void AddLatticeContent(const TLattice& latt);
   // generates atoms inside the unit cell only
   void GenerateCell();
-  // generates atoms inside the given box of dim[i].Length() size at position center
-  void GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& center, bool clear_content);
+  /* generates atoms inside the given box of dim[i].Length() size at position
+  center
+  */
+  void GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& center,
+    bool clear_content);
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont);
@@ -94,39 +100,50 @@ public:
   void Generate(const vec3d& center, double rad, TCAtomPList* Template,
     bool ClearCont);
   // checks if there are more than one matrix
-  inline bool IsGenerated() const {  return !(Matrices.Count() == 1 && Matrices[0]->IsFirst());  }
+  bool IsGenerated() const {
+    return !(Matrices.Count() == 1 && Matrices[0]->IsFirst());
+  }
 
-  // generates matrices so that the center of asymmetric unit is inisde the specified volume
-  size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
-        const vec3d& MFrom, const vec3d& MTo);
+  /* generates matrices so that the center of asymmetric unit is inisde the
+  specified volume
+  */
+  size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom,
+    const vec3d& VTo, const vec3d& MFrom, const vec3d& MTo);
   // finds matrices to be used for the next grow operation in GrowFragments
   void GetGrowMatrices(smatd_list& res) const;
   /* finds all matrices unique to the unit cell which complete a given fragment */
   SortedObjectList<smatd, smatd::ContainerIdComparator>
     GetFragmentGrowMatrices(const TCAtomPList& fragment) const;
-  /* grows all atoms which can be grown, if GrowShells is true, only immediate environment
-  of the atoms which can grow is generated */
+  /* grows all atoms which can be grown, if GrowShells is true, only immediate
+  environment of the atoms which can grow is generated */
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
+  /* grows fragemnts with a list of transforms */
+  void GrowFragments(
+    const olxdict<uint32_t, smatd_list, TPrimitiveComparator> &job);
   /* grows a fragment using particular matrix */
   void GrowFragment(uint32_t FragId, const smatd& transform);
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
-  void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
+  void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells,
+    TCAtomPList* Template);
   void GrowAtoms(const TCAtomPList& Atoms, const smatd_list& matrices);
   // returns the atom (generated or exisiting)
   TSAtom *GrowAtom(TCAtom& atom, const smatd& matrix);
   // adds new asymmetric unit transformed by the given symop 
   void Grow(const smatd& transform);
-   /* generates content using current matrices, the current content stays */
+  /* generates content using current matrices, the current content stays */
   void GenerateWholeContent(TCAtomPList* Template);
 
   static int CompareFragmentsBySize(const TNetwork* N, const TNetwork* N1)  {
-    return N1->NodeCount() < N->NodeCount() ? -1 : (N1->NodeCount() > N->NodeCount() ? -1 : 0);
+    return N1->NodeCount() < N->NodeCount() ? -1
+      : (N1->NodeCount() > N->NodeCount() ? -1 : 0);
   }
-  inline size_t FragmentCount() const {  return Fragments.Count(); }
-  inline TNetwork& GetFragment(size_t i) const {  return olx_is_valid_index(i) ? *Fragments[i] : *Network;  }
+  size_t FragmentCount() const {  return Fragments.Count(); }
+  TNetwork& GetFragment(size_t i) const {
+    return olx_is_valid_index(i) ? *Fragments[i] : *Network;
+  }
   const TNetPList& GetFragments() const {  return Fragments;  }
 
-  inline size_t MatrixCount() const {  return Matrices.Count();  }
+  size_t MatrixCount() const {  return Matrices.Count();  }
   const smatd& GetMatrix(size_t i) const {  return *Matrices[i];  }
   smatd& GetMatrix(size_t i)  {  return *Matrices[i];  }
 
@@ -142,11 +159,14 @@ public:
     return NULL;
   }
   //
-  const AtomRegistry& GetAtomRegistry() const {  return Objects.atomRegistry;  }
+  const AtomRegistry& GetAtomRegistry() const {
+    return Objects.atomRegistry;
+  }
   void RestoreAtom(const TSAtom::FullRef& id);
 
   // for the grown structure might return more than one plane
-  TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0, bool regular=false);
+  TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0,
+    bool regular=false);
   void ClearPlaneDefinitions()  {  PlaneDefs.Clear();  }
   //the plane must be deleted by the caller !
   TSPlane* TmpPlane(const TSAtomPList& Atoms, double weightExtent=0);
@@ -155,8 +175,8 @@ public:
 
   void SetAnis(const TCAtomPList& atoms, bool anis);
 
-  inline TUnitCell& GetUnitCell() const {  return *UnitCell; }
-  inline TAsymmUnit& GetAsymmUnit() const {  return *AsymmUnit; }
+  TUnitCell& GetUnitCell() const {  return *UnitCell; }
+  TAsymmUnit& GetAsymmUnit() const {  return *AsymmUnit; }
   void UpdateAsymmUnit();
   // re-creats unit cell U's and reinitialises atom U's
   void RestoreADPs(bool restoreCoordinates=true);  
@@ -172,11 +192,17 @@ public:
   void Compaq();
   // assembles broken fragments
   void CompaqAll();
-  // similar to Compaq, but considers atom to atom distances, not fragment centres
+  /* similar to Compaq, but considers atom to atom distances, not fragment
+  centres
+  */
   void CompaqClosest();
-  // moves atoms of particular type into the positions closest other atoms, does not affect the other atoms
+  /* moves atoms of particular type into the positions closest other atoms,
+  does not affect the other atoms
+  */
   void CompaqType(short Z);
-  // moves Q-peaks into the positions closest to real atoms, does not affect the other atoms
+  /* moves Q-peaks into the positions closest to real atoms, does not affect
+  the other atoms
+  */
   void CompaqQ()  {  CompaqType(iQPeakZ);  }
   // as above, for H
   void CompaqH()  {  CompaqType(iHydrogenZ);  }
@@ -184,10 +210,10 @@ public:
   void TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform);
 
   // beware - only pointers are compared
-  inline bool operator == (const TLattice& l) const {  return this == &l;  }
-  inline bool operator == (const TLattice* l) const {  return this == l;  }
-  inline bool operator != (const TLattice& l) const {  return this != &l;  }
-  inline bool operator != (const TLattice* l) const {  return this != l;  }
+  bool operator == (const TLattice& l) const {  return this == &l;  }
+  bool operator == (const TLattice* l) const {  return this == l;  }
+  bool operator != (const TLattice& l) const {  return this != &l;  }
+  bool operator != (const TLattice* l) const {  return this != l;  }
   struct GrowInfo  {
     smatd_plist matrices;  // the list of all matrices
     TArrayList<TIndexList> info;  // TCAtomId -> matrix;
@@ -205,9 +231,11 @@ protected:
   // removes H2O and R3N from the list of potential hydrogen bond forming atoms
   void RemoveNonHBonding(class TAtomEnvi& envi);
 //  void AnalyseHBonding(class TAtomEnvi& Envi);
-  bool _AnalyseAtomHAdd(class AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms, 
-    int part = DefNoPart, TCAtomPList* generated = NULL);
-  void _ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont, const TSAtomPList& atoms);
+  bool _AnalyseAtomHAdd(class AConstraintGenerator& cg, TSAtom& atom,
+    TSAtomPList& ProcessingAtoms, int part = DefNoPart,
+    TCAtomPList* generated = NULL);
+  void _ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont,
+    const TSAtomPList& atoms);
 public:
   // implements HADD command
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);
