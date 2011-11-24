@@ -547,7 +547,7 @@ public:
   static ListBubbleSorter<TPtrList<T>,const T*, Accessor> BubleSorter;
   static TListTraverser<TPtrList<T> > Traverser;
 public:
-  typedef T list_item_type;
+  typedef T *list_item_type;
 };
 
 #ifndef __BORLANDC__
@@ -575,13 +575,13 @@ public:
     return *this;
   }
 public:
-  typedef item_t list_item_type;
+  typedef item_t *list_item_type;
 };
 
 template <typename item_t>
-class ConstPtrList : public const_list<TPtrList<item_t>, item_t*> {
+class ConstPtrList : public const_list<TPtrList<item_t> > {
   typedef TPtrList<item_t> lst_t;
-  typedef const_list<lst_t, item_t*> parent_t;
+  typedef const_list<lst_t> parent_t;
 public:
   ConstPtrList(const ConstPtrList &l) : parent_t(l) {}
   ConstPtrList(lst_t *lst) : parent_t(lst) {}
@@ -591,7 +591,7 @@ public:
     return *this;
   }
 public:
-  typedef item_t list_item_type;
+  typedef item_t *list_item_type;
 };
 
 EndEsdlNamespace()

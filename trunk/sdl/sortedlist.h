@@ -222,16 +222,16 @@ public:
     return *this;
   }
 public:
-  typedef ObjectClass list_item_type;
+  typedef ObjectClass *list_item_type;
 };
 
 // ConstSortedObjectList
 template <typename obj_t, class Comparator>
 class ConstSortedObjectList
-  : public const_list<SortedObjectList<obj_t,Comparator>, obj_t>
+  : public const_list<SortedObjectList<obj_t,Comparator> >
 {
   typedef SortedObjectList<obj_t,Comparator> list_t;
-  typedef const_list<list_t, obj_t> parent_t;
+  typedef const_list<list_t> parent_t;
 public:
   ConstSortedObjectList(const ConstSortedObjectList &l) : parent_t(l) {}
   ConstSortedObjectList(list_t &l) : parent_t(l) {}
@@ -247,10 +247,10 @@ public:
 // ConstSortedPtrList
 template <typename obj_t, class Comparator>
 class ConstSortedPtrList
-  : public const_list<SortedPtrList<obj_t,Comparator>, obj_t*>
+  : public const_list<SortedPtrList<obj_t,Comparator> >
 {
   typedef SortedPtrList<obj_t,Comparator> list_t;
-  typedef const_list<list_t, obj_t*> parent_t;
+  typedef const_list<list_t> parent_t;
 public:
   ConstSortedPtrList(const ConstSortedPtrList &l) : parent_t(l) {}
   ConstSortedPtrList(list_t &l) : parent_t(l) {}

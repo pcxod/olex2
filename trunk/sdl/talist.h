@@ -413,9 +413,9 @@ public:
 };
 
 template <typename item_t>
-class ConstArrayList : public const_list<TArrayList<item_t>, item_t> {
+class ConstArrayList : public const_list<TArrayList<item_t> > {
   typedef TArrayList<item_t> arr_t;
-  typedef const_list<arr_t, item_t> parent_t;
+  typedef const_list<arr_t> parent_t;
 public:
   ConstArrayList(const ConstArrayList &l) : parent_t(l) {}
   ConstArrayList(arr_t *arr) : parent_t(arr) {}
