@@ -799,8 +799,34 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
   }
 }
 //..............................................................................
+TStrPObjList<olxstr,const cm_Element*> TIns::FixTypeListAndLabels() {
+  TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
+  for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
+    BasicAtoms.Add(GetRM().GetUserContent()[i].element.symbol,
+      &GetRM().GetUserContent()[i].element);
+  }
+  for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
+    TResidue& residue = GetAsymmUnit().GetResidue(i);
+    LabelCorrector lc;
+    for( size_t j=0; j < residue.Count(); j++ )  {
+      if( residue[j].IsDeleted() )  continue;
+      residue[j].SetSaved(false);
+      // fix the SFAC, if wrong
+      size_t spindex = BasicAtoms.IndexOfObject(&residue[j].GetType());
+      if( spindex == InvalidIndex )  {
+        if( residue[j].GetType() != iQPeakZ )  {
+          BasicAtoms.Add(residue[j].GetType().symbol, &residue[j].GetType());
+          GetRM().AddUserContent(residue[j].GetType().symbol, 1.0);
+        }
+      }
+      lc.Correct(residue[j]);
+    }
+  }
+  return BasicAtoms;
+}
+//..............................................................................
 void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
-  const olxstr& comments, bool rems)
+  const olxstr& comments, bool rems, bool save_atoms)
 {
   TStrList SL, mtoks;
   if( sMethod.IsEmpty() )
@@ -824,6 +850,10 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString());
+  TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
+  // if to save atoms - update the SFAC and fix labels
+  if (save_atoms)
+    BasicAtoms = FixTypeListAndLabels();
   SaveSfacUnit(RefMod, RefMod.GetUserContent(), SL, SL.Count()-1);
 
   _SaveSizeTemp(SL);
@@ -833,6 +863,21 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
 
   SL.AddList(mtoks);
   SL.Add(EmptyString());
+  if (save_atoms) {
+    const TAsymmUnit &au = GetAsymmUnit();
+    for (size_t i=0; i < au.AtomCount(); i++)  {
+      TCAtom &a = au.GetAtom(i);
+      if( a.IsDeleted() || a.GetType().z < 2) continue;
+      olxstr& aline = SL.Add(a.GetLabel());
+      aline.RightPadding(6, ' ', true);
+      aline << (BasicAtoms.IndexOfObject(&a.GetType())+1);
+      aline.RightPadding(aline.Length()+4, ' ', true);
+      for( size_t j=0; j < 3; j++ )
+        aline << olxstr::FormatFloat(-5, a.ccrd()[j] ) << ' ';
+      double v = a.GetOccu() + 10;
+      aline << olxstr::FormatFloat(-5, v) << ' ';
+    }
+  }
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add("END");
 #ifdef _UNICODE
@@ -1020,28 +1065,8 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 }
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
-  TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
-  for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
-    BasicAtoms.Add(GetRM().GetUserContent()[i].element.symbol,
-      &GetRM().GetUserContent()[i].element);
-  }
-  for( size_t i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
-    TResidue& residue = GetAsymmUnit().GetResidue(i);
-    LabelCorrector lc;
-    for( size_t j=0; j < residue.Count(); j++ )  {
-      if( residue[j].IsDeleted() )  continue;
-      residue[j].SetSaved(false);
-      // fix the SFAC, if wrong
-      size_t spindex = BasicAtoms.IndexOfObject(&residue[j].GetType());
-      if( spindex == InvalidIndex )  {
-        if( residue[j].GetType() != iQPeakZ )  {
-          BasicAtoms.Add(residue[j].GetType().symbol, &residue[j].GetType());
-          GetRM().AddUserContent(residue[j].GetType().symbol, 1.0);
-        }
-      }
-      lc.Correct(residue[j]);
-    }
-  }
+  TStrPObjList<olxstr,const cm_Element*> BasicAtoms =
+    FixTypeListAndLabels();
   
   ValidateRestraintsAtomNames(GetRM());
   UpdateParams();
