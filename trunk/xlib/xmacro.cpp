@@ -217,19 +217,26 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(Omit, EmptyString(), fpOne|fpTwo|fpThree|psCheckFileTypeIns, 
     "removes any particular reflection from the refinement list. If a single number is provided,\
  all reflections with delta(F^2)/esd greater than given number are omitted");
-  xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;rem-exclude remarks", 
+  xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;"
+    "rem-exclude remarks&;atoms-saves the atom list alongside", 
     fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
-  xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site");
-  xlib_InitMacroA(Close, @Close, EmptyString(), fpNone|psFileLoaded, "Closes currently loaded file");
-  xlib_InitMacro(PiPi, "g-generates using found symmetry operations&;r-ring content [C6,NC5]",
-    fpNone|fpTwo|psFileLoaded, "Analysis of the pi-pi interactions (experimental).\
- The procedure searches for flat reqular C6 or NC5 rings and prints information for the ones where the\
- centroid-centroid distance is smaller than [4] A and the shift is smaller than [3] A. These two parameters\
- can be customised.");
-  xlib_InitMacro(MolInfo, "g-generation of the triangluation [5]&;s-source ([o]ctahedron, (t)etrahedron)"
-    "&;o-use occupancy of the atoms in the integration",
+  xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded,
+    "Prints how many symmetry operators put given atom to the same site");
+  xlib_InitMacroA(Close, @Close, EmptyString(), fpNone|psFileLoaded,
+    "Closes currently loaded file");
+  xlib_InitMacro(PiPi, "g-generates using found symmetry operations"
+    "&;r-ring content [C6,NC5]",
+    fpNone|fpTwo|psFileLoaded,
+    "Analysis of the pi-pi interactions (experimental). The procedure searches"
+    " for flat reqular C6 or NC5 rings and prints information for the ones "
+    "where the centroid-centroid distance is smaller than [4] A and the shift "
+    "is smaller than [3] A. These two parameters can be customised.");
+  xlib_InitMacro(MolInfo, "g-generation of the triangluation [5]&;s-source "
+    "([o]ctahedron, (t)etrahedron) &;o-use occupancy of the atoms in the "
+    "integration",
     fpAny|psFileLoaded,
-    "Prints molecular volume, surface area and other information for visible/selected atoms");
+    "Prints molecular volume, surface area and other information for "
+    "visible/selected atoms");
   xlib_InitMacro(RTab, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
     "Adds RTAB with givn name for provided atoms/selection");
   xlib_InitMacro(HklMerge, EmptyString(), fpAny|psFileLoaded,
@@ -4363,7 +4370,8 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   olxstr FN(TEFile::ChangeFileExt(fileName, "ins"));
   olxstr lstFN(TEFile::ChangeFileExt(fileName, "lst"));
 
-  Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, !Options.Contains("rem"));
+  Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, !Options.Contains("rem"),
+    Options.Contains("atoms"));
   if( TEFile::Exists(lstFN) )  {
     olxstr lstTmpFN(lstFN);
     lstTmpFN << ".tmp";

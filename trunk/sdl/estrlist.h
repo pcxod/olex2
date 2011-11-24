@@ -609,7 +609,9 @@ public:
 
   TTOStringList& Assign(const TTOStringList& S)  {
     PList::Clear();
-    PList::AddList(S);
+    PList::SetCapacity(S.Count());
+    for( size_t i=0; i < S.Count(); i++ )
+      Add(S[i], S.GetObject(i));
     return *this;
   }
 

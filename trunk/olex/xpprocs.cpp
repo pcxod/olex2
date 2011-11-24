@@ -4764,12 +4764,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       ff.GetString(),
       XLibMacros::CurrentDir, true);
   }
-  
-  if( !file_n.file_name.IsEmpty() )  {  // the dialog has been successfully executed
-    /* with some compilations Borland would bring program into an incorrect state
-     if the NonExistenFile exception is thrown from XFile ... (MSVC is fine thought)
+  // the dialog has been successfully executed
+  if( !file_n.file_name.IsEmpty() )  {
+    /* FN might be a dir on windows when a file does not exist - the code above
+    will get the folder name isntead...
     */
-    // FN might be a dir on windows when a file does not exist - the code above will get the folder name isntead...
     if( !TEFile::Exists(file_n.file_name) || TEFile::IsDir(file_n.file_name) )  {
       Error.ProcessingError(__OlxSrcInfo, "Could not locate specified file");
       return;
@@ -4786,8 +4785,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Macros.ProcessMacro("mode off", Error);
     olxstr ds_fn = TEFile::ChangeFileExt(file_n.file_name, "xlds");
     if( TEFile::Exists(ds_fn) )  {
-      Macros.ProcessMacro(
-        olxstr("load view '") << TEFile::ChangeFileExt(file_n.file_name, EmptyString()) << '\'', Error);
+      Macros.ProcessMacro(olxstr("load view '") <<
+        TEFile::ChangeFileExt(file_n.file_name, EmptyString()) << '\'', Error);
     }
     else  {
       if( TEFile::Exists(DefStyle) && ReadStyle )
@@ -4880,24 +4879,44 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       RefineDataTable(false, false);
       LoadVFS(plStructure);  // load virtual fs file
     }
-    catch(const TExceptionBase& exc)  { 
+    catch (const TExceptionBase& exc) { 
       // manual recovery of the situation...
       FXApp->XFile().GetRM().Clear(rm_clear_ALL);
       FXApp->XFile().GetLattice().Clear(true);
       FXApp->XFile().SetLastLoader(NULL);
       FXApp->CreateObjects(true);
-      throw TFunctionFailedException(__OlxSourceInfo, exc);
+      // following shelx, try relaod the ins file?
+      bool is_ok = false;
+      if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("res")) {
+        file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
+        if (TEFile::Exists(file_n.file_name)) {
+          try {
+            FXApp->LoadXFile(TXFile::ComposeName(file_n));
+            TBasicApp::NewLogEntry(logError) << "Last operation was not"
+              " successful, the INS file is reloaded, please resolve the "
+              "conflicts and re-run the process again";
+            is_ok = true;
+          }
+          catch (const TExceptionBase &e) {}
+        }
+      }
+      if (!is_ok)
+        throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     if( FXApp->XFile().HasLastLoader() )  {
       FInfoBox->Clear();
       if( FXApp->CheckFileType<TP4PFile>() ||
         FXApp->CheckFileType<TCRSFile>() )
       {
-        TMacroError er;
-        if( TEFile::Exists( TEFile::ChangeFileExt(file_n.file_name, "ins") ) )
-          Macros.ProcessMacro("SG", er);
-        else
-          Macros.ProcessMacro("SGE", er);
+        if (TBasicApp::GetInstance().Options.FindValue(
+          "p4p_automate", TrueString()).ToBool())
+        {
+          TMacroError er;
+          if( TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins")))
+            Macros.ProcessMacro("SG", er);
+          else
+            Macros.ProcessMacro("SGE", er);
+        }
       }
     // automatic export for kappa cif
       if( FXApp->CheckFileType<TCif>() )  {
