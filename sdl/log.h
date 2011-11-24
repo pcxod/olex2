@@ -62,8 +62,8 @@ public:
       Streams[i].A()->Write(str);
     return *this;
   }
-  template <class SC, class T>
-  TLog& operator << (const TTStrList<SC,T>& lst)  {
+  template <class T>
+  TLog& operator << (const TTStrList<T>& lst)  {
     Add(lst);
     return *this;
   }
@@ -87,13 +87,13 @@ public:
       buffer << NewLineSequence();
       return *this;
     }
-    template <class SC, class T>
-    LogEntry& operator << (const TTStrList<SC,T> &lst)  {
+    template <class T>
+    LogEntry& operator << (const TTStrList<T> &lst)  {
       buffer << lst.Text(NewLineSequence());
       return *this;
     }
-    template <class SC, class T>
-    LogEntry& operator << (const ConstStrList<SC,T> &lst)  {
+    template <class T>
+    LogEntry& operator << (const ConstStrList<T> &lst)  {
       buffer << lst.Text(NewLineSequence());
       return *this;
     }

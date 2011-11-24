@@ -452,8 +452,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 struct Main_SfacComparator {
-  static int Compare(const AnAssociation2<int,const cm_Element*>* a, 
-                     const AnAssociation2<int,const cm_Element*>* b)  {
+  static int Compare(const AnAssociation2<double,const cm_Element*>* a, 
+                     const AnAssociation2<double,const cm_Element*>* b)  {
       return b->GetB()->z - a->GetB()->z;
   }
 };
@@ -466,19 +466,19 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   bool trim = Cmds[0].ToBool();
   bool use_formula = Cmds[0].ToBool();
   if( use_formula )  {
-    TTypeList< AnAssociation2<int,const cm_Element*> > sl;
-    size_t ac = 0;
+    TTypeList< AnAssociation2<double,const cm_Element*> > sl;
+    double ac = 0;
     const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
     for( size_t i=0; i < cl.Count(); i++ )  {
       if( cl[i].element == iHydrogenZ )  continue;
-      sl.AddNew((int)cl[i].count, &cl[i].element);
-      ac += (int)cl[i].count;
+      sl.AddNew(cl[i].count, &cl[i].element);
+      ac += cl[i].count;
     }
     sl.QuickSorter.Sort<Main_SfacComparator>(sl);  // sorts ascending
     double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
     double ratio = auv/(16*ac);
     for( size_t i=0; i < sl.Count(); i++ )
-      sl[i].A() = olx_round(ratio*sl[i].GetA());
+      sl[i].A() = ratio*sl[i].GetA();
 
     TPSTypeList<double, TCAtom*> SortedQPeaks;
     for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -488,19 +488,20 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       else  {
         for( size_t j=0; j < sl.Count(); j++ )  {
           if( *sl[j].GetB() == au.GetAtom(i).GetType() )  {
-            sl[j].A()--;
+            sl[j].A() -= 1./au.GetAtom(i).GetDegeneracy();
             break;
           }
         }
       }
     }
     for( size_t i=0; i < sl.Count(); i++ )  {
-      while( sl[i].GetA() > 0 )  {
+      while( sl[i].GetA() > 0.45 )  {
         if( SortedQPeaks.IsEmpty() )  break;
-        sl[i].A() --;
-        SortedQPeaks.GetLast().Object->SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
-        SortedQPeaks.GetLast().Object->SetType(*sl[i].B());
-        SortedQPeaks.GetLast().Object->SetQPeak(0);
+        TCAtom &p = *SortedQPeaks.GetLast().Object;
+        sl[i].A() -= 1./p.GetDegeneracy();
+        p.SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
+        p.SetType(*sl[i].B());
+        p.SetQPeak(0);
         SortedQPeaks.Delete(SortedQPeaks.Count()-1);
       }
       if( SortedQPeaks.IsEmpty() ) break;

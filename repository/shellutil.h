@@ -38,8 +38,8 @@ public:
   static olxstr PickFolder(const olxstr& Title, const olxstr& SelectedFolder,
      const olxstr& RootFolder );
   // lists all interface names and related MAC addresses
-  typedef TTOStringList<olxstr, TArrayList<unsigned char>,
-    TObjectStrListData<olxstr, TArrayList<unsigned char> > > MACInfo;
+  typedef TTOStringList<TObjectStrListData<olxstr,
+    TArrayList<unsigned char> > > MACInfo;
 protected:
   static bool _MACFromArray(const unsigned char* bf, const char* name,
     MACInfo& mi, size_t len=6, bool accept_empty=false);

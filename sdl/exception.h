@@ -13,7 +13,7 @@
 BeginEsdlNamespace()
 
 // forward reference
-template <typename,typename> class TTStrList;
+template <typename> class TTStrList;
 
 class TBasicException: public TExceptionBase  {
   olxstr Message,

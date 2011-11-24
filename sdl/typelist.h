@@ -483,7 +483,7 @@ public:
     BubleSorter;
   static TListTraverser<TTypeListExt<T,DestructCast> > Traverser;
 public:
-  typedef T item_t;
+  typedef T list_item_type;
 };
 
 template <class T>
@@ -551,9 +551,9 @@ public:
 };
 
 template <typename item_t>
-class ConstTypeList : public const_list<TTypeList<item_t>, item_t> {
+class ConstTypeList : public const_list<TTypeList<item_t> > {
   typedef TTypeList<item_t> lst_t;
-  typedef const_list<lst_t, item_t> parent_t;
+  typedef const_list<lst_t> parent_t;
 public:
   ConstTypeList(const ConstTypeList &l) : parent_t(l) {}
   ConstTypeList(lst_t *lst) : parent_t(lst) {}

@@ -34,8 +34,10 @@ template <typename key_c, typename val_c, class Comparator> struct DictEntry {
   }
 };
 
-template <typename KType, typename VType, class Comparator> class olxdict :
-protected SortedObjectList<DictEntry<KType,VType,Comparator>, TComparableComparator> {
+template <typename KType, typename VType, class Comparator> class olxdict
+  : protected SortedObjectList
+      <DictEntry<KType,VType,Comparator>, TComparableComparator>
+{
   typedef DictEntry<KType,VType,Comparator> EntryType;
   typedef SortedObjectList<EntryType, TComparableComparator> SortedL;
 public:
@@ -76,15 +78,15 @@ public:
       return def;
     return SortedL::operator[] (ind).val;
   }
-  inline void Clear()  {  SortedL::Clear();  }
-  inline size_t Count() const {  return SortedL::Count();  }
-  inline bool IsEmpty() const {  return SortedL::IsEmpty();  }
-  inline void SetCapacity(size_t c)  {  SortedL::SetCapacity(c);  }
-  inline VType& GetValue(size_t ind)  {  return SortedL::operator[] (ind).val;  }
-  inline const VType& GetValue(size_t ind) const {  return SortedL::operator[] (ind).val;  }
-  inline const KType& GetKey(size_t ind) const {  return SortedL::operator[] (ind).key;  }
-  inline const EntryType& GetEntry(size_t ind) const {  return SortedL::operator[] (ind);  }
-  template <class T> inline bool HasKey(const T& key) const {
+  void Clear()  {  SortedL::Clear();  }
+  size_t Count() const {  return SortedL::Count();  }
+  bool IsEmpty() const {  return SortedL::IsEmpty();  }
+  void SetCapacity(size_t c)  {  SortedL::SetCapacity(c);  }
+  VType& GetValue(size_t ind)  {  return SortedL::operator[] (ind).val;  }
+  const VType& GetValue(size_t ind) const {  return SortedL::operator[] (ind).val;  }
+  const KType& GetKey(size_t ind) const {  return SortedL::operator[] (ind).key;  }
+  const EntryType& GetEntry(size_t ind) const {  return SortedL::operator[] (ind);  }
+  template <class T> bool HasKey(const T& key) const {
     return SortedL::IndexOf(key) != InvalidIndex;
   }
 
@@ -118,6 +120,10 @@ public:
     return false;
   }
   void Delete(size_t ind)  {  SortedL::Delete(ind);  }
+public:
+  typedef KType key_item_type;
+  typedef VType value_item_type;
+
 };
 
 // a string to type association....
@@ -127,10 +133,10 @@ template <typename VType, bool case_sensitive=false> class olxstr_dict
 // const_dict
 template <typename key_t, typename val_t, class Comparator>
 class const_olxdict : public const_dict<
-  olxdict<key_t,val_t,Comparator>, key_t, val_t>
+  olxdict<key_t,val_t,Comparator>>
 {
   typedef olxdict<key_t,val_t,Comparator> dict_t;
-  typedef const_dict<dict_t,key_t,val_t> parent_t;
+  typedef const_dict<dict_t> parent_t;
 public:
   const_olxdict(const const_olxdict &d) : parent_t(d) {}
   const_olxdict(dict_t &d) : parent_t(d) {}
