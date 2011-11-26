@@ -102,7 +102,7 @@ public:
 
 //---------------------------------------------------------------------------
 void DoRun();
-void DoLaunch();
+void DoLaunch(const olxcstr& arg=CEmptyString());
 
 class MyApp: public wxAppConsole { 
   virtual bool OnInit() { 
@@ -165,8 +165,10 @@ int main(int argc, char** argv)  {
       }
     }
     DoRun();
-    if( bapp.Arguments.IndexOf("-run") == InvalidIndex )
-      DoLaunch();
+    if( bapp.Arguments.IndexOf("-run") == InvalidIndex ) {
+      olxcstr argl = bapp.Arguments.Text(' ');
+      DoLaunch(argl);
+    }
   }
   catch(const TExceptionBase& exc)  {
     TStrList err;
@@ -266,7 +268,7 @@ void DoRun()  {
   }
 }
 
-void DoLaunch()  {
+void DoLaunch(const olxcstr &arg)  {
   olxcstr bd = TBasicApp::GetBaseDir();
   olxstr path = olx_getenv("PATH");
   path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
@@ -274,23 +276,32 @@ void DoLaunch()  {
   olx_setenv("OLEX2_CCTBX_DIR", EmptyString());
   olx_setenv("OLEX2_DIR", EmptyString());
 #ifdef __WIN32__
-  olx_setenv("PYTHONHOME", bd + "Python26");
+  olx_setenv("PYTHONHOME", bd + "Python27");
   const olxcstr cmdl = bd + "olex2.dll";
 #else
+  olx_setenv("BOOST_ADAPTBX_FPE_DEFAULT", "1");
+  olx_setenv("BOOST_ADAPTBX_SIGNALS_DEFAULT", "1");
+  olxstr gl_stereo = olx_getenv("OLEX2_GL_STEREO");
 #  ifdef __MAC__
   olx_setenv("OLEX2_DIR", bd);
   static const olxcstr ld_var = "DYLD_LIBRARY_PATH";
 #  else
   static const olxcstr ld_var = "LD_LIBRARY_PATH";
+  if (gl_stereo.IsEmpty())
+    olx_setenv("OLEX2_GL_STEREO", "FALSE");
 #  endif
   olxcstr ld_path;
-  ld_path << bd << "lib:" << bd << "Python26:" << bd << "cctbx/cctbx_build/lib";
+  ld_path << bd << "lib:" << bd << "Python27:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
-  olx_setenv("PYTHONHOME", bd + "Python26/python2.6");
+  olx_setenv("PYTHONHOME", bd + "Python27/python2.7");
   const olxcstr cmdl = bd + "olex2_exe";
 #endif
   TEFile::ChangeDir(bd);
-  execl(cmdl.u_str(), cmdl.u_str(), NULL);
+  TEFile::Chmod(cmdl, S_IEXEC);
+  if (arg.IsEmpty())
+    execl(cmdl.u_str(), cmdl.u_str(), NULL);
+  else
+    execl(cmdl.u_str(), cmdl.u_str(), arg.u_str(), NULL);
   TBasicApp::NewLogEntry(logError) << "Failed to launch '" << cmdl << '\'';
 }
 
