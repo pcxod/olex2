@@ -16,12 +16,15 @@
 #include "filetree.h"
 #include "updateapi.h"
 #include "shellutil.h"
+#include <sys/stat.h>
 
 using namespace patcher;
 
 TEFile* PatchAPI::lock_file = NULL;
 
-short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCopy)  {
+short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
+  AActionHandler* OnOverallCopy)
+{
   if( !TBasicApp::IsBaseDirWriteable() )
     return papi_AccessDenied;
   if( !TEFile::Exists(GetUpdateLocationFileName()) )  {
@@ -50,9 +53,9 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     TFileTree ft(patch_dir);
     ft.Expand();
     if( OnFileCopy != NULL )
-      ft.OnFileCopy->Add( OnFileCopy );
+      ft.OnFileCopy->Add(OnFileCopy);
     if( OnOverallCopy != NULL )
-      ft.OnSynchronise->Add( OnOverallCopy );
+      ft.OnSynchronise->Add(OnOverallCopy);
     OnFileCopy = NULL;
     OnOverallCopy = NULL;
 
@@ -77,8 +80,21 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     }
   }
   CleanUp(OnFileCopy, OnOverallCopy);
+  _RestoreExecuableFlags();
   UnlockUpdater();
   return res;
+}
+//.........................................................................
+void PatchAPI::_RestoreExecuableFlags() {
+#if !defined(__WIN32__)
+  TStrList file_list;
+  file_list << "olex2_exe" << "olex2";
+  for (size_t i=0; i < file_list.Count(); i++) {
+    olxstr fn = TBasicApp::GetBaseDir() + file_list[i];
+    if (TEFile::Exists(fn))
+      TEFile::Chmod(fn, S_IEXEC);
+  }
+#endif
 }
 //.........................................................................
 size_t PatchAPI::GetNumberOfOlex2Running()  {
@@ -86,7 +102,7 @@ size_t PatchAPI::GetNumberOfOlex2Running()  {
   TEFile::ListDir(TBasicApp::GetBaseDir(), pid_files, olxstr("*.") <<
     GetOlex2PIDFileExt(), sefAll);
   for( size_t i=0; i < pid_files.Count(); i++ )  {
-    if( TEFile::DelFile( TBasicApp::GetBaseDir() + pid_files[i]) )
+    if( TEFile::DelFile(TBasicApp::GetBaseDir() + pid_files[i]) )
       pid_files[i].SetLength(0);
   }
   pid_files.Pack();

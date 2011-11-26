@@ -7,9 +7,6 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifdef _SVN_REVISION_AVAILABLE
-#  include "../svn_revision.h"
-#endif
 #include "wx/protocol/http.h"
 
 #include "mainform.h"
@@ -6383,48 +6380,6 @@ void TMainForm::funGetUserInput(const TStrObjList& Params, TMacroError &E) {
   else
     E.SetRetVal(EmptyString());
   dlg->Destroy();
-}
-//..............................................................................
-void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E) {
-  olxstr timestamp(olxstr(__DATE__) << ' ' << __TIME__), revision;
-#ifdef _SVN_REVISION_AVAILABLE
-  timestamp = compile_timestamp;
-  revision = svn_revision_number;
-#endif
-  if( Params.IsEmpty() )  {
-    if( revision.IsEmpty() )
-      E.SetRetVal(timestamp);
-    else
-      E.SetRetVal(timestamp << " svn.r" << revision);
-  }
-  else  {
-    if( Params.Count() == 1 && Params[0].Equalsi("full") )  {
-      olxstr rv = timestamp;
-      if( !revision.IsEmpty() )  rv << " svn.r" << revision;
-#ifdef _MSC_FULL_VER
-      rv << " MSC:" << _MSC_FULL_VER;
-#elif __INTEL_COMPILER
-      rv << " Intel:" << __INTEL_COMPILER;
-#elif __GNUC__
-      rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
-#endif
-      rv << " on " << TBasicApp::GetPlatformString();
-#ifdef _CUSTOM_BUILD_
-      rv << " for " << CustomCodeBase::GetName();
-#endif
-      E.SetRetVal(rv);
-    }
-    else  {
-      try {  
-        time_t date = TETime::ParseDate(__DATE__);
-        time_t time = TETime::ParseTime(__TIME__);
-        E.SetRetVal<olxstr>(TETime::FormatDateTime(Params[0], date+time));
-      }
-      catch( TExceptionBase& ) {
-        E.SetRetVal(timestamp);
-      }
-    }
-  }
 }
 //..............................................................................
 void TMainForm::macOFileDel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
