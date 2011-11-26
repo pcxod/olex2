@@ -955,8 +955,6 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   // number of lines, caption, def value
   this_InitFunc(GetUserInput, fpThree);
 
-  this_InitFunc(GetCompilationInfo, fpNone|fpOne);
-
   this_InitFuncD(TranslatePhrase, fpOne,
 "Translates provided phrase into current language");
   this_InitFuncD(IsCurrentLanguage, fpOne,

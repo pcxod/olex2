@@ -13,11 +13,13 @@
 #include "patchapi.h"
 #include "log.h"
 
-UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
-  srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0),
+UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0),
+  PatchDir(patch_dir), srcFS(NULL), destFS(NULL), Index(NULL),
+  _DoUpdate(false), UpdateSize(0),
   OnDownload(Actions.New("ON_DOWNLOAD")),
-  OnAction(Actions.New("ON_ACTION"))  {}
-//....................................................................................
+  OnAction(Actions.New("ON_ACTION"))
+{}
+//.............................................................................
 void UpdateThread::DoInit()  {
   if( !TBasicApp::HasInstance() || Terminate ) 
     return;
@@ -36,7 +38,7 @@ void UpdateThread::DoInit()  {
       TBasicApp::NewLogEntry(logInfo) << exc.GetException()->GetFullMessage();
   }
 }
-//....................................................................................
+//.............................................................................
 int UpdateThread::Run()  {
   DoInit();
   if( !TBasicApp::HasInstance() || Terminate || 
@@ -60,14 +62,16 @@ int UpdateThread::Run()  {
     TStrList cmds;
     bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
     // need to keep to check if sync was completed
-    const uint64_t update_size = Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
+    const uint64_t update_size =
+      Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
     UpdateSize = update_size;
     patcher::PatchAPI::UnlockUpdater();
     if( UpdateSize == 0 )  return 0;
     while( !_DoUpdate )  {
       if( Terminate || !TBasicApp::HasInstance() )  {  // nobody took care ?
         CleanUp();
-        patcher::PatchAPI::UnlockUpdater(); // safe to call without app instance
+        // safe to call without app instance
+        patcher::PatchAPI::UnlockUpdater();
         return 0;
       }
       olx_sleep(100);
@@ -79,7 +83,8 @@ int UpdateThread::Run()  {
 #endif
     // download completion file
     olxstr download_vf(patcher::PatchAPI::GetUpdateLocationFileName());
-    if( TEFile::Exists(download_vf) ) // do not run subsequent temporary updates
+    // do not run subsequent temporary updates
+    if( TEFile::Exists(download_vf) )
       return 0;
   // try to lock updateAPI for update
     while( !patcher::PatchAPI::LockUpdater() )  {
@@ -91,15 +96,20 @@ int UpdateThread::Run()  {
     }
     bool completed = false;
     try {  
-      if( Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds) == update_size )
+      if( Index->Synchronise(*destFS, properties, skip ? NULL
+            : &toSkip, &dfs, &cmds) == update_size )
+      {
         completed = true;
+      }
     }
     catch(const TExceptionBase&)  {}
     // try to update the updater, should check the name of executable though!
     if( dfs.Exists(updater_file) )  {
       try  {
-        olxstr dest = TBasicApp::GetBaseDir() + TEFile::ExtractFileName(updater_file);
-        if( !TEFile::Rename(updater_file, dest) )  {  // are on different disks?
+        olxstr dest = TBasicApp::GetBaseDir() +
+          TEFile::ExtractFileName(updater_file);
+        // are on different disks?
+        if( !TEFile::Rename(updater_file, dest) )  {
           if( TEFile::Copy(updater_file, dest) )
             TEFile::DelFile(updater_file);
         }
@@ -108,7 +118,8 @@ int UpdateThread::Run()  {
       catch(...) {}
     }
     if( completed )  {
-      olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) + patcher::PatchAPI::GetUpdaterCmdFileName());
+      olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) +
+        patcher::PatchAPI::GetUpdaterCmdFileName());
       if( TEFile::Exists(cmd_fn) )  {
         TStrList pc;
 #ifdef _UNICODE
@@ -125,7 +136,8 @@ int UpdateThread::Run()  {
 #endif
       // mark download as complete
       TEFile f(download_vf, "w+b");
-      olxcstr location(TEFile::CreateRelativePath(dfs.GetBase(), TEFile::ExtractFilePath(download_vf)));
+      olxcstr location(TEFile::CreateRelativePath(dfs.GetBase(),
+        TEFile::ExtractFilePath(download_vf)));
       f.Write(location);
     }
     patcher::PatchAPI::UnlockUpdater();
@@ -139,7 +151,7 @@ int UpdateThread::Run()  {
   }  
   return 1;
 }
-//....................................................................................
+//.............................................................................
 void UpdateThread::OnSendTerminate()  {
   if( Index != NULL )
     Index->DoBreak();

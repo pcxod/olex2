@@ -133,6 +133,7 @@ public:
   static DefFunc(CCrd) // cell coordinates of atoms
   static DefFunc(Crd) // cartesian coordinates of atoms
   static DefFunc(CalcR) // calculates R factors
+  static DefFunc(GetCompilationInfo)
 
   static TActionQList Actions;
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg, const olxstr& resHKL_FN);

@@ -81,7 +81,7 @@ public:
 
   Iterator GetIterator() const {  return Iterator(*this);  }
 public:
-  typedef T item_t;
+  typedef T list_item_type;
 };
 
 EndEsdlNamespace()

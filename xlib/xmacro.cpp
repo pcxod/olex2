@@ -41,6 +41,10 @@
 #include "twinning.h"
 #include "refutil.h"
 
+#ifdef _SVN_REVISION_AVAILABLE
+#  include "../svn_revision.h"
+#endif
+
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
 #define xlib_InitMacroA(macroName, amacroName, validOptions, argc, desc)\
@@ -58,168 +62,263 @@ TActionQueue& XLibMacros::OnAddIns = XLibMacros::Actions.New("OnAddIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Run, EmptyString(), fpAny^fpNone, "Runs provided macros (combined by '>>')");
-  xlib_InitMacro(HklStat, "l-list the reflections&;m-merge reflection in current space group", fpAny|psFileLoaded, 
- "If no arguments provided, prints the statistics on all reflections as well as the ones used in the "
- "refinement. If an expressions (condition) is given in the following form: x[ahbkcl], meaning that "
- "x=ah+bk+cl for x equals 0, ((ah+bk+cl) mod x) equals 0 for positove x and not equals 0 for negative "
- "x; the subsequent expressions are combined using logical 'and' operator. For instance 2[l] expression "
- "means: to find all reflections where l is even, the expression -2[l] means to find all reflections "
- "with odd l, 0[h-l] - reflections where h equals to l etc. The function operates on all P1 merged "
- "reflections after filtering by SHEL and OMIT, -m option merges the reflections in current space group"
+  xlib_InitMacro(HklStat,
+    "l-list the reflections&;m-merge reflection in current space group",
+    fpAny|psFileLoaded, 
+    "If no arguments provided, prints the statistics on all reflections as "
+    "well as the ones used in the refinement. If an expressions (condition) "
+    "is given in the following form: x[ahbkcl], meaning that x=ah+bk+cl for x"
+    " equals 0, ((ah+bk+cl) mod x) equals 0 for positove x and not equals 0 "
+    "for negative x; the subsequent expressions are combined using logical "
+    "'and' operator. For instance 2[l] expression means: to find all "
+    "reflections where l is even, the expression -2[l] means to find all "
+    "reflections with odd l, 0[h-l] - reflections where h equals to l etc. The"
+    " function operates on all P1 merged reflections after filtering by SHEL "
+    "and OMIT, -m option merges the reflections in current space group"
  );
   xlib_InitMacro(HklBrush, "f-consider Friedel law", fpAny, "for high redundancy\
  data sets, removes equivalents with high sigma");
-//_________________________________________________________________________________________________________________________
+//_____________________________________________________________________________
   xlib_InitMacro(SG, "a", fpNone|fpOne, "suggest space group");
-  xlib_InitMacro(SGE, EmptyString(), fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use");
-//_________________________________________________________________________________________________________________________
+  xlib_InitMacro(SGE, EmptyString(), fpNone|fpOne|psFileLoaded,
+    "Extended spacegroup determination. Internal use");
+//_____________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
-"Prints a scale vs resolution graph for current file (fcf file must exist in current folder)");
-  xlib_InitMacro(GraphPD, "r-resolution in degrees [0.5]&;fcf-take structure factors from the FCF file, otherwise calculate from current model\
-&;s-use simple scale when calculating structure factors from the mode, otherwise regression scaling will be used", fpNone|psFileLoaded,
-"Prints a intensity vs. 2 theta graph");
-  xlib_InitMacro(Wilson, "b-number of bins&;p-uses linear bins for picture, otherwise uses spherical bins", 
-    fpNone|fpOne|psFileLoaded, "Prints Wilson plot data");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(TestSymm, "e-tolerance limit", fpNone|psFileLoaded, "Tests current \
-  structure for missing symmetry");
-//_________________________________________________________________________________________________________________________
+    "Prints a scale vs resolution graph for current file (fcf file must exist "
+    "in current folder)");
+  xlib_InitMacro(GraphPD,
+    "r-resolution in degrees [0.5]&;fcf-take structure factors from the FCF "
+    "file, otherwise calculate from current model&;s-use simple scale when "
+    "calculating structure factors from the mode, otherwise regression scaling"
+    " will be used",
+    fpNone|psFileLoaded,
+    "Prints a intensity vs. 2 theta graph");
+  xlib_InitMacro(Wilson,
+    "b-number of bins&;p-uses linear bins for picture, otherwise uses spherical"
+    " bins", 
+    fpNone|fpOne|psFileLoaded,
+    "Prints Wilson plot data");
+//_____________________________________________________________________________
+  xlib_InitMacro(TestSymm, "e-tolerance limit", fpNone|psFileLoaded,
+    "Tests current structure for missing symmetry");
+//_____________________________________________________________________________
   xlib_InitMacro(VATA, EmptyString(), fpAny|psFileLoaded,
-"Compares current model with the cif file and write the report to provided file (appending)");
-  xlib_InitMacro(Clean, "npd-promotes at maximum given number of atoms a call [0]\
-&;f-does not run 'fuse' after the completion\
-&;aq-disables analysis of the Q-peaks based on thresholds\
-&;at-disables lonely atom types assignment to O and Cl", fpNone,
-"Tidies up current model");
-//_________________________________________________________________________________________________________________________
+    "Compares current model with the cif file and write the report to provided"
+    " file (appending)");
+  xlib_InitMacro(Clean,
+    "npd-promotes at maximum given number of atoms a call [0]"
+    "&;f-does not run 'fuse' after the completion"
+    "&;aq-disables analysis of the Q-peaks based on thresholds"
+    "&;at-disables lonely atom types assignment to O and Cl",
+    fpNone,
+    "Tidies up current model");
+//_____________________________________________________________________________
   xlib_InitMacro(AtomInfo, EmptyString(), fpAny|psFileLoaded,
 "Searches information for given atoms in the database");
-//_________________________________________________________________________________________________________________________
+//_____________________________________________________________________________
   xlib_InitMacro(Compaq,
     "a-assembles broken fragments&;c-similar as with no options, but considers "
     "atom-to-atom distances&;q-moves Q-peaks to the atoms, atoms are not "
     "affected&;m-assembles non-metallic parts of the structure first, then "
     "moves metals to the closest atom",
     fpNone|psFileLoaded,
-"Moves all atoms or fragments of the asymmetric unit as close to each other as "
-"possible. If no options provided, all fragments are assembled around the "
-"largest one.");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Envi, "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;cs-leaves selection unchanged",
+    "Moves all atoms or fragments of the asymmetric unit as close to each "
+    "other as possible. If no options provided, all fragments are assembled "
+    "around the largest one.");
+//_____________________________________________________________________________
+  xlib_InitMacro(Envi,
+    "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;cs-leaves"
+    " selection unchanged",
     fpNone|fpOne|fpTwo,
-"This macro prints environment of any particular atom. Default search radius is 2.7A.");
-//_________________________________________________________________________________________________________________________
+    "This macro prints environment of any particular atom. Default search "
+    "radius is 2.7A.");
+//_____________________________________________________________________________
   xlib_InitMacro(AddSE, EmptyString(), (fpAny^fpNone)|psFileLoaded,
-"Tries to add a new symmetry element to current space group to form a new one. [-1] is for center of symmetry");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|fpOne|psFileLoaded,
-"Re-initialises the connectivity list. If a number is provided, atoms of the same type connected by bonds shorter\
- than the provided number are merged into one atom with center at the centroid formed by all removed atoms");
+    "Tries to add a new symmetry element to current space group to form a new "
+    "one. [-1] is for center of symmetry");
+//_____________________________________________________________________________
+  xlib_InitMacro(Fuse, "f-removes symmetrical equivalents",
+    fpNone|fpOne|psFileLoaded,
+    "Re-initialises the connectivity list. If a number is provided, atoms of "
+    "the same type connected by bonds shorter than the provided number are "
+    "merged into one atom with center at the centroid formed by all removed "
+    "atoms");
   xlib_InitMacro(Flush, EmptyString(), fpNone|fpOne, "Flushes log streams");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(EXYZ, "eadp-sets the equivalent anisotropic parameter constraint for the shared site",
+//_____________________________________________________________________________
+  xlib_InitMacro(EXYZ,
+    "eadp-sets the equivalent anisotropic parameter constraint for the shared "
+    "site",
     fpAny|psCheckFileTypeIns,
-"Adds a new element to the given/selected site. Takes one selected atom and element types\
- as any subsequent argument. Alternatively can take a few selected aoms of different type to be modelled\
- as the type swapping disorder.");
-//_________________________________________________________________________________________________________________________
+    "Adds a new element to the given/selected site. Takes one selected atom "
+    "and element types as any subsequent argument. Alternatively can take a "
+    "few selected aoms of different type to be modelled as the type swapping "
+    "disorder."
+);
+//_____________________________________________________________________________
   xlib_InitMacro(EADP, EmptyString(), fpAny|psCheckFileTypeIns,
 "Forces EADP/Uiso of provided atoms to be constrained the same");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded, "converts cif to a document");
-  xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded, "creates a table from a cif");
+//_____________________________________________________________________________
+  xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded,
+    "converts cif to a document");
+  xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded,
+    "creates a table from a cif");
   xlib_InitMacro(CifMerge,
     "u-updates atom treatment if the asymmetric units of currently loaded file"
     " and of the CIF file match",
     fpAny|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
-  xlib_InitMacro(CifExtract, EmptyString(), fpTwo|psFileLoaded, "extract a list of items from one cif to another");
-  xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded, "Creates cif from current file, variance-covariance matrix should be available");
-  xlib_InitMacro(FcfCreate, "scale-[external],simple or regression", (fpAny^fpNone)|psFileLoaded,
-    "Creates fcf from current file. Expects a number as in the shelx list number as the first argument, the second "
-    "argument is the output file name filename().fcf is default"
+  xlib_InitMacro(CifExtract, EmptyString(), fpTwo|psFileLoaded,
+    "extract a list of items from one cif to another");
+  xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded,
+    "Creates cif from current file, variance-covariance matrix should be "
+    "available");
+  xlib_InitMacro(FcfCreate, "scale-[external],simple or regression",
+    (fpAny^fpNone)|psFileLoaded,
+    "Creates fcf from current file. Expects a number as in the shelx list "
+    "number as the first argument, the second argument is the output file name"
+    " filename().fcf is default"
     );
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(VoidE, EmptyString(), fpNone|psFileLoaded, "calculates number of electrons in the voids area");
-//_________________________________________________________________________________________________________________________
+//_____________________________________________________________________________
+  xlib_InitMacro(VoidE, EmptyString(), fpNone|psFileLoaded,
+    "calculates number of electrons in the voids area");
+//_____________________________________________________________________________
   xlib_InitMacro(ChangeSG, EmptyString(), fpAny^fpNone|psFileLoaded,
-    "[shift] SG. Changes space group of current structure, applying given shit prior (if provided) to\
- the change of symmetry of the unit cell");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]"
-    "&;g-generates found interactions", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
-    "Adds HTAB instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(HAdd, EmptyString(), fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms, however\
- the ring atoms are treated separately and added all the time");
-  xlib_InitMacro(HImp, EmptyString(), (fpAny^fpNone)|psFileLoaded, "Increases, decreases length of H-bonds.\
- Arguments: value [H atoms]. Value might be +/- to specify to increase/decrease current value");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(FixUnit, EmptyString(), fpNone|fpOne|psFileLoaded, "Sets SFAc and UNIT to current content of the asymmetric unit.\
- Takes Z', with default value of 1.");
-  xlib_InitMacro(GenDisp, "f-generates full SFAC instructions&;n-for neutron data", fpNone|fpOne|psFileLoaded,
-    "Generates anisotropic dispertion parameters for current radiation wavelength");
-//_________________________________________________________________________________________________________________________
-  xlib_InitMacro(AddIns,EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file");
-  xlib_InitMacro(DelIns, EmptyString(), fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided");
-  xlib_InitMacro(LstIns, EmptyString(), fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file");
-  xlib_InitMacro(FixHL, EmptyString(), fpNone|psFileLoaded, "Fixes hydrogen atom labels");
-  xlib_InitMacro(Fix, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu");
-  xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu");
+    "[shift] SG. Changes space group of current structure, applying given shit"
+    " prior (if provided) to the change of symmetry of the unit cell");
+//_____________________________________________________________________________
+  xlib_InitMacro(Htab,
+    "t-adds extra elements (comma separated -t=Br,I) to the donor list. "
+    "Defaults are [N,O,F,Cl,S]&;g-generates found interactions",
+    fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
+    "Adds HTAB instructions to the ins file, maximum bond length [2.9] and "
+    "minimal angle [150] might be provided");
+//_____________________________________________________________________________
+  xlib_InitMacro(HAdd, EmptyString(), fpAny|psCheckFileTypeIns,
+    "Adds hydrogen atoms to all or provided atoms, however the ring atoms are "
+    "treated separately and added all the time");
+  xlib_InitMacro(HImp, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+    "Increases, decreases length of H-bonds. Arguments: value [H atoms]. Value"
+    " might be +/- to specify to increase/decrease current value");
+//_____________________________________________________________________________
+  xlib_InitMacro(FixUnit, EmptyString(), fpNone|fpOne|psFileLoaded,
+    "Sets SFAc and UNIT to current content of the asymmetric unit. Takes Z', "
+    "with default value of 1.");
+  xlib_InitMacro(GenDisp,
+    "f-generates full SFAC instructions&;n-for neutron data",
+    fpNone|fpOne|psFileLoaded,
+    "Generates anisotropic dispertion parameters for current radiation "
+    "wavelength");
+//_____________________________________________________________________________
+  xlib_InitMacro(AddIns,EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
+    "Adds an instruction to the INS file");
+  xlib_InitMacro(DelIns, EmptyString(), fpOne|psCheckFileTypeIns,
+    "A number or the name (will remove all accurances) can be provided");
+  xlib_InitMacro(LstIns, EmptyString(), fpNone|psCheckFileTypeIns,
+    "Lists all instructions of currently loaded Ins file");
+  xlib_InitMacro(FixHL, EmptyString(), fpNone|psFileLoaded,
+    "Fixes hydrogen atom labels");
+  xlib_InitMacro(Fix, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
+    "Fixes specified parameters of atoms: XYZ, Uiso, Occu");
+  xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
+    "Frees specified parameters of atoms: XYZ, Uiso, Occu");
   xlib_InitMacro(Isot,EmptyString() , fpAny|psFileLoaded,
-"makes provided atoms isotropic, if no arguments provided, current selection or all atoms become isotropic");
+    "Makes provided atoms isotropic, if no arguments provided, current "
+    "selection or all atoms become isotropic");
   xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded, 
-"makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered");
-xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fpOne|psFileLoaded, 
-    "Saves current model to a file. By default an ins file is saved and loaded");
-  xlib_InitMacro(LS, EmptyString(), fpOne|fpTwo|psCheckFileTypeIns, "Sets refinement method and/or the number of iterations.");
-  xlib_InitMacro(Plan, EmptyString(), fpOne|psCheckFileTypeIns, "Sets the number of Fourier peaks to be found from the difference map");
-  xlib_InitMacro(UpdateWght, EmptyString(), fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
+    "Makes provided atoms anisotropic if no arguments provided current "
+    "selection or all atoms are considered");
+  xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit",
+    fpNone|fpOne|psFileLoaded, 
+    "Saves current model to a file. By default an ins file is saved and "
+    "loaded");
+  xlib_InitMacro(LS, EmptyString(), fpOne|fpTwo|psCheckFileTypeIns,
+    "Sets refinement method and/or the number of iterations.");
+  xlib_InitMacro(Plan, EmptyString(), fpOne|psCheckFileTypeIns,
+    "Sets the number of Fourier peaks to be found from the difference map");
+  xlib_InitMacro(UpdateWght, EmptyString(), fpAny|psCheckFileTypeIns,
+    "Copies proposed weight to current");
   xlib_InitMacro(User, EmptyString(), fpNone|fpOne, "Changes current folder");
-  xlib_InitMacro(Dir, EmptyString(), fpNone|fpOne, "Lists current folder. A file name mask may be provided");
-  xlib_InitMacro(LstVar, EmptyString(), fpAny, "Lists all defined variables. Accepts * based masks");
-  xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks");
-  xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks");
-  xlib_InitMacro(LstFS, EmptyString(), fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
+  xlib_InitMacro(Dir, EmptyString(), fpNone|fpOne,
+    "Lists current folder. A file name mask may be provided");
+  xlib_InitMacro(LstVar, EmptyString(), fpAny,
+    "Lists all defined variables. Accepts * based masks");
+  xlib_InitMacro(LstMac, "h-Shows help", fpAny,
+    "Lists all defined macros. Accepts * based masks");
+  xlib_InitMacro(LstFun, "h-Shows help", fpAny,
+    "Lists all defined functions. Accepts * based masks");
+  xlib_InitMacro(LstFS, EmptyString(), fpAny,
+    "Prints out detailed content of virtual file system. Accepts * based "
+    "masks");
   xlib_InitMacro(SGS, EmptyString(), fpAny^fpNone|psFileLoaded,
- "Changes current space group settings using provided cell setting (if applicable) and axis, or 9\
- transformation matrix elements and the space group symbol. If the transformed HKL file is required,\
- it should be provided as the last argument (like test.hkl)");
-  xlib_InitMacro(ASR, EmptyString(), fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
-  xlib_InitMacro(Describe, EmptyString(), fpNone^psFileLoaded, "Describes current refinement in a human readable form");
+    "Changes current space group settings using provided cell setting (if "
+    "applicable) and axis, or 9 transformation matrix elements and the space "
+    "group symbol. If the transformed HKL file is required, it should be "
+    "provided as the last argument (like test.hkl)");
+  xlib_InitMacro(ASR, EmptyString(), fpNone^psFileLoaded,
+    "Absolute structure refinement: adds TWIN and BASF to current model in the"
+    " case of non-centrosymmetric structure");
+  xlib_InitMacro(Describe, EmptyString(), fpNone^psFileLoaded,
+    "Describes current refinement in a human readable form");
   xlib_InitMacro(Sort, EmptyString(), fpAny^psFileLoaded,
   "Sorts atoms of the default residue. Atom sort arguments: "
-  "\n\tm - atomic weight\n\tl - label, considering numbers\n\tp - part, 0 is first followed by all positive "
-  "parts in ascending order and then negative ones\n\th - to treat hydrogen atoms independent of the pivot "
-  "atom\n\ts - nun-numerical labels suffix\n\tz - number after the atom symbol\n"
-  "Moiety sort arguments:\n\ts - size\n\th - by heaviest atom\n\tm - molecular weight\nUsage: sort "
-  "[+atom_sort_type] or [Atoms] [moiety [+moety sort type] [moiety atoms]]. If just 'moiety' is provided - "
-  "the atoms will be split into the moieties without sorting.\n"
-  "Example: sort +ml F2 F1 moiety +s - will sort atoms by atomic weight and label, put F1 after F2 and form "
-  "moieties sorted by size. Note that when sorting atoms, any subsequent sort type operates inside the "
-  "groups created by the preceeding sort types."
+  "\n\tm - atomic weight"
+  "\n\tl - label, considering numbers"
+  "\n\tp - part, 0 is first followed by all positive parts in ascending order "
+  "and then negative ones"
+  "\n\th - to treat hydrogen atoms independent of the pivot atom"
+  "\n\ts - non-numerical labels suffix"
+  "\n\tz - number after the atom symbol"
+  "\n Moiety sort arguments:"
+  "\n\ts - size"
+  "\n\th - by heaviest atom"
+  "\n\tm - molecular weight"
+  "\nUsage: sort [+atom_sort_type] or [Atoms] [moiety [+moety sort type] "
+  "[moiety atoms]]. If just 'moiety' is provided - the atoms will be split "
+  "into the moieties without sorting."
+  "\nExample: sort +ml F2 F1 moiety +s - will sort atoms by atomic weight and "
+  "label, put F1 after F2 and form moieties sorted by size. Note that when "
+  "sorting atoms, any subsequent sort type operates inside the groups created "
+  "by the preceeding sort types."
  );
-  xlib_InitMacro(SGInfo, "c-include lattice centering matrices&;i-include inversion generated matrices if any", fpNone|fpOne, 
+  xlib_InitMacro(SGInfo,
+    "c-include lattice centering matrices&;i-include inversion generated "
+    "matrices if any",
+    fpNone|fpOne, 
     "Prints space group information.");
-  xlib_InitMacro(SAInfo, EmptyString(), fpAny, "Finds and prints space groups which include any of the provided systematic absences in the form 'b~~', '~b~' or '~~b'");
-  xlib_InitMacro(Inv, "f-force inversion for non-centrosymmetric space groups", fpAny|psFileLoaded, "Inverts whole structure or provided fragments of the structure");
-  xlib_InitMacro(Push, EmptyString(), (fpAny^(fpNone|fpOne|fpTwo))|psFileLoaded, "Shifts the sctructure (or provided fragments) by the provided translation");
-  xlib_InitMacro(Transform, EmptyString(), fpAny|psFileLoaded, "Transforms the structure or provided fragments according to the given matrix\
- (a11, a12, a13, a21, a22, a23, a31, a32, a33, t1, t2, t3)");
-  xlib_InitMacro(Standardise, EmptyString(), fpNone|fpOne|psFileLoaded, "Standardises atom coordinates (similar to HKL standardisation procedure). If '0' is provided as\
- argument, the asymmetric unit content is arranged as close to (0,0,0), while being inside the unit cell as possible");
+  xlib_InitMacro(SAInfo, EmptyString(), fpAny,
+    "Finds and prints space groups which include any of the provided "
+    "systematic absences in the form 'b~~', '~b~' or '~~b'");
+  xlib_InitMacro(Inv, "f-force inversion for non-centrosymmetric space groups",
+    fpAny|psFileLoaded,
+    "Inverts whole structure or provided fragments of the structure");
+  xlib_InitMacro(Push, EmptyString(),
+    (fpAny^(fpNone|fpOne|fpTwo))|psFileLoaded,
+    "Shifts the sctructure (or provided fragments) by the provided "
+    "translation");
+  xlib_InitMacro(Transform, EmptyString(), fpAny|psFileLoaded,
+    "Transforms the structure or provided fragments according to the given "
+    "matrix (a11, a12, a13, a21, a22, a23, a31, a32, a33, t1, t2, t3)");
+  xlib_InitMacro(Standardise, EmptyString(), fpNone|fpOne|psFileLoaded,
+    "Standardises atom coordinates (similar to HKL standardisation procedure)."
+    " If '0' is provided as argument, the asymmetric unit content is arranged "
+    "as close to (0,0,0), while being inside the unit cell as possible");
   xlib_InitMacro(FitCHN, EmptyString(), (fpAny^(fpNone|fpOne)),
-    "Fits CHN analysis for given formula and observed data given a lits of possible solvents. A mixture of up to 3 solvents only considered,\
- however any number of observed elements can be provided.\
- Example: FitCHN C12H22O11 C:40.1 H:6 N:0 H2O CCl3H");
-  xlib_InitMacro(CalcCHN, EmptyString(), fpNone|fpOne, "Calculates CHN composition of current structure or for provided formula");
-  xlib_InitMacro(CalcMass, EmptyString(), fpNone|fpOne, "Calculates Mass spectrum of current structure or for provided formula");
+    "Fits CHN analysis for given formula and observed data given a lits of "
+    "possible solvents. A mixture of up to 3 solvents only considered, however"
+    " any number of observed elements can be provided. Example: FitCHN "
+    "C12H22O11 C:40.1 H:6 N:0 H2O CCl3H");
+  xlib_InitMacro(CalcCHN, EmptyString(), fpNone|fpOne,
+    "Calculates CHN composition of current structure or for provided formula");
+  xlib_InitMacro(CalcMass, EmptyString(), fpNone|fpOne,
+    "Calculates Mass spectrum of current structure or for provided formula");
   xlib_InitMacro(Omit, EmptyString(), fpOne|fpTwo|fpThree|psCheckFileTypeIns, 
-    "removes any particular reflection from the refinement list. If a single number is provided,\
- all reflections with delta(F^2)/esd greater than given number are omitted");
+    "Removes any particular reflection from the refinement list. If a single "
+    "number is provided, all reflections with delta(F^2)/esd greater than "
+    "given number are omitted");
   xlib_InitMacro(Reset, "s-space group&;c-content&;f-alternative file name&;"
     "rem-exclude remarks&;atoms-saves the atom list alongside", 
-    fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
+    fpAny|psFileLoaded,
+    "Resets current structure for the solution with ShelX");
   xlib_InitMacro(Degen, "cs-clear selection", fpAny|psFileLoaded,
     "Prints how many symmetry operators put given atom to the same site");
   xlib_InitMacroA(Close, @Close, EmptyString(), fpNone|psFileLoaded,
@@ -242,69 +341,103 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(HklMerge, EmptyString(), fpAny|psFileLoaded,
     "Merges current HKL file (ehco HKLSrc()) to given file name. "
     "Warning: if no arguments provided, the current file is overwritten");
-  xlib_InitMacro(HklAppend, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
- See excludeHkl for more details");
-  xlib_InitMacro(HklExclude, "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided\
- indexes in any reflection. The default is in any one reflection" , fpAny,
- "excludes reflections with give indexes from the hkl file -h=1;2 : all reflections where h=1 or 2");
-  xlib_InitMacro(HklImport, "batch-for separator formatted file specifies that there is a batch number",
+  xlib_InitMacro(HklAppend, "h&;k&;l&;c", fpAny,
+    "moves reflection back into the refinement list. See excludeHkl for more "
+    "details");
+  xlib_InitMacro(HklExclude,
+    "h-semicolon separated list of indexes&;k&;l&;c-true/false to use provided"
+    " indexes in any reflection. The default is in any one reflection",
+    fpAny,
+    "Excludes reflections with give indexes from the hkl file -h=1;2 : all "
+    "reflections where h=1 or 2");
+  xlib_InitMacro(HklImport,
+    "batch-for separator formatted file specifies that there is a batch "
+    "number",
     (fpAny^(fpNone|fpOne|fpTwo|fpThree)),
-    "Creates a Shelx compatible 44488(4) file format from given source. Valid arguments:"
-    "fixed and separator. For example: 'HklImport in.hkl fixed 7 7 7 9 9 out.hkl' or 'HklImport in.hkl "
+    "Creates a Shelx compatible 44488(4) file format from given source. Valid"
+    " arguments: fixed and separator. For example:"
+    "\n\t'HklImport in.hkl fixed 7 7 7 9 9 out.hkl' or 'HklImport in.hkl "
     "separator \' \'' out.hkl"
    );
   xlib_InitMacroA(Update, @update, EmptyString(), fpAny,
-    "Reads given file and if the atoms list of loaded file matches the atom list of the given file "
-    "the atomic coordinates, FVAR and BASF values are updated.");
-//_________________________________________________________________________________________________________________________
-//_________________________________________________________________________________________________________________________
+    "Reads given file and if the atoms list of loaded file matches the atom "
+    "list of the given file the atomic coordinates, FVAR and BASF values are "
+    "updated.");
+//_____________________________________________________________________________
+//_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
-"If no arguments provided, returns file name of currently loaded file, for one\
- argument returns extracted file name");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(FileExt, fpNone|fpOne, "Returns file extension. If no arguments provided - of currently loaded file");
-  xlib_InitFunc(FilePath, fpNone|fpOne, "Returns file path. If no arguments provided - of currently loaded file");
+    "If no arguments provided, returns file name of currently loaded file, for "
+    "one argument returns extracted file name");
+//_____________________________________________________________________________
+  xlib_InitFunc(FileExt, fpNone|fpOne,
+    "Returns file extension. If no arguments provided - of currently loaded "
+    "file");
+  xlib_InitFunc(FilePath, fpNone|fpOne,
+    "Returns file path. If no arguments provided - of currently loaded file");
   xlib_InitFunc(FileFull, fpNone, "Returns full path of currently loaded file");
-  xlib_InitFunc(FileDrive, fpNone|fpOne, "Returns file drive. If no arguments provided - of currently loaded file");
-  xlib_InitFunc(Title, fpNone|fpOne, "If the file is loaded, returns it's title else if a parameter passed, it is returned");
+  xlib_InitFunc(FileDrive, fpNone|fpOne,
+    "Returns file drive. If no arguments provided - of currently loaded file");
+  xlib_InitFunc(Title, fpNone|fpOne,
+    "If the file is loaded, returns it's title else if a parameter passed, it "
+    "is returned");
   xlib_InitFunc(IsFileLoaded, fpNone, "Returns true/false");
-  xlib_InitFunc(IsFileType, fpOne, "Checks type of currently loaded file [ins,res,ires,cif,mol,xyz]");
-//_________________________________________________________________________________________________________________________
+  xlib_InitFunc(IsFileType, fpOne,
+    "Checks type of currently loaded file [ins,res,ires,cif,mol,xyz]");
+//_____________________________________________________________________________
   xlib_InitFunc(BaseDir, fpNone|fpOne, "Returns the startup folder");
-  xlib_InitFunc(HKLSrc, fpNone|fpOne|psFileLoaded, "Returns/sets hkl source for currently loaded file");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(LSM, fpNone|psCheckFileTypeIns, "Return current refinement method, L.S. or CGLS currently.");
-  xlib_InitFunc(SSM, fpNone|fpOne, "Return current structure solution method, TREF or PATT currently. If current method is unknown\
- and an argument is provided, that argument is returned");
-  xlib_InitFunc(Ins, fpOne|psCheckFileTypeIns, "Returns instruction value (all data after the instruction). In case the instruction\
- does not exist it return 'n/a' string");
-  xlib_InitFunc(SG, fpNone|fpOne, "Returns space group of currently loaded file.\
- Also takes a string template, where %# is replaced with SG number, %n - short name,\
- %N - full name, %h - html representation of the short name, %H - same as %h for full name,\
- %s - syngony, %HS -Hall symbol");
+  xlib_InitFunc(HKLSrc, fpNone|fpOne|psFileLoaded,
+    "Returns/sets hkl source for currently loaded file");
+//_____________________________________________________________________________
+  xlib_InitFunc(LSM, fpNone|psCheckFileTypeIns,
+    "Return current refinement method, L.S. or CGLS currently.");
+  xlib_InitFunc(SSM, fpNone|fpOne,
+    "Return current structure solution method, TREF or PATT currently. If "
+    "current method is unknown and an argument is provided, that argument is"
+    " returned");
+  xlib_InitFunc(Ins, fpOne|psCheckFileTypeIns,
+    "Returns instruction value (all data after the instruction). In case the "
+    "instruction does not exist it return 'n/a' string");
+  xlib_InitFunc(SG, fpNone|fpOne,
+    "Returns space group of currently loaded file. Also takes a string "
+    "template, where %# is replaced with SG number, %n - short name, %N - full"
+    " name, %h - html representation of the short name, %H - same as %h for "
+    "full name, %s - syngony, %HS -Hall symbol");
   xlib_InitFunc(SGS, fpNone|fpOne|psFileLoaded, "Returns current space settings");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(ATA, fpAny|psFileLoaded, "Test current structure against database.\
-  (Atom Type Assignment). Returns true if any atom type changed");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(FATA, fpAny|psFileLoaded, "Calculates the diff Fourier map and integrates it to find artifacts around atoms.\
-  (Fourier Atom Type Analysis). Returns true if any atom type changed");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(VSS, fpOne|psFileLoaded, "Validate Structure or Solution.\
-  Takes a boolean value. If value is true, the number of tested atoms is limited\
- by the 18A rule. Returns proportion of known atom types to the all atoms number.");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (separated by >>) returns true if succeded");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(Lst, fpOne|psCheckFileTypeIns, "returns a value from the Lst file");
-//_________________________________________________________________________________________________________________________
-  xlib_InitFunc(Crd, fpAny|psFileLoaded, "Returns center of given (selected) atoms in cartesian coordinates");
-  xlib_InitFunc(CCrd, fpAny|psFileLoaded, "Returns center of given (selected) atoms in fractional coordinates");
-  xlib_InitFunc(CalcR, fpNone|fpOne|psFileLoaded, "Calculates R1, R1 for I/sig >2 and wR2. "
-    "If 'print' is provided - prints detailed info");
+//_____________________________________________________________________________
+  xlib_InitFunc(ATA, fpAny|psFileLoaded,
+    "Test current structure against database. (Atom Type Assignment). Returns "
+    "true if any atom type changed");
+//_____________________________________________________________________________
+  xlib_InitFunc(FATA, fpAny|psFileLoaded,
+    "Calculates the diff Fourier map and integrates it to find artifacts "
+    "around atoms. (Fourier Atom Type Analysis). Returns true if any atom type"
+    " changed");
+//_____________________________________________________________________________
+  xlib_InitFunc(VSS, fpOne|psFileLoaded,
+    "Validate Structure or Solution. Takes a boolean value. If value is true, "
+    "the number of tested atoms is limited by the 18A rule. Returns proportion"
+    " of known atom types to the all atoms number.");
+//_____________________________________________________________________________
+  xlib_InitFunc(RemoveSE, fpOne|psFileLoaded,
+    "Returns a new space group name without provided element");
+//_____________________________________________________________________________
+  xlib_InitFunc(Run, fpOne,
+    "Same as the macro, executes provided commands (separated by >>) returns "
+    "true if succeded");
+//_____________________________________________________________________________
+  xlib_InitFunc(Lst, fpOne|psCheckFileTypeIns,
+    "returns a value from the Lst file");
+//_____________________________________________________________________________
+  xlib_InitFunc(Crd, fpAny|psFileLoaded,
+    "Returns center of given (selected) atoms in cartesian coordinates");
+  xlib_InitFunc(CCrd, fpAny|psFileLoaded,
+    "Returns center of given (selected) atoms in fractional coordinates");
+  xlib_InitFunc(CalcR, fpNone|fpOne|psFileLoaded,
+    "Calculates R1, R1 for I/sig >2 and wR2. If 'print' is provided - prints "
+    "detailed info");
+  xlib_InitFunc(GetCompilationInfo, fpAny,
+    "Returns compilation info");
 }
 //..............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -5036,5 +5169,49 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, wR2);
   }
   E.SetRetVal(olxstr(R1) << ',' << R1p << ',' << wR2);
+}
+//..............................................................................
+void XLibMacros::funGetCompilationInfo(const TStrObjList& Params,
+  TMacroError &E)
+{
+  olxstr timestamp(olxstr(__DATE__) << ' ' << __TIME__), revision;
+#ifdef _SVN_REVISION_AVAILABLE
+  timestamp = compile_timestamp;
+  revision = svn_revision_number;
+#endif
+  if( Params.IsEmpty() )  {
+    if( revision.IsEmpty() )
+      E.SetRetVal(timestamp);
+    else
+      E.SetRetVal(timestamp << " svn.r" << revision);
+  }
+  else  {
+    if( Params.Count() == 1 && Params[0].Equalsi("full") )  {
+      olxstr rv = timestamp;
+      if( !revision.IsEmpty() )  rv << " svn.r" << revision;
+#ifdef _MSC_FULL_VER
+      rv << " MSC:" << _MSC_FULL_VER;
+#elif __INTEL_COMPILER
+      rv << " Intel:" << __INTEL_COMPILER;
+#elif __GNUC__
+      rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
+#endif
+      rv << " on " << TBasicApp::GetPlatformString();
+#ifdef _CUSTOM_BUILD_
+      rv << " for " << CustomCodeBase::GetName();
+#endif
+      E.SetRetVal(rv);
+    }
+    else  {
+      try {  
+        time_t date = TETime::ParseDate(__DATE__);
+        time_t time = TETime::ParseTime(__TIME__);
+        E.SetRetVal<olxstr>(TETime::FormatDateTime(Params[0], date+time));
+      }
+      catch( TExceptionBase& ) {
+        E.SetRetVal(timestamp);
+      }
+    }
+  }
 }
 //..............................................................................

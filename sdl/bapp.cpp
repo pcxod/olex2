@@ -25,11 +25,14 @@ UseEsdlNamespace()
 TBasicApp* TBasicApp::Instance = NULL;
 olx_critical_section TBasicApp::app_cs;
 
-TBasicApp::TBasicApp(const olxstr& FileName) : OnProgress(Actions.New("PROGRESS")),
-  OnTimer(Actions.New("TIMER")), OnIdle(Actions.New("IDLE"))
+TBasicApp::TBasicApp(const olxstr& FileName)
+  : OnProgress(Actions.New("PROGRESS")),
+    OnTimer(Actions.New("TIMER")), OnIdle(Actions.New("IDLE"))
 {
-  if( Instance != NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "an application instance already exists");
+  if( Instance != NULL ) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "an application instance already exists");
+  }
   Instance = this;
 
   MaxThreadCount = 1;
@@ -106,17 +109,23 @@ const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
   TBasicApp& inst = GetInstance();
   if( !TEFile::Exists(cd) )  {
     if( !TEFile::MakeDir(cd) )
-      if( !TEFile::MakeDirs(cd) )
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not create common dir:") << cd);
+      if( !TEFile::MakeDirs(cd) ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          olxstr("Could not create common dir:") << cd);
+      }
   }
-  else if( !TEFile::IsDir(cd) )  
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Invalid config dir:") << cd);
+  else if( !TEFile::IsDir(cd) )  {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("Invalid config dir:") << cd);
+  }
   return (inst.SharedDir = TEFile::AddPathDelimeter(cd));
 }
 //..............................................................................
 const olxstr& TBasicApp::GetSharedDir() {  
-  if( GetInstance().SharedDir.IsEmpty() )
-    throw TFunctionFailedException(__OlxSourceInfo, "The common directory is undefined");
+  if( GetInstance().SharedDir.IsEmpty() ) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "The common directory is undefined");
+  }
   return GetInstance().SharedDir; 
 }
 //..............................................................................
@@ -125,6 +134,21 @@ TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
     return *Actions.Find(Name);
   else
     return Actions.New(Name);
+}
+//..............................................................................
+bool TBasicApp::Is64BitCompilation() {
+#if defined(_WIN64)
+  return true;
+#elif defined(__MAC__)
+# if defined(__LP64__) || defined(__x86_64__)
+  return true;
+#endif
+#elif defined(__linux__)
+# if defined(__LP64__) || defined(__x86_64__)
+  return true;
+#endif
+#endif
+  return false;
 }
 //..............................................................................
 olxstr TBasicApp::GetPlatformString()  {
@@ -141,9 +165,14 @@ olxstr TBasicApp::GetPlatformString()  {
 
 #elif __MAC__
   rv << "MAC";
+#  if defined(__LP64__) || defined(__x86_64__)
+  rv << "64";
+#  else
+  rv << "32";
+#  endif
 #elif __linux__
   rv << "Linux";
-#  ifdef __LP64__
+#  if defined(__LP64__) || defined(__x86_64__)
   rv << "64";
 #  else
   rv << "32";

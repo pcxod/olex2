@@ -19,13 +19,6 @@
 #include "cdsfs.h"
 #include "zipfs.h"
 
-//#if defined(__WIN32__) && !defined(__WXWIDGETS__)
-//  #include "winzipfs.h"
-//  typedef TWinZipFileSystem ZipFS;
-//#else
-//  #include "wxzipfs.h"
-//  typedef TwxZipFileSystem ZipFS;
-//#endif
 #ifdef __WXWIDGETS__
   #include "wxftpfs.h"
 #endif
@@ -35,7 +28,8 @@ using namespace patcher;
 const olxstr UpdateAPI::new_installation_fn("new_installation");
 //..............................................................................
 UpdateAPI::UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL), 
-  settings(GetSettingsFileName()), Tag( patcher::PatchAPI::ReadRepositoryTag() )  {  }
+  settings(GetSettingsFileName()), Tag(patcher::PatchAPI::ReadRepositoryTag())
+{}
 //..............................................................................
 short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
   CleanUp(_f_lsnr, _p_lsnr); 
@@ -49,7 +43,8 @@ short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
     return updater::uapi_Busy;
   SettingsFile& sf = settings;
   TFSItem::SkipOptions toSkip;
-  toSkip.extsToSkip = sf.extensions_to_skip.IsEmpty() ? NULL : &sf.extensions_to_skip;
+  toSkip.extsToSkip = sf.extensions_to_skip.IsEmpty() ? NULL
+    : &sf.extensions_to_skip;
   toSkip.filesToSkip = sf.files_to_skip.IsEmpty() ? NULL : &sf.files_to_skip;
 
   short res = updater::uapi_NoSource;
@@ -70,7 +65,9 @@ short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
   return res;
 }
 //.............................................................................
-short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr, const olxstr& repo)  {
+short UpdateAPI::DoInstall(AActionHandler* download_lsnr,
+  AActionHandler* extract_lsnr, const olxstr& repo)
+{
   CleanUp(download_lsnr, extract_lsnr);
   if( !IsInstallRequired() )  return updater::uapi_OK;
   if( repo.IsEmpty() )
@@ -84,7 +81,8 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     try  {
       if( !PatchAPI::LockUpdater() )
         return updater::uapi_Busy;
-      olx_object_ptr<AZipFS> zfs(ZipFSFactory::GetInstance(inst_zip_fn, false));
+      olx_object_ptr<AZipFS> zfs(
+        ZipFSFactory::GetInstance(inst_zip_fn, false));
       if( p_lsnr != NULL )  {
         zfs().OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
@@ -163,7 +161,9 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
   return res;
 }
 //.............................................................................
-short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, const olxstr& name) {
+short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr,
+  AActionHandler* e_lsnr, const olxstr& name)
+{
   CleanUp(d_lsnr, e_lsnr); 
   if( !TBasicApp::GetInstance().IsBaseDirWriteable() )
     return updater::uapi_AccessDenied;
@@ -180,10 +180,23 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
     fs->OnProgress.Add(f_lsnr);
     f_lsnr = NULL;
   }
-  fs->SetBase( AddTagPart(fs->GetBase(), false) );
-  olxstr zip_fn( TEFile::UnixPath(olxstr(fs->GetBase()) << name << ".zip") );
+  fs->SetBase(AddTagPart(fs->GetBase(), false));
+  TStrList names;
+  if (TBasicApp::Is64BitCompilation())
+    names << (TEFile::UnixPath(olxstr(fs->GetBase()) << name << "_64.zip"));
+  names << (TEFile::UnixPath(olxstr(fs->GetBase()) << name << ".zip"));
+
+  olxstr zip_fn;
   IInputStream* is = NULL;
-  try { is = fs->OpenFile(zip_fn);  }
+  try {
+    for (size_t i=0; i < names.Count(); i++) {
+      is = fs->OpenFile(names[i]);
+      if (is != NULL) {
+        zip_fn = names[i];
+        break;
+      }
+    }
+  }
   catch( const TExceptionBase& exc )  {
     log.Add( exc.GetException()->GetFullMessage() );
     delete fs;
@@ -251,7 +264,7 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
     log.Add("Could not locate source for synchronisation");
     return updater::uapi_NoSource;
   }
-  AFileSystem* destFS = FSFromString( sf.dest_repository, sf.proxy );
+  AFileSystem* destFS = FSFromString(sf.dest_repository, sf.proxy);
   if( destFS == NULL )  {
     delete srcFS;
     return updater::uapi_NoDestination;
@@ -264,7 +277,7 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
 //.............................................................................
 void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
-#if defined(__WIN32__) //&& !defined(_DEBUG)  // disable updates by the debug version 
+#if defined(__WIN32__)
 #  if defined(_DEBUG)
 #    if !defined(_WIN64)
        props.Add("port-win32-portable");  // but can change this ...
@@ -280,7 +293,8 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
        props.Add("port-win32-nosse");
 #    elif _M_IX86_FP == 1
        props.Add("port-win32-sse");
-#    elif _M_IX86_FP == 2  // cannot change it! olex2 does not get upadted and this is it...
+     // cannot change it! olex2 does not get updated and this is it...
+#    elif _M_IX86_FP == 2
        props.Add("port-win32");
 #    endif
 #  endif
@@ -309,7 +323,9 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   }
 }
 //.............................................................................
-AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy)  {
+AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo,
+  const olxstr& _proxy)
+{
   if( _repo.IsEmpty() )  return NULL;
   try  {
     AFileSystem* FS = NULL;
@@ -362,7 +378,7 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
   else  {
     bool update = false;
     const SettingsFile& sf = settings;
-    if( sf.update_interval.IsEmpty() || sf.update_interval.Equalsi("Always") )  
+    if( sf.update_interval.IsEmpty() || sf.update_interval.Equalsi("Always") )
       update = true;
     else if( sf.update_interval.Equalsi("Daily") )
       update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay );
@@ -372,7 +388,8 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
       update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*30 );
 
     if( update )  {  
-      AFileSystem* FS = FindActiveRepositoryFS(&repo, (AddTagPart(EmptyString(), true)+"index.ind").SubStringFrom(1));
+      AFileSystem* FS = FindActiveRepositoryFS(&repo,
+        (AddTagPart(EmptyString(), true)+"index.ind").SubStringFrom(1));
       if( FS == NULL )  {
         if( res != NULL )  *res = updater::uapi_NoSource;
         return NULL;
@@ -385,7 +402,9 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
   return NULL;
 }
 //.............................................................................
-AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name, const olxstr& check_file) const  {
+AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name,
+  const olxstr& check_file) const
+{
   TStrList repositories;
   GetAvailableMirrors(repositories);
   for( size_t i=0; i < repositories.Count(); i++ )  {
@@ -393,11 +412,13 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name, const olxstr& 
     if( fs != NULL )  {
 #ifdef _DEBUG
       if( !check_file.IsEmpty() )  {
-        TBasicApp::NewLogEntry() << "Checking repository: " << repositories[i] <<
-          " for file: " << check_file;
+        TBasicApp::NewLogEntry() << "Checking repository: " <<
+          repositories[i] << " for file: " << check_file;
       }
 #endif
-      if( !check_file.IsEmpty() && !fs->Exists(fs->GetBase()+check_file, true) )  {
+      if( !check_file.IsEmpty() &&
+          !fs->Exists(fs->GetBase()+check_file, true) )
+      {
         delete fs;
         continue;
       }
@@ -409,7 +430,7 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name, const olxstr& 
   return NULL;
 }
 //.............................................................................
-void UpdateAPI::GetAvailableMirrors(TStrList& res) const  {
+void UpdateAPI::GetAvailableMirrors(TStrList& res) const {
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
     res.LoadFromFile(mirrors_fn);
