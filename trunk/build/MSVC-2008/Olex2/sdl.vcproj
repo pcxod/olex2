@@ -21,8 +21,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)\lib_d"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="0"
 			ManagedExtensions="0"
@@ -90,8 +90,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="0"
 			ManagedExtensions="0"
@@ -160,8 +160,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)\lib"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="0"
 			ManagedExtensions="0"
@@ -229,8 +229,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="0"
 			ManagedExtensions="0"
@@ -300,7 +300,7 @@
 		<Configuration
 			Name="Unicode-debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -370,8 +370,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -442,8 +442,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|Win32"
-			OutputDirectory="$(SolutionDir)\lib_u"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -516,8 +516,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -591,8 +591,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|Win32"
-			OutputDirectory="$(SolutionDir)\lib_us"
-			IntermediateDirectory="$(ConfigurationName)\obj"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -665,8 +665,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|x64"
-			OutputDirectory="$(SolutionDir)\lib_us"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\obj"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -741,8 +741,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-d|Win32"
-			OutputDirectory="$(SolutionDir)lib_u-d"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -815,8 +815,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-d|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -890,8 +890,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug-static|Win32"
-			OutputDirectory="$(SolutionDir)\lib_usd"
-			IntermediateDirectory="$(ConfigurationName)\obj"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -965,8 +965,8 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-debug-static|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\obj"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(SolutionDir)$(ConfigurationName)\obj"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -1098,10 +1098,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\egc.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\egraph.cpp"
 				>
 			</File>
 			<File
