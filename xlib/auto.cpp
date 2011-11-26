@@ -82,34 +82,13 @@ static const vec3d ZAxis(0,0,1);
 int TAutoDBNode::SortMetricsFunc(const TAttachedNode* a,
   const TAttachedNode* b)
 {
-  double diff = TAutoDBNode::SortCenter.DistanceTo(b->GetCenter()) -
-                TAutoDBNode::SortCenter.DistanceTo(a->GetCenter());
-/*  if( olx_abs(diff) < 0.001 )  {
-    vec3d ap(a.crd()), bp(b.crd());
-    ap -= TAutoDBNode::SortCenter;
-    bp -= TAutoDBNode::SortCenter;
-    double ca = ZAxis.CAngle( ap );
-    if( ca < -1 )  ca = -1;
-    if( ca > 1 )   ca = 1;
-    ca = acos(ca)*180/M_PI;
-    double cb = ZAxis.CAngle( bp );
-    if( cb < -1 )  cb = -1;
-    if( cb > 1 )   cb = 1;
-    cb = acos(cb)*180/M_PI;
-    diff = cb - ca;
-  }
-*/
-  if( diff < 0 )  return -1;
-  if( diff > 0 )  return 1;
-  return 0;
+  return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b->GetCenter()),
+                TAutoDBNode::SortCenter.DistanceTo(a->GetCenter()));
 }
 int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>* a,
                                 const AnAssociation2<TCAtom*, vec3d>* b)  {
-  double diff = TAutoDBNode::SortCenter.DistanceTo(b->GetB()) -
-                TAutoDBNode::SortCenter.DistanceTo(a->GetB());
-  if( diff < 0 )  return -1;
-  if( diff > 0 )  return 1;
-  return 0;
+  return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b->GetB()),
+                TAutoDBNode::SortCenter.DistanceTo(a->GetB()));
 }
 
 TAutoDBNode::TAutoDBNode(TSAtom& sa,
@@ -173,7 +152,7 @@ double TAutoDBNode::CalcAngle(size_t i, size_t j)  const {
   vec3d a(AttachedNodes[i].GetCenter()-Center),
         b(AttachedNodes[j].GetCenter()-Center);
   if( a.QLength()*b.QLength() == 0 )  {
-    TBasicApp::NewLogEntry(logError) <<  "Overlapping atoms enountered";
+    TBasicApp::NewLogEntry(logError) <<  "Overlapping atoms encountered";
     return 0;
   }
   double ca = a.CAngle(b);
@@ -226,7 +205,8 @@ const olxstr& TAutoDBNode::ToString() const  {
 //..............................................................................
 double TAutoDBNode::SearchCompare(const TAutoDBNode& dbn, double* fom) const {
   double _fom = 0;
-  size_t mc = (AttachedNodes.Count() > 4 ) ? AttachedNodes.Count() : Params.Count();
+  size_t mc = (AttachedNodes.Count() > 4 ) ? AttachedNodes.Count()
+    : Params.Count();
   for( size_t i=0; i < mc; i++ ) {
     double diff = Params[i] - dbn.Params[i];
     if( i < AttachedNodes.Count() )  {
@@ -472,7 +452,7 @@ const olxstr& TAutoDBNetNode::ToString(int level) const  {
 //..............................................................................
 TAutoDBNet* TAutoDBNet::CurrentlyLoading = NULL;
 //..............................................................................
-void TAutoDBNet::SaveToStream( IDataOutputStream& output ) const  {
+void TAutoDBNet::SaveToStream( IDataOutputStream& output ) const {
   output << (int32_t)FReference->GetId();
   output << (int16_t)Nodes.Count();
   for( uint32_t i=0; i < Nodes.Count(); i++ )
@@ -742,7 +722,7 @@ TAutoDBNet* TAutoDB::BuildSearchNet(TNetwork& net, TSAtomPList& cas)  {
   return NULL;
 }
 //..............................................................................
-void TAutoDB::SaveToStream( IDataOutputStream& output )  const {
+void TAutoDB::SaveToStream(IDataOutputStream& output) const {
   output.Write(FileSignature, FileSignatureLength);
   output << FileVersion;
   output << (uint16_t)0;  // file flags - flat for now
@@ -1239,7 +1219,10 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   const size_t sn_count = sn->Count();
   // for two atoms we cannot decide which one is which, for one - no reason at all :)
   if( sn_count < 3 )  {
-    if( sn_count == 2 )  { // C-O or C-N?
+    if( sn_count == 2 && // C-O or C-N?
+      cas[0]->CAtom().AttachedSiteCount() == 1 &&
+      cas[1]->CAtom().AttachedSiteCount() == 1)
+    {
       if( sn->Node(0).Center()->GetDistance(0) < 1.3 )  { // C-N
         A2Pemutate(cas[0]->CAtom(), cas[1]->CAtom(),
           XElementLib::GetByIndex(iCarbonIndex),
