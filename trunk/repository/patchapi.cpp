@@ -71,7 +71,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
       catch(...)  {  res = papi_DeleteError;  }
     }
     if( res == papi_OK )  {
-      updater::SettingsFile sf( updater::UpdateAPI::GetSettingsFileName() );
+      updater::SettingsFile sf(updater::UpdateAPI::GetSettingsFileName());
       sf.last_updated = TETime::EpochTime();
       sf.Save();
     }
@@ -83,7 +83,8 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
 //.........................................................................
 size_t PatchAPI::GetNumberOfOlex2Running()  {
   TStrList pid_files;
-  TEFile::ListDir(TBasicApp::GetBaseDir(), pid_files, olxstr("*.") << GetOlex2PIDFileExt(), sefAll);
+  TEFile::ListDir(TBasicApp::GetBaseDir(), pid_files, olxstr("*.") <<
+    GetOlex2PIDFileExt(), sefAll);
   for( size_t i=0; i < pid_files.Count(); i++ )  {
     if( TEFile::DelFile( TBasicApp::GetBaseDir() + pid_files[i]) )
       pid_files[i].SetLength(0);
@@ -115,9 +116,10 @@ bool PatchAPI::UnlockUpdater() {
   TEGC::Finalise();
   return true;
 }
-//.........................................................................
+//.............................................................................
 olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
-  olxstr tag_fn = (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir) + GetTagFileName();
+  olxstr tag_fn = (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir) +
+    GetTagFileName();
   if( !TEFile::Exists(tag_fn) )
     return EmptyString();
   TStrList sl;
