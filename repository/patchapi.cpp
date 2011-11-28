@@ -92,7 +92,7 @@ void PatchAPI::_RestoreExecuableFlags() {
   for (size_t i=0; i < file_list.Count(); i++) {
     olxstr fn = TBasicApp::GetBaseDir() + file_list[i];
     if (TEFile::Exists(fn))
-      TEFile::Chmod(fn, S_IEXEC);
+      TEFile::Chmod(fn, S_IEXEC|S_IREAD|S_IWRITE);
   }
 #endif
 }

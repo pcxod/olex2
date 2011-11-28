@@ -163,8 +163,8 @@ void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
   }
 }
 //..............................................................................
-wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const
-{
+wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url,
+  wxString *redirect) const {
   olxstr Url = url;
   if( !OnURL.Execute(this, &Url) )  return wxHTML_OPEN;
   return wxHTML_BLOCK;
@@ -184,12 +184,13 @@ size_t THtml::GetSwitchState(const olxstr& switchName)  {
 }
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
+  TBasicApp::NewLogEntry() << "dd";
   this->SetFocusIgnoringChildren();
   MouseX = event.GetX();
   MouseY = event.GetY();
   MouseDown = true;
   if( Movable )
-    SetCursor( wxCursor(wxCURSOR_SIZING) );
+    SetCursor(wxCursor(wxCURSOR_SIZING));
   event.Skip();
 }
 //..............................................................................
@@ -241,10 +242,16 @@ bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IE
 void THtml::OnChildFocus(wxChildFocusEvent& event)  {
   wxWindow *wx_next = event.GetWindow(), 
     *focused = FindFocus();
-  if( wx_next != focused )  {
-    if( InFocus != NULL )
-    InFocus->SetFocus();
-    return;
+  /* this happens when the child windows is in visible to API like in
+  combo/spinctls */
+  if (wx_next != focused)  {
+    if (focused->GetParent() == wx_next) {
+      focused = wx_next;
+    }
+    else if(InFocus != NULL) { // this would be odd
+      InFocus->SetFocus();
+      return;
+    }
   }
   AOlxCtrl* prev = NULL, *next = NULL;
   for( size_t i=0; i < Traversables.Count(); i++ )  {

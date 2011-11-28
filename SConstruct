@@ -287,7 +287,7 @@ else:
     env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
     unirun_env = env.Clone()
     env.ParseConfig("python-config --includes")
-    env.ParseConfig("python-config --ldflags")
+    env.ParseConfig("python-config --libs")
   except:
     print 'Please make sure that wxWidgets and Python config scripts are available'
     Exit(1)
