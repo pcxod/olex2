@@ -19,6 +19,7 @@ protected:
   TUtf8File(const olxstr& fn, const olxstr& attr, bool CheckHeader=true)
     : TEFile(fn, attr)
   {
+    SetPosition(0);
     if( Length() >= 3 )  {
       uint32_t header = 0;
       TEFile::Read(&header, 3);
@@ -47,22 +48,22 @@ protected:
 public:
   // pointer must be deleted
   static TUtf8File* Create(const olxstr& name, bool write_header=true)  {
-    TUtf8File* file = new TUtf8File(name, "wb+");  
+    TUtf8File* file = new TUtf8File(name, "w+b");  
     if( write_header )
       ((TEFile*)file)->Write(&TUtf8::FileSignature, 3);
     return file;
   }
   
-  // pointer must be deleted, creates/opens for appending
+  // pointer must be deleted, creates/opens, positioned at the begining
   static TUtf8File* Open(const olxstr& name, bool CheckHeader)  {
-    TUtf8File* file = new TUtf8File(name, "ab+", CheckHeader);  
+    TUtf8File* file = new TUtf8File(name, "a+b", CheckHeader);
     return file;
   }
   // creates a file and writes data to it, closes it
   static void Create(const olxstr& name, const TIString& data,
     bool write_header=true)
   {
-    TUtf8File file(name, "wb+");  
+    TUtf8File file(name, "w+b");  
     if( write_header )
       ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
     file.Write(data);
@@ -178,7 +179,7 @@ public:
   static void WriteLines(const olxstr& fn,
     const TTStrList<T>& list, bool WriteHeader=false)
   {
-    TUtf8File file(fn, "wb+");
+    TUtf8File file(fn, "w+b");
     if( WriteHeader )
       ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
     for( size_t i=0; i < list.Count(); i++ )

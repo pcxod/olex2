@@ -159,14 +159,16 @@ int main(int argc, char** argv)  {
     for( int i=0; i < argc; i++ )
       bapp.Arguments.Add(argv[i]);
     for( size_t i=0; i < bapp.Arguments.Count(); i++ )  {
-      if( bapp.Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
+      if( bapp.Arguments[i].FirstIndexOf('=') != InvalidIndex ||
+          bapp.Arguments[i].StartsFrom('-'))
+      {
         bapp.Options.FromString(bapp.Arguments[i], '=');
         bapp.Arguments.Delete(i--);
       }
     }
     DoRun();
     if( bapp.Arguments.IndexOf("-run") == InvalidIndex ) {
-      olxcstr argl = bapp.Arguments.Text(' ');
+      olxcstr argl = bapp.Arguments.Text(' ', 1);
       DoLaunch(argl);
     }
   }
@@ -282,22 +284,23 @@ void DoLaunch(const olxcstr &arg)  {
   olx_setenv("BOOST_ADAPTBX_FPE_DEFAULT", "1");
   olx_setenv("BOOST_ADAPTBX_SIGNALS_DEFAULT", "1");
   olxstr gl_stereo = olx_getenv("OLEX2_GL_STEREO");
+  if (gl_stereo.IsEmpty())
+    olx_setenv("OLEX2_GL_STEREO", "FALSE");
 #  ifdef __MAC__
   olx_setenv("OLEX2_DIR", bd);
   static const olxcstr ld_var = "DYLD_LIBRARY_PATH";
 #  else
   static const olxcstr ld_var = "LD_LIBRARY_PATH";
-  if (gl_stereo.IsEmpty())
-    olx_setenv("OLEX2_GL_STEREO", "FALSE");
 #  endif
   olxcstr ld_path;
   ld_path << bd << "lib:" << bd << "Python27:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
-  olx_setenv("PYTHONHOME", bd + "Python27/python2.7");
+  // if this is set it wil not start up on Mac
+  //olx_setenv("PYTHONHOME", bd + "Python27");
   const olxcstr cmdl = bd + "olex2_exe";
 #endif
   TEFile::ChangeDir(bd);
-  TEFile::Chmod(cmdl, S_IEXEC);
+  TEFile::Chmod(cmdl, S_IEXEC|S_IEXEC|S_IWRITE);
   if (arg.IsEmpty())
     execl(cmdl.u_str(), cmdl.u_str(), NULL);
   else

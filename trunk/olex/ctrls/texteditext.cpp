@@ -39,9 +39,14 @@ void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
-  StartEvtProcessing()
-    OnReturn.Execute(this);
-  EndEvtProcessing()
+  if (IsMultiLine()) {
+    AppendText(wxT("\n"));
+  }
+  else {
+    StartEvtProcessing()
+      OnReturn.Execute(this);
+    EndEvtProcessing()
+  }
 }
 //..............................................................................
 void TTextEdit::KeyDownEvent(wxKeyEvent& event)  {
