@@ -6091,6 +6091,11 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
   olxstr suffix = Options.FindValue("n");
   const bool name = Options.Contains("n");
   const bool align = Options.Contains("a");
+  int group_cnt = 2;
+  if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
+    group_cnt = Cmds[0].ToInt();
+    Cmds.Delete(0);
+  }
   TXAtomPList atoms = FindXAtoms(Cmds, false, true);
   if( !atoms.IsEmpty() )  {
     if( atoms.Count() == 2 &&
@@ -6201,7 +6206,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     // a full basis provided
-    else if( atoms.Count() >= 6 && (atoms.Count()%2) == 0 )  {
+    else if (atoms.Count() >= 3*group_cnt && (atoms.Count()%group_cnt) == 0) {
       TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
       TSAtomPList atomsToTransform;
       for( size_t i=0; i < atoms.Count()/2; i++ )
@@ -6634,14 +6639,8 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if (!Cmds.IsEmpty())
-    TBasicApp::NewLogEntry() << HallSymbol::Evaluate(HallSymbol::Expand(Cmds[0]));
-  //HallSymbol::Expand("P -2yac");
-  //HallSymbol::Expand("-P 2b 2b");
-  //HallSymbol::Expand("P 4ab 2ab -1ab");
-  //HallSymbol::Expand("P 32 2 (0 0 2)");
-  //HallSymbol::Expand("P 31 2\"");
-  //HallSymbol::Expand("-P 3* 2n");
+  TXAtomPList atoms = FindXAtoms(Cmds, true, true);
+
   return;
   TXApp& xapp = TXApp::GetInstance();
   //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
@@ -6777,29 +6776,29 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //kr_t.CreateTXTList(out, "vcov", true, true, ' ');
   //TBasicApp::GetLog() << out << '\n';
 
-  TXAtomPList xatoms;
-  if( !FindXAtoms(Cmds, xatoms, false, true) )  {
-    return;
-  }
-  //TXApp& xapp = TXApp::GetInstance();
-  VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
-  xapp.NewLogEntry() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation";
-  TSAtomPList atoms(xatoms, StaticCastAccessor<TSAtom>());
-  mat3d_list matrices;
-  vcovc.GetVcoV(atoms, matrices);
-  //vcovc.GetMatrix().FindVcoV(atoms, matrices);
-  const size_t m_dim = (size_t)sqrt((double)matrices.Count());
-  TETable tab(m_dim*3, m_dim*3);
-  for( size_t i=0; i < m_dim; i++ )  {
-    for( size_t j=0; j < m_dim; j++ )  {
-      for( int mi = 0; mi < 3; mi++ )  {
-        for( int mj = 0; mj < 3; mj ++ )  {
-          tab[i*3+mi][j*3+mj] = olxstr::FormatFloat(-3,matrices[i*m_dim+j][mi][mj], true);
-        }
-      }
-    }
-  }
-  TBasicApp::NewLogEntry() << tab.CreateTXTList("vcov", true, true, ' ');
+  //TXAtomPList xatoms;
+  //if( !FindXAtoms(Cmds, xatoms, false, true) )  {
+  //  return;
+  //}
+  ////TXApp& xapp = TXApp::GetInstance();
+  //VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
+  //xapp.NewLogEntry() << "Using " << xapp.InitVcoV(vcovc) << " matrix for the calculation";
+  //TSAtomPList atoms(xatoms, StaticCastAccessor<TSAtom>());
+  //mat3d_list matrices;
+  //vcovc.GetVcoV(atoms, matrices);
+  ////vcovc.GetMatrix().FindVcoV(atoms, matrices);
+  //const size_t m_dim = (size_t)sqrt((double)matrices.Count());
+  //TETable tab(m_dim*3, m_dim*3);
+  //for( size_t i=0; i < m_dim; i++ )  {
+  //  for( size_t j=0; j < m_dim; j++ )  {
+  //    for( int mi = 0; mi < 3; mi++ )  {
+  //      for( int mj = 0; mj < 3; mj ++ )  {
+  //        tab[i*3+mi][j*3+mj] = olxstr::FormatFloat(-3,matrices[i*m_dim+j][mi][mj], true);
+  //      }
+  //    }
+  //  }
+  //}
+  //TBasicApp::NewLogEntry() << tab.CreateTXTList("vcov", true, true, ' ');
 
   //TSocketFS fs(TUrl("http://localhost:8082"));
   //if( fs.Exists("dist/cds.jar", true) )  {
@@ -10117,5 +10116,37 @@ void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
         ConstTypeList<TCAtomPList>(groups));
     }
   }
+}
+//..............................................................................
+void TMainForm::macTolman(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  TXAtomPList atoms = FindXAtoms(Cmds, false, true);
+  if (atoms.Count() != 5) {
+    E.ProcessingError(__OlxSrcInfo, "5 Atoms are expected - M P S1 S2 S3");
+    return;
+  }
+  TBasicApp::NewLogEntry() << "Calculatining Tolman cone angle for the "
+    "selection: http://en.wikipedia.org/wiki/Tolman_cone_angle";
+  double d = Options.FindValue("mpd", atoms[0]->crd().DistanceTo(
+    atoms[1]->crd())).ToDouble();
+  TBasicApp::NewLogEntry() << "Metal to P distance is: " <<
+    olxstr::FormatFloat(3, d);
+  vec3d v0 = (atoms[0]->crd() - atoms[1]->crd()).NormaliseTo(d);
+  olxdict<const cm_Element*, double, TPointerComparator> radii;
+  double sa = 0;
+  for (size_t i=2; i < 5; i++) {
+    vec3d v = atoms[i]->crd()-atoms[1]->crd();
+    radii.Add(&atoms[i]->GetType()) = atoms[i]->GetType().r_vdw;
+    v.NormaliseTo(v.Length()+atoms[i]->GetType().r_vdw);
+    sa += acos((v-v0).CAngle(-v0));
+  }
+  TBasicApp::NewLogEntry() << "Used radii:";
+  for (size_t i=0; i < radii.Count(); i++) {
+    TBasicApp::NewLogEntry() << radii.GetKey(i)->symbol << '\t' <<
+      radii.GetValue(i);
+  }
+  
+  TBasicApp::NewLogEntry() << "Resulting angle: " << olxstr::FormatFloat(3, 180*(2*sa/3)/M_PI);
 }
 //..............................................................................

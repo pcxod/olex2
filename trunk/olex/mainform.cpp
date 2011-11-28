@@ -895,6 +895,9 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   this_InitMacroD(Constrain, "", (fpAny^fpNone)|psFileLoaded,
     "Creates a constraint");
 
+  this_InitMacroD(Tolman, "mpd-M to P distance", fpNone|fpFive|psFileLoaded,
+    "Calculates Tolamn code angle for the selection (M P S1 S2 S3)");
+
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
