@@ -248,6 +248,9 @@ public:
   /* deletes underlying physical object (file or folder). If the object is a folder
   the content of that folder will be removed completely */
   void DelFile();
+  /* this if for internal use only - the FS access rights are not taken into
+  the account! but operates only on the TOSFileSystem and only on files */
+  void _DelFile();
 
   uint64_t CalcTotalItemsSize(const TStrList& props) const;
 
