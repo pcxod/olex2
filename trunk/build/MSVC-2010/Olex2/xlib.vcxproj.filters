@@ -1061,6 +1061,9 @@
     <ClInclude Include="..\..\..\xlib\symmspace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\formula_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

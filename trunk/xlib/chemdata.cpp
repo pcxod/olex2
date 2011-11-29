@@ -1110,13 +1110,19 @@ cm_Element* XElementLib::FindBySymbolEx(const olxstr& label)  {
         return &cm_Elements[i];
   }
   //check for single char label
-  for( short i=0; i < cm_Element_Count; i++ )
-    if( cm_Elements[i].symbol.Length() == 1 && (cm_Elements[i].symbol.CharAt(0) == lbl.CharAt(0)) )
+  for( short i=0; i < cm_Element_Count; i++ ) {
+    if( cm_Elements[i].symbol.Length() == 1 &&
+        (cm_Elements[i].symbol.CharAt(0) == lbl.CharAt(0)) )
+    {
       return &cm_Elements[i];
+    }
+  }
   return NULL;
 }
 //..............................................................................
-ContentList& XElementLib::ParseElementString(const olxstr& su, ContentList& res)  {
+ContentList& XElementLib::ParseElementString(const olxstr& su,
+  ContentList& res)
+{
   olxstr elm, cnt;
   bool nowCnt = false;
   TStrList toks;
