@@ -5795,7 +5795,9 @@ public:
   }
 };
 //
-void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   if( !FPluginItem->ItemExists(Cmds[0]) )  {
     TStateChange sc(prsPluginInstalled, true, Cmds[0]);
     olxstr local_file = Options['l'];
@@ -5804,9 +5806,9 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
         E.ProcessingError(__OlxSrcInfo, "cannot find plugin archive");
         return;
       }
-      TwxZipFileSystem zipFS( local_file, false );
-      TOSFileSystem osFS( TBasicApp::GetBaseDir() );
-      TFSIndex fsIndex( zipFS );
+      TwxZipFileSystem zipFS(local_file, false);
+      TOSFileSystem osFS(TBasicApp::GetBaseDir());
+      TFSIndex fsIndex(zipFS);
       TStrList properties;
       properties.Add(Cmds[0]);
       TOnSync* progressListener = new TOnSync(*FXApp, TBasicApp::GetBaseDir());
@@ -5819,10 +5821,10 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
       }
       osFS.OnAdoptFile.Remove(progressListener);
       delete progressListener;
-      if( Cause )
+      if (Cause != NULL)
         throw TFunctionFailedException(__OlxSourceInfo, Cause);
 
-      FPluginItem->AddItem( Cmds[0] );
+      FPluginItem->AddItem(Cmds[0]);
       OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 
       FPluginFile.SaveToXLFile( PluginFile );
@@ -5830,7 +5832,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
       FXApp->Draw();
     }
     else  {
-      olxstr SettingsFile( TBasicApp::GetBaseDir() + "usettings.dat" );
+      olxstr SettingsFile(TBasicApp::GetBaseDir() + "usettings.dat");
       if( TEFile::Exists(SettingsFile) )  {
         updater::UpdateAPI api;
         short res = api.InstallPlugin(new TDownloadProgress(*FXApp), 
@@ -5844,7 +5846,8 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
           TBasicApp::NewLogEntry() << "\rInstallation complete";
         }
         else  {
-          TBasicApp::NewLogEntry() << "Plugin installation failed with error code: " << res;
+          TBasicApp::NewLogEntry() <<
+            "Plugin installation failed with error code: " << res;
           if( !api.GetLog().IsEmpty() )
             TBasicApp::NewLogEntry() << api.GetLog();
         }
@@ -5869,19 +5872,21 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
 }
 //..............................................................................
 void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TDataItem* di = FPluginItem->FindItem( Cmds[0] );
-  if( di )  di->AddField("signature", Cmds[1] );
-  FPluginFile.SaveToXLFile( PluginFile );
+  TDataItem* di = FPluginItem->FindItem(Cmds[0]);
+  if( di )  di->AddField("signature", Cmds[1]);
+  FPluginFile.SaveToXLFile(PluginFile);
 }
 //..............................................................................
 // local linkage (for classes within functions) is not supported by Borland, though MSVC is fine
   class TFSTraverser {
-    olxstr Property, BaseDir;
+    olxstr BaseDir;
+    SortedObjectList<olxstr, olxstrComparator<false> > props;
     TGXApp* xa;
     TPtrList<TFSItem> ToDelete;
     public:
-      TFSTraverser(TGXApp& xapp, const olxstr& baseDir, const olxstr& prop)  {
-        Property = prop;
+      TFSTraverser(TGXApp& xapp, const olxstr& baseDir, const TStrList &props_)  {
+        for (size_t i=0; i < props_.Count(); i++)
+          props.AddUnique(props_[i]);
         BaseDir = baseDir;
         xa = &xapp;
       }
@@ -5889,9 +5894,9 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
         TPtrList<TFSItem> FoldersToDelete;
         for( size_t i=0; i < ToDelete.Count(); i++ )
           if( !ToDelete[i]->IsFolder() && ToDelete[i]->GetParent() != NULL )  {
-            if( FoldersToDelete.IndexOf( ToDelete[i]->GetParent() ) == InvalidIndex )
-              FoldersToDelete.Add( ToDelete[i]->GetParent() );
-            ToDelete[i]->GetParent()->Remove( *ToDelete[i] );
+            if( FoldersToDelete.IndexOf(ToDelete[i]->GetParent()) == InvalidIndex )
+              FoldersToDelete.Add(ToDelete[i]->GetParent());
+            ToDelete[i]->GetParent()->Remove(*ToDelete[i]);
             ToDelete.Delete(i);
             i--;
           }
@@ -5899,14 +5904,16 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
           bool deleted = false;
           for( size_t i=0; i < FoldersToDelete.Count(); i++ )  {
             if( FoldersToDelete[i]->IsEmpty() )  {
-              olxstr path = FoldersToDelete[i]->GetIndexFS().GetBase() + FoldersToDelete[i]->GetFullName(),
+              olxstr path = FoldersToDelete[i]->GetIndexFS().GetBase() +
+                FoldersToDelete[i]->GetFullName(),
               cpath = path.CommonString(path, BaseDir);
-              TBasicApp::GetLog() << (olxstr("\rDeleting folder /~/") << path.SubStringFrom(cpath.Length()));
+              TBasicApp::GetLog() << (olxstr("\rDeleting folder /~/") <<
+                path.SubStringFrom(cpath.Length()));
               xa->Draw();
               wxTheApp->Dispatch();
               TEFile::RmDir( path );
               deleted = true;
-              FoldersToDelete[i]->GetParent()->Remove( *FoldersToDelete[i] );
+              FoldersToDelete[i]->GetParent()->Remove(*FoldersToDelete[i]);
               FoldersToDelete.Delete(i);
               i--;
             }
@@ -5915,10 +5922,18 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
         }
       }
       bool OnItem(TFSItem& it) {
-        if( it.HasProperty(Property) )  {
+        bool hp = false;
+        for (size_t i=0; i < it.PropertyCount(); i++) {
+          if (props.IndexOf(it.GetProperty(i)) != InvalidIndex) {
+            hp = true;
+            break;
+          }
+        }
+        if (hp) {
           olxstr path = it.GetIndexFS().GetBase() + it.GetFullName(),
                    cpath = path.CommonString(path, BaseDir);
-          TBasicApp::GetLog() << (olxstr("\rDeleting /~/") << path.SubStringFrom(cpath.Length()));
+          TBasicApp::GetLog() << (olxstr("\rDeleting /~/") <<
+            path.SubStringFrom(cpath.Length()));
           xa->Draw();
           wxTheApp->Dispatch();
           TEFile::DelFile( path );
@@ -5927,7 +5942,9 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
         return true;
       }
   };
-void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   if( Cmds[0].StartsFrom("olex") )  {
     E.ProcessingError(__OlxSrcInfo, "cannot uninstall core components");
     return;
@@ -5935,23 +5952,24 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
   TDataItem* di = FPluginItem->FindItem( Cmds[0] );
   if( di != NULL )  {
     TStateChange sc(prsPluginInstalled, false);
-    FPluginItem->DeleteItem( di );
+    FPluginItem->DeleteItem(di);
     OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     olxstr indexFile = TBasicApp::GetBaseDir() + "index.ind";
     if( TEFile::Exists(indexFile) )  {
       TOSFileSystem osFS( TBasicApp::GetBaseDir() );
-      TFSIndex fsIndex( osFS );
+      TFSIndex fsIndex(osFS);
 
-      fsIndex.LoadIndex( indexFile );
-      TFSTraverser* trav = new TFSTraverser(*FXApp, TBasicApp::GetBaseDir(), olxstr("plugin-") << Cmds[0]);
-      TFSItem::Traverser.Traverse<TFSTraverser>(fsIndex.GetRoot(), *trav );
+      fsIndex.LoadIndex(indexFile);
+      TFSTraverser* trav = new TFSTraverser(*FXApp, TBasicApp::GetBaseDir(),
+        updater::UpdateAPI::GetPluginProperties(Cmds[0]));
+      TFSItem::Traverser.Traverse<TFSTraverser>(fsIndex.GetRoot(), *trav);
       delete trav;
-      fsIndex.SaveIndex( indexFile );
+      fsIndex.SaveIndex(indexFile);
       TBasicApp::NewLogEntry() << "\rUninstallation complete";
       FXApp->Draw();
     }
   }
-  FPluginFile.SaveToXLFile( PluginFile );
+  FPluginFile.SaveToXLFile(PluginFile);
 }
 //..............................................................................
 void TMainForm::funIsPluginInstalled(const TStrObjList& Params, TMacroError &E) {

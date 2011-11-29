@@ -181,9 +181,10 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr,
     f_lsnr = NULL;
   }
   fs->SetBase(AddTagPart(fs->GetBase(), false));
-  TStrList names;
-  if (TBasicApp::Is64BitCompilation())
-    names << (TEFile::UnixPath(olxstr(fs->GetBase()) << name << "_64.zip"));
+  TStrList names,
+    sys_tags = GetSystemTags();
+  names << (TEFile::UnixPath(olxstr(fs->GetBase()) << name << '-' <<
+    sys_tags.GetLastString() << ".zip"));
   names << (TEFile::UnixPath(olxstr(fs->GetBase()) << name << ".zip"));
 
   olxstr zip_fn;
@@ -198,7 +199,7 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr,
     }
   }
   catch( const TExceptionBase& exc )  {
-    log.Add( exc.GetException()->GetFullMessage() );
+    log.Add(exc.GetException()->GetFullMessage());
     delete fs;
     PatchAPI::UnlockUpdater();
     return updater::uapi_InvaildRepository;
@@ -220,14 +221,12 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr,
       TFSIndex fsi(zfs());
       TOSFileSystem osf(TBasicApp::GetBaseDir());
       osf.RemoveAccessRight(afs_DeleteAccess);
-      TStrList props;
-      props.Add(olxstr("plugin-") << name);
+      TStrList props = GetPluginProperties(name);
       if( p_lsnr != NULL )  {
         fsi.OnProgress.Add(p_lsnr);
         p_lsnr = NULL;
       }
       fsi.Synchronise(osf, props);
-      //zfs.ExtractAll(TBasicApp::GetBaseDir());
     }
     TEFile::DelFile(zip_fn);
     delete fs;
@@ -235,7 +234,7 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr,
     PatchAPI::UnlockUpdater();
   }
   catch( const TExceptionBase& exc )  {
-    log.Add( exc.GetException()->GetFullMessage() );
+    log.Add(exc.GetException()->GetFullMessage());
     if( fs != NULL )     delete fs;
     if( is != NULL )  delete is;
     PatchAPI::UnlockUpdater();
@@ -275,6 +274,35 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
   return res;
 }
 //.............................................................................
+const_strlist UpdateAPI::GetSystemTags() {
+  TStrList res;
+  olxstr os_str;
+#if defined(__WIN32__)
+  os_str = "win";
+#elif defined(__MAC__)
+  os_str = "mac";
+#elif defined(__linux__)
+  os_str = "mac";
+#else  
+  os_str = "unknown";
+#endif
+  res << os_str << os_str;
+  if (TBasicApp::Is64BitCompilation())
+    res.GetLastString() << "-64";
+  else
+    res.GetLastString() << "-32";
+  return res;
+}
+//.............................................................................
+const_strlist UpdateAPI::GetPluginProperties(const olxstr &p) {
+  TStrList props,
+    sys_tags = GetSystemTags();
+  props.Add("plugin-") << p;
+  for (size_t i=0; i < sys_tags.Count(); i++)
+    props.Add("plugin-") << p << '-' << sys_tags[i];
+  return props;
+}
+//.............................................................................
 void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
 #if defined(__WIN32__)
@@ -305,17 +333,15 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   }
 #endif
   olxstr pluginFile = TBasicApp::GetBaseDir() + "plugins.xld";
-  if( TEFile::Exists( pluginFile ) )  {
+  if( TEFile::Exists(pluginFile) )  {
     try  {
       TDataFile df;
       df.LoadFromXLFile( pluginFile, NULL );
       TDataItem* PluginItem = df.Root().FindItem("Plugin");
       if( PluginItem != NULL )  {
         for( size_t i=0; i < PluginItem->ItemCount(); i++ )  {
-          if( PluginItem->GetItem(i).GetName().StartsFrom("plugin-") )
-            props.Add(PluginItem->GetItem(i).GetName());
-          else
-            props.Add(olxstr("plugin-") << PluginItem->GetItem(i).GetName());
+          props.AddList(GetPluginProperties(
+            PluginItem->GetItem(i).GetName()));
         }
       }
     }

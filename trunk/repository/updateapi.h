@@ -152,6 +152,7 @@ class UpdateAPI  {
   SettingsFile settings;
   olxstr Tag;
   static const olxstr new_installation_fn;
+  static const_strlist GetSystemTags();
 public:
   UpdateAPI();
   ~UpdateAPI()  {  CleanUp();  }
@@ -167,6 +168,8 @@ public:
   // provided handlers must be created with new, and will be deleted
   short InstallPlugin(AActionHandler* download_lsnr,
     AActionHandler* extract_lsnr, const olxstr& name);
+  
+  static const_strlist GetPluginProperties(const olxstr &p);
 
   SettingsFile& GetSettings() {  return settings;  }
 
