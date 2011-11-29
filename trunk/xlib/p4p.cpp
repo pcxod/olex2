@@ -75,9 +75,9 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   for( size_t i=0; i < Strings.Count(); i++ )  {
     olxstr Tmp = olxstr::DeleteSequencesOf<char>(Strings[i], ' ');
     if( Tmp.IsEmpty() )  continue;
-    olxstr TmpUC = Tmp.UpperCase();
+    olxstr TmpUC = Tmp.ToUpperCase();
     for( size_t j=0; j < params.Count(); j++ )  {
-      if( TmpUC.StartsFrom( params[j] ) ) {
+      if( TmpUC.StartsFrom(params[j] )) {
         *params.GetObject(j) = Tmp.SubStringFrom(params[j].Length()).Trim(' ');
         params.Delete(j);
         break;
@@ -128,7 +128,8 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
     if( !params[0].IsNumber() )  params[0] = '0';
     if( !params[1].IsNumber() )  params[1] = '0';
     if( !params[2].IsNumber() )  params[2] = '0';
-    GetRM().expl.SetCrystalSize(params[0].ToDouble(), params[1].ToDouble(), params[2].ToDouble());
+    GetRM().expl.SetCrystalSize(params[0].ToDouble(),
+      params[1].ToDouble(), params[2].ToDouble());
   }
 
   params.Clear();
