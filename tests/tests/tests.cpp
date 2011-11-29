@@ -36,6 +36,7 @@
 #include "tests/evalue_test.h"
 #include "tests/cell_reduction_test.h"
 #include "tests/hall_test.h"
+#include "tests/formula_test.h"
 
 class Listener : public AActionHandler  {
 public:
@@ -83,6 +84,7 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::cell_reduction_test);
   tests.Add(&test::AlgTests);
   tests.Add(&test::HallTests);
+  tests.Add(&test::FormulaTests);
   tests.run();
   if( argc > 1 )  {
     olxstr data_dir = argv[1];

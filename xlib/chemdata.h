@@ -279,6 +279,10 @@ public:
   reference to provided ContentList
   */
   static ContentList& ParseElementString(const olxstr& su, ContentList& cl);
+  static ConstTypeList<ElementCount> ParseElementString(const olxstr& su) {
+    ContentList cl;
+    return ParseElementString(su, cl);
+  }
   /* sorts the content list, so that C comes first, then H and then by Z
   descending; returns a reference to th provide ContentList
   */
