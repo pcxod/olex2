@@ -356,9 +356,9 @@ public:
   TPtrList SubList(size_t from, size_t count) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(
-      __POlxSourceInfo, from, 0, List.Count()+1);
+      __POlxSourceInfo, from, 0, Count()+1);
     TIndexOutOfRangeException::ValidateRange(
-      __POlxSourceInfo, from+count, 0, List.Count()+1);
+      __POlxSourceInfo, from+count, 0, Count()+1);
 #endif
     TPtrList rv(count);
     memcpy(rv.Items, Items[from], count*sizeof(T*));

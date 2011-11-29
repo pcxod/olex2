@@ -6207,46 +6207,48 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
     }
     // a full basis provided
     else if (atoms.Count() >= 3*group_cnt && (atoms.Count()%group_cnt) == 0) {
-      TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
-      TSAtomPList atomsToTransform;
-      for( size_t i=0; i < atoms.Count()/2; i++ )
-        satomp.AddNew<TSAtom*,TSAtom*>(atoms[i], atoms[i+atoms.Count()/2]);
-      TNetwork &netA = satomp[0].GetA()->GetNetwork(),
-        &netB = satomp[0].GetB()->GetNetwork();
-      bool valid = true;
-      for( size_t i=1; i < satomp.Count(); i++ )  {
-        if( satomp[i].GetA()->GetNetwork() != netA ||
-            satomp[i].GetB()->GetNetwork() != netB )
-        {
-          valid = false;
-          E.ProcessingError(__OlxSrcInfo,
-            "atoms should belong to two distinct fragments or the same"
-            " fragment");
-          break;
+      const size_t atom_a_group = atoms.Count()/group_cnt;
+      TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp(atom_a_group);
+      // fill the reference group
+      for (size_t i=0; i < atom_a_group; i++)
+        satomp[i].SetA(atoms[i]);
+      TNetwork &netA = atoms[0]->GetNetwork();
+      for (size_t gi=1; gi < group_cnt; gi++) {
+        for (size_t i=0; i < atom_a_group; i++)
+          satomp[i].SetB(atoms[i+gi*atom_a_group]);
+        TNetwork &netB = satomp[0].GetB()->GetNetwork();
+        bool valid = true;
+        for (size_t i=1; i < satomp.Count(); i++)  {
+          if (satomp[i].GetA()->GetNetwork() != netA ||
+              satomp[i].GetB()->GetNetwork() != netB)
+          {
+            valid = false;
+            E.ProcessingError(__OlxSrcInfo,
+              "Atoms should belong to two distinct fragments or the same"
+              " fragment. Skipping group #") << gi;
+            break;
+          }
+        }
+        if (valid)  {
+          // restore the other unit cell, if any...
+          if (&latt != &netA.GetLattice() || &latt != &netB.GetLattice())  {
+            TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice()
+              : netA.GetLattice();
+            latt1.RestoreADPs();
+          }
+          TSAtomPList atomsToTransform;
+          if (netA != netB) // collect all atoms
+            atomsToTransform = netB.GetNodes();
+          else
+            atomsToTransform = atoms.SubList(gi*atom_a_group, atom_a_group);
+          TNetwork::AlignInfo align_info =
+            MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
+          TNetwork::DoAlignAtoms(atomsToTransform, align_info);
+          CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
         }
       }
-      if( valid )  {
-        // restore the other unit cell, if any...
-        if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
-          TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice()
-            : netA.GetLattice();
-          latt1.RestoreADPs();
-        }
-        if( netA != netB )  {  // collect all atoms
-          for( size_t i=0; i < netB.NodeCount(); i++ )
-            atomsToTransform.Add(netB.Node(i));
-        }
-        else  {
-          for( size_t i=atoms.Count()/2; i < atoms.Count(); i++ )
-            atomsToTransform.Add(atoms[i]);
-        }
-        TNetwork::AlignInfo align_info =
-          MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
-        TNetwork::DoAlignAtoms(atomsToTransform, align_info);
-        FXApp->UpdateBonds();
-        FXApp->CenterView();
-        CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
-      }
+      FXApp->UpdateBonds();
+      FXApp->CenterView();
     }
   }
   else  {
