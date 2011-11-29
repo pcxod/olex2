@@ -1405,10 +1405,10 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
       }
     }
     if( has_int_groups )  {
-      TDataItem &internals = di.AddItem("olex2.constraint.u_proxy");
       for( size_t i=0; i < AfixGroups.Count(); i++ )  {
         if( AfixGroups[i].GetAfix() == -1 && !AfixGroups[i].IsEmpty() )  {
-          olxstr line;
+          olxstr line = "olex2.constraint.u_proxy ";
+          line << AfixGroups[i].GetPivot().GetLabel();
           for( size_t j=0; j < AfixGroups[i].Count(); j++ )  {
             if( AfixGroups[i][j].IsDeleted() )  continue;
             line << ' ' << AfixGroups[i][j].GetLabel();
