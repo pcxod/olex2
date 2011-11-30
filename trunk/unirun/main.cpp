@@ -167,7 +167,7 @@ int main(int argc, char** argv)  {
       }
     }
     DoRun();
-    if( bapp.Options.Contains("-run") ) {
+    if( !bapp.Options.Contains("-run") ) {
       olxcstr argl = bapp.Arguments.Text(' ', 1);
       DoLaunch(argl);
     }
