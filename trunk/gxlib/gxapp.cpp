@@ -300,6 +300,11 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
   XFile().OnFileLoad.Add(this, ID_OnFileLoad);
   XFile().OnFileLoad.Add(&TEGC::NewG<xappXFileLoad>(this));
   XFile().OnFileClose.Add(this, ID_OnFileClose);
+  double ma = TBasicApp::GetInstance().Options
+    .FindValue("q_peak_min_alpha", "0").ToDouble();
+  if (ma < 0) ma = 0;
+  else if (ma > 0.75) ma = 0.75;
+  TXAtom::SetMinQAlpha(ma);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
