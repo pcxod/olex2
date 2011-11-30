@@ -293,10 +293,9 @@ void DoLaunch(const olxcstr &arg)  {
   static const olxcstr ld_var = "LD_LIBRARY_PATH";
 #  endif
   olxcstr ld_path;
-  ld_path << bd << "lib:" << bd << "Python27:" << bd << "cctbx/cctbx_build/lib";
+  ld_path << bd << "lib:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
-  // if this is set it wil not start up on Mac
-  //olx_setenv("PYTHONHOME", bd + "Python27");
+  olx_setenv("PYTHONHOME", bd);
   const olxcstr cmdl = bd + "olex2_exe";
 #endif
   TEFile::ChangeDir(bd);
