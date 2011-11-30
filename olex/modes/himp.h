@@ -33,7 +33,7 @@ public:
       if( XA.GetType() == iHydrogenZ )  {
         TSAtom* aa = NULL;
         for( size_t i=0; i < XA.NodeCount(); i++ )  {
-          if( XA.Node(i).GetType().z < 2 )  {
+          if( XA.Node(i).GetType().z > 2 )  {
             if( aa == NULL )  aa = &XA.Node(i);
             else  {  // bad connectivity
               aa = NULL;
@@ -42,15 +42,22 @@ public:
           }
         }
         if( aa != NULL )  {
-          vec3d v(XA.crd());
-          v -= aa->crd();
-          v.NormaliseTo(BondLength);
-          v += aa->crd();
-          XA.crd() = v;
-          TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(v);
-          XA.ccrd() = v;
-          XA.CAtom().ccrd() = v;
+          XA.crd() = aa->crd() + (XA.crd()-aa->crd()).NormaliseTo(BondLength);
+          XA.ccrd() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit()
+            .Fractionalise(XA.crd());
+          XA.CAtom().ccrd() = XA.ccrd();
           TGlXApp::GetGXApp()->MarkLabel(XA, true);
+        }
+      }
+      else {
+        for( size_t i=0; i < XA.NodeCount(); i++ )  {
+          if (XA.Node(i).GetType().z != iHydrogenZ) continue;
+          XA.Node(i).crd() = XA.crd() + (XA.Node(i).crd()-XA.crd())
+            .NormaliseTo(BondLength);
+          XA.Node(i).ccrd() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit()
+            .Fractionalise(XA.Node(i).crd());
+          XA.Node(i).CAtom().ccrd() = XA.Node(i).ccrd();
+          TGlXApp::GetGXApp()->MarkLabel(XA.Node(i), true);
         }
       }
       return true;
