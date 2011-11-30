@@ -63,6 +63,7 @@ private:
     RimsIndex, 
     DisksIndex,
     CrossIndex;
+  static double MinQAlpha;
   Poly* Polyhedron;
   TXGlLabel* Label;
   void CreatePolyhedron(bool v);
@@ -145,7 +146,8 @@ public:
   static void SetQPeakScale(float V);    // to use with q-peaks
   static float GetQPeakSizeScale();    // to use with q-peaks
   static void SetQPeakSizeScale(float V);    // to use with q-peaks
-
+  static double GetMinQAlpha() { return MinQAlpha; }
+  static void SetMinQAlpha(double v) { MinQAlpha = v; }
   void CalcRad(short DefAtomR);
 
   void ApplyStyle(TGraphicsStyle& S);

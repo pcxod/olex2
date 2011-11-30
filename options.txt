@@ -2,3 +2,6 @@ p4p_automate [True] - specifies if the SG/SGE to be executed after loading the P
 aromatic_rings [False] - specifies if the aromatic rings are to be automatically created
 mouse_invert_zoom [False] - specifies if the mouse zooming operation to be inverted
 mouse_click_threshold [2] - specifiec the rectangluar area size where the mouse click is recognised
+hbond_min_angle [120] - the minimal angle fo H-bonds to exist
+preserve_invalid_ins [false] - if invalid instructios are preserved vs being deleted
+q_peak_min_alpha [0] - minimum value for the Q-peak transparence (0-0.75)
