@@ -1168,23 +1168,37 @@ ContentList& XElementLib::ParseElementString(const olxstr& su,
 }
 //..............................................................................
 void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  {
+  if (str.Length() ==2) {
+    if (IsElement(str))
+      toks.Add(str);
+    else if (IsElement(str[0]) && IsElement(str[1])) {
+      toks.Add(str[0]);
+      toks.Add(str[1]);
+    }
+    else {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("Unknown element - ") << str);
+    }
+    return;
+  }
   olxstr elm;
   for( size_t i=0; i < str.Length(); i++ )  {
     if( str[i] >= 'A' && str[i] <= 'Z' )  {
       if( !elm.IsEmpty() )  {
         if( (i+1) < str.Length() )  {
           if( str[i+1] >= 'A' && str[i+1] <= 'Z' )  {
-            olxstr tmp(elm + str[i+1]);
+            olxstr tmp(elm + str[i]);
             if( IsElement(tmp) || IsShortcut(tmp) )  {
-              i++;
               toks.Add(elm);
-              if( (i+1) < str.Length() )
-                elm = str[i];
+              elm.SetLength(0);
+              continue;
             }
           }
         }
-        if( !IsElement(elm) && !IsShortcut(elm) )
-          throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element - ") << elm);
+        if (!IsElement(elm) && !IsShortcut(elm)) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            olxstr("Unknown element - ") << elm);
+        }
         toks.Add(elm);
         elm = str[i];
       }
@@ -1195,8 +1209,10 @@ void XElementLib::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  {
       elm << str[i];
   }
   if( !elm.IsEmpty() )  {
-    if( !IsElement(elm) && !IsShortcut(elm) )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element - ") << elm);
+    if(!IsElement(elm) && !IsShortcut(elm)) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("Unknown element - ") << elm);
+    }
     toks.Add(elm);
   }
 }
