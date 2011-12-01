@@ -184,7 +184,6 @@ size_t THtml::GetSwitchState(const olxstr& switchName)  {
 }
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
-  TBasicApp::NewLogEntry() << "dd";
   this->SetFocusIgnoringChildren();
   MouseX = event.GetX();
   MouseY = event.GetY();
