@@ -370,7 +370,7 @@ size_t TGXApp::GetNetworks(TNetPList& nets) {
   return c;
 }
 //..............................................................................
-void TGXApp::CreateObjects(bool centerModel)  {
+void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   OnObjectsCreate.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
@@ -392,7 +392,7 @@ void TGXApp::CreateObjects(bool centerModel)  {
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
     xa.Create();
-    if( !xa.IsDeleted() )  {
+    if( !xa.IsDeleted() && init_visibility )  {
       xa.SetVisible(!FStructureVisible ? false
         : (xa.IsAvailable() && xa.CAtom().IsAvailable()));  
     }
@@ -403,9 +403,9 @@ void TGXApp::CreateObjects(bool centerModel)  {
     TXBond& xb = bi.Next();
     xb.Update();
     xb.Create(TXBond::GetLegend(xb, 3));
-    if( !xb.IsDeleted() )
+    if( !xb.IsDeleted() && init_visibility )
       xb.SetVisible(xb.A().IsVisible() && xb.B().IsVisible());
-    if( xb.IsVisible() )  {
+    if( xb.IsVisible() && init_visibility )  {
       if( xb.A().GetType() == iQPeakZ || xb.B().GetType() == iQPeakZ )
         xb.SetVisible(FQPeakBondsVisible);
       else if( xb.GetType() == sotHBond )
@@ -609,7 +609,7 @@ void TGXApp::Quality(const short V)  {
   BondIterator bi = GetBonds();
   while( bi.HasNext() )
     bi.Next().GetPrimitives().ClearPrimitives();
-  CreateObjects(false);
+  CreateObjects(false, false);
   Draw();
 }
 //..............................................................................
@@ -2842,14 +2842,14 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   double LW = 0;
   olx_gl::get(GL_LINE_WIDTH, &LW);
   olx_gl::lineWidth(LW*resolution);
-  CreateObjects(false);
+  CreateObjects(false, false);
   UpdateLabels();
 }
 //..............................................................................
 void TGXApp::FinishDrawBitmap()  {
   FLabels->Clear();
   GetRender().GetScene().RestoreFontScale();
-  CreateObjects(false);
+  CreateObjects(false, false);
   UpdateLabels();
 }
 //..............................................................................

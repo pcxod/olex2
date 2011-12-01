@@ -335,7 +335,7 @@ public:
   // FileName - argv[0]
   TGXApp(const olxstr& FileName);
   virtual ~TGXApp();
-  void CreateObjects(bool CenterModel);
+  void CreateObjects(bool CenterModel, bool init_visibility=true);
   void UpdateBonds();
   AGDrawObject* AddObjectToCreate(AGDrawObject* obj)  {  return ObjectsToCreate.Add(obj);  }
   void Clear();
