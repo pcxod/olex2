@@ -16,6 +16,7 @@
 #include "estack.h"
 #include "md5.h"
 #include "zipfs.h"
+#include <sys/stat.h>
 
 #undef GetObject
 
@@ -523,7 +524,11 @@ void TFSItem::DelFile() {
 void TFSItem::_DelFile() {
   AFileSystem& fs =  (Index.DestFS != NULL) ? GetDestFS() : GetIndexFS();
   if (!EsdlInstanceOf(fs, TOSFileSystem) || IsEmpty()) return;
-  TEFile::DelFile(fs.GetBase()+ GetFullName());
+  olxstr fn = fs.GetBase()+ GetFullName();
+  if (TEFile::Exists(fn)) {
+    TEFile::Chmod(fn, S_IWRITE);
+    TEFile::DelFile(fn);
+  }
 }
 //.............................................................................
 TFSItem& TFSItem::operator = (const TFSItem& FI)  {
