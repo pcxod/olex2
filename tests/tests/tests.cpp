@@ -37,6 +37,7 @@
 #include "tests/cell_reduction_test.h"
 #include "tests/hall_test.h"
 #include "tests/formula_test.h"
+#include "tests/smat_test.h"
 
 class Listener : public AActionHandler  {
 public:
@@ -76,7 +77,7 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::spline_test);
   tests.Add(&test::MatIdTests);
   tests.Add(&test::symm_parser_tests);
-  tests.Add(&smatd::Tests);
+  tests.Add(&test::SymmMatTests);
   tests.Add(&test::vcov_test);
   tests.Add(&test::IndexRangeTest);
   tests.Add(&test::reflection_tests);

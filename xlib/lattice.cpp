@@ -103,8 +103,7 @@ size_t TLattice::GenerateMatrices(smatd_plist& Result,
      const vec3d& MFrom, const vec3d& MTo)  
 {
   const size_t mstart = Result.Count();
-  const vec3d Center = GetAsymmUnit().GetOCenter(true, false);
-
+  const vec3d Center(0.5);
   Result.SetCapacity( (int)(GetUnitCell().MatrixCount()*
                               (olx_abs(VTo[0]-VFrom[0])+1)*
                               (olx_abs(VTo[1]-VFrom[1])+1)*
@@ -119,7 +118,8 @@ size_t TLattice::GenerateMatrices(smatd_plist& Result,
         tmp_mat.t[0] += j;  tmp_mat.t[1] += k;  tmp_mat.t[2] += l;
         if( !vec3d::IsInRangeInc(tmp_mat * Center, MFrom, MTo) )
           continue;
-        Result.Add(new smatd(tmp_mat))->SetId((uint8_t)i, j, k, l);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
+        // set Tag to identify the matrix (and ellipsoids) in the UnitCell
+        Result.Add(new smatd(tmp_mat))->SetId((uint8_t)i, j, k, l);
       }
   }
   const size_t res_cnt = Result.Count();

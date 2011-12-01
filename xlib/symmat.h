@@ -122,6 +122,7 @@ public:
 
   bool IsFirst() const {  return Id == 0x00808080;  }
   uint8_t GetContainerId() const {  return (uint8_t)(Id >> 24);  }
+
   static uint8_t GetContainerId(uint32_t id) {  return (uint8_t)(id >> 24);  }
   static int8_t GetTx(uint32_t id) {
     return (int8_t)(128-(int8_t)((id&0x00FF0000) >> 16));
@@ -161,6 +162,38 @@ public:
     rv |= (uint32_t)(0x80-t[2]);
     return rv;
   }
+  // normalises a fractional coordinate/translation
+  static vec3d NormaliseFractional(const vec3d &t_) {
+    vec3d t = t_;
+    for (int j=0; j < 3; j++) {
+      t[j] -= olx_floor(t[j]);
+      if (t[j] < 1e-3 || t[j] > 0.999) t[j] = 0;
+    }
+    return t;
+  }
+  /* returns a vector with smaller or equal values */
+  template <class list_t, class accessor_t>
+  static vec3d StandardiseFractional(const vec3d &x, const list_t& ml,
+    const accessor_t acc)
+  {
+    vec3d v = NormaliseFractional(x);
+    for( size_t i=0; i < ml.Count(); i++ )  {
+      vec3d tmp = NormaliseFractional(acc(ml[i])*x);
+      if( (tmp[0] < v[0]) ||  // standardise then ...
+        (olx_abs(tmp[0]-v[0]) < 1e-3 && (tmp[1] < v[1])) ||
+        (olx_abs(tmp[0]-v[0]) < 1e-3 &&
+         olx_abs(tmp[1]-v[1]) < 1e-3 && (tmp[2] < v[2])) )    
+      {
+        v = tmp;
+      }
+    }
+    return v;
+  }
+  template <class list_t>
+  static vec3d StandardiseFractional(const vec3d &x, const list_t& ml) {
+    return StandardiseFractional(x, ml, DirectAccessor());
+  }
+
   struct IdComparator {
     static int Compare(const TSymmMat& a, const TSymmMat& b)  {
       return olx_cmp(a.GetId(), b.GetId());
@@ -171,22 +204,6 @@ public:
       return olx_cmp(a.GetContainerId(), b.GetContainerId());
     }
   };
-  static void Tests(OlxTests& t)  {
-    t.description = __OlxSrcInfo;
-    const uint32_t id_1 = GenerateId(0, -56, -43, -21);
-    const uint32_t id_2 = GenerateId(0, vec3i(-56, -43, -21));
-    if( id_1 != id_2 ) {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "ID generation mismatch");
-    }
-    if( GetContainerId(id_1) != 0 )
-      throw TFunctionFailedException(__OlxSourceInfo, "invalid ID");
-    if( GetT(id_1)[0] != -56 || GetT(id_1)[1] != -43 || GetT(id_1)[2] != -21 )
-      throw TFunctionFailedException(__OlxSourceInfo, "invalid T");
-    if( GetT(id_1)[0] != GetTx(id_1) || GetT(id_1)[1] != GetTy(id_1) ||
-        GetT(id_1)[2] != GetTz(id_1) )
-      throw TFunctionFailedException(__OlxSourceInfo, "invalid T");
-  }
 };
 
 typedef TSymmMat<int,double>   smatd;

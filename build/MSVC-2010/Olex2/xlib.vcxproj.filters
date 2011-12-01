@@ -1064,6 +1064,9 @@
     <ClInclude Include="..\..\..\xlib\tests\formula_test.h">
       <Filter>tests</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\xlib\tests\smat_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
