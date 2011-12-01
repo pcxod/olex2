@@ -3353,26 +3353,24 @@ void TGXApp::SetPackMode(short v, const olxstr& atoms)  {
 void TGXApp::CreateXGrowPoints()  {
   if( XGrowPoints.Count() != 0 )  return;
   // remove the identity matrix 
-  smatd_plist matrices;
   smatd I;
   I.r.I();
   UsedTransforms.AddCopy(I);
 
   vec3d MFrom(-1.5, -1.5, -1.5), MTo(2, 2, 2);
-  vec3d VTo = (MTo+1).Round<int>();
-  vec3d VFrom = (MFrom-1).Round<int>();
-  XFile().GetLattice().GenerateMatrices(matrices, VFrom, VTo, MFrom, MTo);
+  smatd_plist matrices = XFile().GetLattice().GenerateMatrices(MFrom, MTo);
 
-  VFrom = XFile().GetAsymmUnit().GetOCenter(false, false);
+  vec3d VFrom = XFile().GetAsymmUnit().GetOCenter(false, false);
   for( size_t i=0; i < matrices.Count(); i++ )  {
     if( UsedTransforms.IndexOf(*matrices[i]) != InvalidIndex )  {
       delete matrices[i];
       continue;
     }
-    VTo = VFrom * matrices[i]->r;
+    vec3d VTo = VFrom * matrices[i]->r;
     VTo += matrices[i]->t;
     XFile().GetAsymmUnit().CellToCartesian(VTo);
-    TXGrowPoint& gp = XGrowPoints.Add( new TXGrowPoint(*FGlRender, EmptyString(), VTo, *matrices[i]) );
+    TXGrowPoint& gp = XGrowPoints.Add(
+      new TXGrowPoint(*FGlRender, EmptyString(), VTo, *matrices[i]));
     gp.Create("GrowPoint");
     delete matrices[i];
   }
