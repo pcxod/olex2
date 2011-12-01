@@ -4313,7 +4313,8 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
       chne.LoadFromExpression(list[i].formula);
       const double M = chne.CHN(calc);
       for( size_t j=0; j < calc.Count(); j++ )  {
-        tab[i][1] << XElementLib::GetByIndex(calc.GetKey(j)).symbol << ':' << olxstr::FormatFloat(2, calc.GetValue(j)*100/M);
+        tab[i][1] << XElementLib::GetByIndex(calc.GetKey(j)).symbol << ':' <<
+          olxstr::FormatFloat(2, calc.GetValue(j)*100/M);
         if( (j+1) < calc.Count() )
           tab[i][1] << ' ';
       }
@@ -4323,38 +4324,35 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
 }
 //..............................................................................
-void XLibMacros::macStandardise(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macStandardise(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
   smatd_list sm;
   sg.GetMatrices(sm, mattAll^mattIdentity);
   if( Cmds.IsEmpty() )  {
-    for( size_t i=0; i < au.AtomCount(); i++ )
-      MapUtil::StandardiseVec(au.GetAtom(i).ccrd(), sm);
+    for( size_t i=0; i < au.AtomCount(); i++ ) {
+      au.GetAtom(i).ccrd() = smatd::StandardiseFractional(
+        au.GetAtom(i).ccrd(), sm);
+    }
   }
   else  {
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       TCAtom& ca = au.GetAtom(i);
-      vec3d &v = ca.ccrd(), cart;
-      for( int j=0; j < 3; j++ )  {
-        while( v[j] < 0 )  v[j] += 1.0;
-        while( v[j] >= 1.0 )  v[j] -= 1.0;
-      }
-      double d = au.CellToCartesian(v, cart).QLength();
+      vec3d v = ca.ccrd() - ca.ccrd().Floor<int>();
+      double d = au.Orthogonalise(v).QLength();
       for( size_t j=0; j < sm.Count(); j++ )  {
-        vec3d tmp = sm[j]*v;
-        for( int k=0; k < 3; k++ )  {
-          while( tmp[k] < 0 )  tmp[k] += 1.0;
-          while( tmp[k] >= 1.0 )  tmp[k] -= 1.0;
-        }
-        const double _d = au.CellToCartesian(tmp, cart).QLength();
+        vec3d tmp = sm[j]*ca.ccrd();
+        tmp -= tmp.Floor<int>();
+        const double _d = au.Orthogonalise(tmp).QLength();
         if( _d < d )  {
           d = _d;
           v = tmp;
         }
       }
-      //MapUtil::StandardiseVec(ca.ccrd(), sm);
+      ca.ccrd() = v;
     }
   }
   xapp.XFile().GetLattice().Init();
