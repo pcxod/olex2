@@ -92,91 +92,88 @@ void TLattice::Clear(bool ClearUnitCell)  {
   }
 }
 //..............................................................................
-size_t TLattice::GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
-  const vec3d& MFrom, const vec3d& MTo)  {
-  GenerateMatrices(Matrices, VFrom, VTo, MFrom, MTo);
-  return MatrixCount();
-}
-//..............................................................................
-size_t TLattice::GenerateMatrices(smatd_plist& Result,
-     const vec3d& VFrom, const vec3d& VTo,
-     const vec3d& MFrom, const vec3d& MTo)  
+ConstPtrList<smatd> TLattice::GenerateMatrices(
+  const vec3d& VFrom, const vec3d& VTo)
 {
-  const size_t mstart = Result.Count();
-  const vec3d Center(0.5);
-  Result.SetCapacity( (int)(GetUnitCell().MatrixCount()*
-                              (olx_abs(VTo[0]-VFrom[0])+1)*
-                              (olx_abs(VTo[1]-VFrom[1])+1)*
-                              (olx_abs(VTo[2]-VFrom[2])+1)) );
-
-  const size_t uc_mc = GetUnitCell().MatrixCount();
-  for( size_t i=0; i < uc_mc; i++ )  {
-    for( int j=(int)VFrom[0]; j <= (int)VTo[0]; j++ )
-      for( int k=(int)VFrom[1]; k <= (int)VTo[1]; k++ )
-      for( int l=(int)VFrom[2]; l <= (int)VTo[2]; l++ )  {
-        smatd tmp_mat = GetUnitCell().GetMatrix(i);
-        tmp_mat.t[0] += j;  tmp_mat.t[1] += k;  tmp_mat.t[2] += l;
-        if( !vec3d::IsInRangeInc(tmp_mat * Center, MFrom, MTo) )
-          continue;
-        // set Tag to identify the matrix (and ellipsoids) in the UnitCell
-        Result.Add(new smatd(tmp_mat))->SetId((uint8_t)i, j, k, l);
-      }
-  }
-  const size_t res_cnt = Result.Count();
-  for( size_t i=0; i < mstart; i++ )  {  // check if al matrices are uniq
-    smatd* M = Result[i];
-    if( M == NULL )  continue;
-    for( size_t j=mstart; j < res_cnt; j++ )  {
-      smatd* M1 = Result[j];
-      if( M1 == NULL )  continue;
-      if( M1->GetId() == M->GetId() )  {
-        delete M1;
-        Result[j] = NULL;
-        break;
+  olxdict<uint32_t, smatd*, TPrimitiveComparator> matrices;
+  const vec3i ts = (VFrom-vec3d(0)).Round<int>(),
+    tt = (VTo-vec3d(0)).Round<int>();
+  const TUnitCell &uc = GetUnitCell();
+  TAsymmUnit &au = GetAsymmUnit();
+  for( size_t i=0; i < uc.MatrixCount(); i++ )  {
+    const smatd& m = uc.GetMatrix(i);
+    for( size_t j=0; j < au.AtomCount(); j++ )  {
+      TCAtom& ca = au.GetAtom(j);
+      if( !ca.IsAvailable() )  continue;
+      vec3d c = m*ca.ccrd();
+      vec3i t = -c.Floor<int>();
+      c += t;
+      for (int tx=ts[0]; tx <= tt[1]; tx++) {
+        for (int ty=ts[1]; ty <= tt[1]; ty++) {
+          for (int tz=ts[2]; tz <= tt[2]; tz++) {
+            vec3i t_(tx, ty, tz);
+            if (!vec3d::IsInRangeInc(c+t_, VFrom, VTo)) continue;
+            t_ += t;
+            const uint32_t m_id = smatd::GenerateId((uint8_t)i, t_);
+            if (!matrices.HasKey(m_id)) {
+              smatd *m_ = new smatd(m);
+              m_->SetRawId(m_id);
+              matrices.Add(m_id, m_)->t += t_;
+            }
+          }
+        }
       }
     }
   }
-  Result.Pack();
-  if( Result.IsEmpty() )
-    Result.Add(new smatd)->I().SetId(0);
-  return Result.Count();
+  TPtrList<smatd> result(matrices.Count());
+  for (size_t i=0; i < matrices.Count(); i++)
+    result[i] = matrices.GetValue(i);
+  if( result.IsEmpty() )
+    result.Add(new smatd)->I().SetId(0);
+  return result;
 }
 //..............................................................................
-size_t TLattice::GenerateMatrices(smatd_plist& Result, const vec3d& center, double rad)  {
+ConstPtrList<smatd> TLattice::GenerateMatrices(
+  const vec3d& center_, double rad)
+{
   const TAsymmUnit& au = GetAsymmUnit();
   const vec3d cnt = au.GetOCenter(true, false);
-  const size_t uc_mc = GetUnitCell().MatrixCount();
+  const TUnitCell &uc = GetUnitCell();
   const double qrad = rad*rad;
-  const size_t mstart = Result.Count();
-  for( size_t i=0; i < uc_mc; i++ )  {
-    for( int j=-5; j <= 5; j++ )
-      for( int k=-5; k <= 5; k++ )
-        for( int l=-5; l <= 5; l++ )  {
-          smatd m = GetUnitCell().GetMatrix(i);
-          m.t[0] += j;  m.t[1] += k;  m.t[2] += l;
-          vec3d rs = au.Orthogonalise(m * cnt);
-          if( center.QDistanceTo(rs) > qrad )  continue;
-          Result.Add(new smatd(m))->SetId((uint8_t)i, j, k, l);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
+  olxdict<uint32_t, smatd*, TPrimitiveComparator> matrices;
+  const vec3d center = au.Fractionalise(center_);
+  for( size_t i=0; i < uc.MatrixCount(); i++ )  {
+    const smatd& m = uc.GetMatrix(i);
+    for( size_t j=0; j < au.AtomCount(); j++ )  {
+      TCAtom& ca = au.GetAtom(j);
+      if( !ca.IsAvailable() )  continue;
+      vec3d c = m*ca.ccrd();
+      vec3i t = -c.Floor<int>();
+      c += t;
+      c -= center;
+      for (int tx=-4; tx <= 4; tx++) {
+        for (int ty=-4; ty <= 4; ty++) {
+          for (int tz=-4; tz <= 4; tz++) {
+            vec3i t_(tx, ty, tz);
+            if (au.Orthogonalise(c+t_).QLength() > qrad) continue;
+            t_ += t;
+            const uint32_t m_id = smatd::GenerateId((uint8_t)i, t_);
+            if (!matrices.HasKey(m_id)) {
+              smatd *m_ = new smatd(m);
+              m_->SetRawId(m_id);
+              matrices.Add(m_id, m_)->t += t_;
+            }
+          }
         }
-  }
-  const size_t res_cnt = Result.Count();
-  for( size_t i=0; i < mstart; i++ )  {  // check if all matrices are uniq
-    smatd* m = Result[i];
-    if( m == NULL )  continue;
-    for( size_t j=mstart; j < res_cnt; j++ )  {
-      smatd* m1 = Result[j];
-      if( m1 == NULL )  continue;
-      if( m1->GetId() == m->GetId() )  {
-        delete m1;
-        Result[j] = NULL;
-        break;
       }
     }
   }
-  Result.Pack();
-  if( Result.IsEmpty() )
-    Result.Add(new smatd )->I().SetId(0);
-  return Result.Count();
+  TPtrList<smatd> result(matrices.Count());
+  for (size_t i=0; i < matrices.Count(); i++)
+    result[i] = matrices.GetValue(i);
+  if( result.IsEmpty() )
+    result.Add(new smatd)->I().SetId(0);
+  return result;
 }
 //..............................................................................
 void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
@@ -346,6 +343,7 @@ void TLattice::GenerateCell()  {
   OnStructureGrow.Enter(this);
   const TUnitCell& uc = GetUnitCell();
   TAsymmUnit& au = GetAsymmUnit();
+  olxdict<uint32_t, smatd*, TPrimitiveComparator> matrices;
   for( size_t i=0; i < uc.MatrixCount(); i++ )  {
     const smatd& m = uc.GetMatrix(i);
     for( size_t j=0; j < au.AtomCount(); j++ )  {
@@ -357,29 +355,27 @@ void TLattice::GenerateCell()  {
       const vec3i t = -sa.ccrd().Floor<int>();
       sa.ccrd() += t;
       const uint32_t m_id = smatd::GenerateId((uint8_t)i, t);
-      smatd* lm = NULL;
-      for( size_t k=0; k < Matrices.Count(); k++ )  {
-        if( Matrices[k]->GetId() == m_id )  {
-          lm = Matrices[k];
-          break;
-        }
-      }
+      smatd* lm = matrices.Find(m_id, NULL);
       if( lm == NULL )  {
-        lm = Matrices.Add(new smatd(m));
+        lm = matrices.Add(m_id, new smatd(m));
         lm->t += t;
         lm->SetRawId(m_id);
       }
       au.CellToCartesian(sa.ccrd(), sa.crd());
-      sa.SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(), ca.GetId()));
+      sa.SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(),
+        ca.GetId()));
       sa.AddMatrix(lm);
     }
   }
+  Matrices.SetCapacity(matrices.Count());
+  for (size_t i=0; i < matrices.Count(); i++)
+    Matrices.Add(matrices.GetValue(i));
   Disassemble();
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& center,
-                           bool clear_content)
+void TLattice::GenerateBox(const mat3d& norms, const vec3d& size,
+  const vec3d& center, bool clear_content)
 {
   OnStructureGrow.Enter(this);
   if( clear_content )  {
@@ -388,6 +384,7 @@ void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& c
   }
   const TUnitCell& uc = GetUnitCell();
   TAsymmUnit& au = GetAsymmUnit();
+  olxdict<uint32_t, smatd*, TPrimitiveComparator> matrices;
   for( size_t i=0; i < uc.MatrixCount(); i++ )  {
     const smatd& m = uc.GetMatrix(i);
     for( int di = -3; di <= 3; di++ )  {
@@ -395,14 +392,8 @@ void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& c
         for( int dk = -3; dk <= 3; dk++ )  {
           const vec3d t(di, dj, dk);
           const uint32_t m_id = smatd::GenerateId((uint8_t)i, t);
-          smatd* lm = NULL;
+          smatd* lm = matrices.Find(m_id, NULL);
           bool matrix_created = false;
-          for( size_t j=0; j < Matrices.Count(); j++ )  {
-            if( Matrices[j]->GetId() == m_id )  {
-              lm = Matrices[j];
-              break;
-            }
-          }
           if( lm == NULL )  {
             lm = new smatd(m);
             lm->t += t;
@@ -415,11 +406,14 @@ void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& c
             vec3d p = m*ca.ccrd() + t;
             const vec3d ccrd = p;
             const vec3f c = norms*(au.CellToCartesian(p) - center);
-            if( olx_abs(c[0]) > size[0] || olx_abs(c[1]) > size[1] || olx_abs(c[2]) > size[2] )
+            if( olx_abs(c[0]) > size[0] || olx_abs(c[1]) > size[1] ||
+                olx_abs(c[2]) > size[2] )
+            {
               continue;
+            }
             GenerateAtom(ca, *lm);
             if( matrix_created )  {
-              Matrices.Add(lm);
+              matrices.Add(m_id, lm);
               matrix_created = false;
             }
           }
@@ -429,30 +423,35 @@ void TLattice::GenerateBox(const mat3d& norms, const vec3d& size, const vec3d& c
       }
     }
   }
+  Matrices.SetCapacity(matrices.Count());
+  for (size_t i=0; i < matrices.Count(); i++)
+    Matrices.Add(matrices.GetValue(i));
   Disassemble();
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template, bool ClearCont)  {
+void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo,
+  TCAtomPList* Template, bool ClearCont)
+{
   OnStructureGrow.Enter(this);
-  vec3d VTo(olx_round(MTo[0]+1), olx_round(MTo[1]+1), olx_round(MTo[2]+1));
-  vec3d VFrom(olx_round(MFrom[0]-1), olx_round(MFrom[1]-1), olx_round(MFrom[2]-1));
   if( ClearCont )  {
     ClearAtoms();
     ClearMatrices();
   }
-  GenerateMatrices(VFrom, VTo, MFrom, MTo);
+  Matrices = GenerateMatrices(MFrom, MTo);
   Generate(Template, ClearCont);
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template, bool ClearCont)  {
+void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
+  bool ClearCont)
+{
   OnStructureGrow.Enter(this);
   if( ClearCont )  {
     ClearAtoms();
     ClearMatrices();
   }
-  GenerateMatrices(Matrices, center, rad);
+  Matrices = GenerateMatrices(center, rad);
   Generate(Template, ClearCont);
   OnStructureGrow.Exit(this);
 }

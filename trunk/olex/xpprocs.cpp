@@ -1181,8 +1181,10 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
 
-    if( number_count != 0 && !(number_count == 6 || number_count == 1 || number_count == 2) )  {
-      Error.ProcessingError(__OlxSrcInfo, "please provide 6, 2 or 1 number" );
+    if( number_count != 0 && !(number_count == 6 || number_count == 1 ||
+      number_count == 2) )
+    {
+      Error.ProcessingError(__OlxSrcInfo, "please provide 6, 2 or 1 number");
       return;
     }
 
@@ -1195,7 +1197,8 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         From[1] = From[2] = From[0];
         To[1] = To[2] = To[0];
       }
-      FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
+      FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL
+        : &TemplAtoms, ClearCont);
     }
     else  {
       TXAtomPList xatoms = FindXAtoms(Cmds, true, true);
@@ -1207,13 +1210,18 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       if( wght != 0 )
         cent /= wght;
-      FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont);
+      FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL
+        : &TemplAtoms, ClearCont);
     }
   }
   if( TBasicApp::GetInstance().IsProfiling() )  {
-    TBasicApp::NewLogEntry(logInfo) << FXApp->XFile().GetLattice().GetObjects().atoms.Count() << " atoms and " <<
-      FXApp->XFile().GetLattice().GetObjects().bonds.Count() << " bonds generated in " <<
-      FXApp->XFile().GetLattice().FragmentCount() << " fragments (" << (TETime::msNow()-st) << "ms)";
+    TBasicApp::NewLogEntry(logInfo) <<
+      FXApp->XFile().GetLattice().GetObjects().atoms.Count() <<
+      " atoms and " <<
+      FXApp->XFile().GetLattice().GetObjects().bonds.Count() <<
+      " bonds generated in " <<
+      FXApp->XFile().GetLattice().FragmentCount() << " fragments ("
+      << (TETime::msNow()-st) << "ms)";
   }
   // optimise drawing ...
   //FXApp->GetRender().Compile(true);

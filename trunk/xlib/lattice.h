@@ -29,16 +29,10 @@ private:
   TNetwork* Network;  // for internal use only
   ASObjectProvider& Objects;
 private:
-  /* generates matrices in volume {VFrom, VTo} and leaves only matrices, which
-  transform the center of gravity of the asymmertic unit within {MFrom, MTo}
-  volume usually VFrom = olx_round(MFrom), VTo = olx_round(VFrom)
-  */
-  size_t GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
-        const vec3d& MFrom, const vec3d& MTo);
   // generates matrices from -4 to 4 which generate aunit within the rad sphere
-  size_t GenerateMatrices(smatd_plist& res, const vec3d& center, double rad);
-  smatd_plist Matrices;    // list of all matrices
-  TNetPList    Fragments;
+  ConstPtrList<smatd> GenerateMatrices(const vec3d& center, double rad);
+  smatd_plist Matrices;  // list of all matrices
+  TNetPList Fragments;
   TTypeList<TSPlane::Def> PlaneDefs;
   void GenerateBondsAndFragments(TArrayList<vec3d> *crd);
 protected:
@@ -104,11 +98,9 @@ public:
     return !(Matrices.Count() == 1 && Matrices[0]->IsFirst());
   }
 
-  /* generates matrices so that the center of asymmetric unit is inisde the
-  specified volume
-  */
-  size_t GenerateMatrices(smatd_plist& Result, const vec3d& VFrom,
-    const vec3d& VTo, const vec3d& MFrom, const vec3d& MTo);
+  /* generates matrices to fil the given volume */
+  ConstPtrList<smatd> GenerateMatrices(const vec3d& VFrom,
+    const vec3d& VTo);
   // finds matrices to be used for the next grow operation in GrowFragments
   void GetGrowMatrices(smatd_list& res) const;
   /* finds all matrices unique to the unit cell which complete a given fragment */
