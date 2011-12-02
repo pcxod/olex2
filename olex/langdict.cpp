@@ -34,7 +34,7 @@ const olxstr& TLangDict::Translate(const olxstr& Phrase) const  {
 //..............................................................................
 void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  {
   Clear();
-  olx_object_ptr<TUtf8File> f(TUtf8File::Open(fileName, true));
+  olx_object_ptr<TUtf8File> f = TUtf8File::Open(fileName, "rb", true);
   TCStrList sl;
   sl.LoadFromTextStream(f());
   if( sl.Count() < 2 )  return;
