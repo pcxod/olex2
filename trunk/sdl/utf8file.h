@@ -16,21 +16,25 @@ BeginEsdlNamespace()
 
 class TUtf8File : public TEFile  {
 protected:
+  static bool validate_stream(IInputStream& io, bool check_header) {
+    io.SetPosition(0);
+    if (io.GetSize() >= 3)  {
+      uint32_t header = 0;
+      io.Read(&header, 3);
+      if (header != TUtf8::FileSignature)  {
+        if (check_header) return false;
+        else
+          io.SetPosition(0);
+      }
+    }
+    return true;
+  }
   TUtf8File(const olxstr& fn, const olxstr& attr, bool CheckHeader=true)
     : TEFile(fn, attr)
   {
-    SetPosition(0);
-    if( Length() >= 3 )  {
-      uint32_t header = 0;
-      TEFile::Read(&header, 3);
-      if( header != TUtf8::FileSignature )  {
-        if( CheckHeader ) {
-          throw TFunctionFailedException(__OlxSourceInfo,
-            "invalid UTF8 file signature");
-        }
-        else
-          TEFile::SetPosition(0);
-      }
+    if (!validate_stream(*this, CheckHeader)) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "invalid UTF8 file signature");
     }
   }
   virtual size_t WritelnFor(const TIWString& str)  {
@@ -54,9 +58,11 @@ public:
     return file;
   }
   
-  // pointer must be deleted, creates/opens, positioned at the begining
-  static TUtf8File* Open(const olxstr& name, bool CheckHeader)  {
-    TUtf8File* file = new TUtf8File(name, "a+b", CheckHeader);
+  // creates/opens, positioned at the begining
+  static olx_object_ptr<TUtf8File> Open(
+    const olxstr& name, const olxstr &attr, bool CheckHeader)
+  {
+    TUtf8File* file = new TUtf8File(name, attr, CheckHeader);
     return file;
   }
   // creates a file and writes data to it, closes it
@@ -72,10 +78,7 @@ public:
   static bool IsUtf8File(const olxstr& fn)  {
     try  {
       TEFile file(fn, "rb");
-      if( file.Length() < 3 )  return false;
-      uint32_t header;
-      file.Read(&header, 3);
-      return (header == TUtf8::FileSignature);
+      validate_stream(file, true);
     }
     catch(...)  {
       return false;
@@ -102,17 +105,9 @@ public:
   static void ReadLines(IInputStream& io, TTStrList<T>& list,
     bool CheckHeader=true)
   {
-    if( io.GetSize() >= 3 )  {
-      uint32_t header = 0;
-      io.Read(&header, 3);
-      if( header != TUtf8::FileSignature )  {
-        if( CheckHeader ) {
-          throw TFunctionFailedException(__OlxSourceInfo,
-            "invalid UTF8 stream");
-        }
-        else
-          io.SetPosition(0);
-      }
+    if (!validate_stream(io, CheckHeader))  {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "invalid UTF8 stream");
     }
     const size_t fl = io.GetAvailableSizeT();
     olx_array_ptr<char> bf(new char [fl+1]);
@@ -122,59 +117,32 @@ public:
     for( size_t i=0; i < list.Count(); i++ )
       if( list[i].EndsWith('\r') )  
         list[i].SetLength(list[i].Length()-1);
-  }
-  // returns one long string
-  static olxwstr ReadAsString(IInputStream& io, bool CheckHeader=true)  {
-    if( io.GetSize() >= 3 )  {
-      uint32_t header = 0;
-      io.Read(&header, 3);
-      if( header != TUtf8::FileSignature )  {
-        if( CheckHeader ) {
-          throw TFunctionFailedException(__OlxSourceInfo,
-            "invalid UTF8 stream");
-        }
-        else
-          io.SetPosition(0);
-      }
-    }
-    const size_t fl = io.GetAvailableSizeT();
-    olx_array_ptr<char> bf(new char [fl+1]);
-    io.Read(bf, fl);
-    olxwstr rv = TUtf8::Decode(bf, fl);
-    return rv;
   }
   template <class T>
   static void ReadLines(const olxstr& fn, TTStrList<T>& list,
     bool CheckHeader=true)
   {
-    TUtf8File file(fn, "rb", CheckHeader);
-    const size_t fl = file.GetAvailableSizeT();
-    olx_array_ptr<char> bf(new char [fl+1]);
-    file.Read(bf, fl);
-    list.Clear();
-    list.Strtok(TUtf8::Decode(bf, fl), '\n', false);
-    for( size_t i=0; i < list.Count(); i++ )
-      if( list[i].EndsWith('\r') )  
-        list[i].SetLength(list[i].Length()-1);
+    TEFile file(fn, "rb");
+    return ReadLines(file, list, CheckHeader);
   }
+
   // returns one long string
-  static olxwstr ReadAsString(const olxstr& fn, bool CheckHeader=true)  {
-    TUtf8File file(fn, "rb", CheckHeader);
-    const size_t fl = file.GetAvailableSizeT();
+  static olxwstr ReadAsString(IInputStream& io, bool CheckHeader=true)  {
+    if (!validate_stream(io, CheckHeader))  {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "invalid UTF8 stream");
+    }
+    const size_t fl = io.GetAvailableSizeT();
     olx_array_ptr<char> bf(new char [fl+1]);
-    file.Read(bf, fl);
+    io.Read(bf, fl);
     olxwstr rv = TUtf8::Decode(bf, fl);
     return rv;
   }
-  template <class T>
-  static void WriteLines(IDataOutputStream& out,
-    const TTStrList<T>& list, bool WriteHeader=true)
-  {
-    if( WriteHeader )
-      out.Write(&TUtf8::FileSignature, 3);
-    for( size_t i=0; i < list.Count(); i++ )
-      out.Writeln(list[i]);
+  static olxwstr ReadAsString(const olxstr& fn, bool CheckHeader=true)  {
+    TEFile file(fn, "rb");
+    return ReadAsString(file, CheckHeader);
   }
+
   template <class T>
   static void WriteLines(const olxstr& fn,
     const TTStrList<T>& list, bool WriteHeader=false)
