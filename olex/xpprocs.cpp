@@ -1167,8 +1167,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       ClearCont);
   }
   else  {
-    vec3d From(-1.0, -1.0, -1.0);
-    vec3d To(1.5, 1.5, 1.5);
+    vec3d From(-0.5), To(1.5);
     size_t number_count = 0;
     for( size_t i=0; i < Cmds.Count(); i++ )  {
       if( Cmds[i].IsNumber() )  {
@@ -10160,14 +10159,16 @@ void TMainForm::macTolman(TStrObjList &Cmds, const TParamList &Options,
     atoms[1]->crd())).ToDouble();
   TBasicApp::NewLogEntry() << "Metal to P distance is: " <<
     olxstr::FormatFloat(3, d);
-  vec3d v0 = (atoms[0]->crd() - atoms[1]->crd()).NormaliseTo(d);
+  vec3d v0 = (atoms[1]->crd() - atoms[0]->crd()).NormaliseTo(d);
   olxdict<const cm_Element*, double, TPointerComparator> radii;
   double sa = 0;
   for (size_t i=2; i < 5; i++) {
-    vec3d v = atoms[i]->crd()-atoms[1]->crd();
+    vec3d v = atoms[i]->crd()-atoms[0]->crd();
     radii.Add(&atoms[i]->GetType()) = atoms[i]->GetType().r_vdw;
-    v.NormaliseTo(v.Length()+atoms[i]->GetType().r_vdw);
-    sa += acos((v-v0).CAngle(-v0));
+    double a = acos(v.CAngle(v0));
+    double qvl = v.QLength();
+    a += acos(sqrt((qvl-olx_sqr(atoms[i]->GetType().r_vdw))/qvl));
+    sa += a;
   }
   TBasicApp::NewLogEntry() << "Used radii:";
   for (size_t i=0; i < radii.Count(); i++) {
