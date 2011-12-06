@@ -929,13 +929,17 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
 
 }
 //..............................................................................
-void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   if( TXApp::GetInstance().XFile().GetLattice().IsGenerated() )  {
-    E.ProcessingError(__OlxSrcInfo, "operation is not applicable to the grown structure");
+    E.ProcessingError(__OlxSrcInfo,
+      "operation is not applicable to the grown structure");
     return;
   }
   double max_d = 2.9, min_ang = TXApp::GetMinHBondAngle();
-  size_t cnt = XLibMacros::ParseNumbers<double,TStrObjList>(Cmds, 2, &max_d, &min_ang);
+  size_t cnt = XLibMacros::ParseNumbers<double,TStrObjList>(
+    Cmds, 2, &max_d, &min_ang);
   if( cnt == 1 )  {
     if( max_d > 10 )  {
       min_ang = max_d;
@@ -968,8 +972,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   bais.Add(iFluorineZ);
   bais.Add(iChlorineZ);
   bais.Add(iSulphurZ);
-  TBasicApp::NewLogEntry() << "Processing HTAB with max D-A distance " << max_d << " and minimum angle "
-    << min_ang;
+  TBasicApp::NewLogEntry() << "Processing HTAB with max D-A distance " <<
+    max_d << " and minimum angle " << min_ang;
   min_ang = cos(min_ang*M_PI/180.0);
   if( Options.Contains('t') )  {
     TStrList elm(Options.FindValue('t'), ',');
@@ -1021,32 +1025,43 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         const vec3d v2 = au.Orthogonalise(cvec - base);
         const double c_a = v1.CAngle(v2);
         if( c_a < min_ang )  {  // > 150 degrees
-          if( sa.GetType() == iCarbonZ )  {
-            InfoTab& it_d = rm.AddRTAB(sa.GetType().symbol + ca.GetType().symbol);
+          // NOTE: false!
+          if( sa.GetType() == iCarbonZ && false )  {
+            InfoTab& it_d = rm.AddRTAB(
+              sa.GetType().symbol + ca.GetType().symbol);
             it_d.AddAtom(&sa.CAtom(), NULL);
-            const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
+            const smatd* mt = (!(all[j].GetB().t.IsNull() &&
+              all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
               transforms.AddCopy(*mt);
             it_d.AddAtom(const_cast<TCAtom*>(&ca), mt);
-            if( rm.ValidateInfoTab(it_d) )
-              TBasicApp::NewLogEntry() << it_d.InsStr() << " d=" << olxstr::FormatFloat(3, d);
+            if( rm.ValidateInfoTab(it_d) ) {
+              TBasicApp::NewLogEntry() << it_d.InsStr() << " d=" <<
+                olxstr::FormatFloat(3, d);
+            }
 
-            InfoTab& it_a = rm.AddRTAB(sa.GetType().symbol + ca.GetType().symbol);
+            InfoTab& it_a = rm.AddRTAB(
+              sa.GetType().symbol + ca.GetType().symbol);
             it_a.AddAtom(&sa.CAtom(), NULL);
             it_a.AddAtom(&sa.Node(h_indexes[k]).CAtom(), NULL);
             it_a.AddAtom(const_cast<TCAtom*>(&ca), mt);
-            if( rm.ValidateInfoTab(it_a) )
-              TBasicApp::NewLogEntry() << it_a.InsStr() << " a=" << olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI);
+            if( rm.ValidateInfoTab(it_a) ) {
+              TBasicApp::NewLogEntry() << it_a.InsStr() << " a=" <<
+                olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI);
+            }
           }
           else  {
             InfoTab& it = rm.AddHTAB();
             it.AddAtom(&sa.CAtom(), NULL);
-            const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
+            const smatd* mt = (!(all[j].GetB().t.IsNull() &&
+              all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
               transforms.AddCopy(*mt);
             it.AddAtom(const_cast<TCAtom*>(&ca), mt);
-            if( rm.ValidateInfoTab(it) )
-              TBasicApp::NewLogEntry() << it.InsStr() << " d=" << olxstr::FormatFloat(3, d);
+            if( rm.ValidateInfoTab(it) ) {
+              TBasicApp::NewLogEntry() << it.InsStr() << " d=" <<
+                olxstr::FormatFloat(3, d);
+            }
           }
         }
       }
