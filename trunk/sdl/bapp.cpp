@@ -184,7 +184,7 @@ olxstr TBasicApp::GetPlatformString()  {
 }
 //..............................................................................
 //..............................................................................
-void BAPP_GetArgCount(const TStrObjList& Params, TMacroError& E)  {
+void BAPP_GetArgCount(const TStrObjList&, TMacroError& E)  {
   E.SetRetVal(TBasicApp::GetArgCount());
 }
 void BAPP_GetArg(const TStrObjList& Params, TMacroError& E)  {

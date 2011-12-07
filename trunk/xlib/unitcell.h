@@ -300,13 +300,16 @@ public:
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
-    static int AtomsSortByDistance(const Association* A1, const Association* A2)  {
+    static int AtomsSortByDistance(const Association* A1,
+      const Association* A2)
+    {
       const double d = A1->GetA().QLength() - A2->GetA().QLength();
       return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
     }
 public:
   // creates an array of matrices for a given aunit and lattice type
-  static void GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short latt)
+  static void GenerateMatrices(smatd_list& out, const TAsymmUnit& au,
+    short latt)
   {
     TSymmLib::GetInstance().ExpandLatt(out,
       MatrixListAdaptor<TAsymmUnit>(au), latt);
@@ -455,13 +458,13 @@ protected:
     const mat3f& tm;
     float** loop_data;
     bool owns_data;
-    TBuildDistanceMapTask(TBuildDistanceMapTask& parent) : 
-    tm(parent.tm), map(parent.map), atoms(parent.atoms), dims(parent.dims),
-      loop_data(parent.loop_data), owns_data(false)  {}
+    TBuildDistanceMapTask(TBuildDistanceMapTask& parent)
+      : map(parent.map), atoms(parent.atoms), dims(parent.dims), tm(parent.tm),
+        loop_data(parent.loop_data), owns_data(false)  {}
   public:
     TBuildDistanceMapTask(const mat3f& _tm, float*** _map, const vec3s& _dims,
-      TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& _atoms) :
-      tm(_tm), map(_map), atoms(_atoms), dims(_dims), owns_data(true)
+      TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& _atoms)
+      : map(_map), atoms(_atoms), dims(_dims), tm(_tm), owns_data(true)
     {
       init_loop_data();
     }

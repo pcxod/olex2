@@ -152,7 +152,7 @@ SiteSymmCon& SiteSymmCon::operator += (const SymmCon* sc)  {
   if( sc == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("implementation error") << 1);
   if( added )  {  // has been initialised?
-    for( size_t i=0; i < 9; i++ )  {
+    for( int i=0; i < 9; i++ )  {
       if( map[i].param == -2 )  // cancelled
         continue;
       if( map[i].param == -1 )  // uknown?
@@ -187,7 +187,7 @@ SiteSymmCon& SiteSymmCon::operator += (const SymmCon* sc)  {
 }
 //..............................................................................
 bool SiteSymmCon::IsConstrained() const {
-  for( size_t i=0; i < 9; i++ )
+  for( int i=0; i < 9; i++ )
     if( map[i].param != (i < 6 ? i : i-6) )
       return true;
   return false;
@@ -197,7 +197,7 @@ olxstr SiteSymmCon::ToString() const {
   static olxstr u_legend[] = {"U11", "U22", "U33", "U23", "U13", "U12"};
   static olxstr c_legend[] = {"X", "Y", "Z"};
   olxstr rv;
-  for( size_t i=0; i < 6; i++ )  {
+  for( int i=0; i < 6; i++ )  {
     if( map[i].param == i )  // skip Uxx=Uxx etc
       continue;
     if( !rv.IsEmpty() )  rv << ',';
@@ -216,8 +216,8 @@ olxstr SiteSymmCon::ToString() const {
     else if( map[i].param == -2 )
       rv << '0';
   }
-  for( size_t i=0; i < 3; i++ )  {
-    const size_t pi = i+6;
+  for( int i=0; i < 3; i++ )  {
+    const int pi = i+6;
     if( map[pi].param == i )  // skip X=X etc
       continue;
     if( !rv.IsEmpty() )  rv << ',';

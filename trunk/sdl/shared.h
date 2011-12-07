@@ -31,11 +31,11 @@ public:
     operator const item_t & () {  return instance.Get(index);  }
   };
 protected:
-  mutable olx_ptr<cont_t> *p;
+  mutable olx_ptr_<cont_t> *p;
   void Set(size_t i, const item_t &v)  {
     if( p->ref_cnt > 1 ) {
       p->ref_cnt--;
-      p = new olx_ptr<cont_t>(new cont_t(*p->p));
+      p = new olx_ptr_<cont_t>(new cont_t(*p->p));
       (*p->p)[i] = v;
     }
     else
@@ -48,14 +48,14 @@ protected:
   void on_modify()  {
     if( p->ref_cnt > 1 ) {
       p->ref_cnt--;
-      p = new olx_ptr<cont_t>(new cont_t(*p->p));
+      p = new olx_ptr_<cont_t>(new cont_t(*p->p));
     }
   }
 public:
-  shared_base() : p(new olx_ptr<cont_t>(new cont_t))  {}
+  shared_base() : p(new olx_ptr_<cont_t>(new cont_t))  {}
   shared_base(const shared_base &l) : p(l.p == NULL ? NULL : l.p->inc_ref())  {}
-  shared_base(cont_t *l) : p (new olx_ptr<cont_t>(l)) {}
-  shared_base(cont_t &l) : p(new olx_ptr<cont_t>(new cont_t)) {
+  shared_base(cont_t *l) : p (new olx_ptr_<cont_t>(l)) {}
+  shared_base(cont_t &l) : p(new olx_ptr_<cont_t>(new cont_t)) {
     p->p->TakeOver(l);
   }
   ~shared_base()  {

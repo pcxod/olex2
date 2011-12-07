@@ -83,7 +83,7 @@ TWString& TWString::operator << (const char &v)  {
 TWString& TWString::AssignCharStr(const char *str, size_t len)  {
   _Start = 0;
   _Increment = 5;
-  _Length = ((len == ~0) ? strlen(str) : len);
+  _Length = ((len == InvalidSize) ? strlen(str) : len);
   if( SData != NULL )  {
     if( SData->RefCnt == 1 )  // owed by this object
       SData->SetCapacity(_Length);

@@ -31,7 +31,7 @@ protected:
   virtual size_t Write(const void* Data, size_t size);
   virtual uint64_t GetSize() const {  return 0;  }
   virtual uint64_t GetPosition() const {  return 0;  }
-  virtual void SetPosition(uint64_t newPos)  {}
+  virtual void SetPosition(uint64_t)  {}
 
   void Add(const olxstr& str)  {
     for( size_t i=0; i < Streams.Count(); i++ )

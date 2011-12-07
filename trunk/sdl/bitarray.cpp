@@ -112,14 +112,14 @@ int TEBitArray::Compare(const TEBitArray& arr)  const {
       if( Get(i) )  return 1;
     }
     // comparison
-    for( size_t i=arr.Count()-1; i != ~0; i-- )  {
+    for( size_t i=arr.Count()-1; i != InvalidIndex; i-- )  {
       if( Get(i) && !arr.Get(i) )  return 1;
       else if( !Get(i) && arr.Get(i) )  return -1;
     }
     return 0;
   }
   else if( arr.Count() == Count() )  {
-    for( size_t i=Count()-1; i != ~0; i-- )  {
+    for( size_t i=Count()-1; i != InvalidIndex; i-- )  {
       if( Get(i) && !arr.Get(i) )  return 1;
       else if( !Get(i) && arr.Get(i) )  return -1;
     }

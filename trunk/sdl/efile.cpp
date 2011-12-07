@@ -41,11 +41,11 @@
     #define STAT_STR stat
     #define WinCopyFile CopyFileA
   #endif
-  #ifndef __BORLANDC__ // this (as Builder 6.0 has no support for it
+#if !defined(__BORLANDC__) && !defined(__GNUC__) // this (as Builder 6.0 has no support for it
   #  define ftell _ftelli64
   #  define fseek _fseeki64
   #endif
-  #ifdef _MSC_VER
+  #if defined(_MSC_VER) || defined(__GNUC__)
     #include <sys/utime.h>
     #ifndef _UNICODE
       #define chmod _chmod
@@ -66,9 +66,6 @@
     #endif
     #define UTIMBUF utimbuf
   #endif
-  //this is only for UNC file names under windows
-  #include <mapiutil.h>
-
   #define OLX_PATH_DEL '\\'
   #define OLX_ENVI_PATH_DEL ';'
   #define OLX_OS_PATH(A)  TEFile::WinPath( (A) )

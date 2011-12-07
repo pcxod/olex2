@@ -13,9 +13,9 @@
 BeginXlibNamespace()
 
 class TExyzGroup {
+  TExyzGroups& Parent;
   size_t Id;
   TCAtomPList Atoms;
-  TExyzGroups& Parent;
 public:
   TExyzGroup(TExyzGroups& parent, size_t id) : Parent(parent), Id(id) {  }
   ~TExyzGroup()  { 
@@ -52,16 +52,17 @@ public:
 #endif
   void FromDataItem(TDataItem& item);
 };
-//....................................................................................
+//..............................................................................
 class TExyzGroups {
   TTypeList<TExyzGroup> Groups;
 public:
-  
   class RefinementModel& RM;
 
   TExyzGroups(RefinementModel& parent) : RM(parent) {}
 
-  TExyzGroup& New() {  return Groups.Add( new TExyzGroup(*this, Groups.Count()) );  }
+  TExyzGroup& New() {
+    return Groups.Add(new TExyzGroup(*this, Groups.Count()));
+  }
   void Clear() {  Groups.Clear();  }
   size_t Count() const {  return Groups.Count();  }
   TExyzGroup& operator [] (size_t i) {  return Groups[i];  }

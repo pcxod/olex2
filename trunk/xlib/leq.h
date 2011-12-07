@@ -40,18 +40,18 @@ struct XVarReference {
 protected:
   size_t Id;
 public:
+  XVar& Parent;
   IXVarReferencer& referencer;
   short var_index;  // one of the var_name
   short relation_type; // relationAsVar or relation_AsOneMinusVar
   double coefficient; // like 0.25 in 20.25
-  XVar& Parent;
   XVarReference(XVar& parent, IXVarReferencer& r, short _var_index, 
     short _relation_type, double coeff=1.0) : 
     Parent(parent),
     referencer(r), 
     var_index(_var_index), 
     relation_type(_relation_type), 
-    coefficient(coeff) { }
+    coefficient(coeff) {}
   DefPropP(size_t, Id)
   // returns the value of the atom parameter associated with this reference
   double GetActualValue() const {  return referencer.GetValue(var_index);  }
@@ -69,10 +69,10 @@ class XVar {
   TPtrList<XLEQ> Equations; // equations using this variable
   size_t Id;
 public:
-
   XVarManager& Parent;
 
-  XVar(XVarManager& parent, double val=0.5) : Parent(parent), Value(val), Id(InvalidIndex) { }
+  XVar(XVarManager& parent, double val=0.5)
+    : Value(val), Id(InvalidIndex), Parent(parent) {}
   // adds a new atom, referencing this variable, for internal use
   XVarReference& _AddRef(XVarReference& vr)  {  return *References.Add(&vr);  }
   // removes a refence, for internal use
@@ -105,13 +105,10 @@ class XLEQ {
   TPtrList<XVar> Vars;
   size_t Id;
 public:
-
   XVarManager& Parent;
 
-  XLEQ(XVarManager& parent, double val=1.0, double sig=0.01) : 
-      Parent(parent), 
-      Value(val), 
-      Sigma(sig) { }
+  XLEQ(XVarManager& parent, double val=1.0, double sig=0.01)
+    :  Value(val), Sigma(sig), Parent(parent) {}
   ~XLEQ() {
     for( size_t i=0; i < Vars.Count(); i++ )
       Vars[i]->_RemLeq(*this);

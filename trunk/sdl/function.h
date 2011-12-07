@@ -186,13 +186,12 @@ template <class Base>
         ArgStateMask, GetDescription());
     }
 
-    virtual void Run(TStrObjList& Params, const TParamList& options,
-      TMacroError& E)
+    virtual void Run(TStrObjList&, const TParamList&, TMacroError&)
     {
       throw TNotImplementedException(__OlxSourceInfo);
     }
 
-    virtual const TCSTypeList<olxstr,olxstr>& GetOptions()  const {
+    virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const {
       throw TNotImplementedException(__OlxSourceInfo);
     }
 
@@ -237,8 +236,7 @@ template <class Base>
       return new TStaticFunction(Func, GetName(), ArgStateMask, GetDescription());
     }
 
-    virtual void Run(TStrObjList& Params, const TParamList& options,
-      TMacroError& E)
+    virtual void Run(TStrObjList&, const TParamList&, TMacroError&)
     {
       throw TNotImplementedException(__OlxSourceInfo);
     }
@@ -380,7 +378,7 @@ template <class Base>
       return ValidOptions;
     }
 
-    virtual void Run(const TStrObjList& Params, TMacroError& E)  {
+    virtual void Run(const TStrObjList&, TMacroError&)  {
       throw TNotImplementedException(__OlxSourceInfo);
     }
 

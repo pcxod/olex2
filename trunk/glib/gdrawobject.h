@@ -65,11 +65,11 @@ public:
   // mouse handlers, any object receives mouse down/up events; write appropriate
   //handlers to handle mouse; if the object returns true OnMouseDown, it receives
   //OnMouseMove as well; Objects must not change values of the Data!
-  virtual bool OnMouseDown(const IEObject *Sender, const struct TMouseData& Data)  {  return false;  }
-  virtual bool OnMouseUp(const IEObject *Sender, const struct TMouseData& Data)  {  return false;  }
-  virtual bool OnMouseMove(const IEObject *Sender, const struct TMouseData& Data)  {  return false;  }
-  virtual bool OnDblClick(const IEObject *Sender, const struct TMouseData& Data)  {  return false;  }
-  virtual bool OnZoom(const IEObject *Sender, const struct TMouseData& Data)  {  return false;  }
+  virtual bool OnMouseDown(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnMouseUp(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnMouseMove(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnDblClick(const IEObject *, const struct TMouseData&)  {  return false;  }
+  virtual bool OnZoom(const IEObject *, const struct TMouseData&)  {  return false;  }
 
   // need a virtual setters for these
   virtual void SetVisible(bool v)  {  olx_set_bit(!v, Flags, sgdoHidden);  }

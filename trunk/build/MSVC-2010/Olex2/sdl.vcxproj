@@ -621,6 +621,7 @@
     <ClCompile Include="..\..\..\sdl\macroerror.cpp" />
     <ClCompile Include="..\..\..\sdl\macrolib.cpp" />
     <ClCompile Include="..\..\..\sdl\md5.cpp" />
+    <ClCompile Include="..\..\..\sdl\os_util.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_cstring.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_istring.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_wstring.cpp" />

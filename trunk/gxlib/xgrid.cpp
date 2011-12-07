@@ -1011,7 +1011,6 @@ void TXGrid::InitIso()  {
 //..............................................................................
 TXBlob* TXGrid::CreateBlob(int x, int) const {
   if( !Is3D() )  return NULL;
-  const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
   TXBlob* xb = new TXBlob(Parent, "blob");
   //IS->GenerateSurface(Scale);
   TPtrList<IsoTriangle> triags;
@@ -1147,7 +1146,6 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
       E.SetRetVal<olxstr>("contour+plane");
     return;
   }
-  int pm = RenderMode;
   if( Params[0] == "fill" )
     RenderMode = planeRenderModeFill;
   else if( Params[0] == "point" )
@@ -1160,8 +1158,10 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
     RenderMode = planeRenderModeContour;
   else if( Params[0] == "contour+plane" )
     RenderMode = planeRenderModeContour|planeRenderModePlane;
-  else throw TInvalidArgumentException(__OlxSourceInfo,
-         olxstr("incorrect mode value: '") << Params[0] << '\'');
+  else {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("incorrect mode value: '") << Params[0] << '\'');
+  }
   InitIso();
 }
 //..............................................................................
@@ -1228,28 +1228,41 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
 //..............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibGetMin, "GetMin",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibGetMin, "GetMin",
     fpNone, "Returns minimum value of the map") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibGetMax, "GetMax",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibGetMax, "GetMax",
     fpNone, "Returns maximum value of the map") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibExtended, "Extended",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibExtended, "Extended",
     fpNone|fpOne|fpSix, "Returns/sets extended size of the grid") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibScale, "Scale",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibScale, "Scale",
     fpNone|fpOne, "Returns/sets current scale") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibSize, "Size",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibSize, "Size",
     fpNone|fpOne, "Returns/sets current size") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibPlaneSize, "PlaneSize",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibPlaneSize, "PlaneSize",
     fpNone|fpOne, "Returns/sets current size") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibDepth, "Depth",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibDepth, "Depth",
     fpNone|fpOne, "Returns/sets current depth") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibDepth, "MaxDepth",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibDepth, "MaxDepth",
     fpNone, "Returns maximum available depth") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibContours, "Contours",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibContours, "Contours",
     fpNone|fpOne, "Returns/sets number of contour levels") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibIsvalid, "IsValid",
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibIsvalid, "IsValid",
     fpNone|fpOne, "Returns true if grid data is initialised") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,  &TXGrid::LibRenderMode, "RenderMode",
-    fpNone|fpOne, "Returns/sets grid rendering mode. Supported values: point, line, fill, plane, contour") );
+  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    &TXGrid::LibRenderMode, "RenderMode",
+    fpNone|fpOne,
+    "Returns/sets grid rendering mode. Supported values: point, line, fill, "
+    "plane, contour") );
 
   AGDrawObject::ExportLibrary( *lib );
   return lib;
@@ -1268,9 +1281,12 @@ PyObject* pyImport(PyObject* self, PyObject* args)  {
   {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "(iii)(iii)s#i");
   }
-  const int sz = dim1*dim2*dim3;
-  if( (type == 0 && sz*sizeof(double) != len) || (type == 1 && sz*sizeof(int) != len))
+  const size_t sz = dim1*dim2*dim3;
+  if( (type == 0 && sz*sizeof(double) != (size_t)len) ||
+      (type == 1 && sz*sizeof(int) != (size_t)len))
+  {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "array size");
+  }
   TEMemoryInputStream ms(data, len);
   TXGrid& g = *TXGrid::GetInstance();
   g.InitGrid(focus1, focus2, focus3);

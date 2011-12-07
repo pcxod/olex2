@@ -18,18 +18,18 @@ public:
   TSymmMat() : Id(~0) {}
   // copy constructor
   TSymmMat(const TSymmMat& v) : 
-    r(v.r), 
-    t(v.t),
-    Id(v.Id) {  }
+    Id(v.Id),
+    r(v.r),
+    t(v.t) {}
   template <typename AMC, typename AVC> 
   TSymmMat(const TSymmMat<AMC,AVC>& v) : 
-    r(v.r), 
-    t(v.t),
-    Id(~0) {  }
+    Id(v.GetId()),
+    r(v.r),
+    t(v.t) {}
   // composing constructor
   template <typename AMC, typename AVC> 
-  TSymmMat(const TMatrix33<AMC>& m, const TVector3<AVC>& v) :
-    r(m), t(v), Id(~0) {}
+  TSymmMat(const TMatrix33<AMC>& m, const TVector3<AVC>& v)
+    : Id(~0), r(m), t(v) {}
 
   template <class AT> 
   TVector3<VC> operator * (const TVector3<AT>& a) const {
@@ -106,8 +106,8 @@ public:
     return m;
   }
 
-  TVector3<VC> t;
   TMatrix33<MC> r;
+  TVector3<VC> t;
 
   uint32_t GetId() const { return Id;  }
   void SetId(uint8_t id)  {  Id = ((uint32_t)id << 24)|(0x00808080);  }

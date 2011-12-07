@@ -218,8 +218,8 @@ public:
   // finds all rings
   void FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res);
   struct RingInfo  {
-    size_t MaxSubsANode, HeaviestSubsIndex;
     const cm_Element* HeaviestSubsType;
+    size_t MaxSubsANode, HeaviestSubsIndex;
     TSizeList Ternary, // three bond inside the ring
       Substituted,    // more than two connections, two belong to the ring
       Alpha;          // susbtituted next to a ternary atom 

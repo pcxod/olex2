@@ -40,7 +40,7 @@ const short
   polyPyramid   = 3,
   polyBipyramid = 4;
 
-const int 
+const uint32_t
   xatom_PolyId        = 1,
   xatom_SphereId      = 2,
   xatom_SmallSphereId = 3,

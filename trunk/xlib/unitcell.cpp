@@ -309,7 +309,6 @@ void TUnitCell::FindSymmEq() const  {
   if( ACA.IsEmpty() )  return;
   if( olx_abs(CalcVolume()-1.0) < 1e-3 )  {  // cartesian coordinates?
     const double delta = GetLattice().GetDelta();
-    const double deltai = GetLattice().GetDeltaI();
     for( size_t i=0; i < ACA.Count(); i++ )  {
       for( size_t j=i+1; j < ACA.Count(); j++ )  {
         const double qd = ACA[i]->ccrd().QDistanceTo(ACA[j]->ccrd());
@@ -700,7 +699,6 @@ void TUnitCell::BuildStructureMap_Direct(TArray3D<short>& map, double delta, sho
   const size_t da = map.Length1(),
                db = map.Length2(),
                dc = map.Length3();
-  const size_t map_dim[] = {da, db, dc};
   map.FastInitWith(0);
   // expand atom list to +/-1/3 of UC
   ExpandAtomCoordinates(allAtoms, 1./2);
@@ -760,8 +758,8 @@ olx_object_ptr<TArray3D<bool> > TUnitCell::BuildAtomMask(const vec3s& dim,
   const double sin_g = sin(au.GetAngles()[2]*M_PI/180);
   const double sr = r*r;
   int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp)/2;
-  int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp)/2;
-  int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/aapp)/2;
+  int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/bapp)/2;
+  int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/capp)/2;
   TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
   for( int x=-ad; x <= ad; x ++ )  {
     for( int y=-bd; y <= bd; y ++ )  {
@@ -795,8 +793,8 @@ const_olxdict<short, TArray3D<bool>*, TPrimitiveComparator>
     const double r = TXApp::GetVdWRadius(au.GetAtom(i), radii) + delta;
     const double sr = r*r;
     int ad = olx_round(olx_max(2*r/sin_b, 2*r/sin_g)/aapp);
-    int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/aapp);
-    int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/aapp);
+    int bd = olx_round(olx_max(2*r/sin_a, 2*r/sin_g)/bapp);
+    int cd = olx_round(olx_max(2*r/sin_a, 2*r/sin_b)/capp);
     TArray3D<bool>* spm = new TArray3D<bool>(-ad, ad, -bd, bd, -cd, cd);
     for( int x=-ad; x <= ad; x ++ )  {
       for( int y=-bd; y <= bd; y ++ )  {
@@ -819,9 +817,6 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
   GenereteAtomCoordinates(allAtoms, true, _template);
   const vec3s dim = map.GetSize();
   // angstrem per pixel scale
-  double capp = Lattice->GetAsymmUnit().GetAxes()[2]/dim[2],
-         bapp = Lattice->GetAsymmUnit().GetAxes()[1]/dim[1],
-         aapp = Lattice->GetAsymmUnit().GetAxes()[0]/dim[0];
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   olxdict<short, TArray3D<bool>*, TPrimitiveComparator> scatterers =
     BuildAtomMasks(dim, radii, delta);
@@ -836,7 +831,6 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
       for( index_t k = -bd; k <= bd; k ++ )  {
         for( index_t l = -cd; l <= cd; l ++ )  {
           if( !spm->Data[j+ad][k+bd][l+cd] )  continue;
-          vec3i crd;
           aa[0] = vec3i(olx_round(center[0]+j), olx_round(center[1]+k), olx_round(center[2]+l)); //x,y,z
           aa[1] = vec3i((int)(center[0]+j), (int)(center[1]+k), (int)(center[2]+l));  //x',y',z'
           aa[2] = vec3i(aa[1][0], aa[0][1], aa[0][2]);  // x',y,z
@@ -967,8 +961,8 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
   const double max_r = 15;
   TArrayList<vec3i_list> shells(olx_round(max_r*shell_res)+1);
   const int ad = olx_round(olx_max(max_r/sin_b, max_r/sin_g)/aapp);
-  const int bd = olx_round(olx_max(max_r/sin_a, max_r/sin_g)/aapp);
-  const int cd = olx_round(olx_max(max_r/sin_a, max_r/sin_b)/aapp);
+  const int bd = olx_round(olx_max(max_r/sin_a, max_r/sin_g)/bapp);
+  const int cd = olx_round(olx_max(max_r/sin_a, max_r/sin_b)/capp);
   for( int x=-ad; x <= ad; x++ )  {
     const double dx = (double)x/dims[0];
     for( int y=-bd; y <= bd; y++ )  {
@@ -1055,7 +1049,7 @@ void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short
     }
     if( unused_atoms > 0 )
       allAtoms.Pack();
-    if( shell_expansion++ >= shells.Count() )
+    if( size_t(shell_expansion++) >= shells.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "too large voids for this procedure");
   }
 }

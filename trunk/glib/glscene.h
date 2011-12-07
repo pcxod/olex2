@@ -95,9 +95,9 @@ public:
 
   class MetaFont {
   protected:
-    olxstr OriginalId, FileName;
-    bool Bold, Italic, Fixed, Underlined;
     short Size;
+    bool Bold, Italic, Fixed, Underlined;
+    olxstr OriginalId, FileName;
   public:
     MetaFont() : Size(0), Bold(false), Italic(false), Fixed(false), Underlined(false)  {}
     virtual olxstr GetIdString() const;

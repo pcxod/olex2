@@ -471,9 +471,8 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
         TAsymmUnit& au = XFile().GetAsymmUnit();
         for( size_t i=0; i < au.AtomCount(); i++ )
           au.GetAtom(i).SetTag(au.GetAtom(i).GetId());
-        TLattice& latt = XFile().GetLattice();
         for( size_t i=0; i < ag.Count(); i++ )  {
-          if( ag[i].GetAtom()->GetTag() != ag[i].GetAtom()->GetId() )
+          if( (size_t)ag[i].GetAtom()->GetTag() != ag[i].GetAtom()->GetId() )
             continue;
           for( size_t j=0; j < objects.atoms.Count(); j++ )  {
             TSAtom& sa = objects.atoms[j];
@@ -538,7 +537,7 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
 }
 //..............................................................................
 void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
-  int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
+  int m = TAfixGroup::GetM(afix);
   if( m == 5 || m ==6 || m == 7 || m == 10 )  {  // special case
     if( sa == NULL )  {
       TTypeList< TSAtomPList > rings;

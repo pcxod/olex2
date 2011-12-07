@@ -19,8 +19,8 @@
 BeginXlibNamespace()
 namespace lcells {
   struct CellInfo {
-    double volume, niggli_volume;
     evecd cell;
+    double volume, niggli_volume;
     short lattice;
     CellInfo() : cell(6), volume(0), niggli_volume(0), lattice(1)  {}
     IDataOutputStream &ToStream(IDataOutputStream &out) const {
@@ -61,9 +61,9 @@ namespace lcells {
 
   struct Index {
     struct Entry {
+      Entry *parent;
       olxstr name;
       uint64_t modified;
-      Entry *parent;
       Entry(Entry *parent_=NULL) : parent(parent_), modified(~0)  {}
       Entry(Entry *parent_, const olxstr &name_, uint64_t modified_)
         : parent(parent_), name(name_), modified(modified_)  {}
@@ -102,9 +102,11 @@ namespace lcells {
     };
     struct ResultEntry : public CellInfo {
       ResultEntry(const olxstr &_file_name, const CellInfo &c)
-        : file_name(_file_name), CellInfo(c)
+        : CellInfo(c), file_name(_file_name)
       {}
-      int Compare(const ResultEntry &e) const {  return file_name.Compare(e.file_name);  }
+      int Compare(const ResultEntry &e) const {
+        return file_name.Compare(e.file_name);
+      }
       olxstr file_name;
     };
     struct FolderEntry;

@@ -135,7 +135,6 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
           sr->SetValue(dis);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
           const double _d1 = (d1 < 1.8 ? d1 : d2);
-          const double _d2 = (d1 > 1.8 ? d1 : d2);
           // if this is not applied, the refinement may never converge 
           sr = &RefMod.rDANG.AddNew();
           sr->SetEsd(0.02);

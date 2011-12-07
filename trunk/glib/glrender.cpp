@@ -41,11 +41,11 @@ void TGlRenderer::TGlListManager::Clear()  {
 TGraphicsStyles* TGlRenderer::FStyles = NULL;
 //..............................................................................
 TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
-  StereoRightColor(1, 0, 0, 1), StereoLeftColor(0, 1, 1, 1),
+  Top(0), Left(0), Width((int)width), Height((int)height), OWidth(0),
+  StereoLeftColor(0, 1, 1, 1), StereoRightColor(1, 0, 0, 1),
   OnDraw(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_DRAW)),
   OnStylesClear(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_CLEAR_STYLES)),
-  OnClear(TBasicApp::GetInstance().NewActionQueue("GL_CLEAR")),
-  Top(0), Left(0), Width((int)width), Height((int)height), OWidth(0)
+  OnClear(TBasicApp::GetInstance().NewActionQueue("GL_CLEAR"))
 {
   CompiledListId = -1;
   FScene = S;

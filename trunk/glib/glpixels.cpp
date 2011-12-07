@@ -82,8 +82,8 @@ void TGlPixels::SetData(int width, int height, unsigned char* data, GLenum forma
 }
 //.............................................................................
 bool TGlPixels::Orient(TGlPrimitive& P)  {
-  double hw = Parent.GetWidth()/2;
-  double hh = Parent.GetHeight()/2;
+  //double hw = Parent.GetWidth()/2;
+  //double hh = Parent.GetHeight()/2;
   //P.Vertices[0] = vec3d((Left+Width)-hw, hh-(Top+Height), Z);
   //P.Vertices[1] = vec3d(P.Vertices[0][0], hh-Top, Z);
   //P.Vertices[2] = vec3d(Left-hw, P.Vertices[1][1], Z);
@@ -91,7 +91,7 @@ bool TGlPixels::Orient(TGlPrimitive& P)  {
   //olx_gl::scale(Parent.GetScale()*Parent.GetExtraZoom());
   //return false;
   if( Data != NULL )  {
-    double MaxZ = Parent.GetMaxRasterZ();
+    //double MaxZ = Parent.GetMaxRasterZ();
     double Scale = Parent.GetScale();
     olx_gl::rasterPos((-Width/2)*Scale, (-Height/2)*Scale, 0.0);
     olx_gl::pixelStore(GL_PACK_ALIGNMENT, 4);

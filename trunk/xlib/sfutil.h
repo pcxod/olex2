@@ -132,19 +132,29 @@ namespace SFUtil {
       }  
     }
   }
-  // find minimum and maximum values of the miller indexes of the structure factor
+  /* find minimum and maximum values of the miller indexes of the structure
+ factor
+ */
   void FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max);
-  // prepares the list of hkl and structure factors, return error message or empty string
+  /* prepares the list of hkl and structure factors, return error message or
+ empty string
+ */
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F, 
-    short mapType, short sfOrigin = sfOriginOlex2, short scaleType = scaleSimple,
+    short mapType, short sfOrigin = sfOriginOlex2,
+    short scaleType = scaleSimple,
     double scale = 0);
   // calculates the structure factors for given reflections
   template <class IndexList>
-  void CalcSF(const TXFile& xfile, const IndexList& refs, TArrayList<compd>& F)  {
+  void CalcSF(const TXFile& xfile, const IndexList& refs,
+    TArrayList<compd>& F)
+  {
     _CalcSF(xfile, MillerIndexList<IndexList>(refs), F);
   }
-  void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs, TArrayList<compd>& F);
-  // returns an instance according to __OLX_USE_FASTSYMM, must be deleted with delete
+  void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
+    TArrayList<compd>& F);
+  /* returns an instance according to __OLX_USE_FASTSYMM, must be deleted with
+ delete
+ */
   ISF_Util* GetSF_Util_Instance(const TSpaceGroup& sg);
 
 #ifdef __OLX_USE_FASTSYMM
@@ -155,17 +165,22 @@ namespace SFUtil {
     const smatd_list matrices, u_matrices;
     double u_multiplier;
     const bool centro;
-    SG_Impl(const smatd_list& all_matrices, const smatd_list& u_matrices, bool _centro) :
-      matrices(all_matrices), size(all_matrices.Count()),
-      u_matrices(u_matrices), u_size(u_matrices.Count()),
-      u_multiplier(double(size)/u_size), centro(_centro) {}
-    void GenHkl(const vec3i& hkl, TArrayList<vec3i>& out, TArrayList<double>& ps) const {
+    SG_Impl(const smatd_list& all_matrices, const smatd_list& u_matrices,
+      bool _centro)
+      : size(all_matrices.Count()), u_size(u_matrices.Count()),
+        matrices(all_matrices), u_matrices(u_matrices),
+        u_multiplier(double(size)/u_size), centro(_centro) {}
+    void GenHkl(const vec3i& hkl, TArrayList<vec3i>& out,
+      TArrayList<double>& ps) const
+    {
       for( size_t i=0; i < size; i++ )  {
         out[i] = hkl*matrices[i].r;
         ps[i] = matrices[i].t.DotProd(hkl);
       }
     }
-    void GenUniqueHkl(const vec3i& hkl, TArrayList<vec3i>& out, TArrayList<double>& ps) const {
+    void GenUniqueHkl(const vec3i& hkl, TArrayList<vec3i>& out,
+      TArrayList<double>& ps) const
+    {
       for( size_t i=0; i < u_matrices.Count(); i++ )  {
         out[i] = hkl*u_matrices[i].r;
         ps[i] = u_matrices[i].t.DotProd(hkl);
@@ -179,27 +194,32 @@ namespace SFUtil {
     // proxying functions
     inline size_t _getusize() const {  return sg::u_size;  }
     inline double _getumult() const {  return sg::u_multiplier;  }
-    inline void _generateu(const vec3i& hkl, TArrayList<vec3i>& out, TArrayList<double>& ps) const {
+    inline void _generateu(const vec3i& hkl, TArrayList<vec3i>& out,
+      TArrayList<double>& ps) const
+    {
       sg::GenUniqueHkl(hkl, out, ps);
     }
     template <class RefList, bool centro> struct SFCalculateTask  {
+      const SF_Util& parent;
       const IMillerIndexList& refs;
       const mat3d& hkl2c;
       TArrayList<compd>& F;
-      TArrayList<compd> fo;
-      const TArrayList<compd>& fpfdp;
-      TArrayList<vec3i> rv;
-      TArrayList<double> ps;
       const ElementPList& scatterers;
       const TCAtomPList& atoms;
       const double* U;
-      const SF_Util& parent;
-      SFCalculateTask(const SF_Util& _parent, const IMillerIndexList& _refs, const mat3d& _hkl2c,
+      TArrayList<vec3i> rv;
+      TArrayList<double> ps;
+      TArrayList<compd> fo;
+      const TArrayList<compd>& fpfdp;
+      SFCalculateTask(const SF_Util& _parent, const IMillerIndexList& _refs,
+        const mat3d& _hkl2c,
         TArrayList<compd>& _F, const ElementPList& _scatterers,
-        const TCAtomPList& _atoms, const double* _U, const TArrayList<compd>& _fpfdp) :
-        parent(_parent), refs(_refs), hkl2c(_hkl2c), F(_F), scatterers(_scatterers),
-        atoms(_atoms), U(_U), rv(_parent._getusize()), ps(_parent._getusize()),
-        fo(_scatterers.Count()), fpfdp(_fpfdp)
+        const TCAtomPList& _atoms, const double* _U,
+        const TArrayList<compd>& _fpfdp)
+        : parent(_parent), refs(_refs), hkl2c(_hkl2c), F(_F),
+          scatterers(_scatterers), atoms(_atoms), U(_U),
+          rv(_parent._getusize()), ps(_parent._getusize()),
+          fo(_scatterers.Count()), fpfdp(_fpfdp)
       {}
       virtual ~SFCalculateTask()  {}
       void Run(size_t i)  {

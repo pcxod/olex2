@@ -482,7 +482,7 @@ public:
     if( arr[sz-1][sz-1]==0 )
       throw TFunctionFailedException(__OlxSourceInfo, "dependent set of equations");
 
-    for( size_t j = sz-1; j != ~0; j-- )  {
+    for( size_t j = sz-1; j != InvalidIndex; j-- )  {
       for( size_t k1=1; k1 < sz-j+1; k1++ )  {
         if( k1 == (sz-j) )
           for( size_t i=sz-1; i > sz-k1; i-- )

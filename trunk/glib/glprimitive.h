@@ -97,59 +97,47 @@ protected:
   }
   void DrawVertex2c(size_t i) const {
     DrawVertex(Vertices[i], Colors[i]);
-    DrawVertex(Vertices[++i], Colors[i]);
+    DrawVertex(Vertices[i+1], Colors[i+1]);
   }
   void DrawVertex2t(size_t i) const {
     DrawVertex(Vertices[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], TextureCrds[i]);
+    DrawVertex(Vertices[i+1], TextureCrds[i+1]);
   }
   void DrawVertex2ct(size_t i) const {
     DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+    DrawVertex(Vertices[i+1], Colors[i+1], TextureCrds[i+1]);
   }
   void DrawVertex3(size_t i) const {
-    DrawVertex(Vertices[i]);
-    DrawVertex(Vertices[i+1]);
-    DrawVertex(Vertices[i+2]);
+    for (int j=0; j < 3; j++)
+      DrawVertex(Vertices[i+j]);
   }
   void DrawVertex3c(size_t i) const {
-    DrawVertex(Vertices[i], Colors[i]);
-    DrawVertex(Vertices[++i], Colors[i]);
-    DrawVertex(Vertices[++i], Colors[i]);
+    for (int j=0; j < 3; j++)
+      DrawVertex(Vertices[i+j], Colors[i+j]);
   }
   void DrawVertex3t(size_t i) const {
-    DrawVertex(Vertices[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], TextureCrds[i]);
+    for (int j=0; j < 3; j++)
+      DrawVertex(Vertices[i+j], TextureCrds[i+j]);
   }
   void DrawVertex3ct(size_t i) const {
-    DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+    for (int j=0; j < 3; j++)
+      DrawVertex(Vertices[i+j], Colors[i+j], TextureCrds[i+j]);
   }
   void DrawVertex4(size_t i) const {
-    DrawVertex(Vertices[i]);
-    DrawVertex(Vertices[i+1]);
-    DrawVertex(Vertices[i+2]);
-    DrawVertex(Vertices[i+3]);
+    for (int j=0; j < 4; j++)
+      DrawVertex(Vertices[i+j]);
   }
   void DrawVertex4c(size_t i) const {
-    DrawVertex(Vertices[i], Colors[i]);
-    DrawVertex(Vertices[++i], Colors[i]);
-    DrawVertex(Vertices[++i], Colors[i]);
-    DrawVertex(Vertices[++i], Colors[i]);
+    for (int j=0; j < 4; j++)
+      DrawVertex(Vertices[i+j], Colors[i+j]);
   }
   void DrawVertex4t(size_t i) const {
-    DrawVertex(Vertices[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], TextureCrds[i]);
+    for (int j=0; j < 4; j++)
+      DrawVertex(Vertices[i+j], TextureCrds[i+j]);
   }
   void DrawVertex4ct(size_t i) const {
-    DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
-    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+    for (int j=0; j < 4; j++)
+      DrawVertex(Vertices[i+j], Colors[i+j], TextureCrds[i+j]);
   }
 public:
   TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short type);
@@ -195,7 +183,7 @@ public:
     else
       GlP->Draw();
   }
-  static void CallList(GLuint i)  {  olx_gl::callList(i); };
+  static void CallList(GLuint i)  {  olx_gl::callList(i);  }
   void StartList()  {
     if( !olx_is_valid_index(ListId) )
       throw TInvalidArgumentException(__OlxSourceInfo, "ListId");
@@ -207,7 +195,7 @@ public:
 
   struct TextureCrd  {
     float s, t, r, q;
-    TextureCrd() : s(0), r(0), t(0), q(1)  {}
+    TextureCrd() : s(0), t(0), r(0), q(1)  {}
   };
   TArrayList<vec3f> Vertices, Normals;
   TArrayList<TextureCrd> TextureCrds;
@@ -225,24 +213,28 @@ public:
   void SetColor(const uint32_t& cl) const;
   static void SetNormal(const vec3d& v)   {  olx_gl::normal(v);  }
   static void SetNormal(const vec3f& v)   {  olx_gl::normal(v);  }
-  static void SetTexCrd(const TextureCrd& c)  {  olx_gl::texCoord(c.s, c.t, c.r, c.q);  }
+  static void SetTexCrd(const TextureCrd& c)  {
+    olx_gl::texCoord(c.s, c.t, c.r, c.q);
+  }
 
   static void DrawVertex(const vec3d& v)  {  olx_gl::vertex(v);  }
   static void DrawVertex(const vec3f& v)  {  olx_gl::vertex(v);  }
 
   template <class vec_class> 
-  void DrawVertex(const vec_class& v, const uint32_t& c) const {  
+  void DrawVertex(const vec_class& v, const uint32_t& c) const {
     SetColor(c);
     DrawVertex(v);
   }
   template <class vec_class> 
-  void DrawVertex(const vec_class& v, const uint32_t& c, const TextureCrd& tc) const {  
+  void DrawVertex(const vec_class& v, const uint32_t& c,
+    const TextureCrd& tc) const
+  {
     SetColor(c);
     SetTexCrd(tc);
     DrawVertex(v);
   }
   template <class vec_class> 
-  static void DrawVertex(const vec_class& v, const TextureCrd& tc)  {  
+  static void DrawVertex(const vec_class& v, const TextureCrd& tc)  {
     SetTexCrd(tc);
     DrawVertex(v);
   }

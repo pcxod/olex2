@@ -171,7 +171,7 @@ template <typename T>
     while( (ind + entry->GetSize()) <= index )  {
       ind += entry->GetSize();
       entry = entry->GetNext();
-      if( entry = NULL )
+      if( entry == NULL )
         throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, Length-1);
     }
     return entry->Item( index-ind );

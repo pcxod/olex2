@@ -27,7 +27,7 @@ private:
   char Flags;
   TGlOption ClearColor, AmbientColor;
   TGlLight Lights[8];
-  virtual bool Execute(const IEObject* Sender, const IEObject* Data=NULL)  {
+  virtual bool Execute(const IEObject*, const IEObject*)  {
     Init();
     return true;
   }

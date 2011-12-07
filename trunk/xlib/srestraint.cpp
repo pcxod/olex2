@@ -10,8 +10,9 @@
 #include "srestraint.h"
 #include "refmodel.h"
 
-TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, size_t id, const short listType) : 
-  Parent(parent), Id(id), ListType(listType)
+TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, size_t id,
+  const short listType)
+  : Parent(parent), Id(id), ListType(listType)
 {
   Value = 0;
   Esd = Esd1 = 0;
@@ -28,7 +29,7 @@ void TSimpleRestraint::AddAtoms(const TCAtomGroup& atoms)  {
 }
 //..............................................................................
 TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
-  if( aa.GetParent() != &Parent.GetRM().aunit  )
+  if( aa.GetParent() != &Parent.GetRM().aunit )
     throw TInvalidArgumentException(__OlxSourceInfo, "mismatching asymmetric unit");
   const smatd* tm = NULL;
   if( ma != NULL )  {

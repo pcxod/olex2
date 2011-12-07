@@ -66,12 +66,12 @@ public:
         TBasicException(location, EmptyString())  {  ;  }
     virtual IEObject* Replicate()  const {  return new TUnsupportedOperator(*this);  }
   };
-  virtual bool operator == (const IEvaluator &val) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
-  virtual bool operator != (const IEvaluator &val) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
-  virtual bool operator > (const IEvaluator &val)  const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
-  virtual bool operator >= (const IEvaluator &val) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
-  virtual bool operator < (const IEvaluator &val)  const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
-  virtual bool operator <= (const IEvaluator &val) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
+  virtual bool operator == (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
+  virtual bool operator != (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
+  virtual bool operator > (const IEvaluator &)  const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
+  virtual bool operator >= (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
+  virtual bool operator < (const IEvaluator &)  const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
+  virtual bool operator <= (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
 //  virtual bool operator <= (const IEvaluator &val) const {  throw TUnsupportedOperator(*(IEObject*)this, "Unsupported operator");  }
 
   virtual IEvaluator *NewInstance(IDataProvider *) = 0; // {  return NULL;  }
@@ -446,7 +446,7 @@ public:
   IEvaluatorFactory()  {  }
   virtual size_t EvaluatorCount() = 0;
   virtual IEvaluator *Evaluator(size_t index) = 0;
-  virtual IEvaluatorFactory* Factory(const olxstr& factoryName) {  return NULL;  }
+  virtual IEvaluatorFactory* Factory(const olxstr&) {  return NULL;  }
   virtual const olxstr& EvaluatorName(size_t index) = 0;
   virtual ~IEvaluatorFactory() {  ;  }
   virtual IEvaluator* Evaluator(const olxstr &Val) = 0;

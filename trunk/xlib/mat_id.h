@@ -21,7 +21,7 @@ namespace rotation_id {
   // derived/using classes might need to know this
   static const size_t size = 18;
   // generates id for a rotation matrix
-  static int get(const mat3i& m)  {
+  static inline int get(const mat3i& m)  {
     int mask = 0;
     for( int i=0; i < 9; i++ )  {
       const int v = m[i/3][i%3];
@@ -33,7 +33,7 @@ namespace rotation_id {
     return mask;
   }
   // generates a matrix from an id
-  static mat3i get(int id)  {
+  static inline mat3i get(int id)  {
     mat3i rv;
     for( int i=0; i < 9; i++ )
       if( (id & (1<<i)) != 0 )
@@ -43,7 +43,7 @@ namespace rotation_id {
   /* generates an id for -matrix, bits matchign signs, signs^(bits<<9) -
   inverts them
   */
-  static int negate(int id)  {
+  static inline int negate(int id)  {
     return (id&0x1FF)|((id&0x3FE00)^((id&0x1FF)<<9));
   }
   // compares only first 18 bits
@@ -51,10 +51,10 @@ namespace rotation_id {
     return (id1&0x3FFFF)-(id2&0x3FFFF);
   }
   // compares only first 18 bits
-  static bool equals(int id1, int id2)  {
+  static inline bool equals(int id1, int id2)  {
     return compare(id1, id2) == 0;
   }
-}; // end of the namespace rotation_id
+} // end of the namespace rotation_id
 
 /* space group matrix identifier - uses 13 bit for the rotation matrix and
 12 bits for the translation (all positive, < 12)
@@ -65,7 +65,7 @@ namespace sg_mat_id {
     translation_size = 4,
     size = rotation_id::size + 3*translation_size;
   // generates id for a rotation matrix
-  static int get(const smatd& m) {
+  static inline int get(const smatd& m) {
     int mask = rotation_id::get(m.r);
     for (int i=0; i < 3; i++) {
       int v = olx_round((m.t[i]-olx_floor(m.t[i]))*12);
@@ -74,7 +74,7 @@ namespace sg_mat_id {
     return mask;
   }
   // extracts translation from the id
-  static vec3d get_t(int id)  {
+  static inline vec3d get_t(int id)  {
     vec3d rv;
     for (int i=0; i < 3; i++) {
       int off = rotation_id::size+translation_size*i;
@@ -84,7 +84,7 @@ namespace sg_mat_id {
     return rv;
   }
   // generates a matrix from an id
-  static smatd get(int id)  {
+  static inline smatd get(int id)  {
     smatd rv;
     rv.r = rotation_id::get(id);
     for (int i=0; i < 3; i++) {
@@ -99,7 +99,7 @@ namespace sg_mat_id {
     return (id1&0x1FFFFFF)-(id2&0x1FFFFFF);
   }
   // compares only first 18 bits
-  static bool equals(int id1, int id2)  {
+  static inline bool equals(int id1, int id2)  {
     return compare(id1, id2) == 0;
   }
 };

@@ -167,7 +167,7 @@ struct FunctionAccessor {
     rv_t (base_t::*func)() const;
     ConstFunctionAccessorT_(rv_t (base_t::*_func)() const) : func(_func)  {}
     template <typename item_t> rv_t operator ()(const item_t& it) const {
-      return (olx_get_ref(it).*func)();
+      return (olx_ref::get(it).*func)();
     }
   };
   template <typename rv_t, typename base_t> struct ConstFunctionAccessorR_  {
@@ -175,7 +175,7 @@ struct FunctionAccessor {
     rv_t &(base_t::*func)() const;
     ConstFunctionAccessorR_(rv_t & (base_t::*_func)() const) : func(_func)  {}
     template <typename item_t> rv_t & operator ()(const item_t& it) const {
-      return (olx_get_ref(it).*func)();
+      return (olx_ref::get(it).*func)();
     }
   };
   template <typename rv_t, typename base_t> struct ConstFunctionAccessorCR_  {
@@ -185,7 +185,7 @@ struct FunctionAccessor {
       : func(_func)  {}
     template <typename item_t>
     const rv_t & operator ()(const item_t& it) const {
-      return (olx_get_ref(it).*func)();
+      return (olx_ref::get(it).*func)();
     }
   };
 
@@ -194,7 +194,7 @@ struct FunctionAccessor {
     rv_t (base_t::*func)();
     FunctionAccessorT_(rv_t (base_t::*_func)()) : func(_func)  {}
     template <typename item_t> rv_t operator()(item_t& it) const {
-      return (olx_get_ref(it).*func)();
+      return (olx_ref::get(it).*func)();
     }
   };
   template <typename rv_t, typename base_t> struct FunctionAccessorR_  {
@@ -202,7 +202,7 @@ struct FunctionAccessor {
     rv_t &(base_t::*func)();
     FunctionAccessorR_(rv_t & (base_t::*_func)()) : func(_func)  {}
     template <typename item_t> rv_t & operator()(item_t& it) const {
-      return (olx_get_ref(it).*func)();
+      return (olx_ref::get(it).*func)();
     }
   };
   template <typename rv_t, typename base_t> struct FunctionAccessorCR_  {
@@ -210,7 +210,7 @@ struct FunctionAccessor {
     const rv_t &(base_t::*func)();
     FunctionAccessorCR_(const rv_t & (base_t::*_func)()) : func(_func)  {}
     template <typename item_t> const rv_t & operator()(item_t& it) const {
-      return (olx_get_ref(it).*func)();
+      return (olx_ref::get(it).*func)();
     }
   };
 
@@ -223,7 +223,7 @@ struct FunctionAccessor {
     {}
     template <typename item_t_t>
     rv_t operator()(item_t_t& it) const {
-      return (*func)(olx_get_ref(it));
+      return (*func)(olx_ref::get(it));
     }
   };
   template <typename rv_t, typename item_t>
@@ -235,7 +235,7 @@ struct FunctionAccessor {
     {}
     template <typename item_t_t>
     rv_t & operator()(item_t_t& it) const {
-      return (*func)(olx_get_ref(it));
+      return (*func)(olx_ref::get(it));
     }
   };
   template <typename rv_t, typename item_t>
@@ -247,7 +247,7 @@ struct FunctionAccessor {
     {}
     template <typename item_t_t>
     const rv_t & operator()(item_t_t& it) const {
-      return (*func)(olx_get_ref(it));
+      return (*func)(olx_ref::get(it));
     }
   };
 

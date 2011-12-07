@@ -626,10 +626,10 @@ TSpaceGroup::TSpaceGroup(const smatd_list &matrices,
     Number(Number),
     Latt(Latt),
     CentroSymmetric(CentroSymmetric),
+    Translations(false),
     BravaisLattice(NULL),
     LaueClass(NULL),
-    PointGroup(NULL),
-    Translations(false)
+    PointGroup(NULL)
 {
   if (hall_symbol.IsEmpty()) {
     HallSymbol = HallSymbol::Evaluate(
@@ -1120,13 +1120,13 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-2-", FindGroupByName("P2") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--2", FindGroupByName("P112") );
   // 0.5+X,-Y,-Z
-  TSymmElement& se_p2111 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
     "21--", FindGroupByName("P2111") );
   // -X,0.5+Y,-Z
-  TSymmElement& se_p21 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
     "-21-", FindGroupByName("P21") );
   // -X,-Y,0.5+Z
-  TSymmElement& se_p1121 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
     "--21", FindGroupByName("P1121") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("3", FindGroupByName("P3") );
   //-Y,+X-Y,0.333+Z;+Y-X,-X,0.667+Z
@@ -1135,7 +1135,7 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("32", FindGroupByName("P32") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("4", FindGroupByName("P4") );
   //-Y,+X,0.25+Z;-X,-Y,0.5+Z;+Y,-X,0.75+Z
-  TSymmElement& se_p41 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
     "41", FindGroupByName("P41") );
   //-Y,+X,0.5+Z;-X,-Y,+Z;+Y,-X,0.5+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("42", FindGroupByName("P42") );

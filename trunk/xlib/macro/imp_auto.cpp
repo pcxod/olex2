@@ -228,8 +228,6 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           SortedQPeaks.GetObject(0)->SetDeleted(true);
       }
       else  {
-        double wght = (SortedQPeaks.GetLastKey()-avQPeak)/
-          (avQPeak-SortedQPeaks.GetKey(0));
         for( size_t i=vals.Count()-1; i != InvalidIndex; i-- )  {
           if( vals[i].GetA() < thVal )  {
             for( size_t j=0; j < vals[i].GetB()->Count(); j++ )
@@ -666,8 +664,6 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
 // init map
   const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
-  vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
-  const size_t PointCount = dim.Prod();
   TArrayList<AnAssociation3<TCAtom*,double, size_t> > atoms(au.AtomCount());
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     atoms[i].A() = &au.GetAtom(i);
@@ -679,8 +675,6 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   sw.start("Calculating electron density map in P1 (Beevers-Lipson)");
   BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
   sw.stop();
-  TArrayList<MapUtil::peak> _Peaks;
-  TTypeList<MapUtil::peak> Peaks;
   sw.start("Integrating P1 map: ");
   ElementRadii radii;
   for( size_t i=0; i < au.AtomCount(); i++ )  {

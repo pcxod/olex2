@@ -18,32 +18,38 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
   size_t aag;
   try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
   catch(const TExceptionBase&)  {
-    TBasicApp::NewLogEntry(logError) << "Could not locate atoms for FREE " << ar.GetExpression();
+    TBasicApp::NewLogEntry(logError) << "Could not locate atoms for FREE " <<
+      ar.GetExpression();
     return;
   }
   if( ag.Count() == 0 || (ag.Count()%2) != 0 )  {
-    TBasicApp::NewLogEntry(logError) << "Even number of atoms is expected for FREE " <<
+    TBasicApp::NewLogEntry(logError) <<
+      "Even number of atoms is expected for FREE " <<
       ar.GetExpression() << ' ' << ag.Count() << " is provided";
     return;
   }
   for( size_t i=0; i < ag.Count(); i += 2 )  {
     if( ag[i].GetMatrix() != NULL && ag[i+1].GetMatrix() != NULL )  {
-      TBasicApp::NewLogEntry(logError) << "Only one eqivalent is expected in FREE, skipping " <<
+      TBasicApp::NewLogEntry(logError) <<
+        "Only one eqivalent is expected in FREE, skipping " <<
         ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
       continue;
     }
     // validate
     if( ag[i].GetAtom()->GetId() == ag[i+1].GetAtom()->GetId() )  {
-      if( (ag[i].GetMatrix() != NULL && ag[i].GetMatrix()->r.IsI() && ag[i].GetMatrix()->t.IsNull()) || 
-        (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() && ag[i+1].GetMatrix()->t.IsNull()) || 
-        ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL )  
+      if( (ag[i].GetMatrix() != NULL && ag[i].GetMatrix()->r.IsI() &&
+           ag[i].GetMatrix()->t.IsNull()) ||
+        (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() &&
+         ag[i+1].GetMatrix()->t.IsNull()) ||
+        (ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL) )
       {
-        TBasicApp::NewLogEntry(logError) << "Dummy  FREE, skipping " << ag[i].GetFullLabel(rm) <<
-          ' ' << ag[i+1].GetFullLabel(rm);
+        TBasicApp::NewLogEntry(logError) << "Dummy  FREE, skipping " <<
+          ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
         continue;
       }
     }
-    RemBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(), ag[i+1].GetMatrix(), true );
+    RemBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(),
+      ag[i+1].GetMatrix(), true);
   }
 }
 //........................................................................
@@ -53,32 +59,38 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
   size_t aag;
   try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
   catch(const TExceptionBase&)  {
-    TBasicApp::NewLogEntry(logError) << "Could not locate atoms for BIND " << ar.GetExpression();
+    TBasicApp::NewLogEntry(logError) << "Could not locate atoms for BIND " <<
+      ar.GetExpression();
     return;
   }
   if( ag.Count() == 0 || (ag.Count()%2) != 0 )  {
-    TBasicApp::NewLogEntry(logError) << "Even number of atoms is expected for FREE " <<
+    TBasicApp::NewLogEntry(logError) <<
+      "Even number of atoms is expected for FREE " <<
       ar.GetExpression() << ' ' << ag.Count() << " is provided";
     return;
   }
   for( size_t i=0; i < ag.Count(); i += 2 )  {
     if( ag[i].GetMatrix() != NULL && ag[i+1].GetMatrix() != NULL )  {
-      TBasicApp::NewLogEntry(logError) << "Only one eqivalent is expected in BIND, skipping " <<
+      TBasicApp::NewLogEntry(logError) <<
+        "Only one eqivalent is expected in BIND, skipping " <<
         ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
       continue;
     }
     // validate
     if( ag[i].GetAtom()->GetId() == ag[i+1].GetAtom()->GetId() )  {
-      if( (ag[i].GetMatrix() != NULL && ag[i].GetMatrix()->r.IsI() && ag[i].GetMatrix()->t.IsNull()) || 
-        (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() && ag[i+1].GetMatrix()->t.IsNull()) || 
-        ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL )  
+      if( (ag[i].GetMatrix() != NULL && ag[i].GetMatrix()->r.IsI() &&
+           ag[i].GetMatrix()->t.IsNull()) ||
+        (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() &&
+         ag[i+1].GetMatrix()->t.IsNull()) ||
+        (ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL) )
       {
         TBasicApp::NewLogEntry(logError) << "Dummy BIND, skipping " <<
           ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
         continue;
       }
     }
-    AddBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(), ag[i+1].GetMatrix(), true );
+    AddBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(),
+      ag[i+1].GetMatrix(), true );
   }
 }
 //........................................................................
@@ -138,7 +150,8 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
     catch(const TExceptionBase& )  {  }
     if( ag.IsEmpty() )  {
-      TBasicApp::NewLogEntry(logError) <<  "Undefined atom in CONN: " << ins.Text(' ');
+      TBasicApp::NewLogEntry(logError) <<  "Undefined atom in CONN: " <<
+        ins.Text(' ');
       return;
     }
     for( size_t i=0; i < ag.Count(); i++ )  {
@@ -148,7 +161,8 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
           AtomInfo.Delete(ai);
       }
       else  {
-        AtomConnInfo& ai = AtomInfo.Add(ag[i].GetAtom(), AtomConnInfo(*ag[i].GetAtom()));
+        AtomConnInfo& ai = AtomInfo.Add(ag[i].GetAtom(),
+          AtomConnInfo(*ag[i].GetAtom()));
         ai.maxBonds = maxB;
         ai.r = r;
       }
@@ -190,8 +204,10 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       str << aci.atom->GetLabel() << ' ' << bi.to.GetLabel();
       if( bi.matr != NULL )  {
         size_t si = rm.UsedSymmIndex(*bi.matr);
-        if( si == InvalidIndex )
-          throw TFunctionFailedException(__OlxSourceInfo, "Undefined EQIV in BIND");
+        if( si == InvalidIndex ) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            "Undefined EQIV in BIND");
+        }
         str << "_$" << (si+1);
       }
     }
@@ -203,8 +219,10 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       str << aci.atom->GetLabel() << ' ' << bi.to.GetLabel();
       if( bi.matr != NULL )  {
         size_t si = rm.UsedSymmIndex(*bi.matr);
-        if( si == InvalidIndex )
-          throw TFunctionFailedException(__OlxSourceInfo, "Undefined EQIV in BIND");
+        if( si == InvalidIndex ) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            "Undefined EQIV in BIND");
+        }
         str << "_$" << (si+1);
       }
     }
@@ -257,15 +275,19 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
     if( _aci.atom->IsDeleted() )
       continue;
     TCAtom* ca = rm.aunit.FindCAtomById(_aci.atom->GetId());
-    if( ca == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "Asymmetric units mismatch");
+    if( ca == NULL ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "Asymmetric units mismatch");
+    }
     AtomConnInfo& aci = AtomInfo.Add(ca);
     aci.atom = ca;
     (CXConnInfoBase&)aci = _aci;
     for( size_t j=0; j < _aci.BondsToCreate.Count(); j++ )  {
       ca = rm.aunit.FindCAtomById(_aci.BondsToCreate[j].to.GetId());
-      if( ca == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "Asymmetric units mismatch");
+      if( ca == NULL ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "Asymmetric units mismatch");
+      }
       if( ca->IsDeleted() )
         continue;
       const smatd* sm = _aci.BondsToCreate[j].matr == NULL ? NULL :
@@ -274,8 +296,10 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
     }
     for( size_t j=0; j < _aci.BondsToRemove.Count(); j++ )  {
       ca = rm.aunit.FindCAtomById(_aci.BondsToRemove[j].to.GetId());
-      if( ca == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "Asymmetric units mismatch");
+      if( ca == NULL ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "Asymmetric units mismatch");
+      }
       if( ca->IsDeleted() )
         continue;
       const smatd* sm = _aci.BondsToRemove[j].matr == NULL ? NULL :
@@ -289,12 +313,15 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
 //........................................................................
 void ConnInfo::ToDataItem(TDataItem& item) const {
   TDataItem& ti_item = item.AddItem("TYPE");
-  for( size_t i=0; i < TypeInfo.Count(); i++ )
-    TypeInfo.GetValue(i).ToDataItem(ti_item.AddItem(TypeInfo.GetValue(i).atomType->symbol));
+  for( size_t i=0; i < TypeInfo.Count(); i++ ) {
+    TypeInfo.GetValue(i).ToDataItem(
+      ti_item.AddItem(TypeInfo.GetValue(i).atomType->symbol));
+  }
   TDataItem& ai_item = item.AddItem("ATOM");
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     if( AtomInfo.GetValue(i).atom->IsDeleted() )  continue;
-    AtomInfo.GetValue(i).ToDataItem(ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
+    AtomInfo.GetValue(i).ToDataItem(
+      ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
   }
 }
 //........................................................................
@@ -302,8 +329,10 @@ void ConnInfo::FromDataItem(const TDataItem& item)  {
   TDataItem& ti_item = item.FindRequiredItem("TYPE");
   for( size_t i=0; i < ti_item.ItemCount(); i++ )  {
     cm_Element* elm = XElementLib::FindBySymbol(ti_item.GetItem(i).GetName());
-    if( elm == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown symbol: ") << ti_item.GetItem(i).GetName());
+    if( elm == NULL ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("Unknown symbol: ") << ti_item.GetItem(i).GetName());
+    }
     TypeInfo.Add(elm).FromDataItem(ti_item.GetItem(i), elm);
 
   }
@@ -323,7 +352,8 @@ PyObject* ConnInfo::PyExport()  {
       TypeInfo.GetValue(i).PyExport());
   }
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
-    PythonExt::SetDictItem(atom, Py_BuildValue("i", AtomInfo.GetValue(i).atom->GetTag()),
+    PythonExt::SetDictItem(atom, Py_BuildValue("i",
+      AtomInfo.GetValue(i).atom->GetTag()),
       AtomInfo.GetValue(i).PyExport());
   }
   PythonExt::SetDictItem(main, "type", type);
@@ -338,7 +368,9 @@ void ConnInfo::TypeConnInfo::ToDataItem(TDataItem& item) const {
   item.AddField("r", r);
   item.AddField("b", maxBonds);
 }
-void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item, const cm_Element* elm)  {
+void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item,
+  const cm_Element* elm)
+{
   atomType = elm;
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();
@@ -350,8 +382,10 @@ PyObject* ConnInfo::TypeConnInfo::PyExport()  {
 }
 #endif
 //........................................................................
-size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) {
-  if( key != &a1 && key != &a2 || list.IsEmpty() )
+size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key,
+  TCAtom& a1, TCAtom& a2, const smatd* eqiv)
+{
+  if( (key != &a1 && key != &a2) || list.IsEmpty() )
     return InvalidIndex;
   if( key == &a1 )  {
     for( size_t i=0; i < list.Count(); i++ )  {
@@ -372,11 +406,14 @@ size_t ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1
   return InvalidIndex;
 }
 //........................................................................
-const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, bool release) const {
+const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
+  bool release) const
+{
   if( eqiv1 == NULL || (eqiv1->r.IsI() && eqiv1->t.IsNull()) )  {
     if( release && eqiv1 != NULL )
       rm.RemUsedSymm(*eqiv1);
-    return (eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) ? NULL : eqiv2);
+    return (eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) ?
+      NULL : eqiv2);
   }
   smatd mat;
   if( &rm.aunit.GetLattice() == NULL )  {  // no lattice?
@@ -417,11 +454,14 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
   return ((mat.r.IsI() && mat.t.IsNull()) ? NULL : &rm.AddUsedSymm(mat));
 }
 //........................................................................
-void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
+void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
+  const smatd* eqiv2, bool release_eqiv)
+{
   const smatd* eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);
   size_t ind = InvalidIndex;
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
-    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv); 
+    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i),
+      a1, a2, eqiv);
     if( ind != InvalidIndex )
       break;
   }
@@ -431,7 +471,8 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
   }
   // validate the bonds to delete
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
-    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
+    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i),
+      a1, a2, eqiv);
     if( ind != InvalidIndex )  {
       AtomInfo.GetValue(i).BondsToRemove.Delete(ind);
       break;
@@ -439,28 +480,35 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
   }
 }
 //........................................................................
-void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
+void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
+  const smatd* eqiv2, bool release_eqiv)
+{
   const smatd* eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);
   size_t ind = InvalidIndex;
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
-    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
+    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i),
+      a1, a2, eqiv);
     if( ind != InvalidIndex )
       break;
   }
   if( ind == InvalidIndex )  {
     // validate the bonds to create
     for( size_t i=0; i < AtomInfo.Count(); i++ )  {
-      ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv);
+      ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate,
+        AtomInfo.GetKey(i), a1, a2, eqiv);
       if( ind != InvalidIndex )  {
         AtomInfo.GetValue(i).BondsToCreate.Delete(ind);
         break;
       }
     }
-    AtomInfo.Add(&a1, AtomConnInfo(a1)).BondsToRemove.Add(new CXBondInfo(a2, eqiv));
+    AtomInfo.Add(&a1, AtomConnInfo(a1)).BondsToRemove.Add(
+      new CXBondInfo(a2, eqiv));
   }
 }
 //........................................................................
-void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml)  {
+void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate,
+  BondInfoList& toDelete, smatd_list& ml)
+{
   const TAsymmUnit& au = *a.GetParent();
   const TUnitCell& uc = a.GetParent()->GetLattice().GetUnitCell();
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -470,13 +518,14 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
     if( ca != a )  {
       for( size_t j=0; j < ci.BondsToRemove.Count(); j++ )  {
         if( ci.BondsToRemove[j].to == a )  {
-          const smatd matr = ci.BondsToRemove[j].matr == NULL ? uc.GetMatrix(0) :
-            uc.InvMatrix(*ci.BondsToRemove[j].matr);
+          const smatd matr = ci.BondsToRemove[j].matr == NULL ? uc.GetMatrix(0)
+            : uc.InvMatrix(*ci.BondsToRemove[j].matr);
           bool uniq = true;
           for( size_t k=0; k < toDelete.Count(); k++ )  {
             if( toDelete[k].to == a && 
-              ((toDelete[k].matr != NULL && toDelete[k].matr->GetId() == matr.GetId()) ||
-                toDelete[k].matr == NULL && ci.BondsToRemove[j].matr == NULL))
+              ((toDelete[k].matr != NULL &&
+                toDelete[k].matr->GetId() == matr.GetId()) ||
+                (toDelete[k].matr == NULL && ci.BondsToRemove[j].matr == NULL)))
             {
               uniq = false;
               break;
@@ -493,8 +542,9 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
           bool uniq = true;
           for( size_t k=0; k < toCreate.Count(); k++ )  {
             if( toCreate[k].to == a && 
-              ((toCreate[k].matr != NULL && toCreate[k].matr->GetId() == matr.GetId()) ||
-                toCreate[k].matr == NULL && ci.BondsToCreate[j].matr == NULL))
+              ((toCreate[k].matr != NULL &&
+                toCreate[k].matr->GetId() == matr.GetId()) ||
+                (toCreate[k].matr == NULL && ci.BondsToCreate[j].matr == NULL)))
             {
               uniq = false;
               break;
@@ -508,10 +558,12 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
     else  {  // own connectivity
       for( size_t i=0; i < ci.BondsToCreate.Count(); i++ )
         toCreate.Add(new CXBondInfo(ci.BondsToCreate[i].to,
-          ci.BondsToCreate[i].matr == NULL ? NULL : &ml.AddCopy(*ci.BondsToCreate[i].matr)));
+          ci.BondsToCreate[i].matr == NULL ? NULL
+            : &ml.AddCopy(*ci.BondsToCreate[i].matr)));
       for( size_t i=0; i < ci.BondsToRemove.Count(); i++ )
         toDelete.Add(new CXBondInfo(ci.BondsToRemove[i].to,
-          ci.BondsToRemove[i].matr == NULL ? NULL : &ml.AddCopy(*ci.BondsToRemove[i].matr)));
+          ci.BondsToRemove[i].matr == NULL ? NULL
+            : &ml.AddCopy(*ci.BondsToRemove[i].matr)));
     }
   }
   //for( size_t i=0; i < ml.Count(); i++ )
@@ -540,7 +592,9 @@ void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item) const {
       bi.AddField("eqiv", BondsToRemove[i].matr->GetId());
   }
 }
-void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item, RefinementModel& rm, TCAtom& a)  {
+void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
+  RefinementModel& rm, TCAtom& a)
+{
   atom = &a;
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();

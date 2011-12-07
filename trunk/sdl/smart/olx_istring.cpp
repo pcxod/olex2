@@ -11,7 +11,7 @@
 
 template <class T, typename TC>
 olxcstr esdl::TTSString<T,TC>::WStr2CStr(const wchar_t* wstr, size_t len)  {
-  const size_t sz = (len == ~0 ? wcslen(wstr) : len);
+  const size_t sz = (len == InvalidSize ? wcslen(wstr) : len);
   if( sz == 0 )
     return CEmptyString();
   const size_t res = wcstombs(NULL, wstr, sz);
@@ -27,7 +27,7 @@ olxcstr esdl::TTSString<T,TC>::WStr2CStr(const olxwstr& str)  {  return WStr2CSt
 
 template <class T, typename TC>
 olxwstr esdl::TTSString<T,TC>::CStr2WStr(const char* mbs, size_t len)  {
-  const size_t sz = (len == ~0 ? strlen(mbs) : len);
+  const size_t sz = (len == InvalidSize ? strlen(mbs) : len);
   if( sz == 0 )
     return WEmptyString();
   const size_t res = mbstowcs(NULL, mbs, sz);

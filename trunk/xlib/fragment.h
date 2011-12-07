@@ -44,14 +44,13 @@ class Fragment {
   TTypeList<FragAtom> Atoms;
   mat3d f2c;  // fractioal to cartesian 
 protected:
-  void BuildMatrix(double a, double b, double c, double alpha, double beta, double gamma)
+  void BuildMatrix(double a, double b, double c, double alpha, double beta,
+    double gamma)
   {
     double cG = cos(gamma/180*M_PI),
       cB = cos(beta/180*M_PI),
       cA = cos(alpha/180*M_PI),
-      sG = sin(gamma/180*M_PI),
-      sB = sin(beta/180*M_PI),
-      sA = sin(alpha/180*M_PI);
+      sG = sin(gamma/180*M_PI);
     double cs = sG/(c*sqrt( (1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG)));
     f2c[0][0] = a;
     f2c[1][0] = b*cG;
@@ -66,14 +65,16 @@ public:
   {  
     BuildMatrix(a, b, c, alpha, beta, gamma);
   }
-  Fragment(const Fragment& frag) : Atoms(frag.Atoms), Code(frag.Code)  {  }
+  Fragment(const Fragment& frag) : Code(frag.Code), Atoms(frag.Atoms)  {}
   Fragment& operator = (const Fragment& f)  {  
     Atoms = f.Atoms;  
     Code = f.Code;
     return *this;
   }
 
-  void Reset(double a, double b, double c, double alpha, double beta, double gamma)  {
+  void Reset(double a, double b, double c, double alpha, double beta,
+    double gamma)
+  {
     BuildMatrix(a, b, c, alpha, beta, gamma);
     Atoms.Clear();
   }
@@ -141,8 +142,10 @@ public:
       GenerateRegularRing(5, l, rv);
       GenerateRegularRing(5, l+1.063, rv);
     }
-    else
-      throw TInvalidArgumentException(__OlxSourceInfo, "invalid fragment identifier");
+    else {
+      throw TInvalidArgumentException(
+        __OlxSourceInfo, "invalid fragment identifier");
+    }
     return rv;
   }
 };

@@ -123,27 +123,26 @@ struct cm_Element {
 protected:
   double Mr;
 public:
+  const short index;
   const olxstr symbol, name;
-  const cm_Gaussians* gaussians;  // 9 elements = 4 gaussians + const
-  const cm_Isotope* isotopes;
-  const cm_Anomalous_Henke* henke_data; 
-  const cm_Neutron_Scattering* neutron_scattering;
   uint32_t def_color;
   const short z, isotope_count, henke_count;
-  const short index;
-  double r_pers, r_bonding, r_sfil, r_cov, r_vdw;
-  cm_Element(short _index, const char* _symbol, const char* _name, uint32_t _def_color, short _z, 
+  double r_pers, r_cov, r_vdw, r_bonding, r_sfil;
+  const cm_Gaussians* gaussians;  // 9 elements = 4 gaussians + const
+  const cm_Isotope* isotopes;
+  const cm_Anomalous_Henke* henke_data;
+  const cm_Neutron_Scattering* neutron_scattering;
+  cm_Element(short _index, const char* _symbol, const char* _name, uint32_t _def_color, short _z,
     double _r_vdw, double _r_cov, double _r_pers, double _r_bonding, double _r_sfil, const cm_Gaussians* _gaussians, 
-    const cm_Isotope* _isotopes, short _isotope_count, 
+    const cm_Isotope* _isotopes, short _isotope_count,
     const cm_Anomalous_Henke* _henke_data, short _henke_count, 
     const cm_Neutron_Scattering* _neutron_scattering) :
-    index(_index),
-    symbol(_symbol), name(_name), def_color(_def_color), z(_z), r_pers(_r_pers), 
+    Mr(0), index(_index),
+    symbol(_symbol), name(_name), def_color(_def_color), z(_z),
+    isotope_count(_isotope_count), henke_count(_henke_count), r_pers(_r_pers),
     r_cov(_r_cov), r_vdw(_r_vdw), r_bonding(_r_bonding), r_sfil(_r_sfil), gaussians(_gaussians), 
-    isotopes(_isotopes), isotope_count(_isotope_count),
-    henke_data(_henke_data), henke_count(_henke_count),
-    neutron_scattering(_neutron_scattering),
-    Mr(0.0)
+    isotopes(_isotopes), henke_data(_henke_data),
+    neutron_scattering(_neutron_scattering)
   {
     for( int i=0; i < isotope_count; i++ )
       Mr += isotopes[i].Mr*isotopes[i].W;

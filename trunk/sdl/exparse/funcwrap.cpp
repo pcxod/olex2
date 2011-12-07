@@ -17,8 +17,8 @@ using namespace exparse;
 //}
 
 void vtest_0() {}
-void vtest_1(bool v)  {}
-void vtest_2(bool v1, bool v2)  {}
+void vtest_1(bool)  {}
+void vtest_2(bool, bool)  {}
 
 bool test_0()  {  return true;  }
 bool test_1(bool v)  {  return !v;  }

@@ -335,10 +335,11 @@ struct GraphAnalyser  {
       return true;
     }
   };
-  GraphAnalyser(TEGraphNode<size_t,TSAtom*>& rootA, TEGraphNode<size_t,TSAtom*>& rootB,
-    double (*_weight_calculator)(const TSAtom&)) :
-      weight_calculator(_weight_calculator),
-      RootA(rootA), RootB(rootB), CallsCount(0), Invert(false)
+  GraphAnalyser(TEGraphNode<size_t,TSAtom*>& rootA,
+    TEGraphNode<size_t,TSAtom*>& rootB,
+    double (*_weight_calculator)(const TSAtom&))
+    : RootA(rootA), RootB(rootB), CallsCount(0), Invert(false),
+      weight_calculator(_weight_calculator)
   {
     minRms = -1;
     CalcRMSForH = true;
@@ -510,9 +511,7 @@ bool TNetwork::DoMatch(TNetwork& net,
   TSAtom* thisSa = NULL;
   size_t maxbc = 0;
   double maxMw = 0;
-  const TAsymmUnit& au_b = net.GetLattice().GetAsymmUnit();
   size_t HCount = 0;
-  const TAsymmUnit& au_a = this->GetLattice().GetAsymmUnit();
   for( size_t i=0; i < NodeCount(); i++ )  {
     Node(i).SetTag(0);
     const size_t bc = TNetwork_NodeCounter(Node(i));
@@ -685,8 +684,6 @@ void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
         continue;
       bool found = true;
       for( size_t k=0; k < rings[i].Count(); k++ )  {
-        TSAtom* a = rings[i][k],
-          *b = rings[j][k];
         if( rings[i][k]->GetTag() != rings[j][k]->GetTag() )  {
           found = false;
           break;
@@ -840,7 +837,6 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, const ElementPList& ringContent,
 }
 //..............................................................................
 TNetwork::RingInfo& TNetwork::AnalyseRing(const TSAtomPList& ring, TNetwork::RingInfo& ri)  {
-  int pivot = -1, pivot_count = 0;
   double maxmw = 0;
   for( size_t i=0; i < ring.Count(); i++ )  {
     if( !ri.HasAfix && ring[i]->CAtom().GetAfix() != 0 )

@@ -92,11 +92,11 @@ public:
         vo.AddNew((vo[t.vertices[0]]+vo[t.vertices[2]])/2);
         vo.AddNew((vo[t.vertices[1]]+vo[t.vertices[2]])/2);
         // new triangle, (12, 23, 13)
-        IndexTriangle& nt1 = to.AddNew(vo.Count()-3, vo.Count()-1, vo.Count()-2);
+        to.AddNew(vo.Count()-3, vo.Count()-1, vo.Count()-2);
         // new tringles partially based on old vertices (new, 23, 12)
-        IndexTriangle& nt2 = to.AddNew(t.vertices[1], vo.Count()-1, vo.Count()-3);
+        to.AddNew(t.vertices[1], vo.Count()-1, vo.Count()-3);
         // new tringles partially based on old vertices (new, 13, 23)
-        IndexTriangle& nt3 = to.AddNew(t.vertices[2], vo.Count()-2, vo.Count()-1);
+        to.AddNew(t.vertices[2], vo.Count()-2, vo.Count()-1);
         // modify the original triangle to take two new points
         t.vertices[1] = vo.Count()-3;  // 12
         t.vertices[2] = vo.Count()-2;  // 13

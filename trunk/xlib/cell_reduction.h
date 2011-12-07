@@ -47,9 +47,8 @@ struct Niggli {
   }
   static void reduce(short _latt, vec3d& sides, vec3d& angles)  {
     double R[6];
-    vec3d cs(cos(angles[0]/180.0*M_PI), cos(angles[1]/180.0*M_PI), cos(angles[2]/180.0*M_PI));
-    double cosa = cs[2];
-    double sina = sin(angles[2]/180.0*M_PI);
+    vec3d cs(cos(angles[0]/180.0*M_PI), cos(angles[1]/180.0*M_PI),
+      cos(angles[2]/180.0*M_PI));
     double vol = sides.Prod()*sqrt(1-cs.QLength()+2*cs.Prod());
     // Acta Cryst. (2004). A60, 1–6
     EpsilonComparator cmp(1e-5*pow(vol, 1./3));

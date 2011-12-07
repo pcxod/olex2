@@ -32,10 +32,11 @@ public:
   struct NameRef {
     size_t catom_id;
     olxstr name;
-    double peak_height;
     const cm_Element* elm;
-    NameRef(size_t id, const cm_Element* _elm, double _peak_height, const olxstr& n) :
-      catom_id(id), elm(_elm), peak_height(_peak_height), name(n)  {}
+    double peak_height;
+    NameRef(size_t id, const cm_Element* _elm, double _peak_height,
+      const olxstr& n)
+      : catom_id(id), name(n), elm(_elm), peak_height(_peak_height)   {}
   };
 
   TNameUndo(IUndoAction* action) : TUndoData(action)  {}
@@ -63,9 +64,11 @@ protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
   void ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last);
   TXApp(const olxstr &basedir, bool dummy);
-  void Init(ASObjectProvider* objectProvider=NULL, ASelectionOwner* selOwner=NULL);
+  void Init(ASObjectProvider* objectProvider=NULL,
+    ASelectionOwner* selOwner=NULL);
 public:
-  TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL, ASelectionOwner* selOwner=NULL);
+  TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL,
+    ASelectionOwner* selOwner=NULL);
   virtual ~TXApp();
   inline TXFile& XFile() const {  return *FXFile; }
   
@@ -88,43 +91,54 @@ public:
   static TXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();
     TXApp* xai = dynamic_cast<TXApp*>(&bai);
-    if( xai == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "unsuitable application instance");
+    if( xai == NULL ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "unsuitable application instance");
+    }
     return *xai;
   }
-  // calculates structure factors for current structure, F.Count must be greater or equal to the ref.Count
+  /* calculates structure factors for current structure, F.Count must be greater
+ or equal to the ref.Count
+ */
   void CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);
   // fixes hydrogen atom labels
   TUndoData* FixHL();
-  static void RingContentFromStr(const olxstr& textDescr, ElementPList& ringDesc);
+  static void RingContentFromStr(const olxstr& textDescr,
+    ElementPList& ringDesc);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
   //
-  virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll = true, bool ClearSelection=true);
+  virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res,
+    bool ReturnAll = true, bool ClearSelection=true);
   // fins Cp, Ph, Naph and Cp* rings and adds corresponding afixes
   void AutoAfixRings(int afix, TSAtom* sa = NULL, bool TryPyridine = false);
   void SetAtomUiso(TSAtom& sa, double val);
-  /* initialises the vcov matrix from shelx or smtbx, might throw an exception... 
-  returns the source of the matrix like: shelxl or smtbx */
+  /* initialises the vcov matrix from shelx or smtbx, might throw an exception..
+  returns the source of the matrix like: shelxl or smtbx
+ */
   olxstr InitVcoV(class VcoVContainer& vcov) const;
 
   static ElementRadii ReadVdWRadii(const olxstr& fileName);
-  static void PrintVdWRadii(const ElementRadii& radii, const ContentList& au_cont);
+  static void PrintVdWRadii(const ElementRadii& radii,
+    const ContentList& au_cont);
   template <class AtomType>  // could be either TCAtom or TSAtom
   static double GetVdWRadius(const AtomType& a, const ElementRadii* radii)  {
-    const size_t ei = (radii == NULL ? InvalidIndex : radii->IndexOf(&a.GetType()));
+    const size_t ei = (radii == NULL ? InvalidIndex
+      : radii->IndexOf(&a.GetType()));
     return (ei == InvalidIndex ? a.GetType().r_vdw : radii->GetValue(ei));
   }
-  /* returns size of the box using radii in A and using r_sfil - in B. If the radii is NULL, the
-  values will be identical. If the radii is not null, the number of radii must equal the number of
-  atoms */
+  /* returns size of the box using radii in A and using r_sfil - in B. If the
+ radii is NULL, the values will be identical. If the radii is not null, the
+ number of radii must equal the number of atoms
+ */
   static WBoxInfo CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
     double (*weight_calculator)(const TSAtom&));
   struct CalcVolumeInfo  {
     double total, overlapping;
-    CalcVolumeInfo(double _total, double _overlapping) : total(_total), overlapping(_overlapping)  {}
+    CalcVolumeInfo(double _total, double _overlapping) : total(_total),
+      overlapping(_overlapping)  {}
   };
   CalcVolumeInfo CalcVolume(const ElementRadii* radii);
 

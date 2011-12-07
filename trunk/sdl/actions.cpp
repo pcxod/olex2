@@ -192,7 +192,7 @@ void TActionQList::Clear()  {
 
   for( size_t i =0; i < ac; i++ )  {
     hands[i]->OnRemove();
-    if( hands[i]->GetTag() == i )  {  // the object represents the last object ( out of dubs)
+    if( (size_t)hands[i]->GetTag() == i )  {  // the object represents the last object ( out of dubs)
       if( hands[i]->IsToDelete() )
         delete hands[i];
     }

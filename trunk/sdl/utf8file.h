@@ -37,16 +37,16 @@ protected:
         "invalid UTF8 file signature");
     }
   }
-  virtual size_t WritelnFor(const TIWString& str)  {
+  virtual size_t WritelnFor(const TIWString&)  {
     return Write(CNewLineSequence());
   }
-  virtual size_t WritelnFor(const wchar_t* Data)  {
+  virtual size_t WritelnFor(const wchar_t*)  {
     return Write(CNewLineSequence());
   }
-  virtual size_t WritelnFor(const TICString& str)  {
+  virtual size_t WritelnFor(const TICString&)  {
     return Write(CNewLineSequence());
   }
-  virtual size_t WritelnFor(const char* Data)  {
+  virtual size_t WritelnFor(const char*)  {
     return Write(CNewLineSequence());
   }
 public:

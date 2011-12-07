@@ -78,10 +78,10 @@ class IDataOutputStream : public IOutputStream  {
   }
 protected:
   // stream's underlying new line...
-  virtual inline size_t WritelnFor(const TIWString& str)  {  return Write(WNewLineSequence());  }
-  virtual inline size_t WritelnFor(const wchar_t* Data)  {  return Write(WNewLineSequence());  }
-  virtual inline size_t WritelnFor(const TICString& str)  {  return Write(CNewLineSequence());  }
-  virtual inline size_t WritelnFor(const char* Data)  {  return Write(CNewLineSequence());  }
+  virtual inline size_t WritelnFor(const TIWString&)  {  return Write(WNewLineSequence());  }
+  virtual inline size_t WritelnFor(const wchar_t*)  {  return Write(WNewLineSequence());  }
+  virtual inline size_t WritelnFor(const TICString&)  {  return Write(CNewLineSequence());  }
+  virtual inline size_t WritelnFor(const char*)  {  return Write(CNewLineSequence());  }
 public:
   virtual ~IDataOutputStream() {}
 

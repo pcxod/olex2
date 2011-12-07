@@ -100,7 +100,6 @@ olxstr HallSymbol::FindT(const vec3d& t, int order)  {
 olxstr HallSymbol::FindTR(const vec3d& t, int order)  {
   const double v = t[0] != 0 ? t[0] : (t[1] != 0 ? t[1] : t[2]);
   if( v == 0 )  return EmptyString();
-  bool processed = false;
   if( order <= 2 || t.Length() != v )
     return FindT(t, order);
   else if( order == 3 )  {
@@ -285,7 +284,7 @@ SymmSpace::Info HallSymbol::Expand(const olxstr &_hs) {
       axis = toks[i].SubStringTo(2);
       size_t ai = r_dict.IndexOf(axis);
       if (ai == InvalidIndex) {
-        if (axis.CharAt(1) == '\'' || axis.CharAt(1) == '"' && dir != 0) {
+        if (((axis.CharAt(1) == '\'') || (axis.CharAt(1) == '"')) && dir != 0) {
           previous = axis.CharAt(0)-'0';
           smatd& m = info.matrices.AddNew();
           m.r = rotation_id::get(find_diagonal(dir, axis.CharAt(1)));

@@ -75,8 +75,8 @@ public:
 struct TOlxVarChangeData : public IEObject  {
   const olxstr& str_val, var_name;
   PyObject* py_val;
-  TOlxVarChangeData(const olxstr& v_name, const olxstr& v_val, PyObject* p_val) :
-    var_name(v_name), str_val(v_val), py_val(p_val) {}
+  TOlxVarChangeData(const olxstr& v_name, const olxstr& v_val, PyObject* p_val)
+    : str_val(v_val), var_name(v_name), py_val(p_val) {}
 };
    
 class TOlxVars : public IEObject  {
@@ -246,7 +246,9 @@ class OlxStateVar  {
   olxstr name, prev_val;
   bool was_set, restored;
 public:
-  OlxStateVar(const olxstr& _name) : name(_name), restored(false), was_set(false)  {
+  OlxStateVar(const olxstr& _name)
+    : name(_name), was_set(false), restored(false)
+  {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     size_t i = TOlxVars::VarIndex(_name);
     if( i != InvalidIndex )  {

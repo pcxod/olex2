@@ -16,15 +16,15 @@ BeginEsdlNamespace()
 template <class obj_t>
 class const_obj {
 protected:
-  mutable olx_ptr<obj_t> *p;
+  mutable olx_ptr_<obj_t> *p;
   static void throw_invalid(const char* file, const char* function, int line) {
     TExceptionBase::ThrowFunctionFailed(file, function, line,
       "uninitialised object");
   }
 public:
   const_obj(const const_obj &l) : p(l.p == NULL ? NULL : l.p->inc_ref())  {}
-  const_obj(obj_t *l) : p (new olx_ptr<obj_t>(l)) {}
-  const_obj(obj_t &l) : p(new olx_ptr<obj_t>(new obj_t)) {
+  const_obj(obj_t *l) : p (new olx_ptr_<obj_t>(l)) {}
+  const_obj(obj_t &l) : p(new olx_ptr_<obj_t>(new obj_t)) {
     p->p->TakeOver(l);
   }
   virtual ~const_obj()  {

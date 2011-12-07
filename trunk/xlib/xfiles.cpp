@@ -53,7 +53,6 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
   try  {
     LoadFromStrings(L);
     if( EsdlInstanceOf(*this, TCif) )  {
-      TCif* cif = (TCif*)this;
       if( !file_n.data_name.IsEmpty() ) {
         if( file_n.is_index )
           ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
@@ -84,8 +83,8 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
 // TXFile function bodies
 //----------------------------------------------------------------------------//
 TXFile::TXFile(ASObjectProvider& Objects) :
-  RefMod(Lattice.GetAsymmUnit()),
   Lattice(Objects),
+  RefMod(Lattice.GetAsymmUnit()),
   OnFileLoad(Actions.New("XFILELOAD")),
   OnFileSave(Actions.New("XFILESAVE")),
   OnFileClose(Actions.New("XFILECLOSE"))
@@ -102,7 +101,7 @@ TXFile::~TXFile()  {
   for( size_t i=0; i < FileFormats.Count(); i++ )
     FileFormats.GetObject(i)->SetTag(i);
   for( size_t i=0; i < FileFormats.Count(); i++ )
-    if( FileFormats.GetObject(i)->GetTag() == i )
+    if( (size_t)FileFormats.GetObject(i)->GetTag() == i )
       delete FileFormats.GetObject(i);
 }
 //..............................................................................
@@ -573,7 +572,7 @@ void TXFile::LibDataName(const TStrObjList& Params, TMacroError& E)  {
   if( i < 0 )
     E.SetRetVal(cif.GetDataName());
   else  {
-    if( i >= cif.BlockCount() )
+    if( (size_t)i >= cif.BlockCount() )
       throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, cif.BlockCount());
     E.SetRetVal(cif.GetBlock(i).GetName());
   }

@@ -391,7 +391,7 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell,
 }
 //.............................................................................
 void Index::PrintResults(const TTypeList<ResultEntry> &res)  {
-  size_t cell_num=0, rows_processes=0;
+  size_t cell_num=0;
   TTable tab(0, 3);
   for( size_t i=0; i < res.Count(); i++ )  {
     if( i > 0 && res[i].cell == res[i-1].cell )  {

@@ -29,6 +29,8 @@ BeginXlibNamespace()
 class TIns: public TBasicCFile  {
   // parsing context state and varables
   struct ParseContext {
+    RefinementModel& rm;
+    TAsymmUnit& au;
     TStrList Symm;
     TStrPObjList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
     bool CellFound, SetNextPivot, End;
@@ -36,17 +38,16 @@ class TIns: public TBasicCFile  {
     // number of atoms (left), pivot, Hydrogens or not
     esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;
     double PartOccu;
+    TResidue* Resi;
     TCAtom* Last,
       // this are used to evaluate riding H Uiso coded like -1.5
       *LastWithU, *LastNonH;
-    TResidue* Resi;
-    TAsymmUnit& au;
-    RefinementModel& rm;
     TIns* ins;
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
     ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit), 
-      Resi(NULL), Last(NULL), LastWithU(NULL), LastNonH(NULL)  {
+      Resi(NULL), Last(NULL), LastWithU(NULL), LastNonH(NULL)
+    {
       End = SetNextPivot = CellFound = false;
       PartOccu = 0;
       ToAnis = Part = 0;

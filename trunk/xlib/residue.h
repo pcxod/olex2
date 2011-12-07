@@ -14,11 +14,11 @@
 BeginXlibNamespace()
 
 class TResidue : public IEObject  {
+  TAsymmUnit& Parent;
+  uint16_t Id;
   olxstr ClassName, Alias;
   int Number;
-  uint16_t Id;
   TCAtomPList Atoms;
-  TAsymmUnit& Parent;
 protected:
   // removes an atom and resets the ResiId, this is used internally from Add
   void Remove(TCAtom& ca)           {
@@ -28,18 +28,21 @@ protected:
       Atoms.Delete(i);
     }
   }
-  // adds an atom to this residue without trying to remove from the owning residue (if there is any!)
+  /* adds an atom to this residue without trying to remove from the owning
+ residue (if there is any!)
+ */
   void _Add(TCAtom& ca) {
     Atoms.Add(ca);
     ca.SetResiId(Id);
   }
 public:
-  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl=EmptyString(), int number = 0, const olxstr& alias=EmptyString()) : 
-      Parent(parent), 
-      Id(id), 
-      ClassName(cl), 
-      Number(number), 
-      Alias(alias)  {  }
+  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl=EmptyString(),
+    int number = 0, const olxstr& alias=EmptyString())
+    : Parent(parent),
+      Id(id),
+      ClassName(cl),
+      Alias(alias),
+      Number(number) {}
   //
   DefPropC(olxstr, ClassName)
   DefPropC(olxstr, Alias)

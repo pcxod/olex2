@@ -235,7 +235,7 @@ public:
   TTStrList& TrimWhiteCharStrings(bool leading=true, bool trailing=true)  {
     if( IsEmpty() )  return *this;
     size_t start = 0, end = Count()-1;
-    if( trailing )  {
+    if( leading )  {
       while( start < end && GetString(start).IsWhiteCharString() ) start++;
       if( start >= Count() )  {  Clear();  return *this;  }
       for( size_t i=0; i < start; i++ )  {

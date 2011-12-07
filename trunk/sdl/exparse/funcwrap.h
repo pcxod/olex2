@@ -281,7 +281,9 @@ namespace exparse  {
       IStaticFunction* func;
       TPtrList<IEvaluable> args;
       const EvaluableFactory& factory;
-      FuncEvaluator(const EvaluableFactory& fc, IStaticFunction* f, const TPtrList<IEvaluable>& a) : factory(fc), func(f), args(a) {
+      FuncEvaluator(const EvaluableFactory& fc, IStaticFunction* f,
+        const TPtrList<IEvaluable>& a) : func(f), args(a), factory(fc)
+      {
         for( size_t i=0; i < args.Count(); i++ )
           args[i]->inc_ref();
       }
@@ -394,13 +396,14 @@ namespace exparse  {
     }
 
     struct FuncEvaluator : public IEvaluable  {
-      IMemberFunction* func;
-      IEvaluable& self;
       const EvaluableFactory& factory;
-      TPtrList<IEvaluable> args;
+      IEvaluable& self;
       const std::type_info& self_rtti;
+      IMemberFunction* func;
+      TPtrList<IEvaluable> args;
       FuncEvaluator(const EvaluableFactory& fc, IEvaluable& s, IMemberFunction* f, 
-        const TPtrList<IEvaluable>& a) : factory(fc), self(s), self_rtti(s.get_type_info()), func(f), args(a) 
+        const TPtrList<IEvaluable>& a)
+        : factory(fc), self(s), self_rtti(s.get_type_info()), func(f), args(a)
       {
         s.inc_ref();
         for( size_t i=0; i < args.Count(); i++ )

@@ -23,6 +23,10 @@
 #include "ins.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
+  VarRefrencerId("basf"),
+  HklStatFileID(EmptyString(), 0, 0),
+  HklFileID(EmptyString(), 0, 0),
+  Vars(*this),
   rDFIX(*this, rltGroup2, "DFIX"),
   rDANG(*this, rltGroup2, "DANG"),
   rSADI(*this, rltGroup2, "SADI"),
@@ -42,10 +46,6 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rSAME(*this),
   OnSetBadReflections(Actions.New("OnSetBadReflections")),
   aunit(au), 
-  HklStatFileID(EmptyString(), 0, 0), 
-  HklFileID(EmptyString(), 0, 0), 
-  Vars(*this),
-  VarRefrencerId("basf"),
   Conn(*this)
 {
   SetDefaults();
@@ -477,7 +477,7 @@ const TRefList& RefinementModel::GetReflections() const {
 const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   // we need to take into the account MERG, HKLF and OMIT things here...
   try {
-    const TRefList& all_refs = GetReflections();
+    GetReflections();
     bool update = (HklStatFileID != HklFileID);
     if( !update && 
       _HklStat.OMIT_s == OMIT_s &&

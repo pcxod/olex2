@@ -18,8 +18,8 @@ UseGlNamespace()
 
 using namespace exparse::parser_util;
 
-TGlFont::TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _SmallId) :
-  Parent(parent), Id(_Id), Name(name), SmallId(_SmallId)
+TGlFont::TGlFont(AGlScene& parent, size_t _Id, const olxstr& name, size_t _SmallId)
+  : Parent(parent), Id(_Id), SmallId(_SmallId), Name(name)
 {
   FontBase = ~0;
   CharSizes.SetCount(256);
@@ -246,7 +246,6 @@ TTextRect TGlFont::GetTextRect(const olxstr& str) const {
   }
   else  {
     double y_shift = 0;
-    short state = 0;
     bool small_fnt = false;
     for( size_t i=0; i < str.Length(); i++ )  {
       if( str.CharAt(i) == '\\' && !is_escaped(str, i) && (i+1) < str.Length() )  {
@@ -1156,7 +1155,7 @@ int gl_font_simplex[95][112] = {
    -1, 3, 8, 4,10, 6,11, 8,11,10,10,14, 7,16, 6,18, 6,20, 7,21,10,21,12,
    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
 };
 
 const olxcstr& TGlFont::DefinePSChar(olxch ch, const double& drawScale,

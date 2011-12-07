@@ -43,14 +43,14 @@ public:
   AActionHandler() : Enabled(true), ToDelete(true)  {}
   virtual ~AActionHandler()  {}
   // handler before the event
-  virtual bool Enter(const IEObject* Sender, const IEObject* Data=NULL)  {  return false;  }
+  virtual bool Enter(const IEObject *, const IEObject *)  {  return false;  }
   // handler after the event
-  virtual bool Exit(const IEObject* Sender, const IEObject* Data=NULL)  {  return false;  }
+  virtual bool Exit(const IEObject *, const IEObject *)  {  return false;  }
   /* handler during the event, does some operation when Obj is changed;
      the action depends on the type of queue
   */
-  virtual void UpdateData(const IEObject* Sender, const IEObject* Data=NULL)  {}
-  virtual bool Execute(const IEObject* Sender, const IEObject* Data=NULL)  {  return false;  }
+  virtual void UpdateData(const IEObject *, const IEObject *)  {}
+  virtual bool Execute(const IEObject *, const IEObject *)  {  return false;  }
   // the function is called the object is removed from the queue
   virtual void OnRemove()  {}
   DefPropBIsSet(Enabled)

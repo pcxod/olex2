@@ -23,7 +23,6 @@ class TGlConsole: public AGDrawObject,
   double FLineSpacing;
   uint16_t Width, Height, Top, Left; // to clip the content
   double GlLeft, GlTop;
-  size_t LinesVisible;
   TStrPObjList<olxstr,TGlMaterial*> FBuffer;
   TStrList FCommands;   // the content
   olxstr FCommand;    // the command
@@ -33,7 +32,8 @@ class TGlConsole: public AGDrawObject,
          FTxtPos,
          FMaxLines,
          FLinesToShow,
-         FStringPos;
+         FStringPos,
+         LinesVisible;
   bool FShowBuffer, FScrollDirectionUp,
     SkipPosting;  // the next pot operation will pass
   size_t FontIndex;
@@ -48,7 +48,9 @@ protected:
   class TGlCursor *FCursor;
 
   virtual size_t Write(const void *Data, size_t size);
-  virtual size_t Write(const olxstr& str)  {  return Write((const TTIString<olxch>&)str);  }
+  virtual size_t Write(const olxstr& str)  {
+    return Write((const TTIString<olxch>&)str);
+  }
   virtual size_t Write(const TTIString<olxch>& str);
   virtual IOutputStream& operator << (IInputStream& is);
   virtual uint64_t GetSize() const {  return 1;  }
@@ -65,10 +67,13 @@ public:
   olxstr GetCommand() const;
   void SetCommand(const olxstr& NewCmd);
   size_t GetCmdInsertPosition() const {  
-    return (FCommand.StartsFrom(PromptStr) ? (FStringPos - PromptStr.Length()) : FStringPos);
+    return (FCommand.StartsFrom(PromptStr) ?
+      (FStringPos - PromptStr.Length()) : FStringPos);
   }
 
-  inline const TStrPObjList<olxstr,TGlMaterial*>& Buffer() const {  return FBuffer;  }
+  inline const TStrPObjList<olxstr,TGlMaterial*>& Buffer() const {
+    return FBuffer;
+  }
   void ClearBuffer();
 
   bool IsPromptVisible() const {  return PromptVisible;  }
@@ -102,7 +107,7 @@ public:
   void PrintText(const TStrList& SL, TGlMaterial *M=NULL, bool Hyphenate=true);
   inline void NewLine()  {  FBuffer.Add(EmptyString()); }
   size_t MaxLines();
-  inline void SetMaxLines(size_t V)  {  FMaxLines = V; };
+  inline void SetMaxLines(size_t V)  {  FMaxLines = V; }
   inline size_t GetLinesToShow() const {  return FLinesToShow;  }
   void SetLinesToShow(size_t V);
 

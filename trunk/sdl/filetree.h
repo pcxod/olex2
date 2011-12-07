@@ -107,7 +107,7 @@ public:
   public:
     Folder(TFileTree& fileTree, const TFileListItem& info,
       const olxstr& fullPath, Folder* parent = NULL)
-      : TFileListItem(info), Parent(parent), FileTree(fileTree)  
+      : TFileListItem(info), FileTree(fileTree), Parent(parent)
     {
       FullPath = TEFile::OSPath(fullPath);
       TEFile::AddPathDelimeterI(FullPath);

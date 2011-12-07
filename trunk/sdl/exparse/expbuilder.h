@@ -26,9 +26,10 @@ namespace exparse  {
     IEvaluable* create_evaluator(expression_tree* root, bool finaliseAssignment=true);
     IEvaluable* locate_function(const olxstr& name, IEvaluable* left, IEvaluable* right);
   public:
-    context& scope;
     EvaluableFactory& factory;
-    exp_builder(EvaluableFactory& _factory, context& _scope) : factory(_factory), scope(_scope)  {
+    context& scope;
+    exp_builder(EvaluableFactory& _factory, context& _scope)
+      : factory(_factory), scope(_scope)  {
     }
     IEvaluable* build(const olxstr& exp, bool finaliseAssignment=true)  {
       expression_parser expp(exp);
@@ -37,7 +38,7 @@ namespace exparse  {
       return create_evaluator(expp.root, finaliseAssignment);
     }
   };
-};  // end exparse namespace
+} // end exparse namespace
 
 EndEsdlNamespace()
 #endif

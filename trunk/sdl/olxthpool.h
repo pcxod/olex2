@@ -28,7 +28,7 @@ class TThreadSlot : public AOlxThread  {
   ITask* task;
   volatile bool suspended;
 public:
-  TThreadSlot() : suspended(false), task(NULL)  {}
+  TThreadSlot() : task(NULL), suspended(false)  {}
   /* the thread automatically becomes suspended when the task is completed,
   and even if a mnew task is set, it will remain suspended until Resume is
   called

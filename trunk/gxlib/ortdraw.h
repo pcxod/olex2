@@ -113,19 +113,19 @@ struct ort_poly : public a_ort_object  {
 };
 
 struct ort_circle : public a_ort_object  {
+  vec3f center;
   bool fill;
   float line_width, r;
-  uint32_t color;
-  vec3f center;
   mat3f* basis;
-  ort_circle(const OrtDraw& parent, const vec3f& _center, float _r, bool _fill) :
-    a_ort_object(parent),
-    center(_center),
-    r(_r),
-    fill(_fill),
-    line_width(1.0f),
-    basis(NULL),
-    color(0x0) {  }
+  uint32_t color;
+  ort_circle(const OrtDraw& parent, const vec3f& _center, float _r, bool _fill)
+    : a_ort_object(parent),
+      center(_center),
+      fill(_fill),
+      line_width(1.0f),
+      r(_r),
+      basis(NULL),
+      color(0) {}
   ~ort_circle()  {
     if( basis != NULL )  delete basis;
   }
@@ -139,14 +139,15 @@ struct ort_cone : public a_ort_object  {
   float bottom_r, top_r;
   uint32_t color;
   uint16_t divs;
-  ort_cone(const OrtDraw& parent, const vec3f& _b, const vec3f _t, float br, float tr, uint32_t cl) :
-    a_ort_object(parent),
-    bottom(_b),
-    top(_t),
-    bottom_r(br),
-    top_r(tr),
-    color(cl),
-    divs(5)  {  }
+  ort_cone(const OrtDraw& parent, const vec3f& _b, const vec3f _t, float br,
+           float tr, uint32_t cl)
+    : a_ort_object(parent),
+      bottom(_b),
+      top(_t),
+      bottom_r(br),
+      top_r(tr),
+      color(cl),
+      divs(5) {}
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return (bottom[2]+top[2])/2;  }
   void update_size(evecf &sz) const;
@@ -173,11 +174,15 @@ protected:
   const TEBasis& basis;
   bool Perspective;
   uint16_t ElpDiv, PieDiv, BondDiv;
-  mutable TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT, BondProjM;
+  mutable TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT,
+    BondProjM;
   mutable TPtrList<const vec3f> FilteredArc;
-  size_t PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal) const;
+  size_t PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out,
+    const vec3f& normal) const;
   float GetBondRad(const ort_bond& b, uint32_t mask) const;
-  vec3f ProjectPoint(const vec3f& p) const {  return (p + SceneOrigin)*ProjMatr+DrawOrigin;  }
+  vec3f ProjectPoint(const vec3f& p) const {
+    return (p + SceneOrigin)*ProjMatr+DrawOrigin;
+  }
   void RenderRims(PSWriter& pw, const mat3f& pm, const vec3f& normal) const;
   void RenderQuads(PSWriter& pw, const mat3f& pm) const;
   void _process_points(TPtrList<vec3f>& points, ort_poly& otp)  {
@@ -188,8 +193,9 @@ protected:
     TTypeList<a_ort_object>& objects;
     const OrtDraw& parent;
     uint32_t color;
-    ContourDrawer(const OrtDraw& _parent, TTypeList<a_ort_object>& _objects, uint32_t _color) :
-      parent(_parent), objects(_objects), color(_color)  {}
+    ContourDrawer(const OrtDraw& _parent, TTypeList<a_ort_object>& _objects,
+      uint32_t _color)
+      : parent(_parent), objects(_objects), color(_color)  {}
     void draw(float x1, float y1, float x2, float y2, float z);
   };
 public:
