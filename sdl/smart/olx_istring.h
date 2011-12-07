@@ -107,7 +107,7 @@ template <class SC>
   TTSString& AssignCharStr(const TC* str, size_t len=~0)  {
     T::_Start = 0;
     T::_Increment = 8;
-    T::_Length = ((len == ~0) ? o_strlen(str) : len);
+    T::_Length = ((len == InvalidIndex) ? o_strlen(str) : len);
     if( T::SData != NULL )  {
       if( T::SData->RefCnt == 1 )  { // owed by this object
         T::SData->SetCapacity(T::_Length);
@@ -741,10 +741,10 @@ public:
   {
     if( wht_len > whr_len || whr_len == 0 || wht_len == 0)
       return InvalidIndex;
-    for( size_t i=whr_len-1; i != ~0; i-- )  {
+    for( size_t i=whr_len-1; i != InvalidIndex; i-- )  {
       if( i < wht_len )  return InvalidIndex;
       bool found = true;
-      for( size_t j=wht_len-1;  j != ~0; j-- )
+      for( size_t j=wht_len-1;  j != InvalidIndex; j-- )
         if( whr[i-j] != wht[j] )  {
           found = false;
           break;
@@ -757,7 +757,7 @@ public:
   template <typename OC, typename AC>
   static size_t o_chrposr(const OC* whr, size_t whr_len, AC wht) {
     if( whr_len == 0 )  return InvalidIndex;
-    for( size_t i=whr_len-1; i != ~0; i-- )
+    for( size_t i=whr_len-1; i != InvalidIndex; i-- )
       if( whr[i] == wht )
         return i;
     return InvalidIndex;
@@ -769,10 +769,10 @@ public:
   {
     if( wht_len > whr_len || whr_len == 0 || wht_len == 0 )
       return InvalidIndex;
-    for( size_t i=whr_len-1; i != ~0; i-- )  {
+    for( size_t i=whr_len-1; i != InvalidIndex; i-- )  {
       if( i < wht_len )  return InvalidIndex;
       bool found = true;
-      for( size_t j=wht_len-1;  j != ~0 ; j-- )
+      for( size_t j=wht_len-1;  j != InvalidIndex ; j-- )
         if( o_toupper(whr[i-j]) != o_toupper(wht[j]) )  {
           found = false;
           break;
@@ -786,7 +786,7 @@ public:
   static size_t o_chrposri(const OC* whr, size_t whr_len, AC wht) {
     if( whr_len == 0 )  return InvalidIndex;
     wht = o_toupper(wht);
-    for( size_t i=whr_len-1; i != ~0; i-- )
+    for( size_t i=whr_len-1; i != InvalidIndex; i-- )
       if( o_toupper(whr[i]) == wht )
         return i;
     return InvalidIndex;
@@ -1575,7 +1575,7 @@ public:
   //...........................................................................
   template <typename OC, typename AC>
   TTSString& Replace(const OC* wht, size_t wht_l, AC with)  {
-    size_t wht_len = wht_l == ~0 ? o_strlen(wht) : wht_l;
+    size_t wht_len = wht_l == InvalidIndex ? o_strlen(wht) : wht_l;
     T::checkBufferForModification(T::_Length);
     size_t rv = o_strrplch(wht, wht_len, with, T::Data(), T::_Length);
     T::_Length -= (wht_len - 1)*rv;
@@ -1584,7 +1584,8 @@ public:
   //...........................................................................
   template <typename OC, typename AC>
   TTSString& Replace(OC wht, const AC* with, size_t with_l=~0)  {
-    size_t extra_len = 0, with_len = (with_l == ~0 ? o_strlen(with) : with_l);
+    size_t extra_len = 0,
+      with_len = (with_l == InvalidIndex ? o_strlen(with) : with_l);
     if( with_len == 0 )  {
       T::_Length -= o_strdch(T::Data(), T::_Length, wht);
       return *this;
@@ -1609,8 +1610,8 @@ public:
     size_t with_l)
   {
     size_t extra_len = 0,
-      with_len = (with_l == ~0 ? o_strlen(with) : with_l),
-      wht_len = (wht_l == ~0 ? o_strlen(wht) : wht_l);
+      with_len = (with_l == InvalidIndex ? o_strlen(with) : with_l),
+      wht_len = (wht_l == InvalidIndex ? o_strlen(wht) : wht_l);
     if( with_len == 0 ) {
       T::_Length -= o_strdstr(T::Data(), T::_Length, wht, wht_len)*wht_len;
       return *this;

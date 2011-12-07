@@ -55,10 +55,16 @@
   #pragma warn -8022  //hidden virtual functions ...
 #endif
 
+// mingw gcc
+#if defined(__WIN32__) && defined(__GNUC__)
+#endif
+
 #ifdef __GNUC__
-  #define  __OlxSourceInfo (olxstr(EmptyString(), 384) << "[" __FILE__ << '(' << __FUNC__ << "):" << __LINE__ << ']')
+  #define  __OlxSourceInfo (olxstr(EmptyString(), 384) << "[" __FILE__ <<\
+    '(' << __FUNC__ << "):" << __LINE__ << ']')
 #else
-  #define  __OlxSourceInfo (olxstr(EmptyString(), 384) << "["__FILE__"("__FUNC__"):" << __LINE__ << ']')
+  #define  __OlxSourceInfo (olxstr(EmptyString(), 384) <<\
+    "["__FILE__"("__FUNC__"):" << __LINE__ << ']')
 #endif
 #define  __POlxSourceInfo __FILE__,__FUNC__,__LINE__
 //#define  __OlxSourceInfo __FILE__" in "__FUNC__
@@ -69,7 +75,7 @@
 #endif
 
 #ifdef __WIN32__  //linux
-# if defined(_MSC_VER) && (_MSC_VER >= 1600)
+# if (defined(_MSC_VER) && (_MSC_VER >= 1600)) || defined(__GNUC__)
     #include <stdint.h>
 # else
     typedef __int8  int8_t;

@@ -15,7 +15,7 @@ BeginEsdlNamespace()
 namespace encoding  {
   namespace base64  {
     static const char *_base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-    static olxcstr encode(const char* data, size_t len)  {
+    inline olxcstr encode(const char* data, size_t len)  {
       size_t from = 0;
       olxcstr rv;
       while (len >= 3) { // encode full blocks first
@@ -39,7 +39,7 @@ namespace encoding  {
       }
       return rv;
     }
-    static size_t _index_of(char ch)  {
+    inline size_t _index_of(char ch)  {
       if( ch >= 'A' && ch <= 'Z' )  return ch-'A';
       if( ch >= 'a' && ch <= 'z' )  return ch-'a' + 26;
       if( ch >= '0' && ch <= '9' )  return ch-'0' + 52;
@@ -49,7 +49,7 @@ namespace encoding  {
       throw TInvalidArgumentException(__OlxSourceInfo, "base64 char");
       return InvalidIndex;
     }
-    static olxcstr decode(const char* data, size_t len)  {
+    inline olxcstr decode(const char* data, size_t len)  {
       if( (len%4) != 0 )
         throw TInvalidArgumentException(__OlxSourceInfo, "base64 length");
       olxcstr rv;
@@ -67,11 +67,19 @@ namespace encoding  {
       }
       return rv;
     }
-    static olxcstr encode(const unsigned char* data, size_t len)  {  return encode((const char*)data, len);  }
-    static olxcstr decode(const unsigned char* data, size_t len)  {  return encode((const char*)data, len);  }
-    static olxcstr decode(const olxcstr& str)  {  return decode(str.raw_str(), str.RawLen());  }
-    static olxcstr encode(const olxcstr& str)  {  return encode(str.raw_str(), str.RawLen());  }
-  }; // end namespace base64
+    inline olxcstr encode(const unsigned char* data, size_t len)  {
+      return encode((const char*)data, len);
+    }
+    inline olxcstr decode(const unsigned char* data, size_t len)  {
+      return encode((const char*)data, len);
+    }
+    inline olxcstr decode(const olxcstr& str)  {
+      return decode(str.raw_str(), str.RawLen());
+    }
+    inline olxcstr encode(const olxcstr& str)  {
+      return encode(str.raw_str(), str.RawLen());
+    }
+  } // end namespace base64
 };
 
 EndEsdlNamespace()

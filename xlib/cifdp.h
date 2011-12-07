@@ -17,14 +17,20 @@ namespace cif_dp {
   class ParsingException : public TBasicException  {
     size_t LineNumber;
   public:
-    ParsingException(const ParsingException& e) : TBasicException(e), LineNumber(e.LineNumber)  {} 
-    ParsingException(const olxstr& location, const olxstr& msg, size_t lineNumber) :
-      LineNumber(lineNumber),
-      TBasicException(location, olxstr("Failed to parse CIF because ") << msg << " at CIF#" << lineNumber)  {}
-    ParsingException(const olxstr& location, const TExceptionBase& cause, const olxstr& msg=EmptyString()) :
-      TBasicException(location, cause, msg )  {}
+    ParsingException(const ParsingException& e)
+      : TBasicException(e), LineNumber(e.LineNumber)  {}
+    ParsingException(const olxstr& location, const olxstr& msg, size_t lineNumber)
+      : TBasicException(location, olxstr("Failed to parse CIF because ") <<
+          msg << " at CIF#" << lineNumber),
+        LineNumber(lineNumber)
+    {}
+    ParsingException(const olxstr& location, const TExceptionBase& cause,
+      const olxstr& msg=EmptyString())
+      : TBasicException(location, cause, msg )  {}
     virtual const char* GetNiceName() const {  return "CIF reading";  }
-    virtual IEObject* Replicate() const {  return new ParsingException(*this);  }
+    virtual IEObject* Replicate() const {
+      return new ParsingException(*this);
+    }
   };
   struct ICifEntry  {
     ICifEntry()  {}
@@ -35,18 +41,27 @@ namespace cif_dp {
     virtual bool IsSaveable() const {  return true;  }
     // if the returned valus is InvalidIndex - the object is not comparable
     virtual size_t GetCmpHash() const {  return InvalidIndex;  }
-    virtual const olxstr& GetName() const {  throw TNotImplementedException(__OlxSourceInfo);  }
-    virtual void SetName(const olxstr&)  {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual const olxstr& GetName() const {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
+    virtual void SetName(const olxstr&)  {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
     virtual ICifEntry* Replicate() const = 0;
     virtual olxstr GetStringValue() const = 0;
   };
-  struct IStringCifEntry : public ICifEntry {  // string(s) value accessor interface
+  // string(s) value accessor interface
+  struct IStringCifEntry : public ICifEntry {
     IStringCifEntry()  {}
     virtual ~IStringCifEntry()  {}
     virtual size_t Count() const {  return 0;  }
-    virtual const olxstr& operator [] (size_t i) const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual const olxstr& operator [] (size_t) const {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
     virtual bool HasComment() const {  return false;  }
-    virtual const olxstr& GetComment() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual const olxstr& GetComment() const {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
   };
   struct cetComment : public IStringCifEntry {
     olxstr comment;
@@ -69,14 +84,15 @@ namespace cif_dp {
     cetString(const olxstr& _val);
     virtual void ToStrings(TStrList& list) const;
     virtual size_t Count() const {  return 1;  }
-    virtual const olxstr& operator [] (size_t i) const {  return value;  }
+    virtual const olxstr& operator [] (size_t) const {  return value;  }
     virtual ICifEntry* Replicate() const {  return new cetString(*this);  }
     virtual olxstr GetStringValue() const {  return value;  }
   };
   struct cetNamedString : public cetString {
     olxstr name;
     cetNamedString(const cetNamedString& v) : cetString(v), name(v.name)  {}
-    cetNamedString(const olxstr& _name, const olxstr& _val) : cetString(_val), name(_name)  {}
+    cetNamedString(const olxstr& _name, const olxstr& _val)
+      : cetString(_val), name(_name)  {}
     virtual void ToStrings(TStrList& list) const;
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
@@ -85,8 +101,10 @@ namespace cif_dp {
   };
   struct cetCommentedString : public cetNamedString  {
     olxstr comment;
-    cetCommentedString(const cetCommentedString& v) : cetNamedString(v), comment(v.comment)  {}
-    cetCommentedString(const olxstr& _name, const olxstr& _val, const olxstr& _comment)
+    cetCommentedString(const cetCommentedString& v)
+      : cetNamedString(v), comment(v.comment)  {}
+    cetCommentedString(const olxstr& _name, const olxstr& _val,
+      const olxstr& _comment)
       : cetNamedString(_name, _val), comment(_comment)  {}
     virtual void ToStrings(TStrList& list) const {
       cetNamedString::ToStrings(list);
@@ -94,7 +112,9 @@ namespace cif_dp {
     }
     virtual bool HasComment() const {  return true;  }
     virtual const olxstr& GetComment() const {  return comment;  }
-    virtual ICifEntry* Replicate() const {  return new cetCommentedString(*this);  }
+    virtual ICifEntry* Replicate() const {
+      return new cetCommentedString(*this);
+    }
   };
   struct cetStringList : public IStringCifEntry {
     TStrList lines;
@@ -112,11 +132,14 @@ namespace cif_dp {
     virtual size_t Count() const {  return lines.Count();  }
     virtual const olxstr& operator [] (size_t i) const {  return lines[i];  }
     virtual ICifEntry* Replicate() const {  return new cetStringList(*this);  }
-    virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual olxstr GetStringValue() const {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
   };
   struct cetNamedStringList : public cetStringList  {
     olxstr name;
-    cetNamedStringList(const cetNamedStringList& v) : cetStringList(v), name(v.name)  {}
+    cetNamedStringList(const cetNamedStringList& v)
+      : cetStringList(v), name(v.name)  {}
     cetNamedStringList(const olxstr& _name) : name(_name)  {}
     virtual void ToStrings(TStrList& list) const {
       list.Add(name);
@@ -125,7 +148,9 @@ namespace cif_dp {
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
     virtual void SetName(const olxstr& _name)  {  name = _name;  }
-    virtual ICifEntry* Replicate() const {  return new cetNamedStringList(*this);  }
+    virtual ICifEntry* Replicate() const {
+      return new cetNamedStringList(*this);
+    }
   };
   struct cetCommentedNamedStringList : public cetNamedStringList {
    olxstr comment;
@@ -139,14 +164,16 @@ namespace cif_dp {
     }
     virtual bool HasComment() const {  return true;  }
     virtual const olxstr& GetComment() const {  return comment;  }
-    virtual ICifEntry* Replicate() const {  return new cetCommentedNamedStringList(*this);  }
+    virtual ICifEntry* Replicate() const {
+      return new cetCommentedNamedStringList(*this);
+    }
   };
   typedef TPtrList<ICifEntry> CifRow;
   typedef TTTable<CifRow> CifTable;
   struct cetTable : public ICifEntry {
   protected:
-    CifTable data;
     olxstr name;
+    CifTable data;
   public:
     cetTable()  {}
     //takes comma separated list of column names
@@ -162,7 +189,9 @@ namespace cif_dp {
     const CifRow& operator [] (size_t i) const {  return data[i];  }
     size_t ColCount() const {  return data.ColCount();  }
     const olxstr& ColName(size_t i) const {  return data.ColName(i);  }
-    template <class Str> size_t ColIndex(const Str& name) const {  return data.ColIndex(name);  }
+    template <class Str> size_t ColIndex(const Str& name) const {
+      return data.ColIndex(name);
+    }
     size_t RowCount() const {  return data.RowCount();  }
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
@@ -170,7 +199,9 @@ namespace cif_dp {
     virtual bool HasName() const {  return true;  }
     void DataFromStrings(TStrList& lines);
     virtual ICifEntry* Replicate() const {  return new cetTable(*this);  }
-    virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual olxstr GetStringValue() const {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
     template <class List> static olxstr GenerateName(const List& l)  {
       if( l.IsEmpty() )  return EmptyString();
       if( l.Count() == 1 )  return l[0];
@@ -181,8 +212,10 @@ namespace cif_dp {
         if( l[i].Length() < min_len )
           min_len = l[i].Length();
       }
-      if( name.IsEmpty() )
-        throw TFunctionFailedException(__OlxSourceInfo, "Mismatching loop columns");
+      if( name.IsEmpty() ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+                                       "Mismatching loop columns");
+      }
       if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
         const size_t u_ind = name.LastIndexOf('_');
         if( u_ind != InvalidIndex )
@@ -204,7 +237,8 @@ namespace cif_dp {
     TStrPObjList<olxstr, ICifEntry*> params;
     CifBlock* parent;
     CifBlock(const CifBlock& v);
-    CifBlock(const olxstr& _name, CifBlock* _parent=NULL) : name(_name), parent(_parent)  {}
+    CifBlock(const olxstr& _name, CifBlock* _parent=NULL)
+      : name(_name), parent(_parent)  {}
     virtual ~CifBlock();
     ICifEntry& Add(ICifEntry* p);
     ICifEntry& Add(ICifEntry& p)  {  return Add(&p);  }
@@ -214,7 +248,9 @@ namespace cif_dp {
     virtual void ToStrings(TStrList& list) const;
     virtual void Format();
     virtual ICifEntry* Replicate() const {  return new CifBlock(*this);  }
-    virtual olxstr GetStringValue() const {  throw TNotImplementedException(__OlxSourceInfo);  }
+    virtual olxstr GetStringValue() const {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
     virtual bool HasName() const {  return true;  }
     virtual const olxstr& GetName() const {  return name;  }
     void Sort(const TStrList& pivots, const TStrList& endings);
@@ -237,8 +273,8 @@ namespace cif_dp {
     olxdict<olxstr, CifBlock*, olxstrComparator<true> > data_map;
     void Format();
     struct parse_context  {
-      CifBlock* current_block;
       TStrList& lines;
+      CifBlock* current_block;
       parse_context(TStrList& _lines) : lines(_lines), current_block(NULL)  {}
     };
     bool ExtractLoop(size_t& start, parse_context& context);
@@ -250,7 +286,7 @@ namespace cif_dp {
     TCifDP()  {}
     virtual ~TCifDP()  {  Clear();  }
     void Clear();
-    //............................................................................
+    //..........................................................................
     //Load the object from a file.
     virtual void LoadFromStrings(const TStrList& Strings);
     //Saves the data to a strings
@@ -281,11 +317,15 @@ namespace cif_dp {
     }
     void Rename(const olxstr& old_name, const olxstr& new_name)  {
       if( old_name == new_name )  return;
-      if( data_map.HasKey(new_name) )
-        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Name already in use: ") << new_name);
+      if( data_map.HasKey(new_name) ) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olxstr("Name already in use: ") << new_name);
+      }
       const size_t cb_ind = data_map.IndexOf(old_name);
-      if( cb_ind == InvalidIndex )
-        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Undefined block: ") << old_name);
+      if( cb_ind == InvalidIndex ) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olxstr("Undefined block: ") << old_name);
+      }
       CifBlock* cb = data_map.GetValue(cb_ind);
       cb->name = new_name;
       data_map.Delete(cb_ind);

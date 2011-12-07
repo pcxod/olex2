@@ -1188,7 +1188,6 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
   if( CAtoms.IsEmpty() )  return false;
   int part = 0,
       afix = 0;
-  size_t resi = InvalidIndex;
   SaveRestraints(SL, &CAtoms, processed, rm, false);
   _SaveFVar(rm, SL);
   for( size_t i=0; i < CAtoms.Count(); i++ )

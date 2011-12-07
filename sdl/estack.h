@@ -20,7 +20,7 @@ template <class T> class TStack  {
   struct item  {
     item* prev;
     T data;
-    item(const T& v, item* _prev) : data(v), prev(_prev)  {}
+    item(const T& v, item* _prev) : prev(_prev), data(v)  {}
   };
   item* cur;
   size_t _count;

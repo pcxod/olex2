@@ -48,8 +48,8 @@ public:
     atom(_atom), matrix(_matrix) {}
   virtual olxstr GetExpression() const {  return atom.GetLabel();  }
   virtual bool IsExplicit() const {  return true;  }
-  virtual size_t Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const {
-    res.Add( new ExplicitCAtomRef(*this) );
+  virtual size_t Expand(RefinementModel &, TAtomRefList& res, TResidue &) const {
+    res.Add( new ExplicitCAtomRef(*this));
     return 1;
   }
   TCAtom& GetAtom() {  return atom;  }
@@ -124,8 +124,8 @@ public:
 
 class AtomRefList  {
   TTypeList<IAtomRef> refs;
-  olxstr residue;
   RefinementModel& rm;
+  olxstr residue;
   olxstr expression;
   bool Valid, ContainsImplicitAtoms;
   olxstr BuildExpression() const  {

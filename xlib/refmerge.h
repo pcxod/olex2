@@ -487,11 +487,11 @@ public:
       rI(mo.rI),
       rSig(mo.rSig)  {  }
     DryMergerOut(double _rI, double _rSig, double _sigInt = 0, double _sumI = 0, double _sumDiff = 0 ) :
-      rI(_rI),
-      rSig(_rSig),
       sigInt(_sigInt),
-      sumI(_sumI),  
-      sumDiff(_sumDiff)  {  }
+      sumI(_sumI),
+      sumDiff(_sumDiff),
+      rI(_rI),
+      rSig(_rSig) {}
     DryMergerOut& operator = (const DryMergerOut& mo)  {
       sigInt = mo.sigInt;
       sumI = mo.sumI;

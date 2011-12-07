@@ -17,22 +17,29 @@ class TGraphicsStyles;
 class TGraphicsStyle;
 
 class TPrimitiveStyle: public AGroupObject  {
+    TGraphicsStyles& Parent;
   olxstr Name;
-  TGraphicsStyles& Parent;
 protected:
-  virtual AGOProperties* NewProperties() const {  return new TGlMaterial;  }
+  virtual AGOProperties* NewProperties() const {
+    return new TGlMaterial;
+  }
 public:
-  TPrimitiveStyle(const olxstr& name, TObjectGroup& GroupParent, TGraphicsStyles& parent) :
-      AGroupObject(GroupParent), Parent(parent), Name(name) {  }
+  TPrimitiveStyle(const olxstr& name, TObjectGroup& GroupParent,
+    TGraphicsStyles& parent)
+    : AGroupObject(GroupParent), Parent(parent), Name(name) {}
   ~TPrimitiveStyle() { }
 
   const olxstr& GetName() const {  return Name; }
-  static const olxstr& ReadName(const TDataItem& Item)  {  return Item.GetFieldValue("PName");  }
+  static const olxstr& ReadName(const TDataItem& Item)  {
+    return Item.GetFieldValue("PName");
+  }
 
   AGOProperties& SetProperties(const AGOProperties& C) {
     return AGroupObject::SetProperties(C);
   }
-  TGlMaterial& GetProperties() const {  return (TGlMaterial&)AGroupObject::GetProperties();  }
+  TGlMaterial& GetProperties() const {
+    return (TGlMaterial&)AGroupObject::GetProperties();
+  }
 
   bool operator == (const TPrimitiveStyle &S ) const  {
     if( Name != S.GetName() || !(GetProperties() == S.GetProperties()) )  
@@ -58,11 +65,11 @@ struct TGSParam {
 };
 
 class TGraphicsStyle: public ACollectionItem  {
+  TGraphicsStyles& Parent;
+  TGraphicsStyle* ParentStyle;
   olxstr Name;
   TPtrList<TPrimitiveStyle> PStyles;
   TSStrObjList<olxstr, TGraphicsStyle*, true> Styles;  // a sublist of the tree
-  TGraphicsStyle* ParentStyle;
-  TGraphicsStyles& Parent;
   TSStrObjList<olxstr, TGSParam, true> Params;  // a list of parameters
   uint16_t Level;
   bool Saveable; // if the style is saveable to dataitems
@@ -101,14 +108,14 @@ protected:
   // used in import of old styles v < 2
   void _TrimFloats();
 public:
-  TGraphicsStyle(TGraphicsStyles& parent, TGraphicsStyle* parent_style, const olxstr& name) :
-  Parent(parent), 
-        ParentStyle(parent_style), 
-        Name(name),
-        Level(parent_style == 0 ? 0 : parent_style->Level+1),
-        Saveable(true),
-        Persistent(false) 
-  { }
+  TGraphicsStyle(TGraphicsStyles& parent, TGraphicsStyle* parent_style,
+    const olxstr& name)
+    :  Parent(parent),
+       ParentStyle(parent_style),
+       Name(name),
+       Level(parent_style == 0 ? 0 : parent_style->Level+1),
+       Saveable(true),
+       Persistent(false) {}
 
   ~TGraphicsStyle() {  Clear();  }
   

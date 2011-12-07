@@ -37,18 +37,12 @@ void TDUnitCell::Init(const double cell[6])  {
   const double cG = cos(cell[5]/180*M_PI),
          cB = cos(cell[4]/180*M_PI),
          cA = cos(cell[3]/180*M_PI),
-         sG = sin(cell[5]/180*M_PI),
-         sB = sin(cell[4]/180*M_PI),
-         sA = sin(cell[3]/180*M_PI);
+         sG = sin(cell[5]/180*M_PI);
 
-  const double V = cell[0]*cell[1]*cell[2]*sqrt((1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
+  const double V =
+      cell[0]*cell[1]*cell[2]*sqrt((1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
 
-  const double cGs = (cA*cB-cG)/(sA*sB),
-         cBs = (cA*cG-cB)/(sA*sG),
-         cAs = (cB*cG-cA)/(sB*sG),
-         as = cell[1]*cell[2]*sA/V,
-         bs = cell[0]*cell[2]*sB/V,
-         cs = cell[0]*cell[1]*sG/V;
+  const double cs = cell[0]*cell[1]*sG/V;
   // cell to cartesian transformation matrix
   CellToCartesian.I();
   CellToCartesian[0][0] = cell[0];

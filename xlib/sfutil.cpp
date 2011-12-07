@@ -151,7 +151,6 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     olxstr hklFileName(xapp.LocateHklFile());
     if( !TEFile::Exists(hklFileName) )
       return "could not locate hkl file";
-    double av = 0;
     sw.start("Loading/Filtering/Merging HKL");
     TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);

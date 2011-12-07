@@ -18,10 +18,10 @@ BeginXlibNamespace()
 class MapUtil  {
 public:
   struct peak  { 
-    uint32_t count;
-    vec3i center;
     bool process;
     double summ;
+    uint32_t count;
+    vec3i center;
     peak() : process(true), summ(0), count(0)  {}
     peak(int _x, int _y, int _z) : process(true),  
       summ(0), count(0), center(_x, _y, _z) {}

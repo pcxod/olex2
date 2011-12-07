@@ -46,7 +46,8 @@ public:
     out.Writeln("%%Title: Olex2 2D diagram");
     out.Writeln("%%Pages: 1");
     out.Writeln("%%Page: 1 1");
-    out.Writeln(olxcstr("%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()));
+    out.Writeln(olxcstr("%%CreationDate: ") <<
+      TETime::FormatDateTime(TETime::Now()));
     out.Writeln("%%Orientation: Portrait");
     out.Writeln("%%DocumentPaperSizes: A4");
     out.Writeln("%%EndComments");
@@ -161,7 +162,9 @@ public:
   }
   //..........................................................................
   template <typename list_t> 
-  void lines(const list_t& list, size_t cnt = InvalidSize, bool close_path=false)  {
+  void lines(const list_t& list, size_t cnt = InvalidSize,
+    bool close_path=false)
+  {
     if( cnt == InvalidSize )  cnt = list.Count();
     if( cnt < 2 )  return;
     moveto(list[0]);
@@ -171,14 +174,18 @@ public:
       lineto(list[0]);
   }
   template <typename list_t> 
-  void drawLines(const list_t& list, size_t cnt = InvalidSize, bool join=false, RenderFunc rf = &PSWriter::stroke)  {
+  void drawLines(const list_t& list, size_t cnt = InvalidSize, bool join=false,
+    RenderFunc rf = &PSWriter::stroke)
+  {
     newPath();
     lines(list, cnt, join);
     (this->*rf)();
   }
   //..........................................................................
   template <typename list_t> 
-  void lines_vp(const list_t& list, size_t cnt = InvalidSize, bool close_path=false)  {
+  void lines_vp(const list_t& list, size_t cnt = InvalidSize,
+    bool close_path=false)
+  {
     if( cnt == InvalidSize )  cnt = list.Count();
     if( cnt < 2 )  return;
     moveto(*list[0]);
@@ -188,7 +195,9 @@ public:
       lineto(*list[0]);
   }
   template <typename list_t> 
-  void drawLines_vp(const list_t& list, size_t cnt = InvalidSize, bool join=false, RenderFunc rf = &PSWriter::stroke)  {
+  void drawLines_vp(const list_t& list, size_t cnt = InvalidSize,
+    bool join=false, RenderFunc rf = &PSWriter::stroke)
+  {
     newPath();
     lines_vp(list, cnt, join);
     (this->*rf)();
@@ -213,7 +222,9 @@ public:
     out.Writeln("setmatrix");
   }
   template <typename vec_t, typename mat_t> 
-  void drawEllipse(const vec_t& center, const mat_t& basis, RenderFunc rf = &PSWriter::stroke)  {
+  void drawEllipse(const vec_t& center, const mat_t& basis,
+    RenderFunc rf = &PSWriter::stroke)
+  {
     newPath();
     ellipse(center, basis);
     (this->*rf)();
@@ -228,7 +239,9 @@ public:
     out.Writeln(bf);
   }
   template <typename vec_t, typename float_t> 
-  void drawCircle(const vec_t& center, const float_t& rad, RenderFunc rf = &PSWriter::stroke)  {
+  void drawCircle(const vec_t& center, const float_t& rad,
+    RenderFunc rf=&PSWriter::stroke)
+  {
     newPath();
     circle(center, rad);
     (this->*rf)();
@@ -242,7 +255,9 @@ public:
   }
   //..........................................................................
   template <class vec_t>
-  void quad(const vec_t& p1, const vec_t& p2, const vec_t& p3, const vec_t& p4) {
+  void quad(const vec_t& p1, const vec_t& p2, const vec_t& p3,
+    const vec_t& p4)
+  {
     moveto(p1);
     lineto(p2);
     lineto(p3);
@@ -276,7 +291,9 @@ public:
     }
   }
   //..........................................................................
-  //draws a cone using sidea and sideb points and calling func after every quadraterial
+  /*draws a cone using sidea and sideb points and calling func after every
+  quadraterial
+  */
   template <class vec_lt>
   void drawQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func)  {
     if( sidea.Count() != sideb.Count() )
@@ -293,27 +310,33 @@ public:
   }
   //..........................................................................
   template <class vec_lt>
-  void drawQuadsBiColored(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func, uint32_t cl1, uint32_t cl2)  {
+  void drawQuadsBiColored(const vec_lt& sidea, const vec_lt& sideb,
+    RenderFunc func, uint32_t cl1, uint32_t cl2)
+  {
     if( sidea.Count() != sideb.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
     if( sidea.Count() < 2 )  return;
     color(cl1);
     for( size_t j=1; j < sidea.Count(); j++ )  {
       newPath();
-      quad(sidea[j-1], (sideb[j-1]+sidea[j-1])/2, (sideb[j]+sidea[j])/2, sidea[j]);
+      quad(sidea[j-1], (sideb[j-1]+sidea[j-1])/2, (sideb[j]+sidea[j])/2,
+        sidea[j]);
       (this->*func)();
     }
     newPath();
-    quad(sidea.GetLast(), (sideb.GetLast()+sidea.GetLast())/2, (sideb[0]+sidea[0])/2, sidea[0]);
+    quad(sidea.GetLast(), (sideb.GetLast()+sidea.GetLast())/2,
+      (sideb[0]+sidea[0])/2, sidea[0]);
     (this->*func)();
     color(cl2);
     for( size_t j=1; j < sidea.Count(); j++ )  {
       newPath();
-      quad((sidea[j-1]+sideb[j-1])/2, sideb[j-1], sideb[j], (sidea[j]+sideb[j])/2);
+      quad((sidea[j-1]+sideb[j-1])/2, sideb[j-1], sideb[j],
+        (sidea[j]+sideb[j])/2);
       (this->*func)();
     }
     newPath();
-    quad((sidea.GetLast()+sideb.GetLast())/2, sideb.GetLast(), sideb[0], (sidea[0]+sideb[0])/2);
+    quad((sidea.GetLast()+sideb.GetLast())/2, sideb.GetLast(), sideb[0],
+      (sidea[0]+sideb[0])/2);
     (this->*func)();
   }
   //..........................................................................
@@ -326,12 +349,16 @@ public:
     if( sidea.Count() < 2 )  return;
     for( size_t j=1; j < sidea.Count(); j++ )
       stippledQuad(sidea[j-1], sideb[j-1], sideb[j], sidea[j], parts, func);
-    stippledQuad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0], parts, func);
+    stippledQuad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0], parts,
+      func);
   }
   //..........................................................................
   template <typename vec_t, typename float_t>
-  void arc(const vec_t& center, const float_t& rad, const float_t startAngle, const float_t& endAngle)  {
-    psw_sprintf(bf, "%f %f %f %f %f arc", (float)center[0], (float)center[1], (float)rad, (float)startAngle, (float)endAngle);
+  void arc(const vec_t& center, const float_t& rad, const float_t startAngle,
+    const float_t& endAngle)
+  {
+    psw_sprintf(bf, "%f %f %f %f %f arc", (float)center[0], (float)center[1],
+      (float)rad, (float)startAngle, (float)endAngle);
     out.Writeln(bf);
   }
   //..........................................................................
@@ -341,7 +368,7 @@ public:
         "bounding box space must be reserved");
     }
     out.SetPosition(bounding_box_pos);
-    psw_sprintf(bf, "%d %d %d %d",
+    psw_sprintf(bf, "%ld %ld %ld %ld",
       olx_round(b[0]),
       olx_round(b[1]),
       olx_round(b[2]),

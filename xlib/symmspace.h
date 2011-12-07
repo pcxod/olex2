@@ -16,8 +16,8 @@ BeginXlibNamespace()
 template <class MatList> class TSymmSpace  {
   MatList ml;
   const mat3d &cart2cell, &cell2cart, &hkl2cart;
-  bool centrosymmetric;
   size_t start;
+  bool centrosymmetric;
 protected:
   TSymmSpace(const TSymmSpace& sp, size_t _start) :
     ml(sp.ml),

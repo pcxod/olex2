@@ -38,28 +38,28 @@ namespace exparse  {
     bool parse_control_chars(const olxstr& exp, olxstr& dest, size_t& ind);
     bool is_expandable(const olxstr& exp);
     // checks if the char is a bracket char
-    static inline bool is_bracket(olxch ch)  {
+    inline bool is_bracket(olxch ch)  {
       return ch == '(' || ch == '[' || ch == '{' || ch == '<';
     }
     // checks if the char is a quote char
-    static inline bool is_quote(olxch ch)  {
+    inline bool is_quote(olxch ch)  {
       return ch == '"' || ch == '\'';
     }
     // checks if the char at ch_ind is ascaped (\')
-    static bool is_escaped(const olxstr& exp, size_t ch_ind)  {
+    inline bool is_escaped(const olxstr& exp, size_t ch_ind)  {
       size_t sc = 0;
       while( --ch_ind != InvalidIndex && exp.CharAt(ch_ind) == '\\' ) sc++;
       return (sc%2) != 0;
     }
     // returns index of th next unescaped char...
-    static size_t next_unescaped(olxch _what, const olxstr& _where, size_t _from)  {
+    inline size_t next_unescaped(olxch _what, const olxstr& _where, size_t _from)  {
       for( size_t i=_from; i < _where.Length(); i++ )
         if( _where.CharAt(i) == _what && !is_escaped(_where, i) )
           return i;
       return InvalidIndex;
     }
     // splits expressions like ("",ddd(),"\""), leaves tokens quoted if quoted originally
-    template <class StrLst> static void split_args(const olxstr& exp, StrLst& res)  {
+    template <class StrLst> void split_args(const olxstr& exp, StrLst& res)  {
       size_t start = 0;
       for( size_t i=0; i < exp.Length(); i++ )  {
         const olxch ch = exp.CharAt(i);
@@ -84,7 +84,7 @@ namespace exparse  {
         res.Add( exp.SubStringFrom(start) ).TrimWhiteChars();
     }
     // removes quotation from a string
-    static inline olxstr unquote(const olxstr& exp)  {
+    inline olxstr unquote(const olxstr& exp)  {
       if( exp.Length() < 2 )  return exp;
       const olxch ch = exp.CharAt(0);
       if( is_quote(ch) && (exp.GetLast() == ch) && !is_escaped(exp, exp.Length()-1) )
@@ -92,7 +92,7 @@ namespace exparse  {
       return exp;
     }
     // checks if the string is quoted
-    static inline bool is_quoted(const olxstr& exp)  {
+    inline bool is_quoted(const olxstr& exp)  {
       if( exp.Length() < 2 )  return false;
       const olxch ch = exp.CharAt(0);
       return (is_quote(ch) && (exp.GetLast() == ch) && !is_escaped(exp, exp.Length()-1));
@@ -126,7 +126,7 @@ namespace exparse  {
       }
       return rv;
     }
-  };
+  }
 
   template <class T> struct evaluator  {
     olxstr name;
@@ -145,10 +145,10 @@ namespace exparse  {
     expression_tree(expression_tree* p, const olxstr& dt, 
       expression_tree* l, expression_tree* r, 
       evaluator<expression_tree>* e) : 
-        parent(p), data(dt), left(l), right(r), evator(e), priority(false) {}
+        data(dt), parent(p), left(l), right(r), evator(e), priority(false) {}
      //................................................................................
     expression_tree(expression_tree* p, const olxstr& dt) : 
-     parent(p), data(dt), left(NULL), right(NULL), evator(NULL), priority(false) {}
+      data(dt), parent(p), left(NULL), right(NULL), evator(NULL), priority(false) {}
      //................................................................................
     ~expression_tree()  {
       if( left != NULL )  delete left;
@@ -167,7 +167,7 @@ namespace exparse  {
     ~expression_parser()  {  delete root;  }
   };
 
-};  // end namespace exparse
+}  // end namespace exparse
 
 EndEsdlNamespace()
 #endif

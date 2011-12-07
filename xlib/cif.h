@@ -204,7 +204,7 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
   virtual size_t Count() const {  return 1;  }
   virtual bool IsSaveable() const {  return !data.IsDeleted();  }
   virtual size_t GetCmpHash() const {  return data.GetId();  }
-  virtual const olxstr& operator [] (size_t i) const {
+  virtual const olxstr& operator [] (size_t) const {
     return  data.GetLabel();
   }
   virtual const olxstr& GetComment() const {  return EmptyString();  }
@@ -229,7 +229,7 @@ struct AtomPartCifEntry : public cif_dp::IStringCifEntry {
   AtomPartCifEntry(TCAtom& _data) : data(_data)  {}
   virtual size_t Count() const {  return 1;  }
   virtual bool IsSaveable() const {  return !data.IsDeleted();  }
-  virtual const olxstr& operator [] (size_t i) const {
+  virtual const olxstr& operator [] (size_t) const {
     return  (tmp_val = (int)data.GetPart());  }
   virtual const olxstr& GetComment() const {  return EmptyString();  }
   virtual cif_dp::ICifEntry* Replicate() const {

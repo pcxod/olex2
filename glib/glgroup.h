@@ -75,8 +75,8 @@ public:
   ones to the provided list */
   bool TryToGroup(AGDObjList& ungroupable);
 
-  inline bool Orient(TGlPrimitive& P)  {  return false;  }
-  inline bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
+  inline bool Orient(TGlPrimitive&)  {  return false;  }
+  inline bool GetDimensions(vec3d&, vec3d&)  {  return false;  }
   virtual bool OnMouseDown(const IEObject *Sender, const struct TMouseData& Data);
   virtual bool OnMouseUp(const IEObject *Sender, const struct TMouseData& Data);
   virtual bool OnMouseMove(const IEObject *Sender, const struct TMouseData& Data);

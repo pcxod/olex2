@@ -91,8 +91,12 @@ template <typename int_t> static bool olx_is_valid_size(const int_t& v)  {
 // wrap memory management functions
 extern void *olx_malloc_(size_t sz);  // throws TOutOfMemoryException 
 extern void *olx_realloc_(void * a, size_t sz);  // throws TOutOfMemoryException 
-template <typename T> T *olx_malloc(size_t sz) {  return (T*)olx_malloc_(sz*sizeof(T));  }
-template <typename T> T *olx_realloc(T *a, size_t sz) {  return (T*)olx_realloc_(a, sz*sizeof(T));  }
+template <typename T> T *olx_malloc(size_t sz) {
+  return (T*)olx_malloc_(sz*sizeof(T));
+}
+template <typename T> T *olx_realloc(T *a, size_t sz) {
+  return (T*)olx_realloc_(a, sz*sizeof(T));
+}
 template <typename T> void olx_free(T *a) {  if( a != NULL )  free(a);  }
 template <typename T> T *olx_memcpy(T *dest, const T *src, size_t sz) {
   return (T *)memcpy(dest, src, sz*sizeof(T));
@@ -177,10 +181,14 @@ public:
   inline Buffer *Data_() const {  return SData;  }
   // for internal stuff
   size_t Start_() const { return _Start;  }
-  // standard api requires terminating '\0'; the use of raw_str and Length() is preferable
+  /* standard api requires terminating '\0'; the use of raw_str and Length() is
+ preferable
+ */
   const T * u_str() const {
     if( SData == NULL ) return NULL;
-    if( (SData->Length == (_Start+_Length)) || (SData->Data[_Start+_Length] != '\0') )  {
+    if( (SData->Length == (_Start+_Length)) ||
+        (SData->Data[_Start+_Length] != '\0') )
+    {
       checkBufferForModification(_Length + 1);
       SData->Data[_Start+_Length] = '\0';
     }
@@ -201,8 +209,9 @@ public:
 #endif
     return SData->Data[_Start + i];
   }
-  /* reads content of the string to external buffer, which must be able to accommodate
-   string length + 1 for the end of string char  */
+  /* reads content of the string to external buffer, which must be able to
+ accommodate string length + 1 for the end of string char
+  */
   T *Read(T *v)  {
     if( SData == NULL ) return NULL;
     olx_memcpy(v, &SData->Data[_Start], _Length);
@@ -220,7 +229,9 @@ typedef TTIString<wchar_t> TIWString;
 
 // implementation of basic object, providing usefull information about a class
 class IEObject  {
-  // this function, if set, will be called from the destructor - useful for garbage collector...
+  /* this function, if set, will be called from the destructor - useful for
+ garbage collector...
+ */
   struct a_destruction_handler  {
     a_destruction_handler *next;
     a_destruction_handler(a_destruction_handler* _prev) : next(NULL) {
@@ -239,7 +250,9 @@ class IEObject  {
         a_destruction_handler(prev),
         destruction_handler(_destruction_handler) {}
     virtual void call(IEObject* obj) const {  (*destruction_handler)(obj);  }
-    virtual const void* get_identifier() const {  return (const void*)destruction_handler;  }
+    virtual const void* get_identifier() const {
+      return (const void*)destruction_handler;
+    }
   };
   template <class base>
   struct member_destruction_handler : public a_destruction_handler {
@@ -252,7 +265,9 @@ class IEObject  {
         a_destruction_handler(prev),
         instance(base_instance),
         destruction_handler(_destruction_handler) {}
-    virtual void call(IEObject* obj) const {  (instance.*destruction_handler)(obj);  }
+    virtual void call(IEObject* obj) const {
+      (instance.*destruction_handler)(obj);
+    }
     virtual const void* get_identifier() const {  return &instance;  }
   };
   
@@ -294,8 +309,10 @@ public:
   }
   template <class base>
   void AddDestructionHandler(base& instance, void (base::*func)(IEObject*))  {
-    if( dsh_head == NULL )
-      dsh_head = dsh_tail = new member_destruction_handler<base>(NULL, instance, func);
+    if( dsh_head == NULL ) {
+      dsh_head = dsh_tail =
+        new member_destruction_handler<base>(NULL, instance, func);
+    }
     else
       dsh_tail = new member_destruction_handler<base>(dsh_tail, instance, func);
   }
@@ -324,29 +341,31 @@ public:
 class TExceptionBase : public IEObject  {
 protected:
   static bool AutoLog;
-  /* to prevent creation this class directly. All instances must be of the TBasicExceptionClass
-  defined in exception.h */
+  /* to prevent creation this class directly. All instances must be of the
+ TBasicExceptionClass defined in exception.h
+ */
   virtual void CreationProtection() = 0;  
 public:
-  static void ThrowFunctionFailed(const char* file, const char* function, int line, const char* msg);
-  static void ThrowIndexOutOfRange(const char* file, const char* function, int line,
-    size_t index, size_t min_ind, size_t max_ind);
-  static void ThrowInvalidUnsignedFormat(const char* file, const char* function, int line, 
-    const char* src, size_t src_len);
-  static void ThrowInvalidUnsignedFormat(const char* file, const char* function, int line, 
-    const wchar_t* src, size_t src_len);
-  static void ThrowInvalidIntegerFormat(const char* file, const char* function, int line, 
-    const char* src, size_t src_len);
-  static void ThrowInvalidIntegerFormat(const char* file, const char* function, int line, 
-    const wchar_t* src, size_t src_len);
-  static void ThrowInvalidFloatFormat(const char* file, const char* function, int line, 
-    const char* src, size_t src_len);
-  static void ThrowInvalidFloatFormat(const char* file, const char* function, int line, 
-    const wchar_t* src, size_t src_len);
-  static void ThrowInvalidBoolFormat(const char* file, const char* function, int line, 
-    const char* src, size_t src_len);
-  static void ThrowInvalidBoolFormat(const char* file, const char* function, int line, 
-    const wchar_t* src, size_t src_len);
+  static void ThrowFunctionFailed(const char* file, const char* function,
+    int line, const char* msg);
+  static void ThrowIndexOutOfRange(const char* file, const char* function,
+    int line, size_t index, size_t min_ind, size_t max_ind);
+  static void ThrowInvalidUnsignedFormat(const char* file, const char* function,
+    int line, const char* src, size_t src_len);
+  static void ThrowInvalidUnsignedFormat(const char* file, const char* function,
+    int line, const wchar_t* src, size_t src_len);
+  static void ThrowInvalidIntegerFormat(const char* file, const char* function,
+    int line, const char* src, size_t src_len);
+  static void ThrowInvalidIntegerFormat(const char* file, const char* function,
+    int line, const wchar_t* src, size_t src_len);
+  static void ThrowInvalidFloatFormat(const char* file, const char* function,
+    int line, const char* src, size_t src_len);
+  static void ThrowInvalidFloatFormat(const char* file, const char* function,
+  int line, const wchar_t* src, size_t src_len);
+  static void ThrowInvalidBoolFormat(const char* file, const char* function,
+    int line, const char* src, size_t src_len);
+  static void ThrowInvalidBoolFormat(const char* file, const char* function,
+    int line, const wchar_t* src, size_t src_len);
   static TIString FormatSrc(const char* file, const char* func, int line);
   static void SetAutoLogging(bool v)  {  AutoLog = v;  }
   static bool GetAutoLogging()  {  return AutoLog;  }
@@ -354,6 +373,7 @@ public:
   const class TBasicException* GetException() const; 
 };
 
+#include "olxptr.h"
 #include "eaccessor.h"
 
 struct olx_alg  {
@@ -465,7 +485,6 @@ template <typename FT> FT olx_pow10(size_t val)  {
   return rv;
 }
 
-#include "olxptr.h"
 #include "association.h"
 #include "listalg.h"
 #include "citem.h"

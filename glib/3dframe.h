@@ -24,8 +24,8 @@ public:
 };
 // frame 'face' - the control sphere of the face
 class TFaceCtrl : public AGlMouseHandlerImp {
-  vec3d &A, &B, &C, &D, &N;
   A3DFrameCtrl& ParentCtrl;
+  vec3d &A, &B, &C, &D, &N;
   size_t Id;
 protected:
   virtual bool DoTranslate(const vec3d& t)  {
@@ -39,9 +39,12 @@ protected:
     return ParentCtrl.OnZoom(GetId(), zoom, inc);
   }
 public:
-  TFaceCtrl(TGlRenderer& prnt, const olxstr& cName, size_t _Id, vec3d& _A, vec3d& _B, vec3d& _C, vec3d& _D, vec3d& _N,
-    A3DFrameCtrl& _ParentCtrl) : AGlMouseHandlerImp(prnt, cName), ParentCtrl(_ParentCtrl),
-    Id(_Id), A(_A), B(_B), C(_C), D(_D), N(_N)
+  TFaceCtrl(TGlRenderer& prnt, const olxstr& cName, size_t _Id,
+    vec3d& _A, vec3d& _B, vec3d& _C, vec3d& _D, vec3d& _N,
+    A3DFrameCtrl& _ParentCtrl)
+    : AGlMouseHandlerImp(prnt, cName),
+      ParentCtrl(_ParentCtrl),
+      A(_A), B(_B), C(_C), D(_D), N(_N), Id(_Id)
   {
     SetMoveable(true);
     SetRoteable(true);

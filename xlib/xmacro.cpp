@@ -182,7 +182,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(VoidE, EmptyString(), fpNone|psFileLoaded,
     "calculates number of electrons in the voids area");
 //_____________________________________________________________________________
-  xlib_InitMacro(ChangeSG, EmptyString(), fpAny^fpNone|psFileLoaded,
+  xlib_InitMacro(ChangeSG, EmptyString(), (fpAny^fpNone)|psFileLoaded,
     "[shift] SG. Changes space group of current structure, applying given shit"
     " prior (if provided) to the change of symmetry of the unit cell");
 //_____________________________________________________________________________
@@ -249,7 +249,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(LstFS, EmptyString(), fpAny,
     "Prints out detailed content of virtual file system. Accepts * based "
     "masks");
-  xlib_InitMacro(SGS, EmptyString(), fpAny^fpNone|psFileLoaded,
+  xlib_InitMacro(SGS, EmptyString(), (fpAny^fpNone)|psFileLoaded,
     "Changes current space group settings using provided cell setting (if "
     "applicable) and axis, or 9 transformation matrix elements and the space "
     "group symbol. If the transformed HKL file is required, it should be "
@@ -987,7 +987,6 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   }
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   TLattice& lat = TXApp::GetInstance().XFile().GetLattice();
-  TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   TArrayList< AnAssociation2<TCAtom const*, smatd> > all;
   size_t h_indexes[4];
   const ASObjectProvider& objects = lat.GetObjects();
@@ -1164,9 +1163,9 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
               }
             }
             if( eqiv != NULL )  {
-              TIns& ins = XApp.XFile().GetLastLoader<TIns>();
               const smatd& e = rm.AddUsedSymm(*eqiv);
-              rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(), NULL, &e, true);
+              rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(),
+                NULL, &e, true);
               XApp.NewLogEntry() << "The atom" << satoms[aitr]->GetLabel() << 
                 " is connected to itself through symmetry, removing the"
                 " symmetry generated bond";
@@ -1206,16 +1205,20 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   delete XApp.FixHL();
 }
 //..............................................................................
-void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& XApp = TXApp::GetInstance();
   if( XApp.XFile().GetLattice().IsGenerated() )  {
-    Error.ProcessingError(__OlxSrcInfo, "The procedure is not applicable for the grown structure");
+    Error.ProcessingError(__OlxSrcInfo,
+      "The procedure is not applicable for the grown structure");
     return;
   }
   bool increase = false, 
     decrease = false;
   if( !Cmds[0].IsNumber() )  {
-    Error.ProcessingError(__OlxSrcInfo, "first arument should be a number or +/- number");
+    Error.ProcessingError(__OlxSrcInfo,
+      "first arument should be a number or +/- number");
     return;
   }
   double val = Cmds[0].ToDouble();
@@ -1577,7 +1580,6 @@ void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  bool isOmit = false;
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   if( Cmds[0].IsNumber() )  {
     int insIndex = Cmds[0].ToInt();
@@ -2134,7 +2136,6 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
   }
   // special case - cross-link 4 atoms by one variable
   if( groups.Count() == 2 && groups[0]->Count() == 2 && groups[1]->Count() )  {
-    XLEQ* leq = NULL;
     XVar& vr = rm.Vars.NewVar();
     rm.Vars.AddVarRef(vr,
       (*groups[0])[0], catom_var_name_Sof, relation_AsVar, 1.0);
@@ -4009,7 +4010,6 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     TPtrList<TSpaceGroup> sgs;
-    bool cntro = false;
     E.SetRetVal(&sgs);
     op->executeMacroEx("SG", E);
     E.SetRetVal<bool>(false);
@@ -4379,9 +4379,7 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
 {
   static olxstr sig("OMIT");
   TXApp &app = TXApp::GetInstance();
-  const TIns& ins = app.XFile().GetLastLoader<TIns>();
   RefinementModel& rm = app.XFile().GetRM();
-  const TLst& Lst = ins.GetLst();
   if( Cmds.Count() == 1 )  {
     if( Cmds[0].IsNumber() )  {
       const double th = Cmds[0].ToDouble();
@@ -4536,7 +4534,7 @@ void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   for( size_t i=0; i < atoms.Count(); i++ ) 
     atoms[i]->CAtom().SetTag(i);
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    if( atoms[i]->CAtom().GetTag() != i ||
+    if( (size_t)atoms[i]->CAtom().GetTag() != i ||
         atoms[i]->CAtom().GetDegeneracy() == 1)
     {
       continue;
@@ -4699,7 +4697,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
                   olxstr::FormatFloat(3, planes[i].Angle(plane_params)) <<
                   ", centroid-centroid distance: " << olxstr::FormatFloat(3, pccd) <<
                   ", shift distance " << olxstr::FormatFloat(3, shift);
-                if( transforms.IndexOf(mat) == -1 )
+                if( transforms.IndexOf(mat) == InvalidIndex )
                   transforms.AddCopy(mat);
               }
             }
@@ -4826,7 +4824,6 @@ void XLibMacros::macMolInfo(TStrObjList &Cmds, const TParamList &Options, TMacro
     const size_t off = triags.Count()*i;
     const float_type r = (float_type)atoms[i]->GetType().r_vdw;
     const vec_type center = atoms[i]->crd();
-    const float_type occu_factor = (float_type)atoms[i]->CAtom().GetOccu();
     for( size_t j=0; j < triags.Count(); j++ )  {
       if( t_map[off+j] == 0 )  continue;
       const vec_type

@@ -41,9 +41,8 @@ class TGlGroup;
 class TGlRenderer : public IEObject  {
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;  // a list of all groups of primitives
   TSStrPObjList<olxcstr,TGPCollection*, false> FCollections;
-//  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
-//  TSPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
-  TPtrList<TGlMaterial> FTranslucentObjects, FIdentityObjects, FTranslucentIdentityObjects;
+  TPtrList<TGlMaterial> FTranslucentObjects,
+    FIdentityObjects, FTranslucentIdentityObjects;
   typedef SortedPtrList<AGDrawObject, TPointerComparator> GObjectList;
   GObjectList FGObjects;
   TPtrList<TGlGroup> FGroups;   // list of groups
@@ -65,8 +64,8 @@ class TGlRenderer : public IEObject  {
   TGlOption FogColor;
   float FogDensity, FogStart, FogEnd;
 //__________________
+  int Top, Left;
   int Width, Height, OWidth;
-  int Left, Top;
   double LineWidth;
   int CompiledListId;
 protected:
@@ -122,7 +121,7 @@ public:
   TEBasis& GetBasis() {  return FBasis; }
   const TEBasis& GetBasis() const {  return FBasis; }
   void SetBasis(const TEBasis &B)  {  FBasis = B; }
-  template <class VC> void Translate(const VC& V)  {  FBasis.Translate(V); };
+  template <class VC> void Translate(const VC& V)  {  FBasis.Translate(V); }
   void TranslateX(double V)  {  FBasis.TranslateX(V);  }
   void TranslateY(double V)  {  FBasis.TranslateY(V);  }
   void TranslateZ(double V)  {  FBasis.TranslateZ(V);  }
@@ -162,7 +161,8 @@ public:
   void Initialise();
   void InitLights();
   double CalcZoom() const { 
-    const double df = SceneDepth < 0 ? (SceneDepth=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
+    const double df = SceneDepth < 0 ?
+      (SceneDepth=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
     return 1./df;
   }
   /* returns a "size of a pixel in current viewport"; use it to transform screen coordinates to

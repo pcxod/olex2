@@ -424,8 +424,8 @@ protected:
   
   class TAnalyseNetNodeTask  {
     TTypeList< TPtrList<TAutoDBNode> >& Nodes;
-    TTypeList<TGuessCount>& Guesses;
     TAutoDBNet& Network;
+    TTypeList<TGuessCount>& Guesses;
     size_t LocateDBNodeIndex(const TPtrList<TAutoDBNode>& segment,
       TAutoDBNode* nd, size_t from=InvalidIndex, size_t to=InvalidIndex);
   public:

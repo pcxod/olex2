@@ -14,13 +14,16 @@
 #include "ebasis.h"
 BeginGxlNamespace()
 
-namespace pov {
+struct pov {
   template <typename NumT>
   static olxstr to_str(const TVector3<NumT> &v)  {
-    return olxstr(EmptyString(), 64) << '<' << v[0] << ',' << v[1] << ',' << v[2] << '>';
+    return olxstr(EmptyString(), 64) << '<' << v[0] << ',' << v[1] << ',' <<
+      v[2] << '>';
   }
   template <typename NumT>
-  static olxstr to_str(const TMatrix33<NumT> &m, const TVector3<NumT> &t)  {
+  static olxstr to_str(const TMatrix33<NumT> &m,
+    const TVector3<NumT> &t)
+  {
     return olxstr(EmptyString(), 120) << '<'
       << m[0][0] << ',' << m[0][1] << ',' << m[0][2] << ',' 
       << m[1][0] << ',' << m[1][1] << ',' << m[1][2] << ',' 
@@ -28,14 +31,18 @@ namespace pov {
       << t[0] << ',' << t[1] << ',' << t[2] << '>';
   }
   static olxstr to_str(const TGlOption &v, bool color=true)  {
-    if( color )
-      //return olxstr::FromCStr(olxT("rgb<"), 64) << v[0] << ',' << v[1] << ',' << v[2] << '>';
-      return olxstr(EmptyString(), 64) << "rgb<" << v[0] << ',' << v[1] << ',' << v[2] << '>';
-    else
-      return olxstr(EmptyString(), 64) << '<' << v[0] << ',' << v[1] << ',' << v[2] << '>';
+    if( color ) {
+      return olxstr(EmptyString(), 64) << "rgb<" << v[0] << ',' << v[1] <<
+        ',' << v[2] << '>';
+    }
+    else {
+      return olxstr(EmptyString(), 64) << '<' << v[0] << ',' << v[1] << ',' <<
+        v[2] << '>';
+    }
   }
-  static olxstr get_mat_name(const olxstr &primitive_name, TGraphicsStyle &style,
-    olxdict<const TGlMaterial*, olxstr, TPointerComparator> &materials)
+  static olxstr get_mat_name(const olxstr &primitive_name,
+    TGraphicsStyle &style, olxdict<const TGlMaterial*, olxstr,
+    TPointerComparator> &materials)
   {
     olxstr mat_name;
     size_t lmi = style.IndexOfMaterial(primitive_name);
@@ -53,8 +60,8 @@ namespace pov {
     olxdict<const TGlMaterial*, olxstr, TPointerComparator> &materials)
   {
     size_t lmi = materials.IndexOf(&glm);
-    return (lmi == InvalidIndex ? materials.Add(&glm, olxstr("mat") << (materials.Count()+1))
-      : materials.GetValue(lmi));
+    return (lmi == InvalidIndex ? materials.Add(&glm, olxstr("mat") <<
+      (materials.Count()+1)) : materials.GetValue(lmi));
   }
   struct CrdTransformer  {
     TEBasis basis;

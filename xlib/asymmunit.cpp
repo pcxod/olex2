@@ -154,7 +154,6 @@ void  TAsymmUnit::InitMatrices()  {
   const double V = Axes.Prod()*Vp;
 
   const double
-    cGs = (cA*cB-cG)/(sA*sB),
     cBs = (cA*cG-cB)/(sA*sG),
     cAs = (cB*cG-cA)/(sB*sG),
     as = Axes[1]*Axes[2]*sA/V,
@@ -332,7 +331,7 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   size_t us_ind = Label.IndexOf('_');
   if( us_ind != InvalidIndex && ++us_ind < Label.Length() )  {
     if( Label.SubStringFrom(us_ind).IsNumber() )  {  // residue number?
-      size_t resi_num = Label.SubStringFrom(us_ind).ToInt();
+      int resi_num = Label.SubStringFrom(us_ind).ToInt();
       for( size_t i=0; i < Residues.Count(); i++ )  {
         if( Residues[i].GetNumber() == resi_num )  {
           resi = &Residues[i];
@@ -1116,7 +1115,6 @@ void TAsymmUnit::_UpdateQPeaks()  {
     sortedPeaks.Add(CAtoms[i]->GetQPeak(), CAtoms[i]);
   }
   ac = sortedPeaks.Count();
-  size_t ind = InvalidIndex;
   for( size_t i=0; i < ac; i++ )
     sortedPeaks.GetObject(i)->SetLabel(olxstr('Q') << olxstr(ac-i), false);
   if( ac )  {
@@ -1150,8 +1148,6 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
       return;
     }
   }
-  size_t QPeakIndex = InvalidIndex;
-  double qPeak = 0;
   TCAtom& ca = this->NewAtom();
   if( is_q_peak )  {
     ca.SetType(XElementLib::GetByIndex(iQPeakIndex));

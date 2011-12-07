@@ -27,10 +27,12 @@ const short rltNone   = 0, // default value for the constructor...
             rltGroup  = 5; // atoms represent a group
 
 class TSimpleRestraint : public IEObject, public IXVarReferencer  {
+  TSRestraintList& Parent;
+  size_t Id;
+  short ListType;
   double Value, Esd, Esd1;
   XVarReference* VarRef;
   bool AllNonHAtoms;
-  short ListType;
   TCAtomGroup InvolvedAtoms;
   bool AtomsEqual(const TGroupCAtom& a1, const TGroupCAtom& a2)  {
     return AtomsEqual(a1.GetAtom(), a1.GetMatrix(), a2.GetAtom(), a2.GetMatrix());
@@ -44,8 +46,6 @@ class TSimpleRestraint : public IEObject, public IXVarReferencer  {
     }
     return false;
   }
-  TSRestraintList& Parent;
-  size_t Id;
 protected:
   void SetId(size_t id)  {  Id = id;  }
 public:

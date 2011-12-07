@@ -73,7 +73,7 @@ namespace math  {  namespace spline {
     double interpolate(double t) const {
       if( x.Count() < 2 )
         throw TInvalidArgumentException(__OlxSourceInfo, "spline size");
-      if( periodic && t > x.GetLast() || t < x(0) )  {  // remap
+      if( periodic && ((t > x.GetLast()) || (t < x(0))) )  {  // remap
         const FT period = x.GetLast()-x(0);
         const FT k = t/period;
         t = period*(k - olx_floor(k));
@@ -205,7 +205,7 @@ namespace math  {  namespace spline {
           b(0) = 3*(s.y(1)-s.y(0))/(s.x(1)-s.x(0))-lb*(s.x(1)-s.x(0))/2;
         }
         // right side
-        if( rbt = boundary_type_parabolic )  {
+        if( rbt == boundary_type_parabolic )  {
           a1(n-1) = a2(n-1) = 1;
           a3(n-1) = 0;
           b(n-1) = 2*(s.y(n-1)-s.y(n-2))/(s.x(n-1)-s.x(n-2));

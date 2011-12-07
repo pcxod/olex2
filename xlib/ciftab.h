@@ -44,18 +44,19 @@ struct CifTabBond  {
 struct CifTabAngle  {
   olxstr Value, S1, S3;
   CifTabAtom &A1, &A2, &A3;
-  CifTabAngle(CifTabAtom& a1, CifTabAtom& a2, CifTabAtom& a3) :A1(a1), A2(a2), A3(a3) {}
+  CifTabAngle(CifTabAtom& a1, CifTabAtom& a2, CifTabAtom& a3)
+    : A1(a1), A2(a2), A3(a3) {}
   bool Contains(const CifTabAtom& A) const;
   bool FormedBy(const CifTabBond& B, const CifTabBond& B1) const;
 };
 //---------------------------------------------------------------------------
 class TLLTBondSort  {
 public:
-  short SortType;
   CifTabAtom &Atom; // must be initilaised before the call
   const TStrList &Symmetry;
-  TLLTBondSort(CifTabAtom& atom, const TStrList& symm, short sort_type) :
-    Atom(atom), Symmetry(symm), SortType(sort_type)  {}
+  short SortType;
+  TLLTBondSort(CifTabAtom& atom, const TStrList& symm, short sort_type)
+    : Atom(atom), Symmetry(symm), SortType(sort_type)  {}
   int Compare(const CifTabBond *I, const CifTabBond *I1);
 };
 //---------------------------------------------------------------------------
@@ -72,9 +73,10 @@ public:
   virtual ~TLinkedLoopTable();
 
   size_t AtomCount() const {  return FAtoms.Count(); }
-  CifTabAtom *Atom(size_t index) {  return FAtoms[index];  };
-  /* Returns a table constructed for Atom. The Atom should represent a valid atom
-   label in Cif->AsymmUnit. */
+  CifTabAtom *Atom(size_t index) {  return FAtoms[index];  }
+  /* Returns a table constructed for Atom. The Atom should represent a valid
+ atom label in Cif->AsymmUnit.
+ */
   TTTable<TStrList>* MakeTable(const olxstr& Atom);
 };
 

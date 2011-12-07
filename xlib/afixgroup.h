@@ -14,17 +14,20 @@
 BeginXlibNamespace()
 
 class TAfixGroup : public ACollectionItem {
-  double D, Sof, U;
-  int Afix;
+  TAfixGroups& Parent;
   size_t Id;
   TCAtom* Pivot;
+  double D, Sof, U;
+  int Afix;
   TCAtomPList Dependent;
-  TAfixGroups& Parent;
   static const olxstr n_names[], m_names[];
 public:
-  TAfixGroup(TAfixGroups& parent) : Parent(parent), D(0), Sof(0), U(0) {}
-  TAfixGroup(TAfixGroups& parent, size_t id, TCAtom* pivot, int afix, double d = 0, double sof = 0, double u = 0) :
-      Parent(parent), Id(id), Pivot(pivot), D(d), Afix(afix), Sof(sof), U(u)  {  
+  TAfixGroup(TAfixGroups& parent)
+    : Parent(parent), D(0), Sof(0), U(0) {}
+  TAfixGroup(TAfixGroups& parent, size_t id, TCAtom* pivot,
+    int afix, double d = 0, double sof = 0, double u = 0)
+    : Parent(parent), Id(id), Pivot(pivot), D(d), Sof(sof), U(u), Afix(afix)
+  {
     if( pivot != NULL )  {
       if( HasExcplicitPivot() || IsUnbound() )
         pivot->SetDependentAfixGroup(this);
@@ -89,7 +92,7 @@ public:
   not a preceeding (like afix n=3 vs n=6)
   */
   static bool HasExcplicitPivot(int afix)  {
-    const int n = GetN(afix), m = GetM(afix);
+    const int n = GetN(afix);
     return (n == 6 || n == 9);
   }
   // these require an implicit pivot (outside the group)
@@ -99,7 +102,7 @@ public:
   }
   // these are just 'service' AFIX...
   static bool HasPivot(int afix)  {
-    const int n = GetN(afix), m = GetM(afix);
+    const int n = GetN(afix);
     return !(n == 1 || n == 2);
   }
   static bool IsRiding(int afix)  {

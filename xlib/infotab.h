@@ -22,10 +22,10 @@ const short
   infotab_bond = 4;
 
 class InfoTab : public IEObject {  // need to cast to delete
-  olxstr ResiName, ParamName;
-  TCAtomGroup atoms;
   RefinementModel& RM;
   short Type;
+  olxstr ParamName, ResiName;
+  TCAtomGroup atoms;
 public:
   InfoTab(RefinementModel& rm, short type, const olxstr& paramName=EmptyString(),
     const olxstr& resiName=EmptyString())

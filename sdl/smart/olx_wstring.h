@@ -49,7 +49,7 @@ protected:
     wchar_t bf[80];
 #if defined(_MSC_VER)
     swprintf_s(bf, 80, format, v);
-#elif defined(__GNUC__) 
+#elif defined(__GNUC__) && !defined(__WIN32__)
     swprintf(bf, 80, format, v);
 #else
     swprintf(bf, format, v);
@@ -67,7 +67,7 @@ protected:
     wchar_t bf[80]; // we could use dynamic memory with TTBuffer<T>::Alloc instead
 #if defined(_MSC_VER)
     swprintf_s(bf, 80, format, v);
-#elif defined(__GNUC__) 
+#elif defined(__GNUC__) && !defined(__WIN32__)
     swprintf(bf, 80, format, v);
 #else
     swprintf(bf, format, v);
@@ -80,7 +80,7 @@ protected:
     wchar_t bf[80]; // we could use dynamic memory with TTBuffer<T>::Alloc instead
 #if defined(_MSC_VER)
     swprintf_s(bf, 80, format, v);
-#elif defined(__GNUC__) 
+#elif defined(__GNUC__) &&!defined(__WIN32__)
     swprintf(bf, 80, format, v);
 #else
     swprintf(bf, format, v);

@@ -54,7 +54,7 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
   item.AddField("atom_range", rb.GetString(true));
   TDataItem& dep = item.AddItem("dependent");
   for( size_t i=0; i < Dependent.Count(); i++ )
-    item.AddItem(atom_id++, Dependent[i]->GetId());
+    dep.AddItem(atom_id++, Dependent[i]->GetId());
   if( ParentGroup != NULL )
     item.AddField("parent", ParentGroup->GetId());
 }

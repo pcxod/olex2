@@ -104,7 +104,7 @@ public:
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetTag(i);
     for( size_t i=0; i < Atoms.Count(); i++ )
-      if( Atoms[i]->GetTag() != i )
+      if( (size_t)Atoms[i]->GetTag() != i )
         return false;
     return true;
   }

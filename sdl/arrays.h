@@ -21,18 +21,21 @@
 BeginEsdlNamespace()
 
 /*
-  These arrays are only suitable for primitive types, as memset zeroes the initialised arrays.
-  These arrays are just for convinience, as the Data attribute is publically exposed for the 
-  performance issues
+  These arrays are only suitable for primitive types, as memset zeroes the
+ initialised arrays. These arrays are just for convinience, as the Data
+ attribute is publically exposed for the performance issues
 */
 template <class AE> class TArray1D : public IEObject  {
-  const size_t _Length;
   index_t MinIndex;
+  const size_t _Length;
 public:
 // the indexes provided are inclusive
-  TArray1D(index_t minIndex, index_t maxIndex) : MinIndex(minIndex), _Length(maxIndex - minIndex + 1)  {
+  TArray1D(index_t minIndex, index_t maxIndex)
+    : MinIndex(minIndex), _Length(maxIndex - minIndex + 1)
+  {
     Data = NULL;
-    if( minIndex > maxIndex )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
+    if( minIndex > maxIndex )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
     Data = new AE[_Length];
     memset(Data, 0, _Length*sizeof(AE));
   }
@@ -44,7 +47,9 @@ public:
       Data[i] = val;
   }
 
-  void FastInitWith(const int val)  {  memset( Data, val, _Length*sizeof(AE) );  }
+  void FastInitWith(const int val)  {
+    memset( Data, val, _Length*sizeof(AE) );
+  }
 
   // direct access to "private" member
   AE* Data;
@@ -52,11 +57,14 @@ public:
   size_t Length() const {  return _Length;  }
   size_t Count() const { return _Length; }
   index_t GetMin() const {  return MinIndex;  }
-  bool IsInRange(index_t ind) const {  return ind >= MinIndex && ((ind-MinIndex) < _Length);  }
+  bool IsInRange(index_t ind) const {
+    return ind >= MinIndex && ((ind-MinIndex) < _Length);
+  }
   AE& operator [] (index_t index) const { return Value(index);  }
   AE& Value(index_t index) const {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index-MinIndex, 0, _Length);
+    TIndexOutOfRangeException::ValidateRange(
+          __POlxSourceInfo, index-MinIndex, 0, _Length);
 #endif
     return Data[index-MinIndex];
   }
@@ -66,12 +74,15 @@ public:
 
 // we do not use TArray1D< TArray1D > for performance reasons...
 template <class AE> class TArray2D : public IEObject {
-  const size_t Width, Height;
-  const index_t MinWidth, MinHeight;
+  const index_t MinWidth;
+  const size_t Width;
+  const index_t MinHeight;
+  const size_t Height;
 public:
 // the indexes provided are inclusive
-  TArray2D(index_t minWidth, index_t maxWidth, index_t minHeight, index_t maxHeight) : 
-      MinWidth(minWidth), Width(maxWidth - minWidth + 1), 
+  TArray2D(index_t minWidth, index_t maxWidth,
+    index_t minHeight, index_t maxHeight)
+    : MinWidth(minWidth), Width(maxWidth - minWidth + 1),
       MinHeight(minHeight), Height(maxHeight - minHeight + 1)  {
     Data = NULL;
     if( minWidth > maxWidth || minHeight > maxHeight )  
@@ -116,8 +127,10 @@ public:
 
   const AE& Value(index_t x, index_t y) const {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, x-MinWidth, 0, Width);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, y-MinHeight, 0, Height);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, x-MinWidth, 0, Width);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, y-MinHeight, 0, Height);
 #endif
     return Data[x-MinWidth][y-MinHeight];
   }
@@ -135,8 +148,12 @@ public:
 
 // we do not use TArray1D<TArray2D<AE>*>* Data for performance reasons
 template <class AE> class TArray3D : public IEObject {
-  const size_t Width, Height, Depth;
-  const index_t MinWidth, MinHeight, MinDepth;
+  const index_t MinWidth;
+  const size_t Width;
+  const index_t MinHeight;
+  const size_t Height;
+  const index_t MinDepth;
+  const size_t Depth;
   void Init()  {
     Data = new AE**[Width];
     for( size_t i=0; i < Width; i++ )  {
@@ -149,10 +166,10 @@ template <class AE> class TArray3D : public IEObject {
   }
 public:
   template <typename vec_t>
-  TArray3D(const vec_t& mind, const vec_t& maxd) : 
-        MinWidth(mind[0]), Width(maxd[0] - mind[0] + 1),
-        MinHeight(mind[1]), Height(maxd[1] - mind[1] + 1),
-        MinDepth(mind[2]), Depth(maxd[2] - mind[2] + 1)
+  TArray3D(const vec_t& mind, const vec_t& maxd)
+    : MinWidth(mind[0]), Width(maxd[0] - mind[0] + 1),
+      MinHeight(mind[1]), Height(maxd[1] - mind[1] + 1),
+      MinDepth(mind[2]), Depth(maxd[2] - mind[2] + 1)
   {
     Data = NULL;
     if( mind[0] > maxd[0] || mind[1] > maxd[1] || mind[2] > maxd[2] )  
@@ -161,10 +178,10 @@ public:
   }
   // the indexes provided are inclusive
   TArray3D(index_t minWidth, index_t maxWidth, index_t minHeight,
-      index_t maxHeight, index_t minDepth, index_t maxDepth) : 
-        MinWidth(minWidth), Width(maxWidth - minWidth + 1),
-        MinHeight(minHeight), Height(maxHeight - minHeight + 1),
-        MinDepth(minDepth), Depth(maxDepth - minDepth + 1)
+    index_t maxHeight, index_t minDepth, index_t maxDepth)
+    : MinWidth(minWidth), Width(maxWidth - minWidth + 1),
+      MinHeight(minHeight), Height(maxHeight - minHeight + 1),
+      MinDepth(minDepth), Depth(maxDepth - minDepth + 1)
   {
     Data = NULL;
     if( minWidth >= maxWidth || minHeight >= maxHeight || minDepth >= maxDepth )  
@@ -218,13 +235,18 @@ public:
 
   AE& Value(index_t x, index_t y, index_t z) const {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, x-MinWidth, 0, Width);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, y-MinHeight, 0, Height);
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, z-MinDepth, 0, Depth);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, x-MinWidth, 0, Width);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, y-MinHeight, 0, Height);
+    TIndexOutOfRangeException::ValidateRange(
+      __POlxSourceInfo, z-MinDepth, 0, Depth);
 #endif
     return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
   }
-  AE& operator () (index_t x, index_t y, index_t z) const {  return Value(x,y,z);  }
+  AE& operator () (index_t x, index_t y, index_t z) const {
+    return Value(x,y,z);
+  }
 
   template <class VC> AE& Value(const VC& ind) const {  
     return Value((index_t)ind[0], (index_t)ind[1], (index_t)ind[2]);  
@@ -319,6 +341,6 @@ namespace simple {
     item_t **operator [] (size_t i) { return data[i]; }
     const item_t **operator [] (size_t i) const { return data[i]; }
   };
-}; // namspace simple
+} // namspace simple
 EndEsdlNamespace()
 #endif

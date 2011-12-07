@@ -26,8 +26,8 @@ class TPrimitiveComparator  {
 public:
   template <class ComparableA, class ComparableB>
   static inline int Compare(const ComparableA& A, const ComparableB& B)  {
-    if( olx_get_ref(A) < olx_get_ref(B) )  return -1;
-    if( olx_get_ref(A) > olx_get_ref(B) )  return 1;
+    if( olx_ref::get(A) < olx_ref::get(B) )  return -1;
+    if( olx_ref::get(A) > olx_ref::get(B) )  return 1;
     return 0;
   }
 };
@@ -36,8 +36,8 @@ class TPointerComparator  {
 public:
   template <class ComparableA, class ComparableB>
   static inline int Compare(const ComparableA& A, const ComparableB& B)  {
-    if( olx_get_ptr(A) < olx_get_ptr(B) )  return -1;
-    if( olx_get_ptr(A) > olx_get_ptr(B) )  return 1;
+    if( olx_ptr::get(A) < olx_ptr::get(B) )  return -1;
+    if( olx_ptr::get(A) > olx_ptr::get(B) )  return 1;
     return 0;
   }
 };
@@ -46,7 +46,7 @@ class TComparableComparator  {
 public:
   template <class ComparableA, class ComparableB>
   static inline int Compare(const ComparableA& A, const ComparableB& B)  {
-    return olx_get_ref(A).Compare(olx_get_ref(B));
+    return olx_ref::get(A).Compare(olx_ref::get(B));
   }
 };
 //.............................................................................
@@ -89,7 +89,7 @@ template <typename ItemClass> struct Sort_StaticFunctionWrapper {
 };
 //.............................................................................
 struct DummySwapListener  {
-  static void OnSwap(size_t i, size_t j)  {}
+  static void OnSwap(size_t, size_t)  {}
 };
 template <typename List> struct SyncSwapListener {
   List& list;
@@ -101,7 +101,7 @@ template
 <class List, class Item, class accessor, class Comparator, class Listener>
 struct QuickSorter  {
   QuickSorter(List& _list, const Comparator& _cmp, const Listener& _listener) :
-    list(_list), cmp(_cmp), listener(_listener)  {}
+    list(_list), listener(_listener), cmp(_cmp)  {}
   void Sort()  {
     if( list.Count() < 2 )  return;
     DoSort(0, list.Count()-1);
@@ -173,8 +173,8 @@ struct BubbleSorter  {
   }
 protected:
   List& list;
-  const Listener& listener;
   const Comparator& cmp;
+  const Listener& listener;
 };
 //.............................................................................
 template <class ListClass, class ItemClass, class Accessor>

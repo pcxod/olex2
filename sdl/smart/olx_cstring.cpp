@@ -39,7 +39,7 @@ TCString::TCString( const TWString& wstr )  {
 TCString& TCString::AssignWCharStr(const wchar_t* wstr, size_t len)  {
   _Start = 0;
   _Increment = 8;
-  _Length = ((len==~0) ? wcslen(wstr) : len);
+  _Length = ((len==InvalidSize) ? wcslen(wstr) : len);
   if( SData != NULL )  {
     if( SData->RefCnt == 1 )  { // owed by this object
       SData->SetCapacity(_Length);

@@ -49,8 +49,8 @@ class RefinementModel
 {
   // in INS file is EQUV command
   struct Equiv  {
-    smatd symop;
     int ref_cnt;
+    smatd symop;
     Equiv() : ref_cnt(0)  {}
     Equiv(const Equiv& e) : ref_cnt(e.ref_cnt), symop(e.symop)  {}
     Equiv(const smatd& so) : ref_cnt(0), symop(so)  {}
@@ -161,11 +161,6 @@ protected:
   TTypeList<BadReflection> BadReflections;
   TActionQList Actions;
 public:
-
-  TActionQueue& OnSetBadReflections;
-
-  TAsymmUnit& aunit;
-
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
   ExperimentalDetails expl;
@@ -184,12 +179,14 @@ public:
                   rFixedUeq,
                   rSimilarUeq,
                   rSimilarAdpVolume;
+  TExyzGroups ExyzGroups;
+  TAfixGroups AfixGroups;
+  TSameGroupList  rSAME;
+  TActionQueue& OnSetBadReflections;
+  TAsymmUnit& aunit;
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
   ConstraintContainer<same_group_constraint> SameGroups;
   ConstraintContainer<adirection> Directions;
-  TSameGroupList  rSAME;
-  TAfixGroups AfixGroups;
-  TExyzGroups ExyzGroups;
   // restraints and constraints register
   olxdict<olxstr, IConstraintContainer*, olxstrComparator<false> > rcRegister;
   TPtrList<IConstraintContainer> rcList;  // when order matters
@@ -736,11 +733,11 @@ Friedel opposites of components 1 ... m
 //
 // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const {  return VarRefrencerId;  }
-  virtual size_t GetIdOf(const IXVarReferencer& vr) const {  return 0;  }
-  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
+  virtual size_t GetIdOf(const IXVarReferencer &) const {  return 0;  }
+  virtual size_t GetPersistentIdOf(const IXVarReferencer &) const {
     return 0;
   }
-  virtual IXVarReferencer& GetReferencer(size_t id) const {
+  virtual IXVarReferencer& GetReferencer(size_t) const {
     return const_cast<RefinementModel&>(*this);
   }
   virtual size_t ReferencerCount() const {  return 1;  }

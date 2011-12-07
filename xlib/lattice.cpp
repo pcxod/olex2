@@ -36,11 +36,11 @@ int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
 }
 
 TLattice::TLattice(ASObjectProvider& ObjectProvider) :
+  Objects(ObjectProvider),
   OnStructureGrow(Actions.New("STRGEN")),
   OnStructureUniq(Actions.New("STRUNIQ")),
   OnDisassemble(Actions.New("DISASSEBLE")),
-  OnAtomsDeleted(Actions.New("ATOMSDELETE")),
-  Objects(ObjectProvider)
+  OnAtomsDeleted(Actions.New("ATOMSDELETE"))
 {
   AsymmUnit = new TAsymmUnit(this);
   UnitCell = new TUnitCell(this);
@@ -328,7 +328,6 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
   TAsymmUnit& au = GetAsymmUnit();
   Objects.atoms.IncCapacity(Matrices.Count()*au.AtomCount());
   for( size_t i=0; i < Matrices.Count(); i++ )  {
-    smatd* M = Matrices[i];
     for( size_t j=0; j < au.AtomCount(); j++ )  {
       if( !au.GetAtom(j).IsAvailable() )  continue;
       GenerateAtom(au.GetAtom(j), *Matrices[i]);
@@ -619,7 +618,6 @@ void TLattice::GrowFragments(
   const olxdict<uint32_t, smatd_list, TPrimitiveComparator> &job)
 {
   olxdict<uint32_t, smatd*, TPrimitiveComparator> matrix_map;
-  smatd *M = NULL;
   // check if the matix is unique
   matrix_map.SetCapacity(Matrices.Count());
   for (size_t i=0; i < Matrices.Count(); i++)
@@ -787,7 +785,7 @@ TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
 //..............................................................................
 TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
   const size_t ac = Objects.atoms.Count();
-  for( size_t i=0; i < Objects.atoms.Count(); i++ )
+  for( size_t i=0; i < ac; i++ )
     if( ca.GetId() == Objects.atoms[i].CAtom().GetId() )  
       return &Objects.atoms[i];
   return NULL;
@@ -1376,7 +1374,7 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
     fragAtoms[i]->GetNetwork().SetTag(i);
 
   for( size_t i=0; i < fragAtoms.Count(); i++ )  {
-    if( fragAtoms[i]->GetNetwork().GetTag() == i )  {
+    if( (size_t)fragAtoms[i]->GetNetwork().GetTag() == i )  {
       for( size_t j=0; j < fragAtoms[i]->GetNetwork().NodeCount(); j++ )  {
         TSAtom& SA = fragAtoms[i]->GetNetwork().Node(j);
         SA.CAtom().ccrd() = transform * SA.CAtom().ccrd();
@@ -1854,7 +1852,6 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg,
 }
 //..............................................................................
 void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  {
-  const size_t au_cnt = GetAsymmUnit().AtomCount();
   ElementPList CTypes;
   CTypes.Add(XElementLib::FindBySymbol("C"));
   CTypes.Add(XElementLib::FindBySymbol("N"));
@@ -2268,7 +2265,7 @@ olxstr TLattice::CalcMoiety() const {
       cl.Set(j, new ElementCount(*_cld.GetKey(j), _cld.GetValue(j)));
     XElementLib::SortContentList(cl);
     bool uniq = true;
-    double wght=0, overall_occu = 0;
+    double overall_occu = 0;
     for( size_t j=0; j < cfrags[i].Count(); j++ )  {
       const double occu = cfrags[i][j]->GetOccu();
       if( overall_occu == 0 )
@@ -2366,7 +2363,6 @@ void TLattice::BuildAtomRegistry()  {
     vec3i::UpdateMinMax(Matrices[i]->GetT(Matrices[i]->GetId()), mind, maxd);
   maxd[0] += 1;  maxd[1] += 1;  maxd[2] += 1;
   AtomRegistry::RegistryType& registry = Objects.atomRegistry.Init(mind, maxd);
-  size_t cnt=0;
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom* sa = &Objects.atoms[i];

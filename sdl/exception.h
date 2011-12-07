@@ -37,8 +37,8 @@ public:
   TBasicException(const olxstr& location, IEObject* cause) :
     Location(location), Cause((TBasicException*)cause) {}
 
-    TBasicException(const olxstr& location, const olxstr& Msg) :
-    Location(location), Message(Msg), Cause(NULL)  {}
+  TBasicException(const olxstr& location, const olxstr& Msg) :
+    Message(Msg), Location(location), Cause(NULL)  {}
 
   virtual ~TBasicException();
   inline const olxstr& GetError() const {  return Message;  }

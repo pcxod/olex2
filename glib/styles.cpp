@@ -246,7 +246,7 @@ void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks)  {
   if( toks.Count() < Level )  return;
   const size_t i = Styles.IndexOf(toks[Level]);
   if( i != InvalidIndex )  {
-    if( toks.Count() == Level+1 )  {
+    if( toks.Count() == size_t(Level+1) )  {
       delete Styles.GetObject(i);
       Styles.Delete(i);
     }

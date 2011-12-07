@@ -89,8 +89,8 @@ class TEMemoryInputStream : public IDataInputStream {
 public:
   TEMemoryInputStream(const void* data, size_t length) : 
     Data((unsigned char const*)data), 
-    Position(0),
-    Length(length)  {  }
+    Length(length),
+    Position(0) {}
   
   virtual inline uint64_t GetSize() const {  return Length;  }
   virtual inline uint64_t GetPosition() const {  return Position;  }

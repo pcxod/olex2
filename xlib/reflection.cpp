@@ -71,7 +71,7 @@ bool TReflection::IsAbsent(const vec3i& hkl, const SymmSpace::InfoEx& info)  {
       if( !(absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )  {
         for( size_t j=0; j < info.vertices.Count(); j++ )  {
           const double ps = (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
-          if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
+          if( (absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )
             return true;
         }
       }
@@ -81,7 +81,7 @@ bool TReflection::IsAbsent(const vec3i& hkl, const SymmSpace::InfoEx& info)  {
   if( !absent )  {  // check for Identity and centering
     for( size_t i=0; i < info.vertices.Count(); i++ )  {
       const double ps = info.vertices[i].DotProd(hkl);
-      if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
+      if( (absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )
         return true;
     }
   }
@@ -181,7 +181,7 @@ void TReflection::Analyse(const SymmSpace::InfoEx& info)  {
           for( size_t j=0; j < info.vertices.Count(); j++ )  {
             const double ps =
               (info.matrices[i].t+info.vertices[j]).DotProd(hkl);
-            if( absent = (olx_abs( ps - olx_round(ps) ) > 0.01) )
+            if( (absent = (olx_abs( ps - olx_round(ps) ) > 0.01)) )
               SetAbsent(true);
           }
         }

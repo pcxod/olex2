@@ -299,7 +299,7 @@ public:
   TGroupCAtom(TCAtom& a, const smatd& m)
     : Atom(&a), Matrix(m.IsFirst() ? NULL : &m)  {}
   TGroupCAtom(const olxstr& name, TCAtom* a, const smatd* m=NULL)
-    : Name(name), Atom(a), Matrix(m)  {}
+    : Atom(a), Matrix(m), Name(name)  {}
   TGroupCAtom(const TGroupCAtom& ga)
     : Atom(ga.Atom), Matrix(ga.Matrix), Name(ga.Name)  {}
   TGroupCAtom(const TDataItem& di, const RefinementModel& rm)  {
@@ -307,7 +307,9 @@ public:
   }
   DefPropP(TCAtom*, Atom)
   inline const smatd* GetMatrix() const {  return Matrix;  }
-  vec3d ccrd() const { return Matrix == NULL ? Atom->ccrd() : *Matrix*Atom->ccrd();  }
+  vec3d ccrd() const {
+    return Matrix == NULL ? Atom->ccrd() : *Matrix*Atom->ccrd();
+  }
   DefPropC(olxstr, Name)
   // if atom's Residue is default or residue number equals to ResiNumber - it it dropped
   olxstr GetFullLabel(const RefinementModel& rm, const int ResiNumber) const;

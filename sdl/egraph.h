@@ -101,7 +101,6 @@ public:
     for( size_t i=0; i < conn.Count(); i++ )  {
       const ConnInfo& ci = conn[i];
       const size_t perm_cnt = olx_factorial_t<size_t, size_t>(ci.GetA().Count());
-      const size_t repeat_n = total_perm/(perm_cnt*group_size);
       for( size_t j=1; j < perm_cnt; j++ )
         for( size_t k=0; k < group_size; k++ )
           for( size_t l=0; l < perm_size; l++ )

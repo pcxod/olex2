@@ -28,7 +28,7 @@ public:
              TCAtom& CA, const smatd& transform);
   void Create(const olxstr& cName=EmptyString());
 
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; }
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {  return true;  }
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {  return false;  }

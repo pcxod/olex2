@@ -19,8 +19,8 @@ BeginEsdlNamespace()
 */
 template <class T> class TQueue  {
   struct item  {
-    item* next;
     T data;
+    item* next;
     item(const T& v) : data(v), next(NULL)  {}
   };
   item *first, *last;

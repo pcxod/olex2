@@ -1138,7 +1138,7 @@ void TXAtom::CreatePolyhedron(bool v)  {
     return;
   }
 
-  TXAtom::Poly& pl = *(Polyhedron = new TXAtom::Poly);
+  Polyhedron = new TXAtom::Poly;
   vec3f sv;
   double sd = 0;
   for( size_t i=0; i < bound.Count(); i++ )  {

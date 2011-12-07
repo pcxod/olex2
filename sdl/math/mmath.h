@@ -86,8 +86,8 @@ namespace math  {
   };
 
   template <typename CT, typename FT> struct mat_mat  {
-    const size_t col_s, col_e, row_s, row_e, row_c, col_c;
     CT& m;
+    const size_t col_s, col_e, row_s, row_e, row_c, col_c;
     mat_mat(CT& _m, size_t rows, size_t rowe, size_t cols, size_t cole) :
       m(_m),
       col_s(cols), col_e(cole), row_s(rows), row_e(rowe),
@@ -403,9 +403,7 @@ namespace math  {
   struct LU  {
     template <typename MatT, typename IndexVecT>
     static void Decompose(MatT& m, IndexVecT& pivots)  {
-      const size_t
-        min_d = olx_min(m.RowCount(), m.ColCount()),
-        max_d = olx_max(m.RowCount(), m.ColCount());
+      const size_t min_d = olx_min(m.RowCount(), m.ColCount());
       for( size_t i=0; i < min_d; i++ )  {
         size_t pivot_index = i;
         for( size_t j=i+1; j < m.RowCount(); j++ )  {
@@ -458,9 +456,7 @@ namespace math  {
   template <typename FT> struct LQ  {
     template <typename MatT,typename VecT>
     static void Decompose(MatT& m, VecT& taus)  {
-      const size_t
-        min_d = olx_min(m.RowCount(), m.ColCount()),
-        max_d = olx_max(m.RowCount(), m.ColCount());
+      const size_t min_d = olx_min(m.RowCount(), m.ColCount());
       taus.Resize(min_d);
       TVector<FT> tmp(m.ColCount());
       Reflection<FT> ref(m.RowCount());
@@ -1201,7 +1197,8 @@ namespace math  {
             m.Assign(u, m.RowCount(), m.ColCount());
             tmp.Transpose();
             bool res;
-            if( res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, tmp, vt) )
+            if( (res = Bidiagonal<FT>::SVD::Decompose(
+              w, e, upper, false, zm, tmp, vt)) )
             {
               tmp = m*tmp.Transpose();
               u.Assign(tmp, tmp.RowCount(), tmp.ColCount(), false);
@@ -1250,7 +1247,8 @@ namespace math  {
           else  {
             TMatrix<FT> tmp;
             Bidiagonal<FT>::UnpackPT(mp, ptau, m.RowCount(), tmp);
-            if( res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, u, tmp) )
+            if( (res = Bidiagonal<FT>::SVD::Decompose(
+              w, e, upper, false, zm, u, tmp)) )
             {
               m.Assign(vt, m.RowCount(), m.ColCount());
               tmp = tmp * m;

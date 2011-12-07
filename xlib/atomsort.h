@@ -203,23 +203,25 @@ public:
     list.Pack();
     list.Insert(ins_pos, sorted);
   }
-  static void Sort(TCAtomPList& list, int (*sort_func)(const TCAtom*, const TCAtom*))  {
+  static void Sort(TCAtomPList& list,
+    int (*sort_func)(const TCAtom*, const TCAtom*))
+  {
     TCAtomPList::QuickSorter.SortSF(list, sort_func);
   }
   static void Sort(TCAtomPList& list, AtomSorter::CombiSort& cs)  {
-    TCAtomPList::QuickSorter.SortMF<AtomSorter::CombiSort>(list, cs, &AtomSorter::CombiSort::atom_cmp);
+    TCAtomPList::QuickSorter.SortMF<AtomSorter::CombiSort>(
+      list, cs, &AtomSorter::CombiSort::atom_cmp);
   }
 };
 
 class MoietySorter {
-  static int moiety_cmp_Mr(const AnAssociation3<int,double,TCAtomPList>* m1, 
-    const AnAssociation3<int,double,TCAtomPList>* m2) 
+  static int moiety_cmp_Mr(const AnAssociation3<size_t,double,TCAtomPList>* m1,
+    const AnAssociation3<size_t,double,TCAtomPList>* m2)
   {
-    const double diff = m2->GetB() - m1->GetB();
-    return diff < 0 ? -1 : ( diff > 0 ? 1 : 0);
+    return olx_cmp(m2->GetB(), m1->GetB());
   }
-  static int moiety_cmp_size(const AnAssociation2<int,TCAtomPList>* m1, 
-    const AnAssociation2<int,TCAtomPList>* m2) 
+  static int moiety_cmp_size(const AnAssociation2<size_t,TCAtomPList>* m1,
+    const AnAssociation2<size_t,TCAtomPList>* m2)
   {
     return olx_cmp(m2->GetB().Count(), m1->GetB().Count());
   }
@@ -244,7 +246,7 @@ public:
     if( moieties.IsEmpty() )
       return;
     for( size_t i=0; i < moieties.Count(); i++ )  {
-      const int moiety_id = moieties[i].GetA()->GetFragmentId();
+      const size_t moiety_id = moieties[i].GetA()->GetFragmentId();
       for( size_t j=0; j < list.Count(); j++ )  {
         if( moiety_id == list[j]->GetFragmentId() && list[j]->GetTag() == -1 )  {
           list[j]->SetTag(i);
@@ -267,7 +269,7 @@ public:
   // does not do the sorting - just organises atoms into moieties
   static void CreateMoieties(TCAtomPList& list)  {
     // dictionary will not do here - the moiety order will be destroyed...
-    typedef AnAssociation2<int, TCAtomPList> moiety;
+    typedef AnAssociation2<size_t, TCAtomPList> moiety;
     TTypeList<moiety> moieties;
     for( size_t i=0; i < list.Count(); i++ )  {
       TCAtomPList* ca_list = NULL;
@@ -289,7 +291,7 @@ public:
     }
   }
   static void SortByHeaviestElement(TCAtomPList& list)  {
-    typedef AnAssociation3<int, double, TCAtomPList> moiety;
+    typedef AnAssociation3<size_t, double, TCAtomPList> moiety;
     TTypeList<moiety> moieties;
     for( size_t i=0; i < list.Count(); i++ )  {
       TCAtomPList* ca_list = NULL;
@@ -301,8 +303,10 @@ public:
           break;
         }
       }
-      if( ca_list == NULL )
-        ca_list = &moieties.Add(new moiety(list[i]->GetFragmentId(), list[i]->GetType().GetMr())).C();
+      if( ca_list == NULL ) {
+        ca_list = &moieties.Add(
+          new moiety(list[i]->GetFragmentId(), list[i]->GetType().GetMr())).C();
+      }
       ca_list->Add(list[i]);
     }
     if( moieties.Count() < 2 )  return;
@@ -314,7 +318,7 @@ public:
     }
   }
   static void SortByWeight(TCAtomPList& list)  {
-    typedef AnAssociation3<int, double, TCAtomPList> moiety;
+    typedef AnAssociation3<size_t, double, TCAtomPList> moiety;
     TTypeList<moiety> moieties;
     for( size_t i=0; i < list.Count(); i++ )  {
       TCAtomPList* ca_list = NULL;
@@ -338,7 +342,7 @@ public:
     }
   }
   static void SortBySize(TCAtomPList& list)  {
-    typedef AnAssociation2<int, TCAtomPList> moiety;
+    typedef AnAssociation2<size_t, TCAtomPList> moiety;
     TTypeList<moiety> moieties;
     for( size_t i=0; i < list.Count(); i++ )  {
       TCAtomPList* ca_list = NULL;

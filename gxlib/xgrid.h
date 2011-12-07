@@ -203,6 +203,7 @@ public:
     TPointerComparator> &materials) const;
 protected:
   struct TPlaneCalculationTask  {
+    TXGrid& parent;
     float **data, ***src_data;
     char *text_data;
     const mat3f &proj_m, &c2c;
@@ -210,24 +211,26 @@ protected:
     const vec3s& dim;
     float minVal, maxVal, size, depth, hh;
     size_t max_dim;
-    short mode;
     bool init_data, init_text;
-    TXGrid& parent;
+    short mode;
     MapUtil::MapGetter<float,2> map_getter;
     void Run(size_t index);
-    TPlaneCalculationTask(TXGrid& _parent, float*** _src_data, float** _data, char* _text_data, size_t _max_dim, float _size,
-      float _depth, const mat3f& _proj_m, const mat3f& _c2c, const vec3f& _center, const vec3s& _dim, short _mode) :
+    TPlaneCalculationTask(TXGrid& _parent, float*** _src_data, float** _data,
+      char* _text_data, size_t _max_dim, float _size,
+      float _depth, const mat3f& _proj_m, const mat3f& _c2c,
+      const vec3f& _center, const vec3s& _dim, short _mode) :
         parent(_parent),
-        src_data(_src_data), data(_data), text_data(_text_data), max_dim(_max_dim), size(_size), depth(_depth),
-        proj_m(_proj_m), c2c(_c2c), center(_center), dim(_dim), minVal(1000), maxVal(-1000),
+        data(_data), src_data(_src_data), text_data(_text_data),
+        proj_m(_proj_m), c2c(_c2c), center(_center), dim(_dim),
+        minVal(1000), maxVal(-1000),
+        size(_size), depth(_depth), hh((float)_max_dim/2), max_dim(_max_dim),
         init_data((_mode&planeRenderModeContour) != 0),
         init_text((_mode&planeRenderModePlane) != 0),
         mode(_mode),
-        hh((float)_max_dim/2),
         map_getter(src_data, dim) {}
     TPlaneCalculationTask* Replicate() const {
-      return new TPlaneCalculationTask(parent, src_data, data, text_data, max_dim, size,
-        depth, proj_m, c2c, center, dim, mode);
+      return new TPlaneCalculationTask(parent, src_data, data, text_data,
+        max_dim, size, depth, proj_m, c2c, center, dim, mode);
     }
   };
 };

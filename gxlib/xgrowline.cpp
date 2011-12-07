@@ -15,9 +15,9 @@
 TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TXAtom& A,
   TCAtom& CA, const smatd& transform) :
   TXBond(NULL, r, collectionName),
-    Transform(transform),
-    _XAtom(A),
-    _CAtom(CA)
+  _XAtom(A),
+  _CAtom(CA),
+  Transform(transform)
 {
   AGDrawObject::SetSelectable(false);
   FEdge = transform * CA.ccrd();

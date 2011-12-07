@@ -22,9 +22,11 @@ namespace exparse  {
 
   template <class T, class OT> struct val_wrapper  {
     T* val;
-    mutable OT* origin;
     mutable bool do_delete;
-    val_wrapper(const val_wrapper& v) : val(v.val), do_delete(v.do_delete), origin(v.origin)  {
+    mutable OT* origin;
+    val_wrapper(const val_wrapper& v) : val(v.val), do_delete(v.do_delete),
+      origin(v.origin)
+    {
       v.origin = NULL;
       v.do_delete = false;
     }  
@@ -34,7 +36,8 @@ namespace exparse  {
       origin->inc_ref();
       v.do_delete = false;
     }  
-    val_wrapper(const cast_result& cr) : val((T*)cr.value), do_delete(cr.temporary), origin(NULL)  {}
+    val_wrapper(const cast_result& cr)
+      : val((T*)cr.value), do_delete(cr.temporary), origin(NULL)  {}
     ~val_wrapper()  {  
       if( do_delete )
         delete val;  
@@ -48,17 +51,20 @@ namespace exparse  {
     T* val;
     mutable OT* origin;
     mutable bool do_delete;
-    val_wrapper(const val_wrapper& v) : val(v.val), do_delete(v.do_delete), origin(v.origin)  {
+    val_wrapper(const val_wrapper& v)
+      : val(v.val), origin(v.origin), do_delete(v.do_delete)
+    {
       v.origin = NULL;
       v.do_delete = false;
     }  
     val_wrapper(const val_wrapper& v, OT* _origin) : val(v.val),
-      do_delete(v.do_delete), origin(_origin)
+      origin(_origin), do_delete(v.do_delete)
     {
       origin->inc_ref();
       v.do_delete = false;
     }  
-    val_wrapper(const cast_result& cr) : val((T*)cr.value), do_delete(cr.temporary), origin(NULL)  {}
+    val_wrapper(const cast_result& cr)
+      : val((T*)cr.value), origin(NULL), do_delete(cr.temporary)  {}
     ~val_wrapper()  {  
       if( do_delete )
         delete val;  
@@ -67,7 +73,7 @@ namespace exparse  {
     }
     operator const T& ()  {  return *val;  }
   };
-};  // end namespace exparse
+}  // end namespace exparse
 
 EndEsdlNamespace()
 #endif

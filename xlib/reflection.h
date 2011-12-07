@@ -283,16 +283,16 @@ public:
   }
 //..............................................................................
   template <class Ref> static double GetF(const Ref& _r) {
-    const TReflection& r = olx_get_ref(_r);
+    const TReflection& r = olx_ref::get(_r);
     return r.GetI() <= 0 ? 0 : sqrt(r.GetI());
   }
   static double GetF(const double& _f) {  return _f;  }
   template <class Ref> static double GetFsq(const Ref& _r) {
-    return olx_get_ref(_r).GetI();
+    return olx_ref::get(_r).GetI();
   }
   static double GetFsq(const double& _fsq) {  return _fsq;  }
   template <class Ref> static const vec3i& GetHkl(const Ref& _r) {
-    return olx_get_ref(_r).GetHkl();
+    return olx_ref::get(_r).GetHkl();
   }
   static const vec3i& GetHkl(const vec3i& _hkl) {  return _hkl;  }
   static vec3i& GetHkl(vec3i& _hkl) {  return _hkl;  }

@@ -45,8 +45,8 @@ struct adirection : public AReferencible {
 #endif
   static const olxstr& GetName();
   static const olxstr &EncodeType(uint16_t type);
-  static uint16_t DecodeType(const olxstr& type);
-  void UpdateParams(const TStrList& toks) {}
+  static uint16_t DecodeType(const olxstr &type);
+  void UpdateParams(const TStrList &) {}
 };
 
 struct static_direction : public adirection {
@@ -56,7 +56,7 @@ struct static_direction : public adirection {
     : adirection(id), value(_value) {}
   virtual vec3d get() const {  return value;  }
   virtual bool IsValid() const {  return true;  }
-  virtual adirection* DoCopy(RefinementModel& rm) const {
+  virtual adirection* DoCopy(RefinementModel &) const {
     return new static_direction(id, value);
   }
   virtual adirection* CreateFromDataItem(const TDataItem& di,

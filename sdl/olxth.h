@@ -13,6 +13,7 @@
 #include "os_util.h"
 #include "actions.h"
 #include "egc.h"
+#undef Yield
 BeginEsdlNamespace()
 
 // converts function (taking no arguents) to a thread - ready function
@@ -67,11 +68,11 @@ protected:  // do not allow to create externally
   TActionQList Actions;
   //..................................................................................................
   AOlxThread() : 
-    Detached(true), 
+    RetVal(0),
     Terminate(false),
+    Detached(true),
     Running(false),
     Handle(0), 
-    RetVal(0),
     OnTerminate(Actions.New("ON_TERMINATE")) {}
   //..................................................................................................
   /* thread can do some extras here, as it will be called from SendTerminate 

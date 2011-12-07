@@ -38,8 +38,10 @@ public:
   }
 
 
-  template <typename FloatT, class Task> static MapInfo Calculate(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, const vec3s& dim, double vol)  {
+  template <typename FloatT, class Task> static MapInfo Calculate(
+    const TArrayList<SFUtil::StructureFactor>& F,
+    FloatT*** map, const vec3s& dim, double vol)
+  {
     vec3i mini, maxi;
     SFUtil::FindMinMax(F, mini, maxi); 
     const double T_PI = 2*M_PI;
@@ -47,7 +49,6 @@ public:
     const int minInd = olx_min(mini[2], olx_min(mini[0], mini[1]));
     const int maxInd = olx_max(maxi[2], olx_max(maxi[0], maxi[1]));
     const size_t iLen = maxInd - minInd + 1;
-    const size_t mapMax = olx_max(dim[2], olx_max(dim[0], dim[1]));
     compd** sin_cosX = new compd*[dim[0]],
       **sin_cosY, **sin_cosZ;
     for( size_t i=0; i < dim[0]; i++ )  {
@@ -133,21 +134,21 @@ public:
     FloatT*** map;
     const SFList& F;
     const vec3s& dim;
-    size_t kLen, lLen;
     compd  **sin_cosX, **sin_cosY, **sin_cosZ;
     compd ** S, *T;
     const vec3i &mini, &maxi;
+    size_t kLen, lLen;
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
     TCalcEDMTask(FloatT*** _map, const vec3s& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
       compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
-      map(_map), dim(_dim), vol(_volume),
-      F(_F), mini(_min), maxi(_max),
+      map(_map), F(_F), dim(_dim),
       sin_cosX(_scX), sin_cosY(_scY), sin_cosZ(_scZ),
+      mini(_min), maxi(_max),
       kLen(_max[1]-_min[1]+1), lLen(_max[2]-_min[2]+1), minInd(_minInd),
-      sum(0), sq_sum(0), maxVal(-1000), minVal(1000)
+      sum(0), sq_sum(0), vol(_volume), maxVal(-1000), minVal(1000)
     {
       S = new compd*[kLen];
       for( size_t i=0; i < kLen; i++ )

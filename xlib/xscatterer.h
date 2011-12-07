@@ -29,9 +29,12 @@ class XScatterer {
   short set_items;
 public:
   // creates a dummy scatterer
-  XScatterer(const olxstr& lbl) : Label(lbl), mu(0), r(0), wt(0), source(NULL), set_items(0)  {}
+  XScatterer(const olxstr& lbl)
+    : mu(0), wt(0), r(0), source(NULL), Label(lbl), set_items(0)  {}
   // creates scatterer from the library
-  XScatterer(const cm_Element& src, double energy) : mu(0), set_items(0)  {  
+  XScatterer(const cm_Element& src, double energy)
+    : mu(0), set_items(0)
+  {
     SetSource(src, energy);
   }
   // searches for the scatterer in the library and initialises data. If scatterer no found, throws exception
@@ -47,9 +50,9 @@ public:
     mu(sc.mu),
     wt(sc.wt),
     r(sc.r),
-    Label(sc.Label),
-    source(sc.source),
     fpfdp(sc.fpfdp),
+    source(sc.source),
+    Label(sc.Label),
     set_items(sc.set_items)  {}
   // initialises data from the provided library element
   void SetSource(const cm_Element& src, double energy)  {

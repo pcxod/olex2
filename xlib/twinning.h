@@ -142,8 +142,8 @@ namespace twinning  {
   };
 
   template <typename twin_iterator> struct obs_twin_mate_generator {
-    const TRefList& refs;
     const twin_iterator& itr;
+    const TRefList& refs;
     obs_twin_mate_generator(const twin_iterator& _itr, const TRefList& _refs)
       : itr(_itr), refs(_refs)  {}
     bool HasNext() const {  return itr.HasNext();  }
@@ -173,8 +173,8 @@ namespace twinning  {
       iterator(const merohedral& _parent, size_t _src_index)
         : parent(_parent),
           src_index(_src_index),
-          index(parent.all_refs[src_index].GetHkl()),
-          current(0) {}
+          current(0),
+          index(parent.all_refs[src_index].GetHkl()) {}
       bool HasNext() const {  return current < olx_abs(parent.n);  }
       bool HasNextUniq() const {
         return current == 0 || 
@@ -262,7 +262,7 @@ namespace twinning  {
       mutable size_t current, current_mero;
       const size_t off;
       iterator(const general& _parent, size_t start)
-        : parent(_parent), off(start), current(0), current_mero(0)  {}
+        : parent(_parent), current(0), current_mero(0), off(start)  {}
       bool HasNext() const {
         return (current == 0 ||
           ((off-current) != InvalidIndex &&
@@ -360,9 +360,9 @@ namespace twinning  {
         double pbs = 1-olx_sum(scales, 0, parts),
           tbs = 1-olx_sum(scales, parts);
         TDoubleList scs((parts+1)*(mero_matrices.Count()+1));
-        for( int i=0; i <= mero_matrices.Count(); i++) {
+        for( size_t i=0; i <= mero_matrices.Count(); i++) {
           double s = (i == 0) ? tbs : scales[parts+i-1];
-          for (size_t j=0; j <= parts; j++) {
+          for (int j=0; j <= parts; j++) {
             scs[i*(parts+1)+j] = (j == 0 ? pbs : scales[j-1])*s;
           }
         }

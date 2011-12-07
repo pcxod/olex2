@@ -304,7 +304,7 @@ namespace olx_mat  {
 
 template <typename float_type>
   static void olx_sincos(const float_type ang, float_type *sina, float_type *cosa)  {
-#if defined(__WIN32__) && !defined(_WIN64)
+#if defined(__WIN32__) && !defined(_WIN64) && !defined(__GNUC__)
   _asm  {
     FLD  ang
     FSINCOS

@@ -181,7 +181,9 @@ size_t ListIAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue& _r
 //...................................................................................................
 //...................................................................................................
 //...................................................................................................
-AtomRefList::AtomRefList(RefinementModel& _rm, const olxstr& exp, const olxstr& resi) : rm(_rm), residue(resi)  {
+AtomRefList::AtomRefList(RefinementModel& _rm, const olxstr& exp,
+  const olxstr& resi) : rm(_rm), residue(resi)
+{
   Valid = true;
   ContainsImplicitAtoms = false;
   TStrList toks(exp, ' ');

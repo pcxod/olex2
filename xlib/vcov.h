@@ -103,11 +103,13 @@ public:
 };
 
 class VcoVContainer {
-  VcoVMatrix vcov;
-  evecd cell, celle;  // celle can be extended to matrix once covariances are available
   TAsymmUnit& au;
+  VcoVMatrix vcov;
+  // celle can be extended to matrix once covariances are available
+  evecd cell, celle;
 public:
-  template <class atom_list> void ProcessSymmetry(const atom_list& atoms, mat3d_list& ms)  {
+  template <class atom_list>
+  void ProcessSymmetry(const atom_list& atoms, mat3d_list& ms)  {
     mat3d_alist mt(atoms.Count());
     for( size_t i=0; i < atoms.Count(); i++ )
       mt[i] = mat3d::Transpose(atoms[i]->GetMatrix(0).r);
@@ -237,7 +239,8 @@ protected:
   struct AlignmentRMSD  {
     const vec3d_alist& points;
     const TDoubleList& weights;
-    AlignmentRMSD(const vec3d_alist& pts, const TDoubleList& wghts) : points(pts), weights(wghts)  {}
+    AlignmentRMSD(const vec3d_alist& pts, const TDoubleList& wghts)
+      : points(pts), weights(wghts)  {}
     double calc() const {
       align::ListsToPairAdaptor<vec3d_alist, TDoubleList> l2p(points, weights);
       align::out ao = align::FindAlignmentQuaternions(l2p);
@@ -248,7 +251,8 @@ protected:
   template <class planeT, class pointT> struct PlaneToPointDistance  {
     const planeT& plane;
     const pointT& point;
-    PlaneToPointDistance(const planeT& _plane, const pointT& _point) : plane(_plane), point(_point)  {}
+    PlaneToPointDistance(const planeT& _plane, const pointT& _point)
+      : plane(_plane), point(_point)  {}
     double calc() const {
       const PlaneInfo pi = plane.evaluate();
       return point.evaluate().DotProd(pi.normal) - pi.d;
@@ -303,7 +307,8 @@ protected:
     bT b;
     cT c;
     dT d;
-    TorsionAngle(const aT& _a, const bT& _b, const cT& _c, const dT& _d) : a(_a), b(_b), c(_c), d(_d)  {}
+    TorsionAngle(const aT& _a, const bT& _b, const cT& _c, const dT& _d)
+      : a(_a), b(_b), c(_c), d(_d)  {}
     double calc() const {
       return olx_dihedral_angle(a.evaluate(), b.evaluate(), c.evaluate(), d.evaluate());
       //return olx_dihedral_angle_signed(a.evaluate(), b.evaluate(), c.evaluate(), d.evaluate());
@@ -318,7 +323,8 @@ protected:
     bT b;
     cT c;
     dT d;
-    TetrahedronVolume(const aT& _a, const bT& _b, const cT& _c, const dT& _d) : a(_a), b(_b), c(_c), d(_d)  {}
+    TetrahedronVolume(const aT& _a, const bT& _b, const cT& _c, const dT& _d)
+      : a(_a), b(_b), c(_c), d(_d)  {}
     double calc() const {
       return olx_tetrahedron_volume(a.evaluate(), b.evaluate(), c.evaluate(), d.evaluate());
     }
@@ -361,7 +367,9 @@ protected:
     const vec3d_alist& points;
     vec3d_alist pl;
     TDoubleList weights;
-    OctahedralDistortionBL(const vec3d_alist& _points) : points(_points), pl(3), weights(3)  {
+    OctahedralDistortionBL(const vec3d_alist& _points)
+      : points(_points), pl(3), weights(3)
+    {
       for( size_t i=0; i < weights.Count(); i++ )
         weights[i] = 1.0;
     }
@@ -388,7 +396,9 @@ protected:
     const vec3d_alist& points;
     vec3d_alist pl;
     TDoubleList weights;
-    OctahedralDistortionBP(const vec3d_alist& _points) : points(_points), pl(6), weights(6)  {
+    OctahedralDistortionBP(const vec3d_alist& _points)
+      : points(_points), pl(6), weights(6)
+    {
       for( size_t i=0; i < weights.Count(); i++ )
         weights[i] = 1.0;
     }
@@ -412,7 +422,8 @@ protected:
     }
   };
   // helper functions
-  template <class VC> double CalcEsd(const size_t sz, const mat3d_list& m, const VC& df)  {
+  template <class VC>
+  double CalcEsd(const size_t sz, const mat3d_list& m, const VC& df)  {
     double esd = 0;
     for( size_t i=0; i < sz; i++ )  {
       for( size_t j=0; j < sz; j++ )  {
@@ -450,9 +461,9 @@ protected:
     }
   }
   struct CalcHelper  {
-    mat3d_list m;
-    vec3d_alist points;
     VcoVContainer& base;
+    vec3d_alist points;
+    mat3d_list m;
     template <class list> CalcHelper(VcoVContainer& _base, const list& atoms) :
       base(_base), points(atoms.Count())
     {
@@ -464,10 +475,10 @@ protected:
     }
   };
   struct CalcWHelper  {
-    mat3d_list m;
+    VcoVContainer& base;
     vec3d_alist points;
     TDoubleList weights;
-    VcoVContainer& base;
+    mat3d_list m;
     template <class list> CalcWHelper(VcoVContainer& _base, const list& atms) :
       base(_base), points(atms.Count()), weights(atms.Count())
     {
@@ -481,7 +492,9 @@ protected:
     }
   };
   template <class list, typename eval> 
-  TEValue<double> DoCalcForPoints(list& points, const mat3d_list& vcov, const eval& e)  {
+  TEValue<double> DoCalcForPoints(list& points, const mat3d_list& vcov,
+    const eval& e)
+  {
     TDoubleList df(points.Count()*3);
     CompositeVector<list, double> pvec(points);
     CalcDiff(pvec, df, e);

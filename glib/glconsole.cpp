@@ -19,7 +19,24 @@
 #include "integration.h"
 #include "bapp.h"
 // keyboard constanst, silly to include here, but...
-#include "wx/defs.h"
+
+// stolen from wxWidgets
+enum wxKeyCode {
+    WXK_BACK    =    8,
+    WXK_TAB     =    9,
+    WXK_RETURN  =    13,
+    WXK_ESCAPE  =    27,
+    WXK_SPACE   =    32,
+    WXK_DELETE  =    127,
+    WXK_END = 312,
+    WXK_HOME = 313,
+    WXK_LEFT = 314,
+    WXK_UP = 315,
+    WXK_RIGHT = 316,
+    WXK_DOWN = 317,
+    WXK_PAGEUP = 366,
+    WXK_PAGEDOWN = 367
+};
 
 /* There is a slight problem with cursor - depending on object properties it might
   be drawn before the console, and then its position is validated after it is drawn
@@ -28,10 +45,10 @@
 
 TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName),
-  OnCommand(Actions.New("ONCOMMAND")),
-  OnPost(Actions.New("ONPOST")),
+  LinesVisible(~0),
   FontIndex(~0),
-  LinesVisible(~0)
+  OnCommand(Actions.New("ONCOMMAND")),
+  OnPost(Actions.New("ONPOST"))
 {
   PrintMaterial = NULL;
   FLineSpacing = 0;
@@ -281,7 +298,9 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( Key == WXK_PAGEUP || Key == WXK_PAGEDOWN && olx_is_valid_index(LinesVisible) )  {
+  if( (Key == WXK_PAGEUP || Key == WXK_PAGEDOWN) &&
+      olx_is_valid_index(LinesVisible) )
+  {
     if( Key == WXK_PAGEDOWN )  {
       const size_t lines = CalcScrollDown();
       FTxtPos += lines-1;

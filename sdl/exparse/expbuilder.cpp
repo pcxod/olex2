@@ -13,10 +13,14 @@ using namespace esdl::exparse;
 
 ClassInfo<StringValue,olxstr> StringValue::info;
 
-//......................................................................................................
+//..............................................................................
 bool exp_builder::needs_sorting(expression_tree* root)  {
-  if( BuiltInsFactory::is_cmp(root->data) || BuiltInsFactory::is_arithmetic(root->data) )  {
-    if( root->right != NULL && BuiltInsFactory::is_logical(root->right->data) )  {
+  if( BuiltInsFactory::is_cmp(root->data) ||
+      BuiltInsFactory::is_arithmetic(root->data) )
+  {
+    if( root->right != NULL &&
+        BuiltInsFactory::is_logical(root->right->data) )
+    {
       if( root->right->left == NULL )  // +/- number
         return false;
       return !root->right->priority;
@@ -34,10 +38,12 @@ bool exp_builder::needs_sorting(expression_tree* root)  {
   }
   return false;
 }
-//......................................................................................................
+//..............................................................................
 expression_tree* exp_builder::sort_logical(expression_tree* root)  {
   // need to test that it is not just -number... root->right->left does it?
-  if( root->parent == NULL && root->left == NULL && root->right != NULL && root->right->left != NULL )  {
+  if( root->parent == NULL && root->left == NULL && root->right != NULL &&
+      root->right->left != NULL )
+  {
     expression_tree* top = root->right;
     root->right = top->left;
     top->parent = root->parent;
@@ -74,16 +80,20 @@ expression_tree* exp_builder::sort_logical(expression_tree* root)  {
   }
   return root;
 }
-//......................................................................................................
-IEvaluable* exp_builder::process_const_func(IEvaluable* func, IEvaluable* left, IEvaluable* right)  {
+//..............................................................................
+IEvaluable* exp_builder::process_const_func(IEvaluable* func, IEvaluable* left,
+  IEvaluable* right)
+{
   if( (dynamic_cast<BuiltInsFactory::IConstFunc*>(func) != NULL || 
     dynamic_cast<BuiltInsFactory::IConstFunc2*>(func) != NULL) )
   {
-    ANumberEvaluator* left_na = (left == NULL ? NULL : dynamic_cast<ANumberEvaluator*>(left));
-    ANumberEvaluator* right_na = (right == NULL ? NULL : dynamic_cast<ANumberEvaluator*>(right));
-    if( left == NULL ||
-      (left_na != NULL && left_na->is_final()) &&
-      (right == NULL || (right_na != NULL && right_na->is_final())) )  
+    ANumberEvaluator* left_na = (left == NULL ? NULL
+      : dynamic_cast<ANumberEvaluator*>(left));
+    ANumberEvaluator* right_na = (right == NULL ? NULL
+      : dynamic_cast<ANumberEvaluator*>(right));
+    if( (left == NULL) ||
+      ((left_na != NULL && left_na->is_final()) &&
+      ((right == NULL) || (right_na != NULL && right_na->is_final()))) )
     {
       IEvaluable* ce = func->_evaluate();
       delete func;
@@ -92,8 +102,10 @@ IEvaluable* exp_builder::process_const_func(IEvaluable* func, IEvaluable* left, 
   }
   return func;
 }
-//......................................................................................................
-IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root, IEvaluable* left)  {
+//..............................................................................
+IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root,
+  IEvaluable* left)
+{
   TPtrList<IEvaluable> args;
   bool all_const = true;
   for( size_t i=0; i < root->evator->args.Count(); i++ )  {
@@ -101,7 +113,8 @@ IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root, IEvaluable
     if( args.GetLast() == NULL )  {
       for( size_t j=0; j < args.Count()-2; j++ )
         delete args[j];
-      throw TInvalidArgumentException(__OlxSourceInfo, "could not find appropriate evluable");
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "could not find appropriate evluable");
     }
     ANumberEvaluator* ne = dynamic_cast<ANumberEvaluator*>(args.GetLast());
     if( ne == NULL || !ne->is_final() )
@@ -118,15 +131,19 @@ IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root, IEvaluable
     if( rv == NULL )
       rv = scope.functions.create_from_name(factory, root->evator->name, args);
   }
-  if( rv == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("undefined function: ") << root->evator->name);
+  if( rv == NULL ) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("undefined function: ") << root->evator->name);
+  }
     // need to test if the function result cannot be changed
   if( all_const )
     return process_const_func(rv, NULL);
   return rv;
 }
-//......................................................................................................
-IEvaluable* exp_builder::locate_function(const olxstr& name, IEvaluable* left, IEvaluable* right)  {
+//..............................................................................
+IEvaluable* exp_builder::locate_function(const olxstr& name, IEvaluable* left,
+    IEvaluable* right)
+{
   TPtrList<IEvaluable> args;
   args.Add(left);
   if( right != NULL )  args.Add(right);
@@ -138,12 +155,15 @@ IEvaluable* exp_builder::locate_function(const olxstr& name, IEvaluable* left, I
   if( rv == NULL )  {
     if( left != NULL )  delete left;
     if( right != NULL )  delete right;
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not create specified evaluator: ") << name);
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("could not create specified evaluator: ") << name);
   }
   return rv;
 }
-//......................................................................................................
-IEvaluable* exp_builder::create_evaluator(expression_tree* root, bool finaliseAssignment)  {
+//..............................................................................
+IEvaluable* exp_builder::create_evaluator(expression_tree* root,
+  bool finaliseAssignment)
+{
   if( root->data == '.' )  {
     IEvaluable* left = NULL, *rv=NULL;
     if( root->left == NULL || (left=create_evaluator(root->left)) == NULL )
@@ -169,8 +189,10 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root, bool finaliseAs
     return rv;
   }
   if( root->data == '=' )  {  // assignment
-    if( root->right == NULL || root->left == NULL || root->evator != NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "invalid assignment operator");
+    if( root->right == NULL || root->left == NULL || root->evator != NULL ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "invalid assignment operator");
+    }
     IEvaluable* val = create_evaluator(root->right);
     if ( !val->is_final() && finaliseAssignment )  {
       IEvaluable* res = val->_evaluate();
@@ -195,7 +217,8 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root, bool finaliseAs
     catch(const TExceptionBase& exc)  {
       if( left != NULL )  delete left;
       if( right != NULL )  delete right;
-      throw TFunctionFailedException(__OlxSourceInfo, exc, "could not find appropriate evlauable");
+      throw TFunctionFailedException(__OlxSourceInfo, exc,
+        "could not find appropriate evlauable");
     }
     if( left == NULL && right != NULL )  {
       left = right;
@@ -216,7 +239,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root, bool finaliseAs
       else  {
         // check if a string
         if( (root->data.StartsFrom('\'') && root->data.EndsWith('\'')) ||
-            root->data.StartsFrom('\"') && root->data.EndsWith('\"') )  
+            (root->data.StartsFrom('\"') && root->data.EndsWith('\"')) )
         {
           return new StringValue(root->data.Trim(root->data.CharAt(0)));
         }
@@ -224,11 +247,13 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root, bool finaliseAs
         if( rv != NULL )
           return rv;
         rv = scope.find_var(root->data);
-        if( rv == NULL )
-          throw TFunctionFailedException(__OlxSourceInfo, olxstr("undefined variable: ") << root->data);
+        if( rv == NULL ) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            olxstr("undefined variable: ") << root->data);
+        }
         return rv;
       }
     }
   }
 }
-//......................................................................................................
+//..............................................................................

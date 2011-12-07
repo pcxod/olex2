@@ -97,11 +97,12 @@ public:
 struct XObjectProvider : public ASObjectProvider {
   TGlRenderer& renderer;
   XObjectProvider(TGlRenderer& _renderer) :
-    renderer(_renderer),
     ASObjectProvider(
       *(new TXObjectProvider<TSAtom,TXAtom>(_renderer)),
       *(new TXObjectProvider<TSBond,TXBond>(_renderer)),
-      *(new TXObjectProvider<TSPlane,TXPlane>(_renderer))) {}
+      *(new TXObjectProvider<TSPlane,TXPlane>(_renderer))),
+    renderer(_renderer)
+  {}
   ~XObjectProvider()  {
     atoms.Clear();
     bonds.Clear();

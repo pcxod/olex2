@@ -115,7 +115,6 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   bool picture = Options.Contains("p");
   if( binsCnt <= 0 ) binsCnt = 10;
 
-  double dsR = maxds-minds;
   if( ! picture )  {  /// use spherical bins
     double Vtot = olx_sphere_volume(sqrt(maxds)), Vstep = Vtot/binsCnt, 
       Vstart = olx_sphere_volume(sqrt(minds)),
