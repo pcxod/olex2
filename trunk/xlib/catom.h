@@ -43,7 +43,8 @@ const short
   catom_flag_HAttached  = 0x0004,
   catom_flag_Saved      = 0x0008,
   catom_flag_Masked     = 0x0010,
-  catom_flag_Detached   = 0x0020;
+  catom_flag_Detached   = 0x0020,
+  catom_flag_Processed  = 0x0040; // generic flag
 
 class TEllipsoid;
 class TAfixGroup;
@@ -68,11 +69,14 @@ public:
   };
 private:
   class TAsymmUnit* Parent;
-  //TBasicAtomInfo* FAtomInfo;    // a pointer to TBasisAtomInfo object
   const cm_Element* Type;
   olxstr Label;    // atom's label
-  size_t Id, EllpId;  // c_atoms id; this is also used to identify if TSAtoms are the same
-  uint32_t FragmentId, // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
+  // Id is also used to identify if TSAtoms are the same
+  size_t Id, EllpId;  
+  /* this is used in asymmetric unit sort and initialised in
+  TLatice::InitBody()
+  */
+  uint32_t FragmentId,
     ResiId;
   uint16_t SameId, Flags;
   int8_t Part;
@@ -82,7 +86,10 @@ private:
     Uiso,  // isotropic thermal parameter
     UisoEsd,
     QPeak,  // if atom is a peak atom - this is not 0
-    UisoScale;  // for proxied Uiso (depending on the UisoOwner, this defines the scaled value
+    /* for proxied Uiso (depending on the UisoOwner, this defines the scaled
+    value
+    */
+    UisoScale;
   TCAtom* UisoOwner;  // the Uiso owner, if any
   vec3d Center, Esd;  // fractional coordinates and esds
   TTypeList<TCAtom::Site> AttachedSites, AttachedSitesI;
@@ -94,7 +101,7 @@ private:
   XVarReference* Vars[12]; //x,y,z,occu,uiso,U
   static olxstr VarNames[];
   CXConnInfo* ConnInfo;
-  inline void SetId(size_t id)  {  Id = id;  }
+  void SetId(size_t id)  {  Id = id;  }
   int SortSitesByDistanceAsc(const Site* s1, const Site* s2) const;
   int SortSitesByDistanceDsc(const Site* s1, const Site* s2) const {
     return -SortSitesByDistanceAsc(s1, s2);
@@ -102,31 +109,41 @@ private:
 public:
   TCAtom(TAsymmUnit* Parent);
   virtual ~TCAtom();
-  inline TAsymmUnit* GetParent() const {  return Parent; }
-  //inline TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
+  TAsymmUnit* GetParent() const {  return Parent; }
+  //TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
   //void SetAtomInfo(TBasicAtomInfo& A);
   const cm_Element& GetType() const {  return *Type; }
   void SetType(const cm_Element& A);
 
-  /* function validates and changes the atom type. If validate is true, the atom type is guessed
-  from the label and changed. If validate is false, the label is set without changing the atom type */
+  /* function validates and changes the atom type. If validate is true, the
+  atom type is guessed from the label and changed. If validate is false, the
+  label is set without changing the atom type
+  */
   void SetLabel(const olxstr& L, bool validate=true);
   
   // returns atom label
   const olxstr& GetLabel() const {  return Label;  }
-  // if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and the Residue number
+  /* if ResiId == -1 works the same as GetLabel(), otherwise appends '_' and
+  the Residue number
+  */
   olxstr GetResiLabel() const;
 
-  inline size_t AttachedSiteCount() const {  return AttachedSites.Count();  }
+  size_t AttachedSiteCount() const {  return AttachedSites.Count();  }
   bool IsAttachedTo(const TCAtom& ca) const {
     for( size_t i=0; i < AttachedSites.Count(); i++ )
       if( AttachedSites[i].atom == &ca )
         return true;
     return false;
   }
-  inline TCAtom::Site& GetAttachedSite(size_t i) const {  return AttachedSites.GetItem(i);  }
-  inline TCAtom& GetAttachedAtom(size_t i) const {  return *AttachedSites[i].atom;  }
-  // will add only a unique set {atom, matrix}, returns true if the set is unique
+  TCAtom::Site& GetAttachedSite(size_t i) const {
+    return AttachedSites.GetItem(i);
+  }
+  TCAtom& GetAttachedAtom(size_t i) const {
+    return *AttachedSites[i].atom;
+  }
+  /* will add only a unique set {atom, matrix}, returns true if the set is
+  unique
+  */
   bool AttachSite(TCAtom* atom, const smatd& matrix);
   void ClearAttachedSites()  {
     AttachedSites.Clear();
@@ -135,20 +152,26 @@ public:
   // aplies conninfo to the list of attached sites
   void UpdateAttachedSites();
 
-  inline size_t AttachedSiteICount() const {  return AttachedSitesI.Count();  }
-  inline TCAtom::Site& GetAttachedSiteI(size_t i) const {  return AttachedSitesI[i];  }
-  inline TCAtom& GetAttachedAtomI(size_t i) const {  return *AttachedSitesI[i].atom;  }
-  // will only add a unique set of {atom, matrix}, returns true if the set is unique
+  size_t AttachedSiteICount() const {  return AttachedSitesI.Count();  }
+  TCAtom::Site& GetAttachedSiteI(size_t i) const {
+    return AttachedSitesI[i];
+  }
+  TCAtom& GetAttachedAtomI(size_t i) const {
+    return *AttachedSitesI[i].atom;
+  }
+  /* will only add a unique set of {atom, matrix}, returns true if the set is
+  unique
+  */
   bool AttachSiteI(TCAtom* atom, const smatd& matrix);
   // pointers only compared!
-  inline bool operator == (const TCAtom& ca) const {  return this == &ca;  }
-  inline bool operator == (const TCAtom* ca) const {  return this == ca;  }
-  inline bool operator != (const TCAtom& ca) const {  return this != &ca;  }
-  inline bool operator != (const TCAtom* ca) const {  return this != ca;  }
+  bool operator == (const TCAtom& ca) const {  return this == &ca;  }
+  bool operator == (const TCAtom* ca) const {  return this == ca;  }
+  bool operator != (const TCAtom& ca) const {  return this != &ca;  }
+  bool operator != (const TCAtom* ca) const {  return this != ca;  }
 
   void  Assign(const TCAtom& S);
 
-  inline size_t GetId() const {  return Id;  }
+  size_t GetId() const {  return Id;  }
   DefPropP(uint32_t, ResiId)
   DefPropP(uint32_t, FragmentId)
   DefPropP(uint16_t, SameId)
@@ -177,15 +200,24 @@ public:
   int GetAfix() const;
   DefPropP(TAfixGroup*, ParentAfixGroup)
   DefPropP(TAfixGroup*, DependentAfixGroup)
-  size_t DependentHfixGroupCount() const {  return DependentHfixGroups == NULL ? 0 : DependentHfixGroups->Count();  }
-  TAfixGroup& GetDependentHfixGroup(size_t i) {  return *DependentHfixGroups->GetItem(i);  }
-  const TAfixGroup& GetDependentHfixGroup(size_t i) const {  return *DependentHfixGroups->GetItem(i);  }
-  void RemoveDependentHfixGroup(TAfixGroup& hg) {  DependentHfixGroups->Remove(&hg);  }
+  size_t DependentHfixGroupCount() const {
+    return DependentHfixGroups == NULL ? 0 : DependentHfixGroups->Count();
+  }
+  TAfixGroup& GetDependentHfixGroup(size_t i) {
+    return *DependentHfixGroups->GetItem(i);
+  }
+  const TAfixGroup& GetDependentHfixGroup(size_t i) const {
+    return *DependentHfixGroups->GetItem(i);
+  }
+  void RemoveDependentHfixGroup(TAfixGroup& hg) {
+    DependentHfixGroups->Remove(&hg);
+  }
   void ClearDependentHfixGroups() {  
     if( DependentHfixGroups != NULL ) DependentHfixGroups->Clear();
   }
   void AddDependentHfixGroup(TAfixGroup& hg) {
-    if( DependentHfixGroups == NULL )  DependentHfixGroups = new TPtrList<TAfixGroup>;
+    if( DependentHfixGroups == NULL )
+      DependentHfixGroups = new TPtrList<TAfixGroup>;
     DependentHfixGroups->Add(&hg);
   }
   DefPropP(double, Occu)
@@ -202,16 +234,20 @@ public:
   DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached)
   DefPropBFIsSet(Masked,    Flags, catom_flag_Masked)
   DefPropBFIsSet(Detached,  Flags, catom_flag_Detached)
-  bool IsAvailable() const {  return (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;  }
+  DefPropBFIsSet(Processed,  Flags, catom_flag_Processed)
+  bool IsAvailable() const {
+    return
+      (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;
+  }
   bool IsGrowable() const {  return GetDegeneracy() > 1;  }
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp(const TEllipsoid& NV);
   void AssignEllp(TEllipsoid *NV);
 
-  inline vec3d& ccrd()  {  return Center;  }
-  inline vec3d const& ccrd() const {  return Center;  }
-  inline vec3d& ccrdEsd()  {  return Esd;  }
-  inline vec3d const& ccrdEsd() const {  return Esd;  }
+  vec3d& ccrd()  {  return Center;  }
+  vec3d const& ccrd() const {  return Center;  }
+  vec3d& ccrdEsd()  {  return Esd;  }
+  vec3d const& ccrdEsd() const {  return Esd;  }
 // IXVarReferencer implementation
   virtual size_t VarCount() const {  return 12;  }
   virtual XVarReference* GetVarRef(size_t i) const {  
@@ -244,15 +280,24 @@ public:
   template <class Accessor=DirectAccessor> struct FlagsAnalyser  {
     const short ref_flags;
     FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    template <class Item> inline bool OnItem(const Item& o, size_t) const {
+    template <class Item> bool OnItem(const Item& o, size_t) const {
       return (Accessor::Access(o).Flags&ref_flags) != 0;
+    }
+  };
+  template <class Accessor=DirectAccessor> struct FlagSetter {
+    const short ref_flags;
+    bool set;
+    FlagSetter(short ref_flags_, bool set_)
+      : ref_flags(ref_flags_), set(set_)  {}
+    template <class Item> void OnItem(Item& o, size_t) const {
+      return olx_set_bit(set, Accessor::Access(o).Flags, ref_flags);
     }
   };
   template <class Accessor=DirectAccessor> struct TypeAnalyser  {
     const short ref_type;
     TypeAnalyser(const cm_Element _ref_type) : ref_type(_ref_type.z)  {}
     TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
-    template <class Item> inline bool OnItem(const Item& o, size_t) const {
+    template <class Item> bool OnItem(const Item& o, size_t) const {
       return Accessor::Access(o).GetType() == ref_type;
     }
   };
@@ -265,8 +310,10 @@ public:
 class TCAtomPComparator  {
 public:
   static int Compare(const TCAtom* a1, const TCAtom* a2)  {
-    if( a1->GetFragmentId() != a2->GetFragmentId() )  return a1->GetFragmentId() - a2->GetFragmentId();
-    if( a1->GetResiId() != a2->GetResiId() )  return olx_cmp(a1->GetResiId(),a2->GetResiId());
+    if( a1->GetFragmentId() != a2->GetFragmentId() )
+      return a1->GetFragmentId() - a2->GetFragmentId();
+    if( a1->GetResiId() != a2->GetResiId() )
+      return olx_cmp(a1->GetResiId(),a2->GetResiId());
     // by label
     if( a1->GetType() == a2->GetType() )
       return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());
@@ -306,16 +353,18 @@ public:
     FromDataItem(di, rm);
   }
   DefPropP(TCAtom*, Atom)
-  inline const smatd* GetMatrix() const {  return Matrix;  }
+  const smatd* GetMatrix() const {  return Matrix;  }
   vec3d ccrd() const {
     return Matrix == NULL ? Atom->ccrd() : *Matrix*Atom->ccrd();
   }
   DefPropC(olxstr, Name)
-  // if atom's Residue is default or residue number equals to ResiNumber - it it dropped
+  /* if atom's Residue is default or residue number equals to ResiNumber - it
+  it dropped
+  */
   olxstr GetFullLabel(const RefinementModel& rm, const int ResiNumber) const;
-  /* if Resiname is number - calls the function above with ResiNumber.ToInt(), else if it is empty - calls
-    the single argument function, otherwise compares the atoms' residue name with ResiName and
-    if the names match - drops it
+  /* if Resiname is number - calls the function above with ResiNumber.ToInt(),
+  else if it is empty - calls the single argument function, otherwise compares
+  the atoms' residue name with ResiName and if the names match - drops it
   */
   olxstr GetFullLabel(const RefinementModel& rm, const olxstr& ResiName) const;
   olxstr GetFullLabel(const RefinementModel& rm) const;
