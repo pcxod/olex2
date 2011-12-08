@@ -155,12 +155,10 @@ public:
   }
 //..............................................................................
   TPtrList& operator = (const SharedPtrList<T>& l)  {
-    olx_free(Items);
     return TakeOver(l.Release(), true);
   }
 //..............................................................................
   TPtrList& operator = (const ConstPtrList<T>& l)  {
-    olx_free(Items);
     return TakeOver(l.Release(), true);
   }
 //..............................................................................

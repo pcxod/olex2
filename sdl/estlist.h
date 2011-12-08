@@ -25,15 +25,15 @@ struct TSortedListEntry {
   TSortedListEntry(const TSortedListEntry& entry)
     : Comparable(entry.Comparable), Object(entry.Object)  {}
   virtual ~TSortedListEntry()  {}
-  inline TSortedListEntry& operator = (const TSortedListEntry& entry)  {
+  TSortedListEntry& operator = (const TSortedListEntry& entry)  {
     Comparable = entry.Comparable;
     Object = entry.Object;
     return *this;
   }
-  inline int Compare(const TSortedListEntry& entry) const {
+  int Compare(const TSortedListEntry& entry) const {
     return Comparator::Compare(Comparable, entry.Comparable);  
   }
-  template <class T> inline int Compare(const T& key) const {
+  template <class T> int Compare(const T& key) const {
     return Comparator::Compare(Comparable, key);
   }
 };
@@ -47,7 +47,7 @@ protected:
   template <class Analyser> struct PackItemActor  {
     const Analyser& analyser;
     PackItemActor(const Analyser& _analyser) : analyser(_analyser)  {}
-    inline bool OnItem(EntryType* o, size_t i) const {
+    bool OnItem(EntryType* o, size_t i) const {
       if( analyser.OnItem(o, i) )  {
         delete o;
         return true;
@@ -73,9 +73,17 @@ public:
       Data[i] = new EntryType(*list.Data[i]);
   }
 //..............................................................................
+  TSTypeList &operator = (const TSTypeList &l) {
+    Data.DeleteItems();
+    Data.SetCount(l.Count());
+    for (size_t i=0; i < l.Count(); i++)
+      Data[i] = new EntryType(*l.Data[i]);
+    return *this; 
+  }
+//..............................................................................
   virtual ~TSTypeList()  {  Data.DeleteItems();  }
 //..............................................................................
-  inline void Clear()  {  Data.DeleteItems().Clear();  }
+  void Clear()  {  Data.DeleteItems().Clear();  }
 //..............................................................................
   template <class T> size_t IndexOf(const T& key) const {
     return FindIndexOf(key);
@@ -120,60 +128,59 @@ public:
     return addedc;
   }
 //..............................................................................
-  inline bool IsNull(size_t index) const {  return Data[index] == NULL;  }
+  bool IsNull(size_t index) const {  return Data[index] == NULL;  }
 //..............................................................................
-  inline void NullItem(size_t i)  {
+  void NullItem(size_t i)  {
     if( Data[i] != NULL )  {
       delete Data[i];
       Data[i] = NULL;
     }
   }
 //..............................................................................
-  inline TSTypeList& Pack()  {  Data.Pack();  return *this;  }
+  TSTypeList& Pack()  {  Data.Pack();  return *this;  }
 //..............................................................................
-  template <class PackAnalyser> inline TSTypeList& Pack(const PackAnalyser& pa)
-  {
+  template <class PackAnalyser> TSTypeList& Pack(const PackAnalyser& pa) {
     Data.Pack(PackItemActor<PackAnalyser>(pa));
     return *this;
   }
 //..............................................................................
-  template <class Functor> inline TSTypeList& ForEach(const Functor& f) const {
+  template <class Functor> TSTypeList& ForEach(const Functor& f) const {
     Data.ForEach(f);
     return *this;
   }
 //..............................................................................
-  inline void Delete(size_t i)  {  
+  void Delete(size_t i)  {  
     delete Data[i];  
     Data.Delete(i);  
   }
 //..............................................................................
-  inline size_t Count() const {  return Data.Count(); }
+  size_t Count() const {  return Data.Count(); }
 //..............................................................................
-  inline bool IsEmpty() const {  return Data.IsEmpty();  }
+  bool IsEmpty() const {  return Data.IsEmpty();  }
 //..............................................................................
-  inline const A& GetKey(size_t index) const {
+  const A& GetKey(size_t index) const {
     return Data[index]->Comparable;
   }
 //..............................................................................
-  inline B& GetObject(size_t index) const {  return Data[index]->Object;  }
+  B& GetObject(size_t index) const {  return Data[index]->Object;  }
 //..............................................................................
-  inline const EntryType& GetLast() const {  return *Data.GetLast();  }
+  const EntryType& GetLast() const {  return *Data.GetLast();  }
 //..............................................................................
-  inline const A& GetLastKey() const {  return Data.GetLast()->Comparable;  }
+  const A& GetLastKey() const {  return Data.GetLast()->Comparable;  }
 //..............................................................................
-  inline const B& GetLastObject() const {  return Data.GetLast()->Object;  }
+  const B& GetLastObject() const {  return Data.GetLast()->Object;  }
 //..............................................................................
-  inline TSTypeList& SetCapacity(size_t v)  {
+  TSTypeList& SetCapacity(size_t v)  {
     Data.SetCapacity(v);
     return *this;
   }
 //..............................................................................
-  inline TSTypeList& SetIncrement(size_t v)  {
+  TSTypeList& SetIncrement(size_t v)  {
     Data.SetIncrement(v);
     return *this;
   }
 //..............................................................................
-  template <class T> inline B& operator [] (const T& key) const {
+  template <class T> B& operator [] (const T& key) const {
     const size_t ind = IndexOf(key);
     if( ind != InvalidIndex )
       return Data[ind]->Object;
@@ -209,6 +216,17 @@ public:
     }
     return *entry;
   }
+//..............................................................................
+  TSTypeList &Merge(const TSTypeList &l) {
+    for (size_t i=0; i < l.Count(); i++) {
+      size_t idx = IndexOf(l.GetKey(i));
+      if (idx == InvalidIndex)
+        Add(l.GetKey(i), l.GetObject(i));
+      else
+        Data[idx]->Object = l.GetObject(i);
+    }
+    return *this;
+  }
 };
 // partial specialisation
 //..............................................................................
@@ -216,13 +234,33 @@ public:
 template <typename ComparableClass, typename ObjectClass>
  class TCSTypeList
    : public TSTypeList<ComparableClass, ObjectClass, TComparableComparator>
-{};
+{
+  typedef TSTypeList<ComparableClass, ObjectClass, TComparableComparator>
+    parent_t;
+public:
+  TCSTypeList() {}
+  TCSTypeList(const TCSTypeList& l) : parent_t(l) {}
+  TCSTypeList &operator = (const TCSTypeList& l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
 //..............................................................................
 // to be used with objects, having >, < operators, or primitive types
 template <typename ComparableClass, typename ObjectClass>
 class TPSTypeList
   : public TSTypeList<ComparableClass, ObjectClass, TPrimitiveComparator>
-{};
+{
+  typedef TSTypeList<ComparableClass, ObjectClass, TPrimitiveComparator>
+    parent_t;
+public:
+  TPSTypeList() {}
+  TPSTypeList(const TPSTypeList& l) : parent_t(l) {}
+  TPSTypeList &operator = (const TPSTypeList& l) {
+    parent_t::operator = (l);
+    return *this;
+  }
+};
 //..............................................................................
 // string specialisation ... special overriding for [] operator - returns NULL
 // if no specified comparable exist, beware it returns '0' for primitive types
@@ -235,6 +273,12 @@ class TSStrPObjList
   typedef TSortedListEntry<SC,ObjectClass,olxstrComparator<caseinsensitive> >
     PListEntry;
 public:
+  TSStrPObjList() {}
+  TSStrPObjList(const TSStrPObjList& l) : PList(l) {}
+  TSStrPObjList &operator = (const TSStrPObjList& l) {
+    PList::operator = (l);
+    return *this;
+  }
   const olxstr& GetString(size_t i) const {  return PList::GetKey(i);  }
   const PListEntry& Add(const SC& s,
     const ObjectClass& v=*(ObjectClass*)NULL)
@@ -242,7 +286,7 @@ public:
     return PList::Add(s, v);
   }
   template <class T>
-  inline ObjectClass operator [] (const T& key) const {
+  ObjectClass operator [] (const T& key) const {
     const size_t ind = PList::IndexOf(key);
     return (ind != InvalidIndex)  ? PList::GetObject(ind) : NULL;
   }
@@ -258,8 +302,14 @@ class TSStrObjList
   typedef TSortedListEntry<SC,ObjectClass,olxstrComparator<caseinsensitive> >
     PListEntry;
 public:
-  inline const SC& GetString(size_t i) const {  return PList::GetKey(i);  }
-  inline const PListEntry& Add(const SC& s,
+  TSStrObjList() {}
+  TSStrObjList(const TSStrObjList& l) : PList(l) {}
+  TSStrObjList &operator = (const TSStrObjList& l) {
+    PList::operator = (l);
+    return *this;
+  }
+  const SC& GetString(size_t i) const {  return PList::GetKey(i);  }
+  const PListEntry& Add(const SC& s,
     const ObjectClass& v = *(ObjectClass*)NULL )
   {
     return PList::Add(s, v);
@@ -274,9 +324,15 @@ class TSStrStrList
     typedef TSortedListEntry<SC,SC,olxstrComparator<caseinsensitive> >
       PListEntry;
 public:
-  inline const SC& GetString(size_t i) const {  return PList::GetKey(i);  }
+  TSStrStrList() {}
+  TSStrStrList(const TSStrStrList& l) : PList(l) {}
+  TSStrStrList &operator = (const TSStrStrList& l) {
+    PList::operator = (l);
+    return *this;
+  }
+  const SC& GetString(size_t i) const {  return PList::GetKey(i);  }
   template <class T>
-  inline const PListEntry& Add(const T& key, const SC& v=EmptyString())  {
+  const PListEntry& Add(const T& key, const SC& v=EmptyString())  {
     return PList::Add(key, v);
   }
 };

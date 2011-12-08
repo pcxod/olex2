@@ -37,7 +37,7 @@ protected:
   false. Note that if the description of the fm is empty - the description of
   the previous function will be copied to
   */
-  ABasicFunction *RegisterStatic(
+  ABasicFunction *Register(
     TSStrPObjList<olxstr,ABasicFunction*, true> &container,
     ABasicFunction* fm,
     bool replace, bool do_return);
@@ -77,65 +77,29 @@ public:
   }
 
   template <class BaseClass>
-    void RegisterFunction(TFunction<BaseClass>* func, bool replace = false)  {
-      TSizeList list;
-      Functions.GetIndexes(func->GetName(), list);
-      for( size_t i=0; i < list.Count(); i++ )  {
-        const uint32_t argc = Functions.GetObject(list[i])->GetArgStateMask();
-        if( func->GetArgStateMask() & argc )  {
-          if( replace )  {
-            if( func->GetDescription().IsEmpty() )  {
-              func->SetDescription(
-                Functions.GetObject(list[i])->GetDescription());
-            }
-            delete Functions.GetObject(list[i]);
-            Functions.Delete(list[i]);
-            break;
-          }
-          throw TDuplicateEntry(__OlxSourceInfo,
-            olxstr("function (same number of args)") << func->GetName(),
-            "function");
-        }
-      }
-      func->SetParentLibrary(*this);
-      Functions.Add(func->GetName(), func);
-    }
+  ABasicFunction *RegisterFunction(TFunction<BaseClass>* func,
+    bool replace=false, bool do_return=false)
+  {
+    return Register(Functions, func, replace, do_return);
+  }
 
   ABasicFunction *RegisterStaticFunction(
     TStaticFunction* func, bool replace=false, bool do_return=false)
   {
-    return RegisterStatic(Functions, func, replace, do_return);
+    return Register(Functions, func, replace, do_return);
   }
   ABasicFunction *RegisterStaticMacro(
     TStaticMacro* func, bool replace=false, bool do_return=false)
   {
-    return RegisterStatic(Macros, func, replace, do_return);
+    return Register(Macros, func, replace, do_return);
   }
 
   template <class BaseClass>
-    void RegisterMacro(TMacro<BaseClass>* macro, bool replace = false)  {
-      TSizeList list;
-      Macros.GetIndexes(macro->GetName(), list);
-      for( size_t i=0; i < list.Count(); i++ )  {
-        const uint32_t argc = Macros.GetObject(list[i])->GetArgStateMask();
-        if( macro->GetArgStateMask() & argc )  {
-          if( replace )  {
-            if( macro->GetDescription().IsEmpty() )  {
-              macro->SetDescription(
-                Macros.GetObject(list[i])->GetDescription());
-            }
-            delete Macros.GetObject(list[i]);
-            Macros.Delete(list[i]);
-            break;
-          }
-          throw TDuplicateEntry(__OlxSourceInfo,
-            olxstr("macro (same number of args)") << macro->GetName(),
-            "macro");
-        }
-      }
-      macro->SetParentLibrary(*this);
-      Macros.Add(macro->GetName(), macro);
-    }
+  ABasicFunction *RegisterMacro(TMacro<BaseClass>* macro,
+    bool replace=false, bool do_return=false)
+  {
+    return Register(Macros, macro, replace, do_return);
+  }
   /* if function name is no qualified, current lib is searched only, for
   quailified function names like, html.home, the library will be located and
   searched

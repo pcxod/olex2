@@ -27,7 +27,7 @@ TLibrary::~TLibrary()  {
 //..............................................................................
 TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner)  {
   if( Libraries.IndexOf(name) != InvalidIndex )
-    throw TDuplicateEntry(__OlxSourceInfo, name, "library" );
+    throw TDuplicateEntry(__OlxSourceInfo, name, "library");
   TLibrary* lib = new TLibrary(name, owner);
   Libraries.Add(name, lib);
   lib->SetParentLibrary(this);
@@ -36,15 +36,15 @@ TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner)  {
   return lib;
 }
 //..............................................................................
-void TLibrary::AttachLibrary( TLibrary* lib )  {
+void TLibrary::AttachLibrary(TLibrary* lib)  {
   if( Libraries.IndexOf(lib->GetName()) != InvalidIndex )
     throw TDuplicateEntry(__OlxSourceInfo, lib->GetName(), "library");
   Libraries.Add(lib->GetName(), lib);
-  lib->SetParentLibrary( this );
+  lib->SetParentLibrary(this);
   lib->LibraryOwner = this->LibraryOwner;
 }
 //..............................................................................
-ABasicFunction *TLibrary::RegisterStatic(
+ABasicFunction *TLibrary::Register(
     TSStrPObjList<olxstr,ABasicFunction*, true> &container,
     ABasicFunction* fm,
     bool replace, bool do_return)
@@ -52,6 +52,18 @@ ABasicFunction *TLibrary::RegisterStatic(
   TSizeList list;
   ABasicFunction *rv = NULL;
   container.GetIndexes(fm->GetName(), list);
+  if (fm->GetArgStateMask() == uint32_t(~0)) {
+    if (list.Count() > 1)
+      throw TInvalidArgumentException(__OlxSourceInfo, "ambiguous replacement");
+    ABasicFunction *src = container.GetObject(list[0]);
+    fm->SetArgStateMask(src->GetArgStateMask());
+    if (src->HasOptions()) {
+      TCSTypeList<olxstr,olxstr> options = src->GetOptions();
+      options.Merge(fm->GetOptions());
+      fm->SetOptions(options);
+    }
+  }
+
   for( size_t i=0; i < list.Count(); i++ )  {
     uint32_t argc = container.GetObject(list[i])->GetArgStateMask();
     if( (fm->GetArgStateMask() & argc) != 0 )  {
@@ -235,7 +247,7 @@ size_t TLibrary::FindSimilarMacros(const olxstr& name, TBasicFunctionPList& stor
           store.Add(searchLib->GetMacroByIndex(i));
         return searchLib->MacroCount();
       }
-      return searchLib->LocateSimilarMacros(libPath.GetLastString(), store );
+      return searchLib->LocateSimilarMacros(libPath.GetLastString(), store);
     }
     return 0;
   }
@@ -255,7 +267,7 @@ size_t TLibrary::FindSimilarLibraries(const olxstr& name, TBasicLibraryPList& st
     }
     // must be '.' ending string - get all libs
     for( size_t i=0; i < searchLib->LibraryCount(); i++ )
-      store.Add( searchLib->GetLibraryByIndex(i) );
+      store.Add(searchLib->GetLibraryByIndex(i));
     return searchLib->LibraryCount();
   }
   else

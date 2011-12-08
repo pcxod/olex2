@@ -10003,6 +10003,98 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
         r->AddAtom(atoms[i]->CAtom(), NULL);
     }
   }
+  if( Cmds[0].Equalsi("angle") && Cmds.Count() > 1 )  {
+    double val = Cmds[1].ToDouble();
+    Cmds.DeleteRange(0, 2);
+    TXAtomPList atoms = FindXAtoms(Cmds, false, false);
+    TTypeList<TCAtomPList> triplets;
+    if (atoms.IsEmpty()) {
+      TXBondPList bonds = FXApp->GetSelection().Extract<TXBond>();
+      FXApp->GetRender().SelectAll(false);
+      if ((bonds.Count()%2)!=0) {
+        E.ProcessingError(__OlxSrcInfo, "even number of bonds is expected");
+        return;
+      }
+      for (size_t i=0; i < bonds.Count(); i+=2) {
+        TSAtom *s = bonds[i]->GetShared(*bonds[i+1]);
+        if (s == NULL)  {
+          TBasicApp::NewLogEntry(logError) << "No shared atom for: " <<
+            bonds[i]->A().GetLabel() << '-' << bonds[i]->B().GetLabel() <<
+            " and " <<
+            bonds[i+1]->A().GetLabel() << '-' << bonds[i+1]->B().GetLabel() <<
+            " skiping...";
+        }
+        else {
+          triplets.AddNew() << bonds[i]->Another(*s).CAtom() << s->CAtom() <<
+            bonds[i+1]->Another(*s).CAtom();
+        }
+      }
+    }
+    else {
+      if ((atoms.Count()%3)!=0) {
+        E.ProcessingError(__OlxSrcInfo, "triplets of atoms are expected");
+        return;
+      }
+      for (size_t i=0; i < atoms.Count(); i+=3) {
+        triplets.AddNew() << atoms[i]->CAtom() << atoms[i+1]->CAtom() <<
+          atoms[i+2]->CAtom();
+      }
+    }
+    if (!triplets.IsEmpty()) {
+      TSimpleRestraint &sr = rm.rAngle.AddNew();
+      sr.SetValue(val);
+      for (size_t i=0; i < triplets.Count(); i++) {
+        for (size_t j=0; j < triplets[i].Count(); j++)
+          sr.AddAtom(*triplets[i][j], NULL);
+      }
+    }
+  }
+  if( Cmds[0].Equalsi("dihedral") && Cmds.Count() > 1 )  {
+    double val = Cmds[1].ToDouble();
+    Cmds.DeleteRange(0, 2);
+    TXAtomPList atoms = FindXAtoms(Cmds, false, false);
+    TTypeList<TCAtomPList> quadruplets;
+    if (atoms.IsEmpty()) {
+      TXBondPList bonds = FXApp->GetSelection().Extract<TXBond>();
+      FXApp->GetRender().SelectAll(false);
+      if ((bonds.Count()%2)!=0) {
+        E.ProcessingError(__OlxSrcInfo, "even number of bonds is expected");
+        return;
+      }
+      for (size_t i=0; i < bonds.Count(); i+=2) {
+        ConstPtrList<TSAtom> dh = bonds[i]->GetDihedral(*bonds[i+1]);
+        if (dh.IsEmpty())  {
+          TBasicApp::NewLogEntry(logError) << "Do not form dihedral: " <<
+            bonds[i]->A().GetLabel() << '-' << bonds[i]->B().GetLabel() <<
+            " and " <<
+            bonds[i+1]->A().GetLabel() << '-' << bonds[i+1]->B().GetLabel() <<
+            " skiping...";
+        }
+        else {
+          quadruplets.Add(new TCAtomPList(dh, TSAtom::CAtomAccessor<>()));
+        }
+      }
+    }
+    else {
+      if ((atoms.Count()%4)!=0) {
+        E.ProcessingError(__OlxSrcInfo, "quadruplets of atoms are expected");
+        return;
+      }
+      for (size_t i=0; i < atoms.Count(); i+=4) {
+        TCAtomPList &l = quadruplets.AddNew(4);
+        for (int j=0; j < 4; j++)
+          l.Set(j, atoms[i+j]->CAtom());
+      }
+    }
+    if (!quadruplets.IsEmpty()) {
+      TSimpleRestraint &sr = rm.rDihedralAngle.AddNew();
+      sr.SetValue(val);
+      for (size_t i=0; i < quadruplets.Count(); i++) {
+        for (size_t j=0; j < quadruplets[i].Count(); j++)
+          sr.AddAtom(*quadruplets[i][j], NULL);
+      }
+    }
+  }
 }
 //..............................................................................
 void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,

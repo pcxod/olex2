@@ -82,6 +82,39 @@ public:
   void SetB(Node& a) {  FB = &a;  OnAtomSet();  }
 
   Node& Another(const Node& A) const {  return (&A == FA) ? *FB : *FA; }
+
+  Node* GetShared(const TBasicBond &b) const {
+    if (FA == b.FA || FA == b.FB)
+      return FA;
+    if (FB == b.FA || FB == b.FB)
+      return FB;
+    return NULL;
+  }
+  ConstPtrList<Node> GetDihedral(const TBasicBond &b) const {
+    TPtrList<Node> rv;
+    if (FA->IsConnectedTo(*b.FA))
+      rv << FB << FA << b.FA << b.FB;
+    else if (FA->IsConnectedTo(*b.FB))
+      rv << FB << FA << b.FB << b.FA;
+    else if (FB->IsConnectedTo(*b.FA))
+      rv << FA << FB << b.FA << b.FB;
+    else if (FB->IsConnectedTo(*b.FB))
+      rv << FA << FB << b.FB << b.FA;
+    return rv;
+  }
+
+  ConstPtrList<Node> GetAngle(const TBasicBond &b) const {
+    TPtrList<Node> rv;
+    if (FA == b.FA)
+      rv << FB << FA << b.FB;
+    else if (FA == b.FB)
+      rv << FB << FA << b.FA;
+    else if (FB == b.FA)
+      rv << FA << FB << b.FB;
+    else if (FB == b.FB)
+      rv << FA << FB << b.FA;
+    return rv;
+  }
 };
 //---------------------------------------------------------------------------
 // TBasicNode -  basic node
