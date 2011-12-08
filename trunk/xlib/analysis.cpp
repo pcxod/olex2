@@ -343,7 +343,7 @@ void fragments::fragment::breadth_first_tags(size_t start,
       TCAtom::Site &st = a->GetAttachedSite(i);
       if (st.atom->GetTag() == -1)
         queue.Push(st.atom);
-      else if (st.atom->GetTag() >= tv)
+      else if (st.atom->GetTag() >= tv && ring_atoms != NULL)
         ring_atoms->Add(st.atom);
     }
   }
@@ -354,35 +354,31 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
   TQueue<TCAtom*> queue;
   a.GetParent()->GetAtoms().ForEach(
     TCAtom::FlagSetter<>(catom_flag_Processed, false));
-  queue.Push(ring.Add(a));
-  TCAtom *last = NULL;
-  //for (size_t i=0; i < a.AttachedSiteCount(); i++) {
-  //  TCAtom::Site &st = a.GetAttachedSite(i);
-  //  if (st.atom->GetTag() == a.GetTag())
-  //    queue.Push(ring.Add(st.atom));
-  //}
+  queue.Push(ring.Add(a))->SetProcessed(true);
+  for (size_t i=0; i < a.AttachedSiteCount(); i++) {
+    TCAtom::Site &st = a.GetAttachedSite(i);
+    if (st.atom->GetTag() == a.GetTag())
+      queue.Push(ring.Add(st.atom))->SetProcessed(true);
+  }
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
-    if (a->IsProcessed()) {
-      last = a;
-      break;
-    }
-    a->SetProcessed(true);
+    bool stop=false;
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
-      if (st.atom->GetTag() <= a->GetTag())
-        queue.Push(ring.Add(st.atom));
+      if (st.atom->GetTag() < a->GetTag()) {
+        if (st.atom->IsProcessed())
+          stop = true;
+        else
+          queue.Push(ring.Add(st.atom))->SetProcessed(true);
+      }
     }
+    if (stop) break;
   }
-  if (last != NULL) {
-    size_t rc=0;
-    for (size_t i=ring.Count()-1; i != InvalidIndex; i--) {
-      if (ring[i]->GetTag() < last->GetTag())
-        rc++;
-      else
-        break;
-    }
-    ring.SetCount(ring.Count()-rc);
+  // trim, the last is in the rings, all same level before - not 
+  while (ring.Count() > 1 &&
+    ring[ring.Count()-2]->GetTag() == ring.GetLast()->GetTag())
+  {
+    ring.Delete(ring.Count()-2);
   }
   return ring;
 }
