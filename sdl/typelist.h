@@ -218,7 +218,7 @@ public:
   inline T& AddNew()  {  return *List.Add(new T());  }
 //..............................................................................
   template<class AC>
-  inline T& AddNew( const AC& arg )  {  return *List.Add(new T(arg));  }
+  inline T& AddNew(const AC& arg)  {  return *List.Add(new T(arg));  }
 //..............................................................................
   template<class FAC, class SAC>
   inline T& AddNew(const FAC& arg1, const SAC& arg2 )  {
