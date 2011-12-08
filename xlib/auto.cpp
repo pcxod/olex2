@@ -410,7 +410,7 @@ void TAutoDBNetNode::SaveToStream( IDataOutputStream& output ) const {
 }
 void TAutoDBNetNode::LoadFromStream( IDataInputStream& input )  {
 #ifdef __GNUC__  // dunno how it is implemented, but need 8 bits here
-  char cnt; 
+  unsigned char cnt;
 #else  
   uint8_t cnt; 
 #endif

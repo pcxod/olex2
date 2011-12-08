@@ -52,6 +52,13 @@ olxstr alg::formula(const TCAtomPList &atoms, double mult) {
   return rv;
 }
 //.............................................................................
+olxstr alg::label(const TCAtomPList &atoms) {
+  olxstr rv;
+  for( size_t i=0; i < atoms.Count(); i++ )
+    rv << atoms[i]->GetLabel();
+  return rv;
+}
+//.............................................................................
 //.............................................................................
 void peaks::range::delete_all() {
   for (size_t i=0; i < peaks.Count(); i++)
@@ -292,7 +299,6 @@ bool fragments::fragment::is_flat() const {
   vec3d n;
   vec3d_list crds = build_coordinates();
   double rmsd = 0;
-  const TAsymmUnit &au = *atoms_[0]->GetParent();
   if (crds.Count() <= 3) { 
     return true;
   }
@@ -308,7 +314,9 @@ bool fragments::fragment::is_flat() const {
   }
 }
 //.............................................................................
-void fragments::fragment::breadth_first_tags(size_t start) {
+void fragments::fragment::breadth_first_tags(size_t start,
+  TCAtomPList *ring_atoms)
+{
   if (atoms_.IsEmpty()) return;
   atoms_.ForEach(ACollectionItem::TagSetter<>(-1));
   TQueue<TCAtom*> queue;
@@ -325,14 +333,67 @@ void fragments::fragment::breadth_first_tags(size_t start) {
       queue.Push(NULL);
       continue;
     }
-    if (a->GetTag() != -1 ) continue;
+    if (a->GetTag() != -1 ) {
+      if (a->GetTag() >= tv && ring_atoms != NULL)
+        ring_atoms->Add(a);
+      continue;
+    }
     a->SetTag(tv);
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
       if (st.atom->GetTag() == -1)
         queue.Push(st.atom);
+      else if (st.atom->GetTag() >= tv)
+        ring_atoms->Add(st.atom);
     }
   }
+}
+//.............................................................................
+ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
+  TCAtomPList ring;
+  TQueue<TCAtom*> queue;
+  a.GetParent()->GetAtoms().ForEach(
+    TCAtom::FlagSetter<>(catom_flag_Processed, false));
+  queue.Push(ring.Add(a));
+  TCAtom *last = NULL;
+  //for (size_t i=0; i < a.AttachedSiteCount(); i++) {
+  //  TCAtom::Site &st = a.GetAttachedSite(i);
+  //  if (st.atom->GetTag() == a.GetTag())
+  //    queue.Push(ring.Add(st.atom));
+  //}
+  while (!queue.IsEmpty()) {
+    TCAtom *a = queue.Pop();
+    if (a->IsProcessed()) {
+      last = a;
+      break;
+    }
+    a->SetProcessed(true);
+    for (size_t i=0; i < a->AttachedSiteCount(); i++) {
+      TCAtom::Site &st = a->GetAttachedSite(i);
+      if (st.atom->GetTag() <= a->GetTag())
+        queue.Push(ring.Add(st.atom));
+    }
+  }
+  if (last != NULL) {
+    size_t rc=0;
+    for (size_t i=ring.Count()-1; i != InvalidIndex; i--) {
+      if (ring[i]->GetTag() < last->GetTag())
+        rc++;
+      else
+        break;
+    }
+    ring.SetCount(ring.Count()-rc);
+  }
+  return ring;
+}
+//.............................................................................
+ConstTypeList<TCAtomPList> fragments::fragment::get_rings(
+  const TCAtomPList &r_atoms)
+{
+  TTypeList<TCAtomPList> rv;
+  for (size_t i=0; i < r_atoms.Count(); i++)
+    rv.Add(new TCAtomPList(trace_ring(*r_atoms[i])));
+  return rv;
 }
 //.............................................................................
 //.............................................................................

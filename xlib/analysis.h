@@ -21,6 +21,7 @@ namespace alg {
   double mean_peak(const TCAtomPList &peaks);
   double mean_u_eq(const TCAtomPList &atoms);
   olxstr formula(const TCAtomPList &atoms, double mult=1);
+  olxstr label(const TCAtomPList &atoms);
 }; // end namespace alg
 struct peaks {
   static int peak_sort(const TCAtom *a1, const TCAtom *a2) {
@@ -64,6 +65,7 @@ public:
     static void build_coordinate(
       TCAtom &a, const smatd &m, vec3d_list &res);
     ConstTypeList<vec3d> build_coordinates() const;
+    static ConstPtrList<TCAtom> trace_ring(TCAtom &a);
   public:
     fragment() : u_eq(0) {}
     double get_mean_u_eq(bool update=false) const {
@@ -87,7 +89,10 @@ public:
     // works only for a group of atoms distributed around the central one
     size_t find_central_index() const;
     olxstr formula() const { return alg::formula(atoms_); }
-    void breadth_first_tags(size_t start=InvalidIndex);
+    void breadth_first_tags(size_t start=InvalidIndex,
+      TCAtomPList *ring_atoms=NULL);
+    /* traces the rings back from the breadth-first tag assignment */
+    static ConstTypeList<TCAtomPList> get_rings(const TCAtomPList &r_atoms);
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
 };
