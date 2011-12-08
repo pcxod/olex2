@@ -66,6 +66,7 @@ public:
       TCAtom &a, const smatd &m, vec3d_list &res);
     ConstTypeList<vec3d> build_coordinates() const;
     static ConstPtrList<TCAtom> trace_ring(TCAtom &a);
+    static ConstPtrList<TCAtom> ring_sorter(const TCAtomPList &r);
   public:
     fragment() : u_eq(0) {}
     double get_mean_u_eq(bool update=false) const {

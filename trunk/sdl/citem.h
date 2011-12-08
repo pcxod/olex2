@@ -52,6 +52,16 @@ public:
       return GetTag(Accessor::Access(o));
     }
   };
+  struct TagComparator  {
+    template <class Item>
+    static inline int Compare(const Item& o1, const Item& o2)  {
+      return olx_cmp(olx_ref::get(o1).GetTag(), olx_ref::get(o2).GetTag());
+    }
+    template <class Item>
+    static inline int Compare(const Item* o1, const Item* o2)  {
+      return olx_cmp(o1->GetTag(), o2->GetTag());
+    }
+  };
 
   // common algorithms
   // creates a list of unique items

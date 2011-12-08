@@ -360,25 +360,29 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
     if (st.atom->GetTag() == a.GetTag())
       queue.Push(ring.Add(st.atom))->SetProcessed(true);
   }
+  TCAtom *la = NULL;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
-    bool stop=false;
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
       if (st.atom->GetTag() < a->GetTag()) {
         if (st.atom->IsProcessed())
-          stop = true;
+          la = st.atom;
         else
           queue.Push(ring.Add(st.atom))->SetProcessed(true);
       }
     }
-    if (stop) break;
+    if (la != NULL) break;
   }
-  // trim, the last is in the rings, all same level before - not 
-  while (ring.Count() > 1 &&
-    ring[ring.Count()-2]->GetTag() == ring.GetLast()->GetTag())
-  {
-    ring.Delete(ring.Count()-2);
+  // trim
+  if (la != NULL) {
+    while (ring.Count() > 0 &&
+      ring[ring.Count()-1]->GetTag() <= la->GetTag())
+    {
+      ring[ring.Count()-1]->SetProcessed(false);
+      ring.SetCount(ring.Count()-1);
+    }
+    ring.Add(la)->SetProcessed(true);
   }
   return ring;
 }
@@ -387,9 +391,49 @@ ConstTypeList<TCAtomPList> fragments::fragment::get_rings(
   const TCAtomPList &r_atoms)
 {
   TTypeList<TCAtomPList> rv;
+  if (r_atoms.IsEmpty()) return rv;
   for (size_t i=0; i < r_atoms.Count(); i++)
     rv.Add(new TCAtomPList(trace_ring(*r_atoms[i])));
+  r_atoms[0]->GetParent()->GetAtoms().ForEach(
+    TCAtom::FlagSetter<>(catom_flag_Processed, false));
+  // sort the ring according to the connectivity
+  for (size_t i=0; i < rv.Count(); i++) {
+    if (!rv[i].IsEmpty()) {
+      // need for the case of overlapping rings
+      rv[i].ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
+      try {
+        rv[i] = ring_sorter(rv[i]);
+      }
+      catch (const TExceptionBase &e) {
+        TBasicApp::NewLogEntry(logInfo) << "Ring sorting error: " <<
+          e.GetException()->GetFullMessage();
+        rv.Delete(i--);
+      }
+    }
+  }
   return rv;
+}
+//.............................................................................
+ConstPtrList<TCAtom> fragments::fragment::ring_sorter(const TCAtomPList &r) {
+  if (r.Count() < 3) return new TCAtomPList(r);
+  TCAtomPList res(r.Count());
+  res.Set(0, r[0])->SetProcessed(false);
+  for (size_t i=0; i < r.Count()-1; i++) {
+    bool set=false;
+    for (size_t j=0; j < res[i]->AttachedSiteCount(); j++) {
+      TCAtom &a = res[i]->GetAttachedAtom(j);
+      if (a.IsProcessed()) {
+        res.Set(i+1, a)->SetProcessed(false);
+        set = true;
+        break;
+      }
+    }
+    if (!set) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("ring ") << alg::label(r));
+    }
+  }
+  return res;
 }
 //.............................................................................
 //.............................................................................

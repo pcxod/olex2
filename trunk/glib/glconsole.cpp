@@ -21,21 +21,21 @@
 // keyboard constanst, silly to include here, but...
 
 // stolen from wxWidgets
-enum wxKeyCode {
-    WXK_BACK    =    8,
-    WXK_TAB     =    9,
-    WXK_RETURN  =    13,
-    WXK_ESCAPE  =    27,
-    WXK_SPACE   =    32,
-    WXK_DELETE  =    127,
-    WXK_END = 312,
-    WXK_HOME = 313,
-    WXK_LEFT = 314,
-    WXK_UP = 315,
-    WXK_RIGHT = 316,
-    WXK_DOWN = 317,
-    WXK_PAGEUP = 366,
-    WXK_PAGEDOWN = 367
+enum {
+    OLX_KEY_BACK    =    8,
+    OLX_KEY_TAB     =    9,
+    OLX_KEY_RETURN  =    13,
+    OLX_KEY_ESCAPE  =    27,
+    OLX_KEY_SPACE   =    32,
+    OLX_KEY_DELETE  =    127,
+    OLX_KEY_END = 312,
+    OLX_KEY_HOME = 313,
+    OLX_KEY_LEFT = 314,
+    OLX_KEY_UP = 315,
+    OLX_KEY_RIGHT = 316,
+    OLX_KEY_DOWN = 317,
+    OLX_KEY_PAGEUP = 366,
+    OLX_KEY_PAGEDOWN = 367
 };
 
 /* There is a slight problem with cursor - depending on object properties it might
@@ -217,19 +217,19 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
 }
 //..............................................................................
 bool TGlConsole::WillProcessKey( int Key, short ShiftState )  {
-  if( Key == WXK_DELETE )  {
+  if( Key == OLX_KEY_DELETE )  {
     if( ShiftState == 0 && GetInsertPosition() < FCommand.Length() &&
          GetInsertPosition() >= PromptStr.Length() )  {
       return true;
     }
   }
-  else if( Key == WXK_BACK && GetInsertPosition() != PromptStr.Length() )
+  else if( Key == OLX_KEY_BACK && GetInsertPosition() != PromptStr.Length() )
     return true;
   return false;
 }
 //..............................................................................
 bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
-  if( (Key == WXK_UP) && IsPromptVisible() && ShiftState == 0 )  {
+  if( (Key == OLX_KEY_UP) && IsPromptVisible() && ShiftState == 0 )  {
     FCmdPos --;
     if( !olx_is_valid_size(FCmdPos) )  FCmdPos = FCommands.Count()-1;
     if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
@@ -240,7 +240,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     return true;
   }
-  if( (Key == WXK_DOWN) && IsPromptVisible() && ShiftState == 0 )  {
+  if( (Key == OLX_KEY_DOWN) && IsPromptVisible() && ShiftState == 0 )  {
     FCmdPos ++;
     if( FCmdPos >= FCommands.Count() )  FCmdPos = 0;
     if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
@@ -251,7 +251,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     return true;
   }
-  if( (Key == WXK_LEFT) && IsPromptVisible() && (GetInsertPosition() > PromptStr.Length()) )  {
+  if( (Key == OLX_KEY_LEFT) && IsPromptVisible() && (GetInsertPosition() > PromptStr.Length()) )  {
     if( ShiftState == 0 )  {
       SetInsertPosition(GetInsertPosition()-1);
       return true;
@@ -266,7 +266,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     return false;
   }
-  if( (Key == WXK_RIGHT) && IsPromptVisible() && (GetInsertPosition() < FCommand.Length()) )  {
+  if( (Key == OLX_KEY_RIGHT) && IsPromptVisible() && (GetInsertPosition() < FCommand.Length()) )  {
     if( ShiftState == 0 )  {
       SetInsertPosition(GetInsertPosition()+1);
       return true;
@@ -281,7 +281,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     return false;
   }
-  if( Key == WXK_DELETE )  {
+  if( Key == OLX_KEY_DELETE )  {
     if( ShiftState == 0 && GetInsertPosition() < FCommand.Length() &&
          GetInsertPosition() >= PromptStr.Length() )  {
       FCommand.Delete(GetInsertPosition(), 1);
@@ -290,24 +290,24 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     return false;
   }
-  if( (Key == WXK_HOME) && !ShiftState  && IsPromptVisible() )  {
+  if( (Key == OLX_KEY_HOME) && !ShiftState  && IsPromptVisible() )  {
     SetInsertPosition(PromptStr.Length());
     return true;
   }
-  if( (Key == WXK_END) && !ShiftState  && IsPromptVisible() )  {
+  if( (Key == OLX_KEY_END) && !ShiftState  && IsPromptVisible() )  {
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( (Key == WXK_PAGEUP || Key == WXK_PAGEDOWN) &&
+  if( (Key == OLX_KEY_PAGEUP || Key == OLX_KEY_PAGEDOWN) &&
       olx_is_valid_index(LinesVisible) )
   {
-    if( Key == WXK_PAGEDOWN )  {
+    if( Key == OLX_KEY_PAGEDOWN )  {
       const size_t lines = CalcScrollDown();
       FTxtPos += lines-1;
       if( FTxtPos >= FBuffer.Count() )
         FTxtPos = FBuffer.Count()-1;
     }
-    else if( Key == WXK_PAGEUP )  {
+    else if( Key == OLX_KEY_PAGEUP )  {
       if( FTxtPos < LinesVisible-1 )
         FTxtPos = FBuffer.IsEmpty() ? ~0 : 0;
       else if( olx_is_valid_index(FTxtPos) )
@@ -319,13 +319,13 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   if( !Key || Key > 255 || (ShiftState & sssCtrl) || (ShiftState & sssAlt))  return false;
   if( !IsPromptVisible() )  return false;
   
-  if( Key == WXK_ESCAPE )  {
+  if( Key == OLX_KEY_ESCAPE )  {
     olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
     FCommand = PromptStr;
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( Key == WXK_RETURN )  {
+  if( Key == OLX_KEY_RETURN )  {
     FCommand = GetCommand();
     if( FCommand.Length() )  {
       if( FCommands.Count() != 0 && FCommands[FCommands.Count()-1] == FCommand)  {
@@ -344,7 +344,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( Key == WXK_BACK )  {
+  if( Key == OLX_KEY_BACK )  {
     if( FCommand.Length() > PromptStr.Length() )  {
       if( GetInsertPosition() == FCommand.Length() )  {
         FCommand.SetLength(FCommand.Length()-1);
