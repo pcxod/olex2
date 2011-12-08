@@ -10007,7 +10007,7 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
     double val = Cmds[1].ToDouble();
     Cmds.DeleteRange(0, 2);
     TXAtomPList atoms = FindXAtoms(Cmds, false, false);
-    TTypeList<TCAtomPList> triplets;
+    TTypeList<TSAtomPList> triplets;
     if (atoms.IsEmpty()) {
       TXBondPList bonds = FXApp->GetSelection().Extract<TXBond>();
       FXApp->GetRender().SelectAll(false);
@@ -10025,8 +10025,8 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
             " skiping...";
         }
         else {
-          triplets.AddNew() << bonds[i]->Another(*s).CAtom() << s->CAtom() <<
-            bonds[i+1]->Another(*s).CAtom();
+          triplets.AddNew() << bonds[i]->Another(*s) << s <<
+            bonds[i+1]->Another(*s);
         }
       }
     }
@@ -10036,8 +10036,9 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
         return;
       }
       for (size_t i=0; i < atoms.Count(); i+=3) {
-        triplets.AddNew() << atoms[i]->CAtom() << atoms[i+1]->CAtom() <<
-          atoms[i+2]->CAtom();
+        TSAtomPList &l = triplets.AddNew(3);
+        for( int j=0; j < 3; j++)
+          l.Set(j, atoms[i+j]);
       }
     }
     if (!triplets.IsEmpty()) {
@@ -10045,7 +10046,7 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
       sr.SetValue(val);
       for (size_t i=0; i < triplets.Count(); i++) {
         for (size_t j=0; j < triplets[i].Count(); j++)
-          sr.AddAtom(*triplets[i][j], NULL);
+          sr.AddAtom(triplets[i][j]->CAtom(), &triplets[i][j]->GetMatrix(0));
       }
     }
   }
@@ -10053,7 +10054,7 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
     double val = Cmds[1].ToDouble();
     Cmds.DeleteRange(0, 2);
     TXAtomPList atoms = FindXAtoms(Cmds, false, false);
-    TTypeList<TCAtomPList> quadruplets;
+    TTypeList<TSAtomPList> quadruplets;
     if (atoms.IsEmpty()) {
       TXBondPList bonds = FXApp->GetSelection().Extract<TXBond>();
       FXApp->GetRender().SelectAll(false);
@@ -10070,9 +10071,8 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
             bonds[i+1]->A().GetLabel() << '-' << bonds[i+1]->B().GetLabel() <<
             " skiping...";
         }
-        else {
-          quadruplets.Add(new TCAtomPList(dh, TSAtom::CAtomAccessor<>()));
-        }
+        else
+          quadruplets.AddNew(dh);
       }
     }
     else {
@@ -10081,17 +10081,19 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
         return;
       }
       for (size_t i=0; i < atoms.Count(); i+=4) {
-        TCAtomPList &l = quadruplets.AddNew(4);
-        for (int j=0; j < 4; j++)
-          l.Set(j, atoms[i+j]->CAtom());
+        TSAtomPList &l = quadruplets.AddNew(4);
+        for( int j=0; j < 4; j++)
+          l.Set(j, atoms[i+j]);
       }
     }
     if (!quadruplets.IsEmpty()) {
       TSimpleRestraint &sr = rm.rDihedralAngle.AddNew();
       sr.SetValue(val);
       for (size_t i=0; i < quadruplets.Count(); i++) {
-        for (size_t j=0; j < quadruplets[i].Count(); j++)
-          sr.AddAtom(*quadruplets[i][j], NULL);
+        for (size_t j=0; j < quadruplets[i].Count(); j++) {
+          sr.AddAtom(quadruplets[i][j]->CAtom(),
+            &quadruplets[i][j]->GetMatrix(0));
+        }
       }
     }
   }

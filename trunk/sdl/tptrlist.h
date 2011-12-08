@@ -351,7 +351,7 @@ public:
     FCount -= count;
   }
 //..............................................................................
-  TPtrList SubList(size_t from, size_t count) const {
+  ConstPtrList<T> SubList(size_t from, size_t count) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, from, 0, Count()+1);
@@ -363,11 +363,11 @@ public:
     return rv;
   }
 //..............................................................................
-  inline TPtrList SubListFrom(size_t start) const {
+  ConstPtrList<T> SubListFrom(size_t start) const {
     return SubList(start, FCount-start);
   }
 //..............................................................................
-  inline TPtrList SubListTo(size_t to) const {  return SubList(0, to);  }
+  ConstPtrList<T> SubListTo(size_t to) const {  return SubList(0, to);  }
 //..............................................................................
   /*removes given item from the list, returns if the item existed. If there
   are more than 1 the same item in the list, only the first one will be removed
