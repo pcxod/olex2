@@ -306,7 +306,7 @@ struct ConstIndexAccessor  {
   const data_list_t &data;
   ConstIndexAccessor(const data_list_t &data_) : data(data_) {}
   template <typename IndexT>
-  inline const item_t& operator ()(const IndexT& idx) const {
+  const item_t& operator ()(const IndexT& idx) const {
     return data[idx];
   }
 };
@@ -317,7 +317,7 @@ struct IndexAccessor  {
   data_list_t &data;
   IndexAccessor(data_list_t &data_) : data(data_) {}
   template <typename IndexT>
-  inline item_t& operator ()(const IndexT& idx) const {
+  item_t& operator ()(const IndexT& idx) const {
     return data[idx];
   }
 };

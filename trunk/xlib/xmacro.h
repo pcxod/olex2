@@ -136,122 +136,161 @@ public:
   static DefFunc(GetCompilationInfo)
 
   static TActionQList Actions;
-  static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg, const olxstr& resHKL_FN);
+  static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
+    const olxstr& resHKL_FN);
   static const olxstr NoneString;
   static const olxstr NAString;
   static olxstr CurrentDir;
-  // finds numbers and removes them from the list and returns the number of found numbers
-  template <typename nt, class list> static size_t ParseNumbers(list& Cmds, size_t cnt, ...)  {
+  /* finds numbers and removes them from the list and returns the number of
+  found numbers
+  */
+  template <class list>
+  static size_t Parse(list& Cmds, const olxstr& format, ...)
+  {
+    size_t cnt=0;
     va_list argptr;
-    va_start(argptr, cnt);
-    if( cnt == 0 )  {  va_end(argptr);  return 0;  }
-    size_t fc=0;
-    for( size_t i=0; i < Cmds.Count(); i++ )  {
-      if( Cmds[i].IsNumber() )  {
-        *va_arg(argptr, nt*) = (nt)Cmds[i].ToDouble();
-        Cmds.Delete(i);
-        fc++;
-        if( fc >= cnt )  break;
-        i--;
-      }
-    }
-    va_end(argptr);
-    return fc;
-  }
-  // finds numbers in the list and returns the number of found numbers
-  template <typename nt, class list> static size_t ParseOnlyNumbers(const list& Cmds, size_t cnt, int from=0, ...)  {
-    va_list argptr;
-    va_start(argptr, from);
-    if( cnt <= 0 )  {  va_end(argptr);  return 0;  }
-    size_t fc=0;
-    for( size_t i=from; i < Cmds.Count(); i++ )  {
-      *va_arg(argptr, nt*) = (nt)Cmds[i].ToDouble();
-      fc++;
-      if( fc >= cnt )  break;
-    }
-    va_end(argptr);
-    return fc;
-  }
-  // finds numbers in the list and returns the number of found numbers
-  template <class list> static bool Parse(list& Cmds, const olxstr& format, bool remove, ...)  {
-    va_list argptr;
-    va_start(argptr, remove);
+    va_start(argptr, format);
     try  {
       for( size_t i=0, j=0; i < format.Length(); i++, j++ )  {
+        if (j>=Cmds.Count()) break;
         if( format.CharAt(i) == 'v' )  {
-          if( format.Length() < (i+1) || Cmds.Count() < (j+3) )
-            throw TInvalidArgumentException(__OlxSourceInfo, "invalid format");
+          if( format.Length() < (i+1) || Cmds.Count() < (j+3) ) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "invalid format");
+          }
           if( format.CharAt(++i) == 'i' )  {
             vec3i* iv = va_arg(argptr, vec3i*);
-            for( int k=0; k < 3; k++ )
-              (*iv)[k] = Cmds[j+k].ToInt();
-            if( remove )  {
-              Cmds.DeleteRange(j, 3);
-              j--;
-            }
-            else
-              j+=2;
+            for( int k=0; k < 3; k++ ) (*iv)[k] = Cmds[j+k].ToInt();
           }
           else if( format.CharAt(i) == 'd' )  {
             vec3d* dv = va_arg(argptr, vec3d*);
-            for( int k=0; k < 3; k++ )
-              (*dv)[k] = Cmds[j+k].ToDouble();
-            if( remove )  {
-              Cmds.DeleteRange(j, 3);
-              j--;
-            }
-            else
-              j+=2;
+            for( int k=0; k < 3; k++ ) (*dv)[k] = Cmds[j+k].ToDouble();
           }
-          else 
-            throw TInvalidArgumentException(__OlxSourceInfo, "undefined vector type");
+          else {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "undefined vector type");
+          }
+          Cmds.DeleteRange(j--, 3);
+          cnt++;
         }
         else if( format.CharAt(i) == 'm' )  {
-          if( format.Length() < (i+1) || Cmds.Count() < (j+9) )
-            throw TInvalidArgumentException(__OlxSourceInfo, "invalid format");
+          if( format.Length() < (i+1) || Cmds.Count() < (j+9) ) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "invalid format");
+          }
           if( format.CharAt(++i) == 'i' )  {
             mat3i* im = va_arg(argptr, mat3i*);
             for( int k=0; k < 3; k++ )
               for( int l=0; l < 3; l++ )
                 (*im)[k][l] = Cmds[j+k*3+l].ToInt();
-            if( remove )  {
-              Cmds.DeleteRange(j, 9);
-              j--;
-            }
-            else
-              j+=8;
           }
           else if( format.CharAt(i) == 'd' )  {
             mat3d* dm = va_arg(argptr, mat3d*);
             for( int k=0; k < 3; k++ )
               for( int l=0; l < 3; l++ )
                 (*dm)[k][l] = Cmds[j+k*3+l].ToDouble();
-            if( remove )  {
-              Cmds.DeleteRange(j, 9);
-              j--;
-            }
-            else
-              j+=8;
           }
-          else 
-            throw TInvalidArgumentException(__OlxSourceInfo, "undefined matrix type");
+          else {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "undefined matrix type");
+          }
+          Cmds.DeleteRange(j--, 9);
+          cnt++;
         }
         else if( format.CharAt(i) == 'i' )  {
           int* iv = va_arg(argptr, int*);
           *iv = Cmds[j].ToInt();
+          Cmds.Delete(j--);
+          cnt++;
         }
         else if( format.CharAt(i) == 'd' )  {
           double *dv = va_arg(argptr, double*);
           *dv = Cmds[j].ToDouble();
+          Cmds.Delete(j--);
+          cnt++;
         }
       }
     }
-    catch(...)  {
+    catch(const TExceptionBase &e)  {
       va_end(argptr);
-      return false;
+      throw TFunctionFailedException(__OlxSourceInfo, e);
     }
     va_end(argptr);
-    return true;
+    return cnt;
+  }
+  /* finds numbers and removes them from the list and returns the number of
+  found numbers
+  */
+  template <class list>
+  static size_t ParseOnly(const list& Cmds, const olxstr& format, ...) {
+    size_t cnt=0;
+    va_list argptr;
+    va_start(argptr, format);
+    try  {
+      for( size_t i=0, j=0; i < format.Length(); i++, j++ )  {
+        if (j>=Cmds.Count()) break;
+        if( format.CharAt(i) == 'v' )  {
+          if( format.Length() < (i+1) || Cmds.Count() < (j+3) ) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "invalid format");
+          }
+          if( format.CharAt(++i) == 'i' )  {
+            vec3i* iv = va_arg(argptr, vec3i*);
+            for( int k=0; k < 3; k++ ) (*iv)[k] = Cmds[j+k].ToInt();
+          }
+          else if( format.CharAt(i) == 'd' )  {
+            vec3d* dv = va_arg(argptr, vec3d*);
+            for( int k=0; k < 3; k++ ) (*dv)[k] = Cmds[j+k].ToDouble();
+          }
+          else {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "undefined vector type");
+          }
+          j+=2;
+          cnt++;
+        }
+        else if( format.CharAt(i) == 'm' )  {
+          if( format.Length() < (i+1) || Cmds.Count() < (j+9) ) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "invalid format");
+          }
+          if( format.CharAt(++i) == 'i' )  {
+            mat3i* im = va_arg(argptr, mat3i*);
+            for( int k=0; k < 3; k++ )
+              for( int l=0; l < 3; l++ )
+                (*im)[k][l] = Cmds[j+k*3+l].ToInt();
+          }
+          else if( format.CharAt(i) == 'd' )  {
+            mat3d* dm = va_arg(argptr, mat3d*);
+            for( int k=0; k < 3; k++ )
+              for( int l=0; l < 3; l++ )
+                (*dm)[k][l] = Cmds[j+k*3+l].ToDouble();
+          }
+          else {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "undefined matrix type");
+          }
+          j+=8;
+          cnt++;
+        }
+        else if( format.CharAt(i) == 'i' )  {
+          int* iv = va_arg(argptr, int*);
+          *iv = Cmds[j].ToInt();
+          cnt++;
+        }
+        else if( format.CharAt(i) == 'd' )  {
+          double *dv = va_arg(argptr, double*);
+          *dv = Cmds[j].ToDouble();
+          cnt++;
+        }
+      }
+    }
+    catch(const TExceptionBase &e)  {
+      va_end(argptr);
+      throw TFunctionFailedException(__OlxSourceInfo, e);
+    }
+    va_end(argptr);
+    return cnt;
   }
   static void Export(class TLibrary& lib);
   static TActionQueue &OnDelIns, &OnAddIns;

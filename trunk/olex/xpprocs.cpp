@@ -2706,7 +2706,7 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double fvar = -1101, k = -1;
-  XLibMacros::ParseNumbers<double>(Cmds, 2, &fvar, &k);
+  XLibMacros::Parse(Cmds, "dd", &fvar, &k);
   if( k < 0 && olx_abs(fvar-olx_round(fvar)) > 1e-1 )  {
     double fvv = int(fvar)/10;
     k = olx_abs(fvar - fvv*10);
@@ -2798,7 +2798,7 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   RefinementModel& rm = FXApp->XFile().GetRM();
   double val = 1, esd = 0.01;
-  XLibMacros::ParseNumbers<double>(Cmds, 2, &val, &esd);
+  XLibMacros::Parse(Cmds, "dd", &val, &esd);
   TXAtomPList xatoms = FindXAtoms(Cmds, false, true);
   // create a list of unique catoms
   for( size_t i=0; i < xatoms.Count(); i++ )
@@ -2827,7 +2827,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   RefinementModel& rm = FXApp->XFile().GetRM();
   int part = DefNoPart;
   const size_t partCount = Options.FindValue("p", "1").ToSizeT();
-  XLibMacros::ParseNumbers<int>(Cmds, 1, &part);
+  XLibMacros::Parse(Cmds, "i", &part);
   const bool linkOccu = Options.Contains("lo");
   const bool copy = Options.Contains("c");
 
@@ -2912,7 +2912,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   int afix = -1;
-  XLibMacros::ParseNumbers<int>(Cmds, 1, &afix);
+  XLibMacros::Parse(Cmds, "i", &afix);
   if( afix == -1 )  {
     E.ProcessingError(__OlxSrcInfo, "afix should be specified");
     return;
@@ -3058,7 +3058,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macRRings(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double l = 1.39, e = 0.001;
-  XLibMacros::ParseNumbers<double>(Cmds, 2, &l, &e);
+  XLibMacros::Parse(Cmds, "dd", &l, &e);
 
   TTypeList<TSAtomPList> rings;
   olxstr cmd = Cmds.IsEmpty() ? olxstr("sel") : Cmds[0];
@@ -3405,7 +3405,7 @@ void TMainForm::macFlat(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macSIMU(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double esd1 = 0.04, esd2=0.08, val = 1.7;  // esd
-  size_t cnt = XLibMacros::ParseNumbers<double>(Cmds, 3, &esd1, &esd2, &val);
+  size_t cnt = XLibMacros::Parse(Cmds, "ddd", &esd1, &esd2, &val);
   if( cnt == 1 )
     esd2 = esd1 * 2;
   TXAtomPList Atoms = FindXAtoms(Cmds, false, !Options.Contains("cs"));
@@ -3425,7 +3425,7 @@ void TMainForm::macSIMU(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macDELU(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double esd1 = 0.01, esd2=0.01;  // esd
-  size_t cnt = XLibMacros::ParseNumbers<double>(Cmds, 2, &esd1, &esd2);
+  size_t cnt = XLibMacros::Parse(Cmds, "dd", &esd1, &esd2);
   if( cnt == 1 )
     esd2 = esd1;
   TXAtomPList Atoms = FindXAtoms(Cmds, false, !Options.Contains("cs"));
@@ -3443,7 +3443,7 @@ void TMainForm::macDELU(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macISOR(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double esd1 = 0.1, esd2=0.2;  // esd
-  size_t cnt = XLibMacros::ParseNumbers<double>(Cmds, 2, &esd1, &esd2);
+  size_t cnt = XLibMacros::Parse(Cmds, "dd", &esd1, &esd2);
   if( cnt == 1 )
     esd2 = 2*esd1;
   TXAtomPList Atoms = FindXAtoms(Cmds, false, !Options.Contains("cs"));
@@ -3461,7 +3461,7 @@ void TMainForm::macISOR(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macChiv(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double esd = 0.1, val=0;
-  size_t cnt = XLibMacros::ParseNumbers<double>(Cmds, 2, &val, &esd);
+  size_t cnt = XLibMacros::Parse(Cmds, "dd", &val, &esd);
   TXAtomPList Atoms;
   if( !FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs")) )  {
     E.ProcessingError(__OlxSrcInfo, "no atoms provided");
@@ -10003,11 +10003,38 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
         r->AddAtom(atoms[i]->CAtom(), NULL);
     }
   }
-  if( Cmds[0].Equalsi("angle") && Cmds.Count() > 1 )  {
+  else if( Cmds[0].Equalsi("bond") )  {
+    Cmds.Delete(0);
+    double val = -1, esd=0.02;
+    TSimpleRestraint *r = NULL;
+    size_t set_cnt = XLibMacros::Parse(Cmds, "dd", &val, &esd);
+    TXAtomPList atoms = FindXAtoms(Cmds, false, false);
+    if (atoms.IsEmpty()) {
+      TXBondPList bonds = FXApp->GetSelection().Extract<TXBond>();
+      FXApp->GetRender().SelectAll(false);
+      for (size_t i=0; i < bonds.Count(); i++)
+        atoms << bonds[i]->A() << bonds[i]->B();
+    }
+    if( (atoms.Count()%2) != 0 )  {
+      E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
+      return;
+    }
+    if( (set_cnt == 1 && val >= 0.5) || set_cnt == 2)  {
+      r = &rm.rDFIX.AddNew();
+      r->SetValue(val);
+      if (set_cnt == 2) r->SetEsd(esd);
+    }
+    else {
+      r = &rm.rSADI.AddNew();
+      if (set_cnt == 1) r->SetEsd(val);
+    }
+    for (size_t i=0; i < atoms.Count(); i++)
+      r->AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix(0));
+  }
+  else if( Cmds[0].Equalsi("angle") && Cmds.Count() > 1 )  {
     double val = Cmds[1].ToDouble();
     Cmds.DeleteRange(0, 2);
     TXAtomPList atoms = FindXAtoms(Cmds, false, false);
-    TTypeList<TSAtomPList> triplets;
     if (atoms.IsEmpty()) {
       TXBondPList bonds = FXApp->GetSelection().Extract<TXBond>();
       FXApp->GetRender().SelectAll(false);
@@ -10025,32 +10052,23 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
             " skiping...";
         }
         else {
-          triplets.AddNew() << bonds[i]->Another(*s) << s <<
+          atoms << bonds[i]->Another(*s) << (TXAtom*)s <<
             bonds[i+1]->Another(*s);
         }
       }
     }
-    else {
-      if ((atoms.Count()%3)!=0) {
-        E.ProcessingError(__OlxSrcInfo, "triplets of atoms are expected");
-        return;
-      }
-      for (size_t i=0; i < atoms.Count(); i+=3) {
-        TSAtomPList &l = triplets.AddNew(3);
-        for( int j=0; j < 3; j++)
-          l.Set(j, atoms[i+j]);
-      }
+    if ((atoms.Count()%3)!=0) {
+      E.ProcessingError(__OlxSrcInfo, "triplets of atoms are expected");
+      return;
     }
-    if (!triplets.IsEmpty()) {
+    if (!atoms.IsEmpty()) {
       TSimpleRestraint &sr = rm.rAngle.AddNew();
       sr.SetValue(val);
-      for (size_t i=0; i < triplets.Count(); i++) {
-        for (size_t j=0; j < triplets[i].Count(); j++)
-          sr.AddAtom(triplets[i][j]->CAtom(), &triplets[i][j]->GetMatrix(0));
-      }
+      for (size_t i=0; i < atoms.Count(); i++)
+        sr.AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix(0));
     }
   }
-  if( Cmds[0].Equalsi("dihedral") && Cmds.Count() > 1 )  {
+  else if( Cmds[0].Equalsi("dihedral") && Cmds.Count() > 1 )  {
     double val = Cmds[1].ToDouble();
     Cmds.DeleteRange(0, 2);
     TXAtomPList atoms = FindXAtoms(Cmds, false, false);

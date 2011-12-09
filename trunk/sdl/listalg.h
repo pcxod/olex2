@@ -101,4 +101,39 @@ template <class seq_t> static seq_t &olx_reverse(seq_t &seq)  {
   return olx_reverse(seq, seq.Count());
 }
 
+struct ReverseList {
+  template <class data_list_t>
+  struct ReverseList_  {
+    typedef typename data_list_t::list_item_type return_type;
+    data_list_t &data;
+    ReverseList_(data_list_t &data_) : data(data_) {}
+    return_type& operator [](size_t& i) const {
+      return data[data.Count()-i-1];
+    }
+    size_t Count() const { return data.Count(); }
+  };
+
+  template <class data_list_t>
+  struct ReverseConstList_  {
+    typedef typename data_list_t::list_item_type return_type;
+    const data_list_t &data;
+    ReverseConstList_(const data_list_t &data_) : data(data_) {}
+    const return_type& operator [](size_t& i) const {
+      return data[data.Count()-i-1];
+    }
+    size_t Count() const { return data.Count(); }
+  };
+
+  template <class list_t>
+  static ReverseList_<list_t> Make(list_t &data) {
+    return ReverseList_<list_t>(data);
+  }
+
+  template <class list_t>
+  static ReverseConstList_<list_t> MakeConst(const list_t &data) {
+    return ReverseConstList_<list_t>(data);
+  }
+};
+
+
 #endif

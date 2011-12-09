@@ -128,30 +128,41 @@ public:
 #ifdef __WIN32__
 class SplashDlg : public wxDialog  {
   wxBitmap *bmp;
-  int imgHeight, imgWidth, txtHeight;
+  int imgHeight, imgWidth, txtHeight, txtWidth;
+  bool has_alpha;
 public:
   SplashDlg(wxWindow *parent) :
-      wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100), wxNO_BORDER) 
+      wxDialog(parent, -1, wxT("Initialising"), wxDefaultPosition, wxSize(100, 100),
+        wxNO_BORDER|wxFRAME_SHAPED) 
   {
     wxDialog::SetTitle(wxT("Olex2 splash screen"));
     bmp = NULL;
     imgHeight = 0;
     imgWidth = 200;
-    olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
+    has_alpha = false;
+    olxstr splash_img = TBasicApp::GetBaseDir() + "splash.png";
     if( TEFile::Exists(splash_img) )  {
       wxImage img;
       img.LoadFile(splash_img.u_str());
+      has_alpha = img.HasAlpha();
+      if (has_alpha)
+        img.ConvertAlphaToMask();
       bmp = new wxBitmap(img);
       imgWidth = img.GetWidth();
       imgHeight = img.GetHeight();
+      if (has_alpha) {
+        wxRegion reg(*bmp);
+        SetShape(reg);
+      }
     }
     wxWindowDC dc(this);
-    wxSize sz = dc.GetTextExtent(wxT("I"));
+    wxSize sz = dc.GetTextExtent(wxT("Olex2 is initialising"));
     int ScreenW = wxSystemSettings::GetMetric(wxSYS_SCREEN_X),
         ScreenH = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
     const int ch = imgHeight + sz.y; // combined height
     SetSize((ScreenW-imgWidth)/2, (ScreenH-ch)/2, imgWidth, ch);
     txtHeight = sz.y;
+    txtWidth = sz.GetWidth();
   }
   ~SplashDlg()  {
     if( bmp != NULL )
@@ -160,17 +171,21 @@ public:
   void DoPaint()  {
     static size_t generation = 0;
     wxWindowDC dc(this);
+    dc.SetBackgroundMode(wxTRANSPARENT);
+    dc.SetBackground(*wxTRANSPARENT_BRUSH);//*wxWHITE_BRUSH);
+    //dc.Clear();
     if( bmp != NULL )
-      dc.DrawBitmap(*bmp, 0, 0);
+      dc.DrawBitmap(*bmp, 0, 0, true);
     wxString str(wxT("Olex2 is initialising"));
     for( size_t i=0; i < generation; i++ )
       str += '.';
-    wxColor cl(0x8b7566);
+    wxColor cl(0xb4);
     dc.SetBrush(wxBrush(cl));//*wxWHITE_BRUSH);
     dc.SetPen(wxPen(cl));//*wxWHITE_PEN);
-    dc.DrawRectangle(0, imgHeight, imgWidth, txtHeight);
+    int h = has_alpha ? imgHeight-txtHeight : imgHeight;
+    dc.DrawRectangle(0, h, imgWidth, h);
     dc.SetTextForeground(*wxWHITE);
-    dc.DrawText(str, 0, imgHeight);
+    dc.DrawText(str, (imgWidth-olx_round(txtWidth*1.5))/2, h);
     if( ++generation > 20 )
       generation = 0;
   }

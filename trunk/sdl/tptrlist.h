@@ -359,7 +359,7 @@ public:
       __POlxSourceInfo, from+count, 0, Count()+1);
 #endif
     TPtrList rv(count);
-    memcpy(rv.Items, Items[from], count*sizeof(T*));
+    memcpy(rv.Items, &Items[from], count*sizeof(T*));
     return rv;
   }
 //..............................................................................
@@ -388,14 +388,14 @@ public:
     if( sv == 0 )  return *this;
     if( sv == 1 )  {  // special case
       T *D = Items[0];
-      for( size_t i=1; i <= FCount-1; i++ )
+      for( size_t i=1; i < FCount; i++ )
         Items[i-1] = Items[i];
       Items[FCount-1] = D;
     }
     else  {
       T** D = new T*[sv];
-      memcpy( D, Items, sv*sizeof(T*) );
-      for( size_t i=sv; i <= FCount-1; i++ )
+      memcpy( D, Items, sv*sizeof(T*));
+      for( size_t i=sv; i < FCount; i++ )
         Items[i-sv] = Items[i];
       memcpy(&Items[FCount-sv], D, sv*sizeof(T*));
       delete [] D;

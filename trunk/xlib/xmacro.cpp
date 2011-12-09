@@ -938,8 +938,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   double max_d = 2.9, min_ang = TXApp::GetMinHBondAngle();
-  size_t cnt = XLibMacros::ParseNumbers<double,TStrObjList>(
-    Cmds, 2, &max_d, &min_ang);
+  size_t cnt = XLibMacros::Parse(Cmds, "dd", &max_d, &min_ang);
   if( cnt == 1 )  {
     if( max_d > 10 )  {
       min_ang = max_d;
@@ -1606,7 +1605,7 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   int ls = -1;
-  XLibMacros::ParseNumbers<int,TStrObjList>(Cmds, 1, &ls);
+  XLibMacros::Parse(Cmds, "i", &ls);
   if( ls != -1 )  
     TXApp::GetInstance().XFile().GetRM().SetIterations((int)ls);
   if( !Cmds.IsEmpty() )
@@ -2354,7 +2353,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   double r = 2.7;
-  ParseNumbers<double,TStrObjList>(Cmds, 1, &r);
+  Parse(Cmds, "d", &r);
   if( r < 1 || r > 10 )  {
     E.ProcessingError(__OlxSrcInfo, "radius must be within [1;10] range");
     return;
