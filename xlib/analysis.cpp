@@ -387,22 +387,22 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
   return ring;
 }
 //.............................................................................
-ConstTypeList<TCAtomPList> fragments::fragment::get_rings(
+ConstTypeList<fragments::ring> fragments::fragment::get_rings(
   const TCAtomPList &r_atoms)
 {
-  TTypeList<TCAtomPList> rv;
+  TTypeList<fragments::ring> rv;
   if (r_atoms.IsEmpty()) return rv;
   for (size_t i=0; i < r_atoms.Count(); i++)
-    rv.Add(new TCAtomPList(trace_ring(*r_atoms[i])));
+    rv.AddNew(trace_ring(*r_atoms[i]));
   r_atoms[0]->GetParent()->GetAtoms().ForEach(
     TCAtom::FlagSetter<>(catom_flag_Processed, false));
   // sort the ring according to the connectivity
   for (size_t i=0; i < rv.Count(); i++) {
-    if (!rv[i].IsEmpty()) {
+    if (!rv[i].atoms.IsEmpty()) {
       // need for the case of overlapping rings
-      rv[i].ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
+      rv[i].atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
       try {
-        rv[i] = ring_sorter(rv[i]);
+        rv[i] = ring_sorter(rv[i].atoms);
       }
       catch (const TExceptionBase &e) {
         TBasicApp::NewLogEntry(logInfo) << "Ring sorting error: " <<

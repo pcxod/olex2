@@ -401,8 +401,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         "FRAG code must be greater than 16");
     }
     double a=1, b=1, c=1, al=90, be=90, ga=90;
-    XLibMacros::ParseOnlyNumbers<double, TStrList>(
-      Toks, 6, 2, &a, &b, &c, &al, &be, &ga);
+    XLibMacros::ParseOnly(
+      Toks.SubListFrom(2), "dddddd", &a, &b, &c, &al, &be, &ga);
     Fragment* frag = cx.rm.FindFragByCode(code);
     if( frag == NULL )
       frag = &cx.rm.AddFrag(Toks[1].ToInt(), a, b, c, al, be, ga);

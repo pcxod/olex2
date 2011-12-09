@@ -56,6 +56,66 @@ protected:
   // recursive exansion helper function
   static void expand_node(TCAtom &a, TCAtomPList &atoms);
 public:
+  struct ring {
+    /* fused - the link belongs to the rings, otherwise the link starts with an
+    atom which belongs to one rings and ends wih the atom belinging to the other
+    ring*/
+    struct bond {
+      bool fused;
+      TCAtomPList link;
+      ring &parent, &to;
+      bond(ring &parent_, ring &to_) : parent(parent_), to(to) {}
+    };
+    ring(ConstPtrList<TCAtom> atoms_) : atoms(atoms_) {}
+    TTypeList<bond> bonds;
+    TCAtomPList atoms;
+    bool IsFusedWith(const ring &r) const {
+      atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
+      r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
+      size_t prev_ind=InvalidIndex;
+      for (size_t i=0; i < atoms.Count(); i++) {
+        if (atoms[i]->IsProcessed()) {
+          if (prev_ind != InvalidIndex) {
+            if (i == prev_ind+1 || (prev_ind==0 && i==atoms.Count()-1))
+              return true;
+          }
+          prev_ind = i;
+        }
+      }
+      return false;
+    }
+    bool Merge(ring &r) {
+      atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
+      r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
+      TSizeList tii, tai;
+      for (size_t i=0; i < atoms.Count(); i++)
+        if (atoms[i]->IsProcessed()) tii << i;
+      if (tii.Count() != 2) return false;
+
+      atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
+      for (size_t i=0; i < r.atoms.Count(); i++)
+        if (!r.atoms[i]->IsProcessed()) tai << i;
+
+      if (tii[0] == 0 && tii[1] == atoms.Count()-1)
+        ;//atoms.ShiftR(1);
+      else if (tii[0]+1 == tii[1])
+        atoms.ShiftL(tii[0]+1);
+      else
+        return false;
+
+      if (tai[0] == 0 && tai[1] == r.atoms.Count()-1)
+        r.atoms.ShiftR(1);
+      else if (tai[0]+1 == tai[1])
+        r.atoms.ShiftL(tai[0]);
+      else
+        return false;
+      if (atoms[0] != r.atoms[1])
+        atoms.AddList(r.atoms.SubListFrom(2));
+      else
+        atoms.AddList(ReverseList::MakeConst(r.atoms.SubListFrom(2)));
+      return true;
+    }
+  };
   struct fragment {
   protected:
     mutable double u_eq;
@@ -93,7 +153,7 @@ public:
     void breadth_first_tags(size_t start=InvalidIndex,
       TCAtomPList *ring_atoms=NULL);
     /* traces the rings back from the breadth-first tag assignment */
-    static ConstTypeList<TCAtomPList> get_rings(const TCAtomPList &r_atoms);
+    static ConstTypeList<ring> get_rings(const TCAtomPList &r_atoms);
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
 };
