@@ -22,6 +22,7 @@ namespace alg {
   double mean_u_eq(const TCAtomPList &atoms);
   olxstr formula(const TCAtomPList &atoms, double mult=1);
   olxstr label(const TCAtomPList &atoms);
+  const cm_Element &find_heaviest(const TCAtomPList &atoms);
 }; // end namespace alg
 struct peaks {
   static int peak_sort(const TCAtom *a1, const TCAtom *a2) {
@@ -57,64 +58,29 @@ protected:
   static void expand_node(TCAtom &a, TCAtomPList &atoms);
 public:
   struct ring {
-    /* fused - the link belongs to the rings, otherwise the link starts with an
-    atom which belongs to one rings and ends wih the atom belinging to the other
-    ring*/
-    struct bond {
-      bool fused;
-      TCAtomPList link;
-      ring &parent, &to;
-      bond(ring &parent_, ring &to_) : parent(parent_), to(to) {}
-    };
-    ring(ConstPtrList<TCAtom> atoms_) : atoms(atoms_) {}
-    TTypeList<bond> bonds;
-    TCAtomPList atoms;
-    bool IsFusedWith(const ring &r) const {
-      atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
-      r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
-      size_t prev_ind=InvalidIndex;
-      for (size_t i=0; i < atoms.Count(); i++) {
-        if (atoms[i]->IsProcessed()) {
-          if (prev_ind != InvalidIndex) {
-            if (i == prev_ind+1 || (prev_ind==0 && i==atoms.Count()-1))
-              return true;
-          }
-          prev_ind = i;
-        }
+    struct substituent {
+      // always start from the ring atom
+      TCAtomPList atoms;
+      ring &parent;
+      size_t ring_count;
+      substituent(ring &parent_, TCAtom &a)
+        : parent(parent_), ring_count(0)
+      {
+        atoms.Add(a);
       }
-      return false;
-    }
-    bool Merge(ring &r) {
-      atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
-      r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
-      TSizeList tii, tai;
-      for (size_t i=0; i < atoms.Count(); i++)
-        if (atoms[i]->IsProcessed()) tii << i;
-      if (tii.Count() != 2) return false;
-
-      atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
-      for (size_t i=0; i < r.atoms.Count(); i++)
-        if (!r.atoms[i]->IsProcessed()) tai << i;
-
-      if (tii[0] == 0 && tii[1] == atoms.Count()-1)
-        ;//atoms.ShiftR(1);
-      else if (tii[0]+1 == tii[1])
-        atoms.ShiftL(tii[0]+1);
-      else
-        return false;
-
-      if (tai[0] == 0 && tai[1] == r.atoms.Count()-1)
-        r.atoms.ShiftR(1);
-      else if (tai[0]+1 == tai[1])
-        r.atoms.ShiftL(tai[0]);
-      else
-        return false;
-      if (atoms[0] != r.atoms[1])
-        atoms.AddList(r.atoms.SubListFrom(2));
-      else
-        atoms.AddList(ReverseList::MakeConst(r.atoms.SubListFrom(2)));
-      return true;
-    }
+      int Compare(const substituent &s) const;
+    };
+    size_t fused_count;
+    ring(ConstPtrList<TCAtom> atoms_)
+      : atoms(atoms_), fused_count(0)
+    {}
+    TTypeList<substituent> substituents;
+    TCAtomPList atoms;
+    // checks if the rings shares two sunsequent atoms with abother ring
+    bool is_fused_with(const ring &r) const;
+    // merges fused ring into one, big ring, r is merged into this ring
+    bool merge(ring &r);
+    int Compare(const substituent &s) const;
   };
   struct fragment {
   protected:
@@ -125,8 +91,11 @@ public:
     static void build_coordinate(
       TCAtom &a, const smatd &m, vec3d_list &res);
     ConstTypeList<vec3d> build_coordinates() const;
-    static ConstPtrList<TCAtom> trace_ring(TCAtom &a);
+    ConstPtrList<TCAtom> trace_ring(TCAtom &a);
+    void trace_substituent(ring::substituent &s);
     static ConstPtrList<TCAtom> ring_sorter(const TCAtomPList &r);
+    void init_rings(TTypeList<ring> &rings);
+    void init_ring(size_t i, TTypeList<ring> &rings);
   public:
     fragment() : u_eq(0) {}
     double get_mean_u_eq(bool update=false) const {
@@ -153,7 +122,7 @@ public:
     void breadth_first_tags(size_t start=InvalidIndex,
       TCAtomPList *ring_atoms=NULL);
     /* traces the rings back from the breadth-first tag assignment */
-    static ConstTypeList<ring> get_rings(const TCAtomPList &r_atoms);
+    ConstTypeList<ring> get_rings(const TCAtomPList &r_atoms);
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
 };

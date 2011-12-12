@@ -59,6 +59,17 @@ olxstr alg::label(const TCAtomPList &atoms) {
   return rv;
 }
 //.............................................................................
+const cm_Element &alg::find_heaviest(const TCAtomPList &atoms) {
+  if (atoms.IsEmpty())
+    return XElementLib::GetByIndex(iQPeakIndex);
+  size_t ind=0;
+  for (size_t i=1; i < atoms.Count(); i++) {
+    if (atoms[i]->GetType().z > atoms[ind]->GetType().z)
+      ind = i;
+  }
+  return atoms[ind]->GetType();
+}
+//.............................................................................
 //.............................................................................
 void peaks::range::delete_all() {
   for (size_t i=0; i < peaks.Count(); i++)
@@ -136,6 +147,67 @@ TCAtomPList &peaks::proximity_clean(TCAtomPList &peaks) {
     }
   }
   return peaks.Pack(TCAtom::FlagsAnalyser<>(catom_flag_Deleted));
+}
+//.............................................................................
+//.............................................................................
+bool fragments::ring::is_fused_with(const ring &r) const {
+  atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
+  r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
+  size_t prev_ind=InvalidIndex;
+  for (size_t i=0; i < atoms.Count(); i++) {
+    if (atoms[i]->IsProcessed()) {
+      if (prev_ind != InvalidIndex) {
+        if (i == prev_ind+1 || (prev_ind==0 && i==atoms.Count()-1))
+          return true;
+      }
+      prev_ind = i;
+    }
+  }
+  return false;
+}
+//.............................................................................
+bool fragments::ring::merge(ring &r) {
+  atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
+  r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
+  TSizeList tii, tai;
+  for (size_t i=0; i < atoms.Count(); i++)
+    if (atoms[i]->IsProcessed()) tii << i;
+  if (tii.Count() != 2) return false;
+
+  atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
+  for (size_t i=0; i < r.atoms.Count(); i++)
+    if (!r.atoms[i]->IsProcessed()) tai << i;
+
+  if (tii[0] == 0 && tii[1] == atoms.Count()-1)
+    ;//atoms.ShiftR(1);
+  else if (tii[0]+1 == tii[1])
+    atoms.ShiftL(tii[0]+1);
+  else
+    return false;
+
+  if (tai[0] == 0 && tai[1] == r.atoms.Count()-1)
+    r.atoms.ShiftR(1);
+  else if (tai[0]+1 == tai[1])
+    r.atoms.ShiftL(tai[0]);
+  else
+    return false;
+  if (atoms[0] != r.atoms[1])
+    atoms.AddList(r.atoms.SubListFrom(2));
+  else
+    atoms.AddList(ReverseList::MakeConst(r.atoms.SubListFrom(2)));
+  fused_count++;
+  return true;
+}
+//.............................................................................
+//.............................................................................
+int fragments::ring::substituent::Compare(
+  const fragments::ring::substituent &s) const
+{
+  int r = olx_cmp(ring_count, s.ring_count);
+  if (r != 0) return r;
+  r = olx_cmp(alg::find_heaviest(atoms).z, alg::find_heaviest(s.atoms).z);
+  if (r != 0) return r;
+  return olx_cmp(atoms.Count(), s.atoms.Count());
 }
 //.............................................................................
 //.............................................................................
@@ -349,10 +421,53 @@ void fragments::fragment::breadth_first_tags(size_t start,
   }
 }
 //.............................................................................
+void fragments::fragment::init_rings(TTypeList<fragments::ring> &rings) {
+  for (size_t i=0; i < rings.Count(); i++)
+    init_ring(i, rings);
+}
+//.............................................................................
+void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
+  if (atoms_.IsEmpty()) return;
+  atoms_.ForEach(ACollectionItem::TagSetter<>(-1));
+  ring &r = rings[i];
+  TQueue<TCAtom*> queue;
+  for (size_t i=0; i < rings.Count(); i++)
+    rings[i].atoms.ForEach(ACollectionItem::TagSetter<>(0));
+  for (size_t i=0; i < r.atoms.Count(); i++)
+    queue.Push(r.atoms[i])->SetTag(-1);
+  queue.Push(NULL);
+  index_t tv = 1;
+  while (!queue.IsEmpty()) {
+    TCAtom *a = queue.Pop();
+    if (a == NULL) {
+      if (queue.IsEmpty()) break;
+      tv++;
+      queue.Push(NULL);
+      continue;
+    }
+    if (a->GetTag() != -1 ) continue;
+    a->SetTag(tv);
+    for (size_t i=0; i < a->AttachedSiteCount(); i++) {
+      TCAtom::Site &st = a->GetAttachedSite(i);
+      if (st.atom->GetTag() == -1)
+        queue.Push(st.atom);
+    }
+  }
+  for (size_t i=0; i < r.atoms.Count(); i++) {
+    for (size_t j=0; j < r.atoms[i]->AttachedSiteCount(); j++) {
+      TCAtom &a = r.atoms[i]->GetAttachedAtom(j);
+      if (a.GetTag() == 1) {
+        trace_substituent(
+          r.substituents.Add(new ring::substituent(r, a)));
+      }
+    }
+  }
+}
+//.............................................................................
 ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
   TCAtomPList ring;
   TQueue<TCAtom*> queue;
-  a.GetParent()->GetAtoms().ForEach(
+  atoms_.ForEach(
     TCAtom::FlagSetter<>(catom_flag_Processed, false));
   queue.Push(ring.Add(a))->SetProcessed(true);
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
@@ -387,6 +502,24 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
   return ring;
 }
 //.............................................................................
+void fragments::fragment::trace_substituent(ring::substituent &s) {
+  atoms_.ForEach(
+    TCAtom::FlagSetter<>(catom_flag_Processed, false));
+  for (size_t i=0; i < s.atoms.Count(); i++) { // hidden recursion
+    if (s.atoms[i]->IsProcessed()) continue;
+    for (size_t j=0; j < s.atoms[i]->AttachedSiteCount(); j++) {
+      TCAtom &a = s.atoms[i]->GetAttachedAtom(j);
+      if (a.IsProcessed()) continue;
+      if (a.GetTag() <= s.atoms[i]->GetTag()) {
+        if (a.GetTag() == 0)
+          s.ring_count++;
+        continue;
+      }
+      s.atoms.Add(a);
+    }
+  }
+}
+//.............................................................................
 ConstTypeList<fragments::ring> fragments::fragment::get_rings(
   const TCAtomPList &r_atoms)
 {
@@ -411,6 +544,7 @@ ConstTypeList<fragments::ring> fragments::fragment::get_rings(
       }
     }
   }
+  init_rings(rv);
   return rv;
 }
 //.............................................................................
