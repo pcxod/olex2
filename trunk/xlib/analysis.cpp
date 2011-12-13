@@ -150,6 +150,13 @@ TCAtomPList &peaks::proximity_clean(TCAtomPList &peaks) {
 }
 //.............................................................................
 //.............................................................................
+void fragments::tree_node::reverse() {
+  olx_reverse(trunk);
+  trunk.ForEach(ACollectionItem::IndexTagSetter<>());
+  sort();
+}
+//.............................................................................
+//.............................................................................
 bool fragments::ring::is_fused_with(const ring &r) const {
   atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
   r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
@@ -195,8 +202,21 @@ bool fragments::ring::merge(ring &r) {
     atoms.AddList(r.atoms.SubListFrom(2));
   else
     atoms.AddList(ReverseList::MakeConst(r.atoms.SubListFrom(2)));
+  for (size_t i=0; i < r.substituents.Count(); i++) {
+    if (!r.substituents[i].atoms[0]->IsProcessed())
+      substituents.AddCopy(r.substituents[i]);
+  }
   fused_count++;
   return true;
+}
+//.............................................................................
+int fragments::ring::Compare(const ring &r) const {
+  int d = olx_cmp(atoms.Count(), r.atoms.Count());
+  if (d != 0) return d;
+  d = olx_cmp(substituents.Count(), r.substituents.Count());
+  if (d != 0) return d;
+  if (substituents.IsEmpty()) return 0;
+  return substituents[0].Compare(r.substituents[0]);
 }
 //.............................................................................
 //.............................................................................
@@ -396,7 +416,7 @@ void fragments::fragment::breadth_first_tags(size_t start,
     start = 0;
   queue.Push(atoms_[start]);
   queue.Push(NULL);
-  index_t tv = 1;
+  index_t tv = 0;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
     if (a == NULL) {
@@ -422,8 +442,17 @@ void fragments::fragment::breadth_first_tags(size_t start,
 }
 //.............................................................................
 void fragments::fragment::init_rings(TTypeList<fragments::ring> &rings) {
-  for (size_t i=0; i < rings.Count(); i++)
+  for (size_t i=0; i < rings.Count(); i++) {
     init_ring(i, rings);
+    if (!rings[i].substituents.IsEmpty()) {
+      rings[i].substituents.QuickSorter.Sort(rings[i].substituents,
+        TComparableComparator());
+      // align atoms to start from the 'heaviest' substituent
+      rings[i].atoms.ForEach(ACollectionItem::IndexTagSetter<>());
+      rings[i].atoms.ShiftL(rings[i].substituents.GetLast().atoms[0]->GetTag());
+    }
+  }
+  rings.QuickSorter.Sort(rings, TComparableComparator());
 }
 //.............................................................................
 void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
@@ -432,11 +461,11 @@ void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
   ring &r = rings[i];
   TQueue<TCAtom*> queue;
   for (size_t i=0; i < rings.Count(); i++)
-    rings[i].atoms.ForEach(ACollectionItem::TagSetter<>(0));
+    rings[i].atoms.ForEach(ACollectionItem::TagSetter<>(-2));
   for (size_t i=0; i < r.atoms.Count(); i++)
     queue.Push(r.atoms[i])->SetTag(-1);
   queue.Push(NULL);
-  index_t tv = 1;
+  index_t tv = 0;
   while (!queue.IsEmpty()) {
     TCAtom *a = queue.Pop();
     if (a == NULL) {
@@ -456,12 +485,50 @@ void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
   for (size_t i=0; i < r.atoms.Count(); i++) {
     for (size_t j=0; j < r.atoms[i]->AttachedSiteCount(); j++) {
       TCAtom &a = r.atoms[i]->GetAttachedAtom(j);
-      if (a.GetTag() == 1) {
-        trace_substituent(
-          r.substituents.Add(new ring::substituent(r, a)));
+      if (a.GetTag() == 1 && a.GetType().z > 1) {
+        ring::substituent &s = r.substituents.Add(
+          new ring::substituent(r, *r.atoms[i]));
+        s.atoms.Add(a);
+        trace_substituent(s);
+      }
+      else if (a.GetTag() == -2) { // straight to the ring
+        r.substituents.Add(
+          new ring::substituent(r, *r.atoms[i])).ring_count++;
       }
     }
   }
+  // build the substituent trees
+  for (size_t i=0; i < r.substituents.Count(); i++) {
+    ring::substituent &s = r.substituents[i];
+    trace_tree(s.atoms, s.tree);
+  }
+}
+//.............................................................................
+fragments::tree_node &fragments::fragment::trace_tree(TCAtomPList &atoms,
+  tree_node &tree)
+{
+  atoms.QuickSorter.Sort(atoms, ring::substituent::atom_cmp());
+  if (atoms.Count() == 1) {
+    tree.trunk.Add(atoms[0]);
+    return tree;
+  }
+  trace_branch(atoms.GetLast(), tree);
+  tree.trunk.ForEach(ACollectionItem::TagSetter<>(0));
+  TPtrList<tree_node> branches;
+  branches.Add(tree);
+  for (size_t i=atoms.Count()-2; i != InvalidIndex; i--) {
+    if (!atoms[i]->IsProcessed()) {
+      tree_node &b = *(new tree_node);
+      TCAtom *ta = trace_branch(atoms[i], b);
+      const index_t t = ta->GetTag();
+      b.trunk.ForEach(ACollectionItem::TagSetter<>(branches.Count()));
+      branches[t]->branches.Add(b);
+      branches.Add(b);
+      ta->SetTag(t); //restore the tag to the original branch
+    }
+  }
+  tree.sort();
+  return tree;
 }
 //.............................................................................
 ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
@@ -505,19 +572,46 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
 void fragments::fragment::trace_substituent(ring::substituent &s) {
   atoms_.ForEach(
     TCAtom::FlagSetter<>(catom_flag_Processed, false));
-  for (size_t i=0; i < s.atoms.Count(); i++) { // hidden recursion
+  s.parent.atoms.ForEach(
+    TCAtom::FlagSetter<>(catom_flag_Processed, true));
+  for (size_t i=1; i < s.atoms.Count(); i++) { // hidden recursion
     if (s.atoms[i]->IsProcessed()) continue;
     for (size_t j=0; j < s.atoms[i]->AttachedSiteCount(); j++) {
       TCAtom &a = s.atoms[i]->GetAttachedAtom(j);
       if (a.IsProcessed()) continue;
       if (a.GetTag() <= s.atoms[i]->GetTag()) {
-        if (a.GetTag() == 0)
+        if (a.GetTag() == -2)
           s.ring_count++;
         continue;
       }
       s.atoms.Add(a);
     }
   }
+}
+//.............................................................................
+TCAtom *fragments::fragment::trace_branch(TCAtom *a, tree_node &b) {
+  while (true) {
+    if (b.trunk.Count() > 1 && b.trunk.GetLast() == a)
+      throw TFunctionFailedException(__OlxSourceInfo, "internal error");
+    b.trunk.Add(a);
+    for (size_t i=0; i < a->AttachedSiteCount(); i++) {
+      TCAtom &st = a->GetAttachedAtom(i);
+      if (st.IsProcessed() || st.GetTag() == 0) {
+        b.trunk.Add(st);
+        b.trunk.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
+        return &st;
+      }
+      if (st.GetTag() < a->GetTag()) {
+        a = &st;
+        break;
+      }
+    }
+  }
+}
+//.............................................................................
+fragments::tree_node fragments::fragment::build_tree() {
+  tree_node b;
+  return trace_tree(atoms_, b);
 }
 //.............................................................................
 ConstTypeList<fragments::ring> fragments::fragment::get_rings(
@@ -527,8 +621,7 @@ ConstTypeList<fragments::ring> fragments::fragment::get_rings(
   if (r_atoms.IsEmpty()) return rv;
   for (size_t i=0; i < r_atoms.Count(); i++)
     rv.AddNew(trace_ring(*r_atoms[i]));
-  r_atoms[0]->GetParent()->GetAtoms().ForEach(
-    TCAtom::FlagSetter<>(catom_flag_Processed, false));
+  atoms_.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
   // sort the ring according to the connectivity
   for (size_t i=0; i < rv.Count(); i++) {
     if (!rv[i].atoms.IsEmpty()) {
@@ -538,13 +631,10 @@ ConstTypeList<fragments::ring> fragments::fragment::get_rings(
         rv[i] = ring_sorter(rv[i].atoms);
       }
       catch (const TExceptionBase &e) {
-        TBasicApp::NewLogEntry(logInfo) << "Ring sorting error: " <<
-          e.GetException()->GetFullMessage();
-        rv.Delete(i--);
+        throw TFunctionFailedException(__OlxSourceInfo, e);
       }
     }
   }
-  init_rings(rv);
   return rv;
 }
 //.............................................................................
@@ -575,7 +665,7 @@ void fragments::expand_node(TCAtom &a, TCAtomPList &atoms) {
   atoms.Add(a)->SetTag(1);
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
-    if (aa.IsDeleted() || aa.GetTag() != 0) continue;
+    if (!aa.IsAvailable() || aa.GetTag() != 0) continue;
     expand_node(aa, atoms);
   }
 }
@@ -586,7 +676,7 @@ ConstTypeList<fragments::fragment> fragments::extract(TAsymmUnit &au) {
   atoms.ForEach(ACollectionItem::TagSetter<>(0));
   size_t cnt = 0;
   for (size_t i=0; i < atoms.Count(); i++) {
-    if (atoms[i]->IsDeleted()) continue;
+    if (!atoms[i]->IsAvailable()) continue;
     if (atoms[i]->GetTag() == 0) {
       TCAtomPList catoms;
       expand_node(*atoms[i], catoms);

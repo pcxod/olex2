@@ -11,42 +11,42 @@
 #include "cif.h"
 
 // TLLTBondSort function bodies - bond sorting procedure in TLinkedLoopTable
-int TLLTBondSort::Compare(const CifTabBond *I, const CifTabBond *I1)  {
+int TLLTBondSort::Compare(const CifTabBond &I, const CifTabBond &I1)  {
   double v;
   if( (SortType & cCifTabSortLength) != 0 )  {  // length, Mr, Label
-    v = I->Value.ToDouble() - I1->Value.ToDouble();
+    v = I.Value.ToDouble() - I1.Value.ToDouble();
     if( v < 0 ) return -1;
     if( v > 0 ) return 1;
-    v = I->Another(Atom).CA.GetType().GetMr() - I1->Another(Atom).CA.GetType().GetMr();
+    v = I.Another(Atom).CA.GetType().GetMr() - I1.Another(Atom).CA.GetType().GetMr();
     if( v > 0 ) return 1;
     if( v < 0 ) return -1;
-    v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
+    v = I.Another(Atom).Label.Compare(I1.Another(Atom).Label);
     if( v == 0 )
-      return olx_cmp(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
+      return olx_cmp(Symmetry.IndexOf(I.S2), Symmetry.IndexOf(I1.S2));
   }
   if( (SortType & cCifTabSortName) != 0 )  {  // Name, length
-    v = I->Another(Atom).Label.Compare(I1->Another(Atom).Label);
+    v = I.Another(Atom).Label.Compare(I1.Another(Atom).Label);
     if( v < 0 ) return -1;
     if( v > 0 ) return 1;
     if( v == 0 )  {
-      v = (int)(Symmetry.IndexOf(I->S2) - Symmetry.IndexOf(I1->S2));
+      v = (int)(Symmetry.IndexOf(I.S2) - Symmetry.IndexOf(I1.S2));
       if( v < 0 ) return -1;
       if( v > 0 ) return 1;
     }
-    v = I->Value.ToDouble() - I1->Value.ToDouble();
+    v = I.Value.ToDouble() - I1.Value.ToDouble();
     if( v < 0 ) return -1;
     if( v > 0 ) return 1;
     return 0;
   }
   if( (SortType & cCifTabSortMw) != 0 )  {  // Mr, Length, Label
-    v = I->Another(Atom).CA.GetType().GetMr() - I1->Another(Atom).CA.GetType().GetMr();
+    v = I.Another(Atom).CA.GetType().GetMr() - I1.Another(Atom).CA.GetType().GetMr();
     if( v < 0 ) return -1;
     if( v > 0 ) return 1;
-    v = I->Value.ToDouble() - I1->Value.ToDouble();
+    v = I.Value.ToDouble() - I1.Value.ToDouble();
     if( v > 0 ) return 1;
     if( v < 0 ) return -1;
     if( v == 0 )
-      return olx_cmp(Symmetry.IndexOf(I->S2), Symmetry.IndexOf(I1->S2));
+      return olx_cmp(Symmetry.IndexOf(I.S2), Symmetry.IndexOf(I1.S2));
   }
   return 0;
 }

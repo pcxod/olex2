@@ -217,11 +217,11 @@ void THklFile::UpdateRef(const TReflection& R)  {
   Refs[ind]->SetOmitted(R.IsOmitted());
 }
 //..............................................................................
-int THklFile::HklCmp(const TReflection* R1, const TReflection* R2)  {
-  int r = R1->CompareTo(*R2);
+int THklFile::HklCmp(const TReflection &R1, const TReflection &R2)  {
+  int r = R1.CompareTo(R2);
   if( r == 0 )  {  // for unmerged data ...
-    if( R1->GetI() < R2->GetI() )  return -1;
-    if( R1->GetI() > R2->GetI() )  return 1;
+    if( R1.GetI() < R2.GetI() )  return -1;
+    if( R1.GetI() > R2.GetI() )  return 1;
   }
   return r;
 }

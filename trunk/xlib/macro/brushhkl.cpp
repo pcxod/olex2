@@ -49,11 +49,11 @@ struct HklBrushRef  {
       }
     }
   }
-  static int CompareHkl(const HklBrushRef *r1, const HklBrushRef *r2)  {
-    return r1->CompareTo(*r2);
+  static int CompareHkl(const HklBrushRef &r1, const HklBrushRef &r2)  {
+    return r1.CompareTo(r2);
   }
-  static int CompareSig(const HklBrushRef *r1, const HklBrushRef *r2)  {
-    return r1->CompareTo(*r2);
+  static int CompareSig(const HklBrushRef &r1, const HklBrushRef &r2)  {
+    return r1.CompareTo(r2);
   }
 };
 

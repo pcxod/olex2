@@ -26,31 +26,30 @@ const short
 
 class AtomSorter {
 public:
-  static int atom_cmp_Part(const TCAtom* a1, const TCAtom* a2) {
-    if( a2->GetPart() < 0 && a1->GetPart() >= 0 )
+  static int atom_cmp_Part(const TCAtom &a1, const TCAtom &a2) {
+    if( a2.GetPart() < 0 && a1.GetPart() >= 0 )
       return -1;
-    if( a2->GetPart() >= 0 && a1->GetPart() < 0 )
+    if( a2.GetPart() >= 0 && a1.GetPart() < 0 )
       return 1;
-    return a1->GetPart() - a2->GetPart();  // smallest goes first
+    return a1.GetPart() - a2.GetPart();  // smallest goes first
   }
-  static int atom_cmp_Mw(const TCAtom* a1, const TCAtom* a2) {
-    const double diff = a2->GetType().GetMr() - a1->GetType().GetMr();
-    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  static int atom_cmp_Mw(const TCAtom &a1, const TCAtom &a2) {
+    return olx_cmp(a2.GetType().GetMr(), a1.GetType().GetMr());
   }
-  static int atom_cmp_Label(const TCAtom* a1, const TCAtom* a2)  {
-    return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());
+  static int atom_cmp_Label(const TCAtom &a1, const TCAtom &a2)  {
+    return TCAtom::CompareAtomLabels(a1.GetLabel(), a2.GetLabel());
   }
-  static int atom_cmp_Suffix(const TCAtom* a1, const TCAtom* a2)  {
+  static int atom_cmp_Suffix(const TCAtom &a1, const TCAtom &a2)  {
     olxstr sa, sb;
-    for( size_t i=0; i < a1->GetLabel().Length(); i++ )  {
-      if( olxstr::o_isalpha(a1->GetLabel().CharAt(a1->GetLabel().Length()-i-1)) )
-        sa << a1->GetLabel().CharAt(a1->GetLabel().Length()-i-1);
+    for( size_t i=0; i < a1.GetLabel().Length(); i++ )  {
+      if( olxstr::o_isalpha(a1.GetLabel().CharAt(a1.GetLabel().Length()-i-1)) )
+        sa << a1.GetLabel().CharAt(a1.GetLabel().Length()-i-1);
       else
         break;
     }
-    for( size_t i=0; i < a2->GetLabel().Length(); i++ )  {
-      if( olxstr::o_isalpha(a2->GetLabel().CharAt(a2->GetLabel().Length()-i-1)) )
-        sb << a2->GetLabel().CharAt(a2->GetLabel().Length()-i-1);
+    for( size_t i=0; i < a2.GetLabel().Length(); i++ )  {
+      if( olxstr::o_isalpha(a2.GetLabel().CharAt(a2.GetLabel().Length()-i-1)) )
+        sb << a2.GetLabel().CharAt(a2.GetLabel().Length()-i-1);
       else
         break;
     }
@@ -67,17 +66,17 @@ public:
     }
     return olxstrComparator<false>::Compare(sa, sb);
   }
-  static int atom_cmp_Number(const TCAtom* a1, const TCAtom* a2)  {
+  static int atom_cmp_Number(const TCAtom &a1, const TCAtom &a2)  {
     olxstr sa, sb;
-    for( size_t i=a1->GetType().symbol.Length(); i < a1->GetLabel().Length(); i++ )  {
-      if( olxstr::o_isdigit(a1->GetLabel().CharAt(i)) )
-        sa << a1->GetLabel().CharAt(i);
+    for( size_t i=a1.GetType().symbol.Length(); i < a1.GetLabel().Length(); i++ )  {
+      if( olxstr::o_isdigit(a1.GetLabel().CharAt(i)) )
+        sa << a1.GetLabel().CharAt(i);
       else
         break;
     }
-    for( size_t i=a2->GetType().symbol.Length(); i < a2->GetLabel().Length(); i++ )  {
-      if( olxstr::o_isdigit(a2->GetLabel().CharAt(i)) )
-        sb << a2->GetLabel().CharAt(i);
+    for( size_t i=a2.GetType().symbol.Length(); i < a2.GetLabel().Length(); i++ )  {
+      if( olxstr::o_isdigit(a2.GetLabel().CharAt(i)) )
+        sb << a2.GetLabel().CharAt(i);
       else
         break;
     }
@@ -85,20 +84,20 @@ public:
       return (sb.IsEmpty() ? 0 : -1);
     return (sb.IsEmpty() ? 1 : olx_cmp(sa.ToInt(), sb.ToInt()));
   }
-  static int atom_cmp_Id(const TCAtom* a1, const TCAtom* a2)  {
-    return olx_cmp(a1->GetId(), a2->GetId());
+  static int atom_cmp_Id(const TCAtom &a1, const TCAtom &a2)  {
+    return olx_cmp(a1.GetId(), a2.GetId());
   }
-  static int atom_cmp_Label1(const TCAtom* a1, const TCAtom* a2) {
-    return a1->GetLabel().Comparei(a2->GetLabel());
+  static int atom_cmp_Label1(const TCAtom &a1, const TCAtom &a2) {
+    return a1.GetLabel().Comparei(a2.GetLabel());
   }
-  static int atom_cmp_MoietySize(const TCAtom* a1, const TCAtom* a2) {
-    return a1->GetFragmentId() - a2->GetFragmentId();
+  static int atom_cmp_MoietySize(const TCAtom &a1, const TCAtom &a2) {
+    return a1.GetFragmentId() - a2.GetFragmentId();
   }
 
   struct CombiSort {
     //typedef int (*sort_func)(const TCAtom*, const TCAtom*);
-    TArrayList<int (*)(const TCAtom*, const TCAtom*)> sequence;
-    int atom_cmp(const TCAtom* a1, const TCAtom* a2) const {
+    TArrayList<int (*)(const TCAtom &, const TCAtom &)> sequence;
+    int atom_cmp(const TCAtom &a1, const TCAtom &a2) const {
       for( size_t i=0; i < sequence.Count(); i++ )  {
         int res = (*sequence[i])(a1, a2);
         if( res != 0 )
@@ -108,7 +107,9 @@ public:
     }
   };
 
-  static void KeepH(TCAtomPList& l1, const TLattice& latt, int (*sort_func)(const TCAtom*, const TCAtom*))  {
+  static void KeepH(TCAtomPList& l1, const TLattice& latt,
+    int (*sort_func)(const TCAtom &, const TCAtom &))
+  {
     typedef AnAssociation2<TCAtom*,TCAtomPList> tree_node;
     TTypeList<tree_node> atom_tree;
     for( size_t i=0; i < latt.GetAsymmUnit().AtomCount(); i++ ) // tag all atoms with -1
@@ -144,8 +145,11 @@ public:
         TCAtomPList::QuickSorter.SortSF(ca_list, sort_func);
       atom_count += (ca_list.Count() + 1);
     }
-    if( atom_count != l1.Count() )
-      throw TFunctionFailedException(__OlxSourceInfo, "atom list does not match the lattice, could not keep H atoms next to pivot atom");
+    if( atom_count != l1.Count() ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "atom list does not match the lattice, could not keep H atoms next to "
+        "pivot atom");
+    }
     atom_count = 0;
     for( size_t i=0; i < atom_tree.Count(); i++ )  {
       l1[atom_count++] = atom_tree[i].A();
@@ -204,7 +208,7 @@ public:
     list.Insert(ins_pos, sorted);
   }
   static void Sort(TCAtomPList& list,
-    int (*sort_func)(const TCAtom*, const TCAtom*))
+    int (*sort_func)(const TCAtom&, const TCAtom&))
   {
     TCAtomPList::QuickSorter.SortSF(list, sort_func);
   }
@@ -215,15 +219,15 @@ public:
 };
 
 class MoietySorter {
-  static int moiety_cmp_Mr(const AnAssociation3<size_t,double,TCAtomPList>* m1,
-    const AnAssociation3<size_t,double,TCAtomPList>* m2)
+  static int moiety_cmp_Mr(const AnAssociation3<size_t,double,TCAtomPList> &m1,
+    const AnAssociation3<size_t,double,TCAtomPList> &m2)
   {
-    return olx_cmp(m2->GetB(), m1->GetB());
+    return olx_cmp(m2.GetB(), m1.GetB());
   }
-  static int moiety_cmp_size(const AnAssociation2<size_t,TCAtomPList>* m1,
-    const AnAssociation2<size_t,TCAtomPList>* m2)
+  static int moiety_cmp_size(const AnAssociation2<size_t,TCAtomPList> &m1,
+    const AnAssociation2<size_t,TCAtomPList> &m2)
   {
-    return olx_cmp(m2->GetB().Count(), m1->GetB().Count());
+    return olx_cmp(m2.GetB().Count(), m1.GetB().Count());
   }
 public:
   static void SortByMoietyAtom(TCAtomPList& list, const TStrList& atom_names)  {
@@ -329,8 +333,10 @@ public:
           break;
         }
       }
-      if( ca_list == NULL )
-        ca_list = &moieties.Add(new moiety(list[i]->GetFragmentId(), list[i]->GetType().GetMr())).C();
+      if( ca_list == NULL ) {
+        ca_list = &moieties.Add(
+          new moiety(list[i]->GetFragmentId(), list[i]->GetType().GetMr())).C();
+      }
       ca_list->Add(list[i]);
     }
     if( moieties.Count() < 2 )  return;
@@ -353,7 +359,7 @@ public:
         }
       }
       if( ca_list == NULL )
-        ca_list = &moieties.Add( new moiety(list[i]->GetFragmentId()) ).B();
+        ca_list = &moieties.Add(new moiety(list[i]->GetFragmentId()) ).B();
       ca_list->Add(list[i]);
     }
     if( moieties.Count() < 2 )  return;

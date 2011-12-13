@@ -13,23 +13,19 @@
 UseEsdlNamespace()
 
 // Binominal polynomial routins
-int TSPoint::SPointsSortA(const TSPoint* I, const TSPoint* I1)  {
-  if( I->Y < I1->Y )  return 1;
-  if( I->Y > I1->Y )  return -1;
-  return 0;
+int TSPoint::SPointsSortA(const TSPoint &I, const TSPoint &I1)  {
+  return olx_cmp(I1.Y, I.Y);
 }
 //..............................................................................
-int TSPoint::SPointsSortB(const TSPoint* I, const TSPoint* I1)  {
-  if( I->X < I1->X )  return 1;
-  if( I->X > I1->X )  return -1;
-  return 0;
+int TSPoint::SPointsSortB(const TSPoint &I, const TSPoint &I1)  {
+  return olx_cmp(I1.X, I.X);
 }
 //..............................................................................
-int _PMembersSort(const TPMember* I, const TPMember* I1) {
-  if( I->Id == I1->Id )
-    return I->Extent - I1->Extent;
+int _PMembersSort(const TPMember &I, const TPMember &I1) {
+  if( I.Id == I1.Id )
+    return I.Extent - I1.Extent;
   else
-    return olx_cmp(I->Id, I1->Id);
+    return olx_cmp(I.Id, I1.Id);
 }
 //----------------------------------------------------------------------------//
 int _PolynomMembersSort(const TPolynomMember& I, const TPolynomMember& I1)  {

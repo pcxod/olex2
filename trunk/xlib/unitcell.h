@@ -300,11 +300,10 @@ public:
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
-    static int AtomsSortByDistance(const Association* A1,
-      const Association* A2)
+    static int AtomsSortByDistance(const Association &A1,
+      const Association &A2)
     {
-      const double d = A1->GetA().QLength() - A2->GetA().QLength();
-      return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
+      return olx_cmp(A1.GetA().QLength(), A2.GetA().QLength());
     }
 public:
   // creates an array of matrices for a given aunit and lattice type
@@ -348,7 +347,7 @@ public:
     }
     // create a list of unique atoms
     float* distances = new float[ list.Count()+1 ];
-    list.QuickSorter.SortSF(list, AtomsSortByDistance);
+    list.QuickSorter.SortSF(list, &AtomsSortByDistance<Association>);
     const size_t lc = list.Count();
     for( size_t i=0; i < lc; i++ )
       distances[i] = (float)list[i].GetA().QLength();
@@ -429,12 +428,12 @@ public:
     vec3d center;
     AC_Sort(const vec3d &_center) : center(_center) {}
     int Compare(
-      const AnAssociation2<const TCAtom *, vec3d> *a1,
-      const AnAssociation2<const TCAtom *, vec3d> *a2) const
+      const AnAssociation2<const TCAtom *, vec3d> &a1,
+      const AnAssociation2<const TCAtom *, vec3d> &a2) const
     {
       return olx_cmp(
-        center.QDistanceTo(a1->GetB()),
-        center.QDistanceTo(a2->GetB()));
+        center.QDistanceTo(a1.GetB()),
+        center.QDistanceTo(a2.GetB()));
     }
   };
 

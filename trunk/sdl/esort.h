@@ -45,7 +45,7 @@ public:
 class TComparableComparator  {
 public:
   template <class ComparableA, class ComparableB>
-  static inline int Compare(const ComparableA& A, const ComparableB& B)  {
+  static int Compare(const ComparableA& A, const ComparableB& B)  {
     return olx_ref::get(A).Compare(olx_ref::get(B));
   }
 };
@@ -53,22 +53,23 @@ public:
 template <class Base, typename ItemClass>
 struct Sort_ConstMemberFunctionWrapper {
   Base& Instance;
-  int (Base::*Func)(ItemClass a, ItemClass b) const;
+  int (Base::*Func)(const ItemClass &a, const ItemClass &b) const;
   Sort_ConstMemberFunctionWrapper(Base& instance,
-    int (Base::*func)(ItemClass a, ItemClass b) const)
+    int (Base::*func)(const ItemClass &a, const ItemClass &b) const)
     :  Instance(instance), Func(func) {}
-  inline int Compare(ItemClass a, ItemClass b) const {
+  int Compare(const ItemClass &a, const ItemClass &b) const {
     return (Instance.*Func)(a, b);
   }
 };
 //.............................................................................
-template <class Base, typename ItemClass> struct Sort_MemberFunctionWrapper {
+template <class Base, typename ItemClass>
+struct Sort_MemberFunctionWrapper {
   Base& Instance;
-  int (Base::*Func)(ItemClass a, ItemClass b);
+  int (Base::*Func)(const ItemClass &a, const ItemClass &b);
   Sort_MemberFunctionWrapper(Base& instance,
-    int (Base::*func)(ItemClass a, ItemClass b))
+    int (Base::*func)(const ItemClass &a, const ItemClass &b))
     : Instance(instance), Func(func) {}
-  inline int Compare(ItemClass a, ItemClass b) const {
+  int Compare(const ItemClass &a, const ItemClass &b) const {
     return (Instance.*Func)(a, b);
   }
 };
@@ -80,10 +81,11 @@ template <class Comparator, class ItemClass> struct Sort_ComparatorWrapper {
 };
 //.............................................................................
 template <typename ItemClass> struct Sort_StaticFunctionWrapper {
-  int (*Func)(ItemClass a, ItemClass b);
-  Sort_StaticFunctionWrapper(int (*func)(ItemClass a, ItemClass b))
+  int (*Func)(const ItemClass &a, const ItemClass &b);
+  Sort_StaticFunctionWrapper(
+    int (*func)(const ItemClass &a, const ItemClass &b))
     : Func(func)  {}
-  inline int Compare(ItemClass a, ItemClass b) const {
+  inline int Compare(const ItemClass &a, const ItemClass &b) const {
     return (*Func)(a, b);
   }
 };
@@ -114,7 +116,8 @@ protected:
     const size_t diff = hi0-lo0;
     if( diff == 1 )  {
       if( cmp.Compare(
-            accessor::get(list, lo0), accessor::get(list, hi0)) > 0 )
+          olx_ref::get(accessor::get(list, lo0)),
+          olx_ref::get(accessor::get(list, hi0))) > 0 )
       {
         listener.OnSwap(lo0, hi0);
         list.Swap(lo0, hi0);
@@ -126,10 +129,16 @@ protected:
       const size_t m_ind = (lo0 + hi0)/2;
       Item mid = accessor::get(list, m_ind);
       while( lo <= hi )  {
-        while( cmp.Compare(accessor::get(list, lo), mid) < 0 )  {
+        while( cmp.Compare(
+                olx_ref::get(accessor::get(list, lo)),
+                olx_ref::get(mid)) < 0 )
+        {
           if( ++lo >= hi0 )  break;
         }
-        while( cmp.Compare(accessor::get(list, hi), mid) > 0 )  {
+        while( cmp.Compare(
+                olx_ref::get(accessor::get(list, hi)),
+                olx_ref::get(mid)) > 0 )
+        {
           if( --hi <= lo0 )  break;
         }
         if( lo <= hi )  {
@@ -162,7 +171,8 @@ struct BubbleSorter  {
       changes = false;
       for( size_t i=1; i < lc; i++ )  {
         if( cmp.Compare(
-              accessor::get(list, i-1), accessor::get(list, i)) > 0 )
+              olx_ref::get(accessor::get(list, i-1)),
+              olx_ref::get(accessor::get(list, i))) > 0 )
         {
           list.Swap(i-1, i);
           listener.OnSwap(i-1, i);
@@ -198,31 +208,34 @@ public:
       SwapListener>(list, cmp, sl).Sort();
   }
   // convenience functions
-  static void SortSF(ListClass& list, int (*f)(ItemClass a, ItemClass b))  {
+  template <typename item_t>
+  static void SortSF(ListClass& list,
+    int (*f)(const item_t &a, const item_t &b))
+  {
     QuickSorter<ListClass, ItemClass, Accessor,
-      Sort_StaticFunctionWrapper<ItemClass>, DummySwapListener>(
+      Sort_StaticFunctionWrapper<item_t>, DummySwapListener>(
       list,
-      Sort_StaticFunctionWrapper<ItemClass>(f),
+      Sort_StaticFunctionWrapper<item_t>(f),
       DummySwapListener()).Sort();
   }
-  template <class BaseClass>
+  template <class BaseClass, typename item_t>
   static void SortMF(ListClass& list, BaseClass& base,
-    int (BaseClass::*f)(ItemClass a, ItemClass b) const)
+    int (BaseClass::*f)(const item_t &a, const item_t &b) const)
   {
     QuickSorter<ListClass, ItemClass, Accessor,
-      Sort_ConstMemberFunctionWrapper<BaseClass,ItemClass>,
+      Sort_ConstMemberFunctionWrapper<BaseClass,item_t>,
       DummySwapListener>(
-        list, Sort_ConstMemberFunctionWrapper<BaseClass, ItemClass>(base, f),
+        list, Sort_ConstMemberFunctionWrapper<BaseClass, item_t>(base, f),
         DummySwapListener()).Sort();
   }
-  template <class BaseClass>
+  template <class BaseClass, typename item_t>
   static void SortMF(ListClass& list, BaseClass& base,
-    int (BaseClass::*f)(ItemClass a, ItemClass b))
+    int (BaseClass::*f)(const item_t &a, const item_t &b))
   {
     QuickSorter<ListClass, ItemClass, Accessor,
-      Sort_MemberFunctionWrapper<BaseClass,ItemClass>,
+      Sort_MemberFunctionWrapper<BaseClass,item_t>,
       DummySwapListener>(
-        list, Sort_MemberFunctionWrapper<BaseClass, ItemClass>(base, f),
+        list, Sort_MemberFunctionWrapper<BaseClass, item_t>(base, f),
         DummySwapListener()).Sort();
   }
 };

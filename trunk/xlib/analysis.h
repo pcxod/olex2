@@ -25,8 +25,8 @@ namespace alg {
   const cm_Element &find_heaviest(const TCAtomPList &atoms);
 }; // end namespace alg
 struct peaks {
-  static int peak_sort(const TCAtom *a1, const TCAtom *a2) {
-    return olx_cmp(a2->GetQPeak(), a1->GetQPeak());
+  static int peak_sort(const TCAtom &a1, const TCAtom &a2) {
+    return olx_cmp(a2.GetQPeak(), a1.GetQPeak());
   }
   static ConstPtrList<TCAtom> extract(TAsymmUnit &au,
     bool *all_peaks=NULL);
@@ -57,10 +57,24 @@ protected:
   // recursive exansion helper function
   static void expand_node(TCAtom &a, TCAtomPList &atoms);
 public:
+  struct tree_node {
+    TCAtomPList trunk;
+    TTypeList<tree_node> branches;
+    int Compare(const tree_node &b) const {
+      return olx_cmp(trunk[0]->GetTag(), b.trunk[0]->GetTag());
+    }
+    void sort() {
+      trunk.ForEach(ACollectionItem::IndexTagSetter<>());
+      branches.QuickSorter.Sort(branches, TComparableComparator());
+    }
+    // reverses the trunk direction and re-sorts the branches
+    void reverse();
+  };
   struct ring {
     struct substituent {
       // always start from the ring atom
       TCAtomPList atoms;
+      tree_node tree;
       ring &parent;
       size_t ring_count;
       substituent(ring &parent_, TCAtom &a)
@@ -69,6 +83,13 @@ public:
         atoms.Add(a);
       }
       int Compare(const substituent &s) const;
+      struct atom_cmp {
+        static int Compare(const TCAtom &a1, const TCAtom &a2) {
+          int r = olx_cmp(a1.GetTag(), a2.GetTag());
+          if (r == 0) r = olx_cmp(a1.GetType().z, a2.GetType().z);
+          return r;
+        }
+      };
     };
     size_t fused_count;
     ring(ConstPtrList<TCAtom> atoms_)
@@ -80,7 +101,7 @@ public:
     bool is_fused_with(const ring &r) const;
     // merges fused ring into one, big ring, r is merged into this ring
     bool merge(ring &r);
-    int Compare(const substituent &s) const;
+    int Compare(const ring &r) const;
   };
   struct fragment {
   protected:
@@ -94,8 +115,13 @@ public:
     ConstPtrList<TCAtom> trace_ring(TCAtom &a);
     void trace_substituent(ring::substituent &s);
     static ConstPtrList<TCAtom> ring_sorter(const TCAtomPList &r);
-    void init_rings(TTypeList<ring> &rings);
     void init_ring(size_t i, TTypeList<ring> &rings);
+    /* expects graph prepared by trace substituent or by the breadth-first
+    expansion, returns the atom where the branch's trunk stops.
+    a - the atom at the far end of the branch
+    */
+    static TCAtom *trace_branch(TCAtom *a, tree_node &b);
+    static tree_node &trace_tree(TCAtomPList &atoms, tree_node &root);
   public:
     fragment() : u_eq(0) {}
     double get_mean_u_eq(bool update=false) const {
@@ -123,6 +149,9 @@ public:
       TCAtomPList *ring_atoms=NULL);
     /* traces the rings back from the breadth-first tag assignment */
     ConstTypeList<ring> get_rings(const TCAtomPList &r_atoms);
+    /* finds ring substituents and sorts substituents and the rings */
+    void init_rings(TTypeList<ring> &rings);
+    tree_node build_tree();
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
 };

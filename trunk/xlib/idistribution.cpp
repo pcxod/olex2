@@ -51,16 +51,16 @@ double PEvaluator(const TPolynomMember& PM)  {
   return W;
 }
 //..............................................................................
-int PPolyEvaluator(const TPolynomMember* P, const TPolynomMember* P1) {
-  double W = P->GetMult(),
-         W1=P1->GetMult();
-  const TTypeList<TPMember>& L = P->Members();
+int PPolyEvaluator(const TPolynomMember &P, const TPolynomMember &P1) {
+  double W = P.GetMult(),
+         W1=P1.GetMult();
+  const TTypeList<TPMember>& L = P.Members();
   for( size_t i=0; i < L.Count(); i++ )  {
     const cm_Isotope* Is = (const cm_Isotope*)L[i].Data;
     for( int j=0; j < L[i].Extent; j++ )
       W *= Is->W;
   }
-  const TTypeList<TPMember>& L1 = P1->Members();
+  const TTypeList<TPMember>& L1 = P1.Members();
   for( size_t i=0; i < L1.Count(); i++ )  {
     cm_Isotope* Is = (cm_Isotope*)L1[i].Data;
     for( int j=0; j < L1[i].Extent; j++ )
@@ -71,13 +71,13 @@ int PPolyEvaluator(const TPolynomMember* P, const TPolynomMember* P1) {
   return 0;
 }
 //..............................................................................
-int _SeriesSort(const TPolySerie* I, const TPolySerie* I1) {
-  return olx_cmp(I->Count(), I1->Count());
+int _SeriesSort(const TPolySerie &I, const TPolySerie &I1) {
+  return olx_cmp(I.Count(), I1.Count());
 }
 //..............................................................................
-int  _SerieSort(const TSPoint* I, const TSPoint* I1)  {
-  if( I->X < I1->X )  return 1;
-  if( I->X > I1->X )  return -1;
+int  _SerieSort(const TSPoint &I, const TSPoint &I1)  {
+  if( I.X < I1.X )  return 1;
+  if( I.X > I1.X )  return -1;
   return 0;
 }
 //----------------------------------------------------------------------------//

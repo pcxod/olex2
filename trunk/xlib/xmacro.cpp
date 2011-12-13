@@ -1398,11 +1398,10 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 // http://www.minsocam.org/ammin/AM78/AM78_1104.pdf
-int macGraphPD_Sort(const AnAssociation2<double,double>* a1, const AnAssociation2<double,double>* a2) {
-  const double df = a1->GetA() - a2->GetA();
-  if( df < 0 )  return -1;
-  if( df > 0 )  return 1;
-  return 0;
+int macGraphPD_Sort(const AnAssociation2<double,double> &a1,
+  const AnAssociation2<double,double> &a2)
+{
+  return olx_cmp(a1.GetA(), a2.GetA());
 }
 void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();

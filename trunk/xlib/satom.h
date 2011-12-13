@@ -35,16 +35,16 @@ private:
   vec3d  FCenter;          // atom center in cartesian coordinates
 protected:
   mutable short Flags;
-  int _SortNodesByDistanceAsc(const TSAtom* a1, const TSAtom* a2) const {
+  int _SortNodesByDistanceAsc(const TSAtom &a1, const TSAtom &a2) const {
     return olx_cmp(
-      FCenter.DistanceTo(a1->FCenter), FCenter.DistanceTo(a2->FCenter));
+      FCenter.DistanceTo(a1.FCenter), FCenter.DistanceTo(a2.FCenter));
   }
-  int _SortNodesByDistanceDsc(const TSAtom* a1, const TSAtom* a2) const {
+  int _SortNodesByDistanceDsc(const TSAtom &a1, const TSAtom &a2) const {
     return olx_cmp(
-      FCenter.DistanceTo(a2->FCenter), FCenter.DistanceTo(a1->FCenter));
+      FCenter.DistanceTo(a2.FCenter), FCenter.DistanceTo(a1.FCenter));
   }
-  static int _SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2);
-  static int _SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2);
+  static int _SortBondsByLengthAsc(const TSBond &b1, const TSBond &b2);
+  static int _SortBondsByLengthDsc(const TSBond &b1, const TSBond &b2);
 public:
   TSAtom(TNetwork* N);
   virtual ~TSAtom()  {}
@@ -255,8 +255,8 @@ public:
 
   // sorts atoms according to the distcance from {0,0,0}
   struct SortByDistance {
-    static int Compare(const TSAtom *A, const TSAtom *A1)  {
-      return olx_cmp(A->crd().QLength(), A1->crd().QLength());
+    static int Compare(const TSAtom &A, const TSAtom &A1)  {
+      return olx_cmp(A.crd().QLength(), A1.crd().QLength());
     }
   };
 

@@ -102,12 +102,12 @@ public:
 
 namespace SymmSpace  {
   
-  extern int sort_group(const smatd *m1, const smatd *m2);
+  extern int sort_group(const smatd &m1, const smatd &m2);
   
   struct Info  {
   protected:
-    static int sort_matrix_list(const smatd *m1, const smatd *m2) {
-      return olx_cmp(rotation_id::get(m1->r), rotation_id::get(m2->r));
+    static int sort_matrix_list(const smatd &m1, const smatd &m2) {
+      return olx_cmp(rotation_id::get(m1.r), rotation_id::get(m2.r));
     }
     static vec3d normalise_t(const vec3d &t);
   public:

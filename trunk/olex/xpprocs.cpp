@@ -3476,21 +3476,16 @@ void TMainForm::macChiv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->XFile().GetRM().rCHIV.ValidateRestraint(sr);
 }
 //..............................................................................
-int TMainForm_macShowQ_QPeakSortA(const TCAtom* a, const TCAtom* b)  {
-  double v = a->GetQPeak() - b->GetQPeak();
-  if( v == 0 && a->GetLabel().Length() > 1 && b->GetLabel().Length() > 1 )  {
-    if( a->GetLabel().SubStringFrom(1).IsNumber() && b->GetLabel().SubStringFrom(1).IsNumber() )
-      v = b->GetLabel().SubStringFrom(1).ToInt() - a->GetLabel().SubStringFrom(1).ToInt();
+int TMainForm_macShowQ_QPeakSortA(const TCAtom &a, const TCAtom &b)  {
+  double v = a.GetQPeak() - b.GetQPeak();
+  if( v == 0 && a.GetLabel().Length() > 1 && b.GetLabel().Length() > 1 )  {
+    if( a.GetLabel().SubStringFrom(1).IsNumber() && b.GetLabel().SubStringFrom(1).IsNumber() )
+      v = b.GetLabel().SubStringFrom(1).ToInt() - a.GetLabel().SubStringFrom(1).ToInt();
   }
   return v < 0 ? 1 : (v > 0 ? -1 : 0);
 }
-int TMainForm_macShowQ_QPeakSortD(const TCAtom* a, const TCAtom* b)  {
-  double v = b->GetQPeak() - a->GetQPeak();
-  if( v == 0 && a->GetLabel().Length() > 1 && b->GetLabel().Length() > 1 )  {
-    if( a->GetLabel().SubStringFrom(1).IsNumber() && b->GetLabel().SubStringFrom(1).IsNumber() )
-      v = a->GetLabel().SubStringFrom(1).ToInt() - b->GetLabel().SubStringFrom(1).ToInt();
-  }
-  return v < 0 ? 1 : (v > 0 ? -1 : 0);
+int TMainForm_macShowQ_QPeakSortD(const TCAtom &a, const TCAtom &b)  {
+  return TMainForm_macShowQ_QPeakSortA(b, a);
 }
 void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double wheel = Options.FindValue("wheel", '0').ToDouble();
@@ -3555,7 +3550,8 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < au.AtomCount(); i++ )
       if( au.GetAtom(i).GetType() == iQPeakZ )
         qpeaks.Add(au.GetAtom(i));
-    qpeaks.QuickSorter.SortSF(qpeaks, negative ? TMainForm_macShowQ_QPeakSortD : TMainForm_macShowQ_QPeakSortA);
+    qpeaks.QuickSorter.SortSF(qpeaks,
+      negative ? TMainForm_macShowQ_QPeakSortD : TMainForm_macShowQ_QPeakSortA);
     num = olx_min(qpeaks.Count()*num/100, qpeaks.Count());
     for( size_t i=0; i < qpeaks.Count(); i++ )  
       qpeaks[i]->SetDetached( i >= (size_t)num );
@@ -8725,11 +8721,8 @@ public:
   double GetVolume() const {  return Volume.GetV();  }
   double GetEsd() const {  return Volume.GetE();  }
 };
-int Esd_ThSort( const Esd_Tetrahedron* th1, const Esd_Tetrahedron* th2 )  {
-  double v = th1->GetVolume() - th2->GetVolume();
-  if( v < 0 )  return -1;
-  if( v > 0 )  return 1;
-  return 0;
+int Esd_ThSort(const Esd_Tetrahedron &th1, const Esd_Tetrahedron &th2)  {
+  return olx_cmp(th1.GetVolume(), th2.GetVolume());
 }
 void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   VcoVContainer vcovc(FXApp->XFile().GetAsymmUnit());

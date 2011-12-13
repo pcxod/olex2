@@ -1901,9 +1901,9 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
   }
 }
 //..............................................................................
-int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
-  int v = TCAtomPComparator::Compare(&I1->CAtom(), &I2->CAtom());
-  return (v == 0) ? TCAtom::CompareAtomLabels(I1->GetLabel(), I2->GetLabel()) : v;
+int XAtomLabelSort(const TXAtom &I1, const TXAtom &I2)  {
+  int v = TCAtomComparator::Compare(I1.CAtom(), I2.CAtom());
+  return (v == 0) ? TCAtom::CompareAtomLabels(I1.GetLabel(), I2.GetLabel()) : v;
 }
 //..............................................................................
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,

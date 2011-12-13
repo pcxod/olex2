@@ -354,19 +354,19 @@ void cetTable::DataFromStrings(TStrList& lines)  {
       data[i][j] = cells[i*ColCount+j];
   }
 }
-int cetTable::TableSorter::Compare(const CifRow* r1, const CifRow* r2)  {
-  const size_t sz = r1->Count();
+int cetTable::TableSorter::Compare(const CifRow &r1, const CifRow &r2)  {
+  const size_t sz = r1.Count();
   size_t cmpb_cnt = 0;
   for( size_t i=0; i < sz; i++ )
-    if( r1->GetItem(i)->GetCmpHash() != InvalidIndex )
+    if( r1.GetItem(i)->GetCmpHash() != InvalidIndex )
       cmpb_cnt++;
   if( cmpb_cnt == 3 )  {  // special case for sorting angles...
     int cmps[3] = {0, 0, 0};
     cmpb_cnt = 0;
     for( size_t i=0; i < sz; i++ )  {
-      size_t h1 = r1->GetItem(i)->GetCmpHash();
+      size_t h1 = r1.GetItem(i)->GetCmpHash();
       if( h1 == InvalidIndex )  continue;
-      cmps[cmpb_cnt] = olx_cmp(h1, r2->GetItem(i)->GetCmpHash());
+      cmps[cmpb_cnt] = olx_cmp(h1, r2.GetItem(i)->GetCmpHash());
       if( ++cmpb_cnt >= 3 )
         break;
     }
@@ -379,9 +379,9 @@ int cetTable::TableSorter::Compare(const CifRow* r1, const CifRow* r2)  {
   }
   else  {
     for( size_t i=0; i < sz; i++ )  {
-      size_t h1 = r1->GetItem(i)->GetCmpHash();
+      size_t h1 = r1.GetItem(i)->GetCmpHash();
       h1 = (h1 == InvalidIndex) ? 0 : h1;
-      size_t h2 = r2->GetItem(i)->GetCmpHash();
+      size_t h2 = r2.GetItem(i)->GetCmpHash();
       h2 = (h2 == InvalidIndex) ? 0 : h2;
       if( h1 < h2 )  return -1;
       if( h1 > h2 )  return 1;
@@ -550,16 +550,18 @@ void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
   }
 }
 //.............................................................................
-int CifBlock::CifSorter::Compare(const CifBlock::EntryGroup* e1, const CifBlock::EntryGroup* e2) const {
+int CifBlock::CifSorter::Compare(const CifBlock::EntryGroup &e1,
+  const CifBlock::EntryGroup &e2) const
+{
   size_t c1=InvalidIndex, c2=InvalidIndex, c1_l=0, c2_l=0;
   for( size_t i=0; i < pivots.Count(); i++ )  {
-    if( c1 == InvalidIndex && e1->name.StartsFromi(pivots[i]) )  {
+    if( c1 == InvalidIndex && e1.name.StartsFromi(pivots[i]) )  {
       if( pivots[i].Length() > c1_l )  {
         c1 = i;
         c1_l = pivots[i].Length();
       }
     }
-    if( c2 == InvalidIndex && e2->name.StartsFromi(pivots[i]) )  {
+    if( c2 == InvalidIndex && e2.name.StartsFromi(pivots[i]) )  {
       if( pivots[i].Length() > c2_l )  {
         c2 = i;
         c2_l = pivots[i].Length();
@@ -567,16 +569,16 @@ int CifBlock::CifSorter::Compare(const CifBlock::EntryGroup* e1, const CifBlock:
     }
   }
   if( c1 == c2 )  {
-    if( e1->name.Length() == e1->name.Length() )  {
+    if( e1.name.Length() == e2.name.Length() )  {
       size_t s1=InvalidIndex, s2=InvalidIndex, s1_l=0, s2_l=0;
       for( size_t i=0; i < endings.Count(); i++ )  {
-        if( s1 == InvalidIndex && e1->name.EndsWithi(endings[i]) )  {
+        if( s1 == InvalidIndex && e1.name.EndsWithi(endings[i]) )  {
           if( endings[i].Length() > s1_l )  {
             s1 = i;
             s1_l = endings[i].Length();
           }
         }
-        if( s2 == InvalidIndex && e2->name.EndsWithi(endings[i]) )  {
+        if( s2 == InvalidIndex && e2.name.EndsWithi(endings[i]) )  {
           if( endings[i].Length() > s2_l )  {
             s2 = i;
             s2_l = endings[i].Length();
@@ -584,11 +586,11 @@ int CifBlock::CifSorter::Compare(const CifBlock::EntryGroup* e1, const CifBlock:
         }
       }
       if( s1 == s2 )
-        return e1->name.Comparei(e2->name);
+        return e1.name.Comparei(e2.name);
       return olx_cmp(s1, s2);
     }
     else
-       return e1->name.Comparei(e2->name);
+       return e1.name.Comparei(e2.name);
   }
   return olx_cmp(c1, c2);
 }

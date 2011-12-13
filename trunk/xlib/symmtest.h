@@ -34,13 +34,12 @@ class TSymmTest : public IEObject {
   TTypeList<TSymmTestData> Vecs;
 
 protected:
-  static inline int VecsCmpByCount(const TSymmTestData* a , const TSymmTestData* b)  {
-    return a->Count() < b->Count() ? -1 : (a->Count() > b->Count() ? 1 : 0);
+  static inline int VecsCmpByCount(const TSymmTestData &a , const TSymmTestData &b)  {
+    return olx_cmp(a.Count(), b.Count());
   }
-  static inline int VecsCmpByRadius(const AnAssociation3<vec3d,size_t,size_t>* a ,
-                                     const AnAssociation3<vec3d,size_t,size_t>* b)  {
-    const double v = a->GetA().QLength() - b->GetA().QLength();
-    return (v > 0) ? 1 : (v < 0 ? -1 : 0);
+  static inline int VecsCmpByRadius(const AnAssociation3<vec3d,size_t,size_t> &a ,
+                                     const AnAssociation3<vec3d,size_t,size_t> &b)  {
+    return olx_cmp(a.GetA().QLength(), b.GetA().QLength());
   }
 
 public:
@@ -131,7 +130,8 @@ public:
     // collect the results
     for( size_t i=0; i < tmpVecs.Count(); i++ )  {
       if( tmpVecs.IsNull(i) )  continue;
-      TSymmTestData* sd = new TSymmTestData( tmpVecs[i].GetA(), tmpVecs[i].GetB(), tmpVecs[i].GetC());
+      TSymmTestData* sd = new TSymmTestData(
+        tmpVecs[i].GetA(), tmpVecs[i].GetB(), tmpVecs[i].GetC());
       Vecs.Add(*sd);
       double qval = radii[i];
       tmpVecs.NullItem(i);
@@ -152,10 +152,12 @@ public:
     delete [] radii;
     Vecs.QuickSorter.SortSF(Vecs,VecsCmpByCount);
   }
-  static void TestDependency(const TTypeList< AnAssociation2<vec3d,TCAtom*> >& lista,
-                             const TTypeList< AnAssociation2<vec3d,TCAtom*> >& listb,
-                             TTypeList< TSymmTestData >& Vecs,
-                             const smatd& matr, double tol)  {
+  static void TestDependency(
+    const TTypeList< AnAssociation2<vec3d,TCAtom*> >& lista,
+    const TTypeList< AnAssociation2<vec3d,TCAtom*> >& listb,
+    TTypeList< TSymmTestData >& Vecs,
+    const smatd& matr, double tol)
+  {
     TTypeList< AnAssociation3<vec3d,size_t,size_t> > tmpVecs;
     Vecs.Clear();
     Vecs.SetCapacity( lista.Count()*listb.Count()+1 );
@@ -189,7 +191,8 @@ public:
     // collect the results
     for( size_t i=0; i < tmpVecs.Count(); i++ )  {
       if( tmpVecs.IsNull(i) )  continue;
-      TSymmTestData* sd = new TSymmTestData( tmpVecs[i].GetA(), tmpVecs[i].GetB(), tmpVecs[i].GetC());
+      TSymmTestData* sd = new TSymmTestData(
+        tmpVecs[i].GetA(), tmpVecs[i].GetB(), tmpVecs[i].GetC());
       Vecs.Add(*sd);
       a = tmpVecs[i].GetA(); // "crawling" center
       qval = radii[i];
@@ -200,7 +203,7 @@ public:
         if( olx_abs(tmpVecs[j].GetA()[0]-a[0])  < tol &&
             olx_abs(tmpVecs[j].GetA()[1]-a[1])  < tol &&
             olx_abs(tmpVecs[j].GetA()[2]-a[2])  < tol  )  {
-          sd->Atoms.AddNew<size_t,size_t>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
+          sd->Atoms.AddNew<size_t,size_t>(tmpVecs[j].GetB(), tmpVecs[j].GetC());
           a *= 0.75;
           a += tmpVecs[j].GetA()*0.25;  // implement "crawling"
 

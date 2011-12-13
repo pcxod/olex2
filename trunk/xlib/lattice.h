@@ -125,9 +125,8 @@ public:
   /* generates content using current matrices, the current content stays */
   void GenerateWholeContent(TCAtomPList* Template);
 
-  static int CompareFragmentsBySize(const TNetwork* N, const TNetwork* N1)  {
-    return N1->NodeCount() < N->NodeCount() ? -1
-      : (N1->NodeCount() > N->NodeCount() ? -1 : 0);
+  static int CompareFragmentsBySize(const TNetwork &N, const TNetwork &N1)  {
+    return olx_cmp(N1.NodeCount(), N.NodeCount());
   }
   size_t FragmentCount() const {  return Fragments.Count(); }
   TNetwork& GetFragment(size_t i) const {

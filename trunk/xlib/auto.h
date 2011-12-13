@@ -119,9 +119,9 @@ class TAutoDBNode  {
   }
   double CalcAngle(size_t i, size_t j) const;
 protected:
-  static int SortMetricsFunc(const TAttachedNode* a, const TAttachedNode* b);
-  static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>* a,
-                            const AnAssociation2<TCAtom*, vec3d>* b);
+  static int SortMetricsFunc(const TAttachedNode &a, const TAttachedNode &b);
+  static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d> &a,
+                            const AnAssociation2<TCAtom*, vec3d> &b);
   static vec3d SortCenter;
 public:
   TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms);
@@ -346,10 +346,10 @@ public:
       Node = node;
       Fom = fom;
     }
-    static int SortByFOMFunc(const THitStruct<NodeClass>* a,
-      const THitStruct<NodeClass>* b)
+    static int SortByFOMFunc(const THitStruct<NodeClass> &a,
+      const THitStruct<NodeClass> &b)
     {
-      return olx_cmp(a->Fom, b->Fom);
+      return olx_cmp(a.Fom, b.Fom);
     }
   };
   
@@ -358,19 +358,19 @@ public:
     TTypeList< THitStruct<NodeClass> > hits;
     const cm_Element* Type;
     double meanFom;
-    static int SortByFOMFunc(const THitList<NodeClass>* a,
-      const THitList<NodeClass>* b)  {
-        const size_t nc = olx_min(a->hits.Count(), b->hits.Count());
+    static int SortByFOMFunc(const THitList<NodeClass> &a,
+      const THitList<NodeClass> &b)  {
+        const size_t nc = olx_min(a.hits.Count(), b.hits.Count());
         double foma = 0, fomb = 0;
         for( size_t i=0; i < nc; i++ )  {
-          foma += a->hits[i].Fom;
-          fomb += b->hits[i].Fom;
+          foma += a.hits[i].Fom;
+          fomb += b.hits[i].Fom;
         }
         return olx_cmp(foma, fomb);
     }
-    static int SortByCountFunc(const THitList<NodeClass>* a,
-      const THitList<NodeClass>* b)  {
-        return olx_cmp(b->hits.Count(), a->hits.Count());
+    static int SortByCountFunc(const THitList<NodeClass> &a,
+      const THitList<NodeClass> &b)  {
+        return olx_cmp(b.hits.Count(), a.hits.Count());
     }
     THitList(const cm_Element& type, NodeClass* node, double fom)  {
       Type = &type;

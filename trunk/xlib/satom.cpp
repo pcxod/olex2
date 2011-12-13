@@ -28,12 +28,12 @@ void  TSAtom::CAtom(TCAtom& S)  {
   SetMasked(S.IsMasked());
 }
 //..............................................................................
-int TSAtom::_SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2)  {
-  return olx_cmp(b1->QLength(), b2->QLength());
+int TSAtom::_SortBondsByLengthAsc(const TSBond &b1, const TSBond &b2)  {
+  return olx_cmp(b1.QLength(), b2.QLength());
 }
 //..............................................................................
-int TSAtom::_SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2)  {
-  return olx_cmp(b2->QLength(), b1->QLength());
+int TSAtom::_SortBondsByLengthDsc(const TSBond &b1, const TSBond &b2)  {
+  return olx_cmp(b2.QLength(), b1.QLength());
 }
 //..............................................................................
 void TSAtom::Assign(const TSAtom& S)  {

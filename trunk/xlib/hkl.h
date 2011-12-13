@@ -21,7 +21,7 @@
 BeginXlibNamespace()
 
 class THklFile: public IEObject  {
-  static int HklCmp(const TReflection* I1, const TReflection* I2);
+  static int HklCmp(const TReflection &I1, const TReflection &I2);
   TRefPList Refs;
   TArray3D< TRefPList* > *Hkl3D;
   mat3d Basis;

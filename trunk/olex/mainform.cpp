@@ -2916,9 +2916,8 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   return true;
 }
 //..............................................................................
-int SortQPeak(const TCAtom* a1, const TCAtom* a2)  {
-  const double v =  a2->GetQPeak() - a1->GetQPeak();
-  return (v < 0) ? -1 : ( v > 0 ? 1 : 0 );
+int SortQPeak(const TCAtom &a1, const TCAtom &a2)  {
+  return olx_cmp(a2.GetQPeak(), a1.GetQPeak());
 }
 void TMainForm::QPeakTable(bool TableDef, bool Create)  {
   static const olxstr QPeakTableFile("qpeaks.htm");

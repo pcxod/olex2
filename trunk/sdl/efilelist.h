@@ -12,6 +12,7 @@
 #include "ebase.h"
 #include "typelist.h"
 #include "etime.h"
+#include "emath.h"
 
 BeginEsdlNamespace()
   class TFileListItem  {
@@ -47,13 +48,21 @@ BeginEsdlNamespace()
         return (ind != InvalidIndex) ?  fn.SubStringFrom(ind+1) : EmptyString();
       }
     public:
-      static int Compare( const TFileListItem* i1, const TFileListItem* i2 )  {
-        if( field == 0 )  return i1->GetName().Compare(i2->GetName());
-        if( field == 1 )  return ExtractFileExt(i1->GetName()).Compare(ExtractFileExt(i2->GetName()));
-        if( field == 2 )  return TPrimitiveComparator::Compare<uint64_t>(i1->GetCreationTime(), i2->GetCreationTime());
-        if( field == 3 )  return TPrimitiveComparator::Compare<uint64_t>(i1->GetModificationTime(), i2->GetModificationTime());
-        if( field == 4 )  return TPrimitiveComparator::Compare<uint64_t>(i1->GetLastAccessTime(), i2->GetLastAccessTime());
-        if( field == 5 )  return TPrimitiveComparator::Compare<uint64_t>(i1->GetSize(), i2->GetSize());
+      static int Compare(const TFileListItem &i1, const TFileListItem &i2 )  {
+        if( field == 0 )
+          return i1.GetName().Compare(i2.GetName());
+        if( field == 1 ) {
+          return ExtractFileExt(i1.GetName()).Compare(
+            ExtractFileExt(i2.GetName()));
+        }
+        if( field == 2 )
+          return olx_cmp(i1.GetCreationTime(), i2.GetCreationTime());
+        if( field == 3 )
+          return olx_cmp(i1.GetModificationTime(), i2.GetModificationTime());
+        if( field == 4 )
+          return olx_cmp(i1.GetLastAccessTime(), i2.GetLastAccessTime());
+        if( field == 5 )
+          return olx_cmp(i1.GetSize(), i2.GetSize());
         return 0;
       }
     };

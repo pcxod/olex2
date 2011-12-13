@@ -28,7 +28,7 @@ typedef TPtrList<class TNetwork> TNetPList;
 class TNetwork: public TBasicNode<TNetwork, TSAtom, TSBond>  {
 protected:
   class TLattice  *Lattice;
-  // sorts atoms by diatnce from {0,0,0}, must be called before search for Hbonds
+  // sorts atoms by distance from 0, must be called before search for Hbonds
   void SortNodes();
 public:
   TNetwork(TLattice* P, TNetwork *N);
@@ -45,10 +45,12 @@ public:
   // copies the content of S to the net
   void Assign(TNetwork& S);
 
-  /* disassembles the list of Atoms into the fragments; does not affect current net */
+  /* disassembles the list of Atoms into the fragments; does not affect current
+  net
+  */
   void Disassemble(ASObjectProvider& objects, TNetPList& Frags);
-  /* creates bonds and fragments for atoms initialised by Disassemble, all Q-bonds end up 
-  in the bond_sink*/
+  /* creates bonds and fragments for atoms initialised by Disassemble
+  */
   void CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Frags);
   // returns true if the two atoms share a matrix
   static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
@@ -190,20 +192,24 @@ public:
   static bool IsRingRegular(const TSAtomPList& ring);
   static bool IsRingPrimitive(const TSAtomPList& ring);
   // invertion must be specified for the permutational graph match
-  bool DoMatch(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res, bool Invert,
+  bool DoMatch(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res,
+    bool Invert,
     double (*weight_calculator)(const TSAtom&));
-  bool IsSubgraphOf(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res,
+  bool IsSubgraphOf(TNetwork& net,
+    TTypeList< AnAssociation2<size_t, size_t> >& res,
     const TSizeList& rootsToSkip);
 
 protected:
-  static int TNetwork_SortRingAtoms(const TSAtom* a, const TSAtom* b)  {
-    return (int)(a->GetTag()-b->GetTag());
+  static int TNetwork_SortRingAtoms(const TSAtom &a, const TSAtom &b)  {
+    return (int)(a.GetTag()-b.GetTag());
   }
   static index_t ShortestDistance(TSAtom &a, TSAtom &b);
-  static bool TryRing(TSAtom& sa, TSAtomPList& ring, const ElementPList& ringContent, size_t level=1);
+  static bool TryRing(TSAtom& sa, TSAtomPList& ring,
+    const ElementPList& ringContent, size_t level=1);
   static bool TryRing(TSAtom& sa, TSAtomPList& ring, size_t level=1);
 // tries to find the ring in given direction
-  static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring, const ElementPList& ringContent);
+  static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring,
+    const ElementPList& ringContent);
   static bool TryRing(TSAtom& sa, size_t node, TSAtomPList& ring);
   void UnifyRings(TTypeList<TSAtomPList>& rings);
 
@@ -238,21 +244,28 @@ public:
       Substituents.Clear();
       return *this;
     }
-    bool IsSingleCSubstituted() const;  // returns true if all substituents are single CHn groups
+    // returns true if all substituents are single CHn groups
+    bool IsSingleCSubstituted() const;
   };
   static RingInfo& AnalyseRing(const TSAtomPList& ring, RingInfo& ri);
-  // returns true of the fragment has enough nodes to be matched/aligned to others
-  bool IsSuitableForMatching() const {  return NodeCount() >= 3 && !Node(0).CAtom().IsDetached();  }
+  /* returns true of the fragment has enough nodes to be matched/aligned to
+  others
+  */
+  bool IsSuitableForMatching() const {
+    return NodeCount() >= 3 && !Node(0).CAtom().IsDetached();
+  }
   struct AlignInfo  {
     align::out align_out;
     TEValueD rmsd;  // unweighted rmsd
     bool inverted;
   };
-  static AlignInfo GetAlignmentRMSD(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+  static AlignInfo GetAlignmentRMSD(
+    const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
     bool invert,
     double (*weight_calculator)(const TSAtom&));
   // prepares a list of atoms, coordinates and weights for VcoV calculations
-  static void PrepareESDCalc(const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
+  static void PrepareESDCalc(
+    const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
     bool TryInversion,
     TSAtomPList& atoms_out,
     vec3d_alist& crd_out, 
