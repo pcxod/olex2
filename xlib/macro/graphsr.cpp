@@ -21,11 +21,8 @@
 //..............................................................................
 struct TGraphRSRef  {
   double ds, Fo, Fc;
-  static int SortByDs(const TGraphRSRef* r1, const TGraphRSRef* r2)  {
-    double v = r1->ds - r2->ds;
-    if( v < 0 )  return -1;
-    if( v > 0 ) return 1;
-    return 0;
+  static int SortByDs(const TGraphRSRef &r1, const TGraphRSRef &r2)  {
+    return olx_cmp(r1.ds, r2.ds);
   }
 };
 struct TGraphRSBin {
@@ -47,7 +44,8 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     if( !TEFile::Exists(fcffn) )  {
       fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fco");
       if( !TEFile::Exists(fcffn) )  {
-        E.ProcessingError(__OlxSrcInfo, "please load fcf file or make sure the one exists in current folder");
+        E.ProcessingError(__OlxSrcInfo,
+          "please load fcf file or make sure the one exists in current folder");
         return;
       }
     }

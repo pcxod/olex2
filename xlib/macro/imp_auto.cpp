@@ -121,9 +121,9 @@ void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 struct Main_BaiComparator {
-  static int Compare(const TPrimitiveStrListData<olxstr,const cm_Element*>* a, 
-                     const TPrimitiveStrListData<olxstr,const cm_Element*>* b)  {
-      return a->Object->z - b->Object->z;
+  static int Compare(const TPrimitiveStrListData<olxstr,const cm_Element*> &a, 
+                     const TPrimitiveStrListData<olxstr,const cm_Element*> &b)  {
+      return a.Object->z - b.Object->z;
   }
 };
 void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list,
@@ -450,9 +450,9 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 struct Main_SfacComparator {
-  static int Compare(const AnAssociation2<double,const cm_Element*>* a, 
-                     const AnAssociation2<double,const cm_Element*>* b)  {
-      return b->GetB()->z - a->GetB()->z;
+  static int Compare(const AnAssociation2<double,const cm_Element*> &a, 
+                     const AnAssociation2<double,const cm_Element*> &b)  {
+      return b.GetB()->z - a.GetB()->z;
   }
 };
 void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {

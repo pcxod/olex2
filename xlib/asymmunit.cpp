@@ -562,8 +562,10 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
 //..............................................................................
 size_t TAsymmUnit::CountElements(const olxstr& Symbol) const  {
   cm_Element* elm = XElementLib::FindBySymbol(Symbol);
-  if( elm == NULL )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("unknown element: '") << Symbol << '\'');
+  if( elm == NULL ) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      olxstr("unknown element: ").quote() << Symbol);
+  }
   size_t cnt = 0;
   for( size_t i=0; i < AtomCount(); i++ )
     if( !GetAtom(i).IsDeleted() && GetAtom(i).GetType() == *elm )
@@ -574,7 +576,7 @@ size_t TAsymmUnit::CountElements(const olxstr& Symbol) const  {
 void TAsymmUnit::Sort(TCAtomPList* list) {
  // sorting by four params
   if( list == NULL )  list = &MainResidue.Atoms;
-  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
+  TCAtomPList::QuickSorter.Sort<TCAtomComparator>(*list);
 }
 //..............................................................................
 int TAsymmUnit::GetNextPart(bool neg) const {

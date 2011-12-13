@@ -33,9 +33,9 @@ template <class SC> struct TSingleStringWrapper  {
 
 template <class T, bool CaseInsensetive> class TStringWrapperComparator  {
 public:
-  static int Compare(const T* A, const T* B)  {
-   return (CaseInsensetive) ? A->String.Comparei(B->String)
-     : A->String.Compare(B->String);
+  static int Compare(const T &A, const T &B)  {
+   return (CaseInsensetive) ? A.String.Comparei(B.String)
+     : A.String.Compare(B.String);
   }
 };
 // string class, string container class

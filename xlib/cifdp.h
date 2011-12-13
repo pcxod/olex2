@@ -226,7 +226,7 @@ namespace cif_dp {
     void Sort();
     // used in table sorting, not suitable for parallelisation
     struct TableSorter  {
-      static int Compare(const CifRow* r1, const CifRow* r2);
+      static int Compare(const CifRow &r1, const CifRow &r2);
     };
   };
 
@@ -262,7 +262,7 @@ namespace cif_dp {
       const TStrList &pivots, &endings;
       CifSorter(const TStrList& _pivots, const TStrList& _endings) :
         pivots(_pivots), endings(_endings)  {}
-      int Compare(const EntryGroup* e1, const EntryGroup* e2) const;
+      int Compare(const EntryGroup &e1, const EntryGroup &e2) const;
     };
   };
 

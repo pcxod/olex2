@@ -79,16 +79,16 @@ vec3d TAutoDBNode::SortCenter;
 
 static const vec3d ZAxis(0,0,1);
 
-int TAutoDBNode::SortMetricsFunc(const TAttachedNode* a,
-  const TAttachedNode* b)
+int TAutoDBNode::SortMetricsFunc(const TAttachedNode &a,
+  const TAttachedNode &b)
 {
-  return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b->GetCenter()),
-                TAutoDBNode::SortCenter.DistanceTo(a->GetCenter()));
+  return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b.GetCenter()),
+                TAutoDBNode::SortCenter.DistanceTo(a.GetCenter()));
 }
-int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>* a,
-                                const AnAssociation2<TCAtom*, vec3d>* b)  {
-  return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b->GetB()),
-                TAutoDBNode::SortCenter.DistanceTo(a->GetB()));
+int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d> &a,
+                                const AnAssociation2<TCAtom*, vec3d> &b)  {
+  return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b.GetB()),
+                TAutoDBNode::SortCenter.DistanceTo(a.GetB()));
 }
 
 TAutoDBNode::TAutoDBNode(TSAtom& sa,
@@ -452,7 +452,7 @@ const olxstr& TAutoDBNetNode::ToString(int level) const  {
 //..............................................................................
 TAutoDBNet* TAutoDBNet::CurrentlyLoading = NULL;
 //..............................................................................
-void TAutoDBNet::SaveToStream( IDataOutputStream& output ) const {
+void TAutoDBNet::SaveToStream(IDataOutputStream& output) const {
   output << (int32_t)FReference->GetId();
   output << (int16_t)Nodes.Count();
   for( uint32_t i=0; i < Nodes.Count(); i++ )
@@ -460,7 +460,7 @@ void TAutoDBNet::SaveToStream( IDataOutputStream& output ) const {
   for( uint32_t i=0; i < Nodes.Count(); i++ )
     Nodes[i].SaveToStream( output );
 }
-void TAutoDBNet::LoadFromStream( IDataInputStream& input )  {
+void TAutoDBNet::LoadFromStream(IDataInputStream& input)  {
   TAutoDBNet::CurrentlyLoading = this;
   int32_t ind;
   int16_t cnt;
@@ -483,8 +483,8 @@ int UpdateNodeSortFunc(const TAutoDBNode* a, const TAutoDBNode* b)  {
   return a->UpdateCompare(*b);
 }
 //..............................................................................
-int SearchCompareFunc(const TAutoDBNode* a, const TAutoDBNode* b)  {
-  double v = a->SearchCompare(*b);
+int SearchCompareFunc(const TAutoDBNode &a, const TAutoDBNode &b)  {
+  double v = a.SearchCompare(b);
   if( v < 0 )  return -1;
   if( v > 0 )  return 1;
   return 0;
@@ -951,13 +951,13 @@ size_t TAutoDB::TAnalyseNetNodeTask::LocateDBNodeIndex(
   if( to == InvalidIndex )  to = segment.Count()-1;
   if( to == from )  return to;
   if( (to-from) == 1 )  return from;
-  int resfrom = SearchCompareFunc(segment[from], nd),
-      resto   = SearchCompareFunc(segment[to], nd);
+  int resfrom = SearchCompareFunc(*segment[from], *nd),
+      resto   = SearchCompareFunc(*segment[to], *nd);
   if( resfrom == 0 )  return from;
   if( resto == 0 )    return to;
   if( resfrom < 0 && resto > 0 )  {
     size_t index = (to+from)/2;
-    int res = SearchCompareFunc(segment[index], nd);
+    int res = SearchCompareFunc(*segment[index], *nd);
     if( res < 0 )  {  return LocateDBNodeIndex(segment, nd, index, to);  }
     if( res > 0 )  {  return LocateDBNodeIndex(segment, nd, from, index);  }
     if( res == 0 )  {  return index;  }

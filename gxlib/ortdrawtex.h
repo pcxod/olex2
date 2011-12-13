@@ -29,9 +29,8 @@ private:
         delete ielpm;
     }
   };
-  static int OrtAtomZSort(const OrtAtom* a1, const OrtAtom* a2)  {
-    const float diff = a1->crd[2] - a2->crd[2];
-    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  static int OrtAtomZSort(const OrtAtom &a1, const OrtAtom &a2)  {
+    return olx_cmp_float(a1.crd[2], a2.crd[2], 1e-3f);
   }
   float AradScale, DrawScale, BondRad, LinearScale;
   mat3f ProjMatr, UnProjMatr;

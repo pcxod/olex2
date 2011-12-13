@@ -219,16 +219,16 @@ typedef TTypeList<ElementCount> ContentList;
 typedef olxdict<const cm_Element*, double, TPointerComparator> ElementRadii;
 typedef olxdict<const cm_Element*, double, TPointerComparator> ElementDict;
 
-// sorts elemnt pointers by Z descending 
-struct ElementPZSorter  {
-  static int Compare(const cm_Element* s1, const cm_Element* s2)  {
-    return s2->z - s1->z;
+// sorts element by Z descending 
+struct ElementZSorter  {
+  static int Compare(const cm_Element &s1, const cm_Element &s2)  {
+    return s2.z - s1.z;
   }
 };
-// sorts elemnt pointers by symbol ascending
-struct ElementPSymbolSorter  {
-  static int Compare(const cm_Element* s1, const cm_Element* s2)  {
-    return s1->symbol.Compare(s2->symbol);
+// sorts element by symbol ascending
+struct ElementSymbolSorter  {
+  static int Compare(const cm_Element &s1, const cm_Element &s2)  {
+    return s1.symbol.Compare(s2.symbol);
   }
 };
 

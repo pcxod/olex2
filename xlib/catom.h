@@ -102,8 +102,8 @@ private:
   static olxstr VarNames[];
   CXConnInfo* ConnInfo;
   void SetId(size_t id)  {  Id = id;  }
-  int SortSitesByDistanceAsc(const Site* s1, const Site* s2) const;
-  int SortSitesByDistanceDsc(const Site* s1, const Site* s2) const {
+  int SortSitesByDistanceAsc(const Site &s1, const Site &s2) const;
+  int SortSitesByDistanceDsc(const Site &s1, const Site &s2) const {
     return -SortSitesByDistanceAsc(s1, s2);
   }
 public:
@@ -307,32 +307,32 @@ public:
   typedef TPtrList<TCAtom> TCAtomPList;
   typedef TTypeList<TCAtom> TCAtomList;
 //..............................................................................
-class TCAtomPComparator  {
+class TCAtomComparator  {
 public:
-  static int Compare(const TCAtom* a1, const TCAtom* a2)  {
-    if( a1->GetFragmentId() != a2->GetFragmentId() )
-      return a1->GetFragmentId() - a2->GetFragmentId();
-    if( a1->GetResiId() != a2->GetResiId() )
-      return olx_cmp(a1->GetResiId(),a2->GetResiId());
+  static int Compare(const TCAtom &a1, const TCAtom &a2)  {
+    if( a1.GetFragmentId() != a2.GetFragmentId() )
+      return a1.GetFragmentId() - a2.GetFragmentId();
+    if( a1.GetResiId() != a2.GetResiId() )
+      return olx_cmp(a1.GetResiId(), a2.GetResiId());
     // by label
-    if( a1->GetType() == a2->GetType() )
-      return TCAtom::CompareAtomLabels(a1->GetLabel(), a2->GetLabel());
+    if( a1.GetType() == a2.GetType() )
+      return TCAtom::CompareAtomLabels(a1.GetLabel(), a2.GetLabel());
     // by weight
-    return olx_cmp(a1->GetType().GetMr(), a2->GetType().GetMr());
+    return olx_cmp(a1.GetType().GetMr(), a2.GetType().GetMr());
   }
 };
 //..............................................................................
-class TCAtomPCenterComparator  {
+class TCAtomCenterComparator  {
 public:
-  static int Compare(const TCAtom* a1, const TCAtom* a2)  {
-    return olx_cmp(a1->ccrd().QLength(), a2->ccrd().QLength());
+  static int Compare(const TCAtom &a1, const TCAtom &a2)  {
+    return olx_cmp(a1.ccrd().QLength(), a2.ccrd().QLength());
   }
 };
 //..............................................................................
 class TCAtomTagComparator  {
 public:
-  static int Compare(const TCAtom* a1, const TCAtom* a2)  {
-    return olx_cmp(a1->GetTag(), a2->GetTag());
+  static int Compare(const TCAtom &a1, const TCAtom &a2)  {
+    return olx_cmp(a1.GetTag(), a2.GetTag());
   }
 };
 //..............................................................................

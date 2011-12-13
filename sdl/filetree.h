@@ -41,12 +41,12 @@ public:
     olxstr FullPath;
     typedef TDiffFolder<Folder> DiffFolder;
 #ifdef __WIN32__
-    static int CompareFiles(const TFileListItem* i1, const TFileListItem* i2)
+    static int CompareFiles(const TFileListItem &i1, const TFileListItem &i2)
     {
-      return i1->GetName().Comparei(i2->GetName());
+      return i1.GetName().Comparei(i2.GetName());
     }
-    static int CompareFolders(const Folder* i1, const Folder* i2)  {
-      return i1->Name.Comparei(i2->Name);
+    static int CompareFolders(const Folder &i1, const Folder &i2)  {
+      return i1.Name.Comparei(i2.Name);
     }
     template <class T> static size_t FindSortedIndexOf(const T&list,
       const olxstr& entity)

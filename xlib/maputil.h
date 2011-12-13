@@ -259,31 +259,22 @@ public:
     DeleteMap(map_copy, dim);
     return res;
   }
-  static int PeakPtrSortByCount(const MapUtil::peak* a, const MapUtil::peak* b)
-  {
-    return b->count - a->count;
-  }
   static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {
     return b.count - a.count;
-  }
-  static int PeakSortBySum(const MapUtil::peak* a, const MapUtil::peak* b)  {
-    return olx_cmp(b->summ, a->summ);
   }
   static int PeakSortBySum(const MapUtil::peak& a, const MapUtil::peak& b)  {
     return olx_cmp(b.summ, a.summ);
   }
-  static int PeakSortByWeight(const MapUtil::peak* a, const MapUtil::peak* b)  {
-    if( a->count == 0 )
-      return b->count == 0 ? 0 : 1;
-    else if( b->count == 0 )
-      return a->count == 0 ? 0 : -1;
-    const double diff = b->summ/b->count - a->summ/a->count;
-    return diff < 0 ? -1 : (diff > 0 ? 1 : 0); 
+  static int PeakSortByWeight(const MapUtil::peak &a, const MapUtil::peak &b)  {
+    if( a.count == 0 )
+      return b.count == 0 ? 0 : 1;
+    else if( b.count == 0 )
+      return a.count == 0 ? 0 : -1;
+    return olx_cmp(b.summ/b.count, a.summ/a.count);
   }
 protected:
-  static int SortByDistance(const vec3d* a, const vec3d* b)  {
-    const double d = a->QLength() - b->QLength();
-    return d < 0 ? -1 : (d > 0 ? 1 : 0);
+  static int SortByDistance(const vec3d &a, const vec3d &b)  {
+    return olx_cmp(a.QLength(), b.QLength());
   }
 public:
   /*ml - all symmetry matrices, including identity matrix;

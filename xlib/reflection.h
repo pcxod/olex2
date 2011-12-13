@@ -225,12 +225,9 @@ public:
   static int Compare(const TReflection &a, const TReflection &b)  {
     return a.CompareTo(b);
   }
-  static int CompareP(const TReflection *a, const TReflection *b)  {
-    return a->CompareTo(*b);
-  }
   // could be list of pointers or list of const pointers
   template <class RefPList> static void SortList(RefPList& lst)  {  
-    lst.QuickSorter.SortSF(lst, &TReflection::CompareP);  
+    lst.QuickSorter.SortSF(lst, &TReflection::Compare);  
   }
 //..............................................................................
   // these values are intialised by Analyse
