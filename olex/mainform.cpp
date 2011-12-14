@@ -3911,12 +3911,17 @@ PyObject* pyPPI(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
-  {"GetUserInput", pyGetUserInput, METH_VARARGS, "shows a dialog, where user can type some text.\
-   Takes three agruments: flags, title and content. If flags not equal to 1, a muliline dialog sis created"},
-  {"IsControl", pyIsControl, METH_VARARGS, "Takes HTML element name and optionaly popup name. Returns true/false if given control exists"},
+  {"GetUserInput", pyGetUserInput, METH_VARARGS, 
+  "Shows a dialog, where user can type some text. Takes three agruments: flags"
+  ", title and content. If flags not equal to 1, a muliline dialog sis created"
+  },
+  {"IsControl", pyIsControl, METH_VARARGS,
+  "Takes HTML element name and optionaly popup name. Returns true/false if "
+  "given control exists"
+  },
   {"GetPPI", pyPPI, METH_VARARGS, "Returns screen PPI"},
   {NULL, NULL, 0, NULL}
-   };
+};
 //..............................................................................
 void TMainForm::PyInit()  {
   Py_InitModule("olex_gui", CORE_Methods);
