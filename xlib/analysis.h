@@ -97,11 +97,15 @@ public:
     {}
     TTypeList<substituent> substituents;
     TCAtomPList atoms;
+    bool is_leq(const ring &r) const;
     // checks if the rings shares two sunsequent atoms with abother ring
     bool is_fused_with(const ring &r) const;
     // merges fused ring into one, big ring, r is merged into this ring
     bool merge(ring &r);
     int Compare(const ring &r) const;
+    static int SizeCompare(const ring &r1, const ring &r2) {
+      return olx_cmp(r1.atoms.Count(), r2.atoms.Count());
+    }
   };
   struct fragment {
   protected:

@@ -104,6 +104,24 @@ struct FunctionComparator {
   }
 };
 //.............................................................................
+template <class cmp_t> struct ReverseComparator_ {
+  const cmp_t &cmp;
+  ReverseComparator_(const cmp_t &cmp_) : cmp(cmp_) {}
+  template <typename item_t> int Compare(
+    const item_t &i1, const item_t &i2) const
+  {
+    return cmp.Compare(i2, i1);
+  }
+};
+// generic reverse comparator
+template <class cmp_t> ReverseComparator_<cmp_t> olx_reverse_cmp(
+  const cmp_t &cmp)
+{
+  return ReverseComparator_<cmp_t>(cmp);
+}
+// to be used with the objects having Compare method
+ReverseComparator_<TComparableComparator> olx_reverse_cmp();
+//.............................................................................
 struct DummySwapListener  {
   static void OnSwap(size_t, size_t)  {}
 };

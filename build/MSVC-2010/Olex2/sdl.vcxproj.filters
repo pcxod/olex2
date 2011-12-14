@@ -162,6 +162,9 @@
     <ClCompile Include="..\..\..\sdl\os_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\sdl\esort.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\sdl\actions.h">
