@@ -190,8 +190,8 @@ protected:
       points.Add(otp.points[i]);
   }
   struct ContourDrawer {
-    TTypeList<a_ort_object>& objects;
     const OrtDraw& parent;
+    TTypeList<a_ort_object>& objects;
     uint32_t color;
     ContourDrawer(const OrtDraw& _parent, TTypeList<a_ort_object>& _objects,
       uint32_t _color)

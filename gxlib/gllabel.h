@@ -41,7 +41,7 @@ public:
   virtual ~TXGlLabel()  {}
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
+  bool GetDimensions(vec3d &, vec3d &)  {  return false;  }
   inline const olxstr& GetLabel() const {  return FLabel;  }
   void SetLabel(const olxstr& L);
   void UpdateLabel()  {  SetLabel(GetLabel());  }

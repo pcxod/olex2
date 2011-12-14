@@ -22,7 +22,7 @@ protected:
   vec3d Center;
   double Zoom;
   virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
-  virtual bool DoRotate(const vec3d& vec, double angle) {  return false;  }
+  virtual bool DoRotate(const vec3d&, double) {  return false;  }
   virtual bool DoZoom(double zoom, bool inc)  {
     if( inc ) Zoom = ValidateZoom(Zoom+zoom);
     else      Zoom = ValidateZoom(zoom);

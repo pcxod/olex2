@@ -288,7 +288,8 @@ ConstTypeList<vec3d> fragments::fragment::build_coordinates() const {
 void fragments::fragment::init_generators() {
   if (atoms_.IsEmpty()) return;
   generators.AddList(
-    atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_));
+    atoms_[0]->GetParent()->GetLattice().GetFragmentGrowMatrices(atoms_,
+      true));
 }
 //.............................................................................
 bool fragments::fragment::is_polymeric() const {

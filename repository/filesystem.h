@@ -55,9 +55,9 @@ protected:
   }
 public:
   AFileSystem() : 
-    Break(false),
     Index(NULL),
     Access(afs_FullAccess),  
+    Break(false),
     OnProgress(Actions.New("ON_PROGRESS")),
     OnBreak(Actions.New("ON_BREAK"))
   {
@@ -159,13 +159,13 @@ public:
     SkipOptions() : extsToSkip(NULL), filesToSkip(NULL) {  }
   };
 private:
-  olxstr Name, Digest;
-  uint64_t Size, DateTime;
-  bool Folder, Processed;
   TFSItem* Parent;
-  TCSTypeList<olxstr, TFSItem*> Items;
-  TStrList Properties, Actions;
   TFSIndex& Index;
+  bool Folder, Processed;
+  uint64_t DateTime, Size;
+  TCSTypeList<olxstr, TFSItem*> Items;
+  olxstr Name, Digest;
+  TStrList Properties, Actions;
 protected:
   void DeleteItem(TFSItem* item);
   bool IsProcessed() const {  return Processed;  }
@@ -173,9 +173,9 @@ protected:
   void SetProcessed(bool v);
 public:
   TFSItem(TFSIndex& index, TFSItem* parent, const olxstr& name) :
-    Index(index), 
     Parent(parent), 
-    Folder(false), 
+    Index(index),
+    Folder(false),
     Processed(false) ,
     DateTime(0), 
     Size(0), 

@@ -32,7 +32,7 @@ public:
   };
   template <class Accessor=DirectAccessor> struct IndexTagAnalyser  {
     template <class Item> static inline bool OnItem(const Item& o, size_t i)  {
-      return Accessor::Access(o).GetTag() != i;
+      return (size_t)Accessor::Access(o).GetTag() != i;
     }
   };
   template <class Accessor=DirectAccessor> struct TagSetter  {

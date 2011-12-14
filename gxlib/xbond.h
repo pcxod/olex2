@@ -73,7 +73,7 @@ public:
   inline double GetRadius() const {  return FParams[4]; }
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false; }
+  bool GetDimensions(vec3d &, vec3d &)  {  return false; }
 
   // for parameters of a specific primitive
   void ListParams(TStrList &List, TGlPrimitive *Primitive);

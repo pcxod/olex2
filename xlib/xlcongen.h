@@ -66,7 +66,7 @@ public:
     }
     return -1;
   }
-  static short ShelxToOlex(int shelx_code, TAtomEnvi& envi, TAtomEnvi* pivot = NULL)  {
+  static short ShelxToOlex(int shelx_code, TAtomEnvi& envi)  {
     const int m = TAfixGroup::GetM(shelx_code);
     switch( m ) {
       case 1:

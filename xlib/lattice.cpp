@@ -23,6 +23,7 @@
 #include "olxmps.h"
 #include "estrbuffer.h"
 #include "symmparser.h"
+#include "equeue.h"
 
 #undef GetObject
 
@@ -456,20 +457,25 @@ void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
 }
 //..............................................................................
 SortedObjectList<smatd, smatd::ContainerIdComparator>
-  TLattice::GetFragmentGrowMatrices(const TCAtomPList& l) const
+  TLattice::GetFragmentGrowMatrices(const TCAtomPList& l, bool use_q_peaks) const
 {
   SortedObjectList<smatd, smatd::ContainerIdComparator> res;
-  smatd_list all; // we need a non-sorted list to implement 'recursion'
   const TUnitCell& uc = GetUnitCell();
   res.Add(uc.GetMatrix(0));
-  all.AddNew(uc.GetMatrix(0));
-  for( size_t i=0; i < all.Count(); i++ )  {
+  TQueue<const smatd*> q;
+  q.Push(&res[0]);
+  while (!q.IsEmpty()) {
+    const smatd &ref_m = *q.Pop();
     for( size_t j=0; j < l.Count(); j++ )  {
       TCAtom& a = *l[j];
       for( size_t k=0; k < a.AttachedSiteCount(); k++ )  {
-        smatd m = uc.MulMatrix(a.GetAttachedSite(k).matrix, all[i]);
-        if( res.AddUnique(m) )
-          all.AddNew(m);  // recursion
+        TCAtom &aa = a.GetAttachedAtom(k);
+        if (aa.IsDeleted() || (!use_q_peaks && aa.GetType() == iQPeakZ))
+          continue;
+        smatd m = uc.MulMatrix(a.GetAttachedSite(k).matrix, ref_m);
+        size_t idx;
+        if( res.AddUnique(m, &idx) )
+          q.Push(&res[idx]);
       }
     }
   }
@@ -2311,7 +2317,7 @@ olxstr TLattice::CalcMoiety() const {
   if( zp_mult != 1 )  {
     for( size_t i=0; i < frags.Count(); i++ )  {
       const TCAtomPList& l = cfrags[frags[i].GetC()];
-      const size_t generators = GetFragmentGrowMatrices(l).Count();
+      const size_t generators = GetFragmentGrowMatrices(l, false).Count();
       const int gd = int(generators == 0 ? 1 : generators);
       frags[i].A() *= zp_mult/gd;
       for( size_t j=0; j < frags[i].GetB().Count(); j++ )

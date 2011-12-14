@@ -14,7 +14,9 @@
 #ifdef __WIN32__
   #include <objbase.h>
   #include <shlguid.h>
+#ifndef __GNUC__
   #include <shobjidl.h>
+#endif
   #include <shlobj.h>
   #include <iphlpapi.h>
 #else
@@ -35,7 +37,7 @@
 #endif
 
 //#undef __WIN32__  // compilation test for wxWidgets
-
+#ifndef __GNUC__
 bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
        const olxstr& ObjectPath,const olxstr& description, bool AddRunAs)  {
 #ifdef __WIN32__
@@ -88,6 +90,7 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
 #endif
   throw TNotImplementedException(__OlxSourceInfo);
 }
+#endif //__GNUC__
 //..............................................................................
 olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
 #ifdef __WIN32__
@@ -114,8 +117,10 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
         GetVersionEx(&veri);
         LONG flags = KEY_QUERY_VALUE;
         // is XP or later?
+#ifdef KEY_WOW64_64KEY
         if( veri.dwMajorVersion > 5 || (veri.dwMajorVersion == 5 && veri.dwMinorVersion > 0 ) )
           flags |= KEY_WOW64_64KEY;
+#endif
         HKEY key;
         if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, olxT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion"),
               0, flags, &key) != ERROR_SUCCESS )
