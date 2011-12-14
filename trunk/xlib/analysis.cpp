@@ -157,6 +157,15 @@ void fragments::tree_node::reverse() {
 }
 //.............................................................................
 //.............................................................................
+bool fragments::ring::is_leq(const ring &r) const {
+  atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
+  r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
+  for (size_t i=0; i < atoms.Count(); i++)
+    if (!atoms[i]->IsProcessed())
+      return false;
+  return true;
+}
+//.............................................................................
 bool fragments::ring::is_fused_with(const ring &r) const {
   atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, false));
   r.atoms.ForEach(TCAtom::FlagSetter<>(catom_flag_Processed, true));
