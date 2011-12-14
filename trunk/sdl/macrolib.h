@@ -131,13 +131,15 @@ protected:
   }
   void ParseMacro(const TDataItem& macro_def, TEMacro& macro);
   DefMacro(IF)
+  DefMacro(Abort)
   DefFunc(LastError)
   DefFunc(Or)
   DefFunc(And)
   DefFunc(Not)
   DefFunc(LogLevel)
 public:
-  TEMacroLib(olex::IOlexProcessor& olexProcessor) : OlexProcessor(olexProcessor), LogLevel(macro_log_macro)  {}
+  TEMacroLib(olex::IOlexProcessor& olexProcessor)
+    : OlexProcessor(olexProcessor), LogLevel(macro_log_macro)  {}
   ~TEMacroLib() {  Clear();  }
   void Init();  // extends the Library with functionality
   void Load(const TDataItem& m_root)  {
@@ -146,7 +148,8 @@ public:
       const TDataItem& m_def = m_root.GetItem(i);
       const TDataItem* di = m_def.FindItem("body");
       if( di == NULL )  {
-        TBasicApp::NewLogEntry(logError) << "Macro body is not defined: " << m_def.GetName();
+        TBasicApp::NewLogEntry(logError) << "Macro body is not defined: " <<
+          m_def.GetName();
         continue;
       }
       TEMacro* m = new TEMacro( m_def.GetName(), m_def.GetFieldValue("help"));
@@ -179,7 +182,9 @@ public:
     }
     return out.Count() - cnt;
   }
-  // if has_owner is true, then in th case the function does not exist no flags are set in E
+  /* if has_owner is true, then in th case the function does not exist no flags
+  are set in E
+  */
   bool ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner);
   //..............................................................................
   template <class Base> void ProcessTopMacro(const olxstr& Cmd, TMacroError& Error, 

@@ -14,6 +14,7 @@
 #include "htmlext.h"
 #include "fsext.h"
 #include "wxzipfs.h"
+#include "integration.h"
 
 void THtmlSwitch::Clear()  {
   Switches.Clear();
@@ -32,7 +33,8 @@ void THtmlSwitch::UpdateFileIndex()  {
   olxstr FN = Files[FileIndex];
   IInputStream *is = TFileHandlerManager::GetInputStream(FN);
   if( is == NULL )  {
-    TBasicApp::NewLogEntry(logError) << "THtmlSwitch::File does not exist: " << FN;
+    TBasicApp::NewLogEntry(logError) <<
+      (olxstr("THtmlSwitch::File does not exist: ").quote() << FN);
     return;
   }
 #ifdef _UNICODE
@@ -41,7 +43,36 @@ void THtmlSwitch::UpdateFileIndex()  {
   Strings.LoadFromTextStream(*is);
 #endif
   delete is;
+  const olxstr ignore_open= "<!-- #ignoreif", ignore_close = "#ignoreif -->";
   for( size_t i=0; i < Strings.Count(); i++ )  {
+    if (Strings[i].StartsFrom(ignore_open)) {
+      olxstr fn = Strings[i].SubStringFrom(ignore_open.Length()).TrimWhiteChars();
+      Strings[i].SetLength(0);
+      if (fn.IsEmpty()) {
+        TBasicApp::NewLogEntry(logError) <<
+          (olxstr("Invalid ignoreif construct: ").quote() << Strings[i]);
+      }
+      size_t j=i+1;
+      for (;j < Strings.Count(); j++) {
+        if (Strings[j].StartsFrom(ignore_close))
+          break;
+      }
+      if (j >= Strings.Count()) {
+        TBasicApp::NewLogEntry(logError) << "Missing closing ignoreif";
+        j = Strings.Count()-1;
+      }
+      else
+        Strings[j].SetLength(0);
+      olxstr rv;
+      if (olex::IOlexProcessor::GetInstance()->executeFunction(fn, rv) ) {
+        if( rv.ToBool() )
+          Strings.DeleteRange(i, j-i+1);
+      }
+      else {
+        TBasicApp::NewLogEntry(logError) <<
+          (olxstr("Invalid function in ingnoreif: ").quote() << fn);
+      }
+    }
     // replace the parameters with their values
     if( Strings[i].IndexOf('#') != InvalidIndex )  {
       // "key word parameter"
@@ -81,7 +112,9 @@ THtmlSwitch& THtmlSwitch::NewSwitch()  {
   return Switches.AddNew(ParentHtml, this);
 }
 //..............................................................................
-size_t THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<THtmlSwitch>& ret)  {
+size_t THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end,
+  TPtrList<THtmlSwitch>& ret)
+{
   size_t cnt = 0;
   for( size_t i=0; i < Switches.Count(); i++ )  {
     if( end.IsEmpty() )  {
@@ -97,7 +130,9 @@ size_t THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList
       }
     }
     else {
-      if( Switches[i].GetName().StartsFrom(start) && Switches[i].GetName().EndsWith(end) )  {
+      if( Switches[i].GetName().StartsFrom(start) &&
+          Switches[i].GetName().EndsWith(end) )
+      {
         ret.Add(Switches[i]);
         cnt++;
       }
