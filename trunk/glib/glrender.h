@@ -137,8 +137,8 @@ public:
     &OnStylesClear,  // Enter and Exit are called
     &OnClear;
 
-  void Resize(size_t h, size_t w);
-  void Resize(int Left, int Top, size_t h, size_t w, float Zoom);
+  void Resize(size_t w, size_t h);
+  void Resize(int Left, int Top, size_t w, size_t h, float Zoom);
 // perspective stuff
   void EnablePerspective(bool Set);
   bool IsPerspectiveEnabled() const {  return FPerspective; }

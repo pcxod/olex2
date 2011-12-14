@@ -53,7 +53,7 @@ template <class obj_t, class act_t> class ObjectCaster
   TIObjectProvider<obj_t>& list;
 protected:
   // dummy function...
-  virtual act_t& New(TNetwork* n) {  return *((act_t*)NULL);  }
+  virtual act_t& New(TNetwork*) {  return *((act_t*)NULL);  }
 public:
   ObjectCaster(TIObjectProvider<obj_t>& _list) : list(_list)  {}
   virtual size_t Count() const {  return list.Count();  }

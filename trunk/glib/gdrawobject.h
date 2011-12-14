@@ -94,8 +94,8 @@ public:
       SetSelected(false);
   }
   
-  virtual void ListDrawingStyles(TStrList& List)  {}
-  virtual void UpdaterimitiveParams(TGlPrimitive* GlP)  {}
+  virtual void ListDrawingStyles(TStrList&)  {}
+  virtual void UpdaterimitiveParams(TGlPrimitive*)  {}
   /* a generic Update function, called when the model (like control points) has changed
   should be implemented by objects depending on coordinates of others in an indirect way
   */
@@ -108,11 +108,11 @@ public:
   virtual void Compile(); 
 
   // for parameters of a specific primitive
-  virtual void ListParams(TStrList& List, TGlPrimitive* Primitive)  {}
+  virtual void ListParams(TStrList&, TGlPrimitive*)  {}
   // for internal object parameters
-  virtual void ListParams(TStrList& List)  {}
+  virtual void ListParams(TStrList&)  {}
   // fills the list with primitives from which the object can be constructed
-  virtual void ListPrimitives(TStrList& List) const {}
+  virtual void ListPrimitives(TStrList&) const {}
   virtual void UpdatePrimitives(int32_t Mask);
   virtual void OnPrimitivesCleared()  {}
 

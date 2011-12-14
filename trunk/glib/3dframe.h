@@ -68,10 +68,10 @@ protected:
   virtual bool DoRotate(const vec3d& vec, double angle);
   virtual bool DoZoom(double zoom, bool inc);
   virtual bool OnTranslate(size_t sender, const vec3d& t);
-  virtual bool OnRotate(size_t sender, const vec3d& vec, double angle)  {
+  virtual bool OnRotate(size_t sender, const vec3d&, double angle)  {
     return DoRotate(Faces[sender].GetN(), angle);
   }
-  virtual bool OnZoom(size_t sender, double zoom, bool inc)  {
+  virtual bool OnZoom(size_t, double, bool)  {
     return true;
   }
 public:

@@ -47,7 +47,7 @@ void TXFader::Create(const olxstr& cName)  {
   GlP.SetProperties(GlM);
 }
 //..............................................................................
-bool TXFader::Orient(TGlPrimitive& P)  {
+bool TXFader::Orient(TGlPrimitive&)  {
   if( Background == NULL && Foreground == NULL )  return true;
   double MaxZ = Parent.GetMaxRasterZ();
   //MaxZ = 0;

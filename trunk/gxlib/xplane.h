@@ -30,22 +30,23 @@ public:
   index_t DecTag()  {  return TSPlane::DecTag();  }
 
   bool Orient(TGlPrimitive& P);
-  bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
+  bool GetDimensions(vec3d &, vec3d &)  {  return false;  }
   void ListPrimitives(TStrList& List) const;
 
-  bool OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
+  bool OnMouseDown(const IEObject *, const TMouseData &)  {
     return true;
   }
-  bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
+  bool OnMouseUp(const IEObject *, const TMouseData &)  {
     return false;
   }
-  bool OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
+  bool OnMouseMove(const IEObject *, const TMouseData &)  {
     return false;
   }
 
   void Delete(bool v)  {
-    TSPlane::SetDeleted(true);
-    SetVisible(false);
+    TSPlane::SetDeleted(v);
+    if (v)
+      SetVisible(false);
   }
   const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
     TPointerComparator> &materials) const;

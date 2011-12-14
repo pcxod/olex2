@@ -625,9 +625,9 @@ void TFSItem::ClearEmptyFolders()  {
 //.............................................................................
 TFSIndex::TFSIndex(AFileSystem& fs) : 
   IndexFS(fs),
+  OnBreak(Actions.New("ON_BREAK")),
   OnProgress(Actions.New("ON_PROGRESS")),
-  OnAction(Actions.New("ON_ACTION")),
-  OnBreak(Actions.New("ON_BREAK"))
+  OnAction(Actions.New("ON_ACTION"))
 {
   Root = new TFSItem(*this, NULL, "ROOT");
   DestFS = NULL;

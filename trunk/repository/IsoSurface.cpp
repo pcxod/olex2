@@ -315,7 +315,7 @@ const int CIsoSurface::m_triTable[256][16] = {
 };
 //..............................................................................
 CIsoSurface::CIsoSurface(TArray3D<float>& points) : 
-  DimmZ(points.Length3()), DimmY(points.Length2()), DimmX(points.Length1()),
+  DimmX(points.Length1()), DimmY(points.Length2()), DimmZ(points.Length3()),
   ZSlice(DimmY*DimmX),
   Points(points)
 {

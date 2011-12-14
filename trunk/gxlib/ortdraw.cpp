@@ -218,7 +218,7 @@ void ort_bond::render(PSWriter& pw) const {
     uint32_t def = (atom_a.atom.GetType() > atom_b.atom.GetType() ?
       atom_a.sphere_color : atom_b.sphere_color);
     int pi[] = {0,1,2,3,8,11,12,13};
-    for( int i=0; i < sizeof(pi)/sizeof(pi[0]); i++ )  {
+    for( size_t i=0; i < sizeof(pi)/sizeof(pi[0]); i++ )  {
       if( (mask&(1<<pi[i])) != 0 )  {
         pw.color(get_color(pi[i], def));
         break;

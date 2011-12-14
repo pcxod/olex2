@@ -1005,7 +1005,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         TSAtom* central_atom = atoms[0];
         atoms.Delete(0);
         size_t face_cnt = 0;
-        double total_val_bp = 0, test_val=0;
+        double total_val_bp = 0;
         for( size_t i=0; i < 6; i++ )  {
           for( size_t j=i+1; j < 6; j++ )  {
             for( size_t k=j+1; k < 6; k++ )  {
@@ -2358,7 +2358,7 @@ void TGXApp::SelectRings(const olxstr& Condition, bool Invert)  {
   }
   all.ForEach(ACollectionItem::IndexTagSetter<>());
   for( size_t i=0; i < all.Count(); i++ )
-    if( all[i]->GetTag() == i && all[i]->IsVisible() )
+    if( (size_t)all[i]->GetTag() == i && all[i]->IsVisible() )
       FGlRender->Select(*all[i]);
 }
 //..............................................................................
@@ -2530,7 +2530,7 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
   if( Atoms != NULL )  {  // make sure all atoms of selected collections are updated
     Atoms->ForEach(ACollectionItem::IndexTagSetter<AGDrawObject::PrimitivesAccessor>());
     for( size_t i=0; i < Atoms->Count(); i++ )  {
-      if( (*Atoms)[i]->GetPrimitives().GetTag() == i )  {
+      if( (size_t)(*Atoms)[i]->GetPrimitives().GetTag() == i )  {
         TGPCollection& gpc = (*Atoms)[i]->GetPrimitives();
         for( size_t j=0; j < gpc.ObjectCount(); j++ )
           ((TXAtom&)gpc.GetObject(j)).CalcRad(DS);
@@ -2551,7 +2551,7 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
 void TGXApp::GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result)  {
   GDObjects.ForEach(ACollectionItem::IndexTagSetter<AGDrawObject::PrimitivesAccessor>());
   for( size_t i=0; i < GDObjects.Count(); i++ )  {
-    if( GDObjects[i]->GetPrimitives().GetTag() == i )
+    if( (size_t)GDObjects[i]->GetPrimitives().GetTag() == i )
       Result.Add(GDObjects[i]->GetPrimitives());
   }
 }
@@ -2667,7 +2667,7 @@ void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
   FillXAtomList(atoms, Atoms);
   atoms.ForEach(ACollectionItem::IndexTagSetter<AGDrawObject::PrimitivesAccessor>());
   for( size_t i=0; i < atoms.Count(); i++ )
-    if( atoms[i]->GetPrimitives().GetTag() == i )
+    if( (size_t)atoms[i]->GetPrimitives().GetTag() == i )
       atoms[i]->UpdatePrimitives(Mask);
   if( Atoms == NULL )  {
     TXAtom::DefMask(Mask);
@@ -2685,14 +2685,14 @@ void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds, bool HBondsOnly)
   if( HBondsOnly )  {
     for( size_t i=0; i < bonds.Count(); i++ )  {
       if( bonds[i]->GetType() != sotHBond )  continue;
-      if( bonds[i]->GetPrimitives().GetTag() == i )
+      if( (size_t)bonds[i]->GetPrimitives().GetTag() == i )
         bonds[i]->UpdatePrimitives(Mask);
     }
   }
   else  {
     for( size_t i=0; i < bonds.Count(); i++ )  {
       if( bonds[i]->GetType() == sotHBond )  continue;
-      if( bonds[i]->GetPrimitives().GetTag() == i )
+      if( (size_t)bonds[i]->GetPrimitives().GetTag() == i )
         bonds[i]->UpdatePrimitives(Mask);
     }
   }
@@ -3445,9 +3445,9 @@ void TGXApp::CreateXGrowLines()  {
       lines.Set(i*2+1, XGrowLines[i].GetGlLabel());
     }
     for( size_t i=0; i < XGrowLines.Count(); i++ )  {
-      if( XGrowLines[i].GetPrimitives().GetTag() == i )
+      if( (size_t)XGrowLines[i].GetPrimitives().GetTag() == i )
         colls.Add(XGrowLines[i].GetPrimitives());
-      if( XGrowLines[i].GetGlLabel().GetPrimitives().GetTag() == i )
+      if( (size_t)XGrowLines[i].GetGlLabel().GetPrimitives().GetTag() == i )
         colls.Add(XGrowLines[i].GetGlLabel().GetPrimitives());
     }
     FGlRender->RemoveCollections(colls);  // remove collections with their primitives
@@ -4031,7 +4031,6 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
     group.AddField("parent_id", glG.GetParentGroup() == NULL ? -2 : glG.GetParentGroup()->GetTag());
     TDataItem& atoms = group.AddItem("Atoms");
     TDataItem& bonds = group.AddItem("Bonds");
-    TDataItem& planes = group.AddItem("Planes");
     for( size_t j=0; j < glG.Count(); j++ )  {
       AGDrawObject& glO = glG.GetObject(j);
       if( EsdlInstanceOf(glO, TXAtom) )
@@ -4315,7 +4314,6 @@ void TGXApp::SelectAll(bool Select)  {
 //..............................................................................
 TStrList TGXApp::ToPov() const {
   TGlRenderer &r = GetRender();
-  const TAsymmUnit &au = XFile().GetAsymmUnit();
   pov::CrdTransformer crdc(r.GetBasis());
   olxdict<const TGlMaterial*, olxstr, TPointerComparator> materials;
   olxdict<AGDrawObject*, olxstr, TPrimitiveComparator> sph_materials;
@@ -4405,7 +4403,6 @@ void TGXApp::CreateRings(bool force, bool create)  {
   if( cgs != NULL )
     glm = cgs->FindMaterial("Sphere");
   
-  const TLattice &latt = XFile().GetLattice();
   TTypeList<TSAtomPList> rings;
   FindRings("C5", rings);
   FindRings("C6", rings);

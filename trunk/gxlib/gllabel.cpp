@@ -78,7 +78,6 @@ vec3d TXGlLabel::GetVectorPosition() const {
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
   if( Transformer != NULL )  {
     vec3d T = Transformer->ForVector(*this);
-    const double z = T[2];
     return Transformer->AdjustZ(
       T += (off*Parent.GetBasis().GetMatrix())*(Scale*ScaleR*Parent.GetBasis().GetZoom()));
   }
@@ -92,7 +91,6 @@ vec3d TXGlLabel::GetVectorPosition() const {
 //..............................................................................
 bool TXGlLabel::Orient(TGlPrimitive& P)  {
   const double Scale = Parent.GetScale();
-  const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
   TGlFont& glf = GetFont();
   if( P.GetType() == sgloText )  {
     if( !glf.IsVectorFont() )  {

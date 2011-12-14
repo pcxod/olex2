@@ -43,7 +43,7 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock(const olxstr& FN)  {
   }
   else  {
     if( mb->DateTime != 0 && TEFile::Exists(fileName) )  {
-      if( TEFile::FileAge(fileName) > mb->DateTime )  {
+      if( (uint64_t)TEFile::FileAge(fileName) > mb->DateTime )  {
         size_t ind = FMemoryBlocks.IndexOf(fileName);
         FMemoryBlocks.Delete(ind);
         delete [] mb->Buffer;

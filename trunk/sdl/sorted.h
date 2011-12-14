@@ -15,7 +15,9 @@ BeginEsdlNamespace()
 namespace sorted {
 
   template <class ListClass, class Comparator, typename TypeClass>
-  size_t FindInsertIndex(const ListClass &list, const Comparator &cmp, const TypeClass &entity) {
+  size_t FindInsertIndex(const ListClass &list, const Comparator &cmp,
+    const TypeClass &entity)
+  {
     size_t from = 0, to = list.Count()-1;
     while( true )  {
       if( (to-from) == 1 )  return to;
@@ -35,8 +37,8 @@ namespace sorted {
   }
 
   template <class ListClass, class Comparator, typename TypeClass>
-  size_t FindInsertIndexEx(const ListClass &list, const Comparator &cmp, const TypeClass &entity,
-    bool &exists)
+  size_t FindInsertIndexEx(const ListClass &list, const Comparator &cmp,
+    const TypeClass &entity, bool &exists)
   {
     size_t from = 0, to = list.Count()-1;
     while( true )  {
@@ -70,7 +72,9 @@ namespace sorted {
   }
 
   template <class ListClass, class Comparator, typename KeyC>
-  size_t FindIndexOf(const ListClass &list, const Comparator &cmp, const KeyC &entity) {
+  size_t FindIndexOf(const ListClass &list, const Comparator &cmp,
+    const KeyC &entity)
+  {
     if( list.Count() == 0 )  return InvalidIndex;
     if( list.Count() == 1 )  
       return cmp.Compare(list[0],entity) == 0 ? 0 : InvalidIndex;
@@ -110,18 +114,26 @@ namespace sorted {
       else                   {  list.Add(entry);  return 1;  }
     }
     // smaller than the first
-    if( cmp.Compare(list[0], entry) >=0  )  {  list.Insert(0, entry);  return 0; }
+    if( cmp.Compare(list[0], entry) >=0  )  {
+      list.Insert(0, entry);
+      return 0;
+    }
     // larger than the last
-    if( cmp.Compare(list.GetLast(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
+    if( cmp.Compare(list.GetLast(), entry) <=0 )  {
+      list.Add(entry);
+      return list.Count()-1;
+    }
     // an easy case then with two items
-    if( list.Count() == 2 )       {  list.Insert(1, entry);  return 1; }
+    if( list.Count() == 2 )  {  list.Insert(1, entry);  return 1; }
     const size_t pos = FindInsertIndex(list, cmp, entry);
     list.Insert(pos, entry);
     return pos;
   }
 
   template <class ListClass, class Comparator, typename TypeClass>
-  bool AddUnique(ListClass &list, const Comparator &cmp, TypeClass entry, size_t *pos = NULL)  {
+  bool AddUnique(ListClass &list, const Comparator &cmp,
+    TypeClass entry, size_t *pos=NULL)
+  {
     if( list.Count() == 0 )  {  
       list.Add(entry);  
       if( pos != NULL )  *pos = 0;
@@ -161,7 +173,7 @@ namespace sorted {
     list.Insert(ps, entry);
     return true;
   }
-};  // end namespace sorted
+}  // end namespace sorted
 
 EndEsdlNamespace()
 #endif
