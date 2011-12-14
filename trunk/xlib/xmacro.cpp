@@ -1431,7 +1431,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
     const double lp = 1;//(1.0+olx_sqr(cos(theta_2)))/(olx_sqr(sin(theta_2/2))*cos(theta_2/2));
     gd.AddNew(theta_2*180/M_PI, ref.GetI()*ref.GetMultiplicity()*lp);
   }
-  gd.QuickSorter.SortSF(gd, macGraphPD_Sort);
+  QuickSorter::SortSF(gd, macGraphPD_Sort);
   min_2t = gd[0].GetA();
   max_2t = gd.GetLast().GetA();
   const double sig_0 = 1./80. + (max_2t-min_2t)/800.0;
@@ -2412,7 +2412,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
   TTTable<TStrList> table(rowData.Count(), rowData.Count()+2); // +SYM + LEN
   table.ColName(0) = SA.GetLabel();
   table.ColName(1) = "SYMM";
-  rowData.BubleSorter.Sort<XLibMacros::TEnviComparator>(rowData);
+  BubbleSorter::Sort(rowData, XLibMacros::TEnviComparator());
   for( size_t i=0; i < rowData.Count(); i++ )  {
     const AnAssociation3<TCAtom*, vec3d, smatd>& rd = rowData[i];
     table.RowName(i) = rd.GetA()->GetLabel();
@@ -4316,7 +4316,7 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( list.IsEmpty() )
     TBasicApp::NewLogEntry() << "Could not fit provided data";
   else  {
-    list.QuickSorter.Sort<TComparableComparator>(list);
+    QuickSorter::Sort(list);
     TETable tab(list.Count(), 3);
     tab.ColName(0) = "Formula";
     tab.ColName(1) = "CHN";

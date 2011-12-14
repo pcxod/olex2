@@ -477,12 +477,13 @@ public:
       return l.List[i];
     }
   };
-  static ListQuickSorter<TTypeListExt<T,DestructCast>,const T*, Accessor>
-    QuickSorter;
-  static ListBubbleSorter<TTypeListExt<T,DestructCast>,const T*, Accessor>
-    BubleSorter;
   static TListTraverser<TTypeListExt<T,DestructCast> > Traverser;
 public:
+  struct InternalAccessor : public TPtrList<T>::InternalAccessor {
+    InternalAccessor(TTypeListExt &l)
+      : TPtrList<T>::InternalAccessor(l.List)
+    {}
+  };
   typedef T list_item_type;
 };
 
@@ -519,14 +520,6 @@ template <class T>
     typedef T list_item_type;
   };
 #ifndef __BORLANDC__
-template <class T, typename DestructCast>
-ListQuickSorter<TTypeListExt<T,DestructCast>,const T*,
-  typename TTypeListExt<T,DestructCast>::Accessor>
-    TTypeListExt<T,DestructCast>::QuickSorter;
-template <class T, typename DestructCast>
-ListBubbleSorter<TTypeListExt<T,DestructCast>,const T*,
-  typename TTypeListExt<T,DestructCast>::Accessor>
-    TTypeListExt<T,DestructCast>::BubleSorter;
 template <class T, typename DestructCast>
   TListTraverser<TTypeListExt<T,DestructCast> >
     TTypeListExt<T,DestructCast>::Traverser;

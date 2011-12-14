@@ -81,7 +81,7 @@ ConstTypeList<peaks::range> peaks::analyse(const TCAtomPList &_peaks) {
   TTypeList<range> ranges;
   if (_peaks.IsEmpty()) return ranges;
   TCAtomPList peaks = _peaks;
-  peaks.QuickSorter.SortSF(peaks, peak_sort);
+  QuickSorter::SortSF(peaks, peak_sort);
   if (!peaks.IsEmpty())
     ranges.AddNew().peaks.Add(peaks.GetLast());
   for (size_t i=peaks.Count()-2; i != InvalidIndex; i--) {
@@ -445,14 +445,13 @@ void fragments::fragment::init_rings(TTypeList<fragments::ring> &rings) {
   for (size_t i=0; i < rings.Count(); i++) {
     init_ring(i, rings);
     if (!rings[i].substituents.IsEmpty()) {
-      rings[i].substituents.QuickSorter.Sort(rings[i].substituents,
-        TComparableComparator());
+      QuickSorter::Sort(rings[i].substituents);
       // align atoms to start from the 'heaviest' substituent
       rings[i].atoms.ForEach(ACollectionItem::IndexTagSetter<>());
       rings[i].atoms.ShiftL(rings[i].substituents.GetLast().atoms[0]->GetTag());
     }
   }
-  rings.QuickSorter.Sort(rings, TComparableComparator());
+  QuickSorter::Sort(rings);
 }
 //.............................................................................
 void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
@@ -507,7 +506,7 @@ void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
 fragments::tree_node &fragments::fragment::trace_tree(TCAtomPList &atoms,
   tree_node &tree)
 {
-  atoms.QuickSorter.Sort(atoms, ring::substituent::atom_cmp());
+  QuickSorter::Sort(atoms, ring::substituent::atom_cmp());
   if (atoms.Count() == 1) {
     tree.trunk.Add(atoms[0]);
     return tree;
@@ -777,7 +776,7 @@ const cm_Element &Analysis::check_proposed_element(
   TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
   uc.FindInRangeAC(a.ccrd(), e.r_vdw, res); 
   vec3d center = a.GetParent()->Orthogonalise(a.ccrd());
-  res.QuickSorter.Sort(res, TUnitCell::AC_Sort(center));
+  QuickSorter::Sort(res, TUnitCell::AC_Sort(center));
   size_t cnt = 0;
   for (size_t i=1; i < res.Count(); i++) {
     double d = center.DistanceTo(res[i].GetB());

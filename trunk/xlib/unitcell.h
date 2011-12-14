@@ -347,7 +347,7 @@ public:
     }
     // create a list of unique atoms
     float* distances = new float[ list.Count()+1 ];
-    list.QuickSorter.SortSF(list, &AtomsSortByDistance<Association>);
+    QuickSorter::SortSF(list, &AtomsSortByDistance<Association>);
     const size_t lc = list.Count();
     for( size_t i=0; i < lc; i++ )
       distances[i] = (float)list[i].GetA().QLength();

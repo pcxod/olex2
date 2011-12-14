@@ -917,7 +917,7 @@ void TUnitCell::TBuildDistanceMapTask::init_loop_data()  {
     loop_data[4][i] = (float)i*tm[2][1]/dims[2];
     loop_data[5][i] = (float)i*tm[2][2]/dims[2];
   }
-  atoms.QuickSorter.SortSF(atoms,
+  QuickSorter::SortSF(atoms,
     &TUnitCell::AtomsSortByDistance<AnAssociation3<vec3f,TCAtom*,float> >);
   const size_t ac = atoms.Count();
   for( size_t i=0; i < ac; i++ )
@@ -932,7 +932,8 @@ void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
   const size_t ac = atoms.Count();
   for( size_t i = 0; i < dims[1]; i++ )  {
     for( size_t j = 0; j < dims[2]; j++ )  {
-      vec3f p(loop_data[0][ind] + loop_data[1][i] + loop_data[3][j], loop_data[2][i] + loop_data[4][j], loop_data[5][j]);
+      vec3f p(loop_data[0][ind] + loop_data[1][i] + loop_data[3][j],
+        loop_data[2][i] + loop_data[4][j], loop_data[5][j]);
       const float pl = p.Length();
       for( size_t k=0; k < ac; k++ )  {
         const float d = p.DistanceTo(atoms[k].GetA())-atoms[k].GetC();

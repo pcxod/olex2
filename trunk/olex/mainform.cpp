@@ -2942,7 +2942,7 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       Table[0][1] = "N/A in this file format";
   }
   else  {
-    atoms.QuickSorter.SortSF(atoms, SortQPeak);
+    QuickSorter::SortSF(atoms, SortQPeak);
     Table.Resize( olx_min(10, atoms.Count()), 3);
     const double LQP = olx_max(0.01, atoms[0]->GetQPeak());
     size_t rowIndex = 0;

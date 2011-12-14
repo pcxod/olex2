@@ -227,7 +227,7 @@ public:
   }
   // could be list of pointers or list of const pointers
   template <class RefPList> static void SortList(RefPList& lst)  {  
-    lst.QuickSorter.SortSF(lst, &TReflection::Compare);  
+    QuickSorter::SortSF(lst, &TReflection::Compare);  
   }
 //..............................................................................
   // these values are intialised by Analyse

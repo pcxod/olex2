@@ -139,18 +139,16 @@ public:
   bool operator == (const TSAtom& a) const {  return this == &a;  }
 
   void SortNodesByDistanceAsc()  {
-    Nodes.QuickSorter.SortMF<TSAtom>(Nodes, *this,
-      &TSAtom::_SortNodesByDistanceAsc);
+    QuickSorter::SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceAsc);
   }
   void SortNodesByDistanceDsc()  {
-    Nodes.QuickSorter.SortMF<TSAtom>(Nodes, *this,
-      &TSAtom::_SortNodesByDistanceDsc);
+    QuickSorter::SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceDsc);
   }
   void SortBondsByLengthAsc()  {
-    Bonds.QuickSorter.SortSF(Bonds, &TSAtom::_SortBondsByLengthAsc);
+    QuickSorter::SortSF(Bonds, &TSAtom::_SortBondsByLengthAsc);
   }
   void SortBondsByLengthDsc()  {
-    Bonds.QuickSorter.SortSF(Bonds, &TSAtom::_SortBondsByLengthDsc);
+    QuickSorter::SortSF(Bonds, &TSAtom::_SortBondsByLengthDsc);
   }
   // allows to trim the number of nodes
   void SetNodeCount(size_t cnt);

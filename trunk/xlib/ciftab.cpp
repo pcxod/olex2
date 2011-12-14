@@ -11,7 +11,7 @@
 #include "cif.h"
 
 // TLLTBondSort function bodies - bond sorting procedure in TLinkedLoopTable
-int TLLTBondSort::Compare(const CifTabBond &I, const CifTabBond &I1)  {
+int TLLTBondSort::Compare(const CifTabBond &I, const CifTabBond &I1) const {
   double v;
   if( (SortType & cCifTabSortLength) != 0 )  {  // length, Mr, Label
     v = I.Value.ToDouble() - I1.Value.ToDouble();
@@ -187,8 +187,8 @@ TTTable<TStrList>* TLinkedLoopTable::MakeTable(const olxstr &Atom)  {
       Symm.Add(LB->S2);
   }
   // sort bonds according to the requirements
-  TLLTBondSort BondSort(A, Symm, cCifTabSortLength);
-  A.Bonds.QuickSorter.SortMF(A.Bonds, BondSort, &TLLTBondSort::Compare);
+  ;
+  QuickSorter::Sort(A.Bonds, TLLTBondSort(A, Symm, cCifTabSortLength));
   olxstr Tmp;
   Table.Clear();
   Table.Resize(bc+1, bc);

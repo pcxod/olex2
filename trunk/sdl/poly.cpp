@@ -52,7 +52,7 @@ void TPolynomMember::Combine()  {
     }
   }
   FMembers.Pack();
-  FMembers.QuickSorter.SortSF(FMembers, _PMembersSort);
+  QuickSorter::SortSF(FMembers, _PMembersSort);
 }
 //..............................................................................
 void TPolynomMember::Mul(const TPolynomMember& P) {
@@ -66,7 +66,7 @@ void TPolynomMember::Mul(const TPolynomMember& P) {
 //----------------------------------------------------------------------------//
 void TPolynom::SetThreshold(double Threshold)  {
   if( FPolySort && FEvaluator && (FMembers.Count() > 0) )  {
-    FMembers.QuickSorter.SortSF(FMembers, FPolySort);
+    QuickSorter::SortSF(FMembers, FPolySort);
     const double v = FEvaluator(FMembers[0]);
     if( v == 0 )  return;
     size_t S = FMembers.Count();
@@ -85,7 +85,7 @@ void TPolynom::SetThreshold(double Threshold)  {
 void TPolynom::SetSize(size_t S)  {
   if( FMembers.Count() < S )  return;
   if( FPolySort != NULL )  {
-    FMembers.QuickSorter.SortSF(FMembers, FPolySort);
+    QuickSorter::SortSF(FMembers, FPolySort);
     FMembers.Shrink(S);
   }
   else

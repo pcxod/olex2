@@ -128,7 +128,7 @@ void TAsymmUnit::ComplyToResidues()  {
     for( size_t j=0; j < resi.Count(); j++ )
       resi[j].SetTag(ac++);
   }
-  CAtoms.QuickSorter.Sort<TCAtomTagComparator>(CAtoms);
+  QuickSorter::Sort(CAtoms, ACollectionItem::TagComparator());
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);
 }
@@ -576,7 +576,7 @@ size_t TAsymmUnit::CountElements(const olxstr& Symbol) const  {
 void TAsymmUnit::Sort(TCAtomPList* list) {
  // sorting by four params
   if( list == NULL )  list = &MainResidue.Atoms;
-  TCAtomPList::QuickSorter.Sort<TCAtomComparator>(*list);
+  QuickSorter::Sort(*list, TCAtomComparator());
 }
 //..............................................................................
 int TAsymmUnit::GetNextPart(bool neg) const {

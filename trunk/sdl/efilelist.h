@@ -68,22 +68,22 @@ BeginEsdlNamespace()
     };
 
     static void SortListByName(TTypeList<TFileListItem>& list)  {
-      TTypeList<TFileListItem>::QuickSorter.Sort(list, TFileListItemSorter<0>());
+      QuickSorter::Sort(list, TFileListItemSorter<0>());
     }
     static void SortListByExt(TTypeList<TFileListItem>& list)  {
-      TTypeList<TFileListItem>::QuickSorter.Sort(list, TFileListItemSorter<1>());
+      QuickSorter::Sort(list, TFileListItemSorter<1>());
     }
     static void SortListByAge(TTypeList<TFileListItem>& list)  {
-      TTypeList<TFileListItem>::QuickSorter.Sort(list, TFileListItemSorter<2>());
+      QuickSorter::Sort(list, TFileListItemSorter<2>());
     }
     static void SortListByModificationTime(TTypeList<TFileListItem>& list)  {
-      TTypeList<TFileListItem>::QuickSorter.Sort(list, TFileListItemSorter<3>());
+      QuickSorter::Sort(list, TFileListItemSorter<3>());
     }
     static void SortListByLastAccessTime(TTypeList<TFileListItem>& list)  {
-      TTypeList<TFileListItem>::QuickSorter.Sort(list, TFileListItemSorter<4>());
+      QuickSorter::Sort(list, TFileListItemSorter<4>());
     }
     static void SortListBySize(TTypeList<TFileListItem>& list)  {
-      TTypeList<TFileListItem>::QuickSorter.Sort(list, TFileListItemSorter<5>());
+      QuickSorter::Sort(list, TFileListItemSorter<5>());
     }
   };
 

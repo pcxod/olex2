@@ -122,7 +122,7 @@ public:
     const double stol = 3*tol*tol;  //!!
 
     // optimisation technique
-    tmpVecs.QuickSorter.SortSF(tmpVecs,VecsCmpByRadius);
+    QuickSorter::SortSF(tmpVecs,VecsCmpByRadius);
     float* radii = new float[ tmpVecs.Count()+1];
     for( size_t i=0; i < tmpVecs.Count(); i++ )
       radii[i] = (float)tmpVecs[i].GetA().QLength();
@@ -150,7 +150,7 @@ public:
       Vecs[i].Center /= Vecs[i].Count();
 
     delete [] radii;
-    Vecs.QuickSorter.SortSF(Vecs,VecsCmpByCount);
+    QuickSorter::SortSF(Vecs,VecsCmpByCount);
   }
   static void TestDependency(
     const TTypeList< AnAssociation2<vec3d,TCAtom*> >& lista,
@@ -183,7 +183,7 @@ public:
     double stol = 3*tol*tol, qval;  //!!
 
     // optimisation technique
-    tmpVecs.QuickSorter.SortSF(tmpVecs,VecsCmpByRadius);
+    QuickSorter::SortSF(tmpVecs,VecsCmpByRadius);
     float* radii = new float[ tmpVecs.Count()+1];
     for( size_t i=0; i < tmpVecs.Count(); i++ )
       radii[i] = (float)tmpVecs[i].GetA().QLength();
@@ -221,7 +221,7 @@ public:
       Vecs[i].Center /= Vecs[i].Count();
 
     delete [] radii;
-    Vecs.QuickSorter.SortSF(Vecs,VecsCmpByCount);
+    QuickSorter::SortSF(Vecs,VecsCmpByCount);
   }
 };
 

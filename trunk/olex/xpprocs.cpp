@@ -3497,7 +3497,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < au.AtomCount(); i++ )
       if( !au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ )
         qpeaks.Add(au.GetAtom(i));
-    qpeaks.QuickSorter.SortSF(qpeaks, TMainForm_macShowQ_QPeakSortA);
+    QuickSorter::SortSF(qpeaks, TMainForm_macShowQ_QPeakSortA);
     index_t d_cnt = 0;
     for( size_t i=0; i < qpeaks.Count(); i++ )
       if( !qpeaks[i]->IsDetached() )
@@ -3550,7 +3550,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( size_t i=0; i < au.AtomCount(); i++ )
       if( au.GetAtom(i).GetType() == iQPeakZ )
         qpeaks.Add(au.GetAtom(i));
-    qpeaks.QuickSorter.SortSF(qpeaks,
+    QuickSorter::SortSF(qpeaks,
       negative ? TMainForm_macShowQ_QPeakSortD : TMainForm_macShowQ_QPeakSortA);
     num = olx_min(qpeaks.Count()*num/100, qpeaks.Count());
     for( size_t i=0; i < qpeaks.Count(); i++ )  
@@ -6534,7 +6534,7 @@ void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroE
         }
       }
       const size_t thc = (atoms.Count()-2)*2;
-      tetrahedra.QuickSorter.Sort<TComparableComparator>(tetrahedra);
+      QuickSorter::Sort(tetrahedra);
       for( size_t j=0; j < tetrahedra.Count(); j++ )  {
         TBasicApp::NewLogEntry() << "Tetrahedron " << j+1 <<  ' ' << tetrahedra[j].GetName() 
           << " V = " << tetrahedra[j].GetVolume();
@@ -8215,7 +8215,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     //MapUtil::Integrate<float>(map.Data, dim, (mi.maxVal - mi.minVal)/2.5, Peaks);
     MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
     MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
-    MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
+    QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     const int PointCount = dim.Prod();
     for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
       const MapUtil::peak& peak = MergedPeaks[i];
@@ -8783,7 +8783,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           }
         }
         const size_t thc = (atoms.Count()-2)*2;
-        TTypeList<Esd_Tetrahedron>::QuickSorter.SortSF(tetrahedra, &Esd_ThSort);
+        QuickSorter::SortSF(tetrahedra, &Esd_ThSort);
         bool removed = false;
         while(  tetrahedra.Count() > thc )  {
           TBasicApp::NewLogEntry() << "Removing tetrahedron " <<  tetrahedra[0].GetName() <<

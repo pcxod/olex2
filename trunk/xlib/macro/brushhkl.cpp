@@ -87,7 +87,7 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
     refs.Add(new HklBrushRef(Hkl[i]));
     refs[i]->Standardise(ml, useFriedelLaw);
   }
-  refs.QuickSorter.SortSF(refs, HklBrushRef::CompareHkl);
+  QuickSorter::SortSF(refs, HklBrushRef::CompareHkl);
 
   eqs.Add(refs[0]);  // reference reflection
   for( size_t i=0; i < refs.Count(); )  {
@@ -95,7 +95,7 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
       eqs.Add(refs[i]);
     // do mergings etc
     if( eqs.Count() > 3)  {
-      eqs.QuickSorter.SortSF(eqs, HklBrushRef::CompareSig);
+      QuickSorter::SortSF(eqs, HklBrushRef::CompareSig);
       size_t ind = eqs.Count()-1;
       while( eqs[ind]->ref->GetS() > 2*eqs[0]->ref->GetS() && --ind >= 2 )  {
         eqs[ind]->Deleted = true;

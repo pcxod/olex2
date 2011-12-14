@@ -156,7 +156,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             i++;
           }
         }
-        TrefTries.QuickSorter.SortSF(TrefTries, SortTrefTries);
+        QuickSorter::SortSF(TrefTries, SortTrefTries);
         TrefT = true;
         continue;
       }

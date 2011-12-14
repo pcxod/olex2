@@ -538,23 +538,19 @@ public:
     return *this;
   }
 //..............................................................................
-  struct Accessor  {
-    static T* get(const TPtrList& l, size_t i)  {  return l[i];  }
-  };
-  static ListQuickSorter<TPtrList<T>,const T*, Accessor> QuickSorter;
-  static ListBubbleSorter<TPtrList<T>,const T*, Accessor> BubleSorter;
   static TListTraverser<TPtrList<T> > Traverser;
 public:
+  struct InternalAccessor {
+    TPtrList &list;
+    InternalAccessor(TPtrList &l) : list(l) {}
+    T *operator [](size_t i) { return list.Items[i]; }
+    const T *operator [](size_t i) const { return list.Items[i]; }
+    typedef T* list_item_type;
+  };
   typedef T *list_item_type;
 };
 
 #ifndef __BORLANDC__
-template <class T>
-ListQuickSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor>
-  TPtrList<T>::QuickSorter;
-template <class T>
-ListBubbleSorter<TPtrList<T>,const T*, typename TPtrList<T>::Accessor>
-  TPtrList<T>::BubleSorter;
 template <class T>
   TListTraverser<TPtrList<T> > TPtrList<T>::Traverser;
 #endif

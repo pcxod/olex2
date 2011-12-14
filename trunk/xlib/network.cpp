@@ -33,7 +33,7 @@ TNetwork::TNetwork(TLattice* P, TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBo
 }
 //..............................................................................
 void TNetwork::SortNodes()  {
-  Nodes.QuickSorter.Sort(Nodes, TSAtom::SortByDistance());
+  QuickSorter::Sort(Nodes, TSAtom::SortByDistance());
 }
 //..............................................................................
 void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Frags)  {
@@ -675,7 +675,7 @@ bool TNetwork::TryRing(TSAtom& sa, TSAtomPList& ring, size_t level)  {
 //..............................................................................
 void TNetwork::UnifyRings(TTypeList<TSAtomPList>& rings)  {
   for( size_t i=0; i < rings.Count(); i++ )
-    rings[i].QuickSorter.SortSF(rings[i], TNetwork_SortRingAtoms);
+    QuickSorter::SortSF(rings[i], TNetwork_SortRingAtoms);
   // leave unique rings only
   for( size_t i=0; i < rings.Count(); i++ )  {
     if( rings.IsNull(i) )  continue;

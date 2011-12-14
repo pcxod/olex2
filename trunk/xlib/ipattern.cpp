@@ -45,7 +45,7 @@ bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)
   if( !Points.IsEmpty() )  {
     if( Combine )
       TIDistribution::CombineSerie(Points, Delta);
-    Points.QuickSorter.SortSF(Points, &TSPoint::SPointsSortA);
+    QuickSorter::SortSF(Points, &TSPoint::SPointsSortA);
     // normalisation of the serie
     double MaxY = 100.0/Points[0].Y; // normalisation factor
     for( size_t i=0; i < Points.Count(); i++ )
@@ -54,7 +54,11 @@ bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)
   return true;
 }
 //..............................................................................
-void TIPattern::SortDataByMolWeight(){  Points.QuickSorter.SortSF(Points, &TSPoint::SPointsSortB);  }
+void TIPattern::SortDataByMolWeight() {
+  QuickSorter::SortSF(Points, &TSPoint::SPointsSortB);
+}
 //..............................................................................
-void TIPattern::SortDataByItensity() {  Points.QuickSorter.SortSF(Points, &TSPoint::SPointsSortA);  }
+void TIPattern::SortDataByItensity() {
+  QuickSorter::SortSF(Points, &TSPoint::SPointsSortA);
+}
 //..............................................................................
