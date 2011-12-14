@@ -781,7 +781,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     for( size_t i=0; i < MaxDim; i++ )
       delete [] data[i];
   }
-  objects.QuickSorter.SortSF(objects, OrtObjectsZSort);
+  QuickSorter::SortSF(objects, OrtObjectsZSort);
   
   for( size_t i=0; i < objects.Count(); i++ )
     objects[i].render(pw);

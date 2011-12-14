@@ -290,9 +290,9 @@ public:
       crds.AddNew(Peaks[i].center) *= norm;
       Peaks[i].process = Peaks.Count() != 0;
     }
-    Peaks.QuickSorter.Sort(Peaks,
-      Sort_StaticFunctionWrapper<const MapUtil::peak&>(PeakSortByCount),
-      SyncSwapListener<TTypeList<vec3d> >(crds));
+    QuickSorter::Sort(Peaks,
+      FunctionComparator::Make(PeakSortByCount),
+      SyncSwapListener::Make(crds));
     for( size_t i=0; i < cnt; i++ )  {
       if( !Peaks[i].process )  continue;
       TPtrList<MapUtil::peak> toMerge;

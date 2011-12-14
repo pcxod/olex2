@@ -51,8 +51,8 @@ void TFileTree::Folder::Expand(TOnProgress& pg, short flags)  {
     }
   }
   Files.Pack();
-  Files.QuickSorter.SortSF(Files, &TFileTree::Folder::CompareFiles);
-  Folders.QuickSorter.SortSF(Folders, &TFileTree::Folder::CompareFolders);
+  QuickSorter::SortSF(Files, &TFileTree::Folder::CompareFiles);
+  QuickSorter::SortSF(Folders, &TFileTree::Folder::CompareFolders);
 }
 //.............................................................................
 void TFileTree::Folder::Delete(TOnProgress& pg, bool ContentOnly)  {
@@ -274,7 +274,7 @@ void TFileTree::Folder::Synchronise(TFileTree::Folder& f, TOnProgress& onSync)
         if( !res )
           throw TFunctionFailedException(__OlxSourceInfo, "settime");
         f.Files.AddCopy(Files[i]);
-        f.Files.QuickSorter.SortSF(f.Files, &CompareFiles);
+        QuickSorter::SortSF(f.Files, &CompareFiles);
         onSync.SetPos( onSync.GetPos() + Files[i].GetSize() );
         FileTree.OnSynchronise->Execute(NULL, &onSync);
       }
@@ -302,7 +302,7 @@ void TFileTree::Folder::Synchronise(TFileTree::Folder& f, TOnProgress& onSync)
         f.Folders.Add(
           new Folder(FileTree, Folders[i],
             olxstr(f.FullPath)  <<  Folders[i].Name, &f)), onSync);
-      f.Folders.QuickSorter.SortSF(f.Folders, &CompareFolders);
+      QuickSorter::SortSF(f.Folders, &CompareFolders);
     }
     else
       Folders[i].Synchronise(f.Folders[ind], onSync);

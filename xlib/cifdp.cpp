@@ -541,7 +541,7 @@ void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
       eg.name = params.GetObject(i)->GetName();
     }
   }
-  groups.QuickSorter.Sort(groups, CifSorter(pivots, endings));
+  QuickSorter::Sort(groups, CifSorter(pivots, endings));
   params.Clear();
   for( size_t i=0; i < groups.Count(); i++ )  {
     for( size_t j=0; j < groups[i].items.Count()-1; j++ )

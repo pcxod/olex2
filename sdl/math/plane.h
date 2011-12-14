@@ -57,8 +57,8 @@ namespace olx_plane {
         pvs[i] = 2;
       }
     }
-    pvs.QuickSorter.Sort(pvs, TPrimitiveComparator(),
-      SyncSwapListener<array_t>(points));
+    QuickSorter::Sort(pvs, TPrimitiveComparator(),
+      SyncSwapListener::Make(points));
   }
 };  //end namespace olx_plane
 

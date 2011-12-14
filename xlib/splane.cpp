@@ -138,7 +138,7 @@ TSPlane::Def::Def(const TSPlane& plane)
         uc.GetMatrix(smatd::GetContainerId(atoms[i].ref.matrix_id))), im).GetId();
     }
   }
-  atoms.QuickSorter.Sort<TComparableComparator>(atoms);
+  QuickSorter::Sort(atoms);
 }
 //..............................................................................
 void TSPlane::Def::DefData::ToDataItem(TDataItem& item) const {

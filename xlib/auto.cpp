@@ -130,9 +130,9 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa,
     AttachedNodes.Add(new TAttachedNode(&site.atom->GetType(), p));
   }
   TAutoDBNode::SortCenter = sa.crd();
-  AttachedNodes.QuickSorter.SortSF(AttachedNodes, SortMetricsFunc);
+  QuickSorter::SortSF(AttachedNodes, SortMetricsFunc);
   if( atoms != NULL )
-    atoms->QuickSorter.SortSF(*atoms, SortCAtomsFunc);
+    QuickSorter::SortSF(*atoms, SortCAtomsFunc);
   _PreCalc();
 }
 //..............................................................................
@@ -182,7 +182,7 @@ void TAutoDBNode::LoadFromStream(IDataInputStream& in)  {
   for( uint32_t i=0; i < ind; i++ )
     AttachedNodes.Add( *(new TAttachedNode(in)) );
   TAutoDBNode::SortCenter = Center;
-  AttachedNodes.QuickSorter.SortSF(AttachedNodes, SortMetricsFunc);
+  QuickSorter::SortSF(AttachedNodes, SortMetricsFunc);
   _PreCalc();
 }
 //..............................................................................
@@ -519,7 +519,7 @@ TAutoDB::~TAutoDB()  {
 //..............................................................................
 void TAutoDB::PrepareForSearch()  {
   for( size_t i=0; i < Nodes.Count(); i++ )
-    Nodes[i].QuickSorter.SortSF(Nodes[i], SearchCompareFunc);
+    QuickSorter::SortSF(Nodes[i], SearchCompareFunc);
 }
 //..............................................................................
 void TAutoDB::ProcessFolder(const olxstr& folder)  {
@@ -1170,7 +1170,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
       !guesses[i].list3.IsEmpty() ? guesses[i].list3 : guesses[i].list2;
     for( size_t j=0; j < guessN.Count(); j++ )
       guessN.GetItem(j).Sort();
-    guessN.QuickSorter.SortSF(guessN, THitList<TAutoDBNetNode>::SortByFOMFunc);
+    QuickSorter::SortSF(guessN, THitList<TAutoDBNetNode>::SortByFOMFunc);
     double cfom = 0;
     // just for sorting
     sn->Node(i).IsMetricSimilar(
@@ -1273,7 +1273,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       !guesses[i].list3.IsEmpty() ? guesses[i].list3 : guesses[i].list2;
     for( size_t j=0; j < guessN.Count(); j++ )
       guessN.GetItem(j).Sort();
-    guessN.QuickSorter.SortSF(guessN, THitList<TAutoDBNetNode>::SortByFOMFunc);
+    QuickSorter::SortSF(guessN, THitList<TAutoDBNetNode>::SortByFOMFunc);
     tmp << guesses[i].atom->GetLabel() << ' ';
     double cfom = 0;
     // just for sorting
@@ -1430,7 +1430,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       tmp.SetLength(0);
       for( size_t j=0; j < guesses[i].list1.Count(); j++ )
         guesses[i].list1[j].Sort();
-      guesses[i].list1.QuickSorter.SortSF(guesses[i].list1,
+      QuickSorter::SortSF(guesses[i].list1,
         THitList<TAutoDBNode>::SortByFOMFunc);
       if( !guesses[i].list1.IsEmpty() )  {
         tmp << guesses[i].atom->GetLabel() << ' ';

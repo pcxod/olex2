@@ -142,7 +142,7 @@ public:
           ca_list.Add( &sa->Node(j).CAtom() )->SetTag(1);
       }
       if( ca_list.Count() > 1 && sort_func != NULL )
-        TCAtomPList::QuickSorter.SortSF(ca_list, sort_func);
+        QuickSorter::SortSF(ca_list, sort_func);
       atom_count += (ca_list.Count() + 1);
     }
     if( atom_count != l1.Count() ) {
@@ -210,11 +210,10 @@ public:
   static void Sort(TCAtomPList& list,
     int (*sort_func)(const TCAtom&, const TCAtom&))
   {
-    TCAtomPList::QuickSorter.SortSF(list, sort_func);
+    QuickSorter::SortSF(list, sort_func);
   }
   static void Sort(TCAtomPList& list, AtomSorter::CombiSort& cs)  {
-    TCAtomPList::QuickSorter.SortMF<AtomSorter::CombiSort>(
-      list, cs, &AtomSorter::CombiSort::atom_cmp);
+    QuickSorter::SortMF(list, cs, &AtomSorter::CombiSort::atom_cmp);
   }
 };
 
@@ -314,7 +313,7 @@ public:
       ca_list->Add(list[i]);
     }
     if( moieties.Count() < 2 )  return;
-    moieties.QuickSorter.SortSF(moieties, moiety_cmp_Mr);
+    QuickSorter::SortSF(moieties, moiety_cmp_Mr);
     int atom_cnt = 0;
     for( size_t i=0; i < moieties.Count(); i++ )  {
       for( size_t j=0; j < moieties[i].GetC().Count(); j++ )
@@ -340,7 +339,7 @@ public:
       ca_list->Add(list[i]);
     }
     if( moieties.Count() < 2 )  return;
-    moieties.QuickSorter.SortSF(moieties, moiety_cmp_Mr);
+    QuickSorter::SortSF(moieties, moiety_cmp_Mr);
     int atom_cnt = 0;
     for( size_t i=0; i < moieties.Count(); i++ )  {
       for( size_t j=0; j < moieties[i].GetC().Count(); j++ )
@@ -363,7 +362,7 @@ public:
       ca_list->Add(list[i]);
     }
     if( moieties.Count() < 2 )  return;
-    moieties.QuickSorter.SortSF(moieties, moiety_cmp_size);
+    QuickSorter::SortSF(moieties, moiety_cmp_size);
     int atom_cnt = 0;
     for( size_t i=0; i < moieties.Count(); i++ )  {
       for( size_t j=0; j < moieties[i].GetB().Count(); j++ )

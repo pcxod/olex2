@@ -122,7 +122,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   olxstr strBinsCnt( Options.FindValue("b") );
   size_t binsCnt = strBinsCnt.IsEmpty() ? 11 : strBinsCnt.ToSizeT()/2;
-  refs.QuickSorter.SortSF(refs, TGraphRSRef::SortByDs);
+  QuickSorter::SortSF(refs, TGraphRSRef::SortByDs);
 
   double minds=refs[0].ds, maxds=refs.GetLast().ds;
   double step = (maxds-minds)/binsCnt,

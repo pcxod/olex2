@@ -439,7 +439,7 @@ void TCAtom::UpdateAttachedSites()  {
   }
   const CXConnInfo& ci = GetConnInfo();
   if( AttachedSites.Count() > (size_t)olx_abs(ci.maxBonds) )  {
-    AttachedSites.QuickSorter.SortMF<TCAtom>(AttachedSites, *this,
+    QuickSorter::SortMF(AttachedSites, *this,
       ci.maxBonds < 0 ? &TCAtom::SortSitesByDistanceDsc
         : &TCAtom::SortSitesByDistanceAsc);
     // prevent q-peaks affecting the max number of bonds...

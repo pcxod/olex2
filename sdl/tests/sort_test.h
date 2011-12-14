@@ -22,12 +22,12 @@ public:
       pl1[i] = &al1[i];  pl2[i] = &al2[i];
       tl1.Set(i, &al1[i]);  tl2.Set(i, &al2[i]);
     }
-    al1.QuickSorter.Sort(al1, Sort_StaticFunctionWrapper<const int&>(icmp),
-      SyncSwapListener<TArrayList<int> >(al2));
-    pl1.QuickSorter.Sort(pl1, Sort_StaticFunctionWrapper<const int&>(icmp),
-      SyncSwapListener<TPtrList<int> >(pl2));
-    tl1.QuickSorter.Sort(tl1, Sort_StaticFunctionWrapper<const int&>(icmp),
-      SyncSwapListener<TTypeList<int> >(tl2));
+    QuickSorter::Sort(al1, FunctionComparator::Make(icmp),
+      SyncSwapListener::Make(al2));
+    QuickSorter::Sort(pl1, FunctionComparator::Make(icmp),
+      SyncSwapListener::Make(pl2));
+    QuickSorter::Sort(tl1, FunctionComparator::Make(icmp),
+      SyncSwapListener::Make(tl2));
     for( size_t i=0; i < 100; i++ )  {
       if( i > 0 && (al1[i-1] > al1[i] || tl1[i-1] > tl2[i] || *pl1[i-1] > *pl2[i]) )
         throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");

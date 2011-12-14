@@ -542,7 +542,7 @@ public:
     //tex header is finished, start the body
     pw.Writenl("\\begin{document}");
     pw.Writenl("\\begin{tikzpicture}");
-    atoms.QuickSorter.SortSF(atoms, OrtAtomZSort);
+    QuickSorter::SortSF(atoms, OrtAtomZSort);
 
     for( size_t i=0; i < atoms.Count(); i++ )  {
       const TSAtom& sa = *atoms[i].atom;

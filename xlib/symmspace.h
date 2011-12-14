@@ -129,7 +129,7 @@ namespace SymmSpace  {
     void normalise(const vec3d_list &translations);
     // just sorts matrices
     void normalise() {
-      matrices.QuickSorter.SortSF(matrices, &sort_matrix_list);
+      QuickSorter::SortSF(matrices, &sort_matrix_list);
     }
   };
   struct InfoEx  {  // has a list of translation vectors vs latt number
@@ -237,7 +237,7 @@ namespace SymmSpace  {
         groups.GetValue(i)[j].t -=
           groups.GetValue(i)[j].t.template Floor<int>();
       }
-      groups.GetValue(i).QuickSorter.SortSF(groups.GetValue(i), &sort_group);
+      QuickSorter::SortSF(groups.GetValue(i), &sort_group);
       groups.GetValue(i).SetCount(1);
     }
     // find out if centrosymmetric...

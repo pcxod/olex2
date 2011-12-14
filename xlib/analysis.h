@@ -65,7 +65,7 @@ public:
     }
     void sort() {
       trunk.ForEach(ACollectionItem::IndexTagSetter<>());
-      branches.QuickSorter.Sort(branches, TComparableComparator());
+      QuickSorter::Sort(branches, TComparableComparator());
     }
     // reverses the trunk direction and re-sorts the branches
     void reverse();

@@ -47,7 +47,7 @@ public:
   inline const smatd& GetMatrix(size_t ind) const {  return Envi[ind].GetB();  }
   void Delete(size_t i)  {  Envi.Delete(i);  }
   void SortByDistance()  {
-    Envi.QuickSorter.SortMF<TAtomEnvi>(Envi, *this, &TAtomEnvi::_SortByDistance);
+    QuickSorter::SortMF(Envi, *this, &TAtomEnvi::_SortByDistance);
   }
   void Exclude(TCAtom& ca )                    {
     for( size_t i=0; i < Envi.Count(); i++ )

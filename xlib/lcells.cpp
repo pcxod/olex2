@@ -257,8 +257,8 @@ void Index::PrintInfo() const {
 //.............................................................................
 size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
   size_t updated_cnt = 0;
-  folders.QuickSorter.Sort<Entry::NameComparator>(folders);
-  entries.QuickSorter.Sort<Entry::NameComparator>(entries);
+  QuickSorter::Sort(folders, Entry::NameComparator());
+  QuickSorter::Sort(entries, Entry::NameComparator());
   ConstSlice<TTypeList<FileEntry>, FileEntry>
     file_entries(entries, 0, entries.Count());
   for( size_t i=0; i < folder.FileCount(); i++ )  {
@@ -335,7 +335,7 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell,
   CellInfo to_search = cell;
   // search by niggli volume
   Niggli::reduce(to_search.lattice, to_search.cell);
-  all.QuickSorter.Sort<CellInfo::ReducedVolumeComparator>(all);
+  QuickSorter::Sort(all, CellInfo::ReducedVolumeComparator());
   const size_t ni = sorted::FindInsertIndex(
     all, CellInfo::ReducedVolumeComparator(), to_search);
   // go right
@@ -353,8 +353,8 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell,
     res.AddCopy(all[j]);
   }
   // search by cell volume
-  all.QuickSorter.Sort(all, CellInfo::VolumeComparator(),
-    SyncSwapListener<TEBitArray>(usage));
+  QuickSorter::Sort(all, CellInfo::VolumeComparator(),
+    SyncSwapListener::Make(usage));
   const size_t vi = sorted::FindInsertIndex(
     all, CellInfo::VolumeComparator(), to_search);
   // go right

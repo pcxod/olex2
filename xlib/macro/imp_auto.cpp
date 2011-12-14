@@ -138,7 +138,7 @@ void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list,
       au_bais.Add(&cl[i].element);
       list.Add(cl[i].element.symbol, &cl[i].element);
     }
-    list.QuickSort<Main_BaiComparator>();
+    QuickSorter::Sort(list, Main_BaiComparator());
   }
 }
 
@@ -472,7 +472,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       sl.AddNew(cl[i].count, &cl[i].element);
       ac += cl[i].count;
     }
-    sl.QuickSorter.Sort<Main_SfacComparator>(sl);  // sorts ascending
+    QuickSorter::Sort(sl, Main_SfacComparator());  // sorts ascending
     double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
     double ratio = auv/(16*ac);
     for( size_t i=0; i < sl.Count(); i++ )

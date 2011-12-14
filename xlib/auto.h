@@ -390,7 +390,7 @@ public:
       return mf /= cnt;
     }
     void Sort()  {
-      hits.QuickSorter.SortSF(hits, THitStruct<NodeClass>::SortByFOMFunc);
+      QuickSorter::SortSF(hits, THitStruct<NodeClass>::SortByFOMFunc);
     }
   };
   struct Type  {

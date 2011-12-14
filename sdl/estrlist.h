@@ -379,43 +379,11 @@ public:
     return TakeOver(list.Relase(), true);
   }
 
-  template <class comparator> void BubleSort()  {
-    TPtrList<T>::BubleSorter.template Sort<comparator>(Strings);
-  }
-
-  void BubleSortSF(int (*f)(const T* a, const T* b))  {
-    TPtrList<T>::BubleSorter.template SortSF(Strings, f);
-  }
-
-  template <class BaseClass> void BubleSortMF(
-    BaseClass& baseClassInstance, int (BaseClass::*f)(const T* a, const T* b))
-  {
-    TPtrList<T>::BubleSorter.template SortMF<BaseClass>(
-      Strings, baseClassInstance, f);
-  }
-
-  template <class Comparator> void QuickSort()  {
-    TPtrList<T>::QuickSorter.template Sort<Comparator>(Strings);
-  }
-
-  void QuickSortSF(int (*f)(const T* a, const T* b))  {
-    TPtrList<T>::QuickSorter.template SortSF(Strings, f);
-  }
-
-  template <class BaseClass> void QuickSortMF(
-    BaseClass& baseClassInstance, int (BaseClass::*f)(const T* a, const T* b))
-  {
-    TPtrList<T>::QuickSorter.template SortMF<BaseClass>(
-      Strings, baseClassInstance, f);
-  }
-
   void QSort(bool ci)  {
     if( ci )
-      TPtrList<T>::QuickSorter.template
-        Sort<TStringWrapperComparator<T,true> >(Strings);
+      QuickSorter::Sort(Strings, TStringWrapperComparator<T,true>());
     else 
-      TPtrList<T>::QuickSorter.template
-        Sort<TStringWrapperComparator<T,false> >(Strings);
+      QuickSorter::Sort(Strings, TStringWrapperComparator<T,false>());
   }
 
   size_t StrtokF(const string_type& Str, const TSizeList& indexes)  {
@@ -521,6 +489,11 @@ public:
     return *this;
   }
 public:
+  struct InternalAccessor : public TPtrList<T>::InternalAccessor {
+    InternalAccessor(TTStrList &l)
+      : TPtrList<T>::InternalAccessor(l.Strings)
+    {}
+  };
   typedef typename T::string_type list_item_type;
 };
 

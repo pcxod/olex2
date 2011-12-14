@@ -57,7 +57,7 @@ public:
   short SortType;
   TLLTBondSort(CifTabAtom& atom, const TStrList& symm, short sort_type)
     : Atom(atom), Symmetry(symm), SortType(sort_type)  {}
-  int Compare(const CifTabBond &I, const CifTabBond &I1);
+  int Compare(const CifTabBond &I, const CifTabBond &I1) const;
 };
 //---------------------------------------------------------------------------
 class TLinkedLoopTable: public IEObject  {

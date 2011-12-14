@@ -72,12 +72,13 @@ public:
   inline double GetMinIS() const { return MinIS;  }
 
   void Clear();
-  inline void Sort()  {  Refs.QuickSorter.SortSF(Refs, HklCmp);  }
+  void Sort()  {  QuickSorter::SortSF(Refs, HklCmp);  }
   /* if ins loader is passed and the hkl file has CELL and SFAC in it, 
-  it will be initalised and if the ins_initialised is provided - it will be set True if the 
-  CELL and SFAC are found
+  it will be initalised and if the ins_initialised is provided - it will be set
+  True if the CELL and SFAC are found
   */
-  bool LoadFromFile(const olxstr& FN, class TIns* ins = NULL, bool* ins_initialised=NULL);
+  bool LoadFromFile(const olxstr& FN, class TIns* ins = NULL,
+    bool* ins_initialised=NULL);
   bool SaveToFile(const olxstr& FN);
   void UpdateRef(const TReflection& R);
   // returns reflections owned by this object
@@ -88,8 +89,9 @@ public:
     RefMerger::MergeInP1<Merger>(Refs, output, omits);
   }
 //..............................................................................
-  /* a primitive check if a line is an HKL file line - this is used on the first line
-  to check wether the file is a proper HKL*/
+  /* a primitive check if a line is an HKL file line - this is used on the
+  first line to check wether the file is a proper HKL
+  */
   static bool IsHKLFileLine(const olxstr& l)  {
     if( l.Length() >= 28 )  {
       if( !l.SubString(0,4).IsNumber() || !l.SubString(4,4).IsNumber() ||
@@ -102,7 +104,8 @@ public:
   }
 
   // saves to file a list of reflections
-  static bool SaveToFile(const olxstr& FN, const TRefPList& Reflections, bool Append = true);
+  static bool SaveToFile(const olxstr& FN, const TRefPList& Reflections,
+    bool Append = true);
   // saves to file a list of reflections
   static bool SaveToFile(const olxstr& FN, const TRefList& Reflections);
 };

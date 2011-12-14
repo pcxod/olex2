@@ -151,7 +151,7 @@ void TIDistribution::Evail(const TPolynomMember& PM, double& M, double& W) const
 }
 //..............................................................................
 void  TIDistribution::CombineSerie(TPolySerie& S, double threshold) {
-  S.QuickSorter.SortSF(S, _SerieSort);
+  QuickSorter::SortSF(S, _SerieSort);
   for( size_t j=0; j < S.Count(); j++ )  {
     TSPoint& SP = S[j++];
     if( j == S.Count() ) break;
@@ -201,7 +201,7 @@ void TIDistribution::Calc(TPolySerie& S)  {
     else
       break;
   }
-  Series.QuickSorter.SortSF(Series, _SeriesSort);
+  QuickSorter::SortSF(Series, _SeriesSort);
   for( size_t i=0; i < Series.Count(); i++ )  {
     TPolySerie& sr = Series[i];
     size_t c = Layer.Count();
