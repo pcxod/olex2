@@ -348,7 +348,9 @@ public:
       IsTransitionalMetal(e) ||
       IsPostTransitionalMetal(e) ||
       IsLanthanide(e) ||
-      IsActinide(e);
+      IsActinide(e) ||
+      IsGroup1(e) || IsGroup2(e) ||
+      (e.z > 5 && IsGroup3(e)); // after B
   }
   // Li->Fr
   static bool IsGroup1(const cm_Element &e) {  return IsGroup(1, e);  }
