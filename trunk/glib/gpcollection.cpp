@@ -16,7 +16,7 @@
 void TGPCollection::ClearPrimitives()  {
   for( size_t i=0; i < Parent.PrimitiveCount(); i++ )
     Parent.GetPrimitive(i).SetTag(-1);
-  Primitives.ForEach(ACollectionItem::TagSetter<>(0));
+  Primitives.ForEach(ACollectionItem::TagSetter(0));
   Parent.RemovePrimitiveByTag(0);
   Primitives.Clear();
 }

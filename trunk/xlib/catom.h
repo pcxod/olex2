@@ -106,6 +106,7 @@ private:
   int SortSitesByDistanceDsc(const Site &s1, const Site &s2) const {
     return -SortSitesByDistanceAsc(s1, s2);
   }
+  typedef TDirectAccessor<TCAtom> DirectAccessor;
 public:
   TCAtom(TAsymmUnit* Parent);
   virtual ~TCAtom();
@@ -277,30 +278,72 @@ public:
   PyObject* PyExport(bool export_attached_sites);
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
-  template <class Accessor=DirectAccessor> struct FlagsAnalyser  {
+
+  template <class Accessor> struct FlagsAnalyser_ {
+    const Accessor &accessor;
     const short ref_flags;
-    FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    template <class Item> bool OnItem(const Item& o, size_t) const {
-      return (Accessor::Access(o).Flags&ref_flags) != 0;
+    FlagsAnalyser_(const Accessor &accessor_, short _ref_flags)
+      : accessor(accessor), ref_flags(_ref_flags)  {}
+    template <class Item>
+    bool OnItem(const Item& o, size_t) const {
+      return (accessor(o).Flags&ref_flags) != 0;
     }
   };
-  template <class Accessor=DirectAccessor> struct FlagSetter {
+  template <class acc_t> static FlagsAnalyser_<acc_t>
+  FlagsAnalyser(const acc_t &acc, short flag) {
+    return FlagsAnalyser_<acc_t>(acc, eflags);
+  }
+  static FlagsAnalyser_<DirectAccessor>
+  FlagsAnalyser(short flags) {
+    return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
+  }
+  
+  template <class Accessor> struct FlagSetter_ {
+    const Accessor &accessor;
     const short ref_flags;
     bool set;
-    FlagSetter(short ref_flags_, bool set_)
-      : ref_flags(ref_flags_), set(set_)  {}
-    template <class Item> void OnItem(Item& o, size_t) const {
-      return olx_set_bit(set, Accessor::Access(o).Flags, ref_flags);
+    FlagSetter_(const Accessor &accessor_, short ref_flags_, bool set_)
+      : accessor(accessor_), ref_flags(ref_flags_), set(set_)  {}
+    template <class Item>
+    void OnItem(Item& o, size_t) const {
+      return olx_set_bit(set, accessor(o).Flags, ref_flags);
     }
   };
-  template <class Accessor=DirectAccessor> struct TypeAnalyser  {
+  template <class acc_t> static FlagSetter_<acc_t>
+  FlagSetter(const acc_t &acc, short ref_flags, bool set) {
+    return FlagSetter_<acc_t>(acc, ref_flags, set);
+  }
+  static FlagSetter_<DirectAccessor>
+  FlagSetter(short ref_flags, bool set) {
+    return FlagSetter_<DirectAccessor>(DirectAccessor(), ref_flags, set);
+  }
+
+  template <class Accessor> struct TypeAnalyser_ {
+    const Accessor &accessor;
     const short ref_type;
-    TypeAnalyser(const cm_Element _ref_type) : ref_type(_ref_type.z)  {}
-    TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
+    TypeAnalyser_(const Accessor &accessor_, short _ref_type)
+      : accessor(accessor_), ref_type(_ref_type)  {}
     template <class Item> bool OnItem(const Item& o, size_t) const {
-      return Accessor::Access(o).GetType() == ref_type;
+      return accessor(o).GetType() == ref_type;
     }
   };
+  template <class acc_t> static TypeAnalyser_<acc_t>
+  TypeAnalyser(const acc_t &acc, const cm_Element &e) {
+    return TypeAnalyser_<acc_t>(acc, e.z);
+  }
+  template <class acc_t> static TypeAnalyser_<acc_t>
+  TypeAnalyser(const acc_t &acc, short z) {
+    return TypeAnalyser_<acc_t>(acc, z);
+  }
+  static TypeAnalyser_<DirectAccessor>
+  TypeAnalyser(short z) {
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), z);
+  }
+  static TypeAnalyser_<DirectAccessor>
+  TypeAnalyser(const cm_Element &e) {
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), e.z);
+  }
+
   friend class TAsymmUnit;
 };
 //..............................................................................
@@ -317,7 +360,7 @@ public:
     // by label
     if( a1.GetType() == a2.GetType() )
       return TCAtom::CompareAtomLabels(a1.GetLabel(), a2.GetLabel());
-    // by weight
+    // by mass
     return olx_cmp(a1.GetType().GetMr(), a2.GetType().GetMr());
   }
 };
@@ -326,13 +369,6 @@ class TCAtomCenterComparator  {
 public:
   static int Compare(const TCAtom &a1, const TCAtom &a2)  {
     return olx_cmp(a1.ccrd().QLength(), a2.ccrd().QLength());
-  }
-};
-//..............................................................................
-class TCAtomTagComparator  {
-public:
-  static int Compare(const TCAtom &a1, const TCAtom &a2)  {
-    return olx_cmp(a1.GetTag(), a2.GetTag());
   }
 };
 //..............................................................................

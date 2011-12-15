@@ -911,7 +911,7 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
 }
 //..............................................................................
 void TLattice::UpdatePlaneDefinitions()  {
-  PlaneDefs.ForEach(ACollectionItem::TagSetter<>(0));
+  PlaneDefs.ForEach(ACollectionItem::TagSetter(0));
   for( size_t i=0; i < Objects.planes.Count(); i++ )  {
     TSPlane& sp = Objects.planes[i];
     if( sp.IsDeleted() || sp.GetDefId() >= PlaneDefs.Count() )  // would be odd
@@ -1230,7 +1230,7 @@ size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)
 void TLattice::CompaqAll()  {
   if( IsGenerated() || Fragments.Count() < 2 )  return;
   TUnitCell& uc = GetUnitCell();
-  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
+  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   size_t cnt = 0;
   for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
     TSAtom& sa = Objects.atoms[i];
@@ -1882,7 +1882,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   _ProcessRingHAdd(cg, rcont, atoms); // Py
 
   TAsymmUnit &au = GetAsymmUnit();
-  au.GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i]->IsDeleted() || !atoms[i]->CAtom().IsAvailable() ||
       atoms[i]->CAtom().GetTag() != 0 )
@@ -1919,7 +1919,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   /* // this might be useful for hadd on grown structures
   GetUnitCell().AddEllipsoid(au.AtomCount()-au_cnt);
   GetUnitCell().FindSymmEq();
-  au.GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter(-1));
   for( size_t i=au_cnt; i < au.AtomCount(); i++ )
     GenerateAtom(au.GetAtom(i), *Matrices[0]);
     */

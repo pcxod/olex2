@@ -1271,17 +1271,19 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
-  TCAtomPList catoms(atoms, TSAtom::CAtomAccessor<>());
+  TCAtomPList catoms(atoms,
+    FunctionAccessor::MakeConst(&TSAtom::CAtom));
   if( !Options.Contains("h") )
-    catoms.Pack(TCAtom::TypeAnalyser<>(iHydrogenZ));
-  catoms.Pack(TCAtom::TypeAnalyser<>(iQPeakZ));
+    catoms.Pack(TCAtom::TypeAnalyser(iHydrogenZ));
+  catoms.Pack(TCAtom::TypeAnalyser(iQPeakZ));
   TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, true);
 }
 //..............................................................................
 void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
-  TCAtomPList catoms(atoms, TSAtom::CAtomAccessor<>());
+  TCAtomPList catoms(atoms,
+    FunctionAccessor::MakeConst(&TSAtom::CAtom));
   TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, false);
 }
 //..............................................................................
@@ -1316,7 +1318,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( vars.Equalsi( "OCCU" ) )  {
     const ASObjectProvider& objects = xapp.XFile().GetLattice().GetObjects();
-    objects.atoms.ForEach(ACollectionItem::TagSetter<>(0));
+    objects.atoms.ForEach(ACollectionItem::TagSetter(0));
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->GetTag() != 0 )  continue;
       TSAtomPList neighbours;

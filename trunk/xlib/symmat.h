@@ -174,7 +174,7 @@ public:
   /* returns a vector with smaller or equal values */
   template <class list_t, class accessor_t>
   static vec3d StandardiseFractional(const vec3d &x, const list_t& ml,
-    const accessor_t acc)
+    const accessor_t &acc)
   {
     vec3d v = NormaliseFractional(x);
     for( size_t i=0; i < ml.Count(); i++ )  {
@@ -191,7 +191,7 @@ public:
   }
   template <class list_t>
   static vec3d StandardiseFractional(const vec3d &x, const list_t& ml) {
-    return StandardiseFractional(x, ml, DirectAccessor());
+    return StandardiseFractional(x, ml, ListAccessor(ml));
   }
 
   struct IdComparator {

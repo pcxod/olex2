@@ -81,6 +81,12 @@ public:
       Set(i, accessor(list[i]));
   }
 //..............................................................................
+  template <class List> TPtrList(const List& list)  {
+    init(list.Count());
+    for( size_t i=0; i < list.Count(); i++ )
+      Set(i, list[i]);
+  }
+//..............................................................................
   virtual ~TPtrList()  {  olx_free(Items);  }
 //..............................................................................
   //deletes the objects and clears the list
@@ -136,7 +142,7 @@ public:
   template <class List> TPtrList& Assign(const List& l)  {
     SetCount(l.Count());
     for( size_t i=0; i < l.Count(); i++ )
-      Items[i] = l[i];
+      Set(i, l[i]);
     return *this;
   }
 //..............................................................................

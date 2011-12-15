@@ -16,6 +16,7 @@
 #include "arrays.h"
 #include "maputil.h"
 #include "estopwatch.h"
+#include "analysis.h"
 
 struct _auto_BI {  
   int type;
@@ -40,7 +41,7 @@ size_t imp_auto_AtomCount(const TAsymmUnit& au)  {
 
 void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  olxstr folder( Cmds.IsEmpty() ? EmptyString() : Cmds[0] );
+  olxstr folder(Cmds.IsEmpty() ? EmptyString() : Cmds[0]);
   int arg = 0;
   if( folder.IsNumber() )  {
     arg = folder.ToInt();
@@ -48,20 +49,6 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   }
   if( folder.IsEmpty() && olex::IOlexProcessor::GetInstance() != NULL )
     olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
-  // Qpeak rings analysis ...
-  try  {
-    TTypeList< TSAtomPList > rings;
-    xapp.FindRings("QQQQQQ", rings);
-    for( size_t i=0; i < rings.Count(); i++ )  {
-      double rms = TSPlane::CalcRMS( rings[i] );
-      if( rms < 0.1 && TNetwork::IsRingRegular( rings[i]) )  {
-        for( size_t j=0; j < rings[i].Count(); j++ )  {
-          rings[i][j]->CAtom().SetLabel("Cph");
-        }
-      }
-    }
-  }
-  catch( ... )  {  ;  }
   static olxstr FileName(xapp.XFile().GetFileName());
   if( !folder.IsEmpty() )  {
     TAutoDB::GetInstance().ProcessFolder(folder);
@@ -456,6 +443,7 @@ struct Main_SfacComparator {
   }
 };
 void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
+  using namespace olx_analysis;
   TXApp& xapp = TXApp::GetInstance();
   TLattice& latt = xapp.XFile().GetLattice();
   TUnitCell& uc = latt.GetUnitCell();
@@ -474,7 +462,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     }
     QuickSorter::Sort(sl, Main_SfacComparator());  // sorts ascending
     double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
-    double ratio = auv/(16*ac);
+    double ratio = auv/(18*ac);
     for( size_t i=0; i < sl.Count(); i++ )
       sl[i].A() = ratio*sl[i].GetA();
 
@@ -498,7 +486,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
         TCAtom &p = *SortedQPeaks.GetLast().Object;
         sl[i].A() -= 1./p.GetDegeneracy();
         p.SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
-        p.SetType(*sl[i].B());
+        p.SetType(Analysis::check_proposed_element(p, *sl[i].B()));
         p.SetQPeak(0);
         SortedQPeaks.Delete(SortedQPeaks.Count()-1);
       }
@@ -515,8 +503,11 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       uc.FindInRangeAC(au.GetAtom(i).ccrd(), au.GetAtom(i).GetType().r_bonding+1.3, res);
       vec3d center = au.Orthogonalise(au.GetAtom(i).ccrd());
       for( size_t j=0; j < res.Count(); j++ )  {
-        if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() && center.QDistanceTo(res[j].GetB()) < 1e-4 )
+        if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() &&
+            center.QDistanceTo(res[j].GetB()) < 1e-4 )
+        {
           res.Delete(j--);
+        }
       }
       AtomCount++;
       double wght = 1;
@@ -594,7 +585,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       for( size_t i=0; i < au.AtomCount(); i++ )  {
         if( au.GetAtom(i).IsDeleted() )  continue;
         if( au.GetAtom(i).GetType() == iQPeakZ )
-          SortedQPeaks.Add( au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
+          SortedQPeaks.Add(au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
       }
       for( size_t i=0; i < olx_min(to_delete,SortedQPeaks.Count()); i++ )
         SortedQPeaks.GetObject(i)->SetDeleted(true);

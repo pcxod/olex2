@@ -22,6 +22,7 @@
 
 #undef GetObject
 
+using namespace olx_analysis;
 const uint16_t MaxConnectivity = 12;
 
 // file header: Signature,Version,Flags
@@ -162,7 +163,7 @@ double TAutoDBNode::CalcAngle(size_t i, size_t j)  const {
 }
 //..............................................................................
 void TAutoDBNode::SaveToStream( IDataOutputStream& output ) const {
-  output << (int32_t)Element->index;
+  output << (uint32_t)Element->index;
   output << (float)Center[0];
   output << (float)Center[1];
   output << (float)Center[2];
@@ -180,7 +181,7 @@ void TAutoDBNode::LoadFromStream(IDataInputStream& in)  {
   in >> val;  Center[2] = val;
   in >> ind;
   for( uint32_t i=0; i < ind; i++ )
-    AttachedNodes.Add( *(new TAttachedNode(in)) );
+    AttachedNodes.Add(*(new TAttachedNode(in)));
   TAutoDBNode::SortCenter = Center;
   QuickSorter::SortSF(AttachedNodes, SortMetricsFunc);
   _PreCalc();
@@ -402,7 +403,7 @@ bool TAutoDBNetNode::IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel)
   }
 }
 //..............................................................................
-void TAutoDBNetNode::SaveToStream( IDataOutputStream& output ) const {
+void TAutoDBNetNode::SaveToStream(IDataOutputStream& output) const {
   output << FCenter->GetId();
   output << (int8_t)AttachedNodes.Count();
   for( size_t i=0; i < AttachedNodes.Count(); i++ )
@@ -420,7 +421,7 @@ void TAutoDBNetNode::LoadFromStream( IDataInputStream& input )  {
   input >> cnt;
   for( size_t i=0; i < cnt; i++ )  {
     input >> ind;
-    AttachedNodes.Add( &TAutoDBNet::GetCurrentlyLoading().Node(ind) );
+    AttachedNodes.Add(&TAutoDBNet::GetCurrentlyLoading().Node(ind));
   }
 }
 //..............................................................................
@@ -468,7 +469,7 @@ void TAutoDBNet::LoadFromStream(IDataInputStream& input)  {
   FReference = &TAutoDB::GetInstance().Reference(ind);
   input >> cnt;
   for( uint16_t i=0; i < cnt; i++ )
-    Nodes.Add( *( new TAutoDBNetNode(NULL)) );
+    Nodes.Add(*( new TAutoDBNetNode(NULL)));
   for( uint16_t i=0; i < cnt; i++ )
     Nodes[i].LoadFromStream(input);
   // build index
@@ -1207,6 +1208,16 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
   return res;
 }
 //..............................................................................
+bool TAutoDB::ChangeType(TCAtom &a, const cm_Element &e) {
+  if (a.GetType() == e || e == iHydrogenZ) return false;
+  if (alg::check_connectivity(a, e)) {
+    a.SetType(e);
+    a.SetLabel(e.symbol, false);
+    return true;
+  }
+  return false;
+}
+//..............................................................................
 void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
   double& Uiso, TAutoDB::AnalysisStat& stat, ElementPList* proposed_atoms)
 {
@@ -1314,24 +1325,30 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   else
     TBasicApp::NewLogEntry(logInfo) << "Could not locate confident atom types";
   // assigning atom types according to L3 and L2 and printing stats
+  SortedPtrList<TAutoDBNetNode, TPointerComparator> processed;
   for( size_t i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetId() == 0 )  {
-      if (UisoCnt==0 && proposed_atoms==NULL && !guesses[i].list1.IsEmpty())
-        sn->Node(i).SetTag(guesses[i].list1[0].Type->index);
-      continue;
+      if (UisoCnt==0 && proposed_atoms==NULL && !guesses[i].list1.IsEmpty()) {
+        if (alg::check_connectivity(*guesses[i].atom, *guesses[i].list1[0].Type)) {
+          sn->Node(i).SetTag(guesses[i].list1[0].Type->index);
+        }
+        continue;
+      }
     }
-    tmp.SetLength(0);
     TTypeList< THitList<TAutoDBNetNode> > &guessN =
       !guesses[i].list3.IsEmpty() ? guesses[i].list3 : guesses[i].list2;
-
-    const cm_Element* type = guessN[0].Type;
-    sn->Node(i).SetTag(type->index);
-    for( size_t j=0; j < guessN.Count(); j++ )  {
-      tmp << guessN[j].Type->symbol << '(' <<
-        olxstr::FormatFloat(2,1.0/(guessN[j].MeanFomN(1)+0.001)) << ")";
-      if( (j+1) < guessN.Count() )
-        tmp << ',';
-    }
+    const cm_Element* type = NULL;
+    if (sn->Node(i).GetId() != 0) {
+      tmp.SetLength(0);
+      type = guessN[0].Type;
+      sn->Node(i).SetTag(type->index);
+      for( size_t j=0; j < guessN.Count(); j++ )  {
+        tmp << guessN[j].Type->symbol << '(' <<
+          olxstr::FormatFloat(2,1.0/(guessN[j].MeanFomN(1)+0.001)) << ")";
+        if( (j+1) < guessN.Count() )
+          tmp << ',';
+      }
+      }
     if( permutator == NULL || !permutator->IsActive() )  {
       // have to do it here too!
       bool searchHeavier = false, searchLighter = false;
@@ -1346,28 +1363,26 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       }
       if( searchLighter || searchHeavier )  {
         AnalyseUiso(*guesses[i].atom, guessN, stat, searchHeavier, searchLighter, proposed_atoms);
-        sn->Node(i).SetTag(guesses[i].atom->GetType().index); // enforce atom type
+        sn->Node(i).SetTag(guesses[i].atom->GetType().index);
+        processed.AddUnique(&sn->Node(i));
       }
       else  {
         if( type != NULL && *type != guesses[i].atom->GetType() )  {
           if( proposed_atoms != NULL )  {
             if( proposed_atoms->IndexOf(type) != InvalidIndex )  {
-              stat.AtomTypeChanges++;
-              guesses[i].atom->SetLabel(olxstr(type->symbol) << (i+1), false);
-              guesses[i].atom->SetType(*type);
+              if (ChangeType(*guesses[i].atom, *type))
+                stat.AtomTypeChanges++;
             }
           }
           else if( BAIDelta != -1 )  {
             if( abs(type->z - guesses[i].atom->GetType().z) < BAIDelta )  {
-              stat.AtomTypeChanges++;
-              guesses[i].atom->SetLabel(olxstr(type->symbol) << (i+1), false);
-              guesses[i].atom->SetType(*type);
+              if (ChangeType(*guesses[i].atom, *type))
+                stat.AtomTypeChanges++;
             }
           }
           else  {
-            stat.AtomTypeChanges++;
-            guesses[i].atom->SetLabel(olxstr(type->symbol) << (i+1), false);
-            guesses[i].atom->SetType(*type);
+            if (ChangeType(*guesses[i].atom, *type))
+              stat.AtomTypeChanges++;
           }
         }
       }
@@ -1375,8 +1390,9 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     TBasicApp::NewLogEntry(logInfo) << tmp;
   }
   for( size_t i=0; i < sn_count; i++ )  {
-    if( sn->Node(i).GetTag() != -1 &&
-        guesses[i].atom->GetType() != sn->Node(i).GetTag() )
+    if (sn->Node(i).GetTag() != -1 &&
+        guesses[i].atom->GetType() != sn->Node(i).GetTag() &&
+        processed.IndexOf(&sn->Node(i)) == InvalidIndex)
     {
       int change_evt = -1;
       cm_Element* l_elm = &XElementLib::GetByIndex(sn->Node(i).GetTag());
@@ -1386,9 +1402,8 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           double delta_z = guesses[i].atom->GetType().z - l_elm->z;
           double ref_val = guesses[i].atom->GetUiso() - 0.0025*delta_z;
           if(  ref_val > 0.01 && ref_val < 0.075)  {
-            change_evt = 0;
-            guesses[i].atom->SetLabel(olxstr(l_elm->symbol) << (i+1), false);
-            guesses[i].atom->SetType(*l_elm);
+            if (ChangeType(*guesses[i].atom, *l_elm))
+              change_evt = 0;
           }
         }
       }
@@ -1396,15 +1411,13 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if( olx_abs(guesses[i].atom->GetType().z-sn->Node(i).GetTag()) <
             BAIDelta )
         {
-          change_evt = 1;
-          guesses[i].atom->SetLabel(olxstr(l_elm->symbol) << (i+1), false);
-          guesses[i].atom->SetType(*l_elm);
+          if (ChangeType(*guesses[i].atom, *l_elm))
+            change_evt = 1;
         }
       }
       else  {  // unrestrained assignment
-        change_evt = 2;
-        guesses[i].atom->SetLabel(olxstr(l_elm->symbol) << (i+1), false);
-        guesses[i].atom->SetType(*l_elm);
+        if (ChangeType(*guesses[i].atom, *l_elm))
+          change_evt = 2;
       }
       if( change_evt != -1 )  {
         TBasicApp::NewLogEntry(logInfo) << "SN[" << change_evt <<
@@ -1499,22 +1512,19 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           if( type == NULL || *type == guesses[i].atom->GetType() )  continue;
           if( proposed_atoms != NULL )  {
             if( proposed_atoms->IndexOf(type) != InvalidIndex )  {
+            if (ChangeType(*guesses[i].atom, *type))
               stat.AtomTypeChanges++;
-              guesses[i].atom->SetLabel(olxstr(type->symbol) << (i+1), false);
-              guesses[i].atom->SetType(*type);
             }
           }
           else if( BAIDelta != -1 )  {
             if( abs(type->z - guesses[i].atom->GetType().z) < BAIDelta )  {
-              stat.AtomTypeChanges++;
-              guesses[i].atom->SetLabel(olxstr(type->symbol) << (i+1), false);
-              guesses[i].atom->SetType(*type);
+              if (ChangeType(*guesses[i].atom, *type))
+                stat.AtomTypeChanges++;
             }
           }
           else  {
-            stat.AtomTypeChanges++;
-            guesses[i].atom->SetLabel(olxstr(type->symbol) << (i+1), false);
-            guesses[i].atom->SetType(*type);
+            if (ChangeType(*guesses[i].atom, *type))
+              stat.AtomTypeChanges++;
           }
         }
         TBasicApp::NewLogEntry(logInfo) << tmp;

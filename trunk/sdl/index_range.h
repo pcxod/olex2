@@ -72,7 +72,7 @@ struct IndexRange  {
     return FromString(range, l);
   }
   static olxstr ToString(const TSizeList& list)  {
-    return ToString(list, DirectAccessor());
+    return ToString(list, ListAccessor(list));
   }
   class Builder  {
     olxstr range;

@@ -404,7 +404,7 @@ namespace twinning  {
       TRefList& out, const TArrayList<compd>& Fc, TArrayList<compd>* pF)
     {
       detwin(dt, out, Fc);
-      TRefPList to_merge(out, DirectAccessor());
+      TRefPList to_merge(out);
       out.ReleaseAll();
       SymmSpace::InfoEx si = sym_info;
       si.centrosymmetric = true;
