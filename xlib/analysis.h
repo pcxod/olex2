@@ -23,6 +23,8 @@ namespace alg {
   olxstr formula(const TCAtomPList &atoms, double mult=1);
   olxstr label(const TCAtomPList &atoms);
   const cm_Element &find_heaviest(const TCAtomPList &atoms);
+  bool check_geometry(const TCAtom &a, const cm_Element &e);
+  bool check_connectivity(const TCAtom &a, const cm_Element &e);
 }; // end namespace alg
 struct peaks {
   static int peak_sort(const TCAtom &a1, const TCAtom &a2) {
@@ -64,7 +66,7 @@ public:
       return olx_cmp(trunk[0]->GetTag(), b.trunk[0]->GetTag());
     }
     void sort() {
-      trunk.ForEach(ACollectionItem::IndexTagSetter<>());
+      trunk.ForEach(ACollectionItem::IndexTagSetter());
       QuickSorter::Sort(branches, TComparableComparator());
     }
     // reverses the trunk direction and re-sorts the branches
@@ -143,7 +145,7 @@ public:
     bool is_flat() const;
     bool is_polymeric() const;
     fragment &pack() {
-      atoms_.Pack(TCAtom::FlagsAnalyser<>(catom_flag_Deleted));
+      atoms_.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
       return *this;
     }
     // works only for a group of atoms distributed around the central one
@@ -175,7 +177,7 @@ public:
   static double find_scale(TLattice &latt);
 
   static const cm_Element &check_proposed_element(
-    TCAtom &a, const cm_Element &e);
+    TCAtom &a, const cm_Element &e, ElementPList *set=NULL);
 
   static void funTrim(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(trim_18(TXApp::GetInstance().XFile().GetAsymmUnit()));

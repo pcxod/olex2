@@ -22,7 +22,7 @@ namespace PlaneSort {
       sortedPlane.SetCount(sp.CrdCount());
       for( size_t i=0; i < sp.CrdCount(); i++ )
         sortedPlane[i] = sp.GetAtom(i).crd();
-      olx_plane::Sort(sortedPlane, DirectAccessor(), sp.GetCenter(),
+      olx_plane::Sort(sortedPlane, ListAccessor(sortedPlane), sp.GetCenter(),
         sp.GetNormal());
     }
     

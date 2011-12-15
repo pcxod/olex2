@@ -20,6 +20,7 @@
 #include "xfiles.h"
 #include "tptrlist.h"
 #include "library.h"
+#include "analysis.h"
 #include "xapp.h"
 
 BeginXlibNamespace()
@@ -414,6 +415,7 @@ public:
     TStrList& report);
 
   ConstTypeList<TAnalysisResult> AnalyseStructure(TLattice& latt);
+  static bool ChangeType(TCAtom &a, const cm_Element &e);
 protected:
   ConstTypeList<TAnalysisResult> AnalyseNet(TNetwork& net);
   // hits must be sorted beforehand!
@@ -473,6 +475,19 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
         }
       }
     }
+    // last option
+    if (type == &ca.GetType() && proposed_atoms != NULL) {
+      int delta = 100;
+      for (size_t i=0; i < proposed_atoms->Count(); i++) {
+        int d = (*proposed_atoms)[i]->z - ca.GetType().z;
+        if (d > 0 && d < delta) {
+          delta = d;
+          type = (*proposed_atoms)[i];
+        }
+      }
+      if (type != &ca.GetType() && BAIDelta != -1 && delta > BAIDelta)
+        type = &ca.GetType();
+    }
   }
   else if( lighter )  {
     TBasicApp::NewLogEntry(logInfo) << "Searching element lighter for " <<
@@ -497,6 +512,19 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
         }
       }
     }
+    // last option
+    if (type == &ca.GetType() && proposed_atoms != NULL) {
+      int delta = 100;
+      for (size_t i=0; i < proposed_atoms->Count(); i++) {
+        int d = ca.GetType().z - (*proposed_atoms)[i]->z;
+        if (d > 0 && d < delta) {
+          delta = d;
+          type = (*proposed_atoms)[i];
+        }
+      }
+      if (type != &ca.GetType() && BAIDelta != -1 && delta > BAIDelta)
+        type = &ca.GetType();
+    }
   }
   for( size_t j=0; j < list.Count(); j++ )  {
     tmp << list[j].Type->symbol << '(' <<
@@ -504,12 +532,14 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
       list[j].hits[0].Fom;
     if( (j+1) < list.Count() )  tmp << ',';
   }
-  if( type == NULL || *type == ca.GetType() )  return false;
-  stat.AtomTypeChanges++;
-  ca.SetLabel(type->symbol, false);
-  ca.SetType(*type);
-  TBasicApp::NewLogEntry(logInfo) << tmp;
-  return true;
+  if (ChangeType(ca, *type)) {
+    stat.AtomTypeChanges++;
+    ca.SetLabel(type->symbol, false);
+    ca.SetType(*type);
+    TBasicApp::NewLogEntry(logInfo) << tmp;
+    return true;
+  }
+  return false;
 }
 
 };

@@ -119,7 +119,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
 }
 //..............................................................................
 void TAsymmUnit::ComplyToResidues()  {
-  CAtoms.ForEach(ACollectionItem::TagSetter<>(-1));
+  CAtoms.ForEach(ACollectionItem::TagSetter(-1));
   size_t ac = 0;
   for( size_t i=0; i < MainResidue.Count(); i++ )
     MainResidue[i].SetTag(ac++);
@@ -394,8 +394,8 @@ void TAsymmUnit::DetachAtomType(short type, bool detach)  {
 //..............................................................................
 void TAsymmUnit::PackAtoms()  {
   for( size_t i=0; i < Residues.Count(); i++ )
-    GetResidue(i).Atoms.Pack(TCAtom::FlagsAnalyser<>(catom_flag_Deleted));
-  CAtoms.Pack(TCAtom::FlagsAnalyser<>(catom_flag_Deleted));
+    GetResidue(i).Atoms.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
+  CAtoms.Pack(TCAtom::FlagsAnalyser(catom_flag_Deleted));
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);
 }

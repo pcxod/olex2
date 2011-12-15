@@ -10,33 +10,27 @@
 #ifndef __olx_sdl_eaccessor_H
 #define __olx_sdl_eaccessor_H
 
-struct DirectAccessor  {
-  template <typename Item> static const Item& Access(const Item& item)  {
-    return item;
-  }
-  template <typename Item> static Item& Access(Item& item)  {
-    return item;
-  }
-
-  template <typename Item> const Item& operator ()(const Item& item) const {
-    return item;
-  }
-  template <typename Item> Item& operator ()(Item& item) const {
-    return item;
-  }
+struct DummyAccessor  {
+  template <typename item_t>
+  const item_t& operator ()(const item_t& item) const { return item; }
+  template <typename item_t>
+  item_t& operator ()(item_t& item) const { return item; }
 };
 
 template <typename item_t>
 struct TDirectAccessor  {
   typedef item_t return_type;
 
-  static const item_t& Access(const item_t& item) { return item; }
-  static item_t& Access(item_t& item) { return item; }
-
   const item_t& operator ()(const item_t& item) const { return item; }
   item_t& operator ()(item_t& item) const { return item; }
 };
 
+template <class list_t>
+TDirectAccessor<typename list_t::list_item_type>
+  ListAccessor(const list_t &t)
+{
+  return TDirectAccessor<typename list_t::list_item_type>();
+}
 struct DereferenceAccessor  {
   template <typename item_t>
   const item_t& operator ()(const item_t* item) const { return *item; }

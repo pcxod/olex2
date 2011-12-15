@@ -899,8 +899,8 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
 
-  Primitives.GetObjects().ForEach(ACollectionItem::TagSetter<>(-1));
-  GP.GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
+  Primitives.GetObjects().ForEach(ACollectionItem::TagSetter(-1));
+  GP.GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
   Primitives.RemoveObjectsByTag(0);
   FCollections.Delete(FCollections.IndexOfObject(&GP));
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
@@ -921,9 +921,9 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   FTranslucentObjects.Clear();
   FIdentityObjects.Clear();
 
-  Primitives.GetObjects().ForEach(ACollectionItem::TagSetter<>(-1));
+  Primitives.GetObjects().ForEach(ACollectionItem::TagSetter(-1));
   for( size_t i=0; i < Colls.Count(); i++ )  {
-    Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter<>(0));
+    Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
     const size_t col_ind = FCollections.IndexOfObject(Colls[i]);
     FCollections.Delete(col_ind);
     delete Colls[i];

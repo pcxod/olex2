@@ -49,7 +49,8 @@ struct MergeStats  {
     MinIndexes[0] = MinIndexes[1] = MinIndexes[2] = 100;
     MaxIndexes[0] = MaxIndexes[1] = MaxIndexes[2] = -100;
     OmittedByUser = UniqueReflections = 0;
-    CentricReflections = SystematicAbsentcesRemoved = InconsistentEquivalents = 0;
+    CentricReflections = SystematicAbsentcesRemoved =
+      InconsistentEquivalents = 0;
     ReflectionAPotMax = 0;
     FriedelOppositesMerged = false;
   }
@@ -68,8 +69,9 @@ class RefMerger {
     for( size_t i=0; i < ref_cnt; i++ )
       refs[i]->Standardise(info_ex);
     stats.FriedelOppositesMerged = info_ex.centrosymmetric;
-    // standartise reflection indexes according to provided list of symmetry operators
-    // sort the list
+    /* standartise reflection indexes according to provided list of symmetry
+    operators
+    */
     TReflection::SortList(refs);
     output.SetCapacity(ref_cnt); // better more that none :)
     // merge reflections
@@ -112,7 +114,8 @@ class RefMerger {
           SS += mo.ref->GetS();
           SI += mo.ref->GetI();
           stats.MeanIOverSigma += mo.ref->GetI()/mo.ref->GetS();
-          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
+          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
+            stats.MaxIndexes);
         }
         else
           stats.SystematicAbsentcesRemoved += merged_count;
@@ -123,17 +126,22 @@ class RefMerger {
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
+      : stats.UniqueReflections);
     return stats;
   }
   template <class RefListMerger> 
-  static MergeStats _DryMerge(const SymmSpace::InfoEx& info_ex, TRefPList& refs,
-    const vec3i_list& omits)
+  static MergeStats _DryMerge(const SymmSpace::InfoEx& info_ex,
+    TRefPList& refs, const vec3i_list& omits)
   {
-    if( refs.IsEmpty() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
+    if( refs.IsEmpty() ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "empty reflection list");
+    }
     MergeStats stats;
-    // standartise reflection indexes according to provided list of symmetry operators
+    /* standartise reflection indexes according to provided list of symmetry
+    operators
+    */
     const size_t ref_cnt = refs.Count();
     for( size_t i=0; i < ref_cnt; i++ )
       refs[i]->Standardise(info_ex);
@@ -177,7 +185,8 @@ class RefMerger {
           SS += mo.rSig;
           SI += mo.rI;
           stats.MeanIOverSigma += mo.rI/mo.rSig;
-          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
+          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
+            stats.MaxIndexes);
           stats.UniqueReflections++;
         }
         else
@@ -188,15 +197,18 @@ class RefMerger {
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
+      : stats.UniqueReflections);
     return stats;
   }
   template <class MatList>
-  static MergeStats _DoSGFilter(const MatList& ml, TRefPList& refs, const vec3i_list& omits, 
-    TRefList& output)  
+  static MergeStats _DoSGFilter(const MatList& ml, TRefPList& refs,
+    const vec3i_list& omits, TRefList& output)  
   {
-    if( refs.IsEmpty() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
+    if( refs.IsEmpty() ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "empty reflection list");
+    }
     MergeStats stats;
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
@@ -227,7 +239,8 @@ class RefMerger {
             _r.SetCentric(ref->IsCentric());
             _r.SetMultiplicity(ref->GetMultiplicity());
             stats.MeanIOverSigma += _r.GetI()/_r.GetS();
-            vec3i::UpdateMinMax(_r.GetHkl(), stats.MinIndexes, stats.MaxIndexes);
+            vec3i::UpdateMinMax(_r.GetHkl(), stats.MinIndexes,
+              stats.MaxIndexes);
           }
           if( ref->IsCentric() )
             stats.CentricReflections++;
@@ -245,9 +258,13 @@ class RefMerger {
     return stats;
   }
   template <class MatList>
-  static MergeStats _DoDrySGFilter(const MatList& ml, TRefPList& refs, const vec3i_list& omits)  {
-    if( refs.IsEmpty() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
+  static MergeStats _DoDrySGFilter(const MatList& ml, TRefPList& refs,
+    const vec3i_list& omits)
+  {
+    if( refs.IsEmpty() ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "empty reflection list");
+    }
     MergeStats stats;
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
@@ -274,7 +291,8 @@ class RefMerger {
         if( !ref->IsAbsent() )  {
           for( size_t j=from; j < i; j++ )  {
             stats.MeanIOverSigma += refs[j]->GetI()/refs[j]->GetS();
-            vec3i::UpdateMinMax(refs[j]->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
+            vec3i::UpdateMinMax(refs[j]->GetHkl(), stats.MinIndexes,
+              stats.MaxIndexes);
           }
           if( ref->IsCentric() )
             stats.CentricReflections++;
@@ -288,16 +306,19 @@ class RefMerger {
     }
     stats.Rint = -1;
     stats.Rsigma = -1;
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
+      : stats.UniqueReflections);
     return stats;
   }
 
   template <class RefListMerger>
-  static MergeStats _DoMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits,
-    TRefList& output)
+  static MergeStats _DoMergeInP1(TPtrList<const TReflection>& refs,
+    const vec3i_list& omits, TRefList& output)
   {
-    if( refs.IsEmpty() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
+    if( refs.IsEmpty() ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "empty reflection list");
+    }
     MergeStats stats;
     // sort the list
     TReflection::SortList(refs);
@@ -339,7 +360,8 @@ class RefMerger {
         SS += mo.ref->GetS();
         SI += mo.ref->GetI();
         stats.MeanIOverSigma += mo.ref->GetI()/mo.ref->GetS();
-        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
+        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
+          stats.MaxIndexes);
       }
       if( i >= ref_cnt )  break;
       ref = refs[i];
@@ -347,13 +369,18 @@ class RefMerger {
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
+      : stats.UniqueReflections);
     return stats;
   }
   template <class RefListMerger>
-  static MergeStats _DryMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits)  {
-    if( refs.IsEmpty() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
+  static MergeStats _DryMergeInP1(TPtrList<const TReflection>& refs,
+    const vec3i_list& omits)
+  {
+    if( refs.IsEmpty() ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "empty reflection list");
+    }
     MergeStats stats;
     // sort the list
     TReflection::SortList(refs);
@@ -389,7 +416,8 @@ class RefMerger {
         SS += mo.rSig;
         SI += mo.rI;
         stats.MeanIOverSigma += mo.rI/mo.rSig;
-        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
+        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
+          stats.MaxIndexes);
         stats.UniqueReflections++;
       }
       if( i >= ref_cnt )  break;
@@ -397,64 +425,84 @@ class RefMerger {
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
-    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1 : stats.UniqueReflections);
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
+      : stats.UniqueReflections);
     return stats;
   }
 public:
-/* Function merges provided reflections using provided list of matrices. 
-   The reflections are standardised. The resulting reflections are stored in the output .
+/* Function merges provided reflections using provided list of matrices.
+   The reflections are standardised. The resulting reflections are stored in
+   the output.
 */
   template <class MatList, class RefListMerger, class RefList> 
-  static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output, 
-    const vec3i_list& omits, bool mergeFP)  
+  static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output,
+    const vec3i_list& omits, bool mergeFP)
   {
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
     if( mergeFP )  info_ex.centrosymmetric = true; 
-    TRefPList refs(Refs, DirectAccessor());
+    TRefPList refs(Refs);
     return _DoMerge<RefListMerger>(info_ex, refs, omits, output);
   }
   template <class RefListMerger, class RefList> 
-  static MergeStats Merge(const SymmSpace::InfoEx& si, RefList& Refs, TRefList& output, 
-    const vec3i_list& omits)  
+  static MergeStats Merge(const SymmSpace::InfoEx& si, RefList& Refs,
+    TRefList& output, const vec3i_list& omits)
   {
-    TRefPList refs(Refs, DirectAccessor());
+    TRefPList refs(Refs);
     return _DoMerge<RefListMerger>(si, refs, omits, output);
   }
-  /* Functions gets the statistic on the list of provided reflections (which get stantardised) */
+  /* Functions gets the statistic on the list of provided reflections (which
+  get stantardised)
+  */
   template <class MatList, class RefListMerger, class RefList> 
-  static MergeStats DryMerge(const MatList& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
+  static MergeStats DryMerge(const MatList& ml, RefList& Refs,
+    const vec3i_list& omits, bool mergeFP)
+  {
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
     if( mergeFP )
       info_ex.centrosymmetric = true; 
-    TRefPList refs(Refs, DirectAccessor());
+    TRefPList refs(Refs);
     return _DryMerge<RefListMerger>(info_ex, refs, omits);
   }
   template <class RefListMerger, class RefList> 
-  static MergeStats DryMerge(const SymmSpace::InfoEx& si, RefList& Refs, const vec3i_list& omits)  {
-    TRefPList refs(Refs, DirectAccessor());
+  static MergeStats DryMerge(const SymmSpace::InfoEx& si, RefList& Refs,
+    const vec3i_list& omits)
+  {
+    TRefPList refs(Refs);
     return _DryMerge<RefListMerger>(si, refs, omits);
   }
-  /* The function merges provided reflections in P1 and strores the result in the output */
+  /* The function merges provided reflections in P1 and strores the result in
+  the output
+  */
   template <class RefListMerger, class RefList> 
-  static MergeStats MergeInP1(const RefList& Refs, TRefList& output, const vec3i_list& omits)  {
-    TPtrList<const TReflection> refs(Refs, DirectAccessor());
+  static MergeStats MergeInP1(const RefList& Refs, TRefList& output,
+    const vec3i_list& omits)
+  {
+    TPtrList<const TReflection> refs(Refs);
     return _DoMergeInP1<RefListMerger>(refs, omits, output);
   }
   template <class RefListMerger, class RefList> 
-  static MergeStats DryMergeInP1(const RefList& Refs, const vec3i_list& omits)  {
-    TPtrList<const TReflection> refs(Refs, DirectAccessor());
+  static MergeStats DryMergeInP1(const RefList& Refs,
+    const vec3i_list& omits)
+  {
+    TPtrList<const TReflection> refs(Refs);
     return _DryMergeInP1<RefListMerger>(refs, omits);
   }
   /* The function filters out systematic absences */
   template <class MatList, class RefList> 
-  static MergeStats SGFilter(const MatList& ml, RefList& Refs, TRefList& output, const vec3i_list& omits)  {
-    TRefPList refs(Refs, DirectAccessor());
-    return _DoSGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits, output);
+  static MergeStats SGFilter(const MatList& ml, RefList& Refs,
+    TRefList& output, const vec3i_list& omits)
+  {
+    TRefPList refs(Refs);
+    return _DoSGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
+      refs, omits, output);
   }
   template <class MatList, class RefList> 
-  static MergeStats DrySGFilter(const MatList& ml, RefList& Refs, const vec3i_list& omits)  {
-    TRefPList refs(Refs, DirectAccessor());
-    return _DoDrySGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0), refs, omits);
+  static MergeStats DrySGFilter(const MatList& ml, RefList& Refs,
+    const vec3i_list& omits)
+  {
+    TRefPList refs(Refs);
+    return _DoDrySGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
+      refs, omits);
   }
 
   struct MergerOut  {
@@ -465,11 +513,12 @@ public:
       sigInt(mo.sigInt),
       sumI(mo.sumI),
       sumDiff(mo.sumDiff)  {  }
-    MergerOut(TReflection* _ref, double _sigInt = 0, double _sumI = 0, double _sumDiff = 0 ) :
-      ref(_ref),
-      sigInt(_sigInt),
-      sumI(_sumI),  
-      sumDiff(_sumDiff)  {  }
+    MergerOut(TReflection* _ref, double _sigInt=0, double _sumI=0,
+      double _sumDiff=0)
+      : ref(_ref),
+        sigInt(_sigInt),
+        sumI(_sumI),  
+        sumDiff(_sumDiff) {}
     MergerOut& operator = (const MergerOut& mo)  {
       ref = mo.ref;
       sigInt = mo.sigInt;
@@ -486,12 +535,13 @@ public:
       sumDiff(mo.sumDiff),
       rI(mo.rI),
       rSig(mo.rSig)  {  }
-    DryMergerOut(double _rI, double _rSig, double _sigInt = 0, double _sumI = 0, double _sumDiff = 0 ) :
-      sigInt(_sigInt),
-      sumI(_sumI),
-      sumDiff(_sumDiff),
-      rI(_rI),
-      rSig(_rSig) {}
+    DryMergerOut(double _rI, double _rSig, double _sigInt=0, double _sumI=0,
+      double _sumDiff=0)
+      : sigInt(_sigInt),
+        sumI(_sumI),
+        sumDiff(_sumDiff),
+        rI(_rI),
+        rSig(_rSig) {}
     DryMergerOut& operator = (const DryMergerOut& mo)  {
       sigInt = mo.sigInt;
       sumI = mo.sumI;
@@ -501,7 +551,8 @@ public:
       return *this;
     }
   };
-/* merges using statistical weights for the intensities Imean = sum( I/Sig^2 )/sum( 1./Sig^2 )
+/* merges using statistical weights for the intensities
+Imean = sum( I/Sig^2 )/sum( 1./Sig^2 )
    http://www.crystal.chem.uu.nl/distr/mergehklf5/mergehklf5.html
    we cannot use a single pass algorithm like:
       double sum_wght = 0, sum_wght_i_sq = 0, sum_wght_i = 0, sum_i = 0;
@@ -514,15 +565,20 @@ public:
         sum_i += rl[l]->GetI();
       }
       const double mean = sum_wght_i/sum_wght;
-      const double sig_sq = (sum_wght_i_sq - sum_wght_i*sum_wght_i/sum_wght)/( (rl.Count()-1)*sum_wght );
-      const double sum_diff = (sum_i*sum_wght - rl.Count()*sum_wght_i)/sum_wght;
-      return MergerOut( new TReflection( rl[0]->GetH(), rl[0]->GetK(), rl[0]->GetL(), mean, 1./sqrt(sum_wght)), sqrt(sig_sq), sum_i, sum_diff);
+      const double sig_sq = (sum_wght_i_sq - sum_wght_i*sum_wght_i/sum_wght)/
+        ( (rl.Count()-1)*sum_wght );
+      const double sum_diff = (sum_i*sum_wght - rl.Count()*sum_wght_i)/
+        sum_wght;
+      return MergerOut( new TReflection( rl[0]->GetH(), rl[0]->GetK(),
+        rl[0]->GetL(), mean, 1./sqrt(sum_wght)), sqrt(sig_sq), sum_i, sum_diff);
   since we need to return the sum( |Ii-Imean| )...
 */
   class StandardMerger  {
   public:
     // returns a newly created reflection do be deleted with delete
-    template <class RefPList> static MergerOut Merge(const RefPList& rl, size_t from, size_t to)  {
+    template <class RefPList> static MergerOut Merge(const RefPList& rl,
+      size_t from, size_t to)
+    {
       const size_t cnt = to-from;
       if( cnt == 1 )  return MergerOut(new TReflection(*rl[from]) );
       double sum_wght = 0, sum_wght_i = 0, sum_i = 0;
@@ -542,16 +598,19 @@ public:
         sig_top += w*diff*diff; 
       }
       return MergerOut( 
-        new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(), mean, 1./sqrt(sum_wght)), 
+        new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(),
+        mean, 1./sqrt(sum_wght)), 
         sqrt(sig_top/(sum_wght*(cnt-1))), 
         sum_i, 
         sum_diff
         );
     }
     // returns just statistics
-    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, size_t from, size_t to)  {
+    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl,
+      size_t from, size_t to)
+    {
       const size_t cnt = to-from;
-      if( cnt == 1 )  return DryMergerOut(rl[from]->GetI(), rl[from]->GetS() );
+      if( cnt == 1 )  return DryMergerOut(rl[from]->GetI(), rl[from]->GetS());
       double sum_wght = 0, sum_wght_i = 0, sum_i = 0;
       for( size_t i=from; i < to; i++ )  {
         const double w = 1./(rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001);
@@ -580,7 +639,9 @@ public:
   class UnitMerger  {
   public:
     // returns a newly created reflection do be deleted with delete
-    template <class RefPList> static MergerOut Merge(const RefPList& rl, size_t from, size_t to)  {
+    template <class RefPList> static MergerOut Merge(const RefPList& rl,
+      size_t from, size_t to)
+    {
       const size_t cnt = to-from;
       if( cnt == 1 )  return MergerOut(new TReflection(*rl[from]) );
       double sum_sig_sq = 0, sum_i = 0;
@@ -596,16 +657,19 @@ public:
         sum_diff_sq += diff*diff;
       }
       return MergerOut( 
-        new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(), mean, sqrt(sum_sig_sq/cnt)), 
+        new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(),
+        mean, sqrt(sum_sig_sq/cnt)), 
         sqrt(sum_diff_sq/(cnt*(cnt-1))), 
         sum_i, 
         sum_diff
         );
     }
     // returns just statistic
-    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, size_t from, size_t to)  {
+    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl,
+      size_t from, size_t to)
+    {
       const size_t cnt = to-from;
-      if( cnt == 1 )  return DryMergerOut(rl[from]->GetI(), rl[from]->GetS() );
+      if( cnt == 1 )  return DryMergerOut(rl[from]->GetI(), rl[from]->GetS());
       double sum_sig_sq = 0, sum_i = 0;
       for( size_t i=from; i < to; i++ )  {
         sum_i += rl[i]->GetI();
@@ -633,14 +697,17 @@ public:
   class ShelxMerger  {
   public:
     // returns a newly created reflection do be deleted with delete
-    template <class RefPList> static MergerOut Merge(const RefPList& rl, size_t from, size_t to)  {
+    template <class RefPList> static MergerOut Merge(const RefPList& rl,
+      size_t from, size_t to)
+    {
       const size_t cnt = to-from;
       if( cnt == 1 )  return MergerOut(new TReflection(*rl[from]) );
       double sum_wght = 0, sum_wght_i = 0, sum_rec_sig_sq = 0;
       for( size_t i=from; i < to; i++ )  {
         const double s = rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001;
         const double rec_sig_sq = 1./(s*s);
-        const double w = (rl[i]->GetI() > 3.0*s) ? rl[i]->GetI()*rec_sig_sq : 3./s;
+        const double w = (rl[i]->GetI() > 3.0*s) ? rl[i]->GetI()*rec_sig_sq
+          : 3./s;
         sum_wght += w;
         sum_rec_sig_sq += rec_sig_sq;
         sum_wght_i += w*rl[i]->GetI();
@@ -653,21 +720,25 @@ public:
         sum_i += rl[i]->GetI();
       }
       return MergerOut( 
-        new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(), mean, 1./sqrt(sum_rec_sig_sq)), 
+        new TReflection( rl[from]->GetH(), rl[from]->GetK(), rl[from]->GetL(),
+        mean, 1./sqrt(sum_rec_sig_sq)), 
         sum_diff/(cnt*sqrt((double)cnt-1.0)), 
         sum_i, 
         sum_diff
         );
     }
     // returns a just statistic
-    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl, size_t from, size_t to)  {
+    template <class RefPList> static DryMergerOut DryMerge(const RefPList& rl,
+      size_t from, size_t to)
+    {
       const size_t cnt = to - from;
       if( cnt == 1 )  return DryMergerOut(rl[from]->GetI(), rl[from]->GetS());
       double sum_wght = 0, sum_wght_i = 0, sum_rec_sig_sq = 0;
       for( size_t i=from; i < to; i++ )  {
         const double s = rl[i]->GetS() != 0 ? rl[i]->GetS() : 0.001;
         const double rec_sig_sq = 1./(s*s);
-        const double w = (rl[i]->GetI() > 3.0*s) ? rl[i]->GetI()*rec_sig_sq : 3./s;
+        const double w = (rl[i]->GetI() > 3.0*s) ? rl[i]->GetI()*rec_sig_sq
+          : 3./s;
         sum_wght += w;
         sum_rec_sig_sq += rec_sig_sq;
         sum_wght_i += w*rl[i]->GetI();

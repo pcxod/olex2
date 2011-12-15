@@ -283,7 +283,7 @@ void ResultCollector(
 void BuildGraph(TEGraphNode<size_t,TSAtom*>& graphNode)  {
   typedef TEGraphNode<size_t,TSAtom*> node_t;
   TNetwork& net = graphNode.GetObject()->GetNetwork();
-  net.GetNodes().ForEach(ACollectionItem::TagSetter<>(-1));
+  net.GetNodes().ForEach(ACollectionItem::TagSetter(-1));
   TQueue<TSAtom*> aqueue;
   aqueue.Push(graphNode.GetObject());
   aqueue.Push(NULL);
@@ -570,8 +570,8 @@ bool TNetwork::DoMatch(TNetwork& net,
       delete thatGraph;
   }
   if( minGraph == NULL )  return false;
-  GetNodes().ForEach(ACollectionItem::TagSetter<>(1));
-  net.GetNodes().ForEach(ACollectionItem::TagSetter<>(1));
+  GetNodes().ForEach(ACollectionItem::TagSetter(1));
+  net.GetNodes().ForEach(ACollectionItem::TagSetter(1));
   ResultCollector(thisGraph.GetRoot(), minGraph->GetRoot(), res);
   delete minGraph;
   return true;
@@ -716,14 +716,14 @@ void TNetwork::FindRings(const ElementPList& ringContent,
   for( size_t i=0; i < all.Count(); i++ )  {
     if( all[i]->GetType() != *ringContent[0] )  continue;
     ring.Clear();
-    Nodes.ForEach(ACollectionItem::TagSetter<>(0));
+    Nodes.ForEach(ACollectionItem::TagSetter(0));
     ring.Add(all[i]);
     if( TryRing(*all[i], ring, ringContent) )  {
       res.AddCopy(ring);
       rings.AddCopy(ring);
     }
   }
-  Nodes.ForEach(ACollectionItem::IndexTagSetter<>());
+  Nodes.ForEach(ACollectionItem::IndexTagSetter());
   UnifyRings(rings);
   for( size_t i=0; i < rings.Count(); i++ )  {
     if( rings.IsNull(i) )
@@ -776,7 +776,7 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, TTypeList<TSAtomPList>& res)  {
       rings.AddCopy(ring);
     }
   }
-  Nodes.ForEach(ACollectionItem::IndexTagSetter<>());
+  Nodes.ForEach(ACollectionItem::IndexTagSetter());
   UnifyRings(rings);
   for( size_t i=0; i < rings.Count(); i++ )  {
     if( rings.IsNull(i) )

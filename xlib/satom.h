@@ -28,11 +28,10 @@ class TSAtom : public TBasicNode<class TNetwork, TSAtom, class TSBond> {
 private:
   smatd_plist Matrices;
   // a list of pointers to matrices used for generation of atom
-  TCAtom* FCAtom;       // basic crystallographic information
-//  int FTag; // override TCollectioItem and TGDrawObject tags
-  class TEllipsoid* FEllipsoid;   // a pointer to TEllipsoid object
-  vec3d  FCCenter;     // atom center in cell coordinates
-  vec3d  FCenter;          // atom center in cartesian coordinates
+  TCAtom* FCAtom;  // basic crystallographic information
+  class TEllipsoid* FEllipsoid;  // a pointer to TEllipsoid object
+  vec3d  FCCenter;  // atom center in fractional coordinates
+  vec3d  FCenter;  // atom center in cartesian coordinates
 protected:
   mutable short Flags;
   int _SortNodesByDistanceAsc(const TSAtom &a1, const TSAtom &a2) const {
@@ -45,6 +44,7 @@ protected:
   }
   static int _SortBondsByLengthAsc(const TSBond &b1, const TSBond &b2);
   static int _SortBondsByLengthDsc(const TSBond &b1, const TSBond &b2);
+  typedef TDirectAccessor<TSAtom> DirectAccessor;
 public:
   TSAtom(TNetwork* N);
   virtual ~TSAtom()  {}
@@ -60,20 +60,7 @@ public:
     return !(IsDeleted() || IsMasked() || FCAtom->IsDetached());
   }
   bool IsGrown() const {  return NodeCount() == CAtom().AttachedSiteCount();  }
-  template <class Accessor=DirectAccessor> struct CAtomAccessor  {
-    template <class Item> static inline TCAtom& Access(Item& a)  {
-      return Accessor::Access(a).CAtom();
-    }
-    template <class Item> static inline TCAtom& Access(Item* a)  {
-      return Accessor::Access(*a).CAtom();
-    }
-    template <class Item> inline TCAtom& operator ()(Item& a) const {
-      return Accessor::Access(a).CAtom();
-    }
-    template <class Item> inline TCAtom& operator ()(Item* a) const {
-      return Accessor::Access(*a).CAtom();
-    }
-  };
+
   TCAtom& CAtom() const {  return *FCAtom;  }
   void CAtom(TCAtom& CA);
 
@@ -235,28 +222,69 @@ public:
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
   
-  template <class Accessor=DirectAccessor> struct FlagsAnalyser  {
-    const short ref_flags;
-    FlagsAnalyser(short _ref_flags) : ref_flags(_ref_flags)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {
-      return (Accessor::Access(o).Flags&ref_flags) != 0;
-    }
-  };
-  template <class Accessor=DirectAccessor> struct TypeAnalyser  {
-    const short ref_type;
-    TypeAnalyser(const cm_Element _ref_type) : ref_type(_ref_type.z)  {}
-    TypeAnalyser(short _ref_type) : ref_type(_ref_type)  {}
-    template <class Item> inline bool OnItem(const Item& o) const {
-      return Accessor::Access(o).GetType() == ref_type;
-    }
-  };
-
   // sorts atoms according to the distcance from {0,0,0}
   struct SortByDistance {
     static int Compare(const TSAtom &A, const TSAtom &A1)  {
       return olx_cmp(A.crd().QLength(), A1.crd().QLength());
     }
   };
+
+  template <class Accessor> struct FlagsAnalyser_ {
+    const Accessor &accessor;
+    const short ref_flags;
+    FlagsAnalyser_(const Accessor &accessor_, short _ref_flags)
+      : accessor(accessor), ref_flags(_ref_flags)  {}
+    template <class Item>
+    bool OnItem(const Item& o, size_t) const {
+      return (Accessor::Access(o).Flags&ref_flags) != 0;
+    }
+  };
+  template <class acc_t> static FlagsAnalyser_<acc_t>
+  FlagsAnalyser(const acc_t &acc, short flag) {
+    return FlagsAnalyser_<acc_t>(acc, eflags);
+  }
+  static FlagsAnalyser_<DirectAccessor>
+  FlagsAnalyser(short flags) {
+    return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
+  }
+  
+  template <class Accessor> struct FlagSetter_ {
+    const Accessor &accessor;
+    const short ref_flags;
+    bool set;
+    FlagSetter_(const Accessor &accessor_, short ref_flags_, bool set_)
+      : accessor(accessor_), ref_flags(ref_flags_), set(set_)  {}
+    template <class Item>
+    void OnItem(Item& o, size_t) const {
+      return olx_set_bit(set, accessor(o).Flags, ref_flags);
+    }
+  };
+  template <class acc_t> static FlagSetter_<acc_t>
+  FlagSetter(const acc_t &acc, short ref_flags, bool set) {
+    return FlagSetter_<acc_t>(acc, ref_flags, set);
+  }
+  static FlagSetter_<DirectAccessor>
+  FlagSetter(short ref_flags, bool set) {
+    return FlagSetter_<DirectAccessor>(DirectAccessor(), ref_flags, set);
+  }
+
+  template <class Accessor> struct TypeAnalyser_ {
+    const Accessor &accessor;
+    const short ref_type;
+    TypeAnalyser_(const Accessor &accessor_, short _ref_type)
+      : accessor(accessor_), ref_type(_ref_type)  {}
+    template <class Item> bool OnItem(const Item& o, size_t) const {
+      return accessor(o).GetType() == ref_type;
+    }
+  };
+  template <class acc_t> static TypeAnalyser_<acc_t>
+  TypeAnalyser(const acc_t &acc, const cm_Element &e) {
+    return TypeAnalyser_<acc_t>(acc, e.z);
+  }
+  static TypeAnalyser_<DirectAccessor>
+  TypeAnalyser(short z) {
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), z);
+  }
 
 };
 

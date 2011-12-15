@@ -967,7 +967,7 @@ void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TNetPList L(Atoms, FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
   FXApp->FragmentsVisible(FXApp->InvertFragmentsList(
-    ACollectionItem::Unique<>::Do(L)), false);
+    ACollectionItem::Unique(L)), false);
   FXApp->CenterView(true);
   TimePerFrame = FXApp->Draw();
 }
@@ -2714,9 +2714,9 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   RefinementModel& rm = FXApp->XFile().GetRM();
   TCAtomPList atoms(FindXAtoms(Cmds, false, !Options.Contains("cs")),
-    TXAtom::CAtomAccessor<>());
-  ACollectionItem::Unique<>::Do(atoms);
-  atoms.ForEach(ACollectionItem::TagSetter<>(0));
+    FunctionAccessor::MakeConst(&TXAtom::CAtom));
+  ACollectionItem::Unique(atoms);
+  atoms.ForEach(ACollectionItem::TagSetter(0));
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i]->DependentHfixGroupCount() == 1 )  {
       TAfixGroup &ag = atoms[i]->GetDependentHfixGroup(0);
@@ -2724,7 +2724,7 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         ag[j].SetTag(1);
     }
   }
-  atoms.Pack(olx_alg::olx_not(ACollectionItem::TagAnalyser<>(0)));
+  atoms.Pack(olx_alg::olx_not(ACollectionItem::TagAnalyser(0)));
   if( fvar == -1101 && ((atoms.Count()%2) != 0 || atoms.IsEmpty()) )  {
     rm.Vars.Validate();
     TBasicApp::NewLogEntry() << "Free variables: " << rm.Vars.GetFVARStr();
@@ -4458,7 +4458,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
   if( Cmds.Count() >= 1 && Cmds[0].Equalsi("frag") )  {
     TNetPList nets(FindXAtoms(Cmds.SubListFrom(1), false, false),
       FunctionAccessor::MakeConst(&TXAtom::GetNetwork));
-    FXApp->SelectFragments(ACollectionItem::Unique<>::Do(nets), !Options.Contains('u'));
+    FXApp->SelectFragments(ACollectionItem::Unique(nets), !Options.Contains('u'));
   }
   else if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
     FXApp->GetRender().ClearSelection();
@@ -4467,7 +4467,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     TPtrList<TSimpleRestraint> b_res;
     RefinementModel& rm = FXApp->XFile().GetRM();
     rm.Describe(out, &a_res, &b_res);
-    FXApp->XFile().GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter<>(0));
+    FXApp->XFile().GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter(0));
     for( size_t i=0; i < a_res.Count(); i++ )
       a_res[i]->SetTag(1);
     TGXApp::AtomIterator ai = FXApp->GetAtoms();
@@ -6061,7 +6061,7 @@ TNetwork::AlignInfo MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,
   TDoubleList wghts_out;
   TNetwork::PrepareESDCalc(atoms, TryInversion, atoms_out, crds_out ,wghts_out, weight_calculator);
   TEValue<double> rv = vcovc.CalcAlignmentRMSD(
-    TSAtomCPList(atoms_out, DirectAccessor()), crds_out, wghts_out);
+    TSAtomCPList(atoms_out), crds_out, wghts_out);
   TBasicApp::NewLogEntry() << (olxstr("RMSD is ") << rv.ToString() << " A");
   return TNetwork::GetAlignmentRMSD(atoms, TryInversion, weight_calculator);
 }
@@ -8990,9 +8990,9 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( atoms.Count() != 7 )
         return;
       TBasicApp::NewLogEntry() << "Octahedral distortion is (using best line, for the selection): " << 
-        vcovc.CalcOHDistortionBL(TSAtomCPList(atoms, DirectAccessor())).ToString();
+        vcovc.CalcOHDistortionBL(TSAtomCPList(atoms)).ToString();
       TBasicApp::NewLogEntry() << "Octahedral distortion is (using best plane, for the selection): " << 
-        vcovc.CalcOHDistortionBP(TSAtomCPList(atoms, DirectAccessor())).ToString();
+        vcovc.CalcOHDistortionBP(TSAtomCPList(atoms)).ToString();
       TSAtom* central_atom = atoms[0];
       atoms.Delete(0);
       olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
@@ -9027,7 +9027,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
               TBasicApp::GetLog() << sorted_atoms[l]->GetLabel() << ' ';
             sorted_atoms.Insert(0, central_atom);
             TEValue<double> rv = vcovc.CalcOHDistortionBP(
-              TSAtomCPList(sorted_atoms, DirectAccessor()));
+              TSAtomCPList(sorted_atoms));
             total_val_bp += rv.GetV()*3;
             total_esd_bp += olx_sqr(rv.GetE()); 
             TBasicApp::NewLogEntry() << rv.ToString();
@@ -9288,7 +9288,7 @@ void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroError &E)  {
 void macSAME_expand(const TArrayList<TSAtomPList>& groups)  {
   throw TNotImplementedException(__OlxSourceInfo);
   //TXApp& xapp = TXApp::GetInstance();
-  //xapp.XFile().GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter<>(-1));
+  //xapp.XFile().GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter(-1));
   //for( size_t i=0; i < groups[0].Count(); i++ )  {
   //  for( size_t 
   //}
@@ -9910,7 +9910,7 @@ void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError
       rings[i][j]->SetTag(1);
     }
     c /= rings[i].Count();
-    ACollectionItem::Unique<>::Do(ring_M[i]);
+    ACollectionItem::Unique(ring_M[i]);
     for( size_t j=0; j < ring_M[i].Count(); j++ )  {
       TXLine &l = FXApp->AddLine(ring_M[i][j]->GetLabel()+olxstr(i),
         ring_M[i][j]->crd(), c);
@@ -10121,9 +10121,8 @@ void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
       E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
       return;
     }
-    for( size_t i=0; i < atoms.Count(); i++ )
-      atoms[i]->SetTag(atoms[i]->CAtom().GetId());
-    ACollectionItem::Unique<>::Do(atoms);
+    ACollectionItem::Unique(atoms,
+      FunctionAccessor::MakeConst(&TXAtom::CAtom));
     // search optimisation
     SortedPtrList<TCAtom, TPointerComparator> s_catoms;
     for( size_t i=0; i < atoms.Count(); i++ )
@@ -10152,9 +10151,8 @@ void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
       E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
       return;
     }
-    for( size_t i=0; i < atoms.Count(); i++ )
-      atoms[i]->SetTag(atoms[i]->CAtom().GetId());
-    ACollectionItem::Unique<>::Do(atoms);
+    ACollectionItem::Unique(atoms,
+      FunctionAccessor::MakeConst(&TXAtom::CAtom));
     // search optimisation
     SortedPtrList<TCAtom, TPointerComparator> s_catoms;
     for( size_t i=0; i < atoms.Count(); i++ )
