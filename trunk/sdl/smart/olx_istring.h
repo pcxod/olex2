@@ -366,6 +366,7 @@ public:
   static size_t o_strlen(const wchar_t* wstr)  {
     return (wstr==NULL) ? 0 : wcslen(wstr);
   }
+  static size_t o_strlen(const T &str)  { return str.Length(); }
   static void o_strtup(TC* wht, size_t wht_len)  {
     for( size_t i=0; i < wht_len; i++ )
       wht[i] = o_toupper(wht[i]);

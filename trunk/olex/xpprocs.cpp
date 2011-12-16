@@ -6234,7 +6234,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i=0; i < atom_a_group; i++)
         satomp[i].SetA(atoms[i]);
       TNetwork &netA = atoms[0]->GetNetwork();
-      for (size_t gi=1; gi < group_cnt; gi++) {
+      for (int gi=1; gi < group_cnt; gi++) {
         for (size_t i=0; i < atom_a_group; i++)
           satomp[i].SetB(atoms[i+gi*atom_a_group]);
         TNetwork &netB = satomp[0].GetB()->GetNetwork();
