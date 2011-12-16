@@ -179,7 +179,8 @@ public:
     wxString str(wxT("Olex2 is initialising"));
     for( size_t i=0; i < generation; i++ )
       str += '.';
-    wxColor cl(0xb4);
+    wxColor cl(0x8b7566);
+    //wxColor cl(0xb4);
     dc.SetBrush(wxBrush(cl));//*wxWHITE_BRUSH);
     dc.SetPen(wxPen(cl));//*wxWHITE_PEN);
     int h = has_alpha ? imgHeight-txtHeight : imgHeight;

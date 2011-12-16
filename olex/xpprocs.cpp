@@ -1757,6 +1757,7 @@ void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  double r = Cmds[0].ToDouble();
   TXBondPList bonds;
   if( Cmds.Count() == 2 && Cmds[1].Equalsi("hbonds") )  {
     TGXApp::BondIterator bi = FXApp->GetBonds();
@@ -1765,7 +1766,7 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( xb.GetType() == sotHBond )
         bonds.Add(xb);
     }
-    FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
+    FXApp->BondRad(r, &bonds);
   }
   else  {
     bonds = FXApp->GetBonds(Cmds.Text(' ', 1), true);
@@ -1776,8 +1777,9 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( xb.GetType() != sotHBond )
           bonds.Add(xb);
       }
+      TXBond::DefR(r);
     }
-    FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
+    FXApp->BondRad(r, &bonds);
   }
 }
 //..............................................................................

@@ -48,6 +48,8 @@ TStrPObjList<olxstr,TGlPrimitive*> TXBond::FStaticObjects;
 TArrayList<TGlPrimitiveParams>  TXBond::FPrimitiveParams;
 TGraphicsStyle* TXBond::FBondParams=NULL;
 TXBond::TStylesClear *TXBond::OnStylesClear=NULL;
+double TXBond::FDefR = -1;
+int TXBond::FDefM = -1;
 //..............................................................................
 TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   TSBond(net),
@@ -112,7 +114,7 @@ void TXBond::Create(const olxstr& cName)  {
     GPC = &Parent.NewCollection(NewL);
   else if( GPC->PrimitiveCount() != 0 )  {
     GPC->AddObject(*this);
-    Params()[4] = GPC->GetStyle().GetNumParam("R", 1.0);
+    Params()[4] = GPC->GetStyle().GetNumParam('R', DefR());
     return;
   }
   TGraphicsStyle& GS = GPC->GetStyle();
@@ -125,7 +127,7 @@ void TXBond::Create(const olxstr& cName)  {
   if( PrimitiveMask == 0 )  
     return;  // nothing to create then...
 
-  Params()[4]= GS.GetNumParam("R", Params()[4]);
+  Params()[4]= GS.GetNumParam('R', DefR());
   const uint16_t legend_level = TXAtom::LegendLevel(GetPrimitives().GetName());
   for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
     if( (PrimitiveMask & (1<<i)) != 0 )    {
@@ -138,7 +140,8 @@ void TXBond::Create(const olxstr& cName)  {
       GlP.StartList();
       GlP.CallList(SGlP);
       GlP.EndList();
-      TGlMaterial* style_mat = legend_level == 3 ? GS.FindMaterial(FStaticObjects[i]) : NULL;
+      TGlMaterial* style_mat = 
+        legend_level == 3 ? GS.FindMaterial(FStaticObjects[i]) : NULL;
       if( IsValid() )  {
         if( style_mat != NULL )
           GlP.SetProperties(*style_mat);
@@ -629,12 +632,24 @@ void TXBond::ValidateBondParams()  {
 //..............................................................................
 void TXBond::DefMask(int V)  {
   ValidateBondParams();
-  FBondParams->SetParam("DefM", V, true);
+  FBondParams->SetParam("DefM", (FDefM=V), true);
 }
 //..............................................................................
 int TXBond::DefMask()  {
+  if (FDefM != -1) return FDefM;
   ValidateBondParams();
-  return FBondParams->GetNumParam("DefM", 7, true);
+  return (FDefM = FBondParams->GetNumParam("DefM", 7, true));
+}
+//..............................................................................
+void TXBond::DefR(double V)  {
+  ValidateBondParams();
+  FBondParams->SetParam("DefR", (FDefR=V), true);
+}
+//..............................................................................
+double TXBond::DefR()  {
+  if (FDefR > 0) return FDefR;
+  ValidateBondParams();
+  return (FDefR = FBondParams->GetNumParam("DefR", 1.0, true));
 }
 //..............................................................................
 bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
