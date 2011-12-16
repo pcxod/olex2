@@ -145,24 +145,24 @@ public:
   found numbers
   */
   template <class list>
-  static size_t Parse(list& Cmds, const olxstr& format, ...)
-  {
+  static size_t Parse(list& Cmds, const char* format, ...) {
     size_t cnt=0;
     va_list argptr;
     va_start(argptr, format);
     try  {
-      for( size_t i=0, j=0; i < format.Length(); i++, j++ )  {
+      const size_t len = olxstr::o_strlen(format);
+      for( size_t i=0, j=0; i < len; i++, j++ )  {
         if (j>=Cmds.Count()) break;
-        if( format.CharAt(i) == 'v' )  {
-          if( format.Length() < (i+1) || Cmds.Count() < (j+3) ) {
+        if( format[i] == 'v' )  {
+          if( len < (i+1) || Cmds.Count() < (j+3) ) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "invalid format");
           }
-          if( format.CharAt(++i) == 'i' )  {
+          if( format[++i] == 'i' )  {
             vec3i* iv = va_arg(argptr, vec3i*);
             for( int k=0; k < 3; k++ ) (*iv)[k] = Cmds[j+k].ToInt();
           }
-          else if( format.CharAt(i) == 'd' )  {
+          else if( format[i] == 'd' )  {
             vec3d* dv = va_arg(argptr, vec3d*);
             for( int k=0; k < 3; k++ ) (*dv)[k] = Cmds[j+k].ToDouble();
           }
@@ -173,18 +173,18 @@ public:
           Cmds.DeleteRange(j--, 3);
           cnt++;
         }
-        else if( format.CharAt(i) == 'm' )  {
-          if( format.Length() < (i+1) || Cmds.Count() < (j+9) ) {
+        else if( format[i] == 'm' )  {
+          if( len < (i+1) || Cmds.Count() < (j+9) ) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "invalid format");
           }
-          if( format.CharAt(++i) == 'i' )  {
+          if( format[++i] == 'i' )  {
             mat3i* im = va_arg(argptr, mat3i*);
             for( int k=0; k < 3; k++ )
               for( int l=0; l < 3; l++ )
                 (*im)[k][l] = Cmds[j+k*3+l].ToInt();
           }
-          else if( format.CharAt(i) == 'd' )  {
+          else if( format[i] == 'd' )  {
             mat3d* dm = va_arg(argptr, mat3d*);
             for( int k=0; k < 3; k++ )
               for( int l=0; l < 3; l++ )
@@ -197,13 +197,13 @@ public:
           Cmds.DeleteRange(j--, 9);
           cnt++;
         }
-        else if( format.CharAt(i) == 'i' )  {
+        else if( format[i] == 'i' )  {
           int* iv = va_arg(argptr, int*);
           *iv = Cmds[j].ToInt();
           Cmds.Delete(j--);
           cnt++;
         }
-        else if( format.CharAt(i) == 'd' )  {
+        else if( format[i] == 'd' )  {
           double *dv = va_arg(argptr, double*);
           *dv = Cmds[j].ToDouble();
           Cmds.Delete(j--);
@@ -222,23 +222,24 @@ public:
   found numbers
   */
   template <class list>
-  static size_t ParseOnly(const list& Cmds, const olxstr& format, ...) {
+  static size_t ParseOnly(const list& Cmds, const char *format, ...) {
     size_t cnt=0;
     va_list argptr;
     va_start(argptr, format);
     try  {
-      for( size_t i=0, j=0; i < format.Length(); i++, j++ )  {
+      const size_t len = olxstr::o_strlen(format);
+      for( size_t i=0, j=0; i < len; i++, j++ )  {
         if (j>=Cmds.Count()) break;
-        if( format.CharAt(i) == 'v' )  {
-          if( format.Length() < (i+1) || Cmds.Count() < (j+3) ) {
+        if( format[i] == 'v' )  {
+          if( len < (i+1) || Cmds.Count() < (j+3) ) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "invalid format");
           }
-          if( format.CharAt(++i) == 'i' )  {
+          if( format[++i] == 'i' )  {
             vec3i* iv = va_arg(argptr, vec3i*);
             for( int k=0; k < 3; k++ ) (*iv)[k] = Cmds[j+k].ToInt();
           }
-          else if( format.CharAt(i) == 'd' )  {
+          else if( format[i] == 'd' )  {
             vec3d* dv = va_arg(argptr, vec3d*);
             for( int k=0; k < 3; k++ ) (*dv)[k] = Cmds[j+k].ToDouble();
           }
@@ -249,18 +250,18 @@ public:
           j+=2;
           cnt++;
         }
-        else if( format.CharAt(i) == 'm' )  {
-          if( format.Length() < (i+1) || Cmds.Count() < (j+9) ) {
+        else if( format[i] == 'm' )  {
+          if( len < (i+1) || Cmds.Count() < (j+9) ) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "invalid format");
           }
-          if( format.CharAt(++i) == 'i' )  {
+          if( format[++i] == 'i' )  {
             mat3i* im = va_arg(argptr, mat3i*);
             for( int k=0; k < 3; k++ )
               for( int l=0; l < 3; l++ )
                 (*im)[k][l] = Cmds[j+k*3+l].ToInt();
           }
-          else if( format.CharAt(i) == 'd' )  {
+          else if( format[i] == 'd' )  {
             mat3d* dm = va_arg(argptr, mat3d*);
             for( int k=0; k < 3; k++ )
               for( int l=0; l < 3; l++ )
@@ -273,12 +274,12 @@ public:
           j+=8;
           cnt++;
         }
-        else if( format.CharAt(i) == 'i' )  {
+        else if( format[i] == 'i' )  {
           int* iv = va_arg(argptr, int*);
           *iv = Cmds[j].ToInt();
           cnt++;
         }
-        else if( format.CharAt(i) == 'd' )  {
+        else if( format[i] == 'd' )  {
           double *dv = va_arg(argptr, double*);
           *dv = Cmds[j].ToDouble();
           cnt++;
