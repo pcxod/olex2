@@ -24,6 +24,8 @@ class TXBond: public TSBond, public AGDrawObject  {
 private:
   TXGlLabel* Label;
   short FDrawStyle;
+  static double FDefR;
+  static int FDefM;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
@@ -107,8 +109,10 @@ public:
 
   uint32_t GetPrimitiveMask() const;
   static void DefMask(int V);
-  static int  DefMask();
-  inline short DrawStyle() const {  return FDrawStyle; }
+  static int DefMask();
+  static void DefR(double V);
+  static double DefR();
+  short DrawStyle() const {  return FDrawStyle; }
 
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);
   void OnPrimitivesCleared();

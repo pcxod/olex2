@@ -84,8 +84,8 @@ protected:
   virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
   virtual bool DoRotate(const vec3d&, double) {  return false;  }
   virtual bool DoZoom(double, bool)  {  return false;  }
-  static float FTelpProb, FQPeakScale, FQPeakSizeScale;
-  static short FDefRad, FDefDS;
+  static float FTelpProb, FQPeakScale, FQPeakSizeScale, FDefZoom;
+  static short FDefRad, FDefDS, FDefMask;
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;

@@ -57,8 +57,10 @@ TTypeList<TGlPrimitiveParams> TXAtom::FPrimitiveParams;
 float TXAtom::FTelpProb = 0;
 float TXAtom::FQPeakScale = 0;
 float TXAtom::FQPeakSizeScale = 0;
+float TXAtom::FDefZoom = 0;
 short TXAtom::FDefRad = 0;
 short TXAtom::FDefDS = 0;
+short TXAtom::FDefMask = -1;
 int TXAtom::OrtepSpheres = -1;
 double TXAtom::MinQAlpha = 0;
 TGraphicsStyle* TXAtom::FAtomParams=NULL;
@@ -899,12 +901,12 @@ void TXAtom::DefDS(short V)  {
 //..............................................................................
 void TXAtom::DefMask(int V)  {
   ValidateAtomParams();
-  FAtomParams->SetParam("DefMask", V, true);
+  FAtomParams->SetParam("DefMask", (FDefMask=V), true);
 }
 //..............................................................................
 void TXAtom::DefZoom(float V)  {
   ValidateAtomParams();
-  FAtomParams->SetParam("DefZ", V, true);
+  FAtomParams->SetParam("DefZ", (FDefZoom=V), true);
 }
 //..............................................................................
 void TXAtom::TelpProb(float V)  {
@@ -919,40 +921,38 @@ short TXAtom::DefRad()  {
   if( FDefRad != 0 )  
     return FDefRad;
   ValidateAtomParams();
-  FDefRad = FAtomParams->GetNumParam("DefR", darPers, true);
-  return FDefRad;
+  return (FDefRad = FAtomParams->GetNumParam("DefR", darPers, true));
 }
 //..............................................................................
 short TXAtom::DefDS()  {
   if( FDefDS != 0 )  
     return FDefDS;
   ValidateAtomParams();
-  FDefDS = FAtomParams->GetNumParam("DefDS", adsSphere, true);
-  return FDefDS;
+  return (FDefDS = FAtomParams->GetNumParam("DefDS", adsSphere, true));
 }
 //..............................................................................
 int TXAtom::DefMask()  {
+  if (FDefMask != -1) return FDefMask;
   ValidateAtomParams();
-  return FAtomParams->GetNumParam("DefMask", 5, true);
+  return (FDefMask = FAtomParams->GetNumParam("DefMask", 5, true));
 }
 //..............................................................................
 float TXAtom::TelpProb()  {
-  if( FTelpProb != 0 )  
-    return FTelpProb;
+  if( FTelpProb != 0 ) return FTelpProb;
   ValidateAtomParams();
-  FTelpProb = FAtomParams->GetNumParam("TelpP", 1.0f, true);
-  return FTelpProb;
+  return (FTelpProb = FAtomParams->GetNumParam("TelpP", 1.0f, true));
 }
 //..............................................................................
 float TXAtom::DefZoom()  {
+  if (FDefZoom > 0) return FDefZoom;
   ValidateAtomParams();
-  return FAtomParams->GetNumParam("DefZ", 1.0f, true);
+  return (FDefZoom = FAtomParams->GetNumParam("DefZ", 1.0f, true));
 }
 //..............................................................................
 float TXAtom::GetQPeakScale()  {
   if( FQPeakScale != 0 )  return FQPeakScale;
   ValidateAtomParams();
-  return FAtomParams->GetNumParam("QPeakScale", 3.0f, true);
+  return (FQPeakScale = FAtomParams->GetNumParam("QPeakScale", 3.0f, true));
 }
 //..............................................................................
 void TXAtom::SetQPeakScale(float V)  {
@@ -965,14 +965,14 @@ void TXAtom::SetQPeakScale(float V)  {
 float TXAtom::GetQPeakSizeScale()  {
   if( FQPeakSizeScale != 0 )  return FQPeakSizeScale;
   ValidateAtomParams();
-  return FAtomParams->GetNumParam("QPeakSizeScale", 1.0f, true);
+  return (FQPeakSizeScale =
+    FAtomParams->GetNumParam("QPeakSizeScale", 1.0f, true));
 }
 //..............................................................................
 void TXAtom::SetQPeakSizeScale(float V)  {
   ValidateAtomParams();
   if( V < 0 )  V = 1;
-  FAtomParams->SetParam("QPeakSizeScale", V, true);
-  FQPeakSizeScale = V;
+  FAtomParams->SetParam("QPeakSizeScale", (FQPeakSizeScale=V), true);
 }
 //..............................................................................
 bool TXAtom::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
