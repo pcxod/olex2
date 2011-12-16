@@ -140,7 +140,7 @@ public:
     imgHeight = 0;
     imgWidth = 200;
     has_alpha = false;
-    olxstr splash_img = TBasicApp::GetBaseDir() + "splash.png";
+    olxstr splash_img = TBasicApp::GetBaseDir() + "splash.jpg";
     if( TEFile::Exists(splash_img) )  {
       wxImage img;
       img.LoadFile(splash_img.u_str());
