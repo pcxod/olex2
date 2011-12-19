@@ -127,7 +127,8 @@ public:
   void CheckInitialised();
 
   static inline PythonExt* GetInstance()  {
-    if( Instance == NULL )  throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised object");
+    if( Instance == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised object");
     return Instance;
   }
   PyObject* GetProfileInfo();

@@ -133,22 +133,23 @@ bool TGlXApp::OnInit()  {
   wxSize wSize(ScreenW, ScreenH);
   TSocketFS::SetUseLocalFS(true);
   MainForm = new TMainForm(this);
+  TEGC::Initialise();  // prepare Olex2 API...
 #ifdef __WIN32__
   MainForm->SetIcon(wxIcon(wxT("MAINICON")));
 #else
   MainForm->SetIcon(wxIcon(mainicon_xpm));
 #endif
-  // KUBUNTU opengl does not want any parameters :)
-  TEGC::Initialise();  // prepare Olex2 API...
   // register wxWidgets to handle ZIP files
   TwxZipFileSystem::RegisterFactory();
+  // KUBUNTU opengl does not want any parameters :)
   olxstr str_glAttr = olx_getenv("OLEX2_GL_DEFAULT"),
          str_glStereo = olx_getenv("OLEX2_GL_STEREO");
   int *gl_attr = TGlCanvas::GetGlAttributes(
     !str_glAttr.IsEmpty() && str_glAttr.Equalsi("TRUE"),
     str_glStereo.IsEmpty() || str_glStereo.Equalsi("TRUE"));
   MainForm->GlCanvas(new TGlCanvas(
-    MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS")));
+    MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0,
+      wxT("GL_CANVAS")));
   // create an instance of the XApplication
   olxstr BaseDir(argv[0]);
   // 2008.09.29
@@ -159,6 +160,14 @@ bool TGlXApp::OnInit()  {
 //      BaseDir = TEFile::ParentDir(BaseDir);
 //      BaseDir << "Resources/";
     #endif
+    olxstr base_dir_x = TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DIR");
+    olxstr base_dir = TEFile::AddPathDelimeter(
+      TEFile::ExtractFilePath(base_dir_x));
+  olx_setenv("PATH", TEFile::TrimPathDelimeter(base_dir) << olx_env_sep()
+    << olx_getenv("PATH"));
+#ifdef __WIN32__
+  olx_setenv("PYTHONPATH", base_dir + "Python27");
+#endif
 #if defined(_WIN64) && defined(_DEBUG)
     XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DEBUG_DIR"));
 #else
@@ -172,7 +181,8 @@ bool TGlXApp::OnInit()  {
   // write PID file
   if( XApp->IsBaseDirWriteable() )  {
     int pid = getpid();
-    pid_file = new TEFile(olxstr(XApp->GetBaseDir()) << pid << '.' << patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b");
+    pid_file = new TEFile(olxstr(XApp->GetBaseDir()) << pid << '.' <<
+      patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b");
   }
   for( int i=0; i < argc; i++ )
     XApp->Arguments.Add(olxstr(argv[i]));

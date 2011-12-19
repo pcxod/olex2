@@ -160,7 +160,8 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_____________________________________________________________________________
   xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded,
     "converts cif to a document");
-  xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded,
+  xlib_InitMacro(Cif2Tab, "n-output file name&;t-table definition file",
+    fpAny|psFileLoaded,
     "creates a table from a cif");
   xlib_InitMacro(CifMerge,
     "u-updates atom treatment if the asymmetric units of currently loaded file"
@@ -2837,22 +2838,25 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   TBasicApp::NewLogEntry(logInfo) << "Document name: " << RF;
 }
 //..............................................................................
-void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
-  olxstr CifTablesFile(xapp.GetCifTemplatesDir() + "tables.xlt");
+  olxstr CifTablesFile = Options.FindValue('t', "tables.xlt");
+  if (!TEFile::IsAbsolutePath(CifTablesFile))
+    CifTablesFile = xapp.GetCifTemplatesDir() + CifTablesFile;
+  if( !TEFile::Exists(CifTablesFile) )  {
+    Error.ProcessingError(__OlxSrcInfo, "tables definition file is not found");
+    return;
+  }
+
   olxstr CifDictionaryFile(xapp.GetCifTemplatesDir() + "cifindex.dat");
   if( Cmds.IsEmpty() )  {
-    if( !TEFile::Exists(CifTablesFile) )  {
-      Error.ProcessingError(__OlxSrcInfo, "tables definition file is not found");
-      return;
-    }
-
     TDataFile DF;
     TStrList SL;
     TDataItem *Root;
     olxstr Tmp;
     DF.LoadFromXLFile(CifTablesFile, &SL);
-
     Root = DF.Root().FindItemi("Cif_Tables");
     if( Root != NULL )  {
       xapp.NewLogEntry(logInfo) << "Found table definitions:";
@@ -2896,8 +2900,16 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString());
     RF << "_tables";
   }
-  RF = TEFile::ChangeFileExt(RF, "html");
   TDataItem* Root = DF.Root().FindItemi("Cif_Tables");
+  if (Root == NULL) {
+    Error.ProcessingError(__OlxSrcInfo, "wrong root");
+    return;
+  }
+  { // guess format
+    const olxstr str_format = Root->GetFieldValue("format", "html");
+    const bool html = str_format.Equalsi("html");
+    RF = TEFile::ChangeFileExt(RF, html ? "html" : "tex");
+  }
   smatd_list SymmList;
   size_t tab_count = 1;
   for( size_t i=0; i < Cmds.Count(); i++ )  {
@@ -2944,7 +2956,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
 
       olxstr footer;
       for( size_t i=0; i < SymmList.Count(); i++ )  {
-        footer << "<sup>" << (i+1) << "</sup>" << TSymmParser::MatrixToSymmEx(SymmList[i]);
+        footer << "<sup>" << (i+1) << "</sup>" <<
+          TSymmParser::MatrixToSymmEx(SymmList[i]);
         if( (i+1) < SymmList.Count() )
           footer << "; ";
       }
