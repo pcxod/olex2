@@ -31,7 +31,10 @@ olxstr olx_getenv(const olxstr& name);
 // a convenience function, takin key=val string
 bool olx_setenv(const olxstr& v);
 #ifdef __WIN32__
-  bool IsWow64() ;
+  inline char olx_env_sep() { return ';'; }
+  bool IsWow64();
+#else
+  inline char olx_env_sep() { return ':'; }
 #endif
 // http://en.wikipedia.org/wiki/Critical_section
 struct olx_critical_section  {

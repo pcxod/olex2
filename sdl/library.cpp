@@ -55,12 +55,14 @@ ABasicFunction *TLibrary::Register(
   if (fm->GetArgStateMask() == uint32_t(~0)) {
     if (list.Count() > 1)
       throw TInvalidArgumentException(__OlxSourceInfo, "ambiguous replacement");
-    ABasicFunction *src = container.GetObject(list[0]);
-    fm->SetArgStateMask(src->GetArgStateMask());
-    if (src->HasOptions()) {
-      TCSTypeList<olxstr,olxstr> options = src->GetOptions();
-      options.Merge(fm->GetOptions());
-      fm->SetOptions(options);
+    if (!list.IsEmpty()) {
+      ABasicFunction *src = container.GetObject(list[0]);
+      fm->SetArgStateMask(src->GetArgStateMask());
+      if (src->HasOptions()) {
+        TCSTypeList<olxstr,olxstr> options = src->GetOptions();
+        options.Merge(fm->GetOptions());
+        fm->SetOptions(options);
+      }
     }
   }
 

@@ -593,10 +593,11 @@ f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupa
     "Prints out information for gived [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
 "Prints available information. If no arguments provided prints available commands");
-  this_InitMacroD(Matr, EmptyString(), fpNone|fpOne|fpTwo|fpNine,
-"Displays or sets current orientation matrix. For single argument, 1,2,3 001, 111, etc\
- values are acceptable, two values taken are of the klm form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c,\
- nine values provide a full matrix ");
+  this_InitMacroD(Matr, EmptyString(), fpNone|fpOne|fpTwo|fpThree|fpNine,
+"Displays or sets current orientation matrix. For single argument, 1,2,3 001,"
+" 111, etc values are acceptable, two values taken are of the klm form, which"
+" specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three values pecify "
+"the view normal and nine values provide a full matrix");
   this_InitMacroD(Qual, "h-High&;m-Medium&;l-Low", fpNone, "Sets drawings quality");
 
   this_InitMacroD(Line, "n-just sets current view normal to the line without creating the object",

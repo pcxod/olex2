@@ -1463,21 +1463,27 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   if( Cmds.IsEmpty() )  {
     const mat3d& Matr = FXApp->GetRender().GetBasis().GetMatrix();
     for( size_t i=0; i < 3; i++ )  {
       olxstr Tmp;
-      Tmp << olxstr::FormatFloat(3, Matr[0][i]);  Tmp.RightPadding(7, ' ', true);
-      Tmp << olxstr::FormatFloat(3, Matr[1][i]);  Tmp.RightPadding(14, ' ', true);
-      Tmp << olxstr::FormatFloat(3, Matr[2][i]);  Tmp.RightPadding(21, ' ', true);
+      Tmp << olxstr::FormatFloat(3, Matr[0][i]);
+      Tmp.RightPadding(7, ' ', true);
+      Tmp << olxstr::FormatFloat(3, Matr[1][i]);
+      Tmp.RightPadding(14, ' ', true);
+      Tmp << olxstr::FormatFloat(3, Matr[2][i]);
+      Tmp.RightPadding(21, ' ', true);
       TBasicApp::NewLogEntry() << Tmp;
     }
   }
   else  {
     if( Cmds.Count() == 1 )  {
-      const mat3d& M = FXApp->IsHklVisible() ? FXApp->XFile().GetAsymmUnit().GetHklToCartesian() :
-        FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
+      const mat3d& M = FXApp->IsHklVisible() ?
+        FXApp->XFile().GetAsymmUnit().GetHklToCartesian()
+        : FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
       olxstr arg;
       if( Cmds[0] == '1' )  arg = "100";
       else if( Cmds[0] == '2' )  arg = "010";
@@ -1485,7 +1491,9 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       else
         arg = Cmds[0];
       if( (arg.Length()%3) != 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "invalid argument, an arguments like 010, 001000, +0-1+1 etc is expected");
+        Error.ProcessingError(__OlxSrcInfo,
+          "invalid argument, an arguments like 010, 001000, +0-1+1 etc is"
+          " expected");
         return;
       }
       vec3d n;
@@ -1500,7 +1508,9 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     else if( Cmds.Count() == 2 )  {  // from to view
       if( (Cmds[0].Length()%3) != 0 || (Cmds[1].Length()%3) != 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "invalid arguments, a klm, two arguments like 010, 001000, +0-1+1 etc are expected");
+        Error.ProcessingError(__OlxSrcInfo,
+          "invalid arguments, a klm, two arguments like 010, 001000, +0-1+1 "
+          "etc are expected");
         return;
       }
       const mat3d& M = FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
@@ -1512,8 +1522,20 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       vec3d n = from-to;
       if( n.QLength() < 1e-3 )  {
-        Error.ProcessingError(__OlxSrcInfo, "from and to arguments must be different");
+        Error.ProcessingError(__OlxSrcInfo,
+          "from and to arguments must be different");
         return;
+      }
+      FXApp->GetRender().GetBasis().OrientNormal(n);
+    }
+    else if( Cmds.Count() == 3 )  {  // view along
+      const mat3d& M = FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
+      vec3d n = M[0]*Cmds[0].ToDouble() +
+        M[1]*Cmds[1].ToDouble() +
+        M[2]*Cmds[2].ToDouble();
+      try { n.Normalise(); }
+      catch(const TExceptionBase &e) {
+        Error.ProcessingError(__OlxSrcInfo, "non-singular direction is expected");
       }
       FXApp->GetRender().GetBasis().OrientNormal(n);
     }

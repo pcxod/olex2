@@ -98,9 +98,9 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     if (a.GetAttachedAtom(i).GetType() != iQPeakZ)
       cc++;
   }
-  if (e == iHydrogenIndex)
+  if (e == iHydrogenZ)
     return cc == 1;
-  if (e == iOxygenIndex)
+  if (e == iOxygenZ)
     return cc <= 2;
   if (XElementLib::IsHalogen(e))
     return cc == 1;
@@ -819,7 +819,7 @@ bool Analysis::analyse_u_eq(TAsymmUnit &au) {
 const cm_Element &Analysis::check_proposed_element(
     TCAtom &a, const cm_Element &e, ElementPList *set)
 {
-  if ( alg::check_connectivity(a, e) || !alg::check_geometry(a, e) )
+  if ( !alg::check_connectivity(a, e) || !alg::check_geometry(a, e) )
     return a.GetType();
   if (XElementLib::IsGroup8(e)) {
     cm_Element *pe = XElementLib::FindByZ(e.z-1);

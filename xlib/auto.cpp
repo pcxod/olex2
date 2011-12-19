@@ -504,7 +504,7 @@ TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
   for( uint16_t i=0; i < MaxConnectivity-1; i++ )
     Nodes.AddNew();
   BAIDelta = -1;
-  URatio = 1.3;
+  URatio = 1.5;
   lc.GetLibrary().AttachLibrary(ExportLibrary());
 }
 //..............................................................................
