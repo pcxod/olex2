@@ -111,12 +111,10 @@ ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
   const cm_Element *re)
 {
   const short z = (re == NULL ? iCarbonZ : re->z);
-  TArrayList<size_t> rv;
-  for (size_t i=0; i < atoms.Count(); i++) {
-    if (atoms[i]->GetType() != z)
-      rv.Add(i);
-  }
-  return rv;
+  return &ListFilter::FilterIndices(
+    atoms,
+    *(new TArrayList<size_t>),
+    olx_alg::olx_not(TCAtom::TypeAnalyser(z)));
 }
 //.............................................................................
 //.............................................................................

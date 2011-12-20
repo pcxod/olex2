@@ -41,21 +41,57 @@ struct ListCaster  {
 };
 
 struct ListFilter  {
-  template <class ResList, class Condition> struct _Filter  {
-    ResList& results;
-    const Condition& condition;
-    _Filter(ResList& _results, const Condition& _condition) :
-      results(_results), condition(_condition)  {}
-    template <class Item> inline void OnItem(Item& o, size_t i) const {
-      if( condition.OnItem(o, i) )
-        results.Add(o);
+  template <class analyser_t, class collector_t>
+  struct ResultCollector_ {
+    const analyser_t &analyser;
+    const collector_t &collector;
+    ResultCollector_(const analyser_t &analyser_, const collector_t &collector_)
+      : analyser(analyser_), collector(collector_)
+    {}
+    template <class item_t>
+    void OnItem(item_t &i, size_t idx) const {
+      if (analyser.OnItem(i, idx))
+        collector.OnItem(i, idx);
+    }
+    template <class item_t>
+    void OnItem(const item_t &i, size_t idx) const {
+      if (analyser.OnItem(i, idx))
+        collector.OnItem(i, idx);
     }
   };
+  template <class list_t> struct ItemCollector_ {
+    list_t &dest;
+    ItemCollector_(list_t &dest_)
+      : dest(dest_)
+    {}
+    template <class item_t>
+    void OnItem(item_t &i, size_t) const { dest.Add(i); }
+    template <class item_t>
+    void OnItem(const item_t &i, size_t) const { dest.Add(i); }
+  };
+  template <class list_t> struct IndexCollector_ {
+    list_t &dest;
+    IndexCollector_(list_t &dest_)
+      : dest(dest_)
+    {}
+    template <class item_t>
+    void OnItem(const item_t &, size_t i) const { dest.Add(i); }
+  };
+
   template <class SrcList, class ResList, class Condition>
   static ResList& Filter(const SrcList& src, ResList& dest,
     const Condition& cond)
   {
-    src.ForEach(_Filter<ResList, Condition>(dest, cond));
+    src.ForEach(ResultCollector_<Condition, ItemCollector_<ResList> >(
+      cond, dest));
+    return dest;
+  }
+  template <class SrcList, class ResList, class Condition>
+  static ResList& FilterIndices(const SrcList& src, ResList& dest,
+    const Condition& cond)
+  {
+    src.ForEach(ResultCollector_<Condition, IndexCollector_<ResList> >(
+      cond, dest));
     return dest;
   }
 };
