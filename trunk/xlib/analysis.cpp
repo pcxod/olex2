@@ -107,6 +107,18 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
   return true;
 }
 //.............................................................................
+ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
+  const cm_Element *re)
+{
+  const short z = (re == NULL ? iCarbonZ : re->z);
+  TArrayList<size_t> rv;
+  for (size_t i=0; i < atoms.Count(); i++) {
+    if (atoms[i]->GetType() != z)
+      rv.Add(i);
+  }
+  return rv;
+}
+//.............................................................................
 //.............................................................................
 void peaks::range::delete_all() {
   for (size_t i=0; i < peaks.Count(); i++)
@@ -265,12 +277,23 @@ int fragments::ring::Compare(const ring &r) const {
   return substituents[0].Compare(r.substituents[0]);
 }
 //.............................................................................
+void fragments::ring::reverse() {
+  if (atoms.IsEmpty()) return;
+  const size_t hs = (atoms.Count()-1)/2;
+  for (size_t i=0; i < hs; i++)
+    atoms.Swap(i+1, atoms.Count()-i-1);
+}
+//.............................................................................
 //.............................................................................
 int fragments::ring::substituent::Compare(
   const fragments::ring::substituent &s) const
 {
   int r = olx_cmp(ring_count, s.ring_count);
   if (r != 0) return r;
+  if (ring_count == 1) {
+    r = -olx_cmp(atoms.Count(), s.atoms.Count());
+    if (r != 0) return r;
+  }
   r = olx_cmp(alg::find_heaviest(atoms).z, alg::find_heaviest(s.atoms).z);
   if (r != 0) return r;
   return olx_cmp(atoms.Count(), s.atoms.Count());
@@ -491,11 +514,37 @@ void fragments::fragment::breadth_first_tags(size_t start,
 void fragments::fragment::init_rings(TTypeList<fragments::ring> &rings) {
   for (size_t i=0; i < rings.Count(); i++) {
     init_ring(i, rings);
-    if (!rings[i].substituents.IsEmpty()) {
-      QuickSorter::Sort(rings[i].substituents);
-      // align atoms to start from the 'heaviest' substituent
-      rings[i].atoms.ForEach(ACollectionItem::IndexTagSetter());
-      rings[i].atoms.ShiftL(rings[i].substituents.GetLast().atoms[0]->GetTag());
+    QuickSorter::Sort(rings[i].substituents);
+    TArrayList<size_t> hi = alg::find_hetero_indices(rings[i].atoms);
+    if (hi.Count() == 1 ) {
+      rings[i].atoms.ShiftL(hi[0]);
+      // minimise the subs indices by changing the direction if neeeded
+      if (!rings[i].substituents.IsEmpty()) {
+        rings[i].atoms.ForEach(ACollectionItem::IndexTagSetter());
+        bool last_smallest=true;
+        for (size_t j=0; j < rings[i].substituents.Count()-1; j++) {
+          if (rings[i].substituents.GetLast().atoms[0]->GetTag() >
+              rings[i].substituents[j].atoms[0]->GetTag())
+          {
+            last_smallest = false;
+            break;
+          }
+        }
+        if (!last_smallest ||
+          ((size_t)rings[i].substituents.GetLast().atoms[0]->GetTag() >
+            rings[i].atoms.Count()/2))
+        {
+          rings[i].reverse();
+        }
+      }
+    }
+    else {
+      if (!rings[i].substituents.IsEmpty()) {
+        QuickSorter::Sort(rings[i].substituents);
+        // align atoms to start from the 'heaviest' substituent
+        rings[i].atoms.ForEach(ACollectionItem::IndexTagSetter());
+        rings[i].atoms.ShiftL(rings[i].substituents.GetLast().atoms[0]->GetTag());
+      }
     }
   }
   QuickSorter::Sort(rings);
