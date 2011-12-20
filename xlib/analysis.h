@@ -25,6 +25,8 @@ namespace alg {
   const cm_Element &find_heaviest(const TCAtomPList &atoms);
   bool check_geometry(const TCAtom &a, const cm_Element &e);
   bool check_connectivity(const TCAtom &a, const cm_Element &e);
+  ConstArrayList<size_t> find_hetero_indices(const TCAtomPList &atoms,
+    const cm_Element *re=NULL);
 }; // end namespace alg
 struct peaks {
   static int peak_sort(const TCAtom &a1, const TCAtom &a2) {
@@ -108,6 +110,7 @@ public:
     static int SizeCompare(const ring &r1, const ring &r2) {
       return olx_cmp(r1.atoms.Count(), r2.atoms.Count());
     }
+    void reverse();
   };
   struct fragment {
   protected:
