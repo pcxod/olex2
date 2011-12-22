@@ -1,0 +1,10 @@
+proxy=
+repository=http://www.olex2.org/olex2-distro/
+update=Always
+lastupdate=1287516852
+exceptions=exe;pyd;dll
+dest_repository=
+src_for_dest=
+skip=cctbx_win
+olex-port=
+ask_update=true
