@@ -15,50 +15,107 @@
 #include "seval.h"
 
 // data provider interface
-class ITXAtom_DataProvider: public IDataProvider  {
+class ITXAtom_DataProvider: public ITSAtom_DataProvider {
 public:
   virtual TXAtom *GetTXAtom() = 0;
+  virtual void SetTXAtom(TXAtom *)  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  TSAtom *GetTSAtom() { return GetTXAtom(); }
 };
-// data provider interface
-class ITGlGroupDataProvider: public IDataProvider  {
+class TTXAtom_DataProvider : public ITXAtom_DataProvider {
+  TXAtom *XAtom;
 public:
-  virtual TGlGroup *GetTGlGroup() = 0;
+  TTXAtom_DataProvider() : XAtom(NULL) {}
+  TXAtom *GetTXAtom() {
+    if (XAtom == NULL)
+      throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
+    return XAtom;
+  }
+  void SetTXAtom(TXAtom *val) { XAtom = val; }
 };
+
 // data provider interface
 class ITXBond_DataProvider: public IDataProvider  {
 public:
   virtual TXBond *GetTXBond() = 0;
-  virtual TSBond *GetTSBond()  {  return GetTXBond();  }
+  virtual void SetTXBond(TXBond *) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  virtual TSBond *GetTSBond() { return GetTXBond(); }
+};
+class TTXBond_DataProvider : public ITXBond_DataProvider {
+  TXBond *XBond;
+public:
+  TXBond *GetTXBond() {
+    if (XBond == NULL)
+      throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
+    return XBond;
+  }
+  void SetTXBond(TXBond *val)  {  XBond = val;  }
 };
 // factory class implementation
-class TTXBond_EvaluatorFactory: public IEvaluatorFactory, ITXBond_DataProvider  {
-  TXBond *XBond;
+class TTXBond_EvaluatorFactory : public IEvaluatorFactory {
   // the list of all evaluators
   TSStrPObjList<olxstr,IEvaluator*, true> Evaluators;
   TSStrPObjList<olxstr,IDataProvider*, true> DataProviders;
   IEvaluatorFactory *FactoryRegister;
 public:
-  IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
+  IEvaluator *Evaluator(const olxstr &propertyName)  {
+    return Evaluators[propertyName];
+  }
   IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
   const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
-  // variable getter, to be used by evaluators
-  TXBond *GetTXBond(){  return XBond;  }
-  // variable setter
-  void SetTXBond_(TXBond *val)  {  XBond = val;  }
   // destructor
   ~TTXBond_EvaluatorFactory()  {
     for( size_t i=0; i < Evaluators.Count(); i++ )
       delete Evaluators.GetObject(i);
     for( size_t i=0; i < DataProviders.Count(); i++ )
       delete DataProviders.GetObject(i);
+    delete provider;
   }
   // constructor to create instaces of registered evaluators
-  TTXBond_EvaluatorFactory(IEvaluatorFactory *parent);
+  TTXBond_EvaluatorFactory(IEvaluatorFactory *parent,
+    ITXBond_DataProvider *provider);
+  ITXBond_DataProvider *provider;
 };
+
+// data provider interface
+class ITGlGroupDataProvider
+  : public ITXAtom_DataProvider, public ITXBond_DataProvider
+{
+public:
+  virtual TGlGroup *GetTGlGroup() = 0;
+  virtual void SetTGlGroup(TGlGroup *)  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  TXAtom *GetTXAtom()  {
+    TGlGroup *g = GetTGlGroup();
+    if (g->Count() == 0 || !EsdlInstanceOf((*g)[0], TXAtom))
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid object type");
+    return &(TXAtom&)g->GetObject(0);
+  }
+  TXBond *GetTXBond() {
+    TGlGroup *g = GetTGlGroup();
+    if (g->Count() == 0 || !EsdlInstanceOf((*g)[0], TXBond))
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid object type");
+    return &(TXBond&)g->GetObject(0);
+  }
+};
+class TTGlGroupDataProvider : public ITGlGroupDataProvider {
+  TGlGroup *sel;
+public:
+  TGlGroup *GetTGlGroup() {
+    if (sel == NULL)
+      throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
+    return sel;
+  }
+  void SetTGlGroup(TGlGroup *val) { sel = val; }
+};
+
 // factory class implementation
-class TTXAtom_EvaluatorFactory: public IEvaluatorFactory, ITXAtom_DataProvider  {
-  TXAtom *XAtom;
+class TTXAtom_EvaluatorFactory: public IEvaluatorFactory {
   // the list of all evaluators
   TSStrPObjList<olxstr,IEvaluator*, true> Evaluators;
   TSStrPObjList<olxstr,IDataProvider*, true> DataProviders;
@@ -68,178 +125,100 @@ public:
   IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
   const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
-  // variable getter, to be used by evaluators
-  TXAtom *GetTXAtom(){  return XAtom;  }
-  // variable setter
-  void SetTXAtom(TXAtom *val)  {  XAtom = val;  }
-  // destructor
   ~TTXAtom_EvaluatorFactory()  {
     for( size_t i=0; i < Evaluators.Count(); i++ )
       delete Evaluators.GetObject(i);
     for( size_t i=0; i < DataProviders.Count(); i++ )
       delete DataProviders.GetObject(i);
+    delete provider;
   }
   // constructor to create instaces of registered evaluators
-  TTXAtom_EvaluatorFactory(IEvaluatorFactory *parent);
+  TTXAtom_EvaluatorFactory(IEvaluatorFactory *parent,
+    ITXAtom_DataProvider *provider);
+  ITXAtom_DataProvider *provider;
 };
 // evaluator implementation for bool selected
-class TXAtom_SelectedEvaluator: public IBoolEvaluator  {
-  ITXAtom_DataProvider *Parent;
+class TXAtom_SelectedEvaluator
+  : public TEvaluator<ITXAtom_DataProvider,IBoolEvaluator,TXAtom_SelectedEvaluator>
+{
 public:
   // constructor
-  TXAtom_SelectedEvaluator(ITXAtom_DataProvider* parent) { Parent = parent;  }
-  // virtual method
-  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TXAtom_SelectedEvaluator( (ITXAtom_DataProvider*)dp);  }
-  // destructor
-  TXAtom_SelectedEvaluator()  {  ;  }
-  // evaluator function
+  TXAtom_SelectedEvaluator(ITXAtom_DataProvider* parent)
+    : parent_t(parent)
+  {}
   bool EvaluateBool() const {  return Parent->GetTXAtom()->IsSelected();  }
 };
 
-class TXAtom_BaiEvaluator: public ITBasicAtomInfoDataProvider  {
-  ITXAtom_DataProvider *Parent;
-public:
-  TXAtom_BaiEvaluator(ITXAtom_DataProvider* parent) { Parent = parent;  }
-  TXAtom_BaiEvaluator()  {  ;  }
-  const cm_Element *GetType()  {return &Parent->GetTXAtom()->GetType();  }
-};
-
-// evaluator implementation for complex b
-class TSelBEvaluator: public ITXBond_DataProvider  {
-  ITGlGroupDataProvider *Parent;
-public:
-  // constructor
-  TSelBEvaluator(ITGlGroupDataProvider* parent) { Parent = parent;  }
-  // destructor
-  TSelBEvaluator()  {  ;  }
-  // evaluator function
-  TXBond *GetTXBond()  {return &(TXBond&)Parent->GetTGlGroup()->GetObject(0);  }
-};
-// evaluator implementation for complex a
-class TSelAEvaluator: public ITXAtom_DataProvider
-{
-  ITGlGroupDataProvider *Parent;
-public:
-  // constructor
-  TSelAEvaluator(ITGlGroupDataProvider* parent) { Parent = parent;  }
-  // destructor
-  TSelAEvaluator()  {  ;  }
-  // evaluator function
-  TXAtom *GetTXAtom()  {return &(TXAtom&)Parent->GetTGlGroup()->GetObject(0);  }
-};
-// evaluator implementation for scalar type
-class TXBond_TypeEvaluator: public IDoubleEvaluator
-{
-  ITXBond_DataProvider *Parent;
-public:
-  // constructor
-  TXBond_TypeEvaluator(ITXBond_DataProvider* parent) { Parent = parent;  }
-  // virtual method
-  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TXBond_TypeEvaluator( (ITXBond_DataProvider*)dp);  }
-  // destructor
-  TXBond_TypeEvaluator()  {  ;  }
-  // evaluator function
-  double EvaluateDouble() const {  return Parent->GetTXBond()->GetType();  }
-};
 // factory class implementation
-class TTGlGroupEvaluatorFactory: public IEvaluatorFactory, ITGlGroupDataProvider
-{
-  TGlGroup *sel;
+class TTGlGroupEvaluatorFactory : public IEvaluatorFactory {
   // the list of all evaluators
   TSStrPObjList<olxstr,IEvaluator*, true> Evaluators;
-  TSStrPObjList<olxstr,IDataProvider*, true> DataProviders;
+  TSStrPObjList<olxstr,IEvaluatorFactory*, true> Factories;
+  TPtrList<ITGlGroupDataProvider> providers;
   IEvaluatorFactory *FactoryRegister;
 public:
-  IEvaluator *Evaluator(const olxstr & propertyName)  {  return Evaluators[propertyName];  }
+  IEvaluator *Evaluator(const olxstr &propertyName)  {
+    return Evaluators[propertyName];
+  }
   IEvaluator *Evaluator(size_t index)  {  return Evaluators.GetObject(index);  }
   const olxstr& EvaluatorName(size_t index)  {  return Evaluators.GetKey(index);  }
   size_t EvaluatorCount()  {  return Evaluators.Count();  }
-  // variable getter, to be used by evaluators
-  TGlGroup *GetTGlGroup(){  return sel;  }
-  // variable setter
-  void SetTGlGroup(TGlGroup *val)  {  sel = val;  }
-  // destructor
   ~TTGlGroupEvaluatorFactory()  {
-    for( size_t i=0; i < Evaluators.Count(); i++ )
-      delete Evaluators.GetObject(i);
-    for( size_t i=0; i < DataProviders.Count(); i++ )
-      delete DataProviders.GetObject(i);
+    for( size_t i=0; i < Factories.Count(); i++ )
+      delete Factories.GetObject(i);
+  }
+  void SetTGlGroup(TGlGroup *g) {
+    for (size_t i=0; i < providers.Count(); i++)
+      providers[i]->SetTGlGroup(g);
   }
   // constructor to create instaces of registered evaluators
   TTGlGroupEvaluatorFactory(IEvaluatorFactory *parent);
 };
 // evaluator implementation for complex A
-class TXBond_AEvaluator: public ITSAtom_DataProvider
-{
+template <int n>
+class TXBond_AtomEvaluator : public ITSAtom_DataProvider {
   ITXBond_DataProvider *Parent;
 public:
-  // constructor
-  TXBond_AEvaluator(ITXBond_DataProvider* parent) { Parent = parent;  }
-  // destructor
-  TXBond_AEvaluator()  {  ;  }
-  // evaluator function
-  TSAtom* GetTSAtom()  {return &Parent->GetTXBond()->A();  }
+  TXBond_AtomEvaluator(ITXBond_DataProvider* parent) : Parent(parent) {}
+  TSAtom* GetTSAtom()  {
+    return &(n ==1 ? Parent->GetTXBond()->A() : Parent->GetTXBond()->B());
+  }
 };
-// evaluator implementation for complex B
-class TXBond_BEvaluator: public ITSAtom_DataProvider
-{
-  ITXBond_DataProvider *Parent;
-public:
-  // constructor
-  TXBond_BEvaluator(ITXBond_DataProvider* parent) { Parent = parent;  }
-  // destructor
-  TXBond_BEvaluator()  {  ;  }
-  // evaluator function
-  TSAtom* GetTSAtom()  {  return &Parent->GetTXBond()->B();  }
-};
+
 // evaluator implementation for bool deleted
-class TXBond_DeletedEvaluator: public IBoolEvaluator
-{
-  ITXBond_DataProvider *Parent;
+class TXBond_DeletedEvaluator
+  : public TEvaluator<ITXBond_DataProvider,IBoolEvaluator,TXBond_DeletedEvaluator> {
 public:
   // constructor
-  TXBond_DeletedEvaluator(ITXBond_DataProvider* parent) { Parent = parent;  }
-  // virtual method
-  IEvaluator *NewInstance(IDataProvider *dp)  {  return new TXBond_DeletedEvaluator( (ITXBond_DataProvider*)dp);  }
-  // destructor
-  TXBond_DeletedEvaluator()  {  ;  }
-  // evaluator function
+  TXBond_DeletedEvaluator(ITXBond_DataProvider* parent)
+    : parent_t(parent)
+  {}
   bool EvaluateBool() const {  return Parent->GetTXBond()->IsDeleted();  }
 };
 // evaluator implementation for scalar length
-class TXBond_LengthEvaluator: public IDoubleEvaluator
+class TXBond_LengthEvaluator
+  : public TEvaluator<ITXBond_DataProvider,IDoubleEvaluator,TXBond_LengthEvaluator>
 {
-  ITXBond_DataProvider *Parent;
 public:
-  // constructor
-  TXBond_LengthEvaluator(ITXBond_DataProvider* parent) { Parent = parent;  }
-  // virtual method
-  IEvaluator *NewInstance( IDataProvider *dp)  {  return new TXBond_LengthEvaluator( (ITXBond_DataProvider*)dp);  }
-  // destructor
-  TXBond_LengthEvaluator()  {  ;  }
-  // evaluator function
+  TXBond_LengthEvaluator(ITXBond_DataProvider* parent)
+    : parent_t(parent)
+  {}
   double EvaluateDouble() const {  return Parent->GetTXBond()->Length();  }
+};
+// evaluator implementation for scalar type
+class TXBond_TypeEvaluator
+  : public TEvaluator<ITXBond_DataProvider,IDoubleEvaluator,TXBond_TypeEvaluator>
+{
+public:
+  TXBond_TypeEvaluator(ITXBond_DataProvider* parent)
+    : parent_t(parent)
+  {}
+  double EvaluateDouble() const {  return Parent->GetTXBond()->GetType();  }
 };
 
 class TXFactoryRegister : public TSFactoryRegister {
 public:
-  TXFactoryRegister()  {
-    TTBasicAtomInfoEvaluatorFactory *tTBasicAtomInfoEvaluatorFactory = new TTBasicAtomInfoEvaluatorFactory(this);
-    Factories.Add("TTBasicAtomInfoEvaluatorFactory", tTBasicAtomInfoEvaluatorFactory);
-    FactoryMap.Add("bai", tTBasicAtomInfoEvaluatorFactory);
-    TTSAtom_EvaluatorFactory *tTSAtom_EvaluatorFactory = new TTSAtom_EvaluatorFactory(this);
-    Factories.Add("TTSAtom_EvaluatorFactory", tTSAtom_EvaluatorFactory);
-    FactoryMap.Add("SAtom", tTSAtom_EvaluatorFactory);
-    TTXAtom_EvaluatorFactory *tTXAtomEvaluatorFactory = new TTXAtom_EvaluatorFactory(this);
-    Factories.Add("TTXAtomEvaluatorFactory", tTXAtomEvaluatorFactory);
-    FactoryMap.Add("XAtom", tTXAtomEvaluatorFactory);
-    TTXBond_EvaluatorFactory *tTXBond_EvaluatorFactory = new TTXBond_EvaluatorFactory(this);
-    Factories.Add("TTXBond_EvaluatorFactory", tTXBond_EvaluatorFactory);
-    FactoryMap.Add("XBond", tTXBond_EvaluatorFactory);
-    TTGlGroupEvaluatorFactory *tTGlGroupEvaluatorFactory = new TTGlGroupEvaluatorFactory(this);
-    Factories.Add("TTGlGroupEvaluatorFactory", tTGlGroupEvaluatorFactory);
-    FactoryMap.Add("sel", tTGlGroupEvaluatorFactory);
-  }
+  TXFactoryRegister();
 };
 
 #endif

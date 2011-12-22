@@ -13,39 +13,43 @@
 #include "estlist.h"
 #include "estrlist.h"
 // arithmetic operators/functions
-const short aofAdd  = 1,
-            aofSub  = 2,
-            aofMul  = 3,
-            aofDiv  = 4,
-            aofExt  = 5,
-            aofSin  = 6,
-            aofCos  = 7,
-            aofTan  = 8,
-            aofAsin = 9,
-            aofAcos = 10,
-            aofAtan = 11,
-            aofAbs  = 12,
-            aofRemainder = 13;
+const short
+  aofAdd  = 1,
+  aofSub  = 2,
+  aofMul  = 3,
+  aofDiv  = 4,
+  aofExt  = 5,
+  aofSin  = 6,
+  aofCos  = 7,
+  aofTan  = 8,
+  aofAsin = 9,
+  aofAcos = 10,
+  aofAtan = 11,
+  aofAbs  = 12,
+  aofRemainder = 13;
 
 template <class IC>
   class TObjectFactory  {
   public:
-    virtual ~TObjectFactory()  {}
+    virtual ~TObjectFactory() {}
     virtual IC *NewInstance(TPtrList<IEObject>* Arguments) = 0;
   };
 
 class TOperatorSignature  {
 public:
   olxstr StringValue;
-  short    ShortValue;
+  short ShortValue;
   TOperatorSignature(const short shortVal, const olxstr &strVal);
   static TOperatorSignature DefinedFunctions[];
   static short DefinedFunctionCount;
 };
 
-class IDataProvider  {
+class IDataProvider {
 public:
-  virtual ~IDataProvider()  {}
+  virtual ~IDataProvider() {}
+  virtual IDataProvider* cast(const type_info &ti) {
+    return this;
+  }
 };
 
 class IEvaluable : public IEObject {
@@ -58,12 +62,12 @@ public:
 // an abstract class for evaluation simple expressions
 class IEvaluator: public IEObject  {
 public:
-  virtual ~IEvaluator() {  ;  }
+  virtual ~IEvaluator() {}
 
   class TUnsupportedOperator: public TBasicException  {
   public:
     TUnsupportedOperator(const olxstr& location):
-        TBasicException(location, EmptyString())  {  ;  }
+        TBasicException(location, EmptyString()) {}
     virtual IEObject* Replicate()  const {  return new TUnsupportedOperator(*this);  }
   };
   virtual bool operator == (const IEvaluator &) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
@@ -80,7 +84,7 @@ public:
   class TCastException: public TBasicException  {
   public:
     TCastException(const olxstr& location ):
-        TBasicException(location, EmptyString())  { ;  }
+        TBasicException(location, EmptyString()) { ;  }
     virtual IEObject* Replicate()  const {  return new TCastException(*this);  }
   };
   virtual short EvaluateShort()         const {  throw TCastException(__OlxSourceInfo);  }
@@ -98,7 +102,7 @@ public:
 class IArithmetic
 {
 public:
-  virtual ~IArithmetic()  {  ; }
+  virtual ~IArithmetic() {  ; }
   virtual IEvaluator* operator + (const IEvaluator &v) const = 0;
   virtual IEvaluator* operator - (const IEvaluator &v) const = 0;
   virtual IEvaluator* operator / (const IEvaluator &v) const = 0;
@@ -277,30 +281,30 @@ public:
 class TStringEvaluator: public IStringEvaluator  {
   olxstr Value;
 public:
-  TStringEvaluator(const olxstr &Val)  {  Value = Val;  }
+  TStringEvaluator(const olxstr &Val) {  Value = Val;  }
   ~TStringEvaluator() {  ;  }
   const olxstr& EvaluateString() const {  return Value;  }
-  void SetValue(const olxstr& v)  {  Value = v;  }
+  void SetValue(const olxstr& v) {  Value = v;  }
   IEvaluator *NewInstance(IDataProvider *) {  return new TStringEvaluator(Value);  }
 };
 
 class TScalarEvaluator: public IDoubleEvaluator  {
   double Value;
 public:
-  TScalarEvaluator(double Val)  {  Value = Val;  }
+  TScalarEvaluator(double Val) {  Value = Val;  }
   ~TScalarEvaluator() {  ;  }
   double EvaluateDouble() const {  return Value;  }
-  void SetValue(double v)  {  Value = v;  }
+  void SetValue(double v) {  Value = v;  }
   IEvaluator *NewInstance(IDataProvider *) {  return new TScalarEvaluator(Value);  }
 };
 
 class TBoolEvaluator: public IBoolEvaluator  {
   bool Value;
 public:
-  TBoolEvaluator(bool Val)  {  Value = Val;  }
+  TBoolEvaluator(bool Val) {  Value = Val;  }
   ~TBoolEvaluator() {  ;  }
   bool   EvaluateBool() const {  return Value;  }
-  void SetValue( bool v )  {  Value = v;  }
+  void SetValue( bool v ) {  Value = v;  }
   IEvaluator *NewInstance(IDataProvider *) {  return new TBoolEvaluator (Value);  }
 };
 
@@ -311,7 +315,7 @@ template <class PropertyProviderClass, class EvaluatorClass>
   public:
     TPropertyEvaluator()                           {  FData = NULL;  }
     TPropertyEvaluator(PropertyProviderClass data) {  FData = data;  }
-    virtual ~TPropertyEvaluator()                  {  }
+    virtual ~TPropertyEvaluator()                 {}
     void Data( PropertyProviderClass data )        {  FData = data;  }
     PropertyProviderClass Data()             const {  return FData;  }
   };
@@ -323,7 +327,7 @@ template <class CollectionProviderClass, class PropertyProviderClass>
   public:
     ACollection()                                 {  FData = NULL;  }
     ACollection(CollectionProviderClass data)     {  FData = data;  }
-    virtual ~ACollection()                        {  ;  }
+    virtual ~ACollection()                       {}
     PropertyProviderClass Item(int index)         {  return NULL;  }
     void Data( CollectionProviderClass data )     {  FData = data;  }
     CollectionProviderClass Data()          const {  return FData;  }
@@ -383,7 +387,7 @@ template <class CollectionProviderClass, class PropertyProviderClass, class Eval
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateString();
     }
-    virtual ~TCollectionPropertyEvaluator()  {  }
+    virtual ~TCollectionPropertyEvaluator() {}
   };
 
 // property types
@@ -394,7 +398,7 @@ const short mtUndefined  = -1,
 
 class IClassDefinition  {
 public:
-  virtual ~IClassDefinition()  {  }
+  virtual ~IClassDefinition() {}
   // returns one of the above mtXXX constants
   virtual short GetMemberType(const olxstr& propName);
   virtual olxstr GetPropertyType(const olxstr& propName);
@@ -410,9 +414,9 @@ class TEvaluatorFactory  {
   TSStrPObjList<olxstr,IClassDefinition*, true> ClassDefinitions;
 public:
   TEvaluatorFactory() {  ;  }
-  IEvaluator* Evaluator(const olxstr &Val)  {
+  IEvaluator* Evaluator(const olxstr &Val) {
     TStrList toks(Val, '.');
-    if( toks.Count() <= 1 )  {
+    if( toks.Count() <= 1 ) {
       // a special action has to be taken if operators are to be considered
       // in the future
       return NULL;
@@ -424,9 +428,9 @@ public:
     return ProcessProperties( classDef, toks );
   }
 protected:
-  IEvaluator* ProcessProperties(IClassDefinition *classDef, TStrList props)  {
+  IEvaluator* ProcessProperties(IClassDefinition *classDef, TStrList props) {
     short memberType = classDef->GetMemberType( props[0] );
-    switch( memberType )  {
+    switch( memberType ) {
       case mtProperty:
         break;
       case mtComplex:
@@ -443,14 +447,14 @@ protected:
 
 class IEvaluatorFactory  {
 public:
-  IEvaluatorFactory()  {  }
   virtual size_t EvaluatorCount() = 0;
   virtual IEvaluator *Evaluator(size_t index) = 0;
-  virtual IEvaluatorFactory* Factory(const olxstr&) {  return NULL;  }
+  virtual IEvaluatorFactory* Factory(const olxstr&) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
   virtual const olxstr& EvaluatorName(size_t index) = 0;
-  virtual ~IEvaluatorFactory() {  ;  }
+  virtual ~IEvaluatorFactory() {}
   virtual IEvaluator* Evaluator(const olxstr &Val) = 0;
-//  virtual ICollection* Collection(const olxstr &Name) = 0;
 };
 
 /*
@@ -468,73 +472,73 @@ public:
 class TcoGOperator: public IEvaluable  {
   IEvaluator *Left, *Right;
 public:
-  TcoGOperator(IEvaluator *left, IEvaluator *right)  {
+  TcoGOperator(IEvaluator *left, IEvaluator *right) {
     Left = left;
     Right = right;
     if( Left == NULL || Right == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluator");
   }
-  ~TcoGOperator()  {  ;  }
+  ~TcoGOperator() {}
   bool Evaluate() {  return *Left > *Right;  }
 };
 class TcoLOperator: public IEvaluable  {
   IEvaluator *Left, *Right;
 public:
-  TcoLOperator(IEvaluator *left, IEvaluator *right)  {
+  TcoLOperator(IEvaluator *left, IEvaluator *right) {
     Left = left;
     Right = right;
     if( Left == NULL || Right == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluator");
   }
-  ~TcoLOperator()  {  ;  }
+  ~TcoLOperator() {}
   bool Evaluate() {  return *Left < *Right;  }
 };
 class TcoNEOperator: public IEvaluable  {
   IEvaluator *Left, *Right;
 public:
-  TcoNEOperator(IEvaluator *left, IEvaluator *right)  {
+  TcoNEOperator(IEvaluator *left, IEvaluator *right) {
     Left = left;
     Right = right;
     if( Left == NULL || Right == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluator");
   }
-  ~TcoNEOperator()  {  ;  }
+  ~TcoNEOperator() {}
   bool Evaluate() {  return *Left != *Right;  }
 };
 class TcoGEOperator: public IEvaluable  {
   IEvaluator *Left, *Right;
 public:
-  TcoGEOperator(IEvaluator *left, IEvaluator *right)  {
+  TcoGEOperator(IEvaluator *left, IEvaluator *right) {
     Left = left;
     Right = right;
     if( Left == NULL || Right == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluator");
   }
-  ~TcoGEOperator()  {  ;  }
+  ~TcoGEOperator() {}
   bool Evaluate() {  return *Left >= *Right;  }
 };
 class TcoEOperator: public IEvaluable  {
   IEvaluator *Left, *Right;
 public:
-  TcoEOperator(IEvaluator *left, IEvaluator *right)  {
+  TcoEOperator(IEvaluator *left, IEvaluator *right) {
     Left = left;
     Right = right;
     if( Left == NULL || Right == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluator");
   }
-  ~TcoEOperator()  {  ;  }
+  ~TcoEOperator() {}
   bool Evaluate() {  return *Left == *Right;  }
 };
 class TcoLEOperator: public IEvaluable  {
   IEvaluator *Left, *Right;
 public:
-  TcoLEOperator(IEvaluator *left, IEvaluator *right)  {
+  TcoLEOperator(IEvaluator *left, IEvaluator *right) {
     Left = left;
     Right = right;
     if( Left == NULL || Right == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluator");
   }
-  ~TcoLEOperator()  {  ;  }
+  ~TcoLEOperator() {}
   bool Evaluate() {  return *Left <= *Right;  }
 };
 /* ___________________________________________________________________________*/
@@ -543,14 +547,14 @@ public:
 class TloAndOperator: public IEvaluable  {
   IEvaluable *OperandA, *OperandB;
 public:
-  TloAndOperator(IEvaluable *operandA, IEvaluable *operandB)  {
+  TloAndOperator(IEvaluable *operandA, IEvaluable *operandB) {
     OperandA = operandA;
     OperandB = operandB;
     if( OperandA == NULL || OperandB == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluable");
   }
-  ~TloAndOperator()  {  ;  }
-  bool Evaluate()  {
+  ~TloAndOperator() {}
+  bool Evaluate() {
     if( !OperandA->Evaluate() )  return false;
     if( !OperandB->Evaluate() )  return false;
     return true;
@@ -559,14 +563,14 @@ public:
 class TloOrOperator: public IEvaluable  {
   IEvaluable *OperandA, *OperandB;
 public:
-  TloOrOperator(IEvaluable *operandA, IEvaluable *operandB)  {
+  TloOrOperator(IEvaluable *operandA, IEvaluable *operandB) {
     OperandA = operandA;
     OperandB = operandB;
     if( OperandA == NULL || OperandB == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluable");
   }
-  ~TloOrOperator()  {  ;  }
-  bool Evaluate()  {
+  ~TloOrOperator() {}
+  bool Evaluate() {
     if( OperandA->Evaluate() )  return true;
     if( OperandB->Evaluate() )  return true;
     return false;
@@ -575,33 +579,35 @@ public:
 class TloNotOperator: public IEvaluable  {
   IEvaluable *Operand;
 public:
-  TloNotOperator(IEvaluable *operand)  {
+  TloNotOperator(IEvaluable *operand) {
     Operand = operand;
     if( Operand == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "NULL evaluable");
   }
-  ~TloNotOperator()  {  ;  }
-  bool Evaluate()  {  return !Operand->Evaluate();  }
+  ~TloNotOperator() {}
+  bool Evaluate() {  return !Operand->Evaluate();  }
 };
 /* ___________________________________________________________________________*/
 
 // signgle argument operator factory
 template <class OC, class IC, class AC>
-  class TsaFactory: public TObjectFactory<OC>  {
+  class TsaFactory: public TObjectFactory<OC> {
   public:
-    ~TsaFactory()  {  }
-    OC *NewInstance(TPtrList<IEObject>* Args)  {
-      if( Args->Count() != 1 )  return NULL;  //TODO: throw exception
+    ~TsaFactory() {}
+    OC *NewInstance(TPtrList<IEObject>* Args) {
+      if( Args->Count() != 1 )
+        throw TInvalidArgumentException(__OlxSourceInfo, "number of operands");
       return new IC((AC*)Args->GetItem(0));
     }
   };
 // two argument operator factory
 template <class OC, class IC, class AC>
-  class TtaFactory: public TObjectFactory<OC>  {
+  class TtaFactory: public TObjectFactory<OC> {
   public:
-    ~TtaFactory()  {  }
-    OC *NewInstance(TPtrList<IEObject>* Args)  {
-      if( Args->Count() != 2 )  return NULL;  //TODO: throw exception
+    ~TtaFactory() {}
+    OC *NewInstance(TPtrList<IEObject>* Args) {
+      if( Args->Count() != 2 )  
+        throw TInvalidArgumentException(__OlxSourceInfo, "number of operands");
       return new IC((AC*)Args->GetItem(0), (AC*)Args->GetItem(1));
     }
   };
@@ -613,13 +619,14 @@ class TSyntaxParser  {
   TPtrList<IEvaluable> Evaluables;
   TPtrList<IEvaluator> Evaluators;
   TStrList FErrors;
-  TSStrPObjList<olxstr,TObjectFactory<IEvaluable>*, false > LogicalOperators, ComparisonOperators, ArithmeticFunctions;
+  TSStrPObjList<olxstr,TObjectFactory<IEvaluable>*, false > LogicalOperators,
+    ComparisonOperators, ArithmeticFunctions;
 protected:
   IEvaluable* SimpleParse(const olxstr& Expression);
 public:
   TSyntaxParser(IEvaluatorFactory *FactoryInstance, const olxstr &Text);
   ~TSyntaxParser();
-  bool Evaluate()  {  return Root->Evaluate();  }
+  bool Evaluate() {  return Root->Evaluate();  }
   const TStrList& Errors() const  {  return FErrors;  }
 };
 

@@ -2241,14 +2241,14 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
   TXFactoryRegister rf;
   TTXBond_EvaluatorFactory *xbond = (TTXBond_EvaluatorFactory*)rf.BindingFactory("xbond");
   TTGlGroupEvaluatorFactory *sel = (TTGlGroupEvaluatorFactory*)rf.BindingFactory("sel");
-  sel->SetTGlGroup( &FGlRender->GetSelection() );
+  sel->SetTGlGroup(&FGlRender->GetSelection());
   TSyntaxParser SyntaxParser(&rf, Where);
   if( !SyntaxParser.Errors().Count() )  {
     BondIterator bi(*this);
     while( bi.HasNext() )  {
       TXBond& xb = bi.Next();
       if( xb.IsSelected() )  continue;
-      xbond->SetTXBond_(&xb);
+      xbond->provider->SetTXBond(&xb);
       if( SyntaxParser.Evaluate() )  
         GetRender().Select(xb);
     }
@@ -2276,14 +2276,14 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
   TXFactoryRegister rf;
   TTXAtom_EvaluatorFactory *xatom = (TTXAtom_EvaluatorFactory*)rf.BindingFactory("xatom");
   TTGlGroupEvaluatorFactory *sel = (TTGlGroupEvaluatorFactory*)rf.BindingFactory("sel");
-  sel->SetTGlGroup( &FGlRender->GetSelection() );
+  sel->SetTGlGroup(&FGlRender->GetSelection());
   TSyntaxParser SyntaxParser(&rf, Where);
   if( !SyntaxParser.Errors().Count() )  {
     AtomIterator ai(*this);
     while( ai.HasNext() )  {
       TXAtom& xa = ai.Next();
       if( xa.IsSelected() )  continue;
-      xatom->SetTXAtom(&xa);
+      xatom->provider->SetTXAtom(&xa);
       if( SyntaxParser.Evaluate() )  
         GetRender().Select(xa);
     }

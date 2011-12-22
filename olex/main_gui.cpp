@@ -122,13 +122,18 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
 void TMainForm::OnAtomPolyChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
+  olxstr Tmp("poly ");
+  Tmp << ' ';
   switch( event.GetId() )  {
-    case ID_AtomPolyNone:       XA->SetPolyhedronType(polyNone);  break;
-    case ID_AtomPolyAuto:       XA->SetPolyhedronType(polyAuto);  break;
-    case ID_AtomPolyRegular:    XA->SetPolyhedronType(polyRegular);  break;
-    case ID_AtomPolyPyramid:    XA->SetPolyhedronType(polyPyramid);  break;
-    case ID_AtomPolyBipyramid:  XA->SetPolyhedronType(polyBipyramid);  break;
+    case ID_AtomPolyNone: Tmp << "none";  break;
+    case ID_AtomPolyAuto: Tmp << "auto";  break;
+    case ID_AtomPolyRegular: Tmp << "regular";  break;
+    case ID_AtomPolyPyramid: Tmp << "pyramid";  break;
+    case ID_AtomPolyBipyramid: Tmp << "bypyramid";  break;
   }
+  if( !XA->IsSelected() )
+    Tmp << " #c" << XA->CAtom().GetId();
+  ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -142,13 +147,15 @@ void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::CellVChange()  {
   TStateChange sc(prsCellVis, FXApp->IsCellVisible());
-  pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell") : wxT("Hide cell")));
+  pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell")
+    : wxT("Hide cell")));
   OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void TMainForm::BasisVChange()  {
   TStateChange sc(prsBasisVis, FXApp->IsBasisVisible());
-  pmModel->SetLabel(ID_BasisVisible, (FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis")));
+  pmModel->SetLabel(ID_BasisVisible,
+    (FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis")));
   OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................

@@ -182,10 +182,15 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
       TPtrList<IEObject> Args(2);
       Args[0] = LeftEvaluator;
       Args[1] = RightEvaluator;
-      if( loFactory != NULL )
-        RightCondition = Evaluables.Add(coFactory->NewInstance(&Args));
-      else
-        LeftCondition = Evaluables.Add(coFactory->NewInstance(&Args));
+      try {
+        if( loFactory != NULL )
+          RightCondition = Evaluables.Add(coFactory->NewInstance(&Args));
+        else
+          LeftCondition = Evaluables.Add(coFactory->NewInstance(&Args));
+      }
+      catch(const TExceptionBase &e) {
+        throw TFunctionFailedException(__OlxSourceInfo, e);
+      }
       // clean up the values for the next loop
       RightExp.SetLength(0);
       LeftExp.SetLength(0);

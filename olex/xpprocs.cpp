@@ -10306,3 +10306,31 @@ void TMainForm::macTolman(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << "Resulting angle: " << olxstr::FormatFloat(3, 180*(2*sa/3)/M_PI);
 }
 //..............................................................................
+void TMainForm::macPoly(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  short pt = 0;
+  const olxstr &str_t = Cmds.GetLastString();
+  if (str_t.Equalsi("none"))
+    pt = 0;
+  else if (str_t.Equalsi("auto"))
+    pt = polyAuto;
+  else if (str_t.Equalsi("regular"))
+    pt = polyRegular;
+  else if (str_t.Equalsi("pyramid"))
+    pt = polyPyramid;
+  else if (str_t.Equalsi("bipyramid"))
+    pt = polyBipyramid;
+  else {
+    E.ProcessingError(__OlxSrcInfo, "Undefined poly type: ").quote() << str_t;
+    return;
+  }
+  Cmds.Delete(Cmds.Count()-1);
+  TXAtomPList atoms = FindXAtoms(Cmds, true, true);
+  atoms.ForEach(ACollectionItem::IndexTagSetter(
+    FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
+  atoms.Pack(ACollectionItem::IndexTagAnalyser(
+    FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
+  for (size_t i=0; i < atoms.Count(); i++)
+    atoms[i]->SetPolyhedronType(pt);
+}
+//..............................................................................
+
