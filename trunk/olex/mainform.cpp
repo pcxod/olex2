@@ -461,218 +461,343 @@ void TMainForm::XApp(TGXApp *XA)  {
 ////////////////////////////////////////////////////////////////////////////////
   Macros.Init();
   TLibrary &Library = XA->GetLibrary();
-  this_InitMacroAD(Reap, @reap, "b&;r&;*", fpAny,
-"This macro loads a file if provided as an argument. If no argument is provided, it\
- shows a file open dialog");
+  this_InitMacroAD(Reap, @reap,
+    "b-blind&;"
+    "r-also relaod the default style&;"
+    "*-read and overlay",
+    fpAny,
+    "This macro loads a file if provided as an argument. If no argument is "
+    "provided, it shows a file open dialog");
   this_InitMacroD(Pict,
-"c-embossed output in color&;bw-embossed output in b&w&;pq-highest (picture) quality",
-  fpOne|fpTwo,
-"Outputs a picture. Output file name is required, if a second numerical parameter is\
- provided, it is considered to be image resolution in range [0.1-10].");
+    "c-embossed output in color&;"
+    "bw-embossed output in b&w&;"
+    "pq-highest (picture) quality",
+    fpOne|fpTwo,
+    "Outputs a raster picture. Output file name is required, if a second "
+    "numerical parameter is provided, it is considered to be image resolution "
+    "in range [0.1-10] in screen sizes, anythin greater than 10 is considered "
+    "as the desired picture width.");
   this_InitMacroD(Picta, "pq-picture quality", fpOne|fpTwo,
-"A portable version of pict with limited resolution (OS/graphics card dependent). Not stable on some graphics cards");
-  this_InitMacroD(Echo, "m-the printing color (info, warning, error or exceptiion)", fpAny,
-"Prints provided string, functions are evaluated before printing");
-  this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled&;color_bond-bonds\
- are colored&;div_pie-number [4] of stripes in the octant&;lw_pie-line width [0.5] of the octant\
- stripes&;lw_octant-line width [0.5] of the octant arcs&;lw_font-line width [1] for the vector\
- font&;lw_ellipse-line width [0.5] of the ellipse&;scale_hb-scale for H-bonds [0.5]&;p-perspective\
- &;octants-comma separated atom types/names ADP's of which to be rendered with octants\
- [-$C]&;bond_outline_color-bond outline color[0xffffff]&;bond_outline_oversize-the extra size of the\
- outline in percents [10]&;atom_outline_color-atom outline color[0xffffff]&;atom_outline_oversize- the\
- extra size of outline in percents[5]", fpOne|psFileLoaded, 
-    "Experimental postscript rendering");
-  this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
+    "A portable version of pict with limited resolution (OS/graphics card "
+    "dependent). Not stable on some graphics cards");
+  this_InitMacroD(Echo,
+    "m-the printing color (info, warning, error or exceptiion)",
+    fpAny,
+    "Prints provided string, functions are evaluated before printing");
+  this_InitMacroD(PictPS,
+    "color_line-lines&;"
+    "color_fill-ellipses are filled&;"
+    "color_bond-bonds are colored&;"
+    "div_pie-number [4] of stripes in the octant&;"
+    "lw_pie-line width [0.5] of the octant stripes&;"
+    "lw_octant-line width [0.5] of the octant arcs&;"
+    "lw_font-line width [1] for the vector font&;"
+    "lw_ellipse-line width [0.5] of the ellipse&;"
+    "scale_hb-scale for H-bonds [0.5]&;"
+    "p-perspective &;"
+    "octants-comma separated atom types/names ADP's of which to be rendered "
+    "with octants [-$C]&;"
+    "bond_outline_color-bond outline color[0xffffff]&;"
+    "bond_outline_oversize-the extra size of the outline in percents [10]&;"
+    "atom_outline_color-atom outline color[0xffffff]&;"
+    "atom_outline_oversize- the extra size of outline in percents[5]",
+    fpOne|psFileLoaded, 
+    "Postscript rendering");
+  this_InitMacroD(PictTEX,
+    "color_line-lines&;"
+    "color_fill-ellipses are filled",
+    fpOne|psFileLoaded, 
     "Experimental tex/pgf rendering");
-  this_InitMacroD(PictS, "a-view angle [6]&;s-separation between the images in % [10]&;h-output image height [screen*resolution]", fpOne|fpTwo|psFileLoaded, 
-    "Experimental stereoscopic picture output");
-  this_InitMacroD(PictPR, "", fpOne|psFileLoaded, 
-    "Experimental PovRay output");
+  this_InitMacroD(PictS,
+    "a-view angle [6]&;"
+    "s-separation between the images in % [10]&;"
+    "h-output image height [screen*resolution]",
+    fpOne|fpTwo|psFileLoaded, 
+    "Stereoscopic picture rendering");
+  this_InitMacroD(PictPR, EmptyString(), fpOne|psFileLoaded, 
+    "PovRay output");
   // contains an accumulation buffer. prints only when '\n' is encountered
   this_InitMacroD(Post, EmptyString(), fpAny,
-"Prints a string, but only after a new line character is encountered");
+    "Prints a string, but only after a new line character is encountered");
 
   this_InitMacroD(Bang, EmptyString(), fpAny | psFileLoaded,
-"Prints bonds and angles table for selected atoms");
+    "Prints bonds and angles table for selected/given atoms");
   this_InitMacroD(Grow,
-"s-grow shells vs fragments&;w-grows the rest of the structure, using already "
-"applied generators&;t-grows only provided atoms/atom types&;b-grows all "
-"visible grow bonds (when in a grow mode)", fpAny | psFileLoaded,
-"Grows whole structure or provided atoms only");
+    "s-grow shells vs fragments&;"
+    "w-grows the rest of the structure, using already applied generators&;"
+    "t-grows only provided atoms/atom types&;"
+    "b-grows all visible grow bonds (when in a grow mode)",
+    fpAny|psFileLoaded,
+    "Grows whole structure or provided atoms only");
   this_InitMacroD(Uniq, EmptyString(), fpAny | psFileLoaded,
-"Shows only fragments specified by atom name(s) or selection");
+    "Shows only fragments specified by atom name(s) or selection");
 
-  this_InitMacroD(Group, "n-a custom name can be provided", fpNone|psFileLoaded,
-"Groups current visible objects or selection");
+  this_InitMacroD(Group,
+    "n-a custom name can be provided",
+    fpNone|psFileLoaded,
+  "Groups current visible objects or selection");
 
   this_InitMacroD(Fmol, EmptyString(), fpNone|psFileLoaded,
-"Shows all fragments (as opposite to uniq)");
+    "Shows all fragments (as opposite to uniq)");
   this_InitMacroD(Clear, EmptyString(), fpNone,
-"Clears console buffer (text)");
+    "Clears console buffer (text)");
 
   this_InitMacroD(Cell, EmptyString(), fpNone|fpOne|psFileLoaded,
-"If no arguments provided inverts visibility of unit cell, otherwise sets it to\
- the boolean value of the parameter");
+    "If no arguments provided inverts visibility of unit cell, otherwise sets"
+    " it to the boolean value of the parameter");
   this_InitMacroD(Rota, EmptyString(), fpTwo|fpFive,
-"For two arguments the first one specifies axis of rotation (1,2,3 or x,y,z) and\
- the second one the rotation angle in degrees. For five arguments the first three\
- arguments specify the rotation vector [x,y,z] the forth parameter is the rotation\
- angle and the fifth one is the increment - the rotation will be continuous");
+    "For two arguments the first one specifies axis of rotation (1,2,3 or "
+    "x,y,z) and the second one the rotation angle in degrees. For five "
+    "arguments the first three arguments specify the rotation vector [x,y,z] "
+    "the forth parameter is the rotation angle and the fifth one is the "
+    "increment - the rotation will be continuous");
 
   this_InitMacroD(Listen, EmptyString(), fpAny,
-"Listens for changes in a file provided as argument. If the file content changes\
- it is automatically reloaded in Olex2. If no arguments provided prints current\
- status of the mode");
+    "Listens for changes in a file provided as argument. If the file content "
+    "changes it is automatically reloaded in Olex2. If no arguments provided "
+    "prints current status of the mode");
   #ifdef __WIN32__
   this_InitMacroD(WindowCmd, EmptyString(), fpAny^(fpNone|fpOne),
-"Windows specific command which send a command to a process with GUI window. First\
- argument is the window name, the second is the command. 'nl' is considered as a\
- new line char and 'sp' as white space char");
+    "Windows specific command which send a command to a process with GUI "
+    "window. First argument is the window name, the second is the command. "
+    "'nl' is considered as a new line char and 'sp' as white space char");
   #endif
   this_InitMacroD(ProcessCmd, EmptyString(), fpAny^(fpNone|fpOne),
-"Send a command to current process. 'nl' is translated to the new line char and\
- 'sp' to the white space char");
+    "Send a command to current process. 'nl' is translated to the new line "
+    "char and 'sp' to the white space char");
   this_InitMacroD(Wait, "r-during wait all events are processed", fpOne,
-"Forces Olex2 and calling process to sleep for provided number of milliseconds");
+    "Forces Olex2 and calling process to sleep for provided number of "
+    "milliseconds");
 
   this_InitMacroD(SwapBg, EmptyString(), fpNone,
-"Swaps current background to white or vice-versa");
+    "Swaps current background to white or vice-versa");
   this_InitMacroD(Silent, EmptyString(), fpNone|fpOne,
-"If no argument is provided, prints out current mode status. Takes 'on' and 'off'\
- values to turn Olex2 log on and off");
+    "If no argument is provided, prints out current mode status. Takes 'on' "
+    "and 'off' values to turn Olex2 log on and off");
   this_InitMacroD(Stop, EmptyString(), fpOne,
-"Switches specified mode off");
+    "Switches specified mode off");
 
   this_InitMacroD(Exit, EmptyString(), fpNone, "Exits Olex2");
   this_InitMacroAD(Exit, quit, EmptyString(), fpNone, "Exits Olex2");
 
-  this_InitMacroD(Pack, "c-specifies if current lattice content should not be deleted", fpAny|psFileLoaded,
-    "Packs structure within default or given volume(6 or 2 values for parallelepiped "
-    "or 1 for sphere). If atom names/types are provided it only packs the provided atoms.");
-  this_InitMacroD(Sel, "a-select all&;u-unselect all&;i-invert selection", fpAny,
-"If no arguments provided, prints current selection. This includes distances, angles\
- and torsion angles. Selects atoms fulfilling provided conditions. An extended\
- syntax include keyword 'where' and 'rings' which allow selecting atoms and bonds\
- according to their properties, like type and length or rings of particular connectivity\
- like C6 or NC5. If the 'where' keyword is used, logical operators, like and (&&),\
- and or (||) can be used to refine the selection");
+  this_InitMacroD(Pack,
+    "c-specifies if current lattice content should not be deleted",
+    fpAny|psFileLoaded,
+    "Packs structure within default or given volume(6 or 2 values for "
+    "parallelepiped "
+    "or 1 for sphere). If atom names/types are provided it only packs the "
+    "provided atoms.");
+  this_InitMacroD(Sel,
+    "a-select all&;"
+    "u-unselect all&;"
+    "i-invert selection",
+    fpAny,
+    "If no arguments provided, prints current selection. This includes "
+    "distances, angles and torsion angles and other geometrical parameters. "
+    "Selects atoms fulfilling provided conditions, like"
+    "\nsel $type - selects any particular atom type; type can be one of the "
+    "following shortcuts - * - for all atoms, M - for metals, X - for halogens"
+    "\nsel $*,type - selects all but type atoms"
+    "\n\n"
+    "An extended syntax include keyword 'where' and 'rings' which "
+    "allow selecting atoms and bonds according to their properties, like type "
+    "and length or rings of particular connectivity like C6 or NC5. If the "
+    "'where' keyword is used, logical operators, like and (&&), and or (||) "
+    "can be used to refine the selection. For example:"
+    "\nsel atoms where xatom.bai.z > 2 - to select all atoms heavier after H"
+    "\nsel bonds where xbond.length > 2 - to select all bonds longer than 2 A"
+    "\nsel bonds where xbond.b.bai.z == 1 - to select all bonds where the "
+    "lightest atoms is H"
+    );
 
   this_InitMacroD(Capitalise, "", (fpAny|psFileLoaded)^fpNone,
     "Changes atom labels capitalisation for all/given/selected atoms. The"
     " first argument is the template like Aaaa");
 
-  this_InitMacroD(PiM, "l-display labels for the created lines", fpAny|psFileLoaded,
+  this_InitMacroD(PiM,
+    "l-display labels for the created lines",
+    fpAny|psFileLoaded,
     "Creates an illustration of a pi-system to metal bonds");
 
-  this_InitMacroD(Esd, "label-creates a graphics label", fpAny|psFileLoaded,
-    "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\
- matrix coming from the ShelXL refinement with negative 'MORE' like 'MORE -1' option");
+  this_InitMacroD(Esd,
+    "label-creates a graphics label",
+    fpAny|psFileLoaded,
+    "This procedure calculates possible parameters for the selection and "
+    "evaluates their esd using the variance-covariance matrix coming from the "
+    "ShelXL refinement with negative 'MORE' like 'MORE -1' option");
   
-  this_InitMacroD(Name, "c-enables checking labels for duplications&;s-simply changes suffix\
-  of provided atoms to the provided one (or none)&;cs-leaves current selection unchanged", fpOne | fpTwo,
-"Names atoms. If the 'sel' keyword is used and a number is provided as second argument\
- the numbering will happen in the order the atoms were selected (make sure -c option\
- is added)");
+  this_InitMacroD(Name,
+    "c-enables checking labels for duplications&;"
+    "s-simply changes suffix of provided atoms to the provided one (or none)&;"
+    "cs-leaves current selection unchanged",
+    fpOne|fpTwo,
+    "Names atoms. If the 'sel' keyword is used and a number is provided as "
+    "second argument the numbering will happen in the order the atoms were "
+    "selected (make sure -c option is added)");
   this_InitMacroD(TelpV, EmptyString(), fpOne,
-"Calculates ADPs for given thermal probability factor");
+    "Calculates ADPs for given thermal probability factor");
   this_InitMacroD(Labels,
-"p-part&;l-label&;v-variables&;o-occupancy&;co-chemical occupancy&;a-afix&;h-show hydrogen atom labels&;\
-f-fixed parameters&;u-Uiso&;r-Uiso multiplier for riding atoms&;ao-actual occupancy\
- (as in the ins file)&;qi-Q peak intensity&;i-display labels for identity atoms only&;f-applies given\
- format to the labels like -f=AaBB Aaaa or -f=Aabb etc",  fpNone,
-"Inverts visibility of atom labels on/off. Look at the options");
+    "p-part&;"
+    "l-label&;"
+    "v-variables&;"
+    "o-occupancy&;"
+    "co-chemical occupancy&;"
+    "a-afix&;"
+    "h-show hydrogen atom labels&;"
+    "f-fixed parameters&;"
+    "u-Uiso&;"
+    "r-Uiso multiplier for riding atoms&;"
+    "ao-actual occupancy (as in the ins file)&;"
+    "qi-Q peak intensity&;"
+    "i-display labels for identity atoms only&;"
+    "f-applies given format to the labels like -f=AaBB Aaaa or -f=Aabb etc",
+    fpNone,
+    "Inverts visibility of atom labels on/off. Look at the options");
 
   this_InitMacroD(SetEnv, EmptyString(), fpTwo,
 "Sets an environmental variable");
 
   this_InitMacroD(SetView, "c-center", fpAny,
-    "Sets view normal to the normal of the selected plane, to a bond or mean line");
+    "Sets view normal to the normal of the selected plane, to a bond or mean "
+    "line");
   this_InitMacroD(Info,
     "s-sorts the atom list&;p-coordinate precision [3]&;f-print fractional "
     "coordinates vs Cartesian [true]", fpAny,
     "Prints out information for gived [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
-"Prints available information. If no arguments provided prints available commands");
+    "Prints available information. If no arguments provided prints available "
+    "commands");
   this_InitMacroD(Matr, EmptyString(), fpNone|fpOne|fpTwo|fpThree|fpNine,
-"Displays or sets current orientation matrix. For single argument, 1,2,3 001,"
-" 111, etc values are acceptable, two values taken are of the klm form, which"
-" specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three values pecify "
-"the view normal and nine values provide a full matrix");
-  this_InitMacroD(Qual, "h-High&;m-Medium&;l-Low", fpNone, "Sets drawings quality");
+    "Displays or sets current orientation matrix. For single argument, 1,2,3 "
+    "001, 111, etc values are acceptable, two values taken are of the klm "
+    "form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three "
+    "values pecify the view normal and nine values provide a full matrix");
+  this_InitMacroD(Qual,
+    "h-High&;"
+    "m-Medium&;"
+    "l-Low", fpNone,
+    "Sets drawings quality");
 
-  this_InitMacroD(Line, "n-just sets current view normal to the line without creating the object",
-    fpAny, "Creates a line or best line for provided atoms");
+  this_InitMacroD(Line,
+    "n-just sets current view normal to the line without creating the object",
+    fpAny,
+    "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
-  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane&;we-use weights proportional to the (atomic weight)^we", 
+  this_InitMacroD(Mpln,
+    "n-just orient, do not create plane&;"
+    "r-create regular plane&;"
+    "we-use weights proportional to the (atomic mass)^we", 
     fpAny, "Sets current view along the normal of the best plane");
-  this_InitMacroD(Cent, EmptyString(), fpAny, "creates a centroid for given/selected/all atoms");
+  this_InitMacroD(Cent, EmptyString(), fpAny,
+    "Creates a centroid for given/selected/all atoms");
   this_InitMacroD(Mask, EmptyString(), fpAny^fpNone, 
-"Sets primitives for atoms or bonds according to provided mask.\
-Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 2048' - this resets hydrogen bond style to default");
+    "Sets primitives for atoms or bonds according to provided mask. Accepts "
+    "atoms, bonds, hbonds or a name (like from LstGO).\n"
+    "Example: 'mask hbonds 2048' - this resets hydrogen bond style to "
+    "default");
 
   this_InitMacroD(ARad, EmptyString(), fpAny^fpNone, 
-"Changes how the atoms are drawn [sfil - sphere packing, pers - static radii, isot - radii proportional to Ueq,\
- isoth - as isot, but applied to H atoms as well]");
-  this_InitMacroD(ADS, EmptyString(), fpAny^(fpNone), "Changes atom draw style [sph,elp,std]");
-  this_InitMacroD(AZoom, EmptyString(), fpAny^fpNone, "Modifies given atoms [all] radius. The first argument is the new radius in %");
-  this_InitMacroD(BRad, EmptyString(), fpAny^fpNone, "Sets provided [all] bonds radius to given number (first argument)");
+    "Changes how the atoms are drawn [sfil - sphere packing, pers - static "
+    "radii, isot - radii proportional to Ueq, isoth - as isot, but applied to "
+    "H atoms as well]");
+  this_InitMacroD(ADS, EmptyString(), fpAny^(fpNone),
+    "Changes atom draw style [sph,elp,std]");
+  this_InitMacroD(AZoom, EmptyString(), fpAny^fpNone,
+    "Modifies given atoms [all] radius. The first argument is the new radius "
+    "in %");
+  this_InitMacroD(BRad, EmptyString(), fpAny^fpNone,
+    "Sets provided [all] bonds radius to given number (first argument)");
 
-  this_InitMacroD(Hide, EmptyString(), fpAny, "Hides selected objects or provided atom names (no atom related objects as bonds are hidden automatically)");
-  this_InitMacroD(Kill, "au-kill atoms in the asymmetric unit (disregarding visibility/availability)."
-    " This option is intended for internal use - the model is not rebuilt after its execution",
-    fpAny^fpNone, "Deletes provided [selected] atoms");
+  this_InitMacroD(Hide, EmptyString(), fpAny,
+    "Hides selected objects or provided atom names (no atom related objects as"
+    " bonds are hidden automatically)");
+  this_InitMacroD(Kill,
+    "au-kill atoms in the asymmetric unit (disregarding visibility/"
+    "availability). This option is intended for the internal use - the model is"
+    " not rebuilt after its execution",
+    fpAny^fpNone,
+    "Deletes provided/selected atoms, bonds and other objects");
 
-  this_InitMacroD(Exec, "s-synchronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command");
-  this_InitMacroD(Shell, "", fpAny,
-    "If no arguments launches a new interactive shell, otherwise runs provided file in the interactive "
-    "shell (on windows ShellExecute is used to avoid flickering console)");
+  this_InitMacroD(Exec,
+    "s-synchronise&;"
+    "o-detached&;"
+    "d-output dub file name&;"
+    "q-do not post output to console",
+    fpAny^fpNone,
+    "Executes external process");
+  this_InitMacroD(Shell, EmptyString(), fpAny,
+    "If no arguments launches a new interactive shell, otherwise runs provided"
+    " file in the interactive shell (on windows ShellExecute is used to avoid "
+    "flickering console)");
   this_InitMacro(Save, , fpAny^fpNone);
   this_InitMacro(Load, , fpAny^fpNone);
   this_InitMacro(Link, , fpNone|fpOne);
-  this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)");
-  this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)");
+  this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne,
+    "Prints default style or sets it (none resets)");
+  this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne,
+    "Prints default scene parameters or sets it (none resets)");
 
-  this_InitMacro(Basis, , fpNone|fpOne);
-  this_InitMacro(Lines, , fpOne);
+  this_InitMacroD(Basis, EmptyString(), fpNone|fpOne,
+    "Shows/hides the orientation basis");
+  this_InitMacroD(Lines, EmptyString(), fpOne,
+    "Sets the number of visible text lines in the console. Use -1 to dysplay "
+    "all lines");
 
   this_InitMacro(Ceiling, , fpOne);
   this_InitMacro(Fade, , fpThree);
 
   this_InitMacro(WaitFor, , fpOne);
 
-  this_InitMacro(HtmlPanelSwap, , fpNone|fpOne);
+  this_InitMacroD(HtmlPanelSwap, EmptyString(), fpNone|fpOne,
+    "Swaps or sets the position of the HTML GUI panel. If no arguments given -"
+    " swaps the panel position. The position can be specified by left and "
+    "right");
   this_InitMacro(HtmlPanelWidth, , fpNone|fpOne);
-  this_InitMacro(HtmlPanelVisible, , fpNone|fpOne|fpTwo);
+  this_InitMacroD(HtmlPanelVisible, EmptyString(), fpNone|fpOne|fpTwo,
+    "Swaps visibility of the HTML GUI panel or sets it to a given state"
+    " (true/false)");
 
   this_InitMacroD(QPeakScale, EmptyString(), fpNone|fpOne,
-    "Prints/sets the scale of dependency of the Q-peak transparency vs height");
+    "Prints/sets the scale of dependency of the Q-peak transparency vs "
+    "height");
   this_InitMacroD(QPeakSizeScale, EmptyString(), fpNone|fpOne,
-    "Prints/sets the scale the Q-peak size relative to other atoms, default is 1");
-  this_InitMacroD(Label, "type-type of labels to make (works only for the PostScript output);"
-    " possible options - subscript, brackers, default&;symm-symmetry dependent tag type {[$], #, full}&;"
+    "Prints/sets the scale the Q-peak size relative to other atoms, default is"
+    " 1");
+  this_InitMacroD(Label,
+    "type-type of labels to make - subscript, brackers, default&;"
+    "symm-symmetry dependent tag type {[$], #, full}&;"
     "cif-creates labels for CIF data a combination of {b,a,t,h}",
- fpAny, "Creates moveable labels for provided atoms/bonds/angles (selection)");
+    fpAny,
+    "Creates moveable labels for provided atoms/bonds/angles (selection)");
 
-  this_InitMacroD(Focus, EmptyString(), fpNone, "Sets input focus to the console");
-  this_InitMacroD(Refresh, EmptyString(), fpNone, "Refreshes the GUI");
-  this_InitMacroD(Move,"cs-leaves selection unchanged&;c-copy moved atom", fpNone|fpTwo,
-  "moves two atoms as close to each other as possible; if no atoms given, moves all fragments\
-  as close to the cell center as possible");
+  this_InitMacroD(Focus, EmptyString(), fpNone,
+    "Sets input focus to the console");
+  this_InitMacroD(Refresh, EmptyString(), fpNone,
+    "Refreshes the GUI");
+  this_InitMacroD(Move,
+    "cs-leaves selection unchanged&;"
+    "c-copy moved atom",
+    fpNone|fpTwo,
+    "Moves two atoms as close to each other as possible; if no atoms given, "
+    "moves all fragments as close to the cell center as possible");
 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
-  this_InitMacroD(Fvar, EmptyString(), fpAny|psCheckFileTypeIns, "Assigns/release occupancy for "
-    "given atoms. Examples:"
-    "\n-'fvar' if nothing is selected will print current values of the variables. For a selection "
-    "of even number atoms, will create a new variable and link occupancies of the first half of "
-    "the selection to occupancy the other half of the selection. "
+  this_InitMacroD(Fvar, EmptyString(), fpAny|psCheckFileTypeIns,
+    "Assigns/release occupancy for given atoms. Examples:"
+    "\n-'fvar' if nothing is selected will print current values of the "
+    "variables. For a selection of even number atoms, will create a new "
+    "variable and link occupancies of the first half of the selection to "
+    "occupancy the other half of the selection. "
     "\n-'fvar 0' - makes occupancy of provided atoms refineable"
     "\n-'fvar 1' - fixes occupancy of provided atoms at current value"
-    "\n-'fvar 1 1' - fixes occupancy of provided atoms at chemical occupancy of 1"
-    "\n-'fvar 2' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied by "
-    "current value of the occupancy of the given atoms, or, if occupancy already linked to a variable "
-    "- it will replace the variable index."
-    "\n-'fvar 2 0.5' will link occupancy of the given atoms to the value of the 2nd FVAR multiplied "
-    "by 0.5.");
+    "\n-'fvar 1 1' - fixes occupancy of provided atoms at chemical occupancy "
+    "of 1"
+    "\n-'fvar 2' will link occupancy of the given atoms to the value of the "
+    "2nd FVAR multiplied by current value of the occupancy of the given atoms,"
+    " or, if occupancy already linked to a variable - it will replace the "
+    "variable index."
+    "\n-'fvar 2 0.5' will link occupancy of the given atoms to the value of "
+    "the 2nd FVAR multiplied by 0.5.");
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
   this_InitMacroD(Part,
     "p-number of parts&;lo-link ocupancy of given atoms through FVAR's&;"
@@ -683,51 +808,60 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
     "occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
   this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
     (fpAny^fpNone)|psCheckFileTypeIns,
-    "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");
+    "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and "
+    "119");
   this_InitMacro(Dfix, cs-do not clear selection&;e, fpAny|psCheckFileTypeIns);
   this_InitMacroD(Tria, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Adds a distance restraint for bonds and 'angle' restraint for the angle");
+    "Adds a distance restraint for bonds and 'angle' restraint for the angle");
   this_InitMacroD(Dang, "cs-do not clear selection", fpAny|psCheckFileTypeIns, 
-"Adds a ShelX compatible angle restraint");
+    "Adds a ShelX compatible angle restraint");
   this_InitMacroD(Sadi, EmptyString(), fpAny|psCheckFileTypeIns,
-"Similar distances restraint");
+    "Similar distances restraint");
   this_InitMacroD(RRings,"cs-do not clear selection" , fpAny,
-"Makes all provided rings [like C6 or NC5] regular (flat and all distances similar). If a selection "
-"is given - the whole rings must be selected");
+    "Makes all provided rings [like C6 or NC5] regular (flat and all distances"
+    " similar). If a selection is given - the whole rings must be selected");
   this_InitMacroD(Flat, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Forces flat group restraint for at least 4 provided atoms");
+    "Forces flat group restraint for at least 4 provided atoms");
   this_InitMacroD(Chiv, "cs- do not clear selection", fpAny|psCheckFileTypeIns,
-"Forces chiral volume of atom(s) to '0' or provided value");
+    "Forces chiral volume of atom(s) to '0' or provided value");
   this_InitMacroD(DELU, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Rigid bond constraint. If no atoms provided, all non-H atoms considered");
+    "Rigid bond constraint. If no atoms provided, all non-H atoms considered");
   this_InitMacroD(SIMU, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Forces similarity restraint for Uij of provided atoms. If no atoms provided, all non-H atoms considered");
+    "Forces similarity restraint for Uij of provided atoms. If no atoms "
+    "provided, all non-H atoms considered");
   this_InitMacroD(ISOR, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Forses Uij of provided atoms to behave in isotropic manner. If no atoms provided, all non-H atoms considered");
+    "Forses Uij of provided atoms to behave in isotropic manner. If no atoms "
+    "provided, all non-H atoms considered");
 
   this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded);
 
   this_InitMacroD(Mode, 
-"a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only\n&;\
-p-[name] prefix\n&;\
-s-[grow] short interactions; [name] suffix; [fit] split&;\
-t-[name] type\n&;\
-c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;\
-r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms; "
-"[fit] rotation angle increment (smooth rotation by default)\n&;\
-v-[grow] use user provided delta for connectivity analysis, default 2A\n&;\
-shells-[grow] grow atom shells vs fragments", 
-(fpAny^fpNone)|psFileLoaded, 
-    "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split, fit");
+    "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only\n&;"
+    "p-[name] prefix\n&;"
+    "s-[grow] short interactions; [name] suffix; [fit] split&;"
+    "t-[name] type\n&;"
+    "c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;"
+    "r-[split] a restraint/constraint for split atoms; [grow] show radial "
+    "bonds between the same atoms; [fit] rotation angle increment (smooth "
+    "rotation by default)\n&;"
+    "v-[grow] use user provided delta for connectivity analysis, default 2A\n&;"
+    "shells-[grow] grow atom shells vs fragments", 
+    (fpAny^fpNone)|psFileLoaded, 
+    "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
+    " name, occu, pack, part, split, fit");
 
-  this_InitMacroD(Text, EmptyString(), fpNone, "shows the console buffer in an external editor, defined by defeditor variable");
-  this_InitMacroD(ShowStr, EmptyString(), fpNone|fpOne|psFileLoaded, "shows/hides structure and console buffer");
+  this_InitMacroD(Text, EmptyString(), fpNone,
+    "Shows the console buffer in an external editor, defined by defeditor "
+    "variable");
+  this_InitMacroD(ShowStr, EmptyString(), fpNone|fpOne|psFileLoaded,
+    "Shows/hides structure and console buffer");
   // not implemented
   this_InitMacro(Bind, , fpTwo);
 
   this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour);
-  this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms", 
-    fpAny|psCheckFileTypeIns, "splits provided atoms along the longest axis of the ADP");
+  this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms",
+    fpAny|psCheckFileTypeIns,
+    "Splits provided atoms along the longest axis of the ADP");
   this_InitMacro(ShowP, m-do not modify the display view, fpAny);
 
   this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns);
@@ -738,26 +872,44 @@ shells-[grow] grow atom shells vs fragments",
   // not implemented
   this_InitMacro(HklExtract, , fpOne|psFileLoaded);
 
-  this_InitMacroD(Direction, EmptyString(), fpNone, "prints current orientation of the model in factional coordinates");
+  this_InitMacroD(Direction, EmptyString(), fpNone,
+    "Prints current orientation of the model in factional coordinates");
   this_InitMacro(ViewGrid, , fpNone|fpOne);
   this_InitMacro(Undo, , fpNone);
 
-  this_InitMacroD(Individualise, EmptyString(), fpAny, "Moves provided atoms to individual collections, so that the atom properties,\
- such as draw style and appearance can be changed separately of the group. The first call to this macro creates a group\
- unique to the asymmetric unit, the second call makes the atom unique to the lattice");
-  this_InitMacroD(Collectivise, EmptyString(), fpAny, "Does the opposite to the Individialise. If provided atoms are unique to the lattice\
- a call to this function makes them uniq to the asymmetric unit, the following call makes the uniq to the element type");
+  this_InitMacroD(Individualise, EmptyString(), fpAny,
+    "Moves provided atoms to individual collections, so that the atom "
+    "properties, such as draw style and appearance can be changed separately "
+    "of the group. The first call to this macro creates a group unique to the"
+    " asymmetric unit, the second call makes the atom unique to the lattice");
+  this_InitMacroD(Collectivise, EmptyString(), fpAny,
+    "Does the opposite to the Individialise. If provided atoms are unique to "
+    "the lattice a call to this function makes them uniq to the asymmetric "
+    "unit, the following call makes the uniq to the element type");
 
-  this_InitMacroD(Popup,"w-width&;h-height&;t-title&;b-border[trscaip],t-caption bar, r-sizeable border, s-system menu, c-close box,\
- a-maximise box, i-minimise box, p-window should stay on the top of others&;x-left position&;y-top position&;ondblclick-a macro or commands to\
- execute when window is double clicked&;onsize-a macro to be executed when the popup is resized&;s-do show the window after the creation",
-    fpTwo, "Creates a popup HTML window. Usage: popup popup_name html_source");
+  this_InitMacroD(Popup,
+    "w-width&;"
+    "h-height&;"
+    "t-title&;"
+    "b-border[trscaip],t-caption bar, r-sizeable border, s-system menu, "
+    "c-close box, a-maximise box, i-minimise box, p-window should stay on the"
+    " top of others&;x-left position&;y-top position&;ondblclick-a macro or "
+    "commands to execute when window is double clicked&;onsize-a macro to be "
+    "executed when the popup is resized&;s-do show the window after the creation",
+    fpTwo,
+    "Creates a popup HTML window. Usage: popup popup_name html_source");
 
-  this_InitMacroD(Delta, EmptyString(), fpNone|fpOne, "Prints/sets current delta fir the covalent bonds");
-  this_InitMacroD(DeltaI, EmptyString(), fpNone|fpOne, "Prints/sets current delta for short interactions");
+  this_InitMacroD(Delta, EmptyString(), fpNone|fpOne,
+    "Prints/sets current delta fir the covalent bonds");
+  this_InitMacroD(DeltaI, EmptyString(), fpNone|fpOne,
+    "Prints/sets current delta for short interactions");
 
-  this_InitMacroAD(Python, @py, "i-shows a text input box&;l-loads a file into a text input box", fpAny,
-    "Runs provided python lines '\n' is used as new line separator or shows a text input window");
+  this_InitMacroAD(Python, @py,
+    "i-shows a text input box&;"
+    "l-loads a file into a text input box",
+    fpAny,
+    "Runs provided python lines '\\n' is used as new line separator or shows "
+    "a text input window");
 
   this_InitMacro(CreateMenu, c&;s&;r&;m, fpOne|fpTwo|fpThree);
   this_InitMacro(DeleteMenu, , fpOne);
@@ -781,129 +933,175 @@ shells-[grow] grow atom shells vs fragments",
   this_InitMacro(Patt, ,fpNone|psCheckFileTypeIns);
   this_InitMacro(Export, ,fpNone|fpOne|psCheckFileTypeCif);
 
-  this_InitMacro(InstallPlugin,"l-local installation from a zip file, which must contains index.ind" ,fpOne);
+  this_InitMacro(InstallPlugin,
+    "l-local installation from a zip file, which must contains index.ind",
+    fpOne);
   this_InitMacro(SignPlugin, ,fpAny^(fpOne|fpNone));
   this_InitMacro(UninstallPlugin, ,fpOne);
   this_InitMacro(UpdateFile, f,fpOne);
   this_InitMacro(NextSolution, ,fpNone);
 
-  this_InitMacroD(Match, "s-subgraph match&;w-use Z as weights&;n-naming. If the value a symbol [or set of]\
- this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
- leaving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
-i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine");
+  this_InitMacroD(Match,
+    "s-subgraph match&;"
+    "w-use Z as weights&;"
+    "n-naming. If the value a symbol [or set of] this is appended to the "
+    "label, '$xx' replaces the symbols after the atom type symbol with xx, "
+    "leaving the ending, '-xx' - changes the ending of the label with xx&;"
+    "a-align&;"
+    "i-try inversion&;"
+    "u-unmatch&;"
+    "esd-calculate esd (works for pairs only)",
+    fpNone|fpOne|fpTwo,
+    "Fragment matching, alignment and label transfer routine");
   this_InitMacroD(Conn, EmptyString(), fpAny^fpNone,
-    "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now)."
+    "Changes provided atom(s) connectivity (only until next connectivity "
+    "modifying operation for now)."
     "\nUsage: conn max_bond bonding_radius [selection/atom(s)/$type]"
     "\nUsage: conn max_bond [selection/atom(s)/$type]"
-    "\nUsage: conn bonding_radius [selection/atom(s)/$type] - note the radius should have floating point"
+    "\nUsage: conn bonding_radius [selection/atom(s)/$type] - note the radius"
+    " should have floating point"
     );
-  this_InitMacroD(AddBond, EmptyString(), fpAny, "Adds specified bond to the connectivity table");
-  this_InitMacroD(DelBond, EmptyString(), fpAny, "Removes specified bond from the connectivity table");
+  this_InitMacroD(AddBond, EmptyString(), fpAny,
+    "Adds specified bond to the connectivity table");
+  this_InitMacroD(DelBond, EmptyString(), fpAny,
+    "Removes specified bond from the connectivity table");
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
   
-  this_InitMacroD(OFileDel, EmptyString(), fpOne, "Deletes overlayed file specified by index");
+  this_InitMacroD(OFileDel, EmptyString(), fpOne,
+    "Deletes overlayed file specified by index");
   this_InitMacroD(OFileSwap, EmptyString(), fpOne,
-    "Makes overlayed file, given by index the current file to which all commands are applied");
-  this_InitMacroD(CalcVol, "n-normalises bonds before the calculation&;cs-do not clear the selection", fpNone|fpOne, "Calculates tetrahedron or bipyramidal shape volume for given (selected) atom");
+    "Makes overlayed file, given by index the current file to which all "
+    "commands are applied");
+  this_InitMacroD(CalcVol,
+    "n-normalises bonds before the calculation&;"
+    "cs-do not clear the selection",
+    fpNone|fpOne,
+    "Calculates tetrahedron or bipyramidal shape volume for given (selected) "
+    "atom");
 
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
-"Schedules a particular macro (second argument) to be executed within provided\
- interval (first argument)");
+    "Schedules a particular macro (second argument) to be executed within "
+    "provided interval (first argument)");
 
-  this_InitMacroD(Tls, EmptyString(), fpAny|psFileLoaded, "James Haestier TLS test procedure");
+  this_InitMacroD(Tls, EmptyString(), fpAny|psFileLoaded,
+    "James Haestier TLS test procedure");
 
   this_InitMacro(Test, , fpAny);
 
   this_InitMacroD(LstRes, EmptyString(), fpNone|psFileLoaded,
-"Prints all interpreted restrains for current structure");
+    "Prints all interpreted restrains for current structure");
   this_InitMacroD(CalcVoid,
-    "d-distance from Van der Waals surface [0]&;r-resolution[0.2]&;p-precise"
-    " calculation&;i-invert the map for rendering",
+    "d-distance from Van der Waals surface [0]&;r-resolution[0.2]&;"
+    "p-precise calculation&;"
+    "i-invert the map for rendering",
     fpNone|fpOne|psFileLoaded,
-"Calculates solvent accessible void and packing parameters; optionally accepts"
-" a file with space separated values of Atom Type and radius, an entry a line");
+      "Calculates solvent accessible void and packing parameters; optionally "
+      "accepts a file with space separated values of Atom Type and radius, an "
+      "entry a line");
   this_InitMacroD(Sgen, EmptyString(), (fpAny^fpNone)|psFileLoaded,
-"Grows the structure using provided atoms (all if none provided) and symmetry code");
+    "Grows the structure using provided atoms (all if none provided) and "
+    "symmetry code");
   this_InitMacroD(LstSymm, EmptyString(), fpNone|psFileLoaded,
-"Prints symmetry codes of current unit cell");
-  this_InitMacroD(IT, "o-orients basis according to principle axes of inertia", fpAny,
-"Calculates tensor of inertia");
+    "Prints symmetry codes for current structure");
+  this_InitMacroD(IT,
+    "o-orients basis according to principle axes of inertia",
+    fpAny,
+    "Calculates tensor of inertia");
 
   this_InitMacroD(StartLogging, "c-empties the file if exists", fpOne,
-"Creates/opens for appending a log file, where all screen output is saved");
+    "Creates/opens for appending a log file, where all screen output is "
+    "saved");
   this_InitMacroD(ViewLattice, EmptyString(), fpOne,
-"Loads cell information from provided file and displays it on screen as lattice points/grid");
+    "Loads cell information from provided file and displays it on screen as "
+    "lattice points/grid");
   this_InitMacroD(AddObject, EmptyString(), fpAny^(fpNone|fpOne),
-"Adds a new user defined object to the graphical scene");
+    "Adds a new user defined object to the graphical scene");
   this_InitMacroD(DelObject, EmptyString(), fpOne,
-"Deletes graphical object by name");
+    "Deletes graphical object by name");
 
   this_InitMacroD(OnRefine, EmptyString(), fpAny,
-"Internal procedure");
+    "Internal procedure");
   this_InitMacroD(TestMT, EmptyString(), fpAny,
-"Testing multithreading");
-  this_InitMacroD(SetFont, "ps-point size&;b-bold&;i-italic", fpAny^(fpNone|fpOne),
-"Sets font for specified control");
+    "Testing multithreading");
+  this_InitMacroD(SetFont,
+    "ps-point size&;"
+    "b-bold&;"
+    "i-italic",
+    fpAny^(fpNone|fpOne),
+    "Sets font for specified control");
   this_InitMacroD(EditMaterial, EmptyString(), fpOne,
-"Brings up material properties dialog for specified object");
+    "Brings up material properties dialog for specified object");
   this_InitMacroD(SetMaterial, EmptyString(), fpTwo | fpThree,
-"Assigns provided value to specified material");
+    "Assigns provided value to specified material");
   this_InitMacroD(LstGO, EmptyString(), fpNone,
-"List current graphical objects");
+    "List current graphical objects");
   this_InitMacroD(CalcPatt, EmptyString(), fpNone|psFileLoaded,
-"Calculates patterson map");
-  this_InitMacroD(CalcFourier, "fcf-reads structure factors from a fcf file&;diff-calculates\
- difference map&;tomc-calculates 2Fo-Fc map&;obs-calculates observed map&;calc-calculates\
- calculated emap&;scale-scale to use for difference maps, currently available simple(s)\
- sum(Fo^2)/sum(Fc^2)) and regression(r)&;r-resolution in\
- Angstrems&;i-integrates the map&;m-mask the structure", fpNone|psFileLoaded,
- "Calculates fourier map");
-  this_InitMacroD(TestBinding, EmptyString(), fpAny, "Internal tests");
+    "Calculates Patterson map");
+  this_InitMacroD(CalcFourier,
+    "fcf-reads structure factors from a fcf file&;"
+    "diff-calculates difference map&;"
+    "tomc-calculates 2Fo-Fc map&;"
+    "obs-calculates observed map&;"
+    "calc-calculates calculated map&;"
+    "scale-scale to use for difference maps, currently available simple(s) "
+    "sum(Fo^2)/sum(Fc^2)) and regression(r)&;"
+    "r-resolution in Angstrems&;"
+    "i-integrates the map&;"
+    "m-mask the structure", fpNone|psFileLoaded,
+  "Calculates fourier map");
+  this_InitMacroD(TestBinding, EmptyString(), fpAny,
+    "Internal tests");
   this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne,
     "Shows symmetry elements of the unitcell");
   this_InitMacroD(Textm, EmptyString(), fpOne,
     "Runs subsequent commands stored in a text file");
   this_InitMacroD(TestStat, EmptyString(), fpOne,
-    "Test: runs statistical tests on structures in current folder. Expects a file name");
+    "Test: runs statistical tests on structures in current folder. Expects a "
+    "file name");
   this_InitMacroD(ExportFont, EmptyString(), fpTwo,
-"Exports given fonts into Olex2 portable format. At maximum two fonts a file "
-"are supported: a fixed and a proportional font. Example: ExportFont "
-"ChooseFont()&ChooseFont test.fnt");
+    "Exports given fonts into Olex2 portable format. At maximum two fonts a "
+    "file are supported: a fixed and a proportional font. Example: ExportFont "
+    "ChooseFont()&ChooseFont test.fnt");
   this_InitMacroD(ImportFont, EmptyString(), fpTwo, "");
   this_InitMacroD(ImportFrag,
-"p-part to assign&;d-generate DFIX for 1-2 and 1-3 distances&;a-set specified "
-"AFIX to the imported fragment",
-    fpNone|psFileLoaded, "Import a fragment to current structure");
+    "p-part to assign&;"
+    "d-generate DFIX for 1-2 and 1-3 distances&;"
+    "a-set specified AFIX to the imported fragment",
+    fpNone|psFileLoaded,
+    "Import a fragment into current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
     "Exports selected fragment to an external file");
-  this_InitMacroD(ProjSph, "g-sphere quality [6]",
+  this_InitMacroD(ProjSph,
+    "g-sphere quality [6]",
     fpAny|psFileLoaded, 
-"Creates a projection from the selected atom onto a spehere, coloring each "
-"point on the sphere with a unique color corresponding to fragments.");
+    "Creates a projection from the selected atom onto a sphere, coloring each "
+    "point on the sphere with a unique color corresponding to fragments.");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
     "Internal routine for synchronisation");
   this_InitMacroD(SAME,
-    "i-invert the graphs&;e-expand SAME into the list of SADI",
+    "i-invert the graphs&;"
+    "e-expand SAME into the list of SADI",
     fpAny|psFileLoaded,
-"Creates SAME instruction for two fragments (two selected atoms or two atoms "
-"provided) or number_of_groups and groups following each another "
-"(or selection)");
+    "Creates SAME instruction for two fragments (two selected atoms or two "
+    "atoms provided) or number_of_groups and groups following each another "
+    "(or selection)");
   this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded,
-"Creates residue with given class name and optionally number and adds selected"
-" or provided atoms into the residue. If provided residue class name is 'none'"
-", provided atoms are removed from their residues");
+    "Creates residue with given class name and optionally number and adds "
+    "selected or provided atoms into the residue. If provided residue class "
+    "name is 'none', provided atoms are removed from their residues");
   this_InitMacroD(WBox,
-"w-use atomic mass instead of unit weights for atoms&;s-create separate boxes "
-"for fragments", 
-	  (fpAny)|psFileLoaded,
-"Calculates wrapping box around provided box using the set of best, "
-"intermidiate and worst planes");
+    "w-use atomic mass instead of unit weights for atoms&;"
+    "s-create separate boxes for fragments", 
+    (fpAny)|psFileLoaded,
+    "Calculates wrapping box around provided box using the set of best, "
+    "intermidiate and worst planes");
   this_InitMacroD(Center, "z-also recalculates the scene zoom", 
-	  (fpAny)|psFileLoaded, "Sets the centre of rotation to given point");
+    (fpAny)|psFileLoaded, "Sets the centre of rotation to given point");
   this_InitMacroD(FlushFS, EmptyString(), 
-  	(fpOne|fpNone),
-"Saves current content of the virtual file system. If no parameters is given - "
-"the global state is saved. Possible arguments: global, structure");
+    (fpOne|fpNone),
+    "Saves current content of the virtual file system. If no parameters is "
+    "given - the global state is saved. Possible arguments: global, "
+    "structure");
 
   this_InitMacroD(ChemDraw, "", fpAny|psFileLoaded,
     "Currently only creates aromatic rings for Ph, Py and Cp rings");
@@ -914,6 +1112,10 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
 
   this_InitMacroD(Tolman, "mpd-M to P distance", fpNone|fpFive|psFileLoaded,
     "Calculates Tolamn code angle for the selection (M P S1 S2 S3)");
+
+  this_InitMacroD(Poly, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+    "Sets polyhedra type for all/selected/given atoms. Last argument specifies"
+    " the type - none, auto, regular");
 
   // FUNCTIONS _________________________________________________________________
 
@@ -926,19 +1128,21 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
 
   this_InitFunc(DataDir, fpNone);
   this_InitFuncD(Cif, fpOne|psCheckFileTypeCif,
-"Returns instruction value (all data after the instruction). In case the instruction\
- does not exist it return 'n/a' string");
+    "Returns instruction value (all data after the instruction). In case the "
+    "instruction does not exist it return 'n/a' string");
   this_InitFuncD(P4p, fpOne|psCheckFileTypeP4P,
-"Returns instruction value (all data after the instruction). In case the instruction\
- does not exist it return 'n/a' string");
+    "Returns instruction value (all data after the instruction). In case the "
+    "instruction does not exist it return 'n/a' string");
   this_InitFuncD(Crs, fpOne|psCheckFileTypeCRS,
-"Returns instruction value (all data after the instruction). In case the instruction\
- does not exist it return 'n/a' string");
+    "Returns instruction value (all data after the instruction). In case the "
+    "instruction does not exist it return 'n/a' string");
 
   this_InitFunc(Strcat, fpTwo);
   this_InitFunc(Strcmp, fpTwo);
 
-  this_InitFuncD(GetEnv, fpNone|fpOne, "Prints all variables if no arguments is given or returns the given veariable value");
+  this_InitFuncD(GetEnv, fpNone|fpOne,
+    "Prints all variables if no arguments is given or returns the given "
+    "veariable value");
 
   this_InitFunc(Eval, fpOne);
 
@@ -986,33 +1190,54 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
 
   this_InitFunc(ChooseElement, fpNone);
 
-  this_InitFuncD(StrDir, fpNone|psFileLoaded, "Returns location of the folder, where\
-  Olex2 stores structure related data");
+  this_InitFuncD(StrDir, fpNone|psFileLoaded,
+    "Returns location of the folder, where Olex2 stores structure related "
+    "data");
 
-  this_InitFuncD(ChooseFont, fpNone|fpOne|fpTwo, "Brings up a font dialog. If font\
- information provided, initialises the dialog with that font; the first argument may be just 'olex2' or 'system' to\
- enforce choosing the Olex2/System font (the font information can be provided ib the second argument then)");
-  this_InitFuncD(GetFont, fpOne, "Returns specified font");
-  this_InitFuncD(GetMaterial, fpOne|fpTwo, "Returns material of specified object");
-  this_InitFuncD(ChooseMaterial, fpNone|fpOne, "Brings up a dialog to edit\
-  default or provided material");
+  this_InitFuncD(ChooseFont, fpNone|fpOne|fpTwo,
+    "Brings up a font dialog. If font information provided, initialises the "
+    "dialog with that font; the first argument may be just 'olex2' or 'system'"
+    " to enforce choosing the Olex2/System font (the font information can be "
+    "provided in the second argument then)");
+  this_InitFuncD(GetFont, fpOne,
+    "Returns specified font");
+  this_InitFuncD(GetMaterial, fpOne|fpTwo,
+    "Returns material of specified object");
+  this_InitFuncD(ChooseMaterial, fpNone|fpOne,
+    "Brings up a dialog to edit default or provided material");
 
-  this_InitFuncD(GetMouseX, fpNone, "Returns current mouse X position");
-  this_InitFuncD(GetMouseY, fpNone, "Returns current mouse Y position");
-  this_InitFuncD(GetWindowSize, fpNone|fpOne|fpThree, "Returns size of the requested window, main window by default");
-  this_InitFuncD(IsOS, fpOne, "Returns true if current system Windows [win], Linux/GTK [linux], Mac [mac]");
-  this_InitFuncD(ExtraZoom, fpNone|fpOne, "Sets/reads current extra zoom (default zoom correction)");
-  this_InitFuncD(HasGUI, fpNone, "Returns if true if Olex2 is built with GUI");
-  this_InitFuncD(CheckState, fpOne|fpTwo, "Returns if true if given program state is active");
-  this_InitFuncD(GlTooltip, fpNone|fpOne, "Returns state of/sets OpenGL tooltip implementation for the main window\
-                                          (some old platforms do not have proper implementation of tooltips)");
-  this_InitFuncD(CurrentLanguage, fpNone|fpOne, "Returns/sets current language");
-  this_InitFuncD(GetMAC, fpNone|fpOne, "Returns simicolon separated list of computer MAC addresses.\
- If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;..");
-  this_InitFuncD(ThreadCount, fpNone|fpOne, "Returns/sets the number of simultaneous tasks");
-  this_InitFuncD(FullScreen, fpNone|fpOne, "Returns/sets full screen mode (true/false/swap)");
-  this_InitFuncD(MatchFiles, fpTwo|fpThree,    "Matches given files");
-  this_InitFuncD(Freeze, fpNone|fpOne, "Gets/Sets display update status");
+  this_InitFuncD(GetMouseX, fpNone,
+    "Returns current mouse X position");
+  this_InitFuncD(GetMouseY, fpNone,
+    "Returns current mouse Y position");
+  this_InitFuncD(GetWindowSize, fpNone|fpOne|fpThree,
+    "Returns size of the requested window, main window by default");
+  this_InitFuncD(IsOS, fpOne,
+    "Returns true if current system Windows [win], Linux/GTK [linux], Mac "
+    "[mac]");
+  this_InitFuncD(ExtraZoom, fpNone|fpOne,
+    "Sets/reads current extra zoom (default zoom correction)");
+  this_InitFuncD(HasGUI, fpNone,
+    "Returns if true if Olex2 is built with GUI");
+  this_InitFuncD(CheckState, fpOne|fpTwo,
+    "Returns if true if given program state is active");
+  this_InitFuncD(GlTooltip, fpNone|fpOne,
+    "Returns state of/sets OpenGL tooltip implementation for the main window "
+    "(some old platforms do not have proper implementation of tooltips)");
+  this_InitFuncD(CurrentLanguage, fpNone|fpOne,
+    "Returns/sets current language");
+  this_InitFuncD(GetMAC, fpNone|fpOne,
+    "Returns simicolon separated list of computer MAC addresses. If 'full' is "
+    "provided as argument, the adoptor names are also returned as "
+    "adapter=""MAC;..");
+  this_InitFuncD(ThreadCount, fpNone|fpOne,
+    "Returns/sets the number of simultaneous tasks");
+  this_InitFuncD(FullScreen, fpNone|fpOne,
+    "Returns/sets full screen mode (true/false/swap)");
+  this_InitFuncD(MatchFiles, fpTwo|fpThree,
+    "Matches given files");
+  this_InitFuncD(Freeze, fpNone|fpOne,
+    "Gets/Sets display update status");
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(TEFile::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
