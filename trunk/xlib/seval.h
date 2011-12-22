@@ -7,8 +7,8 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef sevalH
-#define sevalH
+#ifndef __olx_xlib_seval_H
+#define __olx_xlib_seval_H
 #include "sbond.h"
 #include "satom.h"
 #include "sparser.h"
