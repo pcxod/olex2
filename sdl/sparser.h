@@ -7,8 +7,8 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __olx_sld_sparesr_H
-#define __olx_sld_sparesr_H
+#ifndef __olx_sld_sparser_H
+#define __olx_sld_sparser_H
 #include "tptrlist.h"
 #include "estlist.h"
 #include "estrlist.h"
@@ -47,7 +47,7 @@ public:
 class IDataProvider {
 public:
   virtual ~IDataProvider() {}
-  virtual IDataProvider* cast(const type_info &ti) {
+  virtual IDataProvider* cast(const std::type_info &ti) {
     return this;
   }
 };
