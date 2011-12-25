@@ -8420,7 +8420,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;
   }
-  if( iv->ref_cnt == 0 )  delete iv;
+  if( iv->ref_cnt() == 0 )  delete iv;
   //iv = _exp.build("x = a.sub (0,4).len() + b.len()");
   //iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)", false);
   //iv = _exp.build("c = a.sub(0,3) != b.sub(0,3)");
@@ -8436,7 +8436,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   //iv = _exp.build("a=['aBc',a,b, 1.2].add(4)");
   iv = _exp.build("a=['aBc',a,b, 1.2]");
   iv = _exp.build("a.add(4)");
-  if (iv->ref_cnt == 0)
+  if (iv->ref_cnt() == 0)
     delete iv;
   iv = _exp.build("a=a[2].toUpper()");
   
@@ -8451,7 +8451,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     iv1 = iv->_evaluate();
     delete iv1;
   }
-  if( iv->ref_cnt == 0 )  delete iv;
+  if( iv->ref_cnt() == 0 )  delete iv;
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

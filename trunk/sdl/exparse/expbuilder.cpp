@@ -174,12 +174,12 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root,
       rv = evaluator_from_evator(root->right, left);
       if (rv->is_final() || rv->is_function())  {
         IEvaluable* eval = rv->_evaluate();
-        if( rv->ref_cnt == 0 )  delete rv;
-        if( left->ref_cnt == 0 )  delete left;
+        if( rv->ref_cnt() == 0 )  delete rv;
+        if( left->ref_cnt() == 0 )  delete left;
         left = rv = eval;
       }
       else  {
-        if( left->ref_cnt == 0 )  delete left;
+        if( left->ref_cnt() == 0 )  delete left;
         left = rv;
       }
       root = root->right;
@@ -198,7 +198,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root,
     IEvaluable* val = create_evaluator(root->right);
     if ( !val->is_final() && finaliseAssignment )  {
       IEvaluable* res = val->_evaluate();
-      if( val->ref_cnt == 0 )
+      if( val->ref_cnt() == 0 )
         delete val;
       val = res;
     }
