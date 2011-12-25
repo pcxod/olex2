@@ -13,35 +13,7 @@
 BeginEsdlNamespace()
 
 namespace exparse  {
-  struct context;
 
-  struct VarProxy : public IEvaluable {
-    IEvaluable* value;
-    VarProxy(IEvaluable* _value) : value(_value) {  _value->inc_ref();  }
-    ~VarProxy()  {
-      if( value->dec_ref() == 0 )
-        delete value;
-    }
-    void update_value(IEvaluable* _value)  {
-      if( value == _value )  return;
-      if( value->dec_ref() == 0 )
-        delete value;
-      value = _value;
-      _value->inc_ref();
-    }
-    virtual const std::type_info& get_type_info() const {  return typeid(*value);  }
-    virtual IEvaluable* _evaluate() const {  return value;  }
-    virtual IEvaluable* find_property(const olxstr& name) {  return value->find_property(name);  }
-    virtual IEvaluable* find_method(const olxstr& name, const struct EvaluableFactory& f,
-      const TPtrList<IEvaluable>& args, IEvaluable* proxy=NULL)
-    {
-      return value->find_method(name, f, args, proxy == NULL ? this : proxy);
-    }
-    virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
-      return value->get_cast_operator(ti);
-    } 
-    virtual bool is_final() const {  return false;  }
-  };
   struct context  {
     LibraryRegistry functions; 
     //olxdict<std::type_info const*, IClassRegistry*, TPointerComparator> classes;
@@ -70,15 +42,19 @@ namespace exparse  {
           vars.GetValue(ind)->update_value(val);
       }
       else  {
-        if( ind != InvalidIndex )
-          throw TInvalidArgumentException(__OlxSourceInfo, olxstr("duplicated variable: ") << name);
+        if( ind != InvalidIndex ) {
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            olxstr("duplicated variable: ") << name);
+        }
         vars.Add(name, new VarProxy(val))->inc_ref();
       }
     }
     void add_const(const olxstr& name, IEvaluable* val)  {
       size_t i = consts.IndexOf(name);
-      if( i != InvalidIndex )
-        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("duplicated constant: ") << name);
+      if( i != InvalidIndex ) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olxstr("duplicated constant: ") << name);
+      }
       val->inc_ref();
       consts.Add(name, val);
     }

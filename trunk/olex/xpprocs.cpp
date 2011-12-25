@@ -4791,7 +4791,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   // the dialog has been successfully executed
   if( !file_n.file_name.IsEmpty() )  {
     /* FN might be a dir on windows when a file does not exist - the code above
-    will get the folder name isntead...
+    will get the folder name instead...
     */
     if( !TEFile::Exists(file_n.file_name) || TEFile::IsDir(file_n.file_name) )  {
       Error.ProcessingError(__OlxSrcInfo, "Could not locate specified file");
@@ -8365,7 +8365,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   FXApp->AddObjectToCreate(sph);
 }
 //..............................................................................
-void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr empty;
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
   TTypeList<TAtomRefList> res;
@@ -8403,9 +8403,13 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   EvaluableFactory evf;
   context cx;
   context::init_global(cx);
-  evf.types.Add(&typeid(olxstr), new StringValue(""));
+  evf.types.Add(&typeid(olxstr), new StringValue);
   evf.classes.Add(&typeid(olxstr), &StringValue::info);
+  evf.types.Add(&typeid(ListValue::list_t), new ListValue);
+  evf.classes.Add(&typeid(ListValue::list_t), &ListValue::info);
+  //evf.classes.Add(&typeid(StringValue), &StringValue::info);
   StringValue::init_library();
+  ListValue::init_library();
 
   exp_builder _exp(evf, cx);
   IEvaluable* iv = _exp.build("a = 'ab c, de\\';()'");
@@ -8426,8 +8430,15 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   //iv = _exp.build("c = c + 100");
   //iv = _exp.build("c = 1.2 + 1.1 - .05");
   //iv = _exp.build("a.len() + 1.2 + 1.1 - abs(-.05)*cos(PI/2)");
+  iv = _exp.build("a='AaBc'.charAt(2)");
   iv = _exp.build("a='AaBc'[1].toUpper()");
   iv = _exp.build("a='100'.atoi()");
+  //iv = _exp.build("a=['aBc',a,b, 1.2].add(4)");
+  iv = _exp.build("a=['aBc',a,b, 1.2]");
+  iv = _exp.build("a.add(4)");
+  if (iv->ref_cnt == 0)
+    delete iv;
+  iv = _exp.build("a=a[2].toUpper()");
   
   //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   if( !iv->is_final() && false )  {
@@ -10280,7 +10291,7 @@ void TMainForm::macTolman(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "5 Atoms are expected - M P S1 S2 S3");
     return;
   }
-  TBasicApp::NewLogEntry() << "Calculatining Tolman cone angle for the "
+  TBasicApp::NewLogEntry() << "Calculatinng Tolman cone angle for the "
     "selection: http://en.wikipedia.org/wiki/Tolman_cone_angle";
   double d = Options.FindValue("mpd", atoms[0]->crd().DistanceTo(
     atoms[1]->crd())).ToDouble();
@@ -10333,4 +10344,3 @@ void TMainForm::macPoly(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     atoms[i]->SetPolyhedronType(pt);
 }
 //..............................................................................
-

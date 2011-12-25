@@ -25,6 +25,7 @@ namespace exparse  {
     IEvaluable* evaluator_from_evator(expression_tree* root, IEvaluable* left=NULL);
     IEvaluable* create_evaluator(expression_tree* root, bool finaliseAssignment=true);
     IEvaluable* locate_function(const olxstr& name, IEvaluable* left, IEvaluable* right);
+    IEvaluable* evaluator_from_string(const olxstr &str) const;
   public:
     EvaluableFactory& factory;
     context& scope;
