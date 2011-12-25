@@ -31,8 +31,10 @@ namespace exparse  {
     mutable int ref_cnt;
     IEvaluable() : ref_cnt(0) {}
     virtual ~IEvaluable() {
-      if( ref_cnt != 0 )
-        throw 1;
+      if( ref_cnt != 0 ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          olxstr("Non-zero reference count: ").quote() << ref_cnt);
+      }
     }
     virtual IEvaluable* _evaluate() const = 0;
     typedef cast_result (*cast_operator)(const IEvaluable*);
@@ -58,6 +60,9 @@ namespace exparse  {
       return NULL;
     }
     virtual bool is_final() const {  return false;  }
+    virtual bool is_function() const {  return false;  }
+    // for the proxies!
+    virtual IEvaluable *undress() { return this; }
     inline int inc_ref() const {  return ++ref_cnt;  }
     inline int dec_ref() const {
       if( --ref_cnt < 0 )
@@ -94,6 +99,10 @@ namespace exparse  {
       // a simple case...
       if( ti == get_type_info() )
         return caster<T>(&IEvaluable::self_cast).cast(this);
+      if( ti == typeid(IEvaluable&) ) {
+        return val_wrapper<T,IEvaluable>(
+          cast_result(new VarProxy(const_cast<IEvaluable*>(this)), true));
+      }
       try  {  
         cast_operator co = get_cast_operator(ti);
         if( co != NULL )
@@ -175,7 +184,7 @@ namespace exparse  {
       throw 1;
     }
     virtual IEvaluable* create_new(const void* v) const {
-      return new TPrimitiveEvaluator<BC,Type>( *static_cast<const Type*>(v) );
+      return new TPrimitiveEvaluator<BC,Type>(*static_cast<const Type*>(v));
     }
   };
 
@@ -195,6 +204,48 @@ namespace exparse  {
         "no casting is avilable for the void type");
     }
   };
+
+  struct VarProxy : public IEvaluable {
+    IEvaluable* value;
+    VarProxy(IEvaluable* _value) : value(_value) {
+      if (value != NULL)
+        value->inc_ref();
+    }
+    ~VarProxy()  {
+      if( value != NULL && value->dec_ref() == 0 )
+        delete value;
+    }
+    void update_value(IEvaluable* _value)  {
+      if( value == _value )  return;
+      if( value->dec_ref() == 0 )
+        delete value;
+      value = _value;
+      _value->inc_ref();
+    }
+    virtual const std::type_info& get_type_info() const {
+      return value->get_type_info();
+    }
+    virtual IEvaluable* _evaluate() const {  return value;  }
+    virtual IEvaluable* find_property(const olxstr& name) {
+      return value->find_property(name);
+    }
+    virtual IEvaluable* find_method(const olxstr& name,
+      const struct EvaluableFactory& f,
+      const TPtrList<IEvaluable>& args, IEvaluable* proxy=NULL)
+    {
+      return value->find_method(name, f, args, proxy == NULL ? this : proxy);
+    }
+    virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
+      return value->get_cast_operator(ti);
+    } 
+     bool is_final() const {  return false;  }
+    IEvaluable *undress() { return value->undress(); }
+    virtual IEvaluable *create_new(const void *data) const {
+      return new VarProxy(
+        const_cast<IEvaluable*>(static_cast<const IEvaluable*>(data)));
+    }
+  };
+
   typedef TPrimitiveEvaluator<TPrimitiveInstance<bool>,bool> BoolValue;
   typedef TPrimitiveEvaluator<TPrimitiveInstance<int>,int> IntValue;
   typedef TPrimitiveEvaluator<TPrimitiveInstance<double>,double> DoubleValue;
@@ -210,6 +261,7 @@ namespace exparse  {
       if( types.IsEmpty() )  {
         add_ptype<bool>();
         add_ptype<char>();
+        add_ptype<wchar_t>();
         add_ptype<unsigned char>();
         add_ptype<short int>();
         add_ptype<unsigned short int>();
@@ -222,6 +274,7 @@ namespace exparse  {
         add_ptype<float>();
         add_ptype<double>();
         add_ptype<long double>();
+        types.Add(&typeid(IEvaluable&), new VarProxy(NULL));
       }
     }
     ~EvaluableFactory()  {
