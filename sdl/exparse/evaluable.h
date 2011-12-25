@@ -28,12 +28,14 @@ namespace exparse  {
   };
 
   struct IEvaluable {
-    mutable int ref_cnt;
-    IEvaluable() : ref_cnt(0) {}
+  protected:
+    mutable int ref_cnt_;
+  public:
+    IEvaluable() : ref_cnt_(0) {}
     virtual ~IEvaluable() {
-      if( ref_cnt != 0 ) {
+      if( ref_cnt_ != 0 ) {
         throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("Non-zero reference count: ").quote() << ref_cnt);
+          olxstr("Non-zero reference count: ").quote() << ref_cnt_);
       }
     }
     virtual IEvaluable* _evaluate() const = 0;
@@ -63,13 +65,13 @@ namespace exparse  {
     virtual bool is_function() const {  return false;  }
     // for the proxies!
     virtual IEvaluable *undress() { return this; }
-    inline int inc_ref() const {  return ++ref_cnt;  }
-    inline int dec_ref() const {
-      if( --ref_cnt < 0 )
+    int inc_ref() const {  return ++ref_cnt_;  }
+    int dec_ref() const {
+      if( --ref_cnt_ < 0 )
         throw 1;
-      return ref_cnt;
+      return ref_cnt_;
     }
-
+    int ref_cnt() const { return ref_cnt_; }
     template <class T> struct caster  {
       cast_operator co;
       caster(cast_operator _co) : co(_co){}
@@ -154,7 +156,7 @@ namespace exparse  {
     bool final;  // does represent a number?
   public:
     ANumberEvaluator(bool _final=false) : final(_final)  {}
-    inline bool is_final() const {  return final;  }
+    bool is_final() const {  return final;  }
   };
   template <class BC, typename Type>
   struct TPrimitiveEvaluator : public ANumberEvaluator, public BC  {
