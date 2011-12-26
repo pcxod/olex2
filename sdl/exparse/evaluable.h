@@ -15,6 +15,8 @@
 BeginEsdlNamespace()
 
 namespace exparse  {
+  struct VarProxy;
+
   class TCastException : public TBasicException  {
     const std::type_info& type;
   public:
@@ -91,6 +93,8 @@ namespace exparse  {
       return typeid(*this);
     }
 
+    IEvaluable *create_proxy_() const;
+
     template <typename T> val_wrapper<T,IEvaluable> cast() const {
       if( !is_final() )  {
         IEvaluable* tmp = _evaluate();
@@ -102,8 +106,7 @@ namespace exparse  {
       if( ti == get_type_info() )
         return caster<T>(&IEvaluable::self_cast).cast(this);
       if( ti == typeid(IEvaluable&) ) {
-        return val_wrapper<T,IEvaluable>(
-          cast_result(new VarProxy(const_cast<IEvaluable*>(this)), true));
+        return val_wrapper<T,IEvaluable>(cast_result(create_proxy_(), true));
       }
       try  {  
         cast_operator co = get_cast_operator(ti);
