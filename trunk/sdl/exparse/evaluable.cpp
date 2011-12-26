@@ -34,3 +34,7 @@ ANumberEvaluator::cast_operators(
   sizeof(ANumberEvaluator::cast_operators_table)/sizeof(ANumberEvaluator::cast_operators_table[0]) 
 );
 
+IEvaluable *IEvaluable::create_proxy_() const {
+  return new VarProxy(const_cast<IEvaluable*>(this));
+}
+
