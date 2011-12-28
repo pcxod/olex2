@@ -12,10 +12,12 @@
 #include "../ebase.h"
 #include "../edict.h"
 #include "expvalue.h"
+#include "../bapp.h"
 BeginEsdlNamespace()
 
 namespace exparse  {
   struct VarProxy;
+  struct EvaluableFactory;
 
   class TCastException : public TBasicException  {
     const std::type_info& type;
@@ -136,7 +138,7 @@ namespace exparse  {
       return cast_result(new olxstr(
         IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate()), true);
     }
-    template<class T> static cast_result primitive_cast(const IEvaluable* i)  {  
+    template<class T> static cast_result primitive_cast(const IEvaluable* i)  {
       return cast_result(new T(
         (T)IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate()), true);
     }
@@ -163,29 +165,29 @@ namespace exparse  {
   };
   template <class BC, typename Type>
   struct TPrimitiveEvaluator : public ANumberEvaluator, public BC  {
-    static cast_result str_cast(const IEvaluable* i)  {  
+    static cast_result str_cast(const IEvaluable* i)  {
       return cast_result(
         new olxstr(
           IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value()),
         true);
     }
-    static cast_result val_cast(const IEvaluable* i)  {  
+    static cast_result val_cast(const IEvaluable* i)  {
       return cast_result(
         &IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value(),
         false);
     }
-    virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
+    virtual cast_operator get_cast_operator(const std::type_info& ti) const {
       if( typeid(Type) == ti )
         return &val_cast;
       else if( typeid(olxstr) == ti )
         return &str_cast;
-      return ANumberEvaluator::get_cast_operator(ti);  
+      return ANumberEvaluator::get_cast_operator(ti);
     } 
     TPrimitiveEvaluator(const Type& val) : ANumberEvaluator(true), BC(val)  {}
     virtual double Evaluate() const {
       return (double)BC::val;
     }
-    virtual IEvaluable* _evaluate() const {  
+    virtual IEvaluable* _evaluate() const {
       throw 1;
     }
     virtual IEvaluable* create_new(const void* v) const {
@@ -240,7 +242,7 @@ namespace exparse  {
     {
       return value->find_method(name, f, args, proxy == NULL ? this : proxy);
     }
-    virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
+    virtual cast_operator get_cast_operator(const std::type_info& ti) const {
       return value->get_cast_operator(ti);
     } 
      bool is_final() const {  return false;  }
@@ -254,6 +256,16 @@ namespace exparse  {
   typedef TPrimitiveEvaluator<TPrimitiveInstance<bool>,bool> BoolValue;
   typedef TPrimitiveEvaluator<TPrimitiveInstance<int>,int> IntValue;
   typedef TPrimitiveEvaluator<TPrimitiveInstance<double>,double> DoubleValue;
+
+  /* helper function to tackle 4.1 gcc unable to resulve 'const T& v' with
+   v being a reference...
+  */
+  template <class T> struct creator {
+    static IEvaluable* create(const EvaluableFactory &f, const T &v);
+  };
+  template <> struct creator<IEvaluable &> {
+    static IEvaluable* create(const EvaluableFactory &f, IEvaluable &v);
+  };
 
   struct EvaluableFactory  {
     olxdict<std::type_info const*, IEvaluable*, TPointerComparator> types;
@@ -279,14 +291,15 @@ namespace exparse  {
         add_ptype<float>();
         add_ptype<double>();
         add_ptype<long double>();
-        types.Add(&typeid(IEvaluable&), new VarProxy(NULL));
+        types.Add(&typeid(IEvaluable &), new VarProxy(NULL));
       }
     }
     ~EvaluableFactory()  {
       for( size_t i=0; i < types.Count(); i++ )
         delete types.GetValue(i);
     }
-    template <class T> IEvaluable* create(const T& val) const {
+
+    template <class T> IEvaluable* create_(const T& val) const {
       const std::type_info& ti = typeid(T);
       size_t i = types.IndexOf(&ti);
       if( i == InvalidIndex ) {
@@ -295,7 +308,26 @@ namespace exparse  {
       }
       return types.GetValue(i)->create_new(&val);
     };
+    IEvaluable* create_ref(IEvaluable &val) const {
+      const std::type_info& ti = typeid(IEvaluable &);
+      size_t i = types.IndexOf(&ti);
+      if( i == InvalidIndex ) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          olxstr("Could not locate object factory for ") << ti.name());
+      }
+      return types.GetValue(i)->create_new(&val);
+    };
+    template <class T> IEvaluable* create(T val) const {
+      return creator<T>::create(*this, val);
+    };
   };
+
+  template <class T> IEvaluable* creator<T>::create(
+    const EvaluableFactory &f, const T &v)
+    {
+     TBasicApp::NewLogEntry() << "Creating type: " << typeid(T).name();
+      return f.create_(v);
+    }
 }  // end namespace exparse
 
 EndEsdlNamespace()

@@ -38,3 +38,10 @@ IEvaluable *IEvaluable::create_proxy_() const {
   return new VarProxy(const_cast<IEvaluable*>(this));
 }
 
+IEvaluable* creator<IEvaluable &>::create(
+  const EvaluableFactory &f, IEvaluable &v)
+{
+  TBasicApp::NewLogEntry() << "Creating ref...";
+  return f.create_ref(v);
+}
+
