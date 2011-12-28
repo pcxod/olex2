@@ -174,8 +174,8 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root,
       rv = evaluator_from_evator(root->right, left);
       if (rv->is_final() || rv->is_function())  {
         IEvaluable* eval = rv->_evaluate();
-        if( rv->ref_cnt() == 0 )  delete rv;
         if( left->ref_cnt() == 0 )  delete left;
+        if( rv->ref_cnt() == 0 )  delete rv;
         left = rv = eval;
       }
       else  {
