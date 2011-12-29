@@ -8435,10 +8435,10 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   iv = _exp.build("a='100'.atoi()");
   //iv = _exp.build("a=['aBc',a,b, 1.2].add(4)");
   iv = _exp.build("a=['aBc',a,b, 1.2]");
-  iv = _exp.build("a.add(4)");
+  iv = _exp.build("a.add(['ab','ac'])");
   if (iv->ref_cnt() == 0)
     delete iv;
-  iv = _exp.build("a=a[2].toUpper()");
+  iv = _exp.build("a=a[4][1][1].toUpper()");
   
   //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   if( !iv->is_final() && false )  {

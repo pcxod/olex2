@@ -303,7 +303,7 @@ namespace exparse  {
       if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
         throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("Dulicate function instance: ").quote() << name);
+          olxstr("Dublicate function instance: ").quote() << name);
       }
       funcs.Add(name, f);
     }
@@ -370,7 +370,7 @@ namespace exparse  {
       IStaticFunction* gf = find(name, args.Count());
       if( gf == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
-          "could not locate specified function");
+          olxstr("could not locate specified function: ").quote() << name);
       }
       return new FuncEvaluator(factory, gf, args);
     }
@@ -385,7 +385,7 @@ namespace exparse  {
       IStaticFunction* gf = find(name, args.Count());
       if( gf == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
-          "could not locate specified function");
+          olxstr("could not locate specified function: ").quote() << name);
       }
       return gf->run(factory, args);
     }
@@ -445,7 +445,7 @@ namespace exparse  {
       if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
         throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("Dulicate function instance: ").quote() << name);
+          olxstr("Dublicate function instance: ").quote() << name);
       }
       funcs.Add(name, f);
     }
@@ -556,7 +556,7 @@ namespace exparse  {
       IMemberFunction* gf = find(name, args.Count());
       if( gf == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
-          "could not locate specified function");
+          olxstr("could not locate specified function: ").quote() << name);
       }
       return new FuncEvaluator(factory, self, gf, args);
     }
@@ -572,7 +572,7 @@ namespace exparse  {
       IMemberFunction* gf = find(name, args.Count());
       if( gf == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
-          "could not locate specified function");
+          olxstr("could not locate specified function: ").quote() << name);
       }
       return gf->run(&self, factory, args);
     }

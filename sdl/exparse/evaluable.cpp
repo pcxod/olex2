@@ -41,7 +41,6 @@ IEvaluable *IEvaluable::create_proxy_() const {
 IEvaluable* creator<IEvaluable &>::create(
   const EvaluableFactory &f, IEvaluable &v)
 {
-  TBasicApp::NewLogEntry() << "Creating ref...";
   return f.create_ref(v);
 }
 

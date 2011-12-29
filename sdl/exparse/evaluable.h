@@ -325,7 +325,6 @@ namespace exparse  {
   template <class T> IEvaluable* creator<T>::create(
     const EvaluableFactory &f, const T &v)
     {
-     TBasicApp::NewLogEntry() << "Creating type: " << typeid(T).name();
       return f.create_(v);
     }
 }  // end namespace exparse
