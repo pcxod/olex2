@@ -8,6 +8,7 @@
 ******************************************************************************/
 
 #include "3dframe.h"
+#include "pers_util.h"
 
 void TFaceCtrl::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  SetCollectionName(cName);
@@ -17,10 +18,11 @@ void TFaceCtrl::Create(const olxstr& cName)  {
   TGraphicsStyle& GS = GPC.GetStyle();
   TGlPrimitive& dummy = GPC.NewPrimitive("Button", sgloMacro);
   TGlMaterial& glm = GS.GetMaterial("button",
-    TGlMaterial("85;1.000,0.000,0.000,0.500;1.000,1.000,0.000,0.100;1.000,1.000,1.000,1.000;1"));
+    TGlMaterial("85;1.000,0.000,0.000,0.500;1.000,1.000,0.000,0.100;1.000,"
+      "1.000,1.000,1.000;1"));
   dummy.SetProperties(glm);
 }
-//.........................................................................................................
+//.............................................................................
 bool TFaceCtrl::Orient(TGlPrimitive&)  {
   ParentCtrl.SetBasis();
   const vec3d cnt = (A+B+C+D)/4;
@@ -36,8 +38,10 @@ bool TFaceCtrl::Orient(TGlPrimitive&)  {
   olx_gl::end();
   return true;
 }
-/////////////////////////////////////////////////////////////////////////////////////////
-T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName) : AGlMouseHandlerImp(prnt, cName)  {
+///////////////////////////////////////////////////////////////////////////////
+T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName)
+  : AGlMouseHandlerImp(prnt, cName)
+{
   SetMoveable(true);
   SetRoteable(true);
   SetZoomable(true);
@@ -56,14 +60,20 @@ T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName) : AGlMouseHan
   norms[4] = vec3d(1,0,0);
   norms[5] = vec3d(0,0,1);
 
-  Faces.Add(new TFaceCtrl(prnt, "facectrl", 0, edges[0], edges[1], edges[2], edges[3], norms[0], *this));
-  Faces.Add(new TFaceCtrl(prnt, "facectrl", 1, edges[0], edges[4], edges[5], edges[1], norms[1], *this));
-  Faces.Add(new TFaceCtrl(prnt, "facectrl", 2, edges[0], edges[3], edges[7], edges[4], norms[2], *this));
-  Faces.Add(new TFaceCtrl(prnt, "facectrl", 3, edges[1], edges[5], edges[6], edges[2], norms[3], *this));
-  Faces.Add(new TFaceCtrl(prnt, "facectrl", 4, edges[2], edges[6], edges[7], edges[3], norms[4], *this));
-  Faces.Add(new TFaceCtrl(prnt, "facectrl", 5, edges[4], edges[7], edges[6], edges[5], norms[5], *this));
+  Faces.Add(new TFaceCtrl(prnt, "facectrl", 0, edges[0], edges[1], edges[2],
+    edges[3], norms[0], *this));
+  Faces.Add(new TFaceCtrl(prnt, "facectrl", 1, edges[0], edges[4], edges[5],
+    edges[1], norms[1], *this));
+  Faces.Add(new TFaceCtrl(prnt, "facectrl", 2, edges[0], edges[3], edges[7],
+    edges[4], norms[2], *this));
+  Faces.Add(new TFaceCtrl(prnt, "facectrl", 3, edges[1], edges[5], edges[6],
+    edges[2], norms[3], *this));
+  Faces.Add(new TFaceCtrl(prnt, "facectrl", 4, edges[2], edges[6], edges[7],
+    edges[3], norms[4], *this));
+  Faces.Add(new TFaceCtrl(prnt, "facectrl", 5, edges[4], edges[7], edges[6],
+    edges[5], norms[5], *this));
 }
-//.........................................................................................................
+//.............................................................................
 void T3DFrameCtrl::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  SetCollectionName(cName);
   for( size_t i=0; i < Faces.Count(); i++ )
@@ -74,10 +84,11 @@ void T3DFrameCtrl::Create(const olxstr& cName)  {
   TGraphicsStyle& GS = GPC.GetStyle();
   TGlPrimitive& dummy = GPC.NewPrimitive("Box", sgloMacro);
   TGlMaterial& glm = GS.GetMaterial("Box",
-    TGlMaterial("1109;0.000,0.502,0.753,1.000;2768240640;0.180,0.180,0.180,1.000;5"));
+    TGlMaterial("1109;0.000,0.502,0.753,1.000;2768240640;0.180,0.180,0.180,"
+      "1.000;5"));
   dummy.SetProperties(glm);
 }
-//.........................................................................................................
+//.............................................................................
 bool T3DFrameCtrl::DoRotate(const vec3d& vec, double angle)  {
   mat3d m;  
   olx_create_rotation_matrix(m, vec, cos(angle), sin(angle));
@@ -87,7 +98,7 @@ bool T3DFrameCtrl::DoRotate(const vec3d& vec, double angle)  {
   UpdateEdges();
   return true;
 }
-//.........................................................................................................
+//.............................................................................
 bool T3DFrameCtrl::DoZoom(double zoom, bool inc)  {
   const double vol = GetVolume();
   double z;
@@ -101,18 +112,32 @@ bool T3DFrameCtrl::DoZoom(double zoom, bool inc)  {
     edges[i] = (edges[i]-cnt)*z+cnt;
   return true;
 }
-//.........................................................................................................
+//.............................................................................
 bool T3DFrameCtrl::OnTranslate(size_t sender, const vec3d& t)  {
-  const vec3d dir = Faces[sender].GetN()*(t.Length()*olx_sign(Faces[sender].GetN().CAngle(t)));
+  const vec3d dir = Faces[sender].GetN()*(t.Length()*
+    olx_sign(Faces[sender].GetN().CAngle(t)));
   Faces[sender].GetA() += dir;
   Faces[sender].GetB() += dir;
   Faces[sender].GetC() += dir;
   Faces[sender].GetD() += dir;
   return true;
 }
-//.........................................................................................................
+//.............................................................................
 void T3DFrameCtrl::UpdateEdges()  {
-  for( int i=0; i < 6; i++ )
-    norms[i] = (Faces[i].GetC()-Faces[i].GetB()).XProdVec(Faces[i].GetA()-Faces[i].GetB()).Normalise();
+  for( int i=0; i < 6; i++ ) {
+    norms[i] = (Faces[i].GetC()-Faces[i].GetB()).XProdVec(
+      Faces[i].GetA()-Faces[i].GetB()).Normalise();
+  }
 }
-//.........................................................................................................
+//.............................................................................
+void T3DFrameCtrl::ToDataItem(TDataItem &di) const {
+  di.AddField("edges", PersUtil::VecArrayToStr(edges, 8));
+  di.AddField("visible", IsVisible());
+}
+//.............................................................................
+void T3DFrameCtrl::FromDataItem(const TDataItem &di) {
+  SetVisible(di.GetRequiredField("visible").ToBool());
+  PersUtil::FloatVecArrayFromStr(di.GetRequiredField("edges"), edges, 8);
+  UpdateEdges();
+}
+//.............................................................................

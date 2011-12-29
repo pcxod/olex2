@@ -163,7 +163,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   new TContextClear(Parent);
   Mask = NULL;
   Instance = this;
-  Boxed = Extended = false;
+  Loading_ = Boxed = Extended = false;
   RenderMode = planeRenderModeFill;
 #ifndef _NO_PYTHON
   PythonExt::GetInstance()->Register(&TXGrid::PyInit);
@@ -538,7 +538,8 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
 //..............................................................................
 void TXGrid::SetScale(float v)  {
   const bool _3d = Is3D();
-  Boxed = false;
+  if (!Loading_)
+    Boxed = false;
   if( _3d && MinHole != MaxHole )  {
     if( v >= MinHole && v <= MaxHole )  {
       Info->Clear();
@@ -556,7 +557,7 @@ void TXGrid::SetScale(float v)  {
     n_triangles.Clear();
     n_normals.Clear();
     n_vertices.Clear();
-    if( XApp->Get3DFrame().IsVisible() )  {
+    if( XApp->Get3DFrame().IsVisible() || Boxed )  {
       const size_t SZ=10;
       const vec3i isz = (XApp->Get3DFrame().GetSize()*SZ).Round<int>();
       TArray3D<float>& points = *(new TArray3D<float>(vec3i(0,0,0), isz));
@@ -1166,7 +1167,7 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
-  item.AddField("empty", IsEmpty() );
+  item.AddField("empty", IsEmpty());
   if( !IsEmpty() )  {
     //item.AddField("visible", Visible());
     item.AddField("draw_mode", RenderMode);
@@ -1175,6 +1176,7 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
     item.AddField("depth", Depth);
     item.AddField("size", Size);
     item.AddField("extended", Extended);
+    item.AddField("boxed", Boxed);
     item.AddField("ext_min", PersUtil::VecToStr(ExtMin));
     item.AddField("ext_max", PersUtil::VecToStr(ExtMin));
     item.AddField("scale", Scale);
@@ -1193,6 +1195,7 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
 //..............................................................................
 void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   Clear();
+  Loading_ = true;
   bool empty = item.GetRequiredField("empty").ToBool();
   if( empty )  return;
   //Visible( item.GetRequiredField("visible").ToBool() );
@@ -1203,6 +1206,7 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   Depth = item.GetRequiredField("depth").ToDouble();
   Size = item.GetRequiredField("size").ToDouble();
   Extended = item.GetFieldValue("extended", FalseString()).ToBool();
+  Boxed = item.GetFieldValue("boxed", FalseString()).ToBool();
   ExtMin = vec3f(-1,-1,-1);
   ExtMax = vec3f(1,1,1);
   const size_t ed_i = item.FieldIndex("ext_max");
@@ -1224,6 +1228,7 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   }
   AdjustMap();
   InitIso();
+  Loading_ = false;
 }
 //..............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
