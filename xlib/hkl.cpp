@@ -95,6 +95,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       }
     }
     const bool apply_basis = !Basis.IsI();
+    size_t removed_cnt = 0;
     const size_t line_cnt = SL.Count();
     Refs.SetCapacity(line_cnt);
     for( size_t i=0; i < line_cnt; i++ )  {
@@ -133,8 +134,16 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
             new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
           ref->SetTag(Tag);
           ref->SetOmitted(ZeroRead);
-          if( apply_basis )
-            ref->SetHkl(Basis*vec3d(ref->GetHkl()));
+          if( apply_basis ) {
+            vec3d nh = Basis*vec3d(ref->GetHkl());
+            vec3i nih = nh.Round<int>();
+            if (!nh.Equals(nih, 0.004) || nih.IsNull()) {
+              delete ref;
+              removed_cnt++;
+              continue;
+            }
+            ref->SetHkl(nih);
+          }
           UpdateMinMax(*ref);
           Refs.Add(ref);
         }
@@ -196,6 +205,12 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           *ins_initialised = true;
         break;
       }
+    }
+    if (removed_cnt != 0) {
+      TBasicApp::NewLogEntry(logError) <<
+        "HKL transformation leads to non-integral/invalid Miller indices";
+      TBasicApp::NewLogEntry(logError) << "Removed: " << removed_cnt <<
+        " invalid reflections";
     }
     for( size_t i=0; i < Refs.Count(); i++ )
       Refs[i]->SetTag((i+1) * olx_sign(Refs[i]->GetTag()));
