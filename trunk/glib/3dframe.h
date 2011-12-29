@@ -118,7 +118,8 @@ public:
       edges[i] += t;
   }
   double GetVolume() const {
-    return sqrt((edges[1]-edges[0]).QLength()*(edges[3]-edges[0]).QLength()*(edges[4]-edges[0]).QLength());
+    return sqrt((edges[1]-edges[0]).QLength()*(edges[3]-edges[0]).QLength()
+      *(edges[4]-edges[0]).QLength());
   }
   vec3d GetSize() const {
     return vec3d(
@@ -138,6 +139,8 @@ public:
       (edges[1]-edges[0]).Normalise(),
       (edges[4]-edges[0]).Normalise());
   }
+  void ToDataItem(TDataItem &di) const;
+  void FromDataItem(const TDataItem &di);
 };
 
 EndGlNamespace()

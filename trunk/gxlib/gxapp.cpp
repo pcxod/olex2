@@ -166,7 +166,7 @@ public:
       FParent->XFile().GetLattice().ClearPlaneDefinitions();
       FParent->ClearGroupDefinitions();
     }
-    FParent->XGrid().Clear();
+    //FParent->XGrid().Clear();
     B = FParent->GetRender().GetBasis();
     FParent->GetRender().Clear();
     FParent->HklFile().Clear();
@@ -4018,6 +4018,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   }
   visibility.AddField("planes", vis.ToBase64String());
   
+  F3DFrame->ToDataItem(item.AddItem("3DFrame"));
   FXGrid->ToDataItem(item.AddItem("Grid"), zos);
   FDBasis->ToDataItem(item.AddItem("DBasis"));
 
@@ -4096,6 +4097,9 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   for( size_t i=0; i < labels.ItemCount(); i++ )
     XLabels.Add(new TXGlLabel(*FGlRender, PLabelsCollectionName)).FromDataItem(labels.GetItem(i));
 
+  TDataItem *frame_i = item.FindItem("3DFrame");
+  if ( frame_i != NULL)
+    F3DFrame->FromDataItem(*frame_i);
   FXGrid->FromDataItem(item.FindRequiredItem("Grid"), zis);
   FDBasis->FromDataItem(item.FindRequiredItem("DBasis"));
 
