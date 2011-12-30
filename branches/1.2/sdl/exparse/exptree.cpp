@@ -55,9 +55,7 @@ bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest, size_t& 
 //...........................................................................
 bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
   const olxch oc = exp.CharAt(ind), 
-    cc = (oc == '(' ? ')' : (oc == '[' ? ']' : (oc == '{' ? '}' : (oc == '<' ? '>' : '#'))));
-  if( cc == '#' )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid bracket char: ") << oc );
+    cc = get_closing_bracket(oc);
   int bc = 1;
   const size_t start = ind+1;
   while( ++ind < exp.Length() && bc != 0 )  {
@@ -73,11 +71,11 @@ bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
   return false;
 }
 //...........................................................................
-bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest, size_t& ind)  {
-  const olxch oc = exp.CharAt(ind), 
-    cc = (oc == '(' ? ')' : (oc == '[' ? ']' : (oc == '{' ? '}' : (oc == '<' ? '>' : '#'))));
-  if( cc == '#' )
-    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid bracket char: ") << oc );
+bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest,
+  size_t& ind)
+{
+  const olxch oc = exp.CharAt(ind),
+    cc = get_closing_bracket(oc);
   int bc = 1;
   const size_t start = ind+1;
   while( ++ind < exp.Length() && bc != 0 )  {
@@ -102,8 +100,12 @@ bool parser_util::is_operator(const olxstr& exp)  {
   return false;
 }
 //...........................................................................
-bool parser_util::parse_control_chars(const olxstr& exp, olxstr& dest, size_t& ind)  {
-  while( ind < exp.Length() && control_chars.IndexOf(exp.CharAt(ind)) != InvalidIndex )  {
+bool parser_util::parse_control_chars(const olxstr& exp, olxstr& dest,
+  size_t& ind)
+{
+  while( ind < exp.Length() &&
+    control_chars.IndexOf(exp.CharAt(ind)) != InvalidIndex )
+  {
     dest << exp.CharAt(ind++);
     if( !is_operator(dest) )  {
       dest.SetLength(dest.Length()-1);
@@ -113,11 +115,19 @@ bool parser_util::parse_control_chars(const olxstr& exp, olxstr& dest, size_t& i
   }
   return !dest.IsEmpty();
 }
+bool parser_util::is_next_char_control(const olxstr& exp, size_t ind) {
+  if (ind+1 < exp.Length() &&
+      control_chars.IndexOf(exp.CharAt(ind+1)) != InvalidIndex)
+  {
+    return true;
+  }
+  return false;
+}
 //...........................................................................
 bool parser_util::is_expandable(const olxstr& exp)  {
   for( size_t i=0; i < exp.Length(); i++ )  {
     const olxch ch = exp.CharAt(i);
-    if( ch == '(' )
+    if( is_bracket(ch) )
       return true;
     if( is_quote(ch) && !is_escaped(exp, i) )  {  // skip strings
       while( ++i < exp.Length() && exp.CharAt(i) != ch && !is_escaped(exp, i) )
@@ -164,8 +174,10 @@ void expression_tree::expand()  {
     if( olxstr::o_iswhitechar(ch) )  continue;
     else if( ch == '(' )  {  // parse out brackets
       olxstr arg;
-      if( !parser_util::parse_brackets(data, arg, i) ) 
-        throw TInvalidArgumentException(__OlxSourceInfo, "problem with brackets");
+      if( !parser_util::parse_brackets(data, arg, i) ) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          "problem with brackets");
+      }
       arg.TrimWhiteChars();
       dt.TrimWhiteChars();
       if( arg.IsEmpty() ) // empty arg list
@@ -204,13 +216,44 @@ void expression_tree::expand()  {
       dt.SetLength(0);
     }
     else if( ch == '[' || ch == '{' )  {
-      size_t ind = i;
-      if( !parser_util::skip_brackets(data, ind) )
+      olxstr arg;
+      if( !parser_util::parse_brackets(data, arg, i) )
         throw TInvalidArgumentException(__OlxSourceInfo, "problem with brackets");
-      dt << data.SubString(i, ind-i+1);
-      i = ind;
+      if (!dt.IsEmpty() || (parent != NULL && parent->data == '.'))  {
+        if (!dt.IsEmpty()) {
+          if( q_ch != ' ' )
+            left = new expression_tree(this, olxstr(q_ch) << dt << q_ch);
+          else
+            left = new expression_tree(this, dt);
+          left->expand();
+          right = new expression_tree(this, '.');
+          right->evator = new evaluator<expression_tree>("_idx_");
+          right->evator->args.Add(new expression_tree(this, arg))->expand();
+          olxstr ra = data.SubStringFrom(i+1);
+          data = '.';
+          right->right = new expression_tree(right,
+            ra.StartsFrom('.') ? ra.SubStringFrom(1) : ra);
+          right->right->expand();
+        }
+        else {
+          evator = new evaluator<expression_tree>("_idx_");
+          evator->args.Add(new expression_tree(this, arg))->expand();
+          olxstr ra = data.SubStringFrom(i+1);
+          data = '.';
+          right = new expression_tree(this,
+            ra.StartsFrom('.') ? ra.SubStringFrom(1) : ra);
+          right->expand();
+        }
+      }
+      else {
+        if (i+1 != data.Length())
+          throw TInvalidArgumentException(__OlxSourceInfo, "list initiliser");
+        data = (olxstr(ch) << arg << (ch == '[' ? ']' : '}'));
+      }
+      break;
     }
-    else if( parser_util::is_quote(ch) && !parser_util::is_escaped(data, i) )  { // parse out the strings
+    // parse out the strings
+    else if( parser_util::is_quote(ch) && !parser_util::is_escaped(data, i) )  {
       if( dt.IsEmpty() )  q_ch = ch;
       if( !parser_util::parse_string(data, dt, i) ) 
         throw TInvalidArgumentException(__OlxSourceInfo, "problem with quotations");
@@ -245,8 +288,8 @@ void expression_tree::expand()  {
           left->expand();
         }
         right = new expression_tree(this, data.SubStringFrom(i));
-        right->expand();
         data = opr;
+        right->expand();
         break;
       }
       else

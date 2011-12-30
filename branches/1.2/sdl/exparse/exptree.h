@@ -36,10 +36,21 @@ namespace exparse  {
     bool parse_brackets(const olxstr& exp, olxstr& dest, size_t& ind);
     bool is_operator(const olxstr& exp);
     bool parse_control_chars(const olxstr& exp, olxstr& dest, size_t& ind);
+    bool is_next_char_control(const olxstr& exp, size_t ind);
     bool is_expandable(const olxstr& exp);
     // checks if the char is a bracket char
     inline bool is_bracket(olxch ch)  {
       return ch == '(' || ch == '[' || ch == '{' || ch == '<';
+    }
+    // returns the bracket counterpart
+    inline olxch get_closing_bracket(olxch oc)  {
+      const olxch cc = (oc == '(' ? ')' : (oc == '[' ? ']' : (oc == '{' ? '}'
+        : (oc == '<' ? '>' : '#'))));
+      if (cc == '#') {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olxstr("bracket=").quote() << oc);
+      }
+      return cc;
     }
     // checks if the char is a quote char
     inline bool is_quote(olxch ch)  {
@@ -60,6 +71,10 @@ namespace exparse  {
     }
     // splits expressions like ("",ddd(),"\""), leaves tokens quoted if quoted originally
     template <class StrLst> void split_args(const olxstr& exp, StrLst& res)  {
+      if (is_bracket(exp.CharAt(0))) {
+        res.Add(exp);
+        return;
+      }
       size_t start = 0;
       for( size_t i=0; i < exp.Length(); i++ )  {
         const olxch ch = exp.CharAt(i);

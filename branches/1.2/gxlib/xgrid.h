@@ -60,7 +60,7 @@ class TXGrid: public AGDrawObject  {
   void RescaleSurface();
   TGlTextBox* Info;
   short RenderMode;
-  bool Extended, Boxed;
+  bool Extended, Boxed, Loading_;
   vec3f ExtMin, ExtMax;
   TGlPrimitive* glpP, *glpN, *glpC;
   // these will keep the masked objects

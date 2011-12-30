@@ -48,21 +48,34 @@ namespace PersUtil {
       v.Add( toks[i].ToInt() );
     return v;
   }
-  template <class vl> static olxstr VecListToStr(const vl& l)  {
+  template <class vl> static olxstr VecArrayToStr(const vl& l, size_t count)  {
     olxstr rv;
-    for( size_t i=0; i < l.Count(); )  {
+    for( size_t i=0; i < count; )  {
       rv << VecToStr(l[i]);
-      if( ++i < l.Count() )
+      if( ++i < count )
         rv << ';';
     }
     return rv;
   }
-  template <class vl> static vl& FloatVecListFromStr(const olxstr& v, vl& l)  {
+  template <class vl> static olxstr VecListToStr(const vl& l)  {
+    return VecArrayToStr(l, l.Count());
+  }
+  template <class vl>
+  static vl& FloatVecListFromStr(const olxstr& v, vl& l)  {
     TStrList toks(v, ';');
     for( size_t i=0; i < toks.Count(); i++ )  {
       vec3d tv = FloatVecFromStr(toks[i]);
       l.AddNew(tv[0], tv[1], tv[2]);
     }
+    return l;
+  }
+  template <class vl>
+  static vl& FloatVecArrayFromStr(const olxstr& v, vl& l, size_t cnt)  {
+    TStrList toks(v, ';');
+    if (cnt != toks.Count())
+      throw TFunctionFailedException(__OlxSourceInfo, "size mismatch");
+    for( size_t i=0; i < toks.Count(); i++ )
+      l[i] = FloatVecFromStr(toks[i]);
     return l;
   }
   template <class vl> static vl& IntVecListFromStr(const olxstr& v, vl& l)  {

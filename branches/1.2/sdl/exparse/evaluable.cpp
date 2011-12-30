@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #include "evaluable.h"
-
+#include "context.h"
 using namespace esdl::exparse;
 
 const IEvaluable::operator_dict::Entry ANumberEvaluator::cast_operators_table[] = {
@@ -27,8 +27,20 @@ const IEvaluable::operator_dict::Entry ANumberEvaluator::cast_operators_table[] 
   ANumberEvaluator::create_operator_entry<float>(),
   ANumberEvaluator::create_operator_entry<double>()
 };
+
 olxdict<std::type_info const*, IEvaluable::cast_operator, TPointerComparator> 
-  ANumberEvaluator::cast_operators( 
-    ANumberEvaluator::cast_operators_table, 
-    sizeof(ANumberEvaluator::cast_operators_table)/sizeof(ANumberEvaluator::cast_operators_table[0]) 
-  );
+ANumberEvaluator::cast_operators( 
+  ANumberEvaluator::cast_operators_table, 
+  sizeof(ANumberEvaluator::cast_operators_table)/sizeof(ANumberEvaluator::cast_operators_table[0]) 
+);
+
+IEvaluable *IEvaluable::create_proxy_() const {
+  return new VarProxy(const_cast<IEvaluable*>(this));
+}
+
+IEvaluable* creator<IEvaluable &>::create(
+  const EvaluableFactory &f, IEvaluable &v)
+{
+  return f.create_ref(v);
+}
+

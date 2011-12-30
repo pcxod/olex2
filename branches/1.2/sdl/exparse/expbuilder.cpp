@@ -12,6 +12,7 @@
 using namespace esdl::exparse;
 
 ClassInfo<StringValue,olxstr> StringValue::info;
+ClassInfo<ListValue,ListValue::list_t> ListValue::info;
 
 //..............................................................................
 bool exp_builder::needs_sorting(expression_tree* root)  {
@@ -133,7 +134,8 @@ IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root,
   }
   if( rv == NULL ) {
     throw TFunctionFailedException(__OlxSourceInfo,
-      olxstr("undefined function: ") << root->evator->name);
+      olxstr("undefined function: ").quote() << root->evator->name <<
+      " for type " << left->get_type_info().name());
   }
     // need to test if the function result cannot be changed
   if( all_const )
@@ -170,14 +172,14 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root,
       throw TFunctionFailedException(__OlxSourceInfo, "invalid indirection");
     while( root->right != NULL && root->right->evator != NULL )  {
       rv = evaluator_from_evator(root->right, left);
-      if( rv->is_final() )  {
+      if (rv->is_final() || rv->is_function())  {
         IEvaluable* eval = rv->_evaluate();
-        if( rv->ref_cnt == 0 )  delete rv;
-        if( left->ref_cnt == 0 )  delete left;
+        if( left->ref_cnt() == 0 )  delete left;
+        if( rv->ref_cnt() == 0 )  delete rv;
         left = rv = eval;
       }
       else  {
-        if( left->ref_cnt == 0 )  delete left;
+        if( left->ref_cnt() == 0 )  delete left;
         left = rv;
       }
       root = root->right;
@@ -186,7 +188,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root,
       IEvaluable* right = create_evaluator(root->right);
       return locate_function(root->data, rv, right);
     }
-    return rv;
+   return rv;
   }
   if( root->data == '=' )  {  // assignment
     if( root->right == NULL || root->left == NULL || root->evator != NULL ) {
@@ -196,7 +198,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root,
     IEvaluable* val = create_evaluator(root->right);
     if ( !val->is_final() && finaliseAssignment )  {
       IEvaluable* res = val->_evaluate();
-      if( val->ref_cnt == 0 )
+      if( val->ref_cnt() == 0 )
         delete val;
       val = res;
     }
@@ -218,7 +220,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root,
       if( left != NULL )  delete left;
       if( right != NULL )  delete right;
       throw TFunctionFailedException(__OlxSourceInfo, exc,
-        "could not find appropriate evlauable");
+        "could not find appropriate evaluable");
     }
     if( left == NULL && right != NULL )  {
       left = right;
@@ -229,31 +231,37 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root,
   else  {
     if( root->evator != NULL )
       return evaluator_from_evator(root);
-    else  {
-      if( root->data.IsNumber() )  { // is number?
-        if( root->data.IndexOf('.') != InvalidIndex )
-          return new DoubleValue(root->data.ToDouble());
-        else
-          return new IntValue(root->data.ToInt());
-      }
-      else  {
-        // check if a string
-        if( (root->data.StartsFrom('\'') && root->data.EndsWith('\'')) ||
-            (root->data.StartsFrom('\"') && root->data.EndsWith('\"')) )
-        {
-          return new StringValue(root->data.Trim(root->data.CharAt(0)));
-        }
-        IEvaluable* rv = scope.find_const(root->data);
-        if( rv != NULL )
-          return rv;
-        rv = scope.find_var(root->data);
-        if( rv == NULL ) {
-          throw TFunctionFailedException(__OlxSourceInfo,
-            olxstr("undefined variable: ") << root->data);
-        }
-        return rv;
-      }
-    }
+     else
+      return evaluator_from_string(root->data);
   }
+}
+//..............................................................................
+IEvaluable* exp_builder::evaluator_from_string(const olxstr &str) const {
+  if( (str.StartsFrom('\'') && str.EndsWith('\'')) ||
+    (str.StartsFrom('\"') && str.EndsWith('\"')) )
+  {
+    return new StringValue(olxstr(str).Trim(str.CharAt(0)));
+  }
+  else if (str.StartsFrom('[') && str.EndsWith(']')) {
+    ListValue *lv = new ListValue;
+    TStrList toks(str.SubStringFrom(1,1), ',');
+    for( size_t ti=0; ti < toks.Count(); ti++)
+      lv->val.Add(evaluator_from_string(toks[ti]))->inc_ref();
+    return lv;
+  }
+  if (str.IsNumber())  { // is number?
+    if( str.IndexOf('.') != InvalidIndex )
+      return new DoubleValue(str.ToDouble());
+    else
+      return new IntValue(str.ToInt());
+  }
+  IEvaluable* rv = scope.find_const(str);
+  if( rv != NULL ) return rv;
+  rv = scope.find_var(str);
+  if( rv == NULL ) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("undefined variable: ").quote() << str);
+  }
+  return rv->undress();
 }
 //..............................................................................
