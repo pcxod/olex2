@@ -802,7 +802,7 @@ bool Analysis::trim_18(TAsymmUnit &au) {
   if (mn > atoms.Count()) {
     size_t i = peak_ranges.Count();
     while (--i !=InvalidIndex && mn > atoms.Count()) {
-      if (peak_ranges[i].get_mean() < 1.5) break;
+      if (peak_ranges[i].get_mean() < 1.5 && atoms.Count() > 0.75*mn ) break;
       atoms.AddList(peak_ranges[i].peaks);
     }
     for (; i != InvalidIndex; i--)
@@ -882,6 +882,8 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
     types.Add(iOxygenZ);
     types.Add(iFluorineZ);
     types.Add(iChlorineZ);
+    types.Add(33); // arsenic
+    types.Add(iBromineZ);
   }
   if (types.IndexOf(a.GetType().z) == InvalidIndex)
     return a.GetType();
@@ -917,6 +919,14 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
     if (ae.Count() == 3) // PR3
       return XElementLib::GetByIndex(iPhosphorusIndex);
     return XElementLib::GetByIndex(iSulphurIndex);
+  }
+  else if (a.GetType() == 33) { // arsenic
+    if (ae.Count() <= 1)
+      return *XElementLib::FindByZ(iBromineZ);
+  }
+  else if (a.GetType() == iBromineZ) {
+    if (ae.Count() > 1)
+      return *XElementLib::FindByZ(33);
   }
   return a.GetType();
 }

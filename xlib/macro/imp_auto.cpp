@@ -49,8 +49,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
     arg = folder.ToInt();
     folder.SetLength(0);
   }
-  if( folder.IsEmpty() && olex::IOlexProcessor::GetInstance() != NULL )
-    olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
+  olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
   static olxstr FileName(xapp.XFile().GetFileName());
   if( !folder.IsEmpty() )  {
     TAutoDB::GetInstance().ProcessFolder(folder);
@@ -77,11 +76,14 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   st = TETime::msNow() - st;
   TBasicApp::NewLogEntry(logInfo) << "Elapsed time " << st << " ms";
 
-  if( olex::IOlexProcessor::GetInstance() != NULL )
-    olex::IOlexProcessor::GetInstance()->executeMacro("fuse");
+  olex::IOlexProcessor::GetInstance()->executeMacro("fuse");
   size_t ac = imp_auto_AtomCount(au);
   if( ac == 0 )  // clearly something is wrong when it happens...
     ac = 1;
+  // sometimes things get stuck while there are some NPD atoms
+  if ((double)stat.ConfidentAtomTypes/ac < 0.2) {
+    olex::IOlexProcessor::GetInstance()->executeMacro("clean");
+  }
   Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' << 
     (double)stat.ConfidentAtomTypes*100/ac);
 }
@@ -144,6 +146,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     StandAlone.Add(XElementLib::GetByIndex(iChlorineIndex));
     StandAlone.Add(XElementLib::GetByIndex(iPotassiumIndex));
     StandAlone.Add(XElementLib::GetByIndex(iCalciumIndex));
+    StandAlone.Add(XElementLib::FindByZ(iBromineZ));
+    StandAlone.Add(XElementLib::FindByZ(53)); // iodine
   }
   helper_CleanBaiList(sfac, AvailableTypes);
   const bool runFuse = !Options.Contains("f");
@@ -300,31 +304,37 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
     if( latt.GetFragment(i).NodeCount() > 7 )   { // skip up to PF6 or so for Uiso analysis
       while( Uisos.Count() <= i ) Uisos.Add(0.0);
-      if( olx_abs(Uisos[i]) < 1e-6 )  {
-        size_t ac = 0;
-        for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
-          TSAtom& sa = latt.GetFragment(i).Node(j);
-          if( sa.IsDeleted() || sa.GetType().GetMr() < 3 )  continue;
-          Uisos[i] += sa.CAtom().GetUiso();
-          ac++;
+      bool changes = true;
+      while (changes) {
+        changes = false;
+        if( olx_abs(Uisos[i]) < 1e-6 )  {
+          size_t ac = 0;
+          for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
+            TSAtom& sa = latt.GetFragment(i).Node(j);
+            if( sa.IsDeleted() || sa.GetType().z < 2 )  continue;
+            Uisos[i] += sa.CAtom().GetUiso();
+            ac++;
+          }
+          if( ac != 0 )  Uisos[i] /= ac;
         }
-        if( ac != 0 )  Uisos[i] /= ac;
-      }
-      if( Uisos[i] > 1e-6 )  {
-        for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
-          TSAtom& sa = latt.GetFragment(i).Node(j);
-          if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
-          if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i]*3)  {
-            TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() << " too large, deleting";
-            sa.SetDeleted(true);
-            sa.CAtom().SetDeleted(true);
-            continue;
+        if( Uisos[i] > 1e-6 )  {
+          for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
+            TSAtom& sa = latt.GetFragment(i).Node(j);
+            if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
+            if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i]*3)  {
+              TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() << " too large, deleting";
+              sa.SetDeleted(true);
+              sa.CAtom().SetDeleted(true);
+              changes = true;
+            }
           }
         }
       }
     }
-    else  if( assignTypes )  {  // treat O an Cl
-      if( latt.GetFragment(i).NodeCount() == 1 && !latt.GetFragment(i).Node(0).IsDeleted() )  {
+    else  if( assignTypes )  {  // treat O and Cl
+      if( latt.GetFragment(i).NodeCount() == 1 &&
+        !latt.GetFragment(i).Node(0).IsDeleted() )
+      {
         TSAtom& sa = latt.GetFragment(i).Node(0);
         bool alone = true;
         for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )
@@ -338,7 +348,10 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           size_t ac = imp_auto_AtomCount(au);
           if( ac == 0 ) // this would be really strange
             ac++;
-          if( stat.SNAtomTypeAssignments == 0 && ((double)stat.ConfidentAtomTypes/ac) > 0.5 )  { // now we can make up types
+          // now we can make up types
+          if( stat.SNAtomTypeAssignments == 0 &&
+            ((double)stat.ConfidentAtomTypes/ac) > 0.5 )
+          {
             bool found = false;
             for( size_t j=0; j < StandAlone.Count(); j++ )  {
               if( sa.GetType() == *StandAlone[j] )  {
