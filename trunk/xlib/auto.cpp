@@ -505,6 +505,7 @@ TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
     Nodes.AddNew();
   BAIDelta = -1;
   URatio = 1.5;
+
   lc.GetLibrary().AttachLibrary(ExportLibrary());
 }
 //..............................................................................
@@ -1783,7 +1784,7 @@ void TAutoDB::LibURatio(const TStrObjList& Params, TMacroError& E)  {
     URatio = Params[0].ToDouble();
 }
 //..............................................................................
-TLibrary*  TAutoDB::ExportLibrary(const olxstr& name)  {
+TLibrary* TAutoDB::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("ata") : name);
   lib->RegisterFunction<TAutoDB>(
     new TFunction<TAutoDB>(this,  &TAutoDB::LibBAIDelta, "BAIDelta",

@@ -20,11 +20,13 @@
 
 struct _auto_BI {  
   int type;
-  uint32_t max_bonds;  
+  uint32_t min_bonds, max_bonds;
 };
 static _auto_BI _autoMaxBond[] = { 
-  {iOxygenIndex, 2},
-  {iFluorineIndex, 1},
+  {iOxygenZ, 1, 2},
+  {iFluorineZ, 0, 1},
+  {iChlorineZ, 0, 1},
+  {iPhosphorusZ, 3, 6},
 };
 
 typedef SortedPtrList<const cm_Element, TPointerComparator> SortedElementList;
@@ -81,7 +83,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   if( ac == 0 )  // clearly something is wrong when it happens...
     ac = 1;
   Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' << 
-    (double)stat.ConfidentAtomTypes*100/ac );
+    (double)stat.ConfidentAtomTypes*100/ac);
 }
 //..............................................................................
 void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options,
@@ -547,7 +549,9 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       for( size_t j=0; j < maxb_cnt; j++ )  {
         if( sa.GetType() == _autoMaxBond[j].type )  {
           uc.GetAtomEnviList(sa, bc_to_check.AddNew()); 
-          if( bc_to_check.GetLast().Count() <= _autoMaxBond[j].max_bonds )  {
+          if( bc_to_check.GetLast().Count() <= _autoMaxBond[j].max_bonds &&
+              bc_to_check.GetLast().Count() >= _autoMaxBond[j].min_bonds)
+          {
             bc_to_check.NullItem(bc_to_check.Count()-1);
           }
         }
