@@ -182,6 +182,8 @@ public:
   static const cm_Element &check_proposed_element(
     TCAtom &a, const cm_Element &e, ElementPList *set=NULL);
 
+  static const cm_Element &check_atom_type(TSAtom &a);
+
   static void funTrim(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(trim_18(TXApp::GetInstance().XFile().GetAsymmUnit()));
   }

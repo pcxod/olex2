@@ -303,8 +303,10 @@ private:
   TDoubleList Uisos;
   AnalysisStat LastStat;
   olxstr LastFileName;
-  int BAIDelta; // maximim element promotion
-  double URatio; // ratio beyond which search for element promotion
+  // maximim element promotion
+  int BAIDelta;
+  // ratio beyond which search for element promotion
+  double URatio, URatioFormula;
 public:
   /* the instance must be created with Replicate to avoid problems
    It will be deleted by this object
