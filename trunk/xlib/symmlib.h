@@ -262,25 +262,27 @@ class TSymmLib: public IEObject  {
   void InitRelations();
   static TSymmLib* Instance;
   int extra_added;
-  TSpaceGroup* CreateNewFromCompact(int latt,
+  TSpaceGroup &CreateNewFromCompact(int latt,
     const smatd_list& compact_matrices, const olxstr &hall_sb=EmptyString());
   TSpaceGroup &InitSpaceGroup(TSpaceGroup &sg);
-  TSpaceGroup *CreateNew(const SymmSpace::Info &si_info, const olxstr &hall_sb);
+  TSpaceGroup &CreateNew(const SymmSpace::Info &si_info, const olxstr &hall_sb);
 public:
   // 21.06.2008, the file name is not used
   TSymmLib(const olxstr& FN=EmptyString());
   virtual ~TSymmLib();
   // creates a dummy space group if not found
-  TSpaceGroup* FindSG(const TAsymmUnit& AU);
+  TSpaceGroup& FindSG(const TAsymmUnit& AU);
 
+  TSpaceGroup &CreateNew(const olxstr &hall);
+  TSpaceGroup &CreateNew(const SymmSpace::Info &si_info);
   // searches for expanded space groups like in the CIF
   template <class SymmSpaceT>
-  TSpaceGroup* FindSymSpace(const SymmSpaceT &sp) {
+  TSpaceGroup& FindSymSpace(const SymmSpaceT &sp) {
     smatd_list all_ml(sp);
     SymmSpace::Info si = SymmSpace::GetInfo(all_ml);
     olxstr hs = HallSymbol::Evaluate(si);
     TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-    return sg == NULL ? CreateNew(si, hs) : sg;
+    return sg == NULL ? CreateNew(si, hs) : *sg;
   }
   size_t FindBravaisLattices(TAsymmUnit& AU,
     TTypeList<TBravaisLatticeRef>& res) const;

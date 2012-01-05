@@ -1275,7 +1275,7 @@ void TSymmLib::GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const  {
     if( GetGroup(i).GetNumber() == N )  res.Add( &GetGroup(i) );
 }
 //..............................................................................
-TSpaceGroup* TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml,
+TSpaceGroup &TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml,
   const olxstr &_hs)
 {
   const olxstr hs = _hs.IsEmpty() ? HallSymbol::Evaluate(latt, ml) : _hs;
@@ -1283,7 +1283,7 @@ TSpaceGroup* TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml,
   TSpaceGroup *SG = new TSpaceGroup(ml, hs, hs,
     EmptyString(), -(++extra_added), GetLatticeByNumber(latt), (latt > 0), hs);
   SpaceGroups.Add(hs, &InitSpaceGroup(*SG));
-  return hall_symbols.Add(hs, SG);
+  return *hall_symbols.Add(hs, SG);
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::InitSpaceGroup(TSpaceGroup &sg) {
@@ -1321,7 +1321,7 @@ TSpaceGroup &TSymmLib::InitSpaceGroup(TSpaceGroup &sg) {
   return sg;
 }
 //..............................................................................
-TSpaceGroup* TSymmLib::CreateNew(const SymmSpace::Info& si,
+TSpaceGroup& TSymmLib::CreateNew(const SymmSpace::Info& si,
   const olxstr &hs)
 {
   smatd_list ml;
@@ -1337,11 +1337,23 @@ TSpaceGroup* TSymmLib::CreateNew(const SymmSpace::Info& si,
     SG->InversionCenter = si.inv_trans/2;
     TBasicApp::NewLogEntry(logInfo) << "Adding new SG " << hs;
     SpaceGroups.Add(hs, &InitSpaceGroup(*SG));
-    return hall_symbols.Add(hs, SG);
+    return *hall_symbols.Add(hs, SG);
   }
 }
 //..............................................................................
-TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
+TSpaceGroup &TSymmLib::CreateNew(const SymmSpace::Info &si) {
+  olxstr hs = HallSymbol::Evaluate(si);
+  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
+  return sg == NULL ? CreateNew(si, hs) : *sg;
+}
+//..............................................................................
+TSpaceGroup &TSymmLib::CreateNew(const olxstr &hs) {
+  SymmSpace::Info si = HallSymbol::Expand(hs);
+  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
+  return sg == NULL ? CreateNew(si, hs) : *sg;
+}
+//..............................................................................
+TSpaceGroup& TSymmLib::FindSG(const TAsymmUnit& AU)  {
   // P - check if compactable
   if (AU.GetLatt() == -1) {
     smatd_list ml = AU.GetMatices();
@@ -1349,13 +1361,13 @@ TSpaceGroup* TSymmLib::FindSG(const TAsymmUnit& AU)  {
     SymmSpace::Info si = SymmSpace::GetInfo(ml);
     olxstr hs = HallSymbol::Evaluate(si);
     TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-    return sg == NULL ? CreateNew(si, hs) : sg;
+    return sg == NULL ? CreateNew(si, hs) : *sg;
   }
   else {
     olxstr hs = HallSymbol::Evaluate(AU.GetLatt(), AU.GetMatices());
     TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
     return sg == NULL ? CreateNewFromCompact(AU.GetLatt(), AU.GetMatices(), hs)
-      : sg;
+      : *sg;
   }
 }
 //..............................................................................

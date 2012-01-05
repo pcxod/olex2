@@ -933,15 +933,11 @@ void TAsymmUnit::LibGetCellVolume(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(*this);
-  if( sg == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "Could not locate spacegroup" );
-    return;
-  }
+  TSpaceGroup& sg = TSymmLib::GetInstance().FindSG(*this);
   if( Params.IsEmpty() )
-    E.SetRetVal(sg->GetName());
+    E.SetRetVal(sg.GetName());
   else if( Params[0].Equalsi("hall") )
-    E.SetRetVal(sg->GetHallSymbol());
+    E.SetRetVal(sg.GetHallSymbol());
 }
 //..............................................................................
 void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
