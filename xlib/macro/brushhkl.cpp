@@ -69,16 +69,12 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
   Hkl.LoadFromFile(HklFN);
 
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(au);
-  if( sg == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "Undefined space group");
-    return;
-  }
+  TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(au);
 
   const bool useFriedelLaw = Options.Contains("f");
   smatd_list ml;
-  sg->GetMatrices(ml, mattAll^(mattIdentity|mattCentering));
-  if( !sg->IsCentrosymmetric() && useFriedelLaw )
+  sg.GetMatrices(ml, mattAll^(mattIdentity|mattCentering));
+  if( !sg.IsCentrosymmetric() && useFriedelLaw )
     ml.InsertNew(0).r.I() *= -1;
 
   TPtrList< HklBrushRef > refs, eqs;

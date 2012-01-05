@@ -23,7 +23,7 @@ void TCRSFile::Clear()  {
 }
 //..............................................................................
 TSpaceGroup* TCRSFile::GetSG()  {
-  return SGInitialised ? TSymmLib::GetInstance().FindSG(GetAsymmUnit()) : NULL;
+  return SGInitialised ? &TSymmLib::GetInstance().FindSG(GetAsymmUnit()) : NULL;
 }
 //..............................................................................
 void TCRSFile::SaveToStrings(TStrList& SL)  {

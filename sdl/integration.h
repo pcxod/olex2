@@ -61,6 +61,7 @@ namespace olex {
     virtual TStrList GetPluginList() const = 0;
     virtual olxstr TranslateString(const olxstr& str) const = 0;
     virtual bool IsControl(const olxstr& cname) const = 0;
+    virtual bool HasGUI() const = 0;
     static const olxstr SGListVarName;
     static DllExport IOlexProcessor* GetInstance()  {  return Instance;  }
   };

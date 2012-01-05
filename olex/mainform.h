@@ -650,6 +650,8 @@ public:
   virtual bool IsControl(const olxstr& cname) const;
   virtual void LockWindowDestruction(wxWindow* wnd, const IEObject* caller);
   virtual void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller);
+  virtual bool HasGUI() const { return true; }
+  //..........................................................................................
 
   void OnKeyUp(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);

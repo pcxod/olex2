@@ -31,27 +31,63 @@ class TAtomTypePermutator;
 class TAutoDBIdObject  {
   int32_t Id;
 public:
-  TAutoDBIdObject(int32_t id )  {  Id = id;  }
-  TAutoDBIdObject(const TAutoDBIdObject& ido )  {  Id = ido.GetId();  }
-  TAutoDBIdObject()          {  Id = -1;   }
-  inline const TAutoDBIdObject& operator = (const TAutoDBIdObject& oid)  {
+  TAutoDBIdObject(int32_t id)  : Id(id) {}
+  TAutoDBIdObject(const TAutoDBIdObject& ido) : Id(ido.Id) {}
+  TAutoDBIdObject() : Id(-1) {}
+  TAutoDBIdObject& operator = (const TAutoDBIdObject& oid)  {
     Id = oid.GetId();
-    return oid;
+    return *this;
   }
-  inline bool operator == (const TAutoDBIdObject& oid) {
+  bool operator == (const TAutoDBIdObject& oid) {
     return Id == oid.GetId();
   }
-  inline bool operator != (const TAutoDBIdObject& oid) {
+  bool operator != (const TAutoDBIdObject& oid) {
     return Id != oid.GetId();
   }
   DefPropP(int32_t, Id)
 };
   typedef TPtrList<TAutoDBIdObject>  TAutoDBIdPList;
 ////////////////////////////////////////////////////////////////////////////////
+class TAutoDBRegistry {
+  olxstr_dict<TAutoDBIdObject*, true> entries;
+public:
+  TAutoDBRegistry() {}
+  TAutoDBRegistry(const TAutoDBRegistry &dbf) : entries(dbf.enties) {}
+  ~TAutoDBRegistry() {
+    for( size_t i=0; i < entries.Count(); i++ )
+      delete entries.GetValue(i);
+  }
+  TAutoDBRegistry& operator = (const TAutoDBRegistry& dbf)  {
+    entries = dbf.entries;
+    return *this;
+  }
+  TAutoDBRegistry(IDataInputStream& in)  {  LoadFromStream(in);  }
+  bool Contains(const olxstr& hash)  { return entries.HasKey(hash); }
+  TAutoDBIdObject& Add(const olxstr& hash)  {
+    TAutoDBIdObject *df = new TAutoDBIdObject,
+      *rv;
+    if ((rv = entries.Add(hash, df)) != df)
+      delete df;
+    return *rv;
+  }
+  inline size_t Count() const {  return Files.Count();  }
+  inline TAutoDBIdObject& GetIdObject(size_t ind) const {
+    return *Files.GetObject(ind);
+  }
+  inline const olxstr& GetObjectName(size_t ind) {
+    return Files.GetKey(ind);
+  }
+  void AssignIds(uint32_t base)  {
+    for( size_t i=0; i < Files.Count(); i++ )
+      Files.GetObject(i)->SetId((uint32_t)(base + i));
+  }
+  void SaveToStream(IDataOutputStream& output) const;
+  void LoadFromStream(IDataInputStream& input);
+};
 class TAutoDBFolder {
   TSStrPObjList<olxstr,TAutoDBIdObject*, true> Files;
 public:
-  TAutoDBFolder()  {  ;  }
+  TAutoDBFolder()  {}
   TAutoDBFolder(const TAutoDBFolder& dbf)  {  *this = dbf;  }
   ~TAutoDBFolder()  {
     for( size_t i=0; i < Files.Count(); i++ )
@@ -83,8 +119,8 @@ public:
     for( size_t i=0; i < Files.Count(); i++ )
       Files.GetObject(i)->SetId((uint32_t)(base + i));
   }
-  void SaveToStream( IDataOutputStream& output ) const;
-  void LoadFromStream( IDataInputStream& input );
+  void SaveToStream(IDataOutputStream& output) const;
+  void LoadFromStream(IDataInputStream& input);
 };
 
 ////////////////////////////////////////////////////////////////////////////////

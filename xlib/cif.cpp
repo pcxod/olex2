@@ -263,7 +263,7 @@ void TCif::Initialize()  {
   }
 
   GetAsymmUnit().InitMatrices();
-
+  bool sg_initialised = false;
   Loop = FindLoop("_space_group_symop");
   if( Loop == NULL )
     Loop = FindLoop("_space_group_symop_operation_xyz");
@@ -321,27 +321,45 @@ void TCif::Initialize()  {
       // remove obsolete loop
       data_provider[block_index].Remove(*Loop);
     }
-  }
-  try  {
-    if( Matrices.IsEmpty() )
-      GetAsymmUnit().ChangeSpaceGroup(
-      *TSymmLib::GetInstance().FindGroupByName("P1"));
-    else  {
-      TSpaceGroup* sg = TSymmLib::GetInstance().FindSymSpace(Matrices);
-      if( sg != NULL )
-        GetAsymmUnit().ChangeSpaceGroup(*sg);
-      else {
-        GetAsymmUnit().ChangeSpaceGroup(
-          *TSymmLib::GetInstance().FindGroupByName("P1"));
+    // no sym ops, check hall symbol
+    else {
+      olxstr hs = GetParamAsString("_symmetry_space_group_name_Hall");
+      if (!hs.IsEmpty()) {
+        TSpaceGroup *sg = TSymmLib::GetInstance().FindGroupByHallSymbol(hs);
+        if (sg != NULL) {
+          GetAsymmUnit().ChangeSpaceGroup(*sg);
+          sg_initialised = true;
+        }
+        else {
+          try {
+            GetAsymmUnit().ChangeSpaceGroup(
+              TSymmLib::GetInstance().CreateNew(hs));
+            sg_initialised = true;
+          }
+          catch(...) {
+            TBasicApp::NewLogEntry() << "Failed to expand Hall symbol";
+          }
+        }
       }
     }
   }
-  catch (const TExceptionBase &e)  {
-    TStrList out;
-    e.GetException()->GetStackTrace(out);
-    TBasicApp::NewLogEntry(logInfo) << out;
-    GetAsymmUnit().ChangeSpaceGroup(
-      *TSymmLib::GetInstance().FindGroupByName("P1"));
+  if (!sg_initialised) {
+    try  {
+      if( Matrices.IsEmpty() )
+        GetAsymmUnit().ChangeSpaceGroup(
+        *TSymmLib::GetInstance().FindGroupByName("P1"));
+      else  {
+        GetAsymmUnit().ChangeSpaceGroup(
+          TSymmLib::GetInstance().FindSymSpace(Matrices));
+      }
+    }
+    catch (const TExceptionBase &e)  {
+      TStrList out;
+      e.GetException()->GetStackTrace(out);
+      TBasicApp::NewLogEntry(logInfo) << out;
+      GetAsymmUnit().ChangeSpaceGroup(
+        *TSymmLib::GetInstance().FindGroupByName("P1"));
+    }
   }
   try  {
     TStrList frm(GetParamAsString("_chemical_formula_sum"), ' ');
@@ -867,9 +885,9 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             if( SVal.Equalsi("date") )
               value = TETime::FormatDateTime(TETime::Now());
             else if( SVal.Equalsi("sg_number") )  {
-              TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
-              if( sg != NULL )
-                value = sg->GetNumber();
+              TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
+              if (sg.GetNumber() > 0)
+                value = sg.GetNumber();
               else
                 value = "unknown";
             }

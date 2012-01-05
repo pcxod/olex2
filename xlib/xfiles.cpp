@@ -124,7 +124,7 @@ void TXFile::LastLoaderChanged() {
     GetLattice().Clear(true);
     return;
   }
-  FSG = TSymmLib::GetInstance().FindSG(FLastLoader->GetAsymmUnit());
+  FSG = &TSymmLib::GetInstance().FindSG(FLastLoader->GetAsymmUnit());
   OnFileLoad.Enter(this, &FLastLoader->GetFileName());
   GetRM().Clear(rm_clear_ALL);
   GetLattice().Clear(true);
@@ -200,7 +200,7 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
     }
     OnFileLoad.Exit(this);
   }
-  FSG = TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());
+  FSG = &TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());
   if( replicated )  {
     for( size_t i=0; i < FileFormats.Count(); i++ )
       if( FileFormats.GetObject(i) == FLastLoader )

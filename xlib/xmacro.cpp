@@ -3227,34 +3227,30 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   Cif->SetParam("_cell_formula_units_Z",
     xapp.XFile().GetAsymmUnit().GetZ(), false);
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
-  if( sg != NULL )  {
-    Cif->SetParam("_space_group_crystal_system",
-      sg->GetBravaisLattice().GetName().ToLowerCase(), true);
-    Cif->SetParam("_space_group_name_Hall", sg->GetHallSymbol(), true);
-    Cif->SetParam("_space_group_name_H-M_alt", sg->GetFullName(), true);
-    Cif->SetParam("_space_group_IT_number", sg->GetNumber(), false);
-    if( !sg->IsCentrosymmetric() &&
-        !Cif->ParamExists("_chemical_absolute_configuration") )
-    {
-      bool flack_used = false;
-      if( xapp.CheckFileType<TIns>() )  {
-        const TIns& ins = xapp.XFile().GetLastLoader<TIns>();
-        const TLst& lst = ins.GetLst();
-        if( lst.IsLoaded() && lst.HasFlack() )  {
-          TEValue<double> fv = lst.Flack();
-          if( fv.GetE() < 0.2 )  {
-            Cif->SetParam("_chemical_absolute_configuration", "ad", false);
-            flack_used = true;
-          }
+  TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(Cif->GetAsymmUnit());
+  Cif->SetParam("_space_group_crystal_system",
+    sg.GetBravaisLattice().GetName().ToLowerCase(), true);
+  Cif->SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
+  Cif->SetParam("_space_group_name_H-M_alt", sg.GetFullName(), true);
+  Cif->SetParam("_space_group_IT_number", sg.GetNumber(), false);
+  if( !sg.IsCentrosymmetric() &&
+    !Cif->ParamExists("_chemical_absolute_configuration") )
+  {
+    bool flack_used = false;
+    if( xapp.CheckFileType<TIns>() )  {
+      const TIns& ins = xapp.XFile().GetLastLoader<TIns>();
+      const TLst& lst = ins.GetLst();
+      if( lst.IsLoaded() && lst.HasFlack() )  {
+        TEValue<double> fv = lst.Flack();
+        if( fv.GetE() < 0.2 )  {
+          Cif->SetParam("_chemical_absolute_configuration", "ad", false);
+          flack_used = true;
         }
       }
-      if( !flack_used )
-        Cif->SetParam("_chemical_absolute_configuration", "unk", false);
     }
+    if( !flack_used )
+      Cif->SetParam("_chemical_absolute_configuration", "unk", false);
   }
-  else
-    TBasicApp::NewLogEntry(logError) << "Could not locate space group ...";
   Cif->SaveToFile(Cif->GetFileName());
 }
 //..............................................................................
@@ -4536,7 +4532,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   if( op != NULL )  {
     op->executeMacroEx(olxstr("@reap \'") << FN << '\'', E);
-    if( E.IsSuccessful() )
+    if( E.IsSuccessful() && op->HasGUI() )
       op->executeMacro("html.Update");
   }
 }

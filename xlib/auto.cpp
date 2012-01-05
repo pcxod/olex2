@@ -284,7 +284,7 @@ bool TAutoDBNode::IsSimilar(const TAutoDBNode& dbn) const  {
       for( size_t i=0; i < Params.Count(); i++ )  {
         diff = olx_abs(Params[i] - dbn.Params[i]);
         if( i < AttachedNodes.Count() )  {
-          if( diff > 0.005) return false;
+          if( diff > 0.005 ) return false;
         }
         else
           if( diff > 4 ) return false;
@@ -754,7 +754,7 @@ void TAutoDB::SaveToStream(IDataOutputStream& output) const {
     Nets[i].SaveToStream(output);
 }
 //..............................................................................
-void TAutoDB::LoadFromStream( IDataInputStream& input )  {
+void TAutoDB::LoadFromStream(IDataInputStream& input)  {
   // validation of the file
   char fileSignature[FileSignatureLength+1];
   input.Read( fileSignature, FileSignatureLength );
@@ -772,7 +772,7 @@ void TAutoDB::LoadFromStream( IDataInputStream& input )  {
   uint32_t ind;
   uint32_t fileCount = 0, nodeCount = 0;
   input >> ind;
-  Folders.SetCapacity( ind );
+  Folders.SetCapacity(ind);
   for( uint32_t i=0; i < ind; i++ )  {
     input >> tmp;
     Folders.Add(TUtf8::Decode(tmp),  new TAutoDBFolder(input));
@@ -783,11 +783,11 @@ void TAutoDB::LoadFromStream( IDataInputStream& input )  {
   uint32_t listCount;
   input >> listCount;  // nt MaxConnectivity is overriden!
   Nodes.Clear();
-  Nodes.SetCapacity( listCount );
+  Nodes.SetCapacity(listCount);
   for( uint32_t i=0; i < listCount; i++ )  {
     Nodes.AddNew();
     input >> ind;
-    Nodes[i].SetCapacity( ind );
+    Nodes[i].SetCapacity(ind);
     for( uint32_t j=0; j < ind; j++ )  {
       Nodes[i].Add(new TAutoDBNode(input));
       Nodes[i][j]->SetId(nodeCount + j);
@@ -1556,18 +1556,14 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt,
       exc.GetException()->GetError();
     return;
   }
-  TSpaceGroup* sga = TSymmLib::GetInstance().FindSG(latt.GetAsymmUnit());
-  TSpaceGroup* sgb = TSymmLib::GetInstance().FindSG(XFile.GetAsymmUnit());
-  if( sga == NULL || sgb == NULL )  {
-    report.Add("Could not evaluate space group");
-    return;
-  }
-  if( sga != sgb )  {
+  TSpaceGroup &sga = TSymmLib::GetInstance().FindSG(latt.GetAsymmUnit());
+  TSpaceGroup &sgb = TSymmLib::GetInstance().FindSG(XFile.GetAsymmUnit());
+  if( &sga != &sgb )  {
     report.Add("Inconsistent space group. Changed from ").quote() <<
-      sgb->GetName() << " to '" << sga->GetName() << '\'';
+      sgb.GetName() << " to '" << sga.GetName() << '\'';
     return;
   }
-  report.Add( olxstr("Current space group is ") << sga->GetName() );
+  report.Add(olxstr("Current space group is ") << sga.GetName() );
   // have to locate possible translation using 'hard' method
   TTypeList< AnAssociation2<vec3d,TCAtom*> > alist, blist;
   TTypeList< TSymmTestData > vlist;
@@ -1581,7 +1577,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt,
     TBasicApp::NewLogEntry(logInfo) << vlist[vlist.Count()-1].Count();
     if( vlist[vlist.Count()-1].Count() > (alist.Count()*0.75) )  {
       thisCenter = vlist[vlist.Count()-1].Center;
-      if( !sga->IsCentrosymmetric() )
+      if( !sga.IsCentrosymmetric() )
         thisCenter *= 2;
     }
   }
