@@ -4719,27 +4719,17 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     file_n = TXFile::ParseName(TEFile::ExpandRelativePath(Cmds.Text(' ')));
     if( TEFile::UnixPath(file_n.file_name).StartsFrom("http://") )  {
       TUrl url(TEFile::UnixPath(file_n.file_name));
-      THttpFileSystem fs(url);
-      if( fs.Exists(url.GetPath(), true) )  {
-        TEFile* file = fs.OpenFileAsFile(url.GetPath());
-        if( file != NULL )  {
-          olxstr dd = getDataDir() + "web/";
-          try  {
-            if( !TEFile::Exists(dd) )
-              TEFile::MakeDir(dd);
-            const olxstr dest_fn = dd + TEFile::ExtractFileName(url.GetPath());
-            TEFile dest(dest_fn, "w+b");
-            dest << *file;
-            TEFile* df = file;
-            file = NULL;
-            delete df;
-            dest.Close();
-            Macros.ProcessMacro(olxstr("@reap '") << dest_fn << '\'', Error);
-          }
-          catch(const TExceptionBase&)  {
-            if( file != NULL )
-              delete file;
-          }
+      TStrList files;
+      files << file_n.file_name;
+      // loking for COD urls
+      if (file_n.file_name.EndsWithi(".cif")) {
+        files << olxstr(file_n.file_name).Replace("cif", "hkl");
+      }
+      olxstr dest_dir = getDataDir() + "web/";
+      if (DownloadFiles(files, dest_dir) > 0) {
+        olxstr dest_fn = dest_dir + TEFile::ExtractFileName(url.GetPath());
+        if (TEFile::Exists(dest_fn)) {
+          Macros.ProcessMacro(olxstr("@reap '") << dest_fn << '\'', Error);
         }
       }
       else

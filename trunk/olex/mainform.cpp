@@ -4096,6 +4096,42 @@ void TMainForm::DoUpdateFiles()  {
     _UpdateThread->ResetUpdateSize();
 }
 //..............................................................................
+size_t TMainForm::DownloadFiles(const TStrList &files, const olxstr &dest) {
+  if (files.IsEmpty()) return 0;
+  THttpFileSystem fs;
+  size_t cnt=0;
+  updater::SettingsFile sf(updater::UpdateAPI::GetSettingsFileName());
+  TUrl proxy(sf.proxy);
+  for (size_t i=0; i < files.Count(); i++) {
+    TUrl url(TEFile::UnixPath(files[i]));
+    if (!proxy.GetHost().IsEmpty())
+      url.SetProxy(proxy);
+    fs.SetUrl(url);
+    TEFile* file = NULL;
+    try {
+      file = fs.OpenFileAsFile(url.GetPath());
+      if( file != NULL )  {
+        if( !TEFile::Exists(dest) )
+          TEFile::MakeDir(dest);
+        const olxstr dest_fn = TEFile::AddPathDelimeter(dest) <<
+          TEFile::ExtractFileName(url.GetPath());
+        TEFile dest(dest_fn, "wb+");
+        dest << *file;
+        TEFile* df = file;
+        file = NULL;
+        delete df;
+        dest.Close();
+        cnt++;
+      }
+    }
+    catch(const TExceptionBase& e)  {
+      if( file != NULL )
+        delete file;
+      TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
+    }
+  }
+  return cnt;
+}
 //..............................................................................
 //..............................................................................
 //..............................................................................

@@ -123,13 +123,21 @@ protected:
   virtual bool _DoesExist(const olxstr& df, bool);
   virtual IInputStream* _DoOpenFile(const olxstr& src);
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {  return false;  }
+  void Init();
 public:
-  THttpFileSystem(const TUrl& url);
-  virtual ~THttpFileSystem();
-  // returns temporary file, which gets deleted when object is deleted, use SetTemporary to change it
+  THttpFileSystem() { Init(); }
+  THttpFileSystem(const TUrl& url) {
+    Init();
+    SetUrl(url);
+  }
+  ~THttpFileSystem();
+  /* returns temporary file, which gets deleted when object is deleted, use
+  SetTemporary to change it
+  */
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);
   }
+  void SetUrl(const TUrl& url);
   DefPropP(uint16_t, ExtraHeaders)
 };
 
