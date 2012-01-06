@@ -4719,27 +4719,17 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     file_n = TXFile::ParseName(TEFile::ExpandRelativePath(Cmds.Text(' ')));
     if( TEFile::UnixPath(file_n.file_name).StartsFrom("http://") )  {
       TUrl url(TEFile::UnixPath(file_n.file_name));
-      THttpFileSystem fs(url);
-      if( fs.Exists(url.GetPath(), true) )  {
-        TEFile* file = fs.OpenFileAsFile(url.GetPath());
-        if( file != NULL )  {
-          olxstr dd = getDataDir() + "web/";
-          try  {
-            if( !TEFile::Exists(dd) )
-              TEFile::MakeDir(dd);
-            const olxstr dest_fn = dd + TEFile::ExtractFileName(url.GetPath());
-            TEFile dest(dest_fn, "w+b");
-            dest << *file;
-            TEFile* df = file;
-            file = NULL;
-            delete df;
-            dest.Close();
-            Macros.ProcessMacro(olxstr("@reap '") << dest_fn << '\'', Error);
-          }
-          catch(const TExceptionBase&)  {
-            if( file != NULL )
-              delete file;
-          }
+      TStrList files;
+      files << file_n.file_name;
+      // loking for COD urls
+      if (file_n.file_name.EndsWithi(".cif")) {
+        files << olxstr(file_n.file_name).Replace("cif", "hkl");
+      }
+      olxstr dest_dir = getDataDir() + "web/";
+      if (DownloadFiles(files, dest_dir) > 0) {
+        olxstr dest_fn = dest_dir + TEFile::ExtractFileName(url.GetPath());
+        if (TEFile::Exists(dest_fn)) {
+          Macros.ProcessMacro(olxstr("@reap '") << dest_fn << '\'', Error);
         }
       }
       else
@@ -7650,8 +7640,8 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     };
     duc->Init(cell);
     FXApp->AddObjectToCreate(duc);
-    TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(bcf->GetAsymmUnit());
-    UserCells.Add(AnAssociation2<TDUnitCell*, TSpaceGroup*>(duc, sg));
+    TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(bcf->GetAsymmUnit());
+    UserCells.Add(AnAssociation2<TDUnitCell*, TSpaceGroup*>(duc, &sg));
     duc->Create();
     delete bcf;
   }
@@ -7665,7 +7655,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     int cr = Cmds[2].ToInt()-1;
     if( cr == -1 )  {
       uc = &FXApp->DUnitCell();
-      sg = TSymmLib::GetInstance().FindSG(FXApp->XFile().GetAsymmUnit());
+      sg = &TSymmLib::GetInstance().FindSG(FXApp->XFile().GetAsymmUnit());
     }
     else if( cr >=0 && (size_t)cr < UserCells.Count() )  {
       uc = UserCells[cr].A();
@@ -8499,14 +8489,10 @@ public:
       TBasicApp::NewLogEntry(logException) << "Failed on " << files[i];
       return 0;
     }
-    TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(au);
-    if( sg == NULL )  {
-      TBasicApp::NewLogEntry(logException) << "Unknown sg for " << files[i];
-      return 0;
-    }
+    TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(au);
     int cc = 0;
     ml.Clear();
-    sg->GetMatrices(ml, mattAll);
+    sg.GetMatrices(ml, mattAll);
     vec3d diff;
     for( size_t j=0; j < au.AtomCount(); j++ )  {
       TCAtom& a1 = au.GetAtom(j);
@@ -8592,13 +8578,9 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       TBasicApp::NewLogEntry(logException) << "Failed on " << files[i];
       continue;
     }
-    TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(au);
-    if( sg == NULL )  {
-      TBasicApp::NewLogEntry(logException) << "Unknown sg for " << files[i];
-      continue;
-    }
+    TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(au);
     ml.Clear();
-    sg->GetMatrices(ml, mattAll);
+    sg.GetMatrices(ml, mattAll);
     for( size_t j=0; j < au.AtomCount(); j++ )  {
       TCAtom& a1 = au.GetAtom(j);
       if( a1.GetTag() == -1 )  continue;

@@ -557,7 +557,7 @@ olxstr UpdateAPI::GetInstallationFileName()  {
 #ifndef _WIN64
   try  {
     if( IsWow64() )
-      return "olex2-x64.zip";
+      return "olex2-win64.zip";
   }
   catch(...)  {}  // stay quiet (?)
   unsigned int cpu_features = 0;
@@ -576,11 +576,11 @@ olxstr UpdateAPI::GetInstallationFileName()  {
   }
   bool has_sse2 = (cpu_features & (0x1 << 26)) != 0;
   bool has_sse = (cpu_features & (0x1 << 25)) != 0;
-  if( has_sse2 ) return "olex2.zip";
-  else if( has_sse )  return "olex2-sse.zip";
-  else  return "olex2-nosse.zip";
+  if( has_sse2 ) return "olex2-win32.zip";
+  else if( has_sse )  return "olex2-win32-sse.zip";
+  else  return "olex2-win32-nosse.zip";
 #else
-  return "olex2-x64.zip";
+  return "olex2-win64.zip";
 #endif
 #else
   return "portable-gui.zip";

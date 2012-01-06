@@ -17,11 +17,11 @@ class TUrl : public IEObject  {
   TUrl* Proxy;
 public:
   // default constructor, sets Port to 80
-  TUrl();
+  TUrl() : Port(80), Proxy(NULL) {}
   // parsers a valid url
-  TUrl( const olxstr& url );
+  TUrl(const olxstr& url);
   // copy constructor
-  TUrl( const TUrl& url );
+  TUrl(const TUrl& url) : Proxy(NULL)  {  *this = url; }
 
   virtual ~TUrl()  {
     if( Proxy != NULL )
@@ -33,10 +33,10 @@ public:
   olxstr GetFullAddress() const;
 
   // for http://www.dur.ac.uk:8080/index.html returns www.dur.ac.uk
-  inline const olxstr& GetHost()  const              {  return Host;  }
+  const olxstr& GetHost() const {  return Host;  }
   void SetHost( const olxstr& host );
-  olxstr GetFullHost()   const;
-  inline bool HasProxy() const {  return Proxy != NULL;  }
+  olxstr GetFullHost() const;
+  bool HasProxy() const {  return Proxy != NULL;  }
   void SetProxy( const TUrl& proxy_url)  {
     if( Proxy != NULL )  delete Proxy;
     Proxy = new TUrl(proxy_url);
@@ -48,16 +48,16 @@ public:
   TUrl& GetProxy() const {  return *Proxy;  }
 
   // for http://www.dur.ac.uk:8080/index.html returns index.html
-  inline const olxstr& GetPath()  const              {  return Path;  }
+  const olxstr& GetPath() const {  return Path;  }
   void SetPath( const olxstr& path );
 
   // for http://www.dur.ac.uk:8080/index.html returns http
-  inline const olxstr& GetProtocol()  const          {  return Protocol;  }
+  const olxstr& GetProtocol() const {  return Protocol;  }
   void SetProtocol( const olxstr& protocol );
 
   // for http://www.dur.ac.uk:8080/index.html returns 8080
-  inline unsigned int GetPort()  const      {  return Port;  }
-  inline void SetPort( unsigned int port )  {  Port = port;  }
+  unsigned int GetPort() const {  return Port;  }
+  void SetPort( unsigned int port )  {  Port = port;  }
 
   class TInvalidUrlException: public TBasicException  {
   public:
@@ -68,7 +68,8 @@ public:
   DefPropC(olxstr, User)
   DefPropC(olxstr, Password)
 
-  static olxcstr GenerateHTTPAuthString(const olxstr& user, const olxstr& pass);
+  static olxcstr GenerateHTTPAuthString(const olxstr& user,
+  const olxstr& pass);
   olxcstr GenerateHTTPAuthString() const {
     return GenerateHTTPAuthString(User, Password);
   }

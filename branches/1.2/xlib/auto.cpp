@@ -19,6 +19,7 @@
 #include "egc.h"
 #include "eutf8.h"
 #include "filetree.h"
+#include "md5.h"
 
 #undef GetObject
 
@@ -26,7 +27,8 @@ using namespace olx_analysis;
 const uint16_t MaxConnectivity = 12;
 
 // file header: Signature,Version,Flags
-const int16_t FileVersion = 0x0001;
+// Version 1 to version 2: TAutoDBFolders changes with single TAutoDBRegistry
+const int16_t FileVersion = 0x0002;
 // file flags
 const int16_t ffZipped  = 0x0001;
 
@@ -38,27 +40,49 @@ const double LengthVar = 0.03,
              AngleVar  = 5.4;
 
 //..............................................................................
-void TAutoDBFolder::SaveToStream( IDataOutputStream& output ) const {
-  output << (long)Files.Count();
-  for( size_t i=0; i < Files.Count(); i++ )
-    output << TUtf8::Encode(Files.GetKey(i));
+void TAutoDBRegistry::SaveToStream(IDataOutputStream& output) const {
+  output << (uint32_t)entries.Count();
+  for( size_t i=0; i < entries.Count(); i++ )
+    output << TUtf8::Encode(entries.GetKey(i));
 }
 //..............................................................................
-void TAutoDBFolder::LoadFromStream( IDataInputStream& input )  {
-  int32_t fc;
+void TAutoDBRegistry::LoadFromStream(IDataInputStream& input) {
+  uint32_t fc;
   input >> fc;
-  Files.SetCapacity( fc);
+  entries.SetCapacity(fc);
   olxcstr tmp;
-  for( long i=0; i < fc; i++ )  {
+  for( uint32_t i=0; i < fc; i++ )  {
     input >> tmp;
-    Files.Add(TUtf8::Decode(tmp), new TAutoDBIdObject());
+    entries.Add(TUtf8::Decode(tmp), new TAutoDBIdObject(i));
+  }
+}
+//..............................................................................
+void TAutoDBRegistry::SaveMap(IDataOutputStream& output) {
+  output << (uint32_t)entries.Count();
+  for( size_t i=0; i < entries.Count(); i++ ) {
+    output << TUtf8::Encode(entries.GetKey(i)) <<
+      TUtf8::Encode(entries.GetValue(i)->reference);
+  }
+}
+//..............................................................................
+void TAutoDBRegistry::LoadMap(IDataInputStream& input) {
+  uint32_t fc;
+  input >> fc;
+  entries.SetCapacity(fc);
+  olxcstr tmp;
+  for( uint32_t i=0; i < fc; i++ )  {
+    input >> tmp;
+    size_t idx = entries.IndexOf(TUtf8::Decode(tmp));
+    input >> tmp;
+    if (idx != InvalidIndex)
+      entries.GetValue(idx)->reference = TUtf8::Decode(tmp);
   }
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 TAttachedNode::TAttachedNode(IDataInputStream& in)  {
-  int32_t ind;
+  uint32_t ind;
   in >> ind;
   Element = &XElementLib::GetByIndex(ind);
   float val;
@@ -68,7 +92,7 @@ TAttachedNode::TAttachedNode(IDataInputStream& in)  {
 }
 //..............................................................................
 void TAttachedNode::SaveToStream( IDataOutputStream& output ) const {
-  output << (int32_t)Element->z;
+  output << (int32_t)Element->index;
   output << (float)FCenter[0];
   output << (float)FCenter[1];
   output << (float)FCenter[2];
@@ -162,7 +186,7 @@ double TAutoDBNode::CalcAngle(size_t i, size_t j)  const {
   return acos(ca)*180.0/M_PI;
 }
 //..............................................................................
-void TAutoDBNode::SaveToStream( IDataOutputStream& output ) const {
+void TAutoDBNode::SaveToStream(IDataOutputStream& output) const {
   output << (uint32_t)Element->index;
   output << (float)Center[0];
   output << (float)Center[1];
@@ -173,21 +197,20 @@ void TAutoDBNode::SaveToStream( IDataOutputStream& output ) const {
 }
 //..............................................................................
 void TAutoDBNode::LoadFromStream(IDataInputStream& in)  {
-  uint32_t ind;
-  Element = &XElementLib::GetByIndex(in.Read<int32_t>());
+  Element = &XElementLib::GetByIndex(in.Read<uint32_t>());
   float val;
-  in >> val;  Center[0] = val;
-  in >> val;  Center[1] = val;
-  in >> val;  Center[2] = val;
-  in >> ind;
-  for( uint32_t i=0; i < ind; i++ )
+  Center[0] = (in >> val);
+  Center[1] = (in >> val);
+  Center[2] = (in >> val);
+  uint32_t cnt = in.Read<uint32_t>();
+  for( uint32_t i=0; i < cnt; i++ )
     AttachedNodes.Add(*(new TAttachedNode(in)));
   TAutoDBNode::SortCenter = Center;
   QuickSorter::SortSF(AttachedNodes, SortMetricsFunc);
   _PreCalc();
 }
 //..............................................................................
-const olxstr& TAutoDBNode::ToString() const  {
+const olxstr& TAutoDBNode::ToString() const {
   olxstr& tmp = TEGC::New<olxstr>(EmptyString(), 100);
   tmp << Element->symbol << '{';
   for( size_t i=0; i < AttachedNodes.Count(); i++ )  {
@@ -269,7 +292,7 @@ bool TAutoDBNode::IsSameType(const TAutoDBNode& dbn) const {
   return true;
 }
 //..............................................................................
-bool TAutoDBNode::IsSimilar(const TAutoDBNode& dbn) const  {
+bool TAutoDBNode::IsSimilar(const TAutoDBNode& dbn) const {
   double diff = Element->z - dbn.Element->z;
   if( diff == 0 )  {
     diff = olx_cmp(AttachedNodes.Count(), dbn.AttachedNodes.Count());
@@ -284,7 +307,7 @@ bool TAutoDBNode::IsSimilar(const TAutoDBNode& dbn) const  {
       for( size_t i=0; i < Params.Count(); i++ )  {
         diff = olx_abs(Params[i] - dbn.Params[i]);
         if( i < AttachedNodes.Count() )  {
-          if( diff > 0.005) return false;
+          if( diff > 0.005 ) return false;
         }
         else
           if( diff > 4 ) return false;
@@ -405,11 +428,11 @@ bool TAutoDBNetNode::IsSameType(const TAutoDBNetNode& dbn, bool ExtraLevel)
 //..............................................................................
 void TAutoDBNetNode::SaveToStream(IDataOutputStream& output) const {
   output << FCenter->GetId();
-  output << (int8_t)AttachedNodes.Count();
+  output << (uint8_t)AttachedNodes.Count();
   for( size_t i=0; i < AttachedNodes.Count(); i++ )
     output << AttachedNodes[i]->GetId();
 }
-void TAutoDBNetNode::LoadFromStream( IDataInputStream& input )  {
+void TAutoDBNetNode::LoadFromStream(IDataInputStream& input)  {
 #ifdef __GNUC__  // dunno how it is implemented, but need 8 bits here
   unsigned char cnt;
 #else  
@@ -454,22 +477,23 @@ const olxstr& TAutoDBNetNode::ToString(int level) const  {
 TAutoDBNet* TAutoDBNet::CurrentlyLoading = NULL;
 //..............................................................................
 void TAutoDBNet::SaveToStream(IDataOutputStream& output) const {
-  output << (int32_t)FReference->GetId();
-  output << (int16_t)Nodes.Count();
-  for( uint32_t i=0; i < Nodes.Count(); i++ )
-    Nodes[i].SetId(i);
-  for( uint32_t i=0; i < Nodes.Count(); i++ )
-    Nodes[i].SaveToStream( output );
+  output << (uint32_t)FReference->id;
+  output << (uint16_t)Nodes.Count();
+  for( size_t i=0; i < Nodes.Count(); i++ )
+    Nodes[i].SetId((int32_t)i);
+  for( size_t i=0; i < Nodes.Count(); i++ )
+    Nodes[i].SaveToStream(output);
 }
 void TAutoDBNet::LoadFromStream(IDataInputStream& input)  {
   TAutoDBNet::CurrentlyLoading = this;
-  int32_t ind;
-  int16_t cnt;
+  uint32_t ind;
+  uint16_t cnt;
   input >> ind;
   FReference = &TAutoDB::GetInstance().Reference(ind);
   input >> cnt;
+  Nodes.SetCapacity(cnt);
   for( uint16_t i=0; i < cnt; i++ )
-    Nodes.Add(*( new TAutoDBNetNode(NULL)));
+    Nodes.Add(new TAutoDBNetNode(NULL));
   for( uint16_t i=0; i < cnt; i++ )
     Nodes[i].LoadFromStream(input);
   // build index
@@ -505,6 +529,7 @@ TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
     Nodes.AddNew();
   BAIDelta = -1;
   URatio = 1.5;
+
   lc.GetLibrary().AttachLibrary(ExportLibrary());
 }
 //..............................................................................
@@ -512,8 +537,6 @@ TAutoDB::~TAutoDB()  {
   for( size_t i=0; i < Nodes.Count(); i++ )
     for( size_t j=0; j < Nodes[i].Count(); j++ )
       delete Nodes[i][j];
-  for( size_t i=0; i < Folders.Count(); i++ )
-    delete Folders.GetObject(i);
   Instance = NULL;
   delete &XFile;
 }
@@ -531,13 +554,6 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
   TStrList files;
   ft.GetRoot().ListFiles(files, "*.cif");
 
-  TAutoDBFolder* dbfolder = NULL;
-  size_t folderIndex = Folders.IndexOf(uf);
-  if( folderIndex != InvalidIndex ) dbfolder = Folders.GetObject(folderIndex);
-  if( dbfolder == NULL )  {
-    dbfolder = new TAutoDBFolder;
-    Folders.Add( uf, dbfolder );
-  }
   TOnProgress progress;
   progress.SetMax(files.Count());
   for( size_t i=0; i < Nodes.Count(); i++ )  {
@@ -546,9 +562,21 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
   }
   for( size_t i=0; i < files.Count(); i++ )  {
     progress.SetPos(i);
-    if( dbfolder->Contains(files[i]) )  continue;
+    TBasicApp::NewLogEntry() << "Processing: " << files[i];
+    olxstr digest;
     try  {
-      TBasicApp::NewLogEntry() << "Processing " << files[i] << "...";
+      TEFile f(files[i], "rb");
+      digest = MD5::Digest(f);
+    }
+    catch(...) {
+      TBasicApp::NewLogEntry(logError) << "Reading failed, skipping";
+      continue;
+    }
+    if (registry.Contains(digest)) {
+      TBasicApp::NewLogEntry(logError) << "Duplicate entry, skipping";
+      continue;
+    }
+    try  {
       XFile.LoadFromFile(files[i]);
       TCif& cif = XFile.GetLastLoader<TCif>();
       olxstr r1 = cif.GetParamAsString("_refine_ls_R_factor_gt");
@@ -579,7 +607,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
         continue;
       }
       XFile.GetLattice().CompaqAll();
-      TAutoDBIdObject& adf = dbfolder->Add(files[i]);
+      TAutoDBIdObject &adf = registry.Add(digest, files[i]);
       for( size_t j=0; j < XFile.GetLattice().FragmentCount(); j++ )
         ProcessNodes(&adf, XFile.GetLattice().GetFragment(j));
     }
@@ -591,6 +619,19 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
     }
   }
   PrepareForSearch();
+  try {
+    TEFile tf(src_file + ".tmp", "wb+");
+    SaveToStream(tf);
+    tf.Close();
+    TEFile::Rename(src_file + ".tmp", src_file);
+    tf.Open(src_file + ".tmp", "wb+");
+    registry.SaveMap(tf);
+    tf.Close();
+    TEFile::Rename(src_file + ".tmp", src_file + ".map");
+  }
+  catch(const TExceptionBase &e) {
+    throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
 }
 //..............................................................................
 struct TTmpNetData  {
@@ -605,34 +646,34 @@ void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
   for( size_t i=0; i < net.NodeCount(); i++ )
     net.Node(i).SetTag(1);
   for( size_t i=0; i < net.NodeCount(); i++ )  {
-    if( net.Node(i).GetType().GetMr() > 3  ) {
-      netItem = new TTmpNetData;
-      netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, vec3d> >;
-      netItem->Atom = &net.Node(i);
-      TAutoDBNode* dbn = new TAutoDBNode(net.Node(i), netItem->neighbours);
-      /* instead of MaxConnectivity we use Nodes.Count() to comply with db
-      format */
-      if( dbn->NodeCount() < 1 || dbn->NodeCount() > Nodes.Count() )  {
-        delete dbn;
-        delete netItem->neighbours;
-        delete netItem;
-      }
-      else  {
-        TPtrList<TAutoDBNode>& segment = Nodes[dbn->NodeCount()-1];
-        for( size_t j=0; j < segment.Count(); j++ )  {
-          if( segment[j]->IsSimilar(*dbn) )  {
-            netItem->Node = segment[j];
-            delete dbn;
-            dbn = NULL;
-            break;
-          }
+    if (net.Node(i).GetType().z < 2 ||net.Node(i).IsDeleted())
+      continue;
+    netItem = new TTmpNetData;
+    netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, vec3d> >;
+    netItem->Atom = &net.Node(i);
+    TAutoDBNode* dbn = new TAutoDBNode(net.Node(i), netItem->neighbours);
+    /* instead of MaxConnectivity we use Nodes.Count() to comply with db
+    format */
+    if( dbn->NodeCount() < 1 || dbn->NodeCount() > Nodes.Count() )  {
+      delete dbn;
+      delete netItem->neighbours;
+      delete netItem;
+    }
+    else  {
+      TPtrList<TAutoDBNode>& segment = Nodes[dbn->NodeCount()-1];
+      for( size_t j=0; j < segment.Count(); j++ )  {
+        if( segment[j]->IsSimilar(*dbn) )  {
+          netItem->Node = segment[j];
+          delete dbn;
+          dbn = NULL;
+          break;
         }
-        if( dbn != NULL )  {
-          netItem->Node = dbn;
-          Nodes[dbn->NodeCount()-1].Add(dbn);
-        }
-        netMatch.AddCopy(netItem);
       }
+      if( dbn != NULL )  {
+        netItem->Node = dbn;
+        Nodes[dbn->NodeCount()-1].Add(dbn);
+      }
+      netMatch.AddCopy(netItem);
     }
   }
   // construct the network
@@ -643,8 +684,8 @@ void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
     attached to CAtoms of other fragments. We avoid this situation by
     considering only atoms of this fragment
     */
-    for( size_t i=0; i < net.GetLattice().GetAsymmUnit().AtomCount(); i++ )
-      net.GetLattice().GetAsymmUnit().GetAtom(i).SetTag(-1);
+    net.GetLattice().GetAsymmUnit().GetAtoms().ForEach(
+      ACollectionItem::TagSetter(-1));
     for( size_t i=0; i < netMatch.Count(); i++ )
       netMatch[i]->Atom->CAtom().SetTag(i);
     TAutoDBNet& net = Nets.AddNew(currentFile);
@@ -727,23 +768,15 @@ void TAutoDB::SaveToStream(IDataOutputStream& output) const {
   output.Write(FileSignature, FileSignatureLength);
   output << FileVersion;
   output << (uint16_t)0;  // file flags - flat for now
-
-  uint32_t folderCount = 0;
-  output << (uint32_t)Folders.Count();
-  for( uint32_t i=0; i < Folders.Count(); i++ )  {
-    output << TUtf8::Encode(Folders.GetKey(i));
-    Folders.GetObject(i)->AssignIds(folderCount);
-    Folders.GetObject(i)->SaveToStream( output);
-    folderCount += (int32_t)Folders.GetObject(i)->Count();
-  }
-
+  registry.AssignIds();
+  registry.SaveToStream(output);
   uint32_t nodeCount = 0;
   output << (uint32_t)Nodes.Count();
   for( uint32_t i=0; i < Nodes.Count(); i++ )  {
     output << (uint32_t)Nodes[i].Count();
     for( uint32_t j=0; j < Nodes[i].Count(); j++ )  {
       Nodes[i][j]->SetId(nodeCount+j);
-      Nodes[i][j]->SaveToStream( output );
+      Nodes[i][j]->SaveToStream(output);
     }
     nodeCount += (uint32_t)Nodes[i].Count();
   }
@@ -753,7 +786,7 @@ void TAutoDB::SaveToStream(IDataOutputStream& output) const {
     Nets[i].SaveToStream(output);
 }
 //..............................................................................
-void TAutoDB::LoadFromStream( IDataInputStream& input )  {
+void TAutoDB::LoadFromStream(IDataInputStream& input)  {
   // validation of the file
   char fileSignature[FileSignatureLength+1];
   input.Read( fileSignature, FileSignatureLength );
@@ -767,26 +800,15 @@ void TAutoDB::LoadFromStream( IDataInputStream& input )  {
   // read file flags
   input >> fileVersion;
   // end of the file validation
-  olxcstr tmp;
-  uint32_t ind;
-  uint32_t fileCount = 0, nodeCount = 0;
-  input >> ind;
-  Folders.SetCapacity( ind );
-  for( uint32_t i=0; i < ind; i++ )  {
-    input >> tmp;
-    Folders.Add(TUtf8::Decode(tmp),  new TAutoDBFolder(input));
-    Folders.GetObject(i)->AssignIds(fileCount);
-    fileCount += (uint32_t)Folders.GetObject(i)->Count();
-  }
-
-  uint32_t listCount;
+  registry.LoadFromStream(input);
+  uint32_t ind, listCount, nodeCount=0;
   input >> listCount;  // nt MaxConnectivity is overriden!
   Nodes.Clear();
-  Nodes.SetCapacity( listCount );
+  Nodes.SetCapacity(listCount);
   for( uint32_t i=0; i < listCount; i++ )  {
     Nodes.AddNew();
     input >> ind;
-    Nodes[i].SetCapacity( ind );
+    Nodes[i].SetCapacity(ind);
     for( uint32_t j=0; j < ind; j++ )  {
       Nodes[i].Add(new TAutoDBNode(input));
       Nodes[i][j]->SetId(nodeCount + j);
@@ -795,8 +817,9 @@ void TAutoDB::LoadFromStream( IDataInputStream& input )  {
   }
 
   input >> ind;
+  Nets.SetCapacity(ind);
   for( uint32_t i=0; i < ind; i++ )
-    Nets.Add(*(new TAutoDBNet(input)));
+    Nets.Add(new TAutoDBNet(input));
 
   PrepareForSearch();
 }
@@ -893,7 +916,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
           ' ' << S2Match[i].GetB() << " hits" );
         olxstr tmp("Refs [");
         for( size_t j=0; j < S2Match[i].GetC()->Count(); j++ )  {
-          tmp << LocateFileName(*S2Match[i].GetC()->GetItem(j)) << ';';
+          tmp << S2Match[i].GetC()->GetItem(j)->reference << ';';
         }
         report.Add( tmp << ']' );
         delete S2Match[i].GetC();
@@ -905,7 +928,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
             ' ' << S3Match[i].GetB() << " hits" );
           olxstr tmp("Refs [");
           for( size_t j=0; j < S3Match[i].GetC()->Count(); j++ )  {
-            tmp << LocateFileName(*S3Match[i].GetC()->GetItem(j)) << ';';
+            tmp << S3Match[i].GetC()->GetItem(j)->reference << ';';
           }
           report.Add( tmp << ']' );
           delete S3Match[i].GetC();
@@ -1555,18 +1578,14 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt,
       exc.GetException()->GetError();
     return;
   }
-  TSpaceGroup* sga = TSymmLib::GetInstance().FindSG(latt.GetAsymmUnit());
-  TSpaceGroup* sgb = TSymmLib::GetInstance().FindSG(XFile.GetAsymmUnit());
-  if( sga == NULL || sgb == NULL )  {
-    report.Add("Could not evaluate space group");
-    return;
-  }
-  if( sga != sgb )  {
+  TSpaceGroup &sga = TSymmLib::GetInstance().FindSG(latt.GetAsymmUnit());
+  TSpaceGroup &sgb = TSymmLib::GetInstance().FindSG(XFile.GetAsymmUnit());
+  if( &sga != &sgb )  {
     report.Add("Inconsistent space group. Changed from ").quote() <<
-      sgb->GetName() << " to '" << sga->GetName() << '\'';
+      sgb.GetName() << " to '" << sga.GetName() << '\'';
     return;
   }
-  report.Add( olxstr("Current space group is ") << sga->GetName() );
+  report.Add(olxstr("Current space group is ") << sga.GetName() );
   // have to locate possible translation using 'hard' method
   TTypeList< AnAssociation2<vec3d,TCAtom*> > alist, blist;
   TTypeList< TSymmTestData > vlist;
@@ -1580,7 +1599,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt,
     TBasicApp::NewLogEntry(logInfo) << vlist[vlist.Count()-1].Count();
     if( vlist[vlist.Count()-1].Count() > (alist.Count()*0.75) )  {
       thisCenter = vlist[vlist.Count()-1].Center;
-      if( !sga->IsCentrosymmetric() )
+      if( !sga.IsCentrosymmetric() )
         thisCenter *= 2;
     }
   }
@@ -1628,7 +1647,7 @@ void TAtomTypePermutator::Init(ElementPList* typeRestraints)  {
   Atoms.Clear();
   TypeRestraints.Clear();
   if( typeRestraints != NULL )
-    TypeRestraints.AddList( *typeRestraints );
+    TypeRestraints.AddList(*typeRestraints);
 }
 //..............................................................................
 void TAtomTypePermutator::ReInit(const TAsymmUnit& au)  {
@@ -1757,12 +1776,26 @@ void TAtomTypePermutator::Permutate()  {
 TAutoDB &TAutoDB::GetInstance()  {
   if( Instance == NULL )  {
     TXApp &app = TXApp::GetInstance();
-    olxstr autodbf(app.GetBaseDir() + "acidb.db");
-    TEGC::AddP(Instance=new TAutoDB(*((TXFile*)app.XFile().Replicate()), app));
-    if( TEFile::Exists( autodbf ) )  {
-      TEFile dbf(autodbf, "rb");
-      Instance->LoadFromStream(dbf);
+    olxstr fn,
+      bd_fn = app.GetBaseDir() + "acidb.db";
+    if (app.IsBaseDirWriteable() || !app.HasSharedDir())
+      fn = bd_fn;
+    else {
+      fn = app.GetSharedDir() + "acidb.db";
+      if (!TEFile::Exists(fn) && TEFile::Exists(bd_fn))
+        TEFile::Copy(bd_fn, fn);
     }
+    TEGC::AddP(Instance=new TAutoDB(*((TXFile*)app.XFile().Replicate()), app));
+    if( TEFile::Exists(fn) )  {
+      TEFile dbf(fn, "rb");
+      Instance->LoadFromStream(dbf);
+      olxstr map_fn = fn + ".map";
+      if (TEFile::Exists(map_fn)) {
+        dbf.Open(map_fn, "rb");
+        Instance->registry.LoadMap(dbf);
+      }
+    }
+    Instance->src_file = fn;
   }
   return *Instance;
 }
@@ -1771,7 +1804,7 @@ TAutoDB &TAutoDB::GetInstance()  {
 //..............................................................................
 void TAutoDB::LibBAIDelta(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
-    E.SetRetVal( BAIDelta );
+    E.SetRetVal(BAIDelta);
   else
     BAIDelta = Params[0].ToInt();
 }
@@ -1783,7 +1816,7 @@ void TAutoDB::LibURatio(const TStrObjList& Params, TMacroError& E)  {
     URatio = Params[0].ToDouble();
 }
 //..............................................................................
-TLibrary*  TAutoDB::ExportLibrary(const olxstr& name)  {
+TLibrary* TAutoDB::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("ata") : name);
   lib->RegisterFunction<TAutoDB>(
     new TFunction<TAutoDB>(this,  &TAutoDB::LibBAIDelta, "BAIDelta",

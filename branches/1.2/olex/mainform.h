@@ -355,6 +355,10 @@ protected:
   // view menu
   void OnHtmlPanel(wxCommandEvent& event);
   bool ImportFrag(const olxstr& line);
+  static size_t DownloadFiles(const TStrList &files, const olxstr &dest);
+  static bool DownloadFile(const olxstr &url, const olxstr &dest) {
+    return DownloadFiles(TStrList() << url, dest) != 0;
+  }
   // macro functions
 private:
 
@@ -650,6 +654,8 @@ public:
   virtual bool IsControl(const olxstr& cname) const;
   virtual void LockWindowDestruction(wxWindow* wnd, const IEObject* caller);
   virtual void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller);
+  virtual bool HasGUI() const { return true; }
+  //..........................................................................................
 
   void OnKeyUp(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);

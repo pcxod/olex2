@@ -103,7 +103,7 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
   if (e == iOxygenZ)
     return cc <= 2;
   if (XElementLib::IsHalogen(e))
-    return cc == 1;
+    return cc <= 1;
   return true;
 }
 //.............................................................................
@@ -802,7 +802,7 @@ bool Analysis::trim_18(TAsymmUnit &au) {
   if (mn > atoms.Count()) {
     size_t i = peak_ranges.Count();
     while (--i !=InvalidIndex && mn > atoms.Count()) {
-      if (peak_ranges[i].get_mean() < 1.5) break;
+      if (peak_ranges[i].get_mean() < 1.5 && atoms.Count() > 0.75*mn ) break;
       atoms.AddList(peak_ranges[i].peaks);
     }
     for (; i != InvalidIndex; i--)
@@ -876,4 +876,58 @@ const cm_Element &Analysis::check_proposed_element(
   return e;
 }
 //.............................................................................
+const cm_Element &Analysis::check_atom_type(TSAtom &a) {
+  static SortedObjectList<short, TPrimitiveComparator> types;
+  if (types.IsEmpty()) {
+    types.Add(iOxygenZ);
+    types.Add(iFluorineZ);
+    types.Add(iChlorineZ);
+    types.Add(33); // arsenic
+    types.Add(iBromineZ);
+  }
+  if (types.IndexOf(a.GetType().z) == InvalidIndex)
+    return a.GetType();
+
+  TUnitCell &uc = a.CAtom().GetParent()->GetLattice().GetUnitCell();
+  TAtomEnvi ae;
+  uc.GetAtomEnviList(a, ae);
+  if (a.GetType() == iOxygenZ) {
+    if (ae.Count() > 2)
+      return XElementLib::GetByIndex(iNitrogenIndex);
+  }
+  else if (a.GetType() == iFluorineZ) {
+    if (ae.Count() > 2)
+      return XElementLib::GetByIndex(iNitrogenIndex);
+    if (ae.Count() > 1)
+      return XElementLib::GetByIndex(iOxygenIndex);
+  }
+  else if (a.GetType() == iChlorineZ) {
+    if (ae.Count() <= 1) return a.GetType();
+    bool has_metal=false;
+    for (size_t i=0; i < ae.Count(); i++) {
+      if (XElementLib::IsMetal(ae.GetType(i))) {
+        has_metal = true;
+        break;
+      }
+    }
+    if (has_metal) {
+      if (ae.Count() == 4) // PR3->M
+        return XElementLib::GetByIndex(iPhosphorusIndex);
+      if (ae.Count() > 2) //SR2->M
+        return XElementLib::GetByIndex(iSulphurIndex);
+    }
+    if (ae.Count() == 3) // PR3
+      return XElementLib::GetByIndex(iPhosphorusIndex);
+    return XElementLib::GetByIndex(iSulphurIndex);
+  }
+  else if (a.GetType() == 33) { // arsenic
+    if (ae.Count() <= 1)
+      return *XElementLib::FindByZ(iBromineZ);
+  }
+  else if (a.GetType() == iBromineZ) {
+    if (ae.Count() > 1)
+      return *XElementLib::FindByZ(33);
+  }
+  return a.GetType();
+}
 //.............................................................................

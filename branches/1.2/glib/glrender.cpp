@@ -200,6 +200,9 @@ void TGlRenderer::_OnStylesClear()  {
 void TGlRenderer::_OnStylesLoaded()  {
   for( size_t i=0; i < FCollections.Count(); i++ )
     FCollections.GetObject(i)->SetStyle(&FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true));
+  // groups are deleted by Clear, so should be removed!
+  for( size_t i=0; i < FGroups.Count(); i++ )
+    FGObjects.Remove(FGroups[i]);
   AGDObjList GO = FGObjects.GetList();
   for( size_t i=0; i < GO.Count(); i++ )  {
     GO[i]->OnPrimitivesCleared();

@@ -20,7 +20,24 @@
 #endif
 olxcstr THttpFileSystem::ExecutableSession;
 //..............................................................................
-THttpFileSystem::THttpFileSystem(const TUrl& url) : Url(url), ExtraHeaders(0)  {
+THttpFileSystem::~THttpFileSystem()  {
+  if( Connected )
+    Disconnect();
+}
+//..............................................................................
+void THttpFileSystem::Init() {
+#ifdef __WIN32__
+  if( !Initialised )
+    Initialise();
+#endif
+  ExtraHeaders = 0;
+  Access = afs_ReadOnlyAccess;
+  Connected = false;
+}
+//..............................................................................
+void THttpFileSystem::SetUrl(const TUrl& url) {
+  if( Connected )
+    Disconnect();
 #ifdef __WIN32__
   if( !Initialised )
     Initialise();
@@ -30,14 +47,8 @@ THttpFileSystem::THttpFileSystem(const TUrl& url) : Url(url), ExtraHeaders(0)  {
     olx_sleep(1);
     ExecutableSession = MD5::Digest(ExecutableSession+olxstr(TETime::msNow()));
   }
-  Access = afs_ReadOnlyAccess;
+  Url = url;
   SetBase(url.GetPath());
-  Connected = false;
-}
-//..............................................................................
-THttpFileSystem::~THttpFileSystem()  {
-  if( Connected )
-    Disconnect();
 }
 //..............................................................................
 void THttpFileSystem::Initialise()  {

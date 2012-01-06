@@ -21,7 +21,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
   char bf[120];
   double q[6];
   int iq[6];
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
+  TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
   sprintf(bf, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d",
     GetAsymmUnit().GetAxes()[0],
     GetAsymmUnit().GetAxes()[1],
@@ -29,7 +29,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     GetAsymmUnit().GetAngles()[0],
     GetAsymmUnit().GetAngles()[1],
     GetAsymmUnit().GetAngles()[2],
-    sg == NULL ? "P1" : sg->GetFullName().c_str(),
+    sg.GetFullName().c_str(),
     GetAsymmUnit().GetZ());
   Strings.Add(bf);
   Strings.Add("TITLE OLEX2 export");
