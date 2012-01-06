@@ -248,7 +248,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       }
       AU->CellToCartesian(v -= shift);
       const double qd = v.QLength();
-      if( j != 0 && qd < 1e-6 )  {
+      if( qd < 1e-6 )  {
         if( i == ind )  {
           smatd eqm(Matrices[j]);
           eqm.t += shift;

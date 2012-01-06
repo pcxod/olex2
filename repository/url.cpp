@@ -11,10 +11,6 @@
 #include "encodings.h"
 #include "eutf8.h"
 
-// default constructor, sets Port to 80
-TUrl::TUrl() : Proxy(NULL)  {
-  Port = 80;
-}
 //..............................................................................
 TUrl::TUrl( const olxstr& _url ) : Proxy(NULL)  {
   Port = 80;
@@ -34,7 +30,9 @@ TUrl::TUrl( const olxstr& _url ) : Proxy(NULL)  {
   }
   // prtocol index
   size_t pri = url.IndexOf("://");
-  // check if the proxy is used and protocol is defined for the target, not the proxy
+  /* check if the proxy is used and protocol is defined for the target, not
+  the proxy
+  */
   size_t doti = url.FirstIndexOf('.');
   if( doti != InvalidIndex && doti < pri )  pri = InvalidIndex;
   // port index
@@ -54,36 +52,32 @@ TUrl::TUrl( const olxstr& _url ) : Proxy(NULL)  {
       pai = url.FirstIndexOf('/', poi+1);
 
   if( pri != InvalidIndex )  {
-    SetProtocol( url.SubStringTo(pri) );
+    SetProtocol(url.SubStringTo(pri));
     if( poi != InvalidIndex )
-      SetHost( url.SubString(pri+3, poi-pri-3) );
+      SetHost(url.SubString(pri+3, poi-pri-3));
     else
       if( pai != InvalidIndex )
-        SetHost( url.SubString(pri+3, pai-pri-3) );
+        SetHost(url.SubString(pri+3, pai-pri-3));
       else
-        SetHost( url.SubStringFrom(pri+3) );
+        SetHost(url.SubStringFrom(pri+3));
   }
   else  {
     if( poi != InvalidIndex )
-      SetHost( url.SubStringTo(poi) );
+      SetHost(url.SubStringTo(poi));
     else
       if( pai != InvalidIndex )
-        SetHost( url.SubStringTo(pai) );
+        SetHost(url.SubStringTo(pai));
       else
-        SetHost( url );
+        SetHost(url);
   }
   if( poi != InvalidIndex )  {
     if( pai != InvalidIndex )
-      SetPort( url.SubString(poi+1, pai-poi-1).ToInt() );
+      SetPort(url.SubString(poi+1, pai-poi-1).ToInt());
     else
-      SetPort( url.SubStringFrom(poi+1).ToInt() );
+      SetPort(url.SubStringFrom(poi+1).ToInt());
   }
   if( pai != InvalidIndex )
-    SetPath( url.SubStringFrom(pai+1) );
-}
-//..............................................................................
-TUrl::TUrl( const TUrl& url ) : Proxy(NULL)  {
-  *this = url;
+    SetPath(url.SubStringFrom(pai+1));
 }
 //..............................................................................
 TUrl& TUrl::operator = (const TUrl& url) {
@@ -91,8 +85,11 @@ TUrl& TUrl::operator = (const TUrl& url) {
   this->Host = url.GetHost();
   this->Protocol = url.GetProtocol();
   this->Path = url.GetPath();
-  if( url.HasProxy() )
+  if( url.HasProxy() ) {
+    if( this->Proxy )
+      delete Proxy;
     this->Proxy = new TUrl(*url.Proxy);
+  }
   else  {
     if( this->Proxy )  {
       delete this->Proxy;

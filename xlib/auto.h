@@ -28,65 +28,57 @@ class TAutoDB;
 class TAutoDBNet;
 class TAtomTypePermutator;
 
-class TAutoDBIdObject  {
-  int32_t Id;
-public:
-  TAutoDBIdObject(int32_t id )  {  Id = id;  }
-  TAutoDBIdObject(const TAutoDBIdObject& ido )  {  Id = ido.GetId();  }
-  TAutoDBIdObject()          {  Id = -1;   }
-  inline const TAutoDBIdObject& operator = (const TAutoDBIdObject& oid)  {
-    Id = oid.GetId();
-    return oid;
-  }
-  inline bool operator == (const TAutoDBIdObject& oid) {
-    return Id == oid.GetId();
-  }
-  inline bool operator != (const TAutoDBIdObject& oid) {
-    return Id != oid.GetId();
-  }
-  DefPropP(int32_t, Id)
+struct TAutoDBIdObject  {
+  int32_t id;
+  olxstr reference;
+  TAutoDBIdObject(int32_t id_) : id(id_) {}
+  TAutoDBIdObject(int32_t id_, const olxstr &ref) : id(id_), reference(ref) {}
+  TAutoDBIdObject() : id(-1) {}
+  bool operator == (const TAutoDBIdObject& oid) { return id == oid.id; }
+  bool operator != (const TAutoDBIdObject& oid) { return id != oid.id; }
 };
-  typedef TPtrList<TAutoDBIdObject>  TAutoDBIdPList;
+typedef TPtrList<TAutoDBIdObject>  TAutoDBIdPList;
 ////////////////////////////////////////////////////////////////////////////////
-class TAutoDBFolder {
-  TSStrPObjList<olxstr,TAutoDBIdObject*, true> Files;
+class TAutoDBRegistry {
+  olxstr_dict<TAutoDBIdObject*, true> entries;
 public:
-  TAutoDBFolder()  {  ;  }
-  TAutoDBFolder(const TAutoDBFolder& dbf)  {  *this = dbf;  }
-  ~TAutoDBFolder()  {
-    for( size_t i=0; i < Files.Count(); i++ )
-      delete Files.GetObject(i);
+  TAutoDBRegistry() {}
+  TAutoDBRegistry(const TAutoDBRegistry &dbf) : entries(dbf.entries) {}
+  ~TAutoDBRegistry() {
+    for (size_t i=0; i < entries.Count(); i++)
+      delete entries.GetValue(i);
   }
-  inline const TAutoDBFolder& operator = (const TAutoDBFolder& dbf)  {
-    Files.SetCapacity( dbf.Files.Count() );
-    for( size_t i=0; i < dbf.Files.Count(); i++ )
-      Files.Add( dbf.Files.GetKey(i), dbf.Files.GetObject(i) );
-    return dbf;
+  TAutoDBRegistry& operator = (const TAutoDBRegistry& dbf) {
+    entries = dbf.entries;
+    return *this;
   }
-  TAutoDBFolder(IDataInputStream& in)     {  LoadFromStream(in);  }
-  inline bool Contains(const olxstr& fileName )  {
-    return Files.IndexOf(fileName) != InvalidIndex;
+  TAutoDBRegistry(IDataInputStream& in) { LoadFromStream(in); }
+  bool Contains(const olxstr& hash) { return entries.HasKey(hash); }
+  TAutoDBIdObject& Add(const olxstr& hash, const olxstr &file_name) {
+    TAutoDBIdObject *df = new TAutoDBIdObject(-1, file_name),
+      *rv;
+    if ((rv = entries.Add(hash, df)) != df)
+      delete df;
+    return *rv;
   }
-  TAutoDBIdObject& Add(const olxstr& fileName)  {
-    TAutoDBIdObject* df = new TAutoDBIdObject();
-    Files.Add(fileName, df );
-    return *df;
+  size_t Count() const { return entries.Count(); }
+  TAutoDBIdObject& GetIdObject(size_t ind) const {
+    return *entries.GetValue(ind);
   }
-  inline size_t Count() const {  return Files.Count();  }
-  inline TAutoDBIdObject& GetIdObject(size_t ind) const {
-    return *Files.GetObject(ind);
+  const olxstr& GetObjectName(size_t ind) {
+    return entries.GetKey(ind);
   }
-  inline const olxstr& GetObjectName(size_t ind) {
-    return Files.GetKey(ind);
+  void AssignIds() const {
+    for (size_t i=0; i < entries.Count(); i++)
+      entries.GetValue(i)->id = (uint32_t)i;
   }
-  void AssignIds(uint32_t base)  {
-    for( size_t i=0; i < Files.Count(); i++ )
-      Files.GetObject(i)->SetId((uint32_t)(base + i));
-  }
-  void SaveToStream( IDataOutputStream& output ) const;
-  void LoadFromStream( IDataInputStream& input );
+  void SaveToStream(IDataOutputStream& output) const;
+  void LoadFromStream(IDataInputStream& input);
+  // saves a map of the hashes to the phisical file names
+  void SaveMap(IDataOutputStream& output);
+  // loads a map of the hashes to the phisical file names
+  void LoadMap(IDataInputStream& input);
 };
-
 ////////////////////////////////////////////////////////////////////////////////
 class TAttachedNode  {
   const cm_Element* Element;
@@ -97,10 +89,10 @@ public:
   TAttachedNode(IDataInputStream& in);
   TAttachedNode()  {  Element = NULL;  }
   void SaveToStream(IDataOutputStream& output ) const;
-  inline void SetType(const cm_Element* e)  {  Element = e;  }
-  inline void SetCenter(const vec3d& c)  {  FCenter = c;  }
-  inline const cm_Element& GetType() const {  return *Element;  }
-  inline const vec3d& GetCenter() const {  return FCenter;  }
+  void SetType(const cm_Element* e)  {  Element = e;  }
+  void SetCenter(const vec3d& c)  {  FCenter = c;  }
+  const cm_Element& GetType() const {  return *Element;  }
+  const vec3d& GetCenter() const {  return FCenter;  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +107,7 @@ class TAutoDBNode  {
   TTypeList<AnAssociation2<TAutoDBNet*,uint32_t> > Parents;
   evecd Params; // pre-calculated parameters
   void _PreCalc();
-  inline double CalcDistance(size_t i) const {
+  double CalcDistance(size_t i) const {
     return AttachedNodes[i].GetCenter().DistanceTo(Center);
   }
   double CalcAngle(size_t i, size_t j) const;
@@ -133,21 +125,21 @@ public:
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
 
-  inline void AddParent(TAutoDBNet* net, uint32_t index) {
+  void AddParent(TAutoDBNet* net, uint32_t index) {
     Parents.AddNew<TAutoDBNet*,uint32_t>(net,index);
   }
-  inline size_t ParentCount() const {  return Parents.Count();  }
-  inline TAutoDBNet* GetParent(size_t i) const {  return Parents[i].GetA();  }
-  inline int GetParentIndex(size_t i) const {  return Parents[i].GetB();  }
+  size_t ParentCount() const {  return Parents.Count();  }
+  TAutoDBNet* GetParent(size_t i) const {  return Parents[i].GetA();  }
+  int GetParentIndex(size_t i) const {  return Parents[i].GetB();  }
 
-  inline size_t NodeCount() const {  return AttachedNodes.Count();  }
-  inline const TAttachedNode& GetNode(size_t i) const {
+  size_t NodeCount() const {  return AttachedNodes.Count();  }
+  const TAttachedNode& GetNode(size_t i) const {
     return AttachedNodes[i];
   }
-  inline const cm_Element& GetType() const {  return *Element;  }
-  inline size_t DistanceCount() const {  return AttachedNodes.Count();  }
-  inline double GetDistance(size_t i) const {  return Params[i];  }
-  inline double GetAngle(size_t i) const {
+  const cm_Element& GetType() const {  return *Element;  }
+  size_t DistanceCount() const {  return AttachedNodes.Count();  }
+  double GetDistance(size_t i) const {  return Params[i];  }
+  double GetAngle(size_t i) const {
     return Params[AttachedNodes.Count()+i];
   }
 
@@ -184,7 +176,7 @@ public:
   TAutoDBNetNode(TAutoDBNode* node)  {  FCenter = node;  }
   TAutoDBNetNode(IDataInputStream& input)  {  LoadFromStream(input);  }
   void AttachNode(TAutoDBNetNode* node) {  AttachedNodes.Add(node);  }
-  inline size_t Count() const {  return AttachedNodes.Count();  }
+  size_t Count() const {  return AttachedNodes.Count();  }
   TAutoDBNetNode* Node(size_t i) const {  return AttachedNodes[i];  }
   TAutoDBNode* Center() const {  return FCenter;  }
 
@@ -210,10 +202,10 @@ public:
   TAutoDBNet(TAutoDBIdObject* ref)  {  FReference = ref;  }
   TAutoDBNet(IDataInputStream& input)  {  LoadFromStream(input);  }
   TAutoDBNetNode& NewNode(TAutoDBNode* node)  {  return Nodes.AddNew(node);  }
-  inline const TAutoDBIdObject& GetReference() const {  return *FReference;  }
-  inline TAutoDBIdObject* Reference() const {  return FReference;  }
-  inline size_t Count() const {  return Nodes.Count();  }
-  inline TAutoDBNetNode& Node(size_t i)  {  return Nodes[i];  }
+  const TAutoDBIdObject& GetReference() const {  return *FReference;  }
+  TAutoDBIdObject* Reference() const {  return FReference;  }
+  size_t Count() const {  return Nodes.Count();  }
+  TAutoDBNetNode& Node(size_t i)  {  return Nodes[i];  }
   void SaveToStream(IDataOutputStream& output) const;
   void LoadFromStream(IDataInputStream& input);
   bool Contains(TAutoDBNode* nd )  const {
@@ -226,7 +218,7 @@ public:
       if( Nodes[i].Center() == nd )  return i;
     return InvalidIndex;
   }
-  static inline TAutoDBNet& GetCurrentlyLoading()  {
+  static TAutoDBNet& GetCurrentlyLoading()  {
     return *CurrentlyLoading;
   }
 };
@@ -240,11 +232,10 @@ class TAutoDB : public IEObject  {
   // a fixed size list 0 - nodes connected to one other node, 1 - two, etc
   TTypeList< TPtrList<TAutoDBNode> > Nodes;
   TXFile& XFile;
-private:
+  olxstr src_file;
   static TAutoDB* Instance;
-//  TAutoDBFileList References;
-  TSStrPObjList<olxstr,TAutoDBFolder*, true> Folders;
-//  TAutoDBFolderList Folders;
+  //TSStrPObjList<olxstr,TAutoDBFolder*, true> Folders;
+  TAutoDBRegistry registry;
   TTypeList<TAutoDBNet> Nets;
   void PrepareForSearch();
 protected:
@@ -260,34 +251,6 @@ protected:
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   }
   //............................................................................
-  TAutoDBIdObject& LocateFile(size_t index) {
-    for( size_t i=0; i < Folders.Count(); i++ )  {
-      if( index < Folders.GetObject(i)->Count() )
-        return Folders.GetObject(i)->GetIdObject(index);
-      index -= Folders.GetObject(i)->Count();
-    }
-    throw TInvalidArgumentException(__OlxSourceInfo, "index");
-  }
-  //............................................................................
-  const olxstr& LocateFileName(const TAutoDBIdObject& file) {
-    size_t index = file.GetId();
-    for( size_t i=0; i < Folders.Count(); i++ )  {
-      if( index < Folders.GetObject(i)->Count() )
-        return Folders.GetObject(i)->GetObjectName(index);
-      index -= Folders.GetObject(i)->Count();
-    }
-    throw TInvalidArgumentException(__OlxSourceInfo, "index");
-  }
-  //............................................................................
-  TAutoDBFolder& LocateFileFolder(const TAutoDBIdObject& file) {
-    size_t index = file.GetId();
-    for( size_t i=0; i < Folders.Count(); i++ )  {
-      if( index < Folders.GetObject(i)->Count() )  
-        return *Folders.GetObject(i);
-      index -= Folders.GetObject(i)->Count();
-    }
-    throw TInvalidArgumentException(__OlxSourceInfo, "index");
-  }
 public:
   // structre to store analysis statistics
   struct AnalysisStat {
@@ -331,13 +294,13 @@ public:
     TAtomTypePermutator* permutator, AnalysisStat& stat,
     ElementPList* proposed_atoms = NULL);
 
-  inline const TDoubleList& GetUisos() const {  return Uisos;  }
+  const TDoubleList& GetUisos() const {  return Uisos;  }
   const AnalysisStat& GetStats() const {  return LastStat;  }
-  inline const olxstr& GetLastFileName() const {  return LastFileName;  }
+  const olxstr& GetLastFileName() const {  return LastFileName;  }
   void AnalyseNode(TSAtom& sa, TStrList& report);
   static TAutoDB &GetInstance();
-  inline TAutoDBIdObject& Reference(size_t i)  {  return LocateFile(i);  }
-  inline TAutoDBNode* Node(size_t i)  {  return LocateNode(i);  }
+  TAutoDBNode* Node(size_t i)  {  return LocateNode(i);  }
+  TAutoDBIdObject& Reference(size_t i) const { return registry.GetIdObject(i); }
   DefPropP(int, BAIDelta)
   DefPropP(double, URatio)
 

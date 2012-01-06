@@ -51,12 +51,8 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   }
   olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
   static olxstr FileName(xapp.XFile().GetFileName());
-  if( !folder.IsEmpty() )  {
+  if( !folder.IsEmpty() )
     TAutoDB::GetInstance().ProcessFolder(folder);
-    olxstr autodbf(xapp.GetBaseDir() + "acidb.db");
-    TEFile dbf(autodbf, "w+b");
-    TAutoDB::GetInstance().SaveToStream(dbf);
-  }
 
   TLattice& latt = xapp.XFile().GetLattice();
   TAsymmUnit& au = latt.GetAsymmUnit();
