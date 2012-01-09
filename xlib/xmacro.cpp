@@ -4532,8 +4532,11 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   if( op != NULL )  {
     op->executeMacroEx(olxstr("@reap \'") << FN << '\'', E);
-    if( E.IsSuccessful() && op->HasGUI() )
-      op->executeMacro("html.Update");
+    if( E.IsSuccessful() ) {
+      ABasicFunction *uf = op->GetLibrary().FindMacro("html.Update");
+      if (uf != 0)
+        op->executeMacro("html.Update");
+    }
   }
 }
 //..............................................................................

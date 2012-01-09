@@ -1889,6 +1889,31 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
+olxstr process_exec_param(const olxstr &p) {
+  using namespace exparse::parser_util;
+  if (is_quoted(p)) return p;
+  bool has_ws = false;
+  for (size_t i=0; i < p.Length(); i++) {
+    if (is_quote(p.CharAt(i))) {
+      skip_string(p, i);
+      continue;
+    }
+    if (p.CharAt(i) == '=') {
+      if (has_ws) break;
+      olxstr argv = p.SubStringFrom(i+1);
+      if (is_quoted(argv)) return p;
+      size_t spi = argv.IndexOf(' ');
+      if (spi != InvalidIndex)
+        return olxstr(p.SubStringTo(i+1)) << '"' << argv << '"';
+      return p;
+    }
+    else if (p.CharAt(i) == ' ')
+      has_ws = true;
+  }
+  if (has_ws)
+    return olxstr('\"') << p << '"';
+  return p;
+}
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   bool Asyn = !Options.Contains('s'), // synchroniusly
     Cout = !Options.Contains('o'),    // catch output
@@ -1897,13 +1922,8 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr dubFile(Options.FindValue('s',EmptyString()));
 
   olxstr Tmp;
-  for( size_t i=0; i < Cmds.Count(); i++ )  {
-    bool Space =  (Cmds[i].FirstIndexOf(' ') != InvalidIndex);
-    if( Space )  Tmp << '\"';
-    Tmp << Cmds[i];
-    if( Space ) Tmp << '\"';
-    Tmp << ' ';
-  }
+  for( size_t i=0; i < Cmds.Count(); i++ )
+    Tmp << process_exec_param(Cmds[i]) << ' ';
   TBasicApp::NewLogEntry(logInfo) << "EXEC: " << Tmp;
   short flags = 0;
   if( (Cout && Asyn) || Asyn )  {  // the only combination
@@ -1945,8 +1965,9 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
   }
-  else if( !Process->Execute() )  {
-    Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
+  else {
+    if( !Process->Execute() )
+      Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
     delete Process;
   }
 }
