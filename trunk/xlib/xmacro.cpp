@@ -443,7 +443,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 //..............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   smatd tm;
-  if( !Parse<TStrObjList>(Cmds, "mivd", true,&tm.r, &tm.t) )  {
+  if( !Parse(Cmds, "mivd", &tm.r, &tm.t) )  {
     Error.ProcessingError(__OlxSrcInfo, "invalid transformation matrix");
     return;
   }
@@ -455,7 +455,7 @@ void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMac
 //..............................................................................
 void XLibMacros::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   vec3d pnt;
-  if( !Parse<TStrObjList>(Cmds, "vd", true, &pnt) )  {
+  if( !Parse(Cmds, "vd", &pnt) )  {
     Error.ProcessingError(__OlxSrcInfo, "invalid translation");
     return;
   }
