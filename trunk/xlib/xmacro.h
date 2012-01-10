@@ -152,6 +152,8 @@ public:
     try  {
       const size_t len = olxstr::o_strlen(format);
       for( size_t i=0, j=0; i < len; i++, j++ )  {
+        while (j < Cmds.Count() && !Cmds[j].IsNumber())
+          j++;
         if (j>=Cmds.Count()) break;
         if( format[i] == 'v' )  {
           if( len < (i+1) || Cmds.Count() < (j+3) ) {
@@ -229,6 +231,8 @@ public:
     try  {
       const size_t len = olxstr::o_strlen(format);
       for( size_t i=0, j=0; i < len; i++, j++ )  {
+        while (j < Cmds.Count() && !Cmds[j].IsNumber())
+          j++;
         if (j>=Cmds.Count()) break;
         if( format[i] == 'v' )  {
           if( len < (i+1) || Cmds.Count() < (j+3) ) {
