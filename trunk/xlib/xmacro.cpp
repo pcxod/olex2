@@ -5117,8 +5117,8 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     if( rm.GetHKLF() >= 5 )  {
       size_t tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
       twinning::general twin(info_ex, rm.GetReflections(),
-        RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASF(),
-        rm.GetTWIN_mat(), tn);
+        RefUtil::ResolutionAndSigmaFilter(rm), basf,
+        mat3d::Transpose(rm.GetTWIN_mat()), tn);
       TArrayList<compd> F(twin.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, F);
       twin.calc_fsq(F, Fsq);
@@ -5128,11 +5128,12 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       RefinementModel::HklStat ms =
         rm.GetRefinementRefList<
           TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+      if (ms.FriedelOppositesMerged)
+        info_ex.centrosymmetric = true;
       TArrayList<compd> F(refs.Count());
-      Fsq.Resize(refs.Count());
       SFUtil::CalcSF(xapp.XFile(), refs, F);
       twinning::merohedral twin(
-        info_ex, refs, ms, rm.GetBASF(), rm.GetTWIN_mat(),
+        info_ex, refs, ms, basf, rm.GetTWIN_mat(),
         rm.GetTWIN_n());
       twin.calc_fsq(F, Fsq);
     }
@@ -5141,13 +5142,27 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     RefinementModel::HklStat ms =
       rm.GetRefinementRefList<
         TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+    if (ms.FriedelOppositesMerged)
+      info_ex.centrosymmetric = true;
     TArrayList<compd> F(refs.Count());
     Fsq.Resize(refs.Count());
     SFUtil::CalcSF(xapp.XFile(), refs, F);
     for( size_t i=0; i < F.Count(); i++ )
       Fsq[i] = F[i].qmod();
   }
-  double scale_k =1./olx_sqr(rm.Vars.GetVar(0).GetValue());
+  double scale_k = 1./olx_sqr(rm.Vars.GetVar(0).GetValue());
+  // no scale?
+  if (olx_abs(1-scale_k) < 1e-3) {
+    double sup=0, sdn=0;
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      if (refs[i].GetI() < 3*refs[i].GetS()) continue;
+      sup += refs[i].GetI();
+      sdn += Fsq[i];
+    }
+    double s = sdn/sup;
+    if (olx_abs(1-s) > 1e-3)
+      scale_k = s;
+  }
   double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
   size_t r1p_cnt=0;
   TDoubleList wght = rm.used_weight;
@@ -5165,7 +5180,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     }
     const double Fc = sqrt(Fc2);
     const double Fo2 = r.GetI()*scale_k;
-    const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
+    const double Fo = Fo2 < 0 ? 0 : sqrt(Fo2);
     const double sigFo2 = r.GetS()*scale_k;
     const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
     const double w =

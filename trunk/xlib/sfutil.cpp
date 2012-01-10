@@ -171,9 +171,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
     }
     else  {
-      TDoubleList scales = rm.GetScales();
       twinning::general twin(info_ex, rm.GetReflections(),
-        RefUtil::ResolutionAndSigmaFilter(rm), scales);
+        RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASF());
       TArrayList<compd> Fc(twin.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, Fc);
       twin.detwin_and_merge(twinning::detwinner_shelx(),
@@ -261,7 +260,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
 }
 //...........................................................................................
 void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
-  TArrayList<TEComplex<double> >& F)
+  TArrayList<TEComplex<double> >& F, bool UseFpFdp)
 {
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
@@ -278,12 +277,13 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   PrepareCalcSF(au, U, scatterers, alist);
 
   sf_util->Calculate(
-    xfile.GetRM().expl.GetRadiationEnergy(), 
-    refs, 
-    au.GetHklToCartesian(), 
-    F, scatterers, 
-    alist, 
-    U
+    xfile.GetRM().expl.GetRadiationEnergy(),
+    refs,
+    au.GetHklToCartesian(),
+    F, scatterers,
+    alist,
+    U,
+    UseFpFdp
   );
   delete sf_util;
   delete [] U;

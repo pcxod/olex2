@@ -617,7 +617,7 @@ void RefinementModel::DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
   if( !BASF.IsEmpty() )  {
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    merohedral(info_ex, refs, st, GetScales(), mat3d::Transpose(GetTWIN_mat()), 2).
+    merohedral(info_ex, refs, st, BASF, mat3d::Transpose(GetTWIN_mat()), 2).
       detwin(detwinner_mixed(), refs, F);
   }
 }
@@ -629,7 +629,7 @@ void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
   if( !BASF.IsEmpty() )  {
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    merohedral(info_ex, refs, st, GetScales(), mat3d::Transpose(GetTWIN_mat()), 2).
+    merohedral(info_ex, refs, st, BASF, mat3d::Transpose(GetTWIN_mat()), 2).
       detwin(detwinner_shelx(), refs, F);
   }
 }

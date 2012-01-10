@@ -183,7 +183,7 @@ namespace twinning  {
       }
       TReflection Next() const {
         int i = current++;
-        if( parent.n < 0 && i == olx_abs(parent.n)/2 )
+        if( parent.n < 0 && i >= olx_abs(parent.n)/2 )
           index = -index;
         TReflection rv = TReflection(
           parent.all_refs[src_index], index, (i+1)*(i==0 ? 1 : -1));

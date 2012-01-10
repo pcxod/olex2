@@ -8209,9 +8209,10 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     maskInc = strMaskInc.ToDouble();
   TRefList refs;
   TArrayList<compd> F;
-  olxstr err( SFUtil::GetSF(refs, F, mapType, 
+  olxstr err = SFUtil::GetSF(refs, F, mapType, 
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
-    (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple) );
+    (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
+      SFUtil::scaleRegression : SFUtil::scaleSimple);
   if( !err.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
