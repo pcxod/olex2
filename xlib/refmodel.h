@@ -686,13 +686,6 @@ Friedel opposites of components 1 ... m
     return _FriedelPairCount;
   }
   vec3i CalcMaxHklIndex(double two_theta=60) const;
-  // applies a transformation
-  void ApplyMatrix(TRefList& refs, const mat3d& m)  {
-    if( m.IsI() )  return;
-    const size_t rc = refs.Count();
-    for( size_t i=0; i < rc; i++ )
-      refs[i].SetHkl((HKLF_mat*vec3d(refs[i].GetHkl())).Round<int>());
-  }
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
     try {  return *RefContainers[id_name];  }
     catch(...)  {
