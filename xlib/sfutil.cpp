@@ -260,7 +260,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
 }
 //...........................................................................................
 void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
-  TArrayList<TEComplex<double> >& F, bool UseFpFdp)
+  TArrayList<TEComplex<double> >& F, bool UseFdp)
 {
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
@@ -283,7 +283,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     F, scatterers,
     alist,
     U,
-    UseFpFdp
+    UseFdp
   );
   delete sf_util;
   delete [] U;

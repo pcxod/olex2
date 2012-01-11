@@ -270,6 +270,7 @@ private:
   int BAIDelta;
   // ratio beyond which search for element promotion
   double URatio, URatioFormula;
+  bool EnforceFormula;
 public:
   /* the instance must be created with Replicate to avoid problems
    It will be deleted by this object
@@ -303,6 +304,7 @@ public:
   TAutoDBIdObject& Reference(size_t i) const { return registry.GetIdObject(i); }
   DefPropP(int, BAIDelta)
   DefPropP(double, URatio)
+  DefPropBIsSet(EnforceFormula)
 
   template <class NodeClass>
   struct THitStruct {
@@ -407,7 +409,8 @@ protected:
 //  these are protected, but exposed in the constructor
   void LibBAIDelta(const TStrObjList& Params, TMacroError& E);
   void LibURatio(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
+  void LibEnforceFormula(const TStrObjList& Params, TMacroError& E);
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 ///////////////////////////////////////////////////////////////////////////////
 template <class NodeType>
 bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,

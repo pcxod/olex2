@@ -530,6 +530,9 @@ public:
     return InvalidIndex;
   }
 //..............................................................................
+  template <typename AT>
+  bool Contains(const AT &v) const { return IndexOf(v) != InvalidIndex; }
+//..............................................................................
   template <class size_t_list_t>
   TPtrList& Rearrange(const size_t_list_t &indices)  {
     if( FCount < 2 )  return *this;

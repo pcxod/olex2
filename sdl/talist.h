@@ -368,6 +368,8 @@ public:
     return InvalidIndex;
   }
 //..............................................................................
+  bool Contains(const T &v) const { return IndexOf(v) != InvalidIndex; }
+//..............................................................................
   static TListTraverser<TArrayList<T> > Traverser;
 public:
   struct InternalAccessor {

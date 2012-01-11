@@ -339,7 +339,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "visible/selected atoms");
   xlib_InitMacro(RTab, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
     "Adds RTAB with givn name for provided atoms/selection");
-  xlib_InitMacro(HklMerge, EmptyString(), fpAny|psFileLoaded,
+  xlib_InitMacro(HklMerge, "z-zero negative intensity", fpAny|psFileLoaded,
     "Merges current HKL file (ehco HKLSrc()) to given file name. "
     "Warning: if no arguments provided, the current file is overwritten");
   xlib_InitMacro(HklAppend, "h&;k&;l&;c", fpAny,
@@ -4898,6 +4898,12 @@ void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options,
     xf.GetRM().GetRefinementRefList<
     TUnitCell::SymmSpace,RefMerger::StandardMerger>(
       xf.GetUnitCell().GetSymmSpace(), refs);
+  if (Options.Contains('z')) {
+    for (size_t i=0; i < refs.Count(); i++) {
+      if (refs[i].GetI() < 0)
+        refs[i].SetI(0);
+    }
+  }
   TTTable<TStrList> tab(6, 2);
   tab[0][0] << "Total reflections";
     tab[0][1] << ms.GetReadReflections();
@@ -5131,9 +5137,9 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       if (ms.FriedelOppositesMerged)
         info_ex.centrosymmetric = true;
       TArrayList<compd> F(refs.Count());
-      SFUtil::CalcSF(xapp.XFile(), refs, F);
+      SFUtil::CalcSF(xapp.XFile(), refs, F, ms.MERG != 4);
       twinning::merohedral twin(
-        info_ex, refs, ms, basf, rm.GetTWIN_mat(),
+        info_ex, refs, ms, basf, mat3d::Transpose(rm.GetTWIN_mat()),
         rm.GetTWIN_n());
       twin.calc_fsq(F, Fsq);
     }
@@ -5151,17 +5157,14 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       Fsq[i] = F[i].qmod();
   }
   double scale_k = 1./olx_sqr(rm.Vars.GetVar(0).GetValue());
-  // no scale?
-  if (olx_abs(1-scale_k) < 1e-3) {
+  if (!Params.IsEmpty() && Params[0].IndexOfi("scale") != InvalidIndex) {
     double sup=0, sdn=0;
     for( size_t i=0; i < refs.Count(); i++ )  {
       if (refs[i].GetI() < 3*refs[i].GetS()) continue;
       sup += refs[i].GetI();
       sdn += Fsq[i];
     }
-    double s = sdn/sup;
-    if (olx_abs(1-s) > 1e-3)
-      scale_k = s;
+    scale_k = sdn/sup;
   }
   double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
   size_t r1p_cnt=0;
@@ -5178,9 +5181,9 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       double x = sp.HklToCart(r.GetHkl()).QLength()*l*l/4;
       Fc2 /= sqrt(1+0.0005*exti*Fc2*l*l*l/sqrt(olx_max(0,x*(1-x))));
     }
-    const double Fc = sqrt(Fc2);
-    const double Fo2 = r.GetI()*scale_k;
-    const double Fo = Fo2 < 0 ? 0 : sqrt(Fo2);
+    const double Fc = sqrt(olx_abs(Fc2));
+    double Fo2 = olx_abs(r.GetI()*scale_k);
+    const double Fo = sqrt(Fo2);
     const double sigFo2 = r.GetS()*scale_k;
     const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
     const double w =
@@ -5189,7 +5192,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     wR2d += w*olx_sqr(Fo2);
     R1u += olx_abs(Fo-Fc);
     R1d += Fo;
-    if( Fo2/sigFo2 >= 2 )  {
+    if( Fo2 >= 2*sigFo2 )  {
       R1up += olx_abs(Fo-Fc);
       R1dp += Fo;
       r1p_cnt++;
@@ -5198,7 +5201,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   double wR2 = sqrt(wR2u/wR2d);
   double R1 = R1u/R1d;
   double R1p = R1up/R1dp;
-  if( !Params.IsEmpty() && Params[0].Equalsi("print") )  {
+  if( !Params.IsEmpty() && Params[0].IndexOfi("print") != InvalidIndex )  {
     xapp.NewLogEntry() << "R1 (All, " << refs.Count() << ") = " <<
       olxstr::FormatFloat(4, R1);
     xapp.NewLogEntry() << "R1 (I/sig >= 2, " << r1p_cnt << ") = " <<

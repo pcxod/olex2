@@ -167,9 +167,9 @@ namespace SFUtil {
   // calculates the structure factors for given reflections
   template <class IndexList>
   void CalcSF(const TXFile& xfile, const IndexList& refs,
-    TArrayList<compd>& F, bool UseFpFdp=true)
+    TArrayList<compd>& F, bool UseFdp=true)
   {
-    _CalcSF(xfile, MillerIndexList<IndexList>(refs), F, UseFpFdp);
+    _CalcSF(xfile, MillerIndexList<IndexList>(refs), F, UseFdp);
   }
   void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     TArrayList<compd>& F, bool UseFpFdp);
@@ -347,16 +347,13 @@ namespace SFUtil {
       const mat3d& hkl2c, TArrayList<compd>& F,
       const ElementPList& scatterers, const TCAtomPList& atoms, 
       const double* U,
-      bool UseFpFdp) const 
+      bool UseFdp) const 
     {
       TArrayList<compd> fpfdp(scatterers.Count());
       for( size_t i=0; i < scatterers.Count(); i++ )  {
-        if (UseFpFdp) {
-          fpfdp[i] = scatterers[i]->CalcFpFdp(eV);
-          fpfdp[i] -= scatterers[i]->z;
-        }
-        else
-          fpfdp[i] = 0;
+        fpfdp[i] = scatterers[i]->CalcFpFdp(eV);
+        fpfdp[i] -= scatterers[i]->z;
+        if (!UseFdp) fpfdp[i].SetIm(0);
       }
       if( centrosymmetric )  {
         SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers,
