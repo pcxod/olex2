@@ -39,6 +39,10 @@ public:
   size_t IndexOf(const KeyC& entity) const {
     return sorted::FindIndexOf(list, Comparator(), entity);
   }
+  template <class KeyC>
+  bool Contains(const KeyC& entity) const {
+    return IndexOf(entity) != InvalidIndex;
+  }
   // removes specified entry from the list and returns true if the entry was in the list
   bool Remove(const TypeClass& entity)  {
     size_t ind = IndexOf(entity);

@@ -415,9 +415,14 @@ void RefinementModel::SetHKLSource(const olxstr& src) {
 const TRefList& RefinementModel::GetReflections() const {
   try {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
-    if( !_Reflections.IsEmpty() && hkl_src_id == HklFileID )
+    if( !_Reflections.IsEmpty() &&
+        hkl_src_id == HklFileID &&
+        HklFileMat == HKLF_mat)
+    {
       return _Reflections;
+    }
     THklFile hf(HKLF_mat);
+    HklFileMat = HKLF_mat;
     hf.LoadFromFile(HKLSource);
     _HklStat.FileMinInd = hf.GetMinHkl();
     _HklStat.FileMaxInd = hf.GetMaxHkl();
@@ -506,6 +511,10 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       }
       else
         _HklStat = RefMerger::DrySGFilter(sp, refs, Omits);
+      _HklStat.HKLF_mat = HKLF_mat;
+      _HklStat.HKLF_m = HKLF_m;
+      _HklStat.HKLF_s = HKLF_s;
+      _HklStat.MERG = MERG;
     }
   }
   catch(const TExceptionBase& e)  {

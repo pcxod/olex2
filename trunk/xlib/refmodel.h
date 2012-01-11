@@ -156,6 +156,7 @@ protected:
   mutable TRefList _Reflections;  // ALL un-merged reflections
   // if this is not the HKLSource, statistics is recalculated
   mutable TEFile::FileID HklStatFileID, HklFileID;
+  mutable mat3d HklFileMat;
   mutable TIntList _Redundancy;
   mutable int _FriedelPairCount;  // the numbe of pairs only
   TTypeList<BadReflection> BadReflections;
@@ -585,6 +586,7 @@ Friedel opposites of components 1 ... m
       bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
       stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, 
         Omits, mergeFP);
+      stats.MERG = MERG;
     }
     else
       stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);

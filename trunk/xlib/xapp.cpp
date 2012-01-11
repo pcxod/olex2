@@ -115,7 +115,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   // initialise newly created atoms
   XFile().UpdateAsymmUnit();
   TAsymmUnit& au = XFile().GetAsymmUnit();
-  const mat3d& hkl2c = au.GetHklToCartesian();
+  const mat3d hkl2c = au.GetHklToCartesian();
   // space group matrix list
   TSpaceGroup* sg = NULL;
   try  { sg = &XFile().GetLastLoaderSG();  }
@@ -124,14 +124,12 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   }
   smatd_list ml;
   sg->GetMatrices(ml, mattAll^(mattCentering));
-  const int multiplier = sg->GetLattice().GetVectors().Count()+1;
-
+  const int multiplier = (int)sg->GetLattice().GetVectors().Count()+1;
   evecd quad(6);
   const static double EQ_PI = 8*M_PI*M_PI;
   const static double T_PI = 2*M_PI;
   const static double TQ_PI = 2.0*M_PI*M_PI;
-  static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
-  double WaveLength = 0.71073;
+  const double r_e = XFile().GetRM().expl.GetRadiationEnergy();
 
   // the thermal ellipsoid scaling factors
   double BM[6] = {hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(),
@@ -155,7 +153,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       scatterers.AddNew<const cm_Element*,compd,compd>(&ca.GetType(), 0, 0);
       bais.Add(ca.GetType());
       scatterers.GetLast().C() =
-        scatterers.GetLast().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
+        scatterers.GetLast().GetA()->CalcFpFdp(r_e);
       scatterers.GetLast().C() -= scatterers.GetLast().GetA()->z;
       ind = scatterers.Count() - 1;
     }

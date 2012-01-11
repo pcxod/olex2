@@ -45,5 +45,8 @@ protected:
     MACInfo& mi, size_t len=6, bool accept_empty=false);
 public:
   static void ListMACAddresses(MACInfo& rv);
+#ifdef __WIN32__
+  static bool VerifyEmbeddedSignature(const olxstr &file_name);
+#endif
 };
 #endif

@@ -1022,7 +1022,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\sdl.lib"
+				OutputFile="$(OutDir)\$(ProjectName).lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -1178,6 +1178,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\olxthpool.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\os_util.cpp"
 				>
 			</File>
 			<File

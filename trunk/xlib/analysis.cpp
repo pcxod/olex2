@@ -118,6 +118,16 @@ ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
 }
 //.............................................................................
 //.............................................................................
+ConstSortedElementPList helper::get_user_elements() {
+  TXApp& xapp = TXApp::GetInstance();
+  const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
+  SortedElementPList rv;
+  for (size_t i=0; i < cl.Count(); i++)
+    rv.AddUnique(&cl[i].element);
+  return rv;
+}
+//.............................................................................
+//.............................................................................
 void peaks::range::delete_all() {
   for (size_t i=0; i < peaks.Count(); i++)
     peaks[i]->SetDeleted(true);

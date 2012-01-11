@@ -28,6 +28,9 @@ namespace alg {
   ConstArrayList<size_t> find_hetero_indices(const TCAtomPList &atoms,
     const cm_Element *re=NULL);
 }; // end namespace alg
+namespace helper {
+  ConstSortedElementPList get_user_elements();
+}; // end namespace helper
 struct peaks {
   static int peak_sort(const TCAtom &a1, const TCAtom &a2) {
     return olx_cmp(a2.GetQPeak(), a1.GetQPeak());

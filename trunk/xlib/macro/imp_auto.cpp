@@ -57,14 +57,8 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TLattice& latt = xapp.XFile().GetLattice();
   TAsymmUnit& au = latt.GetAsymmUnit();
   ElementPList elm_l;
-  if( arg == 1 )  {
-    if( xapp.CheckFileType<TIns>() )  {
-      TIns& ins = xapp.XFile().GetLastLoader<TIns>();
-      const ContentList& cl = ins.GetRM().GetUserContent();
-      for( size_t i=0; i < cl.Count(); i++ ) 
-        elm_l.Add(cl[i].element);
-    }    
-  }
+  if( arg == 1 )
+    elm_l = olx_analysis::helper::get_user_elements();
   TAutoDB::AnalysisStat stat;
   uint64_t st = TETime::msNow();
   TAutoDB::GetInstance().AnalyseStructure(xapp.XFile().GetFileName(), latt, 
@@ -147,6 +141,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   }
   helper_CleanBaiList(sfac, AvailableTypes);
   const bool runFuse = !Options.Contains("f");
+  const bool enforce_formula = TAutoDB::GetInstance().IsEnforceFormula();
   size_t changeNPD = ~0;
   if( Options.Contains("npd") )  {
     olxstr _v = Options.FindValue("npd");
@@ -355,7 +350,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
                 if( sa.CAtom().GetUiso() < 0.01 )  {  // search heavier
                   bool assigned = false;
                   for( size_t k=j+1; k < StandAlone.Count(); k++ )  {
-                    if( AvailableTypes.IndexOf(StandAlone[k]) != InvalidIndex )  {
+                    if( AvailableTypes.Contains(StandAlone[k]) )  {
                       sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
                       sa.CAtom().SetType(*StandAlone[k]);
                       assigned = true;
@@ -367,7 +362,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
                 else if( sa.CAtom().GetUiso() > 0.2 )  {  // search lighter
                   bool assigned = false;
                   for( size_t k=j-1; k != InvalidIndex; k-- )  {
-                    if( AvailableTypes.IndexOf(StandAlone[k]) != InvalidIndex )  {
+                    if( AvailableTypes.Contains(StandAlone[k]) )  {
                       sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
                       sa.CAtom().SetType(*StandAlone[k]);
                       assigned = true;
@@ -378,13 +373,21 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
                 }
               }
             }
-            if( !found || assignLightest )  {  // make lightest then
-              sa.CAtom().SetLabel(StandAlone[0]->symbol, false);
-              sa.CAtom().SetType(*StandAlone[0]);
-            }
-            else if( assignHeaviest )  {
-              sa.CAtom().SetLabel(StandAlone.GetLast()->symbol, false);
-              sa.CAtom().SetType(*StandAlone.GetLast());
+            if (!found) {
+              if( assignLightest )  {  // make lightest then
+                if (!enforce_formula || AvailableTypes.Contains(StandAlone[0]))
+                {
+                  sa.CAtom().SetLabel(StandAlone[0]->symbol, false);
+                  sa.CAtom().SetType(*StandAlone[0]);
+                }
+              }
+              else if( assignHeaviest )  {
+                if (!enforce_formula || AvailableTypes.Contains(StandAlone[0]))
+                {
+                  sa.CAtom().SetLabel(StandAlone.GetLast()->symbol, false);
+                  sa.CAtom().SetType(*StandAlone.GetLast());
+                }
+              }
             }
           }
         }
@@ -460,12 +463,14 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   TUnitCell& uc = latt.GetUnitCell();
   TAsymmUnit& au = latt.GetAsymmUnit();
   int ValidatedAtomCount = 0, AtomCount=0;
-  bool trim = Cmds[0].ToBool();
-  bool use_formula = Cmds[0].ToBool();
+  const bool trim = Cmds[0].ToBool();
+  const bool use_formula = Cmds[0].ToBool();
+  const bool enforce_formula = TAutoDB::GetInstance().IsEnforceFormula();
   if( use_formula )  {
     TTypeList< AnAssociation2<double,const cm_Element*> > sl;
     double ac = 0;
     const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
+    ElementPList elm_l = olx_analysis::helper::get_user_elements();
     for( size_t i=0; i < cl.Count(); i++ )  {
       if( cl[i].element == iHydrogenZ )  continue;
       sl.AddNew(cl[i].count, &cl[i].element);
@@ -497,7 +502,11 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
         TCAtom &p = *SortedQPeaks.GetLast().Object;
         sl[i].A() -= 1./p.GetDegeneracy();
         p.SetLabel((olxstr(sl[i].GetB()->symbol) << i), false);
-        p.SetType(Analysis::check_proposed_element(p, *sl[i].B()));
+        const cm_Element &e = Analysis::check_proposed_element(p, *sl[i].B());
+        if (elm_l.Contains(&e))
+          p.SetType(e);
+        else
+          p.SetType(*sl[i].B());
         p.SetQPeak(0);
         SortedQPeaks.Delete(SortedQPeaks.Count()-1);
       }
@@ -579,8 +588,10 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
           }
         }
         if( sati != InvalidIndex && (sati+1) < sl.Count() )  {
-          bc_to_check[i].GetBase().CAtom().SetType(*sl[sati+1].GetB());
-          changes = true;
+          if (!enforce_formula || elm_l.Contains(sl[sati+1].GetB())) {
+            bc_to_check[i].GetBase().CAtom().SetType(*sl[sati+1].GetB());
+            changes = true;
+          }
         }
       }
     }
@@ -606,7 +617,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     xapp.XFile().EndUpdate();
   }
   for( size_t i=0; i < au.AtomCount(); i++ )
-    au.GetAtom(i).SetLabel( au.CheckLabel(NULL, au.GetAtom(i).GetLabel()), false);
+    au.GetAtom(i).SetLabel(au.CheckLabel(NULL, au.GetAtom(i).GetLabel()), false);
 //  TAutoDB::AnalysisStat stat;
 //  TAutoDB::GetInstance().AnalyseStructure( xapp.XFile().GetFileName(), latt, 
 //    NULL, stat, NULL);

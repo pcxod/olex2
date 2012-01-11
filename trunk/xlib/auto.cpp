@@ -529,7 +529,7 @@ TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
     Nodes.AddNew();
   BAIDelta = -1;
   URatio = 1.5;
-
+  EnforceFormula = false;
   lc.GetLibrary().AttachLibrary(ExportLibrary());
 }
 //..............................................................................
@@ -1811,21 +1811,35 @@ void TAutoDB::LibBAIDelta(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAutoDB::LibURatio(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
-    E.SetRetVal( URatio );
+    E.SetRetVal(URatio);
   else
     URatio = Params[0].ToDouble();
+}
+//..............................................................................
+void TAutoDB::LibEnforceFormula(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )
+    E.SetRetVal(EnforceFormula);
+  else
+    EnforceFormula = Params[0].ToBool();
 }
 //..............................................................................
 TLibrary* TAutoDB::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("ata") : name);
   lib->RegisterFunction<TAutoDB>(
     new TFunction<TAutoDB>(this,  &TAutoDB::LibBAIDelta, "BAIDelta",
-    fpNone|fpOne,
-"Returns/sets maximum difference between element types to promote"));
+      fpNone|fpOne,
+      "Returns/sets maximum difference between element types to promote")
+  );
   lib->RegisterFunction<TAutoDB>(
     new TFunction<TAutoDB>(this,  &TAutoDB::LibURatio, "URatio", fpNone|fpOne,
-"Returns/sets a ration between atom U and mean U of the confident atoms to"
-" consider promotion"));
+      "Returns/sets a ration between atom U and mean U of the confident atoms to"
+      " consider promotion")
+  );
+  lib->RegisterFunction<TAutoDB>(
+    new TFunction<TAutoDB>(this,  &TAutoDB::LibEnforceFormula, "EnforceFormula",
+      fpNone|fpOne,
+      "Returns/sets user formula enforcement option")
+  );
   return lib;
 }
 //..............................................................................
