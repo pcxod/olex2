@@ -320,6 +320,7 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
 }
 //.............................................................................
 //http://msdn.microsoft.com/en-us/library/windows/desktop/aa382384(v=vs.85).aspx
+#ifdef __WIN32__
 bool TShellUtil::VerifyEmbeddedSignature(const olxstr &file_name) {
   WINTRUST_FILE_INFO FileData;
   memset(&FileData, 0, sizeof(FileData));
@@ -347,4 +348,5 @@ bool TShellUtil::VerifyEmbeddedSignature(const olxstr &file_name) {
     &WVTPolicyGUID,
     &WinTrustData) == ERROR_SUCCESS;
 }
+#endif // __WIN32__
 //.............................................................................
