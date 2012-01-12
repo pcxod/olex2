@@ -1385,9 +1385,12 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           searchHeavier = true;
       }
       if( searchLighter || searchHeavier )  {
-        AnalyseUiso(*guesses[i].atom, guessN, stat, searchHeavier, searchLighter, proposed_atoms);
-        sn->Node(i).SetTag(guesses[i].atom->GetType().index);
-        processed.AddUnique(&sn->Node(i));
+        if (AnalyseUiso(*guesses[i].atom, guessN, stat, searchHeavier,
+          searchLighter, proposed_atoms))
+        {
+          sn->Node(i).SetTag(guesses[i].atom->GetType().index);
+          processed.AddUnique(&sn->Node(i));
+        }
       }
       else  {
         if( type != NULL && *type != guesses[i].atom->GetType() )  {

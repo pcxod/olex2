@@ -8028,7 +8028,7 @@ void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {
     glm.FromString(Params[0]);
   TdlgMatProp* MatProp = new TdlgMatProp(this, glm);
   if( MatProp->ShowModal() == wxID_OK )
-    E.SetRetVal(glm.ToString());
+    E.SetRetVal(MatProp->GetCurrent().ToString());
   else
     E.ProcessingError(__OlxSrcInfo, EmptyString());
   MatProp->Destroy();
