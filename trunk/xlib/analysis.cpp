@@ -95,7 +95,8 @@ bool alg::check_geometry(const TCAtom &a, const cm_Element &e) {
 bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
   size_t cc = 0;
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
-    if (a.GetAttachedAtom(i).GetType() != iQPeakZ)
+    TCAtom &aa = a.GetAttachedAtom(i);
+    if (aa.GetType() != iQPeakZ && !aa.IsDeleted())
       cc++;
   }
   if (e == iHydrogenZ)
@@ -104,6 +105,10 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     return cc <= 2;
   if (XElementLib::IsHalogen(e))
     return cc <= 1;
+  if (XElementLib::IsMetal(e)) {
+    if (cc <= 1) return false;
+    if (cc ==2) return XElementLib::IsTtransitionalGroup(1, e);
+  }
   return true;
 }
 //.............................................................................
@@ -892,6 +897,7 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
     types.Add(iOxygenZ);
     types.Add(iFluorineZ);
     types.Add(iChlorineZ);
+    types.Add(iSulphurZ);
     types.Add(33); // arsenic
     types.Add(iBromineZ);
   }
@@ -933,6 +939,10 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
   else if (a.GetType() == 33) { // arsenic
     if (ae.Count() <= 1)
       return *XElementLib::FindByZ(iBromineZ);
+  }
+  else if (a.GetType() == iSulphurZ) {
+    if (ae.Count() <= 1)
+      return XElementLib::GetByIndex(iChlorineIndex);
   }
   else if (a.GetType() == iBromineZ) {
     if (ae.Count() > 1)

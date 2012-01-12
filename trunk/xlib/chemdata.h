@@ -303,20 +303,20 @@ public:
       e.z == (group+46) || e.z == (group+78) || e.z == (group+110);
   }
   /* checks if given element is in sub-group 1-10, Lanthanised are
-  considered to be in group #1 */
+  considered to be in group #3 */
   static bool IsTtransitionalGroup(int group, const cm_Element &e) {
-    if( e.z >= 21 && e.z <= 30 )  {
-      int z = e.z > 28 ? e.z-11 : e.z; 
+    if( e.z >= 21 && e.z <= 30 )  { // Sc->Zn
+      int z = e.z > 28 ? e.z-10 : e.z; 
       return z == (group+18);
     }
-    else if( e.z >= 39 && e.z <= 48 )  {
-      int z = e.z > 46 ? e.z-11 : e.z; 
+    else if( e.z >= 39 && e.z <= 48 )  { //Y->Cd
+      int z = e.z > 46 ? e.z-10 : e.z; 
       return z == (group+36);
     }
-    else if( e.z >= 57 && e.z <= 80 )  {
-      if( e.z < 72 )
-        return group == 1;
-      int z = e.z > 78 ? e.z-11 : e.z; 
+    else if( e.z >= 57 && e.z <= 80 )  { //La->Hg
+      if( e.z < 72 ) // Lanthanides
+        return group == 3;
+      int z = e.z > 78 ? e.z-10 : e.z; 
       return z == (group+68);
     }
     return false;
