@@ -152,7 +152,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   }
   const bool analyseQ = !Options.Contains("aq");
   const bool assignTypes = !Options.Contains("at");
-  const double aqV = Options.FindValue("aq", "0.3").ToDouble(); // R+aqV
+  const double aqV = Options.FindValue("aq", "0.2").ToDouble(); // R+aqV
   // qpeak anlysis
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   if( analyseQ )  {
