@@ -23,7 +23,10 @@ class TEllipsoid: public ACollectionItem  {
   double FQuad[6], FEsd[6];  // quadratic form of the elipsoid and esd
   mat3d Matrix;  // normalised eigen vectors
   double SX, SY, SZ;    // lengths of the vectores
-  size_t Id; // do not change this value ! it is equal to the position in the AsymmUnit list
+  /* do not change this value ! it is equal to the position in the AsymmUnit
+  list
+  */
+  size_t Id;
 public:
   TEllipsoid();
   TEllipsoid( const TEllipsoid& e)  {  this->operator = (e);  }
@@ -34,7 +37,7 @@ public:
   // processes a symmetry matrix and updates object's data
   void MultMatrix(const mat3d& M);
   // return true if the ellipsoid is not positively defined
-  inline bool IsNPD() const {  return FNPD;  }
+  bool IsNPD() const {  return FNPD;  }
 
   template <class T> TEllipsoid& Initialise(const T& Q, const T& E)  {
     for( size_t i=0; i < 6; i++ )  {
@@ -73,12 +76,13 @@ public:
     olx_swap(FEsd[3], FEsd[5]);
     olx_swap(FQuad[3], FQuad[5]);
   }
-  inline double GetSX() const {  return SX;  }
-  inline double GetSY() const {  return SY;  }
-  inline double GetSZ() const {  return SZ;  }
-  inline double GetUeq() const {  return (FQuad[0]+FQuad[1]+FQuad[2])/3;  }
-  inline const mat3d& GetMatrix() const {  return Matrix;  }
-
+  double GetSX() const {  return SX;  }
+  double GetSY() const {  return SY;  }
+  double GetSZ() const {  return SZ;  }
+  double GetUeq() const {  return (FQuad[0]+FQuad[1]+FQuad[2])/3;  }
+  const mat3d& GetMatrix() const {  return Matrix;  }
+  // resets the ellipsoid into a sphere of given radius
+  void ToSpherical(double r);
   DefPropP(size_t, Id)
 };
   typedef TTypeList<TEllipsoid>  TEllpList;

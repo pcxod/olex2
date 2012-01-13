@@ -132,6 +132,32 @@ ConstSortedElementPList helper::get_user_elements() {
   return rv;
 }
 //.............................................................................
+void helper::reset_u(TCAtom &a, double r) {
+  a.SetUiso(r);
+  if (a.GetEllipsoid() != NULL)
+    a.GetEllipsoid()->ToSpherical(r);
+}
+//.............................................................................
+bool helper::can_demote(const cm_Element &e, const SortedElementPList &elms) {
+  size_t idx = elms.IndexOf(e);
+  if (idx == InvalidIndex) {
+    for (size_t i=0; i < elms.Count(); i++) {
+      if (elms[i]->z > e.z) {
+        if (i==0) return false;
+        if (i>0 && elms[i-1]->z == iHydrogenZ)
+          return false;
+        return true;
+      }
+    }
+    return false;
+  }
+  else {
+    if ((idx == 1 && elms[0]->z == iHydrogenZ) || idx == 0)
+      return false;
+    return true;
+  }
+}
+//.............................................................................
 //.............................................................................
 void peaks::range::delete_all() {
   for (size_t i=0; i < peaks.Count(); i++)

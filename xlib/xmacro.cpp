@@ -106,10 +106,12 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Compares current model with the cif file and write the report to provided"
     " file (appending)");
   xlib_InitMacro(Clean,
-    "npd-promotes at maximum given number of atoms a call [0]"
-    "&;f-does not run 'fuse' after the completion"
-    "&;aq-disables analysis of the Q-peaks based on thresholds"
-    "&;at-disables lonely atom types assignment to O and Cl",
+    "npd-promotes at maximum given number of atoms a call [0]&;"
+    "f-does not run 'fuse' after the completion&;"
+    "aq-disables analysis of the Q-peaks based on thresholds&;"
+    "at-disables lonely atom types assignment to O and Cl&;"
+    "d-before 'blown up' atoms, a possibility to demote will be checked"
+    ,
     fpNone,
     "Tidies up current model");
 //_____________________________________________________________________________
