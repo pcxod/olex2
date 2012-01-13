@@ -29,7 +29,6 @@ static _auto_BI _autoMaxBond[] = {
   {iPhosphorusZ, 3, 6},
 };
 
-typedef SortedPtrList<const cm_Element, TPointerComparator> SortedElementList;
 // helper function
 size_t imp_auto_AtomCount(const TAsymmUnit& au)  {
   size_t ac = 0;
@@ -49,7 +48,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
     arg = folder.ToInt();
     folder.SetLength(0);
   }
-  olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd");
+  olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd -d");
   static olxstr FileName(xapp.XFile().GetFileName());
   if( !folder.IsEmpty() )
     TAutoDB::GetInstance().ProcessFolder(folder);
@@ -72,7 +71,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
     ac = 1;
   // sometimes things get stuck while there are some NPD atoms
   if ((double)stat.ConfidentAtomTypes/ac < 0.2) {
-    olex::IOlexProcessor::GetInstance()->executeMacro("clean");
+    olex::IOlexProcessor::GetInstance()->executeMacro("clean -d");
   }
   Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' << 
     (double)stat.ConfidentAtomTypes*100/ac);
@@ -108,7 +107,7 @@ struct Main_BaiComparator {
   }
 };
 void helper_CleanBaiList(TStrPObjList<olxstr,const cm_Element*>& list,
-  SortedElementList& au_bais)
+  SortedElementPList& au_bais)
 {
   TXApp& xapp = TXApp::GetInstance();
   if( xapp.CheckFileType<TIns>() )  {
@@ -128,7 +127,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& xapp = TXApp::GetInstance();
   TStrPObjList<olxstr,const cm_Element*> sfac;
-  SortedElementList AvailableTypes;
+  SortedElementPList AvailableTypes;
   static ElementPList StandAlone;
   if( StandAlone.IsEmpty() )  {
     StandAlone.Add(XElementLib::GetByIndex(iOxygenIndex));
@@ -141,6 +140,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   }
   helper_CleanBaiList(sfac, AvailableTypes);
   const bool runFuse = !Options.Contains("f");
+  const bool check_demotion = Options.Contains('d');
   const bool enforce_formula = TAutoDB::GetInstance().IsEnforceFormula();
   size_t changeNPD = ~0;
   if( Options.Contains("npd") )  {
@@ -313,13 +313,16 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
             TSAtom& sa = latt.GetFragment(i).Node(j);
             if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
             if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i]*3) {
-              if (sa.GetType().z <= 20) {
-                TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() <<
-                  " too large, deleting";
-                sa.SetDeleted(true);
-                sa.CAtom().SetDeleted(true);
-                changes = true;
+              if (check_demotion &&
+                  olx_analysis::helper::can_demote(sa.GetType(), AvailableTypes))
+              {
+                continue;
               }
+              TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() <<
+                " too large, deleting";
+              sa.SetDeleted(true);
+              sa.CAtom().SetDeleted(true);
+              changes = true;
             }
           }
         }
@@ -356,6 +359,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
                     if( AvailableTypes.Contains(StandAlone[k]) )  {
                       sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
                       sa.CAtom().SetType(*StandAlone[k]);
+                      olx_analysis::helper::reset_u(sa.CAtom());
                       assigned = true;
                       break;
                     }
@@ -368,6 +372,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
                     if( AvailableTypes.Contains(StandAlone[k]) )  {
                       sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
                       sa.CAtom().SetType(*StandAlone[k]);
+                      olx_analysis::helper::reset_u(sa.CAtom());
                       assigned = true;
                       break;
                     }
@@ -382,6 +387,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
                 {
                   sa.CAtom().SetLabel(StandAlone[0]->symbol, false);
                   sa.CAtom().SetType(*StandAlone[0]);
+                  olx_analysis::helper::reset_u(sa.CAtom());
                 }
               }
               else if( assignHeaviest )  {
@@ -389,20 +395,11 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
                 {
                   sa.CAtom().SetLabel(StandAlone.GetLast()->symbol, false);
                   sa.CAtom().SetType(*StandAlone.GetLast());
+                  olx_analysis::helper::reset_u(sa.CAtom());
                 }
               }
             }
           }
-        }
-      }
-      for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
-        TSAtom& sa = latt.GetFragment(i).Node(j);
-        if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
-        if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > 0.25 )  {
-          TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() << " blown up";
-          sa.SetDeleted(true);
-          sa.CAtom().SetDeleted(true);
-          continue;
         }
       }
     }
@@ -431,17 +428,33 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  // check blown up
+  for( size_t i=0;  i < latt.GetObjects().atoms.Count(); i++ )  {
+    TSAtom& sa = latt.GetObjects().atoms[i];
+    if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
+    if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > 0.25 )  {
+      if (check_demotion &&
+        olx_analysis::helper::can_demote(sa.GetType(), AvailableTypes))
+      {
+        continue;
+      }
+      TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() << " blown up";
+      sa.SetDeleted(true);
+      sa.CAtom().SetDeleted(true);
+    }
+  }
   // treating NPD atoms... promoting to the next available type
   if( changeNPD > 0 && !sfac.IsEmpty() )  {
     size_t atoms_transformed = 0;
     for( size_t i=0; i < objects.atoms.Count(); i++ )  {
       TSAtom& sa = objects.atoms[i];
-      if( (sa.GetEllipsoid() != NULL && sa.GetEllipsoid()->IsNPD()) ||
+      if( (sa.CAtom().GetEllipsoid() != NULL && sa.CAtom().GetEllipsoid()->IsNPD()) ||
         (sa.CAtom().GetUiso() <= 0.005) )
       {
         size_t ind = sfac.IndexOfObject(&sa.GetType());
         if( ind != InvalidIndex && ((ind+1) < sfac.Count()) )  {
           sa.CAtom().SetType(*sfac.GetObject(ind+1));
+          olx_analysis::helper::reset_u(sa.CAtom());
           if( ++atoms_transformed >= changeNPD )
             break;
         }
@@ -466,8 +479,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   TUnitCell& uc = latt.GetUnitCell();
   TAsymmUnit& au = latt.GetAsymmUnit();
   int ValidatedAtomCount = 0, AtomCount=0;
-  const bool trim = Cmds[0].ToBool();
-  const bool use_formula = Cmds[0].ToBool();
+  const bool use_formula = (Cmds.IsEmpty() ? false : Cmds[0].ToBool());
   const bool enforce_formula = TAutoDB::GetInstance().IsEnforceFormula();
   if( use_formula )  {
     TTypeList< AnAssociation2<double,const cm_Element*> > sl;
@@ -520,48 +532,8 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       if( au.GetAtom(i).GetType() == iQPeakZ ) 
         au.GetAtom(i).SetDeleted(true);
     }
-    TArrayList<AnAssociation2<TCAtom const*, vec3d> > res;
-    for( size_t i=0; i < au.AtomCount(); i++ )  {
-      if( au.GetAtom(i).IsDeleted() )  continue;
-      uc.FindInRangeAC(au.GetAtom(i).ccrd(), au.GetAtom(i).GetType().r_bonding+1.3, res);
-      vec3d center = au.Orthogonalise(au.GetAtom(i).ccrd());
-      for( size_t j=0; j < res.Count(); j++ )  {
-        if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() &&
-            center.QDistanceTo(res[j].GetB()) < 1e-4 )
-        {
-          res.Delete(j--);
-        }
-      }
-      AtomCount++;
-      double wght = 1;
-      if( res.Count() > 1 )  {
-        double awght = 1./(res.Count()*(res.Count()-1));
-        for( size_t j=0; j < res.Count(); j++ )  {
-          if( res[j].GetB().QLength() < 1 )
-            wght -= 0.5/res.Count();
-          for( size_t k=j+1; k < res.Count(); k++ )  {
-            double cang = (res[j].GetB()-center).CAngle(res[k].GetB()-center);
-            if( cang > 0.588 )  { // 56 degrees
-              wght -= awght;
-            }
-          }
-        }
-      }
-      else if( res.Count() == 1 ) {  // just one bond
-        if( res[0].GetB().QLength() < 1 )
-          wght = 0;
-      }
-      else  // no bonds, cannot say anything
-        wght = 0;
-
-      if( wght >= 0.95 )
-        ValidatedAtomCount++;
-      res.Clear();
-    }
     xapp.XFile().EndUpdate();
     // validate max bonds
-    TUnitCell& uc = xapp.XFile().GetUnitCell();
-    TLattice& latt = xapp.XFile().GetLattice();
     ASObjectProvider& objects = latt.GetObjects();
     TTypeList<TAtomEnvi> bc_to_check;
     const size_t maxb_cnt = sizeof(_autoMaxBond)/sizeof(_autoMaxBond[0]);
@@ -601,30 +573,51 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     if( !bc_to_check.IsEmpty() )
       xapp.XFile().EndUpdate();
   }
-  else if( trim && false )  {
-    double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
-    int ac = (int)olx_round(auv/18.6);
-    index_t _to_delete = (int)au.AtomCount() - ac;
-    if( _to_delete > 0 )  {
-      size_t to_delete = _to_delete;
-      TPSTypeList<double, TCAtom*> SortedQPeaks;
-      TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
-      for( size_t i=0; i < au.AtomCount(); i++ )  {
-        if( au.GetAtom(i).IsDeleted() )  continue;
-        if( au.GetAtom(i).GetType() == iQPeakZ )
-          SortedQPeaks.Add(au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
+  TArrayList<AnAssociation2<TCAtom const*, vec3d> > res;
+  for( size_t i=0; i < au.AtomCount(); i++ )  {
+    if( au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() < 2)  continue;
+    uc.FindInRangeAC(au.GetAtom(i).ccrd(),
+      au.GetAtom(i).GetType().r_bonding+1.3, res);
+    vec3d center = au.Orthogonalise(au.GetAtom(i).ccrd());
+    for( size_t j=0; j < res.Count(); j++ )  {
+      if( (res[j].GetA()->GetId() == au.GetAtom(i).GetId() &&
+           center.QDistanceTo(res[j].GetB()) < 1e-4) ||
+           res[j].GetA()->GetType() < 2)
+      {
+        res.Delete(j--);
       }
-      for( size_t i=0; i < olx_min(to_delete,SortedQPeaks.Count()); i++ )
-        SortedQPeaks.GetObject(i)->SetDeleted(true);
     }
-    xapp.XFile().EndUpdate();
+    AtomCount++;
+    double wght = 1;
+    if( res.Count() > 1 )  {
+      double awght = 1./(res.Count()*(res.Count()-1));
+      for( size_t j=0; j < res.Count(); j++ )  {
+        if( res[j].GetB().QLength() < 1 )
+          wght -= 0.5/res.Count();
+        for( size_t k=j+1; k < res.Count(); k++ )  {
+          double cang = (res[j].GetB()-center).CAngle(res[k].GetB()-center);
+          if( cang > 0.588 )  { // 56 degrees
+            wght -= awght;
+          }
+        }
+      }
+    }
+    else if( res.Count() == 1 ) {  // just one bond
+      if( res[0].GetB().QLength() < 1 )
+        wght = 0;
+    }
+    else  // no bonds, cannot say anything
+      wght = 0;
+
+    if( wght >= 0.95 )
+      ValidatedAtomCount++;
+    res.Clear();
   }
   for( size_t i=0; i < au.AtomCount(); i++ )
     au.GetAtom(i).SetLabel(au.CheckLabel(NULL, au.GetAtom(i).GetLabel()), false);
-//  TAutoDB::AnalysisStat stat;
-//  TAutoDB::GetInstance().AnalyseStructure( xapp.XFile().GetFileName(), latt, 
-//    NULL, stat, NULL);
-  Error.SetRetVal((double)ValidatedAtomCount*100/AtomCount);
+
+  Error.SetRetVal(AtomCount == 0 ? 0
+    : (double)ValidatedAtomCount*100/AtomCount);
 }
 //..............................................................................
 double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,

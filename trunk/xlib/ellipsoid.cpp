@@ -87,3 +87,11 @@ void TEllipsoid::MultMatrix(const mat3d& Matr)  {
   Matrix[2].Normalise();
 }
 //..............................................................................
+void TEllipsoid::ToSpherical(double r) {
+  FQuad[0] = FQuad[1] = FQuad[2] = SX = SY = SZ = r;
+  memset(&FQuad[3], 0, sizeof(FQuad[0])*3);
+  memset(&FEsd[0], 0, sizeof(FEsd));
+  Matrix.I();
+  FNPD = r <= 0;
+}
+//..............................................................................

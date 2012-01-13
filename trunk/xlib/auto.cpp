@@ -1536,21 +1536,16 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         }
         if( permutator == NULL || !permutator->IsActive() )  {
           if( type == NULL || *type == guesses[i].atom->GetType() )  continue;
-          if( proposed_atoms != NULL )  {
-            if( proposed_atoms->IndexOf(type) != InvalidIndex )  {
-            if (ChangeType(*guesses[i].atom, *type))
+          bool change = true;
+          if( proposed_atoms != NULL )
+            change = proposed_atoms->Contains(type);
+          else if( BAIDelta != -1 )
+            change = (olx_abs(type->z-guesses[i].atom->GetType().z) < BAIDelta);
+          if (change) {
+            if (ChangeType(*guesses[i].atom, *type)) {
+              olx_analysis::helper::reset_u(*guesses[i].atom);
               stat.AtomTypeChanges++;
             }
-          }
-          else if( BAIDelta != -1 )  {
-            if( abs(type->z - guesses[i].atom->GetType().z) < BAIDelta )  {
-              if (ChangeType(*guesses[i].atom, *type))
-                stat.AtomTypeChanges++;
-            }
-          }
-          else  {
-            if (ChangeType(*guesses[i].atom, *type))
-              stat.AtomTypeChanges++;
           }
         }
         TBasicApp::NewLogEntry(logInfo) << tmp;

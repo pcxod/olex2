@@ -504,6 +504,7 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
     stat.AtomTypeChanges++;
     ca.SetLabel(type->symbol, false);
     ca.SetType(*type);
+    olx_analysis::helper::reset_u(ca);
     TBasicApp::NewLogEntry(logInfo) << tmp;
     return true;
   }
