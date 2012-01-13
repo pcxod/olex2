@@ -222,7 +222,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Fixes specified parameters of atoms: XYZ, Uiso, Occu");
   xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
     "Frees specified parameters of atoms: XYZ, Uiso, Occu");
-  xlib_InitMacro(Isot,EmptyString() , fpAny|psFileLoaded,
+  xlib_InitMacro(Isot, "npd-makes all NPD atoms isotropic",
+    fpAny|psFileLoaded,
     "Makes provided atoms isotropic, if no arguments provided, current "
     "selection or all atoms become isotropic");
   xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded, 
@@ -1281,6 +1282,17 @@ void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if (Options.Contains("npd")) {
+    TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+    TCAtomPList catoms;
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      if (a.GetEllipsoid() != NULL && a.GetEllipsoid()->IsNPD())
+        catoms.Add(a);
+    }
+    TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, false);
+    return;
+  }
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
   TCAtomPList catoms(atoms,

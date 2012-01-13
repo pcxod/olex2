@@ -312,11 +312,14 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
             TSAtom& sa = latt.GetFragment(i).Node(j);
             if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
-            if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i]*3)  {
-              TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() << " too large, deleting";
-              sa.SetDeleted(true);
-              sa.CAtom().SetDeleted(true);
-              changes = true;
+            if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i]*3) {
+              if (sa.GetType().z <= 20) {
+                TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() <<
+                  " too large, deleting";
+                sa.SetDeleted(true);
+                sa.CAtom().SetDeleted(true);
+                changes = true;
+              }
             }
           }
         }
