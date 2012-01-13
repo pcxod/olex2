@@ -1195,67 +1195,118 @@ void TAsymmUnit::LibWeight(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(olxstr::FormatFloat(2, MolWeight()*m));
 }
 //..............................................................................
+void TAsymmUnit::LibNPDCount(const TStrObjList& Params, TMacroError& E) {
+  size_t cnt = 0;
+  for (size_t i=0; i < CAtoms.Count(); i++) {
+    if (CAtoms[i]->IsDeleted()) continue;
+    if (CAtoms[i]->GetEllipsoid() != NULL &&
+        CAtoms[i]->GetEllipsoid()->IsNPD())
+    {
+      cnt++;
+    }
+  }
+  E.SetRetVal(cnt);
+}
+//..............................................................................
 
 TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("au") : name);
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibNewAtom, "NewAtom", fpFour,
-"Adds a new atom to the asymmetric unit and return its ID, by which it can be reffered.\
- The function takes the atom name and ccordinates, if -1 is returned, the atom is not created") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
-"Returns the atom count in the asymmetric unit") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone|fpOne,
-"Returns spacegroup of currently loaded file as name: 'C2', 'I41/amd', etc."
-" Optionally, Hal symbol may be returned if 'hall' is provided as an argument") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCrd, "GetAtomCrd", fpOne,
-"Returns a comma separated list of fractional coordinates for the specified atom") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomName, "GetAtomName", fpOne,
-"Returns atom label") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomType, "GetAtomType", fpOne,
-"Returns atom type (element)"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomOccu, "GetAtomOccu", fpOne,
-"Returns atom occupancy"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomAfix, "GetAtomAfix", fpOne,
-"Returns atom AFIX"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetPeak, "GetPeak", fpOne,
-"Returns peak intensity"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomU, "GetAtomU", fpOne,
-"Returns a single number or six, comma separated values") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomUiso, "GetAtomUiso", fpOne,
-"Returns a single number Uiso or (U11+U22+U33)/3") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetCell, "GetCell", fpNone,
-"Returns six comma separated values for a, b, c and alpha, beta, gamma") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetVolume, "GetVolume", fpNone,
-"Returns volume of the unit cell divided by the number of symmetry elements") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetCellVolume, "GetCellVolume", fpNone,
-"Returns volume of the unit cell") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomCrd, "SetAtomCrd", fpFour,
-"Sets atom coordinates to specified values, first parameters is the atom ID") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomU, "SetAtomU", fpSeven | fpTwo,
-"Sets atoms Uiso/anis first paramater is the atom ID followed by 1 or six parameters"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomOccu, "SetAtomOccu", fpTwo,
-"Sets atom's occupancy; first parameter is the atom ID followed by occupancy"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomLabel, "SetAtomlabel", fpTwo,
-"Sets atom labels to provided value. The first parameter is the atom ID") );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomLabel, "GetAtomlabel", fpTwo,
-"The takes two arguments - the atom ID and increment. The increment is used to navigate through\
- the periodic table, so increment +1 will return next element and -1 the previous element in the\
- periodic table"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibIsAtomDeleted, "IsAtomDeleted", fpOne,
-"Checks status of specified atom"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibIsPeak, "IsPeak", fpOne,
-"Checks if specified atom is  peak"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetZ, "GetZ", fpNone,
-"Returns current Z"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetZ, "SetZ", fpOne,
-"Sets current Z. Does not update content or whatsoever"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetZprime, "GetZprime", fpNone,
-"Returns current Z divided byt the number of matrices of current spacegroup"  ) );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetZprime, "SetZprime", fpOne,
-"Sets Z' for the structure"  ) );
-  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibFormula, "GetFormula", fpNone,
-"Returns chemical formula of the asymmetric unit") );
-  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibWeight, "GetWeight", fpNone|fpOne,
-"Returns molecular mass of the asymmetric unit") );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibNewAtom, "NewAtom", fpFour,
+    "Adds a new atom to the asymmetric unit and return its ID, by which it can"
+    " be reffered. The function takes the atom name and ccordinates, if -1 is "
+    "returned, the atom is not created"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
+    "Returns the atom count in the asymmetric unit"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone|fpOne,
+    "Returns spacegroup of currently loaded file as name: 'C2', 'I41/amd', "
+    "etc. Optionally, Hal symbol may be returned if 'hall' is provided as an"
+    " argument"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomCrd, "GetAtomCrd", fpOne,
+    "Returns a comma separated list of fractional coordinates for the "
+    "specified atom"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomName, "GetAtomName", fpOne,
+    "Returns atom label"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomType, "GetAtomType", fpOne,
+    "Returns atom type (element)"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomOccu, "GetAtomOccu", fpOne,
+    "Returns atom occupancy"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomAfix, "GetAtomAfix", fpOne,
+    "Returns atom AFIX"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetPeak, "GetPeak", fpOne,
+    "Returns peak intensity"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomU, "GetAtomU", fpOne,
+    "Returns a single number or six, comma separated values"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomUiso, "GetAtomUiso", fpOne,
+    "Returns a single number Uiso or (U11+U22+U33)/3"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibNPDCount, "NPDCount", fpNone,
+    "Returns number of the NPD atoms"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetCell, "GetCell", fpNone,
+    "Returns six comma separated values for a, b, c and alpha, beta, gamma"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetVolume, "GetVolume", fpNone,
+    "Returns volume of the unit cell divided by the number of symmetry "
+    "elements"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetCellVolume, "GetCellVolume", fpNone,
+    "Returns volume of the unit cell") );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibSetAtomCrd, "SetAtomCrd", fpFour,
+    "Sets atom coordinates to specified values, first parameters is the atom "
+    "ID"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibSetAtomU, "SetAtomU", fpSeven | fpTwo,
+    "Sets atoms Uiso/anis first paramater is the atom ID followed by 1 or six "
+    "parameters"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibSetAtomOccu, "SetAtomOccu", fpTwo,
+    "Sets atom's occupancy; first parameter is the atom ID followed by "
+    "occupancy"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibSetAtomLabel, "SetAtomlabel", fpTwo,
+    "Sets atom labels to provided value. The first parameter is the atom ID"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetAtomLabel, "GetAtomlabel", fpTwo,
+    "The takes two arguments - the atom ID and increment. The increment is "
+    "used to navigate through the periodic table, so increment +1 will return "
+    "next element and -1 the previous element in the periodic table"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibIsAtomDeleted, "IsAtomDeleted", fpOne,
+    "Checks status of specified atom"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibIsPeak, "IsPeak", fpOne,
+    "Checks if specified atom is  peak"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetZ, "GetZ", fpNone,
+    "Returns current Z"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibSetZ, "SetZ", fpOne,
+    "Sets current Z. Does not update content or whatsoever"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibGetZprime, "GetZprime", fpNone,
+    "Returns current Z divided byt the number of matrices of current "
+    "spacegroup"));
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibSetZprime, "SetZprime", fpOne,
+    "Sets Z' for the structure"));
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibFormula, "GetFormula", fpNone,
+    "Returns chemical formula of the asymmetric unit"));
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibWeight, "GetWeight", fpNone|fpOne,
+    "Returns molecular mass of the asymmetric unit"));
   return lib;
 }
 //..............................................................................

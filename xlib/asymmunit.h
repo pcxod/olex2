@@ -310,6 +310,7 @@ public:
   void LibIsPeak(const TStrObjList& Params, TMacroError& E);
   void LibGetAtomLabel(const TStrObjList& Params, TMacroError& E);
   void LibSetAtomU(const TStrObjList& Params, TMacroError& E);
+  void LibNPDCount(const TStrObjList& Params, TMacroError& E);
   void LibSetAtomOccu(const TStrObjList& Params, TMacroError& E);
   void LibGetSymm(const TStrObjList& Params, TMacroError& E);
   void LibGetZ(const TStrObjList& Params, TMacroError& E);
