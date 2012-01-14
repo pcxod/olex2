@@ -78,7 +78,7 @@ public:
   static bool IsUtf8File(const olxstr& fn)  {
     try  {
       TEFile file(fn, "rb");
-      validate_stream(file, true);
+      return validate_stream(file, true);
     }
     catch(...)  {
       return false;
