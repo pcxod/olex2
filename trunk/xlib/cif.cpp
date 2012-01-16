@@ -59,9 +59,15 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
 }
 //..............................................................................
 void TCif::_LoadCurrent()  {
+  if ( data_provider.Count() == 0) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "Empty/Invalid CIF");
+  }
   if( block_index == InvalidIndex )  {
-    if( data_provider.Count() > 1 || data_provider.Count() == 0 )
-      throw TFunctionFailedException(__OlxSourceInfo, "could not locate required data");
+    if( data_provider.Count() > 1 || data_provider.Count() == 0 ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "could not locate required data");
+    }
     block_index = 0;
     return;  // nothing to initialise anyway... must be a dummy CIF
   }
