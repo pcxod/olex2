@@ -1646,7 +1646,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 
   if( Atoms.Count() < 3 )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong atom count" );
+    Error.ProcessingError(__OlxSrcInfo, "wrong atom count");
     return;
   }
   if( orientOnly )  {
@@ -1666,18 +1666,19 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( plane != NULL )  {
     const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
     size_t colCount = 3;
-    TTTable<TStrList> tab(Atoms.Count()/colCount + (((Atoms.Count()%colCount)==0)?0:1), colCount*3);
+    TTTable<TStrList> tab(plane->Count()/colCount +
+      (((plane->Count()%colCount)==0)?0:1), colCount*3);
     for( size_t i=0; i < colCount; i++ )  {
       tab.ColName(i*3) = "Label";
       tab.ColName(i*3+1) = "D/A";
     }
     double rmsd = 0;
-    for( size_t i=0; i < Atoms.Count(); i+=colCount )  {
+    for( size_t i=0; i < plane->Count(); i+=colCount )  {
       for( size_t j=0; j < colCount; j++ )  {
         if( (i + j) >= Atoms.Count() )
           break;
-        tab[i/colCount][j*3] = Atoms[i+j]->GetLabel();
-        const double v = plane->DistanceTo(Atoms[i+j]->crd()); 
+        tab[i/colCount][j*3] = plane->GetAtom(i+j).GetLabel();
+        const double v = plane->DistanceTo(plane->GetAtom(i+j).crd()); 
         rmsd += v*v;
         tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
       }
