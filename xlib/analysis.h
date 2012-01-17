@@ -12,7 +12,6 @@
 #include "lattice.h"
 #include "symmlib.h"
 #include "xapp.h"
-#include "auto.h"
 #include "filetree.h"
 
 BeginXlibNamespace()

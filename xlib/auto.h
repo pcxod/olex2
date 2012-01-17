@@ -10,7 +10,6 @@
 #ifndef __olx_xl_auto_H
 #define __olx_xl_auto_H
 #include "xbase.h"
-#include "typelist.h"
 #include "estlist.h"
 #include "asymmunit.h"
 #include "unitcell.h"
@@ -18,7 +17,6 @@
 #include "satom.h"
 #include "network.h"
 #include "xfiles.h"
-#include "tptrlist.h"
 #include "library.h"
 #include "analysis.h"
 #include "xapp.h"

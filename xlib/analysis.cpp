@@ -1,5 +1,6 @@
 #include "analysis.h"
 #include "equeue.h"
+#include "auto.h"
 
 using namespace olx_analysis;
 
