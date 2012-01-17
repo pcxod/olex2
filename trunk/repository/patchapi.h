@@ -49,6 +49,7 @@ class PatchAPI  {
   }
   static TEFile* lock_file;
   static void _RestoreExecuableFlags();
+  static olxstr repository_tag;
 public:
   ~PatchAPI()  {  UnlockUpdater();  }
   // if action handlers are passed along - they eill be automatically deleted

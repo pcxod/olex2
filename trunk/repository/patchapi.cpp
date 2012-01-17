@@ -21,6 +21,7 @@
 using namespace patcher;
 
 TEFile* PatchAPI::lock_file = NULL;
+olxstr PatchAPI::repository_tag;
 
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
   AActionHandler* OnOverallCopy)
@@ -134,13 +135,15 @@ bool PatchAPI::UnlockUpdater() {
 }
 //.............................................................................
 olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
+  if (!repository_tag.IsEmpty())
+    return repository_tag;
   olxstr tag_fn = (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir) +
     GetTagFileName();
   if( !TEFile::Exists(tag_fn) )
     return EmptyString();
   TStrList sl;
   sl.LoadFromFile(tag_fn);
-  return sl.Count() == 1 ? sl[0] : EmptyString();
+  return sl.Count() == 1 ? (repository_tag=sl[0]) : EmptyString();
 }
 //.............................................................................
 olxstr PatchAPI::_GetSharedDirRoot()  {
