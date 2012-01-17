@@ -661,7 +661,7 @@ public:
   void OnChar(wxKeyEvent& event);
   void OnNavigation(wxNavigationKeyEvent& event);
 
-  virtual bool ProcessEvent( wxEvent& evt );
+  virtual bool ProcessEvent(wxEvent& evt);
   void OnResize();
   olxstr StylesDir, // styles folder
     ScenesDir, 
@@ -719,7 +719,8 @@ private:
 
   bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed, 
        RunOnceProcessed,
-       StartupInitialised;
+       StartupInitialised,
+       ShowChemicalOccu;
   bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, _UseGlTooltip;
 
   float FHtmlPanelWidth;
