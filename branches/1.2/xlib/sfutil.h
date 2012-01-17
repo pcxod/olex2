@@ -43,18 +43,27 @@ namespace SFUtil {
   public:
     virtual ~ISF_Util()  {}
     // expands indexes to P1
-    virtual void Expand(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, TArrayList<StructureFactor>& out) const = 0;
-    /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6 elements of Ucif or Uiso for each 
-    atom  */
-    virtual void Calculate(double eV, const IMillerIndexList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const ElementPList& scatterers, const TCAtomPList& atoms, const double* U) const = 0;
+    virtual void Expand(const TArrayList<vec3i>& hkl,
+      const TArrayList<compd>& F,
+      TArrayList<StructureFactor>& out) const = 0;
+    /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6
+    elements of Ucif or Uiso for each atom
+    */
+    virtual void Calculate(double eV, const IMillerIndexList& refs,
+      const mat3d& hkl2c, TArrayList<compd>& F, 
+      const ElementPList& scatterers, const TCAtomPList& atoms,
+      const double* U,
+      bool UseFpFdp) const = 0;
     virtual size_t GetSGOrder() const = 0;
   };
 
 
   // for internal use
-  void PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers, TCAtomPList& alist); 
-  /* calculates the scale sum(Fc)/sum(Fo) Fc = k*Fo. Can accept a list of doubles (Fo) */
+  void PrepareCalcSF(const TAsymmUnit& au, double* U,
+    ElementPList& scatterers, TCAtomPList& alist); 
+  /* calculates the scale sum(Fc)/sum(Fo) Fc = k*Fo. Can accept a list of
+  doubles (Fo)
+  */
   template <class RefList>
   static double CalcFScale(const TArrayList<compd>& F, const RefList& refs)  {
     double sF2o = 0, sF2c = 0;
@@ -65,8 +74,12 @@ namespace SFUtil {
     }
     return sF2c/sF2o;
   }
-  /* calculates the scale sum(Fc^2)/sum(Fo^2) Fc^2 = k*Fo^2. Can accept a list of doubles (Fo^2) */
-  template <class RefList> double CalcF2Scale(const TArrayList<compd>& F, const RefList& refs)  {
+  /* calculates the scale sum(Fc^2)/sum(Fo^2) Fc^2 = k*Fo^2. Can accept a list
+  of doubles (Fo^2)
+  */
+  template <class RefList> double CalcF2Scale(const TArrayList<compd>& F,
+    const RefList& refs)
+  {
     double sF2o = 0, sF2c = 0;
     const size_t f_cnt = F.Count();
     for( size_t i=0; i < f_cnt; i++ )  {
@@ -76,7 +89,9 @@ namespace SFUtil {
     return sF2c/sF2o;
   }
   /* calculates a best line scale : Fc = k*Fo + a. Can accept a list of doubles (Fo) */
-  template <class RefList> void CalcFScale(const TArrayList<compd>& F, const RefList& refs, double& k, double& a)  {
+  template <class RefList> void CalcFScale(const TArrayList<compd>& F,
+    const RefList& refs, double& k, double& a)
+  {
     double sx = 0, sy = 0, sxs = 0, sxy = 0;
     const size_t f_cnt = F.Count();
     for( size_t i=0; i < f_cnt; i++ )  {
@@ -90,8 +105,12 @@ namespace SFUtil {
     k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
     a = (sy - k*sx)/f_cnt;
   }
-  /* calculates a best line scale : Fc^2 = k*Fo^2 + a. Can accept a list of doubles (Fo^2) */
-  template <class RefList> void CalcF2Scale(const TArrayList<compd>& F, const RefList& refs, double& k, double& a)  {
+  /* calculates a best line scale : Fc^2 = k*Fo^2 + a. Can accept a list of
+  doubles (Fo^2)
+  */
+  template <class RefList> void CalcF2Scale(const TArrayList<compd>& F,
+    const RefList& refs, double& k, double& a)
+  {
     double sx = 0, sy = 0, sxs = 0, sxy = 0;
     const size_t f_cnt = F.Count();
     for( size_t i=0; i < f_cnt; i++ )  {
@@ -109,7 +128,8 @@ namespace SFUtil {
   void ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F,
     const TSpaceGroup& sg, TArrayList<StructureFactor>& out);
   template <class RefList, class MatList>
-  void ExpandToP1(const RefList& hkl_list, const TArrayList<compd>& F, const MatList& ml,
+  void ExpandToP1(const RefList& hkl_list, const TArrayList<compd>& F,
+    const MatList& ml,
     TArrayList<StructureFactor>& out)
   {
     const size_t ml_cnt = ml.Count();
@@ -135,7 +155,8 @@ namespace SFUtil {
   /* find minimum and maximum values of the miller indexes of the structure
  factor
  */
-  void FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max);
+  void FindMinMax(const TArrayList<StructureFactor>& F,
+    vec3i& min, vec3i& max);
   /* prepares the list of hkl and structure factors, return error message or
  empty string
  */
@@ -146,12 +167,12 @@ namespace SFUtil {
   // calculates the structure factors for given reflections
   template <class IndexList>
   void CalcSF(const TXFile& xfile, const IndexList& refs,
-    TArrayList<compd>& F)
+    TArrayList<compd>& F, bool UseFdp=true)
   {
-    _CalcSF(xfile, MillerIndexList<IndexList>(refs), F);
+    _CalcSF(xfile, MillerIndexList<IndexList>(refs), F, UseFdp);
   }
   void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
-    TArrayList<compd>& F);
+    TArrayList<compd>& F, bool UseFpFdp);
   /* returns an instance according to __OLX_USE_FASTSYMM, must be deleted with
  delete
  */
@@ -322,22 +343,27 @@ namespace SFUtil {
         }
       }
     }
-    virtual void Calculate(double eV, const IMillerIndexList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
+    virtual void Calculate(double eV, const IMillerIndexList& refs,
+      const mat3d& hkl2c, TArrayList<compd>& F,
       const ElementPList& scatterers, const TCAtomPList& atoms, 
-      const double* U) const 
+      const double* U,
+      bool UseFdp) const 
     {
       TArrayList<compd> fpfdp(scatterers.Count());
       for( size_t i=0; i < scatterers.Count(); i++ )  {
         fpfdp[i] = scatterers[i]->CalcFpFdp(eV);
         fpfdp[i] -= scatterers[i]->z;
+        if (!UseFdp) fpfdp[i].SetIm(0);
       }
       if( centrosymmetric )  {
-        SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
+        SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers,
+          atoms, U, fpfdp);
         TListIteratorManager<SFCalculateTask<TRefList, true> >
           tasks(task, refs.Count(), tLinearTask, 50);
       }
       else  {
-        SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F, scatterers, atoms, U, fpfdp);
+        SFCalculateTask<TRefList, false> task(*this, refs, hkl2c, F,
+          scatterers, atoms, U, fpfdp);
         TListIteratorManager<SFCalculateTask<TRefList, false> >
           tasks(task, refs.Count(), tLinearTask, 50);
       }

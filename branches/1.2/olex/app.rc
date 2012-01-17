@@ -38,11 +38,11 @@ MAINICON           ICON         "olex2.ico"
     BEGIN
         BLOCK "080904e4"
         BEGIN
-            VALUE "CompanyName", "OlexSys\0"
+            VALUE "CompanyName", "OlexSys Ltd\0"
             VALUE "FileDescription", "Olex2 executable\0"
             VALUE "FileVersion", "1.6.1.2\0"
             VALUE "InternalName", "Olex2\0"
-            VALUE "LegalCopyright", "Copyright (c) OlexSys, Oleg V. Dolomanov, 2004-2012\0"
+            VALUE "LegalCopyright", "Copyright (c) OlexSys Ltd, 2004-2012\0"
             VALUE "OriginalFilename", "Olex2.exe\0"
             VALUE "ProductName", "Olex2\0"
             VALUE "ProductVersion", "1.6.1.2\0"

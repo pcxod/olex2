@@ -102,7 +102,7 @@ struct cm_Gaussians {
     a1(g.a1), a2(g.a2), a3(g.a3), a4(g.a4), 
       b1(g.b1), b2(g.b2), b3(g.b3), b4(g.b4), c(g.c)  {  }
 
-  inline double calc_sq(double sqv) const {
+  double calc_sq(double sqv) const {
     return a1*exp(b1*sqv) + a2*exp(b2*sqv) + a3*exp(b3*sqv) + a4*exp(b4*sqv) + c;
   }
   cm_Gaussians& operator = (const cm_Gaussians& g)  {
@@ -174,18 +174,19 @@ public:
     throw TFunctionFailedException(__OlxSourceInfo, "cannot happen");
   }
   double GetMr() const {  return Mr;  }
-  inline bool operator >  (const cm_Element& ce) const {  return z >  ce.z;  }
-  inline bool operator >= (const cm_Element& ce) const {  return z >= ce.z;  }
-  inline bool operator <  (const cm_Element& ce) const {  return z <  ce.z;  }
-  inline bool operator <= (const cm_Element& ce) const {  return z <= ce.z;  }
-  inline bool operator == (const cm_Element& ce) const {  return z == ce.z;  }
-  inline bool operator != (const cm_Element& ce) const {  return z != ce.z;  }
-  inline bool operator >  (short _z) const {  return z >  _z;  }
-  inline bool operator >= (short _z) const {  return z >= _z;  }
-  inline bool operator <  (short _z) const {  return z <  _z;  }
-  inline bool operator <= (short _z) const {  return z <= _z;  }
-  inline bool operator == (short _z) const {  return z == _z;  }
-  inline bool operator != (short _z) const {  return z != _z;  }
+  bool operator >  (const cm_Element& ce) const {  return z >  ce.z;  }
+  bool operator >= (const cm_Element& ce) const {  return z >= ce.z;  }
+  bool operator <  (const cm_Element& ce) const {  return z <  ce.z;  }
+  bool operator <= (const cm_Element& ce) const {  return z <= ce.z;  }
+  bool operator == (const cm_Element& ce) const {  return z == ce.z;  }
+  bool operator != (const cm_Element& ce) const {  return z != ce.z;  }
+  bool operator >  (short _z) const {  return z >  _z;  }
+  bool operator >= (short _z) const {  return z >= _z;  }
+  bool operator <  (short _z) const {  return z <  _z;  }
+  bool operator <= (short _z) const {  return z <= _z;  }
+  bool operator == (short _z) const {  return z == _z;  }
+  bool operator != (short _z) const {  return z != _z;  }
+  int Compare(const cm_Element &e) const { return z - e.z; }
 };
 
 struct ElementCount {
@@ -211,9 +212,9 @@ struct ElementCount {
 };
 
 typedef TPtrList<const cm_Element> ElementPList;
-typedef SortedPtrList<const cm_Element, TPointerComparator>
+typedef SortedPtrList<const cm_Element, TComparableComparator>
   SortedElementPList;
-typedef ConstSortedPtrList<const cm_Element, TPointerComparator>
+typedef ConstSortedPtrList<const cm_Element, TComparableComparator>
   ConstSortedElementPList;
 typedef TTypeList<ElementCount> ContentList;
 typedef olxdict<const cm_Element*, double, TPointerComparator> ElementRadii;
@@ -303,20 +304,20 @@ public:
       e.z == (group+46) || e.z == (group+78) || e.z == (group+110);
   }
   /* checks if given element is in sub-group 1-10, Lanthanised are
-  considered to be in group #1 */
+  considered to be in group #3 */
   static bool IsTtransitionalGroup(int group, const cm_Element &e) {
-    if( e.z >= 21 && e.z <= 30 )  {
-      int z = e.z > 28 ? e.z-11 : e.z; 
+    if( e.z >= 21 && e.z <= 30 )  { // Sc->Zn
+      int z = e.z > 28 ? e.z-10 : e.z; 
       return z == (group+18);
     }
-    else if( e.z >= 39 && e.z <= 48 )  {
-      int z = e.z > 46 ? e.z-11 : e.z; 
+    else if( e.z >= 39 && e.z <= 48 )  { //Y->Cd
+      int z = e.z > 46 ? e.z-10 : e.z; 
       return z == (group+36);
     }
-    else if( e.z >= 57 && e.z <= 80 )  {
-      if( e.z < 72 )
-        return group == 1;
-      int z = e.z > 78 ? e.z-11 : e.z; 
+    else if( e.z >= 57 && e.z <= 80 )  { //La->Hg
+      if( e.z < 72 ) // Lanthanides
+        return group == 3;
+      int z = e.z > 78 ? e.z-10 : e.z; 
       return z == (group+68);
     }
     return false;

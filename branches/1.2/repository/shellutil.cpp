@@ -14,6 +14,9 @@
 #ifdef __WIN32__
   #include <objbase.h>
   #include <shlguid.h>
+  #include <wintrust.h>
+  #include <Softpub.h>
+  #pragma comment (lib, "wintrust")
 #ifndef __GNUC__
   #include <shobjidl.h>
 #endif
@@ -315,3 +318,35 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
   freeifaddrs(ifaddrs);
 #endif
 }
+//.............................................................................
+//http://msdn.microsoft.com/en-us/library/windows/desktop/aa382384(v=vs.85).aspx
+#ifdef __WIN32__
+bool TShellUtil::VerifyEmbeddedSignature(const olxstr &file_name) {
+  WINTRUST_FILE_INFO FileData;
+  memset(&FileData, 0, sizeof(FileData));
+  FileData.cbStruct = sizeof(WINTRUST_FILE_INFO);
+  FileData.pcwszFilePath = file_name.u_str();
+  FileData.hFile = NULL;
+  FileData.pgKnownSubject = NULL;
+
+  GUID WVTPolicyGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+  WINTRUST_DATA WinTrustData;
+  memset(&WinTrustData, 0, sizeof(WinTrustData));
+  WinTrustData.cbStruct = sizeof(WinTrustData);
+  WinTrustData.pPolicyCallbackData = NULL;
+  WinTrustData.pSIPClientData = NULL;
+  WinTrustData.dwUIChoice = WTD_UI_NONE;
+  WinTrustData.fdwRevocationChecks = WTD_REVOKE_NONE; 
+  WinTrustData.dwUnionChoice = WTD_CHOICE_FILE;
+  WinTrustData.dwStateAction = 0;
+  WinTrustData.hWVTStateData = NULL;
+  WinTrustData.pwszURLReference = NULL;
+  WinTrustData.dwUIContext = 0;
+  WinTrustData.pFile = &FileData;
+  return WinVerifyTrust(
+    NULL,
+    &WVTPolicyGUID,
+    &WinTrustData) == ERROR_SUCCESS;
+}
+#endif // __WIN32__
+//.............................................................................

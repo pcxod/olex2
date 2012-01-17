@@ -5,3 +5,4 @@ mouse_click_threshold [2] - specifiec the rectangluar area size where the mouse 
 hbond_min_angle [120] - the minimal angle fo H-bonds to exist
 preserve_invalid_ins [false] - if invalid instructios are preserved vs being deleted
 q_peak_min_alpha [0] - minimum value for the Q-peak transparence (0-0.75)
+tooltip_occu_chem [True] - tooltip shows chemical occupancy vs crystallographic one

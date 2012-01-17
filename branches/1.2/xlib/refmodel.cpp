@@ -415,9 +415,14 @@ void RefinementModel::SetHKLSource(const olxstr& src) {
 const TRefList& RefinementModel::GetReflections() const {
   try {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
-    if( !_Reflections.IsEmpty() && hkl_src_id == HklFileID )
+    if( !_Reflections.IsEmpty() &&
+        hkl_src_id == HklFileID &&
+        HklFileMat == HKLF_mat)
+    {
       return _Reflections;
+    }
     THklFile hf(HKLF_mat);
+    HklFileMat = HKLF_mat;
     hf.LoadFromFile(HKLSource);
     _HklStat.FileMinInd = hf.GetMinHkl();
     _HklStat.FileMaxInd = hf.GetMaxHkl();
@@ -506,6 +511,10 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       }
       else
         _HklStat = RefMerger::DrySGFilter(sp, refs, Omits);
+      _HklStat.HKLF_mat = HKLF_mat;
+      _HklStat.HKLF_m = HKLF_m;
+      _HklStat.HKLF_s = HKLF_s;
+      _HklStat.MERG = MERG;
     }
   }
   catch(const TExceptionBase& e)  {
@@ -617,7 +626,7 @@ void RefinementModel::DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
   if( !BASF.IsEmpty() )  {
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    merohedral(info_ex, refs, st, GetScales(), mat3d::Transpose(GetTWIN_mat()), 2).
+    merohedral(info_ex, refs, st, BASF, mat3d::Transpose(GetTWIN_mat()), 2).
       detwin(detwinner_mixed(), refs, F);
   }
 }
@@ -629,7 +638,7 @@ void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
   if( !BASF.IsEmpty() )  {
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    merohedral(info_ex, refs, st, GetScales(), mat3d::Transpose(GetTWIN_mat()), 2).
+    merohedral(info_ex, refs, st, BASF, mat3d::Transpose(GetTWIN_mat()), 2).
       detwin(detwinner_shelx(), refs, F);
   }
 }

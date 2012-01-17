@@ -1646,7 +1646,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 
   if( Atoms.Count() < 3 )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong atom count" );
+    Error.ProcessingError(__OlxSrcInfo, "wrong atom count");
     return;
   }
   if( orientOnly )  {
@@ -1666,18 +1666,19 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( plane != NULL )  {
     const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
     size_t colCount = 3;
-    TTTable<TStrList> tab(Atoms.Count()/colCount + (((Atoms.Count()%colCount)==0)?0:1), colCount*3);
+    TTTable<TStrList> tab(plane->Count()/colCount +
+      (((plane->Count()%colCount)==0)?0:1), colCount*3);
     for( size_t i=0; i < colCount; i++ )  {
       tab.ColName(i*3) = "Label";
       tab.ColName(i*3+1) = "D/A";
     }
     double rmsd = 0;
-    for( size_t i=0; i < Atoms.Count(); i+=colCount )  {
+    for( size_t i=0; i < plane->Count(); i+=colCount )  {
       for( size_t j=0; j < colCount; j++ )  {
         if( (i + j) >= Atoms.Count() )
           break;
-        tab[i/colCount][j*3] = Atoms[i+j]->GetLabel();
-        const double v = plane->DistanceTo(Atoms[i+j]->crd()); 
+        tab[i/colCount][j*3] = plane->GetAtom(i+j).GetLabel();
+        const double v = plane->DistanceTo(plane->GetAtom(i+j).crd()); 
         rmsd += v*v;
         tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
       }
@@ -1889,6 +1890,31 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
+olxstr process_exec_param(const olxstr &p) {
+  using namespace exparse::parser_util;
+  if (is_quoted(p)) return p;
+  bool has_ws = false;
+  for (size_t i=0; i < p.Length(); i++) {
+    if (is_quote(p.CharAt(i))) {
+      skip_string(p, i);
+      continue;
+    }
+    if (p.CharAt(i) == '=') {
+      if (has_ws) break;
+      olxstr argv = p.SubStringFrom(i+1);
+      if (is_quoted(argv)) return p;
+      size_t spi = argv.IndexOf(' ');
+      if (spi != InvalidIndex)
+        return olxstr(p.SubStringTo(i+1)) << '"' << argv << '"';
+      return p;
+    }
+    else if (p.CharAt(i) == ' ')
+      has_ws = true;
+  }
+  if (has_ws)
+    return olxstr('\"') << p << '"';
+  return p;
+}
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   bool Asyn = !Options.Contains('s'), // synchroniusly
     Cout = !Options.Contains('o'),    // catch output
@@ -1897,13 +1923,8 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr dubFile(Options.FindValue('s',EmptyString()));
 
   olxstr Tmp;
-  for( size_t i=0; i < Cmds.Count(); i++ )  {
-    bool Space =  (Cmds[i].FirstIndexOf(' ') != InvalidIndex);
-    if( Space )  Tmp << '\"';
-    Tmp << Cmds[i];
-    if( Space ) Tmp << '\"';
-    Tmp << ' ';
-  }
+  for( size_t i=0; i < Cmds.Count(); i++ )
+    Tmp << process_exec_param(Cmds[i]) << ' ';
   TBasicApp::NewLogEntry(logInfo) << "EXEC: " << Tmp;
   short flags = 0;
   if( (Cout && Asyn) || Asyn )  {  // the only combination
@@ -1945,8 +1966,9 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
   }
-  else if( !Process->Execute() )  {
-    Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
+  else {
+    if( !Process->Execute() )
+      Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process");
     delete Process;
   }
 }
@@ -8007,7 +8029,7 @@ void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {
     glm.FromString(Params[0]);
   TdlgMatProp* MatProp = new TdlgMatProp(this, glm);
   if( MatProp->ShowModal() == wxID_OK )
-    E.SetRetVal(glm.ToString());
+    E.SetRetVal(MatProp->GetCurrent().ToString());
   else
     E.ProcessingError(__OlxSrcInfo, EmptyString());
   MatProp->Destroy();
@@ -8188,9 +8210,10 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     maskInc = strMaskInc.ToDouble();
   TRefList refs;
   TArrayList<compd> F;
-  olxstr err( SFUtil::GetSF(refs, F, mapType, 
+  olxstr err = SFUtil::GetSF(refs, F, mapType, 
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
-    (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple) );
+    (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
+      SFUtil::scaleRegression : SFUtil::scaleSimple);
   if( !err.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, err);
     return;

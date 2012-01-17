@@ -472,6 +472,9 @@ public:
         return i;
     return InvalidIndex;
   }
+//..............................................................................
+  bool Contains(const T &v) const { return IndexOf(v) != InvalidIndex; }
+//..............................................................................
   struct Accessor  {
     static T* get(TTypeListExt<T,DestructCast>& l, size_t i)  {
       return l.List[i];

@@ -654,7 +654,6 @@ public:
   virtual bool IsControl(const olxstr& cname) const;
   virtual void LockWindowDestruction(wxWindow* wnd, const IEObject* caller);
   virtual void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller);
-  virtual bool HasGUI() const { return true; }
   //..........................................................................................
 
   void OnKeyUp(wxKeyEvent& event);
@@ -662,7 +661,7 @@ public:
   void OnChar(wxKeyEvent& event);
   void OnNavigation(wxNavigationKeyEvent& event);
 
-  virtual bool ProcessEvent( wxEvent& evt );
+  virtual bool ProcessEvent(wxEvent& evt);
   void OnResize();
   olxstr StylesDir, // styles folder
     ScenesDir, 
@@ -720,7 +719,8 @@ private:
 
   bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed, 
        RunOnceProcessed,
-       StartupInitialised;
+       StartupInitialised,
+       ShowChemicalOccu;
   bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, _UseGlTooltip;
 
   float FHtmlPanelWidth;

@@ -44,11 +44,10 @@ namespace twinning  {
     template <typename twin_generator_t>
     static detwin_result detwin(const twin_generator_t& itr)  {
       twin_mate_full pr = itr.NextFull();
-      double sum_f_sq=0;
+      double sum_f_sq = pr.f_sq_calc();
       while( itr.HasNext() )
         sum_f_sq += itr.NextCalc().f_sq_calc();
-      double s = pr.fc.qmod();
-      s = s/(s*pr.scale+sum_f_sq);
+      double s = pr.fc.qmod()/sum_f_sq;
       return detwin_result(pr.f_sq*s, pr.sig*s);
     }
   };
@@ -170,27 +169,27 @@ namespace twinning  {
       const size_t src_index;
       mutable int current;
       mutable vec3i index;
+      const size_t n, hn;
       iterator(const merohedral& _parent, size_t _src_index)
         : parent(_parent),
           src_index(_src_index),
           current(0),
-          index(parent.all_refs[src_index].GetHkl()) {}
-      bool HasNext() const {  return current < olx_abs(parent.n);  }
-      bool HasNextUniq() const {
-        return current == 0 || 
-          (current < olx_abs(parent.n) &&
-           index != parent.all_refs[src_index].GetHkl());
-      }
+          index(parent.all_refs[src_index].GetHkl()),
+          n(olx_abs(parent.n)),
+          hn(n/2)
+      {}
+      bool HasNext() const {  return current < n;  }
       TReflection Next() const {
         int i = current++;
-        if( parent.n < 0 && i == olx_abs(parent.n)/2 )
+        if( parent.n < 0 && i >= hn )
           index = -index;
         TReflection rv = TReflection(
           parent.all_refs[src_index], index, (i+1)*(i==0 ? 1 : -1));
         rv.SetTag(
           parent.hkl_to_ref_map.IsInRange(index) ? parent.hkl_to_ref_map(index)
           : -1);
-        index = TReflection::Standardise(parent.matrix*index, parent.sym_info);
+        if (HasNext())
+          index = TReflection::Standardise(parent.matrix*index, parent.sym_info);
         return rv;
       }
     };

@@ -10,7 +10,6 @@
 #ifndef __olx_xl_auto_H
 #define __olx_xl_auto_H
 #include "xbase.h"
-#include "typelist.h"
 #include "estlist.h"
 #include "asymmunit.h"
 #include "unitcell.h"
@@ -18,7 +17,6 @@
 #include "satom.h"
 #include "network.h"
 #include "xfiles.h"
-#include "tptrlist.h"
 #include "library.h"
 #include "analysis.h"
 #include "xapp.h"
@@ -270,6 +268,7 @@ private:
   int BAIDelta;
   // ratio beyond which search for element promotion
   double URatio, URatioFormula;
+  bool EnforceFormula;
 public:
   /* the instance must be created with Replicate to avoid problems
    It will be deleted by this object
@@ -303,6 +302,7 @@ public:
   TAutoDBIdObject& Reference(size_t i) const { return registry.GetIdObject(i); }
   DefPropP(int, BAIDelta)
   DefPropP(double, URatio)
+  DefPropBIsSet(EnforceFormula)
 
   template <class NodeClass>
   struct THitStruct {
@@ -407,7 +407,8 @@ protected:
 //  these are protected, but exposed in the constructor
   void LibBAIDelta(const TStrObjList& Params, TMacroError& E);
   void LibURatio(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
+  void LibEnforceFormula(const TStrObjList& Params, TMacroError& E);
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 ///////////////////////////////////////////////////////////////////////////////
 template <class NodeType>
 bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
@@ -501,6 +502,7 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
     stat.AtomTypeChanges++;
     ca.SetLabel(type->symbol, false);
     ca.SetType(*type);
+    olx_analysis::helper::reset_u(ca);
     TBasicApp::NewLogEntry(logInfo) << tmp;
     return true;
   }

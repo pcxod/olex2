@@ -106,10 +106,12 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Compares current model with the cif file and write the report to provided"
     " file (appending)");
   xlib_InitMacro(Clean,
-    "npd-promotes at maximum given number of atoms a call [0]"
-    "&;f-does not run 'fuse' after the completion"
-    "&;aq-disables analysis of the Q-peaks based on thresholds"
-    "&;at-disables lonely atom types assignment to O and Cl",
+    "npd-promotes at maximum given number of atoms a call [0]&;"
+    "f-does not run 'fuse' after the completion&;"
+    "aq-disables analysis of the Q-peaks based on thresholds&;"
+    "at-disables lonely atom types assignment to O and Cl&;"
+    "d-before 'blown up' atoms, a possibility to demote will be checked"
+    ,
     fpNone,
     "Tidies up current model");
 //_____________________________________________________________________________
@@ -222,7 +224,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Fixes specified parameters of atoms: XYZ, Uiso, Occu");
   xlib_InitMacro(Free, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
     "Frees specified parameters of atoms: XYZ, Uiso, Occu");
-  xlib_InitMacro(Isot,EmptyString() , fpAny|psFileLoaded,
+  xlib_InitMacro(Isot, "npd-makes all NPD atoms isotropic",
+    fpAny|psFileLoaded,
     "Makes provided atoms isotropic, if no arguments provided, current "
     "selection or all atoms become isotropic");
   xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded, 
@@ -339,7 +342,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "visible/selected atoms");
   xlib_InitMacro(RTab, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
     "Adds RTAB with givn name for provided atoms/selection");
-  xlib_InitMacro(HklMerge, EmptyString(), fpAny|psFileLoaded,
+  xlib_InitMacro(HklMerge, "z-zero negative intensity", fpAny|psFileLoaded,
     "Merges current HKL file (ehco HKLSrc()) to given file name. "
     "Warning: if no arguments provided, the current file is overwritten");
   xlib_InitMacro(HklAppend, "h&;k&;l&;c", fpAny,
@@ -443,7 +446,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 //..............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   smatd tm;
-  if( !Parse<TStrObjList>(Cmds, "mivd", true,&tm.r, &tm.t) )  {
+  if( !Parse(Cmds, "mivd", &tm.r, &tm.t) )  {
     Error.ProcessingError(__OlxSrcInfo, "invalid transformation matrix");
     return;
   }
@@ -455,7 +458,7 @@ void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMac
 //..............................................................................
 void XLibMacros::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   vec3d pnt;
-  if( !Parse<TStrObjList>(Cmds, "vd", true, &pnt) )  {
+  if( !Parse(Cmds, "vd", &pnt) )  {
     Error.ProcessingError(__OlxSrcInfo, "invalid translation");
     return;
   }
@@ -1281,6 +1284,17 @@ void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if (Options.Contains("npd")) {
+    TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+    TCAtomPList catoms;
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      if (a.GetEllipsoid() != NULL && a.GetEllipsoid()->IsNPD())
+        catoms.Add(a);
+    }
+    TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, false);
+    return;
+  }
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
   TCAtomPList catoms(atoms,
@@ -4532,8 +4546,11 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   if( op != NULL )  {
     op->executeMacroEx(olxstr("@reap \'") << FN << '\'', E);
-    if( E.IsSuccessful() && op->HasGUI() )
-      op->executeMacro("html.Update");
+    if( E.IsSuccessful() ) {
+      ABasicFunction *uf = op->GetLibrary().FindMacro("html.Update");
+      if (uf != 0)
+        op->executeMacro("html.Update");
+    }
   }
 }
 //..............................................................................
@@ -4895,6 +4912,12 @@ void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options,
     xf.GetRM().GetRefinementRefList<
     TUnitCell::SymmSpace,RefMerger::StandardMerger>(
       xf.GetUnitCell().GetSymmSpace(), refs);
+  if (Options.Contains('z')) {
+    for (size_t i=0; i < refs.Count(); i++) {
+      if (refs[i].GetI() < 0)
+        refs[i].SetI(0);
+    }
+  }
   TTTable<TStrList> tab(6, 2);
   tab[0][0] << "Total reflections";
     tab[0][1] << ms.GetReadReflections();
@@ -5114,8 +5137,8 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     if( rm.GetHKLF() >= 5 )  {
       size_t tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
       twinning::general twin(info_ex, rm.GetReflections(),
-        RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASF(),
-        rm.GetTWIN_mat(), tn);
+        RefUtil::ResolutionAndSigmaFilter(rm), basf,
+        mat3d::Transpose(rm.GetTWIN_mat()), tn);
       TArrayList<compd> F(twin.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, F);
       twin.calc_fsq(F, Fsq);
@@ -5125,11 +5148,12 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       RefinementModel::HklStat ms =
         rm.GetRefinementRefList<
           TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+      if (ms.FriedelOppositesMerged)
+        info_ex.centrosymmetric = true;
       TArrayList<compd> F(refs.Count());
-      Fsq.Resize(refs.Count());
-      SFUtil::CalcSF(xapp.XFile(), refs, F);
+      SFUtil::CalcSF(xapp.XFile(), refs, F, ms.MERG != 4);
       twinning::merohedral twin(
-        info_ex, refs, ms, rm.GetBASF(), rm.GetTWIN_mat(),
+        info_ex, refs, ms, basf, mat3d::Transpose(rm.GetTWIN_mat()),
         rm.GetTWIN_n());
       twin.calc_fsq(F, Fsq);
     }
@@ -5138,13 +5162,24 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     RefinementModel::HklStat ms =
       rm.GetRefinementRefList<
         TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+    if (ms.FriedelOppositesMerged)
+      info_ex.centrosymmetric = true;
     TArrayList<compd> F(refs.Count());
     Fsq.Resize(refs.Count());
     SFUtil::CalcSF(xapp.XFile(), refs, F);
     for( size_t i=0; i < F.Count(); i++ )
       Fsq[i] = F[i].qmod();
   }
-  double scale_k =1./olx_sqr(rm.Vars.GetVar(0).GetValue());
+  double scale_k = 1./olx_sqr(rm.Vars.GetVar(0).GetValue());
+  if (!Params.IsEmpty() && Params[0].IndexOfi("scale") != InvalidIndex) {
+    double sup=0, sdn=0;
+    for( size_t i=0; i < refs.Count(); i++ )  {
+      if (refs[i].GetI() < 3*refs[i].GetS()) continue;
+      sup += refs[i].GetI();
+      sdn += Fsq[i];
+    }
+    scale_k = sdn/sup;
+  }
   double wR2u=0, wR2d=0, R1u=0, R1d=0, R1up = 0, R1dp = 0;
   size_t r1p_cnt=0;
   TDoubleList wght = rm.used_weight;
@@ -5160,9 +5195,9 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       double x = sp.HklToCart(r.GetHkl()).QLength()*l*l/4;
       Fc2 /= sqrt(1+0.0005*exti*Fc2*l*l*l/sqrt(olx_max(0,x*(1-x))));
     }
-    const double Fc = sqrt(Fc2);
-    const double Fo2 = r.GetI()*scale_k;
-    const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
+    const double Fc = sqrt(olx_abs(Fc2));
+    double Fo2 = olx_abs(r.GetI()*scale_k);
+    const double Fo = sqrt(Fo2);
     const double sigFo2 = r.GetS()*scale_k;
     const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
     const double w =
@@ -5171,7 +5206,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     wR2d += w*olx_sqr(Fo2);
     R1u += olx_abs(Fo-Fc);
     R1d += Fo;
-    if( Fo2/sigFo2 >= 2 )  {
+    if( Fo2 >= 2*sigFo2 )  {
       R1up += olx_abs(Fo-Fc);
       R1dp += Fo;
       r1p_cnt++;
@@ -5180,7 +5215,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   double wR2 = sqrt(wR2u/wR2d);
   double R1 = R1u/R1d;
   double R1p = R1up/R1dp;
-  if( !Params.IsEmpty() && Params[0].Equalsi("print") )  {
+  if( !Params.IsEmpty() && Params[0].IndexOfi("print") != InvalidIndex )  {
     xapp.NewLogEntry() << "R1 (All, " << refs.Count() << ") = " <<
       olxstr::FormatFloat(4, R1);
     xapp.NewLogEntry() << "R1 (I/sig >= 2, " << r1p_cnt << ") = " <<

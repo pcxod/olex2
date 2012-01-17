@@ -12,7 +12,6 @@
 #include "lattice.h"
 #include "symmlib.h"
 #include "xapp.h"
-#include "auto.h"
 #include "filetree.h"
 
 BeginXlibNamespace()
@@ -28,6 +27,11 @@ namespace alg {
   ConstArrayList<size_t> find_hetero_indices(const TCAtomPList &atoms,
     const cm_Element *re=NULL);
 }; // end namespace alg
+namespace helper {
+  ConstSortedElementPList get_user_elements();
+  void reset_u(TCAtom &a, double r=0.025);
+  bool can_demote(const cm_Element &e, const SortedElementPList &elms);
+}; // end namespace helper
 struct peaks {
   static int peak_sort(const TCAtom &a1, const TCAtom &a2) {
     return olx_cmp(a2.GetQPeak(), a1.GetQPeak());

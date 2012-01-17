@@ -1,5 +1,6 @@
 #include "analysis.h"
 #include "equeue.h"
+#include "auto.h"
 
 using namespace olx_analysis;
 
@@ -95,7 +96,8 @@ bool alg::check_geometry(const TCAtom &a, const cm_Element &e) {
 bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
   size_t cc = 0;
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
-    if (a.GetAttachedAtom(i).GetType() != iQPeakZ)
+    TCAtom &aa = a.GetAttachedAtom(i);
+    if (aa.GetType() != iQPeakZ && !aa.IsDeleted())
       cc++;
   }
   if (e == iHydrogenZ)
@@ -104,6 +106,10 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     return cc <= 2;
   if (XElementLib::IsHalogen(e))
     return cc <= 1;
+  if (XElementLib::IsMetal(e)) {
+    if (cc <= 1) return false;
+    if (cc ==2) return XElementLib::IsTtransitionalGroup(1, e);
+  }
   return true;
 }
 //.............................................................................
@@ -115,6 +121,42 @@ ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
     atoms,
     *(new TArrayList<size_t>),
     olx_alg::olx_not(TCAtom::TypeAnalyser(z)));
+}
+//.............................................................................
+//.............................................................................
+ConstSortedElementPList helper::get_user_elements() {
+  TXApp& xapp = TXApp::GetInstance();
+  const ContentList& cl = xapp.XFile().GetRM().GetUserContent();
+  SortedElementPList rv;
+  for (size_t i=0; i < cl.Count(); i++)
+    rv.AddUnique(&cl[i].element);
+  return rv;
+}
+//.............................................................................
+void helper::reset_u(TCAtom &a, double r) {
+  a.SetUiso(r);
+  if (a.GetEllipsoid() != NULL)
+    a.GetEllipsoid()->ToSpherical(r);
+}
+//.............................................................................
+bool helper::can_demote(const cm_Element &e, const SortedElementPList &elms) {
+  size_t idx = elms.IndexOf(e);
+  if (idx == InvalidIndex) {
+    for (size_t i=0; i < elms.Count(); i++) {
+      if (elms[i]->z > e.z) {
+        if (i==0) return false;
+        if (i>0 && elms[i-1]->z == iHydrogenZ)
+          return false;
+        return true;
+      }
+    }
+    return false;
+  }
+  else {
+    if ((idx == 1 && elms[0]->z == iHydrogenZ) || idx == 0)
+      return false;
+    return true;
+  }
 }
 //.............................................................................
 //.............................................................................
@@ -882,6 +924,7 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
     types.Add(iOxygenZ);
     types.Add(iFluorineZ);
     types.Add(iChlorineZ);
+    types.Add(iSulphurZ);
     types.Add(33); // arsenic
     types.Add(iBromineZ);
   }
@@ -923,6 +966,10 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
   else if (a.GetType() == 33) { // arsenic
     if (ae.Count() <= 1)
       return *XElementLib::FindByZ(iBromineZ);
+  }
+  else if (a.GetType() == iSulphurZ) {
+    if (ae.Count() <= 1)
+      return XElementLib::GetByIndex(iChlorineIndex);
   }
   else if (a.GetType() == iBromineZ) {
     if (ae.Count() > 1)
