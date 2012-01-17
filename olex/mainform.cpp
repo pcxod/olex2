@@ -317,9 +317,10 @@ TMainForm::TMainForm(TGlXApp *Parent):
   OnStateChange(Actions.New("ONSTATECHANGE")),
   _ProcessHandler(*this)
 {
+  ShowChemicalOccu = true;
   nui_interface = NULL;
   _UpdateThread = NULL;
-	ActionProgress = UpdateProgress = NULL;
+  ActionProgress = UpdateProgress = NULL;
   SkipSizing = false;
   Destroying = false;
 #ifdef __WIN32__
@@ -1573,6 +1574,14 @@ void TMainForm::XApp(TGXApp *XA)  {
   catch(const TExceptionBase &e)  {
     FXApp->NewLogEntry(logError) << e.GetException()->GetError();
   }
+  try {
+    ShowChemicalOccu = FXApp->Options.FindValue(
+      "tooltip_occu_chem", TrueString()).ToBool();
+  }
+  catch(...) {
+    TBasicApp::NewLogEntry(logInfo) <<
+      (olxstr("Invalid boolean value for ").quote() << "tooltip_occu_chem");
+  }
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1747,8 +1756,8 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = xa.GetGuiLabelEx();
       if( xa.GetType() == iQPeakZ )
         Tooltip << ':' << xa.CAtom().GetQPeak();
-      double occu = ca.GetChemOccu();
-      Tooltip << "\nChem occu(";
+      double occu = (ShowChemicalOccu ? ca.GetChemOccu() : ca.GetOccu());
+      Tooltip << (ShowChemicalOccu ? "\nChem occu(" : "\nXtal occu(");
       if( ca.GetVarRef(catom_var_name_Sof) != NULL )  {
         if( ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  {
           Tooltip << "fixed): ";
@@ -2129,6 +2138,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_XOBJECTSDESTROY )  {
+    FObjectUnderMouse = NULL;
     if( Modes->GetCurrent() != NULL )
       Modes->GetCurrent()->OnGraphicsDestroy();
   }
