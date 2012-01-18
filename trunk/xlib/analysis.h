@@ -101,12 +101,12 @@ public:
     };
     size_t fused_count;
     ring(ConstPtrList<TCAtom> atoms_)
-      : atoms(atoms_), fused_count(0)
+      : fused_count(0), atoms(atoms_)
     {}
     TTypeList<substituent> substituents;
     TCAtomPList atoms;
     bool is_leq(const ring &r) const;
-    // checks if the rings shares two sunsequent atoms with abother ring
+    // checks if the rings shares two subsequent atoms with another ring
     bool is_fused_with(const ring &r) const;
     // merges fused ring into one, big ring, r is merged into this ring
     bool merge(ring &r);
