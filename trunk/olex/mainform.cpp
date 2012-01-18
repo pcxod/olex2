@@ -3267,58 +3267,62 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
   TStrList Output;
 
   const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
-  
-  Table[0][0] = "R1(Fo > 4sig(Fo))";
-  if( Lst.R1() > 0.1 )
-    Table[0][1] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.R1()) << "</font>";
-  else
-    Table[0][1] = olxstr::FormatFloat(4,Lst.R1());
-
-  Table[0][2] = "R1(all data)";
-  if( Lst.R1a() > 0.1 )
-    Table[0][3] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.R1a()) << "</font>";
-  else
-   Table[0][3] = olxstr::FormatFloat(4,Lst.R1a());
-
-  Table[1][0] = "wR2";
-  if( Lst.wR2() > 0.2 )
-     Table[1][1] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.wR2()) << "</font>"; 
-  else
-    Table[1][1] = olxstr::FormatFloat(4,Lst.wR2());
-
-  Table[1][2] = "GooF";
-  if( olx_abs(Lst.S()-1) > 0.5 )
-    Table[1][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.S()) << "</font>";
-  else
-    Table[1][3] = olxstr::FormatFloat(2,Lst.S());  
-
-  Table[2][0] = "GooF(Restr)";
-  if( olx_abs(Lst.RS()-1) > 0.5 )
-    Table[2][1] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.RS()) << "</font>";
-  else
-    Table[2][1] = olxstr::FormatFloat(2,Lst.RS());
-
-  Table[2][2] = "Highest peak";
-  if( Lst.Peak() > 1.5 )
-    Table[2][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.Peak()) << "</font>";
-  else
-    Table[2][3] = olxstr::FormatFloat(2,Lst.Peak()); 
-
-  Table[3][0] = "Deepest hole";
-  if( olx_abs(Lst.Hole()) > 1.5 )
-    Table[3][1] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.Hole()) << "</font>";
-  else
-    Table[3][1] = olxstr::FormatFloat(2,Lst.Hole());
-
-  Table[3][2] = "Params";             Table[3][3] = Lst.Params();
-  Table[4][0] = "Refs(total)";        Table[4][1] = Lst.TotalRefs();
-  Table[4][2] = "Refs(uni)";          Table[4][3] = Lst.UniqRefs();
-  Table[5][0] = "Refs(Fo > 4sig(Fo))";Table[5][1] = Lst.Refs4sig();
-  Table[5][2] = "R(int)";             Table[5][3] = olxstr::FormatFloat(3,Lst.Rint());
-  Table[6][0] = "R(sigma)";           Table[6][1] = olxstr::FormatFloat(3,Lst.Rsigma());
-  Table[6][2] = "F000";               Table[6][3] = olxstr::FormatFloat(3,Lst.F000()).TrimFloat();
-  Table[7][0] = "&rho;/g*mm<sup>-3</sup>"; Table[7][1] = olxstr::FormatFloat(3,Lst.Rho());
-  Table[7][2] = "&mu;/mm<sup>-1</sup>";  Table[7][3] = olxstr::FormatFloat(3,Lst.Mu());
+  olxstr m1 = "-1";
+  double v[7] = {
+    Lst.params.Find("R1", m1).ToDouble(),
+    Lst.params.Find("R1all", m1).ToDouble(),
+    Lst.params.Find("wR2", m1).ToDouble(),
+    Lst.params.Find("S", m1).ToDouble(),
+    Lst.params.Find("rS", m1).ToDouble(),
+    Lst.params.Find("peak", m1).ToDouble(),
+    Lst.params.Find("hole", m1).ToDouble(),
+  },
+  ev[7] = {0.1, 0.1, 0.2, -1, -1, 1.5, 1.5};
+  const char* vl[7] = {
+  "R1(Fo > 4sig(Fo))",
+  "R1(all data)",
+  "wR2",
+  "GooF",
+  "GooF(restr)",
+  "Highest peak",
+  "Deepest hole"
+  };
+  size_t coli=0, rowi=0;
+  for (size_t i=0; i < 7; i++) {
+    Table[rowi][coli] = vl[i];
+    if ((ev[i] >= 0 && v[i] > ev[i]) ||
+        ((ev[i] < 0 && olx_abs(v[i]+ev[i]) > 0.5)) )
+    {
+      Table[rowi][coli+1] << "<font color=\'red\'>" <<
+        olxstr::FormatFloat(4,v[i]) << "</font>";
+    }
+    else
+      Table[rowi][coli+1] = olxstr::FormatFloat(4, v[i]);
+    if (coli == 2) {
+      rowi++;
+      coli = 0;
+    }
+    else
+      coli = 2;
+  }
+  Table[3][2] = "Params";
+    Table[3][3] = Lst.params.Find("param_n", m1);
+  Table[4][0] = "Refs(total)";
+    Table[4][1] = Lst.params.Find("ref_total", m1);
+  Table[4][2] = "Refs(uniq)";
+    Table[4][3] = Lst.params.Find("ref_unique", m1);
+  Table[5][0] = "Refs(Fo > 4sig(Fo))";
+    Table[5][1] = Lst.params.Find("ref_4sig", m1);
+  Table[5][2] = "R(int)";
+    Table[5][3] = Lst.params.Find("Rint", m1);
+  Table[6][0] = "R(sigma)";
+    Table[6][1] = Lst.params.Find("Rsig", m1);
+  Table[6][2] = "F000";
+    Table[6][3] = Lst.params.Find("F000", m1);
+  Table[7][0] = "&rho;/g*mm<sup>-3</sup>";
+    Table[7][1] = Lst.params.Find("Rho", m1);
+  Table[7][2] = "&mu;/mm<sup>-1</sup>";
+    Table[7][3] = Lst.params.Find("Mu", m1);
 
   Table.CreateHTMLList(Output, EmptyString(), false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
