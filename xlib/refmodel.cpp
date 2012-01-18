@@ -1542,8 +1542,8 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   //throw TNotImplementedException(__OlxSourceInfo);
-  TSAtomPList atoms;
   size_t n = Cmds.Count();
+  TSAtomPList atoms;
   double ang = -1001;
   if( Cmds.Count() > 0 && Cmds[0].IsNumber() )  {
     n = Cmds[0].ToSizeT();
