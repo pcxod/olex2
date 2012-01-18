@@ -41,6 +41,10 @@
 #include "twinning.h"
 #include "refutil.h"
 
+#ifdef _CUSTOM_BUILD_
+  #include "custom_base.h"
+#endif
+
 #ifdef _SVN_REVISION_AVAILABLE
 #  include "../svn_revision.h"
 #endif
@@ -3254,12 +3258,16 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     if( xapp.CheckFileType<TIns>() )  {
       const TIns& ins = xapp.XFile().GetLastLoader<TIns>();
       const TLst& lst = ins.GetLst();
-      if( lst.IsLoaded() && lst.HasFlack() )  {
-        TEValue<double> fv = lst.Flack();
-        if( fv.GetE() < 0.2 )  {
-          Cif->SetParam("_chemical_absolute_configuration", "ad", false);
-          flack_used = true;
+      olxstr flack = lst.params.Find("flack", EmptyString());
+      if( !flack.IsEmpty() )  {
+        try {
+          TEValue<double> fv(flack);
+          if( fv.GetE() < 0.2 )  {
+            Cif->SetParam("_chemical_absolute_configuration", "ad", false);
+            flack_used = true;
+          }
         }
+        catch(...) {}
       }
     }
     if( !flack_used )
@@ -4431,46 +4439,7 @@ void XLibMacros::funLst(const TStrObjList &Cmds, TMacroError &E)  {
   const TLst& Lst = ins.GetLst();
   if( !Lst.IsLoaded() )
     E.SetRetVal(NAString);
-  else if( Cmds[0].Equalsi("rint") )
-    E.SetRetVal(Lst.Rint());
-  else if( Cmds[0].Equalsi("rsig") )
-    E.SetRetVal(Lst.Rsigma());
-  else if( Cmds[0].Equalsi("r1") )
-    E.SetRetVal(Lst.R1());
-  else if( Cmds[0].Equalsi("r1a") )
-    E.SetRetVal(Lst.R1a());
-  else if( Cmds[0].Equalsi("wr2") )
-    E.SetRetVal(Lst.wR2());
-  else if( Cmds[0].Equalsi("s") )
-    E.SetRetVal(Lst.S());
-  else if( Cmds[0].Equalsi("rs") )
-    E.SetRetVal(Lst.RS());
-  else if( Cmds[0].Equalsi("params") )
-    E.SetRetVal(Lst.Params());
-  else if( Cmds[0].Equalsi("rtotal") )
-    E.SetRetVal(Lst.TotalRefs());
-  else if( Cmds[0].Equalsi("runiq") )
-    E.SetRetVal(Lst.UniqRefs());
-  else if( Cmds[0].Equalsi("r4sig") )
-    E.SetRetVal(Lst.Refs4sig());
-  else if( Cmds[0].Equalsi("peak") )
-    E.SetRetVal(Lst.Peak());
-  else if( Cmds[0].Equalsi("hole") )
-    E.SetRetVal(Lst.Hole());
-  else if( Cmds[0].Equalsi("F000") )
-    E.SetRetVal(Lst.F000());
-  else if( Cmds[0].Equalsi("Rho") )
-    E.SetRetVal(Lst.Rho());
-  else if( Cmds[0].Equalsi("Mu") )
-    E.SetRetVal(Lst.Mu());
-  else if( Cmds[0].Equalsi("flack") )  {
-    if( Lst.HasFlack() )
-      E.SetRetVal(Lst.Flack().ToString());
-    else
-      E.SetRetVal(NAString);
-  }
-  else
-    E.SetRetVal(NAString);
+  E.SetRetVal(Lst.params.Find(Cmds[0], NAString));
 }
 //..............................................................................
 void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {

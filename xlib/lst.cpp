@@ -11,6 +11,7 @@
 #include "efile.h"
 #include "etable.h"
 #include "ins.h"
+#include "xmacro.h"
 
 int SortTrefTries(const TTrefTry &I1, const TTrefTry &I2) {
   if( I1.CFOM < I2.CFOM )  return -1;
@@ -21,27 +22,15 @@ int SortTrefTries(const TTrefTry &I1, const TTrefTry &I2) {
   return res;
 }
 //..............................................................................
-TLst::TLst()  {
-  FR1 = FwR2 = FS = FRS = 0;
-  FParams = FTotalRefs = FUniqRefs = 0;
-  FPeak = FHole = 0;
-  _HasFlack = FLoaded = false;
-}
-//..............................................................................
-TLst::~TLst()  {  return;  }
 //..............................................................................
 void TLst::Clear()  {
+  params.Clear();
   FDRefs.Clear();
   FSplitAtoms.Clear();
   TrefTries.Clear();
   PattSolutions.Clear();
-  FR1 = FR1a = FwR2 = FS = FRS = FRint = FRsig = 0;
-  FParams = FTotalRefs = FUniqRefs = FRefs4sig = 0;
-  FRho = FF000 = FMu = 0;
-  FPeak = FHole = 0;
-
   ErrorMsgs.Clear();
-  _HasFlack = FLoaded = false;
+  Loaded = false;
 }
 //..............................................................................
 bool TLst::LoadFromFile(const olxstr &FN)  {
@@ -74,13 +63,13 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 3 )  continue;
-        FTotalRefs = Toks[0].ToInt();
+        params("ref_total", Toks[0]);
+        int rt = Toks[0].ToInt();
         try  {  //bug: 662044  Reflections read, of which447594  rejected
-          FUniqRefs = FTotalRefs - Toks[5].ToInt(); // uniq = total - rejected
+          int ur = rt - Toks[5].ToInt(); // uniq = total - rejected
+          params("ref_unique", ur);
         }
-        catch(...)  {
-          FUniqRefs = FUniqRefs = -1;
-        }
+        catch(...)  {}
         TRefC = true;
         continue;
       }
@@ -90,7 +79,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 3 )  continue;
-        FUniqRefs = Toks[0].ToInt();
+        params("ref_unique", Toks[0]);
         URefC = true;
         continue;
       }
@@ -194,8 +183,8 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 6 )  continue;
-        FRint = Toks[2].ToDouble();
-        FRsig = Toks[5].ToDouble();
+        params("Rint", Toks[2]);
+        params("Rsig", Toks[5]);
         RIS = true;
         continue;
       }
@@ -205,7 +194,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 4 )  continue;
-        FPeak = Toks[2].ToDouble();
+        params("peak", Toks[2]);
         HP = true;
         continue;
       }
@@ -215,7 +204,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 4 )  continue;
-        FHole = Toks[2].ToDouble();
+        params("hole", Toks[2]);
         DH = true;
         continue;
       }
@@ -227,7 +216,8 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         Toks.Clear();
         i += 2;  if( i >= SL.Count() )  break;
         Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() > 5 )  FParams = Toks[6].ToInt();
+        if( Toks.Count() > 5 )
+          params("params_n", Toks[6]);
 
         // extract R1 or 4sigma, R1a for all data and number of refs with Fo > 4sig(Fo)
         Toks.Clear();
@@ -235,9 +225,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         if( i >= SL.Count() )  break;
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() > 8 )  {
-          FR1 = Toks[2].ToDouble();
-          FRefs4sig = Toks[4].ToInt();
-          FR1a = Toks[9].ToDouble();
+          params("R1", Toks[2]);
+          params("ref_4sig", Toks[4]);
+          params("R1a", Toks[9]);
         }
 
         // extract wR2 && Goof && restrained GooF
@@ -245,11 +235,10 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         i ++;  if( i >= SL.Count() )  break;
         Toks.Strtok(SL[i].Replace(',', EmptyString()), ' ');
         if( Toks.Count() > 11 )  {
-          FwR2 = Toks[2].ToDouble();
-          FS = Toks[7].ToDouble();
-          FRS = Toks[11].ToDouble();
+          params("wR2", Toks[2]);
+          params("S", Toks[7]);
+          params("rS", Toks[11]);
         }
-
         RF = true;
         continue;
       }
@@ -287,9 +276,8 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         Toks.Clear();
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() == 8 )  {
-          FlackParam.V() = Toks[4].ToDouble();
-          FlackParam.E() = Toks[7].ToDouble();
-          _HasFlack = true;
+          TEValueD flack(Toks[4].ToDouble(), Toks[7].ToDouble());
+          params("flack", flack.ToString());
         }
         FlackF = true;
         continue;
@@ -303,9 +291,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       Toks.Clear();
       Toks.Strtok(SL[i], ' ');
       if( Toks.Count() == 17 )  {
-        FF000 = Toks[5].ToDouble();
-        FMu = Toks[8].ToDouble();
-        FRho = Toks[16].ToDouble();
+        params("F000", Toks[5]);
+        params("Mu", Toks[8]);
+        params("Rho", Toks[16]);
         CellInfo = true;
         continue;
       }
@@ -351,26 +339,41 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     }
     if( DH && HP && DRef && TRefC &&URefC && RF && RIS)  break;
   }
+  // backwards for shifts
+  int params_found=0;
+  bool basf_found=false;
+  for (size_t i=SL.Count()-1; i != InvalidIndex; i--) {
+    if (SL[i].FirstIndexOf("Max. shift") != InvalidIndex) {
+      TStrList toks(SL[i], ' ');
+      if (toks.Count() < 4 || !toks[3].IsNumber()) continue;
+      params("max_shift", toks[3].ToDouble());
+      params_found++;
+    }
+    else if (SL[i].FirstIndexOf("Mean shift/esd") != InvalidIndex) {
+      TStrList toks(SL[i], ' ');
+      if (toks.Count() < 4 || !toks[3].IsNumber()) continue;
+      params("mean_shift", toks[3].ToDouble());
+      params_found++;
+    }
+    if( HasTwin && InvTwin )  {
+      if( SL[i].IndexOf("BASF  ") != InvalidIndex )  {
+        TStrList toks(SL[i], ' ');
+        if( toks.Count() == 6 )  {
+          TEValueD flack(toks[1].ToDouble(), toks[2].ToDouble());
+          params("flack", flack.ToString());
+          basf_found = true;
+        }
+      }
+    }
+    if (params_found == 2 && (!(HasTwin && InvTwin) || basf_found) )
+      break;
+  }
   /* we do not consider SA, as it depends if there are any anisotropic atoms
    in the structure
   */
   if( DH || HP || DRef || TRefC || URefC || RF || RIS )
-    FLoaded = true;
-  if( HasTwin && InvTwin )  {
-    for( size_t i=0; i < SL.Count(); i++ )  {
-      olxstr& line = SL[SL.Count()-i-1];
-      if( line.IndexOf("BASF  ") != InvalidIndex )  {
-        Toks.Clear();
-        Toks.Strtok(line, ' ');
-        if( Toks.Count() == 6 )  {
-          FlackParam.V() = Toks[1].ToDouble();
-          FlackParam.E() = Toks[2].ToDouble();
-          break;
-        }
-      }
-    }
-  }
-  return FLoaded;
+    Loaded = true;
+  return Loaded;
 }
 //..............................................................................
 bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
@@ -395,19 +398,32 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
   }
   if( Param == slslRefineData )  {
     Table.Resize(13, 2);
-    Table[0][0] = "R1 (Fo > 4sig(Fo))"; Table[0][1] = R1();
-    Table[1][0] = "R1 all data";        Table[1][1] = R1a();
-    Table[2][0] = "wR2";                Table[2][1] = wR2();
-    Table[3][0] = "GooF";               Table[3][1] = S();
-    Table[4][0] = "Restrained GooF";    Table[4][1] = RS();
-    Table[5][0] = "Parameters";         Table[5][1] = Params();
-    Table[6][0] = "Highest peak";       Table[6][1] = Peak();
-    Table[7][0] = "Deepest hole";       Table[7][1] = Hole();
-    Table[8][0] = "Total reflections";  Table[8][1] = TotalRefs();
-    Table[9][0] = "Unique reflections"; Table[9][1] = UniqRefs();
-    Table[10][0] = "Reflections with Fo > 4sig(Fo)";   Table[10][1] = UniqRefs();
-    Table[11][0] = "Rint";              Table[11][1] = Rint();
-    Table[12][0] = "Rsigma";            Table[12][1] = Rsigma();
+    Table[0][0] = "R1 (Fo > 4sig(Fo))";
+      Table[0][1] = params.Find("R1", XLibMacros::NAString);
+    Table[1][0] = "R1 all data";
+      Table[1][1] = params.Find("R1a", XLibMacros::NAString);
+    Table[2][0] = "wR2";
+      Table[2][1] = params.Find("wR2", XLibMacros::NAString);
+    Table[3][0] = "GooF";
+      Table[3][1] = params.Find("S", XLibMacros::NAString);
+    Table[4][0] = "Restrained GooF";
+      Table[4][1] = params.Find("rS", XLibMacros::NAString);
+    Table[5][0] = "Parameters";
+      Table[5][1] = params.Find("param_n", XLibMacros::NAString);
+    Table[6][0] = "Highest peak";
+      Table[6][1] = params.Find("preak", XLibMacros::NAString);
+    Table[7][0] = "Deepest hole";
+      Table[7][1] = params.Find("hole", XLibMacros::NAString);
+    Table[8][0] = "Total reflections";
+      Table[8][1] = params.Find("ref_total", XLibMacros::NAString);
+    Table[9][0] = "Unique reflections";
+      Table[9][1] = params.Find("ref_uniq", XLibMacros::NAString);
+    Table[10][0] = "Reflections with Fo > 4sig(Fo)";
+      Table[10][1] = params.Find("ref_4sig", XLibMacros::NAString);
+    Table[11][0] = "Rint";
+      Table[11][1] = params.Find("Rint", XLibMacros::NAString);
+    Table[12][0] = "Rsigma";
+      Table[12][1] = params.Find("Rsig", XLibMacros::NAString);
     Table.CreateHTMLList(Html, EmptyString(), false, false, TableDef);
     return true;
   }
