@@ -267,7 +267,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
     mat3f ielm = mat3f(elm).Normalise().Inverse();
     /* etm projects to ellipsoid and un-projects back to the cartesian frame with the ellipsoid
     scale accumulated */
-    mat3f erm, etm = ielm*elm, ietm=etm.Inverse();
+    mat3f erm, etm = ielm*elm;// ietm=etm.Inverse();
     // below is same as: vec3f pv = (touch_point*ietm).Normalise();
     const vec3f pv = mat3f::CramerSolve(etm, touch_point).Normalise();
     // this is there the touch_point ends up after projecting onto the ellipsoid
@@ -757,7 +757,6 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const size_t contour_cnt = grid.GetContourLevelCount();
     olx_array_ptr<float> z(new float[contour_cnt]);
     float minZ = 1000, maxZ = -1000;
-    const vec3i dim = grid.GetDimVec();
     const mat3f bm(app.GetRender().GetBasis().GetMatrix());
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
     const vec3f center(app.GetRender().GetBasis().GetCenter());
