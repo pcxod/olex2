@@ -21,7 +21,7 @@ bool TSocketFS::_OnReadFailed(const THttpFileSystem::ResponseInfo& info, uint64_
         "Connection broken at position " << position << ", reconnecting to the server";
       DoConnect();  // reconnect
       const olxcstr rq = GenerateRequest("GET", info.source, position);
-      return _write(rq) == rq.Length();
+      return (size_t)_write(rq) == rq.Length();
     }
     catch(...)  {
       olx_sleep(1000);

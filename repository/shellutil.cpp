@@ -14,10 +14,10 @@
 #ifdef __WIN32__
   #include <objbase.h>
   #include <shlguid.h>
-  #include <wintrust.h>
-  #include <Softpub.h>
   #pragma comment (lib, "wintrust")
 #ifndef __GNUC__
+  #include <Softpub.h>
+  #include <wintrust.h>
   #include <shobjidl.h>
 #endif
   #include <shlobj.h>
@@ -320,7 +320,7 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
 }
 //.............................................................................
 //http://msdn.microsoft.com/en-us/library/windows/desktop/aa382384(v=vs.85).aspx
-#ifdef __WIN32__
+#if defined(__WIN32__) && !defined(__GNUC__)
 bool TShellUtil::VerifyEmbeddedSignature(const olxstr &file_name) {
   WINTRUST_FILE_INFO FileData;
   memset(&FileData, 0, sizeof(FileData));

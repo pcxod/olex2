@@ -553,7 +553,7 @@ TStrList UpdateAPI::GetDefaultRepositories() {
 //.............................................................................
 //http://www.jorgon.freeserve.co.uk/TestbugHelp/XMMfpins2.htm
 olxstr UpdateAPI::GetInstallationFileName()  {
-#ifdef __WIN32__
+#if defined(__WIN32__) && !defined(__GNUC__)
 #ifndef _WIN64
   try  {
     if( IsWow64() )
