@@ -323,7 +323,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
 //..............................................................................
 int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
   int rl = recv(Socket, dest, dest_sz, 0);
-  if( rl <= 0 || rl == dest_sz )
+  if( rl <= 0 || (size_t)rl == dest_sz )
     return rl;
   size_t total_sz = rl;
   while( total_sz < dest_sz )  {
@@ -337,7 +337,7 @@ int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
 //..............................................................................
 int THttpFileSystem::_write(const olxcstr& str)  {
   int sv = send(Socket, str.c_str(), str.Length(), 0);
-  if( sv <= 0 || sv == str.Length() )
+  if( sv <= 0 || (size_t)sv == str.Length() )
     return sv;
   size_t total_sz = sv;
   while( total_sz < str.Length() )  {

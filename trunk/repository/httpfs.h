@@ -70,7 +70,7 @@ protected:
     bool operator != (const ResponseInfo& i) const {  return !(this->operator == (i));  }
     // does basic checks to identify if any data is attached
     bool HasData() const {
-      return (contentLength != ~0 && IsOK() && headers.HasKey("ETag"));
+      return (contentLength != InvalidSize && IsOK() && headers.HasKey("ETag"));
     }
   };
   struct AllocationInfo  {
