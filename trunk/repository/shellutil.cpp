@@ -14,11 +14,11 @@
 #ifdef __WIN32__
   #include <objbase.h>
   #include <shlguid.h>
-  #pragma comment (lib, "wintrust")
 #ifndef __GNUC__
   #include <Softpub.h>
   #include <wintrust.h>
   #include <shobjidl.h>
+  #pragma comment (lib, "wintrust")
 #endif
   #include <shlobj.h>
   #include <iphlpapi.h>

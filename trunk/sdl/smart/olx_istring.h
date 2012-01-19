@@ -1179,7 +1179,7 @@ public:
   //...........................................................................
   void SetLength(size_t newLen)  {
     if( newLen < T::_Length )
-      DecLength(T::_Length - newLen);
+      T::DecLength(T::_Length - newLen);
     else  {
       T::checkBufferForModification(newLen);
       T::_Length = newLen;
@@ -1234,7 +1234,7 @@ public:
   //...........................................................................
   template <typename OC> TTSString& DeleteSequencesOf(OC wht)  {
     T::checkBufferForModification(T::_Length);
-    DecLength( o_strdcs(T::Data(), T::_Length, wht) );
+    T::DecLength( o_strdcs(T::Data(), T::_Length, wht) );
     return *this;
   }
   //...........................................................................
@@ -1715,7 +1715,7 @@ public:
         extra = 1;
     }
     if (extra !=0) {
-      checkBufferForModification(T::_Length + extra);
+      T::checkBufferForModification(T::_Length + extra);
       Insert(sep, right ? T::_Length : 0, extra);
     }
     return *this;

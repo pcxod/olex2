@@ -217,13 +217,16 @@ public:
     virtual void OnTerminate(const AProcess& p) = 0;
   };
 private:
-  /* there coud be many processes running at the same time, however only one process
-  a time can be redirected (i.e. get input) and only one process to wait for... */
+  /* there could be many processes running at the same time, however only one
+   *  process a time can be redirected (i.e. get input) and only one process to
+   *  wait for... */
   SortedPtrList<AProcess, TPointerComparator> Processes;
   AProcess* Redirected, *Current, *Last;
 protected:
   IProcessHandler& OutputHandler;
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data=NULL)  {
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
+  const IEObject* Data=NULL)
+  {
     if( MsgSubId != msiExecute )  return false;
     if( MsgId == process_manager_timer )  {
       if( !Processes.IsEmpty() )  {
@@ -245,9 +248,9 @@ protected:
     return true;
   }
 public:
-  ProcessManager(IProcessHandler& outputHandler) :
-    OutputHandler(outputHandler),
-    Redirected(NULL), Current(NULL), Last(NULL)
+  ProcessManager(IProcessHandler& outputHandler)
+  : Redirected(NULL), Current(NULL), Last(NULL),
+    OutputHandler(outputHandler)
   {
     TBasicApp::GetInstance().OnTimer.Add(this, process_manager_timer); 
   }

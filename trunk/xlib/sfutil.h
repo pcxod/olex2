@@ -165,14 +165,14 @@ namespace SFUtil {
     short scaleType = scaleSimple,
     double scale = 0);
   // calculates the structure factors for given reflections
+  void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
+    TArrayList<compd>& F, bool UseFpFdp);
   template <class IndexList>
   void CalcSF(const TXFile& xfile, const IndexList& refs,
     TArrayList<compd>& F, bool UseFdp=true)
   {
     _CalcSF(xfile, MillerIndexList<IndexList>(refs), F, UseFdp);
   }
-  void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
-    TArrayList<compd>& F, bool UseFpFdp);
   /* returns an instance according to __OLX_USE_FASTSYMM, must be deleted with
  delete
  */
