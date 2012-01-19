@@ -153,7 +153,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   const bool analyseQ = !Options.Contains("aq");
   const bool assignTypes = !Options.Contains("at");
   const double aqV = Options.FindValue("aq", "0.2").ToDouble(); // R+aqV
-  // qpeak anlysis
+  // qpeak analysis
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   if( analyseQ )  {
     TPSTypeList<double, TCAtom*> SortedQPeaks;
@@ -631,7 +631,7 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,
   SFUtil::ExpandToP1(refs, F, sym_space, P1SF);
   const vec3s dim = map.GetSize();
   const vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
-  BVFourier::MapInfo mi = BVFourier::CalcEDM(P1SF, map.Data, dim, uc.CalcVolume());
+  BVFourier::CalcEDM(P1SF, map.Data, dim, uc.CalcVolume());
   //TArrayList<MapUtil::peak> _Peaks;
   //TTypeList<MapUtil::peak> Peaks;
   //MapUtil::Integrate<float>(map.Data, dim, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
