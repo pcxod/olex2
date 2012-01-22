@@ -165,24 +165,26 @@ bool TGlXApp::OnInit()  {
       TEFile::ExtractFilePath(base_dir_x));
   olx_setenv("PATH", TEFile::TrimPathDelimeter(base_dir) << olx_env_sep()
     << olx_getenv("PATH"));
-#ifdef __WIN32__
-  olx_setenv("PYTHONPATH", base_dir + "Python27");
-#endif
 #if defined(_WIN64) && defined(_DEBUG)
     XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DEBUG_DIR"));
 #else
     XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DIR"));
 #endif
+    XApp->SetSharedDir(patcher::PatchAPI::GetSharedDir());
+    XApp->SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
   }
   catch(const TExceptionBase& e)  {
     TMainFrame::ShowAlert(e);
     throw;
   }
   // write PID file
-  if( XApp->IsBaseDirWriteable() )  {
+  try {
     int pid = getpid();
-    pid_file = new TEFile(olxstr(XApp->GetBaseDir()) << pid << '.' <<
+    pid_file = new TEFile(olxstr(XApp->GetInstanceDir()) << pid << '.' <<
       patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b");
+  }
+  catch(const TExceptionBase &e) {
+    TBasicApp::NewLogEntry(logException) << e;
   }
   for( int i=0; i < argc; i++ )
     XApp->Arguments.Add(olxstr(argv[i]));
@@ -229,18 +231,16 @@ bool TGlXApp::OnInit()  {
 //..............................................................................
 int TGlXApp::OnExit()  {
   // do all operations before TEGC is deleted
-  if( XApp->IsBaseDirWriteable() )  {
-    if( pid_file != NULL )  {
-      pid_file->Delete();
-      delete pid_file;
-      pid_file = NULL;
-    }
-    TStrList pid_files;
-    olxstr conf_dir = XApp->GetBaseDir(); 
-    TEFile::ListDir( conf_dir, pid_files, olxstr("*.") << patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll );
-    for( size_t i=0; i < pid_files.Count(); i++ )
-      TEFile::DelFile(conf_dir+pid_files[i]);
+  if( pid_file != NULL )  {
+    pid_file->Delete();
+    delete pid_file;
+    pid_file = NULL;
   }
+  TStrList pid_files;
+  olxstr conf_dir = XApp->GetInstanceDir(); 
+  TEFile::ListDir( conf_dir, pid_files, olxstr("*.") << patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll );
+  for( size_t i=0; i < pid_files.Count(); i++ )
+    TEFile::DelFile(conf_dir+pid_files[i]);
   delete XApp;
   return 0;
 }

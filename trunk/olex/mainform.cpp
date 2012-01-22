@@ -403,7 +403,7 @@ bool TMainForm::Destroy()  {
     SaveVFS(plStructure);  
     FXApp->OnObjectsDestroy.Remove(this);
     ProcessMacro("onexit");
-    SaveSettings(DataDir + FLastSettingsFile);
+    SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
     ClearPopups();
   }
   Destroying = true;
@@ -923,7 +923,8 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitMacro(SetCmd, , fpAny);
 
-  this_InitMacro(UpdateOptions, , fpNone);
+  this_InitMacroD(UpdateOptions, EmptyString(), fpNone, "Shows the Update Options dialog");
+  this_InitMacroD(Update, EmptyString(), fpNone, "Does check the for the updates");
   this_InitMacro(Reload, , fpOne);
   this_InitMacro(StoreParam, , fpTwo|fpThree);
   this_InitMacro(SelBack, a&;o&;x, fpNone);
@@ -1455,46 +1456,19 @@ void TMainForm::XApp(TGXApp *XA)  {
     wxT("Hide basis") : wxT("Show basis"));
   TutorialDir = XA->GetBaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
-  olxstr new_data_dir = patcher::PatchAPI::GetCurrentSharedDir(&DataDir);
-  DataDir = patcher::PatchAPI::ComposeOldSharedDir(DataDir);
-  // migration code...
-  if( !TEFile::Exists(DataDir) )  {  // do not worry then - create the new one
-    DataDir = new_data_dir;
-    if( !TEFile::MakeDirs(DataDir) )
-      TBasicApp::NewLogEntry(logError) << "Could not create data folder!";
-      if( updater::UpdateAPI::IsNewInstallation() )
-        updater::UpdateAPI::TagInstallationAsOld();
-      patcher::PatchAPI::SaveLocationInfo(new_data_dir);
-  }
-  else  {
-    if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
-      // check if we have full access to all files in the dir...
-      bool copy_old = !updater::UpdateAPI::IsNewInstallation();
-      if( !TEFile::MakeDirs(new_data_dir) ) {
-        TMainFrame::ShowAlert(olxstr("Failed to create: ") << new_data_dir,
-          "ERROR", wxOK|wxICON_ERROR);
-      }
-      else if( copy_old )
-        TFileTree::Copy(DataDir, new_data_dir, false);
-      if( !copy_old )
-        updater::UpdateAPI::TagInstallationAsOld();
-      patcher::PatchAPI::SaveLocationInfo(new_data_dir);
-    }
-    DataDir = new_data_dir;
-  }
-  FXApp->SetSharedDir(DataDir);
   DictionaryFile = XA->GetBaseDir() + "dictionary.txt";
   PluginFile =  XA->GetBaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
 
   TFileHandlerManager::AddBaseDir(TutorialDir);
-  TFileHandlerManager::AddBaseDir(DataDir);
+  TFileHandlerManager::AddBaseDir(FXApp->GetInstanceDir());
 
   SetStatusText(XA->GetBaseDir().u_str());
 
   // put log file to the user data folder
   try  {
-    TBasicApp::GetLog().AddStream(TUtf8File::Create(DataDir + "olex2.log"), true);
+    TBasicApp::GetLog().AddStream(
+      TUtf8File::Create(FXApp->GetInstanceDir() + "olex2.log"), true);
   }
   catch( TExceptionBase& )  {
     TBasicApp::NewLogEntry(logError) << "Could not create log file!";
@@ -1582,6 +1556,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     TBasicApp::NewLogEntry(logInfo) <<
       (olxstr("Invalid boolean value for ").quote() << "tooltip_occu_chem");
   }
+  TBasicApp::GetInstance().NewActionQueue(olxappevent_UPDATE_GUI).Add(this, ID_UPDATE_GUI);
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1609,7 +1584,7 @@ void TMainForm::StartupInit()  {
   FInfoBox->SetFontIndex(2);
   GlTooltip->SetFontIndex(6);
 
-  olxstr T(DataDir);  
+  olxstr T(FXApp->GetInstanceDir());  
   T << FLastSettingsFile;
   if( !TEFile::Exists(T) )  {
     T = TBasicApp::GetBaseDir();
@@ -1728,9 +1703,10 @@ void TMainForm::StartupInit()  {
   }
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
-  if( FXApp->Arguments.Count() >= 2 )
+  if( FXApp->Arguments.Count() >= 2 ) {
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments.Text(' ', 1) << '\'', __OlxSrcInfo);
-  // load html in last cal - it might call some destructive functions on uninitialised data
+  }
+  // load html in last call - it might call some destructive functions on uninitialised data
   FHtml->LoadPage(FHtmlIndexFile.u_str());
   FHtml->SetHomePage(FHtmlIndexFile);
   // must move it here since on Linux things will not get initialised at the previous position
@@ -1913,7 +1889,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   //  }
   //}
   else if( MsgId == ID_UpdateThreadTerminate )  {
-    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     _UpdateThread = NULL;
 
      if( UpdateProgress != NULL )  {
@@ -2272,6 +2248,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if (MsgId == ID_BadReflectionSet) {
     if (MsgSubId == msiExit)
       BadReflectionsTable(false);
+  }
+  else if (MsgId == ID_UPDATE_GUI) {
+    executeMacro("html.update");
   }
   return res;
 }
@@ -3147,8 +3126,8 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   Table.CreateHTMLList(Output, EmptyString(), false, false, false);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plGlobal);
-  if( TEFile::Exists(DataDir+RecentFilesFile) )
-    TEFile::DelFile(DataDir+RecentFilesFile);
+  if( TEFile::Exists(FXApp->GetInstanceDir()+RecentFilesFile) )
+    TEFile::DelFile(FXApp->GetInstanceDir()+RecentFilesFile);
   //TUtf8File::WriteLines( RecentFilesFile, Output, false );
   return true;
 }
@@ -3890,7 +3869,7 @@ void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& func
   }
 }
 //..............................................................................
-const olxstr& TMainForm::getDataDir() const  {  return DataDir;  }
+const olxstr& TMainForm::getDataDir() const  {  return FXApp->GetInstanceDir();  }
 //..............................................................................
 const olxstr& TMainForm::getVar(const olxstr &name, const olxstr &defval) const {
   const size_t i = TOlxVars::VarIndex(name);
@@ -3945,7 +3924,7 @@ void TMainForm::SaveVFS(short persistenceId)  {
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
     else if(persistenceId == plGlobal )
-      dbFN << DataDir << "global.odb";
+      dbFN << FXApp->GetInstanceDir() << "global.odb";
     else
       throw TFunctionFailedException(__OlxSourceInfo, "undefined persistence level");
 
@@ -3969,7 +3948,7 @@ void TMainForm::LoadVFS(short persistenceId)  {
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
     else if(persistenceId == plGlobal )
-      dbFN << DataDir << "global.odb";
+      dbFN << FXApp->GetInstanceDir() << "global.odb";
     else  {
       throw TFunctionFailedException(__OlxSourceInfo,
         "undefined persistence level");

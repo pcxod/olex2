@@ -9,7 +9,7 @@
 
 #include "shellutil.h"
 #include "efile.h"
-#include "exception.h"
+#include "bapp.h"
 
 #ifdef __WIN32__
   #include <objbase.h>
@@ -19,6 +19,7 @@
   #include <wintrust.h>
   #include <shobjidl.h>
   #pragma comment (lib, "wintrust")
+  #pragma comment (lib, "version")
 #endif
   #include <shlobj.h>
   #include <iphlpapi.h>
@@ -348,5 +349,76 @@ bool TShellUtil::VerifyEmbeddedSignature(const olxstr &file_name) {
     &WVTPolicyGUID,
     &WinTrustData) == ERROR_SUCCESS;
 }
+#endif // __WIN32__ && !__GNUC__
+//.............................................................................
+#ifdef __WIN32__
+olxstr TShellUtil::GetFileVersion(const olxstr &fn, const olxstr &lang) {
+  if( TEFile::Exists(fn) )  {
+    DWORD len = GetFileVersionInfoSize(fn.u_str(), &len);
+    if( len > 0 )  {
+      olx_array_ptr<olxch> pBuf(new olxch[len+1]);
+      olxch *pValue[1];
+      UINT pLen;
+      GetFileVersionInfo(fn.u_str(), 0, len, pBuf());
+      if( VerQueryValue(pBuf(),
+            (olxstr("StringFileInfo\\") << lang << "\\ProductVersion").u_str(),
+            (void**)&pValue[0], &pLen) )
+      {
+        return pValue[0];
+      }
+    } 
+  }
+  return EmptyString();
+}
+//http://msdn.microsoft.com/en-us/library/aa376389(VS.85).aspx
+bool TShellUtil::IsAdmin() {
+  BOOL b;
+  SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+  PSID AdministratorsGroup; 
+  b = AllocateAndInitializeSid(
+    &NtAuthority,
+    2,
+    SECURITY_BUILTIN_DOMAIN_RID,
+    DOMAIN_ALIAS_RID_ADMINS,
+    0, 0, 0, 0, 0, 0,
+    &AdministratorsGroup); 
+  if( b == TRUE )   {
+    if( !CheckTokenMembership( NULL, AdministratorsGroup, &b) )
+      b = FALSE;
+    FreeSid(AdministratorsGroup); 
+  }
+  return b == TRUE;
+}
 #endif // __WIN32__
 //.............................................................................
+//http://msdn.microsoft.com/en-us/library/windows/desktop/bb762153(v=vs.85).aspx
+bool TShellUtil::RunElevated(const olxstr &fn, const olxstr &args) {
+  return ShellExecute(
+    NULL,
+    olxT("runas"),
+    fn.u_str(),
+    args.u_str(),
+    NULL,
+    SW_SHOW
+    ) != 0;
+}
+//.............................................................................
+olxstr TShellUtil::GetCmdLineArgs(const olxstr &fn) {
+  const TStrList& args = TBasicApp::GetInstance().Arguments;
+  if( args.Count() > 1 )  {
+    olxstr s_cmdl;
+    if( fn.IndexOf(' ') != InvalidIndex )
+      s_cmdl << '"' << fn << '"';
+    else
+      s_cmdl = fn;
+    for( size_t i=1; i < args.Count(); i++ )  {
+      s_cmdl << ' ';
+      if( args[i].IndexOf(' ') != InvalidIndex )
+        s_cmdl << '"' << args[i] << '"';
+      else
+        s_cmdl << args[i];
+    }
+    return s_cmdl;
+  }
+  return EmptyString();
+}

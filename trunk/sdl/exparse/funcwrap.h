@@ -303,7 +303,7 @@ namespace exparse  {
       if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
         throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("Dublicate function instance: ").quote() << name);
+          olxstr("Duplicate function instance: ").quote() << name);
       }
       funcs.Add(name, f);
     }
@@ -445,7 +445,7 @@ namespace exparse  {
       if( funcs.IndexOf(name) != InvalidIndex )  {
         delete f;
         throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("Dublicate function instance: ").quote() << name);
+          olxstr("Duplicate function instance: ").quote() << name);
       }
       funcs.Add(name, f);
     }

@@ -18,10 +18,11 @@ BeginEsdlNamespace()
 // app event registry, these might not be implemented
 static olxstr 
   olxappevent_GL_DRAW("GLDRAW"),
-  olxappevent_GL_CLEAR_STYLES("GLDSCLEAR");
+  olxappevent_GL_CLEAR_STYLES("GLDSCLEAR"),
+  olxappevent_UPDATE_GUI("UPDATE_GUI");
 
 class TBasicApp: public IEObject  {
-  olxstr BaseDir, SharedDir, ExeName;
+  olxstr BaseDir, InstanceDir, SharedDir, ExeName;
 protected:
   class TActionQList Actions;
   static TBasicApp* Instance;
@@ -36,17 +37,23 @@ public:
   TBasicApp(const olxstr& AppName);
   virtual ~TBasicApp();
 
-  /* shared dir is independent of current user and to be used for global data
-  and locks, must be initialised by the caller otherwise (if empty) the
-  function will throw TFunctionfailedException
+  /* instance dir dependents on the location of the executable and to be used
+  to store instance specific data - updates etc.  If unset, the value is equal
+  to the BaseDir
   */
   static const olxstr& GetSharedDir();
   /* will create the folder if does not exist, if fails - throws
-  TFunctionfailedException
+  TFunctionfailedException. Shared dir is the same for all insatnces of
+  Olex2 disregarding the location
   */
   static const olxstr& SetSharedDir(const olxstr& cd);
   static bool HasSharedDir() {  return !GetInstance().SharedDir.IsEmpty();  }
-
+  const olxstr &_GetInstanceDir() const {
+    return InstanceDir.IsEmpty() ? GetBaseDir() : InstanceDir;
+  }
+  /* sets instance dir - folder dependent on the exe location
+  */
+  void SetInstanceDir(const olxstr &d) { InstanceDir = d; }
   static TLog& GetLog()  {  return *GetInstance().Log;  }
   static TLog::LogEntry NewLogEntry(int evt_type = logDefault,
     bool annotate=false)
@@ -60,6 +67,13 @@ public:
   static olxstr GuessBaseDir(const olxstr& path,
     const olxstr& var_name=EmptyString());
   static const olxstr& GetBaseDir()  {  return GetInstance().BaseDir;  }
+  /* instance dir dependents on the location of the executable and to be used
+  to store insatnce specific data - updates etc.  If unset, the value is equal
+  to the BaseDir
+  */
+  static const olxstr& GetInstanceDir()  {
+    return GetInstance()._GetInstanceDir();
+  }
   // this resets the ExeName to the file name of the bd
   static const olxstr& SetBaseDir(const olxstr& bd);
   static bool IsBaseDirWriteable() {  return GetInstance().BaseDirWriteable;  }

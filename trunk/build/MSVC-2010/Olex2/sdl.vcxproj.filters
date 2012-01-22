@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
-    <Filter Include="exparse">
-      <UniqueIdentifier>{ab425316-1890-40fb-82a7-ef16ce4f1ee6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="exparse\headers">
-      <UniqueIdentifier>{ca44e51e-0a7a-4bb6-a70f-42d309928c1b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\math">
       <UniqueIdentifier>{1731c145-7848-4533-83e8-c81549aba900}</UniqueIdentifier>
     </Filter>
@@ -33,6 +27,18 @@
     </Filter>
     <Filter Include="tests">
       <UniqueIdentifier>{00ccf287-3420-42f3-89a4-fdaedc8aaa89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\macro">
+      <UniqueIdentifier>{7cf6a5f6-ba58-4c97-b506-d0206310ede3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\exparse">
+      <UniqueIdentifier>{d027fd8c-232a-4c38-9b71-ecbe3f915aac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\string">
+      <UniqueIdentifier>{b5c48455-a1aa-44d4-8427-88f2057804cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\exparse">
+      <UniqueIdentifier>{ab425316-1890-40fb-82a7-ef16ce4f1ee6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -145,16 +151,16 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\sdl\exparse\evaluable.cpp">
-      <Filter>exparse</Filter>
+      <Filter>Source Files\exparse</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\sdl\exparse\expbuilder.cpp">
-      <Filter>exparse</Filter>
+      <Filter>Source Files\exparse</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\sdl\exparse\exptree.cpp">
-      <Filter>exparse</Filter>
+      <Filter>Source Files\exparse</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\sdl\exparse\funcwrap.cpp">
-      <Filter>exparse</Filter>
+      <Filter>Source Files\exparse</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\sdl\hashing.cpp">
       <Filter>Source Files</Filter>
@@ -173,19 +179,10 @@
     <ClInclude Include="..\..\..\sdl\bapp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\dataitem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\defs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\ebase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\ebasis.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\ebtree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\egc.h">
@@ -200,16 +197,7 @@
     <ClInclude Include="..\..\..\sdl\etime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\etraverse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\evaluable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\exception.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\function.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\groupobj.h">
@@ -218,25 +206,7 @@
     <ClInclude Include="..\..\..\sdl\integration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\library.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\log.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\macroerror.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\macrolib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\smart\olx_istring.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\smart\olx_wstring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\olxmps.h">
@@ -249,9 +219,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\os_util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\smart\ostring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\pers_util.h">
@@ -283,30 +250,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\xldwriter.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\builtins.h">
-      <Filter>exparse\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\context.h">
-      <Filter>exparse\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\expbuilder.h">
-      <Filter>exparse\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\explib.h">
-      <Filter>exparse\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\expsyn.h">
-      <Filter>exparse\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\exptree.h">
-      <Filter>exparse\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\expvalue.h">
-      <Filter>exparse\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\sdl\exparse\funcwrap.h">
-      <Filter>exparse\headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\association.h">
       <Filter>Header Files</Filter>
@@ -479,9 +422,6 @@
     <ClInclude Include="..\..\..\sdl\linked_operators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\smart\olx_strcvt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\file_filter.h">
       <Filter>Header Files\io</Filter>
     </ClInclude>
@@ -511,6 +451,75 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\listalg.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\function.h">
+      <Filter>Header Files\macro</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\macroerror.h">
+      <Filter>Header Files\macro</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\macrolib.h">
+      <Filter>Header Files\macro</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\evaluable.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\ebasis.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\ebtree.h">
+      <Filter>Header Files\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\etraverse.h">
+      <Filter>Header Files\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h">
+      <Filter>Header Files\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\smart\olx_istring.h">
+      <Filter>Header Files\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\smart\olx_strcvt.h">
+      <Filter>Header Files\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\smart\olx_wstring.h">
+      <Filter>Header Files\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\smart\ostring.h">
+      <Filter>Header Files\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\dataitem.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\library.h">
+      <Filter>Header Files\macro</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\builtins.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\funcwrap.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\context.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\expbuilder.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\explib.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\expsyn.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\exptree.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\expvalue.h">
+      <Filter>Header Files\exparse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\exparse\statements.h">
+      <Filter>Header Files\exparse</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
