@@ -4516,9 +4516,9 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( op != NULL )  {
     op->executeMacroEx(olxstr("@reap \'") << FN << '\'', E);
     if( E.IsSuccessful() ) {
-      ABasicFunction *uf = op->GetLibrary().FindMacro("html.Update");
-      if (uf != 0)
-        op->executeMacro("html.Update");
+      TActionQueue *q =
+        TBasicApp::GetInstance().FindActionQueue(olxappevent_UPDATE_GUI);
+      if (q != NULL) q->Execute(NULL);
     }
   }
 }

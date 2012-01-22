@@ -104,8 +104,11 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
     return cc == 1;
   if (e == iOxygenZ)
     return cc <= 2;
-  if (XElementLib::IsHalogen(e))
+  if (XElementLib::IsHalogen(e)) {
+    if (e.z == iChlorineZ) // treat the ClO4
+      return cc <= 1 || cc == 4;
     return cc <= 1;
+  }
   if (XElementLib::IsMetal(e)) {
     if (cc <= 1) return false;
     if (cc ==2) return XElementLib::IsTtransitionalGroup(1, e);

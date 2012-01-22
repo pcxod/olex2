@@ -21,7 +21,8 @@ enum  {
   logInfo,
   logWarning,
   logError,
-  logException
+  logException,
+  logExceptionTrace
 };
 class TLog: public IEObject, public IDataOutputStream  {
   // stream, to delete at the end
@@ -83,6 +84,7 @@ public:
       buffer << str;
       return *this;
     }
+    LogEntry& operator << (const TExceptionBase &e);
     LogEntry& nl()  {
       buffer << NewLineSequence();
       return *this;

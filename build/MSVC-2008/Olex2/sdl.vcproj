@@ -1355,6 +1355,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\olxptr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\smart\ostring.h"
 				>
 			</File>

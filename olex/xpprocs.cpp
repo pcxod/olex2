@@ -145,11 +145,8 @@
 #include "absorpc.h"
 #include "file_filter.h"
 #include "dsphere.h"
+#include "patchapi.h"
 //#include "gl2ps/gl2ps.c"
-
-#ifdef _CUSTOM_BUILD_
-  #include "custom_base.h"
-#endif
 
 static const olxstr StartMatchCBName("startmatch");
 static const olxstr OnMatchCBName("onmatch");
@@ -176,7 +173,7 @@ void TMainForm::funFileLast(const TStrObjList& Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "file does not exists anymore");
     return;
   }
-  E.SetRetVal( FRecentFiles[index] );
+  E.SetRetVal(FRecentFiles[index]);
 }
 //..............................................................................
 void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
@@ -252,7 +249,7 @@ void TMainForm::funCrs(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funDataDir(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(DataDir.SubStringFrom(0, 1));
+  E.SetRetVal(FXApp->GetInstanceDir().SubStringFrom(0, 1));
 }
 //..............................................................................
 void TMainForm::funStrcat(const TStrObjList& Params, TMacroError &E)  {
@@ -3658,7 +3655,7 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr FN = DataDir + "output.txt";
+  olxstr FN = FXApp->GetInstanceDir() + "output.txt";
   TUtf8File::WriteLines(FN, FGlConsole->Buffer());
   Macros.ProcessMacro(olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
 }
@@ -4832,7 +4829,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( !(TEFile::ChangeFileExt(file_n.file_name, EmptyString()) ==
       TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString())) )
     {
-      TEFile::DelFile(DataDir+"spacegroups.htm");
+      TEFile::DelFile(FXApp->GetInstanceDir()+"spacegroups.htm");
     }
     // special treatment of the kl files
     if( TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl") )  {
@@ -5514,7 +5511,7 @@ void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options, TMac
   else
     StoredParams.GetObject(ind) = Cmds[1];
   if( Cmds.Count() == 3 && Cmds[2].ToBool() )
-    SaveSettings(DataDir + FLastSettingsFile);
+    SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
 }
 //..............................................................................
 void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
@@ -8453,7 +8450,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     delete iv;
   iv = _exp.build("a=a[4][1][1].toUpper()");
   
-  //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
+  iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   if( !iv->is_final() && false )  {
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;
@@ -10349,3 +10346,19 @@ void TMainForm::macPoly(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     atoms[i]->SetPolyhedronType(pt);
 }
 //..............................................................................
+void TMainForm::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+  if (_UpdateThread != NULL) {
+    E.ProcessingError(__OlxSrcInfo, "Update in the progress");
+    return;
+  }
+  if( FXApp->IsBaseDirWriteable() )  {
+    _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + patcher::PatchAPI::GetPatchFolder());
+    _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
+    _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
+    _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
+    _UpdateThread->Start();
+  }
+  
+}
+  //..............................................................................

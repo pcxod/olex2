@@ -28,9 +28,13 @@ size_t TLog::Write(const void *Data, size_t size)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate) : parent(_parent), evt(_evt)  {
-  if( annotate )
-    buffer << "New log entry at: " << TETime::FormatDateTime(TETime::Now()) << NewLineSequence();
+TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate)
+  : parent(_parent), evt(_evt)
+{
+  if (annotate) {
+    buffer << "New log entry at: " << TETime::FormatDateTime(TETime::Now()) <<
+      NewLineSequence();
+  }
 }
 //..............................................................................
 TLog::LogEntry::~LogEntry()  {
@@ -55,6 +59,9 @@ TLog::LogEntry::~LogEntry()  {
     case logException: 
       ac = &parent.OnException;
       break;
+    case logExceptionTrace: 
+      ac = &parent.OnException;
+      break;
     default: 
       ac = &parent.OnInfo;
       break;
@@ -65,5 +72,16 @@ TLog::LogEntry::~LogEntry()  {
     }
     ac->Exit(&parent);
   }
+}
+//..............................................................................
+TLog::LogEntry& TLog::LogEntry::operator << (const TExceptionBase &e) {
+  if (evt == logExceptionTrace) {
+    TStrList l;
+    e.GetException()->GetStackTrace(l);
+    buffer << l.Text(NewLineSequence());
+  }
+  else
+    buffer << e.GetException()->GetError();
+  return *this;
 }
 //..............................................................................

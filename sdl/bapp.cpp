@@ -111,21 +111,19 @@ const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
     if( !TEFile::MakeDir(cd) )
       if( !TEFile::MakeDirs(cd) ) {
         throw TFunctionFailedException(__OlxSourceInfo,
-          olxstr("Could not create common dir:") << cd);
+          olxstr("Could not create common dir: ").quote() << cd);
       }
   }
   else if( !TEFile::IsDir(cd) )  {
     throw TFunctionFailedException(__OlxSourceInfo,
-      olxstr("Invalid config dir:") << cd);
+      olxstr("Invalid shared dir: ").quote() << cd);
   }
   return (inst.SharedDir = TEFile::AddPathDelimeter(cd));
 }
 //..............................................................................
 const olxstr& TBasicApp::GetSharedDir() {  
-  if( GetInstance().SharedDir.IsEmpty() ) {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      "The common directory is undefined");
-  }
+  if( GetInstance().SharedDir.IsEmpty() )
+    return GetInstance().BaseDir;
   return GetInstance().SharedDir; 
 }
 //..............................................................................

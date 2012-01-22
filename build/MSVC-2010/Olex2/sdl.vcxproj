@@ -688,6 +688,7 @@
     <ClInclude Include="..\..\..\sdl\evalue.h" />
     <ClInclude Include="..\..\..\sdl\evector.h" />
     <ClInclude Include="..\..\..\sdl\exception.h" />
+    <ClInclude Include="..\..\..\sdl\exparse\statements.h" />
     <ClInclude Include="..\..\..\sdl\filetree.h" />
     <ClInclude Include="..\..\..\sdl\file_filter.h" />
     <ClInclude Include="..\..\..\sdl\function.h" />
