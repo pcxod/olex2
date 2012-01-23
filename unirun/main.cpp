@@ -166,6 +166,7 @@ int main(int argc, char** argv)  {
         bapp.Arguments.Delete(i--);
       }
     }
+    bapp.SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
     DoRun();
     if( !bapp.Options.Contains("-run") ) {
       olxcstr argl = bapp.Arguments.Text(' ', 1);
