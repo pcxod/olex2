@@ -352,6 +352,7 @@ bool TShellUtil::VerifyEmbeddedSignature(const olxstr &file_name) {
 #endif // __WIN32__ && !__GNUC__
 //.............................................................................
 #ifdef __WIN32__
+#ifndef __GNUC__
 olxstr TShellUtil::GetFileVersion(const olxstr &fn, const olxstr &lang) {
   if( TEFile::Exists(fn) )  {
     DWORD len = GetFileVersionInfoSize(fn.u_str(), &len);
@@ -383,12 +384,13 @@ bool TShellUtil::IsAdmin() {
     0, 0, 0, 0, 0, 0,
     &AdministratorsGroup); 
   if( b == TRUE )   {
-    if( !CheckTokenMembership( NULL, AdministratorsGroup, &b) )
+    if( !CheckTokenMembership(NULL, AdministratorsGroup, &b) )
       b = FALSE;
     FreeSid(AdministratorsGroup); 
   }
   return b == TRUE;
 }
+#endif //__GNUC__
 //.............................................................................
 //http://msdn.microsoft.com/en-us/library/windows/desktop/bb762153(v=vs.85).aspx
 bool TShellUtil::RunElevated(const olxstr &fn, const olxstr &args) {
