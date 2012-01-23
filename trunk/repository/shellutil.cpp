@@ -389,7 +389,6 @@ bool TShellUtil::IsAdmin() {
   }
   return b == TRUE;
 }
-#endif // __WIN32__
 //.............................................................................
 //http://msdn.microsoft.com/en-us/library/windows/desktop/bb762153(v=vs.85).aspx
 bool TShellUtil::RunElevated(const olxstr &fn, const olxstr &args) {
@@ -402,6 +401,7 @@ bool TShellUtil::RunElevated(const olxstr &fn, const olxstr &args) {
     SW_SHOW
     ) != 0;
 }
+#endif // __WIN32__
 //.............................................................................
 olxstr TShellUtil::GetCmdLineArgs(const olxstr &fn) {
   const TStrList& args = TBasicApp::GetInstance().Arguments;
