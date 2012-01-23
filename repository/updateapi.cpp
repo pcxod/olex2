@@ -27,9 +27,21 @@ using namespace updater;
 using namespace patcher;
 const olxstr UpdateAPI::new_installation_fn("new_installation");
 //..............................................................................
-UpdateAPI::UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL), 
-  settings(GetSettingsFileName()), Tag(patcher::PatchAPI::ReadRepositoryTag())
-{}
+UpdateAPI::UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL),
+  Tag(patcher::PatchAPI::ReadRepositoryTag())
+{
+  TStrList files;
+  files << GetSettingsFileName() << GetMirrorsFileName();
+  for (size_t i=0; i < files.Count(); i++) {
+    if (!TEFile::Exists(files[i]))  {
+      olxstr fn = TBasicApp::GetBaseDir() +
+        TEFile::ExtractFileName(files[i]);
+      if (TEFile::Exists(fn))
+        TEFile::Copy(fn, files[i]);
+    }
+  }
+  settings.Init(GetSettingsFileName());
+}
 //..............................................................................
 short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
   CleanUp(_f_lsnr, _p_lsnr); 

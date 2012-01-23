@@ -5466,10 +5466,6 @@ void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  if( !FXApp->IsBaseDirWriteable() )  {
-    E.ProcessingError(__OlxSrcInfo, "This feature is not accessible in read-only installation");
-    return;
-  }
   TdlgUpdateOptions* dlg = new TdlgUpdateOptions(this);
   dlg->ShowModal();
   dlg->Destroy();

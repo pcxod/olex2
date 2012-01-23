@@ -42,20 +42,23 @@ TBasicApp::TBasicApp(const olxstr& FileName)
   // attach GC to the instance, if detached...
   TEGC::Initialise();
   SetBaseDir(FileName);
-  try {
-    olxstr options_file = GetBaseDir() + ".options";
-    if( TEFile::Exists(options_file) )  {
-      TSettingsFile sf(options_file);
-      for( size_t i=0; i < sf.ParamCount(); i++ )
-        Options.AddParam(sf.ParamName(i), sf.ParamValue(i), false);
-    }
-  }
-  catch(...)  {}
+  ReadOptions(GetBaseDir() + ".options");
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
   Instance = NULL;
   delete Log;
+}
+//..............................................................................
+void TBasicApp::ReadOptions(const olxstr &fn) {
+  try {
+    if( TEFile::Exists(fn) )  {
+      TSettingsFile sf(fn);
+      for( size_t i=0; i < sf.ParamCount(); i++ )
+        Options.AddParam(sf.ParamName(i), sf.ParamValue(i), false);
+    }
+  }
+  catch(...)  {}
 }
 //..............................................................................
 olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
@@ -68,10 +71,10 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
     bd = olx_getenv(var_name);
   }
   else {
-	  if( !TEFile::IsDir(path) )
+    if( !TEFile::IsDir(path) )
       bd = TEFile::ExtractFilePath(path);
-		else
-		  bd = path;
+    else
+    bd = path;
     bd = TEFile::ExpandRelativePath(bd, TEFile::CurrentDir());
   }
   if( bd.IsEmpty() || !TEFile::Exists(bd) )
@@ -131,6 +134,9 @@ void TBasicApp::SetInstanceDir(const olxstr &d) {
   if (!TEFile::Exists(d))
     TEFile::MakeDirs(d);
   InstanceDir = TEFile::AddPathDelimeter(d); 
+  // read user settings
+  if (!InstanceDir.Equals(BaseDir))
+    ReadOptions(InstanceDir + ".options");
 }
 //..............................................................................
 TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {

@@ -3495,7 +3495,7 @@ void TMainForm::OnInternalIdle()  {
 #endif
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
-  if( !RunOnceProcessed )  {
+  if( !RunOnceProcessed && TBasicApp::IsBaseDirWriteable() )  {
     RunOnceProcessed = true;
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
