@@ -63,16 +63,7 @@ public:
   static bool HaveUpdates() {
     return TEFile::Exists(GetUpdateLocationFileName());
   }
-  static olxstr GetUpdateLocation()  {
-    olxstr update_location = GetUpdateLocationFileName();
-    if( TEFile::Exists(update_location) )  {
-      TCStrList fc;
-      fc.LoadFromFile(update_location);
-      if( fc.Count() == 1 )
-        return TEFile::ExpandRelativePath(fc[0], GetInstanceDir());
-    }
-    return EmptyString();
-  }
+  static olxstr GetUpdateLocation();
   static olxstr GetUpdaterPIDFileName()  {
     return TBasicApp::GetInstanceDir() + "pid.update";
   }
