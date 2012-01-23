@@ -169,7 +169,7 @@ namespace twinning  {
       const size_t src_index;
       mutable int current;
       mutable vec3i index;
-      const size_t n, hn;
+      const int n, hn;
       iterator(const merohedral& _parent, size_t _src_index)
         : parent(_parent),
           src_index(_src_index),

@@ -24,18 +24,29 @@ void UpdateThread::DoInit()  {
   if( !TBasicApp::HasInstance() || Terminate ) 
     return;
   try  {
+    if (TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName()))
+      return;
+    // compatibility with older versions!
+    olxstr old_lf = TBasicApp::GetBaseDir() +
+      "__location.update";
+    if (TEFile::Exists(old_lf)) {
+      TEFile::Copy(old_lf, patcher::PatchAPI::GetUpdateLocationFileName());
+      TEFile::DelFile(old_lf);
+      return;
+    }
+    // end of the compatibility section
     updater::UpdateAPI uapi;
     srcFS = uapi.FindActiveUpdateRepositoryFS(NULL);
     if( srcFS == NULL )  return;
     Index = new TFSIndex(*srcFS);
-    destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
+    destFS = new TOSFileSystem(TBasicApp::GetBaseDir());
     uapi.EvaluateProperties(properties);
-    srcFS->OnProgress.Add( new TActionProxy(OnDownload) );
-    Index->OnAction.Add( new TActionProxy(OnAction) );
+    srcFS->OnProgress.Add(new TActionProxy(OnDownload));
+    Index->OnAction.Add(new TActionProxy(OnAction));
   }
   catch(const TExceptionBase& exc)  {
     if( TBasicApp::HasInstance() )
-      TBasicApp::NewLogEntry(logInfo) << exc.GetException()->GetFullMessage();
+      TBasicApp::NewLogEntry(logExceptionTrace) << exc;
   }
 }
 //.............................................................................
@@ -47,8 +58,6 @@ int UpdateThread::Run()  {
     CleanUp();
     return 0;
   }
-  if( TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName()) )
-    return 0;
   // try to lock updateAPI
   while( !patcher::PatchAPI::LockUpdater() )  {
     olx_sleep(100);
@@ -76,11 +85,6 @@ int UpdateThread::Run()  {
       }
       olx_sleep(100);
     }
-#ifdef __WIN32__
-    olxstr updater_file = dfs.GetBase() + "olex2.exe";
-#else
-    olxstr updater_file = dfs.GetBase() + "unirun";
-#endif
     // download completion file
     olxstr download_vf(patcher::PatchAPI::GetUpdateLocationFileName());
     // do not run subsequent temporary updates
@@ -103,20 +107,6 @@ int UpdateThread::Run()  {
       }
     }
     catch(const TExceptionBase&)  {}
-    // try to update the updater, should check the name of executable though!
-    if( dfs.Exists(updater_file) )  {
-      try  {
-        olxstr dest = TBasicApp::GetBaseDir() +
-          TEFile::ExtractFileName(updater_file);
-        // are on different disks?
-        if( !TEFile::Rename(updater_file, dest) )  {
-          if( TEFile::Copy(updater_file, dest) )
-            TEFile::DelFile(updater_file);
-        }
-        TEFile::Chmod(dest, S_IEXEC|S_IWRITE|S_IREAD);
-      }
-      catch(...) {}
-    }
     if( completed )  {
       olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) +
         patcher::PatchAPI::GetUpdaterCmdFileName());

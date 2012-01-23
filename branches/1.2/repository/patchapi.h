@@ -49,14 +49,19 @@ class PatchAPI  {
   }
   static TEFile* lock_file;
   static void _RestoreExecuableFlags();
-  static olxstr repository_tag;
+  static olxstr repository_tag, shared_dir, instance_dir;
 public:
   ~PatchAPI()  {  UnlockUpdater();  }
-  // if action handlers are passed along - they eill be automatically deleted
+  // if action handlers are passed along - they will be automatically deleted
   static short DoPatch(AActionHandler* OnFileCopy=NULL,
     AActionHandler* OnOverallCopy=NULL);
+  /* 2012.01.21 - the location is stored in the user dependent folder
+  */
   static olxstr GetUpdateLocationFileName()  {
-    return TBasicApp::GetBaseDir() + "__location.update";
+    return TBasicApp::GetInstanceDir() + "__location.update";
+  }
+  static bool HaveUpdates() {
+    return TEFile::Exists(GetUpdateLocationFileName());
   }
   static olxstr GetUpdateLocation()  {
     olxstr update_location = GetUpdateLocationFileName();
@@ -64,12 +69,12 @@ public:
       TCStrList fc;
       fc.LoadFromFile(update_location);
       if( fc.Count() == 1 )
-        return TEFile::ExpandRelativePath(fc[0]);
+        return TEFile::ExpandRelativePath(fc[0], GetInstanceDir());
     }
     return EmptyString();
   }
   static olxstr GetUpdaterPIDFileName()  {
-    return TBasicApp::GetBaseDir() + "pid.update";
+    return TBasicApp::GetInstanceDir() + "pid.update";
   }
   static const char* GetUpdaterCmdFileName()  {  return "__cmds.update";  }
   static const char* GetOlex2PIDFileExt()  {  return "olex2_pid";  }
@@ -82,11 +87,13 @@ public:
   static const char* GetPatchFolder()  {  return "patch";  }
   //reads current repository tag, returns EmptyString() in the case of error
   static olxstr ReadRepositoryTag(const olxstr& base_dir=EmptyString());
-  /* return 'AppData/Olex2Data/' or OLEX2_DATADIR if defined (gets same value
-  as the argument of the GetCurrentSharedDir
+  /* return 'AppData' or OLEX2_DATADIR if defined
   */
   static olxstr _GetSharedDirRoot();
-  static olxstr GetSharedDirRoot()  {
+  /* return _GetSharedDirRoot()/Olex2Data on windows or
+  _GetSharedDirRoot()/data on other platforms
+  */
+  static olxstr GetSharedDir()  {
     return _GetSharedDirRoot() <<
 #ifdef __WIN32__
     "Olex2Data/";
@@ -94,8 +101,11 @@ public:
     "data/";
 #endif
   }
-  // composes new shared dir and saves its info
-  static olxstr ComposeNewSharedDir(const olxstr& shared_dir,
+  /* composes new instance dir and saves its info. The instance dir depends on
+  the location of the executable and thus can be used to store instance
+  specific updates etc
+  */
+  static olxstr ComposeInstanceDir(const olxstr& shared_dir,
     const olxstr& _base_dir=EmptyString())
   {
     olxstr new_shared_dir = shared_dir;
@@ -110,13 +120,13 @@ public:
       new_shared_dir << MD5::Digest(
         esdl::olxcstr(base_dir + ReadRepositoryTag(base_dir))));
   }
-  /* checks for OLEX2_DATADIR, if DataDir is provided the raw data dir like
-  Application Data without the MD5 suffix will be assigned to it (like from the
-  call to GetSharedDirRoot) if OLEX2_DATADIR_STATIC is set to true, the root
+  /* checks for OLEX2_DATADIR, if OLEX2_DATADIR_STATIC is set to true, the root
   folder is returned and used (for all versions of programs which may be
   installed and using this API
   */
-  static olxstr GetCurrentSharedDir(olxstr* DataDir=NULL);
+  static olxstr GetInstanceDir();
+  /* mostly for internal use, saves the origin of the MD5 hash to folder.info
+  file */
   static void SaveLocationInfo(const olxstr& shared_dir,
     const olxstr& base_dir=EmptyString())
   {
@@ -124,7 +134,7 @@ public:
     location_file_content.Add(TEFile::AddPathDelimeter(
       (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir))) 
         << patcher::PatchAPI::ReadRepositoryTag();
-    location_file_content.SaveToFile( shared_dir + "folder.info" );
+    location_file_content.SaveToFile( shared_dir + "folder.info");
   }
   static olxstr ComposeOldSharedDir(const olxstr& shared_dir)  {
     olxstr new_shared_dir = shared_dir;

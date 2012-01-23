@@ -484,6 +484,10 @@ template <typename FT> FT olx_pow10(size_t val)  {
   while( --val > 0 ) rv *=10;
   return rv;
 }
+/* comparison function (useful for the size_t on Win64, where size_t=uint64_t
+ *  and int is int32_t) */
+template <typename T1, typename T2> inline
+int olx_cmp(T1 a, T2 b)  {  return a < b ? -1 : (a > b ? 1 : 0);  }
 
 #include "association.h"
 #include "listalg.h"

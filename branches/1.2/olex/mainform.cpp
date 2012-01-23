@@ -403,7 +403,7 @@ bool TMainForm::Destroy()  {
     SaveVFS(plStructure);  
     FXApp->OnObjectsDestroy.Remove(this);
     ProcessMacro("onexit");
-    SaveSettings(DataDir + FLastSettingsFile);
+    SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
     ClearPopups();
   }
   Destroying = true;
@@ -834,7 +834,14 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Forses Uij of provided atoms to behave in isotropic manner. If no atoms "
     "provided, all non-H atoms considered");
 
-  this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded);
+  this_InitMacroD(ShowQ,
+    "wheel-number of peaks to hide (if negative) or to show ",
+    fpNone|fpOne|fpTwo|psFileLoaded,
+    "Traverses the three states - peaks and peak bonds are visible, only peaks"
+    " visible, no peaks or peak bonds. One numeric argument is taken to "
+    "increment/decrement the numegbr of visibe peaks. Two aruments are taken "
+    "to control the visibility of atoms or bonds, like in: 'showq a true' or "
+    "'showq b false'");
 
   this_InitMacroD(Mode, 
     "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only\n&;"
@@ -923,7 +930,8 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitMacro(SetCmd, , fpAny);
 
-  this_InitMacro(UpdateOptions, , fpNone);
+  this_InitMacroD(UpdateOptions, EmptyString(), fpNone, "Shows the Update Options dialog");
+  this_InitMacroD(Update, EmptyString(), fpNone, "Does check the for the updates");
   this_InitMacro(Reload, , fpOne);
   this_InitMacro(StoreParam, , fpTwo|fpThree);
   this_InitMacro(SelBack, a&;o&;x, fpNone);
@@ -1455,46 +1463,19 @@ void TMainForm::XApp(TGXApp *XA)  {
     wxT("Hide basis") : wxT("Show basis"));
   TutorialDir = XA->GetBaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
-  olxstr new_data_dir = patcher::PatchAPI::GetCurrentSharedDir(&DataDir);
-  DataDir = patcher::PatchAPI::ComposeOldSharedDir(DataDir);
-  // migration code...
-  if( !TEFile::Exists(DataDir) )  {  // do not worry then - create the new one
-    DataDir = new_data_dir;
-    if( !TEFile::MakeDirs(DataDir) )
-      TBasicApp::NewLogEntry(logError) << "Could not create data folder!";
-      if( updater::UpdateAPI::IsNewInstallation() )
-        updater::UpdateAPI::TagInstallationAsOld();
-      patcher::PatchAPI::SaveLocationInfo(new_data_dir);
-  }
-  else  {
-    if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
-      // check if we have full access to all files in the dir...
-      bool copy_old = !updater::UpdateAPI::IsNewInstallation();
-      if( !TEFile::MakeDirs(new_data_dir) ) {
-        TMainFrame::ShowAlert(olxstr("Failed to create: ") << new_data_dir,
-          "ERROR", wxOK|wxICON_ERROR);
-      }
-      else if( copy_old )
-        TFileTree::Copy(DataDir, new_data_dir, false);
-      if( !copy_old )
-        updater::UpdateAPI::TagInstallationAsOld();
-      patcher::PatchAPI::SaveLocationInfo(new_data_dir);
-    }
-    DataDir = new_data_dir;
-  }
-  FXApp->SetSharedDir(DataDir);
   DictionaryFile = XA->GetBaseDir() + "dictionary.txt";
   PluginFile =  XA->GetBaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
 
   TFileHandlerManager::AddBaseDir(TutorialDir);
-  TFileHandlerManager::AddBaseDir(DataDir);
+  TFileHandlerManager::AddBaseDir(FXApp->GetInstanceDir());
 
   SetStatusText(XA->GetBaseDir().u_str());
 
   // put log file to the user data folder
   try  {
-    TBasicApp::GetLog().AddStream(TUtf8File::Create(DataDir + "olex2.log"), true);
+    TBasicApp::GetLog().AddStream(
+      TUtf8File::Create(FXApp->GetInstanceDir() + "olex2.log"), true);
   }
   catch( TExceptionBase& )  {
     TBasicApp::NewLogEntry(logError) << "Could not create log file!";
@@ -1582,6 +1563,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     TBasicApp::NewLogEntry(logInfo) <<
       (olxstr("Invalid boolean value for ").quote() << "tooltip_occu_chem");
   }
+  TBasicApp::GetInstance().NewActionQueue(olxappevent_UPDATE_GUI).Add(this, ID_UPDATE_GUI);
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1609,7 +1591,7 @@ void TMainForm::StartupInit()  {
   FInfoBox->SetFontIndex(2);
   GlTooltip->SetFontIndex(6);
 
-  olxstr T(DataDir);  
+  olxstr T(FXApp->GetInstanceDir());  
   T << FLastSettingsFile;
   if( !TEFile::Exists(T) )  {
     T = TBasicApp::GetBaseDir();
@@ -1728,21 +1710,36 @@ void TMainForm::StartupInit()  {
   }
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
-  if( FXApp->Arguments.Count() >= 2 )
+  if( FXApp->Arguments.Count() >= 2 ) {
     ProcessMacro(olxstr("reap \'") << FXApp->Arguments.Text(' ', 1) << '\'', __OlxSrcInfo);
-  // load html in last cal - it might call some destructive functions on uninitialised data
+  }
+  // load html in last call - it might call some destructive functions on uninitialised data
   FHtml->LoadPage(FHtmlIndexFile.u_str());
   FHtml->SetHomePage(FHtmlIndexFile);
   // must move it here since on Linux things will not get initialised at the previous position
+  CreateUpdateThread();
+  FileDropTarget* dndt = new FileDropTarget(*this);
+  this->SetDropTarget(dndt);
+}
+//..............................................................................
+bool TMainForm::CreateUpdateThread() {
+  volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+  if (_UpdateThread != NULL) return false;
+#ifndef __WIN32__ // do updates on non-Win only if the folder is writable
   if( FXApp->IsBaseDirWriteable() )  {
-    _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + patcher::PatchAPI::GetPatchFolder());
+#endif
+    _UpdateThread = new UpdateThread(FXApp->GetInstanceDir() +
+      patcher::PatchAPI::GetPatchFolder());
     _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
     _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
     _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
     _UpdateThread->Start();
+    return true;
+#ifndef __WIN32__
   }
-  FileDropTarget* dndt = new FileDropTarget(*this);
-  this->SetDropTarget(dndt);
+  else
+    return false;
+#endif
 }
 //..............................................................................
 void TMainForm::AquireTooltipValue()  {
@@ -1913,7 +1910,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   //  }
   //}
   else if( MsgId == ID_UpdateThreadTerminate )  {
-    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     _UpdateThread = NULL;
 
      if( UpdateProgress != NULL )  {
@@ -2272,6 +2269,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if (MsgId == ID_BadReflectionSet) {
     if (MsgSubId == msiExit)
       BadReflectionsTable(false);
+  }
+  else if (MsgId == ID_UPDATE_GUI) {
+    executeMacro("html.update");
   }
   return res;
 }
@@ -3147,8 +3147,8 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   Table.CreateHTMLList(Output, EmptyString(), false, false, false);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plGlobal);
-  if( TEFile::Exists(DataDir+RecentFilesFile) )
-    TEFile::DelFile(DataDir+RecentFilesFile);
+  if( TEFile::Exists(FXApp->GetInstanceDir()+RecentFilesFile) )
+    TEFile::DelFile(FXApp->GetInstanceDir()+RecentFilesFile);
   //TUtf8File::WriteLines( RecentFilesFile, Output, false );
   return true;
 }
@@ -3267,58 +3267,62 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
   TStrList Output;
 
   const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
-  
-  Table[0][0] = "R1(Fo > 4sig(Fo))";
-  if( Lst.R1() > 0.1 )
-    Table[0][1] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.R1()) << "</font>";
-  else
-    Table[0][1] = olxstr::FormatFloat(4,Lst.R1());
-
-  Table[0][2] = "R1(all data)";
-  if( Lst.R1a() > 0.1 )
-    Table[0][3] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.R1a()) << "</font>";
-  else
-   Table[0][3] = olxstr::FormatFloat(4,Lst.R1a());
-
-  Table[1][0] = "wR2";
-  if( Lst.wR2() > 0.2 )
-     Table[1][1] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.wR2()) << "</font>"; 
-  else
-    Table[1][1] = olxstr::FormatFloat(4,Lst.wR2());
-
-  Table[1][2] = "GooF";
-  if( olx_abs(Lst.S()-1) > 0.5 )
-    Table[1][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.S()) << "</font>";
-  else
-    Table[1][3] = olxstr::FormatFloat(2,Lst.S());  
-
-  Table[2][0] = "GooF(Restr)";
-  if( olx_abs(Lst.RS()-1) > 0.5 )
-    Table[2][1] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.RS()) << "</font>";
-  else
-    Table[2][1] = olxstr::FormatFloat(2,Lst.RS());
-
-  Table[2][2] = "Highest peak";
-  if( Lst.Peak() > 1.5 )
-    Table[2][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.Peak()) << "</font>";
-  else
-    Table[2][3] = olxstr::FormatFloat(2,Lst.Peak()); 
-
-  Table[3][0] = "Deepest hole";
-  if( olx_abs(Lst.Hole()) > 1.5 )
-    Table[3][1] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.Hole()) << "</font>";
-  else
-    Table[3][1] = olxstr::FormatFloat(2,Lst.Hole());
-
-  Table[3][2] = "Params";             Table[3][3] = Lst.Params();
-  Table[4][0] = "Refs(total)";        Table[4][1] = Lst.TotalRefs();
-  Table[4][2] = "Refs(uni)";          Table[4][3] = Lst.UniqRefs();
-  Table[5][0] = "Refs(Fo > 4sig(Fo))";Table[5][1] = Lst.Refs4sig();
-  Table[5][2] = "R(int)";             Table[5][3] = olxstr::FormatFloat(3,Lst.Rint());
-  Table[6][0] = "R(sigma)";           Table[6][1] = olxstr::FormatFloat(3,Lst.Rsigma());
-  Table[6][2] = "F000";               Table[6][3] = olxstr::FormatFloat(3,Lst.F000()).TrimFloat();
-  Table[7][0] = "&rho;/g*mm<sup>-3</sup>"; Table[7][1] = olxstr::FormatFloat(3,Lst.Rho());
-  Table[7][2] = "&mu;/mm<sup>-1</sup>";  Table[7][3] = olxstr::FormatFloat(3,Lst.Mu());
+  olxstr m1 = "-1";
+  double v[7] = {
+    Lst.params.Find("R1", m1).ToDouble(),
+    Lst.params.Find("R1all", m1).ToDouble(),
+    Lst.params.Find("wR2", m1).ToDouble(),
+    Lst.params.Find("S", m1).ToDouble(),
+    Lst.params.Find("rS", m1).ToDouble(),
+    Lst.params.Find("peak", m1).ToDouble(),
+    Lst.params.Find("hole", m1).ToDouble(),
+  },
+  ev[7] = {0.1, 0.1, 0.2, -1, -1, 1.5, 1.5};
+  const char* vl[7] = {
+  "R1(Fo > 4sig(Fo))",
+  "R1(all data)",
+  "wR2",
+  "GooF",
+  "GooF(restr)",
+  "Highest peak",
+  "Deepest hole"
+  };
+  size_t coli=0, rowi=0;
+  for (size_t i=0; i < 7; i++) {
+    Table[rowi][coli] = vl[i];
+    if ((ev[i] >= 0 && v[i] > ev[i]) ||
+        ((ev[i] < 0 && olx_abs(v[i]+ev[i]) > 0.5)) )
+    {
+      Table[rowi][coli+1] << "<font color=\'red\'>" <<
+        olxstr::FormatFloat(4,v[i]) << "</font>";
+    }
+    else
+      Table[rowi][coli+1] = olxstr::FormatFloat(4, v[i]);
+    if (coli == 2) {
+      rowi++;
+      coli = 0;
+    }
+    else
+      coli = 2;
+  }
+  Table[3][2] = "Params";
+    Table[3][3] = Lst.params.Find("param_n", m1);
+  Table[4][0] = "Refs(total)";
+    Table[4][1] = Lst.params.Find("ref_total", m1);
+  Table[4][2] = "Refs(uniq)";
+    Table[4][3] = Lst.params.Find("ref_unique", m1);
+  Table[5][0] = "Refs(Fo > 4sig(Fo))";
+    Table[5][1] = Lst.params.Find("ref_4sig", m1);
+  Table[5][2] = "R(int)";
+    Table[5][3] = Lst.params.Find("Rint", m1);
+  Table[6][0] = "R(sigma)";
+    Table[6][1] = Lst.params.Find("Rsig", m1);
+  Table[6][2] = "F000";
+    Table[6][3] = Lst.params.Find("F000", m1);
+  Table[7][0] = "&rho;/g*mm<sup>-3</sup>";
+    Table[7][1] = Lst.params.Find("Rho", m1);
+  Table[7][2] = "&mu;/mm<sup>-1</sup>";
+    Table[7][3] = Lst.params.Find("Mu", m1);
 
   Table.CreateHTMLList(Output, EmptyString(), false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
@@ -3491,7 +3495,7 @@ void TMainForm::OnInternalIdle()  {
 #endif
   TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
-  if( !RunOnceProcessed )  {
+  if( !RunOnceProcessed && TBasicApp::IsBaseDirWriteable() )  {
     RunOnceProcessed = true;
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
@@ -3886,7 +3890,7 @@ void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& func
   }
 }
 //..............................................................................
-const olxstr& TMainForm::getDataDir() const  {  return DataDir;  }
+const olxstr& TMainForm::getDataDir() const  {  return FXApp->GetInstanceDir();  }
 //..............................................................................
 const olxstr& TMainForm::getVar(const olxstr &name, const olxstr &defval) const {
   const size_t i = TOlxVars::VarIndex(name);
@@ -3941,7 +3945,7 @@ void TMainForm::SaveVFS(short persistenceId)  {
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
     else if(persistenceId == plGlobal )
-      dbFN << DataDir << "global.odb";
+      dbFN << FXApp->GetInstanceDir() << "global.odb";
     else
       throw TFunctionFailedException(__OlxSourceInfo, "undefined persistence level");
 
@@ -3965,7 +3969,7 @@ void TMainForm::LoadVFS(short persistenceId)  {
         TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
     else if(persistenceId == plGlobal )
-      dbFN << DataDir << "global.odb";
+      dbFN << FXApp->GetInstanceDir() << "global.odb";
     else  {
       throw TFunctionFailedException(__OlxSourceInfo,
         "undefined persistence level");
@@ -4080,8 +4084,10 @@ void TMainForm::DoUpdateFiles()  {
   TdlgMsgBox* msg_box = NULL;
   if( sf.ask_for_update )  {
     msg_box = new TdlgMsgBox( this, 
-      olxstr("There are new updates avaialable (") << olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
-      "Updates will be downloaded in the background during this session and\nwill take effect with the next restart of Olex2",
+      olxstr("There are new updates avaialable (") <<
+        olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
+      "Updates will be downloaded in the background during this session and\n"
+      "will take effect with the next restart of Olex2",
       "Automatic Updates",
       "Do not show this message again",
       wxYES|wxNO|wxICON_QUESTION,
@@ -4267,7 +4273,8 @@ void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
     if( !err.IsSuccessful() )
       break;
   }
-  TBasicApp::NewLogEntry(logInfo) << "The process '" << p.GetCmdLine() << "' has been terminated...";
+  TBasicApp::NewLogEntry(logInfo) << "The process '" << p.GetCmdLine() <<
+    "' has been terminated...";
   parent.TimePerFrame = parent.FXApp->Draw();
 }
 //..............................................................................

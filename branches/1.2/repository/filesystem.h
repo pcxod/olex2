@@ -161,7 +161,8 @@ public:
 private:
   TFSItem* Parent;
   TFSIndex& Index;
-  bool Folder, Processed;
+  bool Folder;
+  mutable bool Processed;
   uint64_t DateTime, Size;
   TCSTypeList<olxstr, TFSItem*> Items;
   olxstr Name, Digest;
@@ -170,7 +171,7 @@ protected:
   void DeleteItem(TFSItem* item);
   bool IsProcessed() const {  return Processed;  }
   // recursive version, must be called with false before Syncronise or CalcDiffSize
-  void SetProcessed(bool v);
+  void SetProcessed(bool v) const;
 public:
   TFSItem(TFSIndex& index, TFSItem* parent, const olxstr& name) :
     Parent(parent), 
@@ -241,7 +242,7 @@ public:
   AFileSystem& GetIndexFS() const;
   AFileSystem& GetDestFS() const;
   // calculates the update size
-  uint64_t CalcDiffSize(TFSItem& Dest, const TStrList& properties);
+  uint64_t CalcDiffSize(const TFSItem& Dest, const TStrList& properties) const;
   // syncronises two items
   uint64_t Synchronise(TFSItem& Dest, const TStrList& properties, TStrList* cmds=NULL);
   TFSItem* UpdateFile(TFSItem& FN);

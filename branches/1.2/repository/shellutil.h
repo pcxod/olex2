@@ -45,8 +45,13 @@ protected:
     MACInfo& mi, size_t len=6, bool accept_empty=false);
 public:
   static void ListMACAddresses(MACInfo& rv);
+  static olxstr GetCmdLineArgs(const olxstr &fn);
 #ifdef __WIN32__
   static bool VerifyEmbeddedSignature(const olxstr &file_name);
+  static olxstr GetFileVersion(const olxstr &fn,
+    const olxstr &lang="080904E4");
+  static bool RunElevated(const olxstr &fn, const olxstr &args=EmptyString());
+  static bool IsAdmin();
 #endif
 };
 #endif

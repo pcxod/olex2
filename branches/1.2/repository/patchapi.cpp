@@ -21,7 +21,7 @@
 using namespace patcher;
 
 TEFile* PatchAPI::lock_file = NULL;
-olxstr PatchAPI::repository_tag;
+olxstr PatchAPI::repository_tag, PatchAPI::shared_dir, PatchAPI::instance_dir;
 
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
   AActionHandler* OnOverallCopy)
@@ -147,6 +147,7 @@ olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
 }
 //.............................................................................
 olxstr PatchAPI::_GetSharedDirRoot()  {
+  if (!shared_dir.IsEmpty()) return shared_dir;
   const olxstr dd_str = olx_getenv("OLEX2_DATADIR");
   olxstr data_dir;
   if( !dd_str.IsEmpty() )  {
@@ -156,15 +157,14 @@ olxstr PatchAPI::_GetSharedDirRoot()  {
   }
   if( data_dir.IsEmpty() )
     data_dir = TShellUtil::GetSpecialFolderLocation(fiAppData);
-  return TEFile::AddPathDelimeterI(data_dir);
+  return (shared_dir=TEFile::AddPathDelimeterI(data_dir));
 }
 //.............................................................................
-olxstr PatchAPI::GetCurrentSharedDir(olxstr* DataDir)  {
+olxstr PatchAPI::GetInstanceDir()  {
+  if (!instance_dir.IsEmpty()) return instance_dir;
   olxstr data_dir = _GetSharedDirRoot();
-  if( DataDir != NULL )
-    *DataDir = data_dir;
   if( olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE") )
      return data_dir;
-  return ComposeNewSharedDir(data_dir);
+  return (instance_dir=ComposeInstanceDir(data_dir));
 }
 //.............................................................................

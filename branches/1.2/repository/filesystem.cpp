@@ -320,7 +320,7 @@ int TFSItem::GetLevel() const {
   return level;
 }
 //.............................................................................
-void TFSItem::SetProcessed(bool V)  {
+void TFSItem::SetProcessed(bool V) const {
   Processed = V;
   for( size_t i=0; i < Count(); i++ )
     Item(i).SetProcessed(V);
@@ -407,7 +407,9 @@ uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties,
   return Index.Progress.GetMax();
 }
 //.............................................................................
-uint64_t TFSItem::CalcDiffSize(TFSItem& Dest, const TStrList& properties)  {
+uint64_t TFSItem::CalcDiffSize(const TFSItem& Dest,
+  const TStrList& properties) const
+{
   uint64_t sz = 0;
   if( Parent == NULL )
     SetProcessed(false);
@@ -696,6 +698,8 @@ uint64_t TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties,
   DestI.DestFS = (dest_fs == NULL ? &To : dest_fs);
   olxstr SrcInd = IndexFS.GetBase() + indexName;
   olxstr DestInd = To.GetBase() + indexName;
+  // the index will be kept with the patch!
+  olxstr DestInd_ = DestI.DestFS->GetBase() + indexName;
   try  {
     LoadIndex(SrcInd, toSkip);
     if( To.Exists(DestInd) )
@@ -705,7 +709,7 @@ uint64_t TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties,
     uint64_t BytesTransfered = GetRoot().Synchronise(
       DestI.GetRoot(), properties, cmds);
     if( BytesTransfered != 0 )
-      DestI.SaveIndex(DestInd);
+      DestI.SaveIndex(DestInd_);
     OnBreak.Remove(&DestI.OnBreak);
     return BytesTransfered;
   }
@@ -726,9 +730,7 @@ uint64_t TFSIndex::CalcDiffSize(AFileSystem& To, const TStrList& properties,
     LoadIndex(SrcInd, toSkip);
     if( To.Exists(DestInd) )
       DestI.LoadIndex(DestInd);
-    uint64_t rv = GetRoot().CalcDiffSize(DestI.GetRoot(), properties);
-    DestI.SaveIndex(DestInd);
-    return rv;
+    return GetRoot().CalcDiffSize(DestI.GetRoot(), properties);
   }
   catch( const TExceptionBase& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);

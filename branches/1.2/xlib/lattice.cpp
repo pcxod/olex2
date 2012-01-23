@@ -138,7 +138,6 @@ ConstPtrList<smatd> TLattice::GenerateMatrices(
   const vec3d& center_, double rad)
 {
   const TAsymmUnit& au = GetAsymmUnit();
-  const vec3d cnt = au.GetOCenter(true, false);
   const TUnitCell &uc = GetUnitCell();
   const double qrad = rad*rad;
   olxdict<uint32_t, smatd*, TPrimitiveComparator> matrices;
@@ -404,7 +403,6 @@ void TLattice::GenerateBox(const mat3d& norms, const vec3d& size,
             TCAtom& ca = au.GetAtom(j);
             if( ca.IsDeleted() )  continue;
             vec3d p = m*ca.ccrd() + t;
-            const vec3d ccrd = p;
             const vec3f c = norms*(au.CellToCartesian(p) - center);
             if( olx_abs(c[0]) > size[0] || olx_abs(c[1]) > size[1] ||
                 olx_abs(c[2]) > size[2] )

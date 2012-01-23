@@ -46,7 +46,8 @@ enum  {
   ID_XOBJECTSDESTROY,
   ID_CMDLINECHAR,
   ID_CMDLINEKEYDOWN,
-  ID_TEXTPOST
+  ID_TEXTPOST,
+  ID_UPDATE_GUI
 };
 
 enum  {
@@ -501,6 +502,7 @@ private:
   DefMacro(SetCmd)
 
   DefMacro(UpdateOptions)
+  DefMacro(Update)
   DefMacro(Reload)
   DefMacro(StoreParam)
   DefMacro(SelBack)
@@ -667,7 +669,6 @@ public:
     ScenesDir, 
     DefStyle,         // default style file
     DefSceneP,        // default scene parameters file
-    DataDir,
     TutorialDir,
     PluginFile;
   TGlMaterial
@@ -741,6 +742,8 @@ private:
   void StartupInit();
   bool SkipSizing; // when size changed from the LoadSettings
   void DoUpdateFiles();
+  // returns true if the thread is created
+  bool CreateUpdateThread();
 public:
   TMainForm(TGlXApp *Parent);
   virtual ~TMainForm();
@@ -757,7 +760,7 @@ public:
 
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const  {  return FHtmlPanelWidth;  }
-  inline THtml* GetHtml()  const {  return FHtml; }
+  THtml* GetHtml()  const {  return FHtml; }
   olxstr_dict<TPopupData*, true> Popups;
   THtml* FindHtml(const olxstr& popupName) const;
   inline const olxstr& GetCurrentLanguageEncodingStr() const {
@@ -818,7 +821,7 @@ public:
 // TMainForm interface
   void GlCanvas(TGlCanvas *GC)  {  FGlCanvas = GC;  }
   TGlCanvas * GlCanvas()  {  return FGlCanvas;  }
-  void XApp( TGXApp *XA);
+  void XApp(TGXApp *XA);
   TGXApp *XApp()  {  return FXApp; }
   bool FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect);
   ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds,bool GetAll, bool unselect)  {

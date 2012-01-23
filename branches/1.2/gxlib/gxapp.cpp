@@ -3527,7 +3527,6 @@ void TGXApp::CreateXGrowLines()  {
       }
       Info[A->CAtom().GetId()] = gi;
     }
-    bool added = false;
     for( size_t j=0; j < gi->Count(); j++ )  {
       const AnAssociation2<TCAtom*,smatd>& gii = (*gi)[j];
       smatd transform = (A->GetMatrix(0).IsFirst() ? gii.GetB() : uc.MulMatrix(gii.GetB(), A->GetMatrix(0)));
@@ -3554,11 +3553,8 @@ void TGXApp::CreateXGrowLines()  {
         nt.dist = qdist;
         nt.to = gii.GetA();
         nt.from = A;
-        added = true;
       }
     }
-    //if( !added )
-    //  A->SetGrown(true);
   }
   for( size_t i=0; i < tr_list.Count(); i++ )  {
     TGXApp_Transform1& nt = tr_list[i];

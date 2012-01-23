@@ -47,8 +47,8 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   if( param_cnt == 0 || sl.Count() < param_cnt+11 )  
     throw TFunctionFailedException(__OlxSourceInfo, "empty/invalid matrix file");
   olxstr last_atom_name;
-  TCAtom* atom;
   size_t ua_index;
+  TCAtom *atom = NULL;
   for( size_t i=1; i < param_cnt; i++ )  { // skipp OSF
     toks.Clear();
     toks.Strtok(sl[i+7], ' ');

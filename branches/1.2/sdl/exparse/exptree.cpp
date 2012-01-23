@@ -247,8 +247,9 @@ void expression_tree::expand()  {
       }
       else {
         if (i+1 != data.Length())
-          throw TInvalidArgumentException(__OlxSourceInfo, "list initiliser");
-        data = (olxstr(ch) << arg << (ch == '[' ? ']' : '}'));
+          throw TInvalidArgumentException(__OlxSourceInfo, "list initialiser");
+        else
+          data = (olxstr(ch) << arg << (ch == '[' ? ']' : '}'));
       }
       break;
     }

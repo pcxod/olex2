@@ -54,7 +54,7 @@ public:
   virtual bool Adopt(TXFile& XF);
   //Finds a value by name
   cif_dp::ICifEntry* FindEntry(const olxstr& name) const {
-    return (block_index == InvalidIndex) ? false :
+    return (block_index == InvalidIndex) ? NULL :
       data_provider[block_index].param_map.Find(name, NULL);
   }
   template <class Entry> Entry* FindParam(const olxstr& name) const {

@@ -38,6 +38,7 @@ const short
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 struct SettingsFile  {
+  olxstr source_file;
   olxstr repository,  // repository for local update
     proxy,            // repository proxy
     dest_repository,  // like ftp
@@ -45,14 +46,17 @@ struct SettingsFile  {
     update_interval,
     olex2_port;
   bool ask_for_update;
-  const olxstr source_file;
 
   TStrList extensions_to_skip, files_to_skip;
   time_t last_updated;
   //...........................................................................
-  SettingsFile(const olxstr& file_name) : source_file(file_name)  {
-    if( !TEFile::Exists(file_name) )
-      return;
+  SettingsFile() {}
+  SettingsFile(const olxstr& file_name) {
+    Init(file_name);
+  }
+  void Init(const olxstr& file_name)  {
+    source_file = file_name;
+    if( !TEFile::Exists(file_name) ) return;
     const TSettingsFile settings(file_name);
     proxy = settings["proxy"];
     repository = settings["repository"];
@@ -189,13 +193,13 @@ public:
     const olxstr& proxy_str);
   static TStrList GetDefaultRepositories();
   static olxstr GetSettingsFileName()  {
-    return TBasicApp::GetBaseDir() + "usettings.dat";
+    return TBasicApp::GetInstanceDir() + "usettings.dat";
   }
   static olxstr GetIndexFileName()  {
     return TBasicApp::GetBaseDir() + "index.ind";
   }
   static olxstr GetMirrorsFileName()  {
-    return TBasicApp::GetBaseDir() + "mirrors.txt";
+    return TBasicApp::GetInstanceDir() + "mirrors.txt";
   }
   static bool IsNewInstallation()  {
     return TEFile::Exists(TBasicApp::GetBaseDir() + new_installation_fn);

@@ -35,11 +35,11 @@ public:
       THttpFileSystem(url), max_attempts(_max_attempts), BaseValid(false)
   {
     if( Base.IsEmpty() )
-      Base = TBasicApp::GetBaseDir() + ".cds/";
+      Base = TBasicApp::GetInstanceDir() + ".cds/";
     if( UseLocalFS )  {
       try  {
         if( !TEFile::Exists(Base) )  {
-          if( TBasicApp::IsBaseDirWriteable() && TEFile::MakeDir(Base) )
+          if( TEFile::MakeDir(Base) )
             BaseValid = true;
         }
         else
