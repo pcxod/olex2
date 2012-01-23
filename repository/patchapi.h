@@ -69,12 +69,12 @@ public:
       TCStrList fc;
       fc.LoadFromFile(update_location);
       if( fc.Count() == 1 )
-        return TEFile::ExpandRelativePath(fc[0]);
+        return TEFile::ExpandRelativePath(fc[0], GetInstanceDir());
     }
     return EmptyString();
   }
   static olxstr GetUpdaterPIDFileName()  {
-    return TBasicApp::GetBaseDir() + "pid.update";
+    return TBasicApp::GetInstanceDir() + "pid.update";
   }
   static const char* GetUpdaterCmdFileName()  {  return "__cmds.update";  }
   static const char* GetOlex2PIDFileExt()  {  return "olex2_pid";  }

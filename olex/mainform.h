@@ -742,6 +742,8 @@ private:
   void StartupInit();
   bool SkipSizing; // when size changed from the LoadSettings
   void DoUpdateFiles();
+  // returns true if the thread is created
+  bool CreateUpdateThread();
 public:
   TMainForm(TGlXApp *Parent);
   virtual ~TMainForm();

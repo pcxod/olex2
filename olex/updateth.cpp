@@ -24,18 +24,20 @@ void UpdateThread::DoInit()  {
   if( !TBasicApp::HasInstance() || Terminate ) 
     return;
   try  {
+    if (TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName()))
+      return;
     updater::UpdateAPI uapi;
     srcFS = uapi.FindActiveUpdateRepositoryFS(NULL);
     if( srcFS == NULL )  return;
     Index = new TFSIndex(*srcFS);
-    destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
+    destFS = new TOSFileSystem(TBasicApp::GetBaseDir());
     uapi.EvaluateProperties(properties);
-    srcFS->OnProgress.Add( new TActionProxy(OnDownload) );
-    Index->OnAction.Add( new TActionProxy(OnAction) );
+    srcFS->OnProgress.Add(new TActionProxy(OnDownload));
+    Index->OnAction.Add(new TActionProxy(OnAction));
   }
   catch(const TExceptionBase& exc)  {
     if( TBasicApp::HasInstance() )
-      TBasicApp::NewLogEntry(logInfo) << exc.GetException()->GetFullMessage();
+      TBasicApp::NewLogEntry(logExceptionTrace) << exc;
   }
 }
 //.............................................................................
@@ -47,8 +49,6 @@ int UpdateThread::Run()  {
     CleanUp();
     return 0;
   }
-  if( TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName()) )
-    return 0;
   // try to lock updateAPI
   while( !patcher::PatchAPI::LockUpdater() )  {
     olx_sleep(100);

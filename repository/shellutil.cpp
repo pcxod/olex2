@@ -405,20 +405,17 @@ bool TShellUtil::RunElevated(const olxstr &fn, const olxstr &args) {
 //.............................................................................
 olxstr TShellUtil::GetCmdLineArgs(const olxstr &fn) {
   const TStrList& args = TBasicApp::GetInstance().Arguments;
-  if( args.Count() > 1 )  {
-    olxstr s_cmdl;
-    if( fn.IndexOf(' ') != InvalidIndex )
-      s_cmdl << '"' << fn << '"';
+  olxstr s_cmdl;
+  if( fn.IndexOf(' ') != InvalidIndex )
+    s_cmdl << '"' << fn << '"';
+  else
+    s_cmdl = fn;
+  for( size_t i=1; i < args.Count(); i++ )  {
+    s_cmdl << ' ';
+    if( args[i].IndexOf(' ') != InvalidIndex )
+      s_cmdl << '"' << args[i] << '"';
     else
-      s_cmdl = fn;
-    for( size_t i=1; i < args.Count(); i++ )  {
-      s_cmdl << ' ';
-      if( args[i].IndexOf(' ') != InvalidIndex )
-        s_cmdl << '"' << args[i] << '"';
-      else
-        s_cmdl << args[i];
-    }
-    return s_cmdl;
+      s_cmdl << args[i];
   }
-  return EmptyString();
+  return s_cmdl;
 }

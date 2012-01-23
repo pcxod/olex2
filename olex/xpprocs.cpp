@@ -10347,18 +10347,11 @@ void TMainForm::macPoly(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
-  if (_UpdateThread != NULL) {
-    E.ProcessingError(__OlxSrcInfo, "Update in the progress");
+  if (patcher::PatchAPI::HaveUpdates()) {
+    TBasicApp::NewLogEntry() <<
+      "Updates already available, please restart the program to apply";
     return;
   }
-  if( FXApp->IsBaseDirWriteable() )  {
-    _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + patcher::PatchAPI::GetPatchFolder());
-    _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
-    _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
-    _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
-    _UpdateThread->Start();
-  }
-  
+  CreateUpdateThread();
 }
   //..............................................................................
