@@ -696,6 +696,8 @@ uint64_t TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties,
   DestI.DestFS = (dest_fs == NULL ? &To : dest_fs);
   olxstr SrcInd = IndexFS.GetBase() + indexName;
   olxstr DestInd = To.GetBase() + indexName;
+  // the index will be kept with the patch!
+  olxstr DestInd_ = DestI.DestFS->GetBase() + indexName;
   try  {
     LoadIndex(SrcInd, toSkip);
     if( To.Exists(DestInd) )
@@ -705,7 +707,7 @@ uint64_t TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties,
     uint64_t BytesTransfered = GetRoot().Synchronise(
       DestI.GetRoot(), properties, cmds);
     if( BytesTransfered != 0 )
-      DestI.SaveIndex(DestInd);
+      DestI.SaveIndex(DestInd_);
     OnBreak.Remove(&DestI.OnBreak);
     return BytesTransfered;
   }

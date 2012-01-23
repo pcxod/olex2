@@ -53,7 +53,7 @@ public:
   }
   /* sets instance dir - folder dependent on the exe location
   */
-  void SetInstanceDir(const olxstr &d) { InstanceDir = d; }
+  void SetInstanceDir(const olxstr &d);
   static TLog& GetLog()  {  return *GetInstance().Log;  }
   static TLog::LogEntry NewLogEntry(int evt_type = logDefault,
     bool annotate=false)

@@ -127,6 +127,12 @@ const olxstr& TBasicApp::GetSharedDir() {
   return GetInstance().SharedDir; 
 }
 //..............................................................................
+void TBasicApp::SetInstanceDir(const olxstr &d) {  
+  if (!TEFile::Exists(d))
+    TEFile::MakeDirs(d);
+  InstanceDir = TEFile::AddPathDelimeter(d); 
+}
+//..............................................................................
 TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
   if( Actions.Exists(Name) )
     return *Actions.Find(Name);

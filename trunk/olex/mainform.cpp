@@ -834,7 +834,14 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Forses Uij of provided atoms to behave in isotropic manner. If no atoms "
     "provided, all non-H atoms considered");
 
-  this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded);
+  this_InitMacroD(ShowQ,
+    "wheel-number of peaks to hide (if negative) or to show ",
+    fpNone|fpOne|fpTwo|psFileLoaded,
+    "Traverses the three states - peaks and peak bonds are visible, only peaks"
+    " visible, no peaks or peak bonds. One numeric argument is taken to "
+    "increment/decrement the numegbr of visibe peaks. Two aruments are taken "
+    "to control the visibility of atoms or bonds, like in: 'showq a true' or "
+    "'showq b false'");
 
   this_InitMacroD(Mode, 
     "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only\n&;"
@@ -1710,15 +1717,29 @@ void TMainForm::StartupInit()  {
   FHtml->LoadPage(FHtmlIndexFile.u_str());
   FHtml->SetHomePage(FHtmlIndexFile);
   // must move it here since on Linux things will not get initialised at the previous position
+  CreateUpdateThread();
+  FileDropTarget* dndt = new FileDropTarget(*this);
+  this->SetDropTarget(dndt);
+}
+//..............................................................................
+bool TMainForm::CreateUpdateThread() {
+  volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+  if (_UpdateThread != NULL) return false;
+#ifndef __WIN32__ // do updates on non-Win only if the folder is writable
   if( FXApp->IsBaseDirWriteable() )  {
-    _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + patcher::PatchAPI::GetPatchFolder());
+#endif
+    _UpdateThread = new UpdateThread(FXApp->GetInstanceDir() +
+      patcher::PatchAPI::GetPatchFolder());
     _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
     _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
     _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
     _UpdateThread->Start();
+    return true;
+#ifndef __WIN32__
   }
-  FileDropTarget* dndt = new FileDropTarget(*this);
-  this->SetDropTarget(dndt);
+  else
+    return false;
+#endif
 }
 //..............................................................................
 void TMainForm::AquireTooltipValue()  {
@@ -4063,8 +4084,10 @@ void TMainForm::DoUpdateFiles()  {
   TdlgMsgBox* msg_box = NULL;
   if( sf.ask_for_update )  {
     msg_box = new TdlgMsgBox( this, 
-      olxstr("There are new updates avaialable (") << olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
-      "Updates will be downloaded in the background during this session and\nwill take effect with the next restart of Olex2",
+      olxstr("There are new updates avaialable (") <<
+        olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
+      "Updates will be downloaded in the background during this session and\n"
+      "will take effect with the next restart of Olex2",
       "Automatic Updates",
       "Do not show this message again",
       wxYES|wxNO|wxICON_QUESTION,
@@ -4250,7 +4273,8 @@ void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
     if( !err.IsSuccessful() )
       break;
   }
-  TBasicApp::NewLogEntry(logInfo) << "The process '" << p.GetCmdLine() << "' has been terminated...";
+  TBasicApp::NewLogEntry(logInfo) << "The process '" << p.GetCmdLine() <<
+    "' has been terminated...";
   parent.TimePerFrame = parent.FXApp->Draw();
 }
 //..............................................................................
