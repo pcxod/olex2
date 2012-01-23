@@ -4084,7 +4084,7 @@ void TMainForm::DoUpdateFiles()  {
   TdlgMsgBox* msg_box = NULL;
   if( sf.ask_for_update )  {
     msg_box = new TdlgMsgBox( this, 
-      olxstr("There are new updates avaialable (") <<
+      olxstr("There are new updates available (") <<
         olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
       "Updates will be downloaded in the background during this session and\n"
       "will take effect with the next restart of Olex2",

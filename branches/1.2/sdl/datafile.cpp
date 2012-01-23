@@ -66,7 +66,7 @@ void TDataFile::Include(TStrList* Log)  {
 
     if( !TEFile::Exists(Tmp) )  {
       if( Log != NULL )
-        Log->Add(olxstr("Included file does not exist: ") << Tmp );
+        Log->Add(olxstr("Included file does not exist: ") << Tmp);
       FRoot->DeleteItem(Inc);
       Inc = FRoot->GetAnyItem("#include");
       continue;

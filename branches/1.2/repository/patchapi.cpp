@@ -86,6 +86,23 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
   return res;
 }
 //.........................................................................
+olxstr PatchAPI::GetUpdateLocation()  {
+  olxstr update_location = GetUpdateLocationFileName();
+  if( TEFile::Exists(update_location) )  {
+    TCStrList fc;
+    fc.LoadFromFile(update_location);
+    if( fc.Count() == 1 ) {
+      olxstr path = TUtf8::Decode(fc[0]);
+      if (TEFile::IsAbsolutePath(path))
+        return fc[0];
+      return TEFile::ExpandRelativePath(path, TBasicApp::GetBaseDir());
+    }
+    else if (fc.IsEmpty())
+      return TBasicApp::GetInstanceDir() + GetPatchFolder();
+  }
+  return EmptyString();
+}
+//.........................................................................
 void PatchAPI::_RestoreExecuableFlags() {
 #if !defined(__WIN32__)
   TStrList file_list;
