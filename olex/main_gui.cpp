@@ -123,16 +123,15 @@ void TMainForm::OnAtomPolyChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
   olxstr Tmp("poly ");
-  Tmp << ' ';
+  if( !XA->IsSelected() )
+    Tmp << "#c" << XA->CAtom().GetId() << ' ';
   switch( event.GetId() )  {
     case ID_AtomPolyNone: Tmp << "none";  break;
     case ID_AtomPolyAuto: Tmp << "auto";  break;
     case ID_AtomPolyRegular: Tmp << "regular";  break;
     case ID_AtomPolyPyramid: Tmp << "pyramid";  break;
-    case ID_AtomPolyBipyramid: Tmp << "bypyramid";  break;
+    case ID_AtomPolyBipyramid: Tmp << "bipyramid";  break;
   }
-  if( !XA->IsSelected() )
-    Tmp << " #c" << XA->CAtom().GetId();
   ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
