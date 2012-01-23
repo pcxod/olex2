@@ -95,9 +95,9 @@ olxstr PatchAPI::GetUpdateLocation()  {
       olxstr path = TUtf8::Decode(fc[0]);
       if (TEFile::IsAbsolutePath(path))
         return fc[0];
-      return TEFile::ExpandRelativePath(path, GetBaseDir());
+      return TEFile::ExpandRelativePath(path, TBasicApp::GetBaseDir());
     }
-    else if (fc.IEmpty())
+    else if (fc.IsEmpty())
       return TBasicApp::GetInstanceDir() + GetPatchFolder();
   }
   return EmptyString();
