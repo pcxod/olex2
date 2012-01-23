@@ -30,6 +30,7 @@ protected:
   short MaxThreadCount;
   bool MainFormVisible, Profiling, BaseDirWriteable;
   static olx_critical_section app_cs;
+  void ReadOptions(const olxstr &fn);
 public:
   TParamList Options;
   TStrList Arguments;
