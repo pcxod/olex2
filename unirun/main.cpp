@@ -264,6 +264,12 @@ void DoRun()  {
     }
   }
   else  {
+    // compatibility with older versions!
+    olxstr old_lf = TBasicApp::GetBaseDir() + "__location.update";
+    if (TEFile::Exists(old_lf)) {
+      TEFile::Copy(old_lf, patcher::PatchAPI::GetUpdateLocationFileName());
+      TEFile::DelFile(old_lf);
+    }
     short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
     if( res != patcher::papi_OK )
       TBasicApp::NewLogEntry() << "Update has failed with error code: "
