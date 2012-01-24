@@ -74,7 +74,8 @@ void AConstraintGenerator::DoGenerateAtom(TCAtomPList& created, TAsymmUnit& au,
 void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
      const short Group, const cm_Element& atomType, TAtomEnvi* pivoting )
 {
-  TAsymmUnit& au = *envi.GetBase().CAtom().GetParent();
+  TAsymmUnit &au = *envi.GetBase().CAtom().GetParent();
+  const TUnitCell &uc = au.GetLattice().GetUnitCell();
   mat3d M, M1;
   M.I();
   M1.I();
@@ -217,47 +218,95 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgOH2:
       dis = Distances[GenId(fgOH2,0)];
-      if( envi.IsEmpty() && pivoting != NULL)  {
-        if( pivoting->Count() == 2 )  {
-          Vec1 = (pivoting->GetCrd(0) - pivoting->GetBase().crd()).NormaliseTo(dis);
-          crds.AddNew(pivoting->GetBase().crd() + Vec1);
-          Vec1 = (pivoting->GetCrd(1) - pivoting->GetBase().crd()).NormaliseTo(dis);
-          crds.AddNew(pivoting->GetBase().crd() + Vec1);
-        }
-        else if( pivoting->Count() == 1 )  {
-          PlaneN = (pivoting->GetCrd(0) - envi.GetBase().crd()).Normalise();
-          ca = Z.CAngle(PlaneN);
-          RotVec = PlaneN.XProdVec(Z).Normalise();
-          olx_create_rotation_matrix(M, RotVec, ca);
-
-          crds.AddNew(0, -sin(M_PI*109.4/180), cos(M_PI*109.4/180));
-          crds[0] = M * crds[0];
-          crds[0] *= dis;
-          if( envi.GetBase().CAtom().GetDegeneracy() != 2 )  {
-            crds.AddNew(crds[0]);
-            olx_create_rotation_matrix(M, PlaneN, -0.5);
-            crds[1] = M * crds[1];
-            crds[1] += envi.GetBase().crd();
+      if( envi.IsEmpty())  {
+        vec3d_list h_crds;
+        TCAtom &a = envi.GetBase().CAtom();
+        for (size_t si=0; si < a.AttachedSiteICount(); si++) {
+          TCAtom::Site &s = a.GetAttachedSiteI(si);
+          if (s.atom->GetType() == iHydrogenZ) {
+            smatd m = uc.MulMatrix(s.matrix, envi.GetBase().GetMatrix(0));
+            h_crds.AddCopy(au.Orthogonalise(m*s.atom->ccrd()));
           }
-          crds[0] += envi.GetBase().crd();
+        }
+        if (h_crds.Count() == 2) {  // tetrahedral, check first
+          Vec1 = -((h_crds[0] - envi.GetBase().crd()).Normalise() +
+            (h_crds[1] - envi.GetBase().crd()).Normalise()).Normalise();
+          RotVec = (h_crds[0] - envi.GetBase().crd()).XProdVec(
+            h_crds[1] - envi.GetBase().crd()).Normalise();
+          olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/360), sin(M_PI*109.4/360));
+          crds.AddNew(M*Vec1);
+          olx_create_rotation_matrix(M, RotVec, cos(-M_PI*109.4/360), sin(-M_PI*109.4/360));
+          crds.AddNew(M*Vec1);
+          // final 180 degree rotation
+          olx_create_rotation_matrix(M, Vec1, 0, 1);
+          crds[0] = (M*crds[0])*dis + envi.GetBase().crd();
+          crds[1] = (M*crds[1])*dis + envi.GetBase().crd();
+        }
+        else if (pivoting != NULL && !pivoting->IsEmpty()) {
+          if( pivoting->Count() == 2 )  {
+            Vec1 = (pivoting->GetCrd(0) - pivoting->GetBase().crd()).NormaliseTo(dis);
+            crds.AddNew(pivoting->GetBase().crd() + Vec1);
+            Vec2 = (pivoting->GetCrd(1) - pivoting->GetBase().crd());
+            RotVec = Vec1.XProdVec(Vec2).Normalise();
+            olx_create_rotation_matrix(M, RotVec, cos(-M_PI*109.4/180), sin(-M_PI*109.4/180));
+            crds.AddNew(pivoting->GetBase().crd() + M*Vec1);
+          }
+          else if( pivoting->Count() == 1 )  {
+            PlaneN = (envi.GetBase().crd()-pivoting->GetCrd(0)).Normalise();
+            if (PlaneN.Equals(Z, 1e-3))
+              RotVec = vec3d(1,0,0);
+            else
+              RotVec = Z;
+            RotVec = RotVec.XProdVec(PlaneN).Normalise();
+            PlaneN.NormaliseTo(dis);
+            double ang = M_PI*109.4/360;
+            olx_create_rotation_matrix(M, RotVec, cos(ang), sin(ang));
+            crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
+            olx_create_rotation_matrix(M, RotVec, cos(-ang), sin(-ang));
+            crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
+          }
         }
       }
       else if( envi.Count() == 1 )  {
-        PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
-        ca = Z.CAngle(PlaneN);
-        RotVec = PlaneN.XProdVec(Z).Normalise();
-        olx_create_rotation_matrix(M, RotVec, ca);
-
-        crds.AddNew(0, -sin(M_PI*109.4/180), cos(M_PI*109.4/180));
-        crds[0] = M * crds[0];
-        crds[0] *= dis;
-        if( envi.GetBase().CAtom().GetDegeneracy() != 2 )  {
-          crds.AddNew(crds[0]);
-          olx_create_rotation_matrix(M, PlaneN, -0.5);
-          crds[1] = M * crds[1];
-          crds[1] += envi.GetBase().crd();
+        if (pivoting == NULL || pivoting->IsEmpty()) {
+          PlaneN = (envi.GetBase().crd()-envi.GetCrd(0)).Normalise();
+          if (PlaneN.Equals(Z, 1e-3))
+            RotVec = vec3d(1,0,0);
+          else
+            RotVec = Z;
+          RotVec = RotVec.XProdVec(PlaneN).Normalise();
+          PlaneN.NormaliseTo(dis);
+          double ang = M_PI*109.4/360;
+          olx_create_rotation_matrix(M, RotVec, cos(ang), sin(ang));
+          crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
+          olx_create_rotation_matrix(M, RotVec, cos(-ang), sin(-ang));
+          crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
         }
-        crds[0] += envi.GetBase().crd();
+        else {
+          PlaneN = (envi.GetBase().crd()-envi.GetCrd(0)).Normalise();
+          RotVec = PlaneN.XProdVec(
+            envi.GetBase().crd()-pivoting->GetCrd(0)).Normalise();
+          PlaneN.NormaliseTo(dis);
+          double ang = M_PI*109.4/360;
+          olx_create_rotation_matrix(M, RotVec, cos(ang), sin(ang));
+          crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
+          olx_create_rotation_matrix(M, RotVec, cos(-ang), sin(-ang));
+          crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
+        }
+      }
+      else if (envi.Count() == 2) { // TH
+        Vec1 = -((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() +
+          (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
+        RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec(
+          envi.GetCrd(1) - envi.GetBase().crd()).Normalise();
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/360), sin(M_PI*109.4/360));
+        crds.AddNew(M*Vec1);
+        olx_create_rotation_matrix(M, RotVec, cos(-M_PI*109.4/360), sin(-M_PI*109.4/360));
+        crds.AddNew(M*Vec1);
+        // final 180 degree rotation
+        olx_create_rotation_matrix(M, Vec1, 0, 1);
+        crds[0] = (M*crds[0])*dis + envi.GetBase().crd();
+        crds[1] = (M*crds[1])*dis + envi.GetBase().crd();
       }
       break;
     case fgOH1:
