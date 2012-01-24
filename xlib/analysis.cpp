@@ -94,27 +94,30 @@ bool alg::check_geometry(const TCAtom &a, const cm_Element &e) {
 }
 //.............................................................................
 bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
-  size_t cc = 0;
+  size_t cc = 0, metal_c = 0;
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
-    if (aa.GetType() != iQPeakZ && !aa.IsDeleted() &&
-       !XElementLib::IsMetal(aa.GetType()))
-    {
+    if (aa.GetType() != iQPeakZ && !aa.IsDeleted()) {
       cc++;
+      if (XElementLib::IsMetal(aa.GetType()))
+        metal_c ++;
     }
   }
   if (e == iHydrogenZ)
     return cc == 1;
-  if (e == iOxygenZ)
-    return cc <= 2;
-  if (XElementLib::IsHalogen(e)) {
-    if (e.z == iChlorineZ) // treat the ClO4
-      return cc <= 1 || cc == 4;
-    return cc <= 1;
-  }
   if (XElementLib::IsMetal(e)) {
     if (cc <= 1) return false;
     if (cc ==2) return XElementLib::IsTtransitionalGroup(1, e);
+  }
+  else {
+    cc -= metal_c;
+    if (e == iOxygenZ)
+      return cc <= 2;
+    if (XElementLib::IsHalogen(e)) {
+      if (e.z == iChlorineZ) // treat the ClO4
+        return cc <= 1 || cc == 4;
+      return cc <= 1;
+    }
   }
   return true;
 }
@@ -145,24 +148,34 @@ void helper::reset_u(TCAtom &a, double r) {
     a.GetEllipsoid()->ToSpherical(r);
 }
 //.............................................................................
-bool helper::can_demote(const cm_Element &e, const SortedElementPList &elms) {
+size_t helper::get_demoted_index(const cm_Element &e, const SortedElementPList &elms) {
   size_t idx = elms.IndexOf(e);
   if (idx == InvalidIndex) {
     for (size_t i=0; i < elms.Count(); i++) {
       if (elms[i]->z > e.z) {
-        if (i==0) return false;
+        if (i==0) return InvalidIndex;
         if (i>0 && elms[i-1]->z == iHydrogenZ)
-          return false;
-        return true;
+          return InvalidIndex;
+        return i;
       }
     }
-    return false;
+    return InvalidIndex;
   }
   else {
     if ((idx == 1 && elms[0]->z == iHydrogenZ) || idx == 0)
-      return false;
-    return true;
+      return InvalidIndex;
+    return idx;
   }
+}
+//.............................................................................
+bool helper::can_demote(const cm_Element &e, const SortedElementPList &elms) {
+  return get_demoted_index(e, elms) != InvalidIndex;
+}
+//.............................................................................
+bool helper::can_demote(const TCAtom &a, const SortedElementPList &elms) {
+  size_t idx = get_demoted_index(a.GetType(), elms);
+  if (idx == InvalidIndex) return false;
+  return alg::check_geometry(a, *elms[idx]);
 }
 //.............................................................................
 //.............................................................................

@@ -30,7 +30,10 @@ namespace alg {
 namespace helper {
   ConstSortedElementPList get_user_elements();
   void reset_u(TCAtom &a, double r=0.025);
+  size_t get_demoted_index(const cm_Element &e, const SortedElementPList &elms);
   bool can_demote(const cm_Element &e, const SortedElementPList &elms);
+  // as above, but also checks if the demoted type conenctivity is OK
+  bool can_demote(const TCAtom &e, const SortedElementPList &elms);
 }; // end namespace helper
 struct peaks {
   static int peak_sort(const TCAtom &a1, const TCAtom &a2) {
