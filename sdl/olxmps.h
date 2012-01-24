@@ -46,7 +46,7 @@ template <class TaskClass> class TArrayIterationItem : public ITask {
 
 template <class TaskClass> class TListIteratorManager {
     TTypeList<TArrayIterationItem<TaskClass> > Items;
-    TTypeList<TaskClass> Tasks;
+    TPtrList<TaskClass> Tasks;
   protected:
     void CalculateRatios(eveci& res, size_t ListSize, const short TaskType)  {
       if( TaskType == tLinearTask )  {
@@ -93,7 +93,7 @@ template <class TaskClass> class TListIteratorManager {
     TListIteratorManager(TaskClass& task, size_t ListSize, const short TaskType,
       size_t minSize)
     {
-      Tasks.Add(task);  // must not delete it!!!
+      Tasks.Add(&task);  // must not delete it!!!
       // should we create parallel tasks then at all?
       if( ListSize < minSize || TThreadPool::GetSlotsCount() == 1)  {
         for( size_t i=0; i < ListSize; i++ )
@@ -119,11 +119,12 @@ template <class TaskClass> class TListIteratorManager {
       TThreadPool::DoRun();
     }
     ~TListIteratorManager()  {
-      Tasks.Release(0);
+      Tasks.Delete(0);
+      Tasks.DeleteItems(false);
     }
     size_t Count() {  return Tasks.Count();  }
-    TaskClass& operator [] (size_t i) {  return Tasks[i];  }
-    const TaskClass& operator [] (size_t i) const {  return Tasks[i];  }
+    TaskClass& operator [] (size_t i) {  return *Tasks[i];  }
+    const TaskClass& operator [] (size_t i) const {  return *Tasks[i];  }
   };
 
 EndEsdlNamespace()
