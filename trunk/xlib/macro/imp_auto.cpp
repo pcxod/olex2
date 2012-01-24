@@ -347,55 +347,40 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
             ac++;
           // now we can make up types
           if( stat.SNAtomTypeAssignments == 0 &&
-            ((double)stat.ConfidentAtomTypes/ac) > 0.5 )
+            ((double)stat.ConfidentAtomTypes/ac) > 0.1 )
           {
             bool found = false;
+            int min_dz = 100;
+            size_t closest_idx = InvalidIndex;
+            const cm_Element *to_asign=NULL;
             for( size_t j=0; j < StandAlone.Count(); j++ )  {
-              if( sa.GetType() == *StandAlone[j] )  {
-                found = true;
-                if( sa.CAtom().GetUiso() < 0.01 )  {  // search heavier
-                  bool assigned = false;
-                  for( size_t k=j+1; k < StandAlone.Count(); k++ )  {
-                    if( AvailableTypes.Contains(StandAlone[k]) )  {
-                      sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
-                      sa.CAtom().SetType(*StandAlone[k]);
-                      olx_analysis::helper::reset_u(sa.CAtom());
-                      assigned = true;
-                      break;
-                    }
-                  }
-                  if( !assigned )  assignHeaviest = true;
-                }
-                else if( sa.CAtom().GetUiso() > 0.2 )  {  // search lighter
-                  bool assigned = false;
-                  for( size_t k=j-1; k != InvalidIndex; k-- )  {
-                    if( AvailableTypes.Contains(StandAlone[k]) )  {
-                      sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
-                      sa.CAtom().SetType(*StandAlone[k]);
-                      olx_analysis::helper::reset_u(sa.CAtom());
-                      assigned = true;
-                      break;
-                    }
-                  }
-                  if( !assigned )  assignLightest = true;
+              int dz = olx_abs(sa.GetType().z - StandAlone[j]->z);
+              if (dz < min_dz) {
+                closest_idx = j;
+                min_dz = dz;
+              }
+            }
+            if( sa.CAtom().GetUiso() < 0.01 )  {  // search heavier
+              size_t start = (sa.GetType().z < StandAlone[closest_idx]->z
+                ? closest_idx : closest_idx-1);
+              for( size_t k=start; k < StandAlone.Count(); k++ )  {
+                if( AvailableTypes.Contains(StandAlone[k]) )  {
+                  sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
+                  sa.CAtom().SetType(*StandAlone[k]);
+                  olx_analysis::helper::reset_u(sa.CAtom());
+                  break;
                 }
               }
             }
-            if (!found) {
-              if( assignLightest )  {  // make lightest then
-                if (!enforce_formula || AvailableTypes.Contains(StandAlone[0]))
-                {
-                  sa.CAtom().SetLabel(StandAlone[0]->symbol, false);
-                  sa.CAtom().SetType(*StandAlone[0]);
+            else if( sa.CAtom().GetUiso() > 0.2 )  {  // search lighter
+              size_t start = (sa.GetType().z > StandAlone[closest_idx]->z
+                ? closest_idx : closest_idx-1);
+              for( size_t k=start; k != InvalidIndex; k-- )  {
+                if( AvailableTypes.Contains(StandAlone[k]) )  {
+                  sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
+                  sa.CAtom().SetType(*StandAlone[k]);
                   olx_analysis::helper::reset_u(sa.CAtom());
-                }
-              }
-              else if( assignHeaviest )  {
-                if (!enforce_formula || AvailableTypes.Contains(StandAlone[0]))
-                {
-                  sa.CAtom().SetLabel(StandAlone.GetLast()->symbol, false);
-                  sa.CAtom().SetType(*StandAlone.GetLast());
-                  olx_analysis::helper::reset_u(sa.CAtom());
+                  break;
                 }
               }
             }
@@ -434,7 +419,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
     if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > 0.25 )  {
       if (check_demotion &&
-        olx_analysis::helper::can_demote(sa.GetType(), AvailableTypes))
+        olx_analysis::helper::can_demote(sa.CAtom(), AvailableTypes))
       {
         continue;
       }
