@@ -1676,7 +1676,8 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": OH2";
       TAtomEnvi pivoting;
       UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-      RemoveNonHBonding( pivoting );
+      UnitCell->FilterHBonds(AE, pivoting);
+      RemoveNonHBonding(pivoting);
       cg.FixAtom(AE, fgOH2, h_elm, &pivoting, generated);
     }
     else if( AE.Count() == 1 )  {
@@ -1887,6 +1888,7 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
 
   TAsymmUnit &au = GetAsymmUnit();
   au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+  TSAtomPList waters;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i]->IsDeleted() || !atoms[i]->CAtom().IsAvailable() ||
       atoms[i]->CAtom().GetTag() != 0 )
@@ -1918,7 +1920,24 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
       }
     }
     if( !consider )  continue;
+    if (atoms[i]->GetType() == iOxygenZ) {
+      size_t nhc=0;
+      for (size_t si=0; si < atoms[i]->CAtom().AttachedSiteCount(); si++) {
+        TCAtom::Site &s = atoms[i]->CAtom().GetAttachedSite(si);
+        if (s.atom->IsDeleted() || s.atom->GetType().z < 2)
+          continue;
+        nhc++;
+      }
+      if (nhc == 0) {
+        waters << atoms[i];
+        atoms[i]->CAtom().SetTag(1);
+        continue;
+      }
+    }
     _AnalyseAtomHAdd(cg, *atoms[i], ProcessingAtoms);
+  }
+  for (size_t i=0; i < waters.Count(); i++) {
+    _AnalyseAtomHAdd(cg, *waters[i], ProcessingAtoms);
   }
   /* // this might be useful for hadd on grown structures
   GetUnitCell().AddEllipsoid(au.AtomCount()-au_cnt);
@@ -1931,32 +1950,25 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
 //..............................................................................
 void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
   TAtomEnvi AE;
+  const TUnitCell &uc = GetUnitCell();
+  const TAsymmUnit &au = GetAsymmUnit();
   for( size_t i=0; i < Envi.Count(); i++ )  {
     TSAtom* SA = FindSAtom(Envi.GetCAtom(i));
     AE.Clear();
     UnitCell->GetAtomEnviList(*SA, AE);
     if( SA->GetType() == iOxygenZ )  {
-    /* this case needs an investigation, but currently the same atom cannot be a pivoting one ...*/
-      if( SA->CAtom() == Envi.GetBase().CAtom() )  {
-        Envi.Exclude(SA->CAtom());
-        continue;
-      }
-      if( AE.IsEmpty() )  {
-        if( SA->CAtom() != Envi.GetBase().CAtom() )  // it is a symmetrical equivalent
-          Envi.Exclude( SA->CAtom() );
-      }
-      else if( AE.Count() == 1 )  {
+      if( AE.Count() == 1 )  {
         const double d = AE.GetCrd(0).DistanceTo(SA->crd());
-        if( d > 1.8 )  // coordination bond?
+        if( d > 1.8 && XElementLib::IsMetal(SA->GetType()))  // coordination bond?
           Envi.Exclude(SA->CAtom());
       }
       else if( AE.Count() == 2 )  {  // not much can be done here ... needs thinking
         //Envi.Exclude( SA->CAtom() );
         // commented 17.03.08, just trying to what the shortest distance will give
       }
-      else if( AE.Count() == 3 )  {  // coordinated water molecule
-        Envi.Exclude(SA->CAtom());
-      }
+      //else if( AE.Count() == 3 )  {  // coordinated water molecule
+      //  Envi.Exclude(SA->CAtom());
+      //}
     }
     else if( SA->GetType() == iNitrogenZ )  {
       if( AE.Count() > 3 )
@@ -1977,7 +1989,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
     }
 
     while( hits.Count() > 1 &&
-      ((hits.GetKey(hits.Count()-1) - hits.GetKey(0)) > 0.05) )  {
+      ((hits.GetLastKey() - hits.GetKey(0)) > 0.15) )  {
       Envi.Exclude(*hits.GetObject(hits.Count()-1));
       hits.Delete(hits.Count()-1);
     }
@@ -2001,7 +2013,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
       hits.Add(olx_abs(-1 + vec2.CAngle(vec1)), &Envi.GetCAtom(i));
     }
     while( hits.Count() > 1 )  {
-      Envi.Exclude( *hits.GetObject( hits.Count() - 1 ) );
+      Envi.Exclude(*hits.GetObject( hits.Count() - 1 ) );
       hits.Delete(hits.Count() - 1);
     }
   }

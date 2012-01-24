@@ -97,8 +97,11 @@ bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
   size_t cc = 0;
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
-    if (aa.GetType() != iQPeakZ && !aa.IsDeleted())
+    if (aa.GetType() != iQPeakZ && !aa.IsDeleted() &&
+       !XElementLib::IsMetal(aa.GetType()))
+    {
       cc++;
+    }
   }
   if (e == iHydrogenZ)
     return cc == 1;
