@@ -280,8 +280,14 @@ void TLattice::Init()  {
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
   GetAsymmUnit().GetRefMod()->UpdateUsedSymm(GetUnitCell());
-  GetUnitCell().FindSymmEq(); // find and remove
-  InitBody();
+  try {
+    GetUnitCell().FindSymmEq(); // find and remove
+    InitBody();
+  }
+  catch (const TExceptionBase &e) {
+    Clear(true);
+    throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
 }
 //..............................................................................
 void TLattice::Uniq(bool remEqv)  {

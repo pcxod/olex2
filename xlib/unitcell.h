@@ -98,8 +98,10 @@ public:
   smatd InvMatrix(const smatd& m) const {
     smatd rv = m.Inverse();
     uint8_t c_id = m.GetContainerId();
-    if (c_id >= Matrices.Count())
-      throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
+    if (c_id >= Matrices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("matrix ID: ").quote() << c_id);
+    }
     const uint8_t index = InvDest[m.GetContainerId()];
     rv.SetId(index, (rv.t-Matrices[index].t).Round<int>());
     return rv;
