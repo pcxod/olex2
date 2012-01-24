@@ -439,8 +439,14 @@ void TXFile::EndUpdate()  {
   OnFileLoad.Enter(this, &GetFileName());
   OnFileLoad.Execute(this);
   // we keep the asymmunit but clear the unitcell
-  GetLattice().Init();
-  OnFileLoad.Exit(this);
+  try {
+    GetLattice().Init();
+    OnFileLoad.Exit(this);
+  }
+  catch (const TExceptionBase &e) {
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
+    Close();
+  }
 }
 //..............................................................................
 void TXFile::ToDataItem(TDataItem& item) {
