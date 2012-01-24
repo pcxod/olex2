@@ -80,12 +80,12 @@ public:
   static olxstr ReadRepositoryTag(const olxstr& base_dir=EmptyString());
   /* return 'AppData' or OLEX2_DATADIR if defined
   */
-  static olxstr _GetSharedDirRoot();
+  static olxstr _GetSharedDirRoot(bool refresh=false);
   /* return _GetSharedDirRoot()/Olex2Data on windows or
   _GetSharedDirRoot()/data on other platforms
   */
-  static olxstr GetSharedDir()  {
-    return _GetSharedDirRoot() <<
+  static olxstr GetSharedDir(bool refresh=false)  {
+    return _GetSharedDirRoot(refresh) <<
 #ifdef __WIN32__
     "Olex2Data/";
 #else
@@ -115,7 +115,7 @@ public:
   folder is returned and used (for all versions of programs which may be
   installed and using this API
   */
-  static olxstr GetInstanceDir();
+  static olxstr GetInstanceDir(bool refresh=false);
   /* mostly for internal use, saves the origin of the MD5 hash to folder.info
   file */
   static void SaveLocationInfo(const olxstr& shared_dir,
