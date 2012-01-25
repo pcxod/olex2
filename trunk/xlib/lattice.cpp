@@ -1636,7 +1636,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       else if( v < 120 && (d1 < 1.3 || d2 < 1.3) )
         ;
       else  {
-        if( (d1+d2) > 2.70 )  {
+        if( (d1+d2) > 2.70 && v < 140 )  {
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYNH";
           cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
@@ -1683,13 +1683,14 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
     else if( AE.Count() == 1 )  {
       const double d = AE.GetCrd(0).DistanceTo(atom.crd());
       if( d > 1.3 )   {  // otherwise a doubl bond
+        TAtomEnvi pivoting;
+        UnitCell->GetAtomPossibleHBonds(AE, pivoting);
+        UnitCell->FilterHBonds(AE, pivoting);
+        RemoveNonHBonding(pivoting);
         if( AE.GetType(0) == iChlorineZ )
           ;
         else  if( AE.GetType(0) == iCarbonZ )  {  // carbon
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": COH";
-          TAtomEnvi pivoting;
-          UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-          RemoveNonHBonding(pivoting);
           cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
         }
         else  if( AE.GetType(0) == iSulphurZ )  {
@@ -1701,43 +1702,31 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         else  if( AE.GetType(0) == iPhosphorusZ )  {
           if( d > 1.54 )  {
             TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": POH";
-            TAtomEnvi pivoting;
-            UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-            RemoveNonHBonding(pivoting);
             cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
           }
         }
         else  if( AE.GetType(0) == iSiliconZ )  {
           if( d > 1.6 )  {
             TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": SiOH";
-            TAtomEnvi pivoting;
-            UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-            RemoveNonHBonding(pivoting);
             cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
           }
         }
         else  if( AE.GetType(0) == iBoronZ )  {
           if( d < 1.38 )  {
             TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": B(III)OH";
-            TAtomEnvi pivoting;
-            UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-            RemoveNonHBonding(pivoting);
             cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
           }
         }
         else  if( AE.GetType(0) == iNitrogenZ )  {
           if( d > 1.37 )  {
             TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": NOH";
-            TAtomEnvi pivoting;
-            UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-            RemoveNonHBonding(pivoting);
             cg.FixAtom(AE, fgOH1, h_elm, &pivoting, generated);
           }
         }
         else if( d > 1.8 )  {  // coordination bond?
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() <<
             ": possibly M-OH2";
-          cg.FixAtom(AE, fgOH2, h_elm, NULL, generated);
+          cg.FixAtom(AE, fgOH2, h_elm, &pivoting, generated);
         }
       }
     }
