@@ -364,7 +364,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
               size_t start = (sa.GetType().z < StandAlone[closest_idx]->z
                 ? closest_idx : closest_idx-1);
               for( size_t k=start; k < StandAlone.Count(); k++ )  {
-                if( AvailableTypes.Contains(StandAlone[k]) )  {
+                if( !enforce_formula || AvailableTypes.Contains(StandAlone[k]) )  {
                   sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
                   sa.CAtom().SetType(*StandAlone[k]);
                   olx_analysis::helper::reset_u(sa.CAtom());
@@ -375,8 +375,12 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
             else if( sa.CAtom().GetUiso() > 0.2 )  {  // search lighter
               size_t start = (sa.GetType().z > StandAlone[closest_idx]->z
                 ? closest_idx : closest_idx-1);
+              if (start == InvalidIndex) {
+                sa.SetDeleted(true);
+                sa.CAtom().SetDeleted(true);
+              }
               for( size_t k=start; k != InvalidIndex; k-- )  {
-                if( AvailableTypes.Contains(StandAlone[k]) )  {
+                if( !enforce_formula || AvailableTypes.Contains(StandAlone[k]) )  {
                   sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
                   sa.CAtom().SetType(*StandAlone[k]);
                   olx_analysis::helper::reset_u(sa.CAtom());
