@@ -330,13 +330,13 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
       OnAtomsDeleted.Exit(this);
     }
   }
-
-  TAsymmUnit& au = GetAsymmUnit();
-  Objects.atoms.IncCapacity(Matrices.Count()*au.AtomCount());
+  const TCAtomPList &al = (Template != NULL && !Template->IsEmpty())
+    ? *Template : GetAsymmUnit().GetAtoms();
+  Objects.atoms.IncCapacity(Matrices.Count()*al.Count());
   for( size_t i=0; i < Matrices.Count(); i++ )  {
-    for( size_t j=0; j < au.AtomCount(); j++ )  {
-      if( !au.GetAtom(j).IsAvailable() )  continue;
-      GenerateAtom(au.GetAtom(j), *Matrices[i]);
+    for( size_t j=0; j < al.Count(); j++ )  {
+      if( !al[j]->IsAvailable() )  continue;
+      GenerateAtom(*al[j], *Matrices[i]);
     }
   }
   Disassemble();

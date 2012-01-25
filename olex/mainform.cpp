@@ -706,8 +706,14 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(AZoom, EmptyString(), fpAny^fpNone,
     "Modifies given atoms [all] radius. The first argument is the new radius "
     "in %");
-  this_InitMacroD(BRad, EmptyString(), fpAny^fpNone,
-    "Sets provided [all] bonds radius to given number (first argument)");
+  this_InitMacroD(BRad, "a-specified value is absolute, in A", fpAny^fpNone,
+    "Multiplies provided [all] bonds default radius by given number. The"
+    " default radius for covalent bonds is 0.1A and for H-bonds is 0.02A. To "
+    "set radius for H-bonds use:"
+    "\n\tbrad R hbonds"
+    "\nAny particula bond type can also be specified like:\n\tbrad 0.5 C-H"
+    "\nNote that the heavier atom type is always first"
+    );
 
   this_InitMacroD(Hide, EmptyString(), fpAny,
     "Hides selected objects or provided atom names (no atom related objects as"

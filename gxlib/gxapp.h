@@ -573,7 +573,7 @@ public:
 
   void SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms=NULL);
 
-  ConstPtrList<TXBond> GetBonds(const olxstr& Bonds, bool inc_lines);
+  ConstPtrList<TXBond> GetBonds(const TStrList& Bonds, bool inc_lines);
 
   void AtomRad(const olxstr& Rad, TXAtomPList* Atoms=NULL); // pers, sfil
   void AtomZoom(float Zoom, TXAtomPList* Atoms=NULL);  // takes %

@@ -2471,9 +2471,9 @@ void TGXApp::ClearLabels()  {
   XLabels.Clear();
 }
 //..............................................................................
-ConstPtrList<TXBond> TGXApp::GetBonds(const olxstr& Bonds, bool inc_lines)  {
+ConstPtrList<TXBond> TGXApp::GetBonds(const TStrList& Bonds, bool inc_lines)  {
   TXBondPList List;
-  if( Bonds.IsEmpty() || Bonds.Equalsi("sel") )  {
+  if( Bonds.IsEmpty() )  {
     TGlGroup& sel = GetRender().GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  {
       if( EsdlInstanceOf(sel[i], TXBond) )
@@ -2488,13 +2488,15 @@ ConstPtrList<TXBond> TGXApp::GetBonds(const olxstr& Bonds, bool inc_lines)  {
     }
     return ACollectionItem::Unique(List);
   }
-  TGPCollection *GPC = GetRender().FindCollection(Bonds);
-  if( GPC == NULL )  return List;
-  for( size_t i=0; i < GPC->ObjectCount(); i++ )  {
-    // check if the right type !
-    if( i == 0 &&  !EsdlInstanceOf(GPC->GetObject(0), TXBond) )  
-      return List;
-    List.Add((TXBond&)GPC->GetObject(i));
+  for (size_t i=0; i < Bonds.Count(); i++) {
+    TGPCollection *GPC = GetRender().FindCollection(Bonds[i]);
+    if( GPC == NULL )  continue;
+    for( size_t i=0; i < GPC->ObjectCount(); i++ )  {
+      // check if the right type !
+      if( i == 0 &&  !EsdlInstanceOf(GPC->GetObject(0), TXBond) )  
+        break;
+      List.Add((TXBond&)GPC->GetObject(i));
+    }
   }
   return List;
 }

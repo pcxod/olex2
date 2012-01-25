@@ -98,6 +98,7 @@ public:
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMS(const TSAtomPList& atoms);
+  olxstr StrRepr() const;
 
   class Def : public ACollectionItem {
     struct DefData {
@@ -153,7 +154,7 @@ public:
   size_t GetDefId() const {  return DefId; }
   // not for external use
   void _SetDefId(size_t id)  {  DefId = id; }
-
+  
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };
