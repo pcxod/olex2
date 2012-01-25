@@ -1684,10 +1684,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::NewLogEntry() <<
       tab.CreateTXTList(olxstr("Atom-to-plane distances for ") << planeName,
       true, false, " | ");
-    TBasicApp::NewLogEntry() << "Plane normal: " <<
-      olxstr::FormatFloat(3, plane->GetNormal()[0]) << ' ' <<
-      olxstr::FormatFloat(3, plane->GetNormal()[1]) << ' ' <<
-      olxstr::FormatFloat(3, plane->GetNormal()[2]);
+    TBasicApp::NewLogEntry() << "Plane equation: " << plane->StrRepr();
     if( weightExtent != 0 )  {
       TBasicApp::NewLogEntry() << "Weighted RMSD/A: " <<
         olxstr::FormatFloat(3, plane->GetWeightedRMSD());
@@ -1719,21 +1716,21 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( (Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds") ) && Cmds.Count() > 1 )  {
     int Mask = Cmds[1].ToInt();
-    TXBondPList Bonds = FXApp->GetBonds(Cmds.Text(' ', 2), false);
+    TXBondPList Bonds = FXApp->GetBonds(Cmds.SubListFrom(2), false);
     FXApp->UpdateBondPrimitives(Mask, 
       (Bonds.IsEmpty() && FXApp->GetSelection().Count() == 0) ? NULL : &Bonds, 
       Cmds[0].Equalsi("hbonds"));
   }
   else  {
     int Mask = Cmds.GetLastString().ToInt();
-    Cmds.Delete( Cmds.Count() - 1 );
+    Cmds.Delete(Cmds.Count() - 1);
     TGPCollection *GPC = FXApp->GetRender().FindCollection(Cmds.Text(' '));
     if( GPC != NULL )  {
       if( GPC->ObjectCount() != 0 )
         GPC->GetObject(0).UpdatePrimitives(Mask);
     }
     else  {
-      Error.ProcessingError(__OlxSrcInfo, olxstr("Undefined graphics :") << Cmds.Text(' ') );
+      Error.ProcessingError(__OlxSrcInfo, olxstr("Undefined graphics :") << Cmds.Text(' '));
       return;
     }
   }
@@ -1778,8 +1775,11 @@ void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   double r = Cmds[0].ToDouble();
+  Cmds.Delete(0);
   TXBondPList bonds;
-  if( Cmds.Count() == 2 && Cmds[1].Equalsi("hbonds") )  {
+  bool absolute = Options.Contains('a');
+  if( Cmds.Count() == 1 && Cmds[1].Equalsi("hbonds") )  {
+    if (absolute) r /= 0.02;
     TGXApp::BondIterator bi = FXApp->GetBonds();
     while( bi.HasNext() )  {
       TXBond& xb = bi.Next();
@@ -1789,8 +1789,9 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->BondRad(r, &bonds);
   }
   else  {
-    bonds = FXApp->GetBonds(Cmds.Text(' ', 1), true);
-    if( bonds.IsEmpty() )  {  // get all non-H
+    if (absolute) r /= 0.1;
+    bonds = FXApp->GetBonds(Cmds, true);
+    if( bonds.IsEmpty() && Cmds.IsEmpty() )  {  // get all non-H
       TGXApp::BondIterator bi = FXApp->GetBonds();
       while( bi.HasNext() )  {
         TXBond& xb = bi.Next();
