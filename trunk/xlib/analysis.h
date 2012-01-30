@@ -22,10 +22,19 @@ namespace alg {
   olxstr formula(const TCAtomPList &atoms, double mult=1);
   olxstr label(const TCAtomPList &atoms);
   const cm_Element &find_heaviest(const TCAtomPList &atoms);
+  /* checks if new enviroment is better or as good as the old one
+  */
   bool check_geometry(const TCAtom &a, const cm_Element &e);
+  /* does basic chemical connectivity checks
+  */
   bool check_connectivity(const TCAtom &a, const cm_Element &e);
   ConstArrayList<size_t> find_hetero_indices(const TCAtomPList &atoms,
     const cm_Element *re=NULL);
+  /* locates anevironment around the given point (in fractional coordinates)
+  and rates it according to simple geometrical measurements as distances and
+  angles
+  */
+  double rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r);
 }; // end namespace alg
 namespace helper {
   ConstSortedElementPList get_user_elements();

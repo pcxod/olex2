@@ -1244,6 +1244,11 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
 bool TAutoDB::ChangeType(TCAtom &a, const cm_Element &e) {
   if (a.GetType() == e || e == iHydrogenZ) return false;
   if (alg::check_connectivity(a, e)) {
+    // extra checks for high jumpers
+    if (olx_abs(a.GetType().z-e.z) > 3 ) {
+      if (!alg::check_geometry(a, e))
+        return false;
+    }
     a.SetType(e);
     a.SetLabel(e.symbol, false);
     return true;
