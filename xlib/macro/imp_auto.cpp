@@ -435,14 +435,26 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   // treating NPD atoms... promoting to the next available type
   if( changeNPD > 0 && !sfac.IsEmpty() )  {
     size_t atoms_transformed = 0;
+    int delta_z = TAutoDB::GetInstance().GetBAIDelta();
     for( size_t i=0; i < objects.atoms.Count(); i++ )  {
       TSAtom& sa = objects.atoms[i];
-      if( (sa.CAtom().GetEllipsoid() != NULL && sa.CAtom().GetEllipsoid()->IsNPD()) ||
-        (sa.CAtom().GetUiso() <= 0.005) )
+      if( (sa.CAtom().GetEllipsoid() != NULL &&
+           sa.CAtom().GetEllipsoid()->IsNPD()) ||
+          (sa.CAtom().GetUiso() <= 0.005) )
       {
         size_t ind = sfac.IndexOfObject(&sa.GetType());
         if( ind != InvalidIndex && ((ind+1) < sfac.Count()) )  {
-          sa.CAtom().SetType(*sfac.GetObject(ind+1));
+          if (delta_z > 0 &&  // obey the same rules
+              olx_abs(sa.GetType().z-sfac.GetObject(ind+1)->z) > delta_z)
+          {
+            if (sa.CAtom().GetEllipsoid() != NULL)
+              olx_analysis::helper::reset_u(sa.CAtom());
+            continue;
+          }
+          const cm_Element &e = olx_analysis::Analysis::check_proposed_element(
+            sa.CAtom(), *sfac.GetObject(ind+1));
+          if (e != sa.GetType())
+            sa.CAtom().SetType(e);
           olx_analysis::helper::reset_u(sa.CAtom());
           if( ++atoms_transformed >= changeNPD )
             break;

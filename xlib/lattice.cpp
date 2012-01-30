@@ -1554,14 +1554,18 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
     }
     else if( AE.Count() == 5 )  {  // carboranes ...
       //check
-      bool proceed = false;
-      for( size_t j=0; j < AE.Count(); j++ )
-        if( AE.GetType(j) == iBoronZ )  {
-          proceed = true;  break;
+      if (TSPlane::CalcRMSD(AE) < 0.1) {
+        bool proceed = false;
+        for( size_t j=0; j < AE.Count(); j++ ) {
+          if( AE.GetType(j) == iBoronZ )  {
+            proceed = true;
+            break;
+          }
         }
-      if( proceed )  {
-        TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R5CH";
-        cg.FixAtom(AE, fgBH1, h_elm, NULL, generated);
+        if( proceed )  {
+          TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R5CH";
+          cg.FixAtom(AE, fgBH1, h_elm, NULL, generated);
+        }
       }
     }
   }
@@ -1820,7 +1824,7 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg,
     GetFragment(i).FindRings(rcont, rings);
   TAtomEnvi AE;
   for( size_t i=0; i < rings.Count(); i++ )  {
-    double rms = TSPlane::CalcRMS( rings[i] );
+    double rms = TSPlane::CalcRMSD(rings[i]);
     if( rms < 0.05 && TNetwork::IsRingRegular( rings[i]) )  {
       for( size_t j=0; j < rings[i].Count(); j++ )  {
         AE.Clear();
@@ -1841,8 +1845,11 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg,
           if( (AE.GetCrd(k) - rings[i][j]->crd()).QLength() > 4.0 )
             AE.Delete(k--);
         }
-        if( AE.Count() == 2 && rings[i][j]->GetType() == iCarbonZ && atoms.IndexOf(AE.GetBase()) != InvalidIndex )  {
-          TBasicApp::NewLogEntry(logInfo) << rings[i][j]->GetLabel() << ": X(Y=C)H (ring)";
+        if( AE.Count() == 2 && rings[i][j]->GetType() == iCarbonZ &&
+            atoms.IndexOf(AE.GetBase()) != InvalidIndex )
+        {
+          TBasicApp::NewLogEntry(logInfo) << rings[i][j]->GetLabel() <<
+            ": X(Y=C)H (ring)";
           cg.FixAtom(AE, fgCH1, h_elm);
           rings[i][j]->CAtom().SetHAttached(true);
         }

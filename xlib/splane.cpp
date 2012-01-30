@@ -15,13 +15,25 @@
 #include "unitcell.h"
 #include "pers_util.h"
 
-double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
+double TSPlane::CalcRMSD(const TSAtomPList& atoms)  {
   if( atoms.Count() < 3 )  return -1;
   vec3d p, c;
-  TTypeList< AnAssociation2<vec3d, double> > Points;
-  Points.SetCapacity( atoms.Count() );
-  for( size_t i=0; i < atoms.Count(); i++ )
-    Points.AddNew(atoms[i]->crd(), 1);
+  TArrayList<AnAssociation2<vec3d, double> > Points(atoms.Count());
+  for( size_t i=0; i < atoms.Count(); i++ ) {
+    Points[i].A() = atoms[i]->crd();
+    Points[i].B() = 1;
+  }
+  return CalcPlane(Points, p, c);
+}
+//..............................................................................
+double TSPlane::CalcRMSD(const TAtomEnvi& atoms)  {
+  if( atoms.Count() < 3 )  return -1;
+  vec3d p, c;
+  TArrayList<AnAssociation2<vec3d, double> > Points(atoms.Count());
+  for( size_t i=0; i < atoms.Count(); i++ ) {
+    Points[i].A() = atoms.GetCrd(i);
+    Points[i].B() = 1;
+  }
   return CalcPlane(Points, p, c);
 }
 //..............................................................................

@@ -72,25 +72,11 @@ const cm_Element &alg::find_heaviest(const TCAtomPList &atoms) {
 }
 //.............................................................................
 bool alg::check_geometry(const TCAtom &a, const cm_Element &e) {
-  TTypeList<AnAssociation2<const TCAtom*, vec3d> > res;
-  TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
-  uc.FindInRangeAC(a.ccrd(), e.r_vdw, res); 
-  vec3d center = a.GetParent()->Orthogonalise(a.ccrd());
-  QuickSorter::Sort(res, TUnitCell::AC_Sort(center));
-  res.Delete(0);
-  size_t bad_cnt=0;
-  for (size_t i=0; i < res.Count(); i++) {
-    vec3d a = res[i].GetB()-center;
-    if (a.IsNull(1e-3)) continue;
-    for (size_t j=i+1; j < res.Count(); j++) {
-      vec3d b = res[j].GetB()-center;
-      if (b.IsNull(1e-3)) continue;
-      double ca = a.CAngle(b);
-      if ( ca > 0.6 && olx_abs(ca-1) > 1e-3)
-        bad_cnt++;
-    }
-  }
-  return bad_cnt == 0;
+  double diff = rate_envi(a.GetParent()->GetLattice().GetUnitCell(), 
+    a.ccrd(), e.r_bonding+1.3) -
+      rate_envi(a.GetParent()->GetLattice().GetUnitCell(), 
+      a.ccrd(), a.GetType().r_bonding+1.3);
+  return olx_abs(diff) <= 0.05;
 }
 //.............................................................................
 bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
@@ -146,6 +132,40 @@ ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
     atoms,
     *(new TArrayList<size_t>),
     olx_alg::olx_not(TCAtom::TypeAnalyser(z)));
+}
+//.............................................................................
+double alg::rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r) {
+  TArrayList<AnAssociation2<TCAtom const*, vec3d> > res;
+  uc.FindInRangeAC(fcrd, r, res);
+  const vec3d center = uc.GetLattice().GetAsymmUnit().Orthogonalise(fcrd);
+  for (size_t j=0; j < res.Count(); j++) {
+    if (center.QDistanceTo(res[j].GetB()) < 1e-4 ||
+      res[j].GetA()->GetType() < 2)
+    {
+      res.Delete(j--);
+    }
+  }
+  double wght = 1;
+  if (res.Count() > 1)  {
+    double awght = 1./(res.Count()*(res.Count()-1));
+    for (size_t j=0; j < res.Count(); j++)  {
+      if (res[j].GetB().QLength() < 0.8)
+        wght -= 0.5/res.Count();
+      for (size_t k=j+1; k < res.Count(); k++)  {
+        double cang = (res[j].GetB()-center).CAngle(res[k].GetB()-center);
+        if( cang > 0.588 )  { // less than 56 degrees
+          wght -= awght;
+        }
+      }
+    }
+  }
+  else if (res.Count() == 1) {  // just one bond
+    if (res[0].GetB().QLength() < 0.8)
+      wght = 0;
+  }
+  else  // no bonds, cannot say anything
+    wght = 0;
+  return wght;
 }
 //.............................................................................
 //.............................................................................

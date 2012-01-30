@@ -4597,7 +4597,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   size_t plance_cnt = 0;
   for( size_t i=0; i < rings.Count(); i++ )  {
-    const double rms = TSPlane::CalcRMS(rings[i]);
+    const double rms = TSPlane::CalcRMSD(rings[i]);
     if( rms > 0.05 || !TNetwork::IsRingRegular(rings[i]) )  {
       olxstr rc = "Plane #";
       rc << ++plance_cnt << NewLineSequence();

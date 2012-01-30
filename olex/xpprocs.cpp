@@ -1482,9 +1482,12 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options,
         FXApp->XFile().GetAsymmUnit().GetHklToCartesian()
         : FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
       olxstr arg;
-      if( Cmds[0] == '1' )  arg = "100";
-      else if( Cmds[0] == '2' )  arg = "010";
-      else if( Cmds[0] == '3' )  arg = "001";
+      if( Cmds[0] == '1' || Cmds[0] == 'a' )
+        arg = "100";
+      else if( Cmds[0] == '2' || Cmds[0] == 'b' )
+        arg = "010";
+      else if( Cmds[0] == '3' || Cmds[0] == 'c' )
+        arg = "001";
       else
         arg = Cmds[0];
       if( (arg.Length()%3) != 0 )  {
