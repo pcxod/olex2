@@ -1243,7 +1243,8 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
 //..............................................................................
 bool TAutoDB::ChangeType(TCAtom &a, const cm_Element &e) {
   if (a.GetType() == e || e == iHydrogenZ) return false;
-  if (alg::check_connectivity(a, e)) {
+  bool return_any = alg::check_connectivity(a, a.GetType());
+  if (return_any && alg::check_connectivity(a, e)) {
     // extra checks for high jumpers
     if (olx_abs(a.GetType().z-e.z) > 3 ) {
       if (!alg::check_geometry(a, e))
@@ -1407,6 +1408,13 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if( scale > URatio )
           searchLighter = true;
         else if( scale < 1./URatio )
+          searchHeavier = true;
+      }
+      // use max.min 'absolute' values for elements after Si
+      else if (guesses[i].atom->GetType().z > 14) {
+        if (guesses[i].atom->GetUiso() > 0.05)
+          searchLighter = true;
+        else if (guesses[i].atom->GetUiso() < 0.005)
           searchHeavier = true;
       }
       if( searchLighter || searchHeavier )  {
