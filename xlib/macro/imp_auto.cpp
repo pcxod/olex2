@@ -285,7 +285,19 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     for( size_t i=0; i < QPeaks.Count(); i++ )  {
       if( QPeaks[i]->IsDeleted() || QPeaks[i]->CAtom().IsDeleted() )  continue;
       TBasicApp::NewLogEntry(logInfo) << QPeaks[i]->CAtom().GetLabel() << " -> C";
-      QPeaks[i]->CAtom().SetLabel("C");
+      TCAtom &a = QPeaks[i]->CAtom();
+      a.SetLabel("C", false);
+      a.SetType(XElementLib::GetByIndex(iCarbonIndex));
+      // clean up if H are already in place
+      for (size_t j=0; j < a.AttachedSiteCount(); j++) {
+        TCAtom &aa = a.GetAttachedAtom(j);
+        for (size_t k=0; k < aa.AttachedSiteCount(); k++) {
+          TCAtom &aaa = aa.GetAttachedAtom(k);
+          if (aaa.GetType() == iHydrogenZ) {
+            aaa.SetDeleted(true);
+          }
+        }
+      }
     }
   }
 
@@ -421,7 +433,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0;  i < latt.GetObjects().atoms.Count(); i++ )  {
     TSAtom& sa = latt.GetObjects().atoms[i];
     if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
-    if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > 0.25 )  {
+    if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > 0.125 )  {
       if (check_demotion &&
         olx_analysis::helper::can_demote(sa.CAtom(), AvailableTypes))
       {
@@ -435,6 +447,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   // treating NPD atoms... promoting to the next available type
   if( changeNPD > 0 && !sfac.IsEmpty() )  {
     size_t atoms_transformed = 0;
+    TCAtomPList to_isot;
     int delta_z = TAutoDB::GetInstance().GetBAIDelta();
     for( size_t i=0; i < objects.atoms.Count(); i++ )  {
       TSAtom& sa = objects.atoms[i];
@@ -448,7 +461,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
               olx_abs(sa.GetType().z-sfac.GetObject(ind+1)->z) > delta_z)
           {
             if (sa.CAtom().GetEllipsoid() != NULL)
-              olx_analysis::helper::reset_u(sa.CAtom());
+              to_isot.Add(sa.CAtom());
             continue;
           }
           const cm_Element &e = olx_analysis::Analysis::check_proposed_element(
@@ -461,6 +474,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
+    latt.SetAnis(to_isot, false);
   }
   //end treating NDP atoms
   if( runFuse && olex::IOlexProcessor::GetInstance() != NULL )

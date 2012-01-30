@@ -163,8 +163,8 @@ double alg::rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r) {
     if (res[0].GetB().QLength() < 0.8)
       wght = 0;
   }
-  else  // no bonds, cannot say anything
-    wght = 0;
+  //else  // no bonds, cannot say anything
+  //  wght = 0;
   return wght;
 }
 //.............................................................................
@@ -209,6 +209,7 @@ bool helper::can_demote(const cm_Element &e, const SortedElementPList &elms) {
 }
 //.............................................................................
 bool helper::can_demote(const TCAtom &a, const SortedElementPList &elms) {
+  const bool return_any = alg::check_connectivity(a, a.GetType());
   size_t idx = elms.IndexOf(a.GetType());
   if (idx == InvalidIndex) {
     for (size_t i=0; i < elms.Count(); i++) {
@@ -216,7 +217,7 @@ bool helper::can_demote(const TCAtom &a, const SortedElementPList &elms) {
         if (i==0) return false;
         if (i>0 && elms[i-1]->z == iHydrogenZ)
           return false;
-        if (alg::check_connectivity(a, *elms[i])) return true;
+        if (return_any || alg::check_connectivity(a, *elms[i])) return true;
       }
     }
     return false;
@@ -225,7 +226,7 @@ bool helper::can_demote(const TCAtom &a, const SortedElementPList &elms) {
     if ((idx == 1 && elms[0]->z == iHydrogenZ) || idx == 0)
       return false;
     for (size_t i=idx; i != InvalidIndex; i--) {
-      if (alg::check_connectivity(a, *elms[i])) return true;
+      if (return_any || alg::check_connectivity(a, *elms[i])) return true;
     }
     return false;
   }

@@ -2017,6 +2017,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
 }
 //..............................................................................
 void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
+  if (atoms.IsEmpty()) return; 
   if( !anis )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
       if( olx_is_valid_index(atoms[i]->GetEllpId()) )  {
@@ -2035,9 +2036,8 @@ void TLattice::SetAnis(const TCAtomPList& atoms, bool anis)  {
       }
     }
   }
-  OnStructureUniq.Enter(this);
-  Init();
-  OnStructureUniq.Exit(this);
+  GetUnitCell().UpdateEllipsoids();
+  RestoreADPs(false);
 }
 //..............................................................................
 void TLattice::ToDataItem(TDataItem& item) const  {
@@ -2365,6 +2365,8 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
       au.CellToCartesian(sa.ccrd(), sa.crd());
     if( sa.CAtom().GetEllipsoid() != NULL )
       sa.SetEllipsoid(&uc.GetEllipsoid(sa.GetMatrix(0).GetContainerId(), sa.CAtom().GetId()));
+    else
+      sa.SetEllipsoid(NULL);
   }
   for( size_t i=0; i < uc.EllpCount(); i++ )  {
     TEllipsoid* elp = uc.GetEllp(i);
