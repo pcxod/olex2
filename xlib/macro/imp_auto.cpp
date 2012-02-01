@@ -287,6 +287,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
       TBasicApp::NewLogEntry(logInfo) << QPeaks[i]->CAtom().GetLabel() << " -> C";
       TCAtom &a = QPeaks[i]->CAtom();
       a.SetLabel("C", false);
+      a.SetUiso(0.025);
       a.SetType(XElementLib::GetByIndex(iCarbonIndex));
       // clean up if H are already in place
       for (size_t j=0; j < a.AttachedSiteCount(); j++) {
@@ -406,7 +407,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     }
     for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
       TSAtom& sa = latt.GetFragment(i).Node(j);
-      if( sa.IsDeleted() || sa.CAtom().IsDeleted() || sa.GetType().GetMr() < 3  )  continue;
+      if( sa.IsDeleted() || sa.CAtom().IsDeleted() || sa.GetType().GetMr() < 3 )
+        continue;
       TTypeList<AnAssociation2<TCAtom*, vec3d> > neighbours;
       TAutoDBNode nd(sa, &neighbours);
       for( size_t k=0; k < nd.DistanceCount(); k++ )  {
@@ -417,12 +419,11 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           if( neighbours[k].GetA()->GetType() == iQPeakZ ||
                 neighbours[k].GetA()->GetType() <= iFluorineZ )
           {
-            neighbours[k].GetA()->SetDeleted(true);
+            olx_analysis::helper::delete_atom(*neighbours[k].GetA());
           }
           else  {
             if( sa.GetType() == iQPeakZ || sa.GetType() <= iFluorineZ )  {
-              sa.SetDeleted(true);
-              sa.CAtom().SetDeleted(true);
+              olx_analysis::helper::delete_atom(sa.CAtom());
             }
           }
         }
@@ -440,8 +441,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
         continue;
       }
       TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() << " blown up";
-      sa.SetDeleted(true);
-      sa.CAtom().SetDeleted(true);
+      olx_analysis::helper::delete_atom(sa.CAtom());
     }
   }
   // treating NPD atoms... promoting to the next available type

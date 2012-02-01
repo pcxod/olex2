@@ -415,7 +415,7 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
   AnalysisStat& stat, bool heavier, bool lighter, ElementPList* proposed_atoms)
 {
   if( !lighter && !heavier )  return false;
-  bool return_any = olx_analysis::alg::check_connectivity(ca, ca.GetType());
+  bool return_any = !olx_analysis::alg::check_connectivity(ca, ca.GetType());
   olxstr tmp = ca.GetLabel();
   tmp << ' ';
   const cm_Element* type = &ca.GetType();
