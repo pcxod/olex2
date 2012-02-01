@@ -328,6 +328,7 @@ void TGlRenderer::Resize(int l, int t, size_t w, size_t h, float Zoom)  {
   Height = (int)h;
   FZoom = Zoom;
   FGlImageChanged = true;
+  SetView(false,Zoom);
 }
 //..............................................................................
 void TGlRenderer::SetView(bool i, short Res)  {  SetView(0, 0, i , false, Res);  }
