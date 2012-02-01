@@ -1781,7 +1781,7 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   Cmds.Delete(0);
   TXBondPList bonds;
   bool absolute = Options.Contains('a');
-  if( Cmds.Count() == 1 && Cmds[1].Equalsi("hbonds") )  {
+  if( Cmds.Count() == 2 && Cmds[1].Equalsi("hbonds") )  {
     if (absolute) r /= 0.02;
     TGXApp::BondIterator bi = FXApp->GetBonds();
     while( bi.HasNext() )  {

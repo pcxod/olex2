@@ -15,6 +15,8 @@
 #include "lattice.h"
 #include "label_corrector.h"
 
+static const double THA = acos(-1./3)*180/M_PI;
+
 AConstraintGenerator::AConstraintGenerator(RefinementModel& rm) : RefMod(rm) {
   Distances(GenId(fgCH3, 1), 0.96);
   Distances(GenId(fgCH2, 2), 0.97);
@@ -113,7 +115,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
           Vec1 = M * Vec1;
 
           Vec2 = RotVec.XProdVec(Vec1).Normalise();
-          olx_create_rotation_matrix(M1, Vec2, cos(M_PI*109.4/180));
+          olx_create_rotation_matrix(M1, Vec2, cos(M_PI*THA/180));
 
           RotVec = M1 * RotVec;
           RotVec *= dis;
@@ -129,7 +131,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
       if( crds.IsEmpty() )  {
         PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
         RotVec = PlaneN.XProdVec(Z).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/180));
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
         crds.AddNew(M*PlaneN);
         olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120./180));
         crds.AddNew(M*crds[0]);
@@ -147,9 +149,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         // summ vector
         Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() + (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
         RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec( envi.GetCrd(1) - envi.GetBase().crd() ).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/360), sin(M_PI*109.4/360));
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/360), sin(M_PI*THA/360));
         crds.AddNew(M*Vec1);
-        olx_create_rotation_matrix(M, RotVec, cos(-M_PI*109.4/360), sin(-M_PI*109.4/360));
+        olx_create_rotation_matrix(M, RotVec, cos(-M_PI*THA/360), sin(-M_PI*THA/360));
         crds.AddNew(M*Vec1);
         // final 90 degree rotation
         olx_create_rotation_matrix(M, Vec1, 0, 1);
@@ -233,9 +235,9 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
             (h_crds[1] - envi.GetBase().crd()).Normalise()).Normalise();
           RotVec = (h_crds[0] - envi.GetBase().crd()).XProdVec(
             h_crds[1] - envi.GetBase().crd()).Normalise();
-          olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/360), sin(M_PI*109.4/360));
+          olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/360), sin(M_PI*THA/360));
           crds.AddNew(M*Vec1);
-          olx_create_rotation_matrix(M, RotVec, cos(-M_PI*109.4/360), sin(-M_PI*109.4/360));
+          olx_create_rotation_matrix(M, RotVec, cos(-M_PI*THA/360), sin(-M_PI*THA/360));
           crds.AddNew(M*Vec1);
           // final 180 degree rotation
           olx_create_rotation_matrix(M, Vec1, 0, 1);
@@ -248,7 +250,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
             crds.AddNew(pivoting->GetBase().crd() + Vec1);
             Vec2 = (pivoting->GetCrd(1) - pivoting->GetBase().crd());
             RotVec = Vec1.XProdVec(Vec2).Normalise();
-            olx_create_rotation_matrix(M, RotVec, cos(-M_PI*109.4/180), sin(-M_PI*109.4/180));
+            olx_create_rotation_matrix(M, RotVec, cos(-M_PI*THA/180), sin(-M_PI*THA/180));
             crds.AddNew(pivoting->GetBase().crd() + M*Vec1);
           }
           else if( pivoting->Count() == 1 )  {
@@ -259,7 +261,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
               RotVec = Z;
             RotVec = RotVec.XProdVec(PlaneN).Normalise();
             PlaneN.NormaliseTo(dis);
-            double ang = M_PI*109.4/360;
+            double ang = M_PI*THA/360;
             olx_create_rotation_matrix(M, RotVec, cos(ang), sin(ang));
             crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
             olx_create_rotation_matrix(M, RotVec, cos(-ang), sin(-ang));
@@ -276,7 +278,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
             RotVec = Z;
           RotVec = RotVec.XProdVec(PlaneN).Normalise();
           PlaneN.NormaliseTo(dis);
-          double ang = M_PI*109.4/360;
+          double ang = M_PI*THA/360;
           olx_create_rotation_matrix(M, RotVec, cos(ang), sin(ang));
           crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
           olx_create_rotation_matrix(M, RotVec, cos(-ang), sin(-ang));
@@ -284,24 +286,25 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         }
         else {
           PlaneN = (envi.GetBase().crd()-envi.GetCrd(0)).Normalise();
-          RotVec = PlaneN.XProdVec(
-            envi.GetBase().crd()-pivoting->GetCrd(0)).Normalise();
-          PlaneN.NormaliseTo(dis);
-          double ang = M_PI*109.4/360;
-          olx_create_rotation_matrix(M, RotVec, cos(ang), sin(ang));
-          crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
-          olx_create_rotation_matrix(M, RotVec, cos(-ang), sin(-ang));
-          crds.AddCopy(envi.GetBase().crd() + M*PlaneN);
+          RotVec = PlaneN.XProdVec(pivoting->GetCrd(0)-envi.GetBase().crd())
+            .Normalise();
+          double ang = M_PI*(180-THA)/180;
+          olx_create_rotation_matrix(M, RotVec, cos(ang));
+          crds.AddCopy(M*vec3d(PlaneN).NormaliseTo(dis));
+          ang = M_PI*120/180;
+          olx_create_rotation_matrix(M, PlaneN, cos(ang));
+          crds.AddCopy(envi.GetBase().crd() + M*crds[0]);
+          crds[0] += envi.GetBase().crd();
         }
       }
-      else if (envi.Count() == 2) { // TH
+      else if (envi.Count() >= 2) { // TH
         Vec1 = -((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() +
           (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise();
         RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec(
           envi.GetCrd(1) - envi.GetBase().crd()).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/360), sin(M_PI*109.4/360));
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/360));
         crds.AddNew(M*Vec1);
-        olx_create_rotation_matrix(M, RotVec, cos(-M_PI*109.4/360), sin(-M_PI*109.4/360));
+        olx_create_rotation_matrix(M, RotVec, cos(-M_PI*THA/360), sin(-M_PI*THA/360));
         crds.AddNew(M*Vec1);
         // final 180 degree rotation
         olx_create_rotation_matrix(M, Vec1, 0, 1);
@@ -315,7 +318,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         Vec1 = pivoting->GetCrd(0) - envi.GetBase().crd();
         Vec2 = envi.GetCrd(0) - envi.GetBase().crd();
         RotVec = Vec1.XProdVec(Vec2).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/180));
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
         crds.AddNew(Vec2);
         crds[0] = M * crds[0];
         crds[0].NormaliseTo(dis);
@@ -330,7 +333,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
               RotVec = Vec1.XProdVec(Vec2).Normalise();
             else
               RotVec = Vec2.XProdVec(Vec1).Normalise();
-            olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/180));
+            olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
 
             crds.AddNew(Vec2);
             crds[0] = M * crds[0];
@@ -356,7 +359,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
                     Vec2 = envi.GetBase().crd() - NEnvi.GetBase().crd();
 
                     RotVec = Vec1.XProdVec(Vec2).Normalise();
-                    olx_create_rotation_matrix(M, RotVec, -cos(M_PI*109.4/180));
+                    olx_create_rotation_matrix(M, RotVec, -cos(M_PI*THA/180));
                     Vec2.Normalise();
                     Vec2 = M * Vec2;
                     Vec2 *= dis;
@@ -380,7 +383,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
               RotVec = Vec2.XProdVec(Vec1).Normalise();
               crds.AddNew(Vec2);
             }
-            olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/180));
+            olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
             crds[0] = M * crds[0];
             crds[0].NormaliseTo(dis);
             crds[0] += envi.GetBase().crd();
@@ -391,7 +394,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
           ca = Z.CAngle(PlaneN);
           RotVec = PlaneN.XProdVec(Z).Normalise();
           olx_create_rotation_matrix(M, RotVec, ca);
-          crds.AddNew(0, -sin(M_PI*109.4/180), cos(M_PI*109.4/180));
+          crds.AddNew(0, -sin(M_PI*THA/180), cos(M_PI*THA/180));
           crds[0] = M * crds[0];
           crds[0] *= dis;
           crds[0] += envi.GetBase().crd();
@@ -405,7 +408,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         dis = Distances[GenId(fgNH3,0)];
         PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
         RotVec = PlaneN.XProdVec(Z).Normalise();
-        olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/180));
+        olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
         crds.AddNew(M*PlaneN);
         olx_create_rotation_matrix(M, PlaneN, cos(M_PI*120./180));
         crds.AddNew(M*crds[0]);
@@ -427,7 +430,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
           RotVec.Normalise();
           olx_create_rotation_matrix(M, RotVec, ca);
 
-          crds.AddNew(0, -sin(M_PI*109.4/180), cos(M_PI*109.4/180));
+          crds.AddNew(0, -sin(M_PI*THA/180), cos(M_PI*THA/180));
           crds[0] = M * crds[0];
           crds[0] *= dis;
           crds.AddNew(crds[0]);
@@ -550,7 +553,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
             RotVec = Vec1.XProdVec(Vec2).Normalise();
           else
             RotVec = Vec2.XProdVec(Vec1).Normalise();
-          olx_create_rotation_matrix(M, RotVec, cos(M_PI*109.4/180));
+          olx_create_rotation_matrix(M, RotVec, cos(M_PI*THA/180));
 
           crds.AddNew(Vec2);
           crds[0] = M * crds[0];
@@ -564,7 +567,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         RotVec = PlaneN.XProdVec(Z).Normalise();
         olx_create_rotation_matrix(M, RotVec, ca);
 
-        crds.AddNew(0, -sin(M_PI*109.4/180), cos(M_PI*109.4/180));
+        crds.AddNew(0, -sin(M_PI*THA/180), cos(M_PI*THA/180));
         crds[0] = M * crds[0];
         crds[0] *= dis;
         crds[0] += envi.GetBase().crd();

@@ -1689,7 +1689,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       if( d > 1.3 )   {  // otherwise a doubl bond
         TAtomEnvi pivoting;
         UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-        UnitCell->FilterHBonds(AE, pivoting);
+        if (d < 1.8)  // not coordination
+          UnitCell->FilterHBonds(AE, pivoting);
+        else {  // just remove 'useless'
+          TAtomEnvi tmp;
+          UnitCell->FilterHBonds(AE, tmp);
+        }
         RemoveNonHBonding(pivoting);
         if( AE.GetType(0) == iChlorineZ )
           ;
