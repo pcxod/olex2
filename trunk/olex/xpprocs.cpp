@@ -2215,7 +2215,14 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               cme->r_sfil = radii.GetValue(i);
           }
         }
-        if( Cmds[1].Equalsi("vdw") )  {
+        else if( Cmds[1].Equalsi("pers") )  {
+          for( size_t i=0; i < radii.Count(); i++ )  {
+            cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+            if( cme != NULL )
+              cme->r_pers = radii.GetValue(i);
+          }
+        }
+        else if( Cmds[1].Equalsi("vdw") )  {
           for( size_t i=0; i < radii.Count(); i++ )  {
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
             if( cme != NULL )
@@ -6151,6 +6158,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
     Cmds.Delete(0);
   }
   TXAtomPList atoms = FindXAtoms(Cmds, false, true);
+  size_t match_cnt=0;
   if( !atoms.IsEmpty() )  {
     if( atoms.Count() == 2 &&
         (&atoms[0]->GetNetwork() != &atoms[1]->GetNetwork()) )
@@ -6163,6 +6171,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
         netA.DoMatch(netB, res, TryInvert, weight_calculator);
       TBasicApp::NewLogEntry() << "Graphs match: " << match;
       if( match )  {
+        match_cnt++;
         // restore the other unit cell, if any...
         if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
           TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice()
@@ -6284,6 +6293,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         if (valid)  {
+          match_cnt++;
           // restore the other unit cell, if any...
           if (&latt != &netA.GetLattice() || &latt != &netB.GetLattice())  {
             TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice()
@@ -6301,8 +6311,6 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
           CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
         }
       }
-      FXApp->UpdateBonds();
-      FXApp->CenterView();
     }
   }
   else  {
@@ -6321,6 +6329,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
         TTypeList<AnAssociation2<size_t, size_t> > res;
         if( !nets[i]->DoMatch(*nets[j], res, false, weight_calculator) )
           continue;
+        match_cnt++;
         matched.SetTrue(j);
         TTypeList<AnAssociation2<TSAtom*,TSAtom*> > ap;
         for( size_t k=0; k < res.Count(); k++ ) {
@@ -6368,9 +6377,14 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
         TNetwork::DoAlignAtoms(nets[j]->GetNodes(), ra_i);
       }
     }
+    // do match all possible fragments with similar number of atoms
+  }
+  if (match_cnt != 0) {
     FXApp->UpdateBonds();
     FXApp->CenterView();
-    // do match all possible fragments with similar number of atoms
+  }
+  else {
+    TBasicApp::NewLogEntry() << "No matching fragments found";
   }
 }
 //..............................................................................

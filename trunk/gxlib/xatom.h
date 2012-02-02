@@ -153,8 +153,10 @@ public:
   void ApplyStyle(TGraphicsStyle& S);
   void UpdateStyle(TGraphicsStyle& S);
 
+  double GetR()  {  return Params()[0]; }
+  void SetR(double r);
   void SetZoom(double Z);
-  inline double GetZoom()  {  return Params()[1]; }
+  double GetZoom()  {  return Params()[1]; }
   // this center is 'graphics' center which is updated when the object is dragged
   const vec3d& GetCenter() const {  return Center;  }
   void NullCenter()  {  Center.Null();  }
