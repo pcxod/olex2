@@ -250,12 +250,14 @@ public:
     return (ind != InvalidIndex) ? *FCollections.GetObject(ind) : NewCollection(Name);
   }
 
+  /* in comparison with previos function returns first
+   suitable colelction for example will return "C" for "C.C1.1_555"
+   if nor "C.C1" nether "C.C1.1_555" exists
+   if no collection if found, then CollName = "C", otherwise a name
+   of the returned collection
+   */
   TGPCollection* FindCollectionX(const olxstr &Name, olxstr& CollName);
-  // in comparison with previos function returns first
-  // suitable colelction for example will return "C" for "C.C1.1_555"
-  // if nor "C.C1" nether "C.C1.1_555" exists
-  // if no collection if found, then CollName = "C", otherwise a name
-  // of the returned collection
+
   size_t CollectionCount() const {  return FCollections.Count(); }
   void RemoveCollection(TGPCollection& GP);
   void RemoveCollections(const TPtrList<TGPCollection>& Collections);

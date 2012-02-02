@@ -162,6 +162,12 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "end is reached");
     }
     void Reset()  {  offset = 0;  }
+    template <class Functor>
+    const TIterator& ForEach(const Functor& f) const {
+    for( size_t i=0; i < objects.Count(); i++ )
+      objects[i].ForEach(f);
+    return *this;
+    }
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
     AtomIterator(const TGXApp& app)  {

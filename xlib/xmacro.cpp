@@ -4455,13 +4455,13 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
          content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
          fileName(Options.FindValue('f'));
   xapp.XFile().UpdateAsymmUnit();
-  TIns *Ins = (TIns*)xapp.XFile().FindFormat("ins");
+  TIns ins;
+  ins.Adopt(xapp.XFile());
   if( xapp.CheckFileType<TP4PFile>() )  {
     if( newSg.IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
       return;
     }
-    Ins->Adopt(xapp.XFile());
   }
   else if( xapp.CheckFileType<TCRSFile>() )  {
     TSpaceGroup* sg = xapp.XFile().GetLastLoader<TCRSFile>().GetSG();
@@ -4474,39 +4474,72 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         TBasicApp::NewLogEntry() << "The CRS file format space group is: " << sg->GetName();
       }
     }
-    Ins->Adopt(xapp.XFile());
   }
   if( !content.IsEmpty() )
-    Ins->GetRM().SetUserFormula(content);
-  if( Ins->GetRM().GetUserContent().IsEmpty() )  {
+    ins.GetRM().SetUserFormula(content);
+  if( ins.GetRM().GetUserContent().IsEmpty() )  {
     if( op != NULL )  {
       content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
       if( op->executeFunction(content, content) )
-        Ins->GetRM().SetUserFormula(content);
-      if( Ins->GetRM().GetUserContent().IsEmpty() )  {
+        ins.GetRM().SetUserFormula(content);
+      if( ins.GetRM().GetUserContent().IsEmpty() )  {
         E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify");
         return;
       }
     }
   }
   if( !newSg.IsEmpty() )  {
-    TSpaceGroup* sg = TSymmLib::GetInstance().FindGroupByName(newSg);
+    TStrList sg_toks(newSg, '~');
+    TSpaceGroup* sg = NULL;
+    if (sg_toks.Count() == 1)  {
+      sg = TSymmLib::GetInstance().FindGroupByName(sg_toks[0]);
+    }
+    else {
+      if (sg_toks.Count() == 5) {
+        TStrList toks(sg_toks[0], ' ');
+        SymmSpace::Info sg_info;
+        for (size_t i=0; i < toks.Count(); i++)
+          TSymmParser::SymmToMatrix(toks[i], sg_info.matrices.AddNew());
+        short latt = sg_toks[1].ToInt();
+        sg_info.latt = olx_abs(latt);
+        sg_info.centrosymmetric = latt > 0;
+        sg = &TSymmLib::GetInstance().CreateNew(sg_info);
+        TStrList cell_toks(sg_toks[2], ' '),
+          esd_toks(sg_toks[3], ' '),
+          hklf_toks(sg_toks[4], ' ');
+        if (cell_toks.Count() != 6 || esd_toks.Count() != 6)
+          throw TInvalidArgumentException(__OlxSourceInfo, "CELL");
+        if (hklf_toks.Count() != 9)
+          throw TInvalidArgumentException(__OlxSourceInfo, "HKLF");
+        for (size_t i=0; i < 3; i++) {
+          ins.GetAsymmUnit().GetAxes()[i] = cell_toks[i].ToDouble();
+          ins.GetAsymmUnit().GetAngles()[i] = cell_toks[i+3].ToDouble();
+          ins.GetAsymmUnit().GetAxisEsds()[i] = esd_toks[i].ToDouble();
+          ins.GetAsymmUnit().GetAngleEsds()[i] = esd_toks[i+3].ToDouble();
+        }
+        mat3d m;
+        for ( size_t i=0; i < 9; i++)
+          m[i/3][i%3] = hklf_toks[i].ToDouble();
+        ins.GetRM().SetHKLF_mat(ins.GetRM().GetHKLF_mat()*m);
+      }
+    }
     if( !sg )  {
       E.ProcessingError(__OlxSrcInfo, "could not find space group: ") << newSg;
       return;
     }
-    Ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
+    ins.GetAsymmUnit().ChangeSpaceGroup(*sg);
     newSg.SetLength(0);
     newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
-    olxstr titl(TEFile::ChangeFileExt(TEFile::ExtractFileName(xapp.XFile().GetFileName()), EmptyString()));
-    Ins->SetTitle(titl << " in " << sg->GetName() << " #" << sg->GetNumber());
+    olxstr titl(TEFile::ChangeFileExt(
+      TEFile::ExtractFileName(xapp.XFile().GetFileName()), EmptyString()));
+    ins.SetTitle(titl << " in " << sg->GetName() << " #" << sg->GetNumber());
   }
   if( fileName.IsEmpty() )
     fileName = xapp.XFile().GetFileName();
   olxstr FN(TEFile::ChangeFileExt(fileName, "ins"));
   olxstr lstFN(TEFile::ChangeFileExt(fileName, "lst"));
 
-  Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, !Options.Contains("rem"),
+  ins.SaveForSolution(FN, Cmds.Text(' '), newSg, !Options.Contains("rem"),
     Options.Contains("atoms"));
   if( TEFile::Exists(lstFN) )  {
     olxstr lstTmpFN(lstFN);
