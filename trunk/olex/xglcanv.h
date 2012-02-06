@@ -47,7 +47,7 @@ public:
   /* the arrays is staically allocated and should not be modified!!! 
   wxWidgets needs not a const pointer... If default is true - NULL is returned,
   else if stereo is true - Olex2 will try to initialise stereo buffers */
-  static int* GetGlAttributes(bool _default, bool stereo);
+  static int* GetGlAttributes(bool _default, bool stereo, short depth_bits);
   DECLARE_CLASS(wxGLCanvas)
   DECLARE_EVENT_TABLE()
 };
