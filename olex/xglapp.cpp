@@ -145,7 +145,7 @@ bool TGlXApp::OnInit()  {
   olxstr str_glAttr = olx_getenv("OLEX2_GL_DEFAULT"),
          str_glStereo = olx_getenv("OLEX2_GL_STEREO"),
          str_glDepth = olx_getenv("OLEX2_GL_DEPTH_BITS");
-  short depth_bits = str_glDepth.IsInt() ? str_glDepth.ToInt() : 32;
+  short depth_bits = str_glDepth.IsInt() ? str_glDepth.ToInt() : 24;
   int *gl_attr = TGlCanvas::GetGlAttributes(
     !str_glAttr.IsEmpty() && str_glAttr.Equalsi("TRUE"),
     str_glStereo.IsEmpty() || str_glStereo.Equalsi("TRUE"),
