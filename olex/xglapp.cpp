@@ -195,6 +195,7 @@ bool TGlXApp::OnInit()  {
       XApp->Arguments.Delete(i--);
     }
   }
+
   TProgress *P = new TProgress;
   XApp->OnProgress.Add(P);
 

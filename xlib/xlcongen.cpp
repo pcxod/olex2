@@ -95,8 +95,11 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
       case fgOH2:
         dis = Distances[GenId(fgOH2,0)];
         if( CreatedAtoms.Count() == 2 )  {
-          if( envi.Count() == 1 )
+          if (envi.Count() == 1 &&
+              XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
+          {
             afix = 7;
+          }
           else
             afix = 6;
         }

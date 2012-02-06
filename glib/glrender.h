@@ -39,7 +39,8 @@ class AGDrawObject;
 class TGlGroup;
 
 class TGlRenderer : public IEObject  {
-  ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;  // a list of all groups of primitives
+  // a list of all groups of primitives
+  ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;
   TSStrPObjList<olxcstr,TGPCollection*, false> FCollections;
   TPtrList<TGlMaterial> FTranslucentObjects,
     FIdentityObjects, FTranslucentIdentityObjects;
@@ -52,9 +53,13 @@ class TGlRenderer : public IEObject  {
 //__________________ perspective related stuff
   bool FPerspective;
   float FPAngle,
-/* zoom is used when drawn on a larger canvas, so that objects, which are draw in identity mode can fix their position */
+  /* zoom is used when drawn on a larger canvas, so that objects, which are
+  draw in identity mode can fix their position
+  */
     FZoom,
-/* viewzoom it to be used with rasters when the scene is zoomed using LookAt function */
+  /* viewzoom it to be used with rasters when the scene is zoomed using LookAt
+  function
+  */
     FViewZoom,
     FProjectionLeft, FProjectionRight, FProjectionTop, FProjectionBottom 
     ;
@@ -66,7 +71,7 @@ class TGlRenderer : public IEObject  {
 //__________________
   int Top, Left;
   int Width, Height, OWidth;
-  double LineWidth;
+  double LineWidth, MaxRasterZ;
   int CompiledListId;
 protected:
   void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
@@ -103,13 +108,18 @@ public:
   AGlScene& GetScene() const {  return *FScene;  }
   // the functions set current matrix
   void SetView(int x, int y, bool Identity, bool Select, short Res);
-  void SetView(bool Identity, short Res=1); // is used to set current view (when initialisation is done by an external librray
-  // such as wxWidgets
+  /* is used to set current view (when initialisation is done by an external
+  librray such as wxWidgets
+  */
+  void SetView(bool Identity, short Res=1);
 
   TGraphicsStyles& GetStyles() const {  return *FStyles; }
-  void CleanUpStyles(); // removes styles, which are not used by any collection
-  void _OnStylesClear(); // is called by the FStyles only!
-  void _OnStylesLoaded(); // is called by the FStyles only!
+  // removes styles, which are not used by any collection
+  void CleanUpStyles();
+  // is called by the FStyles only!
+  void _OnStylesClear();
+  // is called by the FStyles only!
+  void _OnStylesLoaded();
 
   bool IsCompiled() const {  return CompiledListId != -1; }
   void Compile(bool v);
@@ -165,16 +175,18 @@ public:
       (SceneDepth=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : SceneDepth;
     return 1./df;
   }
-  /* returns a "size of a pixel in current viewport"; use it to transform screen coordinates to
-  internal coordinates of OpenGl Scene like follow: if an object has to follow mouse pointer, then
-  the change in coordinates should be x = x0+MouseX*GetScale() y = y0+MouseY*GetScale() */
+  /* returns a "size of a pixel in current viewport"; use it to transform
+  screen coordinates to internal coordinates of OpenGl Scene like follow: if an
+  object has to follow mouse pointer, then the change in coordinates should be
+  x = x0+MouseX*GetScale() y = y0+MouseY*GetScale()
+  */
   double GetScale() const {  // to be used to calculate raster positions (x,y)
     return 1./Height;
   }
-  // to be used to calculate raster positions (z)
-  double GetMaxRasterZ() const {  return 1;  }
-  /* this function provides extra value for use with rasters, when the scene is zoomed
-  using LookAt function
+  /* to be used to calculate raster positions (z) */
+  double GetMaxRasterZ() const {  return MaxRasterZ;  }
+  /* this function provides extra value for use with rasters, when the scene is
+  zoomed using LookAt function
   */
   double GetViewZoom() const {  return FViewZoom;  }
   void UpdateMinMax(const vec3d& Max, const vec3d& Min);
@@ -182,20 +194,24 @@ public:
   const vec3d& MaxDim() const { return FMaxV; }
   const vec3d& MinDim() const { return FMinV; }
   /* the actual width is to be used for modifying/restoring canvas size */
-  size_t GetActualWidth() const {  return (StereoFlag==glStereoCross) ? OWidth : Width;  }
+  size_t GetActualWidth() const {
+    return (StereoFlag==glStereoCross) ? OWidth : Width;
+  }
   /* opposite to the above one - this is used in all model calcuations */
   int GetWidth() const {  return Width;  }
   int GetHeight() const {  return Height;  }
   int GetLeft() const {  return Left;  }
   int GetTop() const {  return Top;  }
   /*an "advanced" drawing procedure which draws an object on a static image
-  . Used to implement faster drawing for such objects as text input controls and frames ...
-  Be sure that the object is of "a modal" type, e.g. no significant drawing activity 
-  interrupts it otherwise the drawing will be very slow ideed!
+  . Used to implement faster drawing for such objects as text input controls
+  and frames...  Be sure that the object is of "a modal" type, e.g. no
+  significant drawing activity interrupts it otherwise the drawing will be very
+  slow ideed!
   */
   void UpdateGlImage();
   bool GlImageChanged() const {  return FGlImageChanged; }
-  void ReleaseGlImage();  // use to realease the internal memory allocated by the image
+  // use to realease the internal memory allocated by the image
+  void ReleaseGlImage();
 
   void Draw();
   // to be called if the underlying OpenGl Context is about to change
@@ -238,7 +254,9 @@ public:
 
   void operator = (const TGlRenderer &G);
   TGPCollection& NewCollection(const olxstr &Name);
-  TGPCollection& GetCollection(int ind) const {  return *FCollections.GetObject(ind);  }
+  TGPCollection& GetCollection(int ind) const {
+    return *FCollections.GetObject(ind);
+  }
   template <class T>
   TGPCollection* FindCollection(const T& Name)  {
     const size_t ind = FCollections.IndexOf(Name);
@@ -247,7 +265,8 @@ public:
   template <class T>
   TGPCollection& FindOrCreateCollection(const T& Name)  {
     const size_t ind = FCollections.IndexOf(Name);
-    return (ind != InvalidIndex) ? *FCollections.GetObject(ind) : NewCollection(Name);
+    return (ind != InvalidIndex) ? *FCollections.GetObject(ind)
+      : NewCollection(Name);
   }
 
   /* in comparison with previos function returns first
@@ -263,12 +282,15 @@ public:
   void RemoveCollections(const TPtrList<TGPCollection>& Collections);
 
   size_t PrimitiveCount() const {  return Primitives.ObjectCount(); }
-  TGlPrimitive& GetPrimitive(size_t i) const {  return Primitives.GetObject(i); }
-  TGlPrimitive& NewPrimitive(short type); // do not call directly, use GPCollection's method instead
+  TGlPrimitive& GetPrimitive(size_t i) const {
+    return Primitives.GetObject(i);
+  }
+  // do not call directly, use GPCollection's method instead
+  TGlPrimitive& NewPrimitive(short type);
   void RemovePrimitiveByTag(int index);
   void OnSetProperties(const TGlMaterial& P);
-  void SetProperties(TGlMaterial& P);  // tracks translucent and identity objects
-//  void ReplacePrimitives(TEList *CurObj, TEList *NewObj);
+  // tracks translucent and identity objects
+  void SetProperties(TGlMaterial& P);
 
   void SetObjectsCapacity(size_t v)  { FGObjects.SetCapacity(v);  } 
   AGDrawObject& GetObject(size_t i) const {  return *FGObjects[i]; }
@@ -281,8 +303,10 @@ public:
 
   // vendor specific, fixes for ATI
   void DrawText(TGlPrimitive& p, double x, double y, double z);
-  // avoids clipping the text as well as vendor specific, uses screen coordinates
-  void DrawTextSafe(const vec3d& pos, const olxstr& text, const class TGlFont& fnt);
+  /* avoids clipping the text as well as vendor specific, uses screen
+  coordinates
+  */
+  void DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont& fnt);
   bool IsATI() const {  return ATI;  }
   void EnableClipPlane(class TGlClipPlane *P, bool v);
 
@@ -290,8 +314,9 @@ public:
   TGlBackground* Ceiling()     {  return FCeiling; }
 
   char* GetPixels(bool useMalloc=false, short aligment=4);
-  /* the functions set current view for drawinf large picture x, y- curent quadraterial,
-   res - required resolution; to be used in conjunction with GetPixels
+  /* the functions set current view for drawinf large picture x, y- curent
+  quadraterial, res - required resolution; to be used in conjunction with
+  GetPixels
   */
   void LookAt(double x, double y, short res);
 
@@ -301,11 +326,13 @@ public:
   void LibStereo(const TStrObjList& Params, TMacroError& E);
   void LibStereoColor(const TStrObjList& Params, TMacroError& E);
   void LibFog(TStrObjList& Cmds, const TParamList& Options, TMacroError &E);
-  void LibPerspective(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
+  void LibPerspective(TStrObjList& Cmds, const TParamList& Options,
+    TMacroError& E);
   void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
   void LibCalcZoom(const TStrObjList& Params, TMacroError& E);
   void LibLineWidth(const TStrObjList& Params, TMacroError& E);
   void LibBasis(const TStrObjList& Params, TMacroError& E);
+  void LibRasterZ(const TStrObjList& Params, TMacroError& E);
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 
