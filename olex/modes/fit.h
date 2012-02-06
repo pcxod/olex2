@@ -21,6 +21,7 @@ class TFitMode : public AEventsDispatcher, public AMode  {
   TXAtomPList Atoms, AtomsToMatch;
   vec3d_alist original_crds;
   bool Initialised, DoSplit;
+  int afix;
   class OnUniqHandler : public AActionHandler {
     TFitMode& fit_mode;
   public:
@@ -47,6 +48,11 @@ public:
       return false;
     }
     DoSplit = Options.Contains('s');
+    afix = Options.FindValue('a', "-1").ToInt();
+    if (DoSplit && afix != -1) {
+      TBasicApp::NewLogEntry(logError) <<
+        "Split and Afix are not compatible, atoms will be only split";
+    }
     AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     TXAtomPList xatoms = TGlXApp::GetGXApp()->GetSelection().Extract<TXAtom>();
@@ -114,6 +120,14 @@ public:
     else  {
       for( size_t i=0; i < Atoms.Count(); i++ )
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
+      if (afix != -1 && !Atoms.IsEmpty()) {
+        bool has_pivot = TAfixGroup::HasExcplicitPivot(afix);
+        TAfixGroup &ag = app.XFile().GetRM().AfixGroups.New(
+          has_pivot ? &Atoms[0]->CAtom() : NULL, afix);
+        size_t start = has_pivot? 1 : 0;
+        for( size_t i=start; i < Atoms.Count(); i++ )
+          ag.AddDependent(Atoms[i]->CAtom());
+      }
       app.XFile().GetLattice().Init();
     }
   }
@@ -130,7 +144,9 @@ public:
     }
     return true;
   }
-  virtual bool Dispatch(int msg, short id, const IEObject* Sender, const IEObject* Data=NULL)  {  
+  virtual bool Dispatch(int msg, short id, const IEObject* Sender,
+    const IEObject* Data=NULL)
+  {
     if( !Initialised )  return false;
     TGXApp& app = *TGlXApp::GetGXApp();
     TAsymmUnit& au = app.XFile().GetAsymmUnit();

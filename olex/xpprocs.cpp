@@ -3713,14 +3713,15 @@ void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   bool invert = Options.Contains('i');
   if( invert )  {
-    TStateChange sc(prsGradBG, !FXApp->GetRender().Background()->IsVisible() );
+    TStateChange sc(prsGradBG, !FXApp->GetRender().Background()->IsVisible());
     OnStateChange.Execute( (AEventsDispatcher*)this, &sc );
-    FXApp->GetRender().Background()->SetVisible( !FXApp->GetRender().Background()->IsVisible() );
+    FXApp->GetRender().Background()->SetVisible(
+      !FXApp->GetRender().Background()->IsVisible());
   }
   else if( Cmds.Count() == 1 )  {
-    TStateChange sc(prsGradBG, Cmds[0].ToBool() );
-    OnStateChange.Execute( (AEventsDispatcher*)this, &sc );
-    FXApp->GetRender().Background()->SetVisible( Cmds[0].ToBool() );
+    TStateChange sc(prsGradBG, Cmds[0].ToBool());
+    OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+    FXApp->GetRender().Background()->SetVisible(Cmds[0].ToBool());
   }
   else if( Cmds.IsEmpty() && !Options.Contains('p'))  {
     TdlgGradient *G = new TdlgGradient(this);
@@ -3741,32 +3742,31 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       glt->SetEnabled(false);
   }
   else if( TEFile::Exists(GradientPicture) )  {
-    wxFSFile* inf = TFileHandlerManager::GetFSFileHandler( GradientPicture );
+    wxFSFile* inf = TFileHandlerManager::GetFSFileHandler(GradientPicture);
     if( inf == NULL )  {
       E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ") << GradientPicture;
       return;
     }
-    wxImage img( *inf->GetStream() );
+    wxImage img(*inf->GetStream());
     delete inf;
     if( !img.Ok() )  {
       E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << GradientPicture;
       return;
     }
     int owidth = img.GetWidth(), oheight = img.GetHeight();
-    int l = CalcL( img.GetWidth() );
+    int l = CalcL(img.GetWidth());
     int swidth = (int)pow((double)2, (double)l);
-    l = CalcL( img.GetHeight() );
+    l = CalcL(img.GetHeight());
     int sheight = (int)pow((double)2, (double)l);
 
     if( swidth != owidth || sheight != oheight )
-      img.Rescale( swidth, sheight );
+      img.Rescale(swidth, sheight);
 
     int cl = 3, bmpType = GL_RGB;
     if( img.HasAlpha() )  {
       cl ++;
       bmpType = GL_RGBA;
     }
-
     unsigned char* RGBData = new unsigned char[ swidth * sheight * cl];
     for( int i=0; i < sheight; i++ )  {
       for( int j=0; j < swidth; j++ )  {
@@ -3779,19 +3779,24 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     TGlTexture* glt = FXApp->GetRender().Background()->GetTexture();
-    if( glt != NULL  )
-      FXApp->GetRender().GetTextureManager().Replace2DTexture(*glt, 0, swidth, sheight, 0, bmpType, RGBData);
+    if( glt != NULL  ) {
+      FXApp->GetRender().GetTextureManager().Replace2DTexture(
+        *glt, 0, swidth, sheight, 0, bmpType, RGBData);
+      glt->SetEnabled(true);
+    }
     else  {
-      int glti = FXApp->GetRender().GetTextureManager().Add2DTexture("grad", 0, swidth, sheight, 0, bmpType, RGBData);
-      FXApp->GetRender().Background()->SetTexture( FXApp->GetRender().GetTextureManager().FindTexture(glti) );
+      int glti = FXApp->GetRender().GetTextureManager().Add2DTexture(
+        "grad", 0, swidth, sheight, 0, bmpType, RGBData);
+      FXApp->GetRender().Background()->SetTexture(
+        FXApp->GetRender().GetTextureManager().FindTexture(glti));
       glt = FXApp->GetRender().Background()->GetTexture();
-      glt->SetEnvMode( tpeDecal );
-      glt->SetSCrdWrapping( tpCrdClamp );
-      glt->SetTCrdWrapping( tpCrdClamp );
+      glt->SetEnvMode(tpeDecal);
+      glt->SetSCrdWrapping(tpCrdClamp);
+      glt->SetTCrdWrapping(tpCrdClamp);
 
-      glt->SetMagFilter( tpFilterNearest );
-      glt->SetMinFilter( tpFilterLinear );
-      glt->SetEnabled( true );
+      glt->SetMagFilter(tpFilterNearest);
+      glt->SetMinFilter(tpFilterLinear);
+      glt->SetEnabled(true);
     }
     delete [] RGBData;
   }

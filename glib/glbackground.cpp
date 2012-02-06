@@ -47,16 +47,11 @@ void TGlBackground::Create(const olxstr& cName) {
   GlP.SetProperties(GlM);
   GlP.Vertices.SetCount(4);
   GlP.Colors.SetCount(4);
-  if( Texture != NULL )  {
-    GlP.SetTextureId( Texture->GetId() );
-    GlP.TextureCrds.SetCount(4);
-    GlP.TextureCrds[0].s = 1;  GlP.TextureCrds[0].t = 1;
-    GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 1;
-    GlP.TextureCrds[2].s = 0;  GlP.TextureCrds[2].t = 0;
-    GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 0;
-  }
-  
-  Orient(GlP);
+  GlP.TextureCrds.SetCount(4);
+  GlP.TextureCrds[0].s = 1;  GlP.TextureCrds[0].t = 1;
+  GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 1;
+  GlP.TextureCrds[2].s = 0;  GlP.TextureCrds[2].t = 0;
+  GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 0;
 }
 //..............................................................................
 void TGlBackground::SetTexture(TGlTexture* tx)  {  
@@ -66,7 +61,7 @@ void TGlBackground::SetTexture(TGlTexture* tx)  {
 bool TGlBackground::Orient(TGlPrimitive& P)  {
   if( Parent.IsColorStereo() )  return true; 
   if( Texture != NULL )
-    P.SetTextureId( Texture->GetId() );
+    P.SetTextureId(Texture->GetId());
   double Scale = Parent.GetScale();
   double HW = (Parent.GetWidth()+1)/2*Scale;
   double HH = (Parent.GetHeight()+1)/2*Scale;
