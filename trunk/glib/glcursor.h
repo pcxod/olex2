@@ -16,7 +16,7 @@
 BeginGlNamespace()
 
 class TGlCursor: public AGDrawObject, AEventsDispatcher  {
-  float X, Y;
+  double X, Y, Z;
   bool TextStyle;
   class TGlPrimitive *Primitive;
   olxch Symbol;
@@ -28,9 +28,14 @@ public:
   void Create(const olxstr& cName=EmptyString());
   virtual ~TGlCursor() {}
 
-  void SetPosition(float x, float y)  {  X = x;  Y = y;  }
-  DefPropP(float, X)
-  DefPropP(float, Y)
+  void SetPosition(double x, double y, double z)  {
+    X = x;
+    Y = y;
+    Z = z;
+  }
+  DefPropP(double, X)
+  DefPropP(double, Y)
+  DefPropP(double, Z)
   DefPropP(size_t, FontIndex)
   class TGlFont& GetFont() const;
   

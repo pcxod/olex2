@@ -47,7 +47,7 @@ bool TGlCursor::Orient(TGlPrimitive& P)  {
   if( Primitive == NULL )  return true;
   Primitive->SetFont(&GetFont());
   Primitive->SetString(&Char);
-  Parent.DrawText(P, X, Y, 0);
+  Parent.DrawText(P, X, Y, Z);
   return true;
 }
 //..............................................................................

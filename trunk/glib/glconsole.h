@@ -34,7 +34,7 @@ class TGlConsole: public AGDrawObject,
          FLinesToShow,
          FStringPos,
          LinesVisible;
-  bool FShowBuffer, FScrollDirectionUp,
+  bool FShowBuffer, ScrollDirectionUp,
     SkipPosting;  // the next pot operation will pass
   size_t FontIndex;
   bool PromptVisible;
@@ -71,18 +71,19 @@ public:
       (FStringPos - PromptStr.Length()) : FStringPos);
   }
 
-  inline const TStrPObjList<olxstr,TGlMaterial*>& Buffer() const {
+  const TStrPObjList<olxstr,TGlMaterial*>& Buffer() const {
     return FBuffer;
   }
   void ClearBuffer();
 
   bool IsPromptVisible() const {  return PromptVisible;  }
   void SetPromptVisible(bool v);
-
-  inline size_t GetCommandCount() const {  return FCommands.Count();  }
-  inline const olxstr& GetCommandByIndex(size_t i) const {  return FCommands[i];  }
-  inline size_t GetCommandIndex() const  {  return FCmdPos;  }
-  inline void SetCommandIndex(size_t i) {  FCmdPos = i;  }
+  // returns this objects Z coordinate
+  double GetZ() const;
+  size_t GetCommandCount() const {  return FCommands.Count();  }
+  const olxstr& GetCommandByIndex(size_t i) const {  return FCommands[i];  }
+  size_t GetCommandIndex() const  {  return FCmdPos;  }
+  void SetCommandIndex(size_t i) {  FCmdPos = i;  }
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
@@ -96,26 +97,25 @@ public:
   DefPropP(uint16_t, Left)
   DefPropBIsSet(SkipPosting)
   DefPropP(TGlMaterial*, PrintMaterial)
-  inline bool ShowBuffer() const {  return FShowBuffer; }
-  inline void ShowBuffer(bool v)  {  FShowBuffer = v; }
-  inline double GetLineSpacing() const {  return FLineSpacing; }
+  bool ShowBuffer() const {  return FShowBuffer; }
+  void ShowBuffer(bool v)  {  FShowBuffer = v; }
+  double GetLineSpacing() const {  return FLineSpacing; }
   void SetLineSpacing(double v);
-  inline const olxstr& GetInviteString() const { return InviteStr; }
+  const olxstr& GetInviteString() const { return InviteStr; }
   void SetInviteString(const olxstr& S);
 
   void PrintText(const olxstr& S, TGlMaterial *M=NULL, bool Hyphenate=true);
   void PrintText(const TStrList& SL, TGlMaterial *M=NULL, bool Hyphenate=true);
-  inline void NewLine()  {  FBuffer.Add(EmptyString()); }
+  void NewLine()  {  FBuffer.Add(EmptyString()); }
   size_t MaxLines();
-  inline void SetMaxLines(size_t V)  {  FMaxLines = V; }
-  inline size_t GetLinesToShow() const {  return FLinesToShow;  }
+  void SetMaxLines(size_t V)  {  FMaxLines = V; }
+  size_t GetLinesToShow() const {  return FLinesToShow;  }
   void SetLinesToShow(size_t V);
 
   class TGlFont& GetFont() const;
-  inline TGlCursor& Cursor() const {  return *FCursor;  }
+  TGlCursor& Cursor() const {  return *FCursor;  }
 
-  inline bool ScrollDirectionUp() const {  return FScrollDirectionUp; }
-  inline void ScrollDirectionUp(bool v) {  FScrollDirectionUp = v; }
+  DefPropBIsSet(ScrollDirectionUp)
 
   TActionQueue &OnCommand, &OnPost;
 

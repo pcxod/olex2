@@ -80,6 +80,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   FTranslucentObjects.SetIncrement(16);
   FCollections.SetIncrement(16);
   FGObjects.SetIncrement(16);
+  MaxRasterZ = 1;
 }
 //..............................................................................
 TGlRenderer::~TGlRenderer()  {
@@ -1214,35 +1215,75 @@ void TGlRenderer::LibBasis(const TStrObjList& Params, TMacroError& E)  {
   }
   else  {
     TDataItem di(NULL, EmptyString());
-    di.LoadFromString(0, Params[0], NULL)    ;
+    di.LoadFromString(0, Params[0], NULL);
     GetBasis().FromDataItem(di);
   }
 }
 //..............................................................................
+void TGlRenderer::LibRasterZ(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )
+    E.SetRetVal(GetMaxRasterZ());
+  else
+    MaxRasterZ = Params[0].ToDouble();
+}
+//..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("gl") : name);
-  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
-    fpOne, "Compiles or decompiles the model according to the boolean parameter") );
-  lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibPerspective, "Perspective",
-    EmptyString(), fpNone|fpOne, "Un/Sets perspective view") );
-  lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibFog, "Fog",
-    EmptyString(), fpNone|fpOne, "fog color - sets fog, fog without arguments removes fog") );
-  lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibZoom, "Zoom",
-    EmptyString(), fpNone|fpOne, "If no arguments provided - resets zoom to fit to screen, otherwise increments/\
-decrements current zoom by provided value") );
-  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCalcZoom, "CalcZoom",
-    fpNone, "Returns optimal zoom value") );
-  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereo, "Stereo",
-    fpNone|fpOne|fpTwo, "Returns/sets color/cross stereo mode and optionally stereo angle [3]") );
-  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereoColor,
-    "StereoColor",
-    fpOne|fpTwo|fpFour, "Returns/sets colors for left/right color stereo mode glasses") );
-  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibLineWidth,
-    "LineWidth",
-    fpNone|fpOne, "Returns/sets width of the raster OpenGl line") );
-  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibBasis,
-    "Basis",
-    fpNone|fpOne, "Returns/sets view basis") );
+  lib->RegisterFunction<TGlRenderer>(
+    new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
+      fpOne,
+      "Compiles or decompiles the model according to the boolean parameter")
+  );
+  lib->RegisterMacro<TGlRenderer>(
+    new TMacro<TGlRenderer>(this,  &TGlRenderer::LibPerspective, "Perspective",
+      EmptyString(), fpNone|fpOne,
+      "Un/Sets perspective view")
+  );
+  lib->RegisterMacro<TGlRenderer>(
+    new TMacro<TGlRenderer>(this,  &TGlRenderer::LibFog, "Fog",
+      EmptyString(), fpNone|fpOne,
+      "Sets fog color, fog without arguments removes fog")
+  );
+  lib->RegisterMacro<TGlRenderer>(
+    new TMacro<TGlRenderer>(this,  &TGlRenderer::LibZoom, "Zoom",
+      EmptyString(), fpNone|fpOne,
+      "If no arguments provided - resets zoom to fit to screen, otherwise "
+      "increments/decrements current zoom by provided value")
+  );
+  lib->RegisterFunction<TGlRenderer>(
+    new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCalcZoom, "CalcZoom",
+      fpNone, "Returns optimal zoom value")
+  );
+  lib->RegisterFunction<TGlRenderer>(
+    new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereo, "Stereo",
+      fpNone|fpOne|fpTwo,
+      "Returns/sets color/cross stereo mode and optionally stereo angle [3]")
+  );
+  lib->RegisterFunction<TGlRenderer>(
+    new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereoColor,
+      "StereoColor",
+      fpOne|fpTwo|fpFour,
+      "Returns/sets colors for left/right color stereo mode glasses")
+  );
+  lib->RegisterFunction<TGlRenderer>(
+    new TFunction<TGlRenderer>(this,  &TGlRenderer::LibLineWidth,
+      "LineWidth",
+      fpNone|fpOne,
+      "Returns/sets width of the raster OpenGl line")
+      );
+  lib->RegisterFunction<TGlRenderer>(
+    new TFunction<TGlRenderer>(this,  &TGlRenderer::LibBasis,
+      "Basis",
+      fpNone|fpOne,
+      "Returns/sets view basis")
+  );
+  lib->RegisterFunction<TGlRenderer>(
+    new TFunction<TGlRenderer>(this,  &TGlRenderer::LibRasterZ,
+      "RasterZ",
+      fpNone|fpOne,
+      "Returns/sets maximum value of the raster Z 1 or -1 is typically "
+      "expected")
+  );
   lib->AttachLibrary(LightModel.ExportLibrary("lm"));
   return lib;
 }
