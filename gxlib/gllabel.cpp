@@ -56,7 +56,8 @@ void TXGlLabel::SetLabel(const olxstr& L)  {
 //..............................................................................
 vec3d TXGlLabel::GetRasterPosition() const {
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
-  vec3d off = (GetCenter()+vec3d(-text_rect.width/2,text_rect.height/2,0))*Parent.GetBasis().GetZoom();
+  vec3d off = (GetCenter()+vec3d(-text_rect.width/2,text_rect.height/2,0))*
+    Parent.GetBasis().GetZoom();
   //vec3d off = (GetCenter()*Parent.GetBasis().GetZoom());
   if( Transformer != NULL )  {
     vec3d T = Transformer->ForRaster(*this);
@@ -67,7 +68,7 @@ vec3d TXGlLabel::GetRasterPosition() const {
   T *= Parent.GetBasis().GetZoom();
   T /= Parent.GetScale();
   T += off*ScaleR;
-  T[2] = Parent.GetMaxRasterZ() - 0.001;
+  T[2] = Parent.CalcRasterZ(0.001);
   return T;
 }
 //..............................................................................
@@ -85,7 +86,7 @@ vec3d TXGlLabel::GetVectorPosition() const {
   T += off*(Scale*ScaleR);
   T *= Parent.GetBasis().GetMatrix();
   T *= Parent.GetBasis().GetZoom();
-  T[2] = Parent.GetMaxRasterZ() - 0.001;
+  T[2] = Parent.CalcRasterZ(0.001);
   return T;
 }
 //..............................................................................

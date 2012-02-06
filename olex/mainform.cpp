@@ -2291,9 +2291,11 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
       FHelpWindow->Clear();
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);
-      FHelpWindow->SetTop(InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
-      FHelpWindow->SetMaxStringLength((uint16_t)(FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
-      FHelpWindow->SetZ( FXApp->GetRender().GetMaxRasterZ()-0.1);
+      FHelpWindow->SetTop(
+        InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
+      FHelpWindow->SetMaxStringLength((uint16_t)(
+        FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
+      FHelpWindow->SetZ(FXApp->GetRender().CalcRasterZ(0.1));
       for( size_t i=0; i < macros.Count(); i++ )  {
         FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
         if( !macros[i]->GetDescription().IsEmpty() )  {
