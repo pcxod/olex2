@@ -850,7 +850,8 @@ void TMainForm::XApp(TGXApp *XA)  {
     "'showq b false'");
 
   this_InitMacroD(Mode, 
-    "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only\n&;"
+    "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only; [fit] "
+      "afix\n&;"
     "p-[name] prefix\n&;"
     "s-[grow] short interactions; [name] suffix; [fit] split&;"
     "t-[name] type\n&;"
@@ -872,7 +873,15 @@ void TMainForm::XApp(TGXApp *XA)  {
   // not implemented
   this_InitMacro(Bind, , fpTwo);
 
-  this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour);
+  this_InitMacroD(Grad,
+    "i-toggles gradient mode and the user/white background&;"
+    "p-sets/removes the gradient picture, the picture is assumed to have "
+    "power of 2 dimensions (like 512x256, it is stretched if needed",
+    fpNone|fpOne|fpFour,
+    "Sets options for the background gradient. No options - showsn the "
+    "gradient dialog where the user can choose the gradient colors. One "
+    "parameter is expected to be a boolean - shows/hides the gradient. Four "
+    "parameters specify the gradient colours explicetly.");
   this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms",
     fpAny|psCheckFileTypeIns,
     "Splits provided atoms along the longest axis of the ADP");
@@ -2350,7 +2359,7 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     xyz.LoadFromStrings(lines);
     if( xyz.GetAsymmUnit().AtomCount() == 0 )
       return false;
-    ProcessMacro("mode fit");
+    ProcessMacro("mode fit -a=6");
     TXAtomPList xatoms;
     TXBondPList xbonds;
     FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
