@@ -144,7 +144,7 @@ size_t TGlConsole::CalcScrollDown() const {
 }
 //..............................................................................
 double TGlConsole::GetZ() const {
-  return -(olx_abs(Parent.GetMaxRasterZ())-0.002);
+  return -Parent.CalcRasterZ(0.002);
 }
 //..............................................................................
 bool TGlConsole::Orient(TGlPrimitive& P)  {

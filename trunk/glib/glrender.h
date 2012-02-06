@@ -185,6 +185,10 @@ public:
   }
   /* to be used to calculate raster positions (z) */
   double GetMaxRasterZ() const {  return MaxRasterZ;  }
+  // calculates the Z value for the given offset
+  double CalcRasterZ(double off) const {
+    return olx_sign(GetMaxRasterZ())*(olx_abs(GetMaxRasterZ()) - off);
+  }
   /* this function provides extra value for use with rasters, when the scene is
   zoomed using LookAt function
   */

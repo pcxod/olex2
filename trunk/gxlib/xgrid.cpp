@@ -380,7 +380,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   // if only contours are drawn - render plane at the background
   if( (RenderMode&planeRenderModeContour) != 0 )  {
     if( (RenderMode&planeRenderModePlane) == 0 )
-      Z = -Parent.GetMaxRasterZ() + 0.003;
+      Z = -Parent.CalcRasterZ(0.003);
     else  // render the plane just a bit behind
       Z = Depth - 0.001;
   }
