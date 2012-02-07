@@ -657,7 +657,7 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   }
 }
 //..............................................................................
-void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi) {
+void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi, bool move) {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   bool add = true;
   for (size_t i=0; i < envi.Count(); i++) {
@@ -669,7 +669,8 @@ void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi) {
       vec3d h_crd = au.Orthogonalise(m*s.atom->ccrd());
       double ca = (envi.GetBase().crd()-h_crd).CAngle(envi.GetCrd(i)-h_crd);
       if (ca < -0.34) { // 109.9 -> 180
-        atom.Add(a, envi.GetMatrix(i), envi.GetCrd(i));
+        if (move)
+          atom.Add(a, envi.GetMatrix(i), envi.GetCrd(i));
         envi.Delete(i--);
         break;
       }

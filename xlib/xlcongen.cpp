@@ -52,23 +52,18 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
   try  {
     TSimpleRestraint* sr;
     TCAtomPList CreatedAtoms;
-    TAtomEnvi NEnvi;
     GenerateAtom(CreatedAtoms, envi, Group, atomType, pivoting);
     if( CreatedAtoms.IsEmpty() )  // nothing inserted
       return false;
     bool negative_part = false;
     double occu_mult = 1.0, dis;
     short afix = -1;
+    const size_t bondex_cnt = envi.CountCovalent();
     switch( Group )  {
       case fgNH3:
       case fgCH3:
         if( envi.Count() == 1 )  {
-          //TSAtom *SA = envi.GetBase()->Network()->GetLattice()->FindSAtom( envi.GetCAtom(0) );
-          //envi.GetBase()->Network()->GetLattice()->GetUnitCell()->GetAtomEnviList(*SA, NEnvi);
-          if( NEnvi.Count() > 2 )  // TODO: makes sense?
-            afix = 137;
-          else
-            afix = 137;
+          afix = 137;
           negative_part = (envi.GetBase().CAtom().GetDegeneracy() != 1);
         }
         break;
@@ -87,7 +82,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
           afix = 163;
         break;
       case fgSiH1:
-        if( NEnvi.Count() == 3 )
+        if( envi.Count() == 3 )
           afix = 13;
         break;
       case fgOH3:
@@ -108,27 +103,30 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
           sr->SetEsd(0.01);
           sr->SetValue(dis);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
-          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0));
+          sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0],
+            &envi.GetBase().CAtom().GetEquiv(0));
 
           sr = &RefMod.rDANG.AddNew();
           sr->SetEsd(0.02);
           sr->SetValue(dis*sqrt(2-2*cos(109.4*M_PI/180)));
-          sr->AddAtomPair(*CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0), *CreatedAtoms[0], NULL);
+          sr->AddAtomPair(*CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0),
+            *CreatedAtoms[0], NULL);
 
           if( envi.Count() == 1 )  {
             sr = &RefMod.rSADI.AddNew();
             sr->SetEsd(0.02);
             sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
-            sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], &envi.GetBase().CAtom().GetEquiv(0));
+            sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0],
+              &envi.GetBase().CAtom().GetEquiv(0));
           }
           occu_mult = 2;
         }
         break;
       case fgSH1:
       case fgOH1:
-        if( envi.Count() == 1 )
+        if( bondex_cnt == 1 )
           afix = 147;
-        else if( envi.Count() == 2 && CreatedAtoms.Count() == 1 )  {
+        else if( bondex_cnt == 2 && CreatedAtoms.Count() == 1 )  {
           const double d1 = envi.GetCrd(0).DistanceTo(envi.GetBase().crd());
           const double d2 = envi.GetCrd(1).DistanceTo(envi.GetBase().crd());
           //afix = 3; // possible...

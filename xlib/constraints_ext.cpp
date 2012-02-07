@@ -12,6 +12,7 @@
 #include "atomref.h"
 #include "pers_util.h"
 #include "index_range.h"
+#include "analysis.h"
 
 void rotated_adp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
     TTypeList<rotated_adp_constraint>& out)
@@ -27,18 +28,20 @@ void rotated_adp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
     refine_angle = toks[4].ToBool();
   out.Add(new rotated_adp_constraint(*src, *dest, dir, angle, refine_angle));
 }
-//...................................................................................
+//.............................................................................
 rotated_adp_constraint* rotated_adp_constraint::Copy(
   RefinementModel& rm, const rotated_adp_constraint& c)
 {
   TCAtom* ref = rm.aunit.FindCAtomById(c.source.GetId());
   TCAtom* atom = rm.aunit.FindCAtomById(c.destination.GetId());
-  if( ref == NULL || atom == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units do not match");
+  if( ref == NULL || atom == NULL ) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "asymmetric units do not match");
+  }
   return new rotated_adp_constraint(*ref,
     *atom, rm.DirectionById(c.dir.id), c.angle, c.refine_angle);
 }
-//...................................................................................
+//.............................................................................
 #ifndef _NO_PYTHON
 PyObject* rotated_adp_constraint::PyExport() const {
   return Py_BuildValue("i,i,O,d,b", source.GetTag(), destination.GetTag(),
@@ -46,17 +49,17 @@ PyObject* rotated_adp_constraint::PyExport() const {
   );
 }
 #endif
-//...................................................................................
+//.............................................................................
 olxstr rotated_adp_constraint::ToInsStr(const RefinementModel& rm) const {
   return olxstr("", 64).stream(' ') << GetName() << source.GetLabel()
     << destination.GetLabel() << dir.id << angle << refine_angle;
 }
-//...................................................................................
+//.............................................................................
 const olxstr& rotated_adp_constraint::GetName()  {
   static olxstr name("olex2.constraint.rotated_adp");
   return name;
 }
-//...................................................................................
+//.............................................................................
 void rotated_adp_constraint::ToDataItem(TDataItem& di) const {
   di.AddField("source", source.GetTag())
     .AddField("destination", destination.GetTag())
@@ -64,7 +67,7 @@ void rotated_adp_constraint::ToDataItem(TDataItem& di) const {
     .AddField("refine_angle", refine_angle)
     .AddField("dir_id", dir.id);
 }
-//...................................................................................
+//.............................................................................
 rotated_adp_constraint* rotated_adp_constraint::FromDataItem(
   const TDataItem& di, const RefinementModel& rm)
 {
@@ -76,21 +79,27 @@ rotated_adp_constraint* rotated_adp_constraint::FromDataItem(
       di.GetRequiredField("refine_angle").ToBool()
     );
 }
-//...................................................................................
+//.............................................................................
 void rotated_adp_constraint::UpdateParams(const TStrList& toks)  {
   if( toks.Count() != 1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "argument number");
   angle = toks[0].ToDouble();
 }
-//...................................................................................
-//...................................................................................
-//...................................................................................
+//.............................................................................
+olxstr rotated_adp_constraint::Describe() const {
+  olxstr rv = "ADP of ";
+  return rv << destination.GetLabel() << " is the ADP of " << source.GetLabel() <<
+    " rotated " << angle << " degrees around " << dir.Describe();
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 olxstr adirection::type_names[] = {"static", "vector", "normal"};
 const olxstr& adirection::GetName()  {
   static olxstr name("olex2.direction");
   return name;
 }
-//...................................................................................
+//.............................................................................
 const olxstr &adirection::EncodeType(uint16_t type)  {
   if( type == direction_static )
     return type_names[0];
@@ -100,7 +109,7 @@ const olxstr &adirection::EncodeType(uint16_t type)  {
     return type_names[2];
   throw TInvalidArgumentException(__OlxSourceInfo, olxstr("type=") << type);
 }
-//...................................................................................
+//.............................................................................
 uint16_t adirection::DecodeType(const olxstr &type)  {
   if( type.Equalsi(type_names[0]) )
     return direction_static;
@@ -110,7 +119,7 @@ uint16_t adirection::DecodeType(const olxstr &type)  {
     return direction_normal;
   throw TInvalidArgumentException(__OlxSourceInfo, olxstr("type=") << type);
 }
-//...................................................................................
+//.............................................................................
 void adirection::FromToks(const TStrList& toks, RefinementModel& rm,
     TTypeList<adirection>& out)
 {
@@ -136,7 +145,7 @@ void adirection::FromToks(const TStrList& toks, RefinementModel& rm,
     TBasicApp::NewLogEntry(logException) << ex.GetException()->GetError();
   }
 }
-//...................................................................................
+//.............................................................................
 adirection* direction::DoCopy(RefinementModel& rm) const {
   TCAtomGroup agroup;
   agroup.SetCapacity(atoms.Count());
@@ -151,7 +160,21 @@ adirection* direction::DoCopy(RefinementModel& rm) const {
   }
   return new direction(id, agroup, type);
 }
-//...................................................................................
+//.............................................................................
+olxstr direction::Describe() const {
+  olxstr rv;
+  if (type == direction_vector)
+    rv = "vector through";
+  else if( type == direction_normal)
+    rv = "normal for";
+  return rv << " [" << olx_analysis::alg::label(atoms, ',') << ']';
+}
+//.............................................................................
+olxstr static_direction::Describe() const {
+  olxstr rv = "vector";
+  return  rv << " [" << value.ToString() << ']';
+}
+//.............................................................................
 #ifndef _NO_PYTHON
 PyObject *static_direction::PyExport() const {
   return Py_BuildValue("s, s, (f,f,f)",
@@ -178,13 +201,13 @@ PyObject *direction::PyExport() const {
   return rv;  
 }
 #endif
-//...................................................................................
+//.............................................................................
 olxstr static_direction::ToInsStr(const RefinementModel& rm) const {
   return olxstr("", 64).stream(' ') << GetName()
     << adirection::EncodeType(direction_static)
     << id << value[0] << value[1] << value[2];
 }
-//...................................................................................
+//.............................................................................
 olxstr direction::ToInsStr(const RefinementModel& rm) const {
   olxstr rv("", 64);
   rv.stream(' ') << GetName() << adirection::EncodeType(type) << id;
@@ -194,13 +217,13 @@ olxstr direction::ToInsStr(const RefinementModel& rm) const {
   }
   return rv;
 }
-//...................................................................................
+//.............................................................................
 void static_direction::ToDataItem(TDataItem& di) const {
   di.AddField("type", adirection::EncodeType(direction_static))
     .AddField("id", id)
     .AddField("value", PersUtil::VecToStr(value));
 }
-//...................................................................................
+//.............................................................................
 void direction::ToDataItem(TDataItem& di) const {
   di.AddField("type", adirection::EncodeType(type)).
     AddField("id", id);
@@ -209,7 +232,7 @@ void direction::ToDataItem(TDataItem& di) const {
     atoms[i].ToDataItem(di.AddItem("atom"));
   }
 }
-//...................................................................................
+//.............................................................................
 adirection* adirection::FromDataItem(const TDataItem& di,
   const RefinementModel& rm)
 {
@@ -219,14 +242,14 @@ adirection* adirection::FromDataItem(const TDataItem& di,
   else
     return direction().CreateFromDataItem(di, rm);
 }
-//...................................................................................
+//.............................................................................
 adirection* static_direction::CreateFromDataItem(const TDataItem& di,
   const RefinementModel& rm) const
 {
   return new static_direction(di.GetRequiredField("id"),
     PersUtil::FloatVecFromStr(di.GetRequiredField("value")));
 }
-//...................................................................................
+//.............................................................................
 adirection* direction::CreateFromDataItem(const TDataItem& di,
   const RefinementModel& rm) const
 {
@@ -237,13 +260,13 @@ adirection* direction::CreateFromDataItem(const TDataItem& di,
     agroup.Add(new TGroupCAtom(di.GetItem(i), rm));
   return new direction(di.GetRequiredField("id"), agroup, type);
 }
-//...................................................................................
+//.............................................................................
 vec3d direction::get() const {
   return vec3d(0,0,0);
 }
-//...................................................................................
-//...................................................................................
-//...................................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 void same_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
     TTypeList<same_group_constraint>& out)
 {
@@ -264,7 +287,7 @@ void same_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
   }
   out.Add(g);
 }
-//...................................................................................
+//.............................................................................
 same_group_constraint* same_group_constraint::Copy(
   RefinementModel& rm, const same_group_constraint& c)
 {
@@ -283,7 +306,7 @@ same_group_constraint* same_group_constraint::Copy(
   }
   return &g;
 }
-//...................................................................................
+//.............................................................................
 #ifndef _NO_PYTHON
 PyObject* same_group_constraint::PyExport() const {
   PyObject *gs = PyTuple_New(groups.Count());
@@ -296,7 +319,7 @@ PyObject* same_group_constraint::PyExport() const {
   return gs;
 }
 #endif
-//...................................................................................
+//.............................................................................
 olxstr same_group_constraint::ToInsStr(const RefinementModel& rm) const {
   olxstr rv;
   rv << GetName() << ' ' << groups.Count();
@@ -306,12 +329,12 @@ olxstr same_group_constraint::ToInsStr(const RefinementModel& rm) const {
   }
   return rv;
 }
-//...................................................................................
+//.............................................................................
 const olxstr& same_group_constraint::GetName()  {
   static olxstr name("olex2.constraint.same_group");
   return name;
 }
-//...................................................................................
+//.............................................................................
 void same_group_constraint::ToDataItem(TDataItem& di) const {
   di.SetValue(groups.Count());
   IndexRange::Builder rb;
@@ -321,7 +344,7 @@ void same_group_constraint::ToDataItem(TDataItem& di) const {
   }
   di.AddField("atoms", rb.GetString());
 }
-//...................................................................................
+//.............................................................................
 same_group_constraint* same_group_constraint::FromDataItem(
   const TDataItem& di, const RefinementModel& rm)
 {
@@ -336,6 +359,15 @@ same_group_constraint* same_group_constraint::FromDataItem(
   }
   return &g;
 }
-//...................................................................................
+//.............................................................................
 void same_group_constraint::UpdateParams(const TStrList& toks)  {}
-//...................................................................................
+//.............................................................................
+olxstr same_group_constraint::Describe() const {
+  olxstr rv;
+  for (size_t i=0; i < groups.Count(); i++) {
+    if (!rv.IsEmpty()) rv << ", ";
+    rv << '[' << olx_analysis::alg::label(groups[i], ',') << ']';
+  }
+  return olxstr('{') << rv << '}';
+}
+//.............................................................................
