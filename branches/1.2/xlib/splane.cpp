@@ -15,13 +15,25 @@
 #include "unitcell.h"
 #include "pers_util.h"
 
-double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
+double TSPlane::CalcRMSD(const TSAtomPList& atoms)  {
   if( atoms.Count() < 3 )  return -1;
   vec3d p, c;
-  TTypeList< AnAssociation2<vec3d, double> > Points;
-  Points.SetCapacity( atoms.Count() );
-  for( size_t i=0; i < atoms.Count(); i++ )
-    Points.AddNew(atoms[i]->crd(), 1);
+  TArrayList<AnAssociation2<vec3d, double> > Points(atoms.Count());
+  for( size_t i=0; i < atoms.Count(); i++ ) {
+    Points[i].A() = atoms[i]->crd();
+    Points[i].B() = 1;
+  }
+  return CalcPlane(Points, p, c);
+}
+//..............................................................................
+double TSPlane::CalcRMSD(const TAtomEnvi& atoms)  {
+  if( atoms.Count() < 3 )  return -1;
+  vec3d p, c;
+  TArrayList<AnAssociation2<vec3d, double> > Points(atoms.Count());
+  for( size_t i=0; i < atoms.Count(); i++ ) {
+    Points[i].A() = atoms.GetCrd(i);
+    Points[i].B() = 1;
+  }
   return CalcPlane(Points, p, c);
 }
 //..............................................................................
@@ -85,7 +97,7 @@ bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
 }
 //..............................................................................
 double TSPlane::CalcPlane(const TSAtomPList& atoms, 
-                        vec3d& Params, vec3d& center, const short type)  
+                        vec3d& Params, vec3d& center, const short type)
 {
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
@@ -112,7 +124,7 @@ void TSPlane::FromDataItem(const TDataItem& item)  {
   Crds.Clear();
   ASObjectProvider& objects = Network->GetLattice().GetObjects();
   for( size_t i=0; i < item.ItemCount(); i++ )  {
-    Crds.AddNew(&objects.atoms[item.GetItem(i).GetRequiredField("atom_id").ToInt()], 
+    Crds.AddNew(&objects.atoms[item.GetItem(i).GetRequiredField("atom_id").ToInt()],
       item.GetItem(i).GetValue().ToDouble());
   }
   TTypeList< AnAssociation2<vec3d, double> > points;
@@ -122,6 +134,27 @@ void TSPlane::FromDataItem(const TDataItem& item)  {
   _Init(points);
   SetRegular(item.GetFieldValue("regular", FalseString()).ToBool());
 }
+//..............................................................................
+olxstr TSPlane::StrRepr() const {
+  olxstr rv;
+  const vec3d &n = GetNormal();
+  for (int i=0; i < 3; i++) {
+    if (olx_abs(n[i]) > 1e-5) {
+      if (!rv.IsEmpty()) {
+        rv << ' ';
+        if (n[i] > 0) rv << '+';
+      }
+      rv << olxstr::FormatFloat(3, n[i]) << '*' << olxch('X'+i);
+    }
+  }
+  if (olx_abs(GetD()) > 1e-5) {
+    rv << ' ';
+    if (GetD() > 0) rv << '+';
+    rv << olxstr::FormatFloat(3, GetD());
+  }
+  return rv << " = 0";
+}
+//..............................................................................
 //..............................................................................
 TSPlane::Def::Def(const TSPlane& plane)
   : atoms(plane.Count()), regular(plane.IsRegular())

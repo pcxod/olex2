@@ -1482,9 +1482,12 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options,
         FXApp->XFile().GetAsymmUnit().GetHklToCartesian()
         : FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
       olxstr arg;
-      if( Cmds[0] == '1' )  arg = "100";
-      else if( Cmds[0] == '2' )  arg = "010";
-      else if( Cmds[0] == '3' )  arg = "001";
+      if( Cmds[0] == '1' || Cmds[0] == 'a' )
+        arg = "100";
+      else if( Cmds[0] == '2' || Cmds[0] == 'b' )
+        arg = "010";
+      else if( Cmds[0] == '3' || Cmds[0] == 'c' )
+        arg = "001";
       else
         arg = Cmds[0];
       if( (arg.Length()%3) != 0 )  {
@@ -1684,10 +1687,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::NewLogEntry() <<
       tab.CreateTXTList(olxstr("Atom-to-plane distances for ") << planeName,
       true, false, " | ");
-    TBasicApp::NewLogEntry() << "Plane normal: " <<
-      olxstr::FormatFloat(3, plane->GetNormal()[0]) << ' ' <<
-      olxstr::FormatFloat(3, plane->GetNormal()[1]) << ' ' <<
-      olxstr::FormatFloat(3, plane->GetNormal()[2]);
+    TBasicApp::NewLogEntry() << "Plane equation: " << plane->StrRepr();
     if( weightExtent != 0 )  {
       TBasicApp::NewLogEntry() << "Weighted RMSD/A: " <<
         olxstr::FormatFloat(3, plane->GetWeightedRMSD());
@@ -1719,21 +1719,21 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( (Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds") ) && Cmds.Count() > 1 )  {
     int Mask = Cmds[1].ToInt();
-    TXBondPList Bonds = FXApp->GetBonds(Cmds.Text(' ', 2), false);
+    TXBondPList Bonds = FXApp->GetBonds(Cmds.SubListFrom(2), false);
     FXApp->UpdateBondPrimitives(Mask, 
       (Bonds.IsEmpty() && FXApp->GetSelection().Count() == 0) ? NULL : &Bonds, 
       Cmds[0].Equalsi("hbonds"));
   }
   else  {
     int Mask = Cmds.GetLastString().ToInt();
-    Cmds.Delete( Cmds.Count() - 1 );
+    Cmds.Delete(Cmds.Count() - 1);
     TGPCollection *GPC = FXApp->GetRender().FindCollection(Cmds.Text(' '));
     if( GPC != NULL )  {
       if( GPC->ObjectCount() != 0 )
         GPC->GetObject(0).UpdatePrimitives(Mask);
     }
     else  {
-      Error.ProcessingError(__OlxSrcInfo, olxstr("Undefined graphics :") << Cmds.Text(' ') );
+      Error.ProcessingError(__OlxSrcInfo, olxstr("Undefined graphics :") << Cmds.Text(' '));
       return;
     }
   }
@@ -1778,8 +1778,11 @@ void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   double r = Cmds[0].ToDouble();
+  Cmds.Delete(0);
   TXBondPList bonds;
+  bool absolute = Options.Contains('a');
   if( Cmds.Count() == 2 && Cmds[1].Equalsi("hbonds") )  {
+    if (absolute) r /= 0.02;
     TGXApp::BondIterator bi = FXApp->GetBonds();
     while( bi.HasNext() )  {
       TXBond& xb = bi.Next();
@@ -1789,8 +1792,9 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->BondRad(r, &bonds);
   }
   else  {
-    bonds = FXApp->GetBonds(Cmds.Text(' ', 1), true);
-    if( bonds.IsEmpty() )  {  // get all non-H
+    if (absolute) r /= 0.1;
+    bonds = FXApp->GetBonds(Cmds, true);
+    if( bonds.IsEmpty() && Cmds.IsEmpty() )  {  // get all non-H
       TGXApp::BondIterator bi = FXApp->GetBonds();
       while( bi.HasNext() )  {
         TXBond& xb = bi.Next();
@@ -2211,7 +2215,14 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               cme->r_sfil = radii.GetValue(i);
           }
         }
-        if( Cmds[1].Equalsi("vdw") )  {
+        else if( Cmds[1].Equalsi("pers") )  {
+          for( size_t i=0; i < radii.Count(); i++ )  {
+            cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+            if( cme != NULL )
+              cme->r_pers = radii.GetValue(i);
+          }
+        }
+        else if( Cmds[1].Equalsi("vdw") )  {
           for( size_t i=0; i < radii.Count(); i++ )  {
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
             if( cme != NULL )
@@ -3702,14 +3713,15 @@ void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   bool invert = Options.Contains('i');
   if( invert )  {
-    TStateChange sc(prsGradBG, !FXApp->GetRender().Background()->IsVisible() );
+    TStateChange sc(prsGradBG, !FXApp->GetRender().Background()->IsVisible());
     OnStateChange.Execute( (AEventsDispatcher*)this, &sc );
-    FXApp->GetRender().Background()->SetVisible( !FXApp->GetRender().Background()->IsVisible() );
+    FXApp->GetRender().Background()->SetVisible(
+      !FXApp->GetRender().Background()->IsVisible());
   }
   else if( Cmds.Count() == 1 )  {
-    TStateChange sc(prsGradBG, Cmds[0].ToBool() );
-    OnStateChange.Execute( (AEventsDispatcher*)this, &sc );
-    FXApp->GetRender().Background()->SetVisible( Cmds[0].ToBool() );
+    TStateChange sc(prsGradBG, Cmds[0].ToBool());
+    OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+    FXApp->GetRender().Background()->SetVisible(Cmds[0].ToBool());
   }
   else if( Cmds.IsEmpty() && !Options.Contains('p'))  {
     TdlgGradient *G = new TdlgGradient(this);
@@ -3730,32 +3742,31 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       glt->SetEnabled(false);
   }
   else if( TEFile::Exists(GradientPicture) )  {
-    wxFSFile* inf = TFileHandlerManager::GetFSFileHandler( GradientPicture );
+    wxFSFile* inf = TFileHandlerManager::GetFSFileHandler(GradientPicture);
     if( inf == NULL )  {
       E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ") << GradientPicture;
       return;
     }
-    wxImage img( *inf->GetStream() );
+    wxImage img(*inf->GetStream());
     delete inf;
     if( !img.Ok() )  {
       E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << GradientPicture;
       return;
     }
     int owidth = img.GetWidth(), oheight = img.GetHeight();
-    int l = CalcL( img.GetWidth() );
+    int l = CalcL(img.GetWidth());
     int swidth = (int)pow((double)2, (double)l);
-    l = CalcL( img.GetHeight() );
+    l = CalcL(img.GetHeight());
     int sheight = (int)pow((double)2, (double)l);
 
     if( swidth != owidth || sheight != oheight )
-      img.Rescale( swidth, sheight );
+      img.Rescale(swidth, sheight);
 
     int cl = 3, bmpType = GL_RGB;
     if( img.HasAlpha() )  {
       cl ++;
       bmpType = GL_RGBA;
     }
-
     unsigned char* RGBData = new unsigned char[ swidth * sheight * cl];
     for( int i=0; i < sheight; i++ )  {
       for( int j=0; j < swidth; j++ )  {
@@ -3768,19 +3779,24 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     TGlTexture* glt = FXApp->GetRender().Background()->GetTexture();
-    if( glt != NULL  )
-      FXApp->GetRender().GetTextureManager().Replace2DTexture(*glt, 0, swidth, sheight, 0, bmpType, RGBData);
+    if( glt != NULL  ) {
+      FXApp->GetRender().GetTextureManager().Replace2DTexture(
+        *glt, 0, swidth, sheight, 0, bmpType, RGBData);
+      glt->SetEnabled(true);
+    }
     else  {
-      int glti = FXApp->GetRender().GetTextureManager().Add2DTexture("grad", 0, swidth, sheight, 0, bmpType, RGBData);
-      FXApp->GetRender().Background()->SetTexture( FXApp->GetRender().GetTextureManager().FindTexture(glti) );
+      int glti = FXApp->GetRender().GetTextureManager().Add2DTexture(
+        "grad", 0, swidth, sheight, 0, bmpType, RGBData);
+      FXApp->GetRender().Background()->SetTexture(
+        FXApp->GetRender().GetTextureManager().FindTexture(glti));
       glt = FXApp->GetRender().Background()->GetTexture();
-      glt->SetEnvMode( tpeDecal );
-      glt->SetSCrdWrapping( tpCrdClamp );
-      glt->SetTCrdWrapping( tpCrdClamp );
+      glt->SetEnvMode(tpeDecal);
+      glt->SetSCrdWrapping(tpCrdClamp);
+      glt->SetTCrdWrapping(tpCrdClamp);
 
-      glt->SetMagFilter( tpFilterNearest );
-      glt->SetMinFilter( tpFilterLinear );
-      glt->SetEnabled( true );
+      glt->SetMagFilter(tpFilterNearest);
+      glt->SetMinFilter(tpFilterLinear);
+      glt->SetEnabled(true);
     }
     delete [] RGBData;
   }
@@ -6147,6 +6163,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
     Cmds.Delete(0);
   }
   TXAtomPList atoms = FindXAtoms(Cmds, false, true);
+  size_t match_cnt=0;
   if( !atoms.IsEmpty() )  {
     if( atoms.Count() == 2 &&
         (&atoms[0]->GetNetwork() != &atoms[1]->GetNetwork()) )
@@ -6159,6 +6176,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
         netA.DoMatch(netB, res, TryInvert, weight_calculator);
       TBasicApp::NewLogEntry() << "Graphs match: " << match;
       if( match )  {
+        match_cnt++;
         // restore the other unit cell, if any...
         if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
           TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice()
@@ -6280,6 +6298,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         if (valid)  {
+          match_cnt++;
           // restore the other unit cell, if any...
           if (&latt != &netA.GetLattice() || &latt != &netB.GetLattice())  {
             TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice()
@@ -6297,8 +6316,6 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
           CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
         }
       }
-      FXApp->UpdateBonds();
-      FXApp->CenterView();
     }
   }
   else  {
@@ -6317,6 +6334,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
         TTypeList<AnAssociation2<size_t, size_t> > res;
         if( !nets[i]->DoMatch(*nets[j], res, false, weight_calculator) )
           continue;
+        match_cnt++;
         matched.SetTrue(j);
         TTypeList<AnAssociation2<TSAtom*,TSAtom*> > ap;
         for( size_t k=0; k < res.Count(); k++ ) {
@@ -6364,9 +6382,14 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
         TNetwork::DoAlignAtoms(nets[j]->GetNodes(), ra_i);
       }
     }
+    // do match all possible fragments with similar number of atoms
+  }
+  if (match_cnt != 0) {
     FXApp->UpdateBonds();
     FXApp->CenterView();
-    // do match all possible fragments with similar number of atoms
+  }
+  else {
+    TBasicApp::NewLogEntry() << "No matching fragments found";
   }
 }
 //..............................................................................

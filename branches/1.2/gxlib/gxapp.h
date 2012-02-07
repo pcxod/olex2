@@ -162,6 +162,12 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "end is reached");
     }
     void Reset()  {  offset = 0;  }
+    template <class Functor>
+    const TIterator& ForEach(const Functor& f) const {
+    for( size_t i=0; i < objects.Count(); i++ )
+      objects[i].ForEach(f);
+    return *this;
+    }
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
     AtomIterator(const TGXApp& app)  {
@@ -573,7 +579,7 @@ public:
 
   void SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms=NULL);
 
-  ConstPtrList<TXBond> GetBonds(const olxstr& Bonds, bool inc_lines);
+  ConstPtrList<TXBond> GetBonds(const TStrList& Bonds, bool inc_lines);
 
   void AtomRad(const olxstr& Rad, TXAtomPList* Atoms=NULL); // pers, sfil
   void AtomZoom(float Zoom, TXAtomPList* Atoms=NULL);  // takes %

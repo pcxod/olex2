@@ -85,8 +85,8 @@ TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
     FDrawStyle = adsSphere;
   FRadius = darIsot;
   Params().Resize(2);
-  Params()[0] = 1;
-  Params()[1] = 1;
+  Params()[0] = 1; // radius
+  Params()[1] = 1; // zoom
   // the objects will be automatically deleted by the corresponding action collections
   Label = new TXGlLabel(Render, PLabelsCollectionName);
   Label->SetOffset(crd());
@@ -192,38 +192,43 @@ void TXAtom::CalcRad(short DefRadius)  {
   FRadius = DefRadius;
   GetPrimitives().GetStyle().SetParam("DR", DefRadius);
 
-  if( DefRadius == darPers )  
-    FParams[0] = GetType().r_pers;   
-  else if( DefRadius == darPack )  
-    FParams[0] = GetType().r_sfil;
-  else if( DefRadius == darVdW )  
-    FParams[0] = GetType().r_vdw;
-  else if( DefRadius == darBond )  
-    FParams[0] = sqrt(caDefIso)/2;
+  if( DefRadius == darPers )
+    SetR(GetType().r_pers);
+  else if( DefRadius == darPack )
+    SetR(GetType().r_sfil);
+  else if( DefRadius == darVdW )
+    SetR(GetType().r_vdw);
+  else if( DefRadius == darBond )
+    SetR(sqrt(caDefIso)/2);
   else if( DefRadius == darIsot )  {
-    if( GetType() == iHydrogenZ ) 
-      FParams[0] = 2*caDefIso;
+    if( GetType() == iHydrogenZ )
+      SetR(2*caDefIso);
     else  {
       if( GetType() == iQPeakZ )
-        FParams[0] = sqrt(CAtom().GetUiso())*GetQPeakSizeScale();
+        SetR(sqrt(CAtom().GetUiso())*GetQPeakSizeScale());
       else if( CAtom().GetUiso() > 0 )
-        FParams[0] = sqrt(CAtom().GetUiso());
+        SetR(sqrt(CAtom().GetUiso()));
       else
-        FParams[0] = 2*caDefIso; //sqrt(caDefIso);
+        SetR(2*caDefIso); //sqrt(caDefIso);
     }
   }
   else if( DefRadius == darIsotH )  {
     if( CAtom().GetUiso() > 0 )
-      FParams[0] = sqrt(CAtom().GetUiso());
+      SetR(sqrt(CAtom().GetUiso()));
     else
-      FParams[0] = 2*caDefIso; //sqrt(caDefIso);
+      SetR(2*caDefIso); //sqrt(caDefIso);
   }
 }
 //..............................................................................
 void TXAtom::ValidateRadius(TGraphicsStyle& GS)  {
   Params()[1] = GS.GetNumParam("Z", DefZoom());
-  short dr = GS.GetNumParam("DR", DefRad());
-  CalcRad(dr);
+  double r;
+  if ((r=GS.GetNumParam("R", -1.0)) == -1) {
+    short dr = GS.GetNumParam("DR", DefRad());
+    CalcRad(dr);
+  }
+  else
+    Params()[0] = r;
 }
 void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
   DrawStyle(GS.GetNumParam("DS", DefDS()));
@@ -414,7 +419,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   
   olx_gl::translate(c);
 
-  double scale = FParams[1];
+  double scale = GetZoom();
   if( (FRadius & (darIsot|darIsotH)) != 0 )
     scale *= TelpProb();
   
@@ -450,17 +455,17 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
       }
     }
     else 
-      olx_gl::scale(FParams[0]*scale);
+      olx_gl::scale(GetR()*scale);
     return false;
   }
   // override for standalone atoms
   if( FDrawStyle == adsStandalone )  {
-    olx_gl::scale(FParams[0]*scale);
+    olx_gl::scale(GetR()*scale);
     return false;
   }
   
   if( FDrawStyle == adsSphere )
-    olx_gl::scale(FParams[0]*scale);
+    olx_gl::scale(GetR()*scale);
   return false;
 }
 //..............................................................................
@@ -857,8 +862,6 @@ void TXAtom::UpdatePrimitives(int32_t Mask)  {
   }
 }
 //..............................................................................
-//float TXAtom::Radius(){  return FParams()[0]; }
-//..............................................................................
 void TXAtom::ValidateAtomParams() {
   if( FAtomParams == NULL )  {
     FAtomParams = &TGlRenderer::_GetStyles().NewStyle("AtomParams", true);
@@ -867,11 +870,20 @@ void TXAtom::ValidateAtomParams() {
 }
 //..............................................................................
 void TXAtom::SetZoom(double V)  {
-  GetPrimitives().GetStyle().SetParam("Z", V);
+  GetPrimitives().GetStyle().SetParam("Z", V, LegendLevel(GetCollectionName()) == 0);
   Params()[1] = V;
   // update radius for all members of the collection
   for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
     GetPrimitives().GetObject(i).Params()[1] = V;
+}
+//..............................................................................
+void TXAtom::SetR(double V)  {
+  GetPrimitives().GetStyle().SetParam("R", V);
+  //, LegendLevel(GetCollectionName()) == 0);
+  Params()[0] = V;
+  // update radius for all members of the collection
+  for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
+    GetPrimitives().GetObject(i).Params()[0] = V;
 }
 //..............................................................................
 uint32_t TXAtom::GetPrimitiveMask() const {

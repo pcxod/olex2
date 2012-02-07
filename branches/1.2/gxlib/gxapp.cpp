@@ -2471,9 +2471,9 @@ void TGXApp::ClearLabels()  {
   XLabels.Clear();
 }
 //..............................................................................
-ConstPtrList<TXBond> TGXApp::GetBonds(const olxstr& Bonds, bool inc_lines)  {
+ConstPtrList<TXBond> TGXApp::GetBonds(const TStrList& Bonds, bool inc_lines)  {
   TXBondPList List;
-  if( Bonds.IsEmpty() || Bonds.Equalsi("sel") )  {
+  if( Bonds.IsEmpty() )  {
     TGlGroup& sel = GetRender().GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  {
       if( EsdlInstanceOf(sel[i], TXBond) )
@@ -2488,19 +2488,22 @@ ConstPtrList<TXBond> TGXApp::GetBonds(const olxstr& Bonds, bool inc_lines)  {
     }
     return ACollectionItem::Unique(List);
   }
-  TGPCollection *GPC = GetRender().FindCollection(Bonds);
-  if( GPC == NULL )  return List;
-  for( size_t i=0; i < GPC->ObjectCount(); i++ )  {
-    // check if the right type !
-    if( i == 0 &&  !EsdlInstanceOf(GPC->GetObject(0), TXBond) )  
-      return List;
-    List.Add((TXBond&)GPC->GetObject(i));
+  for (size_t i=0; i < Bonds.Count(); i++) {
+    TGPCollection *GPC = GetRender().FindCollection(Bonds[i]);
+    if( GPC == NULL )  continue;
+    for( size_t i=0; i < GPC->ObjectCount(); i++ )  {
+      // check if the right type !
+      if( i == 0 &&  !EsdlInstanceOf(GPC->GetObject(0), TXBond) )  
+        break;
+      List.Add((TXBond&)GPC->GetObject(i));
+    }
   }
   return List;
 }
 //..............................................................................
 void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
   short DS = -1;
+  double r = 0;
   if( Rad.Equalsi("sfil") ) {
     DS = darPack;
     if( Atoms == NULL )
@@ -2531,7 +2534,10 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     if( Atoms == NULL )
       TXAtom::DefRad(darVdW);
   }
-  if( DS == -1 )
+  else if (Rad.IsNumber()) {
+    r = Rad.ToDouble();
+  }
+  else 
     throw TInvalidArgumentException(__OlxSourceInfo, "rad");
 
   if( Atoms != NULL )  {  // make sure all atoms of selected collections are updated
@@ -2539,16 +2545,23 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
       FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
     for( size_t i=0; i < Atoms->Count(); i++ )  {
       if( (size_t)(*Atoms)[i]->GetPrimitives().GetTag() == i )  {
-        TGPCollection& gpc = (*Atoms)[i]->GetPrimitives();
-        for( size_t j=0; j < gpc.ObjectCount(); j++ )
-          ((TXAtom&)gpc.GetObject(j)).CalcRad(DS);
+        if (DS > 0)
+          Atoms->GetItem(i)->CalcRad(DS);
+        else
+          Atoms->GetItem(i)->SetR(r);
+        (*Atoms)[i]->GetPrimitives().SetTag(-1);
       }
     }
   }
   else {
     AtomIterator ai(*this);
-    while( ai.HasNext() )
-      ai.Next().CalcRad(DS);
+    //ai.ForEach(ACollectionItem::TagSetter(0));
+    while( ai.HasNext() ) {
+      if (DS > 0)
+        ai.Next().CalcRad(DS);
+      else
+        ai.Next().SetR(r);
+    }
   }
   if( Atoms == NULL )  { // 
     TXAtom::DefZoom(1);

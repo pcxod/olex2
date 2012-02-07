@@ -616,41 +616,64 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
 //..............................................................................
 void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   envi.SetBase(ae.GetBase());
-  TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  const static double D = 3.1;
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const double D = 3.1, qD = D*D;
   const size_t ac = au.AtomCount();
   for( size_t i=0; i < ac; i++ )  {
     TCAtom& A = au.GetAtom(i);
     if( A.GetType() == iQPeakZ || A.IsDeleted() )  continue;
     const bool considerI =  (A != ae.GetBase().CAtom());
     // O and N and S for a while
-    if( !(A.GetType() == iOxygenZ || A.GetType() == iNitrogenZ || A.GetType() == iChlorineZ) )
+    if( !(A.GetType() == iOxygenZ ||
+          A.GetType() == iNitrogenZ ||
+          A.GetType() == iChlorineZ) )
+    {
       continue;
+    }
 
     smatd_list& ms = *GetInRange(ae.GetBase().ccrd(), A.ccrd(), D, considerI);
     for( size_t j=0; j < ms.Count(); j++ )  {
-      const vec3d v = au.Orthogonalise(ms[j] * A.ccrd());
-      const double qd = v.QDistanceTo(ae.GetBase().crd());
-      if(  qd < 2*2 || qd > D*D )  continue;
+      const vec3d a_crd = au.Orthogonalise(ms[j] * A.ccrd());
+      const double qd = a_crd.QDistanceTo(ae.GetBase().crd());
+      if(  qd < 2*2 || qd > qD )  continue;
       if( ae.Count() == 1 )  {
-        vec3d v1 = ae.GetCrd(0) - ae.GetBase().crd();
-        vec3d v2 = v - ae.GetBase().crd();
-        // 84 - 180 degrees
-        const double ca = v1.CAngle(v2);
-        if( ca > 0.1 )  continue;
+        // 90 - 150 degrees
+        const double ca = (ae.GetCrd(0) - ae.GetBase().crd()).CAngle(
+          a_crd - ae.GetBase().crd());
+        if( ca > 0 || ca < -0.866 )  continue;
       }
       // make sure that atoms on center of symmetry are not counted twice
-      bool Add = true;
+      bool add = true;
       for( size_t k=0; k < envi.Count(); k++ )  {
-        if( envi.GetCAtom(k) == A && envi.GetCrd(k) == v )  {
-          Add = false;
+        if( envi.GetCAtom(k) == A && envi.GetCrd(k).Equals(a_crd, 1e-3) )  {
+          add = false;
           break;
         }
       }
-      if( Add )
-        envi.Add(A, ms[j], v);
+      if( add )
+        envi.Add(A, ms[j], a_crd);
     }
     delete &ms;
+  }
+}
+//..............................................................................
+void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi) {
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  bool add = true;
+  for (size_t i=0; i < envi.Count(); i++) {
+    TCAtom &a = envi.GetCAtom(i);
+    for( size_t ai=0; ai < a.AttachedSiteCount(); ai++) {
+      TCAtom::Site &s = a.GetAttachedSite(ai);
+      if (s.atom->GetType() != iHydrogenZ) continue;
+      smatd m = MulMatrix(s.matrix, envi.GetMatrix(i));
+      vec3d h_crd = au.Orthogonalise(m*s.atom->ccrd());
+      double ca = (envi.GetBase().crd()-h_crd).CAngle(envi.GetCrd(i)-h_crd);
+      if (ca < -0.34) { // 109.9 -> 180
+        atom.Add(a, envi.GetMatrix(i), envi.GetCrd(i));
+        envi.Delete(i--);
+        break;
+      }
+    }
   }
 }
 //..............................................................................

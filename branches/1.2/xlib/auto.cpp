@@ -1080,6 +1080,16 @@ void TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
       a2.GetLabel() << " -> " << e2.symbol;
     a2.SetType(e2);
   }
+  if( (v&4) != 0 )  {
+    TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " <<
+      a2.GetLabel() << " -> " << e1.symbol;
+    a2.SetType(e1);
+  }
+  if( (v&8) != 0 )  {
+    TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " <<
+      a1.GetLabel() << " -> " << e2.symbol;
+    a1.SetType(e2);
+  }
 }
 //..............................................................................
 short TAutoDB::CheckA2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
@@ -1095,9 +1105,9 @@ short TAutoDB::CheckA2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   }
   else if( ratio < (1.0-threshold) )  {
     if( a2.GetType() != e1 )
-      res |= 2;
+      res |= 4;
     if( a1.GetType() != e2 )
-      res |= 1;
+      res |= 8;
   }
   return res;
 }
@@ -1233,7 +1243,13 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
 //..............................................................................
 bool TAutoDB::ChangeType(TCAtom &a, const cm_Element &e) {
   if (a.GetType() == e || e == iHydrogenZ) return false;
-  if (alg::check_connectivity(a, e)) {
+  bool return_any = !alg::check_connectivity(a, a.GetType());
+  if (return_any || alg::check_connectivity(a, e)) {
+    // extra checks for high jumpers
+    if (olx_abs(a.GetType().z-e.z) > 3 ) {
+      if (!alg::check_geometry(a, e))
+        return false;
+    }
     a.SetType(e);
     a.SetLabel(e.symbol, false);
     return true;
@@ -1258,14 +1274,24 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       cas[1]->CAtom().AttachedSiteCount() == 1)
     {
       if( sn->Node(0).Center()->GetDistance(0) < 1.3 )  { // C-N
+        if (proposed_atoms == NULL ||
+            (proposed_atoms->Contains(XElementLib::GetByIndex(iCarbonIndex)) &&
+             proposed_atoms->Contains(XElementLib::GetByIndex(iNitrogenIndex))))
+        {
         A2Pemutate(cas[0]->CAtom(), cas[1]->CAtom(),
           XElementLib::GetByIndex(iCarbonIndex),
           XElementLib::GetByIndex(iNitrogenIndex), 0.2);
+        }
       }
       else  { // C-O
-        A2Pemutate(cas[0]->CAtom(), cas[1]->CAtom(),
-          XElementLib::GetByIndex(iCarbonIndex),
-          XElementLib::GetByIndex(iOxygenIndex), 0.2);
+        if (proposed_atoms == NULL ||
+            (proposed_atoms->Contains(XElementLib::GetByIndex(iCarbonIndex)) &&
+             proposed_atoms->Contains(XElementLib::GetByIndex(iOxygenIndex))))
+        {
+          A2Pemutate(cas[0]->CAtom(), cas[1]->CAtom(),
+            XElementLib::GetByIndex(iCarbonIndex),
+            XElementLib::GetByIndex(iOxygenIndex), 0.2);
+        }
       }
     }
     for( size_t i=0; i < sn_count; i++ )
@@ -1382,6 +1408,13 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if( scale > URatio )
           searchLighter = true;
         else if( scale < 1./URatio )
+          searchHeavier = true;
+      }
+      // use max.min 'absolute' values for elements after Si
+      else if (guesses[i].atom->GetType().z > 14) {
+        if (guesses[i].atom->GetUiso() > 0.05)
+          searchLighter = true;
+        else if (guesses[i].atom->GetUiso() < 0.005)
           searchHeavier = true;
       }
       if( searchLighter || searchHeavier )  {

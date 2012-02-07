@@ -72,46 +72,56 @@ const cm_Element &alg::find_heaviest(const TCAtomPList &atoms) {
 }
 //.............................................................................
 bool alg::check_geometry(const TCAtom &a, const cm_Element &e) {
-  TTypeList<AnAssociation2<const TCAtom*, vec3d> > res;
-  TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
-  uc.FindInRangeAC(a.ccrd(), e.r_vdw, res); 
-  vec3d center = a.GetParent()->Orthogonalise(a.ccrd());
-  QuickSorter::Sort(res, TUnitCell::AC_Sort(center));
-  res.Delete(0);
-  size_t bad_cnt=0;
-  for (size_t i=0; i < res.Count(); i++) {
-    vec3d a = res[i].GetB()-center;
-    if (a.IsNull(1e-3)) continue;
-    for (size_t j=i+1; j < res.Count(); j++) {
-      vec3d b = res[j].GetB()-center;
-      if (b.IsNull(1e-3)) continue;
-      double ca = a.CAngle(b);
-      if ( ca > 0.6 && olx_abs(ca-1) > 1e-3)
-        bad_cnt++;
-    }
-  }
-  return bad_cnt == 0;
+  double diff = rate_envi(a.GetParent()->GetLattice().GetUnitCell(), 
+    a.ccrd(), e.r_bonding+1.3) -
+      rate_envi(a.GetParent()->GetLattice().GetUnitCell(), 
+      a.ccrd(), a.GetType().r_bonding+1.3);
+  return diff > -0.05;
 }
 //.............................................................................
 bool alg::check_connectivity(const TCAtom &a, const cm_Element &e) {
-  size_t cc = 0;
+  size_t cc = 0, metal_c = 0;
+  size_t halogen_c = 0, calcogen_c = 0, oxygen_c=0;
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom &aa = a.GetAttachedAtom(i);
-    if (aa.GetType() != iQPeakZ && !aa.IsDeleted())
+    if (aa.GetType() != iQPeakZ && !aa.IsDeleted()) {
       cc++;
+      if (XElementLib::IsMetal(aa.GetType()))
+        metal_c ++;
+      else if (XElementLib::IsHalogen(aa.GetType()))
+        halogen_c ++;
+      else if (XElementLib::IsChalcogen(aa.GetType())) {
+        calcogen_c ++;
+        if (aa.GetType() == iOxygenZ)
+          oxygen_c ++;
+      }
+    }
   }
   if (e == iHydrogenZ)
     return cc == 1;
-  if (e == iOxygenZ)
-    return cc <= 2;
-  if (XElementLib::IsHalogen(e)) {
-    if (e.z == iChlorineZ) // treat the ClO4
-      return cc <= 1 || cc == 4;
-    return cc <= 1;
-  }
   if (XElementLib::IsMetal(e)) {
     if (cc <= 1) return false;
     if (cc ==2) return XElementLib::IsTtransitionalGroup(1, e);
+  }
+  else {
+    cc -= metal_c;
+    if (XElementLib::IsChalcogen(e)) {
+      if (e == iOxygenZ)
+        return cc <= 2;
+      return cc > 0;
+    }
+    if (XElementLib::IsHalogen(e)) {
+      cc -= halogen_c; // I3 I-Cl-I etc
+      if (e.z == iChlorineZ)
+        cc -= oxygen_c; // ClO4 etc
+      else // BrSe3 is common
+        cc -= (calcogen_c-oxygen_c);
+      return cc <= 1;
+    }
+    if (XElementLib::IsGroup4(e))
+      return cc > 0 || metal_c > 1; // carbides?
+    if (XElementLib::IsGroup5(e) && e != iNitrogenZ)
+      return cc > 0;
   }
   return true;
 }
@@ -124,6 +134,40 @@ ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
     atoms,
     *(new TArrayList<size_t>),
     olx_alg::olx_not(TCAtom::TypeAnalyser(z)));
+}
+//.............................................................................
+double alg::rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r) {
+  TArrayList<AnAssociation2<TCAtom const*, vec3d> > res;
+  uc.FindInRangeAC(fcrd, r, res);
+  const vec3d center = uc.GetLattice().GetAsymmUnit().Orthogonalise(fcrd);
+  for (size_t j=0; j < res.Count(); j++) {
+    if (center.QDistanceTo(res[j].GetB()) < 1e-4 ||
+      res[j].GetA()->GetType() < 2)
+    {
+      res.Delete(j--);
+    }
+  }
+  double wght = 1;
+  if (res.Count() > 1)  {
+    double awght = 1./(res.Count()*(res.Count()-1));
+    for (size_t j=0; j < res.Count(); j++)  {
+      if (res[j].GetB().QLength() < 0.8)
+        wght -= 0.5/res.Count();
+      for (size_t k=j+1; k < res.Count(); k++)  {
+        double cang = (res[j].GetB()-center).CAngle(res[k].GetB()-center);
+        if( cang > 0.588 )  { // less than 56 degrees
+          wght -= awght;
+        }
+      }
+    }
+  }
+  else if (res.Count() == 1) {  // just one bond
+    if (res[0].GetB().QLength() < 0.8)
+      wght = 0;
+  }
+  //else  // no bonds, cannot say anything
+  //  wght = 0;
+  return wght;
 }
 //.............................................................................
 //.............................................................................
@@ -142,23 +186,65 @@ void helper::reset_u(TCAtom &a, double r) {
     a.GetEllipsoid()->ToSpherical(r);
 }
 //.............................................................................
-bool helper::can_demote(const cm_Element &e, const SortedElementPList &elms) {
+void helper::delete_atom(TCAtom &a) {
+  a.SetDeleted(true);
+  TPtrList<TAfixGroup> ags;
+  if (a.GetDependentAfixGroup() != NULL)
+    ags.Add(a.GetDependentAfixGroup());
+  for (size_t i=0; i < a.DependentHfixGroupCount(); i++)
+    ags.Add(a.GetDependentHfixGroup(i));
+  for (size_t i=0; i < ags.Count(); i++) {
+    for (size_t j=0; j < ags[i]->Count(); j++)
+      delete_atom((*ags[i])[j]);
+  }
+}
+//.............................................................................
+size_t helper::get_demoted_index(const cm_Element &e, const SortedElementPList &elms) {
   size_t idx = elms.IndexOf(e);
   if (idx == InvalidIndex) {
     for (size_t i=0; i < elms.Count(); i++) {
       if (elms[i]->z > e.z) {
+        if (i==0) return InvalidIndex;
+        if (i>0 && elms[i-1]->z == iHydrogenZ)
+          return InvalidIndex;
+        return i;
+      }
+    }
+    return InvalidIndex;
+  }
+  else {
+    if ((idx == 1 && elms[0]->z == iHydrogenZ) || idx == 0)
+      return InvalidIndex;
+    return idx;
+  }
+}
+//.............................................................................
+bool helper::can_demote(const cm_Element &e, const SortedElementPList &elms) {
+  return get_demoted_index(e, elms) != InvalidIndex;
+}
+//.............................................................................
+bool helper::can_demote(const TCAtom &a, const SortedElementPList &elms) {
+  const bool return_any = !alg::check_connectivity(a, a.GetType());
+  size_t idx = elms.IndexOf(a.GetType());
+  if (idx == InvalidIndex) {
+    for (size_t i=0; i < elms.Count(); i++) {
+      if (elms[i]->z > a.GetType().z) {
         if (i==0) return false;
         if (i>0 && elms[i-1]->z == iHydrogenZ)
           return false;
-        return true;
+        if (return_any || alg::check_connectivity(a, *elms[i])) return true;
       }
     }
     return false;
   }
   else {
-    if ((idx == 1 && elms[0]->z == iHydrogenZ) || idx == 0)
-      return false;
-    return true;
+    if (idx == 0) return false;
+    for (size_t i=idx-1; i != InvalidIndex; i--) {
+      if (elms[i]->z == iHydrogenZ) return false;
+      if (return_any || alg::check_connectivity(a, *elms[i]))
+        return true;
+    }
+    return false;
   }
 }
 //.............................................................................
@@ -924,6 +1010,7 @@ const cm_Element &Analysis::check_proposed_element(
 const cm_Element &Analysis::check_atom_type(TSAtom &a) {
   static SortedObjectList<short, TPrimitiveComparator> types;
   if (types.IsEmpty()) {
+    types.Add(iCarbonZ);
     types.Add(iOxygenZ);
     types.Add(iFluorineZ);
     types.Add(iChlorineZ);
@@ -937,26 +1024,25 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
   TUnitCell &uc = a.CAtom().GetParent()->GetLattice().GetUnitCell();
   TAtomEnvi ae;
   uc.GetAtomEnviList(a, ae);
+  size_t metal_c = 0;
+  for (size_t i=0; i < ae.Count(); i++) {
+    if (XElementLib::IsMetal(ae.GetCAtom(i).GetType()))
+      metal_c++;
+  }
+  size_t non_metal_c = ae.Count() - metal_c;
   if (a.GetType() == iOxygenZ) {
-    if (ae.Count() > 2)
+    if (non_metal_c > 2)
       return XElementLib::GetByIndex(iNitrogenIndex);
   }
   else if (a.GetType() == iFluorineZ) {
-    if (ae.Count() > 2)
+    if (non_metal_c > 2)
       return XElementLib::GetByIndex(iNitrogenIndex);
-    if (ae.Count() > 1)
+    if (non_metal_c > 1)
       return XElementLib::GetByIndex(iOxygenIndex);
   }
   else if (a.GetType() == iChlorineZ) {
-    if (ae.Count() <= 1) return a.GetType();
-    bool has_metal=false;
-    for (size_t i=0; i < ae.Count(); i++) {
-      if (XElementLib::IsMetal(ae.GetType(i))) {
-        has_metal = true;
-        break;
-      }
-    }
-    if (has_metal) {
+    if (non_metal_c <= 1) return a.GetType();
+    if (metal_c != 0) {
       if (ae.Count() == 4) // PR3->M
         return XElementLib::GetByIndex(iPhosphorusIndex);
       if (ae.Count() > 2) //SR2->M
@@ -967,16 +1053,22 @@ const cm_Element &Analysis::check_atom_type(TSAtom &a) {
     return XElementLib::GetByIndex(iSulphurIndex);
   }
   else if (a.GetType() == 33) { // arsenic
-    if (ae.Count() <= 1)
+    if (non_metal_c <= 1)
       return *XElementLib::FindByZ(iBromineZ);
   }
   else if (a.GetType() == iSulphurZ) {
-    if (ae.Count() <= 1)
+    if (non_metal_c <= 1)
       return XElementLib::GetByIndex(iChlorineIndex);
+    else if (ae.Count() > 6)  // reset - bad conenctivity
+      return XElementLib::GetByIndex(iCarbonIndex);
   }
   else if (a.GetType() == iBromineZ) {
-    if (ae.Count() > 1)
+    if (non_metal_c > 1)
       return *XElementLib::FindByZ(33);
+  }
+  else if (a.GetType() == iCarbonZ) {
+    if (ae.Count() == 0)
+      return XElementLib::GetByIndex(iOxygenIndex);
   }
   return a.GetType();
 }

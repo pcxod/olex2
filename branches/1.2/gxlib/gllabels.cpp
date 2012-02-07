@@ -158,6 +158,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
 #endif
     if( Tmp.IsEmpty() )  continue;
     P.SetString(&Tmp);
+    const double Z = Parent.CalcRasterZ(0.001);
     if( !Fnt.IsVectorFont() )  {
       if( !matInited )  {
         if( Marks[i] ) {
@@ -191,13 +192,12 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       vec3d V = XA.crd() + Parent.GetBasis().GetCenter();
       V *= Parent.GetBasis().GetMatrix();
       V *= Parent.GetBasis().GetZoom();
-      const double MaxZ = (Parent.GetMaxRasterZ()-0.001);
       if( Parent.GetExtraZoom() > 1 )  {
         V *= (1./Parent.GetScale());
-        Parent.DrawTextSafe(vec3d(V[0]+0.01, V[1]+0.01, MaxZ), Tmp, Fnt);
+        Parent.DrawTextSafe(vec3d(V[0]+0.01, V[1]+0.01, Z), Tmp, Fnt);
       }
       else  {
-        olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, MaxZ);
+        olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, Z);
         P.Draw();
       }
     }
@@ -205,7 +205,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       vec3d T = Parent.GetBasis().GetCenter() + XA.crd();
       T *= Parent.GetBasis().GetMatrix();
       T *= Parent.GetBasis().GetZoom();
-      T[2] = Parent.GetMaxRasterZ() - 0.001;
+      T[2] = Z;
       Fnt.DrawVectorText(T, Tmp, Parent.GetBasis().GetZoom()/Parent.CalcZoom());
     }
   }

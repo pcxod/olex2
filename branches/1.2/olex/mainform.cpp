@@ -706,8 +706,14 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(AZoom, EmptyString(), fpAny^fpNone,
     "Modifies given atoms [all] radius. The first argument is the new radius "
     "in %");
-  this_InitMacroD(BRad, EmptyString(), fpAny^fpNone,
-    "Sets provided [all] bonds radius to given number (first argument)");
+  this_InitMacroD(BRad, "a-specified value is absolute, in A", fpAny^fpNone,
+    "Multiplies provided [all] bonds default radius by given number. The"
+    " default radius for covalent bonds is 0.1A and for H-bonds is 0.02A. To "
+    "set radius for H-bonds use:"
+    "\n\tbrad R hbonds"
+    "\nAny particula bond type can also be specified like:\n\tbrad 0.5 C-H"
+    "\nNote that the heavier atom type is always first"
+    );
 
   this_InitMacroD(Hide, EmptyString(), fpAny,
     "Hides selected objects or provided atom names (no atom related objects as"
@@ -844,7 +850,8 @@ void TMainForm::XApp(TGXApp *XA)  {
     "'showq b false'");
 
   this_InitMacroD(Mode, 
-    "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only\n&;"
+    "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only; [fit] "
+      "afix\n&;"
     "p-[name] prefix\n&;"
     "s-[grow] short interactions; [name] suffix; [fit] split&;"
     "t-[name] type\n&;"
@@ -866,7 +873,15 @@ void TMainForm::XApp(TGXApp *XA)  {
   // not implemented
   this_InitMacro(Bind, , fpTwo);
 
-  this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour);
+  this_InitMacroD(Grad,
+    "i-toggles gradient mode and the user/white background&;"
+    "p-sets/removes the gradient picture, the picture is assumed to have "
+    "power of 2 dimensions (like 512x256, it is stretched if needed",
+    fpNone|fpOne|fpFour,
+    "Sets options for the background gradient. No options - showsn the "
+    "gradient dialog where the user can choose the gradient colors. One "
+    "parameter is expected to be a boolean - shows/hides the gradient. Four "
+    "parameters specify the gradient colours explicetly.");
   this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms",
     fpAny|psCheckFileTypeIns,
     "Splits provided atoms along the longest axis of the ADP");
@@ -2285,9 +2300,11 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
       FHelpWindow->Clear();
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);
-      FHelpWindow->SetTop(InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
-      FHelpWindow->SetMaxStringLength((uint16_t)(FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
-      FHelpWindow->SetZ( FXApp->GetRender().GetMaxRasterZ()-0.1);
+      FHelpWindow->SetTop(
+        InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
+      FHelpWindow->SetMaxStringLength((uint16_t)(
+        FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
+      FHelpWindow->SetZ(FXApp->GetRender().CalcRasterZ(0.1));
       for( size_t i=0; i < macros.Count(); i++ )  {
         FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
         if( !macros[i]->GetDescription().IsEmpty() )  {
@@ -2342,7 +2359,7 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     xyz.LoadFromStrings(lines);
     if( xyz.GetAsymmUnit().AtomCount() == 0 )
       return false;
-    ProcessMacro("mode fit");
+    ProcessMacro("mode fit -a=6");
     TXAtomPList xatoms;
     TXBondPList xbonds;
     FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);

@@ -98,8 +98,10 @@ public:
   smatd InvMatrix(const smatd& m) const {
     smatd rv = m.Inverse();
     uint8_t c_id = m.GetContainerId();
-    if (c_id >= Matrices.Count())
-      throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
+    if (c_id >= Matrices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("matrix ID: ").quote() << c_id);
+    }
     const uint8_t index = InvDest[m.GetContainerId()];
     rv.SetId(index, (rv.t-Matrices[index].t).Round<int>());
     return rv;
@@ -266,10 +268,15 @@ public:
   // finds only q-peaks in the environment of specified atom
   void GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi);
   
-  /* finds "pivoting" atoms for possible h-bonds, considering O and N only with
-    distances within 2.9A and angles 89-130 deg
+  /* finds "pivoting" atoms for possible h-bonds, considering O, N and Cl only
+  with distances within 2.9A and angles 90-150 deg
   */
   void GetAtomPossibleHBonds(const TAtomEnvi& atom, TAtomEnvi& envi);
+
+  /* any of the atoms in envi having H atoms pointing in the atom direction,
+  are moved from envi into atom envi
+  */
+  void FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi);
 
   /* This function creates a map of the unit cell with provided partioning.
   It uses Van-der-Waals atomic radii by defualt and adds delta to it. The grid

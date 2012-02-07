@@ -415,6 +415,7 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
   AnalysisStat& stat, bool heavier, bool lighter, ElementPList* proposed_atoms)
 {
   if( !lighter && !heavier )  return false;
+  bool return_any = !olx_analysis::alg::check_connectivity(ca, ca.GetType());
   olxstr tmp = ca.GetLabel();
   tmp << ' ';
   const cm_Element* type = &ca.GetType();
@@ -446,7 +447,10 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
       int delta = 100;
       for (size_t i=0; i < proposed_atoms->Count(); i++) {
         int d = (*proposed_atoms)[i]->z - ca.GetType().z;
-        if (d > 0 && d < delta) {
+        if (d > 0 && d < delta &&
+           (return_any ||
+             olx_analysis::alg::check_connectivity(ca, *(*proposed_atoms)[i])))
+        {
           delta = d;
           type = (*proposed_atoms)[i];
         }
@@ -483,7 +487,10 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
       int delta = 100;
       for (size_t i=0; i < proposed_atoms->Count(); i++) {
         int d = ca.GetType().z - (*proposed_atoms)[i]->z;
-        if (d > 0 && d < delta) {
+        if (d > 0 && d < delta &&
+           (return_any ||
+            olx_analysis::alg::check_connectivity(ca, *(*proposed_atoms)[i])))
+        {
           delta = d;
           type = (*proposed_atoms)[i];
         }
@@ -500,8 +507,6 @@ bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list,
   }
   if (ChangeType(ca, *type)) {
     stat.AtomTypeChanges++;
-    ca.SetLabel(type->symbol, false);
-    ca.SetType(*type);
     olx_analysis::helper::reset_u(ca);
     TBasicApp::NewLogEntry(logInfo) << tmp;
     return true;

@@ -163,8 +163,8 @@ olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
   return sl.Count() == 1 ? (repository_tag=sl[0]) : EmptyString();
 }
 //.............................................................................
-olxstr PatchAPI::_GetSharedDirRoot()  {
-  if (!shared_dir.IsEmpty()) return shared_dir;
+olxstr PatchAPI::_GetSharedDirRoot(bool refresh)  {
+  if (!refresh && !shared_dir.IsEmpty()) return shared_dir;
   const olxstr dd_str = olx_getenv("OLEX2_DATADIR");
   olxstr data_dir;
   if( !dd_str.IsEmpty() )  {
@@ -177,11 +177,11 @@ olxstr PatchAPI::_GetSharedDirRoot()  {
   return (shared_dir=TEFile::AddPathDelimeterI(data_dir));
 }
 //.............................................................................
-olxstr PatchAPI::GetInstanceDir()  {
-  if (!instance_dir.IsEmpty()) return instance_dir;
-  olxstr data_dir = _GetSharedDirRoot();
+olxstr PatchAPI::GetInstanceDir(bool refresh)  {
+  if (!refresh && !instance_dir.IsEmpty()) return instance_dir;
+  olxstr data_dir = _GetSharedDirRoot(refresh);
   if( olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE") )
-     return data_dir;
+     return (instance_dir=data_dir);
   return (instance_dir=ComposeInstanceDir(data_dir));
 }
 //.............................................................................

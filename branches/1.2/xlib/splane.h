@@ -15,6 +15,8 @@
 
 BeginXlibNamespace()
 
+class TAtomEnvi;
+
 const uint16_t
   plane_best = 1,
   plane_worst = 2;
@@ -97,7 +99,9 @@ public:
   static double CalcPlane(const TSAtomPList& Points, 
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // returns sqrt(smallest eigen value/point.Count())
-  static double CalcRMS(const TSAtomPList& atoms);
+  static double CalcRMSD(const TSAtomPList& atoms);
+  static double CalcRMSD(const TAtomEnvi& atoms);
+  olxstr StrRepr() const;
 
   class Def : public ACollectionItem {
     struct DefData {
@@ -153,7 +157,7 @@ public:
   size_t GetDefId() const {  return DefId; }
   // not for external use
   void _SetDefId(size_t id)  {  DefId = id; }
-
+  
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };

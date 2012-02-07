@@ -38,9 +38,9 @@ enum {
     OLX_KEY_PAGEDOWN = 367
 };
 
-/* There is a slight problem with cursor - depending on object properties it might
-  be drawn before the console, and then its position is validated after it is drawn
-  in previous position!  ...
+/* There is a slight problem with cursor - depending on object properties it
+might be drawn before the console, and then its position is validated after it
+is drawn in previous position!  ...
 */
 
 TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
@@ -62,7 +62,7 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   SetSelectable(false);
   FTxtPos = ~0;
   FMaxLines = 1000;
-  FScrollDirectionUp = true;
+  ScrollDirectionUp = true;
   FLinesToShow = ~0;
   FCmdPos = ~0;
   FCursor = new TGlCursor(R, "Cursor");
@@ -121,7 +121,8 @@ size_t TGlConsole::CalcScrollDown() const {
       }
       if( olx_is_valid_size(FLinesToShow) && lines >= FLinesToShow )  break;
       if( T[1] > MaxY )  break;
-      olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i], Parent.GetWidth()));
+      olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i],
+        Parent.GetWidth()));
       // drawing spaces is not required ...
       size_t stlen = line.Length();
       while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
@@ -142,6 +143,10 @@ size_t TGlConsole::CalcScrollDown() const {
   return lines;
 }
 //..............................................................................
+double TGlConsole::GetZ() const {
+  return -Parent.CalcRasterZ(0.002);
+}
+//..............................................................................
 bool TGlConsole::Orient(TGlPrimitive& P)  {
   TGlFont& Fnt = GetFont();
   //Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
@@ -151,10 +156,10 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   const double Scale = Parent.GetScale(),
                MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
                LineSpacer = (0.05+FLineSpacing)*th;
-  const double MaxZ = -(Parent.GetMaxRasterZ()-0.002);
+  const double Z = GetZ();
   const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
   if( FTxtPos < FBuffer.Count() )  {
-    vec3d T(GlLeft*Scale, GlTop*Scale, MaxZ);
+    vec3d T(GlLeft*Scale, GlTop*Scale, Z);
     if( FBuffer[FTxtPos].IsEmpty() )
       T[1] -= 0.5*th*Scale;
     LinesVisible = 0;
@@ -169,7 +174,8 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
         }
         if( olx_is_valid_size(FLinesToShow) && LinesVisible >= FLinesToShow )  break;
         if( T[1] > MaxY )  break;
-        olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i], Parent.GetWidth()));
+        olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i],
+          Parent.GetWidth()));
         // drawing spaces is not required ...
         size_t stlen = line.Length();
         while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
@@ -188,7 +194,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
         const TTextRect tr = Fnt.GetTextRect(line);
         if( tr.top < 0 )
           T[1] -= tr.top*Scale;
-        Parent.DrawText(P, T[0], T[1], MaxZ); 
+        Parent.DrawText(P, T[0], T[1], Z);
         P.SetString(NULL);
         if( i == 0 )  break;
         T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
@@ -205,7 +211,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
     olxstr tmp = FCommand;
     while( true )  {
       const size_t ml = Fnt.LengthForWidth(tmp, Parent.GetWidth(), lstate);
-      olx_gl::rasterPos(GlLeft*Scale, (GlTop - line_cnt*LineInc)*Scale, MaxZ);
+      olx_gl::rasterPos(GlLeft*Scale, (GlTop - line_cnt*LineInc)*Scale, Z);
       Fnt.DrawRasterText(tmp.SubStringTo(ml), cstate);
       if( tmp.Length() == ml )
         break;
@@ -483,7 +489,8 @@ void TGlConsole::KeepSize()  {
 }
 //..............................................................................
 void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
-  if( !IsPromptVisible() || Parent.GetWidth()*Parent.GetHeight() <= 50*50 )  return;
+  if( !IsPromptVisible() || Parent.GetWidth()*Parent.GetHeight() <= 50*50 )
+    return;
   TGlFont& Fnt = GetFont();
   GlLeft = ((double)Left - (double)Parent.GetWidth()/2) + 0.1;
   GlTop = ((double)Parent.GetHeight()/2 - (Height+Top)) + 0.1;
@@ -505,14 +512,15 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
       const size_t ml = Fnt.LengthForWidth(tmp, Parent.GetWidth(), state);
       printed_cnt += ml;
       if( init_x && printed_cnt > GetInsertPosition() )  {
-        T[0] = Fnt.TextWidth(tmp.SubStringTo(ml-(printed_cnt-GetInsertPosition())), _state);
+        T[0] = (double)Fnt.TextWidth(
+          tmp.SubStringTo(ml-(printed_cnt-GetInsertPosition())), _state);
         cursor_state = _state;
         init_x = false;
         cursor_line = line_cnt;
       }
       if( tmp.Length() == ml )  {
         if( init_x )  {
-          T[0] = Fnt.TextWidth(tmp, _state);
+          T[0] = (double)Fnt.TextWidth(tmp, _state);
           init_x = false;
           cursor_line = line_cnt;
           cursor_state = state;
@@ -526,7 +534,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
     T[0] -= Fnt.GetCharHalfWidth(cursor_state);  // move the cursor half a char left
     T[1] += LineInc*(line_cnt-cursor_line);
     T *= Scale;
-    FCursor->SetPosition(T[0], T[1]);
+    FCursor->SetPosition(T[0], T[1], GetZ());
     GlTop += th*(line_cnt+1);
   }
 }
@@ -536,7 +544,9 @@ void TGlConsole::SetInsertPosition(size_t v)  {
   UpdateCursorPosition(true);
 }
 //..............................................................................
-TGlFont &TGlConsole::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
+TGlFont &TGlConsole::GetFont() const {
+  return Parent.GetScene().GetFont(FontIndex, true);
+}
 //..............................................................................
 bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data)  {
   if( IsVisible() )

@@ -147,12 +147,23 @@ const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id)  
     }
   }
   return UsedSymm.Add(
-    id.IsEmpty() ? (olxstr("$") << (UsedSymm.Count()+1)) : id, RefinementModel::Equiv(matr)).symop;
+    id.IsEmpty() ? (olxstr("$") << (UsedSymm.Count()+1)) : id,
+      RefinementModel::Equiv(matr)).symop;
 }
 //.............................................................................
 void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
-  for( size_t i=0;  i < UsedSymm.Count(); i++ )
-    uc.InitMatrixId(UsedSymm.GetValue(i).symop);
+  try {
+    for( size_t i=0;  i < UsedSymm.Count(); i++ )
+      uc.InitMatrixId(UsedSymm.GetValue(i).symop);
+  }
+  catch (const TExceptionBase &) {
+    TBasicApp::NewLogEntry(logError) <<
+      "Failed to update EQIV list, resetting to identity";
+    TBasicApp::NewLogEntry(logError) <<
+      "This could have happened as a result of the space group change";
+    for( size_t i=0;  i < UsedSymm.Count(); i++ )
+      UsedSymm.GetValue(i).symop = uc.GetMatrix(0);
+  }
 }
 //.............................................................................
 void RefinementModel::RemUsedSymm(const smatd& matr)  {
