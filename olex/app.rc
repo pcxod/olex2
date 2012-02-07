@@ -45,7 +45,7 @@ MAINICON           ICON         "olex2.ico"
             VALUE "LegalCopyright", "Copyright (c) OlexSys Ltd, 2004-2012\0"
             VALUE "OriginalFilename", "Olex2.exe\0"
             VALUE "ProductName", "Olex2\0"
-            VALUE "ProductVersion", "1.6.1.2\0"
+            VALUE "ProductVersion", "1.2.1.3\0"
         END
     END
     BLOCK "VarFileInfo"
