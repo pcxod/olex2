@@ -1680,7 +1680,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": OH2";
       TAtomEnvi pivoting;
       UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-      UnitCell->FilterHBonds(AE, pivoting);
+      UnitCell->FilterHBonds(AE, pivoting, true);
       RemoveNonHBonding(pivoting);
       cg.FixAtom(AE, fgOH2, h_elm, &pivoting, generated);
     }
@@ -1689,12 +1689,8 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       if( d > 1.3 )   {  // otherwise a doubl bond
         TAtomEnvi pivoting;
         UnitCell->GetAtomPossibleHBonds(AE, pivoting);
-        if (d < 1.8)  // not coordination
-          UnitCell->FilterHBonds(AE, pivoting);
-        else {  // just remove 'useless'
-          TAtomEnvi tmp;
-          UnitCell->FilterHBonds(AE, tmp);
-        }
+        // d < 1.8 - move bonds only if not coordination
+        UnitCell->FilterHBonds(AE, pivoting, d < 1.8);
         RemoveNonHBonding(pivoting);
         if( AE.GetType(0) == iChlorineZ )
           ;

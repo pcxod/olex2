@@ -20,7 +20,8 @@ namespace alg {
   double mean_peak(const TCAtomPList &peaks);
   double mean_u_eq(const TCAtomPList &atoms);
   olxstr formula(const TCAtomPList &atoms, double mult=1);
-  olxstr label(const TCAtomPList &atoms);
+  olxstr label(const TCAtomPList &atoms, const olxstr &sp=EmptyString());
+  olxstr label(const TCAtomGroup &atoms, const olxstr &sp=EmptyString());
   const cm_Element &find_heaviest(const TCAtomPList &atoms);
   /* checks if new enviroment is better or as good as the old one
   */

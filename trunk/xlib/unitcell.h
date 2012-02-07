@@ -274,9 +274,9 @@ public:
   void GetAtomPossibleHBonds(const TAtomEnvi& atom, TAtomEnvi& envi);
 
   /* any of the atoms in envi having H atoms pointing in the atom direction,
-  are moved from envi into atom envi
+  are moved from envi into atom envi (if move is true) or simply deleted
   */
-  void FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi);
+  void FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi, bool move);
 
   /* This function creates a map of the unit cell with provided partioning.
   It uses Van-der-Waals atomic radii by defualt and adds delta to it. The grid

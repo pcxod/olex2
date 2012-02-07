@@ -21,6 +21,7 @@
 #include "twinning.h"
 #include "math/plane.h"
 #include "ins.h"
+#include "analysis.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
   VarRefrencerId("basf"),
@@ -659,43 +660,81 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res,
 {
   Validate();
   int sec_num = 0;
+  // site related
+  if( ExyzGroups.Count() != 0 )  {
+    lst.Add(olxstr(++sec_num)) << ". Shared sites";
+    for( size_t i=0; i < ExyzGroups.Count(); i++ )  {
+      TExyzGroup& sr = ExyzGroups[i];
+      olxstr& str = lst.Add('{');
+      for( size_t j=0; j < sr.Count(); j++ )  {
+        if( a_res != NULL )  a_res->Add( &sr[j] ); 
+        str << sr[j].GetLabel();
+        if( (j+1) < sr.Count() )
+          str << ", ";
+      }
+      str << '}';
+    }
+  }
   if( (rDFIX.Count()|rDANG.Count()|rSADI.Count()) != 0 )  {
+    TPtrList<TSRestraintList> ress;
+    ress << rDFIX << rDANG << rSADI;
     lst.Add(olxstr(++sec_num)) << ". Restrained distances";
-    for( size_t i=0; i < rDFIX.Count(); i++ )  {
-      TSimpleRestraint& sr = rDFIX[i];
-      if( b_res != NULL )  b_res->Add(&sr);
-      olxstr& str = lst.Add(EmptyString());
-      for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
-        str << sr.GetAtom(j).GetFullLabel(*this) << '-' <<
-          sr.GetAtom(j+1).GetFullLabel(*this);
-        if( (j+2) < sr.AtomCount() )
-          str << " = ";
+    for (size_t ri=0; ri < ress.Count(); ri++) {
+      TSRestraintList &res = *ress[ri];
+      for( size_t i=0; i < res.Count(); i++ )  {
+        TSimpleRestraint& sr = res[i];
+        if( b_res != NULL )  b_res->Add(&sr);
+        olxstr& str = lst.Add(EmptyString());
+        for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
+          str << sr.GetAtom(j).GetFullLabel(*this) << '-' <<
+            sr.GetAtom(j+1).GetFullLabel(*this);
+          if( (j+2) < sr.AtomCount() ) {
+            if (&res == &rSADI)
+              str << " ~ ";
+            else
+              str << " = ";
+          }
+        }
+        if (&res == &rSADI)
+          str << ": with sigma of " << sr.GetEsd();
+        else
+          str << ": " << sr.GetValue() << " with sigma of " << sr.GetEsd();
       }
-      str << ": " << sr.GetValue() << " with sigma of " << sr.GetEsd();
     }
-    for( size_t i=0; i < rDANG.Count(); i++ )  {
-      TSimpleRestraint& sr = rDANG[i];
-      if( b_res != NULL )  b_res->Add(&sr);
+  }
+  if (rAngle.Count() != 0) {
+    lst.Add(olxstr(++sec_num)) << ". Restrained angles";
+    for (size_t i=0; i < rAngle.Count(); i++) {
+      TSimpleRestraint& sr = rAngle[i];
       olxstr& str = lst.Add(EmptyString());
-      for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
+      for (size_t j=0; j < sr.AtomCount(); j+=3)  {
+        if (a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL)
+          a_res->Add(sr.GetAtom(j).GetAtom());
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' <<
-          sr.GetAtom(j+1).GetFullLabel(*this);
-        if( (j+2) < sr.AtomCount() )
-          str << " = ";
+          sr.GetAtom(j+1).GetFullLabel(*this) << '-' <<
+          sr.GetAtom(j+2).GetFullLabel(*this);
+        if ((j+3) < sr.AtomCount())
+          str << ", ";
       }
-      str << ": " << sr.GetValue() << " with sigma of " << sr.GetEsd();
+      str << ": fixed at " << sr.GetValue() << " with sigma of " << sr.GetEsd();
     }
-    for( size_t i=0; i < rSADI.Count(); i++ )  {
-      TSimpleRestraint& sr = rSADI[i];
-      if( b_res != NULL )  b_res->Add(&sr);
+  }
+  if (rDihedralAngle.Count() != 0) {
+    lst.Add(olxstr(++sec_num)) << ". Restrained dihedral angles";
+    for (size_t i=0; i < rDihedralAngle.Count(); i++) {
+      TSimpleRestraint& sr = rDihedralAngle[i];
       olxstr& str = lst.Add(EmptyString());
-      for( size_t j=0; j < sr.AtomCount(); j+=2 )  {
+      for (size_t j=0; j < sr.AtomCount(); j+=4)  {
+        if (a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL)
+          a_res->Add(sr.GetAtom(j).GetAtom()); 
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' <<
-          sr.GetAtom(j+1).GetFullLabel(*this);
-        if( (j+2) < sr.AtomCount() )
-          str << " ~ ";
+          sr.GetAtom(j+1).GetFullLabel(*this) << '-' <<
+          sr.GetAtom(j+2).GetFullLabel(*this) << '-' <<
+          sr.GetAtom(j+3).GetFullLabel(*this);
+        if ((j+4) < sr.AtomCount())
+          str << ", ";
       }
-      str << ": with sigma of " << sr.GetEsd();
+      str << ": fixed at " << sr.GetValue() << " with sigma of " << sr.GetEsd();
     }
   }
   if( rCHIV.Count() != 0 )  {
@@ -728,6 +767,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res,
       str << ": with sigma of " << sr.GetEsd();
     }
   }
+  // ADP related
   if( rDELU.Count() != 0 )  {
     lst.Add(olxstr(++sec_num)) << ". Rigid bond restraints";
     for( size_t i=0; i < rDELU.Count(); i++ )  {
@@ -750,14 +790,15 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res,
         sr.GetEsd1();
     }
   }
-  if( (rSIMU.Count()|rISOR.Count()|rEADP.Count()) != 0 )  {
+  if( (rSIMU.Count()|rISOR.Count()|rEADP.Count()|
+    rFixedUeq.Count()|rSimilarUeq.Count()|rSimilarAdpVolume.Count()) != 0 )
+  {
     lst.Add(olxstr(++sec_num)) << ". Uiso/Uaniso restraints and constraints";
     for( size_t i=0; i < rSIMU.Count(); i++ )  {
       TSimpleRestraint& sr = rSIMU[i];
       olxstr& str = lst.Add(EmptyString());
-      if( sr.IsAllNonHAtoms() )  {
-        str << "All non-hydrogen atoms";
-      }
+      if( sr.IsAllNonHAtoms() )
+        str << "All non-hydrogen atoms" << ' ' << "have similar U";
       else {
         for( size_t j=0; j < sr.AtomCount(); j++ )  {
           if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
@@ -773,15 +814,14 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res,
     for( size_t i=0; i < rISOR.Count(); i++ )  {
       TSimpleRestraint& sr = rISOR[i];
       olxstr& str = lst.Add(EmptyString());
-      if( sr.IsAllNonHAtoms() )  {
-        str << "All non-hydrogen atoms";
-      }
+      if( sr.IsAllNonHAtoms() )
+        str << "All non-hydrogen atoms" << ' ' << "retrained to be spherical";
       else {
         for( size_t j=0; j < sr.AtomCount(); j++ )  {
           if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )  continue;
           if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
             a_res->Add(sr.GetAtom(j).GetAtom()); 
-          str << "Uanis(" << sr.GetAtom(j).GetFullLabel(*this) << ") ~ Uiso";
+          str << "Uanis(" << sr.GetAtom(j).GetFullLabel(*this) << ") ~ Ueq";
           if( (j+1) < sr.AtomCount() )
             str << ", ";
         }
@@ -804,23 +844,53 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res,
           str << " = ";
       }
     }
-  }
-  if( ExyzGroups.Count() != 0 )  {
-    lst.Add(olxstr(++sec_num)) << ". Shared sites";
-    for( size_t i=0; i < ExyzGroups.Count(); i++ )  {
-      TExyzGroup& sr = ExyzGroups[i];
-      olxstr& str = lst.Add('{');
-      for( size_t j=0; j < sr.Count(); j++ )  {
-        if( a_res != NULL )  a_res->Add( &sr[j] ); 
-        str << sr[j].GetLabel();
-        if( (j+1) < sr.Count() )
-          str << ", ";
+    for (size_t i=0; i < rFixedUeq.Count(); i++) {
+      TSimpleRestraint& sr = rFixedUeq[i];
+      olxstr& str = lst.Add(EmptyString());
+      for (size_t j=0; j < sr.AtomCount(); j++)  {
+        if (a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL)
+          a_res->Add(sr.GetAtom(j).GetAtom());
+        str << "Ueq(" << sr.GetAtom(j).GetFullLabel(*this) << ')';
+        if ((j+1) < sr.AtomCount()) str << ", ";
       }
-      str << '}';
+      str << ": fixed at " << sr.GetValue() << " with sigma of " << sr.GetEsd();
+    }
+    for( size_t i=0; i < rSimilarUeq.Count(); i++ )  {
+      TSimpleRestraint& sr = rSimilarUeq[i];
+      olxstr& str = lst.Add(EmptyString());
+      if( sr.IsAllNonHAtoms() )
+        str << "All non-hydrogen atoms" << ' ' << "have similar Ueq";
+      else {
+        for( size_t j=0; j < sr.AtomCount(); j++ )  {
+          if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
+            a_res->Add(sr.GetAtom(j).GetAtom()); 
+          str << "Ueq(" << sr.GetAtom(j).GetFullLabel(*this) << ')';
+          if( (j+2) < sr.AtomCount() )
+            str << " ~ ";
+        }
+      }
+      str << ": with sigma of " << sr.GetEsd();
+    }
+    for( size_t i=0; i < rSimilarAdpVolume.Count(); i++ )  {
+      TSimpleRestraint& sr = rSimilarAdpVolume[i];
+      olxstr& str = lst.Add(EmptyString());
+      if( sr.IsAllNonHAtoms() )
+        str << "All non-hydrogen atoms" << ' ' << "have similar Uvol";
+      else {
+        for( size_t j=0; j < sr.AtomCount(); j++ )  {
+          if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )
+            a_res->Add(sr.GetAtom(j).GetAtom()); 
+          str << "Uvol(" << sr.GetAtom(j).GetFullLabel(*this) << ')';
+          if( (j+2) < sr.AtomCount() )
+            str << " ~ ";
+        }
+      }
+      str << ": with sigma of " << sr.GetEsd();
     }
   }
+  // fragment related
   if( rSAME.Count() != 0 )  {
-    lst.Add(olxstr(++sec_num)) << ". Same fragments";
+    lst.Add(olxstr(++sec_num)) << ". Same fragment restrains";
     for( size_t i=0; i < rSAME.Count(); i++ )  {
       TSameGroup& sg = rSAME[i];
       if( sg.DependentCount() == 0 || !sg.IsValidForSave() )
@@ -842,6 +912,20 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res,
       str << '}';
     }
   }
+  if (!SameGroups.items.IsEmpty()) {
+    lst.Add(olxstr(++sec_num)) << ". Same fragment constrains";
+    for( size_t i=0; i < SameGroups.items.Count(); i++ )  {
+      if (!SameGroups.items[i].IsValid()) continue;
+      lst.Add(SameGroups.items[i].Describe());
+    }
+  }
+  if (!SharedRotatedADPs.items.IsEmpty()) {
+    lst.Add(olxstr(++sec_num)) << ". Shared rotated ADPs";
+    for( size_t i=0; i < SharedRotatedADPs.items.Count(); i++ )  {
+      if (!SharedRotatedADPs.items[i].IsValid()) continue;
+      lst.Add(SharedRotatedADPs.items[i].Describe());
+    }
+  }
   TStrList vars;
   Vars.Describe(vars);
   if( !vars.IsEmpty() )  {
@@ -856,6 +940,8 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res,
   }
   for( size_t i=0; i < a_gs.Count(); i++ )  {
     TPtrList<TAfixGroup>& gl = a_gs.GetValue(i);
+    if (gl[0]->GetAfix() < 0) // skip internals
+      continue;
     olxstr ag_name = gl[0]->Describe();
     if( !ag_name.IsEmpty() )
       ag_name[0] = olxstr::o_toupper(ag_name.CharAt(0));

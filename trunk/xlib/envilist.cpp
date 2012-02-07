@@ -8,14 +8,30 @@
 ******************************************************************************/
 
 #include "envilist.h"
+#include "lattice.h"
 
-void TAtomEnvi::ApplySymm(const smatd& sym)  {
-  for( size_t i=0; i < Envi.Count(); i++ )  {
+//.............................................................................
+void TAtomEnvi::ApplySymm(const smatd& sym) {
+  for (size_t i=0; i < Envi.Count(); i++) {
     Envi[i].B() *= sym;
     Envi[i].C() = Envi[i].GetB() * Envi[i].GetA()->ccrd();
   }
 }
-
+//.............................................................................
+size_t TAtomEnvi::CountCovalent() const {
+  if (Envi.IsEmpty() || Base == NULL) return 0;
+  size_t cnt = 0;
+  const double delta = Base->GetNetwork().GetLattice().GetDelta();
+  for (size_t i=0; i < Envi.Count(); i++) {
+    if (TNetwork::BondExistsQ(Base->CAtom(), *Envi[i].GetA(),
+      Envi[i].GetC().QDistanceTo(Base->crd()), delta))
+    {
+      cnt++;
+    }
+  }
+  return cnt;
+}
+//.............................................................................
 #ifndef _NO_PYTHON
 PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* neighbours = PyTuple_New( Envi.Count() );

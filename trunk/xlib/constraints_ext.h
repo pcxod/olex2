@@ -35,6 +35,7 @@ struct adirection : public AReferencible {
   virtual bool IsValid() const = 0;
   virtual adirection* DoCopy(RefinementModel& rm) const = 0;
   virtual olxstr ToInsStr(const RefinementModel& rm) const = 0;
+  virtual olxstr Describe() const = 0;
   static adirection* Copy(RefinementModel& rm, const adirection& c) {
     return c.DoCopy(rm);
   }
@@ -63,6 +64,7 @@ struct static_direction : public adirection {
     const RefinementModel& rm) const;
   virtual olxstr ToInsStr(const RefinementModel& rm) const;
   virtual void ToDataItem(TDataItem& di) const;
+  virtual olxstr Describe() const;
 #ifndef _NO_PYTHON
   virtual PyObject* PyExport() const;
 #endif
@@ -89,7 +91,7 @@ struct direction : public adirection {
     return true;
   }
   olxstr ToInsStr(const RefinementModel& rm) const;
-
+  virtual olxstr Describe() const;
   void ToDataItem(TDataItem& di) const;
 #ifndef _NO_PYTHON
   PyObject* PyExport() const;
@@ -124,7 +126,7 @@ struct rotated_adp_constraint  {
   static rotated_adp_constraint*
     Copy(RefinementModel& rm, const rotated_adp_constraint& c);
   static const olxstr& GetName();
-
+  olxstr Describe() const;
   void UpdateParams(const TStrList& toks);
   void ToDataItem(TDataItem& di) const;
   static rotated_adp_constraint* FromDataItem(const TDataItem& di,
@@ -166,7 +168,7 @@ public:
   static same_group_constraint*
     Copy(RefinementModel& rm, const same_group_constraint& c);
   static const olxstr& GetName();
-
+  olxstr Describe() const;
   void UpdateParams(const TStrList& toks);
   void ToDataItem(TDataItem& di) const;
   static same_group_constraint* FromDataItem(const TDataItem& di,
