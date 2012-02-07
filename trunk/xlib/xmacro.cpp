@@ -4489,7 +4489,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
   if( !newSg.IsEmpty() )  {
-    TStrList sg_toks(newSg, '~');
+    TStrList sg_toks(newSg, '~', false);
     TSpaceGroup* sg = NULL;
     if (sg_toks.Count() == 1)  {
       sg = TSymmLib::GetInstance().FindGroupByName(sg_toks[0]);
