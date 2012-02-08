@@ -537,10 +537,16 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     EmbossColour = Options.Contains("c"), 
     PictureQuality = Options.Contains("pq");
   if( EmbossColour )  Emboss = true;
-
   if( PictureQuality )  FXApp->Quality(qaPict);
 
-  short bits = 24, extraBytes;
+  bool mask_bg = Options.Contains("nbg");
+  uint32_t clear_color = FXApp->GetRender().LightModel.GetClearColor().GetRGB();
+  unsigned char bg_r = GetRValue(clear_color),
+    bg_g = GetGValue(clear_color),
+    bg_b = GetBValue(clear_color);
+
+  short bits = mask_bg ? 32 : 24,
+    extraBytes;
   // keep old size values
   const int vpLeft = FXApp->GetRender().GetLeft(),
       vpTop = FXApp->GetRender().GetTop(),
@@ -559,7 +565,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   int BmpHeight = vpHeight*res, BmpWidth = vpWidth*res;
 
-  extraBytes = (4-(BmpWidth*3)%4)%4;
+  extraBytes = (4-(BmpWidth*(bits/8))%4)%4;
 
   HDC hDC = wglGetCurrentDC();
   HGLRC glc = wglGetCurrentContext();
@@ -568,25 +574,28 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   BITMAPFILEHEADER BmpFHdr;
   // intialise bitmap header
   BITMAPINFO BmpInfo;
-  BmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER) ;
+  BmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
   BmpInfo.bmiHeader.biWidth = BmpWidth;
   BmpInfo.bmiHeader.biHeight = BmpHeight;
-  BmpInfo.bmiHeader.biPlanes = 1 ;
+  BmpInfo.bmiHeader.biPlanes = 1;
   BmpInfo.bmiHeader.biBitCount = (WORD) bits;
-  BmpInfo.bmiHeader.biCompression = BI_RGB ;
-  BmpInfo.bmiHeader.biSizeImage = (BmpWidth*3+extraBytes+1)*BmpHeight; //TODO: +1 check!!!
-  BmpInfo.bmiHeader.biXPelsPerMeter = 0 ;
-  BmpInfo.bmiHeader.biYPelsPerMeter = 0 ;
+  BmpInfo.bmiHeader.biCompression = BI_RGB;
+  //TODO: +1 check!!!
+  BmpInfo.bmiHeader.biSizeImage = (BmpWidth*(bits/8)+extraBytes+1)*BmpHeight;
+  BmpInfo.bmiHeader.biXPelsPerMeter = 0;
+  BmpInfo.bmiHeader.biYPelsPerMeter = 0;
   BmpInfo.bmiHeader.biClrUsed = 0;
-  BmpInfo.bmiHeader.biClrImportant = 0 ;
+  BmpInfo.bmiHeader.biClrImportant = 0;
 
   BmpFHdr.bfType = 0x4d42;
-  BmpFHdr.bfSize = sizeof(BmpFHdr)  + sizeof(BITMAPINFOHEADER) + (BmpWidth*3+extraBytes)*BmpHeight;
+  BmpFHdr.bfSize = sizeof(BmpFHdr)  + sizeof(BITMAPINFOHEADER) +
+    (BmpWidth*(bits/8)+extraBytes)*BmpHeight;
   BmpFHdr.bfReserved1 = BmpFHdr.bfReserved2 = 0;
   BmpFHdr.bfOffBits = sizeof(BmpFHdr) + sizeof(BmpInfo.bmiHeader) ;
 
-  char *DIBits;  DIBits = NULL;
-  HBITMAP DIBmp = CreateDIBSection(dDC, &BmpInfo, DIB_RGB_COLORS, (void **)&DIBits, NULL, 0);
+  unsigned char *DIBits = NULL;
+  HBITMAP DIBmp = CreateDIBSection(dDC, &BmpInfo, DIB_RGB_COLORS,
+    (void **)&DIBits, NULL, 0);
 
   SelectObject(dDC, DIBmp);
 
@@ -622,9 +631,9 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   GdiFlush();
   FBitmapDraw = false;
 
+  FXApp->GetRender().BeforeContextChange();
   wglDeleteContext(dglc);
   DeleteDC(dDC);
-  FXApp->GetRender().BeforeContextChange();
   wglMakeCurrent(hDC, glc);
   FXApp->GetRender().AfterContextChange();
   FXApp->GetRender().Resize(vpLeft, vpTop, vpWidth, vpHeight, 1);
@@ -635,19 +644,19 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   if( Emboss )  {
     if( EmbossColour )  {
-      TProcessImage::EmbossC((unsigned char *)DIBits, BmpWidth, BmpHeight, 3,
+      TProcessImage::EmbossC(DIBits, BmpWidth, BmpHeight, 3,
                        FXApp->GetRender().LightModel.GetClearColor().GetRGB());
     }
     else  {
-      TProcessImage::EmbossBW((unsigned char *)DIBits, BmpWidth, BmpHeight, 3,
+      TProcessImage::EmbossBW(DIBits, BmpWidth, BmpHeight, 3,
                        FXApp->GetRender().LightModel.GetClearColor().GetRGB());
     }
   }
-
   olxstr bmpFN, outFN;
-
-  if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )
-    outFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
+  if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) ) {
+    outFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) <<
+      TEFile::ExtractFileName( Cmds[0] );
+  }
   else
     outFN = Cmds[0];
   // correct a common typo
@@ -661,8 +670,25 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TEFile* BmpFile = new TEFile(bmpFN, "w+b");
   BmpFile->Write(&(BmpFHdr), sizeof(BITMAPFILEHEADER));
   BmpFile->Write(&(BmpInfo), sizeof(BITMAPINFOHEADER));
-  char *PP = DIBits;
-  BmpFile->Write(PP, (BmpWidth*3+extraBytes)*BmpHeight);
+  if (mask_bg) {
+    const size_t inc = bits/8,
+      ws = BmpWidth*inc;
+    for (size_t i=0; i < BmpHeight; i++) {
+      for (size_t j=0; j < BmpWidth; j++) {
+        size_t off = (BmpWidth*inc+extraBytes)*i + j*inc;
+        if (DIBits[off+2]   == bg_r &&
+          DIBits[off+1] == bg_g &&
+          DIBits[off] == bg_b)
+        {
+          DIBits[off] = DIBits[off+1] = DIBits[off+2] = ~0;
+          DIBits[off+3] = 0;
+        }
+        else
+          DIBits[off+3] = ~0;
+      }
+    }
+  }
+  BmpFile->Write(DIBits, (BmpWidth*(bits/8)+extraBytes)*BmpHeight);
   DeleteObject(DIBmp);
   delete BmpFile;
   //check if the image is bmp
@@ -671,7 +697,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   wxImage image;
   image.LoadFile(bmpFN.u_str(), wxBITMAP_TYPE_BMP);
   if( !image.Ok() )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not process image conversion" );
+    Error.ProcessingError(__OlxSrcInfo, "could not process image conversion");
     return;
   }
   image.SetOption(wxT("quality"), 85);
@@ -707,9 +733,17 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( BmpWidth < SrcWidth )
     SrcWidth = BmpWidth;
   FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res); 
-
+  bool mask_bg = Options.Contains("nbg");
+  uint32_t clear_color = FXApp->GetRender().LightModel.GetClearColor().GetRGB();
+  unsigned char bg_r = GetRValue(clear_color),
+    bg_g = GetGValue(clear_color),
+    bg_b = GetBValue(clear_color);
+  unsigned char * alpha_bytes = NULL;
+  const int alphaSize = BmpHeight*BmpWidth;
+  if (mask_bg)
+    alpha_bytes = olx_malloc<unsigned char>(alphaSize);
   const int bmpSize = BmpHeight*BmpWidth*3;
-  char* bmpData = (char*)malloc(bmpSize);
+  unsigned char* bmpData = olx_malloc<unsigned char>(bmpSize);
   FGlConsole->SetVisible(false);
   FXApp->GetRender().OnDraw.SetEnabled(false);
   if( res != 1 )    {
@@ -731,6 +765,18 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           bmpData[indexB] = PP[indexA];
           bmpData[indexB+1] = PP[indexA+1];
           bmpData[indexB+2] = PP[indexA+2];
+          if (mask_bg) {
+            int index = alphaSize - (BmpWidth*(mi + l + 1) - mj - k);
+            if (bmpData[indexB]   == bg_r &&
+                bmpData[indexB+1] == bg_g &&
+                bmpData[indexB+2] == bg_b)
+            {
+              bmpData[indexB] = bmpData[indexB+1] = bmpData[indexB+2] = ~0;
+              alpha_bytes[index] = 0;
+            }
+            else
+              alpha_bytes[index] = ~0;
+          }
         }
       }
       delete [] PP;
@@ -755,7 +801,9 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else
     bmpFN = Cmds[0];
   wxImage image;
-  image.SetData((unsigned char*)bmpData, BmpWidth, BmpHeight ); 
+  image.SetData(bmpData, BmpWidth, BmpHeight); 
+  if (alpha_bytes != NULL)
+    image.SetAlpha(alpha_bytes);
   // correct a common typo
   if( TEFile::ExtractFileExt(bmpFN).Equalsi("jpeg") )
     bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
@@ -3735,70 +3783,75 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     v = Cmds[2].ToInt();  FXApp->GetRender().Background()->RT(v);
     v = Cmds[3].ToInt();  FXApp->GetRender().Background()->LT(v);
   }
-  GradientPicture = Options.FindValue("p", GradientPicture);
-  if( GradientPicture.IsEmpty() )  {
-    TGlTexture* glt = FXApp->GetRender().Background()->GetTexture();
-    if( glt != NULL  )
-      glt->SetEnabled(false);
-  }
-  else if( TEFile::Exists(GradientPicture) )  {
-    wxFSFile* inf = TFileHandlerManager::GetFSFileHandler(GradientPicture);
-    if( inf == NULL )  {
-      E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ") << GradientPicture;
-      return;
+  if (Options.Contains('p')) {
+    GradientPicture = Options.FindValue("p", GradientPicture);
+    if( GradientPicture.IsEmpty() )  {
+      TGlTexture* glt = FXApp->GetRender().Background()->GetTexture();
+      if( glt != NULL  )
+        glt->SetEnabled(false);
     }
-    wxImage img(*inf->GetStream());
-    delete inf;
-    if( !img.Ok() )  {
-      E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << GradientPicture;
-      return;
-    }
-    int owidth = img.GetWidth(), oheight = img.GetHeight();
-    int l = CalcL(img.GetWidth());
-    int swidth = (int)pow((double)2, (double)l);
-    l = CalcL(img.GetHeight());
-    int sheight = (int)pow((double)2, (double)l);
-
-    if( swidth != owidth || sheight != oheight )
-      img.Rescale(swidth, sheight);
-
-    int cl = 3, bmpType = GL_RGB;
-    if( img.HasAlpha() )  {
-      cl ++;
-      bmpType = GL_RGBA;
-    }
-    unsigned char* RGBData = new unsigned char[ swidth * sheight * cl];
-    for( int i=0; i < sheight; i++ )  {
-      for( int j=0; j < swidth; j++ )  {
-        int indexa = (i*swidth + (swidth-j-1)) * cl;
-        RGBData[indexa] = img.GetRed(j, i);
-        RGBData[indexa+1] = img.GetGreen(j, i);
-        RGBData[indexa+2] = img.GetBlue(j, i);
-        if( cl == 4 )
-          RGBData[indexa+3] = img.GetAlpha(j, i);
+    else if( TEFile::Exists(GradientPicture) )  {
+      wxFSFile* inf = TFileHandlerManager::GetFSFileHandler(GradientPicture);
+      if( inf == NULL )  {
+        E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ") << GradientPicture;
+        return;
       }
-    }
-    TGlTexture* glt = FXApp->GetRender().Background()->GetTexture();
-    if( glt != NULL  ) {
-      FXApp->GetRender().GetTextureManager().Replace2DTexture(
-        *glt, 0, swidth, sheight, 0, bmpType, RGBData);
-      glt->SetEnabled(true);
-    }
-    else  {
-      int glti = FXApp->GetRender().GetTextureManager().Add2DTexture(
-        "grad", 0, swidth, sheight, 0, bmpType, RGBData);
-      FXApp->GetRender().Background()->SetTexture(
-        FXApp->GetRender().GetTextureManager().FindTexture(glti));
-      glt = FXApp->GetRender().Background()->GetTexture();
-      glt->SetEnvMode(tpeDecal);
-      glt->SetSCrdWrapping(tpCrdClamp);
-      glt->SetTCrdWrapping(tpCrdClamp);
+      wxImage img(*inf->GetStream());
+      delete inf;
+      if( !img.Ok() )  {
+        E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << GradientPicture;
+        return;
+      }
+      int owidth = img.GetWidth(), oheight = img.GetHeight();
+      int swidth = owidth, sheight = oheight;
+      if (!Options.Contains('r')) {
+        int l = CalcL(img.GetWidth());
+        swidth = (int)pow((double)2, (double)l);
+        l = CalcL(img.GetHeight());
+        sheight = (int)pow((double)2, (double)l);
+      }
 
-      glt->SetMagFilter(tpFilterNearest);
-      glt->SetMinFilter(tpFilterLinear);
-      glt->SetEnabled(true);
+      if( swidth != owidth || sheight != oheight )
+        img.Rescale(swidth, sheight);
+
+      int cl = 3, bmpType = GL_RGB;
+      if( img.HasAlpha() )  {
+        cl ++;
+        bmpType = GL_RGBA;
+      }
+      unsigned char* RGBData = new unsigned char[ swidth * sheight * cl];
+      for( int i=0; i < sheight; i++ )  {
+        for( int j=0; j < swidth; j++ )  {
+          int indexa = (i*swidth + (swidth-j-1)) * cl;
+          RGBData[indexa] = img.GetRed(j, i);
+          RGBData[indexa+1] = img.GetGreen(j, i);
+          RGBData[indexa+2] = img.GetBlue(j, i);
+          if( cl == 4 )
+            RGBData[indexa+3] = img.GetAlpha(j, i);
+        }
+      }
+      TGlTexture* glt = FXApp->GetRender().Background()->GetTexture();
+      if( glt != NULL  ) {
+        FXApp->GetRender().GetTextureManager().Replace2DTexture(
+          *glt, 0, swidth, sheight, 0, bmpType, RGBData);
+        glt->SetEnabled(true);
+      }
+      else  {
+        int glti = FXApp->GetRender().GetTextureManager().Add2DTexture(
+          "grad", 0, swidth, sheight, 0, bmpType, RGBData);
+        FXApp->GetRender().Background()->SetTexture(
+          FXApp->GetRender().GetTextureManager().FindTexture(glti));
+        glt = FXApp->GetRender().Background()->GetTexture();
+        glt->SetEnvMode(tpeDecal);
+        glt->SetSCrdWrapping(tpCrdClamp);
+        glt->SetTCrdWrapping(tpCrdClamp);
+
+        glt->SetMagFilter(tpFilterNearest);
+        glt->SetMinFilter(tpFilterLinear);
+        glt->SetEnabled(true);
+      }
+      delete [] RGBData;
     }
-    delete [] RGBData;
   }
 }
 //..............................................................................
