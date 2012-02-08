@@ -40,6 +40,7 @@ class UpdateThread : public AOlxThread  {
   void DoInit();
   virtual void OnSendTerminate();
   TActionQList Actions;
+  void MarkCompleted(const TStrList &cmds);
 public:
   UpdateThread(const olxstr& patch_dir);
 
