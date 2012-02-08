@@ -1064,9 +1064,11 @@ void TGlRenderer::BeforeContextChange()  {
   //OnClear.Enter(this);
   Clear();
   //OnClear.SetEnabled(false);
+  TextureManager->BeforeContextChange();
 }
 //..............................................................................
 void TGlRenderer::AfterContextChange()  {
+  TextureManager->AfterContextChange();
   //OnClear.SetEnabled(true);
   //OnClear.Exit(this);
 }

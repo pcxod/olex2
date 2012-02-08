@@ -196,6 +196,18 @@ struct olx_gl  {
     glGetTexParameterfv(target, pname, dest);
   }
 
+  static void getTexLevelParam(GLenum target, GLint level, GLenum pname,
+    GLfloat* dest)
+  {
+    glGetTexLevelParameterfv(target, level, pname, dest);
+  }
+
+  static void getTexLevelParam(GLenum target, GLint level, GLenum pname,
+    GLint* dest)
+  {
+    glGetTexLevelParameteriv(target, level, pname, dest);
+  }
+
   static void texEnv(GLenum target, GLenum pname, GLint param)  {
     glTexEnvi(target, pname, param);
   }

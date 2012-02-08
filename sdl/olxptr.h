@@ -23,20 +23,27 @@ template <typename ptr> struct olx_object_ptr  {
   olx_object_ptr(const olx_object_ptr& _p) : p(_p.p->inc_ref())  {}
   ~olx_object_ptr()  {
     if( --p->ref_cnt <= 0 )  {
-      delete p->p;
+      if (p->p != NULL) delete p->p;
       delete p;
     }
   }
   olx_object_ptr& operator = (const olx_object_ptr& _p)  {
     if( --p->ref_cnt <= 0 )  {
-      delete p->p;
+      if (p->p != NULL) delete p->p;
       delete p;
     }
     p = _p.p->inc_ref();
     return *this;
   }
-  ptr& operator ()()  {  return *p->p;  }
-  operator ptr& ()  {  return *p->p;  }
+  olx_object_ptr& operator = (ptr *p_)  {
+    if (--p->ref_cnt <= 0 && p->p != NULL)
+      delete p->p;
+    p->p = p_;
+    p->ref_cnt = 1;
+    return *this;
+  }
+  ptr& operator ()() const {  return *p->p;  }
+  operator ptr& () const {  return *p->p;  }
 };
 
 template <typename ptr> struct olx_array_ptr  {
@@ -45,20 +52,28 @@ template <typename ptr> struct olx_array_ptr  {
   olx_array_ptr(const olx_array_ptr& _p) : p(_p.p->inc_ref())  {}
   ~olx_array_ptr()  {
     if( --p->ref_cnt <= 0 )  {
-      delete [] p->p;
+      if (p->p != NULL) delete [] p->p;
       delete p;
     }
   }
   olx_array_ptr& operator = (const olx_array_ptr& _p)  {
     if( --p->ref_cnt <= 0 )  {
-      delete [] p->p;
+      if (p->p != NULL) delete [] p->p;
       delete p;
     }
     p = _p.p->inc_ref();
     return *this;
   }
-  ptr* operator ()()  {  return p->p;  }
-  operator ptr* ()  {  return p->p;  }
+  olx_array_ptr& operator = (ptr *p_)  {
+    if (--p->ref_cnt <= 0 && p->p != NULL)
+      delete [] p->p;
+    p->p = p_;
+    p->ref_cnt = 1;
+    return *this;
+  }
+  bool is_null() const { return p->p == NULL; }
+  ptr* operator ()() const {  return p->p;  }
+  operator ptr* () const {  return p->p;  }
 };
 
 struct olx_ref {

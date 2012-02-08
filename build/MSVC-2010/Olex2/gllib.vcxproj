@@ -509,6 +509,7 @@
     <ClCompile Include="..\..\..\glib\glrender.cpp" />
     <ClCompile Include="..\..\..\glib\glscene.cpp" />
     <ClCompile Include="..\..\..\glib\gltextbox.cpp" />
+    <ClCompile Include="..\..\..\glib\gltexture.cpp" />
     <ClCompile Include="..\..\..\glib\gpcollection.cpp" />
     <ClCompile Include="..\..\..\glib\styles.cpp" />
     <ClCompile Include="..\..\..\glib\xfader.cpp" />
