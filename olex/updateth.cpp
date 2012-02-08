@@ -76,7 +76,11 @@ int UpdateThread::Run()  {
       Index->CalcDiffSize(to, properties, skip ? NULL : &toSkip);
     UpdateSize = update_size;
     patcher::PatchAPI::UnlockUpdater();
-    if( UpdateSize == 0 )  return 0;
+    if( UpdateSize == 0 )  {
+      if (&to == &dfs)  // completed interupted update
+        MarkCompleted(cmds);
+      return 0;
+    }
     while( !_DoUpdate )  {
       if( Terminate || !TBasicApp::HasInstance() )  {  // nobody took care ?
         CleanUp();
@@ -108,27 +112,8 @@ int UpdateThread::Run()  {
       }
     }
     catch(const TExceptionBase&)  {}
-    if( completed )  {
-      olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) +
-        patcher::PatchAPI::GetUpdaterCmdFileName());
-      if( TEFile::Exists(cmd_fn) )  {
-        TStrList pc;
-#ifdef _UNICODE
-        TUtf8File::ReadLines(cmd_fn, pc);
-#else
-        pc.LoadFromFile(cmd_fn);
-#endif
-        cmds.Insert(0, pc);
-      }
-#ifdef _UNICODE
-      TUtf8File::WriteLines(cmd_fn, cmds);
-#else
-      cmds.SaveToFile(cmd_fn);
-#endif
-      // mark download as complete
-      TEFile f(download_vf, "w+b");
-      f.Write(TUtf8::Encode(PatchDir));
-    }
+    if( completed )
+      MarkCompleted(cmds);
     patcher::PatchAPI::UnlockUpdater();
   }
   catch(const TExceptionBase&)  { // oups...
@@ -143,3 +128,29 @@ void UpdateThread::OnSendTerminate()  {
   if( Index != NULL )
     Index->DoBreak();
 }
+//.............................................................................
+void UpdateThread::MarkCompleted(const TStrList &cmds_) {
+  TStrList cmds(cmds_);
+  TOSFileSystem dfs(PatchDir);
+  olxstr download_vf(patcher::PatchAPI::GetUpdateLocationFileName());
+  olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) +
+    patcher::PatchAPI::GetUpdaterCmdFileName());
+  if( TEFile::Exists(cmd_fn) )  {
+    TStrList pc;
+#ifdef _UNICODE
+    TUtf8File::ReadLines(cmd_fn, pc);
+#else
+    pc.LoadFromFile(cmd_fn);
+#endif
+    cmds.Insert(0, pc);
+  }
+#ifdef _UNICODE
+  TUtf8File::WriteLines(cmd_fn, cmds);
+#else
+  cmds.SaveToFile(cmd_fn);
+#endif
+  // mark download as complete
+  TEFile f(download_vf, "w+b");
+  f.Write(TUtf8::Encode(PatchDir));
+}
+//.............................................................................
