@@ -396,7 +396,7 @@ uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties,
     }
     else  {
       if( Dest.UpdateFile(FI) != NULL )  {
-        Index.Progress.IncPos( FI.GetSize() );
+        Index.Progress.IncPos(FI.GetSize());
         Index.OnProgress.Execute(this, &Index.Progress);
       }
     }

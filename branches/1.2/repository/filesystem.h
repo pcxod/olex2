@@ -279,24 +279,36 @@ public:
   
   // this is to be used for the overal progress monitorring
   TActionQueue &OnProgress;
-  // this is to be used for when an action is being applied to a file (like extract)
+  /* this is to be used for when an action is being applied to a file (like
+  extract)
+  */
   TActionQueue &OnAction;
 
   void LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* toSkip=NULL);
   void SaveIndex(const olxstr& IndexFile);
-  /* returns the number transfered bytes.  If the dest_fs is not NULL, the difference is adopted by that
-  file syste. If cmds is not NULL, the rm commands are stored in it */
-  uint64_t Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL, 
-    AFileSystem* dest_fs=NULL, TStrList* cmds=NULL, const olxstr& indexName="index.ind");
-  uint64_t CalcDiffSize(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL,
+  /* returns the number transfered bytes.  If the dest_fs is not NULL, the
+  difference is adopted by that file syste. If cmds is not NULL, the rm
+  commands are stored in it
+  */
+  uint64_t Synchronise(AFileSystem& To, const TStrList& properties,
+    const TFSItem::SkipOptions* toSkip=NULL,
+    AFileSystem* dest_fs=NULL, TStrList* cmds=NULL,
+    const olxstr& indexName="index.ind");
+  uint64_t CalcDiffSize(AFileSystem& To, const TStrList& properties,
+    const TFSItem::SkipOptions* toSkip=NULL,
     const olxstr& indexName="index.ind");
   // returns true if the file is updated (added) and false otherwise
-  bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, const olxstr& indexName="index.ind");
+  bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force,
+    const olxstr& indexName="index.ind");
   inline TFSItem& GetRoot()  const {  return *Root; }
-  /* checks if the file actions specify to delete it, if a delete action is found return false
-  if the timestamps of the items and size match and false in other cases; updates the dest digest if empty */
+  /* checks if the file actions specify to delete it, if a delete action is
+  found return false if the timestamps of the items and size match and false in
+  other cases; updates the dest digest if empty
+  */
   bool ShallAdopt(const TFSItem& src, TFSItem& dest) const;
-  bool ShouldExist(const TFSItem& src)  const {  return src.GetActions().IndexOfi("delete") == InvalidIndex;  }
+  bool ShouldExist(const TFSItem& src)  const {
+    return src.GetActions().IndexOfi("delete") == InvalidIndex;
+  }
   // returns if the action was procesed (or not) successful
   bool ProcessActions(TFSItem& item); 
   // stops the syncronisation and updates the index
