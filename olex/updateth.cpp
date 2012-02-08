@@ -71,8 +71,9 @@ int UpdateThread::Run()  {
     TStrList cmds;
     bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
     // need to keep to check if sync was completed
+    AFileSystem &to = dfs.Exists(dfs.GetBase() + "index.ind") ? dfs : *destFS;
     const uint64_t update_size =
-      Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
+      Index->CalcDiffSize(to, properties, skip ? NULL : &toSkip);
     UpdateSize = update_size;
     patcher::PatchAPI::UnlockUpdater();
     if( UpdateSize == 0 )  return 0;
@@ -100,8 +101,8 @@ int UpdateThread::Run()  {
     }
     bool completed = false;
     try {  
-      if( Index->Synchronise(*destFS, properties, skip ? NULL
-            : &toSkip, &dfs, &cmds) == update_size )
+      if( Index->Synchronise(to, properties, skip ? NULL
+            : &toSkip, &to == destFS ? &dfs : NULL, &cmds) == update_size )
       {
         completed = true;
       }
@@ -133,8 +134,6 @@ int UpdateThread::Run()  {
   catch(const TExceptionBase&)  { // oups...
     CleanUp();
     patcher::PatchAPI::UnlockUpdater();
-    //TBasicApp::NewLogEntry(logInfo)("Update failed...");
-    //TBasicApp::NewLogEntry(logInfo)(exc.GetException()->GetFullMessage());
     return 0;  
   }  
   return 1;

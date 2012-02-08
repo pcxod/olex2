@@ -338,6 +338,18 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
        props.Add("port-win32");
 #    endif
 #  endif
+#elif __MAC__
+#  if defined(__LP64__) || defined(__x86_64__)
+      props.Add("port-mac64");
+#  else
+      props.Add("port-mac32");
+#  endif
+#elif __linux__
+#  if defined(__LP64__) || defined(__x86_64__)
+      props.Add("port-linux64");
+#  else
+      props.Add("port-linux32");
+#  endif
 #else
   if( !settings.olex2_port.IsEmpty() )  {
     props.Add(settings.olex2_port);
@@ -392,10 +404,10 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo,
 #endif
     }
     return FS;
-	}
-	catch(const TExceptionBase& )  {
-	  return NULL;
-	}
+  }
+  catch(const TExceptionBase& )  {
+    return NULL;
+  }
 }
 //.............................................................................
 AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {

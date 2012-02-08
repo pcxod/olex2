@@ -117,6 +117,8 @@ int main(int argc, char** argv)  {
   /* as soon as we create TBasicApp, this instance gets attached to it
   */
   wxAppConsole::SetInstance(&app);
+  // ensure we end up with the same datadir!
+  app.SetAppName(wxT("olex2"));
   TEGC::Initialise();
   TOutStream out;
 #if defined(__WIN32__) && !defined(__WXWIDGETS__)
@@ -155,7 +157,7 @@ int main(int argc, char** argv)  {
         NewLineSequence();
       return 0;
     }
-		// parse out options
+    // parse out options
     for( int i=0; i < argc; i++ )
       bapp.Arguments.Add(argv[i]);
     for( size_t i=0; i < bapp.Arguments.Count(); i++ )  {
