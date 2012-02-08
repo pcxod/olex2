@@ -16,12 +16,15 @@ BeginXlibNamespace()
 class TXlConGen : public AConstraintGenerator {
 public:
   TXlConGen(RefinementModel& rm) : AConstraintGenerator(rm) {}
-  virtual bool FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values);
-  virtual bool FixAtom(TAtomEnvi& envi, const short Group, const cm_Element& atomType, 
+  virtual bool FixParam(const short paramMask, TStrList& res,
+    const TCAtomPList& atoms, const TFixedValueList& values);
+  virtual bool FixAtom(TAtomEnvi& envi, const short Group,
+    const cm_Element& atomType, 
     TAtomEnvi* pivoting = NULL, TCAtomPList* generated = NULL);
-  virtual void AnalyseMultipart(const TAtomEnvi& envi, const TTypeList<TCAtomPList>& parts);
+  virtual void AnalyseMultipart(const TAtomEnvi& envi,
+    const TTypeList<TCAtomPList>& parts);
   // translates shelxl AFIX, HFIX to olex2 notation
-  static int OlexToShelx(short code, TAtomEnvi& envi, TAtomEnvi* pivot = NULL) {
+  static int OlexToShelx(short code, const TAtomEnvi& envi, TAtomEnvi* pivot = NULL) {
     switch( code ) {
       case fgNH3:  
       case fgCH3:  
@@ -66,7 +69,7 @@ public:
     }
     return -1;
   }
-  static short ShelxToOlex(int shelx_code, TAtomEnvi& envi)  {
+  static short ShelxToOlex(int shelx_code, const TAtomEnvi& envi)  {
     const int m = TAfixGroup::GetM(shelx_code);
     switch( m ) {
       case 1:

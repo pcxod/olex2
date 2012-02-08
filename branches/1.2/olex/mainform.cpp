@@ -472,13 +472,17 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Pict,
     "c-embossed output in color&;"
     "bw-embossed output in b&w&;"
-    "pq-highest (picture) quality",
+    "pq-highest (picture) quality&;"
+    "nbg-mask the background with 0 alpha (an rgb colour may be gives)",
     fpOne|fpTwo,
     "Outputs a raster picture. Output file name is required, if a second "
     "numerical parameter is provided, it is considered to be image resolution "
     "in range [0.1-10] in screen sizes, anythin greater than 10 is considered "
     "as the desired picture width.");
-  this_InitMacroD(Picta, "pq-picture quality", fpOne|fpTwo,
+  this_InitMacroD(Picta,
+    "pq-picture quality&;"
+    "nbg-mask the background with 0 alpha (an rgb colour may be gives)",
+    fpOne|fpTwo,
     "A portable version of pict with limited resolution (OS/graphics card "
     "dependent). Not stable on some graphics cards");
   this_InitMacroD(Echo,
@@ -876,7 +880,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Grad,
     "i-toggles gradient mode and the user/white background&;"
     "p-sets/removes the gradient picture, the picture is assumed to have "
-    "power of 2 dimensions (like 512x256, it is stretched if needed",
+    "power of 2 dimensions (like 512x256), it is stretched if needed",
     fpNone|fpOne|fpFour,
     "Sets options for the background gradient. No options - showsn the "
     "gradient dialog where the user can choose the gradient colors. One "
