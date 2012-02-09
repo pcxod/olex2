@@ -16,6 +16,7 @@
 #include "filetree.h"
 #include "updateapi.h"
 #include "shellutil.h"
+#include "eutf8.h"
 #include <sys/stat.h>
 
 using namespace patcher;
@@ -183,5 +184,13 @@ olxstr PatchAPI::GetInstanceDir(bool refresh)  {
   if( olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE") )
      return (instance_dir=data_dir);
   return (instance_dir=ComposeInstanceDir(data_dir));
+}
+//.............................................................................
+void PatchAPI::MarkPatchComplete() {
+  TEFile f(GetUpdateLocationFileName(), "wb+");
+  f.Write(
+    TUtf8::Encode(TBasicApp::GetInstanceDir() +
+      patcher::PatchAPI::GetPatchFolder())
+  );
 }
 //.............................................................................
