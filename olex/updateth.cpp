@@ -132,7 +132,6 @@ void UpdateThread::OnSendTerminate()  {
 void UpdateThread::MarkCompleted(const TStrList &cmds_) {
   TStrList cmds(cmds_);
   TOSFileSystem dfs(PatchDir);
-  olxstr download_vf(patcher::PatchAPI::GetUpdateLocationFileName());
   olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) +
     patcher::PatchAPI::GetUpdaterCmdFileName());
   if( TEFile::Exists(cmd_fn) )  {
@@ -149,8 +148,6 @@ void UpdateThread::MarkCompleted(const TStrList &cmds_) {
 #else
   cmds.SaveToFile(cmd_fn);
 #endif
-  // mark download as complete
-  TEFile f(download_vf, "w+b");
-  f.Write(TUtf8::Encode(PatchDir));
+  patcher::PatchAPI::MarkPatchComplete();
 }
 //.............................................................................

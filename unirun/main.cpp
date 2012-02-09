@@ -32,6 +32,12 @@
 #include "wxzipfs.h"
 using namespace std;
 
+#ifdef __WIN32__
+  olxstr app_name = "olex2.exe";
+#else
+  olxstr app_name = "olex2";
+#endif
+
 class TProgress: public AActionHandler  {
 public:
   TProgress(){}
@@ -272,6 +278,14 @@ void DoRun()  {
       TEFile::Copy(old_lf, patcher::PatchAPI::GetUpdateLocationFileName());
       TEFile::DelFile(old_lf);
     }
+    olxstr patch_dir = TBasicApp::GetInstanceDir() +
+      patcher::PatchAPI::GetPatchFolder();
+    bool force_update = (TEFile::Exists(patch_dir) &&
+      !TEFile::IsEmptyDir(patch_dir) &&
+      !TEFile::Exists(TEFile::AddPathDelimeter(patch_dir) + "index.ind"));
+    if (force_update && !patcher::PatchAPI::HaveUpdates())
+      patcher::PatchAPI::MarkPatchComplete();
+
     short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
     if( res != patcher::papi_OK )
       TBasicApp::NewLogEntry() << "Update has failed with error code: "

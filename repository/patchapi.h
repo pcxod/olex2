@@ -60,6 +60,8 @@ public:
   static olxstr GetUpdateLocationFileName()  {
     return TBasicApp::GetInstanceDir() + "__location.update";
   }
+  /* writes patch dir into the the update location file */
+  static void MarkPatchComplete();
   static bool HaveUpdates() {
     return TEFile::Exists(GetUpdateLocationFileName());
   }
