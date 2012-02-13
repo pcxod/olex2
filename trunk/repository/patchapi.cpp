@@ -67,7 +67,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
       res = papi_CopyError;  
       TBasicApp::NewLogEntry(logException) << exc;
     }
-    
+
     if( res == papi_OK )  {
       try  {
         TEFile::DelFile(GetUpdateLocationFileName());

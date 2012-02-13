@@ -95,7 +95,7 @@ public:
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::GetLog() <<
       (olxstr("\r") << (int)(100*A->GetPos()/A->GetMax()) << '%');
-		fflush(NULL);
+    fflush(NULL);
     return true;
   }
 };
