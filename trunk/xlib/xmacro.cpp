@@ -883,7 +883,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
           con[i][hkli] = 1.0;
       }
       if( con[i][hkli] == 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "illigal value: ") << Cmds[i];
+        Error.ProcessingError(__OlxSrcInfo, "illegal value: ") << Cmds[i];
         return;
       }
       j++;
@@ -4520,7 +4520,9 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         mat3d m;
         for ( size_t i=0; i < 9; i++)
           m[i/3][i%3] = hklf_toks[i].ToDouble();
-        ins.GetRM().SetHKLF_mat(ins.GetRM().GetHKLF_mat()*m);
+        // assume absolute value!
+        ins.GetRM().SetHKLF_mat(m);
+        //ins.GetRM().SetHKLF_mat(ins.GetRM().GetHKLF_mat()*m);
       }
     }
     if( !sg )  {
