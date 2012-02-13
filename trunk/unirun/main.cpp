@@ -314,44 +314,55 @@ void DoRun()  {
     if (TEFile::Exists(tmp_exe_name)) {
       can_copy = TEFile::DelFile(tmp_exe_name);
     }
+#ifdef _DEBUG
     TBasicApp::NewLogEntry() << "Have updates: " <<
       patcher::PatchAPI::HaveUpdates();
-    if (patcher::PatchAPI::HaveUpdates() && !temporary_run) {
-      if (!can_copy) {
-        TBasicApp::NewLogEntry(logError) <<
-          "Another update is currently running, skiping";
-        return;
-      }
-      if (!TBasicApp::IsBaseDirWriteable()) {
-        TBasicApp::NewLogEntry(logError) <<
-          "Updates are available, but the process cannot write to the "
-          "installation folder. Please run with elevated permissions.";
-        return;
-      }
-      else if( TBasicApp::GetInstance().IsBaseDirWriteable() )  {
-        if (!TEFile::Copy(TBasicApp::GetArg(0), tmp_exe_name)) {
+#endif
+    if (patcher::PatchAPI::HaveUpdates()) {
+      if (!temporary_run) {
+        if (!can_copy) {
           TBasicApp::NewLogEntry(logError) <<
-            "Could not copy itself, aborting update";
+            "Another update is currently running, skiping";
           return;
         }
-        TStrList args_list;
-        args_list << tmp_exe_name;
-        args_list << (olxstr("-basedir=") <<
-          olxstr(TBasicApp::GetBaseDir()).Replace(' ', "%20"));
-        args_list << TBasicApp::GetInstance().Arguments.SubListFrom(1);
-        char **args = ListToArgs(args_list);
-        olxstr c_cmdl = TUtf8::Encode(tmp_exe_name);
-        execv(c_cmdl.c_str(), args);
-        TBasicApp::NewLogEntry(logError) <<
-          "Could re-launch itself";
-        return;
+        if (!TBasicApp::IsBaseDirWriteable()) {
+          TBasicApp::NewLogEntry(logError) <<
+            "Updates are available, but the process cannot write to the "
+            "installation folder. Please run with elevated permissions. Or - ";
+          TBasicApp::NewLogEntry() << "Move the content of this folder:";
+          TBasicApp::NewLogEntry() << patcher::PatchAPI::GetUpdateLocation();
+          TBasicApp::NewLogEntry() << "Into this folder:";
+          TBasicApp::NewLogEntry() << TBasicApp::GetBaseDir();
+          TBasicApp::NewLogEntry() << "And dlete this file:";
+          TBasicApp::NewLogEntry() <<
+            patcher::PatchAPI::GetUpdateLocationFileName();
+          return;
+        }
+        else if( TBasicApp::GetInstance().IsBaseDirWriteable() )  {
+          if (!TEFile::Copy(TBasicApp::GetArg(0), tmp_exe_name)) {
+            TBasicApp::NewLogEntry(logError) <<
+              "Could not copy itself, aborting update";
+            return;
+          }
+          TStrList args_list;
+          args_list << tmp_exe_name;
+          args_list << (olxstr("-basedir=") <<
+            olxstr(TBasicApp::GetBaseDir()).Replace(' ', "%20"));
+          args_list << TBasicApp::GetInstance().Arguments.SubListFrom(1);
+          char **args = ListToArgs(args_list);
+          olxstr c_cmdl = TUtf8::Encode(tmp_exe_name);
+          execv(c_cmdl.c_str(), args);
+          TBasicApp::NewLogEntry(logError) <<
+            "Could re-launch itself";
+          return;
+        }
       }
-    }
-    else {
-      short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
-      if( res != patcher::papi_OK )
-        TBasicApp::NewLogEntry() << "Update has failed with error code: "
-        << res;
+      else {
+        short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
+        if( res != patcher::papi_OK )
+          TBasicApp::NewLogEntry() << "Update has failed with error code: "
+          << res;
+      }
     }
   }
 }
