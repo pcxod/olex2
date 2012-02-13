@@ -32,12 +32,6 @@
 #include "wxzipfs.h"
 using namespace std;
 
-#ifdef __WIN32__
-  olxstr app_name = "olex2.exe";
-#else
-  olxstr app_name = "olex2";
-#endif
-
 class TProgress: public AActionHandler  {
 public:
   TProgress(){}
@@ -108,7 +102,19 @@ public:
 
 //---------------------------------------------------------------------------
 void DoRun();
-void DoLaunch(const olxcstr& arg=CEmptyString());
+void DoLaunch(const TStrList &args);
+char **ListToArgs(TStrList &args_list) {
+  char **args = new char*[args_list.Count()+1];
+  args[args_list.Count()] = NULL;
+  for (size_t i=0; i < args_list.Count(); i++) {
+    if (args_list[i].IndexOf(' ') != InvalidIndex)
+      args_list[i] = olxstr('"') << args_list[i] << '"';
+    olxcstr v = TUtf8::Encode(args_list[i]);
+    args[i] = new char [v.Length()+1];
+    strcpy(args[i], v.c_str());
+  }
+  return args;
+}
 
 class MyApp: public wxAppConsole { 
   virtual bool OnInit() { 
@@ -144,10 +150,10 @@ int main(int argc, char** argv)  {
     if( argc > 1 )  {
       olxstr arg(argv[1]);
       print_help = (arg == "-help" || arg == "/help" || arg == "--help");
-      if( !print_help && TEFile::Exists(arg) )  {
+      if (!print_help && TEFile::Exists(arg) && TEFile::IsDir(arg)) {
         base_dir = arg;
+        var_name.SetLength(0);
       }
-      var_name.SetLength(0);
     }
     TBasicApp bapp(TBasicApp::GuessBaseDir(base_dir, var_name));
     bapp.GetLog().AddStream(&out, false);
@@ -176,10 +182,11 @@ int main(int argc, char** argv)  {
     }
     bapp.SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
     DoRun();
-    if( !bapp.Options.Contains("-run") ) {
-      olxcstr argl = bapp.Arguments.Text(' ', 1);
-      DoLaunch(argl);
-    }
+#ifdef _DEBUG
+    system("PAUSE");
+#endif
+    if( !bapp.Options.Contains("-run") )
+      DoLaunch(bapp.Arguments.SubListFrom(1));
   }
   catch(const TExceptionBase& exc)  {
     TStrList err;
@@ -195,6 +202,21 @@ int main(int argc, char** argv)  {
 }
 
 void DoRun()  {
+  bool temporary_run=false;
+  olxstr bd = olxstr(TBasicApp::GetInstance().Options.FindValue(
+    "-basedir", EmptyString())).Replace("%20", ' ');
+  if (!bd.IsEmpty()) {
+    TBasicApp::SetBaseDir(TEFile::AddPathDelimeterI(bd) << "dymmy.exe");
+    temporary_run = true;
+    TBasicApp::SetSharedDir(patcher::PatchAPI::GetSharedDir(true));
+    TBasicApp::GetInstance().SetInstanceDir(
+      patcher::PatchAPI::GetInstanceDir(true));
+  }
+#ifdef _DEBUG
+  TBasicApp::NewLogEntry() << "Base dir: " << TBasicApp::GetBaseDir();
+  TBasicApp::NewLogEntry() << "Instance dir: " << TBasicApp::GetInstanceDir();
+  TBasicApp::NewLogEntry() << "Shared dir: " << TBasicApp::GetSharedDir();
+#endif
   if( updater::UpdateAPI::IsInstallRequired() )  {
     TStrList repos;
     updater::UpdateAPI api;
@@ -286,14 +308,55 @@ void DoRun()  {
     if (force_update && !patcher::PatchAPI::HaveUpdates())
       patcher::PatchAPI::MarkPatchComplete();
 
-    short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
-    if( res != patcher::papi_OK )
-      TBasicApp::NewLogEntry() << "Update has failed with error code: "
-      << res;
+    olxstr tmp_exe_name = TBasicApp::GetInstanceDir() +
+      TEFile::ExtractFileName(TBasicApp::GetArg(0));
+    bool can_copy = true;
+    if (TEFile::Exists(tmp_exe_name)) {
+      can_copy = TEFile::DelFile(tmp_exe_name);
+    }
+    TBasicApp::NewLogEntry() << "Have updates: " <<
+      patcher::PatchAPI::HaveUpdates();
+    if (patcher::PatchAPI::HaveUpdates() && !temporary_run) {
+      if (!can_copy) {
+        TBasicApp::NewLogEntry(logError) <<
+          "Another update is currently running, skiping";
+        return;
+      }
+      if (!TBasicApp::IsBaseDirWriteable()) {
+        TBasicApp::NewLogEntry(logError) <<
+          "Updates are available, but the process cannot write to the "
+          "installation folder. Please run with elevated permissions.";
+        return;
+      }
+      else if( TBasicApp::GetInstance().IsBaseDirWriteable() )  {
+        if (!TEFile::Copy(TBasicApp::GetArg(0), tmp_exe_name)) {
+          TBasicApp::NewLogEntry(logError) <<
+            "Could not copy itself, aborting update";
+          return;
+        }
+        TStrList args_list;
+        args_list << tmp_exe_name;
+        args_list << (olxstr("-basedir=") <<
+          olxstr(TBasicApp::GetBaseDir()).Replace(' ', "%20"));
+        args_list << TBasicApp::GetInstance().Arguments.SubListFrom(1);
+        char **args = ListToArgs(args_list);
+        olxstr c_cmdl = TUtf8::Encode(tmp_exe_name);
+        execv(c_cmdl.c_str(), args);
+        TBasicApp::NewLogEntry(logError) <<
+          "Could re-launch itself";
+        return;
+      }
+    }
+    else {
+      short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
+      if( res != patcher::papi_OK )
+        TBasicApp::NewLogEntry() << "Update has failed with error code: "
+        << res;
+    }
   }
 }
 
-void DoLaunch(const olxcstr &arg)  {
+void DoLaunch(const TStrList &args_)  {
   olxcstr bd = TBasicApp::GetBaseDir();
   olxstr path = olx_getenv("PATH");
   path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
@@ -302,7 +365,7 @@ void DoLaunch(const olxcstr &arg)  {
   olx_setenv("OLEX2_DIR", EmptyString());
 #ifdef __WIN32__
   olx_setenv("PYTHONHOME", bd + "Python27");
-  const olxcstr cmdl = bd + "olex2.dll";
+  const olxstr cmdl = bd + "olex2.dll";
 #else
   olx_setenv("BOOST_ADAPTBX_FPE_DEFAULT", "1");
   olx_setenv("BOOST_ADAPTBX_SIGNALS_DEFAULT", "1");
@@ -319,14 +382,16 @@ void DoLaunch(const olxcstr &arg)  {
   ld_path << bd << "lib:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
   olx_setenv("PYTHONHOME", bd);
-  const olxcstr cmdl = bd + "olex2_exe";
+  const olxstr cmdl = bd + "olex2_exe";
 #endif
   TEFile::ChangeDir(bd);
   TEFile::Chmod(cmdl, S_IEXEC|S_IEXEC|S_IWRITE);
-  if (arg.IsEmpty())
-    execl(cmdl.u_str(), cmdl.u_str(), NULL);
-  else
-    execl(cmdl.u_str(), cmdl.u_str(), arg.u_str(), NULL);
+  TStrList args_list;
+  args_list << cmdl;
+  args_list << args_;
+  char **args = ListToArgs(args_list);
+  olxstr c_cmdl = TUtf8::Encode(cmdl);
+  execv(c_cmdl.c_str(), args);
   TBasicApp::NewLogEntry(logError) << "Failed to launch '" << cmdl << '\'';
 }
 
