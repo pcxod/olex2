@@ -1744,21 +1744,13 @@ void TMainForm::StartupInit()  {
 bool TMainForm::CreateUpdateThread() {
   volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
   if (_UpdateThread != NULL) return false;
-#ifndef __WIN32__ // do updates on non-Win only if the folder is writable
-  if( FXApp->IsBaseDirWriteable() )  {
-#endif
-    _UpdateThread = new UpdateThread(FXApp->GetInstanceDir() +
-      patcher::PatchAPI::GetPatchFolder());
-    _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
-    _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
-    _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
-    _UpdateThread->Start();
-    return true;
-#ifndef __WIN32__
-  }
-  else
-    return false;
-#endif
+  _UpdateThread = new UpdateThread(FXApp->GetInstanceDir() +
+    patcher::PatchAPI::GetPatchFolder());
+  _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
+  _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
+  _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
+  _UpdateThread->Start();
+  return true;
 }
 //..............................................................................
 void TMainForm::AquireTooltipValue()  {
