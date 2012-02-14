@@ -107,7 +107,10 @@ char **ListToArgs(TStrList &args_list) {
   char **args = new char*[args_list.Count()+1];
   args[args_list.Count()] = NULL;
   for (size_t i=0; i < args_list.Count(); i++) {
-    if (args_list[i].IndexOf(' ') != InvalidIndex)
+    // options are to be quoted by the called
+    bool option = args_list[i].StartsFrom('-') ||
+      args_list[i].IndexOf('=') != InvalidIndex;
+    if (!option && args_list[i].IndexOf(' ') != InvalidIndex)
       args_list[i] = olxstr('"') << args_list[i] << '"';
     olxcstr v = TUtf8::Encode(args_list[i]);
     args[i] = new char [v.Length()+1];
@@ -165,7 +168,7 @@ int main(int argc, char** argv)  {
       log.NewEntry() << "If no arguments provided, the system variable "
         "OLEX2_DIR will be checked first, if the variable is not set, "
         "current folder will be updated";
-      log.NewEntry() << "(c) OlexSys, Oleg V. Dolomanov 2007-2011" <<
+      log.NewEntry() << "(c) OlexSys, Oleg V. Dolomanov 2007-2012" <<
         NewLineSequence();
       return 0;
     }
@@ -203,8 +206,9 @@ int main(int argc, char** argv)  {
 
 void DoRun()  {
   bool temporary_run=false;
-  olxstr bd = olxstr(TBasicApp::GetInstance().Options.FindValue(
-    "-basedir", EmptyString())).Replace("%20", ' ');
+  olxstr bd = TBasicApp::GetInstance().Options.FindValue(
+    "-basedir", EmptyString());
+//  TBasicApp::NewLogEntry() << "L: " << bd;
   if (!bd.IsEmpty()) {
     TBasicApp::SetBaseDir(TEFile::AddPathDelimeterI(bd) << "dymmy.exe");
     temporary_run = true;
@@ -333,7 +337,7 @@ void DoRun()  {
           TBasicApp::NewLogEntry() << patcher::PatchAPI::GetUpdateLocation();
           TBasicApp::NewLogEntry() << "Into this folder:";
           TBasicApp::NewLogEntry() << TBasicApp::GetBaseDir();
-          TBasicApp::NewLogEntry() << "And dlete this file:";
+          TBasicApp::NewLogEntry() << "And delete this file:";
           TBasicApp::NewLogEntry() <<
             patcher::PatchAPI::GetUpdateLocationFileName();
           return;
@@ -346,9 +350,16 @@ void DoRun()  {
           }
           TStrList args_list;
           args_list << tmp_exe_name;
-          args_list << (olxstr("-basedir=") <<
-            olxstr(TBasicApp::GetBaseDir()).Replace(' ', "%20"));
+          args_list << (olxstr("-basedir=").quote('"') <<
+            TEFile::TrimPathDelimeter(TBasicApp::GetBaseDir()));
           args_list << TBasicApp::GetInstance().Arguments.SubListFrom(1);
+          for (size_t i=0; i < TBasicApp::GetInstance().Options.Count(); i++) {
+            olxstr &l = args_list.Add(TBasicApp::GetInstance().Options.GetName(i));
+            if (!TBasicApp::GetInstance().Options.GetValue(i).IsEmpty()) {
+              l << (olxstr('=').quote('"') <<
+                TBasicApp::GetInstance().Options.GetValue(i));
+            }
+          }
           char **args = ListToArgs(args_list);
           olxstr c_cmdl = TUtf8::Encode(tmp_exe_name);
           execv(c_cmdl.c_str(), args);
