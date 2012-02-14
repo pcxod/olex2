@@ -2544,18 +2544,22 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     Atoms->ForEach(ACollectionItem::IndexTagSetter(
       FunctionAccessor::MakeConst(&TXAtom::GetPrimitives)));
     for( size_t i=0; i < Atoms->Count(); i++ )  {
-      if( (size_t)(*Atoms)[i]->GetPrimitives().GetTag() == i )  {
-        if (DS > 0)
-          Atoms->GetItem(i)->CalcRad(DS);
-        else
-          Atoms->GetItem(i)->SetR(r);
-        (*Atoms)[i]->GetPrimitives().SetTag(-1);
+      TGPCollection &gpc = (*Atoms)[i]->GetPrimitives();
+      if ((size_t)gpc.GetTag() == i)  {
+        for (size_t j=0; j < gpc.ObjectCount(); j++) {
+          TXAtom *at = dynamic_cast<TXAtom*>(&gpc.GetObject(j));
+          if (at == NULL) continue;
+          if (DS > 0)
+            at->CalcRad(DS);
+          else
+            at->SetR(r);
+        }
+        gpc.SetTag(-1);
       }
     }
   }
   else {
     AtomIterator ai(*this);
-    //ai.ForEach(ACollectionItem::TagSetter(0));
     while( ai.HasNext() ) {
       if (DS > 0)
         ai.Next().CalcRad(DS);
@@ -2601,23 +2605,18 @@ void TGXApp::FillXBondList( TXBondPList& res, TXBondPList* providedBonds)  {
 }
 //..............................................................................
 void TGXApp::AtomZoom(float Zoom, TXAtomPList* Atoms)  {  // takes %
+  double z = Zoom/100;
   AGDObjList objects;
   if( Atoms != NULL )  {
     objects.SetCapacity(Atoms->Count());
     for( size_t i=0; i < Atoms->Count(); i++ )
-      objects.Add((AGDrawObject*)Atoms->GetItem(i));
+      Atoms->GetItem(i)->SetZoom(z);
   }
   else  {
     AtomIterator ai(*this);
     objects.SetCapacity(ai.count);
     while( ai.HasNext() )
-      objects.Add(ai.Next());
-  }
-  TPtrList<TGPCollection> Colls;
-  GetGPCollections(objects, Colls);
-  for( size_t i=0; i < Colls.Count(); i++ )  {
-    if( Colls[i]->ObjectCount() != 0 )
-      ((TXAtom&)Colls[i]->GetObject(0)).SetZoom(Zoom/100);
+      ai.Next().SetZoom(z);
   }
 }
 //..............................................................................

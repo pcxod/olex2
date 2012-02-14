@@ -872,18 +872,12 @@ void TXAtom::ValidateAtomParams() {
 void TXAtom::SetZoom(double V)  {
   GetPrimitives().GetStyle().SetParam("Z", V, LegendLevel(GetCollectionName()) == 0);
   Params()[1] = V;
-  // update radius for all members of the collection
-  for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
-    GetPrimitives().GetObject(i).Params()[1] = V;
 }
 //..............................................................................
 void TXAtom::SetR(double V)  {
   GetPrimitives().GetStyle().SetParam("R", V);
   //, LegendLevel(GetCollectionName()) == 0);
   Params()[0] = V;
-  // update radius for all members of the collection
-  for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
-    GetPrimitives().GetObject(i).Params()[0] = V;
 }
 //..............................................................................
 uint32_t TXAtom::GetPrimitiveMask() const {
