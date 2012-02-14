@@ -1805,7 +1805,7 @@ void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError
   else if( Cmds[0].Equalsi("std") )
     ads = adsStandalone;
   if( ads == -1 )  {
-    Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph/ort/std) supported only" );
+    Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph/ort/std) supported only");
     return;
   }
   Cmds.Delete(0);
@@ -1815,7 +1815,7 @@ void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError
 //..............................................................................
 void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( !Cmds[0].IsNumber() )  {
-    Error.ProcessingError(__OlxSrcInfo, "a number is expected as first argument" );
+    Error.ProcessingError(__OlxSrcInfo, "a number is expected as first argument");
     return;
   }
   double zoom = Cmds[0].ToDouble();
