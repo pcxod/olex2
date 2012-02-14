@@ -376,7 +376,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   TOSFileSystem osFS(dest);
   TFSIndex fsIndex(httpFS);
   TStrList properties;
-  try  {  fsIndex.Synchronise(osFS, properties, NULL, NULL, NULL, index_fn);  }
+  try  {  fsIndex.Synchronise(osFS, properties, NULL, NULL, index_fn);  }
   catch( const TExceptionBase& exc )  {
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
       exc.GetException()->GetFullMessage());

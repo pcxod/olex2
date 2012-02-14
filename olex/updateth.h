@@ -17,7 +17,7 @@
 class UpdateThread : public AOlxThread  {
   size_t time_out;
   uint64_t UpdateSize;
-  AFileSystem* srcFS, *destFS;
+  AFileSystem *srcFS, *destFS;
   TFSIndex* Index;
   TStrList properties, filesToSkip, extensionsToSkip;
   TFSItem::SkipOptions toSkip;
