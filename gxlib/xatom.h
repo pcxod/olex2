@@ -32,7 +32,8 @@ const short
   darPack     = 0x0004,
   darBond     = 0x0008,
   darIsotH    = 0x0010,  // only affects H, others as darIsot
-  darVdW      = 0x0020;
+  darVdW      = 0x0020,
+  darCustom   = 0x0040;
 const short
   polyNone      = 0,
   polyAuto      = 1,  // polyhedron type

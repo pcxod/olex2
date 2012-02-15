@@ -222,13 +222,17 @@ void TXAtom::CalcRad(short DefRadius)  {
 //..............................................................................
 void TXAtom::ValidateRadius(TGraphicsStyle& GS)  {
   Params()[1] = GS.GetNumParam("Z", DefZoom());
-  double r;
-  if ((r=GS.GetNumParam("R", -1.0)) == -1) {
-    short dr = GS.GetNumParam("DR", DefRad());
-    CalcRad(dr);
+  short dr = GS.GetNumParam("DR", DefRad());
+  if (dr == darCustom) {
+    double r;
+    if ((r=GS.GetNumParam("R", -1.0, LegendLevel(GetCollectionName()) == 0)) == -1)
+      CalcRad(darIsot);
+    else
+      Params()[0] = r;
   }
   else
-    Params()[0] = r;
+    CalcRad(dr);
+
 }
 void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
   DrawStyle(GS.GetNumParam("DS", DefDS()));
@@ -870,13 +874,14 @@ void TXAtom::ValidateAtomParams() {
 }
 //..............................................................................
 void TXAtom::SetZoom(double V)  {
-  GetPrimitives().GetStyle().SetParam("Z", V, LegendLevel(GetCollectionName()) == 0);
+  GetPrimitives().GetStyle().SetParam("Z",
+    V, LegendLevel(GetCollectionName()) == 0);
   Params()[1] = V;
 }
 //..............................................................................
 void TXAtom::SetR(double V)  {
-  GetPrimitives().GetStyle().SetParam("R", V);
-  //, LegendLevel(GetCollectionName()) == 0);
+  GetPrimitives().GetStyle().SetParam("R", V,
+    LegendLevel(GetCollectionName()) == 0);
   Params()[0] = V;
 }
 //..............................................................................
