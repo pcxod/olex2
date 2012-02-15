@@ -125,10 +125,11 @@ public:
     size_t CalcItemCount() const;
     // reads the folder structure, flags determine how exceptions is handled
     void Expand(TOnProgress& pg, short flags);
-    /* recursive deletion of the folder, must be expanded beforehand! throws 
-    TFunctionFailedException
+    /* recursive deletion of the folder, must be expanded beforehand! Returns
+    true if the deletion was successful, otherwise use, ListContent to get the
+    list of remained items
     */
-    void Delete(TOnProgress& pg, bool ContentOnly=false);
+    bool Delete(TOnProgress& pg, bool ContentOnly=false);
     // compares folders and returns the difference size
     uint64_t Compare(const Folder& f, TOnProgress& pg) const;
     // calculates the difference tree between the folders
@@ -155,33 +156,59 @@ public:
     size_t CountFilesEx(
       const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const;
     size_t CountFiles(const olxstr& _mask) const;
+    /* creates a list like
+    file: aaa.txt
+    folder ccc
+    if annotate is false, the file and folder annotations are not added
+    */
+    TStrList& ListContent(TStrList& out, bool annotate=true) const;
+    const_strlist ListContent(bool annotate=true) const {
+      TStrList l;
+      return ListContent(l, annotate);
+    }
   };
 ///////////////////////////////////////////////////////////////////////////////
 public:
   typedef TFileTree::TDiffFolder<TFileTree::Folder> DiffFolder;
+  class TFileTreeException : public TIOException {
+  public:
+    TFileTreeException(const olxstr& location, const olxstr &msg)
+    : TIOException(location, msg)
+    {}
+    TFileTreeException(const olxstr& location, const olxstr &msg,
+      const TStrList &content)
+      : TIOException(location, msg),
+        items(content)
+    {}
+    const char* GetNiceName() const { return "File tree exception"; }
+    IEObject* Replicate() const { return new TFileTreeException(*this); }
+    olxstr GetFullMessage() const;
+    TStrList items;
+  };
 protected:
   TActionQList Actions;
   Folder Root;
   volatile bool Break;
 public:
 
-  TActionQueue* OnExpand, // called when the OS folder structure is traversed
-    *OnSynchronise, // called when fodlers are merged
-    *OnFileCopy,   // called in file copy process
-    *OnFileCompare, // called in the comparison process 
-    *OnCompare, // called when files are being compared
-    *OnDelete;  // called when recursive folder deletion is executed
+  TActionQueue &OnExpand, // called when the OS folder structure is traversed
+    &OnSynchronise, // called when fodlers are merged
+    &OnFileCopy,   // called in file copy process
+    &OnFileCompare, // called in the comparison process 
+    &OnCompare, // called when files are being compared
+    &OnDelete;  // called when recursive folder deletion is executed
 
-  TFileTree(const olxstr& root) : Root(*this, TFileListItem(), root)  {
-    OnExpand = &Actions.New("ON_EXPAND");
-    OnSynchronise = &Actions.New("ON_SYNC");
-    OnFileCopy = &Actions.New("ON_FCOPY");
-    OnFileCompare = &Actions.New("ON_FCCOMPARE");
-    OnCompare = &Actions.New("ON_COMPARE");
-    OnDelete = &Actions.New("ON_DELETE");
-    Break = false;
-  }
-  inline const Folder& GetRoot() const {  return Root;  }
+  TFileTree(const olxstr& root)
+    : Root(*this, TFileListItem(), root),
+      Break(false),
+      OnExpand(Actions.New("ON_EXPAND")),
+      OnSynchronise(Actions.New("ON_SYNC")),
+      OnFileCopy(Actions.New("ON_FCOPY")),
+      OnFileCompare(Actions.New("ON_FCCOMPARE")),
+      OnCompare(Actions.New("ON_COMPARE")),
+      OnDelete(Actions.New("ON_DELETE"))
+  {}
+  const Folder& GetRoot() const {  return Root;  }
   void DoBreak() {  Break = true;  }
   // copies files (platform dependent, uses win API to handle huge files)
   bool CopyFile(const olxstr& from, const olxstr& to) const;
@@ -193,11 +220,11 @@ public:
   //...........................................................................
   void Merge(const DiffFolder& df, const olxstr& dest=EmptyString() ) const {
     TOnProgress onSync;
-    onSync.SetMax( CalcMergeSize(df) );
-    OnSynchronise->Enter(NULL, &onSync);
+    onSync.SetMax(CalcMergeSize(df));
+    OnSynchronise.Enter(NULL, &onSync);
     Root.Merge(df, onSync, dest);
-    onSync.SetPos( onSync.GetMax() );
-    OnSynchronise->Exit(NULL, &onSync);
+    onSync.SetPos(onSync.GetMax());
+    OnSynchronise.Exit(NULL, &onSync);
   }
   //...........................................................................
   /* if do_throw is true, the processes will be terminated on the first error
@@ -207,11 +234,11 @@ public:
     bool do_throw=true)  
   {
     TOnProgress OnSync;
-    OnSync.SetMax( Root.CalcSize() );
-    OnSynchronise->Enter(NULL, &OnSync);
+    OnSync.SetMax(Root.CalcSize());
+    OnSynchronise.Enter(NULL, &OnSync);
     bool res = Root.CopyTo(_dest, OnSync, do_throw, AfterCopy);
-    OnSync.SetMax( OnSync.GetMax() );
-    OnSynchronise->Exit(NULL, &OnSync);
+    OnSync.SetMax(OnSync.GetMax());
+    OnSynchronise.Exit(NULL, &OnSync);
     return res;
   }
   //...........................................................................
@@ -229,19 +256,22 @@ public:
   //...........................................................................
   void Expand(short flags=efNone)  {
     TOnProgress onExp;
-    OnExpand->Enter(NULL, &onExp);
+    OnExpand.Enter(NULL, &onExp);
     Root.Expand(onExp, flags);
-    OnSynchronise->Exit(NULL, &onExp);
+    OnSynchronise.Exit(NULL, &onExp);
   }
   //...........................................................................
   // if ContentOnly is true, the top folder is not deleted
   void Delete(bool ContentOnly=false)  {
     TOnProgress onDel;
-    onDel.SetMax( Root.CalcItemCount() );
-    OnDelete->Enter(NULL, &onDel);
-    Root.Delete(onDel, ContentOnly);
-    onDel.SetPos( onDel.GetMax() );
-    OnDelete->Exit(NULL, &onDel);
+    onDel.SetMax(Root.CalcItemCount());
+    OnDelete.Enter(NULL, &onDel);
+    if (!Root.Delete(onDel, ContentOnly)) {
+      throw TFileTreeException(__OlxSourceInfo, "Deleteion failed",
+        Root.ListContent());
+    }
+    onDel.SetPos(onDel.GetMax());
+    OnDelete.Exit(NULL, &onDel);
   }
   //...........................................................................
   static void Delete(const olxstr& fn, bool ContentOnly=false)  {
@@ -252,9 +282,9 @@ public:
   //...........................................................................
   uint64_t Compare(const TFileTree& ft) const {
     TOnProgress onCmp;
-    OnCompare->Enter(NULL, &onCmp);
+    OnCompare.Enter(NULL, &onCmp);
     uint64_t sz = Root.Compare(ft.Root, onCmp);
-    OnCompare->Exit(NULL, &onCmp);
+    OnCompare.Exit(NULL, &onCmp);
     return sz;
   }
   //...........................................................................
@@ -264,9 +294,9 @@ public:
   //...........................................................................
   void Synchronise(TFileTree& ft)  {
     TOnProgress onSync;
-    OnSynchronise->Enter(NULL, &onSync);
+    OnSynchronise.Enter(NULL, &onSync);
     Root.Synchronise(ft.Root, onSync);
-    OnSynchronise->Exit(NULL, &onSync);
+    OnSynchronise.Exit(NULL, &onSync);
   }
   //...........................................................................
   friend class TFileTree::Folder;

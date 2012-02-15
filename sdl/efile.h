@@ -16,41 +16,46 @@
 BeginEsdlNamespace()
 
 // search flags
-const uint16_t sefFile = 0x0001,
-               sefDir       = 0x0002,
-               sefRelDir    = 0x0004,  // "." and ".." folders
-               sefAllDir    = sefDir | sefRelDir,
+const uint16_t
+  sefFile = 0x0001,
+  sefDir       = 0x0002,
+  sefRelDir    = 0x0004,  // "." and ".." folders
+  sefAllDir    = sefDir | sefRelDir,
 
-               sefReadOnly  = 0x0100,
-               sefWriteOnly = 0x0200,
-               sefReadWrite = sefReadOnly | sefWriteOnly,
-               sefExecute   = 0x0400,
-               sefHidden    = 0x0800,
-               sefSystem    = 0x1000,
-               sefRegular   = sefReadWrite | sefExecute,
+  sefReadOnly  = 0x0100,
+  sefWriteOnly = 0x0200,
+  sefReadWrite = sefReadOnly | sefWriteOnly,
+  sefExecute   = 0x0400,
+  sefHidden    = 0x0800,
+  sefSystem    = 0x1000,
+  sefRegular   = sefReadWrite | sefExecute,
 
-               sefAll       = 0xFFFF;
+  sefAll       = 0xFFFF;
 
 // seek constants
-const int      sfStart   = SEEK_SET,
-               sfCurrent = SEEK_CUR,
-               sfEnd     = SEEK_END;
+const int
+  sfStart   = SEEK_SET,
+  sfCurrent = SEEK_CUR,
+  sfEnd     = SEEK_END;
 // file open attributes
-const uint16_t fofText   = 0x0001,
-               fofBinary = 0x0002,
-               fofWrite  = 0x0004,
-               fofRead   = 0x0008,
-               fofAppend = 0x0010,
-               fofCreate = 0x0020,
-               fofReadWrite = 0x000C;
+const uint16_t
+  fofText   = 0x0001,
+  fofBinary = 0x0002,
+  fofWrite  = 0x0004,
+  fofRead   = 0x0008,
+  fofAppend = 0x0010,
+  fofCreate = 0x0020,
+  fofReadWrite = 0x000C;
 // access check constants, POSIX values
-const short accessExists = 0x0000,
-            accessExec   = 0x0001,
-            accessWrite  = 0x0002,
-            accessRead   = 0x0004;
+const short
+  accessExists = 0x0000,
+  accessExec   = 0x0001,
+  accessWrite  = 0x0002,
+  accessRead   = 0x0004;
 
 class TEFile: public IEObject, public IDataInputStream,
-                               public IDataOutputStream  {
+  public IDataOutputStream
+{
   FILE *FHandle;
   olxstr FName;
   bool Temporary; //tmpnam or tmpfile to use
@@ -68,28 +73,26 @@ public:
     olxstr mask;
     size_t toksEnd, toksStart;
   public:
-    TFileNameMask(const olxstr& msk)  { Build(msk);  }
-    TFileNameMask() : toksEnd(InvalidIndex), toksStart(InvalidIndex)  {  }
+    TFileNameMask(const olxstr& msk) { Build(msk); }
+    TFileNameMask() : toksEnd(InvalidIndex), toksStart(InvalidIndex) {}
     void Build(const olxstr& mask);
     bool DoesMatch(const olxstr& str)  const;
   };
-  // a simple file ID, validates file by modification time, name and the size...
+  // a simple file ID, validates file by modification time, name and the size..
   struct FileID {
     olxstr name;
     size_t size;
     time_t timestamp;
-    FileID(const olxstr& _name, size_t _size, time_t _timestamp) :
-      name(_name), size(_size), timestamp(_timestamp) { }
-    // copy constructor
-    FileID(const FileID& fi) : name(fi.name), size(fi.size), timestamp(fi.timestamp) {  }
+    FileID(const olxstr& _name, size_t _size, time_t _timestamp)
+      : name(_name), size(_size), timestamp(_timestamp) { }
     // comparison operator
-    bool operator == (const FileID& fi)  {
+    bool operator == (const FileID& fi) const {
       return (timestamp == fi.timestamp && size == fi.size && name == fi.name);
     }
     // comparison operator
-    bool operator != (const FileID& fi)  {  return !(*this == fi);  }
+    bool operator != (const FileID& fi) const { return !(*this == fi); }
     // assignment operator
-    FileID& operator = (const FileID& fi)  {
+    FileID& operator = (const FileID& fi) {
       name = fi.name;
       size = fi.size;
       timestamp = fi.timestamp;
@@ -112,13 +115,18 @@ protected:
         ExtMask.Build('*');
       else
         ExtMask.Build(ext);
-      NameMask.Build(fn.SubStringTo(fn.Length() - ext.Length() - (ext.IsEmpty() ? 0 : 1)));
+      NameMask.Build(
+        fn.SubStringTo(fn.Length() - ext.Length() - (ext.IsEmpty() ? 0 : 1)));
     }
   };
   typedef TTypeList<MaskAssociation> MaskList;
-  // validates if given file name matches any of the provided masks buidl by BuildMaskList
+  /* validates if given file name matches any of the provided masks buidl by
+  BuildMaskList
+  */
   static bool DoesMatchMasks(const olxstr& fn, const MaskList& masks);
-  // used to build masks ( ans association of mask by name and extension) from a semicolon separated string of masks
+  /* used to build masks ( ans association of mask by name and extension) from
+  a semicolon separated string of masks
+  */
   static void BuildMaskList(const olxstr& mask, MaskList& out);
   // a convinience, const, function
   void _seek(uint64_t off, int origin) const;
@@ -128,7 +136,9 @@ public:
   TEFile(const olxstr& F, short Attribs);
   virtual ~TEFile();
   bool Open(const olxstr& F, const olxstr& Attribs);
-  // closes the file, if was open - returns true, might throw an exception if fclose failed
+  /* closes the file, if was open - returns true, might throw an exception if
+  fclose failed
+  */
   bool Close();
   uint64_t Length() const;
   virtual void Flush();
@@ -163,7 +173,9 @@ public:
   inline const olxstr& GetName() const {  return FName; }
   // closes the file handle and deletes the file
   bool Delete();
-  // temporary file will be deleted on close, if fails - exception will be thrown
+  /* temporary file will be deleted on close, if fails - exception will be
+  thrown
+  */
   DefPropBIsSet(Temporary)
   // tests one or several of the accessXXXX flags
   static bool Access(const olxstr& F, const short Flags);
@@ -182,11 +194,17 @@ public:
   static bool IsDir(const olxstr& F);
   // deletes the folder if empty and returns true on succsess
   static bool RmDir(const olxstr& F);
-  /* deletes the folder recursively, returns true on success, false if the name is a file or
-  the deletion was not successful. If ContentOnly is provided - the top dir is not deleted.
-  Returns true on success and false if an error has occured */
-  static bool DeleteDir(const olxstr& F, bool ContentOnly=false);
-  // checks if the folder is empty, in case of error (non existing dir etc) returns false
+  /* deletes the folder recursively, returns true on success, false if the name
+  is a file or the deletion was not successful. If ContentOnly is provided -
+  the top dir is not deleted. Returns true on success and false if an error has
+  occured. If rethrow is true and an exception occurs - it will be rethrown,
+  use this flag to get the details of the error
+  */
+  static bool DeleteDir(const olxstr& F, bool ContentOnly=false,
+    bool rethrow=false);
+  /* checks if the folder is empty, in case of error (non existing dir etc)
+  returns false
+  */
   static bool IsEmptyDir(const olxstr& F);
   // returns file drive on windows ans empty string for other platforms
   static olxstr ExtractFileDrive(const olxstr& F);
@@ -195,10 +213,14 @@ public:
   static olxstr ExtractFileExt(const olxstr& F);
   static olxstr ExtractFileName(const olxstr& F);
   static olxstr ChangeFileExt(const olxstr& F, const olxstr& Extension);
-  static bool ListCurrentDirEx(TFileList& Out, const olxstr& Mask, const uint16_t searchFlags);
-  static bool ListDirEx(const olxstr& dir, TFileList& Out, const olxstr& Mask, const uint16_t searchFlags);
-  static bool ListCurrentDir(TStrList& Out, const olxstr& Mask, const uint16_t searchFlags);
-  static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr& Mask, const uint16_t searchFlags);
+  static bool ListCurrentDirEx(TFileList& Out, const olxstr& Mask,
+    const uint16_t searchFlags);
+  static bool ListDirEx(const olxstr& dir, TFileList& Out, const olxstr& Mask,
+    const uint16_t searchFlags);
+  static bool ListCurrentDir(TStrList& Out, const olxstr& Mask,
+    const uint16_t searchFlags);
+  static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr& Mask,
+    const uint16_t searchFlags);
   static bool ChangeDir(const olxstr& To);
   static bool MakeDir(const olxstr& Name);
   // the function forces the creation of all dirs upto the last one
@@ -215,46 +237,60 @@ public:
   static olxstr TrimPathDelimeter(const olxstr& Path);
   static olxstr& TrimPathDelimeterI(olxstr& Path);
   static bool IsAbsolutePath(const olxstr& Path);
-  static char GetPathDelimeter()  {
+  static char GetPathDelimeter() {
 #ifdef __WIN32__
     return '\\';
 #else
     return '/';
 #endif
   }
-  /* copies a file, use overwrite option to modify the behaviour, if overwrite is false 
-  and file exists the return value is false */
-  static bool Copy(const olxstr& From, const olxstr& to, bool overwrite = true);
-  // renames a file, if the file with 'to' name exists, behaves according to the overwrite flag
-  static bool Rename(const olxstr& from, const olxstr& to, bool overwrite = true);
-  /* works by creating a 'random' directory inside one folder and checking if it is in the other... 
-  If the function fails to create the test folder it returns false */
+  /* copies a file, use overwrite option to modify the behaviour, if overwrite
+  is false and file exists the return value is false
+  */
+  static bool Copy(const olxstr& From, const olxstr& to,
+    bool overwrite=true);
+  /* renames a file, if the file with 'to' name exists, behaves according to
+  the overwrite flag
+  */
+  static bool Rename(const olxstr& from, const olxstr& to,
+    bool overwrite=true);
+  /* works by creating a 'random' directory inside one folder and checking if
+  it is in the other... If the function fails to create the test folder it
+  returns false
+  */
   static bool IsSameFolder(const olxstr& f1, const olxstr& f2);
   // a weak function - makes the decision only on the name...
   static bool IsSubFolder(const olxstr& which, const olxstr& in_what);
-  /*works for windows only, for other operation systems return LocalFN*/
+  /* works for windows only, for other operation systems return LocalFN
+  */
   static olxstr UNCFileName(const olxstr& LocalFN);
   /* return absolute path constructued from a relative path and a base so for
-  ".." and "c:/windows/win32" return "c:/windows". If path does not start from "."
-  or ".. " thr normalised original is returned. If base is empty, it is assumed to
-  be TBasicApp::GetBaseDir(). Fro empty path path is returned
+  ".." and "c:/windows/win32" return "c:/windows". If path does not start from
+  "." or ".. " thr normalised original is returned. If base is empty, it is
+  assumed to be TBasicApp::GetBaseDir(). Fro empty path path is returned
   */
-  static olxstr ExpandRelativePath(const olxstr& path, const olxstr& base=EmptyString());
-  /* return a string like '../win32' for path='c:/windows' and base='c:/windows/win32' or
-  the original path string if the paths do not share a common base.  If base is empty, it is
-  assumed to be TBasicApp::GetBaseDir(). For empty path path is returned.
+  static olxstr ExpandRelativePath(const olxstr& path,
+    const olxstr& base=EmptyString());
+  /* return a string like '../win32' for path='c:/windows' and
+  base='c:/windows/win32' or the original path string if the paths do not share
+  a common base.  If base is empty, it is assumed to be
+  TBasicApp::GetBaseDir(). For empty path path is returned.
   */
-  static olxstr CreateRelativePath(const olxstr& path, const olxstr& base=EmptyString());
-  /* searches given file name in current folder and in path, if found returns full
-    path to the file inclusive the file name, otherwise returns empty string.
-    if the filename is absolute returns it straight away.
+  static olxstr CreateRelativePath(const olxstr& path,
+    const olxstr& base=EmptyString());
+  /* searches given file name in current folder and in path, if found returns
+  full path to the file inclusive the file name, otherwise returns empty
+  string. If the filename is absolute returns it straight away.
   */
   static olxstr Which(const olxstr& filename);
-  /* returns a new object created with new using tmpnam (on non-windows systems), or
-  properly named file object which is deleted upon the object deletion */
+  /* returns a new object created with new using tmpnam (on non-windows
+  systems), or properly named file object which is deleted upon the object
+  deletion
+  */
   static TEFile* TmpFile(const olxstr& templ=EmptyString());
   // function is based on utime
-  static bool SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t ModTime);
+  static bool SetFileTimes(const olxstr& fileName, uint64_t AccTime,
+    uint64_t ModTime);
   // function is based on stat;
   static time_t FileAge(const olxstr& fileName);
   // function is based on stat;
