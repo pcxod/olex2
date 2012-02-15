@@ -89,10 +89,11 @@ public:
   _GetSharedDirRoot()/data on other platforms
   */
   static olxstr GetSharedDir(bool refresh=false)  {
-    return TEFile::TrimPathDelimeter(_GetSharedDirRoot(refresh)) <<
 #ifdef __WIN32__
+    return TEFile::AddPathDelimeter(_GetSharedDirRoot(refresh)) <<
     "Olex2Data/";
 #else
+    return TEFile::TrimPathDelimeter(_GetSharedDirRoot(refresh)) <<
     "data/";
 #endif
   }

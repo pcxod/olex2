@@ -434,15 +434,19 @@ bool TEFile::IsDir(const olxstr& F)  {
   return (the_stat.st_mode & S_IFDIR) != 0;
 }
 //..............................................................................
-bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly)  {
+bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly, bool rethrow)  {
   olxstr fn = OLX_OS_PATH(F);
-  if( !Exists(fn) || !TEFile::IsDir(fn) )  
+  if (!Exists(fn) || !TEFile::IsDir(fn))
     return false;
-  try  {
+  try {
     TFileTree::Delete(fn, ContentOnly);
     return true;
   }
-  catch( TExceptionBase& )  {  return false;  }
+  catch (const TExceptionBase &e) {
+    if (rethrow)
+      throw TFunctionFailedException(__OlxSourceInfo, e);
+    return false;
+  }
 }
 //..............................................................................
 bool TEFile::IsEmptyDir(const olxstr& F)  {

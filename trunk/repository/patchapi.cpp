@@ -58,9 +58,9 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
     TFileTree ft(patch_dir);
     ft.Expand();
     if( OnFileCopy != NULL )
-      ft.OnFileCopy->Add(OnFileCopy);
+      ft.OnFileCopy.Add(OnFileCopy);
     if( OnOverallCopy != NULL )
-      ft.OnSynchronise->Add(OnOverallCopy);
+      ft.OnSynchronise.Add(OnOverallCopy);
     OnFileCopy = NULL;
     OnOverallCopy = NULL;
 
