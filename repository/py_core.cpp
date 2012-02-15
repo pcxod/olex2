@@ -303,7 +303,7 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
     PythonExt::SetDictItem(out, "InconsistentEquivalents",
       Py_BuildValue("i", hs.InconsistentEquivalents));
     PythonExt::SetDictItem(out, "SystematicAbsencesRemoved",
-      Py_BuildValue("i", hs.SystematicAbsentcesRemoved));
+      Py_BuildValue("i", hs.SystematicAbsencesRemoved));
     PythonExt::SetDictItem(out, "MinD", Py_BuildValue("d", hs.MinD));
     PythonExt::SetDictItem(out, "MaxD", Py_BuildValue("d", hs.MaxD));
     PythonExt::SetDictItem(out, "LimDmin", Py_BuildValue("d", hs.LimDmin));
@@ -320,6 +320,8 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
     PythonExt::SetDictItem(out, "Rsigma", Py_BuildValue("d", hs.Rsigma));
     PythonExt::SetDictItem(out, "MeanIOverSigma",
       Py_BuildValue("d", hs.MeanIOverSigma));
+    PythonExt::SetDictItem(out, "Completeness",
+      Py_BuildValue("d", hs.Completeness));
     PythonExt::SetDictItem(out, "MaxIndexes",
       Py_BuildValue("(iii)", hs.MaxIndexes[0],
         hs.MaxIndexes[1], hs.MaxIndexes[2]));

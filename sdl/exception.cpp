@@ -44,12 +44,9 @@ UseEsdlNamespace()
 //}
 //.............................................................................
 TBasicException::~TBasicException()  {
-  if( GetAutoLogging() )  {
-    if( TBasicApp::HasInstance() )  {
-      TStrList out;
-      this->GetStackTrace(out);
-      TBasicApp::GetLog().NewEntry() << out;
-    }
+  if (GetAutoLogging()) {
+    if (TBasicApp::HasInstance())
+      TBasicApp::GetLog().NewEntry(logExceptionTrace) << *this;
   }
   if( Cause != NULL )
     delete Cause;

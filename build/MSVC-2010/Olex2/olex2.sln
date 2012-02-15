@@ -239,7 +239,8 @@ Global
 		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Release|x64.ActiveCfg = Unicode-debug|Win32
 		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Unicode-debug|Win32.ActiveCfg = Unicode-debug|Win32
 		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Unicode-debug|Win32.Build.0 = Unicode-debug|Win32
-		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Unicode-debug|x64.ActiveCfg = Unicode-debug|Win32
+		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Unicode-debug|x64.ActiveCfg = Unicode-debug|x64
+		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Unicode-debug|x64.Build.0 = Unicode-debug|x64
 		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Unicode-release|Win32.ActiveCfg = Unicode-debug|Win32
 		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Unicode-release|Win32.Build.0 = Unicode-debug|Win32
 		{DDD8C082-FB80-422E-A1EE-CB8AC408E0F8}.Unicode-release|x64.ActiveCfg = Unicode-debug|Win32

@@ -193,8 +193,8 @@ int main(int argc, char** argv)  {
   }
   catch(const TExceptionBase& exc)  {
     TStrList err;
-    exc.GetException()->GetStackTrace(err);
-    out.Write(err.Text(NewLineSequence()));
+    out.Write(
+      exc.GetException()->GetStackTrace(err).Text(NewLineSequence()));
     res = 1;
   }
   out.Write(olxstr("Finished") << NewLineSequence());

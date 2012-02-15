@@ -527,6 +527,27 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.HKLF_m = HKLF_m;
       _HklStat.HKLF_s = HKLF_s;
       _HklStat.MERG = MERG;
+      mat3d h2c = aunit.GetHklToCartesian();
+      size_t e_cnt=0;
+      SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+      info_ex.centrosymmetric = _HklStat.FriedelOppositesMerged;
+      double maxd = olx_max(olx_max(aunit.GetCellToCartesian()[0][0],
+        aunit.GetCellToCartesian()[1][1]), aunit.GetCellToCartesian()[2][2]);
+      for (int h=_HklStat.MinIndexes[0]; h <= _HklStat.MaxIndexes[0]; h++) {
+        for (int k=_HklStat.MinIndexes[1]; k <= _HklStat.MaxIndexes[1]; k++) {
+          for (int l=_HklStat.MinIndexes[2]; l <= _HklStat.MaxIndexes[2]; l++) {
+            if (h==0 && k==0 && l==0) continue;
+            vec3i hkl(h,k,l);
+            vec3i shkl = TReflection::Standardise(hkl, info_ex);
+            if (shkl != hkl) continue;
+            if( TReflection::IsAbsent(hkl, info_ex)) continue;
+            double d = 1/TReflection::ToCart(hkl, h2c).Length();
+            if (d <= _HklStat.MaxD && d >= _HklStat.MinD)
+              e_cnt++;
+          }
+        }
+      }
+      _HklStat.Completeness = double(_HklStat.UniqueReflections) / (e_cnt);
     }
   }
   catch(const TExceptionBase& e)  {
@@ -1357,11 +1378,8 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
 //..............................................................................
 vec3i RefinementModel::CalcMaxHklIndex(double two_theta) const {
   double t = 2*sin(two_theta*M_PI/360)/expl.GetRadiation();
-  const mat3d& h2x = aunit.GetHklToCartesian();
-  vec3d rv(
-    t/h2x[0].Length(),
-    t/h2x[1].Length(),
-    t/h2x[2].Length());
+  const mat3d& f2c = aunit.GetCellToCartesian();
+  vec3d rv = vec3d(f2c[0][0], f2c[1][1], f2c[2][2])*t;
   return vec3i(rv);
 }
 //..............................................................................

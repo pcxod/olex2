@@ -92,7 +92,8 @@ public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
     double MaxD, MinD, LimDmin, LimDmax, 
-      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s;
+      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s,
+      Completeness;
     mat3d HKLF_mat;
     int MERG;
     //vec3i maxInd, minInd;
@@ -119,6 +120,7 @@ public:
       TotalReflections = hs.TotalReflections;
       OmittedReflections = hs.OmittedReflections;
       MERG = hs.MERG;
+      Completeness = hs.Completeness;
       return *this;
     }
     HklStat& operator = (const MergeStats& ms)  {
@@ -139,6 +141,7 @@ public:
       OMIT_2t = def_OMIT_2t;
       SHEL_lr = def_SHEL_lr;
       SHEL_hr = def_SHEL_hr;
+      Completeness = 0;
     }
     size_t GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
   };
