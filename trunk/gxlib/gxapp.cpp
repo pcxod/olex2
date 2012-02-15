@@ -2535,6 +2535,7 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
       TXAtom::DefRad(darVdW);
   }
   else if (Rad.IsNumber()) {
+    DS = darCustom;
     r = Rad.ToDouble();
   }
   else 
@@ -2546,12 +2547,12 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     for( size_t i=0; i < Atoms->Count(); i++ )  {
       TGPCollection &gpc = (*Atoms)[i]->GetPrimitives();
       if ((size_t)gpc.GetTag() == i)  {
+        bool set=false;
         for (size_t j=0; j < gpc.ObjectCount(); j++) {
           TXAtom *at = dynamic_cast<TXAtom*>(&gpc.GetObject(j));
           if (at == NULL) continue;
-          if (DS > 0)
-            at->CalcRad(DS);
-          else
+          at->CalcRad(DS);
+          if (DS == darCustom)
             at->SetR(r);
         }
         gpc.SetTag(-1);
@@ -2561,15 +2562,16 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
   else {
     AtomIterator ai(*this);
     while( ai.HasNext() ) {
-      if (DS > 0)
-        ai.Next().CalcRad(DS);
-      else
-        ai.Next().SetR(r);
+      TXAtom &a = ai.Next();
+      a.CalcRad(DS);
+      if (DS == darCustom)
+        a.SetR(r);
     }
   }
   if( Atoms == NULL )  { // 
     TXAtom::DefZoom(1);
     TXAtom::TelpProb(1);
+    TXAtom::DefRad(DS);
   }
 }
 //..............................................................................
