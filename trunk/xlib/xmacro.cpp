@@ -783,34 +783,56 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   if( Cmds.IsEmpty() )  {
     RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
-    TTTable<TStrList> tab(21, 2);
-    tab[0][0] << "Total reflections (after filtering)";   tab[0][1] << hs.TotalReflections;
-    tab[1][0] << "Unique reflections";            tab[1][1] << hs.UniqueReflections;
-    tab[2][0] << "Centric reflections";           tab[2][1] << hs.CentricReflections;
-    tab[3][0] << "Friedel pairs merged";          tab[3][1] << hs.FriedelOppositesMerged;
-    tab[4][0] << "Inconsistent equivalents";     tab[4][1] << hs.InconsistentEquivalents;
-    tab[5][0] << "Systematic absences removed";   tab[5][1] << hs.SystematicAbsentcesRemoved;
-    tab[6][0] << "Min d";                         tab[6][1] << olxstr::FormatFloat(3, hs.MinD);
-    tab[7][0] << "Max d";                         tab[7][1] << olxstr::FormatFloat(3, hs.MaxD);
-    tab[8][0] << "Limiting d min (SHEL)";         tab[8][1] << olxstr::FormatFloat(3, hs.LimDmin);
-    tab[9][0] << "Limiting d max (SHEL/OMIT_2t)";    tab[9][1] << hs.LimDmax;
-    tab[10][0] << "Filtered off reflections (SHEL/OMIT_s/OMIT_2t)";  tab[10][1] << hs.FilteredOff;
-    tab[11][0] << "Reflections omitted by user (OMIT_hkl)";   tab[11][1] << hs.OmittedByUser;
-    tab[12][0] << "Reflections skipped (after 0 0 0)";        tab[12][1] << hs.OmittedReflections;
-    tab[13][0] << "Intensity transformed for (OMIT_s)";       tab[13][1] << hs.IntensityTransformed << " reflections";
-    tab[14][0] << "Rint, %";                         tab[14][1] << olxstr::FormatFloat(2, hs.Rint*100);
-    tab[15][0] << "Rsigma, %";                       tab[15][1] << olxstr::FormatFloat(2, hs.Rsigma*100);
-    tab[16][0] << "Mean I/sig";                   tab[16][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
-    tab[17][0] << "HKL range (refinement)";                    
-    tab[17][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
-               << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
-               << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
-    tab[18][0] << "HKL range (file)";                    
-    tab[18][1] << "h=[" << hs.FileMinInd[0] << ',' << hs.FileMaxInd[0] << "] "
-               << "k=[" << hs.FileMinInd[1] << ',' << hs.FileMaxInd[1] << "] "
-               << "l=[" << hs.FileMinInd[2] << ',' << hs.FileMaxInd[2] << "] ";
-    tab[19][0] << "Maximum redundancy (+symm eqivs)";    tab[19][1] << hs.ReflectionAPotMax;
-    tab[20][0] << "Average redundancy (+symm eqivs)";    tab[20][1] << olxstr::FormatFloat(2, (double)hs.TotalReflections/hs.UniqueReflections);
+    TTTable<TStrList> tab(22, 2);
+    tab[0][0] << "Total reflections (after filtering)";
+      tab[0][1] << hs.TotalReflections;
+    tab[1][0] << "Unique reflections";
+      tab[1][1] << hs.UniqueReflections;
+    tab[2][0] << "Centric reflections";
+      tab[2][1] << hs.CentricReflections;
+    tab[3][0] << "Friedel pairs merged";
+      tab[3][1] << hs.FriedelOppositesMerged;
+    tab[4][0] << "Inconsistent equivalents";
+      tab[4][1] << hs.InconsistentEquivalents;
+    tab[5][0] << "Systematic absences removed (all/unique)";
+      tab[5][1] << hs.SystematicAbsencesRemoved << '/' <<
+        hs.UniqueSystematicAbsencesRemoved;
+    tab[6][0] << "Min d";
+      tab[6][1] << olxstr::FormatFloat(3, hs.MinD);
+    tab[7][0] << "Max d";
+      tab[7][1] << olxstr::FormatFloat(3, hs.MaxD);
+    tab[8][0] << "Limiting d min (SHEL)";
+      tab[8][1] << olxstr::FormatFloat(3, hs.LimDmin);
+    tab[9][0] << "Limiting d max (SHEL/OMIT_2t)";
+      tab[9][1] << hs.LimDmax;
+    tab[10][0] << "Filtered off reflections (SHEL/OMIT_s/OMIT_2t)";
+      tab[10][1] << hs.FilteredOff;
+    tab[11][0] << "Reflections omitted by user (OMIT_hkl)";
+      tab[11][1] << hs.OmittedByUser;
+    tab[12][0] << "Reflections skipped (after 0 0 0)";
+      tab[12][1] << hs.OmittedReflections;
+    tab[13][0] << "Intensity transformed for (OMIT_s)";
+      tab[13][1] << hs.IntensityTransformed << " reflections";
+    tab[14][0] << "Rint, %";
+      tab[14][1] << olxstr::FormatFloat(2, hs.Rint*100);
+    tab[15][0] << "Rsigma, %";
+      tab[15][1] << olxstr::FormatFloat(2, hs.Rsigma*100);
+    tab[16][0] << "Completeness, [d_min-d_max] %";
+      tab[16][1] << olxstr::FormatFloat(2, hs.Completeness*100);
+    tab[17][0] << "Mean I/sig";
+      tab[17][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
+    tab[18][0] << "HKL range (refinement)";                    
+      tab[18][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
+                 << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
+                 << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
+    tab[19][0] << "HKL range (file)";                    
+      tab[19][1] << "h=[" << hs.FileMinInd[0] << ',' << hs.FileMaxInd[0] << "] "
+                 << "k=[" << hs.FileMinInd[1] << ',' << hs.FileMaxInd[1] << "] "
+                 << "l=[" << hs.FileMinInd[2] << ',' << hs.FileMaxInd[2] << "] ";
+    tab[20][0] << "Maximum redundancy (+symm eqivs)";
+      tab[20][1] << hs.ReflectionAPotMax;
+    tab[21][0] << "Average redundancy (+symm eqivs)";
+      tab[21][1] << olxstr::FormatFloat(2, (double)hs.TotalReflections/hs.UniqueReflections);
 
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("Refinement reflection statistsics"), true, false, "  ");
@@ -4930,7 +4952,7 @@ void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options,
   tab[2][0] << "Inconsistent equaivalents";
     tab[2][1] << ms.InconsistentEquivalents;
   tab[3][0] << "Systematic absences removed";
-    tab[3][1] << ms.SystematicAbsentcesRemoved;
+    tab[3][1] << ms.SystematicAbsencesRemoved;
   tab[4][0] << "Rint";
     tab[4][1] << ms.Rint;
   tab[5][0] << "Rsigma";

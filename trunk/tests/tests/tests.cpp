@@ -95,9 +95,9 @@ int main(int argc, char* argv[]) {
     }
     TFileTree ft(data_dir);
     Listener lsnr;
-    ft.OnExpand->Add(&lsnr);
+    ft.OnExpand.Add(&lsnr);
     ft.Expand();
-    ft.OnExpand->Remove(&lsnr);
+    ft.OnExpand.Remove(&lsnr);
     TStrList files;
     ft.GetRoot().ListFiles(files, "*.cif");
     for( size_t i=0; i < files.Count(); i++ )  {
@@ -121,10 +121,8 @@ int main(int argc, char* argv[]) {
         }
       }
       catch(const TExceptionBase& e)  {
-        TStrList out;
-        e.GetException()->GetStackTrace(out);
         xapp.NewLogEntry().nl() << files[i] << ':';
-        xapp.NewLogEntry() << out;
+        xapp.NewLogEntry(logExceptionTrace) << e;
       }
     }
     files.Clear();
@@ -134,10 +132,8 @@ int main(int argc, char* argv[]) {
         xapp.XFile().LoadFromFile(files[i]);
       }
       catch(const TExceptionBase& e)  {
-        TStrList out;
-        e.GetException()->GetStackTrace(out);
         xapp.NewLogEntry().nl() << files[i] << ':';
-        xapp.NewLogEntry() << out;
+        xapp.NewLogEntry(logExceptionTrace) << e;
       }
     }
   }

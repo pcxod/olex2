@@ -689,7 +689,8 @@ bool TCif::Adopt(TXFile& XF)  {
   // HKL section
   try {
     const RefinementModel::HklStat& hkl_stat = XF.GetRM().GetMergeStat();
-    SetParam("_diffrn_reflns_number", hkl_stat.TotalReflections-hkl_stat.SystematicAbsentcesRemoved, false);
+    SetParam("_diffrn_reflns_number",
+      hkl_stat.TotalReflections-hkl_stat.SystematicAbsencesRemoved, false);
     SetParam("_reflns_number_total", hkl_stat.UniqueReflections, false);
     const char* hkl = "hkl";
     for( int i=0; i < 3; i++ )  {

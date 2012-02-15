@@ -241,7 +241,7 @@ public:
   void SetMultiplicity(uint8_t v)  {
     Flags = (Flags&~MultMask)|((uint32_t)v<<MultOff);
   }
-  void IncMultiplicity()  {  SetMultiplicity(GetMultiplicity()+1);  }
+  void IncMultiplicity(int v=1)  {  SetMultiplicity(GetMultiplicity()+v);  }
 //..............................................................................
   int16_t GetBatch() const {  return (int16_t)((Flags&BatchMask)>>BatchOff);  }
   void SetBatch(int16_t v)  {

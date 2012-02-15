@@ -166,14 +166,10 @@ char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
 //..............................................................................
 void TReflection::Analyse(const SymmSpace::InfoEx& info)  {
   _reset_flags(0, 1, GetBatch());
-  if( info.centrosymmetric )
-    SetCentric(true);
   for( size_t i=0; i < info.matrices.Count(); i++ )  {
     vec3i hklv = hkl*info.matrices[i].r;
     if( hkl == hklv )  {
-      int m = GetMultiplicity(), inc = (int)(1+info.vertices.Count());
-      if( info.centrosymmetric )  inc *= 2;
-      SetMultiplicity(m+inc);
+      IncMultiplicity((int)(1+info.vertices.Count()));
       if( !IsAbsent() )  {
         const double ps = info.matrices[i].t.DotProd(hkl);
         bool absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
@@ -192,5 +188,7 @@ void TReflection::Analyse(const SymmSpace::InfoEx& info)  {
     else if( !info.centrosymmetric && hkl == -hklv )
       SetCentric(true);
   }
+  if( info.centrosymmetric )
+    SetCentric(true);
 }
 //..............................................................................

@@ -611,11 +611,9 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
       for( size_t j=0; j < XFile.GetLattice().FragmentCount(); j++ )
         ProcessNodes(&adf, XFile.GetLattice().GetFragment(j));
     }
-    catch( const TExceptionBase& exc )  {
-      TStrList es;
-      exc.GetException()->GetStackTrace(es);
+    catch( const TExceptionBase& e)  {
       TBasicApp::NewLogEntry(logError) << "Failed to process: " << files[i];
-      TBasicApp::NewLogEntry(logError) << es;
+      TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
   }
   PrepareForSearch();

@@ -332,7 +332,7 @@ namespace twinning  {
             }
             if( all_absent )  {
               all_refs[i].SetTag(-1);
-              ms.SystematicAbsentcesRemoved++;
+              ms.SystematicAbsencesRemoved++;
               i = j+1;
               continue;
             }

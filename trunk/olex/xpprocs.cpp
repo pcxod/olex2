@@ -2168,7 +2168,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     catch(const TExceptionBase &e)  {
       FXApp->GetRender().GetStyles().Clear();
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
-      TBasicApp::NewLogEntry(logException) << e;
+      TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
     FXApp->ClearIndividualCollections();
     FXApp->CreateObjects(true);
@@ -4146,10 +4146,8 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
     else  {
     }
   }
-  catch(const TExceptionBase& exc )  {
-    TStrList output;
-    exc.GetException()->GetStackTrace(output);
-    TBasicApp::NewLogEntry(logException) << output.Text(NewLineSequence());
+  catch(const TExceptionBase& e)  {
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
   dlg->Destroy();
 }
