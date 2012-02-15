@@ -105,7 +105,7 @@ ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
   }
   catch(const TExceptionBase &e)  {
     TBasicApp::NewLogEntry(logError) << fn << ": ";
-    TBasicApp::NewLogEntry() << e.GetException()->GetStackTrace<TStrList>();
+    TBasicApp::NewLogEntry(logException) << e;
   }
   return rvl;
 }
@@ -597,7 +597,7 @@ void IndexManager::Update(const olxstr &cfg_name, const olxstr &folder_name,
       }
     }
     catch(const TExceptionBase &e)  {
-      TBasicApp::NewLogEntry() << e.GetException()->GetStackTrace<TStrList>();
+      TBasicApp::NewLogEntry(logException) << e;
       TBasicApp::NewLogEntry(logException) <<
         (olxstr("Failed to create: ").quote() << indices[i].index_file_name);
     }
