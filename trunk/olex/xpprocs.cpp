@@ -2168,7 +2168,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     catch(const TExceptionBase &e)  {
       FXApp->GetRender().GetStyles().Clear();
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
-      TBasicApp::NewLogEntry(logError) << e.GetException()->GetStackTrace<TStrList>();
+      TBasicApp::NewLogEntry(logException) << e;
     }
     FXApp->ClearIndividualCollections();
     FXApp->CreateObjects(true);
