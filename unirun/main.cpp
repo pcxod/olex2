@@ -157,6 +157,10 @@ int main(int argc, char** argv)  {
         base_dir = arg;
         var_name.SetLength(0);
       }
+// must be done on mac!
+#ifdef __MAC__
+      var_name.SetLength(0);
+#endif
     }
     TBasicApp bapp(TBasicApp::GuessBaseDir(base_dir, var_name));
     bapp.GetLog().AddStream(&out, false);
