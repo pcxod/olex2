@@ -47,7 +47,7 @@ TEBitArray::TEBitArray(unsigned char* data, size_t size, bool own)  {
 //..............................................................................
 TEBitArray::~TEBitArray()  {  delete [] FData;  }
 //..............................................................................
-TEBitArray& TEBitArray::operator = (const TEBitArray& arr )  {
+TEBitArray& TEBitArray::operator = (const TEBitArray& arr)  {
   Clear();
   FCount = arr.FCount;
   FCharCount = arr.FCharCount;
@@ -60,12 +60,19 @@ TEBitArray& TEBitArray::operator = (const TEBitArray& arr )  {
 //..............................................................................
 void TEBitArray::SetSize(size_t newSize)  {
   if( FCount == newSize )  return;
-  if( FData != NULL )  
-    delete [] FData;
+  size_t cnt = FCount, chcnt = FCharCount;
+  unsigned char *data = FData;
   FCount = newSize;
   FCharCount = newSize/8 + 1;
   FData = new unsigned char [FCharCount];
-  memset(FData, 0, FCharCount);
+  if (data != NULL) {
+    memcpy(FData, data, olx_min(FCharCount, chcnt));
+    if (FCharCount > chcnt)
+      memset(&FData[chcnt], 0, FCharCount-chcnt);
+    delete [] data;
+  }
+  else
+    memset(FData, 0, FCharCount);
 }
 //..............................................................................
 void TEBitArray::Clear()  {
@@ -78,7 +85,7 @@ void TEBitArray::Clear()  {
 //..............................................................................
 void TEBitArray::SetAll(bool v)  {
   if( FData == NULL )  return;
-  memset(FData, v ? 0xff : 0, FCharCount );
+  memset(FData, v ? 0xff : 0, FCharCount);
 }
 //..............................................................................
 void TEBitArray::operator << (IInputStream& in)  {
@@ -91,7 +98,7 @@ void TEBitArray::operator << (IInputStream& in)  {
   }
 }
 //..............................................................................
-void TEBitArray::operator >> (IOutputStream& out) const  {
+void TEBitArray::operator >> (IOutputStream& out) const {
   out.Write(&FCount, sizeof(FCount) );
   if( FCount != 0 )
     out.Write(FData, FCharCount);
@@ -104,7 +111,7 @@ bool TEBitArray::operator == (const TEBitArray& arr ) const {
   return true;
 }
 //..............................................................................
-int TEBitArray::Compare(const TEBitArray& arr)  const {
+int TEBitArray::Compare(const TEBitArray& arr) const {
   if( arr.Count() < Count() )  {
     if( arr.IsEmpty() )  return 1;
     // check for a high bit

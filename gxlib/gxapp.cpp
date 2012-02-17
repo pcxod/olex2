@@ -2077,6 +2077,8 @@ ConstPtrList<TXAtom> TGXApp::AddCentroid(const TXAtomPList& Atoms)  {
     centroids[i]->Create();
     centroids[i]->Params()[0] = centroids[i]->GetType().r_pers;
   }
+  if (FLabels->IsVisible())
+    FLabels->Init();
   return centroids;
 }
 //..............................................................................
