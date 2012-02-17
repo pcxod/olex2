@@ -182,6 +182,22 @@ public:
       out[i].B() = res[i].GetB(); 
     }
   }
+  /* As above, but expects a list of
+  Assiciation3+<TCAtom const*, smatd, vec3d, ...>, note that the resulting
+  coordinate is the Cartesian coordinate (the input is in fractional)
+  */
+  template <class res_t> void FindInRangeAMC(const vec3d& center, double R,
+    res_t& out, const TCAtomPList* atoms=NULL) const
+  {
+    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    _FindInRange(center, R, res, false, atoms);
+    out.SetCount(res.Count());
+    for( size_t i=0; i < res.Count(); i++ )  {
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetB();
+      out[i].C() = res[i].GetC(); 
+    }
+  }
   /* finds only bound atoms defined by delta, can take both TCAtom and TSAtom.
   In first case the result will be located at the origin of the atom in the
   asymmetric unit, in the second - to the center of the TSAtom 

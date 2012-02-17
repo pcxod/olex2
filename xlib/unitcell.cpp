@@ -526,14 +526,12 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
         for( int ik=-1; ik <= 1; ik++ )  {
           if( ii == 0 && ij == 0 && ik == 0 )  continue;
           const vec3i shift(ii, ij, ik);
-          vec3d vec(a.ccrd() + shift - to);
-          au.CellToCartesian(vec);
-          const double D = vec.QLength();
+          const double D = au.Orthogonalise(a.ccrd() + shift - to).QLength();
           if( D < R && D > 0.0001 )  {
             smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
             m.SetId(0, ii, ik, ik);
-            res.GetLast().C() = vec;
+            res.GetLast().C() = au.Orthogonalise(a.ccrd() + shift);
           }
         }
       }
@@ -576,7 +574,7 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
             smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
             m.SetId(0, ii, ik, ik);
-            res.GetLast().C() = vec;
+            res.GetLast().C() = au.Orthogonalise(a.ccrd() + shift);
           }
         }
       }

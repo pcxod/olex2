@@ -305,11 +305,10 @@ public:
 protected:
   class TEnviComparator  {
   public:
-    static int Compare(AnAssociation3<TCAtom*, vec3d, smatd> const& i1, 
-      AnAssociation3<TCAtom*, vec3d, smatd> const& i2)  {
-        double res = i1.GetB().QLength() - i2.GetB().QLength();
-        if( res < 0 ) return -1;
-        return (res > 0) ? 1 : 0;
+    int Compare(AnAssociation3<TCAtom*, smatd, vec3d> const& i1, 
+      AnAssociation3<TCAtom*, smatd, vec3d> const& i2) const
+    {
+      return olx_cmp(i1.GetC().QLength(), i2.GetC().QLength());
     }
   };
 };
