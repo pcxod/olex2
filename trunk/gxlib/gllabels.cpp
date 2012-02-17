@@ -25,12 +25,13 @@ void TXGlLabels::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   
-  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
   if( GPC.PrimitiveCount() != 0 )  return;
   FontIndex = Parent.GetScene().FindFontIndexForType<TXGlLabels>();
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
-  GlP.SetProperties(GPC.GetStyle().GetMaterial("Text", GetFont().GetMaterial()));
+  GlP.SetProperties(
+    GPC.GetStyle().GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
@@ -112,14 +113,19 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     if( (Mode & lmFixed) != 0 )  {
       olxstr fXyz;
       for( size_t j=0; j < 3; j++ )  {
-        if( ca.GetVarRef(catom_var_name_X+j) != NULL && ca.GetVarRef(catom_var_name_X+j)->relation_type == relation_None )
+        if( ca.GetVarRef(catom_var_name_X+j) != NULL &&
+            ca.GetVarRef(catom_var_name_X+j)->relation_type == relation_None )
+        {
           fXyz << (olxch)('X'+j);
+        }
       }
       if( !fXyz.IsEmpty() )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << fXyz;
       }
-      if( ca.GetVarRef(catom_var_name_Sof) != NULL && ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  {
+      if( ca.GetVarRef(catom_var_name_Sof) != NULL &&
+          ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
+      {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << "occu";
       }
@@ -127,7 +133,9 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
         olxstr eadp((const char*)"Ua:", 40);
         size_t ec=0;
         for( size_t j=0; j < 6; j++ )  {
-          if( ca.GetVarRef(catom_var_name_U11+j) != NULL && ca.GetVarRef(catom_var_name_U11+j)->relation_type == relation_None )  {
+          if( ca.GetVarRef(catom_var_name_U11+j) != NULL &&
+              ca.GetVarRef(catom_var_name_U11+j)->relation_type == relation_None )
+          {
             ec++;
             eadp << (olxch)('A'+j);
           }
@@ -139,7 +147,9 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
           else Tmp << eadp;
         }
       }
-      else if( ca.GetVarRef(catom_var_name_Uiso) != NULL && ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None )  {
+      else if( ca.GetVarRef(catom_var_name_Uiso) != NULL &&
+               ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None )
+      {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << "Uiso";
       }
@@ -246,5 +256,7 @@ bool TXGlLabels::IsLabelMarked(size_t i) const {
   return false;  // should not happen...
 }
 //..............................................................................
-TGlFont& TXGlLabels::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
+TGlFont& TXGlLabels::GetFont() const {
+  return Parent.GetScene().GetFont(FontIndex, true);
+}
 //..............................................................................
