@@ -160,14 +160,17 @@ public:
   //...........................................................................
   TTSString(const TTIString<TC>& str)  { InitFromString(str);  }
   //...........................................................................
-  // allocates requested size
-  void Allocate(size_t sz, bool change_size)  {
+  /* allocates requested size, if the change_size is false (default), the size
+  of the string stays the same and ony the capacity is increased
+  */
+  TTSString &Allocate(size_t sz, bool change_size=false)  {
     if( T::SData == NULL )
       T::SData = new struct T::Buffer(sz);
     else
       T::SData->SetCapacity(sz);
     if( change_size )
       T::_Length = sz;
+    return *this;
   } 
 
   template <class T1, typename TC1> TTSString(const TTSString<T1,TC1>& v)

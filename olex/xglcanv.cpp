@@ -217,7 +217,7 @@ int* TGlCanvas::GetGlAttributes(bool _default, bool stereo, short depth_bits)  {
   if( _default )  return NULL;
   if( glAttrib != NULL )
     delete [] glAttrib;
-  const int cnt = stereo ? 8 : 7;
+  const int cnt = stereo ? 9 : 8;
   glAttrib = new int [2*cnt+1];
   glAttrib[2*cnt] = 0;
   glAttrib[0] = WX_GL_RGBA;  glAttrib[1] = 1;
@@ -227,8 +227,9 @@ int* TGlCanvas::GetGlAttributes(bool _default, bool stereo, short depth_bits)  {
   glAttrib[8] = WX_GL_MIN_ACCUM_BLUE;  glAttrib[9] = 16;
   glAttrib[10] = WX_GL_MIN_ACCUM_ALPHA;  glAttrib[11] = 16;
   glAttrib[12] = WX_GL_DEPTH_SIZE;  glAttrib[13] = depth_bits;
+  glAttrib[14] = WX_GL_STENCIL_SIZE;  glAttrib[15] = 8;
   if( stereo )  {
-    glAttrib[14] = WX_GL_STEREO;  glAttrib[15] = 1;
+    glAttrib[16] = WX_GL_STEREO;  glAttrib[17] = 1;
   }
 //  WX_GL_SAMPLE_BUFFERS, 1,  // these are not defined though documented...
 //  WX_GL_SAMPLES, 4,

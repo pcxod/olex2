@@ -47,6 +47,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   OnStylesClear(TBasicApp::GetInstance().NewActionQueue(olxappevent_GL_CLEAR_STYLES)),
   OnClear(TBasicApp::GetInstance().NewActionQueue("GL_CLEAR"))
 {
+  poly_stipple = NULL;
   CompiledListId = -1;
   FScene = S;
   FZoom = 1;
@@ -92,6 +93,8 @@ TGlRenderer::~TGlRenderer()  {
   delete FSelection;
   delete FScene;
   delete TextureManager;
+  if (poly_stipple != NULL)
+    delete [] poly_stipple;
 }
 //..............................................................................
 void TGlRenderer::Initialise()  {
@@ -395,6 +398,33 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
   //glDepthRange(1, 0);
 }
 //..............................................................................
+void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
+  if (poly_stipple == NULL) {
+    poly_stipple = new GLubyte [128];
+    memset(poly_stipple, even ? 0x55 : 0xAA, 128);
+  }
+  SetView(true);
+  olx_gl::disable(GL_LIGHTING);
+  olx_gl::disable(GL_DEPTH_TEST);
+
+  olx_gl::clear(GL_STENCIL_BUFFER_BIT);
+  olx_gl::stencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+  olx_gl::stencilFunc(GL_ALWAYS, 1, ~0);
+  olx_gl::enable(GL_STENCIL_TEST);
+
+  olx_gl::polygonStipple(poly_stipple);
+  olx_gl::enable(GL_POLYGON_STIPPLE);
+  olx_gl::colorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+  const double aspect = (double)Width/(double)Height;
+  glRectd(-0.5*aspect, -0.5, 0.5*aspect, 0.5);
+  
+  olx_gl::colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  olx_gl::enable(GL_DEPTH_TEST);
+  olx_gl::disable(GL_POLYGON_STIPPLE);
+  olx_gl::enable(GL_LIGHTING);
+}
+//..............................................................................
 void TGlRenderer::Draw()  {
   if( Width < 50 || Height < 50 )  return;
   olx_gl::enable(GL_NORMALIZE);
@@ -477,6 +507,22 @@ void TGlRenderer::Draw()  {
     DrawObjects(0, 0, false, false);
     olx_gl::drawBuffer(GL_BACK);
     GetBasis().RotateY(ry);
+  }
+  else if( StereoFlag == glStereoInterlace )  {
+    olx_gl::drawBuffer(GL_BACK);
+    SetupStencilFoInterlacedDraw(false);
+    olx_gl::enable(GL_STENCIL_TEST);
+    olx_gl::stencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    const double ry = GetBasis().GetRY();
+    GetBasis().RotateY(ry+StereoAngle);
+    olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    olx_gl::stencilFunc(GL_EQUAL, 0, ~0);
+    DrawObjects(0, 0, false, false);
+    GetBasis().RotateY(ry-StereoAngle);
+    olx_gl::stencilFunc(GL_NOTEQUAL, 0, ~0);
+    DrawObjects(0, 0, false, false);
+    GetBasis().RotateY(ry);
+    olx_gl::disable(GL_STENCIL_TEST);
   }
   else if( StereoFlag == glStereoCross )  {
     const double ry = GetBasis().GetRY();
@@ -1147,6 +1193,14 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
         TBasicApp::NewLogEntry(logError) << "Sorry accumulation buffer is not initialised/available";
       else
         StereoFlag = glStereoAnaglyph;
+    }
+    else if( Params[0].Equalsi("interlace") )  {
+      GLint bits = 0;
+      olx_gl::get(GL_STENCIL_BITS, &bits);
+      if( bits == 0 )
+        TBasicApp::NewLogEntry(logError) << "Sorry stencil buffer is not initialised/available";
+      else
+        StereoFlag = glStereoInterlace;
     }
     else if( Params[0].Equalsi("cross") )  {
       olx_gl::clearColor(LightModel.GetClearColor().Data());
