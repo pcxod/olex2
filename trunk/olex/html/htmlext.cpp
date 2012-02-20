@@ -476,7 +476,8 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
            comment_open = "<!--", comment_close = "-->";
   for( size_t i=0; i < Lst.Count(); i++ )  {
     olxstr tmp = olxstr(Lst[i]).TrimWhiteChars();
-    if( tmp.StartsFrom(comment_open) && !tmp.StartsFrom(Tag2) )  {  // skip comments
+    // skip comments
+    if( tmp.StartsFrom(comment_open) && !tmp.StartsFrom(Tag2) )  {
       //tag_parse_info tpi = skip_tag(Lst, Tag2, Tag3, i, 0);
       if( tmp.EndsWith(comment_close) )  continue;
       bool tag_found = false;
@@ -524,7 +525,8 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Toks.Clear();
       TParamList::StrtokParams(tmp, ';', Toks); // extract arguments
       if( Toks.Count() < 2 )  { // must be at least 2 for filename and status
-        TBasicApp::NewLogEntry(logError) << "Wrong defined switch (not enough data)" << Sw->GetName();
+        TBasicApp::NewLogEntry(logError) <<
+          "Wrong defined switch (not enough data)" << Sw->GetName();
         continue;
       }
 
@@ -533,8 +535,10 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
           if( izZip && !TZipWrapper::IsZipFile(Toks[j]) )  {
             if( Toks[j].StartsFrom('\\') || Toks[j].StartsFrom('/') )
               tmp = Toks[j].SubStringFrom(1);
-            else
-              tmp = TZipWrapper::ComposeFileName(Sender.GetFile(Sender.GetFileIndex()), Toks[j]);
+            else {
+              tmp = TZipWrapper::ComposeFileName(
+                Sender.GetFile(Sender.GetFileIndex()), Toks[j]);
+            }
           }
           else
             tmp = Toks[j];
@@ -545,12 +549,12 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         else  {
           // check for parameters
           if( Toks[j].IndexOf('#') != InvalidIndex )  {
-            olxstr tmp1;
             tmp = Toks[j];
             for( size_t k=0; k < Sender.GetParams().Count(); k++ )  {
-              tmp1 = '#';  
-              tmp1 << Sender.GetParams().GetName(k);
-              tmp.Replace(tmp1, Sender.GetParams().GetValue(k) );
+              olxstr tmp1 = olxstr().Allocate(
+                  Sender.GetParams().GetName(k).Length()+2) <<
+                '#' << Sender.GetParams().GetName(k);
+              tmp.Replace(tmp1, Sender.GetParams().GetValue(k));
             }
             Sw->AddParam(tmp);
           }

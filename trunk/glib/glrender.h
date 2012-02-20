@@ -33,7 +33,8 @@ const uint8_t
   glStereoColor = 0x0001,
   glStereoCross = 0x0002,
   glStereoAnaglyph = 0x0003,
-  glStereoHardware = 0x0004;
+  glStereoHardware = 0x0004,
+  glStereoInterlace = 0x0005;
 
 class AGDrawObject;
 class TGlGroup;
@@ -73,6 +74,8 @@ class TGlRenderer : public IEObject  {
   int Width, Height, OWidth;
   double LineWidth, MaxRasterZ;
   int CompiledListId;
+  GLubyte *poly_stipple;
+  void SetupStencilFoInterlacedDraw(bool even);
 protected:
   void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
 

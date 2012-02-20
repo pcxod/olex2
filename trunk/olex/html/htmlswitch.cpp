@@ -81,8 +81,12 @@ void THtmlSwitch::UpdateFileIndex()  {
         Strings[i].Replace("#parent_name", ParentSwitch->GetName()).\
                    Replace( "#parent_file", ParentSwitch->GetCurrentFile());
       }
-      for( size_t j=0; j < Params.Count(); j++ )
-        Strings[i].Replace(olxstr('#') << Params.GetName(j), Params.GetValue(j));
+      for( size_t j=0; j < Params.Count(); j++ ) {
+        Strings[i].Replace(
+          olxstr().Allocate(Params.GetName(j).Length()+2) <<
+          '#' << Params.GetName(j),
+          Params.GetValue(j));
+      }
     } // end of parameter replacement
   }
   ParentHtml->CheckForSwitches(*this, TZipWrapper::IsZipFile(FN));
