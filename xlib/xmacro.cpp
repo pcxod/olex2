@@ -1350,8 +1350,10 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( vars.Equalsi( "UISO" ) )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetEllipsoid() == NULL )  // isotropic atom
+      if( atoms[i]->GetEllipsoid() == NULL )  {// isotropic atom
         xapp.SetAtomUiso(*atoms[i], var_val);
+        xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Uiso);
+      }
       else  {
         for( short j=0; j < 6; j++ )
           xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_U11+j);

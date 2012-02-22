@@ -302,6 +302,19 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomPolyPyramid, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyBipyramid, TMainForm::OnAtomPolyChange)
 
+  EVT_MENU(ID_AtomPartCustom, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart_2, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart_1, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart0, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart1, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart2, TMainForm::OnAtomPartChange)
+
+  EVT_MENU(ID_AtomUisoCustom, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUiso12, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUiso15, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUisoFree, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUisoFix, TMainForm::OnAtomUisoChange)
+
   EVT_MENU(ID_SelGroup, TMainForm::OnSelection)
   EVT_MENU(ID_SelUnGroup, TMainForm::OnSelection)
   EVT_MENU(ID_SelLabel, TMainForm::OnSelection)
@@ -1300,6 +1313,8 @@ void TMainForm::XApp(TGXApp *XA)  {
     pmAtomOccu = new TMenu();
     pmAtomConn = new TMenu();
     pmAtomPoly = new TMenu();
+    pmAtomPart = new TMenu();
+    pmAtomUiso = new TMenu();
   pmFragment = new TMenu();
   pmSelection = new TMenu();
   pmGraphics = new TMenu();
@@ -1419,10 +1434,23 @@ void TMainForm::XApp(TGXApp *XA)  {
     pmAtomPoly->AppendRadioItem(ID_AtomPolyRegular, wxT("Regular"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyPyramid, wxT("Pyramid"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyBipyramid, wxT("Bipyramid"));
+    miAtomPartCustom = pmAtomPart->AppendRadioItem(ID_AtomPartCustom, wxT("X"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart_2, wxT("-2"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart_1, wxT("-1"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart0, wxT("0"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart1, wxT("1"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart2, wxT("2"));
+    miAtomUisoCustom = pmAtomUiso->AppendRadioItem(ID_AtomUisoCustom, wxT("X"));
+    pmAtomUiso->AppendRadioItem(ID_AtomUiso12, wxT("1.2x"));
+    pmAtomUiso->AppendRadioItem(ID_AtomUiso15, wxT("1.5x"));
+    miAtomUisoFree = pmAtomUiso->AppendRadioItem(ID_AtomUisoFree, wxT("Free"));
+    pmAtomUiso->AppendRadioItem(ID_AtomUisoFix, wxT("Fix"));
 
   pmAtom->Append(ID_MenuAtomType, wxT("Type"), pmAtomType);
   pmAtom->Append(ID_MenuAtomConn, wxT("Bonds"), pmAtomConn);
   pmAtom->Append(ID_MenuAtomOccu, wxT("Chemical occupancy"), pmAtomOccu);
+  pmAtom->Append(ID_MenuAtomPart, wxT("Part"), pmAtomPart);
+  pmAtom->Append(ID_MenuAtomUiso, wxT("Uiso"), pmAtomUiso);
   pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrow, wxT("Grow"));
