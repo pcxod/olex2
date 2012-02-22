@@ -69,6 +69,8 @@ enum  {
   ID_MenuAtomOccu,
   ID_MenuAtomConn,
   ID_MenuAtomPoly,
+  ID_MenuAtomPart,
+  ID_MenuAtomUiso,
 
   ID_DSBS,  // drawing style, balls and sticks
   ID_DSES,  // ellipsoids and sticks
@@ -130,6 +132,19 @@ enum  {
   ID_AtomConn3,
   ID_AtomConn4,
   ID_AtomConn12,
+
+  ID_AtomUisoCustom,
+  ID_AtomUiso15,
+  ID_AtomUiso12,
+  ID_AtomUisoFree,
+  ID_AtomUisoFix,
+
+  ID_AtomPartCustom,
+  ID_AtomPart_2,
+  ID_AtomPart_1,
+  ID_AtomPart0,
+  ID_AtomPart1,
+  ID_AtomPart2,
 
   ID_AtomPolyNone,
   ID_AtomPolyAuto,
@@ -220,7 +235,7 @@ protected:
   bool Destroying;
   TStack<AnAssociation2<wxCursor,wxString> > CursorStack;
   UpdateThread* _UpdateThread;
-	TOnProgress* UpdateProgress, *ActionProgress;
+  TOnProgress* UpdateProgress, *ActionProgress;
   TEFile* ActiveLogFile;
   static void PyInit();
   TActionQList Action;
@@ -343,6 +358,8 @@ protected:
   void OnAtomTypeChange(wxCommandEvent& event);
   void OnAtomOccuChange(wxCommandEvent& event);
   void OnAtomConnChange(wxCommandEvent& event);
+  void OnAtomPartChange(wxCommandEvent& event);
+  void OnAtomUisoChange(wxCommandEvent& event);
   void OnAtomPolyChange(wxCommandEvent& event);
   void OnAtomTypePTable(wxCommandEvent& event);
   void OnAtom(wxCommandEvent& event); // general handler
@@ -759,8 +776,8 @@ public:
   void UseGlTooltip(bool v);
 
   const olxstr& GetStructureOlexFolder();
-  float GetHtmlPanelWidth() const  {  return FHtmlPanelWidth;  }
-  THtml* GetHtml()  const {  return FHtml; }
+  float GetHtmlPanelWidth() const {  return FHtmlPanelWidth;  }
+  THtml* GetHtml() const {  return FHtml; }
   olxstr_dict<TPopupData*, true> Popups;
   THtml* FindHtml(const olxstr& popupName) const;
   inline const olxstr& GetCurrentLanguageEncodingStr() const {
@@ -788,7 +805,13 @@ protected:
     TMenu    *pmAtomType;
     TMenu    *pmAtomOccu, 
              *pmAtomConn,
-             *pmAtomPoly;
+             *pmAtomPoly,
+             *pmAtomPart,
+             *pmAtomUiso
+             ;
+  wxMenuItem *miAtomPartCustom,
+    *miAtomUisoCustom,
+    *miAtomUisoFree;
   TMenu    *pmBond;
     wxMenuItem *miBondInfo;
     TMenu    *pmTang;  // torsion angles
