@@ -24,7 +24,7 @@ protected:
   template <class Analyser> struct PackItemActor  {
     const Analyser& analyser;
     PackItemActor(const Analyser& _analyser) : analyser(_analyser)  {}
-    inline bool OnItem(T& o, size_t i) const {
+    bool OnItem(T& o, size_t i) const {
       if( analyser.OnItem(o, i) )  {
         delete &o;
         return true;
@@ -127,18 +127,18 @@ public:
   }
 //..............................................................................
   //adds a new object ito the list - will be deleted
-  inline T& Add(T& Obj)  {  return *List.Add(&Obj);  }
+  T& Add(T& Obj)  {  return *List.Add(&Obj);  }
   //adds a new object ito the list - will be deleted
-  inline T& Add(T* Obj)  {  return *List.Add(Obj);  }
+  T& Add(T* Obj)  {  return *List.Add(Obj);  }
 //..............................................................................
   //sets the list item to an object, which will be deleted
-  inline T& Set(size_t index, T& Obj)  {
+  T& Set(size_t index, T& Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(T*)(List[index] = &Obj);
   }
   //sets the list item to an object, which will be deleted
-  inline T& Set(size_t index, T* Obj)  {
+  T& Set(size_t index, T* Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(T*)(List[index] = Obj);
@@ -147,7 +147,7 @@ public:
   /*replaces a list item with given value and returns a pointer to previous
   object (might be NULL)
   */
-  inline T* Replace(size_t index, T& Obj)  {
+  T* Replace(size_t index, T& Obj)  {
     T* rv = List[index];
     List[index] = &Obj;
     return rv;
@@ -155,96 +155,96 @@ public:
   /*replaces a list item with given value and returns a pointer to previous
   object (might be NULL)
   */
-  inline T* Replace(size_t index, T* Obj)  {
+  T* Replace(size_t index, T* Obj)  {
     T* rv = List[index];
     List[index] = Obj;
     return rv;
   }
 //..............................................................................
   // adds a copy of the object with copy constructor "copied copy"
-  inline T& AddCopy(const T& Obj)  {  return AddNew<T>(Obj);  }
+  T& AddCopy(const T& Obj)  {  return AddNew<T>(Obj);  }
 //..............................................................................
   //sets the listitem to an new object copied by the copy constructor
-  inline T& SetCopy(size_t index, const T& Obj)  {
+  T& SetCopy(size_t index, const T& Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(List[index] = new T(Obj));
   }
 //..............................................................................
   // insert anobject into thelist; the object will be deleted
-  inline T& Insert(size_t index, T& Obj)  {  return *List.Insert(index, &Obj);  }
+  T& Insert(size_t index, T& Obj)  {  return *List.Insert(index, &Obj);  }
   // insert anobject into thelist; the object will be deleted
-  inline T& Insert(size_t index, T* Obj)  {  return *List.Insert(index, Obj);  }
+  T& Insert(size_t index, T* Obj)  {  return *List.Insert(index, Obj);  }
 //..............................................................................
   // copy constructor created copy is inserted
-  inline T& InsertCopy(size_t index, const T& Obj)  {
+  T& InsertCopy(size_t index, const T& Obj)  {
     return InsertNew<T>(index, Obj);
   }
 //..............................................................................
   //inerts a new object at specified position
-  inline T& InsertNew(size_t index)  {  return *List.Insert(index, new T());  }
+  T& InsertNew(size_t index)  {  return *List.Insert(index, new T());  }
 //..............................................................................
   template<class AC>
-    inline T& InsertNew(size_t index, const AC& arg)  {
+    T& InsertNew(size_t index, const AC& arg)  {
       return *List.Insert(index, new T(arg));
     }
 //..............................................................................
   template<class FAC, class SAC>
-  inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2)  {
+  T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2)  {
     return *List.Insert(index, new T(arg1, arg2));
   }
 //..............................................................................
   template<class FAC, class SAC, class TAC>
-  inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2,
+  T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2,
     const TAC& arg3)
   {
     return *List.Insert(index, new T(arg1, arg2, arg3));
   }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
-  inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2,
+  T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2,
     const TAC& arg3, const FrAC& arg4)
   {
     return *List.Insert(index, new T(arg1, arg2, arg3, arg4));
   }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
-  inline T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2,
+  T& InsertNew(size_t index, const FAC& arg1, const SAC& arg2,
     const TAC& arg3, const FrAC& arg4, const FvAC& arg5)
   {
     return *List.Insert(index, new T(arg1, arg2, arg3, arg4, arg5));
   }
 //..............................................................................
-  inline T& AddNew()  {  return *List.Add(new T());  }
+  T& AddNew()  {  return *List.Add(new T());  }
 //..............................................................................
   template<class AC>
-  inline T& AddNew(const AC& arg)  {  return *List.Add(new T(arg));  }
+  T& AddNew(const AC& arg)  {  return *List.Add(new T(arg));  }
 //..............................................................................
   template<class FAC, class SAC>
-  inline T& AddNew(const FAC& arg1, const SAC& arg2 )  {
+  T& AddNew(const FAC& arg1, const SAC& arg2 )  {
     return *List.Add(new T(arg1, arg2));
   }
 //..............................................................................
   template<class FAC, class SAC, class TAC>
-  inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3 )  {
+  T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3 )  {
     return *List.Add(new T(arg1, arg2, arg3));
   }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
-  inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3,
+  T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3,
     const FrAC& arg4)
   {
     return *List.Add(new T(arg1, arg2, arg3, arg4));
   }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
-  inline T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3,
+  T& AddNew(const FAC& arg1, const SAC& arg2, const TAC& arg3,
     const FrAC& arg4, const FvAC& arg5)
   {
     return *List.Add(new T(arg1, arg2, arg3, arg4, arg5));
   }
 //..............................................................................
-  inline T& operator [] (size_t index) const {
+  T& operator [] (size_t index) const {
 #ifdef _DEBUG
     T*& v = List[index];
     if( v == NULL ) {
@@ -257,7 +257,7 @@ public:
 #endif
   }
 //..............................................................................
-  inline T& GetItem(size_t index) const {
+  T& GetItem(size_t index) const {
 #ifdef _DEBUG
     T*& v = List.GetItem(index);
     if( v == NULL ) {
@@ -270,7 +270,7 @@ public:
 #endif
   }
 //..............................................................................
-  inline T& GetLast() const {
+  T& GetLast() const {
 #ifdef _DEBUG
     T*& v = List.GetLast();
     if( v == NULL ) {
@@ -283,10 +283,10 @@ public:
 #endif
   }
 //..............................................................................
-  inline bool IsNull(size_t index) const {  return List[index] == NULL;  }
+  bool IsNull(size_t index) const {  return List[index] == NULL;  }
 //..............................................................................
   // the function is safe to be called repeatedly on the same index
-  inline void NullItem(size_t index) const {
+  void NullItem(size_t index) const {
     if( List[index] != NULL )  {  // check if not deleted yet
       delete (DestructCast*)List[index];
       List[index] = NULL;
@@ -321,18 +321,27 @@ public:
     return _Assign_Wrapper(list);
   }
 //..............................................................................
+  TTypeListExt & operator << (const T &item) { AddNew(item);  return *this; }
+//..............................................................................
+  TTypeListExt & operator << (T *item) { Add(item);  return *this; }
+//..............................................................................
+  TTypeListExt & operator << (const TTypeListExt &list) {
+    AddList(list);
+    return *this;
+  }
+//..............................................................................
   /* copy - creates new copies of the objest, be careful as the copy constructor
    must exist  */
   template <class alist> TTypeListExt& operator = (const alist& list)  {
     return Assign(list);
   }
 //..............................................................................
-  inline TTypeListExt& SetCapacity(size_t v)  {
+  TTypeListExt& SetCapacity(size_t v)  {
     List.SetCapacity(v);
     return *this;
   }
 //..............................................................................
-  inline TTypeListExt& SetIncrement(size_t v)  {
+  TTypeListExt& SetIncrement(size_t v)  {
     List.SetIncrement(v);
     return *this;
   }
@@ -419,19 +428,19 @@ public:
   }
 //..............................................................................
   // cyclic shift to the left
-  inline TTypeListExt& ShiftL(size_t cnt)  {  List.ShiftL(cnt);  return *this;  }
+  TTypeListExt& ShiftL(size_t cnt)  {  List.ShiftL(cnt);  return *this;  }
 //..............................................................................
   // cyclic shift to the right
-  inline TTypeListExt& ShiftR(size_t cnt)  {  List.ShiftR(cnt);  return *this;  }
+  TTypeListExt& ShiftR(size_t cnt)  {  List.ShiftR(cnt);  return *this;  }
 //..............................................................................
-  inline void Swap(size_t i, size_t j)  {  List.Swap(i, j);  }
+  void Swap(size_t i, size_t j)  {  List.Swap(i, j);  }
 //..............................................................................
-  inline void Move(size_t from, size_t to)  {  List.Move(from, to);  }
+  void Move(size_t from, size_t to)  {  List.Move(from, to);  }
 //..............................................................................
-  inline TTypeListExt& Pack()  {  List.Pack();  return  *this;  }
+  TTypeListExt& Pack()  {  List.Pack();  return  *this;  }
 //..............................................................................
   template <class PackAnalyser>
-  inline TTypeListExt& Pack(const PackAnalyser& pa)  {
+  TTypeListExt& Pack(const PackAnalyser& pa)  {
     List.Pack(PackItemActor<PackAnalyser>(pa));
     return *this;
   }
@@ -442,7 +451,7 @@ public:
     return *this;
   }
 //..............................................................................
-  inline size_t Count() const {  return List.Count();  }
+  size_t Count() const {  return List.Count();  }
 //..............................................................................
   // same as shrink if list size is larger
   TTypeListExt& SetCount(size_t v) {
@@ -463,7 +472,7 @@ public:
     return *this;
   }
 //..............................................................................
-  inline bool IsEmpty() const {  return List.IsEmpty();  }
+  bool IsEmpty() const {  return List.IsEmpty();  }
 //..............................................................................
   // the comparison operator is used
   size_t IndexOf(const T& val) const {

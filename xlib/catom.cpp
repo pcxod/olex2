@@ -380,7 +380,7 @@ bool TCAtom::AttachSite(TCAtom* atom, const smatd& matrix)  {
         return false;
       const vec3d v1 = matrix*atom->ccrd();
       const vec3d v2 = AttachedSites[i].matrix*atom->ccrd();
-      if (v1.Equals(v2, 1e-3))
+      if (Parent->Orthogonalise(v1-v2).QLength() < 1.e-6)
         return false;
     }
   }
@@ -395,7 +395,7 @@ bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix)  {
         return false;
       const vec3d v1 = matrix*atom->ccrd();
       const vec3d v2 = AttachedSitesI[i].matrix*atom->ccrd();
-      if (v1.Equals(v2, 1e-3))
+      if (Parent->Orthogonalise(v1-v2).QLength() < 1.e-6)
         return false;
     }
   }

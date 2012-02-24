@@ -618,9 +618,9 @@ void TLattice::GrowAtom(TSAtom& Atom, bool GrowShells, TCAtomPList* Template)  {
   DoGrow(TSAtomPList() << Atom, GrowShells, Template);
 }
 //..............................................................................
-void TLattice::GrowFragment(uint32_t FragId, const smatd& transform) {
+void TLattice::GrowFragment(uint32_t FragId, const smatd_list& transforms) {
   olxdict<uint32_t, smatd_list, TPrimitiveComparator> j;
-  j.Add(FragId).AddCopy(transform);
+  j.Add(FragId, transforms);
   GrowFragments(j);
 }
 //..............................................................................
@@ -2404,9 +2404,8 @@ void TLattice::BuildAtomRegistry()  {
       }
       if( aum_slice == NULL )  {
         const size_t matr_cnt = GetUnitCell().MatrixCount();
-        aum_slice = (registry.Value(t) = new TArrayList<TSAtomPList*>(matr_cnt));
-        for( size_t j=0; j < matr_cnt; j++ )
-          (*aum_slice)[j] = NULL;
+        aum_slice = (registry.Value(t) =
+          new TArrayList<TSAtomPList*>(matr_cnt, list_init::zero()));
       }
       TSAtomPList* au_slice = (*aum_slice)[matr.GetContainerId()];
       if( au_slice == NULL )  {

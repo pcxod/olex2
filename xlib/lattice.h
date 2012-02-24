@@ -114,7 +114,10 @@ public:
   void GrowFragments(
     const olxdict<uint32_t, smatd_list, TPrimitiveComparator> &job);
   /* grows a fragment using particular matrix */
-  void GrowFragment(uint32_t FragId, const smatd& transform);
+  void GrowFragment(uint32_t FragId, const smatd& transform) {
+    GrowFragment(FragId, smatd_list() << transform);
+  }
+  void GrowFragment(uint32_t FragId, const smatd_list& transforms);
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
   void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells,
     TCAtomPList* Template);

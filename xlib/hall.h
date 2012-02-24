@@ -39,6 +39,10 @@ protected:
 public:
   // a compact list of matrices is taken
   static olxstr Evaluate(int latt, const smatd_list& matrices);
+  /* a compact list of matrices is taken, expanded and compacted again -
+  sometimes the asymmetric unit will have inversion expanded
+  */
+  static olxstr EvaluateEx(int latt, const smatd_list& matrices);
   // takes full list of matrices
   static olxstr Evaluate(const smatd_list& matrices) {
     return Evaluate(SymmSpace::GetInfo(matrices));

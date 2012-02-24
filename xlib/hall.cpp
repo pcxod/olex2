@@ -160,7 +160,14 @@ int HallSymbol::FindR(olxstr& hs, TTypeList<symop>& matrs,
   return previous;
 }
 //.............................................................................
-olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices)  {
+olxstr HallSymbol::EvaluateEx(int latt_, const smatd_list& matrices_) {
+  init();
+  smatd_list all_matrices;
+  TSymmLib::GetInstance().ExpandLatt(all_matrices, matrices_, latt_);
+  return Evaluate(SymmSpace::GetInfo(all_matrices));
+}
+//.............................................................................
+olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices) {
   init();
   olxstr hs;
   if( latt > 0 )  hs << '-';
