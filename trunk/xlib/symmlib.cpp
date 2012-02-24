@@ -931,7 +931,7 @@ SymmSpace::Info TSpaceGroup::GetInfo() const {
 size_t TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
   smatd_list allm;
   size_t c = 0;
-  GetMatrices( allm, Flags );
+  GetMatrices(allm, Flags);
   for( size_t i=0; i < allm.Count(); i++ )  {
     if( matrices.IndexOf(allm[i]) == InvalidIndex )  {
       matrices.AddCopy(allm[i]);
@@ -980,15 +980,15 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
   }
   if( CentroSymmetric && ((Flags & mattInversion) == mattInversion) )  {
     const size_t mc = matrices.Count();
+    smatd im;
+    im.r.I() *= -1;
+    im.t = -InversionCenter*2;
     for( size_t i=0; i < mc; i++ ) {
-      matrices.Add(new smatd(matrices[i])).r *= -1;
-      matrices.GetLast().t += InversionCenter*2;
+      matrices.Add(new smatd(matrices[i])) *= im;
     }
     if( (Flags & mattIdentity) == 0 ) {
-      matrices.Insert(0, new smatd).r.I() *= -1;
-      matrices.GetLast().t += InversionCenter*2;
+      matrices.Insert(0, new smatd).I() *= im;
     }
-
   }
   for( size_t i=0; i < matrices.Count(); i++ )
     matrices[i].t -= matrices[i].t.Floor<int>();
@@ -1354,21 +1354,12 @@ TSpaceGroup &TSymmLib::CreateNew(const olxstr &hs) {
 }
 //..............................................................................
 TSpaceGroup& TSymmLib::FindSG(const TAsymmUnit& AU)  {
-  // P - check if compactable
-  if (AU.GetLatt() == -1) {
-    smatd_list ml = AU.GetMatices();
-    ml.AddNew().I();
-    SymmSpace::Info si = SymmSpace::GetInfo(ml);
-    olxstr hs = HallSymbol::Evaluate(si);
-    TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-    return sg == NULL ? CreateNew(si, hs) : *sg;
-  }
-  else {
-    olxstr hs = HallSymbol::Evaluate(AU.GetLatt(), AU.GetMatices());
-    TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-    return sg == NULL ? CreateNewFromCompact(AU.GetLatt(), AU.GetMatices(), hs)
-      : *sg;
-  }
+  smatd_list ml;
+  TSymmLib::GetInstance().ExpandLatt(ml, AU.GetMatices(), AU.GetLatt());
+  SymmSpace::Info si = SymmSpace::GetInfo(ml);
+  olxstr hs = HallSymbol::Evaluate(si);
+  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
+  return sg == NULL ? CreateNew(si, hs) : *sg;
 }
 //..............................................................................
 size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU,

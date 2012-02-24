@@ -3532,7 +3532,8 @@ void TGXApp::CreateXGrowLines()  {
           *gi, &AttachedAtoms);
       }
       else if( FGrowMode == gmSInteractions )  {
-        uc.FindBindingAM(A->CAtom(), FXFile->GetLattice().GetDeltaI(), *gi, &AttachedAtoms);
+        uc.FindBindingAM(A->CAtom(), FXFile->GetLattice().GetDeltaI(), *gi,
+          &AttachedAtoms);
       }
       else  {
         for( size_t j=0; j < A->CAtom().AttachedSiteCount(); j++ )  {
@@ -3545,7 +3546,8 @@ void TGXApp::CreateXGrowLines()  {
     }
     for( size_t j=0; j < gi->Count(); j++ )  {
       const AnAssociation2<TCAtom*,smatd>& gii = (*gi)[j];
-      smatd transform = (A->GetMatrix(0).IsFirst() ? gii.GetB() : uc.MulMatrix(gii.GetB(), A->GetMatrix(0)));
+      smatd transform = (A->GetMatrix(0).IsFirst() ? gii.GetB()
+        : uc.MulMatrix(gii.GetB(), A->GetMatrix(0)));
       vec3d tc = transform*gii.GetA()->ccrd();
       au.CellToCartesian(tc);
       const double qdist = tc.QDistanceTo(A->crd());
@@ -3553,7 +3555,9 @@ void TGXApp::CreateXGrowLines()  {
         continue;
       bool uniq = true;
       for( size_t l=0; l < tr_list.Count(); l++ )  {
-        if( tr_list[l].transform.GetId() == transform.GetId() && tr_list[l].to == gii.GetA() )  {
+        if( tr_list[l].transform.GetId() == transform.GetId() &&
+            tr_list[l].to == gii.GetA() )
+        {
           if( tr_list[l].dist > qdist )  {
             tr_list[l].dist = qdist;
             tr_list[l].to = gii.GetA();
@@ -4464,8 +4468,8 @@ void TGXApp::GrowBonds() {
   olxdict<uint32_t, smatd_list, TPrimitiveComparator> transforms;
   for (size_t i=0; i < XGrowLines.Count(); i++) {
     if (XGrowLines[i].IsVisible()) {
-      transforms.Add(XGrowLines[i].CAtom().GetFragmentId())
-        .AddCopy(XGrowLines[i].GetTransform());
+      transforms.Add(XGrowLines[i].CAtom().GetFragmentId()) << 
+        XGrowLines[i].GetTransform();
     }
   }
   XFile().GetLattice().GrowFragments(transforms);

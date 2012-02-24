@@ -655,7 +655,6 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
             FXApp->GetRender().Select(*xa);
         }
       }
-      TimePerFrame = FXApp->Draw();
     }
   }
   else if( event.GetId() == ID_AtomCenter )  {
@@ -663,8 +662,8 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
       ProcessMacro(olxstr("center #s") << XA->GetOwnerId());
     else
       ProcessMacro("center");  // center of the selection
-    TimePerFrame = FXApp->Draw();
   }
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnPlane(wxCommandEvent& event)  {

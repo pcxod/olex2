@@ -19,7 +19,7 @@ BeginXlibNamespace()
 
 const unsigned short 
   satom_Deleted    = 0x0001,
-  satom_Grown      = 0x0002,
+  //satom_Grown      = 0x0002, - obsolete
   satom_Standalone = 0x0004,
   satom_Masked     = 0x0008,
   satom_Processed  = 0x0010;  // generic bit

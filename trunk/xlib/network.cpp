@@ -93,12 +93,14 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
     for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSite(j);
       const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix(0));
-      TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
-      if( a == NULL )  {
+      TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(
+        site.atom->GetId(), m.GetId()));
+      if( a == NULL || a->IsDeleted())  {
         for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
           const smatd m1 = uc.MulMatrix(site.atom->GetEquiv(k), m);
-          TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m1.GetId()));
-          if( a != NULL )
+          TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(
+            site.atom->GetId(), m1.GetId()));
+          if( a != NULL && !a->IsDeleted() )
             break;
         }
       }
@@ -116,17 +118,20 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSiteI(j);
       const cm_Element& thatT = site.atom->GetType();
       if( !(thatT == iNitrogenZ || thatT == iOxygenZ || thatT == iFluorineZ ||
-        thatT == iChlorineZ || thatT == iSulphurZ || thatT == iBromineZ || thatT == iSeleniumZ) )
+            thatT == iChlorineZ || thatT == iSulphurZ || thatT == iBromineZ ||
+            thatT == iSeleniumZ) )
       {
         continue;
       }
       const smatd m = sa.GetMatrix(0).IsFirst() ? site.matrix :
         uc.MulMatrix(site.matrix, sa.GetMatrix(0));
-      TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
+      TSAtom* a = objects.atomRegistry.Find(
+        TSAtom::Ref(site.atom->GetId(), m.GetId()));
       if( a == NULL )  {
         for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
           const smatd m1 = uc.MulMatrix(site.atom->GetEquiv(k), m);
-          TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m1.GetId()));
+          TSAtom* a = objects.atomRegistry.Find(
+            TSAtom::Ref(site.atom->GetId(), m1.GetId()));
           if( a != NULL )  break;
         }
       }

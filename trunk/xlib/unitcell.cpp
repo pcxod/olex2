@@ -218,7 +218,6 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       const vec3i shift = v.Round<int>();
       // collect asymetric unit bonds
       if( j == 0 && shift.IsNull() )  {  // I
-        //if( ind == i || Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
         if( ind == i )  continue;
         AU->CellToCartesian(v);
         const double qd = v.QLength();
@@ -234,8 +233,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Latt->GetDelta()) )  // covalent bond
         {
           Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSite(Atoms[ind],
-            Latt->GetUnitCell().InvMatrix(Matrices[j]));
+          Atoms[i]->AttachSite(Atoms[ind], Matrices[j]);
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
           Latt->GetDeltaI()) )  // interaction
@@ -285,6 +283,33 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Atoms[ind]->AttachSiteI(Atoms[i], matr);
           if (i != ind)
             Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+        }
+      }
+    }
+    for( int ii=-1; ii <= 1; ii++ )  {
+      for( int ij=-1; ij <= 1; ij++ ) {
+        for( int ik=-1; ik <= 1; ik++ )  {
+          //if( ii == 0 && ij == 0 && ik == 0 )  continue;
+          const vec3i shift(ii, ij, ik);
+          const double qd = AU->Orthogonalise(
+            Atoms[ind]->ccrd() - shift - Atoms[i]->ccrd()).QLength();
+          smatd matr = Matrices[0];
+          matr.t += shift;
+          matr.SetId(0, shift);
+          if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
+            Latt->GetDelta()) )
+          {
+            Atoms[ind]->AttachSite(Atoms[i], matr);
+            if (i != ind)
+              Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+          }
+          else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
+            Latt->GetDeltaI()) )
+          {
+            Atoms[ind]->AttachSiteI(Atoms[i], matr);
+            if (i != ind)
+              Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+          }
         }
       }
     }
@@ -518,7 +543,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
       if( D < R )  {
         smatd& m = res.AddNew(atoms[i], Matrices[j], au.CellToCartesian(vec += shift)).B();
         m.t += shift;
-        m.SetId(Matrices[j].GetContainerId(), shift[0], shift[1], shift[2]);
+        m.SetId(Matrices[j].GetContainerId(), shift);
       }
     }
     for( int ii=-1; ii <= 1; ii++ )  {

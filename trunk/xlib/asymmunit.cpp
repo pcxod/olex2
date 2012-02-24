@@ -603,10 +603,8 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
     Latt = -Latt;
   Matrices.Clear();
   if (sg.IsCentrosymmetric() && !sg.GetInversionCenter().IsNull(1e-3)) {
-    smatd_list ml;
-    sg.GetMatrices(ml, mattAll^mattCentering);
-    for (size_t i=1; i < ml.Count(); i++)
-      Matrices.AddCopy(ml[i]);
+    sg.GetMatrices(Matrices, mattAll^mattCentering);
+    Matrices.Delete(0);
     Latt = -sg.GetLattice().GetLatt();
   }
   else {
