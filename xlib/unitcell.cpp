@@ -289,7 +289,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
     for( int ii=-1; ii <= 1; ii++ )  {
       for( int ij=-1; ij <= 1; ij++ ) {
         for( int ik=-1; ik <= 1; ik++ )  {
-          //if( ii == 0 && ij == 0 && ik == 0 )  continue;
+          if( ii == 0 && ij == 0 && ik == 0 && i == ind )  continue;
           const vec3i shift(ii, ij, ik);
           const double qd = AU->Orthogonalise(
             Atoms[ind]->ccrd() - shift - Atoms[i]->ccrd()).QLength();
@@ -607,7 +607,9 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
   }
 }
 //..............................................................................
-void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, int part)  const {
+void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
+  int part) const
+{
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   envi.SetBase(atom);
   smatd I;
@@ -615,11 +617,18 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   TCAtom& ca = atom.CAtom();
   for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
     const TCAtom::Site& site = ca.GetAttachedSite(i);
-    if( site.atom->IsDeleted() || (!IncludeQ && site.atom->GetType() == iQPeakZ) )  continue;
-    const smatd m = MulMatrix(site.matrix, atom.GetMatrix(0));
+    if( site.atom->IsDeleted() ||
+        (!IncludeQ && site.atom->GetType() == iQPeakZ) )
+    {
+      continue;
+    }
+    const smatd m = MulMatrix(site.matrix, atom.GetMatrix());
     vec3d v = au.Orthogonalise(m*site.atom->ccrd());
-    if( part == DefNoPart || (site.atom->GetPart() == 0 || site.atom->GetPart() == part) )
+    if( part == DefNoPart || 
+        (site.atom->GetPart() == 0 || site.atom->GetPart() == part) )
+    {
       envi.Add(*site.atom, m, v);
+    }
   }
 }
 //..............................................................................
@@ -630,8 +639,9 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   for( size_t i=0; i < atom.CAtom().AttachedSiteCount(); i++ )  {
     TCAtom::Site& site = atom.CAtom().GetAttachedSite(i);
-    if( site.atom->IsDeleted() || site.atom->GetType() != iQPeakZ )  continue;
-    const smatd m = MulMatrix(site.matrix, atom.GetMatrix(0));
+    if( site.atom->IsDeleted() || site.atom->GetType() != iQPeakZ )
+      continue;
+    const smatd m = MulMatrix(site.matrix, atom.GetMatrix());
     const vec3d v = au.Orthogonalise(m*site.atom->ccrd());
     envi.Add(*site.atom, m, v);
   }

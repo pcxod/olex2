@@ -157,7 +157,7 @@ public:
   const AtomRegistry& GetAtomRegistry() const {
     return Objects.atomRegistry;
   }
-  void RestoreAtom(const TSAtom::FullRef& id);
+  void RestoreAtom(const TSAtom::Ref& id);
 
   // for the grown structure might return more than one plane
   TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0,

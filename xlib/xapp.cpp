@@ -482,7 +482,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
                 atoms.Add(sa);
             }
             else  {
-              if( sa.ContainsMatrix(ag[i].GetMatrix()->GetId()) )  {
+              if( sa.IsGenerator(*ag[i].GetMatrix()) )  {
                 atoms.Add(sa);
               }
             }

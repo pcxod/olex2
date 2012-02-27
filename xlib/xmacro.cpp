@@ -133,9 +133,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     "around the largest one.");
 //_____________________________________________________________________________
   xlib_InitMacro(Envi,
-    "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;cs-leaves"
-    " selection unchanged&;p-print out precision [2], the angle printing "
-    "precision will be half of that for the distances",
+    "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;"
+    "cs-leaves selection unchanged&;"
+    "p-print out precision [2], the angle printing precision will be half of"
+    " that for the distances&;"
+    "c-prints just the connectivity information",
     fpNone|fpOne|fpTwo,
     "This macro prints environment of any particular atom. Default search "
     "radius is 2.7A.");
@@ -2397,6 +2399,33 @@ void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
+  TSAtomPList atoms;
+  TXApp& xapp = TXApp::GetInstance();
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, false) )  {
+    E.ProcessingError(__OlxSrcInfo, "no atoms provided");
+    return;
+  }
+  // print calculated connectivity and SYMM
+  if (Options.Contains('c')) {
+    TStrList out;
+    const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+    const TUnitCell &uc = xapp.XFile().GetUnitCell();
+    for (size_t i=0; i < atoms.Count(); i++) {
+      out.Add(atoms[i]->GetLabel()) << " [" << 
+        TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix()) << ']';
+      for (size_t j=0; j < atoms[i]->CAtom().AttachedSiteCount(); j++) {
+        TCAtom::Site &s = atoms[i]->CAtom().GetAttachedSite(j);
+        smatd m = uc.MulMatrix(s.matrix, atoms[i]->GetMatrix());
+        double d = atoms[i]->crd().DistanceTo(
+          au.Orthogonalise(m*s.atom->ccrd()));
+        out.Add(s.atom->GetLabel()).LeftPadding(5, ' ').RightPadding(20, ' ') <<
+          TSymmParser::MatrixToSymmEx(m).RightPadding(20, ' ') << ": " <<
+          olxstr::FormatFloat(3, d);
+      }
+    }
+    TBasicApp::NewLogEntry() << out;
+    return;
+  }
   double r = 2.7;
   Parse(Cmds, "d", &r);
   if( r < 1 || r > 10 )  {
@@ -2405,12 +2434,6 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
   }
   int prc = Options.FindValue('p', 2).ToInt(),
     aprc = prc/2;
-  TSAtomPList atoms;
-  TXApp& xapp = TXApp::GetInstance();
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, false) )  {
-    E.ProcessingError(__OlxSrcInfo, "no atoms provided");
-    return;
-  }
   ElementPList Exceptions;
   Exceptions.Add(XElementLib::GetByIndex(iQPeakIndex));
   Exceptions.Add(XElementLib::GetByIndex(iHydrogenIndex));
@@ -2419,7 +2442,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
   if( Options.Contains('h') )
     Exceptions.Remove(XElementLib::GetByIndex(iHydrogenIndex));
 
-  TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
+  TLattice& latt = xapp.XFile().GetLattice();
   TAsymmUnit& au = latt.GetAsymmUnit();
   TCAtomPList allAtoms;
   for( size_t i=0; i < au.AtomCount(); i++ )  {
@@ -3415,7 +3438,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
       row[2] = new cetString(vcovc.CalcDistance(b.A(), b.B()).ToString());
       if( !b.B().IsAUAtom() )
         row[3] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymmSpace(),
-          b.B().GetMatrix(0)));
+          b.B().GetMatrix()));
       else
         row[3] = new cetString('.');
       row[4] = new cetString('?');
@@ -3444,12 +3467,12 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         row[3] = new cetString(vcovc.CalcAngleA(_b, a, _c).ToString());
         if( !_b.IsAUAtom() )
           row[4] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymmSpace(),
-            _b.GetMatrix(0)));
+            _b.GetMatrix()));
         else
           row[4] = new cetString('.');
         if( !_c.IsAUAtom() )
           row[5] = new cetString(TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymmSpace(),
-            _c.GetMatrix(0)));
+            _c.GetMatrix()));
         else
           row[5] = new cetString('.');
         row[6] = new cetString('?');
@@ -3495,7 +3518,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         row.Set(2, new AtomCifEntry(*a->GetAtom()));
         TSAtom da(NULL), aa(NULL);
         da.CAtom(*d->GetAtom());
-        da.AddMatrix(&I);
+        da._SetMatrix(&I);
         au.CellToCartesian(da.ccrd(), da.crd());
         aa.CAtom(*a->GetAtom());
         smatd am;
@@ -3507,7 +3530,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
           am = *a->GetMatrix();
           xapp.XFile().GetUnitCell().InitMatrixId(am);
         }
-        aa.AddMatrix(&am);
+        aa._SetMatrix(&am);
         aa.ccrd() = am*aa.ccrd();
         au.CellToCartesian(aa.ccrd(), aa.crd());
         row[3] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(da.crd())));
@@ -3519,7 +3542,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
         else
           row[7] = new cetString(
             TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymmSpace(),
-              aa.GetMatrix(0)));
+              aa.GetMatrix()));
       }
     }
   }
@@ -4577,24 +4600,25 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 }
 //..............................................................................
-void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macDegen(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TSAtomPList atoms;
-  TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true, !Options.Contains("cs"));
-  for( size_t i=0; i < atoms.Count(); i++ ) 
-    atoms[i]->CAtom().SetTag(i);
+  TXApp::GetInstance().FindSAtoms(
+    Cmds.Text(' '), atoms, true, !Options.Contains("cs"));
+  TUnitCell &uc = TXApp::GetInstance().XFile().GetUnitCell();
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    if( (size_t)atoms[i]->CAtom().GetTag() != i ||
-        atoms[i]->CAtom().GetDegeneracy() == 1)
-    {
-      continue;
-    }
-    olxstr str(atoms[i]->CAtom().GetLabel());
-    TBasicApp::NewLogEntry() << str.RightPadding(6, ' ', true) <<
+    if (atoms[i]->CAtom().GetDegeneracy() == 1) continue;
+    TStrList out;
+    out.Add(atoms[i]->CAtom().GetLabel()) << " [" <<
+      TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix()) << "] " <<
       atoms[i]->CAtom().GetDegeneracy();
     for( size_t j=0; j < atoms[i]->CAtom().EquivCount(); j++ )  {
-      TBasicApp::NewLogEntry() << '\t' <<
-        TSymmParser::MatrixToSymmEx(atoms[i]->CAtom().GetEquiv(j));
+      smatd m = uc.MulMatrix(
+        atoms[i]->CAtom().GetEquiv(j), atoms[i]->GetMatrix());
+      out.Add('\t') << TSymmParser::MatrixToSymmEx(m);
     }
+    TBasicApp::NewLogEntry() << out;
     SiteSymmCon ssc = atoms[i]->CAtom().GetSiteConstraints();
     TBasicApp::GetLog() << "\tSite constraints: "; 
     if( ssc.IsConstrained() )
@@ -4918,8 +4942,8 @@ void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options,
     RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
     InfoTab& it = rm.AddRTAB(name);
     for( size_t i=0; i < atoms.Count(); i++ ) {
-      it.AddAtom(&atoms[i]->CAtom(), atoms[i]->GetMatrix(0).IsFirst() ? NULL
-       : &atoms[i]->GetMatrix(0));
+      it.AddAtom(&atoms[i]->CAtom(), atoms[i]->GetMatrix().IsFirst() ? NULL
+       : &atoms[i]->GetMatrix());
     }
   }
   else

@@ -1716,8 +1716,8 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
       if( p_ind != InvalidIndex )  { // add the direction then
         TCAtomGroup as;
         as.Add(new TGroupCAtom(
-          cnt[0]->Node(p_ind).CAtom(), cnt[0]->Node(p_ind).GetMatrix(0)));
-        as.Add(new TGroupCAtom(cnt[0]->CAtom(), cnt[0]->GetMatrix(0)));
+          cnt[0]->Node(p_ind).CAtom(), cnt[0]->Node(p_ind).GetMatrix()));
+        as.Add(new TGroupCAtom(cnt[0]->CAtom(), cnt[0]->GetMatrix()));
         normal = (cnt[0]->crd()-cnt[0]->Node(p_ind).crd()).Normalise();
         center = (atoms[0]->crd()+atoms[1]->crd()+atoms[2]->crd())/3;
         d = AddDirection(as, direction_vector);
@@ -1728,7 +1728,7 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   if( d == NULL )  {
     TCAtomGroup as;
     for( size_t i=0; i < atoms.Count(); i++ )
-      as.Add(new TGroupCAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix(0)));
+      as.Add(new TGroupCAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix()));
     d = AddDirection(as, direction_normal);
     TSPlane::CalcPlane(atoms, normal, center);
   }

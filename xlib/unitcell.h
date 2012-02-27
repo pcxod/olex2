@@ -55,7 +55,9 @@ class TUnitCell: public IEObject  {
   void _FindBinding(const TSAtom& center, double delta,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
     const TCAtomPList* atoms=NULL) const
-  {  _FindBinding(center.CAtom(), center.GetMatrix(0), delta, res, atoms);  }
+  {
+    _FindBinding(center.CAtom(), center.GetMatrix(), delta, res, atoms);
+  }
   //
   static int _AtomSorter(const AnAssociation3<vec3d,TCAtom*, double>& a1,
     const AnAssociation3<vec3d,TCAtom*, double>& a2)
@@ -89,6 +91,14 @@ public:
   Id's. The return value is a new list of matrices with new Id's
   */
   smatd_list MulMatrices(const smatd_list& in, const smatd& transform) const;
+  /* returns just the id of the product, saving on the rotation part
+  multiplication
+  */
+  uint32_t MulMatrixId(const smatd& m, const smatd& tr) const {
+    const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
+    return smatd::GenerateId(index, (tr.MulT(m)-Matrices[index].t).Round<int>());
+  }
+  /* full product */
   smatd MulMatrix(const smatd& m, const smatd& tr) const {
     smatd rv = tr*m;
     const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
