@@ -53,6 +53,9 @@ public:
     return *this;
   }
 
+  //returns the transltion part of the multiplication
+  TVector3<VC> MulT(const TSymmMat& v) const {  return r*v.t+t;  }
+
   bool operator == (const TSymmMat& v) const {
     return (r == v.r && t == v.t);
   }

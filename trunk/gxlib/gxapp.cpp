@@ -84,10 +84,10 @@ int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
 // UNDO DATA CLASSES
 class TKillUndo: public TUndoData  {
 public:
-  TTypeList<TSAtom::FullRef> SAtomIds;
+  TTypeList<TSAtom::Ref> SAtomIds;
   TKillUndo(IUndoAction *action):TUndoData(action)  {  }
   virtual ~TKillUndo()  {  }
-  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCopy(SA.GetFullRef());  }
+  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCopy(SA.GetRef());  }
 };
 class THideUndo: public TUndoData  {
 public:
@@ -2386,7 +2386,7 @@ void TGXApp::ExpandSelection(TCAtomGroup& atoms)  {
   TXAtomPList xatoms = GetSelectedXAtoms(GetDoClearSelection());
   atoms.SetCapacity(atoms.Count() + xatoms.Count());
   for( size_t i=0; i < xatoms.Count(); i++ )
-    atoms.AddNew(&xatoms[i]->CAtom(), &xatoms[i]->GetMatrix(0));
+    atoms.AddNew(&xatoms[i]->CAtom(), &xatoms[i]->GetMatrix());
 }
 //..............................................................................
 void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
@@ -3546,8 +3546,8 @@ void TGXApp::CreateXGrowLines()  {
     }
     for( size_t j=0; j < gi->Count(); j++ )  {
       const AnAssociation2<TCAtom*,smatd>& gii = (*gi)[j];
-      smatd transform = (A->GetMatrix(0).IsFirst() ? gii.GetB()
-        : uc.MulMatrix(gii.GetB(), A->GetMatrix(0)));
+      smatd transform = (A->GetMatrix().IsFirst() ? gii.GetB()
+        : uc.MulMatrix(gii.GetB(), A->GetMatrix()));
       vec3d tc = transform*gii.GetA()->ccrd();
       au.CellToCartesian(tc);
       const double qdist = tc.QDistanceTo(A->crd());
@@ -3622,8 +3622,8 @@ void TGXApp::_CreateXGrowVLines()  {
     for( size_t j=0; j < envi->Count(); j++ )  {
       TCAtom *aa = envi->GetItem(j).GetA();
       if( !aa->IsAvailable() )  continue;
-      const smatd transform = (A->GetMatrix(0).IsFirst() ? envi->GetItem(j).GetB() :
-        uc.MulMatrix(envi->GetItem(j).GetB(), A->GetMatrix(0)));
+      const smatd transform = (A->GetMatrix().IsFirst() ? envi->GetItem(j).GetB() :
+        uc.MulMatrix(envi->GetItem(j).GetB(), A->GetMatrix()));
       if( !aa->IsAvailable() )  continue;
       const vec3d& cc = aa->ccrd();
       vec3d tc = transform*cc;

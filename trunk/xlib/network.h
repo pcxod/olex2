@@ -34,7 +34,7 @@ public:
   TNetwork(TLattice* P, TNetwork *N);
   virtual ~TNetwork()  {}
 
-  inline TLattice& GetLattice() const {  return *Lattice;  }
+  TLattice& GetLattice() const {  return *Lattice;  }
   // empties the content of the network
   void Clear();
   // adds a node to the network and assigns its NetId
@@ -53,16 +53,8 @@ public:
   */
   void CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Frags);
   // returns true if the two atoms share a matrix
-  static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
-    for( size_t i=0; i < sa.MatrixCount(); i++ )  {
-      for( size_t j=0; j < sb.MatrixCount(); j++ )  {
-        if( sa.GetMatrix(i).GetId() == sb.GetMatrix(j).GetId() )  
-          return true;
-      }
-    }
-    return false;
-  }
-  static inline bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
+  static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb);
+  static bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
     if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 || 
        (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )
     {
@@ -72,20 +64,20 @@ public:
     }
     return false;
   }
-  static inline bool IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
+  static bool IsBondAllowed(const TSAtom& sa, const TCAtom& cb,
     const smatd& sm)
   {
     if( sa.CAtom().GetPart() == 0 || cb.GetPart() == 0 || 
        (sa.CAtom().GetPart() == cb.GetPart()) )
     {
       if ((sa.CAtom().GetPart() < 0 || cb.GetPart() < 0))
-        return sa.ContainsMatrix(sm.GetId());
+        return sa.IsGenerator(sm);
       return true;
     }
     return false;
   }
 
-  static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
+  static bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
     const smatd& sm)
   {
     if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
@@ -98,7 +90,7 @@ public:
     return false;
   }
 
-  static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb)  {
+  static bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb)  {
     return (ca.GetPart() == 0 || cb.GetPart() == 0 ||
             ca.GetPart() == cb.GetPart());
   }
@@ -167,14 +159,14 @@ public:
       return IsBondAllowed(a1, a2, m);
     return false;
   }
-  static inline bool BondExists(const TCAtom& a1, const TCAtom& a2, double D,
+  static bool BondExists(const TCAtom& a1, const TCAtom& a2, double D,
     double delta)
   {
     if( D < (a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
       return IsBondAllowed(a1, a2);
     return false;
   }
-  static inline bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, double qD,
+  static bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, double qD,
     double delta)
   {
     if( qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
@@ -183,10 +175,10 @@ public:
   }
 
   // only pointers are compared!!
-  inline bool operator == (const TNetwork& n) const {  return this == &n;  }
-  inline bool operator == (const TNetwork* n) const {  return this == n;  }
-  inline bool operator != (const TNetwork& n) const {  return this != &n;  }
-  inline bool operator != (const TNetwork* n) const {  return this != n;  }
+  bool operator == (const TNetwork& n) const {  return this == &n;  }
+  bool operator == (const TNetwork* n) const {  return this == n;  }
+  bool operator != (const TNetwork& n) const {  return this != &n;  }
+  bool operator != (const TNetwork* n) const {  return this != n;  }
 
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);

@@ -112,11 +112,11 @@ public:
   void ProcessSymmetry(const atom_list& atoms, mat3d_list& ms)  {
     mat3d_alist mt(atoms.Count());
     for( size_t i=0; i < atoms.Count(); i++ )
-      mt[i] = mat3d::Transpose(atoms[i]->GetMatrix(0).r);
+      mt[i] = mat3d::Transpose(atoms[i]->GetMatrix().r);
     for( size_t i=0; i < atoms.Count(); i++ )  {
       for( size_t j=0; j < atoms.Count(); j++ )  {
         const size_t ind = i*atoms.Count() + j;
-        ms[ind] = (mat3d(atoms[i]->GetMatrix(0).r)*ms[ind])*mt[j];
+        ms[ind] = (mat3d(atoms[i]->GetMatrix().r)*ms[ind])*mt[j];
       }
     }
   }

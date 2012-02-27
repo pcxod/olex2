@@ -164,7 +164,7 @@ TSPlane::Def::Def(const TSPlane& plane)
   if( plane.Count() == 0 )  return;
   if( !plane.GetAtom(0).IsAUAtom() )  {
     const TUnitCell& uc = plane.GetNetwork().GetLattice().GetUnitCell();
-    const smatd im = uc.InvMatrix(plane.GetAtom(0).GetMatrix(0));
+    const smatd im = uc.InvMatrix(plane.GetAtom(0).GetMatrix());
     for( size_t i=0; i < atoms.Count(); i++ )  {
       atoms[i].ref.matrix_id = uc.MulMatrix(
         smatd::FromId(atoms[i].ref.matrix_id,

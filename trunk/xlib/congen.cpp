@@ -226,7 +226,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
         for (size_t si=0; si < a.AttachedSiteICount(); si++) {
           TCAtom::Site &s = a.GetAttachedSiteI(si);
           if (s.atom->GetType() == iHydrogenZ) {
-            smatd m = uc.MulMatrix(s.matrix, envi.GetBase().GetMatrix(0));
+            smatd m = uc.MulMatrix(s.matrix, envi.GetBase().GetMatrix());
             h_crds.AddCopy(au.Orthogonalise(m*s.atom->ccrd()));
           }
         }
