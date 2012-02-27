@@ -7815,7 +7815,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     else if( Cmds[0].Equalsi("plane") )  {
       if( (Cmds.Count()-3)%12 != 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments" );
+        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments");
         return;
       }
       for( size_t i=3; i < Cmds.Count(); i+= 12 )  {
