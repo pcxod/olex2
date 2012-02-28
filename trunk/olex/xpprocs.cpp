@@ -3861,6 +3861,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     FXApp->FindCAtoms(Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' '), true);
   if( Atoms.IsEmpty() )  return;
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  TLattice& latt = FXApp->XFile().GetLattice();
   RefinementModel& rm = FXApp->XFile().GetRM();
   TCAtomPList ProcessedAtoms;
   XVar& var = rm.Vars.NewVar();
@@ -3892,14 +3893,16 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     direction *= Length;
     direction /= 2;
-    FXApp->XFile().GetAsymmUnit().CartesianToCell(direction);
+    au.CartesianToCell(direction);
     const double sp = 1./CA->GetDegeneracy();
-    TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
+    TXAtom &XA = FXApp->AddAtom();
+    TCAtom& CA1 = XA.CAtom();
     CA1.Assign(*CA);
     CA1.SetSameId(~0);
     CA1.SetPart(1);
     CA1.ccrd() += direction;
-    CA1.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a'), false);
+    XA.ccrd() = CA1.ccrd();
+    CA1.SetLabel(au.CheckLabel(&CA1, lbl+'a'), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, sp);
     CA1.SetOccu(0.5*sp);
@@ -3907,7 +3910,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TCAtom& CA2 = *CA;
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
-    CA2.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b'), false);
+    CA2.SetLabel(au.CheckLabel(&CA2, lbl+'b'), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, sp);
     CA2.SetOccu(0.5*sp);
@@ -3923,7 +3926,8 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( sr != NULL )
       sr->AddAtomPair(CA1, NULL, CA2, NULL);
   }
-  FXApp->XFile().GetLattice().SetAnis(ProcessedAtoms, false);
+  latt.SetAnis(ProcessedAtoms, false);
+  latt.Uniq();
 }
 //..............................................................................
 void TMainForm::macShowP(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -9375,7 +9379,8 @@ void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options
 }
 //..............................................................................
 void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString()));
+  E.SetRetVal(CheckState(TStateChange::DecodeState(Params[0]),
+    Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 //..............................................................................
 void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {

@@ -2121,26 +2121,23 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& b
     FLabels->Init();
 }
 //..............................................................................
-TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
+TXAtom& TGXApp::AddAtom(TXAtom* templ)  {
   vec3d center;
   if( templ != NULL )
     center = templ->CAtom().ccrd();
-  TXAtom *A = static_cast<TXAtom*>(XFile().GetLattice().NewAtom(center));
-  if( A != NULL )  {
-    olxstr colName;
-    if( templ != NULL )  {
-      colName = templ->GetCollectionName();
-      A->CAtom().SetType(templ->GetType());
-      if( templ->GetType() == iQPeakZ )
-        A->CAtom().SetQPeak(1.0);
-    }
-    else
-      A->CAtom().SetType(XElementLib::GetByIndex(iCarbonIndex));
-    A->Create();
-    A->Params()[0] = A->GetType().r_pers;
-    return A;
+  TXAtom &A = static_cast<TXAtom&>(XFile().GetLattice().NewAtom(center));
+  olxstr colName;
+  if( templ != NULL )  {
+    colName = templ->GetCollectionName();
+    A.CAtom().SetType(templ->GetType());
+    if( templ->GetType() == iQPeakZ )
+      A.CAtom().SetQPeak(1.0);
   }
-  return NULL;
+  else
+    A.CAtom().SetType(XElementLib::GetByIndex(iCarbonIndex));
+  A.Create();
+  A.Params()[0] = A.GetType().r_pers;
+  return A;
 }
 //..............................................................................
 void TGXApp::undoDelete(TUndoData *data)  {

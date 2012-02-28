@@ -100,8 +100,8 @@ public:
   }
   /* full product */
   smatd MulMatrix(const smatd& m, const smatd& tr) const {
-    smatd rv = tr*m;
     const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
+    smatd rv(Matrices[index].r, tr.MulT(m));
     rv.SetId(index, (rv.t-Matrices[index].t).Round<int>());
     return rv;
   }

@@ -1206,6 +1206,40 @@ void TAsymmUnit::LibNPDCount(const TStrObjList& Params, TMacroError& E) {
   E.SetRetVal(cnt);
 }
 //..............................................................................
+void TAsymmUnit::LibOrthogonolise(const TStrObjList& Params, TMacroError& E) {
+  vec3d rv;
+  if (Params.Count() == 3) {
+    rv = vec3d(
+      Params[0].ToDouble(), Params[1].ToDouble(), Params[2].ToDouble());
+  }
+  else {
+    TStrList toks(olxstr(Params[0]).Replace(',', ' '), ' ');
+    if (toks.Count() != 3) {
+      E.ProcessingError(__OlxSrcInfo, "invalid number of tokens");
+      return;
+    }
+    rv = vec3d(toks[0].ToDouble(), toks[1].ToDouble(), toks[2].ToDouble());
+  }
+  E.SetRetVal(Orthogonalise(rv).ToString());
+}
+//..............................................................................
+void TAsymmUnit::LibFractionalise(const TStrObjList& Params, TMacroError& E) {
+  vec3d rv;
+  if (Params.Count() == 3) {
+    rv = vec3d(
+      Params[0].ToDouble(), Params[1].ToDouble(), Params[2].ToDouble());
+  }
+  else {
+    TStrList toks(olxstr(Params[0]).Replace(',', ' '), ' ');
+    if (toks.Count() != 3) {
+      E.ProcessingError(__OlxSrcInfo, "invalid number of tokens");
+      return;
+    }
+    rv = vec3d(toks[0].ToDouble(), toks[1].ToDouble(), toks[2].ToDouble());
+  }
+  E.SetRetVal(Fractionalise(rv).ToString());
+}
+//..............................................................................
 
 TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("au") : name);
@@ -1305,6 +1339,12 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibWeight, "GetWeight", fpNone|fpOne,
     "Returns molecular mass of the asymmetric unit"));
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibOrthogonolise, "Orthogonalise", fpOne|fpThree,
+    "Returns orthogonalised coordinates"));
+  lib->RegisterFunction<TAsymmUnit>(new TFunction<TAsymmUnit>(this,
+    &TAsymmUnit::LibFractionalise, "Fractionalise", fpOne|fpThree,
+    "Returns fractional coordinates"));
   return lib;
 }
 //..............................................................................

@@ -49,7 +49,12 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
       SL.GetLastString() << ' ' << GetRM().expl.GetTempValue().ToString();
     else
       SL.GetLastString() << " 0";
-    SL.Add("SOURCE  ") << GetRM().expl.GetRadiation();
+    double tr = olx_round(GetRM().expl.GetRadiation(), 100);
+    olxstr str_rad = '?';
+    if (tr == 0.71)  str_rad = "Mo";
+    else if (tr == 1.54)  str_rad = "Cu";
+    else if (tr == 0.56)  str_rad = "Ag";
+    SL.Add("SOURCE  ") << str_rad << ' ' << GetRM().expl.GetRadiation();
   // save only if preset
   if( !SGString.IsEmpty() )
     SL.Add("SG  ") << SGString;
@@ -133,11 +138,11 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   }
 
   params.Clear();
-  params.Strtok( Source, ' ');
+  params.Strtok(Source, ' ');
   if( params.Count() > 2 )
     GetRM().expl.SetRadiation(params[1].ToDouble());
-	try  {  GetRM().SetUserFormula(chem.DeleteChars('_'));  }
-	catch(...)  {  }  // just skip...
+  try  {  GetRM().SetUserFormula(chem.DeleteChars('_'));  }
+  catch(...)  {  }  // just skip...
 }
 
 bool TP4PFile::Adopt(TXFile& f)  {

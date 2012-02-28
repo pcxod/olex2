@@ -71,7 +71,7 @@ public:
   TNetwork& GetNetwork() const {  return *Network; }
 
   void Clear(bool ClearUnitCell);
-  void Uniq(bool removeSymmEquivalents = false);
+  void Uniq();
   // used if atoms availibility etc has changed
   void UpdateConnectivity();
   // used if the connectivity info (CONN/BIND/FREE etc) is changed
@@ -166,7 +166,7 @@ public:
   //the plane must be deleted by the caller !
   TSPlane* TmpPlane(const TSAtomPList& Atoms, double weightExtent=0);
   TSAtomPList NewCentroid(const TSAtomPList& Atoms);
-  TSAtom* NewAtom(const vec3d& center);
+  TSAtom& NewAtom(const vec3d& center);
 
   void SetAnis(const TCAtomPList& atoms, bool anis);
 

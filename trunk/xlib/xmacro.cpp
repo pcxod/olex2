@@ -146,7 +146,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Tries to add a new symmetry element to current space group to form a new "
     "one. [-1] is for center of symmetry");
 //_____________________________________________________________________________
-  xlib_InitMacro(Fuse, "f-removes symmetrical equivalents",
+  xlib_InitMacro(Fuse, EmptyString(),
     fpNone|fpOne|psFileLoaded,
     "Re-initialises the connectivity list. If a number is provided, atoms of "
     "the same type connected by bonds shorter than the provided number are "
@@ -1596,10 +1596,10 @@ void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         sa.CAtom().ccrd() = latt.GetAsymmUnit().CartesianToCell(cnt);
       }
     }
-    TXApp::GetInstance().XFile().GetLattice().Uniq(true);
+    TXApp::GetInstance().XFile().GetLattice().Uniq();
   }
   else
-    TXApp::GetInstance().XFile().GetLattice().Uniq(Options.Contains("f"));
+    TXApp::GetInstance().XFile().GetLattice().Uniq();
 }
 //..............................................................................
 void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {

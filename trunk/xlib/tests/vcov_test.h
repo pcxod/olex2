@@ -41,9 +41,9 @@ void vcov_test(OlxTests& t)  {
   TSAtom& src =  app.XFile().GetLattice().GetObjects().atoms[0];
   TSAtom a(NULL), b(NULL);
   a.CAtom(src.CAtom());
-  a.AddMatrix(const_cast<smatd*>(&src.GetMatrix(0)));
+  a._SetMatrix(const_cast<smatd*>(&src.GetMatrix()));
   b.CAtom(src.CAtom());
-  b.AddMatrix(const_cast<smatd*>(&src.GetMatrix(0)));
+  b._SetMatrix(const_cast<smatd*>(&src.GetMatrix()));
   // test cell axis esds
   for( size_t i=0; i < 3; i++ )  {
     vec3d tr;

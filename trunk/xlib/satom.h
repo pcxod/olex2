@@ -125,9 +125,9 @@ public:
   void SortBondsByLengthDsc()  {
     QuickSorter::SortSF(Bonds, &TSAtom::_SortBondsByLengthDsc);
   }
-  // allows to trim the number of nodes
-  void SetNodeCount(size_t cnt);
-  // removes specified node from the list of nodes
+  /* removes specified node from the list of nodes (this node is also removed
+  from the list of the node nodes
+  */
   void RemoveNode(TSAtom& node);
 
   struct Ref  {
@@ -166,6 +166,9 @@ public:
             Matrix->GetId() == id.matrix_id);
   }
   Ref GetRef() const {  return Ref(FCAtom->GetId(), Matrix->GetId());  }
+  // finds the matrix with smallest Id
+  Ref GetMinRef() const {  return GetMinRef(CAtom(), GetMatrix());  }
+  static Ref GetMinRef(const TCAtom &a, const smatd &generator);
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);

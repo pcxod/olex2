@@ -93,17 +93,8 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
     for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSite(j);
       const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix());
-      TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(
-        site.atom->GetId(), m.GetId()));
-      if( a == NULL || a->IsDeleted())  {
-        for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
-          uint32_t id = uc.MulMatrixId(site.atom->GetEquiv(k), m);
-          a = objects.atomRegistry.Find(TSAtom::Ref(
-            site.atom->GetId(), id));
-          if( a != NULL && !a->IsDeleted() )
-            break;
-        }
-      }
+      TSAtom* a = objects.atomRegistry.Find(
+        TSAtom::GetMinRef(*site.atom, m));
       if( a != NULL && !a->IsDeleted() )
         sa.AddNode(*a);
     }
@@ -1212,5 +1203,4 @@ bool TNetwork::HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
   }
   return false;
 }
-//..............................................................................
 //..............................................................................
