@@ -61,16 +61,6 @@ olxstr TSAtom::GetGuiLabel() const  {
     Network->GetLattice().GetUnitCell().GetSymmSpace(), *Matrix);
 }
 //..............................................................................
-void TSAtom::SetNodeCount(size_t cnt)  {
-  if( cnt >= (size_t)Nodes.Count() )
-    return;
-  for( size_t i=cnt; i < Nodes.Count(); i++ )  {
-    Nodes[i]->Nodes.Remove(this);
-    Nodes[i] = NULL;
-  }
-  Nodes.Pack();
-}
-//..............................................................................
 void TSAtom::RemoveNode(TSAtom& node)  {
   size_t ind = Nodes.IndexOf(&node);
   if( ind == InvalidIndex )  return;
@@ -174,5 +164,16 @@ bool TSAtom::IsGenerator(uint32_t m_id) const {
       return true;
   }
   return false;
+}
+//..............................................................................
+TSAtom::Ref TSAtom::GetMinRef(const TCAtom &a, const smatd &generator) {
+  uint32_t m_id = generator.GetId();
+  const TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
+  for (size_t i=0; i < a.EquivCount(); i++) {
+    uint32_t n_id = uc.MulMatrixId(a.GetEquiv(i), generator);
+    if (n_id < m_id)
+      m_id = n_id;
+  }
+  return Ref(a.GetId(), m_id);
 }
 //..............................................................................

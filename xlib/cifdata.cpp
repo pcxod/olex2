@@ -17,7 +17,7 @@ bool CifBond::DoesMatch(const TSAtom& a, const TSAtom& b) const {
       b.CAtom().GetId() == to.GetId() )
   {
     const TUnitCell & uc = a.GetNetwork().GetLattice().GetUnitCell();
-    return b.IsGenerator(uc.MulMatrix(a.GetMatrix(), mat));
+    return b.IsGenerator(uc.MulMatrixId(a.GetMatrix(), mat));
   }
   return false;
 }
@@ -28,8 +28,8 @@ bool CifAngle::DoesMatch(const TSAtom& l, const TSAtom& m, const TSAtom& r) cons
       r.CAtom().GetId() == right.GetId() )
   {
     const TUnitCell & uc = l.GetNetwork().GetLattice().GetUnitCell();
-    return l.IsGenerator(uc.MulMatrix(m.GetMatrix(), mat_l)) &&
-      r.IsGenerator(uc.MulMatrix(m.GetMatrix(), mat_r));
+    return l.IsGenerator(uc.MulMatrixId(m.GetMatrix(), mat_l)) &&
+      r.IsGenerator(uc.MulMatrixId(m.GetMatrix(), mat_r));
   }
   return false;
 }

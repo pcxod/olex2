@@ -486,7 +486,7 @@ public:
   void Generate( const vec3d& center, double rad,
     TCAtomPList* Template, bool ClearPrevCont)
   {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
-  void Uniq(bool remEqs=false)  {    FXFile->GetLattice().Uniq(remEqs);  }
+  void Uniq()  {    FXFile->GetLattice().Uniq();  }
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
     FXFile->GetLattice().GrowFragments(Shell, Template);  
   }
@@ -602,7 +602,7 @@ public:     void CalcProbFactor(float Prob);
   TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
   // will return generated symmetry equivalents too
   ConstPtrList<TXAtom> AddCentroid(const TXAtomPList& Atoms);
-  TXAtom *AddAtom(TXAtom* templ=NULL);
+  TXAtom &AddAtom(TXAtom* templ=NULL);
   // adopts atoms of the auinit and returns newly created atoms and bonds
   void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds);
   void SelectAtoms(const olxstr& Names, bool Invert=false);

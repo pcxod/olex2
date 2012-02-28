@@ -111,6 +111,7 @@ public:
         sr->AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
     }
     app.XFile().GetLattice().SetAnis(to_isot, false);
+    app.XFile().GetLattice().Uniq();
   }
   virtual bool Dispatch(int msg, short id, const IEObject* Sender, const IEObject* Data=NULL)  {  
     TGXApp& app = *TGlXApp::GetGXApp();
@@ -134,31 +135,29 @@ public:
           break;
         }
       if( split )  {
-        TXAtom* xa = TGlXApp::GetGXApp()->AddAtom(XA);
+        TXAtom &xa = TGlXApp::GetGXApp()->AddAtom(XA);
         const TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
-        if( xa != NULL )  {
-          xa->SetMoveable(true);
-          xa->SetRoteable(true);
-          SplitAtoms.AddNew(XA, xa);
-          int part = XA->CAtom().GetPart();
-          if( part == 0 )  part ++;
-          XA->CAtom().SetPart(part);
-          xa->CAtom().SetPart(part+1);
-          xa->crd() += 0.5;
-          vec3d c = au.Fractionalise(xa->crd());
-          xa->CAtom().ccrd() = c;
-          xa->ccrd() = c;
-          olxstr new_l = XA->GetLabel();
-          olxch lc = olxstr::o_tolower(new_l.GetLast());
-          if( olxstr::o_isalpha(lc) && new_l.Length() > 1 )
-            new_l[new_l.Length()-1] = ++lc;
-          else
-            new_l << 'a';
-          xa->CAtom().SetLabel(au.CheckLabel(&xa->CAtom(), new_l), false);
-          if( xa->GetType() == iQPeakZ )
-            xa->CAtom().SetQPeak(1.0);
-          TGlXApp::GetGXApp()->XFile().GetLattice().UpdateConnectivity();
-        }
+        xa.SetMoveable(true);
+        xa.SetRoteable(true);
+        SplitAtoms.AddNew(XA, &xa);
+        int part = XA->CAtom().GetPart();
+        if( part == 0 )  part ++;
+        XA->CAtom().SetPart(part);
+        xa.CAtom().SetPart(part+1);
+        xa.crd() += 0.5;
+        vec3d c = au.Fractionalise(xa.crd());
+        xa.CAtom().ccrd() = c;
+        xa.ccrd() = c;
+        olxstr new_l = XA->GetLabel();
+        olxch lc = olxstr::o_tolower(new_l.GetLast());
+        if( olxstr::o_isalpha(lc) && new_l.Length() > 1 )
+          new_l[new_l.Length()-1] = ++lc;
+        else
+          new_l << 'a';
+        xa.CAtom().SetLabel(au.CheckLabel(&xa.CAtom(), new_l), false);
+        if( xa.GetType() == iQPeakZ )
+          xa.CAtom().SetQPeak(1.0);
+        TGlXApp::GetGXApp()->XFile().GetLattice().UpdateConnectivity();
       }
       else  {  // do selection then
         UpdateSelectionCrds();
