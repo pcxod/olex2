@@ -839,10 +839,10 @@ public:
     return o_chrposi( T::Data(), T::_Length, wht);
   }
 
-  template <typename T> bool Contains(const T &v) const {
+  template <typename ST> bool Contains(const ST &v) const {
     return IndexOf(v) != InvalidIndex;
   }
-  template <typename T> bool Containsi(const T &v) const {
+  template <typename ST> bool Containsi(const ST &v) const {
     return IndexOfi(v) != InvalidIndex;
   }
 

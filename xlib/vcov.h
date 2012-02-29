@@ -496,13 +496,14 @@ protected:
     const eval& e)
   {
     TDoubleList df(points.Count()*3);
-    CalcDiff(CompositeVector::Make(points), df, e);
+    CompositeVector::CompositeVector_<list> pts(points);
+    CalcDiff(pts, df, e);
     CellEsd ced(*this, points);
     return TEValue<double>(e.calc(),
       sqrt(CalcEsd(points.Count(), vcov, df) + ced.DoCalc(e)));
   }
-  typedef ConstSlice<vec3d_alist,vec3d> crd_slice;
-  typedef ConstSlice<TDoubleList, double> weight_slice;
+  typedef ConstSlice<vec3d_alist> crd_slice;
+  typedef ConstSlice<TDoubleList> weight_slice;
   typedef CentroidEvaluator<crd_slice,weight_slice> cnt_et;
   typedef PointProxy pnt_pt;
   typedef PlaneEvaluator<crd_slice,weight_slice> pln_et;
