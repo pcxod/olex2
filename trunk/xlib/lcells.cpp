@@ -259,8 +259,7 @@ size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
   size_t updated_cnt = 0;
   QuickSorter::Sort(folders, Entry::NameComparator());
   QuickSorter::Sort(entries, Entry::NameComparator());
-  ConstSlice<TTypeList<FileEntry>, FileEntry>
-    file_entries(entries, 0, entries.Count());
+  ConstSlice<TTypeList<FileEntry> > file_entries(entries, 0, entries.Count());
   for( size_t i=0; i < folder.FileCount(); i++ )  {
     const TFileListItem &f = folder.GetFile(i);
     if( !ConsiderFile(f.GetName()) )  continue;
@@ -282,7 +281,7 @@ size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
       }
     }
   }
-  ConstSlice<TTypeList<FolderEntry>, FolderEntry>
+  ConstSlice<TTypeList<FolderEntry> >
     folder_entries(folders, 0, folders.Count());
   for( size_t i=0;  i < folder.FolderCount(); i++ )  {
     const TFileTree::Folder &f = folder.GetFolder(i);

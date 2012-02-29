@@ -152,15 +152,18 @@ public:
   const list_item_type& operator [] (size_t i) const {  return Get(i);  }
 };
 /* const vector/list slice */
-template <class VT, typename ItemT> class ConstSlice {
+template <class VT> class ConstSlice {
+public:
+  typedef typename VT::list_item_type list_item_type;
+private:
   const VT& data;
   const size_t offset, size;
 public:
   ConstSlice(const VT& _data, size_t off, size_t sz)
     : data(_data), offset(off), size(sz)  {}
   size_t Count() const {  return size;  }
-  const ItemT& Get(size_t i) const {  return  data[i+offset];  }
-  const ItemT& operator [] (size_t i) const {  return Get(i);  }
+  const list_item_type& Get(size_t i) const {  return  data[i+offset];  }
+  const list_item_type& operator [] (size_t i) const {  return Get(i);  }
 };
 
 /* matrix based on a vector */
