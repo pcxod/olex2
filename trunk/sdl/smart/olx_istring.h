@@ -839,6 +839,13 @@ public:
     return o_chrposi( T::Data(), T::_Length, wht);
   }
 
+  template <typename T> bool Contains(const T &v) const {
+    return IndexOf(v) != InvalidIndex;
+  }
+  template <typename T> bool Containsi(const T &v) const {
+    return IndexOfi(v) != InvalidIndex;
+  }
+
   template <typename AC>
   size_t FirstIndexOf(const AC* wht, size_t from=0) const {
     size_t i = o_strpos(&T::Data()[from], T::_Length-from, wht, o_strlen(wht));

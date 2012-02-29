@@ -2355,6 +2355,9 @@ void TLattice::BuildAtomRegistry()  {
     refs[i] = sa.GetMinRef();
     vec3i::UpdateMinMax(smatd::GetT(refs[i].matrix_id), mind, maxd);
   }
+  if (ac == 0) {
+    maxd = mind = vec3i(0);
+  }
   maxd[0] += 1;  maxd[1] += 1;  maxd[2] += 1;
   AtomRegistry::RegistryType& registry = Objects.atomRegistry.Init(mind, maxd);
   for( size_t i=0; i < ac; i++ )  {

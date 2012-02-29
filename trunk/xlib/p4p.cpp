@@ -10,6 +10,7 @@
 #include "p4p.h"
 #include "asymmunit.h"
 #include "symmlib.h"
+#include "xmacro.h"
 
 void TP4PFile::Clear()  {
   GetRM().Clear(rm_clear_ALL);
@@ -17,7 +18,7 @@ void TP4PFile::Clear()  {
 }
 //.............................................................................
 void TP4PFile::SaveToStrings(TStrList& SL)  {
-  SL.Add("FILEID Created by OLEX2");
+  SL.Add("FILEID Created by OLEX2: ") << XLibMacros::GetCompilationInfo();
   SL.Add(olxstr("TITLE   ") << GetTitle());
   SL.Add(olxstr("CHEM    ") << GetRM().GetUserContentStr());
 
@@ -77,6 +78,7 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Add("CELLSD",  &CellSd);
   params.Add("TITLE",   &Title);
   params.Add("SG",      &SGString);
+  params.Add("FILEID",  &FileId);
   for( size_t i=0; i < Strings.Count(); i++ )  {
     olxstr Tmp = olxstr::DeleteSequencesOf<char>(Strings[i], ' ');
     if( Tmp.IsEmpty() )  continue;

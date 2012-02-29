@@ -4800,6 +4800,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   // a Open dialog appearing breaks the wxWidgets sizing...
   if( !IsShown() && Cmds.IsEmpty() )  return;
+  if (TOlxVars::UnsetVar("olx_disable_reap"))
+    return;
   SetSGList(EmptyString());
   TXFile::NameArg file_n;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
@@ -5013,13 +5015,17 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         FXApp->CheckFileType<TCRSFile>() )
       {
         if (TBasicApp::GetInstance().Options.FindValue(
-          "p4p_automate", TrueString()).ToBool())
+          "p4p_automate", FalseString()).ToBool())
         {
           TMacroError er;
           if( TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins")))
             Macros.ProcessMacro("SG", er);
           else
             Macros.ProcessMacro("SGE", er);
+        }
+        else if (FXApp->CheckFileType<TP4PFile>()) {
+          TP4PFile &p4p = FXApp->XFile().GetLastLoader<TP4PFile>();
+          RunWhenVisibleTasks.Add(new P4PTask(p4p));
         }
       }
     // automatic export for kappa cif

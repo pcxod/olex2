@@ -1012,6 +1012,17 @@ olxstr TEFile::Which(const olxstr& filename)  {
   return EmptyString();
 }
 //..............................................................................
+olxstr TEFile::Which(const olxstr& filename, const TStrList &paths) {
+  olxstr rv = Which(filename);
+  if (!rv.IsEmpty()) return rv;
+  for (size_t i=0; i < paths.Count(); i++) {
+    olxstr d = TEFile::AddPathDelimeter(paths[i]) << filename;
+    if (Exists(d))
+      return d;
+  }
+  return EmptyString();
+}
+//..............................................................................
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////EXTERNAL LIBRRAY FUNCTIONS//////////////////////////////////

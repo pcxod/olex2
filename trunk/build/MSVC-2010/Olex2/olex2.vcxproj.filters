@@ -204,6 +204,9 @@
     <ClCompile Include="..\..\..\olex\nui\skeleton.cpp">
       <Filter>nui</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\olex\tasks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
@@ -391,6 +394,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\olex\nui\nui.h">
       <Filter>nui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\olex\tasks.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

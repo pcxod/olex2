@@ -496,8 +496,7 @@ protected:
     const eval& e)
   {
     TDoubleList df(points.Count()*3);
-    CompositeVector<list, double> pvec(points);
-    CalcDiff(pvec, df, e);
+    CalcDiff(CompositeVector::Make(points), df, e);
     CellEsd ced(*this, points);
     return TEValue<double>(e.calc(),
       sqrt(CalcEsd(points.Count(), vcov, df) + ced.DoCalc(e)));
@@ -586,7 +585,7 @@ public:
     grad[0] = (ij*ca - kj)*oos/ij_l;
     grad[2] = (kj*ca - ij)*oos/kj_l;
     grad[1] = -(grad[0] + grad[2]);
-    double qesd = CalcEsd(3, ch.m, CompositeVector<vec3d_alist, double>(grad));
+    double qesd = CalcEsd(3, ch.m, CompositeVector::Make(grad));
     qesd += cell_esd;
     const double a = acos(ca);
     return TEValue<double>(a,(qesd < 1e-15 ? 0 : sqrt(qesd)))*=180/M_PI;
@@ -613,7 +612,7 @@ public:
     grad[3] = -(nk*(kj_l/nk.QLength()));
     grad[1] = grad[0]*(ij.DotProd(kj)/kj_ql -1.0) - grad[3]*(kl.DotProd(kj)/kj_ql);
     grad[2] = grad[3]*(kl.DotProd(kj)/kj_ql -1.0) - grad[0]*(ij.DotProd(kj)/kj_ql);
-    double esd = CalcEsd(4, ch.m, CompositeVector<vec3d_alist, double>(grad));
+    double esd = CalcEsd(4, ch.m, CompositeVector::Make(grad));
     esd += CellEsd(*this, ch.points).DoCalc(
       TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt>(
         pnt_pt(ch.points[0]), pnt_pt(ch.points[1]),

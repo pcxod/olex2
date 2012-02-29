@@ -283,6 +283,7 @@ public:
   string. If the filename is absolute returns it straight away.
   */
   static olxstr Which(const olxstr& filename);
+  static olxstr Which(const olxstr& filename, const TStrList &paths);
   /* returns a new object created with new using tmpnam (on non-windows
   systems), or properly named file object which is deleted upon the object
   deletion

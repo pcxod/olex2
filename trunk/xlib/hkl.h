@@ -28,30 +28,19 @@ class THklFile: public IEObject  {
 protected:
   vec3i MaxHkl, MinHkl;
   double MaxI, MaxIS, MinI, MinIS;
-  // the function must be caled before the reflection is added to the list, as
-  // it needs to initialise the starting values of min and max
-  inline void UpdateMinMax(const TReflection& r)  {
-    if( Refs.IsEmpty() )  {
-      // set starting values
-      MinHkl[0] = MaxHkl[0] = r.GetH();
-      MinHkl[1] = MaxHkl[1] = r.GetK();
-      MinHkl[2] = MaxHkl[2] = r.GetL();
-      MinI = MaxI = r.GetI();
-      MinIS = MaxIS = r.GetS();
-    }
-    else  {
-      vec3i::UpdateMinMax(r.GetHkl(), MinHkl, MaxHkl);
-      if( r.GetI() < MinI )  {  MinI = r.GetI();  MinIS = r.GetS();  }
-      if( r.GetI() > MaxI )  {  MaxI = r.GetI();  MaxIS = r.GetS();  }
-    }
-  }
+  evecd Cell, CellEsd;
+  double Radiation;
+  /* the function must be caled before the reflection is added to the list, as
+  it needs to initialise the starting values of min and max
+  */
+  void UpdateMinMax(const TReflection& r);
   void InitHkl3D();
   void Clear3D();
+  void Init();
 public:
-  THklFile() : Hkl3D(NULL)  {  Basis.I();  }
-  THklFile(const mat3d& hkl_transformation) :
-    Hkl3D(NULL), Basis(hkl_transformation)  {}
-    virtual ~THklFile()  {  Clear();  }
+  THklFile();
+  THklFile(const mat3d& hkl_transformation);
+  virtual ~THklFile()  {  Clear();  }
 
   void Append(const THklFile& hkls);
   void Append(const TRefPList& hkls);
@@ -60,16 +49,16 @@ public:
   // function has to be called to sort the list of reflections
   void EndAppend();
 
-  inline TReflection& Reflection(size_t i)  const {  return *Refs[i];  }
-  inline TReflection& operator [](size_t i) const {  return *Refs[i];  }
-  inline size_t RefCount() const {  return Refs.Count();  }
+  TReflection& Reflection(size_t i)  const {  return *Refs[i];  }
+  TReflection& operator [](size_t i) const {  return *Refs[i];  }
+  size_t RefCount() const {  return Refs.Count();  }
 
-  inline const vec3i& GetMaxHkl() const {  return MaxHkl;  }
-  inline const vec3i& GetMinHkl() const {  return MinHkl;  }
-  inline double GetMaxI() const { return MaxI;  }
-  inline double GetMaxIS() const { return MaxIS;  }
-  inline double GetMinI() const { return MinI;  }
-  inline double GetMinIS() const { return MinIS;  }
+  const vec3i& GetMaxHkl() const {  return MaxHkl;  }
+  const vec3i& GetMinHkl() const {  return MinHkl;  }
+  double GetMaxI() const { return MaxI;  }
+  double GetMaxIS() const { return MaxIS;  }
+  double GetMinI() const { return MinI;  }
+  double GetMinIS() const { return MinIS;  }
 
   void Clear();
   void Sort()  {  QuickSorter::SortSF(Refs, HklCmp);  }
@@ -83,6 +72,12 @@ public:
   void UpdateRef(const TReflection& R);
   // returns reflections owned by this object
   void AllRefs(const TReflection& R, const smatd_list& sg, TRefPList& Res);
+  bool HasCell() const {
+    return !(Cell.IsEmpty() || CellEsd.IsEmpty() || Radiation == 0);
+  }
+  const evecd &GetCell() const {  return Cell;  }
+  const evecd &GetCellEsd() const {  return CellEsd;  }
+  double GetRadiation() const {  return Radiation;  }
 //..............................................................................
   template <class Merger> void MergeInP1(TRefList& output) const {
     vec3i_list omits;

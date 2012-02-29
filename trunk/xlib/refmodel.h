@@ -186,7 +186,8 @@ public:
   TExyzGroups ExyzGroups;
   TAfixGroups AfixGroups;
   TSameGroupList  rSAME;
-  TActionQueue& OnSetBadReflections;
+  TActionQueue &OnSetBadReflections,
+    &OnCellDifference;
   TAsymmUnit& aunit;
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
   ConstraintContainer<same_group_constraint> SameGroups;
@@ -448,9 +449,9 @@ Friedel opposites of components 1 ... m
   //removes the matrix or decriments the reference count
   void RemUsedSymm(const smatd& matr);
   // returns the number of the used symmetry matrices
-  inline size_t UsedSymmCount() const {  return UsedSymm.Count();  }
+  size_t UsedSymmCount() const {  return UsedSymm.Count();  }
   // returns used symmetry matric at specified index
-  inline const smatd& GetUsedSymm(size_t ind) const {
+  const smatd& GetUsedSymm(size_t ind) const {
     return UsedSymm.GetValue(ind).symop;
   }
   /* return index of given symmetry matrix in the list or -1, if it is not in
@@ -458,8 +459,8 @@ Friedel opposites of components 1 ... m
   */
   size_t UsedSymmIndex(const smatd& matr) const;
   // deletes all used symmetry matrices
-  inline void ClearUsedSymm()  {  UsedSymm.Clear();  }
-  inline const smatd* FindUsedSymm(const olxstr& name)  {
+  void ClearUsedSymm()  {  UsedSymm.Clear();  }
+  const smatd* FindUsedSymm(const olxstr& name)  {
     const size_t i = UsedSymm.IndexOf(name);
     return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i).symop);
   }
@@ -472,13 +473,13 @@ Friedel opposites of components 1 ... m
   // adds new custom scatterer (created with new, will be deleted)
   void AddSfac(XScatterer& sc);
   // returns number of custom scatterers
-  inline size_t SfacCount() const {  return SfacData.Count();  }
+  size_t SfacCount() const {  return SfacData.Count();  }
   // returns scatterer at specified index
-  inline XScatterer& GetSfacData(size_t i) const {
+  XScatterer& GetSfacData(size_t i) const {
     return *SfacData.GetValue(i);
   }
   // finds scatterer by label, returns NULL if nothing found
-  inline XScatterer* FindSfacData(const olxstr& label) const {
+  XScatterer* FindSfacData(const olxstr& label) const {
     size_t ind = SfacData.IndexOf(label);
     return ind == InvalidIndex ? NULL : SfacData.GetValue(ind);
   }

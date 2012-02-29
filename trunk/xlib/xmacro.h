@@ -301,7 +301,7 @@ public:
   static TActionQueue &OnDelIns, &OnAddIns;
   static olxstr VarName_ResetLock()  {  return "olx_lock_reset";  }
   static olxstr VarName_InternalTref()  {  return "olx_internal_tref";  }
-
+  static olxstr GetCompilationInfo();
 protected:
   class TEnviComparator  {
   public:

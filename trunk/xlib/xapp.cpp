@@ -84,10 +84,16 @@ olxstr TXApp::LocateHklFile()  {
     HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
     olxstr HkcFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkc");
     if( TEFile::Existsi(olxstr(HkcFN), HkcFN) )  {
-      TEFile::Copy( HkcFN, HklFN );
+      TEFile::Copy(HkcFN, HklFN);
       return HklFN;
     }
   }
+  // last chance - get any hkl in the same folder (only if one!)
+  TStrList hkl_files;
+  olxstr dir = TEFile::ExtractFilePath(XFile().GetFileName());
+  TEFile::ListDir(dir, hkl_files, "*.hkl", sefFile);
+  if (hkl_files.Count() == 1)
+    return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
   return EmptyString();
 }
 //..............................................................................

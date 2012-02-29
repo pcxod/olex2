@@ -30,14 +30,16 @@ protected:
   short MaxThreadCount;
   bool MainFormVisible, Profiling, BaseDirWriteable;
   static olx_critical_section app_cs;
-  void ReadOptions(const olxstr &fn);
 public:
   TParamList Options;
   TStrList Arguments;
   // the file name of the application with full path
   TBasicApp(const olxstr& AppName);
   virtual ~TBasicApp();
-
+  /*The options are read when the object is constructed, calling it
+  consequently will update the values
+  */
+  void ReadOptions(const olxstr &fn);
   /* instance dir dependents on the location of the executable and to be used
   to store instance specific data - updates etc.  If unset, the value is equal
   to the BaseDir
@@ -111,9 +113,9 @@ public:
   TLibrary* ExportLibrary(const olxstr& lib_name="app");
 
   // application layer critical section
-  inline static void EnterCriticalSection()  {  app_cs.enter();  }
-  inline static void LeaveCriticalSection()  {  app_cs.leave();  }
-  inline static olx_critical_section& GetCriticalSection() {  return app_cs;  }
+  static void EnterCriticalSection()  {  app_cs.enter();  }
+  static void LeaveCriticalSection()  {  app_cs.leave();  }
+  static olx_critical_section& GetCriticalSection() {  return app_cs;  }
   DefPropP(short, MaxThreadCount)
   TActionQueue& OnProgress;
   TActionQueue& OnTimer;
