@@ -824,6 +824,7 @@
     <ClCompile Include="..\..\..\olex\main_gui.cpp" />
     <ClCompile Include="..\..\..\olex\nui\nui.cpp" />
     <ClCompile Include="..\..\..\olex\nui\skeleton.cpp" />
+    <ClCompile Include="..\..\..\olex\tasks.cpp" />
     <ClCompile Include="..\..\..\repository\cdsfs.cpp" />
     <ClCompile Include="..\..\..\olex\edit.cpp" />
     <ClCompile Include="..\..\..\repository\eprocess.cpp" />
@@ -887,6 +888,7 @@
     <ClInclude Include="..\..\..\olex\dgrad.h" />
     <ClInclude Include="..\..\..\olex\edit.h" />
     <ClInclude Include="..\..\..\olex\nui\nui.h" />
+    <ClInclude Include="..\..\..\olex\tasks.h" />
     <ClInclude Include="..\..\..\repository\cdsfs.h" />
     <ClInclude Include="..\..\..\repository\eprocess.h" />
     <ClInclude Include="..\..\..\repository\fftn.h" />

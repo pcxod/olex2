@@ -367,8 +367,11 @@ public:
     return rv << ", " << data[1] << ", " << data[2];
   }
   TIString ToString() const {  return StrRepr<olxstr>();  }
-  olxcstr ToCStr()   const {  return StrRepr<olxcstr>();  }
-  olxwstr ToWStr()   const {  return StrRepr<olxwstr>();  }
+  olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }
+  olxwstr ToWStr() const {  return StrRepr<olxwstr>();  }
+public:
+  typedef T list_item_type;
+  typedef T number_type;
 };
 
 template <class T> class TMatrix33  {
@@ -735,6 +738,8 @@ protected:  // used in GaussSolve to sort the matrix
       }
     }
   }
+public:
+  typedef T number_type;
 };
 
   typedef TVector3<float>  vec3f;

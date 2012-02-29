@@ -176,6 +176,7 @@ bool TGlXApp::OnInit()  {
 #endif
     XApp->SetSharedDir(patcher::PatchAPI::GetSharedDir());
     XApp->SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
+    XApp->ReadOptions(XApp->GetInstanceDir() + ".options");
   }
   catch(const TExceptionBase& e)  {
     TMainFrame::ShowAlert(e);

@@ -30,6 +30,7 @@
 #include "macrolib.h"
 #include "exparse/exptree.h"
 #include "nui/nui.h"
+#include "tasks.h"
 
 #define  ID_FILE0 100
 
@@ -175,6 +176,7 @@ enum  {
   ID_ADDINS,
   ID_VarChange,
   ID_BadReflectionSet,
+  ID_CellChanged,
 
   ID_UpdateThreadTerminate,
   ID_UpdateThreadDownload,
@@ -204,12 +206,6 @@ class TGlXApp;
 struct TPopupData  {
   TDialog *Dialog;
   class THtml *Html;
-};
-//............................................................................//
-struct TScheduledTask  {
-  bool Repeatable;
-  olxstr Task;
-  long Interval, LastCalled;
 };
 //............................................................................//
 class TMainForm: public TMainFrame, public AEventsDispatcher,
@@ -244,6 +240,7 @@ protected:
   TCSTypeList<olxstr, olxstr> StoredParams;
 
   TTypeList<TScheduledTask> Tasks;
+  TPtrList<IOlxTask> RunWhenVisibleTasks;
 
   class TGlCanvas *FGlCanvas;
   TGXApp* FXApp;
@@ -305,7 +302,7 @@ public:
   bool OnMouseDown(int x, int y, short Flags, short Buttons);
   bool OnMouseUp(int x, int y, short Flags, short Buttons);
   bool OnMouseDblClick(int x, int y, short Flags, short Buttons);
-  virtual bool Show( bool v );
+  virtual bool Show(bool v);
   TActionQueue &OnModeChange, &OnStateChange;
 
   void SetUserCursor(const olxstr& param, const olxstr& mode);
@@ -771,6 +768,7 @@ public:
   virtual void SetScenesFolder(const olxstr &sf)  {  ScenesDir = sf;  }
   virtual void LoadScene(const TDataItem& Root, TGlLightModel &FLM);
   virtual void SaveScene(TDataItem& Root, const TGlLightModel &FLM) const;
+  void UpdateUserOptions(const olxstr &option, const olxstr &value);
 
   // fires the state change as well
   void UseGlTooltip(bool v);
@@ -856,7 +854,7 @@ public:
 // General interface
 //..............................................................................
 // actions
-  void ObjectUnderMouse( AGDrawObject *G);
+  void ObjectUnderMouse(AGDrawObject *G);
 //..............................................................................
   DECLARE_CLASS(TMainForm)
   DECLARE_EVENT_TABLE()

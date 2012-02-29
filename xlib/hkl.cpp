@@ -17,10 +17,46 @@
 #include "exception.h"
 #include "ematrix.h"
 #include "symmlib.h"
+#include "math/composite.h"
 
+//..............................................................................
+THklFile::THklFile()  {
+  Basis.I();
+  Init();
+}
+//..............................................................................
+THklFile::THklFile(const mat3d& hkl_transformation)
+  : Basis(hkl_transformation)
+{
+  Init();
+}
+//..............................................................................
+void THklFile::Init() {
+  Cell.Resize(0);
+  CellEsd.Resize(0);
+  Radiation = 0;
+  Hkl3D = NULL;
+}
+//..............................................................................
 void THklFile::Clear()  {
   Refs.DeleteItems().Clear();
   Clear3D();
+}
+//..............................................................................
+void THklFile::UpdateMinMax(const TReflection& r)  {
+  if( Refs.IsEmpty() )  {
+    // set starting values
+    MinHkl[0] = MaxHkl[0] = r.GetH();
+    MinHkl[1] = MaxHkl[1] = r.GetK();
+    MinHkl[2] = MaxHkl[2] = r.GetL();
+    MinI = MaxI = r.GetI();
+    MinIS = MaxIS = r.GetS();
+  }
+  else  {
+    vec3i::UpdateMinMax(r.GetHkl(), MinHkl, MaxHkl);
+    if( r.GetI() < MinI )  {  MinI = r.GetI();  MinIS = r.GetS();  }
+    if( r.GetI() > MaxI )  {  MaxI = r.GetI();  MaxIS = r.GetS();  }
+  }
 }
 //..............................................................................
 void THklFile::Clear3D()  {
@@ -41,7 +77,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
   try  {
     Clear();
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
-    TCStrList SL, Toks;
+    TCStrList SL;
     bool ZeroRead = false, 
       HklFinished = false,
       HasBatch = false,
@@ -161,7 +197,43 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
         }
       }
       else  {
-        if( ins == NULL )  break;
+        if( ins == NULL )  {
+          for( size_t j=i; j < SL.Count(); j++ )  {
+            olxstr line = SL[j].Trim(' ');
+            if( line.StartsFromi("CELL") )  {
+              TStrList Toks(line, ' ');
+              if( Toks.Count() == 8 ) {
+                try {
+                  Radiation = Toks[1].ToDouble();
+                  evecd cell(6); // use tmp in the case CELL is invalid
+                  for (size_t k=2; k < Toks.Count(); k++)
+                    cell[k-2] = Toks[k].ToDouble();
+                  Cell = cell;
+                }
+                catch (const TExceptionBase &e) {
+                  throw TFunctionFailedException(__OlxSourceInfo, e, "reading CELL");
+                }
+              }
+            }
+            else if( line.StartsFromi("ZERR") )  {
+              TStrList Toks(line, ' ');
+              if( Toks.Count() == 8 ) {
+                try {
+                  evecd cell_esd(6); // use tmp in the case CELL is invalid
+                  for (size_t k=2; k < Toks.Count(); k++)
+                    cell_esd[k-2] = Toks[k].ToDouble();
+                  CellEsd = cell_esd;
+                  if (!Cell.IsEmpty())
+                    break;
+                }
+                catch (const TExceptionBase &e) {
+                  throw TFunctionFailedException(__OlxSourceInfo, e, "reading ZERR");
+                }
+              }
+            }
+          }
+          break;
+        }
         ins->Clear();
         ins->SetTitle(
           TEFile::ChangeFileExt(TEFile::ExtractFileName(FN),
@@ -170,33 +242,42 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
         for( size_t j=i; j < SL.Count(); j++ )  {
           olxstr line = SL[j].Trim(' ');
           if( line.IsEmpty() )  continue;
-          Toks.Clear();
           if( line.StartsFromi("CELL") )  {
-            Toks.Strtok(line, ' ');
+            TStrList Toks(line, ' ');
             if( Toks.Count() != 8 ) {
               throw TFunctionFailedException(__OlxSourceInfo,
                 "invalid CELL format");
             }
-            ins->GetRM().expl.SetRadiation(Toks[1].ToDouble());
+            ins->GetRM().expl.SetRadiation(Radiation = Toks[1].ToDouble());
             ins->GetAsymmUnit().GetAxes() = vec3d(Toks[2].ToDouble(),
               Toks[3].ToDouble(), Toks[4].ToDouble());
             ins->GetAsymmUnit().GetAngles() = vec3d(Toks[5].ToDouble(),
               Toks[6].ToDouble(), Toks[7].ToDouble());
+            Cell.Assign(CompositeVector::Make(
+              vec3d_list() << ins->GetAsymmUnit().GetAxes() <<
+                ins->GetAsymmUnit().GetAngles()),
+              6);
             cell_found = true;
           }
           if( line.StartsFromi("ZERR") )  {
-            Toks.Strtok(line, ' ');
-            if( Toks.Count() != 8 )
-              throw TFunctionFailedException(__OlxSourceInfo, "invalid ZERR format");
-            ins->GetAsymmUnit().SetZ(olx_round(Toks[1].ToDouble()));
+            TStrList Toks(line, ' ');
+            if( Toks.Count() != 8 ) {
+              throw TFunctionFailedException(__OlxSourceInfo,
+                "invalid ZERR format");
+            }
+            ins->GetAsymmUnit().SetZ((short)olx_round(Toks[1].ToDouble()));
             ins->GetAsymmUnit().GetAxisEsds() = vec3d(Toks[2].ToDouble(),
               Toks[3].ToDouble(), Toks[4].ToDouble());
             ins->GetAsymmUnit().GetAngleEsds() = vec3d(Toks[5].ToDouble(),
               Toks[6].ToDouble(), Toks[7].ToDouble());
+            CellEsd.Assign(CompositeVector::Make(
+              vec3d_list() << ins->GetAsymmUnit().GetAxisEsds() <<
+                ins->GetAsymmUnit().GetAngleEsds()),
+              6);
             cell_found = true;
           }
           else if( line.StartsFromi("SFAC") )  {
-            Toks.Strtok(line, ' ');  // do the validation
+            TStrList Toks(line, ' ');  // do the validation
             TStrList unit;
             for( size_t k=1; k < Toks.Count(); k++ )  {
               if( !XElementLib::IsAtom(Toks[k]) ) {
@@ -209,14 +290,16 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
             ins->GetRM().SetUserContentSize(unit);
             sfac_found = true;
           }
-          else if( line.StartsFromi("TEMP") )
+          else if( line.StartsFromi("TEMP") ||
+                   line.StartsFromi("SIZE") ||
+                   line.StartsFromi("REM"))
+          {
             ins->AddIns(line, ins->GetRM());
-          else if( line.StartsFromi("SIZE") )
-            ins->AddIns(line, ins->GetRM());
-          else if( line.StartsFromi("REM") )
-            ins->AddIns(line, ins->GetRM());
-          else if( line.StartsFromi("UNIT") )
-            ins->GetRM().SetUserContentSize(TStrList(line.SubStringFrom(5), ' '));
+          }
+          else if( line.StartsFromi("UNIT") ) {
+            ins->GetRM().SetUserContentSize(
+              TStrList(line.SubStringFrom(5), ' '));
+          }
         }
         if( !cell_found || !sfac_found ) {
           throw TFunctionFailedException(__OlxSourceInfo,

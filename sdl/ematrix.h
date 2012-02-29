@@ -672,6 +672,8 @@ public:
       }
     }
   }
+public:
+  typedef MatType number_type;
 };
 
   typedef TMatrix<float> ematf;

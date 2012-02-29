@@ -22,6 +22,7 @@
 #include "math/plane.h"
 #include "ins.h"
 #include "analysis.h"
+#include "math/composite.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
   VarRefrencerId("basf"),
@@ -46,6 +47,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   AfixGroups(*this), 
   rSAME(*this),
   OnSetBadReflections(Actions.New("OnSetBadReflections")),
+  OnCellDifference(Actions.New("OnCellDifference")),
   aunit(au), 
   Conn(*this)
 {
@@ -436,6 +438,19 @@ const TRefList& RefinementModel::GetReflections() const {
     THklFile hf(HKLF_mat);
     HklFileMat = HKLF_mat;
     hf.LoadFromFile(HKLSource);
+    if (hf.HasCell()) {
+      evecd cell = evecd::FromVector(
+        CompositeVector::Make(vec3d_list() << aunit.GetAxes() <<
+          aunit.GetAngles()));
+      evecd esd = evecd::FromVector(
+        CompositeVector::Make(vec3d_list() << aunit.GetAxisEsds() <<
+          aunit.GetAngleEsds()));
+      if (cell.QDistanceTo(hf.GetCell()) > 1e-8 ||
+          esd.QDistanceTo(hf.GetCellEsd()) > 1e-8 )
+      {
+        OnCellDifference.Execute(this, &hf);
+      }
+    }
     _HklStat.FileMinInd = hf.GetMinHkl();
     _HklStat.FileMaxInd = hf.GetMaxHkl();
     TArray3D<TRefPList*> hkl3d(_HklStat.FileMinInd , _HklStat.FileMaxInd);

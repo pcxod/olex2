@@ -1025,7 +1025,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < objects.atoms.Count(); i++ )  {
     TSAtom& sa = objects.atoms[i];
     const cm_Element& elm = sa.GetType();
-    if( elm.GetMr() < 3.5 )  // H,D,Q
+    if( elm.z < 2 )  // H,D,Q
       continue;
     size_t hc = 0;
     for( size_t j=0; j < sa.NodeCount(); j++ )  {
@@ -1039,7 +1039,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
     }
     if( hc == 0 || hc >= 4 )  continue;
     all.Clear();
-    uc.FindInRangeAM(sa.ccrd(), max_d+elm.r_bonding-0.6, all);
+    uc.FindInRangeAM(sa.ccrd(), max_d, all);
     for( size_t j=0; j < all.Count(); j++ )  {
       const TCAtom& ca = *all[j].GetA();
       const cm_Element& elm1 = ca.GetType();
@@ -5272,6 +5272,28 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(olxstr(R1) << ',' << R1p << ',' << wR2);
 }
 //..............................................................................
+olxstr XLibMacros::GetCompilationInfo() {
+  olxstr timestamp(olxstr(__DATE__) << ' ' << __TIME__), revision;
+#ifdef _SVN_REVISION_AVAILABLE
+  timestamp = compile_timestamp;
+  revision = svn_revision_number;
+#endif
+  olxstr rv = timestamp;
+  if( !revision.IsEmpty() )  rv << " svn.r" << revision;
+#ifdef _MSC_FULL_VER
+  rv << " MSC:" << _MSC_FULL_VER;
+#elif __INTEL_COMPILER
+  rv << " Intel:" << __INTEL_COMPILER;
+#elif __GNUC__
+  rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
+#endif
+  rv << " on " << TBasicApp::GetPlatformString();
+#ifdef _CUSTOM_BUILD_
+  rv << " for " << CustomCodeBase::GetName();
+#endif
+  return rv;
+}
+//..............................................................................
 void XLibMacros::funGetCompilationInfo(const TStrObjList& Params,
   TMacroError &E)
 {
@@ -5288,20 +5310,7 @@ void XLibMacros::funGetCompilationInfo(const TStrObjList& Params,
   }
   else  {
     if( Params.Count() == 1 && Params[0].Equalsi("full") )  {
-      olxstr rv = timestamp;
-      if( !revision.IsEmpty() )  rv << " svn.r" << revision;
-#ifdef _MSC_FULL_VER
-      rv << " MSC:" << _MSC_FULL_VER;
-#elif __INTEL_COMPILER
-      rv << " Intel:" << __INTEL_COMPILER;
-#elif __GNUC__
-      rv << " GCC:" << __GNUC__ << '.' << __GNUC_MINOR__ << '.' << __GNUC_PATCHLEVEL__;
-#endif
-      rv << " on " << TBasicApp::GetPlatformString();
-#ifdef _CUSTOM_BUILD_
-      rv << " for " << CustomCodeBase::GetName();
-#endif
-      E.SetRetVal(rv);
+      E.SetRetVal(GetCompilationInfo());
     }
     else  {
       try {  
