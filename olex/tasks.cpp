@@ -36,15 +36,15 @@ void P4PTask::Run() {
 
 void CellChangeTask::Run() {
   TMainForm *mf = TGlXApp::GetMainForm();
+  if (hklsrc != TXApp::GetInstance().XFile().GetRM().GetHKLSource())
+    return;
   olxstr opt = TBasicApp::GetInstance().Options.FindValue("use_hkl_cell");
   bool use = false;
   if (opt.IsEmpty()) {
     olxstr rv = TdlgMsgBox::Execute(mf, "Cell parameters in your HKL file"
-      " differ from currently used. Would you like to update them?\nNote that "
-      "if you answer no, this dialog will not appear until the HKL file is "
-      "changed or Olex2 is restarted",
+      " differ from currently used. Would you like to update them?",
       "Different cells",
-      "Always use cell from the HKL file",
+      "Remember my decision",
       wxYES|wxNO|wxICON_QUESTION, true);
     use = rv.Contains('Y');
     if (rv.Containsi('R'))

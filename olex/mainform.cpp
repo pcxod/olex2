@@ -2340,7 +2340,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if (Data != NULL && EsdlInstanceOf(*Data, THklFile) ) {
        const THklFile &hf = *dynamic_cast<const THklFile*>(Data);
       RunWhenVisibleTasks.Add(
-        new CellChangeTask(hf.GetCell(), hf.GetCellEsd()));
+        new CellChangeTask(FXApp->XFile().GetRM().GetHKLSource(),
+          hf.GetCell(), hf.GetCellEsd()));
     }
   }
   return res;

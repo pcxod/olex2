@@ -35,9 +35,10 @@ struct P4PTask : public IOlxTask {
 };
 
 struct CellChangeTask : public IOlxTask {
+  olxstr hklsrc;
   evecd cell, esds;
-  CellChangeTask(const evecd &cell_, const evecd &esds_)
-    : cell(cell_), esds(esds_)
+  CellChangeTask(const olxstr &hklsrc_, const evecd &cell_, const evecd &esds_)
+    : cell(cell_), esds(esds_), hklsrc(hklsrc_)
   {}
   
   virtual void Run();
