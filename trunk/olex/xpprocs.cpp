@@ -1700,7 +1700,10 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( orientOnly )  {
     plane = FXApp->TmpPlane(&Atoms, weightExtent);
     if( plane != NULL )  {
-      FXApp->GetRender().GetBasis().OrientNormal(plane->GetNormal());
+      mat3d m = plane->GetBasis();
+      vec3d d1 = (m[2]+m[1]).Normalise();
+      vec3d d2 = m[0].XProdVec(d1).Normalise();
+      FXApp->GetRender().GetBasis().Orient(d1, d2, m[0]);
       FXApp->SetGridDepth(plane->GetCenter());
       delete plane;
       plane = NULL;
@@ -7585,6 +7588,13 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
     FunctionAccessor::Make(&TSAtom::crd),
     FunctionAccessor::MakeStatic(&TSAtom::weight_occu_z));
   io.sort();
+  if (Options.Contains("o"))  {
+    io.axis[2] = io.axis[0].XProdVec(io.axis[1]).Normalise();
+    FXApp->GetRender().GetBasis().Orient(io.axis, false);
+    FXApp->GetRender().GetBasis().SetCenter(
+      FXApp->GetRender().GetBasis().GetCenter() - io.center);
+  }
+  else {
   TBasicApp::NewLogEntry() <<
     "Ixx =  " << olxstr::FormatFloat(3, io.moments[0]) <<
     "  Iyy = "  << olxstr::FormatFloat(3, io.moments[1]) <<
@@ -7592,14 +7602,7 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
   TBasicApp::NewLogEntry() << "Eigen vectors:";
   for( size_t i=0; i < 3; i++ )
     TBasicApp::NewLogEntry() << io.axis[i].ToString();
-
-  if (Options.Contains("o"))  {
-    io.axis[2] = io.axis[0].XProdVec(io.axis[1]).Normalise();
-    FXApp->GetRender().GetBasis().Orient(io.axis, false);
-    FXApp->GetRender().GetBasis().SetCenter(
-      FXApp->GetRender().GetBasis().GetCenter() - io.center);
   }
-
 }
 //..............................................................................
 void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

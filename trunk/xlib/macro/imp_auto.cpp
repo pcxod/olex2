@@ -306,15 +306,21 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   if( xapp.XFile().GetFileName() == TAutoDB::GetInstance().GetLastFileName() )
     Uisos.Assign(TAutoDB::GetInstance().GetUisos());
   for( size_t i=0; i < latt.FragmentCount(); i++ )  {
-    if( latt.GetFragment(i).NodeCount() > 7 )   { // skip up to PF6 or so for Uiso analysis
+    TNetwork &frag = latt.GetFragment(i);
+    size_t fac=0;
+    for (size_t j=0; j < frag.NodeCount(); j++) {
+      if (!frag.Node(j).IsDeleted() && frag.Node(j).GetType() != iQPeakZ)
+        fac++;
+    }
+    if( fac > 7 )   { // skip up to PF6 or so for Uiso analysis
       while( Uisos.Count() <= i ) Uisos.Add(0.0);
       bool changes = true;
       while (changes) {
         changes = false;
         if( olx_abs(Uisos[i]) < 1e-6 )  {
           size_t ac = 0;
-          for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
-            TSAtom& sa = latt.GetFragment(i).Node(j);
+          for( size_t j=0;  j < frag.NodeCount(); j++ )  {
+            TSAtom& sa = frag.Node(j);
             if( sa.IsDeleted() || sa.GetType().z < 2 )  continue;
             Uisos[i] += sa.CAtom().GetUiso();
             ac++;
@@ -322,8 +328,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
           if( ac != 0 )  Uisos[i] /= ac;
         }
         if( Uisos[i] > 1e-6 )  {
-          for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
-            TSAtom& sa = latt.GetFragment(i).Node(j);
+          for( size_t j=0;  j < frag.NodeCount(); j++ )  {
+            TSAtom& sa = frag.Node(j);
             if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
             if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i]*3) {
               if (check_demotion &&
@@ -341,17 +347,22 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-    else  if( assignTypes )  {  // treat O and Cl
-      if( latt.GetFragment(i).NodeCount() == 1 &&
-        !latt.GetFragment(i).Node(0).IsDeleted() )
-      {
-        TSAtom& sa = latt.GetFragment(i).Node(0);
-        bool alone = true;
-        for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )
-          if( sa.CAtom().GetAttachedAtom(j).GetType() != iQPeakZ )  {
-            alone = false;
-            break;
-          }
+    else if (assignTypes && fac == 1)  {  // treat O and Cl
+      TSAtom *pas_=NULL;
+      for (size_t j=0; j < frag.NodeCount(); j++) {
+        if (!frag.Node(j).IsDeleted() && frag.Node(j).GetType() != iQPeakZ) {
+          pas_ = &frag.Node(j);
+          break;
+        }
+      }
+      if (pas_ == NULL) continue; // ?
+      TSAtom& sa = *pas_;
+      bool alone = true;
+      for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )
+        if( sa.CAtom().GetAttachedAtom(j).GetType() != iQPeakZ )  {
+          alone = false;
+          break;
+        }
         if( alone )  {
           bool assignHeaviest = false, assignLightest = false;
           const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance().GetStats();
@@ -374,10 +385,12 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
               }
             }
             if( sa.CAtom().GetUiso() < 0.01 )  {  // search heavier
-              size_t start = (sa.GetType().z < StandAlone[closest_idx]->z
-                ? closest_idx : closest_idx-1);
+              size_t start = (sa.GetType().z >= StandAlone[closest_idx]->z
+                ? closest_idx + 1 : closest_idx);
               for( size_t k=start; k < StandAlone.Count(); k++ )  {
-                if( !enforce_formula || AvailableTypes.Contains(StandAlone[k]) )  {
+                if( sa.GetType().z < StandAlone[k]->z &&
+                  (!enforce_formula || AvailableTypes.Contains(StandAlone[k])) )
+                {
                   sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
                   sa.CAtom().SetType(*StandAlone[k]);
                   olx_analysis::helper::reset_u(sa.CAtom());
@@ -403,7 +416,6 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
             }
           }
         }
-      }
     }
     for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
       TSAtom& sa = latt.GetFragment(i).Node(j);
