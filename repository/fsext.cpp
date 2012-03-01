@@ -238,14 +238,15 @@ void TFileHandlerManager::Clear(short persistenceMask)  {
   }
 }
 //..............................................................................
-olxstr TFileHandlerManager::LocateFile( const olxstr& fn )  {
+olxstr TFileHandlerManager::LocateFile(const olxstr& fn)  {
   if( FHandler->IsMemoryBlock(fn) )  return fn;
   if( !TEFile::IsAbsolutePath(fn) )  {
-    olxstr f = TEFile::AddPathDelimeter( TEFile::CurrentDir() );
-    if( TEFile::Exists( f + fn ) )  return f + fn;
+    olxstr f = TEFile::AddPathDelimeter(TEFile::CurrentDir());
+    if( TEFile::Exists(f + fn) )  return f + fn;
     for( size_t i=0; i < BaseDirs.Count(); i++ )  {
-      if( TEFile::Exists( BaseDirs[i] + fn ) )
-        return BaseDirs[i] + fn;
+      olxstr ffn = BaseDirs[i] + fn;
+      if( TEFile::Exists(ffn) )
+        return ffn;
     }
   }
   return fn;
@@ -349,6 +350,15 @@ void TFileHandlerManager::LibDump(TStrObjList &Cmds, const TParamList &Options,
   o.Write(mb->Buffer, mb->Length);
 }
 //..............................................................................
+void TFileHandlerManager::LibClear(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  int mask=-1;
+  if (!Cmds.IsEmpty())
+    mask = Cmds[0].ToInt();
+  TFileHandlerManager::Clear(mask);
+}
+//..............................................................................
 TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("fs") : name);
@@ -362,6 +372,12 @@ TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
       &TFileHandlerManager::LibDump, "Dump", EmptyString(), fpTwo,
     "Saves a file in the VFS to the disk file")
   );
+  lib->RegisterStaticMacro(
+    new TStaticMacro(&TFileHandlerManager::LibClear,
+    "Clear", EmptyString(), fpNone|fpOne,
+    "Clear the content of the VFS. A mask [-1] can be used to remove only "
+    "items with particular persistence mask")
+  );
   return lib;
 }
 
@@ -369,13 +385,13 @@ TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
 //..............................................................................
 //..............................................................................
 #ifndef _NO_PYTHON
-PyObject* pyExists(PyObject* self, PyObject* args)  {
+PyObject* fsext_pyExists(PyObject* self, PyObject* args)  {
   olxstr fn;
   PythonExt::ParseTuple(args, "w", &fn);
   return Py_BuildValue("b", TFileHandlerManager::Exists(fn));
 }
 //..............................................................................
-PyObject* pyTimestamp(PyObject* self, PyObject* args)  {
+PyObject* fsext_pyTimestamp(PyObject* self, PyObject* args)  {
   olxstr fn;
   PythonExt::ParseTuple(args, "w", &fn);
   const TMemoryBlock* mb = TFileHandlerManager::FindMemoryBlock(fn);
@@ -384,7 +400,7 @@ PyObject* pyTimestamp(PyObject* self, PyObject* args)  {
   return Py_BuildValue("l", mb->DateTime );
 }
 //..............................................................................
-PyObject* pyNewFile(PyObject* self, PyObject* args)  {
+PyObject* fsext_pyNewFile(PyObject* self, PyObject* args)  {
   char *data = NULL;
   olxstr name;
   int persistenceId = 0;
@@ -401,7 +417,7 @@ PyObject* pyNewFile(PyObject* self, PyObject* args)  {
   return Py_BuildValue("b", false);
 }
 //..............................................................................
-PyObject* pyReadFile(PyObject* self, PyObject* args)  {
+PyObject* fsext_pyReadFile(PyObject* self, PyObject* args)  {
   olxstr name;
   if( !PythonExt::ParseTuple(args, "w", &name) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
@@ -424,19 +440,31 @@ PyObject* pyReadFile(PyObject* self, PyObject* args)  {
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
     "File does not exist");
 }
+//..............................................................................
+PyObject* fsext_pyClear(PyObject* self, PyObject* args)  {
+  int mask=-1;
+  if( !PythonExt::ParseTuple(args, "|i", &mask) )
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "|i");
+  TFileHandlerManager::Clear(mask);
+  return Py_BuildValue("b", true);
+}
+//..............................................................................
 
 static PyMethodDef OLEXFS_Methods[] = {
-  {"Exists", pyExists, METH_VARARGS,
+  {"Exists", fsext_pyExists, METH_VARARGS,
     "returns true if specified file exists"},
-  {"Timestamp", pyTimestamp, METH_VARARGS,
+  {"Timestamp", fsext_pyTimestamp, METH_VARARGS,
     "returns timestamp (epoch time) of given file, if file does not exist, "
     "returns None"},
-  {"NewFile", pyNewFile, METH_VARARGS,
+  {"NewFile", fsext_pyNewFile, METH_VARARGS,
     "creates a new file (file_name, data,[persistence]), returns true if "
     "operation succeeded"},
-  {"ReadFile", pyReadFile, METH_VARARGS,
+  {"ReadFile", fsext_pyReadFile, METH_VARARGS,
     "reads previously created file and reurns the content of the file or None, "
     "if error has occured"},
+  {"Clear", fsext_pyClear, METH_VARARGS,
+    "clears content of the VFS. Mask can be given to remove items with "
+    "particular persistence level"},
   {NULL, NULL, 0, NULL}
    };
 

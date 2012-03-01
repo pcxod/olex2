@@ -85,6 +85,8 @@ public:
   void LibExists(const TStrObjList& Params, TMacroError& E);
   void LibDump(TStrObjList &Cmds, const TParamList &Options,
     TMacroError &Error);
+  static void LibClear(TStrObjList &Cmds, const TParamList &Options,
+    TMacroError &Error);
   static TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 protected:
 #ifndef _NO_PYTHON

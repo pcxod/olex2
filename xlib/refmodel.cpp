@@ -445,8 +445,8 @@ const TRefList& RefinementModel::GetReflections() const {
       evecd esd = evecd::FromVector(
         CompositeVector::Make(vec3d_list() << aunit.GetAxisEsds() <<
           aunit.GetAngleEsds()));
-      if (cell.QDistanceTo(hf.GetCell()) > 1e-8 ||
-          esd.QDistanceTo(hf.GetCellEsd()) > 1e-8 )
+      if (cell.DistanceTo(hf.GetCell()) > 1e-6 ||
+          esd.DistanceTo(hf.GetCellEsd()) > 1e-6 )
       {
         OnCellDifference.Execute(this, &hf);
       }
