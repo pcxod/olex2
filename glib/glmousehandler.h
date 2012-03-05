@@ -23,7 +23,6 @@ const uint16_t
   glmlMove2dz   = 0x0010;  // the translation is devided by current zoom
 
 class AGlMouseHandler  {
-  uint16_t Flags;
   // default handler implementation
   struct EventHandler {
     int SX, SY;
@@ -35,20 +34,22 @@ class AGlMouseHandler  {
     bool OnDblClick(AGlMouseHandler&, const TMouseData&)  {  return false;  }
   } handler;
 protected:
+  uint16_t glml_Flags;
   virtual bool DoTranslate(const vec3d& t) = 0;
   virtual bool DoRotate(const vec3d& vec, double angle) = 0;
   virtual bool DoZoom(double zoom, bool inc) = 0;
   virtual const TGlRenderer& DoGetRenderer() const = 0;
   EventHandler& GetHandler() {  return handler;  }
 public:
-  AGlMouseHandler() : Flags(0) {}
+  AGlMouseHandler() : glml_Flags(0) {}
   virtual ~AGlMouseHandler() {}
-  DefPropBFIsSet(Move2DZ, Flags, glmlMove2dz)
-  DefPropBFIsSet(Move2D, Flags, glmlMove2d)
-  DefPropBFIsSet(Moveable, Flags, glmlMoveable)
-  DefPropBFIsSet(Roteable, Flags, glmlRoteable)
-  DefPropBFIsSet(Zoomable, Flags, glmlZoomable)
-  static inline double ValidateZoom(double v) {  return v < 0.01 ? 0.01 : v;  }
+  DefPropBFIsSet(Move2DZ, glml_Flags, glmlMove2dz)
+  DefPropBFIsSet(Move2D, glml_Flags, glmlMove2d)
+  DefPropBFIsSet(Moveable, glml_Flags, glmlMoveable)
+  DefPropBFIsSet(Roteable, glml_Flags, glmlRoteable)
+  DefPropBFIsSet(Zoomable, glml_Flags, glmlZoomable)
+
+  static double ValidateZoom(double v) {  return v < 0.01 ? 0.01 : v;  }
 };
 
 class AGlMouseHandlerImp: public AGDrawObject, public AGlMouseHandler  {

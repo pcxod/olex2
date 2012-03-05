@@ -323,9 +323,10 @@ void TUnitCell::FindSymmEq() const  {
   for( size_t i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A1 = GetLattice().GetAsymmUnit().GetAtom(i);
     if( A1.IsDeleted() )  continue;
-    ACA.Add(A1)->SetTag(0);  
     A1.ClearAttachedSites();
     A1.ClearEquivs();
+    if (A1.GetConnInfo().maxBonds != 0)
+      ACA.Add(A1)->SetTag(0);
   }
   // searching for symmetrical equivalents; the search could be optimised by
   // removing the translational equivalents in the firts order; however the task is not

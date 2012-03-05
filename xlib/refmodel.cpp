@@ -1126,16 +1126,16 @@ void RefinementModel::ToDataItem(TDataItem& item) {
 //.............................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
   Clear(rm_clear_ALL);
-  PersUtil::FloatNumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
-  PersUtil::FloatNumberListFromStr(item.GetRequiredField("Weight"), used_weight);
-  PersUtil::FloatNumberListFromStr(item.GetRequiredField("ProposedWeight"), proposed_weight);
+  PersUtil::NumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
+  PersUtil::NumberListFromStr(item.GetRequiredField("Weight"), used_weight);
+  PersUtil::NumberListFromStr(item.GetRequiredField("ProposedWeight"), proposed_weight);
   HKLSource = item.GetRequiredField("HklSrc");
   RefinementMethod = item.GetRequiredField("RefMeth");
   SolutionMethod = item.GetRequiredField("SolMeth");
-  PersUtil::FloatNumberListFromStr(item.GetRequiredField("BatchScales"), BASF);
+  PersUtil::NumberListFromStr(item.GetRequiredField("BatchScales"), BASF);
   for( size_t i=0; i < BASF.Count(); i++ )
     BASF_Vars.Add(NULL);
-  PersUtil::IntNumberListFromStr(item.GetRequiredField("RefInArg"), LS);
+  PersUtil::NumberListFromStr(item.GetRequiredField("RefInArg"), LS);
 
   TDataItem& eqiv = item.FindRequiredItem("EQIV");
   for( size_t i=0; i < eqiv.ItemCount(); i++ )
@@ -1166,7 +1166,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   OMIT_set = omits.GetValue().ToBool();
   OMIT_s = omits.GetRequiredField("s").ToDouble();
   OMIT_2t = omits.GetRequiredField("2theta").ToDouble();
-  PersUtil::IntVecListFromStr(omits.GetRequiredField("hkl"), Omits);
+  PersUtil::VecListFromStr(omits.GetRequiredField("hkl"), Omits);
 
   TDataItem& twin = item.FindRequiredItem("TWIN");
   TWIN_set = twin.GetValue().ToBool();
@@ -1194,8 +1194,8 @@ void RefinementModel::FromDataItem(TDataItem& item) {
     }
   }
   // restraints and BASF may use some of the vars...  
-  Vars.FromDataItem( item.FindRequiredItem("LEQS") );
-  Conn.FromDataItem( item.FindRequiredItem("CONN") );
+  Vars.FromDataItem(item.FindRequiredItem("LEQS"));
+  Conn.FromDataItem(item.FindRequiredItem("CONN"));
   SetUserFormula(item.GetFieldValue("UserContent"), false);
   
   TDataItem* info_tables = item.FindItem("INFO_TABLES");
