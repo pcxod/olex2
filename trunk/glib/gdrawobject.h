@@ -18,7 +18,7 @@
 #include "glmaterial.h"
 BeginGlNamespace()
 
-const unsigned short
+const uint16_t
   sgdoHidden     = 0x0100, // TGDrawObject flags, high byte
   sgdoSelected   = 0x0200,
   sgdoGroupable  = 0x0400,
@@ -31,13 +31,13 @@ const unsigned short
 class AGDrawObject: public ACollectionItem  {
 protected:
   short FDrawStyle;
-  short Flags;
+  uint16_t sgdo_Flags;
   class TGlGroup *ParentGroup;  // parent collection
   class TGlRenderer& Parent;
   TGPCollection *Primitives;
   evecd FParams;
   olxstr CollectionName;
-  inline void SetCollectionName(const olxstr& nn)  {  CollectionName = nn;  }
+  void SetCollectionName(const olxstr& nn)  {  CollectionName = nn;  }
 public:
   AGDrawObject(TGlRenderer& parent, const olxstr& collectionName);
   // create object within the specified collection, using provided parameters
@@ -51,16 +51,16 @@ public:
   }
 
   void SetPrimitives(TGPCollection& GPC)  {  Primitives = &GPC;  }
-  inline TGPCollection& GetPrimitives() const {  return *Primitives;  }
+  TGPCollection& GetPrimitives() const {  return *Primitives;  }
 
-  inline const olxstr& GetCollectionName() const {  return CollectionName;  }
+  const olxstr& GetCollectionName() const {  return CollectionName;  }
 
   evecd& Params()  {  return FParams;  }
   const evecd& Params() const {  return FParams;  }
 
-  inline TGlRenderer& GetParent() const {  return Parent;  }
+  TGlRenderer& GetParent() const {  return Parent;  }
   virtual bool Orient(class TGlPrimitive& P) = 0;
-//  inline virtual void OrientAfterDraw(TGlPrimitive *P){  return; };
+//  virtual void OrientAfterDraw(TGlPrimitive *P){  return; };
   virtual bool GetDimensions(vec3d& Max, vec3d& Min) = 0;
   // mouse handlers, any object receives mouse down/up events; write appropriate
   //handlers to handle mouse; if the object returns true OnMouseDown, it receives
@@ -72,22 +72,22 @@ public:
   virtual bool OnZoom(const IEObject *, const struct TMouseData&)  {  return false;  }
 
   // need a virtual setters for these
-  virtual void SetVisible(bool v)  {  olx_set_bit(!v, Flags, sgdoHidden);  }
-  inline bool IsVisible() const {  return ((Flags&sgdoHidden) == 0);  }
-  virtual void SetSelected(bool v)  {  olx_set_bit(v, Flags, sgdoSelected);  }
-  inline bool IsSelected() const {  return ((Flags&sgdoSelected) != 0);  }
+  virtual void SetVisible(bool v)  {  olx_set_bit(!v, sgdo_Flags, sgdoHidden);  }
+  bool IsVisible() const {  return ((sgdo_Flags&sgdoHidden) == 0);  }
+  virtual void SetSelected(bool v)  {  olx_set_bit(v, sgdo_Flags, sgdoSelected);  }
+  bool IsSelected() const {  return ((sgdo_Flags&sgdoSelected) != 0);  }
 
-  DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
-  DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
-  DefPropBFIsSet(Selectable, Flags, sgdoSelectable)
+  DefPropBFIsSet(Groupable, sgdo_Flags, sgdoGroupable)
+  DefPropBFIsSet(Grouped, sgdo_Flags, sgdoGrouped)
+  DefPropBFIsSet(Selectable, sgdo_Flags, sgdoSelectable)
   // for internal use, may not reflect the real state of the object
-  DefPropBFIsSet(Created, Flags, sgdoCreated)
+  DefPropBFIsSet(Created, sgdo_Flags, sgdoCreated)
 
-  inline bool IsGroup() const {  return (Flags & sgdoGroup) == sgdoGroup;  }
+  bool IsGroup() const {  return (sgdo_Flags&sgdoGroup) == sgdoGroup;  }
 
-  short MaskFlags(short mask) const {  return (Flags&mask);  }
+  short MaskFlags(short mask) const {  return (sgdo_Flags&mask);  }
 
-  virtual inline TGlGroup* GetParentGroup() const {  return ParentGroup;  }
+  virtual TGlGroup* GetParentGroup() const {  return ParentGroup;  }
   virtual void SetParentGroup(TGlGroup* P)  {
     SetGrouped((ParentGroup = P) != NULL);
     if( P == NULL )

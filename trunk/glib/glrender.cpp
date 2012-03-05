@@ -401,7 +401,13 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
 void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
   if (poly_stipple == NULL) {
     poly_stipple = new GLubyte [128];
-    memset(poly_stipple, even ? 0x55 : 0xAA, 128);
+    // horizontal interlacing
+    for (size_t i=0; i < 128; i+=8) {
+      *((uint32_t*)(&poly_stipple[i])) = even ? ~0 : 0;
+      *((uint32_t*)(&poly_stipple[i+4])) = even ? 0 : ~0;
+    }
+    // this is for the vertical interlacing
+    //memset(poly_stipple, even ? 0x55 : 0xAA, 128);
   }
   SetView(true);
   olx_gl::disable(GL_LIGHTING);

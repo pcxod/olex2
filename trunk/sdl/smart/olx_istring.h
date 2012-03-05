@@ -1187,6 +1187,38 @@ public:
     return o_atof<FT>(T::Data(), T::_Length);
   }
   //...........................................................................
+  int8_t ToNumber(int8_t &b) const {
+    return (b=o_atoi<int8_t>(T::Data(), T::_Length, 10));
+  }
+  uint8_t ToNumber(uint8_t &b) const {
+    return (b=o_atoui<uint8_t>(T::Data(), T::_Length, 10));
+  }
+  int16_t ToNumber(int16_t &b) const {
+    return (b=o_atoi<int16_t>(T::Data(), T::_Length, 10));
+  }
+  uint16_t ToNumber(uint16_t &b) const {
+    return (b=o_atoui<uint16_t>(T::Data(), T::_Length, 10));
+  }
+  int32_t ToNumber(int32_t &b) const {
+    return (b=o_atoi<int32_t>(T::Data(), T::_Length, 10));
+  }
+  uint32_t ToNumber(uint32_t &b) const {
+    return (b=o_atoui<uint32_t>(T::Data(), T::_Length, 10));
+  }
+  int64_t ToNumber(int64_t &b) const {
+    return (b=o_atoi<int64_t>(T::Data(), T::_Length, 10));
+  }
+  uint64_t ToNumber(uint64_t &b) const {
+    return (b=o_atoui<uint64_t>(T::Data(), T::_Length, 10));
+  }
+  float ToNumber(float &b) const { return (b=ToFloat<float>()); }
+  double ToNumber(double &b) const { return (b=ToFloat<double>()); }
+  //...........................................................................
+  template <typename num_t> num_t ToNumber() const {
+    num_t n;
+    return ToNumber(n);
+  }
+  //...........................................................................
   void SetLength(size_t newLen)  {
     if( newLen < T::_Length )
       T::DecLength(T::_Length - newLen);

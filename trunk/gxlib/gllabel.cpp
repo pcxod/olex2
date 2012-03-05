@@ -143,14 +143,14 @@ void TXGlLabel::FromDataItem(const TDataItem& item) {
   SetLabel(item.GetRequiredField("text"));
   TDataItem* basis = item.FindItem("Basis");
   if( basis != NULL )  {
-    Offset = PersUtil::FloatVecFromStr(item.GetRequiredField("center"));
+    PersUtil::VecFromStr(item.GetRequiredField("center"), Offset);
     TEBasis b;
     b.FromDataItem(*basis);
     _Center = b.GetCenter();
   }
   else  {
-    Offset = PersUtil::FloatVecFromStr(item.GetRequiredField("offset"));
-    _Center = PersUtil::FloatVecFromStr(item.GetRequiredField("center"));
+    PersUtil::VecFromStr(item.GetRequiredField("offset"), Offset);
+    PersUtil::VecFromStr(item.GetRequiredField("center"), _Center);
   }
 }
 //..............................................................................

@@ -243,6 +243,8 @@ public:
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
+  // intialise the data, must be called after the FromDataItem
+  void FinaliseLoading();
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);

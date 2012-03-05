@@ -231,7 +231,7 @@ void TDBasis::FromDataItem(const TDataItem& di)  {
     Zoom = b.GetZoom();
   }
   else  {
-    _Center = PersUtil::FloatVecFromStr(c);
+    PersUtil::VecFromStr(c, _Center);
     Zoom = di.GetRequiredField("zoom").ToDouble();
   }
   const TDataItem* labels = di.FindItem("Labels");

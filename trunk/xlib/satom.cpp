@@ -141,7 +141,7 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
     Matrix = &latt.GetMatrix(mi);
   }
   FCCenter = GetMatrix() * FCCenter;
-  FCenter = PersUtil::FloatVecFromStr(item.GetRequiredField("crd"));
+  PersUtil::VecFromStr(item.GetRequiredField("crd"), FCenter);
   Flags = item.GetRequiredField("flags").ToInt();
   if( CAtom().GetEllipsoid() != NULL )  {
     SetEllipsoid(&latt.GetUnitCell().GetEllipsoid(

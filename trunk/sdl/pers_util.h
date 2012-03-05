@@ -14,40 +14,34 @@
 BeginEsdlNamespace()
 
 namespace PersUtil {
+
   template <class vec> static olxstr VecToStr(const vec& v)  {
     olxstr rv(v[0]);
     return rv << ',' << v[1] << ',' << v[2];
   }
-  static vec3d FloatVecFromStr(const olxstr& v)  {
+  
+  template <class vec_t> static vec_t &VecFromStr(const olxstr& v, vec_t &rv)  {
     TStrList toks(v, ',');
     if( toks.Count() != 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid vector size");
-    return vec3d(toks[0].ToDouble(), toks[1].ToDouble(), toks[2].ToDouble());
+    toks[0].ToNumber(rv[0]);
+    toks[1].ToNumber(rv[1]);
+    toks[2].ToNumber(rv[2]);
+    return rv;
   }
-  static vec3i IntVecFromStr(const olxstr& v)  {
-    TStrList toks(v, ',');
-    if( toks.Count() != 3 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "invalid vector size");
-    return vec3i(toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt());
+
+  template <class vec_t> static vec_t VecFromStr(const olxstr& v)  {
+    vec_t rv;
+    return VecFromStr(v, rv);
   }
+
   template <class lc> static olxstr NumberListToStr(const lc& v)  {
     olxstr rv = v.IsEmpty() ? EmptyString() : olxstr(v[0]);
     for( size_t i=1; i < v.Count(); i++ )
       rv << ',' << v[i];
     return rv;
   }
-  template <class lc> static lc& FloatNumberListFromStr(const olxstr& str, lc& v)  {
-    TStrList toks(str, ',');
-    for( size_t i=0; i < toks.Count(); i++ )
-      v.Add( toks[i].ToDouble() );
-    return v;
-  }
-  template <class lc> static lc& IntNumberListFromStr(const olxstr& str, lc& v)  {
-    TStrList toks(str, ',');
-    for( size_t i=0; i < toks.Count(); i++ )
-      v.Add( toks[i].ToInt() );
-    return v;
-  }
+
   template <class vl> static olxstr VecArrayToStr(const vl& l, size_t count)  {
     olxstr rv;
     for( size_t i=0; i < count; )  {
@@ -60,32 +54,34 @@ namespace PersUtil {
   template <class vl> static olxstr VecListToStr(const vl& l)  {
     return VecArrayToStr(l, l.Count());
   }
-  template <class vl>
-  static vl& FloatVecListFromStr(const olxstr& v, vl& l)  {
+
+  template <class vl> static vl& VecListFromStr(const olxstr& v, vl& l)  {
     TStrList toks(v, ';');
-    for( size_t i=0; i < toks.Count(); i++ )  {
-      vec3d tv = FloatVecFromStr(toks[i]);
-      l.AddNew(tv[0], tv[1], tv[2]);
-    }
-    return l;
-  }
-  template <class vl>
-  static vl& FloatVecArrayFromStr(const olxstr& v, vl& l, size_t cnt)  {
-    TStrList toks(v, ';');
-    if (cnt != toks.Count())
-      throw TFunctionFailedException(__OlxSourceInfo, "size mismatch");
+    l.SetCount(toks.Count());
+    typename typename vl::list_item_type vec_t;
     for( size_t i=0; i < toks.Count(); i++ )
-      l[i] = FloatVecFromStr(toks[i]);
+      VecFromStr(toks[i], l[i]);
     return l;
   }
-  template <class vl> static vl& IntVecListFromStr(const olxstr& v, vl& l)  {
+
+  template <class vec_t>
+  static vec_t *VecArrayFromStr(const olxstr& v, vec_t* l, size_t sz)  {
     TStrList toks(v, ';');
-    for( size_t i=0; i < toks.Count(); i++ )  {
-      vec3i tv = IntVecFromStr(toks[i]);
-      l.AddNew(tv[0], tv[1], tv[2]);
-    }
+    if (sz != toks.Count())
+      throw TInvalidArgumentException(__OlxSourceInfo, "array size");
+    for( size_t i=0; i < sz; i++ )
+      VecFromStr(toks[i], l[i]);
     return l;
   }
+
+  template <class vl> static vl& NumberListFromStr(const olxstr& v, vl& l)  {
+    TStrList toks(v, ',');
+    l.SetCount(toks.Count());
+    for( size_t i=0; i < toks.Count(); i++ )
+      toks[i].ToNumber(l[i]);
+    return l;
+  }
+
 };
 
 EndEsdlNamespace()

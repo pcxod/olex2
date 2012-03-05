@@ -35,6 +35,7 @@
 #include "cif.h"
 #include "povdraw.h"
 #include "dring.h"
+#include "dusero.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -134,9 +135,7 @@ public:
       olxstr s2 = TEFile::UnixPath(TEFile::ChangeFileExt(
         FParent->XFile().GetFileName(), EmptyString()));
       if( s1 != s2 )  {
-        FParent->ClearIndividualCollections();
-        FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
-        FParent->XFile().GetLattice().ClearPlaneDefinitions();
+        FParent->ClearStructureRelated();
       }
       else  {
         const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
@@ -161,10 +160,7 @@ public:
       }
     }
     else  {
-      FParent->ClearIndividualCollections();
-      FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
-      FParent->XFile().GetLattice().ClearPlaneDefinitions();
-      FParent->ClearGroupDefinitions();
+      FParent->ClearStructureRelated();
     }
     //FParent->XGrid().Clear();
     B = FParent->GetRender().GetBasis();
@@ -205,9 +201,7 @@ public:
       GrowInfo = NULL;
     }
     else  {  // definition will get broken otherwise
-      FParent->XFile().GetLattice().ClearPlaneDefinitions();
-      FParent->ClearLabels();
-      FParent->ClearGroupDefinitions();
+      FParent->ClearStructureRelated();
     }
     if( !hasNonQ && !FParent->AreQPeaksVisible() )
       FParent->SetQPeaksVisible(true);
@@ -332,6 +326,7 @@ void TGXApp::Clear()  {
   ClearXObjects();
   LooseObjects.DeleteItems().Clear();
   ObjectsToCreate.DeleteItems().Clear();
+  UserObjects.Clear();
   XLabels.Clear();
   GlBitmaps.Clear();
 }
@@ -475,7 +470,8 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   FXGrid->Create();
   // create hkls
   if( FHklVisible )  SetHklVisible(true);
-
+  for (size_t i=0; i < UserObjects.Count(); i++)
+    UserObjects[i].Create();
   if( centerModel )
     CenterModel();
   else
@@ -4072,6 +4068,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
       Lines[i].ToDataItem(lines.AddItem(++l_cnt));
   }
 
+  TDataItem &user_objects = item.AddItem("UserObjects");
+  l_cnt=0;
+  for( size_t i=0; i < UserObjects.Count(); i++ )  {
+    if( UserObjects[i].IsVisible() )
+      UserObjects[i].ToDataItem(user_objects.AddItem(++l_cnt));
+  }
+
   TDataItem& renderer = item.AddItem("Renderer");
   renderer.AddField("min", PersUtil::VecToStr(FGlRender->MinDim()));
   renderer.AddField("max", PersUtil::VecToStr(FGlRender->MaxDim()));
@@ -4085,6 +4088,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   LabelInfo.Clear();
   ClearGroupDefinitions();
   OverlayedXFiles.Clear();
+  UserObjects.Clear();
   TXAtom::TelpProb(0);  //force re-reading
   TXAtom::DefRad(0);
   TXAtom::DefDS(0);
@@ -4120,6 +4124,12 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   if( lines != NULL )  {
     for( size_t i=0; i < lines->ItemCount(); i++ )
       Lines.Add(new TXLine(*FGlRender)).FromDataItem(lines->GetItem(i));
+  }
+
+  TDataItem *user_objects = item.FindItem("UserObjects");
+  if( user_objects != NULL )  {
+    for( size_t i=0; i < user_objects->ItemCount(); i++ )
+      UserObjects.Add(new TDUserObj(*FGlRender, user_objects->GetItem(i)));
   }
   
 
@@ -4184,8 +4194,9 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   _UpdateGroupIds();
 
   TDataItem& renderer = item.FindRequiredItem("Renderer");
-  vec3d min = PersUtil::FloatVecFromStr(renderer.GetRequiredField("min"));
-  vec3d max = PersUtil::FloatVecFromStr(renderer.GetRequiredField("max"));
+  vec3d min, max;
+  PersUtil::VecFromStr(renderer.GetRequiredField("min"), min);
+  PersUtil::VecFromStr(renderer.GetRequiredField("max"), max);
   FGlRender->SetSceneComplete(false);
   FGlRender->ClearMinMax();
   FGlRender->UpdateMinMax(min, max);
@@ -4409,6 +4420,8 @@ TStrList TGXApp::ToPov() const {
   }
   if( XGrid().IsVisible() && !XGrid().IsEmpty() )
     out << XGrid().ToPov(materials);
+  for (size_t i=0; i < UserObjects.Count(); i++)
+    out << UserObjects[i].ToPov(materials);
 
   out.Add("}");
   TStrList mat_out, scene_out;
@@ -4470,5 +4483,20 @@ void TGXApp::GrowBonds() {
     }
   }
   XFile().GetLattice().GrowFragments(transforms);
+}
+//..............................................................................
+AGDrawObject* TGXApp::AddObjectToCreate(AGDrawObject* obj)  {
+  TDUserObj *o = dynamic_cast<TDUserObj*>(obj);
+  if (o != NULL)
+    return &UserObjects.Add(o);
+  return ObjectsToCreate.Add(obj);
+}
+//..............................................................................
+void TGXApp::ClearStructureRelated() {
+  ClearIndividualCollections();
+  GetRender().GetStyles().RemoveNamedStyles("Q");
+  XFile().GetLattice().ClearPlaneDefinitions();
+  ClearGroupDefinitions();
+  UserObjects.Clear();
 }
 //..............................................................................

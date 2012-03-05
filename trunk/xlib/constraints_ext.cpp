@@ -247,7 +247,7 @@ adirection* static_direction::CreateFromDataItem(const TDataItem& di,
   const RefinementModel& rm) const
 {
   return new static_direction(di.GetRequiredField("id"),
-    PersUtil::FloatVecFromStr(di.GetRequiredField("value")));
+    PersUtil::VecFromStr<vec3d>(di.GetRequiredField("value")));
 }
 //.............................................................................
 adirection* direction::CreateFromDataItem(const TDataItem& di,

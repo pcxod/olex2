@@ -281,7 +281,7 @@ void TLattice::Init()  {
   GetUnitCell().InitMatrices();
   GetAsymmUnit().GetRefMod()->UpdateUsedSymm(GetUnitCell());
   try {
-    GetUnitCell().FindSymmEq(); // find and remove
+    GetUnitCell().FindSymmEq();
     InitBody();
   }
   catch (const TExceptionBase &e) {
@@ -295,7 +295,7 @@ void TLattice::Uniq()  {
   Clear(false);
   ClearMatrices();
   GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
-  GetUnitCell().FindSymmEq(); // find and remove
+  GetUnitCell().FindSymmEq();
   InitBody();
   OnStructureUniq.Exit(this);
 }
@@ -2145,6 +2145,10 @@ void TLattice::FromDataItem(TDataItem& item)  {
     else
       p._SetDefId(di);
   }
+  //FinaliseLoading();
+}
+//..............................................................................
+void TLattice::FinaliseLoading() {
   GetAsymmUnit()._UpdateConnInfo();
   GetUnitCell().FindSymmEq();
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
