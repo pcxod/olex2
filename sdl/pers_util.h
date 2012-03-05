@@ -19,7 +19,7 @@ namespace PersUtil {
     olxstr rv(v[0]);
     return rv << ',' << v[1] << ',' << v[2];
   }
-  
+
   template <class vec_t> static vec_t &VecFromStr(const olxstr& v, vec_t &rv)  {
     TStrList toks(v, ',');
     if( toks.Count() != 3 )
@@ -58,7 +58,6 @@ namespace PersUtil {
   template <class vl> static vl& VecListFromStr(const olxstr& v, vl& l)  {
     TStrList toks(v, ';');
     l.SetCount(toks.Count());
-    typename typename vl::list_item_type vec_t;
     for( size_t i=0; i < toks.Count(); i++ )
       VecFromStr(toks[i], l[i]);
     return l;
