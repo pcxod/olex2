@@ -16,8 +16,8 @@ BeginEsdlNamespace()
 namespace PersUtil {
 
   template <class vec> static olxstr VecToStr(const vec& v)  {
-    olxstr rv(v[0]);
-    return rv << ',' << v[1] << ',' << v[2];
+    olxstr rv = olxstr().Allocate(3*8+3);
+    return rv << v[0] << ',' << v[1] << ',' << v[2];
   }
 
   template <class vec_t> static vec_t &VecFromStr(const olxstr& v, vec_t &rv)  {
@@ -36,18 +36,22 @@ namespace PersUtil {
   }
 
   template <class lc> static olxstr NumberListToStr(const lc& v)  {
-    olxstr rv = v.IsEmpty() ? EmptyString() : olxstr(v[0]);
-    for( size_t i=1; i < v.Count(); i++ )
-      rv << ',' << v[i];
+    olxstr_buf rv;
+    olxstr sep = ',';
+    for( size_t i=0; i < v.Count(); i++ )
+      rv << v[i] << sep;
+    if (v.Count() > 0)
+      rv << v[v.Count()-1];
     return rv;
   }
 
   template <class vl> static olxstr VecArrayToStr(const vl& l, size_t count)  {
-    olxstr rv;
+    olxstr_buf rv;
+    olxstr sep = ';';
     for( size_t i=0; i < count; )  {
       rv << VecToStr(l[i]);
       if( ++i < count )
-        rv << ';';
+        rv << sep;
     }
     return rv;
   }
