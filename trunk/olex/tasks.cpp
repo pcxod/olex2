@@ -26,8 +26,14 @@ void P4PTask::Run() {
         run_xplain = opt.ToBool();
       }
       if (run_xplain) {
-        if (mf->ProcessMacro("spy.xplain.run(false, true)", __OlxSrcInfo)) {
+        olxstr fn = "spy.xplain.run(false, true)",
+          rv;
+        mf->executeFunction(fn, rv);
+        if (rv.IsBool() && rv.ToBool()) {
           mf->ProcessMacro("reap", __OlxSrcInfo);
+        }
+        else {
+          TBasicApp::NewLogEntry() << "Failed to run XPlain";
         }
       }
     }
