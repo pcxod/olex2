@@ -48,6 +48,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   OnClear(TBasicApp::GetInstance().NewActionQueue("GL_CLEAR"))
 {
   poly_stipple = NULL;
+  AbsoluteTop = 0;
   CompiledListId = -1;
   FScene = S;
   FZoom = 1;
@@ -399,13 +400,15 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
 }
 //..............................................................................
 void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
-  if (poly_stipple == NULL) {
-    poly_stipple = new GLubyte [128];
+  if (poly_stipple == NULL || (poly_even != even)) {
+    if (poly_stipple == NULL)
+      poly_stipple = new GLubyte [128];
     // horizontal interlacing
     for (size_t i=0; i < 128; i+=8) {
-      *((uint32_t*)(&poly_stipple[i])) = even ? ~0 : 0;
-      *((uint32_t*)(&poly_stipple[i+4])) = even ? 0 : ~0;
+      *((uint32_t*)(&poly_stipple[i])) = even ? 0 : ~0;
+      *((uint32_t*)(&poly_stipple[i+4])) = even ? ~0 : 0;
     }
+    poly_even = even;
     // this is for the vertical interlacing
     //memset(poly_stipple, even ? 0x55 : 0xAA, 128);
   }
@@ -516,7 +519,7 @@ void TGlRenderer::Draw()  {
   }
   else if( StereoFlag == glStereoInterlace )  {
     olx_gl::drawBuffer(GL_BACK);
-    SetupStencilFoInterlacedDraw(false);
+    SetupStencilFoInterlacedDraw((AbsoluteTop%2) == 0);
     olx_gl::enable(GL_STENCIL_TEST);
     olx_gl::stencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     const double ry = GetBasis().GetRY();
@@ -909,7 +912,7 @@ void TGlRenderer::SetProperties(TGlMaterial& P)  {  // tracks translucent and id
 //..............................................................................
 void TGlRenderer::OnSetProperties(const TGlMaterial& P)  {  // tracks translucent and identity objects
   //if( P == NULL )  return;
-  if( P.ObjectCount() > 1 )  return; // the properties will not be removde
+  if( P.ObjectCount() > 1 )  return; // the properties will not be removed
   if( P.IsTransparent() && P.IsIdentityDraw() )  {
     size_t index = FTranslucentIdentityObjects.IndexOf(&P);
     if( index != InvalidIndex )  

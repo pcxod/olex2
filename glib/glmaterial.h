@@ -93,6 +93,7 @@ public:
   AGOProperties& operator = (const AGOProperties &G);
   bool operator == (const TGlMaterial &G) const;
   bool operator == (const AGOProperties &G) const; // !!!
+  int Compare(const TGlMaterial &m) const;
 
   void ToDataItem(TDataItem& Item) const;
   bool FromDataItem(const TDataItem& Item);

@@ -41,26 +41,34 @@ struct pov {
     }
   }
   static olxstr get_mat_name(const olxstr &primitive_name,
-    TGraphicsStyle &style, olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials)
+    TGraphicsStyle &style, olxdict<TGlMaterial, olxstr,
+    TComparableComparator> &materials,
+    const AGDrawObject *sender=NULL)
   {
+    if (sender != NULL && sender->GetParentGroup() != NULL)
+      return get_mat_name(primitive_name, style, materials);
     olxstr mat_name;
     size_t lmi = style.IndexOfMaterial(primitive_name);
     if( lmi != InvalidIndex )  {
       TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
-      lmi = materials.IndexOf(&glm);
+      lmi = materials.IndexOf(glm);
       if( lmi == InvalidIndex )
-        mat_name = materials.Add(&glm, olxstr("mat") << (materials.Count()+1));
+        mat_name = materials.Add(glm, olxstr("mat") << (materials.Count()+1));
       else
         mat_name = materials.GetValue(lmi);
     }
     return mat_name;
   }
   static olxstr get_mat_name(const TGlMaterial& glm,
-    olxdict<const TGlMaterial*, olxstr, TPointerComparator> &materials)
+    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials,
+    const AGDrawObject *sender=NULL)
   {
+    if (sender != NULL && sender->GetParentGroup() != NULL) {
+      return get_mat_name(sender->GetParentGroup()->GetActualMaterial(glm),
+        materials);
+    }
     size_t lmi = materials.IndexOf(&glm);
-    return (lmi == InvalidIndex ? materials.Add(&glm, olxstr("mat") <<
+    return (lmi == InvalidIndex ? materials.Add(glm, olxstr("mat") <<
       (materials.Count()+1)) : materials.GetValue(lmi));
   }
   struct CrdTransformer  {

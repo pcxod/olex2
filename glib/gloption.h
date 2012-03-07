@@ -52,7 +52,7 @@ public:
     data[3] = (float)c[3];
     return *this;
   }
-  // us the FromString instead if error handling is needed
+  // use the FromString instead if error handling is needed
   TGlOption& operator = (const olxstr& v)  {
     FromString(v);
     return *this;
@@ -86,11 +86,15 @@ public:
     return *this;
   }
 
-  uint32_t GetRGB() const {  return (uint32_t)RGBA(255*data[0], 255*data[1], 255*data[2], 255*data[3]);  }
-  inline const float* Data() const {  return data;  }
+  uint32_t GetRGB() const {
+    return (uint32_t)RGBA(255*data[0], 255*data[1], 255*data[2], 255*data[3]);
+  }
+  const float* Data() const {  return data;  }
   float* _Data()  {  return data;  }
 
-  bool IsEmpty() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0);  }
+  bool IsEmpty() const {
+    return (data[0] == 0 && data[1] == 0 && data[2] == 0);
+  }
   void Clear()  {  data[0] = data[1] = data[2] = data[3] = 0;  }
   
   float& operator[] (size_t i) {  return data[i]; }
@@ -101,6 +105,13 @@ public:
              olx_abs(data[2]-v[2]) > 1e-5 || olx_abs(data[3]-v[3]) > 1e-5);
   }
   bool operator != (const TGlOption& v) const {  return !(*this == v);  }
+  int Compare(const TGlOption &o) const {
+    for (int i=0; i < 4; i++) {
+      int v = olx_cmp_float(data[i], o.data[i], 1e-3f);
+      if (v != 0) return v;
+    }
+    return 0;
+  }
   bool IsGrey() const {
     return olx_abs(data[0]-data[1]) < 1e-5 && olx_abs(data[0]-data[2]);
   }

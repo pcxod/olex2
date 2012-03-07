@@ -14,13 +14,17 @@
 #include "gdrawobject.h"
 BeginGlNamespace()
 
+struct TMouseData;
+
 class TGlGroup: public AGDrawObject {
-  /* a sorted list, although would give some performace boost cannot be used here:
-    SortedPtrList<AGDrawObject, TPointerComparator> Objects;  // a list of grouped objects
-    since the selection order influences a lot of functionality
+  /* a sorted list, although would give some performace boost cannot be used
+  here:
+    SortedPtrList<AGDrawObject, TPointerComparator> Objects;
+  since the selection order influences a lot of functionality
   */
   AGDObjList Objects;  // a list of grouped objects
   TGlMaterial GlM;
+  TGlOption BlendColor;
   bool DefaultColor, Blended;
 protected:
   void InitMaterial() const;
@@ -61,25 +65,26 @@ public:
   }
   template <class obj_t> ConstPtrList<obj_t> Extract() const {
     TPtrList<obj_t> rv;
-    return Extract<obj_t,TPtrList<obj_t> >(rv);
+    return Extract<obj_t, TPtrList<obj_t> >(rv);
   }
   void Remove(AGDrawObject& G);
   void RemoveHidden();
 
-  inline bool Contains(const AGDrawObject& G) const {  return  Objects.IndexOf(&G) != InvalidIndex;  }
-  inline size_t Count() const {  return Objects.Count();  }
+  bool Contains(const AGDrawObject& G) const {  return  Objects.Contains(G);  }
+  size_t Count() const {  return Objects.Count();  }
   bool IsEmpty() const {  return Objects.IsEmpty();  }
-  inline AGDrawObject& GetObject(size_t i) const {  return *Objects[i];  }
-  inline AGDrawObject& operator [] (size_t i) const {  return *Objects[i];  }
-  /* returns true if there are at least two groupable objects, moving the ungroupable
-  ones to the provided list */
+  AGDrawObject& GetObject(size_t i) const {  return *Objects[i];  }
+  AGDrawObject& operator [] (size_t i) const {  return *Objects[i];  }
+  /* returns true if there are at least two groupable objects, moving the
+  ungroupable ones to the provided list
+  */
   bool TryToGroup(AGDObjList& ungroupable);
 
-  inline bool Orient(TGlPrimitive&)  {  return false;  }
-  inline bool GetDimensions(vec3d&, vec3d&)  {  return false;  }
-  virtual bool OnMouseDown(const IEObject *Sender, const struct TMouseData& Data);
-  virtual bool OnMouseUp(const IEObject *Sender, const struct TMouseData& Data);
-  virtual bool OnMouseMove(const IEObject *Sender, const struct TMouseData& Data);
+  bool Orient(TGlPrimitive&)  {  return false;  }
+  bool GetDimensions(vec3d&, vec3d&)  {  return false;  }
+  virtual bool OnMouseDown(const IEObject *Sender, const TMouseData& Data);
+  virtual bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+  virtual bool OnMouseMove(const IEObject *Sender, const TMouseData& Data);
 
   virtual void SetVisible(bool On);
   virtual void SetSelected(bool On);
@@ -89,6 +94,8 @@ public:
   void SetBlended(bool v);
   const TGlMaterial& GetGlM()  {  return GlM; }
   void SetGlM(const TGlMaterial& m);
+  // returns the actually rendered material
+  virtual TGlMaterial GetActualMaterial(const TGlMaterial &) const;
 };
 
 EndGlNamespace()

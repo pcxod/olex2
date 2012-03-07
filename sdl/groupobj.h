@@ -27,13 +27,15 @@ protected:
   TPtrList<AGroupObject> Objects;
   size_t GetObjectGroupId() const {  return ObjectGroupId;  }
 public:
-  AGOProperties() : ObjectGroupId(InvalidIndex) {  }// Objects.SetIncrement(512);  }
+  AGOProperties() : ObjectGroupId(InvalidIndex) {}
   virtual ~AGOProperties() {}
   // adds an object (reference or a pointer) to the group and returns it
   template <class AGO> 
-  inline AGroupObject& AddObject(AGO& O)  {  return *Objects.Add(O); }
-  inline AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
-  inline size_t ObjectCount() const { return Objects.Count(); }
+  AGroupObject& AddObject(AGO& O)  {  return *Objects.Add(O); }
+  AGroupObject& GetObject(size_t index) const {
+    return *Objects[index];
+  }
+  size_t ObjectCount() const { return Objects.Count(); }
   // removes an object reference or a pointer
   template <class AGO> void RemoveObject(const AGO& GO)  {
     size_t index = Objects.IndexOf(GO);
@@ -60,9 +62,11 @@ protected:
 public:
   AGroupObject(TObjectGroup& parent) : Parent(parent), Properties(NULL) { }
   virtual ~AGroupObject()  { }
-  // this should be used carefull - any change will affect all objects of the group!
-  inline AGOProperties& GetProperties()   {  return *Properties;  }
-  inline const AGOProperties& GetProperties() const {  return *Properties;  }
+  /* this should be used carefull - any change will affect all objects of the
+  group!
+  */
+  AGOProperties& GetProperties()   {  return *Properties;  }
+  const AGOProperties& GetProperties() const {  return *Properties;  }
   /* a copy of C is created and returned if the property does not exists
    otherwise a pointer to existing property is returned
   */
@@ -80,26 +84,29 @@ public:
   void Clear();
   template <class AGO>
   AGroupObject& AddObject(AGO const& O)  {  return *Objects.Add(O);  }
-  inline AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
+  AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
   // access to the lists
   TPtrList<AGroupObject>& GetObjects()  {  return Objects;  }
   const TPtrList<AGroupObject>& GetObjects() const {  return Objects;  }
   const TPtrList<AGOProperties>& GetProperties() const {  return Props;  }
-  inline size_t ObjectCount() const {  return Objects.Count(); }
-  template <class AGO>  size_t IndexOfObject(const AGO& G)  {  return Objects.IndexOf(G); }
-  // used to remove objects form the collection; if an object->Tag ==Tag, it is removed
+  size_t ObjectCount() const {  return Objects.Count(); }
+  template <class AGO>  size_t IndexOfObject(const AGO& G)  {
+    return Objects.IndexOf(G);
+  }
+  /* used to remove objects form the collection; if an object->Tag ==Tag, it is
+  removed
+  */
   void RemoveObjectsByTag(int Tag);
-  //void ReplaceObjects(TEList *CurObj, TEList *NewObj );
 
   AGOProperties& GetProperties(size_t index) const {  return *Props[index]; }
 
-  inline size_t PropertiesCount() const {  return Props.Count(); }
+  size_t PropertiesCount() const {  return Props.Count(); }
   template <class AGP>
   size_t IndexOfProperties(const AGP& P) const {  return Props.IndexOf(P); }
   // creates new properties if required, alwasy returns a valid pointer
   AGOProperties* NewProps(AGroupObject& Sender, // the sender
     AGOProperties *OldProps, // senders old properties
-    const AGOProperties& NewProps);  //th eproperties to set
+    const AGOProperties& NewProps);  //the properties to set
 };
 
 // helper class to avoid casts (well, too many of them)
@@ -108,9 +115,11 @@ class ObjectGroup : public TObjectGroup {
 public:
   ObjectGroup() { }
   virtual ~ObjectGroup() { }
-  template <class AGO> OC& AddObject(AGO const& O)  {  return *(OC*)Objects.Add(O);  }
-  inline OC& GetObject(size_t index) const {  return *(OC*)Objects[index]; }
-  inline PC& GetProperties(size_t index) const {  return *(PC*)Props[index]; }
+  template <class AGO> OC& AddObject(AGO const& O)  {
+    return *(OC*)Objects.Add(O);
+  }
+  OC& GetObject(size_t index) const {  return *(OC*)Objects[index]; }
+  PC& GetProperties(size_t index) const {  return *(PC*)Props[index]; }
 };
 
 EndEsdlNamespace()

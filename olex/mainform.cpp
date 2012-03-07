@@ -211,6 +211,7 @@ public:
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_SIZE(TMainForm::OnSize)
+  EVT_MOVE(TMainForm::OnMove)
   EVT_MENU(ID_FILE0, TMainForm::OnFileOpen)
   EVT_MENU(ID_FILE0+1, TMainForm::OnFileOpen)
   EVT_MENU(ID_FILE0+2, TMainForm::OnFileOpen)
@@ -2688,6 +2689,16 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
     return;
   }
   event.Skip();
+}
+//..............................................................................
+void TMainForm::OnMove(wxMoveEvent& evt) {
+  if( FXApp == NULL || FGlConsole == NULL || FInfoBox == NULL ||
+      !StartupInitialised )
+  {
+    return;
+  }
+  wxPoint p = FGlCanvas->GetScreenPosition();
+  FXApp->GetRender().SetAbsoluteTop(p.y);
 }
 //..............................................................................
 void TMainForm::OnSize(wxSizeEvent& event)  {

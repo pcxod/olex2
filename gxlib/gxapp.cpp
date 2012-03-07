@@ -4354,8 +4354,7 @@ void TGXApp::SelectAll(bool Select)  {
 TStrList TGXApp::ToPov() const {
   TGlRenderer &r = GetRender();
   pov::CrdTransformer crdc(r.GetBasis());
-  olxdict<const TGlMaterial*, olxstr, TPointerComparator> materials;
-  olxdict<AGDrawObject*, olxstr, TPrimitiveComparator> sph_materials;
+  olxdict<TGlMaterial, olxstr, TComparableComparator> materials;
   TStrList out;
   out.Add("global_settings {");
   TGlOption cl_amb = r.LightModel.GetAmbientColor();
@@ -4428,7 +4427,7 @@ TStrList TGXApp::ToPov() const {
   //scene_out.Add("");
   for( size_t i=0; i < materials.Count(); i++ )  {
     mat_out.Add("#declare ") << materials.GetValue(i) << '=';
-    mat_out.Add(materials.GetKey(i)->ToPOV());
+    mat_out.Add(materials.GetKey(i).ToPOV());
   }
   return mat_out << out;
 }
