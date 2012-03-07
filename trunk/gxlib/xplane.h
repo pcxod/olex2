@@ -48,8 +48,8 @@ public:
     if (v)
       SetVisible(false);
   }
-  const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials) const;
+  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const;
   static const_strlist PovDeclare();
 };
 

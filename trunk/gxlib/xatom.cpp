@@ -613,8 +613,8 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
   }
 }
 //..............................................................................
-const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPointerComparator> &materials) const
+const_strlist TXAtom::ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
 {
   TStrList out;
   if( DrawStyle() == adsStandalone && !IsStandalone() )
@@ -628,7 +628,7 @@ const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
     if( GetEllipsoid() == NULL &&
         (glp.GetName() == "Disks" || glp.GetName() == "Rims" ) )
       continue;
-    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
+    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials, this);
     out.Add("  object {") << "atom_" << glp.GetName().ToLowerCase().Replace(' ', '_')
       << " texture {" << p_mat << "}}";
   }
@@ -652,7 +652,7 @@ const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
   out.Add(" }");
   if( GetPolyhedronType() != polyNone && GetPolyhedron() != NULL )  {
     olxstr poly_mat_name = pov::get_mat_name("Polyhedron",
-      GetPrimitives().GetStyle(), materials);
+      GetPrimitives().GetStyle(), materials, this);
     TXAtom::Poly &p = *GetPolyhedron();
     out.Add(" union { //") << GetLabel();
     for( size_t i=0; i < p.faces.Count(); i++ )  {

@@ -49,6 +49,7 @@ void TGlGroup::Create(const olxstr& cName)  {
   Blended = GS.GetParam("Blended", Blended, true).ToBool();
   DefaultColor = (GS.IndexOfMaterial("mat") == InvalidIndex);
   GlM = GS.GetMaterial("mat", GlM);
+  BlendColor = GetBlendColor();
 }
 //..............................................................................
 TGlGroup::~TGlGroup()  {
@@ -69,7 +70,8 @@ void TGlGroup::Remove(AGDrawObject& G)  {
 }
 //..............................................................................
 void TGlGroup::RemoveHidden()  {
-  Objects.Pack(AGDrawObject::FlagsAnalyserEx<ObjectReleaser>(sgdoHidden, ObjectReleaser()));
+  Objects.Pack(AGDrawObject::FlagsAnalyserEx<ObjectReleaser>(
+    sgdoHidden, ObjectReleaser()));
 }
 //..............................................................................
 bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
@@ -82,12 +84,17 @@ bool TGlGroup::Add(AGDrawObject& GO, bool remove)  {
     return false;
   const size_t i = Objects.IndexOf(go);
   if( i == InvalidIndex )  {
-    // GO.Primitives ca nbe NULL when hierarchy of groups being restored before creating them
-    // check the compatibility of the selection
-    if( &GO.GetPrimitives() != NULL && GO.GetPrimitives().PrimitiveCount() != 0 )  {
+    /* GO.Primitives can be NULL when hierarchy of groups being restored before
+    creating them check the compatibility of the selection
+    */
+    if( &GO.GetPrimitives() != NULL &&
+      GO.GetPrimitives().PrimitiveCount() != 0 )
+    {
+      bool idd =
+        GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw();
       if( Objects.IsEmpty() )
-        GlM.SetIdentityDraw(GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw());
-      else if( GlM.IsIdentityDraw() != GO.GetPrimitives().GetPrimitive(0).GetProperties().IsIdentityDraw() ) 
+        GlM.SetIdentityDraw(idd);
+      else if( GlM.IsIdentityDraw() != idd )
         return false;
     }
     go->SetGrouped(true);
@@ -131,7 +138,9 @@ void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {
     OverrideMaterialDraw(SelectPrimitives, SelectObjects);
 }
 //..............................................................................
-void TGlGroup::OverrideMaterialDraw(bool SelectPrimitives, bool SelectObjects) const {
+void TGlGroup::OverrideMaterialDraw(bool SelectPrimitives,
+  bool SelectObjects) const
+{
   for( size_t i=0; i < Count(); i++ )  {
     AGDrawObject& G = GetObject(i);
     if( G.MaskFlags(sgdoHidden) != 0 )  continue;
@@ -185,7 +194,6 @@ void TGlGroup::BlendMaterialDraw(bool SelectPrimitives, bool SelectObjects) cons
     OverrideMaterialDraw(SelectPrimitives, SelectObjects);
     return;
   }
-  TGlOption pa = GetBlendColor();
   for( size_t i=0; i < Count(); i++ )  {
     AGDrawObject& G = GetObject(i);
     if( G.MaskFlags(sgdoHidden) != 0 )  continue;
@@ -200,11 +208,11 @@ void TGlGroup::BlendMaterialDraw(bool SelectPrimitives, bool SelectObjects) cons
     for( size_t j=0; j < pc; j++ )  {
       TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
       TGlMaterial glm = GlP.GetProperties();
-      const float m1 = pa[3];
-      const float m2 = (1.0f-pa[3]);
-      glm.AmbientF[0] = pa[0]*m1 + glm.AmbientF[0]*m2;
-      glm.AmbientF[1] = pa[1]*m1 + glm.AmbientF[1]*m2;
-      glm.AmbientF[2] = pa[2]*m1 + glm.AmbientF[2]*m2;
+      const float m1 = BlendColor[3];
+      const float m2 = (1.0f-BlendColor[3]);
+      glm.AmbientF[0] = BlendColor[0]*m1 + glm.AmbientF[0]*m2;
+      glm.AmbientF[1] = BlendColor[1]*m1 + glm.AmbientF[1]*m2;
+      glm.AmbientF[2] = BlendColor[2]*m1 + glm.AmbientF[2]*m2;
       glm.AmbientF[3] = 1.0f;
       glm.Init(false);
       if( SelectObjects )     olx_gl::loadName((GLuint)G.GetTag());
@@ -222,6 +230,7 @@ void TGlGroup::BlendMaterialDraw(bool SelectPrimitives, bool SelectObjects) cons
 //..............................................................................
 void TGlGroup::SetGlM(const TGlMaterial& m)  {
   GlM = GetPrimitives().GetStyle().SetMaterial("mat", m);
+  BlendColor = GetBlendColor();
 }
 //..............................................................................
 bool TGlGroup::TryToGroup(AGDObjList& ungroupable)  {
@@ -269,5 +278,21 @@ bool TGlGroup::OnMouseMove(const IEObject *Sender, const struct TMouseData& Data
 void TGlGroup::SetBlended(bool v)  {
   Blended = v;
   GetPrimitives().GetStyle().SetParam("Blended", v, true);
+}
+//..............................................................................
+TGlMaterial TGlGroup::GetActualMaterial(const TGlMaterial &m) const {
+  TGlMaterial glm;
+  if (Blended) {
+    glm = m;
+    const float m1 = BlendColor[3];
+    const float m2 = (1.0f-BlendColor[3]);
+    glm.AmbientF[0] = BlendColor[0]*m1 + m.AmbientF[0]*m2;
+    glm.AmbientF[1] = BlendColor[1]*m1 + m.AmbientF[1]*m2;
+    glm.AmbientF[2] = BlendColor[2]*m1 + m.AmbientF[2]*m2;
+    glm.AmbientF[3] = 1.0f;
+  }
+  else
+    glm = GlM;
+  return (ParentGroup != NULL) ? ParentGroup->GetActualMaterial(glm) : glm;
 }
 //..............................................................................

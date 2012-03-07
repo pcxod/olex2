@@ -32,25 +32,6 @@
 #include "nui/nui.h"
 #include "tasks.h"
 
-#define  ID_FILE0 100
-
-enum  {
-  ID_GLDRAW = 1000,
-  ID_TIMER,
-  ID_INFO,
-  ID_WARNING,
-  ID_ERROR,
-  ID_EXCEPTION,
-  ID_ONLINK,
-  ID_HTMLKEY,
-  ID_COMMAND,
-  ID_XOBJECTSDESTROY,
-  ID_CMDLINECHAR,
-  ID_CMDLINEKEYDOWN,
-  ID_TEXTPOST,
-  ID_UPDATE_GUI
-};
-
 enum  {
   ID_HtmlPanel=1,  // view menu
 
@@ -180,7 +161,24 @@ enum  {
 
   ID_UpdateThreadTerminate,
   ID_UpdateThreadDownload,
-  ID_UpdateThreadAction
+  ID_UpdateThreadAction,
+
+  ID_FILE0,
+
+  ID_GLDRAW = ID_FILE0+100,
+  ID_TIMER,
+  ID_INFO,
+  ID_WARNING,
+  ID_ERROR,
+  ID_EXCEPTION,
+  ID_ONLINK,
+  ID_HTMLKEY,
+  ID_COMMAND,
+  ID_XOBJECTSDESTROY,
+  ID_CMDLINECHAR,
+  ID_CMDLINEKEYDOWN,
+  ID_TEXTPOST,
+  ID_UPDATE_GUI
 };
 
 //............................................................................//
@@ -322,6 +320,7 @@ protected:
   void AnalyseError(TMacroError& error)  {  AnalyseErrorEx(error);  }
 
   void OnSize(wxSizeEvent& event);
+  void OnMove(wxMoveEvent& event);
 
   void OnQuit(wxCommandEvent& event);
   void OnFileOpen(wxCommandEvent& event);

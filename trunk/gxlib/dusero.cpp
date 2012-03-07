@@ -119,8 +119,8 @@ void TDUserObj::FromDataItem(const TDataItem &di) {
   }
 }
 //.............................................................................
-const_strlist TDUserObj::ToPov(olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials) const
+const_strlist TDUserObj::ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
 {
   TStrList out;
   out.Add(" object { union {");

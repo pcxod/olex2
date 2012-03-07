@@ -115,8 +115,8 @@ const_strlist TXPlane::PovDeclare()  {
   return out;
 }
 //..............................................................................
-const_strlist TXPlane::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPointerComparator> &materials) const
+const_strlist TXPlane::ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
 {
   TStrList out;
    pov::CrdTransformer crdc(Parent.GetBasis());
