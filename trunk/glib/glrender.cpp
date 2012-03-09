@@ -519,7 +519,7 @@ void TGlRenderer::Draw()  {
   }
   else if( StereoFlag == glStereoInterlace )  {
     olx_gl::drawBuffer(GL_BACK);
-    SetupStencilFoInterlacedDraw((AbsoluteTop%2) == 0);
+    SetupStencilFoInterlacedDraw((AbsoluteTop%2) != 0);
     olx_gl::enable(GL_STENCIL_TEST);
     olx_gl::stencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     const double ry = GetBasis().GetRY();
