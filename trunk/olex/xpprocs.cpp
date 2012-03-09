@@ -4803,8 +4803,14 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   // a Open dialog appearing breaks the wxWidgets sizing...
   if( !IsShown() && Cmds.IsEmpty() )  return;
-  if (TOlxVars::UnsetVar("olx_disable_reap"))
-    return;
+  olxstr cmdl_fn = TOlxVars::FindValue("olx_reap_cmdl");
+  if (!cmdl_fn.IsEmpty()) {
+    TOlxVars::UnsetVar("olx_reap_cmdl");
+    if (TEFile::Exists(cmdl_fn)) {
+      Cmds.Clear();
+      Cmds << cmdl_fn;
+    }
+  }
   SetSGList(EmptyString());
   TXFile::NameArg file_n;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
@@ -6378,6 +6384,30 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
             MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
           CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
+          //for (size_t ai=0; ai < netA.NodeCount(); ai++) {
+          //  TSAtom &a = netA.Node(ai);
+          //  TSAtom &b = netB.Node(ai);
+          //  if (a.GetEllipsoid() == NULL || b.GetEllipsoid() == NULL) continue;
+          //  mat3d m = a.GetEllipsoid()->GetMatrix();
+          //  m[0] *= a.GetEllipsoid()->GetSX();
+          //  m[1] *= a.GetEllipsoid()->GetSY();
+          //  m[2] *= a.GetEllipsoid()->GetSZ();
+          //  mat3d m1 = b.GetEllipsoid()->GetMatrix();
+          //  m1[0] *= b.GetEllipsoid()->GetSX();
+          //  m1[1] *= b.GetEllipsoid()->GetSY();
+          //  m1[2] *= b.GetEllipsoid()->GetSZ();
+          //  m -= m1;
+          //  vec3d v = m[0].XProdVec(m[1]);
+          //  if (m[2].CAngle(v) < 0)
+          //    m[2] *= -1;
+          //  a.GetEllipsoid()->SetMatrix(m);
+          //  a.GetEllipsoid()->SetSX(1);
+          //  a.GetEllipsoid()->SetSY(1);
+          //  a.GetEllipsoid()->SetSZ(1);
+          //  b.GetEllipsoid()->SetSX(0.01);
+          //  b.GetEllipsoid()->SetSY(0.01);
+          //  b.GetEllipsoid()->SetSZ(0.01);
+          //}
         }
       }
     }
