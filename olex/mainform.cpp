@@ -1759,7 +1759,7 @@ void TMainForm::StartupInit()  {
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
     else // disable reading last file in
-      TOlxVars::GetInstance()->SetVar("olx_disable_reap", TrueString());
+      TOlxVars::GetInstance()->SetVar("olx_reap_cmdl", FXApp->Arguments[1]);
   }
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
