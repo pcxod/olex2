@@ -327,12 +327,12 @@ void TTextureManager::AfterContextChange() {
   if (Textures.Count() != TextureData.Count())
     throw TFunctionFailedException(__OlxSourceInfo, "mismatching array sizes");
   if (Textures.IsEmpty()) return;
-  GLuint texId = 0;
-  olx_gl::genTextures((GLuint)Textures.Count(), &texId);
+  olx_array_ptr<GLuint> texIds(new  GLuint[Textures.Count()]);
+  olx_gl::genTextures((GLuint)Textures.Count(), texIds());
   for (size_t i=0; i < Textures.Count(); i++) {
     TGlTexture &glt = *Textures.GetObject(i);
     if (glt.GetId() == ~0) {
-      glt.SetId((GLuint)(texId+i));
+      glt.SetId((GLuint)(texIds[i]));
       glt.WriteData(TextureData[i]);
     }
   }
