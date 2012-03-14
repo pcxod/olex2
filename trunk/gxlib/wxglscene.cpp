@@ -184,6 +184,9 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   }
   // LINUZ port - ... native font string is system dependent...
   wxFont Font(glf.GetIdString().u_str());
+  if (!Font.IsOk()) {
+    Font = wxFont(10, wxMODERN, wxNORMAL, wxNORMAL);
+  }
   if( Font.GetPointSize() <= 1 )
     Font.SetPointSize(10);
   if( half_size )

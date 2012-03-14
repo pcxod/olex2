@@ -44,11 +44,21 @@ void CellChangeTask::Run() {
   TMainForm *mf = TGlXApp::GetMainForm();
   if (hklsrc != TXApp::GetInstance().XFile().GetRM().GetHKLSource())
     return;
+  TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  olxstr o, n;
+  for (size_t i=0; i < 3; i++) {
+    o << ' ' << TEValueD(au.GetAxes()[i], au.GetAxisEsds()[i]).ToString() <<
+      ' ' << TEValueD(au.GetAngles()[i], au.GetAngleEsds()[i]).ToString();
+    n << ' ' << TEValueD(cell[i], esds[i]).ToString() <<
+      ' ' << TEValueD(cell[3+i], esds[3+i]).ToString();
+  }
   olxstr opt = TBasicApp::GetInstance().Options.FindValue("use_hkl_cell");
   bool use = false;
-  if (opt.IsEmpty()) {
-    olxstr rv = TdlgMsgBox::Execute(mf, "Cell parameters in your HKL file"
-      " differ from currently used. Would you like to update them?",
+  if (opt.IsEmpty() && o != n) {
+    olxstr msg = "Cell parameters in your HKL file differ from currently "
+      "used.\nCurrent:";
+    msg << o << "\nNew:" << n << "\nWould you like to update them?";
+    olxstr rv = TdlgMsgBox::Execute(mf, msg,
       "Different cells",
       "Remember my decision",
       wxYES|wxNO|wxICON_QUESTION, true);
@@ -57,9 +67,8 @@ void CellChangeTask::Run() {
       mf->UpdateUserOptions("use_hkl_cell", use);
   }
   if (use) {
-    TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
-    TAsymmUnit &au1 =
-      TXApp::GetInstance().XFile().LastLoader()->GetAsymmUnit();
+   TAsymmUnit &au1 =
+     TXApp::GetInstance().XFile().LastLoader()->GetAsymmUnit();
     au1.GetAxes() = au.GetAxes() = vec3d(cell[0], cell[1], cell[2]);
     au1.GetAngles() = au.GetAngles() = vec3d(cell[3], cell[4], cell[5]);
     au1.GetAxisEsds() = au.GetAxisEsds() = vec3d(esds[0], esds[1], esds[2]);
