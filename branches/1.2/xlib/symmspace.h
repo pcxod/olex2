@@ -109,7 +109,6 @@ namespace SymmSpace  {
     static int sort_matrix_list(const smatd &m1, const smatd &m2) {
       return olx_cmp(rotation_id::get(m1.r), rotation_id::get(m2.r));
     }
-    static vec3d normalise_t(const vec3d &t);
   public:
     bool centrosymmetric;
     /* list of the compact matrices including the identity
@@ -131,6 +130,8 @@ namespace SymmSpace  {
     void normalise() {
       QuickSorter::SortSF(matrices, &sort_matrix_list);
     }
+    // normalises the translation - puts in the [0,1) range
+    static vec3d normalise_t(const vec3d &t);
   };
   struct InfoEx  {  // has a list of translation vectors vs latt number
     bool centrosymmetric;
@@ -234,8 +235,8 @@ namespace SymmSpace  {
     }
     for( size_t i=0; i < groups.Count(); i++ )  {
       for (size_t j=0; j < groups.GetValue(i).Count(); j++) {
-        groups.GetValue(i)[j].t -=
-          groups.GetValue(i)[j].t.template Floor<int>();
+        groups.GetValue(i)[j].t =
+          Info::normalise_t(groups.GetValue(i)[j].t);
       }
       QuickSorter::SortSF(groups.GetValue(i), &sort_group);
       groups.GetValue(i).SetCount(1);
@@ -249,35 +250,34 @@ namespace SymmSpace  {
         if( ii == InvalidIndex )
           continue;
         /* check that the thing folds back onto itself */
-        vec3d t = (groups.GetValue(ii)[0].t - groups.GetValue(i)[0].t).Abs();
+        size_t i1=i, i2=ii;
+        if (groups.GetValue(i)[0].r.Determinant() < 0)
+          olx_swap(i1, i2);
+        vec3d t = Info::normalise_t(
+          (groups.GetValue(i1)[0].t - groups.GetValue(i2)[0].t).Abs());
         if (!inv_t_initialised) {
           rv.inv_trans = t;
           inv_t_initialised = true;
         }
         else {
-          if (!t.Equals(rv.inv_trans, 1e-3) ) {
+          if (!t.Equals(rv.inv_trans, 1e-3)) {
             throw TFunctionFailedException(__OlxSourceInfo,
               "inversion translation varies");
           }
         }
-        groups.GetValue(ii).AddCopy(groups.GetValue(i)[0]);
-        groups.Delete(i--);
+        if (i2 == i)
+          groups.Delete(i--);
+        else
+          groups.Delete(i2);
       }
       rv.centrosymmetric = (groups.Count()*2 == gc);
-      if( rv.centrosymmetric )  {
-        for( size_t i=0; i < groups.Count(); i++ )  {
-          if( groups.GetValue(i)[0].r.Determinant() < 0 )
-            groups.GetValue(i).Delete(0);
-          else
-            groups.GetValue(i).SetCount(1);
-        }
+      if (!rv.centrosymmetric && groups.Count() != gc) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "incomplete inversion");
       }
     }
-    for( size_t i=0; i < groups.Count(); i++ )  {
-      smatd_list& l = groups.GetValue(i);
-      for( size_t j=0; j < l.Count(); j++ )
-        rv.matrices.AddCopy(l[j]);
-    }
+    for( size_t i=0; i < groups.Count(); i++ )
+      rv.matrices.AddCopy(groups.GetValue(i)[0]);
     rv.normalise(translations);
     if (translations_ != NULL) *translations_ = translations;
     return rv;
@@ -297,11 +297,9 @@ namespace SymmSpace  {
       // use info - it has the I
       size_t mc = info.matrices.Count();
       rv.matrices.SetCapacity(mc*2);
-      vec3d it = info.inv_trans*2;
+      smatd invt(-mat3d::Idenity(), -info.inv_trans*2);
       for (size_t i=0; i < mc; i++) {
-        smatd &m = rv.matrices.AddCopy(info.matrices[i]);
-        m.r *= -1;
-        m.t += it;
+        smatd &m = rv.matrices.AddCopy(info.matrices[i]*invt);
         m.t -= m.t.Floor<int>();
       }
     }

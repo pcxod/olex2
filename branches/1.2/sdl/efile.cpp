@@ -434,15 +434,19 @@ bool TEFile::IsDir(const olxstr& F)  {
   return (the_stat.st_mode & S_IFDIR) != 0;
 }
 //..............................................................................
-bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly)  {
+bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly, bool rethrow)  {
   olxstr fn = OLX_OS_PATH(F);
-  if( !Exists(fn) || !TEFile::IsDir(fn) )  
+  if (!Exists(fn) || !TEFile::IsDir(fn))
     return false;
-  try  {
+  try {
     TFileTree::Delete(fn, ContentOnly);
     return true;
   }
-  catch( TExceptionBase& )  {  return false;  }
+  catch (const TExceptionBase &e) {
+    if (rethrow)
+      throw TFunctionFailedException(__OlxSourceInfo, e);
+    return false;
+  }
 }
 //..............................................................................
 bool TEFile::IsEmptyDir(const olxstr& F)  {
@@ -1004,6 +1008,17 @@ olxstr TEFile::Which(const olxstr& filename)  {
     TEFile::AddPathDelimeterI(toks[i]) << filename;
     if( Exists(toks[i]) )
       return toks[i];
+  }
+  return EmptyString();
+}
+//..............................................................................
+olxstr TEFile::Which(const olxstr& filename, const TStrList &paths) {
+  olxstr rv = Which(filename);
+  if (!rv.IsEmpty()) return rv;
+  for (size_t i=0; i < paths.Count(); i++) {
+    olxstr d = TEFile::AddPathDelimeter(paths[i]) << filename;
+    if (Exists(d))
+      return d;
   }
   return EmptyString();
 }

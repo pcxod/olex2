@@ -71,7 +71,7 @@ public:
   TNetwork& GetNetwork() const {  return *Network; }
 
   void Clear(bool ClearUnitCell);
-  void Uniq(bool removeSymmEquivalents = false);
+  void Uniq();
   // used if atoms availibility etc has changed
   void UpdateConnectivity();
   // used if the connectivity info (CONN/BIND/FREE etc) is changed
@@ -114,7 +114,10 @@ public:
   void GrowFragments(
     const olxdict<uint32_t, smatd_list, TPrimitiveComparator> &job);
   /* grows a fragment using particular matrix */
-  void GrowFragment(uint32_t FragId, const smatd& transform);
+  void GrowFragment(uint32_t FragId, const smatd& transform) {
+    GrowFragment(FragId, smatd_list() << transform);
+  }
+  void GrowFragment(uint32_t FragId, const smatd_list& transforms);
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
   void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells,
     TCAtomPList* Template);
@@ -154,7 +157,7 @@ public:
   const AtomRegistry& GetAtomRegistry() const {
     return Objects.atomRegistry;
   }
-  void RestoreAtom(const TSAtom::FullRef& id);
+  void RestoreAtom(const TSAtom::Ref& id);
 
   // for the grown structure might return more than one plane
   TSPlanePList NewPlane(const TSAtomPList& Atoms, double weightExtent=0,
@@ -163,7 +166,7 @@ public:
   //the plane must be deleted by the caller !
   TSPlane* TmpPlane(const TSAtomPList& Atoms, double weightExtent=0);
   TSAtomPList NewCentroid(const TSAtomPList& Atoms);
-  TSAtom* NewAtom(const vec3d& center);
+  TSAtom& NewAtom(const vec3d& center);
 
   void SetAnis(const TCAtomPList& atoms, bool anis);
 
@@ -240,6 +243,8 @@ public:
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
+  // intialise the data, must be called after the FromDataItem
+  void FinaliseLoading();
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);

@@ -294,7 +294,7 @@ const_strlist UpdateAPI::GetSystemTags() {
 #elif defined(__MAC__)
   os_str = "mac";
 #elif defined(__linux__)
-  os_str = "mac";
+  os_str = "linux";
 #else  
   os_str = "unknown";
 #endif
@@ -350,12 +350,11 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
 #  else
       props.Add("port-linux32");
 #  endif
-#else
+#endif
   if( !settings.olex2_port.IsEmpty() )  {
     props.Add(settings.olex2_port);
     log.Add("Portable executable update tag: ") << settings.olex2_port;
   }
-#endif
   olxstr pluginFile = TBasicApp::GetBaseDir() + "plugins.xld";
   if( TEFile::Exists(pluginFile) )  {
     try  {

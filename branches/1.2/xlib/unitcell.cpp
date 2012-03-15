@@ -218,7 +218,6 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       const vec3i shift = v.Round<int>();
       // collect asymetric unit bonds
       if( j == 0 && shift.IsNull() )  {  // I
-        //if( ind == i || Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
         if( ind == i )  continue;
         AU->CellToCartesian(v);
         const double qd = v.QLength();
@@ -234,8 +233,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Latt->GetDelta()) )  // covalent bond
         {
           Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
-          Atoms[i]->AttachSite(Atoms[ind],
-            Latt->GetUnitCell().InvMatrix(Matrices[j]));
+          Atoms[i]->AttachSite(Atoms[ind], Matrices[j]);
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
           Latt->GetDeltaI()) )  // interaction
@@ -288,6 +286,33 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         }
       }
     }
+    for( int ii=-1; ii <= 1; ii++ )  {
+      for( int ij=-1; ij <= 1; ij++ ) {
+        for( int ik=-1; ik <= 1; ik++ )  {
+          if( ii == 0 && ij == 0 && ik == 0 && i == ind )  continue;
+          const vec3i shift(ii, ij, ik);
+          const double qd = AU->Orthogonalise(
+            Atoms[ind]->ccrd() - shift - Atoms[i]->ccrd()).QLength();
+          smatd matr = Matrices[0];
+          matr.t += shift;
+          matr.SetId(0, shift);
+          if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
+            Latt->GetDelta()) )
+          {
+            Atoms[ind]->AttachSite(Atoms[i], matr);
+            if (i != ind)
+              Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+          }
+          else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
+            Latt->GetDeltaI()) )
+          {
+            Atoms[ind]->AttachSiteI(Atoms[i], matr);
+            if (i != ind)
+              Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+          }
+        }
+      }
+    }
   }
 }
 //..............................................................................
@@ -298,9 +323,10 @@ void TUnitCell::FindSymmEq() const  {
   for( size_t i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& A1 = GetLattice().GetAsymmUnit().GetAtom(i);
     if( A1.IsDeleted() )  continue;
-    ACA.Add(A1)->SetTag(0);  
     A1.ClearAttachedSites();
     A1.ClearEquivs();
+    if (A1.GetConnInfo().maxBonds != 0)
+      ACA.Add(A1)->SetTag(0);
   }
   // searching for symmetrical equivalents; the search could be optimised by
   // removing the translational equivalents in the firts order; however the task is not
@@ -518,7 +544,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
       if( D < R )  {
         smatd& m = res.AddNew(atoms[i], Matrices[j], au.CellToCartesian(vec += shift)).B();
         m.t += shift;
-        m.SetId(Matrices[j].GetContainerId(), shift[0], shift[1], shift[2]);
+        m.SetId(Matrices[j].GetContainerId(), shift);
       }
     }
     for( int ii=-1; ii <= 1; ii++ )  {
@@ -526,14 +552,12 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
         for( int ik=-1; ik <= 1; ik++ )  {
           if( ii == 0 && ij == 0 && ik == 0 )  continue;
           const vec3i shift(ii, ij, ik);
-          vec3d vec(a.ccrd() + shift - to);
-          au.CellToCartesian(vec);
-          const double D = vec.QLength();
+          const double D = au.Orthogonalise(a.ccrd() + shift - to).QLength();
           if( D < R && D > 0.0001 )  {
             smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
             m.SetId(0, ii, ik, ik);
-            res.GetLast().C() = vec;
+            res.GetLast().C() = au.Orthogonalise(a.ccrd() + shift);
           }
         }
       }
@@ -576,7 +600,7 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
             smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
             m.SetId(0, ii, ik, ik);
-            res.GetLast().C() = vec;
+            res.GetLast().C() = au.Orthogonalise(a.ccrd() + shift);
           }
         }
       }
@@ -584,7 +608,9 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
   }
 }
 //..............................................................................
-void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, int part)  const {
+void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
+  int part) const
+{
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   envi.SetBase(atom);
   smatd I;
@@ -592,11 +618,18 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   TCAtom& ca = atom.CAtom();
   for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
     const TCAtom::Site& site = ca.GetAttachedSite(i);
-    if( site.atom->IsDeleted() || (!IncludeQ && site.atom->GetType() == iQPeakZ) )  continue;
-    const smatd m = MulMatrix(site.matrix, atom.GetMatrix(0));
+    if( site.atom->IsDeleted() ||
+        (!IncludeQ && site.atom->GetType() == iQPeakZ) )
+    {
+      continue;
+    }
+    const smatd m = MulMatrix(site.matrix, atom.GetMatrix());
     vec3d v = au.Orthogonalise(m*site.atom->ccrd());
-    if( part == DefNoPart || (site.atom->GetPart() == 0 || site.atom->GetPart() == part) )
+    if( part == DefNoPart || 
+        (site.atom->GetPart() == 0 || site.atom->GetPart() == part) )
+    {
       envi.Add(*site.atom, m, v);
+    }
   }
 }
 //..............................................................................
@@ -607,8 +640,9 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   for( size_t i=0; i < atom.CAtom().AttachedSiteCount(); i++ )  {
     TCAtom::Site& site = atom.CAtom().GetAttachedSite(i);
-    if( site.atom->IsDeleted() || site.atom->GetType() != iQPeakZ )  continue;
-    const smatd m = MulMatrix(site.matrix, atom.GetMatrix(0));
+    if( site.atom->IsDeleted() || site.atom->GetType() != iQPeakZ )
+      continue;
+    const smatd m = MulMatrix(site.matrix, atom.GetMatrix());
     const vec3d v = au.Orthogonalise(m*site.atom->ccrd());
     envi.Add(*site.atom, m, v);
   }

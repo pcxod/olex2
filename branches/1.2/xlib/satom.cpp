@@ -16,7 +16,10 @@
 #include "pers_util.h"
 #include "index_range.h"
           
-TSAtom::TSAtom(TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
+TSAtom::TSAtom(TNetwork *N)
+  : TBasicNode<TNetwork, TSAtom, TSBond>(N),
+    Matrix(NULL)
+{
   SetType(sotAtom);
   Flags = 0;
 }
@@ -42,7 +45,7 @@ void TSAtom::Assign(const TSAtom& S)  {
   FCenter    = S.crd();
   FCCenter   = S.ccrd();
   FCAtom     = &S.CAtom();
-  Matrices.Assign(S.Matrices);
+  Matrix = S.Matrix;
 }
 //..............................................................................
 olxstr TSAtom::GetGuiLabel() const  {  
@@ -51,21 +54,11 @@ olxstr TSAtom::GetGuiLabel() const  {
     rv << '_' <<
       FCAtom->GetParent()->GetResidue(FCAtom->GetResiId()).GetNumber();
   }
-  if( Network == NULL || (Matrices[0]->r.IsI() && Matrices[0]->t.IsNull()) )
+  if( Network == NULL || Matrix->IsI() )
     return rv;
   else
     return rv << '.' << TSymmParser::MatrixToSymmCode(
-    Network->GetLattice().GetUnitCell().GetSymmSpace(), *Matrices[0]);
-}
-//..............................................................................
-void TSAtom::SetNodeCount(size_t cnt)  {
-  if( cnt >= (size_t)Nodes.Count() )
-    return;
-  for( size_t i=cnt; i < Nodes.Count(); i++ )  {
-    Nodes[i]->Nodes.Remove(this);
-    Nodes[i] = NULL;
-  }
-  Nodes.Pack();
+    Network->GetLattice().GetUnitCell().GetSymmSpace(), *Matrix);
 }
 //..............................................................................
 void TSAtom::RemoveNode(TSAtom& node)  {
@@ -81,10 +74,10 @@ olxstr TSAtom::GetGuiLabelEx() const  {
     rv << '_' <<
       FCAtom->GetParent()->GetResidue(FCAtom->GetResiId()).GetNumber();
   }
-  if( Network == NULL || (Matrices[0]->r.IsI() && Matrices[0]->t.IsNull()) )
+  if( Network == NULL || Matrix->IsI() )
     return rv;
   else
-    return rv << '(' << TSymmParser::MatrixToSymmEx(*Matrices[0]) << ')';
+    return rv << '(' << TSymmParser::MatrixToSymmEx(*Matrix) << ')';
 }
 //..............................................................................
 void TSAtom::ToDataItem(TDataItem& item) const {
@@ -106,9 +99,7 @@ void TSAtom::ToDataItem(TDataItem& item) const {
     item.AddField("bond_range", rb.GetString(true));
   }
   item.AddField("atom_id", FCAtom->GetTag());
-  TDataItem& matrices = item.AddItem("Matrices");
-  for( size_t i=0; i < Matrices.Count(); i++ )
-    matrices.AddField("matr_id", Matrices[i]->GetId());
+  item.AddField("matrix_id", Matrix->GetId());
 }
 //..............................................................................
 void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
@@ -141,18 +132,48 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   TLattice& latt = Network->GetLattice();
   const size_t ca_id = item.GetRequiredField("atom_id").ToSizeT();
   CAtom(latt.GetAsymmUnit().GetAtom(ca_id));
-  const TDataItem& matrices = item.FindRequiredItem("Matrices");
-  Matrices.SetCapacity(matrices.FieldCount());
-  for( size_t i=0; i < matrices.FieldCount(); i++ )  {
-    const size_t mi = matrices.GetField(i).ToSizeT();
-    Matrices.Add(latt.GetMatrix(mi));
+  TDataItem* matrices = item.FindItem("Matrices");
+  if (matrices == NULL) {
+    Matrix = &latt.GetMatrix(item.GetRequiredField("matrix_id").ToSizeT());
   }
-  FCCenter = *Matrices[0] * FCCenter;
-  FCenter = PersUtil::FloatVecFromStr(item.GetRequiredField("crd"));
+  else {
+    const size_t mi = matrices->GetField(0).ToSizeT();
+    Matrix = &latt.GetMatrix(mi);
+  }
+  FCCenter = GetMatrix() * FCCenter;
+  PersUtil::VecFromStr(item.GetRequiredField("crd"), FCenter);
   Flags = item.GetRequiredField("flags").ToInt();
   if( CAtom().GetEllipsoid() != NULL )  {
     SetEllipsoid(&latt.GetUnitCell().GetEllipsoid(
-      GetMatrix(0).GetContainerId(), CAtom().GetId()));
+      GetMatrix().GetContainerId(), CAtom().GetId()));
   }
+}
+//..............................................................................
+void TSAtom::UpdateMatrix(const smatd *M) {  
+  if (M->IsFirst() || M->GetId() < Matrix->GetId())
+    Matrix = M;
+}
+//..............................................................................
+bool TSAtom::IsGenerator(uint32_t m_id) const {
+  if (m_id == GetMatrix().GetId())
+    return true;
+  const TUnitCell &uc = GetNetwork().GetLattice().GetUnitCell();
+  for (size_t i=0; i < CAtom().EquivCount(); i++) {
+    uint32_t id = uc.MulMatrixId(CAtom().GetEquiv(i), GetMatrix());
+    if (id == m_id)
+      return true;
+  }
+  return false;
+}
+//..............................................................................
+TSAtom::Ref TSAtom::GetMinRef(const TCAtom &a, const smatd &generator) {
+  uint32_t m_id = generator.GetId();
+  const TUnitCell &uc = a.GetParent()->GetLattice().GetUnitCell();
+  for (size_t i=0; i < a.EquivCount(); i++) {
+    uint32_t n_id = uc.MulMatrixId(a.GetEquiv(i), generator);
+    if (n_id < m_id)
+      m_id = n_id;
+  }
+  return Ref(a.GetId(), m_id);
 }
 //..............................................................................

@@ -81,7 +81,7 @@ TLog::LogEntry& TLog::LogEntry::operator << (const TExceptionBase &e) {
     buffer << l.Text(NewLineSequence());
   }
   else
-    buffer << e.GetException()->GetError();
+    buffer << e.GetException()->GetFullMessage();
   return *this;
 }
 //..............................................................................

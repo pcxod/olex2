@@ -263,8 +263,8 @@ const vec3d &TXBond::GetBaseCrd() const {
   return A().crd();
 }
 //..............................................................................
-const_strlist TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPointerComparator> &materials) const
+const_strlist TXBond::ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
 {
   TStrList out;
   if( olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3 )
@@ -273,7 +273,7 @@ const_strlist TXBond::ToPov(olxdict<const TGlMaterial*, olxstr,
   const TGPCollection &gpc = GetPrimitives();
   for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
-    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
+    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials, this);
     out.Add("  object {") << "bond_" << glp.GetName().ToLowerCase().Replace(' ', '_')
       << " texture {" << p_mat << "}}";
   }
@@ -596,9 +596,9 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   if( level == 1 )  return L;
   TUnitCell::SymmSpace sp =
     A->GetNetwork().GetLattice().GetUnitCell().GetSymmSpace();
-  L << '.' << TSymmParser::MatrixToSymmCode(sp, A->GetMatrix(0)) <<
+  L << '.' << TSymmParser::MatrixToSymmCode(sp, A->GetMatrix()) <<
     '-' <<
-    TSymmParser::MatrixToSymmCode(sp, B->GetMatrix(0));
+    TSymmParser::MatrixToSymmCode(sp, B->GetMatrix());
   if( level == 2 )  return L;
   return L << ".u";
 }

@@ -49,7 +49,9 @@ class PatchAPI  {
   }
   static TEFile* lock_file;
   static void _RestoreExecuableFlags();
-  static olxstr repository_tag, shared_dir, instance_dir;
+  static olxstr repository_tag, repository_base_dir,
+    shared_dir,
+    instance_dir;
 public:
   ~PatchAPI()  {  UnlockUpdater();  }
   // if action handlers are passed along - they will be automatically deleted
@@ -60,6 +62,8 @@ public:
   static olxstr GetUpdateLocationFileName()  {
     return TBasicApp::GetInstanceDir() + "__location.update";
   }
+  /* writes patch dir into the the update location file */
+  static void MarkPatchComplete();
   static bool HaveUpdates() {
     return TEFile::Exists(GetUpdateLocationFileName());
   }
@@ -85,10 +89,11 @@ public:
   _GetSharedDirRoot()/data on other platforms
   */
   static olxstr GetSharedDir(bool refresh=false)  {
-    return _GetSharedDirRoot(refresh) <<
 #ifdef __WIN32__
+    return TEFile::AddPathDelimeter(_GetSharedDirRoot(refresh)) <<
     "Olex2Data/";
 #else
+    return TEFile::TrimPathDelimeter(_GetSharedDirRoot(refresh)) <<
     "data/";
 #endif
   }

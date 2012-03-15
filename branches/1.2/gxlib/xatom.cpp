@@ -222,13 +222,17 @@ void TXAtom::CalcRad(short DefRadius)  {
 //..............................................................................
 void TXAtom::ValidateRadius(TGraphicsStyle& GS)  {
   Params()[1] = GS.GetNumParam("Z", DefZoom());
-  double r;
-  if ((r=GS.GetNumParam("R", -1.0)) == -1) {
-    short dr = GS.GetNumParam("DR", DefRad());
-    CalcRad(dr);
+  short dr = GS.GetNumParam("DR", DefRad());
+  if (dr == darCustom) {
+    double r;
+    if ((r=GS.GetNumParam("R", -1.0, LegendLevel(GetCollectionName()) == 0)) == -1)
+      CalcRad(darIsot);
+    else
+      Params()[0] = r;
   }
   else
-    Params()[0] = r;
+    CalcRad(dr);
+
 }
 void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
   DrawStyle(GS.GetNumParam("DS", DefDS()));
@@ -370,7 +374,7 @@ olxstr TXAtom::GetLegend(const TSAtom& A, const short Level)  {
   if( Level == 1 )  return L;
   L << '.';
   L << TSymmParser::MatrixToSymmCode(
-    A.GetNetwork().GetLattice().GetUnitCell().GetSymmSpace(), A.GetMatrix(0));
+    A.GetNetwork().GetLattice().GetUnitCell().GetSymmSpace(), A.GetMatrix());
   return L;
 }
 //..............................................................................
@@ -609,8 +613,8 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
   }
 }
 //..............................................................................
-const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPointerComparator> &materials) const
+const_strlist TXAtom::ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
 {
   TStrList out;
   if( DrawStyle() == adsStandalone && !IsStandalone() )
@@ -624,7 +628,7 @@ const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
     if( GetEllipsoid() == NULL &&
         (glp.GetName() == "Disks" || glp.GetName() == "Rims" ) )
       continue;
-    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
+    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials, this);
     out.Add("  object {") << "atom_" << glp.GetName().ToLowerCase().Replace(' ', '_')
       << " texture {" << p_mat << "}}";
   }
@@ -648,7 +652,7 @@ const_strlist TXAtom::ToPov(olxdict<const TGlMaterial*, olxstr,
   out.Add(" }");
   if( GetPolyhedronType() != polyNone && GetPolyhedron() != NULL )  {
     olxstr poly_mat_name = pov::get_mat_name("Polyhedron",
-      GetPrimitives().GetStyle(), materials);
+      GetPrimitives().GetStyle(), materials, this);
     TXAtom::Poly &p = *GetPolyhedron();
     out.Add(" union { //") << GetLabel();
     for( size_t i=0; i < p.faces.Count(); i++ )  {
@@ -870,20 +874,15 @@ void TXAtom::ValidateAtomParams() {
 }
 //..............................................................................
 void TXAtom::SetZoom(double V)  {
-  GetPrimitives().GetStyle().SetParam("Z", V, LegendLevel(GetCollectionName()) == 0);
+  GetPrimitives().GetStyle().SetParam("Z",
+    V, LegendLevel(GetCollectionName()) == 0);
   Params()[1] = V;
-  // update radius for all members of the collection
-  for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
-    GetPrimitives().GetObject(i).Params()[1] = V;
 }
 //..............................................................................
 void TXAtom::SetR(double V)  {
-  GetPrimitives().GetStyle().SetParam("R", V);
-  //, LegendLevel(GetCollectionName()) == 0);
+  GetPrimitives().GetStyle().SetParam("R", V,
+    LegendLevel(GetCollectionName()) == 0);
   Params()[0] = V;
-  // update radius for all members of the collection
-  for( size_t i=0; i < GetPrimitives().ObjectCount(); i++ )
-    GetPrimitives().GetObject(i).Params()[0] = V;
 }
 //..............................................................................
 uint32_t TXAtom::GetPrimitiveMask() const {

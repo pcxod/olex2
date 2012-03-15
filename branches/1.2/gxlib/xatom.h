@@ -32,7 +32,8 @@ const short
   darPack     = 0x0004,
   darBond     = 0x0008,
   darIsotH    = 0x0010,  // only affects H, others as darIsot
-  darVdW      = 0x0020;
+  darVdW      = 0x0020,
+  darCustom   = 0x0040;
 const short
   polyNone      = 0,
   polyAuto      = 1,  // polyhedron type
@@ -165,7 +166,8 @@ public:
     double scale = FParams[1];
     if( (FRadius & (darIsot|darIsotH)) != 0 )
       scale *= TelpProb();
-    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) && GetEllipsoid() != NULL )
+    if( (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) &&
+      GetEllipsoid() != NULL )
     {
       if( GetEllipsoid()->IsNPD() )
         return (caDefIso*2*scale);
@@ -207,8 +209,8 @@ public:
   int GetPolyhedronType() const;
   Poly *GetPolyhedron() const {  return Polyhedron;  }
 
-  const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials) const;
+  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
+    TComparableComparator> &materials) const;
   static const_strlist PovDeclare();
 
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }

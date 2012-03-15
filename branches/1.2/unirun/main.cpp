@@ -95,14 +95,29 @@ public:
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::GetLog() <<
       (olxstr("\r") << (int)(100*A->GetPos()/A->GetMax()) << '%');
-		fflush(NULL);
+    fflush(NULL);
     return true;
   }
 };
 
 //---------------------------------------------------------------------------
 void DoRun();
-void DoLaunch(const olxcstr& arg=CEmptyString());
+void DoLaunch(const TStrList &args);
+char **ListToArgs(TStrList &args_list) {
+  char **args = new char*[args_list.Count()+1];
+  args[args_list.Count()] = NULL;
+  for (size_t i=0; i < args_list.Count(); i++) {
+    // options are to be quoted by the called
+    bool option = args_list[i].StartsFrom('-') ||
+      args_list[i].IndexOf('=') != InvalidIndex;
+    if (!option && args_list[i].IndexOf(' ') != InvalidIndex)
+      args_list[i] = olxstr('"') << args_list[i] << '"';
+    olxcstr v = TUtf8::Encode(args_list[i]);
+    args[i] = new char [v.Length()+1];
+    strcpy(args[i], v.c_str());
+  }
+  return args;
+}
 
 class MyApp: public wxAppConsole { 
   virtual bool OnInit() { 
@@ -138,10 +153,14 @@ int main(int argc, char** argv)  {
     if( argc > 1 )  {
       olxstr arg(argv[1]);
       print_help = (arg == "-help" || arg == "/help" || arg == "--help");
-      if( !print_help && TEFile::Exists(arg) )  {
+      if (!print_help && TEFile::Exists(arg) && TEFile::IsDir(arg)) {
         base_dir = arg;
+        var_name.SetLength(0);
       }
+// must be done on mac!
+#ifdef __MAC__
       var_name.SetLength(0);
+#endif
     }
     TBasicApp bapp(TBasicApp::GuessBaseDir(base_dir, var_name));
     bapp.GetLog().AddStream(&out, false);
@@ -153,7 +172,7 @@ int main(int argc, char** argv)  {
       log.NewEntry() << "If no arguments provided, the system variable "
         "OLEX2_DIR will be checked first, if the variable is not set, "
         "current folder will be updated";
-      log.NewEntry() << "(c) OlexSys, Oleg V. Dolomanov 2007-2011" <<
+      log.NewEntry() << "(c) OlexSys, Oleg V. Dolomanov 2007-2012" <<
         NewLineSequence();
       return 0;
     }
@@ -170,15 +189,16 @@ int main(int argc, char** argv)  {
     }
     bapp.SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
     DoRun();
-    if( !bapp.Options.Contains("-run") ) {
-      olxcstr argl = bapp.Arguments.Text(' ', 1);
-      DoLaunch(argl);
-    }
+#ifdef _DEBUG
+    system("PAUSE");
+#endif
+    if( !bapp.Options.Contains("-run") )
+      DoLaunch(bapp.Arguments.SubListFrom(1));
   }
   catch(const TExceptionBase& exc)  {
     TStrList err;
-    exc.GetException()->GetStackTrace(err);
-    out.Write(err.Text(NewLineSequence()));
+    out.Write(
+      exc.GetException()->GetStackTrace(err).Text(NewLineSequence()));
     res = 1;
   }
   out.Write(olxstr("Finished") << NewLineSequence());
@@ -189,6 +209,22 @@ int main(int argc, char** argv)  {
 }
 
 void DoRun()  {
+  bool temporary_run=false;
+  olxstr bd = TBasicApp::GetInstance().Options.FindValue(
+    "-basedir", EmptyString());
+//  TBasicApp::NewLogEntry() << "L: " << bd;
+  if (!bd.IsEmpty()) {
+    TBasicApp::SetBaseDir(TEFile::AddPathDelimeterI(bd) << "dymmy.exe");
+    temporary_run = true;
+    TBasicApp::SetSharedDir(patcher::PatchAPI::GetSharedDir(true));
+    TBasicApp::GetInstance().SetInstanceDir(
+      patcher::PatchAPI::GetInstanceDir(true));
+  }
+#ifdef _DEBUG
+  TBasicApp::NewLogEntry() << "Base dir: " << TBasicApp::GetBaseDir();
+  TBasicApp::NewLogEntry() << "Instance dir: " << TBasicApp::GetInstanceDir();
+  TBasicApp::NewLogEntry() << "Shared dir: " << TBasicApp::GetSharedDir();
+#endif
   if( updater::UpdateAPI::IsInstallRequired() )  {
     TStrList repos;
     updater::UpdateAPI api;
@@ -272,14 +308,81 @@ void DoRun()  {
       TEFile::Copy(old_lf, patcher::PatchAPI::GetUpdateLocationFileName());
       TEFile::DelFile(old_lf);
     }
-    short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
-    if( res != patcher::papi_OK )
-      TBasicApp::NewLogEntry() << "Update has failed with error code: "
-      << res;
+    olxstr patch_dir = TBasicApp::GetInstanceDir() +
+      patcher::PatchAPI::GetPatchFolder();
+    bool force_update = (TEFile::Exists(patch_dir) &&
+      !TEFile::IsEmptyDir(patch_dir) &&
+      !TEFile::Exists(TEFile::AddPathDelimeter(patch_dir) + "index.ind"));
+    if (force_update && !patcher::PatchAPI::HaveUpdates())
+      patcher::PatchAPI::MarkPatchComplete();
+
+    olxstr tmp_exe_name = TBasicApp::GetInstanceDir() +
+      TEFile::ExtractFileName(TBasicApp::GetArg(0));
+    bool can_copy = true;
+    if (TEFile::Exists(tmp_exe_name)) {
+      can_copy = TEFile::DelFile(tmp_exe_name);
+    }
+#ifdef _DEBUG
+    TBasicApp::NewLogEntry() << "Have updates: " <<
+      patcher::PatchAPI::HaveUpdates();
+#endif
+    if (patcher::PatchAPI::HaveUpdates()) {
+      if (!temporary_run) {
+        if (!can_copy) {
+          TBasicApp::NewLogEntry(logError) <<
+            "Another update is currently running, skiping";
+          return;
+        }
+        if (!TBasicApp::IsBaseDirWriteable()) {
+          TBasicApp::NewLogEntry(logError) <<
+            "Updates are available, but the process cannot write to the "
+            "installation folder. Please run with elevated permissions. Or - ";
+          TBasicApp::NewLogEntry() << "Move the content of this folder:";
+          TBasicApp::NewLogEntry() << patcher::PatchAPI::GetUpdateLocation();
+          TBasicApp::NewLogEntry() << "Into this folder:";
+          TBasicApp::NewLogEntry() << TBasicApp::GetBaseDir();
+          TBasicApp::NewLogEntry() << "And delete this file:";
+          TBasicApp::NewLogEntry() <<
+            patcher::PatchAPI::GetUpdateLocationFileName();
+          return;
+        }
+        else if( TBasicApp::GetInstance().IsBaseDirWriteable() )  {
+          if (!TEFile::Copy(TBasicApp::GetArg(0), tmp_exe_name)) {
+            TBasicApp::NewLogEntry(logError) <<
+              "Could not copy itself, aborting update";
+            return;
+          }
+          TStrList args_list;
+          args_list << tmp_exe_name;
+          args_list << (olxstr("-basedir=").quote('"') <<
+            TEFile::TrimPathDelimeter(TBasicApp::GetBaseDir()));
+          args_list << TBasicApp::GetInstance().Arguments.SubListFrom(1);
+          for (size_t i=0; i < TBasicApp::GetInstance().Options.Count(); i++) {
+            olxstr &l = args_list.Add(TBasicApp::GetInstance().Options.GetName(i));
+            if (!TBasicApp::GetInstance().Options.GetValue(i).IsEmpty()) {
+              l << (olxstr('=').quote('"') <<
+                TBasicApp::GetInstance().Options.GetValue(i));
+            }
+          }
+          char **args = ListToArgs(args_list);
+          olxstr c_cmdl = TUtf8::Encode(tmp_exe_name);
+          execv(c_cmdl.c_str(), args);
+          TBasicApp::NewLogEntry(logError) <<
+            "Could re-launch itself";
+          return;
+        }
+      }
+      else {
+        short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
+        if( res != patcher::papi_OK )
+          TBasicApp::NewLogEntry() << "Update has failed with error code: "
+          << res;
+      }
+    }
   }
 }
 
-void DoLaunch(const olxcstr &arg)  {
+void DoLaunch(const TStrList &args_)  {
   olxcstr bd = TBasicApp::GetBaseDir();
   olxstr path = olx_getenv("PATH");
   path.Insert(bd.SubStringTo(bd.Length()-1) + ':', 0);
@@ -288,7 +391,7 @@ void DoLaunch(const olxcstr &arg)  {
   olx_setenv("OLEX2_DIR", EmptyString());
 #ifdef __WIN32__
   olx_setenv("PYTHONHOME", bd + "Python27");
-  const olxcstr cmdl = bd + "olex2.dll";
+  const olxstr cmdl = bd + "olex2.dll";
 #else
   olx_setenv("BOOST_ADAPTBX_FPE_DEFAULT", "1");
   olx_setenv("BOOST_ADAPTBX_SIGNALS_DEFAULT", "1");
@@ -305,14 +408,16 @@ void DoLaunch(const olxcstr &arg)  {
   ld_path << bd << "lib:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
   olx_setenv("PYTHONHOME", bd);
-  const olxcstr cmdl = bd + "olex2_exe";
+  const olxstr cmdl = bd + "olex2_exe";
 #endif
   TEFile::ChangeDir(bd);
   TEFile::Chmod(cmdl, S_IEXEC|S_IEXEC|S_IWRITE);
-  if (arg.IsEmpty())
-    execl(cmdl.u_str(), cmdl.u_str(), NULL);
-  else
-    execl(cmdl.u_str(), cmdl.u_str(), arg.u_str(), NULL);
+  TStrList args_list;
+  args_list << cmdl;
+  args_list << args_;
+  char **args = ListToArgs(args_list);
+  olxstr c_cmdl = TUtf8::Encode(cmdl);
+  execv(c_cmdl.c_str(), args);
   TBasicApp::NewLogEntry(logError) << "Failed to launch '" << cmdl << '\'';
 }
 

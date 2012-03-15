@@ -281,7 +281,7 @@ void TLattice::Init()  {
   GetUnitCell().InitMatrices();
   GetAsymmUnit().GetRefMod()->UpdateUsedSymm(GetUnitCell());
   try {
-    GetUnitCell().FindSymmEq(); // find and remove
+    GetUnitCell().FindSymmEq();
     InitBody();
   }
   catch (const TExceptionBase &e) {
@@ -290,12 +290,12 @@ void TLattice::Init()  {
   }
 }
 //..............................................................................
-void TLattice::Uniq(bool remEqv)  {
+void TLattice::Uniq()  {
   OnStructureUniq.Enter(this);
   Clear(false);
   ClearMatrices();
   GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
-  GetUnitCell().FindSymmEq(); // find and remove
+  GetUnitCell().FindSymmEq();
   InitBody();
   OnStructureUniq.Exit(this);
 }
@@ -369,7 +369,7 @@ void TLattice::GenerateCell()  {
       au.CellToCartesian(sa.ccrd(), sa.crd());
       sa.SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(),
         ca.GetId()));
-      sa.AddMatrix(lm);
+      sa._SetMatrix(lm);
     }
   }
   Matrices.SetCapacity(matrices.Count());
@@ -496,7 +496,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
     for( size_t j=0; j < ca.AttachedSiteCount(); j++ )  {
       const TCAtom::Site& site = ca.GetAttachedSite(j);
       if( !site.atom->IsAvailable() )  continue;
-      const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix(0));
+      const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix());
       bool found = false;
       for( size_t l=0; l < MatrixCount(); l++ )  {
         if( Matrices[l]->GetId() == m.GetId() )  {
@@ -523,7 +523,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
       for( size_t j=0; j < CA.AttachedSiteCount(); j++ )  {
         const TCAtom::Site& site = CA.GetAttachedSite(j);
         if( !site.atom->IsAvailable() )  continue;
-        const smatd m = uc.MulMatrix(site.matrix, atoms[i]->GetMatrix(0));
+        const smatd m = uc.MulMatrix(site.matrix, atoms[i]->GetMatrix());
         smatd *mp;
         bool found = false;
         size_t l; // need to use it later
@@ -550,7 +550,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
       for( size_t j=0; j < CA.AttachedSiteCount(); j++ )  {
         const TCAtom::Site& site = CA.GetAttachedSite(j);
         if( !site.atom->IsAvailable() )  continue;
-        const smatd m = uc.MulMatrix(site.matrix, atoms[i]->GetMatrix(0));
+        const smatd m = uc.MulMatrix(site.matrix, atoms[i]->GetMatrix());
         bool found = false;
         size_t l; // need to use it later
         for( l=0; l < MatrixCount(); l++ )  {
@@ -618,9 +618,9 @@ void TLattice::GrowAtom(TSAtom& Atom, bool GrowShells, TCAtomPList* Template)  {
   DoGrow(TSAtomPList() << Atom, GrowShells, Template);
 }
 //..............................................................................
-void TLattice::GrowFragment(uint32_t FragId, const smatd& transform) {
+void TLattice::GrowFragment(uint32_t FragId, const smatd_list& transforms) {
   olxdict<uint32_t, smatd_list, TPrimitiveComparator> j;
-  j.Add(FragId).AddCopy(transform);
+  j.Add(FragId, transforms);
   GrowFragments(j);
 }
 //..............................................................................
@@ -712,7 +712,7 @@ TSAtom *TLattice::GrowAtom(TCAtom& atom, const smatd& matrix)  {
 TSAtom& TLattice::GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net)  {
   TSAtom& SA = Objects.atoms.New(net == NULL ? Network : net);
   SA.CAtom(a);
-  SA.AddMatrix(&symop);
+  SA._SetMatrix(&symop);
   SA.ccrd() = symop * SA.ccrd();
   GetAsymmUnit().CellToCartesian(SA.ccrd(), SA.crd());
   SA.SetEllipsoid(&GetUnitCell().GetEllipsoid(
@@ -747,7 +747,7 @@ void TLattice::Grow(const smatd& transform)  {
   OnStructureGrow.Exit(this);
 }
 //..............................................................................
-void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
+void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
   if( smatd::GetContainerId(id.matrix_id) >= GetUnitCell().MatrixCount() )
     throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
   if( id.catom_id >= GetAsymmUnit().AtomCount() )
@@ -760,29 +760,11 @@ void TLattice::RestoreAtom(const TSAtom::FullRef& id)  {
     }
   }
   if( matr == NULL )  {
-    matr = Matrices.Add( new smatd(smatd::FromId(id.matrix_id, 
-      GetUnitCell().GetMatrix(smatd::GetContainerId(id.matrix_id)))) );
+    matr = Matrices.Add(new smatd(smatd::FromId(id.matrix_id,
+      GetUnitCell().GetMatrix(smatd::GetContainerId(id.matrix_id)))));
   }
   TSAtom& sa = GenerateAtom(GetAsymmUnit().GetAtom(id.catom_id), *matr);
   sa.CAtom().SetDeleted(false);
-  if( id.matrices != NULL )  {
-    for( size_t i=0; i < id.matrices->Count(); i++ )  {
-      if( smatd::GetContainerId((*id.matrices)[i]) >= GetUnitCell().MatrixCount() )
-        throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
-      matr = NULL;
-      for( size_t j=0; j < Matrices.Count(); j++ )  {
-        if( Matrices[j]->GetId() == (*id.matrices)[i] )  {
-          matr = Matrices[j];
-          break;
-        }
-      }
-      if( matr == NULL )  {
-        matr = Matrices.Add(new smatd(smatd::FromId((*id.matrices)[i],
-          GetUnitCell().GetMatrix(smatd::GetContainerId((*id.matrices)[i])))));
-      }
-      sa.AddMatrix(matr);
-    }
-  }
 }
 //..............................................................................
 TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
@@ -805,7 +787,7 @@ TSAtomPList TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   TSAtomPList rv;
   if( Atoms.IsEmpty() )  return rv;
   vec3d cc, ce;
-  const smatd itm = UnitCell->InvMatrix(Atoms[0]->GetMatrix(0));
+  const smatd itm = UnitCell->InvMatrix(Atoms[0]->GetMatrix());
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     cc += itm*Atoms[i]->ccrd();
     ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd());
@@ -830,16 +812,11 @@ TSAtomPList TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   }
 }
 //..............................................................................
-TSAtom* TLattice::NewAtom(const vec3d& center)  {
-  TCAtom* ca = NULL;
-  try  { ca = &AsymmUnit->NewAtom();  }
-  catch(const TExceptionBase& exc)  {
-    throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate());
-  }
-  ca->ccrd() = center;
+TSAtom& TLattice::NewAtom(const vec3d& center)  {
+  TCAtom& ca = AsymmUnit->NewAtom();
+  ca.ccrd() = center;
   GetUnitCell().AddEllipsoid();
-  TSAtom& sa = GenerateAtom(*ca, *Matrices[0]);
-  return &sa;
+  return GenerateAtom(ca, *Matrices[0]);
 }
 //..............................................................................
 TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, bool regular)  {
@@ -2168,6 +2145,10 @@ void TLattice::FromDataItem(TDataItem& item)  {
     else
       p._SetDefId(di);
   }
+  //FinaliseLoading();
+}
+//..............................................................................
+void TLattice::FinaliseLoading() {
   GetAsymmUnit()._UpdateConnInfo();
   GetUnitCell().FindSymmEq();
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )
@@ -2199,12 +2180,7 @@ TLattice::GrowInfo* TLattice::GetGrowInfo() const {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = Objects.atoms[i];
-    TIndexList& mi = gi.info[sa.CAtom().GetId()];
-    const size_t mi_cnt = mi.Count();
-    mi.SetCount(mi_cnt + sa.MatrixCount()+1);
-    mi[mi_cnt] = -(int)sa.MatrixCount(); // separator field
-    for( size_t j=1; j <= sa.MatrixCount(); j++ )
-      mi[mi_cnt+j] = sa.GetMatrix(j-1).GetId();
+    gi.info[sa.CAtom().GetId()] << sa.GetMatrix().GetId();
   }
   // restore matrix tags
   for( size_t i=0; i < mtags.Count(); i++ )
@@ -2235,15 +2211,8 @@ bool TLattice::ApplyGrowInfo()  {
       continue;
     }
     const TIndexList& mi = _GrowInfo->info[i];
-    for( size_t j=0; j < mi.Count(); j++ )  {
-      if( mi[j] < 0 )  {
-        const size_t matr_cnt = olx_abs(mi[j]),
-          matr_start = j+1; 
-        TSAtom& a = GenerateAtom(ca, *Matrices[mi[matr_start]]);
-        for( size_t k=matr_start+1; k < matr_start+matr_cnt; k++, j++ )
-          a.AddMatrix(Matrices[mi[k]]);
-      }
-    }
+    for( size_t j=0; j < mi.Count(); j++ )
+      GenerateAtom(ca, *Matrices[mi[j]]);
   }
   delete _GrowInfo;
   _GrowInfo = NULL;
@@ -2364,8 +2333,10 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
     TSAtom& sa = Objects.atoms[i];
     if( restoreCoordinates )
       au.CellToCartesian(sa.ccrd(), sa.crd());
-    if( sa.CAtom().GetEllipsoid() != NULL )
-      sa.SetEllipsoid(&uc.GetEllipsoid(sa.GetMatrix(0).GetContainerId(), sa.CAtom().GetId()));
+    if( sa.CAtom().GetEllipsoid() != NULL ) {
+      sa.SetEllipsoid(
+        &uc.GetEllipsoid(sa.GetMatrix().GetContainerId(), sa.CAtom().GetId()));
+    }
     else
       sa.SetEllipsoid(NULL);
   }
@@ -2380,45 +2351,43 @@ void TLattice::BuildAtomRegistry()  {
   if( Matrices.IsEmpty() )  return;
   TUnitCell& uc = GetUnitCell();
   vec3i mind(100,100,100), maxd(-100,-100,-100);
-  for( size_t i=0; i < Matrices.Count(); i++ )
-    vec3i::UpdateMinMax(Matrices[i]->GetT(Matrices[i]->GetId()), mind, maxd);
+  const size_t ac = Objects.atoms.Count();
+  TTypeList<TSAtom::Ref> refs(ac);
+  for( size_t i=0; i < ac; i++ )  {
+    TSAtom &sa = Objects.atoms[i];
+    if( !sa.IsAvailable() || sa.CAtom().IsMasked() )  continue;
+    refs[i] = sa.GetMinRef();
+    vec3i::UpdateMinMax(smatd::GetT(refs[i].matrix_id), mind, maxd);
+  }
+  if (ac == 0) {
+    maxd = mind = vec3i(0);
+  }
   maxd[0] += 1;  maxd[1] += 1;  maxd[2] += 1;
   AtomRegistry::RegistryType& registry = Objects.atomRegistry.Init(mind, maxd);
-  const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom* sa = &Objects.atoms[i];
     if( !sa->IsAvailable() || sa->CAtom().IsMasked() )  continue;
-    for( size_t mi=0; mi < sa->MatrixCount(); mi++ )  {
-      const smatd& matr = sa->GetMatrix(mi);
-      const vec3i t = smatd::GetT(matr.GetId());
-      TArrayList<TSAtomPList*>* aum_slice = registry.Value(t);
-      for( size_t j=0; j < sa->CAtom().EquivCount(); j++ )  {
-        const smatd m = uc.MulMatrix(sa->CAtom().GetEquiv(j), matr);
-        TSAtom* sa1 = Objects.atomRegistry.Find(TSAtom::Ref(sa->CAtom().GetId(), m.GetId()));
-        if( sa1 != NULL && sa1 != sa && !sa1->IsDeleted() )  {
-          sa1->AddMatrices(*sa);
-          sa->SetDeleted(true);
-          sa = sa1;
-          break;
-        }
-      }
-      if( aum_slice == NULL )  {
-        const size_t matr_cnt = GetUnitCell().MatrixCount();
-        aum_slice = (registry.Value(t) = new TArrayList<TSAtomPList*>(matr_cnt));
-        for( size_t j=0; j < matr_cnt; j++ )
-          (*aum_slice)[j] = NULL;
-      }
-      TSAtomPList* au_slice = (*aum_slice)[matr.GetContainerId()];
-      if( au_slice == NULL )  {
-        const size_t atom_cnt = GetAsymmUnit().AtomCount();
-        au_slice = ((*aum_slice)[matr.GetContainerId()] = new TSAtomPList(atom_cnt));
-        for( size_t j=0; j < atom_cnt; j++)
-          (*au_slice)[j] = NULL;
-      }
-      if( (*au_slice)[sa->CAtom().GetId()] != NULL && (*au_slice)[sa->CAtom().GetId()] != sa )
-        (*au_slice)[sa->CAtom().GetId()]->SetDeleted(true);
-      (*au_slice)[sa->CAtom().GetId()] = sa;
+    const vec3i t = smatd::GetT(refs[i].matrix_id);
+    TArrayList<TSAtomPList*>* aum_slice = registry.Value(t);
+    if( aum_slice == NULL )  {
+      const size_t matr_cnt = GetUnitCell().MatrixCount();
+      aum_slice = (registry.Value(t) =
+        new TArrayList<TSAtomPList*>(matr_cnt, list_init::zero()));
     }
+    uint8_t  c_id = smatd::GetContainerId(refs[i].matrix_id);
+    TSAtomPList* au_slice = (*aum_slice)[c_id];
+    if( au_slice == NULL )  {
+      const size_t atom_cnt = GetAsymmUnit().AtomCount();
+      au_slice = ((*aum_slice)[c_id] = new TSAtomPList(atom_cnt));
+      for( size_t j=0; j < atom_cnt; j++)
+        (*au_slice)[j] = NULL;
+    }
+    else if( (*au_slice)[refs[i].catom_id] != NULL &&
+        (*au_slice)[refs[i].catom_id] != sa )
+    {
+      (*au_slice)[refs[i].catom_id]->SetDeleted(true);
+    }
+    (*au_slice)[refs[i].catom_id] = sa;
   }
 }
 //..............................................................................
@@ -2436,7 +2405,7 @@ void TLattice::AddLatticeContent(const TLattice& latt)  {
     TSAtom* sa = new_atoms.Add(Objects.atoms.New(Network));
     sa->CAtom(ca);
     sa->crd() = GetAsymmUnit().Orthogonalise(sa->ccrd());
-    sa->AddMatrix(Matrices[0]);
+    sa->_SetMatrix(Matrices[0]);
   }
   for( size_t i=0; i < latt.Objects.bonds.Count(); i++ )  {
     const TSBond& src_b = latt.Objects.bonds[i];

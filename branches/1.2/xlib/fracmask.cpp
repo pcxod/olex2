@@ -51,9 +51,9 @@ void FractMask::ToDataItem(TDataItem& di, IOutputStream& os) const {
 }
 //..................................................................................................
 void FractMask::FromDataItem(const TDataItem& di, IInputStream& is)  {
-  Norm = PersUtil::FloatVecFromStr(di.GetRequiredField("norm"));
-  vec3i _min = PersUtil::IntVecFromStr(di.GetRequiredField("min"));
-  vec3i _max = PersUtil::IntVecFromStr(di.GetRequiredField("max"));
+  PersUtil::VecFromStr(di.GetRequiredField("norm"), Norm);
+  vec3i _min = PersUtil::VecFromStr<vec3i>(di.GetRequiredField("min"));
+  vec3i _max = PersUtil::VecFromStr<vec3i>(di.GetRequiredField("max"));
   size_t cc = di.GetRequiredField("char_count").ToSizeT();
   if( Mask != NULL )
     delete Mask;

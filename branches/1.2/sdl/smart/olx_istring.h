@@ -160,14 +160,17 @@ public:
   //...........................................................................
   TTSString(const TTIString<TC>& str)  { InitFromString(str);  }
   //...........................................................................
-  // allocates requested size
-  void Allocate(size_t sz, bool change_size)  {
+  /* allocates requested size, if the change_size is false (default), the size
+  of the string stays the same and ony the capacity is increased
+  */
+  TTSString &Allocate(size_t sz, bool change_size=false)  {
     if( T::SData == NULL )
       T::SData = new struct T::Buffer(sz);
     else
       T::SData->SetCapacity(sz);
     if( change_size )
       T::_Length = sz;
+    return *this;
   } 
 
   template <class T1, typename TC1> TTSString(const TTSString<T1,TC1>& v)
@@ -836,6 +839,13 @@ public:
     return o_chrposi( T::Data(), T::_Length, wht);
   }
 
+  template <typename ST> bool Contains(const ST &v) const {
+    return IndexOf(v) != InvalidIndex;
+  }
+  template <typename ST> bool Containsi(const ST &v) const {
+    return IndexOfi(v) != InvalidIndex;
+  }
+
   template <typename AC>
   size_t FirstIndexOf(const AC* wht, size_t from=0) const {
     size_t i = o_strpos(&T::Data()[from], T::_Length-from, wht, o_strlen(wht));
@@ -1175,6 +1185,38 @@ public:
   //...........................................................................
   template <typename FT> FT ToFloat() const {
     return o_atof<FT>(T::Data(), T::_Length);
+  }
+  //...........................................................................
+  int8_t ToNumber(int8_t &b) const {
+    return (b=o_atoi<int8_t>(T::Data(), T::_Length, 10));
+  }
+  uint8_t ToNumber(uint8_t &b) const {
+    return (b=o_atoui<uint8_t>(T::Data(), T::_Length, 10));
+  }
+  int16_t ToNumber(int16_t &b) const {
+    return (b=o_atoi<int16_t>(T::Data(), T::_Length, 10));
+  }
+  uint16_t ToNumber(uint16_t &b) const {
+    return (b=o_atoui<uint16_t>(T::Data(), T::_Length, 10));
+  }
+  int32_t ToNumber(int32_t &b) const {
+    return (b=o_atoi<int32_t>(T::Data(), T::_Length, 10));
+  }
+  uint32_t ToNumber(uint32_t &b) const {
+    return (b=o_atoui<uint32_t>(T::Data(), T::_Length, 10));
+  }
+  int64_t ToNumber(int64_t &b) const {
+    return (b=o_atoi<int64_t>(T::Data(), T::_Length, 10));
+  }
+  uint64_t ToNumber(uint64_t &b) const {
+    return (b=o_atoui<uint64_t>(T::Data(), T::_Length, 10));
+  }
+  float ToNumber(float &b) const { return (b=ToFloat<float>()); }
+  double ToNumber(double &b) const { return (b=ToFloat<double>()); }
+  //...........................................................................
+  template <typename num_t> num_t ToNumber() const {
+    num_t n;
+    return ToNumber(n);
   }
   //...........................................................................
   void SetLength(size_t newLen)  {

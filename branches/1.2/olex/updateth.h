@@ -17,7 +17,7 @@
 class UpdateThread : public AOlxThread  {
   size_t time_out;
   uint64_t UpdateSize;
-  AFileSystem* srcFS, *destFS;
+  AFileSystem *srcFS, *destFS;
   TFSIndex* Index;
   TStrList properties, filesToSkip, extensionsToSkip;
   TFSItem::SkipOptions toSkip;
@@ -40,6 +40,7 @@ class UpdateThread : public AOlxThread  {
   void DoInit();
   virtual void OnSendTerminate();
   TActionQList Actions;
+  void MarkCompleted(const TStrList &cmds);
 public:
   UpdateThread(const olxstr& patch_dir);
 

@@ -367,8 +367,11 @@ public:
     return rv << ", " << data[1] << ", " << data[2];
   }
   TIString ToString() const {  return StrRepr<olxstr>();  }
-  olxcstr ToCStr()   const {  return StrRepr<olxcstr>();  }
-  olxwstr ToWStr()   const {  return StrRepr<olxwstr>();  }
+  olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }
+  olxwstr ToWStr() const {  return StrRepr<olxwstr>();  }
+public:
+  typedef T list_item_type;
+  typedef T number_type;
 };
 
 template <class T> class TMatrix33  {
@@ -385,6 +388,9 @@ public:
     data[0][0] = xx;  data[0][1] = xy;  data[0][2] = xz;
     data[1][0] = xy;  data[1][1] = yy;  data[1][2] = yz;
     data[2][0] = xz;  data[2][1] = yz;  data[2][2] = zz;
+  }
+  TMatrix33(T xx, T yy, T zz)  {
+    data[0][0] = xx;  data[1][1] = yy;  data[2][2] = zz;
   }
   template <class vt> TMatrix33(const TVector3<vt>& x, const TVector3<vt>& y,
     const TVector3<vt>& z)
@@ -464,28 +470,28 @@ public:
     return *this;
   }
   static TMatrix33 Transpose (const TMatrix33& v)  {
-    return TMatrix33<T>(v[0][0], v[1][0], v[2][0], 
-                        v[0][1], v[1][1], v[2][1], 
+    return TMatrix33<T>(v[0][0], v[1][0], v[2][0],
+                        v[0][1], v[1][1], v[2][1],
                         v[0][2], v[1][2], v[2][2]);
   }
   TMatrix33 operator -() const {
-    return TMatrix33<T>(-data[0][0], -data[0][1], -data[0][2], 
-                        -data[1][0], -data[1][1], -data[1][2], 
-                        -data[2][0], -data[2][1], -data[2][2]);
+    return TMatrix33<T>(-data[0], -data[1], -data[2]);
   }
-  TMatrix33<T>& Transpose()  {
+  TMatrix33& Transpose()  {
     olx_swap(data[0][1], data[1][0]);
     olx_swap(data[0][2], data[2][0]);
     olx_swap(data[1][2], data[2][1]);
     return *this;
   }
 
-  TMatrix33<T>& I()  {
+  TMatrix33& I()  {
     data[0][0] = 1;  data[0][1] = 0;  data[0][2] = 0;
     data[1][0] = 0;  data[1][1] = 1;  data[1][2] = 0;
     data[2][0] = 0;  data[2][1] = 0;  data[2][2] = 1;
     return *this;
   }
+
+  static TMatrix33 Idenity() {  return TMatrix33(1,1,1);  }
   // normalises each vector
   TMatrix33<T>& Normalise()  {
     data[0].Normalise();
@@ -732,6 +738,8 @@ protected:  // used in GaussSolve to sort the matrix
       }
     }
   }
+public:
+  typedef T number_type;
 };
 
   typedef TVector3<float>  vec3f;

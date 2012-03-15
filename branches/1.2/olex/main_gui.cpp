@@ -21,6 +21,7 @@
 #include "xgrid.h"
 #include "xblob.h"
 #include "glbackground.h"
+#include "edit.h"
 
 void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
   ProcessMacro("htmlpanelvisible");
@@ -31,11 +32,13 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
 //  TBasicApp::GetLog()->Info("generate!");;
   TdlgGenerate *G = new TdlgGenerate(this);
   if( G->ShowModal() == wxID_OK )  {
-    olxstr T("pack ");
-    T << olxstr::FormatFloat(1, G->GetAFrom()) << ' ' << olxstr::FormatFloat(1, G->GetATo()) << ' ';
-    T << olxstr::FormatFloat(1, G->GetBFrom()) << ' ' << olxstr::FormatFloat(1, G->GetBTo()) << ' ';
-    T << olxstr::FormatFloat(1, G->GetCFrom()) << ' ' << olxstr::FormatFloat(1, G->GetCTo()) << ' ';
-    ProcessMacro(T);
+    ProcessMacro(olxstr("pack ").stream(' ') <<
+      olxstr::FormatFloat(1, G->GetAFrom()) <<
+      olxstr::FormatFloat(1, G->GetATo()) <<
+      olxstr::FormatFloat(1, G->GetBFrom()) <<
+      olxstr::FormatFloat(1, G->GetBTo()) <<
+      olxstr::FormatFloat(1, G->GetCFrom()) << 
+      olxstr::FormatFloat(1, G->GetCTo()));
   }
   G->Destroy();
 }
@@ -136,11 +139,83 @@ void TMainForm::OnAtomPolyChange(wxCommandEvent& event)  {
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
+void TMainForm::OnAtomPartChange(wxCommandEvent& event)  {
+  TXAtom *XA = (TXAtom*)FObjectUnderMouse;
+  if( XA == NULL )  return;
+  olxstr cmd;
+  if (event.GetId() == ID_AtomPartCustom) {
+    TdlgEdit *dlg = new TdlgEdit(this, false);
+    dlg->SetTitle(wxT("Please input the part number"));
+    int val=XA->CAtom().GetPart();
+    dlg->SetText(val);
+    if (dlg->ShowModal() == wxID_OK) {
+      try { val = dlg->GetText().ToInt(); }
+      catch(...) {}
+    }
+    dlg->Destroy();
+    if (val != XA->CAtom().GetPart())
+      cmd << "part " << val;
+  }
+  else {
+    cmd << "part " << (event.GetId() - ID_AtomPart0);
+  }
+  if (!cmd.IsEmpty()) {
+    if( !XA->IsSelected() )
+      cmd << " #c" << XA->CAtom().GetId();
+    ProcessMacro(cmd);
+  }
+  TimePerFrame = FXApp->Draw();
+}
+//..............................................................................
+void TMainForm::OnAtomUisoChange(wxCommandEvent& event)  {
+  TXAtom *XA = (TXAtom*)FObjectUnderMouse;
+  if( XA == NULL )  return;
+  olxstr cmd;
+  switch( event.GetId() )  {
+    case ID_AtomUiso15:
+      cmd << "fix uiso -1.5";  break;
+    case ID_AtomUiso12:
+      cmd << "fix uiso -1.2";  break;
+    case ID_AtomUisoFree:
+      cmd << "free uiso";  break;
+    case ID_AtomUisoCustom:
+    case ID_AtomUisoFix:
+      {
+        TdlgEdit *dlg = new TdlgEdit(this, false);
+        dlg->SetTitle(wxT("Please give the Uiso value to fix"));
+        dlg->SetText(XA->CAtom().GetUiso());
+        double val=0;
+        if (dlg->ShowModal() == wxID_OK) {
+          try { val = dlg->GetText().ToDouble(); }
+          catch(...) {}
+        }
+        dlg->Destroy();
+        if (val != 0) {
+          if (event.GetId() == ID_AtomUisoFix)
+            cmd << "fix uiso " << val;
+          else {
+            try { FXApp->SetAtomUiso(*XA, val); }
+            catch (const TExceptionBase &e) {
+              TBasicApp::NewLogEntry(logException) << e;
+            }
+          }
+        }
+      }
+      break;
+  }
+  if (!cmd.IsEmpty()) {
+    if( !XA->IsSelected() )
+      cmd << " #c" << XA->CAtom().GetId();
+    ProcessMacro(cmd);
+  }
+  TimePerFrame = FXApp->Draw();
+}
+//..............................................................................
 void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
   switch( event.GetId() )  {
-    case ID_DQH:  ProcessMacro("qual -h");     break;
-    case ID_DQM:  ProcessMacro("qual -m");     break;
-    case ID_DQL:  ProcessMacro("qual -l");     break;
+    case ID_DQH:  ProcessMacro("qual -h");  break;
+    case ID_DQM:  ProcessMacro("qual -m");  break;
+    case ID_DQL:  ProcessMacro("qual -l");  break;
   }
 }
 //..............................................................................
@@ -322,13 +397,63 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     pmAtom->Enable(ID_SelGroup, false);
     size_t bound_cnt = 0;
     for( size_t i=0; i < XA->NodeCount(); i++ )  {
-      if( XA->Node(i).IsDeleted() || XA->Node(i).GetType().GetMr() < 3.5 )  // H,D,Q
+      if( XA->Node(i).IsDeleted() || XA->Node(i).GetType().z < 2 )  // H,D,Q
         continue;
       bound_cnt++;
     }
     pmAtom->Enable(ID_MenuAtomPoly, bound_cnt > 3);
     if( bound_cnt > 3 )
       pmAtom->Check(ID_AtomPolyNone + XA->GetPolyhedronType(), true);
+    if (XA->CAtom().GetPart() >= -2 && XA->CAtom().GetPart() <= 2) {
+      pmAtom->Check(ID_AtomPart0 + XA->CAtom().GetPart(), true);
+      miAtomPartCustom->SetText(wxT("Custom..."));
+    }
+    else {
+      miAtomPartCustom->Check(true);
+      miAtomPartCustom->SetText((olxstr("Custom: ") <<
+        XA->CAtom().GetPart()).u_str());
+    }
+    if (XA->CAtom().GetEllipsoid() == NULL) {
+      size_t ac =0;
+      for (size_t i=0; i < XA->CAtom().AttachedSiteCount(); i++) {
+        TCAtom &a = XA->CAtom().GetAttachedAtom(i);
+        if (!a.IsDeleted() && a.GetType() != iQPeakZ)
+          ac++;
+      }
+      pmAtom->Enable(ID_AtomUiso12, ac == 1);
+      pmAtom->Enable(ID_AtomUiso15, ac == 1);
+      miAtomUisoCustom->SetText(wxT("Custom..."));
+      miAtomUisoFree->SetText(wxT("Free"));
+      pmAtom->SetLabel(ID_AtomUisoFix, wxT("Fix"));
+      pmAtom->Enable(ID_MenuAtomUiso, true);
+      if (XA->CAtom().GetUisoOwner() != NULL) {
+        if (XA->CAtom().GetUisoScale() == 1.5)
+          pmAtom->Check(ID_AtomUiso15, true);
+        else if (XA->CAtom().GetUisoScale() == 1.2)
+          pmAtom->Check(ID_AtomUiso12, true);
+        else {
+          miAtomUisoCustom->Check(true);
+          miAtomUisoCustom->SetText(
+            (olxstr("Custom: ") << XA->CAtom().GetUisoScale() << " x U(" <<
+            XA->CAtom().GetUisoOwner()->GetLabel() << ')').u_str());
+        }
+      }
+      else if (XA->CAtom().GetVarRef(catom_var_name_Uiso) == NULL) {
+        miAtomUisoFree->Check(true);
+        miAtomUisoFree->SetText((olxstr("Free: ") <<
+          olxstr::FormatFloat(4, XA->CAtom().GetUiso())).u_str());
+      }
+      else if (XA->CAtom().GetVarRef(catom_var_name_Uiso) != NULL &&
+        XA->CAtom().GetVarRef(catom_var_name_Uiso)->relation_type == relation_None)
+      {
+        pmAtom->SetLabel(ID_AtomUisoFix, (olxstr("Fixed: ") <<
+          XA->CAtom().GetUiso()).u_str());
+        pmAtom->Check(ID_AtomUisoFix, true);
+      }
+    }
+    else {
+      pmAtom->Enable(ID_MenuAtomUiso, false);
+    }
     FCurrentPopup = pmAtom;
   }
   else if( EsdlInstanceOf(*G, TXBond) )  {
@@ -530,7 +655,6 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
             FXApp->GetRender().Select(*xa);
         }
       }
-      TimePerFrame = FXApp->Draw();
     }
   }
   else if( event.GetId() == ID_AtomCenter )  {
@@ -538,8 +662,8 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
       ProcessMacro(olxstr("center #s") << XA->GetOwnerId());
     else
       ProcessMacro("center");  // center of the selection
-    TimePerFrame = FXApp->Draw();
   }
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnPlane(wxCommandEvent& event)  {

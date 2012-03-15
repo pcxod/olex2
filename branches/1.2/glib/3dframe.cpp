@@ -137,7 +137,7 @@ void T3DFrameCtrl::ToDataItem(TDataItem &di) const {
 //.............................................................................
 void T3DFrameCtrl::FromDataItem(const TDataItem &di) {
   SetVisible(di.GetRequiredField("visible").ToBool());
-  PersUtil::FloatVecArrayFromStr(di.GetRequiredField("edges"), edges, 8);
+  PersUtil::VecArrayFromStr(di.GetRequiredField("edges"), edges, 8);
   UpdateEdges();
 }
 //.............................................................................

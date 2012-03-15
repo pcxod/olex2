@@ -14,12 +14,16 @@ BeginXlibNamespace()
 
 struct MergeStats  {
   double Rint, Rsigma, MeanIOverSigma;
-  size_t SystematicAbsentcesRemoved,
+  size_t
+    SystematicAbsencesRemoved,
+    UniqueSystematicAbsencesRemoved,
     InconsistentEquivalents,
     UniqueReflections,
     CentricReflections,
     ReflectionAPotMax,
     OmittedByUser;      // OMIT h k l, all equivs
+  // symmetry independent reflections = sum(1/multiplicity)
+  double IndependentReflections;
   bool FriedelOppositesMerged;
   vec3i MinIndexes, MaxIndexes;
   MergeStats()  {
@@ -32,7 +36,8 @@ struct MergeStats  {
     Rint = ms.Rint;
     Rsigma = ms.Rsigma;
     MeanIOverSigma = ms.MeanIOverSigma;
-    SystematicAbsentcesRemoved = ms.SystematicAbsentcesRemoved;
+    SystematicAbsencesRemoved = ms.SystematicAbsencesRemoved;
+    UniqueSystematicAbsencesRemoved = ms.UniqueSystematicAbsencesRemoved;
     InconsistentEquivalents = ms.InconsistentEquivalents;
     UniqueReflections = ms.UniqueReflections;
     OmittedByUser = ms.OmittedByUser;
@@ -41,6 +46,7 @@ struct MergeStats  {
     ReflectionAPotMax = ms.ReflectionAPotMax;
     MinIndexes = ms.MinIndexes;
     MaxIndexes = ms.MaxIndexes;
+    IndependentReflections = ms.IndependentReflections;
     return *this;
   }
   void SetDefaults()  {
@@ -49,10 +55,11 @@ struct MergeStats  {
     MinIndexes[0] = MinIndexes[1] = MinIndexes[2] = 100;
     MaxIndexes[0] = MaxIndexes[1] = MaxIndexes[2] = -100;
     OmittedByUser = UniqueReflections = 0;
-    CentricReflections = SystematicAbsentcesRemoved =
-      InconsistentEquivalents = 0;
+    CentricReflections = SystematicAbsencesRemoved =
+      UniqueSystematicAbsencesRemoved = InconsistentEquivalents = 0;
     ReflectionAPotMax = 0;
     FriedelOppositesMerged = false;
+    IndependentReflections = 0;
   }
   //bool IsEmpty() const {  return TotalReflections == 0;  }
 };
@@ -116,9 +123,12 @@ class RefMerger {
           stats.MeanIOverSigma += mo.ref->GetI()/mo.ref->GetS();
           vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
             stats.MaxIndexes);
+          stats.IndependentReflections += 1./mo.ref->GetMultiplicity();
         }
-        else
-          stats.SystematicAbsentcesRemoved += merged_count;
+        else {
+          stats.SystematicAbsencesRemoved += merged_count;
+          stats.UniqueSystematicAbsencesRemoved++;
+        }
       }
       if( i >= ref_cnt )  break;
       ref = refs[i];
@@ -188,9 +198,12 @@ class RefMerger {
           vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes,
             stats.MaxIndexes);
           stats.UniqueReflections++;
+          stats.IndependentReflections += 1./ref->GetMultiplicity();
         }
-        else
-          stats.SystematicAbsentcesRemoved += merged_count;
+        else {
+          stats.SystematicAbsencesRemoved += merged_count;
+          stats.UniqueSystematicAbsencesRemoved++;
+        }
       }
       if( i >= ref_cnt )  break;
       ref = refs[i];
@@ -244,9 +257,12 @@ class RefMerger {
           }
           if( ref->IsCentric() )
             stats.CentricReflections++;
+          stats.IndependentReflections += 1./ref->GetMultiplicity();
         }
-        else
-          stats.SystematicAbsentcesRemoved ++;
+        else {
+          stats.SystematicAbsencesRemoved += merged_count;
+          stats.UniqueSystematicAbsencesRemoved++;
+        }
       }
       if( i >= ref_cnt )  break;
       ref = refs[i];
@@ -297,9 +313,12 @@ class RefMerger {
           if( ref->IsCentric() )
             stats.CentricReflections++;
           stats.UniqueReflections += merged_count;
+          stats.IndependentReflections += 1./ref->GetMultiplicity();
         }
-        else
-          stats.SystematicAbsentcesRemoved ++;
+        else {
+          stats.SystematicAbsencesRemoved += merged_count;
+          stats.UniqueSystematicAbsencesRemoved++;
+        }
       }
       if( i >= ref_cnt )  break;
       ref = refs[i];
@@ -371,6 +390,7 @@ class RefMerger {
     stats.UniqueReflections = output.Count();
     stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
       : stats.UniqueReflections);
+    stats.IndependentReflections = (double)stats.UniqueReflections;
     return stats;
   }
   template <class RefListMerger>
@@ -427,6 +447,7 @@ class RefMerger {
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
       : stats.UniqueReflections);
+    stats.IndependentReflections = (double)stats.UniqueReflections;
     return stats;
   }
 public:

@@ -199,8 +199,8 @@ public:
   void FromDataItem(const TDataItem& item, IInputStream& zis);
   // creates a blob at given screen coordinates (raster position)
   TXBlob* CreateBlob(int x, int y) const;
-  const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials) const;
+  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const;
 protected:
   struct TPlaneCalculationTask  {
     TXGrid& parent;

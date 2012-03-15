@@ -722,8 +722,8 @@ void TXGrid::UpdateInfo()  {
   Info->Fit();
 }
 //..............................................................................
-const_strlist TXGrid::ToPov(olxdict<const TGlMaterial*, olxstr,
-  TPointerComparator> &materials) const
+const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
 {
   TGraphicsStyle &style = GetPrimitives().GetStyle();
   const olxstr p_mat_name = pov::get_mat_name("-Surface", style, materials),
@@ -1211,8 +1211,8 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   ExtMax = vec3f(1,1,1);
   const size_t ed_i = item.FieldIndex("ext_max");
   if( ed_i != InvalidIndex )  {
-    ExtMin = PersUtil::FloatVecFromStr(item.GetField(ed_i));
-    ExtMax = PersUtil::FloatVecFromStr(item.GetRequiredField("ext_min"));
+    PersUtil::VecFromStr(item.GetField(ed_i), ExtMin);
+    PersUtil::VecFromStr(item.GetRequiredField("ext_min"), ExtMax);
   }
   Scale = item.GetRequiredField("scale").ToDouble();
   InitGrid( item.GetRequiredField("max_x").ToInt(), 

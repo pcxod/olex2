@@ -30,25 +30,7 @@
 #include "macrolib.h"
 #include "exparse/exptree.h"
 #include "nui/nui.h"
-
-#define  ID_FILE0 100
-
-enum  {
-  ID_GLDRAW = 1000,
-  ID_TIMER,
-  ID_INFO,
-  ID_WARNING,
-  ID_ERROR,
-  ID_EXCEPTION,
-  ID_ONLINK,
-  ID_HTMLKEY,
-  ID_COMMAND,
-  ID_XOBJECTSDESTROY,
-  ID_CMDLINECHAR,
-  ID_CMDLINEKEYDOWN,
-  ID_TEXTPOST,
-  ID_UPDATE_GUI
-};
+#include "tasks.h"
 
 enum  {
   ID_HtmlPanel=1,  // view menu
@@ -69,6 +51,8 @@ enum  {
   ID_MenuAtomOccu,
   ID_MenuAtomConn,
   ID_MenuAtomPoly,
+  ID_MenuAtomPart,
+  ID_MenuAtomUiso,
 
   ID_DSBS,  // drawing style, balls and sticks
   ID_DSES,  // ellipsoids and sticks
@@ -131,6 +115,19 @@ enum  {
   ID_AtomConn4,
   ID_AtomConn12,
 
+  ID_AtomUisoCustom,
+  ID_AtomUiso15,
+  ID_AtomUiso12,
+  ID_AtomUisoFree,
+  ID_AtomUisoFix,
+
+  ID_AtomPartCustom,
+  ID_AtomPart_2,
+  ID_AtomPart_1,
+  ID_AtomPart0,
+  ID_AtomPart1,
+  ID_AtomPart2,
+
   ID_AtomPolyNone,
   ID_AtomPolyAuto,
   ID_AtomPolyRegular,
@@ -160,10 +157,28 @@ enum  {
   ID_ADDINS,
   ID_VarChange,
   ID_BadReflectionSet,
+  ID_CellChanged,
 
   ID_UpdateThreadTerminate,
   ID_UpdateThreadDownload,
-  ID_UpdateThreadAction
+  ID_UpdateThreadAction,
+
+  ID_FILE0,
+
+  ID_GLDRAW = ID_FILE0+100,
+  ID_TIMER,
+  ID_INFO,
+  ID_WARNING,
+  ID_ERROR,
+  ID_EXCEPTION,
+  ID_ONLINK,
+  ID_HTMLKEY,
+  ID_COMMAND,
+  ID_XOBJECTSDESTROY,
+  ID_CMDLINECHAR,
+  ID_CMDLINEKEYDOWN,
+  ID_TEXTPOST,
+  ID_UPDATE_GUI
 };
 
 //............................................................................//
@@ -191,12 +206,6 @@ struct TPopupData  {
   class THtml *Html;
 };
 //............................................................................//
-struct TScheduledTask  {
-  bool Repeatable;
-  olxstr Task;
-  long Interval, LastCalled;
-};
-//............................................................................//
 class TMainForm: public TMainFrame, public AEventsDispatcher,
   public olex::IOlexProcessor
 {
@@ -220,7 +229,7 @@ protected:
   bool Destroying;
   TStack<AnAssociation2<wxCursor,wxString> > CursorStack;
   UpdateThread* _UpdateThread;
-	TOnProgress* UpdateProgress, *ActionProgress;
+  TOnProgress* UpdateProgress, *ActionProgress;
   TEFile* ActiveLogFile;
   static void PyInit();
   TActionQList Action;
@@ -229,6 +238,7 @@ protected:
   TCSTypeList<olxstr, olxstr> StoredParams;
 
   TTypeList<TScheduledTask> Tasks;
+  TPtrList<IOlxTask> RunWhenVisibleTasks;
 
   class TGlCanvas *FGlCanvas;
   TGXApp* FXApp;
@@ -290,7 +300,7 @@ public:
   bool OnMouseDown(int x, int y, short Flags, short Buttons);
   bool OnMouseUp(int x, int y, short Flags, short Buttons);
   bool OnMouseDblClick(int x, int y, short Flags, short Buttons);
-  virtual bool Show( bool v );
+  virtual bool Show(bool v);
   TActionQueue &OnModeChange, &OnStateChange;
 
   void SetUserCursor(const olxstr& param, const olxstr& mode);
@@ -310,6 +320,7 @@ protected:
   void AnalyseError(TMacroError& error)  {  AnalyseErrorEx(error);  }
 
   void OnSize(wxSizeEvent& event);
+  void OnMove(wxMoveEvent& event);
 
   void OnQuit(wxCommandEvent& event);
   void OnFileOpen(wxCommandEvent& event);
@@ -343,6 +354,8 @@ protected:
   void OnAtomTypeChange(wxCommandEvent& event);
   void OnAtomOccuChange(wxCommandEvent& event);
   void OnAtomConnChange(wxCommandEvent& event);
+  void OnAtomPartChange(wxCommandEvent& event);
+  void OnAtomUisoChange(wxCommandEvent& event);
   void OnAtomPolyChange(wxCommandEvent& event);
   void OnAtomTypePTable(wxCommandEvent& event);
   void OnAtom(wxCommandEvent& event); // general handler
@@ -754,13 +767,14 @@ public:
   virtual void SetScenesFolder(const olxstr &sf)  {  ScenesDir = sf;  }
   virtual void LoadScene(const TDataItem& Root, TGlLightModel &FLM);
   virtual void SaveScene(TDataItem& Root, const TGlLightModel &FLM) const;
+  void UpdateUserOptions(const olxstr &option, const olxstr &value);
 
   // fires the state change as well
   void UseGlTooltip(bool v);
 
   const olxstr& GetStructureOlexFolder();
-  float GetHtmlPanelWidth() const  {  return FHtmlPanelWidth;  }
-  THtml* GetHtml()  const {  return FHtml; }
+  float GetHtmlPanelWidth() const {  return FHtmlPanelWidth;  }
+  THtml* GetHtml() const {  return FHtml; }
   olxstr_dict<TPopupData*, true> Popups;
   THtml* FindHtml(const olxstr& popupName) const;
   inline const olxstr& GetCurrentLanguageEncodingStr() const {
@@ -788,7 +802,13 @@ protected:
     TMenu    *pmAtomType;
     TMenu    *pmAtomOccu, 
              *pmAtomConn,
-             *pmAtomPoly;
+             *pmAtomPoly,
+             *pmAtomPart,
+             *pmAtomUiso
+             ;
+  wxMenuItem *miAtomPartCustom,
+    *miAtomUisoCustom,
+    *miAtomUisoFree;
   TMenu    *pmBond;
     wxMenuItem *miBondInfo;
     TMenu    *pmTang;  // torsion angles
@@ -833,7 +853,7 @@ public:
 // General interface
 //..............................................................................
 // actions
-  void ObjectUnderMouse( AGDrawObject *G);
+  void ObjectUnderMouse(AGDrawObject *G);
 //..............................................................................
   DECLARE_CLASS(TMainForm)
   DECLARE_EVENT_TABLE()

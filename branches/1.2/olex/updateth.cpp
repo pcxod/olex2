@@ -39,7 +39,8 @@ void UpdateThread::DoInit()  {
     srcFS = uapi.FindActiveUpdateRepositoryFS(NULL);
     if( srcFS == NULL )  return;
     Index = new TFSIndex(*srcFS);
-    destFS = new TOSFileSystem(TBasicApp::GetBaseDir());
+    destFS = new TUpdateFS(PatchDir,
+      *(new TOSFileSystem(TBasicApp::GetBaseDir())));
     uapi.EvaluateProperties(properties);
     srcFS->OnProgress.Add(new TActionProxy(OnDownload));
     Index->OnAction.Add(new TActionProxy(OnAction));
@@ -67,16 +68,19 @@ int UpdateThread::Run()  {
     }
   }
   try  {
-    TOSFileSystem dfs(PatchDir);
     TStrList cmds;
     bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
     // need to keep to check if sync was completed
-    AFileSystem &to = dfs.Exists(dfs.GetBase() + "index.ind") ? dfs : *destFS;
     const uint64_t update_size =
-      Index->CalcDiffSize(to, properties, skip ? NULL : &toSkip);
+      Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
     UpdateSize = update_size;
     patcher::PatchAPI::UnlockUpdater();
-    if( UpdateSize == 0 )  return 0;
+    if( UpdateSize == 0 )  {
+      // complete interupted update
+      if (TEFile::Exists(destFS->GetBase() + "index.ind"))
+        MarkCompleted(cmds);
+      return 0;
+    }
     while( !_DoUpdate )  {
       if( Terminate || !TBasicApp::HasInstance() )  {  // nobody took care ?
         CleanUp();
@@ -101,34 +105,15 @@ int UpdateThread::Run()  {
     }
     bool completed = false;
     try {  
-      if( Index->Synchronise(to, properties, skip ? NULL
-            : &toSkip, &to == destFS ? &dfs : NULL, &cmds) == update_size )
+      if( Index->Synchronise(*destFS, properties, skip ? NULL
+            : &toSkip, &cmds) == update_size )
       {
         completed = true;
       }
     }
     catch(const TExceptionBase&)  {}
-    if( completed )  {
-      olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) +
-        patcher::PatchAPI::GetUpdaterCmdFileName());
-      if( TEFile::Exists(cmd_fn) )  {
-        TStrList pc;
-#ifdef _UNICODE
-        TUtf8File::ReadLines(cmd_fn, pc);
-#else
-        pc.LoadFromFile(cmd_fn);
-#endif
-        cmds.Insert(0, pc);
-      }
-#ifdef _UNICODE
-      TUtf8File::WriteLines(cmd_fn, cmds);
-#else
-      cmds.SaveToFile(cmd_fn);
-#endif
-      // mark download as complete
-      TEFile f(download_vf, "w+b");
-      f.Write(TUtf8::Encode(PatchDir));
-    }
+    if( completed )
+      MarkCompleted(cmds);
     patcher::PatchAPI::UnlockUpdater();
   }
   catch(const TExceptionBase&)  { // oups...
@@ -143,3 +128,26 @@ void UpdateThread::OnSendTerminate()  {
   if( Index != NULL )
     Index->DoBreak();
 }
+//.............................................................................
+void UpdateThread::MarkCompleted(const TStrList &cmds_) {
+  TStrList cmds(cmds_);
+  TOSFileSystem dfs(PatchDir);
+  olxstr cmd_fn(TEFile::ParentDir(dfs.GetBase()) +
+    patcher::PatchAPI::GetUpdaterCmdFileName());
+  if( TEFile::Exists(cmd_fn) )  {
+    TStrList pc;
+#ifdef _UNICODE
+    TUtf8File::ReadLines(cmd_fn, pc);
+#else
+    pc.LoadFromFile(cmd_fn);
+#endif
+    cmds.Insert(0, pc);
+  }
+#ifdef _UNICODE
+  TUtf8File::WriteLines(cmd_fn, cmds);
+#else
+  cmds.SaveToFile(cmd_fn);
+#endif
+  patcher::PatchAPI::MarkPatchComplete();
+}
+//.............................................................................

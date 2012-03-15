@@ -17,10 +17,46 @@
 #include "exception.h"
 #include "ematrix.h"
 #include "symmlib.h"
+#include "math/composite.h"
 
+//..............................................................................
+THklFile::THklFile()  {
+  Basis.I();
+  Init();
+}
+//..............................................................................
+THklFile::THklFile(const mat3d& hkl_transformation)
+  : Basis(hkl_transformation)
+{
+  Init();
+}
+//..............................................................................
+void THklFile::Init() {
+  Cell.Resize(0);
+  CellEsd.Resize(0);
+  Radiation = 0;
+  Hkl3D = NULL;
+}
+//..............................................................................
 void THklFile::Clear()  {
   Refs.DeleteItems().Clear();
   Clear3D();
+}
+//..............................................................................
+void THklFile::UpdateMinMax(const TReflection& r)  {
+  if( Refs.IsEmpty() )  {
+    // set starting values
+    MinHkl[0] = MaxHkl[0] = r.GetH();
+    MinHkl[1] = MaxHkl[1] = r.GetK();
+    MinHkl[2] = MaxHkl[2] = r.GetL();
+    MinI = MaxI = r.GetI();
+    MinIS = MaxIS = r.GetS();
+  }
+  else  {
+    vec3i::UpdateMinMax(r.GetHkl(), MinHkl, MaxHkl);
+    if( r.GetI() < MinI )  {  MinI = r.GetI();  MinIS = r.GetS();  }
+    if( r.GetI() > MaxI )  {  MaxI = r.GetI();  MaxIS = r.GetS();  }
+  }
 }
 //..............................................................................
 void THklFile::Clear3D()  {
@@ -35,11 +71,13 @@ void THklFile::Clear3D()  {
   Hkl3D = NULL;
 }
 
-bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised)  {
+bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
+  bool* ins_initialised)
+{
   try  {
     Clear();
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
-    TCStrList SL, Toks;
+    TCStrList SL;
     bool ZeroRead = false, 
       HklFinished = false,
       HasBatch = false,
@@ -53,7 +91,8 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
         TCif cif;
         try  {  cif.LoadFromStrings(SL);  }
         catch(TExceptionBase& e) {
-          throw TFunctionFailedException(__OlxSrcInfo, e, "unsupported file format");
+          throw TFunctionFailedException(__OlxSrcInfo, e,
+            "unsupported file format");
         }
         // find firt data block with reflections...
         cif_dp::cetTable* hklLoop = NULL;
@@ -72,7 +111,8 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
         const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
         const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
         if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex )  {
-          TInvalidArgumentException(__OlxSourceInfo, "could not locate <h k l meas sigma> data");
+          TInvalidArgumentException(__OlxSourceInfo,
+            "could not locate <h k l meas sigma> data");
         }
         for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
           const cif_dp::CifRow& r = (*hklLoop)[i];
@@ -121,17 +161,21 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
         const int h = line.SubString(0,4).ToInt(),
           k = line.SubString(4,4).ToInt(),
           l = line.SubString(8,4).ToInt();
-        if( h == 0 && k == 0 && l == 0 )  {  // end of the reflections included into calculations
+        // end of the reflections included into calculations
+        if( h == 0 && k == 0 && l == 0 )  {
           ZeroRead = true;
           Tag = -1;
           continue;
         }
         try  {
           TReflection* ref = HasBatch ?
-            new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(),
-              line.SubString(28,4).IsNumber() ? line.SubString(28,4).ToInt() : 1)
+            new TReflection(h, k, l, line.SubString(12,8).ToDouble(),
+              line.SubString(20,8).ToDouble(),
+              line.SubString(28,4).IsNumber() ? line.SubString(28,4).ToInt()
+              : 1)
             :
-            new TReflection(h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble());
+            new TReflection(h, k, l, line.SubString(12,8).ToDouble(),
+              line.SubString(20,8).ToDouble());
           ref->SetTag(Tag);
           ref->SetOmitted(ZeroRead);
           if( apply_basis ) {
@@ -148,59 +192,119 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           Refs.Add(ref);
         }
         catch(const TExceptionBase& e)  {
-          throw TFunctionFailedException(__OlxSourceInfo, e, olxstr("HKL file line ") << (i+1));
+          throw TFunctionFailedException(__OlxSourceInfo, e,
+            olxstr("HKL file line ") << (i+1));
         }
       }
       else  {
-        if( ins == NULL )  break;
+        if( ins == NULL )  {
+          for( size_t j=i; j < SL.Count(); j++ )  {
+            olxstr line = SL[j].Trim(' ');
+            if( line.StartsFromi("CELL") )  {
+              TStrList Toks(line, ' ');
+              if( Toks.Count() == 8 ) {
+                try {
+                  Radiation = Toks[1].ToDouble();
+                  evecd cell(6); // use tmp in the case CELL is invalid
+                  for (size_t k=2; k < Toks.Count(); k++)
+                    cell[k-2] = Toks[k].ToDouble();
+                  Cell = cell;
+                }
+                catch (const TExceptionBase &e) {
+                  throw TFunctionFailedException(__OlxSourceInfo, e, "reading CELL");
+                }
+              }
+            }
+            else if( line.StartsFromi("ZERR") )  {
+              TStrList Toks(line, ' ');
+              if( Toks.Count() == 8 ) {
+                try {
+                  evecd cell_esd(6); // use tmp in the case CELL is invalid
+                  for (size_t k=2; k < Toks.Count(); k++)
+                    cell_esd[k-2] = Toks[k].ToDouble();
+                  CellEsd = cell_esd;
+                  if (!Cell.IsEmpty())
+                    break;
+                }
+                catch (const TExceptionBase &e) {
+                  throw TFunctionFailedException(__OlxSourceInfo, e, "reading ZERR");
+                }
+              }
+            }
+          }
+          break;
+        }
         ins->Clear();
-        ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString()) << " imported from HKL file" );
+        ins->SetTitle(
+          TEFile::ChangeFileExt(TEFile::ExtractFileName(FN),
+            EmptyString()) << " imported from HKL file");
         bool cell_found = false, sfac_found = false;
         for( size_t j=i; j < SL.Count(); j++ )  {
           olxstr line = SL[j].Trim(' ');
           if( line.IsEmpty() )  continue;
-          Toks.Clear();
           if( line.StartsFromi("CELL") )  {
-            Toks.Strtok(line, ' ');
-            if( Toks.Count() != 8 )
-              throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
-            ins->GetRM().expl.SetRadiation(Toks[1].ToDouble());
-            ins->GetAsymmUnit().GetAxes() = vec3d(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble());
-            ins->GetAsymmUnit().GetAngles() = vec3d(Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble());
+            TStrList Toks(line, ' ');
+            if( Toks.Count() != 8 ) {
+              throw TFunctionFailedException(__OlxSourceInfo,
+                "invalid CELL format");
+            }
+            ins->GetRM().expl.SetRadiation(Radiation = Toks[1].ToDouble());
+            ins->GetAsymmUnit().GetAxes() = vec3d(Toks[2].ToDouble(),
+              Toks[3].ToDouble(), Toks[4].ToDouble());
+            ins->GetAsymmUnit().GetAngles() = vec3d(Toks[5].ToDouble(),
+              Toks[6].ToDouble(), Toks[7].ToDouble());
+            Cell.Assign(CompositeVector::Make(
+              vec3d_list() << ins->GetAsymmUnit().GetAxes() <<
+                ins->GetAsymmUnit().GetAngles()),
+              6);
             cell_found = true;
           }
           if( line.StartsFromi("ZERR") )  {
-            Toks.Strtok(line, ' ');
-            if( Toks.Count() != 8 )
-              throw TFunctionFailedException(__OlxSourceInfo, "invalid ZERR format");
-            ins->GetAsymmUnit().SetZ(Toks[1].ToInt());
-            ins->GetAsymmUnit().GetAxisEsds() = vec3d(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble());
-            ins->GetAsymmUnit().GetAngleEsds() = vec3d(Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble());
+            TStrList Toks(line, ' ');
+            if( Toks.Count() != 8 ) {
+              throw TFunctionFailedException(__OlxSourceInfo,
+                "invalid ZERR format");
+            }
+            ins->GetAsymmUnit().SetZ((short)olx_round(Toks[1].ToDouble()));
+            ins->GetAsymmUnit().GetAxisEsds() = vec3d(Toks[2].ToDouble(),
+              Toks[3].ToDouble(), Toks[4].ToDouble());
+            ins->GetAsymmUnit().GetAngleEsds() = vec3d(Toks[5].ToDouble(),
+              Toks[6].ToDouble(), Toks[7].ToDouble());
+            CellEsd.Assign(CompositeVector::Make(
+              vec3d_list() << ins->GetAsymmUnit().GetAxisEsds() <<
+                ins->GetAsymmUnit().GetAngleEsds()),
+              6);
             cell_found = true;
           }
           else if( line.StartsFromi("SFAC") )  {
-            Toks.Strtok(line, ' ');  // do the validation
+            TStrList Toks(line, ' ');  // do the validation
             TStrList unit;
             for( size_t k=1; k < Toks.Count(); k++ )  {
-              if( !XElementLib::IsAtom(Toks[k]) )
-                throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid element ") << Toks[k]);
+              if( !XElementLib::IsAtom(Toks[k]) ) {
+                throw TFunctionFailedException(__OlxSourceInfo,
+                  olxstr("invalid element ") << Toks[k]);
+              }
               unit.Add('1');
             }
             ins->GetRM().SetUserContentType(Toks.SubListFrom(1));
             ins->GetRM().SetUserContentSize(unit);
             sfac_found = true;
           }
-          else if( line.StartsFromi("TEMP") )
+          else if( line.StartsFromi("TEMP") ||
+                   line.StartsFromi("SIZE") ||
+                   line.StartsFromi("REM"))
+          {
             ins->AddIns(line, ins->GetRM());
-          else if( line.StartsFromi("SIZE") )
-            ins->AddIns(line, ins->GetRM());
-          else if( line.StartsFromi("REM") )
-            ins->AddIns(line, ins->GetRM());
-          else if( line.StartsFromi("UNIT") )
-            ins->GetRM().SetUserContentSize(TStrList(line.SubStringFrom(5), ' '));
+          }
+          else if( line.StartsFromi("UNIT") ) {
+            ins->GetRM().SetUserContentSize(
+              TStrList(line.SubStringFrom(5), ' '));
+          }
         }
-        if( !cell_found || !sfac_found )
-          throw TFunctionFailedException(__OlxSourceInfo, "could no locate valid CELL/SFAC instructions");
+        if( !cell_found || !sfac_found ) {
+          throw TFunctionFailedException(__OlxSourceInfo,
+            "could no locate valid CELL/SFAC instructions");
+        }
         if( ins_initialised != NULL )
           *ins_initialised = true;
         break;
@@ -223,7 +327,9 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
   return true;
 }
 //..............................................................................
-bool THklFile::SaveToFile(const olxstr& FN)  {  return THklFile::SaveToFile(FN, Refs, false);  }
+bool THklFile::SaveToFile(const olxstr& FN)  {
+  return THklFile::SaveToFile(FN, Refs, false);
+}
 //..............................................................................
 void THklFile::UpdateRef(const TReflection& R)  {
   size_t ind = olx_abs(R.GetTag())-1;
@@ -254,7 +360,9 @@ void THklFile::InitHkl3D()  {
   Hkl3D = &hkl3D;
 }
 //..............................................................................
-void THklFile::AllRefs(const TReflection& R, const smatd_list& ml, TRefPList& Res)  {
+void THklFile::AllRefs(const TReflection& R, const smatd_list& ml,
+  TRefPList& Res)
+{
   vec3i_list ri;
   for( size_t i=0; i < ml.Count(); i++ )  {
     vec3i hklv = R.MulHkl(ml[i]);
@@ -300,7 +408,9 @@ void THklFile::Append(const THklFile& hkls)  {
   Append(hkls.Refs);
 }
 //..............................................................................
-bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append)  {
+bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs,
+  bool Append)
+{
   if( refs.IsEmpty() )  return true;
   if( Append && TEFile::Exists(FN) )  {
     THklFile F;

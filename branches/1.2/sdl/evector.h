@@ -60,17 +60,16 @@ public:
   TVector(const TVector& V)  {
     Fn = V.Count();
     FData = new VecType[Fn];
-    for( size_t i=0; i < Fn; i++ )
-      FData[i] = V[i];
+    memcpy(FData, V.FData, Fn*sizeof(VecType));
   }
 
-  TVector(size_t ddim)  {
-    Fn = ddim;
-    if( Fn == 0 )
-      FData = NULL;
-    else
-      FData = new VecType[Fn];
+  TVector(size_t ddim) : Fn(ddim) {
+    FData = (Fn == 0 ? NULL : new VecType[Fn]);
     Null();
+  }
+
+  template <typename vec_t> static TVector FromVector(const vec_t& V) {
+    return TVector().Assign(V, V.Count());
   }
 
   virtual ~TVector()  {
@@ -78,24 +77,26 @@ public:
       delete [] FData;
   }
 
-  inline size_t Count() const {  return Fn;  }
-  inline size_t Size() const {  return Fn;  }
-  inline bool IsEmpty() const {  return Count() == 0;  }
-  inline const VecType& operator [](size_t offset) const {
+  size_t Count() const {  return Fn;  }
+  size_t Size() const {  return Fn;  }
+  bool IsEmpty() const {  return Count() == 0;  }
+  const VecType& operator [](size_t offset) const {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
 #endif
     return FData[offset];
   }
-  inline VecType& operator [](size_t offset)  {
+  VecType& operator [](size_t offset)  {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
 #endif
     return FData[offset];
   }
 
-  inline const VecType& operator ()(size_t offset) const {  return operator [] (offset);  }
-  inline VecType& operator ()(size_t offset)  {  return operator [] (offset);  }
+  const VecType& operator ()(size_t offset) const {
+    return operator [] (offset);
+  }
+  VecType& operator ()(size_t offset)  {  return operator [] (offset);  }
   
   const VecType* GetRawData() const {  return FData;  }
 
@@ -128,20 +129,24 @@ public:
     return olx_cmp(Count(), v.Count());
   }
 
-
   template <typename vec_t>
-  static VecType Length(const vec_t& v, size_t cnt)  {  return QLength(v, cnt);  }
+  static VecType Length(const vec_t& v, size_t cnt) {
+    return QLength(v, cnt);
+  }
   template <typename vec_t>
   static VecType Length(const vec_t& v)  {  return QLength(v);  }
   VecType Length() const {  return (VecType)sqrt((double)QLength());  }
 
-  template <typename vec_t> VecType QLength(const vec_t& v, size_t cnt)  {
-    if( cnt == 0 )  throw TInvalidArgumentException(__OlxSourceInfo, "size");
+  template <typename vec_t>
+  static VecType QLength(const vec_t& v, size_t cnt)  {
+    if( cnt == 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "size");
     VecType l = 0;
     for( size_t i=0; i < cnt; i++ )  l += olx_sqr(v[i]);
     return l;
   }
-  template <typename vec_t> VecType QLength(const vec_t& v)  {  return QLength(v, v.Count());  }
+  template <typename vec_t>
+  static VecType QLength(const vec_t& v)  {  return QLength(v, v.Count());  }
   VecType QLength() const {  return QLength(*this);  }
 
   template <typename vec_t>
@@ -358,9 +363,9 @@ public:
       rv << ", " << FData[i];
     return rv;
   }
-  inline TIString ToString() const {  return StrRepr<olxstr>();  }
-  inline olxcstr  ToCStr() const {  return StrRepr<olxcstr>();  }
-  inline olxwstr  ToWStr() const {  return StrRepr<olxwstr>();  }
+  TIString ToString() const {  return StrRepr<olxstr>();  }
+  olxcstr  ToCStr() const {  return StrRepr<olxcstr>();  }
+  olxwstr  ToWStr() const {  return StrRepr<olxwstr>();  }
   void ToStream(IOutputStream& out) const {
     uint32_t sz = (uint32_t)Fn; //TODO: check overflow
     out.Write(&sz, sizeof(sz));
@@ -430,6 +435,7 @@ public:
   }
 public:
   typedef VecType list_item_type;
+  typedef VecType number_type;
 };
 
   typedef TVector<float> evecf;

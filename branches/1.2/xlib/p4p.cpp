@@ -10,6 +10,7 @@
 #include "p4p.h"
 #include "asymmunit.h"
 #include "symmlib.h"
+#include "xmacro.h"
 
 void TP4PFile::Clear()  {
   GetRM().Clear(rm_clear_ALL);
@@ -17,7 +18,7 @@ void TP4PFile::Clear()  {
 }
 //.............................................................................
 void TP4PFile::SaveToStrings(TStrList& SL)  {
-  SL.Add("FILEID Created by OLEX2");
+  SL.Add("FILEID Created by OLEX2: ") << XLibMacros::GetCompilationInfo();
   SL.Add(olxstr("TITLE   ") << GetTitle());
   SL.Add(olxstr("CHEM    ") << GetRM().GetUserContentStr());
 
@@ -49,7 +50,12 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
       SL.GetLastString() << ' ' << GetRM().expl.GetTempValue().ToString();
     else
       SL.GetLastString() << " 0";
-    SL.Add("SOURCE  ") << GetRM().expl.GetRadiation();
+    double tr = olx_round(GetRM().expl.GetRadiation(), 100);
+    olxstr str_rad = '?';
+    if (tr == 0.71)  str_rad = "Mo";
+    else if (tr == 1.54)  str_rad = "Cu";
+    else if (tr == 0.56)  str_rad = "Ag";
+    SL.Add("SOURCE  ") << str_rad << ' ' << GetRM().expl.GetRadiation();
   // save only if preset
   if( !SGString.IsEmpty() )
     SL.Add("SG  ") << SGString;
@@ -72,6 +78,7 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Add("CELLSD",  &CellSd);
   params.Add("TITLE",   &Title);
   params.Add("SG",      &SGString);
+  params.Add("FILEID",  &FileId);
   for( size_t i=0; i < Strings.Count(); i++ )  {
     olxstr Tmp = olxstr::DeleteSequencesOf<char>(Strings[i], ' ');
     if( Tmp.IsEmpty() )  continue;
@@ -133,11 +140,11 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   }
 
   params.Clear();
-  params.Strtok( Source, ' ');
+  params.Strtok(Source, ' ');
   if( params.Count() > 2 )
     GetRM().expl.SetRadiation(params[1].ToDouble());
-	try  {  GetRM().SetUserFormula(chem.DeleteChars('_'));  }
-	catch(...)  {  }  // just skip...
+  try  {  GetRM().SetUserFormula(chem.DeleteChars('_'));  }
+  catch(...)  {  }  // just skip...
 }
 
 bool TP4PFile::Adopt(TXFile& f)  {

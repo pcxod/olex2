@@ -137,9 +137,7 @@ public:
           SL[i].SetLength(0);
       }
       catch(const TExceptionBase &e)  {
-        TStrList st;
-        TBasicApp::NewLogEntry(logError) <<
-          e.GetException()->GetStackTrace(st);
+        TBasicApp::NewLogEntry(logExceptionTrace) << e;
         if( preserve )
           SL[i] = olxstr("REM ") << SL[i];
         else

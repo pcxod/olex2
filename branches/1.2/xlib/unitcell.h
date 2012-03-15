@@ -55,7 +55,9 @@ class TUnitCell: public IEObject  {
   void _FindBinding(const TSAtom& center, double delta,
     TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >& res,
     const TCAtomPList* atoms=NULL) const
-  {  _FindBinding(center.CAtom(), center.GetMatrix(0), delta, res, atoms);  }
+  {
+    _FindBinding(center.CAtom(), center.GetMatrix(), delta, res, atoms);
+  }
   //
   static int _AtomSorter(const AnAssociation3<vec3d,TCAtom*, double>& a1,
     const AnAssociation3<vec3d,TCAtom*, double>& a2)
@@ -89,9 +91,17 @@ public:
   Id's. The return value is a new list of matrices with new Id's
   */
   smatd_list MulMatrices(const smatd_list& in, const smatd& transform) const;
-  smatd MulMatrix(const smatd& m, const smatd& tr) const {
-    smatd rv = tr*m;
+  /* returns just the id of the product, saving on the rotation part
+  multiplication
+  */
+  uint32_t MulMatrixId(const smatd& m, const smatd& tr) const {
     const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
+    return smatd::GenerateId(index, (tr.MulT(m)-Matrices[index].t).Round<int>());
+  }
+  /* full product */
+  smatd MulMatrix(const smatd& m, const smatd& tr) const {
+    const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
+    smatd rv(Matrices[index].r, tr.MulT(m));
     rv.SetId(index, (rv.t-Matrices[index].t).Round<int>());
     return rv;
   }
@@ -180,6 +190,22 @@ public:
     for( size_t i=0; i < res.Count(); i++ )  {
       out[i].A() = res[i].A();
       out[i].B() = res[i].GetB(); 
+    }
+  }
+  /* As above, but expects a list of
+  Assiciation3+<TCAtom const*, smatd, vec3d, ...>, note that the resulting
+  coordinate is the Cartesian coordinate (the input is in fractional)
+  */
+  template <class res_t> void FindInRangeAMC(const vec3d& center, double R,
+    res_t& out, const TCAtomPList* atoms=NULL) const
+  {
+    TTypeList<AnAssociation3<TCAtom*,smatd,vec3d> > res;
+    _FindInRange(center, R, res, false, atoms);
+    out.SetCount(res.Count());
+    for( size_t i=0; i < res.Count(); i++ )  {
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetB();
+      out[i].C() = res[i].GetC(); 
     }
   }
   /* finds only bound atoms defined by delta, can take both TCAtom and TSAtom.

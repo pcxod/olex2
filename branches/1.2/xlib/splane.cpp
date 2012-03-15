@@ -164,11 +164,11 @@ TSPlane::Def::Def(const TSPlane& plane)
   if( plane.Count() == 0 )  return;
   if( !plane.GetAtom(0).IsAUAtom() )  {
     const TUnitCell& uc = plane.GetNetwork().GetLattice().GetUnitCell();
-    const smatd im = uc.InvMatrix(plane.GetAtom(0).GetMatrix(0));
+    const smatd im = uc.InvMatrix(plane.GetAtom(0).GetMatrix());
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      atoms[i].ref.matrix_id = uc.MulMatrix(
+      atoms[i].ref.matrix_id = uc.MulMatrixId(
         smatd::FromId(atoms[i].ref.matrix_id,
-        uc.GetMatrix(smatd::GetContainerId(atoms[i].ref.matrix_id))), im).GetId();
+        uc.GetMatrix(smatd::GetContainerId(atoms[i].ref.matrix_id))), im);
     }
   }
   QuickSorter::Sort(atoms);
@@ -201,25 +201,26 @@ TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
   TNetwork* parent, const smatd& matr) const
 {
   TTypeList<AnAssociation2<TSAtom*, double> > points;
-  mat3d equiv;
-  equiv.I();
+  const TUnitCell& uc = parent->GetLattice().GetUnitCell();
+  const TAsymmUnit& au = parent->GetLattice().GetAsymmUnit();
   if( matr.IsFirst() )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      TSAtom* sa = ar.atomRegistry.Find(atoms[i].ref);
+      TSAtom::Ref &ref = atoms[i].ref;
+      smatd m = smatd::FromId(ref.matrix_id,
+        uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)));
+      TSAtom* sa = ar.atomRegistry.Find(
+        TSAtom::GetMinRef(au.GetAtom(ref.catom_id), m));
       if( sa == NULL )  return NULL;
       points.AddNew(sa, atoms[i].weight);
     }
   }
   else  {
-    const TUnitCell& uc = parent->GetLattice().GetUnitCell();
     for( size_t i=0; i < atoms.Count(); i++ )  {
-      TSAtom::Ref ref = atoms[i].ref;
-      smatd m = smatd::FromId(ref.matrix_id, uc.GetMatrix(smatd::GetContainerId(ref.matrix_id)))*matr;
-      uc.InitMatrixId(m);
-      if( i == 0 )
-        equiv = m.r;
-      ref.matrix_id = m.GetId();
-      TSAtom* sa = ar.atomRegistry.Find(ref);
+      TSAtom::Ref &ref = atoms[i].ref;
+      smatd m = uc.MulMatrix(smatd::FromId(ref.matrix_id,
+        uc.GetMatrix(smatd::GetContainerId(ref.matrix_id))), matr);
+      TSAtom* sa = ar.atomRegistry.Find(
+        TSAtom::GetMinRef(au.GetAtom(ref.catom_id), m));
       if( sa == NULL )  return NULL;
       points.AddNew(sa, atoms[i].weight);
     }

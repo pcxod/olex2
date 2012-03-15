@@ -86,9 +86,8 @@ public:
       for( size_t i=0; i < Atoms.Count(); i++ )  {
         if( Atoms[i]->crd().QDistanceTo(original_crds[i]) < 1e-3 )
           continue;
-        TXAtom* nxa = app.AddAtom(Atoms[i]);
-        if( nxa == NULL )  continue;
-        TCAtom& na = nxa->CAtom();
+        TXAtom& nxa = app.AddAtom(Atoms[i]);
+        TCAtom& na = nxa.CAtom();
         // set parts
         int part = Atoms[i]->CAtom().GetPart();
         if( part == 0 )  part ++;
@@ -116,6 +115,7 @@ public:
         to_iso.Add(Atoms[i]->CAtom());
       }
       app.XFile().GetLattice().SetAnis(to_iso, false);
+      app.XFile().GetLattice().Uniq();
     }
     else  {
       for( size_t i=0; i < Atoms.Count(); i++ )

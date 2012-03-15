@@ -211,6 +211,7 @@ public:
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_SIZE(TMainForm::OnSize)
+  EVT_MOVE(TMainForm::OnMove)
   EVT_MENU(ID_FILE0, TMainForm::OnFileOpen)
   EVT_MENU(ID_FILE0+1, TMainForm::OnFileOpen)
   EVT_MENU(ID_FILE0+2, TMainForm::OnFileOpen)
@@ -301,6 +302,19 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomPolyRegular, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyPyramid, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyBipyramid, TMainForm::OnAtomPolyChange)
+
+  EVT_MENU(ID_AtomPartCustom, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart_2, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart_1, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart0, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart1, TMainForm::OnAtomPartChange)
+  EVT_MENU(ID_AtomPart2, TMainForm::OnAtomPartChange)
+
+  EVT_MENU(ID_AtomUisoCustom, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUiso12, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUiso15, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUisoFree, TMainForm::OnAtomUisoChange)
+  EVT_MENU(ID_AtomUisoFix, TMainForm::OnAtomUisoChange)
 
   EVT_MENU(ID_SelGroup, TMainForm::OnSelection)
   EVT_MENU(ID_SelUnGroup, TMainForm::OnSelection)
@@ -1300,6 +1314,8 @@ void TMainForm::XApp(TGXApp *XA)  {
     pmAtomOccu = new TMenu();
     pmAtomConn = new TMenu();
     pmAtomPoly = new TMenu();
+    pmAtomPart = new TMenu();
+    pmAtomUiso = new TMenu();
   pmFragment = new TMenu();
   pmSelection = new TMenu();
   pmGraphics = new TMenu();
@@ -1419,10 +1435,23 @@ void TMainForm::XApp(TGXApp *XA)  {
     pmAtomPoly->AppendRadioItem(ID_AtomPolyRegular, wxT("Regular"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyPyramid, wxT("Pyramid"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyBipyramid, wxT("Bipyramid"));
+    miAtomPartCustom = pmAtomPart->AppendRadioItem(ID_AtomPartCustom, wxT("X"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart_2, wxT("-2"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart_1, wxT("-1"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart0, wxT("0"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart1, wxT("1"));
+    pmAtomPart->AppendRadioItem(ID_AtomPart2, wxT("2"));
+    miAtomUisoCustom = pmAtomUiso->AppendRadioItem(ID_AtomUisoCustom, wxT("X"));
+    pmAtomUiso->AppendRadioItem(ID_AtomUiso12, wxT("1.2x"));
+    pmAtomUiso->AppendRadioItem(ID_AtomUiso15, wxT("1.5x"));
+    miAtomUisoFree = pmAtomUiso->AppendRadioItem(ID_AtomUisoFree, wxT("Free"));
+    pmAtomUiso->AppendRadioItem(ID_AtomUisoFix, wxT("Fix"));
 
   pmAtom->Append(ID_MenuAtomType, wxT("Type"), pmAtomType);
   pmAtom->Append(ID_MenuAtomConn, wxT("Bonds"), pmAtomConn);
   pmAtom->Append(ID_MenuAtomOccu, wxT("Chemical occupancy"), pmAtomOccu);
+  pmAtom->Append(ID_MenuAtomPart, wxT("Part"), pmAtomPart);
+  pmAtom->Append(ID_MenuAtomUiso, wxT("Uiso"), pmAtomUiso);
   pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrow, wxT("Grow"));
@@ -1551,6 +1580,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   FXApp->XFile().OnFileLoad.Add(this, ID_FileLoad);
   FXApp->XFile().OnFileClose.Add(this, ID_FileClose);
   FXApp->XFile().GetRM().OnSetBadReflections.Add(this, ID_BadReflectionSet);
+  FXApp->XFile().GetRM().OnCellDifference.Add(this, ID_CellChanged);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check(!FHtmlMinimized);
 #ifdef __WIN32__  
@@ -1722,15 +1752,20 @@ void TMainForm::StartupInit()  {
     catch(...) {}
   }
   // do the iterpreters job...
-  if( FXApp->Arguments.Count() >= 2 && FXApp->Arguments.GetLastString().EndsWith(".py") )  {
-    TStrList in;
-    in.LoadFromFile(FXApp->Arguments.GetLastString());
-    PythonExt::GetInstance()->RunPython(in.Text('\n'));
+  if (FXApp->Arguments.Count() >= 2) {
+    if (FXApp->Arguments.GetLastString().EndsWith(".py")) {
+      TStrList in;
+      in.LoadFromFile(FXApp->Arguments.GetLastString());
+      PythonExt::GetInstance()->RunPython(in.Text('\n'));
+    }
+    else // disable reading last file in
+      TOlxVars::GetInstance()->SetVar("olx_reap_cmdl", FXApp->Arguments[1]);
   }
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
   if( FXApp->Arguments.Count() >= 2 ) {
-    ProcessMacro(olxstr("reap \'") << FXApp->Arguments.Text(' ', 1) << '\'', __OlxSrcInfo);
+    ProcessMacro(olxstr("reap \'") << FXApp->Arguments.Text(' ', 1) << '\'',
+      __OlxSrcInfo);
   }
   // load html in last call - it might call some destructive functions on uninitialised data
   FHtml->LoadPage(FHtmlIndexFile.u_str());
@@ -1995,6 +2030,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         ProcessMacro(tmp, "Scheduled task");
       }
     }
+    for (size_t i=0; i < RunWhenVisibleTasks.Count(); i++)
+      RunWhenVisibleTasks[i]->Run();
+    RunWhenVisibleTasks.DeleteItems().Clear();
     // end tasks ...
     if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
       GetHtml()->ProcessPageLoadRequest();
@@ -2022,7 +2060,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         FObjectUnderMouse = NULL;
         ProcessMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', "OnListen");
         for( size_t i=0; i < FOnListenCmds.Count(); i++ )  {
-          if( !ProcessMacro(FOnListenCmds[i], "OnListen") )            
+          if( !ProcessMacro(FOnListenCmds[i], "OnListen") )
             break;
         }
         FileMT = FileT;
@@ -2031,9 +2069,12 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
     }
     if( (FMode & mRota) != 0  )  {
-      FXApp->GetRender().GetBasis().RotateX(FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
-      FXApp->GetRender().GetBasis().RotateY(FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
-      FXApp->GetRender().GetBasis().RotateZ(FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
+      FXApp->GetRender().GetBasis().RotateX(
+        FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
+      FXApp->GetRender().GetBasis().RotateY(
+        FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
+      FXApp->GetRender().GetBasis().RotateZ(
+        FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
       FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
       if( FRotationAngle < 0 )  FMode ^= mRota;
       Draw = true;
@@ -2136,7 +2177,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       static bool UpdateExecuted = false;
       volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
       if( actionEntered && ActionProgress != NULL )  {
-        StatusBar->SetStatusText( (olxstr("Processing ") << ActionProgress->GetAction()).u_str() );
+        StatusBar->SetStatusText( (olxstr("Processing ") <<
+          ActionProgress->GetAction()).u_str() );
         actionEntered = false;
       }
       if( downloadEntered && UpdateProgress != NULL )  {
@@ -2144,7 +2186,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         UpdateExecuted = true;
         StatusBar->SetStatusText( 
           (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' << 
-          olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/(UpdateProgress->GetMax()+1)) << '%').u_str()
+          olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/
+            (UpdateProgress->GetMax()+1)) << '%').u_str()
         );
       }
       if( UpdateExecuted && _UpdateThread == NULL )  {
@@ -2176,7 +2219,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
       this->OnKeyDown(((TKeyEvent*)Data)->GetEvent());
   }
-  else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION && (MsgSubId == msiEnter))  {
+  else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR ||
+           MsgId == ID_EXCEPTION && (MsgSubId == msiEnter))
+  {
     if( Data != NULL )  {
       TGlMaterial *glm = NULL;
       if( MsgId == ID_INFO )           glm = &InfoFontColor;
@@ -2291,6 +2336,14 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if (MsgId == ID_UPDATE_GUI) {
     executeMacro("html.update");
+  }
+  else if (MsgId == ID_CellChanged) {
+    if (Data != NULL && EsdlInstanceOf(*Data, THklFile) ) {
+       const THklFile &hf = *dynamic_cast<const THklFile*>(Data);
+      RunWhenVisibleTasks.Add(
+        new CellChangeTask(FXApp->XFile().GetRM().GetHKLSource(),
+          hf.GetCell(), hf.GetCellEsd()));
+    }
   }
   return res;
 }
@@ -2636,6 +2689,16 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
     return;
   }
   event.Skip();
+}
+//..............................................................................
+void TMainForm::OnMove(wxMoveEvent& evt) {
+  if( FXApp == NULL || FGlConsole == NULL || FInfoBox == NULL ||
+      !StartupInitialised )
+  {
+    return;
+  }
+  wxPoint p = FGlCanvas->GetScreenPosition();
+  FXApp->GetRender().SetAbsoluteTop(p.y);
 }
 //..............................................................................
 void TMainForm::OnSize(wxSizeEvent& event)  {
@@ -4168,6 +4231,21 @@ size_t TMainForm::DownloadFiles(const TStrList &files, const olxstr &dest) {
     }
   }
   return cnt;
+}
+//..............................................................................
+void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
+  FXApp->Options.AddParam(option, value);
+  try {
+    TSettingsFile st;
+    olxstr fn = FXApp->GetInstanceDir() + ".options";
+    if (TEFile::Exists(fn))
+      st.LoadSettings(fn);
+    st.SetParam(option, value);
+    st.SaveSettings(fn);
+  }
+  catch (const TExceptionBase &e) {
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
+  }
 }
 //..............................................................................
 //..............................................................................

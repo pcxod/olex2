@@ -31,7 +31,7 @@ size_t TFileTree::Folder::CalcItemCount() const {
 void TFileTree::Folder::Expand(TOnProgress& pg, short flags)  {
   Files.Clear();
   pg.SetAction(FullPath);
-  FileTree.OnExpand->Execute(NULL, &pg);
+  FileTree.OnExpand.Execute(NULL, &pg);
   try {
     TEFile::ListDirEx(FullPath, Files, "*", sefAll^sefRelDir);
   }
@@ -55,39 +55,40 @@ void TFileTree::Folder::Expand(TOnProgress& pg, short flags)  {
   QuickSorter::SortSF(Folders, &TFileTree::Folder::CompareFolders);
 }
 //.............................................................................
-void TFileTree::Folder::Delete(TOnProgress& pg, bool ContentOnly)  {
-  for( size_t i=0; i < Folders.Count(); i++ )  {
-    try  {
+bool TFileTree::Folder::Delete(TOnProgress& pg, bool ContentOnly)  {
+  try {
+    for( size_t i=0; i < Files.Count(); i++ )  {
+      olxstr fn = FullPath + Files[i].GetName();
+      pg.SetAction(fn);
       pg.IncPos(1);
-      pg.SetAction(Folders[i].FullPath);
-      FileTree.OnDelete->Execute(NULL, &pg);
-      Folders[i].Delete(pg);
-      Folders.NullItem(i);
+      FileTree.OnDelete.Execute(NULL, &pg);
+      if (TEFile::DelFile(fn))
+        Files.NullItem(i);
     }
-    catch( const TExceptionBase& exc )  {
-      Folders.Pack();
-      throw TFunctionFailedException(__OlxSourceInfo, exc);
+    Files.Pack();
+    for( size_t i=0; i < Folders.Count(); i++ )  {
+      try  {
+        pg.IncPos(1);
+        pg.SetAction(Folders[i].FullPath);
+        FileTree.OnDelete.Execute(NULL, &pg);
+        if (Folders[i].Delete(pg))
+          Folders.NullItem(i);
+      }
+      catch (const TExceptionBase& exc)  {
+        Folders.Pack();
+        throw TFunctionFailedException(__OlxSourceInfo, exc);
+      }
     }
+    Folders.Pack();
+    const bool remove = (Parent == NULL ? !ContentOnly : true);
+    if( remove && !TEFile::RmDir(FullPath) )
+      return false;
+    return IsEmpty();
   }
-  Folders.Clear();
-  for( size_t i=0; i < Files.Count(); i++ )  {
-    olxstr fn = FullPath + Files[i].GetName();
-    pg.SetAction(fn);
-    pg.IncPos(1);
-    FileTree.OnDelete->Execute(NULL, &pg);
-    if( !TEFile::DelFile(fn) )  {
-      Files.Pack();
-      throw TFunctionFailedException(__OlxSourceInfo,
-        olxstr("Could not delete file: ").quote() << fn);
-    }
-    else
-      Files.NullItem(i);
-  }
-  Files.Pack();
-  const bool remove = (Parent == NULL ? !ContentOnly : true);
-  if( remove && !TEFile::RmDir(FullPath) )  {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      olxstr("Could not delete folder: ").quote() << FullPath);
+  catch (const TExceptionBase &) {
+    Files.Pack();
+    Folders.Pack();
+    return IsEmpty();
   }
 }
 //.............................................................................
@@ -98,14 +99,14 @@ uint64_t TFileTree::Folder::Compare(const Folder& f, TOnProgress& pg) const {
     if( ind == InvalidIndex )  {
       total_size += Files[i].GetSize();
       pg.SetAction(olxstr("New file: ") << FullPath << Files[i].GetName());
-      FileTree.OnCompare->Execute(NULL, &pg);
+      FileTree.OnCompare.Execute(NULL, &pg);
     }
     else if( Files[i].GetModificationTime() !=
               f.Files[ind].GetModificationTime() ||
             Files[i].GetSize() != f.Files[ind].GetSize() )
     {
       pg.SetAction(olxstr("Changed file: ") << FullPath << Files[i].GetName());
-      FileTree.OnCompare->Execute(NULL, &pg);
+      FileTree.OnCompare.Execute(NULL, &pg);
     }
   }
   for( size_t i=0; i < Folders.Count(); i++ )  {
@@ -113,7 +114,7 @@ uint64_t TFileTree::Folder::Compare(const Folder& f, TOnProgress& pg) const {
     if( ind == InvalidIndex )  {
       total_size += Folders[i].CalcSize();
       pg.SetAction(olxstr("New folder: ") << Folders[i].FullPath);
-      FileTree.OnCompare->Execute(NULL, &pg);
+      FileTree.OnCompare.Execute(NULL, &pg);
     }
     else
       total_size += Folders[i].Compare( f.Folders[ind], pg );
@@ -199,7 +200,7 @@ void TFileTree::Folder::Merge(const DiffFolder& df, TOnProgress& onSync,
         throw TFunctionFailedException(__OlxSourceInfo, "settime");
       onSync.SetPos(onSync.GetPos() + df.Src->Files[i].GetSize());
       onSync.SetAction(df.Src->Files[i].GetName());
-      FileTree.OnSynchronise->Execute(NULL, &onSync);
+      FileTree.OnSynchronise.Execute(NULL, &onSync);
     }
     if( FileTree.Break )  return;
   }
@@ -236,8 +237,8 @@ bool TFileTree::Folder::CopyTo(const olxstr& _dest,
     try  {
       FileTree.CopyFile(src_fn, dest_fn);
       OnSync.SetAction(dest_fn);
-      OnSync.IncPos( Files[i].GetSize() );
-      FileTree.OnSynchronise->Execute(NULL, &OnSync);
+      OnSync.IncPos(Files[i].GetSize());
+      FileTree.OnSynchronise.Execute(NULL, &OnSync);
       bool res = TEFile::SetFileTimes(dest_fn, Files[i].GetLastAccessTime(),
         Files[i].GetModificationTime());
       if( !res )
@@ -276,7 +277,7 @@ void TFileTree::Folder::Synchronise(TFileTree::Folder& f, TOnProgress& onSync)
         f.Files.AddCopy(Files[i]);
         QuickSorter::SortSF(f.Files, &CompareFiles);
         onSync.SetPos( onSync.GetPos() + Files[i].GetSize() );
-        FileTree.OnSynchronise->Execute(NULL, &onSync);
+        FileTree.OnSynchronise.Execute(NULL, &onSync);
       }
     }
     else if( Files[i].GetModificationTime() !=
@@ -284,15 +285,15 @@ void TFileTree::Folder::Synchronise(TFileTree::Folder& f, TOnProgress& onSync)
     {
       onSync.SetAction(olxstr("Changed file: ") << FullPath
         << Files[i].GetName());
-      FileTree.OnSynchronise->Execute(NULL, &onSync);
+      FileTree.OnSynchronise.Execute(NULL, &onSync);
     }
   }
   for( size_t i=0; i < Folders.Count(); i++ )  {
     size_t ind = FindSortedIndexOf(f.Folders, Folders[i].Name);
     if( ind == InvalidIndex )  {
       onSync.SetAction(olxstr("New folder: ") << FullPath << Folders[i].Name);
-      FileTree.OnSynchronise->Execute(NULL, &onSync);
-      olxstr fn = olxstr(f.FullPath)  <<  Folders[i].Name;
+      FileTree.OnSynchronise.Execute(NULL, &onSync);
+      olxstr fn = olxstr(f.FullPath) << Folders[i].Name;
       TEFile::MakeDir(fn);
       bool res = TEFile::SetFileTimes(fn, Folders[i].GetLastAccessTime(),
         Folders[i].GetModificationTime());
@@ -338,7 +339,7 @@ void TFileTree::Folder::ListFilesEx(TStrList& out,
   if( _mask != NULL && !_mask->IsEmpty() )   {
     for( size_t i=0; i < Files.Count(); i++ )  {
       for( size_t j=0; j < _mask->Count(); j++ )  {
-        if( (*_mask)[j].DoesMatch( Files[i].GetName() ) )  {
+        if( (*_mask)[j].DoesMatch(Files[i].GetName()) )  {
           out.Add(FullPath) << Files[i].GetName();
           break;
         }
@@ -397,6 +398,18 @@ size_t TFileTree::Folder::CountFiles(const olxstr& _mask) const {
   else
     return CountFilesEx(NULL);
 }
+//.............................................................................
+TStrList &TFileTree::Folder::ListContent(TStrList &out, bool annotate) const {
+  for (size_t i=0; i < Files.Count(); i++) {
+    (annotate ? out.Add("File: ") : out.Add()) <<
+      FullPath << Files[i].GetName();
+  }
+  for (size_t i=0; i < Folders.Count(); i++) {
+    (annotate ? out.Add("Folder: ") : out.Add()) << Folders[i].GetFullPath();
+    Folders[i].ListContent(out, annotate);
+  }
+  return out;
+}
 //_____________________________________________________________________________
 //_____________________________________________________________________________
 //_____________________________________________________________________________
@@ -433,7 +446,7 @@ bool TFileTree::CopyFile(const olxstr& from, const olxstr& to) const {
   pg.SetMax(fl);
   pg.SetPos(0);
   pg.SetAction( from );
-  OnFileCopy->Enter(NULL, &pg);
+  OnFileCopy.Enter(NULL, &pg);
 
   DWORD read = 1;
   while( true )  {
@@ -459,11 +472,11 @@ bool TFileTree::CopyFile(const olxstr& from, const olxstr& to) const {
       }
       read -= written;
       pg.IncPos( written);
-      OnFileCopy->Execute(NULL, &pg);
+      OnFileCopy.Execute(NULL, &pg);
     }
   }
   pg.SetPos( fl );
-  OnFileCopy->Exit(NULL, &pg);
+  OnFileCopy.Exit(NULL, &pg);
   pg.SetPos(0);
   delete [] bf;
   CloseHandle(in);
@@ -486,10 +499,10 @@ bool TFileTree::CopyFile(const olxstr& from, const olxstr& to) const {
   size_t fl = in.Length();
 
   TOnProgress pg;
-  pg.SetMax( fl );
+  pg.SetMax(fl);
   pg.SetPos(0);
-  pg.SetAction( from );
-  OnFileCopy->Enter(NULL, &pg);
+  pg.SetAction(from);
+  OnFileCopy.Enter(NULL, &pg);
 
   size_t full = fl/bf_sz,
     part = fl%bf_sz;
@@ -497,7 +510,7 @@ bool TFileTree::CopyFile(const olxstr& from, const olxstr& to) const {
     in.Read(bf, bf_sz);
     out.Write(bf, bf_sz);
     pg.SetPos( (i+1)*bf_sz);
-    OnFileCopy->Execute(NULL, &pg);
+    OnFileCopy.Execute(NULL, &pg);
     if( Break )  {
       delete [] bf;
       out.Delete();
@@ -506,8 +519,8 @@ bool TFileTree::CopyFile(const olxstr& from, const olxstr& to) const {
   }
   in.Read(bf, part);
   out.Write(bf, part);
-  pg.SetPos( fl );
-  OnFileCopy->Exit(NULL, &pg);
+  pg.SetPos(fl);
+  OnFileCopy.Exit(NULL, &pg);
   delete [] bf;
   return true;
 }
@@ -523,7 +536,7 @@ bool TFileTree::CompareFiles(const olxstr& from, const olxstr& to) const {
   TOnProgress pg;
   pg.SetMax(fl);
   pg.SetPos(0);
-  pg.SetAction( from );
+  pg.SetAction(from);
   size_t full = static_cast<size_t>(fl/bf_sz),
     part = static_cast<size_t>(fl%bf_sz);
   for( size_t i=0; i < full; i++ )  {
@@ -534,7 +547,7 @@ bool TFileTree::CompareFiles(const olxstr& from, const olxstr& to) const {
       delete [] bf2;
       return false;
     }
-    OnFileCompare->Execute(NULL, &pg);
+    OnFileCompare.Execute(NULL, &pg);
     if( Break )  {
       delete [] bf1;
       delete [] bf2;
@@ -544,8 +557,8 @@ bool TFileTree::CompareFiles(const olxstr& from, const olxstr& to) const {
   f1.Read(bf1, part);
   f2.Read(bf1, part);
   bool res = olxstr::o_memcmp(bf1, bf2, part) != 0;
-  pg.SetPos( fl );
-  OnFileCompare->Execute(NULL, &pg);
+  pg.SetPos(fl);
+  OnFileCompare.Execute(NULL, &pg);
   delete [] bf1;
   delete [] bf2;
   return res;
@@ -566,3 +579,9 @@ uint64_t TFileTree::CalcMergeSize(const DiffFolder& df)  {
   return sz;
 }
 //.............................................................................
+olxstr TFileTree::TFileTreeException::GetFullMessage() const {
+  olxstr rv = GetNiceName();
+  rv << ": " << GetError() << " at " << GetLocation() << NewLineSequence();
+  rv << items.Text(NewLineSequence());
+  return rv;
+}

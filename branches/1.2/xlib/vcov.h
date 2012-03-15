@@ -112,11 +112,11 @@ public:
   void ProcessSymmetry(const atom_list& atoms, mat3d_list& ms)  {
     mat3d_alist mt(atoms.Count());
     for( size_t i=0; i < atoms.Count(); i++ )
-      mt[i] = mat3d::Transpose(atoms[i]->GetMatrix(0).r);
+      mt[i] = mat3d::Transpose(atoms[i]->GetMatrix().r);
     for( size_t i=0; i < atoms.Count(); i++ )  {
       for( size_t j=0; j < atoms.Count(); j++ )  {
         const size_t ind = i*atoms.Count() + j;
-        ms[ind] = (mat3d(atoms[i]->GetMatrix(0).r)*ms[ind])*mt[j];
+        ms[ind] = (mat3d(atoms[i]->GetMatrix().r)*ms[ind])*mt[j];
       }
     }
   }
@@ -496,14 +496,14 @@ protected:
     const eval& e)
   {
     TDoubleList df(points.Count()*3);
-    CompositeVector<list, double> pvec(points);
-    CalcDiff(pvec, df, e);
+    CompositeVector::CompositeVector_<list> pts(points);
+    CalcDiff(pts, df, e);
     CellEsd ced(*this, points);
     return TEValue<double>(e.calc(),
       sqrt(CalcEsd(points.Count(), vcov, df) + ced.DoCalc(e)));
   }
-  typedef ConstSlice<vec3d_alist,vec3d> crd_slice;
-  typedef ConstSlice<TDoubleList, double> weight_slice;
+  typedef ConstSlice<vec3d_alist> crd_slice;
+  typedef ConstSlice<TDoubleList> weight_slice;
   typedef CentroidEvaluator<crd_slice,weight_slice> cnt_et;
   typedef PointProxy pnt_pt;
   typedef PlaneEvaluator<crd_slice,weight_slice> pln_et;
@@ -586,7 +586,7 @@ public:
     grad[0] = (ij*ca - kj)*oos/ij_l;
     grad[2] = (kj*ca - ij)*oos/kj_l;
     grad[1] = -(grad[0] + grad[2]);
-    double qesd = CalcEsd(3, ch.m, CompositeVector<vec3d_alist, double>(grad));
+    double qesd = CalcEsd(3, ch.m, CompositeVector::Make(grad));
     qesd += cell_esd;
     const double a = acos(ca);
     return TEValue<double>(a,(qesd < 1e-15 ? 0 : sqrt(qesd)))*=180/M_PI;
@@ -613,7 +613,7 @@ public:
     grad[3] = -(nk*(kj_l/nk.QLength()));
     grad[1] = grad[0]*(ij.DotProd(kj)/kj_ql -1.0) - grad[3]*(kl.DotProd(kj)/kj_ql);
     grad[2] = grad[3]*(kl.DotProd(kj)/kj_ql -1.0) - grad[0]*(ij.DotProd(kj)/kj_ql);
-    double esd = CalcEsd(4, ch.m, CompositeVector<vec3d_alist, double>(grad));
+    double esd = CalcEsd(4, ch.m, CompositeVector::Make(grad));
     esd += CellEsd(*this, ch.points).DoCalc(
       TorsionAngle<pnt_pt,pnt_pt,pnt_pt,pnt_pt>(
         pnt_pt(ch.points[0]), pnt_pt(ch.points[1]),

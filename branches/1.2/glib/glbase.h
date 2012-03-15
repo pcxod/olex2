@@ -276,6 +276,12 @@ struct olx_gl  {
   }
   static void accum(GLenum op, GLfloat value)  {  glAccum(op, value);  }
 
+  static void stencilOp(GLenum fail, GLenum zfail, GLenum zpass) {
+    glStencilOp(fail, zfail, zpass);
+  }
+  static void stencilFunc(GLenum func, GLint ref, GLuint mask) {
+    glStencilFunc(func, ref, mask);
+  }
   static void hint(GLenum target, GLenum mode)  {  glHint(target, mode);  }
 
   static void lightModel(GLenum pname, GLint param)  {  glLightModeli(pname, param);  }
@@ -330,16 +336,26 @@ struct olx_gl  {
   {
     glReadPixels(left, top, width, height, format, type, pixels);
   }
-  static void drawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* data)  {
+  static void drawPixels(GLsizei width, GLsizei height, GLenum format,
+    GLenum type, const GLvoid* data)
+  {
     glDrawPixels(width, height, format, type, data);
   }
   static GLint renderMode(GLenum mode)  {  return glRenderMode(mode);  }
-  static void polygonMode(GLenum face, GLenum mode)  {  glPolygonMode(face, mode);  }
+  static void polygonMode(GLenum face, GLenum mode)  {
+    glPolygonMode(face, mode);
+  }
+  static void polygonStipple(const GLubyte *mask)  {
+    glPolygonStipple(mask);
+  }
   static void lineStipple(GLint factor, GLushort pattern)  {
     glLineStipple(factor, pattern);
   }
   static void loadName(GLuint name)  {  glLoadName(name);  }
   static void pushName(GLuint name)  {  glPushName(name);  }
+  static void rect(int left, int top, int right, int bottom) {
+    glRecti(left, top, right, bottom);
+  }
   static void clipPlane(GLenum plane, const GLdouble* equation)  {
     glClipPlane(plane, equation);
   }

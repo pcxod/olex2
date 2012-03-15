@@ -105,7 +105,7 @@ ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
   }
   catch(const TExceptionBase &e)  {
     TBasicApp::NewLogEntry(logError) << fn << ": ";
-    TBasicApp::NewLogEntry() << e.GetException()->GetStackTrace<TStrList>();
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
   return rvl;
 }
@@ -159,7 +159,7 @@ int CellReader::ExtractLattFromSymmetry(const cif_dp::CifBlock &block)  {
     return SymmSpace::GetInfo(matrices).latt;
   }
   catch(const TExceptionBase &e)  {
-    TBasicApp::NewLogEntry() << e.GetException()->GetFullMessage();
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
     return 0;
   }
 }
@@ -259,8 +259,7 @@ size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
   size_t updated_cnt = 0;
   QuickSorter::Sort(folders, Entry::NameComparator());
   QuickSorter::Sort(entries, Entry::NameComparator());
-  ConstSlice<TTypeList<FileEntry>, FileEntry>
-    file_entries(entries, 0, entries.Count());
+  ConstSlice<TTypeList<FileEntry> > file_entries(entries, 0, entries.Count());
   for( size_t i=0; i < folder.FileCount(); i++ )  {
     const TFileListItem &f = folder.GetFile(i);
     if( !ConsiderFile(f.GetName()) )  continue;
@@ -282,7 +281,7 @@ size_t Index::FolderEntry::Update(const TFileTree::Folder &folder)  {
       }
     }
   }
-  ConstSlice<TTypeList<FolderEntry>, FolderEntry>
+  ConstSlice<TTypeList<FolderEntry> >
     folder_entries(folders, 0, folders.Count());
   for( size_t i=0;  i < folder.FolderCount(); i++ )  {
     const TFileTree::Folder &f = folder.GetFolder(i);
@@ -511,7 +510,7 @@ void IndexManager::LoadConfig(const olxstr &file_name)  {
       TDataItem &idx = root.GetItem(i);
       olxstr fn = idx.GetRequiredField("file");
       if( !TEFile::IsAbsolutePath(fn) )
-        fn = TEFile::ExpandRelativePath(fn, TBasicApp::GetSharedDir());
+        fn = TEFile::ExpandRelativePath(fn, TBasicApp::GetInstanceDir());
       olxstr root_dir = idx.GetRequiredField("root");
       if( !TEFile::Exists(fn) &&
           (root_dir.IsEmpty() || !TEFile::Exists(root_dir)))
@@ -536,7 +535,7 @@ void IndexManager::SaveConfig(const olxstr &file_name) {
     for( size_t i=0; i < indices.Count(); i++ )  {
       root.AddItem(i+1)
         .AddField("file", TEFile::CreateRelativePath(
-          indices[i].index_file_name, TBasicApp::GetSharedDir()))
+          indices[i].index_file_name, TBasicApp::GetInstanceDir()))
         .AddField("root", indices[i].root)
         .AddField("update", indices[i].update);
     }
@@ -597,7 +596,7 @@ void IndexManager::Update(const olxstr &cfg_name, const olxstr &folder_name,
       }
     }
     catch(const TExceptionBase &e)  {
-      TBasicApp::NewLogEntry() << e.GetException()->GetStackTrace<TStrList>();
+      TBasicApp::NewLogEntry(logExceptionTrace) << e;
       TBasicApp::NewLogEntry(logException) <<
         (olxstr("Failed to create: ").quote() << indices[i].index_file_name);
     }
@@ -677,9 +676,9 @@ void IndexManager::Update(TStrObjList &Cmds, const TParamList &Options,
   }
   if( !index_name.IsEmpty() && !TEFile::IsAbsolutePath(index_name) )  {
     index_name =
-      TEFile::ExpandRelativePath(index_name, TBasicApp::GetSharedDir());
+      TEFile::ExpandRelativePath(index_name, TBasicApp::GetInstanceDir());
     if( !TEFile::IsAbsolutePath(index_name) )
-      index_name = TBasicApp::GetSharedDir() + index_name;
+      index_name = TBasicApp::GetInstanceDir() + index_name;
   }
   IndexManager im;
   im.Update(cfg_name, folder_name, index_name);

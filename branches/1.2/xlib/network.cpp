@@ -92,16 +92,9 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
     if( sa.IsDeleted() )  continue;
     for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSite(j);
-      const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix(0));
-      TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
-      if( a == NULL )  {
-        for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
-          const smatd m1 = uc.MulMatrix(site.atom->GetEquiv(k), m);
-          TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m1.GetId()));
-          if( a != NULL )
-            break;
-        }
-      }
+      const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix());
+      TSAtom* a = objects.atomRegistry.Find(
+        TSAtom::GetMinRef(*site.atom, m));
       if( a != NULL && !a->IsDeleted() )
         sa.AddNode(*a);
     }
@@ -116,17 +109,20 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSiteI(j);
       const cm_Element& thatT = site.atom->GetType();
       if( !(thatT == iNitrogenZ || thatT == iOxygenZ || thatT == iFluorineZ ||
-        thatT == iChlorineZ || thatT == iSulphurZ || thatT == iBromineZ || thatT == iSeleniumZ) )
+            thatT == iChlorineZ || thatT == iSulphurZ || thatT == iBromineZ ||
+            thatT == iSeleniumZ) )
       {
         continue;
       }
-      const smatd m = sa.GetMatrix(0).IsFirst() ? site.matrix :
-        uc.MulMatrix(site.matrix, sa.GetMatrix(0));
-      TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId()));
+      const smatd m = sa.GetMatrix().IsFirst() ? site.matrix :
+        uc.MulMatrix(site.matrix, sa.GetMatrix());
+      TSAtom* a = objects.atomRegistry.Find(
+        TSAtom::Ref(site.atom->GetId(), m.GetId()));
       if( a == NULL )  {
         for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
-          const smatd m1 = uc.MulMatrix(site.atom->GetEquiv(k), m);
-          TSAtom* a = objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m1.GetId()));
+          uint32_t id = uc.MulMatrixId(site.atom->GetEquiv(k), m);
+          TSAtom* a = objects.atomRegistry.Find(
+            TSAtom::Ref(site.atom->GetId(), id));
           if( a != NULL )  break;
         }
       }
@@ -1191,5 +1187,20 @@ olxstr TNetwork::GetFormula() const {
       rv << ' ';
   }
   return rv;
+}
+//..............................................................................
+bool TNetwork::HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
+  if (sa.GetMatrix().GetId() == sb.GetMatrix().GetId())
+    return true;
+  const TUnitCell &uc = sa.GetNetwork().GetLattice().GetUnitCell();
+  for (size_t i=0; i < sa.CAtom().EquivCount(); i++) {
+    uint32_t id = uc.MulMatrixId(sa.CAtom().GetEquiv(i), sa.GetMatrix());
+    for (size_t j=0; j < sb.CAtom().EquivCount(); j++) {
+      uint32_t id1 = uc.MulMatrixId(sb.CAtom().GetEquiv(j), sb.GetMatrix());
+      if (id == id1)
+        return true;
+    }
+  }
+  return false;
 }
 //..............................................................................

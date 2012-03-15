@@ -22,6 +22,7 @@
 #include "math/plane.h"
 #include "ins.h"
 #include "analysis.h"
+#include "math/composite.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
   VarRefrencerId("basf"),
@@ -46,6 +47,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   AfixGroups(*this), 
   rSAME(*this),
   OnSetBadReflections(Actions.New("OnSetBadReflections")),
+  OnCellDifference(Actions.New("OnCellDifference")),
   aunit(au), 
   Conn(*this)
 {
@@ -436,6 +438,19 @@ const TRefList& RefinementModel::GetReflections() const {
     THklFile hf(HKLF_mat);
     HklFileMat = HKLF_mat;
     hf.LoadFromFile(HKLSource);
+    if (hf.HasCell()) {
+      evecd cell = evecd::FromVector(
+        CompositeVector::Make(vec3d_list() << aunit.GetAxes() <<
+          aunit.GetAngles()));
+      evecd esd = evecd::FromVector(
+        CompositeVector::Make(vec3d_list() << aunit.GetAxisEsds() <<
+          aunit.GetAngleEsds()));
+      if (cell.DistanceTo(hf.GetCell()) > 1e-6 ||
+          esd.DistanceTo(hf.GetCellEsd()) > 1e-6 )
+      {
+        OnCellDifference.Execute(this, &hf);
+      }
+    }
     _HklStat.FileMinInd = hf.GetMinHkl();
     _HklStat.FileMaxInd = hf.GetMaxHkl();
     TArray3D<TRefPList*> hkl3d(_HklStat.FileMinInd , _HklStat.FileMaxInd);
@@ -527,6 +542,27 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.HKLF_m = HKLF_m;
       _HklStat.HKLF_s = HKLF_s;
       _HklStat.MERG = MERG;
+      mat3d h2c = aunit.GetHklToCartesian();
+      size_t e_cnt=0;
+      SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+      info_ex.centrosymmetric = _HklStat.FriedelOppositesMerged;
+      double maxd = olx_max(olx_max(aunit.GetCellToCartesian()[0][0],
+        aunit.GetCellToCartesian()[1][1]), aunit.GetCellToCartesian()[2][2]);
+      for (int h=_HklStat.MinIndexes[0]; h <= _HklStat.MaxIndexes[0]; h++) {
+        for (int k=_HklStat.MinIndexes[1]; k <= _HklStat.MaxIndexes[1]; k++) {
+          for (int l=_HklStat.MinIndexes[2]; l <= _HklStat.MaxIndexes[2]; l++) {
+            if (h==0 && k==0 && l==0) continue;
+            vec3i hkl(h,k,l);
+            vec3i shkl = TReflection::Standardise(hkl, info_ex);
+            if (shkl != hkl) continue;
+            if( TReflection::IsAbsent(hkl, info_ex)) continue;
+            double d = 1/TReflection::ToCart(hkl, h2c).Length();
+            if (d <= _HklStat.MaxD && d >= _HklStat.MinD)
+              e_cnt++;
+          }
+        }
+      }
+      _HklStat.Completeness = double(_HklStat.UniqueReflections) / (e_cnt);
     }
   }
   catch(const TExceptionBase& e)  {
@@ -1090,16 +1126,16 @@ void RefinementModel::ToDataItem(TDataItem& item) {
 //.............................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
   Clear(rm_clear_ALL);
-  PersUtil::FloatNumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
-  PersUtil::FloatNumberListFromStr(item.GetRequiredField("Weight"), used_weight);
-  PersUtil::FloatNumberListFromStr(item.GetRequiredField("ProposedWeight"), proposed_weight);
+  PersUtil::NumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
+  PersUtil::NumberListFromStr(item.GetRequiredField("Weight"), used_weight);
+  PersUtil::NumberListFromStr(item.GetRequiredField("ProposedWeight"), proposed_weight);
   HKLSource = item.GetRequiredField("HklSrc");
   RefinementMethod = item.GetRequiredField("RefMeth");
   SolutionMethod = item.GetRequiredField("SolMeth");
-  PersUtil::FloatNumberListFromStr(item.GetRequiredField("BatchScales"), BASF);
+  PersUtil::NumberListFromStr(item.GetRequiredField("BatchScales"), BASF);
   for( size_t i=0; i < BASF.Count(); i++ )
     BASF_Vars.Add(NULL);
-  PersUtil::IntNumberListFromStr(item.GetRequiredField("RefInArg"), LS);
+  PersUtil::NumberListFromStr(item.GetRequiredField("RefInArg"), LS);
 
   TDataItem& eqiv = item.FindRequiredItem("EQIV");
   for( size_t i=0; i < eqiv.ItemCount(); i++ )
@@ -1130,7 +1166,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   OMIT_set = omits.GetValue().ToBool();
   OMIT_s = omits.GetRequiredField("s").ToDouble();
   OMIT_2t = omits.GetRequiredField("2theta").ToDouble();
-  PersUtil::IntVecListFromStr(omits.GetRequiredField("hkl"), Omits);
+  PersUtil::VecListFromStr(omits.GetRequiredField("hkl"), Omits);
 
   TDataItem& twin = item.FindRequiredItem("TWIN");
   TWIN_set = twin.GetValue().ToBool();
@@ -1158,8 +1194,8 @@ void RefinementModel::FromDataItem(TDataItem& item) {
     }
   }
   // restraints and BASF may use some of the vars...  
-  Vars.FromDataItem( item.FindRequiredItem("LEQS") );
-  Conn.FromDataItem( item.FindRequiredItem("CONN") );
+  Vars.FromDataItem(item.FindRequiredItem("LEQS"));
+  Conn.FromDataItem(item.FindRequiredItem("CONN"));
   SetUserFormula(item.GetFieldValue("UserContent"), false);
   
   TDataItem* info_tables = item.FindItem("INFO_TABLES");
@@ -1357,11 +1393,8 @@ bool RefinementModel::Update(const RefinementModel& rm)  {
 //..............................................................................
 vec3i RefinementModel::CalcMaxHklIndex(double two_theta) const {
   double t = 2*sin(two_theta*M_PI/360)/expl.GetRadiation();
-  const mat3d& h2x = aunit.GetHklToCartesian();
-  vec3d rv(
-    t/h2x[0].Length(),
-    t/h2x[1].Length(),
-    t/h2x[2].Length());
+  const mat3d& f2c = aunit.GetCellToCartesian();
+  vec3d rv = vec3d(f2c[0][0], f2c[1][1], f2c[2][2])*t;
   return vec3i(rv);
 }
 //..............................................................................
@@ -1698,8 +1731,8 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
       if( p_ind != InvalidIndex )  { // add the direction then
         TCAtomGroup as;
         as.Add(new TGroupCAtom(
-          cnt[0]->Node(p_ind).CAtom(), cnt[0]->Node(p_ind).GetMatrix(0)));
-        as.Add(new TGroupCAtom(cnt[0]->CAtom(), cnt[0]->GetMatrix(0)));
+          cnt[0]->Node(p_ind).CAtom(), cnt[0]->Node(p_ind).GetMatrix()));
+        as.Add(new TGroupCAtom(cnt[0]->CAtom(), cnt[0]->GetMatrix()));
         normal = (cnt[0]->crd()-cnt[0]->Node(p_ind).crd()).Normalise();
         center = (atoms[0]->crd()+atoms[1]->crd()+atoms[2]->crd())/3;
         d = AddDirection(as, direction_vector);
@@ -1710,7 +1743,7 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   if( d == NULL )  {
     TCAtomGroup as;
     for( size_t i=0; i < atoms.Count(); i++ )
-      as.Add(new TGroupCAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix(0)));
+      as.Add(new TGroupCAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix()));
     d = AddDirection(as, direction_normal);
     TSPlane::CalcPlane(atoms, normal, center);
   }

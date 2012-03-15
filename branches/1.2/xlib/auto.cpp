@@ -147,8 +147,8 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa,
   for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
     const TCAtom::Site& site = ca.GetAttachedSite(i);
     if( ca.IsDeleted() || site.atom->GetType() == iHydrogenZ )  continue;
-    const smatd m = sa.GetMatrix(0).IsFirst()
-      ? site.matrix : uc.MulMatrix(site.matrix, sa.GetMatrix(0));
+    const smatd m = sa.GetMatrix().IsFirst()
+      ? site.matrix : uc.MulMatrix(site.matrix, sa.GetMatrix());
     const vec3d p = au.Orthogonalise(m*site.atom->ccrd());
     if( atoms != NULL )
       atoms->AddNew<TCAtom*, vec3d>(site.atom, p);
@@ -611,11 +611,9 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
       for( size_t j=0; j < XFile.GetLattice().FragmentCount(); j++ )
         ProcessNodes(&adf, XFile.GetLattice().GetFragment(j));
     }
-    catch( const TExceptionBase& exc )  {
-      TStrList es;
-      exc.GetException()->GetStackTrace(es);
+    catch( const TExceptionBase& e)  {
       TBasicApp::NewLogEntry(logError) << "Failed to process: " << files[i];
-      TBasicApp::NewLogEntry(logError) << es;
+      TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
   }
   PrepareForSearch();

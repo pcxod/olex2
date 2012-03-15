@@ -78,6 +78,7 @@ class TXGlLabel;
 class TXReflection;
 class TXGrid;
 class TXLattice;
+class TDUserObj;
 
   typedef TTypeListExt<TXAtom, TSAtom> TXAtomList;
   typedef TTypeListExt<TXBond, TSBond> TXBondList;
@@ -87,11 +88,15 @@ typedef TPtrList<TXPlane> TXPlanePList;
 typedef TPtrList<TXAtom> TXAtomPList;
 typedef TPtrList<TXBond> TXBondPList;
 
-template <class obj_t, class act_t> class TXObjectProvider : public TObjectProvider<obj_t> {
+template <class obj_t, class act_t> class TXObjectProvider
+  : public TObjectProvider<obj_t>
+{
   TGlRenderer& renderer;
 public:
   TXObjectProvider(TGlRenderer& _renderer) : renderer(_renderer)  {}
-  virtual obj_t& New(TNetwork* n)  {  return TObjectProvider<obj_t>::AddNew(new act_t(n, renderer, EmptyString()));  }
+  virtual obj_t& New(TNetwork* n)  {
+    return TObjectProvider<obj_t>::AddNew(new act_t(n, renderer, EmptyString()));
+  }
 };
 
 struct XObjectProvider : public ASObjectProvider {
@@ -118,6 +123,7 @@ struct XObjectProvider : public ASObjectProvider {
 class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   TTypeListExt<TXGrowPoint, AGDrawObject> XGrowPoints;
   TTypeListExt<TXGrowLine, AGDrawObject> XGrowLines;
+  TTypeListExt<TDUserObj, AGDrawObject> UserObjects;
   olxstr AtomsToGrow;
   smatd_list UsedTransforms;
   TTypeListExt<TXReflection, AGDrawObject> XReflections;
@@ -344,7 +350,7 @@ public:
   virtual ~TGXApp();
   void CreateObjects(bool CenterModel, bool init_visibility=true);
   void UpdateBonds();
-  AGDrawObject* AddObjectToCreate(AGDrawObject* obj)  {  return ObjectsToCreate.Add(obj);  }
+  AGDrawObject* AddObjectToCreate(AGDrawObject* obj);
   void Clear();
   void ClearXGrowPoints();
   // changes the graphics quality
@@ -358,6 +364,7 @@ public:
     SelectionCopy[1].Clear();
     LabelInfo.Clear();
   }
+  void ClearStructureRelated();
 //..............................................................................
 // GlRender interface
   void ClearColor(int Color) {  FGlRender->LightModel.SetClearColor(Color); }
@@ -486,7 +493,7 @@ public:
   void Generate( const vec3d& center, double rad,
     TCAtomPList* Template, bool ClearPrevCont)
   {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont);  }
-  void Uniq(bool remEqs=false)  {    FXFile->GetLattice().Uniq(remEqs);  }
+  void Uniq()  {    FXFile->GetLattice().Uniq();  }
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
     FXFile->GetLattice().GrowFragments(Shell, Template);  
   }
@@ -602,7 +609,7 @@ public:     void CalcProbFactor(float Prob);
   TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
   // will return generated symmetry equivalents too
   ConstPtrList<TXAtom> AddCentroid(const TXAtomPList& Atoms);
-  TXAtom *AddAtom(TXAtom* templ=NULL);
+  TXAtom &AddAtom(TXAtom* templ=NULL);
   // adopts atoms of the auinit and returns newly created atoms and bonds
   void AdoptAtoms(const TAsymmUnit& au, TXAtomPList& atoms, TXBondPList& bonds);
   void SelectAtoms(const olxstr& Names, bool Invert=false);

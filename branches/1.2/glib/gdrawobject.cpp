@@ -18,7 +18,7 @@ AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
 {
   Primitives = NULL;
   ParentGroup = NULL;
-  Flags = 0;
+  sgdo_Flags = 0;
   SetVisible(true);
   SetGroupable(false);
   SetSelectable(true);

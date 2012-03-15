@@ -347,9 +347,22 @@ PyObject* ConnInfo::PyExport()  {
   PyObject* main = PyDict_New(),
     *type = PyDict_New(),
     *atom = PyDict_New();
+  SortedElementPList types;
+  for (size_t i=0; i < rm.aunit.AtomCount(); i++) {
+    if (!rm.aunit.GetAtom(i).IsDeleted() &&
+      rm.aunit.GetAtom(i).GetType() != iQPeakZ)
+    {
+      types.AddUnique(&rm.aunit.GetAtom(i).GetType());
+    }
+  }
   for( size_t i=0; i < TypeInfo.Count(); i++ )  {
     PythonExt::SetDictItem(type, TypeInfo.GetValue(i).atomType->symbol,
       TypeInfo.GetValue(i).PyExport());
+    types.Remove(TypeInfo.GetValue(i).atomType);
+  }
+  for( size_t i=0; i < types.Count(); i++ )  {
+    PythonExt::SetDictItem(type, types[i]->symbol,
+      Py_BuildValue("{s:f,s:i}", "radius", types[i]->r_bonding, "bonds", 12));
   }
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     PythonExt::SetDictItem(atom, Py_BuildValue("i",
@@ -358,6 +371,8 @@ PyObject* ConnInfo::PyExport()  {
   }
   PythonExt::SetDictItem(main, "type", type);
   PythonExt::SetDictItem(main, "atom", atom);
+  PythonExt::SetDictItem(main, "delta",
+    Py_BuildValue("f", rm.aunit.GetLattice().GetDelta()));
   return main;
 }
 #endif
@@ -378,7 +393,7 @@ void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item,
 //........................................................................
 #ifndef _NO_PYTHON
 PyObject* ConnInfo::TypeConnInfo::PyExport()  {
-  return Py_BuildValue("{s:d,s:i}", "radius", r, "bonds", maxBonds);
+  return Py_BuildValue("{s:f,s:i}", "radius", r, "bonds", maxBonds);
 }
 #endif
 //........................................................................
@@ -626,7 +641,7 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
 PyObject* ConnInfo::AtomConnInfo::PyExport()  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "radius", Py_BuildValue("f", r));
-  PythonExt::SetDictItem(main, "max_bonds", Py_BuildValue("i", maxBonds));
+  PythonExt::SetDictItem(main, "bonds", Py_BuildValue("i", maxBonds));
   size_t bc = 0;
   for( size_t i=0; i < BondsToCreate.Count(); i++ )  {
     if( BondsToCreate[i].to.IsDeleted() )  continue;

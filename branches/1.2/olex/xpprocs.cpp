@@ -1700,7 +1700,10 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( orientOnly )  {
     plane = FXApp->TmpPlane(&Atoms, weightExtent);
     if( plane != NULL )  {
-      FXApp->GetRender().GetBasis().OrientNormal(plane->GetNormal());
+      mat3d m = plane->GetBasis();
+      vec3d d1 = (m[2]+m[1]).Normalise();
+      vec3d d2 = m[0].XProdVec(d1).Normalise();
+      FXApp->GetRender().GetBasis().Orient(d1, d2, m[0]);
       FXApp->SetGridDepth(plane->GetCenter());
       delete plane;
       plane = NULL;
@@ -1805,7 +1808,7 @@ void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError
   else if( Cmds[0].Equalsi("std") )
     ads = adsStandalone;
   if( ads == -1 )  {
-    Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph/ort/std) supported only" );
+    Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph/ort/std) supported only");
     return;
   }
   Cmds.Delete(0);
@@ -1815,7 +1818,7 @@ void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError
 //..............................................................................
 void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( !Cmds[0].IsNumber() )  {
-    Error.ProcessingError(__OlxSrcInfo, "a number is expected as first argument" );
+    Error.ProcessingError(__OlxSrcInfo, "a number is expected as first argument");
     return;
   }
   double zoom = Cmds[0].ToDouble();
@@ -2168,7 +2171,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     catch(const TExceptionBase &e)  {
       FXApp->GetRender().GetStyles().Clear();
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
-      TBasicApp::NewLogEntry(logError) << e.GetException()->GetStackTrace<TStrList>();
+      TBasicApp::NewLogEntry(logExceptionTrace) << e;
     }
     FXApp->ClearIndividualCollections();
     FXApp->CreateObjects(true);
@@ -2643,9 +2646,9 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       lb = atoms[i]->GetLabel();
     if( !atoms[i]->IsAUAtom() )  {
       if( symm_tag == 1 || symm_tag == 2 )  {
-        size_t pos = equivs.IndexOf(atoms[i]->GetMatrix(0).GetId());
+        size_t pos = equivs.IndexOf(atoms[i]->GetMatrix().GetId());
         if( pos == InvalidIndex )  {
-          equivs.AddCopy(atoms[i]->GetMatrix(0).GetId());
+          equivs.AddCopy(atoms[i]->GetMatrix().GetId());
           pos = equivs.Count()-1;
         }
         if( symm_tag == 1 )
@@ -2654,7 +2657,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           lb << "\\+" << (pos+1);
       }
       else if( symm_tag == 3 )
-        lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix(0));
+        lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix());
     }
     gxl.SetOffset(atoms[i]->crd());
     gxl.SetLabel(lb);
@@ -2943,7 +2946,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       part = rm.aunit.GetNextPart(true);
     XVar& xv = rm.Vars.NewVar(0.5);
     for( size_t i=0; i < Atoms.Count(); i++ )  {
-      if( !Atoms[i]->GetMatrix(0).IsFirst() )  {
+      if( !Atoms[i]->GetMatrix().IsFirst() )  {
         TCAtom& ca = rm.aunit.NewAtom();
         ca.Assign(Atoms[i]->CAtom());
         ca.SetPart(-1);
@@ -3174,13 +3177,13 @@ void TMainForm::macRRings(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     TSimpleRestraint& flat = FXApp->XFile().GetRM().rFLAT.AddNew();
     flat.SetEsd( 0.1 );
     for( size_t j=0; j < rings[i].Count(); j++ )  {
-      flat.AddAtom( rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(0) );
+      flat.AddAtom( rings[i][j]->CAtom(), &rings[i][j]->GetMatrix() );
       if( (j+1) < rings[i].Count() )
-        dfix.AddAtomPair( rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(0),
-                          rings[i][j+1]->CAtom(), &rings[i][j+1]->GetMatrix(0));
+        dfix.AddAtomPair( rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
+                          rings[i][j+1]->CAtom(), &rings[i][j+1]->GetMatrix());
       else
-        dfix.AddAtomPair( rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(0),
-                          rings[i][0]->CAtom(), &rings[i][0]->GetMatrix(0));
+        dfix.AddAtomPair( rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
+                          rings[i][0]->CAtom(), &rings[i][0]->GetMatrix());
     }
   }
 }
@@ -3244,8 +3247,8 @@ void TMainForm::macDfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       for( size_t i=0; i < sel.Count(); i++ )  {
         if( !EsdlInstanceOf(sel[i], TXBond) )  continue;
         const TSBond& sb = (TXBond&)sel[i];
-        sr->AddAtomPair(sb.A().CAtom(), &sb.A().GetMatrix(0),
-          sb.B().CAtom(), &sb.B().GetMatrix(0));
+        sr->AddAtomPair(sb.A().CAtom(), &sb.A().GetMatrix(),
+          sb.B().CAtom(), &sb.B().GetMatrix());
       }
       FXApp->XFile().GetRM().rDFIX.ValidateRestraint(*sr);
     }
@@ -3267,15 +3270,15 @@ void TMainForm::macDfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TSAtom* SA = &XA->Node(i);
       if( SA->IsDeleted() )  continue;
       if( SA->GetType() == iQPeakZ )  continue;
-      dfix->AddAtomPair(XA->CAtom(), &XA->GetMatrix(0),
-        SA->CAtom(), &SA->GetMatrix(0));
+      dfix->AddAtomPair(XA->CAtom(), &XA->GetMatrix(),
+        SA->CAtom(), &SA->GetMatrix());
     }
   }
   else if( Atoms.Count() == 3 )  {  // special case
-    dfix->AddAtomPair(Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(0), 
-                      Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(0));
-    dfix->AddAtomPair(Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(0), 
-                      Atoms[2]->CAtom(), &Atoms[2]->GetMatrix(0));
+    dfix->AddAtomPair(Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(), 
+                      Atoms[1]->CAtom(), &Atoms[1]->GetMatrix());
+    dfix->AddAtomPair(Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(), 
+                      Atoms[2]->CAtom(), &Atoms[2]->GetMatrix());
   }
   else  {
     if( (Atoms.Count()%2) != 0 )  {
@@ -3283,8 +3286,8 @@ void TMainForm::macDfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     for( size_t i=0; i < Atoms.Count(); i += 2 )  {
-      dfix->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(0),
-        Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix(0));
+      dfix->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
+        Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
       if( dfix->AtomCount() >= 12 )  {
         FXApp->XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
         dfix = &FXApp->XFile().GetRM().rDFIX.AddNew();
@@ -3318,8 +3321,8 @@ void TMainForm::macDang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   for( size_t i=0; i < Atoms.Count(); i += 2 )  {
-    dang->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(0),
-      Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix(0));
+    dang->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
+      Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
     if( dang->AtomCount() >= 12 )  {
       FXApp->XFile().GetRM().rDANG.ValidateRestraint(*dang);
       dang = &FXApp->XFile().GetRM().rDANG.AddNew();
@@ -3385,15 +3388,15 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( esd_set )
       dfix->SetEsd(esd);
     esd = dfix->GetEsd();
-    dfix->AddAtomPair(xatoms[i]->CAtom(), &xatoms[i]->GetMatrix(0),
-                      xatoms[i+1]->CAtom(), &xatoms[i+1]->GetMatrix(0));
+    dfix->AddAtomPair(xatoms[i]->CAtom(), &xatoms[i]->GetMatrix(),
+                      xatoms[i+1]->CAtom(), &xatoms[i+1]->GetMatrix());
     if( dfixLenB != dfixLenA )  {
       FXApp->XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
       dfix = &FXApp->XFile().GetRM().rDFIX.AddNew();
       dfix->SetEsd(esd);
     }
-    dfix->AddAtomPair(xatoms[i+1]->CAtom(), &xatoms[i+1]->GetMatrix(0),
-                      xatoms[i+2]->CAtom(), &xatoms[i+2]->GetMatrix(0));
+    dfix->AddAtomPair(xatoms[i+1]->CAtom(), &xatoms[i+1]->GetMatrix(),
+                      xatoms[i+2]->CAtom(), &xatoms[i+2]->GetMatrix());
     FXApp->XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
     TSimpleRestraint* dang = &FXApp->XFile().GetRM().rDANG.AddNew();
     dang->SetValue(
@@ -3402,9 +3405,9 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         1000)
       );
     dang->SetEsd(esd*2);
-    dang->AddAtom(xatoms[i]->CAtom(), &xatoms[i]->GetMatrix(0));
-    //dang->AddAtom(Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix(0) );
-    dang->AddAtom(xatoms[i+2]->CAtom(), &xatoms[i+2]->GetMatrix(0));
+    dang->AddAtom(xatoms[i]->CAtom(), &xatoms[i]->GetMatrix());
+    //dang->AddAtom(Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix() );
+    dang->AddAtom(xatoms[i+2]->CAtom(), &xatoms[i+2]->GetMatrix());
     FXApp->XFile().GetRM().rDANG.ValidateRestraint(*dang);
   }
 }
@@ -3422,8 +3425,8 @@ void TMainForm::macSadi(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       for( size_t i=0; i < sel.Count(); i++ )  {
         if( !EsdlInstanceOf(sel[i], TXBond) )  continue;
         const TXBond& sb = (TXBond&)sel[i];
-        sr->AddAtomPair(sb.A().CAtom(), &sb.A().GetMatrix(0),
-          sb.B().CAtom(), &sb.B().GetMatrix(0));
+        sr->AddAtomPair(sb.A().CAtom(), &sb.A().GetMatrix(),
+          sb.B().CAtom(), &sb.B().GetMatrix());
       }
       FXApp->XFile().GetRM().rSADI.ValidateRestraint(*sr);
     }
@@ -3448,7 +3451,7 @@ void TMainForm::macSadi(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     for( size_t i=0; i < XA->NodeCount(); i++ )  {
       TSAtom& SA = XA->Node(i);
       if( SA.IsDeleted() || SA.GetType() == iQPeakZ )  continue;
-      sr1->AddAtomPair(XA->CAtom(), &XA->GetMatrix(0), SA.CAtom(), &SA.GetMatrix(0));
+      sr1->AddAtomPair(XA->CAtom(), &XA->GetMatrix(), SA.CAtom(), &SA.GetMatrix());
       if( td == 0 )  // need this one to remove opposite atoms from restraint
         td = XA->crd().DistanceTo(SA.crd()) * 2;
       for( size_t j=i+1; j < XA->NodeCount(); j++ )  {
@@ -3460,7 +3463,7 @@ void TMainForm::macSadi(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         }
         const double d = SA.crd().DistanceTo(SA1.crd());
         if( d/td > 0.85 )  continue;
-        sr->AddAtomPair(SA.CAtom(), &SA.GetMatrix(0), SA1.CAtom(), &SA1.GetMatrix(0));
+        sr->AddAtomPair(SA.CAtom(), &SA.GetMatrix(), SA1.CAtom(), &SA1.GetMatrix());
         if( sr->AtomCount() >= 12 )  {
           FXApp->XFile().GetRM().rSADI.ValidateRestraint(*sr);
           sr = &FXApp->XFile().GetRM().rSADI.AddNew();
@@ -3470,10 +3473,10 @@ void TMainForm::macSadi(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else if( Atoms.Count() == 3 )  {  // special case
-    sr->AddAtomPair(Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(0), 
-                    Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(0));
-    sr->AddAtomPair(Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(0), 
-                    Atoms[2]->CAtom(), &Atoms[2]->GetMatrix(0));
+    sr->AddAtomPair(Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(), 
+                    Atoms[1]->CAtom(), &Atoms[1]->GetMatrix());
+    sr->AddAtomPair(Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(), 
+                    Atoms[2]->CAtom(), &Atoms[2]->GetMatrix());
   }
   else  {
     if( (Atoms.Count()%2) != 0 )  {
@@ -3481,8 +3484,8 @@ void TMainForm::macSadi(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     for( size_t i=0; i < Atoms.Count(); i += 2 )  {
-      sr->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(0),
-        Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix(0));
+      sr->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
+        Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
     }
   }
   FXApp->XFile().GetRM().rSADI.ValidateRestraint(*sr);
@@ -3501,7 +3504,7 @@ void TMainForm::macFlat(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     sr.SetEsd(esd);
 
   for( size_t i=0; i < Atoms.Count(); i++ )
-    sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(0));
+    sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix());
   FXApp->XFile().GetRM().rFLAT.ValidateRestraint(sr);
 }
 //..............................................................................
@@ -3574,7 +3577,7 @@ void TMainForm::macChiv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( cnt == 2 )
     sr.SetEsd(esd);
   for( size_t i=0; i < Atoms.Count(); i++ )
-    sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(0));
+    sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix());
   FXApp->XFile().GetRM().rCHIV.ValidateRestraint(sr);
 }
 //..............................................................................
@@ -3861,6 +3864,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     FXApp->FindCAtoms(Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' '), true);
   if( Atoms.IsEmpty() )  return;
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  TLattice& latt = FXApp->XFile().GetLattice();
   RefinementModel& rm = FXApp->XFile().GetRM();
   TCAtomPList ProcessedAtoms;
   XVar& var = rm.Vars.NewVar();
@@ -3892,14 +3896,16 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     direction *= Length;
     direction /= 2;
-    FXApp->XFile().GetAsymmUnit().CartesianToCell(direction);
+    au.CartesianToCell(direction);
     const double sp = 1./CA->GetDegeneracy();
-    TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
+    TXAtom &XA = FXApp->AddAtom();
+    TCAtom& CA1 = XA.CAtom();
     CA1.Assign(*CA);
     CA1.SetSameId(~0);
     CA1.SetPart(1);
     CA1.ccrd() += direction;
-    CA1.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a'), false);
+    XA.ccrd() = CA1.ccrd();
+    CA1.SetLabel(au.CheckLabel(&CA1, lbl+'a'), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, sp);
     CA1.SetOccu(0.5*sp);
@@ -3907,7 +3913,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TCAtom& CA2 = *CA;
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
-    CA2.SetLabel(FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b'), false);
+    CA2.SetLabel(au.CheckLabel(&CA2, lbl+'b'), false);
     // link occupancies
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, sp);
     CA2.SetOccu(0.5*sp);
@@ -3923,7 +3929,8 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( sr != NULL )
       sr->AddAtomPair(CA1, NULL, CA2, NULL);
   }
-  FXApp->XFile().GetLattice().SetAnis(ProcessedAtoms, false);
+  latt.SetAnis(ProcessedAtoms, false);
+  latt.Uniq();
 }
 //..............................................................................
 void TMainForm::macShowP(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4146,10 +4153,8 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
     else  {
     }
   }
-  catch(const TExceptionBase& exc )  {
-    TStrList output;
-    exc.GetException()->GetStackTrace(output);
-    TBasicApp::NewLogEntry(logException) << output.Text(NewLineSequence());
+  catch(const TExceptionBase& e)  {
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
   dlg->Destroy();
 }
@@ -4622,7 +4627,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     while( ai.HasNext() )  {
       TXAtom& a = ai.Next();
       if( a.IsDeleted() || !a.IsVisible() )  continue;
-      if( a.ContainsMatrix(matr.GetId()) )  {
+      if( a.IsGenerator(matr) )  {
         if( invert )
           FXApp->GetRender().Select(a, !a.IsSelected());
         else if( unselect )
@@ -4635,7 +4640,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     while( bi.HasNext() )  {
       TXBond& b = bi.Next();
       if( b.IsDeleted() || !b.IsVisible() )  continue;
-      if( b.A().ContainsMatrix(matr.GetId()) && b.B().ContainsMatrix(matr.GetId()) )  {
+      if( b.A().IsGenerator(matr) && b.B().IsGenerator(matr) )  {
         if( invert )
           FXApp->GetRender().Select(b, !b.IsSelected());
         else if( unselect )
@@ -4798,6 +4803,14 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   // a Open dialog appearing breaks the wxWidgets sizing...
   if( !IsShown() && Cmds.IsEmpty() )  return;
+  olxstr cmdl_fn = TOlxVars::FindValue("olx_reap_cmdl");
+  if (!cmdl_fn.IsEmpty()) {
+    TOlxVars::UnsetVar("olx_reap_cmdl");
+    if (TEFile::Exists(cmdl_fn)) {
+      Cmds.Clear();
+      Cmds << cmdl_fn;
+    }
+  }
   SetSGList(EmptyString());
   TXFile::NameArg file_n;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
@@ -5011,13 +5024,17 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         FXApp->CheckFileType<TCRSFile>() )
       {
         if (TBasicApp::GetInstance().Options.FindValue(
-          "p4p_automate", TrueString()).ToBool())
+          "p4p_automate", FalseString()).ToBool())
         {
           TMacroError er;
           if( TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins")))
             Macros.ProcessMacro("SG", er);
           else
             Macros.ProcessMacro("SGE", er);
+        }
+        else if (FXApp->CheckFileType<TP4PFile>()) {
+          TP4PFile &p4p = FXApp->XFile().GetLastLoader<TP4PFile>();
+          RunWhenVisibleTasks.Add(new P4PTask(p4p));
         }
       }
     // automatic export for kappa cif
@@ -6367,6 +6384,30 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
             MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
           CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
+          //for (size_t ai=0; ai < netA.NodeCount(); ai++) {
+          //  TSAtom &a = netA.Node(ai);
+          //  TSAtom &b = netB.Node(ai);
+          //  if (a.GetEllipsoid() == NULL || b.GetEllipsoid() == NULL) continue;
+          //  mat3d m = a.GetEllipsoid()->GetMatrix();
+          //  m[0] *= a.GetEllipsoid()->GetSX();
+          //  m[1] *= a.GetEllipsoid()->GetSY();
+          //  m[2] *= a.GetEllipsoid()->GetSZ();
+          //  mat3d m1 = b.GetEllipsoid()->GetMatrix();
+          //  m1[0] *= b.GetEllipsoid()->GetSX();
+          //  m1[1] *= b.GetEllipsoid()->GetSY();
+          //  m1[2] *= b.GetEllipsoid()->GetSZ();
+          //  m -= m1;
+          //  vec3d v = m[0].XProdVec(m[1]);
+          //  if (m[2].CAngle(v) < 0)
+          //    m[2] *= -1;
+          //  a.GetEllipsoid()->SetMatrix(m);
+          //  a.GetEllipsoid()->SetSX(1);
+          //  a.GetEllipsoid()->SetSY(1);
+          //  a.GetEllipsoid()->SetSZ(1);
+          //  b.GetEllipsoid()->SetSX(0.01);
+          //  b.GetEllipsoid()->SetSY(0.01);
+          //  b.GetEllipsoid()->SetSZ(0.01);
+          //}
         }
       }
     }
@@ -7577,6 +7618,13 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
     FunctionAccessor::Make(&TSAtom::crd),
     FunctionAccessor::MakeStatic(&TSAtom::weight_occu_z));
   io.sort();
+  if (Options.Contains("o"))  {
+    io.axis[2] = io.axis[0].XProdVec(io.axis[1]).Normalise();
+    FXApp->GetRender().GetBasis().Orient(io.axis, false);
+    FXApp->GetRender().GetBasis().SetCenter(
+      FXApp->GetRender().GetBasis().GetCenter() - io.center);
+  }
+  else {
   TBasicApp::NewLogEntry() <<
     "Ixx =  " << olxstr::FormatFloat(3, io.moments[0]) <<
     "  Iyy = "  << olxstr::FormatFloat(3, io.moments[1]) <<
@@ -7584,14 +7632,7 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
   TBasicApp::NewLogEntry() << "Eigen vectors:";
   for( size_t i=0; i < 3; i++ )
     TBasicApp::NewLogEntry() << io.axis[i].ToString();
-
-  if (Options.Contains("o"))  {
-    io.axis[2] = io.axis[0].XProdVec(io.axis[1]).Normalise();
-    FXApp->GetRender().GetBasis().Orient(io.axis, false);
-    FXApp->GetRender().GetBasis().SetCenter(
-      FXApp->GetRender().GetBasis().GetCenter() - io.center);
   }
-
 }
 //..............................................................................
 void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -7817,7 +7858,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     else if( Cmds[0].Equalsi("plane") )  {
       if( (Cmds.Count()-3)%12 != 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments" );
+        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments");
         return;
       }
       for( size_t i=3; i < Cmds.Count(); i+= 12 )  {
@@ -9312,8 +9353,8 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
   for( size_t i=0; i < atoms.Count(); i += 2 )  {
     FXApp->XFile().GetRM().Conn.AddBond(
       atoms[i]->CAtom(), atoms[i+1]->CAtom(),
-      &FXApp->XFile().GetRM().AddUsedSymm(atoms[i]->GetMatrix(0)),
-      &FXApp->XFile().GetRM().AddUsedSymm(atoms[i+1]->GetMatrix(0)),
+      &FXApp->XFile().GetRM().AddUsedSymm(atoms[i]->GetMatrix()),
+      &FXApp->XFile().GetRM().AddUsedSymm(atoms[i+1]->GetMatrix()),
       true
     );
   }
@@ -9350,10 +9391,10 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
       TCAtom &a1 = pairs[i]->CAtom(),
         &a2 = pairs[i+1]->CAtom();
       for( size_t fasi=0; fasi <= a1.EquivCount(); fasi++ )  {
-        const smatd m1 = uc.MulMatrix(pairs[i]->GetMatrix(0),
+        const smatd m1 = uc.MulMatrix(pairs[i]->GetMatrix(),
           (fasi == a1.EquivCount() ? fm : a1.GetEquiv(fasi)));
         for( size_t sasi=0; sasi <= a2.EquivCount(); sasi++ )  {
-          const smatd m2 = uc.MulMatrix(pairs[i+1]->GetMatrix(0),
+          const smatd m2 = uc.MulMatrix(pairs[i+1]->GetMatrix(),
             (sasi == a2.EquivCount() ? fm : a2.GetEquiv(sasi)));
           FXApp->XFile().GetRM().Conn.RemBond(
             a1, a2,
@@ -9377,7 +9418,8 @@ void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options
 }
 //..............................................................................
 void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString()));
+  E.SetRetVal(CheckState(TStateChange::DecodeState(Params[0]),
+    Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 //..............................................................................
 void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {
@@ -10131,7 +10173,7 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
       if (set_cnt == 1) r->SetEsd(val);
     }
     for (size_t i=0; i < atoms.Count(); i++)
-      r->AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix(0));
+      r->AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
   }
   else if( Cmds[0].Equalsi("angle") && Cmds.Count() > 1 )  {
     double val = Cmds[1].ToDouble();
@@ -10167,7 +10209,7 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
       TSimpleRestraint &sr = rm.rAngle.AddNew();
       sr.SetValue(val);
       for (size_t i=0; i < atoms.Count(); i++)
-        sr.AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix(0));
+        sr.AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
     }
   }
   else if( Cmds[0].Equalsi("dihedral") && Cmds.Count() > 1 )  {
@@ -10212,7 +10254,7 @@ void TMainForm::macRestrain(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i=0; i < quadruplets.Count(); i++) {
         for (size_t j=0; j < quadruplets[i].Count(); j++) {
           sr.AddAtom(quadruplets[i][j]->CAtom(),
-            &quadruplets[i][j]->GetMatrix(0));
+            &quadruplets[i][j]->GetMatrix());
         }
       }
     }

@@ -16,12 +16,16 @@
 #include "filetree.h"
 #include "updateapi.h"
 #include "shellutil.h"
+#include "eutf8.h"
 #include <sys/stat.h>
 
 using namespace patcher;
 
 TEFile* PatchAPI::lock_file = NULL;
-olxstr PatchAPI::repository_tag, PatchAPI::shared_dir, PatchAPI::instance_dir;
+olxstr
+  PatchAPI::repository_tag, PatchAPI::repository_base_dir,
+  PatchAPI::shared_dir,
+  PatchAPI::instance_dir;
 
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
   AActionHandler* OnOverallCopy)
@@ -54,9 +58,9 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
     TFileTree ft(patch_dir);
     ft.Expand();
     if( OnFileCopy != NULL )
-      ft.OnFileCopy->Add(OnFileCopy);
+      ft.OnFileCopy.Add(OnFileCopy);
     if( OnOverallCopy != NULL )
-      ft.OnSynchronise->Add(OnOverallCopy);
+      ft.OnSynchronise.Add(OnOverallCopy);
     OnFileCopy = NULL;
     OnOverallCopy = NULL;
 
@@ -64,9 +68,9 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
     catch(PatchAPI::DeletionExc)  {  res = papi_DeleteError;  }
     catch(const TExceptionBase& exc)  {  
       res = papi_CopyError;  
-      TBasicApp::NewLogEntry(logError) << exc.GetException()->GetFullMessage();
+      TBasicApp::NewLogEntry(logException) << exc;
     }
-    
+
     if( res == papi_OK )  {
       try  {
         TEFile::DelFile(GetUpdateLocationFileName());
@@ -152,12 +156,13 @@ bool PatchAPI::UnlockUpdater() {
 }
 //.............................................................................
 olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
-  if (!repository_tag.IsEmpty())
+  if (repository_base_dir == base_dir)
     return repository_tag;
-  olxstr tag_fn = (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir) +
-    GetTagFileName();
+  repository_base_dir = base_dir.IsEmpty() ? TBasicApp::GetBaseDir()
+    : base_dir;
+  olxstr tag_fn = repository_base_dir + GetTagFileName();
   if( !TEFile::Exists(tag_fn) )
-    return EmptyString();
+    return (repository_tag=EmptyString());
   TStrList sl;
   sl.LoadFromFile(tag_fn);
   return sl.Count() == 1 ? (repository_tag=sl[0]) : EmptyString();
@@ -183,5 +188,13 @@ olxstr PatchAPI::GetInstanceDir(bool refresh)  {
   if( olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE") )
      return (instance_dir=data_dir);
   return (instance_dir=ComposeInstanceDir(data_dir));
+}
+//.............................................................................
+void PatchAPI::MarkPatchComplete() {
+  TEFile f(GetUpdateLocationFileName(), "wb+");
+  f.Write(
+    TUtf8::Encode(TBasicApp::GetInstanceDir() +
+      patcher::PatchAPI::GetPatchFolder())
+  );
 }
 //.............................................................................

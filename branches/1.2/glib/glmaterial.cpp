@@ -35,6 +35,22 @@ bool TGlMaterial::operator == (const TGlMaterial &C) const  {
   return true;
 }
 //..............................................................................
+int TGlMaterial::Compare(const TGlMaterial &m) const {
+  int v = olx_cmp(Flags, m.Flags);
+  if (v != 0) return v;
+  if (HasAmbientF() && (v=AmbientF.Compare(m.AmbientF)) != 0) return v;
+  if (HasAmbientB() && (v=AmbientB.Compare(m.AmbientB)) != 0) return v;
+  if (HasDiffuseF() && (v=DiffuseF.Compare(m.DiffuseF)) != 0) return v;
+  if (HasDiffuseB() && (v=DiffuseB.Compare(m.DiffuseB)) != 0) return v;
+  if (HasSpecularF() && (v=SpecularF.Compare(m.SpecularF)) != 0) return v;
+  if (HasSpecularB() && (v=SpecularB.Compare(m.SpecularB)) != 0) return v;
+  if (HasShininessF() && (v=olx_cmp(ShininessF, m.ShininessF)) != 0) return v;
+  if (HasShininessB() && (v=olx_cmp(ShininessB, m.ShininessB)) != 0) return v;
+  if (HasEmissionF() && (v=EmissionF.Compare(m.EmissionF)) != 0) return v;
+  if (HasEmissionB() && (v=EmissionB.Compare(m.EmissionB)) != 0) return v;
+  return 0;
+}
+//..............................................................................
 AGOProperties& TGlMaterial::operator = (const AGOProperties& G)  {
   TGlMaterial *GlM = (TGlMaterial*)&G;
   this->operator = (*GlM);

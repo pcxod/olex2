@@ -14,13 +14,15 @@
 BeginXlibNamespace()
 
 class TP4PFile : public TBasicCFile  {
-  olxstr   Color,
-           SiteId,
-           Morph,
-           Mosaic,
-           Symm,
-           Bravais,
-           SGString;
+  olxstr
+    Color,
+    SiteId,
+    Morph,
+    Mosaic,
+    Symm,
+    Bravais,
+    SGString,
+    FileId; // FILEID field
 public:
   TP4PFile()  {}
   ~TP4PFile()  {}
@@ -28,6 +30,7 @@ public:
   const olxstr& GetColor() const {  return Color;  }
   const olxstr& GetSiteId() const {  return SiteId;  }
   const olxstr& GetMorph() const {  return Morph;  }
+  const olxstr& GetFileId() const {  return FileId;  }
   // this is set when the file is manually exported ...
   DefPropC(olxstr, SGString)
   virtual void SaveToStrings(TStrList& Strings);

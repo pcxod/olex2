@@ -13,14 +13,12 @@ using namespace SymmSpace;
 
 int SymmSpace::sort_group(const smatd &m1, const smatd &m2) {
   int r = olx_cmp(m1.t.QLength(), m2.t.QLength());
-  if (r == 0) {
-    if (m1.t[0] == 0 || m2.t[0] == 0) {
-      if (m1.t[0] == 0 && m2.t[0] == 0)
-        return olx_cmp(m1.t[1], m2.t[1]);
-      return olx_cmp(m1.t[0], m2.t[0]);
-    }
-  }
-  return r;
+  if (r != 0) return r;
+  r = olx_cmp(m1.t[0], m2.t[0]);
+  if (r != 0) return r;
+  r = olx_cmp(m1.t[1], m2.t[1]);
+  if (r != 0) return r;
+  return olx_cmp(m1.t[2], m2.t[2]);
 }
 //.............................................................................
 //.............................................................................

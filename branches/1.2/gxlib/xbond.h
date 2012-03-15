@@ -120,8 +120,8 @@ public:
   // should be called when atom coordinates have changed
   virtual void Update();
 
-  const_strlist ToPov(olxdict<const TGlMaterial*, olxstr,
-    TPointerComparator> &materials) const;
+  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const;
   virtual const vec3d &GetBaseCrd() const;
   static const_strlist PovDeclare();
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }

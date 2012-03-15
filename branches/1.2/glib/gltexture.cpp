@@ -200,8 +200,7 @@ TGlTexture::Data TGlTexture::ReadData(const TGlTexture& tex) {
     GL_TEXTURE_BORDER, &rv.border);
   if (rv.width == 0 || rv.height == 0)
     return rv;
-  short extraBytes = (4-(rv.width*3)%4)%4;  //4 bytes aligment
-  rv.data = new unsigned char[(rv.width*4+extraBytes)*rv.height];
+  rv.data = new unsigned char[rv.width*rv.height*4];
   if( rv.data == NULL )
     throw TOutOfMemoryException(__OlxSourceInfo);
   olx_gl::pixelStore(GL_PACK_ALIGNMENT, 4);
@@ -247,12 +246,12 @@ GLuint TTextureManager::Add2DTexture(const olxstr& name, GLint level,
 
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);
   if (format == GL_RGB) {
-    olx_gl::texImage(GL_TEXTURE_2D, level, 3, width, height, 0, format,
-      GL_UNSIGNED_BYTE, pixels);
+    olx_gl::texImage(GL_TEXTURE_2D, level, 3, width, height, border,
+      format, GL_UNSIGNED_BYTE, pixels);
   }
   else if (format == GL_RGBA) {
-    olx_gl::texImage(GL_TEXTURE_2D, level, 4, width, height, 0, format,
-      GL_UNSIGNED_BYTE, pixels);
+    olx_gl::texImage(GL_TEXTURE_2D, level, 4, width, height, border,
+      format, GL_UNSIGNED_BYTE, pixels);
   }
   else {  
     throw TInvalidArgumentException(__OlxSourceInfo,
@@ -272,12 +271,12 @@ void TTextureManager::Replace2DTexture(TGlTexture& tex, GLint level,
   olx_gl::bindTexture(GL_TEXTURE_2D, texId);
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);
   if (format == GL_RGB) {
-    olx_gl::texImage(GL_TEXTURE_2D, level, 3, width, height, 0, format,
-      GL_UNSIGNED_BYTE, pixels);
+    olx_gl::texImage(GL_TEXTURE_2D, level, 3, width, height, border,
+      format, GL_UNSIGNED_BYTE, pixels);
   }
   else if (format == GL_RGBA) {
-    olx_gl::texImage(GL_TEXTURE_2D, level, 4, width, height, 0, format,
-      GL_UNSIGNED_BYTE, pixels);
+    olx_gl::texImage(GL_TEXTURE_2D, level, 4, width, height, border,
+      format, GL_UNSIGNED_BYTE, pixels);
   }
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
@@ -290,11 +289,11 @@ GLuint TTextureManager::Add1DTexture(const olxstr& name, GLint level,
 {
   olx_gl::pixelStore(GL_UNPACK_ALIGNMENT, 4);
   if (format == GL_RGB) {
-    olx_gl::texImage(GL_TEXTURE_2D, level, format, width, 0, format,
+    olx_gl::texImage(GL_TEXTURE_2D, level, 3, width, border, format,
       GL_UNSIGNED_BYTE, pixels);
   }
   else if (format == GL_RGBA) {
-    olx_gl::texImage(GL_TEXTURE_2D, level, format, width, 0, format,
+    olx_gl::texImage(GL_TEXTURE_2D, level, 4, width, border, format,
       GL_UNSIGNED_BYTE, pixels);
   }
   else {
@@ -327,12 +326,13 @@ void TTextureManager::BeforeContextChange() {
 void TTextureManager::AfterContextChange() {
   if (Textures.Count() != TextureData.Count())
     throw TFunctionFailedException(__OlxSourceInfo, "mismatching array sizes");
-  GLuint texId = 0;
-  olx_gl::genTextures((GLuint)Textures.Count(), &texId);
+  if (Textures.IsEmpty()) return;
+  olx_array_ptr<GLuint> texIds(new  GLuint[Textures.Count()]);
+  olx_gl::genTextures((GLuint)Textures.Count(), texIds());
   for (size_t i=0; i < Textures.Count(); i++) {
     TGlTexture &glt = *Textures.GetObject(i);
     if (glt.GetId() == ~0) {
-      glt.SetId((GLuint)(texId+i));
+      glt.SetId((GLuint)(texIds[i]));
       glt.WriteData(TextureData[i]);
     }
   }
