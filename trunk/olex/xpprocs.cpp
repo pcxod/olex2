@@ -6751,11 +6751,37 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     if( xatoms[i]->GetEllipsoid() == NULL )
       xatoms[i] = NULL;
   }
-  if( xatoms.Pack().IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "no atoms given");
+  if( xatoms.Pack().Count() < 4 )  {
+    Error.ProcessingError(__OlxSrcInfo, "at least 4 anisotropic atoms expected");
     return;
   }
-  xlib::TLS tls(TSAtomPList(xatoms.Pack(), StaticCastAccessor<TSAtom>()), cellParameters);
+  evecd_list original_q;
+  evecd Q(6);
+  if (Options.Contains('b') && xatoms.Count() > 2) {
+    TBasicApp::NewLogEntry() << "Aligning x axis to: " <<
+      xatoms[1]->GetGuiLabelEx() << " - " <<
+      xatoms[0]->GetGuiLabelEx();
+    mat3d basis;
+    basis[0] = xatoms[1]->crd()-xatoms[0]->crd();
+    TBasicApp::NewLogEntry() << "Aligning z axis perpendicular to plane formed"
+      " by given atoms";
+    basis[2] = basis[0].XProdVec(xatoms[2]->crd()-xatoms[0]->crd());
+    basis[1] = basis[2].XProdVec(basis[0]);
+    basis.Normalise();
+    original_q.SetCapacity(xatoms.Count());
+    mat3d basis_t = mat3d::Transpose(basis);
+    for (size_t i=0; i < xatoms.Count(); i++) {
+      xatoms[i]->GetEllipsoid()->GetQuad(Q);
+      original_q.AddCopy(Q);
+      mat3d N(Q[0], Q[5], Q[4], Q[1], Q[3], Q[2]);
+      N = basis*N*basis_t;
+      Q[0] = N[0][0];  Q[1] = N[1][1];  Q[2] = N[2][2];
+      Q[3] = N[1][2];  Q[4] = N[0][2];  Q[5] = N[0][1];
+      *xatoms[i]->GetEllipsoid() = Q;
+    }
+  }
+
+  xlib::TLS tls(TSAtomPList(xatoms, StaticCastAccessor<TSAtom>()), cellParameters);
   olxstr ttitle("TLS analysis for: ");
   for( size_t i=0; i < xatoms.Count(); i++ )  {
     ttitle << xatoms[i]->GetGuiLabel();
@@ -6768,20 +6794,6 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     "R2: " << olxstr::FormatFloat(3, tls.GetFoM()[1]) << ' ' <<
     "Chi: " << olxstr::FormatFloat(3, tls.GetFoM()[2]);
 
-  mat3d basis;
-  if (Options.Contains('b') && xatoms.Count() > 2) {
-    TBasicApp::NewLogEntry() << "Aligning x axis to: " <<
-      xatoms[1]->GetGuiLabelEx() << " - " <<
-      xatoms[0]->GetGuiLabelEx();
-    basis[0] = xatoms[1]->crd()-xatoms[0]->crd();
-    TBasicApp::NewLogEntry() << "Aligning z axis perpendicular to plane formed"
-      " by given atoms";
-    basis[2] = basis[0].XProdVec(xatoms[2]->crd()-xatoms[0]->crd());
-    basis[1] = basis[2].XProdVec(basis[0]);
-    basis.Normalise();
-  }
-  else
-    basis.I();
   TTTable<TStrList> tab(xatoms.Count()*2, 7);
   tab.ColName(0) = "Atom";
   tab.ColName(1) = "U11";
@@ -6790,37 +6802,33 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
   tab.ColName(4) = "U23";
   tab.ColName(5) = "U31";
   tab.ColName(6) = "U12";
-  evecd Q(6);
-  mat3d basis_t = mat3d::Transpose(basis);
   for (size_t i=0; i < xatoms.Count(); i++) {
     size_t idx = i*2;
     tab[idx][0] = xatoms[i]->GetGuiLabel();
     xatoms[i]->GetEllipsoid()->GetQuad(Q);
-    mat3d N(Q[0], Q[5], Q[4], Q[1], Q[3], Q[2]);
-    N = basis*N*basis_t;
-    Q[0] = N[0][0];  Q[1] = N[1][1];  Q[2] = N[2][2];
-    Q[3] = N[1][2];  Q[4] = N[0][2];  Q[5] = N[0][1];
     //mat3d::EigenValues(N, EV.I());
     for (size_t j=0; j < 6; j++)
       tab[idx][j+1] = olxstr::FormatFloat(-4, Q[j], true);
-
     tab[idx+1][0] = "Utls";
     Q = tls.GetElpList()[i];
-    N = mat3d(Q[0], Q[5], Q[4], Q[1], Q[3], Q[2]);
-    N = basis*N*basis_t;
-    Q[0] = N[0][0];  Q[1] = N[1][1];  Q[2] = N[2][2];
-    Q[3] = N[1][2];  Q[4] = N[0][2];  Q[5] = N[0][1];
     //mat3d::EigenValues(N, EV.I());
     for (size_t j=0; j < 6; j++)
       tab[idx+1][j+1] = olxstr::FormatFloat(-4, Q[j], true);
   }
   TBasicApp::NewLogEntry() << tab.CreateTXTList(ttitle, true, false, ' ');
-  if (Options.Contains('a') && tls.GetElpList().Count() == xatoms.Count()) {
+  if (original_q.IsEmpty() &&
+      Options.Contains('a') &&
+      tls.GetElpList().Count() == xatoms.Count())
+  {
     for (size_t i=0; i < xatoms.Count(); i++) {
       *xatoms[i]->GetEllipsoid() = tls.GetElpList()[i];
       if (xatoms[i]->GetMatrix().IsFirst())
         *xatoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
     }
+  }
+  if (!original_q.IsEmpty()) {
+    for (size_t i=0; i < xatoms.Count(); i++)
+      *xatoms[i]->GetEllipsoid() = original_q[i];
   }
 }
 //..............................................................................

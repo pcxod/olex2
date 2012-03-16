@@ -71,12 +71,12 @@ TLS::TLS(const TSAtomPList &atoms, const double *cellParameters) {
   */
   // Rotate TLS tensor to L principle axes: diagonalise L
   RotateLaxes();
+  //Origin shift
+  symS();
   //Initialise newElps to TLS for atoms
   newElps = calcUijEllipse(atoms);
   //Independant of coordinates, calculated with Uij in cartesian
   FigOfMerit (atoms, newElps, UijCol, weights);
-  //Origin shift
-  //symS();
 
   //{
   //  mat3d splitAxes, Tmatrix, Smatrix;
