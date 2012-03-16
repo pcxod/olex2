@@ -883,7 +883,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
     " name, occu, pack, part, split, fit");
 
-  this_InitMacroD(Text, EmptyString(), fpNone,
+  this_InitMacroD(Text, EmptyString(), fpNone|fpOne,
     "Shows the console buffer in an external editor, defined by defeditor "
     "variable");
   this_InitMacroD(ShowStr, EmptyString(), fpNone|fpOne|psFileLoaded,

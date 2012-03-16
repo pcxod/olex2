@@ -3717,7 +3717,9 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr FN = FXApp->GetInstanceDir() + "output.txt";
+  olxstr log="output.txt";
+  if (!Cmds.IsEmpty()) log = Cmds[0];
+  olxstr FN = FXApp->GetInstanceDir() + log;
   TUtf8File::WriteLines(FN, FGlConsole->Buffer());
   Macros.ProcessMacro(olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
 }
