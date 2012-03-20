@@ -55,7 +55,7 @@ private:
   
   vec3d FoM;    // {R1,R2, sqrt(chi^2)}
   ematd TLS_VcV;
-  mat3d TVcV;
+  mat3d LVcV;
   // NOTE: To be replace when VcV matrix is available
   void UijErrors(const TSAtomPList &atoms, ematd &weights);
   void createDM(ematd &designM, evecd &UijC ,const TSAtomPList &atoms);
