@@ -2362,6 +2362,7 @@ void TLattice::BuildAtomRegistry()  {
   if (ac == 0) {
     maxd = mind = vec3i(0);
   }
+  if (mind[0] == 100) return;
   maxd[0] += 1;  maxd[1] += 1;  maxd[2] += 1;
   AtomRegistry::RegistryType& registry = Objects.atomRegistry.Init(mind, maxd);
   for( size_t i=0; i < ac; i++ )  {
