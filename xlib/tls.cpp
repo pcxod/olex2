@@ -87,6 +87,13 @@ void TLS::printTLS(const olxstr &title){
   TTTable<TStrList> tab(12, 3);
   tab[0][0] = "T";  tab[4][0] = "L";  tab[8][0] = "S";
   for( size_t i=0; i < 3; i++ )  {
+    for( size_t j=0; j < 3; j++ )  {
+      if (olx_abs(GetT()[i][j]) < 1e-16) Tmat[i][j] = 0;
+      if (olx_abs(GetL()[i][j]) < 1e-16) Lmat[i][j] = 0;
+      if (olx_abs(GetS()[i][j]) < 1e-16) Smat[i][j] = 0;
+    }
+  }
+  for( size_t i=0; i < 3; i++ )  {
     tab[1][i]  = olxstr::FormatFloat(-3, GetT()[i][0], true);
     tab[2][i]  = olxstr::FormatFloat(-3, GetT()[i][1], true);
     tab[3][i]  = olxstr::FormatFloat(-3, GetT()[i][2], true);
@@ -276,22 +283,13 @@ void TLS::calcL_VcV(){
 // VcV_L = sum_(m,n,p,q) d L_Laxes(i,i) / d L_cart(m,n) * d L_Laxes(j,j) / d L_cart(p,q) *VcVLCart(mn,pq)
 
   //compute VcV_L_cart from TLS_VcV_cart  
+  int l_acc [] = {9, 14, 20, 19, 18, 13};
   ematd VcV(6,6); //order: l11,l22,l33,l23,l13,l12 (shelx)
   for (int i=0; i<6; i++) {
     for (int j=0; j<6; j++) {
-      VcV[i][j] = TLS_VcV[tlsToShelx(i)][tlsToShelx(j)];
+      VcV[i][j] = TLS_VcV[l_acc[i]][l_acc[j]];
     }
   }
-#ifdef _DEBUG
-  //check if symmetric
-  for (short i=0; i<6; i++) {
-    for (short j=0; j<6; j++) {
-      if (olx_cmp_float(VcV(i,j), VcV(j,i), 1e-6) != 0)
-        throw TFunctionFailedException(__OlxSourceInfo, 
-    "TLS Failed: VcV matrix for L in Cartesian not symmetric");
-    }
-  }
-#endif
   ematd diff(3,6);
   //differiential matrix,diff[i][j] dL_laxes[i][i]/dLcartesian[j], j= 11,22,33,32,31,21 (shelx)
   for(short i=0; i<3; i++){  //ith eigenvalue
@@ -309,7 +307,7 @@ void TLS::calcL_VcV(){
       diff[i][5]= temp[0][1];
   }  
 
-  ematd VcVtemp(3,3); //Not 6x6: Only 3 diagonal L_Laxes values
+  mat3d VcVtemp; //Not 6x6: Only 3 diagonal L_Laxes values
   for(short i=0; i<3; i++){
     for(short j=0; j<3; j++){ // for Covariance [L(i,i),L(j,j)]
       for(short m=0; m<6; m++){
@@ -530,7 +528,7 @@ TEValueD TLS::BondCorrect(const TSAtom &atom1, const TSAtom &atom2){
 
   for (int i=0; i<3; i++)
     for (int j=0; j<3; j++)
-      rv.E() += dBdL[i]*dBdL[j]*LVcV[i][j]; 
+      rv.E() += dBdL[i]*dBdL[j]*LVcV[i][j];
   rv.E() = sqrt(rv.GetE());
   return rv;
 }
@@ -548,30 +546,30 @@ evecd TLS::extrapolate(const TSAtom &atom) {
   return vec;
 }
 
-int TLS::tlsToShelx(int i) const {
-  /*recall TLS elements order:  
-  (t11,t12,t22,t13,t23,t33,
-   s11,s12,s13,l11,s21,s22,
-   s33,l12,l22,s31,s32,s33,
-   l13,l23,l33) 
-  //shelx order: l11,l22,l33,l32,l31,l21
-  */
-  switch(i){
-  case 0: 
-    return 9; //l11
-  case 1:
-    return 14; //l22
-  case 2:
-    return 20; //l33      
-    break;
-  case 3:
-    return 19;
-  case 4:
-    return 18;
-  case 5:
-    return 13;
-  default:
-    throw TInvalidArgumentException(__OlxSourceInfo, 
-      "TLS parameters (l11,l22,l33,l23,l13,l12 etc) conversion to shelx convention: failed");   
-  }
-}
+//int TLS::tlsToShelx(int i) const {
+//  /*recall TLS elements order:  
+//  (t11,t12,t22,t13,t23,t33,
+//   s11,s12,s13,l11,s21,s22,
+//   s33,l12,l22,s31,s32,s33,
+//   l13,l23,l33) 
+//  //shelx order: l11,l22,l33,l32,l31,l21
+//  */
+//  switch(i){
+//  case 0: 
+//    return 9; //l11
+//  case 1:
+//    return 14; //l22
+//  case 2:
+//    return 20; //l33      
+//    break;
+//  case 3:
+//    return 19;
+//  case 4:
+//    return 18;
+//  case 5:
+//    return 13;
+//  default:
+//    throw TInvalidArgumentException(__OlxSourceInfo, 
+//      "TLS parameters (l11,l22,l33,l23,l13,l12 etc) conversion to shelx convention: failed");   
+//  }
+//}
