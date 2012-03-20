@@ -765,7 +765,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Basis, EmptyString(), fpNone|fpOne,
     "Shows/hides the orientation basis");
   this_InitMacroD(Lines, EmptyString(), fpOne,
-    "Sets the number of visible text lines in the console. Use -1 to dysplay "
+    "Sets the number of visible text lines in the console. Use -1 to display "
     "all lines");
 
   this_InitMacro(Ceiling, , fpOne);
@@ -883,7 +883,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
     " name, occu, pack, part, split, fit");
 
-  this_InitMacroD(Text, EmptyString(), fpNone,
+  this_InitMacroD(Text, EmptyString(), fpNone|fpOne,
     "Shows the console buffer in an external editor, defined by defeditor "
     "variable");
   this_InitMacroD(ShowStr, EmptyString(), fpNone|fpOne|psFileLoaded,
@@ -1025,8 +1025,11 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Schedules a particular macro (second argument) to be executed within "
     "provided interval (first argument)");
 
-  this_InitMacroD(Tls, EmptyString(), fpAny|psFileLoaded,
-    "James Haestier TLS test procedure");
+  this_InitMacroD(Tls,
+    "b-three first selected atoms are the ADp basis&;"
+    "a-apply the TLS ADP to the atoms",
+    fpAny|psFileLoaded,
+    "TLS test procedure");
 
   this_InitMacro(Test, , fpAny);
 

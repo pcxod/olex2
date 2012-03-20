@@ -3717,7 +3717,9 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr FN = FXApp->GetInstanceDir() + "output.txt";
+  olxstr log="output.txt";
+  if (!Cmds.IsEmpty()) log = Cmds[0];
+  olxstr FN = FXApp->GetInstanceDir() + log;
   TUtf8File::WriteLines(FN, FGlConsole->Buffer());
   Macros.ProcessMacro(olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
 }
@@ -4404,7 +4406,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   FXApp->XGrid().AdjustMap();
-  //FXApp->XGrid().InitIso();
+  FXApp->XGrid().InitIso();
   FXApp->ShowGrid(true, EmptyString());
   TBasicApp::NewLogEntry();
 }
@@ -6749,37 +6751,92 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     if( xatoms[i]->GetEllipsoid() == NULL )
       xatoms[i] = NULL;
   }
-  if( xatoms.Pack().IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "no atoms given");
+  if( xatoms.Pack().Count() < 4 )  {
+    Error.ProcessingError(__OlxSrcInfo, "at least 4 anisotropic atoms expected");
     return;
   }
-  xlib::TLS tls(TSAtomPList(xatoms.Pack(), StaticCastAccessor<TSAtom>()), cellParameters);
-  TTTable<TStrList> tab(12, 3);
+  evecd_list original_q;
+  vec3d_list original_crds;
+  evecd Q(6);
+  TAsymmUnit &au = FXApp->XFile().GetAsymmUnit();
+  if (Options.Contains('b') && xatoms.Count() > 2) {
+    TBasicApp::NewLogEntry() << "Aligning x axis to: " <<
+      xatoms[1]->GetGuiLabelEx() << " - " <<
+      xatoms[0]->GetGuiLabelEx();
+    mat3d basis;
+    basis[0] = xatoms[1]->crd()-xatoms[0]->crd();
+    TBasicApp::NewLogEntry() << "Aligning z axis perpendicular to plane formed"
+      " by given atoms";
+    basis[2] = basis[0].XProdVec(xatoms[2]->crd()-xatoms[0]->crd());
+    basis[1] = basis[2].XProdVec(basis[0]);
+    basis.Normalise();
+    original_q.SetCapacity(xatoms.Count());
+    original_crds.SetCapacity(xatoms.Count());
+    mat3d basis_t = mat3d::Transpose(basis);
+    for (size_t i=0; i < xatoms.Count(); i++) {
+      xatoms[i]->GetEllipsoid()->GetQuad(Q);
+      original_q.AddCopy(Q);
+      mat3d N(Q[0], Q[5], Q[4], Q[1], Q[3], Q[2]);
+      N = basis*N*basis_t;
+      Q[0] = N[0][0];  Q[1] = N[1][1];  Q[2] = N[2][2];
+      Q[3] = N[1][2];  Q[4] = N[0][2];  Q[5] = N[0][1];
+      *xatoms[i]->GetEllipsoid() = Q;
+      original_crds.AddCopy(xatoms[i]->crd());
+      xatoms[i]->crd() = basis*xatoms[i]->crd();
+    }
+  }
+
+  xlib::TLS tls(TSAtomPList(xatoms, StaticCastAccessor<TSAtom>()), cellParameters);
   olxstr ttitle("TLS analysis for: ");
   for( size_t i=0; i < xatoms.Count(); i++ )  {
     ttitle << xatoms[i]->GetGuiLabel();
     if( (i+1) < xatoms.Count() )
       ttitle << ", ";
   }
-  tab[0][0] = "T";
-  for( size_t i=0; i < 3; i++ )  {
-    tab[1][i] = olxstr::FormatFloat( -3, tls.GetT()[i][0], true );
-    tab[2][i] = olxstr::FormatFloat( -3, tls.GetT()[i][1], true );
-    tab[3][i] = olxstr::FormatFloat( -3, tls.GetT()[i][2], true );
+  tls.printTLS(ttitle);
+  TBasicApp::NewLogEntry() <<
+    "R1, %: " << olxstr::FormatFloat(2, tls.GetFoM()[0]*100) << ' ' <<
+    "R2, %: " << olxstr::FormatFloat(2, tls.GetFoM()[1]*100) << ' ' <<
+    "Chi: " << olxstr::FormatFloat(3, tls.GetFoM()[2]);
+
+  TTTable<TStrList> tab(xatoms.Count()*2, 7);
+  tab.ColName(0) = "Atom";
+  tab.ColName(1) = "U11";
+  tab.ColName(2) = "U22";
+  tab.ColName(3) = "U33";
+  tab.ColName(4) = "U23";
+  tab.ColName(5) = "U31";
+  tab.ColName(6) = "U12";
+  for (size_t i=0; i < xatoms.Count(); i++) {
+    size_t idx = i*2;
+    tab[idx][0] = xatoms[i]->GetGuiLabel();
+    xatoms[i]->GetEllipsoid()->GetQuad(Q);
+    //mat3d::EigenValues(N, EV.I());
+    for (size_t j=0; j < 6; j++)
+      tab[idx][j+1] = olxstr::FormatFloat(-4, Q[j], true);
+    tab[idx+1][0] = "Utls";
+    Q = tls.GetElpList()[i];
+    //mat3d::EigenValues(N, EV.I());
+    for (size_t j=0; j < 6; j++)
+      tab[idx+1][j+1] = olxstr::FormatFloat(-4, Q[j], true);
   }
-  tab[4][0] = "L";
-  for( size_t i=0; i < 3; i++ )  {
-    tab[5][i] = olxstr::FormatFloat( -3, tls.GetL()[i][0], true );
-    tab[6][i] = olxstr::FormatFloat( -3, tls.GetL()[i][1], true );
-    tab[7][i] = olxstr::FormatFloat( -3, tls.GetL()[i][2], true );
+  TBasicApp::NewLogEntry() << tab.CreateTXTList(ttitle, true, false, ' ');
+  if (original_q.IsEmpty() &&
+      Options.Contains('a') &&
+      tls.GetElpList().Count() == xatoms.Count())
+  {
+    for (size_t i=0; i < xatoms.Count(); i++) {
+      *xatoms[i]->GetEllipsoid() = tls.GetElpList()[i];
+      if (xatoms[i]->GetMatrix().IsFirst())
+        *xatoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
+    }
   }
-  tab[8][0] = "S";
-  for( size_t i=0; i < 3; i++ )  {
-    tab[9][i] = olxstr::FormatFloat( -3, tls.GetS()[i][0], true );
-    tab[10][i] = olxstr::FormatFloat( -3, tls.GetS()[i][1], true );
-    tab[11][i] = olxstr::FormatFloat( -3, tls.GetS()[i][2], true );
+  if (!original_q.IsEmpty()) {
+    for (size_t i=0; i < xatoms.Count(); i++) {
+      *xatoms[i]->GetEllipsoid() = original_q[i];
+      xatoms[i]->crd() = original_crds[i];
+    }
   }
-  TBasicApp::NewLogEntry() << tab.CreateTXTList(ttitle, false, false, ' ');
 }
 //..............................................................................
 void TMainForm::funChooseElement(const TStrObjList& Params, TMacroError &E) {
@@ -10265,7 +10322,7 @@ void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   RefinementModel &rm = FXApp->XFile().GetRM();
-  if( Cmds[0].Equalsi("U") )  { // EADP
+  if (Cmds[0].Equalsi("U") || Cmds[0].Equalsi("ADP")) { // EADP
     Cmds.Delete(0);
     TXAtomPList atoms = FindXAtoms(Cmds, false, true);
     if( atoms.Count() < 2 )  {
@@ -10396,6 +10453,18 @@ void TMainForm::macConstrain(TStrObjList &Cmds, const TParamList &Options,
       FXApp->XFile().GetRM().SameGroups.items.AddNew(
         ConstTypeList<TCAtomPList>(groups));
     }
+  }
+  else if( Cmds[0].Equalsi("same") && // same group constraint
+          (Cmds.Count() > 1 && Cmds[1].Equalsi("adp") ) )
+  {
+    Cmds.DeleteRange(0, 2);
+    ABasicFunction *bf = GetLibrary().FindMacro("xf.rm.ShareADP");
+    if (bf == NULL) {
+      E.ProcessingError(__OlxSrcInfo, "could not locate required function");
+      return;
+    }
+    else
+      bf->Run(Cmds, Options, E);
   }
 }
 //..............................................................................
