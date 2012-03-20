@@ -30,7 +30,7 @@ public:
   const vec3d& GetFoM() const { return FoM; }
   const evecd_list& GetElpList() const { return newElps; }
   const mat3d& GetRtoLaxes() const { return RtoLaxes; }
-  const ematd& GetLVcV() const { return LVcV; }
+  const mat3d& GetLVcV() const { return LVcV; }
   void printTLS(const olxstr &title="TLS matrices");
   
   ConstTypeList<evecd> calcUijEllipse(const TSAtomPList &atoms);
@@ -55,7 +55,7 @@ private:
   
   vec3d FoM;    // {R1,R2, sqrt(chi^2)}
   ematd TLS_VcV;
-  ematd LVcV;
+  mat3d TVcV;
   // NOTE: To be replace when VcV matrix is available
   void UijErrors(const TSAtomPList &atoms, ematd &weights);
   void createDM(ematd &designM, evecd &UijC ,const TSAtomPList &atoms);
@@ -71,7 +71,6 @@ private:
   
   //helper mathods:
   int epsil(int i, int j, int k) const;
-  int tlsToShelx(int i) const;
 };
 
 EndXlibNamespace()

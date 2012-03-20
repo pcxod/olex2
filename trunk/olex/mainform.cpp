@@ -765,7 +765,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Basis, EmptyString(), fpNone|fpOne,
     "Shows/hides the orientation basis");
   this_InitMacroD(Lines, EmptyString(), fpOne,
-    "Sets the number of visible text lines in the console. Use -1 to dysplay "
+    "Sets the number of visible text lines in the console. Use -1 to display "
     "all lines");
 
   this_InitMacro(Ceiling, , fpOne);

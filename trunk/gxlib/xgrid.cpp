@@ -181,7 +181,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   ContourCrds[0] = ContourCrds[1] = NULL;
   ContourLevels = NULL;
   ContourLevelCount = 14;
-  Scale = 10;
+  Scale = 1;
   //for textures, 2^n+2 (for border)...
   //MaxDim = 128;//olx_max( olx_max(MaxX,MaxY), MaxZ);
   MaxDim = 128;
@@ -200,7 +200,10 @@ TXGrid::~TXGrid()  {
   Instance = NULL;
 }
 //..............................................................................
-void TXGrid::Clear()  {  DeleteObjects();  }
+void TXGrid::Clear()  {
+  DeleteObjects();
+  _ResetLists();
+}
 //..............................................................................
 void TXGrid::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )  
@@ -457,6 +460,7 @@ bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
 //..............................................................................
 void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ)  {
   DeleteObjects();
+  _ResetLists();
   MaxX = maxX;
   MaxY = maxY;
   MaxZ = maxZ;
@@ -735,10 +739,11 @@ const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
   if( Boxed )  {
     for( int li = 0; li <= 1; li++ )  {
+      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      if (trians.IsEmpty()) continue;
       out.Add("  object { mesh {");
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
       for( size_t i=0; i < trians.Count(); i++ )  {
         out.Add("    smooth_triangle {");
         for( int j=0; j < 3; j++ )  {
@@ -754,9 +759,10 @@ const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
   else if( Mask != NULL )  {
     vec3d pts[3];
     for( int li = 0; li <= 1; li++ )  {
+      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      if (trians.IsEmpty()) continue;
       const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
       const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
       out.Add("  object { mesh {");
       for( int x=-1; x <= 1; x++ )  {
         for( int y=-1; y <= 1; y++ )  {
@@ -792,10 +798,11 @@ const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
     if( Extended )  {
       vec3d pts[3]; // ext drawing
       for( int li = 0; li <= 1; li++ )  {
+        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+        if (trians.IsEmpty()) continue;
         out.Add("  object { mesh {");
         const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
         for( float x=ExtMin[0]; x < ExtMax[0]; x++ )  {
           for( float y=ExtMin[1]; y < ExtMax[1]; y++ )  {
             for( float z=ExtMin[2]; z < ExtMax[2]; z++ )  {
@@ -828,10 +835,11 @@ const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
     }
     else  {
       for( int li = 0; li <= 1; li++ )  {
+        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+        if (trians.IsEmpty()) continue;
         out.Add("  object { mesh {");
         TTypeList<vec3f> verts = (li == 0 ? p_vertices : n_vertices);
         const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
         for( size_t i=0; i < verts.Count(); i++ )  {
           verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;
           au.CellToCartesian(verts[i]);
