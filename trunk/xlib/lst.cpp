@@ -360,7 +360,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         TStrList toks(SL[i], ' ');
         if( toks.Count() == 6 )  {
           TEValueD flack(toks[1].ToDouble(), toks[2].ToDouble());
-          params("flack", flack.ToString());
+          params.Add("flack") = flack.ToString();
           basf_found = true;
         }
       }
