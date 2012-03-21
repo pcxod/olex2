@@ -191,15 +191,7 @@ bool TGlXApp::OnInit()  {
   catch(const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logException) << e;
   }
-  for( int i=0; i < argc; i++ )
-    XApp->Arguments.Add(olxstr(argv[i]));
-
-  for( size_t i=0; i < XApp->Arguments.Count(); i++ )  {
-    if( XApp->Arguments[i].FirstIndexOf('=') != InvalidIndex )  {
-      XApp->Options.FromString(XApp->Arguments[i], '=');
-      XApp->Arguments.Delete(i--);
-    }
-  }
+  XApp->InitArguments(argc, argv);
 
   TProgress *P = new TProgress;
   XApp->OnProgress.Add(P);
@@ -244,7 +236,8 @@ int TGlXApp::OnExit()  {
   }
   TStrList pid_files;
   olxstr conf_dir = XApp->GetInstanceDir(); 
-  TEFile::ListDir( conf_dir, pid_files, olxstr("*.") << patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll );
+  TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
+    patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
   for( size_t i=0; i < pid_files.Count(); i++ )
     TEFile::DelFile(conf_dir+pid_files[i]);
   delete XApp;

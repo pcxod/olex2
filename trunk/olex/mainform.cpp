@@ -1524,13 +1524,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   SetStatusText(XA->GetBaseDir().u_str());
 
   // put log file to the user data folder
-  try  {
-    TBasicApp::GetLog().AddStream(
-      TUtf8File::Create(FXApp->GetInstanceDir() + "olex2.log"), true);
-  }
-  catch( TExceptionBase& )  {
-    TBasicApp::NewLogEntry(logError) << "Could not create log file!";
-  }
+  XA->CleanupLogs();
+  XA->CreateLogFile(XA->Options.FindValue("log_name", "olex2"));
 
   TBasicApp::GetLog().OnInfo.Add(this, ID_INFO, msiEnter);
   TBasicApp::GetLog().OnWarning.Add(this, ID_WARNING, msiEnter);

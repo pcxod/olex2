@@ -177,16 +177,7 @@ int main(int argc, char** argv)  {
       return 0;
     }
     // parse out options
-    for( int i=0; i < argc; i++ )
-      bapp.Arguments.Add(argv[i]);
-    for( size_t i=0; i < bapp.Arguments.Count(); i++ )  {
-      if( bapp.Arguments[i].FirstIndexOf('=') != InvalidIndex ||
-          bapp.Arguments[i].StartsFrom('-'))
-      {
-        bapp.Options.FromString(bapp.Arguments[i], '=');
-        bapp.Arguments.Delete(i--);
-      }
-    }
+    bapp.InitArguments(argc, argv);
     bapp.SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
     DoRun();
 #ifdef _DEBUG

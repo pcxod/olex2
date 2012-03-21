@@ -86,17 +86,10 @@ public:
   */
   static olxstr _GetSharedDirRoot(bool refresh=false);
   /* return _GetSharedDirRoot()/Olex2Data on windows or
-  _GetSharedDirRoot()/data on other platforms
+  _GetSharedDirRoot()/data on other platforms (unless the OLEX2_DATADIR_STATIC
+  is set to true
   */
-  static olxstr GetSharedDir(bool refresh=false)  {
-#ifdef __WIN32__
-    return TEFile::AddPathDelimeter(_GetSharedDirRoot(refresh)) <<
-    "Olex2Data/";
-#else
-    return TEFile::TrimPathDelimeter(_GetSharedDirRoot(refresh)) <<
-    "data/";
-#endif
-  }
+  static olxstr GetSharedDir(bool refresh=false);
   /* composes new instance dir and saves its info. The instance dir depends on
   the location of the executable and thus can be used to store instance
   specific updates etc
