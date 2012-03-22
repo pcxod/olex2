@@ -217,7 +217,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         i += 2;  if( i >= SL.Count() )  break;
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() > 5 )
-          params("params_n", Toks[6]);
+          params("param_n", Toks[6]);
 
         // extract R1 or 4sigma, R1a for all data and number of refs with Fo > 4sig(Fo)
         Toks.Clear();
@@ -227,7 +227,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         if( Toks.Count() > 8 )  {
           params("R1", Toks[2]);
           params("ref_4sig", Toks[4]);
-          params("R1a", Toks[9]);
+          params("R1all", Toks[9]);
         }
 
         // extract wR2 && Goof && restrained GooF
@@ -401,7 +401,7 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
     Table[0][0] = "R1 (Fo > 4sig(Fo))";
       Table[0][1] = params.Find("R1", XLibMacros::NAString);
     Table[1][0] = "R1 all data";
-      Table[1][1] = params.Find("R1a", XLibMacros::NAString);
+      Table[1][1] = params.Find("R1all", XLibMacros::NAString);
     Table[2][0] = "wR2";
       Table[2][1] = params.Find("wR2", XLibMacros::NAString);
     Table[3][0] = "GooF";
