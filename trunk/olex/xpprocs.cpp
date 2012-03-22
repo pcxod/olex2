@@ -4987,6 +4987,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     try  {
       SaveVFS(plStructure); // save virtual fs file
+      TFileHandlerManager::Clear(plStructure);
       int64_t st = TETime::msNow();
       FXApp->LoadXFile(TXFile::ComposeName(file_n));
       st = TETime::msNow() - st;
