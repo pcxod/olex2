@@ -546,8 +546,6 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       size_t e_cnt=0;
       SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
       info_ex.centrosymmetric = _HklStat.FriedelOppositesMerged;
-      double maxd = olx_max(olx_max(aunit.GetCellToCartesian()[0][0],
-        aunit.GetCellToCartesian()[1][1]), aunit.GetCellToCartesian()[2][2]);
       for (int h=_HklStat.MinIndexes[0]; h <= _HklStat.MaxIndexes[0]; h++) {
         for (int k=_HklStat.MinIndexes[1]; k <= _HklStat.MaxIndexes[1]; k++) {
           for (int l=_HklStat.MinIndexes[2]; l <= _HklStat.MaxIndexes[2]; l++) {
