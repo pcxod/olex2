@@ -2040,11 +2040,11 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       Macros.ProcessMacro(olxstr("exec -o getvar(defbrowser) '") << cmd << '\'', Error);
     }
 # ifdef __linux__
-    else if( cmd.EndsWith(".pdf") )  {
+    else if( cmd.EndsWith(".pdf") || cmd.EndsWith(".PDF") )  {
       wxString dskpAttr;
       wxGetEnv(wxT("DESKTOP_SESSION"), &dskpAttr);
       if (dskpAttr.Contains(wxT("gnome")))
-        Macros.ProcessMacro(olxstr("exec -o gnome-open '") << cmd << '\'', Error);
+        Macros.ProcessMacro(olxstr("exec -o xdg-open '") << cmd << '\'', Error);
       else if (dskpAttr.Contains(wxT("kde")))
         Macros.ProcessMacro(olxstr("exec -o konqueror '") << cmd << '\'', Error);
       else if (dskpAttr.Contains(wxT("xfce")))
