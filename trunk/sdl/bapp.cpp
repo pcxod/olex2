@@ -199,16 +199,16 @@ olxstr TBasicApp::GetPlatformString()  {
 //..............................................................................
 bool TBasicApp::CreateLogFile(const olxstr &file_name) {
   if (LogFile != NULL) return false;
-  olxstr l_name;
+  olxstr l_name=file_name;
   if (!TEFile::IsAbsolutePath(file_name)) {
     if (!TEFile::IsDir(InstanceDir)) return false;
     olxstr ld = InstanceDir + "logs";
     if (!TEFile::Exists(ld) && !TEFile::MakeDir(ld))
       return false;
     l_name = TEFile::AddPathDelimeterI(ld) << file_name;
+    olxstr ts = TETime::FormatDateTime("yyMMdd-hhmmss", TETime::Now());
+    l_name << '-' << ts << ".olx.log";
   }
-  olxstr ts = TETime::FormatDateTime("yyMMdd-hhmmss", TETime::Now());
-  l_name << '-' << ts << ".olx.log";
   try {
     LogFile = TUtf8File::Create(l_name);
     Log->AddStream(LogFile, false);

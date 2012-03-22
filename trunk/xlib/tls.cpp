@@ -281,31 +281,71 @@ void TLS::RotateLaxes(){
 
 void TLS::calcL_VcV(){
 // VcV_L = sum_(m,n,p,q) d L_Laxes(i,i) / d L_cart(m,n) * d L_Laxes(j,j) / d L_cart(p,q) *VcVLCart(mn,pq)
+//  (t11@0, t12@1, t22@2, t13@3, t23@4, t33@5,
+//   s11@6, s12@7, s13@8, s33@12, s31@15,s32@16,s33@17, s21@10, s22@11
+//  l11@9, l12@13, l13@18, l22@14, l23@19,l33@20) 
 
   //compute VcV_L_cart from TLS_VcV_cart  
   int l_acc [] = {9, 14, 20, 19, 18, 13};
-  ematd VcV(6,6); //order: l11,l22,l33,l23,l13,l12 (shelx)
+  int l_acc1 [] = {
+    9, 13, 18,
+    13, 14, 19,
+    18, 19, 20};
+  ematd VcV(6,6), x(9,9); //order: l11,l22,l33,l23,l13,l12 (shelx)
   for (int i=0; i<6; i++) {
-    for (int j=0; j<6; j++) {
-      VcV[i][j] = TLS_VcV[l_acc[i]][l_acc[j]];
-    }
+    for (int j=i+1; j<6; j++)
+      VcV[i][j] = VcV[j][i] = TLS_VcV[l_acc[i]][l_acc[j]];
+    VcV[i][i] = TLS_VcV[l_acc[i]][l_acc[i]];
   }
-  ematd diff(3,6);
+  for (int i=0; i<9; i++) {
+    for (int j=0; j<9; j++)
+      x[i][j] = TLS_VcV[l_acc1[i]][l_acc1[j]];
+  }
+  ematd kp(9, 9);
+  mat3d rmt = mat3d::Transpose(RtoLaxes);
+  olx_mat::KroneckerProduct(rmt, rmt, kp);
+  ematd kpt = ematd::Transpose(kp);
+  x = kp*x*kpt;
+  math::alg::print0_2(kp, "Kp");
+  math::alg::print0_2(x, "K");
+
+  ematd d(6,6);
   //differiential matrix,diff[i][j] dL_laxes[i][i]/dLcartesian[j], j= 11,22,33,32,31,21 (shelx)
-  for(short i=0; i<3; i++){  //ith eigenvalue
-      mat3d temp;
-      for(short m=0; m<3; m++){
-        for(short n=m; n<3; n++){ //symmetric - only calc 6 elements
-          temp[m][n] = RtoLaxes[i][m]*RtoLaxes[i][n]; 
-        }
-      }
-      diff[i][0]= temp[0][0];
-      diff[i][1]= temp[1][1];
-      diff[i][2]= temp[2][2];
-      diff[i][3]= temp[1][2];
-      diff[i][4]= temp[0][2];
-      diff[i][5]= temp[0][1];
-  }  
+  for (int i=0; i < 6; i++) {  //ith eigenvalue
+    mat3d temp;
+    if (i < 3)
+      temp[i][0] = temp[0][i] = 1;
+    else if (i==3)
+      temp[1][1] = 1;
+    else if (i==4)
+      temp[2][1] = temp[1][2] = 1;
+    else if (i==5)
+      temp[2][2] = 1;
+    //else if (i==3)
+    //  temp[2][1] = temp[1][2] = 1;
+    //else if (i==4)
+    //  temp[2][0] = temp[0][2] = 1;
+    //else if (i==5)
+    //  temp[1][0] = temp[0][1] = 1;
+    temp = RtoLaxes*temp*rmt;
+    //for(short m=0; m<3; m++){
+    //  for(short n=m; n<3; n++){ //symmetric - only calc 6 elements
+    //    temp[m][n] = RtoLaxes[i][m]*RtoLaxes[n][i];
+    //  }
+    //}
+    d[i][0]= temp[0][0];
+    d[i][1]= temp[0][1];
+    d[i][2]= temp[0][2];
+    d[i][3]= temp[1][1];
+    d[i][4]= temp[1][2];
+    d[i][5]= temp[2][2];
+    //d[i][0]= temp[0][0];
+    //d[i][1]= temp[1][1];
+    //d[i][2]= temp[2][2];
+    //d[i][3]= temp[1][2];
+    //d[i][4]= temp[0][2];
+    //d[i][5]= temp[0][1];
+  }
 
   mat3d VcVtemp; //Not 6x6: Only 3 diagonal L_Laxes values
   for(short i=0; i<3; i++){
@@ -313,15 +353,28 @@ void TLS::calcL_VcV(){
       for(short m=0; m<6; m++){
         for(short n=0; n<6; n++){ 
 //VCV (L(i),L_L(j))= dL_L(i)/dL_Cart(m) * dL_L(j)/ d LCart(n) *VCV(Lcart,Lcart)
-          VcVtemp[i][j] =  VcVtemp[i][j] + diff[i][m]*diff[j][n] *VcV[m][n]; 
+          VcVtemp[i][j] += d[i][m]*d[j][n] *VcV[m][n]; 
         }
       }
-      if (i!=j){
-        VcVtemp[i][j] = 2*VcVtemp[i][j]; 
-        // off-diag elements count twice due to symmetry, [i][j] = [j][i]
+      //if (i!=j){
+      //  VcVtemp[i][j] *= 2;
+      //  // off-diag elements count twice due to symmetry, [i][j] = [j][i]
+      //}
+    }
+  }
+  ematd vc(6,6); //Not 6x6: Only 3 diagonal L_Laxes values
+  for(short i=0; i<6; i++){
+    for(short j=0; j<6; j++){ // for Covariance [L(i,i),L(j,j)]
+      for(short m=0; m<6; m++){
+        for(short n=0; n<6; n++){ 
+          vc[i][j] += d[i][m]*d[j][n] *VcV[m][n]; 
+        }
       }
     }
   }
+  math::alg::print0_2(d, "D");
+  math::alg::print0_2(vc, "VcV");
+ 
   LVcV=VcVtemp;
 }
 ConstTypeList<evecd>  TLS::calcUijEllipse (const TSAtomPList &atoms) {
@@ -391,7 +444,6 @@ void TLS::FigOfMerit(const TSAtomPList &atoms, const evecd_list &Elps,
   // R1 = sum |Uobs - Utls| / sum |Uobs|
   // R2 = Sqrt[ sum {weight_Uobs (Uobs - Utls)^2} / sum{weigh_Uobs Uobs^2}  ]
   // Sqrt[chi^2] = Sqrt[ sum {weight_Uobs (Uobs - Utls)^2}/ n ], n dof
-
   evecd diff(6* atoms.Count());
   for (size_t i =0; i < atoms.Count(); i++){
     diff[6*i+0] = UijCol[6*i+0] - Elps[i][0];  // Uobs - Utls in Cartesian
