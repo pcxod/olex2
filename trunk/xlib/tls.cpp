@@ -272,110 +272,79 @@ void TLS::RotateLaxes(){
   //rotation matrix, RtoLaxes.
   Lmat.EigenValues(Lmat, RtoLaxes.I()); //diagonalise Lmatrix
   //compute L variance-covariance matrix
-  calcL_VcV();
+  RotateVcV();
   origin = RtoLaxes*origin;
   mat3d tm = mat3d::Transpose(RtoLaxes);
   Tmat = RtoLaxes * Tmat * tm;
   Smat = RtoLaxes * Smat * tm;
 }
 
-void TLS::calcL_VcV(){
+void TLS::RotateVcV(){
 // VcV_L = sum_(m,n,p,q) d L_Laxes(i,i) / d L_cart(m,n) * d L_Laxes(j,j) / d L_cart(p,q) *VcVLCart(mn,pq)
 //  (t11@0, t12@1, t22@2, t13@3, t23@4, t33@5,
-//   s11@6, s12@7, s13@8, s33@12, s31@15,s32@16,s33@17, s21@10, s22@11
+//   s11@6, s12@7, s13@8, s21@10, s22@11, s23@12, s31@15,s32@16,s33@17
 //  l11@9, l12@13, l13@18, l22@14, l23@19,l33@20) 
+  int t_acc [] = {0, 1,  3,  2,  4,  5};
+  int l_acc [] = {9, 13, 18, 14, 19, 20};
+  int s_acc [] = {6, 7,  8,  10, 11, 12, 15, 16, 17};
 
-  //compute VcV_L_cart from TLS_VcV_cart  
-  int l_acc [] = {9, 14, 20, 19, 18, 13};
+  // symmetric by index access
+  int sacc[6][2] = {
+    {0, 0}, {0, 1}, {0, 2},
+    {1, 1}, {1, 2}, {2, 2}};
+  int facc[9][2] = {!!
+    {0, 0}, {0, 1}, {0, 2},
+    {1, 0}, {1, 1}, {1, 2},
+    {2, 0}, {2, 1}, {2, 2}};
+  ematd sym_d(6,6); // matrix of derivatives for sym matrices
+  mat3d RtoLaxesT = mat3d::Transpose(RtoLaxes);
+  for (int i=0; i < 6; i++) {
+    mat3d temp;
+    temp[sacc[i][1]][sacc[i][0]] = temp[sacc[i][0]][sacc[i][1]] = 1;
+    temp = RtoLaxes*temp*RtoLaxesT;
+    for (int j=0; j < 6; j++)
+      sym_d[j][i] = temp[sacc[j][0]][sacc[j][1]];
+  }
+  ematd sym_d_t = ematd::Transpose(sym_d);
+  TVcV.Resize(6,6);
+  LVcV.Resize(6,6);
+  for (int i=0; i<6; i++) {
+    for (int j=i+1; j<6; j++) {
+      TVcV[i][j] = TVcV[j][i] = TLS_VcV[t_acc[i]][t_acc[j]];
+      LVcV[i][j] = LVcV[j][i] = TLS_VcV[l_acc[i]][l_acc[j]];
+    }
+    TVcV[i][i] = TLS_VcV[t_acc[i]][t_acc[i]];
+    LVcV[i][i] = TLS_VcV[l_acc[i]][l_acc[i]];
+  }
+  math::alg::print0_2(sym_d, "D");
+  LVcV = sym_d*LVcV*sym_d_t;
+  TVcV = sym_d*TVcV*sym_d_t;
+  math::alg::print0_2(LVcV, "D*C*DT");
+#ifdef _DEBUG
   int l_acc1 [] = {
     9, 13, 18,
     13, 14, 19,
     18, 19, 20};
-  ematd VcV(6,6), x(9,9); //order: l11,l22,l33,l23,l13,l12 (shelx)
-  for (int i=0; i<6; i++) {
-    for (int j=i+1; j<6; j++)
-      VcV[i][j] = VcV[j][i] = TLS_VcV[l_acc[i]][l_acc[j]];
-    VcV[i][i] = TLS_VcV[l_acc[i]][l_acc[i]];
-  }
+  ematd x(9,9); //order: l11,l22,l33,l23,l13,l12 (shelx)
   for (int i=0; i<9; i++) {
-    for (int j=0; j<9; j++)
-      x[i][j] = TLS_VcV[l_acc1[i]][l_acc1[j]];
+    for (int j=i+1; j<9; j++)
+      x[j][i] = x[i][j] = TLS_VcV[l_acc1[i]][l_acc1[j]];
+    x[i][i] = TLS_VcV[l_acc1[i]][l_acc1[i]];
   }
   ematd kp(9, 9);
-  mat3d rmt = mat3d::Transpose(RtoLaxes);
-  olx_mat::KroneckerProduct(rmt, rmt, kp);
-  ematd kpt = ematd::Transpose(kp);
-  x = kp*x*kpt;
-  math::alg::print0_2(kp, "Kp");
-  math::alg::print0_2(x, "K");
-
-  ematd d(6,6);
-  //differiential matrix,diff[i][j] dL_laxes[i][i]/dLcartesian[j], j= 11,22,33,32,31,21 (shelx)
-  for (int i=0; i < 6; i++) {  //ith eigenvalue
-    mat3d temp;
-    if (i < 3)
-      temp[i][0] = temp[0][i] = 1;
-    else if (i==3)
-      temp[1][1] = 1;
-    else if (i==4)
-      temp[2][1] = temp[1][2] = 1;
-    else if (i==5)
-      temp[2][2] = 1;
-    //else if (i==3)
-    //  temp[2][1] = temp[1][2] = 1;
-    //else if (i==4)
-    //  temp[2][0] = temp[0][2] = 1;
-    //else if (i==5)
-    //  temp[1][0] = temp[0][1] = 1;
-    temp = RtoLaxes*temp*rmt;
-    //for(short m=0; m<3; m++){
-    //  for(short n=m; n<3; n++){ //symmetric - only calc 6 elements
-    //    temp[m][n] = RtoLaxes[i][m]*RtoLaxes[n][i];
-    //  }
-    //}
-    d[i][0]= temp[0][0];
-    d[i][1]= temp[0][1];
-    d[i][2]= temp[0][2];
-    d[i][3]= temp[1][1];
-    d[i][4]= temp[1][2];
-    d[i][5]= temp[2][2];
-    //d[i][0]= temp[0][0];
-    //d[i][1]= temp[1][1];
-    //d[i][2]= temp[2][2];
-    //d[i][3]= temp[1][2];
-    //d[i][4]= temp[0][2];
-    //d[i][5]= temp[0][1];
-  }
-
-  mat3d VcVtemp; //Not 6x6: Only 3 diagonal L_Laxes values
-  for(short i=0; i<3; i++){
-    for(short j=0; j<3; j++){ // for Covariance [L(i,i),L(j,j)]
-      for(short m=0; m<6; m++){
-        for(short n=0; n<6; n++){ 
-//VCV (L(i),L_L(j))= dL_L(i)/dL_Cart(m) * dL_L(j)/ d LCart(n) *VCV(Lcart,Lcart)
-          VcVtemp[i][j] += d[i][m]*d[j][n] *VcV[m][n]; 
-        }
+  olx_mat::KroneckerProduct(RtoLaxes, RtoLaxes, kp);
+  x = kp*x*ematd::Transpose(kp);
+  // full to symmetric access
+  int xacc[9] = {0, 1, 2, 1, 3, 4, 2, 4, 5};
+  for (int i=0; i<9; i++) {
+    for (int j=i+1; j<9; j++)
+      if (olx_abs(x[i][j]-LVcV[xacc[i]][xacc[j]]) > 1e-10) {
+        math::alg::print0_2(x, "Kp*X*KpT");
+        math::alg::print0_2(LVcV, "LVcV");
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
       }
-      //if (i!=j){
-      //  VcVtemp[i][j] *= 2;
-      //  // off-diag elements count twice due to symmetry, [i][j] = [j][i]
-      //}
-    }
   }
-  ematd vc(6,6); //Not 6x6: Only 3 diagonal L_Laxes values
-  for(short i=0; i<6; i++){
-    for(short j=0; j<6; j++){ // for Covariance [L(i,i),L(j,j)]
-      for(short m=0; m<6; m++){
-        for(short n=0; n<6; n++){ 
-          vc[i][j] += d[i][m]*d[j][n] *VcV[m][n]; 
-        }
-      }
-    }
-  }
-  math::alg::print0_2(d, "D");
-  math::alg::print0_2(vc, "VcV");
- 
-  LVcV=VcVtemp;
+#endif
 }
 ConstTypeList<evecd>  TLS::calcUijEllipse (const TSAtomPList &atoms) {
   /* For each atom, calc U_ij from current TLS matrices */
