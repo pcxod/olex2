@@ -30,7 +30,9 @@ public:
   const vec3d& GetFoM() const { return FoM; }
   const evecd_list& GetElpList() const { return newElps; }
   const mat3d& GetRtoLaxes() const { return RtoLaxes; }
-  const mat3d& GetLVcV() const { return LVcV; }
+  const ematd& GetTVcV() const { return TVcV; }
+  const ematd& GetLVcV() const { return LVcV; }
+  const ematd& GetSVcV() const { return SVcV; }
   void printTLS(const olxstr &title="TLS matrices");
   
   ConstTypeList<evecd> calcUijEllipse(const TSAtomPList &atoms);
@@ -55,14 +57,14 @@ private:
   
   vec3d FoM;    // {R1,R2, sqrt(chi^2)}
   ematd TLS_VcV;
-  mat3d LVcV;
+  ematd TVcV, LVcV, SVcV;
   // NOTE: To be replace when VcV matrix is available
   void UijErrors(const TSAtomPList &atoms, ematd &weights);
   void createDM(ematd &designM, evecd &UijC ,const TSAtomPList &atoms);
   mat3d calcUijCart (const vec3d &atomPosition);
   void calcTLS_VcV(evecd &w, ematd &v);
   void RotateLaxes();
-  void calcL_VcV();
+  void RotateVcV();
   void FigOfMerit(const TSAtomPList &atoms, const evecd_list &Elps,
     const evecd &UijCol, const ematd &weights);
   void quadToCart(const evecd &quad, ematd &UijCart);  // Converts Uij quadractic wrt Xtal basis to Catesian
