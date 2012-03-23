@@ -296,7 +296,7 @@ void TLS::RotateVcV(){
     {0, 0}, {0, 1}, {0, 2},
     {1, 0}, {1, 1}, {1, 2},
     {2, 0}, {2, 1}, {2, 2}};
-  ematd sym_d(6,6); // matrix of derivatives for sym matrices
+  ematd sym_d(6,6), d(9,9); // matrix of derivatives for sym matrices
   mat3d RtoLaxesT = mat3d::Transpose(RtoLaxes);
   for (int i=0; i < 6; i++) {
     mat3d temp;
@@ -304,6 +304,16 @@ void TLS::RotateVcV(){
     temp = RtoLaxes*temp*RtoLaxesT;
     for (int j=0; j < 6; j++)
       sym_d[j][i] = temp[sacc[j][0]][sacc[j][1]];
+  }
+  SVcV.Resize(9,9);
+  for (int i=0; i < 9; i++) {
+    mat3d temp;
+    temp[facc[i][0]][facc[i][1]] = 1;
+    temp = RtoLaxes*temp*RtoLaxesT;
+    for (int j=0; j < 9; j++) {
+      SVcV[i][j] = TLS_VcV[s_acc[i]][s_acc[j]];
+      d[j][i] = temp[facc[j][0]][facc[j][1]];
+    }
   }
   ematd sym_d_t = ematd::Transpose(sym_d);
   TVcV.Resize(6,6);
@@ -316,10 +326,13 @@ void TLS::RotateVcV(){
     TVcV[i][i] = TLS_VcV[t_acc[i]][t_acc[i]];
     LVcV[i][i] = TLS_VcV[l_acc[i]][l_acc[i]];
   }
-  math::alg::print0_2(sym_d, "D");
+  math::alg::print0_2(LVcV, "LVcV");
   LVcV = sym_d*LVcV*sym_d_t;
+  math::alg::print0_2(LVcV, "LVcV");
   TVcV = sym_d*TVcV*sym_d_t;
-  math::alg::print0_2(LVcV, "D*C*DT");
+  math::alg::print0_2(SVcV, "SVcV");
+  SVcV = d*SVcV*ematd::Transpose(d);
+  math::alg::print0_2(SVcV, "SVcV");
 #ifdef _DEBUG
   int l_acc1 [] = {
     9, 13, 18,
