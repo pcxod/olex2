@@ -31,6 +31,7 @@ protected:
   short MaxThreadCount;
   bool MainFormVisible, Profiling, BaseDirWriteable;
   static olx_critical_section app_cs;
+  void ValidateArgs() const;
 public:
   TParamList Options;
   TStrList Arguments;
@@ -42,8 +43,7 @@ public:
   */
   template <typename ch_t>
   void InitArguments(int argc, ch_t **argv) {
-    Options.Clear();
-    Arguments.Clear();
+    ValidateArgs(); // throw an excaption if Arguments are not empty
     for (size_t i=0; i < argc; i++) {
       olxstr arg = argv[i];
       if (arg.Contains('=') || arg.StartsFrom('-'))

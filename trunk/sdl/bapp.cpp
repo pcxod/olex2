@@ -237,6 +237,11 @@ void TBasicApp::CleanupLogs(const olxstr &dir_name) {
   }
 }
 //..............................................................................
+void TBasicApp::ValidateArgs() const {
+  if (!Arguments.IsEmpty())
+    throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
+}
+//..............................................................................
 //..............................................................................
 void BAPP_GetArgCount(const TStrObjList&, TMacroError& E)  {
   E.SetRetVal(TBasicApp::GetArgCount());
