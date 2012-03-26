@@ -1761,7 +1761,10 @@ void TMainForm::StartupInit()  {
   }
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
-  // load html in last call - it might call some destructive functions on uninitialised data
+  if( FXApp->GetArguments().Count() >= 2 ) {
+    ProcessMacro(olxstr("reap \'") << FXApp->GetArguments().Text(' ', 1) <<
+      '\'', __OlxSrcInfo);
+  }  // load html in last call - it might call some destructive functions on uninitialised data
   FHtml->LoadPage(FHtmlIndexFile.u_str());
   FHtml->SetHomePage(FHtmlIndexFile);
   // must move it here since on Linux things will not get initialised at the previous position
