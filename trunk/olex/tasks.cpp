@@ -10,7 +10,7 @@ void P4PTask::Run() {
     mf->ProcessFunction(cmd, __OlxSrcInfo);
     if (cmd.IsBool() && cmd.ToBool()) {
       olxstr opt =
-        TBasicApp::GetInstance().Options.FindValue("run_rigaku_xplain");
+        TBasicApp::GetInstance().GetOptions().FindValue("run_rigaku_xplain");
       bool run_xplain=false;
       if (opt.IsEmpty()) {
         olxstr rv = TdlgMsgBox::Execute(mf, "Would you like to run "
@@ -52,7 +52,7 @@ void CellChangeTask::Run() {
     n << ' ' << TEValueD(cell[i], esds[i]).ToString() <<
       ' ' << TEValueD(cell[3+i], esds[3+i]).ToString();
   }
-  olxstr opt = TBasicApp::GetInstance().Options.FindValue("use_hkl_cell");
+  olxstr opt = TBasicApp::GetInstance().GetOptions().FindValue("use_hkl_cell");
   bool use = false;
   if (opt.IsEmpty() && o != n) {
     olxstr msg = "Cell parameters in your HKL file differ from currently "

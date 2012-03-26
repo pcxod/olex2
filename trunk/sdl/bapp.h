@@ -32,12 +32,14 @@ protected:
   bool MainFormVisible, Profiling, BaseDirWriteable;
   static olx_critical_section app_cs;
   void ValidateArgs() const;
-public:
   TParamList Options;
   TStrList Arguments;
+public:
   // the file name of the application with full path
   TBasicApp(const olxstr& AppName);
   virtual ~TBasicApp();
+  const TParamList &GetOptions() const { return Options; }
+  const TStrList &GetArguments() const { return Arguments; }
   /* initialises Options and Arguments. Options either contain '=' or start
   from '-'
   */
@@ -56,6 +58,10 @@ public:
   consequently will update the values
   */
   void ReadOptions(const olxstr &fn);
+  template <typename T>
+  void UpdateOption(const T &name, const olxstr &value) {
+    Options.AddParam(name, value);
+  }
   /* instance dir dependents on the location of the executable and to be used
   to store instance specific data - updates etc.  If unset, the value is equal
   to the BaseDir

@@ -5026,7 +5026,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( FXApp->CheckFileType<TP4PFile>() ||
         FXApp->CheckFileType<TCRSFile>() )
       {
-        if (TBasicApp::GetInstance().Options.FindValue(
+        if (TBasicApp::GetInstance().GetOptions().FindValue(
           "p4p_automate", FalseString()).ToBool())
         {
           TMacroError er;

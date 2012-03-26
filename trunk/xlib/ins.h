@@ -323,7 +323,7 @@ public:
   inline const TInsList& InsParams(size_t i)  {  return *Ins.GetObject(i); }
   void DelIns(size_t i);
   static bool DoPreserveInvalid() {
-    return TBasicApp::GetInstance().Options
+    return TBasicApp::GetInstance().GetOptions()
       .FindValue("preserve_invalid_ins", FalseString()).ToBool();
   }
   virtual IEObject* Replicate() const {  return new TIns;  }

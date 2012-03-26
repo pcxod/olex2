@@ -252,21 +252,21 @@ void BAPP_GetArg(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void BAPP_GetOptCount(const TStrObjList&, TMacroError& E)  {
-  E.SetRetVal(TBasicApp::GetInstance().Options.Count());
+  E.SetRetVal(TBasicApp::GetInstance().GetOptions().Count());
 }
 void BAPP_GetOpt(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
   TBasicApp &a = TBasicApp::GetInstance();
-  if (i > a.Options.Count()) {
+  if (i > a.GetOptions().Count()) {
     E.SetRetVal(EmptyString());
     return;
   }
-  olxstr n = a.Options.GetName(i),
-    v = a.Options.GetValue(i);
+  olxstr n = a.GetOptions().GetName(i),
+    v = a.GetOptions().GetValue(i);
   E.SetRetVal(v.IsEmpty() ? n : (n << '=' << v));
 }
 void BAPP_GetOptValue(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal(TBasicApp::GetInstance().Options.FindValue(
+  E.SetRetVal(TBasicApp::GetInstance().GetOptions().FindValue(
     Params[0], Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 //..............................................................................

@@ -873,7 +873,7 @@ double TXApp::GetMinHBondAngle()  {
   if (a.min_hbond_angle_i)
     return a.min_hbond_angle;
   else {
-    a.min_hbond_angle = TBasicApp::GetInstance().Options
+    a.min_hbond_angle = TBasicApp::GetInstance().GetOptions()
     .FindValue("hbond_min_angle", "120").ToDouble();
     a.min_hbond_angle_i = true;
     return a.min_hbond_angle;
@@ -885,7 +885,7 @@ bool TXApp::DoPreserveFVARs() {
   if (a.preserve_fvars_i)
     return a.preserve_fvars;
   else {
-    a.preserve_fvars = TBasicApp::GetInstance().Options
+    a.preserve_fvars = TBasicApp::GetInstance().GetOptions()
     .FindValue("preserve_fvars", FalseString()).ToBool();
     a.preserve_fvars_i = true;
     return a.preserve_fvars;
