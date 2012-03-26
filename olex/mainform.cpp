@@ -1525,7 +1525,7 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   // put log file to the user data folder
   XA->CleanupLogs();
-  XA->CreateLogFile(XA->Options.FindValue("log_name", "olex2"));
+  XA->CreateLogFile(XA->GetOptions().FindValue("log_name", "olex2"));
 
   TBasicApp::GetLog().OnInfo.Add(this, ID_INFO, msiEnter);
   TBasicApp::GetLog().OnWarning.Add(this, ID_WARNING, msiEnter);
@@ -1603,7 +1603,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     FXApp->NewLogEntry(logError) << e.GetException()->GetError();
   }
   try {
-    ShowChemicalOccu = FXApp->Options.FindValue(
+    ShowChemicalOccu = FXApp->GetOptions().FindValue(
       "tooltip_occu_chem", TrueString()).ToBool();
   }
   catch(...) {
@@ -1750,21 +1750,17 @@ void TMainForm::StartupInit()  {
     catch(...) {}
   }
   // do the iterpreters job...
-  if (FXApp->Arguments.Count() >= 2) {
-    if (FXApp->Arguments.GetLastString().EndsWith(".py")) {
+  if (FXApp->GetArguments().Count() >= 2) {
+    if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
       TStrList in;
-      in.LoadFromFile(FXApp->Arguments.GetLastString());
+      in.LoadFromFile(FXApp->GetArguments().GetLastString());
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
     else // disable reading last file in
-      TOlxVars::GetInstance()->SetVar("olx_reap_cmdl", FXApp->Arguments[1]);
+      TOlxVars::GetInstance()->SetVar("olx_reap_cmdl", FXApp->GetArguments()[1]);
   }
   ProcessMacro("onstartup", __OlxSrcInfo);
   ProcessMacro("user_onstartup", __OlxSrcInfo);
-  if( FXApp->Arguments.Count() >= 2 ) {
-    ProcessMacro(olxstr("reap \'") << FXApp->Arguments.Text(' ', 1) << '\'',
-      __OlxSrcInfo);
-  }
   // load html in last call - it might call some destructive functions on uninitialised data
   FHtml->LoadPage(FHtmlIndexFile.u_str());
   FHtml->SetHomePage(FHtmlIndexFile);
@@ -4232,7 +4228,7 @@ size_t TMainForm::DownloadFiles(const TStrList &files, const olxstr &dest) {
 }
 //..............................................................................
 void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
-  FXApp->Options.AddParam(option, value);
+  FXApp->UpdateOption(option, value);
   try {
     TSettingsFile st;
     olxstr fn = FXApp->GetInstanceDir() + ".options";

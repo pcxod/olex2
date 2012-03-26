@@ -22,14 +22,14 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   SetHandler(smbLeft, sssShift|sssCtrl, meMoveXY);
   SetHandler(smbLeft|smbRight, 0, meMoveXY);
   //SetHandler(smbLeft, sssAlt, meMoveZ);
-  if( !TBasicApp::GetInstance().Options.FindValue(
+  if( !TBasicApp::GetInstance().GetOptions().FindValue(
     "mouse_invert_zoom", FalseString()).ToBool() )
   {
     SetHandler(smbRight, 0, meZoom);
   }
   else
     SetHandler(smbRight, 0, meZoomI);
-  ClickThreshold = TBasicApp::GetInstance().Options
+  ClickThreshold = TBasicApp::GetInstance().GetOptions()
     .FindValue("mouse_click_threshold", "2").ToInt();
   // an alternative for MAC...
   SetHandler(smbLeft, sssAlt, meZoom);

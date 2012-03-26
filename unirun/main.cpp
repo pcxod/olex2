@@ -183,8 +183,8 @@ int main(int argc, char** argv)  {
 #ifdef _DEBUG
     system("PAUSE");
 #endif
-    if( !bapp.Options.Contains("-run") )
-      DoLaunch(bapp.Arguments.SubListFrom(1));
+    if( !bapp.GetOptions().Contains("-run") )
+      DoLaunch(bapp.GetArguments().SubListFrom(1));
   }
   catch(const TExceptionBase& exc)  {
     TStrList err;
@@ -201,7 +201,7 @@ int main(int argc, char** argv)  {
 
 void DoRun()  {
   bool temporary_run=false;
-  olxstr bd = TBasicApp::GetInstance().Options.FindValue(
+  olxstr bd = TBasicApp::GetInstance().GetOptions().FindValue(
     "-basedir", EmptyString());
 //  TBasicApp::NewLogEntry() << "L: " << bd;
   if (!bd.IsEmpty()) {
@@ -222,8 +222,8 @@ void DoRun()  {
     olxstr repo;
     TBasicApp::NewLogEntry() << "Installation folder: "
       << TBasicApp::GetBaseDir();
-    if( TBasicApp::GetInstance().Options.Contains("-tag") )  {
-      olxstr tag = TBasicApp::GetInstance().Options["-tag"];
+    if( TBasicApp::GetInstance().GetOptions().Contains("-tag") )  {
+      olxstr tag = TBasicApp::GetInstance().GetOptions()["-tag"];
       if( tag.Equalsi("max") )  {
         TStrList tags;
         api.GetAvailableTags(tags, repo);
@@ -347,12 +347,12 @@ void DoRun()  {
           args_list << tmp_exe_name;
           args_list << (olxstr("-basedir=").quote('"') <<
             TEFile::TrimPathDelimeter(TBasicApp::GetBaseDir()));
-          args_list << TBasicApp::GetInstance().Arguments.SubListFrom(1);
-          for (size_t i=0; i < TBasicApp::GetInstance().Options.Count(); i++) {
-            olxstr &l = args_list.Add(TBasicApp::GetInstance().Options.GetName(i));
-            if (!TBasicApp::GetInstance().Options.GetValue(i).IsEmpty()) {
+          args_list << TBasicApp::GetInstance().GetArguments().SubListFrom(1);
+          for (size_t i=0; i < TBasicApp::GetInstance().GetOptions().Count(); i++) {
+            olxstr &l = args_list.Add(TBasicApp::GetInstance().GetOptions().GetName(i));
+            if (!TBasicApp::GetInstance().GetOptions().GetValue(i).IsEmpty()) {
               l << (olxstr('=').quote('"') <<
-                TBasicApp::GetInstance().Options.GetValue(i));
+                TBasicApp::GetInstance().GetOptions().GetValue(i));
             }
           }
           char **args = ListToArgs(args_list);
