@@ -10,6 +10,7 @@
 #include "leq.h"
 #include "refmodel.h"
 #include "srestraint.h"
+#include "xapp.h"
 
 olxstr XVarManager::RelationNames[] = {"None", "var", "one_minus_var"};
 
@@ -105,7 +106,7 @@ bool XVar::IsUsed() const {
   const size_t rc = RefCount();
   if( LeqCount() == 0 )  {
     if( rc == 1 )  {
-      if( Parent.DoPreserveFVARs() ||
+      if( TXApp::DoPreserveFVARs() ||
           EsdlInstanceOf(References[0]->referencer, TSimpleRestraint) )
         return true;
     }
@@ -162,8 +163,6 @@ XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
 //.................................................................................................
 //.................................................................................................
 XVarManager::XVarManager(RefinementModel& rm) : RM(rm) {
-  preserve_fvars = TBasicApp::GetInstance().Options.FindValue(
-    "preserve_fvars", FalseString()).ToBool();
   NextVar = 0;
   NewVar(1.0).SetId(0);
 }

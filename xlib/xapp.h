@@ -60,6 +60,9 @@ protected:
   TLibrary Library;
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
   ASelectionOwner* SelectionOwner;
+  bool preserve_fvars, preserve_fvars_i;
+  double min_hbond_angle;
+  bool min_hbond_angle_i;
 protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
   void ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last);
@@ -153,6 +156,8 @@ public:
   }
   // the returned value (in degrees) must be cached if used in loops etc
   static double GetMinHBondAngle();
+  // preserve free vaiable if referenced once only
+  static bool DoPreserveFVARs();
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
