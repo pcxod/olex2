@@ -112,7 +112,7 @@ public:
     return *Instance;  
   }
 
-  static bool HasInstance()  {  return Instance != NULL;  }
+  static bool HasInstance();
   /* Creates a log file, just a name is expected: like olex2 or olex2c, the
   timestamp will be appendedn to make it 'unique'. If the name is not an
   absolute path - the InsatnceDir is used
@@ -149,6 +149,10 @@ public:
   static void LeaveCriticalSection()  {  app_cs.leave();  }
   static olx_critical_section& GetCriticalSection() {  return app_cs;  }
   DefPropP(short, MaxThreadCount)
+  /* Note that objects which may live after the application end (like the ones
+  places into the garbage collector - should check that an application insatnce
+  exsists before using any of the actions queues
+  */
   TActionQueue& OnProgress;
   TActionQueue& OnTimer;
   TActionQueue& OnIdle;

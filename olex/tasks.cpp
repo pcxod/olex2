@@ -2,6 +2,7 @@
 #include "xglapp.h"
 #include "mainform.h"
 #include "msgbox.h"
+#include "ins.h"
 
 void P4PTask::Run() {
   if (file_id.Contains("Rigaku CrystalClear")) {
@@ -26,6 +27,22 @@ void P4PTask::Run() {
         run_xplain = opt.ToBool();
       }
       if (run_xplain) {
+        olxstr loaded_fn = TXApp::GetInstance().XFile().GetFileName();
+        olxstr exts[] = {"ins", "res", "cif"};
+        bool cell_src_exists = false;
+        for (size_t i=0; i < sizeof(exts)/sizeof(exts[0]); i++) {
+          olxstr n = TEFile::ChangeFileExt(loaded_fn, exts[i]);
+          if (TEFile::Exists(n)) {
+            cell_src_exists = true;
+            break;
+          }
+        }
+        if (!cell_src_exists) {
+          TIns ins;
+          ins.Adopt(TXApp::GetInstance().XFile());
+          ins.SaveForSolution(TEFile::ChangeFileExt(loaded_fn, "ins"), "TREF",
+            "Imported by Olex2");
+        }
         olxstr fn = "spy.xplain.run(false, true)",
           rv;
         mf->executeFunction(fn, rv);

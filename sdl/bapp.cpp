@@ -48,10 +48,17 @@ TBasicApp::TBasicApp(const olxstr& FileName)
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
+  EnterCriticalSection();
   delete Log;
   if (LogFile != NULL)
     delete LogFile;
   Instance = NULL;
+  LeaveCriticalSection();
+}
+//..............................................................................
+bool TBasicApp::HasInstance()  {
+  volatile olx_scope_cs cs(GetCriticalSection());
+  return Instance != NULL;
 }
 //..............................................................................
 void TBasicApp::ReadOptions(const olxstr &fn) {
