@@ -220,6 +220,30 @@ bool TNetwork::CBondExistsQ(const TSAtom& A1, const TSAtom& A2,
   return false;
 }
 //..............................................................................
+bool TNetwork::IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
+  const smatd& sm)
+{
+  if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
+    (ca.GetPart() == cb.GetPart()) )
+  {
+    if ((ca.GetPart() < 0 || cb.GetPart() < 0)) {
+      if (sm.IsFirst() ) return true;
+      for (size_t i=0; i < ca.EquivCount(); i++) {
+        if (sm.GetId() == ca.GetEquiv(i).GetId())
+          return true;
+      }
+      const TUnitCell &uc = ca.GetParent()->GetLattice().GetUnitCell();
+      for (size_t i=0; i < cb.EquivCount(); i++) {
+        if (smatd::IsFirst(uc.MulMatrixId(cb.GetEquiv(i), sm)))
+          return true;
+      }
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+//..............................................................................
 //..............................................................................
 // HELPER function
 class TNetTraverser  {

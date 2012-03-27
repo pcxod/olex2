@@ -206,7 +206,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
   if( Atoms[ind]->IsDeleted() )  return;
   const size_t ac = Atoms.Count();
   const size_t mc = Matrices.Count();
-  for( size_t i=ind; i < ac; i++ )  {
+  for( size_t i=ind+1; i < ac; i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
     if( Atoms[i]->GetExyzGroup() != NULL &&
       Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup() )
@@ -218,7 +218,6 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       const vec3i shift = v.Round<int>();
       // collect asymetric unit bonds
       if( j == 0 && shift.IsNull() )  {  // I
-        if( ind == i )  continue;
         AU->CellToCartesian(v);
         const double qd = v.QLength();
         if( qd < 1e-6 )  {
@@ -247,13 +246,6 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       AU->CellToCartesian(v -= shift);
       const double qd = v.QLength();
       if( qd < 1e-6 )  {
-        if( i == ind )  {
-          smatd eqm(Matrices[j]);
-          eqm.t += shift;
-          eqm.SetId((uint8_t)j, shift);
-          Atoms[ind]->AddEquiv(eqm);
-          continue;
-        }
         if( Atoms[ind]->GetType() == iQPeakZ )  {
           Atoms[ind]->SetDeleted(true);
           break;
@@ -274,22 +266,19 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           Latt->GetDelta()) )
         {
           Atoms[ind]->AttachSite(Atoms[i], matr);
-          if (i != ind)
-            Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+          Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
           Latt->GetDeltaI()) )
         {
           Atoms[ind]->AttachSiteI(Atoms[i], matr);
-          if (i != ind)
-            Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+          Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
       }
     }
     for( int ii=-1; ii <= 1; ii++ )  {
       for( int ij=-1; ij <= 1; ij++ ) {
         for( int ik=-1; ik <= 1; ik++ )  {
-          if( ii == 0 && ij == 0 && ik == 0 && i == ind )  continue;
           const vec3i shift(ii, ij, ik);
           const double qd = AU->Orthogonalise(
             Atoms[ind]->ccrd() - shift - Atoms[i]->ccrd()).QLength();
@@ -310,6 +299,41 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
             if (i != ind)
               Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
           }
+        }
+      }
+    }
+  }
+}
+//..............................................................................
+void TUnitCell::TSearchSymmEqTask::InitEquiv() const {
+  const size_t ac = Atoms.Count();
+  const size_t mc = Matrices.Count();
+  for( size_t i=0; i < ac; i++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
+    for( size_t j=1; j < mc; j++ )  {
+      vec3d v = Atoms[i]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
+      const vec3i shift = v.Round<int>();
+      AU->CellToCartesian(v -= shift);
+      const double qd = v.QLength();
+      if( qd < 1e-6 )  {
+        smatd eqm(Matrices[j]);
+        eqm.t += shift;
+        eqm.SetId((uint8_t)j, shift);
+        Atoms[i]->AddEquiv(eqm);
+      }
+      else  {
+        smatd matr = Matrices[j];
+        matr.t += shift;
+        matr.SetId((uint8_t)j, shift);
+        if( TNetwork::BondExistsQ(*Atoms[i], *Atoms[i], matr, qd,
+          Latt->GetDelta()) )
+        {
+          Atoms[i]->AttachSite(Atoms[i], matr);
+        }
+        else if( TNetwork::BondExistsQ(*Atoms[i], *Atoms[i], matr, qd,
+          Latt->GetDeltaI()) )
+        {
+          Atoms[i]->AttachSiteI(Atoms[i], matr);
         }
       }
     }
@@ -347,6 +371,7 @@ void TUnitCell::FindSymmEq() const  {
   }
   else  {
     TSearchSymmEqTask searchTask(ACA, Matrices);
+    searchTask.InitEquiv();
     TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(),
       tQuadraticTask, 1000);
     for( size_t i=0; i < ACA.Count(); i++ )

@@ -78,17 +78,7 @@ public:
   }
 
   static bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb,
-    const smatd& sm)
-  {
-    if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
-       (ca.GetPart() == cb.GetPart()) )
-    {
-      if ((ca.GetPart() < 0 || cb.GetPart() < 0))
-        return sm.IsFirst();
-      return true;
-    }
-    return false;
-  }
+    const smatd& sm);
 
   static bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb)  {
     return (ca.GetPart() == 0 || cb.GetPart() == 0 ||
