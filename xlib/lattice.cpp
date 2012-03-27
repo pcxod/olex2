@@ -512,9 +512,11 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
 //..............................................................................
 void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Template)  {
   RestoreCoordinates();
-  // all matrices after MatrixCount are new and has to be used for generation
-  const size_t currentCount = MatrixCount();
   const TUnitCell& uc = GetUnitCell();
+  SortedPtrList<smatd, smatd::IdComparator> matrices;
+  matrices.SetCapacity(Matrices.Count());
+  for (size_t i=0; i < Matrices.Count(); i++)
+    matrices.AddUnique(Matrices[i]);
   OnStructureGrow.Enter(this);
   if( GrowShell )  {
     for( size_t i=0; i < atoms.Count(); i++ )  {
@@ -524,26 +526,22 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
         const TCAtom::Site& site = CA.GetAttachedSite(j);
         if( !site.atom->IsAvailable() )  continue;
         const smatd m = uc.MulMatrix(site.matrix, atoms[i]->GetMatrix());
+        if (Objects.atomRegistry.Find(
+          TSAtom::Ref(site.atom->GetId(), m.GetId())) != NULL)
+          continue;
+        size_t mi = matrices.IndexOf(&m);
         smatd *mp;
-        bool found = false;
-        size_t l; // need to use it later
-        for( l=0; l < MatrixCount(); l++ )  {
-          if( Matrices[l]->GetId() == m.GetId() )  {
-            found = true;  
-            mp = Matrices[l];
-            break;
-          }
-        }
-        if( !found )
-          mp = Matrices.Add(new smatd(m));
-        if( Objects.atomRegistry.Find(TSAtom::Ref(site.atom->GetId(), m.GetId())) == NULL )
-          GenerateAtom(*site.atom, *mp);
+        if (mi == InvalidIndex)
+          matrices.Add(mp = Matrices.Add(new smatd(m)));
+        else
+          mp = matrices[mi];
+        GenerateAtom(*site.atom, *mp);
       }
     }
   }
   else  {
   // the fragmens to grow by a particular matrix
-    TTypeList<TIntList> Fragments2Grow;
+    olxdict<smatd*, TIntList, TPointerComparator> Fragments2Grow;
     for( size_t i=0; i < atoms.Count(); i++ )  {
       TSAtom* SA = atoms[i];
       const TCAtom& CA = SA->CAtom();
@@ -551,34 +549,21 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
         const TCAtom::Site& site = CA.GetAttachedSite(j);
         if( !site.atom->IsAvailable() )  continue;
         const smatd m = uc.MulMatrix(site.matrix, atoms[i]->GetMatrix());
-        bool found = false;
-        size_t l; // need to use it later
-        for( l=0; l < MatrixCount(); l++ )  {
-          if( Matrices[l]->GetId() == m.GetId() )  {
-            found = true;  
-            break;
-          }
-        }
-        if( !found )  {
-          Matrices.Add(new smatd(m));
-          Fragments2Grow.Add(new TIntList).Add(site.atom->GetFragmentId());
-        }
-        else  {
-          if( l >= currentCount )  {
-            TIntList& ToGrow = Fragments2Grow[l-currentCount];
-            if( ToGrow.IndexOf(site.atom->GetFragmentId()) == InvalidIndex )
-              ToGrow.Add(site.atom->GetFragmentId());
-          }
-        }
+        size_t mi = matrices.IndexOf(&m);
+        smatd *mp;
+        if (mi == InvalidIndex)
+          matrices.Add(mp = Matrices.Add(new smatd(m)));
+        else
+          mp = matrices[mi];
+        Fragments2Grow.Add(mp).Add(site.atom->GetFragmentId());
       }
     }
-    for( size_t i = currentCount; i < MatrixCount(); i++ )  {
-      smatd* M = Matrices[i];
-      TIntList& ToGrow = Fragments2Grow[i-currentCount];
+    for (size_t i=0; i < Fragments2Grow.Count(); i++) {
+      TIntList& ToGrow = Fragments2Grow.GetValue(i);
       for( size_t j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
         TCAtom& ca = GetAsymmUnit().GetAtom(j);
-        if( ca.IsAvailable()&& ToGrow.IndexOf(ca.GetFragmentId()) != InvalidIndex )
-          GenerateAtom(ca, *M);
+        if( ca.IsAvailable() && ToGrow.IndexOf(ca.GetFragmentId()) != InvalidIndex )
+          GenerateAtom(ca, *const_cast<smatd *>(Fragments2Grow.GetKey(i)));
       }
     }
   }

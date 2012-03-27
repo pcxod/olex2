@@ -479,6 +479,7 @@ protected:
   public:
     TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices);
     void Run(size_t ind) const;
+    void InitEquiv() const;
     TSearchSymmEqTask* Replicate() const {
       return new TSearchSymmEqTask(Atoms, Matrices);
     }
