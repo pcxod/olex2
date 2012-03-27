@@ -45,9 +45,11 @@ TWinProcess::TWinProcess(const olxstr& cmdl, short flags) : AProcess(false, cmdl
 }
 //..............................................................................
 TWinProcess::~TWinProcess()  {
+  volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
   if( IsTerminateOnDelete() )
     Terminate();
-  TBasicApp::GetInstance().OnTimer.Remove(this);
+  if (TBasicApp::HasInstance())
+    TBasicApp::GetInstance().OnTimer.Remove(this);
   CloseThreadStreams();
   CloseStreams();
   if( ProcessInfo.hProcess != NULL )
@@ -163,7 +165,9 @@ bool TWinProcess::Execute()  {
 }
 //..............................................................................
 bool TWinProcess::Terminate()  {
-  TBasicApp::GetInstance().OnTimer.Remove(this);
+  volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+  if (TBasicApp::HasInstance())
+    TBasicApp::GetInstance().OnTimer.Remove(this);
   SetTerminated();
   CloseStreams();
   OnTerminate.Execute((AEventsDispatcher*)this, NULL);
