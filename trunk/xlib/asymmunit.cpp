@@ -104,6 +104,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   }
   // copy matrices
   Cartesian2Cell = C.GetCartesianToCell();
+  Cartesian2CellT = C.Cartesian2CellT;
   Cell2CartesianT = C.Cell2CartesianT;
   Cell2Cartesian = C.GetCellToCartesian();
   Cell2CartesianT = C.Cell2CartesianT;
