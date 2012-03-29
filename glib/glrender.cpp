@@ -1322,7 +1322,7 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TGlRenderer>(
     new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereo, "Stereo",
       fpNone|fpOne|fpTwo,
-      "Returns/sets color/cross stereo mode and optionally stereo angle [3]")
+      "Returns/sets color/cross/anaglyph/hardware stereo mode and optionally stereo angle [3]")
   );
   lib->RegisterFunction<TGlRenderer>(
     new TFunction<TGlRenderer>(this,  &TGlRenderer::LibStereoColor,
