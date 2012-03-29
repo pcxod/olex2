@@ -2,6 +2,7 @@
 #include "xglapp.h"
 #include "mainform.h"
 #include "msgbox.h"
+#include "ins.h"
 
 void P4PTask::Run() {
   if (file_id.Contains("Rigaku CrystalClear")) {
@@ -10,7 +11,7 @@ void P4PTask::Run() {
     mf->ProcessFunction(cmd, __OlxSrcInfo);
     if (cmd.IsBool() && cmd.ToBool()) {
       olxstr opt =
-        TBasicApp::GetInstance().Options.FindValue("run_rigaku_xplain");
+        TBasicApp::GetInstance().GetOptions().FindValue("run_rigaku_xplain");
       bool run_xplain=false;
       if (opt.IsEmpty()) {
         olxstr rv = TdlgMsgBox::Execute(mf, "Would you like to run "
@@ -26,6 +27,22 @@ void P4PTask::Run() {
         run_xplain = opt.ToBool();
       }
       if (run_xplain) {
+        olxstr loaded_fn = TXApp::GetInstance().XFile().GetFileName();
+        olxstr exts[] = {"ins", "res", "cif"};
+        bool cell_src_exists = false;
+        for (size_t i=0; i < sizeof(exts)/sizeof(exts[0]); i++) {
+          olxstr n = TEFile::ChangeFileExt(loaded_fn, exts[i]);
+          if (TEFile::Exists(n)) {
+            cell_src_exists = true;
+            break;
+          }
+        }
+        if (!cell_src_exists) {
+          TIns ins;
+          ins.Adopt(TXApp::GetInstance().XFile());
+          ins.SaveForSolution(TEFile::ChangeFileExt(loaded_fn, "ins"), "TREF",
+            "Imported by Olex2");
+        }
         olxstr fn = "spy.xplain.run(false, true)",
           rv;
         mf->executeFunction(fn, rv);
@@ -52,7 +69,7 @@ void CellChangeTask::Run() {
     n << ' ' << TEValueD(cell[i], esds[i]).ToString() <<
       ' ' << TEValueD(cell[3+i], esds[3+i]).ToString();
   }
-  olxstr opt = TBasicApp::GetInstance().Options.FindValue("use_hkl_cell");
+  olxstr opt = TBasicApp::GetInstance().GetOptions().FindValue("use_hkl_cell");
   bool use = false;
   if (opt.IsEmpty() && o != n) {
     olxstr msg = "Cell parameters in your HKL file differ from currently "

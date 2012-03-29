@@ -1832,7 +1832,7 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   Cmds.Delete(0);
   TXBondPList bonds;
   bool absolute = Options.Contains('a');
-  if( Cmds.Count() == 2 && Cmds[1].Equalsi("hbonds") )  {
+  if( Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds") )  {
     if (absolute) r /= 0.02;
     TGXApp::BondIterator bi = FXApp->GetBonds();
     while( bi.HasNext() )  {
@@ -2040,11 +2040,11 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       Macros.ProcessMacro(olxstr("exec -o getvar(defbrowser) '") << cmd << '\'', Error);
     }
 # ifdef __linux__
-    else if( cmd.EndsWith(".pdf") )  {
+    else if( cmd.EndsWith(".pdf") || cmd.EndsWith(".PDF") )  {
       wxString dskpAttr;
       wxGetEnv(wxT("DESKTOP_SESSION"), &dskpAttr);
       if (dskpAttr.Contains(wxT("gnome")))
-        Macros.ProcessMacro(olxstr("exec -o gnome-open '") << cmd << '\'', Error);
+        Macros.ProcessMacro(olxstr("exec -o xdg-open '") << cmd << '\'', Error);
       else if (dskpAttr.Contains(wxT("kde")))
         Macros.ProcessMacro(olxstr("exec -o konqueror '") << cmd << '\'', Error);
       else if (dskpAttr.Contains(wxT("xfce")))
@@ -4987,6 +4987,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     try  {
       SaveVFS(plStructure); // save virtual fs file
+      TFileHandlerManager::Clear(plStructure);
       int64_t st = TETime::msNow();
       FXApp->LoadXFile(TXFile::ComposeName(file_n));
       st = TETime::msNow() - st;
@@ -5025,7 +5026,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( FXApp->CheckFileType<TP4PFile>() ||
         FXApp->CheckFileType<TCRSFile>() )
       {
-        if (TBasicApp::GetInstance().Options.FindValue(
+        if (TBasicApp::GetInstance().GetOptions().FindValue(
           "p4p_automate", FalseString()).ToBool())
         {
           TMacroError er;
@@ -6773,14 +6774,13 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     original_q.SetCapacity(xatoms.Count());
     original_crds.SetCapacity(xatoms.Count());
     mat3d basis_t = mat3d::Transpose(basis);
+    double sm=0;
     for (size_t i=0; i < xatoms.Count(); i++) {
+      xatoms[i]->GetEllipsoid()->GetQuad(original_q.AddNew(6));
+      xatoms[i]->GetEllipsoid()->MultMatrix(basis);
       xatoms[i]->GetEllipsoid()->GetQuad(Q);
-      original_q.AddCopy(Q);
-      mat3d N(Q[0], Q[5], Q[4], Q[1], Q[3], Q[2]);
-      N = basis*N*basis_t;
-      Q[0] = N[0][0];  Q[1] = N[1][1];  Q[2] = N[2][2];
-      Q[3] = N[1][2];  Q[4] = N[0][2];  Q[5] = N[0][1];
-      *xatoms[i]->GetEllipsoid() = Q;
+      evecd d = original_q.GetLast() - Q;
+      sm += d.Length();
       original_crds.AddCopy(xatoms[i]->crd());
       xatoms[i]->crd() = basis*xatoms[i]->crd();
     }

@@ -131,7 +131,8 @@ public:
   }
   void SetId(uint8_t id, const vec3i& t)  {  Id = GenerateId(id, t);  }
 
-  bool IsFirst() const {  return Id == 0x00808080;  }
+  bool IsFirst() const {  return IsFirst(Id);  }
+  static bool IsFirst(uint32_t id) {  return id == 0x00808080;  }
   uint8_t GetContainerId() const {  return (uint8_t)(Id >> 24);  }
 
   static uint8_t GetContainerId(uint32_t id) {  return (uint8_t)(id >> 24);  }
@@ -208,6 +209,9 @@ public:
   struct IdComparator {
     static int Compare(const TSymmMat& a, const TSymmMat& b)  {
       return olx_cmp(a.GetId(), b.GetId());
+    }
+    static int Compare(const TSymmMat* a, const TSymmMat* b)  {
+      return olx_cmp(a->GetId(), b->GetId());
     }
   };
   struct ContainerIdComparator {

@@ -168,6 +168,17 @@ olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
   return sl.Count() == 1 ? (repository_tag=sl[0]) : EmptyString();
 }
 //.............................................................................
+olxstr PatchAPI::GetSharedDir(bool refresh) {
+  olxstr rv = TEFile::AddPathDelimeter(_GetSharedDirRoot(refresh));
+  if( olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE") )
+    return rv;
+#ifdef __WIN32__
+  return rv << "Olex2Data/";
+#else
+  return rv << "data/";
+#endif
+}
+//.............................................................................
 olxstr PatchAPI::_GetSharedDirRoot(bool refresh)  {
   if (!refresh && !shared_dir.IsEmpty()) return shared_dir;
   const olxstr dd_str = olx_getenv("OLEX2_DATADIR");

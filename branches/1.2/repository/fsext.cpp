@@ -102,7 +102,7 @@ IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN)  {
 }
 //..............................................................................
 #ifdef __WXWIDGETS__
-wxFSFile *TFileHandlerManager::_GetFSFileHandler( const olxstr &FN )  {
+wxFSFile *TFileHandlerManager::_GetFSFileHandler(const olxstr &FN)  {
   static wxString st(wxT("OCTET")), es;
   if( TZipWrapper::IsZipFile(FN) )  {
     TZipEntry ze;
@@ -213,7 +213,7 @@ IDataInputStream *TFileHandlerManager::GetInputStream(const olxstr &FN)  {
 }
 //..............................................................................
 #ifdef __WXWIDGETS__
-wxFSFile *TFileHandlerManager::GetFSFileHandler( const olxstr &FN )  {
+wxFSFile *TFileHandlerManager::GetFSFileHandler(const olxstr &FN)  {
   if( FHandler == NULL )  FHandler = new TFileHandlerManager;
   return FHandler->_GetFSFileHandler( LocateFile(FN) );
 }

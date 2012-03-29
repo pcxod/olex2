@@ -25,21 +25,43 @@ class TBasicApp: public IEObject  {
   olxstr BaseDir, InstanceDir, SharedDir, ExeName;
 protected:
   class TActionQList Actions;
-  static TBasicApp* Instance;
-  class TLog* Log;
+  static TBasicApp *Instance;
+  class TLog *Log;
+  class TEFile *LogFile;
   short MaxThreadCount;
   bool MainFormVisible, Profiling, BaseDirWriteable;
   static olx_critical_section app_cs;
-public:
+  void ValidateArgs() const;
   TParamList Options;
   TStrList Arguments;
+public:
   // the file name of the application with full path
   TBasicApp(const olxstr& AppName);
   virtual ~TBasicApp();
+  const TParamList &GetOptions() const { return Options; }
+  const TStrList &GetArguments() const { return Arguments; }
+  /* initialises Options and Arguments. Options either contain '=' or start
+  from '-'
+  */
+  template <typename ch_t>
+  void InitArguments(int argc, ch_t **argv) {
+    ValidateArgs(); // throw an excaption if Arguments are not empty
+    for (size_t i=0; i < argc; i++) {
+      olxstr arg = argv[i];
+      if (arg.Contains('=') || arg.StartsFrom('-'))
+        Options.FromString(arg, '=');
+      else
+        Arguments.Add(arg);
+    }
+  }
   /*The options are read when the object is constructed, calling it
   consequently will update the values
   */
   void ReadOptions(const olxstr &fn);
+  template <typename T>
+  void UpdateOption(const T &name, const olxstr &value) {
+    Options.AddParam(name, value);
+  }
   /* instance dir dependents on the location of the executable and to be used
   to store instance specific data - updates etc.  If unset, the value is equal
   to the BaseDir
@@ -90,7 +112,17 @@ public:
     return *Instance;  
   }
 
-  static bool HasInstance()  {  return Instance != NULL;  }
+  static bool HasInstance();
+  /* Creates a log file, just a name is expected: like olex2 or olex2c, the
+  timestamp will be appendedn to make it 'unique'. If the name is not an
+  absolute path - the InsatnceDir is used
+  */
+  bool CreateLogFile(const olxstr &file_name);
+  TEFile *GetLogFile() const { return LogFile; }
+  /*Removes .log files in the given folder, if the dir_name is empty - the
+  InstanceDir is cleaned up
+  */
+  void CleanupLogs(const olxstr &dir_name=EmptyString());
 
   TActionQueue& NewActionQueue(const olxstr& Name);
   TActionQueue* FindActionQueue(const olxstr& Name)  {  
@@ -117,6 +149,10 @@ public:
   static void LeaveCriticalSection()  {  app_cs.leave();  }
   static olx_critical_section& GetCriticalSection() {  return app_cs;  }
   DefPropP(short, MaxThreadCount)
+  /* Note that objects which may live after the application end (like the ones
+  places into the garbage collector - should check that an application insatnce
+  exsists before using any of the actions queues
+  */
   TActionQueue& OnProgress;
   TActionQueue& OnTimer;
   TActionQueue& OnIdle;

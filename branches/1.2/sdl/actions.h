@@ -139,9 +139,14 @@ public:
   // executes a named queue
   bool Execute(const olxstr& Name, const IEObject* Sender, const IEObject* Data=NULL);
 
-  bool Exists(const olxstr& Name) const {  return Queues.IndexOf(Name) != InvalidIndex;  }
-  /* throws exception if the queue does not exist */
-  TActionQueue* Find(const olxstr& Name) const {  return Queues[Name];  }
+  bool Exists(const olxstr& Name) const {
+    return Queues.IndexOf(Name) != InvalidIndex;
+  }
+  /* find a queue by name, returns NULL if not found */
+  TActionQueue* Find(const olxstr& Name) const {
+    size_t i = Queues.IndexOf(Name);
+    return i == InvalidIndex ? NULL : Queues.GetObject(i);
+  }
   // queue by index
   TActionQueue& Get(size_t index) const {  return *Queues.GetObject(index);  }
   TActionQueue& operator [](size_t index) const {  return *Queues.GetObject(index);  }
@@ -157,17 +162,17 @@ class TActionProxy : public AActionHandler  {
 public:
   TActionProxy(TActionQueue& q) : queue(q) {}
   virtual bool Enter(const IEObject* Sender, const IEObject* Data=NULL) {  
-	  return queue.Enter(Sender, Data);
-	}
+    return queue.Enter(Sender, Data);
+  }
   virtual bool Exit(const IEObject* Sender, const IEObject* Data=NULL)  {
-	  return queue.Exit(Sender, Data);
-	}
+    return queue.Exit(Sender, Data);
+  }
   virtual void UpdateData(const IEObject* Sender, const IEObject* Data=NULL)  {
-	  queue.UpdateData(Sender, Data);
-	}
+    queue.UpdateData(Sender, Data);
+  }
   virtual bool Execute(const IEObject* Sender, const IEObject* Data=NULL)  {
-	  return queue.Execute(Sender, Data);
-	} 
+    return queue.Execute(Sender, Data);
+  } 
 };
 // disabled the queue when created and restores the state (if was enabled!) when destroyed
 class TActionQueueLock  {

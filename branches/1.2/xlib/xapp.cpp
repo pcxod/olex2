@@ -23,7 +23,13 @@
 #include "vcov.h"
 
 TXApp::TXApp(const olxstr &basedir, bool)
-  : TBasicApp(basedir), Library(EmptyString(), this)  {}
+  : TBasicApp(basedir), Library(EmptyString(), this)
+{
+  min_hbond_angle = 120;
+  min_hbond_angle_i = false;
+  preserve_fvars = false;
+  preserve_fvars_i = false;
+}
 //..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
   ASelectionOwner* selOwner)
@@ -863,7 +869,26 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
 }
 //..............................................................................
 double TXApp::GetMinHBondAngle()  {
-  return TBasicApp::GetInstance().Options
+  TXApp &a = GetInstance();
+  if (a.min_hbond_angle_i)
+    return a.min_hbond_angle;
+  else {
+    a.min_hbond_angle = TBasicApp::GetInstance().GetOptions()
     .FindValue("hbond_min_angle", "120").ToDouble();
+    a.min_hbond_angle_i = true;
+    return a.min_hbond_angle;
+  }
+}
+//..............................................................................
+bool TXApp::DoPreserveFVARs() {
+  TXApp &a = GetInstance();
+  if (a.preserve_fvars_i)
+    return a.preserve_fvars;
+  else {
+    a.preserve_fvars = TBasicApp::GetInstance().GetOptions()
+    .FindValue("preserve_fvars", FalseString()).ToBool();
+    a.preserve_fvars_i = true;
+    return a.preserve_fvars;
+  }
 }
 //..............................................................................
