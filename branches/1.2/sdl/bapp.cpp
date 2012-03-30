@@ -24,7 +24,6 @@
 UseEsdlNamespace()
 
 TBasicApp* TBasicApp::Instance = NULL;
-olx_critical_section TBasicApp::app_cs;
 
 TBasicApp::TBasicApp(const olxstr& FileName)
   : OnProgress(Actions.New("PROGRESS")),
