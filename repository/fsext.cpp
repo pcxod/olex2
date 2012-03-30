@@ -86,7 +86,7 @@ IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN)  {
       zw = new TZipWrapper( ze.ZipName, true );
       FZipFiles.Add( ze.ZipName, zw );
     }
-    return zw->OpenEntry( ze.EntryName );
+    return zw->OpenEntry(ze.EntryName);
   }
   else  {
 #endif
@@ -196,7 +196,6 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is,
     mb->Buffer = new char [mb->Length + 1];
     if( mb->Length != 0 )
       is.Read(mb->Buffer, mb->Length);
-    mb->PersistenceId = persistenceId;
   }
 }
 //..............................................................................
@@ -263,7 +262,6 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
   TMemoryBlock *mb = FMemoryBlocks[fileName];
   if( mb == NULL )  {
     mb = new TMemoryBlock;
-    mb->PersistenceId = persistenceId;
     FMemoryBlocks.Add(fileName, mb);
   }
   else
@@ -271,16 +269,16 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
   mb->Buffer = new char [length + 1];
   mb->Length = (uint32_t)length;
   mb->DateTime = TETime::Now();
-  mb->PersistenceId = persistenceId;
   if( length != 0 )
     memcpy(mb->Buffer, bf, length);
+  mb->PersistenceId = persistenceId;
 }
 //..............................................................................
 void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
   size_t length, short persistenceId)
 {
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
-  return FHandler->_AddMemoryBlock(name, bf, length, persistenceId );
+  return FHandler->_AddMemoryBlock(name, bf, length, persistenceId);
 }
 //..............................................................................
 size_t TFileHandlerManager::Count()  {
