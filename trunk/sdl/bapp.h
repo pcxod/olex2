@@ -30,7 +30,6 @@ protected:
   class TEFile *LogFile;
   short MaxThreadCount;
   bool MainFormVisible, Profiling, BaseDirWriteable;
-  static olx_critical_section app_cs;
   void ValidateArgs() const;
   TParamList Options;
   TStrList Arguments;
@@ -145,9 +144,12 @@ public:
   TLibrary* ExportLibrary(const olxstr& lib_name="app");
 
   // application layer critical section
-  static void EnterCriticalSection()  {  app_cs.enter();  }
-  static void LeaveCriticalSection()  {  app_cs.leave();  }
-  static olx_critical_section& GetCriticalSection() {  return app_cs;  }
+  static void EnterCriticalSection()  {  GetCriticalSection().enter();  }
+  static void LeaveCriticalSection()  {  GetCriticalSection().leave();  }
+  static olx_critical_section& GetCriticalSection() {
+    static olx_critical_section app_cs;
+    return app_cs;
+  }
   DefPropP(short, MaxThreadCount)
   /* Note that objects which may live after the application end (like the ones
   places into the garbage collector - should check that an application insatnce
