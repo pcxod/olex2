@@ -4374,8 +4374,10 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   //TBasicApp::NewLogEntry() << "  at (") << olxstr::FormatFloat(2, voidCenter[0]) << ", "  <<
   //  olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
   //  olxstr::FormatFloat(2, voidCenter[2]) << ")";
-  TBasicApp::NewLogEntry() << "Radius of the largest spherical void is (A) " <<
-    olxstr::FormatFloat(2, (double)MaxLevel/resolution);
+  TBasicApp::NewLogEntry() << "Radius [ volume ] of the largest spherical void is " <<
+    olxstr::FormatFloat(2, (double)MaxLevel/resolution) <<
+     " A [ " << olxstr::FormatFloat(2, 4*M_PI*pow((double)MaxLevel/resolution,3)/3)
+     << " A^3 ]";
   TBasicApp::NewLogEntry() << (catoms.IsEmpty() ? "Structure occupies" : "Selected atoms occupy")
     << " (A^3) " << olxstr::FormatFloat(2, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)";
