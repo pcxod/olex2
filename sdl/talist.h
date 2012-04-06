@@ -84,7 +84,7 @@ public:
   }
 //..............................................................................
   //deletes the objects and clears the list
-  inline void Clear()  {  SetCount(0);  }
+  void Clear()  {  SetCount(0);  }
 //..............................................................................
   TArrayList &TakeOver(TArrayList& l, bool do_delete=false)  {
     if( Items != NULL )  delete [] Items;
@@ -108,19 +108,19 @@ public:
     return *this;
   }
 //..............................................................................
-  template <class List> inline TArrayList& operator = (const List& list)  {
+  template <class List> TArrayList& operator = (const List& list)  {
     return Assign(list);
   }
 //..............................................................................
-  inline TArrayList& operator = (const SharedArrayList<T>& list)  {
+  TArrayList& operator = (const SharedArrayList<T>& list)  {
     return TakeOver(list.Release(), true);
   }
 //..............................................................................
-  inline TArrayList& operator = (const ConstArrayList<T>& list)  {
+  TArrayList& operator = (const ConstArrayList<T>& list)  {
     return TakeOver(list.Release(), true);
   }
 //..............................................................................
-  inline TArrayList& operator = (const TArrayList& list)  {
+  TArrayList& operator = (const TArrayList& list)  {
     return Assign(list);
   }
 //..............................................................................
@@ -140,7 +140,7 @@ public:
     AddList(list.GetObject());
   }
 //..............................................................................
-  template <class List> inline TArrayList& operator += (const List& list)  {
+  template <class List> TArrayList& operator += (const List& list)  {
     return AddList(list);
   }
 //..............................................................................
@@ -168,21 +168,21 @@ public:
     return (Items[index] = Obj);
   }
 //..............................................................................
-  inline T& operator [] (size_t index) const {
+  T& operator [] (size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  inline T& GetItem(size_t index) const {
+  T& GetItem(size_t index) const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
 //..............................................................................
-  inline T& GetLast() const {
+  T& GetLast() const {
 #ifdef _DEBUG
   TIndexOutOfRangeException::ValidateRange(
     __POlxSourceInfo, FCount-1, 0, FCount);
@@ -210,7 +210,7 @@ public:
     return *this;
   }
 //..............................................................................
-  inline TArrayList& SetIncrement(size_t v)  {
+  TArrayList& SetIncrement(size_t v)  {
     FIncrement = v;
     return *this;
   }
@@ -294,7 +294,7 @@ public:
     return *this;
   }
 //..............................................................................
-  inline void Swap(size_t i, size_t j)  {
+  void Swap(size_t i, size_t j)  {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, j, 0, FCount);
@@ -324,9 +324,9 @@ public:
     Items[to] = D;
   }
 //..............................................................................
-  inline size_t Count() const {  return FCount;  }
+  size_t Count() const {  return FCount;  }
 //..............................................................................
-  inline bool IsEmpty() const {  return FCount == 0;  }
+  bool IsEmpty() const {  return FCount == 0;  }
 //..............................................................................
   template <class init_t>
   TArrayList& SetCount(size_t v, const init_t &initialiser)  {

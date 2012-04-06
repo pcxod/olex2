@@ -521,6 +521,9 @@
     <ClInclude Include="..\..\..\sdl\exparse\statements.h">
       <Filter>Header Files\exparse</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\math\dmatrix.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

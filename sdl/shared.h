@@ -64,27 +64,15 @@ public:
       delete p;
     }
   }
-  Item operator [] (size_t i)  {  return Item(i, *this);  }
-  const item_t &operator [] (size_t i) const {  return (*p->p)[i];  }
-  size_t Count() const {  return p == NULL ? 0 : p->p->Count();  }
-  bool IsEmpty() const {  return Count() == 0;  }
   operator const cont_t &() const {
     if( p == NULL )
       throw_invalid(__POlxSourceInfo);
     return *p->p;
   }
-  const cont_t& GetList() const {
+  const cont_t& GetObject() const {
     if( p == NULL )
       throw_invalid(__POlxSourceInfo);
     return *p->p;
-  }
-  void Delete(size_t i)  {
-    on_modify();
-    p->p->Delete(i);  
-  }
-  void IncCapacity(size_t v)  {
-    on_modify();
-    p->p->Setcapcity(p->p->GetCount()+v);  
   }
   shared_base& operator = (const shared_base &a) {
     if( p != NULL && --p->ref_cnt == 0 )  {
@@ -113,9 +101,33 @@ public:
   bool IsValid() const {  return p != NULL;  }
 };
 
+template <class cont_t, typename item_t>
+class shared_list_base : public shared_base<cont_t, item_t> {
+public:
+  shared_list_base() {}
+  shared_list_base(const shared_list_base &l)
+    : shared_base<cont_t, item_t>(l)  {}
+  shared_list_base(cont_t *l)
+    : shared_base<cont_t, item_t>(l) {}
+  shared_list_base(cont_t &l)
+    : shared_base<cont_t, item_t>(l) {}
+  Item operator [] (size_t i)  {  return Item(i, *this);  }
+  const item_t &operator [] (size_t i) const {  return (*p->p)[i];  }
+  size_t Count() const {  return p == NULL ? 0 : p->p->Count();  }
+  bool IsEmpty() const {  return Count() == 0;  }
+  void Delete(size_t i)  {
+    on_modify();
+    p->p->Delete(i);  
+  }
+  void IncCapacity(size_t v)  {
+    on_modify();
+    p->p->Setcapcity(p->p->GetCount()+v);  
+  }
+};
+
 template <class list_t, typename item_t>
-class shared_list : public shared_base<list_t,item_t> {
-  typedef shared_base<list_t,item_t> _parent_t;
+class shared_list : public shared_list_base<list_t,item_t> {
+  typedef shared_list_base<list_t,item_t> _parent_t;
 public:
   shared_list() {}
   shared_list(const shared_list &l) : _parent_t(l) {}
@@ -135,8 +147,8 @@ public:
 };
 
 template <class list_t, typename item_t>
-class shared_ptr_list : public shared_base<list_t,item_t*> {
-  typedef shared_base<list_t,item_t*> _parent_t;
+class shared_ptr_list : public shared_list_base<list_t,item_t*> {
+  typedef shared_list_base<list_t,item_t*> _parent_t;
 public:
   shared_ptr_list() {}
   shared_ptr_list(const shared_ptr_list &l) : _parent_t(l) {}
@@ -156,8 +168,8 @@ public:
 };
 
 template <class array_t, typename item_t>
-class shared_array : public shared_base<array_t,item_t> {
-  typedef shared_base<array_t,item_t> _parent_t;
+class shared_array : public shared_list_base<array_t,item_t> {
+  typedef shared_list_base<array_t,item_t> _parent_t;
 public:
   shared_array() {}
   shared_array(const shared_array &l) : _parent_t(l) {}
