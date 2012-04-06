@@ -78,6 +78,9 @@ public:
   const list_item_type &operator [] (size_t i) const {
     return (*_parent_t::p->p)[i];
   }
+  const list_item_type &operator () (size_t i) const {
+    return (*_parent_t::p->p)[i];
+  }
   size_t Count() const {
     return _parent_t::p == NULL ? 0 : _parent_t::p->p->Count();
   }
@@ -114,5 +117,29 @@ public:
   }
 };
 
+template <class cont_t>
+class const_mat : public const_obj<cont_t> {
+  typedef const_obj<cont_t> _parent_t;
+public:
+  typedef typename cont_t::number_type number_type;
+
+  const_mat(const const_mat &l) : _parent_t(l) {}
+  const_mat(cont_t *l) : _parent_t(l) {}
+  const_mat(cont_t &l) : _parent_t(l) {}
+  const number_type &operator () (size_t i, size_t j) const {
+    return (*_parent_t::p->p)(i, j);
+  }
+  size_t ColCount() const {
+    return _parent_t::p == NULL ? 0 : _parent_t::p->p->ColCount();
+  }
+  size_t RowCount() const {
+    return _parent_t::p == NULL ? 0 : _parent_t::p->p->RowCount();
+  }
+  bool IsEmpty() const {  return ColCount() == 0 || RowCount() == 0;  }
+  const_mat& operator = (const const_mat &a) {
+    _parent_t:: operator = (a);
+    return *this;
+  }
+};
 EndEsdlNamespace()
 #endif

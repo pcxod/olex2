@@ -186,6 +186,7 @@ void TUnitCell::UpdateEllipsoids()  {
         E->SetId(j*ac+A1.GetId());
         *E = *A1.GetEllipsoid();
         E->MultMatrix(abc2xyz*Matrices[j].r*xyz2abc);
+        //E->MultMatrix(Matrices[j].r);
         Ellipsoids[i][j] = E;
       }
       else

@@ -191,7 +191,7 @@ bool TGlXApp::OnInit()  {
   catch(const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logException) << e;
   }
-  XApp->InitArguments(argc, argv);
+  XApp->InitArguments<wxChar>(argc, argv);
 
   TProgress *P = new TProgress;
   XApp->OnProgress.Add(P);

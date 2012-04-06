@@ -248,6 +248,18 @@ void TBasicApp::ValidateArgs() const {
     throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
 }
 //..............................................................................
+void TBasicApp::TryToCombineArguments() {
+  TStrList args;
+  for (size_t i=0; i < Arguments.Count(); i++) {
+    if (Arguments[i].Contains(' '))
+      args.Add('"') << Arguments[i] << '"';
+    else
+      args.Add(Arguments[i]);
+  }
+  Arguments.Clear();
+  TParamList::StrtokParams(args.Text(' '), ' ', Arguments);
+}
+//..............................................................................
 //..............................................................................
 void BAPP_GetArgCount(const TStrObjList&, TMacroError& E)  {
   E.SetRetVal(TBasicApp::GetArgCount());

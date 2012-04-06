@@ -6798,8 +6798,7 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
   tls.printTLS(ttitle);
   TBasicApp::NewLogEntry() <<
     "R1, %: " << olxstr::FormatFloat(2, tls.GetFoM()[0]*100) << ' ' <<
-    "R2, %: " << olxstr::FormatFloat(2, tls.GetFoM()[1]*100) << ' ' <<
-    "Chi: " << olxstr::FormatFloat(3, tls.GetFoM()[2]);
+    "R2', %: " << olxstr::FormatFloat(2, tls.GetFoM()[1]*100);
 
   TTTable<TStrList> tab(xatoms.Count()*2, 7);
   tab.ColName(0) = "Atom";

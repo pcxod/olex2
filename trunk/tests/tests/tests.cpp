@@ -73,7 +73,9 @@ int main(int argc, char* argv[]) {
     Add(&test::TestInvert).
     Add(&test::TestLU).
     Add(&test::TestQR).
-    Add(&test::TestCholesky);
+    Add(&test::TestCholesky).
+    Add(&test::TestEigenDecomposition).
+    Add(&test::TestMatrixDiff);
   tests.Add(&test::spline_test);
   tests.Add(&test::MatIdTests);
   tests.Add(&test::symm_parser_tests);

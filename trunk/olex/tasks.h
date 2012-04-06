@@ -6,7 +6,6 @@
 * This source file is distributed under the terms of the licence located in   *
 * the root folder.                                                            *
 ******************************************************************************/
-
 #ifndef __olx_tasks_H
 #define __olx_tasks_H
 #include "evector.h"

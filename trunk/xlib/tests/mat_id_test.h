@@ -65,6 +65,7 @@ void full_id_test(OlxTests& t) {
   }
 }
 void MatIdTests(OlxTests& t)  {
+  t.description = __OlxSrcInfo;
   t.Add(&test::rotation_id_test)
     .Add(&test::smatd_id_test)
     .Add(&test::full_id_test<12>)
