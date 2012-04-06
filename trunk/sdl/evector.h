@@ -180,7 +180,7 @@ public:
   }
 
   int Compare(const TVector& v) const {
-    if (Count() != value.Count())
+    if (Count() != v.Count())
       return olx_cmp(Count(), v.Count());
     const size_t l = olx_min(this->Count(), v.Count());
     for( size_t i=0; i < l; i++ )  {
