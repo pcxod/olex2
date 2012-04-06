@@ -111,7 +111,7 @@ namespace math  {
     size_t ColCount() const {  return col_c;  }
     size_t RowCount() const {  return row_c;  }
     template <class AT> mat_mat & operator = (const AT &n) {
-      for (size_t i=rows, i1=0; i < row_e; i++, i1++)
+      for (size_t i=row_s, i1=0; i < row_e; i++, i1++)
         for (size_t j=col_s; j < col_e; j++)
           m(i,j) = n(i1,j-col_s);
       return *this;
@@ -123,7 +123,7 @@ namespace math  {
       for (size_t i=0; i < row_c; i++) {
         const size_t i_off = row_s+i;
         for (size_t j=i; j < col_e; j++)
-          m(i_off,j+cols_s) = m(j+col_s,i_off) = n(i,j);
+          m(i_off,j+col_s) = m(j+col_s,i_off) = n(i,j);
       }
       return *this;
     }
@@ -1359,9 +1359,9 @@ namespace math  {
     /* if upper is true, UxUt decomposition, otherwise LxLt */
     template <typename MatT>
     static bool Decompose(MatT& m, bool upper)  {
-      typedef MatT::number_type FT;
+      typedef typename MatT::number_type FT;
       const size_t n = m.RowCount();
-      if( upper )  {  //Cholesky–Crout
+      if( upper )  {  //Choleskyï¿½Crout
         for( size_t i=0; i < n; i++ )  {
           FT v = 0;
           for( size_t j=0; j < i; j++ )
@@ -1379,7 +1379,7 @@ namespace math  {
           }
         }
       }
-      else  {  //Cholesky–Banachiewicz
+      else  {  //Choleskyï¿½Banachiewicz
         for( size_t i=0; i < n; i++ )  {
           FT v = 0;
           for( size_t j=0; j < i; j++ )
