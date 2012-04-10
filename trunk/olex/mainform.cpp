@@ -1029,7 +1029,13 @@ void TMainForm::XApp(TGXApp *XA)  {
     "b-three first selected atoms are the ADp basis&;"
     "a-apply the TLS ADP to the atoms",
     fpAny|psFileLoaded,
-    "TLS test procedure");
+    "TLS procedure. The TLS is calculated for the given atoms and then the "
+    "matrices rotated to the L axes (making L diagonal) and shifted to make S "
+    "symmetric. The printed R1 is calculated for ADPs in the L axes and is:\n"
+    "R1=sum(i=1..3,j=i..3)(|Uobs_ij-Utls_ij|)/sum(i=1..3, j=i..3)(|Uobs_ij|)"
+    "\nR2' is invariant under the rotation and is calculated as\n"
+    "R2'=sum(i=1..3,j=1..3)((Uobs_ij-Utls_ij)^2)/sum(i=1..3,j=1..3)(Uobs_ij^2)"
+    );
 
   this_InitMacro(Test, , fpAny);
 

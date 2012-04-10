@@ -8,90 +8,97 @@
 ******************************************************************************/
 
 #include "ellipsoid.h"
+#include "math/dmatrix.h"
 
-TEllipsoid::TEllipsoid()  {
+TEllipsoid::TEllipsoid() : Quad(6), Esd(6)  {
   Matrix.I();
   SX = SY = SZ = 0;
-  for( int i=0; i < 6; i++ )  {    
-    FEsd[i] = FQuad[i] = 0;
-  }
-  FNPD = false;
+  NPD = false;
 }
 //..............................................................................
 void TEllipsoid::Initialise()  {
-  mat3d M(FQuad[0], FQuad[5], FQuad[4], FQuad[1], FQuad[3], FQuad[2]), 
-        I;
-  // calc eigen values and vectors
-  mat3d::EigenValues(M, I.I());
+  mat3d M = ExpandQuad();
+  mat3d::EigenValues(M, Matrix.I());
   if( (M[0][0] <= 0) || (M[1][1] <= 0) || (M[2][2] <= 0) )  {
     SX = SY = SZ = 0;
-    FNPD = true;
+    NPD = true;
   }
   else  {
     // calculate axis lengths
     SX = sqrt(M[0][0]);  // correspondes 50% ellipsoides
     SY = sqrt(M[1][1]);
     SZ = sqrt(M[2][2]);
-    FNPD = false;
+    NPD = false;
   }
-  Matrix = I;
-  Matrix[0].Normalise();
-  Matrix[1].Normalise();
-  Matrix[2].Normalise();
 }
 //..............................................................................
-void TEllipsoid::operator = (const TEllipsoid&E)  {
+void TEllipsoid::operator = (const TEllipsoid &E)  {
   Matrix = E.GetMatrix();
   SX = E.GetSX();
   SY = E.GetSY();
   SZ = E.GetSZ();
-  for( int i=0; i < 6; i++ )  {
-    FQuad[i] = E.FQuad[i];
-    FEsd[i] = E.FEsd[i];
-  }
-  FNPD = E.FNPD;
+  Quad = E.Quad;
+  Esd = E.Esd;
+  NPD = E.NPD;
 }
 //..............................................................................
 /* to get the quadratic for Matrix*Matr(SX^2,SY^2,SZ^2)*MatrixT */
-void TEllipsoid::MultMatrix(const mat3d& Matr)  {
-  if( FNPD )  return;
-  mat3d N(FQuad[0], FQuad[5], FQuad[4], FQuad[1], FQuad[3], FQuad[2]), 
-        M(mat3d::Transpose(Matr)), 
-        E(FEsd[0], FEsd[5], FEsd[4], FEsd[1], FEsd[3], FEsd[2]);
+void TEllipsoid::Mult(const mat3d &Matr)  {
+  if( NPD )  return;
+  mat3d N = ExpandQuad(),
+    M(mat3d::Transpose(Matr));
   // do trasformation of the eigen vectors
   N = Matr*N*M;
-  E = Matr*E*M;
   // store new quadratic form
-  FQuad[0] = N[0][0];  FQuad[1] = N[1][1];  FQuad[2] = N[2][2];
-  FQuad[3] = N[1][2];  FQuad[4] = N[0][2];  FQuad[5] = N[0][1];
-  // strore new Esd's
-  FEsd[0]  = E[0][0];  FEsd[1]  = E[1][1];  FEsd[2]  = E[2][2];
-  FEsd[3]  = E[1][2];  FEsd[4]  = E[0][2];  FEsd[5]  = E[0][1];
+  Quad[0] = N[0][0];  Quad[1] = N[1][1];  Quad[2] = N[2][2];
+  Quad[3] = N[1][2];  Quad[4] = N[0][2];  Quad[5] = N[0][1];
   // get eigen values/vectors
-  mat3d::EigenValues(N, M.I());
+  mat3d::EigenValues(N, Matrix.I());
   // assign new eigen values
-
-  if( (N[0][0] <= 0) || (N[1][1] <= 0) || (N[2][2] <= 0) )  {
-    SX = SY = SZ = 0;
-    FNPD = true;
+  SX = sqrt(N[0][0]);
+  SY = sqrt(N[1][1]);
+  SZ = sqrt(N[2][2]);
+}
+//..............................................................................
+void TEllipsoid::Mult(const mat3d &Matr, const ematd &J, const ematd &Jt)  {
+  if( NPD )  return;
+  Mult(Matr);
+  if (!Esd.IsNull()) {
+    ematd em(6,6);
+    for (int i=0; i < 6; i++)
+      em[i][i] = olx_sqr(Esd[shelx_to_linear(i)]);
+    em = J*em*Jt;
+    for (int i=0; i < 6; i++)
+      Esd[linear_to_shelx(i)] = sqrt(em[i][i]);
   }
-  else  {
-    FNPD = false;
-    SX = sqrt(N[0][0]);  SY = sqrt(N[1][1]);  SZ = sqrt(N[2][2]);
-  }
-  // assign new eigen vectors
-  Matrix = M;
-  //Matrix.Transpose(); // see initialise for details
-  Matrix[0].Normalise();
-  Matrix[1].Normalise();
-  Matrix[2].Normalise();
+}
+//..............................................................................
+void TEllipsoid::Mult(const mat3d &Matr, const ematd &VcV)  {
+  if( NPD )  return;
+  Mult(Matr);
+  for (int i=0; i < 6; i++)
+    Esd[linear_to_shelx(i)] = sqrt(VcV[i][i]);
 }
 //..............................................................................
 void TEllipsoid::ToSpherical(double r) {
-  FQuad[0] = FQuad[1] = FQuad[2] = SX = SY = SZ = r;
-  memset(&FQuad[3], 0, sizeof(FQuad[0])*3);
-  memset(&FEsd[0], 0, sizeof(FEsd));
+  Quad[0] = Quad[1] = Quad[2] = SX = SY = SZ = r;
+  Quad[3] = Quad[4] = Quad[5] = 0;
+  Esd.Null();
   Matrix.I();
-  FNPD = r <= 0;
+  NPD = r <= 0;
+}
+//..............................................................................
+ConstMatrix<double> TEllipsoid::GetTransformationJ(const mat3d &tm) {
+  ematd J(6,6);
+  using namespace math;
+  typedef linear_from_sym<mat3d> from_sym3d;
+  typedef linear_to_sym<mat3d> to_sym3d;
+  for (int i=0; i < 6; i++) {
+    from_sym3d m = dmat::M_x_OneSym_x_Mt(tm,
+      to_sym3d::get_i(i), to_sym3d::get_j(i));
+    for (int j=0; j < 6; j++)
+      J(j, i) = m(j); // dUdm
+  }
+  return J;
 }
 //..............................................................................

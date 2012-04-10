@@ -174,9 +174,16 @@ public:
     return Null(v, v.Count());
   }
 
-  TVector& Null()  {  
+  TVector& Null()  {
     memset(FData, 0, sizeof(FT)*Fn);
     return *this;
+  }
+
+  bool IsNull(FT eps=FT(1e-8)) const {
+    for (size_t i=0; i < Fn; i++)
+      if (olx_abs(FData[i]) > eps)
+        return false;
+    return true;
   }
 
   int Compare(const TVector& v) const {
