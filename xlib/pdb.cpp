@@ -51,7 +51,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     Strings.Add(bf);
     TEllipsoid* e = a.GetEllipsoid();
     if( e == NULL )  continue;
-    e->GetQuad(q);
+    e->GetShelxQuad(q);
     for( int j=0; j < 6; j++ )
       iq[j] = (int)(q[j]*10000);
     sprintf(bf, "ANISOU%5d %5s           %7d%7d%7d%7d%7d%7d      %2s ",

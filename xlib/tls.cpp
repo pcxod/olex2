@@ -135,14 +135,10 @@ void TLS::createDM(ematd &dm, evecd &UijC, const TSAtomPList &atoms) {
         dm(idx+k, 12+j) = m(k);
     }
     /************************************************************/
-    atoms[i]->GetEllipsoid()->GetQuad(quad);
-    UijC[idx]   = quad[0];  //U11 in cartesian
-    UijC[idx+1] = quad[5];  //U12
-    UijC[idx+2] = quad[4];  //U13
-    UijC[idx+3] = quad[1];  //U22
-    UijC[idx+4] = quad[3];  //U32
-    UijC[idx+5] = quad[2];  //U33
-  } //i loop
+    atoms[i]->GetEllipsoid()->GetShelxQuad(quad);
+    for (int j=0; j < 6; j++)
+      UijC[idx+j]  = quad[TEllipsoid::shelx_to_linear(j)];
+  }
 } 
 
 
@@ -255,14 +251,12 @@ vec3d TLS::FigOfMerit(const TSAtomPList &atoms, const evecd_list &Elps,
   //sets FoM = {R1,R2}
   // R1 = sum {i<j=0..3} |Uobs - Utls| / sum |Uobs| in L axes
   // R2 = Sqrt[ sum {i,j=0..3} (Uobs - Utls)^2 / sum{Uobs^2}  ]
-  evecd q1(6);
   double sumUobs=0;
   double R1=0, R2=0, sumUobsSq=0;
   double k[6] = {1, 2, 2, 1, 2, 1};
   mat3d RtoLaxesT = mat3d::Transpose(RtoLaxes);
   for (size_t i=0; i < atoms.Count(); i++) {
-    atoms[i]->GetEllipsoid()->GetQuad(q1);
-    from_sym3d E1 = RtoLaxes*mat3d(q1[0], q1[5], q1[4], q1[1], q1[3], q1[2])*
+    from_sym3d E1 = RtoLaxes*atoms[i]->GetEllipsoid()->ExpandQuad()*
       RtoLaxesT;
     from_sym3d E2 = RtoLaxes*mat3d(Elps[i][0], Elps[i][5], Elps[i][4],
       Elps[i][1], Elps[i][3], Elps[i][2])*RtoLaxesT;

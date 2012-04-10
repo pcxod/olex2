@@ -214,12 +214,12 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         for( size_t j=0; j < 6; j++ )  {
           if( ssc.map[j].param >= 0 )  {
             e->SetEsd(j, olx_abs(e->GetEsd(ssc.map[j].param)*ssc.map[j].multiplier));
-            e->SetValue(j, e->GetValue(ssc.map[j].param)*ssc.map[j].multiplier);
+            e->SetQuad(j, e->GetQuad(ssc.map[j].param)*ssc.map[j].multiplier);
           }
           else
             e->SetEsd(j, 0);
         }
-        e->GetQuad(Q, E);
+        e->GetShelxQuad(Q, E);
         e->Initialise(au.UcifToUcart(Q), E);
         a.SetUiso((Q[0]+Q[2]+Q[3])/3);
       }

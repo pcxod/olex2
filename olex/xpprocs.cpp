@@ -6776,13 +6776,9 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     original_q.SetCapacity(xatoms.Count());
     original_crds.SetCapacity(xatoms.Count());
     mat3d basis_t = mat3d::Transpose(basis);
-    double sm=0;
     for (size_t i=0; i < xatoms.Count(); i++) {
-      xatoms[i]->GetEllipsoid()->GetQuad(original_q.AddNew(6));
-      xatoms[i]->GetEllipsoid()->MultMatrix(basis);
-      xatoms[i]->GetEllipsoid()->GetQuad(Q);
-      evecd d = original_q.GetLast() - Q;
-      sm += d.Length();
+      xatoms[i]->GetEllipsoid()->GetShelxQuad(original_q.AddNew(6));
+      xatoms[i]->GetEllipsoid()->Mult(basis);
       original_crds.AddCopy(xatoms[i]->crd());
       xatoms[i]->crd() = basis*xatoms[i]->crd();
     }
@@ -6811,13 +6807,11 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
   for (size_t i=0; i < xatoms.Count(); i++) {
     size_t idx = i*2;
     tab[idx][0] = xatoms[i]->GetGuiLabel();
-    xatoms[i]->GetEllipsoid()->GetQuad(Q);
-    //mat3d::EigenValues(N, EV.I());
+    xatoms[i]->GetEllipsoid()->GetShelxQuad(Q);
     for (size_t j=0; j < 6; j++)
       tab[idx][j+1] = olxstr::FormatFloat(-4, Q[j], true);
     tab[idx+1][0] = "Utls";
     Q = tls.GetElpList()[i];
-    //mat3d::EigenValues(N, EV.I());
     for (size_t j=0; j < 6; j++)
       tab[idx+1][j+1] = olxstr::FormatFloat(-4, Q[j], true);
   }

@@ -893,8 +893,9 @@ void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
   size_t index = Params[0].ToSizeT();
   if( index >= AtomCount() )
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  evecd Q(1);
+  evecd Q;
   if( GetAtom(index).GetEllipsoid() == NULL )  {
+    Q.Resize(1);
     // TODO: a special condition - the atom is isotropic, but a user wishes it to be
     // anisotropic - six values a, a, a, 0, 0, 0 have to be passed
     //if( GetAtom(index)->
@@ -902,7 +903,7 @@ void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
   }
   else  {  // the function resises the vector automatically
     Q.Resize(6);
-    GetAtom(index).GetEllipsoid()->GetQuad(Q);
+    GetAtom(index).GetEllipsoid()->GetShelxQuad(Q);
   }
 
   E.SetRetVal(Q.ToString());
