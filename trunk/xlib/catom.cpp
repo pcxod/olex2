@@ -238,7 +238,7 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   }
   else  {
     double Q[6], E[6];
-    GetEllipsoid()->GetQuad(Q, E);
+    GetEllipsoid()->GetShelxQuad(Q, E);
     PythonExt::SetDictItem(main, "adp", 
       Py_BuildValue("(dddddd)(dddddd)", Q[0], Q[1], Q[2], Q[3], Q[4], Q[5], 
        E[0], E[1], E[2], E[3], E[4], E[5]
