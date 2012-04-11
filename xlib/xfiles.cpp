@@ -459,7 +459,6 @@ void TXFile::FromDataItem(TDataItem& item) {
   GetLattice().FromDataItem(item.FindRequiredItem("Lattice"));
   GetRM().FromDataItem(item.FindRequiredItem("RefModel"));
   GetLattice().FinaliseLoading();
-  GetRM().UpdateUsedSymm(GetUnitCell());
 }
 //..............................................................................
 //..............................................................................

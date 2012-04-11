@@ -24,15 +24,23 @@ public:
 protected:
   struct AtomConnInfo : public CXConnInfoBase  {
     TCAtom* atom;
+    bool temporary;
     BondInfoList BondsToCreate, BondsToRemove;
-    AtomConnInfo() : atom(NULL) {}
-    AtomConnInfo(TCAtom& ca) : atom(&ca) {}
-    AtomConnInfo(const AtomConnInfo& ci) : CXConnInfoBase(ci), atom(ci.atom) {}
+    AtomConnInfo()
+      : atom(NULL), temporary(false)
+    {}
+    AtomConnInfo(TCAtom& ca)
+      : atom(&ca), temporary(false)
+    {}
+    AtomConnInfo(const AtomConnInfo& ci)
+      : CXConnInfoBase(ci), atom(ci.atom), temporary(ci.temporary)
+    {}
     AtomConnInfo& operator = (const AtomConnInfo& ci)  {
       CXConnInfoBase::operator = (ci);
       atom = ci.atom;
       BondsToCreate = ci.BondsToCreate;
       BondsToRemove = ci.BondsToRemove;
+      temporary = ci.temporary;
       return *this;
     }
     void ToDataItem(TDataItem& item) const;
@@ -44,8 +52,12 @@ protected:
   struct TypeConnInfo : public CXConnInfoBase  {
     const cm_Element* atomType;
     TypeConnInfo() : atomType(NULL) {}
-    TypeConnInfo(const cm_Element& type) : atomType(&type) {}
-    TypeConnInfo(const TypeConnInfo& ci) : CXConnInfoBase(ci), atomType(ci.atomType) {}
+    TypeConnInfo(const cm_Element& type)
+      : atomType(&type)
+    {}
+    TypeConnInfo(const TypeConnInfo& ci)
+      : CXConnInfoBase(ci), atomType(ci.atomType)
+    {}
     TypeConnInfo& operator = (const TypeConnInfo& ti)  {
       CXConnInfoBase::operator = (ti);
       atomType = ti.atomType;
@@ -60,7 +72,8 @@ protected:
   olxdict<TCAtom*, AtomConnInfo, TPointerComparator> AtomInfo;
   olxdict<const cm_Element*, TypeConnInfo, TPointerComparator> TypeInfo;
   // 
-  const smatd* GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, bool release) const;
+  const smatd* GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
+    bool release) const;
 public:
   ConnInfo(RefinementModel& _rm) : rm(_rm) {}
 
@@ -75,15 +88,20 @@ public:
   // the atom's connetivity table to have no bonds
   void Disconnect(TCAtom& ca);
   // eqiv corresponds to a2
-  static size_t FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv);
-  void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
-  void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
-  /* combines all bonds to create and delete for this atom and imposed by others 
-  assumes that all atoms already have connectivity information attached. 
-  The newly created matrices are stored in the ml - note then the list is deleted
-  the compiled information might become invalid (as some bonds will refer to matrices 
-  in the list) */
-  static void Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml);
+  static size_t FindBondIndex(const BondInfoList& list, TCAtom* key,
+    TCAtom& a1, TCAtom& a2, const smatd* eqiv);
+  void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
+    const smatd* eqiv2, bool release_eqiv);
+  void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
+    const smatd* eqiv2, bool release_eqiv);
+  /* combines all bonds to create and delete for this atom and imposed by
+  others assumes that all atoms already have connectivity information attached.
+  The newly created matrices are stored in the ml - note then the list is
+  deleted the compiled information might become invalid (as some bonds will
+  refer to matrices in the list)
+  */
+  static void Compile(const TCAtom& a, BondInfoList& toCreate,
+    BondInfoList& toDelete, smatd_list& ml);
   //.................................................................
   void ProcessFree(const TStrList& ins);
   void ProcessBind(const TStrList& ins);
