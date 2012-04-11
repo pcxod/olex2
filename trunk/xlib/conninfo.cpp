@@ -90,7 +90,7 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
       }
     }
     AddBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(),
-      ag[i+1].GetMatrix(), true );
+      ag[i+1].GetMatrix(), true);
   }
 }
 //........................................................................
@@ -155,7 +155,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
       return;
     }
     for( size_t i=0; i < ag.Count(); i++ )  {
-      if( maxB == 12 && r == -1 )  {  // reset to default?
+      if( maxB == def_max_bonds && r == -1 )  {  // reset to default?
         size_t ai = AtomInfo.IndexOf(ag[i].GetAtom());
         if( ai != InvalidIndex )
           AtomInfo.Delete(ai);
@@ -165,6 +165,18 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
           AtomConnInfo(*ag[i].GetAtom()));
         ai.maxBonds = maxB;
         ai.r = r;
+        ai.temporary = false;
+      }
+    }
+  }
+  // update temporary connectivity objects
+  for (size_t i=0; i < AtomInfo.Count(); i++) {
+    AtomConnInfo &ai = AtomInfo.GetValue(i);
+    if (ai.temporary) {
+      size_t ti = TypeInfo.IndexOf(&ai.atom->GetType());
+      if (ti != InvalidIndex) {
+        ai.maxBonds = TypeInfo.GetValue(ti).maxBonds;
+        ai.r = TypeInfo.GetValue(ti).r;
       }
     }
   }
@@ -186,9 +198,11 @@ void ConnInfo::ToInsList(TStrList& ins) const {
   // specialisation for particular atoms to follow the generic type info
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
     const AtomConnInfo& aci = AtomInfo.GetValue(i);
-    if( aci.atom->IsDeleted() )
+    if (aci.atom->IsDeleted())
       continue;
-    if( aci.r != -1 || aci.maxBonds != def_max_bonds )  {
+    if( !aci.temporary && 
+      (aci.r != -1 || aci.maxBonds != def_max_bonds) )
+    {
       olxstr& str = ins.Add("CONN ");
       if( aci.maxBonds != def_max_bonds || aci.r != -1 )
         str << aci.maxBonds << ' ';
@@ -282,6 +296,7 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
     AtomConnInfo& aci = AtomInfo.Add(ca);
     aci.atom = ca;
     (CXConnInfoBase&)aci = _aci;
+    aci.temporary = _aci.temporary;
     for( size_t j=0; j < _aci.BondsToCreate.Count(); j++ )  {
       ca = rm.aunit.FindCAtomById(_aci.BondsToCreate[j].to.GetId());
       if( ca == NULL ) {
@@ -481,8 +496,14 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
       break;
   }
   if( ind == InvalidIndex )  {
-    AtomInfo.Add(&a1, AtomConnInfo(a1))
-      .BondsToCreate.Add(new CXBondInfo(a2, eqiv));
+    AtomConnInfo &ci = AtomInfo.Add(&a1, AtomConnInfo(a1));
+    ci.BondsToCreate.Add(new CXBondInfo(a2, eqiv));
+    ci.temporary = true;
+    size_t ti = TypeInfo.IndexOf(a1.GetType());
+    if (ti != InvalidIndex) {
+      ci.maxBonds = TypeInfo.GetValue(ti).maxBonds;
+      ci.r = TypeInfo.GetValue(ti).r;
+    }
   }
   // validate the bonds to delete
   for( size_t i=0; i < AtomInfo.Count(); i++ )  {
@@ -516,8 +537,14 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
         break;
       }
     }
-    AtomInfo.Add(&a1, AtomConnInfo(a1)).BondsToRemove.Add(
-      new CXBondInfo(a2, eqiv));
+    AtomConnInfo &ci = AtomInfo.Add(&a1, AtomConnInfo(a1));
+    ci.BondsToRemove.Add(new CXBondInfo(a2, eqiv));
+    ci.temporary = true;
+    size_t ti = TypeInfo.IndexOf(a1.GetType());
+    if (ti != InvalidIndex) {
+      ci.maxBonds = TypeInfo.GetValue(ti).maxBonds;
+      ci.r = TypeInfo.GetValue(ti).r;
+    }
   }
 }
 //........................................................................
@@ -586,8 +613,9 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate,
 }
 //........................................................................
 void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item) const {
-  item.AddField("r", r);
-  item.AddField("b", maxBonds);
+  item.AddField('r', r)
+    .AddField('b', maxBonds)
+    .AddField('t', temporary);
   TDataItem& ab = item.AddItem("ADDBOND");
   for( size_t i=0; i < BondsToCreate.Count(); i++ )  {
     if( BondsToCreate[i].to.IsDeleted() )
@@ -611,8 +639,9 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
   RefinementModel& rm, TCAtom& a)
 {
   atom = &a;
-  r = item.GetRequiredField("r").ToDouble();
-  maxBonds = item.GetRequiredField("b").ToInt();
+  r = item.GetRequiredField('r').ToDouble();
+  maxBonds = item.GetRequiredField('b').ToInt();
+  temporary = item.GetFieldValue('t', FalseString()).ToBool();
   TDataItem& ab = item.FindRequiredItem("ADDBOND");
   for( size_t i=0; i < ab.ItemCount(); i++ )  {
     TCAtom& ca = rm.aunit.GetAtom(ab.GetItem(i).GetRequiredField("to").ToInt());
