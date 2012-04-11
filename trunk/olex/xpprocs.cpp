@@ -4337,12 +4337,14 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       }
     }
   }
-
+  vec3d_list void_centers =
+    MapUtil::FindLevelCenters<short>(amap, dim, MaxLevel, -MaxLevel);
   const vec3i MaxXCh = MapUtil::AnalyseChannels1(map.Data, dim, MaxLevel);
   for( int i=0; i < 3; i++ )  {
     if( MaxXCh[i] != 0 )
-      TBasicApp::NewLogEntry() << (olxstr((olxch)('a'+i)) << " direction can be penetrated by a sphere of " <<
-      olxstr::FormatFloat(2, MaxXCh[i]/resolution) << "A radius");
+      TBasicApp::NewLogEntry() << (olxstr((olxch)('a'+i)) <<
+        " direction can be penetrated by a sphere of " <<
+        olxstr::FormatFloat(2, MaxXCh[i]/resolution) << "A radius");
   }
   //short*** map_copy = MapUtil::ReplicateMap(map.Data, mapX, mapY, mapZ);
   //short*** amap = map_copy;
@@ -4376,8 +4378,15 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   //  olxstr::FormatFloat(2, voidCenter[2]) << ")";
   TBasicApp::NewLogEntry() << "Radius [ volume ] of the largest spherical void is " <<
     olxstr::FormatFloat(2, (double)MaxLevel/resolution) <<
-     " A [ " << olxstr::FormatFloat(2, 4*M_PI*pow((double)MaxLevel/resolution,3)/3)
-     << " A^3 ]";
+      " A [ " << olxstr::FormatFloat(2, olx_sphere_volume((double)MaxLevel/resolution))
+      << " A^3 ]";
+  TBasicApp::NewLogEntry() << "The void center(s) are at (fractional):";
+  for (size_t i=0; i < void_centers.Count(); i++) {
+    olxstr l1;
+    for (int j=0; j < 3; j++)
+      l1 << ' ' << olxstr::FormatFloat(-3, void_centers[i][j]);
+    TBasicApp::NewLogEntry() << l1;
+  }
   TBasicApp::NewLogEntry() << (catoms.IsEmpty() ? "Structure occupies" : "Selected atoms occupy")
     << " (A^3) " << olxstr::FormatFloat(2, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)";
