@@ -1248,15 +1248,15 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibNewAtom, "NewAtom", fpFour,
     "Adds a new atom to the asymmetric unit and return its ID, by which it can"
-    " be reffered. The function takes the atom name and ccordinates, if -1 is "
+    " be referred. The function takes the atom name and coordinates, if -1 is "
     "returned, the atom is not created"));
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
     "Returns the atom count in the asymmetric unit"));
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone|fpOne,
-    "Returns spacegroup of currently loaded file as name: 'C2', 'I41/amd', "
-    "etc. Optionally, Hal symbol may be returned if 'hall' is provided as an"
+    "Returns space group of currently loaded file as name: 'C2', 'I41/amd', "
+    "etc. Optionally, Hall symbol may be returned if 'hall' is provided as an"
     " argument"));
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibGetAtomCrd, "GetAtomCrd", fpOne,

@@ -259,6 +259,61 @@ public:
     DeleteMap(map_copy, dim);
     return res;
   }
+  /* returns fractional coordinates of the specified level, safe value must be
+  unique and not occur in the map
+  */
+  template <typename map_type>
+  static ConstTypeList<vec3d> FindLevelCenters(map_type*** map,
+    const vec3i& dim, map_type level, map_type safe_value)
+  {
+    vec3d_list centers;
+    for (int i=0; i < dim[0]; i++) {
+      for (int j=0; j < dim[1]; j++) {
+        for (int k=0; k < dim[2]; k++) {
+          if (map[i][j][k] == level) {
+            vec3i p;
+            TStack<vec3i> stack;
+            stack.Push(vec3i(i,j,k));
+            map[i][j][k] = safe_value;
+            int cnt=0;
+            while( !stack.IsEmpty()) {
+              vec3i p1 = stack.Pop();
+              cnt++;
+              p += p1;
+              for (int ii=-1; ii <=1; ii++) {
+                int ix = (p1[0] + ii)%dim[0];
+                if( ix < 0 ) ix += dim[0];
+                for (int ij=-1; ij <=1; ij++) {
+                  int iy = (p1[1] + ij)%dim[1];
+                  if( iy < 0 ) iy += dim[1];
+                  for (int ik=-1; ik <=1; ik++) {
+                    int iz = (p1[2] + ik)%dim[2];
+                    if( iz < 0 ) iz += dim[2];
+                    if (map[ix][iy][iz] == level) {
+                      stack.Push(vec3i(p1[0]+ii, p1[1]+ij, p1[2]+ik));
+                      map[ix][iy][iz] = safe_value;
+                    }
+                  }
+                }
+              }
+            }
+            centers.AddCopy(vec3d(p)/cnt) /= dim;
+          }
+        }
+      }
+    }
+    // restore the voids
+    for (int i=0; i < dim[0]; i++) {
+      for (int j=0; j < dim[1]; j++) {
+        for (int k=0; k < dim[2]; k++) {
+          if (map[i][j][k] == safe_value) {
+            map[i][j][k] = level;
+          }
+        }
+      }
+    }
+    return centers;
+  }
   static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {
     return b.count - a.count;
   }
