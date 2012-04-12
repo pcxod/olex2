@@ -2570,8 +2570,12 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
       TimePerFrame = FXApp->Draw();
       return;
     }
-    else
-      m.Skip();
+    else {
+      if( !FGlConsole->ProcessKey(m.GetKeyCode(), Fl))
+        m.Skip();
+      else
+        TimePerFrame = FXApp->Draw();
+    }
   }
 
   if( _ProcessManager->GetRedirected() != NULL )  {
@@ -2581,11 +2585,10 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     return;
   }
 
-  if( m.GetKeyCode() == WXK_RETURN ) {
+  if (m.GetKeyCode() == WXK_RETURN)
     TimePerFrame = FXApp->Draw();
-  }
-  else  {
-    if( !CmdLineVisible )
+  else {
+    if (!CmdLineVisible)
       TimePerFrame = FXApp->Draw();
   }
   if (FindFocus() != FCmdLine)
@@ -2597,6 +2600,7 @@ void TMainForm::OnKeyUp(wxKeyEvent& m)  {
 }
 //..............................................................................
 void TMainForm::OnKeyDown(wxKeyEvent& m)  {
+  m.Skip(false);
   wxWindow* wxw = FindFocus();
   if (wxw != FGlCanvas && wxw != FCmdLine) {
     if (FHtml != NULL) {
@@ -2615,15 +2619,14 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   short Fl = 0;
   if( m.m_keyCode == WXK_CONTROL ||
       m.m_keyCode == WXK_MENU ||
-      m.m_keyCode == WXK_SHIFT )
+      m.m_keyCode == WXK_SHIFT ||
+      m.m_keyCode == WXK_ALT)
   {
     m.Skip();
     return;
   }
   if (CmdLineVisible && wxw == FGlCanvas) {
     FCmdLine->EmulateKeyPress(m);
-    FCmdLine->SetFocus();
-    m.Skip();
     return;
   }
   if( m.m_altDown )      Fl |= sssAlt;
@@ -2633,16 +2636,29 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   if( m.GetModifiers() == wxMOD_CMD )  {
   // paste, Cmd+V, Ctrl+V
     if( m.GetKeyCode() == 'V' )  {
+      // avoid duplication
+      if (CmdLineVisible && FindFocus() != FCmdLine)
+        return;
       if( wxTheClipboard->Open() )  {
         if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
           wxTextDataObject data;
           wxTheClipboard->GetData(data);
-          olxstr cmdl = FGlConsole->GetCommand();
+          olxstr cmdl;
+          if (CmdLineVisible)
+            cmdl = FCmdLine->GetCommand();
+          else
+            cmdl = FGlConsole->GetCommand();
           olxstr content = data.GetText();
           if( !ImportFrag(content) )  {
             olxstr trimmed_content = content;
             trimmed_content.Trim(' ').Trim('\n').Trim('\r');
-            const size_t ip = FGlConsole->GetCmdInsertPosition();
+            size_t ip;
+            if (CmdLineVisible) {
+              ip = FCmdLine->GetInsertionPoint() -
+                FCmdLine->GetPromptStr().Length();
+            }
+            else
+              ip = FGlConsole->GetCmdInsertPosition();
             if( ip >= cmdl.Length() )
               cmdl << content;
             else
@@ -3419,7 +3435,8 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
 
   Table.CreateHTMLList(Output, EmptyString(), false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
-  TFileHandlerManager::AddMemoryBlock(RefineDataFile, cst.c_str(), cst.Length(), plStructure);
+  TFileHandlerManager::AddMemoryBlock(RefineDataFile, cst.c_str(),
+    cst.Length(), plStructure);
   if( TEFile::Exists(RefineDataFile) )
     TEFile::DelFile(RefineDataFile);
 //TUtf8File::WriteLines( RefineDataFile, Output, false );
@@ -3623,7 +3640,7 @@ void TMainForm::OnInternalIdle()  {
   return;
 }
 //..............................................................................
-void TMainForm::SetUserCursor( const olxstr& param, const olxstr& mode )  {
+void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
   wxBitmap bmp(32, 32);
   wxMemoryDC memDC;
   wxBrush Brush = memDC.GetBrush();
@@ -3692,7 +3709,9 @@ bool TMainForm::executeFunction(const olxstr& function, olxstr& retVal)  {
 //..............................................................................
 IEObject* TMainForm::executeFunction(const olxstr& function)  {
   size_t ind = function.FirstIndexOf('(');
-  if( (ind == InvalidIndex) || (ind == (function.Length()-1)) || !function.EndsWith(')') )  {
+  if( (ind == InvalidIndex) || 
+      (ind == (function.Length()-1)) || !function.EndsWith(')') )
+  {
     TBasicApp::NewLogEntry(logError) << "Incorrect function call: " << function;
     return NULL;
   }
@@ -3728,11 +3747,13 @@ THtml* TMainForm::FindHtml(const olxstr& popupName) const {
 //..............................................................................
 void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
   if( !error.IsSuccessful() )  {
-    if( error.IsProcessingException() )
-      TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<  error.GetInfo();
+    if( error.IsProcessingException() ) {
+      TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<
+        error.GetInfo();
+    }
     else if( !error.GetInfo().IsEmpty() )  {
-      TBasicApp::NewLogEntry(quiet ? logInfo : logError) << error.GetLocation() << ": "
-        <<  error.GetInfo();
+      TBasicApp::NewLogEntry(quiet ? logInfo : logError) << error.GetLocation()
+        << ": " <<  error.GetInfo();
     }
     while( !error.GetStack().IsEmpty() )  {
       TBasicApp::NewLogEntry(quiet ? logInfo : logDefault) << '\t'
@@ -3742,8 +3763,10 @@ void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
 }
 //..............................................................................
 bool TMainForm::ProcessEvent( wxEvent& evt )  {
-  if( evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED && AccMenus.ValueExists( evt.GetId() )  )  {
-    olxstr macro( AccMenus.GetValue(evt.GetId())->GetCommand() );
+  if( evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED &&
+      AccMenus.ValueExists(evt.GetId()) )
+  {
+    olxstr macro( AccMenus.GetValue(evt.GetId())->GetCommand());
     if( !macro.IsEmpty() )  {
       TStrList sl;
       sl.Strtok( macro, ">>");
@@ -4129,11 +4152,14 @@ void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  
   }
 }
 //..............................................................................
-bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect)  {
+bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms,
+  bool GetAll, bool unselect)
+{
   size_t cnt = xatoms.Count();
   if( Cmds.IsEmpty() )  {
     xatoms.AddList(
-      FXApp->FindXAtoms("sel", EsdlInstanceOf(FXApp->GetSelection(), TGlGroup) ? unselect : false));
+      FXApp->FindXAtoms("sel", EsdlInstanceOf(FXApp->GetSelection(), TGlGroup)
+      ? unselect : false));
     if( GetAll && xatoms.IsEmpty() )
       xatoms.AddList(FXApp->FindXAtoms(EmptyString(), unselect));
   }
@@ -4270,7 +4296,8 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|w");
   THtml* html = pname.IsEmpty() ? TGlXApp::GetMainForm()->GetHtml() :
                 TGlXApp::GetMainForm()->FindHtml(pname);
-  return Py_BuildValue("b", html == NULL ? false : (html->FindObject(cname) != NULL) );
+  return Py_BuildValue("b", html == NULL ? false
+    : (html->FindObject(cname) != NULL));
 }
 //..............................................................................
 PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
