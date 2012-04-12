@@ -59,6 +59,7 @@ protected:
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
+  void OnResize();
 public:
   TGlConsole(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName=EmptyString());
@@ -91,10 +92,12 @@ public:
   bool ProcessKey(int Key, short ShiftState);
   bool WillProcessKey(int Key, short ShiftState);
 
-  DefPropP(uint16_t, Width)
-  DefPropP(uint16_t, Height)
-  DefPropP(uint16_t, Top)
-  DefPropP(uint16_t, Left)
+  uint16_t GetLeft() const { return Left; }
+  uint16_t GetTop() const { return Top; }
+  uint16_t GetWidth() const { return Width; }
+  uint16_t GetHeight() const { return Height; }
+
+  void Resize(int l, int t, int w, int h);
   DefPropBIsSet(SkipPosting)
   DefPropP(TGlMaterial*, PrintMaterial)
   bool ShowBuffer() const {  return FShowBuffer; }
