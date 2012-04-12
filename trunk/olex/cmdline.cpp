@@ -11,28 +11,27 @@
 #include "glmouse.h"
 #include "bapp.h"
 
-static bool DoCheckPosition = false;
-
-TCmdLine::TCmdLine( wxWindow* parent, int flags ) :
+TCmdLine::TCmdLine(wxWindow* parent, int flags) :
   TTextEdit(parent, flags),
   OnCommand(Actions.New("ONCOMMAND"))
 {
   PromptStr = ">>";
-  SetText( PromptStr );
+  SetText(PromptStr);
   SetInsertionPointEnd();
   CmdIndex = 0;
-  SetToDelete(false);
-  TBasicApp::GetInstance().OnTimer.Add((AActionHandler*)this);
 }
 //..............................................................................
-TCmdLine::~TCmdLine()  {
-  TBasicApp::GetInstance().OnTimer.Remove((AActionHandler*)this);
-}
+TCmdLine::~TCmdLine()  {}
 //..............................................................................
 bool TCmdLine::ProcessKey(wxKeyEvent& evt)  {
-  if( (evt.GetKeyCode() == WXK_LEFT) && evt.GetModifiers() == 0 )  {
-    if( GetInsertionPoint() <= (long)PromptStr.Length() )
-      return true;
+  if( (evt.GetKeyCode() == WXK_LEFT) )  {
+    if (evt.GetModifiers() == 0) {
+      if( GetInsertionPoint() <= (long)PromptStr.Length() )
+        return true;
+    }
+    else if (evt.ControlDown())
+      return !GetText().SubStringTo(GetInsertionPoint())
+        .TrimWhiteChars(true).Contains(' ');
   }
   else if( (evt.GetKeyCode() == WXK_BACK) )  {
     if( GetInsertionPoint() <= (long)PromptStr.Length() )
@@ -42,7 +41,7 @@ bool TCmdLine::ProcessKey(wxKeyEvent& evt)  {
     if( --CmdIndex < 0 )
       CmdIndex = 0;
     if( CmdIndex < (int)Commands.Count() )
-      SetCommand( Commands[CmdIndex] );
+      SetCommand(Commands[CmdIndex]);
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_DOWN) )  {
@@ -50,7 +49,7 @@ bool TCmdLine::ProcessKey(wxKeyEvent& evt)  {
       CmdIndex = Commands.Count()-1;
     }
     if( CmdIndex < (int)Commands.Count() && Commands.Count() != 0 )
-      SetCommand( Commands[CmdIndex] );
+      SetCommand(Commands[CmdIndex]);
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_RETURN) && evt.GetModifiers() == 0 )  {
@@ -58,43 +57,28 @@ bool TCmdLine::ProcessKey(wxKeyEvent& evt)  {
     if( !Commands.IsEmpty() && (Commands.GetLastString() == cmd ) )
       ;
     else
-      Commands.Add( GetCommand()  );
+      Commands.Add(GetCommand());
     CmdIndex = Commands.Count();
     OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_ESCAPE) && evt.GetModifiers() == 0 )  {
-    SetCommand( EmptyString() );
+    SetCommand(EmptyString());
     return true;
   }
   else if( (evt.GetKeyCode() == WXK_HOME) && evt.GetModifiers() == 0 )  {
-    SetInsertionPoint( PromptStr.Length() );
+    SetInsertionPoint(PromptStr.Length());
     return true;
   }
-  else if( (evt.GetKeyCode() == WXK_UP) && evt.ControlDown()  )  {
-    SetInsertionPoint( PromptStr.Length() );
+  else if( (evt.GetKeyCode() == WXK_UP) && evt.ControlDown() )  {
+    SetInsertionPoint(PromptStr.Length());
     return true;
   }
-  DoCheckPosition = true;
   return false;
 }
 //..............................................................................
 void TCmdLine::SetCommand(const olxstr& cmd)  {
-  SetText( PromptStr + cmd );
+  SetText(PromptStr + cmd);
   SetInsertionPointEnd();
-}
-//..............................................................................
-bool TCmdLine::Execute(const IEObject *Sender, const IEObject *Data)  {
-  // chek for any other keyboard combination which move the cursor ...
-  // ufrotunatelly call to GetInsertionPoint() takes one core of the dialcore processor,
-  // so need an extra tag ...
-  if( DoCheckPosition )  {
-    if( GetInsertionPoint() < (long)PromptStr.Length() )  {
-      SetInsertionPoint( PromptStr.Length() );
-      return false;
-    }
-    DoCheckPosition = false;
-  }
-  return false;
 }
 //..............................................................................
