@@ -1139,9 +1139,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   for( size_t i=0; i < eqiv.ItemCount(); i++ )
     TSymmParser::SymmToMatrix(
       eqiv.GetItem(i).GetValue(), UsedSymm.Add(eqiv.GetItem(i).GetName()).symop);
-  
 
-  expl.FromDataItem(item.FindRequiredItem("EXPL"));  
+  UpdateUsedSymm(aunit.GetLattice().GetUnitCell());
+  expl.FromDataItem(item.FindRequiredItem("EXPL"));
 
   AfixGroups.FromDataItem(item.FindRequiredItem("AFIX"));
   ExyzGroups.FromDataItem(item.FindRequiredItem("EXYZ"));

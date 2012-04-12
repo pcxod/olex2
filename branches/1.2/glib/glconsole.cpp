@@ -68,6 +68,8 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   FCursor = new TGlCursor(R, "Cursor");
   SetToDelete(false);
   R.OnDraw.Add(this);
+  // init size related valriables
+  OnResize();
 }
 //..............................................................................
 TGlConsole::~TGlConsole()  {
@@ -78,7 +80,7 @@ TGlConsole::~TGlConsole()  {
 //..............................................................................
 void TGlConsole::Create(const olxstr& cName)  {
   FontIndex = Parent.GetScene().FindFontIndexForType<TGlConsole>(FontIndex);
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -635,6 +637,19 @@ bool TGlConsole::GetDimensions(vec3d &Max, vec3d &Min)  {
   Max = vec3d(0.5, 0.5, 0);
   Min = vec3d(-0.5, -0.5, 0);
   return true;
+}
+//..............................................................................
+void TGlConsole::OnResize() {
+  GlLeft = ((double)Left - (double)Parent.GetWidth()/2) + 0.1;
+  GlTop = ((double)Parent.GetHeight()/2 - (Height+Top)) + 0.1;
+}
+//..............................................................................
+void TGlConsole::Resize(int l, int t, int w, int h) {
+  Left = (uint16_t)l;
+  Top = (uint16_t)t;
+  Width = (uint16_t)w;
+  Height = (uint16_t)h;
+  OnResize();
 }
 //..............................................................................
 //..............................................................................
