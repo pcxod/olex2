@@ -106,7 +106,7 @@ protected:
     bool Enter(const IEObject *Sender, const IEObject *Data);
     bool Exit(const IEObject *Sender, const IEObject *Data);
   };
-  static void ClearStaticObjects()  {  FStaticObjects.Clear();  }
+  static void ClearStaticObjects();
 public:
   TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXAtom();
