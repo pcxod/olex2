@@ -106,15 +106,19 @@ TXAtom::~TXAtom()  {
   }
   if( !FPrimitiveParams.IsEmpty() )
     FPrimitiveParams.Clear();
-  if( OrtepSpheres != -1 )  {
-    olx_gl::deleteLists(OrtepSpheres, 9);
-    OrtepSpheres = -1;
-  }
   if( Polyhedron != NULL )  {
     delete Polyhedron;
     Polyhedron = NULL;
   }
   delete Label;
+}
+//..............................................................................
+void TXAtom::ClearStaticObjects()  {
+  FStaticObjects.Clear();
+  if( OrtepSpheres != -1 )  {
+    olx_gl::deleteLists(OrtepSpheres, 9);
+    OrtepSpheres = -1;
+  }
 }
 //..............................................................................
 void TXAtom::Quality(const short V)  {
@@ -360,15 +364,14 @@ void TXAtom::Create(const olxstr& cName)  {
 }
 //..............................................................................
 olxstr TXAtom::GetLabelLegend(const TSAtom& A)  {
-  olxstr L = A.GetType().symbol;
-  L << '.' << A.CAtom().GetLabel();
-  return L;
+  olxstr L(A.GetType().symbol, A.CAtom().GetLabel().Length()+4);
+  return (L << '.' << A.CAtom().GetLabel());
 }
 //..............................................................................
 olxstr TXAtom::GetLegend(const TSAtom& A, const short Level)  {
   if( A.GetType() == iQPeakZ )
     return GetLabelLegend(A);
-  olxstr L = A.GetType().symbol;  
+  olxstr L(A.GetType().symbol, 16);
   if( Level == 0 )  return L;
   L << '.' << A.CAtom().GetLabel();
   if( Level == 1 )  return L;
@@ -517,8 +520,8 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
     return;
   }
 //////////
-  M.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF |
-              sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB);
+  M.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF |
+             sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB);
   M.AmbientF = Cl;
   M.DiffuseF = Mask ^ Cl;
   M.SpecularF = 0xffffffff;
@@ -623,14 +626,28 @@ const_strlist TXAtom::ToPov(olxdict<TGlMaterial, olxstr,
   const TGPCollection &gpc = GetPrimitives();
   for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
-    if( glp.GetName() == "Polyhedron" )
-      continue;
+    if( glp.GetOwnerId() == xatom_PolyId ) continue;
     if( GetEllipsoid() == NULL &&
-        (glp.GetName() == "Disks" || glp.GetName() == "Rims" ) )
+      (glp.GetOwnerId() == xatom_DisksId || glp.GetOwnerId() == xatom_RimsId ) )
       continue;
+    olxstr name_extra;
+    if (GetEllipsoid() != NULL
+        && FDrawStyle == adsOrtep &&
+        glp.GetOwnerId() == xatom_SphereId)
+    {
+      short mask = 0;
+      const mat3d mat = GetEllipsoid()->GetMatrix()*Parent.GetBasis().GetMatrix();
+      for( int i=0; i < 3; i++ )  {
+        if( mat[i][2] < 0 )
+          mask |= (1<<i);
+      }
+      name_extra = mask+1;
+    }
+
     olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials, this);
-    out.Add("  object {") << "atom_" << glp.GetName().ToLowerCase().Replace(' ', '_')
-      << " texture {" << p_mat << "}}";
+    out.Add("  object {") << "atom_" <<
+      glp.GetName().ToLowerCase().Replace(' ', '_') << name_extra <<
+      " texture {" << p_mat << "}}";
   }
   pov::CrdTransformer crdc(Parent.GetBasis());
   out.Add("  }");
@@ -672,14 +689,29 @@ const_strlist TXAtom::ToPov(olxdict<TGlMaterial, olxstr,
 const_strlist TXAtom::PovDeclare()  {
   TStrList out;
   out.Add("#declare atom_sphere=object{ sphere {<0,0,0>, 1} }");
+  out.Add("#declare atom_sphere1=object{ difference {"
+    "sphere {<0,0,0>, 1} box {<0,0,0>, <1,1,1>} } }");
+  out.Add("#declare atom_sphere2=object{ difference {"
+    " sphere {<0,0,0>, 1} box {<-1,0,0>, <0,1,1>} } }");
+  out.Add("#declare atom_sphere3=object{ difference {"
+    " sphere {<0,0,0>, 1} box {<0,-1,0>, <1,0,1>} } }");
+  out.Add("#declare atom_sphere4=object{ difference {"
+    " sphere {<0,0,0>, 1} box {<-1,-1,0>, <0,0,1>} } }");
+  out.Add("#declare atom_sphere5=object{ difference {"
+    " sphere {<0,0,0>, 1} box {<0,0,-1>, <1,1,0>} } }");
+  out.Add("#declare atom_sphere6=object{ difference {"
+    " sphere {<0,0,0>, 1} box {<-1,0,-1>, <0,1,0>} } }");
+  out.Add("#declare atom_sphere7=object{ difference {"
+    " sphere {<0,0,0>, 1} box {<0,-1,-1>, <1,0,0>} } }");
+  out.Add("#declare atom_sphere8=object{ difference {"
+    " sphere {<0,0,0>, 1} box {<-1,-1,-1>, <0,0,0>} } }");
   out.Add("#declare atom_small_sphere=object{ sphere {<0,0,0>, 0.5} }");
-  out.Add("#declare atom_rims=object{ disc {<0,0,1><0,0,1>, 0.1} }");
   const double RimR = FAtomParams->GetNumParam("RimR", 1.02, true);  // radius
   const double RimW = FAtomParams->GetNumParam("RimW", 0.05, true);  // width
   out.Add("#declare atom_rims=object{ union {");
-  out.Add(" cylinder {<") << RimW << ",0,0>, <-" << RimW << ",0,0>, " << RimR << '}';
-  out.Add(" cylinder {<0,") << RimW << ",0>, <0,-" << RimW << ",0>, " << RimR << '}';
-  out.Add(" cylinder {<0,0,") << RimW << ">, <0,0,-" << RimW << ">, " << RimR << '}';
+  out.Add(" cylinder {<") << RimW << ",0,0>, <-" << RimW << ",0,0>, " << RimR << " open}";
+  out.Add(" cylinder {<0,") << RimW << ",0>, <0,-" << RimW << ",0>, " << RimR << " open}";
+  out.Add(" cylinder {<0,0,") << RimW << ">, <0,0,-" << RimW << ">, " << RimR << " open}";
   out.Add("}}");
 
   double DiskIR = FAtomParams->GetNumParam("DiskIR", 0.0, true);  // inner radius for disks
@@ -825,8 +857,7 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   TArrayList<vec3f> norms;
   typedef GlSphereEx<float, OctahedronFP<vec3f> > gls;
   gls::Generate(1, olx_round(log(SphereQ)+0.5), vecs, triags, norms);
-  if( OrtepSpheres == -1 )
-    OrtepSpheres = olx_gl::genLists(9);
+  OrtepSpheres = olx_gl::genLists(9);
   
   olx_gl::newList(OrtepSpheres, GL_COMPILE);
   gls::RenderEx(vecs, triags, norms, vec3f(0,0,0), vec3f(1,1,1));
@@ -1062,7 +1093,9 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   return cnt;
 }
 //..............................................................................
-void TXAtom::CreatePoly(const TSAtomPList& bound, short type, const vec3d* _normal, const vec3d* _pc)  {
+void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
+  const vec3d* _normal, const vec3d* _pc)
+{
   try  {
     static const vec3d NullVec;
     TXAtom::Poly& pl = *((Polyhedron == NULL) ? (Polyhedron=new TXAtom::Poly) : Polyhedron);
@@ -1072,11 +1105,12 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type, const vec3d* _norm
         pl.vecs[i] = bound[i]->crd();
         for( size_t j=i+1; j < bound.Count(); j++ )  {
           for( size_t k=j+1; k < bound.Count(); k++ )  {
+            // regular octahedron vol would be ~0.47A^3
             if( olx_tetrahedron_volume(
-              NullVec, 
-              (bound[i]->crd()-crd()).Normalise(), 
-              (bound[j]->crd()-crd()).Normalise(), 
-              (bound[k]->crd()-crd()).Normalise() ) > 0.03 )  // reagular octahedron vol would be ~0.47A^3
+              NullVec,
+              (bound[i]->crd()-crd()).Normalise(),
+              (bound[j]->crd()-crd()).Normalise(),
+              (bound[k]->crd()-crd()).Normalise() ) > 0.03 )
               pl.faces.AddNew(i, j, k);
           }
         }

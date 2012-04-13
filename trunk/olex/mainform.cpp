@@ -2549,8 +2549,10 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     if( !FullCmd.IsEmpty() && (FullCmd != Cmd) ) {
       if (CmdLineVisible)
         FCmdLine->SetCommand(FullCmd);
-      else
+      else {
         FGlConsole->SetCommand(FullCmd);
+        TimePerFrame = FXApp->Draw();
+      }
     }
     else
       TimePerFrame = FXApp->Draw();
