@@ -52,6 +52,8 @@ public:
   bool IsNPD() const {  return NPD;  }
 
   template <class T> TEllipsoid& Initialise(const T& ShelxQ, const T& ShelxE) {
+    Quad.Resize(6);
+    Esd.Resize(6);
     for( size_t i=0; i < 6; i++ )  {
       Quad[i] = ShelxQ[i];
       Esd[i]  = ShelxE[i];
@@ -60,6 +62,8 @@ public:
     return *this;
   }
   template <class T> TEllipsoid& Initialise(const T& ShelxQ)  {
+    Quad.Resize(6);
+    Esd.Resize(6);
     for( size_t i=0; i < 6; i++ )  {
       Quad[i] = ShelxQ[i];
       Esd[i]  = 0;
