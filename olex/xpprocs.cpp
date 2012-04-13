@@ -146,6 +146,7 @@
 #include "file_filter.h"
 #include "dsphere.h"
 #include "patchapi.h"
+#include "analysis.h"
 //#include "gl2ps/gl2ps.c"
 
 static const olxstr StartMatchCBName("startmatch");
@@ -925,7 +926,7 @@ void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   olxstr file_name = (Cmds[0].EndsWith(".pov") ? Cmds[0] : olxstr(Cmds[0]) << ".pov");
-  TCStrList(FXApp->ToPov()).SaveToFile(file_name);
+  TCStrList(TStrList(FXApp->ToPov())).SaveToFile(file_name);
 }
 //..............................................................................
 void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -4280,37 +4281,33 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   TGlGroup& sel = FXApp->GetSelection();
   for( size_t i=0; i < sel.Count(); i++ )  {
     if( EsdlInstanceOf(sel[i], TXAtom) ) 
-      catoms.Add( ((TXAtom&)sel[i]).CAtom() )->SetTag(catoms.Count());
+      catoms.Add(((TXAtom&)sel[i]).CAtom())->SetTag(catoms.Count());
   }
-  for( size_t i=0; i < catoms.Count(); i++ )
-    if( catoms[i]->GetTag() != i )
-      catoms[i] = NULL;
-  catoms.Pack();
-  //
-  if( catoms.IsEmpty() )
-    TBasicApp::NewLogEntry() << "Calculating for all atoms of the asymmetric unit";
+  catoms.Pack(ACollectionItem::IndexTagAnalyser());
+  if( catoms.IsEmpty() ) {
+    TBasicApp::NewLogEntry() <<
+     "Calculating for all atoms of the asymmetric unit";
+  }
   else  {
-    olxstr atoms_str("Calculating for");
-    for( size_t i=0; i < catoms.Count(); i++ )
-      atoms_str << ' ' << catoms[i]->GetLabel();
-    FGlConsole->PrintText( atoms_str << " only" );
+    TBasicApp::NewLogEntry() << "Calculating for " <<
+      olx_analysis::alg::label(catoms);
   }
-
-  double surfdis = Options.FindValue("d", "0").ToDouble();
+  olxstr_dict<olxstr> rv;
+  double surfdis = rv('d', Options.FindValue('d', '0')).ToDouble();
+  
   TBasicApp::NewLogEntry() << "Extra distance from the surface: " << surfdis;
   
   double resolution = Options.FindValue("r", "0.2").ToDouble();
   if( resolution < 0.01 )  
-    resolution = 0.02;
+    resolution = 0.01;
+  rv('r', resolution);
   resolution = 1./resolution;
   const vec3i dim(au.GetAxes()*resolution);
   const double mapVol = dim.Prod();
   const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   const int minLevel = olx_round(pow(6*mapVol*3/(4*M_PI*vol), 1./3));
-  TArray3D<short> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
-  vec3d voidCenter;
-  size_t structureGridPoints = 0;
   FXApp->XGrid().Clear();  // release the occupied memory
+  TArray3D<short> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   map.FastInitWith(10000);
   if( Options.Contains('p') )
     FXApp->XFile().GetUnitCell().BuildDistanceMap_Direct(map, surfdis, -1,
@@ -4319,6 +4316,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     FXApp->XFile().GetUnitCell().BuildDistanceMap_Masks(map, surfdis, -1,
       radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
   }
+  size_t structureGridPoints = 0;
   TIntList levels;
   short*** amap = map.Data;
   short MaxLevel = 0;
@@ -4346,36 +4344,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
         " direction can be penetrated by a sphere of " <<
         olxstr::FormatFloat(2, MaxXCh[i]/resolution) << "A radius");
   }
-  //short*** map_copy = MapUtil::ReplicateMap(map.Data, mapX, mapY, mapZ);
-  //short*** amap = map_copy;
-  ////short*** amap = map.Data;
-  //for( int i=0; i < mapX; i++ )  {
-  //  for( int j=0; j < mapY; j++ )  {
-  //    for( int k=0; k < mapZ; k++ )  {
-  //      if( amap[i][j][k] < minLevel )
-  //        amap[i][j][k] = 0;
-  //      else
-  //        amap[i][j][k] = -101;
-  //    }
-  //  }
-  //}
-  //MapUtil::AnalyseVoidsX<short>(amap, mapX, mapY, mapZ, minLevel+1);
-  //size_t _pc = 0;
-  //for( int i=0; i < mapX; i++ )  {
-  //  for( int j=0; j < mapY; j++ )  {
-  //    for( int k=0; k < mapZ; k++ )  {
-  //      if( amap[i][j][k] > minLevel )
-  //        _pc++;
-  //    }
-  //  }
-  //}
-  //MapUtil::DeleteMap(map_copy, mapX, mapY, mapZ);
   TBasicApp::NewLogEntry() << "Cell volume (A^3) " << olxstr::FormatFloat(3, vol);
-  //TBasicApp::NewLogEntry() << "Voids volume (A^3) " << olxstr::FormatFloat(3, (mapVol-_pc)*vol/mapVol);
-  //TBasicApp::NewLogEntry() << "Max level reached ") << MaxLevel << '\n');
-  //TBasicApp::NewLogEntry() << "  at (") << olxstr::FormatFloat(2, voidCenter[0]) << ", "  <<
-  //  olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
-  //  olxstr::FormatFloat(2, voidCenter[2]) << ")";
   TBasicApp::NewLogEntry() << "Radius [ volume ] of the largest spherical void is " <<
     olxstr::FormatFloat(2, (double)MaxLevel/resolution) <<
       " A [ " << olxstr::FormatFloat(2, olx_sphere_volume((double)MaxLevel/resolution))
@@ -4420,6 +4389,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   FXApp->XGrid().InitIso();
   FXApp->ShowGrid(true, EmptyString());
   TBasicApp::NewLogEntry();
+  //E.SetRetVal(XLibMacros::NAString);
 }
 //..............................................................................
 void TMainForm::macViewGrid(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4746,7 +4716,10 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       FXApp->SetGraphicsVisible(&fr, true);
     }
   }
-  else if( Options.IsEmpty() )  {  // print labels of selected atoms
+  else if( !(Options.Contains('a') ||
+    Options.Contains('i') ||
+    Options.Contains('u')))
+  {
     size_t period=5;
     TXAtomPList Atoms = FXApp->FindXAtoms("sel", false);
     if( Atoms.IsEmpty() && Cmds.Count() == 1 )  {
@@ -4791,9 +4764,15 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         return;
       }
     }
-    olxstr seli = FXApp->GetSelectionInfo();
-    if( !seli.IsEmpty() )
+    olxstr seli = FXApp->GetSelectionInfo(Options.Contains('l'));
+    if( !seli.IsEmpty() ) {
       FXApp->NewLogEntry() << seli;
+      if (Options.Contains('c')) {
+        wxTheClipboard->Open();
+        wxTheClipboard->SetData(new wxTextDataObject(seli.u_str()));
+        wxTheClipboard->Close();
+      }
+    }
   }
   else  {
     for( size_t i=0; i < Options.Count(); i++ )  {
@@ -6520,7 +6499,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
     } 
     else if( Cmds[0].Equalsi("cmdline") )  {
       CmdLineVisible = Cmds[1].ToBool();
-      FCmdLine->Show( CmdLineVisible );
+      FCmdLine->Show(CmdLineVisible);
       if( CmdLineVisible )  FCmdLine->SetFocus();
       FGlConsole->SetPromptVisible(!CmdLineVisible);
       TStateChange sc(prsCmdlVis, CmdLineVisible);
@@ -6825,14 +6804,64 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
       tab[idx+1][j+1] = olxstr::FormatFloat(-4, Q[j], true);
   }
   TBasicApp::NewLogEntry() << tab.CreateTXTList(ttitle, true, false, ' ');
+  //{
+  //  olxdict<TGlMaterial, olxstr, TComparableComparator> materials;
+  //  TStrList out = FXApp->GetRender().GetScene().ToPov();
+  //  out << TXAtom::PovDeclare();
+  //  out << TXBond::PovDeclare();
+  //  out << TXPlane::PovDeclare();
+  //  out.Add("union {");
+  //  TGXApp::AtomIterator ai = FXApp->GetAtoms();
+  //  while( ai.HasNext() )  ai.Next().SetTag(0);
+  //  xatoms.ForEach(ACollectionItem::TagSetter(1));
+  //  ai.Reset();
+  //  while (ai.HasNext())  {
+  //    TXAtom &a = ai.Next();
+  //    if (a.IsVisible() && a.GetTag() == 0)
+  //      out << a.ToPov(materials);
+  //  }
+  //  TGXApp::BondIterator bi = FXApp->GetBonds();
+  //  while( bi.HasNext() )  {
+  //    TXBond &b = bi.Next();
+  //    if( b.IsVisible() )
+  //      out << b.ToPov(materials);
+  //  }
+  //  TGXApp::PlaneIterator pi = FXApp->GetPlanes();
+  //  while( pi.HasNext() )  {
+  //    TXPlane &p = pi.Next();
+  //    if( p.IsVisible() )
+  //      out << p.ToPov(materials);
+  //  }
+  //  for (size_t i=0; i < xatoms.Count(); i++) {
+  //    TStrList o;
+  //    o << "object { difference {";
+  //    o << xatoms[i]->ToPov(materials);
+  //    xatoms[i]->GetEllipsoid()->GetShelxQuad(Q);
+  //    xatoms[i]->GetEllipsoid()->Initialise(tls.GetElpList()[i]);
+  //    o << xatoms[i]->ToPov(materials);
+  //    o << "}}";
+  //    out << o;
+  //    xatoms[i]->GetEllipsoid()->Initialise(Q);
+  //  }
+  //  out.Add("}");
+  //  TStrList mat_out;
+  //  for( size_t i=0; i < materials.Count(); i++ )  {
+  //    mat_out.Add("#declare ") << materials.GetValue(i) << '=';
+  //    mat_out.Add(materials.GetKey(i).ToPOV());
+  //  }
+  //  TCStrList(mat_out << out).SaveToFile("e:/test.pov");
+  //}
   if (original_q.IsEmpty() &&
       Options.Contains('a') &&
       tls.GetElpList().Count() == xatoms.Count())
   {
     for (size_t i=0; i < xatoms.Count(); i++) {
-      *xatoms[i]->GetEllipsoid() = tls.GetElpList()[i];
-      if (xatoms[i]->GetMatrix().IsFirst())
-        *xatoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
+      xatoms[i]->GetEllipsoid()->GetShelxQuad(Q);
+      Q -= tls.GetElpList()[i];
+      xatoms[i]->GetEllipsoid()->Initialise(Q);
+      //*xatoms[i]->GetEllipsoid() = tls.GetElpList()[i];
+      //if (xatoms[i]->GetMatrix().IsFirst())
+      //  *xatoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
     }
   }
   if (!original_q.IsEmpty()) {
@@ -8917,10 +8946,13 @@ class Esd_Tetrahedron  {
   VcoVContainer& vcov;
 protected:
   void CalcVolume()  {
-    Volume = vcov.CalcTetrahedronVolume( *atoms[0], *atoms[1], *atoms[2], *atoms[3] );
+    Volume =
+      vcov.CalcTetrahedronVolume(*atoms[0], *atoms[1], *atoms[2], *atoms[3]);
   }
 public:
-  Esd_Tetrahedron(const olxstr& name, const VcoVContainer& _vcov): Volume(-1,0), vcov(const_cast<VcoVContainer&>(_vcov))  {
+  Esd_Tetrahedron(const olxstr& name, const VcoVContainer& _vcov)
+    : Volume(-1,0), vcov(const_cast<VcoVContainer&>(_vcov))
+  {
     Name = name;
   }
   void Add( TSAtom* a )  {
@@ -8935,7 +8967,9 @@ public:
 int Esd_ThSort(const Esd_Tetrahedron &th1, const Esd_Tetrahedron &th2)  {
   return olx_cmp(th1.GetVolume(), th2.GetVolume());
 }
-void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   VcoVContainer vcovc(FXApp->XFile().GetAsymmUnit());
   try  {
     olxstr src_mat = FXApp->InitVcoV(vcovc);
@@ -8948,7 +8982,17 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   TStrList values;
   TGlGroup& sel = FXApp->GetSelection();
-  if( sel.Count() != 0 )  {
+  if (Options.Contains('l')) {
+    for (size_t i=0; i < sel.Count(); i++) {
+      if (EsdlInstanceOf(sel[i], TXBond)) {
+        TXBond &xb = (TXBond&)sel[i];
+        values.Add(xb.A().GetLabel()) << " to " << xb.B().GetLabel() <<
+          " distance: " << vcovc.CalcDistance(xb.A(), xb.B()).ToString() <<
+          " A";
+      }
+    }
+  }
+  else {
     if( sel.Count() == 1 )  {
       if( EsdlInstanceOf(sel[0], TXAtom) )  {
         TSAtomPList atoms;
@@ -8962,7 +9006,8 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         if( atoms.Count() == 3 )
           atoms.Add(xa);
         if( atoms.Count() < 4 )  {
-          Error.ProcessingError(__OlxSrcInfo, "An atom with at least four bonds is expected");
+          Error.ProcessingError(__OlxSrcInfo,
+            "An atom with at least four bonds is expected");
           return;
         }
         TTypeList<Esd_Tetrahedron> tetrahedra;
@@ -9009,12 +9054,11 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         }
         TEValue<double> ev(v, sqrt(esd));
         if( removed )  {
-          TBasicApp::NewLogEntry() <<
-            (values.Add("The volume for remaining tetrahedra is ") << ev.ToString() << " A^3");
+          values.Add("The volume for remaining tetrahedra is ") <<
+            ev.ToString() << " A^3";
         }
         else  {
-          TBasicApp::NewLogEntry() <<
-            (values.Add("The tetrahedra volume is ") << ev.ToString() << " A^3");
+          values.Add("The tetrahedra volume is ") << ev.ToString() << " A^3";
         }
       }
       else if( EsdlInstanceOf(sel[0], TXPlane) )  {
@@ -9025,36 +9069,36 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           atoms.Add(xp.GetAtom(i));
           pld << atoms.GetLast()->GetLabel() << ' ';
         }
-        TBasicApp::NewLogEntry() << (values.Add("Plane ") << pld <<
-          (values.Add("RMS: ") << vcovc.CalcPlane(atoms).ToString()) << " A");
+        values.Add("Plane ") << pld <<
+          (values.Add("RMS: ") << vcovc.CalcPlane(atoms).ToString()) << " A";
         TEPoint3<double> c_cent(vcovc.CalcCentroid(atoms));
-        TBasicApp::NewLogEntry() << "Plane " << pld << "cartesian centroid : {" << c_cent[0].ToString() <<
+        values.Add("Plane ") << pld << "cartesian centroid : {" << c_cent[0].ToString() <<
           ", " << c_cent[1].ToString() << ", " << c_cent[2].ToString() << "}";
         TEPoint3<double> f_cent(vcovc.CalcCentroidF(atoms));
-        TBasicApp::NewLogEntry() << "Plane " << pld << "fractional centroid : {" << f_cent[0].ToString() <<
+        values.Add("Plane ") << pld << "fractional centroid : {" << f_cent[0].ToString() <<
           ", " << f_cent[1].ToString() << ", " << f_cent[2].ToString() << "}";
       }
       else if( EsdlInstanceOf(sel[0], TXBond) )  {
         TXBond& xb = (TXBond&)sel[0];
-        TBasicApp::NewLogEntry() << (values.Add(xb.A().GetLabel()) << " to " <<
-          xb.B().GetLabel() << " distance: " <<
-          vcovc.CalcDistance(xb.A(), xb.B()).ToString() << " A");
+        values.Add(xb.A().GetLabel()) << " to " << xb.B().GetLabel() <<
+          " distance: " << vcovc.CalcDistance(xb.A(), xb.B()).ToString() <<
+          " A";
       }
     }
     else if( sel.Count() == 2 )  {
       if( EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXAtom) )  {
-        TBasicApp::NewLogEntry() << (values.Add(((TXAtom&)sel[0]).GetLabel()) << " to " <<
+        values.Add(((TXAtom&)sel[0]).GetLabel()) << " to " <<
           ((TXAtom&)sel[1]).GetLabel() << " distance: " <<
-          vcovc.CalcDistance((TXAtom&)sel[0], (TXAtom&)sel[1]).ToString() << " A");
+          vcovc.CalcDistance((TXAtom&)sel[0], (TXAtom&)sel[1]).ToString() << " A";
       }
       else if( EsdlInstanceOf(sel[0], TXBond) && EsdlInstanceOf(sel[1], TXBond) )  {
         TSBond& b1 = ((TXBond&)sel[0]);
         TSBond& b2 = ((TXBond&)sel[1]);
         TEValue<double> v(vcovc.CalcB2BAngle(b1.A(), b1.B(), b2.A(), b2.B())),
           v1(180-v.GetV(), v.GetE());
-        TBasicApp::NewLogEntry() << (values.Add(b1.A().GetLabel()) << '-' << b1.B().GetLabel() << " to " <<
+        values.Add(b1.A().GetLabel()) << '-' << b1.B().GetLabel() << " to " <<
           b2.A().GetLabel() << '-' << b2.B().GetLabel() << " angle: " <<
-          v.ToString() << '(' << v1.ToString() << ')');
+          v.ToString() << '(' << v1.ToString() << ')';
       }
       else if( (EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXPlane)) ||  
                (EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[0], TXPlane)))  {
@@ -9066,10 +9110,11 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           pld << atoms.GetLast()->GetLabel() << ' ';
         }
         TSAtom& sa = ((TXAtom&)sel[EsdlInstanceOf(sel[0],TXAtom) ? 0 : 1]);
-        TBasicApp::NewLogEntry() << (values.Add(sa.GetLabel()) << " to plane " << pld << "distance: " <<
-          vcovc.CalcP2ADistance(atoms, sa).ToString() << " A");
-        TBasicApp::NewLogEntry() << (values.Add(sa.GetLabel()) << " to plane " << pld << "centroid distance: " <<
-          vcovc.CalcPC2ADistance(atoms, sa).ToString() << " A");
+        values.Add(sa.GetLabel()) << " to plane " << pld << "distance: " <<
+          vcovc.CalcP2ADistance(atoms, sa).ToString() << " A";
+        values.Add(sa.GetLabel()) << " to plane " << pld <<
+          "centroid distance: " <<
+          vcovc.CalcPC2ADistance(atoms, sa).ToString() << " A";
       }
       else if( (EsdlInstanceOf(sel[0], TXBond) && EsdlInstanceOf(sel[1], TXPlane)) ||  
                (EsdlInstanceOf(sel[1], TXBond) && EsdlInstanceOf(sel[0], TXPlane)))  {
@@ -9083,8 +9128,8 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TSBond& sb = ((TXBond&)sel[ EsdlInstanceOf(sel[0], TXBond) ? 0 : 1]);
         TEValue<double> v(vcovc.CalcP2VAngle(atoms, sb.A(), sb.B())),
           v1(180-v.GetV(), v.GetE());
-        TBasicApp::NewLogEntry() << (values.Add(sb.A().GetLabel()) << '-' << sb.B().GetLabel() << " to plane "
-          << pld << "angle: " << v.ToString() << '(' << v1.ToString() << ')');
+        values.Add(sb.A().GetLabel()) << '-' << sb.B().GetLabel() << " to plane "
+          << pld << "angle: " << v.ToString() << '(' << v1.ToString() << ')';
       }
       else if( EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXPlane) )  {
         TSAtomCPList p1, p2;
@@ -9100,35 +9145,42 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           pld2 << p2.GetLast()->GetLabel() << ' ';
         }
         const TEValue<double> angle = vcovc.CalcP2PAngle(p1, p2);
-        TBasicApp::NewLogEntry() << (values.Add("Plane ") << pld1 << "to plane angle: " <<
-          angle.ToString());
-        TBasicApp::NewLogEntry() << (values.Add("Plane centroid to plane centroid distance: ") <<
-          vcovc.CalcPC2PCDistance(p1, p2).ToString() << " A");
-        TBasicApp::NewLogEntry() << (values.Add("Plane [") << pld1 << "] to plane centroid distance: " <<
-          vcovc.CalcP2PCDistance(p1, p2).ToString() << " A");
-        TBasicApp::NewLogEntry() << (values.Add("Plane [") << pld1 << "] to plane shift: " <<
-          vcovc.CalcP2PShiftDistance(p1, p2).ToString() << " A");
+        values.Add("Plane ") << pld1 << "to plane angle: " << angle.ToString();
+        values.Add("Plane centroid to plane centroid distance: ") <<
+          vcovc.CalcPC2PCDistance(p1, p2).ToString() << " A";
+        values.Add("Plane [") << pld1 << "] to plane centroid distance: " <<
+          vcovc.CalcP2PCDistance(p1, p2).ToString() << " A";
+        values.Add("Plane [") << pld1 << "] to plane shift: " <<
+          vcovc.CalcP2PShiftDistance(p1, p2).ToString() << " A";
         if( olx_abs(angle.GetV()) > 1e-6 )  {
-          TBasicApp::NewLogEntry() << (values.Add("Plane [") << pld2 << "] to plane centroid distance: " <<
-            vcovc.CalcP2PCDistance(p2, p1).ToString() << " A");
-          TBasicApp::NewLogEntry() << (values.Add("Plane [") << pld2 << "] to plane shift distance: " <<
-            vcovc.CalcP2PShiftDistance(p2, p1).ToString() << " A");
+          values.Add("Plane [") << pld2 << "] to plane centroid distance: " <<
+            vcovc.CalcP2PCDistance(p2, p1).ToString() << " A";
+          values.Add("Plane [") << pld2 << "] to plane shift distance: " <<
+            vcovc.CalcP2PShiftDistance(p2, p1).ToString() << " A";
         }
       }
     }
     else if( sel.Count() == 3 )  {
-      if( EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[2], TXAtom) )  {
+      if( EsdlInstanceOf(sel[0], TXAtom) &&
+          EsdlInstanceOf(sel[1], TXAtom) &&
+          EsdlInstanceOf(sel[2], TXAtom) )
+      {
         TSAtom& a1 = (TXAtom&)sel[0];
         TSAtom& a2 = (TXAtom&)sel[1];
         TSAtom& a3 = (TXAtom&)sel[2];
-        TBasicApp::NewLogEntry() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
-          << " angle (numerical): " << vcovc.CalcAngle(a1, a2, a3).ToString());
-        TBasicApp::NewLogEntry() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
-          << " angle (analytical): " << vcovc.CalcAngleA(a1, a2, a3).ToString());
+        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
+          << " angle (numerical): " << vcovc.CalcAngle(a1, a2, a3).ToString();
+        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
+          << " angle (analytical): " << vcovc.CalcAngleA(a1, a2, a3).ToString();
       }
-      else if( (EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[2], TXAtom)) || 
-               (EsdlInstanceOf(sel[1], TXPlane) && EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[2], TXAtom)) ||
-               (EsdlInstanceOf(sel[2], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) && EsdlInstanceOf(sel[0], TXAtom)))  {
+      else if(
+        (EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) &&
+         EsdlInstanceOf(sel[2], TXAtom)) ||
+        (EsdlInstanceOf(sel[1], TXPlane) && EsdlInstanceOf(sel[0], TXAtom) &&
+         EsdlInstanceOf(sel[2], TXAtom)) ||
+        (EsdlInstanceOf(sel[2], TXPlane) && EsdlInstanceOf(sel[1], TXAtom) &&
+         EsdlInstanceOf(sel[0], TXAtom)))
+      {
         TSAtom* a1 = NULL, *a2 = NULL;
         TXPlane* xp = NULL;
         TSAtomCPList atoms;
@@ -9147,10 +9199,13 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           atoms.Add(xp->GetAtom(i));
           pld << atoms.GetLast()->GetLabel() << ' ';
         }
-        TBasicApp::NewLogEntry() << (values.Add(a1->GetLabel()) << '-' << a2->GetLabel() << " to plane " << pld <<
-          "angle: " << vcovc.CalcP2VAngle(atoms, *a1, *a2).ToString());
+        values.Add(a1->GetLabel()) << '-' << a2->GetLabel() << " to plane " <<
+          pld << "angle: " << vcovc.CalcP2VAngle(atoms, *a1, *a2).ToString();
       }
-      else if( EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXPlane) && EsdlInstanceOf(sel[2], TXPlane) )  {
+      else if( EsdlInstanceOf(sel[0], TXPlane) &&
+        EsdlInstanceOf(sel[1], TXPlane) &&
+        EsdlInstanceOf(sel[2], TXPlane) )
+      {
         TSPlane& p1 = (TXPlane&)sel[0];
         TSPlane& p2 = (TXPlane&)sel[1];
         TSPlane& p3 = (TXPlane&)sel[2];
@@ -9158,8 +9213,8 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         for( size_t i=0; i < p1.Count(); i++ )  a1.Add(p1.GetAtom(i));
         for( size_t i=0; i < p2.Count(); i++ )  a2.Add(p2.GetAtom(i));
         for( size_t i=0; i < p3.Count(); i++ )  a3.Add(p3.GetAtom(i));
-        TBasicApp::NewLogEntry() << (values.Add("Angle between plane centroids: ") <<
-          vcovc.Calc3PCAngle(a1, a2, a3).ToString());
+        values.Add("Angle between plane centroids: ") <<
+          vcovc.Calc3PCAngle(a1, a2, a3).ToString();
       }
       else if( EsdlInstanceOf(sel[0], TXPlane) &&
               EsdlInstanceOf(sel[1], TXAtom) &&
@@ -9171,9 +9226,8 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TSAtomCPList a1, a2;
         for( size_t i=0; i < p1.Count(); i++ )  a1.Add(p1.GetAtom(i));
         for( size_t i=0; i < p2.Count(); i++ )  a2.Add(p2.GetAtom(i));
-        TBasicApp::NewLogEntry() << (
-          values.Add("Angle between plane centroid - atom - plane centroid: ")
-          << vcovc.CalcPCAPCAngle(a1, a, a2).ToString());
+        values.Add("Angle between plane centroid - atom - plane centroid: ") <<
+          vcovc.CalcPCAPCAngle(a1, a, a2).ToString();
       }
     }
     else if( sel.Count() == 4 )  {
@@ -9183,13 +9237,17 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TSAtom& a2 = (TXAtom&)sel[1];
         TSAtom& a3 = (TXAtom&)sel[2];
         TSAtom& a4 = (TXAtom&)sel[3];
-        TBasicApp::NewLogEntry() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-'
-          << a4.GetLabel() << " torsion angle (numerical): " << vcovc.CalcTAngle(a1, a2, a3, a4).ToString());
-        TBasicApp::NewLogEntry() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-'
-          << a4.GetLabel() << " torsion angle (analytical): " << vcovc.CalcTAngleA(a1, a2, a3, a4).ToString());
-        TBasicApp::NewLogEntry() << (values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-'
-          << a4.GetLabel() << " tetrahedron volume: " <<
-          vcovc.CalcTetrahedronVolume(a1, a2, a3, a4).ToString() << " A^3");
+        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' <<
+          a3.GetLabel() << '-' << a4.GetLabel() <<
+          " torsion angle (numerical): " <<
+          vcovc.CalcTAngle(a1, a2, a3, a4).ToString();
+        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' <<
+          a3.GetLabel() << '-' << a4.GetLabel() <<
+          " torsion angle (analytical): " <<
+          vcovc.CalcTAngleA(a1, a2, a3, a4).ToString();
+        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' <<
+          a3.GetLabel() << '-' << a4.GetLabel() << " tetrahedron volume: " <<
+          vcovc.CalcTetrahedronVolume(a1, a2, a3, a4).ToString() << " A^3";
       }
     }
     else if( sel.Count() == 7 )  {
@@ -9200,9 +9258,9 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
       if( atoms.Count() != 7 )
         return;
-      TBasicApp::NewLogEntry() << "Octahedral distortion is (using best line, for the selection): " << 
+      values.Add("Octahedral distortion is (using best line, for the selection): ") << 
         vcovc.CalcOHDistortionBL(TSAtomCPList(atoms)).ToString();
-      TBasicApp::NewLogEntry() << "Octahedral distortion is (using best plane, for the selection): " << 
+      values.Add("Octahedral distortion is (using best plane, for the selection): ") << 
         vcovc.CalcOHDistortionBP(TSAtomCPList(atoms)).ToString();
       TSAtom* central_atom = atoms[0];
       atoms.Delete(0);
@@ -9233,15 +9291,15 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
             face1_center /= 3;
             transforms.Add(0, central_atom->crd() - face1_center);
             PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(), normal, sorted_atoms);
-            TBasicApp::GetLog() << (olxstr("Face ") << ++face_cnt << ": ") ;
+            values.Add("Face ") << ++face_cnt << ": ";
             for( size_t l=0; l < sorted_atoms.Count(); l++ )
-              TBasicApp::GetLog() << sorted_atoms[l]->GetLabel() << ' ';
+              values.GetLastString() << sorted_atoms[l]->GetLabel() << ' ';
             sorted_atoms.Insert(0, central_atom);
             TEValue<double> rv = vcovc.CalcOHDistortionBP(
               TSAtomCPList(sorted_atoms));
             total_val_bp += rv.GetV()*3;
             total_esd_bp += olx_sqr(rv.GetE()); 
-            TBasicApp::NewLogEntry() << rv.ToString();
+            values.GetLastString() << rv.ToString();
             //TBasicApp::GetLog() << "BP: " << rv.ToString();
             //rv = vcovc.CalcOHDistortionBL(sorted_atoms);
             //total_val_bl += olx_abs(180.0 - rv.GetV() * 3);
@@ -9251,7 +9309,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         }
       }
       if( face_cnt == 8 )  {
-        TBasicApp::NewLogEntry() << "Combined distortion (best plane): " <<
+        values.Add("Combined distortion (best plane): ") <<
           TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString();
         //TBasicApp::NewLogEntry() << "Combined distortion (best line): " << TEValue<double>(total_val_bl, 3*sqrt(total_esd_bl)).ToString()');
       }
@@ -9259,6 +9317,13 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TBasicApp::NewLogEntry() << "Could not locate required 8 octahedron faces";
       }
     }
+  }
+  TBasicApp::NewLogEntry() << values;
+  if (Options.Contains('c')) {
+    wxTheClipboard->Open();
+    wxTheClipboard->SetData(
+      new wxTextDataObject(values.Text(NewLineSequence()).u_str()));
+    wxTheClipboard->Close();
   }
   if( Options.Contains("label") )  {
     vec3d cent;

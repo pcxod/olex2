@@ -32,7 +32,7 @@ protected:
 public:
   AGlScene() : FParent(NULL) {}
   virtual ~AGlScene();
-  inline TGlRenderer *Parent()  {  return FParent;  }
+  TGlRenderer *Parent()  {  return FParent;  }
   /* must be called by TGlRender */
   void Parent(TGlRenderer *P)  {  FParent = P; }
   /* The function creates or replaces a font (if exists under the same name)  */
@@ -54,8 +54,8 @@ public:
   virtual void StartDraw();
   virtual void EndDraw();
 
-  inline size_t FontCount() const {  return Fonts.Count();  }
-  inline TGlFont& GetSmallFont(size_t i) const {
+  size_t FontCount() const {  return Fonts.Count();  }
+  TGlFont& GetSmallFont(size_t i) const {
     if( i >= SmallFonts.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid small font index :") << i);
     if( !SmallFonts[i]->IsCreated() )
@@ -63,7 +63,7 @@ public:
     return *SmallFonts[i];
   }
   // the fonts is created if uninitialised
-  inline TGlFont& GetFont(size_t i, bool use_default) const {
+  TGlFont& GetFont(size_t i, bool use_default) const {
     TGlFont* rv = NULL;
     if( i >= Fonts.Count() )  {
       if( use_default )
@@ -77,13 +77,13 @@ public:
       DoCreateFont(*rv, false);
     return *rv;
   }
-  inline TGlFont& GetDefaultFont() const {
+  TGlFont& GetDefaultFont() const {
     if( Fonts.IsEmpty() )
       throw TFunctionFailedException(__OlxSourceInfo, "no fonts available");
     return GetFont(0, true);
   }
   // this is motly for internal infrastructure calls - returned font might be not initialised
-  inline TGlFont& _GetFont(size_t i) const {  return *Fonts[i];  }
+  TGlFont& _GetFont(size_t i) const {  return *Fonts[i];  }
   TGlFont* FindFont(const olxstr& name)  {  return FontsDict.Find(name, NULL);  }
   template <class T> TGlFont& RegisterFontForType(TGlFont& fnt)  {
     FontRegistry.Add(&typeid(T), fnt.GetId());
@@ -111,12 +111,13 @@ public:
     DefPropBIsSet(Bold)
     DefPropBIsSet(Fixed)
     DefPropBIsSet(Italic)
-    inline bool IsUnderlined() const {  return Underlined;  }
+    bool IsUnderlined() const {  return Underlined;  }
     DefPropP(short, Size)
   };
 
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
+  const_strlist ToPov() const;
 };
 
 EndGlNamespace()

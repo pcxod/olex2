@@ -766,11 +766,31 @@ olxstr macSel_GetPlaneName(const TSPlane& p)  {
     rv << ' ' << p.GetAtom(i).GetGuiLabel();
   return rv;
 }
-olxstr TGXApp::GetSelectionInfo()  {
+olxstr TGXApp::GetSelectionInfo(bool list)  {
   olxstr Tmp;
   try {
     double v;
     TGlGroup& Sel = FGlRender->GetSelection();
+    if (list) {
+      TStrList rv;
+      for (size_t i=0; i < Sel.Count(); i++) {
+        if (!EsdlInstanceOf(Sel[i], TXBond))  continue;
+        TXBond &b = ((TXBond&)Sel[i]);
+        olxstr &l = rv.Add("Distance (");
+        l << macSel_GetName2(b.A(), b.B()) << "): ";
+        if( CheckFileType<TCif>() )  {
+          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager()
+            .Match(b.A(), b.B());
+          if( cv != NULL )
+            l << cv->GetValue().ToString();
+          else
+            l << olxstr::FormatFloat(3, b.Length());
+        }
+        else
+          l << olxstr::FormatFloat(3, b.Length());
+      }
+      return rv.Text(NewLineSequence());
+    }
     if( Sel.Count() == 1 )  {
       if( EsdlInstanceOf(Sel[0], TXBond) )  {
         TXBond &b = ((TXBond&)Sel[0]);
@@ -4351,47 +4371,14 @@ void TGXApp::SelectAll(bool Select)  {
   Draw();
 }
 //..............................................................................
-TStrList TGXApp::ToPov() const {
-  TGlRenderer &r = GetRender();
-  pov::CrdTransformer crdc(r.GetBasis());
+const_strlist TGXApp::ToPov() const {
   olxdict<TGlMaterial, olxstr, TComparableComparator> materials;
-  TStrList out;
-  out.Add("global_settings {");
-  TGlOption cl_amb = r.LightModel.GetAmbientColor();
-  cl_amb *= 10;
-  out.Add(" ambient_light ") << pov::to_str(cl_amb);
-  out.Add("}");
-
-  TGlOption cl_clear = r.LightModel.GetClearColor();
-  out.Add("background { color ") << pov::to_str(cl_clear) << " }";
-  out.Add("camera {");
-  out.Add(" location <0,0,") << 3./r.GetBasis().GetZoom() << '>';
-  out.Add(" angle 25");
-  out.Add(" up 1");
-  out.Add(" right -4/3");
-  out.Add(" look_at <0,0,0>");
-  out.Add("}");
-  for( size_t i=0; i < 8; i++ )  {
-    TGlLight &l = r.LightModel.GetLight(i);
-    if( !l.IsEnabled() )  continue;
-    out.Add("light_source {");
-    TGlOption lp = l.GetPosition();
-    out.Add(" ") << pov::to_str(lp, false);
-    lp = l.GetDiffuse();
-    if( lp.IsEmpty() )
-      lp = l.GetAmbient();
-    if( lp.IsEmpty() )
-      lp = l.GetSpecular();
-    lp *= 1.5;
-    out.Add(" color ") << pov::to_str(lp);
-    out.Add("}");
-  }
-
+  TStrList out = GetRender().GetScene().ToPov();
   out << TXAtom::PovDeclare();
   out << TXBond::PovDeclare();
   out << TXPlane::PovDeclare();
-  TGXApp::AtomIterator ai = GetAtoms();
   out.Add("union {");
+  TGXApp::AtomIterator ai = GetAtoms();
   while( ai.HasNext() )  {
     TXAtom &a = ai.Next();
     if( a.IsVisible() )
@@ -4423,8 +4410,7 @@ TStrList TGXApp::ToPov() const {
     out << UserObjects[i].ToPov(materials);
 
   out.Add("}");
-  TStrList mat_out, scene_out;
-  //scene_out.Add("");
+  TStrList mat_out;
   for( size_t i=0; i < materials.Count(); i++ )  {
     mat_out.Add("#declare ") << materials.GetValue(i) << '=';
     mat_out.Add(materials.GetKey(i).ToPOV());
