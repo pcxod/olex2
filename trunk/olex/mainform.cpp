@@ -609,6 +609,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Sel,
     "a-select all&;"
     "u-unselect all&;"
+    "l-consider the list of bonds as independent&;"
+    "c-copies printed values to the clipboard"
     "i-invert selection",
     fpAny,
     "If no arguments provided, prints current selection. This includes "
@@ -639,11 +641,14 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Creates an illustration of a pi-system to metal bonds");
 
   this_InitMacroD(Esd,
-    "label-creates a graphics label",
+    "label-creates a graphics label&;"
+    "l-consider the list of bonds as independent&;"
+    "c-copies printed values to the clipboard",
     fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and "
     "evaluates their esd using the variance-covariance matrix coming from the "
-    "ShelXL refinement with negative 'MORE' like 'MORE -1' option");
+    "ShelXL refinement with negative 'MORE' like 'MORE -1' option or from the "
+    "olex2.refine");
   
   this_InitMacroD(Name,
     "c-enables checking labels for duplications&;"

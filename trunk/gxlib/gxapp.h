@@ -421,7 +421,8 @@ public:
   void GroupSelection(const olxstr& name);
   void UnGroupSelection();
   void UnGroup(TGlGroup& G);
-  olxstr GetSelectionInfo();
+  // if list is true - the selection is considered as a list of bonds
+  olxstr GetSelectionInfo(bool list=false);
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);
   virtual void ExpandSelectionEx(TSAtomPList& atoms);
@@ -705,7 +706,7 @@ public:     void CalcProbFactor(float Prob);
   void SaveModel(const olxstr& file_name) const;
   void LoadModel(const olxstr& file_name);
 
-  TStrList ToPov() const;
+  const_strlist ToPov() const;
 //..............................................................................
   static TGXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();

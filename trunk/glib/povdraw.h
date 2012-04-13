@@ -9,10 +9,14 @@
 
 #ifndef __olx_gxl_powdraw_H
 #define __olx_gxl_powdraw_H
-#include "gxbase.h"
 #include "gloption.h"
 #include "ebasis.h"
-BeginGxlNamespace()
+#include "edict.h"
+BeginGlNamespace()
+
+class TGraphicsStyle;
+class TGlMaterial;
+class AGDrawObject;
 
 struct pov {
   template <typename NumT>
@@ -43,34 +47,12 @@ struct pov {
   static olxstr get_mat_name(const olxstr &primitive_name,
     TGraphicsStyle &style, olxdict<TGlMaterial, olxstr,
     TComparableComparator> &materials,
-    const AGDrawObject *sender=NULL)
-  {
-    if (sender != NULL && sender->GetParentGroup() != NULL)
-      return get_mat_name(primitive_name, style, materials);
-    olxstr mat_name;
-    size_t lmi = style.IndexOfMaterial(primitive_name);
-    if( lmi != InvalidIndex )  {
-      TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
-      lmi = materials.IndexOf(glm);
-      if( lmi == InvalidIndex )
-        mat_name = materials.Add(glm, olxstr("mat") << (materials.Count()+1));
-      else
-        mat_name = materials.GetValue(lmi);
-    }
-    return mat_name;
-  }
+    const AGDrawObject *sender=NULL);
+
   static olxstr get_mat_name(const TGlMaterial& glm,
     olxdict<TGlMaterial, olxstr, TComparableComparator> &materials,
-    const AGDrawObject *sender=NULL)
-  {
-    if (sender != NULL && sender->GetParentGroup() != NULL) {
-      return get_mat_name(sender->GetParentGroup()->GetActualMaterial(glm),
-        materials);
-    }
-    size_t lmi = materials.IndexOf(&glm);
-    return (lmi == InvalidIndex ? materials.Add(glm, olxstr("mat") <<
-      (materials.Count()+1)) : materials.GetValue(lmi));
-  }
+    const AGDrawObject *sender=NULL);
+
   struct CrdTransformer  {
     TEBasis basis;
     double scale;
@@ -88,5 +70,5 @@ struct pov {
   };
 };
 
-EndGxlNamespace()
+EndGlNamespace()
 #endif
