@@ -38,10 +38,12 @@ namespace PersUtil {
   template <class lc> static olxstr NumberListToStr(const lc& v)  {
     olxstr_buf rv;
     olxstr sep = ',';
-    for( size_t i=0; i < v.Count(); i++ )
-      rv << v[i] << sep;
-    if (v.Count() > 0)
-      rv << v[v.Count()-1];
+    if (v.Count() > 0) {
+      size_t to = v.Count()-1;
+      for( size_t i=0; i < to; i++ )
+        rv << v[i] << sep;
+      rv << v[to];
+    }
     return rv;
   }
 
