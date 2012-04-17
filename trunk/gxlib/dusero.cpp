@@ -17,7 +17,10 @@
 #include "povdraw.h"
 
 TDUserObj::TDUserObj(TGlRenderer& R, short type, const olxstr& collectionName) :
-  AGlMouseHandlerImp(R, collectionName), Type(type), Vertices(NULL), Normals(NULL)
+  AGlMouseHandlerImp(R, collectionName),
+    Type(type),
+    Vertices(NULL), Normals(NULL),
+    Colors(NULL)
 {
   SetSelectable(false);
   GlM.SetFlags(sglmAmbientF);
@@ -29,7 +32,8 @@ TDUserObj::TDUserObj(TGlRenderer& R, short type, const olxstr& collectionName) :
 TDUserObj::TDUserObj(TGlRenderer& R, const TDataItem &di)
   : AGlMouseHandlerImp(R, EmptyString()),
     Vertices(NULL),
-    Normals(NULL)
+    Normals(NULL),
+    Colors(NULL)
 {
   FromDataItem(di);
 }
@@ -67,6 +71,11 @@ void TDUserObj::Create(const olxstr& cName)  {
       GlP.Vertices = *Vertices;
     if( Normals != NULL )
       GlP.Normals = *Normals;
+    if (Colors != NULL) {
+      GlP.Colors = *Colors;
+      GlM.SetColorMaterial(true);
+      GlP.SetProperties(GlM);
+    }
   }
 }
 //.............................................................................
@@ -100,14 +109,28 @@ void TDUserObj::ToDataItem(TDataItem &di) const {
     di.AddField("vertices", PersUtil::VecListToStr(*Vertices));
   if (Normals != NULL)
     di.AddField("normals", PersUtil::VecListToStr(*Normals));
+  if (Colors != NULL)
+    di.AddField("colors", PersUtil::NumberListToStr(*Colors));
 }
 //.............................................................................
 void TDUserObj::FromDataItem(const TDataItem &di) {
+  if (Vertices != NULL) {
+    delete Vertices;
+    Vertices = NULL;
+  }
+  if (Normals != NULL) {
+    delete Normals;
+    Normals = NULL;
+  }
+  if (Colors != NULL) {
+    delete Colors;
+    Colors = NULL;
+  }
   di.GetRequiredField("type").ToNumber(Type);
   di.GetRequiredField("flags").ToNumber(AGlMouseHandlerImp::glml_Flags);
   SetCollectionName(di.GetRequiredField("name"));
   Basis.FromDataItem(di.FindRequiredItem("Basis"));
-  olxstr v = di.GetFieldValue("verices");
+  olxstr v = di.GetFieldValue("vertices");
   if (!v.IsEmpty()) {
     Vertices = new vec3f_alist;
     PersUtil::VecListFromStr(v, *Vertices);
@@ -115,7 +138,12 @@ void TDUserObj::FromDataItem(const TDataItem &di) {
   v = di.GetFieldValue("normals");
   if (!v.IsEmpty()) {
     Normals = new vec3f_alist;
-    PersUtil::VecListFromStr(v, *Vertices);
+    PersUtil::VecListFromStr(v, *Normals);
+  }
+  v = di.GetFieldValue("colors");
+  if (!v.IsEmpty()) {
+    Colors = new TArrayList<uint32_t>;
+    PersUtil::NumberListFromStr(v, *Colors);
   }
 }
 //.............................................................................

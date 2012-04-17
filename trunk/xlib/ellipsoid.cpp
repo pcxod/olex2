@@ -20,12 +20,14 @@ void TEllipsoid::Initialise()  {
   mat3d M = ExpandQuad();
   mat3d::EigenValues(M, Matrix.I());
   if( (M[0][0] <= 0) || (M[1][1] <= 0) || (M[2][2] <= 0) )  {
-    SX = SY = SZ = 0;
     NPD = true;
+    SX = sqrt(olx_abs(M[0][0]));
+    SY = sqrt(olx_abs(M[1][1]));
+    SZ = sqrt(olx_abs(M[2][2]));
   }
   else  {
     // calculate axis lengths
-    SX = sqrt(M[0][0]);  // correspondes 50% ellipsoides
+    SX = sqrt(M[0][0]);
     SY = sqrt(M[1][1]);
     SZ = sqrt(M[2][2]);
     NPD = false;

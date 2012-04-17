@@ -500,7 +500,8 @@ void TMainForm::XApp(TGXApp *XA)  {
     "A portable version of pict with limited resolution (OS/graphics card "
     "dependent). Not stable on some graphics cards");
   this_InitMacroD(Echo,
-    "m-the printing color (info, warning, error or exceptiion)",
+    "m-the printing color (info, warning, error or exceptiion)&;"
+    "c-copy printed information to clipboard",
     fpAny,
     "Prints provided string, functions are evaluated before printing");
   this_InitMacroD(PictPS,
@@ -539,7 +540,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Post, EmptyString(), fpAny,
     "Prints a string, but only after a new line character is encountered");
 
-  this_InitMacroD(Bang, EmptyString(), fpAny | psFileLoaded,
+  this_InitMacroD(Bang, "c-copy info to the clipboard", fpAny|psFileLoaded,
     "Prints bonds and angles table for selected/given atoms");
   this_InitMacroD(Grow,
     "s-grow shells vs fragments&;"
@@ -686,7 +687,9 @@ void TMainForm::XApp(TGXApp *XA)  {
     "line");
   this_InitMacroD(Info,
     "s-sorts the atom list&;p-coordinate precision [3]&;f-print fractional "
-    "coordinates vs Cartesian [true]", fpAny,
+    "coordinates vs Cartesian [true]&;"
+    "c-copy the printed information ito the clipboard",
+    fpAny,
     "Prints out information for gived [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
     "Prints available information. If no arguments provided prints available "
@@ -1031,7 +1034,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "provided interval (first argument)");
 
   this_InitMacroD(Tls,
-    "b-three first selected atoms are the ADp basis&;"
     "a-apply the TLS ADP to the atoms",
     fpAny|psFileLoaded,
     "TLS procedure. The TLS is calculated for the given atoms and then the "
@@ -2633,8 +2635,10 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     return;
   }
   if (CmdLineVisible && wxw == FGlCanvas) {
-    FCmdLine->EmulateKeyPress(m);
-    return;
+    if (m.m_keyCode != WXK_BACK && m.m_keyCode != WXK_DELETE) {
+      FCmdLine->EmulateKeyPress(m);
+      return;
+    }
   }
   if( m.m_altDown )      Fl |= sssAlt;
   if( m.m_shiftDown )    Fl |= sssShift;
@@ -2646,39 +2650,40 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
       // avoid duplication
       if (CmdLineVisible && FindFocus() != FCmdLine)
         return;
+      olxstr content;
       if( wxTheClipboard->Open() )  {
         if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
           wxTextDataObject data;
           wxTheClipboard->GetData(data);
-          olxstr cmdl;
-          if (CmdLineVisible)
-            cmdl = FCmdLine->GetCommand();
-          else
-            cmdl = FGlConsole->GetCommand();
-          olxstr content = data.GetText();
-          if( !ImportFrag(content) )  {
-            olxstr trimmed_content = content;
-            trimmed_content.Trim(' ').Trim('\n').Trim('\r');
-            size_t ip;
-            if (CmdLineVisible) {
-              ip = FCmdLine->GetInsertionPoint() -
-                FCmdLine->GetPromptStr().Length();
-            }
-            else
-              ip = FGlConsole->GetCmdInsertPosition();
-            if( ip >= cmdl.Length() )
-              cmdl << content;
-            else
-              cmdl.Insert(content, ip);
-            if (CmdLineVisible)
-              FCmdLine->SetCommand(cmdl);
-            else
-              FGlConsole->SetCommand(cmdl);
-          }
-          TimePerFrame = FXApp->Draw();
+          content = data.GetText();
         }
         wxTheClipboard->Close();
       }
+      olxstr cmdl;
+      if (CmdLineVisible)
+        cmdl = FCmdLine->GetCommand();
+      else
+        cmdl = FGlConsole->GetCommand();
+      if( !ImportFrag(content) )  {
+        olxstr trimmed_content = content;
+        trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+        size_t ip;
+        if (CmdLineVisible) {
+          ip = FCmdLine->GetInsertionPoint() -
+            FCmdLine->GetPromptStr().Length();
+        }
+        else
+          ip = FGlConsole->GetCmdInsertPosition();
+        if( ip >= cmdl.Length() )
+          cmdl << content;
+        else
+          cmdl.Insert(content, ip);
+        if (CmdLineVisible)
+          FCmdLine->SetCommand(cmdl);
+        else
+          FGlConsole->SetCommand(cmdl);
+      }
+      TimePerFrame = FXApp->Draw();
       return;
     }
     //undo, Cmd+Z, Ctrl+Z
@@ -2692,7 +2697,13 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     m.Skip();
     return;
   }
-  if( FGlConsole->WillProcessKey(m.GetKeyCode(), Fl) )  {
+  if (CmdLineVisible) {
+    if (FCmdLine->WillProcessKey(m)) {
+      m.Skip();
+      return;
+    }
+  }
+  else if (!FGlConsole->WillProcessKey(m.GetKeyCode(), Fl)) {
     m.Skip();
     return;
   }
@@ -3769,7 +3780,7 @@ void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
   }
 }
 //..............................................................................
-bool TMainForm::ProcessEvent( wxEvent& evt )  {
+bool TMainForm::ProcessEvent(wxEvent& evt)  {
   if( evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED &&
       AccMenus.ValueExists(evt.GetId()) )
   {
@@ -4163,19 +4174,7 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms,
   bool GetAll, bool unselect)
 {
   size_t cnt = xatoms.Count();
-  if( Cmds.IsEmpty() )  {
-    xatoms.AddList(
-      FXApp->FindXAtoms("sel", EsdlInstanceOf(FXApp->GetSelection(), TGlGroup)
-      ? unselect : false));
-    if( GetAll && xatoms.IsEmpty() )
-      xatoms.AddList(FXApp->FindXAtoms(EmptyString(), unselect));
-  }
-  else
-    xatoms.AddList(FXApp->FindXAtoms(Cmds.Text(' '), unselect));
-  for( size_t i=0; i < xatoms.Count(); i++ )
-    if( !xatoms[i]->IsVisible() )
-      xatoms[i] = NULL;
-  xatoms.Pack();
+  xatoms.AddList(FXApp->FindXAtoms(Cmds, GetAll, unselect));
   return (xatoms.Count() != cnt);
 }
 //..............................................................................
@@ -4290,6 +4289,14 @@ void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
   }
   catch (const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
+  }
+}
+//..............................................................................
+void TMainForm::ToClipboard(const olxstr &text) const {
+  if( wxTheClipboard->Open() )  {
+    if (wxTheClipboard->IsSupported(wxDF_TEXT) )
+      wxTheClipboard->SetData(new wxTextDataObject(text.u_str()));
+    wxTheClipboard->Close();
   }
 }
 //..............................................................................

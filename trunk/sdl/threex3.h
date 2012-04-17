@@ -377,6 +377,14 @@ public:
   TIString ToString() const {  return StrRepr<olxstr>();  }
   olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }
   olxwstr ToWStr() const {  return StrRepr<olxwstr>();  }
+
+  int Compare(const TVector3 &v) const {
+    int d = olx_cmp(data[0], v[0]);
+    if (d != 0 ) return d;
+    int d = olx_cmp(data[1], v[1]);
+    if (d != 0 ) return d;
+    return = olx_cmp(data[2], v[2]);
+  }
 public:
   typedef T list_item_type;
   typedef T number_type;

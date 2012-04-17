@@ -314,6 +314,10 @@ public:
   bool CheckState(uint32_t state, const olxstr& stateData);
   bool PopupMenu(wxMenu* menu, const wxPoint& p=wxDefaultPosition);
   bool PopupMenu(wxMenu* menu, int x, int y)  {  return PopupMenu(menu, wxPoint(x,y));  }
+  void ToClipboard(const olxstr &text) const;
+  void ToClipboard(const TStrList &text) const {
+    ToClipboard(text.Text(NewLineSequence()));
+  }
 protected:
   void PostCmdHelp(const olxstr &Cmd, bool Full=false);
   void AnalyseErrorEx(TMacroError& error, bool queit=false);

@@ -23,7 +23,8 @@ typedef linear_from_sym<mat3d> from_sym3d;
 typedef linear_to_sym<mat3d> to_sym3d;
 
 
-TLS::TLS(const TSAtomPList &atoms, const double *cellParameters) {
+TLS::TLS(const TSAtomPList &atoms_) : atoms(atoms_)
+{
   if (atoms.IsEmpty())
     throw TInvalidArgumentException(__OlxSourceInfo, "atom list");
   TLSfreeParameters = 21;
@@ -38,13 +39,13 @@ TLS::TLS(const TSAtomPList &atoms, const double *cellParameters) {
   */
   ematd designM, weights;
   evecd UijCol;
-  //UijErrors(atoms, weights);
+  //UijErrors(weights);
   /*
   currently unit weights
   Create design matrix and find TLS matrices using SVD
   dm is function of atoms' coords in Cartesian.
   */
-  createDM(designM, UijCol, atoms);
+  createDM(designM, UijCol);
   // UijCol create wrt same coord system
   // TLS wrt same frame/origin as UijCol
   calcTLS(designM, UijCol, weights);
@@ -52,14 +53,14 @@ TLS::TLS(const TSAtomPList &atoms, const double *cellParameters) {
   RotateLaxes();
   symS();  //Origin shift to symmetrise the S
   newElps = calcUijEllipse(atoms);
-  FoM = FigOfMerit(atoms, newElps, UijCol, weights);
-
+  FoM = FigOfMerit(newElps, weights);
   //{ // diagonalise S?
   //  mat3d splitAxes, Tmatrix, Smatrix;
   //  diagS(splitAxes,Tmatrix,Smatrix);
   //}
 }
-void TLS::printTLS(const olxstr &title){
+
+void TLS::printTLS(const olxstr &title) const {
   TTTable<TStrList> tab(12, 3);
   tab[0][0] = "T";  tab[4][0] = "L";  tab[8][0] = "S";
   int sacc [9] = {0, 1, 2, 1, 3, 4, 2, 4, 5};
@@ -76,7 +77,38 @@ void TLS::printTLS(const olxstr &title){
   }
   TBasicApp::NewLogEntry() << tab.CreateTXTList(title, false, false, ' ');
 }
-void TLS::UijErrors(const TSAtomPList &atoms, ematd &weights){
+
+void TLS::printDiff(const olxstr &title) const {
+  TTTable<TStrList> tab(atoms.Count()*2, 7);
+  tab.ColName(0) = "Atom";
+  tab.ColName(1) = "U11";
+  tab.ColName(2) = "U22";
+  tab.ColName(3) = "U33";
+  tab.ColName(4) = "U23";
+  tab.ColName(5) = "U31";
+  tab.ColName(6) = "U12";
+  evecd Q(6);
+  for (size_t i=0; i < atoms.Count(); i++) {
+    size_t idx = i*2;
+    tab[idx][0] = atoms[i]->GetGuiLabel();
+    atoms[i]->GetEllipsoid()->GetShelxQuad(Q);
+    for (size_t j=0; j < 6; j++)
+      tab[idx][j+1] = olxstr::FormatFloat(-4, Q[j], true);
+    tab[idx+1][0] = "Utls";
+    Q = GetElpList()[i];
+    for (size_t j=0; j < 6; j++)
+      tab[idx+1][j+1] = olxstr::FormatFloat(-4, Q[j], true);
+  }
+  TBasicApp::NewLogEntry() << tab.CreateTXTList(title, true, false, ' ');
+}
+
+void TLS::printFOM() const {
+  TBasicApp::NewLogEntry() <<
+    "R1, %: " << olxstr::FormatFloat(2, GetFoM()[0]*100) << ' ' <<
+    "R2', %: " << olxstr::FormatFloat(2, GetFoM()[1]*100);
+}
+
+void TLS::UijErrors(ematd &weights){
 // Unit weights  - should be replaced by VcV matrix when available
   size_t dm = 6*atoms.Count();
   int wght[6] = {1, 2, 2, 1, 2, 1};
@@ -107,7 +139,7 @@ void TLS::UijErrors(const TSAtomPList &atoms, ematd &weights){
   Rcart.Print();*/
 }
 
-void TLS::createDM(ematd &dm, evecd &UijC, const TSAtomPList &atoms) {
+void TLS::createDM(ematd &dm, evecd &UijC) {
   dm.Resize(6*atoms.Count(),TLSfreeParameters).Null();
   UijC.Resize(6*atoms.Count()).Null();
   evecd quad(6);
@@ -238,16 +270,14 @@ ConstTypeList<evecd> TLS::calcUijEllipse (const TSAtomPList &atoms) {
   return Ellipsoids;
 }
 
-mat3d TLS::calcUijCart(const vec3d &position){
+mat3d TLS::calcUijCart(const vec3d &position) {
   vec3d r = position - origin;
   mat3d Atls(0, r[2], -r[1], -r[2], 0, r[0], r[1], -r[0], 0);
   mat3d AtlsT = mat3d::Transpose(Atls);
   return Tmat + Atls*Smat + mat3d::Transpose(Smat)*AtlsT + Atls*Lmat*AtlsT;
 }
 
-vec3d TLS::FigOfMerit(const TSAtomPList &atoms, const evecd_list &Elps,
-  const evecd &UijCol, const ematd &weights)
-{  
+vec3d TLS::FigOfMerit(const evecd_list &Elps, const ematd &weights) {
   //sets FoM = {R1,R2}
   // R1 = sum {i<j=0..3} |Uobs - Utls| / sum |Uobs| in L axes
   // R2 = Sqrt[ sum {i,j=0..3} (Uobs - Utls)^2 / sum{Uobs^2}  ]

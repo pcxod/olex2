@@ -937,20 +937,15 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "could not find any atoms");
     return;
   }
-  TStrList Output;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     FXApp->BangTable(*Atoms[i], Table);
-    Output.Clear();
+    TStrList Output;
     Table.CreateTXTList(Output, EmptyString(), true, true, ' ');
     FGlConsole->PrintText(Output, NULL, false);
     clipbrd << Output.Text(NewLineSequence());
   }
-  if( wxTheClipboard->Open() )  {
-    if (wxTheClipboard->IsSupported(wxDF_TEXT) )
-      wxTheClipboard->SetData(new wxTextDataObject(clipbrd.u_str()));
-    wxTheClipboard->Close();
-  }
-  TBasicApp::NewLogEntry() << "The environment list was placed to the clipboard";
+  if (Options.Contains('c'))
+    ToClipboard(clipbrd);
 }
 //..............................................................................
 void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
@@ -1169,7 +1164,9 @@ void TMainForm::macStop(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   olxstr m = Options.FindValue('m');
   if( !m.IsEmpty() )  {
     if( m.Equalsi("info") )
@@ -1182,7 +1179,8 @@ void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FGlConsole->SetPrintMaterial(&ExceptionFontColor);
   }
   TBasicApp::NewLogEntry() << Cmds.Text(' ');
-  //FXApp->Draw();
+  if (Options.Contains('c'))
+    ToClipboard(Cmds.Text(' '));
 }
 //..............................................................................
 void TMainForm::macPost(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1440,6 +1438,8 @@ void TMainForm::macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Options.Contains('f')
     );
   TBasicApp::NewLogEntry() << Output;
+  if (Options.Contains('c'))
+    ToClipboard(Output);
 }
 //..............................................................................
 void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -4767,11 +4767,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     olxstr seli = FXApp->GetSelectionInfo(Options.Contains('l'));
     if( !seli.IsEmpty() ) {
       FXApp->NewLogEntry() << seli;
-      if (Options.Contains('c')) {
-        wxTheClipboard->Open();
-        wxTheClipboard->SetData(new wxTextDataObject(seli.u_str()));
-        wxTheClipboard->Close();
-      }
+      if (Options.Contains('c'))
+        ToClipboard(seli);
     }
   }
   else  {
@@ -6730,13 +6727,6 @@ void TMainForm::funSGList(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  double cellParameters[12];
-  for( int i = 0; i < 3; i++ )  {
-    cellParameters[i]= FXApp->XFile().GetAsymmUnit().GetAxes()[i];
-    cellParameters[i+3]= FXApp->XFile().GetAsymmUnit().GetAngles()[i];
-    cellParameters[i+6]= FXApp->XFile().GetAsymmUnit().GetAxisEsds()[i];
-    cellParameters[i+9]= FXApp->XFile().GetAsymmUnit().GetAngleEsds()[i];
-  }
   TXAtomPList xatoms = FindXAtoms(Cmds, true, true);
   for( size_t i=0; i < xatoms.Count(); i++ )  {
     if( xatoms[i]->GetEllipsoid() == NULL )
@@ -6746,128 +6736,21 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     Error.ProcessingError(__OlxSrcInfo, "at least 4 anisotropic atoms expected");
     return;
   }
-  evecd_list original_q;
-  vec3d_list original_crds;
   evecd Q(6);
   TAsymmUnit &au = FXApp->XFile().GetAsymmUnit();
-  if (Options.Contains('b') && xatoms.Count() > 2) {
-    TBasicApp::NewLogEntry() << "Aligning x axis to: " <<
-      xatoms[1]->GetGuiLabelEx() << " - " <<
-      xatoms[0]->GetGuiLabelEx();
-    mat3d basis;
-    basis[0] = xatoms[1]->crd()-xatoms[0]->crd();
-    TBasicApp::NewLogEntry() << "Aligning z axis perpendicular to plane formed"
-      " by given atoms";
-    basis[2] = basis[0].XProdVec(xatoms[2]->crd()-xatoms[0]->crd());
-    basis[1] = basis[2].XProdVec(basis[0]);
-    basis.Normalise();
-    original_q.SetCapacity(xatoms.Count());
-    original_crds.SetCapacity(xatoms.Count());
-    mat3d basis_t = mat3d::Transpose(basis);
-    for (size_t i=0; i < xatoms.Count(); i++) {
-      xatoms[i]->GetEllipsoid()->GetShelxQuad(original_q.AddNew(6));
-      xatoms[i]->GetEllipsoid()->Mult(basis);
-      original_crds.AddCopy(xatoms[i]->crd());
-      xatoms[i]->crd() = basis*xatoms[i]->crd();
-    }
-  }
-
-  xlib::TLS tls(TSAtomPList(xatoms, StaticCastAccessor<TSAtom>()), cellParameters);
-  olxstr ttitle("TLS analysis for: ");
-  for( size_t i=0; i < xatoms.Count(); i++ )  {
-    ttitle << xatoms[i]->GetGuiLabel();
-    if( (i+1) < xatoms.Count() )
-      ttitle << ", ";
-  }
-  tls.printTLS(ttitle);
-  TBasicApp::NewLogEntry() <<
-    "R1, %: " << olxstr::FormatFloat(2, tls.GetFoM()[0]*100) << ' ' <<
-    "R2', %: " << olxstr::FormatFloat(2, tls.GetFoM()[1]*100);
-
-  TTTable<TStrList> tab(xatoms.Count()*2, 7);
-  tab.ColName(0) = "Atom";
-  tab.ColName(1) = "U11";
-  tab.ColName(2) = "U22";
-  tab.ColName(3) = "U33";
-  tab.ColName(4) = "U23";
-  tab.ColName(5) = "U31";
-  tab.ColName(6) = "U12";
-  for (size_t i=0; i < xatoms.Count(); i++) {
-    size_t idx = i*2;
-    tab[idx][0] = xatoms[i]->GetGuiLabel();
-    xatoms[i]->GetEllipsoid()->GetShelxQuad(Q);
-    for (size_t j=0; j < 6; j++)
-      tab[idx][j+1] = olxstr::FormatFloat(-4, Q[j], true);
-    tab[idx+1][0] = "Utls";
-    Q = tls.GetElpList()[i];
-    for (size_t j=0; j < 6; j++)
-      tab[idx+1][j+1] = olxstr::FormatFloat(-4, Q[j], true);
-  }
-  TBasicApp::NewLogEntry() << tab.CreateTXTList(ttitle, true, false, ' ');
-  //{
-  //  olxdict<TGlMaterial, olxstr, TComparableComparator> materials;
-  //  TStrList out = FXApp->GetRender().GetScene().ToPov();
-  //  out << TXAtom::PovDeclare();
-  //  out << TXBond::PovDeclare();
-  //  out << TXPlane::PovDeclare();
-  //  out.Add("union {");
-  //  TGXApp::AtomIterator ai = FXApp->GetAtoms();
-  //  while( ai.HasNext() )  ai.Next().SetTag(0);
-  //  xatoms.ForEach(ACollectionItem::TagSetter(1));
-  //  ai.Reset();
-  //  while (ai.HasNext())  {
-  //    TXAtom &a = ai.Next();
-  //    if (a.IsVisible() && a.GetTag() == 0)
-  //      out << a.ToPov(materials);
-  //  }
-  //  TGXApp::BondIterator bi = FXApp->GetBonds();
-  //  while( bi.HasNext() )  {
-  //    TXBond &b = bi.Next();
-  //    if( b.IsVisible() )
-  //      out << b.ToPov(materials);
-  //  }
-  //  TGXApp::PlaneIterator pi = FXApp->GetPlanes();
-  //  while( pi.HasNext() )  {
-  //    TXPlane &p = pi.Next();
-  //    if( p.IsVisible() )
-  //      out << p.ToPov(materials);
-  //  }
-  //  for (size_t i=0; i < xatoms.Count(); i++) {
-  //    TStrList o;
-  //    o << "object { difference {";
-  //    o << xatoms[i]->ToPov(materials);
-  //    xatoms[i]->GetEllipsoid()->GetShelxQuad(Q);
-  //    xatoms[i]->GetEllipsoid()->Initialise(tls.GetElpList()[i]);
-  //    o << xatoms[i]->ToPov(materials);
-  //    o << "}}";
-  //    out << o;
-  //    xatoms[i]->GetEllipsoid()->Initialise(Q);
-  //  }
-  //  out.Add("}");
-  //  TStrList mat_out;
-  //  for( size_t i=0; i < materials.Count(); i++ )  {
-  //    mat_out.Add("#declare ") << materials.GetValue(i) << '=';
-  //    mat_out.Add(materials.GetKey(i).ToPOV());
-  //  }
-  //  TCStrList(mat_out << out).SaveToFile("e:/test.pov");
-  //}
-  if (original_q.IsEmpty() &&
-      Options.Contains('a') &&
+  xlib::TLS tls(TSAtomPList(xatoms, StaticCastAccessor<TSAtom>()));
+  olxstr ttitle = "TLS analysis for: ";
+  tls.printTLS(ttitle << FXApp->Label(xatoms));
+  tls.printFOM();
+  tls.printDiff();
+  if (Options.Contains('a') &&
       tls.GetElpList().Count() == xatoms.Count())
   {
     for (size_t i=0; i < xatoms.Count(); i++) {
       xatoms[i]->GetEllipsoid()->GetShelxQuad(Q);
-      Q -= tls.GetElpList()[i];
-      xatoms[i]->GetEllipsoid()->Initialise(Q);
-      //*xatoms[i]->GetEllipsoid() = tls.GetElpList()[i];
-      //if (xatoms[i]->GetMatrix().IsFirst())
-      //  *xatoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
-    }
-  }
-  if (!original_q.IsEmpty()) {
-    for (size_t i=0; i < xatoms.Count(); i++) {
-      *xatoms[i]->GetEllipsoid() = original_q[i];
-      xatoms[i]->crd() = original_crds[i];
+      xatoms[i]->GetEllipsoid()->Initialise(tls.GetElpList()[i]);
+      if (xatoms[i]->GetMatrix().IsFirst())
+        *xatoms[i]->CAtom().GetEllipsoid() = tls.GetElpList()[i];
     }
   }
 }
@@ -9319,12 +9202,8 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   TBasicApp::NewLogEntry() << values;
-  if (Options.Contains('c')) {
-    wxTheClipboard->Open();
-    wxTheClipboard->SetData(
-      new wxTextDataObject(values.Text(NewLineSequence()).u_str()));
-    wxTheClipboard->Close();
-  }
+  if (Options.Contains('c'))
+    ToClipboard(values);
   if( Options.Contains("label") )  {
     vec3d cent;
     size_t cnt = 0;

@@ -18,11 +18,13 @@
 
 BeginXlibNamespace()
 /* References:
-  V. Schomaker, Acta Cryst 1968, B24, 63
+  V. Schomaker & K. N. Trueblood, Acta Cryst 1968, B24, 63
+  B54, 507-514
 */
 class TLS {
+  TSAtomPList atoms;
 public:
-  TLS(const TSAtomPList &atoms, const double *cellParameters);
+  TLS(const TSAtomPList &atoms);
   //accessors
   const mat3d& GetT() const { return Tmat; }
   const mat3d& GetL() const { return Lmat; }
@@ -32,7 +34,9 @@ public:
   const evecd_list& GetElpList() const { return newElps; }
   const mat3d& GetRtoLaxes() const { return RtoLaxes; }
   const ematd& GetVcV() const { return TLS_VcV; }
-  void printTLS(const olxstr &title="TLS matrices");
+  void printTLS(const olxstr &title="TLS matrices") const;
+  void printDiff(const olxstr &title="Uobs vs Utls") const;
+  void printFOM() const;
   
   ConstTypeList<evecd> calcUijEllipse(const TSAtomPList &atoms);
   bool calcTLS(const ematd& designM, const evecd& UijC, const ematd &weigts);
@@ -58,12 +62,11 @@ private:
   // (6T, 6L, 9S) x (6T, 6L, 9S)
   ematd TLS_VcV;
   // NOTE: To be replace when VcV matrix is available
-  void UijErrors(const TSAtomPList &atoms, ematd &weights);
-  void createDM(ematd &designM, evecd &UijC ,const TSAtomPList &atoms);
+  void UijErrors(ematd &weights);
+  void createDM(ematd &designM, evecd &UijC);
   mat3d calcUijCart (const vec3d &atomPosition);
   void RotateLaxes();
-  vec3d FigOfMerit(const TSAtomPList &atoms, const evecd_list &Elps,
-    const evecd &UijCol, const ematd &weights);
+  vec3d FigOfMerit(const evecd_list &Elps, const ematd &weights);
   void symS(); // Shifts origin - makes S symmetric
   void diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix); //Splits L axes to make S diagonal
 
