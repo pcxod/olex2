@@ -2703,7 +2703,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
       return;
     }
   }
-  else if (!FGlConsole->WillProcessKey(m.GetKeyCode(), Fl)) {
+  else if (FGlConsole->WillProcessKey(m.GetKeyCode(), Fl)) {
     m.Skip();
     return;
   }
