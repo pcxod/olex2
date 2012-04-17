@@ -21,6 +21,8 @@ public:
   virtual ~TCmdLine();
 
   bool ProcessKey(wxKeyEvent& evt);
+  // checks only Del, Backspace
+  bool WillProcessKey(wxKeyEvent& evt);
 
   DefPropC(olxstr, PromptStr)
 

@@ -2622,8 +2622,10 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     return;
   }
   if (CmdLineVisible && wxw == FGlCanvas) {
-    FCmdLine->EmulateKeyPress(m);
-    return;
+    if (m.m_keyCode != WXK_BACK && m.m_keyCode != WXK_DELETE) {
+      FCmdLine->EmulateKeyPress(m);
+      return;
+    }
   }
   if( m.m_altDown )      Fl |= sssAlt;
   if( m.m_shiftDown )    Fl |= sssShift;
@@ -2635,39 +2637,40 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
       // avoid duplication
       if (CmdLineVisible && FindFocus() != FCmdLine)
         return;
+      olxstr content;
       if( wxTheClipboard->Open() )  {
         if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
           wxTextDataObject data;
           wxTheClipboard->GetData(data);
-          olxstr cmdl;
-          if (CmdLineVisible)
-            cmdl = FCmdLine->GetCommand();
-          else
-            cmdl = FGlConsole->GetCommand();
-          olxstr content = data.GetText();
-          if( !ImportFrag(content) )  {
-            olxstr trimmed_content = content;
-            trimmed_content.Trim(' ').Trim('\n').Trim('\r');
-            size_t ip;
-            if (CmdLineVisible) {
-              ip = FCmdLine->GetInsertionPoint() -
-                FCmdLine->GetPromptStr().Length();
-            }
-            else
-              ip = FGlConsole->GetCmdInsertPosition();
-            if( ip >= cmdl.Length() )
-              cmdl << content;
-            else
-              cmdl.Insert(content, ip);
-            if (CmdLineVisible)
-              FCmdLine->SetCommand(cmdl);
-            else
-              FGlConsole->SetCommand(cmdl);
-          }
-          TimePerFrame = FXApp->Draw();
+          content = data.GetText();
         }
         wxTheClipboard->Close();
       }
+      olxstr cmdl;
+      if (CmdLineVisible)
+        cmdl = FCmdLine->GetCommand();
+      else
+        cmdl = FGlConsole->GetCommand();
+      if( !ImportFrag(content) )  {
+        olxstr trimmed_content = content;
+        trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+        size_t ip;
+        if (CmdLineVisible) {
+          ip = FCmdLine->GetInsertionPoint() -
+            FCmdLine->GetPromptStr().Length();
+        }
+        else
+          ip = FGlConsole->GetCmdInsertPosition();
+        if( ip >= cmdl.Length() )
+          cmdl << content;
+        else
+          cmdl.Insert(content, ip);
+        if (CmdLineVisible)
+          FCmdLine->SetCommand(cmdl);
+        else
+          FGlConsole->SetCommand(cmdl);
+      }
+      TimePerFrame = FXApp->Draw();
       return;
     }
     //undo, Cmd+Z, Ctrl+Z
@@ -2681,7 +2684,13 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     m.Skip();
     return;
   }
-  if( FGlConsole->WillProcessKey(m.GetKeyCode(), Fl) )  {
+  if (CmdLineVisible) {
+    if (FCmdLine->WillProcessKey(m)) {
+      m.Skip();
+      return;
+    }
+  }
+  else if (FGlConsole->WillProcessKey(m.GetKeyCode(), Fl)) {
     m.Skip();
     return;
   }
@@ -3758,7 +3767,7 @@ void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
   }
 }
 //..............................................................................
-bool TMainForm::ProcessEvent( wxEvent& evt )  {
+bool TMainForm::ProcessEvent(wxEvent& evt)  {
   if( evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED &&
       AccMenus.ValueExists(evt.GetId()) )
   {
