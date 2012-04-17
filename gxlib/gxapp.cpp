@@ -1646,7 +1646,11 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection
       if( EsdlInstanceOf(sel[i], TXAtom) )
         rv.Add((TXAtom&)sel[i]);
     }
-    if( !rv.IsEmpty() )  return rv;
+    if( !rv.IsEmpty() )  {
+      if (ClearSelection)
+        GetRender().SelectAll(false);
+      return rv;
+    }
     AtomIterator ai(*this);
     rv.SetCapacity(ai.count);
     while( ai.HasNext() )  {
@@ -1725,6 +1729,22 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection
     }
   }
   return rv;
+}
+//..............................................................................
+ConstPtrList<TXAtom> TGXApp::FindXAtoms(const TStrObjList &Cmds, bool GetAll,
+  bool unselect)
+{
+  TXAtomPList atoms;
+  if( Cmds.IsEmpty() )  {
+    atoms.AddList(
+      FindXAtoms(EmptyString(), EsdlInstanceOf(GetSelection(), TGlGroup)
+      ? unselect : false));
+    if( GetAll && atoms.IsEmpty() )
+      atoms = FindXAtoms(EmptyString(), unselect);
+  }
+  else
+    atoms = FindXAtoms(Cmds.Text(' '), unselect);
+  return atoms;
 }
 //..............................................................................
 void TGXApp::CheckQBonds(TXAtom& XA)  {
@@ -2035,6 +2055,13 @@ AGDrawObject* TGXApp::FindLooseObject(const olxstr &Name)  {
   for( size_t i=0; i < LooseObjects.Count(); i++ )
     if( LooseObjects[i]->GetPrimitives().GetName().Equalsi(Name) )
       return LooseObjects[i];
+  return NULL;
+}
+//..............................................................................
+TDUserObj* TGXApp::FindUserObject(const olxstr &Name)  {
+  for( size_t i=0; i < UserObjects.Count(); i++ )
+    if( UserObjects[i].GetPrimitives().GetName().Equalsi(Name) )
+      return &UserObjects[i];
   return NULL;
 }
 //..............................................................................
@@ -4485,3 +4512,14 @@ void TGXApp::ClearStructureRelated() {
   UserObjects.Clear();
 }
 //..............................................................................
+olxstr TGXApp::Label(const TXAtomPList &atoms, const olxstr &sp) {
+  olxstr_buf rv;
+  if (!atoms.IsEmpty()) {
+    size_t cnt = atoms.Count()-1;
+    for( size_t i=0; i < cnt; i++ )
+      rv << atoms[i]->GetGuiLabel() << sp;
+    rv << atoms.GetLast()->GetGuiLabel();
+  }
+  return rv;
+}
+

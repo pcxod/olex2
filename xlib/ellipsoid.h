@@ -95,8 +95,10 @@ public:
   const evecd &GetQuad() const { return Quad; }
   const evecd &GetEsd() const { return Esd; }
   const mat3d& GetMatrix() const {  return Matrix;  }
-  mat3d ExpandQuad() const {
-    return mat3d(Quad[0], Quad[5], Quad[4], Quad[1], Quad[3], Quad[2]);
+  mat3d ExpandQuad() const { return ExpandShelxQuad(Quad); }
+  template <typename QT>
+  static mat3d ExpandShelxQuad(const QT &Q) {
+    return mat3d(Q[0], Q[5], Q[4], Q[1], Q[3], Q[2]);
   }
   /* returns 6x6 matrix suitable for the esd VcV matrix transformation like:
     new_VcV = J*olx_VcV*Jt assuming the VcV is constructed like:

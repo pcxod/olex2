@@ -346,13 +346,43 @@ void TGlPrimitive::Draw()  {
   else if( Type == sgloTriangles )  {
     olx_gl::begin(GL_TRIANGLES);
     if( Normals.IsEmpty() )  {
-      for( size_t i=0; i < Vertices.Count(); i++ )
-        DrawVertex(Vertices[i]);
+      if (Colors.IsEmpty()) {
+        for( size_t i=0; i < Vertices.Count(); i++ )
+          DrawVertex(Vertices[i]);
+      }
+      else if (Colors.Count() == Vertices.Count()) {
+        for( size_t i=0; i < Vertices.Count(); i++ )
+          DrawVertex(Vertices[i], Colors[i]);
+      }
     }
-    else if( Normals.Count()*3 == Vertices.Count() )  {  //+normal
-      for( size_t i=0; i < Normals.Count(); i++ )  {
-        SetNormal(Normals[i]);
-        DrawVertex3(i*3);
+    else {
+      if (Colors.IsEmpty()) {
+        if( Normals.Count() == Vertices.Count() )  {  //+normal
+          for( size_t i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            DrawVertex(Vertices[i]);
+          }
+        }
+        else if( Normals.Count()*3 == Vertices.Count() )  {  //+normal
+          for( size_t i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            DrawVertex3(i*3);
+          }
+        }
+      }
+      else if (Colors.Count() == Vertices.Count()) {
+        if( Normals.Count() == Vertices.Count() )  {  //+normal
+          for( size_t i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            DrawVertex(Vertices[i], Colors[i]);
+          }
+        }
+        else if( Normals.Count()*3 == Vertices.Count() )  {  //+normal
+          for( size_t i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            DrawVertex3c(i*3);
+          }
+        }
       }
     }
     olx_gl::end();

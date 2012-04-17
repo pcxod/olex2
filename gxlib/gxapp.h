@@ -555,6 +555,8 @@ public:
   ConstPtrList<TCAtom> FindCAtoms(const olxstr& Atoms, bool ClearSelection=true);
   ConstPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool ClearSelection=true,
     bool FindHidden=false);
+  ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds, bool GetAll,
+    bool unselect);
 
   //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   //const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
@@ -606,6 +608,7 @@ public:     void CalcProbFactor(float Prob);
   void ClearLines()  {  Lines.Clear();  }
   TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);
   AGDrawObject* FindLooseObject(const olxstr& Name);
+  TDUserObj *FindUserObject(const olxstr& Name);
 
   TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
   // will return generated symmetry equivalents too
@@ -633,6 +636,7 @@ public:     void CalcProbFactor(float Prob);
   TXGlLabel& GetLabel(size_t i)  {  return XLabels[i];  }
   const TXGlLabel& GetLabel(size_t i) const {  return XLabels[i];  }
   void UpdateLabels();
+  static olxstr Label(const TXAtomPList &atoms, const olxstr &sep= ' ');
 //..............................................................................
   void SetQPeakScale(float V);
   float GetQPeakScale();

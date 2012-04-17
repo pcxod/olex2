@@ -18,6 +18,7 @@ BeginGxlNamespace()
 class TDUserObj: public AGlMouseHandlerImp  {
   short Type;
   TArrayList<vec3f>* Vertices, *Normals;
+  TArrayList<uint32_t> *Colors;
   TGlMaterial GlM;
 protected:
   virtual bool DoTranslate(const vec3d& t) {
@@ -35,11 +36,22 @@ public:
   TDUserObj(TGlRenderer& Render, short type, const olxstr& collectionName);
   TDUserObj(TGlRenderer& Render, const TDataItem &di);
   virtual ~TDUserObj()  {  
-    if( Vertices != NULL )   delete Vertices;
-    if( Normals != NULL )   delete Normals;
+    if (Vertices != NULL) delete Vertices;
+    if (Normals != NULL) delete Normals;
+    if (Colors != NULL) delete Colors;
   }
-  void SetVertices(TArrayList<vec3f>* vertices)  {  Vertices = vertices;  }
-  void SetNormals(TArrayList<vec3f>* normals)  {  Normals = normals;  }
+  void SetVertices(TArrayList<vec3f>* vertices)  {
+    if (Vertices != NULL) delete Vertices;
+    Vertices = vertices;
+  }
+  void SetNormals(TArrayList<vec3f>* normals)  {
+    if (Normals != NULL) delete Normals;
+    Normals = normals;
+  }
+  void SetColors(TArrayList<uint32_t>* colors)  {
+    if (Colors != NULL) delete Colors;
+    Colors = colors;
+  }
   void SetMaterial(const olxstr& mat)  {  GlM.FromString(mat);  }
   void SetMaterial(const TGlMaterial& glm)  {  GlM = glm;  }
   void Create(const olxstr& cName=EmptyString());

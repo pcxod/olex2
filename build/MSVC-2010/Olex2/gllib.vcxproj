@@ -519,6 +519,7 @@
     <ClInclude Include="..\..\..\glib\3dframe.h" />
     <ClInclude Include="..\..\..\glib\dframe.h" />
     <ClInclude Include="..\..\..\glib\gdrawobject.h" />
+    <ClInclude Include="..\..\..\glib\glalg.h" />
     <ClInclude Include="..\..\..\glib\glbackground.h" />
     <ClInclude Include="..\..\..\glib\glbase.h" />
     <ClInclude Include="..\..\..\glib\glbitmap.h" />
