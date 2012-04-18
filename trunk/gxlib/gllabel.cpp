@@ -113,7 +113,10 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     T[2] -= 0.0005;
     olx_gl::translate(T);
     if( !glf.IsVectorFont() )  {
-      olx_gl::scale(Scale, Scale, 1.0);
+      double s = Scale;
+      if (Parent.GetViewZoom()!=1)
+        s /= Parent.GetExtraZoom();
+      olx_gl::scale(s, s, 1.0);
     }
     else  {
       const double scale = Parent.GetBasis().GetZoom()/Parent.CalcZoom();

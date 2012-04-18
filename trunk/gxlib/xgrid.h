@@ -23,6 +23,7 @@
 #include "xblob.h"
 #include "symmat.h"
 #include "maputil.h"
+#include "glbitmap.h"
 BeginGxlNamespace()
 
 const short
@@ -37,12 +38,38 @@ const short
 
 //class TXGrid: public TGlMouseListener  {
 class TXGrid: public AGDrawObject  {
-  //TVectorDList AllPoints;
+  class TLegend : public AGlMouseHandlerImp  {
+    int Width, Height;
+    int Top, Left;
+    GLuint TextureId;
+    double Z;
+    TGlMaterial GlM;
+  protected:
+    vec3d Center;
+    virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
+    virtual bool DoRotate(const vec3d&, double) {  return false;  }
+    virtual bool DoZoom(double zoom, bool inc)  { return false; }
+    const vec3d& GetCenter() const {  return Center;  }
+    void Init(unsigned char* RGB, GLenum format);
+  public:
+    TLegend(TGlRenderer& Render, const olxstr& collectionName);
+    void SetData(unsigned char* RGB, GLsizei width, GLsizei height,
+      GLenum format);
+    void Create(const olxstr& cName=EmptyString());
+    void SetMaterial(const TGlMaterial &m) { GlM = m; }
+    void Fit();
+    virtual bool Orient(TGlPrimitive& P);
+    virtual bool GetDimensions(vec3d &, vec3d &) { return false; }
+    bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
+    void UpdateLabel() { Fit(); }
+    TStrList text;
+  };
+
   TArray3D<float>* ED;
   FractMask* Mask;
   // if mask is specified
   GLuint PListId, NListId;
-  char *TextData;
+  char *TextData, *LegendData;
   float **ContourData;
   float *ContourCrds[2], *ContourLevels;
   size_t ContourLevelCount;
@@ -51,14 +78,9 @@ class TXGrid: public AGDrawObject  {
   void DeleteObjects();
   GLuint TextIndex;
   static TXGrid* Instance;
-  /*currently unused procedure for smoothing polygonised plane by linearly interpolating
-  colours. So this procedure will render 4 quads with nice colour gradients */
-  void DrawQuad4(double A[4], double B[4], double C[4], double D[4]);
-  /* a more detailed procedure based on the above - an original quad is split into 16
-  pieces and colours are lineraly interpolated */
-  void DrawQuad16(double points[4][4]);
   void RescaleSurface();
-  TGlTextBox* Info;
+  TGlTextBox *Info;
+  TLegend *Legend;
   short RenderMode;
   bool Extended, Boxed, Loading_;
   vec3f ExtMin, ExtMax;
@@ -72,16 +94,14 @@ protected:
   size_t MaxX, MaxY, MaxZ, MaxDim; 
   float MinHole, MaxHole;  // the values of scale to skip
   int LastMouseX, LastMouseY;
-  void CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) const;
-  void CalcColor(float v) const;
   bool MouseDown;
   void DoSmooth();
   void GlLine(float x1, float y1, float x2, float y2, float z);
-  int GetPolygonMode() const {  return RenderMode == planeRenderModeFill ? GL_FILL : 
+  int GetPolygonMode() const {  return RenderMode == planeRenderModeFill ? GL_FILL :
     (RenderMode == planeRenderModeLine ? GL_LINE : 
-    (RenderMode == planeRenderModePoint ? GL_POINT : -1)); 
+    (RenderMode == planeRenderModePoint ? GL_POINT : -1));
   }
-  bool Is3D() const {  return RenderMode == planeRenderModeFill || 
+  bool Is3D() const {  return RenderMode == planeRenderModeFill ||
     RenderMode == planeRenderModeLine ||
     RenderMode == planeRenderModePoint;
   }
@@ -170,6 +190,7 @@ public:
   inline virtual void SetVisible(bool On) {  
     AGDrawObject::SetVisible(On);  
     Info->SetVisible(On);
+    Legend->SetVisible(On);
     if( !On )
       Clear();
   }
@@ -211,7 +232,6 @@ protected:
     const vec3s& dim;
     float minVal, maxVal, size, depth, hh;
     size_t max_dim;
-    bool init_data, init_text;
     short mode;
     MapUtil::MapGetter<float,2> map_getter;
     void Run(size_t index);
@@ -224,8 +244,6 @@ protected:
         proj_m(_proj_m), c2c(_c2c), center(_center), dim(_dim),
         minVal(1000), maxVal(-1000),
         size(_size), depth(_depth), hh((float)_max_dim/2), max_dim(_max_dim),
-        init_data((_mode&planeRenderModeContour) != 0),
-        init_text((_mode&planeRenderModePlane) != 0),
         mode(_mode),
         map_getter(src_data, dim) {}
     TPlaneCalculationTask* Replicate() const {
