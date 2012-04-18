@@ -15,10 +15,10 @@
 
 TGlBitmap::TGlBitmap(TGlRenderer& Render, const olxstr& collectionName,
   int left, int top, unsigned int width, unsigned int height,
-  unsigned char* RGB, GLenum format) : 
-AGlMouseHandlerImp(Render, collectionName)  
+  unsigned char* RGB, GLenum format) :
+AGlMouseHandlerImp(Render, collectionName)
 {
-  Z = -10.0;
+  Z = 0.0;
   Zoom = 1;
   Left = left;
   Top = top;
@@ -52,7 +52,7 @@ void TGlBitmap::Init(unsigned char* RGB, GLenum format)  {
 }
 //.............................................................................
 void TGlBitmap::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
 
   //TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
@@ -68,7 +68,7 @@ void TGlBitmap::Create(const olxstr& cName)  {
 
   TGlMaterial GlM;
 
-  GlM.SetFlags(0);   
+  GlM.SetFlags(0);
   GlM.ShininessF = 128;
   GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
   GlM.AmbientF = 0x800f0f0f;
@@ -86,7 +86,9 @@ void TGlBitmap::Create(const olxstr& cName)  {
   GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 1;
 }
 //.............................................................................
-void TGlBitmap::ReplaceData(int width, int height, unsigned char* RGB, GLenum format) {
+void TGlBitmap::ReplaceData(int width, int height, unsigned char* RGB,
+  GLenum format)
+{
   Width = width;
   Height = height;
   if( olx_is_valid_index(TextureId) )  {
@@ -99,17 +101,18 @@ void TGlBitmap::ReplaceData(int width, int height, unsigned char* RGB, GLenum fo
 }
 //.............................................................................
 bool TGlBitmap::Orient(TGlPrimitive& P)  {
-  P.SetTextureId( TextureId );
-  double hw = Parent.GetWidth()/2;
-  double hh = Parent.GetHeight()/2;
-  double xx = GetCenter()[0],
-         xy = -GetCenter()[1],
-         zm = GetZoom();
-  P.Vertices[0] = vec3d((Left+Width*zm)-hw + xx, hh-(Top+Height*zm) - xy, Z);
-  P.Vertices[1] = vec3d(P.Vertices[0][0], hh-Top- xy, Z);
-  P.Vertices[2] = vec3d(Left-hw + xx, P.Vertices[1][1], Z);
-  P.Vertices[3] = vec3d(P.Vertices[2][0], P.Vertices[0][1], Z);
-  olx_gl::scale(Parent.GetScale()*Parent.GetExtraZoom());
+  P.SetTextureId(TextureId);
+  double Scale = Parent.GetScale(),
+    es = Parent.GetExtraZoom()*Parent.GetViewZoom();
+  Scale *= es;
+  const double hw = Parent.GetWidth()/(2*es), w = Width;
+  const double hh = Parent.GetHeight()/(2*es), h = Height;
+  double xx = GetCenter()[0], xy = -GetCenter()[1];
+  const double z = Z-0.01;
+  P.Vertices[0] = vec3d((Left+w+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, z);
+  P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top+xy-hh)*Scale, z);
+  P.Vertices[2] = vec3d((Left+xx-hw)*Scale, -(Top+xy-hh)*Scale, z);
+  P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, z); 
   return false;
 }
 //.............................................................................
