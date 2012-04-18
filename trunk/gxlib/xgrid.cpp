@@ -114,11 +114,11 @@ bool TXGrid::TLegend::OnMouseUp(const IEObject *Sender,
 }
 //..............................................................................
 bool TXGrid::TLegend::Orient(TGlPrimitive& P)  {
-  if( Width == 0 || Height == 0 )
+  if (Width == 0 || Height == 0 || text.IsEmpty())
     return true;
   olx_gl::normal(0, 0, 1);
   const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
-  if( P.GetType() == sgloText )  {
+  if (P.GetType() == sgloText)  {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
     const uint16_t th = glf.TextHeight(EmptyString());
     const double hw = Parent.GetWidth()/2;
@@ -703,7 +703,6 @@ void TXGrid::UpdateInfo()  {
   else
     Info->PostText(olxstr("Current level: ") << Scale);
   Info->Fit();
-
 }
 //..............................................................................
 const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
@@ -995,6 +994,7 @@ void TXGrid::InitIso()  {
     if( ED == NULL )
       return;
     SetScale(Scale);
+    Legend->text.Clear();
   }
 }
 //..............................................................................
