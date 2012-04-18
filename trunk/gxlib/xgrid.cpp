@@ -1259,6 +1259,7 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
 
   AGDrawObject::ExportLibrary(*lib);
   Info->ExportLibrary(*lib->AddLibrary("label"));
+  Legend->ExportLibrary(*lib->AddLibrary("legend"));
   return lib;
 }
 //..............................................................................
