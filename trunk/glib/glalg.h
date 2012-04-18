@@ -12,6 +12,7 @@
 #include "glbase.h"
 #include "bitarray.h"
 #include "esphere.h"
+#include "olxmps.h"
 BeginGlNamespace()
 
 template <typename float_type=double>
