@@ -56,7 +56,7 @@ void TGlTextBox::Create(const olxstr& cName)  {
   glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
-  glpText.SetProperties( GS.GetMaterial("Text", GetFont().GetMaterial()) );
+  glpText.SetProperties(GS.GetMaterial("Text", GetFont().GetMaterial()));
   glpText.Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
@@ -68,14 +68,14 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
   if( Width == 0 || Height == 0 )
     return true;
   olx_gl::normal(0, 0, 1);
+  const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
   if( P.GetType() == sgloText )  {
     TGlFont& Fnt = GetFont();
-    const double rscale = Parent.GetExtraZoom()*Parent.GetViewZoom();
     const uint16_t th = Fnt.TextHeight(EmptyString());
-    const double GlLeft = ((Left+GetCenter()[0])*rscale - Parent.GetWidth()/2.0) + 0.1;
-    const double GlTop = (Parent.GetHeight()/2.0 - (Top-GetCenter()[1])*rscale-Height) + 0.1;
-    const double LineSpacer = (0.05+LineSpacing-1)*th;
+    const double GlLeft = ((Left+GetCenter()[0])*es - Parent.GetWidth()/2.0) + 0.1;
     const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1./Parent.GetExtraZoom();
+    const double GlTop = (Parent.GetHeight()/2.0 - (Top-GetCenter()[1])*es-Height*scale) + 0.1;
+    const double LineSpacer = (0.05+LineSpacing-1)*th;
     bool mat_changed = false;
     vec3d T(GlLeft, GlTop, Z);
     for( size_t i=0; i < FBuffer.Count(); i++ )  {
@@ -85,7 +85,8 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
         GlM->Init(Parent.IsColorStereo());
         mat_changed = true;
       }
-      olxstr const line = FBuffer[ii].SubStringTo(Fnt.LengthForWidth(FBuffer[ii], Parent.GetWidth()));
+      olxstr line = FBuffer[ii].SubStringTo(
+        Fnt.LengthForWidth(FBuffer[ii], Parent.GetWidth()));
       const TTextRect tr = Fnt.GetTextRect(line);
       T[1] -= tr.top*scale;
       Parent.DrawTextSafe(T, line, Fnt);
@@ -96,17 +97,17 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     return true;
   }
   else  {
-    double Scale = Parent.GetScale(),
-      es = Parent.GetExtraZoom()*Parent.GetViewZoom();
-    Scale *= es;
-    const double hw = Parent.GetWidth()/(2*es), w = Width/es;
-    const double hh = Parent.GetHeight()/(2*es), h = Height/es;
+    double Scale = Parent.GetScale()*es;
+    double hw = Parent.GetWidth()/(2*es), w = Width;
+    if (FBuffer.Count() == 1)
+      w /= Parent.GetExtraZoom();
+    const double hh = Parent.GetHeight()/(2*es), h = Height/Parent.GetExtraZoom();
     double xx = GetCenter()[0], xy = -GetCenter()[1];
     const double z = Z-0.01;
     P.Vertices[0] = vec3d((Left+w+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, z);
-    P.Vertices[1] = vec3d((Left+w+xx-hw)*Scale, -(Top+xy-hh)*Scale, z);
+    P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top+xy-hh)*Scale, z);
     P.Vertices[2] = vec3d((Left+xx-hw)*Scale, -(Top+xy-hh)*Scale, z);
-    P.Vertices[3] = vec3d((Left+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, z); 
+    P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, z); 
     return false;
   }
 }
@@ -155,8 +156,9 @@ void TGlTextBox::Fit()  {
     for( size_t i=0; i < FBuffer.Count(); i++ )  {
       const TTextRect tr = glf.GetTextRect(FBuffer[i]);
       Height -= (uint16_t)olx_round(tr.top);
-      Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight())+LineSpacer);
+      Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight()));
     }
+    Height += (uint16_t)olx_round(LineSpacer*(FBuffer.Count()-1));
   }
   else if( FBuffer.Count() == 1 )  {
     const TTextRect tr = GetFont().GetTextRect(FBuffer[0]);
@@ -186,5 +188,7 @@ bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
 //..............................................................................
-TGlFont& TGlTextBox::GetFont() const {  return Parent.GetScene().GetFont(FontIndex, true);  }
+TGlFont& TGlTextBox::GetFont() const {
+  return Parent.GetScene().GetFont(FontIndex, true);
+}
 //..............................................................................

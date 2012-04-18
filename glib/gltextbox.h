@@ -18,7 +18,7 @@ class TGlTextBox: public AGlMouseHandlerImp  {
   float LineSpacing;
   uint16_t Width, Height, MaxStringLength;
   int Top, Left;
-  TStrPObjList<olxstr,TGlMaterial*> FBuffer;   // the content
+  TStrPObjList<olxstr,TGlMaterial*> FBuffer;  // the content
   double Z;
   uint16_t FontIndex;
   bool ScrollDirectionUp;

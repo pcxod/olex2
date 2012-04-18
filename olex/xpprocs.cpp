@@ -749,8 +749,9 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FXApp->GetRender().OnDraw.SetEnabled(false);
   if( res != 1 )    {
     FXApp->GetRender().GetScene().ScaleFonts(res);
-    if( res >= 3 )
+    if( res >= 2 )
       FXApp->Quality(qaPict);
+    FXApp->UpdateLabels();
   }
   for( int i=0; i < res; i++ )  {
     for( int j=0; j < res; j++ )  {
@@ -785,8 +786,9 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   if( res != 1 ) {
     FXApp->GetRender().GetScene().RestoreFontScale();
-    if( res >= 3 ) 
+    if( res >= 2 ) 
       FXApp->Quality(qaMedium);
+    FXApp->UpdateLabels();
   }
 
   FXApp->GetRender().OnDraw.SetEnabled(true);

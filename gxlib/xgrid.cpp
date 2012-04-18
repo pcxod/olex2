@@ -26,6 +26,138 @@
   #include "pyext.h"
 #endif
 
+TXGrid::TLegend::TLegend(TGlRenderer& Render, const olxstr& collectionName)
+  : AGlMouseHandlerImp(Render, collectionName)
+{
+  SetMove2D(true);
+  SetMoveable(true);
+  Top = Left = 0;
+  Width = 64;
+  Height = 128;
+  Z = 0;
+  TextureId = ~0;
+}
+//..............................................................................
+void TXGrid::TLegend::SetData(unsigned char *rgb,
+  GLsizei width, GLsizei height, GLenum format)
+{
+  if( olx_is_valid_index(TextureId) )  {
+    TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
+    Parent.GetTextureManager().Replace2DTexture(
+      *tex, 0, width, height, 0, format, rgb);
+  }
+  else {
+    TextureId = Parent.GetTextureManager().Add2DTexture(
+      GetCollectionName(), 0, Width, Height, 0,
+      format, rgb);
+    TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
+    tex->SetEnvMode(tpeDecal);
+    tex->SetSCrdWrapping(tpCrdClamp);
+    tex->SetTCrdWrapping(tpCrdClamp);
+
+    tex->SetMagFilter(tpFilterNearest);
+    tex->SetMinFilter(tpFilterLinear);
+    tex->SetEnabled(true);
+  }
+}
+//..............................................................................
+void TXGrid::TLegend::Create(const olxstr& cName)  {
+  if (!cName.IsEmpty())    SetCollectionName(cName);
+  TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
+  TGraphicsStyle& GS = GPC.GetStyle();
+  Left = GS.GetParam("Left", Left, true).ToInt();
+  Top = GS.GetParam("Top", Top, true).ToInt();
+  Z = GS.GetParam("Z", Z).ToDouble();
+
+  TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
+  GlP.SetTextureId(TextureId);
+  GlM.SetIdentityDraw(true);
+  GlP.SetProperties(GlM);
+  // texture coordinates
+  GlP.TextureCrds.SetCount(4);
+  GlP.Vertices.SetCount(4);
+  GlP.TextureCrds[0].s = 0;  GlP.TextureCrds[0].t = 1;
+  GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 0;
+  GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 0;
+  GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 1;
+
+  TGlFont &glf = Parent.GetScene().GetFont(~0, true);
+  TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
+  glpText.SetProperties(GS.GetMaterial("Text", glf.GetMaterial()));
+  glpText.Params[0] = -1;
+}
+//..............................................................................
+void TXGrid::TLegend::Fit()  {
+  TGlFont &glf = Parent.GetScene().GetFont(~0, true);
+  const uint16_t th = glf.TextHeight(EmptyString());
+  const double LineSpacer = 0.05*th;
+  Height = 0;
+  for( size_t i=0; i < text.Count(); i++ )  {
+    const TTextRect tr = glf.GetTextRect(text[i]);
+    Height -= (uint16_t)olx_round(tr.top);
+    Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight()));
+  }
+  Height += (uint16_t)olx_round(LineSpacer*(text.Count()-1));
+}
+//..............................................................................
+bool TXGrid::TLegend::OnMouseUp(const IEObject *Sender,
+  const TMouseData& Data)
+{
+  Left = olx_round(Left + GetCenter()[0]);
+  Top = olx_round(Top - GetCenter()[1]);
+  Center.Null();
+  GetPrimitives().GetStyle().SetParam("Top", Top, true);
+  GetPrimitives().GetStyle().SetParam("Left", Left, true);
+  return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
+}
+//..............................................................................
+bool TXGrid::TLegend::Orient(TGlPrimitive& P)  {
+  if( Width == 0 || Height == 0 )
+    return true;
+  olx_gl::normal(0, 0, 1);
+  const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
+  if( P.GetType() == sgloText )  {
+    TGlFont &glf = Parent.GetScene().GetFont(~0, true);
+    const uint16_t th = glf.TextHeight(EmptyString());
+    const double hw = Parent.GetWidth()/2;
+    const double hh = Parent.GetHeight()/2;
+    const double GlLeft = ((Left+Width+GetCenter()[0])*es - hw) + 0.1;
+    const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1./Parent.GetExtraZoom();
+    const double GlTop = (hh - (Top-GetCenter()[1])*es-Height*scale) + 0.1;
+    const double LineSpacer = 0.05*th;
+    vec3d T(GlLeft, GlTop, Z);
+    for( size_t i=0; i < text.Count(); i++ )  {
+      const size_t ii = text.Count() - i - 1;
+      olxstr line = text[ii].SubStringTo(
+        glf.LengthForWidth(text[ii], Parent.GetWidth()));
+      const TTextRect tr = glf.GetTextRect(line);
+      T[1] -= tr.top*scale;
+      Parent.DrawTextSafe(T, line, glf);
+      T[1] += (olx_max(tr.height, glf.GetMaxHeight())+LineSpacer)*scale;
+    }
+    return true;
+  }
+  else  {
+    P.SetTextureId(TextureId);
+    double Scale = Parent.GetScale()*es;
+    const double hw = Parent.GetWidth()/(2*es);
+    const double hh = Parent.GetHeight()/(2*es);
+    double xx = GetCenter()[0], xy = -GetCenter()[1];
+    const double z = Z-0.01;
+    double w = Width,
+      h = Height/Parent.GetExtraZoom();
+    P.Vertices[0] = vec3d((Left+w+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, z);
+    P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top+xy-hh)*Scale, z);
+    P.Vertices[2] = vec3d((Left+xx-hw)*Scale, -(Top+xy-hh)*Scale, z);
+    P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, z); 
+    return false;
+  }
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
 TXGrid::TContextClear::TContextClear(TGlRenderer& r)  {
   r.OnClear.Add(this);
 }
@@ -43,114 +175,6 @@ bool TXGrid::TContextClear::Exit(const IEObject *Sender, const IEObject *Data)  
 //..............................................................................
 TXGrid* TXGrid::Instance = NULL;
 
-void TXGrid::DrawQuad16(double points[4][4])  {
-  double p[3][3][4];
-
-  p[0][0][0] = points[0][0];
-  p[0][0][1] = points[0][1];
-  p[0][0][2] = points[0][2];
-  p[0][0][3] = points[0][3];
-
-  p[0][2][0] = points[1][0];
-  p[0][2][1] = points[1][1];
-  p[0][2][2] = points[1][2];
-  p[0][2][3] = points[1][3];
-
-  p[2][2][0] = points[2][0];
-  p[2][2][1] = points[2][1];
-  p[2][2][2] = points[2][2];
-  p[2][2][3] = points[2][3];
-
-  p[2][0][0] = points[3][0];
-  p[2][0][1] = points[3][1];
-  p[2][0][2] = points[3][2];
-  p[2][0][2] = points[3][3];
-
-  p[1][0][0] = (points[0][0]+points[3][0])/2;
-  p[1][0][1] = (points[0][1]+points[3][1])/2;
-  p[1][0][2] = (points[0][2]+points[3][2])/2;
-  p[1][0][3] = (points[0][3]+points[3][3])/2;
-
-  p[1][1][0] = (points[0][0]+points[1][0]+points[2][0]+points[3][0])/4;
-  p[1][1][1] = (points[0][1]+points[1][1]+points[2][1]+points[3][1])/4;
-  p[1][1][2] = (points[0][2]+points[1][2]+points[2][2]+points[3][2])/4;
-  p[1][1][3] = (points[0][2]+points[1][2]+points[2][2]+points[3][2])/4;
-
-  p[0][1][0] = (points[0][0]+points[1][0])/2;
-  p[0][1][1] = (points[0][1]+points[1][1])/2;
-  p[0][1][2] = (points[0][2]+points[1][2])/2;
-  p[0][1][3] = (points[0][3]+points[1][3])/2;
-
-  p[1][2][0] = (points[1][0]+points[2][0])/2;
-  p[1][2][1] = (points[1][1]+points[2][1])/2;
-  p[1][2][2] = (points[1][2]+points[2][2])/2;
-  p[1][2][3] = (points[1][3]+points[2][3])/2;
-
-  p[2][1][0] = (points[2][0]+points[3][0])/2;
-  p[2][1][1] = (points[2][1]+points[3][1])/2;
-  p[2][1][2] = (points[2][2]+points[3][2])/2;
-  p[2][1][3] = (points[2][3]+points[3][3])/2;
-
-  DrawQuad4( p[0][0], p[0][1], p[1][1], p[1][0] );
-  DrawQuad4( p[0][1], p[0][2], p[1][2], p[1][1] );
-  DrawQuad4( p[1][0], p[1][1], p[2][1], p[2][0] );
-  DrawQuad4( p[1][1], p[1][2], p[2][2], p[2][1] );
-}
-
-void TXGrid::DrawQuad4(double A[4], double B[4], double C[4], double D[4])  {
-  double p[3][3][3], c[2][2];
-
-  c[0][0] = A[3];
-  c[0][1] = B[3];
-  c[1][0] = C[3];
-  c[1][1] = D[3];
-
-  p[0][0][0] = A[0];
-  p[0][0][1] = A[1];
-  p[0][0][2] = A[2];
-
-  p[0][2][0] = B[0];
-  p[0][2][1] = B[1];
-  p[0][2][2] = B[2];
-
-  p[2][2][0] = C[0];
-  p[2][2][1] = C[1];
-  p[2][2][2] = C[2];
-
-  p[2][0][0] = C[0];
-  p[2][0][1] = C[1];
-  p[2][0][2] = C[2];
-
-  p[1][0][0] = (A[0]+D[0])/2;
-  p[1][0][1] = (A[1]+D[1])/2;
-  p[1][0][2] = (A[2]+D[2])/2;
-
-  p[1][1][0] = (A[0]+B[0]+C[0]+D[0])/4;
-  p[1][1][1] = (A[1]+B[1]+C[1]+D[1])/4;
-  p[1][1][2] = (A[2]+B[2]+C[2]+D[2])/4;
-
-  p[0][1][0] = (A[0]+B[0])/2;
-  p[0][1][1] = (A[1]+B[1])/2;
-  p[0][1][2] = (A[2]+B[2])/2;
-
-  p[1][2][0] = (B[0]+C[0])/2;
-  p[1][2][1] = (B[1]+C[1])/2;
-  p[1][2][2] = (B[2]+C[2])/2;
-
-  p[2][1][0] = (C[0]+D[0])/2;
-  p[2][1][1] = (C[1]+D[1])/2;
-  p[2][1][2] = (C[2]+D[2])/2;
-
-  for(int i=0; i < 2; i++ )  {
-    for(int j=0; j < 2; j++ )  {
-      CalcColor( c[i][j] );
-      olx_gl::vertex(p[i][j]);
-      olx_gl::vertex(p[i+1][j]);
-      olx_gl::vertex(p[i+1][j+1]);
-      olx_gl::vertex(p[i][j+1]);
-    }
-  }
-}
 //----------------------------------------------------------------------------//
 TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
                      AGDrawObject(xapp->GetRender(), collectionName),
@@ -185,7 +209,9 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   //for textures, 2^n+2 (for border)...
   //MaxDim = 128;//olx_max( olx_max(MaxX,MaxY), MaxZ);
   MaxDim = 128;
-  Info = new TGlTextBox(Parent, "XGrid_Legend");
+  Info = new TGlTextBox(Parent, "XGrid_Label");
+  Legend = new TLegend(Parent, "XGrid_Legend");
+  LegendData = new char[32*32*3];
   MaxX = MaxY = MaxZ = 0;
   MaxVal = MinVal = 0;
   MinHole = MaxHole = 0;
@@ -197,6 +223,8 @@ TXGrid::~TXGrid()  {
   Clear();
   DeleteObjects();
   delete Info;
+  delete Legend;
+  delete [] LegendData;
   Instance = NULL;
 }
 //..............................................................................
@@ -210,17 +238,20 @@ void TXGrid::Create(const olxstr& cName)  {
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  if( GPC.PrimitiveCount() != 0 )  return;
-
   TGraphicsStyle& GS = GPC.GetStyle();
-  TGlPrimitive& GlP = GPC.NewPrimitive("eMap", sgloQuads);
   TGlMaterial GlM;
   GlM.SetFlags(0);
   GlM.ShininessF = 128;
   GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmTransparent);
   GlM.AmbientF = 0xD80f0f0f;
   GlM.DiffuseF = 0xD80f0f0f;
-  GlP.SetProperties( GS.GetMaterial(GlP.GetName(), GlM));
+  Info->Create();
+  Legend->SetMaterial(GS.GetMaterial("eMap", GlM));
+  Legend->Create();
+  if( GPC.PrimitiveCount() != 0 )  return;
+
+  TGlPrimitive& GlP = GPC.NewPrimitive("eMap", sgloQuads);
+  GlP.SetProperties(GS.GetMaterial(GlP.GetName(), GlM));
 
   TextIndex = ~0;
   GlP.SetTextureId(~0);
@@ -232,7 +263,6 @@ void TXGrid::Create(const olxstr& cName)  {
   GlP.TextureCrds[1].s = 1;  GlP.TextureCrds[1].t = 0;
   GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 1;
   GlP.TextureCrds[3].s = 0;  GlP.TextureCrds[3].t = 1;
-  Info->Create();
   // create dummy primitives
   glpP = &GPC.NewPrimitive("+Surface", sgloQuads);
   glpP->SetProperties(GS.GetMaterial("+Surface", 
@@ -249,86 +279,6 @@ void TXGrid::Create(const olxstr& cName)  {
     RescaleSurface();
 }
 //..............................................................................
-void TXGrid::CalcColorRGB(float v, uint8_t& R, uint8_t& G, uint8_t& B) const {
-  //if( v == 0 )
-  // v = MaxVal;
-  float cs;
-  if( Scale < 0 )  {  // show both
-    cs = v/(-Scale + 0.001);
-    if( cs < -0.5 )  {
-      R = 255;
-      G = (uint8_t)(-sin(M_PI*cs)*255);
-      B = G;
-    }
-    else if( cs < 0 ) {
-      R = (uint8_t)(-sin(M_PI*cs/2)*255);
-      G = R;
-      B = R;
-    }
-    else if( cs < 0.5 ) {
-      G = (uint8_t)(sin(M_PI*cs/2)*255);
-      R = G;
-      B = G;
-    }
-    else {
-      R = (uint8_t)(sin(M_PI*cs)*255);
-      G = 255;
-      B = R;
-    }
-  }
-  else  {
-    cs = olx_abs(v)/(Scale+0.001);
-    if( cs < 0.5 ) {
-      R = (uint8_t)(sin(M_PI*cs)*255);
-      G = 255;
-      B = 255;
-    }
-    else {
-      R = 255;
-      G = (uint8_t)(sin(M_PI*cs)*255);
-      B = 0;
-    }
-  }
-}
-//..............................................................................
-void TXGrid::CalcColor(float v) const {
-  double cs, R, G, B;
-  if( v < 0 )  {
-    if( v < MinVal/Scale )
-      cs = -1;
-    else
-      cs = -v*(Scale)/MinVal;
-  }
-  else  {
-    if( v > MaxVal/Scale )
-      cs = 1;
-    else
-      cs = v*(Scale)/MaxVal;
-  }
-
-  if( cs < -0.5 )  {
-    R = 0;
-    G = -(float)sin(M_PI*cs);
-    B = 1;
-  }
-  else if( cs < 0 ) {
-    R = 0;
-    G = 1;
-    B = -(float)sin(M_PI*cs);
-  }
-  else if( cs < 0.5 ) {
-    R = (float)sin(M_PI*cs);
-    G = 1;
-    B = 0;
-  }
-  else {
-    R = 1;
-    G = (float)sin(M_PI*cs);
-    B = 0;
-  }
-  olx_gl::color(R,G,B);
-}
-//..............................................................................
 void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
   for( size_t j=0; j < max_dim; j++ )  {  // (i,j,Depth)        
     vec3f p((float)(ind-hh)/size, (float)(j-hh)/size,  depth);
@@ -336,21 +286,11 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
     p -= center;
     p *= c2c;
     const float val = map_getter.Get(p);
-    if( init_text )  {
-      uint8_t R, G, B;
-      parent.CalcColorRGB(val, R, G, B);
-      const size_t off = (ind+j*max_dim)*3; 
-      text_data[off] = R;
-      text_data[off+1] = G;
-      text_data[off+2] = B;
-    }
-    if( init_data )  {
-      if( val < minVal )
-        minVal = val;
-      if( val > maxVal )
-        maxVal = val;
-      data[ind][j] = val;
-    }
+    if( val < minVal )
+      minVal = val;
+    if( val > maxVal )
+      maxVal = val;
+    data[ind][j] = val;
   }
 }
 //..............................................................................
@@ -370,8 +310,11 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       return true;
   }
   else  {
-    if( (RenderMode&planeRenderModeContour) != 0 && (RenderMode&planeRenderModePlane) == 0 )
+    if( (RenderMode&planeRenderModeContour) != 0 &&
+        (RenderMode&planeRenderModePlane) == 0 )
+    {
       return true;
+    }
   }
 
   const mat3f bm(Parent.GetBasis().GetMatrix());
@@ -394,8 +337,10 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   GlP.Vertices[2] = bm*vec3f(hh/Size, hh/Size, Z)-center;
   GlP.Vertices[3] = bm*vec3f(-hh/Size, hh/Size, Z)-center;
 
-  TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData, MaxDim, Size, Depth, bm, c2c, center, dim, RenderMode);
-  TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim, tLinearTask, MaxDim > 64);
+  TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData,
+    MaxDim, Size, Depth, bm, c2c, center, dim, RenderMode);
+  TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim,
+    tLinearTask, MaxDim > 64);
   float minVal = 1000, maxVal = -1000;
   for( size_t i = 0; i < tasks.Count(); i++ )  {
     if( tasks[i].minVal < minVal )
@@ -405,8 +350,21 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   }
   olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
   if( (RenderMode&planeRenderModePlane) != 0 )  {
+    float bs = (Scale < 0 ? -Scale/MinVal: Scale/MaxVal);
+    for (size_t i=0; i < MaxDim; i++) {
+      for (size_t j=0; j < MaxDim; j++) {
+        float s = ContourData[i][j] < 0 ? -ContourData[i][j]/minVal
+          : ContourData[i][j]/maxVal;
+        //float s = ContourData[i][j]/(maxVal-minVal);
+        const size_t off = (i+j*MaxDim)*3; 
+        TextData[off+0] = 128-127*s;
+        TextData[off+1] = 128+127*s;
+        TextData[off+2] = 128+127*bs;
+      }
+    }
     if( !olx_is_valid_index(TextIndex) )  {
-      TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, (GLsizei)MaxDim, (GLsizei)MaxDim, 0, GL_RGB, TextData);
+      TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0,
+        (GLsizei)MaxDim, (GLsizei)MaxDim, 0, GL_RGB, TextData);
       TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextIndex);
       tex->SetEnvMode(tpeDecal);
       tex->SetSCrdWrapping(tpCrdClamp);
@@ -416,10 +374,12 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       tex->SetMagFilter(tpFilterLinear);
       tex->SetEnabled(true);
     }
-    else
+    else {
       Parent.GetTextureManager().
-      Replace2DTexture(*Parent.GetTextureManager().
-      FindTexture(TextIndex), 0, (GLsizei)MaxDim, (GLsizei)MaxDim, 0, GL_RGB, TextData);
+       Replace2DTexture(*Parent.GetTextureManager().
+        FindTexture(TextIndex), 0, (GLsizei)MaxDim, (GLsizei)MaxDim, 0, GL_RGB,
+          TextData);
+    }
 
     GlP.SetTextureId(TextIndex);
   }
@@ -437,6 +397,25 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       ContourCrds[0], ContourCrds[1], 
       ContourLevelCount, ContourLevels, mf);
     GlP.EndColorRendering();
+    float legend_step = (maxVal-minVal)/32;
+    float bs = (Scale < 0 ? -Scale/MinVal: Scale/MaxVal);
+    for (int i=0; i < 32; i++) {
+      float val = minVal + legend_step*i;
+      float s = val < 0 ? -val/minVal : val/maxVal;
+      //float s = val/(maxVal-minVal);
+      size_t off = i*32*3;
+      for (int j=0; j < 32*3; j+=3) {
+        LegendData[off+j+0] = 128-127*s;
+        LegendData[off+j+1] = 128+127*s;
+        LegendData[off+j+2] = 128+127*bs;
+      }
+    }
+    Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);
+    legend_step = (maxVal-minVal)/ContourLevelCount;
+    Legend->text.Clear();
+    for (int i=0; i < ContourLevelCount; i++)
+      Legend->text << olxstr::FormatFloat(-3, minVal+legend_step*i);
+    Legend->Fit();
   }
   return false;
 }
@@ -724,6 +703,7 @@ void TXGrid::UpdateInfo()  {
   else
     Info->PostText(olxstr("Current level: ") << Scale);
   Info->Fit();
+
 }
 //..............................................................................
 const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
@@ -1209,9 +1189,6 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   //Visible( item.GetRequiredField("visible").ToBool() );
   SetVisible(true);
   RenderMode = item.GetRequiredField("draw_mode").ToInt();
-  MaxVal = item.GetRequiredField("max_val").ToDouble();
-  MinVal = item.GetRequiredField("min_val").ToDouble();
-  Depth = item.GetRequiredField("depth").ToDouble();
   Size = item.GetRequiredField("size").ToDouble();
   Extended = item.GetFieldValue("extended", FalseString()).ToBool();
   Boxed = item.GetFieldValue("boxed", FalseString()).ToBool();
@@ -1226,6 +1203,9 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   InitGrid( item.GetRequiredField("max_x").ToInt(), 
             item.GetRequiredField("max_y").ToInt(),
             item.GetRequiredField("max_z").ToInt() );
+  MaxVal = item.GetRequiredField("max_val").ToDouble();
+  MinVal = item.GetRequiredField("min_val").ToDouble();
+  Depth = item.GetRequiredField("depth").ToDouble();
   for( size_t x=0; x < MaxX; x++ )
     for( size_t y=0; y < MaxY; y++ )
       zis.Read(ED->Data[x][y], sizeof(float)*MaxZ);
@@ -1277,7 +1257,8 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     "Returns/sets grid rendering mode. Supported values: point, line, fill, "
     "plane, contour") );
 
-  AGDrawObject::ExportLibrary( *lib );
+  AGDrawObject::ExportLibrary(*lib);
+  Info->ExportLibrary(*lib->AddLibrary("label"));
   return lib;
 }
 //..............................................................................
