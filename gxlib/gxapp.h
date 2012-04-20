@@ -553,8 +553,8 @@ public:
   ConstPtrList<TXBond> GetXBonds(const olxstr& BondName);
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
   ConstPtrList<TCAtom> FindCAtoms(const olxstr& Atoms, bool ClearSelection=true);
-  ConstPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool ClearSelection=true,
-    bool FindHidden=false);
+  ConstPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool getAll=true,
+    bool ClearSelection=true, bool FindHidden=false);
   ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds, bool GetAll,
     bool unselect);
 
