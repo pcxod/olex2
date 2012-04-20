@@ -23,15 +23,18 @@ PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
   olxstr fn;
   if( !PythonExt::ParseTuple(args, "w", &fn) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
-  if( !TEFile::Exists(fn) )
-    return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo, olxstr("File does not exist: ") << fn);
+  if( !TEFile::Exists(fn) ) {
+    return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo,
+      olxstr("File does not exist: ") << fn);
+  }
   THklFile hkl;
   bool res = false;
   olxstr error;
   try  {  res = hkl.LoadFromFile(fn);  }
   catch( const TExceptionBase& e )  {  error = e.GetException()->GetError();  }
   if( !res )  {
-    return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo, olxstr("Invalid HKL file: ") << fn << '\n' << error);
+    return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo,
+      olxstr("Invalid HKL file: ") << fn << '\n' << error);
   }
   PyObject* rv = PyTuple_New( hkl.RefCount() );
   for( size_t i=0; i < hkl.RefCount(); i++ )  {
@@ -43,7 +46,7 @@ PyObject* hkl_py::Read(PyObject* self, PyObject* args)  {
     PyTuple_SetItem(ref, 3, Py_BuildValue("d", hkl[i].GetI()));
     PyTuple_SetItem(ref, 4, Py_BuildValue("d", hkl[i].GetS()));
     PyTuple_SetItem(ref, 5, Py_BuildValue("i", hkl[i].GetBatch()));
-    PyTuple_SetItem(ref, 6, Py_BuildValue("b", hkl[i].GetTag() >= 0) );
+    PyTuple_SetItem(ref, 6, Py_BuildValue("b", !hkl[i].IsOmitted()));
   }
   return rv;
 }
@@ -53,21 +56,29 @@ PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
   PyObject* in;
   if( !PythonExt::ParseTuple(args, "wO", &fn, &in) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wO");
-  if( !PyList_CheckExact(in) )
-    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, "A list is expected");
+  if( !PyList_CheckExact(in) ) {
+    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+      "A list is expected");
+  }
   size_t sz = PyList_Size(in);
   TRefList rf;
   int h, k, l, flag, test_flag = -1;
   double I, S;
   for( size_t i=0; i < sz; i++ )  {
     PyObject* prf = PyList_GetItem(in, i);
-    if( !PyTuple_CheckExact(prf) || PyTuple_Size(prf) < 6)
-      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, "A tuple of 6 items is expected");
-    if( !PyArg_ParseTuple(prf, "iiiddi", &h, &k, &l, &I, &S, &flag) )
-      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, "Failed to parse the (iiiddi) tuple");
+    if( !PyTuple_CheckExact(prf) || PyTuple_Size(prf) < 6) {
+      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        "A tuple of 6 items is expected");
+    }
+    if( !PyArg_ParseTuple(prf, "iiiddi", &h, &k, &l, &I, &S, &flag) ) {
+      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        "Failed to parse the (iiiddi) tuple");
+    }
     if( test_flag == -1 )  
        test_flag = flag;
-    else if( test_flag == TReflection::NoBatchSet && flag != TReflection::NoBatchSet )  {
+    else if( test_flag == TReflection::NoBatchSet &&
+      flag != TReflection::NoBatchSet )
+    {
       return PythonExt::SetErrorMsg(PyExc_IOError, __OlxSourceInfo,
         "Error: reflections with and without batch numbers are provided");
     }
