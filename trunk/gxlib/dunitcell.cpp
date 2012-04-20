@@ -64,7 +64,7 @@ void TDUnitCell::Init(const double cell[6])  {
   HklToCartesian[2] /= V;
 }
 //...........................................................................
-void TDUnitCell::SetReciprocal(bool v)  {
+void TDUnitCell::SetReciprocal(bool v, double scale)  {
   if( FGlP == NULL )  return;
 
   mat3d M = v ? HklToCartesian : CellToCartesian;
@@ -99,6 +99,8 @@ void TDUnitCell::SetReciprocal(bool v)  {
   FGlP->Vertices[22] = M[2]+M[0];  //AC
   FGlP->Vertices[23] = M[2]+M[1]+M[0];  //ABC
   Reciprocal = v;
+  for (size_t i=0; i < FGlP->Vertices.Count(); i++)
+    FGlP->Vertices[i] *= scale;
   // reinitialise labels
   const size_t FontIndex = Parent.GetScene().FindFontIndexForType<TDUnitCell>();
   for( int i=0; i < 3; i++ )  {  

@@ -1042,6 +1042,12 @@ void TMainForm::macCell(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->SetCellVisible(!FXApp->IsCellVisible());
   else
     FXApp->SetCellVisible(Cmds[0].ToBool());
+  if (FXApp->DUnitCell().IsVisible()) {
+    olxstr r = Options.FindValue('r', FalseString());
+    if (r.IsEmpty()) r = FalseString();
+    bool br = r.ToBool();
+    FXApp->DUnitCell().SetReciprocal(br, br ? 100: 1);
+  }
   FXApp->CenterView();
 }
 //..............................................................................
@@ -1064,7 +1070,7 @@ void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FMode = FMode | mRota;
   }
   else  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong parameters" );
+    Error.ProcessingError(__OlxSrcInfo, "wrong parameters");
   }
 }
 //..............................................................................
@@ -10016,8 +10022,11 @@ void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError
     FXApp->FindRings("C5", rings);
     FXApp->FindRings("C6", rings);
     for( size_t i=0; i < rings.Count(); i++ )  {
-      if( !TNetwork::IsRingPrimitive(rings[i]) || !TNetwork::IsRingRegular(rings[i]) )
+      if( TSPlane::CalcRMSD(rings[i]) > 0.05 ||
+          !TNetwork::IsRingRegular(rings[i]) )
+      {
         rings.NullItem(i);
+      }
     }
     rings.Pack();
   }

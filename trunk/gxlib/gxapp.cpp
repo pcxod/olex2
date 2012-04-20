@@ -1636,8 +1636,8 @@ ConstPtrList<TXAtom> TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
   return rv;
 }
 //..............................................................................
-ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection,
-  bool FindHidden)
+ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
+  bool ClearSelection, bool FindHidden)
 {
   TXAtomPList rv;
   if( Atoms.IsEmpty() )  {  // return selection/all atoms
@@ -1651,13 +1651,15 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection
         GetRender().SelectAll(false);
       return rv;
     }
-    AtomIterator ai(*this);
-    rv.SetCapacity(ai.count);
-    while( ai.HasNext() )  {
-      TXAtom& xa = ai.Next();
-      if( xa.IsDeleted() )  continue; 
-      if( !FindHidden && !xa.IsVisible() ) continue;
-      rv.Add(xa);
+    if (getAll) {
+      AtomIterator ai(*this);
+      rv.SetCapacity(ai.count);
+      while( ai.HasNext() )  {
+        TXAtom& xa = ai.Next();
+        if( xa.IsDeleted() )  continue; 
+        if( !FindHidden && !xa.IsVisible() ) continue;
+        rv.Add(xa);
+      }
     }
   }
   else  {
@@ -1676,7 +1678,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection
           TXAtom* XATo = NULL;
           if( Toks[i].Equalsi("end") )  ;
           else  {
-            XATo = GetXAtom(Toks[i], ClearSelection );
+            XATo = GetXAtom(Toks[i], ClearSelection);
             if( XATo == NULL )
               throw TInvalidArgumentException(__OlxSourceInfo, "\'to\' atoms is undefined");
           }
@@ -1737,10 +1739,8 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const TStrObjList &Cmds, bool GetAll,
   TXAtomPList atoms;
   if( Cmds.IsEmpty() )  {
     atoms.AddList(
-      FindXAtoms(EmptyString(), EsdlInstanceOf(GetSelection(), TGlGroup)
+      FindXAtoms(EmptyString(), GetAll, EsdlInstanceOf(GetSelection(), TGlGroup)
       ? unselect : false));
-    if( GetAll && atoms.IsEmpty() )
-      atoms = FindXAtoms(EmptyString(), unselect);
   }
   else
     atoms = FindXAtoms(Cmds.Text(' '), unselect);
