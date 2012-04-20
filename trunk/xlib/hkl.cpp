@@ -82,7 +82,6 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
       HklFinished = false,
       HasBatch = false,
       FormatInitialised = false;
-    int Tag = 1;
     SL.LoadFromFile(FN);
     if( SL.IsEmpty() )
       throw TEmptyFileException(__OlxSrcInfo, FN);
@@ -164,7 +163,6 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
         // end of the reflections included into calculations
         if( h == 0 && k == 0 && l == 0 )  {
           ZeroRead = true;
-          Tag = -1;
           continue;
         }
         try  {
@@ -176,7 +174,6 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
             :
             new TReflection(h, k, l, line.SubString(12,8).ToDouble(),
               line.SubString(20,8).ToDouble());
-          ref->SetTag(Tag);
           ref->SetOmitted(ZeroRead);
           if( apply_basis ) {
             vec3d nh = Basis*vec3d(ref->GetHkl());
@@ -189,7 +186,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
             ref->SetHkl(nih);
           }
           UpdateMinMax(*ref);
-          Refs.Add(ref);
+          Refs.Add(ref)->SetTag(Refs.Count());
         }
         catch(const TExceptionBase& e)  {
           throw TFunctionFailedException(__OlxSourceInfo, e,
@@ -316,8 +313,6 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
       TBasicApp::NewLogEntry(logError) << "Removed: " << removed_cnt <<
         " invalid reflections";
     }
-    for( size_t i=0; i < Refs.Count(); i++ )
-      Refs[i]->SetTag((i+1) * olx_sign(Refs[i]->GetTag()));
   }
   catch(const TExceptionBase& e)  {
     throw TFunctionFailedException(__OlxSourceInfo, e);
@@ -382,8 +377,7 @@ void THklFile::AllRefs(const TReflection& R, const smatd_list& ml,
 //..............................................................................
 void THklFile::Append(TReflection& hkl)  {
   UpdateMinMax(hkl);
-  Refs.Add(hkl);
-  hkl.SetTag(Refs.Count());
+  Refs.Add(hkl)->SetTag(Refs.Count());
 }
 //..............................................................................
 void THklFile::EndAppend()  {
@@ -392,13 +386,9 @@ void THklFile::EndAppend()  {
 //..............................................................................
 void THklFile::Append(const TRefPList& hkls)  {
   if( hkls.IsEmpty() )  return;
-
   for( size_t i=0; i < hkls.Count(); i++ )  {
-    // call it before new - in case of exception
     UpdateMinMax(*hkls[i]);
-    TReflection* r = new TReflection(*hkls[i]);
-    r->SetTag(Refs.Count());
-    Refs.Add(r);
+    Refs.Add(new TReflection(*hkls[i]))->SetTag(Refs.Count());
   }
   EndAppend();
 }
