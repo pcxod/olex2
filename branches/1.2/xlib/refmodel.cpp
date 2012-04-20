@@ -463,6 +463,7 @@ const TRefList& RefinementModel::GetReflections() const {
     _FriedelPairCount = 0;
     _Reflections.SetCapacity(hkl_cnt);
     for( size_t i=0; i < hkl_cnt; i++ )  {
+      if (hf[i].IsOmitted()) continue;
       hf[i].SetI(hf[i].GetI()*HKLF_s);
       hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
       if( HKLF < 5 )  // enforce to clear the batch number...

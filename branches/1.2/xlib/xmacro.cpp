@@ -5011,30 +5011,30 @@ void XLibMacros::macHklAppend(TStrObjList &Cmds, const TParamList &Options,
   Hkl.LoadFromFile(hklSrc);
   if( Options.IsEmpty() )  {
     for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() < 0 )  {
-        Hkl[i].SetTag(-Hkl[i].GetTag());
+      if( Hkl[i].IsOmitted() )  {
+        Hkl[i].SetOmitted(false);
         c++;
       }
     }
   }
   else if( combine )  {
     for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() < 0 )  {
+      if( Hkl[i].IsOmitted() )  {
         if( !h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) == InvalidIndex ) continue;
         if( !k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) == InvalidIndex ) continue;
         if( !l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) == InvalidIndex ) continue;
-        Hkl[i].SetTag(-Hkl[i].GetTag());
+        Hkl[i].SetOmitted(false);
         c++;
       }
     }
   }
   else  {
     for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() < 0 )  {
+      if( Hkl[i].IsOmitted() )  {
         if( h.IndexOf(Hkl[i].GetH()) != InvalidIndex ||
             k.IndexOf(Hkl[i].GetK()) != InvalidIndex ||
             l.IndexOf(Hkl[i].GetL()) != InvalidIndex )  {
-          Hkl[i].SetTag(-Hkl[i].GetTag());
+          Hkl[i].SetOmitted(false);
           c++;
         }
       }
@@ -5075,23 +5075,23 @@ void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options,
   Hkl.LoadFromFile(hklSrc);
   if( combine )  {
     for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() > 0 )  {
+      if( !Hkl[i].IsOmitted() )  {
         if( !h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) == InvalidIndex) continue;
         if( !k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) == InvalidIndex) continue;
         if( !l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) == InvalidIndex) continue;
-        Hkl[i].SetTag(-Hkl[i].GetTag());
+        Hkl[i].SetOmitted(true);
         c++;
       }
     }
   }
   else  {
     for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() > 0 )  {
+      if( !Hkl[i].IsOmitted() )  {
         if( (!h.IsEmpty() && h.IndexOf(Hkl[i].GetH()) != InvalidIndex) ||
             (!k.IsEmpty() && k.IndexOf(Hkl[i].GetK()) != InvalidIndex) ||
             (!l.IsEmpty() && l.IndexOf(Hkl[i].GetL()) != InvalidIndex) )
         {
-          Hkl[i].SetTag(-Hkl[i].GetTag());
+          Hkl[i].SetOmitted(true);
           c++;
         }
       }
@@ -5182,7 +5182,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
   if( !basf.IsEmpty() )  {
     if( rm.GetHKLF() >= 5 )  {
-      size_t tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
+      int tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
       twinning::general twin(info_ex, rm.GetReflections(),
         RefUtil::ResolutionAndSigmaFilter(rm), basf,
         mat3d::Transpose(rm.GetTWIN_mat()), tn);

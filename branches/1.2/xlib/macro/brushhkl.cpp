@@ -107,8 +107,8 @@ void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacr
   size_t deletedRefs = 0;
   for( size_t i=0; i < refs.Count(); i++ )  {
     toSave.Add( refs[i]->ref );
-    if( refs[i]->Deleted && refs[i]->ref->GetTag() >= 0 )  {
-      refs[i]->ref->SetTag(-refs[i]->ref->GetTag());
+    if( refs[i]->Deleted )  {
+      refs[i]->ref->SetOmitted(true);
       deletedRefs++;
     }
     delete refs[i];
