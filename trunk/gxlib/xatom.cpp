@@ -487,7 +487,7 @@ bool TXAtom::GetDimensions(vec3d& Max, vec3d& Min)  {
 //..............................................................................
 void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
   uint32_t Cl, Mask;
-  Mask = RGBA(0x5f, 0x5f, 0x5f, 0x00);
+  Mask = OLX_RGBA(0x5f, 0x5f, 0x5f, 0x00);
   Cl = (int)Atom.GetType().def_color;
 ///////////
   if( Atom.GetType() == iQPeakZ )  {
@@ -534,7 +534,7 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
 //..............................................................................
 void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
   uint32_t Cl, Mask;
-  Mask = RGBA(0x5f, 0x5f, 0x5f, 0x00);
+  Mask = OLX_RGBA(0x5f, 0x5f, 0x5f, 0x00);
 
   M.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmEmissionF);
 //  |  sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmEmissionB);

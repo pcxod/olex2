@@ -23,7 +23,8 @@ void TProcessImage::FilterBW(unsigned char *Image, int width, int height, int by
   int index, index1, summ;
   int total = width*height*bytePerColour;
   int newImageMax = width*height;
-  unsigned char MeanBG = (GetRValue(BGcolour) +GetGValue(BGcolour) + GetBValue(BGcolour))/3;
+  unsigned char MeanBG = (OLX_GetRValue(BGcolour) +OLX_GetGValue(BGcolour) +
+    OLX_GetBValue(BGcolour))/3;
   unsigned char * newImg = new unsigned char [newImageMax];
 
   for( int i=0; i < width; i++ )

@@ -38,10 +38,10 @@ public:
   }
 
   TGlOption& operator = (uint32_t c)  {
-    data[0] = (float)GetRValue(c)/255;
-    data[1] = (float)GetGValue(c)/255;
-    data[2] = (float)GetBValue(c)/255;
-    data[3] = (float)GetAValue(c)/255;
+    data[0] = (float)OLX_GetRValue(c)/255;
+    data[1] = (float)OLX_GetGValue(c)/255;
+    data[2] = (float)OLX_GetBValue(c)/255;
+    data[3] = (float)OLX_GetAValue(c)/255;
     return *this;
   }
 
@@ -87,7 +87,7 @@ public:
   }
 
   uint32_t GetRGB() const {
-    return (uint32_t)RGBA(255*data[0], 255*data[1], 255*data[2], 255*data[3]);
+    return (uint32_t)OLX_RGBA(255*data[0], 255*data[1], 255*data[2], 255*data[3]);
   }
   const float* Data() const {  return data;  }
   float* _Data()  {  return data;  }
