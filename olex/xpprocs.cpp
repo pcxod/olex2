@@ -443,11 +443,13 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funRGB(const TStrObjList& Params, TMacroError &E)  {
   if( Params.Count() == 3 )  {
-    E.SetRetVal((uint32_t)RGB(Params[0].ToInt(), Params[1].ToInt(), Params[2].ToInt()));
+    E.SetRetVal((uint32_t)OLX_RGB(Params[0].ToInt(), Params[1].ToInt(),
+      Params[2].ToInt()));
     return;
   }
   if( Params.Count() == 4 )  {
-    E.SetRetVal((uint32_t)RGBA(Params[0].ToInt(), Params[1].ToInt(), Params[2].ToInt(), Params[3].ToInt()));
+    E.SetRetVal((uint32_t)OLX_RGBA(Params[0].ToInt(), Params[1].ToInt(),
+      Params[2].ToInt(), Params[3].ToInt()));
     return;
   }
 }
@@ -458,6 +460,7 @@ void TMainForm::funHtmlPanelWidth(const TStrObjList &Cmds, TMacroError &E)  {
   else
     E.SetRetVal(GetHtml()->WI.GetWidth());
 }
+//..............................................................................
 void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
   wxColourDialog CD(this);
   wxColor wc;
@@ -469,7 +472,7 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
   if( CD.ShowModal() == wxID_OK )  {
     wc = CD.GetColourData().GetColour();
     if( Params.IsEmpty() )  {
-      E.SetRetVal( (int)RGB(wc.Red(), wc.Green(), wc.Blue()) );
+      E.SetRetVal( (uint32_t)OLX_RGB(wc.Red(), wc.Green(), wc.Blue()) );
     }
     else if( Params[0].Equalsi("hex") )  {
       olx_array_ptr<char> p(olx_malloc<char>(8));
@@ -542,9 +545,9 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   bool mask_bg = Options.Contains("nbg");
   uint32_t clear_color = FXApp->GetRender().LightModel.GetClearColor().GetRGB();
-  unsigned char bg_r = GetRValue(clear_color),
-    bg_g = GetGValue(clear_color),
-    bg_b = GetBValue(clear_color);
+  unsigned char bg_r = OLX_GetRValue(clear_color),
+    bg_g = OLX_GetGValue(clear_color),
+    bg_b = OLX_GetBValue(clear_color);
 
   short bits = mask_bg ? 32 : 24,
     extraBytes;
@@ -736,9 +739,9 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res); 
   bool mask_bg = Options.Contains("nbg");
   uint32_t clear_color = FXApp->GetRender().LightModel.GetClearColor().GetRGB();
-  unsigned char bg_r = GetRValue(clear_color),
-    bg_g = GetGValue(clear_color),
-    bg_b = GetBValue(clear_color);
+  unsigned char bg_r = OLX_GetRValue(clear_color),
+    bg_g = OLX_GetGValue(clear_color),
+    bg_b = OLX_GetBValue(clear_color);
   unsigned char * alpha_bytes = NULL;
   const int alphaSize = BmpHeight*BmpWidth;
   if (mask_bg)
@@ -8426,7 +8429,7 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
       cl = 0x00ffffff;
     else if( cnt > 1 )
       cl /= cnt;
-    if( GetAValue(cl) != 0 )
+    if( OLX_GetAValue(cl) != 0 )
       return cl;
     return cl|(127<<24);
   }

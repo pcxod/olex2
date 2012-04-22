@@ -354,9 +354,9 @@ void TdlgSceneProps::InitLight(TGlLight& L)  {
   teAmb->WI.SetColor(L.GetAmbient().GetRGB());
   scAmbA->SetValue( (int)L.GetAmbient()[3]*100);
   teDiff->WI.SetColor(L.GetDiffuse().GetRGB());
-  /*teDiff->SetColour(wxColour(GetRValue(L.Diffuse().GetRGB()), 
-    GetGValue(L.Diffuse().GetRGB()), 
-    GetBValue(L.Diffuse().GetRGB())));*/
+  /*teDiff->SetColour(wxColour(OLX_GetRValue(L.Diffuse().GetRGB()), 
+    OLX_GetGValue(L.Diffuse().GetRGB()), 
+    OLX_GetBValue(L.Diffuse().GetRGB())));*/
   scDiffA->SetValue(L.GetDiffuse()[3]*100);
   teSpec->WI.SetColor(L.GetSpecular().GetRGB());
   scSpecA->SetValue((int)L.GetSpecular()[3]*100);
