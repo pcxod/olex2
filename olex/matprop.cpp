@@ -240,7 +240,7 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
     CD->GetColourData().SetColour(wc);
     if( CD->ShowModal() == wxID_OK )  {
       wc = CD->GetColourData().GetColour();
-      ((TTextEdit*)Sender)->WI.SetColor(RGB(wc.Red(), wc.Green(), wc.Blue()));
+      ((TTextEdit*)Sender)->WI.SetColor(OLX_RGB(wc.Red(), wc.Green(), wc.Blue()));
     }
     delete CD;
   }
