@@ -110,7 +110,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
         const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
         const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
         if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex )  {
-          TInvalidArgumentException(__OlxSourceInfo,
+          throw TInvalidArgumentException(__OlxSourceInfo,
             "could not locate <h k l meas sigma> data");
         }
         for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
