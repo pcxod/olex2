@@ -109,7 +109,7 @@ PyObject* runWriteImage(PyObject* self, PyObject* args)  {
   int length = 0;
   if( !PythonExt::ParseTuple(args, "ws#|i", &name, &data, &length, &persistenceId) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ws#|i");
-  if( data != NULL && !name.IsEmpty() && length > 0 )  {
+  if (data != NULL && !name.IsEmpty()) {
     TFileHandlerManager::AddMemoryBlock(name, data, length, persistenceId);
     return Py_BuildValue("b", true);
   }
