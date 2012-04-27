@@ -548,7 +548,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
     if( format[i] == 'i' )  {
       int* ip = va_arg(argptr, int*);
       if( !PyArg_Parse(io, "i", ip) )  {
-        va_end(argptr);       
+        va_end(argptr);
         return false;
       }
         //throw TInvalidArgumentException(__OlxSourceInfo, "integer is expected");
@@ -570,7 +570,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
           os->Append(wc_bf.Data(), usz);
       }
       else  {
-        va_end(argptr);       
+        va_end(argptr);
         return false;
       }
         //throw TInvalidArgumentException(__OlxSourceInfo, "string/unicode is expected");
@@ -585,7 +585,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
       else
         rlen = &len;
       if( !PyArg_Parse(io, "s#", cstr, rlen)  )  {
-        va_end(argptr);       
+        va_end(argptr);
         return false;
       }
         //throw TInvalidArgumentException(__OlxSourceInfo, "string is expected");
@@ -613,13 +613,13 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
     else if( format[i] == 'b' )  {
       bool* bp = va_arg(argptr, bool*);
       if( !PyArg_Parse(io, "b", bp) )  {
-        va_end(argptr);       
+        va_end(argptr);
         return false;
       }
         //throw TInvalidArgumentException(__OlxSourceInfo, "boolean is expected");
     }
     else  {
-      va_end(argptr);       
+      va_end(argptr);
       return false;
     }
       //throw TInvalidArgumentException(__OlxSourceInfo, olxstr("undefined format specifier '") << format[i] << '\'');
@@ -629,6 +629,6 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
       i++;
     }
   }
-  va_end(argptr);       
+  va_end(argptr);
   return true;
 }

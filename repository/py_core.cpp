@@ -182,7 +182,7 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
   // make the labels unique inside residues...
   for( size_t i=0; i < au.ResidueCount(); i++ )
-    LabelCorrector().CorrectAll(au.GetResidue(i));
+    LabelCorrector(false).CorrectAll(au.GetResidue(i));
   return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
 }
 //..............................................................................

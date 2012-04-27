@@ -67,19 +67,20 @@ struct LabelCorrector  {
   olxdict<olxstr, TCAtom*, olxstrComparator<true> > uniq_labels;
   olxdict<const cm_Element*, LabelIterator, TPrimitiveComparator>
     labels;
-  LabelCorrector()  {}
-  LabelCorrector(TAsymmUnit& au)  {
+  bool trim;
+  LabelCorrector(bool trim=true) : trim(trim)  {}
+  LabelCorrector(TAsymmUnit& au, bool trim=true) : trim(trim) {
     uniq_labels.SetCapacity(au.AtomCount());
     for( size_t i=0; i < au.AtomCount(); i++ )  {
       TCAtom& a = au.GetAtom(i);
       if( a.IsDeleted() )  continue;
-      if( a.GetLabel().Length() > 4 )
+      if( trim && a.GetLabel().Length() > 4 )
         a.SetLabel(a.GetLabel().SubStringTo(4), false);
       uniq_labels.Add(a.GetLabel(), &a);
     }
   }
   void Correct(TCAtom& a)  {
-    if( a.GetLabel().Length() > 4 )
+    if( trim && a.GetLabel().Length() > 4 )
       a.SetLabel(a.GetLabel().SubStringTo(4), false);
     TCAtom* lo = uniq_labels.Find(a.GetLabel(), NULL);
     if( lo != NULL )  {
