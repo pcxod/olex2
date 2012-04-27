@@ -65,6 +65,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
       TStrList toks;
       CIFToks(Lines[start], toks);
       for( size_t i=0; i < toks.Count(); i++ )  {
+        if (toks[i].CharAt(0) == '#') break;
         if( param_found || toks[i].CharAt(0) != '_' )  {
           param_found = true;
           loop_data.Add(toks[i]);
