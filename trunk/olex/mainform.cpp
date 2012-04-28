@@ -554,7 +554,7 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitMacroD(Group,
     "n-a custom name can be provided",
-    fpNone|psFileLoaded,
+    fpNone|fpOne|psFileLoaded,
   "Groups current visible objects or selection");
 
   this_InitMacroD(Fmol, EmptyString(), fpNone|psFileLoaded,
@@ -612,8 +612,8 @@ void TMainForm::XApp(TGXApp *XA)  {
     "a-select all&;"
     "u-unselect all&;"
     "l-consider the list of bonds as independent&;"
-    "c-copies printed values to the clipboard"
-    "i-invert selection",
+    "c-copies printed values to the clipboard&;"
+    "i-invert selection&;",
     fpAny,
     "If no arguments provided, prints current selection. This includes "
     "distances, angles and torsion angles and other geometrical parameters. "
