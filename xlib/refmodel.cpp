@@ -483,11 +483,11 @@ const TRefList& RefinementModel::GetReflections() const {
       for( int k=_HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++ )  {
         for( int l=_HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++ )  {
           TRefPList* rl1 = hkl3d(h, k, l);
-          if(  rl1 == NULL )  continue;
+          if( rl1 == NULL )  continue;
           const vec3i ind(-h,-k,-l);
           if( hkl3d.IsInRange(ind) )  {
             TRefPList* rl2 = hkl3d(ind);
-            if( rl2 != NULL )  {
+            if( rl2 != NULL && rl2 != rl1 )  {
               _FriedelPairCount++;
               _Redundancy[rl2->Count()-1]++;
               delete rl2;
