@@ -985,7 +985,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         HyphenateIns(tmp, sl);
       }
       for( size_t i=0; i < sg.Count(); i++ )
-        _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
+        _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false, checkResi);
       return;
     }
   }
@@ -1040,7 +1040,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     size_t sc = 0;
     for( size_t j=0; j < hg.Count(); j++ )  {
       if( !hg[j].IsDeleted() && !hg[j].IsSaved() )  {
-        _SaveAtom(rm, hg[j], part, afix, sfac, sl, index, checkSame);
+        _SaveAtom(rm, hg[j], part, afix, sfac, sl, index, checkSame, checkResi);
         sc++;
       }
     }
@@ -1053,7 +1053,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     size_t sc = 0;
     for( size_t i=0; i < ag->Count(); i++ )  {
       if( !(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved() )  {
-        _SaveAtom(rm, (*ag)[i], part, afix, sfac, sl, index, checkSame);
+        _SaveAtom(rm, (*ag)[i], part, afix, sfac, sl, index, checkSame, checkResi);
         sc++;
       }
     }
@@ -1091,7 +1091,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
       }
       if( ac.GetParentAfixGroup() != NULL && 
          !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
-      _SaveAtom(GetRM(), ac, part, afix, &BasicAtoms, SL);
+      _SaveAtom(GetRM(), ac, part, afix, &BasicAtoms, SL, NULL, true, false);
     }
   }
   if( afix != 0 )  SL.Add("AFIX 0");

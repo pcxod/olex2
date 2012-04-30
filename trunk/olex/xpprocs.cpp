@@ -3980,14 +3980,23 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( Ins != NULL )
     Ins->UpdateParams();
   // get CAtoms and EXYZ equivalents
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   for( size_t i=0; i < Atoms.Count(); i++ )  {
-    TCAtom* ca = &Atoms[i]->CAtom();
-    CAtoms.Add( ca );
-    TExyzGroup* eg = ca->GetExyzGroup();
+    TCAtom &ca = Atoms[i]->CAtom();
+    if (ca.GetTag() != 0) continue;
+    CAtoms.Add(ca)->SetTag(1);
+    TExyzGroup* eg = ca.GetExyzGroup();
     if( eg != NULL )  {
       for( size_t j=0; j < eg->Count(); j++ )
         if( !(*eg)[j].IsDeleted() )
-          CAtoms.Add( &(*eg)[j] );
+          CAtoms.Add((*eg)[j]);
+    }
+    if (ca.GetResiId() != 0) {
+      const TResidue& resi = rm.aunit.GetResidue(ca.GetResiId());
+      for (size_t j=0; j < resi.Count(); j++) {
+        if (resi[j].GetTag() != 0) continue;
+        CAtoms.Add(resi[j])->SetTag(1);
+      }
     }
   }
   TXApp::UnifyPAtomList(CAtoms);
