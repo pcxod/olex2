@@ -985,7 +985,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         HyphenateIns(tmp, sl);
       }
       for( size_t i=0; i < sg.Count(); i++ )
-        _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false, true);
+        _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
       return;
     }
   }
