@@ -4732,7 +4732,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     Options.Contains('u')))
   {
     size_t period=5;
-    TXAtomPList Atoms = FXApp->FindXAtoms("sel", false);
+    TXAtomPList Atoms = FXApp->FindXAtoms("sel", false, false);
     if( Atoms.IsEmpty() && Cmds.Count() == 1 )  {
       TGPCollection* gpc = FXApp->GetRender().FindCollection(Cmds[0]);
       if( gpc != NULL )  {
@@ -4984,8 +4984,13 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
     }
     try  {
-      SaveVFS(plStructure); // save virtual fs file
-      TFileHandlerManager::Clear(plStructure);
+      bool update_vfs =
+        TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) !=
+        TEFile::ExtractFilePath(file_n.file_name);
+      if (update_vfs) {
+        SaveVFS(plStructure); // save virtual fs file
+        TFileHandlerManager::Clear(plStructure);
+      }
       int64_t st = TETime::msNow();
       FXApp->LoadXFile(TXFile::ComposeName(file_n));
       st = TETime::msNow() - st;
@@ -4993,7 +4998,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         << NewLineSequence();
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
-      LoadVFS(plStructure);  // load virtual fs file
+      if (update_vfs)
+        LoadVFS(plStructure);  // load virtual fs file
     }
     catch (const TExceptionBase& exc) { 
       // manual recovery of the situation...
