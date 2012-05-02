@@ -892,7 +892,9 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
 {
   TStrList lines;
   short state = 0;
+  SortedObjectList<olxstr, olxstrComparator<false> > elms;
   for( size_t i=0; i < rm.GetUserContent().Count(); i++ )  {
+    elms.AddUnique(rm.GetUserContent()[i].element.symbol);
     XScatterer* sd = rm.FindSfacData(rm.GetUserContent()[i].element.symbol);
     if( sd != NULL && sd->IsSFAC() )  {
       olxstr tmp = sd->ToInsString();
@@ -918,8 +920,11 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
     }
   }
   for( size_t i=0; i < rm.SfacCount(); i++ )  {
-    if( rm.GetSfacData(i).IsDISP() )
+    if( rm.GetSfacData(i).IsDISP() &&
+      elms.Contains(rm.GetSfacData(i).GetLabel()))
+    {
       list.Insert(pos++, rm.GetSfacData(i).ToInsString());
+    }
   }
   olxstr& unit = list.Insert(pos++, "UNIT");
 
