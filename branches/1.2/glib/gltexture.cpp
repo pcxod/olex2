@@ -11,7 +11,7 @@
 //.............................................................................
 TGlTexture::TGlTexture(GLuint id, uint32_t type, GLint level,
   const olxstr& name)
-  : Id(id), Level(level), SetParams(0), Name(name)
+  : Level(level), SetParams(0), Id(id), Name(name)
 {
   if( type == tpt1D )
     olx_set_true(SetParams, tp1D);

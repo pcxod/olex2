@@ -3970,14 +3970,23 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( Ins != NULL )
     Ins->UpdateParams();
   // get CAtoms and EXYZ equivalents
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   for( size_t i=0; i < Atoms.Count(); i++ )  {
-    TCAtom* ca = &Atoms[i]->CAtom();
-    CAtoms.Add( ca );
-    TExyzGroup* eg = ca->GetExyzGroup();
+    TCAtom &ca = Atoms[i]->CAtom();
+    if (ca.GetTag() != 0) continue;
+    CAtoms.Add(ca)->SetTag(1);
+    TExyzGroup* eg = ca.GetExyzGroup();
     if( eg != NULL )  {
       for( size_t j=0; j < eg->Count(); j++ )
         if( !(*eg)[j].IsDeleted() )
-          CAtoms.Add( &(*eg)[j] );
+          CAtoms.Add((*eg)[j]);
+    }
+    if (ca.GetResiId() != 0) {
+      const TResidue& resi = rm.aunit.GetResidue(ca.GetResiId());
+      for (size_t j=0; j < resi.Count(); j++) {
+        if (resi[j].GetTag() != 0) continue;
+        CAtoms.Add(resi[j])->SetTag(1);
+      }
     }
   }
   TXApp::UnifyPAtomList(CAtoms);
@@ -4988,8 +4997,13 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
     }
     try  {
-      SaveVFS(plStructure); // save virtual fs file
-      TFileHandlerManager::Clear(plStructure);
+      bool update_vfs =
+        TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) !=
+        TEFile::ExtractFilePath(file_n.file_name);
+      if (update_vfs) {
+        SaveVFS(plStructure); // save virtual fs file
+        TFileHandlerManager::Clear(plStructure);
+      }
       int64_t st = TETime::msNow();
       FXApp->LoadXFile(TXFile::ComposeName(file_n));
       st = TETime::msNow() - st;
@@ -4997,7 +5011,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         << NewLineSequence();
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
-      LoadVFS(plStructure);  // load virtual fs file
+      if (update_vfs)
+        LoadVFS(plStructure);  // load virtual fs file
     }
     catch (const TExceptionBase& exc) { 
       // manual recovery of the situation...
@@ -10068,8 +10083,11 @@ void TMainForm::macPiM(TStrObjList &Cmds, const TParamList &Options, TMacroError
     FXApp->FindRings("C5", rings);
     FXApp->FindRings("C6", rings);
     for( size_t i=0; i < rings.Count(); i++ )  {
-      if( !TNetwork::IsRingPrimitive(rings[i]) || !TNetwork::IsRingRegular(rings[i]) )
+      if( TSPlane::CalcRMSD(rings[i]) > 0.05 ||
+          !TNetwork::IsRingRegular(rings[i]) )
+      {
         rings.NullItem(i);
+      }
     }
     rings.Pack();
   }

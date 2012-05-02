@@ -442,7 +442,7 @@ void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo,
     ClearAtoms();
     ClearMatrices();
   }
-  Matrices = GenerateMatrices(MFrom, MTo);
+  Matrices.AddList(GenerateMatrices(MFrom, MTo));
   Generate(Template, ClearCont);
   OnStructureGrow.Exit(this);
 }
@@ -455,7 +455,7 @@ void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
     ClearAtoms();
     ClearMatrices();
   }
-  Matrices = GenerateMatrices(center, rad);
+  Matrices.AddList(GenerateMatrices(center, rad));
   Generate(Template, ClearCont);
   OnStructureGrow.Exit(this);
 }
