@@ -1,0 +1,3263 @@
+
+<P1 #="1" LATT="-1" HS="P 1" \>
+<P-1 #="2" LATT="1" HS="-P 1" \>
+<P2 FULL="P 1 2 1" #="3" AXIS="b" LATT="-1" HS="P 2y" 
+ <1 "-X,Y,-Z"\>
+\>
+<P112 #="3" AXIS="c" LATT="-1" HS="P 2" FULL="P 1 1 2" 
+ <1 "-X,-Y,Z"\>
+\>
+<P211 #="3" AXIS="a" LATT="-1" HS="P 2x" FULL="P 2 1 1" 
+ <1 "X,-Y,-Z"\>
+\>
+<P21 FULL="P 1 21 1" #="4" AXIS="b" LATT="-1" HS=" P 2yb" 
+ <1 "-X,0.5+Y,-Z"\>
+\>
+<P1121 #="4" AXIS="c" LATT="-1" HS=" P 2c" FULL="P 1 1 21" 
+ <1 "-X,-Y,0.5+Z"\>
+\>
+<P2111 #="4" AXIS="a" LATT="-1" HS=" P 2xa" FULL="P 21 1 1" 
+ <1 "0.5+X,-Y,-Z"\>
+\>
+<C2 FULL="C 1 2 1" #="5" AXIS="b1" LATT="-7" HS="C 2y" 
+ <1 "-X,Y,-Z"\>
+\>
+<A2 FULL="A 1 2 1" #="5" AXIS="b2" LATT="-5" HS="A 2y" 
+ <1 "-X,Y,-Z"\>
+\>
+<I2 FULL="I 1 2 1" #="5" AXIS="b3" LATT="-2" HS="I 2y" 
+ <1 "-X,Y,-Z"\>
+\>
+<A112 #="5" AXIS="c1" LATT="-5" HS="A 2" FULL="A 1 1 2" 
+ <1 "-X,-Y,Z"\>
+\>
+<B112 #="5" AXIS="c2" LATT="-6" HS="B 2" FULL="B 1 1 2" 
+ <1 "-X,-Y,Z"\>
+\>
+<I112 #="5" AXIS="c3" LATT="-2" HS="I 2" FULL="I 1 1 2" 
+ <1 "-X,-Y,Z"\>
+\>
+<B211 #="5" AXIS="a1" LATT="-6" HS="B 2x" FULL="B 2 1 1" 
+ <1 "X,-Y,-Z"\>
+\>
+<C211 #="5" AXIS="a2" LATT="-7" HS="C 2x" FULL="C 2 1 1" 
+ <1 "X,-Y,-Z"\>
+\>
+<I211 #="5" AXIS="a3" LATT="-2" HS="I 2x" FULL="I 2 1 1" 
+ <1 "X,-Y,-Z"\>
+\>
+<Pm FULL="P 1 m 1" #="6" AXIS="b" LATT="-1" HS="P -2y" 
+ <1 "X,-Y,Z"\>
+\>
+<P11m #="6" AXIS="c" LATT="-1" HS="P -2" FULL="P 1 1 m" 
+ <1 "X,Y,-Z"\>
+\>
+<Pm11 #="6" AXIS="a" LATT="-1" HS="P -2x" FULL="P m 1 1" 
+ <1 "-X,Y,Z"\>
+\>
+<Pc FULL="P 1 c 1" #="7" AXIS="b1" LATT="-1" HS="P -2yc" 
+ <1 "X,-Y,0.5+Z"\>
+\>
+<Pn FULL="P 1 n 1" #="7" AXIS="b2" LATT="-1" HS="P -2yac" 
+ <1 "0.5+X,-Y,0.5+Z"\>
+\>
+<Pa FULL="P 1 a 1" #="7" AXIS="b3" LATT="-1" HS="P -2ya" 
+ <1 "0.5+X,-Y,Z"\>
+\>
+<P11a #="7" AXIS="c1" LATT="-1" HS="P -2a" FULL="P 1 1 a" 
+ <1 "0.5+X,Y,-Z"\>
+\>
+<P11n #="7" AXIS="c2" LATT="-1" HS="P -2ab" FULL="P 1 1 n" 
+ <1 "0.5+X,0.5+Y,-Z"\>
+\>
+<P11b #="7" AXIS="c3" LATT="-1" HS="P -2b" FULL="P 1 1 b" 
+ <1 "X,0.5+Y,-Z"\>
+\>
+<Pb11 #="7" AXIS="a1" LATT="-1" HS="P -2xb" FULL="P b 1 1" 
+ <1 "-X,0.5+Y,Z"\>
+\>
+<Pn11 #="7" AXIS="a2" LATT="-1" HS="P -2xbc" FULL="P n 1 1" 
+ <1 "-X,0.5+Y,0.5+Z"\>
+\>
+<Pc11 #="7" AXIS="a3" LATT="-1" HS="P -2xc" FULL="P c 1 1" 
+ <1 "-X,Y,0.5+Z"\>
+\>
+<Cm FULL="C 1 m 1" #="8" AXIS="b1" LATT="-7" HS="C -2y" 
+ <1 "X,-Y,Z"\>
+\>
+<Am FULL="A 1 m 1" #="8" AXIS="b2" LATT="-5" HS="A -2y" 
+ <1 "X,-Y,Z"\>
+\>
+<Im FULL="I 1 m 1" #="8" AXIS="b3" LATT="-2" HS="I -2y" 
+ <1 "X,-Y,Z"\>
+\>
+<A11m #="8" AXIS="c1" LATT="-5" HS="A -2" FULL="A 1 1 m" 
+ <1 "X,Y,-Z"\>
+\>
+<B11m #="8" AXIS="c2" LATT="-6" HS="B -2" FULL="B 1 1 m" 
+ <1 "X,Y,-Z"\>
+\>
+<I11m #="8" AXIS="c3" LATT="-2" HS="I -2" FULL="I 1 1 m" 
+ <1 "X,Y,-Z"\>
+\>
+<Bm11 #="8" AXIS="a1" LATT="-6" HS="B -2x" FULL="B m 1 1" 
+ <1 "-X,Y,Z"\>
+\>
+<Cm11 #="8" AXIS="a2" LATT="-7" HS="C -2x" FULL="C m 1 1" 
+ <1 "-X,Y,Z"\>
+\>
+<Im11 #="8" AXIS="a3" LATT="-2" HS="I -2x" FULL="I m 1 1" 
+ <1 "-X,Y,Z"\>
+\>
+<Cc FULL="C 1 c 1" #="9" AXIS="b1" LATT="-7" HS="C -2yc" 
+ <1 "X,-Y,0.5+Z"\>
+\>
+<An FULL="A 1 n 1" #="9" AXIS="b2" LATT="-5" HS="A -2yac" 
+ <1 "0.5+X,-Y,0.5+Z"\>
+\>
+<Ia FULL="I 1 a 1" #="9" AXIS="b3" LATT="-2" HS="I -2ya" 
+ <1 "0.5+X,-Y,Z"\>
+\>
+<Aa FULL="A 1 a 1" #="9" AXIS="-b1" LATT="-5" HS="A -2ya" 
+ <1 "0.5+X,-Y,Z"\>
+\>
+<Cn FULL="C 1 n 1" #="9" AXIS="-b2" LATT="-7" HS="C -2ybc" 
+ <1 "X,0.5-Y,0.5+Z"\>
+\>
+<Ic FULL="I 1 c 1" #="9" AXIS="-b3" LATT="-2" HS="I -2yc" 
+ <1 "X,-Y,0.5+Z"\>
+\>
+<A11a #="9" AXIS="c1" LATT="-5" HS="A -2a" FULL="A 1 1 a" 
+ <1 "0.5+X,Y,-Z"\>
+\>
+<B11n #="9" AXIS="c2" LATT="-6" HS="B -2bc" FULL="B 1 1 n" 
+ <1 "X,0.5+Y,0.5-Z"\>
+\>
+<I11b #="9" AXIS="c3" LATT="-2" HS="I -2b" FULL="I 1 1 b" 
+ <1 "X,0.5+Y,-Z"\>
+\>
+<B11b #="9" AXIS="-c1" LATT="-6" HS="B -2b" FULL="B 1 1 b" 
+ <1 "X,0.5+Y,-Z"\>
+\>
+<A11n #="9" AXIS="-c2" LATT="-5" HS="A -2ac" FULL="A 1 1 n" 
+ <1 "0.5+X,Y,0.5-Z"\>
+\>
+<I11a #="9" AXIS="-c3" LATT="-2" HS="I -2a" FULL="I 1 1 a" 
+ <1 "0.5+X,Y,-Z"\>
+\>
+<Bb11 #="9" AXIS="a1" LATT="-6" HS="B -2xb" FULL="B b 1 1" 
+ <1 "-X,0.5+Y,Z"\>
+\>
+<Cn11 #="9" AXIS="a2" LATT="-7" HS="C -2xbc" FULL="C n 1 1" 
+ <1 "-X,0.5+Y,0.5+Z"\>
+\>
+<Ic11 #="9" AXIS="a3" LATT="-2" HS="I -2xc" FULL="I c 1 1" 
+ <1 "-X,Y,0.5+Z"\>
+\>
+<Cc11 #="9" AXIS="-a1" LATT="-7" HS="C -2xc" FULL="C c 1 1" 
+ <1 "-X,Y,0.5+Z"\>
+\>
+<Bn11 #="9" AXIS="-a2" LATT="-6" HS="B -2xbc" FULL="B n 1 1" 
+ <1 "-X,0.5+Y,0.5+Z"\>
+\>
+<Ib11 #="9" AXIS="-a3" LATT="-2" HS="I -2xb" FULL="I b 1 1" 
+ <1 "-X,0.5+Y,Z"\>
+\>
+<P2/m FULL="P 1 2/m 1" #="10" AXIS="b" LATT="1" HS="-P 2y" 
+ <1 "-X,Y,-Z"\>
+\>
+<P112/m #="10" AXIS="c" LATT="1" HS="-P 2" FULL="P 1 1 2/m" 
+ <1 "-X,-Y,Z"\>
+\>
+<P2/m11 #="10" AXIS="a" LATT="1" HS="-P 2x" FULL="P 2/m 1 1" 
+ <1 "X,-Y,-Z"\>
+\>
+<P21/m FULL="P 1 21/m 1" #="11" AXIS="b" LATT="1" HS="-P 2yb" 
+ <1 "-X,0.5+Y,-Z"\>
+\>
+<P1121/m #="11" AXIS="c" LATT="1" HS="-P 2c" FULL="P 1 1 21/m" 
+ <1 "-X,-Y,0.5+Z"\>
+\>
+<P21/m11 #="11" AXIS="a" LATT="1" HS="-P 2xa" FULL="P 21/m 1 1" 
+ <1 "0.5+X,-Y,-Z"\>
+\>
+<C2/m FULL="C 1 2/m 1" #="12" AXIS="b1" LATT="7" HS="-C 2y" 
+ <1 "-X,Y,-Z"\>
+\>
+<A2/m FULL="A 1 2/m 1" #="12" AXIS="b2" LATT="5" HS="-A 2y" 
+ <1 "-X,Y,-Z"\>
+\>
+<I2/m FULL="I 1 2/m 1" #="12" AXIS="b3" LATT="2" HS="-I 2y" 
+ <1 "-X,Y,-Z"\>
+\>
+<A112/m #="12" AXIS="c1" LATT="5" HS="-A 2" FULL="A 1 1 2/m" 
+ <1 "-X,-Y,Z"\>
+\>
+<B112/m #="12" AXIS="c2" LATT="6" HS="-B 2" FULL="B 1 1 2/m" 
+ <1 "-X,-Y,Z"\>
+\>
+<I112/m #="12" AXIS="c3" LATT="2" HS="-I 2" FULL="I 1 1 2/m" 
+ <1 "-X,-Y,Z"\>
+\>
+<B2/m11 #="12" AXIS="a1" LATT="6" HS="-B 2x" FULL="B 2/m 1 1" 
+ <1 "X,-Y,-Z"\>
+\>
+<C2/m11 #="12" AXIS="a2" LATT="7" HS="-C 2x" FULL="C 2/m 1 1" 
+ <1 "X,-Y,-Z"\>
+\>
+<I2/m11 #="12" AXIS="a3" LATT="2" HS="-I 2x" FULL="I 2/m 1 1" 
+ <1 "X,-Y,-Z"\>
+\>
+<P2/c FULL="P 1 2/c 1" #="13" AXIS="b1" LATT="1" HS="-P 2yc" 
+ <1 "-X,Y,0.5-Z"\>
+\>
+<P2/n FULL="P 1 2/n 1" #="13" AXIS="b2" LATT="1" HS="-P 2yac" 
+ <1 "0.5-X,Y,0.5-Z"\>
+\>
+<P2/a FULL="P 1 2/a 1" #="13" AXIS="b3" LATT="1" HS="-P 2ya" 
+ <1 "0.5-X,Y,-Z"\>
+\>
+<P112/a #="13" AXIS="c1" LATT="1" HS="-P 2a" FULL="P 1 1 2/a" 
+ <1 "0.5-X,-Y,Z"\>
+\>
+<P112/n #="13" AXIS="c2" LATT="1" HS="-P 2ab" FULL="P 1 1 2/n" 
+ <1 "0.5-X,0.5-Y,Z"\>
+\>
+<P112/b #="13" AXIS="c3" LATT="1" HS="-P 2b" FULL="P 1 1 2/b" 
+ <1 "-X,0.5-Y,Z"\>
+\>
+<P2/b11 #="13" AXIS="a1" LATT="1" HS="-P 2xb" FULL="P 2/b 1 1" 
+ <1 "X,0.5-Y,-Z"\>
+\>
+<P2/n11 #="13" AXIS="a2" LATT="1" HS="-P 2xbc" FULL="P 2/n 1 1" 
+ <1 "X,0.5-Y,0.5-Z"\>
+\>
+<P2/c11 #="13" AXIS="a3" LATT="1" HS="-P 2xc" FULL="P 2/c 1 1" 
+ <1 "X,-Y,0.5-Z"\>
+\>
+<P21/c FULL="P 1 21/c 1" #="14" AXIS="b1" LATT="1" HS="-P 2ybc" 
+ <1 "-X,0.5+Y,0.5-Z"\>
+\>
+<P21/n FULL="P 1 21/n 1" #="14" AXIS="b2" LATT="1" HS="-P 2yn" 
+ <1 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<P21/a FULL="P 1 21/a 1" #="14" AXIS="b3" LATT="1" HS="-P 2yab" 
+ <1 "0.5-X,0.5+Y,-Z"\>
+\>
+<P1121/a #="14" AXIS="c1" LATT="1" HS="-P 2ac" FULL="P 1 1 21/a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+\>
+<P1121/n #="14" AXIS="c2" LATT="1" HS="-P 2n" FULL="P 1 1 21/n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+\>
+<P1121/b #="14" AXIS="c3" LATT="1" HS="-P 2bc" FULL="P 1 1 21/b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+\>
+<P21/b11 #="14" AXIS="a1" LATT="1" HS="-P 2xab" FULL="P 21/b 1 1" 
+ <1 "0.5+X,0.5-Y,-Z"\>
+\>
+<P21/n11 #="14" AXIS="a2" LATT="1" HS="-P 2xn" FULL="P 21/n 1 1" 
+ <1 "0.5+X,0.5-Y,0.5-Z"\>
+\>
+<P21/c11 #="14" AXIS="a3" LATT="1" HS="-P 2xac" FULL="P 21/c 1 1" 
+ <1 "0.5+X,-Y,0.5-Z"\>
+\>
+<C2/c FULL="C 1 2/c 1" #="15" AXIS="b1" LATT="7" HS="-C 2yc" 
+ <1 "-X,Y,0.5-Z"\>
+\>
+<A2/n FULL="A 1 2/n 1" #="15" AXIS="b2" LATT="5" HS="-A 2yac" 
+ <1 "0.5-X,Y,0.5-Z"\>
+\>
+<I2/a FULL="I 1 2/a 1" #="15" AXIS="b3" LATT="2" HS="-I 2ya" 
+ <1 "0.5-X,Y,-Z"\>
+\>
+<A2/a FULL="A 1 2/a 1" #="15" AXIS="-b1" LATT="5" HS="-A 2ya" 
+ <1 "0.5-X,Y,-Z"\>
+\>
+<C2/n FULL="C 1 2/n 1" #="15" AXIS="-b2" LATT="7" HS="-C 2ybc" 
+ <1 "-X,0.5+Y,0.5-Z"\>
+\>
+<I2/c FULL="I 1 2/c 1" #="15" AXIS="-b3" LATT="2" HS="-I 2yc" 
+ <1 "-X,Y,0.5-Z"\>
+\>
+<A112/a #="15" AXIS="c1" LATT="5" HS="-A 2a" FULL="A 1 1 2/a" 
+ <1 "0.5-X,-Y,Z"\>
+\>
+<B112/n #="15" AXIS="c2" LATT="6" HS="-B 2bc" FULL="B 1 1 2/n" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+\>
+<I112/b #="15" AXIS="c3" LATT="2" HS="-I 2b" FULL="I 1 1 2/b" 
+ <1 "-X,0.5-Y,Z"\>
+\>
+<B112/b #="15" AXIS="-c1" LATT="6" HS="-B 2b" FULL="B 1 1 2/b" 
+ <1 "-X,0.5-Y,Z"\>
+\>
+<A112/n #="15" AXIS="-c2" LATT="5" HS="-A 2ac" FULL="A 1 1 2/n" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+\>
+<I112/a #="15" AXIS="-c3" LATT="2" HS="-I 2a" FULL="I 1 1 2/a" 
+ <1 "0.5-X,-Y,Z"\>
+\>
+<B2/b11 #="15" AXIS="a1" LATT="6" HS="-B 2xb" FULL="B 2/b 1 1" 
+ <1 "X,0.5-Y,-Z"\>
+\>
+<C2/n11 #="15" AXIS="a2" LATT="7" HS="-C 2xbc" FULL="C 2/n 1 1" 
+ <1 "X,0.5-Y,0.5-Z"\>
+\>
+<I2/c11 #="15" AXIS="a3" LATT="2" HS="-I 2xc" FULL="I 2/c 1 1" 
+ <1 "X,-Y,0.5-Z"\>
+\>
+<C2/c11 #="15" AXIS="-a1" LATT="7" HS="-C 2xc" FULL="C 2/c 1 1" 
+ <1 "X,-Y,0.5-Z"\>
+\>
+<B2/n11 #="15" AXIS="-a2" LATT="6" HS="-B 2xbc" FULL="B 2/n 1 1" 
+ <1 "X,0.5-Y,0.5-Z"\>
+\>
+<I2/b11 #="15" AXIS="-a3" LATT="2" HS="-I 2xb" FULL="I 2/b 1 1" 
+ <1 "X,0.5-Y,-Z"\>
+\>
+<P222 #="16" LATT="-1" HS="P 2 2" FULL="P 2 2 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<P2221 #="17" LATT="-1" HS=" P 2c 2" FULL="P 2 2 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<P2122 #="17" AXIS="cab" LATT="-1" HS=" P 2a 2a" FULL="P 21 2 2" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<P2212 #="17" AXIS="bca" LATT="-1" HS=" P 2 2b" FULL="P 2 21 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<P21212 #="18" LATT="-1" HS="P 2 2ab" FULL="P 21 21 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<P22121 #="18" AXIS="cab" LATT="-1" HS="P 2bc 2" FULL="P 2 21 21" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<P21221 #="18" AXIS="bca" LATT="-1" HS="P 2ac 2ac" FULL="P 21 2 21" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<P212121 #="19" LATT="-1" HS=" P 2ac 2ab" FULL="P 21 21 21" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<C2221 #="20" LATT="-7" HS=" C 2c 2" FULL="C 2 2 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<A2122 #="20" AXIS="cab" LATT="-5" HS=" A 2a 2a" FULL="A 21 2 2" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<B2212 #="20" AXIS="bca" LATT="-6" HS=" B 2 2b" FULL="B 2 21 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<C222 #="21" LATT="-7" HS="C 2 2" FULL="C 2 2 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<A222 #="21" AXIS="cab" LATT="-5" HS="A 2 2" FULL="A 2 2 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<B222 #="21" AXIS="bca" LATT="-6" HS="B 2 2" FULL="B 2 2 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<F222 #="22" LATT="-4" HS="F 2 2" FULL="F 2 2 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<I222 #="23" LATT="-2" HS="I 2 2" FULL="I 2 2 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<I212121 #="24" LATT="-2" HS=" I 2b 2c" FULL="I 21 21 21" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pmm2 #="25" LATT="-1" HS="P 2 -2" FULL="P m m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<P2mm #="25" AXIS="cab" LATT="-1" HS="P -2 2" FULL="P 2 m m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<Pm2m #="25" AXIS="bca" LATT="-1" HS="P -2 -2" FULL="P m 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Pmc21 #="26" LATT="-1" HS=" P 2c -2" FULL="P m c 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<Pcm21 #="26" AXIS="ba-c" LATT="-1" HS=" P 2c -2c" FULL="P c m 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "-X,Y,0.5+Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<P21ma #="26" AXIS="cab" LATT="-1" HS=" P -2a 2a" FULL="P 21 m a" 
+ <1 "0.5+X,-Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<P21am #="26" AXIS="-cba" LATT="-1" HS=" P -2 2a" FULL="P 21 a m" 
+ <1 "0.5+X,-Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Pb21m #="26" AXIS="bca" LATT="-1" HS=" P -2 -2b" FULL="P b 21 m" 
+ <1 "-X,0.5+Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,0.5+Y,Z"\>
+\>
+<Pm21b #="26" AXIS="a-cb" LATT="-1" HS=" P -2b -2" FULL="P m 21 b" 
+ <1 "-X,0.5+Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Pcc2 #="27" LATT="-1" HS="P 2 -2c" FULL="P c c 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,0.5+Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<P2aa #="27" AXIS="cab" LATT="-1" HS="P -2a 2" FULL="P 2 a a" 
+ <1 "X,-Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Pb2b #="27" AXIS="bca" LATT="-1" HS="P -2b -2b" FULL="P b 2 b" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "-X,0.5+Y,Z"\>
+\>
+<Pma2 #="28" LATT="-1" HS="P 2 -2a" FULL="P m a 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5-X,Y,Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Pbm2 #="28" AXIS="ba-c" LATT="-1" HS="P 2 -2b" FULL="P b m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,0.5+Y,Z"\>
+ <3 "X,0.5-Y,Z"\>
+\>
+<P2mb #="28" AXIS="cab" LATT="-1" HS="P -2b 2" FULL="P 2 m b" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "X,0.5-Y,Z"\>
+\>
+<P2cm #="28" AXIS="-cba" LATT="-1" HS="P -2c 2" FULL="P 2 c m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,0.5-Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<Pc2m #="28" AXIS="bca" LATT="-1" HS="P -2c -2c" FULL="P c 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,0.5-Z"\>
+ <3 "-X,Y,0.5+Z"\>
+\>
+<Pm2a #="28" AXIS="a-cb" LATT="-1" HS="P -2a -2a" FULL="P m 2 a" 
+ <1 "-X,Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "0.5-X,Y,Z"\>
+\>
+<Pca21 #="29" LATT="-1" HS=" P 2c -2ac" FULL="P c a 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "0.5-X,Y,0.5+Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Pbc21 #="29" AXIS="ba-c" LATT="-1" HS=" P 2c -2b" FULL="P b c 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "-X,0.5+Y,Z"\>
+ <3 "X,0.5-Y,0.5+Z"\>
+\>
+<P21ab #="29" AXIS="cab" LATT="-1" HS=" P -2b 2a" FULL="P 21 a b" 
+ <1 "0.5+X,-Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "0.5+X,0.5-Y,Z"\>
+\>
+<P21ca #="29" AXIS="-cba" LATT="-1" HS=" P -2ac 2a" FULL="P 21 c a" 
+ <1 "0.5+X,-Y,-Z"\>
+ <2 "0.5+X,Y,0.5-Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<Pc21b #="29" AXIS="bca" LATT="-1" HS=" P -2bc -2c" FULL="P c 21 b" 
+ <1 "-X,0.5+Y,-Z"\>
+ <2 "X,0.5+Y,0.5-Z"\>
+ <3 "-X,Y,0.5+Z"\>
+\>
+<Pb21a #="29" AXIS="a-cb" LATT="-1" HS=" P -2a -2ab" FULL="P b 21 a" 
+ <1 "-X,0.5+Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "0.5-X,0.5+Y,Z"\>
+\>
+<Pnc2 #="30" LATT="-1" HS="P 2 -2bc" FULL="P n c 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,0.5+Y,0.5+Z"\>
+ <3 "X,0.5-Y,0.5+Z"\>
+\>
+<Pcn2 #="30" AXIS="ba-c" LATT="-1" HS="P 2 -2ac" FULL="P c n 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5-X,Y,0.5+Z"\>
+ <3 "0.5+X,-Y,0.5+Z"\>
+\>
+<P2na #="30" AXIS="cab" LATT="-1" HS="P -2ac 2" FULL="P 2 n a" 
+ <1 "X,-Y,-Z"\>
+ <2 "0.5+X,Y,0.5-Z"\>
+ <3 "0.5+X,-Y,0.5+Z"\>
+\>
+<P2an #="30" AXIS="-cba" LATT="-1" HS="P -2ab 2" FULL="P 2 a n" 
+ <1 "X,-Y,-Z"\>
+ <2 "0.5+X,0.5+Y,-Z"\>
+ <3 "0.5+X,0.5-Y,Z"\>
+\>
+<Pb2n #="30" AXIS="bca" LATT="-1" HS="P -2ab -2ab" FULL="P b 2 n" 
+ <1 "-X,Y,-Z"\>
+ <2 "0.5+X,0.5+Y,-Z"\>
+ <3 "0.5-X,0.5+Y,Z"\>
+\>
+<Pn2b #="30" AXIS="a-cb" LATT="-1" HS="P -2bc -2bc" FULL="P n 2 b" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,0.5+Y,0.5-Z"\>
+ <3 "-X,0.5+Y,0.5+Z"\>
+\>
+<Pmn21 #="31" LATT="-1" HS=" P 2ac -2" FULL="P m n 21" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "0.5+X,-Y,0.5+Z"\>
+\>
+<Pnm21 #="31" AXIS="ba-c" LATT="-1" HS=" P 2bc -2bc" FULL="P n m 21" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "-X,0.5+Y,0.5+Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<P21mn #="31" AXIS="cab" LATT="-1" HS=" P -2ab 2ab" FULL="P 21 m n" 
+ <1 "0.5+X,0.5-Y,-Z"\>
+ <2 "0.5+X,0.5+Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<P21nm #="31" AXIS="-cba" LATT="-1" HS=" P -2 2ac" FULL="P 21 n m" 
+ <1 "0.5+X,-Y,0.5-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "0.5+X,-Y,0.5+Z"\>
+\>
+<Pn21m #="31" AXIS="bca" LATT="-1" HS=" P -2 -2bc" FULL="P n 21 m" 
+ <1 "-X,0.5+Y,0.5-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,0.5+Y,0.5+Z"\>
+\>
+<Pm21n #="31" AXIS="a-cb" LATT="-1" HS=" P -2ab -2" FULL="P m 21 n" 
+ <1 "0.5-X,0.5+Y,-Z"\>
+ <2 "0.5+X,0.5+Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Pba2 #="32" LATT="-1" HS="P 2 -2ab" FULL="P b a 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5-X,0.5+Y,Z"\>
+ <3 "0.5+X,0.5-Y,Z"\>
+\>
+<P2cb #="32" AXIS="cab" LATT="-1" HS="P -2bc 2" FULL="P 2 c b" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,0.5+Y,0.5-Z"\>
+ <3 "X,0.5-Y,0.5+Z"\>
+\>
+<Pc2a #="32" AXIS="bca" LATT="-1" HS="P -2ac -2ac" FULL="P c 2 a" 
+ <1 "-X,Y,-Z"\>
+ <2 "0.5+X,Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5+Z"\>
+\>
+<Pna21 #="33" LATT="-1" HS=" P 2c -2n" FULL="P n a 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "0.5-X,0.5+Y,0.5+Z"\>
+ <3 "0.5+X,0.5-Y,Z"\>
+\>
+<Pbn21 #="33" AXIS="ba-c" LATT="-1" HS=" P 2c -2ab" FULL="P b n 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "0.5-X,0.5+Y,Z"\>
+ <3 "0.5+X,0.5-Y,0.5+Z"\>
+\>
+<P21nb #="33" AXIS="cab" LATT="-1" HS=" P -2bc 2a" FULL="P 21 n b" 
+ <1 "0.5+X,-Y,-Z"\>
+ <2 "X,0.5+Y,0.5-Z"\>
+ <3 "0.5+X,0.5-Y,0.5+Z"\>
+\>
+<P21cn #="33" AXIS="-cba" LATT="-1" HS=" P -2n 2a" FULL="P 21 c n" 
+ <1 "0.5+X,-Y,-Z"\>
+ <2 "0.5+X,0.5+Y,0.5-Z"\>
+ <3 "X,0.5-Y,0.5+Z"\>
+\>
+<Pc21n #="33" AXIS="bca" LATT="-1" HS=" P -2n -2ac" FULL="P c 21 n" 
+ <1 "-X,0.5+Y,-Z"\>
+ <2 "0.5+X,0.5+Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5+Z"\>
+\>
+<Pn21a #="33" AXIS="a-cb" LATT="-1" HS=" P -2ac -2n" FULL="P n 21 a" 
+ <1 "-X,0.5+Y,-Z"\>
+ <2 "0.5+X,Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,0.5+Z"\>
+\>
+<Pnn2 #="34" LATT="-1" HS="P 2 -2n" FULL="P n n 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5-X,0.5+Y,0.5+Z"\>
+ <3 "0.5+X,0.5-Y,0.5+Z"\>
+\>
+<P2nn #="34" AXIS="cab" LATT="-1" HS="P -2n 2" FULL="P 2 n n" 
+ <1 "X,-Y,-Z"\>
+ <2 "0.5+X,0.5+Y,0.5-Z"\>
+ <3 "0.5+X,0.5-Y,0.5+Z"\>
+\>
+<Pn2n #="34" AXIS="bca" LATT="-1" HS="P -2n -2n" FULL="P n 2 n" 
+ <1 "-X,Y,-Z"\>
+ <2 "0.5+X,0.5+Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,0.5+Z"\>
+\>
+<Cmm2 #="35" LATT="-7" HS="C 2 -2" FULL="C m m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<A2mm #="35" AXIS="cab" LATT="-5" HS="A -2 2" FULL="A 2 m m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<Bm2m #="35" AXIS="bca" LATT="-6" HS="B -2 -2" FULL="B m 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Cmc21 #="36" LATT="-7" HS=" C 2c -2" FULL="C m c 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<Ccm21 #="36" AXIS="ba-c" LATT="-7" HS=" C 2c -2c" FULL="C c m 21" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "-X,Y,0.5+Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<A21ma #="36" AXIS="cab" LATT="-5" HS=" A -2a 2a" FULL="A 21 m a" 
+ <1 "0.5+X,-Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<A21am #="36" AXIS="-cba" LATT="-5" HS=" A -2 2a" FULL="A 21 a m" 
+ <1 "0.5+X,-Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Bb21m #="36" AXIS="bca" LATT="-6" HS=" B -2 -2b" FULL="B b 21 m" 
+ <1 "-X,0.5+Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,0.5+Y,Z"\>
+\>
+<Bm21b #="36" AXIS="a-cb" LATT="-6" HS=" B -2b -2" FULL="B m 21 b" 
+ <1 "-X,0.5+Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Ccc2 #="37" LATT="-7" HS="C 2 -2c" FULL="C c c 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,0.5+Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<A2aa #="37" AXIS="cab" LATT="-5" HS="A -2a 2" FULL="A 2 a a" 
+ <1 "X,-Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Bb2b #="37" AXIS="bca" LATT="-6" HS="B -2b -2b" FULL="B b 2 b" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "-X,0.5+Y,Z"\>
+\>
+<Amm2 #="38" LATT="-5" HS="A 2 -2" FULL="A m m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<Bmm2 #="38" AXIS="ba-c" LATT="-6" HS="B 2 -2" FULL="B m m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<B2mm #="38" AXIS="cab" LATT="-6" HS="B -2 2" FULL="B 2 m m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<C2mm #="38" AXIS="-cba" LATT="-7" HS="C -2 2" FULL="C 2 m m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<Cm2m #="38" AXIS="bca" LATT="-7" HS="C -2 -2" FULL="C m 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Am2m #="38" AXIS="a-cb" LATT="-5" HS="A -2 -2" FULL="A m 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Abm2 #="39" LATT="-5" HS="A 2 -2c" FULL="A b m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,0.5+Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<Bma2 #="39" AXIS="ba-c" LATT="-6" HS="B 2 -2c" FULL="B m a 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,0.5+Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<B2cm #="39" AXIS="cab" LATT="-6" HS="B -2c 2" FULL="B 2 c m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,0.5-Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<C2mb #="39" AXIS="-cba" LATT="-7" HS="C -2b 2" FULL="C 2 m b" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "X,0.5-Y,Z"\>
+\>
+<Cm2a #="39" AXIS="bca" LATT="-7" HS="C -2b -2b" FULL="C m 2 a" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "-X,0.5+Y,Z"\>
+\>
+<Ac2m #="39" AXIS="a-cb" LATT="-5" HS="A -2c -2c" FULL="A c 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,0.5-Z"\>
+ <3 "-X,Y,0.5+Z"\>
+\>
+<Ama2 #="40" LATT="-5" HS="A 2 -2a" FULL="A m a 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5-X,Y,Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Bbm2 #="40" AXIS="ba-c" LATT="-6" HS="B 2 -2b" FULL="B b m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,0.5+Y,Z"\>
+ <3 "X,0.5-Y,Z"\>
+\>
+<B2mb #="40" AXIS="cab" LATT="-6" HS="B -2b 2" FULL="B 2 m b" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "X,0.5-Y,Z"\>
+\>
+<C2cm #="40" AXIS="-cba" LATT="-7" HS="C -2c 2" FULL="C 2 c m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,0.5-Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<Cc2m #="40" AXIS="bca" LATT="-7" HS="C -2c -2c" FULL="C c 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,0.5-Z"\>
+ <3 "-X,Y,0.5+Z"\>
+\>
+<Am2a #="40" AXIS="a-cb" LATT="-5" HS="A -2a -2a" FULL="A m 2 a" 
+ <1 "-X,Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "0.5-X,Y,Z"\>
+\>
+<Aba2 #="41" LATT="-5" HS="A 2 -2ac" FULL="A b a 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5-X,Y,0.5+Z"\>
+ <3 "0.5+X,-Y,0.5+Z"\>
+\>
+<Bba2 #="41" AXIS="ba-c" LATT="-6" HS="B 2 -2bc" FULL="B b a 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,0.5+Y,0.5+Z"\>
+ <3 "X,0.5-Y,0.5+Z"\>
+\>
+<B2cb #="41" AXIS="cab" LATT="-6" HS="B -2bc 2" FULL="B 2 c b" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,0.5+Y,0.5-Z"\>
+ <3 "X,0.5-Y,0.5+Z"\>
+\>
+<C2cb #="41" AXIS="-cba" LATT="-7" HS="C -2bc 2" FULL="C 2 c b" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,0.5+Y,0.5-Z"\>
+ <3 "X,0.5-Y,0.5+Z"\>
+\>
+<Cc2a #="41" AXIS="bca" LATT="-7" HS="C -2bc -2bc" FULL="C c 2 a" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,0.5+Y,0.5-Z"\>
+ <3 "-X,0.5+Y,0.5+Z"\>
+\>
+<Ac2a #="41" AXIS="a-cb" LATT="-5" HS="A -2ac -2ac" FULL="A c 2 a" 
+ <1 "-X,Y,-Z"\>
+ <2 "0.5+X,Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5+Z"\>
+\>
+<Fmm2 #="42" LATT="-4" HS="F 2 -2" FULL="F m m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<F2mm #="42" AXIS="cab" LATT="-4" HS="F -2 2" FULL="F 2 m m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<Fm2m #="42" AXIS="bca" LATT="-4" HS="F -2 -2" FULL="F m 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Fdd2 #="43" LATT="-4" HS="F 2 -2d" FULL="F d d 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.25-X,0.25+Y,0.25+Z"\>
+ <3 "0.25+X,0.25-Y,0.25+Z"\>
+\>
+<F2dd #="43" AXIS="cab" LATT="-4" HS="F -2d 2" FULL="F 2 d d" 
+ <1 "X,-Y,-Z"\>
+ <2 "0.25+X,0.25+Y,0.25-Z"\>
+ <3 "0.25+X,0.25-Y,0.25+Z"\>
+\>
+<Fd2d #="43" AXIS="bca" LATT="-4" HS="F -2d -2d" FULL="F d 2 d" 
+ <1 "-X,Y,-Z"\>
+ <2 "0.25+X,0.25+Y,0.25-Z"\>
+ <3 "0.25-X,0.25+Y,0.25+Z"\>
+\>
+<Imm2 #="44" LATT="-2" HS="I 2 -2" FULL="I m m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<I2mm #="44" AXIS="cab" LATT="-2" HS="I -2 2" FULL="I 2 m m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "X,-Y,Z"\>
+\>
+<Im2m #="44" AXIS="bca" LATT="-2" HS="I -2 -2" FULL="I m 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,-Z"\>
+ <3 "-X,Y,Z"\>
+\>
+<Iba2 #="45" LATT="-2" HS="I 2 -2c" FULL="I b a 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,Y,0.5+Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<I2cb #="45" AXIS="cab" LATT="-2" HS="I -2a 2" FULL="I 2 c b" 
+ <1 "X,-Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Ic2a #="45" AXIS="bca" LATT="-2" HS="I -2b -2b" FULL="I c 2 a" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "-X,0.5+Y,Z"\>
+\>
+<Ima2 #="46" LATT="-2" HS="I 2 -2a" FULL="I m a 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5-X,Y,Z"\>
+ <3 "0.5+X,-Y,Z"\>
+\>
+<Ibm2 #="46" AXIS="ba-c" LATT="-2" HS="I 2 -2b" FULL="I b m 2" 
+ <1 "-X,-Y,Z"\>
+ <2 "-X,0.5+Y,Z"\>
+ <3 "X,0.5-Y,Z"\>
+\>
+<I2mb #="46" AXIS="cab" LATT="-2" HS="I -2b 2" FULL="I 2 m b" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,0.5+Y,-Z"\>
+ <3 "X,0.5-Y,Z"\>
+\>
+<I2cm #="46" AXIS="-cba" LATT="-2" HS="I -2c 2" FULL="I 2 c m" 
+ <1 "X,-Y,-Z"\>
+ <2 "X,Y,0.5-Z"\>
+ <3 "X,-Y,0.5+Z"\>
+\>
+<Ic2m #="46" AXIS="bca" LATT="-2" HS="I -2c -2c" FULL="I c 2 m" 
+ <1 "-X,Y,-Z"\>
+ <2 "X,Y,0.5-Z"\>
+ <3 "-X,Y,0.5+Z"\>
+\>
+<Im2a #="46" AXIS="a-cb" LATT="-2" HS="I -2a -2a" FULL="I m 2 a" 
+ <1 "-X,Y,-Z"\>
+ <2 "0.5+X,Y,-Z"\>
+ <3 "0.5-X,Y,Z"\>
+\>
+<Pmmm #="47" LATT="1" HS="-P 2 2" FULL="P m m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Pnnn #="48" LATT="1" HS="-P 2ab 2bc" FULL="P n n n"
+ <1 "0.5-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Pccm #="49" LATT="1" HS="-P 2 2c" FULL="P c c m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Pmaa #="49" AXIS="cab" LATT="1" HS="-P 2a 2" FULL="P m a a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pbmb #="49" AXIS="bca" LATT="1" HS="-P 2b 2b" FULL="P b m b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Pban #="50" LATT="1" HS="-P 2ab 2b" FULL="P b a n"
+ <1 "0.5-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pncb #="50" AXIS="cab" LATT="1" HS="-P 2b 2bc" FULL="P n c b"
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Pcna #="50" AXIS="bca" LATT="1" HS="-P 2a 2c" FULL="P c n a"
+ <1 "0.5-X,-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Pmma #="51" LATT="1" HS="-P 2a 2a" FULL="P m m a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Pmmb #="51" AXIS="ba-c" LATT="1" HS="-P 2b 2" FULL="P m m b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Pbmm #="51" AXIS="cab" LATT="1" HS="-P 2 2b" FULL="P b m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Pcmm #="51" AXIS="-cba" LATT="1" HS="-P 2c 2c" FULL="P c m m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Pmcm #="51" AXIS="bca" LATT="1" HS="-P 2c 2" FULL="P m c m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Pmam #="51" AXIS="a-cb" LATT="1" HS="-P 2 2a" FULL="P m a m" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pnna #="52" LATT="1" HS="-P 2a 2bc" FULL="P n n a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<Pnnb #="52" AXIS="ba-c" LATT="1" HS="-P 2b 2n" FULL="P n n b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "0.5+X,0.5-Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Pbnn #="52" AXIS="cab" LATT="1" HS="-P 2n 2b" FULL="P b n n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Pcnn #="52" AXIS="-cba" LATT="1" HS="-P 2ab 2c" FULL="P c n n" 
+ <1 "0.5-X,0.5-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<Pncn #="52" AXIS="bca" LATT="1" HS="-P 2ab 2n" FULL="P n c n" 
+ <1 "0.5-X,0.5-Y,Z"\>
+ <2 "0.5+X,0.5-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Pnan #="52" AXIS="a-cb" LATT="1" HS="-P 2n 2bc" FULL="P n a n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pmna #="53" LATT="1" HS="-P 2ac 2" FULL="P m n a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Pnmb #="53" AXIS="ba-c" LATT="1" HS="-P 2bc 2bc" FULL="P n m b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Pbmn #="53" AXIS="cab" LATT="1" HS="-P 2ab 2ab" FULL="P b m n" 
+ <1 "0.5-X,0.5-Y,Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Pcnm #="53" AXIS="-cba" LATT="1" HS="-P 2 2ac" FULL="P c n m" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Pncm #="53" AXIS="bca" LATT="1" HS="-P 2 2bc" FULL="P n c m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Pman #="53" AXIS="a-cb" LATT="1" HS="-P 2ab 2" FULL="P m a n" 
+ <1 "0.5-X,0.5-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<Pcca #="54" LATT="1" HS="-P 2a 2ac" FULL="P c c a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Pccb #="54" AXIS="ba-c" LATT="1" HS="-P 2b 2c" FULL="P c c b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Pbaa #="54" AXIS="cab" LATT="1" HS="-P 2a 2b" FULL="P b a a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<Pcaa #="54" AXIS="-cba" LATT="1" HS="-P 2ac 2c" FULL="P c a a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pbcb #="54" AXIS="bca" LATT="1" HS="-P 2bc 2b" FULL="P b c b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Pbab #="54" AXIS="a-cb" LATT="1" HS="-P 2b 2ab" FULL="P b a b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pbam #="55" LATT="1" HS="-P 2 2ab" FULL="P b a m" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<Pmcb #="55" AXIS="cab" LATT="1" HS="-P 2bc 2" FULL="P m c b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Pcma #="55" AXIS="bca" LATT="1" HS="-P 2ac 2ac" FULL="P c m a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Pccn #="56" LATT="1" HS="-P 2ab 2ac" FULL="P c c n" 
+ <1 "0.5-X,0.5-Y,Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Pnaa #="56" AXIS="cab" LATT="1" HS="-P 2ac 2bc" FULL="P n a a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<Pbnb #="56" AXIS="bca" LATT="1" HS="-P 2bc 2ab" FULL="P b n b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Pbcm #="57" LATT="1" HS="-P 2c 2b" FULL="P b c m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Pcam #="57" AXIS="ba-c" LATT="1" HS="-P 2c 2ac" FULL="P c a m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pmca #="57" AXIS="cab" LATT="1" HS="-P 2ac 2a" FULL="P m c a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Pmab #="57" AXIS="-cba" LATT="1" HS="-P 2b 2a" FULL="P m a b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<Pbma #="57" AXIS="bca" LATT="1" HS="-P 2a 2ab" FULL="P b m a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Pcmb #="57" AXIS="a-cb" LATT="1" HS="-P 2bc 2c" FULL="P c m b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Pnnm #="58" LATT="1" HS="-P 2 2n" FULL="P n n m" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5+X,0.5-Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<Pmnn #="58" AXIS="cab" LATT="1" HS="-P 2n 2" FULL="P m n n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<Pnmn #="58" AXIS="bca" LATT="1" HS="-P 2n 2n" FULL="P n m n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Pmmn #="59" LATT="1" HS="-P 2ab 2a" FULL="P m m n"
+ <1 "0.5-X,0.5-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Pnmm #="59" AXIS="cab" LATT="1" HS="-P 2c 2bc" FULL="P n m m"
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Pmnm #="59" AXIS="bca" LATT="1" HS="-P 2c 2a" FULL="P m n m"
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Pbcn #="60" LATT="1" HS="-P 2n 2ab" FULL="P b c n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Pcan #="60" AXIS="ba-c" LATT="1" HS="-P 2n 2c" FULL="P c a n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<Pnca #="60" AXIS="cab" LATT="1" HS="-P 2a 2n" FULL="P n c a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "0.5+X,0.5-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Pnab #="60" AXIS="-cba" LATT="1" HS="-P 2bc 2n" FULL="P n a b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,0.5-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Pbna #="60" AXIS="bca" LATT="1" HS="-P 2ac 2b" FULL="P b n a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<Pcnb #="60" AXIS="a-cb" LATT="1" HS="-P 2b 2ac" FULL="P c n b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<Pbca #="61" LATT="1" HS="-P 2ac 2ab" FULL="P b c a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Pcab #="61" AXIS="ba-c" LATT="1" HS="-P 2bc 2ac" FULL="P c a b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<Pnma #="62" LATT="1" HS="-P 2ac 2n" FULL="P n m a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Pmnb #="62" AXIS="ba-c" LATT="1" HS="-P 2bc 2a" FULL="P m n b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<Pbnm #="62" AXIS="cab" LATT="1" HS="-P 2c 2ab" FULL="P b n m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,-Z"\>
+ <3 "0.5-X,0.5+Y,0.5-Z"\>
+\>
+<Pcmn #="62" AXIS="-cba" LATT="1" HS="-P 2n 2ac" FULL="P c m n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Pmcn #="62" AXIS="bca" LATT="1" HS="-P 2n 2a" FULL="P m c n" 
+ <1 "0.5-X,0.5-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Pnam #="62" AXIS="a-cb" LATT="1" HS="-P 2c 2n" FULL="P n a m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "0.5+X,0.5-Y,0.5-Z"\>
+ <3 "0.5-X,0.5+Y,-Z"\>
+\>
+<Cmcm #="63" LATT="7" HS="-C 2c 2" FULL="C m c m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Ccmm #="63" AXIS="ba-c" LATT="7" HS="-C 2c 2c" FULL="C c m m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Amma #="63" AXIS="cab" LATT="5" HS="-A 2a 2a" FULL="A m m a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Amam #="63" AXIS="-cba" LATT="5" HS="-A 2 2a" FULL="A m a m" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Bbmm #="63" AXIS="bca" LATT="6" HS="-B 2 2b" FULL="B b m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Bmmb #="63" AXIS="a-cb" LATT="6" HS="-B 2b 2" FULL="B m m b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Cmca #="64" LATT="7" HS="-C 2bc 2" FULL="C m c a" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Ccmb #="64" AXIS="ba-c" LATT="7" HS="-C 2bc 2bc" FULL="C c m b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Abma #="64" AXIS="cab" LATT="5" HS="-A 2ac 2ac" FULL="A b m a" 
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Acam #="64" AXIS="-cba" LATT="5" HS="-A 2 2ac" FULL="A c a m" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5+X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Bbcm #="64" AXIS="bca" LATT="6" HS="-B 2 2bc" FULL="B b c m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Bmab #="64" AXIS="a-cb" LATT="6" HS="-B 2bc 2" FULL="B m a b" 
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Cmmm #="65" LATT="7" HS="-C 2 2" FULL="C m m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Ammm #="65" AXIS="cab" LATT="5" HS="-A 2 2" FULL="A m m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Bmmm #="65" AXIS="bca" LATT="6" HS="-B 2 2" FULL="B m m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Cccm #="66" LATT="7" HS="-C 2 2c" FULL="C c c m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Amaa #="66" AXIS="cab" LATT="5" HS="-A 2a 2" FULL="A m a a" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Bbmb #="66" AXIS="bca" LATT="6" HS="-B 2b 2b" FULL="B b m b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Cmma #="67" LATT="7" HS="-C 2b 2" FULL="C m m a" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Cmmb #="67" AXIS="ba-c" LATT="7" HS="-C 2b 2b" FULL="C m m b" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Abmm #="67" AXIS="cab" LATT="5" HS="-A 2c 2c" FULL="A b m m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Acmm #="67" AXIS="-cba" LATT="5" HS="-A 2 2c" FULL="A c m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Bmcm #="67" AXIS="bca" LATT="6" HS="-B 2 2c" FULL="B m c m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Bmam #="67" AXIS="a-cb" LATT="6" HS="-B 2c 2" FULL="B m a m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Ccca #="68" LATT="7" HS="-C 2b 2bc" FULL="C c c a"
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Cccb #="68" AXIS="ba-c" LATT="7" HS="-C 2b 2c" FULL="C c c b"
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,0.5+Y,0.5-Z"\>
+\>
+<Abaa #="68" AXIS="cab" LATT="5" HS="-A 2a 2c" FULL="A b a a"
+ <1 "0.5-X,-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,0.5-Z"\>
+\>
+<Acaa #="68" AXIS="-cba" LATT="5" HS="-A 2ac 2c" FULL="A c a a"
+ <1 "0.5-X,-Y,0.5+Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Bbcb #="68" AXIS="bca" LATT="6" HS="-B 2bc 2b" FULL="B b c b"
+ <1 "-X,0.5-Y,0.5+Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Bbab #="68" AXIS="a-cb" LATT="6" HS="-B 2b 2bc" FULL="B b a b"
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Fmmm #="69" LATT="4" HS="-F 2 2" FULL="F m m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Fddd #="70" LATT="4" HS="-F 2uv 2vw" FULL="F d d d"
+ <1 "0.25-X,0.25-Y,Z"\>
+ <2 "X,0.25-Y,0.25-Z"\>
+ <3 "0.25-X,Y,0.25-Z"\>
+\>
+<Immm #="71" LATT="2" HS="-I 2 2" FULL="I m m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Ibam #="72" LATT="2" HS="-I 2 2c" FULL="I b a m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Imcb #="72" AXIS="cab" LATT="2" HS="-I 2a 2" FULL="I m c b" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Icma #="72" AXIS="bca" LATT="2" HS="-I 2b 2b" FULL="I c m a" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Ibca #="73" LATT="2" HS="-I 2b 2c" FULL="I b c a" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Icab #="73" AXIS="ba-c" LATT="2" HS="-I 2a 2b" FULL="I c a b" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<Imma #="74" LATT="2" HS="-I 2b 2" FULL="I m m a" 
+ <1 "-X,0.5-Y,Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Immb #="74" AXIS="ba-c" LATT="2" HS="-I 2a 2a" FULL="I m m b" 
+ <1 "0.5-X,-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Ibmm #="74" AXIS="cab" LATT="2" HS="-I 2c 2c" FULL="I b m m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,0.5-Z"\>
+ <3 "-X,Y,-Z"\>
+\>
+<Icmm #="74" AXIS="-cba" LATT="2" HS="-I 2 2b" FULL="I c m m" 
+ <1 "-X,-Y,Z"\>
+ <2 "X,0.5-Y,-Z"\>
+ <3 "-X,0.5+Y,-Z"\>
+\>
+<Imcm #="74" AXIS="bca" LATT="2" HS="-I 2 2a" FULL="I m c m" 
+ <1 "-X,-Y,Z"\>
+ <2 "0.5+X,-Y,-Z"\>
+ <3 "0.5-X,Y,-Z"\>
+\>
+<Imam #="74" AXIS="a-cb" LATT="2" HS="-I 2c 2" FULL="I m a m" 
+ <1 "-X,-Y,0.5+Z"\>
+ <2 "X,-Y,-Z"\>
+ <3 "-X,Y,0.5-Z"\>
+\>
+<P4 #="75" LATT="-1" HS="P 4" FULL="P 4"
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+\>
+<P41 #="76" LATT="-1" HS=" P 4w" FULL="P 41"
+ <1 "-Y,X,0.25+Z"\>
+ <2 "-X,-Y,0.5+Z"\>
+ <3 "Y,-X,0.75+Z"\>
+\>
+<P42 #="77" LATT="-1" HS=" P 4c" FULL="P 42"
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+\>
+<P43 #="78" LATT="-1" HS=" P 4cw" FULL="P 43" 
+ <1 "-Y,X,0.75+Z"\>
+ <2 "-X,-Y,0.5+Z"\>
+ <3 "Y,-X,0.25+Z"\>
+\>
+<I4 #="79" LATT="-2" HS="I 4" FULL="I 4"
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+\>
+<I41 #="80" LATT="-2" HS=" I 4bw" FULL="I 41"
+ <1 "-Y,0.5+X,0.25+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,0.5-X,0.25+Z"\>
+\>
+<P-4 #="81" LATT="-1" HS=" P -4" FULL="P -4" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+\>
+<I-4 #="82" LATT="-2" HS=" I -4" FULL="I -4"
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+\>
+<P4/m #="83" LATT="1" HS="-P 4" FULL="P 4/m"
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+\>
+<P42/m #="84" LATT="1" HS="-P 4c" FULL="P 42/m"
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+\>
+<P4/n #="85" LATT="1" HS="-P 4a" FULL="P 4/n"
+ <1 "0.5-Y,X,Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,Z"\>
+\>
+<P42/n #="86" LATT="1" HS="-P 4bc" FULL="P 42/n"
+ <1 "-Y,0.5+X,0.5+Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "0.5+Y,-X,0.5+Z"\>
+\>
+<I4/m #="87" LATT="2" HS="-I 4" FULL="I 4/m"
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+\>
+<I41/a #="88" LATT="2" HS="-I 4ad" FULL="I 41/a"
+ <1 "0.75-Y,0.25+X,0.25+Z"\>
+ <2 "-X,0.5-Y,Z"\>
+ <3 "0.25+Y,0.25-X,0.25+Z"\>
+\>
+<P422 #="89" LATT="-1" HS="P 4 2" FULL="P 4 2 2" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<P4212 #="90" LATT="-1" HS=" P 4ab 2ab" FULL="P 42 1 2" 
+ <1 "0.5-Y,0.5+X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "0.5+Y,0.5-X,Z"\>
+ <4 "0.5+X,0.5-Y,-Z"\>
+ <5 "0.5-X,0.5+Y,-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<P4122 #="91" LATT="-1" HS=" P 4w 2c" FULL="P 41 2 2" 
+ <1 "-Y,X,0.25+Z"\>
+ <2 "-X,-Y,0.5+Z"\>
+ <3 "Y,-X,0.75+Z"\>
+ <4 "X,-Y,0.5-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "Y,X,0.75-Z"\>
+ <7 "-Y,-X,0.25-Z"\>
+\>
+<P41212 #="92" LATT="-1" HS="P 4abw 2nw" FULL="P 41 21 2" 
+ <1 "0.5-Y,0.5+X,0.25+Z"\>
+ <2 "-X,-Y,0.5+Z"\>
+ <3 "0.5+Y,0.5-X,0.75+Z"\>
+ <4 "0.5+X,0.5-Y,0.75-Z"\>
+ <5 "0.5-X,0.5+Y,0.25-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,0.5-Z"\>
+\>
+<P4222 #="93" LATT="-1" HS=" P 4c 2" FULL="P 42 2 2" 
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "Y,X,0.5-Z"\>
+ <7 "-Y,-X,0.5-Z"\>
+\>
+<P42212 #="94" LATT="-1" HS="P 4n 2n" FULL="P 42 21 2" 
+ <1 "0.5-Y,0.5+X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "0.5+Y,0.5-X,0.5+Z"\>
+ <4 "0.5+X,0.5-Y,0.5-Z"\>
+ <5 "0.5-X,0.5+Y,0.5-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<P4322 #="95" LATT="-1" HS=" P 4cw 2c" FULL="P 43 2 2" 
+ <1 "-Y,X,0.75+Z"\>
+ <2 "-X,-Y,0.5+Z"\>
+ <3 "Y,-X,0.25+Z"\>
+ <4 "X,-Y,0.5-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "Y,X,0.25-Z"\>
+ <7 "-Y,-X,0.75-Z"\>
+\>
+<P43212 #="96" LATT="-1" HS="P 4nw 2abw" FULL="P 43 21 2" 
+ <1 "0.5-Y,0.5+X,0.75+Z"\>
+ <2 "-X,-Y,0.5+Z"\>
+ <3 "0.5+Y,0.5-X,0.25+Z"\>
+ <4 "0.5+X,0.5-Y,0.25-Z"\>
+ <5 "0.5-X,0.5+Y,0.75-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,0.5-Z"\>
+\>
+<I422 #="97" LATT="-2" HS="I 4 2" FULL="I 4 2 2" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<I4122 #="98" LATT="-2" HS=" I 4bw 2bw" FULL="I 41 2 2" 
+ <1 "-Y,0.5+X,0.25+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,0.5-X,0.25+Z"\>
+ <4 "X,0.5-Y,0.25-Z"\>
+ <5 "-X,0.5+Y,0.25-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<P4mm #="99" LATT="-1" HS="P 4 -2" FULL="P 4 m m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "-X,Y,Z"\>
+ <5 "X,-Y,Z"\>
+ <6 "-Y,-X,Z"\>
+ <7 "Y,X,Z"\>
+\>
+<P4bm #="100" LATT="-1" HS="P 4 -2ab" FULL="P 4 b m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "0.5-X,0.5+Y,Z"\>
+ <5 "0.5+X,0.5-Y,Z"\>
+ <6 "0.5-Y,0.5-X,Z"\>
+ <7 "0.5+Y,0.5+X,Z"\>
+\>
+<P42cm #="101" LATT="-1" HS=" P 4c -2c" FULL="P 42 c m" 
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+ <4 "-X,Y,0.5+Z"\>
+ <5 "X,-Y,0.5+Z"\>
+ <6 "-Y,-X,Z"\>
+ <7 "Y,X,Z"\>
+\>
+<P42nm #="102" LATT="-1" HS=" P 4n -2n" FULL="P 42 n m" 
+ <1 "0.5-Y,0.5+X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "0.5+Y,0.5-X,0.5+Z"\>
+ <4 "0.5-X,0.5+Y,0.5+Z"\>
+ <5 "0.5+X,0.5-Y,0.5+Z"\>
+ <6 "-Y,-X,Z"\>
+ <7 "Y,X,Z"\>
+\>
+<P4cc #="103" LATT="-1" HS="P 4 -2c" FULL="P 4 c c" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "-X,Y,0.5+Z"\>
+ <5 "X,-Y,0.5+Z"\>
+ <6 "-Y,-X,0.5+Z"\>
+ <7 "Y,X,0.5+Z"\>
+\>
+<P4nc #="104" LATT="-1" HS="P 4 -2n" FULL="P 4 n c" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "0.5-X,0.5+Y,0.5+Z"\>
+ <5 "0.5+X,0.5-Y,0.5+Z"\>
+ <6 "0.5-Y,0.5-X,0.5+Z"\>
+ <7 "0.5+Y,0.5+X,0.5+Z"\>
+\>
+<P42mc #="105" LATT="-1" HS=" P 4c -2" FULL="P 42 m c" 
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+ <4 "-X,Y,Z"\>
+ <5 "X,-Y,Z"\>
+ <6 "-Y,-X,0.5+Z"\>
+ <7 "Y,X,0.5+Z"\>
+\>
+<P42bc #="106" LATT="-1" HS=" P 4c -2ab" FULL="P 42 b c" 
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+ <4 "0.5-X,0.5+Y,Z"\>
+ <5 "0.5+X,0.5-Y,Z"\>
+ <6 "0.5-Y,0.5-X,0.5+Z"\>
+ <7 "0.5+Y,0.5+X,0.5+Z"\>
+\>
+<I4mm #="107" LATT="-2" HS="I 4 -2" FULL="I 4 m m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "-X,Y,Z"\>
+ <5 "X,-Y,Z"\>
+ <6 "-Y,-X,Z"\>
+ <7 "Y,X,Z"\>
+\>
+<I4cm #="108" LATT="-2" HS="I 4 -2c" FULL="I 4 c m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "-X,Y,0.5+Z"\>
+ <5 "X,-Y,0.5+Z"\>
+ <6 "-Y,-X,0.5+Z"\>
+ <7 "Y,X,0.5+Z"\>
+\>
+<I41md #="109" LATT="-2" HS=" I 4bw -2" FULL="I 41 m d" 
+ <1 "-Y,0.5+X,0.25+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,0.5-X,0.25+Z"\>
+ <4 "-X,Y,Z"\>
+ <5 "X,-Y,Z"\>
+ <6 "-Y,0.5-X,0.25+Z"\>
+ <7 "Y,0.5+X,0.25+Z"\>
+\>
+<I41cd #="110" LATT="-2" HS=" I 4bw -2c" FULL="I 41 c d" 
+ <1 "-Y,0.5+X,0.25+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,0.5-X,0.25+Z"\>
+ <4 "-X,Y,0.5+Z"\>
+ <5 "X,-Y,0.5+Z"\>
+ <6 "0.5-Y,-X,0.25+Z"\>
+ <7 "0.5+Y,X,0.25+Z"\>
+\>
+<P-42m #="111" LATT="-1" HS=" P -4 2" FULL="P -4 2 m" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "-Y,-X,Z"\>
+ <7 "Y,X,Z"\>
+\>
+<P-42c #="112" LATT="-1" HS=" P -4 2c" FULL="P -4 2 c" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "X,-Y,0.5-Z"\>
+ <5 "-X,Y,0.5-Z"\>
+ <6 "-Y,-X,0.5+Z"\>
+ <7 "Y,X,0.5+Z"\>
+\>
+<P-421m #="113" LATT="-1" HS="P -4 2ab" FULL="P -4 21 m" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "0.5+X,0.5-Y,-Z"\>
+ <5 "0.5-X,0.5+Y,-Z"\>
+ <6 "0.5-Y,0.5-X,Z"\>
+ <7 "0.5+Y,0.5+X,Z"\>
+\>
+<P-421c #="114" LATT="-1" HS="P -4 2n" FULL="P -4 21 c" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "0.5+X,0.5-Y,0.5-Z"\>
+ <5 "0.5-X,0.5+Y,0.5-Z"\>
+ <6 "0.5-Y,0.5-X,0.5+Z"\>
+ <7 "0.5+Y,0.5+X,0.5+Z"\>
+\>
+<P-4m2 #="115" LATT="-1" HS=" P -4 -2" FULL="P -4 m 2" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "Y,X,-Z"\>
+ <5 "-Y,-X,-Z"\>
+ <6 "-X,Y,Z"\>
+ <7 "X,-Y,Z"\>
+\>
+<P-4c2 #="116" LATT="-1" HS=" P -4 -2c" FULL="P -4 c 2" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "Y,X,0.5-Z"\>
+ <5 "-Y,-X,0.5-Z"\>
+ <6 "-X,Y,0.5+Z"\>
+ <7 "X,-Y,0.5+Z"\>
+\>
+<P-4b2 #="117" LATT="-1" HS=" P -4 -2ab" FULL="P -4 b 2" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "0.5+Y,0.5+X,-Z"\>
+ <5 "0.5-Y,0.5-X,-Z"\>
+ <6 "0.5-X,0.5+Y,Z"\>
+ <7 "0.5+X,0.5-Y,Z"\>
+\>
+<P-4n2 #="118" LATT="-1" HS=" P -4 -2n" FULL="P -4 n 2" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "0.5+Y,0.5+X,0.5-Z"\>
+ <5 "0.5-Y,0.5-X,0.5-Z"\>
+ <6 "0.5-X,0.5+Y,0.5+Z"\>
+ <7 "0.5+X,0.5-Y,0.5+Z"\>
+\>
+<I-4m2 #="119" LATT="-2" HS=" I -4 -2" FULL="I -4 m 2" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "Y,X,-Z"\>
+ <5 "-Y,-X,-Z"\>
+ <6 "-X,Y,Z"\>
+ <7 "X,-Y,Z"\>
+\>
+<I-4c2 #="120" LATT="-2" HS=" I -4 -2c" FULL="I -4 c 2" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "Y,X,0.5-Z"\>
+ <5 "-Y,-X,0.5-Z"\>
+ <6 "-X,Y,0.5+Z"\>
+ <7 "X,-Y,0.5+Z"\>
+\>
+<I-42m #="121" LATT="-2" HS=" I -4 2" FULL="I -4 2 m" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "-Y,-X,Z"\>
+ <7 "Y,X,Z"\>
+\>
+<I-42d #="122" LATT="-2" HS=" I -4 2bw" FULL="I -4 2 d" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "X,0.5-Y,0.25-Z"\>
+ <5 "-X,0.5+Y,0.25-Z"\>
+ <6 "-Y,0.5-X,0.25+Z"\>
+ <7 "Y,0.5+X,0.25+Z"\>
+\>
+<P4/mmm #="123" LATT="1" HS="-P 4 2" FULL="P 4/m m m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<P4/mcc #="124" LATT="1" HS="-P 4 2c" FULL="P 4/m c c" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Y,0.5-Z"\>
+ <5 "-X,Y,0.5-Z"\>
+ <6 "Y,X,0.5-Z"\>
+ <7 "-Y,-X,0.5-Z"\>
+\>
+<P4/nbm #="125" LATT="1" HS="-P 4a 2b" FULL="P 4/n b m"
+ <1 "0.5-Y,X,Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,Z"\>
+ <4 "X,0.5-Y,-Z"\>
+ <5 "0.5-X,Y,-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "0.5-Y,0.5-X,-Z"\>
+\>
+<P4/nnc #="126" LATT="1" HS="-P 4a 2bc" FULL="P 4/n n c"
+ <1 "0.5-Y,X,Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,Z"\>
+ <4 "X,0.5-Y,0.5-Z"\>
+ <5 "0.5-X,Y,0.5-Z"\>
+ <6 "Y,X,0.5-Z"\>
+ <7 "0.5-Y,0.5-X,0.5-Z"\>
+\>
+<P4/mbm #="127" LATT="1" HS="-P 4 2ab" FULL="P 4/m b m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "0.5+X,0.5-Y,-Z"\>
+ <5 "0.5-X,0.5+Y,-Z"\>
+ <6 "0.5+Y,0.5+X,-Z"\>
+ <7 "0.5-Y,0.5-X,-Z"\>
+\>
+<P4/mnc #="128" LATT="1" HS="-P 4 2n" FULL="P 4/m n c" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "0.5+X,0.5-Y,0.5-Z"\>
+ <5 "0.5-X,0.5+Y,0.5-Z"\>
+ <6 "0.5+Y,0.5+X,0.5-Z"\>
+ <7 "0.5-Y,0.5-X,0.5-Z"\>
+\>
+<P4/nmm #="129" LATT="1" HS="-P 4a 2a" FULL="P 4/n m m"
+ <1 "0.5-Y,X,Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,Z"\>
+ <4 "0.5+X,-Y,-Z"\>
+ <5 "-X,0.5+Y,-Z"\>
+ <6 "0.5+Y,0.5+X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<P4/ncc #="130" LATT="1" HS="-P 4a 2ac" FULL="P 4/n c c"
+ <1 "0.5-Y,X,Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,Z"\>
+ <4 "0.5+X,-Y,0.5-Z"\>
+ <5 "-X,0.5+Y,0.5-Z"\>
+ <6 "0.5+Y,0.5+X,0.5-Z"\>
+ <7 "-Y,-X,0.5-Z"\>
+\>
+<P42/mmc #="131" LATT="1" HS="-P 4c 2" FULL="P 42/m m c" 
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "Y,X,0.5-Z"\>
+ <7 "-Y,-X,0.5-Z"\>
+\>
+<P42/mcm #="132" LATT="1" HS="-P 4c 2c" FULL="P 42/m c m" 
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+ <4 "X,-Y,0.5-Z"\>
+ <5 "-X,Y,0.5-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<P42/nbc #="133" LATT="1" HS="-P 4ac 2b" FULL="P 42/n b c"
+ <1 "0.5-Y,X,0.5+Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,0.5+Z"\>
+ <4 "X,0.5-Y,-Z"\>
+ <5 "0.5-X,Y,-Z"\>
+ <6 "Y,X,0.5-Z"\>
+ <7 "0.5-Y,0.5-X,0.5-Z"\>
+\>
+<P42/nnm #="134" LATT="1" HS="-P 4ac 2bc" FULL="P 42/n n n"
+ <1 "0.5-Y,X,0.5+Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,0.5+Z"\>
+ <4 "X,0.5-Y,0.5-Z"\>
+ <5 "0.5-X,Y,0.5-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "0.5-Y,0.5-X,-Z"\>
+\>
+<P42/mbc #="135" LATT="1" HS="-P 4c 2ab" FULL="P 42/m b c" 
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+ <4 "0.5+X,0.5-Y,-Z"\>
+ <5 "0.5-X,0.5+Y,-Z"\>
+ <6 "0.5+Y,0.5+X,0.5-Z"\>
+ <7 "0.5-Y,0.5-X,0.5-Z"\>
+\>
+<P42/mnm #="136" LATT="1" HS="-P 4n 2n" FULL="P 42/m n m" 
+ <1 "0.5-Y,0.5+X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "0.5+Y,0.5-X,0.5+Z"\>
+ <4 "0.5+X,0.5-Y,0.5-Z"\>
+ <5 "0.5-X,0.5+Y,0.5-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<P42/nmc #="137" LATT="1" HS="-P 4ac 2a" FULL="P 42/n m c"
+ <1 "0.5-Y,X,0.5+Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,0.5+Z"\>
+ <4 "0.5+X,-Y,-Z"\>
+ <5 "-X,0.5+Y,-Z"\>
+ <6 "0.5+Y,0.5+X,0.5-Z"\>
+ <7 "-Y,-X,0.5-Z"\>
+\>
+<P42/ncm #="138" LATT="1" HS="-P 4ac 2ac" FULL="P 42/n c m"
+ <1 "0.5-Y,X,0.5+Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,0.5+Z"\>
+ <4 "0.5+X,-Y,0.5-Z"\>
+ <5 "-X,0.5+Y,0.5-Z"\>
+ <6 "0.5+Y,0.5+X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<I4/mmm #="139" LATT="2" HS="-I 4 2" FULL="I 4/m m m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,Y,-Z"\>
+ <6 "Y,X,-Z"\>
+ <7 "-Y,-X,-Z"\>
+\>
+<I4/mcm #="140" LATT="2" HS="-I 4 2c" FULL="I 4/m c m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Y,0.5-Z"\>
+ <5 "-X,Y,0.5-Z"\>
+ <6 "Y,X,0.5-Z"\>
+ <7 "-Y,-X,0.5-Z"\>
+\>
+<I41/amd #="141" LATT="2" HS="-I 4bd 2" FULL="I 41/a m d"
+ <1 "0.25-Y,0.75+X,0.25+Z"\>
+ <2 "-X,0.5-Y,Z"\>
+ <3 "0.25+Y,0.25-X,0.75+Z"\>
+ <4 "X,-Y,-Z"\>
+ <5 "-X,0.5+Y,-Z"\>
+ <6 "0.25+Y,0.75+X,0.25-Z"\>
+ <7 "0.25-Y,0.25-X,0.75-Z"\>
+\>
+<I41/acd #="142" LATT="2" HS="-I 4bd 2c" FULL="I 41/a c d"
+ <1 "0.25-Y,0.75+X,0.25+Z"\>
+ <2 "-X,0.5-Y,Z"\>
+ <3 "0.25+Y,0.25-X,0.75+Z"\>
+ <4 "X,-Y,0.5-Z"\>
+ <5 "0.5-X,Y,-Z"\>
+ <6 "0.75+Y,0.25+X,0.25-Z"\>
+ <7 "0.25-Y,0.25-X,0.25-Z"\>
+\>
+<P3 #="143" LATT="-1" HS="P 3" FULL="P 3"
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+\>
+<P31 #="144" LATT="-1" HS="P 31" FULL="P 31" 
+ <1 "-Y,X-Y,0.333333+Z"\>
+ <2 "-X+Y,-X,0.666667+Z"\>
+\>
+<P32 #="145" LATT="-1" HS="P 32" FULL="P 32"
+ <1 "-Y,X-Y,0.666667+Z"\>
+ <2 "-X+Y,-X,0.333333+Z"\>
+\>
+<R3 #="146" AXIS="H" LATT="-3" HS="R 3" FULL="R 3"
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+\>
+<R3:r #="146" AXIS="R" LATT="-1" HS="P 3*" FULL="R 3"
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+\>
+<P-3 #="147" LATT="1" HS="-P 3" FULL="P -3"
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+\>
+<R-3 #="148" AXIS="H" LATT="3" HS="-R 3" FULL="R -3"
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+\>
+<R-3:r #="148" AXIS="R" LATT="1" HS="-P 3*" FULL="R -3"
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+\>
+<P312 #="149" LATT="-1" HS="P 3 2" FULL="P 3 1 2"
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "-Y,-X,-Z"\>
+ <4 "-X+Y,Y,-Z"\>
+ <5 "X,X-Y,-Z"\>
+\>
+<P321 #="150" LATT="-1" HS="P 3 2&2E;" FULL="P 3 2 1" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "X-Y,-Y,-Z"\>
+ <4 "-X,-X+Y,-Z"\>
+ <5 "Y,X,-Z"\>
+\>
+<P3112 #="151" LATT="-1" HS=" P 31 2c (0 0 1)" FULL="P 31 1 2" 
+ <1 "-Y,X-Y,0.333333+Z"\>
+ <2 "-X+Y,-X,0.666667+Z"\>
+ <3 "-Y,-X,0.666667-Z"\>
+ <4 "-X+Y,Y,0.333333-Z"\>
+ <5 "X,X-Y,-Z"\>
+\>
+<P3121 #="152" LATT="-1" HS=" P 31 2&2E;" FULL="P 31 2 1" 
+ <1 "-Y,X-Y,0.333333+Z"\>
+ <2 "-X+Y,-X,0.666667+Z"\>
+ <3 "X-Y,-Y,0.666667-Z"\>
+ <4 "-X,-X+Y,0.333333-Z"\>
+ <5 "Y,X,-Z"\>
+\>
+<P3212 #="153" LATT="-1" HS=" P 32 2c (0 0 -1)" FULL="P 32 1 2" 
+ <1 "-Y,X-Y,0.666667+Z"\>
+ <2 "-X+Y,-X,0.333333+Z"\>
+ <3 "-Y,-X,0.333333-Z"\>
+ <4 "-X+Y,Y,0.666667-Z"\>
+ <5 "X,X-Y,-Z"\>
+\>
+<P3221 #="154" LATT="-1" HS=" P 32 2&2E;" FULL="P 32 2 1" 
+ <1 "-Y,X-Y,0.666667+Z"\>
+ <2 "-X+Y,-X,0.333333+Z"\>
+ <3 "X-Y,-Y,0.333333-Z"\>
+ <4 "-X,-X+Y,0.666667-Z"\>
+ <5 "Y,X,-Z"\>
+\>
+<R32 #="155" AXIS="H" LATT="-3" HS="R 3 2&2E;" FULL="R 32"
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "X-Y,-Y,-Z"\>
+ <4 "-X,-X+Y,-Z"\>
+ <5 "Y,X,-Z"\>
+\>
+<R32:r #="155" AXIS="R" LATT="-1" HS="P 3* 2" FULL="R 32"
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,-X,-Z"\>
+ <4 "-X,-Z,-Y"\>
+ <5 "-Z,-Y,-X"\>
+\>
+<P3m1 #="156" LATT="-1" HS="P 3 -2&2E;" FULL="P 3 m 1" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "-X+Y,Y,Z"\>
+ <4 "X,X-Y,Z"\>
+ <5 "-Y,-X,Z"\>
+\>
+<P31m #="157" LATT="-1" HS="P 3 -2" FULL="P 3 1 m" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "Y,X,Z"\>
+ <4 "X-Y,-Y,Z"\>
+ <5 "-X,-X+Y,Z"\>
+\>
+<P3c1 #="158" LATT="-1" HS="P 3 -2&2E;c" FULL="P 3 c 1" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "-X+Y,Y,0.5+Z"\>
+ <4 "X,X-Y,0.5+Z"\>
+ <5 "-Y,-X,0.5+Z"\>
+\>
+<P31c #="159" LATT="-1" HS="P 3 -2c" FULL="P 3 1 c" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "Y,X,0.5+Z"\>
+ <4 "X-Y,-Y,0.5+Z"\>
+ <5 "-X,-X+Y,0.5+Z"\>
+\>
+<R3m #="160" AXIS="H" LATT="-3" HS="R 3 -2&2E;" FULL="R 3 m" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "-X+Y,Y,Z"\>
+ <4 "X,X-Y,Z"\>
+ <5 "-Y,-X,Z"\>
+\>
+<R3m:r #="160" AXIS="R" LATT="-1" HS="P 3* -2" FULL="R 3 m" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "Y,X,Z"\>
+ <4 "X,Z,Y"\>
+ <5 "Z,Y,X"\>
+\>
+<R3c #="161" AXIS="H" LATT="-3" HS="R 3 -2&2E;c" FULL="R 3 c" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "-X+Y,Y,0.5+Z"\>
+ <4 "X,X-Y,0.5+Z"\>
+ <5 "-Y,-X,0.5+Z"\>
+\>
+<R3c:r #="161" AXIS="R" LATT="-1" HS="3* -2n" FULL="R 3 c" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "0.5+Y,0.5+X,0.5+Z"\>
+ <4 "0.5+X,0.5+Z,0.5+Y"\>
+ <5 "0.5+Z,0.5+Y,0.5+X"\>
+\>
+<P-31m #="162" LATT="1" HS="-P 3 2" FULL="P -3 1 m" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "-Y,-X,-Z"\>
+ <4 "-X+Y,Y,-Z"\>
+ <5 "X,X-Y,-Z"\>
+\>
+<P-31c #="163" LATT="1" HS="-P 3 2c" FULL="P -3 1 c" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "-Y,-X,0.5-Z"\>
+ <4 "-X+Y,Y,0.5-Z"\>
+ <5 "X,X-Y,0.5-Z"\>
+\>
+<P-3m1 #="164" LATT="1" HS="-P 3 2&2E;" FULL="P -3 m 1" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "X-Y,-Y,-Z"\>
+ <4 "-X,-X+Y,-Z"\>
+ <5 "Y,X,-Z"\>
+\>
+<P-3c1 #="165" LATT="1" HS="-P 3 2&2E;c" FULL="P -3 c 1" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "X-Y,-Y,0.5-Z"\>
+ <4 "-X,-X+Y,0.5-Z"\>
+ <5 "Y,X,0.5-Z"\>
+\>
+<R-3m #="166" AXIS="H" LATT="3" HS="-R 3 2&2E;" FULL="R -3 m" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "X-Y,-Y,-Z"\>
+ <4 "-X,-X+Y,-Z"\>
+ <5 "Y,X,-Z"\>
+\>
+<R-3m:r #="166" AXIS="R" LATT="1" HS="-P 3* 2" FULL="R -3 m" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,-X,-Z"\>
+ <4 "-X,-Z,-Y"\>
+ <5 "-Z,-Y,-X"\>
+\>
+<R-3c #="167" AXIS="H" LATT="3" HS="-R 3 2&2E;c" FULL="R -3 c" 
+ <1 "-Y,X-Y,Z"\>
+ <2 "-X+Y,-X,Z"\>
+ <3 "X-Y,-Y,0.5-Z"\>
+ <4 "-X,-X+Y,0.5-Z"\>
+ <5 "Y,X,0.5-Z"\>
+\>
+<R-3c:r #="167" AXIS="R" LATT="1" HS="-P 3* 2n" FULL="R -3 c" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "0.5-Y,0.5-X,0.5-Z"\>
+ <4 "0.5-X,0.5-Z,0.5-Y"\>
+ <5 "0.5-Z,0.5-Y,0.5-X"\>
+\>
+<P6 #="168" LATT="-1" HS="P 6" FULL="P 6"
+ <1 "X-Y,X,Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,Z"\>
+\>
+<P61 #="169" LATT="-1" HS=" P 61"  FULL="P 61"
+ <1 "X-Y,X,0.166667+Z"\>
+ <2 "-Y,X-Y,0.333333+Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,0.666667+Z"\>
+ <5 "Y,-X+Y,0.833333+Z"\>
+\>
+<P65 #="170" LATT="-1" HS=" P 65" FULL="P 65" 
+ <1 "X-Y,X,0.833333+Z"\>
+ <2 "-Y,X-Y,0.666667+Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,0.333333+Z"\>
+ <5 "Y,-X+Y,0.166667+Z"\>
+\>
+<P62 #="171" LATT="-1" HS=" P 62" FULL="P 62" 
+ <1 "X-Y,X,0.333333+Z"\>
+ <2 "-Y,X-Y,0.666667+Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,0.333333+Z"\>
+ <5 "Y,-X+Y,0.666667+Z"\>
+\>
+<P64 #="172" LATT="-1" HS=" P 64" FULL="P 64" 
+ <1 "X-Y,X,0.666667+Z"\>
+ <2 "-Y,X-Y,0.333333+Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,0.666667+Z"\>
+ <5 "Y,-X+Y,0.333333+Z"\>
+\>
+<P63 #="173" LATT="-1" HS=" P 6c" FULL="P 63" 
+ <1 "X-Y,X,0.5+Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,0.5+Z"\>
+\>
+<P-6 #="174" LATT="-1" HS=" P -6" FULL="P -6" 
+ <1 "-X+Y,-X,-Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "X,Y,-Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "-Y,X-Y,-Z"\>
+\>
+<P6/m #="175" LATT="1" HS="-P 6" FULL="P 6/m" 
+ <1 "X-Y,X,Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,Z"\>
+\>
+<P63/m #="176" LATT="1" HS="-P 6c" FULL="P 63/m" 
+ <1 "X-Y,X,0.5+Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,0.5+Z"\>
+\>
+<P622 #="177" LATT="-1" HS="P 6 2" FULL="P 6 2 2" 
+ <1 "X-Y,X,Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,-Z"\>
+ <8 "Y,X,-Z"\>
+ <9 "-Y,-X,-Z"\>
+ <10 "-X+Y,Y,-Z"\>
+ <11 "X,X-Y,-Z"\>
+\>
+<P6122 #="178" LATT="-1" HS=" P 61 2 (0 0 -1)" FULL="P 61 2 2" 
+ <1 "X-Y,X,0.166667+Z"\>
+ <2 "-Y,X-Y,0.333333+Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,0.666667+Z"\>
+ <5 "Y,-X+Y,0.833333+Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,0.666667-Z"\>
+ <8 "Y,X,0.333333-Z"\>
+ <9 "-Y,-X,0.833333-Z"\>
+ <10 "-X+Y,Y,0.5-Z"\>
+ <11 "X,X-Y,0.166667-Z"\>
+\>
+<P6522 #="179" LATT="-1" HS=" P 65 2 (0 0 1)" FULL="P 65 2 2" 
+ <1 "X-Y,X,0.833333+Z"\>
+ <2 "-Y,X-Y,0.666667+Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,0.333333+Z"\>
+ <5 "Y,-X+Y,0.166667+Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,0.333333-Z"\>
+ <8 "Y,X,0.666667-Z"\>
+ <9 "-Y,-X,0.166667-Z"\>
+ <10 "-X+Y,Y,0.5-Z"\>
+ <11 "X,X-Y,0.833333-Z"\>
+\>
+<P6222 #="180" LATT="-1" HS=" P 62 2c (0 0 1)" FULL="P 62 2 2" 
+ <1 "X-Y,X,0.333333+Z"\>
+ <2 "-Y,X-Y,0.666667+Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,0.333333+Z"\>
+ <5 "Y,-X+Y,0.666667+Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,0.333333-Z"\>
+ <8 "Y,X,0.666667-Z"\>
+ <9 "-Y,-X,0.666667-Z"\>
+ <10 "-X+Y,Y,-Z"\>
+ <11 "X,X-Y,0.333333-Z"\>
+\>
+<P6422 #="181" LATT="-1" HS=" P 64 2c (0 0 -1)" FULL="P 64 2 2" 
+ <1 "X-Y,X,0.666667+Z"\>
+ <2 "-Y,X-Y,0.333333+Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,0.666667+Z"\>
+ <5 "Y,-X+Y,0.333333+Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,0.666667-Z"\>
+ <8 "Y,X,0.333333-Z"\>
+ <9 "-Y,-X,0.333333-Z"\>
+ <10 "-X+Y,Y,-Z"\>
+ <11 "X,X-Y,0.666667-Z"\>
+\>
+<P6322 #="182" LATT="-1" HS=" P 6c 2c" FULL="P 63 2 2" 
+ <1 "X-Y,X,0.5+Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,0.5+Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,-Z"\>
+ <8 "Y,X,-Z"\>
+ <9 "-Y,-X,0.5-Z"\>
+ <10 "-X+Y,Y,0.5-Z"\>
+ <11 "X,X-Y,0.5-Z"\>
+\>
+<P6mm #="183" LATT="-1" HS="P 6 -2" FULL="P 6 m m" 
+ <1 "X-Y,X,Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,Z"\>
+ <6 "-X+Y,Y,Z"\>
+ <7 "X,X-Y,Z"\>
+ <8 "-Y,-X,Z"\>
+ <9 "Y,X,Z"\>
+ <10 "X-Y,-Y,Z"\>
+ <11 "-X,-X+Y,Z"\>
+\>
+<P6cc #="184" LATT="-1" HS="P 6 -2c" FULL="P 6 c c" 
+ <1 "X-Y,X,Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,Z"\>
+ <6 "-X+Y,Y,0.5+Z"\>
+ <7 "X,X-Y,0.5+Z"\>
+ <8 "-Y,-X,0.5+Z"\>
+ <9 "Y,X,0.5+Z"\>
+ <10 "X-Y,-Y,0.5+Z"\>
+ <11 "-X,-X+Y,0.5+Z"\>
+\>
+<P63cm #="185" LATT="-1" HS=" P 6c -2" FULL="P 63 c m" 
+ <1 "X-Y,X,0.5+Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,0.5+Z"\>
+ <6 "-X+Y,Y,0.5+Z"\>
+ <7 "X,X-Y,0.5+Z"\>
+ <8 "-Y,-X,0.5+Z"\>
+ <9 "Y,X,Z"\>
+ <10 "X-Y,-Y,Z"\>
+ <11 "-X,-X+Y,Z"\>
+\>
+<P63mc #="186" LATT="-1" HS=" P 6c -2c" FULL="P 63 m c" 
+ <1 "X-Y,X,0.5+Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,0.5+Z"\>
+ <6 "-X+Y,Y,Z"\>
+ <7 "X,X-Y,Z"\>
+ <8 "-Y,-X,Z"\>
+ <9 "Y,X,0.5+Z"\>
+ <10 "X-Y,-Y,0.5+Z"\>
+ <11 "-X,-X+Y,0.5+Z"\>
+\>
+<P-6m2 #="187" LATT="-1" HS=" P -6 2" FULL="P -6 m 2" 
+ <1 "-X+Y,-X,-Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "X,Y,-Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "-Y,X-Y,-Z"\>
+ <6 "-Y,-X,-Z"\>
+ <7 "-X+Y,Y,-Z"\>
+ <8 "X,X-Y,-Z"\>
+ <9 "-X+Y,Y,Z"\>
+ <10 "X,X-Y,Z"\>
+ <11 "-Y,-X,Z"\>
+\>
+<P-6c2 #="188" LATT="-1" HS=" P -6c 2" FULL="P -6 c 2" 
+ <1 "-X+Y,-X,0.5-Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "X,Y,0.5-Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "-Y,X-Y,0.5-Z"\>
+ <6 "-Y,-X,-Z"\>
+ <7 "-X+Y,Y,-Z"\>
+ <8 "X,X-Y,-Z"\>
+ <9 "-X+Y,Y,0.5+Z"\>
+ <10 "X,X-Y,0.5+Z"\>
+ <11 "-Y,-X,0.5+Z"\>
+\>
+<P-62m #="189" LATT="-1" HS=" P -6 -2" FULL="P -6 2 m" 
+ <1 "-X+Y,-X,-Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "X,Y,-Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "-Y,X-Y,-Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,-Z"\>
+ <8 "Y,X,-Z"\>
+ <9 "Y,X,Z"\>
+ <10 "X-Y,-Y,Z"\>
+ <11 "-X,-X+Y,Z"\>
+\>
+<P-62c #="190" LATT="-1" HS=" P -6c -2c" FULL="P -6 2 c" 
+ <1 "-X+Y,-X,0.5-Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "X,Y,0.5-Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "-Y,X-Y,0.5-Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,-Z"\>
+ <8 "Y,X,-Z"\>
+ <9 "Y,X,0.5+Z"\>
+ <10 "X-Y,-Y,0.5+Z"\>
+ <11 "-X,-X+Y,0.5+Z"\>
+\>
+<P6/mmm #="191" LATT="1" HS="-P 6 2" FULL="P 6/m m m" 
+ <1 "X-Y,X,Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,-Z"\>
+ <8 "Y,X,-Z"\>
+ <9 "-Y,-X,-Z"\>
+ <10 "-X+Y,Y,-Z"\>
+ <11 "X,X-Y,-Z"\>
+\>
+<P6/mcc #="192" LATT="1" HS="-P 6 2c" FULL="P 6/m c c" 
+ <1 "X-Y,X,Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,Z"\>
+ <6 "X-Y,-Y,0.5-Z"\>
+ <7 "-X,-X+Y,0.5-Z"\>
+ <8 "Y,X,0.5-Z"\>
+ <9 "-Y,-X,0.5-Z"\>
+ <10 "-X+Y,Y,0.5-Z"\>
+ <11 "X,X-Y,0.5-Z"\>
+\>
+<P63/mcm #="193" LATT="1" HS="-P 6c 2" FULL="P 63/m c m" 
+ <1 "X-Y,X,0.5+Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,0.5+Z"\>
+ <6 "X-Y,-Y,0.5-Z"\>
+ <7 "-X,-X+Y,0.5-Z"\>
+ <8 "Y,X,0.5-Z"\>
+ <9 "-Y,-X,-Z"\>
+ <10 "-X+Y,Y,-Z"\>
+ <11 "X,X-Y,-Z"\>
+\>
+<P63/mmc #="194" LATT="1" HS="-P 6c 2c" FULL="P 63/m m c" 
+ <1 "X-Y,X,0.5+Z"\>
+ <2 "-Y,X-Y,Z"\>
+ <3 "-X,-Y,0.5+Z"\>
+ <4 "-X+Y,-X,Z"\>
+ <5 "Y,-X+Y,0.5+Z"\>
+ <6 "X-Y,-Y,-Z"\>
+ <7 "-X,-X+Y,-Z"\>
+ <8 "Y,X,-Z"\>
+ <9 "-Y,-X,0.5-Z"\>
+ <10 "-X+Y,Y,0.5-Z"\>
+ <11 "X,X-Y,0.5-Z"\>
+\>
+<P23 #="195" LATT="-1" HS="P 2 2 3" FULL="P 2 3 P" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,-Z,X"\>
+ <4 "Z,-X,-Y"\>
+ <5 "-Y,Z,-X"\>
+ <6 "-Z,-X,Y"\>
+ <7 "-Z,X,-Y"\>
+ <8 "Y,-Z,-X"\>
+ <9 "-X,-Y,Z"\>
+ <10 "X,-Y,-Z"\>
+ <11 "-X,Y,-Z"\>
+\>
+<F23 #="196" LATT="-4" HS="F 2 2 3" FULL="F 2 3 F" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,-Z,X"\>
+ <4 "Z,-X,-Y"\>
+ <5 "-Y,Z,-X"\>
+ <6 "-Z,-X,Y"\>
+ <7 "-Z,X,-Y"\>
+ <8 "Y,-Z,-X"\>
+ <9 "-X,-Y,Z"\>
+ <10 "X,-Y,-Z"\>
+ <11 "-X,Y,-Z"\>
+\>
+<I23 #="197" LATT="-2" HS="I 2 2 3" FULL="I 2 3 I" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,-Z,X"\>
+ <4 "Z,-X,-Y"\>
+ <5 "-Y,Z,-X"\>
+ <6 "-Z,-X,Y"\>
+ <7 "-Z,X,-Y"\>
+ <8 "Y,-Z,-X"\>
+ <9 "-X,-Y,Z"\>
+ <10 "X,-Y,-Z"\>
+ <11 "-X,Y,-Z"\>
+\>
+<P213 #="198" LATT="-1" HS=" P 2ac 2ab 3" FULL="P 21 3 P" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "0.5-Y,-Z,0.5+X"\>
+ <4 "0.5+Z,0.5-X,-Y"\>
+ <5 "-Y,0.5+Z,0.5-X"\>
+ <6 "0.5-Z,-X,0.5+Y"\>
+ <7 "-Z,0.5+X,0.5-Y"\>
+ <8 "0.5+Y,0.5-Z,-X"\>
+ <9 "0.5-X,-Y,0.5+Z"\>
+ <10 "0.5+X,0.5-Y,-Z"\>
+ <11 "-X,0.5+Y,0.5-Z"\>
+\>
+<I213 #="199" LATT="-2" HS=" I 2b 2c 3" FULL="I 21 3 I" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,0.5-Z,X"\>
+ <4 "Z,-X,0.5-Y"\>
+ <5 "0.5-Y,Z,-X"\>
+ <6 "-Z,0.5-X,Y"\>
+ <7 "0.5-Z,X,-Y"\>
+ <8 "Y,-Z,0.5-X"\>
+ <9 "-X,0.5-Y,Z"\>
+ <10 "X,-Y,0.5-Z"\>
+ <11 "0.5-X,Y,-Z"\>
+\>
+<Pm-3 #="200" LATT="1" HS="-P 2 2 3" FULL="P m -3 -P" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,-Z,X"\>
+ <4 "Z,-X,-Y"\>
+ <5 "-Y,Z,-X"\>
+ <6 "-Z,-X,Y"\>
+ <7 "-Z,X,-Y"\>
+ <8 "Y,-Z,-X"\>
+ <9 "-X,-Y,Z"\>
+ <10 "X,-Y,-Z"\>
+ <11 "-X,Y,-Z"\>
+\>
+<Pn-3 #="201" LATT="1" HS="-P 2ab 2bc 3" FULL="P n -3"
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "0.5-Y,0.5-Z,X"\>
+ <4 "Z,0.5-X,0.5-Y"\>
+ <5 "0.5-Y,Z,0.5-X"\>
+ <6 "0.5-Z,0.5-X,Y"\>
+ <7 "0.5-Z,X,0.5-Y"\>
+ <8 "Y,0.5-Z,0.5-X"\>
+ <9 "0.5-X,0.5-Y,Z"\>
+ <10 "X,0.5-Y,0.5-Z"\>
+ <11 "0.5-X,Y,0.5-Z"\>
+\>
+<Fm-3 #="202" LATT="4" HS="-F 2 2 3" FULL="F m -3" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,-Z,X"\>
+ <4 "Z,-X,-Y"\>
+ <5 "-Y,Z,-X"\>
+ <6 "-Z,-X,Y"\>
+ <7 "-Z,X,-Y"\>
+ <8 "Y,-Z,-X"\>
+ <9 "-X,-Y,Z"\>
+ <10 "X,-Y,-Z"\>
+ <11 "-X,Y,-Z"\>
+\>
+<Fd-3 #="203" LATT="4" HS="-F 2uv 2vw 3" FULL="F d -3"
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "0.25-Y,0.25-Z,X"\>
+ <4 "Z,0.25-X,0.25-Y"\>
+ <5 "0.25-Y,Z,0.25-X"\>
+ <6 "0.25-Z,0.25-X,Y"\>
+ <7 "0.25-Z,X,0.25-Y"\>
+ <8 "Y,0.25-Z,0.25-X"\>
+ <9 "0.25-X,0.25-Y,Z"\>
+ <10 "X,0.25-Y,0.25-Z"\>
+ <11 "0.25-X,Y,0.25-Z"\>
+\>
+<Im-3 #="204" LATT="2" HS="-I 2 2 3" FULL="I m -3" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,-Z,X"\>
+ <4 "Z,-X,-Y"\>
+ <5 "-Y,Z,-X"\>
+ <6 "-Z,-X,Y"\>
+ <7 "-Z,X,-Y"\>
+ <8 "Y,-Z,-X"\>
+ <9 "-X,-Y,Z"\>
+ <10 "X,-Y,-Z"\>
+ <11 "-X,Y,-Z"\>
+\>
+<Pa-3 #="205" LATT="1" HS="-P 2ac 2ab 3" FULL="P a -3" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "0.5-Y,-Z,0.5+X"\>
+ <4 "0.5+Z,0.5-X,-Y"\>
+ <5 "-Y,0.5+Z,0.5-X"\>
+ <6 "0.5-Z,-X,0.5+Y"\>
+ <7 "-Z,0.5+X,0.5-Y"\>
+ <8 "0.5+Y,0.5-Z,-X"\>
+ <9 "0.5-X,-Y,0.5+Z"\>
+ <10 "0.5+X,0.5-Y,-Z"\>
+ <11 "-X,0.5+Y,0.5-Z"\>
+\>
+<Ia-3 #="206" LATT="2" HS="-I 2b 2c 3" FULL="I a -3" 
+ <1 "Z,X,Y"\>
+ <2 "Y,Z,X"\>
+ <3 "-Y,0.5-Z,X"\>
+ <4 "Z,-X,0.5-Y"\>
+ <5 "0.5-Y,Z,-X"\>
+ <6 "-Z,0.5-X,Y"\>
+ <7 "0.5-Z,X,-Y"\>
+ <8 "Y,-Z,0.5-X"\>
+ <9 "-X,0.5-Y,Z"\>
+ <10 "X,-Y,0.5-Z"\>
+ <11 "0.5-X,Y,-Z"\>
+\>
+<P432 #="207" LATT="-1" HS="P 4 2 3" FULL="P 4 3 2" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Z,Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "X,Z,-Y"\>
+ <7 "Z,Y,-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "-Z,Y,X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "Y,X,-Z"\>
+ <19 "-Y,-X,-Z"\>
+ <20 "-X,Z,Y"\>
+ <21 "-X,-Z,-Y"\>
+ <22 "Z,-Y,X"\>
+ <23 "-Z,-Y,-X"\>
+\>
+<P4232 #="208" LATT="-1" HS=" P 4n 2 3" FULL="P 42 3 2" 
+ <1 "0.5-Y,0.5+X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "0.5+Y,0.5-X,0.5+Z"\>
+ <4 "0.5+X,0.5-Z,0.5+Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "0.5+X,0.5+Z,0.5-Y"\>
+ <7 "0.5+Z,0.5+Y,0.5-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "0.5-Z,0.5+Y,0.5+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "0.5+Y,0.5+X,0.5-Z"\>
+ <19 "0.5-Y,0.5-X,0.5-Z"\>
+ <20 "0.5-X,0.5+Z,0.5+Y"\>
+ <21 "0.5-X,0.5-Z,0.5-Y"\>
+ <22 "0.5+Z,0.5-Y,0.5+X"\>
+ <23 "0.5-Z,0.5-Y,0.5-X"\>
+\>
+<F432 #="209" LATT="-4" HS="F 4 2 3" FULL="F 4 3 2" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Z,Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "X,Z,-Y"\>
+ <7 "Z,Y,-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "-Z,Y,X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "Y,X,-Z"\>
+ <19 "-Y,-X,-Z"\>
+ <20 "-X,Z,Y"\>
+ <21 "-X,-Z,-Y"\>
+ <22 "Z,-Y,X"\>
+ <23 "-Z,-Y,-X"\>
+\>
+<F4132 #="210" LATT="-4" HS=" F 4d 2 3" FULL="F 41 3 2" 
+ <1 "0.25-Y,0.25+X,0.25+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "0.25+Y,0.25-X,0.25+Z"\>
+ <4 "0.25+X,0.25-Z,0.25+Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "0.25+X,0.25+Z,0.25-Y"\>
+ <7 "0.25+Z,0.25+Y,0.25-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "0.25-Z,0.25+Y,0.25+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "0.25+Y,0.25+X,0.25-Z"\>
+ <19 "0.25-Y,0.25-X,0.25-Z"\>
+ <20 "0.25-X,0.25+Z,0.25+Y"\>
+ <21 "0.25-X,0.25-Z,0.25-Y"\>
+ <22 "0.25+Z,0.25-Y,0.25+X"\>
+ <23 "0.25-Z,0.25-Y,0.25-X"\>
+\>
+<I432 #="211" LATT="-2" HS="I 4 2 3" FULL="I 4 3 2" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Z,Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "X,Z,-Y"\>
+ <7 "Z,Y,-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "-Z,Y,X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "Y,X,-Z"\>
+ <19 "-Y,-X,-Z"\>
+ <20 "-X,Z,Y"\>
+ <21 "-X,-Z,-Y"\>
+ <22 "Z,-Y,X"\>
+ <23 "-Z,-Y,-X"\>
+\>
+<P4332 #="212" LATT="-1" HS=" P 4acd 2ab 3" FULL="P 43 3 2" 
+ <1 "0.75-Y,0.25+X,0.75+Z"\>
+ <2 "0.5-X,-Y,0.5+Z"\>
+ <3 "0.75+Y,0.75-X,0.25+Z"\>
+ <4 "0.75+X,0.75-Z,0.25+Y"\>
+ <5 "0.5+X,0.5-Y,-Z"\>
+ <6 "0.25+X,0.75+Z,0.75-Y"\>
+ <7 "0.25+Z,0.75+Y,0.75-X"\>
+ <8 "-X,0.5+Y,0.5-Z"\>
+ <9 "0.75-Z,0.25+Y,0.75+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "0.5-Y,-Z,0.5+X"\>
+ <13 "0.5+Z,0.5-X,-Y"\>
+ <14 "-Y,0.5+Z,0.5-X"\>
+ <15 "0.5-Z,-X,0.5+Y"\>
+ <16 "-Z,0.5+X,0.5-Y"\>
+ <17 "0.5+Y,0.5-Z,-X"\>
+ <18 "0.25+Y,0.75+X,0.75-Z"\>
+ <19 "0.25-Y,0.25-X,0.25-Z"\>
+ <20 "0.75-X,0.25+Z,0.75+Y"\>
+ <21 "0.25-X,0.25-Z,0.25-Y"\>
+ <22 "0.75+Z,0.75-Y,0.25+X"\>
+ <23 "0.25-Z,0.25-Y,0.25-X"\>
+\>
+<P4132 #="213" LATT="-1" HS=" P 4bd 2ab 3" FULL="P 41 3 2" 
+ <1 "0.25-Y,0.75+X,0.25+Z"\>
+ <2 "0.5-X,-Y,0.5+Z"\>
+ <3 "0.25+Y,0.25-X,0.75+Z"\>
+ <4 "0.25+X,0.25-Z,0.75+Y"\>
+ <5 "0.5+X,0.5-Y,-Z"\>
+ <6 "0.75+X,0.25+Z,0.25-Y"\>
+ <7 "0.75+Z,0.25+Y,0.25-X"\>
+ <8 "-X,0.5+Y,0.5-Z"\>
+ <9 "0.25-Z,0.75+Y,0.25+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "0.5-Y,-Z,0.5+X"\>
+ <13 "0.5+Z,0.5-X,-Y"\>
+ <14 "-Y,0.5+Z,0.5-X"\>
+ <15 "0.5-Z,-X,0.5+Y"\>
+ <16 "-Z,0.5+X,0.5-Y"\>
+ <17 "0.5+Y,0.5-Z,-X"\>
+ <18 "0.75+Y,0.25+X,0.25-Z"\>
+ <19 "0.75-Y,0.75-X,0.75-Z"\>
+ <20 "0.25-X,0.75+Z,0.25+Y"\>
+ <21 "0.75-X,0.75-Z,0.75-Y"\>
+ <22 "0.25+Z,0.25-Y,0.75+X"\>
+ <23 "0.75-Z,0.75-Y,0.75-X"\>
+\>
+<I4132 #="214" LATT="-2" HS=" I 4bd 2c 3" FULL="I 41 3 2" 
+ <1 "0.25-Y,0.75+X,0.25+Z"\>
+ <2 "-X,0.5-Y,Z"\>
+ <3 "0.25+Y,0.25-X,0.75+Z"\>
+ <4 "0.25+X,0.25-Z,0.75+Y"\>
+ <5 "X,-Y,0.5-Z"\>
+ <6 "0.75+X,0.25+Z,0.25-Y"\>
+ <7 "0.75+Z,0.25+Y,0.25-X"\>
+ <8 "0.5-X,Y,-Z"\>
+ <9 "0.25-Z,0.75+Y,0.25+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,0.5-Z,X"\>
+ <13 "Z,-X,0.5-Y"\>
+ <14 "0.5-Y,Z,-X"\>
+ <15 "-Z,0.5-X,Y"\>
+ <16 "0.5-Z,X,-Y"\>
+ <17 "Y,-Z,0.5-X"\>
+ <18 "0.75+Y,0.25+X,0.25-Z"\>
+ <19 "0.25-Y,0.25-X,0.25-Z"\>
+ <20 "0.25-X,0.75+Z,0.25+Y"\>
+ <21 "0.25-X,0.25-Z,0.25-Y"\>
+ <22 "0.25+Z,0.25-Y,0.75+X"\>
+ <23 "0.25-Z,0.25-Y,0.25-X"\>
+\>
+<P-43m #="215" LATT="-1" HS=" P -4 2 3" FULL="P -4 3 m" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "-X,Z,-Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "-X,-Z,Y"\>
+ <7 "-Z,-Y,X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "Z,-Y,-X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "-Y,-X,Z"\>
+ <19 "Y,X,Z"\>
+ <20 "X,-Z,-Y"\>
+ <21 "X,Z,Y"\>
+ <22 "-Z,Y,-X"\>
+ <23 "Z,Y,X"\>
+\>
+<F-43m #="216" LATT="-4" HS=" F -4 2 3" FULL="F -4 3 m" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "-X,Z,-Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "-X,-Z,Y"\>
+ <7 "-Z,-Y,X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "Z,-Y,-X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "-Y,-X,Z"\>
+ <19 "Y,X,Z"\>
+ <20 "X,-Z,-Y"\>
+ <21 "X,Z,Y"\>
+ <22 "-Z,Y,-X"\>
+ <23 "Z,Y,X"\>
+\>
+<I-43m #="217" LATT="-2" HS=" I -4 2 3" FULL="I -4 3 m" 
+ <1 "Y,-X,-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,-Z"\>
+ <4 "-X,Z,-Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "-X,-Z,Y"\>
+ <7 "-Z,-Y,X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "Z,-Y,-X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "-Y,-X,Z"\>
+ <19 "Y,X,Z"\>
+ <20 "X,-Z,-Y"\>
+ <21 "X,Z,Y"\>
+ <22 "-Z,Y,-X"\>
+ <23 "Z,Y,X"\>
+\>
+<P-43n #="218" LATT="-1" HS=" P -4n 2 3" FULL="P -4 3 n" 
+ <1 "0.5+Y,0.5-X,0.5-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "0.5-Y,0.5+X,0.5-Z"\>
+ <4 "0.5-X,0.5+Z,0.5-Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "0.5-X,0.5-Z,0.5+Y"\>
+ <7 "0.5-Z,0.5-Y,0.5+X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "0.5+Z,0.5-Y,0.5-X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "0.5-Y,0.5-X,0.5+Z"\>
+ <19 "0.5+Y,0.5+X,0.5+Z"\>
+ <20 "0.5+X,0.5-Z,0.5-Y"\>
+ <21 "0.5+X,0.5+Z,0.5+Y"\>
+ <22 "0.5-Z,0.5+Y,0.5-X"\>
+ <23 "0.5+Z,0.5+Y,0.5+X"\>
+\>
+<F-43c #="219" LATT="-4" HS=" F -4c 2 3" FULL="F -4 3 c" 
+ <1 "Y,-X,0.5-Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "-Y,X,0.5-Z"\>
+ <4 "-X,Z,0.5-Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "-X,-Z,0.5+Y"\>
+ <7 "-Z,-Y,0.5+X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "Z,-Y,0.5-X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "-Y,-X,0.5+Z"\>
+ <19 "Y,X,0.5+Z"\>
+ <20 "X,-Z,0.5-Y"\>
+ <21 "X,Z,0.5+Y"\>
+ <22 "-Z,Y,0.5-X"\>
+ <23 "Z,Y,0.5+X"\>
+\>
+<I-43d #="220" LATT="-2" HS=" I -4bd 2c 3" FULL="I -4 3 d" 
+ <1 "0.25+Y,0.75-X,0.25-Z"\>
+ <2 "-X,0.5-Y,Z"\>
+ <3 "0.25-Y,0.25+X,0.75-Z"\>
+ <4 "0.25-X,0.25+Z,0.75-Y"\>
+ <5 "X,-Y,0.5-Z"\>
+ <6 "0.75-X,0.25-Z,0.25+Y"\>
+ <7 "0.75-Z,0.25-Y,0.25+X"\>
+ <8 "0.5-X,Y,-Z"\>
+ <9 "0.25+Z,0.75-Y,0.25-X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,0.5-Z,X"\>
+ <13 "Z,-X,0.5-Y"\>
+ <14 "0.5-Y,Z,-X"\>
+ <15 "-Z,0.5-X,Y"\>
+ <16 "0.5-Z,X,-Y"\>
+ <17 "Y,-Z,0.5-X"\>
+ <18 "0.75-Y,0.25-X,0.25+Z"\>
+ <19 "0.25+Y,0.25+X,0.25+Z"\>
+ <20 "0.25+X,0.75-Z,0.25-Y"\>
+ <21 "0.25+X,0.25+Z,0.25+Y"\>
+ <22 "0.25-Z,0.25+Y,0.75-X"\>
+ <23 "0.25+Z,0.25+Y,0.25+X"\>
+\>
+<Pm-3m #="221" LATT="1" HS="-P 4 2 3" FULL="P m -3 m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Z,Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "X,Z,-Y"\>
+ <7 "Z,Y,-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "-Z,Y,X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "Y,X,-Z"\>
+ <19 "-Y,-X,-Z"\>
+ <20 "-X,Z,Y"\>
+ <21 "-X,-Z,-Y"\>
+ <22 "Z,-Y,X"\>
+ <23 "-Z,-Y,-X"\>
+\>
+<Pn-3n #="222" LATT="1" HS="-P 4a 2bc 3" FULL="P n -3 n"
+ <1 "0.5-Y,X,Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "Y,0.5-X,Z"\>
+ <4 "X,0.5-Z,Y"\>
+ <5 "X,0.5-Y,0.5-Z"\>
+ <6 "X,Z,0.5-Y"\>
+ <7 "Z,Y,0.5-X"\>
+ <8 "0.5-X,Y,0.5-Z"\>
+ <9 "0.5-Z,Y,X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "0.5-Y,0.5-Z,X"\>
+ <13 "Z,0.5-X,0.5-Y"\>
+ <14 "0.5-Y,Z,0.5-X"\>
+ <15 "0.5-Z,0.5-X,Y"\>
+ <16 "0.5-Z,X,0.5-Y"\>
+ <17 "Y,0.5-Z,0.5-X"\>
+ <18 "Y,X,0.5-Z"\>
+ <19 "0.5-Y,0.5-X,0.5-Z"\>
+ <20 "0.5-X,Z,Y"\>
+ <21 "0.5-X,0.5-Z,0.5-Y"\>
+ <22 "Z,0.5-Y,X"\>
+ <23 "0.5-Z,0.5-Y,0.5-X"\>
+\>
+<Pm-3n #="223" LATT="1" HS="-P 4n 2 3" FULL="P m -3 n" 
+ <1 "0.5-Y,0.5+X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "0.5+Y,0.5-X,0.5+Z"\>
+ <4 "0.5+X,0.5-Z,0.5+Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "0.5+X,0.5+Z,0.5-Y"\>
+ <7 "0.5+Z,0.5+Y,0.5-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "0.5-Z,0.5+Y,0.5+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "0.5+Y,0.5+X,0.5-Z"\>
+ <19 "0.5-Y,0.5-X,0.5-Z"\>
+ <20 "0.5-X,0.5+Z,0.5+Y"\>
+ <21 "0.5-X,0.5-Z,0.5-Y"\>
+ <22 "0.5+Z,0.5-Y,0.5+X"\>
+ <23 "0.5-Z,0.5-Y,0.5-X"\>
+\>
+<Pn-3m #="224" LATT="1" HS="-P 4bc 2bc 3" FULL="P n -3 m"
+ <1 "-Y,0.5+X,0.5+Z"\>
+ <2 "0.5-X,0.5-Y,Z"\>
+ <3 "0.5+Y,-X,0.5+Z"\>
+ <4 "0.5+X,-Z,0.5+Y"\>
+ <5 "X,0.5-Y,0.5-Z"\>
+ <6 "0.5+X,0.5+Z,-Y"\>
+ <7 "0.5+Z,0.5+Y,-X"\>
+ <8 "0.5-X,Y,0.5-Z"\>
+ <9 "-Z,0.5+Y,0.5+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "0.5-Y,0.5-Z,X"\>
+ <13 "Z,0.5-X,0.5-Y"\>
+ <14 "0.5-Y,Z,0.5-X"\>
+ <15 "0.5-Z,0.5-X,Y"\>
+ <16 "0.5-Z,X,0.5-Y"\>
+ <17 "Y,0.5-Z,0.5-X"\>
+ <18 "0.5+Y,0.5+X,-Z"\>
+ <19 "-Y,-X,-Z"\>
+ <20 "-X,0.5+Z,0.5+Y"\>
+ <21 "-X,-Z,-Y"\>
+ <22 "0.5+Z,-Y,0.5+X"\>
+ <23 "-Z,-Y,-X"\>
+\>
+<Fm-3m #="225" LATT="4" HS="-F 4 2 3" FULL="F m -3 m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Z,Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "X,Z,-Y"\>
+ <7 "Z,Y,-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "-Z,Y,X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "Y,X,-Z"\>
+ <19 "-Y,-X,-Z"\>
+ <20 "-X,Z,Y"\>
+ <21 "-X,-Z,-Y"\>
+ <22 "Z,-Y,X"\>
+ <23 "-Z,-Y,-X"\>
+\>
+<Fm-3c #="226" LATT="4" HS="-F 4c 2 3" FULL="F m -3 c" 
+ <1 "-Y,X,0.5+Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,0.5+Z"\>
+ <4 "X,-Z,0.5+Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "X,Z,0.5-Y"\>
+ <7 "Z,Y,0.5-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "-Z,Y,0.5+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "Y,X,0.5-Z"\>
+ <19 "-Y,-X,0.5-Z"\>
+ <20 "-X,Z,0.5+Y"\>
+ <21 "-X,-Z,0.5-Y"\>
+ <22 "Z,-Y,0.5+X"\>
+ <23 "-Z,-Y,0.5-X"\>
+\>
+<Fd-3m #="227" LATT="4" HS="-F 4vw 2vw 3" FULL="F d -3 m"
+ <1 "-Y,0.25+X,0.25+Z"\>
+ <2 "0.25-X,0.25-Y,Z"\>
+ <3 "0.25+Y,-X,0.25+Z"\>
+ <4 "0.25+X,-Z,0.25+Y"\>
+ <5 "X,0.25-Y,0.25-Z"\>
+ <6 "0.25+X,0.25+Z,-Y"\>
+ <7 "0.25+Z,0.25+Y,-X"\>
+ <8 "0.25-X,Y,0.25-Z"\>
+ <9 "-Z,0.25+Y,0.25+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "0.25-Y,0.25-Z,X"\>
+ <13 "Z,0.25-X,0.25-Y"\>
+ <14 "0.25-Y,Z,0.25-X"\>
+ <15 "0.25-Z,0.25-X,Y"\>
+ <16 "0.25-Z,X,0.25-Y"\>
+ <17 "Y,0.25-Z,0.25-X"\>
+ <18 "0.25+Y,0.25+X,-Z"\>
+ <19 "-Y,-X,-Z"\>
+ <20 "-X,0.25+Z,0.25+Y"\>
+ <21 "-X,-Z,-Y"\>
+ <22 "0.25+Z,-Y,0.25+X"\>
+ <23 "-Z,-Y,-X"\>
+\>
+<Fd-3c #="228" LATT="4" HS="-F 4cvw 2vw 3" FULL="F d -3 c"
+ <1 "-Y,0.25+X,0.75+Z"\>
+ <2 "0.25-X,0.25-Y,Z"\>
+ <3 "0.25+Y,-X,0.75+Z"\>
+ <4 "0.25+X,-Z,0.75+Y"\>
+ <5 "X,0.25-Y,0.25-Z"\>
+ <6 "0.25+X,0.75+Z,-Y"\>
+ <7 "0.25+Z,0.75+Y,-X"\>
+ <8 "0.25-X,Y,0.25-Z"\>
+ <9 "-Z,0.25+Y,0.75+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "0.25-Y,0.25-Z,X"\>
+ <13 "Z,0.25-X,0.25-Y"\>
+ <14 "0.25-Y,Z,0.25-X"\>
+ <15 "0.25-Z,0.25-X,Y"\>
+ <16 "0.25-Z,X,0.25-Y"\>
+ <17 "Y,0.25-Z,0.25-X"\>
+ <18 "0.25+Y,0.75+X,-Z"\>
+ <19 "-Y,-X,0.5-Z"\>
+ <20 "-X,0.25+Z,0.75+Y"\>
+ <21 "-X,-Z,0.5-Y"\>
+ <22 "0.25+Z,-Y,0.75+X"\>
+ <23 "-Z,-Y,0.5-X"\>
+\>
+<Im-3m #="229" LATT="2" HS="-I 4 2 3" FULL="I m -3 m" 
+ <1 "-Y,X,Z"\>
+ <2 "-X,-Y,Z"\>
+ <3 "Y,-X,Z"\>
+ <4 "X,-Z,Y"\>
+ <5 "X,-Y,-Z"\>
+ <6 "X,Z,-Y"\>
+ <7 "Z,Y,-X"\>
+ <8 "-X,Y,-Z"\>
+ <9 "-Z,Y,X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,-Z,X"\>
+ <13 "Z,-X,-Y"\>
+ <14 "-Y,Z,-X"\>
+ <15 "-Z,-X,Y"\>
+ <16 "-Z,X,-Y"\>
+ <17 "Y,-Z,-X"\>
+ <18 "Y,X,-Z"\>
+ <19 "-Y,-X,-Z"\>
+ <20 "-X,Z,Y"\>
+ <21 "-X,-Z,-Y"\>
+ <22 "Z,-Y,X"\>
+ <23 "-Z,-Y,-X"\>
+\>
+<Ia-3d #="230" LATT="2" HS="-I 4bd 2c 3" FULL="I a -3 d" 
+ <1 "0.25-Y,0.75+X,0.25+Z"\>
+ <2 "-X,0.5-Y,Z"\>
+ <3 "0.25+Y,0.25-X,0.75+Z"\>
+ <4 "0.25+X,0.25-Z,0.75+Y"\>
+ <5 "X,-Y,0.5-Z"\>
+ <6 "0.75+X,0.25+Z,0.25-Y"\>
+ <7 "0.75+Z,0.25+Y,0.25-X"\>
+ <8 "0.5-X,Y,-Z"\>
+ <9 "0.25-Z,0.75+Y,0.25+X"\>
+ <10 "Z,X,Y"\>
+ <11 "Y,Z,X"\>
+ <12 "-Y,0.5-Z,X"\>
+ <13 "Z,-X,0.5-Y"\>
+ <14 "0.5-Y,Z,-X"\>
+ <15 "-Z,0.5-X,Y"\>
+ <16 "0.5-Z,X,-Y"\>
+ <17 "Y,-Z,0.5-X"\>
+ <18 "0.75+Y,0.25+X,0.25-Z"\>
+ <19 "0.25-Y,0.25-X,0.25-Z"\>
+ <20 "0.25-X,0.75+Z,0.25+Y"\>
+ <21 "0.25-X,0.25-Z,0.25-Y"\>
+ <22 "0.25+Z,0.25-Y,0.75+X"\>
+ <23 "0.25-Z,0.25-Y,0.25-X"\>
+\>
+<Fx #="231" LATT="-4" \>
