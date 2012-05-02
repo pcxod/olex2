@@ -15,10 +15,29 @@
 
 // the selection buffer size
 #define MAXSELECT 100
-#define OLX_GetRValue(rgb)   (uint8_t) (rgb)
-#define OLX_GetBValue(rgb)   (uint8_t) ((rgb) >> 16)
-#define OLX_GetGValue(rgb)   (uint8_t) ((rgb) >> 8)
-#define OLX_GetAValue(rgb)   (uint8_t) ((rgb) >> 24)
-#define OLX_RGB(r, g ,b)  ((uint32_t) (((uint16_t) (r) | ((uint16_t) (g) << 8)) | (((uint32_t) (uint8_t) (b)) << 16)))
-#define OLX_RGBA(r, g, b, a) ( ((uint32_t)(r)) | ((uint32_t)(g) << 8) | ((uint32_t)(b) << 16) | ((uint32_t)(a) << 24))
+
+#ifndef GetRValue
+  #define GetRValue(rgb)   (uint8_t) (rgb)
+#endif
+
+#ifndef GetBValue
+  #define GetBValue(rgb)   (uint8_t) ((rgb) >> 16)
+#endif
+
+#ifndef GetGValue
+  #define GetGValue(rgb)   (uint8_t) ((rgb) >> 8)
+#endif
+
+#ifndef GetAValue
+  #define GetAValue(rgb)   (uint8_t) ((rgb) >> 24)
+#endif
+
+#ifndef RGB
+  #define RGB(r, g ,b)  ((uint32_t) (((uint16_t) (r) | ((uint16_t) (g) << 8)) | (((uint32_t) (uint8_t) (b)) << 16)))
+#endif
+
+#ifndef RGBA
+  #define RGBA(r, g, b, a) ( ((uint32_t)(r)) | ((uint32_t)(g) << 8) | ((uint32_t)(b) << 16) | ((uint32_t)(a) << 24))
+#endif
+
 #endif

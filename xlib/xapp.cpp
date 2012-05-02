@@ -174,7 +174,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     alist.Add(&ca); 
     TEllipsoid* elp = ca.GetEllipsoid();
     if( elp != NULL )  {
-      elp->GetShelxQuad(quad);  // default is Ucart
+      elp->GetQuad(quad);  // default is Ucart
       au.UcartToUcif(quad);
       for( int k=0; k < 6; k++ )
         Ucifs[ind+k] = -TQ_PI*quad[k]*BM[k];

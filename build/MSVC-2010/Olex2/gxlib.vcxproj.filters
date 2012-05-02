@@ -155,6 +155,9 @@
     <ClInclude Include="..\..\..\gxlib\xgroup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\povdraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\gxlib\dring.h">
       <Filter>Header Files</Filter>
     </ClInclude>

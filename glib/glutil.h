@@ -9,26 +9,24 @@
 
 #ifndef __olx_glutil_H
 #define __olx_glutil_H
-#include "glalg.h"
-#include "bapp.h"
-#include "sortedlist.h"
+#include "glbase.h"
+#include "esphere.h"
 BeginGlNamespace()
 
 template <typename float_type, class FaceProvider> class GlSphereEx :
   public OlxSphere<float_type,FaceProvider>
 {
-  typedef TVector3<float_type> vec_t;
 public:
   static void Render(float_type rad, size_t ext)  {
-    TTypeList<vec_t> vecs;
+    TTypeList<TVector3<float_type> > vecs;
     TTypeList<IndexTriangle> triags;
-    TArrayList<vec_t> norms;
+    TArrayList<TVector3<float_type> > norms;
     OlxSphere<float_type,FaceProvider>::Generate(rad, ext, vecs, triags, norms);
     Render(vecs, triags, norms);
   }
-  static void Render(const TTypeList<vec_t>& vecs,
+  static void Render(const TTypeList<TVector3<float_type> >& vecs,
     const TTypeList<IndexTriangle>& triags,
-    const TArrayList<vec_t>& norms)
+    const TArrayList<TVector3<float_type> >& norms)
   {
     const size_t tc = triags.Count();
     olx_gl::begin(GL_TRIANGLES);
@@ -42,26 +40,26 @@ public:
     olx_gl::end();
   }
   static void RenderEx(float_type rad, size_t ext,
-    const vec_t& f_mask, const vec_t& t_mask)
+    const TVector3<float_type>& f_mask, const TVector3<float_type>& t_mask)
   {
-    TTypeList<vec_t> vecs;
+    TTypeList<TVector3<float_type> > vecs;
     TTypeList<IndexTriangle> triags;
-    TArrayList<vec_t> norms;
+    TArrayList<TVector3<float_type> > norms;
     OlxSphere<float_type,FaceProvider>::Generate(rad, ext, vecs, triags, norms);
     RenderEx(vecs, triags, norms, f_mask, t_mask);
   }
-  static void RenderEx(const TTypeList<vec_t>& vecs,
+  static void RenderEx(const TTypeList<TVector3<float_type> >& vecs,
     const TTypeList<IndexTriangle>& triags,
-    const TArrayList<vec_t>& norms, 
-    const vec_t& f_mask, const vec_t& t_mask)
+    const TArrayList<TVector3<float_type> >& norms, 
+    const vec3f& f_mask, const vec3f& t_mask)
   {
     const size_t tc = triags.Count();
     olx_gl::begin(GL_TRIANGLES);
     for( size_t i = 0; i < tc; i++ )  {
       const IndexTriangle& t = triags[i];
-      if( vec_t::IsInRangeInc(vecs[t.vertices[0]], f_mask, t_mask) &&
-          vec_t::IsInRangeInc(vecs[t.vertices[1]], f_mask, t_mask) &&
-          vec_t::IsInRangeInc(vecs[t.vertices[2]], f_mask, t_mask) )
+      if( vec3f::IsInRangeInc(vecs[t.vertices[0]], f_mask, t_mask) &&
+          vec3f::IsInRangeInc(vecs[t.vertices[1]], f_mask, t_mask) &&
+          vec3f::IsInRangeInc(vecs[t.vertices[2]], f_mask, t_mask) )
          continue;
       for( int j=0; j < 3; j++ )  {
         olx_gl::normal(norms[t.vertices[j]]);
@@ -71,7 +69,7 @@ public:
     olx_gl::end();
   }
   void RenderDisks(float_type rad, size_t t, float_type disk_s)  {
-    vec_t sf(rad, 0, 0);
+    vec3f sf(rad, 0, 0);
     float_type sa, sma, ca, cma;
     olx_sincos(2*M_PI/t, &sa, &ca);
     olx_sincos(-2*M_PI/t, &sma, &cma);
@@ -85,7 +83,7 @@ public:
       sf[1] = (sf[1]*ca - x*sa);
     }
     olx_gl::end();
-    sf = vec_t(rad, 0, 0);
+    sf = vec3f(rad, 0, 0);
     olx_gl::begin(GL_POLYGON);
     olx_gl::normal(0, 0, 1);
     for( size_t i=0; i <= t; i++ )  {
@@ -97,7 +95,7 @@ public:
     }
     olx_gl::end();
 
-    sf = vec_t(rad, 0, 0);
+    sf = vec3f(rad, 0, 0);
     olx_gl::begin(GL_POLYGON);
     olx_gl::normal(0, -1, 0);
     for( size_t i=0; i <= t; i++ )  {
@@ -108,7 +106,7 @@ public:
       sf[1] = (sf[1]*ca - x*sa);
     }
     olx_gl::end();
-    sf = vec_t(rad, 0, 0);
+    sf = vec3f(rad, 0, 0);
     olx_gl::begin(GL_POLYGON);
     olx_gl::normal(0, 1, 0);
     for( size_t i=0; i <= t; i++ )  {
@@ -120,7 +118,7 @@ public:
     }
     olx_gl::end();
 
-    sf = vec_t(rad, 0, 0);
+    sf = vec3f(rad, 0, 0);
     olx_gl::begin(GL_POLYGON);
     olx_gl::normal(-1, 0, 0);
     for( size_t i=0; i <= t; i++ )  {
@@ -130,7 +128,7 @@ public:
       sf[1] = (sf[1]*ca - x*sa);
     }
     olx_gl::end();
-    sf = vec_t(rad, 0, 0);
+    sf = vec3f(rad, 0, 0);
     olx_gl::begin(GL_POLYGON);
     olx_gl::normal(1, 0, 0);
     for( size_t i=0; i <= t; i++ )  {
@@ -142,7 +140,7 @@ public:
     olx_gl::end();
   }
   void RenderRims(float_type rad, size_t t, float_type disk_s)  {
-    vec_t sf(rad, 0, 0), pv;
+    vec3f sf(rad, 0, 0), pv;
     float_type sa, ca;
     olx_sincos(2*M_PI/t, &sa, &ca);
     olx_gl::begin(GL_QUADS);
@@ -160,7 +158,7 @@ public:
     }
     olx_gl::end();
 
-    sf = vec_t(rad, 0, 0);
+    sf = vec3f(rad, 0, 0);
     olx_gl::begin(GL_QUADS);
     for( size_t i=0; i <= t; i++ )  {
       olx_gl::normal(sf[1], 0.0f, sf[0]);
@@ -176,7 +174,7 @@ public:
     }
     olx_gl::end();
 
-    sf = vec_t(rad, 0, 0);
+    sf = vec3f(rad, 0, 0);
     olx_gl::begin(GL_QUADS);
     for( size_t i=0; i <= t; i++ )  {
       olx_gl::normal(0.0f, sf[0], sf[1]);

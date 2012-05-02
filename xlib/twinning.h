@@ -84,7 +84,7 @@ namespace twinning  {
         for( size_t j=0; j < scales.Count(); j++, s++ )
           _m[i][s >= scales.Count() ? s-scales.Count(): s] = scales[j];
       }
-      if( !math::LU::Invert(_m) )
+      if( !math::LU<double>::Invert(_m) )
         throw TFunctionFailedException(__OlxSourceInfo, "cannot invert the matrix");
     }
     template <typename twin_generator_t>

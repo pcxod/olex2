@@ -56,10 +56,10 @@ void TDSphere::Create(const olxstr& cName)  {
     for( size_t j=0; j < 3; j++ )  {
       uint32_t cl = analyser.Analyse(vecs[t.vertices[j]]);
       if( cl != last_cl )  {
-        olx_gl::color((float)OLX_GetRValue(cl)/255,
-          (float)OLX_GetGValue(cl)/255,
-          (float)OLX_GetBValue(cl)/255,
-          (float)OLX_GetAValue(cl)/255);
+        olx_gl::color((float)GetRValue(cl)/255,
+          (float)GetGValue(cl)/255,
+          (float)GetBValue(cl)/255,
+          (float)GetAValue(cl)/255);
         last_cl = cl;
       }
       olx_gl::normal(norms[t.vertices[j]]);

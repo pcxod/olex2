@@ -18,48 +18,47 @@ class TWindowInterface  {
 public:
   TWindowInterface(wxWindow *window) : Window(window) {}
 
-  int GetWidth()   const { return Window->GetRect().width; };
-  void SetWidth(int w)   { Window->SetSize(-1, -1, w, -1, wxSIZE_USE_EXISTING); };
-  int GetHeight()  const { return Window->GetRect().height; };
-  void SetHeight(int h)  { Window->SetSize(-1, -1, -1, h, wxSIZE_USE_EXISTING); };
+  inline int GetWidth()   const { return Window->GetRect().width; };
+  inline void SetWidth(int w)   { Window->SetSize(-1, -1, w, -1, wxSIZE_USE_EXISTING); };
+  inline int GetHeight()  const { return Window->GetRect().height; };
+  inline void SetHeight(int h)  { Window->SetSize(-1, -1, -1, h, wxSIZE_USE_EXISTING); };
 
-  int GetLeft()    const { return Window->GetRect().x; };
-  void SetLeft(int l)    { Window->SetSize(l, -1, -1, -1, wxSIZE_USE_EXISTING); };
-  int GetTop()     const { return Window->GetRect().y; };
-  void SetTop(int r)     { Window->SetSize(-1, r, -1, -1, wxSIZE_USE_EXISTING); };
+  inline int GetLeft()    const { return Window->GetRect().x; };
+  inline void SetLeft(int l)    { Window->SetSize(l, -1, -1, -1, wxSIZE_USE_EXISTING); };
+  inline int GetTop()     const { return Window->GetRect().y; };
+  inline void SetTop(int r)     { Window->SetSize(-1, r, -1, -1, wxSIZE_USE_EXISTING); };
   uint32_t GetColor() const {
     wxColour c = Window->GetBackgroundColour();
-    return OLX_RGB(c.Red(), c.Green(), c.Blue());
+    return RGB(c.Red(), c.Green(), c.Blue());
   }
-  void SetColor(uint32_t c)  {
-    Window->SetBackgroundColour(wxColour(OLX_GetRValue(c), OLX_GetGValue(c),
-      OLX_GetBValue(c)));
+  inline void SetColor(uint32_t c)  {
+    Window->SetBackgroundColour(wxColour(GetRValue(c), GetGValue(c), GetBValue(c)));
     Window->Refresh();
   }
-  void SetColor(wxColor c)  {  Window->SetBackgroundColour(c);  Window->Refresh();  }
-  bool IsVisible()    const {  return Window->IsShown();  }
-  void SetVisible(bool v)   {  
+  inline void SetColor(wxColor c)  {  Window->SetBackgroundColour(c);  Window->Refresh();  }
+  inline bool IsVisible()    const {  return Window->IsShown();  }
+  inline void SetVisible(bool v)   {  
     if( v )  
       Window->Show();  
     else  
       Window->Hide();  
   }
 
-  long GetWindowStyle()  const {   return Window->GetWindowStyleFlag();  }
-  void SetWindowStyle(long v)  { Window->SetWindowStyleFlag(v);  }
-  void AddWindowStyle(long v)  { Window->SetWindowStyleFlag(GetWindowStyle() | v);  }
+  inline long GetWindowStyle()  const {   return Window->GetWindowStyleFlag();  }
+  inline void SetWindowStyle(long v)  { Window->SetWindowStyleFlag(v);  }
+  inline void AddWindowStyle(long v)  { Window->SetWindowStyleFlag(GetWindowStyle() | v);  }
   void DelWindowStyle(long v)  {
     Window->SetWindowStyleFlag(GetWindowStyle() & ~v);
   }
-  bool HasWindowStyle(long v) const {  return (GetWindowStyle() & v) != 0;  }
+  inline bool HasWindowStyle(long v) const {  return (GetWindowStyle() & v) != 0;  }
 
-  long GetExtraStyle()   const {   return Window->GetExtraStyle();  }
-  void SetExtraStyle(long v)   { Window->SetExtraStyle(v);  }
-  void AddExtraStyle(long v)   { Window->SetExtraStyle(GetWindowStyle() | v);  }
+  inline long GetExtraStyle()   const {   return Window->GetExtraStyle();  }
+  inline void SetExtraStyle(long v)   { Window->SetExtraStyle(v);  }
+  inline void AddExtraStyle(long v)   { Window->SetExtraStyle(GetWindowStyle() | v);  }
   void DelExtraStyle(long v)   {
     SetExtraStyle(GetExtraStyle() & ~v);
   }
-  bool HasExtraStyle(long v) const {  return (GetExtraStyle() & v) != 0;  }
+  inline bool HasExtraStyle(long v) const {  return (GetExtraStyle() & v) != 0;  }
 };
 
 #endif

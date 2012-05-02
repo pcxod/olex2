@@ -511,7 +511,6 @@
     <ClCompile Include="..\..\..\glib\gltextbox.cpp" />
     <ClCompile Include="..\..\..\glib\gltexture.cpp" />
     <ClCompile Include="..\..\..\glib\gpcollection.cpp" />
-    <ClCompile Include="..\..\..\glib\povdraw.cpp" />
     <ClCompile Include="..\..\..\glib\styles.cpp" />
     <ClCompile Include="..\..\..\glib\xfader.cpp" />
   </ItemGroup>
@@ -519,7 +518,6 @@
     <ClInclude Include="..\..\..\glib\3dframe.h" />
     <ClInclude Include="..\..\..\glib\dframe.h" />
     <ClInclude Include="..\..\..\glib\gdrawobject.h" />
-    <ClInclude Include="..\..\..\glib\glalg.h" />
     <ClInclude Include="..\..\..\glib\glbackground.h" />
     <ClInclude Include="..\..\..\glib\glbase.h" />
     <ClInclude Include="..\..\..\glib\glbitmap.h" />
@@ -544,7 +542,6 @@
     <ClInclude Include="..\..\..\glib\gltexture.h" />
     <ClInclude Include="..\..\..\glib\glutil.h" />
     <ClInclude Include="..\..\..\glib\gpcollection.h" />
-    <ClInclude Include="..\..\..\glib\povdraw.h" />
     <ClInclude Include="..\..\..\glib\styles.h" />
   </ItemGroup>
   <ItemGroup>

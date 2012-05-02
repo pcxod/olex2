@@ -17,7 +17,6 @@ BeginEsdlNamespace()
 // simple structure to contain three indeces to vertices 
 struct IndexTriangle {
   TVector3<size_t> vertices;
-  size_t operator [] (size_t i) const { return vertices[i]; }
   IndexTriangle(size_t i1, size_t i2, size_t i3) : vertices(i1,i2,i3)  {}
 };
 // Octahedron face provider
@@ -46,8 +45,7 @@ template <class vec_type> struct TetrahedronFP  {
   static size_t vertex_count, face_count;
 };
 template <class vec_type> vec_type TetrahedronFP<vec_type>::vertices[4] = {
-  vec_type(1, 1, 1), vec_type(-1, -1, 1), vec_type(-1, 1, -1),
-  vec_type(1, -1, -1)
+  vec_type(1, 1, 1), vec_type(-1, -1, 1), vec_type(-1, 1, -1), vec_type(1, -1, -1)
 };
 template <class vec_type> IndexTriangle TetrahedronFP<vec_type>::faces[4] = {
   IndexTriangle(0, 2, 1), IndexTriangle(0, 1, 3),
@@ -56,18 +54,14 @@ template <class vec_type> IndexTriangle TetrahedronFP<vec_type>::faces[4] = {
 template <class vec_type> size_t TetrahedronFP<vec_type>::vertex_count = 4;
 template <class vec_type> size_t TetrahedronFP<vec_type>::face_count = 4;
 
-/* a class to build sphere by partitioning an octahedron. Alows custom masks to
-be aplied when rendering the sphere in OpenGL or other rendering engine. All
-methods and members can be made static...
-*/
+/* a class to build sphere by partitioning an octahedron. Alows custom masks to be aplied when
+rendering the sphere in OpenGL or other rendering engine. All methods and members can be made static... */
 template <typename float_type, class FaceProvider> class OlxSphere {
 public:
-  /* rad - radius of the sphere, ext - the generation to generate, vo - vector
-  output, to - triangles output, normals - the normals output (one a vertex,
-  not triangle). Since there is a huge redundancy, a unique set of vecteces is
-  generated and triangles contain inly indeces to the verteces they are based
-  on
-  */
+  /* rad - radius of the sphere, ext - the generation to generate, vo - vector output,
+  to - triangles output, normals - the normals output (one a vertex, not triangle). Since
+  there is a huge redundancy, a unique set of vecteces is generated and triangles
+  contain inly indeces to the verteces they are based on */
   static void Generate(float_type rad, size_t ext,
     TTypeList<TVector3<float_type> >& vo,
     TTypeList<IndexTriangle>& to,

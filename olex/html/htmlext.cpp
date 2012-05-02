@@ -1103,7 +1103,7 @@ olxstr THtml::GetObjectValue(const AOlxCtrl *Obj)  {
   }
   if( EsdlInstanceOf(*Obj, TColorCtrl) )  {
     wxColor c = ((TColorCtrl*)Obj)->GetColour();
-    return OLX_RGBA(c.Red(), c.Green(), c.Blue(), c.Alpha());
+    return RGBA(c.Red(), c.Green(), c.Blue(), c.Alpha());
   }
   return EmptyString();
 }

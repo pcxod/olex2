@@ -52,7 +52,7 @@ public:
   size_t EdgeCount() const {  return FGlP == NULL ? 0 : 24;  }
   const vec3f& GetEdge(size_t i) const {  return FGlP->Vertices[i];  }
   inline bool IsReciprocal() const {  return Reciprocal;  }
-  void SetReciprocal(bool v, double scale=1);
+  void SetReciprocal(bool v);
   virtual void SetVisible(bool v);
   inline const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
   inline const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }

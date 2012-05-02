@@ -9,7 +9,6 @@
 
 #include "glscene.h"
 #include "glrender.h"
-#include "povdraw.h"
 
 AGlScene::~AGlScene()  {
   Fonts.DeleteItems();
@@ -69,41 +68,6 @@ void AGlScene::FromDataItem(const TDataItem &di)  {
   TDataItem &fonts = di.FindRequiredItem("Fonts");
   for( size_t i=0; i < fonts.ItemCount(); i++ )
     CreateFont(fonts.GetItem(i).GetName(), fonts.GetItem(i).GetValue());
-}
-//..............................................................................
-const_strlist AGlScene::ToPov() const {
-  TStrList out;
-  out.Add("global_settings {");
-  TGlOption cl_amb = FParent->LightModel.GetAmbientColor();
-  cl_amb *= 10;
-  out.Add(" ambient_light ") << pov::to_str(cl_amb);
-  out.Add("}");
-
-  TGlOption cl_clear = FParent->LightModel.GetClearColor();
-  out.Add("background { color ") << pov::to_str(cl_clear) << " }";
-  out.Add("camera {");
-  out.Add(" location <0,0,") << 3./FParent->GetBasis().GetZoom() << '>';
-  out.Add(" angle 25");
-  out.Add(" up 1");
-  out.Add(" right -4/3");
-  out.Add(" look_at <0,0,0>");
-  out.Add("}");
-  for( size_t i=0; i < 8; i++ )  {
-    const TGlLight &l = FParent->LightModel.GetLight(i);
-    if( !l.IsEnabled() )  continue;
-    out.Add("light_source {");
-    TGlOption lp = l.GetPosition();
-    out.Add(" ") << pov::to_str(lp, false);
-    lp = l.GetDiffuse();
-    if( lp.IsEmpty() )
-      lp = l.GetAmbient();
-    if( lp.IsEmpty() )
-      lp = l.GetSpecular();
-    lp *= 1.5;
-    out.Add(" color ") << pov::to_str(lp);
-    out.Add("}");
-  }
-  return out;
 }
 //..............................................................................
 //..............................................................................

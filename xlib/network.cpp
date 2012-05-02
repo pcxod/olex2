@@ -1070,7 +1070,7 @@ void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform,
       uc.GetEllp(atomsToTransform[i]->GetEllipsoid()->GetId());
       atomsToTransform[i]->GetEllipsoid()->SetTag(1);
       // ADP is ivariant under the inversion
-      atomsToTransform[i]->GetEllipsoid()->Mult(m);
+      atomsToTransform[i]->GetEllipsoid()->MultMatrix(m);
     }
   }
 }

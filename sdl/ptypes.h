@@ -50,17 +50,5 @@ public:
   virtual IEObject* Replicate() const {  return new TEPType(*this);  }
 };
 
-template <> class TEPType<IEObject> : public AReferencible  {
-  olxstr Value;
-public:
-  TEPType(const IEObject &val) : Value(val.ToString())  {}
-  TEPType(const TEPType& val) : Value(val.GetValue())  {}
-  olxstr& Val()  {  return Value;  }
-  const olxstr& GetValue() const {  return Value;  }
-  void SetValue(const char* v)  {  Value = v;  }
-  TIString ToString() const {  return Value;  }
-  virtual IEObject* Replicate() const {  return new TEPType(*this);  }
-};
-
 EndEsdlNamespace()
 #endif

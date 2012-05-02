@@ -439,10 +439,10 @@ const TRefList& RefinementModel::GetReflections() const {
     HklFileMat = HKLF_mat;
     hf.LoadFromFile(HKLSource);
     if (hf.HasCell()) {
-      evecd cell = evecd::FromAny(
+      evecd cell = evecd::FromVector(
         CompositeVector::Make(vec3d_list() << aunit.GetAxes() <<
           aunit.GetAngles()));
-      evecd esd = evecd::FromAny(
+      evecd esd = evecd::FromVector(
         CompositeVector::Make(vec3d_list() << aunit.GetAxisEsds() <<
           aunit.GetAngleEsds()));
       if (cell.DistanceTo(hf.GetCell()) > 1e-6 ||

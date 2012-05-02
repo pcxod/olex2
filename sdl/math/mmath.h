@@ -17,15 +17,14 @@ BeginEsdlNamespace()
 reflection generation in particular - inspired by smtxb code by Luc Bourhis */
 
 namespace math  {
-  template <typename CT> struct mat_col  {
-    typedef typename CT::number_type number_type;
+  template <typename CT, typename FT> struct mat_col  {
     CT& m;
     const size_t col, start, end, sz;
     mat_col(CT& _m, size_t _col, size_t _start, size_t _end=InvalidIndex) :
       m(_m), col(_col), start(_start),
       end(_end==InvalidIndex ? m.RowCount() : _end), sz(end-start)  {}
-    number_type& operator () (size_t i)  {  return m(start+i, col);  }
-    const number_type& operator () (size_t i) const {
+    FT& operator () (size_t i)  {  return m(start+i, col);  }
+    const FT& operator () (size_t i) const {
       if( i >= sz )  throw 1;
        return m(start+i, col);
     }
@@ -42,17 +41,14 @@ namespace math  {
     bool IsEmpty() const {  return sz == 0;  }
   };
 
-  template <typename CT> struct mat_row  {
-    typedef typename CT::number_type number_type;
+  template <typename CT, typename FT> struct mat_row  {
     CT& m;
     const size_t row, start, end, sz;
     mat_row(CT& _m, size_t _row, size_t _start, size_t _end=InvalidIndex) :
       m(_m), row(_row), start(_start),
       end(_end==InvalidIndex ? m.ColCount() : _end), sz(end-start)  {}
-    number_type& operator () (size_t i)  {  return m(row, start+i);  }
-    const number_type& operator () (size_t i) const {
-      return m(row, start+i);
-    }
+    FT& operator () (size_t i)  {  return m(row, start+i);  }
+    const FT& operator () (size_t i) const {  return m(row, start+i);  }
     template <typename Functor> mat_row& ForEach(const Functor& f)  {
       for( size_t i=start; i < end; i++ )
         f(m(row, i));
@@ -67,15 +63,14 @@ namespace math  {
     bool IsEmpty() const {  return sz == 0;  }
   };
 
-  template <typename CT> struct vec_row  {
-    typedef typename CT::number_type number_type;
+  template <typename CT, typename FT> struct vec_row  {
     CT& v;
     const size_t start, end, sz;
     vec_row(CT& _v, size_t _start, size_t _end=InvalidIndex) :
       v(_v), start(_start),
       end(_end==InvalidIndex ? v.Count() : _end), sz(end-start)  {}
-    number_type& operator () (size_t i)  {  return v(start+i);  }
-    const number_type& operator () (size_t i) const {  return v(start+i);  }
+    FT& operator () (size_t i)  {  return v(start+i);  }
+    const FT& operator () (size_t i) const {  return v(start+i);  }
     template <typename Functor> vec_row& ForEach(const Functor& f)  {
       for( size_t i=start; i < end; i++ )
         f(v(i));
@@ -90,8 +85,7 @@ namespace math  {
     bool IsEmpty() const {  return sz == 0;  }
   };
 
-  template <typename CT> struct mat_mat  {
-    typedef typename CT::number_type number_type;
+  template <typename CT, typename FT> struct mat_mat  {
     CT& m;
     const size_t col_s, col_e, row_s, row_e, row_c, col_c;
     mat_mat(CT& _m, size_t rows, size_t rowe, size_t cols, size_t cole) :
@@ -102,88 +96,49 @@ namespace math  {
       m(_m),
       col_s(0), col_e(colc), row_s(0), row_e(rowc),
       row_c(rowc), col_c(colc) {}
-    number_type& operator ()(size_t i, size_t j) {
-      return m(i+row_s,j+col_s);
-    }
-    const number_type& operator ()(size_t i, size_t j) const {
-      return m(i+row_s,j+col_s);
-    }
+    FT& operator ()(size_t i, size_t j)  {  return m(i,j);  }
+    const FT& operator ()(size_t i, size_t j) const {  return m(i,j);  }
     size_t ColCount() const {  return col_c;  }
     size_t RowCount() const {  return row_c;  }
-    template <class AT> mat_mat & operator = (const AT &n) {
-      for (size_t i=row_s, i1=0; i < row_e; i++, i1++)
-        for (size_t j=col_s; j < col_e; j++)
-          m(i,j) = n(i1,j-col_s);
-      return *this;
-    }
-    // considers n to be symmetric
-    template <class AT> mat_mat & SymAssign(const AT &n) {
-      if (col_c != row_c)
-        throw TInvalidArgumentException(__OlxSourceInfo, "matrix size");
-      for (size_t i=0; i < row_c; i++) {
-        const size_t i_off = row_s+i;
-        for (size_t j=i; j < col_e; j++)
-          m(i_off,j+col_s) = m(j+col_s,i_off) = n(i,j);
-      }
-      return *this;
-    }
-    template <typename Functor> mat_mat& ForEach(const Functor& f)  {
-      for (size_t i=row_s; i < row_e; i++)
-        for (size_t j=col_s; j < col_e; j++)
-          f(m(i, j));
-      return *this;
-    }
-    template <typename Functor> mat_mat& ForEach(const Functor& f) const {
-      for (size_t i=row_s; i < row_e; i++)
-        for (size_t j=col_s; j < col_e; j++)
-          f(m(i, j));
-      return *this;
-    }
     bool IsEmpty() const {  return ColCount() == 0 || RowCount() == 0;  }
   };
   
-  struct proxy  {
-    template <typename CT> static mat_mat<CT>
+  template <typename FT> struct proxy  {
+    template <typename CT> static mat_mat<CT,FT>
     mat(CT& _m, size_t rows, size_t rowe, size_t cols, size_t cole)  {
-      return mat_mat<CT>(_m, rows, rowe, cols, cole); 
+      return mat_mat<CT,FT>(_m, rows, rowe, cols, cole); 
     }
-    template <typename CT> static mat_mat<CT>
+    template <typename CT> static mat_mat<CT,FT>
     mat_to(CT& _m, size_t rowe, size_t cole)  {
-      return mat_mat<CT>(_m, 0, rowe, 0, cole); 
+      return mat_mat<CT,FT>(_m, 0, rowe, 0, cole); 
     }
-    template <typename CT> static mat_col<CT>
+    template <typename CT> static mat_col<CT,FT>
     col(CT& _m, size_t _col, size_t _start, size_t _end=InvalidIndex)  {
-      return mat_col<CT>(_m, _col, _start, _end);
+      return mat_col<CT,FT>(_m, _col, _start, _end);
     }
-    template <typename CT> static mat_row<CT>
+    template <typename CT> static mat_row<CT,FT>
     row(CT& _m, size_t _row, size_t _start, size_t _end=InvalidIndex)  {
-      return mat_row<CT>(_m, _row, _start, _end);
+      return mat_row<CT,FT>(_m, _row, _start, _end);
     }
-    template <typename CT> static vec_row<CT>
+    template <typename CT> static vec_row<CT,FT>
     vec(CT& _v, size_t _start, size_t _end=InvalidIndex)  {
-      return vec_row<CT>(_v, _start, _end);
+      return vec_row<CT,FT>(_v, _start, _end);
     }
   };
 
   namespace alg  {
-    template<typename ToT, typename FromT>
-    void copy(ToT& to, const FromT& f)
-    {
+    template<typename ToT, typename FromT> void copy(ToT& to, const FromT& f)  {
       for( size_t i=0; i < f.Count(); i++ )
         to(i) = f(i);
     }
-    template<typename ToT, typename FromT>
-    void copy_1(ToT& to, const FromT& f)
-    {
+    template<typename ToT, typename FromT> void copy_1(ToT& to, const FromT& f)  {
       for( size_t i=1; i < f.Count(); i++ )
         to(i) = f(i);
       to(0) = 1;
     }
     // this way the rounding error is smaller than in a simple loop
-    template<typename T1, typename T2>
-    typename T1::number_type dot_prod_x(const T1& a, const T2& b)
-    {
-      typename T1::number_type v = 0;
+    template<typename T1, typename T2, typename FT> FT& dot_prod_x(const T1& a, const T2& b, FT& v)  {
+      v = 0;
       size_t ce=((a.Count())/4)*4, i=0;
       for( ; i < ce; i+=4 )
         v += a(i)*b(i) + a(i+1)*b(i+1) + a(i+2)*b(i+2) + a(i+3)*b(i+3);
@@ -192,10 +147,8 @@ namespace math  {
       return v;
     }
     // this way the rounding error is smaller than in a simple loop
-    template<typename T1, typename T2>
-    typename T1::number_type dot_prod(const T1& a, const T2& b)
-    {
-      typename T1::number_type v = 0;
+    template<typename T1, typename T2, typename FT> FT& dot_prod(const T1& a, const T2& b, FT& v)  {
+      v = 0;
       const size_t sz = a.Caunt();
       for( size_t i=0; i < sz; i++ )
         v += a(i)*b(i);
@@ -211,8 +164,7 @@ namespace math  {
       for( size_t x=0; x < sz; x++ )
         olx_swap(m(x,i), m(x,j));
     }
-    template <typename T>
-    void print0(const T& a, size_t m, const olxstr& annotation=EmptyString()) {
+    template <typename T> void print0(const T& a, size_t m, const olxstr& annotation=EmptyString())  {
       if( !annotation.IsEmpty() )
         TBasicApp::NewLogEntry() << annotation;
       olxstr line;
@@ -220,12 +172,10 @@ namespace math  {
         line << olxstr::FormatFloat(-16, a(i), true) << ' ';
       TBasicApp::NewLogEntry() << line;
     }
-    template <typename T>
-    void print0_1(const T& a, const olxstr& annotation=EmptyString())  {
+    template <typename T> void print0_1(const T& a, const olxstr& annotation=EmptyString())  {
       print0(a, a.Count(), annotation);
     }
-    template <typename T>
-    void print1(const T& a, int m, const olxstr& annotation=EmptyString())  {
+    template <typename T> void print1(const T& a, int m, const olxstr& annotation=EmptyString())  {
       if( !annotation.IsEmpty() )
         TBasicApp::NewLogEntry() << annotation;
       olxstr line;
@@ -241,24 +191,20 @@ namespace math  {
       for( size_t i=0; i < m; i++ )  {
         olxstr line;
         for( size_t j=0; j < n; j++ )
-          line << olxstr::FormatFloat(-4, a(i, j), true) << ' ';
+          line << olxstr::FormatFloat(-16, a(i, j), true) << ' ';
         TBasicApp::NewLogEntry() << line;
       }
     }
-    template <typename T>
-    void print0_2(const T& a, const olxstr& annotation=EmptyString())  {
+    template <typename T> void print0_2(const T& a, const olxstr& annotation=EmptyString())  {
       print0(a, a.RowCount(), a.ColCount(), annotation);
     }
-    template <typename T>
-    void print1(const T& a, int m, int n,
-      const olxstr& annotation=EmptyString())
-    {
+    template <typename T> void print1(const T& a, int m, int n, const olxstr& annotation=EmptyString())  {
       if( !annotation.IsEmpty() )
         TBasicApp::NewLogEntry() << annotation;
       for( int i=1; i <= m; i++ )  {
         olxstr line;
         for( int j=1; j <= n; j++ )
-          line << olxstr::FormatFloat(-4, a(i,j), true) << ' ';
+          line << olxstr::FormatFloat(-16, a(i,j), true) << ' ';
         TBasicApp::NewLogEntry() << line;
       }
     }
@@ -312,7 +258,7 @@ namespace math  {
       mx = olx_max(olx_abs(alpha), olx_abs(xnorm));
       const FT beta = mx*sqrt(olx_sqr(alpha/mx)+olx_sqr(xnorm/mx));
       const FT v0 = (alpha <= 0 ? alpha - beta : -xnorm/(alpha + beta)*xnorm);
-      proxy::vec(v,1, v.Count()).ForEach(alg::Mul(1/v0));
+      proxy<FT>::vec(v,1, v.Count()).ForEach(alg::Mul(1/v0));
       v(0) = beta;
       return 2/(olx_sqr(xnorm/v0)+1);
     }
@@ -339,7 +285,7 @@ namespace math  {
     void ApplyFromLeft(MatT& m, FT tau, size_t row_s, size_t col_s)  {
       const FT beta = m(row_s,col_s-1);
       m(row_s,col_s-1) = 1;
-      ApplyFromLeft(m, tau, proxy::col(m, col_s-1, row_s, m.RowCount()),
+      ApplyFromLeft(m, tau, proxy<FT>::col(m, col_s-1, row_s, m.RowCount()),
         row_s, m.RowCount(), col_s, m.ColCount());
       m(row_s,col_s-1) = beta;
     }
@@ -350,16 +296,17 @@ namespace math  {
       if( tau == 0 || row_s >= row_e || col_s >= col_e )
         return;
       for( size_t i=row_s; i < row_e; i++ )  {
-        FT v = tau*alg::dot_prod_x(proxy::row(m, i, col_s, col_e), vt);
+        FT v = 0;
+        const FT v1 = tau*alg::dot_prod_x(proxy<FT>::row(m, i, col_s, col_e), vt, v);
         for( size_t j=col_s; j < col_e; j++ )
-          m(i,j) -= vt(j-col_s)*v;
+          m(i,j) -= vt(j-col_s)*v1;
       }
     }
     template <typename MatT>
     void ApplyFromRight(MatT& m, FT tau, size_t row_s, size_t col_s)  {
       const FT beta = m(row_s-1,col_s);
       m(row_s-1,col_s) = 1;
-      ApplyFromRight(m, tau, proxy::row(m, row_s-1, col_s, m.ColCount()),
+      ApplyFromRight(m, tau, proxy<FT>::row(m, row_s-1, col_s, m.ColCount()),
         row_s, m.RowCount(), col_s, m.ColCount());
       m(row_s-1,col_s) = beta;
     }
@@ -416,9 +363,8 @@ namespace math  {
   };  // end of struct Rotation
 
   // returns false for singular matrix
-  template <typename MatT>
+  template <typename MatT, typename FT>
   static bool InvertTriagular(MatT& m, bool upper, bool hasUnitDiag)  {
-    typedef typename MatT::number_type FT;
     if( upper )  {
       for( size_t i=0; i < m.RowCount(); i++ )  {
         FT diag_v = -1;
@@ -453,6 +399,7 @@ namespace math  {
     }
     return true;
   }
+  template <typename FT>
   struct LU  {
     template <typename MatT, typename IndexVecT>
     static void Decompose(MatT& m, IndexVecT& pivots)  {
@@ -468,7 +415,7 @@ namespace math  {
           if( pivot_index != i )
             alg::swap_rows(m, pivot_index, i);
           if( i < min_d-1 )
-            proxy::col(m, i, i+1).ForEach(alg::Mul(1/m(i,i)));
+            proxy<FT>::col(m, i, i+1).ForEach(alg::Mul(1/m(i,i)));
         }
         for( size_t j=i+1; j < m.RowCount(); j++ )  {
           for( size_t k=i+1; k < m.RowCount(); k++ )
@@ -478,8 +425,7 @@ namespace math  {
     }
     template <typename MatT, typename IndexVecT>
     static bool Invert(MatT& m, const IndexVecT& pivots)  {
-      typedef typename MatT::number_type FT;
-      if( !InvertTriagular<MatT>(m, true, false) )
+      if( !InvertTriagular<MatT, FT>(m, true, false) )
         return false;
       TVector<FT> tmp(m.RowCount());
       for( size_t i=m.RowCount()-2; i != InvalidIndex; i-- )  {
@@ -507,16 +453,15 @@ namespace math  {
       return Invert(m, pivots);
     }
   }; // end of LU
-  struct LQ  {
+  template <typename FT> struct LQ  {
     template <typename MatT,typename VecT>
     static void Decompose(MatT& m, VecT& taus)  {
-      typedef typename MatT::number_type FT;
       const size_t min_d = olx_min(m.RowCount(), m.ColCount());
       taus.Resize(min_d);
       TVector<FT> tmp(m.ColCount());
       Reflection<FT> ref(m.RowCount());
       for( size_t i=0; i < min_d; i++ )  {
-        mat_row<MatT> mr(m, i, i);
+        mat_row<MatT,FT> mr(m, i, i);
         taus(i) = ref.Generate(mr);
         if( i < m.ColCount()-1 )  {
           alg::copy_1(tmp, mr);
@@ -526,7 +471,6 @@ namespace math  {
     }
     template <typename MatIT, typename MatOT, typename VecT>
     static void UnpackQ(const MatIT& m, const VecT& taus, size_t row_cnt, MatOT& q)  {
-      typedef typename MatOT::number_type FT;
       if( m.IsEmpty() || row_cnt == 0 )
         return;
       const size_t min_d = olx_min(m.RowCount(), m.ColCount());
@@ -546,16 +490,16 @@ namespace math  {
     }
   }; // end of LQ
   
+  template <class FT>
   struct QR  {
     template <typename MatT, typename VecT>
     static void Decompose(MatT& m, VecT& taus)  {
-      typedef typename MatT::number_type FT;
       const size_t min_d = olx_min(m.ColCount(), m.RowCount());
       Reflection<FT> r(min_d);
       taus.Resize(min_d);
       TVector<FT> tmp(m.RowCount());
       for( size_t i=0; i < min_d; i++ )  {
-        mat_col<MatT> mc(m, i, i);
+        mat_col<MatT, FT> mc(m, i, i);
         taus(i) = r.Generate(mc);
         if( i < m.ColCount()-1 )  {
           alg::copy_1(tmp, mc);
@@ -566,7 +510,6 @@ namespace math  {
 
     template <typename MatIT, typename MatOT, typename VecT>
     static void Unpack(const MatIT& qr, const VecT& tau, size_t col_num, MatOT& q)  {
-      typedef typename MatOT::number_type FT;
       const size_t min_d = olx_min(qr.ColCount(), qr.RowCount());
       Reflection<FT> ref(col_num);
       q.Resize(qr.RowCount(), col_num);
@@ -577,16 +520,15 @@ namespace math  {
       const size_t sz = olx_min(min_d, col_num)-1;
       TVector<FT> v(qr.RowCount());
       for( size_t i=sz; i != InvalidIndex; i-- )  {
-        alg::copy_1(v, proxy::col(qr, i, i, qr.RowCount())); 
+        alg::copy_1(v, proxy<FT>::col(qr, i, i, qr.RowCount())); 
         ref.ApplyFromLeft(q, tau(i), v, i, qr.RowCount(), 0, col_num);
       }
     }
   }; // end QR
 
-  struct Bidiagonal  {
+  template <typename FT> struct Bidiagonal  {
     template <typename MatT, typename VecT>
     static void ToBidiagonal(MatT& m, VecT& qtau, VecT& ptau)  {
-      typedef typename MatT::number_type FT;
       const size_t
         min_d = olx_min(m.ColCount(), m.RowCount()),
         max_d = olx_max(m.ColCount(), m.RowCount());
@@ -597,11 +539,11 @@ namespace math  {
         const size_t k_left = m.ColCount() - (m.RowCount() > m.ColCount() ? 0 : 1);
         const size_t k_right = m.ColCount()-2;
         for( size_t i=0; i < k_left; i++ )  {
-          mat_col<MatT> mc(m, i, i);
+          mat_col<MatT, FT> mc(m, i, i);
           qtau(i) = ref.Generate(mc);
           ref.ApplyFromLeft(m, qtau(i), i, i+1);
           if( i < k_right )  {
-            mat_row<MatT> mr(m, i, i+1);
+            mat_row<MatT, FT> mr(m, i, i+1);
             ptau(i) = ref.Generate(mr);
             ref.ApplyFromRight(m, ptau(i), i+1, i+1);
           }
@@ -613,11 +555,11 @@ namespace math  {
         const size_t k_right = m.RowCount();
         const size_t k_left = m.RowCount()-2;
         for( size_t i=0; i < k_right; i++ )  {
-          mat_row<MatT> mr(m, i, i);
+          mat_row<MatT, FT> mr(m, i, i);
           ptau(i) = ref.Generate(mr);
           ref.ApplyFromRight(m, ptau(i), i+1, i);
           if( i < k_left )  {
-            mat_col<MatT> mc(m, i, i+1);
+            mat_col<MatT, FT> mc(m, i, i+1);
             qtau(i) = ref.Generate(mc);
             ref.ApplyFromLeft(m, qtau(i), i+1, i+1);
           }
@@ -628,7 +570,6 @@ namespace math  {
     }
     template <typename MatIT, typename MatOT, typename VecT>
     static void UnpackQ(const MatIT& qp, const VecT& qtau, size_t col_cnt, MatOT& q)  {
-      typedef typename MatOT::number_type FT;
       q.Resize(qp.RowCount(), col_cnt);
       Reflection<FT> r(col_cnt);
       TVector<FT> tmp(qp.RowCount());
@@ -639,21 +580,20 @@ namespace math  {
       if( qp.RowCount() >= qp.ColCount() )  {
         const size_t s = olx_min(qp.ColCount(), col_cnt)-1;
         for( size_t i=s; i != InvalidIndex; i-- )  {
-          alg::copy_1(tmp, proxy::col(qp, i, i, qp.RowCount()));
+          alg::copy_1(tmp, proxy<FT>::col(qp, i, i, qp.RowCount()));
           r.ApplyFromLeft(q, qtau(i), tmp, i, qp.RowCount(), 0, col_cnt);
         }
       }
       else  {
         const size_t s = olx_min(qp.RowCount(), col_cnt)-1;
         for( size_t i=s; i != InvalidIndex; i-- )  {
-          alg::copy_1(tmp, proxy::col(qp, i, i+1, qp.RowCount()));
+          alg::copy_1(tmp, proxy<FT>::col(qp, i, i+1, qp.RowCount()));
           r.ApplyFromLeft(q, qtau(i), tmp, i+1, qp.RowCount(), 0, col_cnt);
         }
       }
     }
     template <typename MatIT, typename MatOT, typename VecT>
     static void UnpackPT(const MatIT& qp, const VecT& ptau, size_t row_cnt, MatOT& pt)  {
-      typedef typename MatOT::number_type FT;
       if( qp.IsEmpty() || row_cnt == 0 )
         return;
       pt.Resize(row_cnt, qp.ColCount());
@@ -666,14 +606,14 @@ namespace math  {
       if( qp.RowCount() >= qp.ColCount() )  {
         const size_t s = olx_min(qp.ColCount(), row_cnt)-2;
         for( size_t i=s; i != InvalidIndex; i-- )  {
-          alg::copy_1(tmp, proxy::row(qp, i, i+1, qp.ColCount()));
+          alg::copy_1(tmp, proxy<FT>::row(qp, i, i+1, qp.ColCount()));
           ref.ApplyFromRight(pt, ptau(i), tmp, 0, row_cnt, i+1, qp.ColCount());
         }
       }
       else  {
         const size_t s = olx_min(qp.RowCount(), row_cnt)-1;
         for( size_t i=s; i != InvalidIndex; i-- )  {
-          alg::copy_1(tmp, proxy::row(qp, i, i, qp.ColCount()));
+          alg::copy_1(tmp, proxy<FT>::row(qp, i, i, qp.ColCount()));
           ref.ApplyFromRight(pt, ptau(i), tmp, 0, row_cnt, i, qp.ColCount());
         }
       }
@@ -707,7 +647,6 @@ namespace math  {
     template <typename MatIT, typename MatOT, typename VecT>
     static void MulByQ(const MatIT& qp, const VecT& tauq, MatOT& z, bool from_right, bool dot_trans)
     {
-      typedef typename MatOT::number_type FT;
       const size_t mx = olx_max(
         olx_max(qp.ColCount(), qp.RowCount()),
         olx_max(z.ColCount(), z.RowCount()));
@@ -725,7 +664,7 @@ namespace math  {
         }
         TVector<FT> tmp(mx);
         for( size_t i=i1; i < i2; i+= step_inc )  {
-          alg::copy_1(tmp, proxy::col(qp, i, i, qp.RowCount()));
+          alg::copy_1(tmp, proxy<FT>::col(qp, i, i, qp.RowCount()));
           if( from_right )
             ref.ApplyFromRight(z, tauq(i), tmp, 0, z.RowCount(), i, qp.RowCount());
           else
@@ -746,7 +685,7 @@ namespace math  {
         }
         TVector<FT> tmp(mx);
         for( size_t i=i1; i < i2; i += step_inc )  {
-          alg::copy_1(tmp, proxy::col(qp, i, i+1, qp.RowCount()));
+          alg::copy_1(tmp, proxy<FT>::col(qp, i, i+1, qp.RowCount()));
           if( from_right )
             ref.ApplyFromRight(z, tauq(i), tmp, 0, z.RowCount(), i+1, qp.RowCount());
           else
@@ -757,7 +696,6 @@ namespace math  {
     template <typename MatIT, typename MatOT, typename VecT>
     static void MulByP(const MatIT& qp, const VecT& tauq, MatOT& z, bool from_right, bool dot_trans)
     {
-      typedef typename MatOT::number_type FT;
       const size_t mx = olx_max(
         olx_max(qp.ColCount(), qp.RowCount()),
         olx_max(z.ColCount(), z.RowCount()));
@@ -775,7 +713,7 @@ namespace math  {
         }
         TVector<FT> tmp(mx);
         while( i1 != i2 )  {
-          alg::copy_1(tmp, proxy::row(qp, i1, i1+1, qp.RowCount()));
+          alg::copy_1(tmp, proxy<FT>::row(qp, i1, i1+1, qp.RowCount()));
           if( from_right )
             ref.ApplyFromRight(z, tauq(i1), tmp, 0, z.RowCount(), i1+1, qp.ColCount());
           else
@@ -797,7 +735,7 @@ namespace math  {
         }
         TVector<FT> tmp(mx);
         while( i1 != i2 )  {
-          alg::copy_1(tmp, proxy::row(qp, i1, i1, qp.ColCount()));
+          alg::copy_1(tmp, proxy<FT>::row(qp, i1, i1, qp.ColCount()));
           if( from_right )
             ref.ApplyFromRight(z, tauq(i1), tmp, 0, z.RowCount(), i1, qp.ColCount());
           else
@@ -806,7 +744,6 @@ namespace math  {
         }
       }
     }
-    template <typename FT>
     struct SVD  {
       template <typename DiagT1, typename DiagT2, typename UT, typename CT, typename VtT>
       static void do2x2(size_t i, DiagT1& d, DiagT2& e, UT& u, CT& c, VtT& vt)  {
@@ -912,7 +849,7 @@ namespace math  {
           if( d(0) < 0 )  {
             d(0) = -d(0);
             if( vt.RowCount() > 0 )
-              proxy::row(vt, 0, 0).ForEach(alg::ChSig());
+              proxy<FT>::row(vt, 0, 0).ForEach(alg::ChSig());
           }
           return true;
         }
@@ -1163,7 +1100,7 @@ namespace math  {
           if( d(i) < 0 )  {
             d(i) = -d(i);
             if( vt.ColCount() > 0 )
-              proxy::row(vt, i, 0).ForEach(alg::ChSig());
+              proxy<FT>::row(vt, i, 0).ForEach(alg::ChSig());
           }
         }
         // eventually - sorting...
@@ -1220,47 +1157,47 @@ namespace math  {
       else
         vt.Resize(m.ColCount(), m.ColCount());
       // 'zero' matrix
-      mat_mat<MatT> zm(m, 0, 0);
+      mat_mat<MatT,FT> zm(m, 0, 0);
       if( m.RowCount() > 1.6*m.ColCount() )  {
         if( u_flag == 0 )  {
           TVector<FT> taus;
-          QR::Decompose(m, taus);
+          QR<FT>::Decompose(m, taus);
           for( size_t i=1; i < m.ColCount(); i++ )  {
             for( size_t j=1; j < i; j++ )
               m(i,j) = 0;
           }
           TVector<FT> qtau, ptau;
-          mat_mat<MatT> mp(m, m.RowCount(), m.RowCount());
-          Bidiagonal::ToBidiagonal(mp, qtau, ptau);
-          Bidiagonal::UnpackPT(mp, ptau, vt.RowCount(), vt);
+          mat_mat<MatT,FT> mp(m, m.RowCount(), m.RowCount());
+          Bidiagonal<FT>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<FT>::UnpackPT(mp, ptau, vt.RowCount(), vt);
           TVector<FT> e;
-          const bool upper = Bidiagonal::UnpackDiagonals(mp, w, e);
-          return Bidiagonal::SVD<FT>::Decompose(w, e, upper, false, zm, zm, vt);
+          const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
+          return Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, zm, vt);
         }
         else  {
           TVector<FT> taus;
-          QR::Decompose(m, taus);
-          QR::Unpack(m, taus, u.ColCount(), u);
+          QR<FT>::Decompose(m, taus);
+          QR<FT>::Unpack(m, taus, u.ColCount(), u);
           for( size_t i=1; i < m.ColCount(); i++ )  {
             for( size_t j=0; j < i; j++ )
               m(i,j) = 0;
           }
           TVector<FT> qtau, ptau, e;
-          mat_mat<MatT> mp(m, m.ColCount(), m.ColCount());
-          Bidiagonal::ToBidiagonal(mp, qtau, ptau);
-          Bidiagonal::UnpackPT(mp, ptau, vt.RowCount(), vt);
-          const bool upper = Bidiagonal::UnpackDiagonals(mp, w, e);
+          mat_mat<MatT,FT> mp(m, m.ColCount(), m.ColCount());
+          Bidiagonal<FT>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<FT>::UnpackPT(mp, ptau, vt.RowCount(), vt);
+          const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
           if( !extra_mem )  {
-            Bidiagonal::MulByQ(mp, qtau, u, true, false);
-            return Bidiagonal::SVD<FT>::Decompose(w, e, upper, false, u, zm, vt);
+            Bidiagonal<FT>::MulByQ(mp, qtau, u, true, false);
+            return Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, u, zm, vt);
           }
           else  {
             TMatrix<FT> tmp;
-            Bidiagonal::UnpackQ(mp, qtau, m.ColCount(), tmp);
+            Bidiagonal<FT>::UnpackQ(mp, qtau, m.ColCount(), tmp);
             m.Assign(u, m.RowCount(), m.ColCount());
             tmp.Transpose();
             bool res;
-            if( (res = Bidiagonal::SVD<FT>::Decompose(
+            if( (res = Bidiagonal<FT>::SVD::Decompose(
               w, e, upper, false, zm, tmp, vt)) )
             {
               tmp = m*tmp.Transpose();
@@ -1273,44 +1210,44 @@ namespace math  {
       else if( m.ColCount() > 1.6*m.RowCount() )  {
         if( u_flag == 0 )  {
           TVector<FT> taus;
-          LQ::Decompose(m, taus);
+          LQ<FT>::Decompose(m, taus);
           for( size_t i=1; i < m.RowCount()-1; i++ )  {
             for( size_t j=i+1; j < m.RowCount(); j++ )
               m(i,j) = 0;
           }
           TVector<FT> qtau, ptau, e;
-          Bidiagonal::ToBidiagonal(m, qtau, ptau);
-          Bidiagonal::UnpackQ(m, ptau, u.RowCount(), u);
-          mat_mat<MatT> mp(m, m.RowCount(), m.RowCount());
-          const bool upper = Bidiagonal::UnpackDiagonals(mp, w, e);
+          Bidiagonal<FT>::ToBidiagonal(m, qtau, ptau);
+          Bidiagonal<FT>::UnpackQ(m, ptau, u.RowCount(), u);
+          mat_mat<MatT,FT> mp(m, m.RowCount(), m.RowCount());
+          const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
           u.Transpose();
-          const bool res = Bidiagonal::SVD<FT>::Decompose(w, e, upper, false, u, mp, vt);
+          const bool res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, u, mp, vt);
           u.Transpose();
           return res;
         }
         else  {
           TVector<FT> taus;
-          LQ::Decompose(m, taus);
-          LQ::UnpackQ(m, taus, vt.ColCount(), vt);
+          LQ<FT>::Decompose(m, taus);
+          LQ<FT>::UnpackQ(m, taus, vt.ColCount(), vt);
           for( size_t i=0; i < m.RowCount()-1; i++ )  {
             for( size_t j=i+1; j < m.RowCount(); j++ )
               m(i,j) = 0;
           }
           TVector<FT> qtau, ptau, e;
-          mat_mat<MatT> mp(m, m.RowCount(), m.RowCount());
-          Bidiagonal::ToBidiagonal(mp, qtau, ptau);
-          Bidiagonal::UnpackQ(mp, qtau, u.RowCount(), u);
-          const bool upper = Bidiagonal::UnpackDiagonals(mp, w, e);
+          mat_mat<MatT,FT> mp(m, m.RowCount(), m.RowCount());
+          Bidiagonal<FT>::ToBidiagonal(mp, qtau, ptau);
+          Bidiagonal<FT>::UnpackQ(mp, qtau, u.RowCount(), u);
+          const bool upper = Bidiagonal<FT>::UnpackDiagonals(mp, w, e);
           u.Transpose();
           bool res;
           if( !extra_mem )  {
-            Bidiagonal::MulByP(mp, ptau, vt, false, true);
-            res = Bidiagonal::SVD<FT>::Decompose(w, e, upper, false, zm, u, vt);
+            Bidiagonal<FT>::MulByP(mp, ptau, vt, false, true);
+            res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, u, vt);
           }
           else  {
             TMatrix<FT> tmp;
-            Bidiagonal::UnpackPT(mp, ptau, m.RowCount(), tmp);
-            if( (res = Bidiagonal::SVD<FT>::Decompose(
+            Bidiagonal<FT>::UnpackPT(mp, ptau, m.RowCount(), tmp);
+            if( (res = Bidiagonal<FT>::SVD::Decompose(
               w, e, upper, false, zm, u, tmp)) )
             {
               m.Assign(vt, m.RowCount(), m.ColCount());
@@ -1324,29 +1261,29 @@ namespace math  {
       }
       else if( m.RowCount() <= m.ColCount() )  {
         TVector<FT> ptau, qtau, e;
-        Bidiagonal::ToBidiagonal(m, qtau, ptau);
-        Bidiagonal::UnpackQ(m, qtau, u.ColCount(), u);
-        Bidiagonal::UnpackPT(m, ptau, vt.RowCount(), vt);
-        const bool upper = Bidiagonal::UnpackDiagonals(m, w, e);
+        Bidiagonal<FT>::ToBidiagonal(m, qtau, ptau);
+        Bidiagonal<FT>::UnpackQ(m, qtau, u.ColCount(), u);
+        Bidiagonal<FT>::UnpackPT(m, ptau, vt.RowCount(), vt);
+        const bool upper = Bidiagonal<FT>::UnpackDiagonals(m, w, e);
         u.Transpose();
-        const bool res = Bidiagonal::SVD<FT>::Decompose(w, e, upper, false, zm, u, vt);
+        const bool res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, u, vt);
         u.Transpose();
         return res;
       }
       else  {
         TVector<FT> ptau, qtau, e;
-        Bidiagonal::ToBidiagonal(m, qtau, ptau);
-        Bidiagonal::UnpackQ(m, qtau, u.ColCount(), u);
-        Bidiagonal::UnpackPT(m, ptau, vt.RowCount(), vt);
-        const bool upper = Bidiagonal::UnpackDiagonals(m, w, e);
+        Bidiagonal<FT>::ToBidiagonal(m, qtau, ptau);
+        Bidiagonal<FT>::UnpackQ(m, qtau, u.ColCount(), u);
+        Bidiagonal<FT>::UnpackPT(m, ptau, vt.RowCount(), vt);
+        const bool upper = Bidiagonal<FT>::UnpackDiagonals(m, w, e);
         if( !extra_mem )
-          return Bidiagonal::SVD<FT>::Decompose(w, e, upper, false, u, zm, vt);
+          return Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, u, zm, vt);
         else  {
           TMatrix<FT> tmp(min_d, m.RowCount());
           for( size_t i=0; i < min_d; i++ )
             for( size_t j=0; j < m.RowCount(); j++ )
               tmp(i,j) = u(j,i);
-          const bool res = Bidiagonal::SVD<FT>::Decompose(w, e, upper, false, zm, tmp, vt);
+          const bool res = Bidiagonal<FT>::SVD::Decompose(w, e, upper, false, zm, tmp, vt);
           for( size_t i=0; i < min_d; i++ )
             for( size_t j=0; j < m.RowCount(); j++ )
               u(j,i) = tmp(i,j);
@@ -1355,13 +1292,13 @@ namespace math  {
       }
     }
   };
+  template <typename FT>
   struct Cholesky  {
     /* if upper is true, UxUt decomposition, otherwise LxLt */
     template <typename MatT>
     static bool Decompose(MatT& m, bool upper)  {
-      typedef typename MatT::number_type FT;
       const size_t n = m.RowCount();
-      if( upper )  {  //Choleskyï¿½Crout
+      if( upper )  {  //Cholesky–Crout
         for( size_t i=0; i < n; i++ )  {
           FT v = 0;
           for( size_t j=0; j < i; j++ )
@@ -1375,11 +1312,11 @@ namespace math  {
               for( size_t k=i+1; k < n; k++ )
                 m(i,k) -= m(j,k)*m(j,i);
             }
-            proxy::row(m, i, i+1).ForEach(alg::Mul(1/mii));
+            proxy<FT>::row(m, i, i+1).ForEach(alg::Mul(1/mii));
           }
         }
       }
-      else  {  //Choleskyï¿½Banachiewicz
+      else  {  //Cholesky–Banachiewicz
         for( size_t i=0; i < n; i++ )  {
           FT v = 0;
           for( size_t j=0; j < i; j++ )
@@ -1395,7 +1332,7 @@ namespace math  {
                 dp += m(j,k)*m(i,k);
               m(j,i) -= dp;
             }
-            proxy::col(m, i, i+1).ForEach(alg::Mul(1/mii));
+            proxy<FT>::col(m, i, i+1).ForEach(alg::Mul(1/mii));
           }
         }
       }

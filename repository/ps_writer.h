@@ -60,9 +60,9 @@ public:
   }
   //..........................................................................
   const char* color_str(uint32_t rgb)  {
-    psw_sprintf(bf, "%f %f %f setrgbcolor", (float)OLX_GetRValue(rgb)/255, 
-      (float)OLX_GetGValue(rgb)/255,
-      (float)OLX_GetBValue(rgb)/255
+    psw_sprintf(bf, "%f %f %f setrgbcolor", (float)GetRValue(rgb)/255, 
+      (float)GetGValue(rgb)/255,
+      (float)GetBValue(rgb)/255
     );
     return bf;
   }

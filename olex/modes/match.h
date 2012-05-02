@@ -17,7 +17,7 @@ protected:
     for( size_t i=0; i < atoms.Count(); i++ )  {
       atoms[i]->crd() = (rm*atoms[i]->crd()) - origin;
       if( atoms[i]->GetEllipsoid() != NULL )
-        atoms[i]->GetEllipsoid()->Mult(rm);
+        atoms[i]->GetEllipsoid()->MultMatrix(rm);
     }
   }
 public:
@@ -176,7 +176,7 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     for( size_t i=0; i < atomsA.Count(); i++ )  {
       atomsA[i]->crd() = (atomsA[i]->crd()-ao.center_a)*m + ao.center_b;
       if( atomsA[i]->GetEllipsoid() != NULL )
-        atomsA[i]->GetEllipsoid()->Mult(m);
+        atomsA[i]->GetEllipsoid()->MultMatrix(m);
     }
     //TNetwork::DoAlignAtoms(atomsA, ao);
   }

@@ -249,7 +249,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
     alist.Add(&ca); 
     TEllipsoid* elp = ca.GetEllipsoid();
     if( elp != NULL )  {
-      elp->GetShelxQuad(quad);  // default is Ucart
+      elp->GetQuad(quad);  // default is Ucart
       au.UcartToUcif(quad);
       for( int k=0; k < 6; k++ )
         U[ind+k] = -TQ_PI*quad[k]*BM[k];

@@ -29,11 +29,14 @@ struct CompositeMatrix {
       if( matrices.Count() != row_sz*col_sz )
         throw TInvalidArgumentException(__OlxSourceInfo, "size");
     }
-    const number_type& operator ()(size_t i, size_t j) const {
+    const number_type& Get(size_t i, size_t j) const {
       return matrices[(i/m_row_sz)*row_sz+j/m_row_sz][i%m_col_sz][j%m_row_sz];
     }
-    number_type& operator ()(size_t i, size_t j)  {
+    number_type& Get(size_t i, size_t j)  {
       return matrices[(i/m_row_sz)*row_sz+j/m_row_sz][i%m_col_sz][j%m_row_sz];
+    }
+    void Set(size_t i, size_t j, const number_type& v)  {
+      matrices[(i/m_row_sz)*row_sz+j/m_row_sz][i%m_col_sz][j%m_row_sz] = v;
     }
     size_t ColCount() const {  return col_cnt;  }
     size_t RowCount() const {  return row_cnt;  }
@@ -67,8 +70,6 @@ struct CompositeVector {
     }
     number_type& operator [] (size_t i)  {  return Get(i);  }
     const number_type& operator [] (size_t i) const {  return Get(i);  }
-    number_type& operator () (size_t i)  {  return Get(i);  }
-    const number_type& operator () (size_t i) const {  return Get(i);  }
   };
   // convenience constructor
   template <typename list_t>
@@ -112,7 +113,6 @@ public:
   size_t Count() const {  return size;  }
   const NumT& Get(size_t i) const {  return  data[i];  }
   const NumT& operator [] (size_t i) const {  return Get(i);  }
-  const NumT& operator () (size_t i) const {  return Get(i);  }
 public:
   typedef NumT list_item_type;
   typedef NumT number_type;
@@ -130,8 +130,6 @@ public:
   void Set(size_t i, const NumT& v)  {  data[i] = v;  }
   NumT& operator [] (size_t i)  {  return Get(i);  }
   const NumT& operator [] (size_t i) const {  return Get(i);  }
-  NumT& operator () (size_t i)  {  return Get(i);  }
-  const NumT& operator () (size_t i) const {  return Get(i);  }
 public:
   typedef NumT number_type;
 };
@@ -152,8 +150,6 @@ public:
   void Set(size_t i, const list_item_type& v)  {  data[i+offset] = v;  }
   list_item_type& operator [] (size_t i)  {  return Get(i);  }
   const list_item_type& operator [] (size_t i) const {  return Get(i);  }
-  list_item_type& operator () (size_t i)  {  return Get(i);  }
-  const list_item_type& operator () (size_t i) const {  return Get(i);  }
 };
 /* const vector/list slice */
 template <class VT> class ConstSlice {
@@ -168,7 +164,6 @@ public:
   size_t Count() const {  return size;  }
   const list_item_type& Get(size_t i) const {  return  data[i+offset];  }
   const list_item_type& operator [] (size_t i) const {  return Get(i);  }
-  const list_item_type& operator () (size_t i) const {  return Get(i);  }
 };
 
 /* matrix based on a vector */
@@ -201,11 +196,9 @@ template <typename NumT> class PlainMatrix
   : public VectorMatrix<PlainVector<NumT> >
 {
   typedef PlainVector<NumT> vec_t;
-  vec_t vec;
 public:
-  PlainMatrix(NumT* _data, size_t row_sz, size_t col_sz)
-    : vec(_data, row_sz*col_sz),
-      VectorMatrix<vec_t>(vec, row_sz, col_sz)  {}
+  PlainMatrix(NumT* _data, size_t row_sz, size_t col_sz) :
+    VectorMatrix<vec_t>(vec_t(_data, row_sz*col_sz), row_sz, col_sz)  {}
 };
 
 #endif

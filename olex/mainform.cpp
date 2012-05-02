@@ -500,8 +500,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "A portable version of pict with limited resolution (OS/graphics card "
     "dependent). Not stable on some graphics cards");
   this_InitMacroD(Echo,
-    "m-the printing color (info, warning, error or exceptiion)&;"
-    "c-copy printed information to clipboard",
+    "m-the printing color (info, warning, error or exceptiion)",
     fpAny,
     "Prints provided string, functions are evaluated before printing");
   this_InitMacroD(PictPS,
@@ -540,7 +539,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Post, EmptyString(), fpAny,
     "Prints a string, but only after a new line character is encountered");
 
-  this_InitMacroD(Bang, "c-copy info to the clipboard", fpAny|psFileLoaded,
+  this_InitMacroD(Bang, EmptyString(), fpAny | psFileLoaded,
     "Prints bonds and angles table for selected/given atoms");
   this_InitMacroD(Grow,
     "s-grow shells vs fragments&;"
@@ -554,7 +553,7 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitMacroD(Group,
     "n-a custom name can be provided",
-    fpNone|fpOne|psFileLoaded,
+    fpNone|psFileLoaded,
   "Groups current visible objects or selection");
 
   this_InitMacroD(Fmol, EmptyString(), fpNone|psFileLoaded,
@@ -562,8 +561,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Clear, EmptyString(), fpNone,
     "Clears console buffer (text)");
 
-  this_InitMacroD(Cell, "r-shows reciprocal cell",
-    fpNone|fpOne|psFileLoaded,
+  this_InitMacroD(Cell, EmptyString(), fpNone|fpOne|psFileLoaded,
     "If no arguments provided inverts visibility of unit cell, otherwise sets"
     " it to the boolean value of the parameter");
   this_InitMacroD(Rota, EmptyString(), fpTwo|fpFive,
@@ -611,9 +609,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Sel,
     "a-select all&;"
     "u-unselect all&;"
-    "l-consider the list of bonds as independent&;"
-    "c-copies printed values to the clipboard&;"
-    "i-invert selection&;",
+    "i-invert selection",
     fpAny,
     "If no arguments provided, prints current selection. This includes "
     "distances, angles and torsion angles and other geometrical parameters. "
@@ -643,14 +639,11 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Creates an illustration of a pi-system to metal bonds");
 
   this_InitMacroD(Esd,
-    "label-creates a graphics label&;"
-    "l-consider the list of bonds as independent&;"
-    "c-copies printed values to the clipboard",
+    "label-creates a graphics label",
     fpAny|psFileLoaded,
     "This procedure calculates possible parameters for the selection and "
     "evaluates their esd using the variance-covariance matrix coming from the "
-    "ShelXL refinement with negative 'MORE' like 'MORE -1' option or from the "
-    "olex2.refine");
+    "ShelXL refinement with negative 'MORE' like 'MORE -1' option");
   
   this_InitMacroD(Name,
     "c-enables checking labels for duplications&;"
@@ -688,9 +681,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "line");
   this_InitMacroD(Info,
     "s-sorts the atom list&;p-coordinate precision [3]&;f-print fractional "
-    "coordinates vs Cartesian [true]&;"
-    "c-copy the printed information ito the clipboard",
-    fpAny,
+    "coordinates vs Cartesian [true]", fpAny,
     "Prints out information for gived [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
     "Prints available information. If no arguments provided prints available "
@@ -1035,15 +1026,10 @@ void TMainForm::XApp(TGXApp *XA)  {
     "provided interval (first argument)");
 
   this_InitMacroD(Tls,
+    "b-three first selected atoms are the ADp basis&;"
     "a-apply the TLS ADP to the atoms",
     fpAny|psFileLoaded,
-    "TLS procedure. The TLS is calculated for the given atoms and then the "
-    "matrices rotated to the L axes (making L diagonal) and shifted to make S "
-    "symmetric. The printed R1 is calculated for ADPs in the L axes and is:\n"
-    "R1=sum(i=1..3,j=i..3)(|Uobs_ij-Utls_ij|)/sum(i=1..3, j=i..3)(|Uobs_ij|)"
-    "\nR2' is invariant under the rotation and is calculated as\n"
-    "R2'=sum(i=1..3,j=1..3)((Uobs_ij-Utls_ij)^2)/sum(i=1..3,j=1..3)(Uobs_ij^2)"
-    );
+    "TLS test procedure");
 
   this_InitMacro(Test, , fpAny);
 
@@ -4175,7 +4161,19 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms,
   bool GetAll, bool unselect)
 {
   size_t cnt = xatoms.Count();
-  xatoms.AddList(FXApp->FindXAtoms(Cmds, GetAll, unselect));
+  if( Cmds.IsEmpty() )  {
+    xatoms.AddList(
+      FXApp->FindXAtoms("sel", EsdlInstanceOf(FXApp->GetSelection(), TGlGroup)
+      ? unselect : false));
+    if( GetAll && xatoms.IsEmpty() )
+      xatoms.AddList(FXApp->FindXAtoms(EmptyString(), unselect));
+  }
+  else
+    xatoms.AddList(FXApp->FindXAtoms(Cmds.Text(' '), unselect));
+  for( size_t i=0; i < xatoms.Count(); i++ )
+    if( !xatoms[i]->IsVisible() )
+      xatoms[i] = NULL;
+  xatoms.Pack();
   return (xatoms.Count() != cnt);
 }
 //..............................................................................
@@ -4290,14 +4288,6 @@ void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
   }
   catch (const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
-  }
-}
-//..............................................................................
-void TMainForm::ToClipboard(const olxstr &text) const {
-  if( wxTheClipboard->Open() )  {
-    if (wxTheClipboard->IsSupported(wxDF_TEXT) )
-      wxTheClipboard->SetData(new wxTextDataObject(text.u_str()));
-    wxTheClipboard->Close();
   }
 }
 //..............................................................................

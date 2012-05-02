@@ -1797,13 +1797,11 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
   const mat3d old_cac = au.GetCartesianToCell();
   au.InitMatrices();
   const mat3d elptm = mat3d::Transpose(au.GetCellToCartesian())*i_tm*mat3d::Transpose(old_cac);
-  ematd J = TEllipsoid::GetTransformationJ(elptm),
-    Jt = ematd::Transpose(J);
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
     ca.ccrd() = i_tm * ca.ccrd();
     if( ca.GetEllipsoid() != NULL )
-      ca.GetEllipsoid()->Mult(elptm, J, Jt);
+      ca.GetEllipsoid()->MultMatrix(elptm);
   }
   TBasicApp::NewLogEntry() << "New cell: " <<
     TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString() << ' ' <<

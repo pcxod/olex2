@@ -766,31 +766,11 @@ olxstr macSel_GetPlaneName(const TSPlane& p)  {
     rv << ' ' << p.GetAtom(i).GetGuiLabel();
   return rv;
 }
-olxstr TGXApp::GetSelectionInfo(bool list)  {
+olxstr TGXApp::GetSelectionInfo()  {
   olxstr Tmp;
   try {
     double v;
     TGlGroup& Sel = FGlRender->GetSelection();
-    if (list) {
-      TStrList rv;
-      for (size_t i=0; i < Sel.Count(); i++) {
-        if (!EsdlInstanceOf(Sel[i], TXBond))  continue;
-        TXBond &b = ((TXBond&)Sel[i]);
-        olxstr &l = rv.Add("Distance (");
-        l << macSel_GetName2(b.A(), b.B()) << "): ";
-        if( CheckFileType<TCif>() )  {
-          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager()
-            .Match(b.A(), b.B());
-          if( cv != NULL )
-            l << cv->GetValue().ToString();
-          else
-            l << olxstr::FormatFloat(3, b.Length());
-        }
-        else
-          l << olxstr::FormatFloat(3, b.Length());
-      }
-      return rv.Text(NewLineSequence());
-    }
     if( Sel.Count() == 1 )  {
       if( EsdlInstanceOf(Sel[0], TXBond) )  {
         TXBond &b = ((TXBond&)Sel[0]);
@@ -1636,8 +1616,8 @@ ConstPtrList<TXAtom> TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
   return rv;
 }
 //..............................................................................
-ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
-  bool ClearSelection, bool FindHidden)
+ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool ClearSelection,
+  bool FindHidden)
 {
   TXAtomPList rv;
   if( Atoms.IsEmpty() )  {  // return selection/all atoms
@@ -1646,20 +1626,14 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
       if( EsdlInstanceOf(sel[i], TXAtom) )
         rv.Add((TXAtom&)sel[i]);
     }
-    if( !rv.IsEmpty() )  {
-      if (ClearSelection)
-        GetRender().SelectAll(false);
-      return rv;
-    }
-    if (getAll) {
-      AtomIterator ai(*this);
-      rv.SetCapacity(ai.count);
-      while( ai.HasNext() )  {
-        TXAtom& xa = ai.Next();
-        if( xa.IsDeleted() )  continue; 
-        if( !FindHidden && !xa.IsVisible() ) continue;
-        rv.Add(xa);
-      }
+    if( !rv.IsEmpty() )  return rv;
+    AtomIterator ai(*this);
+    rv.SetCapacity(ai.count);
+    while( ai.HasNext() )  {
+      TXAtom& xa = ai.Next();
+      if( xa.IsDeleted() )  continue; 
+      if( !FindHidden && !xa.IsVisible() ) continue;
+      rv.Add(xa);
     }
   }
   else  {
@@ -1678,7 +1652,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
           TXAtom* XATo = NULL;
           if( Toks[i].Equalsi("end") )  ;
           else  {
-            XATo = GetXAtom(Toks[i], ClearSelection);
+            XATo = GetXAtom(Toks[i], ClearSelection );
             if( XATo == NULL )
               throw TInvalidArgumentException(__OlxSourceInfo, "\'to\' atoms is undefined");
           }
@@ -1731,20 +1705,6 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
     }
   }
   return rv;
-}
-//..............................................................................
-ConstPtrList<TXAtom> TGXApp::FindXAtoms(const TStrObjList &Cmds, bool GetAll,
-  bool unselect)
-{
-  TXAtomPList atoms;
-  if( Cmds.IsEmpty() )  {
-    atoms.AddList(
-      FindXAtoms(EmptyString(), GetAll, EsdlInstanceOf(GetSelection(), TGlGroup)
-      ? unselect : false));
-  }
-  else
-    atoms = FindXAtoms(Cmds.Text(' '), unselect);
-  return atoms;
 }
 //..............................................................................
 void TGXApp::CheckQBonds(TXAtom& XA)  {
@@ -2055,13 +2015,6 @@ AGDrawObject* TGXApp::FindLooseObject(const olxstr &Name)  {
   for( size_t i=0; i < LooseObjects.Count(); i++ )
     if( LooseObjects[i]->GetPrimitives().GetName().Equalsi(Name) )
       return LooseObjects[i];
-  return NULL;
-}
-//..............................................................................
-TDUserObj* TGXApp::FindUserObject(const olxstr &Name)  {
-  for( size_t i=0; i < UserObjects.Count(); i++ )
-    if( UserObjects[i].GetPrimitives().GetName().Equalsi(Name) )
-      return &UserObjects[i];
   return NULL;
 }
 //..............................................................................
@@ -4398,14 +4351,47 @@ void TGXApp::SelectAll(bool Select)  {
   Draw();
 }
 //..............................................................................
-const_strlist TGXApp::ToPov() const {
+TStrList TGXApp::ToPov() const {
+  TGlRenderer &r = GetRender();
+  pov::CrdTransformer crdc(r.GetBasis());
   olxdict<TGlMaterial, olxstr, TComparableComparator> materials;
-  TStrList out = GetRender().GetScene().ToPov();
+  TStrList out;
+  out.Add("global_settings {");
+  TGlOption cl_amb = r.LightModel.GetAmbientColor();
+  cl_amb *= 10;
+  out.Add(" ambient_light ") << pov::to_str(cl_amb);
+  out.Add("}");
+
+  TGlOption cl_clear = r.LightModel.GetClearColor();
+  out.Add("background { color ") << pov::to_str(cl_clear) << " }";
+  out.Add("camera {");
+  out.Add(" location <0,0,") << 3./r.GetBasis().GetZoom() << '>';
+  out.Add(" angle 25");
+  out.Add(" up 1");
+  out.Add(" right -4/3");
+  out.Add(" look_at <0,0,0>");
+  out.Add("}");
+  for( size_t i=0; i < 8; i++ )  {
+    TGlLight &l = r.LightModel.GetLight(i);
+    if( !l.IsEnabled() )  continue;
+    out.Add("light_source {");
+    TGlOption lp = l.GetPosition();
+    out.Add(" ") << pov::to_str(lp, false);
+    lp = l.GetDiffuse();
+    if( lp.IsEmpty() )
+      lp = l.GetAmbient();
+    if( lp.IsEmpty() )
+      lp = l.GetSpecular();
+    lp *= 1.5;
+    out.Add(" color ") << pov::to_str(lp);
+    out.Add("}");
+  }
+
   out << TXAtom::PovDeclare();
   out << TXBond::PovDeclare();
   out << TXPlane::PovDeclare();
-  out.Add("union {");
   TGXApp::AtomIterator ai = GetAtoms();
+  out.Add("union {");
   while( ai.HasNext() )  {
     TXAtom &a = ai.Next();
     if( a.IsVisible() )
@@ -4437,7 +4423,8 @@ const_strlist TGXApp::ToPov() const {
     out << UserObjects[i].ToPov(materials);
 
   out.Add("}");
-  TStrList mat_out;
+  TStrList mat_out, scene_out;
+  //scene_out.Add("");
   for( size_t i=0; i < materials.Count(); i++ )  {
     mat_out.Add("#declare ") << materials.GetValue(i) << '=';
     mat_out.Add(materials.GetKey(i).ToPOV());
@@ -4512,14 +4499,3 @@ void TGXApp::ClearStructureRelated() {
   UserObjects.Clear();
 }
 //..............................................................................
-olxstr TGXApp::Label(const TXAtomPList &atoms, const olxstr &sp) {
-  olxstr_buf rv;
-  if (!atoms.IsEmpty()) {
-    size_t cnt = atoms.Count()-1;
-    for( size_t i=0; i < cnt; i++ )
-      rv << atoms[i]->GetGuiLabel() << sp;
-    rv << atoms.GetLast()->GetGuiLabel();
-  }
-  return rv;
-}
-

@@ -1380,7 +1380,7 @@ olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  
     rm.Vars.GetParam(CA, catom_var_name_Sof)) << ' ';
   // save Uiso, Uanis
   if( CA.GetEllipsoid() != NULL )  {
-    CA.GetEllipsoid()->GetShelxQuad(Q);
+    CA.GetEllipsoid()->GetQuad(Q);
     rm.aunit.UcartToUcif(Q);
 
     for( short j = 0; j < 6; j++ )  {

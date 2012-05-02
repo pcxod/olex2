@@ -421,8 +421,7 @@ public:
   void GroupSelection(const olxstr& name);
   void UnGroupSelection();
   void UnGroup(TGlGroup& G);
-  // if list is true - the selection is considered as a list of bonds
-  olxstr GetSelectionInfo(bool list=false);
+  olxstr GetSelectionInfo();
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);
   virtual void ExpandSelectionEx(TSAtomPList& atoms);
@@ -553,10 +552,8 @@ public:
   ConstPtrList<TXBond> GetXBonds(const olxstr& BondName);
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
   ConstPtrList<TCAtom> FindCAtoms(const olxstr& Atoms, bool ClearSelection=true);
-  ConstPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool getAll=true,
-    bool ClearSelection=true, bool FindHidden=false);
-  ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds, bool GetAll,
-    bool unselect);
+  ConstPtrList<TXAtom> FindXAtoms(const olxstr& Atoms, bool ClearSelection=true,
+    bool FindHidden=false);
 
   //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   //const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
@@ -608,7 +605,6 @@ public:     void CalcProbFactor(float Prob);
   void ClearLines()  {  Lines.Clear();  }
   TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);
   AGDrawObject* FindLooseObject(const olxstr& Name);
-  TDUserObj *FindUserObject(const olxstr& Name);
 
   TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
   // will return generated symmetry equivalents too
@@ -636,7 +632,6 @@ public:     void CalcProbFactor(float Prob);
   TXGlLabel& GetLabel(size_t i)  {  return XLabels[i];  }
   const TXGlLabel& GetLabel(size_t i) const {  return XLabels[i];  }
   void UpdateLabels();
-  static olxstr Label(const TXAtomPList &atoms, const olxstr &sep= ' ');
 //..............................................................................
   void SetQPeakScale(float V);
   float GetQPeakScale();
@@ -710,7 +705,7 @@ public:     void CalcProbFactor(float Prob);
   void SaveModel(const olxstr& file_name) const;
   void LoadModel(const olxstr& file_name);
 
-  const_strlist ToPov() const;
+  TStrList ToPov() const;
 //..............................................................................
   static TGXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();

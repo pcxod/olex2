@@ -765,7 +765,7 @@ bool TCif::Adopt(TXFile& XF)  {
     else
       Row[10] = new cetString('.');
     if( A.GetEllipsoid() != NULL )  {
-      A.GetEllipsoid()->GetShelxQuad(Q, E);
+      A.GetEllipsoid()->GetQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
       CifRow& Row1 = u_loop.AddRow();
       Row1[0] = new AtomCifEntry(A);

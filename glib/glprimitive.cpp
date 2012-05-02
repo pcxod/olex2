@@ -211,8 +211,8 @@ void TGlPrimitive::EndColorRendering() const {
 //..............................................................................
 void TGlPrimitive::SetColor(const uint32_t& cl) const {
   if( !Renderer.IsColorStereo() )
-    olx_gl::color((float)OLX_GetRValue(cl)/255, (float)OLX_GetGValue(cl)/255,
-      (float)OLX_GetBValue(cl)/255, (float)OLX_GetAValue(cl)/255);
+    olx_gl::color((float)GetRValue(cl)/255, (float)GetGValue(cl)/255,
+      (float)GetBValue(cl)/255, (float)GetAValue(cl)/255);
 }
 //..............................................................................
 void TGlPrimitive::Draw()  {
@@ -346,43 +346,13 @@ void TGlPrimitive::Draw()  {
   else if( Type == sgloTriangles )  {
     olx_gl::begin(GL_TRIANGLES);
     if( Normals.IsEmpty() )  {
-      if (Colors.IsEmpty()) {
-        for( size_t i=0; i < Vertices.Count(); i++ )
-          DrawVertex(Vertices[i]);
-      }
-      else if (Colors.Count() == Vertices.Count()) {
-        for( size_t i=0; i < Vertices.Count(); i++ )
-          DrawVertex(Vertices[i], Colors[i]);
-      }
+      for( size_t i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i]);
     }
-    else {
-      if (Colors.IsEmpty()) {
-        if( Normals.Count() == Vertices.Count() )  {  //+normal
-          for( size_t i=0; i < Normals.Count(); i++ )  {
-            SetNormal(Normals[i]);
-            DrawVertex(Vertices[i]);
-          }
-        }
-        else if( Normals.Count()*3 == Vertices.Count() )  {  //+normal
-          for( size_t i=0; i < Normals.Count(); i++ )  {
-            SetNormal(Normals[i]);
-            DrawVertex3(i*3);
-          }
-        }
-      }
-      else if (Colors.Count() == Vertices.Count()) {
-        if( Normals.Count() == Vertices.Count() )  {  //+normal
-          for( size_t i=0; i < Normals.Count(); i++ )  {
-            SetNormal(Normals[i]);
-            DrawVertex(Vertices[i], Colors[i]);
-          }
-        }
-        else if( Normals.Count()*3 == Vertices.Count() )  {  //+normal
-          for( size_t i=0; i < Normals.Count(); i++ )  {
-            SetNormal(Normals[i]);
-            DrawVertex3c(i*3);
-          }
-        }
+    else if( Normals.Count()*3 == Vertices.Count() )  {  //+normal
+      for( size_t i=0; i < Normals.Count(); i++ )  {
+        SetNormal(Normals[i]);
+        DrawVertex3(i*3);
       }
     }
     olx_gl::end();

@@ -9,8 +9,6 @@
 
 #include "math/mmath.h"
 #include "threex3.h"
-#include "math/composite.h"
-#include "math/dmatrix.h"
 namespace test {
 
 using namespace math;
@@ -19,11 +17,11 @@ void TestQR(OlxTests& t)  {
   const mat3d m(12, -51, 4, 6, 167, -68, -4, 24, -41);
   mat3d qr(m), r, q;
   vec3d tau;
-  QR::Decompose(qr, tau);
+  QR<double>::Decompose(qr, tau);
   for( int i=0; i < 3; i++ )
     for( int j=i; j < 3; j++ )
       r(i,j) = qr(i,j);
-  QR::Unpack(qr, tau, 3, q);
+  QR<double>::Unpack(qr, tau, 3, q);
   mat3d m1 = q*r;
   //alg::print0(m1, 3, 3);
   for( int i=0; i < 3; i++ )  {
@@ -42,7 +40,7 @@ void TestLU(OlxTests& t)  {
     -42, 24, -41);
   mat3d lu(m), l, u, p;
   TVector3<size_t> pivots;
-  LU::Decompose(lu, pivots);
+  LU<double>::Decompose(lu, pivots);
   for( int i=0; i < 3; i++ )  {
     for( int j=i; j < 3; j++ )  {
       u(i,j) = lu(i,j);
@@ -70,7 +68,7 @@ void TestInvert(OlxTests& t)  {
     -42, 24, -41);
   mat3d n(m), l, u, p;
   TVector3<size_t> pivots;
-  LU::Invert(n);
+  LU<double>::Invert(n);
   mat3d m1 = m*n;
   for( int i=0; i < 3; i++ )  {
     for( int j=0; j < 3; j++ )  {
@@ -80,9 +78,9 @@ void TestInvert(OlxTests& t)  {
   }
   double arr[4][4] = {{14,2,3,4}, {12,5,-6,7}, {10,8,29,10}, {0.8, 11, -12, 13}};
   ematd om(4,4);
-  om.Assign(PlainMatrix<double>(&arr[0][0], 4, 4), 4, 4);
+  om.Assign(arr, 4, 4);
   ematd im(om);
-  LU::Invert(im);
+  LU<double>::Invert(im);
   om *= im;
   for( int i=0; i < 4; i++ )  {
     for( int j=0; j < 4; j++ )  {
@@ -178,15 +176,15 @@ void TestSVD(OlxTests& t)  {
       }
       for( int emem = 0; emem < 2; emem++ )  {
         for( size_t row_cnt=1; row_cnt < dim_n; row_cnt++ )  {
-          m = PlainMatrix<double>(&arr[0][0], row_cnt, dim_m);
+          m.Assign(arr, row_cnt, dim_m);
           const TMatrix<FT> om(m);
           svd.Decompose(m, 2, 2, emem!=0);
           s.Resize(row_cnt, dim_m).Null();
           for( size_t i=0; i < svd.w.Count(); i++ )
             s(i,i) = svd.w(i);
           TMatrix<FT> m1 = svd.u*s*svd.vt,
-            up = svd.u*TMatrix<FT>::Transpose(svd.u),
-            vtp = svd.vt*TMatrix<FT>::Transpose(svd.vt);
+            up = svd.u*TMatrix<FT>(svd.u).Transpose(),
+            vtp = svd.vt*TMatrix<FT>(svd.vt).Transpose();
           for( size_t i=0; i < vtp.RowCount(); i++ )  {
             for( size_t j=0; j < vtp.ColCount(); j++ )  {
               if( olx_abs(vtp(i,j)-(i==j ? 1 : 0)) > 1e-10 )
@@ -220,10 +218,10 @@ void TestSVD(OlxTests& t)  {
     alg::print0_2(e.v, "Vt:");
     alg::print0_1(e.w, "W:");
     ematd m(e.m);
-    Bidiagonal::ToBidiagonal(m, q, p);
+    Bidiagonal<FT>::ToBidiagonal(m, q, p);
     alg::print0_2(m, "Input:");
-    Bidiagonal::UnpackQ(m, q, e.u.ColCount(), e.u);
-    Bidiagonal::UnpackPT(m, p, e.v.RowCount(), e.v);
+    Bidiagonal<FT>::UnpackQ(m, q, e.u.ColCount(), e.u);
+    Bidiagonal<FT>::UnpackPT(m, p, e.v.RowCount(), e.v);
     alg::print0_2(e.v, "Input Vt:");
     alg::print0_2(e.u, "Input u:");
     SVD<FT> svd;
@@ -241,12 +239,12 @@ void TestCholesky(OlxTests& t)  {
     {-5, 0, 11}
   };
   ematd m1(3,3);
-  m1 = PlainMatrix<double>(&mv[0][0], 3, 3);
+  m1.Assign(mv, 3, 3);
   const ematd om(m1);
-  math::Cholesky::Decompose(m1, true);
+  math::Cholesky<double>::Decompose(m1, true);
   ematd m2(3,3);
-  m2 = PlainMatrix<double>(&mv[0][0], 3, 3);
-  math::Cholesky::Decompose(m2, false);
+  m2.Assign(mv, 3, 3);
+  math::Cholesky<double>::Decompose(m2, false);
   ematd l(3,3), u(3,3);
   for( int i=0; i < 3; i++ )  {
     for( int j=i; j < 3; j++ )  {
@@ -266,76 +264,4 @@ void TestCholesky(OlxTests& t)  {
   }
 }
 //...........................................................................................
-void TestEigenDecomposition(OlxTests& t)  {
-  t.description = __OlxSrcInfo;
-  double mv[3][3] = {
-    {-2, 1, -1},
-    {1, -1, 0},
-    {-1, 0, -1}
-  };
-  ematd m(3,3), I(3,3);
-  m = PlainMatrix<double>(&mv[0][0], 3, 3);
-  ematd::EigenValues(m, I.I());
-  ematd m1 = ematd::Transpose(I)*m*I;
-  for( int i=0; i < 3; i++ )  {
-    for( int j=0; j < 3; j++ )  {
-      if( olx_abs(mv[i][j]-m1(i,j)) > 1e-8 ) {
-        alg::print0_2(PlainMatrix<double>(&mv[0][0], 3, 3), "Source");
-        alg::print0_2(m1, "Result");
-        throw TFunctionFailedException(__OlxSrcInfo, "m != Qt*L*Q");
-      }
-    }
-  }
-}
-//...........................................................................................
-void TestMatrixDiff(OlxTests& t)  {
-  t.description = __OlxSrcInfo;
-  mat3d m(1,2,3,4,5,6);
-  for (int j=0; j < 9; j++) {
-    mat3d r = dmat::M_x_One(m, j/3, j%3);
-    mat3d tm;
-    tm[j/3][j%3] = 1;
-    mat3d t = m*tm;
-    for (int i1=0; i1 < 3; i1++)
-      if (!r[i1].Equals(t[i1], 1e-8))
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
-    
-    r = dmat::One_x_M(m, j/3, j%3);
-    t = tm*m;
-    for (int i1=0; i1 < 3; i1++)
-      if (!r[i1].Equals(t[i1], 1e-8))
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
-
-    r = dmat::M_x_One_x_Mt(m, j/3, j%3);
-    t = m*tm*mat3d::Transpose(m);
-    for (int i1=0; i1 < 3; i1++)
-      if (!r[i1].Equals(t[i1], 1e-8))
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
-  }
-  typedef linear_to_sym_base lsb;
-  int a[6][2] = { {0,0}, {0,1}, {0,2}, {1,1}, {1,2}, {2,2} };
-  for (size_t j=0; j < 6; j++) {
-    mat3d tm;
-    tm[lsb::get_i(j)][lsb::get_j(j)] = tm[lsb::get_j(j)][lsb::get_i(j)] = 1;
-
-    mat3d r = dmat::M_x_OneSym(m, a[j][0], a[j][1]);
-    mat3d t = m*tm;
-    for (int i1=0; i1 < 3; i1++)
-      if (!r[i1].Equals(t[i1], 1e-8))
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
-    
-    r = dmat::OneSym_x_M(m, a[j][0], a[j][1]);
-    t = tm*m;
-    for (int i1=0; i1 < 3; i1++)
-      if (!r[i1].Equals(t[i1], 1e-8))
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
-
-    r = dmat::M_x_OneSym_x_Mt(m, a[j][0], a[j][1]);
-    t = m*tm*mat3d::Transpose(m);
-    for (int i1=0; i1 < 3; i1++)
-      if (!r[i1].Equals(t[i1], 1e-8))
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
-
-  }
-}
 };  //namespace test

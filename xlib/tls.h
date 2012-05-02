@@ -14,17 +14,14 @@
 #include "satom.h"
 #include "ellipsoid.h"
 #include "evalue.h"
-#include "math/mmath.h"
 
 BeginXlibNamespace()
 /* References:
-  V. Schomaker & K. N. Trueblood, Acta Cryst 1968, B24, 63
-  B54, 507-514
+  V. Schomaker, Acta Cryst 1968, B24, 63
 */
 class TLS {
-  TSAtomPList atoms;
 public:
-  TLS(const TSAtomPList &atoms);
+  TLS(const TSAtomPList &atoms, const double *cellParameters);
   //accessors
   const mat3d& GetT() const { return Tmat; }
   const mat3d& GetL() const { return Lmat; }
@@ -33,10 +30,10 @@ public:
   const vec3d& GetFoM() const { return FoM; }
   const evecd_list& GetElpList() const { return newElps; }
   const mat3d& GetRtoLaxes() const { return RtoLaxes; }
-  const ematd& GetVcV() const { return TLS_VcV; }
-  void printTLS(const olxstr &title="TLS matrices") const;
-  void printDiff(const olxstr &title="Uobs vs Utls") const;
-  void printFOM() const;
+  const ematd& GetTVcV() const { return TVcV; }
+  const ematd& GetLVcV() const { return LVcV; }
+  const ematd& GetSVcV() const { return SVcV; }
+  void printTLS(const olxstr &title="TLS matrices");
   
   ConstTypeList<evecd> calcUijEllipse(const TSAtomPList &atoms);
   bool calcTLS(const ematd& designM, const evecd& UijC, const ematd &weigts);
@@ -58,18 +55,22 @@ private:
   unsigned short TLSfreeParameters; // 21, To be reduced by 1 per constraint 
                     //(unless enforced with Lagrange multipliers?).
   
-  vec3d FoM;    // {R1,R2'}
-  // (6T, 6L, 9S) x (6T, 6L, 9S)
+  vec3d FoM;    // {R1,R2, sqrt(chi^2)}
   ematd TLS_VcV;
+  ematd TVcV, LVcV, SVcV;
   // NOTE: To be replace when VcV matrix is available
-  void UijErrors(ematd &weights);
-  void createDM(ematd &designM, evecd &UijC);
+  void UijErrors(const TSAtomPList &atoms, ematd &weights);
+  void createDM(ematd &designM, evecd &UijC ,const TSAtomPList &atoms);
   mat3d calcUijCart (const vec3d &atomPosition);
+  void calcTLS_VcV(evecd &w, ematd &v);
   void RotateLaxes();
-  vec3d FigOfMerit(const evecd_list &Elps, const ematd &weights);
+  void RotateVcV();
+  void FigOfMerit(const TSAtomPList &atoms, const evecd_list &Elps,
+    const evecd &UijCol, const ematd &weights);
+  void quadToCart(const evecd &quad, ematd &UijCart);  // Converts Uij quadractic wrt Xtal basis to Catesian
   void symS(); // Shifts origin - makes S symmetric
   void diagS(mat3d &split, mat3d &Tmatrix, mat3d &Smatrix); //Splits L axes to make S diagonal
-
+  
   //helper mathods:
   int epsil(int i, int j, int k) const;
 };

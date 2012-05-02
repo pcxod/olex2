@@ -1342,8 +1342,6 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
   const mat3d abc2xyz(mat3d::Transpose(GetAsymmUnit().GetCellToCartesian())),
               xyz2abc(mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
   const mat3d etm = abc2xyz*transform.r*xyz2abc;
-  ematd J = TEllipsoid::GetTransformationJ(etm),
-    Jt = ematd::Transpose(J);
   for( size_t i=0; i < fragAtoms.Count(); i++ )
     fragAtoms[i]->GetNetwork().SetTag(i);
 
@@ -1353,7 +1351,7 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
         TSAtom& SA = fragAtoms[i]->GetNetwork().Node(j);
         SA.CAtom().ccrd() = transform * SA.CAtom().ccrd();
         if( SA.CAtom().GetEllipsoid() != NULL ) 
-          SA.CAtom().GetEllipsoid()->Mult(etm, J, Jt);
+          SA.CAtom().GetEllipsoid()->MultMatrix(etm);
       }
     }
   }

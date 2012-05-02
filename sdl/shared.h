@@ -14,8 +14,34 @@ BeginEsdlNamespace()
 
 template <class cont_t, typename item_t>
 class shared_base {
+public:
+  class Item {
+    size_t index;
+    shared_base &instance;
+  public:
+    Item(size_t idx, shared_base &inst) : index(idx), instance(inst) {}
+    Item& operator = (const item_t &v) {
+      instance.Set(index, v);
+      return *this;
+    }
+    Item& operator = (const Item &v) {
+      instance->Set(index, v.instance.Get(v.index));
+      return *this;
+    }
+    operator const item_t & () {  return instance.Get(index);  }
+  };
 protected:
   mutable olx_ptr_<cont_t> *p;
+  void Set(size_t i, const item_t &v)  {
+    if( p->ref_cnt > 1 ) {
+      p->ref_cnt--;
+      p = new olx_ptr_<cont_t>(new cont_t(*p->p));
+      (*p->p)[i] = v;
+    }
+    else
+      (*p->p)[i] = v;
+  }
+  const item_t &Get(size_t i) const {  return (*p->p)[i];  }
   static void throw_invalid(const char* file, const char* function, int line) {
     TExceptionBase::ThrowFunctionFailed(file, function, line, "uninitialised object");
   }
@@ -38,15 +64,27 @@ public:
       delete p;
     }
   }
+  Item operator [] (size_t i)  {  return Item(i, *this);  }
+  const item_t &operator [] (size_t i) const {  return (*p->p)[i];  }
+  size_t Count() const {  return p == NULL ? 0 : p->p->Count();  }
+  bool IsEmpty() const {  return Count() == 0;  }
   operator const cont_t &() const {
     if( p == NULL )
       throw_invalid(__POlxSourceInfo);
     return *p->p;
   }
-  const cont_t& GetObject() const {
+  const cont_t& GetList() const {
     if( p == NULL )
       throw_invalid(__POlxSourceInfo);
     return *p->p;
+  }
+  void Delete(size_t i)  {
+    on_modify();
+    p->p->Delete(i);  
+  }
+  void IncCapacity(size_t v)  {
+    on_modify();
+    p->p->Setcapcity(p->p->GetCount()+v);  
   }
   shared_base& operator = (const shared_base &a) {
     if( p != NULL && --p->ref_cnt == 0 )  {
@@ -75,69 +113,9 @@ public:
   bool IsValid() const {  return p != NULL;  }
 };
 
-template <class cont_t, typename item_t>
-class shared_list_base : public shared_base<cont_t, item_t> {
-public:
-  class Item {
-    size_t index;
-    shared_list_base<cont_t,item_t> &instance;
-  public:
-    Item(size_t idx, shared_list_base<cont_t,item_t> &inst)
-      : index(idx), instance(inst) {}
-    Item& operator = (const item_t &v) {
-      instance.Set(index, v);
-      return *this;
-    }
-    Item& operator = (const Item &v) {
-      instance->Set(index, v.instance.Get(v.index));
-      return *this;
-    }
-    operator const item_t & () {  return instance.Get(index);  }
-  };
-  void Set(size_t i, const item_t &v)  {
-    typedef shared_base<cont_t, item_t> p_t;
-    if( p_t::p->ref_cnt > 1 ) {
-      p_t::p->ref_cnt--;
-      p_t::p = new olx_ptr_<cont_t>(new cont_t(*p_t::p->p));
-      (*p_t::p->p)[i] = v;
-    }
-    else
-      (*p_t::p->p)[i] = v;
-  }
-  const item_t &Get(size_t i) const {
-    return (*shared_base<cont_t, item_t>::p->p)[i];
-  }
-public:
-  shared_list_base() {}
-  shared_list_base(const shared_list_base &l)
-    : shared_base<cont_t, item_t>(l)  {}
-  shared_list_base(cont_t *l)
-    : shared_base<cont_t, item_t>(l) {}
-  shared_list_base(cont_t &l)
-    : shared_base<cont_t, item_t>(l) {}
-  Item operator [] (size_t i)  {  return Item(i, *this);  }
-  const item_t &operator [] (size_t i) const {
-    return (*shared_base<cont_t,item_t>::p->p)[i];
-  }
-  size_t Count() const {
-    return shared_base<cont_t,item_t>::p == NULL ? 0
-      : shared_base<cont_t,item_t>::p->p->Count();
-  }
-  bool IsEmpty() const {  return Count() == 0;  }
-  void Delete(size_t i)  {
-    shared_base<cont_t,item_t>::on_modify();
-    shared_base<cont_t,item_t>::p->p->Delete(i);  
-  }
-  void IncCapacity(size_t v)  {
-    shared_base<cont_t,item_t>::on_modify();
-    shared_base<cont_t,item_t>::p->p->Setcapcity(
-      shared_base<cont_t,item_t>::p->p->GetCount()+v);
-  }
-};
-
 template <class list_t, typename item_t>
-class shared_list : public shared_list_base<list_t,item_t> {
-  typedef shared_list_base<list_t,item_t> _parent_t;
+class shared_list : public shared_base<list_t,item_t> {
+  typedef shared_base<list_t,item_t> _parent_t;
 public:
   shared_list() {}
   shared_list(const shared_list &l) : _parent_t(l) {}
@@ -157,8 +135,8 @@ public:
 };
 
 template <class list_t, typename item_t>
-class shared_ptr_list : public shared_list_base<list_t,item_t*> {
-  typedef shared_list_base<list_t,item_t*> _parent_t;
+class shared_ptr_list : public shared_base<list_t,item_t*> {
+  typedef shared_base<list_t,item_t*> _parent_t;
 public:
   shared_ptr_list() {}
   shared_ptr_list(const shared_ptr_list &l) : _parent_t(l) {}
@@ -178,8 +156,8 @@ public:
 };
 
 template <class array_t, typename item_t>
-class shared_array : public shared_list_base<array_t,item_t> {
-  typedef shared_list_base<array_t,item_t> _parent_t;
+class shared_array : public shared_base<array_t,item_t> {
+  typedef shared_base<array_t,item_t> _parent_t;
 public:
   shared_array() {}
   shared_array(const shared_array &l) : _parent_t(l) {}

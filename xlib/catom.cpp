@@ -175,7 +175,7 @@ void TCAtom::AssignEllp(TEllipsoid* NV)  {
 //..............................................................................
 void TCAtom::UpdateEllp(const TEllipsoid &NV) {
   double Q[6], E[6];
-  NV.GetShelxQuad(Q, E);
+  NV.GetQuad(Q, E);
   if( EllpId == InvalidIndex )  {
     TEllipsoid& elp = Parent->NewEllp();
     elp.Initialise(Q, E);
@@ -204,7 +204,7 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
   }
   else {
     double Q[6], E[6];
-    GetEllipsoid()->GetShelxQuad(Q, E);
+    GetEllipsoid()->GetQuad(Q, E);
     TDataItem& elp = item.AddItem("adp");
     elp.AddField("xx", TEValue<double>(Q[0], E[0]).ToString());
     elp.AddField("yy", TEValue<double>(Q[1], E[1]).ToString());
@@ -238,7 +238,7 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   }
   else  {
     double Q[6], E[6];
-    GetEllipsoid()->GetShelxQuad(Q, E);
+    GetEllipsoid()->GetQuad(Q, E);
     PythonExt::SetDictItem(main, "adp", 
       Py_BuildValue("(dddddd)(dddddd)", Q[0], Q[1], Q[2], Q[3], Q[4], Q[5], 
        E[0], E[1], E[2], E[3], E[4], E[5]
@@ -567,7 +567,7 @@ double TCAtom::GetValue(size_t var_index) const {
     case catom_var_name_U12:
       if( !olx_is_valid_index(EllpId) )
         throw TInvalidArgumentException(__OlxSourceInfo, "Uanis is not defined");
-      return Parent->GetEllp(EllpId).GetQuad(var_index-catom_var_name_U11);
+      return Parent->GetEllp(EllpId).GetValue(var_index-catom_var_name_U11);
     default:
       throw TInvalidArgumentException(__OlxSourceInfo, "parameter name");
   }

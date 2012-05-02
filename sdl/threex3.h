@@ -29,16 +29,8 @@ public:
   TVector3(const TVector3<T>& v) {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];
   }
-  template <class AT> TVector3 (const TVector3<AT>& v) {
+  template <class AT> TVector3(const TVector3<AT>& v) {
     data[0] = (T)v[0];  data[1] = (T)v[1];  data[2] = (T)v[2];
-  }
-  // any vector
-  template <class AV> static TVector3 FromAny(const AV& v) {
-#ifdef _DEBUG
-    if (v.Count() != 3)
-      throw TInvalidArgumentException(__OlxSourceInfo, "vector");
-#endif
-    return TVector3(v(0), v(1), v(2));
   }
 
   T& operator [] (size_t i)  {  return data[i];  }
@@ -149,8 +141,8 @@ public:
   template <class AT> TVector3<T> XProdVec(const TVector3<AT>& v) const
   {
     return TVector3<T>(
-      data[1]*v[2] - data[2]*v[1],
-      data[2]*v[0] - data[0]*v[2],
+      data[1]*v[2] - data[2]*v[1], 
+      data[2]*v[0] - data[0]*v[2], 
       data[0]*v[1] - data[1]*v[0]);
   }
   /* returns a normal to vector through a point (vector with same origin as
@@ -377,14 +369,6 @@ public:
   TIString ToString() const {  return StrRepr<olxstr>();  }
   olxcstr ToCStr() const {  return StrRepr<olxcstr>();  }
   olxwstr ToWStr() const {  return StrRepr<olxwstr>();  }
-
-  int Compare(const TVector3 &v) const {
-    int d = olx_cmp(data[0], v[0]);
-    if (d != 0 ) return d;
-    d = olx_cmp(data[1], v[1]);
-    if (d != 0 ) return d;
-    return olx_cmp(data[2], v[2]);
-  }
 public:
   typedef T list_item_type;
   typedef T number_type;
@@ -423,20 +407,6 @@ public:
     data[1][0] = (T)v[1][0]; data[1][1] = (T)v[1][1]; data[1][2] = (T)v[1][2];
     data[2][0] = (T)v[2][0]; data[2][1] = (T)v[2][1]; data[2][2] = (T)v[2][2];
   }
-  // any matrix
-  template <class AM> static TMatrix33 FromAny(const AM& v)  {
-#ifdef _DEBUG
-    if (v.ColCount() != 3 || v.RowCount() != 3)
-      throw TInvalidArgumentException(__OlxSourceInfo, "matrix");
-#endif
-    TMatrix33 r;
-    for (int i=0; i < 3; i++) {
-      r[i][0] = v(i,0);
-      r[i][1] = v(i,1);
-      r[i][2] = v(i,2);
-    }
-    return r;
-  }
   
   const TVector3<T>& operator [] (size_t i) const {  return data[i];  }
   TVector3<T>& operator [] (size_t i)  {  return data[i];  } 
@@ -453,10 +423,8 @@ public:
   static size_t RowCount()  {  return 3;  }
   static bool IsEmpty()  {  return false;  }
   static void Resize(size_t w, size_t h)  {
-#ifdef _DEBUG
     if( w != 3 || h != 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
-#endif
   }
   void SwapRows(size_t i, size_t j)  {
     for( int _i=0; _i < 3; _i++ )  {
@@ -544,10 +512,10 @@ public:
     return *this;
   }
 
-  bool operator == (const TMatrix33& v) const {
+  bool operator == (const TMatrix33<T>& v) const {
     return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]);
   }
-  bool operator != (const TMatrix33& v) const {
+  bool operator != (const TMatrix33<T>& v) const {
     return !(operator == (v));
   }
 
@@ -559,19 +527,6 @@ public:
   template <class AT>
   TMatrix33<T>& operator = (const TMatrix33<AT>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];
-    return *this;
-  }
-  template <class AM>
-  TMatrix33<T>& operator = (const AM& v)  {
-#ifdef _DEBUG
-    if (v.ColCount() != 3 || v.RowCount() != 3)
-      throw TInvalidArgumentException(__OlxSourceInfo, "matrix");
-#endif
-    for (int i=0; i < 3; i++) {
-      data[i][0] = v(i,0);
-      data[i][1] = v(i,1);
-      data[i][2] = v(i,2);
-    }
     return *this;
   }
   template <class AT>
