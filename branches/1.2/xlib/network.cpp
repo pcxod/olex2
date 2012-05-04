@@ -49,7 +49,7 @@ void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Fra
       A1.SetTag(0);
       for( size_t j=0; j < Net->NodeCount(); j++ )  {
         TSAtom& A2 = Net->Node(j);
-        const size_t a2_cnt = A2.NodeCount(); 
+        const size_t a2_cnt = A2.NodeCount();
         for( size_t k=0; k < a2_cnt; k++ )  {
           TSAtom& A3 = A2.Node(k);
           if( A3.GetTag() != 0 )  {
@@ -118,15 +118,16 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
         uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
         TSAtom::Ref(site.atom->GetId(), m.GetId()));
-      if( a == NULL )  {
+      if (a == NULL || a->IsDeleted()) {
         for( size_t k=0; k < site.atom->EquivCount(); k++ )  {
           uint32_t id = uc.MulMatrixId(site.atom->GetEquiv(k), m);
-          TSAtom* a = objects.atomRegistry.Find(
+            a = objects.atomRegistry.Find(
             TSAtom::Ref(site.atom->GetId(), id));
-          if( a != NULL )  break;
+          if (a != NULL && !a->IsDeleted())
+            break;
         }
       }
-      if( a != NULL && !a->IsDeleted() )  {
+      if (a != NULL) {
         bool process = true;
         double min_cs = cos_th;
         for( size_t k=0; k < sa.NodeCount(); k++ )  {
