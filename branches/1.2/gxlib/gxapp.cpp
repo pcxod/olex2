@@ -110,7 +110,7 @@ class xappXFileLoad: public AActionHandler  {
   bool SameFile, EmptyFile;
   int state;
 public:
-  xappXFileLoad(TGXApp *Parent) {  
+  xappXFileLoad(TGXApp *Parent) {
     FParent = Parent;  
     AActionHandler::SetToDelete(false);
     GrowInfo = NULL;
@@ -141,7 +141,7 @@ public:
         const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
         size_t ac = 0;
         for( size_t i=0; i < au.AtomCount(); i++ )  {
-          const TCAtom& ca = au.GetAtom(i);           
+          const TCAtom& ca = au.GetAtom(i);
           if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
           ac++;
         }
@@ -4496,6 +4496,9 @@ void TGXApp::ClearStructureRelated() {
   GetRender().GetStyles().RemoveNamedStyles("Q");
   XFile().GetLattice().ClearPlaneDefinitions();
   ClearGroupDefinitions();
+  SelectionCopy[0].Clear();
+  SelectionCopy[1].Clear();
+  GetRender().SelectAll(false);
   UserObjects.Clear();
 }
 //..............................................................................

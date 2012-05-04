@@ -5016,6 +5016,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     catch (const TExceptionBase& exc) { 
       // manual recovery of the situation...
+      FXApp->ClearStructureRelated();
       FXApp->XFile().GetRM().Clear(rm_clear_ALL);
       FXApp->XFile().GetLattice().Clear(true);
       FXApp->XFile().SetLastLoader(NULL);
