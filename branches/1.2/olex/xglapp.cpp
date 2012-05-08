@@ -124,6 +124,7 @@ END_EVENT_TABLE()
 
 //..............................................................................
 bool TGlXApp::OnInit()  {
+  setlocale(LC_NUMERIC, "C");
   wxApp::SetAppName(wxT("olex2"));
   Instance = this;
 //  wxToolTip::Enable(true);
