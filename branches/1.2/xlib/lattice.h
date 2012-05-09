@@ -249,7 +249,8 @@ public:
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);
   void LibGetMoiety(const TStrObjList& Params, TMacroError& E);
-  TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
+  void LibIsGrown(const TStrObjList& Params, TMacroError& E);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndXlibNamespace()

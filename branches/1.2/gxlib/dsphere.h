@@ -34,6 +34,7 @@ protected:
     return true;
   }
   PointAnalyser& analyser;
+  size_t Generation;  //6
 public:
   TDSphere(TGlRenderer& Render, PointAnalyser& analyser,
     const olxstr& collectionName=EmptyString());
@@ -42,6 +43,7 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min) {  return false;  }
   double GetRadius() const;
+  DefPropP(size_t, Generation)
   TEBasis Basis;
 };
 
