@@ -951,14 +951,17 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   if( count == 0 )  {
-    TBasicApp::NewLogEntry() << "Could not find any reflections fulfilling given condition";
+    TBasicApp::NewLogEntry() <<
+      "Could not find any reflections fulfilling given condition";
     return;
   }
   SI /= count;
   SE = sqrt(SE/count);
 
-  xapp.NewLogEntry() << "Found " << count << " reflections fulfilling given condition";
-  xapp.NewLogEntry() << "I(s) is " << olxstr::FormatFloat(3, SI) << '(' << olxstr::FormatFloat(3, SE) << ")";
+  xapp.NewLogEntry() << "Found " << count <<
+    " reflections fulfilling given condition";
+  xapp.NewLogEntry() << "I(s) is " << olxstr::FormatFloat(3, SI) << '(' <<
+    olxstr::FormatFloat(3, SE) << ")";
 
 }
 //..............................................................................
