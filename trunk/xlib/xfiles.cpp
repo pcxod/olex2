@@ -429,7 +429,7 @@ void TXFile::Close()  {
 IEObject* TXFile::Replicate() const {
   TXFile* xf = new TXFile(*(SObjectProvider*)Lattice.GetObjects().Replicate());
   for( size_t i=0; i < FileFormats.Count(); i++ )  {
-    xf->RegisterFileFormat((TBasicCFile*)FileFormats.GetObject(i)->Replicate(), 
+    xf->RegisterFileFormat((TBasicCFile*)FileFormats.GetObject(i)->Replicate(),
                               FileFormats[i]);
   }
   return xf;

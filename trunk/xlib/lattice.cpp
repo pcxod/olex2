@@ -962,7 +962,8 @@ void TLattice::UpdateAsymmUnit()  {
 //..............................................................................
 void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
   if( IsGenerated() )  {
-    TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
+    TBasicApp::NewLogEntry(logError) <<
+      "Cannot perform this operation on grown structure";
     return;
   }
   smatd* m = GetUnitCell().GetClosest(to, fragAtom.ccrd(), true);
@@ -970,8 +971,10 @@ void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
     for( size_t i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
       TSAtom& SA = fragAtom.GetNetwork().Node(i);
       SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-      if( SA.CAtom().GetEllipsoid() != NULL )
-        *SA.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
+      if( SA.CAtom().GetEllipsoid() != NULL ) {
+        *SA.CAtom().GetEllipsoid() =
+          GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
+      }
     }
     delete m;
     GetUnitCell().UpdateEllipsoids();
@@ -983,15 +986,18 @@ void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
 //..............................................................................
 void TLattice::MoveFragment(TSAtom& to, TSAtom& fragAtom)  {
   if( IsGenerated() )  {
-    TBasicApp::NewLogEntry(logError) << "Cannot perform this operation on grown structure";
+    TBasicApp::NewLogEntry(logError) <<
+      "Cannot perform this operation on grown structure";
     return;
   }
-  smatd* m = GetUnitCell().GetClosest(to.CAtom(), fragAtom.CAtom(), true);  
+  smatd* m = GetUnitCell().GetClosest(to.CAtom(), fragAtom.CAtom(), true);
   if( m != NULL )  {
     if( to.CAtom().GetFragmentId() == fragAtom.CAtom().GetFragmentId() )  {
       fragAtom.CAtom().ccrd() = *m * fragAtom.CAtom().ccrd();
-      if( fragAtom.CAtom().GetEllipsoid() != NULL )
-        *fragAtom.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(m->GetContainerId(), fragAtom.CAtom().GetId());
+      if( fragAtom.CAtom().GetEllipsoid() != NULL ) {
+        *fragAtom.CAtom().GetEllipsoid() =
+          GetUnitCell().GetEllipsoid(m->GetContainerId(), fragAtom.CAtom().GetId());
+      }
     }
     else  {  // move whole fragment then
       uint32_t fragId = fragAtom.CAtom().GetFragmentId();
@@ -999,8 +1005,10 @@ void TLattice::MoveFragment(TSAtom& to, TSAtom& fragAtom)  {
         TSAtom& sa = Objects.atoms[i];
         if( sa.CAtom().GetFragmentId() == fragId )  {
           sa.CAtom().ccrd() = *m * sa.CAtom().ccrd();
-          if( sa.CAtom().GetEllipsoid() != NULL ) 
-            *sa.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(m->GetContainerId(), sa.CAtom().GetId());
+          if( sa.CAtom().GetEllipsoid() != NULL ) {
+            *sa.CAtom().GetEllipsoid() =
+              GetUnitCell().GetEllipsoid(m->GetContainerId(), sa.CAtom().GetId());
+          }
         }
       }
     }
@@ -1062,9 +1070,12 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
 //..............................................................................
 void TLattice::MoveToCenter()  {
   if( IsGenerated() )  {
-    TBasicApp::NewLogEntry(logError) << "";
-    OnStructureGrow.Enter(this);
+    TBasicApp::NewLogEntry(logError) <<
+      "Cannot perform this operation on grown structure";
+    return;
   }
+  vec3d cnt(0.5),
+    ocnt = GetAsymmUnit().Orthogonalise(cnt);
   for( size_t i=0; i < Fragments.Count(); i++ )  {
     TNetwork* frag = Fragments[i];
     vec3d molCenter;
@@ -1076,35 +1087,27 @@ void TLattice::MoveToCenter()  {
     }
     if( ac == 0 )  continue;
     molCenter /= ac;
-    smatd* m = GetUnitCell().GetClosest(vec3d(0.5, 0.5, 0.5), molCenter, true);
+    smatd* m = GetUnitCell().GetClosest(cnt, molCenter, true);
     if( m == NULL )  continue;
-    if( IsGenerated() )  {
-      for( size_t j=0; j < frag->NodeCount(); j++ )  {
-        TSAtom& SA = frag->Node(j);
-        SA.ccrd() = *m * SA.ccrd();
-        SA.SetEllipsoid(&GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId()));
-      }
+    double d1 = GetAsymmUnit().Orthogonalise(molCenter).DistanceTo(ocnt);
+    double d2 = GetAsymmUnit().Orthogonalise(*m*molCenter).DistanceTo(ocnt);
+    if (olx_abs(d1-d2) < 1e-2) {
+      delete m;
+      continue;
     }
-    else  {
-      for( size_t j=0; j < frag->NodeCount(); j++ )  {
-        TSAtom& SA = frag->Node(j);
-        SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-        if( SA.CAtom().GetEllipsoid() != NULL ) 
-          *SA.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
+    for( size_t j=0; j < frag->NodeCount(); j++ )  {
+      TSAtom& SA = frag->Node(j);
+      SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
+      if( SA.CAtom().GetEllipsoid() != NULL )  {
+        *SA.CAtom().GetEllipsoid() =
+          GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
       }
     }
     delete m;
   }
-  if( !IsGenerated() )  {  
-    OnStructureUniq.Enter(this);
-    Init();
-    OnStructureUniq.Exit(this);
-  }
-  else  {
-    RestoreCoordinates();
-    Disassemble();
-    OnStructureGrow.Exit(this);
-  }
+  OnStructureUniq.Enter(this);
+  Init();
+  OnStructureUniq.Exit(this);
 }
 //..............................................................................
 void TLattice::Compaq()  {
@@ -2465,13 +2468,31 @@ void TLattice::LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( rv );
 }
 //..............................................................................
+void TLattice::LibIsGrown(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal(IsGenerated());
+}
+//..............................................................................
 TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("latt") : name);
-  lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetFragmentCount, "GetFragmentCount", fpNone,
-"Returns number of fragments in the lattice") );
-  lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetFragmentAtoms, "GetFragmentAtoms", fpOne,
-"Returns a comma separated list of atoms in specified fragment") );
-  lib->RegisterFunction<TLattice>( new TFunction<TLattice>(this,  &TLattice::LibGetMoiety, "GetMoiety", fpNone,
-"Returns moelcular moiety") );
+  lib->RegisterFunction<TLattice>(
+    new TFunction<TLattice>(this,  &TLattice::LibGetFragmentCount,
+    "GetFragmentCount", fpNone,
+    "Returns number of fragments in the lattice")
+  );
+  lib->RegisterFunction<TLattice>(
+    new TFunction<TLattice>(this,  &TLattice::LibGetFragmentAtoms,
+    "GetFragmentAtoms", fpOne,
+    "Returns a comma separated list of atoms in specified fragment")
+  );
+  lib->RegisterFunction<TLattice>(
+    new TFunction<TLattice>(this,  &TLattice::LibGetMoiety,
+    "GetMoiety", fpNone,
+    "Returns molecular moiety")
+  );
+  lib->RegisterFunction<TLattice>(
+    new TFunction<TLattice>(this,  &TLattice::LibIsGrown,
+    "IsGrown", fpNone,
+    "Returns true if the structure is grow")
+  );
   return lib;
 }

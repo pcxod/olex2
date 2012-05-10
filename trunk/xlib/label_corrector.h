@@ -134,6 +134,16 @@ struct LabelCorrector  {
         "Incorrectly intialised object - use the right constructor");
     }
   }
+  bool IsGlobal(const TCAtom& a) const {
+    TCAtom* lo = uniq_labels.Find(a.GetLabel(), NULL);
+    if (lo != &a)
+      return false;
+    else if( lo == NULL ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "Incorrectly intialised object - use the right constructor");
+    }
+    return true;
+  }
 };
 
 #endif

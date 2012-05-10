@@ -772,7 +772,7 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
     for (size_t j=0; j < r.Count(); j++)
-      r[j].SetTag(CAtoms[i]->IsDeleted() ? -1 : aid++);
+      r[j].SetTag(r[j].IsDeleted() ? -1 : aid++);
   }
   TDataItem& resi = item.AddItem("residues");
   for( size_t i=0; i < ResidueCount(); i++ )  {
@@ -809,11 +809,10 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn)  {
   PythonExt::SetDictItem(main, "cell", cell);
   // pre-set atom tags
   size_t aid=0;
-  for( size_t i=0; i < CAtoms.Count(); i++ )  {
-    if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetType() != iQPeakZ )
-      CAtoms[i]->SetTag(aid++);
-    else
-      CAtoms[i]->SetTag(-1);
+  for( size_t i=0; i < ResidueCount(); i++ )  {
+    TResidue& r = GetResidue(i);
+    for (size_t j=0; j < r.Count(); j++)
+      r[j].SetTag(r[j].IsDeleted() || r[j].GetType() == iQPeakZ ? -1 : aid++);
   }
   size_t resi_cnt = 0;
   for( size_t i=0; i < ResidueCount(); i++ )  {

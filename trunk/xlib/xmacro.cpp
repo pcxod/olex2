@@ -2372,14 +2372,19 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
+  TXFile &xf = TXApp::GetInstance().XFile();
+  if (xf.GetLattice().IsGenerated()) {
+    TBasicApp::NewLogEntry(logError) <<
+      "Cannot perform this operation on grown structure";
+    return;
+  }
   if( Options.Contains('a') )  
-    TXApp::GetInstance().XFile().GetLattice().CompaqAll();
+    xf.GetLattice().CompaqAll();
   else if( Options.Contains('c') )  
-    TXApp::GetInstance().XFile().GetLattice().CompaqClosest();
+    xf.GetLattice().CompaqClosest();
   else if( Options.Contains('q') )  
-    TXApp::GetInstance().XFile().GetLattice().CompaqQ();
+    xf.GetLattice().CompaqQ();
   else if( Options.Contains('m') )  {
-    TXFile &xf = TXApp::GetInstance().XFile();
     TAsymmUnit &au = xf.GetAsymmUnit();
     TIntList modified(au.AtomCount());
     for( size_t i=0; i < au.AtomCount(); i++ )  {

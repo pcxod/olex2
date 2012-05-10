@@ -588,9 +588,16 @@ float TGXApp::ProbFactor(float Prob)  {
 //..............................................................................
 void TGXApp::Init()  {
   try  {  CreateObjects(false);  }
-  catch(...)  {
+  catch(const TExceptionBase &e)  {
     GetRender().GetStyles().Clear();
-    CreateObjects(false);
+    try {
+      GetRender()._OnStylesLoaded();
+      CreateObjects(false);
+    }
+    catch(const TExceptionBase &e1) {
+      throw TFunctionFailedException(__OlxSourceInfo, e1);
+    }
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
 }
 //..............................................................................

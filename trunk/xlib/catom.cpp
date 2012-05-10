@@ -196,7 +196,7 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
   if( !olx_is_valid_index(EllpId) )  {
     item.AddField("Uiso", TEValue<double>(Uiso, UisoEsd).ToString());
-    if( UisoOwner != NULL && !UisoOwner->IsDeleted() )  {
+    if( UisoOwner != NULL && UisoOwner->GetTag() >= 0 )  {
       TDataItem& uo = item.AddItem("Uowner");
       uo.AddField("id", UisoOwner->GetTag());
       uo.AddField("k", UisoScale);
@@ -225,13 +225,14 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   PythonExt::SetDictItem(main, "part", Py_BuildValue("i", Part));
   PythonExt::SetDictItem(main, "occu", Py_BuildValue("(dd)", Occu, OccuEsd));
   PythonExt::SetDictItem(main, "tag", Py_BuildValue("i", GetTag()));
-  PythonExt::SetDictItem(main, "crd", 
-    Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]));
+  PythonExt::SetDictItem(main, "crd",
+    Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2],
+      Esd[0], Esd[1], Esd[2]));
   if( !olx_is_valid_index(EllpId) )  {
     PythonExt::SetDictItem(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd));
-    if( UisoOwner != NULL && !UisoOwner->IsDeleted() )  {
+    if( UisoOwner != NULL && UisoOwner->GetTag() >= 0 )  {
       PyObject* uo = PyDict_New();
-      PythonExt::SetDictItem(uo, "id", Py_BuildValue("i", UisoOwner->GetTag())) ;
+      PythonExt::SetDictItem(uo, "id", Py_BuildValue("i", UisoOwner->GetTag()));
       PythonExt::SetDictItem(uo, "k", Py_BuildValue("d", UisoScale));
       PythonExt::SetDictItem(main, "uisoOwner", uo);
     }
@@ -257,7 +258,7 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
     cnt = 0;
     for( size_t i=0; i < AttachedSites.Count(); i++ )  {
       Site& s = AttachedSites[i];
-      if( s.atom->GetTag()  < 0 )  continue;
+      if( s.atom->GetTag() < 0 )  continue;
       const smatd& mat = s.matrix;
       const vec3d crd = au.Orthogonalise(mat*s.atom->ccrd());
       if( mat.IsFirst() )
@@ -464,7 +465,8 @@ void TCAtom::UpdateAttachedSites()  {
 olxstr TCAtom::GetResiLabel() const {
   if( GetResiId() == 0 )
     return GetLabel();
-  return (olxstr(GetLabel()) << '_' << GetParent()->GetResidue(GetResiId()).GetNumber());
+  return (olxstr(GetLabel()) << '_' <<
+    GetParent()->GetResidue(GetResiId()).GetNumber());
 }
 //..............................................................................
 SiteSymmCon TCAtom::GetSiteConstraints() const {
@@ -490,7 +492,9 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm) const  {
   return name;
 }
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const int resiId) const  {
+olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
+  const int resiId) const
+{
   olxstr name(Atom->GetLabel());
   if( Atom->GetResiId() == 0 || 
     Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiId )  
@@ -506,14 +510,17 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const int resiId) co
   return name;
 }
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const olxstr& resiName) const  {
+olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
+  const olxstr& resiName) const
+{
   if( resiName.IsEmpty() )
     return GetFullLabel(rm);
 
   olxstr name(Atom->GetLabel());
   if( resiName.IsNumber() )  {
     if( Atom->GetResiId() == 0 || 
-      (Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiName.ToInt()) )  
+      (Atom->GetParent()->GetResidue(
+        Atom->GetResiId()).GetNumber() == resiName.ToInt()) )
     {
       if( Matrix != NULL )
         name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
@@ -526,7 +533,8 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const olxstr& resiNa
   }
   else  {
     if( !olx_is_valid_index(Atom->GetResiId()) || 
-      (!resiName.IsEmpty() && Atom->GetParent()->GetResidue(Atom->GetResiId()).GetClassName().Equalsi(resiName)) )  
+      (!resiName.IsEmpty() && Atom->GetParent()->GetResidue(
+        Atom->GetResiId()).GetClassName().Equalsi(resiName)) )
     {
       if( Matrix != NULL )
         name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
@@ -541,7 +549,8 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm, const olxstr& resiNa
 }
 //..............................................................................
 void TGroupCAtom::ToDataItem(TDataItem& di) const {
-  di.AddField("atom_id", Atom->GetTag()).AddField("matr_id", Matrix == NULL ? -1 : Matrix->GetId());
+  di.AddField("atom_id", Atom->GetTag()).AddField("matr_id", Matrix == NULL
+    ? -1 : Matrix->GetId());
 }
 //..............................................................................
 void TGroupCAtom::FromDataItem(const TDataItem& di, const RefinementModel& rm)  {

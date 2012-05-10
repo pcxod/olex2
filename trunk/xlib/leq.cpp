@@ -75,9 +75,7 @@ PyObject* XVar::PyExport(TPtrList<PyObject>& atoms)  {
     if( References[i]->referencer.IsValid() )
       rc++;
   }
-  if( rc == 0 && this->GetId() != 0 )
-    return PythonExt::PyNone();
-  PyObject* main = PyDict_New(), 
+  PyObject* main = PyDict_New(),
     *refs = PyTuple_New(rc);
   PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value));
   if( rc != 0 )  {
