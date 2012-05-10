@@ -8421,7 +8421,11 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
     }  
   }
+  size_t g = Options.FindValue('g', 6).ToSizeT();
+  if (g > 10)
+    g = 10;
   TDSphere *sph = new TDSphere(FXApp->GetRender(), pa, olxstr("Sph_") << ++counter);
+  sph->SetGeneration(g);
   sph->Create();
   sph->Basis.SetCenter(xatoms[0]->crd());
   sph->Basis.SetZoom(2);

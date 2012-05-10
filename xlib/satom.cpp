@@ -99,6 +99,16 @@ void TSAtom::ToDataItem(TDataItem& item) const {
     item.AddField("bond_range", rb.GetString(true));
   }
   item.AddField("atom_id", FCAtom->GetTag());
+#ifdef _DEBUG
+  const TAsymmUnit &au = *FCAtom->GetParent();
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).GetTag() == FCAtom->GetTag() && 
+      &au.GetAtom(i) != FCAtom)
+    {
+      throw TFunctionFailedException(__OlxSourceInfo, "assert");
+    }
+  }
+#endif
   item.AddField("matrix_id", Matrix->GetId());
 }
 //..............................................................................

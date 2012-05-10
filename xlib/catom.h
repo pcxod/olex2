@@ -251,7 +251,7 @@ public:
   vec3d const& ccrdEsd() const {  return Esd;  }
 // IXVarReferencer implementation
   virtual size_t VarCount() const {  return 12;  }
-  virtual XVarReference* GetVarRef(size_t i) const {  
+  virtual XVarReference* GetVarRef(size_t i) const {
     if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return Vars[i];  
@@ -269,8 +269,11 @@ public:
   virtual IXVarReferencerContainer& GetParentContainer() const;
   virtual double GetValue(size_t var_index) const;
   virtual void SetValue(size_t var_index, const double& val);
-  virtual bool IsValid() const {  return !IsDeleted();  }
+  virtual bool IsValid() const {  return !IsDeleted() && GetTag() >=0;  }
   virtual olxstr GetIdName() const {  return Label;  }
+#ifdef _DEBUG
+  void SetTag(index_t v) { ACollectionItem::SetTag(v); }
+#endif
 //
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

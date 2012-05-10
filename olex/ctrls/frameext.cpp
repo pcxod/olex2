@@ -83,13 +83,13 @@ int TMainFrame::ShowAlert(const olxstr &msg, const olxstr &title, int flags)  {
 }
 //..............................................................................
 void TMainFrame::ShowAlert(const TExceptionBase &e, const olxstr &msg, bool log)  {
+  TStrList sl;
+  e.GetException()->GetStackTrace(sl);
   if( log )  {
-    TStrList sl;
-    e.GetException()->GetStackTrace(sl);
     TBasicApp::NewLogEntry() << "Exception occured:" << NewLineSequence() <<
       msg << NewLineSequence() << sl;
   }
-  wxMessageBox(e.GetException()->GetError().u_str(),
-    (olxstr("Exception: ") << EsdlObjectName(*e.GetException())).u_str(),
+  wxMessageBox(sl.Text(NewLineSequence()).u_str(),
+    EsdlObjectName(*e.GetException()).u_str(),
     wxOK|wxICON_ERROR, MainFrameInstance);
 }
