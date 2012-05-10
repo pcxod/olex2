@@ -529,7 +529,7 @@ void CIsoSurface::CalculateNormals()  {
       Vertices[Triangles[i].pointID[0]];
     const vec3f vec2 = Vertices[Triangles[i].pointID[2]] -
       Vertices[Triangles[i].pointID[0]];
-    const float S = vec1.QLength()*vec2.QLength()*sin(acos(vec1.CAngle(vec2)));
+    const float S = vec1.XProdVal(vec2);
     vec3f normal = vec1.XProdVec(vec2);
     if( S > 0 )  // weight up normals of little triangles (hight curvature)
       normal /= sqrt(S);

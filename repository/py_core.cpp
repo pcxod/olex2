@@ -168,8 +168,7 @@ PyObject* pyTranslate(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pyDescRef(PyObject* self, PyObject* args)  {
-  TStrList rv;
-  TXApp::GetInstance().XFile().GetRM().Describe(rv);
+  TStrList rv = TXApp::GetInstance().XFile().GetRM().Describe();
   return PythonExt::BuildString(rv.Text('\n'));
 }
 //..............................................................................

@@ -1062,8 +1062,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
 //..............................................................................
 void TLattice::MoveToCenter()  {
   if( IsGenerated() )  {
-    TBasicApp::NewLogEntry(logError) << "Please note that asymetric unit will not be updated: "
-      "the structure is grown";
+    TBasicApp::NewLogEntry(logError) << "";
     OnStructureGrow.Enter(this);
   }
   for( size_t i=0; i < Fragments.Count(); i++ )  {

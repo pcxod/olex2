@@ -13,20 +13,26 @@
 
 BeginXlibNamespace()
 
+/* number and alias are unique numbers */
 class TResidue : public IEObject  {
   TAsymmUnit& Parent;
-  uint16_t Id;
-  olxstr ClassName, Alias;
-  int Number;
+  uint32_t Id;
+  olxstr ClassName;
+  int Number, Alias;
   TCAtomPList Atoms;
 protected:
   // removes an atom and resets the ResiId, this is used internally from Add
-  void Remove(TCAtom& ca)           {
+  void Remove(TCAtom& ca) {
     size_t i = Atoms.IndexOf(ca);
     if( i != InvalidIndex )  {
       ca.SetResiId(~0);
       Atoms.Delete(i);
     }
+  }
+  void SetId(uint32_t id) {
+    Id = id;
+    for (size_t i=0; i < Atoms.Count(); i++)
+      Atoms[i]->SetResiId(id);
   }
   /* adds an atom to this residue without trying to remove from the owning
  residue (if there is any!)
@@ -36,18 +42,26 @@ protected:
     ca.SetResiId(Id);
   }
 public:
-  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl=EmptyString(),
-    int number = 0, const olxstr& alias=EmptyString())
-    : Parent(parent),
-      Id(id),
-      ClassName(cl),
-      Alias(alias),
-      Number(number) {}
+  TResidue(TAsymmUnit& parent, uint32_t id)
+    : Parent(parent), Id(id), Number(0), Alias(0)
+  {}
+  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl,
+    int number=0)
+    : Parent(parent), Id(id), ClassName(cl), Number(number), Alias(number)
+  {}
+  TResidue(TAsymmUnit& parent, uint32_t id, const olxstr& cl,
+    int number, int alias)
+    : Parent(parent), Id(id), ClassName(cl), Number(number), Alias(alias)
+  {}
   //
   DefPropC(olxstr, ClassName)
-  DefPropC(olxstr, Alias)
+  DefPropC(int, Alias)
   DefPropP(int, Number)
-  uint32_t GetId() const {  return Id;  }
+  bool HasAlias() const { return Number != Alias; }
+  int Compare(const TResidue &r) const {
+    return olx_cmp(GetNumber(), r.GetNumber());
+  }
+  size_t GetId() const {  return Id;  }
   TCAtomPList& GetAtomList()  {  return Atoms;  }
   const TCAtomPList& GetAtomList() const {  return Atoms;  }
   TAsymmUnit& GetParent()  {  return Parent;  }
@@ -56,12 +70,12 @@ public:
     olxstr rv("RESI ");
     rv << ClassName;
     if( Number != 0 )  rv << ' ' << Number;
-    return (rv << (Alias.IsEmpty() ? EmptyString() : (olxstr(' ') << Alias)));
+    return rv << (!HasAlias() ? EmptyString() : (olxstr(' ') << Alias));
   }
-  size_t Count() const {  return Atoms.Count();  }  
+  size_t Count() const {  return Atoms.Count();  }
   TCAtom& GetAtom(size_t i) const {  return *Atoms[i];  }
   TCAtom& operator [] (size_t i) const {  return *Atoms[i]; }
-  void Clear()                      {  
+  void Clear() {
     for( size_t i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetResiId(~0);
     Atoms.Clear();  

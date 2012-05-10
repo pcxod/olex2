@@ -31,15 +31,57 @@ class TFitMode : public AEventsDispatcher, public AMode  {
       return true;
     }
   };
+  class TFitModeUndo : public TUndoData {
+    TArrayList<AnAssociation2<TCAtom*, vec3d> > data;
+    typedef TUndoActionImplMF<TFitModeUndo> impl_t;
+  public:
+    TFitModeUndo() : TUndoData(new impl_t(this, &TFitModeUndo::undo)) {}
+    TFitModeUndo(const TXAtomPList &atoms)
+      : TUndoData(new impl_t(this, &TFitModeUndo::undo)),
+        data(atoms.Count())
+    {
+      for (size_t i=0; i < atoms.Count(); i++) {
+        data[i].A() = &atoms[i]->CAtom();
+        data[i].B() = atoms[i]->ccrd();
+      }
+    }
+    void undo(TUndoData *) {
+      if (data.IsEmpty()) return;
+      TGXApp& app = *TGlXApp::GetGXApp();
+      TAsymmUnit &au = *data[0].GetA()->GetParent();
+      au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+      for (size_t i=0; i < data.Count(); i++) {
+        data[i].A()->ccrd() = data[i].B();
+        data[i].A()->SetTag(1);
+      }
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      while (ai.HasNext()) {
+        TXAtom &xa = ai.Next();
+        if (xa.CAtom().GetTag() != 1) continue;
+        xa.ccrd() = xa.CAtom().ccrd();
+        xa.crd() = au.Orthogonalise(xa.ccrd());
+      }
+      app.XFile().GetLattice().Init();
+    }
+  };
   double AngleInc;
   OnUniqHandler* uniq_handler;
+  TFitModeUndo *undo;
 public:
-  TFitMode(size_t id) : AMode(id), Initialised(false), AngleInc(0), DoSplit(false)  {
+  TFitMode(size_t id)
+    : AMode(id),
+      Initialised(false),
+      AngleInc(0),
+      DoSplit(false),
+      undo(NULL)
+  {
     uniq_handler = new OnUniqHandler(*this);
-    TGlXApp::GetGXApp()->OnObjectsCreate.Add(this, mode_fit_create, msiExit);
-    TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble, msiEnter);
-    TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureUniq.AddFirst(uniq_handler);
-    TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureGrow.AddFirst(uniq_handler);
+    TGXApp& app = *TGlXApp::GetGXApp();
+    app.OnObjectsCreate.Add(this, mode_fit_create, msiExit);
+    app.XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble,
+      msiEnter);
+    app.XFile().GetLattice().OnStructureUniq.AddFirst(uniq_handler);
+    app.XFile().GetLattice().OnStructureGrow.AddFirst(uniq_handler);
     TGlXApp::GetGXApp()->EnableSelection(false);
   }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
@@ -56,6 +98,7 @@ public:
     AtomsToMatch.Clear();
     TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
     TXAtomPList xatoms = TGlXApp::GetGXApp()->GetSelection().Extract<TXAtom>();
+    undo = new TFitModeUndo(xatoms);
     original_crds.SetCount(xatoms.Count());
     for( size_t i=0; i < xatoms.Count(); i++ )
       original_crds[i] = xatoms[i]->crd();
@@ -67,11 +110,13 @@ public:
     return (Initialised = true);
   }
   ~TFitMode()  {
-    TGlXApp::GetGXApp()->OnObjectsCreate.Remove(this);
-    TGlXApp::GetGXApp()->XFile().GetLattice().OnDisassemble.Remove(this);
-    TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureUniq.Remove(uniq_handler);
-    TGlXApp::GetGXApp()->XFile().GetLattice().OnStructureGrow.Remove(uniq_handler);
+    TGXApp& app = *TGlXApp::GetGXApp();
+    app.OnObjectsCreate.Remove(this);
+    app.XFile().GetLattice().OnDisassemble.Remove(this);
+    app.XFile().GetLattice().OnStructureUniq.Remove(uniq_handler);
+    app.XFile().GetLattice().OnStructureGrow.Remove(uniq_handler);
     delete uniq_handler;
+    if (undo != NULL) delete undo;
     TGlXApp::GetGXApp()->EnableSelection(true);
   }
   void Finalise() {
@@ -129,6 +174,10 @@ public:
           ag.AddDependent(Atoms[i]->CAtom());
       }
       app.XFile().GetLattice().Init();
+    }
+    if (undo != NULL) {
+      TGlXApp::GetMainForm()->GetUndoStack()->Push(undo);
+      undo = NULL;
     }
   }
   virtual bool OnObject(AGDrawObject &obj)  {

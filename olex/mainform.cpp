@@ -1047,8 +1047,6 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitMacro(Test, , fpAny);
 
-  this_InitMacroD(LstRes, EmptyString(), fpNone|psFileLoaded,
-    "Prints all interpreted restrains for current structure");
   this_InitMacroD(CalcVoid,
     "d-distance from Van der Waals surface [0]&;r-resolution[0.2]&;"
     "p-precise calculation&;"

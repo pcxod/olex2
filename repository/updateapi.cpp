@@ -549,9 +549,9 @@ olxstr UpdateAPI::TrimTagPart(const olxstr& path) const {
   olxstr rv = TEFile::UnixPath(path);
   if( !rv.EndsWith('/') )  rv << '/';
   if( rv.EndsWith("update/") )
-    rv.SetLength( rv.Length() - 7 );
+    rv.SetLength(rv.Length() - 7);
   if( rv.EndsWith(Tag+'/') )
-    rv.SetLength( rv.Length() - Tag.Length() - 1 );
+    rv.SetLength(rv.Length() - Tag.Length() - 1);
   return rv;
 }
 //.............................................................................
@@ -564,7 +564,7 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
   return rv;
 }
 //.............................................................................
-TStrList UpdateAPI::GetDefaultRepositories() {
+const TStrList &UpdateAPI::GetDefaultRepositories() {
   static TStrList rv;
   if( rv.IsEmpty() )  {
     rv.Add("http://www.olex2.org/olex2-distro/");

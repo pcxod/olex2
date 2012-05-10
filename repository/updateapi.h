@@ -191,7 +191,7 @@ public:
   // creates an FS from string - ftpfs, httpfs, os-fs or zipfs
   static AFileSystem* FSFromString(const olxstr& repo_str,
     const olxstr& proxy_str);
-  static TStrList GetDefaultRepositories();
+  static const TStrList& GetDefaultRepositories();
   static olxstr GetSettingsFileName()  {
     return TBasicApp::GetInstanceDir() + "usettings.dat";
   }

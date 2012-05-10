@@ -182,14 +182,15 @@ public:
     else  {
       // empty resi name refers to all atom outside RESI
       if( !resi_name.IsEmpty() )
-        rm.aunit.FindResidues(resi_name, residues);  
-      else if( CurrResi != NULL )  
+        residues.AddList(rm.aunit.FindResidues(resi_name));
+      else if( CurrResi != NULL )
         residues.Add(CurrResi);
       if( residues.IsEmpty() )  {
         throw TInvalidArgumentException(__OlxSourceInfo,
           olxstr("invalid residue class/number: ") << resi_name);
       }
     }
+    residues.Pack();
     if( Expression.CharAt(0) == '$' )  {  // sfac type
       olxstr sfac = ((resi_ind == InvalidIndex) ? Expression.SubStringFrom(1)
         : Expression.SubString(1, resi_ind-1));
@@ -246,9 +247,7 @@ public:
     }
     atomAGroup = 0;
     TCAtomGroup tmp_atoms;
-    TPtrList<TResidue> residues;
-    // empty resi name refers to all atom outside RESI
-    rm.aunit.FindResidues(DefResi, residues);
+    TPtrList<TResidue> residues = rm.aunit.FindResidues(DefResi);
     TStrList toks(nexp, ' '), unprocessed;
     for( size_t i=0; i < residues.Count(); i++ )  {
       bool succeded = true;

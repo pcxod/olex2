@@ -549,7 +549,6 @@ private:
   DefMacro(Tls)
   DefMacro(Test)
 
-  DefMacro(LstRes)
   DefMacro(CalcVoid)
   DefMacro(Sgen)
   DefMacro(LstSymm)

@@ -10,6 +10,7 @@
 #ifndef __olx_xl_refmodel_H
 #define __olx_xl_refmodel_H
 #include "asymmunit.h"
+#include "srestraint.h"
 #include "xscatterer.h"
 #include "experimental.h"
 #include "leq.h"
@@ -164,6 +165,8 @@ protected:
   mutable int _FriedelPairCount;  // the numbe of pairs only
   TTypeList<BadReflection> BadReflections;
   TActionQList Actions;
+  olxstr AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
+    size_t group_size, const olxstr &sep) const;
 public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
@@ -199,8 +202,7 @@ public:
   // removes references to all deleted atoms
   void Validate();
   // creates a human readable description of the refinement
-  void Describe(TStrList& lst, TPtrList<TCAtom>* a_res = NULL,
-    TPtrList<TSimpleRestraint>* b_res = NULL);
+  const_strlist Describe();
 #ifndef _NO_PYTHON
   PyObject* PyExport(bool export_connectivity);
 #endif
@@ -447,7 +449,7 @@ Friedel opposites of components 1 ... m
   // adss new symmetry matrics, used in restraints/constraints 
   const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString());
   //removes the matrix or decriments the reference count
-  void RemUsedSymm(const smatd& matr);
+  void RemUsedSymm(const smatd& matr) const;
   // returns the number of the used symmetry matrices
   size_t UsedSymmCount() const {  return UsedSymm.Count();  }
   // returns used symmetry matric at specified index
@@ -460,7 +462,7 @@ Friedel opposites of components 1 ... m
   size_t UsedSymmIndex(const smatd& matr) const;
   // deletes all used symmetry matrices
   void ClearUsedSymm()  {  UsedSymm.Clear();  }
-  const smatd* FindUsedSymm(const olxstr& name)  {
+  const smatd* FindUsedSymm(const olxstr& name) const {
     const size_t i = UsedSymm.IndexOf(name);
     return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i).symop);
   }

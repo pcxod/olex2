@@ -553,14 +553,16 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         "number of arguments for RESI");
     }
     if( Toks[1].IsNumber() )  {
-      cx.Resi = &cx.au.NewResidue(EmptyString(), Toks[1].ToInt(),
-        (Toks.Count() > 2) ? Toks[2] : EmptyString());
+      int n = Toks[1].ToInt();
+      cx.Resi = &cx.au.NewResidue(EmptyString(), n,
+        (Toks.Count() > 2) ? Toks[2].ToInt() : n);
     }
     else if( Toks.Count() > 2 )  {
       if( !Toks[2].IsNumber() )
         throw TInvalidArgumentException(__OlxSourceInfo, "number for RESI");
-      cx.Resi = &cx.au.NewResidue(Toks[1], Toks[2].ToInt(),
-        (Toks.Count() > 3) ? Toks[3] : EmptyString());
+      int n = Toks[2].ToInt();
+      cx.Resi = &cx.au.NewResidue(Toks[1], n,
+        (Toks.Count() > 3) ? Toks[3].ToInt() : n);
     }
   }
   else if( Toks[0].Equalsi("SFAC") )  {
@@ -1491,12 +1493,13 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
 }
 //..............................................................................
 bool Ins_ProcessRestraint(const TCAtomPList* atoms,
-  const TSimpleRestraint& sr)
+  const TSimpleRestraint& sr, const RefinementModel &rm)
 {
-  if( sr.AtomCount() == 0 && !sr.IsAllNonHAtoms() )  return false;
-  if( atoms == NULL )  return true;
-  for( size_t i=0; i < atoms->Count(); i++ )
-    if( sr.ContainsAtom(*atoms->GetItem(i)) )
+  if (sr.IsEmpty() && !sr.IsAllNonHAtoms()) return false;
+  if (atoms == NULL)  return true;
+  TTypeList<ExplicitCAtomRef> ra = sr.GetAtoms().ExpandList(rm);
+  for (size_t i=0; i < ra.Count(); i++)
+    if (atoms->Contains(ra[i].GetAtom()))
       return true;
   return false;
 }
@@ -1504,12 +1507,15 @@ bool Ins_ProcessRestraint(const TCAtomPList* atoms,
 olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
   const TIns::RCInfo &ri, const TCAtomPList *atoms)
 {
-  if( !Ins_ProcessRestraint(atoms, sr) )  return EmptyString();
-  if( (int)sr.AtomCount() < ri.atom_limit )  // has lower atom count limit?
-    return EmptyString();
   const RefinementModel &rm = sr.GetParent().GetRM();
+  if (!Ins_ProcessRestraint(atoms, sr, rm))
+    return EmptyString();
+  //if( (int)sr.AtomCount() < ri.atom_limit )  // has lower atom count limit?
+  //  return EmptyString();
   bool def = rm.IsDefaultRestraint(sr);
   olxstr line = sr.GetIdName();
+  if (!sr.GetAtoms().GetResi().IsEmpty())
+    line << '_' << sr.GetAtoms().GetResi();
   if( ri.has_value > 0 )  // has value and is first?
     line << ' ' << rm.Vars.GetParam(sr, 0);
   if( ri.esd_cnt > 0 && !def )  // uses Esd?
@@ -1518,12 +1524,7 @@ olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
     line << ' ' << sr.GetEsd1();
   if( ri.has_value < 0 && !def )  // has value and is last?
     line << ' ' << rm.Vars.GetParam(sr, 0);
-  for( size_t j=0; j < sr.AtomCount(); j++ )  {
-    if( ri.full_label )
-      line << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-    else
-      line << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
-  }
+  line << ' ' << sr.GetAtoms().GetExpression();
   return line;
 }
 //..............................................................................
@@ -1565,7 +1566,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       olxstr line = RestraintToString(sr, ri, atoms);
       if( line.IsEmpty() )  continue;
       HyphenateIns(line, SL);
-      if( processed != NULL )  
+      if( processed != NULL )
         processed->restraints.Add(sr);
     }
   }
@@ -1640,11 +1641,15 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
   restraints.Add(&rm.rFixedUeq);
   restraints.Add(&rm.rSimilarUeq);
   LabelCorrector lc(rm.aunit);
-  for( size_t i=0; i < restraints.Count(); i++ )  {
+  olxstr err_names;
+  for (size_t i=0; i < restraints.Count(); i++) {
     TSRestraintList& srl = *restraints[i];
-    for( size_t j=0; j < srl.Count(); j++ )  {
-      for( size_t k=0; k < srl[j].AtomCount(); k++ )
-        lc.CorrectGlobal(*srl[j].GetAtom(k).GetAtom());
+    for (size_t j=0; j < srl.Count(); j++) {
+      TTypeList<ExplicitCAtomRef> atoms = srl[j].GetAtoms().ExpandList(rm);
+      for (size_t k=0; k < atoms.Count(); k++) {
+        if (!lc.IsGlobal(atoms[i].GetAtom()))
+          err_names << ' ' << atoms[i].GetAtom().GetLabel();
+      }
     }
   }
   // equivalent EXYZ constraint
@@ -1652,6 +1657,10 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
     TExyzGroup& sr = rm.ExyzGroups[i];
     for( size_t j=0; j < sr.Count(); j++ )
       lc.CorrectGlobal(sr[j]);
+  }
+  if (!err_names.IsEmpty()) {
+    TBasicApp::NewLogEntry(logError) << "The following atom names are used in"
+      " restraints but cannot be globally resolved: " << err_names;
   }
 }
 //..............................................................................
@@ -1678,8 +1687,8 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
   bool write_internals)
 {
   SL.Add("TITL ") << GetTitle();
-  SL.Add( _CellToString() );
-  SL.Add( _ZerrToString() );
+  SL.Add(_CellToString());
+  SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString());
   SL.Add(EmptyString());
@@ -1926,61 +1935,12 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
       sr.SetAllNonHAtoms(true);
     }
     else  {
-      TAtomReference aref(toks.Text(' ', index));
-      TCAtomGroup agroup;
-      size_t atomAGroup;
-      try  {  aref.Expand(rm, agroup, resi, atomAGroup);  }
-      catch( const TExceptionBase& ex )  {
-        TBasicApp::NewLogEntry(logException) << ex.GetException()->GetError();
-        return false;
-      }
-      int expected = 0;
-      if( sr.GetListType() == rltGroup2 &&
-          (agroup.Count() == 0 || (agroup.Count()%2)!=0) )
-      {
-        expected = 2;
-      }
-      else if( sr.GetListType() == rltGroup3 &&
-              (agroup.Count() == 0 || (agroup.Count()%3)!=0) )
-      {
-        expected = 3;
-      }
-      else if( sr.GetListType() == rltGroup4 &&
-              (agroup.Count() == 0 || (agroup.Count()%4)!=0) )
-      {
-        expected = 4;
-      }
-      if( expected != 0 )  {
-        olxstr str_sz;
-        switch( expected ) {
-        case 2: str_sz = "pairs";  break;
-        case 3: str_sz = "triplets";  break;
-        case 4: str_sz = "quadruplets";  break;
-        }
-        TBasicApp::NewLogEntry(logError)
-          << "Wrong restraint parameters list - a list of " << str_sz
-          << " is expected: " << toks.Text(' ');
-        return false;
-      }
-      if( ins_name.Equalsi("FLAT") )  {  // a special case again...
-        TSimpleRestraint* sr1 = &sr;
-        for( size_t j=0; j < agroup.Count(); j += atomAGroup )  {
-          for( size_t k=0; k < atomAGroup; k++ )
-            sr1->AddAtom(*agroup[j+k].GetAtom(), agroup[j+k].GetMatrix());
-          if( j != 0 )
-            srl->ValidateRestraint(*sr1);
-          sr1 = &srl->AddNew();
-          sr1->SetEsd(sr.GetEsd());
-          sr1->SetEsd1(sr.GetEsd1());
-          sr1->SetValue(sr.GetValue());
-        }
-      }
-      else
-        sr.AddAtoms(agroup);
+      sr.AtomsFromExpression(toks.Text(' ', index), resi);
     }
     srl->ValidateRestraint(sr);
-    if( !Ins_ProcessRestraint(NULL, sr) && DoPreserveInvalid() )  {
-      TBasicApp::NewLogEntry() << (olxstr("Preserving invalid instruction: ").quote() << toks.Text(' '));
+    if( !Ins_ProcessRestraint(NULL, sr, rm) && DoPreserveInvalid() )  {
+      TBasicApp::NewLogEntry() <<
+        (olxstr("Preserving invalid instruction: ").quote() << toks.Text(' '));
       return false;
     }
     return true;
