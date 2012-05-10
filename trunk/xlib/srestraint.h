@@ -7,24 +7,23 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-//---------------------------------------------------------------------------
-#ifndef srestraintH
-#define srestraintH
-#include "catom.h"
-// covers DFIX, SADI, DANG
-BeginXlibNamespace()
-// I am really tired of this bshyt
+#ifndef __olx_xl_srestraint_H
+#define __olx_xl_srestraint_H
+#include "catomlist.h"
 #undef AddAtom
+BeginXlibNamespace()
+
 class TAsymmUnit;
 class RefinementModel;
 class TSRestraintList;
 // restraint atom list types
-const short rltNone   = 0, // default value for the constructor...
-            rltAtoms  = 1, // set of independent atoms
-            rltGroup2 = 2, // set of "bonds" - atom pairs
-            rltGroup3 = 3, // set of "angles" - atom triplets
-            rltGroup4 = 4, // dihedrals
-            rltGroup  = 5; // atoms represent a group
+const short
+  rltNone   = 0, // default value for the constructor...
+  rltAtoms  = 1, // set of independent atoms
+  rltGroup2 = 2, // set of "bonds" - atom pairs
+  rltGroup3 = 3, // set of "angles" - atom triplets
+  rltGroup4 = 4, // dihedrals
+  rltGroup  = 5; // atoms represent a group
 
 class TSimpleRestraint : public IEObject, public IXVarReferencer  {
   TSRestraintList& Parent;
@@ -33,19 +32,7 @@ class TSimpleRestraint : public IEObject, public IXVarReferencer  {
   double Value, Esd, Esd1;
   XVarReference* VarRef;
   bool AllNonHAtoms;
-  TCAtomGroup InvolvedAtoms;
-  bool AtomsEqual(const TGroupCAtom& a1, const TGroupCAtom& a2)  {
-    return AtomsEqual(a1.GetAtom(), a1.GetMatrix(), a2.GetAtom(), a2.GetMatrix());
-  }
-  bool AtomsEqual(TCAtom* a1, const smatd* m1, TCAtom* a2, const smatd* m2)  {
-    if( a1 == a2 )  {
-      if( (m1 == NULL && m2 == NULL) || ((m1 != NULL && m2 != NULL)  &&
-        (*m1 == *m2) ) )  {
-          return true;
-      }
-    }
-    return false;
-  }
+  AtomRefList Atoms;
 protected:
   void SetId(size_t id)  {  Id = id;  }
 public:
@@ -62,26 +49,19 @@ public:
     AddAtom(aa, ma);
     return AddAtom(ab, mb);
   }
+  void AtomsFromExpression(const olxstr &e, const olxstr &resi=EmptyString());
 
   const TSRestraintList& GetParent() const {  return Parent;  }
   TSRestraintList& GetParent()  {  return Parent;  }
-
+  const AtomRefList &GetAtoms() const { return Atoms; }
   void Delete();
-  void Validate();
-  void Clear();
+  bool IsEmpty() const { return Atoms.IsEmpty(); }
+  olxstr GetAtomExpression() const { return Atoms.GetExpression(); }
 
-  void OnCAtomCrdChange(TCAtom* ca, const smatd& matr);
+  TSimpleRestraint &Validate();
 
-  // removes dublicated information depending on the list type
-  void Subtract(TSimpleRestraint& sr);
-
-  // copies data from a restraon, but with atoms from the thisAU
+  // copies data from a restrain, but with atoms from the thisAU
   void Assign(const TSimpleRestraint&);
-  //const TSimpleRestraint& operator = ( const TSimpleRestraint& );
-
-  size_t AtomCount() const {  return InvolvedAtoms.Count();  }
-  TGroupCAtom& GetAtom(size_t i) const {  return InvolvedAtoms[i];  }
-  bool ContainsAtom(TCAtom& ca) const;
 
   short GetListType() const {  return ListType;  }
 
@@ -139,10 +119,10 @@ class TSRestraintList : public IEObject, public IXVarReferencerContainer  {
   RefinementModel& RefMod;
   olxstr IdName;
 public:
-  TSRestraintList(RefinementModel& rm, const short restraintListType, const olxstr& id_name) : 
-      RefMod(rm), IdName(id_name) {
-    RestraintListType = restraintListType;  
-  }
+  TSRestraintList(RefinementModel& rm, const short restraintListType,
+    const olxstr& id_name) : RestraintListType(restraintListType),
+    RefMod(rm), IdName(id_name)
+  {}
   virtual ~TSRestraintList()  {}
   TSimpleRestraint& AddNew();
   // function checks uniquesness of the restraint data - previously defined values are removed

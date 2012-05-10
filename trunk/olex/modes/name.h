@@ -20,8 +20,14 @@ protected:
   class TNameModeUndo : public TUndoData {
     TSizeList LabelIndeces;
   public:
-    TNameModeUndo() : TUndoData(new TUndoActionImplMF<TNameModeUndo>(this, &TNameModeUndo::undo))  {  }
-    TNameModeUndo(TXAtom& xa) : TUndoData(new TUndoActionImplMF<TNameModeUndo>(this, &TNameModeUndo::undo))  {  
+    TNameModeUndo()
+      : TUndoData(new TUndoActionImplMF<TNameModeUndo>(
+          this, &TNameModeUndo::undo))
+    {}
+    TNameModeUndo(TXAtom& xa)
+      : TUndoData(new TUndoActionImplMF<TNameModeUndo>(
+          this, &TNameModeUndo::undo))
+    {
       AddAtom(xa);
     }
     void AddAtom(TXAtom& xa)  {  LabelIndeces.Add(xa.GetOwnerId());  }

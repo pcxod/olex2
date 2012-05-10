@@ -1616,16 +1616,25 @@ void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
 }
 //..............................................................................
-void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  // if instruction is parsed, it goes to current model, otherwise i stays in the ins file
+void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  if (!TXApp::GetInstance().CheckFileType<TIns>()) return;
+  /* if instruction is parsed, it goes to current model, otherwise it stays in
+  the ins file
+  */
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   if( !Ins.AddIns(TStrList(Cmds), TXApp::GetInstance().XFile().GetRM()) )  {
-    Error.ProcessingError(__OlxSrcInfo, olxstr("could not add instruction: ") << Cmds.Text(' '));
+    Error.ProcessingError(__OlxSrcInfo,
+      olxstr("could not add instruction: ") << Cmds.Text(' '));
     return;
   }
 }
 //..............................................................................
-void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  if (!TXApp::GetInstance().CheckFileType<TIns>()) return;
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   if( Cmds[0].IsNumber() )  {
     int insIndex = Cmds[0].ToInt();
@@ -2710,7 +2719,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
   }
   else if( Params[0].Equalsi("qnum") )
     E.SetRetVal(rm.PLAN.Count() == 0 ? NAString : olxstr(rm.PLAN[0]));
-  else  {
+  else if (TXApp::GetInstance().CheckFileType<TIns>()) {
     TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
     if( Params[0].Equalsi("R1") )
       E.SetRetVal(I.GetR1() < 0 ? NAString : olxstr(I.GetR1()));
@@ -2718,15 +2727,13 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
       E.SetRetVal(NAString);
       return;
     }
-    //  xapp.XFile().UpdateAsymmUnit();
-    //  I->UpdateParams();
-
     TInsList* insv = I.FindIns(Params[0]);
     if( insv != 0 )
       E.SetRetVal(insv->Text(' '));
     else
       E.SetRetVal(EmptyString());
   }
+  E.SetRetVal(NAString);
 }
 //..............................................................................
 void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
@@ -4169,8 +4176,8 @@ void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
-  TStrList lst, out;
-  xapp.XFile().GetRM().Describe(lst);
+  TStrList lst =xapp.XFile().GetRM().Describe(),
+    out;
   for( size_t i=0; i < lst.Count(); i++ )
     out.Hyphenate(lst[i], 80, true);
   xapp.NewLogEntry() << out; 

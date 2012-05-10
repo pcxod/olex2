@@ -13,7 +13,6 @@
 #include "ematrix.h"
 #include "threex3.h"
 #include "macroerror.h"
-#include "srestraint.h"
 #include "ellipsoid.h"
 #include "samegroup.h"
 #include "dataitem.h"
@@ -58,6 +57,7 @@ protected:
   TActionQList Actions;
   TTypeListExt<TResidue, IEObject> Residues;
   TResidue& MainResidue;
+  olxdict<int, TResidue*, TPrimitiveComparator> ResidueRegistry;
   class RefinementModel* RefMod;
   static const olxstr IdName;
   void _UpdateQPeaks();
@@ -176,18 +176,30 @@ public:
   void Clear();
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number,
-    const olxstr& alias=EmptyString());
+    int alias);
+  TResidue& NewResidue(const olxstr& RClass, int number) {
+    return NewResidue(RClass, number, number);
+  }
   size_t ResidueCount() const {  return Residues.Count()+1;  }
   TResidue& GetResidue(size_t i) const {
     return (i==0) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i-1];
   }
   TResidue* NextResidue(const TResidue& r) const;
   TResidue* PrevResidue(const TResidue& r) const;
+  TResidue* FindResidue(int num) const {
+    return ResidueRegistry.Find(num, NULL);
+  }
+  // releases the given residues
+  void Release(const TPtrList<TResidue> &rs);
+  /* releases the given residues; after the residues restrored, they are sorted
+  by the number
+  */
+  void Restore(const TPtrList<TResidue> &rs);
   void AssignResidues(const TAsymmUnit& au);
   // changes the atom order as in residues
   void ComplyToResidues();
-  // if a number is provided, seraches by Number otherwise - by ClassName
-  void FindResidues(const olxstr& resi, TPtrList<TResidue>& list);
+  // if a number is provided, searches by Number otherwise - by ClassName
+  ConstPtrList<TResidue> FindResidues(const olxstr& resi) const;
   // this is called internally by the TCAtom, to sync connectivity info
   void _OnAtomTypeChanged(TCAtom& caller);
   // called by the ref model

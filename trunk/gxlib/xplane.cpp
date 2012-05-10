@@ -54,9 +54,9 @@ void TXPlane::Create(const olxstr& cName)  {
     GlM.DiffuseB = 0x7f3f3f3f;
     TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloPolygon);
     GlP.SetProperties(GS.GetMaterial(GlP.GetName(), GlM));
-    if( !IsRegular() )  
+    if( !IsRegular() )
       GlP.Vertices.SetCount(CrdCount());
-    else                 
+    else
       GlP.Vertices.SetCount(4);
 
     PlaneSort::Sorter sp(*this);
@@ -78,7 +78,7 @@ void TXPlane::Create(const olxstr& cName)  {
       mat3d rm;
       olx_create_rotation_matrix(rm, vec3d(1,0,0), cos(M_PI*(360/4)/180));
       for( int i=0; i < 4; i++ )  {
-        GlP.Vertices[i] = marv;    
+        GlP.Vertices[i] = marv;
         marv *= rm;
       }
     }
