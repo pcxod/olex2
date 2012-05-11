@@ -67,11 +67,24 @@ public:
   template <class AT> T CAngle(const TVector3<AT>& v) const {
     T l = QLength()*v.QLength();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
-    l = (T)((data[0]*v[0]+data[1]*v[1]+data[2]*v[2])/sqrt(l));
+    l = DotProd(v)/sqrt(l);
     // treat possible rounding errors
     if( l > 1 )  l = 1;
-    if( l < -1 )  l = -1;
+    else if( l < -1 )  l = -1;
     return l;
+  }
+  template <class AT> bool IsParallel(const TVector3<AT>& v,
+    T eps=T(1e-15)) const
+  {
+    T l = QLength()*v.QLength();
+    if( l == 0 )  throw TDivException(__OlxSourceInfo);
+    l = olx_abs(DotProd(v)/sqrt(l));
+    return olx_abs(l-1) < eps;
+  }
+  template <class AT> bool IsOthodonal(const TVector3<AT>& v,
+    T eps=T(1e-15)) const
+  {
+    return olx_abs(DotProd(v)) < eps;
   }
   // multiplies each element by itself
   TVector3<T>& Qrt()  {
