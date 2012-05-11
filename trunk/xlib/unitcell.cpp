@@ -386,7 +386,7 @@ void TUnitCell::FindSymmEq() const  {
     for (size_t i=0; i < rm->InfoTabCount(); i++) {
       InfoTab &it = rm->GetInfoTab(i);
       if (it.GetType() != infotab_htab || !it.IsValid()) continue;
-      for( size_t j=0; j < it.Count(); j+=2) {
+      for (size_t j=0; j < it.Count(); j+=2) {
         smatd m;
         if (it.GetAtom(j+1).GetMatrix() != NULL) {
           m = InvMatrix(*it.GetAtom(j+1).GetMatrix());

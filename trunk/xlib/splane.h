@@ -77,7 +77,13 @@ public:
   const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
   TSAtom& GetAtom(size_t i) {  return *Crds[i].A();  }
   double GetWeight(size_t i) const {  return Crds[i].GetB();  }
-
+  /* returns inverse intersects with the lattice vectors, the vector is divided
+  by modulus of the smallest non-zero value. Takes the orthogonalisation matrix
+  plane normal and a point on the plane
+  */
+  static vec3d GetCrystallographicDirection(const mat3d &m,
+    const vec3d &n, const vec3d &p);
+  vec3d GetCrystallographicDirection() const;
 // static members
   /* calculates all three planes - best, worst and the complimentary, 
   the normals are sorted by rms ascending, so the best plane is at [0] and the
