@@ -53,16 +53,13 @@ void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
   const double nl = GetNormal().Length();
   Distance = GetNormal().DotProd(Center)/nl;
   Normals[0] /= nl;
-  double max_qd = 0;
-  size_t m_i = 0;
-  for (size_t i=0; i < points.Count(); i++) {
-    double qd = (points[i].GetA() - Center).QLength();
-    if (qd > max_qd) {
-      m_i = i;
-      max_qd = qd;
-    }
+  vec3d dir(113,11,29);
+  if (dir.IsParallel(Normals[0])) {
+    dir[0] = 1;
+    TBasicApp::NewLogEntry(logWarning) << "Unfortunately your plane hit the "
+      "predefined condition and my be rendered incorrectly";
   }
-  Normals[1] = (points[m_i].GetA() - Center).Normalise();
+  Normals[1] = dir.XProdVec(Normals[0]).Normalise();
   Normals[2] = Normals[0].XProdVec(Normals[1]).Normalise();
   Normals[1] = Normals[2].XProdVec(Normals[0]).Normalise();
   wRMSD = rms[0];
