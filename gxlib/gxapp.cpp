@@ -2090,11 +2090,15 @@ TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool regular, double weightExtent)
   if( Atoms.Count() < 3 )  return NULL;
   TSPlanePList planes = XFile().GetLattice().NewPlane(
     TSAtomPList(Atoms), weightExtent, regular);
+  size_t pi=0;
   for( size_t i=0; i < planes.Count(); i++ ) {
     static_cast<TXPlane*>(planes[i])->Create(
       olxstr("TXPlane") << planes[i]->GetDefId());
+    if (&planes[i]->GetAtom(0) == Atoms[0]) {
+      pi = i;
+    }
   }
-  return planes.IsEmpty() ? NULL : static_cast<TXPlane*>(planes[0]);
+  return planes.IsEmpty() ? NULL : static_cast<TXPlane*>(planes[pi]);
 }
 //..............................................................................
 TXPlane *TGXApp::FindPlane(const olxstr &PlaneName)  {

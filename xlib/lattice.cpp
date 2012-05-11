@@ -822,11 +822,15 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
       if( IsGenerated() )  {
         delete Plane;
         for( size_t i=0; i < Matrices.Count(); i++ )  {
-          TSPlane* p = pd.FromAtomRegistry(Objects, PlaneDefs.Count()-1, Network, *Matrices[i]);
+          TSPlane* p = pd.FromAtomRegistry(Objects, PlaneDefs.Count()-1,
+            Network, *Matrices[i]);
           if( p != NULL )  {
             bool uniq = true;
             for( size_t j=0; j < Objects.planes.Count()-1; j++ )  {
-              if( Objects.planes[j].GetCenter().QDistanceTo(p->GetCenter()) < 1e-6 )  {
+              if (Objects.planes[j].GetCenter().QDistanceTo(
+                    p->GetCenter()) < 1e-6 &&
+                  Objects.planes[j].GetNormal().IsParallel(p->GetNormal()))
+              {
                 uniq = false;
                 break;
               }

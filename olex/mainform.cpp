@@ -1807,6 +1807,7 @@ bool TMainForm::CreateUpdateThread() {
 //..............................................................................
 void TMainForm::AquireTooltipValue()  {
   AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY, 0);
+  Tooltip.SetLength(0);
   if( G != NULL )  {
     if( G->IsSelected() )
       Tooltip = FXApp->GetSelectionInfo();
@@ -1871,7 +1872,8 @@ void TMainForm::AquireTooltipValue()  {
       Tooltip = xb.A().GetLabel();
       Tooltip << '-' << xb.B().GetLabel() << ": ";
       if( FXApp->CheckFileType<TCif>() )  {
-        ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>().GetDataManager().Match(xb.A(), xb.B());
+        ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>()
+          .GetDataManager().Match(xb.A(), xb.B());
         if( cv != NULL )
           Tooltip << cv->GetValue().ToString();
         else
@@ -1904,11 +1906,11 @@ void TMainForm::AquireTooltipValue()  {
     else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
       Tooltip = TSymmParser::MatrixToSymmEx(((TXGrowPoint*)G)->GetTransform());
     }
-    else
-      Tooltip.SetLength(0);
+    else if( EsdlInstanceOf( *G, TXPlane) )  {
+      Tooltip << "HKL direction: " <<
+        ((TXPlane*)G)->GetCrystallographicDirection().ToString();
+    }
   }
-  else
-    Tooltip.SetLength(0);
 }
 //..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {

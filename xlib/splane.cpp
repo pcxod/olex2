@@ -147,6 +147,30 @@ olxstr TSPlane::StrRepr() const {
   return rv << " = 0";
 }
 //..............................................................................
+vec3d TSPlane::GetCrystallographicDirection() const {
+  return GetCrystallographicDirection(
+    GetNetwork().GetLattice().GetAsymmUnit().GetCellToCartesian(),
+    GetNormal(),
+    GetCenter());
+}
+//..............................................................................
+vec3d TSPlane::GetCrystallographicDirection(const mat3d &m,
+  const vec3d &n, const vec3d &p)
+{
+  vec3d hkl;
+  double min_v=100, d = n.DotProd(p);
+  for (int i=0; i < 3; i++) {
+    if (m[i].IsOrthogonal(n)) continue;
+    double l = d/n.DotProd(m[i]);
+    hkl[i] = l;
+    l = olx_abs(l);
+    if (l < min_v)
+      min_v = l;
+  }
+  if (min_v < 1e-4) min_v = 1;
+  return (hkl /= min_v);
+}
+//..............................................................................
 //..............................................................................
 TSPlane::Def::Def(const TSPlane& plane)
   : atoms(plane.Count()), regular(plane.IsRegular())

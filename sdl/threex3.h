@@ -74,15 +74,15 @@ public:
     return l;
   }
   template <class AT> bool IsParallel(const TVector3<AT>& v,
-    T eps=T(1e-15)) const
+    T eps=T(1e-8)) const
   {
     T l = QLength()*v.QLength();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     l = olx_abs(DotProd(v)/sqrt(l));
     return olx_abs(l-1) < eps;
   }
-  template <class AT> bool IsOthodonal(const TVector3<AT>& v,
-    T eps=T(1e-15)) const
+  template <class AT> bool IsOrthogonal(const TVector3<AT>& v,
+    T eps=T(1e-8)) const
   {
     return olx_abs(DotProd(v)) < eps;
   }
