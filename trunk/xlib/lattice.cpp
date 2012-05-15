@@ -24,6 +24,7 @@
 #include "estrbuffer.h"
 #include "symmparser.h"
 #include "equeue.h"
+#include "analysis.h"
 
 #undef GetObject
 
@@ -1158,8 +1159,10 @@ void TLattice::Compaq()  {
         TSAtom& SA = frag->Node(j);
         if( SA.IsDeleted() )  continue;
         SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-        if( SA.CAtom().GetEllipsoid() != NULL ) 
-          *SA.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(m->GetContainerId(), SA.CAtom().GetId());
+        if( SA.CAtom().GetEllipsoid() != NULL ) {
+          *SA.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(
+            m->GetContainerId(), SA.CAtom().GetId());
+        }
       }
       delete m;
     }
@@ -1169,24 +1172,24 @@ void TLattice::Compaq()  {
   OnStructureUniq.Exit(this);
 }
 //..............................................................................
-template <int run>
-size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)
+int TLattice_CompaqAll_SiteCmp(const TCAtom::Site &s1,
+  const TCAtom::Site &s2)
 {
-  if( run == 1 && ca.GetType() == iQPeakZ )  return 0;
+  return olx_cmp(s2.atom->GetQPeak(), s1.atom->GetQPeak());
+}
+size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca,
+  const smatd& matr, bool q_peaks)
+{
+  if (!q_peaks && ca.GetType() == iQPeakZ) return 0;
   size_t cnt = 0;
   ca.SetTag(1);
+  TPtrList<TCAtom::Site> sites;
   for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
     TCAtom::Site& site = ca.GetAttachedSite(i);
-    if( site.atom->GetTag() != 0  )  continue;
+    if( site.atom->GetTag() != 0 )  continue;
     if( !matr.IsFirst() )  {
       cnt++;
       site.matrix = uc.MulMatrix(site.matrix, matr);
-    }
-    /* if already attached and not here - then just skip */
-    else if( site.atom->GetFragmentId() == ca.GetFragmentId() &&
-            !site.matrix.IsFirst() )
-    {
-      continue;
     }
     site.atom->SetTag(1);
     site.atom->SetFragmentId(ca.GetFragmentId());
@@ -1196,27 +1199,75 @@ size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca, const smatd& matr)
         site.matrix.GetContainerId(), site.atom->GetId());
     }
     if( site.atom->IsAvailable() )
-      cnt += TLattice_CompaqAll_Process<run>(uc, *site.atom, site.matrix);
+      sites << site;
+  }
+  QuickSorter::SortSF(sites, &TLattice_CompaqAll_SiteCmp);
+  for (size_t i=0; i < sites.Count(); i++) {
+    cnt += TLattice_CompaqAll_Process(uc,
+      *sites[i]->atom, sites[i]->matrix, q_peaks);
   }
   return cnt;
 }
-void TLattice::CompaqAll()  {
-  if( IsGenerated() || Fragments.Count() < 2 )  return;
-  TUnitCell& uc = GetUnitCell();
-  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter(0));
-  size_t cnt = 0;
-  for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
-    TSAtom& sa = Objects.atoms[i];
-    if( sa.CAtom().GetTag() != 0 || !sa.CAtom().IsAvailable() )
-      continue;
-    cnt += TLattice_CompaqAll_Process<1>(uc, sa.CAtom(), uc.GetMatrix(0));
+void TLattice_CompaqAll_ProcessRest(TUnitCell& uc, TCAtom& ca)
+{
+  TPtrList<TCAtom::Site> sites;
+  for( size_t i=0; i < ca.AttachedSiteCount(); i++ )  {
+    TCAtom::Site& site = ca.GetAttachedSite(i);
+    if( site.atom->GetTag() != 1 )  continue;
+    double d=0;
+    smatd *m = uc.GetClosest(*site.atom, ca, true, &d);
+    if (m == NULL) return;
+    ca.ccrd() = *m*ca.ccrd();
+    if( ca.GetEllipsoid() != NULL )  {
+      *ca.GetEllipsoid() = uc.GetEllipsoid(m->GetContainerId(), ca.GetId());
+    }
+    delete m;
+    return;
   }
-  // process Q-peaks
+}
+void TLattice::CompaqAll()  {
+  if (IsGenerated())  return;
+  TUnitCell& uc = GetUnitCell();
+  using namespace olx_analysis;
+  TCAtomPList sqp;
+  sqp.SetCapacity(Objects.atoms.Count());
+  size_t ac=0, cnt=0;
+  for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
+    TCAtom& ca = Objects.atoms[i].CAtom();
+    if(ca.GetType() == iQPeakZ)
+      sqp.Add(ca);
+    else
+      ac++;
+    ca.SetTag(0);
+  }
   for( size_t i=0; i < Objects.atoms.Count(); i++ )  {
     TSAtom& sa = Objects.atoms[i];
-    if( sa.CAtom().GetTag() != 0 || !sa.CAtom().IsAvailable() )
-      continue;
-    cnt += TLattice_CompaqAll_Process<2>(uc, sa.CAtom(), uc.GetMatrix(0));
+    if( sa.CAtom().GetTag() == 0 || sa.CAtom().IsAvailable() )
+      cnt += TLattice_CompaqAll_Process(uc, sa.CAtom(), uc.GetMatrix(0), false);
+  }
+  if (!sqp.IsEmpty()) {
+    TTypeList<peaks::range> peak_ranges = peaks::analyse(sqp);
+    for (size_t i=peak_ranges.Count()-1; i != 0; i--)
+      ac += peak_ranges[i].peaks.Count();
+    bool z_processed=true;
+    if (uc.CalcVolume()/(ac*uc.MatrixCount()) > 14) {
+      for (size_t i=0; i < peak_ranges[0].peaks.Count(); i++) {
+        if (peak_ranges[0].peaks[i]->GetTag() == 0)
+          peak_ranges[0].peaks[i]->SetTag(2);
+      }
+      z_processed = false;
+    }
+    for (size_t i=0; i < sqp.Count(); i++) {
+      if (sqp[i]->GetTag() == 0 && sqp[i]->IsAvailable())
+        TLattice_CompaqAll_Process(uc, *sqp[i], uc.GetMatrix(0), true);
+    }
+    if (!z_processed) {
+      for (size_t i=peak_ranges[0].peaks.Count()-1; i !=InvalidIndex; i--) {
+        TCAtom &p = *peak_ranges[0].peaks[i];
+        if (p.IsAvailable() && p.GetTag() == 2)
+          TLattice_CompaqAll_ProcessRest(uc, p);
+      }
+    }
   }
   OnStructureUniq.Enter(this);
   TActionQueueLock __queuelock(&OnStructureUniq);
