@@ -627,6 +627,7 @@ void TLattice::GrowFragments(
   OnStructureGrow.Enter(this);
   for( size_t i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& ca = GetAsymmUnit().GetAtom(i);
+    if (!ca.IsAvailable()) continue;
     size_t fi = job.IndexOf(ca.GetFragmentId());
     if (fi != InvalidIndex) {
       const smatd_list &l = job.GetValue(fi);
@@ -660,7 +661,7 @@ void TLattice::GrowAtoms(const TCAtomPList& atoms, const smatd_list& matrices)  
   Objects.atoms.IncCapacity(atoms.Count()*addedMatrices.Count());
   for( size_t i=0; i < addedMatrices.Count(); i++ )  {
     for( size_t j=0; j < atoms.Count(); j++ )  {
-      if( !atoms[j]->IsDeleted() && atoms[j]->IsAvailable() )
+      if( atoms[j]->IsAvailable() )
         GenerateAtom(*atoms[j], *addedMatrices[i]);
     }
   }
@@ -2348,7 +2349,7 @@ void TLattice::BuildAtomRegistry()  {
   TTypeList<TSAtom::Ref> refs(ac);
   for( size_t i=0; i < ac; i++ )  {
     TSAtom &sa = Objects.atoms[i];
-    if( !sa.IsAvailable() || sa.CAtom().IsMasked() )  continue;
+    if( !sa.IsAvailable() )  continue;
     refs[i] = sa.GetMinRef();
     vec3i::UpdateMinMax(smatd::GetT(refs[i].matrix_id), mind, maxd);
   }
