@@ -415,10 +415,11 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
   bool ConsiderOriginal, double* dist) const
 {
   const smatd* minMatr = NULL;
+  const TAsymmUnit &au = GetLattice().GetAsymmUnit();
   vec3i mint;
   double minD=10000;
   if( ConsiderOriginal )  {
-    minD = GetLattice().GetAsymmUnit().Orthogonalise(from-to).QLength();
+    minD = au.Orthogonalise(from-to).QLength();
     if( dist != NULL )
       *dist = minD;
   }
@@ -429,7 +430,7 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
     v += shift;
     // check for identity matrix
     if( i == 0 && shift.IsNull() )  continue;
-    const double D = GetLattice().GetAsymmUnit().CellToCartesian(v).QLength();
+    const double D = au.CellToCartesian(v).QLength();
     if( D < minD )  {
       minD = D;
       minMatr = &matr;
@@ -447,7 +448,7 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
     retVal->t += mint;
     retVal->SetId(minMatr->GetContainerId(), mint);
     if( dist != NULL )
-      *dist = minD;
+      *dist = sqrt(minD);
     return retVal;
   }
   return NULL;
@@ -543,7 +544,7 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
   return retVal;
 }
 //..............................................................................
-smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from, 
+smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
   double R, bool IncludeI, const smatd_list& ToSkip) const
 {
   smatd_list* retVal = new smatd_list;
