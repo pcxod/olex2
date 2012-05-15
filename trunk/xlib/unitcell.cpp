@@ -613,7 +613,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
           if( D < R && D > 0.0001 )  {
             smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
-            m.SetId(0, ii, ik, ik);
+            m.SetId(0, shift);
             res.GetLast().C() = au.Orthogonalise(a.ccrd() + shift);
           }
         }
@@ -656,7 +656,7 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
           if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, I, qD, delta) )  {
             smatd& m = res.AddNew(atoms[i]).B().I();
             m.t += shift;
-            m.SetId(0, ii, ik, ik);
+            m.SetId(0, shift);
             res.GetLast().C() = au.Orthogonalise(a.ccrd() + shift);
           }
         }

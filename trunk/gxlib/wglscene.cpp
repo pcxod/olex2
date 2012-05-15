@@ -153,7 +153,7 @@ void TWGlScene::InitialiseHDC(HDC Dc)  {
   if( !FGlContext )
     throw TFunctionFailedException(__OlxSourceInfo, "could not create gl context");
   if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
-    throw TFunctionFailedException(__OlxSourceInfo, "could not make curernt context");
+    throw TFunctionFailedException(__OlxSourceInfo, "could not make current context");
 }
 //..............................................................................
 void TWGlScene::StartDraw()  {
@@ -162,7 +162,7 @@ void TWGlScene::StartDraw()  {
     SelectObject(FWContext, FBitmap);
     SetPixelFormatDescriptor(FWContext, 24);
     if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
-      throw TFunctionFailedException(__OlxSourceInfo, "could not mak current context");
+      throw TFunctionFailedException(__OlxSourceInfo, "could not make current context");
   }
   AGlScene::StartDraw();
 }
