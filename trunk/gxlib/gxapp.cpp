@@ -758,13 +758,20 @@ olxstr macSel_GetName2(const TSAtom& a1, const TSAtom& a2)  {
   return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel();
 }
 olxstr macSel_GetName3(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3)  {
-  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << '-' << a3.GetGuiLabel();
+  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << '-' <<
+    a3.GetGuiLabel();
 }
-olxstr macSel_GetName4(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4)  {
-  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << '-' << a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
+olxstr macSel_GetName4(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3,
+  const TSAtom& a4)
+{
+  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << '-' <<
+    a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
 }
-olxstr macSel_GetName4a(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4)  {
-  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << ' ' << a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
+olxstr macSel_GetName4a(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3,
+  const TSAtom& a4)
+{
+  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << ' ' <<
+    a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
 }
 olxstr macSel_GetPlaneName(const TSPlane& p)  {
   if( p.Count() == 0 )  return EmptyString();
@@ -773,6 +780,23 @@ olxstr macSel_GetPlaneName(const TSPlane& p)  {
     rv << ' ' << p.GetAtom(i).GetGuiLabel();
   return rv;
 }
+olxstr macSel_FormatValue(double d, const ACifValue *cv) {
+  if (cv == NULL)
+    return olxstr::FormatFloat(3, d);
+  if (olx_abs(cv->GetValue().GetV()-d) > 1e-2) {
+    return  olxstr("CIF: ") << cv->GetValue().ToString() <<
+      " Actual: " << olxstr::FormatFloat(3, d);
+  }
+  return cv->GetValue().ToString();
+}
+
+olxstr macSel_FormatDistance(const TSAtom &a, const TSAtom &b, double d,
+  const ACifValue *cv)
+{
+  olxstr l = "Distance (";
+  return (l << macSel_GetName2(a, b) << "): " << macSel_FormatValue(d, cv));
+}
+
 olxstr TGXApp::GetSelectionInfo(bool list)  {
   olxstr Tmp;
   try {
@@ -783,36 +807,24 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
       for (size_t i=0; i < Sel.Count(); i++) {
         if (!EsdlInstanceOf(Sel[i], TXBond))  continue;
         TXBond &b = ((TXBond&)Sel[i]);
-        olxstr &l = rv.Add("Distance (");
-        l << macSel_GetName2(b.A(), b.B()) << "): ";
+        ACifValue* cv=NULL;
         if( CheckFileType<TCif>() )  {
-          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager()
-            .Match(b.A(), b.B());
-          if( cv != NULL )
-            l << cv->GetValue().ToString();
-          else
-            l << olxstr::FormatFloat(3, b.Length());
+          cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(
+            b.A(), b.B());
         }
-        else
-          l << olxstr::FormatFloat(3, b.Length());
+        rv << macSel_FormatDistance(b.A(), b.B(), b.Length(), cv);
       }
       return rv.Text(NewLineSequence());
     }
     if( Sel.Count() == 1 )  {
       if( EsdlInstanceOf(Sel[0], TXBond) )  {
         TXBond &b = ((TXBond&)Sel[0]);
-        Tmp = "Distance (";
-        Tmp << macSel_GetName2(b.A(), b.B()) << "): ";
+        ACifValue* cv=NULL;
         if( CheckFileType<TCif>() )  {
-          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager()
-            .Match(b.A(), b.B());
-          if( cv != NULL )
-            Tmp << cv->GetValue().ToString();
-          else
-            Tmp << olxstr::FormatFloat(3, b.Length());
+          cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(
+            b.A(), b.B());
         }
-        else
-          Tmp << olxstr::FormatFloat(3, b.Length());
+        Tmp = macSel_FormatDistance(b.A(), b.B(), b.Length(), cv);
       }
     }
     else if( Sel.Count() == 2 )  {
@@ -821,17 +833,10 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
       {
         TSAtom &a1 = ((TXAtom&)Sel[0]),
           &a2 = ((TXAtom&)Sel[1]);
-        Tmp = "Distance (";
-        Tmp << macSel_GetName2(a1, a2) << "): ";
-        if( CheckFileType<TCif>() )  {
-          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(a1, a2);
-          if( cv != NULL )
-            Tmp << cv->GetValue().ToString();
-          else
-            Tmp << olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd()));
-        }
-        else
-          Tmp << olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd()));
+        ACifValue* cv=NULL;
+        if( CheckFileType<TCif>() )
+          cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(a1, a2);
+        Tmp = macSel_FormatDistance(a1, a2, a1.crd().DistanceTo(a2.crd()), cv);
       }
       else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXBond) )  {
         TXBond& A = (TXBond&)Sel[0], &B =(TXBond&)Sel[1];
@@ -855,7 +860,7 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
           v = olx_dihedral_angle_signed(A.A().crd(), A.B().crd(), B.B().crd(), B.A().crd());
           Tmp << olxstr::FormatFloat(3, v) <<
             "\nTorsion angle (" <<
-            macSel_GetName4(A.A(), A.B(), B.B(), B.A()) << 
+            macSel_GetName4(A.A(), A.B(), B.B(), B.A()) <<
             "): ";
           v = olx_dihedral_angle_signed(A.A().crd(), A.B().crd(), B.A().crd(), B.B().crd());
           Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
@@ -923,14 +928,16 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
         TXPlane &a = ((TXPlane&)Sel[0]),
           &b = ((TXPlane&)Sel[1]);
         
-        vec3d n_c = (b.GetCenter()-a.GetCenter()).XProdVec(a.GetNormal()+b.GetNormal()).Normalise();
+        vec3d n_c = (b.GetCenter()-a.GetCenter()).XProdVec(
+          a.GetNormal()+b.GetNormal()).Normalise();
         vec3d p_a = a.GetNormal() -  n_c*n_c.DotProd(a.GetNormal());
         vec3d p_b = b.GetNormal() -  n_c*n_c.DotProd(b.GetNormal());
         const double ang = a.Angle(b);
         Tmp = "Angle (plane-plane): ";
         Tmp << olxstr::FormatFloat(3, ang) <<
           "\nTwist Angle (plane-plane, experimental): " <<
-          olxstr::FormatFloat(3, olx_dihedral_angle(a.GetCenter()+a.GetNormal(), a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal())) <<
+          olxstr::FormatFloat(3, olx_dihedral_angle(a.GetCenter()+a.GetNormal(),
+            a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal())) <<
           "\nFold Angle (plane-plane, experimental): " <<
           olxstr::FormatFloat(3, acos(p_a.CAngle(p_b))*180/M_PI) <<
           "\nDistance (plane centroid-plane centroid): " <<
@@ -962,15 +969,11 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
             &a3 = ((TXAtom&)Sel[2]);
         Tmp = "Angle (";
         Tmp << macSel_GetName3(a1, a2, a3)<< "): ";
+        ACifValue* cv=NULL;
         if( CheckFileType<TCif>() )  {
-          ACifValue* cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(a1, a2, a3);
-          if( cv != NULL )
-            Tmp << cv->GetValue().ToString();
-          else
-            Tmp << olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd()));
+          cv = XFile().GetLastLoader<TCif>().GetDataManager().Match(a1, a2, a3);
         }
-        else
-          Tmp << olxstr::FormatFloat(3, olx_angle(a1.crd(), a2.crd(), a3.crd()));
+        Tmp << macSel_FormatValue(olx_angle(a1.crd(), a2.crd(), a3.crd()), cv);
       }
       else if( EsdlInstanceOf(Sel[0], TXPlane) &&
         EsdlInstanceOf(Sel[1], TXPlane) &&
