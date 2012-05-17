@@ -56,7 +56,8 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   Width = Height = 100;
   PromptVisible = true;
   SkipPosting = false;
-  olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+  PromptStr = InviteStr;
+  olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
   FShowBuffer = true;
   SetSelectable(false);
@@ -92,12 +93,12 @@ void TGlConsole::Create(const olxstr& cName)  {
   TGraphicsStyle& GS = GPC.GetStyle();
   FLinesToShow = GS.GetParam("LinesToShow", FLinesToShow, true).ToInt();
   FLineSpacing = GS.GetParam("LineSpacing", "0", true).ToDouble();
-  InviteStr = GS.GetParam("Prompt", ">>", true);
+  PromptStr = InviteStr = GS.GetParam("Prompt", ">>", true);
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
   GlP.SetProperties(GS.GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
   FCursor->Create();
-  olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+  olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
   FStringPos = FCommand.Length();
 }
@@ -241,7 +242,8 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     FCmdPos --;
     if( !olx_is_valid_size(FCmdPos) )  FCmdPos = FCommands.Count()-1;
     if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
-      olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+      PromptStr = InviteStr;
+      olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
       FCommand << FCommands[FCmdPos];
       SetInsertPosition(FCommand.Length());
@@ -252,14 +254,17 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     FCmdPos ++;
     if( FCmdPos >= FCommands.Count() )  FCmdPos = 0;
     if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
-      olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+      PromptStr = InviteStr;
+      olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
       FCommand << FCommands[FCmdPos];
       SetInsertPosition(FCommand.Length());
     }
     return true;
   }
-  if( (Key == OLX_KEY_LEFT) && IsPromptVisible() && (GetInsertPosition() > PromptStr.Length()) )  {
+  if( (Key == OLX_KEY_LEFT) && IsPromptVisible() &&
+      (GetInsertPosition() > PromptStr.Length()) )
+  {
     if( ShiftState == 0 )  {
       SetInsertPosition(GetInsertPosition()-1);
       return true;
@@ -274,7 +279,9 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     return false;
   }
-  if( (Key == OLX_KEY_RIGHT) && IsPromptVisible() && (GetInsertPosition() < FCommand.Length()) )  {
+  if( (Key == OLX_KEY_RIGHT) && IsPromptVisible() &&
+      (GetInsertPosition() < FCommand.Length()) )
+  {
     if( ShiftState == 0 )  {
       SetInsertPosition(GetInsertPosition()+1);
       return true;
@@ -324,11 +331,13 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( !Key || Key > 255 || (ShiftState & sssCtrl) || (ShiftState & sssAlt))  return false;
+  if( !Key || Key > 255 || (ShiftState & sssCtrl) || (ShiftState & sssAlt))
+    return false;
   if( !IsPromptVisible() )  return false;
   
   if( Key == OLX_KEY_ESCAPE )  {
-    olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+    PromptStr = InviteStr;
+    olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
     FCommand = PromptStr;
     SetInsertPosition(FCommand.Length());
     return true;
@@ -346,7 +355,8 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
     if( FCommand.IsEmpty() )  {
-      olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+      PromptStr = InviteStr;
+      olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
     }
     SetInsertPosition(FCommand.Length());
@@ -464,7 +474,8 @@ olxstr TGlConsole::GetCommand() const  {
 }
 //..............................................................................
 void TGlConsole::SetCommand(const olxstr& NewCmd)  {
-  olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+  PromptStr = InviteStr;
+  olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
   FCommand << NewCmd;
   SetInsertPosition( FCommand.Length() );
@@ -570,10 +581,10 @@ void TGlConsole::SetPromptVisible(bool v)  {
 }
 //..............................................................................
 void TGlConsole::SetInviteString(const olxstr &S)  {
-  InviteStr = S;
+  PromptStr = InviteStr = S;
   GetPrimitives().GetStyle().SetParam("Prompt", InviteStr.Replace("\\(", '('), true);
   olxstr cmd = GetCommand();
-  olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+  olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
   FCommand << cmd;
   SetInsertPosition(FCommand.Length());
@@ -693,7 +704,8 @@ void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )  {
-    olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
+    PromptStr = InviteStr;
+    olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
     FCommand = PromptStr;
     FCommand << Params[0];
     SetInsertPosition(FCommand.Length());
@@ -703,22 +715,35 @@ void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 TLibrary* TGlConsole::ExportLibrary(const olxstr& name)  {
-  TLibrary* lib = new TLibrary( (name.IsEmpty() ? olxstr("console") : name) );
-  lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibClear, "Clear",
-    fpNone, "Clears the content of the output buffer") );
-  lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibLines, "Lines",
-    fpNone|fpOne, "Sets/returns the number of lines to display") );
-  lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibShowBuffer, "ShowBuffer",
-    fpNone|fpOne, "Shows/hides the output buffer or returns current status") );
-  lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibPostText, "Post",
-    fpAny^fpNone, "Adds provided text to the output buffer") );
-  lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibLineSpacing, "LineSpacing",
-    fpNone|fpOne, "Changes/returns current line spacing") );
-  lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibInviteString, "PromptString",
-    fpNone|fpOne, "Changes/returns current prompt string") );
-  lib->RegisterFunction<TGlConsole>( new TFunction<TGlConsole>(this,  &TGlConsole::LibCommand, "Command",
-    fpNone|fpOne, "Changes/returns current command") );
-
+  TLibrary* lib = new TLibrary((name.IsEmpty() ? olxstr("console") : name));
+  lib->RegisterFunction<TGlConsole>(
+    new TFunction<TGlConsole>(this,  &TGlConsole::LibClear,
+      "Clear", fpNone,
+      "Clears the content of the output buffer") );
+  lib->RegisterFunction<TGlConsole>(
+    new TFunction<TGlConsole>(this,  &TGlConsole::LibLines,
+      "Lines", fpNone|fpOne,
+      "Sets/returns the number of lines to display"));
+  lib->RegisterFunction<TGlConsole>(
+    new TFunction<TGlConsole>(this,  &TGlConsole::LibShowBuffer,
+      "ShowBuffer", fpNone|fpOne,
+      "Shows/hides the output buffer or returns current status"));
+  lib->RegisterFunction<TGlConsole>(
+    new TFunction<TGlConsole>(this,  &TGlConsole::LibPostText,
+      "Post", fpAny^fpNone,
+      "Adds provided text to the output buffer"));
+  lib->RegisterFunction<TGlConsole>(
+    new TFunction<TGlConsole>(this,  &TGlConsole::LibLineSpacing,
+      "LineSpacing", fpNone|fpOne,
+      "Changes/returns current line spacing"));
+  lib->RegisterFunction<TGlConsole>(
+    new TFunction<TGlConsole>(this,  &TGlConsole::LibInviteString,
+      "PromptString", fpNone|fpOne,
+      "Changes/returns current prompt string"));
+  lib->RegisterFunction<TGlConsole>(
+    new TFunction<TGlConsole>(this,  &TGlConsole::LibCommand,
+      "Command", fpNone|fpOne,
+      "Changes/returns current command"));
   AGDrawObject::ExportLibrary(*lib);
   lib->AttachLibrary(FCursor->ExportLibrary());
   return lib;

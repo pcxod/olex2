@@ -107,7 +107,8 @@ public:
 
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
-  PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
+  ConstPtrList<PyObject> PyExport(TPtrList<PyObject>& atoms,
+    TPtrList<PyObject>& equiv);
 #endif
   void FromDataItem(const TDataItem& item);
   friend class TSRestraintList;

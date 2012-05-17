@@ -25,17 +25,13 @@ BEGIN_EVENT_TABLE(TTextEdit, wxTextCtrl)
 END_EVENT_TABLE()
 //..............................................................................
 void TTextEdit::ClickEvent(wxMouseEvent& event)  {
-  StartEvtProcessing()
-    OnClick.Execute(this);
-    event.Skip();
-  EndEvtProcessing()
+  OnClick.Execute(this);
+  event.Skip();
 }
 //..............................................................................
 void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
   //StrValue = GetText();
-  StartEvtProcessing()
-    OnChange.Execute(this);
-  EndEvtProcessing()
+  OnChange.Execute(this);
 }
 //..............................................................................
 void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
@@ -43,43 +39,33 @@ void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
     AppendText(wxT("\n"));
   }
   else {
-    StartEvtProcessing()
-      OnReturn.Execute(this);
-    EndEvtProcessing()
+    OnReturn.Execute(this);
   }
 }
 //..............................................................................
 void TTextEdit::KeyDownEvent(wxKeyEvent& event)  {
   TKeyEvent evt(event);
   event.Skip();
-  StartEvtProcessing()
-    OnKeyDown.Execute(this, &evt);
-  EndEvtProcessing()
+  OnKeyDown.Execute(this, &evt);
 }
 //..............................................................................
 void TTextEdit::CharEvent(wxKeyEvent& event)  {
   TKeyEvent evt(event);
   event.Skip();
-  StartEvtProcessing()
-    OnChar.Execute(this, &evt);
-  EndEvtProcessing()
+  OnChar.Execute(this, &evt);
 }
 //..............................................................................
 void TTextEdit::LeaveEvent(wxFocusEvent& event)  {
   olxstr v = GetText();
   bool changed = (v != StrValue);
-  StartEvtProcessing()
-    if( changed )  {
-      OnChange.Execute(this);
-      StrValue = v;
-    }
-    OnLeave.Execute(this);
-  EndEvtProcessing()
+  if( changed )  {
+    OnChange.Execute(this);
+    StrValue = v;
+  }
+  OnLeave.Execute(this);
 }
 //..............................................................................
 void TTextEdit::EnterEvent(wxFocusEvent& event)  {
-  StartEvtProcessing()
-    OnEnter.Execute(this);
-  EndEvtProcessing()
+  OnEnter.Execute(this);
 }
 //..............................................................................

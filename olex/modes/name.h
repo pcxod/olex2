@@ -95,7 +95,7 @@ public:
     olxstr labels("labels -l");
     if( Symbol.Equalsi('H') || Symbol.Equalsi('D') )
       labels << " -h";
-    TGlXApp::GetMainForm()->executeMacro(labels);
+    TGlXApp::GetMainForm()->processMacro(labels);
     TGXApp& app = *TGlXApp::GetGXApp();
     TGXApp::BondIterator bi = app.GetBonds();
     while( bi.HasNext() )

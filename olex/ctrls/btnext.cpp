@@ -32,7 +32,6 @@ bool AButtonBase::Execute(const IEObject *Sender, const IEObject *Data)  {
 //..............................................................................
 void AButtonBase::SetDown(bool v)  {
   if( Down == v )  return;
-  StartEvtProcessing()
   if( Down )  {
     Down = false;
     OnUp.Execute((AOlxCtrl*)this);
@@ -41,18 +40,15 @@ void AButtonBase::SetDown(bool v)  {
     Down = true;
     OnDown.Execute((AOlxCtrl*)this);
   }
-  EndEvtProcessing()
 }
 //..............................................................................
 void AButtonBase::_ClickEvent()  {
-  StartEvtProcessing()
-    if( Down )
-      OnUp.Execute((AOlxCtrl*)this);
-    OnClick.Execute((AOlxCtrl*)this);
-    if( !Down )
-      OnDown.Execute((AOlxCtrl*)this);
-    Down = !Down;
-  EndEvtProcessing()
+  if( Down )
+    OnUp.Execute((AOlxCtrl*)this);
+  OnClick.Execute((AOlxCtrl*)this);
+  if( !Down )
+    OnDown.Execute((AOlxCtrl*)this);
+  Down = !Down;
 }
 //..............................................................................
 //..............................................................................
@@ -161,28 +157,24 @@ void TImgButton::Render(wxDC& dc) const {
 //..............................................................................
 void TImgButton::MouseDownEvent(wxMouseEvent& event)  {
   if( state == stDisabled || state == stDown )  return;
-  StartEvtProcessing()
-    state = stDown;
+  state = stDown;
+  Paint();
+  ProcessingOnDown = true;
+  OnDown.Execute((AOlxCtrl*)this);
+  if( !MouseIn )  {
+    OnUp.Execute((AOlxCtrl*)this);
+    state = stUp;
     Paint();
-    ProcessingOnDown = true;
-    OnDown.Execute((AOlxCtrl*)this);
-    if( !MouseIn )  {
-      OnUp.Execute((AOlxCtrl*)this);
-      state = stUp;
-      Paint();
-    }
-    ProcessingOnDown = false;
-  EndEvtProcessing()
+  }
+  ProcessingOnDown = false;
 }
 //..............................................................................
 void TImgButton::MouseUpEvent(wxMouseEvent& event)  {
- if( state == stDisabled || state == stUp || state == stHover )  return;
-  StartEvtProcessing()
-    OnUp.Execute((AOlxCtrl*)this);
-    OnClick.Execute((AOlxCtrl*)this);
-    state = stUp;
-    Paint();
-  EndEvtProcessing()
+  if( state == stDisabled || state == stUp || state == stHover )  return;
+  OnUp.Execute((AOlxCtrl*)this);
+  OnClick.Execute((AOlxCtrl*)this);
+  state = stUp;
+  Paint();
 }
 //..............................................................................
 void TImgButton::MouseMoveEvent(wxMouseEvent& event)  {

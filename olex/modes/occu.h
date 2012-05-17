@@ -38,7 +38,7 @@ public:
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Occu = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
     TGlXApp::GetMainForm()->SetUserCursor( Occu, "occu");
-    TGlXApp::GetMainForm()->executeMacro("labels -ao");
+    TGlXApp::GetMainForm()->processMacro("labels -ao");
     return true;
   }
   ~TOccuMode() {  HasInstance = false;  }

@@ -12,7 +12,6 @@
 #include "exparse/exptree.h"
 #include "htmlswitch.h"
 #include "imgcellext.h"
-#include "../mainform.h"
 #include "wx/tooltip.h"
 #include "../xglapp.h"
 #include "../obase.h"
@@ -20,10 +19,8 @@
 #include "wxzipfs.h"
 
 #define this_InitFuncD(funcName, argc, desc) \
-  (*THtml::Library).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc, desc));\
-  (LC->GetLibrary()).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc, desc))
+  (Library).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc, desc))
 
-TLibrary* THtml::Library = NULL;
 olxstr THtml::SwitchSource;
 str_stack THtml::SwitchSources;
 
@@ -39,11 +36,12 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_SIZE(THtml::OnSizeEvt)
 END_EVENT_TABLE()
 //..............................................................................
-THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, const olxstr &pop_name,
-  int flags)
+THtml::THtml(THtmlManager &manager, wxWindow *Parent,
+  const olxstr &pop_name, int flags)
   : wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, flags),
     PopupName(pop_name), WI(this), ObjectsState(*this),
     InFocus(NULL),
+    Manager(manager),
     OnLink(Actions.New("ONLINK")),
     OnURL(Actions.New("ONURL")),
     OnDblClick(Actions.New("ONDBLCL")),
@@ -55,124 +53,6 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC, const olxstr &pop_name,
   MouseDown = false;
   ShowTooltips = true;
   PageLoadRequested = false;
-  if( LC && ! THtml::Library )  {
-    THtml::Library = LC->GetLibrary().AddLibrary("html");
-    InitMacroD(*THtml::Library, THtml, ItemState,
-      "u-does not update the html",
-      fpAny^(fpNone|fpOne),
-"Changes state of the HTML switch, accepts masks like '*-picture-*'"
-    );
-    InitMacroD(*THtml::Library, THtml, Update, EmptyString(),
-      fpNone|fpOne,
-      "Reloads the content of the main or given named HTML window"
-    );
-    InitMacroD(*THtml::Library, THtml, Home, EmptyString(), fpNone|fpOne,
-      "Reloads the page"
-    );
-    InitMacroD(*THtml::Library, THtml, Load, EmptyString(), fpOne|fpTwo,
-"Loads content into main or given HTML page. Example: load name file_name"
-    );
-    InitMacroD(*THtml::Library, THtml, Dump, EmptyString(), fpOne|fpTwo,
-      "Saves content of the main or given page into the file"
-    );
-    InitMacroD(*THtml::Library, THtml, Tooltips, EmptyString(),
-      fpNone|fpOne|fpTwo,
-"Enables or disables tooltip for HTML. If no arguments is given the state of "
-"tooltops for the main HTML is inverted. If a single boolean argument is given"
-" - the state of the tooltips is set to the given value, if the argument is "
-"not a boolean the state of the tooltips for HTML windows with given name is "
-"inverted. If two arguments are given - the first should be an HTML window "
-"name and the second - a boolean value. This function executes the htmltt "
-"state change event"
-      );
-    InitMacroD(*THtml::Library, THtml, SetFonts, EmptyString(), fpTwo,
-      "Sets normal and fixed fonts to display HTML content");
-    InitMacroD( *THtml::Library, THtml, SetBorders, EmptyString(), fpOne|fpTwo,
-      "Sets borders between HTML content and window edges");
-    InitMacroD(*THtml::Library, THtml, DefineControl, 
-"v-value&;i-tems&;c-checked/down&;bg-background color&;fg-foreground color"
-"&;min-min value&;max-max value", 
-      fpTwo,
-      "Defines a managed control properties"
-    );
-    InitMacroD(*THtml::Library, THtml, Hide, EmptyString(), fpOne,
-      "Hides an Html popup window");
-    InitMacroD(*THtml::Library, THtml, Group, EmptyString(),
-      fpAny^(fpNone|fpOne),
-      "Creates an exclusive group of buttons");
-    InitMacroD(*THtml::Library, THtml, LstObj, EmptyString(), 
-      fpAny^(fpNone|fpOne),
-      "Prints the list of available HTML objects");
-    this_InitFuncD(GetValue, fpOne,
-      "Returns value of specified object");
-    this_InitFuncD(GetData, fpOne,
-      "Returns data associated with specified object");
-    this_InitFuncD(GetState, fpOne|fpTwo,
-      "Returns state of the checkbox or a button. For example: echo "
-      "getstate(button, enabled/down) or echo getstate(checkbox)");
-    this_InitFuncD(GetLabel, fpOne,
-      "Returns labels of specified object. Applicable to labels, buttons and "
-      "checkboxes");
-    this_InitFuncD(GetImage, fpOne,
-      "Returns image source for a button or zimg");
-    this_InitFuncD(GetItems, fpOne,
-      "Returns items of a combobox or list");
-    this_InitFuncD(SetValue, fpTwo,
-      "Sets value of specified object");
-    this_InitFuncD(SetData, fpTwo,
-      "Sets data for specified object");
-    this_InitFuncD(SetState, fpTwo|fpThree,
-      "Sets state of a checkbox or a button");
-    this_InitFuncD(SetLabel, fpTwo,
-      "Sets labels for a label, button or checkbox");
-    this_InitFuncD(SetImage, fpTwo,
-      "Sets image location for a button or a zimg");
-    this_InitFuncD(SetItems, fpTwo,
-      "Sets items for comboboxes and lists");
-    this_InitFuncD(SaveData, fpOne,
-      "Saves state, data, label and value of all objects to a file");
-    this_InitFuncD(LoadData, fpOne,
-      "Loads previously saved data of html objects form a file");
-    this_InitFuncD(SetFG, fpTwo,
-      "Sets foreground of specified object");
-    this_InitFuncD(SetBG, fpTwo,
-      "Sets background of specified object");
-    this_InitFuncD(GetFontName, fpNone, "Returns current font name");
-    this_InitFuncD(GetBorders, fpNone,
-      "Returns borders width between HTML content and window boundaries");
-    this_InitFuncD(SetFocus, fpOne,
-      "Sets input focus to the specified HTML control");
-    this_InitFuncD(Select, fpTwo|fpThree,
-      "Selects a treeview item by label (default) or data (third argument "
-      "should be False)");
-    this_InitFuncD(GetItemState, fpOne|fpTwo,
-      "Returns item state of provided switch");
-    this_InitFuncD(IsItem, fpOne, "Returns true if specified switch exists");
-    this_InitFuncD(IsPopup, fpOne,
-      "Returns true if specified popup window exists and visible");
-    this_InitFuncD(EndModal, fpTwo,
-      "Ends a modal popup and sets the return code");
-    this_InitFuncD(ShowModal, fpOne,
-      "Shows a previously created popup window as a modal dialog");
-    this_InitFuncD(Width, fpOne|fpTwo,
-      "Returns/sets width of an HTML object window (use 'self' to address the "
-      "window itself)");
-    this_InitFuncD(Height, fpOne|fpTwo,
-      "Returns/sets height of an HTML object window (use 'self' to address the"
-      " window itself)");
-    this_InitFuncD(ClientWidth, fpOne|fpTwo,
-      "Returns/sets client width of an HTML window (use 'self' to address the "
-      "window itself)");
-    this_InitFuncD(ClientHeight, fpOne|fpTwo,
-      "Returns/sets client height of an HTML window (use 'self' to address the"
-      " window itself)");
-    this_InitFuncD(ContainerWidth, fpOne|fpTwo,
-      "Returns/sets width of a popup window");
-    this_InitFuncD(ContainerHeight, fpOne|fpTwo,
-      "Returns/sets height of a popup window");
-    this_InitFuncD(Call, fpOne,
-      "Calls event of specified control, expects [popup.]control.event");
-  }
 }
 //..............................................................................
 THtml::~THtml()  {
@@ -252,25 +132,25 @@ void THtml::OnMouseMotion(wxMouseEvent& event)  {
 //..............................................................................
 void THtml::OnMouseDblClick(wxMouseEvent& event)  {
   event.Skip();
-  StartEvtProcessing()
-    OnDblClick.Execute(this, &OnDblClickData);
-  EndEvtProcessing()
+  volatile THtmlManager::DestructionLocker dm =
+    Manager.LockDestruction(this, this);
+  OnDblClick.Execute(this, &OnDblClickData);
 }
 //..............................................................................
 void THtml::OnSizeEvt(wxSizeEvent& event)  {
   event.Skip();
-  StartEvtProcessing()
-    OnSize.Execute(this, &OnSizeData);
-  EndEvtProcessing()
+  volatile THtmlManager::DestructionLocker dm =
+    Manager.LockDestruction(this, this);
+  OnSize.Execute(this, &OnSizeData);
 }
 //..............................................................................
 bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
   const IEObject* Data)
 {
   if( MsgId == html_parent_resize )  {
-    TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
+    volatile THtmlManager::DestructionLocker dm =
+      Manager.LockDestruction(this, this);
     OnSize.Execute(this, &OnSizeData);
-    TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
   }
   return true;
 }
@@ -368,7 +248,8 @@ void THtml::GetTraversibleIndeces(index_t& current, index_t& another,
 //..............................................................................
 void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
   // prevent page re-loading and object deletion
-  TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
+  volatile THtmlManager::DestructionLocker dm =
+    Manager.LockDestruction(this, this);
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
       olxstr s = ((TTextEdit*)prev)->OnLeave.data;
@@ -389,7 +270,6 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
       ((TComboBox*)next)->SetSelection(-1,-1);
     }
   }
-  TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
 }
 //..............................................................................
 void THtml::DoNavigate(bool forward)  {
@@ -474,6 +354,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
            Tag1 = "<!-- #includeif ",
            Tag2 = "<!-- #include",
            comment_open = "<!--", comment_close = "-->";
+  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
   for( size_t i=0; i < Lst.Count(); i++ )  {
     olxstr tmp = olxstr(Lst[i]).TrimWhiteChars();
     // skip comments
@@ -493,10 +374,12 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
     }
 
     // TRANSLATION START
-    Lst[i] = TGlXApp::GetMainForm()->TranslateString(Lst[i]);
-    if( Lst[i].IndexOf("$") != InvalidIndex ) {
-      TGlXApp::GetMainForm()->ProcessFunction(Lst[i],
-        olxstr(Sender.GetCurrentFile()) << '#' << (i+1));
+    if (op != NULL) {
+      Lst[i] = op->TranslateString(Lst[i]);
+      if( Lst[i].IndexOf("$") != InvalidIndex ) {
+        op->processFunction(Lst[i],
+          olxstr(Sender.GetCurrentFile()) << '#' << (i+1));
+      }
     }
     // TRANSLATION END
     int stm = (Lst[i].StartsFrom(Tag1) ? 1 : 0);
@@ -512,7 +395,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       }
       if( stm == 1 )  {
         tmp = Toks[0];
-        if( TGlXApp::GetMainForm()->ProcessFunction(tmp) )  {
+        if( op != NULL && op->processFunction(tmp) )  {
           if( !tmp.ToBool() )  continue;
         }
         else  continue;
@@ -542,8 +425,8 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
           }
           else
             tmp = Toks[j];
-
-          TGlXApp::GetMainForm()->ProcessFunction(tmp);
+          if (op != NULL)
+            op->processFunction(tmp);
           Sw->AddFile(tmp);
         }
         else  {
@@ -810,7 +693,7 @@ rotation if one of the states correspond to current - the next one is selected
 void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   THtml *html = NULL;
   if( Cmds.Count() > 2 && !Cmds[1].IsNumber() )  {
-    html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
+    html = Manager.FindHtml(Cmds[0]);
     if( html == NULL )  {
       Error.ProcessingError(__OlxSrcInfo, "undefined popup: ").quote() << Cmds[0];
       return;
@@ -906,7 +789,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
-  THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Params[0]) : this;
+  THtml *html = (Params.Count() == 2) ? Manager.FindHtml(Params[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -926,12 +809,12 @@ void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
-  THtml *html = TGlXApp::GetMainForm()->FindHtml(Params[0]);
+  THtml *html = Manager.FindHtml(Params[0]);
   E.SetRetVal(html != NULL && html->GetParent()->IsShown());
 }
 //..............................................................................
 void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
-  THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Params[0]) : this;
+  THtml *html = (Params.Count() == 2) ? Manager.FindHtml(Params[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -943,7 +826,7 @@ void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
 void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
   ShowTooltips = v;
   TStateChange sc(prsHtmlTTVis, v, html_name);
-  TGlXApp::GetMainForm()->OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+  Manager.OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -954,20 +837,20 @@ void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( Cmds[0].IsBool() )
       this->SetShowTooltips(Cmds[0].ToBool());
     else  {
-      THtml* html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
+      THtml* html = Manager.FindHtml(Cmds[0]);
       if( html == NULL )  return;
       html->SetShowTooltips(!html->GetShowTooltips());
     }
   }
   else  {
-    THtml* html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
+    THtml* html = Manager.FindHtml(Cmds[0]);
     if( html != NULL )
       html->SetShowTooltips(Cmds[1].ToBool(), Cmds[0]);
   }
 }
 //..............................................................................
 void THtml::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 1) ? Manager.FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
@@ -980,7 +863,7 @@ void THtml::macSetFonts(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 2) ? Manager.FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
@@ -989,7 +872,7 @@ void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void THtml::macHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 1) ? Manager.FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
@@ -998,7 +881,7 @@ void THtml::macHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E
 }
 //..............................................................................
 void THtml::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 2) ? Manager.FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
@@ -1007,7 +890,7 @@ void THtml::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E
 }
 //..............................................................................
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TPopupData *html = TGlXApp::GetMainForm()->Popups.Find(Cmds[0], NULL);
+  THtmlManager::TPopupData *html = Manager.Popups.Find(Cmds[0], NULL);
   if( html == NULL )  {
     //E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1017,7 +900,7 @@ void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E
 }
 //..............................................................................
 void THtml::macDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 2) ? Manager.FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Cmds[0];
     return;
@@ -1328,7 +1211,7 @@ THtml::Control THtml::FindControl(const olxstr &name, TMacroError& me, short nee
 {
   const size_t ind = name.IndexOf('.');
   THtml* html = (ind == InvalidIndex) ? this
-    : TGlXApp::GetMainForm()->FindHtml(name.SubStringTo(ind));
+    : Manager.FindHtml(name.SubStringTo(ind));
   olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind+1);
   if( html == NULL )  {
     me.ProcessingError(location, "could not locate specified popup: ").quote() <<
@@ -1590,7 +1473,7 @@ void THtml::funGetBorders(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->Popups.Find(Params[0], NULL);
+  THtmlManager::TPopupData *pd = Manager.Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -1603,7 +1486,7 @@ void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funShowModal(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->Popups.Find(Params[0], NULL);
+  THtmlManager::TPopupData *pd = Manager.Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -1648,7 +1531,7 @@ void THtml::funClientHeight(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->Popups.Find(Params[0], NULL);
+  THtmlManager::TPopupData *pd = Manager.Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -1660,7 +1543,7 @@ void THtml::funContainerWidth(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funContainerHeight(const TStrObjList &Params, TMacroError &E)  {
-  TPopupData *pd = TGlXApp::GetMainForm()->Popups.Find(Params[0], NULL);
+  THtmlManager::TPopupData *pd = Manager.Popups.Find(Params[0], NULL);
   if( pd == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window: ").quote() << Params[0];
     return;
@@ -1772,6 +1655,7 @@ void THtml::TObjectsState::SaveState()  {
 }
 //..............................................................................
 void THtml::TObjectsState::RestoreState()  {
+  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
   for( size_t i=0; i < html.ObjectCount(); i++ )  {
     if( !html.IsObjectManageble(i) )  continue;
     size_t ind = Objects.IndexOf( html.GetObjectName(i) );
@@ -1780,33 +1664,34 @@ void THtml::TObjectsState::RestoreState()  {
     wxWindow* win = html.GetWindow(i);
     TSStrStrList<olxstr,false>& props = *Objects.GetObject(ind);
     if( props["type"] != EsdlClassName(*obj) )  {
-      TBasicApp::NewLogEntry(logError) << "Object type changed for: " << Objects.GetString(ind);
+      TBasicApp::NewLogEntry(logError) << "Object type changed for: "
+        << Objects.GetString(ind);
       continue;
     }
-    if( EsdlInstanceOf(*obj, TTextEdit) )  {  
+    if( EsdlInstanceOf(*obj, TTextEdit) )  {
       TTextEdit* te = (TTextEdit*)obj;
       te->SetText(props["val"]);
       te->SetData(props["data"]);
     }
-    else if( EsdlInstanceOf(*obj, TCheckBox) )  {  
+    else if( EsdlInstanceOf(*obj, TCheckBox) )  {
       TCheckBox* cb = (TCheckBox*)obj;   
       cb->SetCaption(props["val"]);
       cb->SetChecked(props["checked"].ToBool());
       cb->SetData(props["data"]);
     }
-    else if( EsdlInstanceOf(*obj, TTrackBar) )  {  
+    else if( EsdlInstanceOf(*obj, TTrackBar) )  {
       TTrackBar* tb = (TTrackBar*)obj;  
-      tb->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()) );
+      tb->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       tb->SetValue(olx_round(props["val"].ToDouble()));
       tb->SetData(props["data"]);
     }
-    else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {  
+    else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {
       TSpinCtrl* sc = (TSpinCtrl*)obj;  
       sc->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       sc->SetValue(olx_round(props["val"].ToDouble()));
       sc->SetData(props["data"]);
     }
-    else if( EsdlInstanceOf(*obj, TButton) )    {  
+    else if( EsdlInstanceOf(*obj, TButton) )  {
       TButton* bt = (TButton*)obj;
       bt->SetData(props["data"]);
       bt->SetCaption(props["val"] );
@@ -1818,7 +1703,7 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnUp.SetEnabled(true);
       bt->OnClick.SetEnabled(true);
     }
-    else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
+    else if( EsdlInstanceOf(*obj, TBmpButton) )  {
       TBmpButton* bt = (TBmpButton*)obj;  
       bt->SetData(props["data"]);
       bt->SetSource(props["val"] );
@@ -1830,14 +1715,14 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnUp.SetEnabled(true);
       bt->OnClick.SetEnabled(true);
     }
-    else if( EsdlInstanceOf(*obj, TImgButton) )    {  
+    else if( EsdlInstanceOf(*obj, TImgButton) )  {
       TImgButton* bt = (TImgButton*)obj;  
       bt->SetData(props["data"]);
       bt->SetImages(props["val"], props["width"].ToInt(), props["height"].ToInt());
       bt->SetDown(props["checked"].ToBool());
       bt->SetEnabled(props["enabled"].ToBool());
     }
-    else if( EsdlInstanceOf(*obj, TComboBox) )  {  
+    else if( EsdlInstanceOf(*obj, TComboBox) )  {
       TComboBox* cb = (TComboBox*)obj;  
       TStrList toks(props["items"], ';');
       cb->Clear();
@@ -1845,26 +1730,28 @@ void THtml::TObjectsState::RestoreState()  {
       cb->SetText(props["val"] );
       cb->SetData(props["data"]);
     }
-    else if( EsdlInstanceOf(*obj, TListBox) )  {  
+    else if( EsdlInstanceOf(*obj, TListBox) )  {
       TListBox* lb = (TListBox*)obj;  
       TStrList toks(props["items"], ';');
       lb->Clear();
       lb->AddItems(toks);
     }
-    else if( EsdlInstanceOf(*obj, TTreeView) )  {  
+    else if( EsdlInstanceOf(*obj, TTreeView) )  {
       ((TTreeView*)obj)->RestoreState(props["state"]);
     }
-    else if( EsdlInstanceOf(*obj, TLabel) )  {  
+    else if( EsdlInstanceOf(*obj, TLabel) )  {
       TLabel* lb = (TLabel*)obj;  
       lb->SetCaption(props["val"]);
     }
     else //?
       ;
-    // restoring the control colours, it is generic 
+    // restoring the control colours, it is generic
     if( win != NULL && false )  {
       olxstr bg(props["bg"]), fg(props["fg"]);
-      TGlXApp::GetMainForm()->ProcessFunction(bg);
-      TGlXApp::GetMainForm()->ProcessFunction(fg);
+      if (op != NULL) {
+        op->processFunction(bg);
+        op->processFunction(fg);
+      }
       if( EsdlInstanceOf(*win, TComboBox) )  {
         TComboBox* Box = (TComboBox*)win;
         if( !fg.IsEmpty() )  {
@@ -1875,22 +1762,22 @@ void THtml::TObjectsState::RestoreState()  {
             Box->GetPopupControl()->GetControl()->SetForegroundColour(fgCl);
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetForegroundColour(fgCl);
-#endif						
+#endif
         }
         if( !bg.IsEmpty() )  {
           wxColor bgCl = wxColor(bg.u_str());
           //Box->SetBackgroundColour(bgCl);
-#ifdef __WIN32__					
+#ifdef __WIN32__
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgCl);
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetBackgroundColour(bgCl);
-#endif						
+#endif
         }
-      }  
+      }
       else  {
-        if( !fg.IsEmpty() )  win->SetForegroundColour( wxColor(fg.u_str()) );
-        if( !bg.IsEmpty() )  win->SetBackgroundColour( wxColor(bg.u_str()) );
+        if( !fg.IsEmpty() )  win->SetForegroundColour(wxColor(fg.u_str()));
+        if( !bg.IsEmpty() )  win->SetBackgroundColour(wxColor(bg.u_str()));
       }
     }
   }
@@ -1903,7 +1790,9 @@ bool THtml::TObjectsState::LoadFromFile(const olxstr& fn)  {
   return true;
 }
 //..............................................................................
-TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& name, const std::type_info& type) {
+TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(
+  const olxstr& name, const std::type_info& type)
+{
   const size_t ind = Objects.IndexOf( name );
   if( ind != InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "object already exists");
@@ -1911,27 +1800,27 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
 
   props->Add("type", type.name());  // type
   props->Add("data");
-  if( type == typeid(TTextEdit) )  {  
+  if( type == typeid(TTextEdit) )  {
     props->Add("val");
   }
-  else if( type == typeid(TCheckBox) )  {  
+  else if( type == typeid(TCheckBox) )  {
     props->Add("val");
     props->Add("checked");
   }
-  else if( type == typeid(TTrackBar) || type == typeid(TSpinCtrl) )  {  
+  else if( type == typeid(TTrackBar) || type == typeid(TSpinCtrl) )  {
     props->Add("min");
     props->Add("max");
     props->Add("val");
   }
-  else if( type == typeid(TButton) )    {  
+  else if( type == typeid(TButton) )  {
     props->Add("checked");
     props->Add("val");
   }
-  else if( type == typeid(TBmpButton) )    {  
+  else if( type == typeid(TBmpButton) )  {
     props->Add("checked");
     props->Add("val");
   }
-  else if( type == typeid(TImgButton) )    {  
+  else if( type == typeid(TImgButton) )  {
     props->Add("checked");
     props->Add("enabled");
     props->Add("val");
@@ -1943,14 +1832,14 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
     props->Add("val");
     props->Add("items");
   }
-  else if( type == typeid(TListBox) )  {  
+  else if( type == typeid(TListBox) )  {
     props->Add("val");
     props->Add("items");
   }
-  else if( type == typeid(TTreeView) )  {  
+  else if( type == typeid(TTreeView) )  {
     props->Add("state");
   }
-  else if( type == typeid(TLabel) )  {  
+  else if( type == typeid(TLabel) )  {
     props->Add("val");
   }
   else //?
@@ -1995,10 +1884,10 @@ void THtml::funCall(const TStrObjList &Params, TMacroError &E)  {
   }
   Control c = FindControl(ctrl_name, E, 1, __OlxSrcInfo);
   if( c.html == NULL || c.ctrl == NULL )  return;
-  TMainFrame::GetMainFrameInstance().LockWindowDestruction(this, this);
+  volatile THtmlManager::DestructionLocker dm =
+    Manager.LockDestruction(this, this);
   if( !c.ctrl->ExecuteActionQueue(evt_name) )
     E.ProcessingError(__OlxSrcInfo, "Failed to execute: ").quote() << Params[0];
-  TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(this, this);
 }
 //..............................................................................
 void THtml::macLstObj(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -2006,13 +1895,273 @@ void THtml::macLstObj(TStrObjList &Cmds, const TParamList &Options, TMacroError 
   all.SetCapacity(Objects.Count());
   for( size_t i=0; i < Objects.Count(); i++ )
     all.Add(Objects.GetKey(i));
-  const TMainForm &mf = *TGlXApp::GetMainForm();
-  for( size_t i=0; i < mf.Popups.Count(); i++ )  {
-    THtml &h = *mf.Popups.GetValue(i)->Html;
+  for( size_t i=0; i < Manager.Popups.Count(); i++ )  {
+    THtml &h = *Manager.Popups.GetValue(i)->Html;
     all.SetCapacity(all.Count()+h.Objects.Count());
     for( size_t j=0; j < h.Objects.Count(); j++ )
-      all.Add(mf.Popups.GetKey(i)) << '.' << h.Objects.GetKey(j);
+      all.Add(Manager.Popups.GetKey(i)) << '.' << h.Objects.GetKey(j);
   }
   TBasicApp::NewLogEntry() << all;
+}
+//..............................................................................
+TLibrary *THtml::ExportLibrary(const olxstr &name) {
+  TLibrary &Library = *(new TLibrary(name));
+  InitMacroD(Library, THtml, ItemState,
+    "u-does not update the html",
+    fpAny^(fpNone|fpOne),
+"Changes state of the HTML switch, accepts masks like '*-picture-*'"
+  );
+  InitMacroD(Library, THtml, Update, EmptyString(),
+    fpNone|fpOne,
+    "Reloads the content of the main or given named HTML window"
+  );
+  InitMacroD(Library, THtml, Home, EmptyString(), fpNone|fpOne,
+    "Reloads the page"
+  );
+  InitMacroD(Library, THtml, Load, EmptyString(), fpOne|fpTwo,
+"Loads content into main or given HTML page. Example: load name file_name"
+  );
+  InitMacroD(Library, THtml, Dump, EmptyString(), fpOne|fpTwo,
+    "Saves content of the main or given page into the file"
+  );
+  InitMacroD(Library, THtml, Tooltips, EmptyString(),
+    fpNone|fpOne|fpTwo,
+"Enables or disables tooltip for HTML. If no arguments is given the state of "
+"tooltops for the main HTML is inverted. If a single boolean argument is given"
+" - the state of the tooltips is set to the given value, if the argument is "
+"not a boolean the state of the tooltips for HTML windows with given name is "
+"inverted. If two arguments are given - the first should be an HTML window "
+"name and the second - a boolean value. This function executes the htmltt "
+"state change event"
+    );
+  InitMacroD(Library, THtml, SetFonts, EmptyString(), fpTwo,
+    "Sets normal and fixed fonts to display HTML content");
+  InitMacroD(Library, THtml, SetBorders, EmptyString(), fpOne|fpTwo,
+    "Sets borders between HTML content and window edges");
+  InitMacroD(Library, THtml, DefineControl, 
+"v-value&;i-tems&;c-checked/down&;bg-background color&;fg-foreground color"
+"&;min-min value&;max-max value", 
+    fpTwo,
+    "Defines a managed control properties"
+  );
+  InitMacroD(Library, THtml, Hide, EmptyString(), fpOne,
+    "Hides an Html popup window");
+  InitMacroD(Library, THtml, Group, EmptyString(),
+    fpAny^(fpNone|fpOne),
+    "Creates an exclusive group of buttons");
+  InitMacroD(Library, THtml, LstObj, EmptyString(), 
+    fpAny^(fpNone|fpOne),
+    "Prints the list of available HTML objects");
+  this_InitFuncD(GetValue, fpOne,
+    "Returns value of specified object");
+  this_InitFuncD(GetData, fpOne,
+    "Returns data associated with specified object");
+  this_InitFuncD(GetState, fpOne|fpTwo,
+    "Returns state of the checkbox or a button. For example: echo "
+    "getstate(button, enabled/down) or echo getstate(checkbox)");
+  this_InitFuncD(GetLabel, fpOne,
+    "Returns labels of specified object. Applicable to labels, buttons and "
+    "checkboxes");
+  this_InitFuncD(GetImage, fpOne,
+    "Returns image source for a button or zimg");
+  this_InitFuncD(GetItems, fpOne,
+    "Returns items of a combobox or list");
+  this_InitFuncD(SetValue, fpTwo,
+    "Sets value of specified object");
+  this_InitFuncD(SetData, fpTwo,
+    "Sets data for specified object");
+  this_InitFuncD(SetState, fpTwo|fpThree,
+    "Sets state of a checkbox or a button");
+  this_InitFuncD(SetLabel, fpTwo,
+    "Sets labels for a label, button or checkbox");
+  this_InitFuncD(SetImage, fpTwo,
+    "Sets image location for a button or a zimg");
+  this_InitFuncD(SetItems, fpTwo,
+    "Sets items for comboboxes and lists");
+  this_InitFuncD(SaveData, fpOne,
+    "Saves state, data, label and value of all objects to a file");
+  this_InitFuncD(LoadData, fpOne,
+    "Loads previously saved data of html objects form a file");
+  this_InitFuncD(SetFG, fpTwo,
+    "Sets foreground of specified object");
+  this_InitFuncD(SetBG, fpTwo,
+    "Sets background of specified object");
+  this_InitFuncD(GetFontName, fpNone, "Returns current font name");
+  this_InitFuncD(GetBorders, fpNone,
+    "Returns borders width between HTML content and window boundaries");
+  this_InitFuncD(SetFocus, fpOne,
+    "Sets input focus to the specified HTML control");
+  this_InitFuncD(Select, fpTwo|fpThree,
+    "Selects a treeview item by label (default) or data (third argument "
+    "should be False)");
+  this_InitFuncD(GetItemState, fpOne|fpTwo,
+    "Returns item state of provided switch");
+  this_InitFuncD(IsItem, fpOne, "Returns true if specified switch exists");
+  this_InitFuncD(IsPopup, fpOne,
+    "Returns true if specified popup window exists and visible");
+  this_InitFuncD(EndModal, fpTwo,
+    "Ends a modal popup and sets the return code");
+  this_InitFuncD(ShowModal, fpOne,
+    "Shows a previously created popup window as a modal dialog");
+  this_InitFuncD(Width, fpOne|fpTwo,
+    "Returns/sets width of an HTML object window (use 'self' to address the "
+    "window itself)");
+  this_InitFuncD(Height, fpOne|fpTwo,
+    "Returns/sets height of an HTML object window (use 'self' to address the"
+    " window itself)");
+  this_InitFuncD(ClientWidth, fpOne|fpTwo,
+    "Returns/sets client width of an HTML window (use 'self' to address the "
+    "window itself)");
+  this_InitFuncD(ClientHeight, fpOne|fpTwo,
+    "Returns/sets client height of an HTML window (use 'self' to address the"
+    " window itself)");
+  this_InitFuncD(ContainerWidth, fpOne|fpTwo,
+    "Returns/sets width of a popup window");
+  this_InitFuncD(ContainerHeight, fpOne|fpTwo,
+    "Returns/sets height of a popup window");
+  this_InitFuncD(Call, fpOne,
+    "Calls event of specified control, expects [popup.]control.event");
+  return &Library;
+}
+
+//..............................................................................
+THtmlManager::THtmlManager(wxWindow *mainWindow)
+  : mainWindow(mainWindow),
+    main(NULL),
+    OnStateChange(Actions.New("OnStateChange")),
+    OnModeChange(Actions.New("OnModeChange")),
+    OnLink(Actions.New("OnLink"))
+{
+  AActionHandler::SetToDelete(false);
+}
+//..............................................................................
+THtmlManager::~THtmlManager() {
+  main->Destroy();
+  ClearPopups();
+}
+//..............................................................................
+void THtmlManager::InitialiseMain(long flags) {
+  main = new THtml(*this, mainWindow, EmptyString(), flags);
+  main->OnLink.Add(this);
+}
+//..............................................................................
+void THtmlManager::ProcessPageLoadRequests() {
+  if (main != NULL && main->IsPageLoadRequested() && !main->IsPageLocked()) {
+    main->ProcessPageLoadRequest();
+  }
+  try {
+    for (size_t pi=0; pi < Popups.Count(); pi++) {
+      if (Popups.GetValue(pi)->Html->IsPageLoadRequested() &&
+        !Popups.GetValue(pi)->Html->IsPageLocked() )
+      {
+        Popups.GetValue(pi)->Html->ProcessPageLoadRequest();
+      }
+    }
+  }
+  catch(const TExceptionBase &e)  {
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
+  }
+}
+//.............................................................................
+void THtmlManager::ClearPopups() {
+  for( size_t i=0; i < Popups.Count(); i++ )  {
+    Popups.GetValue(i)->Dialog->Destroy();
+    delete Popups.GetValue(i);
+  }
+  Popups.Clear();
+}
+//.............................................................................
+void THtmlManager::LockWindowDestruction(wxWindow* wnd,
+  const IEObject* caller)
+{
+  if (wnd == main)
+    main->LockPageLoad(caller);
+  else  {
+    for (size_t i=0; i < Popups.Count(); i++) {
+      if (Popups.GetValue(i)->Html == wnd) {
+        Popups.GetValue(i)->Html->LockPageLoad(caller);
+        break;
+      }
+    }
+  }
+}
+//.............................................................................
+void THtmlManager::UnlockWindowDestruction(wxWindow* wnd,
+  const IEObject* caller)
+{
+  if (wnd == main)
+    main->UnlockPageLoad(caller);
+  else  {
+    for (size_t i=0; i < Popups.Count(); i++) {
+      if (Popups.GetValue(i)->Html == wnd) {
+        Popups.GetValue(i)->Html->UnlockPageLoad(caller);
+        break;
+      }
+    }
+  }
+}
+//..............................................................................
+THtml* THtmlManager::FindHtml(const olxstr& name) const {
+  if(name.IsEmpty()) return main;
+  TPopupData *pd = Popups.Find(name, NULL);
+  return pd == NULL ? NULL : pd->Html;
+}
+//..............................................................................
+bool THtmlManager::Enter(const IEObject *sender, const IEObject *data) {
+  if (sender != NULL) {
+    const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
+    THtml *html = dynamic_cast<THtml*>(wx->GetParent());
+    if (html != NULL) {
+      volatile THtmlManager::DestructionLocker dm =
+        LockDestruction(html, this);
+      OnLink.Enter(sender, data);
+      return true;
+    }
+  }
+  OnLink.Enter(sender, data);
+  return true;
+}
+//..............................................................................
+bool THtmlManager::Exit(const IEObject *sender, const IEObject *data) {
+  if (sender != NULL) {
+    const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
+    THtml *html = dynamic_cast<THtml*>(wx->GetParent());
+    if (html != NULL) {
+      volatile THtmlManager::DestructionLocker dm =
+        LockDestruction(html, this);
+      OnLink.Exit(sender, data);
+      return true;
+    }
+  }
+  OnLink.Exit(sender, data);
+  return true;
+}
+//..............................................................................
+bool THtmlManager::Execute(const IEObject *sender, const IEObject *data) {
+  if (sender != NULL) {
+    const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
+    THtml *html = dynamic_cast<THtml*>(wx->GetParent());
+    if (html != NULL) {
+      volatile THtmlManager::DestructionLocker dm =
+        LockDestruction(html, this);
+      OnLink.Execute(sender, data);
+      return true;
+    }
+  }
+  OnLink.Execute(sender, data);
+  return true;
+}
+//..............................................................................
+THtmlManager::TPopupData &THtmlManager::NewPopup(TDialog *owner,
+  const olxstr &name, long flags)
+{
+  TPopupData *pd = Popups.Find(name, NULL);
+  if (pd == NULL) {
+    pd = Popups.Add(name, new TPopupData);
+    pd->Dialog = owner;
+    pd->Html = new THtml(*this, owner, name, flags);
+    pd->Html->OnLink.Add(this);
+  }
+  return *pd;
 }
 //..............................................................................

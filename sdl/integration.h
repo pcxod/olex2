@@ -41,22 +41,25 @@ namespace olex {
     IOlexProcessor()  {  Instance = this;  }
     virtual ~IOlexProcessor()  {}
     // uses custom macro error to set args, get rv
-    virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er) = 0;
-    // a shortcut to above
-    inline bool executeMacro(const olxstr& cmdLine)  {
-      TMacroError er;
-      return executeMacroEx(cmdLine, er);
-    }
-    virtual void print(const olxstr& Text, const short MessageType = mtNone) = 0;
-    virtual bool executeFunction(const olxstr& funcName, olxstr& retValue) = 0;
-    // returns a value, which should be deleted, of the TPType <> type
-    virtual IEObject* executeFunction(const olxstr& funcName) = 0;
+    virtual bool processMacro(const olxstr& cmdLine,
+      const olxstr &location=EmptyString(), bool quiet=false) = 0;
+    virtual bool processMacroEx(const olxstr& cmdLine,
+      TMacroError& err, const olxstr &location=EmptyString(),
+      bool quiet=false) = 0;
+    virtual void print(const olxstr& Text,
+      const short MessageType = mtNone) = 0;
+    virtual bool processFunction(olxstr& cmdl,
+      const olxstr &location=EmptyString(), bool quiet=false) = 0;
+    //virtual IEObject* executeFunction(const olxstr& funcName) = 0;
     virtual TLibrary&  GetLibrary() = 0;
-    virtual bool registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn) = 0;
-    virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName) = 0;
+    virtual bool registerCallbackFunc(const olxstr& cbEvent,
+      ABasicFunction* fn) = 0;
+    virtual void unregisterCallbackFunc(const olxstr& cbEvent,
+      const olxstr& funcName) = 0;
 
     virtual const olxstr& getDataDir() const = 0;
-    virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=EmptyString()) const = 0;
+    virtual const olxstr& getVar(const olxstr &name,
+      const olxstr &defval=EmptyString()) const = 0;
     virtual void setVar(const olxstr &name, const olxstr &val) const = 0;
     virtual TStrList GetPluginList() const = 0;
     virtual olxstr TranslateString(const olxstr& str) const = 0;

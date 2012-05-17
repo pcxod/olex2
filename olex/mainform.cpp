@@ -115,9 +115,9 @@ public:
     else if( EsdlInstanceOf(*Obj, TDUnitCell) )
       FParent->CellVChange();
     else  if( Obj == FParent->FInfoBox )
-      FParent->ProcessMacro("showwindow info false");
+      FParent->processMacro("showwindow info false");
     else  if( Obj == FParent->FHelpWindow )
-      FParent->ProcessMacro("showwindow help false");
+      FParent->processMacro("showwindow help false");
     else if( EsdlInstanceOf(*Obj, TXGrid) )
       FParent->GridVChange();
     else if( EsdlInstanceOf(*Obj, T3DFrameCtrl) )
@@ -327,6 +327,7 @@ END_EVENT_TABLE()
 TMainForm::TMainForm(TGlXApp *Parent):
   TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
   Macros(*this),
+  HtmlManager(*(new THtmlManager(this))),
   OnModeChange(Actions.New("ONMODECHANGE")),
   OnStateChange(Actions.New("ONSTATECHANGE")),
   _ProcessHandler(*this)
@@ -356,7 +357,6 @@ TMainForm::TMainForm(TGlXApp *Parent):
   FGlConsole = NULL;
   FInfoBox = NULL;
   GlTooltip = NULL;
-  FHtml = NULL;
   ActiveLogFile = NULL;
 
   MousePositionX = MousePositionY = -1;
@@ -414,11 +414,10 @@ TMainForm::TMainForm(TGlXApp *Parent):
 bool TMainForm::Destroy()  {
   if( FXApp != NULL )  {
     SaveVFS(plGlobal);  // save virtual db to file
-    SaveVFS(plStructure);  
+    SaveVFS(plStructure);
     FXApp->OnObjectsDestroy.Remove(this);
-    ProcessMacro("onexit");
+    processMacro("onexit");
     SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
-    ClearPopups();
   }
   Destroying = true;
   return wxFrame::Destroy();
@@ -430,8 +429,8 @@ TMainForm::~TMainForm()  {
     _UpdateThread->Join(true);
     delete _UpdateThread;
   }
-	if( UpdateProgress != NULL )
-	  delete UpdateProgress;
+  if( UpdateProgress != NULL )
+    delete UpdateProgress;
   delete Modes;
   for( size_t i=0; i < CallbackFuncs.Count(); i++ )
     delete CallbackFuncs.GetObject(i);
@@ -462,6 +461,7 @@ TMainForm::~TMainForm()  {
   delete FUndoStack;
   // leave it for the end
   delete _ProcessManager;
+  delete &HtmlManager;
   // the order is VERY important!
   TOlxVars::Finalise();
   PythonExt::Finilise();
@@ -1548,10 +1548,11 @@ void TMainForm::XApp(TGXApp *XA)  {
   XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
-  FHtml = new THtml(this, FXApp, EmptyString(), 4|wxVSCROLL|wxALWAYS_SHOW_SB);
+  HtmlManager.InitialiseMain(4|wxVSCROLL|wxALWAYS_SHOW_SB);
+  GetLibrary().AttachLibrary(HtmlManager.main->ExportLibrary());
 
-  FHtml->OnLink.Add(this, ID_ONLINK);
-  FHtml->OnKey.Add(this, ID_HTMLKEY);
+  HtmlManager.OnLink.Add(this, ID_ONLINK);
+  HtmlManager.main->OnKey.Add(this, ID_HTMLKEY);
 
   FXApp->SetLabelsVisible(false);
   FXApp->GetRender().LightModel.SetClearColor(0x0f0f0f0f);
@@ -1665,14 +1666,14 @@ void TMainForm::StartupInit()  {
 
   FXApp->Init(); // initialise the gl after styles reloaded
   if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
-    ProcessMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'');
+    processMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'');
 
-  ProcessMacro(olxstr("showwindow help ") << HelpWindowVisible);
-  ProcessMacro(olxstr("showwindow info ") << InfoWindowVisible);
-  ProcessMacro(olxstr("showwindow cmdline ") << CmdLineVisible);
+  processMacro(olxstr("showwindow help ") << HelpWindowVisible);
+  processMacro(olxstr("showwindow info ") << InfoWindowVisible);
+  processMacro(olxstr("showwindow cmdline ") << CmdLineVisible);
   FGlConsole->ShowBuffer(true);  // this should be on :)
-  ProcessMacro("reload macro", __OlxSrcInfo);
-  ProcessMacro("reload help", __OlxSrcInfo);
+  processMacro("reload macro", __OlxSrcInfo);
+  processMacro("reload help", __OlxSrcInfo);
 
   FTimer->Start(15);
   if( FGlCanvas != NULL )  FGlCanvas->XApp(FXApp);
@@ -1727,7 +1728,7 @@ void TMainForm::StartupInit()  {
           if( item.GetName().Equalsi("sep") )    cmd << "-# ";
           if( item.GetName().Equalsi("check") )  cmd << "-c ";
 
-          ProcessMacro(cmd, __OlxSrcInfo);
+          processMacro(cmd, __OlxSrcInfo);
         }
       }
       catch( TExceptionBase& exc )  {
@@ -1751,7 +1752,7 @@ void TMainForm::StartupInit()  {
 
   // set the variables
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    ProcessMacro(olxstr("setvar(") << StoredParams.GetKey(i)
+    processMacro(olxstr("setvar(") << StoredParams.GetKey(i)
                     << ",\'" << StoredParams.GetObject(i)
                     << "\')");
 
@@ -1771,14 +1772,14 @@ void TMainForm::StartupInit()  {
     else // disable reading last file in
       TOlxVars::GetInstance()->SetVar("olx_reap_cmdl", FXApp->GetArguments()[1]);
   }
-  ProcessMacro("onstartup", __OlxSrcInfo);
-  ProcessMacro("user_onstartup", __OlxSrcInfo);
+  processMacro("onstartup", __OlxSrcInfo);
+  processMacro("user_onstartup", __OlxSrcInfo);
   if( FXApp->GetArguments().Count() >= 2 ) {
-    ProcessMacro(olxstr("reap \'") << FXApp->GetArguments().Text(' ', 1) <<
+    processMacro(olxstr("reap \'") << FXApp->GetArguments().Text(' ', 1) <<
       '\'', __OlxSrcInfo);
   }  // load html in last call - it might call some destructive functions on uninitialised data
-  FHtml->LoadPage(FHtmlIndexFile.u_str());
-  FHtml->SetHomePage(FHtmlIndexFile);
+  HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());
+  HtmlManager.main->SetHomePage(FHtmlIndexFile);
   // must move it here since on Linux things will not get initialised at the previous position
   CreateUpdateThread();
   FileDropTarget* dndt = new FileDropTarget(*this);
@@ -2038,40 +2039,23 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         }
         else
           Tasks[i].LastCalled = TETime::Now();
-        ProcessMacro(tmp, "Scheduled task");
+        processMacro(tmp, "Scheduled task");
       }
     }
     for (size_t i=0; i < RunWhenVisibleTasks.Count(); i++)
       RunWhenVisibleTasks[i]->Run();
     RunWhenVisibleTasks.DeleteItems().Clear();
     // end tasks ...
-    if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
-      GetHtml()->ProcessPageLoadRequest();
-    THtml *main_html = FHtml;
-    try  {
-      for( size_t pi=0; pi < Popups.Count(); pi++ )  {
-        if( Popups.GetValue(pi)->Html->IsPageLoadRequested() &&
-            !Popups.GetValue(pi)->Html->IsPageLocked() )
-        {
-          FHtml = Popups.GetValue(pi)->Html;
-          Popups.GetValue(pi)->Html->ProcessPageLoadRequest();
-        }
-      }
-    }
-    catch(const TExceptionBase &e)  {
-      TBasicApp::NewLogEntry(logError) << e.GetException()->GetFullMessage();
-    }
-    FHtml = main_html;
-
+    HtmlManager.ProcessPageLoadRequests();
     FTimer->OnTimer.SetEnabled(true);
     if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
       static time_t FileMT = TEFile::FileAge(FListenFile);
       time_t FileT = TEFile::FileAge(FListenFile);
       if( FileMT != FileT )  {
         FObjectUnderMouse = NULL;
-        ProcessMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', "OnListen");
+        processMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', "OnListen");
         for( size_t i=0; i < FOnListenCmds.Count(); i++ )  {
-          if( !ProcessMacro(FOnListenCmds[i], "OnListen") )
+          if( !processMacro(FOnListenCmds[i], "OnListen") )
             break;
         }
         FileMT = FileT;
@@ -2259,7 +2243,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       in case if a modal window appears and the timer event can be called */
       FTimer->OnTimer.SetEnabled(false);
       for( size_t i=0; i < Toks.Count(); i++ )  {
-        if( !ProcessMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), "OnLink") )
+        if( !processMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), "OnLink") )
           break;
       }
       TimePerFrame = FXApp->Draw();
@@ -2325,7 +2309,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       else  {
         FHelpWindow->SetVisible(false);
         olxstr FullCmd(tmp);
-        ProcessMacro(FullCmd, "Console");
+        processMacro(FullCmd, "Console");
       }
       if( CmdLineVisible && EsdlInstanceOf(*Sender, TCmdLine) )
         FCmdLine->SetCommand(EmptyString());
@@ -2337,7 +2321,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       if( ((olxstr*)Data)->Equalsi("OMIT") )  {
         BadReflectionsTable(false);
-        executeMacro("html.update");
+        processMacro("html.update");
       }
     }
   }
@@ -2345,7 +2329,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       if( ((olxstr*)Data)->Equalsi("OMIT") )  {
         BadReflectionsTable(false);
-        executeMacro("html.update");
+        processMacro("html.update");
       }
     }
   }
@@ -2354,7 +2338,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       BadReflectionsTable(false);
   }
   else if (MsgId == ID_UPDATE_GUI) {
-    executeMacro("html.update");
+    processMacro("html.update");
   }
   else if (MsgId == ID_CellChanged) {
     if (Data != NULL && EsdlInstanceOf(*Data, THklFile) ) {
@@ -2435,7 +2419,7 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     xyz.LoadFromStrings(lines);
     if( xyz.GetAsymmUnit().AtomCount() == 0 )
       return false;
-    ProcessMacro("mode fit -a=6");
+    processMacro("mode fit -a=6");
     TXAtomPList xatoms;
     TXBondPList xbonds;
     FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
@@ -2534,9 +2518,9 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
       if( Modes->GetCurrent()->OnKey( m.GetKeyCode(), Fl) )
         return;
       else
-        ProcessMacro("mode off");
+        processMacro("mode off");
     }
-    ProcessMacro("sel -u");
+    processMacro("sel -u");
     TimePerFrame = FXApp->Draw();
   }
   if( m.GetKeyCode() == WXK_TAB )  {  // tab
@@ -2613,8 +2597,8 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   m.Skip(false);
   wxWindow* wxw = FindFocus();
   if (wxw != FGlCanvas && wxw != FCmdLine) {
-    if (FHtml != NULL) {
-      THtml* htw = FHtml;
+    if (HtmlManager.main != NULL) {
+      THtml* htw = HtmlManager.main;
       if ((wxw != NULL && EsdlInstanceOf(*wxw, THtml)))
         htw = (THtml*)wxw;
       else if (wxw != NULL && wxw->GetParent() != NULL &&
@@ -2689,7 +2673,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     }
     //undo, Cmd+Z, Ctrl+Z
     else if( m.GetKeyCode() == 'Z' )  {
-      ProcessMacro("undo");
+      processMacro("undo");
       TimePerFrame = FXApp->Draw();
       return;
     }
@@ -2710,7 +2694,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   }
   olxstr Cmd = AccShortcuts.GetValue(Fl<<16 | m.m_keyCode);
   if( !Cmd.IsEmpty() )  {
-    ProcessMacro(Cmd, __OlxSrcInfo);
+    processMacro(Cmd, __OlxSrcInfo);
     TimePerFrame = FXApp->Draw();
     return;
   }
@@ -2718,14 +2702,17 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
 }
 //..............................................................................
 void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
-  if( FindFocus() != FGlCanvas )  {
-    if( FHtml != 0 )  {
-      THtml* htw = FHtml;
+  if (FindFocus() != FGlCanvas) {
+    if (HtmlManager.main != NULL) {
+      THtml* htw = HtmlManager.main;
       wxWindow* wxw = FindFocus();
       if( (wxw != NULL && EsdlInstanceOf(*wxw, THtml)) )
         htw = (THtml*)wxw;
-      else if( wxw != NULL && wxw->GetParent() != NULL && EsdlInstanceOf(*wxw->GetParent(), THtml) )
+      else if(wxw != NULL && wxw->GetParent() != NULL &&
+              EsdlInstanceOf(*wxw->GetParent(), THtml) )
+      {
         htw = (THtml*)wxw->GetParent();
+      }
       htw->OnNavigation(event);
     }
     return;
@@ -2746,7 +2733,11 @@ void TMainForm::OnMove(wxMoveEvent& evt) {
 void TMainForm::OnSize(wxSizeEvent& event)  {
   wxFrame::OnSize(event);
   if( SkipSizing )  return;
-  if( FXApp == NULL || FGlConsole == NULL || FInfoBox == NULL || !StartupInitialised )  return;
+  if( FXApp == NULL || FGlConsole == NULL || FInfoBox == NULL ||
+      !StartupInitialised )
+  {
+    return;
+  }
   OnResize();
 }
 //..............................................................................
@@ -2758,35 +2749,37 @@ void TMainForm::OnResize()  {
   FInfoBox->SetTop(1);
   if( FHtmlMinimized )  {
     if( FHtmlOnLeft )  {
-      FHtml->SetSize(0, 0, 10, h);
+      HtmlManager.main->SetSize(0, 0, 10, h);
       l = 10;
       w = w - l;
     }
     else  {
-      FHtml->SetSize(w-10, 0, 10, h);
+      HtmlManager.main->SetSize(w-10, 0, 10, h);
       w = w-10;
     }
   }
   else  {
-    FHtml->Freeze();
+    HtmlManager.main->Freeze();
     if( FHtmlOnLeft )  {
-      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
-      FHtml->SetClientSize(cw, -1);
-      FHtml->SetSize(-1, h);
-      FHtml->Move(0, 0);
-      l = FHtml->GetSize().GetWidth();
+      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth
+        : (int)(w*FHtmlPanelWidth);
+      HtmlManager.main->SetClientSize(cw, -1);
+      HtmlManager.main->SetSize(-1, h);
+      HtmlManager.main->Move(0, 0);
+      l = HtmlManager.main->GetSize().GetWidth();
       w -= l;
     }
     else  {
-      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
-      FHtml->SetClientSize(cw, -1);
-      FHtml->SetSize(-1, h);
-      FHtml->Move((int)(w-FHtml->GetSize().GetWidth()), 0);
-      w -= FHtml->GetSize().GetWidth();
+      const int cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth
+        : (int)(w*FHtmlPanelWidth);
+      HtmlManager.main->SetClientSize(cw, -1);
+      HtmlManager.main->SetSize(-1, h);
+      HtmlManager.main->Move((int)(w-HtmlManager.main->GetSize().GetWidth()), 0);
+      w -= HtmlManager.main->GetSize().GetWidth();
     }
-    FHtml->Refresh();
-    FHtml->Update();
-    FHtml->Thaw();
+    HtmlManager.main->Refresh();
+    HtmlManager.main->Update();
+    HtmlManager.main->Thaw();
   }
   if( CmdLineVisible )  {
     FCmdLine->WI.SetWidth(w);
@@ -2815,7 +2808,8 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd, bool inc_files)  {
       if( lsi != InvalidIndex )  {
         olxstr dir_name = path.SubStringTo(lsi+1);
         if( TEFile::Exists(dir_name) )  {
-          TEFile::ListDir(dir_name, names, olxstr(path.SubStringFrom(lsi+1)) << '*', sefReadWrite);
+          TEFile::ListDir(dir_name, names, olxstr(path.SubStringFrom(lsi+1)) <<
+            '*', sefReadWrite);
           for( size_t i=0; i < names.Count(); i++ )
             all_cmds.Add(dir_name +names[i]);
         }
@@ -2909,11 +2903,11 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     I->AddField("Width", olxstr(FHtmlPanelWidth) << '%');
   else
     I->AddField("Width", FHtmlPanelWidth);
-  I->AddField("Tooltips", FHtml->GetShowTooltips());
-  I->AddField("Borders", FHtml->GetBorders());
+  I->AddField("Tooltips", HtmlManager.main->GetShowTooltips());
+  I->AddField("Borders", HtmlManager.main->GetBorders());
   {
     olxstr normal, fixed;
-    FHtml->GetFonts(normal, fixed);
+    HtmlManager.main->GetFonts(normal, fixed);
     I->AddField("NormalFont", normal);
     I->AddField("FixedFont", fixed);
   }
@@ -2976,11 +2970,11 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( I == NULL )
     return;
   StylesDir = TEFile::ExpandRelativePath(I->GetFieldValue("Styles"));
-    executeFunction(StylesDir, StylesDir);
+    processFunction(StylesDir);
   ScenesDir = TEFile::ExpandRelativePath(I->GetFieldValue("Scenes"));
-    executeFunction(ScenesDir, ScenesDir);
+    processFunction(ScenesDir);
   XLibMacros::CurrentDir = TEFile::ExpandRelativePath(I->GetFieldValue("Current"));
-    executeFunction(XLibMacros::CurrentDir, XLibMacros::CurrentDir);
+    processFunction(XLibMacros::CurrentDir);
 
   I = DF.Root().FindItem("HTML");
   if( I != NULL )  {
@@ -2992,8 +2986,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     Tmp = I->GetFieldValue("Width");
     if( !Tmp.IsEmpty() )  {
       FHtmlWidthFixed = !Tmp.EndsWith('%');
-      FHtmlPanelWidth = ((!FHtmlWidthFixed) ? Tmp.SubStringTo(Tmp.Length()-1).ToDouble() :
-                                              Tmp.ToDouble());
+      FHtmlPanelWidth = ((!FHtmlWidthFixed) ? Tmp.SubStringTo(Tmp.Length()-1).ToDouble()
+        : Tmp.ToDouble());
       if( !FHtmlWidthFixed && FHtmlPanelWidth >= 0.5 )
         FHtmlPanelWidth = 0.25;
     }
@@ -3002,15 +2996,15 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
 
     Tmp = I->GetFieldValue("Tooltips", EmptyString());
     if( !Tmp.IsEmpty() )
-      FHtml->SetShowTooltips(Tmp.ToBool());
+      HtmlManager.main->SetShowTooltips(Tmp.ToBool());
 
     Tmp = I->GetFieldValue("Borders");
     if( !Tmp.IsEmpty() && Tmp.IsNumber() )
-      FHtml->SetBorders(Tmp.ToInt());
+      HtmlManager.main->SetBorders(Tmp.ToInt());
 
     olxstr nf(I->GetFieldValue("NormalFont", EmptyString()));
     olxstr ff(I->GetFieldValue("FixedFont", EmptyString()));
-    FHtml->SetFonts(nf, ff);
+    HtmlManager.main->SetFonts(nf, ff);
   }
 
   SkipSizing = true;
@@ -3059,17 +3053,18 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       T = I->GetFieldValue(olxstr("file") << i);
     }
     for( size_t j=0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++ )  {
-      executeFunction(uniqNames[j], uniqNames[j]);
+      processFunction(uniqNames[j]);
       MenuFile->AppendCheckItem((int)(ID_FILE0+j), uniqNames[j].u_str());
-      FRecentFiles.Add(uniqNames[j], MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1));
+      FRecentFiles.Add(uniqNames[j],
+        MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1));
     }
   }
 
   I = DF.Root().FindItem("Defaults");
   DefStyle = TEFile::ExpandRelativePath(I->GetFieldValue("Style"));
-    executeFunction(DefStyle, DefStyle);
+    processFunction(DefStyle);
   DefSceneP = TEFile::ExpandRelativePath(I->GetFieldValue("Scene"));
-    executeFunction(DefSceneP, DefSceneP);
+    processFunction(DefSceneP);
   // loading default style if provided ?
   if( TEFile::Exists(DefStyle) )  {
     TDataFile SDF;
@@ -3146,13 +3141,13 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     GradientPicture.SetLength(0);
   olxstr T = I->GetFieldValue("Gradient", EmptyString());
   if( !T.IsEmpty() ) 
-    ProcessMacro(olxstr("grad ") << T);
+    processMacro(olxstr("grad ") << T);
 
   I = DF.Root().FindItem("Stored_params");
   if( I )  {
     for( size_t i=0; i < I->ItemCount(); i++ )  {
       TDataItem& pd = I->GetItem(i);
-      ProcessMacro( olxstr("storeparam ") << pd.GetName() << ' '
+      processMacro( olxstr("storeparam ") << pd.GetName() << ' '
                       << '\'' << pd.GetFieldValue("value") << '\'' << ' '
                       << pd.GetFieldValue("process", EmptyString()));
     }
@@ -3470,7 +3465,7 @@ void TMainForm::OnMouseWheel(int x, int y, double delta)  {
   if( step.IsNumber() )
     delta *= step.ToDouble();
   cmd << delta;
-  ProcessMacro(cmd);
+  processMacro(cmd);
 }
 //..............................................................................
 void TMainForm::OnMouseMove(int x, int y)  {
@@ -3566,14 +3561,6 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
   return false;
 }
 //..............................................................................
-void TMainForm::ClearPopups()  {
-  for( size_t i=0; i < Popups.Count(); i++ )  {
-    Popups.GetValue(i)->Dialog->Destroy();
-    delete Popups.GetValue(i);
-  }
-  Popups.Clear();
-}
-//..............................................................................
 bool TMainForm::CheckMode(size_t mode, const olxstr& modeData)  {
   if( Modes->GetCurrent() == NULL )  return false;
   return mode == Modes->GetCurrent()->GetId();
@@ -3586,13 +3573,13 @@ bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
   if( state == prsHtmlVis )  {
     if( stateData.IsEmpty() )
       return FHtmlMinimized;
-    TPopupData* pp = Popups.Find(stateData, NULL);
+    THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
     return (pp != NULL) ? pp->Dialog->IsShown() : false;
   }
   if( state == prsHtmlTTVis )  {
     if( stateData.IsEmpty() )
-      return FHtml->GetShowTooltips();
-    TPopupData* pp = Popups.Find(stateData, NULL);
+      return HtmlManager.main->GetShowTooltips();
+    THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
     return (pp != NULL) ? pp->Html->GetShowTooltips() : false;
   }
   if( state == prsPluginInstalled )  {
@@ -3635,7 +3622,7 @@ void TMainForm::OnInternalIdle()  {
         macros.LoadFromFile( rof[i] );
         macros.CombineLines('\\');
         for( size_t j=0; j < macros.Count(); j++ )  {
-          executeMacro( macros[j] );
+          processMacro(macros[j]);
 #ifdef _DEBUG
           FXApp->NewLogEntry() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j];
 #endif
@@ -3696,12 +3683,6 @@ void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
   FGlCanvas->SetCursor(cr);
 }
 //..............................................................................
-bool TMainForm::executeMacroEx(const olxstr& cmdLine, TMacroError& er)  {
-  Macros.ProcessMacro(cmdLine, er);
-  AnalyseError(er);
-  return er.IsSuccessful();
-}
-//..............................................................................
 void TMainForm::print(const olxstr& output, const short MessageType)  {
 //  TGlMaterial *glm = NULL;
   if( MessageType == olex::mtInfo )
@@ -3719,49 +3700,6 @@ void TMainForm::print(const olxstr& output, const short MessageType)  {
 //  else if( MessageType == olex::mtError )     glm = &ErrorFontColor;
 //  else if( MessageType == olex::mtException ) glm = &ExceptionFontColor;
 //  FGlConsole->PostText(output, glm);
-}
-//..............................................................................
-bool TMainForm::executeFunction(const olxstr& function, olxstr& retVal)  {
-  retVal = function;
-  return ProcessFunction(retVal);
-}
-//..............................................................................
-IEObject* TMainForm::executeFunction(const olxstr& function)  {
-  size_t ind = function.FirstIndexOf('(');
-  if( (ind == InvalidIndex) || 
-      (ind == (function.Length()-1)) || !function.EndsWith(')') )
-  {
-    TBasicApp::NewLogEntry(logError) << "Incorrect function call: " << function;
-    return NULL;
-  }
-  olxstr funName = function.SubStringTo(ind);
-  ABasicFunction* Fun = FXApp->GetLibrary().FindFunction(funName);
-  if( Fun == NULL )  {
-    TBasicApp::NewLogEntry(logError) << "Unknow function: " << funName;
-    return NULL;
-  }
-  TMacroError me;
-  TStrObjList funParams;
-  olxstr funArg = function.SubStringFrom(ind+1, 1);
-  TParamList::StrtokParams(funArg, ',', funParams);
-  try  {
-    Fun->Run(funParams, me);
-    if( !me.IsSuccessful() )  {
-      AnalyseError(me);
-      return NULL;
-    }
-  }
-  catch(const TExceptionBase& exc)  {
-    me.ProcessingException(*Fun, exc);
-    AnalyseError(me);
-    return NULL;
-  }
-  return (me.HasRetVal()) ? me.RetObj()->Replicate() : NULL;
-}
-//..............................................................................
-THtml* TMainForm::FindHtml(const olxstr& popupName) const {
-  TPopupData* pd = Popups.Find(popupName, NULL);
-  return pd ? pd->Html : NULL;
 }
 //..............................................................................
 void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
@@ -3790,7 +3728,7 @@ bool TMainForm::ProcessEvent(wxEvent& evt)  {
       TStrList sl;
       sl.Strtok( macro, ">>");
       for( size_t i=0; i < sl.Count(); i++ )  {
-        if( !ProcessMacro(sl[i]) )
+        if( !processMacro(sl[i]) )
           break;
       }
       // restore state if failed
@@ -3875,7 +3813,7 @@ void TMainForm::SetProgramState(bool val, uint32_t state, const olxstr& data )  
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
   AGDrawObject *G = FXApp->SelectObject(x, y);
   if( G == NULL )  {
-    ProcessMacro("sel -u");
+    processMacro("sel -u");
     return true;
   }
   if( EsdlInstanceOf(*G, TGlBitmap) )  {
@@ -3901,7 +3839,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
   else if( EsdlInstanceOf(*G, TXGlLabel) )  {
     olxstr label = "getuserinput(1, \'Atom label\', \'";
     label << ((TXGlLabel*)G)->GetLabel() << "\')";
-    if( ProcessFunction(label) && !label.IsEmpty() )
+    if( processFunction(label) && !label.IsEmpty() )
       ((TXGlLabel*)G)->SetLabel(label);
 
   }
@@ -4145,32 +4083,6 @@ const olxstr& TMainForm::GetStructureOlexFolder()  {
   return EmptyString();
 }
 //..............................................................................
-void TMainForm::LockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
-  if( wnd == FHtml )
-    FHtml->LockPageLoad(caller);
-  else  {
-    for( size_t i=0; i < Popups.Count(); i++ )  {
-      if( Popups.GetValue(i)->Html == wnd )  {
-        Popups.GetValue(i)->Html->LockPageLoad(caller);
-        break;
-      }
-    }
-  }
-}
-//..............................................................................
-void TMainForm::UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller)  {
-  if( wnd == FHtml )
-    FHtml->UnlockPageLoad(caller);
-  else  {
-    for( size_t i=0; i < Popups.Count(); i++ )  {
-      if( Popups.GetValue(i)->Html == wnd )  {
-        Popups.GetValue(i)->Html->UnlockPageLoad(caller);
-        break;
-      }
-    }
-  }
-}
-//..............................................................................
 bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms,
   bool GetAll, bool unselect)
 {
@@ -4201,7 +4113,12 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
   size_t di = _cname.IndexOf("->");
   olxstr pname = (di == InvalidIndex ? EmptyString() : _cname.SubStringTo(di));
   olxstr cname = (di == InvalidIndex ? _cname : _cname.SubStringFrom(di+2));
-  THtml* html = pname.IsEmpty() ? GetHtml() : FindHtml(pname);  
+  THtml* html = HtmlManager.main;
+  if (!pname.IsEmpty()) {
+    THtmlManager::TPopupData *pd = HtmlManager.Popups.Find(pname, NULL);
+    if (pd != NULL)
+      html = pd->Html;
+  }
   return html == NULL ? false : (html->FindObject(cname) != NULL);
 }
 //..............................................................................
@@ -4309,10 +4226,9 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   olxstr cname, pname;  // control and popup (if any) name
   if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|w");
-  THtml* html = pname.IsEmpty() ? TGlXApp::GetMainForm()->GetHtml() :
-                TGlXApp::GetMainForm()->FindHtml(pname);
-  return Py_BuildValue("b", html == NULL ? false
-    : (html->FindObject(cname) != NULL));
+  if (!pname.IsEmpty())
+    cname = pname << "->" << cname;
+  return Py_BuildValue("b", TGlXApp::GetMainForm()->IsControl(cname));
 }
 //..............................................................................
 PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
@@ -4369,7 +4285,7 @@ bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayS
       return false;
   }
   catch(...)  {  return false;  }
-  parent.executeMacro(olxstr("reap \'") << fn << '\'');
+  parent.processMacro(olxstr("reap \'") << fn << '\'');
   return true;
 }
 //..............................................................................
@@ -4422,7 +4338,7 @@ void TMainForm::ProcessHandler::OnTerminate(const AProcess& p)  {
   TMacroError err;
   for( size_t i=0; i < p.OnTerminateCmds().Count(); i++ ) {
     const olxstr& cmd = p.OnTerminateCmds()[i];
-    parent.ProcessMacro(cmd, olxstr("OnTerminate of: ") << p.GetCmdLine());
+    parent.processMacro(cmd, olxstr("OnTerminate of: ") << p.GetCmdLine());
     if( !err.IsSuccessful() )
       break;
   }

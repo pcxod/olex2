@@ -15,7 +15,7 @@ public:
   TPackMode(size_t id) : AMode(id)  {}
   bool Initialise(TStrObjList &Cmds, const TParamList &Options) {
     olxstr AtomsToGrow( Cmds.Text(' ') );
-    TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
+    TGlXApp::GetMainForm()->processMacro("cursor(hand)");
     TGlXApp::GetGXApp()->SetPackMode( 0, AtomsToGrow );
     TGlXApp::GetGXApp()->SetXGrowPointsVisible(true);
     return true;

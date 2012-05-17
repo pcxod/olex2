@@ -16,7 +16,7 @@ void P4PTask::Run() {
   if (file_id.Contains("Rigaku CrystalClear")) {
     TMainForm *mf = TGlXApp::GetMainForm();
     olxstr cmd = "spy.xplain.exists()";
-    mf->ProcessFunction(cmd, __OlxSrcInfo);
+    mf->processFunction(cmd, __OlxSrcInfo);
     if (cmd.IsBool() && cmd.ToBool()) {
       olxstr opt =
         TBasicApp::GetInstance().GetOptions().FindValue("run_rigaku_xplain");
@@ -51,11 +51,10 @@ void P4PTask::Run() {
           ins.SaveForSolution(TEFile::ChangeFileExt(loaded_fn, "ins"), "TREF",
             "Imported by Olex2");
         }
-        olxstr fn = "spy.xplain.run(false, true)",
-          rv;
-        mf->executeFunction(fn, rv);
-        if (rv.IsBool() && rv.ToBool()) {
-          mf->ProcessMacro("reap", __OlxSrcInfo);
+        olxstr fn = "spy.xplain.run(false, true)";
+        mf->processFunction(fn);
+        if (fn.IsBool() && fn.ToBool()) {
+          mf->processMacro("reap", __OlxSrcInfo);
         }
         else {
           TBasicApp::NewLogEntry() << "Failed to run XPlain";

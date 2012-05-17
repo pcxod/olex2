@@ -28,22 +28,16 @@ BEGIN_EVENT_TABLE(TTreeView, wxGenericTreeCtrl)
 END_EVENT_TABLE()
 
 void TTreeView::ItemActivateEvent(wxTreeEvent& event)  {
-  StartEvtProcessing()
-    OnDblClick.Execute(this);
-  EndEvtProcessing()
+  OnDblClick.Execute(this);
 }
 //..............................................................................
 void TTreeView::SelectionEvent(wxTreeEvent& event) {
-  StartEvtProcessing()
-    OnSelect.Execute(this);
-  EndEvtProcessing()
+  OnSelect.Execute(this);
 }
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
-  StartEvtProcessing()
-    OnSelect.Execute(this, &TEGC::New<olxstr>(OnSelect.data)
-      .Replace("~label~", event.GetLabel()));
-  EndEvtProcessing()
+  OnSelect.Execute(this, &TEGC::New<olxstr>(OnSelect.data)
+    .Replace("~label~", event.GetLabel()));
 }
 //..............................................................................
 size_t TTreeView::ReadStrings(size_t& index, const wxTreeItemId* thisCaller,

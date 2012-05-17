@@ -38,7 +38,7 @@ public:
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Part = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     TGlXApp::GetMainForm()->SetUserCursor( Part, "part");
-    TGlXApp::GetMainForm()->executeMacro("labels -p -h");
+    TGlXApp::GetMainForm()->processMacro("labels -p -h");
     return true;
   }
   ~TPartMode() {  HasInstance = false;  }

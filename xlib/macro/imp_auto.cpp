@@ -48,7 +48,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
     arg = folder.ToInt();
     folder.SetLength(0);
   }
-  olex::IOlexProcessor::GetInstance()->executeMacro("clean -npd -d");
+  olex::IOlexProcessor::GetInstance()->processMacro("clean -npd -d");
   static olxstr FileName(xapp.XFile().GetFileName());
   if( !folder.IsEmpty() )
     TAutoDB::GetInstance().ProcessFolder(folder);
@@ -65,13 +65,13 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   st = TETime::msNow() - st;
   TBasicApp::NewLogEntry(logInfo) << "Elapsed time " << st << " ms";
 
-  olex::IOlexProcessor::GetInstance()->executeMacro("fuse");
+  olex::IOlexProcessor::GetInstance()->processMacro("fuse");
   size_t ac = imp_auto_AtomCount(au);
   if( ac == 0 )  // clearly something is wrong when it happens...
     ac = 1;
   // sometimes things get stuck while there are some NPD atoms
   if ((double)stat.ConfidentAtomTypes/ac < 0.2) {
-    olex::IOlexProcessor::GetInstance()->executeMacro("clean -d");
+    olex::IOlexProcessor::GetInstance()->processMacro("clean -d");
   }
   Error.SetRetVal(olxstr(stat.AtomTypeChanges!=0) << ';' << 
     (double)stat.ConfidentAtomTypes*100/ac);
@@ -490,7 +490,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
   }
   //end treating NDP atoms
   if( runFuse && olex::IOlexProcessor::GetInstance() != NULL )
-    olex::IOlexProcessor::GetInstance()->executeMacro("fuse");
+    olex::IOlexProcessor::GetInstance()->processMacro("fuse");
 }
 //..............................................................................
 struct Main_SfacComparator {
