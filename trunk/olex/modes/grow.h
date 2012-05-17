@@ -52,7 +52,7 @@ public:
       mode = gmCovalent;
     }
     const olxstr AtomsToGrow = Cmds.Text(' ');
-    TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
+    TGlXApp::GetMainForm()->processMacro("cursor(hand)");
     TGlXApp::GetGXApp()->SetGrowMode(mode, AtomsToGrow);
     TGlXApp::GetGXApp()->SetXGrowLinesVisible(true);
     TGlXApp::GetGXApp()->SetZoomAfterModelBuilt(false);

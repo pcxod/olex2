@@ -245,7 +245,7 @@ PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
   olxstr macroName;
   if( !PythonExt::ParseTuple(args, "w", &macroName) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
-  bool res = o_r->executeMacro(macroName);
+  bool res = o_r->processMacro(macroName);
   return Py_BuildValue("b", res);
 }
 //..............................................................................
@@ -254,8 +254,8 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
   olxstr functionName;
   if( !PythonExt::ParseTuple(args, "w", &functionName) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
-  olxstr retValue;
-  bool res = o_r->executeFunction(functionName,  retValue);
+  olxstr retValue = functionName;
+  bool res = o_r->processFunction(retValue);
   if( res )
     return PythonExt::BuildString(retValue);
   return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
@@ -303,7 +303,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
         if( tmp.IsEmpty() )  continue;
         macro_args << tmp << ' ';
       }
-      bool res = o_r->executeMacro(name << ' ' << macro_args);
+      bool res = o_r->processMacro(name << ' ' << macro_args);
       return Py_BuildValue("b", res);
     }
   }
@@ -482,10 +482,13 @@ void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options, TMacroError
     return;
   }
   olxstr cd = TEFile::CurrentDir();
-  TEFile::ChangeDir( TEFile::ExtractFilePath(fn) );
+  TEFile::ChangeDir(TEFile::ExtractFilePath(fn));
 
-  if( RunPython( olxstr("execfile(\'") << TEFile::ExtractFileName(fn) << "\')") == -1 )
+  if( RunPython(
+        olxstr("execfile(\'") << TEFile::ExtractFileName(fn) << "\')") == -1)
+  {
     E.ProcessingError(__OlxSrcInfo, "script execution failed");
+  }
 
   TEFile::ChangeDir(cd);
 }

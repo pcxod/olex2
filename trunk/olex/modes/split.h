@@ -58,7 +58,7 @@ public:
     TGXApp& app = *TGlXApp::GetGXApp();
     if( !app.CheckFileType<TIns>() )  return false;
     ReCon = Options.FindValue("r", EmptyString()).ToLowerCase();
-    TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
+    TGlXApp::GetMainForm()->processMacro("cursor(hand)");
     TGXApp::AtomIterator ai = app.GetAtoms();
     while( ai.HasNext() )
       ai.Next().SetMoveable(true);

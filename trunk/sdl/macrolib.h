@@ -62,17 +62,23 @@ public:
   inline const olxstr& GetName() const {  return Name;  }
   inline const olxstr& GetDescription() const {  return Description;  }
   template <class ArgsClass, class CmdClass> // must be one of the string lists
-  bool ListCommands(const ArgsClass& args, CmdClass& cmds, TStrList& onAbort, TStrList& onListen, 
-    TStrList& onTerminate, olex::IOlexProcessor& olex_processor )  {
+  bool ListCommands(const ArgsClass& args, CmdClass& cmds, TStrList& onAbort,
+    TStrList& onListen,
+    TStrList& onTerminate, olex::IOlexProcessor& olex_processor )
+  {
     
     if( Args.Count() < args.Count() )  {
-      TBasicApp::NewLogEntry(logError) << Name << ": too many arguments" << NewLineSequence();
+      TBasicApp::NewLogEntry(logError) << Name << ": too many arguments" <<
+        NewLineSequence();
       return false;
     }
     TStrList argV( Args.Count() );
     for( size_t i=0; i < argV.Count(); i++ )  {
-      if( !Args.GetObject(i).IsEmpty() && Args.GetObject(i).IndexOf('(') != InvalidIndex )  {
-        olex_processor.executeFunction(Args.GetObject(i), argV[i]);
+      if( !Args.GetObject(i).IsEmpty() && Args.GetObject(i).IndexOf('(') !=
+        InvalidIndex )
+      {
+        argV[i] = Args.GetObject(i);
+        olex_processor.processFunction(argV[i]);
       }
       else // set the defaults!!
         argV[i] = Args.GetObject(i);
@@ -82,7 +88,8 @@ public:
       if( eqsi != InvalidIndex )  {  // argument with name and value
         size_t argi = Args.IndexOf( args[i].SubStringTo(eqsi) );
         if( argi == InvalidIndex )  {
-          TBasicApp::NewLogEntry(logError) << Name << ": wrong argument name: " << args[i].SubStringTo(eqsi);
+          TBasicApp::NewLogEntry(logError) << Name << ": wrong argument name: "
+            << args[i].SubStringTo(eqsi);
           return false;
         }
         else
@@ -191,7 +198,8 @@ public:
     Base& base_instance, void (Base::*ErrorAnalyser)(TMacroError& error))  
   {
     ProcessMacro(Cmd, Error);
-    (base_instance.*ErrorAnalyser)(Error);
+    if (ErrorAnalyser != NULL)
+      (base_instance.*ErrorAnalyser)(Error);
   }
   //..............................................................................
   void ProcessMacro(const olxstr& Cmd, TMacroError& Error);

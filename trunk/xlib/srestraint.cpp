@@ -65,30 +65,34 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 #ifndef _NO_PYTHON
-PyObject* TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
+ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {
-  PyObject* main = PyDict_New();
-  PythonExt::SetDictItem(main, "allNonH", Py_BuildValue("b", AllNonHAtoms));
-  PythonExt::SetDictItem(main, "esd1", Py_BuildValue("d", Esd));
-  PythonExt::SetDictItem(main, "esd2", Py_BuildValue("d", Esd1));
-  PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value));
-  TTypeList<ExplicitCAtomRef> ats = Atoms.ExpandList(Parent.GetRM());
-  PyObject* involved = PyTuple_New(ats.Count());
-  for( size_t i=0; i < ats.Count(); i++ )  {
-    PyObject* eq;
-    if( ats[i].GetMatrix() == NULL )
-      eq = Py_None;
-    else
-      eq = equiv[ats[i].GetMatrix()->GetId()];
-    Py_INCREF(eq);
-    PyTuple_SetItem(involved, i, 
-      Py_BuildValue("OO", Py_BuildValue("i", ats[i].GetAtom().GetTag()), eq));
+  TTypeList<TAtomRefList> ats = Atoms.Expand(Parent.GetRM());
+  TPtrList<PyObject> rv(ats.Count());
+  for (size_t i=0; i < ats.Count(); i++) {
+    rv[i] = PyDict_New();
+    PythonExt::SetDictItem(rv[i], "allNonH", Py_BuildValue("b", AllNonHAtoms));
+    PythonExt::SetDictItem(rv[i], "esd1", Py_BuildValue("d", Esd));
+    PythonExt::SetDictItem(rv[i], "esd2", Py_BuildValue("d", Esd1));
+    PythonExt::SetDictItem(rv[i], "value", Py_BuildValue("d", Value));
+    PyObject* involved = PyTuple_New(ats[i].Count());
+    for( size_t j=0; j < ats[i].Count(); j++ )  {
+      PyObject* eq;
+      if( ats[i][j].GetMatrix() == NULL )
+        eq = Py_None;
+      else
+        eq = equiv[ats[i][j].GetMatrix()->GetId()];
+      Py_INCREF(eq);
+      PyTuple_SetItem(involved, j, 
+        Py_BuildValue("OO", Py_BuildValue("i", ats[i][j].GetAtom().GetTag()), eq));
+    }
+    PythonExt::SetDictItem(rv[i], "atoms", involved);
   }
-  PythonExt::SetDictItem(main, "atoms", involved);
-  return main;
+  return rv;
 }
-#endif//..............................................................................
+#endif
+//..............................................................................
 void TSimpleRestraint::FromDataItem(const TDataItem& item) {
   AllNonHAtoms = item.GetRequiredField("allNonH").ToBool();
   Esd = item.GetRequiredField("esd").ToDouble();
@@ -158,7 +162,7 @@ void TSRestraintList::Clear()  {
     if( Restraints[i].GetVarRef(0) != NULL )
       delete RefMod.Vars.ReleaseRef(Restraints[i], 0);
   }
-  Restraints.Clear();  
+  Restraints.Clear();
 }
 //..............................................................................
 TSimpleRestraint& TSRestraintList::Release(size_t i)  {
@@ -185,7 +189,7 @@ void TSRestraintList::Release(TSimpleRestraint& sr)  {
 void TSRestraintList::ToDataItem(TDataItem& item) const {
   size_t rs_id = 0;
   for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( !Restraints[i].IsAllNonHAtoms() || Restraints[i].Validate().IsEmpty() )
+    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].Validate().IsEmpty() )
       continue;
     Restraints[i].ToDataItem(item.AddItem(rs_id++));
   }
@@ -195,19 +199,15 @@ void TSRestraintList::ToDataItem(TDataItem& item) const {
 PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {
-  size_t rs_cnt = 0;
+  TPtrList<PyObject> all;
   for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( !Restraints[i].IsAllNonHAtoms() || Restraints[i].Validate().IsEmpty() )
+    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].Validate().IsEmpty() )
       continue;
-    rs_cnt++;
+    all << Restraints[i].PyExport(atoms, equiv);
   }
-
-  PyObject* main = PyTuple_New( rs_cnt );
-  rs_cnt = 0;
-  for( size_t i=0; i < Restraints.Count(); i++ )  {
-    if( !Restraints[i].IsAllNonHAtoms() || Restraints[i].Validate().IsEmpty() )
-      continue;
-    PyTuple_SetItem(main, rs_cnt++, Restraints[i].PyExport(atoms, equiv));
+  PyObject* main = PyTuple_New(all.Count());
+  for (size_t i=0; i < all.Count(); i++) {
+    PyTuple_SetItem(main, i, all[i]);
   }
   return main;
 }

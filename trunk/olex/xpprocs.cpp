@@ -455,10 +455,10 @@ void TMainForm::funRGB(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funHtmlPanelWidth(const TStrObjList &Cmds, TMacroError &E)  {
-  if( FHtml == NULL || FHtmlMinimized )
+  if( HtmlManager.main == NULL || FHtmlMinimized )
     E.SetRetVal(olxstr("-1"));
   else
-    E.SetRetVal(GetHtml()->WI.GetWidth());
+    E.SetRetVal(HtmlManager.main->WI.GetWidth());
 }
 //..............................................................................
 void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
@@ -1982,7 +1982,7 @@ olxstr process_exec_param(const olxstr &p) {
   return p;
 }
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  bool Asyn = !Options.Contains('s'), // synchroniusly
+  bool Asyn = !Options.Contains('s'), // synchronously
     Cout = !Options.Contains('o'),    // catch output
     quite = Options.Contains('q');
 
@@ -2008,8 +2008,6 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TWxProcess* Process = new TWxProcess(Tmp, flags);
 #endif
 
-  Process->SetOnTerminateCmds(FOnTerminateMacroCmds);
-  FOnTerminateMacroCmds.Clear();
   if( (Cout && Asyn) || Asyn )  {  // the only combination
     if( !Cout )  {
       _ProcessManager->OnCreate(*Process);
@@ -2508,7 +2506,7 @@ void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, T
       }
     }
     else  {
-      E.ProcessingError( __OlxSrcInfo, olxstr("uncknown option '") << Cmds[0] << '\'');
+      E.ProcessingError( __OlxSrcInfo, olxstr("unknown option '") << Cmds[0] << '\'');
       return;
     }
     if( changed )  OnResize();
@@ -2528,7 +2526,7 @@ void TMainForm::macHtmlPanelVisible(TStrObjList &Cmds, const TParamList &Options
   }
   else if( Cmds.Count() == 2 ) {
     bool show = Cmds[0].ToBool();
-    TPopupData *pd = Popups.Find(Cmds[1], NULL);
+    THtmlManager::TPopupData *pd = HtmlManager.Popups.Find(Cmds[1], NULL);
     if( pd != NULL )  {
       if( show && !pd->Dialog->IsShown() )  pd->Dialog->Show();
       if( !show && pd->Dialog->IsShown() )  pd->Dialog->Hide();
@@ -4983,7 +4981,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               s_sg(s_inp);
             TSpaceGroup* sg = NULL;
             while( sg == NULL )  {
-              ProcessFunction(s_sg);
+              processFunction(s_sg);
               sg = TSymmLib::GetInstance().FindGroupByName(s_sg);
               if( sg != NULL ) break;
               s_sg = s_inp;
@@ -4992,7 +4990,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
             if( ins->GetRM().GetUserContent().IsEmpty() )  {
               s_inp = "getuserinput(1, \'Please, enter cell content\', \'C1')";
-              ProcessFunction(s_inp);
+              processFunction(s_inp);
               ins->GetRM().SetUserFormula(s_inp);
             }
             else  {
@@ -5260,13 +5258,10 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( iBorder == 0 )
     iBorder = wxNO_BORDER;
   // check if the popup already exists
-  TPopupData *pd = Popups.Find(Cmds[0], NULL);
+  THtmlManager::TPopupData *pd = HtmlManager.Popups.Find(Cmds[0], NULL);
   if( pd != NULL )  {
-    THtml* ph = FHtml;
-    FHtml = pd->Html;
     try  {  pd->Html->LoadPage(Cmds[1].u_str());  }
     catch( ... )  {}
-    FHtml = ph;
     pd->Html->SetHomePage(TutorialDir + Cmds[1]);
     if( Options.Contains('w') && Options.Contains('h') )  {
 #ifdef __WXGTK__  // any another way to force move ???
@@ -5280,33 +5275,23 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       pd->Dialog->Show(true);
     return;
   }
-
   TDialog *dlg = new TDialog(this, title.u_str(), wxT("htmlPopupWindow"), wxPoint(x,y),
     wxSize(width, height), iBorder);
-  THtml *html1 = new THtml(dlg, FXApp, Cmds[0]);
-  dlg->OnResize.Add(html1, html_parent_resize, msiExecute);
-  html1->SetWebFolder(TutorialDir);
-  html1->SetHomePage(TutorialDir + Cmds[1]);
-  html1->SetMovable(false);
-  html1->SetOnSizeData(onSize.Replace("\\(", '('));
-  html1->SetOnDblClickData(onDblClick.Replace("\\(", '('));
+  pd = &HtmlManager.NewPopup(dlg, Cmds[0]);
+  dlg->OnResize.Add(pd->Html, html_parent_resize, msiExecute);
+  pd->Html->SetWebFolder(TutorialDir);
+  pd->Html->SetHomePage(TutorialDir + Cmds[1]);
+  pd->Html->SetMovable(false);
+  pd->Html->SetOnSizeData(onSize.Replace("\\(", '('));
+  pd->Html->SetOnDblClickData(onDblClick.Replace("\\(", '('));
   dlg->GetClientSize(&width, &height);
-  html1->SetSize(width, height);
-  pd = new TPopupData;
-  pd->Dialog = dlg;
-  pd->Html = html1;
-
-  Popups.Add(Cmds[0], pd);
-  THtml* ph = FHtml;
-  FHtml = html1;
-  try  {  html1->LoadPage(Cmds[1].u_str());  }
+  pd->Html->SetSize(width, height);
+  try  {  pd->Html->LoadPage(Cmds[1].u_str());  }
   catch( ... )  {}
-  FHtml = ph;
   
-  html1->OnLink.Add(this, ID_ONLINK);
-  html1->OnKey.Add(this, ID_HTMLKEY);
-  html1->OnDblClick.Add(this, ID_ONLINK);
-  html1->OnSize.Add(this, ID_ONLINK);
+  pd->Html->OnKey.Add(this, ID_HTMLKEY);
+  pd->Html->OnDblClick.Add(this, ID_ONLINK);
+  pd->Html->OnSize.Add(this, ID_ONLINK);
   if( !Options.Contains('s') )
     dlg->Show();
 }
@@ -7527,7 +7512,7 @@ void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   if( !FindXAtoms(Cmds, Atoms, true, true) )  {
-    Error.ProcessingError(__OlxSrcInfo, "no atoms provided" );
+    Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
     return;
   }
   FXApp->Grow(Atoms, symm);
@@ -8206,7 +8191,7 @@ void TMainForm::funGetWindowSize(const TStrObjList &Params, TMacroError &E)  {
     E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
   else if( Params[0].Equalsi("html") ) {
-    wxRect sz = FHtml->GetRect();
+    wxRect sz = HtmlManager.main->GetRect();
     E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
   else if( Params[0].Equalsi("main-cs") ) {

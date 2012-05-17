@@ -23,8 +23,6 @@ void TColorCtrl::ChangeEvent(wxColourPickerEvent& event)  {
   if( Color == c )
     return;
   Color = c;
-  StartEvtProcessing()
-    OnChange.Execute(this);
-  EndEvtProcessing()
+  OnChange.Execute(this);
 }
 //..............................................................................

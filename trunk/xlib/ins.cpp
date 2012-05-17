@@ -1645,6 +1645,7 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
   for (size_t i=0; i < restraints.Count(); i++) {
     TSRestraintList& srl = *restraints[i];
     for (size_t j=0; j < srl.Count(); j++) {
+      if (!srl[j].GetAtoms().GetResi().IsEmpty()) continue;
       TTypeList<ExplicitCAtomRef> atoms = srl[j].GetAtoms().ExpandList(rm);
       for (size_t k=0; k < atoms.Count(); k++) {
         if (!lc.IsGlobal(atoms[k].GetAtom()))

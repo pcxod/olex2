@@ -25,7 +25,7 @@ public:
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     xlConGen = new TXlConGen( TGlXApp::GetGXApp()->XFile().GetRM() );
     TGlXApp::GetMainForm()->SetUserCursor( Hfix, "hfix");
-    TGlXApp::GetMainForm()->executeMacro("labels -a -h");
+    TGlXApp::GetMainForm()->processMacro("labels -a -h");
     return true;
   }
   void Finalise()  {
@@ -51,7 +51,7 @@ public:
           ca.GetParentAfixGroup()->Clear();
       }
       else
-        TGlXApp::GetMainForm()->executeMacro(
+        TGlXApp::GetMainForm()->processMacro(
         olxstr("hadd ") << Hfix << " #c" << XA->CAtom().GetId());
       return true;
     }

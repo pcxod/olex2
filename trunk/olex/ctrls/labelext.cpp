@@ -19,7 +19,5 @@ BEGIN_EVENT_TABLE(TLabel, wxStaticText)
 END_EVENT_TABLE()
 //..............................................................................
 void TLabel::ClickEvent(wxCommandEvent& event)  {
-  StartEvtProcessing()
-    OnClick.Execute(this);
-  EndEvtProcessing()
+  OnClick.Execute(this);
 }

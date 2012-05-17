@@ -24,15 +24,15 @@
 #include "edit.h"
 
 void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
-  ProcessMacro("htmlpanelvisible");
-  ProcessMacro("html.update");
+  processMacro("htmlpanelvisible");
+  processMacro("html.update");
 }
 //..............................................................................
 void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
 //  TBasicApp::GetLog()->Info("generate!");;
   TdlgGenerate *G = new TdlgGenerate(this);
   if( G->ShowModal() == wxID_OK )  {
-    ProcessMacro(olxstr("pack ").stream(' ') <<
+    processMacro(olxstr("pack ").stream(' ') <<
       olxstr::FormatFloat(1, G->GetAFrom()) <<
       olxstr::FormatFloat(1, G->GetATo()) <<
       olxstr::FormatFloat(1, G->GetBFrom()) <<
@@ -45,16 +45,16 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
 //..............................................................................
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {
   if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+FRecentFilesToShow) )
-    ProcessMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'');
+    processMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'');
 }
 //..............................................................................
 void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
   switch( event.GetId() )  {
-    case ID_DSBS: ProcessMacro("pers", __OlxSrcInfo);  break;
-    case ID_DSES: ProcessMacro("telp", __OlxSrcInfo);  break;
-    case ID_DSSP: ProcessMacro("sfil", __OlxSrcInfo);  break;
-    case ID_DSWF: ProcessMacro("proj", __OlxSrcInfo);  break;
-    case ID_DSST: ProcessMacro("tubes", __OlxSrcInfo);  break;
+    case ID_DSBS: processMacro("pers", __OlxSrcInfo);  break;
+    case ID_DSES: processMacro("telp", __OlxSrcInfo);  break;
+    case ID_DSSP: processMacro("sfil", __OlxSrcInfo);  break;
+    case ID_DSWF: processMacro("proj", __OlxSrcInfo);  break;
+    case ID_DSST: processMacro("tubes", __OlxSrcInfo);  break;
     case ID_SceneProps:
       TdlgSceneProps *Dlg = new TdlgSceneProps(this);
       if( Dlg->ShowModal() == wxID_OK )  {
@@ -67,13 +67,13 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
 }
 void TMainForm::OnViewAlong(wxCommandEvent& event) {
   switch( event.GetId() )  {
-    case ID_View100:  ProcessMacro("matr 1");  break;
-    case ID_View010:  ProcessMacro("matr 2");  break;
-    case ID_View001:  ProcessMacro("matr 3");  break;
-    case ID_View110:  ProcessMacro("matr 110");  break;
-    case ID_View101:  ProcessMacro("matr 101");  break;
-    case ID_View011:  ProcessMacro("matr 011");  break;
-    case ID_View111:  ProcessMacro("matr 111");  break;
+    case ID_View100:  processMacro("matr 1");  break;
+    case ID_View010:  processMacro("matr 2");  break;
+    case ID_View001:  processMacro("matr 3");  break;
+    case ID_View110:  processMacro("matr 110");  break;
+    case ID_View101:  processMacro("matr 101");  break;
+    case ID_View011:  processMacro("matr 011");  break;
+    case ID_View111:  processMacro("matr 111");  break;
   }
 }
 //..............................................................................
@@ -99,7 +99,7 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
     Tmp << " sel";
   else                  
     Tmp << " #c" << XA->CAtom().GetId();
-  ProcessMacro(Tmp);
+  processMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -118,7 +118,7 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
   }
   if( !XA->IsSelected() )
     Tmp << " #c" << XA->CAtom().GetId();
-  ProcessMacro(Tmp);
+  processMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -135,7 +135,7 @@ void TMainForm::OnAtomPolyChange(wxCommandEvent& event)  {
     case ID_AtomPolyPyramid: Tmp << "pyramid";  break;
     case ID_AtomPolyBipyramid: Tmp << "bipyramid";  break;
   }
-  ProcessMacro(Tmp);
+  processMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -162,7 +162,7 @@ void TMainForm::OnAtomPartChange(wxCommandEvent& event)  {
   if (!cmd.IsEmpty()) {
     if( !XA->IsSelected() )
       cmd << " #c" << XA->CAtom().GetId();
-    ProcessMacro(cmd);
+    processMacro(cmd);
   }
   TimePerFrame = FXApp->Draw();
 }
@@ -206,16 +206,16 @@ void TMainForm::OnAtomUisoChange(wxCommandEvent& event)  {
   if (!cmd.IsEmpty()) {
     if( !XA->IsSelected() )
       cmd << " #c" << XA->CAtom().GetId();
-    ProcessMacro(cmd);
+    processMacro(cmd);
   }
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
   switch( event.GetId() )  {
-    case ID_DQH:  ProcessMacro("qual -h");  break;
-    case ID_DQM:  ProcessMacro("qual -m");  break;
-    case ID_DQL:  ProcessMacro("qual -l");  break;
+    case ID_DQH:  processMacro("qual -h");  break;
+    case ID_DQM:  processMacro("qual -m");  break;
+    case ID_DQL:  processMacro("qual -l");  break;
   }
 }
 //..............................................................................
@@ -256,14 +256,14 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
 
   if( event.GetId() == ID_GraphicsHide )  {
     if( FObjectUnderMouse->IsSelected() )
-      ProcessMacro("hide sel");
+      processMacro("hide sel");
     else
       FUndoStack->Push(FXApp->SetGraphicsVisible(FObjectUnderMouse, false));
     TimePerFrame = FXApp->Draw();
   }
   else if( event.GetId() == ID_GraphicsKill )  {
     if( FObjectUnderMouse->IsSelected() )
-      ProcessMacro("kill sel");
+      processMacro("kill sel");
     else  {
       AGDObjList l;
       l.Add(FObjectUnderMouse);
@@ -275,7 +275,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( LabelToEdit != NULL )  {
       olxstr Tmp = "getuserinput(1, \'Please, enter new label\', \'";
       Tmp << LabelToEdit->GetLabel() << "\')";
-      ProcessFunction(Tmp);
+      processFunction(Tmp);
       if( !Tmp.IsEmpty() ) {
         LabelToEdit->SetLabel(Tmp);
         FXApp->Draw();
@@ -349,7 +349,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       else  {
         olxstr TmpStr = "mask ";
         TmpStr << FObjectUnderMouse->GetPrimitives().GetName() << ' ' << Primitives->Mask;
-        ProcessMacro(TmpStr);
+        processMacro(TmpStr);
       }
     }
     Primitives->Destroy();
@@ -542,7 +542,7 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
       Tmp << 'S';
       break;
   }
-  ProcessMacro(Tmp);
+  processMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -558,7 +558,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TPTableDlg *Dlg = new TPTableDlg(this);
   if( Dlg->ShowModal() == wxID_OK )  {
     Tmp << Dlg->GetSelected()->symbol;
-    ProcessMacro(Tmp);
+    processMacro(Tmp);
   }
   Dlg->Destroy();
   TimePerFrame = FXApp->Draw();
@@ -631,11 +631,11 @@ void TMainForm::OnFragmentSelectAll(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnShowAll(wxCommandEvent& event)  {
-  ProcessMacro("fmol");
+  processMacro("fmol");
 }
 //..............................................................................
 void TMainForm::OnModelCenter(wxCommandEvent& event)  {
-  ProcessMacro("center");
+  processMacro("center");
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -643,7 +643,7 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( event.GetId() == ID_AtomGrow )
-    ProcessMacro(olxstr("grow #s") << XA->GetOwnerId());
+    processMacro(olxstr("grow #s") << XA->GetOwnerId());
   else if( event.GetId() == ID_AtomSelRings )  {
     TTypeList<TSAtomPList> rings;
     XA->GetNetwork().FindAtomRings(*XA, rings);
@@ -659,9 +659,9 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   }
   else if( event.GetId() == ID_AtomCenter )  {
     if( !XA->IsSelected() )
-      ProcessMacro(olxstr("center #s") << XA->GetOwnerId());
+      processMacro(olxstr("center #s") << XA->GetOwnerId());
     else
-      ProcessMacro("center");  // center of the selection
+      processMacro("center");  // center of the selection
   }
   TimePerFrame = FXApp->Draw();
 }
@@ -672,7 +672,7 @@ void TMainForm::OnPlane(wxCommandEvent& event)  {
   if( event.GetId() == ID_PlaneActivate )  {
     const vec3d& n = XP->GetNormal();
     const vec3d& c = XP->GetCenter();
-    ProcessMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
+    processMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
      << ' ' << c[0] << ' ' << c[1] << ' ' << c[2]);
   }
 }
@@ -683,14 +683,14 @@ void TMainForm::OnBond(wxCommandEvent& event)  {
   if( event.GetId() == ID_BondViewAlong )  {
     const vec3d n = (xb->B().crd()-xb->A().crd()).Normalise();
     const vec3d c = (xb->B().crd()+xb->A().crd())/2;
-    ProcessMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
+    processMacro(olxstr("SetView -c ") << n[0] << ' ' << n[1] << ' ' << n[2]
      << ' ' << c[0] << ' ' << c[1] << ' ' << c[2]);
   }
 }
 //..............................................................................
 void TMainForm::OnSelection(wxCommandEvent& m)  {
   if( m.GetId() == ID_SelGroup )
-    ProcessMacro("group");
+    processMacro("group");
   else if( m.GetId() == ID_SelUnGroup )  {
     TGlGroup *GlR = NULL;
     if( FObjectUnderMouse != NULL && EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
@@ -728,13 +728,13 @@ void TMainForm::OnGraphicsStyle(wxCommandEvent& event)  {
     olxstr FN = PickFile("Drawing style",
     "Drawing styles|*.glds", StylesDir, false);
     if( !FN.IsEmpty() )
-      ProcessMacro(olxstr("save style ") << FN);
+      processMacro(olxstr("save style ") << FN);
   }
   if( event.GetId() == ID_GStyleOpen )  {
     olxstr FN = PickFile("Drawing style",
     "Drawing styles|*.glds", StylesDir, true);
     if( !FN.IsEmpty() )
-      ProcessMacro(olxstr("load style ") << FN);
+      processMacro(olxstr("load style ") << FN);
   }
 }
 //..............................................................................

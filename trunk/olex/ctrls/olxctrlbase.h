@@ -9,18 +9,6 @@
 
 #ifndef __olx_ctrl_base_H
 #define __olx_ctrl_base_H
-
-#define StartEvtProcessing()\
-  TMainFrame::GetMainFrameInstance().LockWindowDestruction(GetParent(), (AOlxCtrl*)this); \
-  try  {
-
-#define EndEvtProcessing()\
-        }  catch(const TExceptionBase& exc)  {\
-    TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(GetParent(), (AOlxCtrl*)this);\
-    throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );\
-  }\
-  TMainFrame::GetMainFrameInstance().UnlockWindowDestruction(GetParent(), (AOlxCtrl*)this);
-
 #include "actions.h"
 #include "../wininterface.h"
 

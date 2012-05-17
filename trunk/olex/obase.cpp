@@ -48,7 +48,7 @@ AMode::AMode(size_t id) : Id(id)  {
 AMode::~AMode() {
   TModeChange mc(Id, false);
   TGlXApp::GetMainForm()->OnModeChange.Execute(NULL, &mc);
-  TGlXApp::GetMainForm()->executeFunction("cursor()");  //r eset the screen cursor
+  TGlXApp::GetMainForm()->processMacro("cursor()");  //r eset the screen cursor
   TGlXApp::GetGXApp()->ClearLabelMarks();  // hide atom marks if any
 }
 //..............................................................................

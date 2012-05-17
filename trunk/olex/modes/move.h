@@ -23,7 +23,7 @@ public:
       Center += Atoms[i]->ccrd();
     if( Atoms.Count() != 0 )
       Center /= Atoms.Count();
-    TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
+    TGlXApp::GetMainForm()->processMacro("cursor(hand)");
     return true;
   }
   void Finalise()  {}  

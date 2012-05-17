@@ -83,18 +83,14 @@ void TComboBox::AddObject( const olxstr &Item, IEObject* Data)  {
 void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
-  StartEvtProcessing()
-    OnReturn.Execute(this);
-  EndEvtProcessing()
+  OnReturn.Execute(this);
 }
 //..............................................................................
 void TComboBox::ChangeEvent(wxCommandEvent& event)  {
   StrValue = GetValue();
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
-  StartEvtProcessing()
-    OnChange.Execute(this);
-  EndEvtProcessing()
+  OnChange.Execute(this);
 }
 //..............................................................................
 const IEObject* TComboBox::GetObject(int i)  {
@@ -141,19 +137,15 @@ void TComboBox::AddItems(const TStrList& EL) {
 void TComboBox::HandleOnLeave()  {
   olxstr v = GetValue();
   bool changed = (v != StrValue);
-  StartEvtProcessing()
-    if( changed )  {
-      OnChange.Execute(this);
-      StrValue = v;
-    }
-    OnLeave.Execute(this);
-  EndEvtProcessing()
+  if( changed )  {
+    OnChange.Execute(this);
+    StrValue = v;
+  }
+  OnLeave.Execute(this);
 }
 //..............................................................................
 void TComboBox::HandleOnEnter()  {
-  StartEvtProcessing()
-    OnEnter.Execute(this);
-  EndEvtProcessing()
+  OnEnter.Execute(this);
 }
 //..............................................................................
 #ifdef __WIN32__

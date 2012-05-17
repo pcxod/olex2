@@ -23,8 +23,6 @@ void TDateCtrl::ChangeEvent(wxDateEvent& event)  {
   if( event.GetDate() == Value )
     return;
   Value = event.GetDate();
-  StartEvtProcessing()
-    OnChange.Execute(this);
-  EndEvtProcessing()
+  OnChange.Execute(this);
 }
 //..............................................................................

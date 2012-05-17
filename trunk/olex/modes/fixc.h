@@ -46,7 +46,7 @@ protected:
 public:
   TFixCMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
-    TGlXApp::GetMainForm()->executeMacro("labels -f");
+    TGlXApp::GetMainForm()->processMacro("labels -f");
     TGlXApp::GetMainForm()->SetUserCursor( "XYZ", "fix" );
     return true;
   }

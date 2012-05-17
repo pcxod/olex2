@@ -53,7 +53,7 @@ public:
   TFixUMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Val = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
-    TGlXApp::GetMainForm()->executeMacro("labels -f -r -h");
+    TGlXApp::GetMainForm()->processMacro("labels -f -r -h");
     if( Val == 0 )
       TGlXApp::GetMainForm()->SetUserCursor("<U>", "fix" );
     else

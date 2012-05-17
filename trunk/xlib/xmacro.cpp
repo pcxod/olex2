@@ -764,12 +764,13 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   using namespace olex;
   IOlexProcessor* op = IOlexProcessor::GetInstance();
-  if( op == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
+  if( op == NULL ) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "this function requires Olex2 processor implementation");
+  }
   TStrList allCmds(Cmds.Text(' '), ">>");
   for( size_t i=0; i < allCmds.Count(); i++ )  {
-    op->executeMacroEx(allCmds[i], Error);
-    if( !Error.IsSuccessful() )  {
+    if( !op->processMacro(allCmds[i]) )  {
       if( (i+1) < allCmds.Count() )
         op->print("Not all macros in the provided list were executed", olex::mtError);
       break;
@@ -1565,7 +1566,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Sort )  {
     olex::IOlexProcessor* op = olex::IOlexProcessor::GetInstance();
       if( op != NULL )
-        op->executeMacro(olxstr("reap \'") << Tmp << '\'');
+        op->processMacro(olxstr("reap \'") << Tmp << '\'');
   }
 }
 //..............................................................................
@@ -2676,12 +2677,13 @@ void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {
 void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
   using namespace olex;
   IOlexProcessor* op = IOlexProcessor::GetInstance();
-  if( op == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
+  if( op == NULL ) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "this function requires Olex2 processor implementation");
+  }
   TStrList allCmds(Params.Text(' '), ">>");
   for( size_t i=0; i < allCmds.Count(); i++ )  {
-    op->executeMacroEx(allCmds[i], E);
-    if( !E.IsSuccessful() )  {
+    if( !op->processMacro(allCmds[i]) )  {
       if( (i+1) < allCmds.Count() )
         op->print("Not all macros in the provided list were executed", olex::mtError);
       break;
@@ -3069,18 +3071,17 @@ olxstr XLibMacros::CifResolve(const olxstr& func)  {
   using namespace olex;
   IOlexProcessor* op = IOlexProcessor::GetInstance();
   if( op == NULL )  return func;
-  olxstr rv;
-  if( op->executeFunction(func, rv) )
-    return rv;
-  return func;
+  olxstr rv = func;
+  op->processFunction(rv);
+  return rv;
 }
 //..............................................................................
 bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
   using namespace olex;
   IOlexProcessor* op = IOlexProcessor::GetInstance();
   if( op == NULL )  return false;
-  olxstr rv;
-  if( op->executeFunction(func, rv) )  {
+  olxstr rv = func;
+  if( op->processFunction(rv) )  {
     func = rv;
     return true;
   }
@@ -3105,12 +3106,16 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     try  {
       TDataFile df;
       if( !df.LoadFromXLFile(CifCustomisationFN) )  {
-        Error.ProcessingError(__OlxSrcInfo, "falied to load CIF customisation file");
+        Error.ProcessingError(__OlxSrcInfo,
+          "falied to load CIF customisation file");
         return;
       }
-      TDataItem& di = df.Root().FindRequiredItem("cif_customisation").FindRequiredItem("translation");
-      for( size_t i=0; i < di.ItemCount(); i++ )
-        Translations.AddNew(di.GetItem(i).GetRequiredField("from"), di.GetItem(i).GetRequiredField("to"));
+      TDataItem& di = df.Root().FindRequiredItem(
+        "cif_customisation").FindRequiredItem("translation");
+      for( size_t i=0; i < di.ItemCount(); i++ ) {
+        Translations.AddNew(di.GetItem(i).GetRequiredField("from"),
+          di.GetItem(i).GetRequiredField("to"));
+      }
     }
     catch(const TExceptionBase& e)  {
       throw TFunctionFailedException(__OlxSourceInfo, e);
@@ -4104,10 +4109,11 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else  {
     TPtrList<TSpaceGroup> sgs;
     E.SetRetVal(&sgs);
-    op->executeMacroEx("SG", E);
+    op->processMacroEx("SG", E);
     E.SetRetVal<bool>(false);
     if( sgs.IsEmpty() )  {
-      TBasicApp::NewLogEntry(logError) <<  "Could not find any suitable space group. Terminating ... ";
+      TBasicApp::NewLogEntry(logError) <<
+        "Could not find any suitable space group. Terminating ... ";
       return;
     }
     else if( sgs.Count() == 1 )  {
@@ -4118,7 +4124,7 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       olxstr cmd = "Wilson";
       if( !Cmds.IsEmpty() )
         cmd << " '" << Cmds[0] << '\'';
-      op->executeMacroEx(cmd, E);
+      op->processMacroEx(cmd, E);
       bool centro = E.GetRetVal().ToBool();
       TBasicApp::NewLogEntry() << "Searching for centrosymmetric group: " << centro;
       for( size_t i=0; i < sgs.Count(); i++ )  {
@@ -4144,28 +4150,35 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
   }
-  olxstr fn(Cmds.IsEmpty() ? TEFile::ChangeFileExt(TXApp::GetInstance().XFile().GetFileName(), "ins") : Cmds[0]);
-  op->executeMacroEx(olxstr("reset -s=") << sg->GetName() << " -f='" << fn << '\'', E);
+  olxstr fn(Cmds.IsEmpty() ? TEFile::ChangeFileExt(
+    TXApp::GetInstance().XFile().GetFileName(), "ins") : Cmds[0]);
+  op->processMacroEx(olxstr("reset -s=") << sg->GetName() << " -f='" <<
+    fn << '\'', E);
   if( E.IsSuccessful() )  {
-    op->executeMacroEx(olxstr("reap '") << fn << '\'', E);
+    op->processMacroEx(olxstr("reap '") << fn << '\'', E);
     if( E.IsSuccessful() )  { 
       OlxStateVar _var(VarName_ResetLock());
-      op->executeMacroEx(olxstr("solve"), E);
+      op->processMacroEx(olxstr("solve"), E);
       // this will reset zoom!
-      op->executeMacroEx(olxstr("fuse"), E);
+      op->processMacroEx(olxstr("fuse"), E);
     }
     E.SetRetVal<bool>(E.IsSuccessful());
   }
 }
 //..............................................................................
-void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TXApp& xapp = TXApp::GetInstance();
   TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
   if( sg.IsCentrosymmetric() )  {
-    E.ProcessingError(__OlxSrcInfo, "not applicable to centrosymmetric space groups");
+    E.ProcessingError(__OlxSrcInfo,
+      "not applicable to centrosymmetric space groups");
     return;
   }
-  if( xapp.XFile().GetRM().GetHKLF() == 5 || xapp.XFile().GetRM().GetHKLF() == 6 )  {
+  if( xapp.XFile().GetRM().GetHKLF() == 5 ||
+      xapp.XFile().GetRM().GetHKLF() == 6 )
+  {
     E.ProcessingError(__OlxSrcInfo, "not applicable to HKLF 5/6 data format");
     return;
   }
@@ -4182,7 +4195,9 @@ void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   xapp.NewLogEntry() << "Done";
 }
 //..............................................................................
-void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TXApp& xapp = TXApp::GetInstance();
   TStrList lst =xapp.XFile().GetRM().Describe(),
     out;
@@ -4191,10 +4206,13 @@ void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacr
   xapp.NewLogEntry() << out; 
 }
 //..............................................................................
-void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   if( !xapp.XFile().HasLastLoader() && Cmds.IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "Nor file is loaded neither formula is provided");
+    Error.ProcessingError(__OlxSrcInfo,
+      "Nor file is loaded neither formula is provided");
     return;
   }
   TCHNExp chn;
@@ -4208,7 +4226,8 @@ void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options, TMacro
       " H: " << olxstr::FormatFloat(3, H*100./Mr) <<
       " N: " << olxstr::FormatFloat(3, N*100./Mr);
     TBasicApp::NewLogEntry() << Msg << NewLineSequence();
-    TBasicApp::NewLogEntry() << "Full composition:" << NewLineSequence() << chn.Composition();
+    TBasicApp::NewLogEntry() << "Full composition:" <<
+      NewLineSequence() << chn.Composition();
     return;
   }
   chn.LoadFromExpression(xapp.XFile().GetAsymmUnit().SummFormula(EmptyString()));
@@ -4219,27 +4238,35 @@ void XLibMacros::macCalcCHN(TStrObjList &Cmds, const TParamList &Options, TMacro
     " H: " << olxstr::FormatFloat(3, H*100./Mr) <<
     " N: " << olxstr::FormatFloat(3, N*100./Mr);
   TBasicApp::NewLogEntry() << Msg;
-  TBasicApp::NewLogEntry() << "Full composition:" << NewLineSequence() << chn.Composition();
+  TBasicApp::NewLogEntry() << "Full composition:" <<
+    NewLineSequence() << chn.Composition();
 }
 //..............................................................................
-void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   if( !xapp.XFile().HasLastLoader() && Cmds.IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "Nor file is loaded neither formula is provided");
+    Error.ProcessingError(__OlxSrcInfo,
+      "Nor file is loaded neither formula is provided");
     return;
   }
   TIPattern ip;
   if( Cmds.Count() == 1 )  {
     olxstr err;
     if( !ip.Calc(Cmds[0], err, true, 0.5) )  {
-      Error.ProcessingError(__OlxSrcInfo, "could not parse the given expression: ") << err;
+      Error.ProcessingError(__OlxSrcInfo, 
+        "could not parse the given expression: ") << err;
       return;
     }
   }
   else  {
     olxstr err;
-    if( !ip.Calc(xapp.XFile().GetAsymmUnit().SummFormula(EmptyString()), err, true, 0.5) )  {
-      Error.ProcessingError(__OlxSrcInfo, "could not parse the given expression: ") << err;
+    if( !ip.Calc(xapp.XFile().GetAsymmUnit().SummFormula(
+      EmptyString()), err, true, 0.5) )
+    {
+      Error.ProcessingError(__OlxSrcInfo,
+        "could not parse the given expression: ") << err;
       return;
     }
   }
@@ -4251,7 +4278,8 @@ void XLibMacros::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacr
     Msg << ": " << point.Y;
     xapp.NewLogEntry() << Msg;
   }
-  TBasicApp::NewLogEntry() << "    -- NOTE THAT NATURAL DISTRIBUTION OF ISOTOPES IS ASSUMED --";
+  TBasicApp::NewLogEntry() <<
+    "    -- NOTE THAT NATURAL DISTRIBUTION OF ISOTOPES IS ASSUMED --";
   TBasicApp::NewLogEntry() << "******* ******* SPECTRUM ******* ********";
   ip.SortDataByMolWeight();
   for( size_t i=0; i < ip.PointCount(); i++ )  {
@@ -4302,11 +4330,12 @@ struct XLibMacros_ChnFitData  {
     return df < 0 ? -1 : (df > 0 ? 1 : 0);
   }
 };
-void XLibMacros_fit_chn_process(TTypeList<XLibMacros_ChnFitData>& list, const ematd& chn,
-                                const evecd& p,
-                                const olxstr names[4],
-                                const olxdict<short, double, TPrimitiveComparator>& obs,
-                                size_t cnt)
+void XLibMacros_fit_chn_process(TTypeList<XLibMacros_ChnFitData>& list,
+  const ematd& chn,
+  const evecd& p,
+  const olxstr names[4],
+  const olxdict<short, double, TPrimitiveComparator>& obs,
+  size_t cnt)
 {
   for( size_t i=0; i < cnt; i++ )  {
     if( p[i] < 0 || fabs(p[i]) < 0.05 || p[i] > 5 )  return;
@@ -4331,7 +4360,9 @@ void XLibMacros_fit_chn_process(TTypeList<XLibMacros_ChnFitData>& list, const em
   }
   cfd.dev = sqrt(dev);
 }
-void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TCHNExp chne;
   chne.LoadFromExpression(Cmds[0]);
   TStrList solvents;
@@ -4351,20 +4382,24 @@ void XLibMacros::macFitCHN(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
   if( solvents.IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "a space separated list of solvents is expected");
+    Error.ProcessingError(__OlxSrcInfo,
+      "a space separated list of solvents is expected");
     return;
   }
   TTypeList<XLibMacros_ChnFitData> list;
   const double Mw = chne.CHN(calc);
-  olxstr names[4] = {chne.SummFormula(EmptyString()), EmptyString(), EmptyString(), EmptyString()};
+  olxstr names[4] = {chne.SummFormula(EmptyString()), EmptyString(),
+    EmptyString(), EmptyString()};
   ematd m(obs.Count(), 3), chn(4, obs.Count()+1);
   evecd p(obs.Count());
   olxstr fit_info_from = "Fitting ", fit_info_to;
   for( size_t i=0; i < obs.Count(); i++ )  {
     p[i] = calc.GetValue(i) - obs.GetValue(i)*Mw;
     chn[0][i] = calc.GetValue(i);
-    fit_info_from << XElementLib::GetByIndex(calc.GetKey(i)).symbol << ':' << olxstr::FormatFloat(2, calc.GetValue(i)*100/Mw);
-    fit_info_to << XElementLib::GetByIndex(obs.GetKey(i)).symbol << ':' << olxstr::FormatFloat(2, obs.GetValue(i)*100);
+    fit_info_from << XElementLib::GetByIndex(calc.GetKey(i)).symbol << ':'
+      << olxstr::FormatFloat(2, calc.GetValue(i)*100/Mw);
+    fit_info_to << XElementLib::GetByIndex(obs.GetKey(i)).symbol << ':' <<
+      olxstr::FormatFloat(2, obs.GetValue(i)*100);
     if( (i+1) < calc.Count() )  {
        fit_info_to << ' ';
        fit_info_from << ' ';
@@ -4504,13 +4539,18 @@ void XLibMacros::funLst(const TStrObjList &Cmds, TMacroError &E)  {
   E.SetRetVal(Lst.params.Find(Cmds[0], NAString));
 }
 //..............................................................................
-void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TXApp& xapp = TXApp::GetInstance();
   if( !(xapp.CheckFileType<TIns>() ||
         xapp.CheckFileType<TP4PFile>() ||
         xapp.CheckFileType<TCRSFile>()  )  )  return;
-  if( TOlxVars::IsVar(VarName_InternalTref()) || TOlxVars::IsVar(VarName_ResetLock()))
+  if( TOlxVars::IsVar(VarName_InternalTref()) ||
+      TOlxVars::IsVar(VarName_ResetLock()))
+  {
     return;
+  }
   using namespace olex;
   IOlexProcessor* op = IOlexProcessor::GetInstance();
   olxstr newSg(Options.FindValue('s')), 
@@ -4521,7 +4561,8 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   ins.Adopt(xapp.XFile());
   if( xapp.CheckFileType<TP4PFile>() )  {
     if( newSg.IsEmpty() )  {
-      E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
+      E.ProcessingError(__OlxSrcInfo,
+        "please specify a space group with -s=SG switch");
       return;
     }
   }
@@ -4529,11 +4570,13 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     TSpaceGroup* sg = xapp.XFile().GetLastLoader<TCRSFile>().GetSG();
     if( newSg.IsEmpty() )  {
       if( sg == NULL )  {
-        E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch");
+        E.ProcessingError(__OlxSrcInfo,
+          "please specify a space group with -s=SG switch");
         return;
       }
       else  {
-        TBasicApp::NewLogEntry() << "The CRS file format space group is: " << sg->GetName();
+        TBasicApp::NewLogEntry() << "The CRS file format space group is: "
+          << sg->GetName();
       }
     }
   }
@@ -4542,10 +4585,11 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( ins.GetRM().GetUserContent().IsEmpty() )  {
     if( op != NULL )  {
       content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
-      if( op->executeFunction(content, content) )
+      if( op->processFunction(content) )
         ins.GetRM().SetUserFormula(content);
       if( ins.GetRM().GetUserContent().IsEmpty() )  {
-        E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify");
+        E.ProcessingError(__OlxSrcInfo,
+          "empty SFAC instruction, please use -c=Content to specify");
         return;
       }
     }
@@ -4611,7 +4655,7 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     TEFile::Rename(lstFN, lstTmpFN);
   }
   if( op != NULL )  {
-    op->executeMacroEx(olxstr("@reap \'") << FN << '\'', E);
+    op->processMacroEx(olxstr("@reap \'") << FN << '\'', E);
     if( E.IsSuccessful() ) {
       TActionQueue *q =
         TBasicApp::GetInstance().FindActionQueue(olxappevent_UPDATE_GUI);

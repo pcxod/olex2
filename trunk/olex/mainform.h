@@ -201,27 +201,44 @@ class TMainForm;
 class TGlXApp;
 
 //............................................................................//
-struct TPopupData  {
-  TDialog *Dialog;
-  class THtml *Html;
-};
-//............................................................................//
 class TMainForm: public TMainFrame, public AEventsDispatcher,
   public olex::IOlexProcessor
 {
   //TFrameMaker FrameMaker;
 public:
-  virtual bool executeMacroEx(const olxstr& function, TMacroError& ar);
   virtual void print(const olxstr& function, const short MessageType = olex::mtNone);
-  virtual bool executeFunction(const olxstr& function, olxstr& retVal);
-  virtual IEObject* executeFunction(const olxstr& function);
   virtual bool registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn);
   virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName);
   virtual const olxstr& getDataDir() const;
   virtual const olxstr& getVar(const olxstr& name, const olxstr& defval=EmptyString()) const;
   virtual void setVar(const olxstr& name, const olxstr& val) const;
   virtual TStrList GetPluginList() const;
-
+  virtual bool processFunction(olxstr &cmd,
+    const olxstr& location=EmptyString(), bool quiet=false)
+  {
+    TMacroError err;
+    err.SetLocation(location);
+    const bool rv = Macros.ProcessFunction(cmd, err, false);  
+    AnalyseErrorEx(err, quiet);
+    return rv;
+  }
+  virtual bool processMacro(const olxstr& cmd,
+    const olxstr& location=EmptyString(), bool quiet=false)
+  {
+    TMacroError err;
+    err.SetLocation(location);
+    Macros.ProcessTopMacro(cmd, err, *this,
+      quiet ? NULL : &TMainForm::AnalyseError);
+    return err.IsSuccessful();
+  }
+  virtual bool processMacroEx(const olxstr& cmd, TMacroError &err,
+    const olxstr& location=EmptyString(), bool quiet=false)
+  {
+    err.SetLocation(location);
+    Macros.ProcessTopMacro(cmd, err, *this,
+      quiet ? NULL : &TMainForm::AnalyseError);
+    return err.IsSuccessful();
+  }
   void CallbackFunc(const olxstr& cbEvent, const olxstr& param);
   void CallbackFunc(const olxstr& cbEvent, TStrObjList& params);
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
@@ -252,15 +269,12 @@ protected:
 
   TGlConsole *FGlConsole;
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
-  TStrList FOnTerminateMacroCmds; // a list of commands called when a process is terminated
-  TStrList FOnAbortCmds;           // a "stack" of macroses, called when macro terminated
-  TStrList FOnListenCmds;  // a list of commands called when a file is changed by another process
+  // a list of commands called when a file is changed by another process
+  TStrList FOnListenCmds;
   TMacroError MacroError;
   
   olxstr Tooltip;
   void AquireTooltipValue();
-
-  void ClearPopups();
 
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
@@ -280,21 +294,8 @@ protected:
   void CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS);
   void UpdateInfoBox();
   olx_nui::INUI *nui_interface;
+  class THtmlManager &HtmlManager;
 public:
-  bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString(), bool quiet=false) {  
-    TMacroError err;
-    err.SetLocation(location);
-    //cmd = exparse::parser_util::unescape(cmd);
-    const bool rv = Macros.ProcessFunction(cmd, err, false);  
-    AnalyseErrorEx(err, quiet);
-    return rv;
-  }
-  bool ProcessMacro(const olxstr& cmd, const olxstr& location=EmptyString())  {
-    TMacroError err;
-    err.SetLocation(location);
-    Macros.ProcessTopMacro(cmd, err, *this, &TMainForm::AnalyseError);
-    return err.IsSuccessful();
-  }
   void OnMouseMove(int x, int y);
   void OnMouseWheel(int x, int y, double delta);
   bool OnMouseDown(int x, int y, short Flags, short Buttons);
@@ -670,8 +671,6 @@ public:
   virtual TLibrary& GetLibrary()  {  return FXApp->GetLibrary();  }
   virtual olxstr TranslateString(const olxstr& str) const;
   virtual bool IsControl(const olxstr& cname) const;
-  virtual void LockWindowDestruction(wxWindow* wnd, const IEObject* caller);
-  virtual void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller);
   //..........................................................................................
 
   void OnKeyUp(wxKeyEvent& event);
@@ -730,7 +729,6 @@ private:
   uint16_t FRecentFilesToShow;
   void UpdateRecentFile(const olxstr& FN);
   TGlOption FBgColor;
-  THtml* FHtml;
   class TCmdLine* FCmdLine;
   olxstr FHtmlIndexFile;
 
@@ -777,10 +775,7 @@ public:
 
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const {  return FHtmlPanelWidth;  }
-  THtml* GetHtml() const {  return FHtml; }
-  olxstr_dict<TPopupData*, true> Popups;
-  THtml* FindHtml(const olxstr& popupName) const;
-  inline const olxstr& GetCurrentLanguageEncodingStr() const {
+  const olxstr& GetCurrentLanguageEncodingStr() const {
     return Dictionary.GetCurrentLanguageEncodingStr();
   }
 //..............................................................................

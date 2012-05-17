@@ -18,13 +18,15 @@
 #include "wx/dynarray.h"
 #include "library.h"
 #include "edict.h"
-#include "../ctrls/olxctrlbase.h"
+#include "../ctrls.h"
 
 class THtmlSwitch;
 
 enum {
   html_parent_resize = 2
 };
+
+class THtmlManager;
 
 class THtml: public wxHtmlWindow, public AEventsDispatcher  {
 private:
@@ -35,10 +37,12 @@ private:
   TActionQList Actions;
   olxstr PopupName;
 protected:
-  olxstr WebFolder, FileName, HomePage;   // the base of all web files
+  olxstr WebFolder, // the base of all web files
+    FileName, HomePage;
   olxstr NormalFont, FixedFont;
   void OnLinkClicked(const wxHtmlLinkInfo& link);
-  wxHtmlOpeningStatus OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString *redirect) const;
+  wxHtmlOpeningStatus OnOpeningURL(wxHtmlURLType type, const wxString& url,
+    wxString *redirect) const;
 
   void OnSizeEvt(wxSizeEvent& event);
   void OnMouseDblClick(wxMouseEvent& event);
@@ -49,8 +53,11 @@ protected:
   void OnChildFocus(wxChildFocusEvent& event);
   void DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next);
   olxstr OnSizeData, OnDblClickData;
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data=NULL);
-  /* on GTK scrolling makes mess out of the controls so will try to "fix it" here*/
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
+    const IEObject* Data=NULL);
+  /* on GTK scrolling makes mess out of the controls so will try to "fix it"
+  here
+  */
   void OnScroll(wxScrollEvent& evt);
   virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL);
 
@@ -59,7 +66,8 @@ protected:
   bool MouseDown;
 
   THtmlSwitch* Root;
-  olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>, olxstrComparator<true> > Objects;
+  olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>,
+    olxstrComparator<true> > Objects;
   TTypeList<AnAssociation2<AOlxCtrl*,wxWindow*> > Traversables;
   TSStrPObjList<olxstr,size_t,true> SwitchStates;
   TTypeList<TStrList> Groups;
@@ -74,7 +82,8 @@ protected:
       const size_t ind = Objects.IndexOf(cname);
       return (ind == InvalidIndex) ? NULL : Objects.GetObject(ind);
     }
-    TSStrStrList<olxstr,false>* DefineControl(const olxstr& name, const std::type_info& type);
+    TSStrStrList<olxstr,false>* DefineControl(const olxstr& name,
+      const std::type_info& type);
     void SaveState();
     void RestoreState();
     void SaveToFile(const olxstr& fn);
@@ -140,14 +149,15 @@ protected:
   olxstr GetObjectItems(const AOlxCtrl *Object);
   void SetObjectValue(AOlxCtrl *AOlxCtrl, const olxstr& Value);
   void SetObjectData(AOlxCtrl *AOlxCtrl, const olxstr& Data);
-  void SetObjectState(AOlxCtrl *AOlxCtrl, bool State, const olxstr& state_name);
+  void SetObjectState(AOlxCtrl *AOlxCtrl, bool State,
+    const olxstr& state_name);
   bool SetObjectImage(AOlxCtrl *AOlxCtrl, const olxstr& src);
   bool SetObjectItems(AOlxCtrl *AOlxCtrl, const olxstr& src);
   void _FindNext(index_t from, index_t &dest, bool scroll) const;
   void _FindPrev(index_t from, index_t &dest, bool scroll) const;
-  void GetTraversibleIndeces(index_t& current, index_t& another, bool forward) const;
+  void GetTraversibleIndeces(index_t& current, index_t& another,
+    bool forward) const;
   void DoNavigate(bool forward);
-  static TLibrary* Library;
   struct Control {
     THtml *html;
     AOlxCtrl *ctrl;
@@ -160,7 +170,7 @@ protected:
   Control FindControl(const olxstr &name, TMacroError& me,
     short needed, const char* location);
 public:
-  THtml(wxWindow *Parent, ALibraryContainer* LC,
+  THtml(THtmlManager &manager, wxWindow *Parent,
     const olxstr &pop_name=EmptyString(), int flags=4);
   virtual ~THtml();
 
@@ -186,22 +196,24 @@ public:
   void SetShowTooltips(bool v, const olxstr &html_name=EmptyString());
 
   bool IsPageLoadRequested() const {  return PageLoadRequested;  }
-  inline void LockPageLoad(const IEObject* caller)  {
+  void LockPageLoad(const IEObject* caller)  {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     Locks.Add(caller, 0)++;
   }
-  inline void UnlockPageLoad(const IEObject* caller)  {
+  void UnlockPageLoad(const IEObject* caller)  {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     const size_t pos = Locks.IndexOf(caller);
     if( pos == InvalidIndex )
       throw TInvalidArgumentException(__OlxSourceInfo, "caller");
     int lc = --Locks.GetValue(pos);
-    if( lc < 0 )
-      throw TFunctionFailedException(__OlxSourceInfo, "not matchin call to unlock");
+    if( lc < 0 ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "not matching call to unlock");
+    }
     if( lc == 0 )
       Locks.Delete(pos);
   }
-  inline bool IsPageLocked() const {
+  bool IsPageLocked() const {
     volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     return !Locks.IsEmpty();
   }
@@ -220,7 +232,8 @@ public:
   THtmlSwitch& GetRoot() const {  return *Root; }
   bool ItemState(const olxstr& ItemName, short State);
   // object operations
-  bool AddObject(const olxstr& Name, AOlxCtrl *Obj, wxWindow* wxObj, bool Manage = false);
+  bool AddObject(const olxstr& Name, AOlxCtrl *Obj, wxWindow* wxObj,
+    bool Manage = false);
   AOlxCtrl *FindObject(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
     return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).A();
@@ -229,14 +242,19 @@ public:
     const size_t ind = Objects.IndexOf(Name);
     return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).B();
   }
-  inline size_t ObjectCount() const {  return Objects.Count();  }
-  inline AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).A();  }
-  inline wxWindow* GetWindow(size_t i)  {  return Objects.GetValue(i).B();  }
-  inline const olxstr& GetObjectName(size_t i) const {  return Objects.GetKey(i);  }
-  inline bool IsObjectManageble(size_t i) const {  return Objects.GetValue(i).GetC();  }
+  size_t ObjectCount() const {  return Objects.Count();  }
+  AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).A();  }
+  wxWindow* GetWindow(size_t i)  {  return Objects.GetValue(i).B();  }
+  const olxstr& GetObjectName(size_t i) const {  return Objects.GetKey(i);  }
+  bool IsObjectManageble(size_t i) const {
+    return Objects.GetValue(i).GetC();
+  }
+  TLibrary* ExportLibrary(const olxstr &name="html");
+
   //
   DefPropBIsSet(Movable)
 
+  THtmlManager &Manager;
   TActionQueue& OnURL;
   TActionQueue& OnLink;
 
@@ -253,11 +271,57 @@ public:
   // an extention...
   class WordCell : public wxHtmlWordCell  {
   public:
-    WordCell(const wxString& word, const wxDC& dc) : wxHtmlWordCell(word, dc)  {  }
+    WordCell(const wxString& word, const wxDC& dc) : wxHtmlWordCell(word, dc)
+    {}
     //just this extra function for managed alignment ...
     void SetDescent(int v) {  m_Descent = v;  }
   };
 
   DECLARE_EVENT_TABLE()
 };
+
+class THtmlManager : public AActionHandler {
+  wxWindow *mainWindow;
+  TActionQList Actions;
+  virtual bool Enter(const IEObject *, const IEObject *);
+  virtual bool Exit(const IEObject *, const IEObject *);
+  virtual bool Execute(const IEObject *, const IEObject *);
+public:
+  THtml *main;
+  struct TPopupData  {
+    TDialog *Dialog;
+    THtml *Html;
+  };
+  struct DestructionLocker {
+    THtmlManager &manager;
+    wxWindow *wnd;
+    IEObject *sender;
+    DestructionLocker(THtmlManager &manager, wxWindow *wnd, IEObject *sender)
+      : manager(manager), wnd(wnd), sender(sender)
+    {
+      manager.LockWindowDestruction(wnd, sender);
+    }
+    ~DestructionLocker() {
+      manager.UnlockWindowDestruction(wnd, sender);
+    }
+  };
+  THtmlManager(wxWindow *mainWindow);
+  ~THtmlManager();
+  void InitialiseMain(long flags);
+  void ProcessPageLoadRequests();
+  void ClearPopups();
+  DestructionLocker LockDestruction(wxWindow *wnd, IEObject *sender) {
+    return DestructionLocker(*this, wnd, sender);
+  }
+  void LockWindowDestruction(wxWindow* wnd, const IEObject* caller);
+  void UnlockWindowDestruction(wxWindow* wnd, const IEObject* caller);
+  THtml* FindHtml(const olxstr& name) const;
+  TPopupData &NewPopup(TDialog *owner, const olxstr &name, long flags=4);
+  olxstr_dict<TPopupData*, true> Popups;
+  TActionQueue &OnStateChange,
+    &OnModeChange,
+    &OnLink;
+
+};
+
 #endif
