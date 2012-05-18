@@ -108,11 +108,10 @@ bool TGlBitmap::Orient(TGlPrimitive& P)  {
   const double hw = Parent.GetWidth()/(2*es), w = Width;
   const double hh = Parent.GetHeight()/(2*es), h = Height;
   double xx = GetCenter()[0], xy = -GetCenter()[1];
-  const double z = Z-0.01;
-  P.Vertices[0] = vec3d((Left+w+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, z);
-  P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top+xy-hh)*Scale, z);
-  P.Vertices[2] = vec3d((Left+xx-hw)*Scale, -(Top+xy-hh)*Scale, z);
-  P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, z); 
+  P.Vertices[0] = vec3d((Left+w+xx-hw)*Scale, -(Top+h+xy-hh)*Scale, Z);
+  P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top+xy-hh)*Scale, Z);
+  P.Vertices[2] = vec3d((Left+xx-hw)*Scale, -(Top+xy-hh)*Scale, Z);
+  P.Vertices[3] = vec3d(P.Vertices[2][0], -(Top+h+xy-hh)*Scale, Z); 
   return false;
 }
 //.............................................................................
