@@ -2027,6 +2027,7 @@ TLibrary *THtml::ExportLibrary(const olxstr &name) {
 //..............................................................................
 THtmlManager::THtmlManager(wxWindow *mainWindow)
   : mainWindow(mainWindow),
+    destroyed(false),
     main(NULL),
     OnStateChange(Actions.New("OnStateChange")),
     OnModeChange(Actions.New("OnModeChange")),
@@ -2036,6 +2037,13 @@ THtmlManager::THtmlManager(wxWindow *mainWindow)
 }
 //..............................................................................
 THtmlManager::~THtmlManager() {
+  Destroy();
+}
+//..............................................................................
+void THtmlManager::Destroy() {
+  if (destroyed) return;
+  destroyed = true;
+  main->OnLink.Remove(this);
   main->Destroy();
   ClearPopups();
 }
@@ -2065,6 +2073,7 @@ void THtmlManager::ProcessPageLoadRequests() {
 //.............................................................................
 void THtmlManager::ClearPopups() {
   for( size_t i=0; i < Popups.Count(); i++ )  {
+    Popups.GetValue(i)->Html->OnLink.Remove(this);
     Popups.GetValue(i)->Dialog->Destroy();
     delete Popups.GetValue(i);
   }
