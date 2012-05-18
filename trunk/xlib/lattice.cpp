@@ -831,7 +831,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
             for( size_t j=0; j < Objects.planes.Count()-1; j++ )  {
               if (Objects.planes[j].GetCenter().QDistanceTo(
                     p->GetCenter()) < 1e-6 &&
-                  Objects.planes[j].GetNormal().IsParallel(p->GetNormal()))
+                    Objects.planes[j].GetNormal().IsParallel(p->GetNormal()))
               {
                 uniq = false;
                 break;
@@ -850,8 +850,25 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
         Plane->_SetDefId(PlaneDefs.Count()-1);
       }
     }
-    else
-      delete Plane;
+    else {
+      bool uniq=true;
+      for (size_t i=0; i < Objects.planes.Count(); i++) {
+        if (Objects.planes[i].GetCenter().QDistanceTo(
+            Plane->GetCenter()) < 1e-6 &&
+            Objects.planes[i].GetNormal().IsParallel(Plane->GetNormal()))
+        {
+          if (Objects.planes[i].IsDeleted())
+            Objects.planes[i].SetDeleted(false);
+          rv << Objects.planes[i];
+          uniq = false;
+          break;
+        }
+      }
+      if (!uniq)
+        delete Plane;
+      else
+        rv << Plane;
+    }
   }
   return rv;
 }

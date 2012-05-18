@@ -5657,7 +5657,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
     bmpType = GL_RGBA;
   }
 
-  unsigned char* RGBData = new unsigned char[ swidth * sheight * cl];
+  unsigned char* RGBData = new unsigned char[swidth * sheight * cl];
   for( int i=0; i < sheight; i++ )  {
     for( int j=0; j < swidth; j++ )  {
       int indexa = (i*swidth + (swidth-j-1)) * cl;
