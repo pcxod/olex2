@@ -286,6 +286,7 @@ class THtmlManager : public AActionHandler {
   virtual bool Enter(const IEObject *, const IEObject *);
   virtual bool Exit(const IEObject *, const IEObject *);
   virtual bool Execute(const IEObject *, const IEObject *);
+  bool destroyed;
 public:
   THtml *main;
   struct TPopupData  {
@@ -307,6 +308,7 @@ public:
   };
   THtmlManager(wxWindow *mainWindow);
   ~THtmlManager();
+  void Destroy();
   void InitialiseMain(long flags);
   void ProcessPageLoadRequests();
   void ClearPopups();

@@ -332,6 +332,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
   OnStateChange(Actions.New("ONSTATECHANGE")),
   _ProcessHandler(*this)
 {
+  TEGC::AddP(&HtmlManager);
   ShowChemicalOccu = true;
   nui_interface = NULL;
   _UpdateThread = NULL;
@@ -420,6 +421,7 @@ bool TMainForm::Destroy()  {
     SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
   }
   Destroying = true;
+  HtmlManager.Destroy();
   return wxFrame::Destroy();
 }
 //..............................................................................
@@ -461,7 +463,6 @@ TMainForm::~TMainForm()  {
   delete FUndoStack;
   // leave it for the end
   delete _ProcessManager;
-  delete &HtmlManager;
   // the order is VERY important!
   TOlxVars::Finalise();
   PythonExt::Finilise();

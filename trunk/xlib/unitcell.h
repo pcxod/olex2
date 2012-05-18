@@ -64,6 +64,10 @@ class TUnitCell: public IEObject  {
   {
     return olx_cmp(a1.GetA().QLength(), a2.GetA().QLength());
   }
+  /* makes sure that only a single instance of an equivalent position is
+  present in the list
+  */
+  static void UnifyAMCList(TTypeList<AnAssociation3<TCAtom*, smatd, vec3d> >&);
 public:
   TUnitCell(TLattice* L);
   virtual ~TUnitCell();
@@ -163,8 +167,8 @@ public:
   than the translational symmetry generated one), so there might be a two I
   matrices with different translations
   */ 
-  smatd_list* GetInRange(const vec3d& to, const vec3d& from, double R,
-    bool IncludeI) const;
+  ConstTypeList<smatd> GetInRange(const vec3d& to, const vec3d& from,
+    double R, bool IncludeI) const;
 
   /* function operates as the one above, however for each matrix also searches
   translations within [-1..+1] range, so returned list might have multiple
@@ -172,8 +176,8 @@ public:
   matrix is already in the ToSkip list before adding it to the results. The
   return value is always a valid object to be deleted with a call to delete
   */
-  smatd_list* GetInRangeEx(const vec3d& to, const vec3d& from, double R,
-    bool IncludeI, const smatd_list& ToSkip) const;
+  ConstTypeList<smatd> GetInRangeEx(const vec3d& to, const vec3d& from,
+    double R, bool IncludeI, const smatd_list& ToSkip) const;
   
   /* The function finds all atoms and symmetry operators generating them within
   the sphere of radius R. Note that only matrices unique to the unit cell are
@@ -240,10 +244,9 @@ public:
     }
   }
 
-  /* returns a list of all matrices which lead to covalent/hydrogen bonds, 
-  the return value is always an object to be deleted with delete 
+  /* returns a list of all matrices which lead to covalent/hydrogen bonds
   */
-  smatd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
+  ConstTypeList<smatd> GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI,
     bool IncludeHBonds) const;
   

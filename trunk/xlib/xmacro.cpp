@@ -1023,7 +1023,6 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   }
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   TLattice& lat = TXApp::GetInstance().XFile().GetLattice();
-  TArrayList< AnAssociation2<TCAtom const*, smatd> > all;
   size_t h_indexes[4];
   const ASObjectProvider& objects = lat.GetObjects();
   for( size_t i=0; i < objects.atoms.Count(); i++ )  {
@@ -1042,7 +1041,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     if( hc == 0 || hc >= 4 )  continue;
-    all.Clear();
+    TArrayList<AnAssociation2<TCAtom const*, smatd> > all;
     uc.FindInRangeAM(sa.ccrd(), max_d, all);
     for( size_t j=0; j < all.Count(); j++ )  {
       const TCAtom& ca = *all[j].GetA();
