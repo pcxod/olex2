@@ -3743,10 +3743,10 @@ TGlBitmap* TGXApp::CreateGlBitmap(const olxstr& name,
     GlBitmaps.Add(glB);
     glB->Create();
     ObjectsToCreate.Add( (AGDrawObject*)glB );
-    glB->SetZ(-10.0 + (double)GlBitmaps.Count()/100 );
+    glB->SetZ(-FGlRender->GetMaxRasterZ() + (double)GlBitmaps.Count()/100);
   }
   else  {
-    glB->ReplaceData( width, height, RGBa, format );
+    glB->ReplaceData(width, height, RGBa, format);
     glB->SetVisible(!glB->IsVisible());
   }
   return glB;
