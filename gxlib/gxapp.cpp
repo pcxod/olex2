@@ -2095,8 +2095,10 @@ TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool regular, double weightExtent)
     TSAtomPList(Atoms), weightExtent, regular);
   size_t pi=0;
   for( size_t i=0; i < planes.Count(); i++ ) {
-    static_cast<TXPlane*>(planes[i])->Create(
-      olxstr("TXPlane") << planes[i]->GetDefId());
+    TXPlane * p =static_cast<TXPlane*>(planes[i]);
+    if (!p->IsVisible())
+      p->SetVisible(true);
+    p->Create(olxstr("TXPlane") << planes[i]->GetDefId());
     if (&planes[i]->GetAtom(0) == Atoms[0]) {
       pi = i;
     }
@@ -4150,6 +4152,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   ClearGroupDefinitions();
   OverlayedXFiles.Clear();
   UserObjects.Clear();
+  Rings.Clear();
   TXAtom::TelpProb(0);  //force re-reading
   TXAtom::DefRad(0);
   TXAtom::DefDS(0);
@@ -4527,6 +4530,7 @@ void TGXApp::ClearStructureRelated() {
   SelectionCopy[1].Clear();
   GetRender().SelectAll(false);
   UserObjects.Clear();
+  Rings.Clear();
 }
 //..............................................................................
 olxstr TGXApp::Label(const TXAtomPList &atoms, const olxstr &sp) {
