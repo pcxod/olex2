@@ -220,27 +220,27 @@ void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::CellVChange()  {
-  TStateChange sc(prsCellVis, FXApp->IsCellVisible());
+  TStateRegistry::GetInstance().SetState(stateCellVisible,
+    FXApp->IsCellVisible(), EmptyString(), true);
   pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell")
     : wxT("Hide cell")));
-  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void TMainForm::BasisVChange()  {
-  TStateChange sc(prsBasisVis, FXApp->IsBasisVisible());
+  TStateRegistry::GetInstance().SetState(stateBasisVisible,
+    FXApp->IsBasisVisible(), EmptyString(), true);
   pmModel->SetLabel(ID_BasisVisible,
     (FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis")));
-  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void TMainForm::GridVChange()  {
-  TStateChange sc(prsGridVis, FXApp->XGrid().IsVisible());
-  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+  TStateRegistry::GetInstance().SetState(stateXGridVisible,
+    FXApp->IsGridVisible(), EmptyString(), true);
 }
 //..............................................................................
 void TMainForm::FrameVChange()  {
-  TStateChange sc(prsGridVis, FXApp->Get3DFrame().IsVisible());
-  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+  TStateRegistry::GetInstance().SetState(stateWBoxVisible,
+    FXApp->Get3DFrame().IsVisible(), EmptyString(), true);
 }
 //..............................................................................
 void TMainForm::OnCellVisible(wxCommandEvent& event)  {
@@ -258,7 +258,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( FObjectUnderMouse->IsSelected() )
       processMacro("hide sel");
     else
-      FUndoStack->Push(FXApp->SetGraphicsVisible(FObjectUnderMouse, false));
+      FXApp->GetUndo().Push(FXApp->SetGraphicsVisible(FObjectUnderMouse, false));
     TimePerFrame = FXApp->Draw();
   }
   else if( event.GetId() == ID_GraphicsKill )  {
@@ -267,7 +267,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     else  {
       AGDObjList l;
       l.Add(FObjectUnderMouse);
-      FUndoStack->Push(FXApp->DeleteXObjects(l));
+      FXApp->GetUndo().Push(FXApp->DeleteXObjects(l));
     }
     TimePerFrame = FXApp->Draw();
   }

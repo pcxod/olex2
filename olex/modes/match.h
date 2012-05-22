@@ -24,36 +24,36 @@ public:
   TMatchMode(size_t id) : AMode(id)  {}
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     AtomsToMatch.Clear();
-    TGlXApp::GetMainForm()->SetUserCursor('0', "<M>");
+    SetUserCursor(0, "<M>");
     return true;
   }
   void Finalise()  {}
   virtual bool OnObject(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) && AtomsToMatch.Count() < 7 )  {
       AtomsToMatch.Add((TXAtom&)obj);
-      TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<M>");
-      FitAtoms(AtomsToMatch, "<M>", true);
+      FitAtoms(AtomsToMatch, true);
+      SetUserCursor(AtomsToMatch.Count(), "<M>");
       return true;
     }
     return false;
   }
   virtual void OnGraphicsDestroy()  {
     AtomsToMatch.Clear();
-    TGlXApp::GetMainForm()->SetUserCursor('0', "<M>");
+    SetUserCursor(0, "<M>");
   }
   virtual bool OnKey(int keyId, short shiftState)  {
     if( shiftState == 0 && keyId == WXK_ESCAPE )  {
       if( AtomsToMatch.IsEmpty() )  return false;
       AtomsToMatch.Delete(AtomsToMatch.Count()-1);
-      TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<M>");
+      SetUserCursor(AtomsToMatch.Count(), "<M>");
       return true;
     }
     return false;
   }
-  static void FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, bool group);
+  static void FitAtoms(TXAtomPList& AtomsToMatch, bool group);
 };
 
-void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, bool group)  {
+void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, bool group){
   if( (AtomsToMatch.Count() % 2) != 0 || AtomsToMatch.Count() < 2 )  return;
   TNetwork* netA = NULL, *netB = NULL;
   TSAtomPList atomsA, atomsB;
@@ -78,7 +78,6 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
   if( netA == netB )  {
     TBasicApp::NewLogEntry(logError) << "Atoms belong to the same fragment";
     AtomsToMatch.Clear();
-    TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), cursor_name);
     return;
   }
   if( &netA->GetLattice() == &netB->GetLattice() )  {
@@ -93,7 +92,6 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
         }
         else  {
           AtomsToMatch.Clear();
-          TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), cursor_name);
           return;
         }
       }
@@ -111,7 +109,6 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
         }
         else  {
           AtomsToMatch.Clear();
-          TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), cursor_name);
           return;
         }
       }
@@ -135,9 +132,10 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
       nb.Add(netB);
     }
     if( group )  {
-      TGlGroup& ga = TGlXApp::GetGXApp()->GroupFragments(na, "FragmentA");
-      TGlGroup& gb = TGlXApp::GetGXApp()->GroupFragments(nb, "FragmentB");
-      TGlXApp::GetGXApp()->SelectAll(false);
+      TGXApp &gxapp = TGXApp::GetInstance();
+      TGlGroup& ga = gxapp.GroupFragments(na, "FragmentA");
+      TGlGroup& gb = gxapp.GroupFragments(nb, "FragmentB");
+      gxapp.SelectAll(false);
       if( &ga != NULL && ga.IsDefaultColor() )
         ga.SetGlM(TGlMaterial("85;0.000,1.000,0.000,0.000;4144959;1.000,1.000,1.000,0.500;36"));
       if( &gb != NULL && gb.IsDefaultColor() )
@@ -159,7 +157,8 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     vec3d v2((AtomsToMatch[4]->crd() - AtomsToMatch[3]->crd()));
     v1 = rv.Normal(v1);
     v2 = rv.Normal(v2);
-    rv = v1.XProdVec(v2).Normalise();  // replacing the rotation vector for the one with correct orientation
+    // replacing the rotation vector for the one with correct orientation
+    rv = v1.XProdVec(v2).Normalise();
     mat3d rm;
     olx_create_rotation_matrix(rm, rv, v1.CAngle(v2));
     TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->crd()-AtomsToMatch[1]->crd());
@@ -180,7 +179,7 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, const olxstr& cursor_name, 
     }
     //TNetwork::DoAlignAtoms(atomsA, ao);
   }
-  TGlXApp::GetGXApp()->UpdateBonds();
+  TGXApp::GetInstance().UpdateBonds();
 }
 
 #endif

@@ -404,7 +404,10 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
     }
   }
   else  {
-    CursorStack.Push(AnAssociation2<wxCursor,wxString>(FGlCanvas->GetCursor(), GetStatusBar()->GetStatusText()));
+    if (!Params[0].Equalsi("user")) {
+      CursorStack.Push(AnAssociation2<wxCursor,wxString>(
+        FGlCanvas->GetCursor(), GetStatusBar()->GetStatusText()));
+    }
     if( Params[0].Equalsi("busy") )  {
       wxCursor cr(wxCURSOR_WAIT);
       SetCursor(cr);
@@ -426,6 +429,9 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
       wxCursor cr(wxCURSOR_ARROW);
       SetCursor(cr);
       FGlCanvas->SetCursor(cr);
+    }
+    else if (Params[0].Equalsi("user") && Params.Count() == 3)  {
+      SetUserCursor(Params[1], Params[2]);
     }
     else  {
       if( TEFile::Exists(Params[0]) )  {
@@ -1281,43 +1287,56 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //FXApp->GetRender().Compile(true);
 }
 //..............................................................................
-void TMainForm::macName(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macName(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   bool checkLabels = Options.Contains("c");
   bool changeSuffix = Options.Contains("s");
   if( changeSuffix )  {
     TXAtomPList xatoms;
-    if( FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs")) )
-      FUndoStack->Push(FXApp->ChangeSuffix(xatoms, Options.FindValue("s"), checkLabels));
+    if( FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs")) ) {
+      FXApp->GetUndo().Push(FXApp->ChangeSuffix(
+        xatoms, Options.FindValue("s"), checkLabels));
+    }
   }
   else  {
     bool processed = false;
     if( Cmds.Count() == 1 )  { // bug #49
       const size_t spi = Cmds[0].IndexOf(' ');
       if( spi != InvalidIndex )  {
-        FUndoStack->Push(
-          FXApp->Name(Cmds[0].SubStringTo(spi), Cmds[0].SubStringFrom(spi+1), checkLabels,
+        FXApp->GetUndo().Push(
+          FXApp->Name(Cmds[0].SubStringTo(spi),
+          Cmds[0].SubStringFrom(spi+1), checkLabels,
           !Options.Contains("cs"))
         );
       }
-      else
-        FUndoStack->Push(FXApp->Name("sel", Cmds[0], checkLabels, !Options.Contains("cs")));
+      else {
+        FXApp->GetUndo().Push(
+          FXApp->Name("sel", Cmds[0], checkLabels, !Options.Contains("cs")));
+      }
       processed = true;
     }
     else if( Cmds.Count() == 2 )  {
-      FUndoStack->Push(FXApp->Name(Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")));
+      FXApp->GetUndo().Push(FXApp->Name(
+        Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")));
       processed = true;
     }
     if( !processed )  {
-      Error.ProcessingError(__OlxSrcInfo, olxstr("invalid syntax: ") << Cmds.Text(' '));
+      Error.ProcessingError(__OlxSrcInfo,
+        olxstr("invalid syntax: ") << Cmds.Text(' '));
     }
   }
 }
 //..............................................................................
-void TMainForm::macTelpV(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macTelpV(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   FXApp->CalcProbFactor(Cmds[0].ToDouble());
 }
 //..............................................................................
-void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   short lmode = 0;
   if( Options.Contains('p') )   lmode |= lmPart;
   if( Options.Contains('l') )   lmode |= lmLabels;
@@ -1336,17 +1355,22 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     lmode |= lmLabels;
     lmode |= lmQPeak;
     FXApp->SetLabelsMode(lmode);
-    FXApp->SetLabelsVisible(!FXApp->AreLabelsVisible());
+    if (Cmds.Count() == 1 && Cmds[0].IsBool())
+      FXApp->SetLabelsVisible(Cmds[0].ToBool());
+    else
+      FXApp->SetLabelsVisible(!FXApp->AreLabelsVisible());
   }
   else  {
-    FXApp->SetLabelsMode(lmode |= lmQPeak );
+    FXApp->SetLabelsMode(lmode |= lmQPeak);
     FXApp->SetLabelsVisible(true);
   }
-  TStateChange sc(prsLabels, FXApp->AreLabelsVisible());
-  OnStateChange.Execute((AOlxCtrl*)this, &sc);
+  TStateRegistry::GetInstance().SetState(stateLabelsVisible,
+    FXApp->AreLabelsVisible(), EmptyString(), true);
 }
 //..............................................................................
-void TMainForm::macCapitalise(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macCapitalise(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXAtomPList xatoms;
   const olxstr format = Cmds[0];
   Cmds.Delete(0);
@@ -1369,14 +1393,18 @@ void TMainForm::macCapitalise(TStrObjList &Cmds, const TParamList &Options, TMac
   }
 }
 //..............................................................................
-void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   if( !olx_setenv(Cmds[0], Cmds[1]) )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not set the variable" );
+    Error.ProcessingError(__OlxSrcInfo, "could not set the variable");
     return;
   }
 }
 //..............................................................................
-void TMainForm::macSetView(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macSetView(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   const bool do_center = Options.Contains('c');
   bool process = false, has_center = true;
   vec3d center, normal;
@@ -1899,7 +1927,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( !out.IsEmpty()  )  {
       FXApp->NewLogEntry() << "Deleting " << out;
-      FUndoStack->Push(FXApp->DeleteXObjects(Objects));
+      FXApp->GetUndo().Push(FXApp->DeleteXObjects(Objects));
       sel.Clear();
     }
   }
@@ -1934,7 +1962,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       for( size_t i=0; i < todel.Count(); i++ )
         FXApp->GetLog() << todel[i]->GetLabel() << ' ';
       FXApp->NewLogEntry();
-      FUndoStack->Push(FXApp->DeleteXAtoms(todel));
+      FXApp->GetUndo().Push(FXApp->DeleteXAtoms(todel));
     }
   }
 }
@@ -1945,14 +1973,14 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TGlGroup& sel = FXApp->GetSelection();
     for( size_t i=0; i < sel.Count(); i++ )  
       Objects.Add( sel[i] );
-    FUndoStack->Push( FXApp->SetGraphicsVisible( Objects, false ) );
+    FXApp->GetUndo().Push( FXApp->SetGraphicsVisible( Objects, false ) );
     sel.Clear();
   }
   else  {
     TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h'));
     if( Atoms.IsEmpty() )  return;
     AGDObjList go(Atoms, StaticCastAccessor<AGDrawObject>());
-    FUndoStack->Push(FXApp->SetGraphicsVisible(go, false));
+    FXApp->GetUndo().Push(FXApp->SetGraphicsVisible(go, false));
   }
 }
 //..............................................................................
@@ -2777,47 +2805,37 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     bool v = Cmds[1].ToBool();
     if( Cmds[0] == 'a' )  {
       if( v && !FXApp->AreHydrogensVisible() )  {
-        TStateChange sc(prsHVis, true);
         FXApp->SetHydrogensVisible(true);
-        OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
       else if( !v && FXApp->AreHydrogensVisible() )  {
-        TStateChange sc(prsHVis, false);
         FXApp->SetHydrogensVisible(false);
-        OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
     }
     else if( Cmds[0] == 'b' )  {
       if( v && !FXApp->AreHBondsVisible() )  {
-        TStateChange sc(prsHBVis, true);
         FXApp->SetHBondsVisible(true);
-        OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
       else if( !v && FXApp->AreHBondsVisible() )  {
-        TStateChange sc(prsHBVis, false);
         FXApp->SetHBondsVisible(false);
-        OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
     }
   }
   else  {
     if( FXApp->AreHydrogensVisible() && !FXApp->AreHBondsVisible() )  {
-      TStateChange sc(prsHBVis, true);
       FXApp->SetHBondsVisible(true);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
     else if( FXApp->AreHydrogensVisible() && FXApp->AreHBondsVisible() )  {
-      TStateChange sc(prsHBVis|prsHVis, false);
       FXApp->SetHBondsVisible(false);
       FXApp->SetHydrogensVisible(false);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
     else if( !FXApp->AreHydrogensVisible() && !FXApp->AreHBondsVisible() )  {
-      TStateChange sc(prsHVis, true);
       FXApp->SetHydrogensVisible(true);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
   }
+  TStateRegistry::GetInstance().SetState(stateHydrogensVisible,
+    FXApp->AreHydrogensVisible(), EmptyString(), true);
+  TStateRegistry::GetInstance().SetState(stateHydrogenBondsVisible,
+    FXApp->AreHBondsVisible(), EmptyString(), true);
   FXApp->GetRender().SetBasis(basis);
 }
 //..............................................................................
@@ -3635,26 +3653,18 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     bool v = Cmds[1].ToBool();
     if( Cmds[0] == "a" )  {
       if( v && !FXApp->AreQPeaksVisible() )  {
-        TStateChange sc(prsQVis, true);
         FXApp->SetQPeaksVisible(true);
-        OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
       else if( !v && FXApp->AreQPeaksVisible() )  {
-        TStateChange sc(prsQVis, false);
         FXApp->SetQPeaksVisible(false);
-        OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       }
     }
     else if( Cmds[0] == "b" )  {
       if( v && !FXApp->AreQPeakBondsVisible() )  {
-        TStateChange sc(prsQBVis, true);
-        FXApp->SetQPeakBondsVisible( true );
-        OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+        FXApp->SetQPeakBondsVisible(true);
       }
       else if( !v && FXApp->AreQPeakBondsVisible() )  {
-        TStateChange sc(prsQBVis, false);
-        FXApp->SetQPeakBondsVisible( false );
-        OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+        FXApp->SetQPeakBondsVisible(false);
       }
     }
   }
@@ -3678,22 +3688,20 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   else  {
     if( (!FXApp->AreQPeaksVisible() && !FXApp->AreQPeakBondsVisible()) )  {
-      TStateChange sc(prsQVis, true);
       FXApp->SetQPeaksVisible(true);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
     else if( FXApp->AreQPeaksVisible() && !FXApp->AreQPeakBondsVisible())  {
-      TStateChange sc(prsQBVis, true);
       FXApp->SetQPeakBondsVisible(true);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
     else if( FXApp->AreQPeaksVisible() && FXApp->AreQPeakBondsVisible() )  {
-      TStateChange sc(prsQBVis|prsQVis, false);
       FXApp->SetQPeaksVisible(false);
       FXApp->SetQPeakBondsVisible(false);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     }
   }
+  TStateRegistry::GetInstance().SetState(stateQPeaksVisible,
+    FXApp->AreQPeaksVisible(), EmptyString(), true);
+  TStateRegistry::GetInstance().SetState(stateQPeakBondsVisible,
+    FXApp->AreQPeakBondsVisible(), EmptyString(), true);
   FXApp->GetRender().SetBasis(basis);
 }
 //..............................................................................
@@ -3701,11 +3709,13 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   // this variable is set when the mode is changed from within this function
   static bool ChangingMode = false;
   if( ChangingMode )  return;
-  AMode* md = Modes->SetMode(Cmds[0]);
-  olxstr tmp;
+  olxstr name = Cmds[0], args;
+  Cmds.Delete(0);
+  args << Cmds.Text(' ');
+  for (size_t i=0; i < Options.Count(); i++)
+    args << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
+  AMode* md = Modes->SetMode(name, args);
   if( md != NULL )  {
-    tmp << Cmds[0];
-    Cmds.Delete(0);
     try  {
       if( !md->Initialise(Cmds, Options) )  {
         E.ProcessingError(__OlxSrcInfo, "Current mode is unavailable");
@@ -3713,17 +3723,10 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         return;
       }
     }
-    catch(const TExceptionBase& e)  {  
+    catch(const TExceptionBase& e)  {
       Modes->ClearMode(false);
-      throw TFunctionFailedException(__OlxSrcInfo, e);  
+      throw TFunctionFailedException(__OlxSrcInfo, e);
     }
-  }
-  if( md != NULL || Cmds[0].Equalsi("off") )  {
-    tmp << Cmds.Text(' ');
-    for( size_t i=0; i < Options.Count(); i++ )
-      tmp << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
-    CallbackFunc(OnModeChangeCBName, tmp);
-    FXApp->EnableSelection(md == NULL);
   }
   ChangingMode = false;
 }
@@ -3759,8 +3762,8 @@ void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroE
   else
     FXApp->SetStructureVisible(Cmds[0].ToBool());
   FXApp->CenterView();
-  TStateChange sc(prsStrVis, FXApp->IsStructureVisible());
-  OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+  TStateRegistry::GetInstance().SetState(stateStructureVisible,
+    FXApp->IsStructureVisible(), EmptyString(), true);
 }
 //..............................................................................
 void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -3778,14 +3781,10 @@ void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   bool invert = Options.Contains('i');
   if( invert )  {
-    TStateChange sc(prsGradBG, !FXApp->GetRender().Background()->IsVisible());
-    OnStateChange.Execute( (AEventsDispatcher*)this, &sc );
     FXApp->GetRender().Background()->SetVisible(
       !FXApp->GetRender().Background()->IsVisible());
   }
   else if( Cmds.Count() == 1 )  {
-    TStateChange sc(prsGradBG, Cmds[0].ToBool());
-    OnStateChange.Execute((AEventsDispatcher*)this, &sc);
     FXApp->GetRender().Background()->SetVisible(Cmds[0].ToBool());
   }
   else if( Cmds.IsEmpty() && !Options.Contains('p'))  {
@@ -3870,6 +3869,8 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       delete [] RGBData;
     }
   }
+  TStateRegistry::GetInstance().SetState(stateGradientOn,
+    FXApp->GetRender().Background()->IsVisible(), EmptyString(), true);
 }
 //..............................................................................
 void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -4512,8 +4513,8 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TMainForm::macUndo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( !FUndoStack->isEmpty() )  {
-    TUndoData* data = FUndoStack->Pop();
+  if( !FXApp->GetUndo().isEmpty() )  {
+    TUndoData* data = FXApp->GetUndo().Pop();
     data->Undo();
     delete data;
   }
@@ -5401,8 +5402,14 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
             menu->InsertSeparator(insindex);
           else {
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
-            if( !modeDependent.IsEmpty() )  item->SetActionQueue(OnModeChange, modeDependent, TMenuItem::ModeDependent);
-            if( !stateDependent.IsEmpty() )  item->SetActionQueue(OnStateChange, stateDependent, TMenuItem::StateDependent);
+            if( !modeDependent.IsEmpty() ) {
+              item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
+                modeDependent, TMenuItem::ModeDependent);
+            }
+            if( !stateDependent.IsEmpty() ) {
+              item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
+                stateDependent, TMenuItem::StateDependent);
+            }
             if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
             menu->Insert(insindex, item );
             AccMenus.AddAccell(accell, item );
@@ -5412,8 +5419,14 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
           if( itemType == mtSeparator )  menu->AppendSeparator();
           else {
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
-            if( !modeDependent.IsEmpty() )  item->SetActionQueue(OnModeChange, modeDependent, TMenuItem::ModeDependent);
-            if( !stateDependent.IsEmpty() )  item->SetActionQueue(OnStateChange, stateDependent, TMenuItem::StateDependent);
+            if( !modeDependent.IsEmpty() ) {
+              item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
+                modeDependent, TMenuItem::ModeDependent);
+            }
+            if( !stateDependent.IsEmpty() ) {
+              item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
+                stateDependent, TMenuItem::StateDependent);
+            }
             if( Cmds.Count() > 1 )  item->SetCommand(Cmds[1]);
             menu->Append( item );
             AccMenus.AddAccell(accell, item );
@@ -5461,8 +5474,14 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         else  {
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
           if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
-          if( !modeDependent.IsEmpty() )  item->SetActionQueue(OnModeChange, modeDependent, TMenuItem::ModeDependent);
-          if( !stateDependent.IsEmpty() )  item->SetActionQueue(OnStateChange, stateDependent, TMenuItem::StateDependent);
+            if( !modeDependent.IsEmpty() ) {
+              item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
+                modeDependent, TMenuItem::ModeDependent);
+            }
+            if( !stateDependent.IsEmpty() ) {
+              item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
+                stateDependent, TMenuItem::StateDependent);
+            }
           menu->Insert(insindex, item);
           AccMenus.AddAccell(accell, item);
         }
@@ -5471,8 +5490,14 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         if( itemType == mtSeparator )  menu->AppendSeparator();
         else  {
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
-          if( !modeDependent.IsEmpty() )  item->SetActionQueue(OnModeChange, modeDependent, TMenuItem::ModeDependent);
-          if( !stateDependent.IsEmpty() )  item->SetActionQueue(OnStateChange, stateDependent, TMenuItem::StateDependent);
+            if( !modeDependent.IsEmpty() ) {
+              item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
+                modeDependent, TMenuItem::ModeDependent);
+            }
+            if( !stateDependent.IsEmpty() ) {
+              item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
+                stateDependent, TMenuItem::StateDependent);
+            }
           if( Cmds.Count() > 1 )  item->SetCommand(Cmds[1]);
           menu->Append(item);
           AccMenus.AddAccell(accell, item);
@@ -5946,7 +5971,6 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   if( !FPluginItem->ItemExists(Cmds[0]) )  {
-    TStateChange sc(prsPluginInstalled, true, Cmds[0]);
     olxstr local_file = Options['l'];
     if( !local_file.IsEmpty() )  {
       if( !TEFile::Exists(local_file) )  {
@@ -5972,7 +5996,8 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
         throw TFunctionFailedException(__OlxSourceInfo, Cause);
 
       FPluginItem->AddItem(Cmds[0]);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+      TStateRegistry::GetInstance().SetState(statePluginInstalled, true,
+        EmptyString(), true);
 
       FPluginFile.SaveToXLFile( PluginFile );
       TBasicApp::NewLogEntry() << "Installation complete";
@@ -5987,8 +6012,6 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
           Cmds[0]);
         if( res == updater::uapi_OK )  {
           FPluginItem->AddItem(Cmds[0]);
-          OnStateChange.Execute((AEventsDispatcher*)this, &sc);
-
           FPluginFile.SaveToXLFile(PluginFile);
           TBasicApp::NewLogEntry() << "\rInstallation complete";
         }
@@ -6006,10 +6029,8 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else  {
-    TDataItem* di = FPluginItem->FindItem( Cmds[0] );
+    TDataItem* di = FPluginItem->FindItem(Cmds[0]);
     if( di != NULL )  {
-      TStateChange sc(prsPluginInstalled, false, Cmds[0]);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
       Macros.ProcessMacro(olxstr("uninstallplugin ") << Cmds[0], E);
     }
     else  {
@@ -6098,12 +6119,12 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
   }
   TDataItem* di = FPluginItem->FindItem( Cmds[0] );
   if( di != NULL )  {
-    TStateChange sc(prsPluginInstalled, false);
     FPluginItem->DeleteItem(di);
-    OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+    TStateRegistry::GetInstance().SetState(statePluginInstalled, false,
+      EmptyString(), true);
     olxstr indexFile = TBasicApp::GetBaseDir() + "index.ind";
     if( TEFile::Exists(indexFile) )  {
-      TOSFileSystem osFS( TBasicApp::GetBaseDir() );
+      TOSFileSystem osFS(TBasicApp::GetBaseDir());
       TFSIndex fsIndex(osFS);
 
       fsIndex.LoadIndex(indexFile);
@@ -6212,7 +6233,7 @@ TNetwork::AlignInfo MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,
 //..............................................................................
 void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  {
   olxstr arg;
-  TStrObjList callBackArg;
+  TStrList callBackArg;
   for( size_t i=0; i < netA.NodeCount(); i++ )  {
     arg << netA.Node(i).GetLabel();
     if( (i+1) < netA.NodeCount() )  arg << ',';
@@ -6225,7 +6246,7 @@ void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  
     if( (i+1) < netB.NodeCount() )  arg << ',';
   }
   callBackArg.Add(arg);
-  CallbackFunc(OnMatchCBName, callBackArg);
+  callCallbackFunc(OnMatchCBName, callBackArg);
 }
 //..............................................................................
 void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
@@ -6247,7 +6268,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
   FXApp->UpdateBonds();
   if( Options.Contains("u") )  // do nothing...
     return;
-  CallbackFunc(StartMatchCBName, EmptyString());
+  callCallbackFunc(StartMatchCBName, TStrList());
   const bool TryInvert = Options.Contains("i");
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
   if( Options.Contains('w') )
@@ -6522,14 +6543,14 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       HelpWindowVisible = Cmds[1].ToBool();
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
-      TStateChange sc(prsHelpVis, HelpWindowVisible);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+      TStateRegistry::GetInstance().SetState(stateHelpWindowVisible,
+        HelpWindowVisible, EmptyString(), true);
     } 
     else  if( Cmds[0].Equalsi("info") )  {
       InfoWindowVisible = Cmds[1].ToBool();
       FInfoBox->SetVisible(InfoWindowVisible);
-      TStateChange sc(prsInfoVis, InfoWindowVisible);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+      TStateRegistry::GetInstance().SetState(stateInfoWidnowVisible,
+        InfoWindowVisible, EmptyString(), true);
       OnResize();
       FXApp->Draw();
     } 
@@ -6538,8 +6559,8 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       FCmdLine->Show(CmdLineVisible);
       if( CmdLineVisible )  FCmdLine->SetFocus();
       FGlConsole->SetPromptVisible(!CmdLineVisible);
-      TStateChange sc(prsCmdlVis, CmdLineVisible);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+      TStateRegistry::GetInstance().SetState(stateCmdLineVisible,
+        CmdLineVisible, EmptyString(), true);
       OnResize();
       FXApp->Draw();
     }
@@ -6549,14 +6570,14 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       HelpWindowVisible = !HelpWindowVisible;
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
-      TStateChange sc(prsHelpVis, HelpWindowVisible);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+      TStateRegistry::GetInstance().SetState(stateHelpWindowVisible,
+        HelpWindowVisible, EmptyString(), true);
     } 
     else if( Cmds[0].Equalsi("info") )  {
       InfoWindowVisible = !InfoWindowVisible;
       FInfoBox->SetVisible(InfoWindowVisible);
-      TStateChange sc(prsInfoVis, InfoWindowVisible);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+      TStateRegistry::GetInstance().SetState(stateInfoWidnowVisible,
+        InfoWindowVisible, EmptyString(), true);
       OnResize();
       FXApp->Draw();
     } 
@@ -6565,8 +6586,8 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       FCmdLine->Show( CmdLineVisible );
       if( CmdLineVisible )  FCmdLine->SetFocus();
       FGlConsole->SetPromptVisible(!CmdLineVisible);
-      TStateChange sc(prsCmdlVis, CmdLineVisible);
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+      TStateRegistry::GetInstance().SetState(stateCmdLineVisible,
+        CmdLineVisible, EmptyString(), true);
       OnResize();
       FXApp->Draw();
     }
@@ -9364,7 +9385,7 @@ void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options
 }
 //..............................................................................
 void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(CheckState(TStateChange::DecodeState(Params[0]),
+  E.SetRetVal(TStateRegistry::GetInstance().CheckState(Params[0],
     Params.Count() == 2 ? Params[1] : EmptyString()));
 }
 //..............................................................................

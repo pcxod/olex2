@@ -19,15 +19,19 @@ protected:
     double Occu;
     size_t LabelIndex;
   public:
-    TOccuModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TOccuModeUndo>(this, &TOccuModeUndo::undo)),
-      Atom(XA->CAtom()), LabelIndex(XA->GetOwnerId())
+    TOccuModeUndo(TXAtom* XA)
+      : TUndoData(new TUndoActionImplMF<TOccuModeUndo>(
+          this, &TOccuModeUndo::undo)),
+        Atom(XA->CAtom()), LabelIndex(XA->GetOwnerId())
     {
-      Occu = Atom.GetParent()->GetRefMod()->Vars.GetParam(Atom, catom_var_name_Sof);
+      Occu = Atom.GetParent()->GetRefMod()->Vars.GetParam(
+        Atom, catom_var_name_Sof);
     }
     void undo(TUndoData* data)  {
       if( TOccuMode::HasInstance )
-        TGlXApp::GetGXApp()->MarkLabel(LabelIndex, false);
-      Atom.GetParent()->GetRefMod()->Vars.SetParam(Atom, catom_var_name_Sof, Occu);
+        TGXApp::GetInstance().MarkLabel(LabelIndex, false);
+      Atom.GetParent()->GetRefMod()->Vars.SetParam(
+        Atom, catom_var_name_Sof, Occu);
     }
   };
 #ifdef __BORLANDC__
@@ -37,8 +41,8 @@ public:
   TOccuMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Occu = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
-    TGlXApp::GetMainForm()->SetUserCursor( Occu, "occu");
-    TGlXApp::GetMainForm()->processMacro("labels -ao");
+    SetUserCursor(Occu, "occu");
+    olex2.processMacro("labels -ao");
     return true;
   }
   ~TOccuMode() {  HasInstance = false;  }
@@ -46,10 +50,10 @@ public:
   virtual bool OnObject(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push(new TOccuModeUndo(&XA));
+      gxapp.GetUndo().Push(new TOccuModeUndo(&XA));
       XA.CAtom().GetParent()->GetRefMod()->Vars.SetParam(
         XA.CAtom(), catom_var_name_Sof, Occu);
-      TGlXApp::GetGXApp()->MarkLabel(XA, true);
+      gxapp.MarkLabel(XA, true);
       return true;
     }
     return false;

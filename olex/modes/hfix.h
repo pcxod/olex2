@@ -20,12 +20,12 @@ protected:
 public:
   THfixMode(size_t id) : AModeWithLabels(id), xlConGen(NULL)  {}
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
-    if( !TGlXApp::GetGXApp()->CheckFileType<TIns>() )
+    if( !gxapp.CheckFileType<TIns>() )
       return false;
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
-    xlConGen = new TXlConGen( TGlXApp::GetGXApp()->XFile().GetRM() );
-    TGlXApp::GetMainForm()->SetUserCursor( Hfix, "hfix");
-    TGlXApp::GetMainForm()->processMacro("labels -a -h");
+    xlConGen = new TXlConGen(gxapp.XFile().GetRM());
+    SetUserCursor(Hfix, "hfix");
+    olex2.processMacro("labels -a -h");
     return true;
   }
   void Finalise()  {
@@ -37,7 +37,7 @@ public:
       TXAtom *XA = &(TXAtom&)obj;
       int n = TAfixGroup::GetN(Hfix);
       if( TAfixGroup::IsFittedRing(Hfix) )  {
-        TGlXApp::GetGXApp()->AutoAfixRings(Hfix, XA, true);
+        gxapp.AutoAfixRings(Hfix, XA, true);
       }
       else if( Hfix == 0 )  {  // special case
         TCAtom& ca = XA->CAtom();
@@ -50,9 +50,10 @@ public:
         else if( ca.GetParentAfixGroup() != NULL )
           ca.GetParentAfixGroup()->Clear();
       }
-      else
-        TGlXApp::GetMainForm()->processMacro(
-        olxstr("hadd ") << Hfix << " #c" << XA->CAtom().GetId());
+      else {
+        olex2.processMacro(
+          olxstr("hadd ") << Hfix << " #c" << XA->CAtom().GetId());
+      }
       return true;
     }
     return false;

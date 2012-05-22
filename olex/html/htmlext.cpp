@@ -23,6 +23,7 @@
 
 olxstr THtml::SwitchSource;
 str_stack THtml::SwitchSources;
+size_t THtml::stateTooltipsVisible = InvalidIndex;
 
 BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_LEFT_DCLICK(THtml::OnMouseDblClick)
@@ -53,6 +54,14 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   MouseDown = false;
   ShowTooltips = true;
   PageLoadRequested = false;
+  if (stateTooltipsVisible == InvalidIndex) {
+    stateTooltipsVisible = TStateRegistry::GetInstance().Register("htmlttvis",
+      new TStateRegistry::Slot(
+        TStateRegistry::NewGetter(*this, &THtml::GetShowTooltips),
+        new TStateRegistry::TMacroSetter("html.Tooltips")
+      )
+    );
+  }
 }
 //..............................................................................
 THtml::~THtml()  {
@@ -825,8 +834,8 @@ void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
   ShowTooltips = v;
-  TStateChange sc(prsHtmlTTVis, v, html_name);
-  Manager.OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+  TStateRegistry::GetInstance().SetState(stateTooltipsVisible, v,
+    EmptyString(), true);
 }
 //..............................................................................
 void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2029,8 +2038,6 @@ THtmlManager::THtmlManager(wxWindow *mainWindow)
   : mainWindow(mainWindow),
     destroyed(false),
     main(NULL),
-    OnStateChange(Actions.New("OnStateChange")),
-    OnModeChange(Actions.New("OnModeChange")),
     OnLink(Actions.New("OnLink"))
 {
   AActionHandler::SetToDelete(false);

@@ -16,7 +16,6 @@
 #include "gxapp.h"
 #include "ctrls.h"
 #include "eprocess.h"
-#include "undo.h"
 #include "glconsole.h"
 #include "datafile.h"
 #include "gltextbox.h"
@@ -218,7 +217,7 @@ public:
   {
     TMacroError err;
     err.SetLocation(location);
-    const bool rv = Macros.ProcessFunction(cmd, err, false);  
+    const bool rv = Macros.ProcessFunction(cmd, err, false);
     AnalyseErrorEx(err, quiet);
     return rv;
   }
@@ -239,8 +238,7 @@ public:
       quiet ? NULL : &TMainForm::AnalyseError);
     return err.IsSuccessful();
   }
-  void CallbackFunc(const olxstr& cbEvent, const olxstr& param);
-  void CallbackFunc(const olxstr& cbEvent, TStrObjList& params);
+  virtual void callCallbackFunc(const olxstr& cbEvent, const TStrList& params);
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
 protected:
   bool Destroying;
@@ -279,11 +277,26 @@ protected:
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
-  // click-name states
-  uint32_t ProgramState;
 
-  class TModes *Modes;
-
+  class TModeRegistry *Modes;
+  class TStateRegistry *States;
+  size_t stateStructureVisible,
+    stateHydrogensVisible,
+    stateHydrogenBondsVisible,
+    stateQPeaksVisible,
+    stateQPeakBondsVisible,
+    stateCellVisible,
+    stateBasisVisible,
+    stateHtmlVisible,
+    statePluginInstalled,
+    stateInfoWidnowVisible,
+    stateHelpWindowVisible,
+    stateCmdLineVisible,
+    stateGradientOn,
+    stateLabelsVisible,
+    stateGlTooltips,
+    stateXGridVisible,
+    stateWBoxVisible;
    // solution mode variables
   TTypeList<long> Solutions;
   int CurrentSolution;
@@ -302,19 +315,17 @@ public:
   bool OnMouseUp(int x, int y, short Flags, short Buttons);
   bool OnMouseDblClick(int x, int y, short Flags, short Buttons);
   virtual bool Show(bool v);
-  TActionQueue &OnModeChange, &OnStateChange;
 
   void SetUserCursor(const olxstr& param, const olxstr& mode);
 
-  inline TUndoStack* GetUndoStack()  {  return FUndoStack;  }
+  const TModeRegistry& GetModes() const {  return *Modes;  }
 
-  const TModes& GetModes() const {  return *Modes;  }
-
-  void SetProgramState(bool val, uint32_t state, const olxstr& data );
   bool CheckMode(size_t mode, const olxstr& modeData);
-  bool CheckState(uint32_t state, const olxstr& stateData);
+  bool CheckState(size_t state, const olxstr& stateData) const;
   bool PopupMenu(wxMenu* menu, const wxPoint& p=wxDefaultPosition);
-  bool PopupMenu(wxMenu* menu, int x, int y)  {  return PopupMenu(menu, wxPoint(x,y));  }
+  bool PopupMenu(wxMenu* menu, int x, int y)  {
+    return PopupMenu(menu, wxPoint(x,y));
+  }
   void ToClipboard(const olxstr &text) const;
   void ToClipboard(const TStrList &text) const {
     ToClipboard(text.Text(NewLineSequence()));
@@ -663,15 +674,13 @@ private:
   DefFunc(FullScreen)
   DefFunc(MatchFiles)
   DefFunc(Freeze)
-
-  TUndoStack *FUndoStack;
 //..............................................................................
 public:
   const olxstr&  TranslatePhrase(const olxstr& phrase);
   virtual TLibrary& GetLibrary()  {  return FXApp->GetLibrary();  }
   virtual olxstr TranslateString(const olxstr& str) const;
   virtual bool IsControl(const olxstr& cname) const;
-  //..........................................................................................
+  //............................................................................
 
   void OnKeyUp(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);
@@ -691,7 +700,8 @@ public:
     ExecFontColor, InfoFontColor,
     WarningFontColor, ErrorFontColor, ExceptionFontColor;
 private:
-  bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
+  bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data=NULL);
   olxstr FLastSettingsFile;
 
   class ProcessHandler : public ProcessManager::IProcessHandler  {

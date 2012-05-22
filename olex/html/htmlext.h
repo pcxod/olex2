@@ -36,6 +36,7 @@ private:
   wxWindow* InFocus;
   TActionQList Actions;
   olxstr PopupName;
+  static size_t stateTooltipsVisible;
 protected:
   olxstr WebFolder, // the base of all web files
     FileName, HomePage;
@@ -320,9 +321,7 @@ public:
   THtml* FindHtml(const olxstr& name) const;
   TPopupData &NewPopup(TDialog *owner, const olxstr &name, long flags=4);
   olxstr_dict<TPopupData*, true> Popups;
-  TActionQueue &OnStateChange,
-    &OnModeChange,
-    &OnLink;
+  TActionQueue &OnLink;
 
 };
 

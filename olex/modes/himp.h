@@ -21,11 +21,11 @@ public:
       TBasicApp::NewLogEntry(logError) << "suspicious bond length";
       return false;
     }
-    TGlXApp::GetMainForm()->SetUserCursor("<->", olxstr(BondLength));
+    SetUserCursor("<->", olxstr(BondLength));
     return true;
   }
   void Finalise()  {
-    TXApp::GetInstance().XFile().GetLattice().UpdateConnectivity();
+    gxapp.XFile().GetLattice().UpdateConnectivity();
   }
   virtual bool OnObject(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
@@ -43,10 +43,9 @@ public:
         }
         if( aa != NULL )  {
           XA.crd() = aa->crd() + (XA.crd()-aa->crd()).NormaliseTo(BondLength);
-          XA.ccrd() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit()
-            .Fractionalise(XA.crd());
+          XA.ccrd() = gxapp.XFile().GetAsymmUnit().Fractionalise(XA.crd());
           XA.CAtom().ccrd() = XA.ccrd();
-          TGlXApp::GetGXApp()->MarkLabel(XA, true);
+          gxapp.MarkLabel(XA, true);
         }
       }
       else {
@@ -54,10 +53,10 @@ public:
           if (XA.Node(i).GetType().z != iHydrogenZ) continue;
           XA.Node(i).crd() = XA.crd() + (XA.Node(i).crd()-XA.crd())
             .NormaliseTo(BondLength);
-          XA.Node(i).ccrd() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit()
-            .Fractionalise(XA.Node(i).crd());
+          XA.Node(i).ccrd() = gxapp.XFile().GetAsymmUnit().Fractionalise(
+            XA.Node(i).crd());
           XA.Node(i).CAtom().ccrd() = XA.Node(i).ccrd();
-          TGlXApp::GetGXApp()->MarkLabel(XA.Node(i), true);
+          gxapp.MarkLabel(XA.Node(i), true);
         }
       }
       return true;

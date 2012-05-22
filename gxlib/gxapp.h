@@ -149,6 +149,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   /* makes sure that only bonds (and grow mode lines) with both atoms visible are visible,
  also considers H, and Q bonds special handling */
   void _syncBondsVisibility();
+  TUndoStack UndoStack;
 public:
   template <class obj_t, class act_t> struct TIterator  {
     size_t offset, count;
@@ -208,6 +209,7 @@ public:
   AtomIterator GetAtoms() const {  return AtomIterator(*this);  }
   BondIterator GetBonds() const {  return BondIterator(*this);  }
   PlaneIterator GetPlanes() const {  return PlaneIterator(*this);  }
+  TUndoStack &GetUndo() { return UndoStack; }
 protected:
   TGlRenderer* FGlRender;
   TXFader* Fader;
@@ -510,13 +512,13 @@ public:
   void MoveToCenter();
   void Compaq(bool AtomicLevel);
   void SetHydrogensVisible(bool v);
-  bool AreHydrogensVisible()  {  return FHydrogensVisible;  }
+  bool AreHydrogensVisible() const {  return FHydrogensVisible;  }
   void SetHBondsVisible(bool v, bool update_groups=true);
-  bool AreHBondsVisible()  {  return FHBondsVisible;  }
+  bool AreHBondsVisible() const {  return FHBondsVisible;  }
   void SetQPeaksVisible(bool v);
-  bool AreQPeaksVisible()  {  return FQPeaksVisible;  }
+  bool AreQPeaksVisible() const {  return FQPeaksVisible;  }
   void SetQPeakBondsVisible(bool v, bool update_groups=true);
-  bool AreQPeakBondsVisible()  {  return FQPeakBondsVisible;  }
+  bool AreQPeakBondsVisible() const {  return FQPeakBondsVisible;  }
   bool IsDisplayFrozen() const {  return DisplayFrozen;  }
   void SetDisplayFrozen(bool v)  {
     DisplayFrozen = v;
@@ -526,17 +528,17 @@ public:
   // hides all bonds for all hidden q-peaks
   void SetStructureVisible(bool v);
   void SetHklVisible(bool v);
-  bool IsHklVisible()  {  return FHklVisible;  }
-  bool IsStructureVisible() {  return FStructureVisible;  }
+  bool IsHklVisible() const {  return FHklVisible;  }
+  bool IsStructureVisible() const {  return FStructureVisible;  }
   void ShowPart(const TIntList& parts, bool show);
 
   void SetXGrowLinesVisible(bool v);
-  bool GetXGrowLinesVisible()  {  return FXGrowLinesVisible;  }
+  bool GetXGrowLinesVisible() const {  return FXGrowLinesVisible;  }
   short GetGrowMode() const {  return FGrowMode;  }
   void SetGrowMode(short v, const olxstr& atoms);
   //
   void SetXGrowPointsVisible(bool v);
-  bool GetXGrowPointsVisible()      {  return XGrowPointsVisible;  }
+  bool GetXGrowPointsVisible() const {  return XGrowPointsVisible;  }
   inline short GetPackMode()  const {  return PackMode;  }
   void SetPackMode(short v, const olxstr& atoms);
   //

@@ -25,7 +25,7 @@ void AButtonBase::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
 bool AButtonBase::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {
     const TModeChange* mc = (const TModeChange*)Data;
-    SetDown( mc->CheckStatus(DependMode) );
+    SetDown(TModeRegistry::CheckMode(DependMode));
   }
   return true;
 }
