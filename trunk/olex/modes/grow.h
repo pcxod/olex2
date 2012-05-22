@@ -9,7 +9,7 @@
 
 #ifndef __OLX_GROW_MODE_H
 #define __OLX_GROW_MODE_H
-
+#include "xgrowline.h"
 class TGrowMode : public AMode  {
 protected:
   bool GrowShells;
@@ -30,7 +30,7 @@ public:
     else if( VdW )  {
       mode = gmVanDerWaals;
       olxstr vr = Options.FindValue('v');
-      TGlXApp::GetGXApp()->SetDeltaV(vr.IsEmpty() ? 2.0 : vr.ToDouble());
+      gxapp.SetDeltaV(vr.IsEmpty() ? 2.0 : vr.ToDouble());
     }
     else if( Rad )
       mode = gmSameAtoms;
@@ -38,7 +38,7 @@ public:
       mode = gmCovalent;
     // the AU rebuilding mode, enfoces grow shells and covalent bonds only
     if( Options.Contains('a') )  {
-      TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+      TAsymmUnit &au = gxapp.XFile().GetAsymmUnit();
       detached.SetSize(au.AtomCount());
       for( size_t i=0; i < au.AtomCount(); i++ )  {
         TCAtom &a = au.GetAtom(i);
@@ -47,32 +47,32 @@ public:
           detached.SetTrue(i);
         }
       }
-      TGXApp::GetInstance().UpdateConnectivity();
+      gxapp.UpdateConnectivity();
       GrowShells = true;
       mode = gmCovalent;
     }
     const olxstr AtomsToGrow = Cmds.Text(' ');
-    TGlXApp::GetMainForm()->processMacro("cursor(hand)");
-    TGlXApp::GetGXApp()->SetGrowMode(mode, AtomsToGrow);
-    TGlXApp::GetGXApp()->SetXGrowLinesVisible(true);
-    TGlXApp::GetGXApp()->SetZoomAfterModelBuilt(false);
+    olex2.processMacro("cursor(hand)");
+    gxapp.SetGrowMode(mode, AtomsToGrow);
+    gxapp.SetXGrowLinesVisible(true);
+    gxapp.SetZoomAfterModelBuilt(false);
     return true;
   }
   void Finalise() {
-    TGlXApp::GetGXApp()->SetXGrowLinesVisible(false);
-    TGlXApp::GetGXApp()->SetZoomAfterModelBuilt(true);
+    gxapp.SetXGrowLinesVisible(false);
+    gxapp.SetZoomAfterModelBuilt(true);
     if( !detached.IsEmpty() )  {
-      TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+      TAsymmUnit &au = gxapp.XFile().GetAsymmUnit();
       for( size_t i=0; i < au.AtomCount(); i++ )  {
         if( detached[i] )
           au.GetAtom(i).SetDetached(false);
       }
-      TGXApp::GetInstance().XFile().GetLattice().CompaqQ();
+      gxapp.XFile().GetLattice().CompaqQ();
     }
   }
   void UpdateAU(size_t ac)  {
     if( detached.IsEmpty() )  return;
-    TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
+    TLattice& latt = gxapp.XFile().GetLattice();
     for( size_t i=ac; i < latt.GetObjects().atoms.Count(); i++ )  {
       TSAtom &aa = latt.GetObjects().atoms[i];
       for( size_t j=0; j < ac; j++ )  {
@@ -87,7 +87,7 @@ public:
     }
   }
   virtual bool OnObject(AGDrawObject& obj)  {
-    TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
+    TLattice& latt = gxapp.XFile().GetLattice();
     if( EsdlInstanceOf(obj, TXGrowLine) )  {
       TXGrowLine& xl = (TXGrowLine&)obj;
       if( GrowShells && mode == gmCovalent )  {

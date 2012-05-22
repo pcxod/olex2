@@ -8,14 +8,8 @@
 ******************************************************************************/
 
 #include "obase.h"
-#include "xglapp.h"
-#include "mainform.h"
 
-#include "xatom.h"
-#include "xbond.h"
 #include "modes/name.h"
-
-#include "glgroup.h"
 #include "modes/match.h"
 
 #include "ins.h"
@@ -27,185 +21,163 @@
 #include "modes/fixu.h"
 #include "modes/fixc.h"
 
-#include "xgrowline.h"
 #include "modes/grow.h"
 #include "xgrowpoint.h"
 #include "modes/pack.h"
 #include "modes/move.h"
 #include "modes/fit.h"
 
- bool TPartMode::HasInstance = false;
- bool TOccuMode::HasInstance = false;
- bool TFixUMode::HasInstance = false;
- bool TFixCMode::HasInstance = false;
- TNameMode* TNameMode::Instance = NULL;
+bool TPartMode::HasInstance = false;
+bool TOccuMode::HasInstance = false;
+bool TFixUMode::HasInstance = false;
+bool TFixCMode::HasInstance = false;
+TNameMode* TNameMode::Instance = NULL;
 
-AMode::AMode(size_t id) : Id(id)  {
+AMode::AMode(size_t id)
+  : Id(id), gxapp(TGXApp::GetInstance()),
+    olex2(*olex::IOlexProcessor::GetInstance())
+{
   TModeChange mc(Id, true);
-  TGlXApp::GetMainForm()->OnModeChange.Execute(NULL, &mc);
+  TModeRegistry::GetInstance().OnChange.Execute(NULL, &mc);
 }
 //..............................................................................
 AMode::~AMode() {
   TModeChange mc(Id, false);
-  TGlXApp::GetMainForm()->OnModeChange.Execute(NULL, &mc);
-  TGlXApp::GetMainForm()->processMacro("cursor()");  //r eset the screen cursor
-  TGlXApp::GetGXApp()->ClearLabelMarks();  // hide atom marks if any
+  TModeRegistry::GetInstance().OnChange.Execute(NULL, &mc);
+  //reset the screen cursor
+  olex2.processMacro("cursor()");
+  gxapp.ClearLabelMarks();  // hide atom marks if any
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 AModeWithLabels::AModeWithLabels(size_t id) : AMode(id)  {
-  LabelsVisible = TGlXApp::GetGXApp()->AreLabelsVisible();
-  LabelsMode = TGlXApp::GetGXApp()->GetLabelsMode();
+  LabelsVisible = gxapp.AreLabelsVisible();
+  LabelsMode = gxapp.GetLabelsMode();
 }
 //..............................................................................
 AModeWithLabels::~AModeWithLabels()  {
-  TGlXApp::GetGXApp()->SetLabelsVisible(LabelsVisible);
-  TGlXApp::GetGXApp()->SetLabelsMode(LabelsMode);
+  gxapp.SetLabelsVisible(LabelsVisible);
+  gxapp.SetLabelsMode(LabelsMode);
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TModes* TModes::Instance = NULL;
+olxstr TModeRegistry::ModeChangeCB = "modechange";
+TModeRegistry* TModeRegistry::Instance = NULL;
 
-TModes::TModes() {
-  if( Instance != NULL )  throw TFunctionFailedException(__OlxSourceInfo, "singleton");
+TModeRegistry::TModeRegistry()
+  : OnChange(Actions.New("OnChange"))
+{
+  if( Instance != NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
-  Modes.Add( "name",   new TModeFactory<TNameMode>(Modes.Count()+1));
-  Modes.Add( "match",  new TModeFactory<TMatchMode>(Modes.Count()+1));
-  Modes.Add( "split",  new TModeFactory<TSplitMode>(Modes.Count()+1));
-  Modes.Add( "himp",   new TModeFactory<THimpMode>(Modes.Count()+1));
-  Modes.Add( "hfix",   new TModeFactory<THfixMode>(Modes.Count()+1));
-  Modes.Add( "part",   new TModeFactory<TPartMode>(Modes.Count()+1));
-  Modes.Add( "occu",   new TModeFactory<TOccuMode>(Modes.Count()+1));
-  Modes.Add( "fixu",   new TModeFactory<TFixUMode>(Modes.Count()+1));
-  Modes.Add( "fixxyz", new TModeFactory<TFixCMode>(Modes.Count()+1));
-  Modes.Add( "grow",   new TModeFactory<TGrowMode>(Modes.Count()+1));
-  Modes.Add( "pack",   new TModeFactory<TPackMode>(Modes.Count()+1));
-  Modes.Add( "move",   new TModeFactory<TMoveMode>(Modes.Count()+1));
-  Modes.Add( "fit",   new TModeFactory<TFitMode>(Modes.Count()+1));
+  Modes.Add("name",   new TModeFactory<TNameMode>(Modes.Count()+1));
+  Modes.Add("match",  new TModeFactory<TMatchMode>(Modes.Count()+1));
+  Modes.Add("split",  new TModeFactory<TSplitMode>(Modes.Count()+1));
+  Modes.Add("himp",   new TModeFactory<THimpMode>(Modes.Count()+1));
+  Modes.Add("hfix",   new TModeFactory<THfixMode>(Modes.Count()+1));
+  Modes.Add("part",   new TModeFactory<TPartMode>(Modes.Count()+1));
+  Modes.Add("occu",   new TModeFactory<TOccuMode>(Modes.Count()+1));
+  Modes.Add("fixu",   new TModeFactory<TFixUMode>(Modes.Count()+1));
+  Modes.Add("fixxyz", new TModeFactory<TFixCMode>(Modes.Count()+1));
+  Modes.Add("grow",   new TModeFactory<TGrowMode>(Modes.Count()+1));
+  Modes.Add("pack",   new TModeFactory<TPackMode>(Modes.Count()+1));
+  Modes.Add("move",   new TModeFactory<TMoveMode>(Modes.Count()+1));
+  Modes.Add("fit",    new TModeFactory<TFitMode>(Modes.Count()+1));
   CurrentMode = NULL;
 }
 //..............................................................................
-AMode* TModes::SetMode(const olxstr& name)  {
-  AModeFactory* mf = Modes[name];
+AMode* TModeRegistry::SetMode(const olxstr& name, const olxstr &args)  {
+  AModeFactory* mf = Modes.Find(name, NULL);
   if( CurrentMode != NULL )  {
     CurrentMode->Finalise();
     delete CurrentMode;
   }
-  CurrentMode = NULL;  // mf->New Calls other functions, validating currnet mode...
+  CurrentMode = NULL;  // mf->New Calls other functions, validating current mode...
   CurrentMode = (mf == NULL) ? NULL : mf->New();
+  if (CurrentMode != NULL || name.Equalsi("off")) {
+    olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+    olxstr tmp = name;
+    if (!args.IsEmpty()) tmp << ' ' << args;
+    op->callCallbackFunc(ModeChangeCB, TStrList() << tmp);
+  }
   return CurrentMode;
 }
 //..............................................................................
-void TModes::ClearMode(bool finalise)  {
+void TModeRegistry::ClearMode(bool finalise)  {
   if( CurrentMode == NULL )  return;
   if( finalise )  CurrentMode->Finalise();
   delete CurrentMode;
   CurrentMode = NULL;
 }
 //..............................................................................
-TModes::~TModes()  {
+TModeRegistry::~TModeRegistry()  {
   for( size_t i=0; i < Modes.Count(); i++ )
-    delete Modes.GetObject(i);
+    delete Modes.GetValue(i);
   if( CurrentMode != NULL )
     delete CurrentMode;
   Instance = NULL;
 }
 //..............................................................................
-size_t TModes::DecodeMode(const olxstr& mode)  {
-  if( Instance == NULL )
+size_t TModeRegistry::DecodeMode(const olxstr& mode)  {
+  return GetInstance().Modes.IndexOf(mode) + 1;  // -1 +1 = 0 = mmNone
+}
+//..............................................................................
+TModeRegistry &TModeRegistry::GetInstance() {
+  if (Instance == NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised instance");
-  return Instance->Modes.IndexOf(mode) + 1;  // -1 +1 = 0 = mmNone
+  return *Instance;
 }
 //..............................................................................
-bool TModeChange::CheckStatus(const olxstr& mode, const olxstr& modeData)  {
-  return CheckStatus(TModes::DecodeMode(mode), modeData);
-}
-bool TModeChange::CheckStatus(size_t mode, const olxstr& modeData) {
-  return TGlXApp::GetMainForm()->CheckMode(mode, modeData);
-}
-
-//..............................................................................
-//..............................................................................
-//..............................................................................
-TStateChange::TStateChange(uint32_t state, bool status, const olxstr& data) {
-  FStatus = status;
-  State = state;
-  TGlXApp::GetMainForm()->SetProgramState(status,  state, data);
+bool TModeRegistry::CheckMode(size_t mode) {
+  TModeRegistry &inst = GetInstance();
+  return inst.GetCurrent() == NULL ? false
+    : inst.GetCurrent()->GetId() == mode;
 }
 //..............................................................................
-olxstr TStateChange::StrRepr(uint32_t State) {
-  switch( State )  {
-    case prsStrVis:     return "strvis";
-    case prsHVis:       return "hvis";
-    case prsHBVis:      return "hbvis";
-    case prsQVis:       return "qvis";
-    case prsQBVis:      return "qbvis";
-    case prsCellVis:    return "cellvis";
-    case prsBasisVis:   return "basisvis";
-    case prsHtmlVis:    return "htmlvis";
-    case prsHtmlTTVis:  return "htmlttvis";
-    case prsBmpVis:     return "bmpvis";
-    case prsInfoVis:    return "infovis";
-    case prsHelpVis:    return "helpvis";
-    case prsCmdlVis:    return "cmdlinevis";
-    case prsGradBG:     return "gradBG";
-    case prsLabels:     return "labelsvis";
-    case prsGLTT:       return "gltt";
-    case prsPluginInstalled:  return "pluginInstalled";
-    case prsGridVis:  return "gridvis";
-    case prsWBoxVis:  return "wboxvis";
-  }
-  return "none";
+bool TModeRegistry::CheckMode(const olxstr& mode) {
+  return CheckMode(DecodeMode(mode));
 }
 //..............................................................................
-uint32_t TStateChange::DecodeState(const olxstr& mode)  {
- if( mode.Equalsi("strvis") )
-   return prsStrVis;
-  else if( mode.Equalsi("hvis") )
-    return prsHVis;
-  else if( mode.Equalsi("hbvis") )
-    return prsHBVis;
-  else if( mode.Equalsi("qvis") )
-    return prsQVis;
-  else if( mode.Equalsi("qbvis") )
-    return prsQBVis;
-  else if( mode.Equalsi("cellvis") )
-    return prsCellVis;
-  else if( mode.Equalsi("basisvis") )
-    return prsBasisVis;
-  else if( mode.Equalsi("htmlvis") )
-    return prsHtmlVis;
-  else if( mode.Equalsi("htmlttvis") )
-    return prsHtmlTTVis;
-  else if( mode.Equalsi("bmpvis") )
-    return prsBmpVis;
-  else if( mode.Equalsi("pluginInstalled") )
-    return prsPluginInstalled;
-  else if( mode.Equalsi("infovis") )
-    return prsInfoVis;
-  else if( mode.Equalsi("helpvis") )
-    return prsHelpVis;
-  else if( mode.Equalsi("cmdlinevis") )
-    return prsCmdlVis;
-  else if( mode.Equalsi("gradBG") )
-    return prsGradBG;
-  else if( mode.Equalsi("labelsvis") )
-    return prsLabels;
-  else if( mode.Equalsi("GLTT") )
-    return prsGLTT;
-  else if( mode.Equalsi("gridvis") )
-    return prsGridVis;
-  else if( mode.Equalsi("wboxvis") )
-    return prsWBoxVis;
-  return prsNone;
+//..............................................................................
+//..............................................................................
+TStateRegistry *TStateRegistry::Instance = NULL;
+olxstr TStateRegistry::StateChangeCB = "statechange";
+//..............................................................................
+TStateRegistry::TStateRegistry()
+ : OnChange(Actions.New("state_change"))
+{
+  if( Instance != NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "singleton");
+  Instance = this;
 }
 //..............................................................................
-bool TStateChange::CheckStatus(const olxstr& stateName, const olxstr& stateData) {
-  return CheckStatus(TStateChange::DecodeState(stateName), stateData);
+void TStateRegistry::SetState(size_t id, bool status, const olxstr &data,
+  bool internal_call)
+{
+  TStateChange sc(id, status, data);
+  OnChange.Execute(NULL, &sc);
+  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  TStrList args;
+  args.Add(slots[id]->name);
+  args.Add(status);
+  if (!data.IsEmpty())
+    args.Add(data);
+  op->callCallbackFunc(StateChangeCB, args);
+  if (internal_call) return;
+  slots[id]->Set(status, data);
 }
 //..............................................................................
-bool TStateChange::CheckStatus(uint32_t state, const olxstr& stateData) {
-  return TGlXApp::GetMainForm()->CheckState(state, stateData);
+void TStateRegistry::TMacroSetter::operator ()(bool v, const olxstr &data) {
+  olxstr c = cmd;
+  c << ' ' << v;
+  if (!data.IsEmpty()) c << ' ' << data;
+  olex::IOlexProcessor::GetInstance()->processMacro(c, __OlxSrcInfo);
+}
+//..............................................................................
+TStateRegistry &TStateRegistry::GetInstance() {
+  if (Instance == NULL)
+    throw TFunctionFailedException(__OlxSourceInfo, "uninitialised instance");
+  return *Instance;
 }

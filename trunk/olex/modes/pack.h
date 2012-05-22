@@ -15,15 +15,15 @@ public:
   TPackMode(size_t id) : AMode(id)  {}
   bool Initialise(TStrObjList &Cmds, const TParamList &Options) {
     olxstr AtomsToGrow( Cmds.Text(' ') );
-    TGlXApp::GetMainForm()->processMacro("cursor(hand)");
-    TGlXApp::GetGXApp()->SetPackMode( 0, AtomsToGrow );
-    TGlXApp::GetGXApp()->SetXGrowPointsVisible(true);
+    olex2.processMacro("cursor(hand)");
+    gxapp.SetPackMode( 0, AtomsToGrow );
+    gxapp.SetXGrowPointsVisible(true);
     return true;
   }
-  void Finalise() {  TGlXApp::GetGXApp()->SetXGrowPointsVisible(false);  }
+  void Finalise() {  gxapp.SetXGrowPointsVisible(false);  }
   virtual bool OnObject(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXGrowPoint) )  {
-      TGlXApp::GetGXApp()->Grow((TXGrowPoint&)obj);
+      gxapp.Grow((TXGrowPoint&)obj);
       return true;
     }
     return false;

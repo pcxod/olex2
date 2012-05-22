@@ -15,6 +15,7 @@
 #include "wxzipfs.h"
 #include "integration.h"
 #include "utf8file.h"
+#include "../obase.h"
 
 #ifdef _UNICODE
   #define _StrFormat_ wxT("%ls")
@@ -555,7 +556,7 @@ TAG_HANDLER_PROC(tag)  {
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
     if( !modeDependent.IsEmpty() )
-      Btn->SetActionQueue(html->Manager.OnModeChange, modeDependent);
+      Btn->SetActionQueue(TModeRegistry::GetInstance().OnChange, modeDependent);
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(CreatedWindow, fl));
   }
 /******************* COMBOBOX *************************************************/
@@ -761,7 +762,7 @@ TAG_HANDLER_PROC(tag)  {
       Box->OnUncheck.Add(&html->Manager);
     }
     if( tag.HasParam(wxT("MODEDEPENDENT")) ) {
-      Box->SetActionQueue(html->Manager.OnModeChange,
+      Box->SetActionQueue(TModeRegistry::GetInstance().OnChange,
         tag.GetParam(wxT("MODEDEPENDENT")));
     }
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));

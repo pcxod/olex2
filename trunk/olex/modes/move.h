@@ -18,18 +18,18 @@ public:
   TMoveMode(size_t id) : AMode(id)  {}
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Copy = Options.Contains('c');
-    TXAtomPList Atoms = TGlXApp::GetGXApp()->FindXAtoms(Cmds.Text(' '), true);
+    TXAtomPList Atoms = gxapp.FindXAtoms(Cmds.Text(' '), true);
     for( size_t i=0; i < Atoms.Count(); i++ )
       Center += Atoms[i]->ccrd();
     if( Atoms.Count() != 0 )
       Center /= Atoms.Count();
-    TGlXApp::GetMainForm()->processMacro("cursor(hand)");
+    olex2.processMacro("cursor(hand)");
     return true;
   }
-  void Finalise()  {}  
+  void Finalise()  {}
   virtual bool OnObject(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
-      TGlXApp::GetGXApp()->MoveFragment(Center, &(TXAtom&)obj, Copy);
+      gxapp.MoveFragment(Center, &(TXAtom&)obj, Copy);
       return true;
     }
     return false;

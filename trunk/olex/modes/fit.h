@@ -47,21 +47,20 @@ class TFitMode : public AEventsDispatcher, public AMode  {
     }
     void undo(TUndoData *) {
       if (data.IsEmpty()) return;
-      TGXApp& app = *TGlXApp::GetGXApp();
       TAsymmUnit &au = *data[0].GetA()->GetParent();
       au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
       for (size_t i=0; i < data.Count(); i++) {
         data[i].A()->ccrd() = data[i].B();
         data[i].A()->SetTag(1);
       }
-      TGXApp::AtomIterator ai = app.GetAtoms();
+      TGXApp::AtomIterator ai = TGXApp::GetInstance().GetAtoms();
       while (ai.HasNext()) {
         TXAtom &xa = ai.Next();
         if (xa.CAtom().GetTag() != 1) continue;
         xa.ccrd() = xa.CAtom().ccrd();
         xa.crd() = au.Orthogonalise(xa.ccrd());
       }
-      app.XFile().GetLattice().Init();
+      TGXApp::GetInstance().XFile().GetLattice().Init();
     }
   };
   double AngleInc;
@@ -76,16 +75,15 @@ public:
       undo(NULL)
   {
     uniq_handler = new OnUniqHandler(*this);
-    TGXApp& app = *TGlXApp::GetGXApp();
-    app.OnObjectsCreate.Add(this, mode_fit_create, msiExit);
-    app.XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble,
+    gxapp.OnObjectsCreate.Add(this, mode_fit_create, msiExit);
+    gxapp.XFile().GetLattice().OnDisassemble.Add(this, mode_fit_disassemble,
       msiEnter);
-    app.XFile().GetLattice().OnStructureUniq.AddFirst(uniq_handler);
-    app.XFile().GetLattice().OnStructureGrow.AddFirst(uniq_handler);
-    TGlXApp::GetGXApp()->EnableSelection(false);
+    gxapp.XFile().GetLattice().OnStructureUniq.AddFirst(uniq_handler);
+    gxapp.XFile().GetLattice().OnStructureGrow.AddFirst(uniq_handler);
+    gxapp.EnableSelection(false);
   }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
-    if( TGlXApp::GetGXApp()->XFile().GetLattice().IsGenerated() )  {
+    if( gxapp.XFile().GetLattice().IsGenerated() )  {
       TBasicApp::NewLogEntry(logError) << "Unavailable for grown structures";
       return false;
     }
@@ -96,13 +94,13 @@ public:
         "Split and Afix are not compatible, atoms will be only split";
     }
     AtomsToMatch.Clear();
-    TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
-    TXAtomPList xatoms = TGlXApp::GetGXApp()->GetSelection().Extract<TXAtom>();
+    SetUserCursor('0', "<F>");
+    TXAtomPList xatoms = gxapp.GetSelection().Extract<TXAtom>();
     undo = new TFitModeUndo(xatoms);
     original_crds.SetCount(xatoms.Count());
     for( size_t i=0; i < xatoms.Count(); i++ )
       original_crds[i] = xatoms[i]->crd();
-    group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
+    group = &gxapp.GetRender().ReplaceSelection<TXGroup>();
     AngleInc = Options.FindValue("r", "0").ToDouble();
     group->SetAngleInc(AngleInc*M_PI/180);
     AddAtoms(xatoms);
@@ -110,28 +108,26 @@ public:
     return (Initialised = true);
   }
   ~TFitMode()  {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    app.OnObjectsCreate.Remove(this);
-    app.XFile().GetLattice().OnDisassemble.Remove(this);
-    app.XFile().GetLattice().OnStructureUniq.Remove(uniq_handler);
-    app.XFile().GetLattice().OnStructureGrow.Remove(uniq_handler);
+    gxapp.OnObjectsCreate.Remove(this);
+    gxapp.XFile().GetLattice().OnDisassemble.Remove(this);
+    gxapp.XFile().GetLattice().OnStructureUniq.Remove(uniq_handler);
+    gxapp.XFile().GetLattice().OnStructureGrow.Remove(uniq_handler);
     delete uniq_handler;
     if (undo != NULL) delete undo;
-    TGlXApp::GetGXApp()->EnableSelection(true);
+    gxapp.EnableSelection(true);
   }
   void Finalise() {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    app.GetRender().ReplaceSelection<TGlGroup>();
+    gxapp.GetRender().ReplaceSelection<TGlGroup>();
     Initialised = false;
-    RefinementModel& rm = app.XFile().GetRM();
-    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    RefinementModel& rm = gxapp.XFile().GetRM();
+    TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
     XVar& xv = rm.Vars.NewVar(0.75);
     if( DoSplit )  {
       TCAtomPList to_iso;
       for( size_t i=0; i < Atoms.Count(); i++ )  {
         if( Atoms[i]->crd().QDistanceTo(original_crds[i]) < 1e-3 )
           continue;
-        TXAtom& nxa = app.AddAtom(Atoms[i]);
+        TXAtom& nxa = gxapp.AddAtom(Atoms[i]);
         TCAtom& na = nxa.CAtom();
         // set parts
         int part = Atoms[i]->CAtom().GetPart();
@@ -159,24 +155,24 @@ public:
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(original_crds[i]);
         to_iso.Add(Atoms[i]->CAtom());
       }
-      app.XFile().GetLattice().SetAnis(to_iso, false);
-      app.XFile().GetLattice().Uniq();
+      gxapp.XFile().GetLattice().SetAnis(to_iso, false);
+      gxapp.XFile().GetLattice().Uniq();
     }
     else  {
       for( size_t i=0; i < Atoms.Count(); i++ )
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
       if (afix != -1 && !Atoms.IsEmpty()) {
         bool has_pivot = TAfixGroup::HasExcplicitPivot(afix);
-        TAfixGroup &ag = app.XFile().GetRM().AfixGroups.New(
+        TAfixGroup &ag = gxapp.XFile().GetRM().AfixGroups.New(
           has_pivot ? &Atoms[0]->CAtom() : NULL, afix);
         size_t start = has_pivot? 1 : 0;
         for( size_t i=start; i < Atoms.Count(); i++ )
           ag.AddDependent(Atoms[i]->CAtom());
       }
-      app.XFile().GetLattice().Init();
+      gxapp.XFile().GetLattice().Init();
     }
     if (undo != NULL) {
-      TGlXApp::GetMainForm()->GetUndoStack()->Push(undo);
+      gxapp.GetUndo().Push(undo);
       undo = NULL;
     }
   }
@@ -185,9 +181,10 @@ public:
       if( AtomsToMatch.IsEmpty() && Atoms.IndexOf((TXAtom&)obj) == InvalidIndex )
         return true;
       AtomsToMatch.Add((TXAtom&)obj);
-      TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<F>");
+      SetUserCursor(AtomsToMatch.Count(), "<F>");
       if( (AtomsToMatch.Count()%2) == 0 )  {
-        TMatchMode::FitAtoms(AtomsToMatch, "<F>", false);
+        TMatchMode::FitAtoms(AtomsToMatch, false);
+        SetUserCursor(AtomsToMatch.Count(), "<F>");
         group->UpdateRotationCenter();
       }
     }
@@ -197,20 +194,19 @@ public:
     const IEObject* Data=NULL)
   {
     if( !Initialised )  return false;
-    TGXApp& app = *TGlXApp::GetGXApp();
-    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
     if( msg == mode_fit_disassemble )  {
-      if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )
+      if( !EsdlInstanceOf(gxapp.GetRender().GetSelection(), TXGroup) )
         return true;
       for( size_t i=0; i < Atoms.Count(); i++ )
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
       Atoms.Clear();
       AtomsToMatch.Clear();
-      TGlXApp::GetMainForm()->SetUserCursor('0', "<F>");
+      SetUserCursor('0', "<F>");
     }
     else if( msg == mode_fit_create )  {
-      if( !EsdlInstanceOf(app.GetRender().GetSelection(), TXGroup) )  {
-        group = &TGlXApp::GetGXApp()->GetRender().ReplaceSelection<TXGroup>();
+      if( !EsdlInstanceOf(gxapp.GetRender().GetSelection(), TXGroup) )  {
+        group = &gxapp.GetRender().ReplaceSelection<TXGroup>();
         group->SetAngleInc(AngleInc*M_PI/180);
       }
       Atoms = group->Extract<TXAtom>();
@@ -224,7 +220,7 @@ public:
     if( shiftState == 0 && keyId == WXK_ESCAPE )  {
       if( AtomsToMatch.IsEmpty() )  return false;
       AtomsToMatch.Delete(AtomsToMatch.Count()-1);
-      TGlXApp::GetMainForm()->SetUserCursor(AtomsToMatch.Count(), "<F>");
+      SetUserCursor(AtomsToMatch.Count(), "<F>");
       return true;
     }
     return false;

@@ -34,7 +34,7 @@ void TCheckBox::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
 bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {
     const TModeChange* mc = (const TModeChange*)Data;
-    SetChecked( mc->CheckStatus(DependMode) );
+    SetChecked(TModeRegistry::CheckMode(DependMode));
   }
   OnClick.Execute((AOlxCtrl*)this);
   if( IsChecked() )

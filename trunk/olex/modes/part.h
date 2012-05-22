@@ -19,15 +19,17 @@ protected:
     int Part;
     size_t LabelIndex;
   public:
-    TPartModeUndo(TXAtom* XA) : TUndoData( new TUndoActionImplMF<TPartModeUndo>(this, &TPartModeUndo::undo)),
-      Atom(XA->CAtom()), LabelIndex(XA->GetOwnerId())
+    TPartModeUndo(TXAtom* XA)
+      : TUndoData(
+          new TUndoActionImplMF<TPartModeUndo>(this, &TPartModeUndo::undo)),
+        Atom(XA->CAtom()), LabelIndex(XA->GetOwnerId())
     {
       Part = Atom.GetPart();
     }
     void undo(TUndoData* data)  {
       if( TPartMode::HasInstance )
-        TGlXApp::GetGXApp()->MarkLabel(LabelIndex, false);
-      Atom.SetPart( Part );
+        TGXApp::GetInstance().MarkLabel(LabelIndex, false);
+      Atom.SetPart(Part);
     }
   };
 #ifdef __BORLANDC__
@@ -37,18 +39,20 @@ public:
   TPartMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     Part = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
-    TGlXApp::GetMainForm()->SetUserCursor( Part, "part");
-    TGlXApp::GetMainForm()->processMacro("labels -p -h");
+    SetUserCursor(Part, "part");
+    olex2.processMacro("labels -p -h");
     return true;
   }
   ~TPartMode() {  HasInstance = false;  }
-  void Finalise()  {  TXApp::GetInstance().XFile().GetLattice().UpdateConnectivity();  }
-  virtual bool OnObject(AGDrawObject& obj)  {
+  void Finalise() {
+    TXApp::GetInstance().XFile().GetLattice().UpdateConnectivity();
+  }
+  virtual bool OnObject(AGDrawObject& obj) {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push(new TPartModeUndo(&XA));
+      gxapp.GetUndo().Push(new TPartModeUndo(&XA));
       XA.CAtom().SetPart(Part);
-      TGlXApp::GetGXApp()->MarkLabel(XA, true);
+      gxapp.MarkLabel(XA, true);
       return true;
     }
     return false;

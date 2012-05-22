@@ -18,7 +18,7 @@ class TSplitMode : public AEventsDispatcher, public AMode  {
   TTypeList<AnAssociation2<TXAtom*,TXAtom*> > SplitAtoms;
 protected:
   void UpdateSelectionCrds() const {
-    TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
+    TGlGroup& sel = gxapp.GetSelection();
     if( sel.Count() > 1 )  {
       vec3d c, cr;
       TXAtomPList atoms;
@@ -32,10 +32,9 @@ protected:
     }
   }
   void UpdateCrds() const {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    const TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    const TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
     UpdateSelectionCrds();
-    TGXApp::AtomIterator ai = app.GetAtoms();
+    TGXApp::AtomIterator ai = gxapp.GetAtoms();
     while( ai.HasNext() )  {
       TXAtom& xa = ai.Next();
       // summ the translations
@@ -50,38 +49,35 @@ protected:
   olxstr ReCon; // restraint or constraint to use for split atoms
 public:
   TSplitMode(size_t id) : AMode(id)  {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    app.OnObjectsCreate.Add(this, mode_split_ObjectsCreate, msiExit);
-    app.XFile().GetLattice().OnDisassemble.Add(this, mode_split_Disassemble, msiEnter);
+    gxapp.OnObjectsCreate.Add(this, mode_split_ObjectsCreate, msiExit);
+    gxapp.XFile().GetLattice().OnDisassemble.Add(
+      this, mode_split_Disassemble, msiEnter);
   }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    if( !app.CheckFileType<TIns>() )  return false;
+    if( !gxapp.CheckFileType<TIns>() )  return false;
     ReCon = Options.FindValue("r", EmptyString()).ToLowerCase();
-    TGlXApp::GetMainForm()->processMacro("cursor(hand)");
-    TGXApp::AtomIterator ai = app.GetAtoms();
+    olex2.processMacro("cursor(hand)");
+    TGXApp::AtomIterator ai = gxapp.GetAtoms();
     while( ai.HasNext() )
       ai.Next().SetMoveable(true);
     return true;
   }
   ~TSplitMode()  {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    app.OnObjectsCreate.Remove(this);
-    app.XFile().GetLattice().OnDisassemble.Remove(this);
+    gxapp.OnObjectsCreate.Remove(this);
+    gxapp.XFile().GetLattice().OnDisassemble.Remove(this);
   }
   void Finalise() {
-    TGXApp& app = *TGlXApp::GetGXApp();
-    TIns& Ins = app.XFile().GetLastLoader<TIns>();
-    RefinementModel& rm = app.XFile().GetRM();
+    TIns& Ins = gxapp.XFile().GetLastLoader<TIns>();
+    RefinementModel& rm = gxapp.XFile().GetRM();
     UpdateCrds();
     // if this is not done here it interferes and may cause a crash
-    app.XFile().GetLattice().OnDisassemble.Remove(this);
-    app.OnObjectsCreate.Remove(this);
-    TGXApp::AtomIterator ai = app.GetAtoms();
+    gxapp.XFile().GetLattice().OnDisassemble.Remove(this);
+    gxapp.OnObjectsCreate.Remove(this);
+    TGXApp::AtomIterator ai = gxapp.GetAtoms();
     while( ai.HasNext() )
       ai.Next().SetMoveable(false);
     if( SplitAtoms.IsEmpty() )  {
-      app.XFile().GetLattice().UpdateConnectivity();
+      gxapp.XFile().GetLattice().UpdateConnectivity();
       return;
     }
     TCAtomPList to_isot;
@@ -110,13 +106,14 @@ public:
       if( sr != NULL )
         sr->AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
     }
-    app.XFile().GetLattice().SetAnis(to_isot, false);
-    app.XFile().GetLattice().Uniq();
+    gxapp.XFile().GetLattice().SetAnis(to_isot, false);
+    gxapp.XFile().GetLattice().Uniq();
   }
-  virtual bool Dispatch(int msg, short id, const IEObject* Sender, const IEObject* Data=NULL)  {  
-    TGXApp& app = *TGlXApp::GetGXApp();
+  virtual bool Dispatch(int msg, short id, const IEObject* Sender,
+    const IEObject* Data=NULL)
+  {
     if( msg == mode_split_ObjectsCreate )  {
-      TGXApp::AtomIterator ai = app.GetAtoms();
+      TGXApp::AtomIterator ai = gxapp.GetAtoms();
       while( ai.HasNext() )
         ai.Next().SetMoveable(true);
     }
@@ -135,8 +132,8 @@ public:
           break;
         }
       if( split )  {
-        TXAtom &xa = TGlXApp::GetGXApp()->AddAtom(XA);
-        const TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
+        TXAtom &xa = gxapp.AddAtom(XA);
+        const TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
         xa.SetMoveable(true);
         xa.SetRoteable(true);
         SplitAtoms.AddNew(XA, &xa);
@@ -157,11 +154,11 @@ public:
         xa.CAtom().SetLabel(au.CheckLabel(&xa.CAtom(), new_l), false);
         if( xa.GetType() == iQPeakZ )
           xa.CAtom().SetQPeak(1.0);
-        TGlXApp::GetGXApp()->XFile().GetLattice().UpdateConnectivity();
+        gxapp.XFile().GetLattice().UpdateConnectivity();
       }
       else  {  // do selection then
         UpdateSelectionCrds();
-        TGlXApp::GetGXApp()->GetRender().Select(*XA);
+        gxapp.GetRender().Select(*XA);
       }
       return true;
     }

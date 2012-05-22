@@ -50,12 +50,13 @@ namespace olex {
       const short MessageType = mtNone) = 0;
     virtual bool processFunction(olxstr& cmdl,
       const olxstr &location=EmptyString(), bool quiet=false) = 0;
-    //virtual IEObject* executeFunction(const olxstr& funcName) = 0;
     virtual TLibrary&  GetLibrary() = 0;
     virtual bool registerCallbackFunc(const olxstr& cbEvent,
       ABasicFunction* fn) = 0;
     virtual void unregisterCallbackFunc(const olxstr& cbEvent,
       const olxstr& funcName) = 0;
+    virtual void callCallbackFunc(const olxstr& cbEvent,
+      const TStrList& params) = 0;
 
     virtual const olxstr& getDataDir() const = 0;
     virtual const olxstr& getVar(const olxstr &name,

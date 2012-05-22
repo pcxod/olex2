@@ -124,6 +124,7 @@ public:
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     state = 1;
+    FParent->GetUndo().Clear();
     if( GrowInfo != NULL )  {
       delete GrowInfo;
       GrowInfo = NULL;

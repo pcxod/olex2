@@ -328,8 +328,6 @@ TMainForm::TMainForm(TGlXApp *Parent):
   TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
   Macros(*this),
   HtmlManager(*(new THtmlManager(this))),
-  OnModeChange(Actions.New("ONMODECHANGE")),
-  OnStateChange(Actions.New("ONSTATECHANGE")),
   _ProcessHandler(*this)
 {
   TEGC::AddP(&HtmlManager);
@@ -380,21 +378,17 @@ TMainForm::TMainForm(TGlXApp *Parent):
 
   FLastSettingsFile = "last.osp";
 
-  ProgramState = prsQVis|prsHVis|prsHBVis;
-
-  Modes = new TModes();
-  FUndoStack = new TUndoStack();
+  Modes = new TModeRegistry();
+  States = new TStateRegistry();
 
   FParent = Parent;
   ObjectUnderMouse(NULL);
   FHelpItem = NULL;
   FTimer = new TTimer;
-  HelpFontColorCmd.SetFlags(sglmAmbientF);  HelpFontColorTxt.SetFlags(sglmAmbientF);
-  HelpFontColorCmd.AmbientF = 0x00ffff;     HelpFontColorTxt.AmbientF = 0x00ffff00;
-
-//  ConsoleFontColor
-//  NotesFontColor
-//  LabelsFontColor
+  HelpFontColorCmd.SetFlags(sglmAmbientF);
+  HelpFontColorTxt.SetFlags(sglmAmbientF);
+  HelpFontColorCmd.AmbientF = 0x00ffff;
+  HelpFontColorTxt.AmbientF = 0x00ffff00;
 
   ExecFontColor.SetFlags(sglmAmbientF);
   ExecFontColor.AmbientF = 0x00ffff;
@@ -434,6 +428,7 @@ TMainForm::~TMainForm()  {
   if( UpdateProgress != NULL )
     delete UpdateProgress;
   delete Modes;
+  delete States;
   for( size_t i=0; i < CallbackFuncs.Count(); i++ )
     delete CallbackFuncs.GetObject(i);
   // delete FIOExt;
@@ -460,7 +455,6 @@ TMainForm::~TMainForm()  {
   delete pmLattice;
   delete pmGrid;
 
-  delete FUndoStack;
   // leave it for the end
   delete _ProcessManager;
   // the order is VERY important!
@@ -1217,7 +1211,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitFunc(Sel, fpNone|psFileLoaded);
   this_InitFunc(FPS, fpNone);
 
-  this_InitFunc(Cursor, fpNone|fpOne|fpTwo);
+  this_InitFunc(Cursor, fpNone|fpOne|fpTwo|fpThree);
   this_InitFunc(RGB, fpThree|fpFour);
   this_InitFunc(Color, fpNone|fpOne|fpTwo);
 
@@ -1593,9 +1587,114 @@ void TMainForm::XApp(TGXApp *XA)  {
   FXApp->XFile().OnFileClose.Add(this, ID_FileClose);
   FXApp->XFile().GetRM().OnSetBadReflections.Add(this, ID_BadReflectionSet);
   FXApp->XFile().GetRM().OnCellDifference.Add(this, ID_CellChanged);
+  stateStructureVisible = States->Register("strvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*FXApp, &TGXApp::IsStructureVisible),
+      new TStateRegistry::TMacroSetter("ShowStr")
+    )
+  );
+
+  stateHydrogensVisible = States->Register("hvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreHydrogensVisible),
+      new TStateRegistry::TMacroSetter("ShowH a")
+    )
+  );
+  stateHydrogenBondsVisible = States->Register("hbvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreHBondsVisible),
+      new TStateRegistry::TMacroSetter("ShowH b")
+    )
+  );
+  stateQPeaksVisible = States->Register("qvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreQPeaksVisible),
+      new TStateRegistry::TMacroSetter("ShowQ a")
+    )
+  );
+  stateQPeakBondsVisible = States->Register("qbvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreQPeakBondsVisible),
+      new TStateRegistry::TMacroSetter("ShowQ b")
+    )
+  );
+  stateCellVisible = States->Register("cellvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TDUnitCell>(FXApp->DUnitCell(),
+        &TDUnitCell::IsVisible),
+      new TStateRegistry::TMacroSetter("cell")
+    )
+  );
+  stateBasisVisible = States->Register("basisvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TDBasis>(FXApp->DBasis(),
+        &TDBasis::IsVisible),
+      new TStateRegistry::TMacroSetter("basis")
+    )
+  );
+  stateHtmlVisible = States->Register("htmlvis",
+    new TStateRegistry::Slot(
+      States->NewGetter(*this, &TMainForm::CheckState),
+      new TStateRegistry::TMacroSetter("HtmlPanelVisible")
+    )
+  );
+  statePluginInstalled = States->Register("pluginInstalled",
+    new TStateRegistry::Slot(
+      States->NewGetter(*this, &TMainForm::CheckState),
+      new TStateRegistry::TMacroSetter("HtmlPanelVisible")
+    )
+  );
+  stateInfoWidnowVisible = States->Register("infovis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TGlTextBox>(*FInfoBox, &TGlTextBox::IsVisible),
+      new TStateRegistry::TMacroSetter("ShowWindow info")
+    )
+  );
+  stateHelpWindowVisible = States->Register("helpvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TGlTextBox>(*FHelpWindow, &TGlTextBox::IsVisible),
+      new TStateRegistry::TMacroSetter("ShowWindow help")
+    )
+  );
+  stateCmdLineVisible = States->Register("cmdlinevis",
+    new TStateRegistry::Slot(
+      States->NewGetter(*this, &TMainForm::CheckState),
+      new TStateRegistry::TMacroSetter("ShowWindow cmdline")
+    )
+  );
+  stateGradientOn = States->Register("gradBG",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TGlBackground>(*FXApp->GetRender().Background(),
+        &TGlBackground::IsVisible),
+      new TStateRegistry::TMacroSetter("grad")
+    )
+  );
+  stateLabelsVisible = States->Register("labelsvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreLabelsVisible),
+      new TStateRegistry::TMacroSetter("labels")
+    )
+  );
+  stateXGridVisible = States->Register("gridvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TXGrid>(FXApp->XGrid(),
+        &TXGrid::IsVisible),
+      new TStateRegistry::TNoneSetter()
+    )
+  );
+  stateWBoxVisible = States->Register("wboxvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<T3DFrameCtrl>(FXApp->Get3DFrame(),
+        &T3DFrameCtrl::IsVisible),
+      TStateRegistry::NewSetter<T3DFrameCtrl>(FXApp->Get3DFrame(),
+        &T3DFrameCtrl::SetVisible)
+    )
+  );
+  //stateGlTooltips = States->Register("GLTT");
+
   // synchronise if value is different in settings file...
   miHtmlPanel->Check(!FHtmlMinimized);
-#ifdef __WIN32__  
+#ifdef __WIN32__
   SplashDlg splash_dlg(this);
   RefreshTh rth(splash_dlg);
   splash_dlg.Show();
@@ -1744,8 +1843,8 @@ void TMainForm::StartupInit()  {
     FPluginItem = FPluginFile.Root().FindItem("Plugin");
     // manually activate the events
     for( size_t i=0; i < FPluginItem->ItemCount(); i++ )  {
-      TStateChange sc(prsPluginInstalled, true, FPluginItem->GetItem(i).GetName());
-      OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+      TStateRegistry::GetInstance().SetState(
+        statePluginInstalled, true, FPluginItem->GetItem(i).GetName(), true);
     }
   }
   else
@@ -1753,9 +1852,8 @@ void TMainForm::StartupInit()  {
 
   // set the variables
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    processMacro(olxstr("setvar(") << StoredParams.GetKey(i)
-                    << ",\'" << StoredParams.GetObject(i)
-                    << "\')");
+    processMacro(olxstr("setvar(") << StoredParams.GetKey(i) << ",\'" <<
+      StoredParams.GetObject(i) << "\')");
 
   }
 
@@ -2198,8 +2296,6 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       Modes->GetCurrent()->OnGraphicsDestroy();
   }
   else if( MsgId == ID_FileLoad )  {
-    if( MsgSubId == msiEnter )
-      FUndoStack->Clear();
   }
   else if( MsgId == ID_FileClose )  {
     if( MsgSubId == msiExit )  {
@@ -3550,7 +3646,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
         FXApp->GetRender().GetBasis().Rotate(V, acos(ca));
       N = FXApp->GetRender().GetBasis().GetMatrix()[2];
       Tmp="got: ";
-      Tmp << N.ToString(); 
+      Tmp << N.ToString();
       TBasicApp::NewLogEntry() << Tmp;
 
       FXApp->Draw();
@@ -3567,38 +3663,27 @@ bool TMainForm::CheckMode(size_t mode, const olxstr& modeData)  {
   return mode == Modes->GetCurrent()->GetId();
 }
 //..............................................................................
-bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
-  if( stateData.IsEmpty() )
-    return (ProgramState & state) != 0;
-
-  if( state == prsHtmlVis )  {
-    if( stateData.IsEmpty() )
-      return FHtmlMinimized;
+bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
+  if (state == stateHtmlVisible) {
+    if (stateData.IsEmpty()) return FHtmlMinimized;
     THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
     return (pp != NULL) ? pp->Dialog->IsShown() : false;
   }
-  if( state == prsHtmlTTVis )  {
-    if( stateData.IsEmpty() )
-      return HtmlManager.main->GetShowTooltips();
-    THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
-    return (pp != NULL) ? pp->Html->GetShowTooltips() : false;
+  //if( state == prsHtmlTTVis )  {
+  //  if( stateData.IsEmpty() )
+  //    return HtmlManager.main->GetShowTooltips();
+  //  THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
+  //  return (pp != NULL) ? pp->Html->GetShowTooltips() : false;
+  //}
+  if (state == statePluginInstalled) {
+    if( stateData.IsEmpty() ) return false;
+    return FPluginItem->ItemExists(stateData);
   }
-  if( state == prsPluginInstalled )  {
-    if( stateData.IsEmpty() )
-      return false;
-    return FPluginItem->ItemExists( stateData );
-  }
-  if( state == prsHelpVis )
-    return HelpWindowVisible;
-  if( state == prsInfoVis )
-    return InfoWindowVisible;
-  if( state == prsCmdlVis )
+  if( state == stateCmdLineVisible )
     return CmdLineVisible;
-  if( state == prsGradBG )
-    return FXApp->GetRender().Background()->IsVisible();
-  if( state == prsGridVis )
+  if( state == stateXGridVisible )
     return FXApp->XGrid().IsVisible();
-  if( state == prsWBoxVis )
+  if( state == stateWBoxVisible )
     return FXApp->Get3DFrame().IsVisible();
   return false;
 }
@@ -3777,38 +3862,11 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
   else if( charStr == "PGDN" ) Char = WXK_PAGEDOWN;
   else if( charStr == "END" )  Char = WXK_END;
   else if( charStr == "DEL" )  Char = WXK_DELETE;
-  else if( charStr == "INS" )  Char = WXK_INSERT;  
+  else if( charStr == "INS" )  Char = WXK_INSERT;
   else if( charStr == "BREAK" ) Char = WXK_PAUSE;
   else if( charStr == "BACK" ) Char = WXK_BACK;
 
   return Char!=0 ? ((Shift << 16)|Char) : -1;
-}
-//..............................................................................
-void TMainForm::SetProgramState(bool val, uint32_t state, const olxstr& data )  {
-  olx_set_bit(val, ProgramState, state);
-  uint32_t st = state;
-  while( (st%2) == 0 && st > 0 )
-    st /= 2;
-  if( st > 1 )  {  // multiple values
-    for( int i=0; i < 32; i++ )  {
-      st = 1 << i;
-      if( (state & st) == 0 )  continue;
-      TStrObjList args;
-      args.Add( TStateChange::StrRepr(st) );
-      args.Add( val );
-      if( !data.IsEmpty() )
-        args.Add(data);
-      CallbackFunc(OnStateChangeCBName, args);
-    }
-  }
-  else  {
-    TStrObjList args;
-    args.Add( TStateChange::StrRepr(state) );
-    args.Add( val );
-    if( !data.IsEmpty() )
-      args.Add(data);
-    CallbackFunc(OnStateChangeCBName, args);
-  }
 }
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
@@ -3928,11 +3986,10 @@ olxstr TMainForm::TranslateString(const olxstr& str) const {
 void TMainForm::UseGlTooltip(bool v)  {
   if( v == _UseGlTooltip )
     return;
-  TStateChange sc(prsGLTT, v);
+  TStateRegistry::GetInstance().SetState(stateGlTooltips, v, EmptyString(), false);
   _UseGlTooltip = v;
   if( v )
     FGlCanvas->SetToolTip(wxT(""));
-  OnStateChange.Execute((AOlxCtrl*)this, &sc);
 }
 //..............................................................................
 //..............................................................................
@@ -3984,31 +4041,15 @@ void TMainForm::setVar(const olxstr &name, const olxstr &val) const {
   TOlxVars::SetVar(name, val);
 }
 //..............................................................................
-void TMainForm::CallbackFunc(const olxstr& cbEvent, TStrObjList& params)  {
-  static TSizeList indexes;
-  static TMacroError me;
-  indexes.Clear();
+void TMainForm::callCallbackFunc(const olxstr& cbEvent, const TStrList& params)
+{
+  TSizeList indexes;
+  TMacroError me;
   CallbackFuncs.GetIndexes(cbEvent, indexes);
   for( size_t i=0; i < indexes.Count(); i++ )  {
+    CallbackFuncs.GetObject(indexes[i])->Run(params, me);
+    AnalyseError(me);
     me.Reset();
-    CallbackFuncs.GetObject( indexes[i] )->Run(params, me);
-    AnalyseError( me );
-  }
-}
-//..............................................................................
-void TMainForm::CallbackFunc(const olxstr& cbEvent, const olxstr& param)  {
-  static TSizeList indexes;
-  static TMacroError me;
-  static TStrObjList sl;
-  indexes.Clear();
-  sl.Clear();
-  sl.Add( param );
-
-  CallbackFuncs.GetIndexes(cbEvent, indexes);
-  for( size_t i=0; i < indexes.Count(); i++ )  {
-    me.Reset();
-    CallbackFuncs.GetObject( indexes[i] )->Run(sl, me);
-    AnalyseError( me );
   }
 }
 //..............................................................................
@@ -4317,7 +4358,7 @@ void TMainForm::ProcessHandler::BeforePrint() {
 void TMainForm::ProcessHandler::Print(const olxstr& line)  {
   if( !line.IsEmpty() )  {
     TBasicApp::GetLog() << line;
-    parent.CallbackFunc(ProcessOutputCBName, line);
+    parent.callCallbackFunc(ProcessOutputCBName, TStrList() << line);
     printed = true;
   }
 }
