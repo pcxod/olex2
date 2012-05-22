@@ -12,6 +12,7 @@
 #include "estlist.h"
 #include "integration.h"
 #include "gxapp.h"
+#undef Status
 
 class TStateChange: public IEObject {
   const size_t State;
@@ -32,7 +33,7 @@ public:
     virtual ~IGetter() {}
     virtual bool operator ()(const olxstr &) const = 0;
   };
-  
+
   template <class base_t>
   struct TMemberFunctionGetter_0 : public IGetter {
     const base_t &instance;
