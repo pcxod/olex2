@@ -36,6 +36,7 @@
 #include "povdraw.h"
 #include "dring.h"
 #include "dusero.h"
+#include "gxmacro.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -300,6 +301,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
   if (ma < 0) ma = 0;
   else if (ma > 0.75) ma = 0.75;
   TXAtom::SetMinQAlpha(ma);
+  GXLibMacros::Export(Library);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
@@ -1800,7 +1802,8 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name, bool CheckLabel)  {
   cm_Element* elm = XElementLib::FindBySymbolEx(Name);
   if( elm == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid element");
-  TNameUndo *undo = new TNameUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
+  TNameUndo *undo = new TNameUndo(
+    new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
   olxstr oldL = XA.GetLabel();
   bool recreate = ((elm == NULL) ? true : XA.GetType() != *elm);
   if( Name.Length() == elm->symbol.Length() && oldL.StartsFromi(XA.GetType().symbol) )
@@ -3122,7 +3125,7 @@ void TGXApp::SetStructureVisible(bool v)  {
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr& fn)  {
   FXFile->LoadFromFile(fn);
-  if( !FStructureVisible )  
+  if( !FStructureVisible )
     NewLogEntry() << "Note: structure is invisible";
   else {
     if( !FQPeaksVisible ) 

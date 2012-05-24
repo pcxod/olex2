@@ -72,13 +72,14 @@ struct TGlMMoveEvent  {
 class TGlMouse: public IEObject  {
   class TGlRenderer *FParent;
   class TDFrame *FDFrame;
+  TActionQList Actions;
 protected:
   int FSX, FSY;
   bool FButtonDown, FDblClick;
   TPtrList<TGlMMoveEvent> Handlers;
   TMouseData MData;
   short Action;
-  bool SelectionEnabled;
+  bool SelectionEnabled, InMode;
   class TGlGroup* FindObjectGroup(const AGDrawObject& obj);
   // to distinguish clicking on an object 
   int ClickThreshold;
@@ -98,6 +99,9 @@ public:
   // is set by handlers
   void SetAction(short A)  {  Action = A;  }
   DefPropBIsSet(SelectionEnabled)
+  DefPropBIsSet(InMode)
+
+  TActionQueue &OnObject;
 };
 
 // default behaviour to mouse events

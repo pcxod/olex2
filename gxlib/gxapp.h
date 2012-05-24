@@ -146,8 +146,9 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
 // drawing data and functions
   double FPictureResolution;
   TStrList IndividualCollections;
-  /* makes sure that only bonds (and grow mode lines) with both atoms visible are visible,
- also considers H, and Q bonds special handling */
+  /* makes sure that only bonds (and grow mode lines) with both atoms visible
+  are visible, also considers H, and Q bonds special handling
+  */
   void _syncBondsVisibility();
   TUndoStack UndoStack;
 public:
@@ -178,30 +179,36 @@ public:
   };
   struct AtomIterator : public TIterator<TSAtom, TXAtom>  {
     AtomIterator(const TGXApp& app)  {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().
+        atoms.GetAccessor<TXAtom>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().atoms.GetAccessor<TXAtom>());
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
+          atoms.GetAccessor<TXAtom>());
         count += objects.GetLast().Count();
       }
     }
   };
   struct BondIterator : public TIterator<TSBond, TXBond>  {
     BondIterator(const TGXApp& app)  {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().
+        bonds.GetAccessor<TXBond>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().bonds.GetAccessor<TXBond>());
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
+          bonds.GetAccessor<TXBond>());
         count += objects.GetLast().Count();
       }
     }
   };
   struct PlaneIterator : public TIterator<TSPlane, TXPlane>  {
     PlaneIterator(const TGXApp& app)  {
-      objects.AddCopy(app.XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+      objects.AddCopy(app.XFile().GetLattice().GetObjects().
+        planes.GetAccessor<TXPlane>());
       count += objects.GetLast().Count();
       for( size_t i=0; i < app.OverlayedXFiles.Count(); i++ )  {
-        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().planes.GetAccessor<TXPlane>());
+        objects.AddCopy(app.OverlayedXFiles[i].GetLattice().GetObjects().
+          planes.GetAccessor<TXPlane>());
         count += objects.GetLast().Count();
       }
     }
@@ -224,17 +231,20 @@ protected:
   TXGrid* FXGrid;
 
   void FragmentVisible( TNetwork *N, bool V);
-  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
+  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data=NULL);
   void GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result);
   struct BondRef  {
     const TLattice& latt;
     TSBond::Ref ref;
-    BondRef(const TLattice& _latt, const TSBond::Ref& _ref): latt(_latt), ref(_ref)  {}
+    BondRef(const TLattice& _latt, const TSBond::Ref& _ref)
+      : latt(_latt), ref(_ref)  {}
   };
   struct AtomRef  {
     const TLattice& latt;
     TSAtom::Ref ref;
-    AtomRef(const TLattice& _latt, const TSAtom::Ref& _ref): latt(_latt), ref(_ref)  {}
+    AtomRef(const TLattice& _latt, const TSAtom::Ref& _ref)
+      : latt(_latt), ref(_ref)  {}
   };
   struct GroupData  {
     TTypeList<AtomRef> atoms;
@@ -370,9 +380,11 @@ public:
 //..............................................................................
 // GlRender interface
   void ClearColor(int Color) {  FGlRender->LightModel.SetClearColor(Color); }
-  inline uint32_t ClearColor() const {  return FGlRender->LightModel.GetClearColor().GetRGB(); }
-  inline TGlRenderer& GetRender() const {  return *FGlRender; }
-  inline TXFader& GetFader() {  return *Fader; }
+  uint32_t ClearColor() const {
+    return FGlRender->LightModel.GetClearColor().GetRGB();
+  }
+  TGlRenderer& GetRender() const {  return *FGlRender; }
+  TXFader& GetFader() {  return *Fader; }
   void InitFadeMode();
 
   // implementation of BasicApp function - renders the scene
@@ -380,7 +392,9 @@ public:
   DefPropBIsSet(MainFormVisible)
   // renders the scene and returns used time in ms
   uint64_t Draw();
-  // prepares drawing on a bitmap, recreates graphics with different parameters, scales fonts
+  /* prepares drawing on a bitmap, recreates graphics with different
+  parameters, scales fonts
+  */
   void BeginDrawBitmap(double res);
   // restores the on-screen rendering
   void FinishDrawBitmap();
@@ -388,21 +402,24 @@ public:
   AGDrawObject* SelectObject(int x, int y, int depth=0)  {
     return FGlRender->SelectObject(x, y, depth);
   }
-  TGlPrimitive *SelectPrimitive(int x, int y)  {  return FGlRender->SelectPrimitive(x, y); }
+  TGlPrimitive *SelectPrimitive(int x, int y)  {
+    return FGlRender->SelectPrimitive(x, y);
+  }
   DefPropP(double, ExtraZoom)
 //..............................................................................
 // TXApp interface
-  inline TDUnitCell& DUnitCell()  {  return *FDUnitCell; }
-  inline TDBasis& DBasis()  {  return *FDBasis; }
-  inline THklFile& HklFile()  {  return *FHklFile; }
-  inline TDFrame& DFrame()  {  return *FDFrame; }
-  inline TXGrid& XGrid() const {  return *FXGrid;  }
-  inline T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
+  TDUnitCell& DUnitCell()  {  return *FDUnitCell; }
+  TDBasis& DBasis()  {  return *FDBasis; }
+  THklFile& HklFile()  {  return *FHklFile; }
+  TDFrame& DFrame()  {  return *FDFrame; }
+  TXGrid& XGrid() const {  return *FXGrid;  }
+  T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
+  TGlMouse& GetMouseHandler() const { return *FGlMouse; }
 
   // this function to be used to get all networks, including th overlayed files
   size_t GetNetworks(TNetPList& nets);
   // overlayed files
-  inline size_t OverlayedXFileCount() const {  return OverlayedXFiles.Count();  }
+  size_t OverlayedXFileCount() const {  return OverlayedXFiles.Count();  }
   TXFile& GetOverlayedXFile(size_t i)  {  return OverlayedXFiles[i];  }
   // sets current active XFile...
   void SetActiveXFile(size_t i);
@@ -417,9 +434,13 @@ public:
   void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select);
   void InvertSelection()  {  GetRender().InvertSelection();  Draw();  }
-  inline TGlGroup* FindObjectGroup(AGDrawObject& G)  {  return GetRender().FindObjectGroup(G);  }
-  inline TGlGroup* FindGroup(const olxstr& colName)  {  return GetRender().FindGroupByName(colName);  }
-  inline TGlGroup& GetSelection() const {  return GetRender().GetSelection();  }
+  TGlGroup* FindObjectGroup(AGDrawObject& G)  {
+    return GetRender().FindObjectGroup(G);
+  }
+  TGlGroup* FindGroup(const olxstr& colName)  {
+    return GetRender().FindGroupByName(colName);
+  }
+  TGlGroup& GetSelection() const {  return GetRender().GetSelection();  }
   void GroupSelection(const olxstr& name);
   void UnGroupSelection();
   void UnGroup(TGlGroup& G);
@@ -429,13 +450,13 @@ public:
   virtual void ExpandSelection(TCAtomGroup& atoms);
   virtual void ExpandSelectionEx(TSAtomPList& atoms);
 
-  TGlBitmap* CreateGlBitmap(const olxstr& name,
-    int left, int top, int width, int height, unsigned char* RGBa, unsigned int format);
+  TGlBitmap* CreateGlBitmap(const olxstr& name, int left, int top,
+    int width, int height, unsigned char* RGBa, unsigned int format);
     
   TGlBitmap* FindGlBitmap(const olxstr& name);
   void DeleteGlBitmap(const olxstr& name);
-  inline size_t GlBitmapCount() const {  return GlBitmaps.Count();  }
-  inline TGlBitmap& GlBitmap(size_t i)  {  return *GlBitmaps[i];  }
+  size_t GlBitmapCount() const {  return GlBitmaps.Count();  }
+  TGlBitmap& GlBitmap(size_t i)  {  return *GlBitmaps[i];  }
 
   bool ShowGrid(bool v, const olxstr& FN=EmptyString());
   bool IsGridVisible() const;
@@ -539,7 +560,7 @@ public:
   //
   void SetXGrowPointsVisible(bool v);
   bool GetXGrowPointsVisible() const {  return XGrowPointsVisible;  }
-  inline short GetPackMode()  const {  return PackMode;  }
+  short GetPackMode()  const {  return PackMode;  }
   void SetPackMode(short v, const olxstr& atoms);
   //
 protected:
@@ -562,11 +583,11 @@ public:
 
   //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   //const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }
-  //inline size_t AtomCount() const {  return XAtoms.Count();  }
+  //size_t AtomCount() const {  return XAtoms.Count();  }
 
   //TXBond& GetBond(size_t i) {  return XBonds[i];  }
   //const TXBond& GetBond(size_t i) const {  return XBonds[i];  }
-  //inline size_t BondCount() const {  return XBonds.Count();  }
+  //size_t BondCount() const {  return XBonds.Count();  }
 
 protected:
   /* the function simply checks if there are any invisible bonds connectd to the
@@ -669,7 +690,7 @@ public:     void CalcProbFactor(float Prob);
   void SetCellVisible( bool v);
   bool IsBasisVisible() const;
   void SetBasisVisible( bool v);
-  inline bool IsGraphicsVisible(AGDrawObject *G ) const {  return G->IsVisible(); }
+  bool IsGraphicsVisible(AGDrawObject *G ) const {  return G->IsVisible(); }
   TUndoData* SetGraphicsVisible(AGDrawObject *G, bool v );
   TUndoData* SetGraphicsVisible(AGDObjList& G, bool v );
 

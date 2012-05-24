@@ -569,6 +569,7 @@
     <ClCompile Include="..\..\..\gxlib\gllabel.cpp" />
     <ClCompile Include="..\..\..\gxlib\gllabels.cpp" />
     <ClCompile Include="..\..\..\gxlib\gxapp.cpp" />
+    <ClCompile Include="..\..\..\gxlib\gxmacro.cpp" />
     <ClCompile Include="..\..\..\gxlib\ortdraw.cpp" />
     <ClCompile Include="..\..\..\gxlib\wxglscene.cpp" />
     <ClCompile Include="..\..\..\gxlib\xatom.cpp" />
@@ -617,6 +618,7 @@
     <ClInclude Include="..\..\..\glib\glutil.h" />
     <ClInclude Include="..\..\..\gxlib\gxapp.h" />
     <ClInclude Include="..\..\..\gxlib\gxbase.h" />
+    <ClInclude Include="..\..\..\gxlib\gxmacro.h" />
     <ClInclude Include="..\..\..\gxlib\ortdraw.h" />
     <ClInclude Include="..\..\..\gxlib\ortdrawtex.h" />
     <ClInclude Include="..\..\..\gxlib\oxmfile.h" />

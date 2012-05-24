@@ -20,7 +20,7 @@ TDialog::TDialog(TMainFrame *Parent, const wxString &Title, const wxString &Clas
       const wxPoint& position, const wxSize& size, int style) :
   wxDialog(Parent, -1,  Title, position, size, style, ClassName),
   AOlxCtrl(this),
-  OnResize(Actions.New("OnResIze")),
+  OnResize(Actions.New("OnResize")),
   Parent(Parent)
 {
   if( Parent != NULL )

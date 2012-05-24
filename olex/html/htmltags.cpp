@@ -7,7 +7,7 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "htmlext.h"
+#include "htmlmanager.h"
 #include "imgcellext.h"
 #include "widgetcellext.h"
 #include "wx/html/htmlcell.h"
