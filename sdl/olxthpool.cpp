@@ -11,9 +11,11 @@
 #include "bapp.h"
 
 TTypeList<TThreadSlot> TThreadPool::tasks;
-olx_critical_section TThreadPool::crit_sect;
 size_t TThreadPool::current_task = 0;
 
+TThreadSlot::~TThreadSlot() {
+  Running = false;
+}
 bool TThreadSlot::IsSuspended() const {
   return suspended;
 }

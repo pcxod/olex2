@@ -29,6 +29,7 @@ class TThreadSlot : public AOlxThread  {
   volatile bool suspended;
 public:
   TThreadSlot() : task(NULL), suspended(false)  {}
+  ~TThreadSlot();
   /* the thread automatically becomes suspended when the task is completed,
   and even if a mnew task is set, it will remain suspended until Resume is
   called
@@ -46,10 +47,12 @@ public:
 class TThreadPool {
   static TTypeList<TThreadSlot> tasks;
   static void _checkThreadCount();
-  static olx_critical_section crit_sect;
   static size_t current_task;
 public:
-  static olx_critical_section& GetCriticalSection() {  return crit_sect;  }
+  static olx_critical_section& GetCriticalSection() {
+    static olx_critical_section crit_sect;
+    return crit_sect;
+  }
   static size_t GetSlotsCount()   {
     _checkThreadCount();
     return tasks.Count();

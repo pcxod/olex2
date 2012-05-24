@@ -16,6 +16,8 @@ public:
   static DefMacro(Grow)
   static DefMacro(Pack)
   static DefMacro(Name)
+  static DefMacro(CalcFourier)
+  static DefMacro(CalcPatt)
 
   static DefMacro(Qual)
 

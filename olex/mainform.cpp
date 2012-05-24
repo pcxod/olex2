@@ -1060,20 +1060,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Assigns provided value to specified material");
   this_InitMacroD(LstGO, EmptyString(), fpNone,
     "List current graphical objects");
-  this_InitMacroD(CalcPatt, EmptyString(), fpNone|psFileLoaded,
-    "Calculates Patterson map");
-  this_InitMacroD(CalcFourier,
-    "fcf-reads structure factors from a fcf file&;"
-    "diff-calculates difference map&;"
-    "tomc-calculates 2Fo-Fc map&;"
-    "obs-calculates observed map&;"
-    "calc-calculates calculated map&;"
-    "scale-scale to use for difference maps, currently available simple(s) "
-    "sum(Fo^2)/sum(Fc^2)) and regression(r)&;"
-    "r-resolution in Angstrems&;"
-    "i-integrates the map&;"
-    "m-mask the structure", fpNone|psFileLoaded,
-  "Calculates fourier map");
   this_InitMacroD(TestBinding, EmptyString(), fpAny,
     "Internal tests");
   this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne,
