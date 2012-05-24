@@ -201,6 +201,12 @@ protected:
     v.Replace('$', "\\$");
     olex2.processMacro(olxstr("cursor(user,") << v << ',' << name << ')');
   }
+  class ObjectPicker_ : public AActionHandler {
+  public:
+    ObjectPicker_(AMode &mode) : mode(mode) {}
+    AMode &mode;
+    virtual bool Execute(const IEObject *sender, const IEObject *data);
+  } ObjectPicker;
 public:
   AMode(size_t id);
   virtual ~AMode();

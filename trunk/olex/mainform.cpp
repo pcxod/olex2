@@ -54,7 +54,7 @@
 
 #include "efile.h"
 
-#include "html/htmlext.h"
+#include "html/htmlmanager.h"
 
 #include "httpfs.h"
 #include "pyext.h"
@@ -537,13 +537,6 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitMacroD(Bang, "c-copy info to the clipboard", fpAny|psFileLoaded,
     "Prints bonds and angles table for selected/given atoms");
-  this_InitMacroD(Grow,
-    "s-grow shells vs fragments&;"
-    "w-grows the rest of the structure, using already applied generators&;"
-    "t-grows only provided atoms/atom types&;"
-    "b-grows all visible grow bonds (when in a grow mode)",
-    fpAny|psFileLoaded,
-    "Grows whole structure or provided atoms only");
   this_InitMacroD(Uniq, EmptyString(), fpAny | psFileLoaded,
     "Shows only fragments specified by atom name(s) or selection");
 
@@ -596,13 +589,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Exit, EmptyString(), fpNone, "Exits Olex2");
   this_InitMacroAD(Exit, quit, EmptyString(), fpNone, "Exits Olex2");
 
-  this_InitMacroD(Pack,
-    "c-specifies if current lattice content should not be deleted",
-    fpAny|psFileLoaded,
-    "Packs structure within default or given volume(6 or 2 values for "
-    "parallelepiped "
-    "or 1 for sphere). If atom names/types are provided it only packs the "
-    "provided atoms.");
   this_InitMacroD(Sel,
     "a-select all&;"
     "u-unselect all&;"
@@ -647,14 +633,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "ShelXL refinement with negative 'MORE' like 'MORE -1' option or from the "
     "olex2.refine");
   
-  this_InitMacroD(Name,
-    "c-enables checking labels for duplications&;"
-    "s-simply changes suffix of provided atoms to the provided one (or none)&;"
-    "cs-leaves current selection unchanged",
-    fpOne|fpTwo,
-    "Names atoms. If the 'sel' keyword is used and a number is provided as "
-    "second argument the numbering will happen in the order the atoms were "
-    "selected (make sure -c option is added)");
   this_InitMacroD(TelpV, EmptyString(), fpOne,
     "Calculates ADPs for given thermal probability factor");
   this_InitMacroD(Labels,
@@ -695,11 +673,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "001, 111, etc values are acceptable, two values taken are of the klm "
     "form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three "
     "values pecify the view normal and nine values provide a full matrix");
-  this_InitMacroD(Qual,
-    "h-High&;"
-    "m-Medium&;"
-    "l-Low", fpNone,
-    "Sets drawings quality");
 
   this_InitMacroD(Line,
     "n-just sets current view normal to the line without creating the object",
@@ -871,7 +844,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "to control the visibility of atoms or bonds, like in: 'showq a true' or "
     "'showq b false'");
 
-  this_InitMacroD(Mode, 
+  this_InitMacroD(Mode,
     "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only; [fit] "
       "afix\n&;"
     "p-[name] prefix\n&;"
@@ -1544,7 +1517,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   LoadVFS(plGlobal);
 
   HtmlManager.InitialiseMain(4|wxVSCROLL|wxALWAYS_SHOW_SB);
-  GetLibrary().AttachLibrary(HtmlManager.main->ExportLibrary());
+  GetLibrary().AttachLibrary(HtmlManager.ExportLibrary());
 
   HtmlManager.OnLink.Add(this, ID_ONLINK);
   HtmlManager.main->OnKey.Add(this, ID_HTMLKEY);

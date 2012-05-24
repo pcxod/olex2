@@ -35,13 +35,29 @@ TNameMode* TNameMode::Instance = NULL;
 
 AMode::AMode(size_t id)
   : Id(id), gxapp(TGXApp::GetInstance()),
-    olex2(*olex::IOlexProcessor::GetInstance())
+    olex2(*olex::IOlexProcessor::GetInstance()),
+    ObjectPicker(*this)
 {
   TModeChange mc(Id, true);
   TModeRegistry::GetInstance().OnChange.Execute(NULL, &mc);
+  gxapp.GetMouseHandler().SetInMode(true);
+  gxapp.GetMouseHandler().OnObject.Add(&ObjectPicker);
+}
+//..............................................................................
+bool AMode::ObjectPicker_::Execute(
+  const IEObject *sender, const IEObject *data)
+{
+  const AGDrawObject *o = dynamic_cast<const AGDrawObject *>(data);
+  if (o != NULL) {
+    mode.OnObject(*const_cast<AGDrawObject *>(o));
+    return true;
+  }
+  return false;
 }
 //..............................................................................
 AMode::~AMode() {
+  gxapp.GetMouseHandler().OnObject.Remove(&ObjectPicker);
+  gxapp.GetMouseHandler().SetInMode(false);
   TModeChange mc(Id, false);
   TModeRegistry::GetInstance().OnChange.Execute(NULL, &mc);
   //reset the screen cursor

@@ -13,9 +13,11 @@
 #include "dframe.h"
 #include "glgroup.h"
 
-TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
+TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
+  : OnObject(Actions.New("ObObject"))
+{
   FSX = FSY = 0;
-  FDblClick = FButtonDown = false;
+  InMode = FDblClick = FButtonDown = false;
   FParent = Parent;
   SetHandler(smbLeft, 0, meRotateXY);
   SetHandler(smbLeft, sssCtrl, meRotateZ);
@@ -52,21 +54,26 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
     if( MData.Object == FDFrame ) 
       res = MData.Object->OnMouseUp(this, MData);
     else  {
-      TGlGroup *PColl = FindObjectGroup(*MData.Object);
-      if( PColl != NULL ) 
-        res = PColl->OnMouseUp(this, MData);
-      else
-        res = MData.Object->OnMouseUp(this, MData);
-      if( res == false && SelectionEnabled && Shift == 0 && button == smbLeft &&
+      if (InMode && OnObject.Execute(this, MData.Object)) {
+        ;
+      }
+      else {
+        TGlGroup *PColl = FindObjectGroup(*MData.Object);
+        if( PColl != NULL ) 
+          res = PColl->OnMouseUp(this, MData);
+        else
+          res = MData.Object->OnMouseUp(this, MData);
+        if( res == false && SelectionEnabled && Shift == 0 && button == smbLeft &&
           (olx_abs(MData.DownX-MData.UpX) <= ClickThreshold) &&
           (olx_abs(MData.DownY-MData.UpY) <= ClickThreshold) )  // right click
-      {
-        if( PColl != NULL && PColl != &FParent->GetSelection() ) 
-          FParent->Select(*PColl); 
-        else 
-          FParent->Select(*MData.Object);
-        FParent->Draw();
-        res = true;
+        {
+          if( PColl != NULL && PColl != &FParent->GetSelection() ) 
+            FParent->Select(*PColl); 
+          else 
+            FParent->Select(*MData.Object);
+          FParent->Draw();
+          res = true;
+        }
       }
     }
   }

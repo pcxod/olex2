@@ -60,7 +60,7 @@
 #include "xyz.h"
 
 #include "fsext.h"
-#include "html/htmlext.h"
+#include "html/htmlmanager.h"
 
 #include <iostream>
 
@@ -301,11 +301,13 @@ void TMainForm::funGetVar(const TStrObjList& Params, TMacroError &E)  {
   if( ind == InvalidIndex )  {
     if( Params.Count() == 2 )
       E.SetRetVal( Params[1] );
-    else  
-      E.ProcessingError(__OlxSrcInfo, "Could not locate specified attribute: '") << Params[0] << '\'';
+    else {
+      E.ProcessingError(__OlxSrcInfo,
+        "Could not locate specified variable: ").quote() << Params[0];
+    }
   }
   else
-    E.SetRetVal( TOlxVars::GetVarStr(ind) );
+    E.SetRetVal(TOlxVars::GetVarStr(ind));
 }
 //..............................................................................
 void TMainForm::funIsVar(const TStrObjList& Params, TMacroError &E)  {
@@ -959,58 +961,6 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     ToClipboard(clipbrd);
 }
 //..............................................................................
-void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
-  if (Options.Contains('b')) {  // grow XGrowBonds only
-    FXApp->GrowBonds();
-    return;
-  }
-  bool GrowShells = Options.Contains('s'),
-       GrowContent = Options.Contains('w');
-  TCAtomPList TemplAtoms;
-  if( Options.Contains('t') )
-    TemplAtoms = FXApp->FindCAtoms(olxstr(Options['t']).Replace(',', ' '));
-  if( Cmds.IsEmpty() )  {  // grow fragments
-    if( GrowContent ) 
-      FXApp->GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-    else  {
-      TXAtomPList atoms;
-      FXApp->GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-      if( !GrowShells )  {
-        const TLattice& latt = FXApp->XFile().GetLattice();
-        smatd_list gm;
-        /* check if next grow will not introduce simple translations */
-        bool grow_next = true;
-        while( grow_next )  {
-          gm.Clear();
-          latt.GetGrowMatrices(gm);
-          if( gm.IsEmpty() )  break;
-          for( size_t i=0; i < latt.MatrixCount(); i++ )  {
-            for( size_t j=0; j < gm.Count(); j++ )  {
-              if( latt.GetMatrix(i).r == gm[j].r )  {
-                const vec3d df = latt.GetMatrix(i).t - gm[j].t;
-                if( (df-df.Round<int>()).QLength() < 1e-6 )  {
-                  grow_next = false;
-                  break;
-                }
-              }
-            }
-            if( !grow_next )  break;
-          }
-          if( grow_next )
-            FXApp->GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-        }
-      }
-    }
-  }
-  else  {  // grow atoms
-    if( GrowContent )
-      FXApp->GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-    else
-      FXApp->GrowAtoms(Cmds.Text(' '), GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-
-  }
-}
-//..............................................................................
 void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXAtomPList Atoms = FindXAtoms(Cmds, false, true);
   if( Atoms.IsEmpty() )  {
@@ -1209,123 +1159,6 @@ void TMainForm::macPost(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   Close(true);
-}
-//..............................................................................
-void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  const bool ClearCont = !Options.Contains("c");
-  const bool cell = (Cmds.Count() > 0 && Cmds[0].Equalsi("cell"));
-  const bool wbox = (Cmds.Count() > 0 && Cmds[0].Equalsi("wbox"));
-  if( cell || wbox )
-    Cmds.Delete(0);
-  const uint64_t st = TETime::msNow();
-  if( cell )
-    FXApp->XFile().GetLattice().GenerateCell();
-  else if( wbox && FXApp->Get3DFrame().IsVisible() )  {
-    FXApp->XFile().GetLattice().GenerateBox(
-      FXApp->Get3DFrame().GetNormals(),
-      FXApp->Get3DFrame().GetSize()/2,
-      FXApp->Get3DFrame().GetCenter(),
-      ClearCont);
-  }
-  else  {
-    vec3d From(-0.5), To(1.5);
-    size_t number_count = 0;
-    for( size_t i=0; i < Cmds.Count(); i++ )  {
-      if( Cmds[i].IsNumber() )  {
-        if( !(number_count%2) )
-          From[number_count/2] = Cmds[i].ToDouble();
-        else
-          To[number_count/2]= Cmds[i].ToDouble();
-        number_count++;
-        Cmds.Delete(i--);
-      }
-    }
-
-    if( number_count != 0 && !(number_count == 6 || number_count == 1 ||
-      number_count == 2) )
-    {
-      Error.ProcessingError(__OlxSrcInfo, "please provide 6, 2 or 1 number");
-      return;
-    }
-
-    TCAtomPList TemplAtoms;
-    if( !Cmds.IsEmpty() )
-      TemplAtoms = FXApp->FindCAtoms(Cmds.Text(' '));
-
-    if( number_count == 6 || number_count == 0 || number_count == 2 )  {
-      if( number_count == 2 )  {
-        From[1] = From[2] = From[0];
-        To[1] = To[2] = To[0];
-      }
-      FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL
-        : &TemplAtoms, ClearCont);
-    }
-    else  {
-      TXAtomPList xatoms = FindXAtoms(Cmds, true, true);
-      vec3d cent;
-      double wght = 0;
-      for( size_t i=0; i < xatoms.Count(); i++ )  {
-        cent += xatoms[i]->crd()*xatoms[i]->CAtom().GetChemOccu();
-        wght += xatoms[i]->CAtom().GetChemOccu();
-      }
-      if( wght != 0 )
-        cent /= wght;
-      FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL
-        : &TemplAtoms, ClearCont);
-    }
-  }
-  if( TBasicApp::GetInstance().IsProfiling() )  {
-    TBasicApp::NewLogEntry(logInfo) <<
-      FXApp->XFile().GetLattice().GetObjects().atoms.Count() <<
-      " atoms and " <<
-      FXApp->XFile().GetLattice().GetObjects().bonds.Count() <<
-      " bonds generated in " <<
-      FXApp->XFile().GetLattice().FragmentCount() << " fragments ("
-      << (TETime::msNow()-st) << "ms)";
-  }
-  // optimise drawing ...
-  //FXApp->GetRender().Compile(true);
-}
-//..............................................................................
-void TMainForm::macName(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
-{
-  bool checkLabels = Options.Contains("c");
-  bool changeSuffix = Options.Contains("s");
-  if( changeSuffix )  {
-    TXAtomPList xatoms;
-    if( FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs")) ) {
-      FXApp->GetUndo().Push(FXApp->ChangeSuffix(
-        xatoms, Options.FindValue("s"), checkLabels));
-    }
-  }
-  else  {
-    bool processed = false;
-    if( Cmds.Count() == 1 )  { // bug #49
-      const size_t spi = Cmds[0].IndexOf(' ');
-      if( spi != InvalidIndex )  {
-        FXApp->GetUndo().Push(
-          FXApp->Name(Cmds[0].SubStringTo(spi),
-          Cmds[0].SubStringFrom(spi+1), checkLabels,
-          !Options.Contains("cs"))
-        );
-      }
-      else {
-        FXApp->GetUndo().Push(
-          FXApp->Name("sel", Cmds[0], checkLabels, !Options.Contains("cs")));
-      }
-      processed = true;
-    }
-    else if( Cmds.Count() == 2 )  {
-      FXApp->GetUndo().Push(FXApp->Name(
-        Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")));
-      processed = true;
-    }
-    if( !processed )  {
-      Error.ProcessingError(__OlxSrcInfo,
-        olxstr("invalid syntax: ") << Cmds.Text(' '));
-    }
-  }
 }
 //..............................................................................
 void TMainForm::macTelpV(TStrObjList &Cmds, const TParamList &Options,
@@ -1638,21 +1471,6 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options,
       FXApp->GetRender().GetBasis().SetMatrix(M);
     }
     FXApp->Draw();
-  }
-}
-//..............................................................................
-void TMainForm::macQual(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Options.IsEmpty() )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong number of arguments");
-    return;
-  }
-  else  {
-     if( Options.GetName(0)[0] == 'h' ) { FXApp->Quality(qaHigh);  return; }
-     if( Options.GetName(0)[0] == 'm' ) { FXApp->Quality(qaMedium);  return; }
-     if( Options.GetName(0)[0] == 'l' ) { FXApp->Quality(qaLow);  return; }
-
-    Error.ProcessingError(__OlxSrcInfo, "wrong argument");
-    return;
   }
 }
 //..............................................................................
@@ -5327,7 +5145,7 @@ void TMainForm::macDeltaI(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //..............................................................................
 void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Options.Contains('i') || Options.Contains('l') )  {
-    TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), true);
+    TdlgEdit *dlg = new TdlgEdit(this, true);
     dlg->SetTitle( wxT("Python script editor") );
     if( Options.Contains('l') )  {
       olxstr FN = PickFile("Open File",
@@ -7821,7 +7639,7 @@ void TMainForm::macDelObject(TStrObjList &Cmds, const TParamList &Options, TMacr
 //..............................................................................
 void TMainForm::macTextm(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( !TEFile::Exists( Cmds[0] )  )  {
-    Error.ProcessingError(__OlxSrcInfo, "file does not exist" );
+    Error.ProcessingError(__OlxSrcInfo, "file does not exist");
     return;
   }
   TStrList sl;
