@@ -67,7 +67,7 @@ protected:  // do not allow to create externally
   //..................................................................................................
   TActionQList Actions;
   //..................................................................................................
-  AOlxThread() : 
+  AOlxThread() :
     RetVal(0),
     Terminate(false),
     Detached(true),
@@ -138,9 +138,9 @@ public:
   }
   //..................................................................................................
   // this only has effect if the main procedure of the thread checks for this flag...
-  void SendTerminate()  {  
-    OnSendTerminate(); 
-    Terminate = true;  
+  void SendTerminate()  {
+    OnSendTerminate();
+    Terminate = true;
   }
   bool IsRunning() const {  return Running;  }
   //..................................................................................................

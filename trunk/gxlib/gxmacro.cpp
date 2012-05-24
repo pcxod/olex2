@@ -1,4 +1,9 @@
 #include "gxmacro.h"
+#include "sfutil.h"
+#include "maputil.h"
+#include "beevers-lipson.h"
+#include "unitcell.h"
+#include "xgrid.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro(\
@@ -36,6 +41,21 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Names atoms. If the 'sel' keyword is used and a number is provided as "
     "second argument the numbering will happen in the order the atoms were "
     "selected (make sure -c option is added)");
+
+  gxlib_InitMacro(CalcPatt, EmptyString(), fpNone|psFileLoaded,
+    "Calculates Patterson map");
+  gxlib_InitMacro(CalcFourier,
+    "fcf-reads structure factors from a fcf file&;"
+    "diff-calculates difference map&;"
+    "tomc-calculates 2Fo-Fc map&;"
+    "obs-calculates observed map&;"
+    "calc-calculates calculated map&;"
+    "scale-scale to use for difference maps, currently available simple(s) "
+    "sum(Fo^2)/sum(Fc^2)) and regression(r)&;"
+    "r-resolution in Angstrems&;"
+    "i-integrates the map&;"
+    "m-mask the structure", fpNone|psFileLoaded,
+  "Calculates fourier map");
 
   gxlib_InitMacro(Qual,
     "h-High&;"
@@ -241,3 +261,153 @@ void GXLibMacros::macQual(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
+void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  static const short // scale type
+    stSimple     = 0x0001,
+    stRegression = 0x0002;
+  double resolution = Options.FindValue("r", "0.25").ToDouble(), 
+    maskInc = 1.0;
+  if( resolution < 0.1 )  resolution = 0.1;
+  resolution = 1./resolution;
+  short mapType = SFUtil::mapTypeCalc;
+  if( Options.Contains("tomc") )
+    mapType = SFUtil::mapType2OmC;
+  else if( Options.Contains("obs") )
+    mapType = SFUtil::mapTypeObs;
+  else if( Options.Contains("diff") )
+    mapType = SFUtil::mapTypeDiff;
+  olxstr strMaskInc = Options.FindValue("m");
+  if( !strMaskInc.IsEmpty() )
+    maskInc = strMaskInc.ToDouble();
+  TRefList refs;
+  TArrayList<compd> F;
+  olxstr err = SFUtil::GetSF(refs, F, mapType, 
+    Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
+    (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
+      SFUtil::scaleRegression : SFUtil::scaleSimple);
+  if( !err.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, err);
+    return;
+  }
+  TAsymmUnit& au = app.XFile().GetAsymmUnit();
+  TUnitCell& uc = app.XFile().GetUnitCell();
+  TArrayList<SFUtil::StructureFactor> P1SF;
+  SFUtil::ExpandToP1(refs, F, uc.GetMatrixList(), P1SF);
+  const double vol = app.XFile().GetLattice().GetUnitCell().CalcVolume();
+  BVFourier::MapInfo mi;
+// init map
+  const vec3i dim(au.GetAxes()*resolution);
+  TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
+  mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
+//////////////////////////////////////////////////////////////////////////////////////////
+  app.XGrid().InitGrid(dim);
+
+  app.XGrid().SetMaxHole(mi.sigma*1.4);
+  app.XGrid().SetMinHole(-mi.sigma*1.4);
+  app.XGrid().SetScale(-mi.sigma*6);
+  //app.XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
+  app.XGrid().SetMinVal(mi.minVal);
+  app.XGrid().SetMaxVal(mi.maxVal);
+  // copy map
+  MapUtil::CopyMap(app.XGrid().Data()->Data, map.Data, dim);
+  app.XGrid().AdjustMap();
+
+  TBasicApp::NewLogEntry() << "Map max val " << olxstr::FormatFloat(3, mi.maxVal) << 
+    " min val " << olxstr::FormatFloat(3, mi.minVal) << NewLineSequence() << 
+    "Map sigma " << olxstr::FormatFloat(3, mi.sigma);
+  // map integration
+  if( Options.Contains('i') )  {
+    TArrayList<MapUtil::peak> Peaks;
+    TTypeList<MapUtil::peak> MergedPeaks;
+    vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
+    //MapUtil::Integrate<float>(map.Data, dim, (mi.maxVal - mi.minVal)/2.5, Peaks);
+    MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
+    MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
+    QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortBySum);
+    const int PointCount = dim.Prod();
+    for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
+      const MapUtil::peak& peak = MergedPeaks[i];
+      if( peak.count == 0 )  continue;
+      vec3d cnt((double)peak.center[0]/dim[0], (double)peak.center[1]/dim[1], (double)peak.center[2]/dim[2]); 
+      const double ed = (double)((long)((peak.summ*1000)/peak.count))/1000;
+      TCAtom& ca = au.NewAtom();
+      ca.SetLabel(olxstr("Q") << olxstr((100+i)));
+      ca.ccrd() = cnt;
+      ca.SetQPeak(ed);
+    }
+    au.InitData();
+    TActionQueue* q_draw = app.FindActionQueue(olxappevent_GL_DRAW);
+    bool q_draw_changed = false;
+    if( q_draw != NULL )  {
+      q_draw->SetEnabled(false);
+      q_draw_changed = true;
+    }
+    app.XFile().GetLattice().Init();
+    olex::IOlexProcessor::GetInstance()->processMacro("compaq -q");
+    if( q_draw != NULL && q_draw_changed )
+      q_draw->SetEnabled(true);
+  }  // integration
+  if( Options.Contains("m") )  {
+    FractMask* fm = new FractMask;
+    app.BuildSceneMask(*fm, maskInc);
+    app.XGrid().SetMask(*fm);
+  }
+  app.XGrid().InitIso();
+  //TStateChange sc(prsGridVis, true);
+  app.ShowGrid(true, EmptyString());
+  //OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+}
+//.............................................................................
+void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  TAsymmUnit& au = app.XFile().GetAsymmUnit();
+  // space group matrix list
+  TSpaceGroup* sg = NULL;
+  try  { sg = &app.XFile().GetLastLoaderSG();  }
+  catch(...)  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
+    return;
+  }
+  TUnitCell::SymmSpace sp = app.XFile().GetUnitCell().GetSymmSpace();
+  olxstr hklFileName = app.LocateHklFile();
+  if( !TEFile::Exists(hklFileName) )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
+    return;
+  }
+  TRefList refs;
+  RefinementModel::HklStat stats =
+    app.XFile().GetRM().GetFourierRefList<
+      TUnitCell::SymmSpace,RefMerger::StandardMerger>(sp, refs);
+  const double vol = app.XFile().GetLattice().GetUnitCell().CalcVolume();
+  TArrayList<SFUtil::StructureFactor> P1SF(refs.Count()*sp.Count());
+  size_t index = 0;
+  for( size_t i=0; i < refs.Count(); i++ )  {
+    const TReflection& ref = refs[i];
+    double sI = sqrt(refs[i].GetI() < 0 ? 0 : refs[i].GetI());
+    for( size_t j=0; j < sp.Count(); j++, index++ )  {
+      P1SF[index].hkl = ref * sp[j];
+      P1SF[index].ps = sp[j].t.DotProd(ref.GetHkl());
+      P1SF[index].val = sI;
+      P1SF[index].val *= compd::polar(1, 2*M_PI*P1SF[index].ps);
+    }
+  }
+  const double resolution = 5;
+  const vec3i dim(au.GetAxes()*resolution);
+  app.XGrid().InitGrid(dim);
+  BVFourier::MapInfo mi = BVFourier::CalcPatt(
+    P1SF, app.XGrid().Data()->Data, dim, vol);
+  app.XGrid().AdjustMap();
+  app.XGrid().SetMinVal(mi.minVal);
+  app.XGrid().SetMaxVal(mi.maxVal);
+  app.XGrid().SetMaxHole( mi.sigma*1.4);
+  app.XGrid().SetMinHole(-mi.sigma*1.4);
+  app.XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
+  app.XGrid().InitIso();
+  app.ShowGrid(true, EmptyString());
+}
+//..............................................................................

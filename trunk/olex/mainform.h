@@ -576,8 +576,6 @@ private:
   DefMacro(EditMaterial)
   DefMacro(SetMaterial)
   DefMacro(LstGO)
-  DefMacro(CalcPatt)
-  DefMacro(CalcFourier)
   DefMacro(TestBinding)
   DefMacro(ShowSymm)
   DefMacro(Textm)

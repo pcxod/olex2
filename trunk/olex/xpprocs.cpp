@@ -115,7 +115,6 @@
 #endif
 
 #include "olxmps.h"
-#include "beevers-lipson.h"
 #include "maputil.h"
 
 #include "olxvar.h"
@@ -7962,55 +7961,6 @@ void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << output;
 }
 //..............................................................................
-void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &E)
-{
-  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  // space group matrix list
-  TSpaceGroup* sg = NULL;
-  try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
-    return;
-  }
-  TUnitCell::SymmSpace sp = FXApp->XFile().GetUnitCell().GetSymmSpace();
-  olxstr hklFileName = FXApp->LocateHklFile();
-  if( !TEFile::Exists(hklFileName) )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
-    return;
-  }
-  TRefList refs;
-  RefinementModel::HklStat stats =
-    FXApp->XFile().GetRM().GetFourierRefList<
-      TUnitCell::SymmSpace,RefMerger::StandardMerger>(sp, refs);
-  const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
-  TArrayList<SFUtil::StructureFactor> P1SF(refs.Count()*sp.Count());
-  size_t index = 0;
-  for( size_t i=0; i < refs.Count(); i++ )  {
-    const TReflection& ref = refs[i];
-    double sI = sqrt(refs[i].GetI() < 0 ? 0 : refs[i].GetI());
-    for( size_t j=0; j < sp.Count(); j++, index++ )  {
-      P1SF[index].hkl = ref * sp[j];
-      P1SF[index].ps = sp[j].t.DotProd(ref.GetHkl());
-      P1SF[index].val = sI;
-      P1SF[index].val *= compd::polar(1, 2*M_PI*P1SF[index].ps);
-    }
-  }
-  const double resolution = 5;
-  const vec3i dim(au.GetAxes()*resolution);
-  FXApp->XGrid().InitGrid(dim);
-  BVFourier::MapInfo mi = BVFourier::CalcPatt(
-    P1SF, FXApp->XGrid().Data()->Data, dim, vol);
-  FXApp->XGrid().AdjustMap();
-  FXApp->XGrid().SetMinVal(mi.minVal);
-  FXApp->XGrid().SetMaxVal(mi.maxVal);
-  FXApp->XGrid().SetMaxHole( mi.sigma*1.4);
-  FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
-  FXApp->XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
-  FXApp->XGrid().InitIso();
-  FXApp->ShowGrid(true, EmptyString());
-}
-//..............................................................................
 //..............................................................................
 void TMainForm::funGetMouseX(const TStrObjList &Params, TMacroError &E)  {
   E.SetRetVal( ::wxGetMousePosition().x );
@@ -8047,103 +7997,6 @@ void TMainForm::funGetWindowSize(const TStrObjList &Params, TMacroError &E)  {
   }
   else
     E.ProcessingError(__OlxSrcInfo, "undefined window");
-}
-//..............................................................................
-void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-// scale type
-  static const short stSimple     = 0x0001,
-                     stRegression = 0x0002;
-  double resolution = Options.FindValue("r", "0.25").ToDouble(), 
-    maskInc = 1.0;
-  if( resolution < 0.1 )  resolution = 0.1;
-  resolution = 1./resolution;
-  short mapType = SFUtil::mapTypeCalc;
-  if( Options.Contains("tomc") )
-    mapType = SFUtil::mapType2OmC;
-  else if( Options.Contains("obs") )
-    mapType = SFUtil::mapTypeObs;
-  else if( Options.Contains("diff") )
-    mapType = SFUtil::mapTypeDiff;
-  olxstr strMaskInc = Options.FindValue("m");
-  if( !strMaskInc.IsEmpty() )
-    maskInc = strMaskInc.ToDouble();
-  TRefList refs;
-  TArrayList<compd> F;
-  olxstr err = SFUtil::GetSF(refs, F, mapType, 
-    Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
-    (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
-      SFUtil::scaleRegression : SFUtil::scaleSimple);
-  if( !err.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, err);
-    return;
-  }
-  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  TUnitCell& uc = FXApp->XFile().GetUnitCell();
-  TArrayList<SFUtil::StructureFactor> P1SF;
-  SFUtil::ExpandToP1(refs, F, uc.GetMatrixList(), P1SF);
-  const double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
-  BVFourier::MapInfo mi;
-// init map
-  const vec3i dim(au.GetAxes()*resolution);
-  TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
-  mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
-//////////////////////////////////////////////////////////////////////////////////////////
-  FXApp->XGrid().InitGrid(dim);
-
-  FXApp->XGrid().SetMaxHole(mi.sigma*1.4);
-  FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
-  FXApp->XGrid().SetScale(-mi.sigma*6);
-  //FXApp->XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
-  FXApp->XGrid().SetMinVal(mi.minVal);
-  FXApp->XGrid().SetMaxVal(mi.maxVal);
-  // copy map
-  MapUtil::CopyMap(FXApp->XGrid().Data()->Data, map.Data, dim);
-  FXApp->XGrid().AdjustMap();
-
-  TBasicApp::NewLogEntry() << "Map max val " << olxstr::FormatFloat(3, mi.maxVal) << 
-    " min val " << olxstr::FormatFloat(3, mi.minVal) << NewLineSequence() << 
-    "Map sigma " << olxstr::FormatFloat(3, mi.sigma);
-  // map integration
-  if( Options.Contains('i') )  {
-    TArrayList<MapUtil::peak> Peaks;
-    TTypeList<MapUtil::peak> MergedPeaks;
-    vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
-    //MapUtil::Integrate<float>(map.Data, dim, (mi.maxVal - mi.minVal)/2.5, Peaks);
-    MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
-    MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
-    QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortBySum);
-    const int PointCount = dim.Prod();
-    for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
-      const MapUtil::peak& peak = MergedPeaks[i];
-      if( peak.count == 0 )  continue;
-      vec3d cnt((double)peak.center[0]/dim[0], (double)peak.center[1]/dim[1], (double)peak.center[2]/dim[2]); 
-      const double ed = (double)((long)((peak.summ*1000)/peak.count))/1000;
-      TCAtom& ca = au.NewAtom();
-      ca.SetLabel(olxstr("Q") << olxstr((100+i)));
-      ca.ccrd() = cnt;
-      ca.SetQPeak(ed);
-    }
-    au.InitData();
-    TActionQueue* q_draw = FXApp->FindActionQueue(olxappevent_GL_DRAW);
-    bool q_draw_changed = false;
-    if( q_draw != NULL )  {
-      q_draw->SetEnabled(false);
-      q_draw_changed = true;
-    }
-    FXApp->XFile().GetLattice().Init();
-    Macros.ProcessMacro("compaq -q", E);
-    if( q_draw != NULL && q_draw_changed )
-      q_draw->SetEnabled(true);
-  }  // integration
-  if( Options.Contains("m") )  {
-    FractMask* fm = new FractMask;
-    FXApp->BuildSceneMask(*fm, maskInc);
-    FXApp->XGrid().SetMask(*fm);
-  }
-  FXApp->XGrid().InitIso();
-  //TStateChange sc(prsGridVis, true);
-  FXApp->ShowGrid(true, EmptyString());
-  //OnStateChange.Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
