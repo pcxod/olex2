@@ -345,12 +345,18 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   for (size_t i=SL.Count()-1; i != InvalidIndex; i--) {
     if (SL[i].FirstIndexOf("Max. shift") != InvalidIndex) {
       TStrList toks(SL[i], ' ');
-      if (toks.Count() < 13 || !toks[3].IsNumber()) continue;
+      if (toks.Count() < 12 || !toks[3].IsNumber()) continue;
+      if (!toks[3].IsNumber()) continue;
       params("max_shift", toks[3].ToDouble());
       params("max_shift_object", toks[6]);
-      if (!toks[3].IsNumber()) continue;
-      params("max_du", toks[10].ToDouble());
-      params("max_du_object", toks[12]);
+      if (toks.Count() <= 12) {
+        params("max_du", toks[9].SubStringFrom(1).ToDouble());
+        params("max_du_object", toks[11]);
+      }
+      else {
+        params("max_du", toks[10].ToDouble());
+        params("max_du_object", toks[12]);
+      }
       params_found++;
     }
     else if (SL[i].FirstIndexOf("Mean shift/esd") != InvalidIndex) {

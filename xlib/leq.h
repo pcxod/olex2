@@ -25,8 +25,8 @@ const short  // relation of parameters to variables
   relation_AsOneMinusVar = 2,
   relation_Last          = 2;  // for iterations
 
-/* Any single variable can be shared by several atom parameters (to make them equal) as well 
-as by several linear equations
+/* Any single variable can be shared by several atom parameters (to make them
+equal) as well as by several linear equations
 */
 
 class XLEQ;
@@ -45,12 +45,12 @@ public:
   short var_index;  // one of the var_name
   short relation_type; // relationAsVar or relation_AsOneMinusVar
   double coefficient; // like 0.25 in 20.25
-  XVarReference(XVar& parent, IXVarReferencer& r, short _var_index, 
+  XVarReference(XVar& parent, IXVarReferencer& r, short _var_index,
     short _relation_type, double coeff=1.0) : 
     Parent(parent),
-    referencer(r), 
-    var_index(_var_index), 
-    relation_type(_relation_type), 
+    referencer(r),
+    var_index(_var_index),
+    relation_type(_relation_type),
     coefficient(coeff) {}
   DefPropP(size_t, Id)
   // returns the value of the atom parameter associated with this reference
@@ -78,7 +78,9 @@ public:
   // removes a refence, for internal use
   void _RemRef(XVarReference& vr)  {  References.Remove(&vr);  }
   size_t _RefCount()  const {  return References.Count();  }
-  // calculates the number of atoms (excluding the deleted ones) using this variable
+  /* calculates the number of atoms (excluding the deleted ones) using this
+  variable
+  */
   size_t RefCount() const;
   XVarReference& GetRef(size_t i) const {  return *References[i];  }
 
@@ -172,10 +174,14 @@ public:
     v->SetId(Vars.Count());
     return Vars.Add(v);  
   }
-  // returns existing variable or creates a new one. Sets a limit of 1024 variables
+  /* returns existing variable or creates a new one. Sets a limit of 1024
+  variables
+  */
   XVar& GetReferencedVar(size_t ind) {
-    if( ind < 1 || ind > 1024 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "invalid variable reference");
+    if( ind < 1 || ind > 1024 ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "invalid variable reference");
+    }
     while( Vars.Count() < ind )
       NewVar();
     return Vars[ind-1];
@@ -209,19 +215,25 @@ public:
     NextVar = 0;  // the global scale factor
     Equations.Clear(); // these are recreatable
   }
-  /* sets a relation between an atom parameter and a variable, if the coefficient is -10 (default value), 
-  the atom degenerocy is taken
+  /* sets a relation between an atom parameter and a variable, if the
+  coefficient is -10 (default value), the atom degenerocy is taken
   */
-  XVarReference& AddVarRef(XVar& var, IXVarReferencer& r, short var_name, short relation, double coefficient);
+  XVarReference& AddVarRef(XVar& var, IXVarReferencer& r, short var_name,
+    short relation, double coefficient);
   // for parsing...
-  XVarReference& AddVarRef(XVarReference& ref) {  References.Add(ref).SetId(References.Count());  return ref;  }
+  XVarReference& AddVarRef(XVarReference& ref) {
+    References.Add(ref).SetId(References.Count());
+    return ref;
+  }
   // releases a reference to the variable, must be deleted, unless restored
   XVarReference* ReleaseRef(IXVarReferencer& r, short var_name); 
   // restrores previously released var reference
   void RestoreRef(IXVarReferencer& r, short var_name, XVarReference* vr);
   // removes all unused variables and invalid/incomplete equations
   void Validate();
-  // helps with parsing SHELX specific paramter representation, returns actual value of the param
+  /* helps with parsing SHELX specific paramter representation, returns actual
+  value of the param
+  */
   double SetParam(IXVarReferencer& r, short param_name, double val);
   void FixParam(IXVarReferencer& r, short param_name);
   void FreeParam(IXVarReferencer& r, short param_name);
@@ -230,7 +242,8 @@ public:
     return GetParam(r, param_name, r.GetValue(param_name));
   }
   // uses the override_val instead of the call to GetValue(param_name)
-  double GetParam(const IXVarReferencer& r, short param_name, double override_val) const;
+  double GetParam(const IXVarReferencer& r, short param_name,
+    double override_val) const;
   // parses FVAR and assignes variable values
   template <class list> void AddFVAR(const list& fvar) {
     for( size_t i=0; i < fvar.Count(); i++, NextVar++ )  {
@@ -247,10 +260,14 @@ public:
     return rv;
   }
   template <class list> void AddSUMP(const list& sump) {
-    if( sump.Count() < 6 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "at least six parameters expected for SUMP");
-    if( (sump.Count()%2) != 0 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "even number of arguments is expected for SUMP");
+    if( sump.Count() < 6 ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "at least six parameters expected for SUMP");
+    }
+    if( (sump.Count()%2) != 0 ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "even number of arguments is expected for SUMP");
+    }
     XLEQ& le = NewEquation(sump[0].ToDouble(), sump[1].ToDouble());
     for( size_t i=2; i < sump.Count(); i+=2 )  {
       XVar& v = GetReferencedVar(sump[i+1].ToInt());

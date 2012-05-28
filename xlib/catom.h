@@ -254,17 +254,17 @@ public:
   virtual XVarReference* GetVarRef(size_t i) const {
     if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return Vars[i];  
+    return Vars[i];
   }
   virtual olxstr GetVarName(size_t i) const { 
     if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return VarNames[i];  
+    return VarNames[i];
   }
   virtual void SetVarRef(size_t i, XVarReference* var_ref) {  
     if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    Vars[i] = var_ref;  
+    Vars[i] = var_ref;
   }
   virtual IXVarReferencerContainer& GetParentContainer() const;
   virtual double GetValue(size_t var_index) const;

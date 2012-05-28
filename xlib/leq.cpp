@@ -55,7 +55,7 @@ XVarReference& XVarReference::FromDataItem(const TDataItem& item,
 //.............................................................................
 size_t XVar::RefCount() const {
   size_t rv = 0;
-  for( size_t i=0; i < References.Count(); i++ )  
+  for( size_t i=0; i < References.Count(); i++ )
     if( References[i]->referencer.IsValid() )
       rv++;
   return rv;
@@ -175,12 +175,14 @@ void XVarManager::ClearAll()  {
 void XVarManager::Assign(const XVarManager& vm) {
   ClearAll();
   for( size_t i=0; i < vm.Vars.Count(); i++ )
-    NewVar( vm.Vars[i].GetValue() );
+    NewVar(vm.Vars[i].GetValue());
   for( size_t i=0; i < vm.References.Count(); i++ )  {
     XVarReference& vr = vm.References[i];
-    IXVarReferencerContainer& rc = RM.GetRefContainer(vr.referencer.GetParentContainer().GetIdName());
+    IXVarReferencerContainer& rc =
+      RM.GetRefContainer(vr.referencer.GetParentContainer().GetIdName());
     IXVarReferencer& xvr = rc.GetReferencer(vr.referencer.GetReferencerId());
-    AddVarRef(Vars[vr.Parent.GetId()], xvr, vr.var_index, vr.relation_type, vr.coefficient);
+    AddVarRef(Vars[vr.Parent.GetId()],
+      xvr, vr.var_index, vr.relation_type, vr.coefficient);
   }
   for( size_t i=0; i < vm.Equations.Count(); i++ )
     NewEquation()._Assign(vm.Equations[i]);
@@ -188,7 +190,9 @@ void XVarManager::Assign(const XVarManager& vm) {
     NewVar(1.0).SetId(0);
 }
 //.................................................................................................
-XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a, short var_name, short relation, double coeff)  {
+XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
+  short var_name, short relation, double coeff)
+{
   XVarReference* prf = a.GetVarRef(var_name);
   if( prf != NULL && olx_is_valid_index(prf->GetId()) )  {
     prf->Parent._RemRef(*prf);
@@ -308,7 +312,7 @@ void XVarManager::Validate() {
     }
   }
   for( size_t i=1; i < Vars.Count(); i++ )  {// start from 1 to leave global scale
-    XVar& v = Vars[i];   
+    XVar& v = Vars[i];
     if( !v.IsUsed() ) {
       for( size_t j=0; j < v._RefCount(); j++ )  {
         XVarReference& vr = v.GetRef(j);
