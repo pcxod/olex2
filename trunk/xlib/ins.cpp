@@ -340,6 +340,7 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         Param->GetObject(j) = GetAsymmUnit().FindCAtom(Param->GetString(j));
     }
   }
+  cx.rm.aunit.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
   cx.rm.Vars.Validate();
   cx.rm.ProcessFrags();
 }
@@ -1074,7 +1075,6 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 void TIns::SaveToStrings(TStrList& SL)  {
   TStrPObjList<olxstr,const cm_Element*> BasicAtoms =
     FixTypeListAndLabels();
-  
   ValidateRestraintsAtomNames(GetRM());
   UpdateParams();
   SaveHeader(SL, false, true);
@@ -1423,6 +1423,8 @@ olxstr TIns::_CellToString()  {
 //..............................................................................
 void TIns::_SaveFVar(RefinementModel& rm, TStrList& SL)  {
   olxstr Tmp; // = "FVAR ";
+  // tag is used to validate the atoms, negative tag - makes ana atom invalid
+  rm.aunit.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
   rm.Vars.Validate();
   HyphenateIns("FVAR ", rm.Vars.GetFVARStr(), SL);
 }
@@ -1701,7 +1703,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
   _SaveSizeTemp(SL);
   for( size_t i=0; i < GetRM().InfoTabCount(); i++ )  {
     if( GetRM().GetInfoTab(i).IsValid() )
-      SL.Add( GetRM().GetInfoTab(i).InsStr() );
+      SL.Add(GetRM().GetInfoTab(i).InsStr());
   }
   GetRM().Conn.ToInsList(SL);
   // copy "unknown" instructions except rems
