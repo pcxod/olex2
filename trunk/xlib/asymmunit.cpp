@@ -766,7 +766,7 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   cell.AddField("Z", Z);
   TDataItem& symm = item.AddItem("symm");
   symm.AddField("latt", Latt);
-  for( size_t i=0; i < Matrices.Count(); i++ )  
+  for( size_t i=0; i < Matrices.Count(); i++ )
     symm.AddItem(i, TSymmParser::MatrixToSymmEx(Matrices[i]));
   size_t aid=0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
@@ -799,20 +799,34 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn)  {
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);
   PyObject* main = PyDict_New(), *cell = PyDict_New();
-  PythonExt::SetDictItem(cell, "a", Py_BuildValue("(dd)", Axes[0], AxisEsds[0]));
-  PythonExt::SetDictItem(cell, "b", Py_BuildValue("(dd)", Axes[1], AxisEsds[1]));
-  PythonExt::SetDictItem(cell, "c", Py_BuildValue("(dd)", Axes[2], AxisEsds[2]));
-  PythonExt::SetDictItem(cell, "alpha", Py_BuildValue("(dd)", Angles[0], AngleEsds[0]));
-  PythonExt::SetDictItem(cell, "beta", Py_BuildValue("(dd)", Angles[1], AngleEsds[1]));
-  PythonExt::SetDictItem(cell, "gamma", Py_BuildValue("(dd)", Angles[2], AngleEsds[2]));
+  PythonExt::SetDictItem(cell, "a",
+    Py_BuildValue("(dd)", Axes[0], AxisEsds[0]));
+  PythonExt::SetDictItem(cell, "b",
+    Py_BuildValue("(dd)", Axes[1], AxisEsds[1]));
+  PythonExt::SetDictItem(cell, "c",
+    Py_BuildValue("(dd)", Axes[2], AxisEsds[2]));
+  PythonExt::SetDictItem(cell, "alpha",
+    Py_BuildValue("(dd)", Angles[0], AngleEsds[0]));
+  PythonExt::SetDictItem(cell, "beta",
+    Py_BuildValue("(dd)", Angles[1], AngleEsds[1]));
+  PythonExt::SetDictItem(cell, "gamma",
+    Py_BuildValue("(dd)", Angles[2], AngleEsds[2]));
   PythonExt::SetDictItem(cell, "z", Py_BuildValue("i", Z));
   PythonExt::SetDictItem(main, "cell", cell);
   // pre-set atom tags
+  TEBitArray deleted(CAtoms.Count());
   size_t aid=0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
-    for (size_t j=0; j < r.Count(); j++)
-      r[j].SetTag(r[j].IsDeleted() || r[j].GetType() == iQPeakZ ? -1 : aid++);
+    for (size_t j=0; j < r.Count(); j++) {
+      if (r[j].GetType() == iQPeakZ && !r[j].IsDeleted()) {
+        deleted.SetTrue(r[j].GetId());
+        r[j].SetDeleted(true);
+        r[j].SetTag(-1);
+      }
+      else
+        r[j].SetTag(r[j].IsDeleted() ? -1 : aid++);
+    }
   }
   size_t resi_cnt = 0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
@@ -851,6 +865,10 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn)  {
     PyTuple_SetItem(residues, resi_cnt++, ri);
   }
   PythonExt::SetDictItem(main, "residues", residues);
+  for (size_t i=0; i < CAtoms.Count(); i++) {
+    if (deleted[i])
+      CAtoms[i]->SetDeleted(false);
+  }
   return main;
 }
 #endif
