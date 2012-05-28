@@ -261,7 +261,7 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     return VarNames[i];
   }
-  virtual void SetVarRef(size_t i, XVarReference* var_ref) {  
+  virtual void SetVarRef(size_t i, XVarReference* var_ref) {
     if( i >= VarCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     Vars[i] = var_ref;
@@ -269,7 +269,7 @@ public:
   virtual IXVarReferencerContainer& GetParentContainer() const;
   virtual double GetValue(size_t var_index) const;
   virtual void SetValue(size_t var_index, const double& val);
-  virtual bool IsValid() const {  return !IsDeleted() && GetTag() >=0;  }
+  virtual bool IsValid() const {  return !IsDeleted();  }
   virtual olxstr GetIdName() const {  return Label;  }
 #ifdef _DEBUG
   void SetTag(index_t v) { ACollectionItem::SetTag(v); }
@@ -410,7 +410,7 @@ public:
   void ToDataItem(TDataItem& di) const;
   void FromDataItem(const TDataItem& di, const RefinementModel& rm);
 };
-//....................................................................................
+//..............................................................................
 typedef TTypeList<TGroupCAtom> TCAtomGroup;
 //..............................................................................
 EndXlibNamespace()

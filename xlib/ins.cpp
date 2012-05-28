@@ -340,7 +340,6 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         Param->GetObject(j) = GetAsymmUnit().FindCAtom(Param->GetString(j));
     }
   }
-  cx.rm.aunit.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
   cx.rm.Vars.Validate();
   cx.rm.ProcessFrags();
 }
@@ -1423,8 +1422,6 @@ olxstr TIns::_CellToString()  {
 //..............................................................................
 void TIns::_SaveFVar(RefinementModel& rm, TStrList& SL)  {
   olxstr Tmp; // = "FVAR ";
-  // tag is used to validate the atoms, negative tag - makes ana atom invalid
-  rm.aunit.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
   rm.Vars.Validate();
   HyphenateIns("FVAR ", rm.Vars.GetFVARStr(), SL);
 }
