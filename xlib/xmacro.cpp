@@ -1516,7 +1516,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   if( !TEFile::IsAbsolutePath(Tmp) ) {
     if (CurrentDir.IsEmpty())
-      Tmp = TEFile::AddPathDelimeterI(TEFile::CurrentDir()) + Tmp;
+      Tmp = TEFile::AddPathDelimeter(TEFile::CurrentDir()) + Tmp;
     else
       Tmp = TEFile::AddPathDelimeter(CurrentDir) + Tmp;
   }
