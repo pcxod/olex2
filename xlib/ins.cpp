@@ -349,8 +349,9 @@ void TIns::_ProcessAfix0(ParseContext& cx)  {
     int old_m = cx.AfixGroups.Current().GetB()->GetM();
     if( cx.AfixGroups.Current().GetA() > 0 )  {
       if( old_m != 0 )
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("incomplete AFIX group") <<
-        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString()) );
+        throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("incomplete AFIX group") <<
+        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString()));
       else  {
         TBasicApp::NewLogEntry(logWarning) << "Possibly incorrect AFIX " <<
           cx.AfixGroups.Current().GetB()->GetAfix() <<

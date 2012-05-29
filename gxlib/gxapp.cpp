@@ -4356,13 +4356,14 @@ void TGXApp::LoadModel(const olxstr& fileName) {
 #endif
 }
 //..............................................................................
-void TGXApp::GroupSelection(const olxstr& name)  {
+TGlGroup *TGXApp::GroupSelection(const olxstr& name)  {
   TGlGroup* glg = GetRender().GroupSelection(name);
   if( glg != NULL )  {
     StoreGroup(*glg, GroupDefs.AddNew());
     _UpdateGroupIds();
     Draw();
   }
+  return glg;
 }
 //..............................................................................
 void TGXApp::UnGroupSelection()  {

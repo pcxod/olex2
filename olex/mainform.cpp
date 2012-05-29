@@ -686,29 +686,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     fpAny, "Sets current view along the normal of the best plane");
   this_InitMacroD(Cent, EmptyString(), fpAny,
     "Creates a centroid for given/selected/all atoms");
-  this_InitMacroD(Mask, EmptyString(), fpAny^fpNone, 
-    "Sets primitives for atoms or bonds according to provided mask. Accepts "
-    "atoms, bonds, hbonds or a name (like from LstGO).\n"
-    "Example: 'mask hbonds 2048' - this resets hydrogen bond style to "
-    "default");
-
-  this_InitMacroD(ARad, EmptyString(), fpAny^fpNone, 
-    "Changes how the atoms are drawn [sfil - sphere packing, pers - static "
-    "radii, isot - radii proportional to Ueq, isoth - as isot, but applied to "
-    "H atoms as well]");
-  this_InitMacroD(ADS, EmptyString(), fpAny^(fpNone),
-    "Changes atom draw style [sph,elp,std]");
-  this_InitMacroD(AZoom, EmptyString(), fpAny^fpNone,
-    "Modifies given atoms [all] radius. The first argument is the new radius "
-    "in %");
-  this_InitMacroD(BRad, "a-specified value is absolute, in A", fpAny^fpNone,
-    "Multiplies provided [all] bonds default radius by given number. The"
-    " default radius for covalent bonds is 0.1A and for H-bonds is 0.02A. To "
-    "set radius for H-bonds use:"
-    "\n\tbrad R hbonds"
-    "\nAny particula bond type can also be specified like:\n\tbrad 0.5 C-H"
-    "\nNote that the heavier atom type is always first"
-    );
 
   this_InitMacroD(Hide, EmptyString(), fpAny,
     "Hides selected objects or provided atom names (no atom related objects as"
@@ -1137,7 +1114,6 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitFunc(Cell, fpOne|psFileLoaded);
 
-  this_InitFunc(DataDir, fpNone);
   this_InitFuncD(Cif, fpOne|psCheckFileTypeCif,
     "Returns instruction value (all data after the instruction). In case the "
     "instruction does not exist it return 'n/a' string");

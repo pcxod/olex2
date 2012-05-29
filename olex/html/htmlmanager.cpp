@@ -955,7 +955,13 @@ void THtmlManager::funHeight(const TStrObjList &Params, TMacroError &E)  {
 //.............................................................................
 void THtmlManager::funClientWidth(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
-  if( c.html == NULL || c.wnd == NULL )  return;
+  if( c.html == NULL || c.wnd == NULL )  {
+    if( Params.Count() == 1 ) {
+      E.Reset();
+      E.SetRetVal(0);
+    }
+    return;
+  }
   if( Params.Count() == 1 )
     E.SetRetVal(c.wnd->GetClientSize().GetWidth());
   else
@@ -964,7 +970,13 @@ void THtmlManager::funClientWidth(const TStrObjList &Params, TMacroError &E)  {
 //.............................................................................
 void THtmlManager::funClientHeight(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 2, __OlxSrcInfo);
-  if( c.html == NULL || c.wnd == NULL )  return;
+  if( c.html == NULL || c.wnd == NULL )  {
+    if( Params.Count() == 1 ) {
+      E.Reset();
+      E.SetRetVal(0);
+    }
+    return;
+  }
   if( Params.Count() == 1 )
     E.SetRetVal(c.wnd->GetClientSize().GetHeight());
   else

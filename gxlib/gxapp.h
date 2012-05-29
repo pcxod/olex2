@@ -441,7 +441,8 @@ public:
     return GetRender().FindGroupByName(colName);
   }
   TGlGroup& GetSelection() const {  return GetRender().GetSelection();  }
-  void GroupSelection(const olxstr& name);
+  /* returns the newly created group or NULL if the grouping has failed */
+  TGlGroup *GroupSelection(const olxstr& name);
   void UnGroupSelection();
   void UnGroup(TGlGroup& G);
   // if list is true - the selection is considered as a list of bonds

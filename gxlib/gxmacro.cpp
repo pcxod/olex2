@@ -62,6 +62,30 @@ void GXLibMacros::Export(TLibrary& lib) {
     "m-Medium&;"
     "l-Low", fpNone,
     "Sets drawings quality");
+
+  gxlib_InitMacro(Mask, EmptyString(), fpAny^fpNone, 
+    "Sets primitives for atoms or bonds according to provided mask. Accepts "
+    "atoms, bonds, hbonds or a name (like from LstGO).\n"
+    "Example: 'mask hbonds 2048' - this resets hydrogen bond style to "
+    "default");
+
+  gxlib_InitMacro(ARad, EmptyString(), fpAny^fpNone, 
+    "Changes how the atoms are drawn [sfil - sphere packing, pers - static "
+    "radii, isot - radii proportional to Ueq, isoth - as isot, but applied to "
+    "H atoms as well]");
+  gxlib_InitMacro(ADS, EmptyString(), fpAny^(fpNone),
+    "Changes atom draw style [sph,elp,std]");
+  gxlib_InitMacro(AZoom, EmptyString(), fpAny^fpNone,
+    "Modifies given atoms [all] radius. The first argument is the new radius "
+    "in %");
+  gxlib_InitMacro(BRad, "a-specified value is absolute, in A", fpAny^fpNone,
+    "Multiplies provided [all] bonds default radius by given number. The"
+    " default radius for covalent bonds is 0.1A and for H-bonds is 0.02A. To "
+    "set radius for H-bonds use:"
+    "\n\tbrad R hbonds"
+    "\nAny particula bond type can also be specified like:\n\tbrad 0.5 C-H"
+    "\nNote that the heavier atom type is always first"
+    );
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -122,7 +146,7 @@ void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
 
   }
 }
-//..............................................................................
+//.............................................................................
 void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
@@ -302,7 +326,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
   mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
-//////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
   app.XGrid().InitGrid(dim);
 
   app.XGrid().SetMaxHole(mi.sigma*1.4);
@@ -315,15 +339,15 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   MapUtil::CopyMap(app.XGrid().Data()->Data, map.Data, dim);
   app.XGrid().AdjustMap();
 
-  TBasicApp::NewLogEntry() << "Map max val " << olxstr::FormatFloat(3, mi.maxVal) << 
-    " min val " << olxstr::FormatFloat(3, mi.minVal) << NewLineSequence() << 
+  TBasicApp::NewLogEntry() <<
+    "Map max val " << olxstr::FormatFloat(3, mi.maxVal) <<
+    " min val " << olxstr::FormatFloat(3, mi.minVal) << NewLineSequence() <<
     "Map sigma " << olxstr::FormatFloat(3, mi.sigma);
   // map integration
   if( Options.Contains('i') )  {
     TArrayList<MapUtil::peak> Peaks;
     TTypeList<MapUtil::peak> MergedPeaks;
     vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
-    //MapUtil::Integrate<float>(map.Data, dim, (mi.maxVal - mi.minVal)/2.5, Peaks);
     MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
     MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
     QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortBySum);
@@ -331,7 +355,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
-      vec3d cnt((double)peak.center[0]/dim[0], (double)peak.center[1]/dim[1], (double)peak.center[2]/dim[2]); 
+      vec3d cnt((double)peak.center[0]/dim[0], (double)peak.center[1]/dim[1],
+        (double)peak.center[2]/dim[2]); 
       const double ed = (double)((long)((peak.summ*1000)/peak.count))/1000;
       TCAtom& ca = au.NewAtom();
       ca.SetLabel(olxstr("Q") << olxstr((100+i)));
@@ -406,8 +431,126 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
   app.XGrid().SetMaxVal(mi.maxVal);
   app.XGrid().SetMaxHole( mi.sigma*1.4);
   app.XGrid().SetMinHole(-mi.sigma*1.4);
-  app.XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
+  app.XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5);
   app.XGrid().InitIso();
   app.ShowGrid(true, EmptyString());
 }
-//..............................................................................
+//.............................................................................
+void GXLibMacros::macMask(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  if (Cmds[0].Equalsi("atoms") && Cmds.Count() > 1) {
+    int Mask = Cmds[1].ToInt();
+    short ADS=0, AtomsStart=2;
+    TXAtomPList Atoms =
+      app.FindXAtoms(TStrObjList(Cmds.SubListFrom(AtomsStart)), false, false);
+    app.UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
+  }
+  else if( (Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds")) &&
+           Cmds.Count() > 1 )
+  {
+    int Mask = Cmds[1].ToInt();
+    TXBondPList Bonds = app.GetBonds(TStrList(Cmds.SubListFrom(2)), false);
+    app.UpdateBondPrimitives(Mask, 
+      (Bonds.IsEmpty() && app.GetSelection().Count() == 0) ? NULL : &Bonds,
+      Cmds[0].Equalsi("hbonds"));
+  }
+  else  {
+    int Mask = Cmds.GetLastString().ToInt();
+    Cmds.Delete(Cmds.Count() - 1);
+    TGPCollection *GPC = app.GetRender().FindCollection(Cmds.Text(' '));
+    if( GPC != NULL )  {
+      if( GPC->ObjectCount() != 0 )
+        GPC->GetObject(0).UpdatePrimitives(Mask);
+    }
+    else  {
+      Error.ProcessingError(__OlxSrcInfo,"Undefined graphics:").quote() <<
+        Cmds.Text(' ');
+      return;
+    }
+  }
+}
+//.............................................................................
+void GXLibMacros::macARad(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  olxstr arad(Cmds[0]);
+  Cmds.Delete(0);
+  TXAtomPList xatoms = app.FindXAtoms(Cmds, false, false);
+  app.AtomRad(arad, xatoms.IsEmpty() ? NULL : &xatoms);
+}
+//.............................................................................
+void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  short ads = -1;
+  if( Cmds[0].Equalsi("elp") )
+    ads = adsEllipsoid;
+  else if( Cmds[0].Equalsi("sph") )
+    ads = adsSphere;
+  else if( Cmds[0].Equalsi("ort") )
+    ads = adsOrtep;
+  else if( Cmds[0].Equalsi("std") )
+    ads = adsStandalone;
+  if( ads == -1 )  {
+    Error.ProcessingError(__OlxSrcInfo,
+      "unknown atom type (elp/sph/ort/std) supported only");
+    return;
+  }
+  TGXApp &app = TGXApp::GetInstance();
+  Cmds.Delete(0);
+  TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
+  app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? NULL : &Atoms);
+}
+//.............................................................................
+void GXLibMacros::macAZoom(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  if( !Cmds[0].IsNumber() )  {
+    Error.ProcessingError(__OlxSrcInfo,
+      "a number is expected as first argument");
+    return;
+  }
+  TGXApp &app = TGXApp::GetInstance();
+  double zoom = Cmds[0].ToDouble();
+  Cmds.Delete(0);
+  TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
+  app.AtomZoom(zoom, Atoms.IsEmpty() ? NULL : &Atoms);
+}
+//.............................................................................
+void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  double r = Cmds[0].ToDouble();
+  Cmds.Delete(0);
+  TXBondPList bonds;
+  bool absolute = Options.Contains('a');
+  if( Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds") )  {
+    if (absolute) r /= 0.02;
+    TGXApp::BondIterator bi = app.GetBonds();
+    while( bi.HasNext() )  {
+      TXBond& xb = bi.Next();
+      if( xb.GetType() == sotHBond )
+        bonds.Add(xb);
+    }
+    app.BondRad(r, &bonds);
+  }
+  else  {
+    if (absolute) r /= 0.1;
+    bonds = app.GetBonds(Cmds, true);
+    if( bonds.IsEmpty() && Cmds.IsEmpty() )  {  // get all non-H
+      TGXApp::BondIterator bi = app.GetBonds();
+      while( bi.HasNext() )  {
+        TXBond& xb = bi.Next();
+        if( xb.GetType() != sotHBond )
+          bonds.Add(xb);
+      }
+      TXBond::DefR(r);
+    }
+    app.BondRad(r, &bonds);
+  }
+}
+//.............................................................................

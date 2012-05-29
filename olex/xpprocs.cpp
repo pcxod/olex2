@@ -248,10 +248,6 @@ void TMainForm::funCrs(const TStrObjList& Params, TMacroError &E)  {
     E.SetRetVal(XLibMacros::NAString);
 }
 //..............................................................................
-void TMainForm::funDataDir(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(FXApp->GetInstanceDir().SubStringFrom(0, 1));
-}
-//..............................................................................
 void TMainForm::funStrcat(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(Params[0] + Params[1]);
 }
@@ -602,7 +598,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   BmpFHdr.bfSize = sizeof(BmpFHdr)  + sizeof(BITMAPINFOHEADER) +
     (BmpWidth*(bits/8)+extraBytes)*BmpHeight;
   BmpFHdr.bfReserved1 = BmpFHdr.bfReserved2 = 0;
-  BmpFHdr.bfOffBits = sizeof(BmpFHdr) + sizeof(BmpInfo.bmiHeader) ;
+  BmpFHdr.bfOffBits = sizeof(BmpFHdr) + sizeof(BmpInfo.bmiHeader);
 
   unsigned char *DIBits = NULL;
   HBITMAP DIBmp = CreateDIBSection(dDC, &BmpInfo, DIB_RGB_COLORS,
@@ -720,12 +716,13 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 #endif // __WIN32__
 }
 //..............................................................................
-void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  //wxProgressDialog progress(wxT("Rendering..."), wxT("Pass 1 out of 4"), 5, this, wxPD_AUTO_HIDE); 
+void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   int orgHeight = FXApp->GetRender().GetHeight(),
       orgWidth  = FXApp->GetRender().GetWidth();
   double res = 1;
-  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )  
+  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )
     res = Cmds[1].ToDouble();
   if( res >= 100 )  // width provided
     res /= orgWidth;
@@ -1617,104 +1614,6 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macCent(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   FXApp->AddCentroid(FindXAtoms(Cmds, true, true).GetObject());
-}
-//..............................................................................
-void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error){
-  if( Cmds[0].Equalsi("atoms") && Cmds.Count() > 1 )  {
-    int Mask = Cmds[1].ToInt();
-    short ADS=0, AtomsStart=2;
-    olxstr Tmp;
-    TXAtomPList Atoms = FindXAtoms(Cmds.SubListFrom(AtomsStart), false, false);
-    FXApp->UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
-  }
-  else if( (Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds") ) && Cmds.Count() > 1 )  {
-    int Mask = Cmds[1].ToInt();
-    TXBondPList Bonds = FXApp->GetBonds(Cmds.SubListFrom(2), false);
-    FXApp->UpdateBondPrimitives(Mask, 
-      (Bonds.IsEmpty() && FXApp->GetSelection().Count() == 0) ? NULL : &Bonds, 
-      Cmds[0].Equalsi("hbonds"));
-  }
-  else  {
-    int Mask = Cmds.GetLastString().ToInt();
-    Cmds.Delete(Cmds.Count() - 1);
-    TGPCollection *GPC = FXApp->GetRender().FindCollection(Cmds.Text(' '));
-    if( GPC != NULL )  {
-      if( GPC->ObjectCount() != 0 )
-        GPC->GetObject(0).UpdatePrimitives(Mask);
-    }
-    else  {
-      Error.ProcessingError(__OlxSrcInfo, olxstr("Undefined graphics :") << Cmds.Text(' '));
-      return;
-    }
-  }
-}
-//..............................................................................
-void TMainForm::macARad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr arad(Cmds[0]);
-  Cmds.Delete(0);
-  TXAtomPList xatoms = FindXAtoms(Cmds, false, false);
-  FXApp->AtomRad(arad, xatoms.IsEmpty() ? NULL : &xatoms);
-}
-//..............................................................................
-void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  short ads = -1;
-  if( Cmds[0].Equalsi("elp") )
-    ads = adsEllipsoid;
-  else if( Cmds[0].Equalsi("sph") )
-    ads = adsSphere;
-  else if( Cmds[0].Equalsi("ort") )
-    ads = adsOrtep;
-  else if( Cmds[0].Equalsi("std") )
-    ads = adsStandalone;
-  if( ads == -1 )  {
-    Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph/ort/std) supported only");
-    return;
-  }
-  Cmds.Delete(0);
-  TXAtomPList Atoms = FindXAtoms(Cmds, false, false);
-  FXApp->SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? NULL : &Atoms);
-}
-//..............................................................................
-void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !Cmds[0].IsNumber() )  {
-    Error.ProcessingError(__OlxSrcInfo, "a number is expected as first argument");
-    return;
-  }
-  double zoom = Cmds[0].ToDouble();
-  Cmds.Delete(0);
-  TXAtomPList Atoms = FindXAtoms(Cmds, false, false);
-  FXApp->AtomZoom(zoom, Atoms.IsEmpty() ? NULL : &Atoms);
-}
-//..............................................................................
-void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  double r = Cmds[0].ToDouble();
-  Cmds.Delete(0);
-  TXBondPList bonds;
-  bool absolute = Options.Contains('a');
-  if( Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds") )  {
-    if (absolute) r /= 0.02;
-    TGXApp::BondIterator bi = FXApp->GetBonds();
-    while( bi.HasNext() )  {
-      TXBond& xb = bi.Next();
-      if( xb.GetType() == sotHBond )
-        bonds.Add(xb);
-    }
-    FXApp->BondRad(r, &bonds);
-  }
-  else  {
-    if (absolute) r /= 0.1;
-    bonds = FXApp->GetBonds(Cmds, true);
-    if( bonds.IsEmpty() && Cmds.IsEmpty() )  {  // get all non-H
-      TGXApp::BondIterator bi = FXApp->GetBonds();
-      while( bi.HasNext() )  {
-        TXBond& xb = bi.Next();
-        if( xb.GetType() != sotHBond )
-          bonds.Add(xb);
-      }
-      TXBond::DefR(r);
-    }
-    FXApp->BondRad(r, &bonds);
-  }
 }
 //..............................................................................
 void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

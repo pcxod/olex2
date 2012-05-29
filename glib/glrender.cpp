@@ -841,7 +841,7 @@ TGlGroup* TGlRenderer::FindGroupByName(const olxstr& colName) const {
 void TGlRenderer::ClearSelection()  {  FSelection->Clear();  }
 //..............................................................................
 TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
-  if( FSelection->Count() > 1 )  {
+  if( FSelection->Count() > 0 )  {
     AGDObjList ungroupable;
     if( !FSelection->TryToGroup(ungroupable) )
       return NULL;
@@ -1008,9 +1008,9 @@ void TGlRenderer::LookAt(double x, double y, short res)  {
   FProjectionBottom = (float)((y+1)/(double)res - 0.5);
 }
 //..............................................................................
-char* TGlRenderer::GetPixels(bool useMalloc, short aligment)  {
+char* TGlRenderer::GetPixels(bool useMalloc, short aligment, GLuint format)  {
   char *Bf;
-  short extraBytes = (4-(Width*3)%4)%4;  //for bitmaps with 4 bytes aligment
+  short extraBytes = aligment-(Width*3)%aligment;
   if( useMalloc )  {
     Bf = (char*)malloc((Width*3+extraBytes)*Height);
   }
@@ -1021,7 +1021,7 @@ char* TGlRenderer::GetPixels(bool useMalloc, short aligment)  {
     throw TOutOfMemoryException(__OlxSourceInfo);
   olx_gl::readBuffer(GL_BACK);
   olx_gl::pixelStore(GL_PACK_ALIGNMENT, aligment);
-  olx_gl::readPixels(0, 0, Width, Height, GL_RGB, GL_UNSIGNED_BYTE, Bf);
+  olx_gl::readPixels(0, 0, Width, Height, GL_BGR_EXT, GL_UNSIGNED_BYTE, Bf);
   return Bf;
 }
 //..............................................................................
@@ -1034,9 +1034,9 @@ void TGlRenderer::RemovePrimitiveByTag(int in)  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
       FTranslucentIdentityObjects.Add(GlM);
-    else if( GlM.IsTransparent() )    
+    else if( GlM.IsTransparent() )
       FTranslucentObjects.Add(GlM);
-    else if( GlM.IsIdentityDraw() )   
+    else if( GlM.IsIdentityDraw() )
       FIdentityObjects.Add(GlM);
   }
 }

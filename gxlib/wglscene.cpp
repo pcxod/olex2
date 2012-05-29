@@ -52,13 +52,14 @@ void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, __int8 bits) {
   int PixelFormat;
   if( bits == 0 )
     bits = 24;  // by default
+  PIXELFORMATDESCRIPTOR pdf;
   PIXELFORMATDESCRIPTOR pfd = {
     sizeof(PIXELFORMATDESCRIPTOR),
     1,
-    PFD_DRAW_TO_WINDOW |	// support window
-	  PFD_SUPPORT_OPENGL |	// support OpenGL
-	  PFD_DOUBLEBUFFER,	// double buffered
-	  PFD_TYPE_RGBA,
+    PFD_DRAW_TO_WINDOW | // support window
+    PFD_SUPPORT_OPENGL |  // support OpenGL
+    PFD_DOUBLEBUFFER,    // double buffered
+    PFD_TYPE_RGBA,
     bits,
     0,0,0,0,0,0,
     0,0,

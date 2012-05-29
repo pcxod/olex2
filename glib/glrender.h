@@ -322,8 +322,8 @@ public:
 
   TGlBackground* Background()  {  return FBackground; }
   TGlBackground* Ceiling()     {  return FCeiling; }
-
-  char* GetPixels(bool useMalloc=false, short aligment=4);
+  /* returns 24 bit colors, formatis GL_RGB or GL_BGR_EXT */
+  char* GetPixels(bool useMalloc=false, short aligment=4, GLuint format=GL_RGB);
   /* the functions set current view for drawinf large picture x, y- curent
   quadraterial, res - required resolution; to be used in conjunction with
   GetPixels
