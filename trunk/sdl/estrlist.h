@@ -707,7 +707,7 @@ public:
   TStrPObjList& SubList(size_t offset, size_t count, TStrPObjList& SL) const
   {
     for( size_t i=offset; i < offset+count; i++ )
-      SL.Add(PList::GetString(i), GetObject(i));
+      SL.Add(PList::GetString(i), PList::GetObject(i));
     return SL;
   }
 
