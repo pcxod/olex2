@@ -66,6 +66,11 @@ public:
     for( size_t i=0; i < list.Count(); i++ )
       Add(list[i]);
   }
+  template <class T1> TTStrList(const ConstStrObjList<T1>& list)  {
+    Strings.SetCapacity(list.Count());
+    for (size_t i=0; i < list.Count(); i++)
+      Add(list[i]);
+  }
   TTStrList(const TTStrList& list)  {
     Strings.SetCapacity(list.Count());
     for( size_t i=0; i < list.Count(); i++ )
@@ -580,12 +585,12 @@ public:
     return SL;
   }
 
-  TTOStringList SubListFrom(size_t offset) const {
+  ConstStrObjList<GC> SubListFrom(size_t offset) const {
     TTOStringList SL;
     return SubList(offset, PList::Count()-offset, SL);
   }
 
-  TTOStringList SubListTo(size_t to) const {
+  ConstStrObjList<GC> SubListTo(size_t to) const {
     TTOStringList SL;
     return SubList(0, to, SL);
   }
@@ -660,23 +665,22 @@ public:
   }
 };
 
-template <class SC, typename OC> class TStrPObjList: 
+template <class SC, typename OC> class TStrPObjList:
    public TTOStringList<TPrimitiveStrListData<SC,OC> >
 {
-  typedef TTOStringList<TPrimitiveStrListData<SC,OC> > PList;
+  typedef TPrimitiveStrListData<SC,OC> data_t;
+  typedef TTOStringList<data_t> PList;
 public:
   TStrPObjList()  {}
   TStrPObjList(size_t count) : PList(count)  {}
-  TStrPObjList(const
-    ConstStrObjList<TPrimitiveStrListData<SC,OC> > &list)
-  {
-    PList::Strings.TakeOver(list.Relase(), true);
+  TStrPObjList(const ConstStrObjList<data_t> &list) {
+    PList::TakeOver(list.Release(), true);
   }
 
   template <class T1> TStrPObjList(const TTStrList<T1>& list)
     : PList(list) {}
 
-  TStrPObjList(const TTOStringList<TPrimitiveStrListData<SC,OC> >& list)
+  TStrPObjList(const TTOStringList<data_t>& list)
     : PList(list)  {}
 
   TStrPObjList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL)
@@ -695,12 +699,28 @@ public:
     return (in != InvalidIndex) ? PList::Strings[in]->Object : NULL;
   }
 
-  TStrPObjList &operator = (const
-    ConstStrObjList<TPrimitiveStrListData<SC,OC> > &list)
-  {
+  TStrPObjList &operator = (const ConstStrObjList<data_t> &list) {
     PList::Strings.TakeOver(list.Relase(), true);
     return *this;
   }
+
+  TStrPObjList& SubList(size_t offset, size_t count, TStrPObjList& SL) const
+  {
+    for( size_t i=offset; i < offset+count; i++ )
+      SL.Add(PList::GetString(i), GetObject(i));
+    return SL;
+  }
+
+  ConstStrObjList<data_t> SubListFrom(size_t offset) const {
+    TStrPObjList SL;
+    return SubList(offset, PList::Count()-offset, SL);
+  }
+
+  ConstStrObjList<data_t> SubListTo(size_t to) const {
+    TStrPObjList SL;
+    return SubList(0, to, SL);
+  }
+
 };
 
 // const_strlist

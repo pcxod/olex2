@@ -36,7 +36,9 @@ public:
   virtual void RestoreFontScale()  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-  virtual olxstr ShowFontDialog(TGlFont* glf = NULL, const olxstr& fontDescription=EmptyString())  {
+  virtual olxstr ShowFontDialog(TGlFont* glf = NULL,
+    const olxstr& fontDescription=EmptyString())
+  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
 };

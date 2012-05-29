@@ -44,7 +44,8 @@ const short
   catom_flag_Saved      = 0x0008,
   catom_flag_Masked     = 0x0010,
   catom_flag_Detached   = 0x0020,
-  catom_flag_Processed  = 0x0040; // generic flag
+  catom_flag_Processed  = 0x0040, // generic flag
+  catom_flag_FixedType  = 0x0080;
 
 class TEllipsoid;
 class TAfixGroup;
@@ -235,7 +236,8 @@ public:
   DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached)
   DefPropBFIsSet(Masked,    Flags, catom_flag_Masked)
   DefPropBFIsSet(Detached,  Flags, catom_flag_Detached)
-  DefPropBFIsSet(Processed,  Flags, catom_flag_Processed)
+  DefPropBFIsSet(Processed, Flags, catom_flag_Processed)
+  DefPropBFIsSet(FixedType, Flags, catom_flag_FixedType)
   bool IsAvailable() const {
     return
       (Flags&(catom_flag_Detached|catom_flag_Masked|catom_flag_Deleted)) == 0;

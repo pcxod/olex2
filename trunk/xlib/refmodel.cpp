@@ -1543,6 +1543,15 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
     for( size_t i=0;  i < rl.Count(); i++ )
       ri.AddItem("item", rl[i]);
   }
+  olxstr fixed_types;
+  for (size_t i=0; i < aunit.AtomCount(); i++) {
+    TCAtom &a = aunit.GetAtom(i);
+    if (!a.IsDeleted() && a.IsFixedType())
+      fixed_types << ' ' << a.GetLabel();
+  }
+  if (!fixed_types.IsEmpty()) {
+    di.AddItem("fixed_types", fixed_types.SubStringFrom(1));
+  }
   TEStrBuffer bf;
   di.SaveToStrBuffer(bf);
   return bf.ToString();
@@ -1597,6 +1606,19 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
           "Unknown Olex2 constraint: ").quote()
           << constraints->GetItem(i).GetValue());
       }
+    }
+  }
+  TDataItem *fixed_types = di.FindItem("fixed_types");
+  if (fixed_types != NULL) {
+    TStrList toks(fixed_types->GetValue(), ' ');
+    for (size_t i=0; i < toks.Count(); i++) {
+      TCAtom *a = aunit.FindCAtom(toks[i]);
+      if (a == NULL) {
+        TBasicApp::NewLogEntry(logError) <<
+          (olxstr("Invalid fixed type atom name: ").quote() << toks[i]);
+        continue;
+      }
+      a->SetFixedType(true);
     }
   }
 }

@@ -397,6 +397,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Checks type of currently loaded file [ins,res,ires,cif,mol,xyz]");
 //_____________________________________________________________________________
   xlib_InitFunc(BaseDir, fpNone|fpOne, "Returns the startup folder");
+  xlib_InitFunc(DataDir, fpNone, "Returns the location of user data");
   xlib_InitFunc(HKLSrc, fpNone|fpOne|psFileLoaded,
     "Returns/sets hkl source for currently loaded file");
 //_____________________________________________________________________________
@@ -1513,8 +1514,12 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   bool Sort = Options.Contains('s');
 
-  if( TEFile::ExtractFilePath(Tmp).IsEmpty() )
-    Tmp = TEFile::AddPathDelimeter(CurrentDir) + Tmp;
+  if( !TEFile::IsAbsolutePath(Tmp) ) {
+    if (CurrentDir.IsEmpty())
+      Tmp = TEFile::AddPathDelimeterI(TEFile::CurrentDir()) + Tmp;
+    else
+      Tmp = TEFile::AddPathDelimeter(CurrentDir) + Tmp;
+  }
   TEBitArray removedSAtoms, removedCAtoms;
   if( TEFile::ExtractFileExt(Tmp).Equalsi("ins"))  {  // kill Q peak in the ins file
     ASObjectProvider& objects = XApp.XFile().GetLattice().GetObjects();
@@ -2667,6 +2672,10 @@ void XLibMacros::funBaseDir(const TStrObjList& Params, TMacroError &E)  {
   // windows parser assumes that \" is " and does wrong parsing...
   if( !tmp.IsEmpty() )  tmp.SetLength(tmp.Length()-1);
   E.SetRetVal(tmp);
+}
+//..............................................................................
+void XLibMacros::funDataDir(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal(TBasicApp::GetInstanceDir().SubStringFrom(0, 1));
 }
 //..............................................................................
 void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {

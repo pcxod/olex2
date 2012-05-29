@@ -80,10 +80,10 @@ public:
   static DefMacro(Flush)
 
   static DefMacro(SGS)  // SG settings
-  static DefMacro(Inv)  
-  static DefMacro(Push)  
-  static DefMacro(Transform)  
-  static DefMacro(Standardise)  
+  static DefMacro(Inv)
+  static DefMacro(Push)
+  static DefMacro(Transform)
+  static DefMacro(Standardise)
 
   static olxstr CifResolve(const olxstr& func);
   static bool ProcessExternalFunction(olxstr& func);
@@ -92,7 +92,7 @@ public:
   static DefMacro(Cif2Tab)
   static DefMacro(Cif2Doc)
   static DefMacro(CifCreate)
-  static DefMacro(FcfCreate)  
+  static DefMacro(FcfCreate)
 
   static DefMacro(CalcCHN)
   static DefMacro(CalcMass)
@@ -116,6 +116,7 @@ public:
   static DefFunc(Ins)
 
   static DefFunc(BaseDir)
+  static DefFunc(DataDir)
   static DefFunc(HKLSrc)
 
   static DefFunc(LSM)

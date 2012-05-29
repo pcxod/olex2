@@ -18,6 +18,11 @@ public:
   static DefMacro(Name)
   static DefMacro(CalcFourier)
   static DefMacro(CalcPatt)
+  static DefMacro(Mask)
+  static DefMacro(ARad)
+  static DefMacro(ADS)
+  static DefMacro(AZoom)
+  static DefMacro(BRad)
 
   static DefMacro(Qual)
 
