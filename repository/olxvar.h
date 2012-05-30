@@ -16,15 +16,16 @@
 #ifndef _NO_PYTHON
   #include "pyext.h"
 // python object types
-const short potNone        = 0x0000,
-            potBool        = 0x0001,
-            potInt         = 0x0002,
-            potFloat       = 0x0004,
-            potString      = 0x0008,
-            potComplex     = 0x0010,
-            potUndefined   = 0x0080,
-            potHasGetter   = 0x0100,
-            potHasSetter   = 0x0200;
+const short
+  potNone        = 0x0000,
+  potBool        = 0x0001,
+  potInt         = 0x0002,
+  potFloat       = 0x0004,
+  potString      = 0x0008,
+  potComplex     = 0x0010,
+  potUndefined   = 0x0080,
+  potHasGetter   = 0x0100,
+  potHasSetter   = 0x0200;
 
 class TOlxPyVar {
   olxstr *Str;
@@ -193,6 +194,7 @@ public:
   static const olxstr& FindVarName(PyObject *pyObj) {
     return (Instance == NULL) ? EmptyString() : Instance->_FindName(pyObj);
   }
+  static TLibrary *ExportLibrary(const olxstr &name="env", TLibrary *l=NULL);
 };
 #else  // _NO_PYTHON
 // use a very thin implementation with no python...
@@ -250,10 +252,12 @@ public:
     size_t i = VarIndex(name);
     return (i == InvalidIndex) ? def : GetVarStr(i);
   }
+  static TLibrary *ExportLibrary(const olxstr &name="env", TLibrary *l=NULL);
 };
 #endif  // _NO_PYTHON
-/* a convinience object: sets var withi given name on the creation and unsets on destruction
-thread safe - synchronised */
+/* a convinience object: sets var withi given name on the creation and unsets
+on destruction thread safe - synchronised
+*/
 class OlxStateVar  {
   olxstr name, prev_val;
   bool was_set, restored;

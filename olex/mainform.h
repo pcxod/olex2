@@ -610,10 +610,6 @@ private:
   DefFunc(GetEnv)
 
   DefFunc(Eval)
-  DefFunc(UnsetVar)
-  DefFunc(SetVar)
-  DefFunc(GetVar)
-  DefFunc(IsVar)
   DefFunc(VVol)
 
   DefFunc(Sel)

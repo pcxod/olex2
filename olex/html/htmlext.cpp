@@ -362,6 +362,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
            comment_open = "<!--", comment_close = "-->";
   olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
   for( size_t i=0; i < Lst.Count(); i++ )  {
+    Lst[i].Replace("~popup_name~", PopupName);
     olxstr tmp = olxstr(Lst[i]).TrimWhiteChars();
     // skip comments
     if( tmp.StartsFrom(comment_open) && !tmp.StartsFrom(Tag2) )  {
