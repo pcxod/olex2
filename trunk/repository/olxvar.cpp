@@ -22,20 +22,20 @@ TOlxPyVar::TOlxPyVar(PyObject* obj)  {
   InitObject(obj);
 
 }
-//..............................................................................
+//.............................................................................
 TOlxPyVar::TOlxPyVar(const TOlxPyVar& oo)  {
   Type = oo.Type;
   Str = (oo.Str == NULL) ? NULL : new olxstr(*oo.Str);
   Obj = oo.Obj;
   if( Obj != NULL )  Py_INCREF(Obj);
 }
-//..............................................................................
+//.............................................................................
 TOlxPyVar::~TOlxPyVar()  {
   if( Str != NULL )  delete Str;
   if( Obj != NULL && Obj != Py_None)
     Py_DECREF(Obj);
 }
-//..............................................................................
+//.............................................................................
 void TOlxPyVar::InitObject(PyObject* obj)  {
   if( Obj != NULL )  Py_DECREF(Obj);
   Obj = obj;
@@ -66,11 +66,12 @@ void TOlxPyVar::InitObject(PyObject* obj)  {
 
   if( defv != NULL )  Py_DECREF(defv);
 }
-//..............................................................................
+//.............................................................................
 PyObject* TOlxPyVar::ObjectValue(PyObject* obj)  {
-  return PyObject_HasAttrString(obj, svmn) ? PyObject_CallMethod(obj, gvmn, NULL) : obj;
+  return PyObject_HasAttrString(obj, svmn)
+    ? PyObject_CallMethod(obj, gvmn, NULL) : obj;
 }
-//..............................................................................
+//.............................................................................
 PyObject* TOlxPyVar::GetObjVal()  {
   if( Obj != NULL )  {
     PyObject *rv = HasGet() ? PyObject_CallMethod(Obj, gvmn, NULL) : Obj;
@@ -80,20 +81,23 @@ PyObject* TOlxPyVar::GetObjVal()  {
   }
   else  if( Str != NULL )
     return PythonExt::BuildString(*Str);
-  else
-    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, "Uninitialised object");
+  else {
+    return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+      "Uninitialised object");
+  }
 }
-//..............................................................................
+//.............................................................................
 void TOlxPyVar::Set(PyObject* obj)  {
   if( Obj == NULL && obj == Py_None )  {
-    Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "A valid object is expected"));
+    Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
+      "A valid object is expected"));
     return;
-//    throw TInvalidArgumentException(__OlxSourceInfo, "A valid object is expected");
   }
   if( Obj != NULL )  {
     if( obj == Py_None )  {
       if( !HasSet() )  {
-        Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Missing set method"));
+        Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
+          "Missing set method"));
         return;
       }
     }
@@ -113,13 +117,13 @@ void TOlxPyVar::Set(PyObject* obj)  {
     if( obj->ob_type == &PyString_Type || obj->ob_type == &PyUnicode_Type )
       *Str = PythonExt::ParseStr(obj);
     else  {
-      Py_DECREF(PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, "Uninitialised object"));
+      Py_DECREF(PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        "Uninitialised object"));
       return;
-//      throw TInvalidArgumentException(__OlxSourceInfo, "Uninitialised object");
     }
   }
 }
-//..............................................................................
+//.............................................................................
 void TOlxPyVar::Set(const olxstr& str)  {
   if( Obj == NULL )  {
     if( Str == NULL )  Str = new olxstr(str);
@@ -138,7 +142,8 @@ void TOlxPyVar::Set(const olxstr& str)  {
         bool v = str.Equalsi(TrueString());
         if( !v && !str.Equalsi(FalseString()) )  {
           olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
-          Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
+          Py_DECREF(
+            PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
           throw TInvalidArgumentException(__OlxSourceInfo, err);
         }
         arg = PyBool_FromLong(v);
@@ -146,7 +151,8 @@ void TOlxPyVar::Set(const olxstr& str)  {
       else if( (Type & potInt) != 0  )  {
         if( !str.IsNumber() )  {
           olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
-          Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
+          Py_DECREF(
+            PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
           throw TInvalidArgumentException(__OlxSourceInfo, err);
         }
         arg = Py_BuildValue("i", str.ToInt());
@@ -154,7 +160,8 @@ void TOlxPyVar::Set(const olxstr& str)  {
       else if( (Type & potFloat) != 0 )  {
         if( !str.IsNumber() )  {
           olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
-          Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
+          Py_DECREF(
+            PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
           throw TInvalidArgumentException(__OlxSourceInfo, err);
         }
         arg = Py_BuildValue("d", str.ToDouble());
@@ -163,7 +170,8 @@ void TOlxPyVar::Set(const olxstr& str)  {
         arg = PythonExt::BuildString(str);
       else  {
         olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
-        Py_DECREF(PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
+        Py_DECREF(
+          PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
         throw TInvalidArgumentException(__OlxSourceInfo, err);
       }
       Py_DECREF(Obj);
@@ -171,7 +179,7 @@ void TOlxPyVar::Set(const olxstr& str)  {
     }
   }
 }
-//..............................................................................
+//.............................................................................
 const olxstr& TOlxVars::GetVarStr(size_t index)  {
   TOlxPyVar& oo = Instance->Vars.GetObject(index);
   if( oo.GetStr() != NULL )  return *oo.GetStr();
@@ -184,16 +192,55 @@ const olxstr& TOlxVars::GetVarStr(size_t index)  {
   else
     return TEGC::New<olxstr>(PyObject_REPR(po));
 }
-//..............................................................................
+//.............................................................................
 TOlxVars::TOlxVars()  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
   OnVarChange = &Actions.New("OnVarChange");
-//  TEGC::AddP(this);  // we cannot do this, as Pyhon might be Finalised boforehad!!!
+//  TEGC::AddP(this);  // we cannot do this, as Pyhon might be Finalised beforehand!!!
 }
 #endif // _NO_PYTHON
+//............................................................................
+void olxvar_funUnsetVar(const TStrObjList& Params, TMacroError &E)  {
+  TOlxVars::UnsetVar(Params[0]);
+}
+//.............................................................................
+void olxvar_funGetVar(const TStrObjList& Params, TMacroError &E)  {
+  const size_t ind = TOlxVars::VarIndex(Params[0]);
+  if (ind == InvalidIndex) {
+    if (Params.Count() == 2)
+      E.SetRetVal(Params[1]);
+    else {
+      E.ProcessingError(__OlxSrcInfo,
+        "Could not locate specified variable: ").quote() << Params[0];
+    }
+  }
+  else
+    E.SetRetVal(TOlxVars::GetVarStr(ind));
+}
+void olxvar_funSetVar(const TStrObjList& Params, TMacroError &E) {
+  TOlxVars::SetVar(Params[0], Params[1]);
+}
+void olxvar_funIsVar(const TStrObjList& Params, TMacroError &E) {
+  E.SetRetVal(TOlxVars::IsVar(Params[0]));
+}
+TLibrary *TOlxVars::ExportLibrary(const olxstr &name, TLibrary *_l) {
+  TLibrary *l = _l == NULL ? new TLibrary(name) : _l;
+  l->RegisterStaticFunction(
+    new TStaticFunction(&olxvar_funSetVar,
+      "SetVar", fpTwo, "Sets the value of the specified variable"));
+  l->RegisterStaticFunction(
+    new TStaticFunction(&olxvar_funGetVar,
+      "GetVar", fpOne|fpTwo, "Gets the value of the specified variable. If the"
+      " variable does not exist and no default value is provided - an error "
+      "occurs"));
+  l->RegisterStaticFunction(
+    new TStaticFunction(&olxvar_funIsVar,
+      "IsVar", fpOne, "Checks if the specified variable exists"));
+  l->RegisterStaticFunction(
+    new TStaticFunction(&olxvar_funUnsetVar,
+      "UnsetVar", fpOne, "Removes the specified variable"));
+  return l;
+}
 
-#ifdef __BORLANDC__
-  #pragma package(smart_init)
-#endif

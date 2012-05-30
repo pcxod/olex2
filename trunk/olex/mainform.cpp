@@ -1133,11 +1133,6 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitFunc(Eval, fpOne);
 
-  this_InitFunc(UnsetVar, fpOne);
-  this_InitFunc(SetVar, fpTwo);
-  this_InitFunc(GetVar, fpOne|fpTwo);
-  this_InitFunc(IsVar, fpOne);
-
   this_InitFunc(VVol, fpNone|fpOne|psFileLoaded);
 
   this_InitFunc(Env, fpOne|psFileLoaded);
@@ -1237,6 +1232,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   Library.AttachLibrary(XA->GetFader().ExportLibrary());
   Library.AttachLibrary(XA->XGrid().ExportLibrary());
   Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
+  TOlxVars::ExportLibrary(EmptyString(), &Library);
 #ifdef _CUSTOM_BUILD_
   CustomCodeBase::Initialise(Library);
 #endif

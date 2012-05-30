@@ -241,7 +241,7 @@ TAG_HANDLER_PROC(tag)  {
   if( ax == 0 )  ax = 30;
   if( ay == 0 )  ay = 20;
  
-  if( tag.HasParam(wxT("FLOAT")) )  
+  if( tag.HasParam(wxT("FLOAT")) )
     fl = ax;
 
   {  // parse h alignment
@@ -315,7 +315,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 
-  Value = tag.GetParam(wxT("VALUE"));
+  Value = ExpandMacroShortcuts(tag.GetParam(wxT("VALUE")), macro_map);
   op->processFunction(Value, SrcInfo, true);
   Data = tag.GetParam(wxT("DATA"));
 /******************* TEXT CONTROL *********************************************/

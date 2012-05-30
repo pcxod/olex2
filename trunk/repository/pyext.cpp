@@ -25,8 +25,8 @@
 //#include "egc.h"
 
 PythonExt* PythonExt::Instance = NULL;
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
 class TFuncWrapper : public PythonExt::BasicWrapper  {
   bool ProcessOutput;
 public:
@@ -63,8 +63,8 @@ public:
   }
 };
 
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
 class TMacroWrapper : public PythonExt::BasicWrapper  {
 public:
   TMacroWrapper(PyObject* callable, bool profile) :
@@ -97,9 +97,9 @@ public:
   }
 };
 
-//..............................................................................
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 
 PyObject* runWriteImage(PyObject* self, PyObject* args)  {
   //IOlexProcessor* o_r = PythonExt::GetOlexProcessor();
@@ -115,7 +115,7 @@ PyObject* runWriteImage(PyObject* self, PyObject* args)  {
   }
   return Py_BuildValue("b", false);
 }
-//..............................................................................
+//.............................................................................
 PyObject* runReadImage(PyObject* self, PyObject* args)  {
   //IOlexProcessor* o_r = PythonExt::GetOlexProcessor();
   olxstr name;
@@ -136,7 +136,7 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
   }
   return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Undefined object");
 }
-//..............................................................................
+//.............................................................................
 TLibrary *FindOrCreateLibrary(const olxstr& name)  {
   TLibrary *lib = PythonExt::GetInstance()->GetBindLibrary();
   if( lib == NULL )  return lib;
@@ -151,15 +151,17 @@ TLibrary *FindOrCreateLibrary(const olxstr& name)  {
   }
   return lib;
 }
-//..............................................................................
+//.............................................................................
 PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
   PyObject* fun;
   olxstr lib_name;
   bool profile = false;
   if( !PythonExt::ParseTuple(args, "O|bw", &fun, &profile, &lib_name) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O|bw");
-  if( !PyCallable_Check(fun) )
-    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, "Parameter must be callable");
+  if( !PyCallable_Check(fun) ) {
+    return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo,
+      "Parameter must be callable");
+  }
   TLibrary *lib = FindOrCreateLibrary(lib_name);
   if( lib == NULL )
     return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo, 
@@ -178,7 +180,7 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, st.Text('\n'));
   }
 }
-//..............................................................................
+//.............................................................................
 PyObject* runRegisterCallback(PyObject* self, PyObject* args)  {
   olxstr cbEvent;
   PyObject* fun;
@@ -196,7 +198,7 @@ PyObject* runRegisterCallback(PyObject* self, PyObject* args)  {
     new TFunction<TFuncWrapper>(fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny) );
   return Py_BuildValue("b", true);
 }
-//..............................................................................
+//.............................................................................
 PyObject* runUnregisterCallback(PyObject* self, PyObject* args)  {
   olxstr cbEvent;
   PyObject* fun;
@@ -208,7 +210,7 @@ PyObject* runUnregisterCallback(PyObject* self, PyObject* args)  {
     cbEvent, PyEval_GetFuncName(fun));
   return Py_BuildValue("b", true);
 }
-//..............................................................................
+//.............................................................................
 PyObject* runRegisterMacro(PyObject* self, PyObject* args)  {
   olxstr validOptions;
   PyObject* fun;
@@ -235,11 +237,11 @@ PyObject* runRegisterMacro(PyObject* self, PyObject* args)  {
     return PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, st.Text('\n'));
   }
 }
-//..............................................................................
+//.............................................................................
 PyObject* runGetProfileInfo(PyObject* self, PyObject* args)  {
   return PythonExt::GetInstance()->GetProfileInfo();
 }
-//..............................................................................
+//.............................................................................
 PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
   IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr macroName;
@@ -248,7 +250,7 @@ PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
   bool res = o_r->processMacro(macroName);
   return Py_BuildValue("b", res);
 }
-//..............................................................................
+//.............................................................................
 PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
   IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr functionName;
@@ -261,7 +263,7 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
   return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
     olxstr("Function '") << functionName << "' failed");
 }
-//..............................................................................
+//.............................................................................
 PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
   IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr name;
@@ -330,7 +332,7 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
     }
   }
 }
-//..............................................................................
+//.............................................................................
 PyObject* runPrintText(PyObject* self, PyObject* args)  {
   for( Py_ssize_t i=0; i < PyTuple_Size(args); i++ )  {
     PyObject* po = PyTuple_GetItem(args, i);
@@ -338,31 +340,40 @@ PyObject* runPrintText(PyObject* self, PyObject* args)  {
   }
   return PythonExt::PyNone();
 }
-//..............................................................................
+//.............................................................................
 PyMethodDef Methods[] = {
   {"m", runOlexMacro, METH_VARARGS, "executes olex macro"},
   {"f", runOlexFunction, METH_VARARGS, "executes olex function"},
   {"f_ex", runOlexFunctionEx, METH_VARARGS, "executes olex function"},
-  {"writeImage", runWriteImage, METH_VARARGS, "adds new image/object to olex2 memory; (name, date, persistence=0).\
- Persistence: 0 - none, 1 - for current structure, 2 - global"},
-  {"readImage", runReadImage, METH_VARARGS, "reads an image/object from olex memory"},
-  {"registerFunction", runRegisterFunction, METH_VARARGS, "registers python function in olex domain"},
-  {"registerMacro", runRegisterMacro, METH_VARARGS, "registers python macro in olex domain"},
-  {"registerCallback", runRegisterCallback, METH_VARARGS, "registers a python callback function in olex domain"},
-  {"unregisterCallback", runUnregisterCallback, METH_VARARGS, "unregisters a python callback function in olex domain"},
-  {"getProfileInfo", runGetProfileInfo, METH_VARARGS, "returns a tuple of {function, number of calls, total time (ms)} records"},
+  {"writeImage", runWriteImage, METH_VARARGS, "adds new image/object to olex2 "
+    "memory; (name, date, persistence=0). Persistence: 0 - none, 1 - for "
+    "current structure, 2 - global"},
+  {"readImage", runReadImage, METH_VARARGS,
+    "reads an image/object from olex2 memory"},
+  {"registerFunction", runRegisterFunction, METH_VARARGS,
+    "registers python function in olex2 domain"},
+  {"registerMacro", runRegisterMacro, METH_VARARGS,
+    "registers python macro in olex2 domain"},
+  {"registerCallback", runRegisterCallback, METH_VARARGS,
+    "registers a python callback function in olex2 domain"},
+  {"unregisterCallback", runUnregisterCallback, METH_VARARGS,
+    "unregisters a python callback function in olex2 domain"},
+  {"getProfileInfo", runGetProfileInfo, METH_VARARGS,
+    "returns a tuple of {function, number of calls, total time (ms)} records"},
   {"post", runPrintText, METH_VARARGS, "prints provided text in Olex2"},
   {NULL, NULL, 0, NULL}
 };
-//..............................................................................
-olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep)  {
+//.............................................................................
+olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep,
+  const olxstr &module_name)
+{
   if( sep == ',' )  {
     olxcstr res("def ");
     res << pyName << "(*args):\n  ";
     res << "al = []\n  ";
     res << "for arg in args:\n    ";
     res << "al.append(unicode(arg))\n  ";
-    res << "return olex.f_ex('" << olexName << "', False, al)";
+    res << "return " << module_name << ".f_ex('" << olexName << "', False, al)";
     return res;
   }
   else  {
@@ -371,39 +382,46 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep)  {
     res << "al = []\n  ";
     res << "for arg in args:\n    ";
     res << "al.append(unicode(arg))\n  ";
-    res << "return olex.f_ex('" << olexName << "', True, al, kwds)";
+    res << "return " << module_name << ".f_ex('" << olexName << "', True, al, kwds)";
     return res;
   }
 }
-//..............................................................................
-PythonExt::PythonExt(IOlexProcessor* olexProcessor) : LogLevel(macro_log_macro)  {
+//.............................................................................
+PythonExt::PythonExt(IOlexProcessor* olexProcessor, const olxstr &module_name)
+  : module_name(module_name),
+    LogLevel(macro_log_macro)
+{
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
   OlexProcessor = olexProcessor;
 }
-//..............................................................................
+//.............................................................................
 PythonExt::~PythonExt()  {
   ClearToDelete();
   if( Py_IsInitialized() )
     Py_Finalize();
   Instance = NULL;
 }
-//..............................................................................
+//.............................................................................
 void PythonExt::CheckInitialised()  {
   if( !Py_IsInitialized() )  {
     Py_Initialize();
-    Py_InitModule("olex", Methods);
+    Py_InitModule(module_name.c_str(), Methods);
     for( size_t i=0; i < ToRegister.Count(); i++ )
       (*ToRegister[i])();
   }
 }
-//..............................................................................
+//.............................................................................
 PyObject* PythonExt::GetProfileInfo()  {
   size_t picnt = 0;
-  for( size_t i=0; i < ToDelete.Count(); i++ )
-    if( ToDelete[i]->ProfileInfo() != NULL && ToDelete[i]->ProfileInfo()->CallCount > 0 )
+  for( size_t i=0; i < ToDelete.Count(); i++ ) {
+    if( ToDelete[i]->ProfileInfo() != NULL &&
+        ToDelete[i]->ProfileInfo()->CallCount > 0 )
+    {
       picnt++;
+    }
+  }
 
   PyObject *rv = PyTuple_New(picnt);
   picnt = 0;
@@ -418,22 +436,23 @@ PyObject* PythonExt::GetProfileInfo()  {
   }
   return rv;
 }
-//..............................................................................
+//.............................................................................
 int PythonExt::RunPython(const olxstr& script)  {
   CheckInitialised();
   return PyRun_SimpleString(script.c_str());
 }
-//..............................................................................
-void ExportLib(const olxstr &_root, const TLibrary& Lib)  {
-  if( Lib.IsEmpty() )
-    return;
+//.............................................................................
+void ExportLib(const olxstr &_root, const TLibrary& Lib,
+  const olxstr &module_name)
+{
+  if (Lib.IsEmpty()) return;
 
   olxstr root = TEFile::AddPathDelimeter(_root);
   if( !TEFile::Exists(root) )
     TEFile::MakeDir(root);
   TEFile out(root + "__init__.py", "w+b");
   out.Write("import sys\n");
-  out.Write("import olex\n");
+  out.Write(olxcstr("import ") << module_name << "\n");
   for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
     TLibrary &lib = *Lib.GetLibraryByIndex(i);
     if( !lib.IsEmpty() )
@@ -443,22 +462,24 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib)  {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
     olxstr pyName = fun->GetName();
     pyName.Replace('@', "At");
-    out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ',') << '\n');
+    out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ',', module_name)
+      << '\n');
   }
 
   for( size_t i=0; i < Lib.MacroCount(); i++ )  {
     ABasicFunction* fun = Lib.GetMacroByIndex(i);
     olxstr pyName = fun->GetName();
     pyName.Replace('@', "At");
-    out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ') << '\n');
+    out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ', module_name)
+      << '\n');
   }
   for( size_t i=0; i < Lib.LibraryCount(); i++ )  {
     TLibrary &lib = *Lib.GetLibraryByIndex(i);
-    ExportLib(root + lib.GetName(),  lib);
+    ExportLib(root + lib.GetName(),  lib, module_name);
   }
 }
-//..............................................................................
-void Export(const TStrObjList& Cmds, TMacroError& E)  {
+//.............................................................................
+void PythonExt::funExport(const TStrObjList& Cmds, TMacroError& E)  {
   IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   if( o_r == NULL )  return;
   // clean up legacy export
@@ -466,19 +487,24 @@ void Export(const TStrObjList& Cmds, TMacroError& E)  {
     TEFile::DelFile(Cmds[0]+".py");
   if( TEFile::Exists(Cmds[0]+".pyc") )
     TEFile::DelFile(Cmds[0]+".pyc");
-  ExportLib(Cmds[0], o_r->GetLibrary());
+  ExportLib(Cmds[0], o_r->GetLibrary(), module_name);
 }
-//..............................................................................
-void PythonExt::macReset(TStrObjList& Cmds, const TParamList &Options, TMacroError& E)  {
+//.............................................................................
+void PythonExt::macReset(TStrObjList& Cmds, const TParamList &Options,
+  TMacroError& E)
+{
   if( Py_IsInitialized() )
     Py_Finalize();
   CheckInitialised();
 }
-//..............................................................................
-void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options, TMacroError& E) {
+//.............................................................................
+void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options,
+  TMacroError& E)
+{
   olxstr fn = TEFile::OSPath(Cmds.Text(' '));
   if( !TEFile::Exists(fn) )  {
-    E.ProcessingError(__OlxSrcInfo, "specified script file does not exist: ") << fn;
+    E.ProcessingError(__OlxSrcInfo,
+      "specified script file does not exist: ") << fn;
     return;
   }
   olxstr cd = TEFile::CurrentDir();
@@ -492,7 +518,7 @@ void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options, TMacroError
 
   TEFile::ChangeDir(cd);
 }
-//..............................................................................
+//.............................................................................
 void PythonExt::funLogLevel(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
     olxstr ll;
@@ -507,22 +533,28 @@ void PythonExt::funLogLevel(const TStrObjList& Params, TMacroError& E)  {
     SetLogLevel(ll);
   }
 }
-//..............................................................................
+//.............................................................................
 TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
   // binding library
   PythonExt::GetOlexProcessor()->GetLibrary().AttachLibrary(
     BindLibrary=new TLibrary("spy"));
   Library = new TLibrary(name.IsEmpty() ? olxstr("py") : name);
-  Library->RegisterStaticFunction(
-    new TStaticFunction(::Export, "Export", fpOne, "Exports library to a python file"));
-  Library->RegisterMacro<PythonExt>(
-    new TMacro<PythonExt>(this, &PythonExt::macReset, "Reset", EmptyString(), fpNone));
-  Library->RegisterMacro<PythonExt>(
-    new TMacro<PythonExt>(this, &PythonExt::macRun, "Run", EmptyString(),
-    fpAny^fpNone, "Runs provided file"));
   Library->RegisterFunction<PythonExt>(
-    new TFunction<PythonExt>(this, &PythonExt::funLogLevel, "LogLevel", fpNone|fpOne,
-    "Sets log level - default is macro, look at LogLevel for more information"));
+    new TFunction<PythonExt>(this, &PythonExt::funExport,
+      "Export", fpOne,
+      "Exports the library to a folder"));
+  Library->RegisterMacro<PythonExt>(
+    new TMacro<PythonExt>(this, &PythonExt::macReset,
+      "Reset", EmptyString(), fpNone));
+  Library->RegisterMacro<PythonExt>(
+    new TMacro<PythonExt>(this, &PythonExt::macRun,
+      "Run", EmptyString(),
+      fpAny^fpNone, "Runs provided file"));
+  Library->RegisterFunction<PythonExt>(
+    new TFunction<PythonExt>(this, &PythonExt::funLogLevel,
+      "LogLevel", fpNone|fpOne,
+      "Sets log level - default is macro, look at LogLevel for more "
+      "information"));
   return Library;
 }
 

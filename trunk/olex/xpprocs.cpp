@@ -283,31 +283,6 @@ void TMainForm::funFileOpen(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(PickFile(Params[0], Params[1], Params[2], true));
 }
 //..............................................................................
-void TMainForm::funUnsetVar(const TStrObjList& Params, TMacroError &E)  {
-  TOlxVars::UnsetVar(Params[0]);
-}
-//..............................................................................
-void TMainForm::funSetVar(const TStrObjList& Params, TMacroError &E)  {
-  TOlxVars::SetVar(Params[0], Params[1]);
-}
-//..............................................................................
-void TMainForm::funGetVar(const TStrObjList& Params, TMacroError &E)  {
-  const size_t ind = TOlxVars::VarIndex(Params[0]);
-  if( ind == InvalidIndex )  {
-    if( Params.Count() == 2 )
-      E.SetRetVal( Params[1] );
-    else {
-      E.ProcessingError(__OlxSrcInfo,
-        "Could not locate specified variable: ").quote() << Params[0];
-    }
-  }
-  else
-    E.SetRetVal(TOlxVars::GetVarStr(ind));
-}
-//..............................................................................
-void TMainForm::funIsVar(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(TOlxVars::IsVar(Params[0]));
-}
 //..............................................................................
 void TMainForm::funVVol(const TStrObjList& Params, TMacroError &E)  {
   ElementRadii radii;

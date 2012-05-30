@@ -54,13 +54,13 @@ public:
   virtual bool CheckProgramState(uint32_t state);
   virtual ALibraryContainer* GetOwner() const {  return LibraryOwner;  }
 
-  inline size_t FunctionCount() const {  return Functions.Count(); }
-  inline ABasicFunction* GetFunctionByIndex(size_t i)  const {
+  size_t FunctionCount() const {  return Functions.Count(); }
+  ABasicFunction* GetFunctionByIndex(size_t i)  const {
     return Functions.GetObject(i);
   }
 
-  inline size_t MacroCount() const {  return Macros.Count(); }
-  inline ABasicFunction* GetMacroByIndex(size_t i) const {
+  size_t MacroCount() const {  return Macros.Count(); }
+  ABasicFunction* GetMacroByIndex(size_t i) const {
     return Macros.GetObject(i);
   }
 
@@ -68,11 +68,11 @@ public:
   // not that the library will be deleted upon destruction
   void AttachLibrary(TLibrary* lib);
 
-  inline size_t LibraryCount() const {  return Libraries.Count();  }
-  inline TLibrary* GetLibraryByName(const olxstr& name) const {
+  size_t LibraryCount() const {  return Libraries.Count();  }
+  TLibrary* GetLibraryByName(const olxstr& name) const {
     return Libraries[name];
   }
-  inline TLibrary* GetLibraryByIndex(size_t index) const {
+  TLibrary* GetLibraryByIndex(size_t index) const {
     return Libraries.GetObject(index);
   }
 
