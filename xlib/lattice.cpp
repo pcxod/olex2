@@ -1208,6 +1208,11 @@ size_t TLattice_CompaqAll_Process(TUnitCell& uc, TCAtom& ca,
       cnt++;
       site.matrix = uc.MulMatrix(site.matrix, matr);
     }
+    else if( site.atom->GetFragmentId() == ca.GetFragmentId() &&
+      !site.matrix.IsFirst() && ca.GetType() != iQPeakZ )
+    {
+      continue;
+    }
     site.atom->SetTag(1);
     site.atom->SetFragmentId(ca.GetFragmentId());
     site.atom->ccrd() = site.matrix*site.atom->ccrd();
