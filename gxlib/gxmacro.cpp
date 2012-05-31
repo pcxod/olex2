@@ -272,16 +272,14 @@ void GXLibMacros::macQual(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   TGXApp &app = TGXApp::GetInstance();
-  if( Options.IsEmpty() )  {
+  if( Options.IsEmpty() )
     Error.ProcessingError(__OlxSrcInfo, "wrong number of arguments");
-    return;
-  }
   else  {
      if( Options.GetName(0)[0] == 'h' ) app.Quality(qaHigh);
      else if( Options.GetName(0)[0] == 'm' ) app.Quality(qaMedium);
      else if( Options.GetName(0)[0] == 'l' ) app.Quality(qaLow);
-    Error.ProcessingError(__OlxSrcInfo, "wrong argument");
-    return;
+     else
+       Error.ProcessingError(__OlxSrcInfo, "wrong argument");
   }
 }
 //.............................................................................
@@ -292,7 +290,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   static const short // scale type
     stSimple     = 0x0001,
     stRegression = 0x0002;
-  double resolution = Options.FindValue("r", "0.25").ToDouble(), 
+  double resolution = Options.FindValue("r", "0.25").ToDouble(),
     maskInc = 1.0;
   if( resolution < 0.1 )  resolution = 0.1;
   resolution = 1./resolution;
@@ -309,7 +307,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TRefList refs;
   TArrayList<compd> F;
   olxstr err = SFUtil::GetSF(refs, F, mapType, 
-    Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
+    Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2,
     (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
       SFUtil::scaleRegression : SFUtil::scaleSimple);
   if( !err.IsEmpty() )  {
