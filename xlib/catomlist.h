@@ -154,7 +154,7 @@ class AtomRefList  {
   olxstr residue;
   olxstr expression;
   bool Valid, ContainsImplicitAtoms;
-  olxstr BuildExpression() const  {
+  olxstr BuildExpression() const {
     olxstr rv;
     for( size_t i=0; i < refs.Count(); i++ )  {
       rv << refs[i].GetExpression();
@@ -165,13 +165,16 @@ class AtomRefList  {
   }
   void EnsureAtomGroups(const RefinementModel& rm, TAtomRefList& al,
     size_t groups_size) const;
+  void EnsureAtomGroups(size_t group_size);
 public:
   /* creates an instance of the object from given expression for given residue
   class, number or alias. Empty residue specifies the main residue.
   */
   AtomRefList(RefinementModel& rm, const olxstr& exp,
     const olxstr& resi=EmptyString());
-  AtomRefList(RefinementModel& rm) : rm(rm) {}
+  AtomRefList(RefinementModel& rm)
+    : rm(rm), Valid(true), ContainsImplicitAtoms(false)
+  {}
   /* expands the underlying expressions into a list. If the residue name is a
   class name (and there are several residues of the kind), there will be more
   than one entry in the res with each entry corresponding to any particular
@@ -212,7 +215,7 @@ public:
   void Clear() { refs.Clear(); }
   bool IsEmpty() const { return refs.IsEmpty(); }
   size_t Count() const { return refs.Count(); }
-  AtomRefList &Validate();
+  AtomRefList &Validate(size_t group_size=InvalidSize);
   void Assign(const AtomRefList &arl);
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);

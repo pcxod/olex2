@@ -43,7 +43,13 @@ void TSimpleRestraint::Delete()  {
 }
 //..............................................................................
 TSimpleRestraint &TSimpleRestraint::Validate() {
-  Atoms.Validate();
+  size_t gc = InvalidIndex;
+  switch (ListType) {
+  case rltGroup2: gc = 2; break;
+  case rltGroup3: gc = 3; break;
+  case rltGroup4: gc = 4; break;
+  }
+  Atoms.Validate(gc);
   return *this;
 }
 //..............................................................................
