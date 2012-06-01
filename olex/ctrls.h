@@ -20,6 +20,7 @@ namespace ctrl_ext  {
   protected:
     class TMainFrame *Parent;
     TActionQList Actions;
+    bool manage_parent;
   public:
     TDialog(TMainFrame *Parent,
       const wxString &Title,
@@ -27,8 +28,18 @@ namespace ctrl_ext  {
       const wxPoint& position = wxDefaultPosition,
       const wxSize& size = wxDefaultSize,
       int style=wxRESIZE_BORDER|wxDEFAULT_DIALOG_STYLE);
+    TDialog(wxWindow *Parent,
+      const wxString &Title,
+      const wxString &ClassName,
+      const wxPoint& position = wxDefaultPosition,
+      const wxSize& size = wxDefaultSize,
+      int style=wxRESIZE_BORDER|wxDEFAULT_DIALOG_STYLE);
     virtual ~TDialog();
-
+    virtual bool Show(bool show=true);
+    /* extended version, if manage_parent is true, the parent window is
+    disabled before the execution and is enabled before hiding this window
+    */
+    int ShowModalEx(bool manage_parent);
     TActionQueue &OnResize;
     DECLARE_CLASS(TDialog)
     DECLARE_EVENT_TABLE()

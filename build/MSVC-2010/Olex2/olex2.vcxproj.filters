@@ -207,6 +207,9 @@
     <ClCompile Include="..\..\..\olex\tasks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\olex\html\htmlmanager.cpp">
+      <Filter>html\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
@@ -397,6 +400,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\olex\tasks.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\olex\html\htmlmanager.h">
+      <Filter>html\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
