@@ -15,7 +15,7 @@
 #include "emath.h"
 
 const int ID_Timer = 1;
-//..............................................................................
+//.............................................................................
 AProcess::AProcess(bool use_threads, const olxstr& cmdl, short flags) : 
   Flags(flags), 
   CmdLine(cmdl),
@@ -26,24 +26,52 @@ AProcess::AProcess(bool use_threads, const olxstr& cmdl, short flags) :
   if( IsRedirected() )  // must be async
     olx_set_bit(false, Flags, spfSynchronised);
 }
-//..............................................................................
+//.............................................................................
 AProcess::~AProcess()  {
   if( DubOutput != NULL )
     delete DubOutput; 
 }
-//..............................................................................
+//.............................................................................
+olxstr AProcess::PrepareArg(const olxstr &p) {
+  using namespace exparse::parser_util;
+  if (is_quoted(p)) return p;
+  bool has_ws = false;
+  for (size_t i=0; i < p.Length(); i++) {
+    if (is_quote(p.CharAt(i))) {
+      skip_string(p, i);
+      continue;
+    }
+    if (p.CharAt(i) == '=') {
+      if (has_ws) break;
+      olxstr argv = p.SubStringFrom(i+1);
+      if (is_quoted(argv)) return p;
+      size_t spi = argv.IndexOf(' ');
+      if (spi != InvalidIndex)
+        return olxstr(p.SubStringTo(i+1)) << '"' << argv << '"';
+      return p;
+    }
+    else if (p.CharAt(i) == ' ')
+      has_ws = true;
+  }
+  if (has_ws)
+    return olxstr('\"') << p << '"';
+  return p;
+}
+//.............................................................................
 
 #ifdef __WIN32__
 //---------------------------------------------------------------------------//
 // TWinProcess Def
 //---------------------------------------------------------------------------//
-TWinProcess::TWinProcess(const olxstr& cmdl, short flags) : AProcess(false, cmdl, flags) {
+TWinProcess::TWinProcess(const olxstr& cmdl, short flags)
+  : AProcess(false, cmdl, flags)
+{
   InWrite = OutRead = NULL;
   OutWrite = ErrWrite = InRead = NULL;
   ProcessInfo.hProcess = NULL;
   CallsWasted = 0;
 }
-//..............................................................................
+//.............................................................................
 TWinProcess::~TWinProcess()  {
   volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
   if( IsTerminateOnDelete() )
@@ -55,7 +83,7 @@ TWinProcess::~TWinProcess()  {
   if( ProcessInfo.hProcess != NULL )
     CloseHandle(ProcessInfo.hProcess);
 }
-//..............................................................................
+//.............................................................................
 bool TWinProcess::InitStreams()  {
   HANDLE  TmpOutRead = NULL;  // parent stdout read handle
   HANDLE TmpInWrite = NULL;      // parent stdin write handle
@@ -100,18 +128,18 @@ bool TWinProcess::InitStreams()  {
   SetHandleInformation( InWrite, HANDLE_FLAG_INHERIT, 0);
   return true;
 }
-//..............................................................................
+//.............................................................................
 void TWinProcess::CloseThreadStreams()  {
  if( InRead )     { CloseHandle(InRead);    InRead = NULL; }
  if( OutWrite )   { CloseHandle(OutWrite);  OutWrite = NULL;   }
  if( ErrWrite )   { CloseHandle(ErrWrite);  ErrWrite = NULL;   }
 }
-//..............................................................................
+//.............................................................................
 void TWinProcess::CloseStreams()  {
  if( OutRead != NULL )  { CloseHandle(OutRead);   OutRead = NULL; }
  if( InWrite != NULL )  { CloseHandle(InWrite); InWrite = NULL;   }
 }
-//..............................................................................
+//.............................................................................
 bool TWinProcess::Execute()  {
   if( IsRedirected() )  {  // must be async
     if( !InitStreams() )  return false;
@@ -134,8 +162,9 @@ bool TWinProcess::Execute()  {
     si.dwFlags |= STARTF_USESTDHANDLES;
 
   // Launch the child process.
-  if( !CreateProcess(NULL, (LPTSTR)GetCmdLine().u_str(), NULL, NULL,   true,
-                      CREATE_NEW_CONSOLE|CREATE_SEPARATE_WOW_VDM, NULL, NULL, &si, &ProcessInfo))
+  if( !CreateProcess(NULL, (LPTSTR)GetCmdLine().u_str(), NULL, NULL, true,
+        CREATE_NEW_CONSOLE|CREATE_SEPARATE_WOW_VDM, NULL, NULL, &si,
+        &ProcessInfo))
   {
     CloseStreams();
     return false;
@@ -149,7 +178,8 @@ bool TWinProcess::Execute()  {
   // are maintained in this process or else the pipe will not
   // close when the child process exits and ReadFile will hang.
   CloseThreadStreams();
-  if( !IsSynchronised() ) // Launch a thread to receive output from the child process.
+  // Launch a thread to receive output from the child process.
+  if( !IsSynchronised() )
     TBasicApp::GetInstance().OnTimer.Add(this, ID_Timer);
 
   if( IsSynchronised() )  {
@@ -163,7 +193,7 @@ bool TWinProcess::Execute()  {
   }
   return true;
 }
-//..............................................................................
+//.............................................................................
 bool TWinProcess::Terminate()  {
   volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
   if (TBasicApp::HasInstance())
@@ -179,7 +209,7 @@ bool TWinProcess::Terminate()  {
   }
   return true;
 }
-//..............................................................................
+//.............................................................................
 // write data to the child's stdin
 void TWinProcess::Write(const olxstr &Str)  {
   if( InWrite == NULL )  return;
@@ -187,15 +217,17 @@ void TWinProcess::Write(const olxstr &Str)  {
   WriteFile(InWrite, Str.c_str(), Str.Length(), &Written, NULL);
   GetOutput().Write(Str.c_str(), Str.Length());
 }
-//..............................................................................
+//.............................................................................
 void TWinProcess::Writenl()  {
   if( InWrite == NULL )  return;
   DWORD Written;
   WriteFile(InWrite, "\n", 1, &Written, NULL);
   GetOutput().Write('\n');
 }
-//..............................................................................
-bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
+//.............................................................................
+bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+  const IEObject *Data)
+{
   bool Terminated = false;
   if( MsgId == ID_Timer )  {
     if( IsRedirected() )  {
@@ -203,7 +235,7 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
       const size_t BfC=512;
       char Bf[BfC];
       DWORD dwRead = 0;
-      if( PeekNamedPipe(OutRead, NULL, 0, NULL, &dwAvail, NULL) == 0 )  // error
+      if( PeekNamedPipe(OutRead, NULL, 0, NULL, &dwAvail, NULL) == 0 ) // error
         Terminated = true;
       else  if( dwAvail == 0 )  {  // no data
         CallsWasted++;
@@ -211,8 +243,11 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
       else  {
         CallsWasted = 0;
         dwRead = 0;
-        if( ReadFile(OutRead, Bf, olx_min(BfC-1, dwAvail), &dwRead, NULL) == 0 || dwRead == 0 )  // error, the child might ended
+        if( ReadFile(OutRead, Bf, olx_min(BfC-1, dwAvail), &dwRead, NULL) == 0
+            || dwRead == 0 )  // error, the child might ended
+        {
           Terminated = true;
+        }
         else  {
           Output.Write(Bf, dwRead);
           if( GetDubStream() != NULL )
@@ -222,8 +257,11 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
     }
     else  {  // just check if still valid
       DWORD Status;
-      if( GetExitCodeProcess(ProcessInfo.hProcess, &Status) == 0 || Status != STILL_ACTIVE )
+      if( GetExitCodeProcess(ProcessInfo.hProcess, &Status) == 0 ||
+          Status != STILL_ACTIVE )
+      {
         Terminated = true;
+      }
     }
   }
   // Win98 fix... as PeekNamedPipe does not fail after the process is terminate
@@ -247,7 +285,7 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
 void TWinProcess::Detach()  {
   TEGC::Add((AEventsDispatcher*)this);
 }
-//..............................................................................
+//.............................................................................
 //---------------------------------------------------------------------------//
 // TWinWinCmd implementation
 //---------------------------------------------------------------------------//
@@ -266,16 +304,18 @@ bool TWinWinCmd::SendWindowCmd(const olxstr& WndName, const olxstr& Cmd)  {
 }
 #endif  // for __WIN32__
 #ifdef __WXWIDGETS__
-//..............................................................................
+//.............................................................................
 //---------------------------------------------------------------------------//
 // TWxProcess implementation
 //---------------------------------------------------------------------------//
-TWxProcess::TWxProcess(const olxstr& cmdl, short flags) : AProcess(true, cmdl, flags) {
+TWxProcess::TWxProcess(const olxstr& cmdl, short flags)
+  : AProcess(true, cmdl, flags)
+{
   FStream = NULL;
   FInputStream = NULL;
   FOutputStream = NULL;
 }
-//..............................................................................
+//.............................................................................
 TWxProcess::~TWxProcess()  {
   if( FStream != NULL )  {
     FStream->OnTerminate();
@@ -286,7 +326,7 @@ TWxProcess::~TWxProcess()  {
   if( IsTerminateOnDelete() )
     Terminate();
 }
-//..............................................................................
+//.............................................................................
 bool TWxProcess::Terminate()  {
   SetTerminated();
   if( ProcessId >= 0 )  {
@@ -303,7 +343,7 @@ bool TWxProcess::Terminate()  {
   }
   return false;
 }
-//..............................................................................
+//.............................................................................
 void TWxProcess::OnTerminate(int pid, int status)  {
   ProcessId = -1;
   SetTerminated();
@@ -317,13 +357,13 @@ void TWxProcess::OnTerminate(int pid, int status)  {
   }
   AProcess::OnTerminate.Execute(this);
 }
-//..............................................................................
-void TWxProcess::Detach()  {  
+//.............................................................................
+void TWxProcess::Detach()  {
   AProcess::OnTerminate.Clear();
-  wxProcess::Detach();  
+  wxProcess::Detach();
   TEGC::AddP(this); // according to docs, we should not delete the object 
 }
-//..............................................................................
+//.............................................................................
 bool TWxProcess::Execute()  {
   if( GetCmdLine().IsEmpty() )  return false;
   if( AProcess::IsRedirected() )  Redirect();
@@ -374,39 +414,41 @@ bool TWxProcess::InitStreams()  {
   }
   return false;
 }
-//..............................................................................
+//.............................................................................
 void TWxProcess::Write(const olxstr &Cmd)  {
   if( !FOutputStream )  return;
   FOutputStream->Write(Cmd.c_str(), Cmd.Length());
   Output.Write(Cmd.c_str(), Cmd.Length());
 }
-//..............................................................................
+//.............................................................................
 void TWxProcess::Writenl()  {
   if( !FOutputStream )  return;
   FOutputStream->PutC('\n');
   Output.Write('\n');
 }
-//..............................................................................
+//.............................................................................
 //---------------------------------------------------------------------------//
 
 //---------------------------------------------------------------------------//
-TIStream::TIStream(TWxProcess *Parent, wxInputStream *IS) : wxThread(wxTHREAD_JOINABLE)  {
+TIStream::TIStream(TWxProcess *Parent, wxInputStream *IS)
+  : wxThread(wxTHREAD_JOINABLE)
+{
   FStream = IS;
   FParent = Parent;
   Terminated = false;
 }
-//..............................................................................
+//.............................................................................
 TIStream::~TIStream(){ 
   FParent = NULL;
   FStream = NULL;
 }
-//..............................................................................
+//.............................................................................
 void TIStream::OnTerminate()  {
   volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
   FStream = NULL;
   FParent = NULL;
 }
-//..............................................................................
+//.............................................................................
 void* TIStream::Entry()  {
   while( (FStream != NULL) && !FStream->Eof() )  {
     const char ch = (char)FStream->GetC();
@@ -418,5 +460,5 @@ void* TIStream::Entry()  {
   }
   return NULL;
 }
-//..............................................................................
+//.............................................................................
 #endif  // for __WXWIDGETS__
