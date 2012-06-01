@@ -28,7 +28,7 @@ const short  // process flags
   spfRedirected        = 0x0001,
   spfSynchronised      = 0x0002,
   spfTerminateOnDelete = 0x0004,
-  spfQuite             = 0x0008,
+  spfQuiet             = 0x0008,
   spfTerminated        = 0x0010;
 
 enum {
@@ -119,7 +119,7 @@ public:
   bool IsSynchronised() const {  return (Flags & spfSynchronised) != 0;  }
   bool IsRedirected() const {  return (Flags & spfRedirected) != 0;  }
   bool IsOutputDub() const {  return (Flags & spfRedirected) != 0;  }
-  bool IsQuite() const {  return (Flags & spfQuite) != 0;  }
+  bool IsQuite() const {  return (Flags & spfQuiet) != 0;  }
   bool IsTerminated() const {  return (Flags & spfTerminated) != 0;  }
 
   const BufferedProcessOutput& GetOutput() const {  return Output;  }
@@ -127,7 +127,7 @@ public:
 
   const TStrList& OnTerminateCmds() const {  return FOnTerminateCmds;  }
   void SetOnTerminateCmds(const TStrList& l)  {  FOnTerminateCmds.Assign(l);  }
-  inline int GetProcessId() const {  return ProcessId;  }
+  int GetProcessId() const {  return ProcessId;  }
   const olxstr&  GetCmdLine() const {  return CmdLine;  }
   IOutputStream* GetDubStream() const {  return DubOutput;  }
   // sets stream to dublicate process output, will be deleted
@@ -138,6 +138,8 @@ public:
   virtual bool Terminate() = 0;
   virtual bool Execute() = 0;
   virtual void Detach() = 0;
+
+  static olxstr PrepareArg(const olxstr &p);
 
   TActionQueue& OnTerminate;
 };
@@ -252,7 +254,7 @@ public:
   : Redirected(NULL), Current(NULL), Last(NULL),
     OutputHandler(outputHandler)
   {
-    TBasicApp::GetInstance().OnTimer.Add(this, process_manager_timer); 
+    TBasicApp::GetInstance().OnTimer.Add(this, process_manager_timer);
   }
   //..............................................................................
   ~ProcessManager()  {
@@ -307,8 +309,6 @@ public:
   AProcess* GetCurrent() const {  return Current;  }
   AProcess* GetLast() const {  return Last;  }
   AProcess* GetRedirected() const {  return Redirected;  }
-  //..............................................................................
-
 };
 
 #endif

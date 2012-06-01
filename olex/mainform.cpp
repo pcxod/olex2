@@ -4283,7 +4283,7 @@ void TMainForm::UpdateInfoBox()  {
 //..............................................................................
 void TMainForm::ProcessHandler::BeforePrint() {
   parent.FGlConsole->SetPrintMaterial(&parent.ExecFontColor);
-  printed = false;;
+  printed = false;
 }
 //..............................................................................
 void TMainForm::ProcessHandler::Print(const olxstr& line)  {
