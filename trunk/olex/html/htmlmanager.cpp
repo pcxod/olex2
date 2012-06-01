@@ -932,7 +932,8 @@ void THtmlManager::funShowModal(const TStrObjList &Params, TMacroError &E)  {
       "undefined html window: ").quote() << Params[0];
     return;
   }
-  E.SetRetVal(pd->Dialog->ShowModal());
+  E.SetRetVal(
+    pd->Dialog->ShowModalEx(Params.Count() == 1 ? false : Params[1].ToBool()));
 }
 //.............................................................................
 void THtmlManager::funWidth(const TStrObjList &Params, TMacroError &E)  {
@@ -1131,7 +1132,7 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
     "Returns true if specified popup window exists and visible");
   this_InitFuncD(EndModal, fpTwo,
     "Ends a modal popup and sets the return code");
-  this_InitFuncD(ShowModal, fpOne,
+  this_InitFuncD(ShowModal, fpOne|fpTwo,
     "Shows a previously created popup window as a modal dialog");
   this_InitFuncD(Width, fpOne|fpTwo,
     "Returns/sets width of an HTML object window (use 'self' to address the "
