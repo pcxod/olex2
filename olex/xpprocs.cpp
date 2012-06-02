@@ -1689,9 +1689,9 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   short flags = 0;
   if( (Cout && Asyn) || Asyn )  {  // the only combination
     if( !Cout )
-      flags = quite ? spfQuite : 0;
+      flags = quite ? spfQuiet : 0;
     else
-      flags = quite ? spfRedirected|spfQuite : spfRedirected;
+      flags = quite ? spfRedirected|spfQuiet : spfRedirected;
   }
   else
     flags = spfSynchronised;
