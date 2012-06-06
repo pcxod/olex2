@@ -1609,7 +1609,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           group_deletion = true;
           TBasicApp::NewLogEntry() << "Please use 'ungroup' to delete groups";
         }
-        continue;        
+        continue;
       }
       else
         out << sel[i].GetPrimitives().GetName();
@@ -2126,7 +2126,7 @@ void TMainForm::macFade(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FFadeVector[1] = Cmds[1].ToDouble();
   FFadeVector[2] = Cmds[2].ToDouble();
   if( FFadeVector[1] < 0 || FFadeVector[1] > 1 )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
+    Error.ProcessingError(__OlxSrcInfo, "wrong arguments");
     return;
   }
   TGlBackground *C = FXApp->GetRender().Ceiling();
@@ -4642,7 +4642,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           TMacroError er;
           Macros.ProcessMacro(olxstr("SGE '") <<
             TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', er);
-          if( !er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue()  )  {
+          if( !er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue() )  {
             olxstr
               s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"),
               s_sg(s_inp);
@@ -4894,7 +4894,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //      FXApp->Draw();  // to update the scene just in case...
-    FGlConsole->SetCommand(FGlConsole->GetCommand());  // force th eupdate
+    FGlConsole->SetCommand(FGlConsole->GetCommand());  // force the update
     return;
   }
   else  {

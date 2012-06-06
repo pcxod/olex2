@@ -336,7 +336,18 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
 PyObject* runPrintText(PyObject* self, PyObject* args)  {
   for( Py_ssize_t i=0; i < PyTuple_Size(args); i++ )  {
     PyObject* po = PyTuple_GetItem(args, i);
-    TBasicApp::GetLog() << PythonExt::ParseStr(po).Trim('\'');
+    olxstr s = PythonExt::ParseStr(po).Trim('\'');
+    bool nl=false;
+    if (s.EndsWith("\r\n")) {
+      nl = true;
+      s.SetLength(s.Length()-1);
+    }
+    else if (s.EndsWith('\n') || s.EndsWith('\r')) {
+      nl = true;
+      s.SetLength(s.Length()-1);
+    }
+    if (nl) TBasicApp::NewLogEntry();
+    TBasicApp::GetLog() << s;
   }
   return PythonExt::PyNone();
 }

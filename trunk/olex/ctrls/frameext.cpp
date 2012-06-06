@@ -70,8 +70,8 @@ olxstr TMainFrame::PickFile(const olxstr &Caption, const olxstr &Filter,
   int Style;
   if( Open )  Style = wxFD_OPEN;
   else        Style = wxFD_SAVE;
-  wxFileDialog *dlgFile = new wxFileDialog( this, Caption.u_str(), DefFolder.u_str(), wxString(),
-    PortableFilter(Filter).u_str(), Style);
+  wxFileDialog *dlgFile = new wxFileDialog(this, Caption.u_str(),
+    DefFolder.u_str(), wxString(), PortableFilter(Filter).u_str(), Style);
   if( dlgFile->ShowModal() ==  wxID_OK )
     FN = dlgFile->GetPath();
   delete dlgFile;

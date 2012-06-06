@@ -51,6 +51,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
        CellInfo = false,
        HasTwin = false,
        InvTwin = false;
+  bool header_found = false;
   TStrList Toks;
   Clear();
   SL.LoadFromFile(FN);
@@ -58,6 +59,26 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   TLstSplitAtom *SplitA;
   for( size_t i=0; i < SL.Count(); i++ )  {
     Toks.Clear();
+    if (!header_found && SL[i].Contains("++") &&
+      (i+1) < SL.Count() && SL[i].Contains('+'))
+    {
+      i++;
+      size_t hi = SL[i].FirstIndexOf('-');
+      size_t spi = SL[i].LastIndexOf(' ', hi);
+      if (spi == InvalidIndex || hi == InvalidIndex) continue;
+      params("program", SL[i].SubString(spi+1, hi-spi-1));
+      spi = SL[i].FirstIndexOf(' ', hi);
+      if (spi == InvalidIndex) continue;
+      params("version", SL[i].SubString(hi+1, spi-hi-1));
+      i++;
+      if (i >= SL.Count()) continue;
+      Toks.Strtok(SL[i], ' ');
+      if (Toks.Count() > 3 && Toks[Toks.Count()-3].Equals("Release")) {
+        params.Add("version") = Toks[Toks.Count()-2];
+      }
+      header_found = true;
+      continue;
+    }
     if( !TRefC )  {
       ind = SL[i].FirstIndexOf("Reflections read,");
       if( ind != InvalidIndex )  {
