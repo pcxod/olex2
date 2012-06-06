@@ -232,45 +232,50 @@ class RefMerger {
     for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
       const size_t from = i;
-      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
-        ;
+      size_t real_count=ref->GetBatch() > 0 ? 1 : 0;
+      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) ) {
+        if (refs[i]->GetBatch() > 0) real_count++;
+      }
       const size_t merged_count = i - from;
       bool omitted = false;
       for( size_t j=0; j < omits.Count(); j++ )  {
         if( ref->GetHkl() == omits[j] )  {
-          stats.OmittedByUser += merged_count;
+          stats.OmittedByUser += real_count;
           omitted = true;
           break;
         }
       }
-      if( !omitted )  {
+      if (!omitted && real_count > 0) {
         if( merged_count > stats.ReflectionAPotMax )
-          stats.ReflectionAPotMax = merged_count;
+          stats.ReflectionAPotMax = real_count;
         if( !ref->IsAbsent() )  {
           for( size_t j=from; j < i; j++ )  {
             TReflection& _r = output.AddCopy(*refs[j]);
             _r.SetCentric(ref->IsCentric());
             _r.SetMultiplicity(ref->GetMultiplicity());
-            stats.MeanIOverSigma += _r.GetI()/_r.GetS();
-            vec3i::UpdateMinMax(_r.GetHkl(), stats.MinIndexes,
-              stats.MaxIndexes);
-          }
+             vec3i::UpdateMinMax(_r.GetHkl(), stats.MinIndexes,
+                stats.MaxIndexes);
+             if (refs[j]->GetBatch() > 0)
+              stats.MeanIOverSigma += _r.GetI()/_r.GetS();
+         }
           if( ref->IsCentric() )
-            stats.CentricReflections++;
-          stats.IndependentReflections += 1./ref->GetMultiplicity();
+            stats.CentricReflections += real_count;
+          stats.UniqueReflections += real_count;
+          stats.IndependentReflections +=
+            (double)real_count/ref->GetMultiplicity();
         }
         else {
-          stats.SystematicAbsencesRemoved += merged_count;
+          stats.SystematicAbsencesRemoved += real_count;
           stats.UniqueSystematicAbsencesRemoved++;
         }
       }
       if( i >= ref_cnt )  break;
       ref = refs[i];
     }
-    stats.UniqueReflections = output.Count();
     stats.Rint = -1;
     stats.Rsigma = -1;
-    stats.MeanIOverSigma = -1;
+    stats.MeanIOverSigma /= (stats.UniqueReflections == 0 ? 1
+      : stats.UniqueReflections);
     return stats;
   }
   template <class MatList>
@@ -290,33 +295,37 @@ class RefMerger {
     for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
       const size_t from = i;
-      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
-        ;
+      size_t real_count=ref->GetBatch() > 0 ? 1 : 0;
+      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) ) {
+        if (refs[i]->GetBatch() > 0) real_count++;
+      }
       const size_t merged_count = i - from;
       bool omitted = false;
       for( size_t j=0; j < omits.Count(); j++ )  {
         if( ref->GetHkl() == omits[j] )  {
-          stats.OmittedByUser += merged_count;
+          stats.OmittedByUser += real_count;
           omitted = true;
           break;
         }
       }
-      if( !omitted )  {
+      if (!omitted && real_count > 0) {
         if( merged_count > stats.ReflectionAPotMax )
-          stats.ReflectionAPotMax = merged_count;
+          stats.ReflectionAPotMax = real_count;
         if( !ref->IsAbsent() )  {
           for( size_t j=from; j < i; j++ )  {
-            stats.MeanIOverSigma += refs[j]->GetI()/refs[j]->GetS();
             vec3i::UpdateMinMax(refs[j]->GetHkl(), stats.MinIndexes,
               stats.MaxIndexes);
+            if (refs[j]->GetBatch() >0)
+              stats.MeanIOverSigma += refs[j]->GetI()/refs[j]->GetS();
           }
-          if( ref->IsCentric() )
-            stats.CentricReflections++;
-          stats.UniqueReflections += merged_count;
-          stats.IndependentReflections += 1./ref->GetMultiplicity();
+          if (ref->IsCentric())
+            stats.CentricReflections += real_count;
+          stats.UniqueReflections += real_count;
+          stats.IndependentReflections +=
+            (double)real_count/ref->GetMultiplicity();
         }
         else {
-          stats.SystematicAbsencesRemoved += merged_count;
+          stats.SystematicAbsencesRemoved += real_count;
           stats.UniqueSystematicAbsencesRemoved++;
         }
       }
