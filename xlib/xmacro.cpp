@@ -2751,7 +2751,8 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
     else
       E.SetRetVal(EmptyString());
   }
-  E.SetRetVal(NAString);
+  else
+    E.SetRetVal(NAString);
 }
 //..............................................................................
 void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
