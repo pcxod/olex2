@@ -126,8 +126,12 @@ namespace twinning  {
       if( (size_t)r.GetTag() > Fc.Count() )
         throw TIndexOutOfRangeException(__OlxSourceInfo, r.GetTag(), 0, Fc.Count());
       const size_t bi = olx_abs(r.GetBatch())-1;
+      if (bi >= scales.Count()) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olxstr("batch number in: ").quote() << r.ToString());
+      }
       return twin_mate_full(
-        Fc[r.GetTag()], r.GetI(), r.GetS(), bi < scales.Count() ? scales[bi] : 0);
+        Fc[r.GetTag()], r.GetI(), r.GetS(), scales[bi]);
     }
     twin_mate_calc NextCalc() const {
       TReflection r = itr.Next();
@@ -136,7 +140,11 @@ namespace twinning  {
       if( (size_t)r.GetTag() > Fc.Count() )
         throw TIndexOutOfRangeException(__OlxSourceInfo, r.GetTag(), 0, Fc.Count());
       const size_t bi = olx_abs(r.GetBatch())-1;
-      return twin_mate_calc(Fc[r.GetTag()], bi < scales.Count() ? scales[bi] : 0);
+      if (bi >= scales.Count()) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          olxstr("batch number in: ").quote() << r.ToString());
+      }
+      return twin_mate_calc(Fc[r.GetTag()], scales[bi]);
     }
   };
 

@@ -301,17 +301,17 @@ olxstr RefinementModel::GetTWINStr() const {
 }
 //.............................................................................
 void RefinementModel::SetIterations(int v)  {  
-  if( LS.IsEmpty() ) 
+  if( LS.IsEmpty() )
     LS.Add(v);
   else
-    LS[0] = v;  
+    LS[0] = v;
 }
 //.............................................................................
 void RefinementModel::SetPlan(int v)  {  
-  if( PLAN.IsEmpty() )  
+  if( PLAN.IsEmpty() )
     PLAN.Add(v);
   else
-    PLAN[0] = v;  
+    PLAN[0] = v;
 }
 //.............................................................................
 void RefinementModel::AddSfac(XScatterer& sc)  {
@@ -370,40 +370,55 @@ bool RefinementModel::ValidateInfoTab(const InfoTab& it)  {
 void RefinementModel::AddInfoTab(const TStrList& l)  {
   size_t atom_start = 1;
   size_t resi_ind = l[0].IndexOf('_');
-  olxstr tab_name = (resi_ind == InvalidIndex ? l[0] : l[0].SubStringTo(resi_ind));
-  olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString() : l[0].SubStringFrom(resi_ind+1));
-  if( tab_name.Equalsi("HTAB") )
-    InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString(), resi_name) );
-  else if( tab_name.Equalsi("RTAB") )
-    InfoTables.Add( new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name) );
-  else if( tab_name.Equalsi("MPLA") )  {
-    if( l[atom_start].IsNumber() )
-      InfoTables.Add(new InfoTab(*this, infotab_mpla, l[atom_start++], resi_name));
-    else
-      InfoTables.Add(new InfoTab(*this, infotab_mpla, EmptyString(), resi_name));
+  olxstr tab_name = (resi_ind == InvalidIndex ? l[0]
+  : l[0].SubStringTo(resi_ind));
+  olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString()
+    : l[0].SubStringFrom(resi_ind+1));
+  if( tab_name.Equalsi("HTAB") ) {
+    InfoTables.Add(
+      new InfoTab(*this, infotab_htab, EmptyString(), resi_name));
   }
-  else
-    throw TInvalidArgumentException(__OlxSourceInfo, "unknown information table name");
+  else if( tab_name.Equalsi("RTAB") ) {
+    InfoTables.Add(
+      new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name));
+  }
+  else if( tab_name.Equalsi("MPLA") )  {
+    if( l[atom_start].IsNumber() ) {
+      InfoTables.Add(
+        new InfoTab(*this, infotab_mpla, l[atom_start++], resi_name));
+    }
+    else {
+      InfoTables.Add(
+        new InfoTab(*this, infotab_mpla, EmptyString(), resi_name));
+    }
+  }
+  else {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "unknown information table name");
+  }
 
   TAtomReference ar(l.Text(' ', atom_start));
   TCAtomGroup ag;
   size_t atomAGroup;
   try  {  ar.Expand( *this, ag, resi_name, atomAGroup);  }
   catch( const TExceptionBase& ex )  {
-    TBasicApp::NewLogEntry(logError) << "Invalid info table atoms: " << l.Text(' ');
+    TBasicApp::NewLogEntry(logError) <<
+      "Invalid info table atoms: " << l.Text(' ');
     TBasicApp::NewLogEntry(logError) << ex.GetException()->GetFullMessage();
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }
   InfoTables.GetLast().AssignAtoms(ag);
   if( !InfoTables.GetLast().IsValid() )  {
-    TBasicApp::NewLogEntry(logError) << "Invalid info table: " << l.Text(' ');
+    TBasicApp::NewLogEntry(logError) <<
+      "Invalid info table: " << l.Text(' ');
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }
   for( size_t i=0; i < InfoTables.Count()-1; i++ )  {
     if( InfoTables[i] == InfoTables.GetLast() )  {
-      TBasicApp::NewLogEntry(logError) << "Duplicate info table: " << l.Text(' ');
+      TBasicApp::NewLogEntry(logError) <<
+        "Duplicate info table: " << l.Text(' ');
       InfoTables.Delete( InfoTables.Count()-1 );
       return;
     }
@@ -468,11 +483,12 @@ const TRefList& RefinementModel::GetReflections() const {
     _FriedelPairCount = 0;
     _Reflections.SetCapacity(hkl_cnt);
     for( size_t i=0; i < hkl_cnt; i++ )  {
+      if( HKLF < 5 )  // enforce to clear the batch number...
+        hf[i].SetBatch(TReflection::NoBatchSet);
       if (hf[i].IsOmitted()) continue;
       hf[i].SetI(hf[i].GetI()*HKLF_s);
       hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
-      if( HKLF < 5 )  // enforce to clear the batch number...
-        hf[i].SetBatch(TReflection::NoBatchSet);
+      if (hf[i].GetBatch() <= 0) continue;
       TReflection& r = _Reflections.AddNew(hf[i]);
       TRefPList* rl = hkl3d(hf[i].GetHkl());
       if( rl == NULL )
@@ -525,7 +541,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.HKLF_m == HKLF_m &&
       _HklStat.HKLF_s == HKLF_s &&
       _HklStat.HKLF_mat == HKLF_mat &&
-      _HklStat.MERG == MERG && !OMITs_Modified )  
+      _HklStat.MERG == MERG && !OMITs_Modified )
     {
       return _HklStat;
     }
@@ -1018,7 +1034,8 @@ void RefinementModel::ProcessFrags()  {
         for( size_t k=0; k < ag.Count(); k++ )
           all_atoms[k+1] = &ag[k];
         for( size_t k=0; k < all_atoms.Count(); k++ )  {
-          atoms.AddNew(all_atoms[k], (const cm_Element*)NULL, all_atoms[k]->ccrd().QLength() > 1e-6);
+          atoms.AddNew(all_atoms[k],
+            (const cm_Element*)NULL, all_atoms[k]->ccrd().QLength() > 1e-6);
           crds.AddCopy((*frag)[k].crd);
         }
         aunit.FitAtoms(atoms, crds, false);

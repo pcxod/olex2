@@ -226,8 +226,11 @@ public:
     return a.CompareTo(b);
   }
   // could be list of pointers or list of const pointers
-  template <class RefPList> static void SortList(RefPList& lst)  {  
+  template <class RefPList> static void SortList(RefPList& lst)  {
     QuickSorter::SortSF(lst, &TReflection::Compare);  
+  }
+  bool operator == (const vec3i &hkl_) const {
+    return hkl == hkl_;
   }
 //..............................................................................
   // these values are intialised by Analyse
@@ -247,6 +250,7 @@ public:
   void SetBatch(int16_t v)  {
     Flags = (Flags&~BatchMask)|((uint32_t)v<<BatchOff);
   }
+  bool IsBatchSet() const { return GetBatch() != NoBatchSet; }
 //..............................................................................
   vec3i& GetHkl()  {  return hkl;  }
   const vec3i& GetHkl() const {  return hkl;  }
