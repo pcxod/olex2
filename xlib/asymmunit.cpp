@@ -386,10 +386,10 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   olxstr lb(Label);
   size_t us_ind = Label.IndexOf('_');
   if( us_ind != InvalidIndex && ++us_ind < Label.Length() )  {
-    if( Label.SubStringFrom(us_ind).IsNumber() )  {  // residue number?
+    if (Label.SubStringFrom(us_ind).IsNumber()) {  // residue number?
       int resi_num = Label.SubStringFrom(us_ind).ToInt();
       resi = ResidueRegistry.Find(resi_num, resi);
-      if( resi == NULL )  // invalid residue?
+      if (resi == NULL)
         return NULL;
     }
     else
@@ -409,9 +409,12 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
     }
     else  {
       for( size_t i=0; i < resi->Count(); i++ )
-        if( !resi->GetAtom(i).IsDeleted() && resi->GetAtom(i).GetLabel().Equalsi(lb) )
+        if( !resi->GetAtom(i).IsDeleted() &&
+            resi->GetAtom(i).GetLabel().Equalsi(lb) )
+        {
           if( part == DefNoPart || resi->GetAtom(i).GetPart() == part )
             return &resi->GetAtom(i);
+        }
     }
   }
   else  {  // global search
@@ -431,6 +434,15 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
           if( part == DefNoPart || CAtoms[i]->GetPart() == part )
             return CAtoms[i];
     }
+  }
+  return NULL;
+}
+//..............................................................................
+TCAtom *TAsymmUnit::FindCAtomDirect(const olxstr &label) const {
+  const size_t ac = CAtoms.Count();
+  for( size_t i =0; i < ac; i++ )  {
+    if (CAtoms[i]->GetLabel().Equalsi(label))
+      return CAtoms[i];
   }
   return NULL;
 }
