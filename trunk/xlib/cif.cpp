@@ -201,7 +201,7 @@ void TCif::Rename(const olxstr& old_name, const olxstr& new_name)  {
 ConstPtrList<TCAtom> TCif::FindAtoms(const TStrList &names) {
   TCAtomPList atoms;
   for (size_t i=0; i < names.Count(); i++) {
-    if (atoms.Add(GetAsymmUnit().FindCAtom(names[i])) == NULL) {
+    if (atoms.Add(GetAsymmUnit().FindCAtomDirect(names[i])) == NULL) {
       TBasicApp::NewLogEntry(logError) <<
         (olxstr("Undefined atom :").quote() << names[i]);
       atoms.Clear();
@@ -462,7 +462,8 @@ void TCif::Initialize()  {
         tab.ColName(j).IndexOf("label") != InvalidIndex )
       {
         for( size_t k=0; k < tab.RowCount(); k++ )  {
-          TCAtom* ca = GetAsymmUnit().FindCAtom(tab[k][j]->GetStringValue());
+          TCAtom* ca = GetAsymmUnit().FindCAtomDirect(
+            tab[k][j]->GetStringValue());
           if( ca != NULL )
             tab.Set(k, j, new AtomCifEntry(*ca));
         }
@@ -484,11 +485,12 @@ void TCif::Initialize()  {
 
   if( (ALabel|Ui[0]|Ui[1]|Ui[2]|Ui[3]|Ui[4]|Ui[5]) != InvalidIndex )  {
     for( size_t i=0; i < ALoop->RowCount(); i++ )  {
-      TCAtom* A = GetAsymmUnit().FindCAtom(
+      TCAtom* A = GetAsymmUnit().FindCAtomDirect(
         ALoop->Get(i, ALabel).GetStringValue());
       if( A == NULL ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
-          olxstr("wrong atom in the aniso loop ").quote() << ALabel);
+          olxstr("wrong atom in the aniso loop ").quote() <<
+            ALoop->Get(i, ALabel).GetStringValue());
       }
       for( int j=0; j < 6; j++ )  {
         EValue = ALoop->Get(i, Ui[j]).GetStringValue();
