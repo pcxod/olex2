@@ -78,7 +78,7 @@ public:
   static size_t Count();
   static const olxstr& GetBlockName(size_t i);
   static size_t GetBlockSize(size_t i);
-  static const olxstr& GetBlockDateTime(size_t i);
+  static olxstr GetBlockDateTime(size_t i);
   static short GetPersistenceId(size_t i);
   static bool Exists(const olxstr& fn);
 

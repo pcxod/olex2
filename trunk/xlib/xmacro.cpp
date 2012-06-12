@@ -347,8 +347,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Prints molecular volume, surface area and other information for "
     "visible/selected atoms");
-  xlib_InitMacro(RTab, EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
-    "Adds RTAB with givn name for provided atoms/selection");
+  xlib_InitMacro(RTab, EmptyString(), fpAny|psCheckFileTypeIns,
+    "Adds RTAB with given name for provided atoms/selection");
   xlib_InitMacro(HklMerge, "z-zero negative intensity", fpAny|psFileLoaded,
     "Merges current HKL file (ehco HKLSrc()) to given file name. "
     "Warning: if no arguments provided, the current file is overwritten");
