@@ -13,14 +13,14 @@
 #include <stdlib.h>
 #include "actions.h"
 
-/* as simple garbage collector class
-simple objects aree deleted when oOnIdle is called next time, whereas the referencible
-objects are deleted only when reference count is zro
+/* a very simple garbage collector class
+simple objects are deleted when oOnIdle is called next time, whereas the
+referencible objects are deleted only when reference count is zero
 
-there are two options ofor how to delete the object: atexit function can be used
-or Delete property of the AActionHandler. In the latter case there is a danger
-for asynchronious execution - the object will be deleted when TBasicApp is deleted...
-for now we use the latetr one
+there are two options for how to delete the object: atexit function can be
+used or Delete property of the AActionHandler. In the latter case there is a
+danger for asynchronous execution - the object will be deleted when TBasicApp
+is deleted...
 
     if( atexit( &AtExit ) != 0 )
       throw TFunctionFailedException(__OlxSourceInfo, "atexit failed");
@@ -31,7 +31,6 @@ for now we use the latetr one
       Instance = NULL;
     }
   }
-  
 */
 
 
@@ -58,7 +57,7 @@ protected:
   void ClearATE();
   void _AddASAP(IEObject* object);
   void _AddATE(IEObject* object);
-  inline static void AtObjectDestruct(IEObject* obj)  {
+  static void AtObjectDestruct(IEObject* obj) {
     Instance->_AtObjectDestruct(obj);
   }
   void _AtObjectDestruct(IEObject* obj);
@@ -66,30 +65,32 @@ public:
   TEGC();
   virtual ~TEGC();
   // add an object to be deleted ASAP
-  inline static void Add(IEObject* object)  {
+  static void Add(IEObject* object) {
     GetInstance()->_AddASAP(object);
   }
   // add an object with postponed deletion (in the destructor)
-  inline static void AddP(IEObject* object)  {
+  static void AddP(IEObject* object) {
     GetInstance()->_AddATE(object);
   }
-  /* call this before any API calls clike olxstr.c_str() and u_cstr(), once an instance of TBasicAPP,
-  or derived class is created the instance gets attached and will be removde automatically */
-  inline static void Initialise() {  
-    if( Instance == NULL )
-      Instance = new TEGC;
-    if( !RemovalManaged )
-      ManageRemoval();
+  /* call this before any API calls clike olxstr.c_str() and u_str(), once an
+  instance of TBasicAPP, or derived class is created the instance gets attached
+  and will be removde automatically
+  */
+  static void Initialise() {
+    if (Instance == NULL) Instance = new TEGC;
+    if (!RemovalManaged) ManageRemoval();
   }
-  /* call this to manually Finalise (nothing will happen in case if TBasicApp instance is active),
-  should only be called when an instanve of TBasicApp is never created */
-  inline static void Finalise()  {
-    if( !RemovalManaged && Instance != NULL )  {
+  /* call this to manually Finalise (nothing will happen in case if TBasicApp
+  instance is active), should only be called when an instanve of TBasicApp is
+  never created
+  */
+  static void Finalise() {
+    if (!RemovalManaged && Instance != NULL) {
       delete Instance;
       Instance = NULL;
     }
   }
-  inline static TEGC* GetInstance()  {
+  static TEGC* GetInstance() {
     return (Instance!=NULL ? Instance : (Instance = new TEGC));
   }
 
@@ -97,52 +98,98 @@ public:
     ClearASAP();
     return true;
   }
-//..............................................................................
+//.............................................................................
   template<class T>
-   static T& New()  {  T* o = new T();  Add(o);  return *o;  }
-//..............................................................................
+  static T& New() {
+    T* o = new T();
+    Add(o);
+    return *o;
+  }
+//.............................................................................
   template<class T, class AC>
-    static T& New( const AC& arg )  {
-      T* o = new T(arg);  Add(o);  return *o;  }
-//..............................................................................
+  static T& New(const AC& arg) {
+    T* o = new T(arg);
+    Add(o);
+    return *o;
+  }
+//.............................................................................
   template<class T, class FAC, class SAC>
-    static T& New( const FAC& arg1, const SAC& arg2 )  {
-      T* o = new T(arg1, arg2);  Add(o);  return *o;  }
-//..............................................................................
+  static T& New( const FAC& arg1, const SAC& arg2 ) {
+    T* o = new T(arg1, arg2);
+    Add(o);
+    return *o;
+  }
+//.............................................................................
   template<class T, class FAC, class SAC, class TAC>
-    static T& New( const FAC& arg1, const SAC& arg2, const TAC& arg3 )  {
-      T* o = new T(arg1, arg2, arg3);  Add(o);  return *o;  }
-//..............................................................................
+  static T& New(const FAC& arg1, const SAC& arg2, const TAC& arg3) {
+    T* o = new T(arg1, arg2, arg3);
+    Add(o);
+    return *o;
+  }
+//.............................................................................
   template<class T, class FAC, class SAC, class TAC, class FrAC>
-    static T& New( const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
-      T* o = new T(arg1, arg2, arg3, arg4);  Add(o);  return *o;  }
-//..............................................................................
+  static T& New(const FAC& arg1, const SAC& arg2, const TAC& arg3,
+    const FrAC& arg4)
+  {
+    T* o = new T(arg1, arg2, arg3, arg4);
+    Add(o);
+    return *o;
+  }
+//.............................................................................
   template<class T, class FAC, class SAC, class TAC, class FrAC, class FvAC>
-    static T& New( const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
-      T* o = new T(arg1, arg2, arg3, arg4, arg5);  Add(o);  return *o;  }
-//..............................................................................
+  static T& New(const FAC& arg1, const SAC& arg2, const TAC& arg3,
+    const FrAC& arg4, const FvAC& arg5)
+  {
+    T* o = new T(arg1, arg2, arg3, arg4, arg5);
+    Add(o);
+    return *o;
+  }
+//.............................................................................
   template<class T>
-   static T& NewG()  {  T* o = new T();  AddP(o);  return *o;  }
-//..............................................................................
+  static T& NewG()  {
+    T* o = new T();
+    AddP(o);
+    return *o;
+ }
+//.............................................................................
   template<class T, class AC>
-    static T& NewG( const AC& arg )  {
-      T* o = new T(arg);  AddP(o);  return *o;  }
-//..............................................................................
+  static T& NewG(const AC& arg) {
+      T* o = new T(arg);
+      AddP(o);
+      return *o;
+  }
+//.............................................................................
   template<class T, class FAC, class SAC>
-    static T& NewG( const FAC& arg1, const SAC& arg2 )  {
-      T* o = new T(arg1, arg2);  AddP(o);  return *o;  }
-//..............................................................................
+  static T& NewG(const FAC& arg1, const SAC& arg2) {
+    T* o = new T(arg1, arg2);
+    AddP(o);
+    return *o;
+  }
+//.............................................................................
   template<class T, class FAC, class SAC, class TAC>
-    static T& NewG( const FAC& arg1, const SAC& arg2, const TAC& arg3 )  {
-      T* o = new T(arg1, arg2, arg3);  AddP(o);  return *o;  }
-//..............................................................................
+  static T& NewG(const FAC& arg1, const SAC& arg2, const TAC& arg3) {
+    T* o = new T(arg1, arg2, arg3);
+    AddP(o);
+    return *o;
+  }
+//.............................................................................
   template<class T, class FAC, class SAC, class TAC, class FrAC>
-    static T& NewG( const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
-      T* o = new T(arg1, arg2, arg3, arg4);  AddP(o);  return *o;  }
-//..............................................................................
+  static T& NewG( const FAC& arg1, const SAC& arg2, const TAC& arg3,
+    const FrAC& arg4)
+  {
+    T* o = new T(arg1, arg2, arg3, arg4);
+    AddP(o);
+    return *o;
+  }
+//.............................................................................
   template<class T, class FAC, class SAC, class TAC, class FrAC, class FvAC>
-    static T& NewG( const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
-      T* o = new T(arg1, arg2, arg3, arg4, arg5);  AddP(o);  return *o;  }
+  static T& NewG(const FAC& arg1, const SAC& arg2, const TAC& arg3,
+    const FrAC& arg4, const FvAC& arg5)
+  {
+    T* o = new T(arg1, arg2, arg3, arg4, arg5);
+    AddP(o);
+    return *o;
+  }
 };
 
 EndEsdlNamespace()

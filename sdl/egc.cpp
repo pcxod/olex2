@@ -74,6 +74,10 @@ void TEGC::ClearATE() {
 }
 //.............................................................................
 void TEGC::_AddASAP(IEObject* object) {
+  if (!object->AddDestructionHandler(&TEGC::AtObjectDestruct)) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "object is already managed");
+  }
   if (ASAPOTail == NULL)
     ASAPOTail = ASAPOHead.Next = new OEntry;
   else {
@@ -82,12 +86,15 @@ void TEGC::_AddASAP(IEObject* object) {
   }
   ASAPOTail->Next = NULL;
   ASAPOTail->Object = object;
-  object->AddDestructionHandler(&TEGC::AtObjectDestruct);
   // check if the object was already placed to the ATE store ...
   RemoveObject(ATEOHead, object);
 }
 //.............................................................................
-void TEGC::_AddATE( IEObject* object ) {
+void TEGC::_AddATE(IEObject* object) {
+  if (!object->AddDestructionHandler(&TEGC::AtObjectDestruct)) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "object is already managed");
+  }
   if (ATEOTail == NULL) {
     ATEOTail = ATEOHead.Next = new OEntry;
   }
@@ -97,7 +104,6 @@ void TEGC::_AddATE( IEObject* object ) {
   }
   ATEOTail->Next = NULL;
   ATEOTail->Object = object;
-  object->AddDestructionHandler(&TEGC::AtObjectDestruct);
 }
 //.............................................................................
 void TEGC::_AtObjectDestruct(IEObject* obj) {

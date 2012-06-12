@@ -259,7 +259,7 @@ class IEObject  {
     void (base::*destruction_handler)(IEObject* obj);
     base& instance;
     member_destruction_handler(
-      a_destruction_handler* prev, 
+      a_destruction_handler* prev,
       base& base_instance,
       void (base::*_destruction_handler)(IEObject* obj)) :
         a_destruction_handler(prev),
@@ -268,56 +268,43 @@ class IEObject  {
     virtual void call(IEObject* obj) const {
       (instance.*destruction_handler)(obj);
     }
-    virtual const void* get_identifier() const {  return &instance;  }
+    virtual const void* get_identifier() const {
+      return (const void*)destruction_handler;
+    }
   };
   
   a_destruction_handler *dsh_head, *dsh_tail;
   
-  void _RemoveDestructionHandler(const void* identifier)  {
-    a_destruction_handler *cr = dsh_head, *prev=NULL;
-    while( cr != NULL )  {
-      if( cr->get_identifier() == identifier )  {
-        if( prev != NULL )  prev->next = cr->next;
-        if( cr == dsh_tail )  dsh_tail = prev;
-        if( dsh_head == cr )  dsh_head = NULL;
-        delete cr;
-        break;
-      }
-      prev = cr;
-      cr = cr->next;
-    }
-  }
+  void _RemoveDestructionHandler(const void* identifier);
+  bool _HasDestructionHandler(a_destruction_handler *dh) const;
 public:
   IEObject() : dsh_head(NULL), dsh_tail(NULL) {}
-  virtual ~IEObject()  {
-    while( dsh_head != NULL )  {
-      dsh_head->call(this);
-      a_destruction_handler *dsh = dsh_head;
-      dsh_head = dsh_head->next;
-      delete dsh;
-    }
-  }
+  virtual ~IEObject();
   // throws an exception
   virtual TIString ToString() const;
   // throws an exception if not implemented
   virtual IEObject* Replicate() const;
-  void AddDestructionHandler(void (*func)(IEObject*))  {
-    if( dsh_head == NULL )
-      dsh_head = dsh_tail = new static_destruction_handler(NULL, func);
-    else
-      dsh_tail = new static_destruction_handler(dsh_tail, func);
-  }
+  bool AddDestructionHandler(void (*func)(IEObject*));
   template <class base>
-  void AddDestructionHandler(base& instance, void (base::*func)(IEObject*))  {
+  bool AddDestructionHandler(base& instance, void (base::*func)(IEObject*))  {
     if( dsh_head == NULL ) {
       dsh_head = dsh_tail =
         new member_destruction_handler<base>(NULL, instance, func);
     }
-    else
-      dsh_tail = new member_destruction_handler<base>(dsh_tail, instance, func);
+    else {
+      a_destruction_handler *e =
+        new member_destruction_handler<base>(NULL, instance, func);
+      if (_HasDestructionHandler(e)) {
+        delete e;
+        return false;
+      }
+      dsh_tail->next = e;
+      dsh_tail = e;
+    }
+    return true;
   }
-  template <class T> void RemoveDestructionHandler(const T& indetifier)  {
-    _RemoveDestructionHandler((const void*)indetifier);
+  template <class T> void RemoveDestructionHandler(const T& identifier)  {
+    _RemoveDestructionHandler((const void*)identifier);
   }
 };
 

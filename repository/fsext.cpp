@@ -20,7 +20,7 @@
 #include "wxzipfs.h"
 
   const int16_t TFileHandlerManager::FVersion = 0x0001;
-  const char TFileHandlerManager::FSignature[]="ODF_"; // olex data file?
+  const char TFileHandlerManager::FSignature[]="ODF_"; // olex2 data file?
   const int TFileHandlerManager_FSignatureLength = 4;
 
 TFileHandlerManager *TFileHandlerManager::FHandler = NULL;
@@ -55,13 +55,19 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock(const olxstr& FN)  {
   return mb;
 }
 //..............................................................................
-TFileHandlerManager::TFileHandlerManager()  {  
+TFileHandlerManager::TFileHandlerManager()  {
+  if (FHandler != NULL)
+    throw TFunctionFailedException(__OlxSourceInfo, "singleton");
+  TEGC::AddP(FHandler = this);
 #ifndef _NO_PYTHON
-  PythonExt::GetInstance()->Register( &TFileHandlerManager::PyInit );
+  PythonExt::GetInstance()->Register(&TFileHandlerManager::PyInit);
 #endif
 }
 //..............................................................................
-TFileHandlerManager::~TFileHandlerManager()  {  _Clear();  }
+TFileHandlerManager::~TFileHandlerManager()  {
+  _Clear();
+  FHandler = NULL;
+}
 //..............................................................................
 void TFileHandlerManager::_Clear()  {
   for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
@@ -200,21 +206,21 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is,
 }
 //..............................................................................
 const TMemoryBlock* TFileHandlerManager::FindMemoryBlock(const olxstr& bn) {
-  if( !FHandler )  FHandler = new TFileHandlerManager;
   if( bn.IsEmpty() )  return NULL;
+  if( FHandler == NULL )  new TFileHandlerManager;
   return FHandler->FMemoryBlocks[TEFile::UnixPath(bn)];
 }
 //..............................................................................
 IDataInputStream *TFileHandlerManager::GetInputStream(const olxstr &FN)  {
-  if( !FHandler )  FHandler = new TFileHandlerManager;
   if( FN.IsEmpty() )  return NULL;
-  return FHandler->_GetInputStream( LocateFile(FN) );
+  if( FHandler == NULL )  new TFileHandlerManager;
+  return FHandler->_GetInputStream(LocateFile(FN));
 }
 //..............................................................................
 #ifdef __WXWIDGETS__
 wxFSFile *TFileHandlerManager::GetFSFileHandler(const olxstr &FN)  {
-  if( FHandler == NULL )  FHandler = new TFileHandlerManager;
-  return FHandler->_GetFSFileHandler( LocateFile(FN) );
+  if( FHandler == NULL )  new TFileHandlerManager;
+  return FHandler->_GetFSFileHandler(LocateFile(FN));
 }
 #endif
 //..............................................................................
@@ -222,7 +228,6 @@ void TFileHandlerManager::Clear(short persistenceMask)  {
   if( FHandler != NULL )  {
     if( persistenceMask == ~0 )  {
       delete FHandler;
-      FHandler = NULL;
     }
     else  {
       for( size_t i=0; i < FHandler->FMemoryBlocks.Count(); i++ )  {
@@ -277,53 +282,49 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
 void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
   size_t length, short persistenceId)
 {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
+  if( FHandler == NULL )  FHandler = new TFileHandlerManager;
   return FHandler->_AddMemoryBlock(name, bf, length, persistenceId);
 }
 //..............................................................................
 size_t TFileHandlerManager::Count()  {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
+  if( FHandler == NULL )  FHandler = new TFileHandlerManager;
   return FHandler->FMemoryBlocks.Count();
 }
 //..............................................................................
 const olxstr& TFileHandlerManager::GetBlockName(size_t i)  {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
+  if( FHandler == NULL )  FHandler = new TFileHandlerManager;
   return FHandler->FMemoryBlocks.GetString(i);
 }
 //..............................................................................
 size_t TFileHandlerManager::GetBlockSize(size_t i)  {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
+  if( FHandler == NULL )  FHandler = new TFileHandlerManager;
   return FHandler->FMemoryBlocks.GetObject(i)->Length;
 }
 //..............................................................................
-const olxstr& TFileHandlerManager::GetBlockDateTime(size_t i)  {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
-  return TEGC::New<olxstr>( 
-    TETime::FormatDateTime(FHandler->FMemoryBlocks.GetObject(i)->DateTime) 
-  );
+olxstr TFileHandlerManager::GetBlockDateTime(size_t i)  {
+  return FHandler->FMemoryBlocks.GetObject(i)->DateTime;
 }
 //..............................................................................
 short TFileHandlerManager::GetPersistenceId(size_t i)  {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return FHandler->FMemoryBlocks.GetObject(i)->PersistenceId;
 }
 //..............................................................................
 void TFileHandlerManager::SaveToStream(IDataOutputStream& os,
   short persistenceMask)
 {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
+  if( FHandler == NULL )  new TFileHandlerManager;
   FHandler->_SaveToStream(os, persistenceMask);
 }
 //..............................................................................
 void TFileHandlerManager::LoadFromStream(IDataInputStream& is,
   short persistenceId)
 {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
+  if( FHandler == NULL )  new TFileHandlerManager;
   FHandler->_LoadFromStream(is, persistenceId);
 }
 //..............................................................................
 bool TFileHandlerManager::Exists(const olxstr& fn)  {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
+  if( FHandler == NULL )  new TFileHandlerManager;
   return FHandler->IsMemoryBlock(fn);
 }
 //..............................................................................
@@ -358,7 +359,7 @@ void TFileHandlerManager::LibClear(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
-  if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
+  if( FHandler == NULL )  new TFileHandlerManager();
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("fs") : name);
   lib->RegisterFunction<TFileHandlerManager>(
     new TFunction<TFileHandlerManager>(FHandler,  
