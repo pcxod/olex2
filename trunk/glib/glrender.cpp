@@ -1021,7 +1021,7 @@ char* TGlRenderer::GetPixels(bool useMalloc, short aligment, GLuint format)  {
     throw TOutOfMemoryException(__OlxSourceInfo);
   olx_gl::readBuffer(GL_BACK);
   olx_gl::pixelStore(GL_PACK_ALIGNMENT, aligment);
-  olx_gl::readPixels(0, 0, Width, Height, GL_BGR_EXT, GL_UNSIGNED_BYTE, Bf);
+  olx_gl::readPixels(0, 0, Width, Height, format, GL_UNSIGNED_BYTE, Bf);
   return Bf;
 }
 //..............................................................................
