@@ -223,8 +223,7 @@ TAG_HANDLER_PROC(tag)  {
       if( Tmp.EndsWith('%') )  {
         ay = 0;
         float _ay = Tmp.SubStringTo(Tmp.Length()-1).ToFloat<float>()/100;
-        _ay *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize()
-          .GetHeight();
+        _ay *= html->GetSize().GetHeight();
         ay = (int)_ay;
       }
       else
@@ -297,7 +296,7 @@ TAG_HANDLER_PROC(tag)  {
           wxHtmlContainerCell* contC =
             new wxHtmlContainerCell(m_WParser->GetContainer());
           THtml::WordCell* wc =
-            new THtml::WordCell( Label.u_str(), *m_WParser->GetDC());
+            new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
           if( LinkInfo != NULL ) {  
             wc->SetLink(*LinkInfo);
             delete LinkInfo;
@@ -327,8 +326,7 @@ TAG_HANDLER_PROC(tag)  {
       flags = wxTE_PROCESS_ENTER;
       
     if( tag.HasParam( wxT("PASSWORD") ) )   flags |= wxTE_PASSWORD;
-    TTextEdit *Text = new TTextEdit(
-      m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
+    TTextEdit *Text = new TTextEdit(html, flags);
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
     CreatedWindow = Text;
@@ -378,8 +376,7 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam(wxT("dropdown")) )  {
       flags = wxDP_DROPDOWN;
     }
-    TDateCtrl *DT =
-      new TDateCtrl(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
+    TDateCtrl *DT = new TDateCtrl(html, flags);
     DT->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = DT;
     CreatedWindow = DT;
@@ -416,8 +413,7 @@ TAG_HANDLER_PROC(tag)  {
   }
 /******************* COLOR CONTROL *******************************************/
   if( TagName.Equalsi("color") )  {
-    TColorCtrl *CC =
-      new TColorCtrl(m_WParser->GetWindowInterface()->GetHTMLWindow());
+    TColorCtrl *CC = new TColorCtrl(html);
     CC->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = CC;
     CreatedWindow = CC;
@@ -447,8 +443,7 @@ TAG_HANDLER_PROC(tag)  {
   }
 /******************* LABEL ***************************************************/
   else if( TagName.Equalsi("label") )  {
-    TLabel *Text =
-      new TLabel(m_WParser->GetWindowInterface()->GetHTMLWindow(), Value);
+    TLabel *Text = new TLabel(html, Value);
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
     CreatedWindow = Text;
@@ -466,8 +461,7 @@ TAG_HANDLER_PROC(tag)  {
     olxstr buttonImage = tag.GetParam(wxT("IMAGE"));
     if( !buttonImage.IsEmpty() )  {
       if( buttonImage.IndexOf(',') != InvalidIndex )  {
-        TImgButton* ibtn =
-          new TImgButton(m_WParser->GetWindowInterface()->GetHTMLWindow());
+        TImgButton* ibtn = new TImgButton(html);
         ibtn->SetImages(buttonImage, width_set ? ax : -1, height_set ? ay : -1);
         if( tag.HasParam(wxT("ENABLED")) )
           ibtn->SetEnabled(olxstr(tag.GetParam(wxT("ENABLED"))).ToBool());
@@ -477,11 +471,10 @@ TAG_HANDLER_PROC(tag)  {
         Btn = ibtn;
       }
       else  {
-        Btn = new TBmpButton(
-          m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxNullBitmap,
+        Btn = new TBmpButton(html, -1, wxNullBitmap,
           wxDefaultPosition, wxDefaultSize, flags );
         ((TBmpButton*)Btn)->SetSource( buttonImage );
-        wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( buttonImage );
+        wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(buttonImage);
         if( fsFile == NULL ) {
           TBasicApp::NewLogEntry(logError) <<
             "THTML: could not locate image for button: " << ObjectName;
@@ -506,15 +499,15 @@ TAG_HANDLER_PROC(tag)  {
         }
         Btn->WI.SetWidth(ax);
         Btn->WI.SetHeight(ay);
-        ((TBmpButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
+        ((TBmpButton*)Btn)->SetFont(m_WParser->GetDC()->GetFont());
         CreatedWindow = (TBmpButton*)Btn;
       }
     }
     else  {
-      Btn = new TButton(m_WParser->GetWindowInterface()->GetHTMLWindow(), -1,
-        wxEmptyString, wxDefaultPosition, wxDefaultSize, flags);
+      Btn = new TButton(html, -1, wxEmptyString,
+        wxDefaultPosition, wxDefaultSize, flags);
       ((TButton*)Btn)->SetCaption(Value);
-      ((TButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
+      ((TButton*)Btn)->SetFont(m_WParser->GetDC()->GetFont());
       if( (flags & wxBU_EXACTFIT) == 0 )  {
         Btn->WI.SetWidth(ax);
         Btn->WI.SetHeight(ay);
@@ -522,7 +515,7 @@ TAG_HANDLER_PROC(tag)  {
 #ifdef __WXGTK__  // got no idea what happens here, client size does not work?
       wxFont fnt(m_WParser->GetDC()->GetFont());
       fnt.SetPointSize( fnt.GetPointSize()-2);
-      ((TButton*)Btn)->SetFont( fnt );
+      ((TButton*)Btn)->SetFont(fnt);
       wxCoord w=0, h=0, desc=0, exlead=0;
       wxString wxs(Value.u_str());
       m_WParser->GetDC()->GetTextExtent(wxs, &w, &h, &desc, &exlead, &fnt);
@@ -561,17 +554,14 @@ TAG_HANDLER_PROC(tag)  {
   }
 /******************* COMBOBOX *************************************************/
   else if( TagName.Equalsi("combo") )  {
-    TComboBox *Box =
-      new TComboBox(m_WParser->GetWindowInterface()->GetHTMLWindow(),
-        tag.HasParam(wxT("READONLY")),
-      wxSize(ax, ay));
+    TComboBox *Box = new TComboBox(html,
+      tag.HasParam(wxT("READONLY")), wxSize(ax, ay));
     Box->SetFont(m_WParser->GetDC()->GetFont());
-
     CreatedObject = Box;
     CreatedWindow = Box;
     Box->WI.SetWidth(ax);
-#ifdef __MAC__    
-    Box->WI.SetHeight( olx_max(ay, Box->GetCharHeight()+10) );
+#ifdef __MAC__
+    Box->WI.SetHeight(olx_max(ay, Box->GetCharHeight()+10));
 #else
     Box->WI.SetHeight( ay );
 #endif    
@@ -633,8 +623,7 @@ TAG_HANDLER_PROC(tag)  {
   }
 /******************* SPIN CONTROL *********************************************/
   else if( TagName.Equalsi("spin") )  {
-    TSpinCtrl *Spin =
-      new TSpinCtrl(m_WParser->GetWindowInterface()->GetHTMLWindow());
+    TSpinCtrl *Spin = new TSpinCtrl(html);
     Spin->SetFont(m_WParser->GetDC()->GetFont());
     Spin->SetForegroundColour(m_WParser->GetDC()->GetTextForeground());
     int min=0, max = 100;
@@ -675,8 +664,7 @@ TAG_HANDLER_PROC(tag)  {
   }
 /******************* SLIDER ***************************************************/
   else  if( TagName.Equalsi("slider") )  {
-    TTrackBar *Track =
-      new TTrackBar(m_WParser->GetWindowInterface()->GetHTMLWindow());
+    TTrackBar *Track = new TTrackBar(html);
     Track->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Track;
     CreatedWindow = Track;
@@ -721,9 +709,8 @@ TAG_HANDLER_PROC(tag)  {
   }
 /******************* CHECKBOX *************************************************/
   else if( TagName.Equalsi("checkbox") )  {
-    TCheckBox *Box =
-      new TCheckBox(m_WParser->GetWindowInterface()->GetHTMLWindow(),
-        tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
+    TCheckBox *Box = new TCheckBox(html,
+      tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
     Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
     wxa->centreX.Absolute(0);
@@ -775,9 +762,7 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam(wxT("EDITABLE")) )
       flags |= wxTR_EDIT_LABELS;
 
-    TTreeView *Tree =
-      new TTreeView(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
-
+    TTreeView *Tree = new TTreeView(html, flags);
     if( (flags&wxTR_HIDE_ROOT) == 0 && tag.HasParam(wxT("ROOTLABEL")) )
       Tree->SetItemText(Tree->GetRootItem(), tag.GetParam(wxT("ROOTLABEL")));
     olxstr src = tag.GetParam(wxT("SRC"));
@@ -829,6 +814,9 @@ TAG_HANDLER_PROC(tag)  {
 #endif
       Tree->LoadFromStrings(list);
       delete ios;
+      if (tag.HasParam(wxT("EXPANDED"))) {
+        Tree->ExpandAll();
+      }
       wxString sel = tag.GetParam(wxT("SELECTED"));
       if( sel.IsEmpty() )  {
         sel = tag.GetParam(wxT("VALUE"));
@@ -870,8 +858,7 @@ TAG_HANDLER_PROC(tag)  {
       op->processFunction(items, SrcInfo, true);
       itemsList.Strtok(items, ';');
     }
-    TListBox *List =
-      new TListBox(m_WParser->GetWindowInterface()->GetHTMLWindow());
+    TListBox *List = new TListBox(html);
     List->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = List;
     CreatedWindow = List;
