@@ -889,21 +889,24 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
         v = olx_angle(A.Edge(), A.Base(), B.A().crd(), B.B().crd());
         Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ")";
       }
-      else if( EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom) )  {
+      else if( (EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom)) ||
+               (EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXAtom)))
+      {
+        const TXPlane &p = (TXPlane&)(EsdlInstanceOf(Sel[0], TXPlane) ? Sel[0] : Sel[1]);
+        const TXAtom &a = (TXAtom&)(EsdlInstanceOf(Sel[0], TXPlane) ? Sel[1] : Sel[0]);
         Tmp = "Distance (plane-atom): ";
-        v = ((TXPlane&)Sel[0]).DistanceTo(((TXAtom&)Sel[1]));
-        Tmp << olxstr::FormatFloat(3, v) << 
-          "\nDistance (plane centroid-atom): ";
-        v = ((TXPlane&)Sel[0]).GetCenter().DistanceTo(((TXAtom&)Sel[1]).crd());
-        Tmp << olxstr::FormatFloat(3, v);
-      }
-      else if( EsdlInstanceOf(Sel[0], TXAtom) && EsdlInstanceOf(Sel[1], TXPlane) )  {
-        Tmp = "Distance (plane-atom): ";
-        v = ((TXPlane&)Sel[1]).DistanceTo(((TXAtom&)Sel[0]));
-        Tmp << olxstr::FormatFloat(3, v) <<
-          "\nDistance (plane centroid-atom): ";
-        v = ((TXPlane&)Sel[1]).GetCenter().DistanceTo(((TXAtom&)Sel[0]).crd());
-        Tmp << olxstr::FormatFloat(3, v);
+        v = p.DistanceTo(a);
+        Tmp << olxstr::FormatFloat(3, v) << "\nDistance (plane centroid-atom): " <<
+          olxstr::FormatFloat(3, p.GetCenter().DistanceTo(a.crd()));
+        vec3d x = (a.crd()-p.GetCenter());
+        x -= p.GetNormal()*p.GetNormal().DotProd(x);
+        Tmp << "\nAtom projection to the plane fractional coordinates: " <<
+          XFile().GetAsymmUnit().Fractionalise(x+p.GetCenter()).ToString();
+        Tmp << "\nCentroid-projecttion point distance: " <<
+          olxstr::FormatFloat(3, x.Length());
+        Tmp << "\nAtom-Centroid-projecttion point angle: " <<
+          olxstr::FormatFloat(2,
+            acos((a.crd()-p.GetCenter()).CAngle(x))*180/M_PI);
       }
       else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXPlane) )  {
         Tmp = "Angle (plane-bond): ";
