@@ -11,13 +11,13 @@
 #include "frameext.h"
 
 using namespace ctrl_ext;
-IMPLEMENT_CLASS(TTreeView, wxGenericTreeCtrl)
+IMPLEMENT_CLASS(TTreeView, wxTreeCtrl)
 
 enum  {
   ID_ExpandAll = 1000,
   ID_CollapseAll
 };
-BEGIN_EVENT_TABLE(TTreeView, wxGenericTreeCtrl)
+BEGIN_EVENT_TABLE(TTreeView, wxTreeCtrl)
   EVT_TREE_ITEM_ACTIVATED(-1, TTreeView::ItemActivateEvent)
   EVT_TREE_SEL_CHANGED(-1, TTreeView::SelectionEvent)
   EVT_TREE_END_LABEL_EDIT(-1, TTreeView::ItemEditEvent)
