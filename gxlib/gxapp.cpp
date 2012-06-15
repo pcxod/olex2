@@ -902,9 +902,9 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
         x -= p.GetNormal()*p.GetNormal().DotProd(x);
         Tmp << "\nAtom projection to the plane fractional coordinates: " <<
           XFile().GetAsymmUnit().Fractionalise(x+p.GetCenter()).ToString();
-        Tmp << "\nCentroid-projecttion point distance: " <<
+        Tmp << "\nCentroid-projection point distance: " <<
           olxstr::FormatFloat(3, x.Length());
-        Tmp << "\nAtom-Centroid-projecttion point angle: " <<
+        Tmp << "\nAtom-Centroid-projection point angle: " <<
           olxstr::FormatFloat(2,
             acos((a.crd()-p.GetCenter()).CAngle(x))*180/M_PI);
       }
