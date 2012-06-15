@@ -199,7 +199,7 @@ public:
     while( true )  {
       if( Terminate )  return 1;
       dlg.DoPaint();
-      wxApp::GetInstance()->ProcessPendingEvents();
+      //wxApp::GetInstance()->ProcessPendingEvents();
       olx_sleep(200);
     }
   }
