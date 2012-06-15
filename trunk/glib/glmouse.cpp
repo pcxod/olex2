@@ -54,7 +54,9 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
     if( MData.Object == FDFrame ) 
       res = MData.Object->OnMouseUp(this, MData);
     else  {
-      if (InMode && OnObject.Execute(this, MData.Object)) {
+      if (InMode && button == smbLeft &&
+          OnObject.Execute(this, MData.Object))
+      {
         ;
       }
       else {
