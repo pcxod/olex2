@@ -1075,6 +1075,16 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 void TIns::SaveToStrings(TStrList& SL)  {
   TStrPObjList<olxstr,const cm_Element*> BasicAtoms =
     FixTypeListAndLabels();
+  for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
+    TCAtom &ca = GetAsymmUnit().GetAtom(i);
+    olxstr lb = ca.GetLabel();
+    lb.Replace('\t' ,' ').Replace('_', ' ');
+    if (lb.Contains(' ')) {
+      TBasicApp::NewLogEntry(logError) << "Changing invalid atom labels for" <<
+        (olxstr(' ').quote() << ca.GetLabel());
+      ca.SetLabel(lb.DeleteChars(' '), false);
+    }
+  }
   ValidateRestraintsAtomNames(GetRM());
   UpdateParams();
   SaveHeader(SL, false, true);
@@ -1368,7 +1378,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
 }
 //..............................................................................
 olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
-  double v, Q[6];   // quadratic form of ellipsoid
+  evecd Q(6);
   olxstr Tmp = CA.GetLabel();
   Tmp.RightPadding(6, ' ', true);
   if( SfacIndex < 0 )
@@ -1396,10 +1406,8 @@ olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  
     }
   }
   else  {
-    if( CA.GetUisoOwner() )  // riding atom
-      v = -CA.GetUisoScale();
-    else 
-      v = rm.Vars.GetParam(CA, catom_var_name_Uiso);
+    double v = (CA.GetUisoOwner() == NULL
+      ? rm.Vars.GetParam(CA, catom_var_name_Uiso) : -CA.GetUisoScale());
     Tmp << olxstr::FormatFloat(-5, v) << ' ';
   }
   // Q-Peak
