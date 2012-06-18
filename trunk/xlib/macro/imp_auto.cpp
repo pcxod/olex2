@@ -358,64 +358,69 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
       if (pas_ == NULL) continue; // ?
       TSAtom& sa = *pas_;
       bool alone = true;
-      for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )
-        if( sa.CAtom().GetAttachedAtom(j).GetType() != iQPeakZ )  {
-          alone = false;
-          break;
+      if (!sa.CAtom().IsFixedType()) {
+        for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ ) {
+          if( sa.CAtom().GetAttachedAtom(j).GetType() != iQPeakZ )  {
+            alone = false;
+            break;
+          }
         }
-        if( alone )  {
-          bool assignHeaviest = false, assignLightest = false;
-          const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance().GetStats();
-          size_t ac = imp_auto_AtomCount(au);
-          if( ac == 0 ) // this would be really strange
-            ac++;
-          // now we can make up types
-          if( stat.SNAtomTypeAssignments == 0 &&
-            ((double)stat.ConfidentAtomTypes/ac) > 0.1 )
-          {
-            bool found = false;
-            int min_dz = 100;
-            size_t closest_idx = InvalidIndex;
-            const cm_Element *to_asign=NULL;
-            for( size_t j=0; j < StandAlone.Count(); j++ )  {
-              int dz = olx_abs(sa.GetType().z - StandAlone[j]->z);
-              if (dz < min_dz) {
-                closest_idx = j;
-                min_dz = dz;
+      }
+      else
+        alone = false;
+      if( alone )  {
+        bool assignHeaviest = false, assignLightest = false;
+        const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance().GetStats();
+        size_t ac = imp_auto_AtomCount(au);
+        if( ac == 0 ) // this would be really strange
+          ac++;
+        // now we can make up types
+        if( stat.SNAtomTypeAssignments == 0 &&
+          ((double)stat.ConfidentAtomTypes/ac) > 0.1 )
+        {
+          bool found = false;
+          int min_dz = 100;
+          size_t closest_idx = InvalidIndex;
+          const cm_Element *to_asign=NULL;
+          for( size_t j=0; j < StandAlone.Count(); j++ )  {
+            int dz = olx_abs(sa.GetType().z - StandAlone[j]->z);
+            if (dz < min_dz) {
+              closest_idx = j;
+              min_dz = dz;
+            }
+          }
+          if( sa.CAtom().GetUiso() < 0.01 )  {  // search heavier
+            size_t start = (sa.GetType().z >= StandAlone[closest_idx]->z
+              ? closest_idx + 1 : closest_idx);
+            for( size_t k=start; k < StandAlone.Count(); k++ )  {
+              if( sa.GetType().z < StandAlone[k]->z &&
+                (!enforce_formula || AvailableTypes.Contains(StandAlone[k])) )
+              {
+                sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
+                sa.CAtom().SetType(*StandAlone[k]);
+                olx_analysis::helper::reset_u(sa.CAtom());
+                break;
               }
             }
-            if( sa.CAtom().GetUiso() < 0.01 )  {  // search heavier
-              size_t start = (sa.GetType().z >= StandAlone[closest_idx]->z
-                ? closest_idx + 1 : closest_idx);
-              for( size_t k=start; k < StandAlone.Count(); k++ )  {
-                if( sa.GetType().z < StandAlone[k]->z &&
-                  (!enforce_formula || AvailableTypes.Contains(StandAlone[k])) )
-                {
-                  sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
-                  sa.CAtom().SetType(*StandAlone[k]);
-                  olx_analysis::helper::reset_u(sa.CAtom());
-                  break;
-                }
-              }
+          }
+          else if( sa.CAtom().GetUiso() > 0.2 )  {  // search lighter
+            size_t start = (sa.GetType().z > StandAlone[closest_idx]->z
+              ? closest_idx : closest_idx-1);
+            if (start == InvalidIndex) {
+              sa.SetDeleted(true);
+              sa.CAtom().SetDeleted(true);
             }
-            else if( sa.CAtom().GetUiso() > 0.2 )  {  // search lighter
-              size_t start = (sa.GetType().z > StandAlone[closest_idx]->z
-                ? closest_idx : closest_idx-1);
-              if (start == InvalidIndex) {
-                sa.SetDeleted(true);
-                sa.CAtom().SetDeleted(true);
-              }
-              for( size_t k=start; k != InvalidIndex; k-- )  {
-                if( !enforce_formula || AvailableTypes.Contains(StandAlone[k]) )  {
-                  sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
-                  sa.CAtom().SetType(*StandAlone[k]);
-                  olx_analysis::helper::reset_u(sa.CAtom());
-                  break;
-                }
+            for( size_t k=start; k != InvalidIndex; k-- )  {
+              if( !enforce_formula || AvailableTypes.Contains(StandAlone[k]) )  {
+                sa.CAtom().SetLabel(StandAlone[k]->symbol, false);
+                sa.CAtom().SetType(*StandAlone[k]);
+                olx_analysis::helper::reset_u(sa.CAtom());
+                break;
               }
             }
           }
         }
+      }
     }
     for( size_t j=0;  j < latt.GetFragment(i).NodeCount(); j++ )  {
       TSAtom& sa = latt.GetFragment(i).Node(j);
@@ -463,6 +468,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
     int delta_z = TAutoDB::GetInstance().GetBAIDelta();
     for( size_t i=0; i < objects.atoms.Count(); i++ )  {
       TSAtom& sa = objects.atoms[i];
+      if (sa.CAtom().IsFixedType()) continue;
       if( (sa.CAtom().GetEllipsoid() != NULL &&
            sa.CAtom().GetEllipsoid()->IsNPD()) ||
           (sa.CAtom().GetUiso() <= 0.005) )
@@ -748,8 +754,13 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   const double minEd = mi.sigma*3;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     if( atoms[i].GetC() != 0 )  {
-      const double ed = atoms[i].GetB()/atoms[i].GetC();  
+      const double ed = atoms[i].GetB()/atoms[i].GetC();
       if( olx_abs(ed) < minEd )  continue;
+      if (atoms[i].GetA()->IsFixedType()) {
+        TBasicApp::NewLogEntry() << "Skipping fixed type atoms '" <<
+          atoms[i].GetA()->GetLabel() << '\'';
+        continue;
+      }
       double p_ed = 0, n_ed  = 0; 
       const cm_Element& original_type = atoms[i].GetA()->GetType();
       const size_t ti = atom_masks.IndexOf(original_type.index);

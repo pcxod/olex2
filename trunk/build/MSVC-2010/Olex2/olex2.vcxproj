@@ -889,6 +889,7 @@
     <ClInclude Include="..\..\..\olex\dgrad.h" />
     <ClInclude Include="..\..\..\olex\edit.h" />
     <ClInclude Include="..\..\..\olex\html\htmlmanager.h" />
+    <ClInclude Include="..\..\..\olex\modes\lock.h" />
     <ClInclude Include="..\..\..\olex\nui\nui.h" />
     <ClInclude Include="..\..\..\olex\tasks.h" />
     <ClInclude Include="..\..\..\repository\cdsfs.h" />
