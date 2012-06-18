@@ -404,6 +404,9 @@
     <ClInclude Include="..\..\..\olex\html\htmlmanager.h">
       <Filter>html\headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\olex\modes\lock.h">
+      <Filter>modes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\olex\app.rc">
