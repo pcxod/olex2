@@ -26,6 +26,7 @@
 #include "modes/pack.h"
 #include "modes/move.h"
 #include "modes/fit.h"
+#include "modes/lock.h"
 
 bool TPartMode::HasInstance = false;
 bool TOccuMode::HasInstance = false;
@@ -101,6 +102,7 @@ TModeRegistry::TModeRegistry()
   Modes.Add("pack",   new TModeFactory<TPackMode>(Modes.Count()+1));
   Modes.Add("move",   new TModeFactory<TMoveMode>(Modes.Count()+1));
   Modes.Add("fit",    new TModeFactory<TFitMode>(Modes.Count()+1));
+  Modes.Add("lock",   new TModeFactory<TLockMode>(Modes.Count()+1));
   CurrentMode = NULL;
 }
 //..............................................................................
