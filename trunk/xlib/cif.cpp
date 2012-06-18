@@ -162,6 +162,16 @@ void TCif::SaveToStrings(TStrList& Strings)  {
     pivots.Strtok(def_pivots, ',');
     endings.Strtok(def_endings, ',');
   }
+  for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
+    TCAtom &ca = GetAsymmUnit().GetAtom(i);
+    olxstr lb = ca.GetLabel();
+    lb.Replace('\t' ,' ').Replace('#', ' ');
+    if (lb.Contains(' ')) {
+      TBasicApp::NewLogEntry(logError) << "Changing invalid atom labels for" <<
+        (olxstr(' ').quote() << ca.GetLabel());
+      ca.SetLabel(lb.DeleteChars(' '), false);
+    }
+  }
   GetAsymmUnit().ComplyToResidues();
   for( size_t i=0; i < data_provider[block_index].table_map.Count(); i++ )
     data_provider[block_index].table_map.GetValue(i)->Sort();
@@ -654,8 +664,8 @@ bool TCif::Adopt(TXFile& XF)  {
   Clear();
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
-  Title = TEFile::ChangeFileExt(TEFile::ExtractFileName(XF.GetFileName()), EmptyString());
-
+  Title = TEFile::ChangeFileExt(
+    TEFile::ExtractFileName(XF.GetFileName()), EmptyString());
   data_provider.Clear();
   data_provider.Add(Title.Replace(' ', "%20"));
   block_index = 0;
@@ -666,15 +676,22 @@ bool TCif::Adopt(TXFile& XF)  {
   SetParam("_chemical_formula_moiety", XF.GetLattice().CalcMoiety(), true);
   SetParam("_chemical_formula_sum", GetAsymmUnit()._SummFormula(' ',
     1./olx_max(GetAsymmUnit().GetZPrime(), 0.01)), true);
-  SetParam("_chemical_formula_weight", olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
+  SetParam("_chemical_formula_weight",
+    olxstr::FormatFloat(2, GetAsymmUnit().MolWeight()), false);
   const TAsymmUnit& au = GetAsymmUnit();
-  SetParam("_cell_length_a", TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString(), false);
-  SetParam("_cell_length_b", TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString(), false);
-  SetParam("_cell_length_c", TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString(), false);
+  SetParam("_cell_length_a",
+    TEValueD(au.GetAxes()[0], au.GetAxisEsds()[0]).ToString(), false);
+  SetParam("_cell_length_b",
+    TEValueD(au.GetAxes()[1], au.GetAxisEsds()[1]).ToString(), false);
+  SetParam("_cell_length_c",
+    TEValueD(au.GetAxes()[2], au.GetAxisEsds()[2]).ToString(), false);
 
-  SetParam("_cell_angle_alpha", TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString(), false);
-  SetParam("_cell_angle_beta",  TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString(), false);
-  SetParam("_cell_angle_gamma", TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString(), false);
+  SetParam("_cell_angle_alpha",
+    TEValueD(au.GetAngles()[0], au.GetAngleEsds()[0]).ToString(), false);
+  SetParam("_cell_angle_beta",
+    TEValueD(au.GetAngles()[1], au.GetAngleEsds()[1]).ToString(), false);
+  SetParam("_cell_angle_gamma",
+    TEValueD(au.GetAngles()[2], au.GetAngleEsds()[2]).ToString(), false);
   SetParam("_cell_volume", XF.GetUnitCell().CalcVolumeEx().ToString(), false);
   SetParam("_cell_formula_units_Z", XF.GetAsymmUnit().GetZ(), false);
 
@@ -696,30 +713,42 @@ bool TCif::Adopt(TXFile& XF)  {
     SetParam("_reflns_number_total", hkl_stat.UniqueReflections, false);
     const char* hkl = "hkl";
     for( int i=0; i < 3; i++ )  {
-      SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_min", hkl_stat.FileMinInd[i], false);
-      SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_max", hkl_stat.FileMaxInd[i], false);
+      SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_min",
+        hkl_stat.FileMinInd[i], false);
+      SetParam(olxstr("_diffrn_reflns_limit_") << hkl[i] << "_max",
+        hkl_stat.FileMaxInd[i], false);
     }
     if( hkl_stat.MaxD > 0 )
       SetParam("_diffrn_reflns_theta_min",
-      olxstr::FormatFloat(2, asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MaxD))*180/M_PI), false);
+        olxstr::FormatFloat(2,
+          asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MaxD))*180/M_PI),
+        false);
     if( hkl_stat.MinD > 0 )
       SetParam("_diffrn_reflns_theta_max",
-      olxstr::FormatFloat(2, asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MinD))*180/M_PI), false);
-    SetParam("_diffrn_reflns_av_R_equivalents", olxstr::FormatFloat(4, hkl_stat.Rint), false);
-    SetParam("_diffrn_reflns_av_unetI/netI", olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
+        olxstr::FormatFloat(2,
+          asin(XF.GetRM().expl.GetRadiation()/(2*hkl_stat.MinD))*180/M_PI),
+        false);
+    SetParam("_diffrn_reflns_av_R_equivalents",
+      olxstr::FormatFloat(4, hkl_stat.Rint), false);
+    SetParam("_diffrn_reflns_av_unetI/netI",
+      olxstr::FormatFloat(4, hkl_stat.Rsigma), false);
   }
   catch(const TExceptionBase&)  {
-    TBasicApp::NewLogEntry() << __OlxSrcInfo << ": failed to update HKL statistics section of the CIF";
+    TBasicApp::NewLogEntry() << __OlxSrcInfo << ": failed to update HKL "
+      "statistics section of the CIF";
   }
   if( XF.GetAsymmUnit().IsQPeakMinMaxInitialised() )
-    SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(), false);
+    SetParam("_refine_diff_density_max", XF.GetAsymmUnit().GetMaxQPeak(),
+    false);
   TSpaceGroup& sg = XF.GetLastLoaderSG();
-  SetParam("_space_group_crystal_system", sg.GetBravaisLattice().GetName().ToLowerCase(), true);
+  SetParam("_space_group_crystal_system",
+    sg.GetBravaisLattice().GetName().ToLowerCase(), true);
   SetParam("_space_group_name_H-M_alt", sg.GetFullName(), true);
   SetParam("_space_group_name_Hall", sg.GetHallSymbol(), true);
   SetParam("_space_group_IT_number", sg.GetNumber(), false);
   {
-    cetTable& Loop = AddLoopDef("_space_group_symop_id,_space_group_symop_operation_xyz");
+    cetTable& Loop = AddLoopDef("_space_group_symop_id,"
+      "_space_group_symop_operation_xyz");
     sg.GetMatrices(Matrices, mattAll);
     for( size_t i=0; i < Matrices.Count(); i++ )  {
       CifRow& row = Loop.AddRow();
@@ -751,11 +780,14 @@ bool TCif::Adopt(TXFile& XF)  {
     CifRow& Row = atom_loop.AddRow();
     Row[0] = new cetString(A.GetLabel());
     Row[1] = new cetString(A.GetType().symbol);
-    for( int j=0; j < 3; j++ )
-      Row.Set(j+2, new cetString(TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString()));
+    for( int j=0; j < 3; j++ ) {
+      Row.Set(j+2,
+        new cetString(TEValueD(A.ccrd()[j], A.ccrdEsd()[j]).ToString()));
+    }
     Row.Set(5, new cetString(TEValueD(A.GetUiso(), A.GetUisoEsd()).ToString()));
     Row.Set(6, new cetString(A.GetEllipsoid() == NULL ? "Uiso" : "Uani"));
-    Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000), A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
+    Row.Set(7, new cetString(TEValueD(olx_round(A.GetChemOccu(), 1000),
+      A.GetOccuEsd()*A.GetDegeneracy()).ToString()));
     if( A.GetParentAfixGroup() != NULL && A.GetParentAfixGroup()->IsRiding() )
       Row.Set(8, new cetString("R"));
     else

@@ -18,7 +18,7 @@ class TNameMode : public AModeWithLabels  {
 protected:
   static TNameMode* Instance;
   class TNameModeUndo : public TUndoData {
-    TSizeList LabelIndeces;
+    TSizeList LabelIndices;
   public:
     TNameModeUndo()
       : TUndoData(new TUndoActionImplMF<TNameModeUndo>(
@@ -30,11 +30,11 @@ protected:
     {
       AddAtom(xa);
     }
-    void AddAtom(TXAtom& xa)  {  LabelIndeces.Add(xa.GetOwnerId());  }
+    void AddAtom(TXAtom& xa)  {  LabelIndices.Add(xa.GetOwnerId());  }
     void undo(TUndoData* data)  {
       if( TNameMode::Instance != NULL )  {
-        for( size_t i=0; i < LabelIndeces.Count(); i++ )  {
-          TGXApp::GetInstance().MarkLabel(LabelIndeces[i], false);
+        for( size_t i=0; i < LabelIndices.Count(); i++ )  {
+          TGXApp::GetInstance().MarkLabel(LabelIndices[i], false);
           TNameMode::Instance->Index--;
         }
         TNameMode::Instance->SetCursor();
