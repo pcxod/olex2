@@ -1068,6 +1068,20 @@ void TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, const cm_Element& e1,
   const cm_Element& e2, double threshold)
 {
   short v = CheckA2Pemutate(a1, a2, e1, e2, threshold);
+  if ((v&9) != 0 ) {
+    if (!a1.IsFixedType()) {
+      TBasicApp::NewLogEntry() << "Skipping fixed type atoms '" <<
+        a1.GetLabel() << '\'';
+      return;
+    }
+  }
+  if ((v&6) != 0 ) {
+    if (!a1.IsFixedType()) {
+      TBasicApp::NewLogEntry() << "Skipping fixed type atoms '" <<
+        a2.GetLabel() << '\'';
+      return;
+    }
+  }
   if( (v&1) != 0 )  {
     TBasicApp::NewLogEntry(logInfo) << "A2 assignment: " <<
       a1.GetLabel() << " -> " << e1.symbol;
@@ -1240,7 +1254,12 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseNet(TNetwork& net)  {
 }
 //..............................................................................
 bool TAutoDB::ChangeType(TCAtom &a, const cm_Element &e) {
-  if (a.GetType() == e || e == iHydrogenZ) return false;
+  if (a.GetType() == e || e == iHydrogenZ ) return false;
+  if (a.IsFixedType()) {
+    TBasicApp::NewLogEntry() << "Skipping fixed type atoms '" <<
+      a.GetLabel() << '\'';
+    return false;
+  }
   bool return_any = !alg::check_connectivity(a, a.GetType());
   if (return_any || alg::check_connectivity(a, e)) {
     // extra checks for high jumpers
