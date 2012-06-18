@@ -13,8 +13,16 @@
 TTypeList<TThreadSlot> TThreadPool::tasks;
 size_t TThreadPool::current_task = 0;
 
+TThreadSlot::TThreadSlot()
+  : task(NULL),
+  suspended(false)
+{
+  Detached = false;
+}
 TThreadSlot::~TThreadSlot() {
-  Running = false;
+  Terminate = true;
+  while (Running)
+    olx_sleep(10);
 }
 bool TThreadSlot::IsSuspended() const {
   return suspended;
@@ -32,7 +40,10 @@ void TThreadSlot::SetTask(ITask& _task)  {
 }
 int TThreadSlot::Run() {
   while( true )  {
-    if( Terminate )  break;
+    if( Terminate ) {
+      Running = false;
+      break;
+    }
     if( suspended )  {
       Yield();
       olx_sleep(1);
@@ -54,7 +65,7 @@ void TThreadPool::_checkThreadCount()  {
       "undefined number of possible threads");
   }
   while( tasks.Count() < (size_t)max_th )
-    tasks.AddNew();
+    tasks.Add(new TThreadSlot);
   while( tasks.Count() > (size_t)max_th )  {
     if( tasks.GetLast().IsRunning() )
       tasks.GetLast().Join(true);

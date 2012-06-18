@@ -50,12 +50,13 @@ protected:
   pthread_t Handle;
   static void* _Run(void* _instance) {
 #endif
-    ((AOlxThread*)_instance)->Running = true;
-    ((AOlxThread*)_instance)->RetVal = ((AOlxThread*)_instance)->Run();
+    AOlxThread *th = (AOlxThread*)_instance;
+    th->Running = true;
+    th->RetVal = ((AOlxThread*)_instance)->Run();
     // running prevents the object deletion...
-    ((AOlxThread*)_instance)->Running = false;
-    if( ((AOlxThread*)_instance)->Detached )
-      delete (AOlxThread*)_instance;
+    th->Running = false;
+    if( th->Detached )
+      delete th;
 #ifdef __WIN32__
     ExitThread(0);
 #else
