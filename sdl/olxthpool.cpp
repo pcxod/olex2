@@ -19,11 +19,7 @@ TThreadSlot::TThreadSlot()
 {
   Detached = false;
 }
-TThreadSlot::~TThreadSlot() {
-  Terminate = true;
-  while (Running)
-    olx_sleep(10);
-}
+TThreadSlot::~TThreadSlot() {}
 bool TThreadSlot::IsSuspended() const {
   return suspended;
 }
@@ -55,6 +51,7 @@ int TThreadSlot::Run() {
       suspended = true;
     }
   }
+  Running = false;
   return 0;
 }
 

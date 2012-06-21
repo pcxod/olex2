@@ -64,17 +64,22 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
       }
     }
   }
-  catch( const TExceptionBase& exc )  {  
+  catch( const TExceptionBase& exc )  {
     FileName.SetLength(0);
-    throw TFunctionFailedException(__OlxSourceInfo, exc);  
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  /* fix labels for not native formats, will not help for FE1A, because it could come from
-  Fe1A or from Fe1a ... */
-  if( !IsNative() )  {   
+  /* fix labels for not native formats, will not help for FE1A, because it
+  could come from Fe1A or from Fe1a ...
+  */
+  if( !IsNative() )  {
     for( size_t i=0; i < AsymmUnit.AtomCount(); i++ )  {
       TCAtom& a = AsymmUnit.GetAtom(i);
-      if( a.GetType().symbol.Length() == 2 && a.GetLabel().StartsFromi(a.GetType().symbol) )
-        a.SetLabel(a.GetType().symbol + a.GetLabel().SubStringFrom(a.GetType().symbol.Length()), false);
+      if( a.GetType().symbol.Length() == 2 &&
+          a.GetLabel().StartsFromi(a.GetType().symbol) )
+      {
+        a.SetLabel(a.GetType().symbol +
+          a.GetLabel().SubStringFrom(a.GetType().symbol.Length()), false);
+      }
     }
   }
   FileName = file_n.file_name;

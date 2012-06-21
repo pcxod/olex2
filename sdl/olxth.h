@@ -87,6 +87,16 @@ public:
       Detached = false;
       Terminate = true;
     }
+#if defined(__WIN32__) && defined(_DLL)
+    if (Handle != NULL && Running) {
+      unsigned long ec = STILL_ACTIVE, rv;
+      while( ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0 )  {
+        if( SwitchToThread() == 0 )
+          olx_sleep(5);
+      }
+    }
+    Running = false;
+#endif
     while( Running )  {
       Yield();
       olx_sleep(5);
