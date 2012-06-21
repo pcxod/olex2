@@ -401,8 +401,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(HKLSrc, fpNone|fpOne|psFileLoaded,
     "Returns/sets hkl source for currently loaded file");
 //_____________________________________________________________________________
-  xlib_InitFunc(LSM, fpNone|psCheckFileTypeIns,
-    "Return current refinement method, L.S. or CGLS currently.");
+  xlib_InitFunc(LSM, fpNone|fpOne|psCheckFileTypeIns,
+    "Return/sets current refinement method, L.S. or CGLS currently. The method"
+    " can also be set using LS macro");
   xlib_InitFunc(SSM, fpNone|fpOne,
     "Return current structure solution method, TREF or PATT currently. If "
     "current method is unknown and an argument is provided, that argument is"
@@ -1670,7 +1671,7 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   int ls = -1;
   XLibMacros::Parse(Cmds, "i", &ls);
-  if( ls != -1 )  
+  if( ls != -1 )
     TXApp::GetInstance().XFile().GetRM().SetIterations((int)ls);
   if( !Cmds.IsEmpty() )
     TXApp::GetInstance().XFile().GetRM().SetRefinementMethod(Cmds[0]);
@@ -2679,7 +2680,10 @@ void XLibMacros::funDataDir(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal(TXApp::GetInstance().XFile().GetRM().GetRefinementMethod());
+  if (Params.IsEmpty())
+    E.SetRetVal(TXApp::GetInstance().XFile().GetRM().GetRefinementMethod());
+  else
+    TXApp::GetInstance().XFile().GetRM().SetRefinementMethod(Params[0]);
 }
 //..............................................................................
 void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {

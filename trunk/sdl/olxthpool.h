@@ -59,6 +59,13 @@ public:
   }
   static void AllocateTask(ITask& task);
   static void DoRun();
+  /* In general this is not needed to be called, however to avoid cleaning up
+  problems, in particular when this is used from a DLL, it is recommended to
+  call this function.
+  */
+  static void Finalise() {
+    tasks.Clear();
+  }
   //static void AllocateTasks(
 };
 
