@@ -13,6 +13,7 @@
 #include "estrbuffer.h"
 #include "utf8file.h"
 #include "exparse/exptree.h"
+#include "integration.h"
 
 UseEsdlNamespace()
 using namespace exparse::parser_util;
@@ -20,11 +21,11 @@ using namespace exparse::parser_util;
 TDataFile::TDataFile()  {
   FRoot = new TDataItem(NULL, "Root");
 }
-//..............................................................................
+//.............................................................................
 TDataFile::~TDataFile()  {
   delete FRoot;
 }
-//..............................................................................
+//.............................................................................
 bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
   olxwstr in;
   FRoot->Clear();
@@ -40,7 +41,7 @@ bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
     }
   return true;
 }
-//..............................................................................
+//.............................................................................
 bool TDataFile::LoadFromXLFile(const olxstr &DataFile, TStrList* Log)  {
   try  {
     TEFile in(DataFile, "rb");
@@ -48,25 +49,24 @@ bool TDataFile::LoadFromXLFile(const olxstr &DataFile, TStrList* Log)  {
     FileName = DataFile;
     return res;
   }
-  catch(const TExceptionBase& e)  {  throw TFunctionFailedException(__OlxSourceInfo, e);  }
+  catch(const TExceptionBase& e)  {
+    throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
 }
-//..............................................................................
+//.............................................................................
 void TDataFile::Include(TStrList* Log)  {
-  TDataItem *Inc;
-  olxstr Tmp;
-  Inc = FRoot->GetAnyItem("#include");
+  TDataItem *Inc = FRoot->GetAnyItem("#include");
+  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
   while( Inc != NULL )  {
-    Tmp = TEFile::ExtractFilePath( Inc->GetValue() );
-    if( Tmp.IsEmpty() )
-      Tmp = TEFile::ExtractFilePath(FileName);
-    if( Tmp.IsEmpty() )
-      Tmp = Inc->GetValue();
-    else
-      Tmp << TEFile::ExtractFileName(Inc->GetValue());
+    olxstr Tmp = Inc->GetValue();
+    if (op != NULL)
+      op->processFunction(Tmp);
+    if (!TEFile::IsAbsolutePath(Tmp))
+      Tmp = TEFile::ExtractFilePath(FileName) + Tmp;
 
-    if( !TEFile::Exists(Tmp) )  {
-      if( Log != NULL )
-        Log->Add(olxstr("Included file does not exist: ") << Tmp);
+    if (!TEFile::Exists(Tmp)) {
+      if (Log != NULL)
+        Log->Add("Included file does not exist: ").quote() << Tmp;
       FRoot->DeleteItem(Inc);
       Inc = FRoot->GetAnyItem("#include");
       continue;
@@ -77,17 +77,16 @@ void TDataFile::Include(TStrList* Log)  {
     const olxstr& extend_str = Inc->GetFieldValue("extend");
     bool extend = extend_str.IsEmpty() ? false : extend_str.ToBool();
     Inc->GetParent()->AddContent(DF.Root(), extend);
-
     FRoot->DeleteItem(Inc);
     Inc = FRoot->GetAnyItem("#include");
   }
   FRoot->ResolveFields(Log);
 }
-//..............................................................................
+//.............................................................................
 void TDataFile::SaveToXLFile(const olxstr &DataFile)  {
   FileName = DataFile;
   TEStrBuffer bf(1024*32);
   FRoot->SaveToStrBuffer(bf);
   TUtf8File::Create(DataFile, bf.ToString());
 }
-//..............................................................................
+//.............................................................................
