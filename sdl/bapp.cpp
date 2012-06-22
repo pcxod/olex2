@@ -73,8 +73,10 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
   name = olxstr::FromExternal(bf, rv);
 #else
   Dl_info dl_info;
-  dladdr(on_load, &dl_info);
+  dladdr((const void *)&TBasicApp::GetModuleMD5Hash, &dl_info);
   name = dl_info.dli_fname;
+  if (!TEFile::IsAbsolutePath(name))
+    name = TEFile::ExpandRelativePath(name, GetBaseDir());
 #endif
   bool do_calculate = true;
   olxstr last_dg_fn = GetInstanceDir() + "app.md5";
