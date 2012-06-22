@@ -412,7 +412,7 @@ bool TMainForm::Destroy()  {
     SaveVFS(plStructure);
     FXApp->OnObjectsDestroy.Remove(this);
     processMacro("onexit");
-    SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
+    SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
   }
   Destroying = true;
   HtmlManager.Destroy();
@@ -1682,7 +1682,7 @@ void TMainForm::StartupInit()  {
   FInfoBox->SetFontIndex(2);
   GlTooltip->SetFontIndex(6);
 
-  olxstr T(FXApp->GetInstanceDir());  
+  olxstr T(FXApp->GetConfigDir());
   T << FLastSettingsFile;
   if( !TEFile::Exists(T) )  {
     T = TBasicApp::GetBaseDir();
