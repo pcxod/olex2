@@ -149,6 +149,18 @@ void TBasicApp::SetInstanceDir(const olxstr &d) {
     ReadOptions(InstanceDir + ".options");
 }
 //..............................................................................
+void TBasicApp::SetConfigdDir(const olxstr &cd) {
+  if (TEFile::IsAbsolutePath(cd))
+    ConfigDir = cd;
+  else
+    ConfigDir = _GetInstanceDir() + cd;
+  TEFile::AddPathDelimeterI(ConfigDir);
+  if (!TEFile::Exists(ConfigDir)) {
+    if (!TEFile::MakeDirs(ConfigDir))
+      throw TInvalidArgumentException(__OlxSourceInfo, "ConfigDir");
+  }
+}
+//..............................................................................
 TActionQueue& TBasicApp::NewActionQueue(const olxstr& Name) {
   if( Actions.Exists(Name) )
     return *Actions.Find(Name);
@@ -300,6 +312,26 @@ void BAPP_LogFileName(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(f == NULL ? EmptyString() : f->GetName());
 }
 //..............................................................................
+void BAPP_BaseDir(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal(TBasicApp::GetInstance().GetBaseDir());
+}
+//..............................................................................
+void BAPP_InstanceDir(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal(TBasicApp::GetInstance().GetInstanceDir());
+}
+//..............................................................................
+void BAPP_SharedDir(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal(TBasicApp::GetInstance().GetSharedDir());
+}
+//..............................................................................
+void BAPP_ConfigDir(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal(TBasicApp::GetInstance().GetConfigDir());
+}
+//..............................................................................
+void BAPP_Platform(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal(TBasicApp::GetPlatformString());
+}
+//..............................................................................
 TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   TLibrary* lib = new TLibrary(lib_name);
   lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetArgCount,
@@ -324,5 +356,21 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   lib->RegisterStaticFunction(new TStaticFunction(BAPP_LogFileName,
     "GetLogName", fpNone,
     "Returns current log file name"));
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_BaseDir,
+    "BaseDir", fpNone,
+    "Returns the directory from which the application is launched."));
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_InstanceDir,
+    "InstanceDir", fpNone,
+    "Returns the instance specific, writable directory."));
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_SharedDir,
+    "SharedDir", fpNone,
+    "Returns a generic writable directory."));
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_ConfigDir,
+    "ConfigDir", fpNone,
+    "Returns the configuration directory. If it is not set, the InstanceDir is"
+    " returned"));
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_Platform,
+    "Platform", fpNone,
+    "Returns current platform like WIN, MAC, Linux 32/64"));
  return lib;
 }

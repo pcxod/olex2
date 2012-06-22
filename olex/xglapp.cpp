@@ -177,7 +177,10 @@ bool TGlXApp::OnInit()  {
 #endif
     XApp->SetSharedDir(patcher::PatchAPI::GetSharedDir());
     XApp->SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
-    XApp->ReadOptions(XApp->GetInstanceDir() + ".options");
+    olxstr config_dir = olx_getenv("OLEX2_CONFIGDIR");
+    if (!config_dir.IsEmpty())
+      XApp->SetConfigdDir(config_dir);
+    XApp->ReadOptions(XApp->GetConfigDir() + ".options");
   }
   catch(const TExceptionBase& e)  {
     TMainFrame::ShowAlert(e);

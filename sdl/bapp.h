@@ -22,7 +22,16 @@ static olxstr
   olxappevent_UPDATE_GUI("UPDATE_GUI");
 
 class TBasicApp: public IEObject  {
-  olxstr BaseDir, InstanceDir, SharedDir, ExeName;
+  olxstr
+/* the directory from which the program is running */
+    BaseDir,
+/* the instance specific, writable directory */
+    InstanceDir,
+/* the instance independent, writable directory */
+    SharedDir,
+    ExeName,
+/* the configuration, writable directory, by default = InstanceDir */
+    ConfigDir;
 protected:
   class TActionQList Actions;
   static TBasicApp *Instance;
@@ -78,6 +87,14 @@ public:
   const olxstr &_GetInstanceDir() const {
     return InstanceDir.IsEmpty() ? GetBaseDir() : InstanceDir;
   }
+  /* If the path is absolute - it is used as is, otherwise it is considered to
+  be relative to the InstanceDir
+  */
+  void SetConfigdDir(const olxstr &path);
+  bool HasConfigDir() { return !ConfigDir.IsEmpty(); }
+  const olxstr &GetConfigDir() const {
+    return ConfigDir.IsEmpty() ? _GetInstanceDir() : ConfigDir;
+  }
   /* sets instance dir - folder dependent on the exe location
   */
   void SetInstanceDir(const olxstr &d);
@@ -106,7 +123,7 @@ public:
   static bool IsBaseDirWriteable() {  return GetInstance().BaseDirWriteable;  }
   // valid only if correct string is passed to the constructor
   static const olxstr& GetExeName()  {  return GetInstance().ExeName;  }
-  static TBasicApp& GetInstance() {  
+  static TBasicApp& GetInstance() {
     if( Instance == NULL ) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Uninitialised application layer...");
@@ -116,7 +133,7 @@ public:
 
   static bool HasInstance();
   /* Creates a log file, just a name is expected: like olex2 or olex2c, the
-  timestamp will be appendedn to make it 'unique'. If the name is not an
+  timestamp will be appended to make it 'unique'. If the name is not an
   absolute path - the InsatnceDir is used
   */
   bool CreateLogFile(const olxstr &file_name);
@@ -140,8 +157,10 @@ public:
   // implementation might consider drawing scene, update GUI etc..
   virtual void Update()  {}
   static size_t GetArgCount()  {  return GetInstance().Arguments.Count();  }
-  static const olxstr& GetArg(size_t i)  {  return GetInstance().Arguments[i];  }
-  // returns WIN32, WIN64, LINUX32, LINUX64, MAC etc
+  static const olxstr& GetArg(size_t i)  {
+    return GetInstance().Arguments[i];
+  }
+  // returns WIN32, WIN64, LINUX32, LINUX64, MAC32 etc
   static olxstr GetPlatformString();
   static bool Is64BitCompilation();
   TLibrary* ExportLibrary(const olxstr& lib_name="app");
@@ -155,7 +174,7 @@ public:
   }
   DefPropP(short, MaxThreadCount)
   /* Note that objects which may live after the application end (like the ones
-  places into the garbage collector - should check that an application insatnce
+  places into the garbage collector - should check that an application instance
   exsists before using any of the actions queues
   */
   TActionQueue& OnProgress;
