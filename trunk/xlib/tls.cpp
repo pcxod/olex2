@@ -79,7 +79,7 @@ void TLS::printTLS(const olxstr &title) const {
 }
 
 void TLS::printDiff(const olxstr &title) const {
-  TTTable<TStrList> tab(atoms.Count()*2, 7);
+  TTTable<TStrList> tab(atoms.Count()*2, 8);
   tab.ColName(0) = "Atom";
   tab.ColName(1) = "U11";
   tab.ColName(2) = "U22";
@@ -87,7 +87,14 @@ void TLS::printDiff(const olxstr &title) const {
   tab.ColName(4) = "U23";
   tab.ColName(5) = "U31";
   tab.ColName(6) = "U12";
+  tab.ColName(7) = "1000*dV/sum(V)";
   evecd Q(6);
+  double UobsVolSum=0, UobsVolSum_sq=0, R1=0, R2=0;
+  for (size_t i=0; i < atoms.Count(); i++) {
+    double v = atoms[i]->GetEllipsoid()->CalcVolume();
+    UobsVolSum += v;
+    UobsVolSum_sq += v*v;
+  }
   for (size_t i=0; i < atoms.Count(); i++) {
     size_t idx = i*2;
     tab[idx][0] = atoms[i]->GetGuiLabel();
@@ -96,10 +103,19 @@ void TLS::printDiff(const olxstr &title) const {
       tab[idx][j+1] = olxstr::FormatFloat(-4, Q[j], true);
     tab[idx+1][0] = "Utls";
     Q = GetElpList()[i];
+    double dV = (atoms[i]->GetEllipsoid()->CalcVolume() -
+      TEllipsoid(Q).CalcVolume());
+    R1 += olx_abs(dV);
+    R2 += dV*dV;
     for (size_t j=0; j < 6; j++)
       tab[idx+1][j+1] = olxstr::FormatFloat(-4, Q[j], true);
+    tab[idx][7] = olxstr::FormatFloat(-4, 100*dV/UobsVolSum);
   }
   TBasicApp::NewLogEntry() << tab.CreateTXTList(title, true, false, ' ');
+  TBasicApp::NewLogEntry() << "R1(vol)=" <<
+    olxstr::FormatFloat(2, 100*R1/UobsVolSum);
+  TBasicApp::NewLogEntry() << "R2(vol)=" <<
+    olxstr::FormatFloat(2, 100*R2/UobsVolSum_sq);
 }
 
 void TLS::printFOM() const {
