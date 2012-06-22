@@ -115,7 +115,7 @@ void TLS::printDiff(const olxstr &title) const {
   TBasicApp::NewLogEntry() << "R1(vol)=" <<
     olxstr::FormatFloat(2, 100*R1/UobsVolSum);
   TBasicApp::NewLogEntry() << "R2(vol)=" <<
-    olxstr::FormatFloat(2, 100*R2/UobsVolSum_sq);
+    olxstr::FormatFloat(2, 100*sqrt(R2/UobsVolSum_sq));
 }
 
 void TLS::printFOM() const {
