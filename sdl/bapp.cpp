@@ -14,12 +14,14 @@
 #include "egc.h"
 #include "settingsfile.h"
 #include "utf8file.h"
+#include "md5.h"
 
 #ifdef __WIN32__
   #define OLX_STR(a) (a).u_str()
   #define OLX_CHAR olxch
 #else
   #define OLX_STR(a) (a).c_str()
+# include <dlfcn.h>
 #endif
 UseEsdlNamespace()
 
@@ -53,6 +55,55 @@ TBasicApp::~TBasicApp()  {
     delete LogFile;
   Instance = NULL;
   LeaveCriticalSection();
+}
+//..............................................................................
+const olxstr &TBasicApp::GetModuleMD5Hash() {
+  static olxstr Digest;
+  if (!Digest.IsEmpty()) return Digest;
+  olxstr name;
+#ifdef __WIN32__
+  olxch * bf;
+  DWORD rv = ERROR_INSUFFICIENT_BUFFER;
+  int n=1;
+  while (rv == MAX_PATH || rv == ERROR_INSUFFICIENT_BUFFER) {
+    if (n > 1) delete [] bf;
+    bf = new olxch[MAX_PATH*n];
+    rv = GetModuleFileName(NULL, bf, MAX_PATH*n);
+  }
+  name = olxstr::FromExternal(bf, rv);
+#else
+  Dl_info dl_info;
+  dladdr(on_load, &dl_info);
+  name = dl_info.dli_fname;
+#endif
+  bool do_calculate = true;
+  olxstr last_dg_fn = GetInstanceDir() + "app.md5";
+  if (TEFile::Exists(last_dg_fn)) {
+    TCStrList l;
+    l.LoadFromFile(last_dg_fn);
+    if (l.Count() > 3) {
+      TEFile::FileID fd = TEFile::GetFileID(name);
+      if (l[0] == name &&
+          l[1] == olxstr(fd.size) &&
+          l[2] == olxstr(fd.timestamp))
+      {
+        Digest = l[3];
+        do_calculate = false;
+      }
+    }
+  }
+  if (do_calculate) {
+    TEFile f(name, "rb");
+    Digest = MD5::Digest(f);
+    TCStrList l;
+    TEFile::FileID fd = TEFile::GetFileID(name);
+    l << name;
+    l << fd.size;
+    l << fd.timestamp;
+    l << Digest;
+    l.SaveToFile(last_dg_fn);
+  }
+  return Digest;
 }
 //..............................................................................
 bool TBasicApp::HasInstance()  {
@@ -336,6 +387,10 @@ void BAPP_Platform(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(TBasicApp::GetPlatformString());
 }
 //..............................................................................
+void BAPP_ModuleHash(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal(TBasicApp::GetModuleMD5Hash());
+}
+//..............................................................................
 TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   TLibrary* lib = new TLibrary(lib_name);
   lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetArgCount,
@@ -376,5 +431,8 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   lib->RegisterStaticFunction(new TStaticFunction(BAPP_Platform,
     "Platform", fpNone,
     "Returns current platform like WIN, MAC, Linux 32/64"));
+  lib->RegisterStaticFunction(new TStaticFunction(BAPP_ModuleHash,
+    "ModuleHash", fpNone,
+    "Returns curren module MD5 hash"));
  return lib;
 }
