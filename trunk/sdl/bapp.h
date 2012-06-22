@@ -49,6 +49,8 @@ public:
   virtual ~TBasicApp();
   const TParamList &GetOptions() const { return Options; }
   const TStrList &GetArguments() const { return Arguments; }
+  // this cane be used to identify version changes
+  static const olxstr &GetModuleMD5Hash();
   /* initialises Options and Arguments. Options either contain '=' or start
   from '-'
   */
