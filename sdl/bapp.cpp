@@ -313,19 +313,23 @@ void BAPP_LogFileName(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void BAPP_BaseDir(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(TBasicApp::GetInstance().GetBaseDir());
+  E.SetRetVal(
+    TBasicApp::GetInstance().GetBaseDir().SubStringFrom(0,1));
 }
 //..............................................................................
 void BAPP_InstanceDir(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(TBasicApp::GetInstance().GetInstanceDir());
+  E.SetRetVal(
+    TBasicApp::GetInstance().GetInstanceDir().SubStringFrom(0,1));
 }
 //..............................................................................
 void BAPP_SharedDir(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(TBasicApp::GetInstance().GetSharedDir());
+  E.SetRetVal(
+    TBasicApp::GetInstance().GetSharedDir().SubStringFrom(0,1));
 }
 //..............................................................................
 void BAPP_ConfigDir(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(TBasicApp::GetInstance().GetConfigDir());
+  E.SetRetVal(
+    TBasicApp::GetInstance().GetConfigDir().SubStringFrom(0,1));
 }
 //..............................................................................
 void BAPP_Platform(const TStrObjList& Params, TMacroError &E)  {
