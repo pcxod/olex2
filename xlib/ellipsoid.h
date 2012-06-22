@@ -91,6 +91,9 @@ public:
   double GetSX() const {  return SX;  }
   double GetSY() const {  return SY;  }
   double GetSZ() const {  return SZ;  }
+  double CalcVolume() const {
+    return SX*SY*SZ*4*M_PI/3;
+  }
   double GetUeq() const {  return (Quad[0]+Quad[1]+Quad[2])/3;  }
   const evecd &GetQuad() const { return Quad; }
   const evecd &GetEsd() const { return Esd; }
