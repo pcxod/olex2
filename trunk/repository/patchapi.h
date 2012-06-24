@@ -103,7 +103,7 @@ public:
 #ifdef __WIN32__
     new_shared_dir << "Olex2Data/";
 #else
-    TEFile::TrimPathDelimeterI(new_shared_dir) << "data/";
+    TEFile::TrimPathDelimeterI(new_shared_dir) << "/data/";
 #endif
     return TEFile::AddPathDelimeterI( 
       new_shared_dir << MD5::Digest(
