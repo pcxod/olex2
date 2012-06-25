@@ -63,12 +63,13 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
   olxstr name;
 #ifdef __WIN32__
   olxch * bf;
-  DWORD rv = ERROR_INSUFFICIENT_BUFFER;
+  DWORD rv = MAX_PATH;
   int n=1;
-  while (rv == MAX_PATH || rv == ERROR_INSUFFICIENT_BUFFER) {
+  while (rv == MAX_PATH) {
     if (n > 1) delete [] bf;
     bf = new olxch[MAX_PATH*n];
     rv = GetModuleFileName(NULL, bf, MAX_PATH*n);
+    n++;
   }
   name = olxstr::FromExternal(bf, rv);
 #else
