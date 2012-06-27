@@ -418,7 +418,6 @@ private:
   DefMacro(Exit)
   DefMacro(Sel)
   DefMacro(Esd)
-  DefMacro(TelpV)
   DefMacro(Labels)
   DefMacro(SetEnv)
   DefMacro(SetView)

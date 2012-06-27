@@ -13,6 +13,7 @@
 #include "estrlist.h"
 #include "efilelist.h"
 #include "datastream.h"
+#include "wildcard.h"
 BeginEsdlNamespace()
 
 // search flags
@@ -67,16 +68,11 @@ protected:
     Temporary = true;
   }
 public:
-  // class for filtering files by mask. other platforms then win
-  class TFileNameMask  {
-    TStrList toks;
-    olxstr mask;
-    size_t toksEnd, toksStart;
+  // class for filtering files by mask.
+  class TFileNameMask : public Wildcard {
   public:
-    TFileNameMask(const olxstr& msk) { Build(msk); }
-    TFileNameMask() : toksEnd(InvalidIndex), toksStart(InvalidIndex) {}
-    void Build(const olxstr& mask);
-    bool DoesMatch(const olxstr& str)  const;
+    TFileNameMask() {}
+    TFileNameMask(const olxstr& msk) : Wildcard(msk) {}
   };
   // a simple file ID, validates file by modification time, name and the size..
   struct FileID {

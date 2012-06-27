@@ -22,7 +22,7 @@ BeginGxlNamespace()
 
 static olxstr
   PLabelsCollectionName("PLabels");
-const short
+const int16_t
   qaHigh    = 1,  // drawing quality
   qaMedium  = 2,
   qaLow     = 3,

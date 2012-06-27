@@ -171,6 +171,9 @@
     <ClCompile Include="..\..\..\sdl\esort.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\sdl\wildcard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\sdl\actions.h">
@@ -523,6 +526,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\math\dmatrix.h">
       <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\wildcard.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -116,7 +116,7 @@ public:
 
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);
   void OnPrimitivesCleared();
-  static void Quality(const short Val);
+  static int16_t Quality(int16_t Val);
   // should be called when atom coordinates have changed
   virtual void Update();
 

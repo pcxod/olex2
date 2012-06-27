@@ -604,10 +604,12 @@ void TGXApp::Init()  {
   }
 }
 //..............................................................................
-void TGXApp::Quality(const short V)  {
-  TXAtom::Quality(V);
+int32_t TGXApp::Quality(const short V)  {
+  uint16_t aq = (uint16_t)(V >> 16);
+  if (aq == 0) aq = V;
+  int32_t rv = TXAtom::Quality(aq) << 16;
   TXAtom::CreateStaticObjects(*FGlRender);
-  TXBond::Quality(V);
+  rv |= TXBond::Quality((uint16_t)(V&0x0000FFFF));
   TXBond::CreateStaticObjects(*FGlRender);
   AtomIterator ai = GetAtoms();
   while( ai.HasNext() )
@@ -617,6 +619,7 @@ void TGXApp::Quality(const short V)  {
     bi.Next().GetPrimitives().ClearPrimitives();
   CreateObjects(false, false);
   Draw();
+  return rv;
 }
 //..............................................................................
 bool TGXApp::IsCellVisible() const {

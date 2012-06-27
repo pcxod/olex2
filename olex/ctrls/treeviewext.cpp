@@ -187,7 +187,7 @@ wxTreeItemId TTreeView::_FindByData(const wxTreeItemId& root, const olxstr& data
     if( dt->GetData() != NULL && data == dt->GetData()->ToString() )
       return root;
   }
-  if( !HasChildren(root) )  return wxTreeItemId();
+ // if( !HasChildren(root) )  return wxTreeItemId();
   wxTreeItemIdValue cookie;
   wxTreeItemId ch_id = GetFirstChild(root, cookie);
   while( ch_id.IsOk() )  {

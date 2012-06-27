@@ -243,7 +243,9 @@ void TXBond::ListPrimitives(TStrList &List) const {
   List.Assign(FStaticObjects);
 }
 //..............................................................................
-void TXBond::Quality(const short Val)  {
+int16_t TXBond::Quality(int16_t Val)  {
+  static int16_t previous_quality = -1;
+  if (Val == -1) Val = qaMedium;
   ValidateBondParams();
   olxstr& ConeQ = FBondParams->GetParam("ConeQ", "15", true);
   switch( Val )  {
@@ -252,7 +254,9 @@ void TXBond::Quality(const short Val)  {
     case qaMedium: ConeQ = 15;  break;
     case qaLow:    ConeQ = 5;  break;
   }
-  return;
+  int16_t pq = previous_quality;
+  previous_quality = Val;
+  return pq;
 }
 //..............................................................................
 void TXBond::ListDrawingStyles(TStrList &L){  return; }

@@ -23,6 +23,7 @@ public:
   static DefMacro(ADS)
   static DefMacro(AZoom)
   static DefMacro(BRad)
+  static DefMacro(TelpV)
 
   static DefMacro(Qual)
 
