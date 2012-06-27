@@ -121,7 +121,9 @@ void TXAtom::ClearStaticObjects()  {
   }
 }
 //..............................................................................
-void TXAtom::Quality(const short V)  {
+int16_t TXAtom::Quality(int16_t V)  {
+  static int16_t previous_value = -1;
+  if (V == -1) V = qaMedium;
   ValidateAtomParams();
   olxstr &SphereQ   = FAtomParams->GetParam("SphereQ", EmptyString(), true);
   olxstr &RimQ = FAtomParams->GetParam("RimQ", EmptyString(), true);  // quality
@@ -162,7 +164,9 @@ void TXAtom::Quality(const short V)  {
       break;
   }
   DiskOR = RimR;
-  return;
+  int16_t rv = previous_value;
+  previous_value = V;
+  return rv;
 }
 //..............................................................................
 void TXAtom::ListPrimitives(TStrList &List) const {
@@ -253,7 +257,7 @@ void TXAtom::Create(const olxstr& cName)  {
     Legend = GetLegend(*this);
 
   TGPCollection *GPC = NULL;
-  if( FStaticObjects.IsEmpty() )  
+  if( FStaticObjects.IsEmpty() )
     CreateStaticObjects(Parent);
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXAtom>());
   //Label->SetLabel(Atom().GetLabel());

@@ -203,7 +203,7 @@ public:
 
   void UpdatePrimitiveParams(TGlPrimitive* GlP);
   void OnPrimitivesCleared();
-  static void Quality(const short Val);
+  static int16_t Quality(int16_t Val);
 
   void SetPolyhedronType(short type);
   int GetPolyhedronType() const;

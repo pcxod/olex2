@@ -86,6 +86,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "\nAny particula bond type can also be specified like:\n\tbrad 0.5 C-H"
     "\nNote that the heavier atom type is always first"
     );
+  gxlib_InitMacro(TelpV, EmptyString(), fpOne,
+    "Calculates ADP scale for given thermal probability (in %)");
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -275,11 +277,15 @@ void GXLibMacros::macQual(TStrObjList &Cmds, const TParamList &Options,
   if( Options.IsEmpty() )
     Error.ProcessingError(__OlxSrcInfo, "wrong number of arguments");
   else  {
-     if( Options.GetName(0)[0] == 'h' ) app.Quality(qaHigh);
-     else if( Options.GetName(0)[0] == 'm' ) app.Quality(qaMedium);
-     else if( Options.GetName(0)[0] == 'l' ) app.Quality(qaLow);
-     else
+    int32_t v;
+     if( Options.GetName(0)[0] == 'h' ) v = qaHigh;
+     else if( Options.GetName(0)[0] == 'm' ) v = qaMedium;
+     else if( Options.GetName(0)[0] == 'l' ) v = qaLow;
+     else {
        Error.ProcessingError(__OlxSrcInfo, "wrong argument");
+       return;
+     }
+    app.Quality(v);
   }
 }
 //.............................................................................
@@ -552,3 +558,9 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
+void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp::GetInstance().CalcProbFactor(Cmds[0].ToDouble());
+}
+//..............................................................................

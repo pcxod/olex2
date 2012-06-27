@@ -633,8 +633,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "ShelXL refinement with negative 'MORE' like 'MORE -1' option or from the "
     "olex2.refine");
   
-  this_InitMacroD(TelpV, EmptyString(), fpOne,
-    "Calculates ADPs for given thermal probability factor");
   this_InitMacroD(Labels,
     "p-part&;"
     "l-label&;"

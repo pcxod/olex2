@@ -366,7 +366,7 @@ public:
   void Clear();
   void ClearXGrowPoints();
   // changes the graphics quality
-  void Quality(const short v);
+  int32_t Quality(const short v);
   void Init();
 //..............................................................................
   void ClearIndividualCollections()  {  IndividualCollections.Clear();  }

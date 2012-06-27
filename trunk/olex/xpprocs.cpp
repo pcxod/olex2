@@ -519,7 +519,10 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     EmbossColour = Options.Contains("c"), 
     PictureQuality = Options.Contains("pq");
   if( EmbossColour )  Emboss = true;
-  if( PictureQuality )  FXApp->Quality(qaPict);
+  int32_t previous_quality = -1;
+  if( PictureQuality )  {
+    previous_quality = FXApp->Quality(qaPict);
+  }
 
   bool mask_bg = Options.Contains("nbg");
   uint32_t clear_color = FXApp->GetRender().LightModel.GetClearColor().GetRGB();
@@ -536,7 +539,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       vpHeight = FXApp->GetRender().GetHeight();
 
   double res = 2;
-  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )  
+  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )
     res = Cmds[1].ToDouble();
   if( res >= 100 )  // width provided
     res /= vpWidth;
@@ -596,9 +599,9 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     PFD_MAIN_PLANE,
     0,
     0,0,
-    };
-    int PixelFormat = ChoosePixelFormat(dDC, &pfd);
-    SetPixelFormat(dDC, PixelFormat, &pfd);
+  };
+  int PixelFormat = ChoosePixelFormat(dDC, &pfd);
+  SetPixelFormat(dDC, PixelFormat, &pfd);
   HGLRC dglc = wglCreateContext(dDC);
   FXApp->GetRender().Resize(0, 0, BmpWidth, BmpHeight, res);
   FXApp->GetRender().BeforeContextChange();
@@ -621,7 +624,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->GetRender().Resize(vpLeft, vpTop, vpWidth, vpHeight, 1);
   FGlConsole->SetVisible(true);
   FXApp->FinishDrawBitmap();
-  if( PictureQuality )  FXApp->Quality(qaMedium);
+  if( PictureQuality )  FXApp->Quality(previous_quality);
   FXApp->GetRender().EnableFog(FXApp->GetRender().IsFogEnabled());
 
   if( Emboss )  {
@@ -729,10 +732,11 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   unsigned char* bmpData = olx_malloc<unsigned char>(bmpSize);
   FGlConsole->SetVisible(false);
   FXApp->GetRender().OnDraw.SetEnabled(false);
-  if( res != 1 )    {
+  int32_t previous_quality = -1;
+  if( res != 1 )  {
     FXApp->GetRender().GetScene().ScaleFonts(res);
     if( res >= 2 )
-      FXApp->Quality(qaPict);
+      previous_quality = FXApp->Quality(qaPict);
     FXApp->UpdateLabels();
   }
   for( int i=0; i < res; i++ )  {
@@ -768,8 +772,8 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   }
   if( res != 1 ) {
     FXApp->GetRender().GetScene().RestoreFontScale();
-    if( res >= 2 ) 
-      FXApp->Quality(qaMedium);
+    if( previous_quality != -1 )
+      FXApp->Quality(previous_quality);
     FXApp->UpdateLabels();
   }
 
@@ -1130,12 +1134,6 @@ void TMainForm::macPost(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   Close(true);
-}
-//..............................................................................
-void TMainForm::macTelpV(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
-{
-  FXApp->CalcProbFactor(Cmds[0].ToDouble());
 }
 //..............................................................................
 void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options,

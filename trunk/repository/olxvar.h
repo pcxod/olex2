@@ -12,6 +12,7 @@
 #include "estlist.h"
 #include "actions.h"
 #include "bapp.h"
+#include "wildcard.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -131,7 +132,15 @@ class TOlxVars : public IEObject  {
       Vars.Delete(ind);
       return true;
     }
-    return false;
+    size_t c=0;
+    Wildcard w(name);
+    for (size_t i=0; i < Vars.Count(); i++) {
+      if (w.DoesMatch(Vars.GetKey(i))) {
+        Vars.Delete(i--);
+        c++;
+      }
+    }
+    return c > 0;
   }
   TOlxVars();
   ~TOlxVars()  {  Instance = NULL;  }
@@ -211,9 +220,21 @@ class TOlxVars : public IEObject  {
       Vars.Add(name, value);
   }
   template <class T>
-  void _UnsetVar(const T& name)  {
+  bool _UnsetVar(const T& name)  {
     const size_t ind = Vars.IndexOf(name);
-    if( ind != InvalidIndex )  Vars.Delete(ind);
+    if( ind != InvalidIndex )  {
+      Vars.Delete(ind);
+      return true;
+    }
+    size_t c=0;
+    Wildcard w(name);
+    for (size_t i=0; i < Vars.Count(); i++) {
+      if (w.DoesMatch(Vars.GetKey(i))) {
+        Vars.Delete(i--);
+        c++;
+      }
+    }
+    return c > 0;
   }
 public:
   static TOlxVars* GetInstance()  {  return Instance;  }
@@ -235,9 +256,9 @@ public:
     Instance->_SetVar(name, value);
   }
   template <class T>
-  static void UnsetVar(const T& name)  {
+  static bool UnsetVar(const T& name)  {
     if( Instance == NULL )  return;
-    Instance->_UnsetVar(name);
+    return Instance->_UnsetVar(name);
   }
   template <class T>
   static bool IsVar(const T& name) {
