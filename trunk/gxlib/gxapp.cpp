@@ -2108,7 +2108,10 @@ TXPlane *TGXApp::AddPlane(TXAtomPList &Atoms, bool regular, double weightExtent)
     TXPlane * p =static_cast<TXPlane*>(planes[i]);
     if (!p->IsVisible())
       p->SetVisible(true);
-    p->Create(olxstr("TXPlane") << planes[i]->GetDefId());
+    if (!p->IsDeleted())
+      p->Create(olxstr("TXPlane") << planes[i]->GetDefId());
+    else
+      p->SetDeleted(false);
     if (&planes[i]->GetAtom(0) == Atoms[0]) {
       pi = i;
     }
