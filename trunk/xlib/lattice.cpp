@@ -833,6 +833,8 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
                     p->GetCenter()) < 1e-6 &&
                     Objects.planes[j].GetNormal().IsParallel(p->GetNormal()))
               {
+                Objects.planes[j].SetDeleted(false);
+                rv << Objects.planes[j];
                 uniq = false;
                 break;
               }

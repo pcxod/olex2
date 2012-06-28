@@ -18,6 +18,7 @@
 #include "symmlib.h"
 #include "cdsfs.h"
 #include "label_corrector.h"
+#include "symmparser.h"
 #undef GetObject
 
 using namespace olex;
@@ -187,6 +188,7 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* pySGInfo(PyObject* self, PyObject* args)  {
   TSpaceGroup* sg = NULL;
+  bool include_lattice = true;
   if( PyTuple_Size(args) == 0 )  {
     try  {  sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
     catch(...)  {
@@ -195,8 +197,8 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
   }
   else  {
     olxstr sg_name;
-    if( !PythonExt::ParseTuple(args, "w", &sg_name) )
-      return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+    if( !PythonExt::ParseTuple(args, "w|b", &sg_name, &include_lattice) )
+      return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|b");
     sg = TSymmLib::GetInstance().FindGroupByName(sg_name);
     if( sg == NULL )
       return PythonExt::PyNone();
@@ -212,7 +214,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     PythonExt::BuildString(sg->GetFullName()));
   PythonExt::SetDictItem(out, "System",
     PythonExt::BuildString(sg->GetBravaisLattice().GetName()));
-  PythonExt::SetDictItem(out, "Center", 
+  PythonExt::SetDictItem(out, "Center",
     Py_BuildValue("(d,d,d)",
       sg->GetInversionCenter()[0],
       sg->GetInversionCenter()[1],
@@ -245,7 +247,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     for( size_t i=0; i < sg->MatrixCount(); i++ )  {
       const smatd& m = sg->GetMatrix(i);
       PyTuple_SetItem(matr_out, i, 
-        Py_BuildValue("(iiid)(iiid)(iiid)", 
+        Py_BuildValue("(iiid)(iiid)(iiid)",
         m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
         m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
         m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
@@ -253,12 +255,12 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     }
     PythonExt::SetDictItem(out, "Matrices", matr_out);
     smatd_list ml;
-    sg->GetMatrices(ml, mattAll);
+    sg->GetMatrices(ml, include_lattice ? mattAll : mattAll^mattCentering);
     matr_out=PyTuple_New(ml.Count());
     for( size_t i=0; i < ml.Count(); i++ )  {
       const smatd& m = ml[i];
-      PyTuple_SetItem(matr_out, i, 
-        Py_BuildValue("(iiid)(iiid)(iiid)", 
+      PyTuple_SetItem(matr_out, i,
+        Py_BuildValue("(iiid)(iiid)(iiid)",
           m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
           m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
           m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
@@ -275,8 +277,8 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
       matr_out = PyTuple_New(sg_elm[i]->MatrixCount());
       for( size_t j=0; j < sg_elm[i]->MatrixCount(); j++ )  {
         const smatd& m = sg_elm[i]->GetMatrix(j);
-        PyTuple_SetItem(matr_out, j, 
-          Py_BuildValue("((iiid)(iiid)(iiid)))",
+        PyTuple_SetItem(matr_out, j,
+          Py_BuildValue("(iiid)(iiid)(iiid)",
             m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
             m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
             m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]));
@@ -286,6 +288,23 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
     }
     PythonExt::SetDictItem(out, "SysAbs", sysabs_out);
   return out;
+}
+//..............................................................................
+PyObject* pyMatrixToString(PyObject* self, PyObject* args)  {
+  PyObject *m[3], *tp;
+  if (!PyArg_ParseTuple(args, "O", &tp))
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
+  if (!PyArg_ParseTuple(tp, "OOO", &m[0], &m[1], &m[2]))
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "OOO");
+  smatd matr;
+  for (int i=0; i < 3; i++) {
+    int x, y, z;
+    double t;
+    if( !PyArg_ParseTuple(m[i], "iiid", &x, &y, &z, &t) )
+      return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiif");
+    matr.r[i][0] = x; matr.r[i][1] = y; matr.r[i][2] = z; matr.t[i] = t;
+  }
+  return PythonExt::BuildString(TSymmParser::MatrixToSymm(matr));
 }
 //..............................................................................
 PyObject* pyHklStat(PyObject* self, PyObject* args)  {
@@ -468,6 +487,8 @@ static PyMethodDef CORE_Methods[] = {
   "Returns Van der Waals radii for elements of current model"},
   {"SetBadReflections", pySetBadReflections, METH_VARARGS,
     "Sets a list of bad reflections as iterable of (h k l Fo Fc esd)"},
+  {"MatrixToString", pyMatrixToString, METH_VARARGS,
+    "Converts a symmetry operation into string representation"},
   {NULL, NULL, 0, NULL}
    };
 
