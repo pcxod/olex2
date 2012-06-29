@@ -257,7 +257,7 @@ public:
   }
   template <class T>
   static bool UnsetVar(const T& name)  {
-    if( Instance == NULL )  return;
+    if( Instance == NULL )  return false;
     return Instance->_UnsetVar(name);
   }
   template <class T>
