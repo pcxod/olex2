@@ -13,7 +13,6 @@
 #include "scenep.h"
 #include "primtvs.h"
 #include "ptable.h"
-#include "obase.h"
 #include "xatom.h"
 #include "xbond.h"
 #include "xplane.h"
@@ -220,26 +219,26 @@ void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::CellVChange()  {
-  TStateRegistry::GetInstance().SetState(stateCellVisible,
+  TStateRegistry::GetInstance().SetState(FXApp->stateCellVisible,
     FXApp->IsCellVisible(), EmptyString(), true);
   pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell")
     : wxT("Hide cell")));
 }
 //..............................................................................
 void TMainForm::BasisVChange()  {
-  TStateRegistry::GetInstance().SetState(stateBasisVisible,
+  TStateRegistry::GetInstance().SetState(FXApp->stateBasisVisible,
     FXApp->IsBasisVisible(), EmptyString(), true);
   pmModel->SetLabel(ID_BasisVisible,
     (FXApp->IsBasisVisible() ? wxT("Hide basis") : wxT("Show basis")));
 }
 //..............................................................................
 void TMainForm::GridVChange()  {
-  TStateRegistry::GetInstance().SetState(stateXGridVisible,
+  TStateRegistry::GetInstance().SetState(FXApp->stateXGridVisible,
     FXApp->IsGridVisible(), EmptyString(), true);
 }
 //..............................................................................
 void TMainForm::FrameVChange()  {
-  TStateRegistry::GetInstance().SetState(stateWBoxVisible,
+  TStateRegistry::GetInstance().SetState(FXApp->stateWBoxVisible,
     FXApp->Get3DFrame().IsVisible(), EmptyString(), true);
 }
 //..............................................................................

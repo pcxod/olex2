@@ -32,8 +32,10 @@ void vcov_test(OlxTests& t)  {
   tf.SetTemporary(true);
   tf.Flush();
   app.XFile().LoadFromFile(tf.GetName());
-  if( app.XFile().GetLattice().GetObjects().atoms.IsEmpty() )
-    throw TFunctionFailedException(__OlxSourceInfo, "could not complete test: at least 1 atom is needed");
+  if( app.XFile().GetLattice().GetObjects().atoms.IsEmpty() ) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "could not complete test: at least 1 atom is needed");
+  }
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   VcoVContainer vcovc(au);
   try  {  app.InitVcoV(vcovc);  }
@@ -50,8 +52,11 @@ void vcov_test(OlxTests& t)  {
     tr[i] = 1;
     a.crd() = au.Orthogonalise(src.ccrd()+tr);
     TEValueD e = vcovc.CalcDistance(src, a);
-    if( olx_abs(e.GetV()-au.GetAxes()[i]) > 1e-6 || olx_abs(e.GetE()-au.GetAxisEsds()[i]) > 1e-6)
+    if( olx_abs(e.GetV()-au.GetAxes()[i]) > 1e-6 ||
+        olx_abs(e.GetE()-au.GetAxisEsds()[i]) > 1e-6)
+    {
       throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+    }
   }
   // test cell angle esds
   for( size_t i=0; i < 3; i++ )  {
@@ -72,8 +77,11 @@ void vcov_test(OlxTests& t)  {
           ai = 0;
       }
       TEValueD e = vcovc.CalcAngle(a, src, b);
-      if( olx_abs(e.GetV()-au.GetAngles()[ai]) > 1e-4 || olx_abs(e.GetE()-au.GetAngleEsds()[ai]) > 1e-4)
+      if( olx_abs(e.GetV()-au.GetAngles()[ai]) > 1e-4 ||
+          olx_abs(e.GetE()-au.GetAngleEsds()[ai]) > 1e-4)
+      {
         throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+      }
     }
   }
   return;

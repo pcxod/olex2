@@ -15,7 +15,7 @@
 #include "wxzipfs.h"
 #include "integration.h"
 #include "utf8file.h"
-#include "../obase.h"
+#include "olxstate.h"
 
 #ifdef _UNICODE
   #define _StrFormat_ wxT("%ls")

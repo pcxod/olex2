@@ -151,6 +151,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   */
   void _syncBondsVisibility();
   TUndoStack UndoStack;
+  class TStateRegistry *States;
 public:
   template <class obj_t, class act_t> struct TIterator  {
     size_t offset, count;
@@ -345,14 +346,36 @@ protected:
     throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
   }
 public:
-  // stores groups beforehand abd restores afterwards, also considers overlayed files
+  /* stores groups beforehand abd restores afterwards, also considers overlayed
+  files
+  */
   void UpdateConnectivity();
+  size_t stateStructureVisible,
+    stateHydrogensVisible,
+    stateHydrogenBondsVisible,
+    stateQPeaksVisible,
+    stateQPeakBondsVisible,
+    stateCellVisible,
+    stateBasisVisible,
+    stateGradientOn,
+    stateLabelsVisible,
+    stateXGridVisible,
+    stateWBoxVisible;
+  TStateRegistry & GetStatesRegistry() const { return *States; }
+  // only works with wxWidgets
+  bool ToClipboard(const olxstr &text) const;
+  bool ToClipboard(const TStrList &text) const {
+    return ToClipboard(text.Text(NewLineSequence()));
+  }
 protected:
   float FProbFactor;
-  double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number
-  /* intialises SAtom::Tag to XAtom::Id and checks if any atom with AtomInfo == atom_type
-  has visible neighbours, if not - it will be hidden, otherwise its visibility will become 'show';
-  for bonds makes them visible only if both atoms are visible */
+  // the default is 1, Calculated Zoom is multiplid by this number
+  double ExtraZoom;
+  /* intialises SAtom::Tag to XAtom::Id and checks if any atom with
+  AtomInfo == atom_type has visible neighbours, if not - it will be hidden,
+  otherwise its visibility will become 'show'; for bonds makes them visible
+  only if both atoms are visible
+  */
   void SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b);
   void _maskInvisible();
   bool MainFormVisible;
@@ -450,6 +473,7 @@ public:
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);
   virtual void ExpandSelectionEx(TSAtomPList& atoms);
+  virtual ConstPtrList<TSObject<TNetwork> > GetSelected();
 
   TGlBitmap* CreateGlBitmap(const olxstr& name, int left, int top,
     int width, int height, unsigned char* RGBa, unsigned int format);
@@ -581,6 +605,13 @@ public:
     bool ClearSelection=true, bool FindHidden=false);
   ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds, bool GetAll,
     bool unselect);
+  virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res,
+    bool ReturnAll=true, bool ClearSelection=true)
+  {
+    size_t c = res.Count();
+    return res.AddList(FindXAtoms(condition, ReturnAll, ClearSelection),
+      StaticCastAccessor<TSAtom>()).Count() > c;
+  }
 
   //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   //const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }

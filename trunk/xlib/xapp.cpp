@@ -473,7 +473,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
     olxstr new_c = toks.Text(' ');
     if( !new_c.IsEmpty() )  {
       TCAtomGroup ag;
-      TAtomReference ar(toks.Text(' '), SelectionOwner);      
+      TAtomReference ar(toks.Text(' '), SelectionOwner);
       size_t atomAGroup;
       ar.Expand(XFile().GetRM(), ag, EmptyString(), atomAGroup);
       if( !ag.IsEmpty() )  {
@@ -513,6 +513,15 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
   }
   res.AddList(atoms);
   return !atoms.IsEmpty();
+}
+//..............................................................................
+ConstPtrList<SObject> TXApp::GetSelected(bool unselect) const {
+  TPtrList<SObject> rv;
+  if (SelectionOwner != NULL) {
+    SelectionOwner->SetDoClearSelection(unselect);
+    rv = SelectionOwner->GetSelected();
+  }
+  return rv;
 }
 //..............................................................................
 void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {

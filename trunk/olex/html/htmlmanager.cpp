@@ -10,7 +10,7 @@
 #include "htmlmanager.h"
 #include "htmlswitch.h"
 #include "utf8file.h"
-#include "../obase.h"
+#include "olxstate.h"
 
 #define this_InitFuncD(funcName, argc, desc) \
   (Library).RegisterFunction(\

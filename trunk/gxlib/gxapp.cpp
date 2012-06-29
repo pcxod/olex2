@@ -37,6 +37,8 @@
 #include "dring.h"
 #include "dusero.h"
 #include "gxmacro.h"
+#include "glbackground.h"
+#include "olxstate.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -44,6 +46,7 @@
   #include "wx/fontutil.h"
   #include "wx/wfstream.h"
   #include "wxzipfs.h"
+  #include "wx/clipbrd.h"
 #elif __WIN32__
   #include "wglscene.h"
 #endif
@@ -246,10 +249,15 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
   OnObjectsDestroy(NewActionQueue("OBJECTSDESTROY")),
   OnObjectsCreate(NewActionQueue("OBJECTSCREATE"))
 {
-  FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible = true;
+  FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible
+    = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   DisplayFrozen = MainFormVisible = false;
   ZoomAfterModelBuilt = FXPolyVisible = true;
+  stateStructureVisible = stateHydrogensVisible = stateHydrogenBondsVisible =
+    stateQPeaksVisible = stateQPeakBondsVisible = stateCellVisible =
+    stateBasisVisible = stateGradientOn = stateLabelsVisible =
+    stateXGridVisible = stateWBoxVisible = InvalidIndex;
   DeltaV = 3;
   const TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
 #ifdef __WXWIDGETS__
@@ -302,9 +310,84 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
   else if (ma > 0.75) ma = 0.75;
   TXAtom::SetMinQAlpha(ma);
   GXLibMacros::Export(Library);
+  States = new TStateRegistry();
+  stateStructureVisible = States->Register("strvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*this, &TGXApp::IsStructureVisible),
+      new TStateRegistry::TMacroSetter("ShowStr")
+    )
+  );
+
+  stateHydrogensVisible = States->Register("hvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*this, &TGXApp::AreHydrogensVisible),
+      new TStateRegistry::TMacroSetter("ShowH a")
+    )
+  );
+  stateHydrogenBondsVisible = States->Register("hbvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*this, &TGXApp::AreHBondsVisible),
+      new TStateRegistry::TMacroSetter("ShowH b")
+    )
+  );
+  stateQPeaksVisible = States->Register("qvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*this, &TGXApp::AreQPeaksVisible),
+      new TStateRegistry::TMacroSetter("ShowQ a")
+    )
+  );
+  stateQPeakBondsVisible = States->Register("qbvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*this, &TGXApp::AreQPeakBondsVisible),
+      new TStateRegistry::TMacroSetter("ShowQ b")
+    )
+  );
+  stateCellVisible = States->Register("cellvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TDUnitCell>(this->DUnitCell(),
+        &TDUnitCell::IsVisible),
+      new TStateRegistry::TMacroSetter("cell")
+    )
+  );
+  stateBasisVisible = States->Register("basisvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TDBasis>(this->DBasis(),
+        &TDBasis::IsVisible),
+      new TStateRegistry::TMacroSetter("basis")
+    )
+  );
+  stateGradientOn = States->Register("gradBG",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TGlBackground>(*this->GetRender().Background(),
+        &TGlBackground::IsVisible),
+      new TStateRegistry::TMacroSetter("grad")
+    )
+  );
+  stateLabelsVisible = States->Register("labelsvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter(*this, &TGXApp::AreLabelsVisible),
+      new TStateRegistry::TMacroSetter("labels")
+    )
+  );
+  stateXGridVisible = States->Register("gridvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<TXGrid>(this->XGrid(),
+        &TXGrid::IsVisible),
+      new TStateRegistry::TNoneSetter()
+    )
+  );
+  stateWBoxVisible = States->Register("wboxvis",
+    new TStateRegistry::Slot(
+      TStateRegistry::NewGetter<T3DFrameCtrl>(this->Get3DFrame(),
+        &T3DFrameCtrl::IsVisible),
+      TStateRegistry::NewSetter<T3DFrameCtrl>(this->Get3DFrame(),
+        &T3DFrameCtrl::SetVisible)
+    )
+  );
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
+  delete States;
   XFile().GetLattice().OnAtomsDeleted.Remove(this);
   Clear();
   delete FLabels;
@@ -1486,9 +1569,13 @@ ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
         S.Add((TGlGroup&)GO);  
       else if( EsdlInstanceOf(GO, TXAtom) )
         rv.Add((TXAtom&)GO);
+      else if( EsdlInstanceOf(GO, TXBond) ) {
+        TXBond &b = (TXBond&)GO;
+        rv << b.A() << b.B();
+      }
     }
   }
-  if( Clear )  
+  if( Clear )
     SelectAll(false);
   return rv;
 }
@@ -2459,6 +2546,15 @@ void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
   atoms.AddList(GetSelectedXAtoms(GetDoClearSelection()));
 }
 //..............................................................................
+ConstPtrList<TSObject<TNetwork> > TGXApp::GetSelected() {
+  //TPtrList<TSObject<TNetwork> > res;
+  ConstPtrList<TSObject<TNetwork> > rv =
+    GetSelection().Extract<TSObject<TNetwork> >();
+  if (GetDoClearSelection())
+    SelectAll(false);
+  return rv;
+}
+//..............................................................................
 ConstPtrList<TCAtom> TGXApp::FindCAtoms(const olxstr &Atoms, bool ClearSelection)  {
   if( Atoms.IsEmpty() )  {
     TCAtomPList list = GetSelectedCAtoms(ClearSelection);
@@ -3111,10 +3207,14 @@ void TGXApp::SetStructureVisible(bool v)  {
     if( !v )
       xa.SetVisible(v);
     else
-      xa.SetVisible(xa.IsAvailable() && xa.CAtom().IsAvailable());  
+      xa.SetVisible(xa.IsAvailable() && xa.CAtom().IsAvailable());
   }
   for( size_t i=0; i < LooseObjects.Count(); i++ )
     LooseObjects[i]->SetVisible(v);
+  for (size_t i=0; i < Lines.Count(); i++) {
+    if (!Lines[i].IsDeleted())
+      Lines[i].SetVisible(v);
+  }
   PlaneIterator pi(*this);
   while( pi.HasNext() )
     pi.Next().SetVisible(v);
@@ -4553,5 +4653,17 @@ olxstr TGXApp::Label(const TXAtomPList &atoms, const olxstr &sp) {
     rv << atoms.GetLast()->GetGuiLabel();
   }
   return rv;
+}
+//..............................................................................
+bool TGXApp::ToClipboard(const olxstr &text) const {
+#ifdef __WXWIDGETS__
+  if( wxTheClipboard->Open() )  {
+    if (wxTheClipboard->IsSupported(wxDF_TEXT) )
+      wxTheClipboard->SetData(new wxTextDataObject(text.u_str()));
+    wxTheClipboard->Close();
+    return true;
+  }
+#endif
+  return false;
 }
 

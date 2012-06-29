@@ -9,7 +9,7 @@
 
 #include "checkboxext.h"
 #include "frameext.h"
-#include "../obase.h"
+#include "olxstate.h"
 #include "olxvar.h"
 
 using namespace ctrl_ext;

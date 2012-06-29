@@ -7,7 +7,7 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "obase.h"
+#include "olxstate.h"
 
 #include "modes/name.h"
 #include "modes/match.h"
