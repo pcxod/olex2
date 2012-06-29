@@ -31,7 +31,7 @@ public:
   ASelectionOwner() : DoClearSelection(true) {}
   virtual void ExpandSelection(TCAtomGroup& catoms) = 0;
   virtual void ExpandSelectionEx(TPtrList<class TSAtom>& satoms) = 0;
-  virtual ConstPtrList<typename TSObject<class TNetwork> > GetSelected() = 0;
+  virtual ConstPtrList<TSObject<class TNetwork> > GetSelected() = 0;
   DefPropP(bool, DoClearSelection)
 };
 class TAtomReference : public IEObject  {
