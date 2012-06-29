@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
-    <Filter Include="modes">
-      <UniqueIdentifier>{f1f1406c-ae9a-49a4-975a-50d738747b06}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ctrl">
       <UniqueIdentifier>{c7c8ce97-adf5-4c25-b574-fddd6df71f45}</UniqueIdentifier>
     </Filter>
@@ -85,9 +82,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\olex\msgbox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\olex\obase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\repository\olxvar.cpp">
@@ -296,45 +290,6 @@
     <ClInclude Include="..\..\..\olex\xglcanv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\fit.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\fixc.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\fixu.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\grow.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\hfix.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\himp.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\match.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\move.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\name.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\occu.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\pack.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\part.h">
-      <Filter>modes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\split.h">
-      <Filter>modes</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\olex\ctrls\btnext.h">
       <Filter>ctrl\headers</Filter>
     </ClInclude>
@@ -403,9 +358,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\olex\html\htmlmanager.h">
       <Filter>html\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\olex\modes\lock.h">
-      <Filter>modes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

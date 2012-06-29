@@ -839,7 +839,6 @@
     <ClCompile Include="..\..\..\olex\mainform.cpp" />
     <ClCompile Include="..\..\..\olex\matprop.cpp" />
     <ClCompile Include="..\..\..\olex\msgbox.cpp" />
-    <ClCompile Include="..\..\..\olex\obase.cpp" />
     <ClCompile Include="..\..\..\repository\olxvar.cpp" />
     <ClCompile Include="..\..\..\repository\patchapi.cpp" />
     <ClCompile Include="..\..\..\olex\primtvs.cpp" />
@@ -889,7 +888,6 @@
     <ClInclude Include="..\..\..\olex\dgrad.h" />
     <ClInclude Include="..\..\..\olex\edit.h" />
     <ClInclude Include="..\..\..\olex\html\htmlmanager.h" />
-    <ClInclude Include="..\..\..\olex\modes\lock.h" />
     <ClInclude Include="..\..\..\olex\nui\nui.h" />
     <ClInclude Include="..\..\..\olex\tasks.h" />
     <ClInclude Include="..\..\..\repository\cdsfs.h" />
@@ -916,19 +914,6 @@
     <ClInclude Include="..\..\..\repository\wxzipfsext.h" />
     <ClInclude Include="..\..\..\olex\xglapp.h" />
     <ClInclude Include="..\..\..\olex\xglcanv.h" />
-    <ClInclude Include="..\..\..\olex\modes\fit.h" />
-    <ClInclude Include="..\..\..\olex\modes\fixc.h" />
-    <ClInclude Include="..\..\..\olex\modes\fixu.h" />
-    <ClInclude Include="..\..\..\olex\modes\grow.h" />
-    <ClInclude Include="..\..\..\olex\modes\hfix.h" />
-    <ClInclude Include="..\..\..\olex\modes\himp.h" />
-    <ClInclude Include="..\..\..\olex\modes\match.h" />
-    <ClInclude Include="..\..\..\olex\modes\move.h" />
-    <ClInclude Include="..\..\..\olex\modes\name.h" />
-    <ClInclude Include="..\..\..\olex\modes\occu.h" />
-    <ClInclude Include="..\..\..\olex\modes\pack.h" />
-    <ClInclude Include="..\..\..\olex\modes\part.h" />
-    <ClInclude Include="..\..\..\olex\modes\split.h" />
     <ClInclude Include="..\..\..\olex\ctrls\btnext.h" />
     <ClInclude Include="..\..\..\olex\ctrls\checkboxext.h" />
     <ClInclude Include="..\..\..\olex\ctrls\comboext.h" />
