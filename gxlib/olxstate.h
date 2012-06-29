@@ -7,12 +7,14 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __olx_base_H
-#define __olx_base_H
+#ifndef __olx_gxlib_states_H
+#define __olx_gxlib_states_H
 #include "estlist.h"
 #include "integration.h"
 #include "gxapp.h"
 #undef Status
+
+BeginGxlNamespace()
 
 class TStateChange: public IEObject {
   const size_t State;
@@ -225,7 +227,7 @@ public:
   virtual bool AddAtoms(const TPtrList<TXAtom>& atoms) {  return false;  }
   inline size_t GetId() const {  return Id;  }
 };
-//..............................................................................
+//.............................................................................
 class AModeWithLabels : public AMode {
   short LabelsMode;
   bool LabelsVisible;
@@ -233,7 +235,7 @@ public:
   AModeWithLabels(size_t id);
   ~AModeWithLabels();
 };
-//..............................................................................
+//.............................................................................
 
 class AModeFactory  {
 protected:
@@ -279,5 +281,6 @@ public:
   ~TModeChange()  {}
   bool GetStatus() const {  return FStatus;  }
 };
-//..............................................................................
+//.............................................................................
+EndGxlNamespace()
 #endif

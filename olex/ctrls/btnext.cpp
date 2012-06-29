@@ -9,7 +9,7 @@
 
 #include "btnext.h"
 #include "frameext.h"
-#include "../obase.h"
+#include "olxstate.h"
 #include "fsext.h"
 
 using namespace ctrl_ext;

@@ -30,6 +30,7 @@
 #include "exparse/exptree.h"
 #include "nui/nui.h"
 #include "tasks.h"
+#include "olxstate.h"
 
 enum  {
   ID_HtmlPanel=1,  // view menu
@@ -278,25 +279,14 @@ protected:
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
 
-  class TModeRegistry *Modes;
-  class TStateRegistry *States;
-  size_t stateStructureVisible,
-    stateHydrogensVisible,
-    stateHydrogenBondsVisible,
-    stateQPeaksVisible,
-    stateQPeakBondsVisible,
-    stateCellVisible,
-    stateBasisVisible,
+  TModeRegistry *Modes;
+  size_t
     stateHtmlVisible,
     statePluginInstalled,
     stateInfoWidnowVisible,
     stateHelpWindowVisible,
     stateCmdLineVisible,
-    stateGradientOn,
-    stateLabelsVisible,
-    stateGlTooltips,
-    stateXGridVisible,
-    stateWBoxVisible;
+    stateGlTooltips;
    // solution mode variables
   TTypeList<long> Solutions;
   int CurrentSolution;
@@ -325,10 +315,6 @@ public:
   bool PopupMenu(wxMenu* menu, const wxPoint& p=wxDefaultPosition);
   bool PopupMenu(wxMenu* menu, int x, int y)  {
     return PopupMenu(menu, wxPoint(x,y));
-  }
-  void ToClipboard(const olxstr &text) const;
-  void ToClipboard(const TStrList &text) const {
-    ToClipboard(text.Text(NewLineSequence()));
   }
 protected:
   void PostCmdHelp(const olxstr &Cmd, bool Full=false);
@@ -418,10 +404,8 @@ private:
   DefMacro(Exit)
   DefMacro(Sel)
   DefMacro(Esd)
-  DefMacro(Labels)
   DefMacro(SetEnv)
   DefMacro(SetView)
-  DefMacro(Info)
   DefMacro(Help)
   DefMacro(Matr)
   DefMacro(Qual)
@@ -453,32 +437,10 @@ private:
   DefMacro(QPeakScale)
   DefMacro(QPeakSizeScale)
 
-  DefMacro(Label)
-
   DefMacro(Focus)
   DefMacro(Refresh)
 
-  DefMacro(Move)
 
-  DefMacro(ShowH)
-
-  DefMacro(Fvar)
-  DefMacro(Sump)
-  DefMacro(Part)
-  DefMacro(Afix)
-
-  DefMacro(Dfix)
-  DefMacro(Dang)
-  DefMacro(Tria)
-  DefMacro(Sadi)
-  DefMacro(RRings)
-  DefMacro(Flat)
-  DefMacro(Chiv)
-  DefMacro(SIMU)
-  DefMacro(DELU)
-  DefMacro(ISOR)
-
-  DefMacro(ShowQ)
   DefMacro(Mode)
 
   DefMacro(Text)

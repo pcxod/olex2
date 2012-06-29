@@ -20,6 +20,9 @@
 //simply a macro registry
 
 class XLibMacros  {
+protected:
+  static bool ParseResParam(TStrObjList &Cmds, double& esd, double* len=NULL,
+    double* len1=NULL, double* ang=NULL);
 public:
   static DefMacro(Run)
   static DefMacro(HklBrush)
@@ -103,7 +106,23 @@ public:
   static DefMacro(MolInfo)
   static DefMacro(RTab)
   static DefMacro(Update)
-  
+  static DefMacro(Move)
+  static DefMacro(Fvar)
+  static DefMacro(Sump)
+  static DefMacro(Afix)
+  static DefMacro(Part)
+
+  static DefMacro(Dfix)
+  static DefMacro(Dang)
+  static DefMacro(Tria)
+  static DefMacro(Sadi)
+  static DefMacro(RRings)
+  static DefMacro(Flat)
+  static DefMacro(Chiv)
+  static DefMacro(SIMU)
+  static DefMacro(DELU)
+  static DefMacro(ISOR)
+
   static DefFunc(Lst)
   static DefFunc(FileName)
   static DefFunc(FileExt)

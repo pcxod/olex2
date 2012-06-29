@@ -12,6 +12,11 @@
 #include "gxapp.h"
 
 class GXLibMacros  {
+protected:
+  static int QPeakSortA(const TCAtom &a, const TCAtom &b);
+  static int QPeakSortD(const TCAtom &a, const TCAtom &b) {
+    return QPeakSortA(b, a);
+  }
 public:
   static DefMacro(Grow)
   static DefMacro(Pack)
@@ -24,6 +29,11 @@ public:
   static DefMacro(AZoom)
   static DefMacro(BRad)
   static DefMacro(TelpV)
+  static DefMacro(Info)
+  static DefMacro(Label)
+  static DefMacro(Labels)
+  static DefMacro(ShowH)
+  static DefMacro(ShowQ)
 
   static DefMacro(Qual)
 

@@ -9,7 +9,7 @@
 
 #include "menuext.h"
 #include "frameext.h"
-#include "../obase.h"
+#include "olxstate.h"
 
 using namespace ctrl_ext;
 IMPLEMENT_CLASS(TMenu, wxMenu)
@@ -51,6 +51,8 @@ void TMenu::Clear()  {
 //----------------------------------------------------------------------------//
 // TMenuItem implementation
 //----------------------------------------------------------------------------//
+TMenuItem::~TMenuItem()  {}
+//..............................................................................
 void TMenuItem::SetActionQueue(TActionQueue& q, const olxstr& dependMode,
   short dependentOn)
 {

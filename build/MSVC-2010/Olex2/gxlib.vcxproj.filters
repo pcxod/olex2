@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Header Files\modes">
+      <UniqueIdentifier>{6993c95d-b8e5-478a-aa38-c82d05e57e1e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\gxlib\dbasis.cpp">
@@ -79,6 +82,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\gxlib\gxmacro.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\gxlib\olxstate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -165,6 +171,51 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\gxlib\gxmacro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\fit.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\fixc.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\fixu.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\grow.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\hfix.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\himp.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\lock.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\match.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\move.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\name.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\occu.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\pack.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\part.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\modes\split.h">
+      <Filter>Header Files\modes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\gxlib\olxstate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

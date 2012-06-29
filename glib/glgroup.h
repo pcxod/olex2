@@ -58,9 +58,11 @@ public:
       Add(*list[i], false);
   }
   template <class obj_t, class list_t> list_t& Extract(list_t& l) const {
-    for( size_t i=0; i < Objects.Count(); i++ )
-      if( EsdlInstanceOf(*Objects[i], obj_t) )
-        l.Add((obj_t*)Objects[i]);
+    for( size_t i=0; i < Objects.Count(); i++ ) {
+      obj_t *a = dynamic_cast<obj_t*>(Objects[i]);
+      if (a != NULL)
+        l.Add(a);
+    }
     return l;
   }
   template <class obj_t> ConstPtrList<obj_t> Extract() const {

@@ -586,13 +586,19 @@ void TAsymmUnit::AddMatrix(const smatd& a)  {
     Matrices.AddCopy(a);
 }
 //..............................................................................
-olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, char b, char c) const  {
+olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label,
+  char a, char b, char c) const
+{
   olxstr LB( (Label.Length() > 4) ? Label.SubStringTo(2) : Label );
   if( ca != NULL )  {
     const TResidue& resi = GetResidue(ca->GetResiId());
     for( size_t i=0; i < resi.Count(); i++ )  {
       const TCAtom& atom = resi[i];
-      if( atom.GetPart() != ca->GetPart() && (atom.GetPart()|ca->GetPart()) != 0 )  continue;
+      if( atom.GetPart() != ca->GetPart() &&
+          (atom.GetPart()|ca->GetPart()) != 0 )
+      {
+        continue;
+      }
       if( !atom.IsDeleted() && (atom.GetLabel().Equalsi(Label) ) && 
         (atom.GetId() != ca->GetId()) )  {
         LB = atom.GetType().symbol;
@@ -1001,9 +1007,15 @@ void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
   evecd V(6);
-  V[0] = Axes[0];    V[1] = Axes[1];    V[2] = Axes[2];
-  V[3] = Angles[0];  V[4] = Angles[1];  V[5] = Angles[2];
-  E.SetRetVal( V.ToString() );
+  if (Params.IsEmpty() || Params[0].Equalsi("cell")) {
+    V[0] = Axes[0];    V[1] = Axes[1];    V[2] = Axes[2];
+    V[3] = Angles[0];  V[4] = Angles[1];  V[5] = Angles[2];
+  }
+  else if (Params[0].Equalsi("esd")) {
+    V[0] = AxisEsds[0];    V[1] = AxisEsds[1];    V[2] = AxisEsds[2];
+    V[3] = AngleEsds[0];  V[4] = AngleEsds[1];  V[5] = AngleEsds[2];
+  }
+  E.SetRetVal(V.ToString());
 }
 //..............................................................................
 void TAsymmUnit::LibGetVolume(const TStrObjList& Params, TMacroError& E)  {
@@ -1370,7 +1382,7 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
     &TAsymmUnit::LibNPDCount, "NPDCount", fpNone,
     "Returns number of the NPD atoms"));
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
-    &TAsymmUnit::LibGetCell, "GetCell", fpNone,
+    &TAsymmUnit::LibGetCell, "GetCell", fpNone|fpOne,
     "Returns six comma separated values for a, b, c and alpha, beta, gamma"));
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,
     &TAsymmUnit::LibGetVolume, "GetVolume", fpNone,

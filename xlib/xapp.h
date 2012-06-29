@@ -53,7 +53,8 @@ public:
   const cm_Element& GetElement(size_t i) const {  return *Data[i].elm;  }
 };
 
-                     
+typedef TSObject<TNetwork> SObject;
+typedef TPtrList<SObject> SObjectPtrList;
 class TXApp : public TBasicApp, public ALibraryContainer  {
 protected:
   TXFile *FXFile;
@@ -114,8 +115,21 @@ public:
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
   //
   virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res,
-    bool ReturnAll = true, bool ClearSelection=true);
-  // fins Cp, Ph, Naph and Cp* rings and adds corresponding afixes
+    bool ReturnAll=true, bool ClearSelection=true);
+  ConstPtrList<TSAtom> FindSAtoms(
+    const olxstr& condition, bool ReturnAll=true, bool ClearSelection=true)
+  {
+    TSAtomPList atoms;
+    FindSAtoms(condition, atoms, ReturnAll, ClearSelection);
+    return atoms;
+  }
+  ConstPtrList<TSAtom> FindSAtoms(
+    const TStrObjList& names, bool ReturnAll=true, bool ClearSelection=true)
+  {
+    return FindSAtoms(names.Text(' '), ReturnAll, ClearSelection);
+  }
+  ConstPtrList<SObject> GetSelected(bool unselect=true) const;
+  // finds Cp, Ph, Naph and Cp* rings and adds corresponding afixes
   void AutoAfixRings(int afix, TSAtom* sa = NULL, bool TryPyridine = false);
   void SetAtomUiso(TSAtom& sa, double val);
   /* initialises the vcov matrix from shelx or smtbx, might throw an exception..

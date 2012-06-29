@@ -21,12 +21,12 @@
   Library.RegisterMacro( new TMacro<TMainForm>(this, &TMainForm::mac##realMacroName, #macroName, (validOptions), argc, desc))
 
 #include "wx/utils.h"
-#include "wx/clipbrd.h"
 #include "wx/wxhtml.h"
 #include "wx/image.h"
 #include "wx/panel.h"
 #include "wx/fontdlg.h"
 #include "wx/tooltip.h"
+#include "wx/clipbrd.h"
 #include "mainform.h"
 #include "xglcanv.h"
 #include "xglapp.h"
@@ -59,7 +59,7 @@
 #include "httpfs.h"
 #include "pyext.h"
 
-#include "obase.h"
+#include "olxstate.h"
 #include "glbitmap.h"
 #include "log.h"
 #include "cmdline.h"
@@ -379,7 +379,6 @@ TMainForm::TMainForm(TGlXApp *Parent):
   FLastSettingsFile = "last.osp";
 
   Modes = new TModeRegistry();
-  States = new TStateRegistry();
 
   FParent = Parent;
   ObjectUnderMouse(NULL);
@@ -427,8 +426,9 @@ TMainForm::~TMainForm()  {
   }
   if( UpdateProgress != NULL )
     delete UpdateProgress;
+  // clean up it here
+  FXApp->GetStatesRegistry().OnChange.Clear();
   delete Modes;
-  delete States;
   for( size_t i=0; i < CallbackFuncs.Count(); i++ )
     delete CallbackFuncs.GetObject(i);
   // delete FIOExt;
@@ -633,23 +633,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "ShelXL refinement with negative 'MORE' like 'MORE -1' option or from the "
     "olex2.refine");
   
-  this_InitMacroD(Labels,
-    "p-part&;"
-    "l-label&;"
-    "v-variables&;"
-    "o-occupancy&;"
-    "co-chemical occupancy&;"
-    "a-afix&;"
-    "h-show hydrogen atom labels&;"
-    "f-fixed parameters&;"
-    "u-Uiso&;"
-    "r-Uiso multiplier for riding atoms&;"
-    "ao-actual occupancy (as in the ins file)&;"
-    "qi-Q peak intensity&;"
-    "i-display labels for identity atoms only&;"
-    "f-applies given format to the labels like -f=AaBB Aaaa or -f=Aabb etc",
-    fpNone,
-    "Inverts visibility of atom labels on/off. Look at the options");
 
   this_InitMacroD(SetEnv, EmptyString(), fpTwo,
 "Sets an environmental variable");
@@ -657,12 +640,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(SetView, "c-center", fpAny,
     "Sets view normal to the normal of the selected plane, to a bond or mean "
     "line");
-  this_InitMacroD(Info,
-    "s-sorts the atom list&;p-coordinate precision [3]&;f-print fractional "
-    "coordinates vs Cartesian [true]&;"
-    "c-copy the printed information ito the clipboard",
-    fpAny,
-    "Prints out information for gived [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
     "Prints available information. If no arguments provided prints available "
     "commands");
@@ -740,84 +717,11 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(QPeakSizeScale, EmptyString(), fpNone|fpOne,
     "Prints/sets the scale the Q-peak size relative to other atoms, default is"
     " 1");
-  this_InitMacroD(Label,
-    "type-type of labels to make - subscript, brackers, default&;"
-    "symm-symmetry dependent tag type {[$], #, full}&;"
-    "cif-creates labels for CIF data a combination of {b,a,t,h}",
-    fpAny,
-    "Creates moveable labels for provided atoms/bonds/angles (selection)");
 
   this_InitMacroD(Focus, EmptyString(), fpNone,
     "Sets input focus to the console");
   this_InitMacroD(Refresh, EmptyString(), fpNone,
     "Refreshes the GUI");
-  this_InitMacroD(Move,
-    "cs-leaves selection unchanged&;"
-    "c-copy moved atom",
-    fpNone|fpTwo,
-    "Moves two atoms as close to each other as possible; if no atoms given, "
-    "moves all fragments as close to the cell center as possible");
-
-  this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded);
-  this_InitMacroD(Fvar, EmptyString(), fpAny|psCheckFileTypeIns,
-    "Assigns/release occupancy for given atoms. Examples:"
-    "\n-'fvar' if nothing is selected will print current values of the "
-    "variables. For a selection of even number atoms, will create a new "
-    "variable and link occupancies of the first half of the selection to "
-    "occupancy the other half of the selection. "
-    "\n-'fvar 0' - makes occupancy of provided atoms refineable"
-    "\n-'fvar 1' - fixes occupancy of provided atoms at current value"
-    "\n-'fvar 1 1' - fixes occupancy of provided atoms at chemical occupancy "
-    "of 1"
-    "\n-'fvar 2' will link occupancy of the given atoms to the value of the "
-    "2nd FVAR multiplied by current value of the occupancy of the given atoms,"
-    " or, if occupancy already linked to a variable - it will replace the "
-    "variable index."
-    "\n-'fvar 2 0.5' will link occupancy of the given atoms to the value of "
-    "the 2nd FVAR multiplied by 0.5.");
-  this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns);
-  this_InitMacroD(Part,
-    "p-number of parts&;lo-link ocupancy of given atoms through FVAR's&;"
-    "c-creates a copy of all grown atoms to which applied in the asymmetric unit and "
-    "automatically links occupancies with the original atoms",
-    fpAny|psFileLoaded,
-    "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking "
-    "occupancy of given atoms throw FVAR and/or SUMP in cases when -p > 2");
-  this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
-    (fpAny^fpNone)|psCheckFileTypeIns,
-    "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and "
-    "119");
-  this_InitMacro(Dfix, cs-do not clear selection&;e, fpAny|psCheckFileTypeIns);
-  this_InitMacroD(Tria, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-    "Adds a distance restraint for bonds and 'angle' restraint for the angle");
-  this_InitMacroD(Dang, "cs-do not clear selection", fpAny|psCheckFileTypeIns, 
-    "Adds a ShelX compatible angle restraint");
-  this_InitMacroD(Sadi, EmptyString(), fpAny|psCheckFileTypeIns,
-    "Similar distances restraint");
-  this_InitMacroD(RRings,"cs-do not clear selection" , fpAny,
-    "Makes all provided rings [like C6 or NC5] regular (flat and all distances"
-    " similar). If a selection is given - the whole rings must be selected");
-  this_InitMacroD(Flat, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-    "Forces flat group restraint for at least 4 provided atoms");
-  this_InitMacroD(Chiv, "cs- do not clear selection", fpAny|psCheckFileTypeIns,
-    "Forces chiral volume of atom(s) to '0' or provided value");
-  this_InitMacroD(DELU, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-    "Rigid bond constraint. If no atoms provided, all non-H atoms considered");
-  this_InitMacroD(SIMU, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-    "Forces similarity restraint for Uij of provided atoms. If no atoms "
-    "provided, all non-H atoms considered");
-  this_InitMacroD(ISOR, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-    "Forses Uij of provided atoms to behave in isotropic manner. If no atoms "
-    "provided, all non-H atoms considered");
-
-  this_InitMacroD(ShowQ,
-    "wheel-number of peaks to hide (if negative) or to show ",
-    fpNone|fpOne|fpTwo|psFileLoaded,
-    "Traverses the three states - peaks and peak bonds are visible, only peaks"
-    " visible, no peaks or peak bonds. One numeric argument is taken to "
-    "increment/decrement the numegbr of visibe peaks. Two aruments are taken "
-    "to control the visibility of atoms or bonds, like in: 'showq a true' or "
-    "'showq b false'");
 
   this_InitMacroD(Mode,
     "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only; [fit] "
@@ -1516,107 +1420,35 @@ void TMainForm::XApp(TGXApp *XA)  {
   FXApp->XFile().OnFileClose.Add(this, ID_FileClose);
   FXApp->XFile().GetRM().OnSetBadReflections.Add(this, ID_BadReflectionSet);
   FXApp->XFile().GetRM().OnCellDifference.Add(this, ID_CellChanged);
-  stateStructureVisible = States->Register("strvis",
+  TStateRegistry &states = FXApp->GetStatesRegistry();
+  stateHtmlVisible = states.Register("htmlvis",
     new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*FXApp, &TGXApp::IsStructureVisible),
-      new TStateRegistry::TMacroSetter("ShowStr")
-    )
-  );
-
-  stateHydrogensVisible = States->Register("hvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreHydrogensVisible),
-      new TStateRegistry::TMacroSetter("ShowH a")
-    )
-  );
-  stateHydrogenBondsVisible = States->Register("hbvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreHBondsVisible),
-      new TStateRegistry::TMacroSetter("ShowH b")
-    )
-  );
-  stateQPeaksVisible = States->Register("qvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreQPeaksVisible),
-      new TStateRegistry::TMacroSetter("ShowQ a")
-    )
-  );
-  stateQPeakBondsVisible = States->Register("qbvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreQPeakBondsVisible),
-      new TStateRegistry::TMacroSetter("ShowQ b")
-    )
-  );
-  stateCellVisible = States->Register("cellvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TDUnitCell>(FXApp->DUnitCell(),
-        &TDUnitCell::IsVisible),
-      new TStateRegistry::TMacroSetter("cell")
-    )
-  );
-  stateBasisVisible = States->Register("basisvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TDBasis>(FXApp->DBasis(),
-        &TDBasis::IsVisible),
-      new TStateRegistry::TMacroSetter("basis")
-    )
-  );
-  stateHtmlVisible = States->Register("htmlvis",
-    new TStateRegistry::Slot(
-      States->NewGetter(*this, &TMainForm::CheckState),
+      states.NewGetter(*this, &TMainForm::CheckState),
       new TStateRegistry::TMacroSetter("HtmlPanelVisible")
     )
   );
-  statePluginInstalled = States->Register("pluginInstalled",
+  statePluginInstalled = states.Register("pluginInstalled",
     new TStateRegistry::Slot(
-      States->NewGetter(*this, &TMainForm::CheckState),
+      states.NewGetter(*this, &TMainForm::CheckState),
       new TStateRegistry::TMacroSetter("HtmlPanelVisible")
     )
   );
-  stateInfoWidnowVisible = States->Register("infovis",
+  stateInfoWidnowVisible = states.Register("infovis",
     new TStateRegistry::Slot(
       TStateRegistry::NewGetter<TGlTextBox>(*FInfoBox, &TGlTextBox::IsVisible),
       new TStateRegistry::TMacroSetter("ShowWindow info")
     )
   );
-  stateHelpWindowVisible = States->Register("helpvis",
+  stateHelpWindowVisible = states.Register("helpvis",
     new TStateRegistry::Slot(
       TStateRegistry::NewGetter<TGlTextBox>(*FHelpWindow, &TGlTextBox::IsVisible),
       new TStateRegistry::TMacroSetter("ShowWindow help")
     )
   );
-  stateCmdLineVisible = States->Register("cmdlinevis",
+  stateCmdLineVisible = states.Register("cmdlinevis",
     new TStateRegistry::Slot(
-      States->NewGetter(*this, &TMainForm::CheckState),
+      states.NewGetter(*this, &TMainForm::CheckState),
       new TStateRegistry::TMacroSetter("ShowWindow cmdline")
-    )
-  );
-  stateGradientOn = States->Register("gradBG",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TGlBackground>(*FXApp->GetRender().Background(),
-        &TGlBackground::IsVisible),
-      new TStateRegistry::TMacroSetter("grad")
-    )
-  );
-  stateLabelsVisible = States->Register("labelsvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter(*FXApp, &TGXApp::AreLabelsVisible),
-      new TStateRegistry::TMacroSetter("labels")
-    )
-  );
-  stateXGridVisible = States->Register("gridvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<TXGrid>(FXApp->XGrid(),
-        &TXGrid::IsVisible),
-      new TStateRegistry::TNoneSetter()
-    )
-  );
-  stateWBoxVisible = States->Register("wboxvis",
-    new TStateRegistry::Slot(
-      TStateRegistry::NewGetter<T3DFrameCtrl>(FXApp->Get3DFrame(),
-        &T3DFrameCtrl::IsVisible),
-      TStateRegistry::NewSetter<T3DFrameCtrl>(FXApp->Get3DFrame(),
-        &T3DFrameCtrl::SetVisible)
     )
   );
   //stateGlTooltips = States->Register("GLTT");
@@ -3598,22 +3430,12 @@ bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
     THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
     return (pp != NULL) ? pp->Dialog->IsShown() : false;
   }
-  //if( state == prsHtmlTTVis )  {
-  //  if( stateData.IsEmpty() )
-  //    return HtmlManager.main->GetShowTooltips();
-  //  THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
-  //  return (pp != NULL) ? pp->Html->GetShowTooltips() : false;
-  //}
   if (state == statePluginInstalled) {
     if( stateData.IsEmpty() ) return false;
     return FPluginItem->ItemExists(stateData);
   }
   if( state == stateCmdLineVisible )
     return CmdLineVisible;
-  if( state == stateXGridVisible )
-    return FXApp->XGrid().IsVisible();
-  if( state == stateWBoxVisible )
-    return FXApp->Get3DFrame().IsVisible();
   return false;
 }
 //..............................................................................
@@ -4178,14 +4000,6 @@ void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
   }
   catch (const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
-  }
-}
-//..............................................................................
-void TMainForm::ToClipboard(const olxstr &text) const {
-  if( wxTheClipboard->Open() )  {
-    if (wxTheClipboard->IsSupported(wxDF_TEXT) )
-      wxTheClipboard->SetData(new wxTextDataObject(text.u_str()));
-    wxTheClipboard->Close();
   }
 }
 //..............................................................................

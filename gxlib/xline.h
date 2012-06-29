@@ -52,6 +52,7 @@ public:
     TXBond::UpdatePrimitives(mask);
   }
   TGPCollection& GetPrimitives() const {  return TXBond::GetPrimitives();  }
+  bool IsDeleted() const { return TXBond::IsDeleted(); }
   TXGlLabel& GetGlLabel() const {  return TXBond::GetGlLabel();  }
 };
 

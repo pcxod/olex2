@@ -4,6 +4,12 @@
 #include "beevers-lipson.h"
 #include "unitcell.h"
 #include "xgrid.h"
+#include "gllabels.h"
+#include "symmparser.h"
+#include "cif.h"
+#include "vcov.h"
+#include "xline.h"
+#include "olxstate.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro(\
@@ -88,6 +94,47 @@ void GXLibMacros::Export(TLibrary& lib) {
     );
   gxlib_InitMacro(TelpV, EmptyString(), fpOne,
     "Calculates ADP scale for given thermal probability (in %)");
+  gxlib_InitMacro(Labels,
+    "p-part&;"
+    "l-label&;"
+    "v-variables&;"
+    "o-occupancy&;"
+    "co-chemical occupancy&;"
+    "a-afix&;"
+    "h-show hydrogen atom labels&;"
+    "f-fixed parameters&;"
+    "u-Uiso&;"
+    "r-Uiso multiplier for riding atoms&;"
+    "ao-actual occupancy (as in the ins file)&;"
+    "qi-Q peak intensity&;"
+    "i-display labels for identity atoms only&;"
+    "f-applies given format to the labels like -f=AaBB Aaaa or -f=Aabb etc",
+    fpNone,
+    "Inverts visibility of atom labels on/off. Look at the options");
+  gxlib_InitMacro(Label,
+    "type-type of labels to make - subscript, brackers, default&;"
+    "symm-symmetry dependent tag type {[$], #, full}&;"
+    "cif-creates labels for CIF data a combination of {b,a,t,h}",
+    fpAny,
+    "Creates moveable labels for provided atoms/bonds/angles (selection)");
+  gxlib_InitMacro(ShowH,
+    EmptyString(),
+    fpNone|fpTwo|psFileLoaded,
+    "Changes the H-atom and H-bonds visibility");
+  gxlib_InitMacro(Info,
+    "s-sorts the atom list&;p-coordinate precision [3]&;f-print fractional "
+    "coordinates vs Cartesian [true]&;"
+    "c-copy the printed information ito the clipboard",
+    fpAny,
+    "Prints out information for gived [all] atoms");
+  gxlib_InitMacro(ShowQ,
+    "wheel-number of peaks to hide (if negative) or to show ",
+    fpNone|fpOne|fpTwo|psFileLoaded,
+    "Traverses the three states - peaks and peak bonds are visible, only peaks"
+    " visible, no peaks or peak bonds. One numeric argument is taken to "
+    "increment/decrement the numegbr of visibe peaks. Two aruments are taken "
+    "to control the visibility of atoms or bonds, like in: 'showq a true' or "
+    "'showq b false'");
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -563,4 +610,364 @@ void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
 {
   TGXApp::GetInstance().CalcProbFactor(Cmds[0].ToDouble());
 }
+//.............................................................................
+void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  TStrList Output;
+  app.InfoList(Cmds.IsEmpty() ? EmptyString() : Cmds.Text(' '),
+    Output, Options.Contains("p"),
+    Options.FindValue('p', "-3").ToInt(),
+    Options.Contains('f')
+  );
+  TBasicApp::NewLogEntry() << Output;
+  if (Options.Contains('c'))
+    app.ToClipboard(Output);
+}
+//.............................................................................
+void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  short lmode = 0;
+  if (Options.Contains('p'))   lmode |= lmPart;
+  if (Options.Contains('l'))   lmode |= lmLabels;
+  if (Options.Contains('v'))   lmode |= lmOVar;
+  if (Options.Contains('o'))   lmode |= lmOccp;
+  if (Options.Contains("ao"))  lmode |= lmAOcc;
+  if (Options.Contains('u'))   lmode |= lmUiso;
+  if (Options.Contains('r'))   lmode |= lmUisR;
+  if (Options.Contains('a'))   lmode |= lmAfix;
+  if (Options.Contains('h'))   lmode |= lmHydr;
+  if (Options.Contains('f'))   lmode |= lmFixed;
+  if (Options.Contains("qi"))  lmode |= lmQPeakI;
+  if (Options.Contains('i'))   lmode |= lmIdentity;
+  if (Options.Contains("co"))  lmode |= lmCOccu;
+  TGXApp &app = TGXApp::GetInstance();
+  if( lmode == 0 )  {
+    lmode |= lmLabels;
+    lmode |= lmQPeak;
+    app.SetLabelsMode(lmode);
+    if (Cmds.Count() == 1 && Cmds[0].IsBool())
+      app.SetLabelsVisible(Cmds[0].ToBool());
+    else
+      app.SetLabelsVisible(!app.AreLabelsVisible());
+  }
+  else  {
+    app.SetLabelsMode(lmode |= lmQPeak);
+    app.SetLabelsVisible(true);
+  }
+  TStateRegistry::GetInstance().SetState(app.stateLabelsVisible,
+    app.AreLabelsVisible(), EmptyString(), true);
+}
+//.............................................................................
+void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TGXApp &app = TGXApp::GetInstance();
+  TXAtomPList atoms;
+  TXBondPList bonds;
+  TPtrList<TXLine> lines;
+  if( Cmds.IsEmpty() )  {
+    TGlGroup& sel = app.GetSelection();
+    for( size_t i=0; i < sel.Count(); i++)  {
+      if( EsdlInstanceOf(sel[i], TXAtom) )
+        atoms.Add((TXAtom&)sel[i]);
+      else if( EsdlInstanceOf(sel[i], TXBond) )
+        bonds.Add((TXBond&)sel[i]);
+      else if( EsdlInstanceOf(sel[i], TXLine) )
+        lines.Add((TXLine&)sel[i]);
+    }
+    if( atoms.IsEmpty() && bonds.IsEmpty() && lines.IsEmpty() )  {
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      atoms.SetCapacity(ai.count);
+      while( ai.HasNext() )  {
+        TXAtom& xa = ai.Next();
+        if( xa.IsVisible() )
+          atoms.Add(xa);
+      }
+      TGXApp::BondIterator bi = app.GetBonds();
+      bonds.SetCapacity(bi.count);
+      while( bi.HasNext() )  {
+        TXBond& xb = bi.Next();
+        if( xb.IsVisible() )
+          bonds.Add(xb);
+      }
+    }
+  }
+  else
+    atoms = app.FindXAtoms(Cmds, true, false);
+  short lt = 0, symm_tag = 0;
+  const olxstr str_lt = Options.FindValue("type");
+  olxstr str_symm_tag = Options.FindValue("symm");
+  // enforce the default
+  if( Options.Contains("symm") && str_symm_tag.IsEmpty() )
+    str_symm_tag = '$';
+  if( str_lt.Equalsi("brackets") )
+    lt = 1;
+  else if( str_lt.Equalsi("subscript") )
+    lt = 2;
+  // have to kill labels in this case, for consistency of _$ or ^#
+  if( str_symm_tag =='$' || str_symm_tag == '#' )  {
+    for( size_t i=0; i < app.LabelCount(); i++ )
+      app.GetLabel(i).SetVisible(false);
+    symm_tag = (str_symm_tag =='$' ? 1 : 2);
+  }
+  else if( str_symm_tag.Equals("full") )
+    symm_tag = 3;
+  TTypeList<uint32_t> equivs;
+  for( size_t i=0; i < atoms.Count(); i++ )  {
+    TXGlLabel& gxl = atoms[i]->GetGlLabel();
+    olxstr lb;
+    if( lt != 0 &&
+        atoms[i]->GetLabel().Length() > atoms[i]->GetType().symbol.Length() )
+    {
+      olxstr bcc = atoms[i]->GetLabel().SubStringFrom(
+        atoms[i]->GetType().symbol.Length());
+      lb = atoms[i]->GetType().symbol;
+      if( lt == 1 )
+        lb << '(' << bcc << ')';
+      else if( lt == 2 )
+        lb << "\\-" << bcc;
+    }
+    else
+      lb = atoms[i]->GetLabel();
+    if( !atoms[i]->IsAUAtom() )  {
+      if( symm_tag == 1 || symm_tag == 2 )  {
+        size_t pos = equivs.IndexOf(atoms[i]->GetMatrix().GetId());
+        if( pos == InvalidIndex )  {
+          equivs.AddCopy(atoms[i]->GetMatrix().GetId());
+          pos = equivs.Count()-1;
+        }
+        if( symm_tag == 1 )
+          lb << "_$" << (pos+1);
+        else
+          lb << "\\+" << (pos+1);
+      }
+      else if( symm_tag == 3 )
+        lb << ' ' << TSymmParser::MatrixToSymmEx(atoms[i]->GetMatrix());
+    }
+    gxl.SetOffset(atoms[i]->crd());
+    gxl.SetLabel(lb);
+    gxl.SetVisible(true);
+  }
+  TPtrList<TXGlLabel> labels;
+  if( !bonds.IsEmpty() )  {
+    VcoVContainer vcovc(app.XFile().GetAsymmUnit());
+    bool have_vcov = false;
+    try  {
+      olxstr src_mat = app.InitVcoV(vcovc);
+      app.NewLogEntry() << "Using " << src_mat <<
+        " matrix for the calculation";
+      have_vcov = true;
+    }
+    catch(const TExceptionBase&)  {}
+    for( size_t i=0; i < bonds.Count(); i++ )  {
+      TXGlLabel& l = bonds[i]->GetGlLabel();
+      l.SetOffset(bonds[i]->GetCenter());
+      if( have_vcov ) {
+        l.SetLabel(vcovc.CalcDistance(bonds[i]->A(),
+          bonds[i]->B()).ToString());
+      }
+      else
+        l.SetLabel(olxstr::FormatFloat(3, bonds[i]->Length()));
+      labels.Add(l);
+    }
+  }
+  for( size_t i=0; i < lines.Count(); i++ )
+    lines[i]->GetGlLabel().SetVisible(true);
+
+  for( size_t i=0; i < equivs.Count(); i++ )  {
+    smatd m = app.XFile().GetUnitCell().GetMatrix(
+      smatd::GetContainerId(equivs[i]));
+    m.t += smatd::GetT(equivs[i]);
+    olxstr line("$");
+    line << (i+1);
+    line.RightPadding(4, ' ', true) << TSymmParser::MatrixToSymmEx(m);
+    if( i != 0 && (i%3) == 0 )
+      TBasicApp::GetLog() << NewLineSequence();
+    TBasicApp::GetLog() << line.RightPadding(26, ' ');
+  }
+  TBasicApp::GetLog() << NewLineSequence();
+
+  const olxstr _cif = Options.FindValue("cif");
+  if( !_cif.IsEmpty() )  {
+    if( app.CheckFileType<TCif>() )  {
+      const TCifDataManager& cifdn =
+        app.XFile().GetLastLoader<TCif>().GetDataManager();
+      const TGlGroup& sel = app.GetSelection();
+      for( size_t i=0; i < sel.Count(); i++ )  {
+        if( EsdlInstanceOf(sel[i], TXBond) )  {
+          TXBond& xb = (TXBond&)sel[i];
+          ACifValue* v = cifdn.Match(xb.A(), xb.B());
+          if( v == NULL )  continue;
+          TXGlLabel& l = xb.GetGlLabel();
+          l.SetOffset(xb.GetCenter());
+          l.SetLabel(v->GetValue().ToString());
+          labels.Add(l);
+        }
+      }
+    }
+    else  {
+      const TGlGroup& sel = app.GetSelection();
+      for( size_t i=0; i < sel.Count(); i++ )  {
+        if( EsdlInstanceOf(sel[i], TXBond) )  {
+          TXBond& xb = (TXBond&)sel[i];
+          TXGlLabel& l = xb.GetGlLabel();
+          l.SetOffset(xb.GetCenter());
+          l.SetLabel(olxstr::FormatFloat(2, xb.Length()));
+          labels.Add(l);
+        }
+      }
+    }
+  }
+  for( size_t i=0; i < labels.Count(); i++ )  {
+    TXGlLabel& l = *labels[i];
+    vec3d off(-l.GetRect().width/2, -l.GetRect().height/2, 0);
+    const double scale1 =
+      l.GetFont().IsVectorFont() ? 1.0/app.GetRender().GetScale() : 1.0;
+    const double scale = scale1/app.GetRender().GetBasis().GetZoom();
+    l.TranslateBasis(off*scale);
+    l.SetVisible(true);
+  }
+  app.SelectAll(false);
+}
 //..............................................................................
+void GXLibMacros::macShowH(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  TEBasis basis = app.GetRender().GetBasis();
+  if( Cmds.Count() == 2 )  {
+    bool v = Cmds[1].ToBool();
+    if( Cmds[0] == 'a' )  {
+      if( v && !app.AreHydrogensVisible() )  {
+        app.SetHydrogensVisible(true);
+      }
+      else if( !v && app.AreHydrogensVisible() )  {
+        app.SetHydrogensVisible(false);
+      }
+    }
+    else if( Cmds[0] == 'b' )  {
+      if( v && !app.AreHBondsVisible() )  {
+        app.SetHBondsVisible(true);
+      }
+      else if( !v && app.AreHBondsVisible() )  {
+        app.SetHBondsVisible(false);
+      }
+    }
+  }
+  else  {
+    if( app.AreHydrogensVisible() && !app.AreHBondsVisible() )  {
+      app.SetHBondsVisible(true);
+    }
+    else if( app.AreHydrogensVisible() && app.AreHBondsVisible() )  {
+      app.SetHBondsVisible(false);
+      app.SetHydrogensVisible(false);
+    }
+    else if( !app.AreHydrogensVisible() && !app.AreHBondsVisible() )  {
+      app.SetHydrogensVisible(true);
+    }
+  }
+  TStateRegistry::GetInstance().SetState(app.stateHydrogensVisible,
+    app.AreHydrogensVisible(), EmptyString(), true);
+  TStateRegistry::GetInstance().SetState(app.stateHydrogenBondsVisible,
+    app.AreHBondsVisible(), EmptyString(), true);
+  app.GetRender().SetBasis(basis);
+}
+//.............................................................................
+int GXLibMacros::QPeakSortA(const TCAtom &a, const TCAtom &b)  {
+  double v = a.GetQPeak() - b.GetQPeak();
+  if (v == 0 && a.GetLabel().Length() > 1 && b.GetLabel().Length() > 1) {
+    if (a.GetLabel().SubStringFrom(1).IsNumber() &&
+        b.GetLabel().SubStringFrom(1).IsNumber())
+    {
+      v = b.GetLabel().SubStringFrom(1).ToInt() -
+        a.GetLabel().SubStringFrom(1).ToInt();
+    }
+  }
+  return v < 0 ? 1 : (v > 0 ? -1 : 0);
+}
+void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  double wheel = Options.FindValue("wheel", '0').ToDouble();
+  TGXApp &app = TGXApp::GetInstance();
+  TEBasis basis = app.GetRender().GetBasis();
+  if( wheel != 0 )  {
+    //if( !app.QPeaksVisible() )  return;
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    TCAtomPList qpeaks;
+    for( size_t i=0; i < au.AtomCount(); i++ )
+      if( !au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ )
+        qpeaks.Add(au.GetAtom(i));
+    QuickSorter::SortSF(qpeaks, GXLibMacros::QPeakSortA);
+    index_t d_cnt = 0;
+    for( size_t i=0; i < qpeaks.Count(); i++ )
+      if( !qpeaks[i]->IsDetached() )
+        d_cnt++;
+    if( d_cnt == 0 && wheel < 0 )  return;
+    if( d_cnt == qpeaks.Count() && wheel > 0 )  return;
+    d_cnt += (int)(wheel);
+    if( d_cnt < 0 )  d_cnt = 0;
+    if( d_cnt > (int)qpeaks.Count() )
+      d_cnt = qpeaks.Count();
+    for( size_t i=0; i < qpeaks.Count(); i++ )
+      qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
+    //app.XFile().GetLattice().UpdateConnectivityInfo();
+    app.UpdateConnectivity();
+    app.Draw();
+  }
+  else if( Cmds.Count() == 2 )  {
+    bool v = Cmds[1].ToBool();
+    if( Cmds[0] == "a" )  {
+      if( v && !app.AreQPeaksVisible() )  {
+        app.SetQPeaksVisible(true);
+      }
+      else if( !v && app.AreQPeaksVisible() )  {
+        app.SetQPeaksVisible(false);
+      }
+    }
+    else if( Cmds[0] == "b" )  {
+      if( v && !app.AreQPeakBondsVisible() )  {
+        app.SetQPeakBondsVisible(true);
+      }
+      else if( !v && app.AreQPeakBondsVisible() )  {
+        app.SetQPeakBondsVisible(false);
+      }
+    }
+  }
+  else if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
+    index_t num = Cmds[0].ToInt();
+    const bool negative = num < 0;
+    if( num < 0 )  num = olx_abs(num);
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    TCAtomPList qpeaks;
+    for( size_t i=0; i < au.AtomCount(); i++ )
+      if( au.GetAtom(i).GetType() == iQPeakZ )
+        qpeaks.Add(au.GetAtom(i));
+    QuickSorter::SortSF(qpeaks,
+      negative ? GXLibMacros::QPeakSortD : GXLibMacros::QPeakSortA);
+    num = olx_min(qpeaks.Count()*num/100, qpeaks.Count());
+    for( size_t i=0; i < qpeaks.Count(); i++ )  
+      qpeaks[i]->SetDetached( i >= (size_t)num );
+    app.GetSelection().Clear();
+    app.UpdateConnectivity();
+    app.Draw();
+  }
+  else  {
+    if( (!app.AreQPeaksVisible() && !app.AreQPeakBondsVisible()) )  {
+      app.SetQPeaksVisible(true);
+    }
+    else if( app.AreQPeaksVisible() && !app.AreQPeakBondsVisible())  {
+      app.SetQPeakBondsVisible(true);
+    }
+    else if( app.AreQPeaksVisible() && app.AreQPeakBondsVisible() )  {
+      app.SetQPeaksVisible(false);
+      app.SetQPeakBondsVisible(false);
+    }
+  }
+  TStateRegistry::GetInstance().SetState(app.stateQPeaksVisible,
+    app.AreQPeaksVisible(), EmptyString(), true);
+  TStateRegistry::GetInstance().SetState(app.stateQPeakBondsVisible,
+    app.AreQPeakBondsVisible(), EmptyString(), true);
+  app.GetRender().SetBasis(basis);
+}

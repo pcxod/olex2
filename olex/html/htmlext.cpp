@@ -15,7 +15,7 @@
 #include "imgcellext.h"
 #include "wx/tooltip.h"
 #include "../xglapp.h"
-#include "../obase.h"
+#include "olxstate.h"
 #include "wxzipfs.h"
 
 olxstr THtml::SwitchSource;
