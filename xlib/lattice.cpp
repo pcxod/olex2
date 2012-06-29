@@ -88,6 +88,7 @@ void TLattice::Clear(bool ClearUnitCell)  {
   ClearFragments();
   ClearMatrices();
   ClearPlanes();
+  PlaneDefs.Clear();
   if( ClearUnitCell )  {
     GetUnitCell().Clear();
     GetAsymmUnit().Clear();
