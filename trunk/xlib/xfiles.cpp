@@ -242,6 +242,10 @@ void TXFile::UpdateAsymmUnit()  {
   ValidateTabs();
   LL->GetRM().Assign(RefMod, false);
   LL->GetAsymmUnit().SetZ(GetAsymmUnit().GetZ());
+  LL->GetAsymmUnit().GetAxes() = GetAsymmUnit().GetAxes();
+  LL->GetAsymmUnit().GetAxisEsds() = GetAsymmUnit().GetAxisEsds();
+  LL->GetAsymmUnit().GetAngles() = GetAsymmUnit().GetAngles();
+  LL->GetAsymmUnit().GetAngleEsds() = GetAsymmUnit().GetAngleEsds();
 }
 //..............................................................................
 void TXFile::Sort(const TStrList& ins)  {
