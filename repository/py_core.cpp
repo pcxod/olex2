@@ -292,7 +292,8 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* pyMatrixToString(PyObject* self, PyObject* args)  {
   PyObject *m[3], *tp;
-  if (!PyArg_ParseTuple(args, "O", &tp))
+  bool normalise_t=true;
+  if (!PyArg_ParseTuple(args, "O|b", &tp, &normalise_t))
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
   if (!PyArg_ParseTuple(tp, "OOO", &m[0], &m[1], &m[2]))
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "OOO");
@@ -304,7 +305,8 @@ PyObject* pyMatrixToString(PyObject* self, PyObject* args)  {
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiif");
     matr.r[i][0] = x; matr.r[i][1] = y; matr.r[i][2] = z; matr.t[i] = t;
   }
-  return PythonExt::BuildString(TSymmParser::MatrixToSymm(matr));
+  return PythonExt::BuildString(normalise_t ? TSymmParser::MatrixToSymmEx(matr)
+    : TSymmParser::MatrixToSymm(matr));
 }
 //..............................................................................
 PyObject* pyHklStat(PyObject* self, PyObject* args)  {
