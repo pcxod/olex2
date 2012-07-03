@@ -79,7 +79,7 @@ void TLS::printTLS(const olxstr &title) const {
 }
 
 void TLS::printDiff(const olxstr &title) const {
-  TTTable<TStrList> tab(atoms.Count()*2, 8);
+  TTTable<TStrList> tab(atoms.Count()*2, 10);
   tab.ColName(0) = "Atom";
   tab.ColName(1) = "U11";
   tab.ColName(2) = "U22";
@@ -87,20 +87,20 @@ void TLS::printDiff(const olxstr &title) const {
   tab.ColName(4) = "U23";
   tab.ColName(5) = "U31";
   tab.ColName(6) = "U12";
-  tab.ColName(7) = "1000*dV/sum(V)";
+  tab.ColName(7) = "dV/A^3";
+  tab.ColName(8) = "V/A^3";
+  tab.ColName(9) = "100*dV/V";
   evecd Q(6);
   double UobsVolSum=0, UobsVolSum_sq=0, R1=0, R2=0;
   for (size_t i=0; i < atoms.Count(); i++) {
-    double v = atoms[i]->GetEllipsoid()->CalcVolume();
+    const double v = atoms[i]->GetEllipsoid()->CalcVolume();
     UobsVolSum += v;
     UobsVolSum_sq += v*v;
-  }
-  for (size_t i=0; i < atoms.Count(); i++) {
     size_t idx = i*2;
     tab[idx][0] = atoms[i]->GetGuiLabel();
     atoms[i]->GetEllipsoid()->GetShelxQuad(Q);
     for (size_t j=0; j < 6; j++)
-      tab[idx][j+1] = olxstr::FormatFloat(-4, Q[j], true);
+      tab[idx][j+1] = olxstr::FormatFloat(-3, Q[j], true);
     tab[idx+1][0] = "Utls";
     Q = GetElpList()[i];
     double dV = (atoms[i]->GetEllipsoid()->CalcVolume() -
@@ -108,14 +108,18 @@ void TLS::printDiff(const olxstr &title) const {
     R1 += olx_abs(dV);
     R2 += dV*dV;
     for (size_t j=0; j < 6; j++)
-      tab[idx+1][j+1] = olxstr::FormatFloat(-4, Q[j], true);
-    tab[idx][7] = olxstr::FormatFloat(-4, 100*dV/UobsVolSum);
+      tab[idx+1][j+1] = olxstr::FormatFloat(-3, Q[j], true);
+    tab[idx][7] = olxstr::FormatFloat(-3, dV, true);
+    tab[idx][8] = olxstr::FormatFloat(3, v, true);
+    tab[idx][9] = olxstr::FormatFloat(-3, 100*dV/v);
   }
   TBasicApp::NewLogEntry() << tab.CreateTXTList(title, true, false, ' ');
   TBasicApp::NewLogEntry() << "R1(vol)=" <<
-    olxstr::FormatFloat(2, 100*R1/UobsVolSum);
+    olxstr::FormatFloat(2, 100*R1/UobsVolSum) << " %";
   TBasicApp::NewLogEntry() << "R2(vol)=" <<
-    olxstr::FormatFloat(2, 100*sqrt(R2/UobsVolSum_sq));
+    olxstr::FormatFloat(2, 100*sqrt(R2/UobsVolSum_sq)) << " %";
+  TBasicApp::NewLogEntry() << "sum(V)=" <<
+    olxstr::FormatFloat(3, 100*UobsVolSum, true) << " A^3";
 }
 
 void TLS::printFOM() const {
