@@ -82,6 +82,18 @@ void TCmdLine::SetCommand(const olxstr& cmd)  {
   SetInsertionPointEnd();
 }
 //..............................................................................
+const olxstr& TCmdLine::GetLastCommand(const olxstr &name) const {
+  for (size_t i=Commands.Count()-1; i != InvalidIndex; i--) {
+    if (Commands[i].StartsFromi(name) &&
+        Commands[i].Length() > name.Length() &&
+        Commands[i][name.Length()] == ' ')
+    {
+      return Commands[i];
+    }
+  }
+  return EmptyString();
+}
+//..............................................................................
 bool TCmdLine::WillProcessKey(wxKeyEvent& evt) {
   if (evt.HasModifiers()) return false;
   olxstr tx = GetText();
