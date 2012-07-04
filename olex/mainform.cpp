@@ -727,7 +727,8 @@ void TMainForm::XApp(TGXApp *XA)  {
     "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only; [fit] "
       "afix\n&;"
     "p-[name] prefix\n&;"
-    "s-[grow] short interactions; [name] suffix; [fit] split&;"
+    "s-[grow] short interactions; [name] suffix;"
+      " [fit] split, atoms to split offset [0]&;"
     "t-[name] type\n&;"
     "c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;"
     "r-[split] a restraint/constraint for split atoms; [grow] show radial "
@@ -2172,7 +2173,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
             tmp = FCmdLine->GetLastCommand(tmp.SubStringFrom(1));
           else if (EsdlInstanceOf(*Sender, TGlConsole))
             tmp = FGlConsole->GetLastCommand(tmp.SubStringFrom(1));
-          if (!tmp.IsEmpty())  FullCmd = tmp;
+          if (!tmp.IsEmpty()) {
+            FullCmd = tmp;
+            TBasicApp::NewLogEntry() << FullCmd;
+          }
         }
         processMacro(FullCmd, "Console");
       }
@@ -2288,6 +2292,10 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     TXAtomPList xatoms;
     TXBondPList xbonds;
     FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
+    for (size_t i=0; i < xatoms.Count(); i++) {
+      FXApp->XFile().GetRM().Vars.FixParam(
+        xatoms[i]->CAtom(), catom_var_name_Sof);
+    }
     FXApp->CenterView(true);
     AMode *md = Modes->GetCurrent();
     if( md != NULL )  {
