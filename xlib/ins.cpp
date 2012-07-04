@@ -340,6 +340,20 @@ void TIns::_FinishParsing(ParseContext& cx)  {
         Param->GetObject(j) = GetAsymmUnit().FindCAtom(Param->GetString(j));
     }
   }
+  // automatically generate the 'extras'
+  olxdict<TCAtom*, TCAtomPList, TPointerComparator> extras;
+  for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
+    TCAtom &a = GetAsymmUnit().GetAtom(i);
+    if (a.GetUisoOwner() != NULL && a.GetAfix() == 0) {
+      extras.Add(a.GetUisoOwner()).Add(a);
+    }
+  }
+  for (size_t i=0; i < extras.Count(); i++) {
+    TCAtom * owner = const_cast<TCAtom *>(extras.GetKey(i));
+    TAfixGroup &ag = GetRM().AfixGroups.New(owner, -1);
+    for (size_t j=0; j < extras.GetValue(i).Count(); j++)
+      ag.AddDependent(*extras.GetValue(i)[j]);
+  }
   cx.rm.Vars.Validate();
   cx.rm.ProcessFrags();
 }
