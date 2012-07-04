@@ -83,7 +83,9 @@ public:
   double GetZ() const;
   size_t GetCommandCount() const {  return FCommands.Count();  }
   const olxstr& GetCommandByIndex(size_t i) const {  return FCommands[i];  }
-  size_t GetCommandIndex() const  {  return FCmdPos;  }
+  const olxstr& GetLastCommand(const olxstr &name) const;
+
+  size_t GetCommandIndex() const {  return FCmdPos;  }
   void SetCommandIndex(size_t i) {  FCmdPos = i;  }
 
   bool Orient(TGlPrimitive& P);

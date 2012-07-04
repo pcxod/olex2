@@ -2167,6 +2167,13 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       else  {
         FHelpWindow->SetVisible(false);
         olxstr FullCmd(tmp);
+        if (tmp.StartsFrom('!')) {
+          if (CmdLineVisible && EsdlInstanceOf(*Sender, TCmdLine))
+            tmp = FCmdLine->GetLastCommand(tmp.SubStringFrom(1));
+          else if (EsdlInstanceOf(*Sender, TGlConsole))
+            tmp = FGlConsole->GetLastCommand(tmp.SubStringFrom(1));
+          if (!tmp.IsEmpty())  FullCmd = tmp;
+        }
         processMacro(FullCmd, "Console");
       }
       if( CmdLineVisible && EsdlInstanceOf(*Sender, TCmdLine) )

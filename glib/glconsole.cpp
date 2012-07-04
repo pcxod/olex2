@@ -481,6 +481,18 @@ void TGlConsole::SetCommand(const olxstr& NewCmd)  {
   SetInsertPosition( FCommand.Length() );
 }
 //..............................................................................
+const olxstr& TGlConsole::GetLastCommand(const olxstr &name) const {
+  for (size_t i=FCommands.Count()-1; i != InvalidIndex; i--) {
+    if (FCommands[i].StartsFromi(name) &&
+        FCommands[i].Length() > name.Length() &&
+        FCommands[i][name.Length()] == ' ')
+    {
+      return FCommands[i];
+    }
+  }
+  return EmptyString();
+}
+//..............................................................................
 void TGlConsole::ClearBuffer()  {
   size_t lc = FBuffer.Count();
   for( size_t i=0; i < lc; i++ )
