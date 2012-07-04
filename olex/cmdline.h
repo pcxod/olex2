@@ -32,7 +32,7 @@ public:
       : EmptyString();
   }
   void SetCommand(const olxstr& cmd);
-  const olxstr& TCmdLine::GetLastCommand(const olxstr &name) const;
+  const olxstr& GetLastCommand(const olxstr &name) const;
 
   TActionQueue &OnCommand;
 };
