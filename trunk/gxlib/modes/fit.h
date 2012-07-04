@@ -22,6 +22,7 @@ class TFitMode : public AEventsDispatcher, public AMode  {
   vec3d_alist original_crds;
   bool Initialised, DoSplit;
   int afix;
+  size_t split_offset;
   class OnUniqHandler : public AActionHandler {
     TFitMode& fit_mode;
   public:
@@ -83,11 +84,13 @@ public:
     gxapp.EnableSelection(false);
   }
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
-    if( gxapp.XFile().GetLattice().IsGenerated() )  {
-      TBasicApp::NewLogEntry(logError) << "Unavailable for grown structures";
-      return false;
-    }
     DoSplit = Options.Contains('s');
+    if (DoSplit) {
+      olxstr s = Options.FindValue('s');
+      if (!s.IsEmpty()) split_offset = s.ToUInt();
+      else
+        split_offset = 0;
+    }
     afix = Options.FindValue('a', "-1").ToInt();
     if (DoSplit && afix != -1) {
       TBasicApp::NewLogEntry(logError) <<
@@ -124,7 +127,7 @@ public:
     XVar& xv = rm.Vars.NewVar(0.75);
     if( DoSplit )  {
       TCAtomPList to_iso;
-      for( size_t i=0; i < Atoms.Count(); i++ )  {
+      for( size_t i=split_offset; i < Atoms.Count(); i++ )  {
         if( Atoms[i]->crd().QDistanceTo(original_crds[i]) < 1e-3 )
           continue;
         TXAtom& nxa = gxapp.AddAtom(Atoms[i]);
@@ -159,8 +162,19 @@ public:
       gxapp.XFile().GetLattice().Uniq();
     }
     else  {
-      for( size_t i=0; i < Atoms.Count(); i++ )
+      TUnitCell& uc = gxapp.XFile().GetUnitCell();
+      au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+      Atoms.ForEach(ACollectionItem::TagSetter(
+        FunctionAccessor::MakeConst(&TSAtom::CAtom), 1));
+      for (size_t i=0; i < Atoms.Count(); i++) {
         Atoms[i]->CAtom().ccrd() = au.Fractionalise(Atoms[i]->crd());
+        TTypeList<AnAssociation2<TCAtom*, vec3d> > res;
+        uc.FindInRangeAC(Atoms[i]->CAtom().ccrd(), 0.5, res);
+        for (size_t j=0; j < res.Count(); j++) {
+          if (res[j].GetA()->GetTag() == 0)
+            res[j].A()->SetDeleted(true);
+        }
+      }
       if (afix != -1 && !Atoms.IsEmpty()) {
         bool has_pivot = TAfixGroup::HasExcplicitPivot(afix);
         TAfixGroup &ag = gxapp.XFile().GetRM().AfixGroups.New(
@@ -169,7 +183,7 @@ public:
         for( size_t i=start; i < Atoms.Count(); i++ )
           ag.AddDependent(Atoms[i]->CAtom());
       }
-      gxapp.XFile().GetLattice().Init();
+      gxapp.XFile().EndUpdate();
     }
     if (undo != NULL) {
       gxapp.GetUndo().Push(undo);
