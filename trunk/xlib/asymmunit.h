@@ -260,8 +260,8 @@ public:
     char a='0', char b='a', char c='a') const;
 
   bool IsQPeakMinMaxInitialised() const {  return MaxQPeak != -1000;  }
-  double GetMaxQPeak() const {  return MaxQPeak;  }
-  double GetMinQPeak() const {  return MinQPeak;  }
+  DefPropP(double, MinQPeak)
+  DefPropP(double, MaxQPeak)
   /* atoms should have at least three atoms for fitting. If the atoms.atom is
   NULL, atoms.element must be provided, if atoms.bool is false, the atom is not
   used in the fitting. The missing atoms will be initialised on successful
@@ -280,12 +280,12 @@ public:
   
   virtual olxstr GetIdName() const {  return IdName;  }
   // note - possibly unsafe, type is not checked
-  virtual size_t GetIdOf(const IXVarReferencer& vr) const {  
+  virtual size_t GetIdOf(const IXVarReferencer& vr) const {
     if( !EsdlInstanceOf(vr, TCAtom) )
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
     return ((TCAtom&)vr).GetId();
   }
-  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {  
+  virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
     if( !EsdlInstanceOf(vr, TCAtom) )
       throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
     return ((TCAtom&)vr).GetTag();

@@ -755,6 +755,10 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
     vcovc.ReadSmtbxMat(smtbx_fn);
     src_mat = "smtbx";
   }
+  else if (CheckFileType<TCif>()) {
+    vcovc.FromCIF();
+    src_mat = "CIF!!!";
+  }
   else {
     throw TFunctionFailedException(__OlxSourceInfo,
       "could not find a variance-covariance matrix");

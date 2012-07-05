@@ -1453,17 +1453,19 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options,
     Error.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
     return;
   }
-  if( !Options.Contains('n') )
-    FXApp->AddLine(EmptyString(), from, to);
-  else
+  olxstr name = Options.FindValue('n');
+  if (Options.Contains('n') && name.IsEmpty())
     FXApp->GetRender().GetBasis().OrientNormal(to-from);
+  else
+    FXApp->AddLine(name, from, to);
   FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSPlane* plane = NULL;
-  bool orientOnly = Options.Contains("n"),
-    rectangular = Options.Contains("r");
+  bool orientOnly = Options.Contains('n'),
+    rectangular = Options.Contains('r');
+  olxstr name = Options.FindValue('n');
   const double weightExtent = olx_abs(Options.FindValue("we", "0").ToDouble());
   olxstr planeName;
   TXAtomPList Atoms = FindXAtoms(Cmds, true, true);
@@ -1477,7 +1479,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "wrong atom count");
     return;
   }
-  if( orientOnly )  {
+  if (orientOnly && name.IsEmpty()) {
     plane = FXApp->TmpPlane(&Atoms, weightExtent);
     if( plane != NULL )  {
       mat3d m = plane->GetBasis();
@@ -1490,7 +1492,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else  {
-    TXPlane* xp = FXApp->AddPlane(Atoms, rectangular, weightExtent);
+    TXPlane* xp = FXApp->AddPlane(name, Atoms, rectangular, weightExtent);
     if( xp != NULL )
       plane = xp;
   }
@@ -3643,8 +3645,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           size_t block_index = cif.GetBlockIndex();
           if( cif.FindLoopGlobal("_refln", true) != NULL )  {
             er.SetRetVal(&cif);
-            Macros.ProcessMacro(
-              olxstr("export ") << TEFile::ExtractFileName(hklFileName), er);
+            Macros.ProcessMacro(olxstr("export ").quote() << hklFileName, er);
             if( !er.IsProcessingError() )  {
               if( !TEFile::Exists(insFileName) )  {
                 TIns ins;
@@ -4368,7 +4369,9 @@ void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->XFile().UpdateAsymmUnit();  // update the last loader RM
 }
 //..............................................................................
-void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   olxstr exName;
   if( !Cmds.IsEmpty() )
     exName = Cmds[0];
@@ -4381,10 +4384,10 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   TCif* C = NULL;
   if( E.RetObj() != NULL && EsdlInstanceOf(*E.RetObj(), TCif) )
-    C = E.GetRetObj< TCif >();
+    C = E.GetRetObj<TCif>();
   else
     C = &FXApp->XFile().GetLastLoader<TCif>();
-  cif_dp::cetTable* hklLoop = C->FindLoop("_refln");
+  cif_dp::cetTable* hklLoop = C->FindLoopGlobal("_refln", true);
   if( hklLoop == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
     return;
@@ -4407,7 +4410,7 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       hklLoop->Get(i, kInd).GetStringValue().ToInt(),
       hklLoop->Get(i, lInd).GetStringValue().ToInt(),
       hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
-      hklLoop->Get(i, sInd).GetStringValue().ToDouble() );
+      hklLoop->Get(i, sInd).GetStringValue().ToDouble());
     file.Append(*r);
   }
   file.SaveToFile(exName);
@@ -6584,8 +6587,10 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
       else {
         for( size_t i=0; i < gpc->ObjectCount(); i++ )  {
           TGlGroup *glg = dynamic_cast<TGlGroup*>(&gpc->GetObject(i));
-          if( glg != NULL )
+          if( glg != NULL ) {
             glg->SetGlM(glm);
+            found = true;
+          }
         }
       }
     }
