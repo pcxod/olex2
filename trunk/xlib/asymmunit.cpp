@@ -369,7 +369,7 @@ TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
   TCAtom *A = new TCAtom(this);
   A->SetId(CAtoms.Count());
   CAtoms.Add(A);
-  if( resi == NULL )  
+  if( resi == NULL )
     resi = &MainResidue;
   resi->_Add(*A);
   return *A;
