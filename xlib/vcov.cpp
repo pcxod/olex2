@@ -169,7 +169,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
         if( ix > iy )
           olx_swap(ix, iy);
         const size_t ind = ix*(2*param_cnt-ix-1)/2+iy;
-        data[i][j] = all_vcov[ind]*diag[i]*diag[j];  
+        data[i][j] = all_vcov[ind]*diag[i]*diag[j];
       }
     }
   }
@@ -423,6 +423,20 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
     }
     const double Ueq = (Um*Ut).DotProd(Ut);
     a.SetUisoEsd(sqrt(Ueq));
+  }
+}
+//.............................................................................
+void VcoVMatrix::FromCIF(TAsymmUnit& au) {
+  Index.SetCapacity(au.AtomCount());
+  Allocate(au.AtomCount()*3, true);
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    TCAtom &a = au.GetAtom(i);
+    Index.AddNew(a.GetLabel(), vcoviX, a.GetId());
+    Index.AddNew(a.GetLabel(), vcoviY, a.GetId());
+    Index.AddNew(a.GetLabel(), vcoviZ, a.GetId());
+    for (int j=0; j < 3; j++) {
+      data[0][i*3+j] = olx_sqr(a.ccrdEsd()[j]);
+    }
   }
 }
 //.............................................................................

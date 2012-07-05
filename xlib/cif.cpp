@@ -277,6 +277,11 @@ void TCif::Initialize()  {
     TBasicApp::NewLogEntry(logInfo) << "CIF initialising failed: zero cell volume";
     return;
   }
+  {
+    olxstr qp = GetParamAsString("_refine_diff_density_max");
+    if (qp.IsNumber())
+      GetAsymmUnit().SetMaxQPeak(qp.ToDouble());
+  }
 
   GetAsymmUnit().InitMatrices();
   bool sg_initialised = false;

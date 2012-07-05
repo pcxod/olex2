@@ -653,7 +653,8 @@ public:
 protected:  float ProbFactor(float Prob);
 public:     void CalcProbFactor(float Prob);
 
-  TXPlane *AddPlane(TXAtomPList& Atoms, bool Rectangular, double weightExtent=0);
+  TXPlane *AddPlane(const olxstr &name, TXAtomPList& Atoms, bool Rectangular,
+    double weightExtent=0);
   TSPlane *TmpPlane(TXAtomPList* Atoms=NULL, double weightExtent=0); 
   void DeletePlane(TXPlane* plane);
   void ClearPlanes();

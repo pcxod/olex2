@@ -171,8 +171,12 @@ public:
         TTypeList<AnAssociation2<TCAtom*, vec3d> > res;
         uc.FindInRangeAC(Atoms[i]->CAtom().ccrd(), 0.5, res);
         for (size_t j=0; j < res.Count(); j++) {
-          if (res[j].GetA()->GetTag() == 0)
+          if (res[j].GetA()->GetTag() == 0 &&
+              (res[j].GetA()->GetPart() == 0 ||
+               res[j].GetA()->GetPart() == Atoms[i]->CAtom().GetPart()))
+          {
             res[j].A()->SetDeleted(true);
+          }
         }
       }
       if (afix != -1 && !Atoms.IsEmpty()) {

@@ -46,9 +46,10 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
   Assigning = false;
   Z = 1;
   RefMod = NULL;
+  MaxQPeak = MinQPeak = 0;
 }
 //..............................................................................
-TAsymmUnit::~TAsymmUnit()  {  
+TAsymmUnit::~TAsymmUnit()  {
   Clear();  
   delete &MainResidue;
 }
@@ -69,6 +70,7 @@ void  TAsymmUnit::Clear()  {
   Ellipsoids.Clear();
   Latt = -1;
   Z = 1;
+  MaxQPeak = MinQPeak = 0;
 }
 //..............................................................................
 void TAsymmUnit::Assign(const TAsymmUnit& C)  {
