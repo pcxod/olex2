@@ -726,7 +726,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Mode,
     "a-[name] autocomplete; [grow] grow (rebuild) asymmetric unit only; [fit] "
       "afix\n&;"
-    "p-[name] prefix\n&;"
+    "p-[name] prefix; [grow] inserts the new atoms into the AU with given [-1]"
+      " part value\n&;"
     "s-[grow] short interactions; [name] suffix;"
       " [fit] split, atoms to split offset [0]&;"
     "t-[name] type\n&;"

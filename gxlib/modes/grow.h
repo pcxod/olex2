@@ -13,11 +13,12 @@
 class TGrowMode : public AMode  {
 protected:
   bool GrowShells;
-  short mode;
+  short mode, part;
   // the size is used to detrmine if the AU is being rebuilt
   TEBitArray detached;
 public:
-  TGrowMode(size_t id) : AMode(id), GrowShells(false), mode(0)  {}
+  TGrowMode(size_t id)
+    : AMode(id), GrowShells(false), mode(0), part(0)  {}
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     bool SI = Options.Contains('s'),
          Cov = Options.Contains('c'),
@@ -34,8 +35,17 @@ public:
     }
     else if( Rad )
       mode = gmSameAtoms;
-    if( mode == 0 )  
+    if( mode == 0 )
       mode = gmCovalent;
+    if (Options.Contains('p')) {
+      if (mode != gmCovalent || Options.Contains('a')) {
+        TBasicApp::NewLogEntry(logError) << "Incompatible values";
+        return false;
+      }
+      olxstr pv = Options.FindValue('p');
+      part = pv.IsEmpty() ? -1 : pv.ToInt();
+      GrowShells = true;
+    }
     // the AU rebuilding mode, enfoces grow shells and covalent bonds only
     if( Options.Contains('a') )  {
       TAsymmUnit &au = gxapp.XFile().GetAsymmUnit();
@@ -68,6 +78,22 @@ public:
           au.GetAtom(i).SetDetached(false);
       }
       gxapp.XFile().GetLattice().CompaqQ();
+    }
+    if (part != 0) {
+      TLattice& latt = gxapp.XFile().GetLattice();
+      for (size_t i=0; i < latt.GetObjects().atoms.Count(); i++) {
+        TSAtom &a = latt.GetObjects().atoms[i];
+        a.CAtom().SetOccu(a.CAtom().GetOccu()/2);
+        if (!a.GetMatrix().IsFirst()) {
+          TCAtom &ca = latt.GetAsymmUnit().NewAtom();
+          ca.ccrd() = a.ccrd();
+          ca.SetType(a.GetType());
+          ca.SetPart(part);
+          ca.SetOccu(a.CAtom().GetOccu());
+          gxapp.XFile().GetRM().Vars.FixParam(ca, catom_var_name_Sof);
+        }
+      }
+      latt.Init();
     }
   }
   void UpdateAU(size_t ac)  {
