@@ -10,6 +10,8 @@
 #ifndef __OLX_GROW_MODE_H
 #define __OLX_GROW_MODE_H
 #include "xgrowline.h"
+#include "label_corrector.h"
+
 class TGrowMode : public AMode  {
 protected:
   bool GrowShells;
@@ -81,6 +83,7 @@ public:
     }
     if (part != 0) {
       TLattice& latt = gxapp.XFile().GetLattice();
+      LabelCorrector lc(latt.GetAsymmUnit());
       for (size_t i=0; i < latt.GetObjects().atoms.Count(); i++) {
         TSAtom &a = latt.GetObjects().atoms[i];
         a.CAtom().SetOccu(a.CAtom().GetOccu()/2);
@@ -90,6 +93,8 @@ public:
           ca.SetType(a.GetType());
           ca.SetPart(part);
           ca.SetOccu(a.CAtom().GetOccu());
+          ca.SetLabel(a.GetLabel(), false);
+          lc.Correct(ca);
           gxapp.XFile().GetRM().Vars.FixParam(ca, catom_var_name_Sof);
         }
       }
