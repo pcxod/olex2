@@ -89,6 +89,7 @@
 #include "md5.h"
 #include "olxth.h"
 #include "lcells.h"
+#include "label_corrector.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -2292,10 +2293,12 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
     processMacro("mode fit -a=6");
     TXAtomPList xatoms;
     TXBondPList xbonds;
+    LabelCorrector lc(FXApp->XFile().GetAsymmUnit());
     FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
     for (size_t i=0; i < xatoms.Count(); i++) {
       FXApp->XFile().GetRM().Vars.FixParam(
         xatoms[i]->CAtom(), catom_var_name_Sof);
+      lc.Correct(xatoms[i]->CAtom());
     }
     FXApp->CenterView(true);
     AMode *md = Modes->GetCurrent();
