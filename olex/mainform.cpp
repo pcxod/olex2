@@ -959,7 +959,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(ImportFrag,
     "p-part to assign&;"
     "d-generate DFIX for 1-2 and 1-3 distances&;"
-    "a-set specified AFIX to the imported fragment",
+    "a-set specified AFIX to the imported fragment&;"
+    "c-take the content from the clipboard",
     fpNone|psFileLoaded,
     "Import a fragment into current structure");
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,

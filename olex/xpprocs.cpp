@@ -145,6 +145,7 @@
 #include "dsphere.h"
 #include "patchapi.h"
 #include "analysis.h"
+#include "label_corrector.h"
 //#include "gl2ps/gl2ps.c"
 
 static const olxstr StartMatchCBName("startmatch");
@@ -7595,24 +7596,69 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz", XLibMacros::CurrentDir, true);
-  if( FN.IsEmpty() )  return;
+void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  TStrList content;
+  if (Options.Contains('c')) {
+    olxstr clipbrd_content;
+    if( wxTheClipboard->Open() )  {
+      if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
+        wxTextDataObject data;
+        wxTheClipboard->GetData(data);
+        clipbrd_content = data.GetText();
+      }
+      wxTheClipboard->Close();
+    }
+    clipbrd_content.Trim(' ').Trim('\n').Trim('\r');
+    if( !clipbrd_content.StartsFromi("FRAG") ||
+        !clipbrd_content.EndsWithi("FEND") )
+    {
+      E.ProcessingError(__OlxSrcInfo, "Unrecognisable clipboard content");
+      return;
+    }
+    content.Strtok(clipbrd_content, '\n');
+    content.Delete(content.Count()-1);
+    content.Delete(0);
+    for( size_t i=0; i < content.Count(); i++ )  {
+      TStrList toks(content[i].Trim('\r'), ' ');
+      if( toks.Count() != 5 )  {
+        content[i].SetLength(0);
+        continue;
+      }
+      toks.Delete(1);
+      content[i] = toks.Text(' ');
+    }
+  }
+  else {
+    olxstr FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz",
+      XLibMacros::CurrentDir, true);
+    if (FN.IsEmpty()) {
+      E.ProcessingError(__OlxSrcInfo, "A file is expected");
+      return;
+    }
+    content.LoadFromFile(FN);
+  }
   TXyz xyz;
-  xyz.LoadFromFile(FN);
+  xyz.LoadFromStrings(content);
   TXAtomPList xatoms;
   TXBondPList xbonds;
+  LabelCorrector lc(FXApp->XFile().GetAsymmUnit());
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
-  if( xatoms.IsEmpty() )  return;
-  Macros.ProcessMacro("mode fit", E);
   const int part = Options.FindValue("p", "-100").ToInt();
-  if( part != -100 )  {
-    for( size_t i=0; i < xatoms.Count(); i++ )
+  for (size_t i=0; i < xatoms.Count(); i++) {
+    FXApp->XFile().GetRM().Vars.FixParam(
+      xatoms[i]->CAtom(), catom_var_name_Sof);
+    lc.Correct(xatoms[i]->CAtom());
+    if (part != -100)
       xatoms[i]->CAtom().SetPart(part);
   }
+  if( xatoms.IsEmpty() )  return;
+  Macros.ProcessMacro("mode fit", E);
   const int afix = Options.FindValue("a", "-100").ToInt();
   if( afix != -100 )  {
-    TCAtom* pivot = TAfixGroup::HasExcplicitPivot(afix) ? &xatoms[0]->CAtom() : NULL;
+    TCAtom* pivot = TAfixGroup::HasExcplicitPivot(afix) ? &xatoms[0]->CAtom()
+      : NULL;
     TAfixGroup& ag = FXApp->XFile().GetRM().AfixGroups.New(pivot, afix);
     const size_t start = pivot != NULL ? 1 : 0;
     for( size_t i=start; i < xatoms.Count(); i++ )
@@ -7628,7 +7674,8 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
         if( b.GetOwnerId() <= a.GetOwnerId() )  continue;
         const double d = (double)olx_round(a.Bond(j).Length()*1000)/1000;
         const size_t ri = r12.IndexOf(d);
-        TSimpleRestraint& df = (ri == InvalidIndex) ? rm.rDFIX.AddNew() : *r12.GetValue(ri);
+        TSimpleRestraint& df = (ri == InvalidIndex) ? rm.rDFIX.AddNew()
+          : *r12.GetValue(ri);
         df.AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
         if( ri == InvalidIndex )  {
           df.SetValue(d);
@@ -7638,9 +7685,10 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
         for( size_t k=0; k < b.NodeCount(); k++ )  {
           TSAtom& b1 = b.Node(k);
           if( b1.GetOwnerId() <= a.GetOwnerId() )  continue;
-          const double d1 = (double)olx_round(a.crd().DistanceTo(b1.crd())*1000)/1000;
+          const double d1 = olx_round(a.crd().DistanceTo(b1.crd()), 1000);
           const size_t ri1 = r13.IndexOf(d1);
-          TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDFIX.AddNew() : *r13.GetValue(ri1);
+          TSimpleRestraint& df1 = (ri1 == InvalidIndex) ? rm.rDFIX.AddNew()
+            : *r13.GetValue(ri1);
           df1.AddAtomPair(a.CAtom(), NULL, b1.CAtom(), NULL);
           if( ri1 == InvalidIndex )  {
             df1.SetValue(d1);
