@@ -2506,7 +2506,14 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
 {
   TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, false) )  {
+  double r = 2.7;
+  Parse(Cmds, "d", &r);
+  if( r < 1 || r > 10 )  {
+    E.ProcessingError(__OlxSrcInfo, "radius must be within [1;10] range");
+    return;
+  }
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, !Options.Contains("cs")) )
+  {
     E.ProcessingError(__OlxSrcInfo, "no atoms provided");
     return;
   }
@@ -2529,12 +2536,6 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     TBasicApp::NewLogEntry() << out;
-    return;
-  }
-  double r = 2.7;
-  Parse(Cmds, "d", &r);
-  if( r < 1 || r > 10 )  {
-    E.ProcessingError(__OlxSrcInfo, "radius must be within [1;10] range");
     return;
   }
   int prc = Options.FindValue('p', 2).ToInt(),
@@ -5629,8 +5630,9 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
   TXApp &app = TXApp::GetInstance();
   RefinementModel& rm = app.XFile().GetRM();
   int part = DefNoPart;
+  double occu = 0;
   const size_t partCount = Options.FindValue("p", "1").ToSizeT();
-  XLibMacros::Parse(Cmds, "i", &part);
+  XLibMacros::Parse(Cmds, "id", &part, &occu);
   const bool linkOccu = Options.Contains("lo");
   const bool copy = Options.Contains("c");
 
@@ -5669,7 +5671,7 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
       leq = &rm.Vars.NewEquation(1.0, 0.01);
   }
 
-  if( part == DefNoPart ) 
+  if( part == DefNoPart )
     part = rm.aunit.GetNextPart();
 
   for( size_t i=0; i < partCount; i++ )  {
@@ -5709,6 +5711,10 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
           leq->AddMember(
             Atoms[j]->CAtom().GetVarRef(catom_var_name_Sof)->Parent);
         }
+      }
+      else if (occu != 0) {
+        app.XFile().GetRM().Vars.SetParam(
+          Atoms[j]->CAtom(), catom_var_name_Sof, occu);
       }
     }
     part++;
