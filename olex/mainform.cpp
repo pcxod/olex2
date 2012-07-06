@@ -960,6 +960,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "p-part to assign&;"
     "d-generate DFIX for 1-2 and 1-3 distances&;"
     "a-set specified AFIX to the imported fragment&;"
+    "o-set specified occupancy to the imported fragment atoms&;"
     "c-take the content from the clipboard",
     fpNone|psFileLoaded,
     "Import a fragment into current structure");
@@ -2300,6 +2301,7 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
       FXApp->XFile().GetRM().Vars.FixParam(
         xatoms[i]->CAtom(), catom_var_name_Sof);
       lc.Correct(xatoms[i]->CAtom());
+      xatoms[i]->CAtom().SetPart(-1);
     }
     FXApp->CenterView(true);
     AMode *md = Modes->GetCurrent();
@@ -2308,6 +2310,8 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
       for( size_t i=0; i < xbonds.Count(); i++ )
         FXApp->GetRender().Select(*xbonds[i], true);
     }
+    if (FXApp->XFile().GetLattice().IsGenerated())
+      Modes->OnModeExit.Add("fuse");
     return true;
   }
   catch(...)  {  return false;  }

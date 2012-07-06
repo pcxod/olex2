@@ -43,7 +43,9 @@ public:
   const olxstr& GetLabel(size_t ind) const {
     return Envi[ind].A()->GetLabel();
   }
-  const cm_Element& GetType(size_t ind) { return Envi[ind].A()->GetType(); }
+  const cm_Element& GetType(size_t ind) const {
+    return Envi[ind].A()->GetType();
+  }
   TCAtom& GetCAtom(size_t ind) const { return *Envi[ind].A(); }
   const vec3d& GetCrd(size_t ind) const { return Envi[ind].GetC(); }
   const smatd& GetMatrix(size_t ind) const { return Envi[ind].GetB(); }

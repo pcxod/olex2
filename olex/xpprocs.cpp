@@ -2253,9 +2253,12 @@ void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   // this variable is set when the mode is changed from within this function
   static bool ChangingMode = false;
+
   if( ChangingMode )  return;
   olxstr name = Cmds[0], args;
   Cmds.Delete(0);
@@ -2279,7 +2282,9 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   ChangingMode = false;
 }
 //..............................................................................
-void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   olxstr log="output.txt";
   if (!Cmds.IsEmpty()) log = Cmds[0];
   olxstr FN = FXApp->GetInstanceDir() + log;
@@ -4327,7 +4332,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         Lst.TrefTry(i-1).NQual == Lst.TrefTry(i).NQual )
       continue;
     }
-    Solutions.AddCopy(Lst.TrefTry(i).Try);
+    Solutions.Add(Lst.TrefTry(i).Try);
     reps --;
     if( reps <=0 )  break;
   }
@@ -7646,7 +7651,10 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   LabelCorrector lc(FXApp->XFile().GetAsymmUnit());
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms, xbonds);
   const int part = Options.FindValue("p", "-100").ToInt();
+  const double occu = Options.FindValue("o", "-1").ToDouble();
   for (size_t i=0; i < xatoms.Count(); i++) {
+    if (occu > 0)
+      xatoms[i]->CAtom().SetOccu(occu);
     FXApp->XFile().GetRM().Vars.FixParam(
       xatoms[i]->CAtom(), catom_var_name_Sof);
     lc.Correct(xatoms[i]->CAtom());
