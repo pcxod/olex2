@@ -116,7 +116,9 @@ public:
           return fgOH1;
         break;
       case 15:
-        if( envi.GetBase().GetType() == iBoronZ && (envi.Count() == 4 || envi.Count() == 5) )  {
+        if( envi.GetBase().GetType() == iBoronZ &&
+            (envi.Count() == 4 || envi.Count() == 5) )
+        {
           return fgBH1;
         }
         break;

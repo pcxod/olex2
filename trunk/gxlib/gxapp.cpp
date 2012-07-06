@@ -3800,7 +3800,7 @@ void TGXApp::_CreateXGrowVLines()  {
       vec3d tc = transform*cc;
       au.CellToCartesian(tc);
       const double qdist = tc.QDistanceTo(A->crd());
-      if( qdist < 1e-2 || CrdMap.Exists(tc) )  // check if point to one of already existing
+      if( qdist < 0.5 || CrdMap.Exists(tc) )  // check if point to one of already existing
         continue;
       tr_list& ntl = net_tr.Add(aa->GetFragmentId());
       //find the shortest one

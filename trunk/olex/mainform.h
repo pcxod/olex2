@@ -288,7 +288,7 @@ protected:
     stateCmdLineVisible,
     stateGlTooltips;
    // solution mode variables
-  TTypeList<long> Solutions;
+  TIntList Solutions;
   int CurrentSolution;
   olxstr SolutionFolder;
   void ChangeSolution(int sol);

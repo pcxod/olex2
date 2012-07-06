@@ -21,7 +21,7 @@ class TFitMode : public AEventsDispatcher, public AMode  {
   TXAtomPList Atoms, AtomsToMatch;
   vec3d_alist original_crds;
   bool Initialised, DoSplit;
-  int afix;
+  int afix, part;
   size_t split_offset;
   class OnUniqHandler : public AActionHandler {
     TFitMode& fit_mode;
@@ -188,6 +188,7 @@ public:
           ag.AddDependent(Atoms[i]->CAtom());
       }
       gxapp.XFile().EndUpdate();
+      
     }
     if (undo != NULL) {
       gxapp.GetUndo().Push(undo);

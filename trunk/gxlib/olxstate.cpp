@@ -119,6 +119,14 @@ AMode* TModeRegistry::SetMode(const olxstr& name, const olxstr &args)  {
     olxstr tmp = name;
     if (!args.IsEmpty()) tmp << ' ' << args;
     op->callCallbackFunc(ModeChangeCB, TStrList() << tmp);
+    if (name.Equalsi("off")) {
+      olxstr location = __OlxSrcInfo;
+      for (size_t i=0; i < OnModeExit.Count(); i++) {
+        if (!op->processMacro(OnModeExit[i], location))
+          break;
+      }
+      OnModeExit.Clear();
+    }
   }
   return CurrentMode;
 }

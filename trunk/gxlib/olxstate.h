@@ -225,7 +225,7 @@ public:
   virtual bool OnKey(int keyId, short shiftState)  {  return false;  }
   // if the function supported - returns true
   virtual bool AddAtoms(const TPtrList<TXAtom>& atoms) {  return false;  }
-  inline size_t GetId() const {  return Id;  }
+  size_t GetId() const {  return Id;  }
 };
 //.............................................................................
 class AModeWithLabels : public AMode {
@@ -267,6 +267,8 @@ public:
   static size_t DecodeMode(const olxstr& mode);
   AMode* GetCurrent() const {  return CurrentMode;  }
   TActionQueue &OnChange;
+  // the list of commands to be exectued when 'mode off' is called
+  TStrList OnModeExit;
 
   static TModeRegistry &GetInstance();
   static bool CheckMode(size_t mode);
