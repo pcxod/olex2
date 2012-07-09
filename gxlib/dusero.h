@@ -61,7 +61,7 @@ public:
   void FromDataItem(const TDataItem &di);
   const_strlist ToPov(olxdict<TGlMaterial, olxstr,
   TComparableComparator> &materials) const;
-
+  short GetType() const { return Type; }
   TEBasis Basis;
 };
 

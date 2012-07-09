@@ -412,7 +412,8 @@ public:
     }
     return *this;
   }
-
+  // for compatibility of the template interfaces
+  void SetCount(size_t v) { Resize(v); }
 //------------------------------------------------------------------------------
   // searches maximum of an array
   static FT ArrayMax(const FT* a, size_t& n, size_t sz)  {

@@ -209,11 +209,12 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
   if( cell )
     app.XFile().GetLattice().GenerateCell();
   else if( wbox && app.Get3DFrame().IsVisible() )  {
-    app.XFile().GetLattice().GenerateBox(
-      app.Get3DFrame().GetNormals(),
-      app.Get3DFrame().GetSize()/2,
-      app.Get3DFrame().GetCenter(),
-      ClearCont);
+    vec3d_alist norms(6), centres(6);
+    for (int i=0; i < 6; i++) {
+      norms[i] = app.Get3DFrame().Faces[i].GetN();
+      centres[i] = app.Get3DFrame().Faces[i].GetCenter();
+    }
+    app.XFile().GetLattice().GenerateBox(norms, centres, ClearCont);
   }
   else  {
     vec3d From(-0.5), To(1.5);
