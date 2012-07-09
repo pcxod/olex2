@@ -43,7 +43,7 @@ void TBasicCFile::SaveToFile(const olxstr& fn)  {
 };
 //..............................................................................
 void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
-  TXFile::NameArg file_n = TXFile::ParseName(_fn);  
+  TXFile::NameArg file_n = TXFile::ParseName(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
   TStrList L;
   L.LoadFromFile(file_n.file_name);
