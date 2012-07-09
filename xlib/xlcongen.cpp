@@ -142,10 +142,12 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
           sr->SetValue(sqrt(_d1*_d1+dis*dis-2*dis*_d1*cos(109.4*M_PI/180)));
           sr->AddAtomPair(envi.GetCAtom(d1 < 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
           // this is optional
-          //sr = &RefMod.rDANG.AddNew();
-          //sr->SetEsd(0.02);
-          //sr->SetValue(sqrt(_d2*_d2+dis*dis-2*dis*_d2*cos((360.0-109.4-olx_angle(envi.GetCrd(0), envi.GetBase().crd(), envi.GetCrd(1)))*M_PI/180)));
-          //sr->AddAtomPair(envi.GetCAtom(d1 > 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
+          sr = &RefMod.rDANG.AddNew();
+          sr->SetEsd(0.02);
+          const double _d2 = (d1 < 1.8 ? d2 : d1);
+          sr->SetValue(sqrt(_d2*_d2+dis*dis-2*dis*_d2*cos((360.0-109.4-olx_angle(envi.GetCrd(0),
+            envi.GetBase().crd(), envi.GetCrd(1)))*M_PI/180)));
+          sr->AddAtomPair(envi.GetCAtom(d1 > 1.8 ? 0 : 1), NULL, *CreatedAtoms[0], NULL);
         }
         break;
       case fgNH4:
