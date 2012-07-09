@@ -412,7 +412,15 @@ void TCif::Initialize()  {
   const size_t ASymbol = ALoop->ColIndex("_atom_site_type_symbol");
   const size_t APart   = ALoop->ColIndex("_atom_site_disorder_group");
   const size_t SiteOccu = ALoop->ColIndex("_atom_site_occupancy");
-  const size_t Degen = ALoop->ColIndex("_atom_site_symmetry_multiplicity");
+  size_t Degen = ALoop->ColIndex("_atom_site_symmetry_multiplicity");
+  /* 0 - unknown, 1 - position degenaracy, 2 - position multiplicity
+  */
+  int DegenFunction = 0;
+  if (Degen == InvalidIndex) {
+    Degen = ALoop->ColIndex("_atom_site_site_symmetry_multiplicity");
+    if (Degen != InvalidIndex)
+      DegenFunction = 2;
+  }
   const size_t Part = ALoop->ColIndex("_atom_site_disorder_group");
   if( (ALabel|ACi[0]|ACi[1]|ACi[2]) == InvalidIndex )  {
     TBasicApp::NewLogEntry(logError) <<
@@ -430,7 +438,7 @@ void TCif::Initialize()  {
       type = XElementLib::FindBySymbolEx(ALoop->Get(i, ALabel).GetStringValue());
     if( type == NULL )  {
       throw TInvalidArgumentException(__OlxSourceInfo,
-        olxstr("Undefined element: ") <<
+        olxstr("Undefined element: ").quote() <<
           ALoop->Get(i, ASymbol).GetStringValue());
     }
     A.SetType(*type);
@@ -440,7 +448,7 @@ void TCif::Initialize()  {
       if( EValue.GetE() == 0 )
         GetRM().Vars.FixParam(A, catom_var_name_X+j);
     }
-    if( ACUiso != InvalidIndex )    {
+    if( ACUiso != InvalidIndex )  {
       EValue = ALoop->Get(i, ACUiso).GetStringValue();
       A.SetUisoEsd(EValue.GetE());
       A.SetUiso(EValue.GetV());
@@ -457,12 +465,31 @@ void TCif::Initialize()  {
       A.SetOccuEsd(EValue.GetE());
       if( EValue.GetE() == 0 )  GetRM().Vars.FixParam(A, catom_var_name_Sof);
     }
-    const double degen = (Degen != InvalidIndex ?
-      ALoop->Get(i, Degen).GetStringValue().ToDouble() :
-      TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd()));
-    if( degen != 1 )  {
-      A.SetOccu(A.GetOccu()/degen);
-      A.SetOccuEsd(A.GetOccuEsd()/degen);
+    // try to guess what it is
+    if (Degen != InvalidIndex && DegenFunction == 0) {
+      double a = ALoop->Get(i, Degen).GetStringValue().ToDouble();
+      double b =
+        (double)TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd());
+      if (olx_abs(a-b) < 1e-3)
+        DegenFunction = 1;
+      else if (olx_abs((double)MatrixCount()/b - a) < 1e-3)
+        DegenFunction = 2;
+    }
+    if (DegenFunction == 0) {
+      size_t degen = TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd());
+      if( degen != 1 )  {
+        A.SetOccu(A.GetOccu()/(double)degen);
+        A.SetOccuEsd(A.GetOccuEsd()/(double)degen);
+      }
+    }
+    else {
+      double degen = ALoop->Get(i, Degen).GetStringValue().ToDouble();
+      if (DegenFunction == 2)
+        degen = (double)MatrixCount()/degen;
+      if( degen != 1 )  {
+        A.SetOccu(A.GetOccu()/degen);
+        A.SetOccuEsd(A.GetOccuEsd()/degen);
+      }
     }
       
     ALoop->Set(i, ALabel, new AtomCifEntry(A));
@@ -772,7 +799,7 @@ bool TCif::Adopt(TXFile& XF)  {
     "_atom_site_label,_atom_site_type_symbol,_atom_site_fract_x,"
     "_atom_site_fract_y,_atom_site_fract_z,_atom_site_U_iso_or_equiv,"
     "_atom_site_adp_type,_atom_site_occupancy,_atom_site_refinement_flags_posn,"
-    "_atom_site_symmetry_multiplicity,_atom_site_disorder_group");
+    "_atom_site_site_symmetry_order,_atom_site_disorder_group");
 
   cetTable& u_loop = AddLoopDef(
     "_atom_site_aniso_label,_atom_site_aniso_U_11,"
