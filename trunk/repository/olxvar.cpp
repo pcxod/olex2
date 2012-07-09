@@ -150,7 +150,7 @@ void TOlxPyVar::Set(const olxstr& str)  {
       }
       else if( (Type & potInt) != 0  )  {
         if( !str.IsNumber() )  {
-          olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
+          olxstr err(olxstr("Integer is expected, got '") << str << '\'');
           Py_DECREF(
             PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
           throw TInvalidArgumentException(__OlxSourceInfo, err);
@@ -159,7 +159,7 @@ void TOlxPyVar::Set(const olxstr& str)  {
       }
       else if( (Type & potFloat) != 0 )  {
         if( !str.IsNumber() )  {
-          olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
+          olxstr err(olxstr("Float is expected, got '") << str << '\'');
           Py_DECREF(
             PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
           throw TInvalidArgumentException(__OlxSourceInfo, err);
@@ -169,7 +169,7 @@ void TOlxPyVar::Set(const olxstr& str)  {
       else if( (Type & potString) != 0 )
         arg = PythonExt::BuildString(str);
       else  {
-        olxstr err(olxstr("Boolean is expected, got '") << str << '\'');
+        olxstr err(olxstr("String is expected, got '") << str << '\'');
         Py_DECREF(
           PythonExt::SetErrorMsg(PyExc_TypeError, __OlxSourceInfo, err));
         throw TInvalidArgumentException(__OlxSourceInfo, err);

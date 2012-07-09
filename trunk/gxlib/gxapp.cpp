@@ -1566,13 +1566,9 @@ ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
     for( size_t j=0; j < Sel.Count(); j++ )  {
       AGDrawObject& GO = Sel[j];
       if( GO.IsGroup() )  // another group
-        S.Add((TGlGroup&)GO);  
+        S.Add((TGlGroup&)GO);
       else if( EsdlInstanceOf(GO, TXAtom) )
         rv.Add((TXAtom&)GO);
-      else if( EsdlInstanceOf(GO, TXBond) ) {
-        TXBond &b = (TXBond&)GO;
-        rv << b.A() << b.B();
-      }
     }
   }
   if( Clear )
