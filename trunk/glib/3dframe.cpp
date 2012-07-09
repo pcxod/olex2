@@ -53,12 +53,6 @@ T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName)
   edges[5] = vec3d(-0.5,0.5,0.5);
   edges[6] = vec3d(0.5,0.5,0.5);
   edges[7] = vec3d(0.5,-0.5,0.5);
-  norms[0] = vec3d(0,0,-1);
-  norms[1] = vec3d(-1,0,0);
-  norms[2] = vec3d(0,-1,0);
-  norms[3] = vec3d(0,1,0);
-  norms[4] = vec3d(1,0,0);
-  norms[5] = vec3d(0,0,1);
 
   Faces.Add(new TFaceCtrl(prnt, "facectrl", 0, edges[0], edges[1], edges[2],
     edges[3], norms[0], *this));
@@ -72,6 +66,7 @@ T3DFrameCtrl::T3DFrameCtrl(TGlRenderer& prnt, const olxstr& cName)
     edges[3], norms[4], *this));
   Faces.Add(new TFaceCtrl(prnt, "facectrl", 5, edges[4], edges[7], edges[6],
     edges[5], norms[5], *this));
+  UpdateEdges();
 }
 //.............................................................................
 void T3DFrameCtrl::Create(const olxstr& cName)  {
@@ -114,8 +109,9 @@ bool T3DFrameCtrl::DoZoom(double zoom, bool inc)  {
 }
 //.............................................................................
 bool T3DFrameCtrl::OnTranslate(size_t sender, const vec3d& t)  {
-  const vec3d dir = Faces[sender].GetN()*(t.Length()*
-    olx_sign(Faces[sender].GetN().CAngle(t)));
+  vec3d dir = (Faces[sender].GetCenter()-GetCenter()).NormaliseTo(
+    t.Length());
+  dir *= olx_sign(dir.DotProd(t));
   Faces[sender].GetA() += dir;
   Faces[sender].GetB() += dir;
   Faces[sender].GetC() += dir;

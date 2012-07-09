@@ -39,7 +39,7 @@ TDUserObj::TDUserObj(TGlRenderer& R, const TDataItem &di)
 }
 //.............................................................................
 void TDUserObj::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
@@ -61,8 +61,8 @@ void TDUserObj::Create(const olxstr& cName)  {
       }
       Params()[15] = 1;
     }
-    GlP.Params[0] = 1;  
-    GlP.Params[1] = 25;  
+    GlP.Params[0] = 1;
+    GlP.Params[1] = 25;
     GlP.Params[2] = 25;
     GlP.Compile();
   }
@@ -111,6 +111,8 @@ void TDUserObj::ToDataItem(TDataItem &di) const {
     di.AddField("normals", PersUtil::VecListToStr(*Normals));
   if (Colors != NULL)
     di.AddField("colors", PersUtil::NumberListToStr(*Colors));
+  if (!Params().IsEmpty())
+    di.AddField("params", PersUtil::NumberListToStr(Params()));
 }
 //.............................................................................
 void TDUserObj::FromDataItem(const TDataItem &di) {
@@ -144,6 +146,10 @@ void TDUserObj::FromDataItem(const TDataItem &di) {
   if (!v.IsEmpty()) {
     Colors = new TArrayList<uint32_t>;
     PersUtil::NumberListFromStr(v, *Colors);
+  }
+  v = di.GetFieldValue("params");
+  if (!v.IsEmpty()) {
+    PersUtil::NumberListFromStr(v, Params());
   }
 }
 //.............................................................................

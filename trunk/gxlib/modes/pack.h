@@ -18,9 +18,13 @@ public:
     olex2.processMacro("cursor(hand)");
     gxapp.SetPackMode( 0, AtomsToGrow );
     gxapp.SetXGrowPointsVisible(true);
+    gxapp.SetZoomAfterModelBuilt(false);
     return true;
   }
-  void Finalise() {  gxapp.SetXGrowPointsVisible(false);  }
+  void Finalise() {
+    gxapp.SetZoomAfterModelBuilt(true);
+    gxapp.SetXGrowPointsVisible(false);
+  }
   virtual bool OnObject(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXGrowPoint) )  {
       gxapp.Grow((TXGrowPoint&)obj);

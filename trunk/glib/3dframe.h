@@ -58,10 +58,10 @@ public:
   vec3d& GetC()  {  return C;  }
   vec3d& GetD()  {  return D;  }
   const vec3d& GetN() const {  return N;  }
+  vec3d GetCenter() const { return (A+B+C+D)/4; }
 };
 // the frame class itself...
 class T3DFrameCtrl : public AGlMouseHandlerImp, public A3DFrameCtrl {
-  TTypeList<TFaceCtrl> Faces;
   vec3d edges[8], norms[6];
 protected:
   virtual bool DoTranslate(const vec3d& t)  {  Translate(t);  return true;  }
@@ -141,6 +141,8 @@ public:
   }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
+
+  TTypeList<TFaceCtrl> Faces;
 };
 
 EndGlNamespace()

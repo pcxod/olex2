@@ -51,10 +51,12 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
   MData.Shift = Shift; 
   MData.Button = button;
   if( MData.Object != NULL )  {
-    if( MData.Object == FDFrame ) 
+    bool is_click = (olx_abs(MData.DownX-MData.UpX) <= ClickThreshold) &&
+          (olx_abs(MData.DownY-MData.UpY) <= ClickThreshold);
+    if( MData.Object == FDFrame )
       res = MData.Object->OnMouseUp(this, MData);
     else  {
-      if (InMode && button == smbLeft &&
+      if (InMode && button == smbLeft && Shift == 0 && is_click &&
           OnObject.Execute(this, MData.Object))
       {
         ;
@@ -66,8 +68,7 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
         else
           res = MData.Object->OnMouseUp(this, MData);
         if( res == false && SelectionEnabled && Shift == 0 && button == smbLeft &&
-          (olx_abs(MData.DownX-MData.UpX) <= ClickThreshold) &&
-          (olx_abs(MData.DownY-MData.UpY) <= ClickThreshold) )  // right click
+            is_click )  // right click
         {
           if( PColl != NULL && PColl != &FParent->GetSelection() ) 
             FParent->Select(*PColl); 

@@ -90,6 +90,7 @@
 #include "olxth.h"
 #include "lcells.h"
 #include "label_corrector.h"
+#include "dusero.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -1677,7 +1678,7 @@ void TMainForm::AquireTooltipValue()  {
   if( G != NULL )  {
     if( G->IsSelected() )
       Tooltip = FXApp->GetSelectionInfo();
-    else if( EsdlInstanceOf( *G, TXAtom) )  {
+    else if( EsdlInstanceOf(*G, TXAtom) )  {
       const TXAtom &xa = *(TXAtom*)G;
       const TCAtom& ca = xa.CAtom();
       Tooltip = xa.GetGuiLabelEx();
@@ -1733,7 +1734,7 @@ void TMainForm::AquireTooltipValue()  {
       }
 #endif
     }
-    else  if( EsdlInstanceOf( *G, TXBond) )  {
+    else if( EsdlInstanceOf(*G, TXBond) )  {
       TXBond& xb = *(TXBond*)G;
       Tooltip = xb.A().GetLabel();
       Tooltip << '-' << xb.B().GetLabel() << ": ";
@@ -1753,28 +1754,37 @@ void TMainForm::AquireTooltipValue()  {
         ',' << olx_round(n[2], 1000);
 #endif
     } 
-    else if( EsdlInstanceOf( *G, TXReflection) )  {
+    else if( EsdlInstanceOf(*G, TXReflection) )  {
       Tooltip = ((TXReflection*)G)->GetHKL()[0];
       Tooltip << ' '
               << ((TXReflection*)G)->GetHKL()[1] << ' '
               << ((TXReflection*)G)->GetHKL()[2] << ": "
               << ((TXReflection*)G)->GetI();
     }
-    else if( EsdlInstanceOf( *G, TXLine) )  {
+    else if( EsdlInstanceOf(*G, TXLine) )  {
       Tooltip = olxstr::FormatFloat(3, ((TXLine*)G)->Length());
     }
-    else if( EsdlInstanceOf( *G, TXGrowLine) )  {
+    else if( EsdlInstanceOf(*G, TXGrowLine) )  {
       Tooltip = ((TXGrowLine*)G)->XAtom().GetLabel();
       Tooltip << '-' << ((TXGrowLine*)G)->CAtom().GetLabel() << ": "
           << olxstr::FormatFloat(3, ((TXGrowLine*)G)->Length()) << '('
           << TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
     }
-    else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
+    else if( EsdlInstanceOf(*G, TXGrowPoint) )  {
       Tooltip = TSymmParser::MatrixToSymmEx(((TXGrowPoint*)G)->GetTransform());
     }
-    else if( EsdlInstanceOf( *G, TXPlane) )  {
+    else if( EsdlInstanceOf(*G, TXPlane) )  {
       Tooltip << "HKL direction: " <<
         ((TXPlane*)G)->GetCrystallographicDirection().ToString();
+    }
+    else if( EsdlInstanceOf(*G, TDUserObj) )  {
+      TDUserObj &o = *(TDUserObj*)G;
+      if (o.GetType() == sgloSphere && !o.Params().IsEmpty()) {
+        double r=o.Params()[0]*o.Basis.GetZoom();
+        Tooltip << "Sphere volume/radius, A: " <<
+          olxstr::FormatFloat(3, olx_sphere_volume(r)) << '/' <<
+          olxstr::FormatFloat(3, r);
+      }
     }
   }
 }
