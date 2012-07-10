@@ -98,11 +98,7 @@ size_t TTreeView::_SaveState(TEBitArray& res, const wxTreeItemId& item,
   size_t& counter) const
 {
   size_t selected = InvalidIndex;
-  if( counter == 0 )  {
-    if( (GetWindowStyle()&wxTR_HIDE_ROOT) == 0 )
-      res.SetTrue(counter);
-  }
-  else if( IsExpanded(item) )
+  if( IsExpanded(item) )
     res.SetTrue(counter);
   if( IsSelected(item) )  selected = counter;
   wxTreeItemIdValue cookie;
@@ -126,11 +122,16 @@ size_t TTreeView::_SaveState(TEBitArray& res, const wxTreeItemId& item,
 //..............................................................................
 olxstr TTreeView::SaveState() const {
   wxTreeItemId root = GetRootItem();
+  if ((GetWindowStyle()&wxTR_HIDE_ROOT) != 0) {
+    wxTreeItemIdValue cookie;
+    root = GetFirstChild(root, cookie);
+  }
   TEBitArray res(GetChildrenCount(root, true)+1);
   size_t counter = 0;
   size_t selected = _SaveState(res, root, counter);
   olxstr rv = res.ToBase64String();
-  return (rv << ';' << selected);
+  return (rv.stream(';') << selected << ';' << GetScrollPos(wxVERTICAL) <<
+    GetScrollPos(wxHORIZONTAL));
 }
 //..............................................................................
 void TTreeView::_RestoreState(const TEBitArray& res, const wxTreeItemId& item,
@@ -153,18 +154,27 @@ void TTreeView::_RestoreState(const TEBitArray& res, const wxTreeItemId& item,
 }
 //..............................................................................
 void TTreeView::RestoreState(const olxstr& state)  {
-  size_t si = state.LastIndexOf(';');
-  if( si == InvalidIndex )  return;
+  TStrList toks(state, ';');
+  if (toks.Count() != 4)  return;
   wxTreeItemId root = GetRootItem();
+  if ((GetWindowStyle()&wxTR_HIDE_ROOT) != 0) {
+    wxTreeItemIdValue cookie;
+    root = GetFirstChild(root, cookie);
+  }
   TEBitArray res;
-  res.FromBase64String(state.SubStringTo(si));
+  res.FromBase64String(toks[0]);
   if( res.Count() != GetChildrenCount(root, true)+1 )
     return;
   size_t counter = 0;
-  size_t selected = state.SubStringFrom(si+1).ToSizeT();
+  size_t selected = toks[1].ToSizeT();
+  Freeze();
   OnSelect.SetEnabled(false);
   _RestoreState(res, root, counter, selected);
+  //SelectItem(GetSelection(), true);
   OnSelect.SetEnabled(true);
+  SetScrollPos(wxVERTICAL, toks[2].ToInt(), false);
+  Thaw();
+  SetScrollPos(wxHORIZONTAL, toks[3].ToInt(), true);
 }
 //..............................................................................
 wxTreeItemId TTreeView::_FindByLabel(const wxTreeItemId& root, const olxstr& label) const {
