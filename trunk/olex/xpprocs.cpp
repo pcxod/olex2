@@ -4839,7 +4839,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options,
   FXApp->UpdateBonds();
   if( Options.Contains("u") )  // do nothing...
     return;
-  callCallbackFunc(StartMatchCBName, TStrList());
+  callCallbackFunc(StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.Contains("i");
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
   if( Options.Contains('w') )
