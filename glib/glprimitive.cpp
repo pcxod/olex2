@@ -34,11 +34,11 @@ TGlPrimitive::TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short ty
 }
 //..............................................................................
 TGlPrimitive::~TGlPrimitive()  {
-  if( Quadric != NULL )  
+  if( Quadric != NULL )
     gluDeleteQuadric(Quadric);
-  if( Basis != NULL )     
+  if( Basis != NULL )
     delete Basis;
-  if( ClipPlanes != NULL )  
+  if( ClipPlanes != NULL )
     delete ClipPlanes;
   if( olx_is_valid_index(ListId) )
     olx_gl::deleteLists(ListId, 1);
@@ -141,55 +141,62 @@ void TGlPrimitive::ListParams(TStrList &List)  {
   }
 }
 //..............................................................................
-void TGlPrimitive::Compile()  {
-//  if( Compiled() )  return;
+bool TGlPrimitive::IsCompilable() const {
   switch( Type )  {
     case sgloSphere:
-      olx_gl::newList(ListId, GL_COMPILE);
-      if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
-      if( Basis != NULL  )
-        olx_gl::orient(*Basis);
-      CreateQuadric();
+    case sgloDisk:
+    case sgloDiskSlice:
+    case sgloCylinder:
+      return true;
+  }
+  return false;
+}
+//..............................................................................
+void TGlPrimitive::Compile()  {
+  if( IsCompiled() )  return;
+  TGlTexture* currentTexture = NULL;
+  if (IsCompilable()) {
+    olx_gl::newList(ListId, GL_COMPILE);
+    if( olx_is_valid_index(TextureId) )  {
+      TGlTexture* tex = Renderer.GetTextureManager().FindTexture(TextureId);
+      currentTexture = new TGlTexture();
+      tex->ReadCurrent(*currentTexture);
+      tex->SetCurrent();
+    }
+    if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
+    if( Basis != NULL  )
+      olx_gl::orient(*Basis);
+    CreateQuadric();
+  }
+  switch( Type )  {
+    case sgloSphere:
       gluSphere(Quadric, Params[0], (int)Params[1], (int)Params[2]);
-      if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
-      olx_gl::endList();
-      Compiled = true;
       break;
     case sgloDisk:
-      olx_gl::newList(ListId, GL_COMPILE);
-      if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
-      if( Basis != NULL )       olx_gl::orient(*Basis);
-      CreateQuadric();
       gluDisk(Quadric, Params[0], Params[1], (int)Params[2], (int)Params[3]);
-      if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
-      olx_gl::endList();
-      Compiled = true;
       break;
     case sgloDiskSlice:
-      olx_gl::newList(ListId, GL_COMPILE);
-      if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
-      if( Basis != NULL )       olx_gl::orient(*Basis);
-      CreateQuadric();
-      gluPartialDisk(Quadric, Params[0], Params[1], (int)Params[2], (int)Params[3], Params[4], Params[5]);
-      if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
-      olx_gl::endList();
-      Compiled = true;
+      gluPartialDisk(Quadric, Params[0], Params[1], (int)Params[2],
+        (int)Params[3], Params[4], Params[5]);
       break;
     case sgloCylinder:
-      olx_gl::newList(ListId, GL_COMPILE);
-      if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
-      if( Basis != NULL )       olx_gl::orient(*Basis);
-      CreateQuadric();
-      gluCylinder(Quadric, Params[0], Params[1], Params[2], (int)Params[3], (int)Params[4]);
-      if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
-      olx_gl::endList();
-      Compiled = true;
+      gluCylinder(Quadric, Params[0], Params[1], Params[2], (int)Params[3],
+        (int)Params[4]);
       break;
     case sgloCommandList:
       Compiled = true;
       break;
     default:
       Compiled = false;
+  }
+  if (IsCompilable()) {
+    if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
+    olx_gl::endList();
+    Compiled = true;
+    if( currentTexture != NULL )  {
+      currentTexture->SetCurrent();
+      delete currentTexture;
+    }
   }
 }
 //..............................................................................
@@ -220,14 +227,12 @@ void TGlPrimitive::Draw()  {
   if( olx_is_valid_index(ListId) && !Compiled )
     throw TInvalidArgumentException(__OlxSourceInfo, "uncompiled complex object");
 #endif
-  if( Compiled )  {  
-    olx_gl::callList(ListId);  
-    return;  
+  if (Compiled) {
+    olx_gl::callList(ListId);
+    return;
   }
-  if( Basis != NULL )
-    olx_gl::orient(*Basis);
-  if( ClipPlanes != NULL )
-    ClipPlanes->Enable(true);
+  if (Basis != NULL) olx_gl::orient(*Basis);
+  if (ClipPlanes != NULL) ClipPlanes->Enable(true);
   TGlTexture* currentTexture = NULL;
   if( olx_is_valid_index(TextureId) )  {
     TGlTexture* tex = Renderer.GetTextureManager().FindTexture(TextureId);
@@ -235,7 +240,6 @@ void TGlPrimitive::Draw()  {
     tex->ReadCurrent(*currentTexture);
     tex->SetCurrent();
   }
-
   if( Type == sgloText )  {
 #ifdef _DEBUG
     if( Font == NULL )
@@ -512,7 +516,7 @@ void TGlPrimitive::Draw()  {
     }
     if( v )  olx_gl::enable(GL_CULL_FACE);
   }
-  if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
+  if (ClipPlanes != NULL)  ClipPlanes->Enable(false);
   if( currentTexture != NULL )  {
     currentTexture->SetCurrent();
     delete currentTexture;

@@ -45,28 +45,31 @@ const uint32_t
   tpclrSet  = 0x00000020,
   tp1D      = 0x00000040,
   tp2D      = 0x00000080,
-  tpSGen    = 0x00000100,
-  tpTGen    = 0x00000200,
-  tpRGen    = 0x00000400,
-  tpQGen    = 0x00000800,
-  tpEnvMode = 0x00001000,
-  tpEnvColor= 0x00002000,
-  tpEnabled = 0x00004000,
-  tpt1D     = 0x00008000,
-  tpt2D     = 0x00010000
+  tpEnvMode = 0x00000100,
+  tpEnvColor= 0x00000200,
+  tpEnabled = 0x00000400,
+  tpt1D     = 0x00000800,
+  tpt2D     = 0x00001000,
+  tpSGen    = 0x00002000,
+  tpTGen    = 0x00004000,
+  tpRGen    = 0x00008000,
+  tpQGen    = 0x00010000
   ;
 
 class TGlTexture : public IEObject {
   GLint MinFilter, MagFilter, SCrd, TCrd, EnvMode, Level;
   unsigned short SetParams;
-  TGlOption BorderColor, SGenParams, TGenParams, RGenParams, QGenParams,
-    EnvColor;
-  GLenum SGenMode, TGenMode, RGenMode, QGenMode;
+  TGlOption BorderColor, EnvColor,
+    CrdObjPlaneParams[4],
+    CrdEyePlaneParams[4];
+  GLenum CrdGenMode[4]; // S,T,R,Q;
   GLuint Id;
   olxstr Name;
 protected:
-  void SetCrdGen(GLenum crdName, GLenum modeName, const TGlOption& opt) const;
-  void GetCrdGen(GLenum crdName, GLenum& modeName, TGlOption& opt) const;
+  void SetCrdGen(GLenum crdName, GLenum modeName,
+    const TGlOption& op, const TGlOption& ep) const;
+  void GetCrdGen(GLenum crdName, GLenum& genMode,
+    TGlOption& op, TGlOption& ep) const;
 public:
   TGlTexture() : SetParams(0) {}
   TGlTexture(GLuint id, uint32_t type, GLint level, const olxstr& name);
@@ -110,25 +113,10 @@ public:
     BorderColor = cl;
   }
 //.............................................................................
-  void SetSCrdGen(GLenum modeName, const TGlOption& values) {
-    olx_set_true(SetParams, tpSGen);
-    SGenParams = values;
-  }
+  void SetCrdGenMode(GLenum crd, GLenum modeName);
+  void SetObjectPlane(GLenum crd, const TGlOption &val);
+  void SetEyePlane(GLenum crd, const TGlOption &val);
 //.............................................................................
-  void SetTCrdGen(GLenum modeName, const TGlOption& values) {
-    olx_set_true(SetParams, tpTGen);
-    TGenParams = values;
-  }
-//.............................................................................
-  void SetRCrdGen(GLenum modeName, const TGlOption& values) {
-    olx_set_true(SetParams, tpRGen);
-    RGenParams = values;
-  }
-//.............................................................................
-  void SetQCrdGen(GLenum modeName, const TGlOption& values) {
-    olx_set_true(SetParams, tpQGen);
-    QGenParams = values;
-  }
 //.............................................................................
   void SetEnvMode(GLenum modeName) {
     olx_set_true(SetParams, tpEnvMode);
@@ -191,6 +179,13 @@ public:
   TGlTexture* FindTexture(GLuint textureIndex)  {
     const size_t index = Textures.IndexOf(textureIndex);
     return Textures.GetObject(index);
+  }
+  TGlTexture* FindByName(const olxstr &name)  {
+    for (size_t i=0; i < Textures.Count(); i++) {
+      if (Textures.GetObject(i)->GetName() == name)
+        return Textures.GetObject(i);
+    }
+    return NULL;
   }
   void BeforeContextChange();
   void AfterContextChange();
