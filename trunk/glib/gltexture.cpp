@@ -21,24 +21,87 @@ TGlTexture::TGlTexture(GLuint id, uint32_t type, GLint level,
     throw TInvalidArgumentException(__OlxSourceInfo, "type");
 }
 //.............................................................................
-void TGlTexture::SetCrdGen(GLenum crdName, GLenum modeName,
-  const TGlOption& opt) const
+void TGlTexture::SetCrdGen(GLenum crdName, GLenum genMode,
+    const TGlOption& op, const TGlOption& ep) const
 {
-  olx_gl::texGen(crdName, GL_TEXTURE_GEN_MODE, modeName);
-  olx_gl::texGen(crdName, modeName, opt.Data());
+  olx_gl::texGen(crdName, GL_TEXTURE_GEN_MODE, genMode);
+  olx_gl::texGen(crdName, GL_OBJECT_PLANE, op.Data());
+  olx_gl::texGen(crdName, GL_EYE_PLANE, ep.Data());
   if( crdName == GL_S )  olx_gl::enable(GL_TEXTURE_GEN_S);
-  if( crdName == GL_T )  olx_gl::enable(GL_TEXTURE_GEN_T);
-  if( crdName == GL_R )  olx_gl::enable(GL_TEXTURE_GEN_R);
-  if( crdName == GL_Q )  olx_gl::enable(GL_TEXTURE_GEN_Q);
+  else if( crdName == GL_T )  olx_gl::enable(GL_TEXTURE_GEN_T);
+  else if( crdName == GL_R )  olx_gl::enable(GL_TEXTURE_GEN_R);
+  else if( crdName == GL_Q )  olx_gl::enable(GL_TEXTURE_GEN_Q);
 }
 //.............................................................................
-void TGlTexture::GetCrdGen(GLenum crdName, GLenum& modeName, TGlOption& opt)
-  const
+void TGlTexture::GetCrdGen(GLenum crdName, GLenum& genMode,
+    TGlOption& op, TGlOption& ep) const
 {
-  static GLfloat bf[4];
-  olx_gl::getTexGen(crdName, GL_TEXTURE_GEN_MODE, (GLint*)&modeName);
-  olx_gl::getTexGen(crdName, modeName, bf);
-  opt = bf;
+  olx_gl::getTexGen(crdName, GL_TEXTURE_GEN_MODE, (GLint*)&genMode);
+  olx_gl::getTexGen(crdName, GL_OBJECT_PLANE, op._Data());
+  olx_gl::getTexGen(crdName, GL_EYE_PLANE, ep._Data());
+}
+//.............................................................................
+void TGlTexture::SetCrdGenMode(GLenum crd, GLenum modeName) {
+  if (crd == GL_S) {
+    olx_set_true(SetParams, tpSGen);
+    CrdGenMode[0] = modeName;
+  }
+  else if (crd == GL_T) {
+    olx_set_true(SetParams, tpTGen);
+    CrdGenMode[1] = modeName;
+  }
+  else if (crd == GL_R) {
+    olx_set_true(SetParams, tpRGen);
+    CrdGenMode[2] = modeName;
+  }
+  else if (crd == GL_Q) {
+    olx_set_true(SetParams, tpQGen);
+    CrdGenMode[3] = modeName;
+  }
+  else
+    throw TInvalidArgumentException(__OlxSourceInfo, "crd");
+}
+//.............................................................................
+void TGlTexture::SetObjectPlane(GLenum crd, const TGlOption &val) {
+  if (crd == GL_S) {
+    olx_set_true(SetParams, tpSGen);
+    CrdObjPlaneParams[0] = val;
+  }
+  else if (crd == GL_T) {
+    olx_set_true(SetParams, tpTGen);
+    CrdObjPlaneParams[1] = val;
+  }
+  else if (crd == GL_R) {
+    olx_set_true(SetParams, tpRGen);
+    CrdObjPlaneParams[2] = val;
+  }
+  else if (crd == GL_Q) {
+    olx_set_true(SetParams, tpQGen);
+    CrdObjPlaneParams[3] = val;
+  }
+  else
+    throw TInvalidArgumentException(__OlxSourceInfo, "crd");
+}
+//.............................................................................
+void TGlTexture::SetEyePlane(GLenum crd, const TGlOption &val) {
+  if (crd == GL_S) {
+    olx_set_true(SetParams, tpSGen);
+    CrdEyePlaneParams[0] = val;
+  }
+  else if (crd == GL_T) {
+    olx_set_true(SetParams, tpTGen);
+    CrdEyePlaneParams[1] = val;
+  }
+  else if (crd == GL_R) {
+    olx_set_true(SetParams, tpRGen);
+    CrdEyePlaneParams[2] = val;
+  }
+  else if (crd == GL_Q) {
+    olx_set_true(SetParams, tpQGen);
+    CrdEyePlaneParams[3] = val;
+  }
+  else
+    throw TInvalidArgumentException(__OlxSourceInfo, "crd");
 }
 //.............................................................................
 TGlTexture& TGlTexture::operator = (const TGlTexture& tex) {
@@ -49,19 +112,15 @@ TGlTexture& TGlTexture::operator = (const TGlTexture& tex) {
   TCrd        = tex.TCrd;
   BorderColor = tex.BorderColor;
 
-  EnvMode      = tex.EnvMode;
+  EnvMode     = tex.EnvMode;
   EnvColor    = tex.EnvColor;
 
-  SGenParams  = tex.SGenParams;
-  TGenParams  = tex.TGenParams;
-  RGenParams  = tex.RGenParams;
-  QGenParams  = tex.QGenParams;
-  SGenMode    = tex.SGenMode;
-  TGenMode    = tex.TGenMode;
-  RGenMode    = tex.RGenMode;
-  QGenMode    = tex.QGenMode;
-
-  Id          = tex.Id;
+  for (int i=0; i < 4; i++) {
+    CrdObjPlaneParams[i] = tex.CrdObjPlaneParams[i];
+    CrdEyePlaneParams[i] = tex.CrdEyePlaneParams[i];
+    CrdGenMode[i] = tex.CrdGenMode[i];
+  }
+  Id = tex.Id;
   return *this;
 }
 //.............................................................................
@@ -79,10 +138,10 @@ unsigned short TGlTexture::ReadStatus() {
     olx_set_true(status, tpSGen);
   if (olx_gl::isEnabled(GL_TEXTURE_GEN_T))
     olx_set_true(status, tpTGen);
-  if (olx_gl::isEnabled(GL_TEXTURE_GEN_Q))
-    olx_set_true(status, tpQGen);
   if (olx_gl::isEnabled(GL_TEXTURE_GEN_R))
     olx_set_true(status, tpRGen);
+  if (olx_gl::isEnabled(GL_TEXTURE_GEN_Q))
+    olx_set_true(status, tpQGen);
   return status;
 }
 //.............................................................................
@@ -132,14 +191,22 @@ void TGlTexture::ReadCurrent(TGlTexture& tex) {
     olx_gl::getTexParam(TextureType, GL_TEXTURE_BORDER_COLOR, &bf[0]);
     tex.BorderColor = bf;
   }
-  if ((SetParams & tpSGen) != 0)
-    GetCrdGen(GL_S, tex.SGenMode, tex.SGenParams);
-  if ((SetParams & tpTGen) != 0)
-    GetCrdGen(GL_T, tex.TGenMode, tex.TGenParams);
-  if ((SetParams & tpRGen) != 0)
-    GetCrdGen(GL_R, tex.RGenMode, tex.RGenParams);
-  if ((SetParams & tpSGen) != 0)
-    GetCrdGen(GL_Q, tex.QGenMode, tex.QGenParams);
+  if ((SetParams & tpSGen) != 0) {
+    GetCrdGen(GL_S, tex.CrdGenMode[0], tex.CrdObjPlaneParams[0],
+      tex.CrdEyePlaneParams[0]);
+  }
+  if ((SetParams & tpTGen) != 0) {
+    GetCrdGen(GL_T, tex.CrdGenMode[1], tex.CrdObjPlaneParams[1],
+      tex.CrdEyePlaneParams[1]);
+  }
+  if ((SetParams & tpRGen) != 0) {
+    GetCrdGen(GL_R, tex.CrdGenMode[2], tex.CrdObjPlaneParams[2],
+      tex.CrdEyePlaneParams[2]);
+  }
+  if ((SetParams & tpQGen) != 0) {
+    GetCrdGen(GL_Q, tex.CrdGenMode[3], tex.CrdObjPlaneParams[3],
+      tex.CrdEyePlaneParams[3]);
+  }
   if ((SetParams & tpEnvColor) != 0) {
     GLfloat bf[4];
     olx_gl::getTexEnv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, bf);
@@ -174,15 +241,22 @@ void TGlTexture::SetCurrent() const {
       BorderColor.Data());
   }
 
-  if ((SetParams & tpSGen) != 0)
-    SetCrdGen(GL_S, SGenMode, SGenParams);
-  if ((SetParams & tpTGen) != 0)
-    SetCrdGen(GL_T, TGenMode, TGenParams);
-  if ((SetParams & tpRGen) != 0)
-    SetCrdGen(GL_R, RGenMode, RGenParams);
-  if ((SetParams & tpSGen) != 0)
-    SetCrdGen(GL_Q, QGenMode, QGenParams);
-
+  if ((SetParams & tpSGen) != 0) {
+    SetCrdGen(GL_S, CrdGenMode[0], CrdObjPlaneParams[0],
+      CrdEyePlaneParams[0]);
+  }
+  if ((SetParams & tpTGen) != 0) {
+    SetCrdGen(GL_T, CrdGenMode[1], CrdObjPlaneParams[1],
+      CrdEyePlaneParams[1]);
+  }
+  if ((SetParams & tpRGen) != 0) {
+    SetCrdGen(GL_R, CrdGenMode[2], CrdObjPlaneParams[2],
+      CrdEyePlaneParams[2]);
+  }
+  if ((SetParams & tpQGen) != 0) {
+    SetCrdGen(GL_Q, CrdGenMode[3], CrdObjPlaneParams[3],
+      CrdEyePlaneParams[3]);
+  }
   if ((SetParams & tpEnvMode) != 0)
     olx_gl::texEnv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, EnvMode);
   if ((SetParams & tpEnvColor) != 0)

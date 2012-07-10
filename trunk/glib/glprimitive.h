@@ -191,6 +191,8 @@ public:
   }
   static void EndList()  { olx_gl::endList();  }
   bool IsCompiled() const {  return Compiled;  }
+  // for internal use mostly
+  bool IsCompilable() const;
   bool IsList() const {  return Type == sgloCommandList;  }
 
   struct TextureCrd  {
