@@ -86,6 +86,7 @@ void TXGrid::TLegend::Create(const olxstr& cName)  {
   TGlFont &glf = Parent.GetScene().GetFont(~0, true);
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties(GS.GetMaterial("Text", glf.GetMaterial()));
+  glpText.SetFont(&glf);
   glpText.Params[0] = -1;
 }
 //..............................................................................
@@ -234,7 +235,7 @@ void TXGrid::Clear()  {
 }
 //..............................................................................
 void TXGrid::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
@@ -348,18 +349,23 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     if( tasks[i].maxVal > maxVal )
       maxVal = tasks[i].maxVal;
   }
+  const TGlOption& start_p =
+    GetPrimitives().FindPrimitiveByName("-Surface")->GetProperties().AmbientF;
+  const TGlOption& end_p =
+    GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
+  vec3f h_color(end_p[0]-start_p[0], end_p[1]-start_p[1], end_p[2]-start_p[2]);
+  vec3f m_color(end_p[0]+start_p[0], end_p[1]+start_p[1], end_p[2]+start_p[2]);
+  h_color /= 2;
+  m_color /= 2;
   olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
   if( (RenderMode&planeRenderModePlane) != 0 )  {
-    float bs = (Scale < 0 ? -Scale/MinVal: Scale/MaxVal);
     for (size_t i=0; i < MaxDim; i++) {
       for (size_t j=0; j < MaxDim; j++) {
         float s = ContourData[i][j] < 0 ? -ContourData[i][j]/minVal
           : ContourData[i][j]/maxVal;
-        //float s = ContourData[i][j]/(maxVal-minVal);
-        const size_t off = (i+j*MaxDim)*3; 
-        TextData[off+0] = 128-127*s;
-        TextData[off+1] = 128+127*s;
-        TextData[off+2] = 128+127*bs;
+        const size_t off = (i+j*MaxDim)*3;
+        for (int ci=0; ci < 3; ci++)
+          TextData[off+ci] = (char)(255.0f*(m_color[ci]+s*h_color[ci]));
       }
     }
     if( !olx_is_valid_index(TextIndex) )  {
@@ -398,16 +404,13 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       ContourLevelCount, ContourLevels, mf);
     GlP.EndColorRendering();
     float legend_step = (maxVal-minVal)/32;
-    float bs = (Scale < 0 ? -Scale/MinVal: Scale/MaxVal);
     for (int i=0; i < 32; i++) {
       float val = minVal + legend_step*i;
       float s = val < 0 ? -val/minVal : val/maxVal;
-      //float s = val/(maxVal-minVal);
       size_t off = i*32*3;
       for (int j=0; j < 32*3; j+=3) {
-        LegendData[off+j+0] = 128-127*s;
-        LegendData[off+j+1] = 128+127*s;
-        LegendData[off+j+2] = 128+127*bs;
+        for (int ci=0; ci < 3; ci++)
+          LegendData[off+j+ci] = (char)(255.0f*(m_color[ci]+s*h_color[ci]));
       }
     }
     Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);
