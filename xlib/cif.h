@@ -199,13 +199,14 @@ public:
 //---------------------------------------------------------------------------
 struct AtomCifEntry : public cif_dp::IStringCifEntry {
   TCAtom& data;
+  mutable olxstr label;
   AtomCifEntry(const AtomCifEntry& v) : data(v.data)  {}
   AtomCifEntry(TCAtom& _data) : data(_data)  {}
   virtual size_t Count() const {  return 1;  }
   virtual bool IsSaveable() const {  return !data.IsDeleted();  }
   virtual size_t GetCmpHash() const {  return data.GetId();  }
   virtual const olxstr& operator [] (size_t) const {
-    return  data.GetLabel();
+    return  (label=data.GetResiLabel());
   }
   virtual const olxstr& GetComment() const {  return EmptyString();  }
   virtual cif_dp::ICifEntry* Replicate() const {
@@ -215,10 +216,10 @@ struct AtomCifEntry : public cif_dp::IStringCifEntry {
     if( list.IsEmpty() ||
         (list.GetLastString().Length() + data.GetLabel().Length() + 1 > 80) )
     {
-      list.Add(' ') << data.GetLabel();
+      list.Add(' ') << data.GetResiLabel();
     }
     else
-      list.GetLastString() << ' ' << data.GetLabel();
+      list.GetLastString() << ' ' << data.GetResiLabel();
   }
   virtual olxstr GetStringValue() const {  return data.GetLabel();  }
 };
