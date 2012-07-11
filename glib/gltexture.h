@@ -87,6 +87,7 @@ public:
   void Clear() { SetParams &= (tp1D|tp2D); }
 //.............................................................................
   void SetEnabled(bool val) { olx_set_bit(val, SetParams, tpEnabled); }
+  bool IsEnabled() const { return (SetParams & tpEnabled) != 0; }
 //.............................................................................
   void SetMinFilter(GLint val) {
     olx_set_true(SetParams, tpminSet);

@@ -5412,10 +5412,11 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TXAtomPList atoms = FindXAtoms(Cmds, true, true);
-
   return;
-  TXApp& xapp = TXApp::GetInstance();
+  //TXAtomPList atoms = FindXAtoms(Cmds, true, true);
+
+  //return;
+  //TXApp& xapp = TXApp::GetInstance();
   //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
   ////xapp.XFile().GetRM().FilterHkl(refs, ms);
   //TArrayList<compd> F;

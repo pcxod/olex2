@@ -36,6 +36,7 @@ public:
   static DefMacro(ShowQ)
 
   static DefMacro(Qual)
+  static DefMacro(AtomTextures)
 
 //  static DefFunc(Lst)
   static void Export(class TLibrary& lib);
