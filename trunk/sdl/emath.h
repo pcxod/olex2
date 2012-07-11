@@ -172,7 +172,9 @@ double olx_angle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
 
 // greatest common denominator
 extern unsigned int olx_gcd(unsigned int u, unsigned int v);
-
+// works only with integer types
+template <typename IntT>
+inline bool olx_is_pow2(IntT v) { return v <= 0 ? false : (v&(v-1)) == 0; }
 //extern void olx_set_bit( const bool Set, short &V, const short Bit );
 //returns volume of a sphere of radius r
 inline double olx_sphere_volume(double r)  {  return 4.*M_PI/3.0*r*r*r;  }

@@ -662,6 +662,8 @@ public:     void CalcProbFactor(float Prob);
 
   TXLine &AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
   void ClearLines()  {  Lines.Clear();  }
+  size_t LineCount() const { return Lines.Count(); }
+  TXLine &GetLine(size_t i) const{ return Lines[i]; }
   TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);
   AGDrawObject* FindLooseObject(const olxstr& Name);
   TDUserObj *FindUserObject(const olxstr& Name);

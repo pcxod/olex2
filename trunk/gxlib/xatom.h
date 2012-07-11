@@ -58,12 +58,17 @@ public:
   };
 private:
   short FDrawStyle, FRadius;
-  static uint8_t PolyhedronIndex, 
-    SphereIndex, 
-    SmallSphereIndex, 
-    RimsIndex, 
+  static uint8_t PolyhedronIndex,
+    SphereIndex,
+    SmallSphereIndex,
+    RimsIndex,
     DisksIndex,
     CrossIndex;
+  static GLuint
+    OrtepSpheres, // 8 glLists
+    LockedAtomSphere, // 1 list
+    ConstrainedAtomSphere // 1 list
+    ;
   static double MinQAlpha;
   Poly* Polyhedron;
   TXGlLabel* Label;
@@ -80,7 +85,6 @@ protected:
   void ValidateRadius(TGraphicsStyle& GS);
   void ValidateDS(TGraphicsStyle& GS);
   static void ValidateAtomParams();
-  static int OrtepSpheres;  // 8 glLists
   vec3d Center;
   virtual bool DoTranslate(const vec3d& t) {  Center += t;  return true;  }
   virtual bool DoRotate(const vec3d&, double) {  return false;  }
