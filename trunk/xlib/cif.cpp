@@ -810,7 +810,7 @@ bool TCif::Adopt(TXFile& XF)  {
     TCAtom& A = GetAsymmUnit().GetAtom(i);
     if( A.IsDeleted() || A.GetType() == iQPeakZ )  continue;
     CifRow& Row = atom_loop.AddRow();
-    Row[0] = new cetString(A.GetLabel());
+    Row[0] = new cetString(A.GetResiLabel());
     Row[1] = new cetString(A.GetType().symbol);
     for( int j=0; j < 3; j++ ) {
       Row.Set(j+2,
