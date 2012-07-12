@@ -61,10 +61,6 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   Params()[4] = 0.8;
   Label = new TXGlLabel(GetParent(), PLabelsCollectionName);
   Label->SetVisible(false);
-  if( OnStylesClear == NULL )  {
-    OnStylesClear = new TStylesClear(R);
-    new TContextClear(R);
-  }
 }
 //..............................................................................
 TXBond::~TXBond()  {
@@ -348,6 +344,10 @@ const_strlist TXBond::PovDeclare()  {
 }
 //..............................................................................
 void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
+  if( OnStylesClear == NULL )  {
+    OnStylesClear = new TStylesClear(Parent);
+    new TContextClear(Parent);
+  }
   ClearStaticObjects();
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;

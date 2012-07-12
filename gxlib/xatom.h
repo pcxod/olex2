@@ -20,11 +20,12 @@ BeginGxlNamespace()
 
 class TXBond;
 
-const short
+const uint16_t
   adsSphere       = 1,  // atom draw styles
   adsEllipsoid    = 2,
   adsStandalone   = 3,
-  adsOrtep        = 4;
+  adsOrtep        = 4,
+  adsSpecial      = 0x1000;
 
 const short
   darPers     = 0x0001, // default atom radii
@@ -166,6 +167,8 @@ public:
   const vec3d& GetCenter() const {  return Center;  }
   void NullCenter()  {  Center.Null();  }
 
+  DefPropBFIsSet(SpecialDrawing, Flags, adsSpecial)
+
   double GetDrawScale() const {
     double scale = FParams[1];
     if( (FRadius & (darIsot|darIsotH)) != 0 )
@@ -202,7 +205,7 @@ public:
       Label->SetVisible(false);
   }
   void ListDrawingStyles(TStrList &List);
-  inline short DrawStyle() const {  return FDrawStyle;  }
+  short DrawStyle() const {  return FDrawStyle;  }
   void DrawStyle(short V);
 
   void UpdatePrimitiveParams(TGlPrimitive* GlP);

@@ -11,7 +11,7 @@
 #include "egc.h"
 UseEsdlNamespace()
 
-olxstr ABasicLibrary::GetQualifiedName() const  {
+olxstr ABasicLibrary::GetQualifiedName() const {
   olxstr res = GetName();
   ABasicLibrary* lib = this->GetParentLibrary();
   while( lib && lib->GetParentLibrary() )  {
@@ -20,7 +20,7 @@ olxstr ABasicLibrary::GetQualifiedName() const  {
   }
   return res;
 }
-//..............................................................................
+//.............................................................................
 olxstr ABasicFunction::GetSignature() const {
   olxstr res(GetName());
   res << " arguments [";
@@ -64,8 +64,8 @@ olxstr ABasicFunction::GetSignature() const {
     res << ']';
   return res;
 }
-//..............................................................................
-olxstr ABasicFunction::GetQualifiedName() const  {
+//.............................................................................
+olxstr ABasicFunction::GetQualifiedName() const {
   olxstr res = GetName();
   ABasicLibrary* lib = this->GetParentLibrary();
   while( lib && lib->GetParentLibrary() )  {
@@ -74,8 +74,10 @@ olxstr ABasicFunction::GetQualifiedName() const  {
   }
   return res;
 }
-//..............................................................................
-void ABasicFunction::ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxstr>& list)  {
+//.............................................................................
+void ABasicFunction::ParseOptions(const olxstr& Options,
+  TCSTypeList<olxstr,olxstr>& list)
+{
   if( Options.IsEmpty() )  return;
   TStrList toks(Options, "&;");
   for( size_t i=0; i < toks.Count(); i++ )  {
@@ -86,15 +88,62 @@ void ABasicFunction::ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxs
       list.Add( toks[i], EmptyString());
   }
 }
-//..............................................................................
-olxstr ABasicFunction::OptionsToString(const TCSTypeList<olxstr,olxstr>& list) const {
-  olxstr rv;
+//.............................................................................
+olxstr ABasicFunction::OptionsToString(
+  const TCSTypeList<olxstr,olxstr>& list) const
+{
+  olxstr_buf rv;
+  olxstr sep1 = '-', sep2 = "&;";
   for( size_t i=0; i < list.Count(); i++ )  {
     rv << list.GetKey(i);
     if( !list.GetObject(i).IsEmpty() )
-      rv << '-' << list.GetObject(i);
-    rv << "&;";
+      rv << sep1 << list.GetObject(i);
+    rv << sep2;
   }
   return rv;
 }
-//..............................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
+void FunctionChainer::RunMacro(TStrObjList &Params, const TParamList &Options,
+    TMacroError& E)
+{
+  for (size_t i=0; i < functions.Count(); i++) {
+    functions[i]->Run(Params, Options, E);
+    if (E.IsHandled() || !E.IsSuccessful())
+      break;
+    if (!E.IsHandled() && (i+1) < functions.Count())
+      E.SetUnhandled(false);
+  }
+  if (!E.IsHandled())
+    E.ProcessingError(__OlxSourceInfo, "unhandled function call");
+}
+//.............................................................................
+void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroError& E) {
+  for (size_t i=0; i < functions.Count(); i++) {
+    functions[i]->Run(Params, E);
+    if (E.IsHandled() || !E.IsSuccessful())
+      break;
+    if (!E.IsHandled() && (i+1) < functions.Count())
+      E.SetUnhandled(false);
+  }
+  if (!E.IsHandled())
+    E.ProcessingError(__OlxSourceInfo, "unhandled function call");
+}
+//.............................................................................
+void FunctionChainer::Update(TMacro<FunctionChainer> &m) {
+  uint32_t args=0;
+  TCSTypeList<olxstr,olxstr> options;
+  TStrList description;
+  description << NewLineSequence();
+  for (size_t i=0; i < functions.Count(); i++) {
+    args |= functions[i]->GetArgStateMask();
+    options.Merge(functions[i]->GetOptions());
+    description.Add() << '#' << (i+1);
+    description.Add(functions[i]->GetDescription());
+  }
+  m.SetDescription(description.Text(NewLineSequence()));
+  m.SetArgStateMask(args);
+  m.SetOptions(options);
+}
+//.............................................................................

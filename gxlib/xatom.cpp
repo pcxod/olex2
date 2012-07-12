@@ -94,10 +94,6 @@ TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
   Label = new TXGlLabel(Render, PLabelsCollectionName);
   Label->SetOffset(crd());
   Label->SetVisible(false);
-  if( OnStylesClear == NULL )  {
-    OnStylesClear = new TStylesClear(Render);
-    new TContextClear(Render);
-  }
 }
 //..............................................................................
 TXAtom::~TXAtom()  {
@@ -419,18 +415,43 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
 
   vec3d c = GetCenter();
   c += crd();
-  //const TExyzGroup* eg = FAtom.CAtom().GetExyzGroup();
-  //if( eg != NULL )  {
-  //  //if( &(*eg)[0] != &FAtom.CAtom() )  return true;
-  //  if( eg->Count() == 2 )  {
-  //    const mat3d& m = Parent.GetBasis().GetMatrix();
-  //    vec3d v(m[0][0], m[1][0], m[2][0]);
-  //    if( &(*eg)[0] == &FAtom.CAtom() )  
-  //      c -= v*0.25;
-  //    else
-  //      c += v*0.25;
-  //  }
-  //}
+
+  const TExyzGroup* exyz = CAtom().GetExyzGroup();
+  if (exyz != NULL) {
+    if (IsSpecialDrawing()) {
+      const mat3d& m = Parent.GetBasis().GetMatrix();
+      vec3d v(m[0][0], m[1][0], m[2][0]);
+      v *= 0.75;
+      if (exyz->Count() == 2) {
+        if (&(*exyz)[1] == &CAtom())
+          c += v;
+      }
+      if (exyz->Count() == 3) {
+        if (&(*exyz)[1] == &CAtom())
+          c += v;
+        else if (&(*exyz)[2] == &CAtom())
+          c -= v;
+      }
+      else if (exyz->Count() > 3) {
+        size_t id=0;
+        for (size_t i=0; i < exyz->Count(); i++) {
+          if (&(*exyz)[i] == &CAtom()) {
+            id = i;
+            break;
+          }
+        }
+        if (id > 0) {
+          vec3d rv(m[0][2], m[1][2], m[2][2]);
+          mat3d rm;
+          double a = (id-1)*2*M_PI/(exyz->Count()-1);
+          olx_create_rotation_matrix(rm, rv, cos(a), sin(a));
+          c += v*rm;
+        }
+      }
+    }
+    else if (&(*exyz)[0] != &CAtom())
+      return true;
+  }
   
   olx_gl::translate(c);
 
@@ -458,6 +479,10 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
           GetEllipsoid()->GetSZ()*scale
           );
         if (GlP.GetOwnerId() == xatom_SphereId) {
+          if (exyz != NULL && ConstrainedAtomSphere != ~0) {
+            olx_gl::callList(ConstrainedAtomSphere);
+            return true;
+          }
           if (CAtom().IsFixedType() && LockedAtomSphere != ~0) {
             olx_gl::callList(LockedAtomSphere);
             return true;
@@ -485,12 +510,16 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
     return false;
   }
 
-  if (GlP.GetOwnerId() == xatom_SphereId &&
-      CAtom().IsFixedType() &&
-      LockedAtomSphere != ~0)
-  {
-    olx_gl::callList(LockedAtomSphere);
-    return true;
+  if (GlP.GetOwnerId() == xatom_SphereId) {
+    if (exyz != NULL && ConstrainedAtomSphere != ~0) {
+      olx_gl::callList(ConstrainedAtomSphere);
+      return true;
+    }
+    if (CAtom().IsFixedType() && LockedAtomSphere != ~0)
+    {
+      olx_gl::callList(LockedAtomSphere);
+      return true;
+    }
   }
   return false;
 }
@@ -755,6 +784,10 @@ const_strlist TXAtom::PovDeclare()  {
 }
 //..............................................................................
 void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
+  if( OnStylesClear == NULL )  {
+    OnStylesClear = new TStylesClear(Parent);
+    new TContextClear(Parent);
+  }
   ClearStaticObjects();
   TGlMaterial GlM;
   TGlPrimitiveParams *PParams;

@@ -686,7 +686,13 @@ void TMainForm::XApp(TGXApp *XA)  {
     " file in the interactive shell (on windows ShellExecute is used to avoid "
     "flickering console)");
   this_InitMacro(Save, , fpAny^fpNone);
-  this_InitMacro(Load, , fpAny^fpNone);
+  GetLibrary().RegisterMacro(
+    new TMacro<TMainForm>(this, &TMainForm::macLoad, "Load",
+      EmptyString(),  fpAny^fpNone,
+      "Loads style/scene/view/mode/radii. For radii accepts sfil, vdw, pers"),
+    libChain
+  );
+  //this_InitMacro(Load, , fpAny^fpNone);
   this_InitMacro(Link, , fpNone|fpOne);
   this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne,
     "Prints default style or sets it (none resets)");
@@ -2502,6 +2508,23 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     }
     return;
   }
+
+  static bool special_drawing_set=false;
+  if (m.m_controlDown && m.m_keyCode == WXK_SPACE) {
+    special_drawing_set = true;
+    TGXApp::AtomIterator ai = FXApp->GetAtoms();
+    while (ai.HasNext())
+      ai.Next().SetSpecialDrawing(true);
+    FXApp->Draw();
+  }
+  else if (special_drawing_set) {
+    special_drawing_set = false;
+    TGXApp::AtomIterator ai = FXApp->GetAtoms();
+    while (ai.HasNext())
+      ai.Next().SetSpecialDrawing(false);
+    FXApp->Draw();
+  }
+
   short Fl = 0;
   if( m.m_keyCode == WXK_CONTROL ||
       m.m_keyCode == WXK_MENU ||
@@ -2517,6 +2540,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
       return;
     }
   }
+
   if( m.m_altDown )      Fl |= sssAlt;
   if( m.m_shiftDown )    Fl |= sssShift;
   if( m.m_controlDown )  Fl |= sssCtrl;
@@ -3688,22 +3712,34 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
 
   }
   else if( EsdlInstanceOf(*G, TXAtom) )  {
-    TNetwork& n = ((TXAtom*)G)->GetNetwork();
-    size_t sel_cnt=0, cnt = 0;
-    for( size_t i=0; i < n.NodeCount(); i++ )  {
-      TXAtom& a = (TXAtom&)n.Node(i);
-      if( !a.IsVisible() )  continue;
-      cnt++;
-      if( a.IsSelected() )  sel_cnt++;
+    TXAtom * xa = (TXAtom*)G;
+    if (xa->CAtom().GetExyzGroup() != NULL) {
+      TGXApp::AtomIterator ai = FXApp->GetAtoms();
+      while (ai.HasNext()) {
+        TXAtom &a = ai.Next();
+        if (a.CAtom().GetExyzGroup() == xa->CAtom().GetExyzGroup())
+        a.SetSpecialDrawing(!a.IsSpecialDrawing());
+      }
+      FXApp->SelectAll(false);
     }
-    for( size_t i=0; i < n.BondCount(); i++ )  {
-      TXBond& b = (TXBond&)n.Bond(i);
-      if( !b.IsVisible() )  continue;
-      cnt++;
-      if( b.IsSelected() )  sel_cnt++;
-    }
-    if( cnt > 0 )  {
-      FXApp->SelectFragments(TNetPList() << &n, ((double)sel_cnt/cnt) < .75);
+    else {
+      TNetwork& n = xa->GetNetwork();
+      size_t sel_cnt=0, cnt = 0;
+      for( size_t i=0; i < n.NodeCount(); i++ )  {
+        TXAtom& a = (TXAtom&)n.Node(i);
+        if( !a.IsVisible() )  continue;
+        cnt++;
+        if( a.IsSelected() )  sel_cnt++;
+      }
+      for( size_t i=0; i < n.BondCount(); i++ )  {
+        TXBond& b = (TXBond&)n.Bond(i);
+        if( !b.IsVisible() )  continue;
+        cnt++;
+        if( b.IsSelected() )  sel_cnt++;
+      }
+      if( cnt > 0 )  {
+        FXApp->SelectFragments(TNetPList() << &n, ((double)sel_cnt/cnt) < .75);
+      }
     }
   }
   FXApp->Draw();

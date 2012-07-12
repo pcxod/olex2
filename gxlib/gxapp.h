@@ -152,6 +152,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   void _syncBondsVisibility();
   TUndoStack UndoStack;
   class TStateRegistry *States;
+  TStrList TextureNames;
 public:
   template <class obj_t, class act_t> struct TIterator  {
     size_t offset, count;
@@ -713,7 +714,7 @@ public:     void CalcProbFactor(float Prob);
   }
   bool DblClick()  {  return FGlMouse->DblClick();  }
   void ResetMouseState()  {  FGlMouse->ResetMouseState();  }
-  void EnableSelection( bool v)  {  FGlMouse->SetSelectionEnabled(v);  }
+  void EnableSelection(bool v)  {  FGlMouse->SetSelectionEnabled(v);  }
 //..............................................................................
 // actions
   TActionQueue &OnGraphicsVisible,
@@ -735,7 +736,8 @@ public:     void CalcProbFactor(float Prob);
   void SelectFragmentsBonds(const TNetPList& frags, bool v);
   void SelectFragments(const TNetPList& frags, bool v);
   TGlGroup& GroupFragments(const TNetPList& Fragments, const olxstr groupName);
-
+  void LoadTextures(const olxstr &folder);
+  void ClearTextures(short flags);
   // inverts current list of TLattice using Selected Fragments, returns
   // the number of entries added to the result
   void AllVisible(bool V);
