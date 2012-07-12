@@ -47,7 +47,7 @@ void TLibrary::AttachLibrary(TLibrary* lib)  {
 ABasicFunction *TLibrary::Register(
     TSStrPObjList<olxstr,ABasicFunction*, true> &container,
     ABasicFunction* fm,
-    bool replace, bool do_return)
+    uint16_t flags)
 {
   TSizeList list;
   ABasicFunction *rv = NULL;
@@ -67,19 +67,35 @@ ABasicFunction *TLibrary::Register(
   }
 
   for( size_t i=0; i < list.Count(); i++ )  {
-    uint32_t argc = container.GetObject(list[i])->GetArgStateMask();
-    if( (fm->GetArgStateMask() & argc) != 0 )  {
-      if( replace )  {
+    ABasicFunction *f = container.GetObject(list[i]);
+    if( (fm->GetArgStateMask() & f->GetArgStateMask()) != 0 )  {
+      if( (flags&libReplace) != 0 )  {
         if( fm->GetDescription().IsEmpty() )  {
-          fm->SetDescription(
-            container.GetObject(list[i])->GetDescription());
+          fm->SetDescription(f->GetDescription());
         }
-        if (do_return)
-          rv = container.GetObject(list[i]);
+        if ( (flags&libReturn) != 0 )
+          rv = f;
         else
-          delete container.GetObject(list[i]);
+          delete f;
         container.Delete(list[i]);
         break;
+      }
+      else if ((flags&libChain) != 0) {
+        TMacro<FunctionChainer> *fcm =
+          dynamic_cast<TMacro<FunctionChainer> *>(f);
+        FunctionChainer *fc = NULL;
+        if (fcm == NULL) {
+          fc = &Chains.AddNew();
+          fc->Add(f);
+          fcm = new TMacro<FunctionChainer>(fc, &FunctionChainer::RunMacro,
+            f->GetName(), EmptyString(), 0);
+          fcm->SetParentLibrary(*this);
+          container.GetObject(list[i]) = fcm;
+        }
+        else
+          fc = &fcm->GetBaseInstance();
+        fc->Add(fm).Update(*fcm);
+        return NULL;
       }
       throw TDuplicateEntry(__OlxSourceInfo,
         olxstr("macro/function (same number of args) ").quote() <<

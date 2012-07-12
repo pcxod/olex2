@@ -61,8 +61,8 @@ const uint32_t
   fpSpecialCheckB = 0x00020000,
   fpSpecialCheckC = 0x00040000,
   fpSpecialCheckD = 0x00080000,
-  fpSpecialCheckE = 0x00080000,
-  fpSpecialCheckF = 0x00080000
+  fpSpecialCheckE = 0x00100000,
+  fpSpecialCheckF = 0x00200000
   // .... 1 << n
   ;
 
@@ -274,7 +274,7 @@ public:
     void (Base::*macro)(TStrObjList& Params,
     const TParamList &Options, TMacroError& E),
     const olxstr& macroName, const olxstr& validOptions,
-    uint32_t argc, const olxstr& desc=EmptyString() )
+    uint32_t argc, const olxstr& desc=EmptyString())
   {
     ArgStateMask = argc;
     BaseClassInstance = baseClassInstance;
@@ -284,12 +284,14 @@ public:
     ParseOptions(validOptions, ValidOptions);
   }
 
-  virtual ABasicFunction* Replicate() const  {
+  virtual ABasicFunction* Replicate() const {
     return new TMacro<Base>(
       BaseClassInstance, Macro, GetName(),
       OptionsToString(ValidOptions), ArgStateMask,
       GetDescription());
   }
+  
+  Base &GetBaseInstance() const { return *BaseClassInstance; }
 
   virtual bool HasOptions() const { return true; }
   virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const {
@@ -421,8 +423,23 @@ public:
   }
 };
 
-  typedef TPtrList<ABasicFunction> TBasicFunctionPList;
-  typedef TPtrList<ABasicLibrary> TBasicLibraryPList;
+typedef TPtrList<ABasicFunction> TBasicFunctionPList;
+typedef TPtrList<ABasicLibrary> TBasicLibraryPList;
+
+class FunctionChainer {
+  TBasicFunctionPList functions;
+public:
+  FunctionChainer() {}
+  ~FunctionChainer() { functions.DeleteItems(false); }
+  FunctionChainer &Add(ABasicFunction *f) {
+    functions.Add(f);
+    return *this;
+  }
+  void RunMacro(TStrObjList &Params, const TParamList &Options,
+    TMacroError& E);
+  void RunFunction(const TStrObjList &Params, TMacroError& E);
+  void Update(TMacro<FunctionChainer> &m);
+};
 
 EndEsdlNamespace()
 #endif

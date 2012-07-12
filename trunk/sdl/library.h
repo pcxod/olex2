@@ -14,15 +14,21 @@
 
 BeginEsdlNamespace()
 
+const uint16_t
+  libReplace = 0x0001,
+  libReturn  = 0x0002,
+  libChain   = 0x0004;
+
 class TLibrary: public IEObject, public ABasicLibrary  {
   TSStrPObjList<olxstr,ABasicFunction*, true> Functions, Macros;
+  TTypeList<FunctionChainer> Chains;
   olxstr LibraryName;
   TSStrPObjList<olxstr,TLibrary*, true> Libraries;
   ALibraryContainer* LibraryOwner;
   TLibrary* ParentLibrary;
 protected:
   /* these are the helper functions to find func/macro in this library only
-  using unqulified names
+  using unqualified names
   */
   ABasicFunction* LocateFunction(const olxstr& fuctionName, uint32_t argc = 0);
   ABasicFunction* LocateMacro(const olxstr& macroName, uint32_t argc = 0);
@@ -40,7 +46,7 @@ protected:
   ABasicFunction *Register(
     TSStrPObjList<olxstr,ABasicFunction*, true> &container,
     ABasicFunction* fm,
-    bool replace, bool do_return);
+    uint16_t flags);
 public:
   /* it important to pass the owner for the special program state checks to be
   performed
@@ -78,27 +84,27 @@ public:
 
   template <class BaseClass>
   ABasicFunction *RegisterFunction(TFunction<BaseClass>* func,
-    bool replace=false, bool do_return=false)
+    uint16_t flags=0)
   {
-    return Register(Functions, func, replace, do_return);
+    return Register(Functions, func, flags);
   }
 
   ABasicFunction *RegisterStaticFunction(
-    TStaticFunction* func, bool replace=false, bool do_return=false)
+    TStaticFunction* func, uint16_t flags=0)
   {
-    return Register(Functions, func, replace, do_return);
+    return Register(Functions, func, flags);
   }
   ABasicFunction *RegisterStaticMacro(
-    TStaticMacro* func, bool replace=false, bool do_return=false)
+    TStaticMacro* func, uint16_t flags=0)
   {
-    return Register(Macros, func, replace, do_return);
+    return Register(Macros, func, flags);
   }
 
   template <class BaseClass>
   ABasicFunction *RegisterMacro(TMacro<BaseClass>* macro,
-    bool replace=false, bool do_return=false)
+    uint16_t flags=0)
   {
-    return Register(Macros, macro, replace, do_return);
+    return Register(Macros, macro, flags);
   }
   /* if function name is no qualified, current lib is searched only, for
   quailified function names like, html.home, the library will be located and

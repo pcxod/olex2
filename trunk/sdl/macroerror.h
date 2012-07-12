@@ -12,6 +12,7 @@
 #include "exception.h"
 #include "ptypes.h"
 #include "estack.h"
+#include "emath.h"
 BeginEsdlNamespace()
 
 class ABasicFunction;
@@ -22,7 +23,9 @@ const unsigned short
   peProcessingException = 0x0004,
   peInvalidOption       = 0x0008,
   peInvalidArgCount     = 0x0010,
-  peIllegalState        = 0x0020;
+  peIllegalState        = 0x0020,
+  // these are for special handling
+  peUnhandled           = 0x1000;
 
 class TMacroError: public IEObject  {
   unsigned short ProcessError;
@@ -33,7 +36,7 @@ class TMacroError: public IEObject  {
 public:
   TMacroError();
   virtual ~TMacroError()  {
-    if( DeleteObject )  
+    if( DeleteObject )
       delete RetValue;
   }
   
@@ -43,6 +46,7 @@ public:
   void WrongArgCount(const ABasicFunction& caller, size_t provided);
   void WrongOption(const ABasicFunction& caller, const olxstr& option);
   void WrongState(const ABasicFunction& caller);
+  void SetUnhandled(bool v) { olx_set_bit(v, ProcessError, peUnhandled); }
 
   void Reset()  {
     ProcessError = 0;
@@ -55,30 +59,51 @@ public:
   }
   void ClearErrorFlag()  {  ProcessError = 0;  }
 
-  void ProcessingException(const ABasicFunction& caller, const TExceptionBase& exc);
+  void ProcessingException(const ABasicFunction& caller,
+    const TExceptionBase& exc);
 
-  inline bool IsSuccessful() const {  return (ProcessError == 0);  }
-  inline bool DoesFunctionExist() const {  return (ProcessError&peNonexistingFunction) == 0;  }
-  inline bool IsProcessingError() const {  return (ProcessError&peProcessingError) != 0;  }
-  inline bool IsProcessingException() const {  return (ProcessError&peProcessingException) != 0;  }
-  inline bool IsInvalidOption() const {  return (ProcessError&peInvalidOption) != 0;  }
-  inline bool IsInvalidArguments() const {  return (ProcessError&peInvalidArgCount) != 0;  }
-  inline bool IsIllegalState() const {  return (ProcessError&peIllegalState) != 0;  }
+  bool IsSuccessful() const {
+    return ((ProcessError&0x0FFF) == 0);
+  }
+  bool DoesFunctionExist() const {
+    return (ProcessError&peNonexistingFunction) == 0;
+  }
+  bool IsProcessingError() const {
+    return (ProcessError&peProcessingError) != 0;
+  }
+  bool IsProcessingException() const {
+    return (ProcessError&peProcessingException) != 0;
+  }
+  bool IsInvalidOption() const {
+    return (ProcessError&peInvalidOption) != 0;
+  }
+  bool IsInvalidArguments() const {
+    return (ProcessError&peInvalidArgCount) != 0;
+  }
+  bool IsIllegalState() const {
+    return (ProcessError&peIllegalState) != 0;
+  }
 
-  inline const olxstr& GetInfo() const {  return ErrorInfo;  }
+  bool IsHandled() const {
+    return (ProcessError&peUnhandled) == 0;
+  }
+
+  const olxstr& GetInfo() const {  return ErrorInfo;  }
   DefPropC(olxstr, Location)
 
   olxstr GetRetVal() const;
 
-  inline bool HasRetVal() const {  return RetValue != NULL;  }
-  inline IEObject* RetObj() const {  return RetValue;  }
+  bool HasRetVal() const {  return RetValue != NULL;  }
+  IEObject* RetObj() const {  return RetValue;  }
   
   str_stack& GetStack() {  return Stack;  }
 
   // the type is validated
   template <class EObj> EObj* GetRetObj()  {
-    if( !EsdlInstanceOf(*RetValue, EObj) )
-      throw TCastException(__OlxSourceInfo, EsdlObjectName(*RetValue), EsdlClassName(EObj) );
+    if( !EsdlInstanceOf(*RetValue, EObj) ) {
+      throw TCastException(__OlxSourceInfo, EsdlObjectName(*RetValue),
+        EsdlClassName(EObj));
+    }
     return (EObj*)RetValue;
   }
   template <class PT> void SetRetVal(const PT& val)  {
@@ -94,9 +119,13 @@ public:
   }
 
   class TCastException : public TBasicException  {
-    public: TCastException(const olxstr& location, const olxstr& from, const olxstr& to ):
-      TBasicException(location, olxstr("Cannot cast '") << from << "' to '"  << to << '\'')  {  }
-    virtual IEObject* Replicate() const   {  return new TCastException(*this);  }
+    public:
+      TCastException(const olxstr& location, const olxstr& from,
+        const olxstr& to)
+        : TBasicException(location,
+            olxstr("Cannot cast '") << from << "' to '"  << to << '\'')
+      {}
+    virtual IEObject* Replicate() const {  return new TCastException(*this);  }
   };
 
 };

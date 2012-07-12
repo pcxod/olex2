@@ -1895,7 +1895,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( !FN.IsEmpty() && TEFile::Exists(FN) )  {
       if( !TEFile::IsAbsolutePath(FN) )
-        FN = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << FN;        
+        FN = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << FN;
       FXApp->XFile().LoadFromFile(FN);
     }
   }
@@ -1946,7 +1946,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else
-    Error.ProcessingError(__OlxSrcInfo, "undefined parameter");
+    Error.SetUnhandled(true);
 }
 //..............................................................................
 void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2070,7 +2070,7 @@ void TMainForm::macCeiling(TStrObjList &Cmds, const TParamList &Options, TMacroE
     else if( Cmds[0].Equalsi("off") )
       FXApp->GetRender().Ceiling()->SetVisible(false);
     else
-      Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
+      Error.ProcessingError(__OlxSrcInfo, "wrong arguments");
     FXApp->Draw();
   }
 }

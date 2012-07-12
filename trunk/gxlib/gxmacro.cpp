@@ -138,10 +138,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     "increment/decrement the numegbr of visibe peaks. Two aruments are taken "
     "to control the visibility of atoms or bonds, like in: 'showq a true' or "
     "'showq b false'");
-  gxlib_InitMacro(AtomTextures,
+  gxlib_InitMacro(Load,
     EmptyString(),
-    fpNone|fpOne,
-    "Clear/Loads textures for atoms with special flags");
+    fpAny^(fpNone),
+    "Arguments - textures");
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -980,87 +980,18 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
   app.GetRender().SetBasis(basis);
 }
 //.............................................................................
-void GXLibMacros::macAtomTextures(TStrObjList &Cmds, const TParamList &Options,
+void GXLibMacros::macLoad(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-#ifndef __WXWIDGETS__
-  throw TNotImplementedException(__OlxSourceInfo);
-#else
+  if (Cmds.IsEmpty() || !Cmds[0].Equalsi("textures")) {
+    Error.SetUnhandled(true);
+    return;
+  }
+  Cmds.Delete(0);
   TGXApp &app = TGXApp::GetInstance();
-  TStrList textures;
-  textures << "LockedAtoms";
-  textures << "ConstrainedAtoms";
-  TTextureManager &tm = app.GetRender().GetTextureManager();
-  bool update=false;
-  if (Cmds.IsEmpty()) {
-    for (size_t i=0; i < textures.Count(); i++) {
-      TGlTexture *glt = tm.FindByName(textures[i]);
-      if (glt != NULL) {
-        glt->SetEnabled(false);
-        update = true;
-      }
-    }
-  }
-  else {
-    olxstr dn;
-    if (TEFile::IsDir(Cmds[0]))
-      dn = Cmds[0];
-    else
-      dn = app.GetBaseDir();
-    TEFile::AddPathDelimeterI(dn);
-    for (size_t i=0; i < textures.Count(); i++) {
-      olxstr fn = (olxstr(dn) << textures[i]  << ".png");
-      if (!TEFile::Exists(fn)) {
-        TBasicApp::NewLogEntry() << "Could not locate '" << fn <<
-          "' skiping this texture";
-        continue;
-      }
-      wxImage img;
-      img.LoadFile(fn.u_str());
-      if (!img.Ok() ||
-          !olx_is_pow2(img.GetWidth()) ||
-          (img.GetWidth() != img.GetHeight()))
-      {
-        TBasicApp::NewLogEntry() << "Invalid image file '" << fn <<
-          "' skiping this texture";
-        continue;
-      }
-      const int sz=img.GetWidth();
-      unsigned char * tex_data = new unsigned char[sz*sz*3];
-      for (int ix=0; ix < sz; ix++) {
-        int off = ix*sz;
-        for (int jx=0; jx < sz; jx++) {
-          int off1 = (off+jx)*3;
-          tex_data[off1+0] = img.GetRed(ix,jx);
-          tex_data[off1+1] = img.GetGreen(ix,jx);
-          tex_data[off1+2] = img.GetBlue(ix,jx);
-        }
-      }
-      TGlTexture *tex = tm.FindByName(textures[i]);
-      if (tex == NULL) {
-        GLuint tex_id = tm.Add2DTexture(
-          textures[i],
-          0, sz, sz, 0,
-          GL_RGB, tex_data);
-        tex = tm.FindTexture(tex_id);
-      }
-      else {
-        tm.Replace2DTexture(*tex,
-          0, sz, sz, 0,
-          GL_RGB, tex_data);
-      }
-      delete [] tex_data;
-      tex->SetSCrdWrapping(tpCrdRepeat);
-      tex->SetTCrdWrapping(tpCrdRepeat);
-      tex->SetMinFilter(tpFilterNearest);
-      tex->SetMagFilter(tpFilterLinear);
-      tex->SetEnabled(true);
-      update = true;
-      TBasicApp::NewLogEntry() << textures[i] << " loaded...";
-    }
-  }
-  if (update)
-    TXAtom::CreateStaticObjects(app.GetRender());
-#endif
+  if (Cmds.IsEmpty())
+    app.ClearTextures(~0);
+  else
+    app.LoadTextures(Cmds.Text(' '));
 }
 //.............................................................................

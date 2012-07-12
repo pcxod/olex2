@@ -384,6 +384,11 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
         &T3DFrameCtrl::SetVisible)
     )
   );
+  TextureNames << "LockedAtoms";
+  TextureNames << "ConstrainedAtoms";
+  olxstr textures_dir = GetBaseDir() + "etc/Textures";
+  if (TEFile::IsDir(textures_dir))
+    LoadTextures(textures_dir);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
@@ -4667,4 +4672,88 @@ bool TGXApp::ToClipboard(const olxstr &text) const {
 #endif
   return false;
 }
-
+//..............................................................................
+void TGXApp::ClearTextures(short) {
+  TTextureManager &tm = GetRender().GetTextureManager();
+  bool update = false;
+  for (size_t i=0; i < TextureNames.Count(); i++) {
+    TGlTexture *glt = tm.FindByName(TextureNames[i]);
+    if (glt != NULL) {
+      glt->SetEnabled(false);
+      update = true;
+    }
+  }
+  if (update) {
+    TXAtom::CreateStaticObjects(GetRender());
+    TXBond::CreateStaticObjects(GetRender());
+  }
+}
+//..............................................................................
+void TGXApp::LoadTextures(const olxstr &folder) {
+#ifndef __WXWIDGETS__
+  throw TNotImplementedException(__OlxSourceInfo);
+#else
+  if (!TEFile::IsDir(folder)) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "folder name");
+  }
+  TTextureManager &tm = GetRender().GetTextureManager();
+  bool update=false;
+  olxstr dn = folder;
+  TEFile::AddPathDelimeterI(dn);
+  for (size_t i=0; i < TextureNames.Count(); i++) {
+    olxstr fn = (olxstr(dn) << TextureNames[i]  << ".png");
+    if (!TEFile::Exists(fn)) {
+      TBasicApp::NewLogEntry() << "Could not locate '" << fn <<
+        "' skiping this texture";
+      continue;
+    }
+    wxImage img;
+    img.LoadFile(fn.u_str());
+    if (!img.Ok() ||
+      !olx_is_pow2(img.GetWidth()) ||
+      (img.GetWidth() != img.GetHeight()))
+    {
+      TBasicApp::NewLogEntry() << "Invalid image file '" << fn <<
+        "' skiping this texture";
+      continue;
+    }
+    const int sz=img.GetWidth();
+    unsigned char * tex_data = new unsigned char[sz*sz*3];
+    for (int ix=0; ix < sz; ix++) {
+      int off = ix*sz;
+      for (int jx=0; jx < sz; jx++) {
+        int off1 = (off+jx)*3;
+        tex_data[off1+0] = img.GetRed(ix,jx);
+        tex_data[off1+1] = img.GetGreen(ix,jx);
+        tex_data[off1+2] = img.GetBlue(ix,jx);
+      }
+    }
+    TGlTexture *tex = tm.FindByName(TextureNames[i]);
+    if (tex == NULL) {
+      GLuint tex_id = tm.Add2DTexture(
+        TextureNames[i],
+        0, sz, sz, 0,
+        GL_RGB, tex_data);
+      tex = tm.FindTexture(tex_id);
+    }
+    else {
+      tm.Replace2DTexture(*tex,
+        0, sz, sz, 0,
+        GL_RGB, tex_data);
+    }
+    delete [] tex_data;
+    tex->SetSCrdWrapping(tpCrdRepeat);
+    tex->SetTCrdWrapping(tpCrdRepeat);
+    tex->SetMinFilter(tpFilterNearest);
+    tex->SetMagFilter(tpFilterLinear);
+    tex->SetEnabled(true);
+    update = true;
+    TBasicApp::NewLogEntry() << TextureNames[i] << " loaded...";
+  }
+  if (update) {
+    TXAtom::CreateStaticObjects(GetRender());
+    TXBond::CreateStaticObjects(GetRender());
+  }
+#endif
+}
+//..............................................................................
