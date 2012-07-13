@@ -1366,7 +1366,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     else // incomplete data...
       atom->SetUiso(4*caDefIso*caDefIso);
     if( Toks.Count() >= 8 ) // some other data as Q-peak itensity
-      atom->SetQPeak( Toks[7].ToDouble() );
+      atom->SetQPeak(Toks[7].ToDouble());
     if( atom->GetUiso() <= -0.5 )  {  // a value fixed to the pivot atom value
       if( cx.LastWithU == NULL )  {
         throw TInvalidArgumentException(__OlxSourceInfo,

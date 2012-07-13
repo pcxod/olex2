@@ -449,8 +449,8 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
         }
       }
     }
-    else if (&(*exyz)[0] != &CAtom())
-      return true;
+    //else if (&(*exyz)[0] != &CAtom())
+    //  return true;
   }
   
   olx_gl::translate(c);
@@ -585,10 +585,7 @@ void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
 
   M.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmEmissionF);
 //  |  sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmEmissionB);
-  if (Atom.CAtom().IsFixedType())
-    Cl = 0xff ^ Atom.GetType().def_color;
-  else
-    Cl = Atom.GetType().def_color;
+  Cl = Atom.GetType().def_color;
   M.AmbientF = Cl;
   M.DiffuseF = Mask ^ Cl;
   M.SpecularF = 0xffffffff;

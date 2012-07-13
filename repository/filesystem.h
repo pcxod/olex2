@@ -76,25 +76,25 @@ public:
   // deletes a file
   bool DelFile(const olxstr& f) {
     if( (Access & afs_DeleteAccess) == 0 )
-      return false;  
+      return false;
     return _DoDelFile(f);
  }
   // deletes a folder
   bool DelDir(const olxstr& d) {
     if( (Access & afs_DeleteAccess) == 0 )
-      return false;  
+      return false;
     return _DoDelDir(d);
  }
   // puts a file to the file system
   bool AdoptFile(const TFSItem& src) {
     if( (Access & afs_WriteAccess) == 0 )
-      return false;  
+      return false;
     return _DoAdoptFile(src);
  }
   // creates a new folder
   bool NewDir(const olxstr& d) {
     if( (Access & afs_WriteAccess) == 0 )
-      return false;  
+      return false;
     return _DoNewDir(d);
  }
   /* checks if the file exists, forced_check is applies to http FS, where
@@ -107,7 +107,7 @@ public:
   // returns a stream for a specified stream, must be deleted
   IInputStream* OpenFile(const olxstr& src) {
     if( (Access & afs_ReadAccess) == 0 )
-      return NULL;  
+      return NULL;
     return _DoOpenFile(src);
  }
   bool AdoptStream(IInputStream& file, const olxstr& name) {

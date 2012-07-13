@@ -2556,6 +2556,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
         CAtoms.Add(resi[j])->SetTag(1);
       }
     }
+    if (ca.GetUisoOwner() != NULL)
+      CAtoms.Add(ca.GetUisoOwner());
   }
   TXApp::UnifyPAtomList(CAtoms);
   RefinementModel::ReleasedItems released;
@@ -3256,7 +3258,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     TIntList fvars;
     for( size_t i=0; Cmds.Count(); i++ )  {
       if( Cmds[i].IsNumber() )  {
-        fvars.Add(Cmds[i].ToInt()-1);
+        int &v = fvars.Add(Cmds[i].ToInt());
+        v = olx_sign(v)*(olx_abs(v)-1);
         Cmds.Delete(i--);
       }
       else

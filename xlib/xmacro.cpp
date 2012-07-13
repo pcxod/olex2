@@ -203,7 +203,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and "
     "minimal angle [150] might be provided");
 //_____________________________________________________________________________
-  xlib_InitMacro(HAdd, EmptyString(), fpAny|psCheckFileTypeIns,
+  xlib_InitMacro(HAdd, EmptyString(), fpAny,
     "Adds hydrogen atoms to all or provided atoms, however the ring atoms are "
     "treated separately and added all the time");
   xlib_InitMacro(HImp, EmptyString(), (fpAny^fpNone)|psFileLoaded,
@@ -235,7 +235,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Makes provided atoms isotropic, if no arguments provided, current "
     "selection or all atoms become isotropic");
-  xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded, 
+  xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded,
     "Makes provided atoms anisotropic if no arguments provided current "
     "selection or all atoms are considered");
   xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit",
@@ -2333,6 +2333,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
   }
   // force the split atom to become isotropic
   xapp.XFile().GetLattice().SetAnis(processed, false);
+  xapp.XFile().EndUpdate();
 }
 //.............................................................................
 void XLibMacros::macEADP(TStrObjList &Cmds, const TParamList &Options,

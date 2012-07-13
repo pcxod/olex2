@@ -53,8 +53,8 @@ void UpdateThread::DoInit()  {
 //.............................................................................
 int UpdateThread::Run()  {
   DoInit();
-  if( !TBasicApp::HasInstance() || Terminate || 
-    srcFS == NULL || destFS == NULL || Index == NULL )  
+  if( !TBasicApp::HasInstance() || Terminate ||
+    srcFS == NULL || destFS == NULL || Index == NULL )
   {
     CleanUp();
     return 0;
