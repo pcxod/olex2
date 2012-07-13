@@ -1604,7 +1604,7 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
             << constraints->GetItem(i).GetValue());
           continue;
         }
-        if( ca->GetAfix() == -1 )  // already set
+        if( ca->GetAfix() != 0 )  // already set
           continue;
         TAfixGroup& ag = AfixGroups.New(ca, -1);
         for( size_t ti=2; ti < toks.Count(); ti++ )  {
@@ -1615,7 +1615,8 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
               << constraints->GetItem(i).GetValue());
             continue;
           }
-          ag.AddDependent(*ca);
+          if (ca->GetAfix() == 0)
+            ag.AddDependent(*ca);
         }
       }
       else {

@@ -3112,10 +3112,13 @@ void TGXApp::SetHydrogensVisible(bool v)  {
     XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
     for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
       OverlayedXFiles[i].GetAsymmUnit().DetachAtomType(iHydrogenZ, !FHydrogensVisible);
-    if( v && !XFile().GetLattice().IsGenerated() )
-      XFile().GetLattice().CompaqH();
-    else
-      UpdateConnectivity();
+    /* TODO: this is disabled because it causes problems with molecules
+    disordered nearby an element of symmetry - need better treatment...
+    */
+    //if( v && !XFile().GetLattice().IsGenerated() )
+    //  XFile().GetLattice().CompaqH();
+    //else
+    UpdateConnectivity();
     CenterView(true);
   }
 }

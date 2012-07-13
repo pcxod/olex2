@@ -116,7 +116,7 @@ bool TOSFileSystem::_DoAdoptFile(const TFSItem& Src)  {
 //.............................................................................
 bool TOSFileSystem::_DoNewDir(const olxstr& DN)  {
   OnMkDir.Execute(this, &DN);
-  return TEFile::MakeDir(DN);
+  return TEFile::MakeDirs(DN);
 }
 //.............................................................................
 bool TOSFileSystem::_DoesExist(const olxstr& FN, bool)  {
@@ -433,7 +433,7 @@ uint64_t TFSItem::CalcDiffSize(const TFSItem& Dest,
       Res->Processed = true;
       if( !Res->ValidateProperties(properties) )
         continue;
-      if( FI.IsFolder() ) 
+      if( FI.IsFolder() )
         sz += Res->CalcDiffSize(FI, properties);
       else if( Dest.Index.ShallAdopt(*Res, FI) )  {
         sz += Res->GetSize();
