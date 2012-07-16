@@ -353,15 +353,17 @@ void TXFile::ValidateTabs()  {
   for( size_t i=0; i < RefMod.InfoTabCount(); i++ )  {
     if( RefMod.GetInfoTab(i).GetType() != infotab_htab )
       continue;
-    if( RefMod.GetInfoTab(i).Count() != 2 )  // already invalid
-      continue;
+    if (!RefMod.GetInfoTab(i).GetAtoms().IsExplicit()) continue;
+    TTypeList<ExplicitCAtomRef> ta =
+      RefMod.GetInfoTab(i).GetAtoms().ExpandList(GetRM(), 2);
+    if (ta.IsEmpty()) continue;
     TSAtom* sa = NULL;
     InfoTab& it = RefMod.GetInfoTab(i);
     ASObjectProvider& objects = Lattice.GetObjects();
     const size_t ac = objects.atoms.Count();
     for( size_t j=0; j < ac; j++ )  {
       TSAtom& sa1 = objects.atoms[j];
-      if( sa1.CAtom().GetId() == it.GetAtom(0).GetAtom()->GetId() )  {
+      if( sa1.CAtom().GetId() == ta[0].GetAtom().GetId() )  {
         sa = &sa1;
         break;
       }
@@ -380,17 +382,17 @@ void TXFile::ValidateTabs()  {
     if( !hasH )  {  
       TBasicApp::NewLogEntry() << "Removing HTAB (donor has no H atoms): "
         << it.InsStr();
-      RefMod.DeleteInfoTab(i--);  
+      RefMod.DeleteInfoTab(i--);
       continue;  
     }
     // validate the distance makes sense
-    const TAsymmUnit& au = *it.GetAtom(0).GetAtom()->GetParent();
-    vec3d v1 = it.GetAtom(0).GetAtom()->ccrd();
-    if( it.GetAtom(0).GetMatrix() != NULL )
-      v1  = *it.GetAtom(0).GetMatrix()*v1;
-    vec3d v2 = it.GetAtom(1).GetAtom()->ccrd();
-    if( it.GetAtom(1).GetMatrix() != NULL )
-      v2  = *it.GetAtom(1).GetMatrix()*v2;
+    const TAsymmUnit& au = *ta[0].GetAtom().GetParent();
+    vec3d v1 = ta[0].GetAtom().ccrd();
+    if( ta[0].GetMatrix() != NULL )
+      v1  = *ta[0].GetMatrix()*v1;
+    vec3d v2 = ta[1].GetAtom().ccrd();
+    if( ta[1].GetMatrix() != NULL )
+      v2  = *ta[1].GetMatrix()*v2;
     const double dis = au.CellToCartesian(v1).DistanceTo(au.CellToCartesian(v2));
     if( dis > 5 )  {
       TBasicApp::NewLogEntry() << "Removing HTAB (d > 5A): " << it.InsStr();

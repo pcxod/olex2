@@ -497,7 +497,7 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
 {
   olxstr name(Atom->GetLabel());
   if( Atom->GetResiId() == 0 || 
-    Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiId )  
+    Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiId )
   {
     if( Matrix != NULL )
       name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);

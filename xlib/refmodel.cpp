@@ -328,8 +328,8 @@ InfoTab& RefinementModel::AddHTAB() {
   return InfoTables.Add(new InfoTab(*this, infotab_htab));
 }
 //.............................................................................
-InfoTab& RefinementModel::AddRTAB(const olxstr& codename, const olxstr& resi) {
-  return InfoTables.Add(new InfoTab(*this, infotab_rtab, codename, resi));
+InfoTab& RefinementModel::AddRTAB(const olxstr& codename) {
+  return InfoTables.Add(new InfoTab(*this, infotab_rtab, codename));
 }
 //.............................................................................
 void RefinementModel::Validate() {
@@ -343,7 +343,7 @@ void RefinementModel::Validate() {
   AfixGroups.ValidateAll();
   Vars.Validate();
   for( size_t i=0; i < InfoTables.Count(); i++ )  {
-    if( InfoTables[i].HasDeletedAtom() )
+    if (!InfoTables[i].IsValid())
       InfoTables.Delete(i--);
   }
 }
@@ -355,7 +355,7 @@ bool RefinementModel::ValidateInfoTab(const InfoTab& it)  {
     if( &InfoTables[i] == &it )
       it_ind = i;
     else  {
-      if( unique && (InfoTables[i] == it) )  
+      if( unique && (InfoTables[i] == it) )
         unique = false;
     }
   }
@@ -376,50 +376,47 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
     : l[0].SubStringFrom(resi_ind+1));
   if( tab_name.Equalsi("HTAB") ) {
     InfoTables.Add(
-      new InfoTab(*this, infotab_htab, EmptyString(), resi_name));
+      new InfoTab(*this, infotab_htab, EmptyString()));
   }
   else if( tab_name.Equalsi("RTAB") ) {
     InfoTables.Add(
-      new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name));
+      new InfoTab(*this, infotab_rtab, l[atom_start++]));
   }
   else if( tab_name.Equalsi("MPLA") )  {
     if( l[atom_start].IsNumber() ) {
       InfoTables.Add(
-        new InfoTab(*this, infotab_mpla, l[atom_start++], resi_name));
+        new InfoTab(*this, infotab_mpla, l[atom_start++]));
     }
     else {
       InfoTables.Add(
-        new InfoTab(*this, infotab_mpla, EmptyString(), resi_name));
+        new InfoTab(*this, infotab_mpla, EmptyString()));
     }
   }
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "unknown information table name");
   }
-
-  TAtomReference ar(l.Text(' ', atom_start));
-  TCAtomGroup ag;
-  size_t atomAGroup;
-  try  {  ar.Expand( *this, ag, resi_name, atomAGroup);  }
+  try  {
+    InfoTables.GetLast().FromExpression(l.Text(' ', atom_start), resi_name);
+  }
   catch( const TExceptionBase& ex )  {
     TBasicApp::NewLogEntry(logError) <<
       "Invalid info table atoms: " << l.Text(' ');
     TBasicApp::NewLogEntry(logError) << ex.GetException()->GetFullMessage();
-    InfoTables.Delete( InfoTables.Count()-1 );
+    InfoTables.Delete(InfoTables.Count()-1);
     return;
   }
-  InfoTables.GetLast().AssignAtoms(ag);
   if( !InfoTables.GetLast().IsValid() )  {
     TBasicApp::NewLogEntry(logError) <<
       "Invalid info table: " << l.Text(' ');
-    InfoTables.Delete( InfoTables.Count()-1 );
+    InfoTables.Delete(InfoTables.Count()-1);
     return;
   }
   for( size_t i=0; i < InfoTables.Count()-1; i++ )  {
     if( InfoTables[i] == InfoTables.GetLast() )  {
       TBasicApp::NewLogEntry(logError) <<
         "Duplicate info table: " << l.Text(' ');
-      InfoTables.Delete( InfoTables.Count()-1 );
+      InfoTables.Delete(InfoTables.Count()-1);
       return;
     }
   }
@@ -719,7 +716,7 @@ olxstr RefinementModel::AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
     olxstr ss = '-';
     for (size_t i=0; i < al.Count(); i+=group_size) {
       for (size_t j=0; j < group_size; j++) {
-        rv << al[i+j].GetExpression();
+        rv << al[i+j].GetExpression(NULL);
         if (j+1 < group_size)
           rv << ss;
       }
@@ -729,7 +726,7 @@ olxstr RefinementModel::AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
   }
   else {
     for (size_t i=0; i < al.Count(); i++) {
-      rv << al[i].GetExpression();
+      rv << al[i].GetExpression(NULL);
       if ((i+1) < al.Count())
         rv << sep;
     }
@@ -857,7 +854,7 @@ const_strlist RefinementModel::Describe() {
         ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
         for( size_t j=0; j < al.Count(); j++ )  {
           if( al[j].GetAtom().GetEllipsoid() == NULL )  continue;
-          str << "Uanis(" << al[j].GetExpression() << ") ~ Ueq";
+          str << "Uanis(" << al[j].GetExpression(NULL) << ") ~ Ueq";
           if( (j+1) < al.Count() )
             str << ", ";
         }
@@ -874,7 +871,7 @@ const_strlist RefinementModel::Describe() {
           str << "Uiso(";
         else 
           str << "Uanis(";
-        str << al[j].GetExpression() << ')';
+        str << al[j].GetExpression(NULL) << ')';
         if( (j+1) < al.Count() )
           str << " = ";
       }
@@ -884,7 +881,7 @@ const_strlist RefinementModel::Describe() {
       olxstr& str = lst.Add(EmptyString());
       ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
       for (size_t j=0; j < al.Count(); j++)  {
-        str << "Ueq(" << al[j].GetExpression() << ')';
+        str << "Ueq(" << al[j].GetExpression(NULL) << ')';
         if ((j+1) < al.Count()) str << ", ";
       }
       str << ": fixed at " << sr.GetValue() << " with sigma of " << sr.GetEsd();
@@ -897,7 +894,7 @@ const_strlist RefinementModel::Describe() {
       else {
         ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
         for( size_t j=0; j < al.Count(); j++ )  {
-          str << "Ueq(" << al[j].GetExpression() << ')';
+          str << "Ueq(" << al[j].GetExpression(NULL) << ')';
           if( (j+1) < al.Count() )
             str << " ~ ";
         }
@@ -912,7 +909,7 @@ const_strlist RefinementModel::Describe() {
       else {
         ConstTypeList<ExplicitCAtomRef> al = sr.GetAtoms().ExpandList(*this);
         for( size_t j=0; j < al.Count(); j++ )  {
-          str << "Uvol(" << al[j].GetExpression() << ')';
+          str << "Uvol(" << al[j].GetExpression(NULL) << ')';
           if( (j+1) < al.Count() )
             str << " ~ ";
         }

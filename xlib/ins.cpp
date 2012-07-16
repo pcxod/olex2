@@ -1583,6 +1583,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     ResInfo& r = restraints.GetObject(i);
     for( size_t j=0; j < r.GetA()->Count(); j++ )  {
       TSimpleRestraint& sr = (*r.A())[j];
+      sr.UpdateResi();
       const RCInfo& ri = r.GetB();
       sr.Validate();
       olxstr line = RestraintToString(sr, ri, atoms);
@@ -1722,8 +1723,10 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
   for( size_t i=0; i < GetRM().InfoTabCount(); i++ )  {
-    if( GetRM().GetInfoTab(i).IsValid() )
+    if( GetRM().GetInfoTab(i).IsValid() ) {
+      GetRM().GetInfoTab(i).UpdateResi();
       SL.Add(GetRM().GetInfoTab(i).InsStr());
+    }
   }
   GetRM().Conn.ToInsList(SL);
   // copy "unknown" instructions except rems

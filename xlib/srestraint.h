@@ -57,7 +57,7 @@ public:
   void Delete();
   bool IsEmpty() const { return Atoms.IsEmpty(); }
   olxstr GetAtomExpression() const { return Atoms.GetExpression(); }
-
+  void UpdateResi() { Atoms.UpdateResi(); }
   TSimpleRestraint &Validate();
 
   // copies data from a restrain, but with atoms from the thisAU
@@ -147,7 +147,10 @@ public:
   size_t Count() const {  return Restraints.Count();  }
   TSimpleRestraint& operator [] (size_t i) const {  return Restraints[i];  }
   short GetRestraintListType() const {  return RestraintListType;  }
-
+  void UpdateResi() {
+    for (size_t i=0; i < Restraints.Count(); i++)
+      Restraints[i].UpdateResi();
+  }
 // IXVarReferencerContainer implementation
   virtual olxstr GetIdName() const {  return IdName;  }
   virtual size_t GetIdOf(const IXVarReferencer& vr) const {

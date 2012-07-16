@@ -1074,8 +1074,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < rm.InfoTabCount(); i++ )  {
     InfoTab& it = rm.GetInfoTab(i);
     if( it.IsValid() && it.GetType() == infotab_htab )
-      current.Add(it.InsStr()) << " d=" << olx_round(au.Orthogonalise(
-      it.GetAtom(0).ccrd()-it.GetAtom(1).ccrd()).Length(), 1000);
+      current.Add(it.ToString());
   }
   if( !current.IsEmpty() )  {
     TBasicApp::NewLogEntry() << "List of current HTAB instructions: ";
@@ -1143,12 +1142,12 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
           if( sa.GetType() == iCarbonZ && false )  {
             InfoTab& it_d = rm.AddRTAB(
               sa.GetType().symbol + ca.GetType().symbol);
-            it_d.AddAtom(&sa.CAtom(), NULL);
+            it_d.AddAtom(sa.CAtom(), NULL);
             const smatd* mt = (!(all[j].GetB().t.IsNull() &&
               all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
               transforms.AddCopy(*mt);
-            it_d.AddAtom(const_cast<TCAtom*>(&ca), mt);
+            it_d.AddAtom(*const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it_d) ) {
               TBasicApp::NewLogEntry() << it_d.InsStr() << " d=" <<
                 olxstr::FormatFloat(3, d);
@@ -1156,9 +1155,9 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
 
             InfoTab& it_a = rm.AddRTAB(
               sa.GetType().symbol + ca.GetType().symbol);
-            it_a.AddAtom(&sa.CAtom(), NULL);
-            it_a.AddAtom(&sa.Node(h_indexes[k]).CAtom(), NULL);
-            it_a.AddAtom(const_cast<TCAtom*>(&ca), mt);
+            it_a.AddAtom(sa.CAtom(), NULL);
+            it_a.AddAtom(sa.Node(h_indexes[k]).CAtom(), NULL);
+            it_a.AddAtom(*const_cast<TCAtom*>(&ca), mt);
             if( rm.ValidateInfoTab(it_a) ) {
               TBasicApp::NewLogEntry() << it_a.InsStr() << " a=" <<
                 olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI);
@@ -1166,15 +1165,15 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
           }
           else  {
             InfoTab& it = rm.AddHTAB();
-            it.AddAtom(&sa.CAtom(), NULL);
+            it.AddAtom(sa.CAtom(), NULL);
             const smatd* mt = (!(all[j].GetB().t.IsNull() &&
               all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
             if( mt != NULL && transforms.IndexOf(*mt) == InvalidIndex )
               transforms.AddCopy(*mt);
-            it.AddAtom(const_cast<TCAtom*>(&ca), mt);
+            it.AddAtom(*const_cast<TCAtom*>(&ca), mt);
+            it.UpdateResi();
             if( rm.ValidateInfoTab(it) ) {
-              TBasicApp::NewLogEntry() << it.InsStr() << " d=" <<
-                olxstr::FormatFloat(3, d);
+              TBasicApp::NewLogEntry() << it.ToString();
             }
           }
         }
@@ -3608,58 +3607,53 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMac
     for( size_t i=0; i < rm.InfoTabCount(); i++ )  {
       InfoTab& it = rm.GetInfoTab(i);
       if( it.GetType() != infotab_htab || !it.IsValid() )  continue;
-      TGroupCAtom *d = NULL, *a = NULL;
-      for( size_t j=0; j < it.Count(); j++ )  {
-        if( it.GetAtom(j).GetAtom()->IsDeleted() )  continue;
-        if( d == NULL )
-          d = &it.GetAtom(j);
-        else  {
-          a = &it.GetAtom(j);
-          break;
-        }
-      }
-      TSAtom* dsa = xapp.XFile().GetLattice().FindSAtom(*d->GetAtom());
+      //TGroupCAtom *d = NULL, *a = NULL;
+      TTypeList<ExplicitCAtomRef> ta = it.GetAtoms().ExpandList(rm);
+      TSAtom* dsa = xapp.XFile().GetLattice().FindSAtom(ta[0].GetAtom());
       if( dsa == NULL )  continue;  //eh?
       envi.Clear();
       xapp.XFile().GetUnitCell().GetAtomEnviList(*dsa, envi);
       for( size_t j=0; j < envi.Count(); j++ )  {
         if( envi.GetType(j) != iHydrogenZ)  continue;
         // check if the D-H-A angle makes sense...
-        double ang = (au.Orthogonalise(d->ccrd())-envi.GetCrd(j)).CAngle(
-          au.Orthogonalise(a->ccrd())-envi.GetCrd(j));
+        double ang = (au.Orthogonalise(ta[0].GetAtom().ccrd())-envi.GetCrd(j)).
+          CAngle(au.Orthogonalise(ta[1].GetAtom().ccrd())-envi.GetCrd(j));
         if( ang >= 0 )  // <= 90
           continue;
         CifRow& row = hbonds.AddRow();
-        row.Set(0, new AtomCifEntry(*d->GetAtom()));
+        row.Set(0, new AtomCifEntry(ta[0].GetAtom()));
         row.Set(1, new AtomCifEntry(envi.GetCAtom(j)));
-        row.Set(2, new AtomCifEntry(*a->GetAtom()));
+        row.Set(2, new AtomCifEntry(ta[1].GetAtom()));
         TSAtom da(NULL), aa(NULL);
-        da.CAtom(*d->GetAtom());
+        da.CAtom(ta[0].GetAtom());
         da._SetMatrix(&I);
         au.CellToCartesian(da.ccrd(), da.crd());
-        aa.CAtom(*a->GetAtom());
+        aa.CAtom(ta[1].GetAtom());
         smatd am;
-        if( a->GetMatrix() == NULL )  {
+        if( ta[1].GetMatrix() == NULL )  {
           am.I();
           am.SetId(0);
         }
         else  {
-          am = *a->GetMatrix();
+          am = *ta[1].GetMatrix();
           xapp.XFile().GetUnitCell().InitMatrixId(am);
         }
         aa._SetMatrix(&am);
         aa.ccrd() = am*aa.ccrd();
         au.CellToCartesian(aa.ccrd(), aa.crd());
-        row[3] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(da.crd())));
-        row[4] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).DistanceTo(aa.crd())));
+        row[3] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).
+          DistanceTo(da.crd())));
+        row[4] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).
+          DistanceTo(aa.crd())));
         row[5] = new cetString(vcovc.CalcDistance(da, aa).ToString());
-        row[6] = new cetString(olxstr::FormatFloat(1, olx_angle(da.crd(), envi.GetCrd(j), aa.crd())));
-        if( a->GetMatrix() == NULL )
+        row[6] = new cetString(olxstr::FormatFloat(1, olx_angle(da.crd(),
+          envi.GetCrd(j), aa.crd())));
+        if( ta[1].GetMatrix() == NULL )
           row[7] = new cetString('.');
         else
           row[7] = new cetString(
-            TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell().GetSymmSpace(),
-              aa.GetMatrix()));
+            TSymmParser::MatrixToSymmCode(
+              xapp.XFile().GetUnitCell().GetSymmSpace(), aa.GetMatrix()));
       }
     }
   }
@@ -5097,7 +5091,7 @@ void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options,
     RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
     InfoTab& it = rm.AddRTAB(name);
     for( size_t i=0; i < atoms.Count(); i++ ) {
-      it.AddAtom(&atoms[i]->CAtom(), atoms[i]->GetMatrix().IsFirst() ? NULL
+      it.AddAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix().IsFirst() ? NULL
        : &atoms[i]->GetMatrix());
     }
   }
@@ -5931,6 +5925,30 @@ bool XLibMacros::ParseResParam(TStrObjList &Cmds, double& esd, double* len,
   return esd_set;
 }
 //.............................................................................
+XLibMacros::MacroInput XLibMacros::ExtractSelection(const TStrObjList &Cmds,
+    bool unselect)
+{
+  TSAtomPList atoms;
+  TSBondPList bonds;
+  TXApp &app = TXApp::GetInstance();
+  if (!Cmds.IsEmpty())
+    atoms = app.FindSAtoms(Cmds, false, unselect);
+  else {
+    SObjectPtrList sel = app.GetSelected(unselect);
+    for( size_t i=0; i < sel.Count(); i++ )  {
+      TSBond* sb = dynamic_cast<TSBond*>(sel[i]);
+      if (sb != NULL) {
+        bonds << sb;
+        continue;
+      }
+      TSAtom* sa = dynamic_cast<TSAtom*>(sel[i]);
+      if (sa != NULL)
+        atoms << sa;
+    }
+  }
+  return XLibMacros::MacroInput(atoms, bonds);
+}
+//.............................................................................
 void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
@@ -5942,16 +5960,13 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   TXApp &app = TXApp::GetInstance();
+  MacroInput mi = ExtractSelection(Cmds, !Options.Contains("cs"));
   TSAtomPList Atoms;
-  if (!Cmds.IsEmpty())
-    Atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
+  if (!mi.atoms.IsEmpty())
+    Atoms = mi.atoms;
   else {
-    SObjectPtrList sel = app.GetSelected(!Options.Contains("cs"));
-    for( size_t i=0; i < sel.Count(); i++ )  {
-      const TSBond* sb = dynamic_cast<TSBond*>(sel[i]);
-      if (sb == NULL) continue;
-      Atoms << sb->A() << sb->B();
-    }
+    for (size_t i=0; i < mi.bonds.Count(); i++)
+      Atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
   }
   if (Atoms.IsEmpty()) return;
   TSimpleRestraint* dfix = &app.XFile().GetRM().rDFIX.AddNew();
@@ -6039,20 +6054,16 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "please provide the angle to restrain to");
     return;
   }
+  MacroInput mi = ExtractSelection(Cmds, !Options.Contains("cs"));
   TXApp &app = TXApp::GetInstance();
   TSAtomPList atoms;
-  if (!Cmds.IsEmpty())
-    atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
+  if (!mi.atoms.IsEmpty())
+    atoms = mi.atoms;
   else  {
-    SObjectPtrList sel = app.GetSelected(!Options.Contains("cs"));
-    if( sel.Count() > 1 ) {
-      for( size_t i=0; i < sel.Count(); i += 2 )  {
-        TSBond *ba = dynamic_cast<TSBond*>(sel[i]);
-        TSBond *bb = dynamic_cast<TSBond*>(sel[i+1]);
-        if( ba == NULL || bb == NULL ) {
-          E.ProcessingError(__OlxSrcInfo, "bonds only expected");
-          return;
-        }
+    if (mi.bonds.Count() > 1) {
+      for (size_t i=0; i < mi.bonds.Count(); i += 2) {
+        TSBond *ba = mi.bonds[i];
+        TSBond *bb = mi.bonds[i+1];
         TSAtom* a = (&ba->A() == &bb->A() || &ba->B() == &bb->A() ) ? &bb->A()
           : ((&ba->A() == &bb->B() || &ba->B() == &bb->B()) ? &bb->B() : NULL);
         if( a == NULL )  {
@@ -6113,17 +6124,14 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
 {
   double esd = 0.02;  // esd for sadi
   bool esd_set = ParseResParam(Cmds, esd);
+  MacroInput mi = ExtractSelection(Cmds, !Options.Contains("cs"));
   TXApp &app = TXApp::GetInstance();
   TSAtomPList Atoms;
-  if (!Cmds.IsEmpty())
-    Atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
+  if (!mi.atoms.IsEmpty())
+    Atoms = mi.atoms;
   else {
-    SObjectPtrList sel = app.GetSelected(!Options.Contains("cs"));
-    for( size_t i=0; i < sel.Count(); i++ )  {
-      const TSBond* sb = dynamic_cast<TSBond*>(sel[i]);
-      if (sb == NULL) continue;
-      Atoms << sb->A() << sb->B();
-    }
+    for (size_t i=0; i < mi.bonds.Count(); i++)
+      Atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
   }
   TSimpleRestraint *sr = &app.XFile().GetRM().rSADI.AddNew();
   if( esd_set )

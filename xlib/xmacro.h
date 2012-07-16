@@ -23,6 +23,15 @@ class XLibMacros  {
 protected:
   static bool ParseResParam(TStrObjList &Cmds, double& esd, double* len=NULL,
     double* len1=NULL, double* ang=NULL);
+  struct MacroInput {
+    ConstPtrList<TSAtom> atoms;
+    ConstPtrList<TSBond> bonds;
+    MacroInput(TSAtomPList &a, TSBondPList &b)
+    : atoms(a), bonds(b)
+    {}
+  };
+  static MacroInput ExtractSelection(const TStrObjList &Cmds,
+    bool unselect);
 public:
   static DefMacro(Run)
   static DefMacro(HklBrush)
