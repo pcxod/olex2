@@ -385,26 +385,27 @@ void TUnitCell::FindSymmEq() const  {
   if (rm != NULL) {
     for (size_t i=0; i < rm->InfoTabCount(); i++) {
       InfoTab &it = rm->GetInfoTab(i);
-      if (it.GetType() != infotab_htab || !it.IsValid()) continue;
-      for (size_t j=0; j < it.Count(); j+=2) {
+      if (it.GetType() != infotab_htab) continue;
+      TTypeList<ExplicitCAtomRef> ta = it.GetAtoms().ExpandList(*rm, 2);
+      for (size_t j=0; j < ta.Count(); j+=2) {
         smatd m;
-        if (it.GetAtom(j+1).GetMatrix() != NULL) {
-          m = InvMatrix(*it.GetAtom(j+1).GetMatrix());
-          if (it.GetAtom(j).GetMatrix() != NULL)
-            m = MulMatrix(*it.GetAtom(j).GetMatrix(), m);
+        if (ta[j+1].GetMatrix() != NULL) {
+          m = InvMatrix(*ta[j+1].GetMatrix());
+          if (ta[j].GetMatrix() != NULL)
+            m = MulMatrix(*ta[j].GetMatrix(), m);
         }
-        else if (it.GetAtom(j).GetMatrix() != NULL)
-          m = *it.GetAtom(j).GetMatrix();
+        else if (ta[j].GetMatrix() != NULL)
+          m = *ta[j].GetMatrix();
         else
           m = Matrices[0];
-        TCAtom &dn = *it.GetAtom(j).GetAtom();
+        TCAtom &dn = ta[j].GetAtom();
         for (size_t k=0; k < dn.AttachedSiteCount(); k++) {
           TCAtom::Site &s = dn.GetAttachedSite(k);
           if (s.atom->GetType() != iHydrogenZ) continue;
           smatd m1 = MulMatrix(s.matrix, m);
-          it.GetAtom(j+1).GetAtom()->AttachSiteI(s.atom, m1);
-          if (it.GetAtom(j+1).GetAtom() != s.atom)
-            s.atom->AttachSiteI(it.GetAtom(j+1).GetAtom(), InvMatrix(m1));
+          ta[j+1].GetAtom().AttachSiteI(s.atom, m1);
+          if (ta[j+1].GetAtom() != s.atom)
+            s.atom->AttachSiteI(&ta[j+1].GetAtom(), InvMatrix(m1));
         }
       }
     }

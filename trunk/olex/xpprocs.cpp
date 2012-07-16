@@ -545,7 +545,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     res /= vpWidth;
   if( res > 10 )
     res = 10;
-  if( res <= 0 )  
+  if( res <= 0 )
     res = 1;
 
   int BmpHeight = vpHeight*res, BmpWidth = vpWidth*res;
@@ -706,7 +706,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
     res /= orgWidth;
   if( res > 10 )
     res = 10;
-  if( res <= 0 )  
+  if( res <= 0 )
     res = 1;
   if( res > 1 && res < 100 )
     res = olx_round(res);
@@ -772,8 +772,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   }
   if( res != 1 ) {
     FXApp->GetRender().GetScene().RestoreFontScale();
-    if( previous_quality != -1 )
-      FXApp->Quality(previous_quality);
+    FXApp->Quality(previous_quality);
     FXApp->UpdateLabels();
   }
 
@@ -6863,7 +6862,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   for( size_t i=0; i < res.Count(); i++ )  {
     TBasicApp::GetLog() << NewLineSequence();
     for( size_t j=0; j < res[i].Count(); j++ )
-      TBasicApp::GetLog() << res[i][j].GetExpression();
+      TBasicApp::GetLog() << res[i][j].GetExpression(NULL);
   }
   TBasicApp::NewLogEntry() << NewLineSequence() << arl.GetExpression();
   if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )  {

@@ -26,7 +26,7 @@ class IAtomRef : public IEObject {
 public:
   virtual ~IAtomRef()  {}
   // returns either an atom label or a string of C1_tol kind or $C
-  virtual olxstr GetExpression() const = 0;
+  virtual olxstr GetExpression(TResidue *r=NULL) const = 0;
   virtual bool IsExplicit() const = 0;
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
     TResidue& resi) const = 0;
@@ -54,8 +54,7 @@ public:
   }
   ExplicitCAtomRef(const TDataItem & di, RefinementModel& rm);
   ~ExplicitCAtomRef();
-  // can throw an exception if has both - matrix and residue assigned
-  virtual olxstr GetExpression() const;
+  virtual olxstr GetExpression(TResidue *) const;
   virtual bool IsExplicit() const {  return true;  }
   virtual bool IsValid() const;
   virtual size_t Expand(const RefinementModel &, TAtomRefList_& res,
@@ -97,7 +96,7 @@ public:
   ImplicitCAtomRef(const olxstr& _Name) : Name(_Name) {}
   ImplicitCAtomRef(const TDataItem &di);
   // * is special char
-  virtual olxstr GetExpression() const {
+  virtual olxstr GetExpression(TResidue *) const {
     return Name == '*' ? EmptyString() : Name;
   }
   virtual bool IsExplicit() const {  return false;  }
@@ -132,9 +131,9 @@ public:
   virtual bool IsExpandable() const {  return true;  }
   virtual bool IsExplicit() const {  return false;  }
   // * is special char
-  virtual olxstr GetExpression() const {
-    return olxstr(start.GetExpression() << ' ' << op << ' ' <<
-      end.GetExpression());
+  virtual olxstr GetExpression(TResidue *r) const {
+    return olxstr(start.GetExpression(r) << ' ' << op << ' ' <<
+      end.GetExpression(r));
   }
   virtual size_t Expand(const RefinementModel& rm, TAtomRefList_& res,
     TResidue& resi) const;
@@ -154,10 +153,10 @@ class AtomRefList  {
   olxstr residue;
   olxstr expression;
   bool Valid, ContainsImplicitAtoms;
-  olxstr BuildExpression() const {
+  olxstr BuildExpression(TResidue *r) const {
     olxstr rv;
     for( size_t i=0; i < refs.Count(); i++ )  {
-      rv << refs[i].GetExpression();
+      rv << refs[i].GetExpression(r);
       if( (i+1) < refs.Count() )
         rv << ' ';
     }
@@ -198,9 +197,7 @@ public:
   names - the new names will come from the updated model. Implicit atoms will
   stay as provided in the constructor
   */
-  olxstr GetExpression() const {
-    return Valid ? BuildExpression() : expression;
-  }
+  olxstr GetExpression() const;
   const olxstr &GetResi() const { return residue; }
   /* expands the list and returns if resulting explicit list is not empty */
   bool IsExpandable(const RefinementModel& rm,
@@ -212,6 +209,8 @@ public:
   void AddExplicit(TCAtom &a, const smatd *m=NULL) {
     refs.Add(new ExplicitCAtomRef(a, m));
   }
+  // checks if all atoms are in the same RESI
+  void UpdateResi();
   void Clear() { refs.Clear(); }
   bool IsEmpty() const { return refs.IsEmpty(); }
   size_t Count() const { return refs.Count(); }
