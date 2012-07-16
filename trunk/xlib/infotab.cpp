@@ -101,6 +101,7 @@ PyObject* InfoTab::PyExport() {
   PythonExt::SetDictItem(main, "atoms", pya);
   return main;
 }
+#endif
 
 TIString InfoTab::ToString() const {
   olxstr rv = InsStr();
@@ -121,5 +122,3 @@ TIString InfoTab::ToString() const {
 void InfoTab::AddAtom(TCAtom& ca, const smatd* sm)  {
   atoms.AddExplicit(ca, sm);
 }
-
-#endif
