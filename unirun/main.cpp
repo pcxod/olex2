@@ -402,7 +402,7 @@ void DoLaunch(const TStrList &args_)  {
   const olxstr cmdl = bd + "olex2_exe";
 #endif
   TEFile::ChangeDir(bd);
-  TEFile::Chmod(cmdl, S_IEXEC|S_IEXEC|S_IWRITE);
+  TEFile::Chmod(cmdl, S_IEXEC|S_IREAD|S_IWRITE);
   TStrList args_list;
   args_list << cmdl;
   args_list << args_;
