@@ -9,6 +9,7 @@
 
 #include "catomlist.h"
 #include "refmodel.h"
+#include "satom.h"
 
 //.............................................................................
 IAtomRef &IAtomRef::FromDataItem(const TDataItem &di, RefinementModel& rm) {
@@ -43,11 +44,24 @@ ExplicitCAtomRef* ExplicitCAtomRef::NewInstance(const RefinementModel& rm,
   olxstr aname(exp);
   size_t symm_ind = exp.IndexOf('_');
   const smatd* symm = NULL;
-  if( symm_ind != InvalidIndex )  {
+  if (symm_ind != InvalidIndex && (symm_ind+1) < exp.Length())  {
     aname = exp.SubStringTo(symm_ind);
-    symm = rm.FindUsedSymm(exp.SubStringFrom(symm_ind));
+    olxstr sm = exp.SubStringFrom(symm_ind+1);
+    if (sm.CharAt(0) != '$') {
+      size_t di = sm.IndexOf('$');
+      if (di != InvalidIndex) {
+        resi = rm.aunit.FindResidue(sm.SubStringTo(di).ToInt());
+        sm = sm.SubStringFrom(di);
+      }
+      else {
+        resi = rm.aunit.FindResidue(sm.ToInt());
+        sm.SetLength(0);
+      }
+    }
+    if (!sm.IsEmpty())
+      symm = rm.FindUsedSymm(sm);
   }
-  TCAtom* ca = rm.aunit.FindCAtom(aname, resi); 
+  TCAtom* ca = rm.aunit.FindCAtom(aname, resi);
   if( ca == NULL )
     return NULL;
   return new ExplicitCAtomRef(*ca, symm);
@@ -70,16 +84,26 @@ IAtomRef* ExplicitCAtomRef::Clone(RefinementModel& rm) const {
   return new ExplicitCAtomRef(*a, m);
 }
 //.............................................................................
-olxstr ExplicitCAtomRef::GetExpression() const {
+olxstr ExplicitCAtomRef::GetExpression(TResidue *r) const {
   olxstr rv = atom->GetLabel();
-  if (atom->GetResiId() !=0) {
-    if (matrix != NULL)
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "expression invalidates SHELX syntax");
+  bool valid_s = true;
+  bool use_resi = (atom->GetResiId() !=0 &&
+    (r == NULL || r->GetId() != atom->GetResiId()));
+  if (use_resi) {
+    if (matrix != NULL) valid_s = false;
     rv << '_' << atom->GetParent()->GetResidue(atom->GetResiId()).GetNumber();
   }
-  if (matrix != NULL)
-    rv << "_$" << (atom->GetParent()->GetRefMod()->UsedSymmIndex(*matrix)+1);
+  if (matrix != NULL) {
+    if (use_resi)
+      rv << '$';
+    else
+      rv << "_$";
+    rv << (atom->GetParent()->GetRefMod()->UsedSymmIndex(*matrix)+1);
+  }
+  if (!valid_s) {
+    TBasicApp::NewLogEntry(logInfo) << "Expression will not be read correctly"
+      " by SHELX: '" << rv << '\'';
+  }
   return rv;
 }
 //.............................................................................
@@ -168,12 +192,15 @@ size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
     olxstr resi_ref = Name.SubStringFrom(us_ind+1);
     // symmetry reference
     size_t symm_ind = resi_ref.IndexOf('$');
-    if( symm_ind != InvalidIndex )  {  
-      symm = rm.FindUsedSymm( Name.SubStringFrom(symm_ind) );
+    if( symm_ind != InvalidIndex )  {
+      symm = rm.FindUsedSymm(resi_ref.SubStringFrom(symm_ind));
       if( symm == NULL )  return 0;
       resi_ref = resi_ref.SubStringTo(symm_ind);
     }
-    residues.AddList(rm.aunit.FindResidues(resi_ref));
+    if (resi_ref.IsEmpty())
+      residues.Add(resi);
+    else
+      residues.AddList(rm.aunit.FindResidues(resi_ref));
     aname = Name.SubStringTo(us_ind);
   }
   size_t ac = 0;
@@ -183,7 +210,7 @@ size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
     for( size_t i=0; i < residues.Count(); i++ )  {
       for( size_t j=0; j < residues[i]->Count(); j++ )  {
         if( residues[i]->GetAtom(j).IsDeleted() || 
-          residues[i]->GetAtom(j).GetType() != *elm )  
+          residues[i]->GetAtom(j).GetType() != *elm )
         {
           continue;
         }
@@ -218,11 +245,15 @@ IAtomRef* ImplicitCAtomRef::NewInstance(const RefinementModel& rm,
     {
       size_t us_ind = exp.IndexOf('_');
       if (us_ind != InvalidIndex) {
-        if (us_ind+1 == exp.Length()) // invalid reference
-          return NULL;
-        if (exp.CharAt(us_ind) != '$') { // is symm reference?
-          if (!exp.SubStringFrom(us_ind).IsNumber()) //is explicit?
-            return new ImplicitCAtomRef(exp);
+        if (us_ind+1 <= exp.Length()) {
+          if (exp.CharAt(us_ind+1) != '$') { // is symm reference?
+            olxstr ri = exp.SubStringFrom(us_ind+1);
+            size_t di = ri.FirstIndexOf('$');
+             if (di != InvalidIndex)
+               ri = ri.SubStringTo(di);
+            if (!ri.IsNumber()) //is explicit?
+              return new ImplicitCAtomRef(exp);
+          }
         }
       }
       return ExplicitCAtomRef::NewInstance(rm, exp, _resi);
@@ -307,7 +338,7 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
   else
     r_c = resi_;
   expression = exp;
-  residue = r_c;
+  residue = resi_;
   Valid = true;
   ContainsImplicitAtoms = false;
   TStrList toks(exp, ' ');
@@ -346,6 +377,7 @@ void AtomRefList::Build(const olxstr& exp, const olxstr& resi_) {
       break;
     }
   }
+  UpdateResi();
 }
 //.............................................................................
 void AtomRefList::EnsureAtomGroups(const RefinementModel& rm,
@@ -492,5 +524,45 @@ void AtomRefList::FromDataItem(const TDataItem &di) {
   refs.SetCapacity(di.ItemCount());
   for (size_t i=0; i < di.ItemCount(); i++)
     refs.Add(IAtomRef::FromDataItem(di.GetItem(i), rm));
+}
+//.............................................................................
+void AtomRefList::UpdateResi() {
+  if (!IsExplicit()) return;
+  uint32_t r_id = 0;
+  for (size_t i=0; i < refs.Count(); i++) {
+    ExplicitCAtomRef * r = dynamic_cast<ExplicitCAtomRef *>(&refs[i]);
+    if (r == NULL) return;
+    uint32_t ri = r->GetAtom().GetResiId();
+    if (r_id != 0 && ri != 0 && ri != r_id) {
+      if (refs.Count() == 2) {  // special case, 'easy' to handle
+        ExplicitCAtomRef * r0 = dynamic_cast<ExplicitCAtomRef *>(&refs[0]);
+        if (r->GetMatrix() != NULL && r0->GetMatrix() != NULL)
+          return;
+        if (r->GetMatrix() == NULL && r0->GetMatrix() == NULL)
+          break;
+        if (r->GetMatrix() != NULL)
+          r_id = r->GetAtom().GetResiId();
+        else if (r0->GetMatrix() != NULL)
+          r_id = r0->GetAtom().GetResiId();
+        break;
+      }
+      return;
+    }
+    r_id = ri;
+  }
+  if (r_id != 0)
+    residue = r_id;
+}
+//.............................................................................
+olxstr AtomRefList::GetExpression() const {
+  if (!Valid) return expression;
+  if (residue.IsNumber())
+    return BuildExpression(rm.aunit.FindResidue(residue.ToInt()));
+  return BuildExpression(NULL);
+}
+//.............................................................................
+void AtomRefList::AddExplicit(class TSAtom &a) {
+  refs.Add(new ExplicitCAtomRef(a.CAtom(),
+    a.GetMatrix().IsFirst() ? NULL : &a.GetMatrix()));
 }
 //.............................................................................

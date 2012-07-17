@@ -96,15 +96,22 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
     }
   }
   if (do_calculate) {
-    TEFile f(name, "rb");
-    Digest = MD5::Digest(f);
-    TCStrList l;
-    TEFile::FileID fd = TEFile::GetFileID(name);
-    l << name;
-    l << fd.size;
-    l << fd.timestamp;
-    l << Digest;
-    l.SaveToFile(last_dg_fn);
+    try {
+      TEFile f(name, "rb");
+      Digest = MD5::Digest(f);
+      TCStrList l;
+      TEFile::FileID fd = TEFile::GetFileID(name);
+      l << name;
+      l << fd.size;
+      l << fd.timestamp;
+      l << Digest;
+      l.SaveToFile(last_dg_fn);
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logExceptionTrace) << e;
+      // make somewhat new every time
+      Digest = TETime::msNow();
+    }
   }
   return Digest;
 }
@@ -188,7 +195,7 @@ const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
   return (inst.SharedDir = TEFile::AddPathDelimeter(cd));
 }
 //..............................................................................
-const olxstr& TBasicApp::GetSharedDir() {  
+const olxstr& TBasicApp::GetSharedDir() {
   if( GetInstance().SharedDir.IsEmpty() )
     return GetInstance().BaseDir;
   return GetInstance().SharedDir; 

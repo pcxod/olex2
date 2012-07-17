@@ -444,7 +444,7 @@ Friedel opposites of components 1 ... m
   InfoTab& GetInfoTab(size_t i)  {  return InfoTables[i];  }
   void DeleteInfoTab(size_t i)  {  InfoTables.Delete(i);  }
   InfoTab& AddHTAB();
-  InfoTab& AddRTAB(const olxstr& codename, const olxstr& resi=EmptyString());
+  InfoTab& AddRTAB(const olxstr& codename);
   bool ValidateInfoTab(const InfoTab& it);
   // adss new symmetry matrics, used in restraints/constraints 
   const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString());
