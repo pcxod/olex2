@@ -293,42 +293,39 @@ void TMainForm::funVVol(const TStrObjList& Params, TMacroError &E)  {
   const TXApp::CalcVolumeInfo vi = FXApp->CalcVolume(&radii);
   olxstr report;
   E.SetRetVal(olxstr::FormatFloat(2, vi.total-vi.overlapping));
-  TBasicApp::NewLogEntry(logWarning) << "Please note that this is a highly approximate procedure."
-  " Volume of current fragment is calculated using a maximum two overlaping spheres," 
-  " to calculate packing indexes, use calcvoid or MolInfo instead";
+  TBasicApp::NewLogEntry(logWarning) << "Please note that this is a highly "
+    "approximate procedure. Volume of current fragment is calculated using a "
+    "maximum two overlaping spheres, to calculate packing indexes, use "
+    "calcvoid or MolInfo instead";
   
-  TBasicApp::NewLogEntry() << "Molecular volume (A): " << olxstr::FormatFloat(2, vi.total-vi.overlapping);
-  TBasicApp::NewLogEntry() << "Overlapping volume (A): " << olxstr::FormatFloat(2, vi.overlapping);
+  TBasicApp::NewLogEntry() << "Molecular volume (A): " <<
+    olxstr::FormatFloat(2, vi.total-vi.overlapping);
+  TBasicApp::NewLogEntry() << "Overlapping volume (A): " <<
+    olxstr::FormatFloat(2, vi.overlapping);
 }
 //..............................................................................
 void TMainForm::funSel(const TStrObjList& Params, TMacroError &E)  {
-  TSAtomPList atoms;
+  AtomRefList arl(FXApp->XFile().GetRM());
+  bool atoms_only = (Params.Count() == 1 && Params[0].Equalsi('a'));
   TGlGroup& sel = FXApp->GetSelection();
   for( size_t i=0; i < sel.Count(); i++ )  {
     AGDrawObject& gdo = sel[i];
-    if( EsdlInstanceOf(gdo, TXAtom) )
-      atoms.Add(((TXAtom&)gdo));
-    else if( EsdlInstanceOf(gdo, TXBond) )  {
-      atoms.Add(((TXBond&)gdo).A());
-      atoms.Add(((TXBond&)gdo).B());
+    if( EsdlInstanceOf(gdo, TXAtom) ) {
+      arl.AddExplicit((TXAtom&)gdo);
     }
-    else if( EsdlInstanceOf(gdo, TXPlane) )  {
-      TSPlane& sp = ((TXPlane&)gdo);
-      for( size_t j=0; j < sp.Count(); j++ )
-        atoms.Add(sp.GetAtom(j));
+    else if (!atoms_only) {
+      if( EsdlInstanceOf(gdo, TXBond) )  {
+        arl.AddExplicit(((TXBond&)gdo).A());
+        arl.AddExplicit(((TXBond&)gdo).B());
+      }
+      else if( EsdlInstanceOf(gdo, TXPlane) )  {
+        TSPlane& sp = ((TXPlane&)gdo);
+        for( size_t j=0; j < sp.Count(); j++ )
+          arl.AddExplicit(sp.GetAtom(j));
+      }
     }
   }
-  olxstr tmp;
-  for( size_t i=0; i < atoms.Count(); i++ )  {
-    tmp << atoms[i]->GetLabel();
-    if( atoms[i]->CAtom().GetResiId() != 0 )  {
-      tmp << '_' <<
-        atoms[i]->CAtom().GetParent()->GetResidue(atoms[i]->CAtom().GetResiId()).GetNumber();
-    }
-    if( (i+1) < atoms.Count() )
-      tmp << ' ';
-  }
-  E.SetRetVal(tmp);
+  E.SetRetVal(arl.GetExpression());
 }
 //..............................................................................
 void TMainForm::funAtoms(const TStrObjList& Params, TMacroError &E)
