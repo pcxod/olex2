@@ -1052,7 +1052,10 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitFunc(Env, fpOne|psFileLoaded);
   this_InitFunc(Atoms, fpOne|psFileLoaded);
 
-  this_InitFunc(Sel, fpNone|psFileLoaded);
+  this_InitFuncD(Sel, fpNone|fpOne|psFileLoaded,
+    "Returns current selection. By default expands bonds and planes into the "
+    "list of atoms. If the 'a' argument is given, returns only selected atoms."
+  );
   this_InitFunc(FPS, fpNone);
 
   this_InitFunc(Cursor, fpNone|fpOne|fpTwo|fpThree);

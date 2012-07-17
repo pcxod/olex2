@@ -9,6 +9,7 @@
 
 #include "catomlist.h"
 #include "refmodel.h"
+#include "satom.h"
 
 //.............................................................................
 IAtomRef &IAtomRef::FromDataItem(const TDataItem &di, RefinementModel& rm) {
@@ -100,7 +101,7 @@ olxstr ExplicitCAtomRef::GetExpression(TResidue *r) const {
     rv << (atom->GetParent()->GetRefMod()->UsedSymmIndex(*matrix)+1);
   }
   if (!valid_s) {
-    TBasicApp::NewLogEntry(logError) << "Expression will not be read correctly"
+    TBasicApp::NewLogEntry(logInfo) << "Expression will not be read correctly"
       " by SHELX: '" << rv << '\'';
   }
   return rv;
@@ -558,5 +559,10 @@ olxstr AtomRefList::GetExpression() const {
   if (residue.IsNumber())
     return BuildExpression(rm.aunit.FindResidue(residue.ToInt()));
   return BuildExpression(NULL);
+}
+//.............................................................................
+void AtomRefList::AddExplicit(class TSAtom &a) {
+  refs.Add(new ExplicitCAtomRef(a.CAtom(),
+    a.GetMatrix().IsFirst() ? NULL : &a.GetMatrix()));
 }
 //.............................................................................
