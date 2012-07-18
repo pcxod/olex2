@@ -1659,6 +1659,9 @@ void TMainForm::StartupInit()  {
   CreateUpdateThread();
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
+  olxstr textures_dir = FXApp->GetBaseDir() + "etc/Textures";
+  if (TEFile::IsDir(textures_dir))
+    FXApp->LoadTextures(textures_dir);
 }
 //..............................................................................
 bool TMainForm::CreateUpdateThread() {

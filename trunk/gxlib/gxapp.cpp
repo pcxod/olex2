@@ -386,9 +386,6 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
   );
   TextureNames << "LockedAtoms";
   TextureNames << "ConstrainedAtoms";
-  olxstr textures_dir = GetBaseDir() + "etc/Textures";
-  if (TEFile::IsDir(textures_dir))
-    LoadTextures(textures_dir);
 }
 //..............................................................................
 TGXApp::~TGXApp()  {
