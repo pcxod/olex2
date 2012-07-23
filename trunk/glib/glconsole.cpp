@@ -18,25 +18,7 @@
 #include "styles.h"
 #include "integration.h"
 #include "bapp.h"
-// keyboard constanst, silly to include here, but...
 
-// stolen from wxWidgets
-enum {
-    OLX_KEY_BACK    =    8,
-    OLX_KEY_TAB     =    9,
-    OLX_KEY_RETURN  =    13,
-    OLX_KEY_ESCAPE  =    27,
-    OLX_KEY_SPACE   =    32,
-    OLX_KEY_DELETE  =    127,
-    OLX_KEY_END = 312,
-    OLX_KEY_HOME = 313,
-    OLX_KEY_LEFT = 314,
-    OLX_KEY_UP = 315,
-    OLX_KEY_RIGHT = 316,
-    OLX_KEY_DOWN = 317,
-    OLX_KEY_PAGEUP = 366,
-    OLX_KEY_PAGEDOWN = 367
-};
 
 /* There is a slight problem with cursor - depending on object properties it
 might be drawn before the console, and then its position is validated after it

@@ -236,7 +236,7 @@ public:
     return true;
   }
   virtual bool OnKey(int keyId, short shiftState)  {
-    if( shiftState == 0 && keyId == WXK_ESCAPE )  {
+    if( shiftState == 0 && keyId == OLX_KEY_ESCAPE )  {
       if( AtomsToMatch.IsEmpty() )  return false;
       AtomsToMatch.Delete(AtomsToMatch.Count()-1);
       SetUserCursor(AtomsToMatch.Count(), "<F>");

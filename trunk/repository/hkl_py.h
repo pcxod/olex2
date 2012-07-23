@@ -10,6 +10,7 @@
 #ifndef __olx_hkl_py_H
 #define __olx_hkl_py_H
 
+#ifndef _NO_PYTHON
 #include "pyext.h"
 #include "hkl.h"
 
@@ -20,5 +21,6 @@ public:
   static PyObject* Write(PyObject* self, PyObject* args);
   static void PyInit();
 };
+#endif
 
 #endif

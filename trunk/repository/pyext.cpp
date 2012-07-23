@@ -23,6 +23,7 @@
 // egc cannot be used here as python can be finalised before egc is called
 // causing troubles with reference counting ...
 //#include "egc.h"
+#ifndef _NO_PYTHON
 
 PythonExt* PythonExt::Instance = NULL;
 //.............................................................................
@@ -706,3 +707,4 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
   va_end(argptr);
   return true;
 }
+#endif
