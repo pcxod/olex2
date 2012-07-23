@@ -4179,7 +4179,9 @@ void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, T
   dlg->Destroy();
 }
 //..............................................................................
-void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   if( Cmds[0].Equalsi("macro") )  {
     if( TEFile::Exists(FXApp->GetBaseDir() + "macro.xld") )  {
       TStrList SL;
@@ -4199,8 +4201,19 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
   else if( Cmds[0].Equalsi("dictionary") )  {
-    if( TEFile::Exists( DictionaryFile ) )
+    if( TEFile::Exists(DictionaryFile) )
       Dictionary.SetCurrentLanguage(DictionaryFile, Dictionary.GetCurrentLanguage() );
+  }
+  else if( Cmds[0].Equalsi("options") )  {
+    olxstr of = FXApp->GetConfigDir() + ".options";
+    if (TEFile::Exists(of)) {
+      TSettingsFile st;
+      st.LoadSettings(of);
+      for (size_t i=0; i < st.ParamCount(); i++) {
+        TBasicApp::GetInstance().UpdateOption(
+          st.ParamName(i), st.ParamValue(i));
+      }
+    }
   }
 }
 //..............................................................................

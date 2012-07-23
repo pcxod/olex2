@@ -4068,7 +4068,7 @@ void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
   FXApp->UpdateOption(option, value);
   try {
     TSettingsFile st;
-    olxstr fn = FXApp->GetInstanceDir() + ".options";
+    olxstr fn = FXApp->GetConfigDir() + ".options";
     if (TEFile::Exists(fn))
       st.LoadSettings(fn);
     st.SetParam(option, value);
