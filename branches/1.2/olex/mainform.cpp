@@ -1659,6 +1659,9 @@ void TMainForm::StartupInit()  {
   CreateUpdateThread();
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
+  olxstr textures_dir = FXApp->GetBaseDir() + "etc/Textures";
+  if (TEFile::IsDir(textures_dir))
+    FXApp->LoadTextures(textures_dir);
 }
 //..............................................................................
 bool TMainForm::CreateUpdateThread() {
@@ -4065,7 +4068,7 @@ void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
   FXApp->UpdateOption(option, value);
   try {
     TSettingsFile st;
-    olxstr fn = FXApp->GetInstanceDir() + ".options";
+    olxstr fn = FXApp->GetConfigDir() + ".options";
     if (TEFile::Exists(fn))
       st.LoadSettings(fn);
     st.SetParam(option, value);
