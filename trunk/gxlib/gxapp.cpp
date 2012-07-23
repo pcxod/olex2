@@ -1563,6 +1563,7 @@ ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
   TPtrList<TGlGroup> S;
   S.Add(GetSelection());
   TXAtomPList rv;
+  TXBondPList bonds;
   for( size_t i=0; i < S.Count(); i++ )  {
     TGlGroup& Sel = *S[i];
     for( size_t j=0; j < Sel.Count(); j++ )  {
@@ -1571,7 +1572,13 @@ ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
         S.Add((TGlGroup&)GO);
       else if( EsdlInstanceOf(GO, TXAtom) )
         rv.Add((TXAtom&)GO);
+      else if (EsdlInstanceOf(GO, TXBond))
+        bonds << (TXBond&)GO;
     }
+  }
+  if (rv.IsEmpty()) {
+    for (size_t i=0; i < bonds.Count(); i++)
+      rv << bonds[i]->A() << bonds[i]->B();
   }
   if( Clear )
     SelectAll(false);

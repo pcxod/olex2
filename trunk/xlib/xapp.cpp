@@ -446,7 +446,8 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
   if( SelectionOwner != NULL )
     SelectionOwner->SetDoClearSelection(ClearSelection);
   TSAtomPList atoms;
-  if( condition.IsEmpty() )  {  // try the selection first
+  // try the selection first
+  if (condition.IsEmpty() || condition.Equals("sel"))  {
     if( SelectionOwner != NULL )
       SelectionOwner->ExpandSelectionEx(atoms);
   }
