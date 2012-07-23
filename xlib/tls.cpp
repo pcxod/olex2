@@ -426,9 +426,9 @@ TEValueD TLS::BondCorrect(const TSAtom &atom1, const TSAtom &atom2){
    //TLS correction
   int acc[] = {6+0,6+3,6+5};
   TEValueD rv(vec.Length(), 0);
-  rv.V() += (vec[0]*(Lmat[acc[1]][acc[1]]+Lmat[acc[2]][acc[2]])
-           + vec[1]*(Lmat[acc[0]][acc[0]]+Lmat[acc[2]][acc[2]])
-           + vec[2]*(Lmat[acc[1]][acc[1]]+Lmat[acc[0]][acc[0]]))/2;
+  rv.V() += (vec[0]*(Lmat[1][1]+Lmat[2][2])
+           + vec[1]*(Lmat[0][0]+Lmat[2][2])
+           + vec[2]*(Lmat[1][1]+Lmat[0][0]))/2;
 
   vec3d dBdL; //derivative: d BondCorrection / d L[i][i], i = 1,2,3
   dBdL[0] = (1./2.)*(vec[1] + vec[2]);
