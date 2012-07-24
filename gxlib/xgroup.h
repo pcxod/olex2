@@ -72,7 +72,7 @@ protected:
         for( size_t j=0; j < pc; j++ )  {
           TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
           TGlMaterial glm = GlP.GetProperties();
-          glm.SetFlags(glm.GetFlags()|sglmColorMat|sglmShininessF|sglmSpecularF);
+          glm.SetFlags(glm.GetFlags()|sglmShininessF|sglmSpecularF);
           glm.AmbientF *= 0.75;
           if( ditr == 1 )
             glm.AmbientF = glm.AmbientF.GetRGB() | 0x007070;
