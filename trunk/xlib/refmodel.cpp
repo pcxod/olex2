@@ -760,7 +760,7 @@ const_strlist RefinementModel::Describe() {
       TSRestraintList &res = *ress[ri];
       for( size_t i=0; i < res.Count(); i++ )  {
         TSimpleRestraint& sr = res[i];
-        TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this, 3);
+        TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this, 2);
         for (size_t j=0; j < atoms.Count(); j++) {
           lst.Add(' ') << AtomListToStr(atoms[j], 2,
             (&res == &rSADI ? " ~ "  : " = "));
