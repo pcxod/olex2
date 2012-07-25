@@ -29,6 +29,7 @@ bool InfoTab::operator == (const InfoTab &it) const {
 
 InfoTab& InfoTab::operator = (const InfoTab& it)  {
   ParamName = it.ParamName;
+  AtomCount = it.AtomCount;
   Type = it.Type;
   atoms.Assign(it.atoms);
   return *this;
@@ -50,12 +51,18 @@ olxstr InfoTab::InsStr() const {
   olxstr rv = GetName();
   if (!atoms.GetResi().IsEmpty())
     rv << '_' << atoms.GetResi();
+  if (Type == infotab_rtab)
+    rv << ' ' << ParamName;
+  else if (Type == infotab_mpla && AtomCount != -1)
+    rv << ' ' << AtomCount;
   return (rv << ' ' << atoms.GetExpression());
 }
 
 void InfoTab::ToDataItem(TDataItem& di) const {
   di.SetValue(GetName());
   di.AddField("param", ParamName);
+  if (Type == infotab_mpla && AtomCount != -1)
+    di.AddField("atomCount", AtomCount);
   atoms.ToDataItem(di.AddItem("AtomList"));
 }
 
@@ -68,6 +75,9 @@ void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
     Type = infotab_mpla;
   else
     Type = infotab_bond;
+  if (Type == infotab_mpla) {
+    AtomCount = di.GetFieldValue("atomCount", "-1").ToInt();
+  }
   ParamName = di.GetFieldValue("param");
   TDataItem *ais = di.FindItem("atoms");
   if (ais != NULL) {
@@ -91,6 +101,8 @@ PyObject* InfoTab::PyExport() {
   PythonExt::SetDictItem(main, "type",
     PythonExt::BuildString(GetName()));
   PythonExt::SetDictItem(main, "param_name", PythonExt::BuildString(ParamName));
+  if (Type == infotab_mpla)
+    PythonExt::SetDictItem(main, "atom_count", Py_BuildValue("i", AtomCount));
   TTypeList<ExplicitCAtomRef> a = atoms.ExpandList(RM);
   PyObject* pya = PyTuple_New(a.Count());
   for( size_t i=0; i < a.Count(); i++ )  {
