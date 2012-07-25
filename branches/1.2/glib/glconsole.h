@@ -17,6 +17,44 @@
 #include "datastream.h"
 BeginGlNamespace()
 
+// keyboard constanst, silly to include here, but...
+// stolen from wxWidgets
+#ifndef __WIXWIDGETS_
+enum {
+    OLX_KEY_BACK    =    8,
+    OLX_KEY_TAB     =    9,
+    OLX_KEY_RETURN  =    13,
+    OLX_KEY_ESCAPE  =    27,
+    OLX_KEY_SPACE   =    32,
+    OLX_KEY_DELETE  =    127,
+    OLX_KEY_END = 312,
+    OLX_KEY_HOME = 313,
+    OLX_KEY_LEFT = 314,
+    OLX_KEY_UP = 315,
+    OLX_KEY_RIGHT = 316,
+    OLX_KEY_DOWN = 317,
+    OLX_KEY_PAGEUP = 366,
+    OLX_KEY_PAGEDOWN = 367
+};
+#else
+enum {
+    OLX_KEY_BACK    = WXK_BACK,
+    OLX_KEY_TAB     = WXK_TAB,
+    OLX_KEY_RETURN  = WXK_RETURN,
+    OLX_KEY_ESCAPE  = WXK_ESCAPE,
+    OLX_KEY_SPACE   = WXK_SPACE,
+    OLX_KEY_DELETE  = WXK_DELETE,
+    OLX_KEY_END     = WXK_END,
+    OLX_KEY_HOME    = WXK_HOME,
+    OLX_KEY_LEFT    = WXK_LEFT,
+    OLX_KEY_UP      = WXK_UP,
+    OLX_KEY_RIGHT   = WXK_RIGHT,
+    OLX_KEY_DOWN    = WXK_DOWN,
+    OLX_KEY_PAGEUP  = WXK_PAGEUP,
+    OLX_KEY_PAGEDOWN = WXK_PAGEDOWN
+};
+#endif
+
 class TGlConsole: public AGDrawObject, 
                   public AActionHandler, 
                   public IDataOutputStream  {

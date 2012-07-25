@@ -9,6 +9,7 @@
 
 #ifndef __OLX_MATCH_MODE_H
 #define __OLX_MATCH_MODE_H
+#include "glconsole.h"
 
 class TMatchMode : public AMode  {
   TXAtomPList AtomsToMatch;
@@ -42,7 +43,7 @@ public:
     SetUserCursor(0, "<M>");
   }
   virtual bool OnKey(int keyId, short shiftState)  {
-    if( shiftState == 0 && keyId == WXK_ESCAPE )  {
+    if( shiftState == 0 && keyId == OLX_KEY_ESCAPE )  {
       if( AtomsToMatch.IsEmpty() )  return false;
       AtomsToMatch.Delete(AtomsToMatch.Count()-1);
       SetUserCursor(AtomsToMatch.Count(), "<M>");

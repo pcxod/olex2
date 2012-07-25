@@ -22,6 +22,7 @@
 #undef GetObject
 
 using namespace olex;
+#ifndef _NO_PYTHON
 
 PyObject* pyVarValue(PyObject* self, PyObject* args)  {
   olxstr varName;
@@ -497,3 +498,4 @@ static PyMethodDef CORE_Methods[] = {
 void OlexPyCore::PyInit()  {
   Py_InitModule("olex_core", CORE_Methods);
 }
+#endif

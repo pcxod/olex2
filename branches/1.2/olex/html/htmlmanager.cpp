@@ -889,8 +889,8 @@ void THtmlManager::funSetBG(const TStrObjList &Params, TMacroError &E)  {
 }
 //.............................................................................
 void THtmlManager::funGetFontName(const TStrObjList &Params, TMacroError &E)  {
-  olxstr hn = Params.Count() == 1 ? EmptyString() : Params[0];
-  THtml* html = Params.Count() == 1 ? main : FindHtml(Params[0]);
+  olxstr hn = Params.IsEmpty() ? EmptyString() : Params[0];
+  THtml* html = Params.IsEmpty() ? main : FindHtml(Params[0]);
   if (html == NULL) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;
@@ -900,8 +900,8 @@ void THtmlManager::funGetFontName(const TStrObjList &Params, TMacroError &E)  {
 }
 //.............................................................................
 void THtmlManager::funGetBorders(const TStrObjList &Params, TMacroError &E)  {
-  olxstr hn = Params.Count() == 1 ? EmptyString() : Params[0];
-  THtml* html = Params.Count() == 1 ? main : FindHtml(Params[0]);
+  olxstr hn = Params.IsEmpty() ? EmptyString() : Params[0];
+  THtml* html = Params.IsEmpty() ? main : FindHtml(Params[0]);
   if (html == NULL) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << hn;

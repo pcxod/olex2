@@ -385,11 +385,13 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   else if( tab_name.Equalsi("MPLA") )  {
     if( l[atom_start].IsNumber() ) {
       InfoTables.Add(
-        new InfoTab(*this, infotab_mpla, l[atom_start++]));
+        new InfoTab(*this, infotab_mpla, l[atom_start+1],
+          l[atom_start].ToInt()));
+      atom_start++;
     }
     else {
       InfoTables.Add(
-        new InfoTab(*this, infotab_mpla, EmptyString()));
+        new InfoTab(*this, infotab_mpla));
     }
   }
   else {
@@ -760,7 +762,7 @@ const_strlist RefinementModel::Describe() {
       TSRestraintList &res = *ress[ri];
       for( size_t i=0; i < res.Count(); i++ )  {
         TSimpleRestraint& sr = res[i];
-        TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this, 3);
+        TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this, 2);
         for (size_t j=0; j < atoms.Count(); j++) {
           lst.Add(' ') << AtomListToStr(atoms[j], 2,
             (&res == &rSADI ? " ~ "  : " = "));

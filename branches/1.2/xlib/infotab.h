@@ -24,13 +24,16 @@ const short
 
 class InfoTab : public IEObject {  // need to cast to delete
   RefinementModel& RM;
-  short Type;
+  short Type,
+    AtomCount; // for MPLA
   olxstr ParamName;
   AtomRefList atoms;
 public:
   InfoTab(RefinementModel& rm, short type,
-    const olxstr& paramName=EmptyString())
-    : RM(rm), Type(type), ParamName(paramName), atoms(rm) {}
+    const olxstr& paramName=EmptyString(), short atomCount=-1)
+    : RM(rm), Type(type), AtomCount(atomCount),
+    ParamName(paramName), atoms(rm)
+  {}
   
   InfoTab(RefinementModel& rm, const TDataItem& di)
     : RM(rm), atoms(rm)
@@ -54,8 +57,8 @@ public:
   void AddAtom(TCAtom& ca, const smatd* sm);
   void UpdateResi() { atoms.UpdateResi(); }
 
-  AtomRefList&  GetAtoms() {  return atoms;  }
-  const AtomRefList&  GetAtoms() const {  return atoms;  }
+  AtomRefList& GetAtoms() {  return atoms;  }
+  const AtomRefList& GetAtoms() const {  return atoms;  }
 
   short GetType() const {  return Type;  }
 
