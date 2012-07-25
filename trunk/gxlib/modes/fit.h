@@ -128,7 +128,7 @@ public:
     if( DoSplit )  {
       TCAtomPList to_iso;
       for( size_t i=split_offset; i < Atoms.Count(); i++ )  {
-        if( Atoms[i]->crd().QDistanceTo(original_crds[i]) < 1e-3 )
+        if( Atoms[i]->crd().QDistanceTo(original_crds[i]) < 0.01 )
           continue;
         TXAtom& nxa = gxapp.AddAtom(Atoms[i]);
         TCAtom& na = nxa.CAtom();
@@ -145,7 +145,9 @@ public:
         na.SetOccu(0.25*sp);
         // set label
         olxstr new_l = Atoms[i]->GetLabel();
-        olxch lc = olxstr::o_tolower(new_l.GetLast());
+        olxch lc = '1';
+        if (new_l.Length() > Atoms[i]->GetType().symbol.Length())
+          lc = olxstr::o_tolower(new_l.GetLast());
         if( olxstr::o_isalpha(lc) )
           new_l[new_l.Length()-1] = ++lc;
         else

@@ -5096,7 +5096,7 @@ void XLibMacros::macRTab(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else
-    Error.ProcessingError(__OlxSrcInfo, "1 to 3 atoms is expected");
+    Error.ProcessingError(__OlxSrcInfo, "1 to 4 atoms is expected");
 }
 //.............................................................................
 void XLibMacros::macHklMerge(TStrObjList &Cmds, const TParamList &Options,
@@ -5637,7 +5637,7 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   if( copy )  {
-    if( part == DefNoPart ) 
+    if( part == DefNoPart )
       part = rm.aunit.GetNextPart(true);
     XVar& xv = rm.Vars.NewVar(0.5);
     for( size_t i=0; i < Atoms.Count(); i++ )  {
@@ -5674,6 +5674,11 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
            j < (Atoms.Count()/partCount)*(i+1); j++ )
     {
       Atoms[j]->CAtom().SetPart(part);
+      if (!linkOccu && occu != 0) {
+        app.XFile().GetRM().Vars.SetParam(
+          Atoms[j]->CAtom(), catom_var_name_Sof, occu);
+      }
+
       if( Atoms[j]->GetType() == iHydrogenZ || Atoms[j]->GetType() == iQPeakZ )
         continue;
       for( size_t k=0; k <  Atoms[j]->NodeCount(); k++ )  {
@@ -5692,7 +5697,7 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
             rm.Vars.AddVarRef(*xv, Atoms[j]->CAtom(), catom_var_name_Sof,
               relation_AsVar, 1.0/Atoms[j]->CAtom().GetDegeneracy());
           }
-          else  {     
+          else  {
             rm.Vars.AddVarRef(*xv, Atoms[j]->CAtom(), catom_var_name_Sof,
               relation_AsOneMinusVar, 1.0/Atoms[j]->CAtom().GetDegeneracy());
           }
@@ -5706,10 +5711,6 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
           leq->AddMember(
             Atoms[j]->CAtom().GetVarRef(catom_var_name_Sof)->Parent);
         }
-      }
-      else if (occu != 0) {
-        app.XFile().GetRM().Vars.SetParam(
-          Atoms[j]->CAtom(), catom_var_name_Sof, occu);
       }
     }
     part++;
