@@ -839,6 +839,19 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //.............................................................................
 void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp::GetInstance().XFile().Sort(TStrList(Cmds));
+  TBasicApp::NewLogEntry() << "Atom order after sorting:";
+  olxstr atoms;
+  const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    olxstr l = au.GetAtom(i).GetResiLabel();
+    if (atoms.Length() + l.Length() >= 80) {
+      TBasicApp::NewLogEntry() << atoms;
+      atoms.SetLength(0);
+    }
+    atoms << ' ' << au.GetAtom(i).GetResiLabel();
+  }
+  if (!atoms.IsEmpty())
+    TBasicApp::NewLogEntry() << atoms;
 }
 //.............................................................................
 void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
