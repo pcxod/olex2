@@ -56,8 +56,12 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
       context.current_block->Add(table);
       return true;
     }
-    if( Lines[start].IsEmpty() )  continue;
-    if( Lines[start].CharAt(0) != '_' )  {  start--;  break;  }
+    if (Lines[start].IsEmpty() || Lines[start].StartsFrom('#'))
+      continue;
+    if (!Lines[start].StartsFrom('_')) {
+      start--;
+      break;
+    }
     bool param_found = false;  // in the case loop header is mixed up with loop data...
     if( Lines[start].IndexOf(' ') == InvalidIndex )
       table.AddCol(Lines[start]);
@@ -65,8 +69,8 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
       TStrList toks;
       CIFToks(Lines[start], toks);
       for( size_t i=0; i < toks.Count(); i++ )  {
-        if (toks[i].CharAt(0) == '#') break;
-        if( param_found || toks[i].CharAt(0) != '_' )  {
+        if (toks[i].CharAt(0) == '#') continue;
+        if (param_found || !toks[i].StartsFrom('_')) {
           param_found = true;
           loop_data.Add(toks[i]);
         }
@@ -93,7 +97,7 @@ bool TCifDP::ExtractLoop(size_t& start, parse_context& context)  {
   }
   catch(const TExceptionBase& e)  {
     delete &table;
-    throw ParsingException(__OlxSourceInfo, e);
+    throw ParsingException(__OlxSourceInfo, e, olxstr("starting at line #") << start);
   }
   start--;
   return true;
