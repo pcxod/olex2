@@ -569,8 +569,18 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     }
     if( Toks[1].IsNumber() )  {
       int n = Toks[1].ToInt();
-      cx.Resi = &cx.au.NewResidue(EmptyString(), n,
-        (Toks.Count() > 2) ? Toks[2].ToInt() : n);
+      if (Toks.Count() > 2) {
+        if (Toks[2].IsNumber()) {
+          cx.Resi = &cx.au.NewResidue(EmptyString(), n,
+            Toks[2].ToInt());
+        }
+        else {
+          cx.Resi = &cx.au.NewResidue(Toks[2], n, n);
+        }
+      }
+      else {
+        cx.Resi = &cx.au.NewResidue(EmptyString(), n, n);
+      }
     }
     else if( Toks.Count() > 2 )  {
       if( !Toks[2].IsNumber() )
