@@ -189,7 +189,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
     if( tci.maxBonds == def_max_bonds && tci.r == -1 )
       continue;
     olxstr& str = ins.Add("CONN ");
-    if( tci.maxBonds != def_max_bonds )
+    if (tci.maxBonds != def_max_bonds || tci.r != -1)
       str << tci.maxBonds << ' ';
     if( tci.r != -1 )
       str << tci.r << ' ';
