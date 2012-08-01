@@ -45,7 +45,7 @@ void TDSphere::Create(const olxstr& cName)  {
   GlP.SetProperties(m);
   TTypeList<TVector3<float> > vecs;
   TTypeList<IndexTriangle> triags;
-  OlxSphere<float,OctahedronFP<vec3f> >::Generate(1.0, Generation, vecs,
+  OlxSphere<float,OctahedronFP<vec3f> >::Generate(1.0f, Generation, vecs,
     triags);
   const size_t tc = triags.Count();
   uint32_t last_cl = 0;
@@ -59,6 +59,8 @@ void TDSphere::Create(const olxstr& cName)  {
     const IndexTriangle& t = triags[i];
     for( size_t j=0; j < 3; j++ )  {
       uint32_t cl = colors[t.vertices[j]];
+      vec3f n = (vecs[t.vertices[0]]+vecs[t.vertices[1]]+vecs[t.vertices[2]])/3;
+      olx_gl::normal(n);
       if( cl != last_cl )  {
         olx_gl::color((float)OLX_GetRValue(cl)/255,
           (float)OLX_GetGValue(cl)/255,
@@ -66,7 +68,6 @@ void TDSphere::Create(const olxstr& cName)  {
           (float)OLX_GetAValue(cl)/255);
         last_cl = cl;
       }
-      olx_gl::normal(vecs[t.vertices[j]]);
       olx_gl::vertex(vecs[t.vertices[j]]);
     }
   }

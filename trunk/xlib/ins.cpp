@@ -1532,8 +1532,11 @@ olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
   const RefinementModel &rm = sr.GetParent().GetRM();
   if (!Ins_ProcessRestraint(atoms, sr, rm))
     return EmptyString();
-  //if( (int)sr.AtomCount() < ri.atom_limit )  // has lower atom count limit?
-  //  return EmptyString();
+  if (sr.GetAtoms().IsExplicit()) {
+    // has lower atom count limit?
+    if ((int)sr.GetAtoms().Count() < ri.atom_limit )
+      return EmptyString();
+  }
   bool def = rm.IsDefaultRestraint(sr);
   olxstr line = sr.GetIdName();
   if (!sr.GetAtoms().GetResi().IsEmpty())
