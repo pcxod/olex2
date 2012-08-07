@@ -1784,12 +1784,15 @@ void TIns::ParseHeader(const TStrList& in)  {
   for( size_t i=0; i < lst.Count(); i++ )  {
     try  {
       olxstr Tmp = olxstr::DeleteSequencesOf<char>(lst[i], ' ');
-      if( Tmp.IsEmpty() )      continue;
-      for( size_t j=0; j < Tmp.Length(); j++ )  {
-        if( Tmp[j] == '!' )  {  // comment sign
-          Tmp.SetLength(j-1);
-          break;
+      if( Tmp.IsEmpty() )  continue;
+      size_t ci = Tmp.IndexOf('!');
+      if (ci != InvalidIndex) {
+        if (ci == 0) {
+          lst[i] = olxstr("REM ") << lst[i].SubStringFrom(1).TrimWhiteChars();
+          Tmp = olxstr("REM ") << Tmp.SubStringFrom(1).TrimWhiteChars();
         }
+        else
+          Tmp.SetLength(ci);
       }
       toks.Clear();
       toks.Strtok(Tmp, ' ');
