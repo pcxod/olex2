@@ -25,16 +25,20 @@ public:
   };
   typedef TArrayList<SFUtil::StructureFactor> SFList;
 
-  template <class FloatT> static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F, 
-      FloatT*** map, const vec3s& dim, double vol)
+  template <class FloatT>
+  static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F,
+    FloatT*** map, const vec3s& dim, double vol)
   {
-    return Calculate<FloatT, BVFourier::TCalcEDMTask<FloatT> >(F, map, dim, vol);
+    return Calculate<FloatT, BVFourier::TCalcEDMTask<FloatT> >(
+      F, map, dim, vol);
   }
 
-  template <class FloatT> static MapInfo CalcPatt(const TArrayList<SFUtil::StructureFactor>& F, 
+  template <class FloatT>
+  static MapInfo CalcPatt(const TArrayList<SFUtil::StructureFactor>& F,
       FloatT*** map, const vec3s& dim, double vol)
   {
-    return Calculate<FloatT, BVFourier::TCalcPattTask<FloatT> >(F, map, dim, vol);
+    return Calculate<FloatT, BVFourier::TCalcPattTask<FloatT> >(
+      F, map, dim, vol);
   }
 
 
@@ -167,17 +171,33 @@ public:
         const SFUtil::StructureFactor& sf = F[i];
         S[sf.hkl[1]-mini[1]][sf.hkl[2]-mini[2]] += sf.val*sin_cosX[ix][sf.hkl[0]-minInd];
       }
+      int sp1 = maxi[1]-mini[1];
+      int sp2 = maxi[2]-mini[2],
+        spt2 = (sp2>>2)<<2;
       for( size_t iy=0; iy < dim[1]; iy++ )  {
-        for( int i=mini[1]; i <= maxi[1]; i++ )  {
-          for( int j=mini[2]; j <= maxi[2]; j++ )  {
-            T[j-mini[2]] += S[i-mini[1]][j-mini[2]]*sin_cosY[iy][i-minInd];
+        for( int i=0; i <= sp1; i++ )  {
+          int idxi = i+mini[1]-minInd;
+          for( int j=0; j < spt2; j+=4 )  {
+            T[j+0] += S[i][j+0]*sin_cosY[iy][idxi];
+            T[j+1] += S[i][j+1]*sin_cosY[iy][idxi];
+            T[j+2] += S[i][j+2]*sin_cosY[iy][idxi];
+            T[j+3] += S[i][j+3]*sin_cosY[iy][idxi];
+          }
+          for( int j=spt2; j <= sp2; j++ )  {
+            T[j] += S[i][j]*sin_cosY[iy][idxi];
           }
         }
+        int d2 = mini[2]-minInd;
         for( size_t iz=0; iz < dim[2]; iz++ )  {
           compd R;
-          for( int i=mini[2]; i <= maxi[2]; i++ )  {
-            R += T[i-mini[2]]*sin_cosZ[iz][i-minInd];
+          for( int i=0; i < spt2; i+=4 )  {
+            R += T[i+0]*sin_cosZ[iz][i+d2+0];
+            R += T[i+1]*sin_cosZ[iz][i+d2+1];
+            R += T[i+2]*sin_cosZ[iz][i+d2+2];
+            R += T[i+3]*sin_cosZ[iz][i+d2+3];
           }
+          for( int i=spt2; i <= sp2; i++ )
+            R += T[i]*sin_cosZ[iz][i+d2];
           const double val = R.Re()/vol;
           sum += ((val < 0) ? -val : val);
           sq_sum += val*val;

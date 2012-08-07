@@ -7645,7 +7645,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       }
       wxTheClipboard->Close();
     }
-    clipbrd_content.Trim(' ').Trim('\n').Trim('\r');
+    clipbrd_content.Trim(' ').Replace('\r', '\n').Trim('\n').DeleteSequencesOf('\n');
     if( !clipbrd_content.StartsFromi("FRAG") ||
         !clipbrd_content.EndsWithi("FEND") )
     {
@@ -7653,6 +7653,10 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     content.Strtok(clipbrd_content, '\n');
+    if (content.Count() < 3) {
+      E.ProcessingError(__OlxSrcInfo, "Unexpected clipboard content");
+      return;
+    }
     content.Delete(content.Count()-1);
     content.Delete(0);
     for( size_t i=0; i < content.Count(); i++ )  {
