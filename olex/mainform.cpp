@@ -2294,10 +2294,12 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
 //..............................................................................
 bool TMainForm::ImportFrag(const olxstr& line)  {
   olxstr trimmed_content = line;
-  trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+  trimmed_content.Trim(' ').Replace('\r', '\n').Trim('\n').DeleteSequencesOf('\n');
   if( !trimmed_content.StartsFromi("FRAG") || !trimmed_content.EndsWithi("FEND") )
     return false;
   TStrList lines(trimmed_content, '\n');
+  if (lines.Count() < 4)
+    return false;
   lines.Delete(lines.Count()-1);
   lines.Delete(0);
   for( size_t i=0; i < lines.Count(); i++ )  {
