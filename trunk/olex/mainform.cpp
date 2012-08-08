@@ -1628,8 +1628,8 @@ void TMainForm::StartupInit()  {
 
   // set the variables
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
-    processMacro(olxstr("setvar(") << StoredParams.GetKey(i) << ",\'" <<
-      StoredParams.GetObject(i) << "\')");
+    processMacro(olxstr("setvar(") << StoredParams.GetKey(i) << ",\"" <<
+      StoredParams.GetObject(i) << "\")");
 
   }
 
@@ -1650,8 +1650,8 @@ void TMainForm::StartupInit()  {
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
   if( FXApp->GetArguments().Count() >= 2 ) {
-    processMacro(olxstr("reap \'") << FXApp->GetArguments().Text(' ', 1) <<
-      '\'', __OlxSrcInfo);
+    processMacro(olxstr("reap \"") << FXApp->GetArguments().Text(' ', 1) <<
+      '\"', __OlxSrcInfo);
   }  // load html in last call - it might call some destructive functions on uninitialised data
   HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
