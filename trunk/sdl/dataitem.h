@@ -14,6 +14,7 @@
 #include "tptrlist.h"
 #include "estrlist.h"
 #include "exception.h"
+#include "exparse/exptree.h"
 BeginEsdlNamespace()
 
 class TEStrBuffer;
@@ -23,10 +24,6 @@ class TDataItem: public AReferencible  {
   TStrStrList  Fields;
   olxstr Name, Value;
   olxstr ExtractBlockName(olxstr &Str);
-
-  olxstr CodeString(const olxstr& Str)  const;
-  olxstr DecodeString(const olxstr& Str) const;
-
   TDataItem* Parent;
   int Level, Index;
   void* Data;
@@ -42,21 +39,25 @@ protected:
   }
   // to be called from the parser
   void _AddField(const olxstr& name, const olxstr& val) {
-    Fields.Add(name, DecodeString(val) );
+    Fields.Add(name, exparse::parser_util::unescape(val));
   }
   inline void SetParent(TDataItem* p)  {  Parent = p;  }
   TEStrBuffer& writeFullName(TEStrBuffer& bf) const;
 public:
-  TDataItem(TDataItem *Parent, const olxstr& Name, const olxstr& value=EmptyString());
+  TDataItem(TDataItem *Parent, const olxstr& Name,
+    const olxstr& value=EmptyString());
   virtual ~TDataItem();
   void Clear();
-  void Sort();  // sorts fields and items - improve the access by name performance
+  // sorts fields and items - improve the access by name performance
+  void Sort();
   void ResolveFields(TStrList* Log); // resolves referenced fields
   size_t LoadFromString(size_t start, const olxstr &Data, TStrList* Log);
   void SaveToStrBuffer(TEStrBuffer &Data) const;
 
   TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString());
-  // if extend is true the item's content is extended instead of being overwritten
+  /* if extend is true the item's content is extended instead of being
+  overwritten
+  */
   void AddContent(TDataItem& DI, bool extend=false);
   // implementation of the include instruction object.item
   TDataItem& AddItem(const olxstr &Name, TDataItem *Reference);
@@ -82,7 +83,9 @@ public:
   }
 
   TDataItem& GetItem(size_t index) {  return *Items.GetObject(index); }
-  const TDataItem& GetItem(size_t index) const {  return *Items.GetObject(index); }
+  const TDataItem& GetItem(size_t index) const {
+    return *Items.GetObject(index);
+  }
   void FindSimilarItems(const olxstr& StartsFrom, TPtrList<TDataItem>& List);
   inline size_t ItemCount() const {  return Items.Count(); }
   template <class T> bool ItemExists(const T &Name) const {
@@ -96,8 +99,12 @@ public:
   }
   inline size_t FieldCount() const {  return Fields.Count();  }
 
-  template <class T> size_t FieldIndex(const T& Name) const {  return Fields.IndexOf(Name);  }
-  template <class T> size_t FieldIndexi(const T& Name) const {  return Fields.IndexOfi(Name);  }
+  template <class T> size_t FieldIndex(const T& Name) const {
+    return Fields.IndexOf(Name);
+  }
+  template <class T> size_t FieldIndexi(const T& Name) const {
+    return Fields.IndexOfi(Name);
+  }
 
   const olxstr& GetField(size_t i) const {  return Fields.GetObject(i); }
   // the filed will not be decoded
@@ -112,37 +119,47 @@ public:
   }
   // deletes field by index
   void DeleteField(size_t index)  {  Fields.Delete(index);  }
-  // deletes field by name, only deletes the first one if there are several with the same name
+  /* deletes field by name, only deletes the first one if there are several
+  with the same name
+  */
   template <class T> void DeleteField(const T& Name) {
     const size_t fieldIndex = FieldIndex(Name);
     if( fieldIndex != InvalidIndex )  
       DeleteField(fieldIndex);
   }
   template <class T>
-  const olxstr& GetFieldValue( const T& Name, const olxstr& Default=EmptyString() ) const {
+  const olxstr& GetFieldValue( const T& Name,
+    const olxstr& Default=EmptyString() ) const
+  {
     const size_t i = Fields.IndexOf(Name);
     return (i==InvalidIndex) ? Default : Fields.GetObject(i);
   }
   template <class T>
-  const olxstr& GetFieldValueCI( const T& Name, const olxstr& Default=EmptyString() ) const {
+  const olxstr& GetFieldValueCI( const T& Name,
+    const olxstr& Default=EmptyString() ) const
+  {
     const size_t i = Fields.IndexOfi(Name);
     return (i==InvalidIndex) ? Default : Fields.GetObject(i);
   }
   template <class T> const olxstr& GetRequiredField(const T& Name) const  {
     const size_t i = Fields.IndexOf(Name);
-    if( i == InvalidIndex )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required attribute is missing: ") << Name);
+    if( i == InvalidIndex ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("Required attribute is missing: ").quote() << Name);
+    }
     return Fields.GetObject(i);
   }
 
-  template <class T> bool FieldExists(const T& Name)   {  return Fields.IndexOf(Name) != InvalidIndex;  }
+  template <class T> bool FieldExists(const T& Name)  {
+    return Fields.IndexOf(Name) != InvalidIndex;
+  }
 
   TDataItem* GetParent() const {  return Parent; }
-  inline int GetLevel() const {  return Level; }
-  inline int GetIndex() const {  return Index; }
+  int GetLevel() const {  return Level; }
+  int GetIndex() const {  return Index; }
   DefPropC(olxstr, Name)
-  olxstr GetValue() const {  return DecodeString(Value); }
-  void SetValue(const olxstr &V)  {  Value = CodeString(V); }
+  olxstr GetValue() const {  return Value; }
+  void SetValue(const olxstr &V)  {  Value = V; }
   // for use with whatsoever, initialised twith NULL
   DefPropP(void*, Data)
 
@@ -151,8 +168,11 @@ public:
   class TNonexistingDataItemException: public TBasicException  {
   public:
     TNonexistingDataItemException(const olxstr& location, const olxstr &Msg):
-      TBasicException(location, Msg)  {  ;  }
-    virtual IEObject* Replicate() const {  return new TNonexistingDataItemException(*this);  }
+      TBasicException(location, Msg)
+      {}
+    virtual IEObject* Replicate() const {
+      return new TNonexistingDataItemException(*this);
+    }
   };
 };
 

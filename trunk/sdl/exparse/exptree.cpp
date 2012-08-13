@@ -8,10 +8,10 @@
 ******************************************************************************/
 
 #include "exptree.h"
-
+#include "../paramlist.h"
 using namespace esdl::exparse;
 
-//...........................................................................
+//.............................................................................
 bool parser_util::skip_string(const olxstr& exp, size_t& ind)  {
   const olxch qc = exp.CharAt(ind);
   const size_t start = ind;
@@ -22,7 +22,7 @@ bool parser_util::skip_string(const olxstr& exp, size_t& ind)  {
   ind = start;
   return false;
 }
-//...........................................................................
+//.............................................................................
 bool parser_util::parse_string(const olxstr& exp, olxstr& dest, size_t& ind)  {
   const olxch qc = exp.CharAt(ind);
   bool end_found = false;
@@ -37,7 +37,7 @@ bool parser_util::parse_string(const olxstr& exp, olxstr& dest, size_t& ind)  {
     dest = exp.SubString(start, ind - start);
   return end_found;
 }
-//...........................................................................
+//.............................................................................
 bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest, size_t& ind)  {
   const olxch qc = exp.CharAt(ind);
   bool end_found = false;
@@ -52,7 +52,7 @@ bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest, size_t& 
     dest = exp.SubString(start, ind - start);
   return end_found;
 }
-//...........................................................................
+//.............................................................................
 bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
   const olxch oc = exp.CharAt(ind), 
     cc = get_closing_bracket(oc);
@@ -70,7 +70,14 @@ bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
   ind = start;
   return false;
 }
-//...........................................................................
+//.............................................................................
+size_t parser_util::skip_whitechars(const olxstr& exp, size_t& ind) {
+  size_t el = exp.Length();
+  if ( ind >= el) return ind;
+  while (olxstr::o_iswhitechar(exp[ind]) && ++ind < el) ;
+  return ind;
+}
+//.............................................................................
 bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest,
   size_t& ind)
 {
@@ -90,7 +97,7 @@ bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest,
   }
   return false;
 }
-//...........................................................................
+//.............................................................................
 bool parser_util::is_operator(const olxstr& exp)  {
   static size_t sz = sizeof(operators)/sizeof(operators[0]);
   for( size_t i=0; i < sz; i++ )  {
@@ -99,7 +106,7 @@ bool parser_util::is_operator(const olxstr& exp)  {
   }
   return false;
 }
-//...........................................................................
+//.............................................................................
 bool parser_util::parse_control_chars(const olxstr& exp, olxstr& dest,
   size_t& ind)
 {
@@ -123,7 +130,7 @@ bool parser_util::is_next_char_control(const olxstr& exp, size_t ind) {
   }
   return false;
 }
-//...........................................................................
+//.............................................................................
 bool parser_util::is_expandable(const olxstr& exp)  {
   for( size_t i=0; i < exp.Length(); i++ )  {
     const olxch ch = exp.CharAt(i);
@@ -134,12 +141,30 @@ bool parser_util::is_expandable(const olxstr& exp)  {
         ;
       continue;
     }
-    if( control_chars.IndexOf(ch) != InvalidIndex )
+    if ( control_chars.IndexOf(ch) != InvalidIndex )
+      return true;
+    // macro style call 'cos 90'
+    if (olxstr::o_iswhitechar(ch))
       return true;
   }
   return false;
 }
-//...........................................................................
+//.............................................................................
+bool parser_util::is_escaped(const olxstr& exp, size_t ch_ind)  {
+  size_t sc = 0;
+  while( --ch_ind != InvalidIndex && exp.CharAt(ch_ind) == '\\' ) sc++;
+  return (sc%2) != 0;
+}
+//.............................................................................
+size_t parser_util::next_unescaped(olxch _what, const olxstr& _where,
+  size_t _from)
+{
+  for( size_t i=_from; i < _where.Length(); i++ )
+    if( _where.CharAt(i) == _what && !is_escaped(_where, i) )
+      return i;
+  return InvalidIndex;
+}
+//.............................................................................
 olxstr parser_util::unescape(const olxstr& exp)  {
   //return exp;
   olxstr out(EmptyString(), exp.Length());
@@ -152,7 +177,7 @@ olxstr parser_util::unescape(const olxstr& exp)  {
         case 't':   out << '\t';  break;
         case '\\':  out << '\\';  break;
         case '\'':  out << '\'';  break;
-        case '"':   out << '"';  break;
+        case '\"':  out << '\"';  break;
         default:    out << '\\' << exp.CharAt(i);  break;
       }
     }
@@ -161,9 +186,25 @@ olxstr parser_util::unescape(const olxstr& exp)  {
   }
   return out;
 }
-//...........................................................................
-//...........................................................................
-//...........................................................................
+//.............................................................................
+olxstr parser_util::escape(const olxstr& exp)  {
+  //return exp;
+  olxstr out(EmptyString(), exp.Length()+5);
+  for( size_t i=0; i < exp.Length(); i++ )  {
+    switch( exp.CharAt(i) )  {
+      case '\r': case '\n': case '\t':case '\\': case '\'': case '\"':
+        out << '\\' << exp.CharAt(i);
+        break;
+      default:
+        out << exp.CharAt(i);
+        break;
+    }
+  }
+  return out;
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 void expression_tree::expand()  {
   data.TrimWhiteChars();
   if( !parser_util::is_expandable(data) )  return;
@@ -171,7 +212,20 @@ void expression_tree::expand()  {
   olxch q_ch = ' ';
   for( size_t i=0; i < data.Length(); i++ )  {
     olxch ch = data.CharAt(i);
-    if( olxstr::o_iswhitechar(ch) )  continue;
+    if( olxstr::o_iswhitechar(ch) )  {
+      if (dt.IsEmpty()) continue;
+      if ((parser_util::skip_whitechars(dt, i)+1) >= data.Length())
+        break;
+      // check if 'def ttt ccc' syntax is used
+      if( !parser_util::is_next_char_control(data, i)) {
+        TStrList args;
+        TParamList::StrtokParams(data.SubStringFrom(i), ' ', args);
+        evator = new evaluator<expression_tree>(dt);
+        for( size_t ai=0; ai < args.Count(); ai++ )
+          evator->args.Add(new expression_tree(this, args[ai]))->expand();
+        break;
+      }
+    }
     else if( ch == '(' )  {  // parse out brackets
       olxstr arg;
       if( !parser_util::parse_brackets(data, arg, i) ) {

@@ -756,7 +756,6 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
 //..............................................................................
 void TUnitCell::FilterHBonds(TAtomEnvi& atom, TAtomEnvi& envi, bool move) {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  bool add = true;
   for (size_t i=0; i < envi.Count(); i++) {
     TCAtom &a = envi.GetCAtom(i);
     for( size_t ai=0; ai < a.AttachedSiteCount(); ai++) {

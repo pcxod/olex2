@@ -1999,8 +1999,6 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
 //..............................................................................
 void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
   TAtomEnvi AE;
-  const TUnitCell &uc = GetUnitCell();
-  const TAsymmUnit &au = GetAsymmUnit();
   for( size_t i=0; i < Envi.Count(); i++ )  {
     TSAtom* SA = FindSAtom(Envi.GetCAtom(i));
     AE.Clear();
@@ -2424,7 +2422,6 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
 //..............................................................................
 void TLattice::BuildAtomRegistry()  {
   if( Matrices.IsEmpty() )  return;
-  TUnitCell& uc = GetUnitCell();
   vec3i mind(100,100,100), maxd(-100,-100,-100);
   const size_t ac = Objects.atoms.Count();
   TTypeList<TSAtom::Ref> refs(ac);
