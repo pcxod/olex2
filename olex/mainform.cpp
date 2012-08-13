@@ -678,6 +678,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "s-synchronise&;"
     "o-detached&;"
     "d-output dub file name&;"
+    "t-a list of commands to be run when the process is terminated&;"
     "q-do not post output to console",
     fpAny^fpNone,
     "Executes external process");
@@ -1946,7 +1947,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
             break;
         }
         FileMT = FileT;
-        if( !FOnListenCmds.IsEmpty() )  
+        if( !FOnListenCmds.IsEmpty() )
           Draw = true;
       }
     }
@@ -2961,7 +2962,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   TEFile::ChangeDir(XLibMacros::CurrentDir);
 
   I = DF.Root().FindItem("Recent_files");
-  if( I )  {
+  if( I != NULL )  {
     MenuFile->AppendSeparator();
     int i=0;
     TStrList uniqNames;
@@ -2984,7 +2985,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     }
   }
 
-  I = DF.Root().FindItem("Defaults");
+  I = &DF.Root().FindRequiredItem("Defaults");
   DefStyle = TEFile::ExpandRelativePath(I->GetFieldValue("Style"));
     processFunction(DefStyle);
   DefSceneP = TEFile::ExpandRelativePath(I->GetFieldValue("Scene"));

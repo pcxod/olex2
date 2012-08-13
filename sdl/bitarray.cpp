@@ -60,7 +60,7 @@ TEBitArray& TEBitArray::operator = (const TEBitArray& arr)  {
 //..............................................................................
 void TEBitArray::SetSize(size_t newSize)  {
   if( FCount == newSize )  return;
-  size_t cnt = FCount, chcnt = FCharCount;
+  size_t chcnt = FCharCount;
   unsigned char *data = FData;
   FCount = newSize;
   FCharCount = newSize/8 + 1;

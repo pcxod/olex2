@@ -19,18 +19,22 @@ public:
   TParamList() {}
   TParamList(const TParamList& v);
   virtual ~TParamList() {}
-  inline void Clear()  {  TStrStrList::Clear(); }
-  inline size_t Count() const {  return TStrStrList::Count();  };
-  inline bool IsEmpty() const {  return TStrStrList::IsEmpty();  }
-  inline const olxstr& GetValue(size_t index) const {  return GetObject(index);  }
-  inline olxstr& Value(size_t index)  {  return GetObject(index);  }
-  inline const olxstr& GetName(size_t index) const {  return GetString(index);  }
+  void Clear()  {  TStrStrList::Clear(); }
+  size_t Count() const {  return TStrStrList::Count();  };
+  bool IsEmpty() const {  return TStrStrList::IsEmpty();  }
+  const olxstr& GetValue(size_t index) const {  return GetObject(index);  }
+  olxstr& GetValue(size_t index)  {  return GetObject(index);  }
+  const olxstr& GetName(size_t index) const {  return GetString(index);  }
   void FromString(const olxstr& S, char Sep); // -t=op
   void AddParam(const olxstr& Name, const olxstr& Param, bool Check = true);
   template <class T>
-  inline bool Contains(const T& Name)  const {  return IndexOf(Name) != InvalidIndex;  }
+  bool Contains(const T& Name) const {
+    return TStrStrList::IndexOf(Name) != InvalidIndex;
+  }
   template <class T>
-  const olxstr& FindValue(const T& Name, const olxstr& defval=EmptyString()) const {
+  const olxstr& FindValue(const T& Name,
+    const olxstr& defval=EmptyString()) const
+  {
     size_t i = IndexOf(Name);
     return (i != InvalidIndex) ? GetObject(i) : defval;
    }
@@ -38,7 +42,9 @@ public:
   const olxstr& operator [] (const T& Name) const {  return FindValue(Name);  }
   // these functions considers the folowing situations: '"', '('')' and '\''
   template <class StrLst>
-    static size_t StrtokParams(const olxstr& exp, olxch sep, StrLst& out, bool do_unquote=true)  {
+    static size_t StrtokParams(const olxstr& exp, olxch sep, StrLst& out,
+      bool do_unquote=true)
+    {
       using namespace exparse::parser_util;
       if( is_quote(sep) )
         throw TInvalidArgumentException(__OlxSourceInfo, "separator");
@@ -61,22 +67,23 @@ public:
           }
         }
         else if( ch == sep )  {
-          if( sep == ' ' && start == i )  { // white spaces cannot define empty args
+          // white spaces cannot define empty args
+          if( sep == ' ' && start == i )  {
             start = i+1;
             continue;
           }
           if( do_unquote )
-            out.Add( unquote(exp.SubString(start, i-start).TrimWhiteChars()) );
+            out.Add(unquote(exp.SubString(start, i-start).TrimWhiteChars()));
           else 
-            out.Add( exp.SubString(start, i-start).TrimWhiteChars() );
+            out.Add(exp.SubString(start, i-start).TrimWhiteChars());
           start = i+1;
         }
       }
       if( start < exp.Length() )  {
         if( do_unquote )
-          out.Add( unquote(exp.SubStringFrom(start).TrimWhiteChars()) );
+          out.Add(unquote(exp.SubStringFrom(start).TrimWhiteChars()));
         else 
-          out.Add( exp.SubStringFrom(start).TrimWhiteChars() );
+          out.Add(exp.SubStringFrom(start).TrimWhiteChars());
       }
       return out.Count() - pc;
     }

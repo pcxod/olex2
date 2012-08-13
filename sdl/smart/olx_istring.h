@@ -2003,6 +2003,14 @@ public:
     T::SData = new struct T::Buffer(arr, T::_Length);
   }
   //...........................................................................
+  template <typename seq_t> 
+  static bool o_is_oneof(TC ch, const seq_t &seq) {
+    size_t l = o_strlen(seq);
+    for (size_t i=0; i < l; i++)
+      if (ch == seq[i])
+        return true;
+    return false;
+  }
 };
 
 #include "olx_strcvt.h"

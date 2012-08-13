@@ -106,6 +106,12 @@ public:
   {
     return Register(Macros, macro, flags);
   }
+  template <class BaseClass>
+  ABasicFunction *RegisterMacroMacro(TMacroMacro<BaseClass>* macro,
+    uint16_t flags=0)
+  {
+    return Register(Macros, macro, flags);
+  }
   /* if function name is no qualified, current lib is searched only, for
   quailified function names like, html.home, the library will be located and
   searched

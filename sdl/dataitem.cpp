@@ -9,14 +9,13 @@
 
 #include "dataitem.h"
 #include "estrbuffer.h"
-#include "exparse/exptree.h"
-
-static olxstr DoubleQuoteCode("&2E;");
 
 UseEsdlNamespace()
 using namespace exparse::parser_util;
 
-TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val) : Name(nm), Value(val)  {
+TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val)
+  : Name(nm), Value(val)
+{
   if( Prnt != NULL )  {
     Level = Prnt->GetLevel()+1;
     Index = (int)Prnt->ItemCount();
@@ -199,12 +198,13 @@ TDataItem& TDataItem::AddItem(const olxstr& name, const olxstr& val)  {
 size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log)  {
   const size_t sl = Data.Length();
   for( size_t i=start; i < sl; i++ )  {
-    olxch ch = Data.CharAt(i);
-    if( ch == '<' )  {
+    olxch ch = Data[i];
+    if (ch == '<') {
       const size_t name_start_i = i+1;
-      while( ++i < sl )  {
-        ch = Data.CharAt(i);
-        if( ch == '<' || ch == '>' || ch == '\"' || olxstr::o_iswhitechar(ch) )  break;
+      while (++i < sl) {
+        ch = Data[i];
+        if (olxstr::o_is_oneof(ch, "<>\"") || olxstr::o_iswhitechar(ch))
+          break;
       }
       olxstr ItemName = Data.SubString(name_start_i, i-name_start_i);
       if( ItemName.IsEmpty() && Log != NULL )
@@ -221,61 +221,55 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
       }
     }
 
-    if( ch == '>' )  return i;
-    if( ch == '/' || ch == '\\' ) continue;
-    if( !olxstr::o_iswhitechar(ch) )   {
+    if (ch == '>')  return i;
+    if (ch == '/' || ch == '\\') continue;
+    if (!olxstr::o_iswhitechar(ch))  {
       olxstr FieldName, FieldValue;
-      if( is_quote(ch) )  {  // item value
-        parse_escaped_string(Data, Value, i);
-        if( i < sl && (Data.CharAt(i) == '>') )  {  return i;  }
+      if (is_quote(ch)) {  // item value
+        parse_string(Data, Value, i);
+        Value = unescape(Value);
+        if (i < sl && (Data[i] == '>'))
+          return i;
         continue;
       }
       if( (i+1) >= sl ) return sl+1;
       const size_t fn_start = i;
-      while( i < sl )  {  // extract field name
+      while (i < sl)  {  // extract field name
         ch = Data.CharAt(i);
-        if( ch == '=' || ch == '>' || ch == '\"' || ch == '\'' ||
-          ch == '<' || olxstr::o_iswhitechar(ch) )  break;
+        if (olxstr::o_is_oneof(ch, "=><\"\'") || olxstr::o_iswhitechar(ch))
+          break;
         i++;
       }
       FieldName = Data.SubString(fn_start, i - fn_start);
-      if( (i+1) >= sl ) return sl+1;
-      while( olxstr::o_iswhitechar(Data.CharAt(i)) && ++i < sl)  ;  // skip spaces
-      if( (i+1) >= sl ) return sl+1;
-      if( Data.CharAt(i) == '=' )  {  // extract field value
+      if ((skip_whitechars(Data, i)+1) >= sl)
+        return sl+1;
+      if (Data[i] == '=') {  // extract field value
         i++;
-        while( olxstr::o_iswhitechar(Data.CharAt(i)) && ++i < sl )  ;  // skip space
-        if( (i+1) >= sl ) return sl+1;
-        olxch CloseChar = ' ';  // find closing character: space ' or "
-        if( Data.CharAt(i) == '\'' )  {  CloseChar = '\''; i++; }
-        else if( Data.CharAt(i) == '\"' )  {  CloseChar = '\"'; i++; }
-        const size_t fv_start = i;
-        while( i < sl )  {
-          if( Data.CharAt(i) == CloseChar || (CloseChar == ' ' && Data.CharAt(i) == '>') )  break;
-          i++;
-        }
-        FieldValue = Data.SubString(fv_start, i-fv_start);
+        if ((skip_whitechars(Data, i)+1) >= sl)
+          return sl+1;
+        if (is_quote(Data[i]))  // field value
+          parse_string(Data, FieldValue, i);
       }
       else  // the spaces can separate just two field names
         i--;
-      if( FieldName.IndexOf('.') != InvalidIndex )  {  // a reference to an item
+      if (FieldName.IndexOf('.') != InvalidIndex ) {  // a reference to an item
         TDataItem* DI = DotItem(FieldName, Log);
-        if( DI != NULL )  
+        if (DI != NULL)
           AddItem(*DI);
-        else  {  // unresolved so far if !DI
+        else {  // unresolved so far if !DI
           olxstr RefFieldName;
           olxstr *RefField = DotField(FieldName, RefFieldName);
-          if( RefField == NULL )
+          if (RefField == NULL)
             _AddField(FieldName, FieldValue); 
           else
             _AddField(RefFieldName, *RefField);
         }
       }
-      else  {
+      else {
         _AddField(FieldName, FieldValue);
       }
-      if( (i+1) >= sl ) return sl+1;
-      if( Data.CharAt(i) == '>' )  return i;
+      if ((i+1) >= sl) return sl+1;
+      if (Data[i] == '>') return i;
     }
   }
   return sl+1;
@@ -322,13 +316,13 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
     for( int i=0; i < Level-1; i++ )    Data << ' ';
     Data << '<' << Name << ' ';
     if( !Value.IsEmpty() )  {
-      Data << '\"' << Value << "\" ";
+      Data << '\"' << escape(Value) << "\" ";
     }
   }
   const size_t fc = FieldCount();
   for( size_t i=0; i < fc; i++ )  {
     Data << Fields.GetString(i) << '=';
-    Data << '\"' << CodeString(Fields.GetObject(i)) << '\"' << ' ';
+    Data << '\"' << escape(Fields.GetObject(i)) << '\"' << ' ';
   }
   const size_t ic = ItemCount();
   for( size_t i=0; i < ic; i++ )  {
@@ -355,25 +349,13 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
   }
 }
 //..............................................................................
-void TDataItem::FindSimilarItems(const olxstr &StartsFrom, TPtrList<TDataItem>& List)  {
+void TDataItem::FindSimilarItems(const olxstr &StartsFrom,
+  TPtrList<TDataItem>& List)
+{
   for( size_t i=0; i < ItemCount(); i++ )  {
     if( Items[i].StartsFromi(StartsFrom) )
       List.Add(Items.GetObject(i));
   }
-}
-//..............................................................................
-olxstr TDataItem::CodeString(const olxstr& Str) const  {
-  if( Str.IndexOf('\"') == InvalidIndex )  return Str;
-  olxstr rv(Str);
-  rv.Replace('\"', DoubleQuoteCode);
-  return rv;
-}
-//..............................................................................
-olxstr TDataItem::DecodeString(const olxstr& Str) const  {
-  if( Str.IndexOf(DoubleQuoteCode) == InvalidIndex )  return Str;
-  olxstr Res(Str);
-  Res.Replace(DoubleQuoteCode, '\"');
-  return Res;
 }
 //..............................................................................
 // sorts fields and items - improve the access by name performance

@@ -5746,10 +5746,9 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
     Cmds.Delete(0);
   }
   TXApp &app = TXApp::GetInstance();
-  TAsymmUnit& au = app.XFile().GetAsymmUnit();
   RefinementModel& rm = app.XFile().GetRM();
   TSAtomPList Atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
-  const int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
+  const int m = TAfixGroup::GetM(afix);
   if( TAfixGroup::IsFittedRing(afix) )  {  // special case
     // yet another special case
     if( !positions.IsEmpty() )  {

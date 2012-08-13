@@ -9,8 +9,10 @@
 
 #include "function.h"
 #include "egc.h"
+#include "bapp.h"
 UseEsdlNamespace()
 
+//.............................................................................
 olxstr ABasicLibrary::GetQualifiedName() const {
   olxstr res = GetName();
   ABasicLibrary* lib = this->GetParentLibrary();
@@ -19,6 +21,35 @@ olxstr ABasicLibrary::GetQualifiedName() const {
     lib = lib->GetParentLibrary();
   }
   return res;
+}
+//.............................................................................
+olxstr ABasicFunction::SubstituteArgs(const olxstr &arg_,
+  const TStrList &argv) const
+{
+  olxstr arg(arg_);
+  size_t index = arg.FirstIndexOf('%');  // argument by index
+  while( index != InvalidIndex && index < (arg.Length()-1) )  {
+    size_t iindex = index;
+    while (++iindex < arg.Length() && olxstr::o_isdigit(arg.CharAt(iindex)))
+      ;
+    olxstr args = arg.SubString(index+1, iindex-index-1);
+    if( !args.IsEmpty() )  {
+      size_t pindex = args.ToSizeT()-1;  // index of the parameter
+      if( pindex < argv.Count() )  {  // check if valid argument index
+        arg.Delete(index, args.Length()+1); // delete %xx value
+        arg.Insert(argv[pindex], index);  // insert value parameter
+      }
+      else  {
+        TBasicApp::NewLogEntry(logError) << GetName() << ": wrong argument "
+          "index - " << (pindex+1);
+      }
+    }
+    if( index++ < arg.Length() )
+      index = arg.FirstIndexOf('%', index);  // next argument by index
+    else
+      index = InvalidIndex;
+  }
+  return arg;
 }
 //.............................................................................
 olxstr ABasicFunction::GetSignature() const {
@@ -101,6 +132,36 @@ olxstr ABasicFunction::OptionsToString(
     rv << sep2;
   }
   return rv;
+}
+//.............................................................................
+void ABasicFunction::MacroRun(const TStrObjList& Params, TMacroError& E,
+  const TStrList &argv)
+{
+  if (argv.IsEmpty()) {
+    Run(Params, E);
+    return;
+  }
+  TStrObjList params(Params);
+  for (size_t i=0; i < params.Count(); i++)
+    params[i] = SubstituteArgs(Params[i], argv);
+  Run(params, E);
+}
+//.............................................................................
+void ABasicFunction::MacroRun(TStrObjList& Params, const TParamList& options,
+  TMacroError& E, const TStrList &argv)
+{
+  if (argv.IsEmpty()) {
+    Run(Params, options, E);
+    return;
+  }
+  TStrObjList params(Params);
+  TParamList opts(options);
+  for (size_t i=0; i < params.Count(); i++)
+    params[i] = SubstituteArgs(Params[i], argv);
+  for (size_t i=0; i < opts.Count(); i++)
+    opts.GetValue(i) = SubstituteArgs(options.GetValue(i), argv);
+  params.Pack();
+  Run(params, opts, E);
 }
 //.............................................................................
 //.............................................................................

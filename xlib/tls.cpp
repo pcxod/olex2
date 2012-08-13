@@ -275,7 +275,6 @@ ConstTypeList<evecd> TLS::calcUijEllipse (const TSAtomPList &atoms) {
   evecd_list Ellipsoids;
   mat3d RtoLaxesT = mat3d::Transpose(RtoLaxes);  //inverse
   for( size_t i=0; i < atoms.Count(); i++ )  {  
-    TSAtom* theAtom = atoms[i];
     mat3d UtlsLaxes = calcUijCart(RtoLaxes*atoms[i]->crd());
     mat3d UtlsCell = RtoLaxesT * UtlsLaxes * RtoLaxes;
     evecd vec(6);

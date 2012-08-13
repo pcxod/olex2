@@ -2721,7 +2721,6 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     for( size_t i=0; i < Atoms->Count(); i++ )  {
       TGPCollection &gpc = (*Atoms)[i]->GetPrimitives();
       if ((size_t)gpc.GetTag() == i)  {
-        bool set=false;
         for (size_t j=0; j < gpc.ObjectCount(); j++) {
           TXAtom *at = dynamic_cast<TXAtom*>(&gpc.GetObject(j));
           if (at == NULL) continue;

@@ -221,21 +221,21 @@ public:
     FloatT*** map;
     const SFList& F;
     const vec3s& dim;
-    size_t kLen, lLen;
-    compd  **sin_cosX, **sin_cosY, **sin_cosZ;
-    compd ** S, *T;
     const vec3i &mini, &maxi;
+    compd  **sin_cosX, **sin_cosY, **sin_cosZ;
+    size_t kLen, lLen;
+    compd ** S, *T;
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
     TCalcPattTask(FloatT*** _map, const vec3s& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
       compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
-      map(_map), dim(_dim), vol(_volume),
-      F(_F), mini(_min), maxi(_max),
+      map(_map), F(_F), dim(_dim),
+      mini(_min), maxi(_max),
       sin_cosX(_scX), sin_cosY(_scY), sin_cosZ(_scZ),
       kLen(_max[1]-_min[1]+1), lLen(_max[2]-_min[2]+1), minInd(_minInd),
-      sum(0), sq_sum(0), maxVal(-1000), minVal(1000)
+      sum(0), sq_sum(0), vol(_volume), maxVal(-1000), minVal(1000)
     {
       S = new compd*[kLen];
       for( size_t i=0; i < kLen; i++ )
