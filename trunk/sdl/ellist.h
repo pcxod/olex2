@@ -7,8 +7,9 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-/* primitive directional lists, optimised for sequential access, the right cleanup class must be
-chosen to avoid memory leaks! */
+/* primitive directional lists, optimised for sequential access, the right
+cleanup class must be chosen to avoid memory leaks!
+*/
 #ifndef __olx_sdl_linked_indexable_list_H
 #define __olx_sdl_linked_indexable_list_H
 #include "linked_list.h"
@@ -58,7 +59,7 @@ protected:
   bool HasNext() const {
     return (cur == NULL ? parent_t::first : cur->next) != NULL;
   }
-  T& Next() const {  
+  T& Next() const {
     if( cur != NULL )
       cur = cur->next;
     else

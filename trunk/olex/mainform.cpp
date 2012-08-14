@@ -91,6 +91,7 @@
 #include "lcells.h"
 #include "label_corrector.h"
 #include "dusero.h"
+#include "exparse\exptree.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -2886,6 +2887,21 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 void TMainForm::LoadSettings(const olxstr &FN)  {
   if( !TEFile::Exists(FN) ) return;
 
+  // compatibility check...
+#ifdef __WIN32__
+  {
+    TEFile f(FN, "rb");
+    olxcstr l = f.ReadLine(), ds("\\\\");
+    f.Close();
+    if (!l.Contains(ds)) { // no escapes, needs converting
+      TCStrList t;
+      t.LoadFromFile(FN);
+      for (size_t i=0; i < t.Count(); i++)
+        t[i].Replace('\\', ds);
+      t.SaveToFile(FN);
+    }
+  }
+#endif
   TDataFile DF;
   TStrList Log;
   olxstr Tmp;
@@ -2984,8 +3000,15 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
         MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1));
     }
   }
-
-  I = &DF.Root().FindRequiredItem("Defaults");
+  try {
+    I = &DF.Root().FindRequiredItem("Defaults");
+  }
+  catch(const TExceptionBase &e) {
+    FXApp->CreateObjects(false);
+    ShowAlert(e, "Failed to load settings, reseting to the defaults...");
+    processMacro("default");
+    return;
+  }
   DefStyle = TEFile::ExpandRelativePath(I->GetFieldValue("Style"));
     processFunction(DefStyle);
   DefSceneP = TEFile::ExpandRelativePath(I->GetFieldValue("Scene"));
