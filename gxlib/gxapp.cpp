@@ -570,7 +570,6 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   RestoreGroups();  // selection is created above
   FGlRender->SetSceneComplete(true);
   sw.stop();
-  sw.print(NewLogEntry(logInfo));
   OnObjectsCreate.Exit(dynamic_cast<TBasicApp*>(this), NULL);
 }
 //..............................................................................

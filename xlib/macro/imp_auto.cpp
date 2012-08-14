@@ -833,7 +833,6 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   }
   for( size_t i=0; i < atom_masks.Count(); i++ )
     delete atom_masks.GetValue(i);
-  sw.print(xapp.NewLogEntry(logInfo));
   if( found_cnt == 0 )
     TBasicApp::NewLogEntry() << "No problems were found";
   else  {

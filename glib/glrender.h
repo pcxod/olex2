@@ -42,7 +42,7 @@ class TGlGroup;
 class TGlRenderer : public IEObject  {
   // a list of all groups of primitives
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;
-  TSStrPObjList<olxcstr,TGPCollection*, false> FCollections;
+  TSStrPObjList<olxstr,TGPCollection*, false> FCollections;
   TPtrList<TGlMaterial> FTranslucentObjects,
     FIdentityObjects, FTranslucentIdentityObjects;
   typedef SortedPtrList<AGDrawObject, TPointerComparator> GObjectList;

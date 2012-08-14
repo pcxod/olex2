@@ -62,8 +62,6 @@ public:
       else  // argument by position
         argv[i] = args[i];
     }
-    //for (size_t i=0; i < args.Count(); i++)
-    //  olex_processor.processFunction(argv[i]);
     cmds.Assign(Commands);
     onAbort.Assign(OnAbort);
     onListen.Assign(OnListen);
