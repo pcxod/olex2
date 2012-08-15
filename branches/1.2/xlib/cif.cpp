@@ -191,13 +191,15 @@ olxstr TCif::GetParamAsString(const olxstr &Param) const {
   return rv;
 }
 //..............................................................................
-void TCif::SetParam(const olxstr& name, const ICifEntry& value)  {
+void TCif::SetParam(const ICifEntry& value)  {
   if( block_index == InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
   data_provider[block_index].Add(value.Replicate());
 }
 //..............................................................................
-void TCif::ReplaceParam(const olxstr& old_name, const olxstr& new_name, const ICifEntry& value)  {
+void TCif::ReplaceParam(const olxstr& old_name, const olxstr& new_name,
+  const ICifEntry& value)
+{
   if( block_index == InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
   data_provider[block_index].Remove(old_name);

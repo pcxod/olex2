@@ -7,8 +7,9 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-/* primitive directional lists, optimised for sequential access, the right cleanup class must be
-chosen to avoid memory leaks! */
+/* primitive directional lists, the right cleanup class must be chosen to
+avoid memory leaks!
+*/
 #ifndef __olx_sdl_linked_list_H
 #define __olx_sdl_linked_list_H
 #include "ebase.h"
@@ -16,31 +17,35 @@ BeginEsdlNamespace()
 
 template <class T> class NewCleanup {
 public:
-  static inline void DoCleanup(T* v)  {  delete v;  }
+  static void DoCleanup(T* v) { delete v; }
+};
+template <class T> class FreeCleanup {
+public:
+  static void DoCleanup(T* v) { free(v); }
 };
 template <class T> class DummyCleanup {
 public:
-  static inline void DoCleanup(T& v)  {}
+  static void DoCleanup(T& v) {}
 };
 
 // primitive linked list
-template <typename T, class cleanupClass=DummyCleanup<T> > class TLinkedList  {
+template <typename T, class cleanupClass=DummyCleanup<T> > class TLinkedList {
 protected:
   struct Entry  {
     T data;
     Entry* next;
-    Entry(T& d) : data(d), next(NULL)  {}
-    ~Entry()  {  cleanupClass::DoCleanup(data);  }
+    Entry(T& d) : data(d), next(NULL) {}
+    ~Entry()  { cleanupClass::DoCleanup(data); }
   };
   size_t count;
   Entry *first, *last;
 public:
   TLinkedList() : count(0), first(NULL), last(NULL) {}
-  virtual ~TLinkedList()  {  Clear();  }
-  void Clear()  {
-    if( first == NULL )  return;
+  virtual ~TLinkedList() { Clear(); }
+  void Clear() {
+    if (first == NULL ) return;
     Entry *cur = first->next;
-    while( cur != NULL )  {
+    while (cur != NULL) {
       last = cur->next;
       delete cur;
       cur = last;
@@ -49,10 +54,10 @@ public:
     first = last = NULL;
     count = 0;
   }
-  T& Add(T v)  {
-    if( first == NULL )
+  T& Add(T v) {
+    if (first == NULL)
       last = first = new Entry(v);
-    else  {
+    else {
       last->next = new Entry(v);
       last = last->next;
     }
@@ -67,19 +72,22 @@ public:
     bool HasNext() const {
       return (cur == NULL ? parent.first : cur->next) != NULL;
     }
-    size_t Count() const {  return parent.count;  }
+    bool IsEmpty() const { return cur == NULL; }
+    size_t Count() const { return parent.count; }
     T& Next() {
-      if( cur != NULL )
+      if (cur != NULL)
         cur = cur->next;
       else
         cur = parent.first;
-      if( cur == NULL )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "end of the list");
+      if (cur == NULL) {
+        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
+          "end of the list");
+      }
       return cur->data;
     }
   };
 
-  Iterator GetIterator() const {  return Iterator(*this);  }
+  Iterator GetIterator() const { return Iterator(*this); }
 public:
   typedef T list_item_type;
 };

@@ -94,9 +94,9 @@ public:
       const size_t t_cnt = to.Count();
       for( size_t j=0; j < t_cnt; j++ )  {
         IndexTriangle& t = to[j];
-        vo.AddNew((vo[t.vertices[0]]+vo[t.vertices[1]])/2);
-        vo.AddNew((vo[t.vertices[0]]+vo[t.vertices[2]])/2);
-        vo.AddNew((vo[t.vertices[1]]+vo[t.vertices[2]])/2);
+        vo.AddNew(vo[t.vertices[0]]+vo[t.vertices[1]]).Normalise();
+        vo.AddNew(vo[t.vertices[0]]+vo[t.vertices[2]]).Normalise();
+        vo.AddNew(vo[t.vertices[1]]+vo[t.vertices[2]]).Normalise();
         // new triangle, (12, 23, 13)
         to.AddNew(vo.Count()-3, vo.Count()-1, vo.Count()-2);
         // new tringles partially based on old vertices (new, 23, 12)
@@ -110,18 +110,15 @@ public:
     }
     if( _normals != NULL )  {
       TArrayList<TVector3<float_type> >& normals = *_normals;
-      for( size_t i=0; i < vo.Count(); i++ )  // normalise the vertices
-        vo[i].Normalise();
-      // initialise normals
-      normals.SetCount(vo.Count());  
-      for( size_t i=0; i < vo.Count(); i++ )  {
+      normals.SetCount(vo.Count());
+      for( size_t i=0; i < vo.Count(); i++ )  { // normalise the vertices
         normals[i] = vo[i];
         vo[i] *= rad;
       }
     }
     else  {
       for( size_t i=0; i < vo.Count(); i++ )
-        vo[i].NormaliseTo(rad);
+        vo[i] *= rad;
     }
   }
 };

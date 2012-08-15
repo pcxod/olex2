@@ -16,6 +16,7 @@
 #include "sfutil.h"
 #include "arrays.h"
 #include "olxmps.h"
+#include "estopwatch.h"
 BeginXlibNamespace()
 
 class BVFourier {
@@ -46,8 +47,10 @@ public:
     const TArrayList<SFUtil::StructureFactor>& F,
     FloatT*** map, const vec3s& dim, double vol)
   {
+    TStopWatch st(olxstr(__FUNC__) << '<' << typeid(Task).name() << '>');
+    st.start("Initialising");
     vec3i mini, maxi;
-    SFUtil::FindMinMax(F, mini, maxi); 
+    SFUtil::FindMinMax(F, mini, maxi);
     const double T_PI = 2*M_PI;
     // precalculations
     const int minInd = olx_min(mini[2], olx_min(mini[0], mini[1]));
@@ -105,6 +108,7 @@ public:
     */
     MapInfo mi = {0, 1000, -1000};
     double sum = 0, sq_sum = 0;
+    st.start("Calculating");
     Task xtask(map, dim, vol, F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd);
     TListIteratorManager<Task> tasks(xtask, dim[0], tLinearTask, 50);
     for( size_t i=0; i < tasks.Count(); i++ )  {
@@ -191,10 +195,11 @@ public:
         for( size_t iz=0; iz < dim[2]; iz++ )  {
           compd R;
           for( int i=0; i < spt2; i+=4 )  {
-            R += T[i+0]*sin_cosZ[iz][i+d2+0];
-            R += T[i+1]*sin_cosZ[iz][i+d2+1];
-            R += T[i+2]*sin_cosZ[iz][i+d2+2];
-            R += T[i+3]*sin_cosZ[iz][i+d2+3];
+            compd R1 = T[i+0]*sin_cosZ[iz][i+d2+0];
+            compd R2 = T[i+1]*sin_cosZ[iz][i+d2+1];
+            compd R3 = T[i+2]*sin_cosZ[iz][i+d2+2];
+            compd R4 = T[i+3]*sin_cosZ[iz][i+d2+3];
+            R += R1 + R2 + R3 + R4;
           }
           for( int i=spt2; i <= sp2; i++ )
             R += T[i]*sin_cosZ[iz][i+d2];
@@ -221,21 +226,21 @@ public:
     FloatT*** map;
     const SFList& F;
     const vec3s& dim;
-    size_t kLen, lLen;
-    compd  **sin_cosX, **sin_cosY, **sin_cosZ;
-    compd ** S, *T;
     const vec3i &mini, &maxi;
+    compd  **sin_cosX, **sin_cosY, **sin_cosZ;
+    size_t kLen, lLen;
+    compd ** S, *T;
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
     TCalcPattTask(FloatT*** _map, const vec3s& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
       compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
-      map(_map), dim(_dim), vol(_volume),
-      F(_F), mini(_min), maxi(_max),
+      map(_map), F(_F), dim(_dim),
+      mini(_min), maxi(_max),
       sin_cosX(_scX), sin_cosY(_scY), sin_cosZ(_scZ),
       kLen(_max[1]-_min[1]+1), lLen(_max[2]-_min[2]+1), minInd(_minInd),
-      sum(0), sq_sum(0), maxVal(-1000), minVal(1000)
+      sum(0), sq_sum(0), vol(_volume), maxVal(-1000), minVal(1000)
     {
       S = new compd*[kLen];
       for( size_t i=0; i < kLen; i++ )

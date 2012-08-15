@@ -69,15 +69,17 @@ public:
     return (block_index == InvalidIndex) ? false
       : data_provider[block_index].param_map.HasKey(name);
   }
-  //Adds/Sets given parameter a value
-  void SetParam(const olxstr& name, const cif_dp::ICifEntry& value);
+  /*Adds/Sets given parameter a value, the value is replicated, so can be
+  created on stack
+  */
+  void SetParam(const cif_dp::ICifEntry& value);
   void SetParam(const olxstr& name, const olxstr& value, bool quoted)  {
     if( quoted ) {
-      SetParam(name, cif_dp::cetNamedString(name,
+      SetParam(cif_dp::cetNamedString(name,
         olxstr('\'') << value << '\''));
     }
     else
-      SetParam(name, cif_dp::cetNamedString(name, value));
+      SetParam(cif_dp::cetNamedString(name, value));
   }
   void ReplaceParam(const olxstr& olx_name, const olxstr& new_name,
     const cif_dp::ICifEntry& value);

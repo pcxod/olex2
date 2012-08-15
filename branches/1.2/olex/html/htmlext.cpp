@@ -530,7 +530,7 @@ bool THtml::ItemState(const olxstr &ItemName, short State)  {
 }
 //.............................................................................
 bool THtml::UpdatePage()  {
-  if( IsPageLocked() )  {     
+  if( IsPageLocked() )  {
     PageLoadRequested = true;
     PageRequested.SetLength(0);
     return true;

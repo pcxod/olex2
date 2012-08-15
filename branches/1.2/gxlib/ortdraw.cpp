@@ -22,7 +22,9 @@
 #include "arrays.h"
 
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
-a_ort_object(parent), atom(a), p_elpm(NULL), p_ielpm(NULL), elpm(NULL),
+  a_ort_object(parent),
+  atom(a),
+  p_elpm(NULL), p_ielpm(NULL), elpm(NULL),
 draw_style(0)
 {
   const TSAtom& sa = atom;
@@ -121,7 +123,9 @@ void ort_atom::render_standalone(PSWriter& pw) const {
 }
 
 bool ort_atom::IsSpherical() const {
-  bool res = !(p_elpm != NULL && (atom.DrawStyle() == adsEllipsoid || atom.DrawStyle() == adsOrtep));
+  bool res = !(p_elpm != NULL &&
+    (atom.DrawStyle() == adsEllipsoid ||
+    atom.DrawStyle() == adsOrtep));
   if( !res && atom.GetEllipsoid()->IsNPD() )
     return true;
   return res;
@@ -183,10 +187,11 @@ void ort_atom::render_rims(PSWriter& pw) const {
   }
 }
 
-ort_bond::ort_bond(const OrtDraw& parent, const TXBond& _bond, const ort_atom& a1, const ort_atom& a2) :
-  a_ort_object(parent),  
+ort_bond::ort_bond(const OrtDraw& parent, const TXBond& _bond,
+  const ort_atom& a1, const ort_atom& a2)
+  : a_ort_object(parent),
   bond(_bond),
-  atom_a(a1.get_z() < a2.get_z() ? a1 : a2), 
+  atom_a(a1.get_z() < a2.get_z() ? a1 : a2),
   atom_b(a1.get_z() < a2.get_z() ? a2 : a1)
 {
   draw_style = 0;
@@ -265,8 +270,9 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
     mat3f elm = *atom_a.elpm;
     mat3f ielm = mat3f(elm).Normalise().Inverse();
-    /* etm projects to ellipsoid and un-projects back to the cartesian frame with the ellipsoid
-    scale accumulated */
+    /* etm projects to ellipsoid and un-projects back to the cartesian frame
+    with the ellipsoid scale accumulated
+    */
     mat3f erm, etm = ielm*elm;// ietm=etm.Inverse();
     // below is same as: vec3f pv = (touch_point*ietm).Normalise();
     const vec3f pv = mat3f::CramerSolve(etm, touch_point).Normalise();
@@ -286,14 +292,17 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
     for( uint16_t j=0; j < parent.BondDiv; j++ )  {
       parent.BondProjF[j] = (etm*(parent.BondCrd[j]*rot_mat)*parent.ProjMatr).
         NormaliseTo(_brad) + off;
-      parent.BondProjT[j] = (parent.BondCrd[j]*proj_mat).NormaliseTo(brad*2*scalex) + dir_vec*b_len;
+      parent.BondProjT[j] = (parent.BondCrd[j]*proj_mat).
+        NormaliseTo(brad*2*scalex) + dir_vec*b_len;
     }
   }
   else  {
-    const float off_len = !atom_a.IsSolid() ? 0 : 
-      (atom_a.draw_rad > _brad ? sqrt(olx_sqr(atom_a.draw_rad)-olx_sqr(_brad)) : atom_a.draw_rad);
+    const float off_len = !atom_a.IsSolid() ? 0 :
+      (atom_a.draw_rad > _brad ?
+        sqrt(olx_sqr(atom_a.draw_rad)-olx_sqr(_brad)) : atom_a.draw_rad);
     for( uint16_t j=0; j < parent.BondDiv; j++ )  {
-      parent.BondProjT[j] = parent.BondProjF[j] = (parent.BondCrd[j]*proj_mat).NormaliseTo(_brad); 
+      parent.BondProjT[j] = parent.BondProjF[j] =
+        (parent.BondCrd[j]*proj_mat).NormaliseTo(_brad);
       parent.BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*b_len;
       parent.BondProjF[j] += dir_vec*off_len;
     }
@@ -446,7 +455,8 @@ void ort_circle::update_size(evecf &sz) const {
 void ort_cone::render(PSWriter& pw) const {
   vec3f n = (top-bottom).Normalise();
   mat3f rm, basis = TEBasis::CalcBasis<vec3f,mat3f>(n);
-  olx_create_rotation_matrix_<float, mat3f, vec3f>(rm, n, (float)cos(M_PI*2/divs));
+  olx_create_rotation_matrix_<float, mat3f, vec3f>(rm, n,
+    (float)cos(M_PI*2/divs));
   TArrayList<vec3f> t_crd(divs), b_crd(divs);
   vec3f ps = basis[1];
   for( uint16_t i=0; i < divs; i++ )  {
@@ -460,17 +470,24 @@ void ort_cone::render(PSWriter& pw) const {
 }
 
 void ort_cone::update_size(evecf &sz) const {
-  vec3f _n = (top-bottom),
-    tr = vec3f(_n[0], -_n[1], 0).NormaliseTo(top_r),
-    tb = vec3f(_n[0], -_n[1], 0).NormaliseTo(bottom_r);
-  a_ort_object::update_min_max(sz, top+tr);
-  a_ort_object::update_min_max(sz, top-tr);
-  a_ort_object::update_min_max(sz, bottom+tb);
-  a_ort_object::update_min_max(sz, bottom-tb);
+  try {
+    vec3f _n = (top-bottom),
+      tr = vec3f(_n[0], -_n[1], 0).NormaliseTo(top_r),
+      tb = vec3f(_n[0], -_n[1], 0).NormaliseTo(bottom_r);
+    a_ort_object::update_min_max(sz, top+tr);
+    a_ort_object::update_min_max(sz, top-tr);
+    a_ort_object::update_min_max(sz, bottom+tb);
+    a_ort_object::update_min_max(sz, bottom-tb);
+  }
+  catch(const TDivException &) {
+    return;
+  }
 }
 
 
-void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm, const vec3f& norm_vec) const {
+void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm,
+  const vec3f& norm_vec) const
+{
   for( uint16_t j=0; j < ElpDiv; j++ )
     Arc[j] = ElpCrd[j]*pelpm;
   size_t pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
@@ -493,13 +510,19 @@ void OrtDraw::RenderQuads(PSWriter& pw, const mat3f& pelpm) const {
   pw.drawLine(NullVec, pelpm[2]);
   for( uint16_t j=0; j < PieDiv; j++ )
     pw.drawLine(PieCrd[j]*pelpm, pelpm[0]*((float)(PieDiv-j)/PieDiv));
-  for( uint16_t j=0; j < PieDiv; j++ )
-    pw.drawLine(vec3f(0, PieCrd[j][0], PieCrd[j][1])*pelpm, pelpm[1]*((float)(PieDiv-j)/PieDiv));
-  for( uint16_t j=0; j < PieDiv; j++ )
-    pw.drawLine(vec3f(PieCrd[j][1], 0, PieCrd[j][0])*pelpm, pelpm[2]*((float)(PieDiv-j)/PieDiv));
+  for( uint16_t j=0; j < PieDiv; j++ ) {
+    pw.drawLine(vec3f(0, PieCrd[j][0], PieCrd[j][1])*pelpm,
+      pelpm[1]*((float)(PieDiv-j)/PieDiv));
+  }
+  for( uint16_t j=0; j < PieDiv; j++ ) {
+    pw.drawLine(vec3f(PieCrd[j][1], 0, PieCrd[j][0])*pelpm,
+      pelpm[2]*((float)(PieDiv-j)/PieDiv));
+  }
 }
 
-size_t OrtDraw::PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal) const {
+size_t OrtDraw::PrepareArc(const TArrayList<vec3f>& in,
+  TPtrList<const vec3f>& out, const vec3f& normal) const
+{
   size_t start = InvalidIndex, cnt = 0;
   for( size_t i=0; i < in.Count(); i++ )  {
     const size_t next_i = ((i+1) >= in.Count() ? i-in.Count() : i) + 1;
@@ -556,13 +579,15 @@ void OrtDraw::Init(PSWriter& pw)  {
   olx_gl::get(GL_VIEWPORT, vp);
   TGXApp& app = TGXApp::GetInstance();
   const TEBasis& basis = app.GetRender().GetBasis();
-  LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);
+  LinearScale = olx_min((float)pw.GetWidth()/vp[2],
+    (double)pw.GetHeight()/vp[3]);
   
   {
     olxcstr fnt("/Verdana findfont ");
     AGlScene& sc = app.GetRender().GetScene();
     fnt << olx_round(
-      sc.GetFont(sc.FindFontIndexForType<TXAtom>(), true).GetPointSize()/sqrt(LinearScale))
+      sc.GetFont(sc.FindFontIndexForType<TXAtom>(), true).
+        GetPointSize()/sqrt(LinearScale))
       << " scalefont setfont";
     pw.custom(fnt.c_str());
   }
@@ -580,7 +605,8 @@ void OrtDraw::Init(PSWriter& pw)  {
 /*
 Grid interpolation stuff...
 http://xtal.sourceforge.net/man/slant-desc.html
-the cubic interpolation does a good job on coarse grids (compared with direct calculations)
+the cubic interpolation does a good job on coarse grids (compared with direct
+calculations)
 for linear:
     float _p = p[0]-fp[0];
     float _q = p[1]-fp[1];
@@ -608,7 +634,8 @@ for linear:
 Direct calculation:
     TRefList refs;
     TArrayList<compd> F;
-    SFUtil::GetSF(refs, F, SFUtil::mapTypeCalc, SFUtil::sfOriginOlex2, SFUtil::scaleSimple);
+    SFUtil::GetSF(refs, F, SFUtil::mapTypeCalc, SFUtil::sfOriginOlex2,
+      SFUtil::scaleSimple);
     TSpaceGroup* sg = NULL;
     try  { sg = &app.XFile().GetLastLoaderSG();  }
     catch(...)  {  return;  }
@@ -646,7 +673,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
   objects.SetCapacity(ai.count+bi.count);
   while( ai.HasNext() )  {
     TXAtom& xa = ai.Next();
-    if( xa.IsDeleted() ) // have to keep hidden atoms, as those might be used by bonds!
+    // have to keep hidden atoms, as those might be used by bonds!
+    if( xa.IsDeleted() )
       continue;
     xa.SetTag(objects.Count());
     ort_atom *a = new ort_atom(*this, xa);
@@ -738,11 +766,19 @@ void OrtDraw::Render(const olxstr& fileName)  {
       b->draw_style |= ortep_color_bond;
     objects.Add(b);
   }
+
+//  for (size_t i=0; i < app.LineCount(); i++) {
+//    TXLine &l = app.GetLine(i);
+//    ort_line *ol = new ort_line(*this,
+//      ProjectPoint(l.Base()), ProjectPoint(l.Edge()), 255);
+//    objects.Add(ol);
+//  }
   const TXGrid& grid = app.XGrid();
   if( !grid.IsEmpty() && (grid.GetRenderMode()&planeRenderModeContour) != 0 )  {
     Contour<float> cm;
     ContourDrawer drawer(*this, objects, 0);
-    Contour<float>::MemberFeedback<OrtDraw::ContourDrawer> mf(drawer, &OrtDraw::ContourDrawer::draw);
+    Contour<float>::MemberFeedback<OrtDraw::ContourDrawer>
+      mf(drawer, &OrtDraw::ContourDrawer::draw);
     const size_t MaxDim = grid.GetPlaneSize();
     const float hh = (float)MaxDim/2;
     const float Size = grid.GetSize();
@@ -760,7 +796,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     const mat3f bm(app.GetRender().GetBasis().GetMatrix());
     const mat3f c2c(app.XFile().GetAsymmUnit().GetCartesianToCell());
     const vec3f center(app.GetRender().GetBasis().GetCenter());
-    MapUtil::MapGetter<float, 2> map_getter(grid.Data()->Data, grid.Data()->GetSize());
+    MapUtil::MapGetter<float, 2>
+      map_getter(grid.Data()->Data, grid.Data()->GetSize());
     for( size_t i=0; i < MaxDim; i++ )  {
       for( size_t j=0; j < MaxDim; j++ )  {
         vec3f p(((float)i-hh)/Size, ((float)j-hh)/Size,  Depth);
@@ -776,7 +813,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     z[0] = minZ;
     for( size_t i=1; i < contour_cnt; i++ )
       z[i] = z[i-1]+contour_step;
-    cm.DoContour(data, 0, (int)MaxDim-1, 0, (int)MaxDim-1, x, y, contour_cnt, z, mf);
+    cm.DoContour(data, 0, (int)MaxDim-1, 0, (int)MaxDim-1, x, y,
+      contour_cnt, z, mf);
     for( size_t i=0; i < MaxDim; i++ )
       delete [] data[i];
   }
@@ -834,7 +872,8 @@ void OrtDraw::Render(const olxstr& fileName)  {
     for( size_t i=0; i < Labels.Count(); i++ )  {
       const TGlFont& glf = Labels[i]->GetFont();
       uint32_t color = 0;
-      TGlMaterial* glm = Labels[i]->GetPrimitives().GetStyle().FindMaterial("Text");
+      TGlMaterial* glm =
+        Labels[i]->GetPrimitives().GetStyle().FindMaterial("Text");
       if( glm != NULL )
         color = glm->AmbientF.GetRGB();
       pw.color(color);
@@ -884,7 +923,9 @@ void OrtDraw::Render(const olxstr& fileName)  {
   pw.writeBoundingBox(boundary);
 }
 
-void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2, float z)  {
+void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2,
+  float z)
+{
   const float Size = parent.app.XGrid().GetSize();
   const float Depth = parent.app.XGrid().GetDepth();
   vec3d p1(x1/Size, y1/Size, Depth), p2(x2/Size, y2/Size, Depth);
@@ -892,13 +933,15 @@ void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2, float 
   p2 = parent.basis.GetMatrix()*p2 - parent.basis.GetCenter();
   if( z < 0 )
     p2 = (p1+p2)*0.5;
-  objects.Add(new ort_line(parent, parent.ProjectPoint(p1), parent.ProjectPoint(p2), color));
+  objects.Add(new ort_line(parent, parent.ProjectPoint(p1),
+    parent.ProjectPoint(p2), color));
 }
 
 float OrtDraw::GetBondRad(const ort_bond& b, uint32_t mask) const {
-  float r = (b.bond.A().GetType() == iHydrogenZ || b.bond.B().GetType() < iHydrogenZ) ? 
-    BondRad*HBondScale : BondRad;
-  if( (mask&((1<<13)|(1<<12)|(1<<11)|(1<<7)|(1<<6))) != 0 )  //even thinner for line or "balls" bond
+  float r = (b.bond.A().GetType() == iHydrogenZ ||
+             b.bond.B().GetType() < iHydrogenZ) ? BondRad*HBondScale : BondRad;
+  //even thinner for line or "balls" bond
+  if( (mask&((1<<13)|(1<<12)|(1<<11)|(1<<7)|(1<<6))) != 0 )
     r /= 4;
   return r;
 }

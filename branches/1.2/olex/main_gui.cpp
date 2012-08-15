@@ -274,8 +274,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( LabelToEdit != NULL )  {
       olxstr Tmp = "getuserinput(1, \'Please, enter new label\', \'";
       Tmp << LabelToEdit->GetLabel() << "\')";
-      processFunction(Tmp);
-      if( !Tmp.IsEmpty() ) {
+      if ( processFunction(Tmp.Replace('$', "\\$")) && !Tmp.IsEmpty()) {
         LabelToEdit->SetLabel(Tmp);
         FXApp->Draw();
       }

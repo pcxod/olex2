@@ -10,6 +10,7 @@
 #include "vcov.h"
 #include "xline.h"
 #include "olxstate.h"
+#include "estopwatch.h"
 #ifdef __WXWIDGETS__
 #include "wx/wx.h"
 #endif
@@ -347,6 +348,7 @@ void GXLibMacros::macQual(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
+  TStopWatch st(__FUNC__);
   TGXApp &app = TGXApp::GetInstance();
   static const short // scale type
     stSimple     = 0x0001,
@@ -367,7 +369,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     maskInc = strMaskInc.ToDouble();
   TRefList refs;
   TArrayList<compd> F;
-  olxstr err = SFUtil::GetSF(refs, F, mapType, 
+  st.start("Obtaining structure factors");
+  olxstr err = SFUtil::GetSF(refs, F, mapType,
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2,
     (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ?
       SFUtil::scaleRegression : SFUtil::scaleSimple);
@@ -378,14 +381,17 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   TUnitCell& uc = app.XFile().GetUnitCell();
   TArrayList<SFUtil::StructureFactor> P1SF;
+  st.start("Expanding SF to P1");
   SFUtil::ExpandToP1(refs, F, uc.GetMatrixList(), P1SF);
   const double vol = app.XFile().GetLattice().GetUnitCell().CalcVolume();
   BVFourier::MapInfo mi;
 // init map
   const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
+  st.start("Calcuating ED map");
   mi = BVFourier::CalcEDM(P1SF, map.Data, dim, vol);
 ///////////////////////////////////////////////////////////////////////////////
+  st.start("Map operations");
   app.XGrid().InitGrid(dim);
 
   app.XGrid().SetMaxHole(mi.sigma*1.4);
@@ -707,8 +713,6 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroE
   const olxstr str_lt = Options.FindValue("type");
   olxstr str_symm_tag = Options.FindValue("symm");
   // enforce the default
-  if( Options.Contains("symm") && str_symm_tag.IsEmpty() )
-    str_symm_tag = '$';
   if( str_lt.Equalsi("brackets") )
     lt = 1;
   else if( str_lt.Equalsi("subscript") )

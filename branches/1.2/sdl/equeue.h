@@ -73,7 +73,7 @@ public:
     return first->data;
   }
   T Pop()  {
-    if( first != NULL )  { 
+    if( first != NULL )  {
       item* i = first->next;
       T rv = first->data;
       delete first;

@@ -1091,7 +1091,8 @@ void TMainForm::macStop(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Cmds[0] == "listen" )  {
     if( FMode & mListen )  {
       FMode ^= mListen;
-      TBasicApp::NewLogEntry(logInfo) << "Listen mode is off";
+      TBasicApp::NewLogEntry() << "Listen mode is off";
+      FListenFile.SetLength(0);
     }
   }
   else if( Cmds[0] == "logging" )  {
@@ -1651,7 +1652,10 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 #elif defined(__WXWIDGETS__)
   TWxProcess* Process = new TWxProcess(Tmp, flags);
 #endif
-
+  olxstr t_cmd = Options.FindValue('t');
+  if (!t_cmd.IsEmpty()) {
+    Process->SetOnTerminateCmds(TStrList(t_cmd, ">>"));
+  }
   if( (Cout && Asyn) || Asyn )  {  // the only combination
     if( !Cout )  {
       _ProcessManager->OnCreate(*Process);
@@ -3663,9 +3667,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         olxstr hklFileName = TEFile::ChangeFileExt(file_n.file_name, "hkl");
         olxstr insFileName = TEFile::ChangeFileExt(file_n.file_name, "ins");
         TMacroError er;
-        if( !TEFile::Exists(hklFileName)  )  {
+        if (!TEFile::Exists(hklFileName) && cif.GetAsymmUnit().AtomCount() == 0) {
           size_t block_index = cif.GetBlockIndex();
-          if( cif.FindLoopGlobal("_refln", true) != NULL )  {
+          if (cif.FindLoopGlobal("_refln", true) != NULL ||
+              cif.FindEntry("_shelx_hkl_file") != NULL)
+          {
             er.SetRetVal(&cif);
             Macros.ProcessMacro(olxstr("export ").quote() << hklFileName, er);
             if( !er.IsProcessingError() )  {
@@ -3673,7 +3679,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
                 TIns ins;
                 ins.Adopt(FXApp->XFile());
                 ins.GetRM().SetHKLSource(hklFileName);
-                ins.SaveToFile( insFileName );
+                ins.SaveToFile(insFileName);
                 Macros.ProcessMacro(olxstr("@reap \'") << insFileName << '\'', er);
                 if( !er.IsProcessingError() )
                   Macros.ProcessMacro("reset", er);
@@ -4424,7 +4430,13 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options,
     C = &FXApp->XFile().GetLastLoader<TCif>();
   cif_dp::cetTable* hklLoop = C->FindLoopGlobal("_refln", true);
   if( hklLoop == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
+    cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
+      C->FindEntry("_shelx_hkl_file"));
+    if (ci == NULL) {
+      E.ProcessingError(__OlxSrcInfo, "no hkl loop or data found");
+      return;
+    }
+    TCStrList(ci->lines).SaveToFile(exName);
     return;
   }
   const size_t hInd = hklLoop->ColIndex("_refln_index_h");
@@ -6938,6 +6950,11 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     delete iv;
   iv = _exp.build("a=a[4][1][1].toUpper()");
   
+  iv = _exp.build("cos pi*30/180");
+  if( !iv->is_final() )  {
+    IEvaluable* iv1 = iv->_evaluate();
+    delete iv1;
+  }
   iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   if( !iv->is_final() && false )  {
     IEvaluable* iv1 = iv->_evaluate();

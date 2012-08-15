@@ -220,7 +220,6 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       }
     }
   }
-  sw.print(xapp.NewLogEntry(logInfo));
   return EmptyString();
 }
 //...........................................................................................
