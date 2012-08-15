@@ -80,7 +80,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
       if( bc == 0 && funcStarted )  {
         olxstr spFunction =
           Cmd.SubString(specialFunctionIndex+1, i-specialFunctionIndex);
-        if( ProcessFunction(spFunction, E, false) )  {
+        if( ProcessFunction(spFunction, E, false, argv) )  {
           Cmd.Delete(specialFunctionIndex, i - specialFunctionIndex + 1);
           Cmd.Insert(spFunction, specialFunctionIndex);
         }
@@ -283,7 +283,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
   TEMacro* macro = FindMacro(Command);
   if( macro == NULL )  {  // macro does not exist
     if( Command.FirstIndexOf('(') != InvalidIndex )  {
-      if( !ProcessFunction(Command, Error, false) )
+      if( !ProcessFunction(Command, Error, false, argv) )
         return;
       else
         Error.GetStack().Pop();
