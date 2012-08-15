@@ -68,7 +68,8 @@ struct ort_bond : public a_ort_object  {
   const TXBond &bond;
   const ort_atom &atom_a, &atom_b;
   uint16_t draw_style;
-  ort_bond(const OrtDraw& parent, const TXBond& _bond, const ort_atom& a1, const ort_atom& a2);
+  ort_bond(const OrtDraw& parent, const TXBond& _bond,
+    const ort_atom& a1, const ort_atom& a2);
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return (atom_a.crd[2]+atom_b.crd[2])/2;  }
 protected:
@@ -79,8 +80,10 @@ protected:
 struct ort_line : public a_ort_object  {
   vec3f from, to;
   uint32_t color;
-  ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f _to, uint32_t _color) :
-    a_ort_object(parent), from(_from), to(_to), color(_color)  {}
+  ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f _to,
+    uint32_t _color)
+    :  a_ort_object(parent), from(_from), to(_to), color(_color)
+  {}
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return (from[2]+to[2])/2;  }
   void update_size(evecf &sz) const {
@@ -199,7 +202,7 @@ protected:
     void draw(float x1, float y1, float x2, float y2, float z);
   };
 public:
-  OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRender().GetBasis()) {  
+  OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRender().GetBasis()) {
     ElpDiv = 36;
     BondDiv = 12;
     PieDiv = 4;
