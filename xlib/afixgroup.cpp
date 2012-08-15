@@ -143,6 +143,7 @@ bool TAfixGroup::IsEmpty() const {
   }
   if( IsFixedGroup() && dep_cnt != Dependent.Count() )
     return true;
+  if (Afix == 1 || Afix == 2) return false;
   return dep_cnt == 0;
 }
 //..............................................................................

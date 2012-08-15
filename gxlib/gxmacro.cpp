@@ -713,8 +713,6 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroE
   const olxstr str_lt = Options.FindValue("type");
   olxstr str_symm_tag = Options.FindValue("symm");
   // enforce the default
-  if( Options.Contains("symm") && str_symm_tag.IsEmpty() )
-    str_symm_tag = '$';
   if( str_lt.Equalsi("brackets") )
     lt = 1;
   else if( str_lt.Equalsi("subscript") )
