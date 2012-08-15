@@ -51,7 +51,7 @@ void TEMacroLib::Init()  {
 bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
   const TStrList &argv)
 {
-  if( Cmd.IndexOf('(') == InvalidIndex )  return true;
+  if (Cmd.IndexOf('(') == InvalidIndex) return true;
   E.GetStack().Push(Cmd);
   size_t specialFunctionIndex = Cmd.IndexOf('$');
   while( specialFunctionIndex != InvalidIndex &&
@@ -366,7 +366,12 @@ void TEMacroLib::macIF(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   olxstr Condition = Cmds[0];
-  if( !ProcessFunction(Condition, E, false, argv) )  {
+  if (Condition.StartsFrom('%') && Condition.SubStringFrom(1).IsInt()) {
+    size_t ai = Condition.SubStringFrom(1).ToSizeT()-1;
+    if (ai < argv.Count())
+      Condition = argv[ai];
+  }
+  else if( !ProcessFunction(Condition, E, false, argv) )  {
     E.ProcessingError(__OlxSrcInfo, "error processing condition");
     return;
   }

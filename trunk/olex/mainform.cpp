@@ -3737,9 +3737,9 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
     }
   }
   else if( EsdlInstanceOf(*G, TXGlLabel) )  {
-    olxstr label = "getuserinput(1, \'Atom label\', \'";
+    olxstr label = "getuserinput(1, \'Please, enter new label\', \'";
     label << ((TXGlLabel*)G)->GetLabel() << "\')";
-    if( processFunction(label) && !label.IsEmpty() )
+    if( processFunction(label.Replace('$', "\\$")) && !label.IsEmpty() )
       ((TXGlLabel*)G)->SetLabel(label);
 
   }
