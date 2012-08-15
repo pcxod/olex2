@@ -899,9 +899,9 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     tab[7][0] << "Max d";
       tab[7][1] << olxstr::FormatFloat(3, hs.MaxD);
     tab[8][0] << "Limiting d min (SHEL)";
-      tab[8][1] << olxstr::FormatFloat(3, hs.LimDmin);
+      tab[8][1] << (hs.LimDmin == 0 ? NAString : olxstr::FormatFloat(3, hs.LimDmin));
     tab[9][0] << "Limiting d max (SHEL/OMIT_2t)";
-      tab[9][1] << hs.LimDmax;
+      tab[9][1] << (hs.LimDmax == 100 ? NAString : olxstr::FormatFloat(3, hs.LimDmax));
     tab[10][0] << "Filtered off reflections (SHEL/OMIT_s/OMIT_2t)";
       tab[10][1] << hs.FilteredOff;
     tab[11][0] << "Reflections omitted by user (OMIT_hkl)";
@@ -911,9 +911,9 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     tab[13][0] << "Intensity transformed for (OMIT_s)";
       tab[13][1] << hs.IntensityTransformed << " reflections";
     tab[14][0] << "Rint, %";
-      tab[14][1] << olxstr::FormatFloat(2, hs.Rint*100);
+      tab[14][1] << (hs.Rint < 0 ? NAString : olxstr::FormatFloat(2, hs.Rint*100));
     tab[15][0] << "Rsigma, %";
-      tab[15][1] << olxstr::FormatFloat(2, hs.Rsigma*100);
+      tab[15][1] << (hs.Rsigma < 0 ? NAString : olxstr::FormatFloat(2, hs.Rsigma*100));
     tab[16][0] << "Completeness, [d_min-d_max] %";
       tab[16][1] << olxstr::FormatFloat(2, hs.Completeness*100);
     tab[17][0] << "Mean I/sig";
@@ -3192,7 +3192,9 @@ bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
   return false;
 }
 //.............................................................................
-void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   TCif *Cif, Cif2;
   cif_dp::TCifDP src;
@@ -3205,7 +3207,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     "_diffrn_reflns_av_sigmaI/netI", "_diffrn_reflns_av_unetI/netI"
   };
   TTypeList<AnAssociation2<olxstr,olxstr> > Translations;
-  olxstr CifCustomisationFN(xapp.GetCifTemplatesDir() + "customisation.xlt");
+  olxstr CifCustomisationFN(xapp.GetConfigDir() + "cif_customisation.xlt");
+  if (!TEFile::Exists(CifCustomisationFN)) {
+    olxstr src(xapp.GetCifTemplatesDir() + "customisation.xlt");
+    if (TEFile::Exists(src))
+      TEFile::Copy(src, CifCustomisationFN);
+  }
   if( TEFile::Exists(CifCustomisationFN) )  {
     try  {
       TDataFile df;
@@ -3385,7 +3392,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       delete is;
       src.LoadFromStrings(sl);
     }
-    catch( ... )  {    }  // most like the cif does not have cell, so pass it
+    catch( ... )  {}  // most like the cif does not have cell, so pass it
     if( src.Count() == 0 )  continue;
     // normalise
     for( size_t i=0; i < Translations.Count(); i++ )
@@ -3405,7 +3412,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
         }
       }
       if( !skip )
-        Cif->SetParam(src[0].param_map.GetKey(j), e);
+        Cif->SetParam(e);
     }
   }
   // generate moiety string if does not exist
@@ -3444,10 +3451,34 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     if( !flack_used )
       Cif->SetParam("_chemical_absolute_configuration", "unk", false);
   }
+  // emmbedding the RES file into the CIF
+  if (Cif->FindEntry("_shelx_res_file") == NULL) {
+    olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
+    if (TEFile::Exists(res_fn)) {
+      cetNamedStringList res("_shelx_res_file");
+      TEFile res_f(res_fn, "rb");
+      res.lines.LoadFromTextStream(res_f);
+      Cif->SetParam(res);
+      res_f.SetPosition(0);
+      Cif->SetParam("_shelx_res_file_MD5", MD5::Digest(res_f), false);
+    }
+  }
+  // checking some mising bits
+  if (Cif->FindEntry("_diffrn_reflns_limit_h_max") == NULL) {
+    RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
+    Cif->SetParam("_diffrn_reflns_limit_h_min", hs.MinIndexes[0], false);
+    Cif->SetParam("_diffrn_reflns_limit_k_min", hs.MinIndexes[1], false);
+    Cif->SetParam("_diffrn_reflns_limit_l_min", hs.MinIndexes[2], false);
+    Cif->SetParam("_diffrn_reflns_limit_h_max", hs.MaxIndexes[0], false);
+    Cif->SetParam("_diffrn_reflns_limit_k_max", hs.MaxIndexes[1], false);
+    Cif->SetParam("_diffrn_reflns_limit_l_max", hs.MaxIndexes[2], false);
+  }
   Cif->SaveToFile(Cif->GetFileName());
 }
 //.............................................................................
-void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   olxstr Dictionary = Cmds[0];
   if( !TEFile::Exists(Dictionary) )  {  // check if the dictionary exists
@@ -3474,9 +3505,10 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
   catch( TExceptionBase& )  {}
 
   for( size_t i=0; i < In.ParamCount(); i++ )  {
-    cif_dp::ICifEntry* CifData = Cif->FindParam<cif_dp::ICifEntry>(In.ParamName(i));
+    cif_dp::ICifEntry* CifData = Cif->FindParam<cif_dp::ICifEntry>(
+      In.ParamName(i));
     if( CifData != NULL )
-      Out.SetParam(In.ParamName(i), *CifData);
+      Out.SetParam(*CifData);
   }
   try  {  Out.SaveToFile(Cmds[1]);  }
   catch( TExceptionBase& )  {
@@ -3485,7 +3517,9 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
   }
 }
 //.............................................................................
-void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   VcoVContainer vcovc(xapp.XFile().GetAsymmUnit());
   try  {
