@@ -177,11 +177,12 @@ namespace cif_dp {
   public:
     cetTable()  {}
     //takes comma separated list of column names
-    cetTable(const olxstr& cols);
+    cetTable(const olxstr& cols, size_t row_count=InvalidSize);
     cetTable(const cetTable& v);
     virtual ~cetTable()  {  Clear();  }
     void Clear();
     void AddCol(const olxstr& col_name);
+    bool DelCol(const olxstr& col_name);
     CifRow& AddRow()  {  return data.AddRow();  }
     ICifEntry& Set(size_t i, size_t j, ICifEntry* v);
     const ICifEntry& Get(size_t i, size_t j)  const {  return *data[i][j];  }
@@ -193,6 +194,7 @@ namespace cif_dp {
       return data.ColIndex(name);
     }
     size_t RowCount() const {  return data.RowCount();  }
+    void SetRowCount(size_t sz) { data.SetRowCount(sz); }
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
     virtual const olxstr& GetName() const {  return name;  }

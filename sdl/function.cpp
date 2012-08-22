@@ -23,8 +23,8 @@ olxstr ABasicLibrary::GetQualifiedName() const {
   return res;
 }
 //.............................................................................
-olxstr ABasicFunction::SubstituteArgs(const olxstr &arg_,
-  const TStrList &argv) const
+olxstr ABasicFunction::SubstituteArgs(const olxstr &arg_, const TStrList &argv,
+  const olxstr &location)
 {
   olxstr arg(arg_);
   size_t index = arg.FirstIndexOf('%');  // argument by index
@@ -40,7 +40,7 @@ olxstr ABasicFunction::SubstituteArgs(const olxstr &arg_,
         arg.Insert(argv[pindex], index);  // insert value parameter
       }
       else  {
-        TBasicApp::NewLogEntry(logError) << GetName() << ": wrong argument "
+        TBasicApp::NewLogEntry(logError) << location << ": wrong argument "
           "index - " << (pindex+1);
       }
     }
@@ -143,7 +143,7 @@ void ABasicFunction::MacroRun(const TStrObjList& Params, TMacroError& E,
   }
   TStrObjList params(Params);
   for (size_t i=0; i < params.Count(); i++)
-    params[i] = SubstituteArgs(Params[i], argv);
+    params[i] = SubstituteArgs(Params[i], argv, GetName());
   Run(params, E);
 }
 //.............................................................................
@@ -157,9 +157,9 @@ void ABasicFunction::MacroRun(TStrObjList& Params, const TParamList& options,
   TStrObjList params(Params);
   TParamList opts(options);
   for (size_t i=0; i < params.Count(); i++)
-    params[i] = SubstituteArgs(Params[i], argv);
+    params[i] = SubstituteArgs(Params[i], argv, GetName());
   for (size_t i=0; i < opts.Count(); i++)
-    opts.GetValue(i) = SubstituteArgs(options.GetValue(i), argv);
+    opts.GetValue(i) = SubstituteArgs(options.GetValue(i), argv, GetName());
   params.Pack();
   Run(params, opts, E);
 }

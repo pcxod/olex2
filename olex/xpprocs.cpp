@@ -4413,13 +4413,13 @@ void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  olxstr exName;
+  olxstr hkl_name;
   if( !Cmds.IsEmpty() )
-    exName = Cmds[0];
+    hkl_name = Cmds[0];
   else
-    exName = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "hkl");
+    hkl_name = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "hkl");
 
-  if( TEFile::Exists(exName) )  {
+  if( TEFile::Exists(hkl_name) )  {
     E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
     return;
   }
@@ -4432,35 +4432,45 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options,
   if( hklLoop == NULL )  {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C->FindEntry("_shelx_hkl_file"));
-    if (ci == NULL) {
-      E.ProcessingError(__OlxSrcInfo, "no hkl loop or data found");
-      return;
+    if (ci == NULL)
+      TBasicApp::NewLogEntry() << "No hkl loop or data found";
+    else
+      TCStrList(ci->lines).SaveToFile(hkl_name);
+  }
+  else {
+    const size_t hInd = hklLoop->ColIndex("_refln_index_h");
+    const size_t kInd = hklLoop->ColIndex("_refln_index_k");
+    const size_t lInd = hklLoop->ColIndex("_refln_index_l");
+    const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
+    const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
+
+    if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex ) {
+      TBasicApp::NewLogEntry() << "Could not locate <h k l meas sigma> data";
     }
-    TCStrList(ci->lines).SaveToFile(exName);
-    return;
+    else {
+      THklFile file;
+      for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
+        TReflection* r = new TReflection(
+          hklLoop->Get(i, hInd).GetStringValue().ToInt(),
+          hklLoop->Get(i, kInd).GetStringValue().ToInt(),
+          hklLoop->Get(i, lInd).GetStringValue().ToInt(),
+          hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
+          hklLoop->Get(i, sInd).GetStringValue().ToDouble());
+        file.Append(*r);
+      }
+      file.SaveToFile(hkl_name);
+    }
   }
-  const size_t hInd = hklLoop->ColIndex("_refln_index_h");
-  const size_t kInd = hklLoop->ColIndex("_refln_index_k");
-  const size_t lInd = hklLoop->ColIndex("_refln_index_l");
-  const size_t mInd = hklLoop->ColIndex("_refln_F_squared_meas");
-  const size_t sInd = hklLoop->ColIndex("_refln_F_squared_sigma");
-
-  if( (hInd|kInd|lInd|mInd|sInd) == InvalidIndex ) {
-    E.ProcessingError(__OlxSrcInfo, "could not locate <h k l meas sigma> data");
-    return;
+  // check if the res file is there
+  olxstr res_name = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res");
+  if (!TEFile::Exists(res_name)) {
+    cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
+      C->FindEntry("_shelx_res_file"));
+    if (ci != NULL) {
+      TBasicApp::NewLogEntry() << "Exporting RES file";
+      TCStrList(ci->lines).SaveToFile(res_name);
+    }
   }
-
-  THklFile file;
-  for( size_t i=0; i < hklLoop->RowCount(); i++ )  {
-    TReflection* r = new TReflection(
-      hklLoop->Get(i, hInd).GetStringValue().ToInt(),
-      hklLoop->Get(i, kInd).GetStringValue().ToInt(),
-      hklLoop->Get(i, lInd).GetStringValue().ToInt(),
-      hklLoop->Get(i, mInd).GetStringValue().ToDouble(),
-      hklLoop->Get(i, sInd).GetStringValue().ToDouble());
-    file.Append(*r);
-  }
-  file.SaveToFile(exName);
 }
 //..............................................................................
 void TMainForm::funAlert(const TStrObjList& Params, TMacroError &E) {

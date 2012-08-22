@@ -344,7 +344,7 @@ void XVarManager::Describe(TStrList& lst)  {
   Validate();
   for( size_t i=0; i < Equations.Count(); i++ )  {
     olxstr eq_des;
-    int var_added  = 0;
+    int var_added = 0;
     for( size_t j=0; j < Equations[i].Count(); j++ )  {
       if( var_added++ != 0 && Equations[i].GetCoefficient(j) >= 0 )
         eq_des << '+';
@@ -354,11 +354,13 @@ void XVarManager::Describe(TStrList& lst)  {
         XVarReference& vr = Equations[i][j].GetRef(k);
         if( ref_added++ != 0 )
           eq_des << '+';
-        eq_des << vr.referencer.GetVarName(vr.var_index) << '(' << vr.referencer.GetIdName() << ')';
+        eq_des << vr.referencer.GetVarName(vr.var_index) <<
+          '(' << vr.referencer.GetIdName() << ')';
       }
       eq_des << ']';
     }
-    lst.Add(eq_des) << '=' << Equations[i].GetValue() << " with esd of " << Equations[i].GetSigma();
+    lst.Add(' ') << eq_des << '=' << Equations[i].GetValue() <<
+      " with esd of " << Equations[i].GetSigma();
   }
   for( size_t i=1; i < Vars.Count(); i++ )  {
     if( Vars[i]._RefCount() == 2 )  {
@@ -367,16 +369,22 @@ void XVarManager::Describe(TStrList& lst)  {
           (Vars[i].GetRef(1).relation_type == relation_AsVar && 
            Vars[i].GetRef(0).relation_type == relation_AsOneMinusVar) )  
       {
-        if( Vars[i].GetRef(0).relation_type == relation_AsVar )
-          lst.Add( Vars[i].GetRef(0).referencer.GetVarName(Vars[i].GetRef(0).var_index) ) << '(' 
-            << Vars[i].GetRef(0).referencer.GetIdName() 
-            << ")=1-" << Vars[i].GetRef(1).referencer.GetVarName(Vars[i].GetRef(1).var_index) << '(' 
-            << Vars[i].GetRef(1).referencer.GetIdName() << ')';
-        else
-          lst.Add( Vars[i].GetRef(1).referencer.GetVarName(Vars[i].GetRef(1).var_index) ) << '(' 
-            << Vars[i].GetRef(1).referencer.GetIdName() 
-            << ")=1-" << Vars[i].GetRef(0).referencer.GetVarName(Vars[i].GetRef(0).var_index) << '(' 
-            << Vars[i].GetRef(0).referencer.GetIdName() << ')';
+        if( Vars[i].GetRef(0).relation_type == relation_AsVar ) {
+          lst.Add(Vars[i].GetRef(0).referencer.GetVarName(
+              Vars[i].GetRef(0).var_index) ) << '(' <<
+              Vars[i].GetRef(0).referencer.GetIdName() << ")=1-" <<
+            Vars[i].GetRef(1).referencer.GetVarName(
+              Vars[i].GetRef(1).var_index) << '(' <<
+              Vars[i].GetRef(1).referencer.GetIdName() << ')';
+        }
+        else {
+          lst.Add(Vars[i].GetRef(1).referencer.GetVarName(
+              Vars[i].GetRef(1).var_index) ) << '(' <<
+              Vars[i].GetRef(1).referencer.GetIdName() << ")=1-" <<
+            Vars[i].GetRef(0).referencer.GetVarName(
+              Vars[i].GetRef(0).var_index) << '(' <<
+              Vars[i].GetRef(0).referencer.GetIdName() << ')';
+        }
         continue;
       }
     }
@@ -384,17 +392,30 @@ void XVarManager::Describe(TStrList& lst)  {
   // fixed params...
   olxdict<olxstr,olxstr,olxstrComparator<false> > fixed;
   for( size_t i=0; i < Vars[0]._RefCount(); i++ )  {
-    //if( Vars[0].GetRef(i).atom->GetType() == iQPeakZ )  continue;
-    size_t ind = fixed.IndexOf(Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index));
-    if( ind == InvalidIndex )
-      fixed.Add(Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index), 
-      olxstr(Vars[0].GetRef(i).referencer.GetIdName()) << '(' << Vars[0].GetRef(i).GetActualValue() << ')');
-    else
-      fixed.GetValue(ind) << ' ' << Vars[0].GetRef(i).referencer.GetIdName() << '(' 
-        << Vars[0].GetRef(i).GetActualValue() << ')';
+    TCAtom *ca = dynamic_cast<TCAtom*>(&Vars[0].GetRef(i).referencer);
+    if (ca != NULL && ca->GetType() == iQPeakZ )
+      continue;
+    size_t ind = fixed.IndexOf(Vars[0].GetRef(i).referencer.GetVarName(
+      Vars[0].GetRef(i).var_index));
+    if( ind == InvalidIndex ) {
+      fixed.Add(
+        Vars[0].GetRef(i).referencer.GetVarName(Vars[0].GetRef(i).var_index),
+        olxstr(Vars[0].GetRef(i).referencer.GetIdName()) << '(' <<
+          Vars[0].GetRef(i).GetActualValue() << ')');
+    }
+    else {
+      fixed.GetValue(ind) << ' ' << Vars[0].GetRef(i).referencer.GetIdName()
+        << '(' << Vars[0].GetRef(i).GetActualValue() << ')';
+    }
   }
-  for( size_t i=0; i < fixed.Count(); i++ )
-    lst.Add( "Fixed " ) << fixed.GetKey(i) << ": " << fixed.GetValue(i);
+  for( size_t i=0; i < fixed.Count(); i++ ) {
+    lst.Add(" Fixed ") << fixed.GetKey(i) << ": " << fixed.GetValue(i);
+    //TStrList sl;
+    //sl.Hyphenate(fixed.GetValue(i), 78, false);
+    //for (size_t j=0; j < sl.Count(); j++)
+    //  sl[j].Insert(' ', 0, 2);
+    //lst << sl;
+  }
 }
 //.................................................................................................
 void XVarManager::ToDataItem(TDataItem& item) const {

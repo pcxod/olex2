@@ -271,7 +271,7 @@ void cetTable::AddCol(const olxstr& col_name)  {
         name = n;
       }
     }
-    if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
+    if( name.Length() != min_len )  {  // line _geom_angle and geom_angle_etc
       const size_t u_ind = name.LastIndexOf('_');
       if( u_ind != InvalidIndex && u_ind != 0 )
         name.SetLength(u_ind);
@@ -285,10 +285,23 @@ void cetTable::AddCol(const olxstr& col_name)  {
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");
   }
 }
-cetTable::cetTable(const olxstr& cols)  {
+
+bool cetTable::DelCol(const olxstr& col_name) {
+  size_t i = data.ColIndex(col_name);
+  if (i == InvalidIndex) return false;
+  for (size_t j=0; j < data.RowCount(); j++)
+    delete data[j][i];
+  data.DelCol(i);
+  return true;
+  // shall we update the table name here?
+}
+
+cetTable::cetTable(const olxstr& cols, size_t row_count)  {
   const TStrList toks(cols, ',');
   for( size_t i=0; i < toks.Count(); i++ )
     AddCol(toks[i]);
+  if (row_count != InvalidSize)
+    data.SetRowCount(row_count);
 }
 void cetTable::Clear()  {
   for( size_t i=0; i < data.RowCount(); i++ )

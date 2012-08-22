@@ -559,8 +559,11 @@ void XLibMacros::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   xapp.XFile().GetLattice().TransformFragments(atoms, tm);
 }
 //.............................................................................
-void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  bool Force = Options.Contains("f");  // forces inversion for sg without center of inversion
+void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  // forces inversion for sg without center of inversion
+  bool Force = Options.Contains("f");
   TXApp& xapp = TXApp::GetInstance();
   TSpaceGroup* sg = NULL;
   try  { sg = &xapp.XFile().GetLastLoaderSG();  }
@@ -569,7 +572,8 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   if( !sg->IsCentrosymmetric() &&  !Force )  {
-    Error.ProcessingError(__OlxSrcInfo, "non-centrosymmetric space group, use -f to force");
+    Error.ProcessingError(__OlxSrcInfo,
+      "non-centrosymmetric space group, use -f to force");
     return;
   }
   olxstr_dict<olxstr> specials;
@@ -584,12 +588,17 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   specials.Add("P4122", "P4322");
   specials.Add("P41212", "P43212");
   specials.Add("P4132", "P4321");
-  // remap the reverse
+  // re-map the reverse
   size_t s_c = specials.Count();
   for( size_t i=0; i < s_c; i++ )
     specials.Add(specials.GetValue(i), specials.GetKey(i));
 
   TSAtomPList atoms = xapp.FindSAtoms(Cmds.Text(' '), true);
+  SortedObjectList<const TNetwork*, TPointerComparator> frags;
+  if (!sg->IsCentrosymmetric()) {
+    for (size_t i=0; i < atoms.Count(); i++)
+      frags.AddUnique(&atoms[i]->GetNetwork());
+  }
   smatd tm;
   tm.I() *= -1;
   tm.t = sg->GetInversionCenter()*(-2);
@@ -600,12 +609,19 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       << specials.GetKey(s_c) << " to " << specials.GetValue(s_c);
     sg = TSymmLib::GetInstance().FindGroupByName(specials.GetValue(s_c));
     if( sg == NULL )  {
-      Error.ProcessingError(__OlxSrcInfo, "Failed to locate necessary space group");
+      Error.ProcessingError(__OlxSrcInfo, "Failed to locate required space group");
       return;
     }
     xapp.XFile().GetAsymmUnit().ChangeSpaceGroup(*sg);
     xapp.XFile().LastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
     xapp.XFile().EndUpdate();
+  }
+  if (!sg->IsCentrosymmetric() &&
+    frags.Count() != xapp.XFile().GetLattice().FragmentCount())
+  {
+    TBasicApp::NewLogEntry() << "Please note that only visible fragments were "
+      "transformed. Reload the file to undo the transformation and use 'fmol' "
+      "to show all fragments.";
   }
 }
 //.............................................................................
@@ -3259,7 +3275,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     else  {
       const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
       const TAsymmUnit &tau = Cif->GetAsymmUnit();
-      bool match = (tau.AtomCount() <= au.AtomCount()), has_parts = false;
+      bool match = (tau.AtomCount() <= au.AtomCount()),
+        has_parts = false,
+        has_special_positions = false;
       if( match )  {
         size_t ind=0;
         for( size_t i=0; i < tau.AtomCount(); i++, ind++ )  {
@@ -3282,6 +3300,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           }
           if( a.GetPart() != 0 )
             has_parts = true;
+          if (a.GetDegeneracy() != 1)
+            has_special_positions = true;
         }
       }
       if( !match )  {
@@ -3289,16 +3309,60 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           "the asymmetric units mismatch";
       }
       else  {
+        const RefinementModel &rm = xapp.XFile().GetRM();
+        SortedObjectList<const TCAtom *, TPointerComparator> rD,
+          rU;
+        for (size_t rs_i=0; rs_i < rm.rDFIX.Count(); rs_i++) {
+          TTypeList<ExplicitCAtomRef> r =
+            rm.rDFIX[rs_i].GetAtoms().ExpandList(rm, 2);
+          for (size_t ai=0; ai < r.Count(); ai++)
+            rD.AddUnique(&r[ai].GetAtom());
+        }
+        for (size_t rs_i=0; rs_i < rm.rDANG.Count(); rs_i++) {
+          TTypeList<ExplicitCAtomRef> r =
+            rm.rDANG[rs_i].GetAtoms().ExpandList(rm, 2);
+          for (size_t ai=0; ai < r.Count(); ai++)
+            rD.AddUnique(&r[ai].GetAtom());
+        }
+        for (size_t rs_i=0; rs_i < rm.rISOR.Count(); rs_i++) {
+          TTypeList<ExplicitCAtomRef> r =
+            rm.rISOR[rs_i].GetAtoms().ExpandList(rm);
+          for (size_t ai=0; ai < r.Count(); ai++)
+            rU.AddUnique(&r[ai].GetAtom());
+        }
+        for (size_t rs_i=0; rs_i < rm.rDELU.Count(); rs_i++) {
+          if (rm.rDELU[rs_i].IsAllNonHAtoms()) {
+            for (size_t ai=0; ai < au.AtomCount(); ai++) {
+              if (au.GetAtom(ai).GetType().z > 1)
+                rU.AddUnique(&au.GetAtom(ai));
+            }
+          }
+          else {
+            TTypeList<ExplicitCAtomRef> r =
+              rm.rDELU[rs_i].GetAtoms().ExpandList(rm);
+            for (size_t ai=0; ai < r.Count(); ai++)
+              rU.AddUnique(&r[ai].GetAtom());
+          }
+        }
+
         cetTable* tab = Cif->FindLoop("_atom_site");
         if( tab == NULL || tab->RowCount() != tau.AtomCount() )  {
           TBasicApp::NewLogEntry() << "Could not locate the atom_site loop or"
            " its content mismatches the asymmetric unit";
         }
         else  {
-          size_t rf_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
-          if( rf_ind == InvalidIndex )  {
+          tab->DelCol("_atom_site_refinement_flags");
+          size_t rf_pos_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
+          if( rf_pos_ind == InvalidIndex )  {
             tab->AddCol("_atom_site_refinement_flags_posn");
-            rf_ind = tab->ColCount()-1;
+            rf_pos_ind = tab->ColCount()-1;
+          }
+          size_t rf_adp_ind = tab->ColIndex("_atom_site_refinement_flags_adp");
+          if ((!rU.IsEmpty() || has_special_positions) &&
+            rf_adp_ind == InvalidIndex)
+          {
+            tab->AddCol("_atom_site_refinement_flags_adp");
+            rf_adp_ind = tab->ColCount()-1;
           }
           size_t dg_ind = tab->ColIndex("_atom_site_disorder_group");
           if( dg_ind == InvalidIndex && has_parts )  {
@@ -3331,20 +3395,32 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
                   h |= 0x0004;
               }
             }
-            olxstr f;
+            olxstr pos_t, adp_t;
+            if (rD.Contains(&a))
+              pos_t << 'D';
             if( a.GetParentAfixGroup() != NULL )  {
-              if( a.GetParentAfixGroup()->IsRefinable() )  {
-                f << 'G';
-              }
-              else if( a.GetParentAfixGroup()->IsRiding() )
-                f << 'R';
+              if( a.GetParentAfixGroup()->IsRefinable() )
+                pos_t << 'G';
+              if( a.GetParentAfixGroup()->IsRiding() )
+                pos_t << 'R';
             }
-            if( a.GetDegeneracy() != 1 )
-              f << 'S';
-            if( f.IsEmpty() )
-              tab->Set(ri, rf_ind, new cetString('.'));
+            if( a.GetDegeneracy() != 1 ) {
+              pos_t << 'S';
+              adp_t << 'T';
+            }
+            if (rU.Contains(&a))
+              adp_t << 'U';
+            if( pos_t.IsEmpty() )
+              tab->Set(ri, rf_pos_ind, new cetString('.'));
             else
-              tab->Set(ri, rf_ind, new cetString(f));
+              tab->Set(ri, rf_pos_ind, new cetString(pos_t));
+            
+            if (rf_adp_ind != InvalidIndex) {
+              if( adp_t.IsEmpty() )
+                tab->Set(ri, rf_adp_ind, new cetString('.'));
+              else
+                tab->Set(ri, rf_adp_ind, new cetString(adp_t));
+            }
             if( has_parts )  {
               if( a.GetPart() == 0 )
                 tab->Set(ri, dg_ind, new cetString('.'));
@@ -3376,6 +3452,50 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             else
               Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
           }
+        }
+      }
+    }
+    // emmbedding the RES file into the CIF
+    if (Cif->FindEntry("_shelx_res_file") == NULL) {
+      olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
+      if (TEFile::Exists(res_fn)) {
+        cetNamedStringList res("_shelx_res_file");
+        TEFile res_f(res_fn, "rb");
+        res.lines.LoadFromTextStream(res_f);
+        Cif->SetParam(res);
+        res_f.SetPosition(0);
+        size_t as = res_f.GetAvailableSizeT();
+        char *bf = olx_malloc<char>(as);
+        res_f.Read(bf, as);
+        olxcstr s = olxcstr::FromExternal(bf, as);
+        s.DeleteCharSet("\n\r\t ");
+        Cif->SetParam("_shelx_res_file_MD5", MD5::Digest(s), false);
+      }
+    }
+    // embedd HKL
+    if (Cif->FindEntry("_shelx_hkl_file") == NULL &&
+      Cif->FindLoop("_refln") == NULL)
+    {
+      olxstr hkl_src = xapp.LocateHklFile();
+      if (TEFile::Exists(hkl_src)) {
+        cetTable &t = Cif->AddLoopDef("_refln_index_h,_refln_index_k,_refln_index_l,"
+          "_refln_F_squared_meas,_refln_F_squared_sigma");
+        THklFile hkl;
+        hkl.LoadFromFile(hkl_src);
+        bool batch_set = false;
+        if (hkl.RefCount() > 0 && hkl[0].IsBatchSet()) {
+          batch_set = hkl[0].IsBatchSet();
+          t.AddCol("_refln_scale_group_code");
+        }
+        t.SetRowCount(hkl.RefCount());
+        for (size_t hi=0; hi < hkl.RefCount(); hi++) {
+          t[hi][0] = new cetString(hkl[hi].GetH());
+          t[hi][1] = new cetString(hkl[hi].GetK());
+          t[hi][2] = new cetString(hkl[hi].GetL());
+          t[hi][3] = new cetString(hkl[hi].GetI());
+          t[hi][4] = new cetString(hkl[hi].GetS());
+          if (batch_set)
+            t[hi][5] = new cetString(hkl[hi].GetBatch());
         }
       }
     }
@@ -3451,19 +3571,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     if( !flack_used )
       Cif->SetParam("_chemical_absolute_configuration", "unk", false);
   }
-  // emmbedding the RES file into the CIF
-  if (Cif->FindEntry("_shelx_res_file") == NULL) {
-    olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
-    if (TEFile::Exists(res_fn)) {
-      cetNamedStringList res("_shelx_res_file");
-      TEFile res_f(res_fn, "rb");
-      res.lines.LoadFromTextStream(res_f);
-      Cif->SetParam(res);
-      res_f.SetPosition(0);
-      Cif->SetParam("_shelx_res_file_MD5", MD5::Digest(res_f), false);
-    }
-  }
-  // checking some mising bits
+  // checking some possibly missing bits
   if (Cif->FindEntry("_diffrn_reflns_limit_h_max") == NULL) {
     RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
     Cif->SetParam("_diffrn_reflns_limit_h_min", hs.MinIndexes[0], false);
@@ -3473,6 +3581,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->SetParam("_diffrn_reflns_limit_k_max", hs.MaxIndexes[1], false);
     Cif->SetParam("_diffrn_reflns_limit_l_max", hs.MaxIndexes[2], false);
   }
+  // update the refinement description
+  cetNamedStringList description("_olex2_refinement_description");
+  description.lines = xapp.XFile().GetRM().Describe();
+  Cif->SetParam(description);
   Cif->SaveToFile(Cif->GetFileName());
 }
 //.............................................................................
