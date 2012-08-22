@@ -24,15 +24,15 @@ const olxstr TAfixGroup::m_names[] = {
   "Cp*",
   "naphthalene",
   "disordered Me",
-  "Fourier placed Me",
-  "Fourier placed tetrahedral OH",
+  "idealised Me",
+  "idealised tetrahedral OH",
   "boron cage BH",
   "acetylenic CH",
 };
 const olxstr TAfixGroup::n_names[] = {
   EmptyString(),
   "with everything fixed",
-  "with fixed occupancy and ADP",
+  "with fixed occupancy and ADP/Uiso",
   "with riding coordinates",
   "with riding coordinates and stretchable bonds",
   "is dependent atom of rigid group",

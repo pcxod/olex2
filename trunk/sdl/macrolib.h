@@ -95,11 +95,14 @@ protected:
   void ParseMacro(const TDataItem& macro_def, TEMacro& macro);
   DefMacro(Abort)
   DefFunc(LastError)
-  DefFunc(Or)
-  DefFunc(And)
-  DefFunc(Not)
   DefFunc(LogLevel)
   void macIF(TStrObjList& Params, const TParamList &Options,
+    TMacroError& E, const TStrList &argv);
+  void funOr(const TStrObjList& Params,
+    TMacroError& E, const TStrList &argv);
+  void funAnd(const TStrObjList& Params,
+    TMacroError& E, const TStrList &argv);
+  void funNot(const TStrObjList& Params,
     TMacroError& E, const TStrList &argv);
 public:
   TEMacroLib(olex::IOlexProcessor& olexProcessor)

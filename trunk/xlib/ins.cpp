@@ -1028,7 +1028,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
   int atom_afix = a.GetAfix();
-  if( (atom_afix != afix || afix == 1 || afix == 2) && atom_afix > 0)  { 
+  if( (atom_afix != afix || afix == 1 || afix == 2) && atom_afix > 0)  {
     if( !TAfixGroup::HasExcplicitPivot(afix) ||
         !TAfixGroup::IsDependent(atom_afix) )
     {
@@ -1044,7 +1044,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         }
       }
       else  {
-        olxstr& str = sl.Add("AFIX ") << atom_afix;    
+        olxstr& str = sl.Add("AFIX ") << atom_afix;
         if( ag != NULL )  {
           if( ag->GetD() != 0 )
             str << ' ' << ag->GetD();

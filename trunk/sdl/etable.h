@@ -65,28 +65,17 @@ public:
         RowNames.SetCount(RowCnt);
       }
       else  {
-        while( Rows.Count() < RowCnt )  {
+        Rows.SetCapacity(RowCnt);
+        RowNames.SetCount(RowCnt);
+        while( Rows.Count() < RowCnt )
           Rows.AddNew();
-          RowNames.Add();
-        }
       }
     }
     if( ColCnt != ColNames.Count() )  {
-      if( ColNames.Count() < ColCnt )  {  // can happen if RowCnt changed
-        while( ColNames.Count() < ColCnt )
-          ColNames.Add();
-      }
-      else
-        ColNames.SetCount(ColCnt);
+      ColNames.SetCount(ColCnt);
     }
-    for( size_t i=0; i < Rows.Count(); i++ )  {
-      if( Rows[i].Count() < ColCnt )  { 
-        while( Rows[i].Count() < ColCnt )
-          Rows[i].Add();
-      }
-      else
-        Rows[i].SetCount(ColCnt);
-    }
+    for( size_t i=0; i < Rows.Count(); i++ )
+      Rows[i].SetCount(ColCnt);
   }
 
   void SetColCount(size_t NCC)  {  Resize(RowCount(), NCC);  }

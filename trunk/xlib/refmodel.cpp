@@ -969,6 +969,7 @@ const_strlist RefinementModel::Describe() {
     if( !AfixGroups[i].IsEmpty() )
       a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
   }
+  sec_num++;
   for( size_t i=0; i < a_gs.Count(); i++ )  {
     TPtrList<TAfixGroup>& gl = a_gs.GetValue(i);
     if (gl[0]->GetAfix() < 0) // skip internals
@@ -978,9 +979,20 @@ const_strlist RefinementModel::Describe() {
       ag_name[0] = olxstr::o_toupper(ag_name.CharAt(0));
     lst.Add(olxstr(sec_num) << '.' << (olxch)('a'+afix_sn++)) << ' ' <<
       ag_name << ':';
-    olxstr& line = lst.Add(gl[0]->ToString());
+    olxstr& line = (lst.Add(' ') << gl[0]->ToString());
     for( size_t j=1; j < gl.Count(); j++ )
       line << ", " << gl[j]->ToString();
+  }
+  for (size_t i=0; i < lst.Count(); i++) {
+    size_t wsc = lst[i].LeadingCharCount(' ');
+    if (wsc > 0 && lst[i].Length() > 80) {
+      TStrList sl;
+      sl.Hyphenate(lst[i], 80-wsc, false);
+      lst[i] = sl[0];
+      for (size_t li=1; li < sl.Count(); li++) {
+        lst.Insert(++i, sl[li].Insert(' ', 0, wsc));
+      }
+    }
   }
   return lst;
 }

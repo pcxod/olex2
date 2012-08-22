@@ -130,7 +130,6 @@ protected:
   olxstr OptionsToString(const TCSTypeList<olxstr,olxstr>& list) const;
   uint32_t ArgStateMask;
   olxstr RunSignature;
-  olxstr SubstituteArgs(const olxstr &arg, const TStrList &argv) const;
 public:
   virtual ~ABasicFunction()  {}
   virtual void Run(const TStrObjList& Params, TMacroError& E) = 0;
@@ -172,6 +171,8 @@ public:
     }
     return true;
   }
+  static olxstr SubstituteArgs(const olxstr &arg, const TStrList &argv,
+    const olxstr &location=EmptyString());
 };
 //------------------------------------------------------------------------------
 class AFunction: public ABasicFunction  {
@@ -234,6 +235,51 @@ public:
 protected:
   virtual void DoRun(const TStrObjList &Params, TMacroError& E)  {
     (BaseClassInstance->*Func)(Params, E);
+  };
+};
+//------------------------------------------------------------------------------
+template <class Base>
+class TMacroFunction: public AFunction  {
+  Base* BaseClassInstance;
+  void (Base::*Func)(const TStrObjList& Params, TMacroError& E,
+    const TStrList &argv);
+public:
+  TMacroFunction(Base* baseClassInstance,
+    void (Base::*func)(const TStrObjList& Params, TMacroError& E,
+      const TStrList &argv),
+    const olxstr& funcName, uint32_t argc,
+    const olxstr& desc=EmptyString())
+    : AFunction(funcName, argc, desc)
+  {
+    BaseClassInstance = baseClassInstance;
+    Func = func;
+  }
+  virtual ABasicFunction* Replicate() const  {
+    return new TMacroFunction<Base>(BaseClassInstance, Func, GetName(),
+      ArgStateMask, GetDescription());
+  }
+  virtual void MacroRun(const TStrObjList &Params, class TMacroError& E,
+    const TStrList &argv)
+  {
+    if( !ValidateState(Params, E) )  return;
+    const size_t argC = Params.Count();
+    try  {
+      RunSignature = olxstr(GetName(), 128);
+      RunSignature << '(';
+      for( size_t i=0; i < argC; i++ )  {
+        RunSignature << '[' << Params[i] << ']';
+        if( i < (argC-1) )  RunSignature << ", ";
+      }
+      RunSignature << ')';
+      (BaseClassInstance->*Func)(Params, E, argv);
+    }
+    catch( TExceptionBase& exc )  {
+      E.ProcessingException(*this, exc);
+    }
+  };
+protected:
+  virtual void DoRun(const TStrObjList &Params, TMacroError& E)  {
+    (BaseClassInstance->*Func)(Params, E, TStrList());
   };
 };
 //------------------------------------------------------------------------------

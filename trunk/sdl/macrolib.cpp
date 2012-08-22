@@ -16,16 +16,16 @@ using namespace exparse::parser_util;
 //.............................................................................
 void TEMacroLib::Init()  {
   TLibrary &lib = OlexProcessor.GetLibrary();
-  lib.RegisterFunction<TEMacroLib>(
-    new TFunction<TEMacroLib>(this,  &TEMacroLib::funAnd,
+  lib.RegisterMacroFunction<TEMacroLib>(
+    new TMacroFunction<TEMacroLib>(this,  &TEMacroLib::funAnd,
     "And", fpAny^(fpNone|fpOne),
     "Logical 'and' function"));
-  lib.RegisterFunction<TEMacroLib>(
-    new TFunction<TEMacroLib>(this,  &TEMacroLib::funOr,
+  lib.RegisterMacroFunction<TEMacroLib>(
+    new TMacroFunction<TEMacroLib>(this,  &TEMacroLib::funOr,
     "Or", fpAny^(fpNone|fpOne),
     "Logical 'or' function"));
-  lib.RegisterFunction<TEMacroLib>(
-    new TFunction<TEMacroLib>(this,  &TEMacroLib::funNot,
+  lib.RegisterMacroFunction<TEMacroLib>(
+    new TMacroFunction<TEMacroLib>(this,  &TEMacroLib::funNot,
     "Not", fpOne,
     "Logical 'not' function"));
   lib.RegisterFunction<TEMacroLib>(
@@ -297,6 +297,10 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
       return;
   }
   TStrList onAbort, onTerminate, onListen, MCmds, Margv;
+  olxstr location = __OlxSourceInfo;
+  for (size_t i=0; i < Cmds.Count(); i++) {
+    Cmds[i] = ABasicFunction::SubstituteArgs(Cmds[i], argv, location);
+  }
   macro->ListCommands(Cmds, MCmds, onAbort, onListen,
     onTerminate, OlexProcessor, Margv);
   for( size_t i=0; i < MCmds.Count(); i++ )  {
@@ -411,10 +415,12 @@ void TEMacroLib::macIF(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void TEMacroLib::funAnd(const TStrObjList& Params, TMacroError &E) {
+void TEMacroLib::funAnd(const TStrObjList& Params, TMacroError &E,
+  const TStrList &argv)
+{
   for( size_t i=0; i < Params.Count(); i++ )  {
     olxstr tmp = Params[i];
-    if( !ProcessFunction(tmp, E, false) )  {
+    if( !ProcessFunction(tmp, E, false, argv) )  {
       E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
       return;
     }
@@ -426,10 +432,12 @@ void TEMacroLib::funAnd(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal(true);
 }
 //.............................................................................
-void TEMacroLib::funOr(const TStrObjList& Params, TMacroError &E) {
+void TEMacroLib::funOr(const TStrObjList& Params, TMacroError &E,
+  const TStrList &argv)
+{
   for( size_t i=0; i < Params.Count(); i++ )  {
     olxstr tmp = Params[i];
-    if( !ProcessFunction(tmp, E, false) )  {
+    if( !ProcessFunction(tmp, E, false, argv) )  {
       E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
       return;
     }
@@ -441,9 +449,11 @@ void TEMacroLib::funOr(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal(false);
 }
 //.............................................................................
-void TEMacroLib::funNot(const TStrObjList& Params, TMacroError &E) {
+void TEMacroLib::funNot(const TStrObjList& Params, TMacroError &E,
+  const TStrList &argv)
+{
   olxstr tmp = Params[0];
-  if( !ProcessFunction(tmp, E, false) )  {
+  if( !ProcessFunction(tmp, E, false, argv) )  {
     E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
     return;
   }

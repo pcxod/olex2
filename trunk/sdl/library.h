@@ -89,6 +89,13 @@ public:
     return Register(Functions, func, flags);
   }
 
+  template <class BaseClass>
+  ABasicFunction *RegisterMacroFunction(TMacroFunction<BaseClass>* func,
+    uint16_t flags=0)
+  {
+    return Register(Functions, func, flags);
+  }
+
   ABasicFunction *RegisterStaticFunction(
     TStaticFunction* func, uint16_t flags=0)
   {

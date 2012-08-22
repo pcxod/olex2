@@ -107,7 +107,8 @@ public:
         delete Strings[i];
       Strings.SetCount(nc);
     }
-    else  {
+    else if (nc > Strings.Count()) {
+      Strings.SetCapacity(nc);
       while( Strings.Count() < nc )
         Add(EmptyString());
     }
@@ -381,7 +382,7 @@ public:
 
   TTStrList& operator = (const TTStrList& list)  {  return Assign(list);  }
   TTStrList &operator = (const ConstStrList<T> &list)  {
-    return TakeOver(list.Relase(), true);
+    return TakeOver(list.Release(), true);
   }
 
   void QSort(bool ci)  {
