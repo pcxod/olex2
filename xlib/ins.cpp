@@ -1007,8 +1007,13 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         if( !overlap && sg.GetDependent(i).Count() > 1 &&
           sg.GetDependent(i).AreAllAtomsUnique() )
         {
-          tmp << ' ' << sg.GetDependent(i)[0].GetResiLabel() << " > "
-            << sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetResiLabel();
+          tmp << ' ' << sg.GetDependent(i)[0].GetResiLabel();
+          if (sg.GetDependent(i)[0].GetId() <
+            sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetId())
+            tmp << " > ";
+          else
+            tmp << " < ";
+          tmp << sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetResiLabel();
         }
         else  {
           for( size_t j=0; j < sg.GetDependent(i).Count(); j++ )
