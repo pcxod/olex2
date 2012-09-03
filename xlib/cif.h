@@ -81,9 +81,10 @@ public:
     else
       SetParam(cif_dp::cetNamedString(name, value));
   }
-  void ReplaceParam(const olxstr& olx_name, const olxstr& new_name,
-    const cif_dp::ICifEntry& value);
-  void Rename(const olxstr& olx_name, const olxstr& new_name);
+  // removes the parameter by name and add the new one
+  void ReplaceParam(const olxstr& name, const cif_dp::ICifEntry& value);
+  // renames a parameter
+  void Rename(const olxstr& old_name, const olxstr& new_name);
   // returns the number of parameters
   inline size_t ParamCount() const {
     return (block_index == InvalidIndex) ? 0
@@ -92,6 +93,11 @@ public:
   // returns the name of a specified parameter
   const olxstr& ParamName(size_t i) const {
     return data_provider[block_index].param_map.GetKey(i);
+  }
+  // removes a parameters or a table by name
+  template <class SC>
+  bool Remove(const SC &name) {
+    return data_provider[block_index].Remove(name);
   }
   // returns the value of a specified parameter
   cif_dp::ICifEntry& ParamValue(size_t i) const {
@@ -147,11 +153,11 @@ public:
     return NULL;
   }
   //Returns the name of a loop specified by the index
-  inline const olxstr& GetLoopName(size_t i) const {
+  const olxstr& GetLoopName(size_t i) const {
     return data_provider[block_index].table_map.GetValue(i)->GetName();
   }
   // Returns the number of loops
-  inline size_t LoopCount() const {
+  size_t LoopCount() const {
     return (block_index == InvalidIndex) ? 0
       : data_provider[block_index].table_map.Count();
   }

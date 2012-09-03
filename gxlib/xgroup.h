@@ -151,8 +151,8 @@ protected:
 public:
   TXGroup(TGlRenderer& R, const olxstr& colName) :
     TGlGroup(R, colName),
-    AngleInc(0), AngleAcc(0),
-    original_crds(NULL)
+    original_crds(NULL),
+    AngleInc(0), AngleAcc(0)
   {
     SetMoveable(true);
     SetRoteable(true);

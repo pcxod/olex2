@@ -1066,42 +1066,42 @@ void ExpandRelativePath(const TStrObjList& Params, TMacroError& E)  {
 
 TLibrary*  TEFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("file") : name);
-  lib->RegisterStaticFunction( new TStaticFunction( ::FileExists, "Exists", fpOne,
+  lib->Register( new TStaticFunction( ::FileExists, "Exists", fpOne,
 "Returns true if specified file exists") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::FileName, "GetName", fpOne,
+  lib->Register( new TStaticFunction( ::FileName, "GetName", fpOne,
 "Returns name part of the full/partial file name") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::FilePath, "GetPath", fpOne,
+  lib->Register( new TStaticFunction( ::FilePath, "GetPath", fpOne,
 "Returns path component of the full file name") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::FileDrive, "GetDrive", fpOne,
+  lib->Register( new TStaticFunction( ::FileDrive, "GetDrive", fpOne,
 "Returns drive component of the full file name") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::FileExt, "GetExt", fpOne,
+  lib->Register( new TStaticFunction( ::FileExt, "GetExt", fpOne,
 "Returns file extension") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::ChangeFileExt, "ChangeExt", fpTwo,
+  lib->Register( new TStaticFunction( ::ChangeFileExt, "ChangeExt", fpTwo,
 "Returns file name with changed extension") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::Copy, "Copy", fpTwo,
+  lib->Register( new TStaticFunction( ::Copy, "Copy", fpTwo,
 "Copies file provided as first argument into the file provided as second argument") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::Delete, "Delete", fpOne,
+  lib->Register( new TStaticFunction( ::Delete, "Delete", fpOne,
 "Deletes specified file") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::Rename, "Rename", fpTwo,
+  lib->Register( new TStaticFunction( ::Rename, "Rename", fpTwo,
 "Renames specified file") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::CurDir, "CurDir", fpNone,
+  lib->Register( new TStaticFunction( ::CurDir, "CurDir", fpNone,
 "Returns current folder") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::ChDir, "ChDir", fpOne,
+  lib->Register( new TStaticFunction( ::ChDir, "ChDir", fpOne,
 "Changes current folder to provided folder") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::MkDir, "MkDir", fpOne,
+  lib->Register( new TStaticFunction( ::MkDir, "MkDir", fpOne,
 "Creates specified folder") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::OSPath, "OSPath", fpOne,
+  lib->Register( new TStaticFunction( ::OSPath, "OSPath", fpOne,
 "Returns OS specific path for provided path") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::Which, "Which", fpOne,
+  lib->Register( new TStaticFunction( ::Which, "Which", fpOne,
 "Tries to find a particular file looking at current folder, PATH and program folder") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::Age, "Age", fpOne|fpTwo,
+  lib->Register( new TStaticFunction( ::Age, "Age", fpOne|fpTwo,
 "Returns file age for provided file using formatting string (if provided)") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::ListDirForGUI, "ListDirForGUI", fpTwo|fpThree,
+  lib->Register( new TStaticFunction( ::ListDirForGUI, "ListDirForGUI", fpTwo|fpThree,
 "Returns a ready to use in GUI list of files, matching provided mask(s) separated by semicolon.\
  The third, optional argument [f,d,fd] specifies what should be included into the list") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::CreateRelativePath, "RelativePath", fpOne|fpTwo,
+  lib->Register( new TStaticFunction( ::CreateRelativePath, "RelativePath", fpOne|fpTwo,
 "Returns a path to a folder relative to basedir; arguments are (base=basedir,path)") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::ExpandRelativePath, "AbsolutePath", fpOne|fpTwo,
+  lib->Register( new TStaticFunction( ::ExpandRelativePath, "AbsolutePath", fpOne|fpTwo,
 "Returns an absolute path to a folder relative to the basedir; arguments are (base=basedir,path)") );
   return lib;
 }

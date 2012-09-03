@@ -40,58 +40,103 @@ public:
    }
   template <class T>
   const olxstr& operator [] (const T& Name) const {  return FindValue(Name);  }
-  // these functions considers the folowing situations: '"', '('')' and '\''
+  // this function considers the folowing situations: '"', '('')' and '\''
   template <class StrLst>
-    static size_t StrtokParams(const olxstr& exp, olxch sep, StrLst& out,
-      bool do_unquote=true)
-    {
-      using namespace exparse::parser_util;
-      if( is_quote(sep) )
-        throw TInvalidArgumentException(__OlxSourceInfo, "separator");
-      const size_t pc = out.Count();
-      size_t start = 0;
-      for( size_t i=0; i < exp.Length(); i++ )  {
-        const olxch ch = exp.CharAt(i);
-        if( is_quote(ch) && !is_escaped(exp, i) )  {
-          if( !skip_string(exp, i) )  {
-            out.Add( exp.SubStringFrom(start).TrimWhiteChars() );
-            start = exp.Length();
-            break;
-          }
-        }
-        else if( is_bracket(ch) )  {
-          if( !skip_brackets(exp, i) )  {
-            out.Add( exp.SubStringFrom(start).TrimWhiteChars() );
-            start = exp.Length();
-            break;
-          }
-        }
-        else if( ch == sep )  {
-          // white spaces cannot define empty args
-          if( sep == ' ' && start == i )  {
-            start = i+1;
-            continue;
-          }
-          if( do_unquote )
-            out.Add(unquote(exp.SubString(start, i-start).TrimWhiteChars()));
-          else 
-            out.Add(exp.SubString(start, i-start).TrimWhiteChars());
-          start = i+1;
-        }
-      }
-      if( start < exp.Length() )  {
-        if( do_unquote )
-          out.Add(unquote(exp.SubStringFrom(start).TrimWhiteChars()));
-        else 
+  static size_t StrtokParams(const olxstr& exp, olxch sep, StrLst& out,
+    bool do_unquote=true)
+  {
+    using namespace exparse::parser_util;
+    if( is_quote(sep) )
+      throw TInvalidArgumentException(__OlxSourceInfo, "separator");
+    const size_t pc = out.Count();
+    size_t start = 0;
+    for( size_t i=0; i < exp.Length(); i++ )  {
+      const olxch ch = exp.CharAt(i);
+      if( is_quote(ch) && !is_escaped(exp, i) )  {
+        if( !skip_string(exp, i) )  {
           out.Add(exp.SubStringFrom(start).TrimWhiteChars());
+          start = exp.Length();
+          break;
+        }
       }
-      return out.Count() - pc;
+      else if (is_bracket(ch) && !is_escaped(exp, i)) {
+        if( !skip_brackets(exp, i) )  {
+          out.Add(exp.SubStringFrom(start).TrimWhiteChars());
+          start = exp.Length();
+          break;
+        }
+      }
+      else if( ch == sep )  {
+        // white spaces cannot define empty args
+        if( sep == ' ' && start == i )  {
+          start = i+1;
+          continue;
+        }
+        if( do_unquote )
+          out.Add(unquote(exp.SubString(start, i-start).TrimWhiteChars()));
+        else 
+          out.Add(exp.SubString(start, i-start).TrimWhiteChars());
+        start = i+1;
+      }
     }
-  //this function removes the wrapping around the string 'str""'
-  //static olxstr ProcessStringParam(const olxstr& Param);
-  /* if the quation char is the same at the end and beginning of the string
-     function returns true and initilises the Char argument */
-  //static bool GetQuotationChar(const olxstr& Param, olxch* Char);
+    if( start < exp.Length() )  {
+      if( do_unquote )
+        out.Add(unquote(exp.SubStringFrom(start).TrimWhiteChars()));
+      else 
+        out.Add(exp.SubStringFrom(start).TrimWhiteChars());
+    }
+    return out.Count() - pc;
+  }
+  /* this function considers the folowing situations: '"', '('')'
+  to be used to tokenise strings like "cmd1>>if something then 'icmd1>>icmd2'"
+  in this case the quoted >> will not be a separator
+  */
+  static const_strlist StrtokLines(const olxstr& exp, const olxstr &sep,
+    bool do_unquote=true)
+  {
+    using namespace exparse::parser_util;
+    if (sep.IsEmpty() ||(sep.Length() == 1 && is_quote(sep[0])))
+      throw TInvalidArgumentException(__OlxSourceInfo, "separator");
+    TStrList rv;
+    size_t start = 0;
+    for (size_t i=0; i < exp.Length(); i++) {
+      const olxch ch = exp.CharAt(i);
+      if (is_quote(ch) && !is_escaped(exp, i)) {
+        if (!skip_string(exp, i)) {
+          rv.Add(exp.SubStringFrom(start).TrimWhiteChars());
+          start = exp.Length();
+          break;
+        }
+      }
+      else if (is_bracket(ch) && !is_escaped(exp, i)) {
+        if (!skip_brackets(exp, i) ) {
+          rv.Add(exp.SubStringFrom(start).TrimWhiteChars());
+          start = exp.Length();
+          break;
+        }
+      }
+      else if (exp.IsSubStringAt(sep, i)) {
+        // white spaces cannot define empty args
+        if (sep == ' ' && start == i) {
+          start = i+1;
+          continue;
+        }
+        if (do_unquote)
+          rv.Add(unquote(exp.SubString(start, i-start).TrimWhiteChars()));
+        else 
+          rv.Add(exp.SubString(start, i-start).TrimWhiteChars());
+        start = i+sep.Length();
+        i += (sep.Length()-1);
+      }
+    }
+    if (start < exp.Length()) {
+      if (do_unquote)
+        rv.Add(unquote(exp.SubStringFrom(start).TrimWhiteChars()));
+      else 
+        rv.Add(exp.SubStringFrom(start).TrimWhiteChars());
+    }
+    return rv;
+  }
 };
 
 EndEsdlNamespace()

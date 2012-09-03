@@ -8,17 +8,17 @@
 ******************************************************************************/
 
 #define this_InitFunc(funcName, argc) \
-  Library.RegisterFunction( new TFunction<TMainForm>(this, &TMainForm::fun##funcName, #funcName, argc))
+  Library.Register( new TFunction<TMainForm>(this, &TMainForm::fun##funcName, #funcName, argc))
 #define this_InitMacro(macroName, validOptions, argc)\
-  Library.RegisterMacro( new TMacro<TMainForm>(this, &TMainForm::mac##macroName, #macroName, #validOptions, argc))
+  Library.Register( new TMacro<TMainForm>(this, &TMainForm::mac##macroName, #macroName, #validOptions, argc))
 #define this_InitMacroA(realMacroName, macroName, validOptions, argc)\
-  Library.RegisterMacro( new TMacro<TMainForm>(this, &TMainForm::mac##realMacroName, #macroName, #validOptions, argc))
+  Library.Register( new TMacro<TMainForm>(this, &TMainForm::mac##realMacroName, #macroName, #validOptions, argc))
 #define this_InitFuncD(funcName, argc, desc) \
-  Library.RegisterFunction( new TFunction<TMainForm>(this, &TMainForm::fun##funcName, #funcName, argc, desc))
+  Library.Register( new TFunction<TMainForm>(this, &TMainForm::fun##funcName, #funcName, argc, desc))
 #define this_InitMacroD(macroName, validOptions, argc, desc)\
-  Library.RegisterMacro( new TMacro<TMainForm>(this, &TMainForm::mac##macroName, #macroName, (validOptions), argc, desc))
+  Library.Register( new TMacro<TMainForm>(this, &TMainForm::mac##macroName, #macroName, (validOptions), argc, desc))
 #define this_InitMacroAD(realMacroName, macroName, validOptions, argc, desc)\
-  Library.RegisterMacro( new TMacro<TMainForm>(this, &TMainForm::mac##realMacroName, #macroName, (validOptions), argc, desc))
+  Library.Register( new TMacro<TMainForm>(this, &TMainForm::mac##realMacroName, #macroName, (validOptions), argc, desc))
 
 #include "wx/utils.h"
 #include "wx/wxhtml.h"
@@ -92,6 +92,7 @@
 #include "label_corrector.h"
 #include "dusero.h"
 #include "exparse/exptree.h"
+#include "math/libmath.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -688,7 +689,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     " file in the interactive shell (on windows ShellExecute is used to avoid "
     "flickering console)");
   this_InitMacro(Save, , fpAny^fpNone);
-  GetLibrary().RegisterMacro(
+  GetLibrary().Register(
     new TMacro<TMainForm>(this, &TMainForm::macLoad, "Load",
       EmptyString(),  fpAny^fpNone,
       "Loads style/scene/view/mode/radii. For radii accepts sfil, vdw, pers"),
@@ -1047,8 +1048,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Prints all variables if no arguments is given or returns the given "
     "veariable value");
 
-  this_InitFunc(Eval, fpOne);
-
   this_InitFunc(VVol, fpNone|fpOne|psFileLoaded);
 
   this_InitFunc(Env, fpOne|psFileLoaded);
@@ -1141,6 +1140,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Gets/Sets display update status");
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(TEFile::ExportLibrary());
+  Library.AttachLibrary(LibMath::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
   Library.AttachLibrary(TETime::ExportLibrary());
@@ -1578,39 +1578,36 @@ void TMainForm::StartupInit()  {
       }
     }
     sh = settings.Root().FindItemi("menus");
-    if( sh != NULL )  {
+    ABasicFunction *cm_macro = GetLibrary().FindMacro("CreateMenu");
+    if (sh != NULL && cm_macro != NULL)  {
+      TMacroError me;
+      me.SetLocation(__OlxSrcInfo);
       try  {
-        olxstr cmd;
         for( size_t i=0; i < sh->ItemCount(); i++ )  {
           TDataItem& item = sh->GetItem(i);
-          cmd = "createmenu \'";
-          cmd << item.GetFieldValue("title") << "\' \'" <<
-            item.GetFieldValue("macro") << '\'';
-
-          olxstr before = item.GetFieldValue("before");
-          if( !before.IsEmpty() )
-            cmd << " \'" << before <<'\'';
-          cmd << ' ';
+          TStrObjList params;
+          TParamList opts;
+          params << item.GetFieldValue("title") <<
+            item.GetFieldValue("macro") <<
+            item.GetFieldValue("before");
 
           olxstr modeDep = item.GetFieldValue("modedependent");
-          if( !modeDep.IsEmpty() )
-            cmd << " -m=\'" << modeDep << '\'';
-          cmd << ' ';
-
+          if (!modeDep.IsEmpty())
+            opts.AddParam('m', modeDep);
           olxstr stateDep = item.GetFieldValue("statedependent");
-          if( !stateDep.IsEmpty() )
-            cmd << " -s=\'" << stateDep << '\'';
-          cmd << ' ';
-
-          if( item.GetName().Equalsi("radio") )  cmd << "-r ";
-          if( item.GetName().Equalsi("sep") )    cmd << "-# ";
-          if( item.GetName().Equalsi("check") )  cmd << "-c ";
-
-          processMacro(cmd, __OlxSrcInfo);
+          if (!stateDep.IsEmpty())
+            opts.AddParam('s', stateDep);
+          if (item.GetName().Equalsi("radio"))
+            opts.AddParam('r', EmptyString());
+          if (item.GetName().Equalsi("sep"))
+            opts.AddParam('#', EmptyString());
+          if (item.GetName().Equalsi("check"))
+            opts.AddParam('c', EmptyString());
+          cm_macro->Run(params, opts, me);
         }
       }
       catch( TExceptionBase& exc )  {
-        TBasicApp::NewLogEntry(logException) << exc.GetException()->GetFullMessage();
+        TBasicApp::NewLogEntry(logExceptionTrace) << exc;
       }
     }
   }
@@ -2124,7 +2121,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_ONLINK )  {
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
-      TStrList Toks(*(olxstr*)Data, ">>");
+      TStrList Toks = TParamList::StrtokLines(*(olxstr*)Data, ">>");
       //GetHtml()->LockPageLoad();
       /* the page, if requested, will beloaded on time event. The timer is disabled
       in case if a modal window appears and the timer event can be called */
@@ -2250,48 +2247,48 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
 //..............................................................................
 void TMainForm::PreviewHelp(const olxstr& Cmd)  {
   if( !HelpWindowVisible )  return;
-  if( !Cmd.IsEmpty() )  {
-    TPtrList<TEMacro> macros;
-    Macros.FindSimilar(Cmd, macros);
-    if( !macros.IsEmpty() )  {
-      FHelpWindow->Clear();
-      FHelpWindow->SetVisible(HelpWindowVisible);
-      FGlConsole->ShowBuffer(!HelpWindowVisible);
-      FHelpWindow->SetTop(
-        InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
-      FHelpWindow->SetMaxStringLength((uint16_t)(
-        FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
-      FHelpWindow->SetZ(FXApp->GetRender().CalcRasterZ(0.1));
-      for( size_t i=0; i < macros.Count(); i++ )  {
-        FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
-        if( !macros[i]->GetDescription().IsEmpty() )  {
-          FHelpWindow->PostText(macros[i]->GetDescription(), &HelpFontColorTxt);
-          //Cat = Item->FindItem("category");
-          //if( Cat != NULL  )  {
-          //  olxstr Categories;
-          //  for( size_t j=0; j < Cat->ItemCount(); j++ )  {
-          //    Categories << Cat->GetItem(j).GetName();
-          //    if( (j+1) < Cat->ItemCount() )  Categories << ", ";
-          //  }
-          //  if( !Categories.IsEmpty() )  {
-          //    Categories.Insert("\t", 0);
-          //    FHelpWindow->PostText("\tCategory", &HelpFontColorCmd);
-          //    FHelpWindow->PostText(Categories, &HelpFontColorTxt);
-          //  }
-          //}
-        }
-      }
-      FHelpWindow->Fit();
-    }
-    else  {
-      FHelpWindow->SetVisible(false);
-      FGlConsole->ShowBuffer(true);
-    }
-  }
-  else  {
-    FHelpWindow->SetVisible(false);
-    FGlConsole->ShowBuffer(true);
-  }
+  //if( !Cmd.IsEmpty() )  {
+  //  TPtrList<macrolib::TEMacro> macros;
+  //  Macros.FindSimilar(Cmd, macros);
+  //  if( !macros.IsEmpty() )  {
+  //    FHelpWindow->Clear();
+  //    FHelpWindow->SetVisible(HelpWindowVisible);
+  //    FGlConsole->ShowBuffer(!HelpWindowVisible);
+  //    FHelpWindow->SetTop(
+  //      InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1);
+  //    FHelpWindow->SetMaxStringLength((uint16_t)(
+  //      FHelpWindow->GetFont().MaxTextLength(FXApp->GetRender().GetWidth())));
+  //    FHelpWindow->SetZ(FXApp->GetRender().CalcRasterZ(0.1));
+  //    for( size_t i=0; i < macros.Count(); i++ )  {
+  //      FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
+  //      if( !macros[i]->GetDescription().IsEmpty() )  {
+  //        FHelpWindow->PostText(macros[i]->GetDescription(), &HelpFontColorTxt);
+  //        //Cat = Item->FindItem("category");
+  //        //if( Cat != NULL  )  {
+  //        //  olxstr Categories;
+  //        //  for( size_t j=0; j < Cat->ItemCount(); j++ )  {
+  //        //    Categories << Cat->GetItem(j).GetName();
+  //        //    if( (j+1) < Cat->ItemCount() )  Categories << ", ";
+  //        //  }
+  //        //  if( !Categories.IsEmpty() )  {
+  //        //    Categories.Insert("\t", 0);
+  //        //    FHelpWindow->PostText("\tCategory", &HelpFontColorCmd);
+  //        //    FHelpWindow->PostText(Categories, &HelpFontColorTxt);
+  //        //  }
+  //        //}
+  //      }
+  //    }
+  //    FHelpWindow->Fit();
+  //  }
+  //  else  {
+  //    FHelpWindow->SetVisible(false);
+  //    FGlConsole->ShowBuffer(true);
+  //  }
+  //}
+  //else  {
+  //  FHelpWindow->SetVisible(false);
+  //  FGlConsole->ShowBuffer(true);
+  //}
 }
 //..............................................................................
 bool TMainForm::ImportFrag(const olxstr& line)  {
@@ -2744,8 +2741,6 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd, bool inc_files)  {
     else
       TEFile::ListCurrentDir(all_cmds, olxstr(Cmd) << '*', sefReadWrite);
   }
-  if( !Cmd.IsEmpty() )
-    Macros.FindSimilarNames(Cmd, all_cmds);
   TBasicLibraryPList libs;
   GetLibrary().FindSimilarLibraries(Cmd, libs);
   TBasicFunctionPList bins;  // builins
@@ -2805,13 +2800,6 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
     FGlConsole->PrintText( olxstr("Built in function ") << MF->GetName());
     FGlConsole->PrintText(olxstr(" Signature: ") << MF->GetSignature());
     FGlConsole->PrintText(olxstr(" Description: ") << MF->GetDescription());
-  }
-  
-  if( !Cmd.IsEmpty() )  {
-    TEMacro* macro = Macros.FindMacro(Cmd);
-    if( macro != NULL )  {
-      FGlConsole->PrintText(macro->GetDescription(), &HelpFontColorTxt);
-    }
   }
 }
 //..............................................................................
@@ -3652,8 +3640,7 @@ bool TMainForm::ProcessEvent(wxEvent& evt)  {
   {
     olxstr macro( AccMenus.GetValue(evt.GetId())->GetCommand());
     if( !macro.IsEmpty() )  {
-      TStrList sl;
-      sl.Strtok( macro, ">>");
+      TStrList sl = TParamList::StrtokLines(macro, ">>");
       for( size_t i=0; i < sl.Count(); i++ )  {
         if( !processMacro(sl[i]) )
           break;

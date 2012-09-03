@@ -687,18 +687,18 @@ void IndexManager::Update(TStrObjList &Cmds, const TParamList &Options,
 //.............................................................................
 TLibrary* IndexManager::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("lcells") : name);
-  lib->RegisterStaticFunction(
+  lib->Register(
     new TStaticFunction(&IndexManager::Search, "Search",
     fpNone|fpOne|fpTwo|fpSeven,
     "Searches given cell")
     );
-  lib->RegisterStaticMacro(
+  lib->Register(
     new TStaticMacro(&IndexManager::Update, "Update", EmptyString(),
     fpThree|fpTwo|fpOne|fpNone,
     "Updates/creates indices using default/given configuration."
     " To create an index, pass a folder name.")
     );
-  lib->RegisterStaticMacro(
+  lib->Register(
     new TStaticMacro(&IndexManager::Search, "Search", "d-deviation [1 A^3]",
     fpNone|fpOne|fpTwo|fpSeven,
     "Searches current cell, cell from given file, or given cell")

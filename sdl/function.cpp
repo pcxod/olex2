@@ -10,6 +10,7 @@
 #include "function.h"
 #include "egc.h"
 #include "bapp.h"
+
 UseEsdlNamespace()
 
 //.............................................................................
@@ -23,33 +24,21 @@ olxstr ABasicLibrary::GetQualifiedName() const {
   return res;
 }
 //.............................................................................
-olxstr ABasicFunction::SubstituteArgs(const olxstr &arg_, const TStrList &argv,
-  const olxstr &location)
-{
-  olxstr arg(arg_);
-  size_t index = arg.FirstIndexOf('%');  // argument by index
-  while( index != InvalidIndex && index < (arg.Length()-1) )  {
-    size_t iindex = index;
-    while (++iindex < arg.Length() && olxstr::o_isdigit(arg.CharAt(iindex)))
-      ;
-    olxstr args = arg.SubString(index+1, iindex-index-1);
-    if( !args.IsEmpty() )  {
-      size_t pindex = args.ToSizeT()-1;  // index of the parameter
-      if( pindex < argv.Count() )  {  // check if valid argument index
-        arg.Delete(index, args.Length()+1); // delete %xx value
-        arg.Insert(argv[pindex], index);  // insert value parameter
-      }
-      else  {
-        TBasicApp::NewLogEntry(logError) << location << ": wrong argument "
-          "index - " << (pindex+1);
-      }
-    }
-    if( index++ < arg.Length() )
-      index = arg.FirstIndexOf('%', index);  // next argument by index
-    else
-      index = InvalidIndex;
+bool ABasicFunction::ValidateState(const TStrObjList &Params, TMacroError &E) {
+  const size_t argC = Params.Count(),
+    arg_m = (0x0001 << argC);
+  if( (ArgStateMask&fpAny) != fpAny && (ArgStateMask&arg_m) == 0)  {
+    E.WrongArgCount(*this, argC);
+    return false;
   }
-  return arg;
+  // the special checks are in the high word
+  if( (ArgStateMask&0xFFFF0000) &&
+    !GetParentLibrary()->CheckProgramState(ArgStateMask) )
+  {
+    E.WrongState(*this);
+    return false;
+  }
+  return true;
 }
 //.............................................................................
 olxstr ABasicFunction::GetSignature() const {
@@ -134,34 +123,67 @@ olxstr ABasicFunction::OptionsToString(
   return rv;
 }
 //.............................................................................
-void ABasicFunction::MacroRun(const TStrObjList& Params, TMacroError& E,
-  const TStrList &argv)
-{
-  if (argv.IsEmpty()) {
-    Run(Params, E);
-    return;
+void AFunction::Run(const TStrObjList &Params, class TMacroError& E) {
+  if( !ValidateState(Params, E) )  return;
+  const size_t argC = Params.Count();
+  try  {
+    RunSignature = olxstr(GetName(), 128);
+    RunSignature << '(';
+    for( size_t i=0; i < argC; i++ )  {
+      RunSignature << '[' << Params[i] << ']';
+      if( i < (argC-1) )  RunSignature << ", ";
+    }
+    RunSignature << ')';
+    DoRun(Params, E);
   }
-  TStrObjList params(Params);
-  for (size_t i=0; i < params.Count(); i++)
-    params[i] = SubstituteArgs(Params[i], argv, GetName());
-  Run(params, E);
+  catch( TExceptionBase& exc )  {
+    E.ProcessingException(*this, exc);
+  }
+};
+
+//.............................................................................
+void AMacro::Run(TStrObjList &Params, const TParamList &Options,
+  TMacroError& E)
+{
+  if( !ValidateState(Params, E) )  return;
+  const size_t argC = Params.Count();
+  if ((GetArgStateMask()&0x0000ffff) != 0x0000fffe) {
+    for( size_t i=0; i < Options.Count(); i++ )  {
+      if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
+        E.WrongOption(*this, Options.GetName(i) );
+        return;
+      }
+    }
+  }
+  try  {
+    RunSignature = olxstr(GetName(), 128);
+    RunSignature << ' ';
+    for( size_t i=0; i < argC; i++ )  {
+      RunSignature << '[' << Params[i] << ']';
+      if( i < (argC-1) )  RunSignature << ", ";
+    }
+    RunSignature << ' ';
+    for( size_t i=0; i < Options.Count(); i++ )  {
+      RunSignature << '{' << Options.GetName(i) << '=' <<
+        Options.GetValue(i) << '}';
+    }
+    DoRun(Params, Options, E);
+  }
+  catch( TExceptionBase& exc )  {
+    E.ProcessingException(*this, exc);
+  }
 }
 //.............................................................................
-void ABasicFunction::MacroRun(TStrObjList& Params, const TParamList& options,
-  TMacroError& E, const TStrList &argv)
-{
-  if (argv.IsEmpty()) {
-    Run(Params, options, E);
-    return;
+olxstr AMacro::GetSignature() const {
+  if( ValidOptions.Count() )  {
+    olxstr res = ABasicFunction::GetSignature();
+    res << "; valid options - ";
+    for( size_t i=0; i < ValidOptions.Count(); i++ )
+      res << ValidOptions.GetKey(i)  << ';';
+    return res;
   }
-  TStrObjList params(Params);
-  TParamList opts(options);
-  for (size_t i=0; i < params.Count(); i++)
-    params[i] = SubstituteArgs(Params[i], argv, GetName());
-  for (size_t i=0; i < opts.Count(); i++)
-    opts.GetValue(i) = SubstituteArgs(options.GetValue(i), argv, GetName());
-  params.Pack();
-  Run(params, opts, E);
+  else
+    return ABasicFunction::GetSignature();
 }
 //.............................................................................
 //.............................................................................

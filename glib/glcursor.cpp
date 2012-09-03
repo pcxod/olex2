@@ -79,8 +79,10 @@ void TGlCursor::LibSymbol(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 TLibrary*  TGlCursor::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name);
-  lib->RegisterFunction<TGlCursor>( new TFunction<TGlCursor>(this,  &TGlCursor::LibSymbol, "Symbol",
-    fpNone|fpOne, "Returns or sets current symbol used to draw the cursor") );
+  lib->Register(
+    new TFunction<TGlCursor>(this,  &TGlCursor::LibSymbol, "Symbol",
+      fpNone|fpOne,
+    "Returns or sets current symbol used to draw the cursor") );
   return lib;
 }
 //..............................................................................

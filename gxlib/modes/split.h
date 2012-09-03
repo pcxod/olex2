@@ -67,7 +67,6 @@ public:
     gxapp.XFile().GetLattice().OnDisassemble.Remove(this);
   }
   void Finalise() {
-    TIns& Ins = gxapp.XFile().GetLastLoader<TIns>();
     RefinementModel& rm = gxapp.XFile().GetRM();
     UpdateCrds();
     // if this is not done here it interferes and may cause a crash

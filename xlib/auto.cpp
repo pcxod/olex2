@@ -1873,17 +1873,17 @@ void TAutoDB::LibEnforceFormula(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 TLibrary* TAutoDB::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("ata") : name);
-  lib->RegisterFunction<TAutoDB>(
+  lib->Register(
     new TFunction<TAutoDB>(this,  &TAutoDB::LibBAIDelta, "BAIDelta",
       fpNone|fpOne,
       "Returns/sets maximum difference between element types to promote")
   );
-  lib->RegisterFunction<TAutoDB>(
+  lib->Register(
     new TFunction<TAutoDB>(this,  &TAutoDB::LibURatio, "URatio", fpNone|fpOne,
       "Returns/sets a ration between atom U and mean U of the confident atoms to"
       " consider promotion")
   );
-  lib->RegisterFunction<TAutoDB>(
+  lib->Register(
     new TFunction<TAutoDB>(this,  &TAutoDB::LibEnforceFormula, "EnforceFormula",
       fpNone|fpOne,
       "Returns/sets user formula enforcement option")

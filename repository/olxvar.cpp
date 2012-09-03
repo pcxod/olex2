@@ -227,18 +227,18 @@ void olxvar_funIsVar(const TStrObjList& Params, TMacroError &E) {
 }
 TLibrary *TOlxVars::ExportLibrary(const olxstr &name, TLibrary *_l) {
   TLibrary *l = _l == NULL ? new TLibrary(name) : _l;
-  l->RegisterStaticFunction(
+  l->Register(
     new TStaticFunction(&olxvar_funSetVar,
       "SetVar", fpTwo, "Sets the value of the specified variable"));
-  l->RegisterStaticFunction(
+  l->Register(
     new TStaticFunction(&olxvar_funGetVar,
       "GetVar", fpOne|fpTwo, "Gets the value of the specified variable. If the"
       " variable does not exist and no default value is provided - an error "
       "occurs"));
-  l->RegisterStaticFunction(
+  l->Register(
     new TStaticFunction(&olxvar_funIsVar,
       "IsVar", fpOne, "Checks if the specified variable exists"));
-  l->RegisterStaticFunction(
+  l->Register(
     new TStaticFunction(&olxvar_funUnsetVar,
       "UnsetVar", fpOne, "Removes the specified variable"));
   return l;

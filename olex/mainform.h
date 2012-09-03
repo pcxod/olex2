@@ -261,7 +261,7 @@ protected:
   TDataFile FHelpFile, FMacroFile, FPluginFile;
   TDataItem *FHelpItem, *FPluginItem;
   
-  TEMacroLib Macros;
+  macrolib::TEMacroLib Macros;
 
   olxstr DictionaryFile, GradientPicture;
   TLangDict Dictionary;
@@ -570,7 +570,6 @@ private:
   DefFunc(Strcmp)
   DefFunc(GetEnv)
 
-  DefFunc(Eval)
   DefFunc(VVol)
 
   DefFunc(Sel)

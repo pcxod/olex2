@@ -286,14 +286,13 @@ void cetTable::AddCol(const olxstr& col_name)  {
   }
 }
 
-bool cetTable::DelCol(const olxstr& col_name) {
-  size_t i = data.ColIndex(col_name);
-  if (i == InvalidIndex) return false;
-  for (size_t j=0; j < data.RowCount(); j++)
-    delete data[j][i];
-  data.DelCol(i);
-  return true;
+bool cetTable::DelCol(size_t idx) {
+  if (idx == InvalidIndex) return false;
+  for (size_t i=0; i < data.RowCount(); i++)
+    delete data[i][idx];
+  data.DelCol(idx);
   // shall we update the table name here?
+  return true;
 }
 
 cetTable::cetTable(const olxstr& cols, size_t row_count)  {
@@ -475,7 +474,8 @@ CifBlock::~CifBlock()  {
     delete params.GetObject(i);
 }
 ICifEntry& CifBlock::Add(ICifEntry* p)  {
-  if( !p->HasName() || p->GetName().IsEmpty() )  {  // only comments are allowed to have not name
+  // only comments are allowed to have not name
+  if( !p->HasName() || p->GetName().IsEmpty() )  {
     if( !EsdlInstanceOf(*p, cetComment) )
       throw TInvalidArgumentException(__OlxSourceInfo, "name");
     return *params.Add(EmptyString(), p).Object;
@@ -495,7 +495,8 @@ ICifEntry& CifBlock::Add(ICifEntry* p)  {
         table_map.GetValue(ti) = (cetTable*)p;
       else  {
         table_map.Delete(ti);
-        TBasicApp::NewLogEntry(logWarning) << "Changing table type for " << pname;
+        TBasicApp::NewLogEntry(logWarning) << "Changing table type for " <<
+          pname;
       }
     }
     const size_t oi = params.IndexOfi(pname);
@@ -505,16 +506,15 @@ ICifEntry& CifBlock::Add(ICifEntry* p)  {
   }
   return *p;
 }
-bool CifBlock::Remove(const olxstr& pname)  {
-  const size_t i = param_map.IndexOf(pname);
-  if( i == InvalidIndex )  return false;
-  param_map.Delete(i);
-  const size_t ti = table_map.IndexOf(pname);
+bool CifBlock::Delete(size_t idx)  {
+  if( idx == InvalidIndex )  return false;
+  const size_t ti = table_map.IndexOf(param_map.GetKey(idx));
   if( ti != InvalidIndex )
     table_map.Delete(ti);
-  const size_t oi = params.IndexOfi(pname);
+  const size_t oi = params.IndexOfi(param_map.GetKey(idx));
   delete params.GetObject(oi);
   params.Delete(oi);
+  param_map.Delete(idx);
   return true;
 }
 void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name)  {

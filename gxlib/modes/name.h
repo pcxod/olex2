@@ -83,7 +83,6 @@ public:
     Suffix = Options.FindValue('s');
     Symbol = Options.FindValue('t');  // type
     AutoComplete = Options.Contains('a');
-    bool typeSet = false;
     // validate if type is correct
     if( !Symbol.IsEmpty() && !XElementLib::IsElement(Symbol) )
       throw TInvalidArgumentException(__OlxSourceInfo, "element type");

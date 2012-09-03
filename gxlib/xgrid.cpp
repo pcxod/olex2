@@ -1224,37 +1224,37 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
 //..............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibGetMin, "GetMin",
     fpNone, "Returns minimum value of the map") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibGetMax, "GetMax",
     fpNone, "Returns maximum value of the map") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibExtended, "Extended",
     fpNone|fpOne|fpSix, "Returns/sets extended size of the grid") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibScale, "Scale",
     fpNone|fpOne, "Returns/sets current scale") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibSize, "Size",
     fpNone|fpOne, "Returns/sets current size") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibPlaneSize, "PlaneSize",
     fpNone|fpOne, "Returns/sets current size") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibDepth, "Depth",
     fpNone|fpOne, "Returns/sets current depth") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibDepth, "MaxDepth",
     fpNone, "Returns maximum available depth") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibContours, "Contours",
     fpNone|fpOne, "Returns/sets number of contour levels") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibIsvalid, "IsValid",
     fpNone|fpOne, "Returns true if grid data is initialised") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibRenderMode, "RenderMode",
     fpNone|fpOne,
     "Returns/sets grid rendering mode. Supported values: point, line, fill, "

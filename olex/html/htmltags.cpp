@@ -710,7 +710,7 @@ TAG_HANDLER_PROC(tag)  {
 /******************* CHECKBOX *************************************************/
   else if( TagName.Equalsi("checkbox") )  {
     TCheckBox *Box = new TCheckBox(html,
-      tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
+      (tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
     wxa->centreX.Absolute(0);

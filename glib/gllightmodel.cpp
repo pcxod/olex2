@@ -139,15 +139,15 @@ void TGlLightModel::LibTwoSides(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 TLibrary* TGlLightModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("glm") : name);
-  lib->RegisterFunction<TGlLightModel>(new TFunction<TGlLightModel>(this, &TGlLightModel::LibClearColor,
+  lib->Register(new TFunction<TGlLightModel>(this, &TGlLightModel::LibClearColor,
     "ClearColor", fpNone|fpOne, "Returns/sets background color of the model") );
-  lib->RegisterFunction<TGlLightModel>(new TFunction<TGlLightModel>(this, &TGlLightModel::LibAmbientColor,
+  lib->Register(new TFunction<TGlLightModel>(this, &TGlLightModel::LibAmbientColor,
     "AmbientColor", fpNone|fpOne, "Returns/sets ambient color of the model") );
-  lib->RegisterFunction<TGlLightModel>(new TFunction<TGlLightModel>(this, &TGlLightModel::LibLocalViewer,
+  lib->Register(new TFunction<TGlLightModel>(this, &TGlLightModel::LibLocalViewer,
     "LocalViewer", fpNone|fpOne, "Returns/sets local viewer property of the model") );
-  lib->RegisterFunction<TGlLightModel>(new TFunction<TGlLightModel>(this, &TGlLightModel::LibSmoothShade,
+  lib->Register(new TFunction<TGlLightModel>(this, &TGlLightModel::LibSmoothShade,
     "SmoothShade", fpNone|fpOne, "Returns/sets smooth shading of the model") );
-  lib->RegisterFunction<TGlLightModel>(new TFunction<TGlLightModel>(this, &TGlLightModel::LibTwoSides,
+  lib->Register(new TFunction<TGlLightModel>(this, &TGlLightModel::LibTwoSides,
     "TwoSides", fpNone|fpOne, "Returns/sets two sides coloring of the model") );
   for( int i=0; i < 8; i++ )
     lib->AttachLibrary(Lights[i].ExportLibrary(olxstr("light") << (i+1)));

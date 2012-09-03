@@ -264,14 +264,14 @@ void DF(const TStrObjList& Params, TMacroError& E)  {
 
 TLibrary*  TETime::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("time") : name);
-  lib->RegisterStaticFunction( new TStaticFunction( ::FormatDateTime, "FormatDateTime", fpOne|fpTwo,
+  lib->Register( new TStaticFunction( ::FormatDateTime, "FormatDateTime", fpOne|fpTwo,
 "Formats datatime using default 26 char format or using provided string. Valid formats\
  are y(y(yy) - year like 7, 07 or 2007; M(M(M(M - month like 7, 07, Jul, July; d(d(d(d - day like\
  1, 01, Wed or Wednesday; h(h - for hours, m(m - minutes, s(s - seconds like 1 or 01") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::Now, "Now", fpNone|fpOne,
+  lib->Register( new TStaticFunction( ::Now, "Now", fpNone|fpOne,
 "Returns current date and time as a long number if no format is provided. If a format string\
  is provided it return a formatted string. The DF() function can be used for default formatting ") );
-  lib->RegisterStaticFunction( new TStaticFunction( ::DF, "DF", fpNone,
+  lib->Register( new TStaticFunction( ::DF, "DF", fpNone,
 "Returns default date format") );
   return lib;
 }

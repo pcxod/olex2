@@ -22,7 +22,6 @@
 
 #include "wx/image.h"
 #include "wx/dcps.h"
-#include "evaln.h"
 #include "imagep.h"
 
 #include "dgrad.h"
@@ -146,6 +145,7 @@
 #include "patchapi.h"
 #include "analysis.h"
 #include "label_corrector.h"
+#include "estopwatch.h"
 //#include "gl2ps/gl2ps.c"
 
 static const olxstr StartMatchCBName("startmatch");
@@ -991,7 +991,10 @@ void TMainForm::macRota(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     else if( Cmds[0] == "3" || Cmds[0] == "z"  || Cmds[0] == "c" )
       FXApp->GetRender().GetBasis().RotateZ(FXApp->GetRender().GetBasis().GetRZ()+angle);
   }
-  else if( Cmds.Count() == 5 )  {  // rota x y z 90 1 syntax - rotation around (x,y,z) 90 degrees with 1 degree inc
+  /* rota x y z 90 1 syntax - rotation around (x,y,z) 90 degrees with 1 degree
+  inc
+  */
+  else if( Cmds.Count() == 5 )  {
     FRotationVector[0] = Cmds[0].ToDouble();
     FRotationVector[1] = Cmds[1].ToDouble();
     FRotationVector[2] = Cmds[2].ToDouble();
@@ -1654,7 +1657,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 #endif
   olxstr t_cmd = Options.FindValue('t');
   if (!t_cmd.IsEmpty()) {
-    Process->SetOnTerminateCmds(TStrList(t_cmd, ">>"));
+    Process->SetOnTerminateCmds(TParamList::StrtokLines(t_cmd, ">>"));
   }
   if( (Cout && Asyn) || Asyn )  {  // the only combination
     if( !Cout )  {
@@ -3411,6 +3414,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   // a Open dialog appearing breaks the wxWidgets sizing...
   if( !IsShown() && Cmds.IsEmpty() )  return;
+  TStopWatch sw(__FUNC__);
   olxstr cmdl_fn = TOlxVars::FindValue("olx_reap_cmdl");
   if (!cmdl_fn.IsEmpty()) {
     TOlxVars::UnsetVar("olx_reap_cmdl");
@@ -3497,6 +3501,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     if( OverlayXFile )  {
+      sw.start("Loading overlayed file");
       TXFile& xf = FXApp->NewOverlayedXFile();
       xf.LoadFromFile(TXFile::ComposeName(file_n));
       FXApp->CreateObjects(false);
@@ -3527,7 +3532,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         THklFile hkl;
         bool ins_initialised = false;
         TIns* ins = (TIns*)FXApp->XFile().FindFormat("ins");
-        //ins->Clear();
+        sw.start("Loading HKL file");
         hkl.LoadFromFile(file_n.file_name, ins, &ins_initialised);
         if( !ins_initialised )  {
           olxstr src_fn = TEFile::ChangeFileExt(file_n.file_name, "p4p");
@@ -3583,6 +3588,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               EmptyString(), EmptyString(), false);
             Macros.ProcessMacro( olxstr("reap '") <<
               TEFile::ChangeFileExt(file_n.file_name, "ins") << '\'', Error);
+            sw.start("Solving the structure");
             Macros.ProcessMacro("solve", Error);
           }  // sge, if succeseded will run reap and solve
           return;
@@ -3599,11 +3605,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         SaveVFS(plStructure); // save virtual fs file
         TFileHandlerManager::Clear(plStructure);
       }
-      int64_t st = TETime::msNow();
+      sw.start("Loading the XFile");
       FXApp->LoadXFile(TXFile::ComposeName(file_n));
-      st = TETime::msNow() - st;
-      TBasicApp::NewLogEntry(logInfo) << "Structure loaded in " << st << " ms"
-        << NewLineSequence();
+      sw.start("Creating bad reflections and refinement info tables");
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
       if (update_vfs)
@@ -3721,10 +3725,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( !Tmp.IsEmpty() && !(Tmp == XLibMacros::CurrentDir) )  {
         if( !TEFile::ChangeDir(Tmp) )  {
           TBasicApp::NewLogEntry() << "Cannot change current folder '" <<
-            TEFile::CurrentDir() << "' to '" << Tmp;
+            TEFile::CurrentDir() << "' to '" << Tmp << '\'';
         }
         else  {
-          if( !Blind )  
+          if( !Blind )
             XLibMacros::CurrentDir = Tmp;
         }
       }
@@ -3738,23 +3742,12 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
         if( Lst.SplitAtomCount() )  {
           TBasicApp::NewLogEntry() << "The following atom(s) may be split:";
+          Tmp.SetLength(0);
           for( size_t i=0; i < Lst.SplitAtomCount(); i++ )  {
             const TLstSplitAtom& SpA = Lst.SplitAtom(i);
-            Tmp = SpA.AtomName;  Tmp.RightPadding(5, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);
-            Tmp.RightPadding(12, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);
-            Tmp.RightPadding(19, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionA[2]);
-            Tmp.RightPadding(26, ' ', true);
-            Tmp << "& ";
-            Tmp << olxstr::FormatFloat(3, SpA.PositionB[0]);
-            Tmp.RightPadding(35, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionB[1]);
-            Tmp.RightPadding(42, ' ', true);
-            Tmp << olxstr::FormatFloat(3, SpA.PositionB[2]);
-            TBasicApp::NewLogEntry() << Tmp;
+            Tmp << ' ' << SpA.AtomName;
           }
+          TBasicApp::NewLogEntry() << Tmp;
         }
         if( Lst.TrefTryCount() )  {
           TBasicApp::NewLogEntry() << "TREF tries:";
@@ -3801,8 +3794,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//      FXApp->Draw();  // to update the scene just in case...
     FGlConsole->SetCommand(FGlConsole->GetCommand());  // force the update
+    FXApp->Draw();
     return;
   }
   else  {
@@ -3925,14 +3918,6 @@ void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   tmp.Replace("\\n", "\n");
   if( !tmp.EndsWith('\n') )  tmp << '\n';
   PythonExt::GetInstance()->RunPython(tmp);
-}
-//..............................................................................
-void TMainForm::funEval(const TStrObjList& Params, TMacroError &E)  {
-  TStrList Vars;
-  TStrPObjList<olxstr,TSOperation*> Funcs;
-  TSOperation S(NULL, &Funcs, &Vars, NULL);
-  if( S.LoadFromExpression(Params[0]) == 0 )
-    E.SetRetVal(S.Evaluate());
 }
 //..............................................................................
 void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -6949,7 +6934,8 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   //iv = _exp.build("c = b.sub(0,3) + 'dfg'");
   //iv = _exp.build("c = c + 100");
   //iv = _exp.build("c = 1.2 + 1.1 - .05");
-  //iv = _exp.build("a.len() + 1.2 + 1.1 - abs(-.05)*cos(PI/2)");
+  iv = _exp.build("a.len() + 1.2 + 1.1 - abs(-.05)*cos(PI/2)");
+  if (iv->ref_cnt() == 0) delete iv;
   iv = _exp.build("a='AaBc'.charAt(2)");
   iv = _exp.build("a='AaBc'[1].toUpper()");
   iv = _exp.build("a='100'.atoi()");
@@ -6965,7 +6951,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;
   }
-  iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
+  //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   if( !iv->is_final() && false )  {
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;

@@ -27,6 +27,7 @@
 #include "infotab.h"
 #include "catomlist.h"
 #include "label_corrector.h"
+#include "estopwatch.h"
 
 #undef AddAtom
 #undef GetObject
@@ -48,13 +49,18 @@ void TIns::Clear()  {
 }
 //..............................................................................
 void TIns::LoadFromFile(const olxstr& fileName)  {
+  TStopWatch sw(__FUNC__);
   Lst.Clear();
   // load Lst first, as it may have the error indicator
   olxstr lst_fn = TEFile::ChangeFileExt(fileName, "lst");
   if( TEFile::Exists(lst_fn) )  {
-    try  { Lst.LoadFromFile(lst_fn); }
+    try  {
+      sw.start("Loading LST file");
+      Lst.LoadFromFile(lst_fn);
+    }
     catch(...)  {}
   }
+  sw.start("Loading the file");
   TBasicCFile::LoadFromFile(fileName);
 }
 //..............................................................................

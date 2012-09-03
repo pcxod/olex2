@@ -600,6 +600,7 @@
     <ClCompile Include="..\..\..\xlib\cifdp.cpp" />
     <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\hall.cpp" />
+    <ClCompile Include="..\..\..\xlib\infotab.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\brushhkl.cpp" />
     <ClCompile Include="..\..\..\xlib\catom.cpp" />
     <ClCompile Include="..\..\..\xlib\chemdata.cpp">
@@ -621,7 +622,6 @@
     <ClCompile Include="..\..\..\xlib\crs.cpp" />
     <ClCompile Include="..\..\..\xlib\ellipsoid.cpp" />
     <ClCompile Include="..\..\..\xlib\envilist.cpp" />
-    <ClCompile Include="..\..\..\xlib\evaln.cpp" />
     <ClCompile Include="..\..\..\xlib\experimental.cpp" />
     <ClCompile Include="..\..\..\xlib\exyzgroup.cpp" />
     <ClCompile Include="..\..\..\xlib\fastsymm.cpp" />
@@ -791,7 +791,6 @@
     <ClInclude Include="..\..\..\xlib\crs.h" />
     <ClInclude Include="..\..\..\xlib\ellipsoid.h" />
     <ClInclude Include="..\..\..\xlib\envilist.h" />
-    <ClInclude Include="..\..\..\xlib\evaln.h" />
     <ClInclude Include="..\..\..\xlib\exlib.h" />
     <ClInclude Include="..\..\..\xlib\fastsymm.h" />
     <ClInclude Include="..\..\..\xlib\fracmask.h" />

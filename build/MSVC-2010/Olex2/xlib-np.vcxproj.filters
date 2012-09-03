@@ -69,9 +69,6 @@
     <ClCompile Include="..\..\..\xlib\envilist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\xlib\evaln.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\xlib\experimental.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -777,6 +774,9 @@
     <ClCompile Include="..\..\..\xlib\symmspace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\infotab.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\asymmunit.h">
@@ -825,9 +825,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\envilist.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\xlib\evaln.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\exlib.h">
