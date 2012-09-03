@@ -394,10 +394,10 @@ void expression_tree::expand(const parser_util::operator_set &os)  {
 void expression_tree::expand_cmd()  {
   data.TrimWhiteChars();
   if (parser_util::is_quoted(data)) {
-    //data = parser_util::unquote(data);
     return;
   }
   else if (!parser_util::is_expandable(data)) {
+    macro_call = true;
     return;
   }
   size_t dt_st=0;
@@ -415,6 +415,7 @@ void expression_tree::expand_cmd()  {
         evator->args.Add(new expression_tree(this, args[ai]))->expand_cmd();
       macro_call = true;
       dt_st = data.Length();
+      data.SetLength(0);
       break;
     }
     else if (ch == '(') {  // parse out brackets

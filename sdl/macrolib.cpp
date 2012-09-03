@@ -16,7 +16,7 @@ using namespace macrolib;
 //.............................................................................
 //.............................................................................
 TEMacro::TEMacro(const olxstr& name, const olxstr& desc)
-  : AMacro(name, EmptyString(), fpAny, desc)
+  : AMacro(name, EmptyString(), fpAny_Options, desc)
 {
 
 }
@@ -176,6 +176,14 @@ TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
     if (ei != InvalidIndex)
       return arg_t(t->data.SubString(1, ei-1), t->data.SubStringFrom(ei+1));
     return arg_t(t->data.SubStringFrom(1), EmptyString());
+  }
+  if (t->data == '=') {
+    if (t->left == NULL || t->left->data.IsEmpty())
+      throw TInvalidArgumentException(__OlxSourceInfo, "option name");
+    olxstr n = t->left->data.StartsFrom('-') ? t->left->data.SubStringFrom(1)
+      : t->left->data;
+    olxstr v = t->right ? ProcessEvaluator(t->right, me, argv) : EmptyString();
+    return arg_t(n, v);
   }
   if (t->evator)
     return arg_t(EmptyString(), ProcessEvaluator(t, me, argv));
