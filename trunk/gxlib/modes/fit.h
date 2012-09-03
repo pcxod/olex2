@@ -71,8 +71,8 @@ public:
   TFitMode(size_t id)
     : AMode(id),
       Initialised(false),
-      AngleInc(0),
       DoSplit(false),
+      AngleInc(0),
       undo(NULL)
   {
     uniq_handler = new OnUniqHandler(*this);

@@ -197,12 +197,10 @@ void TCif::SetParam(const ICifEntry& value)  {
   data_provider[block_index].Add(value.Replicate());
 }
 //..............................................................................
-void TCif::ReplaceParam(const olxstr& old_name, const olxstr& new_name,
-  const ICifEntry& value)
-{
+void TCif::ReplaceParam(const olxstr& name, const ICifEntry& value) {
   if( block_index == InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
-  data_provider[block_index].Remove(old_name);
+  data_provider[block_index].Remove(name);
   data_provider[block_index].Add(value.Replicate());
 }
 //..............................................................................
@@ -342,7 +340,7 @@ void TCif::Initialize()  {
         }
       }
       // remove obsolete loop
-      data_provider[block_index].Remove(*Loop);
+      data_provider[block_index].Remove(*(ICifEntry*)Loop);
     }
     // no sym ops, check hall symbol
     else {

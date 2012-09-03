@@ -125,7 +125,7 @@ public:
     Slot(IGetter *getter, ISetter *setter)
       : getter(*getter), setter(*setter)
     {}
-    ~Slot() {
+    virtual ~Slot() {
       delete &getter;
       delete &setter;
     }

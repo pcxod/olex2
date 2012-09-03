@@ -710,31 +710,31 @@ void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 TLibrary* TGlConsole::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary((name.IsEmpty() ? olxstr("console") : name));
-  lib->RegisterFunction<TGlConsole>(
+  lib->Register(
     new TFunction<TGlConsole>(this,  &TGlConsole::LibClear,
       "Clear", fpNone,
       "Clears the content of the output buffer") );
-  lib->RegisterFunction<TGlConsole>(
+  lib->Register(
     new TFunction<TGlConsole>(this,  &TGlConsole::LibLines,
       "Lines", fpNone|fpOne,
       "Sets/returns the number of lines to display"));
-  lib->RegisterFunction<TGlConsole>(
+  lib->Register(
     new TFunction<TGlConsole>(this,  &TGlConsole::LibShowBuffer,
       "ShowBuffer", fpNone|fpOne,
       "Shows/hides the output buffer or returns current status"));
-  lib->RegisterFunction<TGlConsole>(
+  lib->Register(
     new TFunction<TGlConsole>(this,  &TGlConsole::LibPostText,
       "Post", fpAny^fpNone,
       "Adds provided text to the output buffer"));
-  lib->RegisterFunction<TGlConsole>(
+  lib->Register(
     new TFunction<TGlConsole>(this,  &TGlConsole::LibLineSpacing,
       "LineSpacing", fpNone|fpOne,
       "Changes/returns current line spacing"));
-  lib->RegisterFunction<TGlConsole>(
+  lib->Register(
     new TFunction<TGlConsole>(this,  &TGlConsole::LibInviteString,
       "PromptString", fpNone|fpOne,
       "Changes/returns current prompt string"));
-  lib->RegisterFunction<TGlConsole>(
+  lib->Register(
     new TFunction<TGlConsole>(this,  &TGlConsole::LibCommand,
       "Command", fpNone|fpOne,
       "Changes/returns current command"));

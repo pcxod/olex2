@@ -13,7 +13,7 @@
 #include "olxstate.h"
 
 #define this_InitFuncD(funcName, argc, desc) \
-  (Library).RegisterFunction(\
+  (Library).Register(\
     new TFunction<THtmlManager>(\
       this, &THtmlManager::fun##funcName, #funcName, argc, desc))
 

@@ -361,17 +361,17 @@ void TFileHandlerManager::LibClear(TStrObjList &Cmds, const TParamList &Options,
 TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
   if( FHandler == NULL )  new TFileHandlerManager();
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("fs") : name);
-  lib->RegisterFunction<TFileHandlerManager>(
-    new TFunction<TFileHandlerManager>(FHandler,  
+  lib->Register(
+    new TFunction<TFileHandlerManager>(FHandler,
       &TFileHandlerManager::LibExists, "Exists", fpOne,
     "Returns true if the specified file exists on the virtual file system")
   );
-  lib->RegisterMacro<TFileHandlerManager>(
-    new TMacro<TFileHandlerManager>(FHandler,  
+  lib->Register(
+    new TMacro<TFileHandlerManager>(FHandler,
       &TFileHandlerManager::LibDump, "Dump", EmptyString(), fpTwo,
     "Saves a file in the VFS to the disk file")
   );
-  lib->RegisterStaticMacro(
+  lib->Register(
     new TStaticMacro(&TFileHandlerManager::LibClear,
     "Clear", EmptyString(), fpNone|fpOne,
     "Clear the content of the VFS. A mask [-1] can be used to remove only "

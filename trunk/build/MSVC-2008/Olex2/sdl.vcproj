@@ -1426,6 +1426,10 @@
 				RelativePath="..\..\..\sdl\undo.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\sdl\wildcard.cpp"
+				>
+			</File>
 			<Filter
 				Name="encoding"
 				>

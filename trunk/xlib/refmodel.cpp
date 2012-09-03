@@ -1795,27 +1795,27 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
 //..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
-  lib->RegisterFunction<RefinementModel>(
+  lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibOSF,
       "OSF",
       fpNone|fpOne,
 "Returns/sets OSF"));
-  lib->RegisterFunction<RefinementModel>(
+  lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibFVar,
       "FVar",
       fpOne|fpTwo,
 "Returns/sets FVAR referred by index"));
-  lib->RegisterFunction<RefinementModel>(
+  lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI,
       "Exti",
       fpNone|fpOne,
 "Returns/sets EXTI") );
-  lib->RegisterFunction<RefinementModel>(
+  lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibUpdateCRParams,
       "UpdateCR",
       fpAny^(fpNone|fpOne|fpTwo),
 "Updates constraint or restraint parameters (name, index, {values})") );
-  lib->RegisterMacro<RefinementModel>(
+  lib->Register(
     new TMacro<RefinementModel>(this, &RefinementModel::LibShareADP,
       "ShareADP", EmptyString(),
       fpAny,

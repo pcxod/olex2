@@ -16,13 +16,13 @@
 #endif
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
-  lib.RegisterStaticMacro(\
+  lib.Register(\
     new TStaticMacro(&GXLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
 #define gxlib_InitMacroA(macroName, amacroName, validOptions, argc, desc)\
-  lib.RegisterStaticMacro(\
+  lib.Register(\
     new TStaticMacro(&GXLibMacros::mac##macroName, #amacroName, (validOptions), argc, desc))
 #define gxlib_InitFunc(funcName, argc, desc) \
-  lib.RegisterStaticFunction(\
+  lib.Register(\
     new TStaticFunction(&GXLibMacros::fun##funcName, #funcName, argc, desc))
 
 //.............................................................................
@@ -350,9 +350,6 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
 {
   TStopWatch st(__FUNC__);
   TGXApp &app = TGXApp::GetInstance();
-  static const short // scale type
-    stSimple     = 0x0001,
-    stRegression = 0x0002;
   double resolution = Options.FindValue("r", "0.25").ToDouble(),
     maskInc = 1.0;
   if( resolution < 0.1 )  resolution = 0.1;
@@ -416,7 +413,6 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
     MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
     QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortBySum);
-    const int PointCount = dim.Prod();
     for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
@@ -457,12 +453,6 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
   TGXApp &app = TGXApp::GetInstance();
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   // space group matrix list
-  TSpaceGroup* sg = NULL;
-  try  { sg = &app.XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
-    return;
-  }
   TUnitCell::SymmSpace sp = app.XFile().GetUnitCell().GetSymmSpace();
   olxstr hklFileName = app.LocateHklFile();
   if( !TEFile::Exists(hklFileName) )  {
@@ -470,8 +460,7 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   TRefList refs;
-  RefinementModel::HklStat stats =
-    app.XFile().GetRM().GetFourierRefList<
+  app.XFile().GetRM().GetFourierRefList<
       TUnitCell::SymmSpace,RefMerger::StandardMerger>(sp, refs);
   const double vol = app.XFile().GetLattice().GetUnitCell().CalcVolume();
   TArrayList<SFUtil::StructureFactor> P1SF(refs.Count()*sp.Count());
@@ -507,7 +496,7 @@ void GXLibMacros::macMask(TStrObjList &Cmds, const TParamList &Options,
   TGXApp &app = TGXApp::GetInstance();
   if (Cmds[0].Equalsi("atoms") && Cmds.Count() > 1) {
     int Mask = Cmds[1].ToInt();
-    short ADS=0, AtomsStart=2;
+    short AtomsStart=2;
     TXAtomPList Atoms =
       app.FindXAtoms(TStrObjList(Cmds.SubListFrom(AtomsStart)), false, false);
     app.UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
@@ -917,10 +906,10 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
       if( !qpeaks[i]->IsDetached() )
         d_cnt++;
     if( d_cnt == 0 && wheel < 0 )  return;
-    if( d_cnt == qpeaks.Count() && wheel > 0 )  return;
-    d_cnt += (int)(wheel);
+    if( d_cnt == (index_t)qpeaks.Count() && wheel > 0 )  return;
+    d_cnt += (index_t)(wheel);
     if( d_cnt < 0 )  d_cnt = 0;
-    if( d_cnt > (int)qpeaks.Count() )
+    if( d_cnt > (index_t)qpeaks.Count() )
       d_cnt = qpeaks.Count();
     for( size_t i=0; i < qpeaks.Count(); i++ )
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);

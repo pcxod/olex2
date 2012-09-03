@@ -95,16 +95,16 @@ void ExperimentalDetails::LibSize(const TStrObjList& Params, TMacroError& E)  {
 //.............................................................................
 TLibrary* ExperimentalDetails::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("exptl") : name );
-  lib->RegisterFunction<ExperimentalDetails>(
+  lib->Register(
     new TFunction<ExperimentalDetails>(this,
     &ExperimentalDetails::LibTemperature, "Temperature", fpNone|fpOne,
     "Returns/sets experiment temperature. Returns value in C, accepts strings"
     " like 120K, 10F. Default scale is C"));
-  lib->RegisterFunction<ExperimentalDetails>(
+  lib->Register(
     new TFunction<ExperimentalDetails>(this,
     &ExperimentalDetails::LibRadiation, "Radiation", fpNone|fpOne,
     "Returns/sets experiment wavelength in angstrems") );
-  lib->RegisterFunction<ExperimentalDetails>(
+  lib->Register(
     new TFunction<ExperimentalDetails>(this,
     &ExperimentalDetails::LibSize, "Size", fpNone|fpOne,
     "Returns/sets crystal size. Returns/accepts strings line 0.5x0.5x0.5 "

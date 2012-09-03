@@ -211,16 +211,26 @@ void TXFader::LibBG2FG(const TStrObjList& Params, TMacroError& E)  {
 
 class TLibrary*  TXFader::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name);
-  lib->RegisterFunction<TXFader>( new TFunction<TXFader>(this,  &TXFader::LibStep, "Step", fpNone|fpOne,
-"Sets/returns xfader increment") );
-  lib->RegisterFunction<TXFader>( new TFunction<TXFader>(this,  &TXFader::LibPosition, "Position", fpNone|fpOne,
-"Sets/returns current xfader position") );
-  lib->RegisterFunction<TXFader>( new TFunction<TXFader>(this,  &TXFader::LibInitBG, "InitBG", fpNone|fpOne,
-"Initialises xfader background frame") );
-  lib->RegisterFunction<TXFader>( new TFunction<TXFader>(this,  &TXFader::LibInitFG, "InitFG", fpNone|fpOne,
-"Initialises xfader foreground frame") );
-  lib->RegisterFunction<TXFader>( new TFunction<TXFader>(this,  &TXFader::LibBG2FG, "BG2FG", fpNone|fpOne,
-"Copies current background frame to foreground frame") );
+  lib->Register(
+    new TFunction<TXFader>(this,  &TXFader::LibStep, "Step",
+      fpNone|fpOne,
+    "Sets/returns xfader increment"));
+  lib->Register(
+    new TFunction<TXFader>(this,  &TXFader::LibPosition, "Position",
+      fpNone|fpOne,
+    "Sets/returns current xfader position"));
+  lib->Register(
+    new TFunction<TXFader>(this,  &TXFader::LibInitBG, "InitBG",
+      fpNone|fpOne,
+    "Initialises xfader background frame"));
+  lib->Register(
+    new TFunction<TXFader>(this,  &TXFader::LibInitFG, "InitFG",
+      fpNone|fpOne,
+    "Initialises xfader foreground frame"));
+  lib->Register(
+    new TFunction<TXFader>(this,  &TXFader::LibBG2FG, "BG2FG",
+      fpNone|fpOne,
+    "Copies current background frame to foreground frame"));
   AGDrawObject::ExportLibrary(*lib);
   return lib;
 }

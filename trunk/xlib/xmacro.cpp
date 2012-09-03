@@ -50,11 +50,11 @@
 #endif
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
-  lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
+  lib.Register( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
 #define xlib_InitMacroA(macroName, amacroName, validOptions, argc, desc)\
-  lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #amacroName, (validOptions), argc, desc))
+  lib.Register( new TStaticMacro(&XLibMacros::mac##macroName, #amacroName, (validOptions), argc, desc))
 #define xlib_InitFunc(funcName, argc, desc) \
-  lib.RegisterStaticFunction( new TStaticFunction(&XLibMacros::fun##funcName, #funcName, argc, desc))
+  lib.Register(new TStaticFunction(&XLibMacros::fun##funcName, #funcName, argc, desc))
 
 using namespace cif_dp;
 const olxstr XLibMacros::NoneString("none");
@@ -174,7 +174,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "creates a table from a cif");
   xlib_InitMacro(CifMerge,
     "u-updates atom treatment if the asymmetric units of currently loaded file"
-    " and of the CIF file match",
+    " and of the CIF file match&;"
+    "f-creates final CIF with embedded RES file and HKL loop",
     fpAny|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
   xlib_InitMacro(CifExtract, EmptyString(), fpTwo|psFileLoaded,
@@ -877,7 +878,7 @@ void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     throw TFunctionFailedException(__OlxSourceInfo,
       "this function requires Olex2 processor implementation");
   }
-  TStrList allCmds(Cmds.Text(' '), ">>");
+  TStrList allCmds = TParamList::StrtokLines(Cmds.Text(' '), ">>");
   for( size_t i=0; i < allCmds.Count(); i++ )  {
     if( !op->processMacro(allCmds[i]) )  {
       if( (i+1) < allCmds.Count() )
@@ -2800,7 +2801,7 @@ void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "this function requires Olex2 processor implementation");
   }
-  TStrList allCmds(Params.Text(' '), ">>");
+  TStrList allCmds = TParamList::StrtokLines(Params.Text(' '), ">>");
   for( size_t i=0; i < allCmds.Count(); i++ )  {
     if( !op->processMacro(allCmds[i]) )  {
       if( (i+1) < allCmds.Count() )
@@ -3215,42 +3216,33 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TCif *Cif, Cif2;
   cif_dp::TCifDP src;
   const size_t _Translation_count = 5;
-  static const olxstr _Translations[2*_Translation_count] = {
-    "_symmetry_cell_setting", "_space_group_crystal_system",
-    "_symmetry_space_group_name_Hall", "_space_group_name_Hall",
-    "_symmetry_space_group_name_H-M", "_space_group_name_H-M_alt",
-    "_symmetry_Int_Tables_number-M", "_space_group_IT_number",
-    "_diffrn_reflns_av_sigmaI/netI", "_diffrn_reflns_av_unetI/netI"
-  };
   TTypeList<AnAssociation2<olxstr,olxstr> > Translations;
   olxstr CifCustomisationFN(xapp.GetConfigDir() + "cif_customisation.xlt");
   if (!TEFile::Exists(CifCustomisationFN)) {
-    olxstr src(xapp.GetCifTemplatesDir() + "customisation.xlt");
-    if (TEFile::Exists(src))
-      TEFile::Copy(src, CifCustomisationFN);
+    CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
+    TBasicApp::NewLogEntry() << "Using default CIF customisation";
   }
-  if( TEFile::Exists(CifCustomisationFN) )  {
-    try  {
+  else {
+    TBasicApp::NewLogEntry() << "Using user CIF customisation";
+  }
+  if (TEFile::Exists(CifCustomisationFN)) {
+    try {
       TDataFile df;
-      if( !df.LoadFromXLFile(CifCustomisationFN) )  {
+      if (!df.LoadFromXLFile(CifCustomisationFN)) {
         Error.ProcessingError(__OlxSrcInfo,
           "falied to load CIF customisation file");
         return;
       }
       TDataItem& di = df.Root().FindRequiredItem(
         "cif_customisation").FindRequiredItem("translation");
-      for( size_t i=0; i < di.ItemCount(); i++ ) {
+      for (size_t i=0; i < di.ItemCount(); i++) {
         Translations.AddNew(di.GetItem(i).GetRequiredField("from"),
           di.GetItem(i).GetRequiredField("to"));
       }
     }
-    catch(const TExceptionBase& e)  {
+    catch (const TExceptionBase& e) {
       throw TFunctionFailedException(__OlxSourceInfo, e);
     }
-  }
-  else  {
-    for( size_t i=0; i < _Translation_count; i++ )
-      Translations.AddNew(_Translations[i*2], _Translations[i*2+1]);
   }
   TStrList _loop_names_to_skip("_atom_site;_geom;_space_group", ';');
   if( xapp.CheckFileType<TCif>() )
@@ -3259,8 +3251,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if( TEFile::Exists(cifFN) )
       Cif2.LoadFromFile(cifFN);
-    else
-      throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
+    else {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "existing cif is expected");
+    }
     Cif = &Cif2;
   }
   // normalise
@@ -3351,7 +3345,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
            " its content mismatches the asymmetric unit";
         }
         else  {
-          tab->DelCol("_atom_site_refinement_flags");
+          tab->RemoveCol("_atom_site_refinement_flags");
           size_t rf_pos_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
           if( rf_pos_ind == InvalidIndex )  {
             tab->AddCol("_atom_site_refinement_flags_posn");
@@ -3455,8 +3449,15 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
+  }
+  if (Options.Contains('f')) {
+    olxstr i_v = Options.FindValue('f');
+    bool insert = i_v.IsEmpty() ? true : i_v.ToBool();
     // emmbedding the RES file into the CIF
-    if (Cif->FindEntry("_shelx_res_file") == NULL) {
+    Cif->Remove("_shelx_res_file");
+    Cif->Remove("_shelx_res_file_MD5");
+    Cif->Remove("_shelx_res_checksum");
+    if (insert) {
       olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
       if (TEFile::Exists(res_fn)) {
         cetNamedStringList res("_shelx_res_file");
@@ -3472,10 +3473,12 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         Cif->SetParam("_shelx_res_file_MD5", MD5::Digest(s), false);
       }
     }
+    Cif->Remove("_shelx_hkl_file");
+    Cif->Remove("_shelx_hkl_file_MD5");
+    Cif->Remove("_shelx_hkl_checksum");
+    Cif->Remove("_refln");
     // embedd HKL
-    if (Cif->FindEntry("_shelx_hkl_file") == NULL &&
-      Cif->FindLoop("_refln") == NULL)
-    {
+    if (insert) {
       olxstr hkl_src = xapp.LocateHklFile();
       if (TEFile::Exists(hkl_src)) {
         cetTable &t = Cif->AddLoopDef("_refln_index_h,_refln_index_k,_refln_index_l,"

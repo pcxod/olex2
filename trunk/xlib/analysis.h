@@ -241,17 +241,17 @@ public:
 
   static TLibrary *ExportLibrary(const olxstr& name="analysis")  {
     TLibrary* lib = new TLibrary(name);
-    lib->RegisterStaticFunction(
+    lib->Register(
       new TStaticFunction(&Analysis::funTrim, "Trim", fpNone|fpOne,
       "Trims the size of the assymetric unit according to the 18 A^3 rule."
       "Returns true if any atoms were deleted")
     );
-    lib->RegisterStaticFunction(
+    lib->Register(
       new TStaticFunction(&Analysis::funFindScale, "Scale", fpNone|fpOne,
       "Scales the Q-peaks according to found fragments."
       "Returns the scale or 0")
     );
-    lib->RegisterStaticFunction(
+    lib->Register(
       new TStaticFunction(&Analysis::funAnaluseUeq, "AnalyseUeq", fpNone|fpOne,
       ""
       "")

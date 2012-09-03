@@ -3241,6 +3241,7 @@ void TGXApp::SetStructureVisible(bool v)  {
 }
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr& fn)  {
+  volatile TStopWatch sw(__FUNC__);
   FXFile->LoadFromFile(fn);
   if( !FStructureVisible )
     NewLogEntry() << "Note: structure is invisible";
