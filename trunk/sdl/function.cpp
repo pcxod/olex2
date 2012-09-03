@@ -27,7 +27,7 @@ olxstr ABasicLibrary::GetQualifiedName() const {
 bool ABasicFunction::ValidateState(const TStrObjList &Params, TMacroError &E) {
   const size_t argC = Params.Count(),
     arg_m = (0x0001 << argC);
-  if( (ArgStateMask&fpAny) != fpAny && (ArgStateMask&arg_m) == 0)  {
+  if( (ArgStateMask&fpAny) < fpAny && (ArgStateMask&arg_m) == 0)  {
     E.WrongArgCount(*this, argC);
     return false;
   }
@@ -147,7 +147,7 @@ void AMacro::Run(TStrObjList &Params, const TParamList &Options,
 {
   if( !ValidateState(Params, E) )  return;
   const size_t argC = Params.Count();
-  if ((GetArgStateMask()&0x0000ffff) != 0x0000fffe) {
+  if ((GetArgStateMask()&0x0000ffff) != fpAny_Options) {
     for( size_t i=0; i < Options.Count(); i++ )  {
       if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
         E.WrongOption(*this, Options.GetName(i) );

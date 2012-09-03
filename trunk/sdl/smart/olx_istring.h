@@ -687,7 +687,7 @@ public:
   static bool o_issubstr(const OC* whr, size_t whr_len, size_t pos,
     const AC* wht, size_t wht_len)
   {
-    if( pos + wht_len >= whr_len )  return false;
+    if( pos + wht_len > whr_len )  return false;
     for( size_t i=0; i < wht_len; i++ )
       if( whr[pos+i] != wht[i] )
         return false;

@@ -67,7 +67,31 @@ void IsNumberTest(OlxTests& t)  {
   }
 }
 //...................................................................................................
+void SubstringTest(OlxTests& t)  {
+  olxstr x("abcd>>");
+  if (x.IsSubStringAt(">>", 3))
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (x.IsSubStringAt(">>", 5))
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (!x.IsSubStringAt(">>", 4))
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  for (size_t i=0; i < x.Length()-1; i++) {
+    if (!x.IsSubStringAt(x.SubStringFrom(i), i))
+      throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  }
+  if (x.SubString(0, 1) != 'a')
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (x.SubString(0, 2) != "ab")
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (x.SubStringFrom(2) != "cd>>")
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (x.SubStringTo(2) != "ab")
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (x.IndexOf(">>") != 4)
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+}
+//...................................................................................................
 void StringTests(OlxTests& t)  {
-  t.Add(&ReplaceTest).Add(&IsNumberTest);
+  t.Add(&ReplaceTest).Add(&IsNumberTest).Add(*SubstringTest);
 }
 };  //namespace test

@@ -56,8 +56,8 @@ const uint32_t
   fpEight = 0x00000100,
   fpNine  = 0x00000200,
   fpTen   = 0x00000400,
-  fpAnyOption = 0x0000fffe,
-  fpAny   = 0x0000ffff,
+  fpAny   = 0x0000fffe,
+  fpAny_Options = 0x0000ffff,
 
   fpSpecialCheckA = 0x00010000,
   fpSpecialCheckB = 0x00020000,

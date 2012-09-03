@@ -241,8 +241,8 @@ if sys.platform[:3] == 'win':
 
   pyFolder = os.path.split(sys.executable)[0] + '\\'
   if not debug:
-    cc_flags = ['/EHsc', '/Ox', '/Ob2', '/Oi', '/GL', '/MD', '/bigobj', '/fp:fast', '/GF']
-    #cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/MD', '/bigobj', '/fp:fast', '/GF']
+    #cc_flags = ['/EHsc', '/Ox', '/Ob2', '/Oi', '/GL', '/MD', '/bigobj', '/fp:fast', '/GF']
+    cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/MD', '/bigobj', '/fp:fast', '/GF']
     if sse:
       cc_flags.append( '/arch:'+sse)
     env.Append(CCFLAGS = cc_flags) 
