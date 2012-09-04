@@ -303,9 +303,9 @@ void TXFile::Sort(const TStrList& ins)  {
         cs.sequence.Add(&AtomSorter::atom_cmp_Part);
       else if( sort.CharAt(i) == 'h' )
         keeph = false;
-       else if( sort.CharAt(i) == 'z' )  
+       else if( sort.CharAt(i) == 'z' )
         cs.sequence.Add(&AtomSorter::atom_cmp_Suffix);
-       else if( sort.CharAt(i) == 'n' )  
+       else if( sort.CharAt(i) == 'n' )
         cs.sequence.Add(&AtomSorter::atom_cmp_Number);
     }
     if( !cs.sequence.IsEmpty() )
@@ -633,7 +633,7 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
 
   lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula",
-      fpOne|psCheckFileTypeIns,
+      fpOne|psCheckFileTypeIns|psCheckFileTypeP4P,
       "Sets formula for current file, takes a string of the following form "
       "'C:25,N:4'")
   );

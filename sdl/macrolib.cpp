@@ -154,11 +154,17 @@ olxstr TEMacroLib::ProcessEvaluator(
       f->Run(Cmds, me);
   }
   if (me.IsSuccessful()) {
-    olxstr rv = me.GetRetVal();
-    if (e->left != NULL)
-      rv = EvaluateArg(e->left, me, argv).B() << rv;
-    if (e->right != NULL) {
-      rv << EvaluateArg(e->right, me, argv).GetB();
+    olxstr rv;
+    try {
+      rv = me.GetRetVal();
+      if (e->left != NULL)
+        rv = EvaluateArg(e->left, me, argv).B() << rv;
+      if (e->right != NULL) {
+        rv << EvaluateArg(e->right, me, argv).GetB();
+      }
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logInfo) << e.GetException()->GetFullMessage();
     }
     me.GetStack().Pop();
     return rv;

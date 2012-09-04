@@ -38,6 +38,7 @@
 #include "tests/hall_test.h"
 #include "tests/formula_test.h"
 #include "tests/smat_test.h"
+#include "tests/exparse_test.h"
 
 class Listener : public AActionHandler  {
 public:
@@ -60,6 +61,7 @@ int main(int argc, char* argv[]) {
   xapp.GetLog().AddStream(new TOutStream, true);
   xapp.GetLog().AddStream(TUtf8File::Create(xapp.GetBaseDir()+"log.out", false), true);
   OlxTests tests;
+  tests.Add(&test::exparse::ExparseTests);
   tests.Add(&test::StringTests);
   tests.Add(&test::ContainerTests);
   tests.Add(&test::MD5Test).
