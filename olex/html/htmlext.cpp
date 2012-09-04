@@ -516,7 +516,7 @@ bool THtml::LoadPage(const wxString &file)  {
   Root->SetFileIndex(0);
   Root->UpdateFileIndex();
   FileName = File;
-  return UpdatePage();
+  return UpdatePage(false);
 }
 //.............................................................................
 bool THtml::ItemState(const olxstr &ItemName, short State)  {
@@ -529,7 +529,7 @@ bool THtml::ItemState(const olxstr &ItemName, short State)  {
   return true;
 }
 //.............................................................................
-bool THtml::UpdatePage()  {
+bool THtml::UpdatePage(bool update_indices)  {
   if( IsPageLocked() )  {
     PageLoadRequested = true;
     PageRequested.SetLength(0);
@@ -546,9 +546,10 @@ bool THtml::UpdatePage()  {
 
   olxstr oldPath(TEFile::CurrentDir());
   TEFile::ChangeDir(WebFolder);
-
-  for( size_t i=0; i < Root->SwitchCount(); i++ )  // reload switches
-    Root->GetSwitch(i).UpdateFileIndex();
+  if (update_indices) { // reload switches
+    for (size_t i=0; i < Root->SwitchCount(); i++)
+      Root->GetSwitch(i).UpdateFileIndex();
+  }
 
   TStrList Res;
   Root->ToStrings(Res);
