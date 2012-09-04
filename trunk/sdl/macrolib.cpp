@@ -134,16 +134,21 @@ olxstr TEMacroLib::ProcessEvaluator(
     TStrObjList Cmds;
     TParamList Options;
     if (e->evator != NULL) {
+      bool math_module = name.StartsFromi("math.");
       for (size_t i=0; i < e->evator->args.Count(); i++) {
-        arg_t r = EvaluateArg(e->evator->args[i], me, argv);
-        if (!me.IsSuccessful())
-          return EmptyString();
-        if (r.GetA().IsEmpty()) {
-          Cmds.Add(r.GetB());
+        if (!math_module) {
+          arg_t r = EvaluateArg(e->evator->args[i], me, argv);
+          if (!me.IsSuccessful())
+            return EmptyString();
+          if (r.GetA().IsEmpty()) {
+            Cmds.Add(r.GetB());
+          }
+          else {
+            Options.AddParam(r.GetA(), r.GetB());
+          }
         }
-        else {
-          Options.AddParam(r.GetA(), r.GetB());
-        }
+        else
+          Cmds.Add(e->evator->args[i]->data);
       }
     }
     if (f->HasOptions()) {
