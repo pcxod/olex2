@@ -30,6 +30,7 @@ void LibMath::Eval(const TStrObjList& Params, TMacroError& E) {
     if (bf == NULL) {
       E.ProcessingError(__OlxSrcInfo,"Undefined function: ").quote()
         << e->name;
+      return;
     }
     TMacroError rv;
     bf->Run(Params, rv);
@@ -38,6 +39,12 @@ void LibMath::Eval(const TStrObjList& Params, TMacroError& E) {
       return;
     }
     e->set_value(rv.GetRetVal().ToDouble());
+  }
+  for (size_t i=0; i < evtr.Variables.Count(); i++) {
+    if (evtr.Variables[i]->name.Equalsi("pi"))
+      evtr.Variables[i]->set_value(M_PI);
+    else if (evtr.Variables[i]->name.Equalsi("e"))
+      evtr.Variables[i]->set_value(2.718281828);
   }
   E.SetRetVal(evtr.evaluate());
 }

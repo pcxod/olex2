@@ -20,10 +20,21 @@ using namespace math_eval;
 ExpEvaluator::ExpEvaluator()
   : root(NULL), eval_root(NULL)
 {
+  factory('@', new FuncEvaluator1::factory(&nop));
   factory('~', new FuncEvaluator1::factory(&chs));
+  factory("sin", new FuncEvaluator1::factory(&sin_));
+  factory("cos", new FuncEvaluator1::factory(&cos_));
+  factory("tan", new FuncEvaluator1::factory(&tan_));
+  factory("asin", new FuncEvaluator1::factory(&asin_));
+  factory("acos", new FuncEvaluator1::factory(&acos_));
+  factory("atan", new FuncEvaluator1::factory(&atan_));
   factory("abs", new FuncEvaluator1::factory(&olx_abs<double>));
-  factory("cos", new FuncEvaluator1::factory((double (*)(double))&cos));
-  factory("sin", new FuncEvaluator1::factory((double (*)(double))&sin));
+  factory("cos_r", new FuncEvaluator1::factory((double (*)(double))&cos));
+  factory("sin_r", new FuncEvaluator1::factory((double (*)(double))&sin));
+  factory("tan_r", new FuncEvaluator1::factory((double (*)(double))&tan));
+  factory("log", new FuncEvaluator1::factory((double (*)(double))&log));
+  factory("log10", new FuncEvaluator1::factory((double (*)(double))&log10));
+  factory("exp", new FuncEvaluator1::factory((double (*)(double))&exp));
   factory('^', new FuncEvaluator2::factory((double (*)(double, double))&pow));
   factory('+', new FuncEvaluator2::factory(&add));
   factory('-', new FuncEvaluator2::factory(&sub));
@@ -55,12 +66,20 @@ AEvaluable *ExpEvaluator::create(exparse::expression_tree *t) {
   if (t->left != NULL || t->right != NULL) {
     TPtrList<AEvaluable> args;
     if (t->left == NULL) {
-      if (t->evator == NULL)
-        throw TFunctionFailedException(__OlxSourceInfo, "invalid expression");
-      TPtrList<AEvaluable> largs;
-      for (size_t i=0; i < t->evator->args.Count(); i++)
-        largs.Add(create(t->evator->args[i]));
-      args << create(t->evator->name, largs);
+      if (t->evator == NULL) {
+        if (t->data != '-' && t->data != '+')
+           throw TFunctionFailedException(__OlxSourceInfo, "invalid expression");
+        if (t->data == '-')
+          t->data = '~';
+        else
+          t->data = '@';
+      }
+      else {
+        TPtrList<AEvaluable> largs;
+        for (size_t i=0; i < t->evator->args.Count(); i++)
+          largs.Add(create(t->evator->args[i]));
+        args << create(t->evator->name, largs);
+      }
     }
     else
       args << create(t->left);

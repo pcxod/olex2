@@ -135,6 +135,13 @@ struct FuncEvaluator2 : public AEvaluable {
 
 struct ExpEvaluator {
   olxstr_dict<IFactory *, true> factory;
+  static double sin_(double a) { return sin(a*M_PI/180); }
+  static double cos_(double a) { return cos(a*M_PI/180); }
+  static double tan_(double a) { return tan(a*M_PI/180); }
+  static double asin_(double a) { return asin(a)*180/M_PI; }
+  static double acos_(double a) { return acos(a)*180/M_PI; }
+  static double atan_(double a) { return atan(a)*180/M_PI; }
+  static double nop(double a) { return a; }
   static double chs(double a) { return -a; }
   static double add(double a, double b) { return a+b; }
   static double sub(double a, double b) { return a-b; }
