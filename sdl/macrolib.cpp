@@ -173,8 +173,10 @@ TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
     if (t->data.IsNumber())
       return arg_t(EmptyString(), t->data);
     size_t ei = t->data.IndexOf('=');
-    if (ei != InvalidIndex)
-      return arg_t(t->data.SubString(1, ei-1), t->data.SubStringFrom(ei+1));
+    if (ei != InvalidIndex) {
+      return arg_t(t->data.SubString(1, ei-1),
+        unquote(t->data.SubStringFrom(ei+1)));
+    }
     return arg_t(t->data.SubStringFrom(1), EmptyString());
   }
   if (t->data == '=') {
@@ -183,7 +185,7 @@ TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
     olxstr n = t->left->data.StartsFrom('-') ? t->left->data.SubStringFrom(1)
       : t->left->data;
     olxstr v = t->right ? ProcessEvaluator(t->right, me, argv) : EmptyString();
-    return arg_t(n, v);
+    return arg_t(n, unquote(v));
   }
   if (t->evator)
     return arg_t(EmptyString(), ProcessEvaluator(t, me, argv));
