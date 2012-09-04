@@ -183,6 +183,9 @@
     <ClCompile Include="..\..\..\sdl\math\evaln.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\sdl\libfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\sdl\actions.h">
@@ -539,11 +542,17 @@
     <ClInclude Include="..\..\..\sdl\wildcard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\math\libmath.h">
-      <Filter>Header Files\containers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\math\evaln.h">
       <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\libfile.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\math\libmath.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\exparse_test.h">
+      <Filter>tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

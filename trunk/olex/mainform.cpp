@@ -93,6 +93,7 @@
 #include "dusero.h"
 #include "exparse/exptree.h"
 #include "math/libmath.h"
+#include "libfile.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -1139,7 +1140,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitFuncD(Freeze, fpNone|fpOne,
     "Gets/Sets display update status");
   Library.AttachLibrary(FXApp->ExportLibrary());
-  Library.AttachLibrary(TEFile::ExportLibrary());
+  Library.AttachLibrary(LibFile::ExportLibrary());
   Library.AttachLibrary(LibMath::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());

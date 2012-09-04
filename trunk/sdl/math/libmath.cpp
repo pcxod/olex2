@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "libmath.h"
 #include "evaln.h"
 #include "../integration.h"
@@ -19,7 +28,7 @@ void LibMath::Eval(const TStrObjList& Params, TMacroError& E) {
     }
     ABasicFunction *bf = op->GetLibrary().FindFunction(e->name);
     if (bf == NULL) {
-      E.ProcessingError(__OlxSrcInfo,"Undefined function :").quote()
+      E.ProcessingError(__OlxSrcInfo,"Undefined function: ").quote()
         << e->name;
     }
     TMacroError rv;
@@ -37,9 +46,6 @@ TLibrary *LibMath::ExportLibrary(const olxstr &name) {
   TLibrary *lib = new TLibrary(name.IsEmpty() ? olxstr("math") : name);
   lib->Register(new TStaticFunction(&LibMath::Eval, "eval", fpOne,
     "Evaluates given expression")
-  );
-  lib->Register(new TStaticFunction(&LibMath::Abs, "abs", fpOne,
-    "Evaluates absolute value of a number")
   );
   return lib;
 }

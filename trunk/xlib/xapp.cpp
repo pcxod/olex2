@@ -106,21 +106,20 @@ olxstr TXApp::LocateHklFile()  {
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
  if( specialCheck & psFileLoaded )
    return XFile().HasLastLoader();
- else if( specialCheck & psCheckFileTypeIns )
-   return (!XFile().HasLastLoader()) ? false : (
-   EsdlInstanceOf(*XFile().LastLoader(), TIns) || 
-   XFile().LastLoader()->IsNative()
-   );
- else if( specialCheck & psCheckFileTypeP4P )
-   return (!XFile().HasLastLoader()) ? false
-    : EsdlInstanceOf(*XFile().LastLoader(), TP4PFile);
- else if( specialCheck & psCheckFileTypeCRS )
-   return (!XFile().HasLastLoader()) ? false
-    : EsdlInstanceOf(*XFile().LastLoader(), TCRSFile);
- else if( specialCheck & psCheckFileTypeCif )
-   return (!XFile().HasLastLoader()) ? false
-    : EsdlInstanceOf(*XFile().LastLoader(), TCif);
-  throw TFunctionFailedException(__OlxSourceInfo, "undefined state");
+ if ((specialCheck&psCheckFileTypeIns) != 0 &&
+   (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TIns) ||
+   XFile().LastLoader()->IsNative()))
+   return true;
+ if ((specialCheck&psCheckFileTypeP4P) != 0 &&
+   (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TP4PFile)))
+   return true;
+ if ((specialCheck&psCheckFileTypeCRS) != 0 &&
+   (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TCRSFile)))
+   return true;
+ if ((specialCheck&psCheckFileTypeCif) != 0 &&
+   (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TCif)))
+   return true;
+ return false;
 }
 //..............................................................................
 void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
