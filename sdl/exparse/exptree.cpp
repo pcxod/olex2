@@ -250,7 +250,7 @@ void expression_tree::expand(const parser_util::operator_set &os)  {
     {
       if (dt_st == i) continue;
       olxstr dt = data.SubString(dt_st, i-dt_st);
-      if ((parser_util::skip_whitechars(data, i)+1) >= data.Length())
+      if ((parser_util::skip_whitechars(data, i)) >= data.Length())
         break;
       // check if 'def ttt ccc' syntax is used
       if( !os.is_next_char_control(data, i)) {
@@ -406,7 +406,7 @@ void expression_tree::expand_cmd()  {
     if( olxstr::o_iswhitechar(ch) )  {
       if (dt_st == i) continue;
       olxstr dt = data.SubString(dt_st, i-dt_st);
-      if ((parser_util::skip_whitechars(data, i)+1) >= data.Length())
+      if ((parser_util::skip_whitechars(data, i)) >= data.Length())
         break;
       TStrList args;
       TParamList::StrtokParams(data.SubStringFrom(i), ' ', args, false);

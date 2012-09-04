@@ -241,11 +241,11 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
         i++;
       }
       FieldName = Data.SubString(fn_start, i - fn_start);
-      if ((skip_whitechars(Data, i)+1) >= sl)
+      if ((skip_whitechars(Data, i)) >= sl)
         return sl+1;
       if (Data[i] == '=') {  // extract field value
         i++;
-        if ((skip_whitechars(Data, i)+1) >= sl)
+        if ((skip_whitechars(Data, i)) >= sl)
           return sl+1;
         if (is_quote(Data[i]))  // field value
           parse_string(Data, FieldValue, i);
