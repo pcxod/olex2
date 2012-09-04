@@ -442,8 +442,8 @@ void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree> *t,
 void TEMacroLib::funAnd(exparse::evaluator<exparse::expression_tree> *t,
   TMacroError &E, const TStrList &argv)
 {
-  if (t->args.Count() != 2) {
-    E.ProcessingError(__OlxSrcInfo, "two arguments are expected");
+  if (t->args.Count() < 2) {
+    E.ProcessingError(__OlxSrcInfo, "at least two arguments are expected");
     return;
   }
   for( size_t i=0; i < t->args.Count(); i++ )  {
@@ -460,8 +460,8 @@ void TEMacroLib::funAnd(exparse::evaluator<exparse::expression_tree> *t,
 void TEMacroLib::funOr(exparse::evaluator<exparse::expression_tree> *t,
   TMacroError &E, const TStrList &argv)
 {
-  if (t->args.Count() != 2) {
-    E.ProcessingError(__OlxSrcInfo, "two arguments are expected");
+  if (t->args.Count() < 2) {
+    E.ProcessingError(__OlxSrcInfo, "at least two arguments are expected");
     return;
   }
   for( size_t i=0; i < t->args.Count(); i++ )  {
