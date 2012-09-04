@@ -165,7 +165,7 @@ public:
   void SetHomePage(const olxstr& hp)  {  HomePage = hp;  }
 
   bool LoadPage(const wxString &File);
-  bool UpdatePage();
+  bool UpdatePage(bool update_indices=true);
   DefPropC(olxstr, WebFolder)
 
   void CheckForSwitches(THtmlSwitch& Sender, bool IsZip);
