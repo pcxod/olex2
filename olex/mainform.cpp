@@ -642,30 +642,10 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(SetEnv, EmptyString(), fpTwo,
 "Sets an environmental variable");
 
-  this_InitMacroD(SetView, "c-center", fpAny,
-    "Sets view normal to the normal of the selected plane, to a bond or mean "
-    "line");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
     "Prints available information. If no arguments provided prints available "
     "commands");
-  this_InitMacroD(Matr, EmptyString(), fpNone|fpOne|fpTwo|fpThree|fpNine,
-    "Displays or sets current orientation matrix. For single argument, 1,2,3 "
-    "001, 111, etc values are acceptable, two values taken are of the klm "
-    "form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three "
-    "values pecify the view normal and nine values provide a full matrix");
-
-  this_InitMacroD(Line,
-    "n-just sets current view normal to the line without creating the object",
-    fpAny,
-    "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
-  this_InitMacroD(Mpln,
-    "n-just orient, do not create plane&;"
-    "r-create regular plane&;"
-    "we-use weights proportional to the (atomic mass)^we", 
-    fpAny, "Sets current view along the normal of the best plane");
-  this_InitMacroD(Cent, EmptyString(), fpAny,
-    "Creates a centroid for given/selected/all atoms");
 
   this_InitMacroD(Hide, EmptyString(), fpAny,
     "Hides selected objects or provided atom names (no atom related objects as"

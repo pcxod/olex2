@@ -420,6 +420,7 @@ void expression_tree::expand_cmd()  {
     }
     else if (ch == '(') {  // parse out brackets
       olxstr dt = data.SubString(dt_st, i-dt_st).TrimWhiteChars();
+      if (dt.IsNumber()) continue;
       olxstr arg;
       if( !parser_util::parse_brackets(data, arg, i) ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
