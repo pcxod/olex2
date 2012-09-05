@@ -107,6 +107,7 @@
 
 static const olxstr ProcessOutputCBName("procout");
 static const olxstr OnStateChangeCBName("statechange");
+static const olxstr OnLogCBName("onlog");
 
 class TObjectVisibilityChange: public AActionHandler  {
   TMainForm *FParent;
@@ -1369,6 +1370,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   TBasicApp::GetLog().OnWarning.Add(this, ID_WARNING, msiEnter);
   TBasicApp::GetLog().OnError.Add(this, ID_ERROR, msiEnter);
   TBasicApp::GetLog().OnException.Add(this, ID_EXCEPTION, msiEnter);
+  TBasicApp::GetLog().OnPost.Add(this, ID_LOG, msiExecute);
   FXApp->OnObjectsDestroy.Add(this, ID_XOBJECTSDESTROY, msiEnter);
   XLibMacros::OnDelIns.Add(this, ID_DELINS, msiExit);
   XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
@@ -2099,6 +2101,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       FGlConsole->SetSkipPosting(true);
       res = false;  // propargate to other streams, logs in particular
     }
+  }
+  else if (MsgId == ID_LOG && (MsgSubId == msiExecute)) {
+    if( Data != NULL )
+      callCallbackFunc(OnLogCBName, TStrList() << Data->ToString());
   }
   else if( MsgId == ID_ONLINK )  {
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
@@ -3219,9 +3225,13 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       Table[0][1] = "N/A in this file format";
   }
   else  {
+    double max_peak = 0; // there are negative peaks too!
+    for (size_t i=0; i < atoms.Count(); i++) {
+      double pv = olx_abs(atoms[i]->GetQPeak());
+      if (pv > max_peak) max_peak = pv;
+    }
     QuickSorter::SortSF(atoms, SortQPeak);
     Table.Resize( olx_min(10, atoms.Count()), 3);
-    const double LQP = olx_max(0.01, atoms[0]->GetQPeak());
     size_t rowIndex = 0;
     for( size_t i=0; i < atoms.Count(); i++, rowIndex++ )  {
       if( i > 8 )  i = atoms.Count() -1;
@@ -3231,11 +3241,18 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       if( i > rowIndex )
         Tmp << atoms[rowIndex]->GetLabel() << " to ";
       Tmp << atoms[i]->GetLabel();
-      if( atoms[i]->GetQPeak() < 2 )
-        Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_small.gif\" height=\"10\" width=\"";
+      olxstr image_name;
+      if (atoms[i]->GetQPeak() < 0)
+        image_name = "purple";
+      else if (atoms[i]->GetQPeak() > 3.5)
+        image_name = "red";
+      else if (atoms[i]->GetQPeak() > 1.5)
+        image_name = "orange";
       else
-        Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_large.gif\" height=\"10\" width=\"";
-      Tmp << olxstr::FormatFloat(1, atoms[i]->GetQPeak()*100/LQP);
+        image_name = "green";
+      Tmp << "\"><zimg border=\"0\" src=\"bar_" << image_name <<
+        ".png\" height=\"10\" width=\"";
+      Tmp << olxstr::FormatFloat(1, olx_abs(atoms[i]->GetQPeak()*100/max_peak));
       Tmp << "%\"></a>";
       Table[rowIndex][2] = Tmp;
     }

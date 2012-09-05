@@ -186,7 +186,7 @@ TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
     size_t ei = t->data.IndexOf('=');
     if (ei != InvalidIndex) {
       return arg_t(t->data.SubString(1, ei-1),
-        unquote(t->data.SubStringFrom(ei+1)));
+        unquote(SubstituteArgs(t->data.SubStringFrom(ei+1), argv)));
     }
     return arg_t(t->data.SubStringFrom(1), EmptyString());
   }

@@ -576,7 +576,8 @@ void TGlConsole::SetPromptVisible(bool v)  {
 //..............................................................................
 void TGlConsole::SetInviteString(const olxstr &S)  {
   PromptStr = InviteStr = S;
-  GetPrimitives().GetStyle().SetParam("Prompt", InviteStr.Replace("\\(", '('), true);
+  GetPrimitives().GetStyle().SetParam("Prompt",
+    InviteStr.Replace("\\(", '('), true);
   olxstr cmd = GetCommand();
   olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
@@ -690,8 +691,19 @@ void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
-  if( !Params.IsEmpty() )
-    SetInviteString(Params[0]);
+  if (!Params.IsEmpty()) {
+    olxstr ps = Params[0];
+    if (!olex::IOlexProcessor::GetInstance()->processFunction(
+      ps, EmptyString(), true))
+    {
+      TBasicApp::NewLogEntry() << "Failed to process the console prompt string"
+        ", resetting to the default one";
+      ps = ">>";
+    }
+    else
+      ps = Params[0];
+    SetInviteString(ps);
+  }
   else
     E.SetRetVal(InviteStr);
 }

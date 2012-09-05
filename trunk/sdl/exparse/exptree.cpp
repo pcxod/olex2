@@ -55,6 +55,7 @@ bool parser_util::operator_set::add_operator(const olxstr &opr) {
   if (!operators.AddUnique(opr)) return false;
   for (size_t i=0; i < opr.Length(); i++)
     control_chars.AddUnique(opr[i]);
+  return true;
 }
 //.............................................................................
 bool parser_util::operator_set::remove_operator(const olxstr &opr) {
@@ -393,6 +394,7 @@ void expression_tree::expand(const parser_util::operator_set &os)  {
 //.............................................................................
 void expression_tree::expand_cmd()  {
   data.TrimWhiteChars();
+  data.Replace((olxch)1, ' ');
   if (parser_util::is_quoted(data)) {
     return;
   }
@@ -401,9 +403,10 @@ void expression_tree::expand_cmd()  {
     return;
   }
   size_t dt_st=0;
-  for( size_t i=0; i < data.Length(); i++ )  {
+  for (size_t i=0; i < data.Length(); i++) {
     olxch ch = data.CharAt(i);
-    if( olxstr::o_iswhitechar(ch) )  {
+    // only the first command can use the 'macro' syntax
+    if (olxstr::o_iswhitechar(ch) && parent == NULL) {
       if (dt_st == i) continue;
       olxstr dt = data.SubString(dt_st, i-dt_st);
       if ((parser_util::skip_whitechars(data, i)) >= data.Length())
@@ -419,7 +422,7 @@ void expression_tree::expand_cmd()  {
       break;
     }
     else if (ch == '(') {  // parse out brackets
-      olxstr dt = data.SubString(dt_st, i-dt_st).TrimWhiteChars();
+      olxstr dt = data.SubString(dt_st, i-dt_st);//.TrimWhiteChars();
       if (dt.IsNumber()) continue;
       olxstr arg;
       if( !parser_util::parse_brackets(data, arg, i) ) {
@@ -481,11 +484,20 @@ void expression_tree::expand_cmd()  {
           throw TFunctionFailedException(__OlxSourceInfo, "invalid syntax");
         left = new expression_tree(this, left_v);
       }
-      i++; // skip the closing bracket
-      if ((parser_util::skip_whitechars(data, i)+1) < data.Length()) {
+      size_t r_start = ++i; // skip the closing bracket
+      if ((parser_util::skip_whitechars(data, i)) < data.Length()) {
         if (right != NULL)
           TFunctionFailedException(__OlxSourceInfo, "invalid syntax");
-        right = new expression_tree(this, data.SubStringFrom(i));
+        // preserve any white spaces if any
+        olxstr dt = data.SubStringFrom(r_start);
+        r_start = 0;
+        while (r_start < dt.Length() &&
+          olxstr::o_iswhitechar(dt.CharAt(r_start)))
+        {
+          dt[r_start] = (olxch)1;
+          r_start++;
+        }
+        right = new expression_tree(this, dt);
         right->expand_cmd();
       }
       if (evator == NULL) {

@@ -522,7 +522,8 @@ bool THtml::LoadPage(const wxString &file)  {
 bool THtml::ItemState(const olxstr &ItemName, short State)  {
   THtmlSwitch * Sw = Root->FindSwitch(ItemName);
   if( Sw == NULL )  {
-    TBasicApp::NewLogEntry(logError) << "THtml::ItemState: unresolved: " << ItemName;
+    TBasicApp::NewLogEntry(logError) << "THtml::ItemState: unresolved: "
+      << ItemName;
     return false;
   }
   Sw->SetFileIndex(State-1);
