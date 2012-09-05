@@ -386,7 +386,6 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
         FindTexture(TextIndex), 0, (GLsizei)MaxDim, (GLsizei)MaxDim, 0, GL_RGB,
           TextData);
     }
-
     GlP.SetTextureId(TextIndex);
   }
   if( (RenderMode&planeRenderModeContour) != 0 )  {
@@ -419,6 +418,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     for (int i=0; i < ContourLevelCount; i++)
       Legend->text << olxstr::FormatFloat(-3, minVal+legend_step*i);
     Legend->Fit();
+    UpdateInfo();
   }
   return false;
 }
@@ -607,6 +607,7 @@ void TXGrid::SetDepth(float v)  {
     Depth = -min_z;
   if( Depth > max_z )
     Depth = max_z;
+  UpdateInfo();
 }
 //.............................................................................
 void TXGrid::SetDepth(const vec3d& v)  {
@@ -704,10 +705,19 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
 //.............................................................................
 void TXGrid::UpdateInfo()  {
   Info->Clear();
-  if( RenderMode == planeRenderModeContour )
-    Info->PostText(olxstr("Contours number: ") << GetContourLevelCount());
-  else
+  if (Is3D())
     Info->PostText(olxstr("Current level: ") << Scale);
+  else {
+    const vec3f center(Parent.GetBasis().GetCenter());
+    vec3f p(0, 0, GetDepth());
+    p = TXApp::GetInstance().XFile().GetAsymmUnit().Fractionalise(
+      Parent.GetBasis().GetMatrix()*p - center);
+    olxstr Tmp =  "Plane center: ";
+    Tmp << olxstr::FormatFloat(3, p[0]) << "*a, " <<
+      olxstr::FormatFloat(3, p[1]) << "*b, " <<
+      olxstr::FormatFloat(3, p[2]) << "*c";
+    Info->PostText(Tmp);
+  }
   Info->Fit();
 }
 //.............................................................................

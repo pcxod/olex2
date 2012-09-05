@@ -149,9 +149,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Sets view normal to the normal of the selected plane, to a bond or mean "
     "line");
   gxlib_InitMacro(Matr,
-    "n-used with 1,2,3 or a,b,c - instead of setting the view along the given "
-    "direction sets it to the normal to the plane formed by the other vectors "
-    "for a it will be the b-c plane, for b - a-c etc",
+    "r-used reciprocal cell instead",
     fpNone|fpOne|fpTwo|fpThree|fpNine,
     "Displays or sets current orientation matrix. For single argument, 1,2,3 "
     "001, 111, etc values are acceptable, two values taken are of the klm "
@@ -1033,10 +1031,10 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
+    const mat3d& M = Options.Contains('r') ?
+      app.XFile().GetAsymmUnit().GetHklToCartesian()
+      : app.XFile().GetAsymmUnit().GetCellToCartesian();
     if (Cmds.Count() == 1) {
-      const mat3d& M = app.IsHklVisible() ?
-        app.XFile().GetAsymmUnit().GetHklToCartesian()
-        : app.XFile().GetAsymmUnit().GetCellToCartesian();
       olxstr arg;
       if (Cmds[0] == '1' || Cmds[0] == 'a')
         arg = "100";
@@ -1053,28 +1051,13 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
         return;
       }
       vec3d n;
-      if (Options.Contains('n')) {
-        if (arg == "100")
-          n = M[1].XProdVec(M[2]);
-        else if (arg == "010")
-          n = M[2].XProdVec(M[0]);
-        else if (arg == "001")
-          n = M[0].XProdVec(M[1]);
-        else {
-          Error.ProcessingError(__OlxSrcInfo, "-n option can be used only with"
-            " principal directions");
-          return;
-        }
-      }
-      else {
-        const size_t s = arg.Length()/3;
-        for (int i=0; i < 3; i++)
-          n += M[i]*arg.SubString(s*i, s).ToInt();
-        if (n.QLength() < 1e-3) {
-          Error.ProcessingError(__OlxSrcInfo,
-            "non zero expression is expected");
-          return;
-        }
+      const size_t s = arg.Length()/3;
+      for (int i=0; i < 3; i++)
+        n += M[i]*arg.SubString(s*i, s).ToInt();
+      if (n.QLength() < 1e-3) {
+        Error.ProcessingError(__OlxSrcInfo,
+          "non zero expression is expected");
+        return;
       }
       app.GetRender().GetBasis().OrientNormal(n);
     }
@@ -1085,7 +1068,6 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
           "etc are expected");
         return;
       }
-      const mat3d& M = app.XFile().GetAsymmUnit().GetCellToCartesian();
       vec3d from, to;
       const size_t fs = Cmds[0].Length()/3, ts = Cmds[1].Length()/3;
       for (int i=0; i < 3; i++) {
@@ -1101,7 +1083,6 @@ void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
       app.GetRender().GetBasis().OrientNormal(n);
     }
     else if (Cmds.Count() == 3) {  // view along
-      const mat3d& M = app.XFile().GetAsymmUnit().GetCellToCartesian();
       vec3d n = M[0]*Cmds[0].ToDouble() +
         M[1]*Cmds[1].ToDouble() +
         M[2]*Cmds[2].ToDouble();
