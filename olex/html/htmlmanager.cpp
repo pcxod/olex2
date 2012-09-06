@@ -346,7 +346,7 @@ void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
   THtml *html = (Cmds.Count() == 1) ? FindHtml(Cmds[0]) : main;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo,
-      "undefined html window: ").quote() << Cmds[0];
+      "undefined html window: ").quote() << (Cmds.IsEmpty() ? "main" : Cmds[0]);
     return;
   }
   html->LoadPage(html->FileName.u_str());

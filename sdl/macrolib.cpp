@@ -148,7 +148,7 @@ olxstr TEMacroLib::ProcessEvaluator(
           }
         }
         else
-          Cmds.Add(e->evator->args[i]->data);
+          Cmds.Add(SubstituteArgs(e->evator->args[i]->data, argv));
       }
     }
     if (f->HasOptions()) {
