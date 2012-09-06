@@ -1571,8 +1571,10 @@ void TMainForm::StartupInit()  {
           TStrObjList params;
           TParamList opts;
           params << item.GetFieldValue("title") <<
-            item.GetFieldValue("macro") <<
-            item.GetFieldValue("before");
+            item.GetFieldValue("macro");
+          olxstr bf = item.GetFieldValue("before");
+          if (!bf.IsEmpty())
+            params << bf;
 
           olxstr modeDep = item.GetFieldValue("modedependent");
           if (!modeDep.IsEmpty())
