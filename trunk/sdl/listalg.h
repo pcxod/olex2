@@ -12,22 +12,22 @@
 
 struct ListCaster  {
   template <class To> struct SimpleCast  {
-    template <class From> static inline To OnItem(From o)  {
+    template <class From> static To OnItem(From o)  {
       return (To)o;
     }
   };
   struct CopyCast  {
-    template <class From, class To> static inline To& OnItem(From o)  {
+    template <class From, class To> static To& OnItem(From o)  {
       return *(new To(o));
     }
   };
   template <class To> struct AssignCast  {
-    template <class From> static inline To OnItem(From o)  {
+    template <class From> static To OnItem(From o)  {
       return *(new To) = o;
     }
   };
   template <typename To, class accessor> struct AccessorCast  {
-    template <class From> static inline To OnItem(From o)  {
+    template <class From> static To OnItem(From o)  {
       return accessor::Access(o);
     }
   };
@@ -171,5 +171,20 @@ struct ReverseList {
   }
 };
 
-
+template <class list_t, typename func_t>
+bool list_and(const list_t &l, func_t f, bool if_empty=false) {
+  for (size_t i=0; i < l.Count(); i++) {
+    if (!(olx_ref::get(l[i]).*f)())
+      return false;
+  }
+  return if_empty;
+};
+template <class list_t, typename func_t>
+bool list_or(const list_t &l, func_t f, bool if_empty=false) {
+  for (size_t i=0; i < l.Count(); i++) {
+    if ((olx_ref::get(l[i]).*f)())
+      return true;
+  }
+  return if_empty;
+};
 #endif
