@@ -6562,7 +6562,14 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   FXApp->AddObjectToCreate(sph);
 }
 //..............................................................................
-  void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  TStrList lll;
+  lll << "aa" << EmptyString() << "2";
+  bool bool_v = list_and(lll, &olxstr::IsEmpty);
+  bool_v = list_or(lll, &olxstr::IsEmpty);
+  bool_v = list_or(lll, &olxstr::IsNumber);
   olxstr empty;
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
   TTypeList<TAtomRefList> res;

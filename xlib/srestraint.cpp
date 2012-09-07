@@ -119,8 +119,7 @@ void TSimpleRestraint::FromDataItem(const TDataItem& item) {
   }
 }
 //..............................................................................
-IXVarReferencerContainer& TSimpleRestraint::GetParentContainer() const
-{
+IXVarReferencerContainer& TSimpleRestraint::GetParentContainer() const {
   return Parent;
 }
 //..............................................................................
@@ -131,6 +130,15 @@ olxstr TSimpleRestraint::GetVarName(size_t var_index) const {
   if( var_index != 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, "var index");
   return vm;  
+}
+//..............................................................................
+TIString TSimpleRestraint::ToString() const {
+  olxstr rv = Parent.GetIdName();
+  if ((Parent.GetParameters() & rptValue) != 0) rv << ' ' << Value;
+  if ((Parent.GetParameters() & rptEsd) != 0) rv << ' ' << Esd;
+  if ((Parent.GetParameters() & rptEsd1) != 0) rv << ' ' << Esd1;
+  if ((Parent.GetParameters() & rptValue1) != 0) rv << ' ' << Value;
+  return (rv << ' ' << Atoms.GetExpression());
 }
 //..............................................................................
 //..............................................................................

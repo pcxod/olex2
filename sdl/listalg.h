@@ -187,4 +187,9 @@ bool list_or(const list_t &l, func_t f, bool if_empty=false) {
   }
   return if_empty;
 };
+template <class list_t, typename func_t>
+void list_call(const list_t &l, func_t f) {
+  for (size_t i=0; i < l.Count(); i++)
+    (olx_ref::get(l[i]).*f)();
+};
 #endif
