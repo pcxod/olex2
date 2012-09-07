@@ -534,13 +534,21 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
   if( ring[pivot]->CAtom().GetDependentAfixGroup() != NULL )
     ring[pivot]->CAtom().GetDependentAfixGroup()->Clear();
   TAfixGroup& ag = FXFile->GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
-  for( size_t i=0; i < ring.Count(); i++ )  {  
-    if( i == pivot )  continue;  // do not want to delete just created!
+  for( size_t i=0; i < ring.Count(); i++ )  {
+    if (i == pivot)  continue;  // do not want to delete just created!
     TCAtom& ca = ring[i]->CAtom();
     // if used in case to change order
+    if (ca.GetParentAfixGroup() != NULL) {
+      TBasicApp::NewLogEntry() << "Removing intersecting AFIX group: ";
+      TBasicApp::NewLogEntry() << ca.GetParentAfixGroup()->ToString();
+      ca.GetParentAfixGroup()->Clear();
+    }
     if( ca.GetDependentAfixGroup() != NULL &&
       ca.GetDependentAfixGroup()->GetAfix() == afix )
     {
+      TBasicApp::NewLogEntry() << "Removing potentially intersecting AFIX"
+        " group: ";
+      TBasicApp::NewLogEntry() << ca.GetDependentAfixGroup()->ToString();
       ca.GetDependentAfixGroup()->Clear();
     }
   }
@@ -556,20 +564,22 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
 }
 //..............................................................................
 void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
+  TBasicApp::NewLogEntry() <<
+    "Automatically locating suitable targets for AFIX " << afix;
   int m = TAfixGroup::GetM(afix);
   if( m == 5 || m ==6 || m == 7 || m == 10 )  {  // special case
     if( sa == NULL )  {
       TTypeList< TSAtomPList > rings;
-      try  {  
+      try  {
         if( m == 6 || m == 7 )  {
-          FindRings("C6", rings);  
+          FindRings("C6", rings);
           if( TryPyridine )  
-            FindRings("NC5", rings);  
+            FindRings("NC5", rings);
         }
         else if( m == 5 || m == 10 ) // Cp or Cp*
-          FindRings("C5", rings);  
+          FindRings("C5", rings);
         else if( m == 11 )
-          FindRings("C10", rings);  
+          FindRings("C10", rings);
       }
       catch( const TExceptionBase& exc )  {
         throw TFunctionFailedException(__OlxSourceInfo, exc);

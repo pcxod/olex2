@@ -40,6 +40,7 @@
 #include "absorpc.h"
 #include "twinning.h"
 #include "refutil.h"
+#include "analysis.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -2965,16 +2966,17 @@ void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroError &E)  {
 //.............................................................................
 void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
-  if( Params.Count() == 1 )
+  if (Params.Count() == 1)
     xapp.XFile().GetRM().SetHKLSource(Params[0]);
-  else  {
+  else {
     olxstr fn = xapp.XFile().GetRM().GetHKLSource();
-    if( TEFile::Exists(fn) )  {  // check the format...
+    if (TEFile::Exists(fn)) {  // check the format...
       TEFile f(fn, "rb");
-      if( !THklFile::IsHKLFileLine(f.ReadLine()) )  {
+      if (!THklFile::IsHKLFileLine(f.ReadLine())) {
         f.Close();
-        fn = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(fn)) << MD5::Digest(fn) << ".hkl";
-        if( !TEFile::Exists(fn) )  {
+        fn = TEFile::AddPathDelimeter(TEFile::ExtractFilePath(fn)) <<
+          MD5::Digest(fn) << ".hkl";
+        if (!TEFile::Exists(fn)) {
           TBasicApp::NewLogEntry() << "Creating HKL file...";
           THklFile::SaveToFile(fn, xapp.XFile().GetRM().GetReflections());
         }
@@ -2984,7 +2986,9 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroError &E)  {
   }
 }
 //.............................................................................
-void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   TXApp& xapp = TXApp::GetInstance();
   olxstr CifDictionaryFile(xapp.GetCifTemplatesDir() + "cifindex.dat");
   if( Cmds.IsEmpty() )  {
@@ -3002,7 +3006,8 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( !TEFile::Exists(TN) )
     TN = xapp.GetCifTemplatesDir() + TN;
   if( !TEFile::Exists(TN) )  {
-    Error.ProcessingError(__OlxSrcInfo, "template for CIF does not exist: ") << Cmds[0];
+    Error.ProcessingError(__OlxSrcInfo, "template for CIF does not exist: ") <<
+      Cmds[0];
     return;
   }
   // resolvind the index file
@@ -5898,9 +5903,11 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel& rm = app.XFile().GetRM();
   TSAtomPList Atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
   const int m = TAfixGroup::GetM(afix);
-  if( TAfixGroup::IsFittedRing(afix) )  {  // special case
+  if (TAfixGroup::IsFittedRing(afix)) {  // special case
     // yet another special case
-    if( !positions.IsEmpty() )  {
+    if (!positions.IsEmpty()) {
+      TBasicApp::NewLogEntry() <<
+        "Generating missing atoms and applying the AFIX";
       TStrList toks(positions, ',');
       if( toks.Count() < 3 )  {
         E.ProcessingError(__OlxSrcInfo, "at least 3 atoms should be provided");
@@ -5913,13 +5920,13 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       }
       TArrayList<int> pos(toks.Count());
       vec3d_list crds;
-      if( m == 5 )
+      if (m == 5)
         Fragment::GenerateFragCrds(frag_id_cp, crds);
-      else if( m == 6 || m == 7 )
+      else if (m == 6 || m == 7)
         Fragment::GenerateFragCrds(frag_id_ph, crds);
-      else if( m == 10 )
+      else if (m == 10)
         Fragment::GenerateFragCrds(frag_id_cp_star, crds);
-      else if( m == 11 )
+      else if (m == 11)
         Fragment::GenerateFragCrds(frag_id_naphthalene, crds);
       for( size_t i=0; i < toks.Count(); i++ )  {
         const int v = toks[i].ToInt()-1;
@@ -5928,7 +5935,7 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
             "please provide position in the ascending order");
           return;
         }
-        if( v < 0 || v >= (int)crds.Count() )  {
+        if (v < 0 || v >= (int)crds.Count()) {
           E.ProcessingError(__OlxSrcInfo, "invalid ring position");
           return;
         }
@@ -5936,15 +5943,15 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       }
       TTypeList<AnAssociation3<TCAtom*, const cm_Element*, bool> > atoms;
       const cm_Element& carb = XElementLib::GetByIndex(iCarbonIndex);
-      for( size_t i=0; i < pos.Count(); i++ )  {
-        while( pos[i] > 0 && (pos[i] > (int)atoms.Count()) ) {
+      for (size_t i=0; i < pos.Count(); i++) {
+        while (pos[i] > 0 && (pos[i] > (int)atoms.Count())) {
           atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(
             NULL, &carb, false));
         }
         atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(
           &Atoms[i]->CAtom(), (const cm_Element*)NULL, true));
       }
-      while( atoms.Count() < crds.Count() ) {
+      while (atoms.Count() < crds.Count()) {
         atoms.Add(new AnAssociation3<TCAtom*, const cm_Element*, bool>(
           NULL, &carb, false));
       }
@@ -5958,7 +5965,7 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       app.XFile().EndUpdate();
       return;
     }
-    if( Atoms.IsEmpty() )
+    if (Atoms.IsEmpty())
       app.AutoAfixRings(afix, NULL, Options.Contains('n'));
     else if( Atoms.Count() == 1 )
       app.AutoAfixRings(afix, Atoms[0], Options.Contains('n'));
@@ -5980,61 +5987,67 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
       for( size_t i=1; i < Atoms.Count(); i++ )  {
         TCAtom& ca = Atoms[i]->CAtom();
-        // if used in case to change order
+        if (ca.GetParentAfixGroup() != NULL) {
+          TBasicApp::NewLogEntry() << "Removing intersecting AFIX group: ";
+          TBasicApp::NewLogEntry() << ca.GetParentAfixGroup()->ToString();
+          ca.GetParentAfixGroup()->Clear();
+        }
         if( ca.GetDependentAfixGroup() != NULL &&
-            ca.GetDependentAfixGroup()->GetAfix() == afix )
+          ca.GetDependentAfixGroup()->GetAfix() == afix )
         {
+          TBasicApp::NewLogEntry() << "Removing potentially intersecting AFIX"
+            " group: ";
+          TBasicApp::NewLogEntry() << ca.GetDependentAfixGroup()->ToString();
           ca.GetDependentAfixGroup()->Clear();
         }
       }
-      for( size_t i=1; i < Atoms.Count(); i++ )
+      for (size_t i=1; i < Atoms.Count(); i++)
         ag.AddDependent(Atoms[i]->CAtom());
     }
   }
   else  {
-    if( afix == 0 )  {
-      for( size_t i=0; i < Atoms.Count(); i++ )  {
+    if (afix == 0) {
+      for (size_t i=0; i < Atoms.Count(); i++) {
         TCAtom& ca = Atoms[i]->CAtom();
-        if( ca.GetAfix() == -1 )
-          continue;
-        if( ca.GetAfix() == 1 || ca.GetAfix() == 2 )  {
-          if( ca.GetDependentAfixGroup() != NULL )
+        if (ca.GetAfix() == -1) continue;
+        if (ca.GetAfix() == 1 || ca.GetAfix() == 2) {
+          if (ca.GetDependentAfixGroup() != NULL)
             ca.GetDependentAfixGroup()->Clear();
           continue;
         }
-        if( ca.GetDependentAfixGroup() != NULL )
+        if (ca.GetDependentAfixGroup() != NULL)
           ca.GetDependentAfixGroup()->Clear();
-        else if( ca.DependentHfixGroupCount() != 0 )  {
-          for( size_t j=0; j < ca.DependentHfixGroupCount(); j++ )  {
-            if( ca.GetDependentHfixGroup(j).GetAfix() != -1 )
+        else if (ca.DependentHfixGroupCount() != 0) {
+          for (size_t j=0; j < ca.DependentHfixGroupCount(); j++) {
+            if (ca.GetDependentHfixGroup(j).GetAfix() != -1)
               ca.GetDependentHfixGroup(j).Clear();
           }
         }
-        else if( ca.GetParentAfixGroup() != NULL )
+        else if (ca.GetParentAfixGroup() != NULL)
           ca.GetParentAfixGroup()->Clear();
       }
     }
-    else if( afix == 1 || afix == 2 ) {
+    else if (afix == 1 || afix == 2) {
       olxstr atom_names;
-      for( size_t i=0; i < Atoms.Count(); i++ )  {
+      for (size_t i=0; i < Atoms.Count(); i++) {
         TCAtom& ca = Atoms[i]->CAtom();
-        if( ca.GetAfix() == 0 )
+        if (ca.GetAfix() == 0)
           rm.AfixGroups.New(&ca, afix);
-        else  {
-          if( !atom_names.IsEmpty() )
+        else {
+          if (!atom_names.IsEmpty())
             atom_names << ' ';
           atom_names << ca.GetLabel();
         }
       }
-      if( !atom_names.IsEmpty() )  {
+      if (!atom_names.IsEmpty()) {
         TBasicApp::NewLogEntry(logError) <<
           "Could not process AFIX for the following atoms:";
         TBasicApp::NewLogEntry() << atom_names;
       }
     }
-    else if( !Atoms.IsEmpty() )  {
+    else if (!Atoms.IsEmpty() ) {
       TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
-      for( size_t i=1; i < Atoms.Count(); i++ )  
+      for (size_t i=1; i < Atoms.Count(); i++)
         ag.AddDependent(Atoms[i]->CAtom());
     }
   }
@@ -6131,46 +6144,46 @@ void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
       Atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
   }
   if (Atoms.IsEmpty()) return;
-  TSimpleRestraint* dfix = &app.XFile().GetRM().rDFIX.AddNew();
-  dfix->SetValue(fixLen);
-  if( esd_set )
-    dfix->SetEsd(esd);
-  esd = dfix->GetEsd();
+  TSimpleRestraint &dfix = app.XFile().GetRM().rDFIX.AddNew();
+  dfix.SetValue(fixLen);
+  if (esd_set) dfix.SetEsd(esd);
+  esd = dfix.GetEsd();
   if (Atoms.Count() == 1) {  // special case
     TSAtom* A = Atoms[0];
     for( size_t i=0; i < A->NodeCount(); i++ )  {
       TSAtom* SA = &A->Node(i);
       if( SA->IsDeleted() || SA->GetType() == iQPeakZ )  continue;
-      dfix->AddAtomPair(A->CAtom(), &A->GetMatrix(),
+      dfix.AddAtomPair(
+        A->CAtom(), &A->GetMatrix(),
         SA->CAtom(), &SA->GetMatrix());
     }
   }
   else if( Atoms.Count() == 3 )  {  // special case
-    dfix->AddAtomPair(Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(), 
-                      Atoms[1]->CAtom(), &Atoms[1]->GetMatrix());
-    dfix->AddAtomPair(Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(), 
-                      Atoms[2]->CAtom(), &Atoms[2]->GetMatrix());
+    dfix.AddAtomPair(
+      Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(), 
+      Atoms[1]->CAtom(), &Atoms[1]->GetMatrix());
+    dfix.AddAtomPair(
+      Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(), 
+      Atoms[2]->CAtom(), &Atoms[2]->GetMatrix());
   }
-  else  {
-    if( (Atoms.Count()%2) != 0 )  {
+  else {
+    if ((Atoms.Count()%2) != 0) {
       E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
       return;
     }
-    for( size_t i=0; i < Atoms.Count(); i += 2 )  {
-      dfix->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
+    for (size_t i=0; i < Atoms.Count(); i+=2) {
+      dfix.AddAtomPair(
+        Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
         Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
-      if( dfix->GetAtoms().Count() >= 12 )  {
-        app.XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
-        dfix = &app.XFile().GetRM().rDFIX.AddNew();
-        dfix->SetValue(fixLen);
-        dfix->SetEsd(esd);
-      }
     }
   }
-  app.XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
+  app.XFile().GetRM().rDFIX.ValidateRestraint(dfix);
+  TBasicApp::NewLogEntry() << dfix.ToString();
 }
 //.............................................................................
-void XLibMacros::macDang(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macDang(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   double fixLen = 0, esd = 0.04;  // length and esd for dang
   bool esd_set = ParseResParam(Cmds, esd, &fixLen);
   if( fixLen == 0 )  {
@@ -6183,26 +6196,21 @@ void XLibMacros::macDang(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     E.ProcessingError(__OlxSrcInfo, "no atoms or bonds provided");
     return;
   }
-  TSimpleRestraint* dang = &app.XFile().GetRM().rDANG.AddNew();
-  dang->SetValue(fixLen);
-  if( esd_set )
-    dang->SetEsd(esd);
-  esd = dang->GetEsd();
-  if( (Atoms.Count()%2) != 0 )  {
+  TSimpleRestraint &dang = app.XFile().GetRM().rDANG.AddNew();
+  dang.SetValue(fixLen);
+  if (esd_set) dang.SetEsd(esd);
+  esd = dang.GetEsd();
+  if ((Atoms.Count()%2) != 0 ) {
     E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
     return;
   }
   for( size_t i=0; i < Atoms.Count(); i += 2 )  {
-    dang->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
+    dang.AddAtomPair(
+      Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
       Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
-    if( dang->GetAtoms().Count() >= 12 )  {
-      app.XFile().GetRM().rDANG.ValidateRestraint(*dang);
-      dang = &app.XFile().GetRM().rDANG.AddNew();
-      dang->SetValue(fixLen);
-      dang->SetEsd(esd);
-    }
   }
-  app.XFile().GetRM().rDANG.ValidateRestraint(*dang);
+  app.XFile().GetRM().rDANG.ValidateRestraint(dang);
+  TBasicApp::NewLogEntry() << dang.ToString();
 }
 //.............................................................................
 void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
@@ -6238,6 +6246,7 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
   for( size_t i=0; i < atoms.Count(); i+=3 )  {
     if( dfixLenA == 0 )  {
       dfixLenA = app.XFile().GetRM().FindRestrainedDistance(
@@ -6251,7 +6260,7 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
         continue;
       }
     }
-    TSimpleRestraint* dfix = &app.XFile().GetRM().rDFIX.AddNew();
+    TSimpleRestraint *dfix = &app.XFile().GetRM().rDFIX.AddNew();
     dfix->SetValue(dfixLenA);
     if( esd_set )
       dfix->SetEsd(esd);
@@ -6260,30 +6269,35 @@ void XLibMacros::macTria(TStrObjList &Cmds, const TParamList &Options,
       atoms[i+1]->CAtom(), &atoms[i+1]->GetMatrix());
     if( dfixLenB != dfixLenA )  {
       app.XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
+      if (!dfix->IsEmpty())
+        TBasicApp::NewLogEntry() << dfix->ToString();
       dfix = &app.XFile().GetRM().rDFIX.AddNew();
       dfix->SetEsd(esd);
     }
     dfix->AddAtomPair(atoms[i+1]->CAtom(), &atoms[i+1]->GetMatrix(),
       atoms[i+2]->CAtom(), &atoms[i+2]->GetMatrix());
     app.XFile().GetRM().rDFIX.ValidateRestraint(*dfix);
-    TSimpleRestraint* dang = &app.XFile().GetRM().rDANG.AddNew();
-    dang->SetValue(
+    if (!dfix->IsEmpty())
+      TBasicApp::NewLogEntry() << dfix->ToString();
+    TSimpleRestraint &dang = app.XFile().GetRM().rDANG.AddNew();
+    dang.SetValue(
       olx_round(
         sqrt(olx_sqr(dfixLenA) + olx_sqr(dfixLenB) -
           2*dfixLenA*dfixLenB*cos(angle*M_PI/180)),
         1000)
       );
-    dang->SetEsd(esd*2);
-    dang->AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
-    //dang->AddAtom(Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix() );
-    dang->AddAtom(atoms[i+2]->CAtom(), &atoms[i+2]->GetMatrix());
-    app.XFile().GetRM().rDANG.ValidateRestraint(*dang);
+    dang.SetEsd(esd*2);
+    dang.AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
+    dang.AddAtom(atoms[i+2]->CAtom(), &atoms[i+2]->GetMatrix());
+    app.XFile().GetRM().rDANG.ValidateRestraint(dang);
+    TBasicApp::NewLogEntry() << dang.ToString();
   }
 }
 //.............................................................................
 void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
   double esd = 0.02;  // esd for sadi
   bool esd_set = ParseResParam(Cmds, esd);
   MacroInput mi = ExtractSelection(Cmds, !Options.Contains("cs"));
@@ -6295,60 +6309,63 @@ void XLibMacros::macSadi(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i=0; i < mi.bonds.Count(); i++)
       Atoms << mi.bonds[i]->A() << mi.bonds[i]->B();
   }
-  TSimpleRestraint *sr = &app.XFile().GetRM().rSADI.AddNew();
-  if( esd_set )
-    sr->SetEsd(esd);
-  esd = sr->GetEsd();
-
-  if( Atoms.Count() == 1 )  {  // special case
-    TSimpleRestraint *sr1 = &app.XFile().GetRM().rSADI.AddNew();
-    sr1->SetEsd(esd);
-    sr->SetEsd(esd*2);
+  TSimpleRestraint &sr = app.XFile().GetRM().rSADI.AddNew();
+  if (esd_set) sr.SetEsd(esd);
+  esd = sr.GetEsd();
+  if (Atoms.Count() == 1) {  // special case
+    TSimpleRestraint &sr1 = app.XFile().GetRM().rSADI.AddNew();
+    sr1.SetEsd(esd);
+    sr.SetEsd(esd*2);
     TSAtom* A = Atoms[0];
     double td = 0;
     for( size_t i=0; i < A->NodeCount(); i++ )  {
       TSAtom& SA = A->Node(i);
-      if( SA.IsDeleted() || SA.GetType() == iQPeakZ )  continue;
-      sr1->AddAtomPair(A->CAtom(), &A->GetMatrix(),
+      if (SA.IsDeleted() || SA.GetType() == iQPeakZ) continue;
+      sr1.AddAtomPair(
+        A->CAtom(), &A->GetMatrix(),
         SA.CAtom(), &SA.GetMatrix());
-      if( td == 0 )  // need this one to remove opposite atoms from restraint
+      if (td == 0)  // need this one to remove opposite atoms from restraint
         td = A->crd().DistanceTo(SA.crd()) * 2;
-      for( size_t j=i+1; j < A->NodeCount(); j++ )  {
+      for (size_t j=i+1; j < A->NodeCount(); j++) {
         TSAtom& SA1 = A->Node(j);
-        if( SA1.IsDeleted() || SA1.GetType() == iQPeakZ ||
-            (SA.CAtom().GetPart() != SA1.CAtom().GetPart()) )
+        if (SA1.IsDeleted() || SA1.GetType() == iQPeakZ ||
+           (SA.CAtom().GetPart() != SA1.CAtom().GetPart()))
         {
          continue;
         }
         const double d = SA.crd().DistanceTo(SA1.crd());
-        if( d/td > 0.85 )  continue;
-        sr->AddAtomPair(SA.CAtom(), &SA.GetMatrix(),
-          SA1.CAtom(), &SA1.GetMatrix());
-        if( sr->GetAtoms().Count() >= 12 )  {
-          app.XFile().GetRM().rSADI.ValidateRestraint(*sr);
-          sr = &app.XFile().GetRM().rSADI.AddNew();
-          sr->SetEsd(esd*2);
+        if( d/td > 0.85 ) {
+          TBasicApp::NewLogEntry() << "Skipping " << SA.GetGuiLabel() << '-' <<
+            SA1.GetGuiLabel() << ": high deviation from the rest of the bonds";
+          continue;
         }
+        sr.AddAtomPair(
+          SA.CAtom(), &SA.GetMatrix(),
+          SA1.CAtom(), &SA1.GetMatrix());
       }
     }
+    TBasicApp::NewLogEntry() << sr1.ToString();
   }
-  else if( Atoms.Count() == 3 )  {  // special case
-    sr->AddAtomPair(Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
+  else if (Atoms.Count() == 3) {  // special case
+    sr.AddAtomPair(
+      Atoms[0]->CAtom(), &Atoms[0]->GetMatrix(),
       Atoms[1]->CAtom(), &Atoms[1]->GetMatrix());
-    sr->AddAtomPair(Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(),
+    sr.AddAtomPair(
+      Atoms[1]->CAtom(), &Atoms[1]->GetMatrix(),
       Atoms[2]->CAtom(), &Atoms[2]->GetMatrix());
   }
-  else  {
-    if( (Atoms.Count()%2) != 0 )  {
+  else {
+    if ((Atoms.Count()%2) != 0 ) {
       E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
       return;
     }
-    for( size_t i=0; i < Atoms.Count(); i += 2 )  {
-      sr->AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
+    for (size_t i=0; i < Atoms.Count(); i += 2 ) {
+      sr.AddAtomPair(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),
         Atoms[i+1]->CAtom(), &Atoms[i+1]->GetMatrix());
     }
   }
-  app.XFile().GetRM().rSADI.ValidateRestraint(*sr);
+  app.XFile().GetRM().rSADI.ValidateRestraint(sr);
+  TBasicApp::NewLogEntry() << sr.ToString();
 }
 //.............................................................................
 void XLibMacros::macFlat(TStrObjList &Cmds, const TParamList &Options,
@@ -6364,6 +6381,8 @@ void XLibMacros::macFlat(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i=0; i < Atoms.Count(); i++)
     sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix());
   app.XFile().GetRM().rFLAT.ValidateRestraint(sr);
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+  TBasicApp::NewLogEntry() << sr.ToString();
 }
 //.............................................................................
 void XLibMacros::macSIMU(TStrObjList &Cmds, const TParamList &Options,
@@ -6386,6 +6405,8 @@ void XLibMacros::macSIMU(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < Atoms.Count(); i++ )
     sr.AddAtom(Atoms[i]->CAtom(), NULL);
   app.XFile().GetRM().rSIMU.ValidateRestraint(sr);
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+  TBasicApp::NewLogEntry() << sr.ToString();
 }
 //.............................................................................
 void XLibMacros::macDELU(TStrObjList &Cmds, const TParamList &Options,
@@ -6406,6 +6427,8 @@ void XLibMacros::macDELU(TStrObjList &Cmds, const TParamList &Options,
   for (size_t i=0; i < Atoms.Count(); i++)
     sr.AddAtom(Atoms[i]->CAtom(), NULL);
   app.XFile().GetRM().rDELU.ValidateRestraint(sr);
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+  TBasicApp::NewLogEntry() << sr.ToString();
 }
 //.............................................................................
 void XLibMacros::macISOR(TStrObjList &Cmds, const TParamList &Options,
@@ -6427,6 +6450,8 @@ void XLibMacros::macISOR(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < Atoms.Count(); i++ )
     sr.AddAtom(Atoms[i]->CAtom(), NULL);
   app.XFile().GetRM().rISOR.ValidateRestraint(sr);
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+  TBasicApp::NewLogEntry() << sr.ToString();
 }
 //.............................................................................
 void XLibMacros::macChiv(TStrObjList &Cmds, const TParamList &Options,
@@ -6443,12 +6468,14 @@ void XLibMacros::macChiv(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < Atoms.Count(); i++ )
     sr.AddAtom(Atoms[i]->CAtom(), &Atoms[i]->GetMatrix());
   app.XFile().GetRM().rCHIV.ValidateRestraint(sr);
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+  TBasicApp::NewLogEntry() << sr.ToString();
 }
 //.............................................................................
 void XLibMacros::macRRings(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  double l = 1.39, e = 0.001;
+  double l = 1.39, e = 0.01;
   XLibMacros::Parse(Cmds, "dd", &l, &e);
   TTypeList<TSAtomPList> rings;
   TXApp &app = TXApp::GetInstance();
@@ -6459,22 +6486,41 @@ void XLibMacros::macRRings(TStrObjList &Cmds, const TParamList &Options,
   }
 
   for (size_t i=0; i < rings.Count(); i++) {
-    TSimpleRestraint& dfix = app.XFile().GetRM().rDFIX.AddNew();
-    dfix.SetValue(l);
-    dfix.SetEsd(e);
+    TBasicApp::NewLogEntry() << "Processing ring: " <<
+      olx_analysis::alg::label(TCAtomPList(rings[i],
+        FunctionAccessor::MakeConst(&TSAtom::CAtom)), '-');
+    TSimpleRestraint& dr12 = l < 0 ? app.XFile().GetRM().rSADI.AddNew()
+      : app.XFile().GetRM().rDFIX.AddNew();
+    TSimpleRestraint& dr13 = app.XFile().GetRM().rSADI.AddNew();
+    if (l > 0) dr12.SetValue(l);
+    dr12.SetEsd(e);
+    dr13.SetEsd(e*2);
     TSimpleRestraint& flat = app.XFile().GetRM().rFLAT.AddNew();
     flat.SetEsd(0.1);
     for (size_t j=0; j < rings[i].Count(); j++) {
       flat.AddAtom(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix());
       if ((j+1) < rings[i].Count()) {
-        dfix.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
+        dr12.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
           rings[i][j+1]->CAtom(), &rings[i][j+1]->GetMatrix());
       }
       else {
-        dfix.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
+        dr12.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
           rings[i][0]->CAtom(), &rings[i][0]->GetMatrix());
       }
+      if ((j+2) < rings[i].Count()) {
+        dr13.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
+          rings[i][j+2]->CAtom(), &rings[i][j+2]->GetMatrix());
+      }
+      else {
+        size_t idx = (j+2) - rings[i].Count();
+        dr13.AddAtomPair(rings[i][j]->CAtom(), &rings[i][j]->GetMatrix(),
+          rings[i][idx]->CAtom(), &rings[i][idx]->GetMatrix());
+      }
     }
+    TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+    TBasicApp::NewLogEntry() << dr12.ToString();
+    TBasicApp::NewLogEntry() << dr13.ToString();
+    TBasicApp::NewLogEntry() << flat.ToString() << NewLineSequence();
   }
 }
 //..............................................................................
