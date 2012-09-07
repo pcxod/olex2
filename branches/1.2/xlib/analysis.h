@@ -22,6 +22,30 @@ namespace alg {
   olxstr formula(const TCAtomPList &atoms, double mult=1);
   olxstr label(const TCAtomPList &atoms, const olxstr &sp=EmptyString());
   olxstr label(const TCAtomGroup &atoms, const olxstr &sp=EmptyString());
+  // applicable to TS/XAtom containers
+  template <class atom_plist_t>
+  olxstr label(const atom_plist_t &atoms, bool add_sym, const olxstr &sp) {
+    olxstr_buf rv;
+    for( size_t i=0; i < atoms.Count(); i++ ) {
+      if (!rv.IsEmpty())  rv << sp;
+      rv << atoms[i]->GetGuiLabel();
+    }
+    return rv;
+  }
+  // returns true if any of the atoms is from the original asymmetric unit
+  template <class atom_plist_t> bool has_I(const atom_plist_t &atoms) {
+    for( size_t i=0; i < atoms.Count(); i++ )
+      if (atoms[i]->GetMatrix().IsFirst())
+        return true;
+    return false;
+  }
+  // returns true if all atoms are from the original asymmetric unit
+  template <class atom_plist_t> bool are_all_I(const atom_plist_t &atoms) {
+    for( size_t i=0; i < atoms.Count(); i++ )
+      if (!atoms[i]->GetMatrix().IsFirst())
+        return false;
+    return true;
+  }
   const cm_Element &find_heaviest(const TCAtomPList &atoms);
   /* checks if new enviroment is better or as good as the old one
   */
@@ -31,7 +55,7 @@ namespace alg {
   bool check_connectivity(const TCAtom &a, const cm_Element &e);
   ConstArrayList<size_t> find_hetero_indices(const TCAtomPList &atoms,
     const cm_Element *re=NULL);
-  /* locates anevironment around the given point (in fractional coordinates)
+  /* locates an evironment around the given point (in fractional coordinates)
   and rates it according to simple geometrical measurements as distances and
   angles
   */
@@ -241,17 +265,17 @@ public:
 
   static TLibrary *ExportLibrary(const olxstr& name="analysis")  {
     TLibrary* lib = new TLibrary(name);
-    lib->RegisterStaticFunction(
+    lib->Register(
       new TStaticFunction(&Analysis::funTrim, "Trim", fpNone|fpOne,
       "Trims the size of the assymetric unit according to the 18 A^3 rule."
       "Returns true if any atoms were deleted")
     );
-    lib->RegisterStaticFunction(
+    lib->Register(
       new TStaticFunction(&Analysis::funFindScale, "Scale", fpNone|fpOne,
       "Scales the Q-peaks according to found fragments."
       "Returns the scale or 0")
     );
-    lib->RegisterStaticFunction(
+    lib->Register(
       new TStaticFunction(&Analysis::funAnaluseUeq, "AnalyseUeq", fpNone|fpOne,
       ""
       "")

@@ -37,6 +37,11 @@ public:
 
   static DefMacro(Qual)
   static DefMacro(Load)
+  static DefMacro(Matr)
+  static DefMacro(Line)
+  static DefMacro(Mpln)
+  static DefMacro(Cent)
+  static DefMacro(SetView)
 
 //  static DefFunc(Lst)
   static void Export(class TLibrary& lib);

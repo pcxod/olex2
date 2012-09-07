@@ -11,19 +11,33 @@
 #define __olx_exp_tree_H
 #include "../tptrlist.h"
 #include "../estrlist.h"
+#include "../edict.h"
 BeginEsdlNamespace()
 
 namespace exparse  {
   namespace parser_util  {
-    static const olxstr control_chars("+-*/&^|:!?=%<>.");
-    static const olxstr operators[]= {
-      '.',
-      '+', '-', '*', '/', '%',  // arithmetic
-      '&', '^', '|', // bitwise
-      "==", "!=", ">=", "<=", '<', '>', // comparison
-      ">>", "<<", // directional
-      ':', '?', '!', "&&", "||", // logical
-      '=', "+=", "-=", "/=", "*=", "&=", "|=", "^=", "<<=" // assignment
+    struct operator_set {
+      typedef SortedObjectList<olxch, TPrimitiveComparator> charset_t;
+      typedef SortedObjectList<olxstr, olxstrComparator<false> > operatorset_t;
+    protected:
+      // a set of all chars unique to the operators
+      charset_t control_chars;
+      operatorset_t operators;
+      void update_charset();
+    public:
+      operator_set();
+      bool is_operator(const olxstr& exp) const {
+        return operators.Contains(exp);
+      }
+      bool is_control_char(olxch ch) const { return control_chars.Contains(ch); }
+      bool is_next_char_control(const olxstr& exp, size_t ind) const {
+        return ind+1 < exp.Length() &&
+          control_chars.Contains(exp.CharAt(ind+1));
+      }
+      bool parse_control_chars(const olxstr& exp, olxstr& dest,
+        size_t& ind) const;
+      bool add_operator(const olxstr &opr);
+      bool remove_operator(const olxstr &opr);
     };
     //leaves ind on the last quote or does not change it if there is no string
     bool skip_string(const olxstr& exp, size_t& ind);
@@ -39,9 +53,11 @@ namespace exparse  {
     // does not check for escaped quotes
     bool parse_escaped_string(const olxstr& exp, olxstr& dest, size_t& ind);
     bool parse_brackets(const olxstr& exp, olxstr& dest, size_t& ind);
-    bool is_operator(const olxstr& exp);
-    bool parse_control_chars(const olxstr& exp, olxstr& dest, size_t& ind);
-    bool is_next_char_control(const olxstr& exp, size_t ind);
+    /* checks if there are any brackets or control chars or white spaces
+    outside quoted strings
+    */
+    bool is_expandable(const olxstr& exp, const operator_set &os);
+    /* as above, but does not check for the control chars */
     bool is_expandable(const olxstr& exp);
     // checks if the char is a bracket char
     inline bool is_bracket(olxch ch)  {
@@ -76,23 +92,14 @@ namespace exparse  {
       size_t start = 0;
       for( size_t i=0; i < exp.Length(); i++ )  {
         const olxch ch = exp.CharAt(i);
-        if( ch == '(' )  {
-          int bc = 1;
-          while( ++i < exp.Length() && bc != 0 )  {
-            if( exp.CharAt(i) == '(' )  bc++;
-            else if( exp.CharAt(i) == ')' )  bc--;
-          }
-          i--;
+        if (is_bracket(ch) && !is_escaped(exp, i)) {
+          skip_brackets(exp, i);
         }
-        else if( is_quote(ch) && !is_escaped(exp, i) )  {  // skip strings
-          while( ++i < exp.Length() &&
-            exp.CharAt(i) != ch && !is_escaped(exp, i) )
-          {
-            continue;
-          }
+        else if (is_quote(ch) && !is_escaped(exp, i))  {  // skip strings
+          skip_string(exp, i);
         }
         else if( ch == ',' )  {
-          res.Add( exp.SubString(start, i-start) ).TrimWhiteChars();
+          res.Add(exp.SubString(start, i-start)).TrimWhiteChars();
           start = i+1;
         }
       }
@@ -163,16 +170,18 @@ namespace exparse  {
     olxstr data;
     expression_tree *parent, *left, *right;
     evaluator<expression_tree>* evator;
-    bool priority;  // the expression is in brackets
-    expression_tree(expression_tree* p, const olxstr& dt, 
+    bool priority,  // the expression is in brackets
+      macro_call; // call conversion - f(x) or 'f x'
+    expression_tree(expression_tree* p, const olxstr& dt,
       expression_tree* l, expression_tree* r, 
       evaluator<expression_tree>* e)
-      : data(dt), parent(p), left(l), right(r), evator(e), priority(false)
+      : data(dt), parent(p), left(l), right(r), evator(e),
+      priority(false), macro_call(false)
     {}
      //........................................................................
     expression_tree(expression_tree* p, const olxstr& dt)
       : data(dt), parent(p), left(NULL), right(NULL), evator(NULL),
-      priority(false)
+      priority(false), macro_call(false)
     {}
      //........................................................................
     ~expression_tree()  {
@@ -180,12 +189,18 @@ namespace exparse  {
       if( right != NULL )  delete right;
       if( evator != NULL )  delete evator;
     }
-    void expand();
+    void expand(const parser_util::operator_set &os);
+    /*this is for the expansion of the command lines rather than of the
+    generic expressions - in this case no control chars are treated
+    */
+    void expand_cmd();
+    olxstr_buf ToStringBuffer() const;
   };
 
   struct expression_parser  {
     expression_tree* root;
-    void expand()  {  root->expand();  }
+    void expand()  {  root->expand(parser_util::operator_set());  }
+    void expand(const parser_util::operator_set &os)  {  root->expand(os);  }
     expression_parser(const olxstr& exp) {
       root = new expression_tree(NULL, exp);
     }

@@ -178,14 +178,18 @@ namespace exparse  {
       }
     };
 
-    static IEvaluable* create(const olxstr& name, TPtrList<IEvaluable>& args)  {
+    static IEvaluable* create(const olxstr& name,
+      TPtrList<IEvaluable>& args)
+    {
       if( args.Count() == 1)
         return create(name, args[0]);
       else if( args.Count() == 2 )
         return create(name, args[0], args[1]);
       return NULL;
     }
-    static IEvaluable* create(const olxstr& name, IEvaluable* a, IEvaluable* b=NULL)  {
+    static IEvaluable* create(const olxstr& name, IEvaluable* a,
+      IEvaluable* b=NULL)
+    {
       if( a == NULL && b == NULL )  {
         return NULL;
       }
@@ -218,19 +222,21 @@ namespace exparse  {
       }
       return NULL;
     }
-    static bool is_logical(const olxstr& name) {  
+    static bool is_logical(const olxstr& name) {
       return name == "||" || name == "&&" || name == '!';
     }
     static bool is_cmp(const olxstr& name) {  
-      return name == "==" || name == "!=" || name == '>' || name == '<' || name == ">=" || name == "<=";
+      return name == "==" || name == "!=" || name == '>' || name == '<' ||
+        name == ">=" || name == "<=";
     }
     static bool is_arithmetic(const olxstr& name) {  
-      return name == '+' || name == '-' || name == '*' || name == '/' || name == '%';
+      return name == '+' || name == '-' || name == '*' || name == '/' ||
+        name == '%';
     }
-    static bool has_arithmetic_priority(const olxstr& name) {  
+    static bool has_arithmetic_priority(const olxstr& name) {
       return name == '*' || name == '/';
     }
-    static bool is_assignment(const olxstr& name) {  
+    static bool is_assignment(const olxstr& name) {
       return name == '=';
     }
   };

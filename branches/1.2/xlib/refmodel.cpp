@@ -24,27 +24,27 @@
 #include "analysis.h"
 #include "math/composite.h"
 
-RefinementModel::RefinementModel(TAsymmUnit& au) : 
+RefinementModel::RefinementModel(TAsymmUnit& au) :
   VarRefrencerId("basf"),
   HklStatFileID(EmptyString(), 0, 0),
   HklFileID(EmptyString(), 0, 0),
   Vars(*this),
-  rDFIX(*this, rltGroup2, "DFIX"),
-  rDANG(*this, rltGroup2, "DANG"),
-  rSADI(*this, rltGroup2, "SADI"),
-  rCHIV(*this, rltAtoms, "CHIV"),
-  rFLAT(*this, rltGroup, "FLAT"),
-  rDELU(*this, rltAtoms, "DELU"),
-  rSIMU(*this, rltAtoms, "SIMU"),
-  rISOR(*this, rltAtoms, "ISOR"),
-  rEADP(*this, rltAtoms, "EADP"),
-  rAngle(*this, rltGroup3, "olex2.restraint.angle"),
-  rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral"),
-  rFixedUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq"),
-  rSimilarUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq_similar"),
-  rSimilarAdpVolume(*this, rltAtoms, "olex2.restraint.adp_volume_similar"),
-  ExyzGroups(*this), 
-  AfixGroups(*this), 
+  rDFIX(*this, rltGroup2, "DFIX", rptValue|rptEsd),
+  rDANG(*this, rltGroup2, "DANG", rptValue|rptEsd),
+  rSADI(*this, rltGroup2, "SADI", rptEsd),
+  rCHIV(*this, rltAtoms, "CHIV", rptValue|rptEsd),
+  rFLAT(*this, rltGroup, "FLAT", rptEsd),
+  rDELU(*this, rltAtoms, "DELU", rptEsd|rptEsd1),
+  rSIMU(*this, rltAtoms, "SIMU", rptEsd|rptEsd1|rptValue1),
+  rISOR(*this, rltAtoms, "ISOR", rptEsd),
+  rEADP(*this, rltAtoms, "EADP", rptNone),
+  rAngle(*this, rltGroup3, "olex2.restraint.angle", rptValue|rptEsd),
+  rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral", rptValue|rptEsd),
+  rFixedUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq", rptValue|rptEsd),
+  rSimilarUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq_similar", rptEsd),
+  rSimilarAdpVolume(*this, rltAtoms, "olex2.restraint.adp_volume_similar", rptEsd),
+  ExyzGroups(*this),
+  AfixGroups(*this),
   rSAME(*this),
   OnSetBadReflections(Actions.New("OnSetBadReflections")),
   OnCellDifference(Actions.New("OnCellDifference")),
@@ -969,6 +969,7 @@ const_strlist RefinementModel::Describe() {
     if( !AfixGroups[i].IsEmpty() )
       a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
   }
+  sec_num++;
   for( size_t i=0; i < a_gs.Count(); i++ )  {
     TPtrList<TAfixGroup>& gl = a_gs.GetValue(i);
     if (gl[0]->GetAfix() < 0) // skip internals
@@ -978,9 +979,20 @@ const_strlist RefinementModel::Describe() {
       ag_name[0] = olxstr::o_toupper(ag_name.CharAt(0));
     lst.Add(olxstr(sec_num) << '.' << (olxch)('a'+afix_sn++)) << ' ' <<
       ag_name << ':';
-    olxstr& line = lst.Add(gl[0]->ToString());
+    olxstr& line = (lst.Add(' ') << gl[0]->ToString());
     for( size_t j=1; j < gl.Count(); j++ )
       line << ", " << gl[j]->ToString();
+  }
+  for (size_t i=0; i < lst.Count(); i++) {
+    size_t wsc = lst[i].LeadingCharCount(' ');
+    if (wsc > 0 && lst[i].Length() > 80) {
+      TStrList sl;
+      sl.Hyphenate(lst[i], 80-wsc, false);
+      lst[i] = sl[0];
+      for (size_t li=1; li < sl.Count(); li++) {
+        lst.Insert(++i, sl[li].Insert(' ', 0, wsc));
+      }
+    }
   }
   return lst;
 }
@@ -1783,27 +1795,27 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
 //..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
-  lib->RegisterFunction<RefinementModel>(
+  lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibOSF,
       "OSF",
       fpNone|fpOne,
 "Returns/sets OSF"));
-  lib->RegisterFunction<RefinementModel>(
+  lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibFVar,
       "FVar",
       fpOne|fpTwo,
 "Returns/sets FVAR referred by index"));
-  lib->RegisterFunction<RefinementModel>(
+  lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI,
       "Exti",
       fpNone|fpOne,
 "Returns/sets EXTI") );
-  lib->RegisterFunction<RefinementModel>(
+  lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibUpdateCRParams,
       "UpdateCR",
       fpAny^(fpNone|fpOne|fpTwo),
 "Updates constraint or restraint parameters (name, index, {values})") );
-  lib->RegisterMacro<RefinementModel>(
+  lib->Register(
     new TMacro<RefinementModel>(this, &RefinementModel::LibShareADP,
       "ShareADP", EmptyString(),
       fpAny,

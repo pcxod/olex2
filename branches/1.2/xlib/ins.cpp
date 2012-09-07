@@ -27,6 +27,7 @@
 #include "infotab.h"
 #include "catomlist.h"
 #include "label_corrector.h"
+#include "estopwatch.h"
 
 #undef AddAtom
 #undef GetObject
@@ -48,13 +49,18 @@ void TIns::Clear()  {
 }
 //..............................................................................
 void TIns::LoadFromFile(const olxstr& fileName)  {
+  TStopWatch sw(__FUNC__);
   Lst.Clear();
   // load Lst first, as it may have the error indicator
   olxstr lst_fn = TEFile::ChangeFileExt(fileName, "lst");
   if( TEFile::Exists(lst_fn) )  {
-    try  { Lst.LoadFromFile(lst_fn); }
+    try  {
+      sw.start("Loading LST file");
+      Lst.LoadFromFile(lst_fn);
+    }
     catch(...)  {}
   }
+  sw.start("Loading the file");
   TBasicCFile::LoadFromFile(fileName);
 }
 //..............................................................................
@@ -1007,8 +1013,13 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         if( !overlap && sg.GetDependent(i).Count() > 1 &&
           sg.GetDependent(i).AreAllAtomsUnique() )
         {
-          tmp << ' ' << sg.GetDependent(i)[0].GetResiLabel() << " > "
-            << sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetResiLabel();
+          tmp << ' ' << sg.GetDependent(i)[0].GetResiLabel();
+          if (sg.GetDependent(i)[0].GetId() <
+            sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetId())
+            tmp << " > ";
+          else
+            tmp << " < ";
+          tmp << sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetResiLabel();
         }
         else  {
           for( size_t j=0; j < sg.GetDependent(i).Count(); j++ )
@@ -1028,7 +1039,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   }
   TAfixGroup* ag = a.GetDependentAfixGroup();
   int atom_afix = a.GetAfix();
-  if( (atom_afix != afix || afix == 1 || afix == 2) && atom_afix > 0)  { 
+  if( (atom_afix != afix || afix == 1 || afix == 2) && atom_afix > 0)  {
     if( !TAfixGroup::HasExcplicitPivot(afix) ||
         !TAfixGroup::IsDependent(atom_afix) )
     {
@@ -1044,7 +1055,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         }
       }
       else  {
-        olxstr& str = sl.Add("AFIX ") << atom_afix;    
+        olxstr& str = sl.Add("AFIX ") << atom_afix;
         if( ag != NULL )  {
           if( ag->GetD() != 0 )
             str << ' ' << ag->GetD();

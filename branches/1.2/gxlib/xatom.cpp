@@ -94,6 +94,7 @@ TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
   Label = new TXGlLabel(Render, PLabelsCollectionName);
   Label->SetOffset(crd());
   Label->SetVisible(false);
+  label_forced = false;
 }
 //..............................................................................
 TXAtom::~TXAtom()  {

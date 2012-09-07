@@ -171,6 +171,7 @@ enum  {
   ID_WARNING,
   ID_ERROR,
   ID_EXCEPTION,
+  ID_LOG,
   ID_ONLINK,
   ID_HTMLKEY,
   ID_COMMAND,
@@ -261,7 +262,7 @@ protected:
   TDataFile FHelpFile, FMacroFile, FPluginFile;
   TDataItem *FHelpItem, *FPluginItem;
   
-  TEMacroLib Macros;
+  macrolib::TEMacroLib Macros;
 
   olxstr DictionaryFile, GradientPicture;
   TLangDict Dictionary;
@@ -405,14 +406,9 @@ private:
   DefMacro(Sel)
   DefMacro(Esd)
   DefMacro(SetEnv)
-  DefMacro(SetView)
   DefMacro(Help)
-  DefMacro(Matr)
   DefMacro(Qual)
-  DefMacro(Line)
   DefMacro(AddLabel)
-  DefMacro(Mpln)
-  DefMacro(Cent)
   DefMacro(Hide)
   DefMacro(Kill)
   DefMacro(UpdateWght)
@@ -570,7 +566,6 @@ private:
   DefFunc(Strcmp)
   DefFunc(GetEnv)
 
-  DefFunc(Eval)
   DefFunc(VVol)
 
   DefFunc(Sel)

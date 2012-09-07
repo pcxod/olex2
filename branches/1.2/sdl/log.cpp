@@ -14,7 +14,9 @@ TLog::TLog() :
   OnInfo(Actions.New("ONINF")),
   OnWarning(Actions.New("ONWRN")),
   OnError(Actions.New("ONERR")),
-  OnException(Actions.New("ONEXC"))  {}
+  OnException(Actions.New("ONEXC")),
+  OnPost(Actions.New("ONPOST"))
+  {}
 //..............................................................................
 TLog::~TLog()  {
   for( size_t i=0; i < Streams.Count(); i++ )
@@ -40,6 +42,7 @@ TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate)
 TLog::LogEntry::~LogEntry()  {
   buffer << NewLineSequence();
   olxstr res = buffer;
+  parent.OnPost.Execute(&parent, &res);
   if( evt == logDefault )  {
     parent << res;
     //parent.Flush();

@@ -21,6 +21,7 @@
 #include "infotab.h"
 #include "absorpc.h"
 #include "analysis.h"
+#include "estopwatch.h"
 
 enum {
   XFILE_SG_Change,
@@ -31,8 +32,11 @@ TBasicCFile::TBasicCFile() : RefMod(AsymmUnit), AsymmUnit(NULL)  {
   AsymmUnit.SetRefMod(&RefMod);
 }
 //..............................................................................
-TBasicCFile::~TBasicCFile()  {  
-  RefMod.Clear(rm_clear_ALL);  // this must be called, as the AU might get destroyed beforehand and then AfixGroups cause crash
+TBasicCFile::~TBasicCFile()  {
+  /* this must be called, as the AU might get destroyed beforehand and then
+  AfixGroups cause crash
+  */
+  RefMod.Clear(rm_clear_ALL);
 }
 //..............................................................................
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
@@ -43,6 +47,7 @@ void TBasicCFile::SaveToFile(const olxstr& fn)  {
 };
 //..............................................................................
 void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
+  TStopWatch(__FUNC__);
   TXFile::NameArg file_n = TXFile::ParseName(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
   TStrList L;
@@ -162,6 +167,7 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
 }
 //..............................................................................
 void TXFile::LoadFromFile(const olxstr & _fn) {
+  TStopWatch(__FUNC__);
   const NameArg file_n = ParseName(_fn);
   const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
   // this thows an exception if the file format loader does not exist
@@ -185,7 +191,7 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
     }
   }
   catch( const TExceptionBase& exc )  {
-    if( replicated )  
+    if( replicated )
       delete Loader;
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
@@ -297,9 +303,9 @@ void TXFile::Sort(const TStrList& ins)  {
         cs.sequence.Add(&AtomSorter::atom_cmp_Part);
       else if( sort.CharAt(i) == 'h' )
         keeph = false;
-       else if( sort.CharAt(i) == 'z' )  
+       else if( sort.CharAt(i) == 'z' )
         cs.sequence.Add(&AtomSorter::atom_cmp_Suffix);
-       else if( sort.CharAt(i) == 'n' )  
+       else if( sort.CharAt(i) == 'n' )
         cs.sequence.Add(&AtomSorter::atom_cmp_Number);
     }
     if( !cs.sequence.IsEmpty() )
@@ -616,7 +622,7 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
 TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name );
 
-  lib->RegisterFunction<TXFile>(
+  lib->Register(
     new TFunction<TXFile>(this, &TXFile::LibGetFormula, "GetFormula",
       fpNone|fpOne|fpTwo|psFileLoaded,
       "Returns a string for content of the asymmetric unit. Takes single or "
@@ -625,45 +631,45 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
       "If no parameter is specified, just formula is returned")
    );
 
-  lib->RegisterFunction<TXFile>(
+  lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibSetFormula, "SetFormula",
-      fpOne|psCheckFileTypeIns,
+      fpOne|psCheckFileTypeIns|psCheckFileTypeP4P,
       "Sets formula for current file, takes a string of the following form "
       "'C:25,N:4'")
   );
 
-  lib->RegisterFunction<TXFile>(
+  lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate",
       fpNone|psCheckFileTypeIns,
       "Must be called after the content of the asymmetric unit has changed - "
       "this function will update the program state")
   );
 
-  lib->RegisterFunction<TXFile>(
+  lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution",
       fpOne|psCheckFileTypeIns,
       "Saves current Q-peak model to provided file (res-file)")
   );
 
-  lib->RegisterFunction<TXFile>(
+  lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibDataCount, "DataCount",
       fpNone|psFileLoaded,
       "Returns number of available data sets")
   );
 
-  lib->RegisterFunction<TXFile>(
+  lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibDataName, "DataName",
       fpOne|psCheckFileTypeCif,
       "Returns data name for given CIF block")
   );
   
-  lib->RegisterFunction<TXFile>(
+  lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibCurrentData, "CurrentData",
       fpNone|fpOne|psCheckFileTypeCif,
       "Returns current data index or changes current data block within the CIF")
   );
   
-  lib->RegisterFunction<TXFile>(
+  lib->Register(
     new TFunction<TXFile>(this,  &TXFile::LibGetMu, "GetMu",
       fpNone|psFileLoaded,
       "Changes current data block within the CIF")

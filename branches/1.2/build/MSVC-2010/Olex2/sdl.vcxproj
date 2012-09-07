@@ -622,10 +622,13 @@
     <ClCompile Include="..\..\..\sdl\hashing.cpp" />
     <ClCompile Include="..\..\..\sdl\integration.cpp" />
     <ClCompile Include="..\..\..\sdl\istream.cpp" />
+    <ClCompile Include="..\..\..\sdl\libfile.cpp" />
     <ClCompile Include="..\..\..\sdl\library.cpp" />
     <ClCompile Include="..\..\..\sdl\log.cpp" />
     <ClCompile Include="..\..\..\sdl\macroerror.cpp" />
     <ClCompile Include="..\..\..\sdl\macrolib.cpp" />
+    <ClCompile Include="..\..\..\sdl\math\evaln.cpp" />
+    <ClCompile Include="..\..\..\sdl\math\libmath.cpp" />
     <ClCompile Include="..\..\..\sdl\md5.cpp" />
     <ClCompile Include="..\..\..\sdl\os_util.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_cstring.cpp" />
@@ -699,6 +702,7 @@
     <ClInclude Include="..\..\..\sdl\index_range.h" />
     <ClInclude Include="..\..\..\sdl\integration.h" />
     <ClInclude Include="..\..\..\sdl\istream.h" />
+    <ClInclude Include="..\..\..\sdl\libfile.h" />
     <ClInclude Include="..\..\..\sdl\library.h" />
     <ClInclude Include="..\..\..\sdl\linked_list.h" />
     <ClInclude Include="..\..\..\sdl\linked_operators.h" />
@@ -709,6 +713,8 @@
     <ClInclude Include="..\..\..\sdl\math\align.h" />
     <ClInclude Include="..\..\..\sdl\math\composite.h" />
     <ClInclude Include="..\..\..\sdl\math\dmatrix.h" />
+    <ClInclude Include="..\..\..\sdl\math\evaln.h" />
+    <ClInclude Include="..\..\..\sdl\math\libmath.h" />
     <ClInclude Include="..\..\..\sdl\math\mmath.h" />
     <ClInclude Include="..\..\..\sdl\math\plane.h" />
     <ClInclude Include="..\..\..\sdl\math\spline.h" />
@@ -743,6 +749,7 @@
     <ClInclude Include="..\..\..\sdl\tests\alg_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\container_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\encoding_test.h" />
+    <ClInclude Include="..\..\..\sdl\tests\exparse_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\irange_test.h" />
     <ClInclude Include="..\..\..\sdl\tests\matrix_test.h" />

@@ -33,6 +33,13 @@ public:
     Tail->Next = NULL;
     Tail->Data->RefCnt++;
   }
+
+  TTStrBuffer(const TTStrBuffer& v) {
+    Tail = Head = NULL;
+    _Length = 0;
+    this->operator << (v);
+  }
+
   virtual ~TTStrBuffer()  {
     Entry* en = Head;
     while( en != NULL )  {
@@ -59,6 +66,26 @@ public:
     _Length += (Tail->Length = v.Length());
     Tail->Next = NULL;
     Tail->Data->RefCnt++;
+    return *this;
+  }
+
+  TTStrBuffer& operator << (const TTStrBuffer& v) {
+    Entry *en = v.Head;
+    while (en != NULL) {
+      if (Head == NULL)
+        Tail = Head = new Entry;
+      else {
+        Tail->Next = new Entry;
+        Tail = Tail->Next;
+        Tail->Next = NULL;
+      }
+      Tail->Data = en->Data;
+      Tail->Start = en->Start;
+      _Length += (Tail->Length = en->Length);
+      en = en->Next;
+      Tail->Next = NULL;
+      Tail->Data->RefCnt++;
+    }
     return *this;
   }
   // writes the EOL - size of v should be Length()+1
@@ -92,6 +119,7 @@ public:
     return v;
   }
   size_t Length() const {  return _Length;  }
+  bool IsEmpty() const { return _Length == 0; }
   Entry *GetHead() {  return Head;  }
   const Entry *GetHead() const {  return Head;  }
 };

@@ -43,7 +43,9 @@ public:
   bool Contains(const KeyC& entity) const {
     return IndexOf(entity) != InvalidIndex;
   }
-  // removes specified entry from the list and returns true if the entry was in the list
+  /* removes specified entry from the list and returns true if the entry was
+  in the list
+  */
   bool Remove(const TypeClass& entity)  {
     size_t ind = IndexOf(entity);
     if( ind == InvalidIndex )  return false;
@@ -68,7 +70,9 @@ public:
 };
 
 template <class ListClass, class Comparator, typename TypeClass>
-class TTSortedList : public TTSortedListBase<ListClass, Comparator, TypeClass> {
+class TTSortedList
+  : public TTSortedListBase<ListClass, Comparator, TypeClass>
+{
   typedef TTSortedListBase<ListClass, Comparator, TypeClass> __parent_t;
 public:
   TTSortedList() {}
@@ -92,7 +96,8 @@ public:
 template <typename TypeClass, class Comparator>
 class SortedTypeList
   : public TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass> {
-  typedef TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass> _parent_t;
+  typedef TTSortedListBase<TTypeList<TypeClass>, Comparator, TypeClass>
+    _parent_t;
 public:
   SortedTypeList() {}
   SortedTypeList(const SortedTypeList& l) : _parent_t(l)  {}
@@ -103,9 +108,10 @@ public:
   size_t Add(TypeClass& entry)  {
     return sorted::Add(_parent_t::list, Comparator(), entry);
   }
-  /* adds an item only if not already in the list, returns true if the item is added, pos is is 
-  initialised with the item index, if item is already in the list - it is deleted and the list
-  will not be modified */
+  /* adds an item only if not already in the list, returns true if the item is
+  added, pos is is initialised with the item index, if item is already in the
+  list - it is deleted and the list will not be modified
+  */
   bool AddUnique(TypeClass* entry, size_t* pos = NULL)  {
     return AddUnique(*entry, pos);
   }
@@ -120,14 +126,14 @@ public:
     return *this;
   }
 };
-//............................................................................................
+//.............................................................................
 // a simple object list to use with sorted list
-//............................................................................................
+//.............................................................................
 template <class ObjectClass> class TObjectList {
   TPtrList<ObjectClass> list;
 public:
   TObjectList() {}
-  TObjectList(const TObjectList& li) {  
+  TObjectList(const TObjectList& li) {
     SetCapacity(li.Count());
     for( size_t i=0; i < li.Count(); i++ )
       Add(li[i]);
@@ -167,19 +173,19 @@ public:
 public:
   typedef ObjectClass list_item_type;
 };
-//............................................................................................
+//.............................................................................
 /* A choice of comprators is provided:
   TPrimitiveComparator - for objects having < and > operators only
   TComparableComparator - for objects having Compare method returning -,+,0
 */
-template <class ObjectClass, class Comparator> 
+template <class ObjectClass, class Comparator>
 class SortedObjectList
   : public TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass> {
   typedef TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass>
     _parent_t;
 public:
   SortedObjectList() {}
-  SortedObjectList(const SortedObjectList& l) : 
+  SortedObjectList(const SortedObjectList& l) :
     TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass>(l) {}
   SortedObjectList(const ConstSortedObjectList<ObjectClass,Comparator>& l)  {
     _parent_t::TakeOver(l.Release(), true);
@@ -194,23 +200,40 @@ public:
     _parent_t::TakeOver(l.Release, true);
     return *this;
   }
+  template <class LT> static
+    ConstSortedObjectList<ObjectClass, Comparator> FromList(const LT &l)
+  {
+    SortedObjectList rv;
+    rv.SetCapacity(l.Count());
+    for (size_t i=0; i < l.Count(); i++) rv.Add(l[i]);
+    return rv;
+  }
+  static ConstSortedObjectList<ObjectClass, Comparator>
+    FromArray(const ObjectClass *a, size_t sz)
+  {
+    SortedObjectList rv;
+    rv.SetCapacity(sz);
+    for (size_t i=0; i < sz; i++) rv.Add(a[i]);
+    return rv;
+  }
 public:
   typedef ObjectClass list_item_type;
 };
-//............................................................................................
+//.............................................................................
 /* A choice of comprators is provided:
   TPrimitiveComparator - for sorting Objects 
-  TComparableComparator - for sorting objects having Compare method returning -,+,0
+  TComparableComparator - for sorting objects having Compare method returning
+  -,+,0
   TPointerComparator - for sorting pointer adresses
 */
-template <class ObjectClass, class Comparator> 
+template <class ObjectClass, class Comparator>
 class SortedPtrList
   : public TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*> {
   typedef TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*>
     _parent_t;
 public:
   SortedPtrList() {}
-  SortedPtrList(const SortedPtrList& l) : 
+  SortedPtrList(const SortedPtrList& l) :
     TTSortedList<TPtrList<ObjectClass>, Comparator, ObjectClass*>(l) {}
   SortedPtrList(const ConstSortedPtrList<ObjectClass,Comparator>& l)  {
     _parent_t::TakeOver(l.Release(), true);
@@ -224,6 +247,14 @@ public:
   {
     _parent_t::TakeOver(l.Release(), true);
     return *this;
+  }
+  template <class LT> static
+    ConstSortedPtrList<ObjectClass, Comparator> FromList(const LT &l)
+  {
+    SortedPtrList rv;
+    rv.SetCapacity(l.Count());
+    for (size_t i=0; i < l.Count(); i++) rv.Add(l[i]);
+    return rv;
   }
 public:
   typedef ObjectClass *list_item_type;

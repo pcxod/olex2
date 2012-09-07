@@ -297,8 +297,6 @@ public:
   static void CheckFileExists(const olxstr& location, const olxstr& fileName);
   
   static const olxstr AllFilesMask;
-
-  static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndEsdlNamespace()

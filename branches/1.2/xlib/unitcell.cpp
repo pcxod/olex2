@@ -20,6 +20,8 @@
 #include "arrays.h"
 #include "etable.h"
 #include "infotab.h"
+#include "estopwatch.h"
+
 #undef GetObject
 
 TUnitCell::TUnitCell(TLattice *L)  {  Lattice = L;  }
@@ -51,7 +53,10 @@ smatd& TUnitCell::InitMatrixId(smatd& m) const {
       const int8_t ta = (int8_t)(m.t[0]-Matrices[i].t[0]);
       const int8_t tb = (int8_t)(m.t[1]-Matrices[i].t[1]);
       const int8_t tc = (int8_t)(m.t[2]-Matrices[i].t[2]);
-      if( olx_abs(dt[0]-ta) < 1e-6 && olx_abs(dt[1]-tb) < 1e-6 && olx_abs(dt[2]-tc) < 1e-6 )  {
+      if( olx_abs(dt[0]-ta) < 1e-6 &&
+          olx_abs(dt[1]-tb) < 1e-6 &&
+          olx_abs(dt[2]-tc) < 1e-6 )
+      {
         m.SetId((uint8_t)i, ta, tb, tc);
         return m;
       }
@@ -60,7 +65,9 @@ smatd& TUnitCell::InitMatrixId(smatd& m) const {
   throw TInvalidArgumentException(__OlxSourceInfo, "could not locate matrix");
 }
 //..............................................................................
-smatd_list TUnitCell::MulMatrices(const smatd_list& in, const smatd& transform) const {
+smatd_list TUnitCell::MulMatrices(const smatd_list& in,
+  const smatd& transform) const
+{
   smatd_list out(in.Count());
   for( size_t i=0; i < in.Count(); i++ )  {
     out.Set(i, new smatd(transform*in[i]));
@@ -106,6 +113,7 @@ TEValue<double> TUnitCell::CalcVolumeEx() const {
 }
 //..............................................................................
 void  TUnitCell::InitMatrices()  {
+  volatile TStopWatch sw(__FUNC__);
   MulDest.Clear();
   Matrices.Clear();
   GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(),
@@ -344,7 +352,8 @@ void TUnitCell::TSearchSymmEqTask::InitEquiv() const {
   }
 }
 //..............................................................................
-void TUnitCell::FindSymmEq() const  {
+void TUnitCell::FindSymmEq() const {
+  volatile TStopWatch sw(__FUNC__);
   TStrList report;
   TCAtomPList ACA;
   ACA.SetCapacity(GetLattice().GetAsymmUnit().AtomCount());
@@ -1208,13 +1217,19 @@ void TUnitCell::LibMatrixCount(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 class TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
-  TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("uc") : name );
-  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this, &TUnitCell::LibVolumeEx, "VolumeEx", fpNone,
-"Returns unit cell volume with esd") );
-  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this, &TUnitCell::LibCellEx, "CellEx", fpOne,
-"Returns unit cell side/angle with esd") );
-  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this, &TUnitCell::LibMatrixCount, "MatrixCount", fpNone,
-"Returns the number of matrices in the unit cell") );
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("uc") : name);
+  lib->Register(
+    new TFunction<TUnitCell>(this, &TUnitCell::LibVolumeEx, "VolumeEx",
+      fpNone,
+    "Returns unit cell volume with esd") );
+  lib->Register(
+    new TFunction<TUnitCell>(this, &TUnitCell::LibCellEx, "CellEx",
+      fpOne,
+    "Returns unit cell side/angle with esd") );
+  lib->Register(
+    new TFunction<TUnitCell>(this, &TUnitCell::LibMatrixCount, "MatrixCount",
+      fpNone,
+    "Returns the number of matrices in the unit cell") );
   return lib;
 }
 //..............................................................................

@@ -626,7 +626,6 @@
     <ClCompile Include="..\..\..\xlib\crs.cpp" />
     <ClCompile Include="..\..\..\xlib\ellipsoid.cpp" />
     <ClCompile Include="..\..\..\xlib\envilist.cpp" />
-    <ClCompile Include="..\..\..\xlib\evaln.cpp" />
     <ClCompile Include="..\..\..\xlib\experimental.cpp" />
     <ClCompile Include="..\..\..\xlib\exyzgroup.cpp" />
     <ClCompile Include="..\..\..\xlib\fastsymm.cpp" />
@@ -1071,7 +1070,6 @@
     <ClInclude Include="..\..\..\xlib\crs.h" />
     <ClInclude Include="..\..\..\xlib\ellipsoid.h" />
     <ClInclude Include="..\..\..\xlib\envilist.h" />
-    <ClInclude Include="..\..\..\xlib\evaln.h" />
     <ClInclude Include="..\..\..\xlib\exlib.h" />
     <ClInclude Include="..\..\..\xlib\experimental.h" />
     <ClInclude Include="..\..\..\xlib\exyzgroup.h" />

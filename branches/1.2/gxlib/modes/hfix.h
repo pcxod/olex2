@@ -35,7 +35,6 @@ public:
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
-      int n = TAfixGroup::GetN(Hfix);
       if( TAfixGroup::IsFittedRing(Hfix) )  {
         gxapp.AutoAfixRings(Hfix, XA, true);
       }

@@ -403,45 +403,45 @@ void BAPP_ModuleHash(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   TLibrary* lib = new TLibrary(lib_name);
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetArgCount,
+  lib->Register(new TStaticFunction(BAPP_GetArgCount,
     "ArgCount", fpNone,
     "Returns number of arguments passed to the application"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetArg,
+  lib->Register(new TStaticFunction(BAPP_GetArg,
     "GetArg", fpOne,
     "Returns application argument value by index"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetOptCount,
+  lib->Register(new TStaticFunction(BAPP_GetOptCount,
     "OptCount", fpNone,
     "Returns number of options passed to the application"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetOpt,
+  lib->Register(new TStaticFunction(BAPP_GetOpt,
     "GetOpt", fpOne,
     "Returns application 'option=value' value by index. '=' only added if the"
     " values is not empty"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_GetOptValue,
+  lib->Register(new TStaticFunction(BAPP_GetOptValue,
     "OptValue", fpOne|fpTwo,
     "Returns value of the given option (default may be provided)"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_Profiling,
+  lib->Register(new TStaticFunction(BAPP_Profiling,
     "Profiling", fpNone|fpOne,
     "Sets/Returns current procedure profiling status"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_LogFileName,
+  lib->Register(new TStaticFunction(BAPP_LogFileName,
     "GetLogName", fpNone,
     "Returns current log file name"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_BaseDir,
+  lib->Register(new TStaticFunction(BAPP_BaseDir,
     "BaseDir", fpNone,
     "Returns the directory from which the application is launched."));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_InstanceDir,
+  lib->Register(new TStaticFunction(BAPP_InstanceDir,
     "InstanceDir", fpNone,
     "Returns the instance specific, writable directory."));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_SharedDir,
+  lib->Register(new TStaticFunction(BAPP_SharedDir,
     "SharedDir", fpNone,
     "Returns a generic writable directory."));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_ConfigDir,
+  lib->Register(new TStaticFunction(BAPP_ConfigDir,
     "ConfigDir", fpNone,
     "Returns the configuration directory. If it is not set, the InstanceDir is"
     " returned"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_Platform,
+  lib->Register(new TStaticFunction(BAPP_Platform,
     "Platform", fpNone,
     "Returns current platform like WIN, MAC, Linux 32/64"));
-  lib->RegisterStaticFunction(new TStaticFunction(BAPP_ModuleHash,
+  lib->Register(new TStaticFunction(BAPP_ModuleHash,
     "ModuleHash", fpNone,
     "Returns curren module MD5 hash"));
  return lib;

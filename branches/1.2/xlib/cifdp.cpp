@@ -271,7 +271,7 @@ void cetTable::AddCol(const olxstr& col_name)  {
         name = n;
       }
     }
-    if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
+    if( name.Length() != min_len )  {  // line _geom_angle and geom_angle_etc
       const size_t u_ind = name.LastIndexOf('_');
       if( u_ind != InvalidIndex && u_ind != 0 )
         name.SetLength(u_ind);
@@ -285,10 +285,22 @@ void cetTable::AddCol(const olxstr& col_name)  {
       throw TFunctionFailedException(__OlxSourceInfo, "mismatching loop columns");
   }
 }
-cetTable::cetTable(const olxstr& cols)  {
+
+bool cetTable::DelCol(size_t idx) {
+  if (idx == InvalidIndex) return false;
+  for (size_t i=0; i < data.RowCount(); i++)
+    delete data[i][idx];
+  data.DelCol(idx);
+  // shall we update the table name here?
+  return true;
+}
+
+cetTable::cetTable(const olxstr& cols, size_t row_count)  {
   const TStrList toks(cols, ',');
   for( size_t i=0; i < toks.Count(); i++ )
     AddCol(toks[i]);
+  if (row_count != InvalidSize)
+    data.SetRowCount(row_count);
 }
 void cetTable::Clear()  {
   for( size_t i=0; i < data.RowCount(); i++ )
@@ -462,7 +474,8 @@ CifBlock::~CifBlock()  {
     delete params.GetObject(i);
 }
 ICifEntry& CifBlock::Add(ICifEntry* p)  {
-  if( !p->HasName() || p->GetName().IsEmpty() )  {  // only comments are allowed to have not name
+  // only comments are allowed to have not name
+  if( !p->HasName() || p->GetName().IsEmpty() )  {
     if( !EsdlInstanceOf(*p, cetComment) )
       throw TInvalidArgumentException(__OlxSourceInfo, "name");
     return *params.Add(EmptyString(), p).Object;
@@ -482,7 +495,8 @@ ICifEntry& CifBlock::Add(ICifEntry* p)  {
         table_map.GetValue(ti) = (cetTable*)p;
       else  {
         table_map.Delete(ti);
-        TBasicApp::NewLogEntry(logWarning) << "Changing table type for " << pname;
+        TBasicApp::NewLogEntry(logWarning) << "Changing table type for " <<
+          pname;
       }
     }
     const size_t oi = params.IndexOfi(pname);
@@ -492,16 +506,15 @@ ICifEntry& CifBlock::Add(ICifEntry* p)  {
   }
   return *p;
 }
-bool CifBlock::Remove(const olxstr& pname)  {
-  const size_t i = param_map.IndexOf(pname);
-  if( i == InvalidIndex )  return false;
-  param_map.Delete(i);
-  const size_t ti = table_map.IndexOf(pname);
+bool CifBlock::Delete(size_t idx)  {
+  if( idx == InvalidIndex )  return false;
+  const size_t ti = table_map.IndexOf(param_map.GetKey(idx));
   if( ti != InvalidIndex )
     table_map.Delete(ti);
-  const size_t oi = params.IndexOfi(pname);
+  const size_t oi = params.IndexOfi(param_map.GetKey(idx));
   delete params.GetObject(oi);
   params.Delete(oi);
+  param_map.Delete(idx);
   return true;
 }
 void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name)  {

@@ -12,6 +12,62 @@
 using namespace esdl::exparse;
 
 //.............................................................................
+parser_util::operator_set::operator_set()
+  : operators(operatorset_t::FromList(
+  TStrList(
+    "+ - * / %" // arithmetic
+    " & ^ |" // bitwise
+    " == != >= <= < >" // comparison
+    " >> <<" // directional
+    " ." // indirection
+    " : ? ! && ||" // logical
+    " = += -= /= *= &= |= ^= <<=", // assignment
+    ' ')))
+{
+  update_charset();
+}
+//.............................................................................
+void parser_util::operator_set::update_charset() {
+  control_chars.Clear();
+  for (size_t i=0; i < operators.Count(); i++) {
+    for (size_t j=0; j < operators[i].Length(); j++)
+      control_chars.AddUnique(operators[i].CharAt(j));
+  }
+}
+//.............................................................................
+bool parser_util::operator_set::parse_control_chars(const olxstr& exp,
+  olxstr& dest, size_t& ind) const
+{
+  if (ind >= exp.Length()) return false;
+  size_t st=ind;
+  while (ind < exp.Length() && control_chars.Contains(exp.CharAt(ind))) {
+    dest = exp.SubString(st, ++ind-st);
+    if (!is_operator(dest)) {
+      dest.SetLength(dest.Length()-1);
+      ind--;
+      break;
+    }
+  }
+  return !dest.IsEmpty();
+}
+//.............................................................................
+bool parser_util::operator_set::add_operator(const olxstr &opr) {
+  if (!operators.AddUnique(opr)) return false;
+  for (size_t i=0; i < opr.Length(); i++)
+    control_chars.AddUnique(opr[i]);
+  return true;
+}
+//.............................................................................
+bool parser_util::operator_set::remove_operator(const olxstr &opr) {
+  if (operators.Remove(opr)) {
+    update_charset();
+    return true;
+  }
+  return false;
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 bool parser_util::skip_string(const olxstr& exp, size_t& ind)  {
   const olxch qc = exp.CharAt(ind);
   const size_t start = ind;
@@ -38,7 +94,9 @@ bool parser_util::parse_string(const olxstr& exp, olxstr& dest, size_t& ind)  {
   return end_found;
 }
 //.............................................................................
-bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest, size_t& ind)  {
+bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest,
+  size_t& ind)
+{
   const olxch qc = exp.CharAt(ind);
   bool end_found = false;
   const size_t start = ind+1;
@@ -98,54 +156,31 @@ bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest,
   return false;
 }
 //.............................................................................
-bool parser_util::is_operator(const olxstr& exp)  {
-  static size_t sz = sizeof(operators)/sizeof(operators[0]);
-  for( size_t i=0; i < sz; i++ )  {
-    if( operators[i] == exp )
-      return true;
-  }
-  return false;
-}
-//.............................................................................
-bool parser_util::parse_control_chars(const olxstr& exp, olxstr& dest,
-  size_t& ind)
-{
-  while( ind < exp.Length() &&
-    control_chars.IndexOf(exp.CharAt(ind)) != InvalidIndex )
-  {
-    dest << exp.CharAt(ind++);
-    if( !is_operator(dest) )  {
-      dest.SetLength(dest.Length()-1);
-      ind--;
-      break;
-    }
-  }
-  return !dest.IsEmpty();
-}
-bool parser_util::is_next_char_control(const olxstr& exp, size_t ind) {
-  if (ind+1 < exp.Length() &&
-      control_chars.IndexOf(exp.CharAt(ind+1)) != InvalidIndex)
-  {
-    return true;
-  }
-  return false;
-}
-//.............................................................................
-bool parser_util::is_expandable(const olxstr& exp)  {
-  for( size_t i=0; i < exp.Length(); i++ )  {
+bool parser_util::is_expandable(const olxstr& exp) {
+  for (size_t i=0; i < exp.Length(); i++) {
     const olxch ch = exp.CharAt(i);
-    if( is_bracket(ch) )
-      return true;
-    if( is_quote(ch) && !is_escaped(exp, i) )  {  // skip strings
-      while( ++i < exp.Length() && exp.CharAt(i) != ch && !is_escaped(exp, i) )
-        ;
+    if (is_bracket(ch)) return true;
+    if (is_quote(ch)) {
+      skip_string(exp, i);
       continue;
     }
-    if ( control_chars.IndexOf(ch) != InvalidIndex )
-      return true;
     // macro style call 'cos 90'
-    if (olxstr::o_iswhitechar(ch))
-      return true;
+    if (olxstr::o_iswhitechar(ch)) return true;
+  }
+  return false;
+}
+//.............................................................................
+bool parser_util::is_expandable(const olxstr& exp, const operator_set &os) {
+  for( size_t i=0; i < exp.Length(); i++ )  {
+    const olxch ch = exp.CharAt(i);
+    if (is_bracket(ch)) return true;
+    if (is_quote(ch)) {
+      skip_string(exp, i);
+      continue;
+    }
+    if (os.is_control_char(ch)) return true;
+    // macro style call 'cos 90'
+    if (olxstr::o_iswhitechar(ch)) return true;
   }
   return false;
 }
@@ -205,35 +240,37 @@ olxstr parser_util::escape(const olxstr& exp)  {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-void expression_tree::expand()  {
+void expression_tree::expand(const parser_util::operator_set &os)  {
   data.TrimWhiteChars();
-  if( !parser_util::is_expandable(data) )  return;
-  olxstr dt;
-  olxch q_ch = ' ';
+  if( !parser_util::is_expandable(data, os) )  return;
+  size_t dt_st=0;
   for( size_t i=0; i < data.Length(); i++ )  {
     olxch ch = data.CharAt(i);
-    if( olxstr::o_iswhitechar(ch) )  {
-      if (dt.IsEmpty()) continue;
-      if ((parser_util::skip_whitechars(dt, i)+1) >= data.Length())
+    if( olxstr::o_iswhitechar(ch) &&
+      !os.is_next_char_control(data, i))
+    {
+      if (dt_st == i) continue;
+      olxstr dt = data.SubString(dt_st, i-dt_st);
+      if ((parser_util::skip_whitechars(data, i)) >= data.Length())
         break;
       // check if 'def ttt ccc' syntax is used
-      if( !parser_util::is_next_char_control(data, i)) {
+      if( !os.is_next_char_control(data, i)) {
         TStrList args;
         TParamList::StrtokParams(data.SubStringFrom(i), ' ', args);
         evator = new evaluator<expression_tree>(dt);
         for( size_t ai=0; ai < args.Count(); ai++ )
-          evator->args.Add(new expression_tree(this, args[ai]))->expand();
+          evator->args.Add(new expression_tree(this, args[ai]))->expand(os);
         break;
       }
     }
     else if( ch == '(' )  {  // parse out brackets
+      olxstr dt = data.SubString(dt_st, i-dt_st).TrimWhiteChars();
       olxstr arg;
       if( !parser_util::parse_brackets(data, arg, i) ) {
         throw TInvalidArgumentException(__OlxSourceInfo,
           "problem with brackets");
       }
       arg.TrimWhiteChars();
-      dt.TrimWhiteChars();
       if( arg.IsEmpty() ) // empty arg list
         evator = new evaluator<expression_tree>(dt);
       else  {
@@ -241,13 +278,14 @@ void expression_tree::expand()  {
         parser_util::split_args(arg, args);
         if( args.Count() == 1 )  {
           left = new expression_tree(this, arg);
-          left->expand();
+          left->expand(os);
           if( !dt.IsEmpty() )  { // ()
             evator = new evaluator<expression_tree>(dt);
             evator->args.Add(left);
             left = NULL;
           }
-          else if( i+1 >= data.Length() )  {  // nothing else? then move one level up...
+          // nothing else? then move one level up...
+          else if( i+1 >= data.Length() )  {
             expression_tree* eta = left;
             left = eta->left;
             right = eta->right;
@@ -264,39 +302,39 @@ void expression_tree::expand()  {
         else  {
           evator = new evaluator<expression_tree>(dt);
           for( size_t ai=0; ai < args.Count(); ai++ )
-            evator->args.Add(new expression_tree(this, args[ai]))->expand();
+            evator->args.Add(new expression_tree(this, args[ai]))->expand(os);
         }
       }
-      dt.SetLength(0);
+      dt_st = i+1;
     }
     else if( ch == '[' || ch == '{' )  {
       olxstr arg;
-      if( !parser_util::parse_brackets(data, arg, i) )
-        throw TInvalidArgumentException(__OlxSourceInfo, "problem with brackets");
-      if (!dt.IsEmpty() || (parent != NULL && parent->data == '.'))  {
-        if (!dt.IsEmpty()) {
-          if( q_ch != ' ' )
-            left = new expression_tree(this, olxstr(q_ch) << dt << q_ch);
-          else
-            left = new expression_tree(this, dt);
-          left->expand();
+      size_t dt_e = i;
+      if (!parser_util::parse_brackets(data, arg, i)) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          "problem with brackets");
+      }
+      if ((dt_st < dt_e) || (parent != NULL && parent->data == '.'))  {
+        if (dt_st < dt_e) {
+          left = new expression_tree(this, data.SubString(dt_st, dt_e-dt_st));
+          left->expand(os);
           right = new expression_tree(this, '.');
           right->evator = new evaluator<expression_tree>("_idx_");
-          right->evator->args.Add(new expression_tree(this, arg))->expand();
+          right->evator->args.Add(new expression_tree(this, arg))->expand(os);
           olxstr ra = data.SubStringFrom(i+1);
           data = '.';
           right->right = new expression_tree(right,
             ra.StartsFrom('.') ? ra.SubStringFrom(1) : ra);
-          right->right->expand();
+          right->right->expand(os);
         }
         else {
           evator = new evaluator<expression_tree>("_idx_");
-          evator->args.Add(new expression_tree(this, arg))->expand();
+          evator->args.Add(new expression_tree(this, arg))->expand(os);
           olxstr ra = data.SubStringFrom(i+1);
           data = '.';
           right = new expression_tree(this,
             ra.StartsFrom('.') ? ra.SubStringFrom(1) : ra);
-          right->expand();
+          right->expand(os);
         }
       }
       else {
@@ -309,46 +347,232 @@ void expression_tree::expand()  {
     }
     // parse out the strings
     else if( parser_util::is_quote(ch) && !parser_util::is_escaped(data, i) )  {
-      if( dt.IsEmpty() )  q_ch = ch;
-      if( !parser_util::parse_string(data, dt, i) ) 
-        throw TInvalidArgumentException(__OlxSourceInfo, "problem with quotations");
+      dt_st = i;
+      if (!parser_util::skip_string(data, i)) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          "problem with quotations");
+      }
     }
-    else  { 
+    else  {
       olxstr opr;
-      if( parser_util::parse_control_chars(data, opr, i) )  {
-        if( opr == '.' )  {  // treat floating point values...
+      size_t dt_e = i;
+      if (os.parse_control_chars(data, opr, i))  {
+        if (opr == '.')  {  // treat floating point values...
           bool number = false;
-          if( i == 1 || (i+1) >= data.Length() )  // .1 or 1.
+          if (i == 1 || (i+1) >= data.Length())  // .1 or 1.
             number = true;
-          else if( (i > 1 && olxstr::o_isdigit(data.CharAt(i-2))) ||
-              (i < data.Length() && olxstr::o_isdigit(data.CharAt(i))) )
+          else if ((i > 1 && olxstr::o_isdigit(data.CharAt(i-2))) ||
+                   (i < data.Length() && olxstr::o_isdigit(data.CharAt(i))))
+          {
             number = true;
-          if( number )  {
-            dt << '.';
-            i--;
-            while( ++i < data.Length() && olxstr::o_isdigit(data.CharAt(i)) )
-              dt << data.CharAt(i);
+          }
+          if (number ) {
+            dt_st = --i; // '.'
+            while (++i < data.Length() && olxstr::o_isdigit(data.CharAt(i)))
+              ;
             i--;
             continue;
           }
         }
-
-        if( !dt.IsEmpty() )  {
-          if( left != NULL )
-            throw TInvalidArgumentException(__OlxSourceInfo, "invalid expression");
-          if( q_ch != ' ' )
-            left = new expression_tree(this, olxstr(q_ch) << dt << q_ch);
-          else
-            left = new expression_tree(this, dt);
-          left->expand();
+        olxstr dt = data.SubString(dt_st, dt_e-dt_st).TrimWhiteChars();
+        if (!dt.IsEmpty())  {
+          if (left != NULL) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "invalid expression");
+          }
+          left = new expression_tree(this, dt);
+          left->expand(os);
         }
         right = new expression_tree(this, data.SubStringFrom(i));
         data = opr;
-        right->expand();
+        right->expand(os);
         break;
       }
-      else
-        dt << ch;
     }
   }
 }
+//.............................................................................
+void expression_tree::expand_cmd()  {
+  data.TrimWhiteChars();
+  data.Replace((olxch)1, ' ');
+  if (parser_util::is_quoted(data)) {
+    return;
+  }
+  else if (!parser_util::is_expandable(data)) {
+    macro_call = true;
+    return;
+  }
+  size_t dt_st=0;
+  for (size_t i=0; i < data.Length(); i++) {
+    olxch ch = data.CharAt(i);
+    // only the first command can use the 'macro' syntax
+    if (olxstr::o_iswhitechar(ch) && parent == NULL) {
+      if (dt_st == i) continue;
+      olxstr dt = data.SubString(dt_st, i-dt_st);
+      if ((parser_util::skip_whitechars(data, i)) >= data.Length())
+        break;
+      TStrList args;
+      TParamList::StrtokParams(data.SubStringFrom(i), ' ', args, false);
+      evator = new evaluator<expression_tree>(dt);
+      for (size_t ai=0; ai < args.Count(); ai++)
+        evator->args.Add(new expression_tree(this, args[ai]))->expand_cmd();
+      macro_call = true;
+      dt_st = data.Length();
+      data.SetLength(0);
+      break;
+    }
+    else if (ch == '(') {  // parse out brackets
+      olxstr dt = data.SubString(dt_st, i-dt_st);//.TrimWhiteChars();
+      if (dt.IsNumber()) continue;
+      olxstr arg;
+      if( !parser_util::parse_brackets(data, arg, i) ) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          "problem with brackets");
+      }
+      arg.TrimWhiteChars();
+      size_t st=0, st_idx=InvalidIndex;
+      while (++st_idx < dt.Length()) {
+        if (!olxstr::o_isalpha(dt.CharAt(st_idx)) &&
+            !olxstr::o_isoneof(dt.CharAt(st_idx), '_', '.'))
+        {
+          st = st_idx+1;
+        }
+      }
+      olxstr left_v = st > 0 ? dt.SubStringTo(st) : EmptyString();
+      dt = dt.SubStringFrom(st);
+      if (arg.IsEmpty()) // empty arg list
+        evator = new evaluator<expression_tree>(dt);
+      else {
+        TStrList args;
+        parser_util::split_args(arg, args);
+        bool math_package = dt.StartsFromi("math.");
+        if (args.Count() > 1 || math_package) {
+          evator = new evaluator<expression_tree>(dt);
+          for (size_t ai=0; ai < args.Count(); ai++) {
+            expression_tree* et = evator->args.Add(
+              new expression_tree(this, args[ai]));
+            if (!math_package)
+              et->expand_cmd();
+          }
+        }
+        else { // 1 argument
+          left = new expression_tree(this, arg);
+          left->expand_cmd();
+          if (!dt.IsEmpty())  { // !()
+            evator = new evaluator<expression_tree>(dt);
+            evator->args.Add(left);
+            left = NULL;
+          }
+          // nothing else? then move one level up...
+          else if (i+1 >= data.Length()) {
+            expression_tree* eta = left;
+            left = eta->left;
+            right = eta->right;
+            evator = eta->evator;
+            if( left != NULL )  left->parent = this;
+            if( right != NULL )  right->parent = this;
+            data = eta->data;
+            eta->left = eta->right = NULL;
+            eta->evator = NULL;
+            delete eta;
+            priority = true;
+          }
+        }
+      }
+      if (!left_v.IsEmpty()) {
+        if (left != NULL)
+          throw TFunctionFailedException(__OlxSourceInfo, "invalid syntax");
+        left = new expression_tree(this, left_v);
+      }
+      size_t r_start = ++i; // skip the closing bracket
+      if ((parser_util::skip_whitechars(data, i)) < data.Length()) {
+        if (right != NULL)
+          TFunctionFailedException(__OlxSourceInfo, "invalid syntax");
+        // preserve any white spaces if any
+        olxstr dt = data.SubStringFrom(r_start);
+        r_start = 0;
+        while (r_start < dt.Length() &&
+          olxstr::o_iswhitechar(dt.CharAt(r_start)))
+        {
+          dt[r_start] = (olxch)1;
+          r_start++;
+        }
+        right = new expression_tree(this, dt);
+        right->expand_cmd();
+      }
+      if (evator == NULL) {
+        priority = true;
+        data.SetLength(0);
+      }
+      dt_st = data.Length();
+      // done here
+      data.SetLength(0);
+      break;
+    }
+    else if (ch == '=') {
+      olxstr dt = data.SubString(dt_st, i-dt_st).TrimWhiteChars();
+      bool valid_name = true;
+      for (size_t idx=0; idx < dt.Length(); idx++) {
+        if (olxstr::o_isalpha(dt.CharAt(idx))) continue;
+        if (olxstr::o_isoneof(dt.CharAt(idx), "_.") && idx != 0) continue;
+        if (dt.CharAt(idx) == '-' && idx == 0) continue;
+        valid_name = false;
+        break;
+      }
+      if (!valid_name)
+        continue;
+      if (dt_st < i)  {
+        if (left != NULL) {
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            "invalid expression");
+        }
+        left = new expression_tree(this, dt);
+        left->expand_cmd();
+      }
+      else {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          "invalid assignment");
+      }
+      right = new expression_tree(this, data.SubStringFrom(i+1));
+      data = ch;
+      right->expand_cmd();
+      dt_st = data.Length();
+      break;
+    }
+    // parse out the strings
+    else if (parser_util::is_quote(ch) && !parser_util::is_escaped(data, i)) {
+      if (!parser_util::skip_string(data, i)) {
+        throw TInvalidArgumentException(__OlxSourceInfo,
+          "problem with quotations");
+      }
+    }
+  }
+  if (dt_st != 0 && dt_st < data.Length()) {
+    if (right != NULL)
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid syntax");
+    right = new expression_tree(this, data.SubStringFrom(dt_st));
+  }
+}
+//.............................................................................
+olxstr_buf expression_tree::ToStringBuffer() const {
+  olxstr_buf rv;
+  if (priority) rv << '(';
+  if (left != NULL)
+    rv << left->ToStringBuffer();
+  if (evator != NULL) {
+    olxstr sp(macro_call ? ' ' : ',');
+    rv << evator->name << (macro_call ? ' ' : '(');
+    for (size_t i=0; i < evator->args.Count(); i++) {
+      rv << evator->args[i]->ToStringBuffer();
+      if (i+1 < evator->args.Count())
+        rv << sp;
+    }
+    if (!macro_call) rv << ')';
+  }
+  rv << data;
+  if (priority) rv << ')';
+  if (right != NULL)
+    rv << right->ToStringBuffer();
+  return rv;
+}
+  //.............................................................................

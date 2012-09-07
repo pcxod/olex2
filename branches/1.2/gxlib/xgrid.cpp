@@ -37,7 +37,7 @@ TXGrid::TLegend::TLegend(TGlRenderer& Render, const olxstr& collectionName)
   Z = 0;
   TextureId = ~0;
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::TLegend::SetData(unsigned char *rgb,
   GLsizei width, GLsizei height, GLenum format)
 {
@@ -60,7 +60,7 @@ void TXGrid::TLegend::SetData(unsigned char *rgb,
     tex->SetEnabled(true);
   }
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::TLegend::Create(const olxstr& cName)  {
   if (!cName.IsEmpty())    SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -89,7 +89,7 @@ void TXGrid::TLegend::Create(const olxstr& cName)  {
   glpText.SetFont(&glf);
   glpText.Params[0] = -1;
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::TLegend::Fit()  {
   TGlFont &glf = Parent.GetScene().GetFont(~0, true);
   const uint16_t th = glf.TextHeight(EmptyString());
@@ -102,7 +102,7 @@ void TXGrid::TLegend::Fit()  {
   }
   Height += (uint16_t)olx_round(LineSpacer*(text.Count()-1));
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::TLegend::OnMouseUp(const IEObject *Sender,
   const TMouseData& Data)
 {
@@ -113,7 +113,7 @@ bool TXGrid::TLegend::OnMouseUp(const IEObject *Sender,
   GetPrimitives().GetStyle().SetParam("Left", Left, true);
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::TLegend::Orient(TGlPrimitive& P)  {
   if (Width == 0 || Height == 0 || text.IsEmpty())
     return true;
@@ -156,24 +156,24 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P)  {
     return false;
   }
 }
-//..............................................................................
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 TXGrid::TContextClear::TContextClear(TGlRenderer& r)  {
   r.OnClear.Add(this);
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::TContextClear::Enter(const IEObject *Sender, const IEObject *Data)  {
   TXGrid::_ResetLists();
   return true;
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::TContextClear::Exit(const IEObject *Sender, const IEObject *Data)  {
   return true;
 }
-//..............................................................................
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 TXGrid* TXGrid::Instance = NULL;
 
 //----------------------------------------------------------------------------//
@@ -219,7 +219,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   PListId = NListId = ~0;
   glpC = glpN = glpP = NULL;
 }
-//..............................................................................
+//.............................................................................
 TXGrid::~TXGrid()  {
   Clear();
   DeleteObjects();
@@ -228,12 +228,12 @@ TXGrid::~TXGrid()  {
   delete [] LegendData;
   Instance = NULL;
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::Clear()  {
   DeleteObjects();
   _ResetLists();
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::Create(const olxstr& cName)  {
   if( !cName.IsEmpty() )
     SetCollectionName(cName);
@@ -279,7 +279,7 @@ void TXGrid::Create(const olxstr& cName)  {
   if( !olx_is_valid_index(PListId) )
     RescaleSurface();
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
   for( size_t j=0; j < max_dim; j++ )  {  // (i,j,Depth)        
     vec3f p((float)(ind-hh)/size, (float)(j-hh)/size,  depth);
@@ -294,7 +294,7 @@ void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
     data[ind][j] = val;
   }
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( ED == NULL )  return true;
   if( Is3D() )  {
@@ -386,7 +386,6 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
         FindTexture(TextIndex), 0, (GLsizei)MaxDim, (GLsizei)MaxDim, 0, GL_RGB,
           TextData);
     }
-
     GlP.SetTextureId(TextIndex);
   }
   if( (RenderMode&planeRenderModeContour) != 0 )  {
@@ -419,10 +418,11 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     for (int i=0; i < ContourLevelCount; i++)
       Legend->text << olxstr::FormatFloat(-3, minVal+legend_step*i);
     Legend->Fit();
+    UpdateInfo();
   }
   return false;
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::GlLine(float x1, float y1, float x2, float y2, float z)  {
   vec3d p1(x1/Size, y1/Size, Depth), p2(x2/Size, y2/Size, Depth);
   p1 = Parent.GetBasis().GetMatrix()*p1 - Parent.GetBasis().GetCenter();
@@ -433,13 +433,13 @@ void TXGrid::GlLine(float x1, float y1, float x2, float y2, float z)  {
   olx_gl::vertex(p1);
   olx_gl::vertex(p2);
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
 //  Min = FCenter;
 //  Max = FCenter;
   return false;
 };
-//..............................................................................
+//.............................................................................
 void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ)  {
   DeleteObjects();
   _ResetLists();
@@ -461,7 +461,7 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ)  {
   ContourLevels = new float[ContourLevelCount];
   MaxHole = MinHole = 0;
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::DeleteObjects()  {
   if( ED != NULL )  {
     delete ED;
@@ -494,7 +494,7 @@ void TXGrid::DeleteObjects()  {
     ContourLevels = NULL;
   }
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   TEFile::CheckFileExists(__OlxSourceInfo, GridFile);
   TStrList SL, toks;
@@ -521,7 +521,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   SetDepth(v);
   return true;
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::SetScale(float v)  {
   const bool _3d = Is3D();
   if (!Loading_)
@@ -592,33 +592,37 @@ void TXGrid::SetScale(float v)  {
     RescaleSurface();
   }
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::SetExtended(bool v)  {
   if( Extended == v )  return;
   Extended = v;
   SetScale(Scale);
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::SetDepth(float v)  {
   Depth = v;
-  const float z = Parent.MaxDim().DistanceTo(Parent.MinDim())/2;
-  if( Depth < -z )
-    Depth = -z;
-  if( Depth > z )
-    Depth = z;
+  const float max_z = (float)Parent.MaxDim().Length();
+  const float min_z = (float)Parent.MinDim().Length();
+  if( Depth < -min_z )
+    Depth = -min_z;
+  if( Depth > max_z )
+    Depth = max_z;
+  UpdateInfo();
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::SetDepth(const vec3d& v)  {
   vec3d p = (v + Parent.GetBasis().GetCenter())*Parent.GetBasis().GetMatrix();
   SetDepth((float)p[2]);
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::SetPlaneSize(size_t _v)  {
   size_t v = _v; 
   while( (v&1) == 0 )
     v = v >> 1;
-  if( v != 1 )
-    throw TInvalidArgumentException(__OlxSrcInfo, "PlaneSize must be a power of 2");
+  if( v != 1 ) {
+    throw TInvalidArgumentException(__OlxSrcInfo,
+      "PlaneSize must be a power of 2");
+  }
   if( _v < 64 || _v > 1024 || _v == MaxDim )
     return;
   if( TextData != NULL )  {
@@ -643,7 +647,7 @@ void TXGrid::SetPlaneSize(size_t _v)  {
   MaxDim = _v;   
   Parent.Draw();
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::SetContourLevelCount(size_t v)  {
   if( v <= 2 || v > 30 )  return;
   if( ContourLevels != NULL )
@@ -651,7 +655,7 @@ void TXGrid::SetContourLevelCount(size_t v)  {
   ContourLevelCount = v;
   ContourLevels = new float[ContourLevelCount];
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
   if( (Data.Shift & sssCtrl) == 0 && (Data.Shift & sssShift) == 0 )
     return false;
@@ -660,12 +664,12 @@ bool TXGrid::OnMouseDown(const IEObject *Sender, const TMouseData& Data)  {
   MouseDown = true;
   return true;
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::OnMouseUp(const IEObject *Sender, const TMouseData& Data) {
   MouseDown = false;
   return !((Data.Shift & sssCtrl) == 0 && (Data.Shift & sssShift) == 0);
 }
-//..............................................................................
+//.............................................................................
 bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
   if( !MouseDown )  return false;
   if( (Data.Button & smbLeft) != 0 ) {
@@ -698,16 +702,25 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
   LastMouseY = Data.Y;
   return true;
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::UpdateInfo()  {
   Info->Clear();
-  if( RenderMode == planeRenderModeContour )
-    Info->PostText(olxstr("Contours number: ") << GetContourLevelCount());
-  else
+  if (Is3D())
     Info->PostText(olxstr("Current level: ") << Scale);
+  else {
+    const vec3f center(Parent.GetBasis().GetCenter());
+    vec3f p(0, 0, GetDepth());
+    p = TXApp::GetInstance().XFile().GetAsymmUnit().Fractionalise(
+      Parent.GetBasis().GetMatrix()*p - center);
+    olxstr Tmp =  "Plane center: ";
+    Tmp << olxstr::FormatFloat(3, p[0]) << "*a, " <<
+      olxstr::FormatFloat(3, p[1]) << "*b, " <<
+      olxstr::FormatFloat(3, p[2]) << "*c";
+    Info->PostText(Tmp);
+  }
   Info->Fit();
 }
-//..............................................................................
+//.............................................................................
 const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
   TComparableComparator> &materials) const
 {
@@ -842,7 +855,7 @@ const_strlist TXGrid::ToPov(olxdict<TGlMaterial, olxstr,
   out.Add(" }}");
   return out;
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::RescaleSurface()  {
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
   if( !olx_is_valid_index(PListId) )  {
@@ -970,7 +983,7 @@ void TXGrid::RescaleSurface()  {
     }
   }
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::AdjustMap()  {
   if( ED == NULL )  return;
   for( size_t i=0; i < MaxX; i++ )
@@ -991,7 +1004,7 @@ void TXGrid::AdjustMap()  {
     ED->Data[MaxX][MaxY][i] = ED->Data[0][0][i];
   ED->Data[MaxX][MaxY][MaxZ] = ED->Data[0][0][0];
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::InitIso()  {
   if( Is3D() )  {
     if( ED == NULL )
@@ -1000,7 +1013,7 @@ void TXGrid::InitIso()  {
     Legend->text.Clear();
   }
 }
-//..............................................................................
+//.............................................................................
 TXBlob* TXGrid::CreateBlob(int x, int) const {
   if( !Is3D() )  return NULL;
   TXBlob* xb = new TXBlob(Parent, "blob");
@@ -1062,9 +1075,9 @@ TXBlob* TXGrid::CreateBlob(int x, int) const {
   }
   return xb;
 }
-//..............................................................................
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 void TXGrid::LibExtended(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Extended);
   else if( Params.Count() == 1 )
@@ -1075,53 +1088,64 @@ void TXGrid::LibExtended(const TStrObjList& Params, TMacroError& E)  {
     SetExtended(true);
   }
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibScale(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Scale);
   else
     SetScale(Params[0].ToFloat<float>());
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibSize(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Size);
   else
     Size = Params[0].ToFloat<float>();
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibPlaneSize(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(MaxDim);
   else
     SetPlaneSize(Params[0].ToSizeT());
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibDepth(const TStrObjList& Params, TMacroError& E)  {
-  if( Params.IsEmpty() )  E.SetRetVal(Depth);
-  else
-    Depth = Params[0].ToFloat<float>();
+  if (Params.IsEmpty()) 
+    E.SetRetVal(Depth);
+  else {
+    if (Params.Count() == 1)
+      Depth = Params[0].ToFloat<float>();
+    else if (Params.Count() == 3) {
+      vec3d v(
+        Params[0].ToDouble(),
+        Params[1].ToDouble(),
+        Params[2].ToDouble());
+      const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
+      SetDepth(au.Orthogonalise(v));
+    }
+  }
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibMaxDepth(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(Parent.MaxDim().DistanceTo(Parent.MinDim())/2);
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibContours(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(ContourLevelCount);
   else
     SetContourLevelCount(Params[0].ToSizeT());
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibIsvalid(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(ED != NULL);
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibGetMin(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(MinVal);
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibGetMax(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(MaxVal);
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
     if( RenderMode == planeRenderModeFill )
@@ -1156,7 +1180,7 @@ void TXGrid::LibRenderMode(const TStrObjList& Params, TMacroError& E)  {
   }
   InitIso();
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   item.AddField("empty", IsEmpty());
   if( !IsEmpty() )  {
@@ -1183,7 +1207,7 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
       Mask->ToDataItem(item.AddItem("mask"), zos);
   }
 }
-//..............................................................................
+//.............................................................................
 void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   Clear();
   Loading_ = true;
@@ -1221,40 +1245,40 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   InitIso();
   Loading_ = false;
 }
-//..............................................................................
+//.............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibGetMin, "GetMin",
     fpNone, "Returns minimum value of the map") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibGetMax, "GetMax",
     fpNone, "Returns maximum value of the map") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibExtended, "Extended",
     fpNone|fpOne|fpSix, "Returns/sets extended size of the grid") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibScale, "Scale",
     fpNone|fpOne, "Returns/sets current scale") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibSize, "Size",
     fpNone|fpOne, "Returns/sets current size") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibPlaneSize, "PlaneSize",
     fpNone|fpOne, "Returns/sets current size") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibDepth, "Depth",
-    fpNone|fpOne, "Returns/sets current depth") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+    fpNone|fpOne|fpThree, "Returns/sets current depth") );
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibDepth, "MaxDepth",
     fpNone, "Returns maximum available depth") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibContours, "Contours",
     fpNone|fpOne, "Returns/sets number of contour levels") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibIsvalid, "IsValid",
     fpNone|fpOne, "Returns true if grid data is initialised") );
-  lib->RegisterFunction<TXGrid>(new TFunction<TXGrid>(this,
+  lib->Register(new TFunction<TXGrid>(this,
     &TXGrid::LibRenderMode, "RenderMode",
     fpNone|fpOne,
     "Returns/sets grid rendering mode. Supported values: point, line, fill, "
@@ -1265,9 +1289,9 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   Legend->ExportLibrary(*lib->AddLibrary("legend"));
   return lib;
 }
-//..............................................................................
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 #ifndef _NO_PYTHON
 PyObject* pyImport(PyObject* self, PyObject* args)  {
   char* data;
@@ -1277,7 +1301,8 @@ PyObject* pyImport(PyObject* self, PyObject* args)  {
     &dim1, &dim2, &dim3,
     &focus1, &focus2, &focus3, &data, &len, &type) )
   {
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "(iii)(iii)s#i");
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo,
+      "(iii)(iii)s#i");
   }
   const size_t sz = dim1*dim2*dim3;
   if( (type == 0 && sz*sizeof(double) != (size_t)len) ||
@@ -1309,7 +1334,7 @@ PyObject* pyImport(PyObject* self, PyObject* args)  {
   }
   return PythonExt::PyNone();
 }
-//..............................................................................
+//.............................................................................
 PyObject* pySetValue(PyObject* self, PyObject* args)  {
   int i, j, k;
   float val;
@@ -1318,17 +1343,19 @@ PyObject* pySetValue(PyObject* self, PyObject* args)  {
   TXGrid::GetInstance()->SetValue(i, j, k, val);
   return PythonExt::PyNone();
 }
-//..............................................................................
+//.............................................................................
 PyObject *pyGetValue(PyObject *self, PyObject* args)  {
   int i, j, k;
   if( !PyArg_ParseTuple(args, "iii", &i, &j, &k) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iii");
   TXGrid *g = TXGrid::GetInstance();
-  if( g->Data() == NULL || !g->Data()->IsInRange(i,j,k) )
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "index - out of range");
+  if( g->Data() == NULL || !g->Data()->IsInRange(i,j,k) ) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo,
+      "index - out of range");
+  }
   return Py_BuildValue("f", g->GetValue(i,j,k));
 }
-//..............................................................................
+//.............................................................................
 PyObject* pyInit(PyObject* self, PyObject* args)  {
   int i, j, k;
   if( !PyArg_ParseTuple(args, "iii", &i, &j, &k) )
@@ -1336,7 +1363,7 @@ PyObject* pyInit(PyObject* self, PyObject* args)  {
   TXGrid::GetInstance()->InitGrid(i, j, k);
   return PythonExt::PyTrue();
 }
-//..............................................................................
+//.............................................................................
 PyObject *pyGetSize(PyObject *self, PyObject* args)  {
   TXGrid *g = TXGrid::GetInstance();
   if( g->Data() == NULL )
@@ -1344,7 +1371,7 @@ PyObject *pyGetSize(PyObject *self, PyObject* args)  {
   return Py_BuildValue("iii",
     g->Data()->Length1(), g->Data()->Length2(), g->Data()->Length3());
 }
-//..............................................................................
+//.............................................................................
 PyObject* pySetMinMax(PyObject* self, PyObject* args)  {
   float min, max;
   if( !PyArg_ParseTuple(args, "ff", &min, &max) )
@@ -1353,7 +1380,7 @@ PyObject* pySetMinMax(PyObject* self, PyObject* args)  {
   TXGrid::GetInstance()->SetMaxVal(max);
   return PythonExt::PyTrue();
 }
-//..............................................................................
+//.............................................................................
 PyObject* pySetHole(PyObject* self, PyObject* args)  {
   float min, max;
   if( !PyArg_ParseTuple(args, "ff", &min, &max) )
@@ -1362,7 +1389,7 @@ PyObject* pySetHole(PyObject* self, PyObject* args)  {
   TXGrid::GetInstance()->SetMaxHole(max);
   return PythonExt::PyTrue();
 }
-//..............................................................................
+//.............................................................................
 PyObject* pySetVisible(PyObject* self, PyObject* args)  {
   bool v;
   if( !PyArg_ParseTuple(args, "b", &v) )
@@ -1370,7 +1397,7 @@ PyObject* pySetVisible(PyObject* self, PyObject* args)  {
   TXGrid::GetInstance()->SetVisible(v);
   return PythonExt::PyNone();
 }
-//..............................................................................
+//.............................................................................
 PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
   bool v;
   if( !PyArg_ParseTuple(args, "b", &v) )
@@ -1380,12 +1407,12 @@ PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
   TXGrid::GetInstance()->InitIso();
   return PythonExt::PyNone();
 }
-//..............................................................................
+//.............................................................................
 PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
   return Py_BuildValue("b", TXGrid::GetInstance()->IsVisible() );
 }
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
 
 static PyMethodDef XGRID_Methods[] = {
   {"Init", pyInit, METH_VARARGS, "initialises grid memory"},
@@ -1393,13 +1420,15 @@ static PyMethodDef XGRID_Methods[] = {
   {"Import", pyImport, METH_VARARGS, "imports grid from an array"},
   {"SetValue", pySetValue, METH_VARARGS, "sets grid value"},
   {"GetValue", pyGetValue, METH_VARARGS, "gets grid value"},
-  {"SetMinMax", pySetMinMax, METH_VARARGS, "sets minimum and maximum vaues of the grid"},
-  {"SetHole", pySetHole, METH_VARARGS, "sets minimum and maximum vaues of the grid to be avoided"},
+  {"SetMinMax", pySetMinMax, METH_VARARGS,
+  "sets minimum and maximum vaues of the grid"},
+  {"SetHole", pySetHole, METH_VARARGS,
+  "sets minimum and maximum vaues of the grid to be avoided"},
   {"IsVisible", pyIsVisible, METH_VARARGS, "returns grid visibility status"},
   {"SetVisible", pySetVisible, METH_VARARGS, "sets grid visibility"},
   {"InitSurface", pyInitSurface, METH_VARARGS, "initialisess surface drawing"},
   {NULL, NULL, 0, NULL}
-   };
+  };
 
 void TXGrid::PyInit()  {
   Py_InitModule( "olex_xgrid", XGRID_Methods );

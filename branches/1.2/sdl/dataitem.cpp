@@ -203,7 +203,7 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
       const size_t name_start_i = i+1;
       while (++i < sl) {
         ch = Data[i];
-        if (olxstr::o_is_oneof(ch, "<>\"") || olxstr::o_iswhitechar(ch))
+        if (olxstr::o_isoneof(ch, "<>\"") || olxstr::o_iswhitechar(ch))
           break;
       }
       olxstr ItemName = Data.SubString(name_start_i, i-name_start_i);
@@ -236,16 +236,16 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log
       const size_t fn_start = i;
       while (i < sl)  {  // extract field name
         ch = Data.CharAt(i);
-        if (olxstr::o_is_oneof(ch, "=><\"\'") || olxstr::o_iswhitechar(ch))
+        if (olxstr::o_isoneof(ch, "=><\"\'") || olxstr::o_iswhitechar(ch))
           break;
         i++;
       }
       FieldName = Data.SubString(fn_start, i - fn_start);
-      if ((skip_whitechars(Data, i)+1) >= sl)
+      if ((skip_whitechars(Data, i)) >= sl)
         return sl+1;
       if (Data[i] == '=') {  // extract field value
         i++;
-        if ((skip_whitechars(Data, i)+1) >= sl)
+        if ((skip_whitechars(Data, i)) >= sl)
           return sl+1;
         if (is_quote(Data[i]))  // field value
           parse_string(Data, FieldValue, i);

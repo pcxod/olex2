@@ -14,28 +14,29 @@
 #define DefFunc(funcName) void fun##funcName(const TStrObjList &Cmds, TMacroError &E);
 
 #define InitFunc(library, baseClass, funcName, argc) \
-  (library).RegisterFunction( new TFunction<baseClass>(this, &baseClass::fun##funcName, #funcName, argc))
+  (library).Register( new TFunction<baseClass>(this, &baseClass::fun##funcName, #funcName, argc))
 #define InitFuncA(library, baseClass, funcName, funcNameA, argc) \
-  (library).RegisterFunction( new TFunction<baseClass>(this, &baseClass::fun##funcName, #funcNameA, argc))
+  (library).Register( new TFunction<baseClass>(this, &baseClass::fun##funcName, #funcNameA, argc))
 #define InitMacro(library, baseClass, macroName, validOptions, argc)\
-  (library).RegisterMacro( new TMacro<baseClass>(this, &baseClass::mac##macroName, #macroName, #validOptions, argc))
+  (library).Register( new TMacro<baseClass>(this, &baseClass::mac##macroName, #macroName, #validOptions, argc))
 #define InitMacroA(library, baseClass, realMacroName, macroName, validOptions, argc)\
-  (library).RegisterMacro( new TMacro<baseClass>(this, &baseClass::mac##realMacroName, #macroName, #validOptions, argc))
+  (library).Register( new TMacro<baseClass>(this, &baseClass::mac##realMacroName, #macroName, #validOptions, argc))
 
 #define InitFuncD(library, baseClass, funcName, argc, desc) \
   (library).RegisterFunctionD( new TFunction<baseClass>(this, &baseClass::fun##funcName, #funcName, argc, desc))
 #define InitFuncAD(library, baseClass, funcName, funcNameA, argc, desc) \
-  (library).RegisterFunction( new TFunction<baseClass>(this, &baseClass::fun##funcName, #funcNameA, argc, desc))
+  (library).Register( new TFunction<baseClass>(this, &baseClass::fun##funcName, #funcNameA, argc, desc))
 #define InitMacroD(library, baseClass, macroName, validOptions, argc, desc)\
-  (library).RegisterMacro( new TMacro<baseClass>(this, &baseClass::mac##macroName, #macroName, validOptions, argc, desc))
+  (library).Register( new TMacro<baseClass>(this, &baseClass::mac##macroName, #macroName, validOptions, argc, desc))
 #define InitMacroAD(library, baseClass, realMacroName, macroName, validOptions, argc, desc)\
-  (library).RegisterMacro( new TMacro<baseClass>(this, &baseClass::mac##realMacroName, #macroName, validOptions, argc, desc))
+  (library).Register( new TMacro<baseClass>(this, &baseClass::mac##realMacroName, #macroName, validOptions, argc, desc))
 
 #include "estlist.h"
 #include "paramlist.h"
 
 #include "macroerror.h"
 #include "tptrlist.h"
+
 BeginEsdlNamespace()
 
 /* these constans specify the number of parameters (bytes [0..3]
@@ -55,7 +56,8 @@ const uint32_t
   fpEight = 0x00000100,
   fpNine  = 0x00000200,
   fpTen   = 0x00000400,
-  fpAny   = 0x0000ffff,
+  fpAny   = 0x0000fffe,
+  fpAny_Options = 0x0000ffff,
 
   fpSpecialCheckA = 0x00010000,
   fpSpecialCheckB = 0x00020000,
@@ -119,7 +121,6 @@ public:
   olxstr GetQualifiedName() const;
 };
 
-
 class ABasicFunction: public IEObject  {
   ABasicLibrary* ParentLibrary;
   olxstr Name;
@@ -130,16 +131,11 @@ protected:
   olxstr OptionsToString(const TCSTypeList<olxstr,olxstr>& list) const;
   uint32_t ArgStateMask;
   olxstr RunSignature;
-  olxstr SubstituteArgs(const olxstr &arg, const TStrList &argv) const;
 public:
   virtual ~ABasicFunction()  {}
   virtual void Run(const TStrObjList& Params, TMacroError& E) = 0;
   virtual void Run(TStrObjList& Params, const TParamList& options,
     TMacroError& E) = 0;
-  virtual void MacroRun(const TStrObjList& Params, TMacroError& E,
-    const TStrList &argv);
-  virtual void MacroRun(TStrObjList& Params, const TParamList& options,
-    TMacroError& E, const TStrList &argv);
   DefPropP(uint32_t, ArgStateMask)
   const olxstr& GetName() const {  return Name;  }
   const olxstr& GetDescription() const {  return Description;  }
@@ -156,22 +152,7 @@ public:
   }
   const olxstr& GetRuntimeSignature() const { return RunSignature; }
   virtual ABasicFunction* Replicate() const = 0;
-  bool ValidateState(const TStrObjList &Params, TMacroError &E)  {
-    const size_t argC = Params.Count(),
-      arg_m = (0x0001 << argC);
-    if( (ArgStateMask&fpAny) != fpAny && (ArgStateMask&arg_m) == 0)  {
-      E.WrongArgCount(*this, argC);
-      return false;
-    }
-    // the special checks are in the high word
-    if( (ArgStateMask&0xFFFF0000) &&
-        !GetParentLibrary()->CheckProgramState(ArgStateMask) )
-    {
-      E.WrongState(*this);
-      return false;
-    }
-    return true;
-  }
+  bool ValidateState(const TStrObjList &Params, TMacroError &E);
 };
 //------------------------------------------------------------------------------
 class AFunction: public ABasicFunction  {
@@ -188,29 +169,11 @@ public:
   virtual void Run(TStrObjList&, const TParamList&, TMacroError&)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-
   virtual bool HasOptions() const { return false; }
   virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-
-  virtual void Run(const TStrObjList &Params, class TMacroError& E)  {
-    if( !ValidateState(Params, E) )  return;
-    const size_t argC = Params.Count();
-    try  {
-      RunSignature = olxstr(GetName(), 128);
-      RunSignature << '(';
-      for( size_t i=0; i < argC; i++ )  {
-        RunSignature << '[' << Params[i] << ']';
-        if( i < (argC-1) )  RunSignature << ", ";
-      }
-      RunSignature << ')';
-      DoRun(Params, E);
-    }
-    catch( TExceptionBase& exc )  {
-      E.ProcessingException(*this, exc);
-    }
-  };
+  virtual void Run(const TStrObjList &Params, class TMacroError& E);
 };
 //------------------------------------------------------------------------------
 template <class Base>
@@ -280,45 +243,8 @@ public:
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual void Run(TStrObjList &Params, const TParamList &Options,
-    TMacroError& E)
-  {
-    if( !ValidateState(Params, E) )  return;
-    const size_t argC = Params.Count();
-    for( size_t i=0; i < Options.Count(); i++ )  {
-      if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
-        E.WrongOption(*this, Options.GetName(i) );
-        return;
-      }
-    }
-    try  {
-      RunSignature = olxstr(GetName(), 128);
-      RunSignature << ' ';
-      for( size_t i=0; i < argC; i++ )  {
-        RunSignature << '[' << Params[i] << ']';
-        if( i < (argC-1) )  RunSignature << ", ";
-      }
-      RunSignature << ' ';
-      for( size_t i=0; i < Options.Count(); i++ )  {
-        RunSignature << '{' << Options.GetName(i) << '=' <<
-          Options.GetValue(i) << '}';
-      }
-      DoRun(Params, Options, E);
-    }
-    catch( TExceptionBase& exc )  {
-      E.ProcessingException(*this, exc);
-    }
-  };
-  virtual olxstr GetSignature() const {
-    if( ValidOptions.Count() )  {
-      olxstr res = ABasicFunction::GetSignature();
-      res << "; valid options - ";
-      for( size_t i=0; i < ValidOptions.Count(); i++ )
-        res << ValidOptions.GetKey(i)  << ';';
-      return res;
-    }
-    else
-      return ABasicFunction::GetSignature();
-  }
+    TMacroError& E);
+  virtual olxstr GetSignature() const;
 };
 //------------------------------------------------------------------------------
 template <class Base>
@@ -350,67 +276,6 @@ protected:
     TMacroError& E)
   {
     (BaseClassInstance->*Macro)(Params, Options, E);
-  }
-};
-//------------------------------------------------------------------------------
-template <class Base>
-class TMacroMacro: public AMacro {
-  Base* BaseClassInstance;
-  void (Base::*Macro)(TStrObjList& Params, const TParamList &Options,
-    TMacroError& E, const TStrList &argv);
-public:
-  TMacroMacro(Base* baseClassInstance,
-    void (Base::*macro)(TStrObjList& Params,
-      const TParamList &Options, TMacroError& E, const TStrList &argv),
-    const olxstr& macroName, const olxstr& validOptions,
-    uint32_t argc, const olxstr& desc=EmptyString())
-    : AMacro(macroName, validOptions, argc, desc)
-  {
-    BaseClassInstance = baseClassInstance;
-    Macro = macro;
-  }
-
-  virtual ABasicFunction* Replicate() const {
-    return new TMacroMacro<Base>(
-      BaseClassInstance, Macro, GetName(),
-      OptionsToString(ValidOptions), ArgStateMask,
-      GetDescription());
-  }
-  virtual void MacroRun(TStrObjList &Params, const TParamList &Options,
-    TMacroError& E, const TStrList &argv)
-  {
-    if( !ValidateState(Params, E) )  return;
-    const size_t argC = Params.Count();
-    for( size_t i=0; i < Options.Count(); i++ )  {
-      if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
-        E.WrongOption(*this, Options.GetName(i) );
-        return;
-      }
-    }
-    try  {
-      RunSignature = olxstr(GetName(), 128);
-      RunSignature << ' ';
-      for( size_t i=0; i < argC; i++ )  {
-        RunSignature << '[' << Params[i] << ']';
-        if( i < (argC-1) )  RunSignature << ", ";
-      }
-      RunSignature << ' ';
-      for( size_t i=0; i < Options.Count(); i++ )  {
-        RunSignature << '{' << Options.GetName(i) << '=' <<
-          Options.GetValue(i) << '}';
-      }
-      (BaseClassInstance->*Macro)(Params, Options, E, argv);
-    }
-    catch( TExceptionBase& exc )  {
-      E.ProcessingException(*this, exc);
-    }
-  }
-//.............................................................................
-protected:
-  virtual void DoRun(TStrObjList &Params, const TParamList &Options,
-    TMacroError& E)
-  {
-    (BaseClassInstance->*Macro)(Params, Options, E, TStrList());
   }
 };
 //------------------------------------------------------------------------------

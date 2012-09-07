@@ -177,11 +177,14 @@ namespace cif_dp {
   public:
     cetTable()  {}
     //takes comma separated list of column names
-    cetTable(const olxstr& cols);
+    cetTable(const olxstr& cols, size_t row_count=InvalidSize);
     cetTable(const cetTable& v);
     virtual ~cetTable()  {  Clear();  }
     void Clear();
     void AddCol(const olxstr& col_name);
+    template <class SC>
+    bool RemoveCol(const SC& col_name) { return DelCol(ColIndex(col_name)); }
+    bool DelCol(size_t idx);
     CifRow& AddRow()  {  return data.AddRow();  }
     ICifEntry& Set(size_t i, size_t j, ICifEntry* v);
     const ICifEntry& Get(size_t i, size_t j)  const {  return *data[i][j];  }
@@ -189,10 +192,12 @@ namespace cif_dp {
     const CifRow& operator [] (size_t i) const {  return data[i];  }
     size_t ColCount() const {  return data.ColCount();  }
     const olxstr& ColName(size_t i) const {  return data.ColName(i);  }
-    template <class Str> size_t ColIndex(const Str& name) const {
+    template <class Str>
+    size_t ColIndex(const Str& name) const {
       return data.ColIndex(name);
     }
     size_t RowCount() const {  return data.RowCount();  }
+    void SetRowCount(size_t sz) { data.SetRowCount(sz); }
     virtual void ToStrings(TStrList& list) const;
     virtual void Format()  {}
     virtual const olxstr& GetName() const {  return name;  }
@@ -214,7 +219,7 @@ namespace cif_dp {
       }
       if( name.IsEmpty() ) {
         throw TFunctionFailedException(__OlxSourceInfo,
-                                       "Mismatching loop columns");
+          "Mismatching loop columns");
       }
       if( name.Length() != min_len )  {  // lihe _geom_angle and geom_angle_etc
         const size_t u_ind = name.LastIndexOf('_');
@@ -231,6 +236,9 @@ namespace cif_dp {
   };
 
   struct CifBlock : public ICifEntry {
+  protected:
+    bool Delete(size_t idx);
+  public:
     olxstr name;
     olxdict<olxstr, cetTable*, olxstrComparator<true> > table_map;
     olxdict<olxstr, ICifEntry*, olxstrComparator<true> > param_map;
@@ -242,7 +250,8 @@ namespace cif_dp {
     virtual ~CifBlock();
     ICifEntry& Add(ICifEntry* p);
     ICifEntry& Add(ICifEntry& p)  {  return Add(&p);  }
-    bool Remove(const olxstr& pname);
+    template <class SC>
+    bool Remove(const SC &pname) { return Delete(param_map.IndexOf(pname)); }
     bool Remove(const ICifEntry& e)  {  return Remove(e.GetName());  }
     void Rename(const olxstr& old_name, const olxstr& new_name);
     virtual void ToStrings(TStrList& list) const;

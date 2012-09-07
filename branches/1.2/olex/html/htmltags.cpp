@@ -297,7 +297,7 @@ TAG_HANDLER_PROC(tag)  {
             new wxHtmlContainerCell(m_WParser->GetContainer());
           THtml::WordCell* wc =
             new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-          if( LinkInfo != NULL ) {  
+          if( LinkInfo != NULL ) {
             wc->SetLink(*LinkInfo);
             delete LinkInfo;
           }
@@ -710,7 +710,7 @@ TAG_HANDLER_PROC(tag)  {
 /******************* CHECKBOX *************************************************/
   else if( TagName.Equalsi("checkbox") )  {
     TCheckBox *Box = new TCheckBox(html,
-      tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
+      (tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
     wxa->centreX.Absolute(0);

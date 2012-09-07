@@ -109,6 +109,7 @@ public:
   TActionQueue& OnWarning;
   TActionQueue& OnError;
   TActionQueue& OnException;
+  TActionQueue& OnPost;
 };
 
 EndEsdlNamespace()

@@ -124,11 +124,28 @@ protected:
   }
   HashingBase() : Impl() {}
 public:
-  static olxcstr Digest(const olxcstr& str)  {  return HashingBase<Impl,Tools>().DoDigest(str.raw_str(), str.RawLen());  }
-  static olxcstr Digest(const olxwstr& str)  {  return HashingBase<Impl,Tools>().DoDigest(str.raw_str(), str.RawLen());  }
-  static olxcstr Digest(const char* str)     {  return HashingBase<Impl,Tools>().DoDigest(str, olxstr::o_strlen(str));  }
-  static olxcstr Digest(const wchar_t* str)  {  return HashingBase<Impl,Tools>().DoDigest(str, olxstr::o_strlen(str)*sizeof(wchar_t));  }
-  static olxcstr Digest(IInputStream& stream){  return HashingBase<Impl,Tools>().DoDigest(stream);  }
+  static olxcstr Digest(const olxcstr& str) {
+    return HashingBase<Impl,Tools>().DoDigest(str.raw_str(), str.RawLen());
+  }
+  static olxcstr Digest(const olxwstr& str) {
+    return HashingBase<Impl,Tools>().DoDigest(
+      str.raw_str(), str.RawLen());
+  }
+  static olxcstr Digest(const char* str, size_t len) {
+    return HashingBase<Impl,Tools>().DoDigest(str, len);
+  }
+  static olxcstr Digest(const wchar_t* str, size_t len)  {
+    return HashingBase<Impl,Tools>().DoDigest(str, len*sizeof(wchar_t));
+  }
+  static olxcstr Digest(const char* str) {
+    return Digest(str, olxstr::o_strlen(str));
+  }
+  static olxcstr Digest(const wchar_t* str) {
+    return Digest(str, olxstr::o_strlen(str));
+  }
+  static olxcstr Digest(IInputStream& stream){
+    return HashingBase<Impl,Tools>().DoDigest(stream);
+  }
 };
 
 EndEsdlNamespace()

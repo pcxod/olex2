@@ -16,13 +16,13 @@
 #endif
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
-  lib.RegisterStaticMacro(\
+  lib.Register(\
     new TStaticMacro(&GXLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
 #define gxlib_InitMacroA(macroName, amacroName, validOptions, argc, desc)\
-  lib.RegisterStaticMacro(\
+  lib.Register(\
     new TStaticMacro(&GXLibMacros::mac##macroName, #amacroName, (validOptions), argc, desc))
 #define gxlib_InitFunc(funcName, argc, desc) \
-  lib.RegisterStaticFunction(\
+  lib.Register(\
     new TStaticFunction(&GXLibMacros::fun##funcName, #funcName, argc, desc))
 
 //.............................................................................
@@ -143,6 +143,32 @@ void GXLibMacros::Export(TLibrary& lib) {
     EmptyString(),
     fpAny^(fpNone),
     "Arguments - textures");
+  gxlib_InitMacro(SetView,
+    "c-center",
+    fpAny,
+    "Sets view normal to the normal of the selected plane, to a bond or mean "
+    "line");
+  gxlib_InitMacro(Matr,
+    "r-used reciprocal cell instead",
+    fpNone|fpOne|fpTwo|fpThree|fpNine,
+    "Displays or sets current orientation matrix. For single argument, 1,2,3 "
+    "001, 111, etc values are acceptable, two values taken are of the klm "
+    "form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three "
+    "values pecify the view normal and nine values provide a full matrix");
+  gxlib_InitMacro(Line,
+    "n-just sets current view normal to the line without creating the object",
+    fpAny,
+    "Creates a line or best line for provided atoms");
+  gxlib_InitMacro(Mpln,
+    "n-just orient, do not create plane&;"
+    "r-create regular plane&;"
+    "we-use weights proportional to the (atomic mass)^we", 
+    fpAny,
+    "Sets current view along the normal of the best plane");
+  gxlib_InitMacro(Cent,
+    EmptyString(),
+    fpAny,
+    "Creates a centroid for given/selected/all atoms");
 }
 //.............................................................................
 void GXLibMacros::macGrow(TStrObjList &Cmds, const TParamList &Options,
@@ -350,9 +376,6 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
 {
   TStopWatch st(__FUNC__);
   TGXApp &app = TGXApp::GetInstance();
-  static const short // scale type
-    stSimple     = 0x0001,
-    stRegression = 0x0002;
   double resolution = Options.FindValue("r", "0.25").ToDouble(),
     maskInc = 1.0;
   if( resolution < 0.1 )  resolution = 0.1;
@@ -416,7 +439,6 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
     MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
     QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortBySum);
-    const int PointCount = dim.Prod();
     for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
@@ -457,12 +479,6 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
   TGXApp &app = TGXApp::GetInstance();
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   // space group matrix list
-  TSpaceGroup* sg = NULL;
-  try  { sg = &app.XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
-    return;
-  }
   TUnitCell::SymmSpace sp = app.XFile().GetUnitCell().GetSymmSpace();
   olxstr hklFileName = app.LocateHklFile();
   if( !TEFile::Exists(hklFileName) )  {
@@ -470,8 +486,7 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   TRefList refs;
-  RefinementModel::HklStat stats =
-    app.XFile().GetRM().GetFourierRefList<
+  app.XFile().GetRM().GetFourierRefList<
       TUnitCell::SymmSpace,RefMerger::StandardMerger>(sp, refs);
   const double vol = app.XFile().GetLattice().GetUnitCell().CalcVolume();
   TArrayList<SFUtil::StructureFactor> P1SF(refs.Count()*sp.Count());
@@ -507,7 +522,7 @@ void GXLibMacros::macMask(TStrObjList &Cmds, const TParamList &Options,
   TGXApp &app = TGXApp::GetInstance();
   if (Cmds[0].Equalsi("atoms") && Cmds.Count() > 1) {
     int Mask = Cmds[1].ToInt();
-    short ADS=0, AtomsStart=2;
+    short AtomsStart=2;
     TXAtomPList Atoms =
       app.FindXAtoms(TStrObjList(Cmds.SubListFrom(AtomsStart)), false, false);
     app.UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
@@ -781,7 +796,8 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
       else
         l.SetLabel(olxstr::FormatFloat(3, bonds[i]->Length()));
-      labels.Add(l);
+      labels.Add(l)->SetVisible(true);
+      l.TranslateBasis(-l.GetCenter());
     }
   }
   for( size_t i=0; i < lines.Count(); i++ )
@@ -917,10 +933,10 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
       if( !qpeaks[i]->IsDetached() )
         d_cnt++;
     if( d_cnt == 0 && wheel < 0 )  return;
-    if( d_cnt == qpeaks.Count() && wheel > 0 )  return;
-    d_cnt += (int)(wheel);
+    if( d_cnt == (index_t)qpeaks.Count() && wheel > 0 )  return;
+    d_cnt += (index_t)(wheel);
     if( d_cnt < 0 )  d_cnt = 0;
-    if( d_cnt > (int)qpeaks.Count() )
+    if( d_cnt > (index_t)qpeaks.Count() )
       d_cnt = qpeaks.Count();
     for( size_t i=0; i < qpeaks.Count(); i++ )
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
@@ -999,3 +1015,320 @@ void GXLibMacros::macLoad(TStrObjList &Cmds, const TParamList &Options,
     app.LoadTextures(Cmds.Text(' '));
 }
 //.............................................................................
+void GXLibMacros::macMatr(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  if (Cmds.IsEmpty()) {
+    TBasicApp::NewLogEntry() << "Current orientation matrix:";
+    const mat3d& Matr = app.GetRender().GetBasis().GetMatrix();
+    for (size_t i=0; i < 3; i++) {
+      olxstr Tmp;
+      for (size_t j=0; j < 3; j++) {
+        Tmp << olxstr::FormatFloat(4, Matr[j][i]);
+        Tmp.RightPadding(7*(j+1), ' ', true);
+      }
+      TBasicApp::NewLogEntry() << Tmp;
+    }
+  }
+  else {
+    const mat3d& M = Options.Contains('r') ?
+      app.XFile().GetAsymmUnit().GetHklToCartesian()
+      : app.XFile().GetAsymmUnit().GetCellToCartesian();
+    if (Cmds.Count() == 1) {
+      olxstr arg;
+      if (Cmds[0] == '1' || Cmds[0] == 'a')
+        arg = "100";
+      else if (Cmds[0] == '2' || Cmds[0] == 'b')
+        arg = "010";
+      else if (Cmds[0] == '3' || Cmds[0] == 'c')
+        arg = "001";
+      else
+        arg = Cmds[0];
+      if ((arg.Length()%3) != 0 ) {
+        Error.ProcessingError(__OlxSrcInfo,
+          "invalid argument, an arguments like 010, 001000, +0-1+1 etc is"
+          " expected");
+        return;
+      }
+      vec3d n;
+      const size_t s = arg.Length()/3;
+      for (int i=0; i < 3; i++)
+        n += M[i]*arg.SubString(s*i, s).ToInt();
+      if (n.QLength() < 1e-3) {
+        Error.ProcessingError(__OlxSrcInfo,
+          "non zero expression is expected");
+        return;
+      }
+      app.GetRender().GetBasis().OrientNormal(n);
+    }
+    else if (Cmds.Count() == 2) {  // from to view
+      if ((Cmds[0].Length()%3) != 0 || (Cmds[1].Length()%3) != 0) {
+        Error.ProcessingError(__OlxSrcInfo,
+          "invalid arguments, a klm, two arguments like 010, 001000, +0-1+1 "
+          "etc are expected");
+        return;
+      }
+      vec3d from, to;
+      const size_t fs = Cmds[0].Length()/3, ts = Cmds[1].Length()/3;
+      for (int i=0; i < 3; i++) {
+        from += M[i]*Cmds[0].SubString(fs*i, fs).ToInt();
+        to += M[i]*Cmds[1].SubString(ts*i, ts).ToInt();
+      }
+      vec3d n = from-to;
+      if (n.QLength() < 1e-3 ) {
+        Error.ProcessingError(__OlxSrcInfo,
+          "from and to arguments must be different");
+        return;
+      }
+      app.GetRender().GetBasis().OrientNormal(n);
+    }
+    else if (Cmds.Count() == 3) {  // view along
+      vec3d n = M[0]*Cmds[0].ToDouble() +
+        M[1]*Cmds[1].ToDouble() +
+        M[2]*Cmds[2].ToDouble();
+      if (n.IsNull(1e-6)) {
+        Error.ProcessingError(__OlxSrcInfo,
+          "a non-singular direction is expected");
+        return;
+      }
+      app.GetRender().GetBasis().OrientNormal(n);
+    }
+    else if (Cmds.Count() == 9) {
+      mat3d M(
+        Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble(),
+        Cmds[3].ToDouble(), Cmds[4].ToDouble(), Cmds[5].ToDouble(),
+        Cmds[6].ToDouble(), Cmds[7].ToDouble(), Cmds[8].ToDouble());
+      M.Transpose();
+      app.GetRender().GetBasis().SetMatrix(M.Normalise());
+    }
+    app.Draw();
+  }
+}
+//..............................................................................
+void GXLibMacros::macSetView(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  const bool do_center = Options.Contains('c');
+  bool process = false, has_center = true;
+  vec3d center, normal;
+  if (Cmds.IsEmpty()) {
+    TGlGroup& g = app.GetSelection();
+    if (g.Count() == 1) {
+      if (EsdlInstanceOf(g[0], TXPlane)) {
+        TXPlane& xp = (TXPlane&)g[0];
+        normal = xp.GetNormal();
+        center = xp.GetCenter();
+        process = true;
+      }
+      else if (EsdlInstanceOf(g[0], TXBond)) {
+        TXBond& xb = (TXBond&)g[0];
+        normal = vec3d(xb.B().crd()-xb.A().crd()).Normalise();
+        center = (xb.B().crd()+xb.A().crd())/2;
+        process = true;
+      }
+    }
+  }
+  else  {
+    if (Cmds.Count() == 3) {
+      for (int i=0; i < 3; i++)
+        normal[i] = Cmds[i].ToDouble();
+      normal.Normalise();
+      process = true;
+      has_center = false;
+    }
+    else if (Cmds.Count() == 6) {
+      for (int i=0; i < 3; i++) {
+        normal[i] = Cmds[i].ToDouble();
+        center[i] = Cmds[3+i].ToDouble();
+      }
+      normal.Normalise();
+      process = true;
+    }
+  }
+  if (!process) {
+    TXAtomPList xatoms = app.FindXAtoms(Cmds, true, false);
+    if( xatoms.Count() < 2 )  {
+      Error.ProcessingError(__OlxSrcInfo, "At least two atoms are required");
+      return;
+    }
+    process = true;
+    if (xatoms.Count() == 2) {
+      center = (xatoms[0]->crd()+xatoms[1]->crd())/2;
+      normal = (xatoms[1]->crd()-xatoms[0]->crd()).Normalise();
+    }
+    else {
+      TSAtomPList satoms(xatoms, StaticCastAccessor<TSAtom>());
+      mat3d params;
+      vec3d rms;
+      TSPlane::CalcPlanes(satoms, params, rms, center);
+      normal = params[2];
+    }
+  }
+  if (process) {
+    app.GetRender().GetBasis().OrientNormal(normal);
+    if (do_center && has_center)
+      app.GetRender().GetBasis().SetCenter(-center);
+    if (app.XGrid().IsVisible() && has_center)
+      app.SetGridDepth(center);
+    app.Draw();
+  }
+}
+//..............................................................................
+void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  bool process_atoms = true;
+  vec3d from, to;
+  if (Cmds.IsEmpty() || (Cmds.Count() == 1 && Cmds[0].Equalsi("sel"))) {
+    TGlGroup& sel = app.GetSelection();
+    if( sel.Count() == 2 )  {
+      if (EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXPlane)) {
+        from = ((TXPlane&)sel[0]).GetCenter();
+        to = ((TXPlane&)sel[1]).GetCenter();
+        process_atoms = false;
+      }
+      else if (EsdlInstanceOf(sel[0], TXAtom) &&
+        EsdlInstanceOf(sel[1], TXPlane))
+      {
+        from = ((TXAtom&)sel[0]).crd();
+        to = ((TXPlane&)sel[1]).GetCenter();
+        process_atoms = false;
+      }
+      else if (EsdlInstanceOf(sel[0], TXPlane) &&
+        EsdlInstanceOf(sel[1], TXAtom))
+      {
+        from = ((TXPlane&)sel[0]).GetCenter();
+        to = ((TXAtom&)sel[1]).crd();
+        process_atoms = false;
+      }
+    }
+  }
+  TXAtomPList Atoms;
+  if (process_atoms)
+    Atoms = app.FindXAtoms(Cmds, true, true);
+  if (Atoms.Count() > 2) {
+    TSAtomPList satoms(Atoms, StaticCastAccessor<TSAtom>());
+    mat3d params;
+    vec3d rms, center;
+    TSPlane::CalcPlanes(satoms, params, rms, center);
+    double maxl = -1000, minl = 1000;
+    for( size_t i=0; i < satoms.Count(); i++ )  {
+      vec3d v = satoms[i]->crd() - center;
+      if (v.QLength() < 0.0001) continue;
+      const double ca = params[2].CAngle(v);
+      const double l = v.Length()*ca;
+      if (l > maxl) maxl = l;
+      if (l < minl) minl = l;
+    }
+    from = center+params[2]*minl;
+    to = center+params[2]*maxl;
+  }
+  else if (Atoms.Count() == 2) {
+    from = Atoms[0]->crd();
+    to = Atoms[1]->crd();
+  }
+
+  else if (process_atoms) {
+    Error.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
+    return;
+  }
+  olxstr name = Options.FindValue('n');
+  if (Options.Contains('n') && name.IsEmpty())
+    app.GetRender().GetBasis().OrientNormal(to-from);
+  else
+    app.AddLine(name, from, to);
+  app.Draw();
+}
+//..............................................................................
+void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  TSPlane* plane = NULL;
+  bool orientOnly = Options.Contains('n'),
+    rectangular = Options.Contains('r');
+  olxstr name = Options.FindValue('n');
+  const double weightExtent = olx_abs(Options.FindValue("we", "0").ToDouble());
+  olxstr planeName;
+  TXAtomPList Atoms = app.FindXAtoms(Cmds, true, true);
+  for (size_t i=0; i < Atoms.Count(); i++ ) {
+    planeName << Atoms[i]->GetLabel();
+    if( i+1 < Atoms.Count() )
+      planeName << ' ';
+  }
+
+  if (Atoms.Count() < 3) {
+    Error.ProcessingError(__OlxSrcInfo, "at least 3 atoms are expected");
+    return;
+  }
+  if (orientOnly && name.IsEmpty()) {
+    plane = app.TmpPlane(&Atoms, weightExtent);
+    if( plane != NULL )  {
+      mat3d m = plane->GetBasis();
+      vec3d d1 = (m[2]+m[1]).Normalise();
+      vec3d d2 = m[0].XProdVec(d1).Normalise();
+      app.GetRender().GetBasis().Orient(d1, d2, m[0]);
+      app.SetGridDepth(plane->GetCenter());
+      delete plane;
+      plane = NULL;
+    }
+  }
+  else  {
+    TXPlane* xp = app.AddPlane(name, Atoms, rectangular, weightExtent);
+    if (xp != NULL)
+      plane = xp;
+  }
+  if (plane != NULL) {
+    const TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    size_t colCount = 3;
+    TTTable<TStrList> tab(plane->Count()/colCount +
+      (((plane->Count()%colCount)==0)?0:1), colCount*3);
+    for (size_t i=0; i < colCount; i++) {
+      tab.ColName(i*3) = "Label";
+      tab.ColName(i*3+1) = "D/A";
+    }
+    double rmsd = 0;
+    for (size_t i=0; i < plane->Count(); i+=colCount) {
+      for (size_t j=0; j < colCount; j++) {
+        if ((i + j) >= Atoms.Count())
+          break;
+        tab[i/colCount][j*3] = plane->GetAtom(i+j).GetLabel();
+        const double v = plane->DistanceTo(plane->GetAtom(i+j).crd()); 
+        rmsd += v*v;
+        tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
+      }
+    }
+    rmsd = sqrt(rmsd/Atoms.Count());
+    TBasicApp::NewLogEntry() <<
+      tab.CreateTXTList(olxstr("Atom-to-plane distances for ") << planeName,
+      true, false, " | ");
+    TBasicApp::NewLogEntry() << "Plane equation: " << plane->StrRepr();
+    TBasicApp::NewLogEntry() << "HKL direction: " <<
+      plane->GetCrystallographicDirection().ToString();
+    if (weightExtent != 0) {
+      TBasicApp::NewLogEntry() << "Weighted RMSD/A: " <<
+        olxstr::FormatFloat(3, plane->GetWeightedRMSD());
+      TBasicApp::NewLogEntry() << "RMSD/A: " <<
+        olxstr::FormatFloat(3, plane->CalcRMSD());
+    }
+    else {
+      TBasicApp::NewLogEntry() << "RMSD/A: " <<
+        olxstr::FormatFloat(3, plane->GetWeightedRMSD());
+    }
+  }
+  else if (!orientOnly) {
+    TBasicApp::NewLogEntry() <<
+      "The plane was not created because it is either not unique or valid";
+  }
+}
+//..............................................................................
+void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TGXApp &app = TGXApp::GetInstance();
+  app.AddCentroid(app.FindXAtoms(Cmds, true, true).GetObject());
+}
+//..............................................................................

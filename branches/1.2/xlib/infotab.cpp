@@ -91,7 +91,7 @@ void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
     }
   }
   else {
-    atoms.FromDataItem(*ais);
+    atoms.FromDataItem(di.FindRequiredItem("AtomList"));
   }
 }
 

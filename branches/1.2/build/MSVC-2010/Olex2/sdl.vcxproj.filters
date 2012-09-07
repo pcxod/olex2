@@ -177,6 +177,15 @@
     <ClCompile Include="..\..\..\sdl\estopwatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\sdl\math\libmath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\sdl\math\evaln.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\sdl\libfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\sdl\actions.h">
@@ -422,9 +431,6 @@
     <ClInclude Include="..\..\..\sdl\sorted.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\smart\strbuf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\linked_operators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -532,6 +538,21 @@
     </ClInclude>
     <ClInclude Include="..\..\..\sdl\wildcard.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\math\evaln.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\libfile.h">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\math\libmath.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\tests\exparse_test.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdl\smart\strbuf.h">
+      <Filter>Header Files\string</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

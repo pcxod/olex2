@@ -19,12 +19,14 @@ namespace exparse  {
 
   struct exp_builder  {
   protected:
-    static bool needs_sorting(expression_tree* root);
-    static expression_tree* sort_logical(expression_tree* root);
-    IEvaluable* process_const_func(IEvaluable* func, IEvaluable* left, IEvaluable* right=NULL);
-    IEvaluable* evaluator_from_evator(expression_tree* root, IEvaluable* left=NULL);
-    IEvaluable* create_evaluator(expression_tree* root, bool finaliseAssignment=true);
-    IEvaluable* locate_function(const olxstr& name, IEvaluable* left, IEvaluable* right);
+    IEvaluable* process_const_func(IEvaluable* func, IEvaluable* left,
+      IEvaluable* right=NULL);
+    IEvaluable* evaluator_from_evator(expression_tree* root,
+      IEvaluable* left=NULL);
+    IEvaluable* create_evaluator(expression_tree* root,
+      bool finaliseAssignment=true);
+    IEvaluable* locate_function(const olxstr& name, IEvaluable* left,
+      IEvaluable* right);
     IEvaluable* evaluator_from_string(const olxstr &str) const;
   public:
     EvaluableFactory& factory;
@@ -38,6 +40,8 @@ namespace exparse  {
       expp.root = sort_logical(expp.root);
       return create_evaluator(expp.root, finaliseAssignment);
     }
+    static bool needs_sorting(expression_tree* root);
+    static expression_tree* sort_logical(expression_tree* root);
   };
 } // end exparse namespace
 

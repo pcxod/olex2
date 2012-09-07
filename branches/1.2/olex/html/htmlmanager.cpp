@@ -13,7 +13,7 @@
 #include "olxstate.h"
 
 #define this_InitFuncD(funcName, argc, desc) \
-  (Library).RegisterFunction(\
+  (Library).Register(\
     new TFunction<THtmlManager>(\
       this, &THtmlManager::fun##funcName, #funcName, argc, desc))
 
@@ -346,7 +346,7 @@ void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
   THtml *html = (Cmds.Count() == 1) ? FindHtml(Cmds[0]) : main;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo,
-      "undefined html window: ").quote() << Cmds[0];
+      "undefined html window: ").quote() << (Cmds.IsEmpty() ? "main" : Cmds[0]);
     return;
   }
   html->LoadPage(html->FileName.u_str());

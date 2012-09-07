@@ -25,6 +25,7 @@
 #include "symmparser.h"
 #include "equeue.h"
 #include "analysis.h"
+#include "estopwatch.h"
 
 #undef GetObject
 
@@ -179,6 +180,7 @@ ConstPtrList<smatd> TLattice::GenerateMatrices(
 }
 //..............................................................................
 void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
+  volatile TStopWatch sw(__FUNC__);
   // treat detached and the rest of atoms separately
   size_t dac = 0;
   const size_t ac = Objects.atoms.Count();
@@ -260,6 +262,7 @@ void TLattice::BuildPlanes()  {
 }
 //..............................................................................
 void TLattice::InitBody()  {
+  volatile TStopWatch sw(__FUNC__);
   OnDisassemble.Enter(this);
   if( !ApplyGrowInfo() )  {
     // create identity matrix
@@ -278,6 +281,7 @@ void TLattice::InitBody()  {
 }
 //..............................................................................
 void TLattice::Init()  {
+  volatile TStopWatch sw(__FUNC__);
   Clear(false);
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
@@ -2557,22 +2561,22 @@ void TLattice::LibIsGrown(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("latt") : name);
-  lib->RegisterFunction<TLattice>(
+  lib->Register(
     new TFunction<TLattice>(this,  &TLattice::LibGetFragmentCount,
     "GetFragmentCount", fpNone,
     "Returns number of fragments in the lattice")
   );
-  lib->RegisterFunction<TLattice>(
+  lib->Register(
     new TFunction<TLattice>(this,  &TLattice::LibGetFragmentAtoms,
     "GetFragmentAtoms", fpOne,
     "Returns a comma separated list of atoms in specified fragment")
   );
-  lib->RegisterFunction<TLattice>(
+  lib->Register(
     new TFunction<TLattice>(this,  &TLattice::LibGetMoiety,
     "GetMoiety", fpNone,
     "Returns molecular moiety")
   );
-  lib->RegisterFunction<TLattice>(
+  lib->Register(
     new TFunction<TLattice>(this,  &TLattice::LibIsGrown,
     "IsGrown", fpNone,
     "Returns true if the structure is grow")

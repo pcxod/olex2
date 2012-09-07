@@ -149,23 +149,23 @@ void TGlLight::LibAttenuation(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 TLibrary* TGlLight::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name);
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibEnabled,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibEnabled,
     "Enabled", fpNone|fpOne, "Returns/sets enabled property of the light") );
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibSpotCutoff,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibSpotCutoff,
     "SpotCutoff", fpNone|fpOne, "Returns/sets spot cutoff property of the light") );
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibSpotExponent,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibSpotExponent,
     "SpotExponent", fpNone|fpOne, "Returns/sets enabled property of the light") );
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibAmbient,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibAmbient,
     "Ambient", fpNone|fpOne, "Returns/sets enabled property of the light") );
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibDiffuse,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibDiffuse,
     "Diffuse", fpNone|fpOne, "Returns/sets enabled property of the light") );
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibSpecular,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibSpecular,
     "Specular", fpNone|fpOne, "Returns/sets enabled property of the light") );
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibPosition,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibPosition,
     "Position", fpNone|fpOne, "Returns/sets enabled property of the light") );
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibSpotDirection,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibSpotDirection,
     "SpotDirection", fpNone|fpOne, "Returns/sets enabled property of the light") );
-  lib->RegisterFunction<TGlLight>(new TFunction<TGlLight>(this, &TGlLight::LibAttenuation,
+  lib->Register(new TFunction<TGlLight>(this, &TGlLight::LibAttenuation,
     "Attenuation", fpNone|fpOne, "Returns/sets enabled property of the light") );
   return lib;
 }

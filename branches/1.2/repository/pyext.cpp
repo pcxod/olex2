@@ -175,7 +175,7 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
   TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete(
     new TFuncWrapper(fun, true, profile));
   try  {
-    lib->RegisterFunction(new TFunction<TFuncWrapper>(
+    lib->Register(new TFunction<TFuncWrapper>(
       fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny), true);
     return Py_BuildValue("b", true);
   }
@@ -244,7 +244,7 @@ PyObject* runRegisterMacro(PyObject* self, PyObject* args)  {
   TMacroWrapper* mw = PythonExt::GetInstance()->AddToDelete(
     new TMacroWrapper(fun, profile));
   try  {
-    lib->RegisterMacro(new TMacro<TMacroWrapper>(mw, &TMacroWrapper::Call,
+    lib->Register(new TMacro<TMacroWrapper>(mw, &TMacroWrapper::Call,
       PyEval_GetFuncName(fun), validOptions, fpAny), true);
     return Py_BuildValue("b", true);
   }
@@ -283,6 +283,7 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
 }
 //.............................................................................
 PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
+  using namespace macrolib;
   IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr name;
   bool macro;
@@ -425,7 +426,7 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep,
 //.............................................................................
 PythonExt::PythonExt(IOlexProcessor* olexProcessor, const olxstr &module_name)
   : module_name(module_name),
-    LogLevel(macro_log_macro)
+    LogLevel(macrolib::macro_log_macro)
 {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
@@ -504,6 +505,8 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
 
   for( size_t i=0; i < Lib.MacroCount(); i++ )  {
     ABasicFunction* fun = Lib.GetMacroByIndex(i);
+    if (dynamic_cast<macrolib::TEMacro*>(fun) != NULL)
+      continue;
     olxstr pyName = fun->GetName();
     pyName.Replace('@', "At");
     out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ', module_name)
@@ -569,6 +572,7 @@ void PythonExt::macRun(TStrObjList& Cmds, const TParamList &Options,
 }
 //.............................................................................
 void PythonExt::funLogLevel(const TStrObjList& Params, TMacroError& E)  {
+  using namespace macrolib;
   if( Params.IsEmpty() )  {
     olxstr ll;
     if( (GetLogLevel()&macro_log_macro) != 0 )  ll << 'm';
@@ -588,18 +592,18 @@ TLibrary* PythonExt::ExportLibrary(const olxstr& name)  {
   PythonExt::GetOlexProcessor()->GetLibrary().AttachLibrary(
     BindLibrary=new TLibrary("spy"));
   Library = new TLibrary(name.IsEmpty() ? olxstr("py") : name);
-  Library->RegisterFunction<PythonExt>(
+  Library->Register(
     new TFunction<PythonExt>(this, &PythonExt::funExport,
       "Export", fpOne,
       "Exports the library to a folder"));
-  Library->RegisterMacro<PythonExt>(
+  Library->Register(
     new TMacro<PythonExt>(this, &PythonExt::macReset,
       "Reset", EmptyString(), fpNone));
-  Library->RegisterMacro<PythonExt>(
+  Library->Register(
     new TMacro<PythonExt>(this, &PythonExt::macRun,
       "Run", EmptyString(),
       fpAny^fpNone, "Runs provided file"));
-  Library->RegisterFunction<PythonExt>(
+  Library->Register(
     new TFunction<PythonExt>(this, &PythonExt::funLogLevel,
       "LogLevel", fpNone|fpOne,
       "Sets log level - default is macro, look at LogLevel for more "

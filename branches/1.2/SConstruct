@@ -60,7 +60,8 @@ else:
   def_tool = 'gnu'
 variables = Variables()
 variables.AddVariables(
-    EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=('vc8', 'vc9', 'vc10', 'gnu', 'intel'))
+    EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=\
+     ('vc8', 'vc9', 'vc10', 'vc11', 'gnu', 'intel'))
     )
 env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch)
 Help(variables.GenerateHelpText(env))
@@ -82,6 +83,8 @@ elif env['TOOL'] == 'vc10':
   #Tool('msvc')(env)
 elif env['TOOL'] == 'gnu':
     Tool('g++')(env)
+elif env['TOOL'] == 'vc11':
+  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='11.0')
 elif env['TOOL'] == 'intel':
     Tool('intelc')(env)
 env.Append(CCFLAGS = ['-D_UNICODE', '-DUNICODE'])
@@ -238,7 +241,7 @@ if sys.platform[:3] == 'win':
 
   pyFolder = os.path.split(sys.executable)[0] + '\\'
   if not debug:
-    #cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', '/bigobj', '/fp:fast', '/GF']
+    #cc_flags = ['/EHsc', '/Ox', '/Ob2', '/Oi', '/GL', '/MD', '/bigobj', '/fp:fast', '/GF']
     cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/MD', '/bigobj', '/fp:fast', '/GF']
     if sse:
       cc_flags.append( '/arch:'+sse)

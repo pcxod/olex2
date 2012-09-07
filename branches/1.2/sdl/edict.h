@@ -45,7 +45,9 @@ public:
   struct Entry  {
     KType key;
     VType value;
-    Entry(const KType& _key, const VType& _value) : key(_key), value(_value)  {}
+    Entry(const KType& _key, const VType& _value)
+      : key(_key), value(_value)
+    {}
   };
 
   olxdict() {}
@@ -83,9 +85,15 @@ public:
   bool IsEmpty() const {  return SortedL::IsEmpty();  }
   void SetCapacity(size_t c)  {  SortedL::SetCapacity(c);  }
   VType& GetValue(size_t ind)  {  return SortedL::operator[] (ind).val;  }
-  const VType& GetValue(size_t ind) const {  return SortedL::operator[] (ind).val;  }
-  const KType& GetKey(size_t ind) const {  return SortedL::operator[] (ind).key;  }
-  const EntryType& GetEntry(size_t ind) const {  return SortedL::operator[] (ind);  }
+  const VType& GetValue(size_t ind) const {
+    return SortedL::operator[] (ind).val;
+  }
+  const KType& GetKey(size_t ind) const {
+    return SortedL::operator[] (ind).key;
+  }
+  const EntryType& GetEntry(size_t ind) const {
+    return SortedL::operator[] (ind);
+  }
   template <class T> bool HasKey(const T& key) const {
     return SortedL::IndexOf(key) != InvalidIndex;
   }
@@ -104,8 +112,10 @@ public:
     SortedL::AddUnique(key, &ind);
     return SortedL::operator[] (ind).val;
   }
-  template <class T> size_t IndexOf(const T& key) const {  return SortedL::IndexOf(key);  }
-  template <class T> size_t IndexOfValue(const T& val) const {  
+  template <class T> size_t IndexOf(const T& key) const {
+    return SortedL::IndexOf(key);
+  }
+  template <class T> size_t IndexOfValue(const T& val) const {
     for( size_t i=0; i < SortedL::Count(); i++ )
       if( SortedL::operator [] (i).val == val )
         return i;
@@ -127,8 +137,8 @@ public:
 };
 
 // a string to type association....
-template <typename VType, bool case_sensitive=false> class olxstr_dict
-  : public olxdict<olxstr, VType, olxstrComparator<case_sensitive> > {};
+template <typename VType, bool case_insensitive=false> class olxstr_dict
+  : public olxdict<olxstr, VType, olxstrComparator<case_insensitive> > {};
 
 // const_dict
 template <typename key_t, typename val_t, class Comparator>
