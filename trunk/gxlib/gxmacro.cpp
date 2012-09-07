@@ -796,7 +796,8 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
       else
         l.SetLabel(olxstr::FormatFloat(3, bonds[i]->Length()));
-      labels.Add(l);
+      labels.Add(l)->SetVisible(true);
+      l.TranslateBasis(-l.GetCenter());
     }
   }
   for( size_t i=0; i < lines.Count(); i++ )

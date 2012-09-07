@@ -73,6 +73,7 @@ private:
   static double MinQAlpha;
   Poly* Polyhedron;
   TXGlLabel* Label;
+  bool label_forced;
   void CreatePolyhedron(bool v);
   // returns the center of the created polyhedron
   vec3f TriangulateType2(Poly& p, const TSAtomPList& atoms);
@@ -201,8 +202,16 @@ public:
 
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);
-    if( !v )
-      Label->SetVisible(false);
+    if (!v) {
+      if (Label->IsVisible()) {
+        Label->SetVisible(false);
+        label_forced = true;
+      }
+    }
+    else if (label_forced) {
+      Label->SetVisible(true);
+      label_forced = false;
+    }
   }
   void ListDrawingStyles(TStrList &List);
   short DrawStyle() const {  return FDrawStyle;  }

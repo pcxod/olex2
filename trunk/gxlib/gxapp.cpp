@@ -3218,7 +3218,7 @@ void TGXApp::SetStructureVisible(bool v)  {
     if( !v )
       xa.SetVisible(v);
     else
-      xa.SetVisible(xa.IsAvailable() && xa.CAtom().IsAvailable());
+      xa.SetVisible(xa.IsAvailable());
   }
   for( size_t i=0; i < LooseObjects.Count(); i++ )
     LooseObjects[i]->SetVisible(v);
