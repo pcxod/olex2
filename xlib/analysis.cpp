@@ -54,16 +54,16 @@ olxstr alg::formula(const TCAtomPList &atoms, double mult) {
 }
 //.............................................................................
 olxstr alg::label(const TCAtomPList &atoms, const olxstr &sp) {
-  olxstr rv;
+  olxstr_buf rv;
   for( size_t i=0; i < atoms.Count(); i++ ) {
     if (!rv.IsEmpty())  rv << sp;
-    rv << atoms[i]->GetLabel();
+    rv << atoms[i]->GetResiLabel();
   }
   return rv;
 }
 //.............................................................................
 olxstr alg::label(const TCAtomGroup &atoms, const olxstr &sp) {
-  olxstr rv;
+  olxstr_buf rv;
   if (atoms.IsEmpty()) return rv;
   RefinementModel &rm = *atoms[0].GetAtom()->GetParent()->GetRefMod();
   for( size_t i=0; i < atoms.Count(); i++ ) {

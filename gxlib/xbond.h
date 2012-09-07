@@ -23,6 +23,7 @@ class TXAtom;
 class TXBond: public TSBond, public AGDrawObject  {
 private:
   TXGlLabel* Label;
+  bool label_forced;
   short FDrawStyle;
   static double FDefR;
   static int FDefM;
@@ -98,8 +99,16 @@ public:
 
   void SetVisible(bool v)  {
     AGDrawObject::SetVisible(v);
-    if( !v )
-      Label->SetVisible(false);
+    if (!v) {
+      if (Label->IsVisible()) {
+        Label->SetVisible(false);
+        label_forced = true;
+      }
+    }
+    else if (label_forced) {
+      Label->SetVisible(true);
+      label_forced = false;
+    }
   }
   void Delete()  {
     TSBond::SetDeleted(true);

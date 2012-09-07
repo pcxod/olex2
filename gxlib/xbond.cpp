@@ -61,6 +61,7 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   Params()[4] = 0.8;
   Label = new TXGlLabel(GetParent(), PLabelsCollectionName);
   Label->SetVisible(false);
+  label_forced = false;
 }
 //..............................................................................
 TXBond::~TXBond()  {
@@ -95,12 +96,10 @@ void TXBond::Update()  {
 //..............................................................................
 void TXBond::Create(const olxstr& cName)  {
   SetCreated(true);
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
-  if( FStaticObjects.IsEmpty() )  
+  if( FStaticObjects.IsEmpty() )
     CreateStaticObjects(Parent);
-  if( IsValid() && Label->GetOffset().IsNull() )  // init label offset
-    Label->SetOffset((A().crd()+B().crd())/2);
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXBond>());
   Label->Create();
   // find collection

@@ -119,6 +119,7 @@ public:
     return v;
   }
   size_t Length() const {  return _Length;  }
+  bool IsEmpty() const { return _Length == 0; }
   Entry *GetHead() {  return Head;  }
   const Entry *GetHead() const {  return Head;  }
 };

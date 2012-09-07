@@ -5982,27 +5982,35 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
         E.ProcessingError(__OlxSrcInfo, "please provide 10 atoms exactly");
         return;
       }
-      if( Atoms[0]->CAtom().GetDependentAfixGroup() != NULL )
-        Atoms[0]->CAtom().GetDependentAfixGroup()->Clear();
-      TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
-      for( size_t i=1; i < Atoms.Count(); i++ )  {
-        TCAtom& ca = Atoms[i]->CAtom();
-        if (ca.GetParentAfixGroup() != NULL) {
-          TBasicApp::NewLogEntry() << "Removing intersecting AFIX group: ";
-          TBasicApp::NewLogEntry() << ca.GetParentAfixGroup()->ToString();
-          ca.GetParentAfixGroup()->Clear();
-        }
-        if( ca.GetDependentAfixGroup() != NULL &&
-          ca.GetDependentAfixGroup()->GetAfix() == afix )
-        {
-          TBasicApp::NewLogEntry() << "Removing potentially intersecting AFIX"
-            " group: ";
-          TBasicApp::NewLogEntry() << ca.GetDependentAfixGroup()->ToString();
-          ca.GetDependentAfixGroup()->Clear();
-        }
+      if (!olx_analysis::alg::are_all_I(Atoms)) {
+        TBasicApp::NewLogEntry() <<
+          "Skipping - asymmetric unit atoms are expected";
       }
-      for (size_t i=1; i < Atoms.Count(); i++)
-        ag.AddDependent(Atoms[i]->CAtom());
+      else {
+        TBasicApp::NewLogEntry() << "Applying AFIX " << afix << " to " <<
+          olx_analysis::alg::label(Atoms, true, ' ');
+        if( Atoms[0]->CAtom().GetDependentAfixGroup() != NULL )
+          Atoms[0]->CAtom().GetDependentAfixGroup()->Clear();
+        TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
+        for( size_t i=1; i < Atoms.Count(); i++ )  {
+          TCAtom& ca = Atoms[i]->CAtom();
+          if (ca.GetParentAfixGroup() != NULL) {
+            TBasicApp::NewLogEntry() << "Removing intersecting AFIX group: ";
+            TBasicApp::NewLogEntry() << ca.GetParentAfixGroup()->ToString();
+            ca.GetParentAfixGroup()->Clear();
+          }
+          if( ca.GetDependentAfixGroup() != NULL &&
+            ca.GetDependentAfixGroup()->GetAfix() == afix )
+          {
+            TBasicApp::NewLogEntry() << "Removing potentially intersecting AFIX"
+              " group: ";
+            TBasicApp::NewLogEntry() << ca.GetDependentAfixGroup()->ToString();
+            ca.GetDependentAfixGroup()->Clear();
+          }
+        }
+        for (size_t i=1; i < Atoms.Count(); i++)
+          ag.AddDependent(Atoms[i]->CAtom());
+      }
     }
   }
   else  {
@@ -6484,11 +6492,13 @@ void XLibMacros::macRRings(TStrObjList &Cmds, const TParamList &Options,
   catch(const TExceptionBase& exc)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-
   for (size_t i=0; i < rings.Count(); i++) {
     TBasicApp::NewLogEntry() << "Processing ring: " <<
-      olx_analysis::alg::label(TCAtomPList(rings[i],
-        FunctionAccessor::MakeConst(&TSAtom::CAtom)), '-');
+      olx_analysis::alg::label(rings[i], true, '-');
+    if (!olx_analysis::alg::has_I(rings[i])) {
+      TBasicApp::NewLogEntry() << "Skipping - no atoms of the asymmetric unit";
+      continue;
+    }
     TSimpleRestraint& dr12 = l < 0 ? app.XFile().GetRM().rSADI.AddNew()
       : app.XFile().GetRM().rDFIX.AddNew();
     TSimpleRestraint& dr13 = app.XFile().GetRM().rSADI.AddNew();
