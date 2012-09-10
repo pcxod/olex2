@@ -607,7 +607,7 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
   double r = Cmds[0].ToDouble();
   Cmds.Delete(0);
   TXBondPList bonds;
-  bool absolute = Options.Contains('a');
+  bool absolute = Options.GetBoolOption('a');
   if( Cmds.Count() == 1 && Cmds[0].Equalsi("hbonds") )  {
     if (absolute) r /= 0.02;
     TGXApp::BondIterator bi = app.GetBonds();
@@ -648,7 +648,7 @@ void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
   app.InfoList(Cmds.IsEmpty() ? EmptyString() : Cmds.Text(' '),
     Output, Options.Contains("p"),
     Options.FindValue('p', "-3").ToInt(),
-    Options.Contains('f')
+    Options.GetBoolOption('f')
   );
   TBasicApp::NewLogEntry() << Output;
   if (Options.Contains('c'))

@@ -261,7 +261,11 @@ void TEMacroLib::Init()  {
 bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
   const TStrList &argv)
 {
-  if (Cmd.IndexOf('(') == InvalidIndex) return true;
+  if (Cmd.IndexOf('(') == InvalidIndex) {
+    if (is_quoted(Cmd))
+      Cmd = unquote(Cmd);
+    return true;
+  }
   if ((LogLevel&macro_log_function) != 0)
     TBasicApp::NewLogEntry(logInfo) << Cmd;
   E.GetStack().Push(Cmd);
@@ -309,6 +313,10 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
       }
     }
     return false;
+  }
+  if (is_quoted(Cmd)) {
+    Cmd = unquote(Cmd);
+    return true;
   }
   exparse::expression_parser expr(Cmd);
   try {

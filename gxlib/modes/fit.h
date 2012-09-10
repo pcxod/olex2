@@ -86,10 +86,14 @@ public:
   bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
     DoSplit = Options.Contains('s');
     if (DoSplit) {
+      split_offset = 0;
       olxstr s = Options.FindValue('s');
-      if (!s.IsEmpty()) split_offset = s.ToUInt();
-      else
-        split_offset = 0;
+      if (!s.IsEmpty()) {
+        if (s.IsBool())
+          DoSplit = s.ToBool();
+        else
+          split_offset = s.ToUInt();
+      }
     }
     afix = Options.FindValue('a', "-1").ToInt();
     if (DoSplit && afix != -1) {
