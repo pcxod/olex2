@@ -37,7 +37,18 @@ public:
   {
     size_t i = IndexOf(Name);
     return (i != InvalidIndex) ? GetObject(i) : defval;
-   }
+  }
+  // special evaluation of a boolean option
+  template <class T>
+  bool GetBoolOption(const T& Name,
+    bool if_empty=true,
+    bool if_does_not_exist=false) const
+  {
+    size_t i = IndexOf(Name);
+    if (i == InvalidIndex) return if_does_not_exist;
+    const olxstr &v = GetObject(i);
+    return v.IsEmpty() ? if_empty : v.ToBool();
+  }
   template <class T>
   const olxstr& operator [] (const T& Name) const {  return FindValue(Name);  }
   // this function considers the folowing situations: '"', '('')' and '\''
