@@ -31,15 +31,20 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock(const olxstr& FN)  {
   TMemoryBlock *mb = FMemoryBlocks[fileName];
   if( mb == NULL )  {
     if( !TEFile::Exists(fileName) )  return NULL;
-    TEFile file(fileName, "rb");
-    const uint32_t fl = OlxIStream::CheckSize<uint32_t>(file.GetSize());
-    if( fl == 0 ) return NULL;
-    mb = new TMemoryBlock;
-    mb->Buffer = new char [fl + 1];
-    mb->Length = fl;
-    mb->DateTime = TEFile::FileAge(fileName);
-    file.Read(mb->Buffer, mb->Length);
-    FMemoryBlocks.Add(fileName, mb);
+    try {
+      TEFile file(fileName, "rb");
+      const uint32_t fl = OlxIStream::CheckSize<uint32_t>(file.GetSize());
+      if( fl == 0 ) return NULL;
+      mb = new TMemoryBlock;
+      mb->Buffer = new char [fl + 1];
+      mb->Length = fl;
+      mb->DateTime = TEFile::FileAge(fileName);
+      file.Read(mb->Buffer, mb->Length);
+      FMemoryBlocks.Add(fileName, mb);
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logInfo) << e;
+    }
   }
   else  {
     if( mb->DateTime != 0 && TEFile::Exists(fileName) )  {
@@ -123,7 +128,7 @@ wxFSFile *TFileHandlerManager::_GetFSFileHandler(const olxstr &FN)  {
       wxIS, ze.EntryName.u_str(), st, es, wxDateTime((time_t)0));
   }
   else  {
-    TMemoryBlock *mb = GetMemoryBlock( FN );
+    TMemoryBlock *mb = GetMemoryBlock(FN);
     return mb == NULL ? NULL : new wxFSFile(new wxMemoryInputStream(
       mb->Buffer, mb->Length), es, st, es, wxDateTime((time_t)0));
   }
