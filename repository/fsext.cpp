@@ -12,7 +12,7 @@
 #include "etime.h"
 #include "egc.h"
 #include "eutf8.h"
-
+#include "bapp.h"
 #ifndef _NO_PYTHON
 #include "pyext.h"
 #endif
