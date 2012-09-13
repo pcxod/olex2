@@ -242,7 +242,8 @@ enum  {
   ID_OnFileClose
 };
 
-TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
+TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
+  : TXApp(FileName, true),
   OnGraphicsVisible(NewActionQueue("GRVISIBLE")),
   OnFragmentVisible(NewActionQueue("FRVISIBLE")),
   OnAllVisible(NewActionQueue("ALLVISIBLE")),
@@ -260,14 +261,17 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, true),
     stateXGridVisible = stateWBoxVisible = InvalidIndex;
   DeltaV = 3;
   const TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
+  AGlScene *GlScene = scene;
+  if (GlScene == NULL) {
 #ifdef __WXWIDGETS__
-  TwxGlScene *GlScene = new TwxGlScene(GetBaseDir() + "etc/Fonts/");
-  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
-  GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
+    GlScene = new TwxGlScene(GetBaseDir() + "etc/Fonts/");
+    wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
+    GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
 #else
-  TWGlScene *GlScene = new TWGlScene();
-  GlScene->CreateFont("Default", "@20").SetMaterial(glm);
+    GlScene = new TWGlScene();
+    GlScene->CreateFont("Default", "@20").SetMaterial(glm);
 #endif
+  }
   FGrowMode = gmCovalent;
 //  TWGlScene *GlScene = new TWGlScene;
 //  TGlScene *GlScene = new TGlScene;

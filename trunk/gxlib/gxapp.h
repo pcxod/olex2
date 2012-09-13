@@ -381,8 +381,8 @@ protected:
   void _maskInvisible();
   bool MainFormVisible;
 public:
-  // FileName - argv[0]
-  TGXApp(const olxstr& FileName);
+  // FileName - argv[0];
+  TGXApp(const olxstr& FileName, AGlScene *scene=NULL);
   virtual ~TGXApp();
   void CreateObjects(bool CenterModel, bool init_visibility=true);
   void UpdateBonds();
