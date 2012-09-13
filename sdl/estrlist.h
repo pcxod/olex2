@@ -765,6 +765,7 @@ public:
   typename item_t::object_type& GetObject(size_t i) const {
     return parent_t::GetObject().GetObject(i);
   }
+  const list_t & GetObject() const { return parent_t::GetObject(); }
   list_item_type Text(const list_item_type& Sep,
     size_t start=InvalidIndex, size_t end=InvalidIndex) const
   {
