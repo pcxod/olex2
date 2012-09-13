@@ -34,6 +34,11 @@ public:
   static DefMacro(Labels)
   static DefMacro(ShowH)
   static DefMacro(ShowQ)
+  static DefMacro(ShowP)
+  static DefMacro(Cell)
+  static DefMacro(Basis)
+  static DefMacro(Sel)
+  static DefMacro(Undo)
 
   static DefMacro(Qual)
   static DefMacro(Load)
@@ -42,6 +47,13 @@ public:
   static DefMacro(Mpln)
   static DefMacro(Cent)
   static DefMacro(SetView)
+  static DefMacro(PiM)
+  static DefMacro(Group)
+
+  static DefMacro(Uniq)
+  static DefMacro(Fmol)
+  static DefMacro(Split)
+
 
 //  static DefFunc(Lst)
   static void Export(class TLibrary& lib);

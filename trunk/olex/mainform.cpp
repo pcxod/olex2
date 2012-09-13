@@ -533,7 +533,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "a-view angle [6]&;"
     "s-separation between the images in % [10]&;"
     "h-output image height [screen*resolution]",
-    fpOne|fpTwo|psFileLoaded, 
+    fpOne|fpTwo|psFileLoaded,
     "Stereoscopic picture rendering");
   this_InitMacroD(PictPR, EmptyString(), fpOne|psFileLoaded, 
     "PovRay output");
@@ -543,23 +543,9 @@ void TMainForm::XApp(TGXApp *XA)  {
 
   this_InitMacroD(Bang, "c-copy info to the clipboard", fpAny|psFileLoaded,
     "Prints bonds and angles table for selected/given atoms");
-  this_InitMacroD(Uniq, EmptyString(), fpAny | psFileLoaded,
-    "Shows only fragments specified by atom name(s) or selection");
 
-  this_InitMacroD(Group,
-    "n-a custom name can be provided",
-    fpNone|fpOne|psFileLoaded,
-  "Groups current visible objects or selection");
-
-  this_InitMacroD(Fmol, EmptyString(), fpNone|psFileLoaded,
-    "Shows all fragments (as opposite to uniq)");
   this_InitMacroD(Clear, EmptyString(), fpNone,
     "Clears console buffer (text)");
-
-  this_InitMacroD(Cell, "r-shows reciprocal cell",
-    fpNone|fpOne|psFileLoaded,
-    "If no arguments provided inverts visibility of unit cell, otherwise sets"
-    " it to the boolean value of the parameter");
   this_InitMacroD(Rota, EmptyString(), fpTwo|fpFive,
     "For two arguments the first one specifies axis of rotation (1,2,3 or "
     "x,y,z) and the second one the rotation angle in degrees. For five "
@@ -595,39 +581,9 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Exit, EmptyString(), fpNone, "Exits Olex2");
   this_InitMacroAD(Exit, quit, EmptyString(), fpNone, "Exits Olex2");
 
-  this_InitMacroD(Sel,
-    "a-select all&;"
-    "u-unselect all&;"
-    "l-consider the list of bonds as independent&;"
-    "c-copies printed values to the clipboard&;"
-    "i-invert selection&;",
-    fpAny,
-    "If no arguments provided, prints current selection. This includes "
-    "distances, angles and torsion angles and other geometrical parameters. "
-    "Selects atoms fulfilling provided conditions, like"
-    "\nsel $type - selects any particular atom type; type can be one of the "
-    "following shortcuts - * - for all atoms, M - for metals, X - for halogens"
-    "\nsel $*,type - selects all but type atoms"
-    "\n\n"
-    "An extended syntax include keyword 'where' and 'rings' which "
-    "allow selecting atoms and bonds according to their properties, like type "
-    "and length or rings of particular connectivity like C6 or NC5. If the "
-    "'where' keyword is used, logical operators, like and (&&), and or (||) "
-    "can be used to refine the selection. For example:"
-    "\nsel atoms where xatom.bai.z > 2 - to select all atoms heavier after H"
-    "\nsel bonds where xbond.length > 2 - to select all bonds longer than 2 A"
-    "\nsel bonds where xbond.b.bai.z == 1 - to select all bonds where the "
-    "lightest atoms is H"
-    );
-
   this_InitMacroD(Capitalise, "", (fpAny|psFileLoaded)^fpNone,
     "Changes atom labels capitalisation for all/given/selected atoms. The"
     " first argument is the template like Aaaa");
-
-  this_InitMacroD(PiM,
-    "l-display labels for the created lines",
-    fpAny|psFileLoaded,
-    "Creates an illustration of a pi-system to metal bonds");
 
   this_InitMacroD(Esd,
     "label-creates a graphics label&;"
@@ -684,8 +640,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne,
     "Prints default scene parameters or sets it (none resets)");
 
-  this_InitMacroD(Basis, EmptyString(), fpNone|fpOne,
-    "Shows/hides the orientation basis");
   this_InitMacroD(Lines, EmptyString(), fpOne,
     "Sets the number of visible text lines in the console. Use -1 to display "
     "all lines");
@@ -751,10 +705,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "gradient dialog where the user can choose the gradient colors. One "
     "parameter is expected to be a boolean - shows/hides the gradient. Four "
     "parameters specify the gradient colours explicetly.");
-  this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms",
-    fpAny|psCheckFileTypeIns,
-    "Splits provided atoms along the longest axis of the ADP");
-  this_InitMacro(ShowP, m-do not modify the display view, fpAny);
 
   this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns);
   this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns);
@@ -767,7 +717,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Direction, EmptyString(), fpNone,
     "Prints current orientation of the model in factional coordinates");
   this_InitMacro(ViewGrid, , fpNone|fpOne);
-  this_InitMacro(Undo, , fpNone);
 
   this_InitMacroD(Individualise, EmptyString(), fpAny,
     "Moves provided atoms to individual collections, so that the atom "
