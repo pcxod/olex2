@@ -251,9 +251,6 @@
     <ClInclude Include="..\..\..\olex\obase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\repository\planesort.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\olex\primtvs.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -73,8 +73,8 @@ TGlMaterial& TGlMaterial::operator = (const TGlMaterial& G)  {
   return *this;
 }
 //..............................................................................
-void TGlMaterial::Init(bool skip) const  {
-  if( skip )  return;  
+void TGlMaterial::Init(bool skip) const {
+  if( skip )  return;
   if( Flags & sglmTransparent )  {
     //if( !glIsEnabled(GL_ALPHA_TEST) )  {
       olx_gl::enable(GL_ALPHA_TEST);

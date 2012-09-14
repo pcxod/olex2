@@ -94,9 +94,9 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   }
   if( val != 0 )
     Tmp << val;
-  if( XA->IsSelected() )  
+  if( XA->IsSelected() )
     Tmp << " sel";
-  else                  
+  else
     Tmp << " #c" << XA->CAtom().GetId();
   processMacro(Tmp);
   TimePerFrame = FXApp->Draw();
@@ -375,9 +375,8 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
   if( G == NULL )  return;
   FCurrentPopup = NULL;
   if( EsdlInstanceOf(*G, TXAtom) )  {
-    TStrList SL;
     TXAtom *XA = (TXAtom*)G;
-    FXApp->BangList(*XA, SL);
+    TStrList SL = FXApp->BangList(*XA);
     pmBang->Clear();
     for( size_t i=0; i < SL.Count(); i++ )
       pmBang->Append(-1, SL[i].u_str());
@@ -455,10 +454,9 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     FCurrentPopup = pmAtom;
   }
   else if( EsdlInstanceOf(*G, TXBond) )  {
-    TStrList SL;
     olxstr T;
     TXBond *XB = (TXBond*)G;
-    FXApp->TangList(XB, SL);
+    TStrList SL = FXApp->TangList(XB);
     pmTang->Clear();
     for( size_t i=0; i < SL.Count(); i++ )
       pmTang->Append(0, SL[i].u_str());
@@ -515,9 +513,9 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
   olxstr Tmp("name -c ");
-  if( XA->IsSelected() )  
+  if( XA->IsSelected() )
     Tmp << "sel";
-  else                  
+  else
     Tmp << "#s" << XA->GetOwnerId();
   Tmp << ' ';
   switch( event.GetId() )  {

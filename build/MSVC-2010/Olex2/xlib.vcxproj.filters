@@ -1064,6 +1064,9 @@
     <ClInclude Include="..\..\..\xlib\tests\smat_test.h">
       <Filter>tests</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\xlib\planesort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
