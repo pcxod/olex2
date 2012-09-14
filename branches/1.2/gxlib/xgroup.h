@@ -61,28 +61,33 @@ protected:
       for( size_t i=0; i < TGlGroup::Count(); i++ )  {
         AGDrawObject& G = GetObject(i);
         if( !G.IsVisible() )  continue;
-        if( G.IsGroup() )    {
+        if( G.IsGroup() ) {
           TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
           if( group != NULL )  {
             group->Draw(SelectPrimitives, SelectObjects);
             continue;
           }
         }
+        bool Select = (SelectObjects|SelectPrimitives);
         const size_t pc = G.GetPrimitives().PrimitiveCount();
         for( size_t j=0; j < pc; j++ )  {
           TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
-          TGlMaterial glm = GlP.GetProperties();
-          glm.SetFlags(glm.GetFlags()|sglmShininessF|sglmSpecularF);
-          glm.AmbientF *= 0.75;
-          if( ditr == 1 )
-            glm.AmbientF = glm.AmbientF.GetRGB() | 0x007070;
-          else
-            glm.AmbientF = glm.AmbientF.GetRGB() | 0x700070;
-          glm.ShininessF = 32;
-          glm.SpecularF = 0xff00;
-          glm.Init(false);
-          if( SelectObjects )     olx_gl::loadName((GLuint)G.GetTag());
-          if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+          if (!Select) {
+            TGlMaterial glm = GlP.GetProperties();
+            glm.SetFlags(glm.GetFlags()|sglmShininessF|sglmSpecularF);
+            glm.AmbientF *= 0.75;
+            if( ditr == 1 )
+              glm.AmbientF = glm.AmbientF.GetRGB() | 0x007070;
+            else
+              glm.AmbientF = glm.AmbientF.GetRGB() | 0x700070;
+            glm.ShininessF = 32;
+            glm.SpecularF = 0xff00;
+            glm.Init(false);
+          }
+          if (SelectObjects)
+            olx_gl::color(G.GetTag());
+          else if (SelectPrimitives)
+            olx_gl::color(GlP.GetTag());
           olx_gl::pushMatrix();
           if( G.Orient(GlP) )  {
             olx_gl::popMatrix();
