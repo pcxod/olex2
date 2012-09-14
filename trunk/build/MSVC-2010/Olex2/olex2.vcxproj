@@ -901,7 +901,6 @@
     <ClInclude Include="..\..\..\olex\matprop.h" />
     <ClInclude Include="..\..\..\olex\msgbox.h" />
     <ClInclude Include="..\..\..\olex\obase.h" />
-    <ClInclude Include="..\..\..\repository\planesort.h" />
     <ClInclude Include="..\..\..\olex\primtvs.h" />
     <ClInclude Include="..\..\..\repository\ps_writer.h" />
     <ClInclude Include="..\..\..\olex\ptable.h" />

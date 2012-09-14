@@ -17,6 +17,7 @@
 #include "undo.h"
 #include "arrays.h"
 #include "atomref.h"
+#include "etable.h"
 
 BeginXlibNamespace()
 // program state and some other special checks for functions
@@ -172,6 +173,12 @@ public:
   static double GetMinHBondAngle();
   // preserve free vaiable if referenced once only
   static bool DoPreserveFVARs();
+
+  static const_strlist BangList(const TSAtom &A);
+  static void BangTable(const TSAtom& A, TTTable<TStrList>& Table);
+  static double Tang(TSBond *B1, TSBond *B2, TSBond *Middle,
+    olxstr *Sequence=NULL);
+  static const_strlist TangList(TSBond *Middle);
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

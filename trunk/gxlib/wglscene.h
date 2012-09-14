@@ -16,8 +16,8 @@ class TWGlScene:public AGlScene  {
   HGLRC FGlContext;
   HDC   FWContext;
   HBITMAP FBitmap;
-  void SetPixelFormatDescriptor(HDC hDc, __int8 bits);
-  void SetPixelFormatDescriptorX(HDC hDc, __int8 bits);
+  void SetPixelFormatDescriptor(HDC hDc, uint8_t bits);
+  void SetPixelFormatDescriptorX(HDC hDc, uint8_t bits);
   virtual TGlFont& DoCreateFont(TGlFont& fnt, bool half_size) const;
 public:
   TWGlScene();

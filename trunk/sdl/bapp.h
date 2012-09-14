@@ -89,6 +89,10 @@ public:
   const olxstr &_GetInstanceDir() const {
     return InstanceDir.IsEmpty() ? GetBaseDir() : InstanceDir;
   }
+  virtual bool ToClipboard(const olxstr &) const { return false; }
+  bool ToClipboard(const TStrList &text) const {
+    return ToClipboard(text.Text(NewLineSequence()));
+  }
   /* If the path is absolute - it is used as is, otherwise it is considered to
   be relative to the InstanceDir
   */

@@ -11,15 +11,13 @@
 #define __olx_xlib_xmacro_H
 #include "library.h"
 #include "xapp.h"
-#include "cif.h"
 #include "symmlib.h"
 #include <stdarg.h>
 // on Linux its is defined as something...
 #undef QLength
 
 //simply a macro registry
-
-class XLibMacros  {
+class XLibMacros : public IEObject {
 protected:
   static bool ParseResParam(TStrObjList &Cmds, double& esd, double* len=NULL,
     double* len1=NULL, double* ang=NULL);
@@ -88,6 +86,8 @@ public:
   static DefMacro(SGInfo)
   static DefMacro(SAInfo)
   static DefMacro(PiPi)
+  static DefMacro(Split)
+  static DefMacro(Bang)
 
   static DefMacro(Flush)
 
@@ -109,6 +109,9 @@ public:
   static DefMacro(CalcCHN)
   static DefMacro(CalcMass)
   static DefMacro(FitCHN)
+  static DefMacro(Tolman)
+  static DefFunc(VVol)
+  static DefMacro(CalcVol)
 
   static DefMacro(Close)
   static DefMacro(Omit)
@@ -131,6 +134,19 @@ public:
   static DefMacro(SIMU)
   static DefMacro(DELU)
   static DefMacro(ISOR)
+  static DefMacro(Same)
+  static DefMacro(Delta)
+  static DefMacro(DeltaI)
+  static DefMacro(AddBond)
+  static DefMacro(DelBond)
+  static DefMacro(RESI)
+  static DefMacro(Restrain)
+  static DefMacro(Constrain)
+  static DefMacro(Conn)
+  static DefMacro(TLS)
+  static DefMacro(Export)
+  static DefMacro(Sgen)
+  static DefMacro(LstSymm)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
@@ -142,6 +158,11 @@ public:
   static DefFunc(IsFileLoaded)
   static DefFunc(IsFileType)
   static DefFunc(Ins)
+  static DefFunc(Cell)
+  static DefFunc(Cif)
+  static DefFunc(P4p)
+  static DefFunc(Crs)
+  static DefFunc(Env)
 
   static DefFunc(BaseDir)
   static DefFunc(DataDir)
@@ -167,8 +188,14 @@ public:
   static TActionQList Actions;
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);
-  static const olxstr NoneString;
-  static const olxstr NAString;
+  static const olxstr &NAString() {
+    static olxstr NAString("n/a");
+    return NAString;
+  }
+  static const olxstr &NoneString() {
+    static olxstr NoneString("none");
+    return NoneString;
+  }
   static olxstr CurrentDir;
   /* finds numbers and removes them from the list and returns the number of
   found numbers
@@ -334,7 +361,7 @@ public:
 protected:
   class TEnviComparator  {
   public:
-    int Compare(AnAssociation3<TCAtom*, smatd, vec3d> const& i1, 
+    int Compare(AnAssociation3<TCAtom*, smatd, vec3d> const& i1,
       AnAssociation3<TCAtom*, smatd, vec3d> const& i2) const
     {
       return olx_cmp(i1.GetC().QLength(), i2.GetC().QLength());

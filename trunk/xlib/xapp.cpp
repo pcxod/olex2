@@ -107,8 +107,8 @@ bool TXApp::CheckProgramState(unsigned int specialCheck)  {
  if( specialCheck & psFileLoaded )
    return XFile().HasLastLoader();
  if ((specialCheck&psCheckFileTypeIns) != 0 &&
-   (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TIns) ||
-   XFile().LastLoader()->IsNative()))
+   (XFile().HasLastLoader() && (EsdlInstanceOf(*XFile().LastLoader(), TIns) ||
+   XFile().LastLoader()->IsNative())))
    return true;
  if ((specialCheck&psCheckFileTypeP4P) != 0 &&
    (XFile().HasLastLoader() && EsdlInstanceOf(*XFile().LastLoader(), TP4PFile)))
@@ -915,3 +915,110 @@ bool TXApp::DoPreserveFVARs() {
   }
 }
 //..............................................................................
+const_strlist TXApp::BangList(const TSAtom& A)  {
+  TStrList L;
+  for( size_t i=0; i < A.BondCount(); i++ )  {
+    const TSBond &B = A.Bond(i);
+    olxstr& T = L.Add(A.GetLabel());
+    T << '-'  << B.Another(A).GetLabel();
+    T << ": " << olxstr::FormatFloat(3, B.Length());
+  }
+  for( size_t i=0; i < A.BondCount(); i++ )  {
+    const TSBond &B = A.Bond(i);
+    for( size_t j=i+1; j < A.BondCount(); j++ )  {
+      const TSBond &B1 = A.Bond(j);
+      olxstr& T = L.Add(B.Another(A).GetLabel());
+      T << '-' << A.GetLabel() << '-';
+      T << B1.Another(A).GetLabel() << ": ";
+      const vec3d V = B.Another(A).crd() - A.crd();
+      const vec3d V1 = B1.Another(A).crd() - A.crd();
+      if( V.QLength()*V1.QLength() != 0 )  {
+        double angle = V.CAngle(V1);
+        angle = acos(angle)*180/M_PI;
+        T << olxstr::FormatFloat(3, angle);
+      }
+    }
+  }
+  return L;
+}
+//..............................................................................
+void TXApp::BangTable(const TSAtom& A, TTTable<TStrList>& Table) {
+  if( A.BondCount() == 0 )  return;
+  Table.Resize(A.BondCount(), A.BondCount());
+  Table.ColName(0) = A.GetLabel();
+  for( size_t i=0; i < A.BondCount()-1; i++ )
+    Table.ColName(i+1) = A.Bond(i).Another(A).GetLabel();
+  for( size_t i=0; i < A.BondCount(); i++ )  {
+    const TSBond &B = A.Bond(i);
+    Table[i][0] = olxstr::FormatFloat(3, B.Length());
+    Table.RowName(i) = B.Another(A).GetLabel();
+    for( size_t j=0; j < A.BondCount()-1; j++ )  {
+      const TSBond& B1 = A.Bond(j);
+      if( i == j )  { Table[i][j+1] = '-'; continue; }
+      if( i <= j )  { Table[i][j+1] = '-'; continue; }
+      const vec3d V = B.Another(A).crd() - A.crd();
+      const vec3d V1 = B1.Another(A).crd() - A.crd();
+      if( V.QLength()*V1.QLength() != 0 )  {
+        double angle = V.CAngle(V1);
+        angle = acos(angle)*180/M_PI;
+        Table[i][j+1] = olxstr::FormatFloat(3, angle);
+      }
+      else
+        Table[i][j+1] = '-';
+    }
+  }
+}
+//..............................................................................
+double TXApp::Tang(TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence) {
+  // right parameters should be passed, e.g. the bonds should be connecetd like
+  // B1-Middle-B2 or B2-Middle->B1, otherwise the result is almost meaningless!
+  if( Middle->A() == B1->A() || Middle->A() == B1->B() )
+    ;
+  else  {
+    olx_swap(B1, B2);
+  }
+  // using next scheme : A1-A2-A3-A4
+  TSAtom &A2 = Middle->A();
+  TSAtom &A3 = Middle->B();
+  TSAtom &A1 = B1->Another(A2);
+  TSAtom &A4 = B2->Another(A3);
+  const double angle = olx_dihedral_angle_signed(
+    A1.crd(), A2.crd(), A3.crd(), A4.crd());
+  if (Sequence != NULL) {
+    *Sequence = A1.GetLabel();
+    *Sequence << '-' << A2.GetLabel() <<
+                 '-' << A3.GetLabel() <<
+                 '-' << A4.GetLabel();
+  }
+  return angle;
+}
+const_strlist TXApp::TangList(TSBond *XMiddle)  {
+  TStrList L;
+  TSBondPList BondsA, BondsB;
+  size_t maxl=0;
+  TSBond *B, *Middle = XMiddle;
+  TSAtom *A = &Middle->A();
+  for( size_t i=0; i < A->BondCount(); i++ )  {
+    B = &A->Bond(i);
+    if( B != Middle ) BondsA.Add(B);
+  }
+  A = &Middle->B();
+  for( size_t i=0; i < A->BondCount(); i++ )  {
+    B = &A->Bond(i);
+    if( B != Middle ) BondsB.Add(B);
+  }
+  for( size_t i=0; i < BondsA.Count(); i++ )  {
+    for( size_t j=0; j < BondsB.Count(); j++ )  {
+      olxstr& T = L.Add();
+      const double angle = Tang( BondsA[i], BondsB[j], Middle, &T);
+      T << ':' << ' ';
+      if( T.Length() > maxl ) maxl = T.Length();  // to format the string later
+      T << olxstr::FormatFloat(3, angle);
+    }
+  }
+  for( size_t i=0; i < L.Count(); i++ )  {
+    size_t j = L[i].IndexOf(':');
+    L[i].Insert(' ', j, maxl-j);  
+  }
+  return L;
+}
