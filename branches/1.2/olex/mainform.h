@@ -386,12 +386,8 @@ private:
   DefMacro(PictTEX)
   DefMacro(PictS)
   DefMacro(PictPR)
-  DefMacro(Bang)
-  DefMacro(Uniq)
   DefMacro(Group)
-  DefMacro(Fmol)
   DefMacro(Clear)
-  DefMacro(Cell)
   DefMacro(Rota)
   DefMacro(Listen)
   DefMacro(WindowCmd)
@@ -403,15 +399,11 @@ private:
   DefMacro(Echo)
   DefMacro(Post)
   DefMacro(Exit)
-  DefMacro(Sel)
-  DefMacro(Esd)
   DefMacro(SetEnv)
   DefMacro(Help)
   DefMacro(Qual)
   DefMacro(AddLabel)
   DefMacro(Hide)
-  DefMacro(Kill)
-  DefMacro(UpdateWght)
   DefMacro(Exec)
   DefMacro(Shell)
   DefMacro(Save)
@@ -420,7 +412,6 @@ private:
   DefMacro(Style)
   DefMacro(Scene)
 
-  DefMacro(Basis)
   DefMacro(Lines)
 
   DefMacro(Ceiling)
@@ -436,7 +427,6 @@ private:
   DefMacro(Focus)
   DefMacro(Refresh)
 
-
   DefMacro(Mode)
 
   DefMacro(Text)
@@ -445,27 +435,16 @@ private:
   DefMacro(Bind)
 
   DefMacro(Grad)
-  DefMacro(Split)
-  DefMacro(ShowP)
 
   DefMacro(EditAtom)
   DefMacro(EditIns)
   DefMacro(HklEdit)
   DefMacro(HklView)
   DefMacro(HklExtract)
-  DefMacro(Direction)
 
   DefMacro(ViewGrid)
 
-  DefMacro(Undo)
-
-  DefMacro(Individualise)
-  DefMacro(Collectivise)
-
   DefMacro(Popup)
-
-  DefMacro(Delta)
-  DefMacro(DeltaI)
 
   DefMacro(Python)
 
@@ -489,7 +468,6 @@ private:
   DefMacro(DeleteBitmap)
   DefMacro(Tref)
   DefMacro(Patt)
-  DefMacro(Export)
 
   DefMacro(InstallPlugin)
   DefMacro(SignPlugin)
@@ -498,21 +476,14 @@ private:
   DefMacro(UpdateFile)
   DefMacro(NextSolution)
 
-  DefMacro(Match)
-
   DefMacro(ShowWindow)
 
   DefMacro(OFileDel)
   DefMacro(OFileSwap)
-  DefMacro(CalcVol)
 
   DefMacro(Schedule)
-  DefMacro(Tls)
   DefMacro(Test)
 
-  DefMacro(CalcVoid)
-  DefMacro(Sgen)
-  DefMacro(LstSymm)
   DefMacro(IT)
   DefMacro(StartLogging)
   DefMacro(ViewLattice)
@@ -527,7 +498,6 @@ private:
   DefMacro(SetFont)
   DefMacro(EditMaterial)
   DefMacro(SetMaterial)
-  DefMacro(LstGO)
   DefMacro(TestBinding)
   DefMacro(ShowSymm)
   DefMacro(Textm)
@@ -536,21 +506,8 @@ private:
   DefMacro(ImportFont)
   DefMacro(ProjSph)
   DefMacro(UpdateQPeakTable)
-  DefMacro(Conn)
-  DefMacro(AddBond)
-  DefMacro(DelBond)
-  DefMacro(SAME)
-  DefMacro(RESI)
-  DefMacro(WBox)
-  DefMacro(Center)
   DefMacro(Capitalise)
   DefMacro(FlushFS)
-  DefMacro(PiM)
-  DefMacro(ChemDraw)
-  DefMacro(Restrain)
-  DefMacro(Constrain)
-  DefMacro(Tolman)
-  DefMacro(Poly)
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////FUNCTIONS/////////////////////////////////////////
   DefFunc(FileLast)
@@ -558,26 +515,18 @@ private:
   DefFunc(FileOpen)
   DefFunc(ChooseDir)
 
-  DefFunc(Cell)
-  DefFunc(Cif)
-  DefFunc(P4p)
-  DefFunc(Crs)
   DefFunc(Strcat)
   DefFunc(Strcmp)
   DefFunc(GetEnv)
 
-  DefFunc(VVol)
-
   DefFunc(Sel)
   DefFunc(Atoms)
-  DefFunc(Env)
   DefFunc(FPS)
 
   DefFunc(Cursor)
   DefFunc(RGB)
   DefFunc(Color)
 
-  DefFunc(Zoom)
   DefFunc(HtmlPanelWidth)
   #ifdef __WIN32__
   DefFunc(LoadDll)
@@ -605,7 +554,6 @@ private:
   DefFunc(GetMouseY)
   DefFunc(GetWindowSize)
   DefFunc(IsOS)
-  DefFunc(ExtraZoom)
   DefFunc(HasGUI)
   DefFunc(CheckState)
   DefFunc(GlTooltip)
@@ -613,7 +561,6 @@ private:
   DefFunc(GetMAC)
   DefFunc(ThreadCount)
   DefFunc(FullScreen)
-  DefFunc(MatchFiles)
   DefFunc(Freeze)
 //..............................................................................
 public:

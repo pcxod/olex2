@@ -11,6 +11,7 @@
 #define __olx_gl_glmouse_H
 #include "glbase.h"
 #include "tptrlist.h"
+#include "library.h"
 BeginGlNamespace()
 
 // mouse listner constants
@@ -35,7 +36,7 @@ const short
   smeRotateZ  = 4,
   smeZoom     = 5,
   smeSelect   = 6;
-// mouse actions             
+// mouse actions
 const short
   glmaTranslateXY  = 1,
   glmaRotateXY     = 2,
@@ -69,7 +70,7 @@ struct TGlMMoveEvent  {
   }
 };
 
-class TGlMouse: public IEObject  {
+class TGlMouse: public IEObject {
   class TGlRenderer *FParent;
   class TDFrame *FDFrame;
   TActionQList Actions;
@@ -79,10 +80,15 @@ protected:
   TPtrList<TGlMMoveEvent> Handlers;
   TMouseData MData;
   short Action;
-  bool SelectionEnabled, InMode;
+  bool SelectionEnabled,
+    RotationEnabled,
+    TranslationEnabled,
+    ZoomingEnabled,
+    InMode;
   class TGlGroup* FindObjectGroup(const AGDrawObject& obj);
   // to distinguish clicking on an object 
   int ClickThreshold;
+  void process_command_list(TStrObjList& Cmds, bool enable);
 public:
   TGlMouse(TGlRenderer *Parent, TDFrame *Frame);
   virtual ~TGlMouse();
@@ -93,15 +99,26 @@ public:
   bool MouseDown(int x, int y, short Shift, short button);
   bool MouseMove(int x, int y, short Shift);
   inline TGlRenderer* Parent() const {  return FParent;  }
-  inline int SX() const {  return FSX;  }
-  inline int SY() const {  return FSY;  }
-  void SetHandler(const short Button, const short Shift, MMoveHandler MH);
+  int SX() const {  return FSX;  }
+  int SY() const {  return FSY;  }
+  void SetHandler(short Button, short Shift, MMoveHandler MH);
   // is set by handlers
   void SetAction(short A)  {  Action = A;  }
   DefPropBIsSet(SelectionEnabled)
+  DefPropBIsSet(RotationEnabled)
+  DefPropBIsSet(TranslationEnabled)
+  DefPropBIsSet(ZoomingEnabled)
   DefPropBIsSet(InMode)
 
   TActionQueue &OnObject;
+  void LibEnable(TStrObjList& Cmds, const TParamList& Options,
+    TMacroError &E);
+  void LibDisable(TStrObjList& Cmds, const TParamList& Options,
+    TMacroError &E);
+  void LibLock(TStrObjList& Cmds, const TParamList& Options,
+    TMacroError &E);
+  void LibIsEnabled(const TStrObjList& Params, TMacroError& E);
+TLibrary *ExportLib(const olxstr &name="mouse");
 };
 
 // default behaviour to mouse events

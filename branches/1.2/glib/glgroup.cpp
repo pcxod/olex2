@@ -144,7 +144,7 @@ void TGlGroup::OverrideMaterialDraw(bool SelectPrimitives,
   for( size_t i=0; i < Count(); i++ )  {
     AGDrawObject& G = GetObject(i);
     if( G.MaskFlags(sgdoHidden) != 0 )  continue;
-    if( G.IsGroup() )    {
+    if( G.IsGroup() )  {
       TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
       if( group != NULL )  {
         group->Draw(SelectPrimitives, SelectObjects);
@@ -154,8 +154,10 @@ void TGlGroup::OverrideMaterialDraw(bool SelectPrimitives,
     const size_t pc = G.GetPrimitives().PrimitiveCount();
     for( size_t j=0; j < pc; j++ )  {
       TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
-      if( SelectObjects )     olx_gl::loadName((GLuint)G.GetTag());
-      if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+      if (SelectObjects)
+        olx_gl::color(G.GetTag());
+      else if (SelectPrimitives)
+        olx_gl::color(GlP.GetTag());
       olx_gl::pushMatrix();
       if( G.Orient(GlP) )  {
         olx_gl::popMatrix();
@@ -189,7 +191,9 @@ bool TGlGroup::CheckBlended() const {
   return IsBlended();
 }
 //..............................................................................
-void TGlGroup::BlendMaterialDraw(bool SelectPrimitives, bool SelectObjects) const {
+void TGlGroup::BlendMaterialDraw(bool SelectPrimitives,
+  bool SelectObjects) const
+{
   if( !CheckBlended() )  {
     OverrideMaterialDraw(SelectPrimitives, SelectObjects);
     return;
@@ -197,26 +201,31 @@ void TGlGroup::BlendMaterialDraw(bool SelectPrimitives, bool SelectObjects) cons
   for( size_t i=0; i < Count(); i++ )  {
     AGDrawObject& G = GetObject(i);
     if( G.MaskFlags(sgdoHidden) != 0 )  continue;
-    if( G.IsGroup() )    {
+    if( G.IsGroup() )  {
       TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
       if( group != NULL )  {
         group->Draw(SelectPrimitives, SelectObjects);
         continue;
       }
     }
+    bool Select = (SelectPrimitives|SelectObjects);
     const size_t pc = G.GetPrimitives().PrimitiveCount();
     for( size_t j=0; j < pc; j++ )  {
       TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
-      TGlMaterial glm = GlP.GetProperties();
-      const float m1 = BlendColor[3];
-      const float m2 = (1.0f-BlendColor[3]);
-      glm.AmbientF[0] = BlendColor[0]*m1 + glm.AmbientF[0]*m2;
-      glm.AmbientF[1] = BlendColor[1]*m1 + glm.AmbientF[1]*m2;
-      glm.AmbientF[2] = BlendColor[2]*m1 + glm.AmbientF[2]*m2;
-      glm.AmbientF[3] = 1.0f;
-      glm.Init(false);
-      if( SelectObjects )     olx_gl::loadName((GLuint)G.GetTag());
-      if( SelectPrimitives )  olx_gl::loadName((GLuint)GlP.GetTag());
+      if (!Select) {
+        TGlMaterial glm = GlP.GetProperties();
+        const float m1 = BlendColor[3];
+        const float m2 = (1.0f-BlendColor[3]);
+        glm.AmbientF[0] = BlendColor[0]*m1 + glm.AmbientF[0]*m2;
+        glm.AmbientF[1] = BlendColor[1]*m1 + glm.AmbientF[1]*m2;
+        glm.AmbientF[2] = BlendColor[2]*m1 + glm.AmbientF[2]*m2;
+        glm.AmbientF[3] = 1.0f;
+        glm.Init(false);
+      }
+      if (SelectObjects)
+        olx_gl::color(G.GetTag());
+      else if (SelectPrimitives)
+        olx_gl::color(GlP.GetTag());
       olx_gl::pushMatrix();
       if( G.Orient(GlP) )  {
         olx_gl::popMatrix();

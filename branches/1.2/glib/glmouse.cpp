@@ -36,12 +36,11 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
   // an alternative for MAC...
   SetHandler(smbLeft, sssAlt, meZoom);
   FDFrame = Frame;
-  SelectionEnabled = true;
+  SelectionEnabled = RotationEnabled = ZoomingEnabled = true;
 }
 //..............................................................................
 TGlMouse::~TGlMouse()  {
-  for( size_t i=0; i < Handlers.Count(); i++ )
-    delete Handlers[i];
+  Handlers.DeleteItems(false);
 }
 //..............................................................................
 bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
@@ -187,7 +186,7 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
   return false;
 }
 //..............................................................................
-void TGlMouse::SetHandler(const short Button, const short Shift, MMoveHandler MH)  {
+void TGlMouse::SetHandler(short Button, short Shift, MMoveHandler MH)  {
   bool found = false;
   for( size_t i=0; i < Handlers.Count(); i++ )  {
     TGlMMoveEvent* ME = Handlers[i];
@@ -206,7 +205,82 @@ void TGlMouse::SetHandler(const short Button, const short Shift, MMoveHandler MH
   }
 }
 //..............................................................................
+void TGlMouse::process_command_list(TStrObjList& Cmds, bool enable) {
+  for (size_t i=0; i < Cmds.Count(); i++) {
+    if (Cmds[i].Equalsi("selection"))
+      SetSelectionEnabled(enable);
+    else if (Cmds[i].Equalsi("rotation"))
+      SetRotationEnabled(enable);
+    else if (Cmds[i].Equalsi("translation"))
+      SetTranslationEnabled(enable);
+    else if (Cmds[i].Equalsi("zooming"))
+      SetZoomingEnabled(enable);
+  }
+}
+//..............................................................................
+void TGlMouse::LibEnable(TStrObjList& Cmds, const TParamList& Options,
+  TMacroError &E)
+{
+  process_command_list(Cmds, true);
+}
+//..............................................................................
+void TGlMouse::LibDisable(TStrObjList& Cmds, const TParamList& Options,
+  TMacroError &E)
+{
+  process_command_list(Cmds, false);
+}
+//..............................................................................
+void TGlMouse::LibLock(TStrObjList& Cmds, const TParamList& Options,
+  TMacroError &E)
+{
+  bool v = Cmds.IsEmpty() ? false : !Cmds[0].ToBool();
+  SetRotationEnabled(v);
+  SetTranslationEnabled(v);
+  SetZoomingEnabled(v);
+}
+//..............................................................................
+void TGlMouse::LibIsEnabled(const TStrObjList& Cmds, TMacroError& E) {
+  if (Cmds[0].Equalsi("selection"))
+    E.SetRetVal(IsSelectionEnabled());
+  else if (Cmds[0].Equalsi("rotation"))
+    E.SetRetVal(IsRotationEnabled());
+  else if (Cmds[0].Equalsi("translation"))
+    E.SetRetVal(IsTranslationEnabled());
+  else if (Cmds[0].Equalsi("zooming"))
+    E.SetRetVal(IsZoomingEnabled());
+}
+//..............................................................................
+TLibrary *TGlMouse::ExportLib(const olxstr &name) {
+  TLibrary *lib = new TLibrary(name);
+  lib->Register(
+    new TMacro<TGlMouse>(this,  &TGlMouse::LibEnable, "Enable",
+      EmptyString(), fpAny^fpNone,
+      "Enables one of the following operations: rotation, zooming, translation"
+      ", selection")
+  );
+  lib->Register(
+    new TMacro<TGlMouse>(this,  &TGlMouse::LibDisable, "Disable",
+      EmptyString(), fpAny^fpNone,
+      "Disables one of the following operations: rotation, zooming, translation"
+      ", selection")
+  );
+  lib->Register(
+    new TMacro<TGlMouse>(this,  &TGlMouse::LibLock, "Lock",
+      EmptyString(), fpNone|fpOne,
+      "[Disables]/enables rotation, zooming and translation")
+  );
+  lib->Register(
+    new TFunction<TGlMouse>(this,  &TGlMouse::LibIsEnabled, "IsEnabled",
+      fpOne,
+      "Returns current status for rotation, zooming, translation or selection")
+  );
+  return lib;
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
 void GlobalGlFunction( meMoveXY(TGlMouse *G, int dx, int dy) )  {
+  if (!G->IsTranslationEnabled()) return;
   TGlRenderer *R = G->Parent();
   double v = R->GetScale();
   vec3d t = R->GetBasis().GetMatrix()*vec3d(dx*v, dy*v, 0);
@@ -215,6 +289,7 @@ void GlobalGlFunction( meMoveXY(TGlMouse *G, int dx, int dy) )  {
 }
 //..............................................................................
 void GlobalGlFunction( meMoveZ(TGlMouse *G, int dx, int dy) )  {
+  if (!G->IsTranslationEnabled()) return;
   TGlRenderer *R = G->Parent();
   double v = R->GetScale();
   R->TranslateZ(dx*v + dy*v);
@@ -222,6 +297,7 @@ void GlobalGlFunction( meMoveZ(TGlMouse *G, int dx, int dy) )  {
 }
 //..............................................................................
 void GlobalGlFunction( meRotateXY(TGlMouse *G, int dx, int dy) )  {
+  if (!G->IsRotationEnabled()) return;
   TGlRenderer *R = G->Parent();
   double RX = R->GetBasis().GetRX() + (double)dy/FRotationDiv;;
   double RY = R->GetBasis().GetRY() + (double)dx/FRotationDiv;;
@@ -235,6 +311,7 @@ void GlobalGlFunction( meRotateXY(TGlMouse *G, int dx, int dy) )  {
 }
 //..............................................................................
 void GlobalGlFunction( meRotateZ(TGlMouse *G, int dx, int dy) )  {
+  if (!G->IsRotationEnabled()) return;
   TGlRenderer *R = G->Parent();
   double RZ = R->GetBasis().GetRZ();
   if( G->SX() > R->GetWidth()/2 )
@@ -254,6 +331,7 @@ void GlobalGlFunction( meRotateZ(TGlMouse *G, int dx, int dy) )  {
 }
 //..............................................................................
 void GlobalGlFunction( meZoom(TGlMouse *G, int dx, int dy) )  {
+  if (!G->IsZoomingEnabled()) return;
   TGlRenderer *R = G->Parent();
   static const double df = 600;
   R->SetZoom(R->GetZoom() + (double)dx/df - (double)dy/df);
@@ -261,6 +339,7 @@ void GlobalGlFunction( meZoom(TGlMouse *G, int dx, int dy) )  {
 }
 //..............................................................................
 void GlobalGlFunction( meZoomI(TGlMouse *G, int dx, int dy) )  {
+  if (!G->IsZoomingEnabled()) return;
   TGlRenderer *R = G->Parent();
   static const double df = 600;
   R->SetZoom(R->GetZoom() - (double)dx/df + (double)dy/df);

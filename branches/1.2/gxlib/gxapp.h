@@ -364,9 +364,12 @@ public:
     stateWBoxVisible;
   TStateRegistry & GetStatesRegistry() const { return *States; }
   // only works with wxWidgets
-  bool ToClipboard(const olxstr &text) const;
-  bool ToClipboard(const TStrList &text) const {
-    return ToClipboard(text.Text(NewLineSequence()));
+  virtual bool ToClipboard(const olxstr &text) const;
+  /* funny enough, if this is not overriden - all TStrLists are being converted
+  to string, thus making the compilation impossible...
+  */
+  bool ToClipboard(const TStrList &l) const {
+    return TBasicApp::ToClipboard(l);
   }
 protected:
   float FProbFactor;
@@ -381,8 +384,8 @@ protected:
   void _maskInvisible();
   bool MainFormVisible;
 public:
-  // FileName - argv[0]
-  TGXApp(const olxstr& FileName);
+  // FileName - argv[0];
+  TGXApp(const olxstr& FileName, AGlScene *scene=NULL);
   virtual ~TGXApp();
   void CreateObjects(bool CenterModel, bool init_visibility=true);
   void UpdateBonds();
@@ -423,8 +426,8 @@ public:
   // restores the on-screen rendering
   void FinishDrawBitmap();
   void Resize(int new_w, int new_h)  {  FGlRender->Resize(new_w, new_h); }
-  AGDrawObject* SelectObject(int x, int y, int depth=0)  {
-    return FGlRender->SelectObject(x, y, depth);
+  AGDrawObject* SelectObject(int x, int y)  {
+    return FGlRender->SelectObject(x, y);
   }
   TGlPrimitive *SelectPrimitive(int x, int y)  {
     return FGlRender->SelectPrimitive(x, y);
@@ -748,11 +751,6 @@ public:     void CalcProbFactor(float Prob);
   void BuildSceneMask(FractMask& mask, double Inc);
 //..............................................................................
 // X interface
-  void BangList(const TSAtom& A, TStrList& L);
-  void BangTable(const TSAtom& A, TTTable<TStrList>& Table);
-  double Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence=NULL);
-  void TangList(TXBond *Middle, TStrList& L);
-
   TUndoData* DeleteXAtoms(TXAtomPList& L);
   TUndoData* DeleteXObjects(AGDObjList& L);
   /* function undoes deleted atoms bonds and planes */

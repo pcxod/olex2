@@ -722,6 +722,7 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetCaption(Value);
     if( tag.HasParam(wxT("CHECKED")) )  {
       Tmp = tag.GetParam(wxT("CHECKED"));
+      op->processFunction(Tmp, SrcInfo, false);
       if( Tmp.IsEmpty() )
         Box->SetChecked(true);
       else if( Tmp.IsBool() )

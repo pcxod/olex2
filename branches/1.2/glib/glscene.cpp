@@ -16,7 +16,9 @@ AGlScene::~AGlScene()  {
   SmallFonts.DeleteItems();
 }
 //..............................................................................
-void AGlScene::StartDraw()  {  olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
+void AGlScene::StartDraw()  {
+  olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 //..............................................................................
 void AGlScene::EndDraw()  {  olx_gl::flush();  }
 //..............................................................................
@@ -35,7 +37,8 @@ int AGlScene::EndSelect()  {
   return hits;
 }
 //..............................................................................
-TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription)  {
+TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription)
+{
   const size_t i = FontsDict.IndexOf(name);
   if( i != InvalidIndex ) {
     // overwrite
@@ -52,7 +55,9 @@ TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription) 
   FontsDict.Add(name, fnt);
   if( !fnt->IsVectorFont() )  {
     fnt->SmallId = SmallFonts.Count();
-    SmallFonts.Add(new TGlFont(*this, SmallFonts.Count(), name))->SetIdString(fntDescription);
+    SmallFonts.Add(
+      new TGlFont(*this, SmallFonts.Count(), name))->SetIdString(
+        fntDescription);
   }
   return *fnt;
 }
@@ -108,7 +113,9 @@ const_strlist AGlScene::ToPov() const {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-olxstr AGlScene::MetaFont::BuildOlexFontId(const olxstr& fileName, short size, bool fixed, bool bold, bool italic)  {
+olxstr AGlScene::MetaFont::BuildOlexFontId(const olxstr& fileName, short size,
+  bool fixed, bool bold, bool italic)
+{
   olxstr prefix, suffix;
   if( !fileName.IsEmpty() )
     prefix << '#' << fileName << ':';

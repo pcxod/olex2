@@ -11,40 +11,67 @@
 #define __olx_gxlib_xmacro_H
 #include "gxapp.h"
 
-class GXLibMacros  {
+class GXLibMacros : public IEObject {
 protected:
+  TGXApp &app;
   static int QPeakSortA(const TCAtom &a, const TCAtom &b);
   static int QPeakSortD(const TCAtom &a, const TCAtom &b) {
     return QPeakSortA(b, a);
   }
 public:
-  static DefMacro(Grow)
-  static DefMacro(Pack)
-  static DefMacro(Name)
-  static DefMacro(CalcFourier)
-  static DefMacro(CalcPatt)
-  static DefMacro(Mask)
-  static DefMacro(ARad)
-  static DefMacro(ADS)
-  static DefMacro(AZoom)
-  static DefMacro(BRad)
-  static DefMacro(TelpV)
-  static DefMacro(Info)
-  static DefMacro(Label)
-  static DefMacro(Labels)
-  static DefMacro(ShowH)
-  static DefMacro(ShowQ)
+  GXLibMacros(TGXApp &app) : app(app) {}
+  DefMacro(Grow)
+  DefMacro(Pack)
+  DefMacro(Name)
+  DefMacro(CalcFourier)
+  DefMacro(CalcPatt)
+  DefMacro(CalcVoid)
+  DefMacro(Mask)
+  DefMacro(ARad)
+  DefMacro(ADS)
+  DefMacro(AZoom)
+  DefMacro(BRad)
+  DefMacro(TelpV)
+  DefMacro(Info)
+  DefMacro(Label)
+  DefMacro(Labels)
+  DefMacro(ShowH)
+  DefMacro(ShowQ)
+  DefMacro(ShowP)
+  DefMacro(Cell)
+  DefMacro(Basis)
+  DefMacro(Sel)
+  DefMacro(Esd)
+  DefMacro(Undo)
+  DefMacro(LstGO)
+  DefMacro(Kill)
 
-  static DefMacro(Qual)
-  static DefMacro(Load)
-  static DefMacro(Matr)
-  static DefMacro(Line)
-  static DefMacro(Mpln)
-  static DefMacro(Cent)
-  static DefMacro(SetView)
+  DefMacro(Qual)
+  DefMacro(Load)
+  DefMacro(Matr)
+  DefMacro(Line)
+  DefMacro(Mpln)
+  DefMacro(Cent)
+  DefMacro(SetView)
+  DefMacro(ChemDraw)
+  DefMacro(PiM)
+  DefMacro(Group)
+  DefMacro(Poly)
 
-//  static DefFunc(Lst)
-  static void Export(class TLibrary& lib);
+  DefMacro(WBox)
+  DefMacro(Center)
+  DefMacro(Direction)
+  DefMacro(Individualise)
+  DefMacro(Collectivise)
+  DefMacro(Match)
+  DefFunc(MatchFiles)
+
+  DefMacro(Uniq)
+  DefMacro(Fmol)
+
+  DefFunc(ExtraZoom)
+
+  void Export(TLibrary& lib);
 };
 //---------------------------------------------------------------------------
 #endif

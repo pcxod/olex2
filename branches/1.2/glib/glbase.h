@@ -112,6 +112,14 @@ struct olx_gl  {
   static void color(int x, int y, int z, int a)  {  glColor4i(x,y,z,a);  }
   static void color(float x, float y, float z, float a)  {  glColor4f(x,y,z,a);  }
   static void color(double x, double y, double z, double a)  {  glColor4d(x,y,z,a);  }
+  template <typename cl_t>
+  static void color(cl_t v) {
+    glColor4f(
+      (float)OLX_GetRValue(v)/255,
+      (float)OLX_GetGValue(v)/255,
+      (float)OLX_GetBValue(v)/255,
+      (float)OLX_GetAValue(v)/255);
+  }
 
 
   static void material(GLenum face, GLenum pname, GLint param)  {

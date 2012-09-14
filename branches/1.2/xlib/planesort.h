@@ -13,6 +13,7 @@
 #include "edict.h"
 #include "math/plane.h"
 
+BeginXlibNamespace()
 namespace PlaneSort {
   struct Sorter {
     TArrayList<vec3d> sortedPlane;
@@ -36,7 +37,7 @@ namespace PlaneSort {
     static void DoSort(const TSAtomPList& atoms, 
       // tag dependent translations
       const olxdict<index_t, vec3d, TPrimitiveComparator>& transforms,
-      vec3d& center, const vec3d& normal, TSAtomPList& output)  
+      vec3d& center, const vec3d& normal, TSAtomPList& output)
     {
       if( atoms.IsEmpty() )
         throw TInvalidArgumentException(__OlxSourceInfo, "atom list");
@@ -52,4 +53,5 @@ namespace PlaneSort {
     }
   };
 };
+EndXlibNamespace()
 #endif

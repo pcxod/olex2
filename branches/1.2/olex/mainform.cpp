@@ -533,7 +533,7 @@ void TMainForm::XApp(TGXApp *XA)  {
     "a-view angle [6]&;"
     "s-separation between the images in % [10]&;"
     "h-output image height [screen*resolution]",
-    fpOne|fpTwo|psFileLoaded, 
+    fpOne|fpTwo|psFileLoaded,
     "Stereoscopic picture rendering");
   this_InitMacroD(PictPR, EmptyString(), fpOne|psFileLoaded, 
     "PovRay output");
@@ -541,25 +541,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Post, EmptyString(), fpAny,
     "Prints a string, but only after a new line character is encountered");
 
-  this_InitMacroD(Bang, "c-copy info to the clipboard", fpAny|psFileLoaded,
-    "Prints bonds and angles table for selected/given atoms");
-  this_InitMacroD(Uniq, EmptyString(), fpAny | psFileLoaded,
-    "Shows only fragments specified by atom name(s) or selection");
-
-  this_InitMacroD(Group,
-    "n-a custom name can be provided",
-    fpNone|fpOne|psFileLoaded,
-  "Groups current visible objects or selection");
-
-  this_InitMacroD(Fmol, EmptyString(), fpNone|psFileLoaded,
-    "Shows all fragments (as opposite to uniq)");
   this_InitMacroD(Clear, EmptyString(), fpNone,
     "Clears console buffer (text)");
-
-  this_InitMacroD(Cell, "r-shows reciprocal cell",
-    fpNone|fpOne|psFileLoaded,
-    "If no arguments provided inverts visibility of unit cell, otherwise sets"
-    " it to the boolean value of the parameter");
   this_InitMacroD(Rota, EmptyString(), fpTwo|fpFive,
     "For two arguments the first one specifies axis of rotation (1,2,3 or "
     "x,y,z) and the second one the rotation angle in degrees. For five "
@@ -595,50 +578,10 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Exit, EmptyString(), fpNone, "Exits Olex2");
   this_InitMacroAD(Exit, quit, EmptyString(), fpNone, "Exits Olex2");
 
-  this_InitMacroD(Sel,
-    "a-select all&;"
-    "u-unselect all&;"
-    "l-consider the list of bonds as independent&;"
-    "c-copies printed values to the clipboard&;"
-    "i-invert selection&;",
-    fpAny,
-    "If no arguments provided, prints current selection. This includes "
-    "distances, angles and torsion angles and other geometrical parameters. "
-    "Selects atoms fulfilling provided conditions, like"
-    "\nsel $type - selects any particular atom type; type can be one of the "
-    "following shortcuts - * - for all atoms, M - for metals, X - for halogens"
-    "\nsel $*,type - selects all but type atoms"
-    "\n\n"
-    "An extended syntax include keyword 'where' and 'rings' which "
-    "allow selecting atoms and bonds according to their properties, like type "
-    "and length or rings of particular connectivity like C6 or NC5. If the "
-    "'where' keyword is used, logical operators, like and (&&), and or (||) "
-    "can be used to refine the selection. For example:"
-    "\nsel atoms where xatom.bai.z > 2 - to select all atoms heavier after H"
-    "\nsel bonds where xbond.length > 2 - to select all bonds longer than 2 A"
-    "\nsel bonds where xbond.b.bai.z == 1 - to select all bonds where the "
-    "lightest atoms is H"
-    );
-
   this_InitMacroD(Capitalise, "", (fpAny|psFileLoaded)^fpNone,
     "Changes atom labels capitalisation for all/given/selected atoms. The"
     " first argument is the template like Aaaa");
 
-  this_InitMacroD(PiM,
-    "l-display labels for the created lines",
-    fpAny|psFileLoaded,
-    "Creates an illustration of a pi-system to metal bonds");
-
-  this_InitMacroD(Esd,
-    "label-creates a graphics label&;"
-    "l-consider the list of bonds as independent&;"
-    "c-copies printed values to the clipboard",
-    fpAny|psFileLoaded,
-    "This procedure calculates possible parameters for the selection and "
-    "evaluates their esd using the variance-covariance matrix coming from the "
-    "ShelXL refinement with negative 'MORE' like 'MORE -1' option or from the "
-    "olex2.refine");
-  
 
   this_InitMacroD(SetEnv, EmptyString(), fpTwo,
 "Sets an environmental variable");
@@ -651,12 +594,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Hide, EmptyString(), fpAny,
     "Hides selected objects or provided atom names (no atom related objects as"
     " bonds are hidden automatically)");
-  this_InitMacroD(Kill,
-    "au-kill atoms in the asymmetric unit (disregarding visibility/"
-    "availability). This option is intended for the internal use - the model is"
-    " not rebuilt after its execution",
-    fpAny^fpNone,
-    "Deletes provided/selected atoms, bonds and other objects");
 
   this_InitMacroD(Exec,
     "s-synchronise&;"
@@ -684,8 +621,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne,
     "Prints default scene parameters or sets it (none resets)");
 
-  this_InitMacroD(Basis, EmptyString(), fpNone|fpOne,
-    "Shows/hides the orientation basis");
   this_InitMacroD(Lines, EmptyString(), fpOne,
     "Sets the number of visible text lines in the console. Use -1 to display "
     "all lines");
@@ -751,10 +686,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "gradient dialog where the user can choose the gradient colors. One "
     "parameter is expected to be a boolean - shows/hides the gradient. Four "
     "parameters specify the gradient colours explicetly.");
-  this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms",
-    fpAny|psCheckFileTypeIns,
-    "Splits provided atoms along the longest axis of the ADP");
-  this_InitMacro(ShowP, m-do not modify the display view, fpAny);
 
   this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns);
   this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns);
@@ -764,20 +695,7 @@ void TMainForm::XApp(TGXApp *XA)  {
   // not implemented
   this_InitMacro(HklExtract, , fpOne|psFileLoaded);
 
-  this_InitMacroD(Direction, EmptyString(), fpNone,
-    "Prints current orientation of the model in factional coordinates");
   this_InitMacro(ViewGrid, , fpNone|fpOne);
-  this_InitMacro(Undo, , fpNone);
-
-  this_InitMacroD(Individualise, EmptyString(), fpAny,
-    "Moves provided atoms to individual collections, so that the atom "
-    "properties, such as draw style and appearance can be changed separately "
-    "of the group. The first call to this macro creates a group unique to the"
-    " asymmetric unit, the second call makes the atom unique to the lattice");
-  this_InitMacroD(Collectivise, EmptyString(), fpAny,
-    "Does the opposite to the Individialise. If provided atoms are unique to "
-    "the lattice a call to this function makes them uniq to the asymmetric "
-    "unit, the following call makes the uniq to the element type");
 
   this_InitMacroD(Popup,
     "w-width&;"
@@ -791,10 +709,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     fpTwo,
     "Creates a popup HTML window. Usage: popup popup_name html_source");
 
-  this_InitMacroD(Delta, EmptyString(), fpNone|fpOne,
-    "Prints/sets current delta fir the covalent bonds");
-  this_InitMacroD(DeltaI, EmptyString(), fpNone|fpOne,
-    "Prints/sets current delta for short interactions");
 
   this_InitMacroAD(Python, @py,
     "i-shows a text input box&;"
@@ -824,7 +738,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacro(DeleteBitmap, , fpOne);
   this_InitMacro(Tref, ,fpOne|fpTwo|psCheckFileTypeIns);
   this_InitMacro(Patt, ,fpNone|psCheckFileTypeIns);
-  this_InitMacro(Export, ,fpNone|fpOne|psCheckFileTypeCif);
 
   this_InitMacro(InstallPlugin,
     "l-local installation from a zip file, which must contains index.ind",
@@ -834,30 +747,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacro(UpdateFile, f,fpOne);
   this_InitMacro(NextSolution, ,fpNone);
 
-  this_InitMacroD(Match,
-    "s-subgraph match&;"
-    "w-use Z as weights&;"
-    "n-naming. If the value a symbol [or set of] this is appended to the "
-    "label, '$xx' replaces the symbols after the atom type symbol with xx, "
-    "leaving the ending, '-xx' - changes the ending of the label with xx&;"
-    "a-align&;"
-    "i-try inversion&;"
-    "u-unmatch&;"
-    "esd-calculate esd (works for pairs only)",
-    fpNone|fpOne|fpTwo,
-    "Fragment matching, alignment and label transfer routine");
-  this_InitMacroD(Conn, EmptyString(), fpAny^fpNone,
-    "Changes provided atom(s) connectivity (only until next connectivity "
-    "modifying operation for now)."
-    "\nUsage: conn max_bond bonding_radius [selection/atom(s)/$type]"
-    "\nUsage: conn max_bond [selection/atom(s)/$type]"
-    "\nUsage: conn bonding_radius [selection/atom(s)/$type] - note the radius"
-    " should have floating point"
-    );
-  this_InitMacroD(AddBond, EmptyString(), fpAny,
-    "Adds specified bond to the connectivity table");
-  this_InitMacroD(DelBond, EmptyString(), fpAny,
-    "Removes specified bond from the connectivity table");
   this_InitMacro(ShowWindow, ,fpOne|fpTwo);
   
   this_InitMacroD(OFileDel, EmptyString(), fpOne,
@@ -865,43 +754,13 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitMacroD(OFileSwap, EmptyString(), fpOne,
     "Makes overlayed file, given by index the current file to which all "
     "commands are applied");
-  this_InitMacroD(CalcVol,
-    "n-normalises bonds before the calculation&;"
-    "cs-do not clear the selection",
-    fpNone|fpOne,
-    "Calculates tetrahedron or bipyramidal shape volume for given (selected) "
-    "atom");
 
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
     "Schedules a particular macro (second argument) to be executed within "
     "provided interval (first argument)");
 
-  this_InitMacroD(Tls,
-    "a-apply the TLS ADP to the atoms",
-    fpAny|psFileLoaded,
-    "TLS procedure. The TLS is calculated for the given atoms and then the "
-    "matrices rotated to the L axes (making L diagonal) and shifted to make S "
-    "symmetric. The printed R1 is calculated for ADPs in the L axes and is:\n"
-    "R1=sum(i=1..3,j=i..3)(|Uobs_ij-Utls_ij|)/sum(i=1..3, j=i..3)(|Uobs_ij|)"
-    "\nR2' is invariant under the rotation and is calculated as\n"
-    "R2'=sum(i=1..3,j=1..3)((Uobs_ij-Utls_ij)^2)/sum(i=1..3,j=1..3)(Uobs_ij^2)"
-    );
-
   this_InitMacro(Test, , fpAny);
 
-  this_InitMacroD(CalcVoid,
-    "d-distance from Van der Waals surface [0]&;r-resolution[0.2]&;"
-    "p-precise calculation&;"
-    "i-invert the map for rendering",
-    fpNone|fpOne|psFileLoaded,
-      "Calculates solvent accessible void and packing parameters; optionally "
-      "accepts a file with space separated values of Atom Type and radius, an "
-      "entry a line");
-  this_InitMacroD(Sgen, EmptyString(), (fpAny^fpNone)|psFileLoaded,
-    "Grows the structure using provided atoms (all if none provided) and "
-    "symmetry code");
-  this_InitMacroD(LstSymm, EmptyString(), fpNone|psFileLoaded,
-    "Prints symmetry codes for current structure");
   this_InitMacroD(IT,
     "o-orients basis according to principle axes of inertia",
     fpAny,
@@ -932,8 +791,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Brings up material properties dialog for specified object");
   this_InitMacroD(SetMaterial, EmptyString(), fpTwo | fpThree,
     "Assigns provided value to specified material");
-  this_InitMacroD(LstGO, EmptyString(), fpNone,
-    "List current graphical objects");
   this_InitMacroD(TestBinding, EmptyString(), fpAny,
     "Internal tests");
   this_InitMacroD(ShowSymm, EmptyString(), fpNone|fpOne,
@@ -965,44 +822,11 @@ void TMainForm::XApp(TGXApp *XA)  {
     "point on the sphere with a unique color corresponding to fragments.");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
     "Internal routine for synchronisation");
-  this_InitMacroD(SAME,
-    "i-invert the graphs&;"
-    "e-expand SAME into the list of SADI",
-    fpAny|psFileLoaded,
-    "Creates SAME instruction for two fragments (two selected atoms or two "
-    "atoms provided) or number_of_groups and groups following each another "
-    "(or selection)");
-  this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded,
-    "Creates residue with given class name and optionally number and adds "
-    "selected or provided atoms into the residue. If provided residue class "
-    "name is 'none', provided atoms are removed from their residues");
-  this_InitMacroD(WBox,
-    "w-use atomic mass instead of unit weights for atoms&;"
-    "s-create separate boxes for fragments", 
-    (fpAny)|psFileLoaded,
-    "Calculates wrapping box around provided box using the set of best, "
-    "intermidiate and worst planes");
-  this_InitMacroD(Center, "z-also recalculates the scene zoom", 
-    (fpAny)|psFileLoaded, "Sets the centre of rotation to given point");
   this_InitMacroD(FlushFS, EmptyString(), 
     (fpOne|fpNone),
     "Saves current content of the virtual file system. If no parameters is "
     "given - the global state is saved. Possible arguments: global, "
     "structure");
-
-  this_InitMacroD(ChemDraw, "", fpAny|psFileLoaded,
-    "Currently only creates aromatic rings for Ph, Py and Cp rings");
-  this_InitMacroD(Restrain, "", fpAny|psFileLoaded,
-    "Creates a restraint");
-  this_InitMacroD(Constrain, "", (fpAny^fpNone)|psFileLoaded,
-    "Creates a constraint");
-
-  this_InitMacroD(Tolman, "mpd-M to P distance", fpNone|fpFive|psFileLoaded,
-    "Calculates Tolamn code angle for the selection (M P S1 S2 S3)");
-
-  this_InitMacroD(Poly, EmptyString(), (fpAny^fpNone)|psFileLoaded,
-    "Sets polyhedra type for all/selected/given atoms. Last argument specifies"
-    " the type - none, auto, regular");
 
   // FUNCTIONS _________________________________________________________________
 
@@ -1011,18 +835,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitFunc(FileOpen, fpThree);
   this_InitFunc(ChooseDir, fpNone|fpOne|fpTwo);
 
-  this_InitFunc(Cell, fpOne|psFileLoaded);
-
-  this_InitFuncD(Cif, fpOne|psCheckFileTypeCif,
-    "Returns instruction value (all data after the instruction). In case the "
-    "instruction does not exist it return 'n/a' string");
-  this_InitFuncD(P4p, fpOne|psCheckFileTypeP4P,
-    "Returns instruction value (all data after the instruction). In case the "
-    "instruction does not exist it return 'n/a' string");
-  this_InitFuncD(Crs, fpOne|psCheckFileTypeCRS,
-    "Returns instruction value (all data after the instruction). In case the "
-    "instruction does not exist it return 'n/a' string");
-
   this_InitFunc(Strcat, fpTwo);
   this_InitFunc(Strcmp, fpTwo);
 
@@ -1030,9 +842,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Prints all variables if no arguments is given or returns the given "
     "veariable value");
 
-  this_InitFunc(VVol, fpNone|fpOne|psFileLoaded);
-
-  this_InitFunc(Env, fpOne|psFileLoaded);
   this_InitFunc(Atoms, fpOne|psFileLoaded);
 
   this_InitFuncD(Sel, fpNone|fpOne|psFileLoaded,
@@ -1045,7 +854,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitFunc(RGB, fpThree|fpFour);
   this_InitFunc(Color, fpNone|fpOne|fpTwo);
 
-  this_InitFunc(Zoom, fpNone|fpOne);
   this_InitFunc(HtmlPanelWidth, fpNone|fpOne);
 
   #ifdef __WIN32__
@@ -1097,8 +905,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitFuncD(IsOS, fpOne,
     "Returns true if current system Windows [win], Linux/GTK [linux], Mac "
     "[mac]");
-  this_InitFuncD(ExtraZoom, fpNone|fpOne,
-    "Sets/reads current extra zoom (default zoom correction)");
   this_InitFuncD(HasGUI, fpNone,
     "Returns if true if Olex2 is built with GUI");
   this_InitFuncD(CheckState, fpOne|fpTwo,
@@ -1116,8 +922,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     "Returns/sets the number of simultaneous tasks");
   this_InitFuncD(FullScreen, fpNone|fpOne,
     "Returns/sets full screen mode (true/false/swap)");
-  this_InitFuncD(MatchFiles, fpTwo|fpThree,
-    "Matches given files");
   this_InitFuncD(Freeze, fpNone|fpOne,
     "Gets/Sets display update status");
   Library.AttachLibrary(FXApp->ExportLibrary());
@@ -1669,7 +1473,7 @@ bool TMainForm::CreateUpdateThread() {
 }
 //..............................................................................
 void TMainForm::AquireTooltipValue()  {
-  AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY, 0);
+  AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY);
   Tooltip.SetLength(0);
   if( G != NULL )  {
     if( G->IsSelected() )

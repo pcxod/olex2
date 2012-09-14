@@ -232,19 +232,19 @@ public:
           }
           vec3i p(pt);
           for( int ii=0; ii < 3; ii++ )  {
-            p[dim_ind[ii]] = pt[dim_ind[ii]]-1;
+            p[dim_ind[ii]] = (int)(pt[dim_ind[ii]]-1);
             if( p[dim_ind[ii]] >= 0 && map[p[0]][p[1]][p[2]] == res[dim_n] )  {
               stack.Push(p);
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
             } 
-            p[dim_ind[ii]] = pt[dim_ind[ii]]+1;
-            if( p[dim_ind[ii]] < (int)dim[dim_ind[ii]] && 
+            p[dim_ind[ii]] = (int)(pt[dim_ind[ii]]+1);
+            if( p[dim_ind[ii]] < (int)dim[dim_ind[ii]] &&
                 map[p[0]][p[1]][p[2]] >= res[dim_n] )
             {
               stack.Push(p);
               map[p[0]][p[1]][p[2]] = res[dim_n]-1;
             } 
-            p[dim_ind[ii]] = pt[dim_ind[ii]];
+            p[dim_ind[ii]] = (int)pt[dim_ind[ii]];
           }
         }
         if( !level_accessible )  {

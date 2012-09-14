@@ -24,7 +24,7 @@ TWGlScene::TWGlScene() {
 //  FFontExtrusionZ = 0.1f;
 }
 //..............................................................................
-void TWGlScene::SetPixelFormatDescriptor(HDC hDc, __int8 bits)  {
+void TWGlScene::SetPixelFormatDescriptor(HDC hDc, uint8_t bits)  {
   int PixelFormat;
   if( bits == 0 )
     bits = 24;  // by default
@@ -48,7 +48,7 @@ void TWGlScene::SetPixelFormatDescriptor(HDC hDc, __int8 bits)  {
   SetPixelFormat(hDc, PixelFormat, &pfd);
 }
 //..............................................................................
-void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, __int8 bits) {
+void TWGlScene::SetPixelFormatDescriptorX(HDC hDc, uint8_t bits) {
   int PixelFormat;
   if( bits == 0 )
     bits = 24;  // by default

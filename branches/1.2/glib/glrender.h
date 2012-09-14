@@ -78,6 +78,7 @@ class TGlRenderer : public IEObject  {
   GLubyte *poly_stipple;
   bool poly_even;
   void SetupStencilFoInterlacedDraw(bool even);
+  GLubyte SelectionBuffer[4][4*3];
 protected:
   void DrawObjects(int x, int y, bool SelectObjects, bool SelectPrimitives);
 
@@ -229,8 +230,8 @@ public:
   // to be called if the underlying OpenGl Context has changed
   void AfterContextChange();
 
-  AGDrawObject* SelectObject(int x, int y, int depth=0);
-  class TGlPrimitive* SelectPrimitive(int x, int y);
+  AGDrawObject* SelectObject(int x, int y);
+  TGlPrimitive* SelectPrimitive(int x, int y);
 
   size_t GroupCount() const {  return FGroups.Count();  }
   TGlGroup& GetGroup(size_t i) const {  return *FGroups[i];  }
@@ -264,7 +265,7 @@ public:
 
   void operator = (const TGlRenderer &G);
   TGPCollection& NewCollection(const olxstr &Name);
-  TGPCollection& GetCollection(int ind) const {
+  TGPCollection& GetCollection(size_t ind) const {
     return *FCollections.GetObject(ind);
   }
   template <class T>
@@ -340,6 +341,7 @@ public:
     TMacroError& E);
   void LibZoom(TStrObjList& Cmds, const TParamList& Options, TMacroError& E);
   void LibCalcZoom(const TStrObjList& Params, TMacroError& E);
+  void LibGetZoom(const TStrObjList& Params, TMacroError& E);
   void LibLineWidth(const TStrObjList& Params, TMacroError& E);
   void LibBasis(const TStrObjList& Params, TMacroError& E);
   void LibRasterZ(const TStrObjList& Params, TMacroError& E);
