@@ -26,8 +26,8 @@ EXE_DIR = $(CWD)/bin/
 OLEX_INS := $(HOME)/olex
 OLEX_BIN := $(HOME)/bin
 find_files = $(wildcard *.cpp)
-VPATH = xlib:alglib:sdl:sdl/smart:sdl/exparse:xlib/macro:xlib/henke:xlib/absorpc:glib:gxlib
-OBJ := xlib alglib sdl sdl/smart sdl/exparse xlib/macro xlib/henke xlib/absorpc glib gxlib
+VPATH = xlib:alglib:sdl:sdl/smart:sdl/exparse:sdl/math:xlib/macro:xlib/henke:xlib/absorpc:glib:gxlib
+OBJ := xlib alglib sdl sdl/smart sdl/exparse sdl/math xlib/macro xlib/henke xlib/absorpc glib gxlib
 NPY_CPP_REPO = filesystem.cpp shellutil.cpp url.cpp httpfs.cpp wxzipfs.cpp fsext.cpp pyext.cpp IsoSurface.cpp eprocess.cpp updateapi.cpp patchapi.cpp cdsfs.cpp zipfs.cpp
 OBJ_CPP_REPO := hkl_py.cpp olxvar.cpp py_core.cpp $(NPY_CPP_REPO)
 NPY_OBJ_REPO := $(addprefix $(OBJ_DIR), $(NPY_CPP_REPO))
@@ -40,6 +40,7 @@ obj_alglib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard alglib/*.cpp)))
 obj_sdl_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/*.cpp)))
 obj_sdl_smart_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/smart/*.cpp)))
 obj_sdl_exparse_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/exparse/*.cpp)))
+obj_sdl_math_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/math/*.cpp)))
 obj_xlib_macro_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/macro/*.cpp)))
 obj_xlib_henke_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/henke/*.cpp)))
 obj_xlib_absorpc_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/absorpc/*.cpp)))
@@ -56,7 +57,7 @@ OBJ_OLEX_NUI := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/nui/*.cpp))
 #######################################
 # Compiling
 CC := gcc
-CFLAGS := -O3 -fpermissive
+CFLAGS := -O3 -fpermissive -fexcess-precision=fast
 #-combine
 OPTS =`wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE
 LDFLAGS += `wx-config --libs gl,core,html,net,aui,adv --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L$(OBJ_DIR) -rdynamic -O3 -fpermissive -ldl -lrt -lGLU -lGL -lstdc++
@@ -78,7 +79,7 @@ all :
 	@echo "Type make install to install"
 
 .PHONY : objs
-objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_sdl_exparse obj_xlib_macro obj_xlib_henke\
+objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_sdl_exparse obj_sdl_math obj_xlib_macro obj_xlib_henke\
       obj_xlib_absorpc obj_xlib_analysis obj_glib obj_gxlib obj_repository
 
 obj:
@@ -113,6 +114,12 @@ obj_sdl_exparse: obj $(obj_sdl_exparse_files:.cpp=.s)
 
 $(obj_sdl_exparse_files:.cpp=.s):
 	$(CC) $(SRC_DIR)sdl/exparse/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
+
+.PHONY : obj_sdl_math
+obj_sdl_math: obj $(obj_sdl_math_files:.cpp=.s)
+
+$(obj_sdl_math_files:.cpp=.s):
+	$(CC) $(SRC_DIR)sdl/math/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
 
 .PHONY : obj_xlib_macro
 obj_xlib_macro: obj $(obj_xlib_macro_files:.cpp=.s)
@@ -157,7 +164,8 @@ $(OBJ_REPO:.cpp=.s):
 	$(CC) $(SRC_DIR)repository/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
 
 .PHONY : bins 
-bins : objs olex unirun
+bins : objs olex
+#unirun
 
 unirun_obj_dir: obj
 	@if test ! -d $(OBJ_DIR)unirun; then mkdir $(OBJ_DIR)unirun; else echo "obj/unirun already present"; fi;
@@ -176,7 +184,7 @@ obj_unirun: unirun_obj_dir $(OBJ_UNIRUN:.cpp=.s)
 
 $(OBJ_UNIRUN:.cpp=.s):
 	$(CC) $(SRC_DIR)unirun/$(@F:.s=.cpp) -o $(OBJ_DIR)unirun/$(@F) -O3 -fpermissive `wx-config --cxxflags --unicode --toolkit=gtk2` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE -D_NO_PYTHON
-#$(addprefix $(SRC_DIR)repository/,$(NPY_CPP_REPO)) 
+	$(addprefix $(SRC_DIR)repository/,$(NPY_CPP_REPO)) 
 
 $(EXE_DIR)unirun : bin $(OBJ_UNIRUN:.cpp=.s) $(obj_sdl_files:.cpp=.s) $(obj_sdl_smart_files:.cpp=.s) $(obj_sdl_exparse_files:.cpp=.s) $(OBJ_REPO:.cpp=.s)
 	$(CC) $(obj_sdl_files:.cpp=.s) $(obj_sdl_smart_files:.cpp=.s) $(obj_sdl_exparse_files:.cpp=.s) $(addprefix $(OBJ_DIR),$(NPY_CPP_REPO:.cpp=.s)) $(OBJ_UNIRUN:.cpp=.s) -o $(EXE_DIR)unirun $(LDFLAGS) -D_NO_PYTHON
