@@ -138,7 +138,7 @@ bool PatchAPI::LockUpdater() {
     if( TEFile::Exists(GetUpdaterPIDFileName()) )
       if( !TEFile::DelFile(GetUpdaterPIDFileName()) )
         return false;
-    lock_file = new TEFile(GetUpdaterPIDFileName(), "w+");  
+    lock_file = new TEFile(GetUpdaterPIDFileName(), "w+");
   }
   catch(...)  {  return false;  }
   return true;

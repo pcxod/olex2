@@ -103,7 +103,7 @@ public:
 #ifdef __WIN32__
     new_shared_dir << "Olex2Data/";
 #else
-    TEFile::TrimPathDelimeterI(new_shared_dir) << "/data/";
+    new_shared_dir << "data/";
 #endif
     return TEFile::AddPathDelimeterI( 
       new_shared_dir << MD5::Digest(
@@ -121,7 +121,7 @@ public:
   {
     TCStrList location_file_content;
     location_file_content.Add(TEFile::AddPathDelimeter(
-      (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir))) 
+      (base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)))
         << patcher::PatchAPI::ReadRepositoryTag();
     location_file_content.SaveToFile( shared_dir + "folder.info");
   }
