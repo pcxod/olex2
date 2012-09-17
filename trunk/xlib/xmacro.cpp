@@ -6790,10 +6790,10 @@ void XLibMacros::macConn(TStrObjList &Cmds, const TParamList &Options,
   TXApp &app = TXApp::GetInstance();
   try  {
     TStrList lst(Cmds);
-    if ((Cmds.Count() == 1 && Cmds[0].IsNumber()) ||
-        (Cmds.Count() == 2 && Cmds[0].IsNumber() && Cmds[1].IsNumber()) )
+    if ((Cmds.Count() == 1 || Cmds.Count() == 2) &&
+      list_and(Cmds, &olxstr::IsNumber))
     {
-      MacroInput mi = ExtractSelection(Cmds, true);
+      MacroInput mi = ExtractSelection(TStrObjList(), true);
       for (size_t i=0; i < mi.atoms.Count(); i++)
         mi.atoms[i]->SetTag(mi.atoms[i]->CAtom().GetId());
       for (size_t i=0; i < mi.atoms.Count(); i++) {
