@@ -130,6 +130,7 @@ public:
     return FindSAtoms(names.Text(' '), ReturnAll, ClearSelection);
   }
   ConstPtrList<SObject> GetSelected(bool unselect=true) const;
+  ASelectionOwner *GetSelectionOwner() const { return SelectionOwner; }
   // finds Cp, Ph, Naph and Cp* rings and adds corresponding afixes
   void AutoAfixRings(int afix, TSAtom* sa = NULL, bool TryPyridine = false);
   void SetAtomUiso(TSAtom& sa, double val);

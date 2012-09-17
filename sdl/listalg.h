@@ -172,20 +172,22 @@ struct ReverseList {
 };
 
 template <class list_t, typename func_t>
-bool list_and(const list_t &l, func_t f, bool if_empty=false) {
+bool list_and(const list_t &l, func_t f, bool if_empty=true) {
+  if (l.IsEmpty()) return if_empty;
   for (size_t i=0; i < l.Count(); i++) {
     if (!(olx_ref::get(l[i]).*f)())
       return false;
   }
-  return if_empty;
+  return true;
 };
 template <class list_t, typename func_t>
 bool list_or(const list_t &l, func_t f, bool if_empty=false) {
+  if (l.IsEmpty()) return if_empty;
   for (size_t i=0; i < l.Count(); i++) {
     if ((olx_ref::get(l[i]).*f)())
       return true;
   }
-  return if_empty;
+  return false;
 };
 template <class list_t, typename func_t>
 void list_call(const list_t &l, func_t f) {
