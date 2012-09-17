@@ -560,7 +560,7 @@ bool THtml::UpdatePage(bool update_indices)  {
   InFocus = NULL;
   int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
   wxHtmlWindow::GetViewStart(&xPos, &yPos);
-#if defined(__WIN32__) || (defined(__linux__) && wxCHECK_VERSION(9,0,0))
+#if defined(__WIN32__) || (defined(__linux__) && wxCHECK_VERSION(2,9,0))
   wxHtmlWindow::Freeze();
 #else
   Hide();
@@ -568,7 +568,7 @@ bool THtml::UpdatePage(bool update_indices)  {
   SetPage(Res.Text(' ').u_str());
   ObjectsState.RestoreState();
   wxHtmlWindow::Scroll(xPos, yPos);
-#if defined(__WIN32__) || (defined(__linux__) && wxCHECK_VERSION(9,0,0))
+#if defined(__WIN32__) || (defined(__linux__) && wxCHECK_VERSION(2,9,0))
   Thaw();
 #else
   Show();
@@ -619,13 +619,13 @@ bool THtml::UpdatePage(bool update_indices)  {
 //.............................................................................
 void THtml::OnScroll(wxScrollEvent& evt)  {  // this is never called at least on GTK
   evt.Skip();
-#ifdef __WXGTK__
+#if defined(__linux__) && !wxCHECK_VERSION(2,9,0)
   this->Update();
 #endif
 }
 //.............................................................................
 void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
-#ifdef __WXGTK__
+#if defined(__linux__) && !wxCHECK_VERSION(2,9,0)
   if( dx == 0 && dy == 0 )  return;
   Freeze();
   wxHtmlWindow::ScrollWindow(dx,dy,rect);
