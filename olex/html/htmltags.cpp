@@ -51,7 +51,7 @@ TAG_HANDLER_PROC(tag)  {
       TStrList toks(tag.GetParam(wxT("COORDS")), ',');
       if( toks.Count() == 4 )
         ic->AddRect(
-          toks[0].ToInt(), 
+          toks[0].ToInt(),
           toks[1].ToInt(),
           toks[2].ToInt(),
           toks[3].ToInt(),

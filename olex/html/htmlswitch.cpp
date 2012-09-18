@@ -168,7 +168,7 @@ THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
 //..............................................................................
 void THtmlSwitch::ToStrings(TStrList &List)  {
   if( FileIndex != InvalidIndex && FileIndex < Files.Count() )
-    List.Add("<SWITCHINFOS SRC=\"")<< Files[FileIndex] << "\">";
+    List.Add("<SWITCHINFOS SRC=\"")<< Files[FileIndex] << "\"/>";
 
   for( size_t i=0; i < Strings.Count(); i++ )  {
     if( Strings.GetObject(i) != NULL )
@@ -177,5 +177,5 @@ void THtmlSwitch::ToStrings(TStrList &List)  {
   }
 
   if( FileIndex != InvalidIndex && FileIndex < Files.Count() )
-    List.Add("<SWITCHINFOE>");
+    List.Add("<SWITCHINFOE/>");
 }

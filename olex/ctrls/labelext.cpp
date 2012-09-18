@@ -19,5 +19,6 @@ BEGIN_EVENT_TABLE(TLabel, wxStaticText)
 END_EVENT_TABLE()
 //..............................................................................
 void TLabel::ClickEvent(wxCommandEvent& event)  {
+  event.Skip();
   OnClick.Execute(this);
 }

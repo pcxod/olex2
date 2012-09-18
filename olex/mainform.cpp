@@ -2599,9 +2599,12 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
 void TMainForm::SaveSettings(const olxstr &FN)  {
   TDataFile DF;
   TDataItem* I = &DF.Root().AddItem("Folders");
-  I->AddField("Styles", TEFile::CreateRelativePath(StylesDir));
-  I->AddField("Scenes", TEFile::CreateRelativePath(ScenesDir));
-  I->AddField("Current", TEFile::CreateRelativePath(XLibMacros::CurrentDir));
+  I->AddField("Styles",
+    olxstr().quote() << TEFile::CreateRelativePath(StylesDir));
+  I->AddField("Scenes",
+    olxstr().quote() << TEFile::CreateRelativePath(ScenesDir));
+  I->AddField("Current",
+    olxstr().quote() << TEFile::CreateRelativePath(XLibMacros::CurrentDir));
 
   I = &DF.Root().AddItem("HTML");
   I->AddField("Minimized", FHtmlMinimized);
@@ -2641,7 +2644,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("Scene", TEFile::CreateRelativePath(DefSceneP));
 
   I->AddField("BgColor", FBgColor.ToString());
-  I->AddField("WhiteOn", (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
+  I->AddField("WhiteOn",
+    (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
   I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible());
   I->AddField("GradientPicture", TEFile::CreateRelativePath(GradientPicture));
   I->AddField("language", Dictionary.GetCurrentLanguage());
@@ -2651,7 +2655,10 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I = &DF.Root().AddItem("Recent_files");
   for( size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
-    I->AddField(olxstr("file") << i, TEFile::CreateRelativePath(FRecentFiles[i]));
+  {
+    I->AddField(olxstr("file") << i,
+      olxstr().quote() << TEFile::CreateRelativePath(FRecentFiles[i]));
+  }
 
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
@@ -2667,7 +2674,6 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 //..............................................................................
 void TMainForm::LoadSettings(const olxstr &FN)  {
   if( !TEFile::Exists(FN) ) return;
-
   // compatibility check...
 #ifdef __WIN32__
   {
@@ -2798,7 +2804,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( TEFile::Exists(DefStyle) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"), false);
+    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"),
+      false);
   }
   else  {
     TDataItem& last_saved_style = DF.Root().FindRequiredItem("Styles");

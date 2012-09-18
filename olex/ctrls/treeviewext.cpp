@@ -28,14 +28,17 @@ BEGIN_EVENT_TABLE(TTreeView, wxTreeCtrl)
 END_EVENT_TABLE()
 
 void TTreeView::ItemActivateEvent(wxTreeEvent& event)  {
+  event.Skip();
   OnDblClick.Execute(this);
 }
 //..............................................................................
 void TTreeView::SelectionEvent(wxTreeEvent& event) {
+  event.Skip();
   OnSelect.Execute(this);
 }
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
+  event.Skip();
   OnSelect.Execute(this, &TEGC::New<olxstr>(OnSelect.data)
     .Replace("~label~", event.GetLabel()));
 }

@@ -32,6 +32,7 @@ void TTextEdit::ClickEvent(wxMouseEvent& event)  {
 void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
   //StrValue = GetText();
   OnChange.Execute(this);
+  event.Skip();
 }
 //..............................................................................
 void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
@@ -41,18 +42,19 @@ void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
   else {
     OnReturn.Execute(this);
   }
+  event.Skip();
 }
 //..............................................................................
 void TTextEdit::KeyDownEvent(wxKeyEvent& event)  {
   TKeyEvent evt(event);
-  event.Skip();
   OnKeyDown.Execute(this, &evt);
+  event.Skip();
 }
 //..............................................................................
 void TTextEdit::CharEvent(wxKeyEvent& event)  {
   TKeyEvent evt(event);
-  event.Skip();
   OnChar.Execute(this, &evt);
+  event.Skip();
 }
 //..............................................................................
 void TTextEdit::LeaveEvent(wxFocusEvent& event)  {
@@ -63,9 +65,11 @@ void TTextEdit::LeaveEvent(wxFocusEvent& event)  {
     StrValue = v;
   }
   OnLeave.Execute(this);
+  event.Skip();
 }
 //..............................................................................
 void TTextEdit::EnterEvent(wxFocusEvent& event)  {
   OnEnter.Execute(this);
+  event.Skip();
 }
 //..............................................................................
