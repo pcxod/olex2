@@ -15,34 +15,39 @@ TMacroError::TMacroError()  {
   ProcessError = 0;
   RetValue = NULL;
 }
-//..............................................................................
+//.............................................................................
 void TMacroError::operator = (const TMacroError& ME)  {
   ProcessError = ME.ProcessError;
   ErrorInfo = ME.ErrorInfo;
   RetValue = ME.RetValue;
 }
-//..............................................................................
-olxstr& TMacroError::ProcessingError(const olxstr& location, const olxstr& errMsg)  {
+//.............................................................................
+olxstr& TMacroError::ProcessingError(const olxstr& location,
+  const olxstr& errMsg)
+{
   ErrorInfo = errMsg;
   ProcessError |= peProcessingError;
   Location = location;
   return ErrorInfo;
 }
-//..............................................................................
+//.............................................................................
 void TMacroError::NonexitingMacroError(const olxstr& macroName)  {
   ErrorInfo = "Macro/function '";
   ErrorInfo << macroName;
   ErrorInfo << "' does not exist";
   ProcessError |= peNonexistingFunction;
 }
-//..............................................................................
+//.............................................................................
 void TMacroError::WrongArgCount(const ABasicFunction& func, size_t ArgC)  {
   ErrorInfo = "Macro/function '";
-  ErrorInfo << func.GetSignature() << "' is provided with " << (int)ArgC << " arguments";
+  ErrorInfo << func.GetSignature() << "' is provided with " << ArgC <<
+    " arguments";
   ProcessError |= peInvalidArgCount;
 }
-//..............................................................................
-void TMacroError::ProcessingException(const ABasicFunction& caller, const TExceptionBase& Exc)  {
+//.............................................................................
+void TMacroError::ProcessingException(const ABasicFunction& caller,
+  const TExceptionBase& Exc)
+{
   ErrorInfo = caller.GetRuntimeSignature();
   const TBasicException* exc = Exc.GetException();
   if( exc->GetCause() == NULL )
@@ -54,20 +59,33 @@ void TMacroError::ProcessingException(const ABasicFunction& caller, const TExcep
   }
   ProcessError |= peProcessingException;
 }
-//..............................................................................
-void TMacroError::WrongOption(const ABasicFunction& func, const olxstr& option)  {
+//.............................................................................
+void TMacroError::ProcessingException(const olxstr& location,
+  const TExceptionBase& Exc)
+{
+  (ErrorInfo = location) << ':' << NewLineSequence();
+  const TBasicException* exc = Exc.GetException();
+  TStrList output;
+  ErrorInfo << ' ' << exc->GetStackTrace(output).Text(NewLineSequence());
+  ProcessError |= peProcessingException;
+}
+//.............................................................................
+void TMacroError::WrongOption(const ABasicFunction& func,
+  const olxstr& option)
+{
   ErrorInfo = "Wrong option ";
   ErrorInfo << option << " for macro " << func.GetSignature();
   ProcessError |= peInvalidOption;
 }
-//..............................................................................
+//.............................................................................
 void TMacroError::WrongState(const ABasicFunction& func)  {
   ErrorInfo = "Wrong program state ";
-  ErrorInfo << func.GetParentLibrary()->GetOwner()->GetStateName( func.GetArgStateMask() );
+  ErrorInfo << func.GetParentLibrary()->GetOwner()->GetStateName(
+    func.GetArgStateMask());
   ErrorInfo << " for macro/function " << func.GetSignature();
   ProcessError |= peIllegalState;
 }
-//..............................................................................
+//.............................................................................
 olxstr TMacroError::GetRetVal() const  {
   if( RetValue == NULL )  return EmptyString();
 //  if( !EsdlInstanceOf(*RetValue, olxstr) )

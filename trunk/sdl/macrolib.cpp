@@ -321,12 +321,12 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
   exparse::expression_parser expr(Cmd);
   try {
     expr.root->expand_cmd();
+    Cmd = ProcessEvaluator(expr.root, E, argv);
+    return E.IsSuccessful();
   }
   catch (const TExceptionBase &e) {
-    throw TFunctionFailedException(__OlxSourceInfo, e);
+    E.ProcessingException(__OlxSourceInfo, e);
   }
-  Cmd = ProcessEvaluator(expr.root, E, argv);
-  return E.IsSuccessful();
 }
 //.............................................................................
 void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
@@ -362,13 +362,18 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
     if( ind1+1 >= Command.Length() )  break;
     ind = Command.FirstIndexOf('|', ind1+1);
   }
-  exparse::expression_parser expr(Command);
-  expr.root->expand_cmd();
-  ProcessEvaluator(expr.root, Error, argv);
-  if( Error.IsSuccessful() )
-    Error.GetStack().Pop();
-  else if (Command.Contains('('))
-    ProcessFunction(Command, Error, false, argv);
+  try {
+    exparse::expression_parser expr(Command);
+    expr.root->expand_cmd();
+    ProcessEvaluator(expr.root, Error, argv);
+    if( Error.IsSuccessful() )
+      Error.GetStack().Pop();
+    else if (Command.Contains('('))
+      ProcessFunction(Command, Error, false, argv);
+  }
+  catch (const TExceptionBase &e) {
+    Error.ProcessingException(__OlxSourceInfo, e);
+  }
 }
 //.............................................................................
 void TEMacroLib::ParseMacro(const TDataItem& macro_def, TEMacro& macro)  {

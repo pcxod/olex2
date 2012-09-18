@@ -45,6 +45,7 @@ bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
 }
 //..............................................................................
 void TCheckBox::ClickEvent(wxCommandEvent &event)  {
+  event.Skip();
   OnClick.Execute((AOlxCtrl*)this);
   if( IsChecked() )
     OnCheck.Execute((AOlxCtrl*)this);

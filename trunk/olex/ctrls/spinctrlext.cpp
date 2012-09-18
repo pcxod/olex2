@@ -23,6 +23,7 @@ BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
 END_EVENT_TABLE()
 //..............................................................................
 void TSpinCtrl::SpinChangeEvent(wxSpinEvent& event)  {
+  event.Skip();
   int val = GetValue();
   if( val == Value ) return;
   Value = val;
@@ -30,22 +31,27 @@ void TSpinCtrl::SpinChangeEvent(wxSpinEvent& event)  {
 }
 //..............................................................................
 void TSpinCtrl::TextChangeEvent(wxCommandEvent& event)  {
-    int val = GetValue();
-  if( val == Value ) return;
-  Value = val;
-  OnChange.Execute(this);
-}
-//..............................................................................
-void TSpinCtrl::LeaveEvent(wxFocusEvent& event)  {
+  event.Skip();
   int val = GetValue();
   if( val == Value ) return;
   Value = val;
   OnChange.Execute(this);
 }
 //..............................................................................
-void TSpinCtrl::EnterEvent(wxFocusEvent& event)  {}
+void TSpinCtrl::LeaveEvent(wxFocusEvent& event)  {
+  event.Skip();
+  int val = GetValue();
+  if( val == Value ) return;
+  Value = val;
+  OnChange.Execute(this);
+}
+//..............................................................................
+void TSpinCtrl::EnterEvent(wxFocusEvent& event)  {
+  event.Skip();
+}
 //..............................................................................
 void TSpinCtrl::EnterPressedEvent(wxCommandEvent& event)  {
+  event.Skip();
   int val = GetValue();
   if( val == Value ) return;
   Value = val;

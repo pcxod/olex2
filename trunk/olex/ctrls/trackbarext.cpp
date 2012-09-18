@@ -20,6 +20,7 @@ BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
 END_EVENT_TABLE()
 
 void TTrackBar::ScrollEvent(wxScrollEvent& evt)  {
+  evt.Skip();
   if( this_Val == GetValue() )  return;
   this_Val = GetValue();
   OnChange.Execute((AOlxCtrl*)this);

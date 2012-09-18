@@ -38,7 +38,7 @@ TComboBox::~TComboBox()  {
   }
 }
 //..............................................................................
-void TComboBox::SetText(const olxstr& T)  {  
+void TComboBox::SetText(const olxstr& T)  {
   StrValue = T;
   SetValue(StrValue.u_str());  
 #ifdef __WIN32__
@@ -84,6 +84,7 @@ void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
   OnReturn.Execute(this);
+  event.Skip();
 }
 //..............................................................................
 void TComboBox::ChangeEvent(wxCommandEvent& event)  {
@@ -91,6 +92,7 @@ void TComboBox::ChangeEvent(wxCommandEvent& event)  {
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
   OnChange.Execute(this);
+  event.Skip();
 }
 //..............................................................................
 const IEObject* TComboBox::GetObject(int i)  {
@@ -149,7 +151,9 @@ void TComboBox::HandleOnEnter()  {
 }
 //..............................................................................
 #ifdef __WIN32__
-void TComboBox::OnDrawItem( wxDC& dc, const wxRect& rect, int item, int flags ) const {
+void TComboBox::OnDrawItem( wxDC& dc, const wxRect& rect, int item,
+  int flags ) const
+{
   wxOwnerDrawnComboBox::OnDrawItem(dc, rect, item, flags);
   return;
 }
@@ -162,7 +166,9 @@ wxCoord TComboBox::OnMeasureItemWidth( size_t item ) const {
   return wxOwnerDrawnComboBox::OnMeasureItem(item);
 }
 //..............................................................................
-void TComboBox::OnDrawBg(wxDC& dc, const wxRect& rect, int item, int flags) const {
+void TComboBox::OnDrawBg(wxDC& dc, const wxRect& rect, int item,
+  int flags) const
+{
   wxOwnerDrawnComboBox::OnDrawBackground(dc, rect, item, flags);
 }
 #endif
