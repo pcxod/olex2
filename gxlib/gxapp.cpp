@@ -1071,31 +1071,30 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
             }
           }
         }
-        if( face_cnt == 8 ) {
-          Tmp << "Combined distortion: " <<
-            olxstr::FormatFloat(2, total_val_bp*180/M_PI) << ", mean: " <<
-            olxstr::FormatFloat(2, total_val_bp*180/(M_PI*24));
-            ;
+      }
+      if( face_cnt == 8 ) {
+        Tmp << "Combined distortion: " <<
+          olxstr::FormatFloat(2, total_val_bp*180/M_PI) << ", mean: " <<
+          olxstr::FormatFloat(2, total_val_bp*180/(M_PI*24));
+        ;
+      }
+      else  {  // calculate just for the selection
+        // centroids
+        vec3d c1 = (atoms[0]->crd() + atoms[2]->crd() + atoms[4]->crd())/3;
+        vec3d c2 = (atoms[1]->crd() + atoms[3]->crd() + atoms[5]->crd())/3;
+        TTypeList<AnAssociation2<vec3d, double> > p1;
+        for( size_t i=0; i < atoms.Count(); i++ )
+          p1.AddNew(atoms[i]->crd() - ((i%2)==0 ? c1 : c2), 1.0);
+        vec3d normal, center;
+        TSPlane::CalcPlane(p1, normal, center, plane_best);
+        normal.Normalise();
+        double sum = 0;
+        for( size_t i=0; i < 3; i++ )  {
+          vec3d v1 = p1[i*2].GetA() - normal*p1[i*2].GetA().DotProd(normal);
+          vec3d v2 = p1[i*2+1].GetA() - normal*p1[i*2+1].GetA().DotProd(normal);
+          sum += olx_abs(M_PI/3 - acos(v1.CAngle(v2)));
         }
-        else  {  // calculate just for the selection
-          // centroids
-          vec3d c1 = (atoms[0]->crd() + atoms[2]->crd() + atoms[4]->crd())/3;
-          vec3d c2 = (atoms[1]->crd() + atoms[3]->crd() + atoms[5]->crd())/3;
-          TTypeList<AnAssociation2<vec3d, double> > p1;
-          for( size_t i=0; i < atoms.Count(); i++ )
-            p1.AddNew(atoms[i]->crd() - ((i%2)==0 ? c1 : c2), 1.0);
-          vec3d normal, center;
-          TSPlane::CalcPlane(p1, normal, center, plane_best);
-          normal.Normalise();
-          double sum = 0;
-          for( size_t i=0; i < 3; i++ )  {
-            vec3d v1 = p1[i*2].GetA() - normal*p1[i*2].GetA().DotProd(normal);
-            vec3d v2 = p1[i*2+1].GetA() - normal*p1[i*2+1].GetA().DotProd(normal);
-            sum += olx_abs(M_PI/3 - acos(v1.CAngle(v2)));
-          }
-          Tmp << "Octahedral distortion (for the selection): " << olxstr::FormatFloat(2, (sum*180/3)/M_PI);
-        }
-///
+        Tmp << "Octahedral distortion (for the selection): " << olxstr::FormatFloat(2, (sum*180/3)/M_PI);
       }
     }
   }
