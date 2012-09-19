@@ -172,7 +172,7 @@ struct ReverseList {
 };
 
 template <class list_t, typename func_t>
-bool list_and(const list_t &l, func_t f, bool if_empty=true) {
+bool olx_list_and(const list_t &l, func_t f, bool if_empty=true) {
   if (l.IsEmpty()) return if_empty;
   for (size_t i=0; i < l.Count(); i++) {
     if (!(olx_ref::get(l[i]).*f)())
@@ -180,6 +180,16 @@ bool list_and(const list_t &l, func_t f, bool if_empty=true) {
   }
   return true;
 };
+template <class list_t, typename func_t>
+bool olx_list_and_st(const list_t &l, func_t f, bool if_empty=true) {
+  if (l.IsEmpty()) return if_empty;
+  for (size_t i=0; i < l.Count(); i++) {
+    if (!(*f)(olx_ref::get(l[i])))
+      return false;
+  }
+  return true;
+};
+
 template <class list_t, typename func_t>
 bool list_or(const list_t &l, func_t f, bool if_empty=false) {
   if (l.IsEmpty()) return if_empty;
@@ -190,8 +200,23 @@ bool list_or(const list_t &l, func_t f, bool if_empty=false) {
   return false;
 };
 template <class list_t, typename func_t>
-void list_call(const list_t &l, func_t f) {
+bool olx_list_or_st(const list_t &l, func_t f, bool if_empty=false) {
+  if (l.IsEmpty()) return if_empty;
+  for (size_t i=0; i < l.Count(); i++) {
+    if ((*f)(olx_ref::get(l[i])))
+      return true;
+  }
+  return false;
+};
+
+template <class list_t, typename func_t>
+void olx_list_call(const list_t &l, func_t f) {
   for (size_t i=0; i < l.Count(); i++)
     (olx_ref::get(l[i]).*f)();
+};
+template <class list_t, typename func_t>
+void olx_list_call_st(const list_t &l, func_t f) {
+  for (size_t i=0; i < l.Count(); i++)
+    (*f)(olx_ref::get(l[i]));
 };
 #endif

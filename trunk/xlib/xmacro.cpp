@@ -6791,7 +6791,7 @@ void XLibMacros::macConn(TStrObjList &Cmds, const TParamList &Options,
   try  {
     TStrList lst(Cmds);
     if ((Cmds.Count() == 1 || Cmds.Count() == 2) &&
-      list_and(Cmds, &olxstr::IsNumber))
+      olx_list_and(Cmds, &olxstr::IsNumber))
     {
       MacroInput mi = ExtractSelection(TStrObjList(), true);
       for (size_t i=0; i < mi.atoms.Count(); i++)

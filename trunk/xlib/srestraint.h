@@ -140,7 +140,7 @@ public:
   */
   void ValidateRestraint(TSimpleRestraint& sr);
   void ValidateAll()  {
-    list_call(Restraints, &TSimpleRestraint::Validate);
+    olx_list_call(Restraints, &TSimpleRestraint::Validate);
   }
 
   TSimpleRestraint& Release(size_t i);

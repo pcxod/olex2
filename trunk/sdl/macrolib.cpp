@@ -326,6 +326,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner,
   }
   catch (const TExceptionBase &e) {
     E.ProcessingException(__OlxSourceInfo, e);
+    return false;
   }
 }
 //.............................................................................

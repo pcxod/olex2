@@ -390,60 +390,24 @@ protected:
     Distance(const aT& _a, const bT& _b) : a(_a), b(_b)  {}
     double calc() const {  return a.evaluate().DistanceTo(b.evaluate());  }
   };
-  // octahedral distortion (in degrees) using best line approach
-  struct OctahedralDistortionBL  {
+  // octahedral distortion (in degrees)
+  struct OctahedralDistortion  {
     const vec3d_alist& points;
-    vec3d_alist pl;
-    TDoubleList weights;
-    OctahedralDistortionBL(const vec3d_alist& _points)
-      : points(_points), pl(3), weights(3)
-    {
-      for( size_t i=0; i < weights.Count(); i++ )
-        weights[i] = 1.0;
-    }
+    OctahedralDistortion(const vec3d_alist& _points)
+      : points(_points)
+    {}
     double calc() const {
       // centroid for first face
       const vec3d c1 = (points[1] + points[3] + points[5])/3;
+      vec3d normal = vec3d::Normal(points, 1, 3, 5);
       // centroid for second face
       const vec3d c2 = (points[2] + points[4] + points[6])/3;
-      pl[0] = c1;  pl[1] = points[0];  pl[2] = c2;
-      const PlaneInfo pi = CalcPlane(pl, weights, 2);
       double sum = 0;
-      for( short i=0; i < 3; i++ )  {
-        vec3d v1 = points[i*2+1] - pi.center;
-        vec3d v2 = points[i*2+2] - pi.center;
-        v1 = v1 - pi.normal*v1.DotProd(pi.normal);
-        v2 = v2 - pi.normal*v2.DotProd(pi.normal);
-        sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
-      }
-      return (sum*180/3)/M_PI;
-    }
-  };
-  // octahedral distortion (in degrees), using best plane approach
-  struct OctahedralDistortionBP  {
-    const vec3d_alist& points;
-    vec3d_alist pl;
-    TDoubleList weights;
-    OctahedralDistortionBP(const vec3d_alist& _points)
-      : points(_points), pl(6), weights(6)
-    {
-      for( size_t i=0; i < weights.Count(); i++ )
-        weights[i] = 1.0;
-    }
-    double calc() const {
-      // translation for first face
-      const vec3d c1 = (points[1] + points[3] + points[5])/3;
-      // translation for second face
-      const vec3d c2 = (points[2] + points[4] + points[6])/3;
-      for( short i=0; i < 3; i++ )  {
-        pl[i*2] = (points[i*2+1] - c1).Normalise();
-        pl[i*2+1] = (points[i*2+2] - c2).Normalise();
-      }
-      const PlaneInfo pi = CalcPlane(pl, weights, 0);
-      double sum = 0;
-      for( short i=0; i < 3; i++ )  {
-        const vec3d v1 = pl[i*2] - pi.normal*pl[i*2].DotProd(pi.normal);
-        const vec3d v2 = pl[i*2+1] - pi.normal*pl[i*2+1].DotProd(pi.normal);
+      for (int i=1; i < 7; i += 2)  {
+        vec3d v1 = points[i] - c1;
+        v1 -= normal*v1.DotProd(normal);
+        vec3d v2 = points[i+1] - c2;
+        v2 -= normal*v2.DotProd(normal);
         sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
       }
       return (sum*180/3)/M_PI;
@@ -823,13 +787,9 @@ public:
   /* octahedral distortion, takes {Central Atom, a1, b1, a2, b2, a3, b3},
   returns mean value
   */
-  TEValue<double> CalcOHDistortionBL(const TSAtomCPList& atoms)  {
+  TEValue<double> CalcOHDistortion(const TSAtomCPList& atoms)  {
     CalcHelper ch(*this, atoms);
-    return ch.DoCalc(OctahedralDistortionBL(ch.points));
-  }
-  TEValue<double> CalcOHDistortionBP(const TSAtomCPList& atoms)  {
-    CalcHelper ch(*this, atoms);
-    return ch.DoCalc(OctahedralDistortionBP(ch.points));
+    return ch.DoCalc(OctahedralDistortion(ch.points));
   }
   const VcoVMatrix& GetMatrix() const {  return vcov;  }
 };
