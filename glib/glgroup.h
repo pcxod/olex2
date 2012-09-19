@@ -98,6 +98,7 @@ public:
   void SetGlM(const TGlMaterial& m);
   // returns the actually rendered material
   virtual TGlMaterial GetActualMaterial(const TGlMaterial &) const;
+  typedef AGDrawObject list_item_type;
 };
 
 EndGlNamespace()

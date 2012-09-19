@@ -181,6 +181,15 @@ public:
       point[1]-data[1]*m,
       point[2]-data[2]*m);
   }
+  static TVector3 Normal(const TVector3 &a, const TVector3 &b,
+    const TVector3 &c)
+  {
+    return (a-b).XProdVec(c-b).Normalise();
+  }
+  template <typename arr_t>
+  static TVector3 Normal(const arr_t &ar, size_t i, size_t j, size_t k) {
+    return (ar[i]-ar[j]).XProdVec(ar[k]-ar[j]).Normalise();
+  }
   TVector3<T> operator -() const {
     return TVector3<T>(-data[0], -data[1], -data[2]);
   }
