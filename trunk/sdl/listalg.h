@@ -10,7 +10,7 @@
 #ifndef __olx_sdl_list_alg_H
 #define __olx_sdl_list_alg_H
 
-struct ListCaster  {
+struct olx_list_caster  {
   template <class To> struct SimpleCast  {
     template <class From> static To OnItem(From o)  {
       return (To)o;
@@ -40,12 +40,13 @@ struct ListCaster  {
   }
 };
 
-struct ListFilter  {
+struct olx_list_filter  {
   template <class analyser_t, class collector_t>
   struct ResultCollector_ {
     const analyser_t &analyser;
     const collector_t &collector;
-    ResultCollector_(const analyser_t &analyser_, const collector_t &collector_)
+    ResultCollector_(const analyser_t &analyser_,
+      const collector_t &collector_)
       : analyser(analyser_), collector(collector_)
     {}
     template <class item_t>
@@ -96,7 +97,7 @@ struct ListFilter  {
   }
 };
 
-struct list_init {
+struct olx_list_init {
 protected:
   struct zero_ {
     template <typename item_t>
@@ -137,13 +138,16 @@ template <class seq_t> static seq_t &olx_reverse(seq_t &seq)  {
   return olx_reverse(seq, seq.Count());
 }
 
-struct ReverseList {
+struct olx_list_reverse {
   template <class data_list_t>
   struct ReverseList_  {
     typedef typename data_list_t::list_item_type return_type;
     data_list_t &data;
     ReverseList_(data_list_t &data_) : data(data_) {}
     return_type& operator [](size_t& i) const {
+      return data[data.Count()-i-1];
+    }
+    return_type& operator ()(size_t& i) const {
       return data[data.Count()-i-1];
     }
     size_t Count() const { return data.Count(); }
@@ -155,6 +159,9 @@ struct ReverseList {
     const data_list_t &data;
     ReverseConstList_(const data_list_t &data_) : data(data_) {}
     const return_type& operator [](size_t& i) const {
+      return data[data.Count()-i-1];
+    }
+    const return_type& operator ()(size_t& i) const {
       return data[data.Count()-i-1];
     }
     size_t Count() const { return data.Count(); }

@@ -36,7 +36,7 @@ private:
 public:
   // creates a new empty objects
   TArrayList()  {  init(0);  }
-  // allocates size elements (can be accessed diretly)
+  // allocates size elements (can be accessed directly)
   TArrayList(size_t size)  {  init(size);  }
 //..............................................................................
   template <class init_t>
@@ -75,6 +75,24 @@ public:
    init(size);
    for( size_t i=0; i < FCount; i++ )
      Items[i] = array[i];
+  }
+//..............................................................................
+  template <class List, class Accessor>
+  static ConstArrayList<T> FromList(const List& list,
+    const Accessor& accessor)
+  {
+    TArrayList rv(list.Count());
+    for (size_t i=0; i < list.Count(); i++)
+      rv[i] = accessor(list[i]);
+    return rv;
+  }
+//..............................................................................
+  template <class List>
+  static ConstArrayList<T> FromList(const List& list) {
+    TArrayList rv(list.Count());
+    for (size_t i=0; i < list.Count(); i++)
+      rv[i] = accessor(list[i]);
+    return rv;
   }
 //..............................................................................
   //destructor - beware t40: error: expecthe objects are deleted!

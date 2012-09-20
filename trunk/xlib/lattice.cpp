@@ -2449,7 +2449,7 @@ void TLattice::BuildAtomRegistry()  {
     if( aum_slice == NULL )  {
       const size_t matr_cnt = GetUnitCell().MatrixCount();
       aum_slice = (registry.Value(t) =
-        new TArrayList<TSAtomPList*>(matr_cnt, list_init::zero()));
+        new TArrayList<TSAtomPList*>(matr_cnt, olx_list_init::zero()));
     }
     uint8_t  c_id = smatd::GetContainerId(refs[i].matrix_id);
     TSAtomPList* au_slice = (*aum_slice)[c_id];
