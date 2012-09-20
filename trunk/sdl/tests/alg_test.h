@@ -49,7 +49,7 @@ void IndexAccessorTest(OlxTests& t)  {
   vec3d_alist vl(3);
   indices.SetCount(3);
   indices.ForEach(olx_list_init::index());
-  auto vla = IndexAccessor::Make(vl);
+  IndexAccessor::IndexAccessor_<vec3d_alist> vla = IndexAccessor::Make(vl);
   vl[0][0] = vl[1][1] = vl[2][2] = 3;
   vec3d mv = olx_mean(vl);
   if (mv.DistanceTo(olx_mean(indices, vla)) > 1e-8)
