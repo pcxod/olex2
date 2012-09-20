@@ -294,25 +294,43 @@ struct FunctionAccessor {
   }
 };
 
-template <typename item_t, class data_list_t>
-struct ConstIndexAccessor  {
-  typedef item_t return_type;
-  const data_list_t &data;
-  ConstIndexAccessor(const data_list_t &data_) : data(data_) {}
-  template <typename IndexT>
-  const item_t& operator ()(const IndexT& idx) const {
-    return data[idx];
-  }
-};
+struct IndexAccessor {
+  template <typename data_list_t>
+  struct ConstIndexAccessor_  {
+    typedef typename data_list_t::list_item_type return_type;
+    const data_list_t &data;
+    ConstIndexAccessor_(const data_list_t &data_) : data(data_) {}
+    template <typename IndexT>
+    const return_type& operator ()(const IndexT& idx) const {
+      return data[idx];
+    }
+    template <typename IndexT>
+    const return_type& operator [](const IndexT& idx) const {
+      return data[idx];
+    }
+  };
+  template <class data_list_t>
+  struct IndexAccessor_  {
+    typedef typename data_list_t::list_item_type return_type;
+    data_list_t &data;
+    IndexAccessor_(data_list_t &data_) : data(data_) {}
+    template <typename IndexT>
+    return_type& operator ()(const IndexT& idx) const {
+      return data[idx];
+    }
+    template <typename IndexT>
+    return_type& operator [](const IndexT& idx) const {
+      return data[idx];
+    }
+  };
 
-template <typename item_t, class data_list_t>
-struct IndexAccessor  {
-  typedef item_t return_type;
-  data_list_t &data;
-  IndexAccessor(data_list_t &data_) : data(data_) {}
-  template <typename IndexT>
-  item_t& operator ()(const IndexT& idx) const {
-    return data[idx];
+  template <class list_t>
+  static IndexAccessor_<list_t> Make(list_t &l) {
+    return IndexAccessor_<list_t>(l);
+  }
+  template <class list_t>
+  static ConstIndexAccessor_<list_t> MakeConst(const list_t &l) {
+    return ConstIndexAccessor_<list_t>(l);
   }
 };
 

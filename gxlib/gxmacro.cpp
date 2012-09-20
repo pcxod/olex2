@@ -2628,24 +2628,19 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
       atoms.Delete(0);
       olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
       int face_cnt = 0;
-      double total_val_bp = 0, total_esd_bp = 0;//, total_val_bl = 0, total_esd_bl=0;
+      double total_val=0, total_esd=0, total_val_bp=0, total_esd_bp=0;
       for( size_t i=0; i < 6; i++ )  {
         for( size_t j=i+1; j < 6; j++ )  {
           for( size_t k=j+1; k < 6; k++ )  {
-            const double thv = olx_tetrahedron_volume( 
-              central_atom->crd(),
-              (atoms[i]->crd()-central_atom->crd()).Normalise() +
-                central_atom->crd(),
-              (atoms[j]->crd()-central_atom->crd()).Normalise() +
-                central_atom->crd(),
-              (atoms[k]->crd()-central_atom->crd()).Normalise() +
-                central_atom->crd());
+            const double thv = olx_tetrahedron_volume_n(central_atom->crd(),
+              atoms[i]->crd(), atoms[j]->crd(), atoms[k]->crd());
             if (thv < 0.1) continue;
             sorted_atoms.Clear();
             transforms.Clear();
-            for( size_t l=0; l < atoms.Count(); l++ )
-              atoms[l]->SetTag(0);
-            atoms[i]->SetTag(1);  atoms[j]->SetTag(1);  atoms[k]->SetTag(1);
+            atoms.ForEach(ACollectionItem::TagSetter(0));
+            atoms[i]->SetTag(1);
+            atoms[j]->SetTag(1);
+            atoms[k]->SetTag(1);
             const vec3d face_center =
               (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
             const vec3d normal = vec3d::Normal(
@@ -2659,23 +2654,41 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
             transforms.Add(0, central_atom->crd() - face1_center);
             PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(),
               normal, sorted_atoms);
-            values.Add("Face ") << ++face_cnt << ": ";
-            for( size_t l=0; l < sorted_atoms.Count(); l++ )
-              values.GetLastString() << sorted_atoms[l]->GetLabel() << ' ';
+            if (sorted_atoms[0]->GetTag() != 1)
+              sorted_atoms.ShiftR(1);
+            values.Add("Face ") << ++face_cnt << ": " <<
+              olx_analysis::alg::label(sorted_atoms, true, ' ') << ' ';
             sorted_atoms.Insert(0, central_atom);
-            TEValue<double> rv = vcovc.CalcOHDistortion(
+            TEValue<double> rv = vcovc.CalcOHDistortionBP(
               TSAtomCPList(sorted_atoms));
             total_val_bp += rv.GetV()*3;
             total_esd_bp += olx_sqr(rv.GetE()); 
+            rv = vcovc.CalcOHDistortion(
+              TSAtomCPList(sorted_atoms));
+            total_val += rv.GetV()*3;
+            total_esd += olx_sqr(rv.GetE()); 
             values.GetLastString() << rv.ToString();
           }
         }
       }
       if( face_cnt == 8 )  {
-        values.Add("Combined distortion: ") <<
-          TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString();
-        values.Add("Mean distortion: ") <<
-          TEValue<double>(total_val_bp/24, 3*sqrt(total_esd_bp)/24).ToString();
+        if (olx_abs(total_val-total_val_bp) < 1e-3) {
+          values.Add("Combined distortion: ") <<
+            TEValue<double>(total_val, 3*sqrt(total_esd)).ToString() <<
+            ", mean: " <<
+            TEValue<double>(total_val/24, 3*sqrt(total_esd)/24).ToString();
+        }
+        else {
+          values.Add("Combined distortion (cross-projections): ") <<
+            TEValue<double>(total_val, 3*sqrt(total_esd)).ToString() <<
+            ", mean: " <<
+            TEValue<double>(total_val/24, 3*sqrt(total_esd)/24).ToString();
+          values.Add("Combined distortion (best plane): ") <<
+            TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString() <<
+            ", mean: " <<
+            TEValue<double>(total_val_bp/24, 3*sqrt(total_esd_bp)/24).ToString()
+            << " degrees";
+        }
       }
       else  {
         TBasicApp::NewLogEntry() << "Could not locate required 8 octahedron faces";

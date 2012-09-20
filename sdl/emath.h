@@ -128,6 +128,14 @@ double olx_tetrahedron_volume(const VC& A, const VC& B,
   d /= n.Length();
   return olx_abs(caS*d/3);
 }
+// normalises the vertices before the calculation
+template <class VC>
+double olx_tetrahedron_volume_n(const VC& A, const VC& B,
+  const VC& C,const VC& D)
+{
+  return olx_tetrahedron_volume(A,
+    (B-A).Normalise()+A, (C-A).Normalise()+A, (D-A).Normalise()+A);
+}
 // dihedral angle in degrees [0..180], throws an exception
 template <class VC>
 double olx_dihedral_angle(const VC& v1, const VC& v2,
@@ -169,7 +177,19 @@ double olx_angle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
     throw TDivException(__OlxSourceInfo);
   return acos( a.CAngle(b) )*180.0/M_PI;
 }
-
+// projection of a point to a plane
+template <class vec_t>
+vec_t olx_projection(const vec_t &p_, const vec_t &center,
+  const vec_t &normal)
+{
+  vec_t p(p_-center);
+  return p - normal*p.DotProd(normal);
+}
+// projection of a point to a plane
+template <class vec_t>
+vec_t olx_projection(const vec_t &p, const vec_t &normal) {
+  return p - normal*p.DotProd(normal);
+}
 // greatest common denominator
 extern unsigned int olx_gcd(unsigned int u, unsigned int v);
 // works only with integer types

@@ -120,6 +120,7 @@ public:
   }
   // for tests
   double Find(const olxstr& atom, const short va, const short vy) const;
+  bool IsEmpty() const { return data == NULL; }
 };
 
 class VcoVContainer {
@@ -143,6 +144,13 @@ public:
   // helper functions, matrices are in cartesian frame
   template <class atom_list>
   void GetVcoV(const atom_list& as, mat3d_list& m)  {
+    if (GetMatrix().IsEmpty()) {
+      size_t sz = olx_sqr(as.Count());
+      m.SetCapacity(sz);
+      while (m.Count() < sz)
+        m.AddNew();
+      return;
+    }
     vcov.FindVcoV(as, m);
     ProcessSymmetry(as, m);
     mat3d c2f(as[0]->CAtom().GetParent()->GetCellToCartesian());
@@ -202,6 +210,7 @@ protected:
     }
     return rv;
   }
+public:
   struct PlaneInfo  {
     double rmsd, d;
     vec3d center, normal;
@@ -404,15 +413,41 @@ protected:
       const vec3d c2 = (points[2] + points[4] + points[6])/3;
       double sum = 0;
       for (int i=1; i < 7; i += 2)  {
-        vec3d v1 = points[i] - c1;
-        v1 -= normal*v1.DotProd(normal);
-        vec3d v2 = points[i+1] - c2;
-        v2 -= normal*v2.DotProd(normal);
+        vec3d v1 = points[i].Projection(c1, normal);
+        vec3d v2 = points[i+1].Projection(c2, normal);
         sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
       }
       return (sum*180/3)/M_PI;
     }
   };
+  // octahedral distortion (in degrees), using best plane approach
+  struct OctahedralDistortionBP  {
+    const vec3d_alist& points;
+    vec3d_alist pl;
+    TDoubleList weights;
+    OctahedralDistortionBP(const vec3d_alist& _points)
+      : points(_points), pl(6), weights(6, olx_list_init::value(1.0))
+    {}
+    double calc() const {
+      // translation for first face
+      const vec3d c1 = (points[1] + points[3] + points[5])/3;
+      // translation for second face
+      const vec3d c2 = (points[2] + points[4] + points[6])/3;
+      for( short i=0; i < 6; i+=2 )  {
+        pl[i] = (points[i+1] - c1).Normalise();
+        pl[i+1] = (points[i+2] - c2).Normalise();
+      }
+      const PlaneInfo pi = CalcPlane(pl, weights, 0);
+      double sum = 0;
+      for( short i=0; i < 6; i+=2 )  {
+        const vec3d v1 = pl[i].Projection(pi.normal);
+        const vec3d v2 = pl[i+1].Projection(pi.normal);
+        sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
+      }
+      return (sum*180/3)/M_PI;
+    }
+  };
+protected:
   // helper functions
   template <class VC>
   double CalcEsd(const size_t sz, const mat3d_list& m, const VC& df)  {
@@ -472,12 +507,11 @@ protected:
     TDoubleList weights;
     mat3d_list m;
     template <class list> CalcWHelper(VcoVContainer& _base, const list& atms) :
-      base(_base), points(atms.Count()), weights(atms.Count())
+      base(_base), points(atms.Count()),
+        weights(atms.Count(), olx_list_init::value(1.0))
     {
       base.GetVcoV(atms, m);
       base.AtomsToPoints(atms, points);
-      for( size_t i=0; i < weights.Count(); i++ )
-        weights[i] = 1.0;
     }
     template <class Eval> TEValue<double> DoCalc(const Eval& e)  {
       return base.DoCalcForPoints(points, m, e);
@@ -487,10 +521,12 @@ protected:
   TEValue<double> DoCalcForPoints(list& points, const mat3d_list& vcov,
     const eval& e)
   {
+    CellEsd ced(*this, points);
+    if (GetMatrix().IsEmpty())
+      return TEValue<double>(e.calc(), sqrt(ced.DoCalc(e)));
     TDoubleList df(points.Count()*3);
     CompositeVector::CompositeVector_<list> pts(points);
     CalcDiff(pts, df, e);
-    CellEsd ced(*this, points);
     return TEValue<double>(e.calc(),
       sqrt(CalcEsd(points.Count(), vcov, df) + ced.DoCalc(e)));
   }
@@ -785,11 +821,20 @@ public:
     return ch.DoCalc(AlignmentRMSD(ch.points, weights));
   }
   /* octahedral distortion, takes {Central Atom, a1, b1, a2, b2, a3, b3},
-  returns mean value
+  returns mean value in degrees. This calculation projects second set of points
+  onto the plane defined be the firts set
   */
   TEValue<double> CalcOHDistortion(const TSAtomCPList& atoms)  {
     CalcHelper ch(*this, atoms);
     return ch.DoCalc(OctahedralDistortion(ch.points));
+  }
+  /* octahedral distortion, takes {Central Atom, a1, b1, a2, b2, a3, b3},
+  returns mean value in degrees. This function uses mean plane defined by
+  the 6 points arranged around the origin
+  */
+  TEValue<double> CalcOHDistortionBP(const TSAtomCPList& atoms)  {
+    CalcHelper ch(*this, atoms);
+    return ch.DoCalc(OctahedralDistortionBP(ch.points));
   }
   const VcoVMatrix& GetMatrix() const {  return vcov;  }
 };

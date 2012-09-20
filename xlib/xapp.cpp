@@ -770,8 +770,7 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
     src_mat = "CIF!!!";
   }
   else {
-    throw TFunctionFailedException(__OlxSourceInfo,
-      "could not find a variance-covariance matrix");
+    return "NO (just cell e.s.d)";
   }
   return src_mat;
 }
