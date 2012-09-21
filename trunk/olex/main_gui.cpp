@@ -44,7 +44,7 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
 //..............................................................................
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {
   if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+FRecentFilesToShow) )
-    processMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'');
+    processMacro(olxstr("reap \"") << FRecentFiles[event.GetId() - ID_FILE0] << '\"');
 }
 //..............................................................................
 void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
