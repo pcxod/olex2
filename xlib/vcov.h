@@ -16,6 +16,7 @@
 #include "lattice.h"
 #include "bapp.h"
 #include "log.h"
+#undef QLength
 BeginXlibNamespace()
 
 const short // constants decribing the stored values

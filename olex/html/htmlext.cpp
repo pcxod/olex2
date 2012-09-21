@@ -482,7 +482,7 @@ bool THtml::ProcessPageLoadRequest()  {
 bool THtml::LoadPage(const wxString &file)  {
   if( file.IsEmpty() )
     return false;
-  
+
   if( IsPageLocked() )  {
     PageLoadRequested = true;
     PageRequested = file;
@@ -619,22 +619,10 @@ bool THtml::UpdatePage(bool update_indices)  {
 //.............................................................................
 void THtml::OnScroll(wxScrollEvent& evt)  {  // this is never called at least on GTK
   evt.Skip();
-#if defined(__linux__) && !wxCHECK_VERSION(2,9,0)
-  this->Update();
-#endif
 }
 //.............................................................................
 void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
-#if defined(__linux__) && !wxCHECK_VERSION(2,9,0)
-  if( dx == 0 && dy == 0 )  return;
-  Freeze();
   wxHtmlWindow::ScrollWindow(dx,dy,rect);
-  Thaw();
-  this->Refresh();
-  this->Update();
-#else
-  wxHtmlWindow::ScrollWindow(dx,dy,rect);
-#endif
 }
 //.............................................................................
 bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
