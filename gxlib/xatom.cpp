@@ -24,7 +24,7 @@
 #include "povdraw.h"
 #include "gltexture.h"
 
-bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
+bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
   TXAtom::FAtomParams = NULL; 
   TXAtom::ClearStaticObjects();
   return true; 
@@ -479,7 +479,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
           GetEllipsoid()->GetSY()*scale,
           GetEllipsoid()->GetSZ()*scale
           );
-        if (GlP.GetOwnerId() == xatom_SphereId) {
+        if (GlP.GetOwnerId() == xatom_SphereId && !Parent.IsSelecting()) {
           if (exyz != NULL && ConstrainedAtomSphere != ~0) {
             olx_gl::callList(ConstrainedAtomSphere);
             return true;
@@ -488,7 +488,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
             olx_gl::callList(LockedAtomSphere);
             return true;
           }
-          else if (FDrawStyle == adsOrtep) {
+          if (FDrawStyle == adsOrtep) {
             short mask = 0;
             const mat3d mat = GetEllipsoid()->GetMatrix()*Parent.GetBasis().GetMatrix();
             for( int i=0; i < 3; i++ )  {
@@ -511,7 +511,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
     return false;
   }
 
-  if (GlP.GetOwnerId() == xatom_SphereId) {
+  if (GlP.GetOwnerId() == xatom_SphereId && !Parent.IsSelecting()) {
     if (exyz != NULL && ConstrainedAtomSphere != ~0) {
       olx_gl::callList(ConstrainedAtomSphere);
       return true;

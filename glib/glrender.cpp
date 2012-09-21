@@ -58,7 +58,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   FZoom = 1;
   FViewZoom = 1;
   FScene->Parent(this);
-  FPerspective = false;
+  Selecting = FPerspective = false;
   FPAngle = 1;
   StereoFlag = 0;
   StereoAngle = 3;
@@ -577,15 +577,15 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
   }
 #endif
   olx_gl::pushAttrib(GL_ALL_ATTRIB_BITS);
-  const bool Select = (SelectObjects || SelectPrimitives);
-  const bool skip_mat = (StereoFlag==glStereoColor || Select);
-  if (Select) {
+  Selecting = (SelectObjects || SelectPrimitives);
+  const bool skip_mat = (StereoFlag==glStereoColor || Selecting);
+  if (Selecting) {
     olx_gl::enable(GL_COLOR_MATERIAL);
     olx_gl::disable(GL_LIGHTING);
   }
   static const int DrawMask = sgdoSelected|sgdoGrouped|sgdoHidden;
   if( !FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw() )  {
-    SetView(x, y, true, Select, 1);
+    SetView(x, y, true, Selecting, 1);
     const size_t id_obj_count = FIdentityObjects.Count();
     for( size_t i=0; i < id_obj_count; i++ )  {
       TGlMaterial* GlM = FIdentityObjects[i];
@@ -615,13 +615,13 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
       FSelection->Draw(SelectPrimitives, SelectObjects);
       olx_gl::popAttrib();
     }
-    SetView(x, y, false, Select, 1);
+    SetView(x, y, false, Selecting, 1);
   }
   else  {
-    SetView(x, y, false, Select, 1);
+    SetView(x, y, false, Selecting, 1);
   }
 
-  if( !Select && IsCompiled() )  {
+  if( !Selecting && IsCompiled() )  {
     olx_gl::callList(CompiledListId);
   }
   else  {
@@ -689,7 +689,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
     olx_gl::popAttrib();
   }
   if (!FTranslucentIdentityObjects.IsEmpty()) {
-    SetView(x, y, true, Select, 1);
+    SetView(x, y, true, Selecting, 1);
     const size_t trans_id_obj_count = FTranslucentIdentityObjects.Count();
     for (size_t i=0; i < trans_id_obj_count; i++) {
       TGlMaterial* GlM = FTranslucentIdentityObjects[i];
