@@ -95,7 +95,7 @@ protected:
   double StereoAngle;
   TGlOption StereoLeftColor, StereoRightColor;
   mutable double SceneDepth;
-  bool ATI;
+  bool ATI, GLUSelection;
 
   class TGlListManager  {
     GLuint Inc, Pos;
@@ -230,7 +230,9 @@ public:
   void BeforeContextChange();
   // to be called if the underlying OpenGl Context has changed
   void AfterContextChange();
-
+  // this is to be used by groups
+  void HandleSelection(const AGDrawObject &o, const TGlPrimitive &p,
+    bool SelectObjects, bool SelectPrimitives) const;
   AGDrawObject* SelectObject(int x, int y);
   TGlPrimitive* SelectPrimitive(int x, int y);
 

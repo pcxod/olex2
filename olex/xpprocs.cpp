@@ -2014,7 +2014,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     SL.Add();
   }
   TIndexList atomIndex;
-  TIns::SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, &released);
+  TIns::SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL,
+    &released);
   for( size_t i=0; i < released.restraints.Count(); i++ )
     released.restraints[i]->GetParent().Release(*released.restraints[i]);
   for( size_t i=0; i < released.sameList.Count(); i++ )
