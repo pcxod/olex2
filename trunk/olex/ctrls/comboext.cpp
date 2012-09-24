@@ -98,7 +98,7 @@ void TComboBox::ChangeEvent(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TComboBox::LeaveEvent(wxFocusEvent& event)  {
-  olxstr v = GetText();
+  olxstr v = GetValue();
   bool changed = (v != StrValue);
   if( changed )  {
     OnChange.Execute(this);
