@@ -25,6 +25,8 @@ BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
 #endif
   EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
   EVT_TEXT_ENTER(-1, TComboBox::EnterPressedEvent)
+  EVT_KILL_FOCUS(TComboBox::LeaveEvent)
+  EVT_SET_FOCUS(TComboBox::EnterEvent)
 END_EVENT_TABLE()
 
 TComboBox::~TComboBox()  {
@@ -40,7 +42,7 @@ TComboBox::~TComboBox()  {
 //..............................................................................
 void TComboBox::SetText(const olxstr& T)  {
   StrValue = T;
-  SetValue(StrValue.u_str());  
+  SetValue(StrValue.u_str());
 #ifdef __WIN32__
   if( GetTextCtrl() != NULL )
     GetTextCtrl()->SetInsertionPoint(0);
@@ -92,6 +94,22 @@ void TComboBox::ChangeEvent(wxCommandEvent& event)  {
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetText());
   OnChange.Execute(this);
+  event.Skip();
+}
+//..............................................................................
+void TComboBox::LeaveEvent(wxFocusEvent& event)  {
+  olxstr v = GetText();
+  bool changed = (v != StrValue);
+  if( changed )  {
+    OnChange.Execute(this);
+    StrValue = v;
+  }
+  OnLeave.Execute(this);
+  event.Skip();
+}
+//..............................................................................
+void TComboBox::EnterEvent(wxFocusEvent& event)  {
+  OnEnter.Execute(this);
   event.Skip();
 }
 //..............................................................................

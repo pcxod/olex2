@@ -510,6 +510,11 @@ void expression_tree::expand_cmd()  {
       break;
     }
     else if (ch == '=') {
+      if (i+1 < data.Length() && olxstr::o_iswhitechar(data.CharAt(i+1)) ||
+        data.CharAt(i+1) == '=')
+      {
+        continue;
+      }
       olxstr dt = data.SubString(dt_st, i-dt_st).TrimWhiteChars();
       bool valid_name = true;
       for (size_t idx=0; idx < dt.Length(); idx++) {
