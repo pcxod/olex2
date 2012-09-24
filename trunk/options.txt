@@ -6,3 +6,8 @@ hbond_min_angle [120] - the minimal angle fo H-bonds to exist
 preserve_invalid_ins [false] - if invalid instructios are preserved vs being deleted
 q_peak_min_alpha [0] - minimum value for the Q-peak transparence (0-0.75)
 tooltip_occu_chem [True] - tooltip shows chemical occupancy vs crystallographic one
+gl_selection [True] - to use the OpenGl selection implementation. If False - a more limited
+ but working more precise with some drivers implementation is used. It however does not allow
+ the selection of objets which use textures (unless treated specifically) or colours..
+gl_multisample [False] - enables smoothing of the rendering, though reduces the prformace it
+ produces better quality picture

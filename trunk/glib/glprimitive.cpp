@@ -234,7 +234,7 @@ void TGlPrimitive::Draw()  {
   if (Basis != NULL) olx_gl::orient(*Basis);
   if (ClipPlanes != NULL) ClipPlanes->Enable(true);
   TGlTexture* currentTexture = NULL;
-  if( olx_is_valid_index(TextureId) )  {
+  if( olx_is_valid_index(TextureId) && !GetRenderer().IsSelecting())  {
     TGlTexture* tex = Renderer.GetTextureManager().FindTexture(TextureId);
     currentTexture = new TGlTexture();
     tex->ReadCurrent(*currentTexture);
@@ -245,14 +245,14 @@ void TGlPrimitive::Draw()  {
     if( Font == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "undefined font");
 #endif
-    if( !(String == NULL || Font == NULL || String->IsEmpty()) )  {
+    if (!(String == NULL || Font == NULL || String->IsEmpty())) {
       if( Font->IsVectorFont() )  {
         Font->DrawVectorText(vec3d(0,0,0), *String);
       }
       else  {
         /* each character of different colour */
         const size_t StrLen = String->Length();
-        if( Colors.Count() == StrLen )  {
+        if (Colors.Count() == StrLen && !GetRenderer().IsSelecting()) {
           uint32_t prev_color = Colors[0];
           SetColor(prev_color);
           short cstate = 0;
@@ -272,10 +272,10 @@ void TGlPrimitive::Draw()  {
   }
   else if( Type == sgloPoints )  {
     olx_gl::pointSize((float)Params[0]);
-    if( Colors.IsEmpty() )  {
+    if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
       olx_gl::begin(GL_POINTS);
-      for( size_t  i=0; i < Vertices.Count(); i++ )
-        DrawVertex( Vertices[i] );
+      for (size_t  i=0; i < Vertices.Count(); i++)
+        DrawVertex(Vertices[i]);
       olx_gl::end();
     }
     else if( Colors.Count() == Vertices.Count() )  {
@@ -291,9 +291,9 @@ void TGlPrimitive::Draw()  {
       olx_gl::get(GL_LINE_WIDTH, &LW);
       olx_gl::lineWidth(Params[0]*LW);
     }
-    if( Colors.IsEmpty() )  {
+    if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
       olx_gl::begin(GL_LINES);
-      for( size_t i=0; i < Vertices.Count(); i++ )
+      for (size_t i=0; i < Vertices.Count(); i++)
         DrawVertex(Vertices[i]);
       olx_gl::end();
     }
@@ -332,7 +332,7 @@ void TGlPrimitive::Draw()  {
       olx_gl::get(GL_LINE_WIDTH, &LW);
       olx_gl::lineWidth(Params[0]*LW);
     }
-    if( Colors.IsEmpty() )  {
+    if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
       olx_gl::begin(GL_LINE_LOOP);
       for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i]);
@@ -350,7 +350,7 @@ void TGlPrimitive::Draw()  {
   else if( Type == sgloTriangles )  {
     olx_gl::begin(GL_TRIANGLES);
     if( Normals.IsEmpty() )  {
-      if (Colors.IsEmpty()) {
+      if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
         for( size_t i=0; i < Vertices.Count(); i++ )
           DrawVertex(Vertices[i]);
       }
@@ -360,7 +360,7 @@ void TGlPrimitive::Draw()  {
       }
     }
     else {
-      if (Colors.IsEmpty()) {
+      if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
         if( Normals.Count() == Vertices.Count() )  {  //+normal
           for( size_t i=0; i < Normals.Count(); i++ )  {
             SetNormal(Normals[i]);
@@ -392,8 +392,11 @@ void TGlPrimitive::Draw()  {
     olx_gl::end();
   }
   else if( Type == sgloQuads )  {
-    if( TextureCrds.IsEmpty() || !olx_is_valid_index(TextureId) )  {
-      if( Colors.IsEmpty() )  {
+    if (TextureCrds.IsEmpty() ||
+      !olx_is_valid_index(TextureId) ||
+      GetRenderer().IsSelecting())
+    {
+      if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
         if( Normals.IsEmpty() )  {
           olx_gl::begin(GL_QUADS);
           for( size_t i=0; i < Vertices.Count(); i++ )
@@ -501,8 +504,8 @@ void TGlPrimitive::Draw()  {
   }
   else if( Type == sgloPolygon )  {
     bool v = olx_gl::isEnabled(GL_CULL_FACE);
-    if( v )  olx_gl::disable(GL_CULL_FACE);
-    if( Colors.IsEmpty() )  {
+    if (v)  olx_gl::disable(GL_CULL_FACE);
+    if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
       olx_gl::begin(GL_POLYGON);
       for( size_t i=0; i < Vertices.Count(); i++ )
         DrawVertex(Vertices[i]);

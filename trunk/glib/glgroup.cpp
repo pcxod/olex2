@@ -154,10 +154,7 @@ void TGlGroup::OverrideMaterialDraw(bool SelectPrimitives,
     const size_t pc = G.GetPrimitives().PrimitiveCount();
     for( size_t j=0; j < pc; j++ )  {
       TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
-      if (SelectObjects)
-        olx_gl::color(G.GetTag());
-      else if (SelectPrimitives)
-        olx_gl::color(GlP.GetTag());
+      Parent.HandleSelection(G, GlP, SelectObjects, SelectPrimitives);
       olx_gl::pushMatrix();
       if( G.Orient(GlP) )  {
         olx_gl::popMatrix();

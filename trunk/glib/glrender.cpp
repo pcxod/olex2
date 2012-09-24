@@ -87,6 +87,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, size_t width, size_t height) :
   FCollections.SetIncrement(16);
   FGObjects.SetIncrement(16);
   MaxRasterZ = 1;
+  GLUSelection = true;
 }
 //..............................................................................
 TGlRenderer::~TGlRenderer()  {
@@ -111,7 +112,13 @@ void TGlRenderer::Initialise()  {
   FCeiling->Create();
   ATI = olxcstr((const char*)olx_gl::getString(GL_VENDOR)).StartsFrom("ATI");
   olx_gl::get(GL_LINE_WIDTH, &LineWidth);
- // olx_gl::enable(GL_MULTISAMPLE);
+  GLUSelection = TBasicApp::GetInstance().GetOptions().FindValue(
+    "gl_selection", TrueString()).ToBool();
+  if (TBasicApp::GetInstance().GetOptions().FindValue(
+    "gl_multisample", FalseString()).ToBool())
+  {
+    olx_gl::enable(GL_MULTISAMPLE);
+  }
 }
 //..............................................................................
 void TGlRenderer::InitLights()  {
@@ -365,7 +372,7 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
   olx_gl::viewport(Left*Res, Top*Res, Width*Res, Height*Res);
   olx_gl::matrixMode(GL_PROJECTION);
   olx_gl::loadIdentity();
-  if( Select )  {
+  if (Select && GLUSelection) {
     GLint vp[4];
     olx_gl::get(GL_VIEWPORT, vp);
     gluPickMatrix(x, Height-y, 3, 3, vp);
@@ -567,6 +574,23 @@ void TGlRenderer::Draw()  {
   OnDraw.Exit(this);
 }
 //..............................................................................
+void TGlRenderer::HandleSelection(const AGDrawObject &o, const TGlPrimitive &p,
+  bool SelectObjects, bool SelectPrimitives) const
+{
+  if (GLUSelection) {
+    if (SelectObjects)
+      olx_gl::loadName((GLuint)o.GetTag());
+    else if (SelectPrimitives)
+      olx_gl::loadName((GLuint)p.GetTag());
+  }
+  else {
+    if (SelectObjects)
+      olx_gl::color(o.GetTag());
+    else if (SelectPrimitives)
+      olx_gl::color(p.GetTag());
+  }
+}
+//..............................................................................
 void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
   bool SelectPrimitives)
 {
@@ -582,6 +606,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
   if (Selecting) {
     olx_gl::enable(GL_COLOR_MATERIAL);
     olx_gl::disable(GL_LIGHTING);
+    glShadeModel(GL_FLAT);
   }
   static const int DrawMask = sgdoSelected|sgdoGrouped|sgdoHidden;
   if( !FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw() )  {
@@ -598,10 +623,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
           if (GDO.MaskFlags(DrawMask) != 0) continue;
-          if (SelectObjects)
-            olx_gl::color(GDO.GetTag());
-          else if (SelectPrimitives)
-            olx_gl::color(GlP.GetTag());
+          HandleSelection(GDO, GlP, SelectObjects, SelectPrimitives);
           olx_gl::pushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
           {  olx_gl::popMatrix(); continue; }
@@ -640,10 +662,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
           if (GDO.MaskFlags(DrawMask) != 0) continue;
-          if (SelectObjects)
-            olx_gl::color(GDO.GetTag());
-          else if (SelectPrimitives)
-            olx_gl::color(GlP.GetTag());
+          HandleSelection(GDO, GlP, SelectObjects, SelectPrimitives);
           olx_gl::pushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
           {  olx_gl::popMatrix(); continue; }
@@ -665,10 +684,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
       for( size_t k=0; k < c_obj_count; k++ )  {
         AGDrawObject& GDO = GPC->GetObject(k);
         if (GDO.MaskFlags(DrawMask) != 0) continue;
-        if (SelectObjects)
-          olx_gl::color(GDO.GetTag());
-        else if (SelectPrimitives)
-          olx_gl::color(GlP.GetTag());
+        HandleSelection(GDO, GlP, SelectObjects, SelectPrimitives);
         olx_gl::pushMatrix();
         if( GDO.Orient(GlP) )  // the object has drawn itself
         {  olx_gl::popMatrix(); continue; }
@@ -702,10 +718,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
         for( size_t k=0; k < c_obj_count; k++ )  {
           AGDrawObject& GDO = GPC->GetObject(k);
           if (GDO.MaskFlags(DrawMask) != 0) continue;
-          if (SelectObjects)
-            olx_gl::color(GDO.GetTag());
-          else if (SelectPrimitives)
-            olx_gl::color(GlP.GetTag());
+          HandleSelection(GDO, GlP, SelectObjects, SelectPrimitives);
           olx_gl::pushMatrix();
           if( GDO.Orient(GlP) )  // the object has drawn itself
           {  olx_gl::popMatrix(); continue; }
@@ -720,40 +733,111 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
 //..............................................................................
 AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
   if( (Width*Height) <= 100 )  return NULL;
-  for( size_t i=0; i < ObjectCount(); i++ )
+  for (size_t i=0; i < ObjectCount(); i++)
     GetObject(i).SetTag((int)(i+1));
-  SetView(x, y, false, true, 1);
-  GetScene().StartDraw();
-  DrawObjects(x, y, true, false);
-  GetScene().EndDraw();
-  memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
-  olx_gl::readPixels(x-1, y-1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
-    &SelectionBuffer[0]);
-  size_t idx = OLX_RGB(
-    SelectionBuffer[1][3],
-    SelectionBuffer[1][4],
-    SelectionBuffer[1][5])-1;
-  return (idx < FGObjects.Count()) ?FGObjects[idx] : NULL;
+  if (GLUSelection) {
+    AGDrawObject *Result=NULL;
+    GLuint *selectBuf = new GLuint [MAXSELECT];
+    GetScene().StartSelect(x, y, selectBuf);
+    DrawObjects(x, y, true, false);
+    int hits = GetScene().EndSelect();
+    if (hits >= 1)  {
+      if( hits == 1 )  {
+        GLuint in = selectBuf[(hits-1)*4+3];
+        if( in >=1 && in <= ObjectCount() )
+          Result = &GetObject(in-1);
+      }
+      else  {
+        unsigned int maxz = ~0;
+        GLuint in=0;
+        for( int i=0; i < hits; i++ )  {
+          if( selectBuf[i*4+1] < maxz )  {
+            in = i;
+            maxz = selectBuf[i*4+1];
+          }
+        }
+        if( (int)(in)*4+3 < 0 )  return NULL;
+        in = selectBuf[(in)*4+3] - 1;
+        if( in < ObjectCount() )  
+          Result = &GetObject(in);
+      }
+    }
+    delete [] selectBuf;
+    return Result;
+  }
+  else {
+    SetView(x, y, false, true, 1);
+    GetScene().StartDraw();
+    DrawObjects(x, y, true, false);
+    GetScene().EndDraw();
+    memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
+    olx_gl::readPixels(x-1, Height-y-1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
+      &SelectionBuffer[0]);
+    static const size_t indices [9][2] = {
+      {1,3}, {1,0}, {1,6},
+      {0,3}, {3,3},
+      {0,0}, {0,6}, {3,0}, {3,6}
+    };
+    for (int i=0; i < 9; i++) {
+      size_t idx = OLX_RGB(
+        SelectionBuffer[indices[i][0]][indices[i][1]],
+        SelectionBuffer[indices[i][0]][indices[i][1]+1],
+        SelectionBuffer[indices[i][0]][indices[i][1]+2])-1;
+      if (idx < FGObjects.Count() && FGObjects[idx]->IsVisible())
+        return FGObjects[idx];
+    }
+    return NULL;
+  }
 }
 //..............................................................................
 TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y) {
   if( (Width*Height) <= 100 )  return NULL;
-  TGlPrimitive *Result = NULL;
-  const size_t prim_count = Primitives.ObjectCount();
-  for( size_t i=0; i < prim_count; i++ )
-    Primitives.GetObject(i).SetTag( (int)(i+1) );
-  SetView(x, y, false, true, 1);
-  GetScene().StartDraw();
-  DrawObjects(x, y, false, true);
-  GetScene().EndDraw();
-  memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
-  olx_gl::readPixels(x-1, y-1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
-    &SelectionBuffer[0]);
-  size_t idx = OLX_RGB(
-    SelectionBuffer[1][3],
-    SelectionBuffer[1][4],
-    SelectionBuffer[1][5])-1;
-  return (idx < PrimitiveCount()) ? &GetPrimitive(idx) : NULL;
+  for (size_t i=0; i < Primitives.ObjectCount(); i++)
+    Primitives.GetObject(i).SetTag((index_t)(i+1));
+  if (GLUSelection) {
+    TGlPrimitive *Result=NULL;
+    GLuint *selectBuf = new GLuint [MAXSELECT];
+    GetScene().StartSelect(x, y, selectBuf);
+    DrawObjects(x, y, false, true);
+    GetScene().EndSelect();
+    int hits = olx_gl::renderMode(GL_RENDER);
+    if( hits >= 1 )  {
+      if( hits == 1 )  {
+        GLuint in = selectBuf[(hits-1)*4+3];
+        if( in >=1 && in <= (PrimitiveCount()+1) )
+          Result = &GetPrimitive(in-1);
+      }
+      else  {
+        unsigned int maxz = ~0;
+        GLuint in=0;
+        for( int i=0; i < hits; i++ )  {
+          if( selectBuf[i*4+1] < maxz )  {
+            in = i;
+            maxz = selectBuf[i*4+1];
+          }
+        }
+        in = selectBuf[in*4+3];
+        if( in >=1 && in <= (PrimitiveCount()+1) )
+          Result = &GetPrimitive(in-1);
+      }
+    }
+    delete [] selectBuf;
+    return Result;
+  }
+  else {
+    SetView(x, y, false, true, 1);
+    GetScene().StartDraw();
+    DrawObjects(x, y, false, true);
+    GetScene().EndDraw();
+    memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
+    olx_gl::readPixels(x-1, Height-y-1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
+      &SelectionBuffer[0]);
+    size_t idx = OLX_RGB(
+      SelectionBuffer[1][3],
+      SelectionBuffer[1][4],
+      SelectionBuffer[1][5])-1;
+    return (idx < PrimitiveCount()) ? &GetPrimitive(idx) : NULL;
+  }
 }
 //..............................................................................
 TGlGroup* TGlRenderer::FindObjectGroup(const AGDrawObject& G) const {

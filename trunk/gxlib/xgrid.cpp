@@ -337,7 +337,10 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   GlP.Vertices[1] = bm*vec3f(hh/Size, -hh/Size, Z)-center;
   GlP.Vertices[2] = bm*vec3f(hh/Size, hh/Size, Z)-center;
   GlP.Vertices[3] = bm*vec3f(-hh/Size, hh/Size, Z)-center;
-
+  if (Parent.IsSelecting()) {
+    GlP.SetTextureId(~0);
+    return false;
+  }
   TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData,
     MaxDim, Size, Depth, bm, c2c, center, dim, RenderMode);
   TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim,
