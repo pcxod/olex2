@@ -476,6 +476,10 @@ template <typename FT> FT olx_pow10(size_t val)  {
 template <typename T1, typename T2> inline
 int olx_cmp(T1 a, T2 b)  {  return a < b ? -1 : (a > b ? 1 : 0);  }
 
+template <typename T, typename T1> bool olx_is(const T1 &v) {
+  return typeid(T) == typeid(olx_ref::get(v));
+};
+
 #include "association.h"
 #include "listalg.h"
 #include "citem.h"

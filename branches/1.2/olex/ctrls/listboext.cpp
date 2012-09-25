@@ -20,10 +20,12 @@ BEGIN_EVENT_TABLE(TListBox, wxListBox)
 END_EVENT_TABLE()
 //..............................................................................
 void TListBox::ClickEvent(wxMouseEvent& event)  {
+  event.Skip();
   OnDblClick.Execute(this);
 }
 //..............................................................................
 void TListBox::ItemSelectEvent(wxCommandEvent& event)  {
+  event.Skip();
   if( !Data.IsEmpty() )
     TOlxVars::SetVar(Data, GetValue());
   OnSelect.Execute(this);

@@ -1540,6 +1540,7 @@ bool Ins_ProcessRestraint(const TCAtomPList* atoms,
 {
   if (sr.IsEmpty() && !sr.IsAllNonHAtoms()) return false;
   if (atoms == NULL)  return true;
+  if (sr.IsAllNonHAtoms()) return true;
   TTypeList<ExplicitCAtomRef> ra = sr.GetAtoms().ExpandList(rm);
   for (size_t i=0; i < ra.Count(); i++)
     if (atoms->Contains(ra[i].GetAtom()))

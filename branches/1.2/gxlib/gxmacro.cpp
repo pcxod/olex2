@@ -2027,7 +2027,7 @@ void GXLibMacros::macWBox(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macCenter(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  if (Cmds.Count() == 3 && list_and(Cmds, &olxstr::IsNumber)) {
+  if (Cmds.Count() == 3 && olx_list_and(Cmds, &olxstr::IsNumber)) {
     app.GetRender().GetBasis().SetCenter(
      -vec3d(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble()));
   }
@@ -2605,63 +2605,46 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           vcovc.CalcPCAPCAngle(a1, a, a2).ToString();
       }
     }
-    else if( sel.Count() == 4 )  {
-      if( EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXAtom) && 
-          EsdlInstanceOf(sel[2], TXAtom) && EsdlInstanceOf(sel[3], TXAtom) )  {
-        TSAtom& a1 = (TXAtom&)sel[0];
-        TSAtom& a2 = (TXAtom&)sel[1];
-        TSAtom& a3 = (TXAtom&)sel[2];
-        TSAtom& a4 = (TXAtom&)sel[3];
-        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' <<
-          a3.GetLabel() << '-' << a4.GetLabel() <<
-          " torsion angle (numerical): " <<
-          vcovc.CalcTAngle(a1, a2, a3, a4).ToString();
-        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' <<
-          a3.GetLabel() << '-' << a4.GetLabel() <<
-          " torsion angle (analytical): " <<
-          vcovc.CalcTAngleA(a1, a2, a3, a4).ToString();
-        values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' <<
-          a3.GetLabel() << '-' << a4.GetLabel() << " tetrahedron volume: " <<
-          vcovc.CalcTetrahedronVolume(a1, a2, a3, a4).ToString() << " A^3";
-      }
+    else if( sel.Count() == 4 &&
+      olx_list_and_st(sel, &olx_is<TXAtom, TGlGroup::list_item_type>))
+    {
+      TSAtomPList a(sel, DynamicCastAccessor<TSAtom>());
+      olxstr lbl = olx_analysis::alg::label(a, true, '-');
+      values.Add(lbl) << " torsion angle (numerical): " <<
+        vcovc.CalcTAngle(*a[0], *a[1], *a[2], *a[3]).ToString();
+      values.Add(lbl) << " torsion angle (analytical): " <<
+        vcovc.CalcTAngleA(*a[0], *a[1], *a[2], *a[3]).ToString();
+      values.Add(lbl) << " tetrahedron volume: " <<
+        vcovc.CalcTetrahedronVolume(*a[0], *a[1], *a[2], *a[3]).ToString() << " A^3";
     }
-    else if( sel.Count() == 7 )  {
-      TSAtomPList atoms, face_atoms, sorted_atoms;
-      for( size_t i=0; i < sel.Count(); i++ )  {
-        if( EsdlInstanceOf(sel[i], TXAtom) )
-          atoms.Add((TXAtom&)sel[i]);
-      }
-      if( atoms.Count() != 7 )
-        return;
-      values.Add("Octahedral distortion is (using best line, for the selection): ")
-        << vcovc.CalcOHDistortionBL(TSAtomCPList(atoms)).ToString();
-      values.Add("Octahedral distortion is (using best plane, for the selection): ")
-        << vcovc.CalcOHDistortionBP(TSAtomCPList(atoms)).ToString();
+    else if( sel.Count() == 7 &&
+      olx_list_and_st(sel, &olx_is<TXAtom, TGlGroup::list_item_type>))
+    {
+      TSAtomPList atoms(sel, DynamicCastAccessor<TSAtom>()),
+        face_atoms, sorted_atoms;
+      values.Add("Octahedral distortion is (for the selection): ")
+        << vcovc.CalcOHDistortion(TSAtomCPList(atoms)).ToString();
       TSAtom* central_atom = atoms[0];
       atoms.Delete(0);
       olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
       int face_cnt = 0;
-      double total_val_bp = 0, total_esd_bp = 0;//, total_val_bl = 0, total_esd_bl=0;
+      double total_val=0, total_esd=0, total_val_bp=0, total_esd_bp=0;
       for( size_t i=0; i < 6; i++ )  {
         for( size_t j=i+1; j < 6; j++ )  {
           for( size_t k=j+1; k < 6; k++ )  {
-            const double thv = olx_tetrahedron_volume( 
-              central_atom->crd(),
-              (atoms[i]->crd()-central_atom->crd()).Normalise() +
-                central_atom->crd(),
-              (atoms[j]->crd()-central_atom->crd()).Normalise() +
-                central_atom->crd(),
-              (atoms[k]->crd()-central_atom->crd()).Normalise() +
-                central_atom->crd());
+            const double thv = olx_tetrahedron_volume_n(central_atom->crd(),
+              atoms[i]->crd(), atoms[j]->crd(), atoms[k]->crd());
             if (thv < 0.1) continue;
             sorted_atoms.Clear();
             transforms.Clear();
-            for( size_t l=0; l < atoms.Count(); l++ )
-              atoms[l]->SetTag(0);
-            atoms[i]->SetTag(1);  atoms[j]->SetTag(1);  atoms[k]->SetTag(1);
+            atoms.ForEach(ACollectionItem::TagSetter(0));
+            atoms[i]->SetTag(1);
+            atoms[j]->SetTag(1);
+            atoms[k]->SetTag(1);
             const vec3d face_center =
               (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
-            const vec3d normal = (face_center - central_atom->crd()).Normalise();
+            const vec3d normal = vec3d::Normal(
+              atoms[i]->crd(), atoms[j]->crd(), atoms[k]->crd());
             transforms.Add(1, central_atom->crd() - face_center);
             vec3d face1_center;
             for( size_t l=0; l < atoms.Count(); l++ )
@@ -2671,28 +2654,41 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
             transforms.Add(0, central_atom->crd() - face1_center);
             PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(),
               normal, sorted_atoms);
-            values.Add("Face ") << ++face_cnt << ": ";
-            for( size_t l=0; l < sorted_atoms.Count(); l++ )
-              values.GetLastString() << sorted_atoms[l]->GetLabel() << ' ';
+            if (sorted_atoms[0]->GetTag() != 1)
+              sorted_atoms.ShiftR(1);
+            values.Add("Face ") << ++face_cnt << ": " <<
+              olx_analysis::alg::label(sorted_atoms, true, ' ') << ' ';
             sorted_atoms.Insert(0, central_atom);
             TEValue<double> rv = vcovc.CalcOHDistortionBP(
               TSAtomCPList(sorted_atoms));
             total_val_bp += rv.GetV()*3;
             total_esd_bp += olx_sqr(rv.GetE()); 
+            rv = vcovc.CalcOHDistortion(
+              TSAtomCPList(sorted_atoms));
+            total_val += rv.GetV()*3;
+            total_esd += olx_sqr(rv.GetE()); 
             values.GetLastString() << rv.ToString();
-            //TBasicApp::GetLog() << "BP: " << rv.ToString();
-            //rv = vcovc.CalcOHDistortionBL(sorted_atoms);
-            //total_val_bl += olx_abs(180.0 - rv.GetV() * 3);
-            //total_esd_bl += olx_sqr(rv.GetE()); 
-            //TBasicApp::NewLogEntry() << " BL: " << rv.ToString();
           }
         }
       }
       if( face_cnt == 8 )  {
-        values.Add("Combined distortion (best plane): ") <<
-          TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString();
-        //TBasicApp::NewLogEntry() << "Combined distortion (best line): " <<
-        //TEValue<double>(total_val_bl, 3*sqrt(total_esd_bl)).ToString()');
+        if (olx_abs(total_val-total_val_bp) < 1e-3) {
+          values.Add("Combined distortion: ") <<
+            TEValue<double>(total_val, 3*sqrt(total_esd)).ToString() <<
+            ", mean: " <<
+            TEValue<double>(total_val/24, 3*sqrt(total_esd)/24).ToString();
+        }
+        else {
+          values.Add("Combined distortion (cross-projections): ") <<
+            TEValue<double>(total_val, 3*sqrt(total_esd)).ToString() <<
+            ", mean: " <<
+            TEValue<double>(total_val/24, 3*sqrt(total_esd)/24).ToString();
+          values.Add("Combined distortion (best plane): ") <<
+            TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString() <<
+            ", mean: " <<
+            TEValue<double>(total_val_bp/24, 3*sqrt(total_esd_bp)/24).ToString()
+            << " degrees";
+        }
       }
       else  {
         TBasicApp::NewLogEntry() << "Could not locate required 8 octahedron faces";

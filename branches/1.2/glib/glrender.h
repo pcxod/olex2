@@ -50,7 +50,7 @@ class TGlRenderer : public IEObject  {
   TPtrList<TGlGroup> FGroups;   // list of groups
   TGlGroup* FSelection;  // list of selected objects
   class TTextureManager* TextureManager;
-  bool FSceneComplete;
+  bool FSceneComplete, Selecting;
 //__________________ perspective related stuff
   bool FPerspective;
   float FPAngle,
@@ -95,7 +95,7 @@ protected:
   double StereoAngle;
   TGlOption StereoLeftColor, StereoRightColor;
   mutable double SceneDepth;
-  bool ATI;
+  bool ATI, GLUSelection;
 
   class TGlListManager  {
     GLuint Inc, Pos;
@@ -131,8 +131,9 @@ public:
   void Compile(bool v);
 
   // if true, then min/max are not updated for newly created objects
-  bool IsSceneComplete()        const {  return FSceneComplete;  }
-  void SetSceneComplete(bool v)       {  FSceneComplete = v;  }
+  bool IsSceneComplete() const {  return FSceneComplete;  }
+  bool IsSelecting() const {  return Selecting;  }
+  void SetSceneComplete(bool v) {  FSceneComplete = v;  }
   // basis manipulation
   TEBasis& GetBasis() {  return FBasis; }
   const TEBasis& GetBasis() const {  return FBasis; }
@@ -229,7 +230,9 @@ public:
   void BeforeContextChange();
   // to be called if the underlying OpenGl Context has changed
   void AfterContextChange();
-
+  // this is to be used by groups
+  void HandleSelection(const AGDrawObject &o, const TGlPrimitive &p,
+    bool SelectObjects, bool SelectPrimitives) const;
   AGDrawObject* SelectObject(int x, int y);
   TGlPrimitive* SelectPrimitive(int x, int y);
 

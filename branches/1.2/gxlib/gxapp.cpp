@@ -50,6 +50,7 @@
 #elif __WIN32__
   #include "wglscene.h"
 #endif
+#include "vcov.h"
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
 
@@ -1018,84 +1019,84 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
             olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd()));
       }
     }
-    else if( Sel.Count() == 7 )  {
-      TSAtomPList atoms;
-      for( size_t i=0; i < Sel.Count(); i++ )  {
-        if( EsdlInstanceOf(Sel[i], TXAtom) )
-          atoms.Add(((TXAtom&)Sel[i]));
-      }
-      if( atoms.Count() == 7 )  {
-        TSAtom* central_atom = atoms[0];
-        atoms.Delete(0);
-        size_t face_cnt = 0;
-        double total_val_bp = 0;
-        for( size_t i=0; i < 6; i++ )  {
-          for( size_t j=i+1; j < 6; j++ )  {
-            for( size_t k=j+1; k < 6; k++ )  {
-              const double thv = olx_tetrahedron_volume( 
-                central_atom->crd(),
-                (atoms[i]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
-                (atoms[j]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
-                (atoms[k]->crd()-central_atom->crd()).Normalise() + central_atom->crd());
-              if( thv < 0.1 )  continue;
-              face_cnt++;
-              TSAtomPList sorted_atoms;
-              olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
-              atoms.ForEach(ACollectionItem::TagSetter(0));
-              atoms[i]->SetTag(1);
-              atoms[j]->SetTag(1);
-              atoms[k]->SetTag(1);
-              const vec3d face_center = (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
-              const vec3d normal = (face_center - central_atom->crd()).Normalise();
+    else if( Sel.Count() == 7 &&
+      olx_list_and_st(Sel, &olx_is<TXAtom, TGlGroup::list_item_type>))
+    {
+      TSAtomPList atoms(Sel, DynamicCastAccessor<TSAtom>());
+      TSAtom* central_atom = atoms[0];
+      atoms.Delete(0);
+      size_t face_cnt=0;
+      double total_val_bp=0, total_val=0;
+      for( size_t i=0; i < 6; i++ )  {
+        for( size_t j=i+1; j < 6; j++ )  {
+          for( size_t k=j+1; k < 6; k++ )  {
+            const double thv = olx_tetrahedron_volume_n(central_atom->crd(),
+              atoms[i]->crd(), atoms[j]->crd(), atoms[k]->crd());
+            if( thv < 0.1 )  continue;
+            face_cnt++;
+            TSAtomPList sorted_atoms;
+            olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
+            atoms.ForEach(ACollectionItem::TagSetter(0));
+            atoms[i]->SetTag(1);
+            atoms[j]->SetTag(1);
+            atoms[k]->SetTag(1);
+            const vec3d face_center =
+              (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
+            const vec3d normal = vec3d::Normal(
+              atoms[i]->crd(), atoms[j]->crd(), atoms[k]->crd());
 
-              vec3d face1_center, new_normal, new_center;
-              for( size_t l=0; l < atoms.Count(); l++ )
-                if( atoms[l]->GetTag() == 0 )
-                  face1_center += atoms[l]->crd();
-              face1_center /= 3;
-              
-              transforms.Add(1, central_atom->crd()-face_center);
-              transforms.Add(0, central_atom->crd()-face1_center);
-              PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(), normal, sorted_atoms);
-              
-              TTypeList<AnAssociation2<vec3d, double> > p1;
-              for( size_t l=0; l < sorted_atoms.Count(); l++ )  {
-                if( sorted_atoms[l]->GetTag() == 0 )
-                  p1.AddNew(sorted_atoms[l]->crd() - face1_center, 1.0);
-                else
-                  p1.AddNew(sorted_atoms[l]->crd() - face_center, 1.0);
-              }
-              TSPlane::CalcPlane(p1, new_normal, new_center, plane_best);
-              new_normal.Normalise();
-              for( size_t l=0; l < 3; l++ )  {
-                vec3d v1 = p1[l*2].GetA() - new_normal*p1[l*2].GetA().DotProd(new_normal);
-                vec3d v2 = p1[l*2+1].GetA() - new_normal*p1[l*2+1].GetA().DotProd(new_normal);
-                total_val_bp += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
-              }
-            }
+            vec3d face1_center;
+            for( size_t l=0; l < atoms.Count(); l++ )
+              if( atoms[l]->GetTag() == 0 )
+                face1_center += atoms[l]->crd();
+            face1_center /= 3;
+            transforms.Add(1, central_atom->crd()-face_center);
+            transforms.Add(0, central_atom->crd()-face1_center);
+            PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(),
+              normal, sorted_atoms);
+            if (sorted_atoms[0]->GetTag() != 1)
+              sorted_atoms.ShiftR(1);
+            vec3d_alist pts;
+            pts << central_atom->crd() << vec3d_alist::FromList(sorted_atoms,
+              FunctionAccessor::Make(&TSAtom::crd));
+            total_val += VcoVContainer::OctahedralDistortion(pts).calc();
+            total_val_bp += VcoVContainer::OctahedralDistortionBP(pts).calc();
           }
         }
-        if( face_cnt == 8 )
-          Tmp << "Combined distortion: " << olxstr::FormatFloat(2, total_val_bp*180/M_PI);
-        else  {  // calculate just for the selection
-          // centroids
-          vec3d c1 = (atoms[0]->crd() + atoms[2]->crd() + atoms[4]->crd())/3;
-          vec3d c2 = (atoms[1]->crd() + atoms[3]->crd() + atoms[5]->crd())/3;
-          TTypeList<AnAssociation2<vec3d, double> > p1;
-          for( size_t i=0; i < atoms.Count(); i++ )
-            p1.AddNew(atoms[i]->crd() - ((i%2)==0 ? c1 : c2), 1.0);
-          vec3d normal, center;
-          TSPlane::CalcPlane(p1, normal, center, plane_best);
-          normal.Normalise();
-          double sum = 0;
-          for( size_t i=0; i < 3; i++ )  {
-            vec3d v1 = p1[i*2].GetA() - normal*p1[i*2].GetA().DotProd(normal);
-            vec3d v2 = p1[i*2+1].GetA() - normal*p1[i*2+1].GetA().DotProd(normal);
-            sum += olx_abs(M_PI/3 - acos(v1.CAngle(v2)));
-          }
-          Tmp << "Octahedral distortion (for the selection): " << olxstr::FormatFloat(2, (sum*180/3)/M_PI);
+      }
+      if( face_cnt == 8 ) {
+        if (olx_abs(total_val-total_val_bp) < 1e-3) {
+          Tmp << "Combined distortion: " <<
+            olxstr::FormatFloat(2, total_val*3) << ", mean: " <<
+            olxstr::FormatFloat(2, total_val/8) << NewLineSequence();
         }
-///
+        else {
+          Tmp << "Combined distortion (cross-projections): " <<
+            olxstr::FormatFloat(2, total_val*3) << ", mean: " <<
+            olxstr::FormatFloat(2, total_val/8) << NewLineSequence();
+          Tmp << "Combined distortion (best plane): " <<
+            olxstr::FormatFloat(2, total_val_bp*3) << ", mean: " <<
+            olxstr::FormatFloat(2, total_val_bp/8) << " degrees";
+        }
+      }
+      else  {  // calculate just for the selection
+        // centroids
+        vec3d c1 = (atoms[0]->crd() + atoms[2]->crd() + atoms[4]->crd())/3;
+        vec3d c2 = (atoms[1]->crd() + atoms[3]->crd() + atoms[5]->crd())/3;
+        TTypeList<AnAssociation2<vec3d, double> > p1;
+        for( size_t i=0; i < atoms.Count(); i++ )
+          p1.AddNew(atoms[i]->crd() - ((i%2)==0 ? c1 : c2), 1.0);
+        vec3d normal, center;
+        TSPlane::CalcPlane(p1, normal, center, plane_best);
+        normal.Normalise();
+        double sum = 0;
+        for( size_t i=0; i < 3; i++ )  {
+          vec3d v1 = p1[i*2].GetA() - normal*p1[i*2].GetA().DotProd(normal);
+          vec3d v2 = p1[i*2+1].GetA() - normal*p1[i*2+1].GetA().DotProd(normal);
+          sum += olx_abs(M_PI/3 - acos(v1.CAngle(v2)));
+        }
+        Tmp << "Octahedral distortion (for the selection): " <<
+          olxstr::FormatFloat(2, (sum*180/3)/M_PI);
       }
     }
   }
@@ -1489,7 +1490,8 @@ ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear)  {
 }
 //..............................................................................
 ConstPtrList<TCAtom> TGXApp::CAtomsByType(const cm_Element& AI)  {
-  return &ListFilter::Filter(XFile().GetLattice().GetAsymmUnit().GetAtoms(),
+  return &olx_list_filter::Filter(
+    XFile().GetLattice().GetAsymmUnit().GetAtoms(),
     *(new TCAtomPList),
     olx_alg::olx_and(
       olx_alg::olx_not(TCAtom::FlagsAnalyser(catom_flag_Deleted)),

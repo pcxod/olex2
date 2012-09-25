@@ -51,7 +51,7 @@ TAG_HANDLER_PROC(tag)  {
       TStrList toks(tag.GetParam(wxT("COORDS")), ',');
       if( toks.Count() == 4 )
         ic->AddRect(
-          toks[0].ToInt(), 
+          toks[0].ToInt(),
           toks[1].ToInt(),
           toks[2].ToInt(),
           toks[3].ToInt(),
@@ -563,7 +563,7 @@ TAG_HANDLER_PROC(tag)  {
 #ifdef __MAC__
     Box->WI.SetHeight(olx_max(ay, Box->GetCharHeight()+10));
 #else
-    Box->WI.SetHeight( ay );
+    Box->WI.SetHeight(ay);
 #endif    
     if( tag.HasParam(wxT("ITEMS")) )  {
       olxstr Items = tag.GetParam(wxT("ITEMS"));

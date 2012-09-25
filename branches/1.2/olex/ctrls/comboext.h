@@ -29,6 +29,8 @@ namespace ctrl_ext {
     };
     void ChangeEvent(wxCommandEvent& event);
     void EnterPressedEvent(wxCommandEvent& event);
+    void LeaveEvent(wxFocusEvent& event);
+    void EnterEvent(wxFocusEvent& event);
     olxstr Data;
     olxstr StrValue;
   protected:

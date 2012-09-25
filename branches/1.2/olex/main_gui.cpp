@@ -44,7 +44,7 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
 //..............................................................................
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {
   if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+FRecentFilesToShow) )
-    processMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'');
+    processMacro(olxstr("reap \"") << FRecentFiles[event.GetId() - ID_FILE0] << '\"');
 }
 //..............................................................................
 void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
@@ -722,13 +722,13 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
 void TMainForm::OnGraphicsStyle(wxCommandEvent& event)  {
   if( event.GetId() == ID_GStyleSave )  {
     olxstr FN = PickFile("Drawing style",
-    "Drawing styles|*.glds", StylesDir, false);
+    "Drawing styles|*.glds", StylesDir, EmptyString(), false);
     if( !FN.IsEmpty() )
       processMacro(olxstr("save style ") << FN);
   }
   if( event.GetId() == ID_GStyleOpen )  {
     olxstr FN = PickFile("Drawing style",
-    "Drawing styles|*.glds", StylesDir, true);
+    "Drawing styles|*.glds", StylesDir, EmptyString(), true);
     if( !FN.IsEmpty() )
       processMacro(olxstr("load style ") << FN);
   }

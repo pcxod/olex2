@@ -62,6 +62,9 @@ public:
   void ProcessingException(const ABasicFunction& caller,
     const TExceptionBase& exc);
 
+  void ProcessingException(const olxstr& location,
+    const TExceptionBase& exc);
+
   bool IsSuccessful() const {
     return ((ProcessError&0x0FFF) == 0);
   }

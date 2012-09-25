@@ -84,10 +84,7 @@ protected:
             glm.SpecularF = 0xff00;
             glm.Init(false);
           }
-          if (SelectObjects)
-            olx_gl::color(G.GetTag());
-          else if (SelectPrimitives)
-            olx_gl::color(GlP.GetTag());
+          Parent.HandleSelection(G, GlP, SelectObjects, SelectPrimitives);
           olx_gl::pushMatrix();
           if( G.Orient(GlP) )  {
             olx_gl::popMatrix();

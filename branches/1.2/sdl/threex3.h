@@ -181,6 +181,38 @@ public:
       point[1]-data[1]*m,
       point[2]-data[2]*m);
   }
+  // convenience method
+  static TVector3 Normal(const TVector3 &a, const TVector3 &b,
+    const TVector3 &c)
+  {
+    return (a-b).XProdVec(c-b).Normalise();
+  }
+  // convenience method
+  template <typename arr_t>
+  static TVector3 Normal(const arr_t &ar, size_t i, size_t j, size_t k) {
+    return (ar[i]-ar[j]).XProdVec(ar[k]-ar[j]).Normalise();
+  }
+  /* projects this vector onto a plane given by the normal with center at
+  the origin
+  */
+  TVector3 &Project(const TVector3 &normal) {
+    return (this->operator -= (normal*DotProd(normal)));
+  }
+  /* projects this vector onto a plane given by the normal and center */
+  TVector3 &Project(const TVector3 &center, const TVector3 &normal) {
+    this->operator -= (center);
+    return (this->operator -= (normal*DotProd(normal)));
+  }
+  /* returns a projection of a point to a plane given by normal with center
+  at origin
+  */
+  TVector3 Projection(const TVector3 &normal) const {
+    return TVector3(*this).Project(normal);
+  }
+  /* returns a projection of a point to a plane given by normal and center */
+  TVector3 Projection(const TVector3 &center, const TVector3 &normal) const {
+    return TVector3(*this-center).Project(normal);
+  }
   TVector3<T> operator -() const {
     return TVector3<T>(-data[0], -data[1], -data[2]);
   }
@@ -192,7 +224,7 @@ public:
     return TVector3<T>(
       data[0] - normal[0]*m,
       data[1] - normal[1]*m,
-      data[2] - normal[2]*m);  
+      data[2] - normal[2]*m);
   }
   TVector3<T>& Normalise()  {
     const T l = Length();

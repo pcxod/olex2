@@ -19,9 +19,9 @@ BEGIN_EVENT_TABLE(TColorCtrl, wxColourPickerCtrl)
 END_EVENT_TABLE()
 //..............................................................................
 void TColorCtrl::ChangeEvent(wxColourPickerEvent& event)  {
+  event.Skip();
   wxColor c = GetColour();
-  if( Color == c )
-    return;
+  if( Color == c ) return;
   Color = c;
   OnChange.Execute(this);
 }

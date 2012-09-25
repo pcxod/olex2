@@ -831,8 +831,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
-  this_InitFunc(FileSave, fpThree);
-  this_InitFunc(FileOpen, fpThree);
+  this_InitFunc(FileSave, fpThree|fpFour);
+  this_InitFunc(FileOpen, fpThree|fpFour);
   this_InitFunc(ChooseDir, fpNone|fpOne|fpTwo);
 
   this_InitFunc(Strcat, fpTwo);
@@ -1728,7 +1728,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       time_t FileT = TEFile::FileAge(FListenFile);
       if( FileMT != FileT )  {
         FObjectUnderMouse = NULL;
-        processMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', "OnListen");
+        processMacro((olxstr("@reap -b -r \"") << FListenFile)+'\"', "OnListen");
         for( size_t i=0; i < FOnListenCmds.Count(); i++ )  {
           if( !processMacro(FOnListenCmds[i], "OnListen") )
             break;
@@ -2599,9 +2599,12 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
 void TMainForm::SaveSettings(const olxstr &FN)  {
   TDataFile DF;
   TDataItem* I = &DF.Root().AddItem("Folders");
-  I->AddField("Styles", TEFile::CreateRelativePath(StylesDir));
-  I->AddField("Scenes", TEFile::CreateRelativePath(ScenesDir));
-  I->AddField("Current", TEFile::CreateRelativePath(XLibMacros::CurrentDir));
+  I->AddField("Styles",
+    olxstr().quote('"') << TEFile::CreateRelativePath(StylesDir));
+  I->AddField("Scenes",
+    olxstr().quote('"') << TEFile::CreateRelativePath(ScenesDir));
+  I->AddField("Current",
+    olxstr().quote('"') << TEFile::CreateRelativePath(XLibMacros::CurrentDir));
 
   I = &DF.Root().AddItem("HTML");
   I->AddField("Minimized", FHtmlMinimized);
@@ -2641,7 +2644,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("Scene", TEFile::CreateRelativePath(DefSceneP));
 
   I->AddField("BgColor", FBgColor.ToString());
-  I->AddField("WhiteOn", (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
+  I->AddField("WhiteOn",
+    (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
   I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible());
   I->AddField("GradientPicture", TEFile::CreateRelativePath(GradientPicture));
   I->AddField("language", Dictionary.GetCurrentLanguage());
@@ -2651,12 +2655,15 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I = &DF.Root().AddItem("Recent_files");
   for( size_t i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
-    I->AddField(olxstr("file") << i, TEFile::CreateRelativePath(FRecentFiles[i]));
+  {
+    I->AddField(olxstr("file") << i,
+      olxstr().quote('"') << TEFile::CreateRelativePath(FRecentFiles[i]));
+  }
 
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
     TDataItem& it = I->AddItem(StoredParams.GetKey(i));
-    it.AddField("value", StoredParams.GetObject(i));
+    it.AddField("value", olxstr().quote('"') << StoredParams.GetObject(i));
   }
 
   SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRender().LightModel);
@@ -2667,7 +2674,6 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 //..............................................................................
 void TMainForm::LoadSettings(const olxstr &FN)  {
   if( !TEFile::Exists(FN) ) return;
-
   // compatibility check...
 #ifdef __WIN32__
   {
@@ -2798,7 +2804,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( TEFile::Exists(DefStyle) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"), false);
+    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"),
+      false);
   }
   else  {
     TDataItem& last_saved_style = DF.Root().FindRequiredItem("Styles");
@@ -2873,12 +2880,12 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     processMacro(olxstr("grad ") << T);
 
   I = DF.Root().FindItem("Stored_params");
-  if( I )  {
-    for( size_t i=0; i < I->ItemCount(); i++ )  {
+  if (I != NULL)  {
+    for (size_t i=0; i < I->ItemCount(); i++) {
       TDataItem& pd = I->GetItem(i);
-      processMacro( olxstr("storeparam ") << pd.GetName() << ' '
-                      << '\'' << pd.GetFieldValue("value") << '\'' << ' '
-                      << pd.GetFieldValue("process", EmptyString()));
+      olxstr v = pd.GetFieldValue("value");
+      processFunction(v, EmptyString(), true);
+      StoredParams.Add(pd.GetName(), v);
     }
   }
 }
@@ -2944,7 +2951,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     return;
   }
   TPtrList<wxMenuItem> Items;
-  olxstr FN( (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ? 
+  olxstr FN( (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ?
     TEFile::ChangeFileExt(fn, EmptyString()) : fn );
   TEFile::OSPathI(FN);
   size_t index = FRecentFiles.IndexOf(FN);
@@ -2956,10 +2963,14 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
           if( item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0+FRecentFilesToShow))
             index = i;
       }
-      if( index != InvalidIndex )
-        mi = MenuFile->InsertCheckItem(index + 1, (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
-      else
-        mi = MenuFile->AppendCheckItem((int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
+      if( index != InvalidIndex ) {
+        mi = MenuFile->InsertCheckItem(index + 1,
+          (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
+      }
+      else {
+        mi = MenuFile->AppendCheckItem(
+          (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
+      }
       FRecentFiles.Insert(0, FN, mi);
     }  
     else  {
@@ -2974,7 +2985,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     Items.Add( FRecentFiles.GetObject(i) ); 
   for( size_t i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
     FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
-    Items[i]->SetText( FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str() ) ;
+    Items[i]->SetText(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
     Items[i]->Check(false);
   }
   FRecentFiles.GetObject(0)->Check( true );
@@ -2991,8 +3002,8 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   if( FRecentFiles.Count()%3 )  tc++;
   Table.Resize(FRecentFiles.Count()/3+tc, 3);
   for( size_t i=0; i < FRecentFiles.Count(); i++ )  {
-    Tmp = "<a href=\"reap \'";
-    Tmp << TEFile::OSPath(FRecentFiles[i]) << "\'\">";
+    Tmp = "<a href=\'reap \"";
+    Tmp << TEFile::OSPath(FRecentFiles[i]) << "\"\'>";
     Tmp << TEFile::ExtractFileName(FRecentFiles[i]) << "</a>";
     Table[i/3][i%3] = Tmp;
   }
@@ -3955,7 +3966,9 @@ void TMainForm::PyInit()  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames)  {
+bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y,
+  const wxArrayString& filenames)
+{
   if( filenames.Count() != 1 )  return false;
   const olxstr fn = filenames[0];
   try  {
@@ -3963,7 +3976,7 @@ bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayS
       return false;
   }
   catch(...)  {  return false;  }
-  parent.processMacro(olxstr("reap \'") << fn << '\'');
+  parent.processMacro(olxstr("reap \"") << fn << '\"');
   return true;
 }
 //..............................................................................
@@ -3976,7 +3989,8 @@ bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
 void TMainForm::UpdateInfoBox()  {
   FInfoBox->Clear();
   if( FXApp->XFile().HasLastLoader() )  {
-    FInfoBox->PostText(olxstr("\\-") << TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
+    FInfoBox->PostText(olxstr("\\-") <<
+      TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(TEFile::ExtractFileName(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(FXApp->XFile().LastLoader()->GetTitle());
     FInfoBox->Fit();

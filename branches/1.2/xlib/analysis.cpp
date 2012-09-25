@@ -143,7 +143,7 @@ ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
   const cm_Element *re)
 {
   const short z = (re == NULL ? iCarbonZ : re->z);
-  return &ListFilter::FilterIndices(
+  return &olx_list_filter::FilterIndices(
     atoms,
     *(new TArrayList<size_t>),
     olx_alg::olx_not(TCAtom::TypeAnalyser(z)));
@@ -401,7 +401,7 @@ bool fragments::ring::merge(ring &r) {
   if (atoms[0] != r.atoms[1])
     atoms.AddList(r.atoms.SubListFrom(2));
   else
-    atoms.AddList(ReverseList::MakeConst(r.atoms.SubListFrom(2)));
+    atoms.AddList(olx_list_reverse::MakeConst(r.atoms.SubListFrom(2)));
   for (size_t i=0; i < r.substituents.Count(); i++) {
     if (!r.substituents[i].atoms[0]->IsProcessed())
       substituents.AddCopy(r.substituents[i]);
@@ -524,13 +524,13 @@ bool fragments::fragment::is_regular() const {
   vec3d_list crds = build_coordinates();
   if (crds.Count() < 3) return true;
   if (crds.Count() == 3) { // check if 180 +- 10 degrees, linear arrangement
-    TSizeList indices(3, list_init::index());
+    TSizeList indices(3, olx_list_init::index());
     indices.Remove(ci);
     double ca = (crds[indices[0]]-crds[ci]).CAngle(crds[indices[1]]-crds[ci]);
     return (ca+1) < 0.03;
   }
   else if (crds.Count() == 4) { // check flat or tetrahedral arrangement
-    TSizeList indices(4, list_init::index());
+    TSizeList indices(4, olx_list_init::index());
     indices.Remove(ci);
     vec3d cnt = (crds[indices[0]]+crds[indices[1]]+crds[indices[2]])/3;
     vec3d rc = crds[ci]-cnt;
@@ -550,9 +550,9 @@ bool fragments::fragment::is_regular() const {
   }
   // some spherical arrangement test
   else if (crds.Count() == 5 || crds.Count() == 7) {
-    TSizeList indices(crds.Count(), list_init::index());
+    TSizeList indices(crds.Count(), olx_list_init::index());
     indices.Remove(ci);
-    vec3d cnt = olx_mean(indices, ConstIndexAccessor<vec3d, vec3d_list>(crds));
+    vec3d cnt = olx_mean(indices, IndexAccessor::MakeConst(crds));
     // check central atom is nearby the geometrical center
     if (cnt.DistanceTo(crds[ci]) > 0.1) return false;
     if (crds.Count() == 5) {

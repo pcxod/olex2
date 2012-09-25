@@ -36,7 +36,8 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
   // an alternative for MAC...
   SetHandler(smbLeft, sssAlt, meZoom);
   FDFrame = Frame;
-  SelectionEnabled = RotationEnabled = ZoomingEnabled = true;
+  TranslationEnabled = SelectionEnabled = RotationEnabled =
+    ZoomingEnabled = true;
 }
 //..............................................................................
 TGlMouse::~TGlMouse()  {

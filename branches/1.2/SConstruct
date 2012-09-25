@@ -283,7 +283,7 @@ else:
       env.ParseConfig("wx-config --cxxflags --version=2.8 --unicode --libs gl,core,html,net,aui")
       env.Append(FRAMEWORKS=['OpenGL', 'AGL', 'Python'])
     else:
-      env.ParseConfig("wx-config --cxxflags --version=2.8 --unicode --libs gl,core,html,net,aui")
+      env.ParseConfig("wx-config --cxxflags --version=2.9 --unicode --libs gl,core,html,net,aui,adv")
       env.Append(LIBS=['libGL', 'libGLU'])
 #!!!
     tests_env = env.Clone()
