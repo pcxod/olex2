@@ -405,7 +405,7 @@ void TdlgSceneProps::OnOK(wxCommandEvent& event)  {
 //..............................................................................
 void TdlgSceneProps::OnOpen(wxCommandEvent& event)  {
   olxstr FN = Parent->PickFile("Load scene parameters",
-    "Scene parameters|*.glsp", Parent->GetScenesFolder(), true);
+    "Scene parameters|*.glsp", Parent->GetScenesFolder(), EmptyString(), true);
   if( !FN.IsEmpty() )  {
     LoadFromFile(FLightModel, FN);
     Parent->SetScenesFolder(TEFile::ExtractFilePath(FN));
@@ -416,7 +416,7 @@ void TdlgSceneProps::OnOpen(wxCommandEvent& event)  {
 //..............................................................................
 void TdlgSceneProps::OnSave(wxCommandEvent& event)  {
   olxstr FN = Parent->PickFile("Save scene parameters",
-  "Scene parameters|*.glsp", Parent->GetScenesFolder(), false);
+  "Scene parameters|*.glsp", Parent->GetScenesFolder(), EmptyString(), false);
   if( !FN.IsEmpty() )  {
     UpdateLight(FLightModel.GetLight(FCurrentLight));
     Parent->SetScenesFolder(TEFile::ExtractFilePath(FN));

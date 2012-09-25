@@ -65,17 +65,13 @@ olxstr TMainFrame::PortableFilter(const olxstr& filter)  {
 }
 //..............................................................................
 olxstr TMainFrame::PickFile(const olxstr &Caption, const olxstr &Filter,
-                              const olxstr &DefFolder, bool Open)  {
-  olxstr FN;
-  int Style;
-  if( Open )  Style = wxFD_OPEN;
-  else        Style = wxFD_SAVE;
-  wxFileDialog *dlgFile = new wxFileDialog(this, Caption.u_str(),
-    DefFolder.u_str(), wxString(), PortableFilter(Filter).u_str(), Style);
-  if( dlgFile->ShowModal() ==  wxID_OK )
-    FN = dlgFile->GetPath();
-  delete dlgFile;
-  return FN;
+  const olxstr &DefFolder, const olxstr &DefFile, bool Open)
+{
+  int Style = Open ? wxFD_OPEN : wxFD_SAVE;
+  wxFileDialog dlgFile(this, Caption.u_str(),
+    DefFolder.u_str(), DefFile.u_str(), PortableFilter(Filter).u_str(), Style);
+  return (dlgFile.ShowModal() == wxID_OK ? olxstr(dlgFile.GetPath())
+    : EmptyString());
 }
 //..............................................................................
 int TMainFrame::ShowAlert(const olxstr &msg, const olxstr &title, int flags)  {

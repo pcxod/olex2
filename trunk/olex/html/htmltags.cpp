@@ -563,7 +563,7 @@ TAG_HANDLER_PROC(tag)  {
 #ifdef __MAC__
     Box->WI.SetHeight(olx_max(ay, Box->GetCharHeight()+10));
 #else
-    Box->WI.SetHeight( ay );
+    Box->WI.SetHeight(ay);
 #endif    
     if( tag.HasParam(wxT("ITEMS")) )  {
       olxstr Items = tag.GetParam(wxT("ITEMS"));

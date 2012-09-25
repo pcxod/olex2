@@ -40,13 +40,23 @@ TComboBox::~TComboBox()  {
   }
 }
 //..............................................................................
-void TComboBox::SetText(const olxstr& T)  {
-  StrValue = T;
+void TComboBox::SetText(const olxstr& T) {
+  olxstr actual_val = T;
+  for (unsigned int i=0; i < GetCount(); i++ )  {
+    TDataObj* res = (TDataObj*)GetClientData(i);
+    if (res == NULL || !res->Delete) continue;
+    olxstr sv = res->Data->ToString();
+    if (sv == T) {
+      actual_val = GetString(i);
+      break;
+    }
+  }
+  StrValue = actual_val;
   SetValue(StrValue.u_str());
 #ifdef __WIN32__
   if( GetTextCtrl() != NULL )
     GetTextCtrl()->SetInsertionPoint(0);
-#endif		
+#endif
 }
 //..............................................................................
 void TComboBox::Clear() {
@@ -66,7 +76,7 @@ void TComboBox::Clear() {
 #endif	
 }
 //..............................................................................
-void TComboBox::_AddObject( const olxstr &Item, IEObject* Data, bool Delete)  {
+void TComboBox::_AddObject(const olxstr &Item, IEObject* Data, bool Delete)  {
   Append(Item.u_str());
   if( Data != NULL )  {
     TDataObj* d_o = new TDataObj;
@@ -78,7 +88,7 @@ void TComboBox::_AddObject( const olxstr &Item, IEObject* Data, bool Delete)  {
     SetClientData(GetCount()-1, NULL);
 }
 //..............................................................................
-void TComboBox::AddObject( const olxstr &Item, IEObject* Data)  {
+void TComboBox::AddObject(const olxstr &Item, IEObject* Data)  {
   _AddObject(Item, Data, false);
 }
 //..............................................................................
@@ -176,11 +186,11 @@ void TComboBox::OnDrawItem( wxDC& dc, const wxRect& rect, int item,
   return;
 }
 //..............................................................................
-wxCoord TComboBox::OnMeasureItem( size_t item ) const {
+wxCoord TComboBox::OnMeasureItem(size_t item) const {
   return this->GetCharHeight();
 }
 //..............................................................................
-wxCoord TComboBox::OnMeasureItemWidth( size_t item ) const {
+wxCoord TComboBox::OnMeasureItemWidth(size_t item) const {
   return wxOwnerDrawnComboBox::OnMeasureItem(item);
 }
 //..............................................................................
