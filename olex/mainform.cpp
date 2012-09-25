@@ -831,8 +831,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
-  this_InitFunc(FileSave, fpThree);
-  this_InitFunc(FileOpen, fpThree);
+  this_InitFunc(FileSave, fpThree|fpFour);
+  this_InitFunc(FileOpen, fpThree|fpFour);
   this_InitFunc(ChooseDir, fpNone|fpOne|fpTwo);
 
   this_InitFunc(Strcat, fpTwo);

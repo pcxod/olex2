@@ -216,11 +216,19 @@ void TMainForm::funGetEnv(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funFileSave(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(PickFile(Params[0], Params[1], Params[2], false));
+  E.SetRetVal(
+    PickFile(Params[0], Params[1], Params[2],
+    Params.Count() == 4 ? Params[3] : EmptyString(),
+    false)
+    );
 }
 //..............................................................................
 void TMainForm::funFileOpen(const TStrObjList& Params, TMacroError &E)  {
-  E.SetRetVal(PickFile(Params[0], Params[1], Params[2], true));
+  E.SetRetVal(
+    PickFile(Params[0], Params[1], Params[2],
+    Params.Count() == 4 ? Params[3] : EmptyString(),
+    true)
+    );
 }
 //..............................................................................
 void TMainForm::funSel(const TStrObjList& Params, TMacroError &E)  {
@@ -1182,8 +1190,10 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   Cmds.Delete(0);
   olxstr FN = Cmds.Text(' ');
   if( Tmp == "style" )  {
-    if( !FN.Length() )
-    {  FN = PickFile("Save drawing style", "Drawing styles|*.glds", StylesDir, false);  }
+    if( FN.IsEmpty() ) {
+      FN = PickFile("Save drawing style", "Drawing styles|*.glds",
+        StylesDir, EmptyString(), false);
+    }
     if( FN.IsEmpty() )  {
       Error.ProcessingError(__OlxSrcInfo, "no file name is given" );
       return;
@@ -1210,8 +1220,10 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   if( Tmp == "scene" )  {
-    if( FN.IsEmpty() )
-      FN = PickFile("Save scene parameters", "Scene parameters|*.glsp", ScenesDir, false);
+    if( FN.IsEmpty() ) {
+      FN = PickFile("Save scene parameters", "Scene parameters|*.glsp",
+        ScenesDir, EmptyString(), false);
+    }
     if( FN.IsEmpty() )  {
       Error.ProcessingError(__OlxSrcInfo, "no file name is given" );
       return;
@@ -1261,8 +1273,10 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
   if( Cmds[0].Equalsi("style") )  {
     olxstr FN = Cmds.Text(' ', 1);
-    if( FN.IsEmpty() )
-      FN = PickFile("Load drawing style", "Drawing styles|*.glds", StylesDir, true);
+    if( FN.IsEmpty() ) {
+      FN = PickFile("Load drawing style", "Drawing styles|*.glds",
+        StylesDir, EmptyString(), true);
+    }
     if( FN.IsEmpty() )
       return;
     olxstr Tmp = TEFile::ExtractFilePath(FN);
@@ -1306,8 +1320,10 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( Cmds[0].Equalsi("scene") )  {
     olxstr FN = Cmds.Text(' ', 1);
-    if( FN.IsEmpty() )
-      FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", ScenesDir, true);
+    if( FN.IsEmpty() ) {
+      FN = PickFile("Load scene parameters", "Scene parameters|*.glsp",
+        ScenesDir, EmptyString(), true);
+    }
     if( FN.IsEmpty() )
       return;
     olxstr Tmp = TEFile::ExtractFilePath(FN);
@@ -1360,8 +1376,10 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else if ( Cmds[0].Equalsi("radii") )  {
     if( Cmds.Count() > 1  )  {
       olxstr fn = Cmds.Text(' ', 2);
-      if( fn.IsEmpty() )
-        fn = PickFile("Load atomic radii", "Text files|*.txt", EmptyString(), true);
+      if( fn.IsEmpty() ) {
+        fn = PickFile("Load atomic radii", "Text files|*.txt",
+          EmptyString(), EmptyString(), true);
+      }
       if( TEFile::Exists(fn) )  {
         olxdict<olxstr,double,olxstrComparator<false> > radii;
         TStrList sl, toks;
@@ -1409,8 +1427,10 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   olxstr FN, Tmp;
-  if( Cmds.IsEmpty() )
-    FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", ScenesDir, false);
+  if( Cmds.IsEmpty() ) {
+    FN = PickFile("Load scene parameters", "Scene parameters|*.glsp",
+      ScenesDir, EmptyString(), false);
+  }
   else
     FN = Cmds.Text(' ');
 
@@ -1475,7 +1495,8 @@ void TMainForm::macStyle(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       return;
     }
     else  {
-      olxstr FN = PickFile("Load drawing style", "Drawing styles|*.glds", StylesDir, false);
+      olxstr FN = PickFile("Load drawing style", "Drawing styles|*.glds",
+        StylesDir, EmptyString(), false);
       if( TEFile::Exists(FN) )
         DefStyle = FN;
     }
@@ -1515,7 +1536,8 @@ void TMainForm::macScene(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   else  {
-    olxstr FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", ScenesDir, false);
+    olxstr FN = PickFile("Load scene parameters", "Scene parameters|*.glsp",
+      ScenesDir, EmptyString(), false);
     if( TEFile::Exists(FN) )
       DefSceneP = FN;
   }
@@ -2333,7 +2355,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       ff.Add("*.oxm", "Olex2 model");
     file_n.file_name = PickFile("Open File",
       ff.GetString(),
-      XLibMacros::CurrentDir, true);
+      XLibMacros::CurrentDir, EmptyString(), true);
   }
   // the dialog has been successfully executed
   if( !file_n.file_name.IsEmpty() )  {
@@ -2717,7 +2739,7 @@ void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         olxstr("Python scripts (*.py)|*.py")  <<
         "|Text files (*.txt)|*.txt"  <<
         "|All files (*.*)|*.*",
-        TBasicApp::GetBaseDir(), true);
+        TBasicApp::GetBaseDir(), EmptyString(), true);
       if( !FN.IsEmpty() && TEFile::Exists(FN) )  {
         TStrList sl;
         sl.LoadFromFile(FN);
@@ -5474,7 +5496,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     olxstr FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz",
-      XLibMacros::CurrentDir, true);
+      XLibMacros::CurrentDir, EmptyString(), true);
     if (FN.IsEmpty()) {
       E.ProcessingError(__OlxSrcInfo, "A file is expected");
       return;
@@ -5571,7 +5593,8 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     E.ProcessingError(__OlxSrcInfo, "please select one fragment or one atom only");
     return;
   }
-  olxstr FN = PickFile("Save Fragment as...", "XYZ files (*.xyz)|*.xyz", XLibMacros::CurrentDir, false);
+  olxstr FN = PickFile("Save Fragment as...", "XYZ files (*.xyz)|*.xyz",
+    XLibMacros::CurrentDir, EmptyString(), false);
   if( FN.IsEmpty() )  return;
   TXyz xyz;
   for( size_t i=0; i < nets[0]->NodeCount(); i++ )  {

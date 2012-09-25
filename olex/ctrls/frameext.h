@@ -37,7 +37,7 @@ namespace ctrl_ext  {
     //saves current position of the window on screen
     void SavePosition(wxWindow *Window);
     olxstr PickFile(const olxstr &Caption, const olxstr &Filter,
-      const olxstr &DefFolder, bool Open);
+      const olxstr &DefFolder, const olxstr &DefFile, bool Open);
     virtual void SetScenesFolder(const olxstr& sf) = 0;
     virtual const olxstr& GetScenesFolder() const = 0;
     virtual void LoadScene(const TDataItem &root, TGlLightModel &scene) = 0;
