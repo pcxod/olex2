@@ -740,6 +740,38 @@ const_strlist RefinementModel::Describe() {
   TStrList lst;
   Validate();
   int sec_num = 0;
+  // riding atoms..
+  olxdict<double, 
+    olxdict<const TCAtom *, TCAtomPList, TPointerComparator>, 
+    TPrimitiveComparator> riding_u;
+  for (size_t i=0; i < aunit.AtomCount(); i++) {
+    TCAtom &a = aunit.GetAtom(i);
+    if (a.GetUisoOwner() != NULL && !a.IsDeleted())
+      riding_u.Add(a.GetUisoScale()).Add(a.GetUisoOwner()).Add(a);
+  }
+  if (!riding_u.IsEmpty()) {
+    lst.Add(olxstr(++sec_num)) << ". Fixed Uiso";
+    for (size_t i=0; i < riding_u.Count(); i++) {
+      lst.Add(" At ") << riding_u.GetKey(i) << " times of:";
+      olxstr &l = lst.Add("  ");
+      for (size_t j=0; j < riding_u.GetValue(i).Count(); j++) {
+        if (l.Length() > 2) l << ", ";
+        TCAtomPList &al = riding_u.GetValue(i).GetValue(j);
+        if (al.Count() == 1) {
+          l << al[0]->GetLabel() << " of " <<
+            riding_u.GetValue(i).GetKey(j)->GetLabel();
+        }
+        else {
+          l << '{';
+          for (size_t k=0; k < al.Count(); k++) {
+            l << al[k]->GetLabel();
+            if ((k+1) < al.Count()) l << ',';
+          }
+          l << "} of " << riding_u.GetValue(i).GetKey(j)->GetLabel();
+        }
+      }
+    }
+  }
   // site related
   if( ExyzGroups.Count() != 0 )  {
     lst.Add(olxstr(++sec_num)) << ". Shared sites";
