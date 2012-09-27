@@ -164,7 +164,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three "
     "values pecify the view normal and nine values provide a full matrix");
   gxlib_InitMacro(Line,
-    "n-just sets current view normal to the line without creating the object",
+    "n-just sets current view normal to the line without creating the object&;"
+    "f-consider input in fractional coordinates vs Cartesian",
     fpAny,
     "Creates a line or best line for provided atoms");
   gxlib_InitMacro(Mpln,
@@ -1322,6 +1323,17 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  if (Cmds.Count() == 6 && olx_list_and(Cmds, &olxstr::IsNumber)) {
+    TDoubleList a = TDoubleList::FromList(Cmds,
+      FunctionAccessor::MakeConst(&olxstr::ToDouble));
+    from = vec3d(a[0], a[1], a[2]);
+    to = vec3d(a[3], a[4], a[5]);
+    if (Options.GetBoolOption('f')) {
+      from = app.XFile().GetAsymmUnit().Orthogonalise(from);
+      to = app.XFile().GetAsymmUnit().Orthogonalise(to);
+    }
+    process_atoms = false;
+  }
   TXAtomPList Atoms;
   if (process_atoms)
     Atoms = app.FindXAtoms(Cmds, true, true);
@@ -1346,7 +1358,6 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
     from = Atoms[0]->crd();
     to = Atoms[1]->crd();
   }
-
   else if (process_atoms) {
     Error.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
     return;
