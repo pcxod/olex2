@@ -362,30 +362,20 @@ void XVarManager::Describe(TStrList& lst)  {
     lst.Add(' ') << eq_des << '=' << Equations[i].GetValue() <<
       " with esd of " << Equations[i].GetSigma();
   }
-  for( size_t i=1; i < Vars.Count(); i++ )  {
-    if( Vars[i]._RefCount() == 2 )  {
-      if( (Vars[i].GetRef(0).relation_type == relation_AsVar && 
-           Vars[i].GetRef(1).relation_type == relation_AsOneMinusVar) ||
-          (Vars[i].GetRef(1).relation_type == relation_AsVar && 
-           Vars[i].GetRef(0).relation_type == relation_AsOneMinusVar) )  
-      {
-        if( Vars[i].GetRef(0).relation_type == relation_AsVar ) {
-          lst.Add(Vars[i].GetRef(0).referencer.GetVarName(
-              Vars[i].GetRef(0).var_index) ) << '(' <<
-              Vars[i].GetRef(0).referencer.GetIdName() << ")=1-" <<
-            Vars[i].GetRef(1).referencer.GetVarName(
-              Vars[i].GetRef(1).var_index) << '(' <<
-              Vars[i].GetRef(1).referencer.GetIdName() << ')';
-        }
-        else {
-          lst.Add(Vars[i].GetRef(1).referencer.GetVarName(
-              Vars[i].GetRef(1).var_index) ) << '(' <<
-              Vars[i].GetRef(1).referencer.GetIdName() << ")=1-" <<
-            Vars[i].GetRef(0).referencer.GetVarName(
-              Vars[i].GetRef(0).var_index) << '(' <<
-              Vars[i].GetRef(0).referencer.GetIdName() << ')';
-        }
-        continue;
+  for (size_t i=1; i < Vars.Count(); i++) {
+    if (Vars[i]._RefCount() < 2) continue;
+    olxstr &l = lst.Add(' ');
+    for (size_t j=0; j < Vars[i]._RefCount(); j++) {
+      if (l.Length() > 1) l << '=';
+      if (Vars[i].GetRef(j).relation_type == relation_AsVar) {
+        l << Vars[i].GetRef(j).referencer.GetVarName(
+          Vars[i].GetRef(j).var_index) << '(' <<
+          Vars[i].GetRef(j).referencer.GetIdName() << ")";
+      }
+      else {
+        l << "1-" << Vars[i].GetRef(1).referencer.GetVarName(
+          Vars[i].GetRef(1).var_index) << "(" <<
+          Vars[i].GetRef(1).referencer.GetIdName() << ')';
       }
     }
   }
@@ -393,8 +383,12 @@ void XVarManager::Describe(TStrList& lst)  {
   olxdict<olxstr,olxstr,olxstrComparator<false> > fixed;
   for( size_t i=0; i < Vars[0]._RefCount(); i++ )  {
     TCAtom *ca = dynamic_cast<TCAtom*>(&Vars[0].GetRef(i).referencer);
-    if (ca != NULL && ca->GetType() == iQPeakZ )
-      continue;
+    if (ca != NULL) {
+      if (ca->GetType() == iQPeakZ) continue;
+      if (Vars[0].GetRef(i).var_index == catom_var_name_Sof &&
+        olx_abs(ca->GetChemOccu()-1) < 1e-3)
+        continue;
+    }
     size_t ind = fixed.IndexOf(Vars[0].GetRef(i).referencer.GetVarName(
       Vars[0].GetRef(i).var_index));
     if( ind == InvalidIndex ) {

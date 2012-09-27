@@ -127,6 +127,7 @@ TIString TAfixGroup::ToString() const {
     rv << Dependent[i]->GetLabel() << ',';
     dep_cnt++;
   }
+  if (dep_cnt == 0) return Pivot->GetLabel();
   rv.SetLength(rv.Length()-1);  // remove trailing ','
   rv << ')';
   //item.AddField("d", D);

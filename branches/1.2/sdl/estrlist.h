@@ -463,20 +463,22 @@ public:
     if( Width == 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "width");
     string_type Str(String);
-    while( Str.Length() > Width )  {
+    while (Str.Length() > Width) {
       size_t spi = Str.LastIndexOf(' ', Width);
-      if( spi != InvalidIndex && spi > 0 )  {
-        Add( Str.SubStringTo(spi) );
+      if (spi != InvalidIndex && spi > 0) {
+        Add(Str.SubStringTo(spi));
         Str.Delete(0, spi+1); // remove the space
       }
-      else  {
-        if( Force )  {
-          Add( Str.SubStringTo(Width) );
+      else {
+        if (Force) {
+          Add(Str.SubStringTo(Width));
           Str.Delete(0, Width); // remove the space
         }
+        else
+          break;
       }
     }
-    if( !Str.IsEmpty() )  
+    if (!Str.IsEmpty())
       Add(Str);
     return *this;
   }
