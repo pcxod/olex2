@@ -77,6 +77,23 @@ protected:
   uint32_t get_color(int primitive, uint32_t def) const;
 };
 
+struct ort_bond_line : public a_ort_object  {
+  const TXLine &line;
+  vec3f from, to, p_from, p_to;
+  uint16_t draw_style;
+  ort_bond_line(const OrtDraw& parent, const TXLine& line,
+    const vec3f& from, const vec3f& to);
+  virtual void render(PSWriter&) const;
+  virtual float get_z() const {  return (p_from[2]+p_to[2])/2;  }
+  virtual void update_size(evecf &sz) const {
+    a_ort_object::update_min_max(sz, p_from);
+    a_ort_object::update_min_max(sz, p_to);
+  }
+protected:
+  void _render(PSWriter&, float scalex, uint32_t mask) const;
+  uint32_t get_color(int primitive, uint32_t def=0xFF) const;
+};
+
 struct ort_line : public a_ort_object  {
   vec3f from, to;
   uint32_t color;
@@ -169,7 +186,7 @@ private:
   uint32_t BondOutlineColor, AtomOutlineColor;
   float BondOutlineSize, AtomOutlineSize;
 protected:
-  float PieLineWidth, 
+  float PieLineWidth,
     ElpLineWidth, 
     QuadLineWidth,
     FontLineWidth,
@@ -183,6 +200,7 @@ protected:
   size_t PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out,
     const vec3f& normal) const;
   float GetBondRad(const ort_bond& b, uint32_t mask) const;
+  float GetLineRad(const ort_bond_line& b, uint32_t mask) const;
   vec3f ProjectPoint(const vec3f& p) const {
     return (p + SceneOrigin)*ProjMatr+DrawOrigin;
   }
@@ -201,6 +219,7 @@ protected:
       : parent(_parent), objects(_objects), color(_color)  {}
     void draw(float x1, float y1, float x2, float y2, float z);
   };
+  TPtrList<ort_atom> atoms;
 public:
   OrtDraw() : app(TGXApp::GetInstance()), basis(app.GetRender().GetBasis()) {
     ElpDiv = 36;
@@ -237,6 +256,7 @@ public:
   DefPropBIsSet(Perspective)
 
   friend struct ort_bond;
+  friend struct ort_bond_line;
   friend struct ort_atom;
   friend struct ort_poly;
 };

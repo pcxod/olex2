@@ -3557,59 +3557,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  if (Options.Contains('f')) {
-    olxstr i_v = Options.FindValue('f');
-    bool insert = i_v.IsEmpty() ? true : i_v.ToBool();
-    // emmbedding the RES file into the CIF
-    Cif->Remove("_shelx_res_file");
-    Cif->Remove("_shelx_res_file_MD5");
-    Cif->Remove("_shelx_res_checksum");
-    if (insert) {
-      olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
-      if (TEFile::Exists(res_fn)) {
-        cetNamedStringList res("_shelx_res_file");
-        TEFile res_f(res_fn, "rb");
-        res.lines.LoadFromTextStream(res_f);
-        Cif->SetParam(res);
-        res_f.SetPosition(0);
-        size_t as = res_f.GetAvailableSizeT();
-        char *bf = olx_malloc<char>(as);
-        res_f.Read(bf, as);
-        olxcstr s = olxcstr::FromExternal(bf, as);
-        s.DeleteCharSet("\n\r\t ");
-        Cif->SetParam("_shelx_res_file_MD5", MD5::Digest(s), false);
-      }
-    }
-    Cif->Remove("_shelx_hkl_file");
-    Cif->Remove("_shelx_hkl_file_MD5");
-    Cif->Remove("_shelx_hkl_checksum");
-    Cif->Remove("_refln");
-    // embedd HKL
-    if (insert) {
-      olxstr hkl_src = xapp.LocateHklFile();
-      if (TEFile::Exists(hkl_src)) {
-        cetTable &t = Cif->AddLoopDef("_refln_index_h,_refln_index_k,_refln_index_l,"
-          "_refln_F_squared_meas,_refln_F_squared_sigma");
-        THklFile hkl;
-        hkl.LoadFromFile(hkl_src);
-        bool batch_set = false;
-        if (hkl.RefCount() > 0 && hkl[0].IsBatchSet()) {
-          batch_set = hkl[0].IsBatchSet();
-          t.AddCol("_refln_scale_group_code");
-        }
-        t.SetRowCount(hkl.RefCount());
-        for (size_t hi=0; hi < hkl.RefCount(); hi++) {
-          t[hi][0] = new cetString(hkl[hi].GetH());
-          t[hi][1] = new cetString(hkl[hi].GetK());
-          t[hi][2] = new cetString(hkl[hi].GetL());
-          t[hi][3] = new cetString(hkl[hi].GetI());
-          t[hi][4] = new cetString(hkl[hi].GetS());
-          if (batch_set)
-            t[hi][5] = new cetString(hkl[hi].GetBatch());
-        }
-      }
-    }
-  }
   for( size_t i=0; i < Cmds.Count(); i++ )  {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
@@ -3643,6 +3590,65 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
       if( !skip )
         Cif->SetParam(e);
+    }
+  }
+  if (Options.Contains('f')) {
+    olxstr i_v = Options.FindValue('f');
+    bool insert = i_v.IsEmpty() ? true : i_v.ToBool();
+    // emmbedding the RES file into the CIF
+    Cif->Remove("_shelx_res_file");
+    Cif->Remove("_shelx_res_file_MD5");
+    Cif->Remove("_shelx_res_checksum");
+    bool has_details = Cif->ParamExists("_iucr_refine_instructions_details");
+    if (has_details)
+      Cif->Remove("_iucr_refine_instructions_details");
+    if (insert) {
+      olxstr res_fn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "res");
+      if (TEFile::Exists(res_fn)) {
+        cetNamedStringList res(has_details ? "_iucr_refine_instructions_details"
+          : "_shelx_res_file");
+        TEFile res_f(res_fn, "rb");
+        res.lines.LoadFromTextStream(res_f);
+        Cif->SetParam(res);
+        if (!has_details) {
+          res_f.SetPosition(0);
+          size_t as = res_f.GetAvailableSizeT();
+          char *bf = olx_malloc<char>(as);
+          res_f.Read(bf, as);
+          olxcstr s = olxcstr::FromExternal(bf, as);
+          s.DeleteCharSet("\n\r\t ");
+          Cif->SetParam("_shelx_res_file_MD5", MD5::Digest(s), false);
+        }
+      }
+    }
+    Cif->Remove("_shelx_hkl_file");
+    Cif->Remove("_shelx_hkl_file_MD5");
+    Cif->Remove("_shelx_hkl_checksum");
+    Cif->Remove("_refln");
+    // embedd HKL
+    if (insert) {
+      olxstr hkl_src = xapp.LocateHklFile();
+      if (TEFile::Exists(hkl_src)) {
+        cetTable &t = Cif->AddLoopDef("_refln_index_h,_refln_index_k,_refln_index_l,"
+          "_refln_F_squared_meas,_refln_F_squared_sigma");
+        THklFile hkl;
+        hkl.LoadFromFile(hkl_src);
+        bool batch_set = false;
+        if (hkl.RefCount() > 0 && hkl[0].IsBatchSet()) {
+          batch_set = hkl[0].IsBatchSet();
+          t.AddCol("_refln_scale_group_code");
+        }
+        t.SetRowCount(hkl.RefCount());
+        for (size_t hi=0; hi < hkl.RefCount(); hi++) {
+          t[hi][0] = new cetString(hkl[hi].GetH());
+          t[hi][1] = new cetString(hkl[hi].GetK());
+          t[hi][2] = new cetString(hkl[hi].GetL());
+          t[hi][3] = new cetString(hkl[hi].GetI());
+          t[hi][4] = new cetString(hkl[hi].GetS());
+          if (batch_set)
+            t[hi][5] = new cetString(hkl[hi].GetBatch());
+        }
+      }
     }
   }
   // generate moiety string if does not exist
