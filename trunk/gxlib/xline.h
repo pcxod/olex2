@@ -51,6 +51,7 @@ public:
   void UpdatePrimitives(int32_t mask)  {
     TXBond::UpdatePrimitives(mask);
   }
+  uint32_t GetPrimitiveMask() const { return TXBond::GetPrimitiveMask(); }
   TGPCollection& GetPrimitives() const {  return TXBond::GetPrimitives();  }
   bool IsDeleted() const { return TXBond::IsDeleted(); }
   TXGlLabel& GetGlLabel() const {  return TXBond::GetGlLabel();  }
