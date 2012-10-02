@@ -64,11 +64,14 @@ protected:
   void render_standalone(PSWriter&) const;
 };
 
+
+template <class draw_t>
 struct ort_bond : public a_ort_object  {
-  const TXBond &bond;
+  const draw_t &object;
   const ort_atom &atom_a, &atom_b;
+  const bool swapped;
   uint16_t draw_style;
-  ort_bond(const OrtDraw& parent, const TXBond& _bond,
+  ort_bond(const OrtDraw& parent, const draw_t &object,
     const ort_atom& a1, const ort_atom& a2);
   virtual void render(PSWriter&) const;
   virtual float get_z() const {  return (atom_a.crd[2]+atom_b.crd[2])/2;  }
@@ -79,6 +82,7 @@ protected:
 
 struct ort_bond_line : public a_ort_object  {
   const TXLine &line;
+  ort_atom *a1, *a2;
   vec3f from, to, p_from, p_to;
   uint16_t draw_style;
   ort_bond_line(const OrtDraw& parent, const TXLine& line,
@@ -199,7 +203,14 @@ protected:
   mutable TPtrList<const vec3f> FilteredArc;
   size_t PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out,
     const vec3f& normal) const;
-  float GetBondRad(const ort_bond& b, uint32_t mask) const;
+  template <class draw_t>
+  float GetBondRad(const ort_bond<draw_t>& b, uint32_t mask) const {
+    float r = (b.atom_a.atom.GetType() == iHydrogenZ ||
+      b.atom_b.atom.GetType() == iHydrogenZ) ? BondRad*HBondScale : BondRad;
+    if( (mask&((1<<13)|(1<<12)|(1<<11)|(1<<7)|(1<<6))) != 0 )
+      r /= 4;
+    return r;
+  }
   float GetLineRad(const ort_bond_line& b, uint32_t mask) const;
   vec3f ProjectPoint(const vec3f& p) const {
     return (p + SceneOrigin)*ProjMatr+DrawOrigin;
@@ -255,7 +266,9 @@ public:
   DefPropP(float, ElpLineWidth)
   DefPropBIsSet(Perspective)
 
-  friend struct ort_bond;
+  friend struct ort_bond_base;
+  friend struct ort_bond<TXBond>;
+  friend struct ort_bond<TXLine>;
   friend struct ort_bond_line;
   friend struct ort_atom;
   friend struct ort_poly;

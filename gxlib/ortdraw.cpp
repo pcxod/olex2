@@ -187,19 +187,23 @@ void ort_atom::render_rims(PSWriter& pw) const {
   }
 }
 
-ort_bond::ort_bond(const OrtDraw& parent, const TXBond& _bond,
+template <class draw_t>
+ort_bond<draw_t>::ort_bond(const OrtDraw& parent,
+  const draw_t &object,
   const ort_atom& a1, const ort_atom& a2)
   : a_ort_object(parent),
-  bond(_bond),
+  object(object),
   atom_a(a1.get_z() < a2.get_z() ? a1 : a2),
-  atom_b(a1.get_z() < a2.get_z() ? a2 : a1)
+  atom_b(a1.get_z() < a2.get_z() ? a2 : a1),
+  swapped(a1.get_z() > a2.get_z())
 {
   draw_style = 0;
 }
 
 
-uint32_t ort_bond::get_color(int primitive, uint32_t def) const {
-  TGlPrimitive *glp = bond.GetPrimitives().FindPrimitiveByName(
+template <class draw_t>
+uint32_t ort_bond<draw_t>::get_color(int primitive, uint32_t def) const {
+  TGlPrimitive *glp = object.GetPrimitives().FindPrimitiveByName(
     TXBond::StaticPrimitives()[primitive]);
   if( (draw_style&ortep_color_bond) == 0 )  {
     return glp == NULL ? 0 :
@@ -208,8 +212,9 @@ uint32_t ort_bond::get_color(int primitive, uint32_t def) const {
   }
   return glp == NULL ? def : glp->GetProperties().AmbientF.GetRGB();
 }
-void ort_bond::render(PSWriter& pw) const {
-  uint32_t mask = bond.GetPrimitiveMask();
+template <class draw_t>
+void ort_bond<draw_t>::render(PSWriter& pw) const {
+  uint32_t mask = object.GetPrimitiveMask();
   if( mask == 0 )  return;
   pw.lineWidth(1.0f);
   pw.translate(atom_a.crd);
@@ -233,7 +238,8 @@ void ort_bond::render(PSWriter& pw) const {
   _render(pw, 1, mask);
   pw.translate(-atom_a.crd);
 }
-void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
+template <class draw_t>
+void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   if( mask == (1<<12) || mask == (1<<13) || (mask&((1<<6)|(1<<7))) != 0 )  {
     pw.lineWidth(scalex);
     if( (mask&(1<<6)) !=0 )  {
@@ -255,7 +261,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   vec3f dir_vec = atom_b.crd-atom_a.crd;
   const float b_len = dir_vec.Length();
   if( b_len < 1e-3 )  return;
-  const float brad = parent.GetBondRad(*this, mask)*bond.GetRadius();
+  const float brad = parent.GetBondRad(*this, mask)*object.GetRadius();
   dir_vec.Normalise();
   const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
   mat3f rot_mat;
@@ -315,7 +321,7 @@ void ort_bond::_render(PSWriter& pw, float scalex, uint32_t mask) const {
       parent.BondProjM[i][1] = (parent.BondProjT[i][1]+parent.BondProjF[i][1])/2;
       parent.BondProjM[i][2] = (parent.BondProjT[i][2]+parent.BondProjF[i][2])/2;
     }
-    if( &atom_a.atom == &bond.A() )  { // normal rendering
+    if (!swapped) { // normal rendering
       if( (mask&((1<<4)|(1<<6)|(1<<9))) != 0 )  {
         if( (mask&(1<<4)) != 0 )
           pw.color(get_color(4, atom_a.sphere_color));
@@ -400,6 +406,32 @@ ort_bond_line::ort_bond_line(const OrtDraw& parent, const TXLine& line,
   p_from(parent.ProjectPoint(from)), p_to(parent.ProjectPoint(to))
 {
   draw_style = 0;
+  a1 = a2 = NULL;
+  float min_d1, min_d2;
+  for (size_t i=0; i < parent.atoms.Count(); i++) {
+    double d1 = (parent.atoms[i]->crd-p_from).QLength();
+    double dr = parent.atoms[i]->draw_rad;
+    if (parent.atoms[i]->elpm != NULL) {
+      dr = olx_max((*parent.atoms[i]->elpm)[0].QLength(),
+        (*parent.atoms[i]->elpm)[1].QLength());
+      dr = olx_max(dr, (*parent.atoms[i]->elpm)[2].QLength());
+    }
+    else
+      dr *= dr;
+    if (d1 < dr) {
+      if (a1 == NULL || (a1 != NULL && d1 < min_d1)) {
+        a1 = parent.atoms[i];
+        min_d1 = d1;
+      }
+    }
+    double d2 = (parent.atoms[i]->crd-p_to).QLength();
+    if (d2 < dr) {
+      if (a2 == NULL || (a2 != NULL && d2 < min_d2)) {
+        a2 = parent.atoms[i];
+        min_d2 = d2;
+      }
+    }
+  }
 }
 
 uint32_t ort_bond_line::get_color(int primitive, uint32_t def) const {
@@ -413,6 +445,10 @@ uint32_t ort_bond_line::get_color(int primitive, uint32_t def) const {
   return glp == NULL ? def : glp->GetProperties().AmbientF.GetRGB();
 }
 void ort_bond_line::render(PSWriter& pw) const {
+  if (a1 != NULL && a2 != NULL) {
+    ort_bond<TXLine>(parent, line, *a1, *a2).render(pw);
+    return;
+  }
   uint32_t mask = line.GetPrimitiveMask();
   if( mask == 0 )  return;
   pw.lineWidth(1.0f);
@@ -469,36 +505,46 @@ void ort_bond_line::_render(PSWriter& pw, float scalex, uint32_t mask) const {
       vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
   const mat3f proj_mat = rot_mat*parent.ProjMatr;
   const float _brad = brad*(1+pers_scale)*scalex;
-  ort_atom *f=NULL, *t=NULL;
-  for (size_t i=0; i < parent.atoms.Count(); i++) {
-    if ((parent.atoms[i]->crd-p_from).QLength() <
-        olx_sqr(parent.atoms[i]->draw_rad))
-    {
-      f = parent.atoms[i];
-    }
-    if ((parent.atoms[i]->crd-p_to).QLength() <
-        olx_sqr(parent.atoms[i]->draw_rad))
-    {
-      t = parent.atoms[i];
-    }
-  }
   float off1=0, off2=0;
-  if (f != NULL) {
-    off1 = !f->IsSolid() ? 0 :
-      (f->draw_rad > _brad ?
-      sqrt(olx_sqr(f->draw_rad)-olx_sqr(_brad)) : f->draw_rad);
+  if (a1 != NULL) {
+    off1 = !a1->IsSolid() ? 0 :
+      (a1->draw_rad > _brad ?
+      sqrt(olx_sqr(a1->draw_rad)-olx_sqr(_brad)) : a1->draw_rad);
   }
-  if (t != NULL) {
-    off2 = !t->IsSolid() ? 0 :
-      (t->draw_rad > _brad ?
-      sqrt(olx_sqr(t->draw_rad)-olx_sqr(_brad)) : t->draw_rad);
+  if (a2 != NULL) {
+    off2 = !a2->IsSolid() ? 0 :
+      (a2->draw_rad > _brad ?
+      sqrt(olx_sqr(a2->draw_rad)-olx_sqr(_brad)) : a2->draw_rad);
   }
-
-  for( uint16_t j=0; j < parent.BondDiv; j++ )  {
-    parent.BondProjT[j] = parent.BondProjF[j] =
-      (parent.BondCrd[j]*proj_mat).NormaliseTo(_brad);
-    parent.BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*(1-off2/b_len);
-    parent.BondProjF[j] += dir_vec*off1/b_len;
+  if (a1 != NULL && !a1->IsSpherical() && a1->IsSolid()) {
+    mat3f elm = *a1->elpm;
+    mat3f ielm = mat3f(elm).Normalise().Inverse();
+    mat3f erm, etm = ielm*elm;
+    vec3f pv = (touch_point*etm.Inverse()).Normalise();
+    const vec3f tp = etm*touch_point;
+    const float erm_ca = tp.CAngle(touch_point);
+    if (erm_ca != 1) {
+      olx_create_rotation_matrix_(
+        erm, tp.XProdVec(touch_point).Normalise(), tp.CAngle(touch_point));
+    }
+    else
+      erm.I();
+    rot_mat *= erm;
+    const vec3f off = (etm*pv)*parent.ProjMatr;
+    for( uint16_t j=0; j < parent.BondDiv; j++ )  {
+      parent.BondProjF[j] = (etm*(parent.BondCrd[j]*rot_mat)*parent.ProjMatr).
+        NormaliseTo(_brad) + off;
+      parent.BondProjT[j] = (parent.BondCrd[j]*proj_mat).
+        NormaliseTo(brad*2*scalex) + dir_vec;
+    }
+  }
+  else {
+    for( uint16_t j=0; j < parent.BondDiv; j++ )  {
+      parent.BondProjT[j] = parent.BondProjF[j] =
+        (parent.BondCrd[j]*proj_mat).NormaliseTo(_brad);
+      parent.BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*(1-off2/b_len);
+      parent.BondProjF[j] += dir_vec*off1/b_len;
+    }
   }
   if( scalex < 1.1 &&
     (mask&((1<<4)|(1<<5)|(1<<6)|(1<<7)|(1<<9)|(1<<10))) != 0 )
@@ -912,7 +958,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
       continue;
     const ort_atom& a1 = (const ort_atom&)objects[xb.A().GetTag()];
     const ort_atom& a2 = (const ort_atom&)objects[xb.B().GetTag()];
-    ort_bond *b = new ort_bond(*this, xb, a1, a2);
+    ort_bond<TXBond> *b = new ort_bond<TXBond>(*this, xb, a1, a2);
     if( (ColorMode&ortep_color_bond) != 0 )
       b->draw_style |= ortep_color_bond;
     objects.Add(b);
@@ -920,6 +966,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
 
   for (size_t i=0; i < app.LineCount(); i++) {
     TXLine &l = app.GetLine(i);
+    if (!l.IsVisible()) continue;
     ort_bond_line *ol = new ort_bond_line(*this,
       l, l.Base(), l.Edge());
     objects.Add(ol);
@@ -1091,15 +1138,6 @@ void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2,
     p2 = (p1+p2)*0.5;
   objects.Add(new ort_line(parent, parent.ProjectPoint(p1),
     parent.ProjectPoint(p2), color));
-}
-
-float OrtDraw::GetBondRad(const ort_bond& b, uint32_t mask) const {
-  float r = (b.bond.A().GetType() == iHydrogenZ ||
-             b.bond.B().GetType() == iHydrogenZ) ? BondRad*HBondScale : BondRad;
-  //even thinner for line or "balls" bond
-  if( (mask&((1<<13)|(1<<12)|(1<<11)|(1<<7)|(1<<6))) != 0 )
-    r /= 4;
-  return r;
 }
 
 float OrtDraw::GetLineRad(const ort_bond_line& b, uint32_t mask) const {
