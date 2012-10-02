@@ -482,6 +482,40 @@ public:
       Add(Str);
     return *this;
   }
+  // a recommended set is " \t,=+-*/"
+  TTStrList& Hyphenate(const string_type& String,
+   const char *cset, size_t Width,
+    const bool Force=true)
+  {
+    if (Width == 0)
+      throw TInvalidArgumentException(__OlxSourceInfo, "width");
+    string_type Str(String);
+    while (Str.Length() > Width) {
+      size_t spi;
+      bool wsp;
+      for (spi=Width-1; spi != InvalidIndex; spi--) {
+        if (olxstr::o_isoneof(Str.CharAt(spi), cset)) {
+          wsp = olxstr::o_iswhitechar(Str.CharAt(spi));
+          break;
+        }
+      }
+      if (spi != InvalidIndex && spi > 0) {
+        Add(Str.SubStringTo(spi+(wsp ? 0 : 1)));
+        Str.Delete(0, spi+1);
+      }
+      else {
+        if (Force) {
+          Add(Str.SubStringTo(Width));
+          Str.Delete(0, Width);
+        }
+        else
+          break;
+      }
+    }
+    if (!Str.IsEmpty())
+      Add(Str);
+    return *this;
+  }
 
   template <class Functor>
   const TTStrList& ForEach(const Functor& f) const {
