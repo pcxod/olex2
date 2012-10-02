@@ -404,11 +404,6 @@ void XVarManager::Describe(TStrList& lst)  {
   }
   for( size_t i=0; i < fixed.Count(); i++ ) {
     lst.Add(" Fixed ") << fixed.GetKey(i) << ": " << fixed.GetValue(i);
-    //TStrList sl;
-    //sl.Hyphenate(fixed.GetValue(i), 78, false);
-    //for (size_t j=0; j < sl.Count(); j++)
-    //  sl[j].Insert(' ', 0, 2);
-    //lst << sl;
   }
 }
 //.................................................................................................

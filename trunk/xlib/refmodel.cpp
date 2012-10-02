@@ -1019,7 +1019,7 @@ const_strlist RefinementModel::Describe() {
     size_t wsc = lst[i].LeadingCharCount(' ');
     if (wsc > 0 && lst[i].Length() > 80) {
       TStrList sl;
-      sl.Hyphenate(lst[i], 80-wsc, false);
+      sl.Hyphenate(lst[i], " \t,=+-*/", 80-wsc, true);
       lst[i] = sl[0];
       for (size_t li=1; li < sl.Count(); li++) {
         lst.Insert(++i, sl[li].Insert(' ', 0, wsc));
