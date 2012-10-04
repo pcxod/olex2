@@ -3597,7 +3597,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     bool insert = i_v.IsEmpty() ? true : i_v.ToBool();
     // emmbedding the RES file into the CIF
     Cif->Remove("_shelx_res_file");
-    Cif->Remove("_shelx_res_file_MD5");
     Cif->Remove("_shelx_res_checksum");
     bool has_details = Cif->ParamExists("_iucr_refine_instructions_details");
     if (has_details)
@@ -3610,19 +3609,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         TEFile res_f(res_fn, "rb");
         res.lines.LoadFromTextStream(res_f);
         Cif->SetParam(res);
-        if (!has_details) {
-          res_f.SetPosition(0);
-          size_t as = res_f.GetAvailableSizeT();
-          char *bf = olx_malloc<char>(as);
-          res_f.Read(bf, as);
-          olxcstr s = olxcstr::FromExternal(bf, as);
-          s.DeleteCharSet("\n\r\t ");
-          Cif->SetParam("_shelx_res_file_MD5", MD5::Digest(s), false);
-        }
       }
     }
     Cif->Remove("_shelx_hkl_file");
-    Cif->Remove("_shelx_hkl_file_MD5");
     Cif->Remove("_shelx_hkl_checksum");
     Cif->Remove("_refln");
     // embedd HKL
