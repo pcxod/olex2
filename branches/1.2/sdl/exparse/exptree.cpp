@@ -432,7 +432,7 @@ void expression_tree::expand_cmd()  {
       arg.TrimWhiteChars();
       size_t st=0, st_idx=InvalidIndex;
       while (++st_idx < dt.Length()) {
-        if (!olxstr::o_isalpha(dt.CharAt(st_idx)) &&
+        if (!olxstr::o_isalphanumeric(dt.CharAt(st_idx)) &&
             !olxstr::o_isoneof(dt.CharAt(st_idx), '_', '.'))
         {
           st = st_idx+1;
