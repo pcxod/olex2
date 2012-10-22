@@ -71,9 +71,9 @@ void TComboBox::Clear() {
   }
 #ifndef __WIN32__
   wxComboBox::Clear();
-#else	
+#else
   wxOwnerDrawnComboBox::Clear();
-#endif	
+#endif
 }
 //..............................................................................
 void TComboBox::_AddObject(const olxstr &Item, IEObject* Data, bool Delete)  {
