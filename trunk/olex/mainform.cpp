@@ -1325,6 +1325,8 @@ void TMainForm::StartupInit()  {
   }
   try  {  LoadSettings(T);  }
   catch(const TExceptionBase& e)  {
+    TBasicApp::NewLogEntry(logExceptionTrace) << e;
+    FXApp->CreateObjects(false);
     ShowAlert(e);
     //throw;
   }
@@ -2677,15 +2679,22 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   // compatibility check...
 #ifdef __WIN32__
   {
-    TEFile f(FN, "rb");
-    olxcstr l = f.ReadLine(), ds("\\\\");
-    f.Close();
-    if (!l.Contains(ds)) { // no escapes, needs converting
-      TCStrList t;
-      t.LoadFromFile(FN);
-      for (size_t i=0; i < t.Count(); i++)
-        t[i].Replace('\\', ds);
-      t.SaveToFile(FN);
+    if (!TEFile::OSPath(FN).StartsFrom(TBasicApp::GetBaseDir())) {
+      TEFile f(FN, "rb");
+      olxcstr l = f.ReadLine(), ds("\\\\");
+      f.Close();
+      if (l.Contains('\\') && !l.Contains(ds)) { // no escapes, needs converting
+        TCStrList t;
+        t.LoadFromFile(FN);
+        for (size_t i=0; i < t.Count(); i++)
+          t[i].Replace('\\', ds);
+        try {
+          t.SaveToFile(FN);
+        }
+        catch (const TExceptionBase &e) {
+          TBasicApp::NewLogEntry(logException) << e;
+        }
+      }
     }
   }
 #endif

@@ -142,7 +142,8 @@ bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   if( FHandle == NULL )  {
     olxstr fn = FName;
     FName.SetLength(0);
-    throw TFileException(__OlxSourceInfo, F, olxstr("NULL handle for '") << F << '\'');
+    throw TFileException(__OlxSourceInfo, F,
+      olxstr("NULL handle for '") << F << "' with opening mode '" << Attribs <<'\'');
   }
   return true;
 }
@@ -876,7 +877,7 @@ bool TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite)  {
 //..............................................................................
 olxstr TEFile::ExpandRelativePath(const olxstr& path, const olxstr& _base) {
   if( path.IsEmpty() )  return path;
-  if( !(path.StartsFrom('.') || path.StartsFrom("..")) )
+  if(!path.StartsFrom('.'))
     return OLX_OS_PATH(path);
   olxstr base = OLX_OS_PATH(_base);
   if( base.IsEmpty() )
@@ -906,7 +907,9 @@ olxstr TEFile::CreateRelativePath(const olxstr& path, const olxstr& _base)  {
   TStrList baseToks(base, OLX_PATH_DEL),
            pathToks(OLX_OS_PATH(path), OLX_PATH_DEL);
   size_t match_count=0, max_cnt = olx_min(pathToks.Count(), baseToks.Count());
-  while(baseToks[match_count] == pathToks[match_count] && ++match_count < max_cnt )  continue;
+  if (max_cnt == 0) return OLX_OS_PATH(path);
+  while(baseToks[match_count] == pathToks[match_count] && ++match_count < max_cnt )
+    continue;
   if( match_count == 0 )  return OLX_OS_PATH(path);
   olxstr rv;
   for( size_t i=match_count; i < baseToks.Count(); i++ )  {
