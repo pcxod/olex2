@@ -2043,6 +2043,10 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < released.sameList.Count(); i++ )
     released.sameList[i]->GetParent().Release(*released.sameList[i]);
   au.Release(TPtrList<TResidue>(residues_to_release));
+  for (size_t i=0; i < rm.AfixGroups.Count(); i++) {
+    if (rm.AfixGroups[i].GetTag() == 1)
+      rm.AfixGroups.Delete(i);
+  }
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
   bool undo=false;
