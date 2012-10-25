@@ -2244,7 +2244,7 @@ void TGXApp::undoHide(TUndoData *data)  {
     undo->Objects[i]->SetVisible(true);
 }
 //..............................................................................
-TUndoData* TGXApp::DeleteXObjects(AGDObjList& L)  {
+TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L)  {
   TXAtomPList atoms;
   atoms.SetCapacity(L.Count());
   bool planes_deleted = false;

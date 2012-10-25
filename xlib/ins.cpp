@@ -1193,9 +1193,9 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       Tmp.SetLength(exi);
     TStrList Toks(Tmp, ' ');
     if( Toks.IsEmpty() )  continue;
-    if( Toks[0].Equalsi("REM") )  
+    if( Toks[0].Equalsi("REM") )
       ;
-    else if( ParseIns(SL, Toks, cx, i) )  
+    else if( ParseIns(SL, Toks, cx, i) )
       ;
     else if( Toks.Count() < 6 )  // should be at least
       Instructions.Add(Tmp);
@@ -1224,7 +1224,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       atomCount++;
       atom->SetLabel(Toks[0], false);
       atom->SetType(*elm);
-      if( atom->GetType().GetMr() > 3.5 )
+      if (atom->GetType().z > 1)
         cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);
     }
