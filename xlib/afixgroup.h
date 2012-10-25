@@ -35,17 +35,19 @@ public:
         pivot->AddDependentHfixGroup(*this);
     }
   }
-  TAfixGroup(TAfixGroups& parent, const TAfixGroup& ag) : Parent(parent) {  
-    Assign(ag);  
+  TAfixGroup(TAfixGroups& parent, const TAfixGroup& ag) : Parent(parent) {
+    Assign(ag);
   }
-  ~TAfixGroup()  {  // note that Clear just removes the item from the parent list, calling this  
+  // note that Clear just removes the item from the parent list, calling this
+  ~TAfixGroup()  {
     for( size_t i=0; i < Dependent.Count(); i++ )
       Dependent[i]->SetParentAfixGroup(NULL);
     Dependent.Clear();
     if( Pivot == NULL )  return;
     if( HasExcplicitPivot() || IsUnbound() )
       Pivot->SetDependentAfixGroup(NULL);
-    else if( Pivot->DependentHfixGroupCount() != 0 ) // might happen at several places 
+    // might happen at several places
+    else if( Pivot->DependentHfixGroupCount() != 0 )
       Pivot->RemoveDependentHfixGroup(*this);
   }
   DefPropP(double, D)
@@ -54,7 +56,7 @@ public:
   DefPropP(size_t, Id)
   void Assign(const TAfixGroup& ag);
   TCAtom& GetPivot() {  return *Pivot;  }
-  void SetPivot(TCAtom& ca)  {  
+  void SetPivot(TCAtom& ca)  {
     Pivot = &ca;
     if( HasExcplicitPivot() || IsUnbound() )
       Pivot->SetDependentAfixGroup(this);
@@ -149,8 +151,7 @@ public:
   void Clear();
   bool IsEmpty() const;
   size_t Count() const {  return Dependent.Count();  }
-  TCAtom& operator [] (size_t i) {  return *Dependent[i];  }
-  const TCAtom& operator [] (size_t i) const {  return *Dependent[i];  }
+  TCAtom& operator [] (size_t i) const {  return *Dependent[i];  }
   // describes current group (just the AFIX)
   olxstr Describe() const;
   // returns string describing the group content
@@ -166,13 +167,13 @@ public:
 class TAfixGroups {
   TTypeList<TAfixGroup> Groups;
 public:
-
   class RefinementModel& RM;
-
   TAfixGroups(RefinementModel& parent) : RM(parent) {}
-
-  TAfixGroup& New(TCAtom* pivot, int Afix, double d = 0, double sof = 0, double u = 0 )  {
-    return Groups.Add( new TAfixGroup(*this, Groups.Count(), pivot, Afix, d, sof, u) );
+  TAfixGroup& New(TCAtom* pivot, int Afix, double d = 0, double sof = 0,
+    double u = 0 )
+  {
+    return Groups.Add(
+      new TAfixGroup(*this, Groups.Count(), pivot, Afix, d, sof, u));
   }
   size_t Count() const {  return Groups.Count();  }
   TAfixGroup& operator [] (size_t i) {  return Groups[i];  }
@@ -180,7 +181,7 @@ public:
   void Clear() {  Groups.Clear();  }
   void Delete(size_t i)  {
     Groups.Delete(i);
-    for( size_t j=i; j < Groups.Count(); j++ )
+    for (size_t j=i; j < Groups.Count(); j++)
       Groups[j].SetId(j);
   }
   void Assign(const TAfixGroups& ags)  {
