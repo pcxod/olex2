@@ -16,7 +16,7 @@ using namespace macrolib;
 //.............................................................................
 //.............................................................................
 TEMacro::TEMacro(const olxstr& name, const olxstr& desc)
-  : AMacro(name, EmptyString(), fpAny_Options, desc)
+  : AMacro(name, EmptyString(), fpAny_Options|fpAny, desc)
 {
 
 }
