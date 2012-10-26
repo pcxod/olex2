@@ -752,7 +752,7 @@ public:     void CalcProbFactor(float Prob);
 //..............................................................................
 // X interface
   TUndoData* DeleteXAtoms(TXAtomPList& L);
-  TUndoData* DeleteXObjects(AGDObjList& L);
+  TUndoData* DeleteXObjects(const AGDObjList& L);
   /* function undoes deleted atoms bonds and planes */
   void undoDelete(TUndoData *data);
   /* function undoes renaming atoms */

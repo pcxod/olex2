@@ -40,9 +40,9 @@
 BeginEsdlNamespace()
 
 /* these constans specify the number of parameters (bytes [0..3]
-   and any special checks for the state in which func/macro can be exexuted
+   and any special checks for the state in which func/macro can be executed
    in bytes [4..7]. For example some functions can be executed only if a file
-   is loaded...
+   is loaded... Only at maximum 14 arguments can be checked safely
 */
 const uint32_t
   fpNone  = 0x00000001,
@@ -56,8 +56,8 @@ const uint32_t
   fpEight = 0x00000100,
   fpNine  = 0x00000200,
   fpTen   = 0x00000400,
-  fpAny   = 0x0000fffe,
-  fpAny_Options = 0x0000ffff,
+  fpAny   = 0x00007fff,
+  fpAny_Options = 0x00008000,
 
   fpSpecialCheckA = 0x00010000,
   fpSpecialCheckB = 0x00020000,
