@@ -147,7 +147,7 @@ void AMacro::Run(TStrObjList &Params, const TParamList &Options,
 {
   if( !ValidateState(Params, E) )  return;
   const size_t argC = Params.Count();
-  if ((GetArgStateMask()&0x0000ffff) != fpAny_Options) {
+  if ((GetArgStateMask()&fpAny_Options) != fpAny_Options) {
     for( size_t i=0; i < Options.Count(); i++ )  {
       if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
         E.WrongOption(*this, Options.GetName(i) );

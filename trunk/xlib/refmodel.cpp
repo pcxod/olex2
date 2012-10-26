@@ -115,7 +115,6 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   SolutionMethod.SetLength(0);
   HKLSource.SetLength(0);
   Omits.Clear();
-  BadReflections.Clear();
   BASF.Clear();
   BASF_Vars.Clear();
   DEFS.Clear();
@@ -129,6 +128,8 @@ void RefinementModel::Clear(uint32_t clear_mask) {
     AfixGroups.Clear();
   if( (clear_mask & rm_clear_VARS) != 0 )
     Vars.ClearAll();
+  if ((clear_mask & rm_clear_BadRefs) != 0)
+    BadReflections.Clear();
 }
 //.............................................................................
 void RefinementModel::ClearVarRefs() {
