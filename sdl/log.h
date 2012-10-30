@@ -78,7 +78,7 @@ public:
     TLog& parent;
     olxstr_buf buffer;
     int evt;
-    LogEntry(TLog& _parent, int evt, bool annotate);
+    LogEntry(TLog& _parent, int evt, bool annotate, const olxstr &location);
     ~LogEntry();
     LogEntry& operator << (const olxstr &str)  {
       buffer << str;
@@ -101,8 +101,10 @@ public:
     }
   };
 //..............................................................................
-  LogEntry NewEntry(int evt=logDefault, bool annotate = false)  {
-    return LogEntry(*this, evt, annotate);
+  LogEntry NewEntry(int evt=logDefault, bool annotate=false,
+    const olxstr &location=EmptyString())
+  {
+    return LogEntry(*this, evt, annotate, location);
   }
 //..............................................................................
   TActionQueue& OnInfo;

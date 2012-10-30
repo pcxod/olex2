@@ -105,10 +105,10 @@ public:
   */
   void SetInstanceDir(const olxstr &d);
   static TLog& GetLog()  {  return *GetInstance().Log;  }
-  static TLog::LogEntry NewLogEntry(int evt_type = logDefault,
-    bool annotate=false)
+  static TLog::LogEntry NewLogEntry(int evt_type=logDefault,
+    bool annotate=false, const olxstr &location=EmptyString())
   {
-    return GetInstance().Log->NewEntry(evt_type, annotate);
+    return GetInstance().Log->NewEntry(evt_type, annotate, location);
   }
   /* if var_name is not NULL, tries to get its value and combine with file name
   of path if either are empty - the curent folder is used with exename
