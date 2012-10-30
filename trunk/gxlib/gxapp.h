@@ -747,7 +747,9 @@ public:     void CalcProbFactor(float Prob);
   void CenterModel();
 
   void CenterView(bool calcZoom = false);
-  // creates a mask of visible scene, Inc is the extra added to atomic Van-der-Waals radii
+  /* creates a mask of visible scene, Inc is the extra added to atomic Van-der
+  -Waals radii
+  */
   void BuildSceneMask(FractMask& mask, double Inc);
 //..............................................................................
 // X interface
@@ -761,7 +763,12 @@ public:     void CalcProbFactor(float Prob);
   void undoHide(TUndoData *data);
 
   void SynchroniseBonds(TXAtomPList& XAtoms);
-
+  /* Saves only structure specific style as well as the scene properties.
+  Three items will be added to the 'item' - Style, Scene and ICollections. The
+  latter is important for restoring properties of individual atoms/bonds etc
+  */
+  void SaveStructureStyle(TDataItem& item) const;
+  void LoadStructureStyle(const TDataItem &item);
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
   void FromDataItem(TDataItem& item, IInputStream& zis);
 
@@ -773,8 +780,10 @@ public:     void CalcProbFactor(float Prob);
   static TGXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();
     TGXApp* gxai = dynamic_cast<TGXApp*>(&bai);
-    if( gxai == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "unsuitable application instance");
+    if( gxai == NULL ) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "unsuitable application instance");
+    }
     return *gxai;
   }
 };

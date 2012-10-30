@@ -4025,7 +4025,30 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   }
 }
 //..............................................................................
-void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
+void TGXApp::SaveStructureStyle(TDataItem& item) const {
+  TPtrList<TGraphicsStyle> styles;
+  for( size_t i=0; i < FGlRender->ObjectCount(); i++ )  {
+    TGraphicsStyle* gs = &FGlRender->GetObject(i).GetPrimitives().GetStyle();
+    while( gs->GetParentStyle() != NULL )  {
+      if( gs->GetParentStyle()->GetParentStyle() == NULL ) // avoid the root
+        break;
+      gs = gs->GetParentStyle();
+    }
+    if( gs->GetName() == "Q" )
+      continue;
+    if( styles.IndexOf(gs) == InvalidIndex )
+      styles.Add(gs);
+  }
+  styles.Add(TXAtom::GetParamStyle());
+  styles.Add(TXBond::GetParamStyle());
+  FGlRender->GetStyles().ToDataItem(item.AddItem("Style"), styles);
+  FGlRender->GetScene().ToDataItem(item.AddItem("Scene"));
+  TDataItem& ind_col = item.AddItem("ICollections");
+  for( size_t i=0; i < IndividualCollections.Count(); i++ )
+    ind_col.AddField( olxstr("col_") << i, IndividualCollections[i]);
+}
+//..............................................................................
+void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   TSizeList LattAtomSz(LattCount()), 
     LattBondSz(LattCount());
   XFile().ToDataItem(item.AddItem("XFile"));
@@ -4039,26 +4062,7 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
       LattBondSz[i+1] = CalcMaxBondTag(OverlayedXFiles[i].GetLattice());
     }
   }
-  TPtrList<TGraphicsStyle> styles;
-  for( size_t i=0; i < FGlRender->ObjectCount(); i++ )  {
-    TGraphicsStyle* gs = &FGlRender->GetObject(i).GetPrimitives().GetStyle();
-    while( gs->GetParentStyle() != NULL )  {
-      if( gs->GetParentStyle()->GetParentStyle() == NULL ) // avoid the root
-        break;
-      gs = gs->GetParentStyle();
-    }
-    if( gs->GetName() == "Q" )
-      continue;
-    if( styles.IndexOf(gs) == InvalidIndex )
-      styles.Add( gs );
-  }
-  styles.Add(TXAtom::GetParamStyle());
-  styles.Add(TXBond::GetParamStyle());
-  FGlRender->GetStyles().ToDataItem(item.AddItem("Style"), styles);
-  FGlRender->GetScene().ToDataItem(item.AddItem("Scene"));
-  TDataItem& ind_col = item.AddItem("ICollections");
-  for( size_t i=0; i < IndividualCollections.Count(); i++ )
-    ind_col.AddField( olxstr("col_") << i, IndividualCollections[i]);
+  SaveStructureStyle(item);
   FGlRender->GetBasis().ToDataItem(item.AddItem("Basis"));
 
   TDataItem& visibility = item.AddItem("Visibility");
@@ -4171,6 +4175,17 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const  {
   renderer.AddField("max", PersUtil::VecToStr(FGlRender->MaxDim()));
 }
 //..............................................................................
+void TGXApp::LoadStructureStyle(const TDataItem &item) {
+  FGlRender->GetStyles().FromDataItem(item.FindRequiredItem("Style"), true);
+  TDataItem *scene_item = item.FindItem("Scene");
+  if( scene_item != NULL )
+    FGlRender->GetScene().FromDataItem(*scene_item);
+  IndividualCollections.Clear();
+  TDataItem& ind_col = item.FindRequiredItem("ICollections");
+  for( size_t i=0; i < ind_col.FieldCount(); i++ )
+    IndividualCollections.Add(ind_col.GetField(i));
+}
+//..............................................................................
 void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FGlRender->Clear();
   ClearXObjects();
@@ -4185,26 +4200,19 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   TXAtom::DefRad(0);
   TXAtom::DefDS(0);
 
-  FGlRender->GetStyles().FromDataItem(item.FindRequiredItem("Style"), true);
-  TDataItem *scene_item = item.FindItem("Scene");
-  if( scene_item != NULL )
-    FGlRender->GetScene().FromDataItem(*scene_item);
-
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
   TDataItem* overlays = item.FindItem("Overlays");
   if( overlays != NULL )  {
     for( size_t i=0; i < overlays->ItemCount(); i++ )
       NewOverlayedXFile().FromDataItem(overlays->GetItem(i));
   }
- 
-  IndividualCollections.Clear();
-  TDataItem& ind_col = item.FindRequiredItem("ICollections");
-  for( size_t i=0; i < ind_col.FieldCount(); i++ )
-    IndividualCollections.Add(ind_col.GetField(i));
-
+  LoadStructureStyle(item);
   const TDataItem& labels = item.FindRequiredItem("Labels");
-  for( size_t i=0; i < labels.ItemCount(); i++ )
-    XLabels.Add(new TXGlLabel(*FGlRender, PLabelsCollectionName)).FromDataItem(labels.GetItem(i));
+  for( size_t i=0; i < labels.ItemCount(); i++ ) {
+    XLabels.Add(
+      new TXGlLabel(
+        *FGlRender, PLabelsCollectionName)).FromDataItem(labels.GetItem(i));
+  }
 
   TDataItem *frame_i = item.FindItem("3DFrame");
   if ( frame_i != NULL)

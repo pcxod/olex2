@@ -607,14 +607,14 @@ void TMainForm::XApp(TGXApp *XA)  {
     "If no arguments launches a new interactive shell, otherwise runs provided"
     " file in the interactive shell (on windows ShellExecute is used to avoid "
     "flickering console)");
-  this_InitMacro(Save, , fpAny^fpNone);
+  this_InitMacroD(Save, EmptyString(), fpAny^fpNone,
+    "Saves style/scene/view/gview/model");
   GetLibrary().Register(
     new TMacro<TMainForm>(this, &TMainForm::macLoad, "Load",
       EmptyString(),  fpAny^fpNone,
-      "Loads style/scene/view/mode/radii. For radii accepts sfil, vdw, pers"),
+      "Loads style/scene/view/gview/model/radii. For radii accepts sfil, vdw, pers"),
     libChain
   );
-  //this_InitMacro(Load, , fpAny^fpNone);
   this_InitMacro(Link, , fpNone|fpOne);
   this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne,
     "Prints default style or sets it (none resets)");
@@ -2706,12 +2706,15 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   TDataItem *I = DF.Root().FindItem("Folders");
   if( I == NULL )
     return;
-  StylesDir = TEFile::ExpandRelativePath(I->GetFieldValue("Styles"));
-    processFunction(StylesDir);
-  ScenesDir = TEFile::ExpandRelativePath(I->GetFieldValue("Scenes"));
-    processFunction(ScenesDir);
-  XLibMacros::CurrentDir = TEFile::ExpandRelativePath(I->GetFieldValue("Current"));
-    processFunction(XLibMacros::CurrentDir);
+  StylesDir = TEFile::ExpandRelativePath(
+    exparse::parser_util::unquote(I->GetFieldValue("Styles")));
+  processFunction(StylesDir);
+  ScenesDir = TEFile::ExpandRelativePath(
+    exparse::parser_util::unquote(I->GetFieldValue("Scenes")));
+  processFunction(ScenesDir);
+  XLibMacros::CurrentDir = TEFile::ExpandRelativePath(
+    exparse::parser_util::unquote(I->GetFieldValue("Current")));
+  processFunction(XLibMacros::CurrentDir);
 
   I = DF.Root().FindItem("HTML");
   if( I != NULL )  {
