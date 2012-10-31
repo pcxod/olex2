@@ -485,7 +485,7 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
     xa.Create();
     if( !xa.IsDeleted() && init_visibility )  {
       xa.SetVisible(!FStructureVisible ? false
-        : (xa.IsAvailable() && xa.CAtom().IsAvailable()));  
+        : (xa.IsAvailable() && xa.CAtom().IsAvailable()));
     }
   }
   
@@ -505,7 +505,8 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   }
   sw.start("Other objects creation");
 
-  ObjectCaster<TSPlane,TXPlane> latt_planes = XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>();
+  ObjectCaster<TSPlane,TXPlane> latt_planes =
+    XFile().GetLattice().GetObjects().planes.GetAccessor<TXPlane>();
   for( size_t i=0; i < latt_planes.Count(); i++ )  {
     TXPlane& xp = latt_planes[i];
     xp.Create(olxstr("TXPlane") << xp.GetDefId());

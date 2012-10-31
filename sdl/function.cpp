@@ -44,41 +44,43 @@ bool ABasicFunction::ValidateState(const TStrObjList &Params, TMacroError &E) {
 olxstr ABasicFunction::GetSignature() const {
   olxstr res(GetName());
   res << " arguments [";
+  const short arg_bits = 15;
   unsigned int ArgC = GetArgStateMask();
   short argc = 0, currentArg = 0;
-  for( short i=0; i < 16; i++ )  if( ArgC & (1 << i) )  argc++;
-  if( argc  > 5 )  {
-    if( argc == 16 )  res << "any";
-    else  {
-      argc = 0;
-      for( short i=0; i < 16; i++ )  if( !(ArgC & (1 << i)) )  argc++;
+  for (short i=0; i < arg_bits; i++)  if (ArgC & (1 << i)) argc++;
+  if (argc > 5) {
+    if (argc == arg_bits) res << "any";
+    else {
+      argc = arg_bits - argc;
       res << "any except ";
-     for( short i=0; i < 16; i++ )  {
-        if( !(ArgC & (0x001 << i)) )  {
-          if( !i )  res << "none";
-          else      res << i;
-          if( currentArg < (argc - 2) )    res << ", ";
-          if( ++currentArg == (argc - 1) ) res << " or ";
+     for (short i=0; i < arg_bits; i++) {
+        if (!(ArgC & (0x001 << i))) {
+          if (i == 0) res << "none";
+          else res << i;
+          if (currentArg < (argc - 2)) res << ", ";
+          if (++currentArg == (argc - 1)) res << " or ";
         }
       }
     }
   }
   else  {
-    for( short i=0; i < 16; i++ )  {
-      if( ArgC & (0x001 << i) )  {
-        if( !i )  res << "none";
-        else      res << (i);
-        if( currentArg < (argc - 2) )    res << ", ";
-        if( ++currentArg == (argc - 1) ) res << " or ";
+    for (short i=0; i < arg_bits; i++) {
+      if (ArgC & (0x001 << i)) {
+        if (i == 0) res << "none";
+        else res << i;
+        if (currentArg < (argc - 2)) res << ", ";
+        if (++currentArg == (argc - 1)) res << " or ";
       }
     }
   }
-  if( (ArgC & 0xffff0000) )  {
+  if ((ArgC&fpAny_Options) != 0)
+    res << "] [any options";
+  if ((ArgC & 0xffff0000)) {
     res << "] states - ";
-    if( this->GetParentLibrary()->GetOwner() )
-      res << this->GetParentLibrary()->GetOwner()->GetStateName( ArgC );
+    if (GetParentLibrary()->GetOwner())
+      res << GetParentLibrary()->GetOwner()->GetStateName(ArgC);
     else
-      res << "illegal states, program might crash if this function is called";
+      res << "illegal states, program may crash if this function is called";
   }
   else
     res << ']';
@@ -175,10 +177,13 @@ void AMacro::Run(TStrObjList &Params, const TParamList &Options,
 }
 //.............................................................................
 olxstr AMacro::GetSignature() const {
-  if( ValidOptions.Count() )  {
+  if (ValidOptions.Count()) {
     olxstr res = ABasicFunction::GetSignature();
-    res << "; valid options - ";
-    for( size_t i=0; i < ValidOptions.Count(); i++ )
+    if ((GetArgStateMask()&fpAny_Options) != 0)
+      res << "; registered options - ";
+    else
+      res << "; valid options - ";
+    for (size_t i=0; i < ValidOptions.Count(); i++)
       res << ValidOptions.GetKey(i)  << ';';
     return res;
   }
