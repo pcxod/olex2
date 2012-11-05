@@ -3838,7 +3838,12 @@ void TMainForm::DoUpdateFiles()  {
     return;
   }
   uint64_t sz = _UpdateThread->GetUpdateSize();
-  if (sz > 0 && !TBasicApp::IsBaseDirWriteable() && !TShellUtil::IsAdmin()) {
+  if (sz > 0 && !TBasicApp::IsBaseDirWriteable()
+#ifdef __WIN32__
+    && !TShellUtil::IsAdmin()
+#endif
+    )
+  {
     TBasicApp::LeaveCriticalSection();
     wxMessageBox(wxT("There are new updates available, please run Olex2 with ")
       wxT("an elevated account.\nNote that if this message keeps appearing ")
