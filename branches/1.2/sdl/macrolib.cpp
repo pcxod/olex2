@@ -181,8 +181,11 @@ TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
   TMacroError& me, const TStrList &argv)
 {
   if (t->data.StartsFrom('-')) {
-    if (t->data.IsNumber())
+    if (t->data.IsNumber() ||
+       (t->data.Length() > 1 && olxstr::o_isdigit(t->data.CharAt(1))))
+    {
       return arg_t(EmptyString(), t->data);
+    }
     size_t ei = t->data.IndexOf('=');
     if (ei != InvalidIndex) {
       return arg_t(t->data.SubString(1, ei-1),

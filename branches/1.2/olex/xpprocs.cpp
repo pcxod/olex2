@@ -1185,7 +1185,9 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
 }
 //..............................................................................
-void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   olxstr Tmp = Cmds[0];
   Cmds.Delete(0);
   olxstr FN = Cmds.Text(' ');
@@ -1206,16 +1208,15 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     else  {
-      if( !StylesDir.IsEmpty() )  Tmp = StylesDir;
-      else                        Tmp = FXApp->GetBaseDir();
-      Tmp << FN;  FN = Tmp;
+      Tmp =  StylesDir.IsEmpty() ? TBasicApp::GetBaseDir() : StylesDir;
+      FN = (Tmp << FN);
     }
     FN = TEFile::ChangeFileExt(FN, "glds");
     TDataFile F;
     FXApp->GetRender().GetStyles().ToDataItem(F.Root().AddItem("style"));
     try  {  F.SaveToXLFile(FN); }
     catch( TExceptionBase& )  {
-      Error.ProcessingError(__OlxSrcInfo, "failed to save file: " ) << FN;
+      Error.ProcessingError(__OlxSrcInfo, "failed to save file: ") << FN;
     }
     return;
   }
@@ -1225,14 +1226,15 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         ScenesDir, EmptyString(), false);
     }
     if( FN.IsEmpty() )  {
-      Error.ProcessingError(__OlxSrcInfo, "no file name is given" );
+      Error.ProcessingError(__OlxSrcInfo, "no file name is given");
       return;
     }
     Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
 
       if( !(ScenesDir.LowerCase() == Tmp.LowerCase()) )  {
-        TBasicApp::NewLogEntry(logInfo) << "Scene parameters folder is changed to: " << Tmp;
+        TBasicApp::NewLogEntry(logInfo) <<
+          "Scene parameters folder is changed to: " << Tmp;
         ScenesDir = Tmp;
       }
     }
@@ -1260,17 +1262,25 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( Tmp == "model" )  {
     if( FXApp->XFile().HasLastLoader() )  {
-      Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxm") :
-                                  TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm");
-      //TDataFile DF;
-      //TDataItem& mi = DF.Root().AddItem("olex_model");
+      Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxm")
+        : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm");
       FXApp->SaveModel(Tmp);
-      //DF.SaveToXLFile(Tmp);
+    }
+  }
+  else if (Tmp == "gview") {
+    if (FXApp->XFile().HasLastLoader()) {
+      Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxv")
+        : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxv");
+      TDataFile df;
+      FXApp->SaveStructureStyle(df.Root().AddItem("GraphicsView"));
+      df.SaveToXLFile(Tmp);
     }
   }
 }
 //..............................................................................
-void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
+void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   if( Cmds[0].Equalsi("style") )  {
     olxstr FN = Cmds.Text(' ', 1);
     if( FN.IsEmpty() ) {
@@ -1282,7 +1292,8 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     olxstr Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
       if( !StylesDir.Equalsi(Tmp) )  {
-        TBasicApp::NewLogEntry(logInfo) << "Styles folder is changed to: " << Tmp;
+        TBasicApp::NewLogEntry(logInfo) <<
+          "Styles folder is changed to: " << Tmp;
         StylesDir = Tmp;
       }
     }
@@ -1299,7 +1310,10 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     F.LoadFromXLFile(FN, NULL);
     FXApp->GetRender().ClearSelection();
     // this forces the object creation, so if there is anything wrong...
-    try  {  FXApp->GetRender().GetStyles().FromDataItem(*F.Root().FindItem("style"), false);  }
+    try  {
+      FXApp->GetRender().GetStyles().FromDataItem(
+      *F.Root().FindItem("style"), false);
+    }
     catch(const TExceptionBase &e)  {
       FXApp->GetRender().GetStyles().Clear();
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
@@ -1315,7 +1329,8 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         LoadScene(F.Root(), FXApp->GetRender().LightModel);
       }
       else
-        TBasicApp::NewLogEntry(logError) << "Load::style: link file does not exist: " << FN;
+        TBasicApp::NewLogEntry(logError, false, __OlxSrcInfo) <<
+        (olxstr("link file does not exist: ").quote() << FN);
     }
   }
   else if( Cmds[0].Equalsi("scene") )  {
@@ -1329,7 +1344,8 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     olxstr Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
       if( !ScenesDir.Equalsi(Tmp) )  {
-        TBasicApp::NewLogEntry(logInfo) << "Scene parameters folder is changed to: " << Tmp;
+        TBasicApp::NewLogEntry(logInfo) <<
+          "Scene parameters folder is changed to: " << Tmp;
         ScenesDir = Tmp;
       }
     }
@@ -1358,14 +1374,15 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( TEFile::Exists(FN) )  {
       TDataFile DF;
       DF.LoadFromXLFile(FN);
-      FXApp->GetRender().GetBasis().FromDataItem(DF.Root().FindRequiredItem("basis"));
+      FXApp->GetRender().GetBasis().FromDataItem(
+        DF.Root().FindRequiredItem("basis"));
     }
   }
   else if( Cmds[0].Equalsi("model") )  {
     olxstr FN = Cmds.Text(' ', 1);
     if( FXApp->XFile().HasLastLoader() )  {
-      FN = (!FN.IsEmpty() ? TEFile::ChangeFileExt(FN, "oxm") :
-                            TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm") );
+      FN = (!FN.IsEmpty() ? TEFile::ChangeFileExt(FN, "oxm")
+        : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm"));
     }
     if( !FN.IsEmpty() && TEFile::Exists(FN) )  {
       if( !TEFile::IsAbsolutePath(FN) )
@@ -1421,11 +1438,27 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
   }
+  else if (Cmds[0].Equalsi("gview")) {
+    olxstr FN = Cmds.Text(' ', 1);
+    if (FXApp->XFile().HasLastLoader()) {
+      FN = (!FN.IsEmpty() ? TEFile::ChangeFileExt(FN, "oxv")
+        : TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxv"));
+    }
+    if (TEFile::Exists(FN)) {
+      if (!TEFile::IsAbsolutePath(FN))
+        FN = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << FN;
+      TDataFile df;
+      df.LoadFromXLFile(FN);
+      FXApp->LoadStructureStyle(df.Root().FindRequiredItem("GraphicsView"));
+    }
+  }
   else
     Error.SetUnhandled(true);
 }
 //..............................................................................
-void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   olxstr FN, Tmp;
   if( Cmds.IsEmpty() ) {
     FN = PickFile("Load scene parameters", "Scene parameters|*.glsp",

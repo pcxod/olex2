@@ -30,12 +30,22 @@ size_t TLog::Write(const void *Data, size_t size)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate)
+TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate,
+  const olxstr &location)
   : parent(_parent), evt(_evt)
 {
   if (annotate) {
-    buffer << "New log entry at: " << TETime::FormatDateTime(TETime::Now()) <<
-      NewLineSequence();
+    if (!location.IsEmpty()) {
+      buffer << "New log entry at [" << location <<  "]: "<<
+        TETime::FormatDateTime(TETime::Now()) << NewLineSequence();
+    }
+    else {
+      buffer << "New log entry at: " << TETime::FormatDateTime(TETime::Now()) <<
+        NewLineSequence();
+    }
+  }
+  else if (!location.IsEmpty()) {
+    buffer << "At [" << location <<  "]: " << NewLineSequence();
   }
 }
 //..............................................................................

@@ -607,14 +607,14 @@ void TMainForm::XApp(TGXApp *XA)  {
     "If no arguments launches a new interactive shell, otherwise runs provided"
     " file in the interactive shell (on windows ShellExecute is used to avoid "
     "flickering console)");
-  this_InitMacro(Save, , fpAny^fpNone);
+  this_InitMacroD(Save, EmptyString(), fpAny^fpNone,
+    "Saves style/scene/view/gview/model");
   GetLibrary().Register(
     new TMacro<TMainForm>(this, &TMainForm::macLoad, "Load",
       EmptyString(),  fpAny^fpNone,
-      "Loads style/scene/view/mode/radii. For radii accepts sfil, vdw, pers"),
+      "Loads style/scene/view/gview/model/radii. For radii accepts sfil, vdw, pers"),
     libChain
   );
-  //this_InitMacro(Load, , fpAny^fpNone);
   this_InitMacro(Link, , fpNone|fpOne);
   this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne,
     "Prints default style or sets it (none resets)");
@@ -2706,12 +2706,15 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   TDataItem *I = DF.Root().FindItem("Folders");
   if( I == NULL )
     return;
-  StylesDir = TEFile::ExpandRelativePath(I->GetFieldValue("Styles"));
-    processFunction(StylesDir);
-  ScenesDir = TEFile::ExpandRelativePath(I->GetFieldValue("Scenes"));
-    processFunction(ScenesDir);
-  XLibMacros::CurrentDir = TEFile::ExpandRelativePath(I->GetFieldValue("Current"));
-    processFunction(XLibMacros::CurrentDir);
+  StylesDir = TEFile::ExpandRelativePath(
+    exparse::parser_util::unquote(I->GetFieldValue("Styles")));
+  processFunction(StylesDir);
+  ScenesDir = TEFile::ExpandRelativePath(
+    exparse::parser_util::unquote(I->GetFieldValue("Scenes")));
+  processFunction(ScenesDir);
+  XLibMacros::CurrentDir = TEFile::ExpandRelativePath(
+    exparse::parser_util::unquote(I->GetFieldValue("Current")));
+  processFunction(XLibMacros::CurrentDir);
 
   I = DF.Root().FindItem("HTML");
   if( I != NULL )  {
@@ -3829,13 +3832,35 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
 }
 //..............................................................................
 void TMainForm::DoUpdateFiles()  {
-  volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
-  if( _UpdateThread == NULL )  return;
+  TBasicApp::EnterCriticalSection();
+  if (_UpdateThread == NULL) {
+    TBasicApp::LeaveCriticalSection();
+    return;
+  }
   uint64_t sz = _UpdateThread->GetUpdateSize();
+  if (sz > 0 && !TBasicApp::IsBaseDirWriteable() && !TShellUtil::IsAdmin()) {
+    TBasicApp::LeaveCriticalSection();
+    wxMessageBox(wxT("There are new updates available, please run Olex2 with ")
+      wxT("an elevated account.\nNote that if this message keeps appearing ")
+      wxT("even after a successful update, type ")
+      wxT("'shell DataDir()' in the Olex2 command line and remove\n")
+      wxT("__location.update and __cmd.update files and the patch directory."),
+      wxT("Updates available"), wxICON_INFORMATION, this);
+    TBasicApp::EnterCriticalSection();
+    if (_UpdateThread == NULL) {
+      TBasicApp::LeaveCriticalSection();
+      return;
+    }
+    _UpdateThread->SendTerminate();
+    _UpdateThread = NULL;
+    TBasicApp::LeaveCriticalSection();
+    return;
+  }
   updater::SettingsFile sf(updater::UpdateAPI::GetSettingsFileName());
-  TdlgMsgBox* msg_box = NULL;
-  if( sf.ask_for_update )  {
-    msg_box = new TdlgMsgBox( this, 
+  if (sf.ask_for_update) {
+    // this is essential as it can freeze the GTK GUI
+    TBasicApp::LeaveCriticalSection();
+    TdlgMsgBox* msg_box = new TdlgMsgBox( this,
       olxstr("There are new updates available (") <<
         olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
       "Updates will be downloaded in the background during this session and\n"
@@ -3844,10 +3869,17 @@ void TMainForm::DoUpdateFiles()  {
       "Do not show this message again",
       wxYES|wxNO|wxICON_QUESTION,
       true);
-    int res = msg_box->ShowModal();  
-    if( res == wxID_YES )  {
+    int res = msg_box->ShowModal();
+    bool checked = msg_box->IsChecked();
+    msg_box->Destroy();
+    TBasicApp::EnterCriticalSection();
+    if (_UpdateThread == NULL) {
+      TBasicApp::LeaveCriticalSection();
+      return;
+    }
+    if (res == wxID_YES) {
       _UpdateThread->DoUpdate();
-      if( msg_box->IsChecked() )  {
+      if (checked) {
         sf.ask_for_update = false;
         sf.Save();
       }
@@ -3856,12 +3888,12 @@ void TMainForm::DoUpdateFiles()  {
       _UpdateThread->SendTerminate();
       _UpdateThread = NULL;
     }
-    msg_box->Destroy();
   }
   else
     _UpdateThread->DoUpdate();
   if( _UpdateThread != NULL )
     _UpdateThread->ResetUpdateSize();
+  TBasicApp::LeaveCriticalSection();
 }
 //..............................................................................
 size_t TMainForm::DownloadFiles(const TStrList &files, const olxstr &dest) {
