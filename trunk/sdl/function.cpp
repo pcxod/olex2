@@ -196,7 +196,7 @@ olxstr AMacro::GetSignature() const {
 void FunctionChainer::RunMacro(TStrObjList &Params, const TParamList &Options,
     TMacroError& E)
 {
-  for (size_t i=0; i < functions.Count(); i++) {
+  for (size_t i=functions.Count()-1; i != InvalidIndex; i--) {
     functions[i]->Run(Params, Options, E);
     if (E.IsHandled() || !E.IsSuccessful())
       break;
