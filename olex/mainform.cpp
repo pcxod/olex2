@@ -687,7 +687,9 @@ void TMainForm::XApp(TGXApp *XA)  {
     "parameter is expected to be a boolean - shows/hides the gradient. Four "
     "parameters specify the gradient colours explicetly.");
 
-  this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns);
+  this_InitMacroD(EditAtom, "cs-do not clear the selection",
+    fpAny|psFileLoaded,
+    "Shows information for the given atom and all of its dependents");
   this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns);
   this_InitMacro(HklEdit, , fpNone|fpOne|fpThree);
   this_InitMacro(HklView, , fpNone|fpOne);
