@@ -1948,9 +1948,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   }
   TCAtomPList CAtoms;
   TXAtomPList Atoms;
-  TIns* Ins = NULL;
-  try {  Ins = &FXApp->XFile().GetLastLoader<TIns>();  }
-  catch(...)  {}  // must be native then...
+  TIns* Ins = FXApp->CheckFileType<TIns>() ?
+    &FXApp->XFile().GetLastLoader<TIns>() : NULL;
   
   if( !FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs")) )  {
     E.ProcessingError(__OlxSrcInfo, "wrong atom names");

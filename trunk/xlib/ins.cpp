@@ -1217,7 +1217,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       }
       else {
         atom = &rm.aunit.GetAtom(index[atomCount]);
-        if( cx.Resi != NULL )  
+        if( cx.Resi != NULL )
           cx.Resi->Add(*atom);
       }
       _ParseAtom(Toks, cx, atom);
