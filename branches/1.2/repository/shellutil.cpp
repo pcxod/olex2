@@ -372,23 +372,73 @@ olxstr TShellUtil::GetFileVersion(const olxstr &fn, const olxstr &lang) {
   return EmptyString();
 }
 //http://msdn.microsoft.com/en-us/library/aa376389(VS.85).aspx
+//http://stackoverflow.com/questions/581204/how-do-i-check-if-a-user-has-local-admin-privileges-in-win32
 bool TShellUtil::IsAdmin() {
-  BOOL b;
-  SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-  PSID AdministratorsGroup; 
-  b = AllocateAndInitializeSid(
-    &NtAuthority,
-    2,
-    SECURITY_BUILTIN_DOMAIN_RID,
-    DOMAIN_ALIAS_RID_ADMINS,
-    0, 0, 0, 0, 0, 0,
-    &AdministratorsGroup); 
-  if( b == TRUE )   {
-    if( !CheckTokenMembership(NULL, AdministratorsGroup, &b) )
-      b = FALSE;
-    FreeSid(AdministratorsGroup); 
+  //SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+  //PSID AdministratorsGroup; 
+  //b = AllocateAndInitializeSid(
+  //  &NtAuthority,
+  //  2,
+  //  SECURITY_BUILTIN_DOMAIN_RID,
+  //  DOMAIN_ALIAS_RID_ADMINS,
+  //  0, 0, 0, 0, 0, 0,
+  //  &AdministratorsGroup); 
+  //if( b == TRUE )   {
+  //  if( !CheckTokenMembership(NULL, AdministratorsGroup, &b) )
+  //    b = FALSE;
+  //  FreeSid(AdministratorsGroup); 
+  //}
+  //return b == TRUE;
+  // check if supports elevation
+  OSVERSIONINFO osvi;
+  memset(&osvi, 0, sizeof(osvi));
+  osvi.dwOSVersionInfoSize = sizeof(osvi);
+  if (GetVersionEx(&osvi) && osvi.dwMajorVersion < 6) {
+    return ::IsUserAnAdmin();
   }
-  return b == TRUE;
+#if _WIN32_WINNT >= 0x0600
+  bool isAdmin = false, res = true;
+  DWORD bytesUsed = 0;
+  TOKEN_ELEVATION_TYPE tokenElevationType;
+  HANDLE m_hToken = NULL;
+  if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &m_hToken)) {
+    res = false;
+  }
+  if (res && !::GetTokenInformation(m_hToken, TokenElevationType,
+    &tokenElevationType, sizeof(tokenElevationType), &bytesUsed))
+  {
+    res = false;
+  }
+  if (res && tokenElevationType == TokenElevationTypeLimited) {
+    TOKEN_LINKED_TOKEN lti;
+    if (res && !::GetTokenInformation(m_hToken, TokenLinkedToken,
+      reinterpret_cast<void *>(&lti), sizeof(lti), &bytesUsed))
+    {
+      res = false;
+    }
+    else {
+      BYTE adminSID[SECURITY_MAX_SID_SIZE];
+      DWORD sidSize = sizeof(adminSID);
+      if (!::CreateWellKnownSid(WinBuiltinAdministratorsSid, 0, &adminSID,
+        &sidSize))
+      {
+        res = false;
+      }
+      BOOL isMember = FALSE;
+      if (res && !::CheckTokenMembership(lti.LinkedToken, &adminSID, &isMember))
+        res = false;
+      else
+        isAdmin = (isMember != FALSE);
+    }
+  }
+  else
+    isAdmin = ::IsUserAnAdmin();
+  if (m_hToken != NULL)
+    CloseHandle(m_hToken);
+  return res ? isAdmin : false;
+#else
+  return ::IsUserAnAdmin();
+#endif
 }
 #endif //__GNUC__
 //.............................................................................

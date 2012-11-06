@@ -1212,12 +1212,12 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
           "unknown element symbol");
       }
       TCAtom* atom = NULL;
-      if( (atomCount+1) > rm.aunit.AtomCount() )  {
+      if (atomCount >= index.Count()) {
         atom = &rm.aunit.NewAtom(cx.Resi);
       }
-      else  {
+      else {
         atom = &rm.aunit.GetAtom(index[atomCount]);
-        if( cx.Resi != NULL )  
+        if( cx.Resi != NULL )
           cx.Resi->Add(*atom);
       }
       _ParseAtom(Toks, cx, atom);
