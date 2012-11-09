@@ -57,9 +57,7 @@ TBasicApp::~TBasicApp()  {
   LeaveCriticalSection();
 }
 //..............................................................................
-const olxstr &TBasicApp::GetModuleMD5Hash() {
-  static olxstr Digest;
-  if (!Digest.IsEmpty()) return Digest;
+olxstr TBasicApp::GetModuleName() {
   olxstr name;
 #ifdef __WIN32__
   olxch * bf;
@@ -79,6 +77,13 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
   if (!TEFile::IsAbsolutePath(name))
     name = TEFile::ExpandRelativePath(name, GetBaseDir());
 #endif
+  return name;
+}
+//..............................................................................
+const olxstr &TBasicApp::GetModuleMD5Hash() {
+  static olxstr Digest;
+  if (!Digest.IsEmpty()) return Digest;
+  olxstr name = GetModuleName();
   bool do_calculate = true;
   olxstr last_dg_fn = GetInstanceDir() + "app.md5";
   if (TEFile::Exists(last_dg_fn)) {
@@ -135,7 +140,9 @@ void TBasicApp::ReadOptions(const olxstr &fn) {
 olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
   olxstr bd, path;
   TStrList toks;
-  TParamList::StrtokParams(_path, ' ', toks);
+  if (!_path.StartsFrom(' ')) { // empty executable name
+    TParamList::StrtokParams(_path, ' ', toks);
+  }
   if( !toks.IsEmpty() )
     path = toks[0];
   if( !var_name.IsEmpty() )  {
@@ -145,11 +152,12 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
     if( !TEFile::IsDir(path) )
       bd = TEFile::ExtractFilePath(path);
     else
-    bd = path;
+      bd = path;
     bd = TEFile::ExpandRelativePath(bd, TEFile::CurrentDir());
   }
-  if( bd.IsEmpty() || !TEFile::Exists(bd) )
+  if( bd.IsEmpty() || !TEFile::Exists(bd) ) {
     bd = TEFile::CurrentDir();
+  }
   TEFile::AddPathDelimeterI(bd);
   olxstr en = TEFile::ExtractFileName(path);
   if( en.IsEmpty() )
@@ -319,18 +327,6 @@ void TBasicApp::CleanupLogs(const olxstr &dir_name) {
 void TBasicApp::ValidateArgs() const {
   if (!Arguments.IsEmpty())
     throw TFunctionFailedException(__OlxSourceInfo, "already initialised");
-}
-//..............................................................................
-void TBasicApp::TryToCombineArguments() {
-  TStrList args;
-  for (size_t i=0; i < Arguments.Count(); i++) {
-    if (Arguments[i].Contains(' '))
-      args.Add('"') << Arguments[i] << '"';
-    else
-      args.Add(Arguments[i]);
-  }
-  Arguments.Clear();
-  TParamList::StrtokParams(args.Text(' '), ' ', Arguments);
 }
 //..............................................................................
 //..............................................................................
