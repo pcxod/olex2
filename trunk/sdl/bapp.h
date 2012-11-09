@@ -42,15 +42,15 @@ protected:
   void ValidateArgs() const;
   TParamList Options;
   TStrList Arguments;
-  void TryToCombineArguments();
 public:
   // the file name of the application with full path
   TBasicApp(const olxstr& AppName);
   virtual ~TBasicApp();
   const TParamList &GetOptions() const { return Options; }
   const TStrList &GetArguments() const { return Arguments; }
-  // this cane be used to identify version changes
+  // this can be used to identify version changes
   static const olxstr &GetModuleMD5Hash();
+  static olxstr GetModuleName();
   /* initialises Options and Arguments. Options either contain '=' or start
   from '-'
   */
@@ -64,8 +64,6 @@ public:
       else
         Arguments.Add(arg);
     }
-    // fixing the single quoted aruments with white spaces
-    TryToCombineArguments();
   }
   /*The options are read when the object is constructed, calling it
   consequently will update the values
