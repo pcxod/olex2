@@ -363,6 +363,7 @@ tests_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 tests_files = generic_files_list + fileListToStringList('tests/tests', tests)
 tests_files.append('./repository/olxvar.cpp')
 tests_files.append('./repository/fsext.cpp')
+tests_files.append('./repository/shellutil.cpp')
 if sys.platform[:3] == 'win':
   tests_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/tests.pdb'])
 tests_files = processFileNameList(tests_files, tests_env, out_dir+'tests')
