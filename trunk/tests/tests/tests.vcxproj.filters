@@ -30,6 +30,9 @@
     <ClCompile Include="tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\repository\shellutil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -67,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="..\..\xlib\tests\cell_reduction_test.h">
       <Filter>Header Files\xlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\repository\tests\shellutil_test.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

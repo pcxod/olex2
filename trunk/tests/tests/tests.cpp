@@ -39,10 +39,11 @@
 #include "tests/formula_test.h"
 #include "tests/smat_test.h"
 #include "tests/exparse_test.h"
+#include "tests/shellutil_test.h"
 
 class Listener : public AActionHandler  {
 public:
-  virtual bool Execute(const IEObject *Sender, const IEObject *Data) {  
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data) {
     if( EsdlInstanceOf(*Data, TOnProgress) )  {
       TBasicApp::GetLog() << '\r' << ((TOnProgress*)Data)->GetAction() << "     "; 
       return true; 
@@ -90,6 +91,7 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::AlgTests);
   tests.Add(&test::HallTests);
   tests.Add(&test::FormulaTests);
+  tests.Add(&test::ShellUtilTests);
   tests.run();
   if( argc > 1 )  {
     olxstr data_dir = argv[1];

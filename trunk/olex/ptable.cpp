@@ -10,7 +10,7 @@
 #include "ptable.h"
 
 TPTableDlg::TPTableDlg(TMainFrame *Parent) :
-  TDialog(Parent, wxT("Periodic table"), EsdlClassName(TPTableDlg).u_str() )  
+  TDialog(Parent, wxT("Periodic table"), EsdlClassName(TPTableDlg).u_str() )
 {
   AActionHandler::SetToDelete(false);
   for( int i=0; i < 9; i++ )  {

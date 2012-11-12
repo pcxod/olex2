@@ -335,15 +335,15 @@ public:
   static wchar_t o_tolower(wchar_t ch)  {  return towlower(ch);  }
   static bool o_isdigit(char ch)     {  return (ch >= '0' && ch <= '9');  }
   static bool o_isdigit(wchar_t ch)  {  return (ch >= L'0' && ch <= L'9');  }
-  static bool o_ishexdigit(char ch)  {  
-    return (ch >= '0' && ch <= '9') || 
+  static bool o_ishexdigit(char ch)  {
+    return (ch >= '0' && ch <= '9') ||
            (ch >= 'A' && ch <= 'F') ||
-           (ch >= 'a' && ch <= 'f');  
+           (ch >= 'a' && ch <= 'f');
   }
-  static bool o_ishexdigit(wchar_t ch)  {  
-    return (ch >= L'0' && ch <= L'9') || 
+  static bool o_ishexdigit(wchar_t ch)  {
+    return (ch >= L'0' && ch <= L'9') ||
            (ch >= L'A' && ch <= L'F') ||
-           (ch >= L'a' && ch <= L'f');  
+           (ch >= L'a' && ch <= L'f');
   }
   static bool o_islatin(char ch)  {
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
@@ -351,8 +351,8 @@ public:
   static bool o_islatin(wchar_t ch)  {
     return (ch >= L'a' && ch <= L'z') || (ch >= L'A' && ch <= L'Z');
   }
-  static bool o_isalpha(char ch)  {  return isalpha(ch) != 0;  }  
-  static bool o_isalpha(wchar_t ch)  {  return iswalpha(ch) != 0;  }  
+  static bool o_isalpha(char ch)  {  return isalpha(ch) != 0;  }
+  static bool o_isalpha(wchar_t ch)  {  return iswalpha(ch) != 0;  }
   static bool o_isalphanumeric(char ch)  {
     return o_isdigit(ch) || o_isalpha(ch);
   }
@@ -370,6 +370,9 @@ public:
     return (wstr==NULL) ? 0 : wcslen(wstr);
   }
   static size_t o_strlen(const T &str)  { return str.Length(); }
+  static const char* o_data(const char* cstr)  { return cstr; }
+  static const wchar_t* o_data(const wchar_t* cstr)  { return cstr; }
+  static typename T::CharT* o_data(const T &str)  { return str.raw_str(); }
   static void o_strtup(TC* wht, size_t wht_len)  {
     for( size_t i=0; i < wht_len; i++ )
       wht[i] = o_toupper(wht[i]);
@@ -702,6 +705,19 @@ public:
     return InvalidIndex;
   }
   //...........................................................................
+  // index of any char in the sequence, linear search
+  template <typename OC, typename AC>
+  static size_t o_chrseqpos(const OC* whr, size_t whr_len,
+    AC* seq, size_t seq_len)
+  {
+    for (size_t i=0; i < whr_len; i++) {
+      for (size_t j=0; j < seq_len; j++)
+        if (whr[i] == seq[j])
+          return i;
+    }
+    return InvalidIndex;
+  }
+  //...........................................................................
   template <typename OC, typename AC>
   static size_t o_strposi(const OC* whr, size_t whr_len, const AC* wht,
     size_t wht_len)
@@ -833,10 +849,10 @@ public:
     return o_strposi(T::Data(), T::_Length, wht, o_strlen(wht));
   }
   template <typename AC> size_t IndexOf(AC wht) const {
-    return o_chrpos( T::Data(), T::_Length, wht);
+    return o_chrpos(T::Data(), T::_Length, wht);
   }
   template <typename AC> size_t IndexOfi(AC wht) const {
-    return o_chrposi( T::Data(), T::_Length, wht);
+    return o_chrposi(T::Data(), T::_Length, wht);
   }
 
   template <typename ST> bool Contains(const ST &v) const {
@@ -844,6 +860,11 @@ public:
   }
   template <typename ST> bool Containsi(const ST &v) const {
     return IndexOfi(v) != InvalidIndex;
+  }
+  template <typename seq_t>
+  bool ContainAnyOf(const seq_t &v) const {
+    return o_chrseqpos(T::Data(), T::_Length, o_data(v), o_strlen(v)) !=
+      InvalidIndex;
   }
 
   template <typename AC>
@@ -976,7 +997,7 @@ public:
   template <typename IT> static IT o_atoi_s(const TC* data, size_t len,
     bool& negative, unsigned short Rad=10)
   {
-    if( len == 0 )    
+    if( len == 0 )
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     size_t sts = 0, ste = len; // string start, end
     while( o_iswhitechar(data[sts]) && ++sts < len ) ;
@@ -985,7 +1006,7 @@ public:
       TExceptionBase::ThrowInvalidIntegerFormat(__POlxSourceInfo, data, len);
     IT val=0;
     negative = false;
-    if( data[sts] == '-' )  {  
+    if( data[sts] == '-' )  {
       negative = true;  
       sts++;  
     }
@@ -1045,8 +1066,8 @@ public:
     if( ++ste <= sts )
       return false;
     negative = false;
-    if( data[sts] == '-' )  {  
-      negative = true;  
+    if( data[sts] == '-' )  {
+      negative = true;
       sts++;  
     }
     else if( data[sts] == '+' )
@@ -1308,7 +1329,7 @@ public:
     size_t wht_len)
   {
     size_t cnt = 0;
-    for( size_t i=0; i < whr_len; i++ )  {                              
+    for( size_t i=0; i < whr_len; i++ )  {
       if( i+wht_len > whr_len )  return cnt;
       bool found = true;
       for( size_t j=0;  j < wht_len; j++ )  {
@@ -1482,7 +1503,7 @@ public:
   {
     if( wht_len > whr_len )  return 0;
     size_t cnt = 0;
-    for( size_t i=0; i < whr_len; i++ )  {                              
+    for( size_t i=0; i < whr_len; i++ )  {
       if( i+wht_len > whr_len )  return cnt;
       bool found = true;
       for( size_t j=0;  j < wht_len; j++ )  {

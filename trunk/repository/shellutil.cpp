@@ -394,7 +394,7 @@ bool TShellUtil::IsAdmin() {
   memset(&osvi, 0, sizeof(osvi));
   osvi.dwOSVersionInfoSize = sizeof(osvi);
   if (GetVersionEx(&osvi) && osvi.dwMajorVersion < 6) {
-    return ::IsUserAnAdmin();
+    return ::IsUserAnAdmin() != FALSE;
   }
 #if _WIN32_WINNT >= 0x0600
   bool isAdmin = false, res = true;
@@ -432,7 +432,7 @@ bool TShellUtil::IsAdmin() {
     }
   }
   else
-    isAdmin = ::IsUserAnAdmin();
+    isAdmin = ::IsUserAnAdmin() != FALSE;
   if (m_hToken != NULL)
     CloseHandle(m_hToken);
   return res ? isAdmin : false;
@@ -455,30 +455,43 @@ bool TShellUtil::RunElevated(const olxstr &fn, const olxstr &args) {
 }
 #endif // __WIN32__
 //.............................................................................
+olxstr TShellUtil::QuoteArg(const olxstr &a) {
+  using namespace exparse;
+  if (a.ContainAnyOf(olxstr(" \"\t\v\n\r"))) {
+    olxstr rv(EmptyString(), a.Length()+7);
+    rv << '"';
+    for (size_t i=0; i < a.Length(); i++) {
+      rv << a[i];
+      size_t sc=0;
+      while (a[i] == '\\' && i < a.Length()) {
+        i++;
+        if (sc++ > 0) rv << a[i];
+      }
+      if (i == a.Length()) {
+        rv.Insert('\\', rv.Length()-1, sc);
+        break;
+      }
+      else if (a[i] == '"') {
+        rv.Insert('\\', rv.Length()-1, sc+1);
+      }
+    }
+    return rv << '"';
+  }
+  else
+    return a;
+}
+//.............................................................................
 olxstr TShellUtil::GetCmdLineArgs(const olxstr &fn) {
   const TBasicApp &a = TBasicApp::GetInstance();
   const TStrList& args = a.GetArguments();
-  olxstr s_cmdl;
-  if( fn.IndexOf(' ') != InvalidIndex )
-    s_cmdl << '"' << fn << '"';
-  else
-    s_cmdl = fn;
-  for( size_t i=1; i < args.Count(); i++ )  {
-    s_cmdl << ' ';
-    if( args[i].IndexOf(' ') != InvalidIndex )
-      s_cmdl << '"' << args[i] << '"';
-    else
-      s_cmdl << args[i];
-  }
+  olxstr s_cmdl = QuoteArg(fn);
+  for( size_t i=1; i < args.Count(); i++ )
+    s_cmdl << ' ' << QuoteArg(args[i]);
   for (size_t i=0; i < a.GetOptions().Count(); i++) {
     s_cmdl << ' ' << a.GetOptions().GetName(i);
     const olxstr &v = a.GetOptions().GetValue(i);
     if (v.IsEmpty()) continue;
-    s_cmdl << '=';
-    if (v.Contains(' '))
-      s_cmdl << '"' << v << '"';
-    else
-      s_cmdl << v;
+    s_cmdl << '=' << QuoteArg(v);
   }
   return s_cmdl;
 }
