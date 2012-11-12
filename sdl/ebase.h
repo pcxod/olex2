@@ -218,7 +218,8 @@ public:
     v[_Length] = L'\0';
     return v;
   }
-  // this does not help in GCC, 
+  typedef T CharT;
+  // this does not help in GCC,
   template <typename,typename> friend class TTSString;
 };
 
