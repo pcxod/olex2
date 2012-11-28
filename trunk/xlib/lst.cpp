@@ -215,7 +215,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 4 )  continue;
-        params("peak", Toks[2]);
+        params("peak", Toks[1].Length() > 4 ? Toks[1].SubStringFrom(4) : Toks[2]);
         HP = true;
         continue;
       }
@@ -225,7 +225,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       if( ind != InvalidIndex )  {
         Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 4 )  continue;
-        params("hole", Toks[2]);
+        params("hole", Toks[1].Length() > 4 ? Toks[1].SubStringFrom(4) : Toks[2]);
         DH = true;
         continue;
       }
