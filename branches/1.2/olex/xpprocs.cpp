@@ -2002,12 +2002,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
     for( size_t j=0; j < released.sameList[i]->DependentCount(); j++ )  {
       TSameGroup& sg = released.sameList[i]->GetDependent(j);
       if( released.sameList.IndexOf(sg) != InvalidIndex )  continue;
-      released.sameList.Add( &sg );
+      released.sameList.Add(sg);
       for( size_t k=0; k < sg.Count(); k++ )
         CAtoms.Add(sg[k]);
     }
   }
-  TPtrList<TAfixGroup> afixes;
   for( size_t i=0; i < rm.AfixGroups.Count(); i++ )
     rm.AfixGroups[i].SetTag(0);
   for( size_t i=0; i < CAtoms.Count(); i++ )  {  // add afixed mates and afix parents
@@ -2017,20 +2016,17 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
       if (hg.GetTag() != 0) continue;
       CAtoms.AddList(hg);
       hg.SetTag(1);
-      afixes.Add(hg);
     }
     if (ca.GetDependentAfixGroup() != NULL &&
         ca.GetDependentAfixGroup()->GetTag() == 0)
     {
       CAtoms.AddList(*ca.GetDependentAfixGroup());
       ca.GetDependentAfixGroup()->SetTag(1);
-      afixes.Add(ca.GetDependentAfixGroup());
     }
     if( ca.GetParentAfixGroup() != NULL && ca.GetParentAfixGroup()->GetTag() == 0 )  {
       CAtoms.Add(ca.GetParentAfixGroup()->GetPivot());
       CAtoms.AddList(*ca.GetParentAfixGroup());
       ca.GetParentAfixGroup()->SetTag(1);
-      afixes.Add(ca.GetParentAfixGroup());
     }
   }
   // make sure that the list is unique
@@ -2077,8 +2073,6 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < released.sameList.Count(); i++ )
     released.sameList[i]->GetParent().Release(*released.sameList[i]);
   au.Release(TPtrList<TResidue>(residues_to_release));
-  for (size_t i=0; i < afixes.Count(); i++)
-    rm.AfixGroups.Delete(afixes[i]->GetId());
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
   bool undo=false;

@@ -199,8 +199,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     " prior (if provided) to the change of symmetry of the unit cell");
 //_____________________________________________________________________________
   xlib_InitMacro(Htab,
-    "t-adds extra elements (comma separated -t=Br,I) to the donor list. "
-    "Defaults are [N,O,F,Cl,S]&;g-generates found interactions",
+    "t-adds extra elements (comma separated -t=Se,I) to the donor list. "
+    "Defaults are [N,O,F,Cl,S,Br]&;g-generates found interactions",
     fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
     "Adds HTAB instructions to the ins file, maximum bond length [2.9] and "
     "minimal angle [150] might be provided");
@@ -1220,6 +1220,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   bais.Add(iFluorineZ);
   bais.Add(iChlorineZ);
   bais.Add(iSulphurZ);
+  bais.Add(iBromineZ);
   TBasicApp::NewLogEntry() << "Processing HTAB with max D-A distance " <<
     max_d << " and minimum angle " << min_ang;
   min_ang = cos(min_ang*M_PI/180.0);
@@ -1235,24 +1236,19 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   }
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   TLattice& lat = TXApp::GetInstance().XFile().GetLattice();
-  size_t h_indexes[4];
   const ASObjectProvider& objects = lat.GetObjects();
   for( size_t i=0; i < objects.atoms.Count(); i++ )  {
     TSAtom& sa = objects.atoms[i];
     const cm_Element& elm = sa.GetType();
     if( elm.z < 2 )  // H,D,Q
       continue;
-    size_t hc = 0;
+    TSizeList h_indexes;
     for( size_t j=0; j < sa.NodeCount(); j++ )  {
       const cm_Element& elm1 = sa.Node(j).GetType();
-      if( elm1 == iHydrogenZ )  {
-        h_indexes[hc] = j;
-        hc++;
-        if( hc >= 4 )
-          break;
-      }
+      if( elm1 == iHydrogenZ )
+        h_indexes << j;
     }
-    if( hc == 0 || hc >= 4 )  continue;
+    if (h_indexes.IsEmpty()) continue;
     TArrayList<AnAssociation2<TCAtom const*, smatd> > all;
     uc.FindInRangeAM(sa.ccrd(), max_d, all);
     for( size_t j=0; j < all.Count(); j++ )  {
@@ -1265,7 +1261,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       if( d < (elm.r_bonding + elm1.r_bonding + 0.4) ) // coval bond
         continue;  
       // analyse angles
-      for( size_t k=0; k < hc; k++ )  {
+      for (size_t k=0; k < h_indexes.Count(); k++) {
         vec3d base = sa.Node(h_indexes[k]).ccrd();
         const vec3d v1 = au.Orthogonalise(sa.ccrd() - base);
         const vec3d v2 = au.Orthogonalise(cvec - base);

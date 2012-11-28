@@ -1032,6 +1032,10 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       return;
     }
   }
+  if (a.GetUisoOwner() != NULL && !a.GetUisoOwner()->IsSaved()) {
+    _SaveAtom(rm, *a.GetUisoOwner(), part, afix, sfac, sl, index,
+      checkSame, checkResi);
+  }
   if( a.GetPart() != part )  {
     if( part != 0 && a.GetPart() != 0 )
       sl.Add("PART 0");
@@ -1173,11 +1177,10 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   size_t atomCount = 0;
   ParseContext cx(rm);
   Preprocess(SL);
-  //rm.FVAR.Clear();
   for( size_t i=0; i < index.Count(); i++ )  {
-    if( i >= rm.aunit.AtomCount() )
+    if( index[i] >= rm.aunit.AtomCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
-    TCAtom &ca = rm.aunit.GetAtom(i);
+    TCAtom &ca = rm.aunit.GetAtom(index[i]);
     if( ca.GetParentAfixGroup() != NULL )
       ca.GetParentAfixGroup()->Clear();
     if( ca.GetDependentAfixGroup() != NULL )
@@ -1247,7 +1250,7 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
   for( size_t i=0; i < CAtoms.Count(); i++ )  {
     if( CAtoms[i]->IsSaved() )  continue;
     TCAtom& ac = *CAtoms[i];
-    if( ac.GetParentAfixGroup() != NULL && 
+    if( ac.GetParentAfixGroup() != NULL &&
       !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
     _SaveAtom(rm, ac, part, afix, NULL, SL, &index);
   }
