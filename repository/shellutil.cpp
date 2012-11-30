@@ -205,7 +205,7 @@ olxstr TShellUtil::PickFolder(const olxstr& Title,
     desktopFolder->ParseDisplayName(NULL, NULL, wsz, &eaten, &rootFolder, NULL);
   }
   BROWSEINFO bi;
-  TCHAR* path = (TCHAR*)shellMalloc->Alloc(MAX_PATH*sizeof(TCHAR));
+  olxch* path = (olxch*)shellMalloc->Alloc(MAX_PATH*sizeof(TCHAR));
   memset(&bi, 0, sizeof(bi));
   bi.lpszTitle = Title.u_str();
   bi.pszDisplayName = path;
@@ -235,6 +235,48 @@ olxstr TShellUtil::PickFolder(const olxstr& Title,
     return dd.GetPath();
   return EmptyString();
   #endif
+  throw TNotImplementedException(__OlxSourceInfo);
+#endif
+}
+//.............................................................................
+olxstr TShellUtil::PickFile(const olxstr& Title, const olxstr &Filter,
+  bool open,
+  const olxstr& DefFolder, const olxstr &DefFile)
+{
+#ifdef __WIN32__
+  OPENFILENAME ofn;
+  memset(&ofn, 0, sizeof(ofn));
+  ofn.lStructSize = sizeof(ofn);
+  olxstr f = olxstr(Filter).Replace('|', '\0') << '\0';
+  ofn.lpstrFilter = f.u_str();
+  olx_array_ptr<olxch> bf(new olxch[MAX_PATH]);
+  if (DefFile.Length()+1 < MAX_PATH) {
+    olx_memcpy(bf(), DefFile.u_str(), DefFile.Length());
+    bf()[DefFile.Length()] = '\0';
+  }
+  ofn.lpstrFile = bf();
+  ofn.nMaxFile = MAX_PATH;
+  ofn.lpstrTitle = Title.u_str();
+  if (!DefFolder.IsEmpty())
+    ofn.lpstrInitialDir = DefFolder.u_str();
+  ofn.Flags = OFN_ENABLESIZING;
+  if (open) {
+    ofn.Flags |= OFN_FILEMUSTEXIST;
+    if( GetSaveFileName(&ofn) == TRUE)
+      return olxstr::FromExternal(bf.p->inc_ref()->p);
+  }
+  else {
+    if( GetOpenFileName(&ofn) == TRUE)
+      return olxstr::FromExternal(bf.p->inc_ref()->p);
+  }
+  return EmptyString();
+#elif __WXWIDGETS__
+  int Style = open ? wxFD_OPEN : wxFD_SAVE;
+  wxFileDialog dlgFile(this, Title.u_str(),
+    DefFolder.u_str(), DefFile.u_str(), Filter.u_str(), Style);
+  return (dlgFile.ShowModal() == wxID_OK ? olxstr(dlgFile.GetPath())
+    : EmptyString());
+#else
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
 }
@@ -296,7 +338,7 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
         (char*)&(ifreq.ifr_name[0]), rv, 6, false);
     }
   }
-	close(sckt);
+  close(sckt);
 #else
   struct ifaddrs* ifaddrs, *tmpia;
   getifaddrs(&ifaddrs);
@@ -455,24 +497,30 @@ bool TShellUtil::RunElevated(const olxstr &fn, const olxstr &args) {
 }
 #endif // __WIN32__
 //.............................................................................
+/* Ref:
+http://blogs.msdn.com/b/twistylittlepassagesallalike/archive/2011/04/23/everyone-quotes-arguments-the-wrong-way.aspx
+*/
 olxstr TShellUtil::QuoteArg(const olxstr &a) {
   using namespace exparse;
   if (a.ContainAnyOf(olxstr(" \"\t\v\n\r"))) {
     olxstr rv(EmptyString(), a.Length()+7);
     rv << '"';
     for (size_t i=0; i < a.Length(); i++) {
-      rv << a[i];
       size_t sc=0;
-      while (a[i] == '\\' && i < a.Length()) {
+      while (i < a.Length() && a[i] == '\\') {
+        sc++;
         i++;
-        if (sc++ > 0) rv << a[i];
       }
       if (i == a.Length()) {
-        rv.Insert('\\', rv.Length()-1, sc);
+        rv.Insert('\\', rv.Length(), sc*2);
         break;
       }
-      else if (a[i] == '"') {
-        rv.Insert('\\', rv.Length()-1, sc+1);
+      else {
+        if (a[i] == '"')
+          rv.Insert('\\', rv.Length(), sc*2+1);
+        else
+          rv.Insert('\\', rv.Length(), sc);
+        rv << a[i];
       }
     }
     return rv << '"';
@@ -481,17 +529,23 @@ olxstr TShellUtil::QuoteArg(const olxstr &a) {
     return a;
 }
 //.............................................................................
-olxstr TShellUtil::GetCmdLineArgs(const olxstr &fn) {
+olxstr TShellUtil::GetCmdLineArgs(const olxstr &fn,
+  bool put_args, bool put_opts)
+{
   const TBasicApp &a = TBasicApp::GetInstance();
   const TStrList& args = a.GetArguments();
   olxstr s_cmdl = QuoteArg(fn);
-  for( size_t i=1; i < args.Count(); i++ )
-    s_cmdl << ' ' << QuoteArg(args[i]);
-  for (size_t i=0; i < a.GetOptions().Count(); i++) {
-    s_cmdl << ' ' << a.GetOptions().GetName(i);
-    const olxstr &v = a.GetOptions().GetValue(i);
-    if (v.IsEmpty()) continue;
-    s_cmdl << '=' << QuoteArg(v);
+  if (put_args) {
+    for( size_t i=1; i < args.Count(); i++ )
+      s_cmdl << ' ' << QuoteArg(args[i]);
+  }
+  if (put_opts) {
+    for (size_t i=0; i < a.GetOptions().Count(); i++) {
+      s_cmdl << ' ' << a.GetOptions().GetName(i);
+      const olxstr &v = a.GetOptions().GetValue(i);
+      if (v.IsEmpty()) continue;
+      s_cmdl << '=' << QuoteArg(v);
+    }
   }
   return s_cmdl;
 }

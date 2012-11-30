@@ -58,8 +58,8 @@ protected:
   static olxstr LocateFile(const olxstr& fn);
   void _SaveToStream(IDataOutputStream& os, short persistenceMask);
   void _LoadFromStream(IDataInputStream& is, short persistenceId);
-  inline bool IsMemoryBlock(const olxstr &EM) const {  
-    return FMemoryBlocks[TEFile::UnixPath(EM)] != NULL;  
+  inline bool IsMemoryBlock(const olxstr &EM) const {
+    return FMemoryBlocks[TEFile::UnixPath(EM)] != NULL;
   }
 public:
   static IDataInputStream *GetInputStream(const olxstr &FN);
