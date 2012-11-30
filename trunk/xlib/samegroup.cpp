@@ -126,7 +126,7 @@ bool TSameGroup::DoOverlap(const TSameGroup &g) const {
 }
 //.............................................................................
 bool TSameGroup::IsValidForSave() const {
-  if( Atoms.IsEmpty() )  
+  if( Atoms.IsEmpty() )
     return false;
   for( size_t i=0; i < Atoms.Count(); i++ )
     if( Atoms[i]->IsDeleted() )

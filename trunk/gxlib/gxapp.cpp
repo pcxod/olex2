@@ -39,6 +39,7 @@
 #include "gxmacro.h"
 #include "glbackground.h"
 #include "olxstate.h"
+#include "vcov.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -49,8 +50,8 @@
   #include "wx/clipbrd.h"
 #elif __WIN32__
   #include "wglscene.h"
+  #include <WinGDI.h>
 #endif
-#include "vcov.h"
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
 
@@ -4611,44 +4612,94 @@ void TGXApp::ClearTextures(short) {
 }
 //..............................................................................
 void TGXApp::LoadTextures(const olxstr &folder) {
-#ifndef __WXWIDGETS__
-  throw TNotImplementedException(__OlxSourceInfo);
-#else
   if (!TEFile::IsDir(folder)) {
     throw TInvalidArgumentException(__OlxSourceInfo, "folder name");
   }
+#if !defined(__WXWIDGETS__) && !defined(__WIN32__)
+  throw TNotImplementedException(__OlxSourceInfo);
+#endif
   TTextureManager &tm = GetRender().GetTextureManager();
   bool update=false;
   olxstr dn = folder;
   TEFile::AddPathDelimeterI(dn);
   for (size_t i=0; i < TextureNames.Count(); i++) {
+#if defined(__WXWIDGETS__)
     olxstr fn = (olxstr(dn) << TextureNames[i]  << ".png");
+#else
+    olxstr fn = (olxstr(dn) << TextureNames[i]  << ".bmp");
+#endif
     if (!TEFile::Exists(fn)) {
       TBasicApp::NewLogEntry() << "Could not locate '" << fn <<
         "' skiping this texture";
       continue;
     }
+    int sz = -1;
+#if defined(__WXWIDGETS__)
     wxImage img;
     img.LoadFile(fn.u_str());
-    if (!img.Ok() ||
-      !olx_is_pow2(img.GetWidth()) ||
-      (img.GetWidth() != img.GetHeight()))
+    if( img.Ok() && olx_is_pow2(img.GetWidth()) &&
+      (img.GetWidth() == img.GetHeight()))
     {
+      sz = img.GetWidth();
+    }
+#else
+    HBITMAP bmp = (HBITMAP)LoadImage(NULL, fn.u_str(), IMAGE_BITMAP, 0, 0,
+      LR_CREATEDIBSECTION|LR_LOADFROMFILE);
+    if (bmp != NULL) {
+      BITMAP bm;
+      GetObjectW(bmp , sizeof(bm) , &bm);
+      if (olx_is_pow2(bm.bmHeight) && (bm.bmHeight == bm.bmWidth)) {
+        sz = bm.bmHeight;
+      }
+      else {
+        ::DeleteObject(bmp);
+      }
+    }
+#endif
+    if (sz == -1) {
       TBasicApp::NewLogEntry() << "Invalid image file '" << fn <<
         "' skiping this texture";
       continue;
     }
-    const int sz=img.GetWidth();
+#if defined(__WXWIDGETS__)
     unsigned char * tex_data = new unsigned char[sz*sz*3];
     for (int ix=0; ix < sz; ix++) {
       int off = ix*sz;
       for (int jx=0; jx < sz; jx++) {
         int off1 = (off+jx)*3;
+        int off2 = (jx*sz+ix)*3;
         tex_data[off1+0] = img.GetRed(ix,jx);
         tex_data[off1+1] = img.GetGreen(ix,jx);
         tex_data[off1+2] = img.GetBlue(ix,jx);
       }
     }
+#else
+    HDC hdc = CreateCompatibleDC(NULL);
+    ::SelectObject(hdc, bmp);
+    BITMAPINFO bmpInfo;
+    memset(&bmpInfo, 0, sizeof(bmpInfo));
+    bmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmpInfo.bmiHeader.biWidth = sz;
+    bmpInfo.bmiHeader.biHeight = sz;
+    bmpInfo.bmiHeader.biPlanes = 1;
+    bmpInfo.bmiHeader.biBitCount = 24;
+    bmpInfo.bmiHeader.biCompression = BI_RGB;
+    unsigned char * tex_data = new unsigned char[sz*sz*3];
+    GetDIBits(hdc, bmp, 0, sz, tex_data, &bmpInfo, DIB_RGB_COLORS);
+    ::SelectObject(hdc, NULL);
+    ::DeleteObject(hdc);
+    ::DeleteObject(bmp);
+    for (int ix=0; ix < sz; ix++) {
+      size_t off = ix*sz;
+      for (int jx=ix+1; jx < sz; jx++) {
+        int off1 = (off+jx)*3;
+        int off2 = (jx*sz+ix)*3;
+        olx_swap(tex_data[off1+0], tex_data[off2+2]);
+        olx_swap(tex_data[off1+1], tex_data[off2+1]);
+        olx_swap(tex_data[off1+2], tex_data[off2+0]);
+      }
+    }
+#endif
     TGlTexture *tex = tm.FindByName(TextureNames[i]);
     if (tex == NULL) {
       GLuint tex_id = tm.Add2DTexture(
@@ -4675,6 +4726,5 @@ void TGXApp::LoadTextures(const olxstr &folder) {
     TXAtom::CreateStaticObjects(GetRender());
     TXBond::CreateStaticObjects(GetRender());
   }
-#endif
 }
 //..............................................................................

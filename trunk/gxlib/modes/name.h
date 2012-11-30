@@ -52,7 +52,7 @@ protected:
     TXAtomPList outgoing;
     for( size_t i=0; i < xa.NodeCount(); i++ )  {
       TXAtom& nd = static_cast<TXAtom&>(xa.Node(i));
-      if( nd.IsDeleted() || nd.GetType() < 3.5 ) // H,D,Q
+      if( nd.IsDeleted() || nd.GetType() < 2 ) // H,D,Q
         continue;
       if( gxapp.IsLabelMarked(nd) )
         continue;

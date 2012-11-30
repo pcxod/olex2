@@ -44,7 +44,7 @@ protected:
   TStrList Arguments;
 public:
   // the file name of the application with full path
-  TBasicApp(const olxstr& AppName);
+  TBasicApp(const olxstr& AppName, bool read_options=false);
   virtual ~TBasicApp();
   const TParamList &GetOptions() const { return Options; }
   const TStrList &GetArguments() const { return Arguments; }
@@ -57,7 +57,7 @@ public:
   template <typename ch_t>
   void InitArguments(int argc, ch_t **argv) {
     ValidateArgs(); // throw an excaption if Arguments are not empty
-    for (size_t i=0; i < argc; i++) {
+    for (int i=0; i < argc; i++) {
       olxstr arg = argv[i];
       if (arg.Contains('=') || arg.StartsFrom('-'))
         Options.FromString(arg, '=');

@@ -121,10 +121,10 @@ void PatchAPI::_RestoreExecuableFlags() {
 //.........................................................................
 size_t PatchAPI::GetNumberOfOlex2Running()  {
   TStrList pid_files;
-  TEFile::ListDir(TBasicApp::GetBaseDir(), pid_files, olxstr("*.") <<
+  TEFile::ListDir(TBasicApp::GetInstanceDir(), pid_files, olxstr("*.") <<
     GetOlex2PIDFileExt(), sefAll);
   for( size_t i=0; i < pid_files.Count(); i++ )  {
-    if( TEFile::DelFile(TBasicApp::GetBaseDir() + pid_files[i]) )
+    if( TEFile::DelFile(TBasicApp::GetInstanceDir() + pid_files[i]) )
       pid_files[i].SetLength(0);
   }
   pid_files.Pack();

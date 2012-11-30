@@ -27,7 +27,7 @@ UseEsdlNamespace()
 
 TBasicApp* TBasicApp::Instance = NULL;
 
-TBasicApp::TBasicApp(const olxstr& FileName)
+TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   : OnProgress(Actions.New("PROGRESS")),
     OnTimer(Actions.New("TIMER")), OnIdle(Actions.New("IDLE"))
 {
@@ -45,7 +45,8 @@ TBasicApp::TBasicApp(const olxstr& FileName)
   // attach GC to the instance, if detached...
   TEGC::Initialise();
   SetBaseDir(FileName);
-  ReadOptions(GetBaseDir() + ".options");
+  if (read_options)
+    ReadOptions(GetBaseDir() + ".options");
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {

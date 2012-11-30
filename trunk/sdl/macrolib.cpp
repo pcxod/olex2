@@ -34,7 +34,7 @@ void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
   olex::IOlexProcessor *ip = olex::IOlexProcessor::GetInstance();
   olxstr location = __OlxSourceInfo;
   for (size_t i=0; i < Args.Count(); i++) {
-    // processing needs to be done for the defaults only - the rest lready ARE
+    // processing needs to be done for the defaults only - the rest already ARE
     if (i < Params.Count()) {
       args.Add(Params[i]);
     }

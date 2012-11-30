@@ -194,3 +194,23 @@ void TAfixGroups::FromDataItem(TDataItem& item) {
     Groups.GetLast().FromDataItem(item.GetItem(i));
   }
 }
+//.............................................................................
+void TAfixGroups::Release(TAfixGroup& ag)  {
+  if (&ag.GetParent() != this) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "AFIX group parent differs");
+  }
+  Groups.Release(ag.GetId());
+  for (size_t i=0; i < Groups.Count(); i++)
+    Groups[i].SetId((uint16_t)i);
+}
+//.............................................................................
+void TAfixGroups::Restore(TAfixGroup& ag)  {
+  if (&ag.GetParent() != this) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "AFIX group parent differs");
+  }
+  Groups.Add(ag);
+  ag.SetId((uint16_t)(Groups.Count()-1));
+}
+//.............................................................................
