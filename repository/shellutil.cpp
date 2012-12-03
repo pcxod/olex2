@@ -27,6 +27,7 @@
   #ifdef __WXWIDGETS__
     #include <wx/stdpaths.h>
     #include <wx/dirdlg.h>
+    #include <wx/filedlg.h>
   #endif
   #include <unistd.h>
   #ifdef __MAC__
@@ -272,7 +273,7 @@ olxstr TShellUtil::PickFile(const olxstr& Title, const olxstr &Filter,
   return EmptyString();
 #elif __WXWIDGETS__
   int Style = open ? wxFD_OPEN : wxFD_SAVE;
-  wxFileDialog dlgFile(this, Title.u_str(),
+  wxFileDialog dlgFile(NULL, Title.u_str(),
     DefFolder.u_str(), DefFile.u_str(), Filter.u_str(), Style);
   return (dlgFile.ShowModal() == wxID_OK ? olxstr(dlgFile.GetPath())
     : EmptyString());
