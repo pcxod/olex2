@@ -273,9 +273,6 @@ protected:
   TStrList FOnListenCmds;
   TMacroError MacroError;
   
-  olxstr Tooltip;
-  void AquireTooltipValue();
-
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
@@ -632,8 +629,7 @@ private:
 
   bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed, 
        RunOnceProcessed,
-       StartupInitialised,
-       ShowChemicalOccu;
+       StartupInitialised;
   bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, _UseGlTooltip;
 
   float FHtmlPanelWidth;

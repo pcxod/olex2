@@ -426,10 +426,10 @@ public:
   // restores the on-screen rendering
   void FinishDrawBitmap();
   void Resize(int new_w, int new_h)  {  FGlRender->Resize(new_w, new_h); }
-  AGDrawObject* SelectObject(int x, int y)  {
+  AGDrawObject* SelectObject(int x, int y) const {
     return FGlRender->SelectObject(x, y);
   }
-  TGlPrimitive *SelectPrimitive(int x, int y)  {
+  TGlPrimitive *SelectPrimitive(int x, int y) const {
     return FGlRender->SelectPrimitive(x, y);
   }
   DefPropP(double, ExtraZoom)
@@ -473,7 +473,8 @@ public:
   void UnGroupSelection();
   void UnGroup(TGlGroup& G);
   // if list is true - the selection is considered as a list of bonds
-  olxstr GetSelectionInfo(bool list=false);
+  olxstr GetSelectionInfo(bool list=false) const;
+  olxstr GetObjectInfoAt(int x, int y) const;
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);
   virtual void ExpandSelectionEx(TSAtomPList& atoms);
@@ -502,7 +503,8 @@ protected:
        XGrowPointsVisible,
        FXPolyVisible,
        DisplayFrozen,
-       ZoomAfterModelBuilt;
+       ZoomAfterModelBuilt,
+       ShowChemicalOccu;
   short FGrowMode, PackMode;
 public:
   TXGlLabels& GetLabels() const {  return *FLabels; }

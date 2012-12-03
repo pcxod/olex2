@@ -254,6 +254,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
 {
   FQPeaksVisible = FHydrogensVisible = FStructureVisible = FHBondsVisible
     = true;
+  ShowChemicalOccu = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   DisplayFrozen = MainFormVisible = false;
   ZoomAfterModelBuilt = FXPolyVisible = true;
@@ -696,6 +697,14 @@ void TGXApp::Init()  {
     }
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
+  try {
+    ShowChemicalOccu = GetOptions().FindValue(
+      "tooltip_occu_chem", TrueString()).ToBool();
+  }
+  catch(...) {
+    TBasicApp::NewLogEntry(logInfo) <<
+      (olxstr("Invalid boolean value for ").quote() << "tooltip_occu_chem");
+  }
 }
 //..............................................................................
 int32_t TGXApp::Quality(const short V)  {
@@ -794,7 +803,7 @@ olxstr macSel_FormatDistance(const TSAtom &a, const TSAtom &b, double d,
   return (l << macSel_GetName2(a, b) << "): " << macSel_FormatValue(d, cv));
 }
 
-olxstr TGXApp::GetSelectionInfo(bool list)  {
+olxstr TGXApp::GetSelectionInfo(bool list) const {
   olxstr Tmp;
   try {
     double v;
@@ -1106,6 +1115,125 @@ olxstr TGXApp::GetSelectionInfo(bool list)  {
     Tmp = "n/a";
   }
   return Tmp;
+}
+//..............................................................................
+olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
+  AGDrawObject *G = SelectObject(x, y);
+  if (G == NULL) return EmptyString();
+  olxstr rv;
+  if (G->IsSelected())
+    rv = GetSelectionInfo();
+  else if (EsdlInstanceOf(*G, TXAtom)) {
+    const TXAtom &xa = *(TXAtom*)G;
+    const TCAtom& ca = xa.CAtom();
+    rv = xa.GetGuiLabelEx();
+    if (xa.GetType() == iQPeakZ)
+      rv << ':' << xa.CAtom().GetQPeak();
+    double occu = (ShowChemicalOccu ? ca.GetChemOccu() : ca.GetOccu());
+    rv << (ShowChemicalOccu ? "\nChem occu(" : "\nXtal occu(");
+    if (ca.GetVarRef(catom_var_name_Sof) != NULL) {
+      if (ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None) {
+        rv << "fixed): ";
+        if (olx_abs(occu-olx_round(occu)) < 1e-3)
+          occu = olx_round(occu);
+      }
+      else {
+        rv << "linked to ";
+        if (olx_abs(ca.GetVarRef(catom_var_name_Sof)->coefficient-1.0) > 1e-6) {
+          rv << olxstr(ca.GetVarRef(catom_var_name_Sof)->coefficient)
+            .TrimFloat() << 'x';
+        }
+        if (ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_AsVar)
+          rv << "[FVAR#";
+        else
+          rv << "[1-FVAR #";
+        rv << (ca.GetVarRef(catom_var_name_Sof)->Parent.GetId()+1) << "]): ";
+      }
+    }
+    else
+      rv << "free): ";
+    rv << TEValueD(occu, ca.GetOccuEsd()*ca.GetDegeneracy()).ToString();
+    if (ca.GetEllipsoid() == NULL) {
+      rv << "\nUiso (";
+      if (ca.GetVarRef(catom_var_name_Uiso) != NULL &&
+        ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None &&
+        ca.GetUisoOwner() == NULL)
+      {
+        rv << "fixed): " << olxstr::FormatFloat(3, ca.GetUiso());
+      }
+      else if( ca.GetUisoOwner() != NULL )
+        rv << "riding): " << olxstr::FormatFloat(3, ca.GetUiso());
+      else
+        rv << "free): " << TEValueD(ca.GetUiso(), ca.GetUisoEsd()).ToString();
+    }
+    else
+      rv << "\nUeq " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
+#ifdef _DEBUG
+    rv << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
+    if (xa.GetEllipsoid() == NULL) {
+      rv << "\nV: " << olxstr::FormatFloat(3,
+        pow(xa.CAtom().GetUiso(), 3./2)*4*M_PI/3, true);
+    }
+    else {
+      rv << "\nV: " << olxstr::FormatFloat(3,
+        xa.GetEllipsoid()->GetSX()*xa.GetEllipsoid()->GetSY()*
+        xa.GetEllipsoid()->GetSZ()*4*M_PI/3, true);
+    }
+#endif
+  }
+  else if (EsdlInstanceOf(*G, TXBond)) {
+    TXBond& xb = *(TXBond*)G;
+    rv = xb.A().GetLabel();
+    rv << '-' << xb.B().GetLabel() << ": ";
+    if (CheckFileType<TCif>()) {
+      ACifValue* cv = XFile().GetLastLoader<TCif>()
+        .GetDataManager().Match(xb.A(), xb.B());
+      if (cv != NULL)
+        rv << cv->GetValue().ToString();
+      else
+        rv << olxstr::FormatFloat(3, xb.Length());
+    }
+    else
+      rv << olxstr::FormatFloat(3, xb.Length());
+#ifdef _DEBUG
+    vec3d n = (xb.A().crd()-xb.B().crd()).Normalise();
+    rv << "\nn: " << olx_round(n[0], 1000) << ',' << olx_round(n[1], 1000) <<
+      ',' << olx_round(n[2], 1000);
+#endif
+  } 
+  else if (EsdlInstanceOf(*G, TXReflection)) {
+    rv = ((TXReflection*)G)->GetHKL()[0];
+    rv << ' '
+      << ((TXReflection*)G)->GetHKL()[1] << ' '
+      << ((TXReflection*)G)->GetHKL()[2] << ": "
+      << ((TXReflection*)G)->GetI();
+  }
+  else if (EsdlInstanceOf(*G, TXLine)) {
+    rv = olxstr::FormatFloat(3, ((TXLine*)G)->Length());
+  }
+  else if (EsdlInstanceOf(*G, TXGrowLine)) {
+    rv = ((TXGrowLine*)G)->XAtom().GetLabel();
+    rv << '-' << ((TXGrowLine*)G)->CAtom().GetLabel() << ": "
+      << olxstr::FormatFloat(3, ((TXGrowLine*)G)->Length()) << '('
+      << TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
+  }
+  else if (EsdlInstanceOf(*G, TXGrowPoint)) {
+    rv = TSymmParser::MatrixToSymmEx(((TXGrowPoint*)G)->GetTransform());
+  }
+  else if (EsdlInstanceOf(*G, TXPlane)) {
+    rv << "HKL direction: " <<
+      ((TXPlane*)G)->GetCrystallographicDirection().ToString();
+  }
+  else if (EsdlInstanceOf(*G, TDUserObj)) {
+    TDUserObj &o = *(TDUserObj*)G;
+    if (o.GetType() == sgloSphere && !o.Params().IsEmpty()) {
+      double r=o.Params()[0]*o.Basis.GetZoom();
+      rv << "Sphere volume/radius, A: " <<
+        olxstr::FormatFloat(3, olx_sphere_volume(r)) << '/' <<
+        olxstr::FormatFloat(3, r);
+    }
+  }
+  return rv;
 }
 //..............................................................................
 void TGXApp::ChangeAtomType( TXAtom *A, const olxstr &Element)  {

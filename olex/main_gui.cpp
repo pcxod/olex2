@@ -484,8 +484,8 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
         FCurrentPopup->Enable(ID_SelUnGroup, true);
       }
     }
-    AquireTooltipValue();
-    FCurrentPopup->Enable(ID_SelLabel, !Tooltip.IsEmpty());
+    olxstr tt = FXApp->GetObjectInfoAt(MousePositionX, MousePositionY);
+    FCurrentPopup->Enable(ID_SelLabel, !tt.IsEmpty());
   }
   if( EsdlInstanceOf(*G, TGlGroup) )  {
     pmSelection->Enable(ID_SelGroup, G->IsSelected() && FXApp->GetSelection().Count() > 1);
@@ -714,7 +714,8 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
     }
     if( cnt != 0 )
       cent /= cnt;
-    FXApp->CreateLabel(cent, Tooltip, 4);
+    FXApp->CreateLabel(cent,
+      FXApp->GetObjectInfoAt(MousePositionX, MousePositionY), 4);
     TimePerFrame = FXApp->Draw();
   }
 }

@@ -337,7 +337,6 @@ TMainForm::TMainForm(TGlXApp *Parent):
   _ProcessHandler(*this)
 {
   TEGC::AddP(&HtmlManager);
-  ShowChemicalOccu = true;
   nui_interface = NULL;
   _UpdateThread = NULL;
   ActionProgress = UpdateProgress = NULL;
@@ -1282,15 +1281,8 @@ void TMainForm::XApp(TGXApp *XA)  {
   catch(const TExceptionBase &e)  {
     FXApp->NewLogEntry(logError) << e.GetException()->GetError();
   }
-  try {
-    ShowChemicalOccu = FXApp->GetOptions().FindValue(
-      "tooltip_occu_chem", TrueString()).ToBool();
-  }
-  catch(...) {
-    TBasicApp::NewLogEntry(logInfo) <<
-      (olxstr("Invalid boolean value for ").quote() << "tooltip_occu_chem");
-  }
-  TBasicApp::GetInstance().NewActionQueue(olxappevent_UPDATE_GUI).Add(this, ID_UPDATE_GUI);
+  TBasicApp::GetInstance().NewActionQueue(olxappevent_UPDATE_GUI)
+    .Add(this, ID_UPDATE_GUI);
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1474,123 +1466,6 @@ bool TMainForm::CreateUpdateThread() {
   else
     return false;
 #endif
-}
-//..............................................................................
-void TMainForm::AquireTooltipValue()  {
-  AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY);
-  Tooltip.SetLength(0);
-  if( G != NULL )  {
-    if( G->IsSelected() )
-      Tooltip = FXApp->GetSelectionInfo();
-    else if( EsdlInstanceOf(*G, TXAtom) )  {
-      const TXAtom &xa = *(TXAtom*)G;
-      const TCAtom& ca = xa.CAtom();
-      Tooltip = xa.GetGuiLabelEx();
-      if( xa.GetType() == iQPeakZ )
-        Tooltip << ':' << xa.CAtom().GetQPeak();
-      double occu = (ShowChemicalOccu ? ca.GetChemOccu() : ca.GetOccu());
-      Tooltip << (ShowChemicalOccu ? "\nChem occu(" : "\nXtal occu(");
-      if( ca.GetVarRef(catom_var_name_Sof) != NULL )  {
-        if( ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  {
-          Tooltip << "fixed): ";
-          if( olx_abs(occu-olx_round(occu)) < 1e-3 )
-            occu = olx_round(occu);
-        }
-        else  {
-          Tooltip << "linked to ";
-          if( olx_abs(ca.GetVarRef(catom_var_name_Sof)->coefficient-1.0) > 1e-6 )
-            Tooltip << olxstr(ca.GetVarRef(catom_var_name_Sof)->coefficient).TrimFloat() << 'x';
-          if( ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_AsVar )
-            Tooltip << "[FVAR#";
-          else
-            Tooltip << "[1-FVAR #";
-          Tooltip << (ca.GetVarRef(catom_var_name_Sof)->Parent.GetId()+1) << "]): ";
-        }
-      }
-      else
-        Tooltip << "free): ";
-      Tooltip << TEValueD(occu, ca.GetOccuEsd()*ca.GetDegeneracy()).ToString();
-      if( ca.GetEllipsoid() == NULL )  {
-        Tooltip << "\nUiso (";
-        if( ca.GetVarRef(catom_var_name_Uiso) != NULL && 
-          ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None &&
-          ca.GetUisoOwner() == NULL)
-        {
-          Tooltip << "fixed): " << olxstr::FormatFloat(3, ca.GetUiso());
-        }
-        else if( ca.GetUisoOwner() != NULL )
-          Tooltip << "riding): " << olxstr::FormatFloat(3, ca.GetUiso());
-        else
-          Tooltip << "free): " << TEValueD(ca.GetUiso(), ca.GetUisoEsd()).ToString();
-      }
-      else
-        Tooltip << "\nUeq " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
-#ifdef _DEBUG
-      Tooltip << "\nBonds: " << xa.BondCount() << ", nodes: " << xa.NodeCount();
-      if( xa.GetEllipsoid() == NULL )  {
-        Tooltip << "\nV: " << olxstr::FormatFloat(3,
-          pow(xa.CAtom().GetUiso(), 3./2)*4*M_PI/3, true);
-      }
-      else {
-        Tooltip << "\nV: " << olxstr::FormatFloat(3,
-          xa.GetEllipsoid()->GetSX()*xa.GetEllipsoid()->GetSY()*
-          xa.GetEllipsoid()->GetSZ()*4*M_PI/3, true);
-      }
-#endif
-    }
-    else if( EsdlInstanceOf(*G, TXBond) )  {
-      TXBond& xb = *(TXBond*)G;
-      Tooltip = xb.A().GetLabel();
-      Tooltip << '-' << xb.B().GetLabel() << ": ";
-      if( FXApp->CheckFileType<TCif>() )  {
-        ACifValue* cv = FXApp->XFile().GetLastLoader<TCif>()
-          .GetDataManager().Match(xb.A(), xb.B());
-        if( cv != NULL )
-          Tooltip << cv->GetValue().ToString();
-        else
-          Tooltip << olxstr::FormatFloat(3, xb.Length());
-      }
-      else
-        Tooltip << olxstr::FormatFloat(3, xb.Length());
-#ifdef _DEBUG
-      vec3d n = (xb.A().crd()-xb.B().crd()).Normalise();
-      Tooltip << "\nn: " << olx_round(n[0], 1000) << ',' << olx_round(n[1], 1000) <<
-        ',' << olx_round(n[2], 1000);
-#endif
-    } 
-    else if( EsdlInstanceOf(*G, TXReflection) )  {
-      Tooltip = ((TXReflection*)G)->GetHKL()[0];
-      Tooltip << ' '
-              << ((TXReflection*)G)->GetHKL()[1] << ' '
-              << ((TXReflection*)G)->GetHKL()[2] << ": "
-              << ((TXReflection*)G)->GetI();
-    }
-    else if( EsdlInstanceOf(*G, TXLine) )  {
-      Tooltip = olxstr::FormatFloat(3, ((TXLine*)G)->Length());
-    }
-    else if( EsdlInstanceOf(*G, TXGrowLine) )  {
-      Tooltip = ((TXGrowLine*)G)->XAtom().GetLabel();
-      Tooltip << '-' << ((TXGrowLine*)G)->CAtom().GetLabel() << ": "
-          << olxstr::FormatFloat(3, ((TXGrowLine*)G)->Length()) << '('
-          << TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
-    }
-    else if( EsdlInstanceOf(*G, TXGrowPoint) )  {
-      Tooltip = TSymmParser::MatrixToSymmEx(((TXGrowPoint*)G)->GetTransform());
-    }
-    else if( EsdlInstanceOf(*G, TXPlane) )  {
-      Tooltip << "HKL direction: " <<
-        ((TXPlane*)G)->GetCrystallographicDirection().ToString();
-    }
-    else if( EsdlInstanceOf(*G, TDUserObj) )  {
-      TDUserObj &o = *(TDUserObj*)G;
-      if (o.GetType() == sgloSphere && !o.Params().IsEmpty()) {
-        double r=o.Params()[0]*o.Basis.GetZoom();
-        Tooltip << "Sphere volume/radius, A: " <<
-          olxstr::FormatFloat(3, olx_sphere_volume(r)) << '/' <<
-          olxstr::FormatFloat(3, r);
-      }
-    }
-  }
 }
 //..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
@@ -1795,19 +1670,19 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( MouseMoveTimeElapsed < 2500 )
       MouseMoveTimeElapsed += FTimer->GetInterval();
     if( MouseMoveTimeElapsed > 500 && MouseMoveTimeElapsed < 5000 )  {
-      AquireTooltipValue();
-      if( !_UseGlTooltip )
-        FGlCanvas->SetToolTip(Tooltip.u_str());
-      else if( GlTooltip != NULL )  {
-        if( Tooltip.IsEmpty() )  {
-          if( GlTooltip->IsVisible() )  {
+      olxstr tt = this->FXApp->GetObjectInfoAt(MousePositionX, MousePositionY);
+      if (!_UseGlTooltip)
+        FGlCanvas->SetToolTip(tt.u_str());
+      else if( GlTooltip != NULL) {
+        if (tt.IsEmpty() )  {
+          if (GlTooltip->IsVisible()) {
             GlTooltip->SetVisible(false);
             Draw = true;
           }
         }
         else  {
           GlTooltip->Clear();
-          GlTooltip->PostText(Tooltip);
+          GlTooltip->PostText(tt);
           GlTooltip->Fit();
           int x = MousePositionX-GlTooltip->GetWidth()/2,
             y = MousePositionY-GlTooltip->GetHeight()-4;
