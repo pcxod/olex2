@@ -166,6 +166,7 @@ public:
       }
       gxapp.XFile().GetLattice().SetAnis(to_iso, false);
       gxapp.XFile().GetLattice().Uniq();
+      gxapp.UpdateDuplicateLabels();
     }
     else  {
       TUnitCell& uc = gxapp.XFile().GetUnitCell();

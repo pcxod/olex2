@@ -77,7 +77,7 @@ TAG_HANDLER_PROC(tag)  {
         ic->AddCircle(
           toks[0].ToInt(), 
           toks[1].ToInt(),
-          toks[2].ToFloat<float>(),
+          toks[2].ToFloat(),
           tag.GetParam(wxT("HREF")),
           tag.GetParam(wxT("TARGET"))
         );
@@ -212,7 +212,7 @@ TAG_HANDLER_PROC(tag)  {
     op->processFunction(Tmp, SrcInfo, false);
     if( !Tmp.IsEmpty() )  {
       if( Tmp.EndsWith('%') )
-        fl = Tmp.SubStringTo(Tmp.Length()-1).ToFloat<float>();
+        fl = Tmp.SubStringTo(Tmp.Length()-1).ToFloat();
       else
         ax = (int)Tmp.ToDouble();
       width_set = true;
@@ -222,7 +222,7 @@ TAG_HANDLER_PROC(tag)  {
     if( !Tmp.IsEmpty() )  {
       if( Tmp.EndsWith('%') )  {
         ay = 0;
-        float _ay = Tmp.SubStringTo(Tmp.Length()-1).ToFloat<float>()/100;
+        float _ay = Tmp.SubStringTo(Tmp.Length()-1).ToFloat()/100;
         _ay *= html->GetSize().GetHeight();
         ay = (int)_ay;
       }

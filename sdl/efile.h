@@ -77,9 +77,9 @@ public:
   // a simple file ID, validates file by modification time, name and the size..
   struct FileID {
     olxstr name;
-    size_t size;
+    uint64_t size;
     time_t timestamp;
-    FileID(const olxstr& _name, size_t _size, time_t _timestamp)
+    FileID(const olxstr& _name, uint64_t _size, time_t _timestamp)
       : name(_name), size(_size), timestamp(_timestamp) { }
     // comparison operator
     bool operator == (const FileID& fi) const {

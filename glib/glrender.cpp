@@ -1334,9 +1334,9 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
     (*glo)[3] = 1;
   }
   else if( Params.Count() == 4 )  {
-    (*glo)[0] = Params[1].ToFloat<float>();
-    (*glo)[1] = Params[2].ToFloat<float>();
-    (*glo)[2] = Params[3].ToFloat<float>();
+    (*glo)[0] = Params[1].ToFloat();
+    (*glo)[1] = Params[2].ToFloat();
+    (*glo)[2] = Params[3].ToFloat();
     (*glo)[3] = 1;
   }
   TGraphicsStyle& gs = FStyles->NewStyle("GL.Stereo", true);

@@ -17,11 +17,13 @@ BeginEsdlNamespace()
 
 // the simplest stack implementation
 template <class T> class TStack  {
+public:
   struct item  {
     item* prev;
     T data;
     item(const T& v, item* _prev) : prev(_prev), data(v)  {}
   };
+private:
   item* cur;
   size_t _count;
 public:
@@ -41,8 +43,8 @@ public:
     _count++;
     return cur->data;
   }
-  inline T Pop()  { 
-    if( cur != NULL )  { 
+  T Pop()  {
+    if( cur != NULL )  {
       item* i = cur->prev;
       T rv = cur->data;
       delete cur;
@@ -52,13 +54,15 @@ public:
     }
     throw TFunctionFailedException(__OlxSourceInfo, "stack is empty");
   }
-  inline bool IsEmpty() const {  return cur == NULL;  }
-  inline size_t Count() const {  return _count;  }
-  inline T& Current() {  
+  bool IsEmpty() const {  return cur == NULL;  }
+  size_t Count() const {  return _count;  }
+  T& Top() {
     if( cur == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "stack is empty");
-    return cur->data;  
+    return cur->data;
   }
+  // this for read-only traversal
+  const item* TopItem() const { return cur; }
 };
 
 class str_stack : public TStack<olxstr>  {
@@ -96,7 +100,7 @@ public:
       }
       Push(o);
     }
-    return argc;  
+    return argc;
   }
 };
 

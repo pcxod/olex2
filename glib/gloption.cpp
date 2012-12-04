@@ -31,10 +31,10 @@ bool TGlOption::FromString(const olxstr &S)  {
   if( S.FirstIndexOf(',') != InvalidIndex )  {
     TStrList SL(S, ',');
     if( SL.Count() != 4 )  return false;
-    data[0] = SL[0].ToFloat<float>();
-    data[1] = SL[1].ToFloat<float>();
-    data[2] = SL[2].ToFloat<float>();
-    data[3] = SL[3].ToFloat<float>();
+    data[0] = SL[0].ToFloat();
+    data[1] = SL[1].ToFloat();
+    data[2] = SL[2].ToFloat();
+    data[3] = SL[3].ToFloat();
   }
   else  {
     *this = S.SafeUInt<uint32_t>();

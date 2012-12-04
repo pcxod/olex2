@@ -650,7 +650,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
       }
       else if( io->ob_type == &PyUnicode_Type )  {
         int usz =  PyUnicode_GetSize(io);
-        TTBuffer<wchar_t> wc_bf(usz+1);      
+        TTBuffer<wchar_t> wc_bf(usz+1);
         usz = PyUnicode_AsWideChar((PyUnicodeObject*)io, wc_bf.Data(), usz);
         if( usz > 0 )
           os->Append(wc_bf.Data(), usz);

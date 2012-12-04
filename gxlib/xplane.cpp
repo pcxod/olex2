@@ -128,7 +128,7 @@ const_strlist TXPlane::ToPov(olxdict<TGlMaterial, olxstr,
       out.Add("   object { union {");
       vec3d zv = vec3d(),
         n = crdc.normal(GetNormal());
-      const mat3d &m = GetBasis();
+      const mat3f m = GetBasis();
       for( size_t j=0; j < glp.Vertices.Count(); j++ )  {
         out.Add("    smooth_triangle {");
         out.Add("     ") << pov::to_str(zv) << pov::to_str(n);

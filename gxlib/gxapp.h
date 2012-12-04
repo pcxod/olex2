@@ -508,11 +508,11 @@ protected:
   short FGrowMode, PackMode;
 public:
   TXGlLabels& GetLabels() const {  return *FLabels; }
+  void UpdateDuplicateLabels();
   bool AreLabelsVisible() const;
   void SetLabelsVisible(bool v);
   void SetLabelsMode(short lmode);
   short GetLabelsMode() const;
-  TGlMaterial& LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
   void MarkLabel(size_t index, bool mark);
   bool IsLabelMarked(const TXAtom& A) const;
