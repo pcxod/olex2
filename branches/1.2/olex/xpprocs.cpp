@@ -1950,7 +1950,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   TXAtomPList Atoms;
   TIns* Ins = FXApp->CheckFileType<TIns>() ?
     &FXApp->XFile().GetLastLoader<TIns>() : NULL;
-  
+
   if( !FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs")) )  {
     E.ProcessingError(__OlxSrcInfo, "wrong atom names");
     return;
@@ -1958,6 +1958,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   // synchronise atom names etc
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
+  TIns::ValidateRestraintsAtomNames(FXApp->XFile().GetRM(), false);
   FXApp->XFile().UpdateAsymmUnit();
   if( Ins != NULL )
     Ins->UpdateParams();
