@@ -122,7 +122,8 @@ public:
   static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
     TIndexList& index, TStrList& SL, 
     RefinementModel::ReleasedItems* processed);
-  void ValidateRestraintsAtomNames(RefinementModel& rm);
+  static void ValidateRestraintsAtomNames(RefinementModel& rm,
+    bool report=true);
   static bool ParseRestraint(RefinementModel& rm, const TStrList& toks);
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
     RefinementModel::ReleasedItems* processed, RefinementModel& rm,
