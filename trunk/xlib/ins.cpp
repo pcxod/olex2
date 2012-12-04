@@ -1178,7 +1178,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   ParseContext cx(rm);
   Preprocess(SL);
   for( size_t i=0; i < index.Count(); i++ )  {
-    if( index[i] >= rm.aunit.AtomCount() )
+    if( (size_t)index[i] >= rm.aunit.AtomCount() )
       throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
     TCAtom &ca = rm.aunit.GetAtom(index[i]);
     if( ca.GetParentAfixGroup() != NULL )
@@ -1675,7 +1675,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   SL.Add();
 }
 //..............................................................................
-void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
+void TIns::ValidateRestraintsAtomNames(RefinementModel& rm, bool report)  {
   // fixed distances
   TPtrList<TSRestraintList> restraints;
   restraints.Add(&rm.rDFIX);
@@ -1710,7 +1710,7 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
     for( size_t j=0; j < sr.Count(); j++ )
       lc.CorrectGlobal(sr[j]);
   }
-  if (!err_names.IsEmpty()) {
+  if (report && !err_names.IsEmpty()) {
     TBasicApp::NewLogEntry(logError) << "The following atom names are used in"
       " restraints but cannot be globally resolved: " << err_names;
   }

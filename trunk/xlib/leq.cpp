@@ -157,21 +157,21 @@ XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
   }
   return *leq;
 }
-//.................................................................................................
-//.................................................................................................
-//.................................................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 XVarManager::XVarManager(RefinementModel& rm) : RM(rm) {
   NextVar = 0;
   NewVar(1.0).SetId(0);
 }
-//.................................................................................................
+//.............................................................................
 void XVarManager::ClearAll()  {
   Clear();
   Vars.Clear();
   References.Clear();
   RM.ClearVarRefs();
 }
-//.................................................................................................
+//.............................................................................
 void XVarManager::Assign(const XVarManager& vm) {
   ClearAll();
   for( size_t i=0; i < vm.Vars.Count(); i++ )
@@ -189,7 +189,7 @@ void XVarManager::Assign(const XVarManager& vm) {
   if( Vars.IsEmpty() )  // odd eh?
     NewVar(1.0).SetId(0);
 }
-//.................................................................................................
+//.............................................................................
 XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
   short var_name, short relation, double coeff)
 {
@@ -198,7 +198,8 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
     prf->Parent._RemRef(*prf);
     References.Delete(prf->GetId());
   }
-  XVarReference& rf = References.Add(new XVarReference(var, a, var_name, relation, coeff));
+  XVarReference& rf = References.Add(
+    new XVarReference(var, a, var_name, relation, coeff));
   for( size_t i=0; i < References.Count(); i++ )
     References[i].SetId(i);
   var._AddRef(rf);
@@ -207,7 +208,7 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
 //    a.SetUisoOwner(NULL);
   return rf;
 }
-//.................................................................................................
+//.............................................................................
 XVarReference* XVarManager::ReleaseRef(IXVarReferencer& a, short var_name) {
   XVarReference* prf = a.GetVarRef(var_name);
   if( prf != NULL )  {
@@ -221,8 +222,10 @@ XVarReference* XVarManager::ReleaseRef(IXVarReferencer& a, short var_name) {
   }
   return prf;
 }
-//.................................................................................................
-void XVarManager::RestoreRef(IXVarReferencer& a, short var_name, XVarReference* vr) {
+//.............................................................................
+void XVarManager::RestoreRef(IXVarReferencer& a, short var_name,
+  XVarReference* vr)
+{
   XVarReference* prf = a.GetVarRef(var_name);
   if( prf != NULL )  {
     prf->Parent._RemRef(*prf);
@@ -239,10 +242,10 @@ void XVarManager::RestoreRef(IXVarReferencer& a, short var_name, XVarReference* 
   for( size_t i=0; i < References.Count(); i++ )
     References[i].SetId(i);
 }
-//.................................................................................................
+//.............................................................................
 double XVarManager::SetParam(IXVarReferencer& ca, short var_index, double val) {
   // despite in shelx a free |var reference| must be > 15, value greater than 10
-  // means that the parameter is fixed, therefore we user Vars[0] for this...
+  // means that the parameter is fixed, therefore we use Vars[0] for this...
   short var_rel = relation_None;
   double coeff = 0, actual_val = val;
   XVar* var = NULL;
@@ -258,7 +261,8 @@ double XVarManager::SetParam(IXVarReferencer& ca, short var_index, double val) {
     else {
       var_rel = iv > 0 ? relation_AsVar : relation_AsOneMinusVar;
       coeff = olx_abs(val -iv*10);
-      actual_val = coeff*(var_rel == relation_AsVar ? var->GetValue() : 1.0 - var->GetValue());
+      actual_val = coeff*(var_rel == relation_AsVar ? var->GetValue()
+        : 1.0 - var->GetValue());
     }
   }
   ca.SetValue(var_index, actual_val);
@@ -268,13 +272,14 @@ double XVarManager::SetParam(IXVarReferencer& ca, short var_index, double val) {
     FreeParam(ca, var_index);
   return actual_val;
 }
-//.................................................................................................
+//.............................................................................
 void XVarManager::FixParam(IXVarReferencer& ca, short var_index) {
-  if( Vars.IsEmpty() )  // this is to fix states when vars are not defined (like while reading CIF)
+  // this is to fix states when vars are not defined (like while reading CIF)
+  if( Vars.IsEmpty() )
     NewVar(1.0).SetId(0);
   AddVarRef(Vars[0], ca, var_index, relation_None, 1);
 }
-//.................................................................................................
+//.............................................................................
 void XVarManager::FreeParam(IXVarReferencer& ca, short var_index) {
   XVarReference* vr = ca.GetVarRef(var_index);
   if( vr != NULL && olx_is_valid_index(vr->GetId()) )  {
@@ -287,18 +292,20 @@ void XVarManager::FreeParam(IXVarReferencer& ca, short var_index) {
 //  if( var_index == var_name_Uiso )
 //    ca.SetUisoOwner(NULL);
 }
-//.................................................................................................
-double XVarManager::GetParam(const IXVarReferencer& ca, short var_index, double val) const {
+//.............................................................................
+double XVarManager::GetParam(const IXVarReferencer& ca, short var_index,
+  double val) const
+{
   const XVarReference* vr = ca.GetVarRef(var_index);
   if( vr == NULL )  return val;
   if( vr->relation_type == relation_None )
-    return olx_sign(val)*(olx_abs(val)+10);
+    return 10 + val;  // shelxl pecularity
   if( vr->relation_type == relation_AsVar )
     return (vr->Parent.GetId()+1)*10+vr->coefficient;
   return -((vr->Parent.GetId()+1)*10+vr->coefficient);
   return 0;
 }
-//.................................................................................................
+//.............................................................................
 void XVarManager::Validate() {
   bool changes = true;
   while( changes )  {
@@ -311,7 +318,8 @@ void XVarManager::Validate() {
       }
     }
   }
-  for( size_t i=1; i < Vars.Count(); i++ )  {// start from 1 to leave global scale
+  // start from 1 to leave global scale
+  for( size_t i=1; i < Vars.Count(); i++ )  {
     XVar& v = Vars[i];
     if( !v.IsUsed() ) {
       for( size_t j=0; j < v._RefCount(); j++ )  {
@@ -332,14 +340,14 @@ void XVarManager::Validate() {
   for( size_t i=0; i < References.Count(); i++ )
     References[i].SetId(i);
 }
-//.................................................................................................
+//.............................................................................
 short XVarManager::RelationIndex(const olxstr& rn) {
   for( short i=0; i <= relation_Last; i++ )
     if( RelationNames[i] == rn )
       return i;
   throw TInvalidArgumentException(__OlxSourceInfo, "unknown relation name");
 }
-//.................................................................................................
+//.............................................................................
 void XVarManager::Describe(TStrList& lst)  {
   Validate();
   for( size_t i=0; i < Equations.Count(); i++ )  {
@@ -406,7 +414,7 @@ void XVarManager::Describe(TStrList& lst)  {
     lst.Add(" Fixed ") << fixed.GetKey(i) << ": " << fixed.GetValue(i);
   }
 }
-//.................................................................................................
+//.............................................................................
 void XVarManager::ToDataItem(TDataItem& item) const {
   TDataItem& vars = item.AddItem("vars");
   for( size_t i=0; i < Vars.Count(); i++ )
@@ -415,7 +423,7 @@ void XVarManager::ToDataItem(TDataItem& item) const {
   for( size_t i=0; i < Equations.Count(); i++ )
     Equations[i].ToDataItem( eqs.AddItem(i) );
 }
-//.................................................................................................
+//.............................................................................
 #ifndef _NO_PYTHON
 PyObject* XVarManager::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
@@ -433,16 +441,20 @@ PyObject* XVarManager::PyExport(TPtrList<PyObject>& atoms)  {
   return main;
 }
 #endif
-//.................................................................................................
+//.............................................................................
 void XVarManager::FromDataItem(const TDataItem& item) {
   ClearAll();
   TDataItem& vars = item.FindRequiredItem("vars");
   for( size_t i=0; i < vars.ItemCount(); i++ )
     Vars.Add(XVar::FromDataItem(vars.GetItem(i), *this)).SetId(Vars.Count());
   TDataItem& eqs = item.FindRequiredItem("eqs");
-  for( size_t i=0; i < eqs.ItemCount(); i++ )
-    Equations.Add( XLEQ::FromDataItem(eqs.GetItem(i), *this)).SetId(Vars.Count());
-  for( size_t i=0; i < References.Count(); i++ )
-    References[i].referencer.SetVarRef(References[i].var_index, &References[i]);
+  for( size_t i=0; i < eqs.ItemCount(); i++ ) {
+    Equations.Add( XLEQ::FromDataItem(eqs.GetItem(i), *this))
+      .SetId(Vars.Count());
+  }
+  for( size_t i=0; i < References.Count(); i++ ) {
+    References[i].referencer.SetVarRef(
+      References[i].var_index, &References[i]);
+  }
 }
-//.................................................................................................
+//.............................................................................
