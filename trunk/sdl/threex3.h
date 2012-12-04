@@ -142,7 +142,7 @@ public:
       olx_floor_t<AT,T>(data[2]));
   }
   template <class AT> T DotProd(const TVector3<AT>& v) const {
-    return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
+    return (T)(data[0]*v[0] + data[1]*v[1] + data[2]*v[2]);
   }
   // ax(bxc) = b(a.c) - c(a.b)
   static TVector3<T> TripleProd(const TVector3<T>& a,

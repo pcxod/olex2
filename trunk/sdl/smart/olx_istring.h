@@ -1202,9 +1202,11 @@ public:
     return negative ? -bp : bp;
   }
   //...........................................................................
-  double ToDouble() const {  return o_atof<double>(T::Data(), T::_Length);  }
+  double ToDouble() const { return ToFloatT<double>(); }
   //...........................................................................
-  template <typename FT> FT ToFloat() const {
+  float ToFloat() const { return ToFloatT<float>(); }
+  //...........................................................................
+  template <typename FT> FT ToFloatT() const {
     return o_atof<FT>(T::Data(), T::_Length);
   }
   //...........................................................................
@@ -1232,8 +1234,8 @@ public:
   uint64_t ToNumber(uint64_t &b) const {
     return (b=o_atoui<uint64_t>(T::Data(), T::_Length, 10));
   }
-  float ToNumber(float &b) const { return (b=ToFloat<float>()); }
-  double ToNumber(double &b) const { return (b=ToFloat<double>()); }
+  float &ToNumber(float &b) const { return (b=ToFloatT<float>()); }
+  double &ToNumber(double &b) const { return (b=ToFloatT<double>()); }
   //...........................................................................
   template <typename num_t> num_t ToNumber() const {
     num_t n;

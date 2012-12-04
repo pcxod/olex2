@@ -696,6 +696,7 @@ Friedel opposites of components 1 ... m
     return _FriedelPairCount;
   }
   vec3i CalcMaxHklIndex(double two_theta=60) const;
+  double CalcCompletnessTo2Theta(double tt) const;
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
     try {  return *RefContainers[id_name];  }
     catch(...)  {
@@ -722,12 +723,12 @@ Friedel opposites of components 1 ... m
   virtual const IXVarReferencerContainer& GetParentContainer() const {
     return *this;
   }
-  virtual double GetValue(size_t var_index) const {  
+  virtual double GetValue(size_t var_index) const {
     if( var_index >= BASF.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
     return BASF[var_index];  
   }
-  virtual void SetValue(size_t var_index, const double& val) {  
+  virtual void SetValue(size_t var_index, const double& val) {
     if( var_index >= BASF.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
     BASF[var_index] = val;  
@@ -758,6 +759,7 @@ Friedel opposites of components 1 ... m
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);
   void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);
+  void LibCalcCompleteness(const TStrObjList& Params, TMacroError& E);
   // restraints & constraints related functions
   void LibShareADP(TStrObjList &Cmds, const TParamList &Opts, TMacroError &E);
 

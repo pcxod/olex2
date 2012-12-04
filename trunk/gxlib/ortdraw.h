@@ -43,7 +43,7 @@ struct ort_atom : public a_ort_object {
   const TXAtom& atom;
   vec3f crd;
   mat3f *p_elpm, *p_ielpm, *elpm;
-  double draw_rad;
+  float draw_rad;
   uint16_t draw_style;
   uint32_t sphere_color, rim_color, mask;
   ort_atom(const OrtDraw& parent, const TXAtom& a);

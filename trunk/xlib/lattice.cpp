@@ -188,7 +188,7 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& sa = Objects.atoms[i];
       (*ocrd)[i] = sa.crd();
-      GetAsymmUnit().CellToCartesian(sa.ccrd(), sa.crd());
+      sa.crd() = GetAsymmUnit().Orthogonalise(sa.ccrd());
       if( !sa.CAtom().IsAvailable() )
         dac++;
     }
@@ -323,7 +323,7 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
       if( sa.IsDeleted() )
         da++;
       else
-        GetAsymmUnit().CellToCartesian(sa.ccrd(), sa.crd());
+        sa.crd() = GetAsymmUnit().Orthogonalise(sa.ccrd());
     }
     if( da != 0 )  {
       const size_t ac = Objects.atoms.Count();
@@ -372,7 +372,7 @@ void TLattice::GenerateCell()  {
         lm->t += t;
         lm->SetRawId(m_id);
       }
-      au.CellToCartesian(sa.ccrd(), sa.crd());
+      sa.crd() = au.Orthogonalise(sa.ccrd());
       sa.SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(),
         ca.GetId()));
       sa._SetMatrix(lm);
@@ -711,8 +711,7 @@ TSAtom& TLattice::GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net)  {
   TSAtom& SA = Objects.atoms.New(net == NULL ? Network : net);
   SA.CAtom(a);
   SA._SetMatrix(&symop);
-  SA.ccrd() = symop * SA.ccrd();
-  GetAsymmUnit().CellToCartesian(SA.ccrd(), SA.crd());
+  SA.crd() = GetAsymmUnit().Orthogonalise(SA.ccrd() = symop * SA.ccrd());
   SA.SetEllipsoid(&GetUnitCell().GetEllipsoid(
     symop.GetContainerId(), SA.CAtom().GetId()));
   return SA;
@@ -1408,7 +1407,7 @@ void TLattice::CompaqType(short type)  {
     }
     if( transform == NULL )  continue;
     sa.ccrd() = sa.CAtom().ccrd() = (*transform * sa.ccrd());
-    au.CellToCartesian(sa.CAtom().ccrd(), sa.crd());
+    sa.crd() = au.Orthogonalise(sa.CAtom().ccrd());
     if( sa.CAtom().GetEllipsoid() != NULL )  {
       *sa.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(
         transform->GetContainerId(), sa.CAtom().GetId());
@@ -1483,7 +1482,7 @@ void TLattice::RestoreCoordinates()  {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = Objects.atoms[i];
-    GetAsymmUnit().CellToCartesian(sa.ccrd(), sa.crd());
+    sa.crd() = GetAsymmUnit().Orthogonalise(sa.ccrd());
   }
 }
 //..............................................................................
@@ -2409,7 +2408,7 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = Objects.atoms[i];
     if( restoreCoordinates )
-      au.CellToCartesian(sa.ccrd(), sa.crd());
+      sa.crd() = au.Orthogonalise(sa.ccrd());
     if( sa.CAtom().GetEllipsoid() != NULL ) {
       sa.SetEllipsoid(
         &uc.GetEllipsoid(sa.GetMatrix().GetContainerId(), sa.CAtom().GetId()));

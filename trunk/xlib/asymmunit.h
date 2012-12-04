@@ -89,43 +89,38 @@ public:
   const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
   const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }
   const mat3d& GetHklToCartesian() const {  return Hkl2Cartesian; }
-  template <typename VC, typename VC1>
-  VC& CellToCartesian(const VC& cell, VC1& crt) const {
-    crt[0] = cell[0]*Cell2Cartesian[0][0] + cell[1]*Cell2Cartesian[1][0] +
-      cell[2]*Cell2Cartesian[2][0];
-    crt[1] = cell[1]*Cell2Cartesian[1][1] + cell[2]*Cell2Cartesian[2][1];
-    crt[2] = cell[2]*Cell2Cartesian[2][2];
-    return crt;
-    //Cartesian = Cell * Cell2Cartesian;
-  }
-  template <class VC> VC& CellToCartesian(VC& crt) const {
-    crt[0] = crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] +
-      crt[2]*Cell2Cartesian[2][0];
-    crt[1] = crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1];
-    crt[2] = crt[2]*Cell2Cartesian[2][2];
+  template <typename FT> TVector3<FT>& CellToCartesian(TVector3<FT>& crt) const
+  {
+    crt[0] = (FT)(crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] +
+      crt[2]*Cell2Cartesian[2][0]);
+    crt[1] = (FT)(crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1]);
+    crt[2] = (FT)(crt[2]*Cell2Cartesian[2][2]);
     return crt;
     //crt *= Cell2Cartesian;
   }
-  template <class VC> VC Orthogonalise(const VC& crt) const {
-    return VC(
-      crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] +
-        crt[2]*Cell2Cartesian[2][0],
-      crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1],
-      crt[2]*Cell2Cartesian[2][2]);
+  template <typename FT>
+  TVector3<FT> Orthogonalise(const TVector3<FT>& crt) const {
+    return TVector3<FT>(
+      (FT)(crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] +
+        crt[2]*Cell2Cartesian[2][0]),
+      (FT)(crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1]),
+      (FT)(crt[2]*Cell2Cartesian[2][2]));
   }
-  template <class VC> VC& CartesianToCell(VC& cll) const {
-    cll[0] = cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] +
-      cll[2]*Cartesian2Cell[2][0];
-    cll[1] = cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1];
-    cll[2] = cll[2]*Cartesian2Cell[2][2];
+  template <typename FT> TVector3<FT>& CartesianToCell(TVector3<FT>& cll) const
+  {
+    cll[0] = (FT)(cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] +
+      cll[2]*Cartesian2Cell[2][0]);
+    cll[1] = (FT)(cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1]);
+    cll[2] = (FT)(cll[2]*Cartesian2Cell[2][2]);
     return cll;
   }
-  template <class VC> VC Fractionalise(const VC& cll) const {
-    return VC(
-      cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] +
-        cll[2]*Cartesian2Cell[2][0],
-      cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1],
-      cll[2]*Cartesian2Cell[2][2]);
+  template <typename FT>
+  TVector3<FT> Fractionalise(const TVector3<FT>& cll) const {
+    return TVector3<FT>(
+      (FT)(cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] +
+      cll[2]*Cartesian2Cell[2][0]),
+      (FT)(cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1]),
+      (FT)(cll[2]*Cartesian2Cell[2][2]));
   }
 
   // J App Cryst 2002, 35, 477-480

@@ -150,10 +150,11 @@ public:
           new_l[new_l.Length()-1] = ++lc;
         else
           new_l << 'a';
-        xa.CAtom().SetLabel(au.CheckLabel(&xa.CAtom(), new_l), false);
+        xa.CAtom().SetLabel(au.CheckLabel(&xa.CAtom(), new_l), true);
         if( xa.GetType() == iQPeakZ )
           xa.CAtom().SetQPeak(1.0);
         gxapp.XFile().GetLattice().UpdateConnectivity();
+        gxapp.UpdateDuplicateLabels();
       }
       else  {  // do selection then
         UpdateSelectionCrds();

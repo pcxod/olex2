@@ -9,6 +9,7 @@
 
 #include "macroerror.h"
 #include "function.h"
+#include "bapp.h"
 
 TMacroError::TMacroError()  {
   DeleteObject = false;
@@ -95,3 +96,13 @@ olxstr TMacroError::GetRetVal() const  {
   return RetValue->ToString();
 }
 
+void TMacroError::PrintStack(int logEvt, bool annotate,
+  const olxstr &prefix) const
+{
+  const str_stack::item *i = Stack.TopItem();
+  while (i != NULL) {
+    TBasicApp::NewLogEntry(logEvt, annotate) << prefix <<
+      olxstr(i->data).TrimWhiteChars();
+    i = i->prev;
+  }
+}

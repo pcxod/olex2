@@ -2235,8 +2235,8 @@ void GXLibMacros::macDirection(TStrObjList &Cmds, const TParamList &Options,
     if( !app.XGrid().IsEmpty() && app.XGrid().IsVisible() && 
       (app.XGrid().GetRenderMode()&(planeRenderModeContour|planeRenderModePlane)) != 0 )
     {
-      const vec3f center(app.GetRender().GetBasis().GetCenter());
-      vec3f p(0, 0, app.XGrid().GetDepth());
+      const vec3d center(app.GetRender().GetBasis().GetCenter());
+      vec3d p(0, 0, app.XGrid().GetDepth());
       p = au.Fractionalise(Basis*p - center);
       olxstr Tmp =  "Grid center: (";
       Tmp << olxstr::FormatFloat(3, p[0]) << "*A, " <<
@@ -2934,9 +2934,9 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   olxstr suffix = Options.FindValue("n");
   const bool name = Options.Contains("n");
   const bool align = Options.Contains("a");
-  int group_cnt = 2;
+  size_t group_cnt = 2;
   if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
-    group_cnt = Cmds[0].ToInt();
+    group_cnt = Cmds[0].ToSizeT();
     Cmds.Delete(0);
   }
   TXAtomPList atoms = app.FindXAtoms(Cmds, false, true);
@@ -3062,7 +3062,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i=0; i < atom_a_group; i++)
         satomp[i].SetA(atoms[i]);
       TNetwork &netA = atoms[0]->GetNetwork();
-      for (int gi=1; gi < group_cnt; gi++) {
+      for (size_t gi=1; gi < group_cnt; gi++) {
         for (size_t i=0; i < atom_a_group; i++)
           satomp[i].SetB(atoms[i+gi*atom_a_group]);
         TNetwork &netB = satomp[0].GetB()->GetNetwork();

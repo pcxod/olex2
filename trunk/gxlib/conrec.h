@@ -85,13 +85,13 @@ public:
               xh[m] = x[i+im[m-1]];
               yh[m] = y[j+jm[m-1]];
             } else {
-              h[0]  = 0.25 * (h[1]+h[2]+h[3]+h[4]);
-              xh[0] = 0.50 * (x[i]+x[i+1]);
-              yh[0] = 0.50 * (y[j]+y[j+1]);
+              h[0]  = Float(0.25) * (h[1]+h[2]+h[3]+h[4]);
+              xh[0] = Float(0.50) * (x[i]+x[i+1]);
+              yh[0] = Float(0.50) * (y[j]+y[j+1]);
             }
-            if( h[m] > 0.0 )
+            if( h[m] > 0 )
               sh[m] = 1;
-            else if( h[m] < 0.0 )
+            else if( h[m] < 0 )
               sh[m] = -1;
             else
               sh[m] = 0;

@@ -15,23 +15,26 @@
 #include "datastream.h"
 BeginEsdlNamespace()
 
-class TEMemoryStream: protected TDirectionalList<char>, 
+class TEMemoryStream: protected TDirectionalList<char>,
                       public IDataInputStream,
                       public IDataOutputStream  {
   size_t Position;
 protected:
   void Clear()  {  TDirectionalList<char>::Clear();  Position = 0;  }
 public:
-  TEMemoryStream(long BufferSize=DefBufferSize) : TDirectionalList<char>(BufferSize)  {  Position = 0;  }
+  TEMemoryStream(long BufferSize=DefBufferSize)
+    : TDirectionalList<char>(BufferSize), Position(0)
+  {}
   TEMemoryStream(IInputStream& is);
-  virtual ~TEMemoryStream()  {  }
+  virtual ~TEMemoryStream()  {}
   //void operator >> (IEOutputStream *os);
 
-  virtual inline uint64_t GetSize() const {  return GetLength();  }
-  virtual inline uint64_t GetPosition() const {  return Position;  }
+  virtual uint64_t GetSize() const {  return GetLength();  }
+  virtual uint64_t GetPosition() const {  return Position;  }
   virtual void SetPosition(uint64_t pos)  {
 #ifdef _DEBUG
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, pos, 0, GetLength()+1);
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo,
+      (size_t)pos, 0, GetLength()+1);
 #endif
     Position = OlxIStream::CheckSizeT(pos);
   }

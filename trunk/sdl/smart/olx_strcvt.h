@@ -52,7 +52,7 @@ template <> struct olx_str_to_num<uint64_t> {
 // float
 template <> struct olx_str_to_num<float> {
   template <class ST, typename TC>
-  float operator ()(const TTSString<ST,TC> &s) const {  return s.template ToFloat<float>();  }
+  float operator ()(const TTSString<ST,TC> &s) const {  return s.ToFloat();  }
 };
 template <> struct olx_str_to_num<double> {
   template <class ST, typename TC>

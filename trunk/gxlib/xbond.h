@@ -72,8 +72,8 @@ public:
   // creates legend up three levels (0 to 2)
   static olxstr GetLegend(const TSBond& B, const short level);
 
-  void SetRadius(float V);
-  inline double GetRadius() const {  return FParams[4]; }
+  void SetRadius(double V);
+  double GetRadius() const {  return FParams[4]; }
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &, vec3d &)  {  return false; }

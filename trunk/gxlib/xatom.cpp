@@ -65,7 +65,7 @@ short TXAtom::FDefMask = -1;
 GLuint TXAtom::OrtepSpheres = ~0;
 GLuint TXAtom::LockedAtomSphere = ~0;
 GLuint TXAtom::ConstrainedAtomSphere = ~0;
-double TXAtom::MinQAlpha = 0;
+float TXAtom::MinQAlpha = 0.1;
 TGraphicsStyle* TXAtom::FAtomParams=NULL;
 TXAtom::TStylesClear *TXAtom::OnStylesClear=NULL;
 uint8_t TXAtom::PolyhedronIndex = ~0;
@@ -791,14 +791,14 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   TGlPrimitiveParams *PParams;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   ValidateAtomParams();
-  double SphereQ = FAtomParams->GetNumParam("SphereQ", 15.0, true);
+  int SphereQ = (int)FAtomParams->GetNumParam("SphereQ", 15, true);
   double RimR = FAtomParams->GetNumParam("RimR", 1.02, true);  // radius
   double RimW = FAtomParams->GetNumParam("RimW", 0.05, true);  // width
-  double RimQ = FAtomParams->GetNumParam("RimQ", SphereQ, true);  // quality
+  int RimQ = (int)FAtomParams->GetNumParam("RimQ", SphereQ, true);  // quality
 
   double DiskIR = FAtomParams->GetNumParam("DiskIR", 0.0, true);  // inner radius for disks
   double DiskOR = FAtomParams->GetNumParam("DiskOR", RimR, true);  // outer radius
-  double DiskQ = FAtomParams->GetNumParam("DiskQ", RimQ, true);  // quality
+  int DiskQ = (int)FAtomParams->GetNumParam("DiskQ", RimQ, true);  // quality
   double DiskS = FAtomParams->GetNumParam("DiskS", RimW, true);  // separation
 
 //..............................
@@ -922,7 +922,7 @@ void TXAtom::CreateStaticObjects(TGlRenderer& Parent)  {
   TTypeList<IndexTriangle> triags;
   TArrayList<vec3f> norms;
   typedef GlSphereEx<float, OctahedronFP<vec3f> > gls;
-  gls::Generate(1, olx_round(log(SphereQ)+0.5), vecs, triags, norms);
+  gls::Generate(1, olx_round(log((float)SphereQ)+0.5f), vecs, triags, norms);
   OrtepSpheres = olx_gl::genLists(9);
   
   olx_gl::newList(OrtepSpheres, GL_COMPILE);

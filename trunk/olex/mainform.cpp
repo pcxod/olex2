@@ -3331,10 +3331,7 @@ void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
       TBasicApp::NewLogEntry(quiet ? logInfo : logError) << error.GetLocation()
         << ": " <<  error.GetInfo();
     }
-    while( !error.GetStack().IsEmpty() )  {
-      TBasicApp::NewLogEntry(quiet ? logInfo : logDefault) << '\t'
-        << error.GetStack().Pop().TrimWhiteChars();
-    }
+    error.PrintStack(quiet ? logInfo : logDefault, false, '\t');
   }
 }
 //..............................................................................

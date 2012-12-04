@@ -323,13 +323,13 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
   const float hh = (float)MaxDim/2;
   const vec3f center(Parent.GetBasis().GetCenter());
   const vec3s dim(MaxX, MaxY, MaxZ);
-  double Z;
+  float Z;
   // if only contours are drawn - render plane at the background
   if( (RenderMode&planeRenderModeContour) != 0 )  {
     if( (RenderMode&planeRenderModePlane) == 0 )
-      Z = -Parent.CalcRasterZ(0.003);
+      Z = (float)-Parent.CalcRasterZ(0.003);
     else  // render the plane just a bit behind
-      Z = Depth - 0.001;
+      Z = Depth - 0.001f;
   }
   else  // no adjustment is required
     Z = Depth;
@@ -418,7 +418,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
     Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);
     legend_step = (maxVal-minVal)/ContourLevelCount;
     Legend->text.Clear();
-    for (int i=0; i < ContourLevelCount; i++)
+    for (int i=0; i < (int)ContourLevelCount; i++)
       Legend->text << olxstr::FormatFloat(-3, minVal+legend_step*i);
     Legend->Fit();
     UpdateInfo();
@@ -509,7 +509,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   for( size_t i=0; i < MaxX; i++ )  {
     for( size_t j=0; j < MaxY; j++ )  {
       for( size_t k=0; k < MaxZ; k++ )  {
-        const float val = toks[vc].ToFloat<float>();
+        const float val = toks[vc].ToFloat();
         if( val > MaxVal ) MaxVal = val;
         if( val < MinVal ) MinVal = val;
         ED->Data[i][j][k] = val;
@@ -641,7 +641,7 @@ void TXGrid::SetPlaneSize(size_t _v)  {
     ContourData = new float*[_v];
     ContourCrds[0] = new float[_v];
     ContourCrds[1] = new float[_v];
-    const float hh = _v/2;
+    const float hh = (float)_v/2;
     for( size_t i=0; i < _v; i++ )  {
       ContourData[i] = new float[_v];
       ContourCrds[0][i] = ContourCrds[1][i] = (float)i-hh;
@@ -685,10 +685,10 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData& Data)  {
         SetContourLevelCount(GetContourLevelCount()+v/2);
       }
       else  {
-        const double step = (MaxVal-MinVal)/250.0;
+        const float step = (MaxVal-MinVal)/250.0f;
         Scale -= step*(LastMouseX - Data.X);
         Scale += step*(LastMouseY - Data.Y);
-        if( olx_abs(Scale) > olx_max(MaxVal,MinVal)  )
+        if( olx_abs(Scale) > olx_max(MaxVal,MinVal) )
           Scale = olx_sign(Scale)*olx_max(MaxVal,MinVal);
       }
     }
@@ -712,7 +712,7 @@ void TXGrid::UpdateInfo()  {
     Info->PostText(olxstr("Current level: ") << Scale);
   else {
     const vec3f center(Parent.GetBasis().GetCenter());
-    vec3f p(0, 0, GetDepth());
+    vec3d p(0, 0, GetDepth());
     p = TXApp::GetInstance().XFile().GetAsymmUnit().Fractionalise(
       Parent.GetBasis().GetMatrix()*p - center);
     olxstr Tmp =  "Plane center: ";
@@ -1095,13 +1095,13 @@ void TXGrid::LibExtended(const TStrObjList& Params, TMacroError& E)  {
 void TXGrid::LibScale(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Scale);
   else
-    SetScale(Params[0].ToFloat<float>());
+    SetScale(Params[0].ToFloat());
 }
 //.............................................................................
 void TXGrid::LibSize(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  E.SetRetVal(Size);
   else
-    Size = Params[0].ToFloat<float>();
+    Size = Params[0].ToFloat();
 }
 //.............................................................................
 void TXGrid::LibPlaneSize(const TStrObjList& Params, TMacroError& E)  {
@@ -1115,7 +1115,7 @@ void TXGrid::LibDepth(const TStrObjList& Params, TMacroError& E)  {
     E.SetRetVal(Depth);
   else {
     if (Params.Count() == 1)
-      Depth = Params[0].ToFloat<float>();
+      Depth = Params[0].ToFloat();
     else if (Params.Count() == 3) {
       vec3d v(
         Params[0].ToDouble(),
@@ -1219,7 +1219,7 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   //Visible( item.GetRequiredField("visible").ToBool() );
   SetVisible(true);
   RenderMode = item.GetRequiredField("draw_mode").ToInt();
-  Size = item.GetRequiredField("size").ToDouble();
+  Size = item.GetRequiredField("size").ToFloat();
   Extended = item.GetFieldValue("extended", FalseString()).ToBool();
   Boxed = item.GetFieldValue("boxed", FalseString()).ToBool();
   ExtMin = vec3f(-1,-1,-1);
@@ -1229,13 +1229,13 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
     PersUtil::VecFromStr(item.GetField(ed_i), ExtMin);
     PersUtil::VecFromStr(item.GetRequiredField("ext_min"), ExtMax);
   }
-  Scale = item.GetRequiredField("scale").ToDouble();
-  InitGrid( item.GetRequiredField("max_x").ToInt(), 
+  Scale = item.GetRequiredField("scale").ToFloat();
+  InitGrid( item.GetRequiredField("max_x").ToInt(),
             item.GetRequiredField("max_y").ToInt(),
-            item.GetRequiredField("max_z").ToInt() );
-  MaxVal = item.GetRequiredField("max_val").ToDouble();
-  MinVal = item.GetRequiredField("min_val").ToDouble();
-  Depth = item.GetRequiredField("depth").ToDouble();
+            item.GetRequiredField("max_z").ToInt());
+  MaxVal = item.GetRequiredField("max_val").ToFloat();
+  MinVal = item.GetRequiredField("min_val").ToFloat();
+  Depth = item.GetRequiredField("depth").ToFloat();
   for( size_t x=0; x < MaxX; x++ )
     for( size_t y=0; y < MaxY; y++ )
       zis.Read(ED->Data[x][y], sizeof(float)*MaxZ);

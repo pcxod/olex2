@@ -1554,7 +1554,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList atoms;
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )  
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )
     return;
 
   if( vars.Equalsi( "XYZ" ) )  {
@@ -3887,7 +3887,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
         TSAtom da(NULL), aa(NULL);
         da.CAtom(ta[0].GetAtom());
         da._SetMatrix(&I);
-        au.CellToCartesian(da.ccrd(), da.crd());
+        da.crd()= au.Orthogonalise(da.ccrd());
         aa.CAtom(ta[1].GetAtom());
         smatd am;
         if( ta[1].GetMatrix() == NULL )  {
@@ -3900,7 +3900,7 @@ void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
         }
         aa._SetMatrix(&am);
         aa.ccrd() = am*aa.ccrd();
-        au.CellToCartesian(aa.ccrd(), aa.crd());
+        aa.crd() = au.Orthogonalise(aa.ccrd());
         row[3] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).
           DistanceTo(da.crd())));
         row[4] = new cetString(olxstr::FormatFloat(2, envi.GetCrd(j).
@@ -7381,7 +7381,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     CA1.SetPart(1);
     CA1.ccrd() += direction;
     A.ccrd() = CA1.ccrd();
-    CA1.SetLabel(au.CheckLabel(&CA1, lbl+'a'), false);
+    CA1.SetLabel(au.CheckLabel(&CA1, lbl+'a'), true);
     // link occupancies
     rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, sp);
     CA1.SetOccu(0.5*sp);
@@ -7389,7 +7389,7 @@ void XLibMacros::macSplit(TStrObjList &Cmds, const TParamList &Options,
     TCAtom& CA2 = *CA;
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
-    CA2.SetLabel(au.CheckLabel(&CA2, lbl+'b'), false);
+    CA2.SetLabel(au.CheckLabel(&CA2, lbl+'b'), true);
     // link occupancies
     rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, sp);
     CA2.SetOccu(0.5*sp);

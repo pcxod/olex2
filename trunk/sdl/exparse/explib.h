@@ -41,9 +41,9 @@ namespace exparse  {
         : *proxy, ef, i, args);
     }
     static cast_result str_cast(const IEvaluable* i)  {  
-      return cast_result(&(IEvaluable::cast_helper<StringValue>(i))->val, false);  
+      return cast_result(&(IEvaluable::cast_helper<StringValue>(i))->val, false);
     }
-    virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
+    virtual cast_operator get_cast_operator(const std::type_info& ti) const {
       if( typeid(olxstr) == ti )
         return &str_cast;
       throw TCastException(__OlxSourceInfo, ti);  
@@ -54,7 +54,7 @@ namespace exparse  {
     virtual bool is_final() const {  return true;  }
     // wrapper functions
     int atoi() const {  return val.SafeInt<int>(); }
-    float atof() const {  return val.ToFloat<float>(); }
+    float atof() const {  return val.ToFloat(); }
     olxstr idx_op(size_t i) const { return val.CharAt(i); }
     // globals section
     static olxstr add(const olxstr& a, const olxstr& b)  {  return a+b; }

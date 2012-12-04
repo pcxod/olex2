@@ -713,9 +713,9 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   od.SetElpLineWidth(Options.FindValue("lw_ellipse", "1").ToDouble());
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
   od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
-  od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat<float>()/100.0f);
+  od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat()/100.0f);
   od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
-  od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat<float>()/100.0f);
+  od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat()/100.0f);
   if( Options.Contains('p') )
     od.SetPerspective(true);
   olxstr octants = Options.FindValue("octants", "-$C");
@@ -1705,7 +1705,8 @@ void TMainForm::macHtmlPanelWidth(TStrObjList &Cmds, const TParamList &Options, 
   }
   if( Cmds.Count() == 1 )  {
     FHtmlWidthFixed = !Cmds[0].EndsWith('%');
-    float width = (FHtmlWidthFixed ? Cmds[0].ToDouble() : Cmds[0].SubStringTo(Cmds[0].Length()-1).ToDouble());
+    float width = (FHtmlWidthFixed ? Cmds[0].ToDouble()
+      : Cmds[0].SubStringTo(Cmds[0].Length()-1).ToDouble());
     if( !FHtmlWidthFixed )  {
       width /= 100;
       if( width < 0.01 )
@@ -1730,7 +1731,7 @@ void TMainForm::macHtmlPanelWidth(TStrObjList &Cmds, const TParamList &Options, 
     OnResize();
     return;
   }
-  E.ProcessingError(__OlxSrcInfo, "wrong number of arguments" );
+  E.ProcessingError(__OlxSrcInfo, "wrong number of arguments");
   return;
 }
 //..............................................................................
@@ -1738,7 +1739,7 @@ void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options, TMac
   if( Cmds.IsEmpty() )
     TBasicApp::NewLogEntry() << "Current Q-Peak scale: " << FXApp->GetQPeakScale();
   else  {
-    float scale = Cmds[0].ToFloat<float>();
+    float scale = Cmds[0].ToFloat();
     FXApp->SetQPeakScale(scale);
     return;
   }
@@ -1748,7 +1749,7 @@ void TMainForm::macQPeakSizeScale(TStrObjList &Cmds, const TParamList &Options, 
   if( Cmds.IsEmpty() )
     TBasicApp::NewLogEntry() << "Current Q-Peak size scale: " << FXApp->GetQPeakSizeScale();
   else  {
-    float scale = Cmds[0].ToFloat<float>();
+    float scale = Cmds[0].ToFloat();
     FXApp->SetQPeakSizeScale(scale);
     return;
   }
@@ -1950,7 +1951,6 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   TXAtomPList Atoms;
   TIns* Ins = FXApp->CheckFileType<TIns>() ?
     &FXApp->XFile().GetLastLoader<TIns>() : NULL;
-
   if( !FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs")) )  {
     E.ProcessingError(__OlxSrcInfo, "wrong atom names");
     return;

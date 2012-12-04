@@ -261,9 +261,9 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
   vec3f dir_vec = atom_b.crd-atom_a.crd;
   const float b_len = dir_vec.Length();
   if( b_len < 1e-3 )  return;
-  const float brad = parent.GetBondRad(*this, mask)*object.GetRadius();
+  const float brad = parent.GetBondRad(*this, mask)*(float)object.GetRadius();
   dir_vec.Normalise();
-  const float pers_scale = 1.0-olx_sqr(dir_vec[2]);
+  const float pers_scale = 1.0f-olx_sqr(dir_vec[2]);
   mat3f rot_mat;
   const vec3f touch_point = (atom_b.atom.crd() - atom_a.atom.crd()).Normalise();
   if( olx_abs(1.0f-olx_abs(touch_point[2])) < 1e-3 )  // degenerated case...
@@ -409,8 +409,8 @@ ort_bond_line::ort_bond_line(const OrtDraw& parent, const TXLine& line,
   a1 = a2 = NULL;
   float min_d1, min_d2;
   for (size_t i=0; i < parent.atoms.Count(); i++) {
-    double d1 = (parent.atoms[i]->crd-p_from).QLength();
-    double dr = parent.atoms[i]->draw_rad;
+    float d1 = (parent.atoms[i]->crd-p_from).QLength();
+    float dr = parent.atoms[i]->draw_rad;
     if (parent.atoms[i]->elpm != NULL) {
       dr = olx_max((*parent.atoms[i]->elpm)[0].QLength(),
         (*parent.atoms[i]->elpm)[1].QLength());
@@ -424,7 +424,7 @@ ort_bond_line::ort_bond_line(const OrtDraw& parent, const TXLine& line,
         min_d1 = d1;
       }
     }
-    double d2 = (parent.atoms[i]->crd-p_to).QLength();
+    float d2 = (parent.atoms[i]->crd-p_to).QLength();
     if (d2 < dr) {
       if (a2 == NULL || (a2 != NULL && d2 < min_d2)) {
         a2 = parent.atoms[i];
@@ -494,11 +494,11 @@ void ort_bond_line::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   vec3f dir_vec = p_to-p_from;
   const float b_len = dir_vec.Length();
   if( b_len < 1e-3 )  return;
-  const float brad = parent.GetLineRad(*this, mask)*line.GetRadius();
-  const float pers_scale = 1.0-olx_sqr(dir_vec[2]/b_len);
+  const float brad = parent.GetLineRad(*this, mask)*(float)line.GetRadius();
+  const float pers_scale = 1.0f-olx_sqr(dir_vec[2]/b_len);
   mat3f rot_mat;
   const vec3f touch_point = vec3f(to-from).Normalise();
-  if( olx_abs(1.0f-olx_abs(touch_point[2])) < 1e-3 )  // degenerated case...
+  if( olx_abs(1.0f-olx_abs(touch_point[2])) < 1e-3f )  // degenerated case...
     rot_mat.I();
   else
     olx_create_rotation_matrix_(rot_mat,
@@ -747,8 +747,8 @@ void OrtDraw::Init(PSWriter& pw)  {
   BondProjF.SetCount(BondDiv);
   BondProjM.SetCount(BondDiv);
   BondProjT.SetCount(BondDiv);
-  double sin_a, cos_a;
-  olx_sincos(2*M_PI/ElpDiv, &sin_a, &cos_a);
+  float sin_a, cos_a;
+  olx_sincos((float)(2*M_PI/ElpDiv), &sin_a, &cos_a);
   vec3f ps(cos_a, -sin_a, 0);
   for( uint16_t i=0; i < ElpDiv; i++ )  {
     ElpCrd[i] = ps;
@@ -756,7 +756,7 @@ void OrtDraw::Init(PSWriter& pw)  {
     ps[0] = (float)(cos_a*x + sin_a*ps[1]);
     ps[1] = (float)(cos_a*ps[1] - sin_a*x);
   }
-  olx_sincos(2*M_PI/BondDiv, &sin_a, &cos_a);
+  olx_sincos((float)(2*M_PI/BondDiv), &sin_a, &cos_a);
   ps = vec3f(cos_a/2, -sin_a/2, 0);
   for( uint16_t i=0; i < BondDiv; i++ )  {
     BondCrd[i] = ps;
@@ -775,7 +775,7 @@ void OrtDraw::Init(PSWriter& pw)  {
   TGXApp& app = TGXApp::GetInstance();
   const TEBasis& basis = app.GetRender().GetBasis();
   LinearScale = olx_min((float)pw.GetWidth()/vp[2],
-    (double)pw.GetHeight()/vp[3]);
+    (float)pw.GetHeight()/vp[3]);
   
   {
     olxcstr fnt("/Verdana findfont ");
@@ -790,8 +790,9 @@ void OrtDraw::Init(PSWriter& pw)  {
   YOffset = ((float)pw.GetHeight()-LinearScale*vp[3])/2;
   pw.translate(0.0f, YOffset);
   pw.scale(LinearScale, LinearScale);
-  DrawScale = app.GetRender().GetBasis().GetZoom()/(app.GetRender().GetScale());
-  BondRad = 0.05*DrawScale;
+  DrawScale = (float)(app.GetRender().GetBasis().GetZoom()
+    /(app.GetRender().GetScale()));
+  BondRad = 0.05f*DrawScale;
   SceneOrigin = basis.GetCenter();
   DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
   ProjMatr = basis.GetMatrix()*DrawScale;  
@@ -906,7 +907,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     T *= app.GetRender().GetScale();
     T -= app.GetRender().GetBasis().GetCenter();
     vec3f cnt = ProjectPoint(T);
-    const float sph_rad = 0.2*DrawScale*b.GetZoom();
+    const float sph_rad = (float)(0.2*DrawScale*b.GetZoom());
     ort_circle* center = new ort_circle(*this, cnt, sph_rad, true);
     all_points.Add(center->center);
     center->color = 0xffffffff;
@@ -916,14 +917,14 @@ void OrtDraw::Render(const olxstr& fileName)  {
         ep = cm[i]*((float)((0.2*len[i]+0.8)*b.GetZoom()));
       
       ort_cone* arrow_cone = new ort_cone(*this, cnt+mp, cnt+ep,
-        0.2*DrawScale*b.GetZoom(), 0, 0); 
+        (float)(0.2*DrawScale*b.GetZoom()), 0, 0);
       objects.Add(arrow_cone);
       all_points.Add(arrow_cone->bottom);
       all_points.Add(arrow_cone->top);
 
       const float z = cm[i][2]/cm[i].Length();
       const float pscale = 1+olx_sign(z)*sqrt(olx_abs(z))/2;
-      const float base_r = 0.075*DrawScale*b.GetZoom();
+      const float base_r = (float)(0.075*DrawScale*b.GetZoom());
       ort_cone* axis_cone = new ort_cone(*this,
         cnt+vec3f(cm[i]).NormaliseTo(// extra 3D effect for the central sphere
           sqrt(olx_sqr(sph_rad)-olx_sqr(base_r))),
@@ -1071,7 +1072,7 @@ void OrtDraw::Render(const olxstr& fileName)  {
     TCStrList output;
     uint32_t prev_ps_color = 0;
     output.Add(pw.color_str(prev_ps_color));
-    const double vector_scale = 1./app.GetRender().GetScale();
+    const float vector_scale = (float)(1./app.GetRender().GetScale());
     for( size_t i=0; i < Labels.Count(); i++ )  {
       const TGlFont& glf = Labels[i]->GetFont();
       uint32_t color = 0;
@@ -1081,14 +1082,15 @@ void OrtDraw::Render(const olxstr& fileName)  {
         color = glm->AmbientF.GetRGB();
       pw.color(color);
       if( glf.IsVectorFont() )  {
-        const double font_scale = DrawScale/app.GetRender().CalcZoom();
-        vec3d crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
+        const float font_scale = (float)(DrawScale/app.GetRender().CalcZoom());
+        vec3f crd = Labels[i]->GetVectorPosition()*vector_scale + DrawOrigin;
         const TTextRect &r = Labels[i]->GetRect();
-        a_ort_object::update_min_max(boundary, vec3f(crd[0]+r.left*font_scale,
-          crd[1]+r.top*vector_scale, 0));
         a_ort_object::update_min_max(boundary,
-          vec3f(crd[0]+(r.left+r.width)*font_scale,
-            crd[1]+(r.top+r.height)*font_scale, 0));
+          vec3f((float)(crd[0]+r.left*font_scale),
+            (float)(crd[1]+r.top*vector_scale), 0));
+        a_ort_object::update_min_max(boundary,
+          vec3f((float)(crd[0]+(r.left+r.width)*font_scale),
+            (float)(crd[1]+(r.top+r.height)*font_scale), 0));
         if( color != prev_ps_color )  {
           output.Add(pw.color_str(color));
           prev_ps_color = color;
