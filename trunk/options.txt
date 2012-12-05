@@ -11,3 +11,5 @@ gl_selection [True] - to use the OpenGl selection implementation. If False - a m
  the selection of objets which use textures (unless treated specifically) or colours..
 gl_multisample [False] - enables smoothing of the rendering, though reduces the prformace it
  produces better quality picture
+preserve_restraint_defaults [false] - if set, the default restraint values/weights are shown in
+ the ins file. This option has no effect when DEFS instruction is set.
