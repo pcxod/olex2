@@ -1188,6 +1188,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
     if( ca.GetExyzGroup() != NULL )
       ca.GetExyzGroup()->Clear();
   }
+  TTypeList<AnAssociation2<TCAtom *, olxstr> > atom_labels;
   for( size_t i=0; i < SL.Count(); i++ )  {
     olxstr Tmp = olxstr::DeleteSequencesOf<char>(SL[i], true);
     if( Tmp.IsEmpty() )  continue;
@@ -1225,7 +1226,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       }
       _ParseAtom(Toks, cx, atom);
       atomCount++;
-      atom->SetLabel(Toks[0], false);
+      atom_labels.AddNew(atom, Toks[0]);
       atom->SetType(*elm);
       if (atom->GetType().z > 1)
         cx.LastNonH = atom;
@@ -1235,6 +1236,8 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   _ProcessSame(cx);
   ParseRestraints(cx.rm, Instructions);
   Instructions.Pack();
+  for (size_t i=0; i < atom_labels.Count(); i++)
+    atom_labels[i].A()->SetLabel(atom_labels[i].GetB(), false);
 }
 //..............................................................................
 bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
