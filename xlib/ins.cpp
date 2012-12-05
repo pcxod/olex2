@@ -1562,7 +1562,8 @@ olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
     if ((int)sr.GetAtoms().Count() < ri.atom_limit )
       return EmptyString();
   }
-  bool def = rm.IsDefaultRestraint(sr);
+  bool def = rm.IsDEFSSet() ? rm.IsDefaultRestraint(sr) :
+    (rm.DoShowRestraintDefaults() ? false : rm.IsDefaultRestraint(sr));
   olxstr line = sr.GetIdName();
   if (!sr.GetAtoms().GetResi().IsEmpty())
     line << '_' << sr.GetAtoms().GetResi();
@@ -1777,7 +1778,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
     if( i+1 < RefMod.used_weight.Count() )
       wght << ' ';
   }
-  if( RefMod.used_weight.IsEmpty() )  
+  if( RefMod.used_weight.IsEmpty() )
     wght << "0.1";
   _SaveFVar(RefMod, SL);
 }
@@ -1957,24 +1958,30 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
     if( toks.Count() > 1 && toks[1].IsNumber() )  {
       if( toks.Count() > 2 && toks[2].IsNumber() )  {
         if( toks.Count() > 3 && toks[3].IsNumber() )  {  // three numerical params
-          if( AcceptsParams < 3 )  
-            throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical parameters");
+          if( AcceptsParams < 3 ) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "too many numerical parameters");
+          }
           *Vals[0] = toks[1].ToDouble();
           *Vals[1] = toks[2].ToDouble();
           *Vals[2] = toks[3].ToDouble();
           index = 4; 
         }
         else  {  // two numerical params
-          if( AcceptsParams < 2 )  
-            throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical parameters");
+          if( AcceptsParams < 2 ) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              "too many numerical parameters");
+          }
           *Vals[0] = toks[1].ToDouble();
           *Vals[1] = toks[2].ToDouble();
           index = 3; 
         }
       }
       else  {
-        if( AcceptsParams < 1 )  
-          throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical parameters");
+        if( AcceptsParams < 1 ) {
+          throw TInvalidArgumentException(__OlxSourceInfo,
+            "too many numerical parameters");
+        }
         *Vals[0] = toks[1].ToDouble();
         index = 2; 
       }

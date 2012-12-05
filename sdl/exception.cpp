@@ -66,3 +66,9 @@ olxstr TBasicException::GetFullMessage() const {
   return rv;
 }
 //.............................................................................
+void TBasicException::PrintStackTrace(bool annotate,
+    const olxstr &prefix) const
+{
+  TBasicApp::NewLogEntry(logExceptionTrace, annotate) << *this;
+}
+//.............................................................................

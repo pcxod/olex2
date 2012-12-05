@@ -1592,6 +1592,18 @@ bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {
   return false;
 }
 //..............................................................................
+bool RefinementModel::DoShowRestraintDefaults() const {
+  try {
+    static bool v = TBasicApp::GetInstance().GetOptions().FindValue(
+      "preserve_restraint_defaults", FalseString()).ToBool();
+    return v;
+  }
+  catch (const TExceptionBase &e) {
+    e.GetException()->PrintStackTrace();
+    return false;
+  }
+}
+//..............................................................................
 olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   bool write_internals) const
 {
