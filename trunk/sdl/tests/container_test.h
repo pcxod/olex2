@@ -115,7 +115,7 @@ void StackTest(OlxTests& t)  {
   for( int i=0; i < 10; i++ )
     stack.Push(i);
   for( int i=0; i < 10; i++ )  {
-    if( stack.Current() != 10-i-1 || stack.Pop() != 10-i-1 )
+    if( stack.Top() != 10-i-1 || stack.Pop() != 10-i-1 )
       throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
   }
   if( !stack.IsEmpty() || stack.Count() != 0 )
