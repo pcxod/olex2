@@ -61,6 +61,8 @@ public:
     return olx_reverse(output);
   }
   virtual olxstr GetFullMessage() const;
+  void PrintStackTrace(bool annotate=false,
+    const olxstr &prefix=EmptyString()) const;
 };
 //.............................................................................
 class TIndexOutOfRangeException: public TBasicException {
