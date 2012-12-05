@@ -64,14 +64,17 @@ void TdlgMatProp::Init()  {
     cbPrimitives->SetValue(gpc.GetPrimitive(0).GetName().u_str());
     cbPrimitives->OnChange.Add(this);
     if( EsdlInstanceOf(*Object,TXAtom) )  {
-      const uint16_t current_level = TXAtom::LegendLevel(Object->GetPrimitives().GetName());
+      const uint16_t current_level =
+        TXAtom::LegendLevel(Object->GetPrimitives().GetName());
       wxArrayString choices;
       if( current_level == 0 )
         choices.Add(wxT("Atom Type"));
       if( current_level <= 1 )
         choices.Add(wxT("Atom Name"));
       choices.Add(wxT("Individual Atom"));
-      cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition, wxDefaultSize, choices, wxCB_READONLY);
+      cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition,
+        wxDefaultSize, choices, wxCB_READONLY);
+      cbApplyTo->SetSelection(0);
     }
   }
   else  {
@@ -79,7 +82,8 @@ void TdlgMatProp::Init()  {
     if( Object != NULL )  {
       if( EsdlInstanceOf(*Object, TGlGroup) )  {
         Materials.AddCopy(((TGlGroup*)Object)->GetGlM());
-        cbBlend = new wxCheckBox(this, -1, wxT("Override color (Use front ambient transparency for blending)"));
+        cbBlend = new wxCheckBox(this, -1,
+          wxT("Override color (Use front ambient transparency for blending)"));
         cbBlend->SetValue(!((TGlGroup*)Object)->IsBlended());
       }
       else if( Object->GetPrimitives().PrimitiveCount() != 0 )
@@ -87,33 +91,63 @@ void TdlgMatProp::Init()  {
     }
   }
   long flags = 0; //wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;
-  cbAmbF = new wxCheckBox(this, -1, wxT("Ambient Front"), wxDefaultPosition, wxDefaultSize, flags);
-  scAmbF = new TSpinCtrl(this);  scAmbF->WI.SetWidth(SpW);  scAmbF->SetRange(0, 100);
-  cbAmbB = new wxCheckBox(this, -1, wxT("Ambient Back"), wxDefaultPosition, wxDefaultSize, flags);
-  scAmbB = new TSpinCtrl(this);  scAmbB->WI.SetWidth(SpW);  scAmbB->SetRange(0, 100);
-  cbDiffF = new wxCheckBox(this, -1, wxT("Diffuse Front"), wxDefaultPosition, wxDefaultSize, flags);
-  scDiffF = new TSpinCtrl(this);  scDiffF->WI.SetWidth(SpW);  scDiffF->SetRange(0, 100);
-  cbDiffB = new wxCheckBox(this, -1, wxT("Diffuse Back"), wxDefaultPosition, wxDefaultSize, flags);
-  scDiffB = new TSpinCtrl(this);  scDiffB->WI.SetWidth(SpW);  scDiffB->SetRange(0, 100);
-  cbEmmF = new wxCheckBox(this, -1, wxT("Emission Front"), wxDefaultPosition, wxDefaultSize, flags);
-  scEmmF = new TSpinCtrl(this);  scEmmF->WI.SetWidth(SpW);  scEmmF->SetRange(0, 100);
-  cbEmmB = new wxCheckBox(this, -1, wxT("Emission Back"), wxDefaultPosition, wxDefaultSize, flags);
-  scEmmB = new TSpinCtrl(this);  scEmmB->WI.SetWidth(SpW);  scEmmB->SetRange(0, 100);
-  cbSpecF = new wxCheckBox(this, -1, wxT("Specular Front"), wxDefaultPosition, wxDefaultSize, flags);
-  scSpecF = new TSpinCtrl(this);  scSpecF->WI.SetWidth(SpW);  scSpecF->SetRange(0, 100);
-  cbSpecB = new wxCheckBox(this, -1, wxT("Specular Back"), wxDefaultPosition, wxDefaultSize, flags);
-  scSpecB = new TSpinCtrl(this);  scSpecB->WI.SetWidth(SpW);  scSpecB->SetRange(0, 100);
-  cbShnF = new wxCheckBox(this, -1, wxT("Shininess Front"), wxDefaultPosition, wxDefaultSize, flags);
-  cbShnB = new wxCheckBox(this, -1, wxT("Shininess Back"), wxDefaultPosition, wxDefaultSize, flags);
+  cbAmbF = new wxCheckBox(this, -1,
+    wxT("Ambient Front"), wxDefaultPosition, wxDefaultSize, flags);
+    scAmbF = new TSpinCtrl(this);
+    scAmbF->WI.SetWidth(SpW);
+    scAmbF->SetRange(0, 100);
+  cbAmbB = new wxCheckBox(this, -1,
+    wxT("Ambient Back"), wxDefaultPosition, wxDefaultSize, flags);
+    scAmbB = new TSpinCtrl(this);
+    scAmbB->WI.SetWidth(SpW);
+    scAmbB->SetRange(0, 100);
+  cbDiffF = new wxCheckBox(this, -1,
+    wxT("Diffuse Front"), wxDefaultPosition, wxDefaultSize, flags);
+    scDiffF = new TSpinCtrl(this);
+    scDiffF->WI.SetWidth(SpW);
+    scDiffF->SetRange(0, 100);
+  cbDiffB = new wxCheckBox(this, -1,
+    wxT("Diffuse Back"), wxDefaultPosition, wxDefaultSize, flags);
+    scDiffB = new TSpinCtrl(this);
+    scDiffB->WI.SetWidth(SpW);
+    scDiffB->SetRange(0, 100);
+  cbEmmF = new wxCheckBox(this, -1,
+    wxT("Emission Front"), wxDefaultPosition, wxDefaultSize, flags);
+    scEmmF = new TSpinCtrl(this);
+    scEmmF->WI.SetWidth(SpW);
+    scEmmF->SetRange(0, 100);
+  cbEmmB = new wxCheckBox(this, -1,
+    wxT("Emission Back"), wxDefaultPosition, wxDefaultSize, flags);
+    scEmmB = new TSpinCtrl(this);
+    scEmmB->WI.SetWidth(SpW);
+    scEmmB->SetRange(0, 100);
+  cbSpecF = new wxCheckBox(this, -1,
+    wxT("Specular Front"), wxDefaultPosition, wxDefaultSize, flags);
+    scSpecF = new TSpinCtrl(this);
+    scSpecF->WI.SetWidth(SpW);
+    scSpecF->SetRange(0, 100);
+  cbSpecB = new wxCheckBox(this, -1,
+    wxT("Specular Back"), wxDefaultPosition, wxDefaultSize, flags);
+    scSpecB = new TSpinCtrl(this);
+    scSpecB->WI.SetWidth(SpW);
+    scSpecB->SetRange(0, 100);
+  cbShnF = new wxCheckBox(this, -1,
+    wxT("Shininess Front"), wxDefaultPosition, wxDefaultSize, flags);
+  cbShnB = new wxCheckBox(this, -1,
+    wxT("Shininess Back"), wxDefaultPosition, wxDefaultSize, flags);
 
   SpinCtrls.Add(scAmbF);   SpinCtrls.Add(scAmbB);
   SpinCtrls.Add(scDiffF);  SpinCtrls.Add(scDiffB);
   SpinCtrls.Add(scEmmF);   SpinCtrls.Add(scEmmB);
   SpinCtrls.Add(scSpecF);  SpinCtrls.Add(scSpecB);
 
-  cbTrans = new wxCheckBox(this, -1, wxT("Translucent"), wxDefaultPosition, wxDefaultSize);
-  scTrans = new TSpinCtrl(this);  scTrans->SetRange(5, 95);  scTrans->OnChange.Add(this);
-  cbIDraw = new wxCheckBox(this, -1, wxT("Identity Draw"), wxDefaultPosition, wxDefaultSize);
+  cbTrans = new wxCheckBox(this, -1,
+    wxT("Translucent"), wxDefaultPosition, wxDefaultSize);
+    scTrans = new TSpinCtrl(this);
+    scTrans->SetRange(5, 95);
+    scTrans->OnChange.Add(this);
+  cbIDraw = new wxCheckBox(this, -1,
+    wxT("Identity Draw"), wxDefaultPosition, wxDefaultSize);
 
   tcAmbF = new TTextEdit(this);  tcAmbF->SetReadOnly(true);  tcAmbF->OnClick.Add(this);
   tcAmbB = new TTextEdit(this);  tcAmbB->SetReadOnly(true);  tcAmbB->OnClick.Add(this);
@@ -144,7 +178,8 @@ void TdlgMatProp::Init()  {
   }
   else if( cbBlend != NULL )  {
     Sizer0 = new wxBoxSizer(wxHORIZONTAL);
-    Sizer0->Add(new wxStaticText(this, -1, wxT("Group color properties: ")), 0, wxEXPAND | wxALL, Border);
+    Sizer0->Add(new wxStaticText(this, -1,
+      wxT("Group color properties: ")), 0, wxEXPAND | wxALL, Border);
     Sizer0->Add(cbBlend, 1, wxEXPAND | wxALL, Border);
   }
 
@@ -153,12 +188,18 @@ void TdlgMatProp::Init()  {
 #else
   wxFlexGridSizer *grid = new wxFlexGridSizer(6, 7, wxDefaultSize);
 #endif
-  grid->Add(new wxStaticText(this, -1, wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
-  grid->Add(new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
-  grid->Add(new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
-  grid->Add(new wxStaticText(this, -1, wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
-  grid->Add(new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
-  grid->Add(new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+  grid->Add(new wxStaticText(this, -1,
+    wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+  grid->Add(new wxStaticText(this, -1,
+    wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+  grid->Add(new wxStaticText(this, -1,
+    wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+  grid->Add(new wxStaticText(this, -1,
+    wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+  grid->Add(new wxStaticText(this, -1,
+    wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
+  grid->Add(new wxStaticText(this, -1,
+    wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);
 
   grid->Add(cbAmbF, 0, wxALL, Border);
   grid->Add(tcAmbF, 0, wxEXPAND | wxALL, Border);
