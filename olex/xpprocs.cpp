@@ -1649,12 +1649,12 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  bool changed = false;
   if( Cmds.IsEmpty() )  {
     FHtmlOnLeft = !FHtmlOnLeft;
-    OnResize();
+    changed = true;
   }
   else  {
-    bool changed = false;
     if( Cmds[0].Equalsi("left") )  {
       if( !FHtmlOnLeft )  {
         changed = FHtmlOnLeft = true;
@@ -1670,7 +1670,17 @@ void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, T
       E.ProcessingError( __OlxSrcInfo, olxstr("unknown option '") << Cmds[0] << '\'');
       return;
     }
-    if( changed )  OnResize();
+  }
+  if( changed )  {
+#ifdef __MAC__ // wth
+  wxSize sz = GetSize();
+  sz.x -= 1;
+  SetSize(sz);
+  sz.x += 1;
+  SetSize(sz);
+#else
+  OnResize();
+#endif
   }
 }
 //..............................................................................
