@@ -23,7 +23,8 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
   wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL);
   const int border = 1;
   if( (EsdlInstanceOf(Object,TXAtom) || EsdlInstanceOf(Object, TXBond)) )  {
-    const uint16_t current_level = TXAtom::LegendLevel(Object.GetPrimitives().GetName());
+    const uint16_t current_level =
+      TXAtom::LegendLevel(Object.GetPrimitives().GetName());
     wxArrayString choices;
     if( EsdlInstanceOf(Object,TXAtom) )  {
       if( current_level == 0 )
@@ -39,7 +40,9 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
         choices.Add(wxT("Bond by Atom Names"));
       choices.Add(wxT("Individual Bond"));
     }
-    cbApplyTo = new wxComboBox(this, -1, choices[0], wxDefaultPosition, wxDefaultSize, choices, wxCB_READONLY);
+    cbApplyTo = new wxComboBox(this, -1,
+      choices[0], wxDefaultPosition, wxDefaultSize, choices, wxCB_READONLY);
+    cbApplyTo->SetSelection(0);
     wxBoxSizer* Sizer0 = new wxBoxSizer(wxHORIZONTAL);
     Sizer0->Add(new wxStaticText(this, -1, wxT("Apply to: ")), 1, wxEXPAND|wxALL, border);
     Sizer0->Add(cbApplyTo, 1, wxFIXED_MINSIZE|wxALL, border);
@@ -48,9 +51,11 @@ TdlgPrimitive::TdlgPrimitive(TMainFrame *P, AGDrawObject& object) :
   }
   TStrList L;
   Object.ListPrimitives(L);
-  int mask = Object.GetPrimitives().GetStyle().GetParam(Object.GetPrimitiveMaskName(), "0").ToInt();
+  int mask = Object.GetPrimitives().GetStyle().GetParam(
+    Object.GetPrimitiveMaskName(), "0").ToInt();
   for( size_t i=0; i < L.Count(); i++ )  {
-    wxCheckBox* Box = Boxes.Add(new wxCheckBox(this, -1, L[i].u_str(), wxDefaultPosition));
+    wxCheckBox* Box = Boxes.Add(
+      new wxCheckBox(this, -1, L[i].u_str(), wxDefaultPosition));
     TopSizer->Add(Box, 0, wxALL, border);
     Box->SetValue((mask & (1 << i)) != 0);
   }
