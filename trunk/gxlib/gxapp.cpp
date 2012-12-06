@@ -3533,6 +3533,7 @@ void TGXApp::Collectivise(const TXBondPList& bonds, short _level, int32_t mask) 
 void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask)  {
   if( atoms.IsEmpty() )  return;
   //TSBondPList sbonds;
+  TPtrList<TGPCollection> colls;
   for( size_t i=0; i < atoms.Count(); i++ )  {
     TXAtom& a = *atoms[i];
     const int cl = TXAtom::LegendLevel(a.GetPrimitives().GetName());
@@ -3542,20 +3543,24 @@ void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask) 
     if( indCol != NULL && &a.GetPrimitives() == indCol )  
       continue;
     else  {
-      if( indCol == NULL )  
+      if( indCol == NULL )
         indCol = &FGlRender->NewCollection(leg);
       const size_t index = IndividualCollections.IndexOf(a.GetPrimitives().GetName());
-      if( index != InvalidIndex )  
+      if( index != InvalidIndex )
         IndividualCollections.Delete(index);
-      TPtrList<AGDrawObject> objects = a.GetPrimitives().GetObjects();
-      a.GetPrimitives().ClearObjects();
+      TGPCollection &gpc = a.GetPrimitives();
+      colls << gpc;
+      TPtrList<AGDrawObject> objects = gpc.GetObjects();
+      gpc.ClearObjects();
       for( size_t oi=0; oi < objects.Count(); oi++ )
         objects[oi]->Create(leg);
       if( mask >= 0 )
         a.UpdatePrimitives(mask);
       //for( size_t j=0; j < a.BondCount(); j++ )
       //  sbonds.Add(a.Bond(j));
+
     }
+    GetRender().RemoveCollections(colls);
   }
 }
 //..............................................................................
