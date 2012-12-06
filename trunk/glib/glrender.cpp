@@ -1225,11 +1225,20 @@ void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options, T
   EnablePerspective(true);
 }
 //..............................................................................
-void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.Count() == 1 )  {
+void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  if (Cmds.Count() == 1) {
     SetFogType(GL_LINEAR);
-    SetFogStart(0.0f);
-    SetFogEnd(2.0f);
+    SetFogStart(0.9f);
+    SetFogEnd(1.4f);
+    SetFogColor(Cmds[0].SafeUInt<uint32_t>());
+    EnableFog(true);
+  }
+  else if (Cmds.Count() == 3) {
+    SetFogType(GL_LINEAR);
+    SetFogStart(Cmds[1].ToFloat());
+    SetFogEnd(Cmds[2].ToFloat());
     SetFogColor(Cmds[0].SafeUInt<uint32_t>());
     EnableFog(true);
   }
@@ -1387,7 +1396,7 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   );
   lib->Register(
     new TMacro<TGlRenderer>(this,  &TGlRenderer::LibFog, "Fog",
-      EmptyString(), fpNone|fpOne,
+      EmptyString(), fpNone|fpOne|fpThree,
       "Sets fog color, fog without arguments removes fog")
   );
   lib->Register(
