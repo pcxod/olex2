@@ -2658,7 +2658,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     MenuFile->AppendSeparator();
     int i=0;
     TStrList uniqNames;
-    olxstr T = TEFile::ExpandRelativePath(I->GetFieldValue( olxstr("file") << i));
+    olxstr T = TEFile::ExpandRelativePath(I->GetFieldValue(olxstr("file") << i));
     while( !T.IsEmpty() )  {
       if( T.EndsWithi(".ins") || T.EndsWithi(".res") )  {
         T = TEFile::ChangeFileExt(T, EmptyString());

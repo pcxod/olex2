@@ -181,9 +181,13 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "b");
   }
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
-  // make the labels unique inside residues...
-  for( size_t i=0; i < au.ResidueCount(); i++ )
-    LabelCorrector(false).CorrectAll(au.GetResidue(i));
+  /* make the labels unique globally. This needs to be done since the number of
+  files containing atom labels (like VcV) and information may be miss
+  -represented
+  */
+  LabelCorrector lc(au, false);
+  for (size_t i=0; i < au.AtomCount(); i++ )
+    lc.CorrectGlobal(au.GetAtom(i));
   return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
 }
 //..............................................................................
