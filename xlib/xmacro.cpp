@@ -6861,12 +6861,12 @@ void XLibMacros::macDelBond(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  MacroInput mi = ExtractSelection(Cmds, true);
   TXApp &app = TXApp::GetInstance();
   RefinementModel &rm = app.XFile().GetRM();
   if (Cmds[0].Equalsi("ADP") && Cmds.Count() > 1) {
     olxstr target = Cmds[1];
     Cmds.DeleteRange(0, 2);
+    MacroInput mi = ExtractSelection(Cmds, true);
     double value = -1;
     if (Cmds.Count() > 0 && Cmds[0].IsNumber()) {
       value = Cmds[0].ToDouble();
@@ -6899,6 +6899,7 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   }
   else if (Cmds[0].Equalsi("bond")) {
     Cmds.Delete(0);
+    MacroInput mi = ExtractSelection(Cmds, true);
     double val = -1, esd=0.02;
     TSimpleRestraint *r = NULL;
     size_t set_cnt = XLibMacros::Parse(Cmds, "dd", &val, &esd);
@@ -6926,6 +6927,7 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   else if( Cmds[0].Equalsi("angle") && Cmds.Count() > 1 )  {
     double val = Cmds[1].ToDouble();
     Cmds.DeleteRange(0, 2);
+    MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
     if (atoms.IsEmpty()) {
       if ((mi.bonds.Count()%2)!=0) {
@@ -6958,6 +6960,7 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds[0].Equalsi("dihedral") && Cmds.Count() > 1) {
     double val = Cmds[1].ToDouble();
     Cmds.DeleteRange(0, 2);
+    MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
     TTypeList<TSAtomPList> quadruplets;
     if (atoms.IsEmpty()) {
