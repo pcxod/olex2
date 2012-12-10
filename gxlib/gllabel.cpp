@@ -73,7 +73,8 @@ vec3d TXGlLabel::GetRasterPosition() const {
 }
 //..............................................................................
 vec3d TXGlLabel::GetVectorPosition() const {
-  vec3d off = Parent.GetBasis().GetMatrix()*(GetCenter()+vec3d(-text_rect.width/2,text_rect.height/2,0));
+  vec3d off = Parent.GetBasis().GetMatrix()*(GetCenter()+
+    vec3d(-text_rect.width/2,text_rect.height/2,0));
   //vec3d off = Parent.GetBasis().GetMatrix()*GetCenter();
   const double Scale = Parent.GetScale();
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();

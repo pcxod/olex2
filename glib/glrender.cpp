@@ -938,7 +938,7 @@ TGlGroup* TGlRenderer::GroupSelection(const olxstr& groupName)  {
   return NULL;
 }
 //..............................................................................
-TGlGroup& TGlRenderer::NewGroup(const olxstr& collection_name) {  
+TGlGroup& TGlRenderer::NewGroup(const olxstr& collection_name) {
   return *FGroups.Add(new TGlGroup(*this, collection_name));  
 }
 //..............................................................................
@@ -1070,9 +1070,9 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
       FTranslucentIdentityObjects.Add(&GlM);
-    else if( GlM.IsTransparent() )   
+    else if( GlM.IsTransparent() )
       FTranslucentObjects.Add(GlM);
-    else if( GlM.IsIdentityDraw() )  
+    else if( GlM.IsIdentityDraw() )
       FIdentityObjects.Add(GlM);
   }
 }
