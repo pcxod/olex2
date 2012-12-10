@@ -85,39 +85,60 @@ TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
     glf.SetPointSize(mf.GetSize());
     return glf;
   }
-  throw TNotImplementedException(__OlxSourceInfo);
+  //throw TNotImplementedException(__OlxSourceInfo);
   MetaFont meta_fnt;
   meta_fnt.SetIdString(glf.GetIdString());
-  HFONT Font = (HFONT)NULL;
-  TPtrList<char> Images(256);
-  int ImageW = 36; //Font.GetPointSize()*1.5;
+  int fs = 24;
+  HFONT Font = ::CreateFontW(half_size ? fs/2 : fs, 0, 0, 0, FW_NORMAL,
+    FALSE, FALSE, FALSE,
+    DEFAULT_CHARSET,
+    OUT_RASTER_PRECIS,
+    CLIP_CHARACTER_PRECIS,
+    NONANTIALIASED_QUALITY,
+    FIXED_PITCH,
+    L"Times New Roman");
+  TPtrList<unsigned char> Images(256);
+  int ImageW = 32; //Font.GetPointSize()*1.5;
   RECT R = {0, 0, ImageW, ImageW};
   TCHAR Char[1];
   BITMAPINFO Bmpi;
+  memset(&Bmpi, 0, sizeof(Bmpi));
+  Bmpi.bmiHeader.biSize = sizeof(Bmpi);
   HDC hDC = CreateCompatibleDC(NULL);
   HBITMAP Bmp = CreateCompatibleBitmap(hDC, ImageW, ImageW);
   if( Bmp == NULL ) 
     throw TFunctionFailedException(__OlxSourceInfo, "NULL handle");
-  HBRUSH Brush = CreateSolidBrush(0);
-  HPEN Pen = CreatePen(PS_SOLID, 1, 0);
+  HBRUSH Brush = CreateSolidBrush(0xffffff);
+  SetTextColor(hDC, 0);
   SelectObject(hDC, Font);
-  SelectObject(hDC, Brush);
-  SelectObject(hDC, Pen);
+  SelectObject(hDC, Bmp);
+  GetDIBits(hDC, Bmp, 0, ImageW, NULL, &Bmpi, DIB_RGB_COLORS);
+  Bmpi.bmiHeader.biBitCount = 24;
+  Bmpi.bmiHeader.biCompression = BI_RGB;
   for( int i=0; i < 256; i++ )  {
-    SelectObject(hDC, Bmp);
     FillRect(hDC, &R, Brush);
     Char[0] = i;
     TextOut(hDC, 0, 0, Char, 1);
-    SelectObject(hDC, NULL);
-    char* Image = new char[4*(ImageW+1)*(ImageW+1)];
-    GetDIBits(hDC, Bmp, 0, ImageW, NULL, &Bmpi, DIB_RGB_COLORS);
+    unsigned char* Image = new unsigned char[3*ImageW*ImageW];
     GetDIBits(hDC, Bmp, 0, ImageW, Image, &Bmpi, DIB_RGB_COLORS);
-    glf.CharFromRGBArray(i, (unsigned char*)Image, ImageW, ImageW);
+    for (int ix=0; ix < ImageW/2; ix++) {
+      size_t offt = ix*ImageW;
+      size_t offb = (ImageW-ix-1)*ImageW;
+      for (int jx=0; jx < ImageW; jx++) {
+        int off1 = (offt+jx)*3;
+        int off2 = (offb+jx)*3;
+        olx_swap(Image[off1+0], Image[off2+2]);
+        olx_swap(Image[off1+1], Image[off2+1]);
+        olx_swap(Image[off1+2], Image[off2+0]);
+      }
+    }
+    glf.CharFromRGBArray(i, Image, ImageW, ImageW);
     Images[i] = Image;
   }
-  DeleteObject(Bmp);
-  DeleteObject(Pen);
-  DeleteObject(Brush);
+  ::SelectObject(hDC, NULL);
+  ::DeleteObject(Bmp);
+  ::DeleteObject(Brush);
+  ::DeleteObject(Font);
   DeleteDC(hDC);
   glf.CreateGlyphsFromRGBArray(meta_fnt.IsFixed(), ImageW, ImageW);
   Images.DeleteItems();

@@ -381,7 +381,7 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW,
         for( int16_t k=cs->Top; k <= cs->Bottom; k++ )  {
           const size_t ind = (k*Width+j)*3;
           if( (cs->Data[ind] | cs->Data[ind+1] | cs->Data[ind+2]) != cs->Background ) // is black?
-            BmpData[(NHeight-k)*BWidth + (j+Leftmost)/8] |= (0x01 << (7-(j+Leftmost)%8));
+            BmpData[(NHeight-k)*BWidth + (j-Leftmost)/8] |= (0x01 << (7-(j-Leftmost)%8));
         }
       }
       olx_gl::newList(FontBase +i, GL_COMPILE);
@@ -510,8 +510,8 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth,
     if( cs->Left > 0 || cs->Bottom > 0 )  {  // check if bitmap is not empty
       for( int j=cs->Left; j <= cs->Right; j++ )  {
         for( int k=cs->Top; k <= cs->Bottom; k++ )  {
-          if( ba[off + k*w + j] ) 
-            bf[((BHeight-k)*BWidth + (j+Leftmost))/8] |= (0x01 << (7-(j+Leftmost)%8));
+          if( ba[off + k*w + j] )
+            bf[((BHeight-k)*BWidth + (j-Leftmost))/8] |= (0x01 << (7-(j-Leftmost)%8));
         }
       }
       olx_gl::newList(FontBase +i, GL_COMPILE);
