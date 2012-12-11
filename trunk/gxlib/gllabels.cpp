@@ -241,12 +241,12 @@ void TXGlLabels::ClearLabelMarks() {
 //..............................................................................
 void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
   if( A.GetOwnerId() < Marks.Count() )
-    Marks[A.GetOwnerId()] = lmiMark;
+    Marks[A.GetOwnerId()] = v ? lmiMark : ~0;
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(size_t i, bool v)  {
   if (i < Marks.Count())
-    Marks[i] = lmiMark;
+    Marks[i] = v ? lmiMark : ~0;
 }
 //..............................................................................
 bool TXGlLabels::IsLabelMarked(const TXAtom& atom) const {

@@ -244,6 +244,7 @@ public:
   AModeFactory(size_t id) : modeId(id)  {}
   virtual ~AModeFactory()  {}
   virtual AMode* New() = 0;
+  void SetId_(size_t id) { modeId = id; }
 };
 
 template <class ModeClass> class TModeFactory : public AModeFactory {
