@@ -390,6 +390,9 @@ public:
   void CreateObjects(bool CenterModel, bool init_visibility=true);
   void UpdateBonds();
   AGDrawObject* AddObjectToCreate(AGDrawObject* obj);
+  bool RemoveObjectToCreate(const AGDrawObject* obj) {
+    return ObjectsToCreate.Remove(obj);
+  }
   void Clear();
   void ClearXGrowPoints();
   // changes the graphics quality

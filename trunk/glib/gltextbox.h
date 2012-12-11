@@ -54,7 +54,10 @@ public:
 
   void PostText(const olxstr &S, class TGlMaterial *M=NULL);
   void PostText(const TStrList &SL, TGlMaterial *M=NULL);
-  inline void NewLine()  {  FBuffer.Add();  }
+  const TStrPObjList<olxstr,TGlMaterial*> &GetText() const {
+    return FBuffer;
+  }
+  void NewLine()  {  FBuffer.Add();  }
   class TGlFont& GetFont() const;
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data);
 };

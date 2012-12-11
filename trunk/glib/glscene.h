@@ -20,32 +20,35 @@ BeginGlNamespace()
 
 class TGlFont;
 /* abstarct class */
-class AGlScene: public IEObject  {
+class AGlScene: public IEObject {
 private:
   olxdict<olxstr, TGlFont*, olxstrComparator<false> > FontsDict;
   TPtrList<TGlFont> Fonts, SmallFonts;
   olxdict<std::type_info const*, size_t, TPointerComparator> FontRegistry; 
 protected:
   class TGlRenderer *FParent;
-  /* The function creates or replaces a font (if exists under the same name)  */
+  /* The function creates or replaces a font (if exists under the same name)
+  */
   virtual TGlFont& DoCreateFont(TGlFont& glf, bool half_size) const = 0;
 public:
   AGlScene() : FParent(NULL) {}
   virtual ~AGlScene();
-  TGlRenderer *Parent()  {  return FParent;  }
+  TGlRenderer *Parent() { return FParent; }
   /* must be called by TGlRender */
-  void Parent(TGlRenderer *P)  {  FParent = P; }
-  /* The function creates or replaces a font (if exists under the same name)  */
+  void Parent(TGlRenderer *P) { FParent = P;}
+  /* The function creates or replaces a font (if exists under the same name)
+  */
   TGlFont& CreateFont(const olxstr& name, const olxstr& fntDescription);
   // used to scale font when drawing on a scaled surface
   virtual void ScaleFonts(double scale) = 0;
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale() = 0;
   virtual void Destroy()  {}
-  /* if the font is provided, it is replaced upon successful dialog.showmodal, otherwise
-  it works as font chooser (default font-fontDescription). Returned string is the font Id string, 
-  or empty string if the dialog is canceled  */
-  virtual olxstr ShowFontDialog(TGlFont* glf = NULL, 
+  /* if the font is provided, it is replaced upon successful dialog.showmodal,
+  otherwise it works as font chooser (default font-fontDescription). Returned
+  string is the font Id string, or empty string if the dialog is canceled
+  */
+  virtual olxstr ShowFontDialog(TGlFont* glf = NULL,
     const olxstr& fontDescription=EmptyString()) = 0;
   virtual void StartSelect(int x, int y, GLuint *Bf);
   // returns number of selection hits
@@ -54,10 +57,12 @@ public:
   virtual void StartDraw();
   virtual void EndDraw();
 
-  size_t FontCount() const {  return Fonts.Count();  }
+  size_t FontCount() const { return Fonts.Count(); }
   TGlFont& GetSmallFont(size_t i) const {
-    if( i >= SmallFonts.Count() )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid small font index :") << i);
+    if( i >= SmallFonts.Count() ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("invalid small font index: ") << i);
+    }
     if( !SmallFonts[i]->IsCreated() )
       DoCreateFont(*SmallFonts[i], true);
     return *SmallFonts[i];
@@ -71,8 +76,10 @@ public:
     }
     else
       rv = Fonts[i];
-    if( rv == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid font index :") << i);
+    if( rv == NULL ) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("invalid font index: ") << i);
+    }
     if( !rv->IsCreated() )
       DoCreateFont(*rv, false);
     return *rv;
@@ -82,14 +89,18 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "no fonts available");
     return GetFont(0, true);
   }
-  // this is motly for internal infrastructure calls - returned font might be not initialised
-  TGlFont& _GetFont(size_t i) const {  return *Fonts[i];  }
-  TGlFont* FindFont(const olxstr& name)  {  return FontsDict.Find(name, NULL);  }
-  template <class T> TGlFont& RegisterFontForType(TGlFont& fnt)  {
+  /* this is motly for internal infrastructure calls - returned font might be
+  not initialised
+  */
+  TGlFont& _GetFont(size_t i) const { return *Fonts[i]; }
+  TGlFont* FindFont(const olxstr& name) {
+    return FontsDict.Find(name, NULL);
+  }
+  template <class T> TGlFont& RegisterFontForType(TGlFont& fnt) {
     FontRegistry.Add(&typeid(T), fnt.GetId());
     return fnt;
   }
-  template <class T> size_t FindFontIndexForType(size_t def_ind=~0)  {
+  template <class T> size_t FindFontIndexForType(size_t def_ind=~0) {
     return FontRegistry.Find(&typeid(T), def_ind);
   }
 
@@ -99,14 +110,23 @@ public:
     bool Bold, Italic, Fixed, Underlined;
     olxstr OriginalId, FileName;
   public:
-    MetaFont() : Size(0), Bold(false), Italic(false), Fixed(false), Underlined(false)  {}
+    MetaFont()
+      : Size(0), Bold(false), Italic(false), Fixed(false), Underlined(false)
+    {}
     virtual olxstr GetIdString() const;
     olxstr GetFileIdString() const;
-    // this function returns true if the ID is known and handler and false otherwise 
+    /* this function returns true if the ID is known and handler and false
+    otherwise
+    */
     virtual bool SetIdString(const olxstr& idstr);
-    static bool IsOlexFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '#';  }
-    static bool IsVectorFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '@';  }
-    static olxstr BuildOlexFontId(const olxstr& fileName, short size, bool fixed, bool bold, bool italic);
+    static bool IsOlexFont(const olxstr& fntId) {
+      return fntId.IsEmpty()? false : fntId.CharAt(0) == '#';
+    }
+    static bool IsVectorFont(const olxstr& fntId) {
+      return fntId.IsEmpty()? false : fntId.CharAt(0) == '@';
+    }
+    static olxstr BuildOlexFontId(const olxstr& fileName, short size,
+      bool fixed, bool bold, bool italic);
     DefPropC(olxstr, FileName)
     DefPropBIsSet(Bold)
     DefPropBIsSet(Fixed)
