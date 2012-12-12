@@ -104,6 +104,7 @@ TGlRenderer::~TGlRenderer()  {
 }
 //..............................................................................
 void TGlRenderer::Initialise()  {
+  GetScene().MakeCurrent();
   InitLights();
   for( size_t i=0; i < Primitives.ObjectCount(); i++ )
     Primitives.GetObject(i).Compile();
@@ -132,6 +133,7 @@ void TGlRenderer::InitLights()  {
 }
 //..............................................................................
 void TGlRenderer::Clear()  {
+  GetScene().MakeCurrent();
   OnClear.Enter(this);
   FSelection->Clear();
   for( size_t i=0; i < FGroups.Count(); i++ )
@@ -160,6 +162,7 @@ void TGlRenderer::Clear()  {
 }
 //..............................................................................
 void TGlRenderer::ClearObjects()  {
+  GetScene().MakeCurrent();
   FSelection->Clear();
   for( size_t i=0; i < FGroups.Count(); i++ )
     delete FGroups[i];
@@ -455,10 +458,11 @@ void TGlRenderer::SetupStencilFoInterlacedDraw(bool even) {
 //..............................................................................
 void TGlRenderer::Draw()  {
   if( Width < 50 || Height < 50 )  return;
+  GetScene().MakeCurrent();
   olx_gl::enable(GL_NORMALIZE);
   OnDraw.Enter(this);
   //glLineWidth( (float)(0.07/GetScale()) );
-  //glPointSize( (float)(0.07/GetScale()) );  
+  //glPointSize( (float)(0.07/GetScale()) );
   if( StereoFlag == glStereoColor )  {
     olx_gl::clearColor(0.0,0.0,0.0,0.0);
     olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -899,7 +903,7 @@ void TGlRenderer::SelectAll(bool Select)  {
 void TGlRenderer::ClearGroups()  {
   if( FGroups.IsEmpty() )  return;
   for( size_t i=0; i < FGroups.Count(); i++ )  {
-    if( FGroups[i]->IsSelected() )  
+    if( FGroups[i]->IsSelected() )
       DeSelect(*FGroups[i]);
     FGroups[i]->Clear();
   }
@@ -987,24 +991,25 @@ void TGlRenderer::SetProperties(TGlMaterial& P)  {  // tracks translucent and id
   }
 }
 //..............................................................................
-void TGlRenderer::OnSetProperties(const TGlMaterial& P)  {  // tracks translucent and identity objects
+// tracks translucent and identity objects
+void TGlRenderer::OnSetProperties(const TGlMaterial& P)  {
   //if( P == NULL )  return;
   if( P.ObjectCount() > 1 )  return; // the properties will not be removed
   if( P.IsTransparent() && P.IsIdentityDraw() )  {
     size_t index = FTranslucentIdentityObjects.IndexOf(&P);
-    if( index != InvalidIndex )  
+    if( index != InvalidIndex )
       FTranslucentIdentityObjects.Delete(index);
     return;
   }
   if( P.IsTransparent() )  {
     size_t index = FTranslucentObjects.IndexOf(&P);
-    if( index != InvalidIndex )  
+    if( index != InvalidIndex )
       FTranslucentObjects.Delete(index);
     return;
   }
   if( P.IsIdentityDraw() )  {
     size_t index = FIdentityObjects.IndexOf(&P);
-    if( index != InvalidIndex ) 
+    if( index != InvalidIndex )
       FIdentityObjects.Delete(index);
     return;
   }
@@ -1086,6 +1091,7 @@ void TGlRenderer::LookAt(double x, double y, short res)  {
 }
 //..............................................................................
 char* TGlRenderer::GetPixels(bool useMalloc, short aligment, GLuint format)  {
+  GetScene().MakeCurrent();
   char *Bf;
   short extraBytes = aligment-(Width*3)%aligment;
   if( useMalloc )  {
@@ -1211,7 +1217,9 @@ void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
   Compile(Params[0].ToBool());
 }
 //..............................................................................
-void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   if( Cmds.IsEmpty() )  {  EnablePerspective(false);  return;  }
   if( !Cmds[0].IsNumber() )  {
     E.ProcessingError(__OlxSrcInfo, "please specify a number in range [1-90]" );
@@ -1246,7 +1254,9 @@ void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options,
     EnableFog(false);
 }
 //..............................................................................
-void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   if( Cmds.IsEmpty() )  {
     SetZoom(CalcZoom());
   }
@@ -1288,16 +1298,20 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
     else if( Params[0].Equalsi("anaglyph") )  {
       GLint bits = 0;
       olx_gl::get(GL_ACCUM_RED_BITS, &bits);
-      if( bits == 0 )
-        TBasicApp::NewLogEntry(logError) << "Sorry accumulation buffer is not initialised/available";
+      if( bits == 0 ) {
+        TBasicApp::NewLogEntry(logError) <<
+          "Sorry accumulation buffer is not initialised/available";
+      }
       else
         StereoFlag = glStereoAnaglyph;
     }
     else if( Params[0].Equalsi("interlace") )  {
       GLint bits = 0;
       olx_gl::get(GL_STENCIL_BITS, &bits);
-      if( bits == 0 )
-        TBasicApp::NewLogEntry(logError) << "Sorry stencil buffer is not initialised/available";
+      if( bits == 0 ) {
+        TBasicApp::NewLogEntry(logError) <<
+          "Sorry stencil buffer is not initialised/available";
+      }
       else
         StereoFlag = glStereoInterlace;
     }
@@ -1310,8 +1324,10 @@ void TGlRenderer::LibStereo(const TStrObjList& Params, TMacroError& E)  {
     else if( Params[0].Equalsi("hardware") )  {
       GLboolean stereo_supported = GL_FALSE;
       olx_gl::get(GL_STEREO, &stereo_supported);
-      if( stereo_supported == GL_FALSE )
-        TBasicApp::NewLogEntry(logError) << "Sorry stereo buffers are not initialised/available";
+      if( stereo_supported == GL_FALSE ) {
+        TBasicApp::NewLogEntry(logError) <<
+          "Sorry stereo buffers are not initialised/available";
+      }
       else  {
         olx_gl::clearColor(LightModel.GetClearColor().Data());
         StereoFlag = glStereoHardware;
@@ -1332,7 +1348,8 @@ void TGlRenderer::LibStereoColor(const TStrObjList& Params, TMacroError& E)  {
   TGlOption* glo = Params[0].Equalsi("left") ? &StereoLeftColor : 
     (Params[0].Equalsi("right") ? &StereoRightColor : NULL);
   if( glo == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined parameter, left/right is expected");
+    E.ProcessingError(__OlxSrcInfo,
+      "undefined parameter, left/right is expected");
     return;
   }
   if( Params.Count() == 1 )  {

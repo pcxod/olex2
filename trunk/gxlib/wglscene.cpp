@@ -176,6 +176,7 @@ void TWGlScene::InitialiseHDC(HDC Dc) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "could not create gl context");
   }
+  MakeCurrent();
 }
 //..............................................................................
 bool TWGlScene::MakeCurrent() {
@@ -190,7 +191,6 @@ void TWGlScene::StartDraw() {
     SelectObject(FWContext, FBitmap);
     SetPixelFormatDescriptor(FWContext, 24);
   }
-  MakeCurrent();
   AGlScene::StartDraw();
 }
 //..............................................................................
@@ -213,7 +213,6 @@ void TWGlScene::StartSelect(int x, int y, GLuint *Bf) {
     SelectObject(FWContext, FBitmap);
     SetPixelFormatDescriptor(FWContext, 24);
   }
-  MakeCurrent();
   AGlScene::StartSelect(x, y, Bf);
 }
 //..............................................................................
