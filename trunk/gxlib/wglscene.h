@@ -41,6 +41,7 @@ public:
   {
     throw TNotImplementedException(__OlxSourceInfo);
   }
+  virtual bool MakeCurrent();
 };
 #endif // __WIN32__
 #endif

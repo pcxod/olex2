@@ -35,7 +35,7 @@ TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
 TGlTextBox::~TGlTextBox()  {  Clear();  }
 //..............................................................................
 void TGlTextBox::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
@@ -48,11 +48,11 @@ void TGlTextBox::Create(const olxstr& cName)  {
   GlM.SetFlags(0);
   GlM.ShininessF = 128;
   GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
-  GlM.AmbientF = 0x800f0f0f;
-  GlM.DiffuseF = 0x800f0f0f;
+  GlM.AmbientF = 0xff0f0f0f;
+  GlM.DiffuseF = 0x000f0f0f;
 
   TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);
-  glpPlane.SetProperties(GS.GetMaterial("Plane", GlM) );
+  glpPlane.SetProperties(GS.GetMaterial("Plane", GlM));
   glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);

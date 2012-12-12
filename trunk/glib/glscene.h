@@ -53,7 +53,8 @@ public:
   virtual void StartSelect(int x, int y, GLuint *Bf);
   // returns number of selection hits
   virtual int EndSelect();
-
+  // returns true if successful
+  virtual bool MakeCurrent() = 0;
   virtual void StartDraw();
   virtual void EndDraw();
 

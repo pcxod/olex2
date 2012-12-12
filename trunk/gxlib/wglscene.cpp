@@ -24,10 +24,8 @@ TWGlScene::TWGlScene() {
 //  FFontExtrusionZ = 0.1f;
 }
 //..............................................................................
-void TWGlScene::SetPixelFormatDescriptor(HDC hDc, uint8_t bits)  {
-  int PixelFormat;
-  if( bits == 0 )
-    bits = 24;  // by default
+void TWGlScene::SetPixelFormatDescriptor(HDC hDc, uint8_t bits) {
+  if (bits == 0) bits = 24;
   PIXELFORMATDESCRIPTOR pfd = {
     sizeof(PIXELFORMATDESCRIPTOR),
     1,
@@ -44,7 +42,7 @@ void TWGlScene::SetPixelFormatDescriptor(HDC hDc, uint8_t bits)  {
     0,
     0,0,
   };
-  PixelFormat = ChoosePixelFormat(hDc, &pfd);
+  int PixelFormat = ChoosePixelFormat(hDc, &pfd);
   SetPixelFormat(hDc, PixelFormat, &pfd);
 }
 //..............................................................................
@@ -145,74 +143,81 @@ TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   return glf;
 }
 //..............................................................................
-void TWGlScene::InitialiseBMP(HBITMAP Bmp)  {
+void TWGlScene::InitialiseBMP(HBITMAP Bmp) {
   Destroy();
-  if( FBitmap == NULL )
+  if (FBitmap == NULL)
     throw TInvalidArgumentException(__OlxSourceInfo, "bitmap=NULL");
   FWContext = CreateCompatibleDC(NULL);
   FBitmap = Bmp;
   SelectObject(FWContext, FBitmap);
   SetPixelFormatDescriptor(FWContext, 24);
   FGlContext = wglCreateContext(FWContext);
-  if( FGlContext == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "could not create gl context");
-  if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
-    throw TFunctionFailedException(__OlxSourceInfo, "could not make current context");
-
-  if( FWContext != NULL )  {
+  if (FGlContext == NULL) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "could not create gl context");
+  }
+  if (!MakeCurrent()) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "could not make current context");
+  }
+  if (FWContext != NULL) {
     DeleteDC(FWContext);
     FWContext = NULL;
   }
 }
 //..............................................................................
-void TWGlScene::InitialiseHDC(HDC Dc)  {
+void TWGlScene::InitialiseHDC(HDC Dc) {
   FBitmap = NULL;
   Destroy();
   FWContext = Dc;
   SetPixelFormatDescriptorX(FWContext, 24);
   FGlContext = wglCreateContext(FWContext);
-  if( !FGlContext )
-    throw TFunctionFailedException(__OlxSourceInfo, "could not create gl context");
-  if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
-    throw TFunctionFailedException(__OlxSourceInfo, "could not make current context");
+  if (FGlContext ==NULL) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "could not create gl context");
+  }
 }
 //..............................................................................
-void TWGlScene::StartDraw()  {
-  if( FBitmap != NULL )  {
+bool TWGlScene::MakeCurrent() {
+  if (FWContext != NULL && FGlContext != NULL)
+    return wglMakeCurrent(FWContext, FGlContext) != FALSE;
+  return false;
+}
+//..............................................................................
+void TWGlScene::StartDraw() {
+  if (FBitmap != NULL) {
     FWContext = CreateCompatibleDC(NULL);
     SelectObject(FWContext, FBitmap);
     SetPixelFormatDescriptor(FWContext, 24);
-    if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
-      throw TFunctionFailedException(__OlxSourceInfo, "could not make current context");
   }
+  MakeCurrent();
   AGlScene::StartDraw();
 }
 //..............................................................................
-void TWGlScene::EndDraw()  {
+void TWGlScene::EndDraw() {
   AGlScene::EndDraw();
-  if( FBitmap == NULL )  {
+  if (FBitmap == NULL) {
     //if( FWContext != NULL )
     //  SwapBuffers(FWContext);
   }
-  else if( FWContext != NULL )  {
+  else if (FWContext != NULL) {
     SelectObject(FWContext, NULL);
     DeleteDC(FWContext);
     FWContext = NULL;
   }
 }
 //..............................................................................
-void TWGlScene::StartSelect(int x, int y, GLuint *Bf)  {
-  if( FBitmap != NULL )  {
+void TWGlScene::StartSelect(int x, int y, GLuint *Bf) {
+  if (FBitmap != NULL) {
     FWContext = CreateCompatibleDC(NULL);
     SelectObject(FWContext, FBitmap);
     SetPixelFormatDescriptor(FWContext, 24);
-    if( wglMakeCurrent(FWContext, FGlContext) == FALSE )
-      throw TFunctionFailedException(__OlxSourceInfo, "could not make current context");
   }
+  MakeCurrent();
   AGlScene::StartSelect(x, y, Bf);
 }
 //..............................................................................
-int TWGlScene::EndSelect()  {
+int TWGlScene::EndSelect() {
   const int rv = AGlScene::EndSelect();
   return rv;
   //if( FBitmap == NULL )  {
@@ -227,13 +232,13 @@ int TWGlScene::EndSelect()  {
   //}
 }
 //..............................................................................
-void TWGlScene::Destroy()  {
-  if( FGlContext != NULL )  {
+void TWGlScene::Destroy() {
+  if (FGlContext != NULL) {
     wglMakeCurrent(NULL, NULL);
     wglDeleteContext(FGlContext);
     FGlContext = NULL;
   }
-  if( FWContext != NULL && FBitmap != NULL )  {
+  if (FWContext != NULL && FBitmap != NULL) {
     DeleteDC(FWContext);
     FWContext = NULL;
   }
