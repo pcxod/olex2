@@ -17,12 +17,14 @@ AGlScene::~AGlScene()  {
 }
 //..............................................................................
 void AGlScene::StartDraw()  {
+  MakeCurrent();
   olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 //..............................................................................
 void AGlScene::EndDraw()  {  olx_gl::flush();  }
 //..............................................................................
 void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
+  MakeCurrent();
   olx_gl::selectBuffer(MAXSELECT, Bf);
   olx_gl::renderMode(GL_SELECT);
   olx_gl::initNames();

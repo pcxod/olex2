@@ -467,6 +467,7 @@ size_t TGXApp::GetNetworks(TNetPList& nets) {
 }
 //..............................................................................
 void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
+  GetRender().GetScene().MakeCurrent();
   OnObjectsCreate.Enter(dynamic_cast<TBasicApp*>(this), NULL);
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
@@ -516,7 +517,7 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
     TXPlane& xp = latt_planes[i];
     xp.Create(olxstr("TXPlane") << xp.GetDefId());
   }
-  double cell[] = {  
+  double cell[] = {
     XFile().GetAsymmUnit().GetAxes()[0],
     XFile().GetAsymmUnit().GetAxes()[1],
     XFile().GetAsymmUnit().GetAxes()[2],
@@ -4778,6 +4779,7 @@ void TGXApp::LoadTextures(const olxstr &folder) {
   if (!TEFile::IsDir(folder)) {
     throw TInvalidArgumentException(__OlxSourceInfo, "folder name");
   }
+  GetRender().GetScene().MakeCurrent();
 #if !defined(__WXWIDGETS__) && !defined(__WIN32__)
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
