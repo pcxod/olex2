@@ -39,7 +39,7 @@ protected:
   wxCheckBox* cbFixed, *cbBold, *cbItalic;
   wxComboBox* cbSize, *cbFileName;
 public:
-  dlgEditOlexFont(const olxstr& fntId, const TStrList& fntFiles) : 
+  dlgEditOlexFont(const olxstr& fntId, const TStrList& fntFiles) :
       wxDialog(NULL, -1, wxT("Olex2 Font"), wxDefaultPosition )  {
 
     TwxGlScene::MetaFont mf(fntId);
@@ -71,24 +71,27 @@ public:
       BSizer->Add( cbItalic, 0, wxALL, 5);
 
     wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
-    ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, 1);
-    ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, 1);
-    ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, 1);
+    ButtonsSizer->Add(
+      new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, 1);
+    ButtonsSizer->Add(
+      new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, 1);
+    ButtonsSizer->Add(
+      new wxButton( this, wxID_HELP, wxT("Help") ), 0, wxALL, 1);
 
-    wxBoxSizer *TopSizer = new wxBoxSizer( wxVERTICAL );
-    TopSizer->Add( AASizer,     0, wxALL, 1);
-    TopSizer->Add( ASizer,     0, wxALL, 1);
-    TopSizer->Add( BSizer,     0, wxALL, 1);
-    TopSizer->Add( ButtonsSizer,     0, wxALL, 1);
-
-    TopSizer->SetSizeHints(this);   // set size hints to honour minimum size
+    wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL);
+    TopSizer->Add(AASizer, 0, wxALL, 1);
+    TopSizer->Add(ASizer, 0, wxALL, 1);
+    TopSizer->Add(BSizer, 0, wxALL, 1);
+    TopSizer->Add(ButtonsSizer, 0, wxALL, 1);
+    // set size hints to honour minimum size
+    TopSizer->SetSizeHints(this);
     SetSizer(TopSizer);
     Center();
   }
   olxstr GetIdString() const {
     long fs = 10;
     cbSize->GetValue().ToLong(&fs);
-    return TwxGlScene::MetaFont::BuildOlexFontId(cbFileName->GetValue(), 
+    return TwxGlScene::MetaFont::BuildOlexFontId(cbFileName->GetValue(),
       (int)fs, 
       cbFixed->IsChecked(),
       cbBold->IsChecked(),
@@ -96,15 +99,26 @@ public:
   }
 
 };
-
-
-TwxGlScene::TwxGlScene(const olxstr& fontsFolder) : FontsFolder(fontsFolder)  {  }
-//..............................................................................
+//.............................................................................
+//.............................................................................
+TwxGlScene::TwxGlScene(const olxstr& fontsFolder)
+  : FontsFolder(fontsFolder),
+  Canvas(NULL)
+{}
+//.............................................................................
 TwxGlScene::~TwxGlScene()  {
   Destroy();
 }
-//..............................................................................
-//TGlFont* TwxGlScene::CreateFont(const olxstr& name, void *Data, TGlFont *ReplaceFnt, bool BmpF, bool FixedW)  {
+bool TwxGlScene::MakeCurrent() {
+  if (Canvas == NULL) return false;
+  Canvas->GetContext()->SetCurrent(*Canvas);
+  return true;
+}
+
+//.............................................................................
+//TGlFont* TwxGlScene::CreateFont(const olxstr& name, void *Data,
+//  TGlFont *ReplaceFnt, bool BmpF, bool FixedW)
+//{
 //  TGlFont *Fnt;
 //  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
 //  
@@ -116,15 +130,19 @@ TwxGlScene::~TwxGlScene()  {
 //  FT_Library library;
 //  FT_Face face;
 //  FT_Error error = FT_Init_FreeType( &library );
-//  if( error )
-//    throw TFunctionFailedException(__OlxSourceInfo, "could not load the FreeType2 librray");
+//  if (error) {
+//    throw TFunctionFailedException(__OlxSourceInfo,
+//      "could not load the FreeType2 librray");
+//  }
 //  error = FT_New_Face(library, "C:/WINDOWS/Fonts/arial.ttf", 0, &face);
-//  if( error )
-//    throw TFunctionFailedException(__OlxSourceInfo, "could not load font face");
+//  if (error) {
+//    throw TFunctionFailedException(__OlxSourceInfo,
+//      "could not load font face");
+//   }
 //  const int fs = 18;
 //  error = FT_Set_Pixel_Sizes(face, 0, fs);
 /////////////////////////////////////////////////////////////////
-//  if( ReplaceFnt )  {
+//  if (ReplaceFnt) {
 //    Fnt = ReplaceFnt;
 //    Fnt->ClearData();
 //  }
@@ -165,7 +183,7 @@ TwxGlScene::~TwxGlScene()  {
 //    Fonts.Add(Fnt);
 //  return Fnt;
 //}
-//..............................................................................
+//.............................................................................
 TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   if( MetaFont::IsOlexFont(glf.GetIdString()) )  {
     if( half_size )  {
@@ -222,8 +240,8 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   Images.DeleteItems();
   return glf;
 }
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
 void TwxGlScene_RipFont(wxFont& fnt, TGlFont& glf, TEBitArray& ba)  {
   TPtrList<wxImage> Images;
   glf.ClearData();
@@ -257,15 +275,19 @@ void TwxGlScene_RipFont(wxFont& fnt, TGlFont& glf, TEBitArray& ba)  {
     for( uint16_t j=0; j < maxw; j++ )  {
       for( uint16_t k=0; k < maxh; k++ )  {
         int ind = (k*ImageW+j)*3;
-        if( (cs->Data[ind] | cs->Data[ind+1] | cs->Data[ind+2]) != cs->Background ) // is black?
+        if (cs->Data[ind] != cs->Background &&
+            cs->Data[ind+1] != cs->Background &&
+            cs->Data[ind+2] != cs->Background) // is black?
+        {
           ba.SetTrue( maxw*(i*maxh+k) + j );
+        }
       }
     }
     delete Images[i];
   }
 }
-//..............................................................................
-void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos)  {
+//.............................................................................
+void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos) {
   TEBitArray ba;
   olxstr prefix( fnt.IsFixedWidth() ? "f" : "n" );
   if( fnt.GetStyle() == wxFONTSTYLE_ITALIC )  {
@@ -323,7 +345,7 @@ void TwxGlScene::ExportFont(const olxstr& name, const olxstr& fileName) const {
   zos.Close();
   fos.Close();
 }
-//..............................................................................
+//.............................................................................
 TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
   MetaFont mf(fnt.GetIdString());
   if( mf.GetSize() <= 1 )
@@ -407,7 +429,7 @@ TGlFont& TwxGlScene::ImportFont(TGlFont& fnt) const {
   delete zin;
   return fnt;
 }
-//..............................................................................
+//.............................................................................
 void TwxGlScene::ScaleFonts(double scale)  {
   if( !FontSizes.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "call RestoreFontScale");
@@ -434,7 +456,7 @@ void TwxGlScene::ScaleFonts(double scale)  {
     CreateFont(_GetFont(i).GetName(), fontId);
   }
 }
-//..............................................................................
+//.............................................................................
 void TwxGlScene::RestoreFontScale()  {
   if( FontSizes.IsEmpty() || FontSizes.Count() != FontCount() )
     throw TFunctionFailedException(__OlxSourceInfo, "call ScaleFont first");
@@ -457,7 +479,7 @@ void TwxGlScene::RestoreFontScale()  {
   }
   FontSizes.Clear();
 }
-//..............................................................................
+//.............................................................................
 olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc)  {
   olxstr rv(EmptyString());
   olxstr fntId( (glf != NULL) ? glf->GetIdString() : fntDesc );
@@ -491,9 +513,9 @@ olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc)  {
   }
   return rv;
 }
-//..............................................................................
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 bool TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
   if( AGlScene::MetaFont::SetIdString(idstr) )
     return true;
@@ -506,7 +528,7 @@ bool TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
   Size = f.GetPointSize();
   return true;
 }
-//..............................................................................
+//.............................................................................
 olxstr TwxGlScene::MetaFont::GetIdString() const {
   const olxstr rv = AGlScene::MetaFont::GetIdString();
   if( !rv.IsEmpty() )  return rv;
@@ -516,5 +538,5 @@ olxstr TwxGlScene::MetaFont::GetIdString() const {
   f.SetPointSize(Size);
   return f.GetNativeFontInfoDesc();
 }
-//..............................................................................
+//.............................................................................
 #endif // __WXWIDGETS__
