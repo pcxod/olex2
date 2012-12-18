@@ -13,7 +13,9 @@
 #include "estrlist.h"
 #include "glfont.h"
 #include "edict.h"
+#include "library.h"
 #ifdef CreateFont
+  #define CreateFontTmp CreateFont
   #undef CreateFont
 #endif
 BeginGlNamespace()
@@ -139,7 +141,14 @@ public:
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
   const_strlist ToPov() const;
+
+  void LibMakeCurrent(TStrObjList& Cmds, const TParamList& Options,
+    TMacroError& E);
+  TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 
 EndGlNamespace()
+#ifdef CreateFontTmp
+  #define CreateFont CreateFontTmp
+#endif
 #endif

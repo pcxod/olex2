@@ -15,14 +15,14 @@ AGlScene::~AGlScene()  {
   Fonts.DeleteItems();
   SmallFonts.DeleteItems();
 }
-//..............................................................................
+//.............................................................................
 void AGlScene::StartDraw()  {
   MakeCurrent();
   olx_gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-//..............................................................................
+//.............................................................................
 void AGlScene::EndDraw()  {  olx_gl::flush();  }
-//..............................................................................
+//.............................................................................
 void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
   MakeCurrent();
   olx_gl::selectBuffer(MAXSELECT, Bf);
@@ -31,14 +31,14 @@ void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
   olx_gl::pushName(~0);
   FParent->SetView(x, y, false, true, 1);
 }
-//..............................................................................
+//.............................................................................
 int AGlScene::EndSelect()  {
   int hits = olx_gl::renderMode(GL_RENDER);
   olx_gl::flush();
   FParent->SetView(false, 1);
   return hits;
 }
-//..............................................................................
+//.............................................................................
 TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription)
 {
   const size_t i = FontsDict.IndexOf(name);
@@ -63,21 +63,21 @@ TGlFont& AGlScene::CreateFont(const olxstr& name, const olxstr& fntDescription)
   }
   return *fnt;
 }
-//..............................................................................
+//.............................................................................
 void AGlScene::ToDataItem(TDataItem &di) const {
   FParent->LightModel.ToDataItem(di.AddItem("LightModel"));
   TDataItem &fonts = di.AddItem("Fonts");
   for( size_t i=0; i < FontCount(); i++ )
     fonts.AddItem(_GetFont(i).GetName(), _GetFont(i).GetIdString());
 }
-//..............................................................................
+//.............................................................................
 void AGlScene::FromDataItem(const TDataItem &di)  {
   FParent->LightModel.FromDataItem(di.FindRequiredItem("LightModel"));
   TDataItem &fonts = di.FindRequiredItem("Fonts");
   for( size_t i=0; i < fonts.ItemCount(); i++ )
     CreateFont(fonts.GetItem(i).GetName(), fonts.GetItem(i).GetValue());
 }
-//..............................................................................
+//.............................................................................
 const_strlist AGlScene::ToPov() const {
   TStrList out;
   out.Add("global_settings {");
@@ -112,9 +112,9 @@ const_strlist AGlScene::ToPov() const {
   }
   return out;
 }
-//..............................................................................
-//..............................................................................
-//..............................................................................
+//.............................................................................
+//.............................................................................
+//.............................................................................
 olxstr AGlScene::MetaFont::BuildOlexFontId(const olxstr& fileName, short size,
   bool fixed, bool bold, bool italic)
 {
@@ -134,7 +134,7 @@ olxstr AGlScene::MetaFont::BuildOlexFontId(const olxstr& fileName, short size,
   suffix.RightPadding(4, '_');
   return prefix << suffix << size;
 }
-//..............................................................................
+//.............................................................................
 bool AGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
   OriginalId = idstr;
   if( IsOlexFont(idstr) )  {
@@ -162,7 +162,7 @@ bool AGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
     return false;
   return true;
 }
-//..............................................................................
+//.............................................................................
 olxstr AGlScene::MetaFont::GetIdString() const {
   if( IsOlexFont(OriginalId) )
     return BuildOlexFontId(FileName, Size, Fixed, Bold, Italic);
@@ -170,9 +170,27 @@ olxstr AGlScene::MetaFont::GetIdString() const {
     return olxstr('@') << Size;
   return EmptyString();
 }
-//..............................................................................
+//.............................................................................
 olxstr AGlScene::MetaFont::GetFileIdString() const {
   if( IsOlexFont(OriginalId) ) 
     return BuildOlexFontId(EmptyString(), Size, Fixed, Bold, Italic);
   throw TInvalidArgumentException(__OlxSourceInfo, "Olex2 font is expected");
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+void AGlScene::LibMakeCurrent(TStrObjList& Cmds, const TParamList& Options,
+  TMacroError& E)
+{
+  MakeCurrent();
+}
+//.............................................................................
+TLibrary* AGlScene::ExportLibrary(const olxstr& name)  {
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("scene") : name);
+  lib->Register(
+    new TMacro<AGlScene>(this,  &AGlScene::LibMakeCurrent, "MakeCurrent",
+      EmptyString(), fpNone,
+      "Make scene for rendering/updates")
+  );
+  return lib;
 }

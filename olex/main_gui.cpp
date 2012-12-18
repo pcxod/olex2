@@ -640,19 +640,8 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( event.GetId() == ID_AtomGrow )
     processMacro(olxstr("grow #s") << XA->GetOwnerId());
-  else if( event.GetId() == ID_AtomSelRings )  {
-    TTypeList<TSAtomPList> rings;
-    XA->GetNetwork().FindAtomRings(*XA, rings);
-    if( !rings.IsEmpty() )  {
-      for( size_t i=0; i < rings.Count(); i++ )  {
-        for( size_t j=0; j < rings[i].Count(); j++ )  {
-          TXAtom* xa = static_cast<TXAtom*>(rings[i][j]);
-          if( !xa->IsSelected() )
-            FXApp->GetRender().Select(*xa);
-        }
-      }
-    }
-  }
+  else if( event.GetId() == ID_AtomSelRings )
+    processMacro(olxstr("sel rings *#s") << XA->GetOwnerId());
   else if( event.GetId() == ID_AtomCenter )  {
     if( !XA->IsSelected() )
       processMacro(olxstr("center #s") << XA->GetOwnerId());
