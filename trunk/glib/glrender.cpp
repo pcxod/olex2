@@ -1400,7 +1400,7 @@ void TGlRenderer::LibRasterZ(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
-  TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("gl") : name);
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("gl") : name);
   lib->Register(
     new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
       fpOne,
@@ -1462,6 +1462,7 @@ TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
       "expected")
   );
   lib->AttachLibrary(LightModel.ExportLibrary("lm"));
+  lib->AttachLibrary(GetScene().ExportLibrary("scene"));
   return lib;
 }
 //..............................................................................

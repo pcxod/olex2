@@ -2554,23 +2554,39 @@ void SortRing(TSAtomPList& atoms)  {
 }
 
 void TGXApp::SelectRings(const olxstr& Condition, bool Invert)  {
-  TTypeList< TSAtomPList > rings;
-  try  {  FindRings(Condition, rings);  }
-  catch( const TExceptionBase& exc )  {
-    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  if (Condition.StartsFrom('*')) {
+    TXAtomPList atoms = FindXAtoms(Condition.SubStringFrom(1), false, false);
+    TTypeList<TSAtomPList> rings;
+    for (size_t i=0; i < atoms.Count(); i++)
+      atoms[i]->GetNetwork().FindAtomRings(*atoms[i], rings);
+    if( !rings.IsEmpty() )  {
+      for( size_t i=0; i < rings.Count(); i++ )  {
+        for( size_t j=0; j < rings[i].Count(); j++ )  {
+          TXAtom* xa = dynamic_cast<TXAtom*>(rings[i][j]);
+          GetRender().Select(*xa, true);
+        }
+      }
+    }
   }
-  if( rings.IsEmpty() )  return;
-  TXAtomPList all;
-  all.SetCapacity(rings.Count()*rings[0].Count());
-  for( size_t i=0; i < rings.Count(); i++ )  {
-    SortRing(rings[i]);
-    for( size_t j=0; j < rings[i].Count(); j++ )
-      all.Add(static_cast<TXAtom*>(rings[i][j]));
+  else {
+    TTypeList< TSAtomPList > rings;
+    try  {  FindRings(Condition, rings);  }
+    catch( const TExceptionBase& exc )  {
+      throw TFunctionFailedException(__OlxSourceInfo, exc);
+    }
+    if( rings.IsEmpty() )  return;
+    TXAtomPList all;
+    all.SetCapacity(rings.Count()*rings[0].Count());
+    for( size_t i=0; i < rings.Count(); i++ )  {
+      SortRing(rings[i]);
+      for( size_t j=0; j < rings[i].Count(); j++ )
+        all.Add(static_cast<TXAtom*>(rings[i][j]));
+    }
+    all.ForEach(ACollectionItem::IndexTagSetter());
+    for( size_t i=0; i < all.Count(); i++ )
+      if( (size_t)all[i]->GetTag() == i && all[i]->IsVisible() )
+        FGlRender->Select(*all[i]);
   }
-  all.ForEach(ACollectionItem::IndexTagSetter());
-  for( size_t i=0; i < all.Count(); i++ )
-    if( (size_t)all[i]->GetTag() == i && all[i]->IsVisible() )
-      FGlRender->Select(*all[i]);
 }
 //..............................................................................
 void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
@@ -2834,7 +2850,7 @@ void TGXApp::FillXAtomList(TXAtomPList& res, TXAtomPList* providedAtoms) {
   }
 }
 //..............................................................................
-void TGXApp::FillXBondList( TXBondPList& res, TXBondPList* providedBonds)  {
+void TGXApp::FillXBondList(TXBondPList& res, TXBondPList* providedBonds)  {
   if( providedBonds != NULL )
     res.AddList(*providedBonds);
   else  {
@@ -2925,6 +2941,7 @@ void TGXApp::BondRad(float R, TXBondPList* Bonds)  {
 }
 //..............................................................................
 void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
+  GetRender().GetScene().MakeCurrent();
   TXAtomPList atoms;
   FillXAtomList(atoms, Atoms);
   atoms.ForEach(ACollectionItem::IndexTagSetter(
@@ -2942,6 +2959,7 @@ void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
 }
 //..............................................................................
 void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds, bool HBondsOnly)  {
+  GetRender().GetScene().MakeCurrent();
   TXBondPList bonds;
   FillXBondList(bonds, Bonds);
   bonds.ForEach(ACollectionItem::IndexTagSetter(
@@ -2971,6 +2989,7 @@ void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds, bool HBondsOnly)
 }
 //..............................................................................
 void TGXApp::SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms)  {
+  GetRender().GetScene().MakeCurrent();
   TXAtomPList atoms;
   FillXAtomList(atoms, Atoms);
   for( size_t i=0; i < atoms.Count(); i++ )
