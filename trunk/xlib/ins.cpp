@@ -971,7 +971,7 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
   }
 }
 //..............................................................................
-void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
+void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl,
   TIndexList* index, bool checkSame, bool checkResi)
 {
@@ -1008,14 +1008,13 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         if( !sg.GetDependent(i).IsValidForSave() )
           continue;
         olxstr tmp("SAME ");
-        tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' ' 
+        tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' '
             << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
         if( !overlap && sg.GetDependent(i).Count() > 1 &&
           sg.GetDependent(i).AreAllAtomsUnique() )
         {
           tmp << ' ' << sg.GetDependent(i)[0].GetResiLabel();
-          if (sg.GetDependent(i)[0].GetId() <
-            sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetId())
+          if (sg[0].GetId() < sg[sg.Count()-1].GetId())
             tmp << " > ";
           else
             tmp << " < ";
