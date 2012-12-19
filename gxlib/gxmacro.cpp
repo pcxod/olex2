@@ -171,11 +171,13 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Mpln,
     "n-just orient, do not create plane&;"
     "r-create regular plane&;"
-    "we-use weights proportional to the (atomic mass)^we", 
+    "we-use weights proportional to the (atomic mass)^we&;"
+    "rings-creates planes for rings template, like NC5",
     fpAny,
     "Sets current view along the normal of the best plane");
   gxlib_InitMacro(Cent,
-    EmptyString(),
+    "rings-finds rings specified by template and add centroids for each of them"
+    ". For example cent -rings=C6",
     fpAny,
     "Creates a centroid for given/selected/all atoms");
   gxlib_InitMacro(Cell, "r-shows reciprocal cell",
@@ -1373,88 +1375,115 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  TSPlane* plane = NULL;
-  bool orientOnly = Options.Contains('n'),
-    rectangular = Options.Contains('r');
-  olxstr name = Options.FindValue('n');
-  const double weightExtent = olx_abs(Options.FindValue("we", "0").ToDouble());
-  olxstr planeName;
-  TXAtomPList Atoms = app.FindXAtoms(Cmds, true, true);
-  for (size_t i=0; i < Atoms.Count(); i++ ) {
-    planeName << Atoms[i]->GetLabel();
-    if( i+1 < Atoms.Count() )
-      planeName << ' ';
-  }
+  olxstr rings_name = Options.FindValue("rings");
+  if (rings_name.IsEmpty()) {
+    TSPlane* plane = NULL;
+    bool orientOnly = Options.Contains('n'),
+      rectangular = Options.Contains('r');
+    olxstr name = Options.FindValue('n');
+    const double weightExtent = olx_abs(Options.FindValue("we", "0").ToDouble());
+    olxstr planeName;
+    TXAtomPList Atoms = app.FindXAtoms(Cmds, true, true);
+    for (size_t i=0; i < Atoms.Count(); i++ ) {
+      planeName << Atoms[i]->GetLabel();
+      if( i+1 < Atoms.Count() )
+        planeName << ' ';
+    }
 
-  if (Atoms.Count() < 3) {
-    Error.ProcessingError(__OlxSrcInfo, "at least 3 atoms are expected");
-    return;
-  }
-  if (orientOnly && name.IsEmpty()) {
-    plane = app.TmpPlane(&Atoms, weightExtent);
-    if( plane != NULL )  {
-      mat3d m = plane->GetBasis();
-      vec3d d1 = (m[2]+m[1]).Normalise();
-      vec3d d2 = m[0].XProdVec(d1).Normalise();
-      app.GetRender().GetBasis().Orient(d1, d2, m[0]);
-      app.SetGridDepth(plane->GetCenter());
-      delete plane;
-      plane = NULL;
+    if (Atoms.Count() < 3) {
+      Error.ProcessingError(__OlxSrcInfo, "at least 3 atoms are expected");
+      return;
     }
-  }
-  else  {
-    TXPlane* xp = app.AddPlane(name, Atoms, rectangular, weightExtent);
-    if (xp != NULL)
-      plane = xp;
-  }
-  if (plane != NULL) {
-    const TAsymmUnit& au = app.XFile().GetAsymmUnit();
-    size_t colCount = 3;
-    TTTable<TStrList> tab(plane->Count()/colCount +
-      (((plane->Count()%colCount)==0)?0:1), colCount*3);
-    for (size_t i=0; i < colCount; i++) {
-      tab.ColName(i*3) = "Label";
-      tab.ColName(i*3+1) = "D/A";
-    }
-    double rmsd = 0;
-    for (size_t i=0; i < plane->Count(); i+=colCount) {
-      for (size_t j=0; j < colCount; j++) {
-        if ((i + j) >= Atoms.Count())
-          break;
-        tab[i/colCount][j*3] = plane->GetAtom(i+j).GetLabel();
-        const double v = plane->DistanceTo(plane->GetAtom(i+j).crd()); 
-        rmsd += v*v;
-        tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
+    if (orientOnly && name.IsEmpty()) {
+      plane = app.TmpPlane(&Atoms, weightExtent);
+      if( plane != NULL )  {
+        mat3d m = plane->GetBasis();
+        vec3d d1 = (m[2]+m[1]).Normalise();
+        vec3d d2 = m[0].XProdVec(d1).Normalise();
+        app.GetRender().GetBasis().Orient(d1, d2, m[0]);
+        app.SetGridDepth(plane->GetCenter());
+        delete plane;
+        plane = NULL;
       }
     }
-    rmsd = sqrt(rmsd/Atoms.Count());
-    TBasicApp::NewLogEntry() <<
-      tab.CreateTXTList(olxstr("Atom-to-plane distances for ") << planeName,
-      true, false, " | ");
-    TBasicApp::NewLogEntry() << "Plane equation: " << plane->StrRepr();
-    TBasicApp::NewLogEntry() << "HKL direction: " <<
-      plane->GetCrystallographicDirection().ToString();
-    if (weightExtent != 0) {
-      TBasicApp::NewLogEntry() << "Weighted RMSD/A: " <<
-        olxstr::FormatFloat(3, plane->GetWeightedRMSD());
-      TBasicApp::NewLogEntry() << "RMSD/A: " <<
-        olxstr::FormatFloat(3, plane->CalcRMSD());
+    else  {
+      TXPlane* xp = app.AddPlane(name, Atoms, rectangular, weightExtent);
+      if (xp != NULL)
+        plane = xp;
     }
-    else {
-      TBasicApp::NewLogEntry() << "RMSD/A: " <<
-        olxstr::FormatFloat(3, plane->GetWeightedRMSD());
+    if (plane != NULL) {
+      const TAsymmUnit& au = app.XFile().GetAsymmUnit();
+      size_t colCount = 3;
+      TTTable<TStrList> tab(plane->Count()/colCount +
+        (((plane->Count()%colCount)==0)?0:1), colCount*3);
+      for (size_t i=0; i < colCount; i++) {
+        tab.ColName(i*3) = "Label";
+        tab.ColName(i*3+1) = "D/A";
+      }
+      double rmsd = 0;
+      for (size_t i=0; i < plane->Count(); i+=colCount) {
+        for (size_t j=0; j < colCount; j++) {
+          if ((i + j) >= Atoms.Count())
+            break;
+          tab[i/colCount][j*3] = plane->GetAtom(i+j).GetLabel();
+          const double v = plane->DistanceTo(plane->GetAtom(i+j).crd()); 
+          rmsd += v*v;
+          tab[i/colCount][j*3+1] = olxstr::FormatFloat(3, v);
+        }
+      }
+      rmsd = sqrt(rmsd/Atoms.Count());
+      TBasicApp::NewLogEntry() <<
+        tab.CreateTXTList(olxstr("Atom-to-plane distances for ") << planeName,
+        true, false, " | ");
+      TBasicApp::NewLogEntry() << "Plane equation: " << plane->StrRepr();
+      TBasicApp::NewLogEntry() << "HKL direction: " <<
+        plane->GetCrystallographicDirection().ToString();
+      if (weightExtent != 0) {
+        TBasicApp::NewLogEntry() << "Weighted RMSD/A: " <<
+          olxstr::FormatFloat(3, plane->GetWeightedRMSD());
+        TBasicApp::NewLogEntry() << "RMSD/A: " <<
+          olxstr::FormatFloat(3, plane->CalcRMSD());
+      }
+      else {
+        TBasicApp::NewLogEntry() << "RMSD/A: " <<
+          olxstr::FormatFloat(3, plane->GetWeightedRMSD());
+      }
+    }
+    else if (!orientOnly) {
+      TBasicApp::NewLogEntry() <<
+        "The plane was not created because it is either not unique or valid";
     }
   }
-  else if (!orientOnly) {
-    TBasicApp::NewLogEntry() <<
-      "The plane was not created because it is either not unique or valid";
+  else {
+    TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
+    olxstr name = "Plane";
+    name << app.XFile().GetLattice().GetObjects().planes.Count();
+    size_t cnt=0;
+    for (size_t i=0; i < rings.Count(); i++) {
+      if( app.AddPlane(name,
+         TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>()), false) != NULL)
+      {
+        cnt++;
+      }
+    }
+    if (cnt != 0) {
+      TBasicApp::NewLogEntry() << "Created " << cnt << " rings";
+    }
   }
 }
 //.............................................................................
 void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  app.AddCentroid(app.FindXAtoms(Cmds, true, true).GetObject());
+  olxstr rings_name = Options.FindValue("rings");
+  if (rings_name.IsEmpty()) {
+    app.AddCentroid(app.FindXAtoms(Cmds, true, true).GetObject());
+  }
+  else {
+    TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
+    for (size_t i=0; i < rings.Count(); i++)
+      app.AddCentroid(TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>()));
+  }
 }
 //.............................................................................
 void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,

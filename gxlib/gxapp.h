@@ -691,7 +691,13 @@ public:     void CalcProbFactor(float Prob);
     SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings 
   */
   void SelectRings(const olxstr& Condition, bool Invert=false);
-  void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings );
+  TTypeList<TSAtomPList>& FindRings(const olxstr& Condition,
+    TTypeList<TSAtomPList>& rings);
+  ConstTypeList<TSAtomPList> FindRings(const olxstr& Condition) {
+    TTypeList<TSAtomPList> l;
+    return FindRings(Condition, l);
+  }
+
   // these two create structure scope labels
   TXGlLabel& CreateLabel(const vec3d& center, const olxstr& T, uint16_t FontIndex);
   TXGlLabel& CreateLabel(const TXAtom& A, uint16_t FontIndex);
