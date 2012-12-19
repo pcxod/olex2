@@ -14,10 +14,7 @@
 #include "glfont.h"
 #include "edict.h"
 #include "library.h"
-#ifdef CreateFont
-  #define CreateFontTmp CreateFont
-  #undef CreateFont
-#endif
+#undef CreateFont
 BeginGlNamespace()
 
 class TGlFont;
@@ -148,7 +145,4 @@ public:
 };
 
 EndGlNamespace()
-#ifdef CreateFontTmp
-  #define CreateFont CreateFontTmp
-#endif
 #endif

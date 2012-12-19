@@ -1512,6 +1512,14 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry(logError) << "Unavailable in a mode";
     return;
   }
+  glSelectionFlag flag=glSelectionNone;
+  if (Options.Contains('a'))
+    flag = glSelectionSelect;
+  else if (Options.Contains('u'))
+    flag = glSelectionUnselect;
+  else if (Options.Contains('i'))
+    flag = glSelectionInvert;
+
   if (Cmds.Count() >= 1 && Cmds[0].Equalsi("frag")) {
     TNetPList nets(
       app.FindXAtoms(TStrObjList(Cmds.SubListFrom(1)), false, false),
@@ -1600,36 +1608,22 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0])) {
-    bool invert = Options.Contains('i'), unselect=false;
-    if( !invert )
-      unselect = Options.Contains('u');
+    if (flag == glSelectionNone) flag = glSelectionSelect;
     const smatd matr = TSymmParser::SymmCodeToMatrix(
       app.XFile().GetUnitCell(), Cmds[0]);
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext()) {
       TXAtom& a = ai.Next();
       if (a.IsDeleted() || !a.IsVisible() )  continue;
-      if (a.IsGenerator(matr) )  {
-        if (invert)
-          app.GetRender().Select(a, !a.IsSelected());
-        else if (unselect)
-          app.GetRender().Select(a, false);
-        else
-          app.GetRender().Select(a, true);
-      }
+      if (a.IsGenerator(matr) )
+        app.GetRender().Select(a, flag);
     }
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext()) {
       TXBond& b = bi.Next();
       if (b.IsDeleted() || !b.IsVisible())  continue;
-      if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr)) {
-        if (invert)
-          app.GetRender().Select(b, !b.IsSelected());
-        else if (unselect)
-          app.GetRender().Select(b, false);
-        else
-          app.GetRender().Select(b, true);
-      }
+      if (b.A().IsGenerator(matr) && b.B().IsGenerator(matr))
+        app.GetRender().Select(b, flag);
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("part")) {
@@ -1652,6 +1646,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("fvar")) {
+    if (flag == glSelectionNone) flag = glSelectionSelect;
     Cmds.Delete(0);
     TIntList fvars;
     for (size_t i=0; Cmds.Count(); i++) {
@@ -1674,17 +1669,63 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
           v *= -1;
         for (size_t i=0; i < fvars.Count(); i++) {
           if (fvars[i] == v)
-            app.GetRender().Select(a, true);
+            app.GetRender().Select(a, flag);
         }
       }
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("isot")) {
+    if (flag == glSelectionNone) flag = glSelectionSelect;
     TGXApp::AtomIterator ai = app.GetAtoms();
     while (ai.HasNext())  {
       TXAtom& xa = ai.Next();
       if (xa.GetEllipsoid() == NULL)
-        app.GetRender().Select(xa, true);
+        app.GetRender().Select(xa, flag);
+    }
+  }
+  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("anis")) {
+    if (flag == glSelectionNone) flag = glSelectionSelect;
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext())  {
+      TXAtom& xa = ai.Next();
+      if (xa.GetEllipsoid() != NULL)
+        app.GetRender().Select(xa, flag);
+    }
+  }
+  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("atoms")) {
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    if (flag == glSelectionNone) flag = glSelectionSelect;
+    while (ai.HasNext())
+      app.GetRender().Select(ai.Next(), flag);
+  }
+  else if (Cmds.Count() == 1 && Cmds[0].Equalsi("bonds")) {
+    if (flag == glSelectionNone) flag = glSelectionSelect;
+    TGXApp::BondIterator bi = app.GetBonds();
+    while (bi.HasNext())
+      app.GetRender().Select(bi.Next(), flag);
+  }
+  else if (Cmds.Count() == 2 && Cmds[0].Equalsi("bond") &&
+    Cmds[1].Equalsi("atoms"))
+  {
+    if (flag == glSelectionNone) flag = glSelectionSelect;
+    TGXApp::BondIterator bi = app.GetBonds();
+    while (bi.HasNext()) {
+      TXBond &b = bi.Next();
+      if (b.IsSelected()) {
+        app.GetRender().Select(b.A(), flag);
+        app.GetRender().Select(b.B(), flag);
+      }
+    }
+  }
+  else if (Cmds.Count() == 2 && Cmds[0].Equalsi("atom") &&
+    Cmds[1].Equalsi("bonds"))
+  {
+    if (flag == glSelectionNone) flag = glSelectionSelect;
+    TGXApp::BondIterator bi = app.GetBonds();
+    while (bi.HasNext()) {
+      TXBond &b = bi.Next();
+      if (b.A().IsSelected() && b.B().IsSelected())
+        app.GetRender().Select(b, flag);
     }
   }
   else if (Cmds.Count() >= 1 && Cmds[0].Equalsi("wbox")) {
@@ -1732,10 +1773,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  else if (!(Options.Contains('a') ||
-    Options.Contains('i') ||
-    Options.Contains('u')))
-  {
+  else if (flag == glSelectionNone) {
     size_t period=5;
     TXAtomPList Atoms = app.FindXAtoms("sel", false, false);
     if (Atoms.IsEmpty() && Cmds.Count() == 1) {
@@ -1788,20 +1826,12 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    for (size_t i=0; i < Options.Count(); i++) {
-      if (Options.GetName(i)[0] == 'a')
-        app.SelectAll(true);
-      else if (Options.GetName(i)[0] == 'u')
-        app.SelectAll(false);
-      else if( Options.GetName(i)[0] == 'i' )  {
-        if (Cmds.Count() == 0)
-          app.GetRender().InvertSelection();
-        else
-          app.SelectAtoms(Cmds.Text(' '), true);
-      }
-      else
-        Error.ProcessingError(__OlxSrcInfo, "wrong options");
-    }
+    if (flag == glSelectionSelect)
+      app.SelectAll(true);
+    else if (flag == glSelectionUnselect)
+      app.SelectAll(false);
+    else if (flag == glSelectionInvert)
+      app.GetRender().InvertSelection();
   }
 }
 //.............................................................................
