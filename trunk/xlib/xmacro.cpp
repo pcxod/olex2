@@ -1885,14 +1885,16 @@ void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError
     TXApp::GetInstance().XFile().GetRM().SetRefinementMethod(Cmds[0]);
 }
 //.............................................................................
-void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
-  if( rm.proposed_weight.Count() == 0 )  return;
-  if( Cmds.IsEmpty() )  
+  if (Cmds.IsEmpty() && rm.proposed_weight.IsEmpty()) return;
+  if (Cmds.IsEmpty())
     rm.used_weight = rm.proposed_weight;
-  else  {
+  else {
     rm.used_weight.SetCount(Cmds.Count());
-    for( size_t i=0; i < Cmds.Count(); i++ )  
+    for (size_t i=0; i < Cmds.Count(); i++)
       rm.used_weight[i] = Cmds[i].ToDouble();
   }
 }

@@ -36,6 +36,13 @@ const uint8_t
   glStereoHardware = 0x0004,
   glStereoInterlace = 0x0005;
 
+enum glSelectionFlag {
+  glSelectionNone, // does nothing
+  glSelectionSelect,
+  glSelectionUnselect,
+  glSelectionInvert
+};
+
 class AGDrawObject;
 class TGlGroup;
 
@@ -259,6 +266,7 @@ public:
     return *sel;
   }
   void Select(AGDrawObject& G, bool v); // convinience function...
+  void Select(AGDrawObject& G, glSelectionFlag flag);
   void Select(AGDrawObject& G);
   void DeSelect(AGDrawObject& G);
   void ClearSelection();

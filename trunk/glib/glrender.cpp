@@ -874,6 +874,23 @@ void TGlRenderer::Select(AGDrawObject& G, bool v)  {
     DeSelect(G);
 }
 //..............................................................................
+void TGlRenderer::Select(AGDrawObject& G, glSelectionFlag v)  {
+  if (v == glSelectionSelect) {
+    if (!G.IsSelected())
+      Select(G);
+  }
+  else if (v == glSelectionUnselect) {
+    if (G.IsSelected())
+      DeSelect(G);
+  }
+  else if (v == glSelectionInvert) {
+    if (!G.IsSelected())
+      Select(G);
+    else
+      DeSelect(G);
+  }
+}
+//..............................................................................
 void TGlRenderer::InvertSelection()  {
   AGDObjList Selected;
   const size_t oc = FGObjects.Count();

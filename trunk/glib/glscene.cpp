@@ -7,9 +7,9 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "glscene.h"
 #include "glrender.h"
 #include "povdraw.h"
+#include "glscene.h"
 
 AGlScene::~AGlScene()  {
   Fonts.DeleteItems();
