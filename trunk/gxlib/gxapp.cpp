@@ -2525,16 +2525,19 @@ bool GetRing(TSAtomPList& atoms, TTypeList<TSAtomPList>& rings)  {
   return true;
 }
 
-void TGXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
+TTypeList<TSAtomPList>&TGXApp::FindRings(const olxstr& Condition,
+  TTypeList<TSAtomPList>& rings)
+{
   ElementPList ring;
   if( Condition.Equalsi("sel") )  {
     TSAtomPList SAtoms(GetSelectedXAtoms(false));
     SAtoms.ForEach(ACollectionItem::TagSetter(0));
     while( GetRing(SAtoms, rings) )
       ;
-    return;
+    return rings;
   }
   TXApp::FindRings(Condition, rings);
+  return rings;
 }
 //..............................................................................
 void SortRing(TSAtomPList& atoms)  {
