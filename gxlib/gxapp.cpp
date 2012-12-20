@@ -2216,7 +2216,7 @@ TDUserObj* TGXApp::FindUserObject(const olxstr &Name)  {
   return NULL;
 }
 //..............................................................................
-TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, double weightExtent)  {
+TSPlane *TGXApp::TmpPlane(const TXAtomPList* atoms, double weightExtent)  {
   TSAtomPList SAtoms;
   if( atoms != NULL )
     SAtoms.Assign(*atoms);
@@ -2230,8 +2230,8 @@ TSPlane *TGXApp::TmpPlane(TXAtomPList* atoms, double weightExtent)  {
   return XFile().GetLattice().TmpPlane(SAtoms, weightExtent);
 }
 //..............................................................................
-TXPlane *TGXApp::AddPlane(const olxstr &name_,TXAtomPList &Atoms, bool regular,
-  double weightExtent)
+TXPlane *TGXApp::AddPlane(const olxstr &name_, const TXAtomPList &Atoms,
+  bool regular, double weightExtent)
 {
   if( Atoms.Count() < 3 )  return NULL;
   TSPlanePList planes = XFile().GetLattice().NewPlane(
