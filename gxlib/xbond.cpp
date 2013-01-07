@@ -77,7 +77,7 @@ TXBond::~TXBond()  {
 void TXBond::Update()  {
   if( !IsValid() )  return;
   vec3d C(B().crd() - A().crd());
-  if( C.IsNull() )  
+  if( C.IsNull() )
     Params().Null();
   else  {
     Params()[3] = C.Length();

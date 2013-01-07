@@ -57,7 +57,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   for( size_t i=0; ai.HasNext(); i++ )  {
     const TXAtom& XA = ai.Next();
     if( XA.IsDeleted() || !XA.IsVisible() )  continue;
-    if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )  
+    if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )
       continue;
     if( (Mode & lmQPeak) == 0 && (XA.GetType() == iQPeakZ) )  continue;
     if( (Mode & lmIdentity) != 0 && !XA.IsAUAtom() )  continue;
@@ -229,6 +229,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
 //..............................................................................
 void TXGlLabels::Init() {
   Marks.SetCount(TGXApp::GetInstance().GetAtoms().count);
+  ClearLabelMarks();
 }
 //..............................................................................
 void TXGlLabels::Selected(bool On) {

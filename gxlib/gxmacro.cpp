@@ -549,12 +549,12 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   st.start("Map operations");
   app.XGrid().InitGrid(dim);
 
-  app.XGrid().SetMaxHole(mi.sigma*1.4);
-  app.XGrid().SetMinHole(-mi.sigma*1.4);
-  app.XGrid().SetScale(-mi.sigma*6);
+  app.XGrid().SetMaxHole((float)(mi.sigma*1.4));
+  app.XGrid().SetMinHole((float)(-mi.sigma*1.4));
+  app.XGrid().SetScale((float)(-mi.sigma*6));
   //app.XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
-  app.XGrid().SetMinVal(mi.minVal);
-  app.XGrid().SetMaxVal(mi.maxVal);
+  app.XGrid().SetMinVal((float)mi.minVal);
+  app.XGrid().SetMaxVal((float)mi.maxVal);
   // copy map
   MapUtil::CopyMap(app.XGrid().Data()->Data, map.Data, dim);
   app.XGrid().AdjustMap();
@@ -568,7 +568,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     TArrayList<MapUtil::peak> Peaks;
     TTypeList<MapUtil::peak> MergedPeaks;
     vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
-    MapUtil::Integrate<float>(map.Data, dim, mi.sigma*6, Peaks);
+    MapUtil::Integrate<float>(map.Data, dim, (float)(mi.sigma*6), Peaks);
     MapUtil::MergePeaks(uc.GetSymmSpace(), norm, Peaks, MergedPeaks);
     QuickSorter::SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     for( size_t i=0; i < MergedPeaks.Count(); i++ )  {
@@ -638,11 +638,11 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
   BVFourier::MapInfo mi = BVFourier::CalcPatt(
     P1SF, app.XGrid().Data()->Data, dim, vol);
   app.XGrid().AdjustMap();
-  app.XGrid().SetMinVal(mi.minVal);
-  app.XGrid().SetMaxVal(mi.maxVal);
-  app.XGrid().SetMaxHole( mi.sigma*1.4);
-  app.XGrid().SetMinHole(-mi.sigma*1.4);
-  app.XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5);
+  app.XGrid().SetMinVal((float)mi.minVal);
+  app.XGrid().SetMaxVal((float)mi.maxVal);
+  app.XGrid().SetMaxHole((float)(mi.sigma*1.4));
+  app.XGrid().SetMinHole((float)(-mi.sigma*1.4));
+  app.XGrid().SetScale((float)(-(mi.maxVal - mi.minVal)/2.5));
   app.XGrid().InitIso();
   app.ShowGrid(true, EmptyString());
 }
@@ -721,7 +721,7 @@ void GXLibMacros::macAZoom(TStrObjList &Cmds, const TParamList &Options,
       "a number is expected as first argument");
     return;
   }
-  double zoom = Cmds[0].ToDouble();
+  float zoom = Cmds[0].ToFloat();
   Cmds.Delete(0);
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
   app.AtomZoom(zoom, Atoms.IsEmpty() ? NULL : &Atoms);
@@ -730,7 +730,7 @@ void GXLibMacros::macAZoom(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  double r = Cmds[0].ToDouble();
+  float r = Cmds[0].ToFloat();
   Cmds.Delete(0);
   TXBondPList bonds;
   bool absolute = Options.GetBoolOption('a');
@@ -745,7 +745,7 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
     app.BondRad(r, &bonds);
   }
   else  {
-    if (absolute) r /= 0.1;
+    if (absolute) r /= 0.1f;
     bonds = app.GetBonds(Cmds, true);
     if( bonds.IsEmpty() && Cmds.IsEmpty() )  {  // get all non-H
       TGXApp::BondIterator bi = app.GetBonds();
@@ -763,7 +763,7 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  app.CalcProbFactor(Cmds[0].ToDouble());
+  app.CalcProbFactor(Cmds[0].ToFloat());
 }
 //.............................................................................
 void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
@@ -2151,11 +2151,11 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   
   TBasicApp::NewLogEntry() << "Extra distance from the surface: " << surfdis;
   
-  double resolution = Options.FindValue("r", "0.2").ToDouble();
+  float resolution = Options.FindValue("r", "0.2").ToFloat();
   if( resolution < 0.01 )  
     resolution = 0.01;
   rv('r', resolution);
-  resolution = 1./resolution;
+  resolution = 1.0f/resolution;
   const vec3i dim(au.GetAxes()*resolution);
   const double mapVol = dim.Prod();
   const double vol = app.XFile().GetLattice().GetUnitCell().CalcVolume();
