@@ -13,6 +13,7 @@
 #include "bapp.h"
 #include "log.h"
 #include "etbuffer.h"
+#include "wx/wx.h"
 
 TLangDict::TLangDict()  {
   CurrentLanguageEncodingStr = "ISO8859-1";

@@ -67,7 +67,7 @@ olxstr TBasicApp::GetModuleName() {
   while (rv == MAX_PATH) {
     if (n > 1) delete [] bf;
     bf = new olxch[MAX_PATH*n];
-    rv = GetModuleFileName(NULL, bf, MAX_PATH*n);
+    rv = GetModuleFileName((HMODULE)Module().GetHandle(), bf, MAX_PATH*n);
     n++;
   }
   name = olxstr::FromExternal(bf, rv);

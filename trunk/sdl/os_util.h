@@ -33,6 +33,17 @@ bool olx_setenv(const olxstr& v);
 #ifdef __WIN32__
   inline char olx_env_sep() { return ';'; }
   bool IsWow64();
+  /* this to work around the DLL handle. A DLL should set the handle in the
+  DLLMain function, otherwise, module handle dependent functions will use the
+  module of the executable which has loaded the DLL
+  */
+  struct Module {
+    static HANDLE handle;
+  public:
+    Module() {}
+    HANDLE GetHandle() const;
+    HANDLE SetHandle(HANDLE h);
+  };
 #else
   inline char olx_env_sep() { return ':'; }
 #endif

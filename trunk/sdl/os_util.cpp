@@ -23,6 +23,22 @@
    bool EsdlObject(olx_setenv)(const olxstr& name, const olxstr& val)  {
      return OLX_PUTENV(name.u_str(), val.u_str()) == 0;
    }
+   //.............................................................................
+   //.............................................................................
+   HANDLE EsdlObject(Module::handle) = NULL;
+   HANDLE Module::GetHandle() const {
+     if (handle == NULL)
+       handle = ::GetModuleHandle(NULL);
+     return handle;
+   }
+   //.............................................................................
+   HANDLE Module::SetHandle(HANDLE h) {
+     HANDLE r = handle;
+     handle = h;
+     return r;
+   }
+   //.............................................................................
+   //.............................................................................
    olxstr EsdlObject(olx_getenv)(const olxstr& name)  {
      olxch* val=NULL;
      size_t sz;

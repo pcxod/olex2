@@ -227,6 +227,7 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
       src.SetLength(0);
     GetRM().SetHKLSource(src);
   }
+  TXApp::GetInstance().SetLastSGResult_(EmptyString());
 }
 //..............................................................................
 void TXFile::UpdateAsymmUnit()  {

@@ -701,6 +701,7 @@
     <ClInclude Include="..\..\..\sdl\hashing.h" />
     <ClInclude Include="..\..\..\sdl\index_range.h" />
     <ClInclude Include="..\..\..\sdl\integration.h" />
+    <ClInclude Include="..\..\..\sdl\ipimp.h" />
     <ClInclude Include="..\..\..\sdl\istream.h" />
     <ClInclude Include="..\..\..\sdl\libfile.h" />
     <ClInclude Include="..\..\..\sdl\library.h" />

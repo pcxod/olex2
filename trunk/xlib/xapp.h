@@ -71,6 +71,7 @@ protected:
   TXApp(const olxstr &basedir, bool dummy);
   void Init(ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);
+  olxstr LastSGResult;
 public:
   TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);
@@ -138,6 +139,9 @@ public:
   returns the source of the matrix like: shelxl or smtbx
  */
   olxstr InitVcoV(class VcoVContainer& vcov) const;
+  olxstr GetLastSGResult() const { return LastSGResult; }
+  // for the internal use
+  void SetLastSGResult_(const olxstr &r) { LastSGResult = r; }
 
   static ElementRadii ReadVdWRadii(const olxstr& fileName);
   static void PrintVdWRadii(const ElementRadii& radii,

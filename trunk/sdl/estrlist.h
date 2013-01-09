@@ -93,6 +93,24 @@ public:
     Strtok(string, sep, skip_sequences);
   }
   
+  template <class list_t>
+  static ConstStrList<T> FromAny(const list_t &list) {
+    TStrList l;
+    l.SetCapacity(list.Count());
+    for (size_t i=0; i < list.Count(); i++)
+      l.Add(list[i]);
+    return l;
+  }
+
+  template <class list_t, class accessor_t>
+  static ConstStrList<T> FromAny(const list_t &list, const accessor_t &acc) {
+    TStrList l;
+    l.SetCapacity(list.Count());
+    for (size_t i=0; i < list.Count(); i++)
+      l.Add(acc(list[i]));
+    return l;
+  }
+
   virtual ~TTStrList()  {  Clear();  }
 
   TTStrList &TakeOver(TTStrList &d, bool do_delete=false)  {

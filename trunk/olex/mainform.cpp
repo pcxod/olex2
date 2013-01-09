@@ -330,9 +330,9 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
 END_EVENT_TABLE()
 //..............................................................................
-TMainForm::TMainForm(TGlXApp *Parent):
-  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
-  Macros(*this),
+TMainForm::TMainForm(TGlXApp *Parent)
+  : TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
+  olex::OlexProcessorImp(NULL),
   HtmlManager(*(new THtmlManager(this))),
   _ProcessHandler(*this)
 {
@@ -434,8 +434,6 @@ TMainForm::~TMainForm()  {
   // clean up it here
   FXApp->GetStatesRegistry().OnChange.Clear();
   delete Modes;
-  for( size_t i=0; i < CallbackFuncs.Count(); i++ )
-    delete CallbackFuncs.GetObject(i);
   // delete FIOExt;
 
 //   if( FXApp->XFile().GetLastLoader() ) // save curent settings
@@ -467,7 +465,8 @@ TMainForm::~TMainForm()  {
   PythonExt::Finilise();
 }
 //..............................................................................
-void TMainForm::XApp(TGXApp *XA)  {
+void TMainForm::XApp(Olex2App *XA)  {
+  olex::OlexProcessorImp::SetLibraryContainer(*XA);
   FXApp = XA;
 
   _ProcessManager = new ProcessManager(_ProcessHandler);
@@ -877,8 +876,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   this_InitFuncD(CurrentLanguageEncoding, fpNone,
 "Returns current language encoding, like: ISO8859-1");
 
-  this_InitFunc(SGList, fpNone);
-
   this_InitFunc(ChooseElement, fpNone);
 
   this_InitFuncD(StrDir, fpNone|psFileLoaded,
@@ -1158,8 +1155,6 @@ void TMainForm::XApp(TGXApp *XA)  {
     wxT("Hide basis") : wxT("Show basis"));
   TutorialDir = XA->GetBaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
-  DictionaryFile = XA->GetBaseDir() + "dictionary.txt";
-  PluginFile =  XA->GetBaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
 
   TFileHandlerManager::AddBaseDir(TutorialDir);
@@ -1227,12 +1222,6 @@ void TMainForm::XApp(TGXApp *XA)  {
   FXApp->XFile().GetRM().OnCellDifference.Add(this, ID_CellChanged);
   TStateRegistry &states = FXApp->GetStatesRegistry();
   stateHtmlVisible = states.Register("htmlvis",
-    new TStateRegistry::Slot(
-      states.NewGetter(*this, &TMainForm::CheckState),
-      new TStateRegistry::TMacroSetter("HtmlPanelVisible")
-    )
-  );
-  statePluginInstalled = states.Register("pluginInstalled",
     new TStateRegistry::Slot(
       states.NewGetter(*this, &TMainForm::CheckState),
       new TStateRegistry::TMacroSetter("HtmlPanelVisible")
@@ -1397,19 +1386,6 @@ void TMainForm::StartupInit()  {
     }
   }
 
-  FPluginItem = NULL;
-  if( TEFile::Exists( PluginFile ) )  {
-    FPluginFile.LoadFromXLFile(PluginFile, NULL);
-    FPluginItem = FPluginFile.Root().FindItem("Plugin");
-    // manually activate the events
-    for( size_t i=0; i < FPluginItem->ItemCount(); i++ )  {
-      TStateRegistry::GetInstance().SetState(
-        statePluginInstalled, true, FPluginItem->GetItem(i).GetName(), true);
-    }
-  }
-  else
-    FPluginItem = &FPluginFile.Root().AddItem("Plugin");
-
   // set the variables
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
     processMacro(olxstr("setvar(") << StoredParams.GetKey(i) << ",\"" <<
@@ -1417,10 +1393,6 @@ void TMainForm::StartupInit()  {
 
   }
 
-  if( Dictionary.GetCurrentLanguage().IsEmpty() )  {
-    try  { Dictionary.SetCurrentLanguage(DictionaryFile, "English");  }
-    catch(...) {}
-  }
   // do the iterpreters job...
   if (FXApp->GetArguments().Count() >= 2) {
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
@@ -2527,7 +2499,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     (FXApp->GetRender().LightModel.GetClearColor().GetRGB() == 0xffffffff));
   I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible());
   I->AddField("GradientPicture", TEFile::CreateRelativePath(GradientPicture));
-  I->AddField("language", Dictionary.GetCurrentLanguage());
+  I->AddField("language", FXApp->Dictionary.GetCurrentLanguage());
   I->AddField("ExtraZoom", FXApp->GetExtraZoom());
   I->AddField("GlTooltip", _UseGlTooltip);
   I->AddField("ThreadCount", FXApp->GetMaxThreadCount());
@@ -2729,14 +2701,12 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   else
     LoadScene(DF.Root().FindRequiredItem("Scene"), FXApp->GetRender().LightModel);
   // restroring language or setting default
-  if( TEFile::Exists( DictionaryFile ) )  {
-    try  {
-      Dictionary.SetCurrentLanguage(DictionaryFile,
-        I->GetFieldValue("language", EmptyString()));
-    }
-    catch(const TExceptionBase& e)  {
-      ShowAlert(e, "Failed loading/processing dictionary file");
-    }
+  try  {
+    FXApp->SetCurrentLanguage(
+      I->GetFieldValue("language", EmptyString()));
+  }
+  catch(const TExceptionBase& e)  {
+    ShowAlert(e, "Failed loading/processing dictionary file");
   }
   FXApp->SetExtraZoom(I->GetFieldValue("ExtraZoom", "1.25").ToDouble());
 #ifdef __WIN32__
@@ -3212,10 +3182,6 @@ bool TMainForm::CheckState(size_t state, const olxstr& stateData) const {
     THtmlManager::TPopupData* pp = HtmlManager.Popups.Find(stateData, NULL);
     return (pp != NULL) ? pp->Dialog->IsShown() : false;
   }
-  if (state == statePluginInstalled) {
-    if( stateData.IsEmpty() ) return false;
-    return FPluginItem->ItemExists(stateData);
-  }
   if( state == stateCmdLineVisible )
     return CmdLineVisible;
   return false;
@@ -3300,39 +3266,6 @@ void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
   wxCursor cr(img);
   SetCursor(cr);
   FGlCanvas->SetCursor(cr);
-}
-//..............................................................................
-void TMainForm::print(const olxstr& output, const short MessageType)  {
-//  TGlMaterial *glm = NULL;
-  if( MessageType == olex::mtInfo )
-    TBasicApp::NewLogEntry(logInfo) << output;
-  else if( MessageType == olex::mtWarning )
-    TBasicApp::NewLogEntry(logWarning) << output;
-  else if( MessageType == olex::mtError )
-    TBasicApp::NewLogEntry(logError) << output;
-  else if( MessageType == olex::mtException )
-    TBasicApp::NewLogEntry(logException) << output;
-  // if need to foce printing - so go aroung the log
-//  if( MessageType == 0 )  ;
-//  else if( MessageType == olex::mtInfo )      glm = &InfoFontColor;
-//  else if( MessageType == olex::mtWarning )   glm = &WarningFontColor;
-//  else if( MessageType == olex::mtError )     glm = &ErrorFontColor;
-//  else if( MessageType == olex::mtException ) glm = &ExceptionFontColor;
-//  FGlConsole->PostText(output, glm);
-}
-//..............................................................................
-void TMainForm::AnalyseErrorEx(TMacroError& error, bool quiet)  {
-  if( !error.IsSuccessful() )  {
-    if( error.IsProcessingException() ) {
-      TBasicApp::NewLogEntry(logException) << error.GetLocation() << ": " <<
-        error.GetInfo();
-    }
-    else if( !error.GetInfo().IsEmpty() )  {
-      TBasicApp::NewLogEntry(quiet ? logInfo : logError) << error.GetLocation()
-        << ": " <<  error.GetInfo();
-    }
-    error.PrintStack(quiet ? logInfo : logDefault, false, '\t');
-  }
 }
 //..............................................................................
 bool TMainForm::ProcessEvent(wxEvent& evt)  {
@@ -3481,49 +3414,6 @@ bool TMainForm::Show(bool v)  {
   return res;
 }
 //..............................................................................
-const olxstr& TMainForm::TranslatePhrase(const olxstr& phrase)  {
-  return Dictionary.Translate(phrase);
-}
-//..............................................................................
-olxstr TMainForm::TranslateString(const olxstr& str) const {
-  olxstr phrase(str);
-  size_t ind = phrase.FirstIndexOf('%');
-  while( ind != InvalidIndex )  {
-    if( ind+1 >= phrase.Length() )  return phrase;
-    // analyse the %..
-    size_t pi = ind;
-    while( --pi != InvalidIndex &&
-      (olxstr::o_isdigit(phrase.CharAt(pi)) || phrase.CharAt(pi) == '.') )
-      ;
-    if( pi != ind-1 && pi != InvalidIndex )  {
-      if( phrase.CharAt(pi) == '\'' || phrase.CharAt(pi) == '\"' )  {
-        if( ind < phrase.Length() && phrase.CharAt(pi) == phrase.CharAt(ind+1) )  {
-          ind = phrase.FirstIndexOf('%', ind+1);
-          continue;
-        }
-      }
-      if( phrase.CharAt(pi) == '=' )  {
-        ind = phrase.FirstIndexOf('%', ind+1);
-        continue;
-      }
-    }
-    size_t ind1 = phrase.FirstIndexOf('%', ind+1);
-    if( ind1 == InvalidIndex )  return phrase;
-    if( ind1 == ind+1 )  { // %%
-      phrase.Delete(ind1, 1);
-      ind = phrase.FirstIndexOf('%', ind1);
-      continue;
-    }
-    olxstr tp( Dictionary.Translate( phrase.SubString(ind+1, ind1-ind-1) ) );
-    phrase.Delete(ind, ind1-ind+1);
-    phrase.Insert(tp, ind);
-    ind1 = ind + tp.Length();
-    if( ind1+1 >= phrase.Length() )  return phrase;
-    ind = phrase.FirstIndexOf('%', ind1+1);
-  }
-  return phrase;
-}
-//..............................................................................
 void TMainForm::UseGlTooltip(bool v)  {
   if( v == _UseGlTooltip )
     return;
@@ -3534,65 +3424,6 @@ void TMainForm::UseGlTooltip(bool v)  {
 }
 //..............................................................................
 //..............................................................................
-//..............................................................................
-bool TMainForm::registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn)  {
-  CallbackFuncs.Add(cbEvent, fn);
-  return true;
-}
-//..............................................................................
-void TMainForm::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName)  {
-  size_t ind = CallbackFuncs.IndexOf(cbEvent),
-    i = ind;
-  if( ind == InvalidIndex )  return;
-  // go forward
-  while( i < CallbackFuncs.Count() && CallbackFuncs.GetKey(i).Equals(cbEvent) )  {
-    if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
-      delete CallbackFuncs.GetObject(i);
-      CallbackFuncs.Delete(i);
-      return;
-    }
-    i++;
-  }
-  // go backwards
-  i = ind-1;
-  while( i !=InvalidIndex && (!CallbackFuncs.GetKey(i).Compare(cbEvent)) )  {
-    if( CallbackFuncs.GetObject(i)->GetName() == funcName )  {
-      delete CallbackFuncs.GetObject(i);
-      CallbackFuncs.Delete(i);
-      return;
-    }
-    i--;
-  }
-}
-//..............................................................................
-const olxstr& TMainForm::getDataDir() const  {  return FXApp->GetInstanceDir();  }
-//..............................................................................
-const olxstr& TMainForm::getVar(const olxstr &name, const olxstr &defval) const {
-  const size_t i = TOlxVars::VarIndex(name);
-  if( i == InvalidIndex )  {
-    if( &defval == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, "undefined key");
-    TOlxVars::SetVar(name, defval);
-    return defval;
-  }
-  return TOlxVars::GetVarStr(i);
-}
-//..............................................................................
-void TMainForm::setVar(const olxstr &name, const olxstr &val) const {
-  TOlxVars::SetVar(name, val);
-}
-//..............................................................................
-void TMainForm::callCallbackFunc(const olxstr& cbEvent, const TStrList& params)
-{
-  TSizeList indexes;
-  TMacroError me;
-  CallbackFuncs.GetIndexes(cbEvent, indexes);
-  for( size_t i=0; i < indexes.Count(); i++ )  {
-    CallbackFuncs.GetObject(indexes[i])->Run(params, me);
-    AnalyseError(me);
-    me.Reset();
-  }
-}
 //..............................................................................
 void TMainForm::SaveVFS(short persistenceId)  {
   try  {
@@ -3672,24 +3503,6 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms,
   size_t cnt = xatoms.Count();
   xatoms.AddList(FXApp->FindXAtoms(Cmds, GetAll, unselect));
   return (xatoms.Count() != cnt);
-}
-//..............................................................................
-const olxstr& TMainForm::GetSGList() const {
-  size_t ind = TOlxVars::VarIndex(SGListVarName);
-  return (ind == InvalidIndex) ? EmptyString() : TOlxVars::GetVarStr(ind);
-}
-//..............................................................................
-void TMainForm::SetSGList(const olxstr &sglist)  {
-  TOlxVars::SetVar(SGListVarName, EmptyString());
-}
-//..............................................................................
-TStrList TMainForm::GetPluginList() const {
-  TStrList rv;
-  if( FPluginItem != NULL )  {
-    for( size_t i=0; i < FPluginItem->ItemCount(); i++ )
-      rv.Add(FPluginItem->GetItem(i).GetName());
-  }
-  return rv;
 }
 //..............................................................................
 bool TMainForm::IsControl(const olxstr& _cname) const {
