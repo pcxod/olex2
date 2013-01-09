@@ -300,8 +300,8 @@ void GlobalGlFunction( meMoveZ(TGlMouse *G, int dx, int dy) )  {
 void GlobalGlFunction( meRotateXY(TGlMouse *G, int dx, int dy) )  {
   if (!G->IsRotationEnabled()) return;
   TGlRenderer *R = G->Parent();
-  double RX = R->GetBasis().GetRX() + (double)dy/FRotationDiv;;
-  double RY = R->GetBasis().GetRY() + (double)dx/FRotationDiv;;
+  double RX = R->GetBasis().GetRX() + (double)dy/FRotationDiv;
+  double RY = R->GetBasis().GetRY() + (double)dx/FRotationDiv;
   if( RX > 360 )  RX = 0;
   if( RX < 0 )    RX = 360;
   if( RY > 360 )  RY = 0;

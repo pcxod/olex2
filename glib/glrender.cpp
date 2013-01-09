@@ -677,6 +677,10 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
     }
   }
   const size_t trans_obj_count = FTranslucentObjects.Count();
+  //olx_gl::disable(GL_DEPTH_TEST);
+  /* disabling the depth test does help for a set of transparent objects but
+  then it does not help if there are any solid objects on the way
+  */
   for( size_t i=0; i < trans_obj_count; i++ )  {
     TGlMaterial* GlM = FTranslucentObjects[i];
     GlM->Init(skip_mat);
@@ -697,6 +701,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
       }
     }
   }
+  //olx_gl::enable(GL_DEPTH_TEST);
   const size_t group_count = FGroups.Count();
   for( size_t i=0; i < group_count; i++ )  {
     if( FGroups[i]->GetParentGroup() == NULL )

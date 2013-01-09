@@ -636,6 +636,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "overlapping of atoms is considered");
   xlib_InitFunc(Env, fpOne|psFileLoaded,
     "Returns immediate atom environment");
+  xlib_InitFunc(SGList, fpNone|psFileLoaded,
+    "Returns result of the last call to the space group determination "
+    "procedure");
 }
 //.............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -984,8 +987,10 @@ void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TStrList allCmds = TParamList::StrtokLines(Cmds.Text(' '), ">>");
   for( size_t i=0; i < allCmds.Count(); i++ )  {
     if( !op->processMacro(allCmds[i]) )  {
-      if( (i+1) < allCmds.Count() )
-        op->print("Not all macros in the provided list were executed", olex::mtError);
+      if( (i+1) < allCmds.Count() ) {
+        TBasicApp::NewLogEntry(logError) <<
+          "Not all macros in the provided list were executed";
+      }
       break;
     }
   }
@@ -2905,8 +2910,10 @@ void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
   TStrList allCmds = TParamList::StrtokLines(Params.Text(' '), ">>");
   for( size_t i=0; i < allCmds.Count(); i++ )  {
     if( !op->processMacro(allCmds[i]) )  {
-      if( (i+1) < allCmds.Count() )
-        op->print("Not all macros in the provided list were executed", olex::mtError);
+      if( (i+1) < allCmds.Count() ) {
+        TBasicApp::NewLogEntry(logError) <<
+          "Not all macros in the provided list were executed";
+      }
       break;
     }
   }
@@ -7662,5 +7669,9 @@ void XLibMacros::macBang(TStrObjList &Cmds, const TParamList &Options,
   }
   if (Options.GetBoolOption('c'))
     app.ToClipboard(clipbrd);
+}
+//..............................................................................
+void XLibMacros::funSGList(const TStrObjList &, TMacroError &E) {
+  E.SetRetVal(TXApp::GetInstance().GetLastSGResult());
 }
 //..............................................................................

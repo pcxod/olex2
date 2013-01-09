@@ -2330,7 +2330,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Cmds << cmdl_fn;
     }
   }
-  SetSGList(EmptyString());
   TXFile::NameArg file_n;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
   bool ReadStyle = !Options.Contains('r');
@@ -2345,7 +2344,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if (file_n.file_name.EndsWithi(".cif")) {
         files << olxstr(file_n.file_name).Replace("cif", "hkl");
       }
-      olxstr dest_dir = getDataDir() + "web/";
+      olxstr dest_dir = TBasicApp::GetInstanceDir() + "web/";
       if (DownloadFiles(files, dest_dir) > 0) {
         olxstr dest_fn = dest_dir + TEFile::ExtractFileName(url.GetPath());
         if (TEFile::Exists(dest_fn)) {
@@ -3071,8 +3070,7 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if( Cmds[0].Equalsi("dictionary") )  {
-    if( TEFile::Exists(DictionaryFile) )
-      Dictionary.SetCurrentLanguage(DictionaryFile, Dictionary.GetCurrentLanguage() );
+    FXApp->SetCurrentLanguage(FXApp->Dictionary.GetCurrentLanguage());
   }
   else if( Cmds[0].Equalsi("options") )  {
     olxstr of = FXApp->GetConfigDir() + ".options";
@@ -3376,7 +3374,7 @@ public:
 void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  if( !FPluginItem->ItemExists(Cmds[0]) )  {
+  if (!FXApp->IsPluginInstalled(Cmds[0])) {
     olxstr local_file = Options['l'];
     if( !local_file.IsEmpty() )  {
       if( !TEFile::Exists(local_file) )  {
@@ -3401,11 +3399,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       if (Cause != NULL)
         throw TFunctionFailedException(__OlxSourceInfo, Cause);
 
-      FPluginItem->AddItem(Cmds[0]);
-      TStateRegistry::GetInstance().SetState(statePluginInstalled, true,
-        EmptyString(), true);
-
-      FPluginFile.SaveToXLFile( PluginFile );
+      FXApp->AddPlugin(Cmds[0]);
       TBasicApp::NewLogEntry() << "Installation complete";
       FXApp->Draw();
     }
@@ -3417,8 +3411,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
           new TOnSync(*FXApp, TBasicApp::GetBaseDir()),
           Cmds[0]);
         if( res == updater::uapi_OK )  {
-          FPluginItem->AddItem(Cmds[0]);
-          FPluginFile.SaveToXLFile(PluginFile);
+          FXApp->AddPlugin(Cmds[0]);
           TBasicApp::NewLogEntry() << "\rInstallation complete";
         }
         else  {
@@ -3435,20 +3428,20 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else  {
-    TDataItem* di = FPluginItem->FindItem(Cmds[0]);
-    if( di != NULL )  {
+    if (FXApp->IsPluginInstalled(Cmds[0])) {
       Macros.ProcessMacro(olxstr("uninstallplugin ") << Cmds[0], E);
     }
-    else  {
+    else {
       TBasicApp::NewLogEntry() << "Specified plugin does not exist: " << Cmds[0];
     }
   }
 }
 //..............................................................................
-void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TDataItem* di = FPluginItem->FindItem(Cmds[0]);
-  if( di )  di->AddField("signature", Cmds[1]);
-  FPluginFile.SaveToXLFile(PluginFile);
+void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  if (!FXApp->AddPluginField(Cmds[0], "signature", Cmds[1]))
+    E.ProcessingError(__OlxSrcInfo, "Failed to sign the plugin");
 }
 //..............................................................................
 // local linkage (for classes within functions) is not supported by Borland, though MSVC is fine
@@ -3523,16 +3516,12 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "cannot uninstall core components");
     return;
   }
-  TDataItem* di = FPluginItem->FindItem( Cmds[0] );
-  if( di != NULL )  {
-    FPluginItem->DeleteItem(di);
-    TStateRegistry::GetInstance().SetState(statePluginInstalled, false,
-      EmptyString(), true);
+
+  if (FXApp->RemovePlugin(Cmds[0])) {
     olxstr indexFile = TBasicApp::GetBaseDir() + "index.ind";
     if( TEFile::Exists(indexFile) )  {
       TOSFileSystem osFS(TBasicApp::GetBaseDir());
       TFSIndex fsIndex(osFS);
-
       fsIndex.LoadIndex(indexFile);
       TFSTraverser* trav = new TFSTraverser(*FXApp, TBasicApp::GetBaseDir(),
         updater::UpdateAPI::GetPluginProperties(Cmds[0]));
@@ -3543,11 +3532,10 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       FXApp->Draw();
     }
   }
-  FPluginFile.SaveToXLFile(PluginFile);
 }
 //..............................................................................
 void TMainForm::funIsPluginInstalled(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( FPluginItem->ItemExists(Params[0]) );
+  E.SetRetVal(FXApp->IsPluginInstalled(Params[0]));
 }
 //..............................................................................
 void TMainForm::funValidatePlugin(const TStrObjList& Params, TMacroError &E) {
@@ -3691,28 +3679,30 @@ void TMainForm::macOFileDel(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 }
 //..............................................................................
-void TMainForm::macOFileSwap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macOFileSwap(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   FXApp->SetActiveXFile(Cmds[0].ToSizeT());
 }
 //..............................................................................
 void TMainForm::funTranslatePhrase(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal(TranslatePhrase(Params[0]));
+  E.SetRetVal(FXApp->TranslatePhrase(Params[0]));
 }
 //..............................................................................
 void TMainForm::funCurrentLanguageEncoding(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( Dictionary.GetCurrentLanguageEncodingStr() );
+  E.SetRetVal(FXApp->Dictionary.GetCurrentLanguageEncodingStr());
 }
 //..............................................................................
 void TMainForm::funIsCurrentLanguage(const TStrObjList& Params, TMacroError &E) {
   TStrList toks;
   toks.Strtok(Params[0], ';');
-  for( size_t i=0; i < toks.Count(); i++ )  {
-    if( toks[i] == Dictionary.GetCurrentLanguage() )  {
-      E.SetRetVal( true );
+  for (size_t i=0; i < toks.Count(); i++) {
+    if (toks[i] == FXApp->Dictionary.GetCurrentLanguage()) {
+      E.SetRetVal(true);
       return;
     }
   }
-  E.SetRetVal( false );
+  E.SetRetVal(false);
 }
 //..............................................................................
 void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3731,9 +3721,9 @@ void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options, TMacro
   task.LastCalled = TETime::Now();
 }
 //..............................................................................
-void TMainForm::funSGList(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal(GetSGList());
-}
+//void TMainForm::funSGList(const TStrObjList& Params, TMacroError &E) {
+//  E.SetRetVal(GetSGList());
+//}
 //..............................................................................
 void TMainForm::funChooseElement(const TStrObjList& Params, TMacroError &E) {
   TPTableDlg *Dlg = new TPTableDlg(this);
@@ -5648,7 +5638,9 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   xyz.SaveToFile(FN);
 }
 //..............................................................................
-void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds,
+  const TParamList &Options, TMacroError &E)
+{
   QPeakTable(false);
 }
 //..............................................................................
@@ -5665,10 +5657,10 @@ void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroError &E)  {
-  if( Params.IsEmpty() )
-    E.SetRetVal(Dictionary.GetCurrentLanguage());
+  if (Params.IsEmpty())
+    E.SetRetVal(FXApp->Dictionary.GetCurrentLanguage());
   else
-    Dictionary.SetCurrentLanguage(DictionaryFile, Params[0] );
+    FXApp->SetCurrentLanguage(Params[0]);
 }
 //..............................................................................
 //..............................................................................

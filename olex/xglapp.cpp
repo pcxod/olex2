@@ -63,7 +63,7 @@ public:
       delete Progress;
       Progress = NULL;
       Max = 0;
-    }                                    
+    }
     return false;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -171,9 +171,9 @@ bool TGlXApp::OnInit()  {
   olx_setenv("PATH", TEFile::TrimPathDelimeter(base_dir) << olx_env_sep()
     << olx_getenv("PATH"));
 #if defined(_WIN64) && defined(_DEBUG)
-    XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DEBUG_DIR"));
+    XApp = new Olex2App(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DEBUG_DIR"));
 #else
-    XApp = new TGXApp(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DIR"));
+    XApp = new Olex2App(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DIR"));
 #endif
     XApp->SetSharedDir(patcher::PatchAPI::GetSharedDir());
     XApp->SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
@@ -196,7 +196,7 @@ bool TGlXApp::OnInit()  {
     TBasicApp::NewLogEntry(logException) << e;
   }
   XApp->InitArguments<wxChar>(argc, argv);
-
+  XApp->InitOlex2App();
   TProgress *P = new TProgress;
   XApp->OnProgress.Add(P);
 

@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #include "py_core.h"
-#include "xapp.h"
+#include "olex2app.h"
 #include "efile.h"
 #include "settingsfile.h"
 #include "url.h"
@@ -116,14 +116,6 @@ PyObject* pyUnsetVar(PyObject* self, PyObject* args)  {
     : PythonExt::PyFalse();
 }
 //..............................................................................
-PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
-  TStrList rv(IOlexProcessor::GetInstance()->GetPluginList());
-  PyObject* af = PyTuple_New( rv.Count() );
-  for( size_t i=0; i < rv.Count(); i++ )
-    PyTuple_SetItem(af, i, PythonExt::BuildString(rv[i]));
-  return af;
-}
-//..............................................................................
 PyObject* pyExpFun(PyObject* self, PyObject* args)  {
   TBasicFunctionPList functions;
   IOlexProcessor::GetInstance()->GetLibrary().ListAllFunctions(functions);
@@ -161,12 +153,24 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
   return af;
 }
 //..............................................................................
+PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
+  if (!AOlex2App::HasInstance())
+    return PythonExt::PyNone();
+  TStrList rv(AOlex2App::GetInstance().GetPluginList());
+  PyObject* af = PyTuple_New( rv.Count() );
+  for( size_t i=0; i < rv.Count(); i++ )
+    PyTuple_SetItem(af, i, PythonExt::BuildString(rv[i]));
+  return af;
+}
+//..............................................................................
 PyObject* pyTranslate(PyObject* self, PyObject* args)  {
   olxstr str;
   if( !PythonExt::ParseTuple(args, "w", &str) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  if (!AOlex2App::HasInstance())
+    return PythonExt::BuildString(str);
   return PythonExt::BuildString(
-    IOlexProcessor::GetInstance()->TranslateString(str));
+    AOlex2App::GetInstance().TranslateString(str));
 }
 //..............................................................................
 PyObject* pyDescRef(PyObject* self, PyObject* args)  {
@@ -460,6 +464,8 @@ static PyMethodDef CORE_Methods[] = {
   },
   {"GetPluginList", pyGetPlugins, METH_VARARGS,
   "Returns a list of installed plugins"},
+  {"Translate", pyTranslate, METH_VARARGS,
+  "Returns translated version of provided string"},
   {"ExportFunctionList", pyExpFun, METH_VARARGS,
   "Exports a list of Olex2 functions and their description"},
   {"ExportMacroList", pyExpMac, METH_VARARGS,
@@ -480,8 +486,6 @@ static PyMethodDef CORE_Methods[] = {
   "Returns name of specified variable"},
   {"FindVarName", pyFindGetVarName, METH_VARARGS,
   "Returns name of variable name corresponding to provided object"},
-  {"Translate", pyTranslate, METH_VARARGS,
-  "Returns translated version of provided string"},
   {"DescribeRefinement", pyDescRef, METH_VARARGS,
   "Returns a string describing current refinement model"},
   {"GetRefinementModel", pyRefModel, METH_VARARGS,

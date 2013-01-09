@@ -241,7 +241,7 @@ class IEObject  {
     }
     virtual ~a_destruction_handler() {}
     virtual void call(IEObject* obj) const = 0;
-    virtual const void* get_identifier() const = 0;
+    virtual bool operator == (const a_destruction_handler *) const = 0;
   };
   struct static_destruction_handler : public a_destruction_handler {
     void (*destruction_handler)(IEObject* obj);
@@ -251,8 +251,10 @@ class IEObject  {
         a_destruction_handler(prev),
         destruction_handler(_destruction_handler) {}
     virtual void call(IEObject* obj) const {  (*destruction_handler)(obj);  }
-    virtual const void* get_identifier() const {
-      return (const void*)destruction_handler;
+    virtual bool operator == (const a_destruction_handler *p_) const {
+      const static_destruction_handler *p =
+        dynamic_cast<const static_destruction_handler *>(p_);
+      return (p && p->destruction_handler == destruction_handler);
     }
   };
   template <class base>
@@ -269,14 +271,17 @@ class IEObject  {
     virtual void call(IEObject* obj) const {
       (instance.*destruction_handler)(obj);
     }
-    virtual const void* get_identifier() const {
-      return (const void*)destruction_handler;
+    virtual bool operator == (const a_destruction_handler *p_) const {
+      const member_destruction_handler *p =
+        dynamic_cast<const member_destruction_handler *>(p_);
+      return (p && &instance == &p->instance &&
+        p->destruction_handler == destruction_handler);
     }
   };
-  
+
   a_destruction_handler *dsh_head, *dsh_tail;
   
-  void _RemoveDestructionHandler(const void* identifier);
+  void _RemoveDestructionHandler(const a_destruction_handler &);
   bool _HasDestructionHandler(a_destruction_handler *dh) const;
 public:
   IEObject() : dsh_head(NULL), dsh_tail(NULL) {}
@@ -304,8 +309,16 @@ public:
     }
     return true;
   }
-  template <class T> void RemoveDestructionHandler(const T& identifier)  {
-    _RemoveDestructionHandler((const void*)identifier);
+  void RemoveDestructionHandler(const a_destruction_handler &dh) {
+    _RemoveDestructionHandler(dh);
+  }
+  void RemoveDestructionHandler(void (*func)(IEObject*)) {
+    _RemoveDestructionHandler(static_destruction_handler(NULL, func));
+  }
+  template <class base_t>
+  void RemoveDestructionHandler(base_t &inst, void (base_t::*func)(IEObject*)) {
+    _RemoveDestructionHandler(
+      member_destruction_handler<base_t>(NULL, inst, func));
   }
 };
 
