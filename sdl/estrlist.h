@@ -92,10 +92,10 @@ public:
   TTStrList(const string_type& string, olxch sep, bool skip_sequences=true)  {
     Strtok(string, sep, skip_sequences);
   }
-  
+
   template <class list_t>
   static ConstStrList<T> FromAny(const list_t &list) {
-    TStrList l;
+    TTStrList l;
     l.SetCapacity(list.Count());
     for (size_t i=0; i < list.Count(); i++)
       l.Add(list[i]);
@@ -104,7 +104,7 @@ public:
 
   template <class list_t, class accessor_t>
   static ConstStrList<T> FromAny(const list_t &list, const accessor_t &acc) {
-    TStrList l;
+    TTStrList l;
     l.SetCapacity(list.Count());
     for (size_t i=0; i < list.Count(); i++)
       l.Add(acc(list[i]));
