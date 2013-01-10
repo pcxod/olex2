@@ -87,8 +87,9 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       last_atom_name = toks[5];
     }
     if( atom == NULL ) {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "mismatching matrix file");
+      TBasicApp::NewLogEntry(logError) <<
+        "Mismatching matrix file, could not locate: " << last_atom_name;
+      continue;
     }
     const size_t ssci = SiteConstraints.IndexOf(atom->GetId());
     const SiteSymmCon& ssc = (ssci == InvalidIndex ?
