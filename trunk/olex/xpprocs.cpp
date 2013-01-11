@@ -2330,6 +2330,25 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Cmds << cmdl_fn;
     }
   }
+  // check if crashed last time
+  {
+    TStrList pid_files;
+    olxstr conf_dir = TBasicApp::GetInstanceDir(); 
+    TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
+      patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
+    size_t del_cnt=0;
+    for (size_t i=0; i < pid_files.Count(); i++) {
+      if (TEFile::DelFile(conf_dir+pid_files[i]))
+        del_cnt++;
+    }
+    if (del_cnt != 0) {
+      TBasicApp::NewLogEntry(logError) << "It appears that Olex2 has crashed "
+        "last time: skipping loading of the the last file. Please contact "
+        "Olex2 team if the problem persists";
+      return;
+    }
+  }
+
   TXFile::NameArg file_n;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
   bool ReadStyle = !Options.Contains('r');

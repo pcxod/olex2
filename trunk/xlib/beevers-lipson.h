@@ -138,7 +138,7 @@ public:
     return mi;
   }
 
-  template <typename FloatT>struct TCalcEDMTask  {
+  template <typename FloatT>struct TCalcEDMTask : public TaskBase {
     FloatT*** map;
     const SFList& F;
     const vec3s& dim;
@@ -222,7 +222,7 @@ public:
     }
   };
 
-  template <typename FloatT>struct TCalcPattTask  {
+  template <typename FloatT>struct TCalcPattTask : public TaskBase {
     FloatT*** map;
     const SFList& F;
     const vec3s& dim;

@@ -207,8 +207,8 @@ void TUnitCell::UpdateEllipsoids()  {
 }
 //..............................................................................
 TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
-  const smatd_list& matrices) :
-  Atoms(atoms), Matrices(matrices)
+  const smatd_list& matrices)
+  : Atoms(atoms), Matrices(matrices)
 {
   AU = atoms[0]->GetParent();
   Latt = &AU->GetLattice();
@@ -238,20 +238,20 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
             Atoms[ind]->SetDeleted(true);
             break;
           }
-          volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+          volatile olx_scope_cs cs_(GetCriticalSection());
           Atoms[i]->SetDeleted(true);
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
           Latt->GetDelta()) )  // covalent bond
         {
-          volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+          volatile olx_scope_cs cs_(GetCriticalSection());
           Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
           Atoms[i]->AttachSite(Atoms[ind], Matrices[j]);
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
           Latt->GetDeltaI()) )  // interaction
         {
-          volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+          volatile olx_scope_cs cs_(GetCriticalSection());
           Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
           Atoms[i]->AttachSiteI(Atoms[ind],
             Latt->GetUnitCell().InvMatrix(Matrices[j]));
@@ -271,7 +271,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           continue;
         }
         if( Atoms[i]->GetParentAfixGroup() == NULL ) {
-          volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+          volatile olx_scope_cs cs_(GetCriticalSection());
           Atoms[i]->SetDeleted(true);
         }
       }
@@ -282,14 +282,14 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
           Latt->GetDelta()) )
         {
-          volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+          volatile olx_scope_cs cs_(GetCriticalSection());
           Atoms[ind]->AttachSite(Atoms[i], matr);
           Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
         else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
           Latt->GetDeltaI()) )
         {
-          volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+          volatile olx_scope_cs cs_(GetCriticalSection());
           Atoms[ind]->AttachSiteI(Atoms[i], matr);
           Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
         }
@@ -307,7 +307,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
             Latt->GetDelta()) )
           {
-            volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+            volatile olx_scope_cs cs_(GetCriticalSection());
             Atoms[ind]->AttachSite(Atoms[i], matr);
             if (i != ind)
               Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
@@ -315,7 +315,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           else if( TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
             Latt->GetDeltaI()) )
           {
-            volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
+            volatile olx_scope_cs cs_(GetCriticalSection());
             Atoms[ind]->AttachSiteI(Atoms[i], matr);
             if (i != ind)
               Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
