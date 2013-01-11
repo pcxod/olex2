@@ -60,22 +60,22 @@ TLog::LogEntry::~LogEntry()  {
   else  {
     TActionQueue* ac = NULL;
     switch( evt )  {
-    case logInfo: 
+    case logInfo:
       ac = &parent.OnInfo;
       break;
     case logWarning: 
       ac = &parent.OnWarning;
       break;
-    case logError: 
+    case logError:
       ac = &parent.OnError;
       break;
-    case logException: 
+    case logException:
       ac = &parent.OnException;
       break;
-    case logExceptionTrace: 
+    case logExceptionTrace:
       ac = &parent.OnException;
       break;
-    default: 
+    default:
       ac = &parent.OnInfo;
       break;
     }
