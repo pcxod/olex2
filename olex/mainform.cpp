@@ -1401,7 +1401,7 @@ void TMainForm::StartupInit()  {
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
     else // disable reading last file in
-      TOlxVars::GetInstance()->SetVar("olx_reap_cmdl", FXApp->GetArguments()[1]);
+      TOlxVars::SetVar("olx_reap_cmdl", FXApp->GetArguments()[1]);
   }
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);

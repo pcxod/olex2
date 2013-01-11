@@ -16,7 +16,6 @@
 #include "gxapp.h"
 #include "library.h"
 #include "conrec.h"
-#include "olxmps.h"
 #include "pers_util.h"
 #include "maputil.h"
 #include "ememstream.h"

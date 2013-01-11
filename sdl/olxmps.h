@@ -23,6 +23,19 @@ const short
 
 template <typename> class TListIteratorManager;
 
+class TaskBase {
+protected:
+  olx_critical_section *critical_section_;
+public:
+  TaskBase() : critical_section_(NULL) {}
+  void SetCriticalSection(olx_critical_section &cs) {
+    critical_section_ = &cs;
+  }
+  olx_critical_section *GetCriticalSection() const {
+    return critical_section_;
+  }
+};
+
 template <class TaskClass> class TArrayIterationItem : public ITask {
     size_t StartIndex, EndIndex;
     uint16_t Id;
@@ -104,11 +117,13 @@ template <class TaskClass> class TListIteratorManager {
       CalculateRatios(ratios, ListSize, TaskType);
       size_t startIndex = 0;
       TaskClass* taskInstance = &task;
+      olx_critical_section cs;
       for( size_t i=0; i < ratios.Count(); i++ )  {
         if( i > 0 )  {
           taskInstance = task.Replicate();
           Tasks.Add(*taskInstance);
         }
+        Tasks[i]->SetCriticalSection(cs);
         TArrayIterationItem<TaskClass>& item = Items.Add(
           new TArrayIterationItem<TaskClass>(*taskInstance,
             startIndex, startIndex + ratios[i]));

@@ -15,7 +15,6 @@
 #include "symmlib.h"
 #include "cif.h"
 #include "etime.h"
-#include "olxmps.h"
 #include "egc.h"
 #include "eutf8.h"
 #include "filetree.h"

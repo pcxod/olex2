@@ -24,6 +24,7 @@
 #include "symmat.h"
 #include "maputil.h"
 #include "glbitmap.h"
+#include "olxmps.h"
 BeginGxlNamespace()
 
 const short
@@ -223,7 +224,7 @@ public:
   const_strlist ToPov(olxdict<TGlMaterial, olxstr,
   TComparableComparator> &materials) const;
 protected:
-  struct TPlaneCalculationTask  {
+  struct TPlaneCalculationTask : public TaskBase {
     TXGrid& parent;
     float **data, ***src_data;
     char *text_data;

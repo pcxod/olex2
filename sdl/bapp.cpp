@@ -50,7 +50,6 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
-  EnterCriticalSection();
   delete Log;
   if (LogFile != NULL)
     delete LogFile;
@@ -123,7 +122,6 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
 }
 //..............................................................................
 bool TBasicApp::HasInstance()  {
-  volatile olx_scope_cs cs(GetCriticalSection());
   return Instance != NULL;
 }
 //..............................................................................

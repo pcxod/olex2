@@ -20,6 +20,7 @@
 #include "library.h"
 #include "analysis.h"
 #include "xapp.h"
+#include "olxmps.h"
 
 BeginXlibNamespace()
 class TAutoDB;
@@ -389,7 +390,7 @@ protected:
     bool heavier, bool lighter,
     ElementPList* proposed_atoms = NULL);
   
-  class TAnalyseNetNodeTask  {
+  class TAnalyseNetNodeTask : public TaskBase {
     TTypeList< TPtrList<TAutoDBNode> >& Nodes;
     TAutoDBNet& Network;
     TTypeList<TGuessCount>& Guesses;
