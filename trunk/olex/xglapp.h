@@ -29,7 +29,7 @@ public:
   TGlXApp() : pid_file(NULL)  {}
   bool Dispatch();
 //  int MainLoop();
-
+  TEFile *GetPIDFile() const { return pid_file; }
   static TGlXApp*  GetInstance()  {  return Instance;  }
   static TMainForm* GetMainForm() {  return GetInstance()->MainForm;  }
   static TGXApp* GetGXApp()       {  return GetInstance()->XApp;  }

@@ -112,6 +112,10 @@
   #endif
 #endif
 
+#ifdef __linux__
+#include <signal.h>
+#endif
+
 #include "olxmps.h"
 #include "maputil.h"
 
@@ -2337,8 +2341,24 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
       patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
     size_t del_cnt=0;
+    olxstr spidfn = TGlXApp::GetInstance()->GetPIDFile() == NULL ? EmptyString()
+      : TGlXApp::GetInstance()->GetPIDFile()->GetName();
+#ifdef __linux__
+    size_t ext_len = olxstr::o_strlen(patcher::PatchAPI::GetOlex2PIDFileExt())+1;
+#endif
     for (size_t i=0; i < pid_files.Count(); i++) {
-      if (TEFile::DelFile(conf_dir+pid_files[i]))
+      olxstr fn = conf_dir + pid_files[i];
+      if (fn == spidfn) continue;
+#ifdef __linux__
+      if (ext_len >= pid_files[i].Length()) continue;
+      olxstr spid = pid_files[i].SubStringTo(pid_files[i].Length()-ext_len);
+      if (spid.IsInt()) {
+         int pid = spid.ToInt();
+         if (kill(pid, 0) == 0)
+           continue;
+      }
+#endif
+      if (TEFile::DelFile(fn))
         del_cnt++;
     }
     if (del_cnt != 0) {
