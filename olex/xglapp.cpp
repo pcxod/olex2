@@ -38,6 +38,10 @@
   #include <process.h>
 #endif
 
+#ifdef __linux__
+#include <signal.h>
+#endif
+
 TGlXApp* TGlXApp::Instance = NULL;
 
 class TProgress: public AActionHandler  {
@@ -190,7 +194,8 @@ bool TGlXApp::OnInit()  {
   try {
     int pid = getpid();
     pid_file = new TEFile(olxstr(XApp->GetInstanceDir()) << pid << '.' <<
-      patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b");
+      patcher::PatchAPI::GetOlex2PIDFileExt(),
+     "w+b");
   }
   catch(const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logException) << e;
@@ -242,8 +247,21 @@ int TGlXApp::OnExit()  {
   olxstr conf_dir = XApp->GetInstanceDir(); 
   TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
     patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
-  for( size_t i=0; i < pid_files.Count(); i++ )
+#ifdef __linux__
+    size_t ext_len = olxstr::o_strlen(patcher::PatchAPI::GetOlex2PIDFileExt())+1;
+#endif
+  for (size_t i=0; i < pid_files.Count(); i++) {
+#ifdef __linux__
+    if (ext_len >= pid_files[i].Length()) continue;
+    olxstr spid = pid_files[i].SubStringTo(pid_files[i].Length()-ext_len);
+    if (spid.IsInt()) {
+       int pid = spid.ToInt();
+       if (kill(pid, 0) == 0)
+         continue;
+    }
+#endif
     TEFile::DelFile(conf_dir+pid_files[i]);
+  }
   delete XApp;
   return 0;
 }
