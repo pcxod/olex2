@@ -56,18 +56,30 @@ public:
   static void Pop();
 };
 
-class TStopWatch  {
+class TStopWatch : public IEObject {
   TStopWatchManager::Record &record;
+  TOnProgress *pg;
 public:
   TStopWatch(const olxstr& functionName)
-    : record(TStopWatchManager::Push(functionName))
+    : record(TStopWatchManager::Push(functionName)),
+      pg(NULL)
   {}
   ~TStopWatch() {
     record.termination_time = TETime::msNow();
     TStopWatchManager::Pop();
   }
-  void start(const olxstr& name)  { record.start(name); }
+  void start(const olxstr& name) {
+    record.start(name);
+    if (pg != NULL) {
+      if (pg->GetPos()+1 >= pg->GetMax())
+        pg->SetMax(pg->GetMax()+1);
+      pg->SetPos(pg->GetPos()+1);
+      pg->SetAction(name);
+      TBasicApp::GetInstance().OnProgress.Execute(this, pg);
+    }
+  }
   void stop() { record.stop(); }
+  void SetProgress(TOnProgress *pg_) { pg = pg_; }
 };
 
 EndEsdlNamespace()

@@ -522,6 +522,13 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   olxstr strMaskInc = Options.FindValue("m");
   if( !strMaskInc.IsEmpty() )
     maskInc = strMaskInc.ToDouble();
+
+  TOnProgress pg;
+  // link the two
+  st.SetProgress(&pg);
+  pg.SetMax(4);
+  TBasicApp::GetInstance().OnProgress.Enter(NULL, &pg);
+
   TRefList refs;
   TArrayList<compd> F;
   st.start("Obtaining structure factors");
@@ -603,6 +610,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   //TStateChange sc(prsGridVis, true);
   app.ShowGrid(true, EmptyString());
   //OnStateChange.Execute((AEventsDispatcher*)this, &sc);
+  pg.SetPos(pg.GetMax());
+  TBasicApp::GetInstance().OnProgress.Exit(NULL, &pg);
 }
 //.............................................................................
 void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
