@@ -4678,6 +4678,8 @@ const_strlist TGXApp::ToPov() const {
   for (size_t i=0; i < UserObjects.Count(); i++)
     out << UserObjects[i].ToPov(materials);
 
+  if (DUnitCell().IsVisible())
+    out << DUnitCell().ToPov(materials);
   out.Add("}");
   TStrList mat_out;
   for( size_t i=0; i < materials.Count(); i++ )  {

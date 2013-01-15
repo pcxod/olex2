@@ -438,10 +438,10 @@ public:
   DefPropP(double, ExtraZoom)
 //..............................................................................
 // TXApp interface
-  TDUnitCell& DUnitCell()  {  return *FDUnitCell; }
-  TDBasis& DBasis()  {  return *FDBasis; }
+  TDUnitCell& DUnitCell() const {  return *FDUnitCell; }
+  TDBasis& DBasis() const {  return *FDBasis; }
   THklFile& HklFile()  {  return *FHklFile; }
-  TDFrame& DFrame()  {  return *FDFrame; }
+  TDFrame& DFrame() const {  return *FDFrame; }
   TXGrid& XGrid() const {  return *FXGrid;  }
   T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
   TGlMouse& GetMouseHandler() const { return *FGlMouse; }

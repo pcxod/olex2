@@ -13,8 +13,9 @@
 #include "glrender.h"
 #include "gpcollection.h"
 #include "styles.h"
+#include "povdraw.h"
 
-TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) : 
+TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
 {
   SetSelectable(false);
@@ -179,5 +180,25 @@ void TDUnitCell::FromDataItem(const TDataItem& di)  {
   const TDataItem& labels = di.FindRequiredItem("Labels");
   for( int i=0; i < 4; i++ )
     Labels[i]->FromDataItem(labels.GetItem(i));
+}
+//..............................................................................
+const_strlist TDUnitCell::ToPov(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
+{
+  TStrList out;
+  if (FGlP == NULL) return out;
+  out.Add(" object { union {");
+  const TGPCollection &gpc = GetPrimitives();
+  pov::CrdTransformer crdc(Parent.GetBasis());
+  olxstr p_mat = pov::get_mat_name(FGlP->GetProperties(), materials);
+  for (int i=0; i < 24; i+=2) {
+    out.Add("  object { cylinder {") << pov::to_str(crdc.crd(GetEdge(i))) <<
+      ',' << pov::to_str(crdc.crd(GetEdge(i+1))) << ", 0.01} texture {" <<
+      p_mat << "}}";
+  }
+  for (int i=0; i < 4; i++)
+    out << Labels[i]->ToPov(materials);
+  out.Add("  }}");
+  return out;
 }
 //..............................................................................

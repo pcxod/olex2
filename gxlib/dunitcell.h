@@ -58,6 +58,8 @@ public:
   inline const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
   void ToDataItem(TDataItem& di) const;
   void FromDataItem(const TDataItem& di);
+  const_strlist ToPov(
+    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
 };
 
 EndGxlNamespace()
