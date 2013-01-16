@@ -160,9 +160,19 @@ const_strlist TDUserObj::ToPov(olxdict<TGlMaterial, olxstr,
   pov::CrdTransformer crdc(Parent.GetBasis());
   for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
-    if( glp.GetType() == sgloSphere ) {
-      olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
+    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials);
+    if (glp.GetType() == sgloSphere) {
       out.Add("  object { sphere {<0,0,0>, 1 } texture {") << p_mat << "}}";
+    }
+    if (glp.GetType() == sgloTriangles) {
+      out.Add("  mesh {");
+      for (size_t vi=0; vi < glp.Vertices.Count(); vi+=3) {
+        out.Add("   triangle {") << pov::to_str(glp.Vertices[vi]) <<
+          ',' << pov::to_str(glp.Vertices[vi+1]) << ',' <<
+          pov::to_str(glp.Vertices[vi+2]) << "}";
+      }
+      out.Add("   texture {") << p_mat << "}";
+      out.Add("  }");
     }
   }
   out.Add("  }");
