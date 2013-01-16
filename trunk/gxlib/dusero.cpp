@@ -87,15 +87,13 @@ bool TDUserObj::Orient(TGlPrimitive& P)  {
       olx_gl::orient(Params().GetRawData());
     else if( Params().Count() == 1 )
       olx_gl::scale(Params()[0]);
-  }
-  else  {
-    if( Type == sgloSphere && Vertices != NULL )  {
+    else if (Vertices != NULL) {
       for( size_t i=0; i < Vertices->Count(); i++ )  {
         olx_gl::translate((*Vertices)[i]);
         P.Draw();
       }
       return true;
-    }    
+    }
   }
   return false;
 }

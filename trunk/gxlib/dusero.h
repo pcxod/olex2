@@ -28,14 +28,14 @@ protected:
     Basis.Rotate(vec, angle);  return true;
   }
   virtual bool DoZoom(double zoom, bool inc)  {
-    if( inc )  Basis.SetZoom(ValidateZoom(Basis.GetZoom() + zoom));
-    else       Basis.SetZoom(ValidateZoom(zoom));
+    if (inc) Basis.SetZoom(ValidateZoom(Basis.GetZoom() + zoom));
+    else Basis.SetZoom(ValidateZoom(zoom));
     return true;
   }
 public:
   TDUserObj(TGlRenderer& Render, short type, const olxstr& collectionName);
   TDUserObj(TGlRenderer& Render, const TDataItem &di);
-  virtual ~TDUserObj()  {  
+  virtual ~TDUserObj()  {
     if (Vertices != NULL) delete Vertices;
     if (Normals != NULL) delete Normals;
     if (Colors != NULL) delete Colors;

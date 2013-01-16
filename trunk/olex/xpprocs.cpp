@@ -4568,23 +4568,24 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
 }
 
 void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds[0].Equalsi("cell") && Cmds.Count() == 2 )  {
-    if( !TEFile::Exists( Cmds[1] )  )  {
+  if (Cmds[0].Equalsi("cell") && Cmds.Count() == 2) {
+    if (!TEFile::Exists(Cmds[1]) ) {
       Error.ProcessingError(__OlxSrcInfo, "file does not exist");
       return;
     }
     TBasicCFile* bcf = FXApp->XFile().FindFormat(TEFile::ExtractFileExt(Cmds[1]));
-    if( bcf == NULL )  {
+    if (bcf == NULL) {
       Error.ProcessingError(__OlxSrcInfo, "unknown file format");
       return;
     }
-    bcf = (TBasicCFile*)bcf->Replicate();
-    try  {  bcf->LoadFromFile(Cmds[1]);  }
-    catch(const TExceptionBase& exc)  {
+    bcf = dynamic_cast<TBasicCFile *>(bcf->Replicate());
+    try { bcf->LoadFromFile(Cmds[1]); }
+    catch(const TExceptionBase& exc) {
       delete bcf;
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
-    TDUnitCell* duc = new TDUnitCell(FXApp->GetRender(), olxstr("cell") << (UserCells.Count()+1) );
+    TDUnitCell* duc = new TDUnitCell(FXApp->GetRender(),
+      olxstr("cell") << (UserCells.Count()+1));
     const double cell[6] = {
       bcf->GetAsymmUnit().GetAxes()[0],
       bcf->GetAsymmUnit().GetAxes()[1],
@@ -4624,7 +4625,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     sg->GetMatrices(ml, mattAll);
     vec3d_list p, allPoints;
 
-    if( Cmds[0].Equalsi("sphere") )  {
+    if (Cmds[0].Equalsi("sphere")) {
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloSphere, Cmds[1]);
       try  {
         if( Cmds.Count() == 4 )
@@ -4661,30 +4662,30 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       //FXApp->AddObjectToCreate(uo);
       //uo->Create();
     }
-    else if( Cmds[0].Equalsi("line") )  {
-      if( (Cmds.Count()-3)%6 != 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments" );
+    else if (Cmds[0].Equalsi("line")) {
+      if ((Cmds.Count()-3)%6 != 0) {
+        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments");
         return;
       }
-      for( size_t i=3; i < Cmds.Count(); i+= 6 )  {
+      for (size_t i=3; i < Cmds.Count(); i+= 6) {
         p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
         p.AddNew(Cmds[i+3].ToDouble(), Cmds[i+4].ToDouble(), Cmds[i+5].ToDouble());
       }
       main_GenerateCrd(p, ml, allPoints);
-      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count() ));
-      for( size_t i=0; i < allPoints.Count(); i++ )
+      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
+      for (size_t i=0; i < allPoints.Count(); i++)
         data[i] = allPoints[i] * uc->GetCellToCartesian();
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloLines, Cmds[1]);
       uo->SetVertices(&data);
       FXApp->AddObjectToCreate(uo);
       uo->Create();
     }
-    else if( Cmds[0].Equalsi("plane") )  {
-      if( (Cmds.Count()-3)%12 != 0 )  {
+    else if (Cmds[0].Equalsi("plane")) {
+      if ((Cmds.Count()-3)%12 != 0) {
         Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments");
         return;
       }
-      for( size_t i=3; i < Cmds.Count(); i+= 12 )  {
+      for (size_t i=3; i < Cmds.Count(); i+= 12) {
         p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
         p.AddNew(Cmds[i+3].ToDouble(), Cmds[i+4].ToDouble(), Cmds[i+5].ToDouble());
         p.AddNew(Cmds[i+6].ToDouble(), Cmds[i+7].ToDouble(), Cmds[i+8].ToDouble());
@@ -4692,15 +4693,98 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       }
       main_GenerateCrd(p, ml, allPoints);
       TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
-      for( size_t i=0; i < allPoints.Count(); i++ )
+      for (size_t i=0; i < allPoints.Count(); i++)
         data[i] = allPoints[i] * uc->GetCellToCartesian();
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, "user_plane");
       uo->SetVertices(&data);
       FXApp->AddObjectToCreate(uo);
       uo->Create();
     }
-    else if( Cmds[0].Equalsi("poly") )  {
-      ;
+    else if (Cmds[0].Equalsi("poly") && Cmds.Count() > 3) {
+      TStrList svertices, striangles;
+      if (Cmds.Count() == 4 && TEFile::Exists(Cmds[3])) {
+        TStrList sl;
+        TStrList toks(sl.LoadFromFile(Cmds[3]).Text(';'), ';');
+        if (toks.Count() != 2) {
+          Error.ProcessingError(__OlxSrcInfo, "a list of vertices seperated "
+            "by comma and list of triangles formed by 0-based vertex indices"
+            " is expected");
+        }
+        svertices.Strtok(toks[0], ',');
+        striangles.Strtok(toks[1], ',');
+      }
+      else {
+        TStrList toks(Cmds.Text(EmptyString(), 3), ';');
+        if (toks.Count() != 2) {
+          Error.ProcessingError(__OlxSrcInfo, "a list of vertices seperated "
+            "by comma and list of triangles formed by 0-based vertex indices"
+            " is expected");
+        }
+        svertices.Strtok(toks[0], ',');
+        striangles.Strtok(toks[1], ',');
+      }
+      if (svertices.Count() < 3 || striangles.IsEmpty()) {
+        Error.ProcessingError(__OlxSrcInfo, "at least three vertices and 1 "
+          "triangle are expected");
+      }
+      if (Error.IsSuccessful()) {
+        TArrayList<vec3f> vertices(svertices.Count());
+        TArrayList<vec3s> triags(striangles.Count());
+        vec3f center;
+        for (size_t i=0; i < svertices.Count(); i++) {
+          TStrList toks(svertices[i], ' ');
+          if (toks.Count() != 3) {
+            TBasicApp::NewLogEntry(logError) << "Invalid vertex: '" <<
+              svertices[i] << '\'';
+            continue;
+          }
+          for (int j=0; j < 3; j++)
+            vertices[i][j] = toks[j].ToFloat();
+          center += vertices[i];
+        }
+        center /= vertices.Count();
+        for (size_t i=0; i < striangles.Count(); i++) {
+          TStrList toks(striangles[i], ' ');
+          if (toks.Count() != 3) {
+            TBasicApp::NewLogEntry(logError) << "Invalid triangle: '" <<
+              svertices[i] << '\'';
+            continue;
+          }
+          for (int j=0; j < 3; j++) {
+            if ((triags[i][j]=toks[j].ToSizeT()) >= vertices.Count()) {
+              triags[i][j] = 0;
+              TBasicApp::NewLogEntry(logError) << "Vertex index out of range: '"
+                << toks[j] << '\'';
+            }
+          }
+        }
+        TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count()));
+        TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count()*3));
+        for (size_t i=0; i < triags.Count(); i++) {
+          vec3f tc;
+          for (int j=0; j < 3; j++) {
+            data[3*i+j] = vertices[triags[i][j]];
+            tc += vertices[triags[i][j]];
+          }
+          tc /= 3;
+          vec3f n = (vertices[triags[i][0]]-vertices[triags[i][1]]).XProdVec(
+            (vertices[triags[i][2]]-vertices[triags[i][1]])).Normalise();
+          if ((tc-center).DotProd(n) < 0) {
+            n *= -1;
+          }
+          else
+            olx_swap(data[3*i], data[3*i+2]);
+          normals[i] = n;
+        }
+        TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloTriangles,
+          Cmds[1]);
+        uo->SetVertices(&data);
+        uo->SetNormals(&normals);
+        FXApp->AddObjectToCreate(uo);
+        uo->SetZoomable(true);
+        uo->SetMoveable(true);
+        uo->Create();
+      }
     }
     else
       Error.ProcessingError(__OlxSrcInfo, "unknown object type");
