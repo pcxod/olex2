@@ -610,24 +610,29 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
   ContentList cont = GetAsymmUnit().GetContentList();
   double mu=0;
   for( size_t i=0; i < cont.Count(); i++ )  {
-    double v = ac.CalcMuOverRhoForE(
-      GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
-    mu += (cont[i].count*cont[i].element.GetMr())*v;
+    XScatterer *xs = GetRM().FindSfacData(cont[i].element.symbol);
+    if (xs != NULL && xs->IsSet(XScatterer::setMu)) {
+      mu += cont[i].count*xs->GetMu()/10;
+    }
+    else {
+      double v = ac.CalcMuOverRhoForE(
+        GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
+      mu += (cont[i].count*cont[i].element.GetMr())*v/6.022142;
+    }
   }
   mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume()/
     GetAsymmUnit().GetZPrime();
-  mu /= 6.022142;
   E.SetRetVal(olxstr::FormatFloat(3,mu));
 }
 //..............................................................................
 TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
-  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name );
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name);
 
   lib->Register(
     new TFunction<TXFile>(this, &TXFile::LibGetFormula, "GetFormula",
       fpNone|fpOne|fpTwo|psFileLoaded,
       "Returns a string for content of the asymmetric unit. Takes single or "
-      "none parameters. If parameter equals 'html' and html formatted string is" 
+      "none parameters. If parameter equals 'html' and html formatted string is"
       " returned, for 'list' parameter a string like 'C:26,N:45' is returned. "
       "If no parameter is specified, just formula is returned")
    );
