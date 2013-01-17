@@ -123,7 +123,7 @@ public:
   }
   template <class T> bool Remove(const T& key)  {
     size_t ind = SortedL::IndexOf(key);
-    if( key != InvalidIndex )  {
+    if (ind != InvalidIndex) {
       SortedL::Delete(ind);
       return true;
     }
