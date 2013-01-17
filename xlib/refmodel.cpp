@@ -737,13 +737,33 @@ olxstr RefinementModel::AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
   return rv;
 }
 //.............................................................................
+void formatRidingUHelper(olxstr &l,
+  olxdict<const TCAtom *, TCAtomPList, TPointerComparator> &r)
+{
+  for (size_t j=0; j < r.Count(); j++) {
+    if (l.Length() > 2) l << ", ";
+    TCAtomPList &al = r.GetValue(j);
+    if (al.Count() == 1) {
+      l << al[0]->GetLabel() << " of " <<
+        r.GetKey(j)->GetLabel();
+    }
+    else {
+      l << '{';
+      for (size_t k=0; k < al.Count(); k++) {
+        l << al[k]->GetLabel();
+        if ((k+1) < al.Count()) l << ',';
+      }
+      l << "} of " << r.GetKey(j)->GetLabel();
+    }
+  }
+}
 const_strlist RefinementModel::Describe() {
   TStrList lst;
   Validate();
   int sec_num = 0;
   // riding atoms..
-  olxdict<double, 
-    olxdict<const TCAtom *, TCAtomPList, TPointerComparator>, 
+  olxdict<double, // scale
+    olxdict<const TCAtom *, TCAtomPList, TPointerComparator>,
     TPrimitiveComparator> riding_u;
   for (size_t i=0; i < aunit.AtomCount(); i++) {
     TCAtom &a = aunit.GetAtom(i);
@@ -751,26 +771,68 @@ const_strlist RefinementModel::Describe() {
       riding_u.Add(a.GetUisoScale()).Add(a.GetUisoOwner()).Add(a);
   }
   if (!riding_u.IsEmpty()) {
-    lst.Add(olxstr(++sec_num)) << ". Fixed Uiso";
+    olxdict<uint32_t, //low-to-high: 8 - bond count, 8 - riding z, 8 - pivot z
+      olxdict<double,
+        SortedPtrList<const TCAtom, TPointerComparator>,
+        TPrimitiveComparator>,
+      TPrimitiveComparator> riding_u_g;
     for (size_t i=0; i < riding_u.Count(); i++) {
-      lst.Add(" At ") << riding_u.GetKey(i) << " times of:";
-      olxstr &l = lst.Add("  ");
       for (size_t j=0; j < riding_u.GetValue(i).Count(); j++) {
-        if (l.Length() > 2) l << ", ";
         TCAtomPList &al = riding_u.GetValue(i).GetValue(j);
-        if (al.Count() == 1) {
-          l << al[0]->GetLabel() << " of " <<
-            riding_u.GetValue(i).GetKey(j)->GetLabel();
-        }
-        else {
-          l << '{';
-          for (size_t k=0; k < al.Count(); k++) {
-            l << al[k]->GetLabel();
-            if ((k+1) < al.Count()) l << ',';
+        bool same_type=true;
+        for (size_t k=1; k < al.Count(); k++) {
+          if (al[k]->GetType() != al[0]->GetType()) {
+            same_type = false;
+            break;
           }
-          l << "} of " << riding_u.GetValue(i).GetKey(j)->GetLabel();
+        }
+        if (!same_type) continue;
+        uint32_t key1=riding_u.GetValue(i).GetKey(j)->GetType().z << 16;
+        key1 = key1 | (al[0]->GetType().z << 8) | (uint8_t)(al.Count());
+        riding_u_g.Add(key1).Add(riding_u.GetKey(i)).AddUnique(
+          riding_u.GetValue(i).GetKey(j));
+      }
+    }
+    // eliminate groups
+    for (size_t i=0; i < riding_u_g.Count(); i++) {
+      if (riding_u_g.GetValue(i).Count() != 1) continue;
+      size_t idx = riding_u.IndexOf(riding_u_g.GetValue(i).GetKey(0));
+      for (size_t j=0; j < riding_u_g.GetValue(i).GetValue(0).Count(); j++) {
+        riding_u.GetValue(idx).Remove(riding_u_g.GetValue(i).GetValue(0)[j]);
+      }
+      if (riding_u.GetValue(idx).IsEmpty())
+        riding_u.Delete(idx);
+    }
+
+    lst.Add(olxstr(++sec_num)) << ". Fixed Uiso";
+    olxdict<double, TSizeList, TPrimitiveComparator> gg;
+    // groups first
+    for (size_t i=0; i < riding_u_g.Count(); i++) {
+      if (riding_u_g.GetValue(i).Count() != 1) continue;
+      gg.Add(riding_u_g.GetValue(i).GetKey(0)).Add(i);
+    }
+    for (size_t i=0; i < gg.Count(); i++) {
+      lst.Add(" At ") << gg.GetKey(i) << " times of:";
+      olxstr &l = lst.Add("  ");
+      for (size_t j=0; j < gg.GetValue(i).Count(); j++) {
+        uint32_t gk = riding_u_g.GetKey(gg.GetValue(i)[j]);
+        cm_Element *e1 = XElementLib::FindByZ((gk&0x00ff0000)>>16);
+        cm_Element *e2 = XElementLib::FindByZ((gk&0x0000ff00)>>8);
+        size_t bonds = (gk&0x000000ff);
+        if (l.Length() > 2) l << ", ";
+        l << "All " << e1->symbol << '(' << e2->symbol;
+        for (size_t bi=1; bi < bonds; bi++) l << ',' << e2->symbol;
+        l << ") groups";
+        size_t idx = riding_u.IndexOf(gg.GetKey(i));
+        if (idx != InvalidIndex) {
+          formatRidingUHelper(l, riding_u.GetValue(idx));
+          riding_u.Delete(idx);
         }
       }
+    }
+    for (size_t i=0; i < riding_u.Count(); i++) {
+      lst.Add(" At ") << riding_u.GetKey(i) << " times of:";
+      formatRidingUHelper(lst.Add("  "), riding_u.GetValue(i));
     }
   }
   // site related
