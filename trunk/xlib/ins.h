@@ -41,12 +41,12 @@ class TIns: public TBasicCFile  {
     TResidue* Resi;
     TCAtom* Last,
       // this are used to evaluate riding H Uiso coded like -1.5
-      *LastWithU, *LastNonH;
+      *LastWithU, *LastRideable;
     TIns* ins;
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
-    ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit), 
-      Resi(NULL), Last(NULL), LastWithU(NULL), LastNonH(NULL)
+    ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit),
+      Resi(NULL), Last(NULL), LastWithU(NULL), LastRideable(NULL)
     {
       End = SetNextPivot = CellFound = false;
       PartOccu = 0;

@@ -1080,6 +1080,7 @@ void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
         const float d = p.DistanceTo(atoms[k].GetA())-atoms[k].GetC();
         if( map[ind][i][j] > d )
           map[ind][i][j] = d;
+        //map[ind][i][j] += d;
         if( d < 0 )  // inside
           break;
         if( (loop_data[6][k]-map[ind][i][j]-3) > pl )  // 3 - max rad (?)

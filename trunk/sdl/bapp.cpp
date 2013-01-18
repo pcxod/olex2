@@ -38,6 +38,12 @@ TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   Instance = this;
 
   MaxThreadCount = 1;
+#ifdef __WIN32__
+  SYSTEM_INFO si;
+  memset(&si, 0, sizeof(si));
+  GetSystemInfo(&si);
+  MaxThreadCount = (short)si.dwNumberOfProcessors;
+#endif
   LogFile = NULL;
   Log = new TLog;
 

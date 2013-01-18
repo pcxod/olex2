@@ -2183,7 +2183,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr HklFN( FXApp->LocateHklFile() );
+  olxstr HklFN = FXApp->XFile().LocateHklFile();
   if( !TEFile::Exists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file");
     return;

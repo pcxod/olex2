@@ -16,6 +16,7 @@
 #include "ins.h"
 #include "crs.h"
 #include "cif.h"
+#include "hkl.h"
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
@@ -222,7 +223,7 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   if( GetRM().GetHKLSource().IsEmpty() ||
      !TEFile::Exists(GetRM().GetHKLSource()) )
   {
-    olxstr src = TXApp::GetInstance().LocateHklFile();
+    olxstr src = LocateHklFile();
     if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
       src.SetLength(0);
     GetRM().SetHKLSource(src);
@@ -732,6 +733,44 @@ TXFile::NameArg TXFile::ParseName(const olxstr& fn)  {
     }
   }
   return rv;
+}
+//..............................................................................
+olxstr TXFile::LocateHklFile()  {
+  olxstr HklFN = GetRM().GetHKLSource();
+  if (TEFile::Existsi(olxstr(HklFN), HklFN))
+    return HklFN;
+  const olxstr fn = GetFileName();
+  HklFN = TEFile::ChangeFileExt(fn, "hkl");
+  if (TEFile::Existsi(olxstr(HklFN), HklFN))
+    return HklFN;
+  HklFN = TEFile::ChangeFileExt(fn, "raw");
+  if (TEFile::Existsi(olxstr(HklFN), HklFN)) {
+    THklFile Hkl;
+    Hkl.LoadFromFile(HklFN);
+    HklFN = TEFile::ChangeFileExt(fn, "hkl");
+    for (size_t i=0; i < Hkl.RefCount(); i++) {
+      Hkl[i].SetI((double)olx_round(Hkl[i].GetI())/100.0);
+      Hkl[i].SetS((double)olx_round(Hkl[i].GetS())/100.0);
+    }
+    Hkl.SaveToFile(HklFN);
+    TBasicApp::NewLogEntry() << "The scaled hkl file is prepared";
+    return HklFN;
+  }
+  else {  // check for stoe format
+    HklFN = TEFile::ChangeFileExt(fn, "hkl");
+    olxstr HkcFN = TEFile::ChangeFileExt(fn, "hkc");
+    if (TEFile::Existsi(olxstr(HkcFN), HkcFN)) {
+      TEFile::Copy(HkcFN, HklFN);
+      return HklFN;
+    }
+  }
+  // last chance - get any hkl in the same folder (only if one!)
+  TStrList hkl_files;
+  olxstr dir = TEFile::ExtractFilePath(fn);
+  TEFile::ListDir(dir, hkl_files, "*.hkl", sefFile);
+  if (hkl_files.Count() == 1)
+    return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
+  return EmptyString();
 }
 //..............................................................................
 

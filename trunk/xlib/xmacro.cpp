@@ -998,7 +998,7 @@ void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //.............................................................................
 void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  olxstr hklSrc = xapp.LocateHklFile();
+  olxstr hklSrc = xapp.XFile().LocateHklFile();
   if( !TEFile::Exists( hklSrc ) )  {
     Error.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
@@ -2048,7 +2048,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg, const ol
   TBasicApp::NewLogEntry(logError) << "Cell esd's are estimated!";
   bool save = false;
   if( !resHKL_FN.IsEmpty() )  {
-    olxstr hkl_fn(xapp.LocateHklFile());
+    olxstr hkl_fn(xapp.XFile().LocateHklFile());
     if( !hkl_fn.IsEmpty() )  {
       THklFile hklf;
       hklf.LoadFromFile(hkl_fn);
@@ -3630,7 +3630,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif->Remove("_refln");
     // embedd HKL
     if (insert) {
-      olxstr hkl_src = xapp.LocateHklFile();
+      olxstr hkl_src = xapp.XFile().LocateHklFile();
       if (TEFile::Exists(hkl_src)) {
         cetTable &t = Cif->AddLoopDef("_refln_index_h,_refln_index_k,_refln_index_l,"
           "_refln_F_squared_meas,_refln_F_squared_sigma");
@@ -5430,7 +5430,7 @@ void XLibMacros::macHklAppend(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < toks.Count(); i++ )
     l.Add(toks[i].ToInt());
 
-  const olxstr hklSrc = TXApp::GetInstance().LocateHklFile();
+  const olxstr hklSrc = TXApp::GetInstance().XFile().LocateHklFile();
   if( !TEFile::Exists( hklSrc ) )  {
     E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
@@ -5490,7 +5490,7 @@ void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options,
   for( size_t i=0; i < toks.Count(); i++ )
     l.Add(toks[i].ToInt());
 
-  const olxstr hklSrc(TXApp::GetInstance().LocateHklFile());
+  const olxstr hklSrc = TXApp::GetInstance().XFile().LocateHklFile();
   if( !TEFile::Exists(hklSrc) )  {
     E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;

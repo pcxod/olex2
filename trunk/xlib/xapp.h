@@ -82,9 +82,6 @@ public:
 
   virtual class TLibrary&  GetLibrary()  {  return Library;  }
 
-  // locates related HKL file, processes raw or hkc file if necessary
-  olxstr LocateHklFile();
-
   // fills the list with the matrices of the UnitCell
   void GetSymm(smatd_list& ml) const;
 

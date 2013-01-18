@@ -104,6 +104,8 @@ public:
   is not required
   */
   TBasicCFile* LastLoader() const {  return FLastLoader;  }
+  // locates related HKL file, processes raw or hkc file if necessary
+  olxstr LocateHklFile();
   void UpdateAsymmUnit();
   /* Generic sort procedure, taking string instructions...
     instructions: Mw, Label, Label1, moiety size, weight, heaviest 
