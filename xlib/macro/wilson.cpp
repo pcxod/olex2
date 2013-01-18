@@ -54,7 +54,7 @@ struct TWilsonEBin {
 };
 void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp &XApp = TXApp::GetInstance();
-  olxstr HklFN( XApp.LocateHklFile() );
+  olxstr HklFN = XApp.XFile().LocateHklFile();
   if( !TEFile::Exists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
     return;

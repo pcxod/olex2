@@ -148,7 +148,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.stop();
   }
   else  {  // olex2 calculated SF
-    olxstr hklFileName(xapp.LocateHklFile());
+    olxstr hklFileName(xapp.XFile().LocateHklFile());
     if( !TEFile::Exists(hklFileName) )
       return "could not locate hkl file";
     sw.start("Loading/Filtering/Merging HKL");

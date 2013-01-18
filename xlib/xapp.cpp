@@ -8,7 +8,6 @@
 ******************************************************************************/
 
 #include "xapp.h"
-#include "hkl.h"
 #include "ins.h"
 #include "cif.h"
 #include "p4p.h"
@@ -63,44 +62,6 @@ void TXApp::Init(ASObjectProvider* objectProvider, ASelectionOwner* selOwner) {
 //..............................................................................
 TXApp::~TXApp()  {
   delete FXFile;
-}
-//..............................................................................
-olxstr TXApp::LocateHklFile()  {
-  if( !XFile().HasLastLoader() )  return EmptyString();
-  olxstr HklFN = XFile().GetRM().GetHKLSource();
-  if( TEFile::Existsi(olxstr(HklFN), HklFN) )  
-    return HklFN;
-  HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
-  if( TEFile::Existsi( olxstr(HklFN), HklFN ) )  
-    return HklFN;
-  HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "raw");
-  if( TEFile::Existsi(olxstr(HklFN), HklFN) )  {
-    THklFile Hkl;
-    Hkl.LoadFromFile(HklFN);
-    HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
-    for( size_t i=0; i < Hkl.RefCount(); i++ )  {
-      Hkl[i].SetI((double)olx_round(Hkl[i].GetI())/100.0 );
-      Hkl[i].SetS((double)olx_round(Hkl[i].GetS())/100.0 );
-    }
-    Hkl.SaveToFile( HklFN );
-    NewLogEntry(logInfo) << "The scaled hkl file is prepared";
-    return HklFN;
-  }
-  else  {  // check for stoe format
-    HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
-    olxstr HkcFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkc");
-    if( TEFile::Existsi(olxstr(HkcFN), HkcFN) )  {
-      TEFile::Copy(HkcFN, HklFN);
-      return HklFN;
-    }
-  }
-  // last chance - get any hkl in the same folder (only if one!)
-  TStrList hkl_files;
-  olxstr dir = TEFile::ExtractFilePath(XFile().GetFileName());
-  TEFile::ListDir(dir, hkl_files, "*.hkl", sefFile);
-  if (hkl_files.Count() == 1)
-    return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
-  return EmptyString();
 }
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {

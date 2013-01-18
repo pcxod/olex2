@@ -10,6 +10,7 @@
 #include "estopwatch.h"
 
 TStopWatchManager::Record *TStopWatchManager::current = NULL;
+olx_critical_section TStopWatchManager::cs;
 //.............................................................................
 const_strlist TStopWatchManager::Record::prepareList(size_t level)  {
   TStrList out;
@@ -33,6 +34,7 @@ const_strlist TStopWatchManager::Record::prepareList(size_t level)  {
 }
 //.............................................................................
 void TStopWatchManager::print() {
+  volatile olx_scope_cs cs_(cs);
   if (!TBasicApp::GetInstance().IsProfiling()) return;
   TBasicApp::NewLogEntry(logInfo) << NewLineSequence() <<
     current->prepareList(1) << NewLineSequence();
@@ -41,12 +43,14 @@ void TStopWatchManager::print() {
 TStopWatchManager::Record &TStopWatchManager::Push(
   const olxstr &functionName)
 {
+  volatile olx_scope_cs cs_(cs);
   if (current == NULL)
     return *(current = new Record(NULL, functionName));
   return *(current = &current->New(functionName));
 }
 //.............................................................................
 void TStopWatchManager::Pop() {
+  volatile olx_scope_cs cs_(cs);
   if (current == NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "current==NULL");
   if (current->parent == NULL) {

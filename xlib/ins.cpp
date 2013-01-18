@@ -136,8 +136,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
           atom->SetType(elmQPeak);
         else
           atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
-        if( atom->GetType().GetMr() > 3.5 )
-          cx.LastNonH = atom;
+        if (atom->GetType().z > 1 &&
+          (cx.AfixGroups.IsEmpty() || cx.AfixGroups.Top().GetB()->GetAfix() != 3))
+        {
+          cx.LastRideable = atom;
+        }
         _ProcessAfix(*atom, cx);
       }
     }
@@ -558,12 +561,12 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
             !TAfixGroup::HasPivot(n);  // if not riding
         }
         if( !cx.SetNextPivot )  {
-          if( cx.LastNonH == NULL  )  {
+          if( cx.LastRideable == NULL )  {
             throw TFunctionFailedException(__OlxSourceInfo,
               "undefined pivot atom for a fitted group");
           }
           // have to check if several afixes for one atom (if the last is H)
-          afixg->SetPivot(*cx.LastNonH);
+          afixg->SetPivot(*cx.LastRideable);
         }
       }
     }
@@ -1227,8 +1230,11 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       atomCount++;
       atom_labels.AddNew(atom, Toks[0]);
       atom->SetType(*elm);
-      if (atom->GetType().z > 1)
-        cx.LastNonH = atom;
+      if (atom->GetType().z > 1 &&
+        (cx.AfixGroups.IsEmpty() || cx.AfixGroups.Top().GetB()->GetAfix() != 3))
+      {
+        cx.LastRideable = atom;
+      }
       _ProcessAfix(*atom, cx);
     }
   }

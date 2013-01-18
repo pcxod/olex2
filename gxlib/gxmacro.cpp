@@ -620,7 +620,7 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   // space group matrix list
   TUnitCell::SymmSpace sp = app.XFile().GetUnitCell().GetSymmSpace();
-  olxstr hklFileName = app.LocateHklFile();
+  olxstr hklFileName = app.XFile().LocateHklFile();
   if( !TEFile::Exists(hklFileName) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
     return;
