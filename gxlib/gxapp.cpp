@@ -712,6 +712,7 @@ void TGXApp::Init()  {
 }
 //..............................................................................
 int32_t TGXApp::Quality(const short V)  {
+  GetRender().GetScene().MakeCurrent();
   uint16_t aq = (uint16_t)(V >> 16);
   if (aq == 0) aq = V;
   int32_t rv = TXAtom::Quality(aq) << 16;
@@ -4779,7 +4780,33 @@ bool TGXApp::ToClipboard(const olxstr &text) const {
     wxTheClipboard->Close();
     return true;
   }
+#elif defined(__WIN32__)
+  if (OpenClipboard(NULL)) {
+    EmptyClipboard();
+    HGLOBAL cd = GlobalAlloc(GMEM_MOVEABLE, text.RawLen()+1);
+    if (!cd) {
+      CloseClipboard();
+      return false;
+    }
+    LPTSTR cdt = (LPTSTR)GlobalLock(cd);
+    memcpy(cdt, text.raw_str(), text.RawLen());
+    cdt[text.Length()] = '\0';
+    GlobalUnlock(cd);
+    SetClipboardData(
+#ifdef _UNICODE
+      CF_UNICODETEXT,
+#else
+      CF_TEXT,
 #endif
+      cd);
+    CloseClipboard();
+  }
+  else {
+    return false;
+  }
+
+#endif
+
   return false;
 }
 //..............................................................................

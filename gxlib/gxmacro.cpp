@@ -510,7 +510,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TStopWatch st(__FUNC__);
   double resolution = Options.FindValue("r", "0.25").ToDouble(),
     maskInc = 1.0;
-  if( resolution < 0.1 )  resolution = 0.1;
+  if( resolution < 0.005 )  resolution = 0.05;
   resolution = 1./resolution;
   short mapType = SFUtil::mapTypeCalc;
   if( Options.Contains("tomc") )
@@ -641,7 +641,7 @@ void GXLibMacros::macCalcPatt(TStrObjList &Cmds, const TParamList &Options,
       P1SF[index].val *= compd::polar(1, 2*M_PI*P1SF[index].ps);
     }
   }
-  const double resolution = 5;
+  const double resolution = 10;
   const vec3i dim(au.GetAxes()*resolution);
   app.XGrid().InitGrid(dim);
   BVFourier::MapInfo mi = BVFourier::CalcPatt(
@@ -2161,8 +2161,8 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << "Extra distance from the surface: " << surfdis;
   
   float resolution = Options.FindValue("r", "0.2").ToFloat();
-  if( resolution < 0.01 )  
-    resolution = 0.01;
+  if( resolution < 0.005 )
+    resolution = 0.005;
   rv('r', resolution);
   resolution = 1.0f/resolution;
   const vec3i dim(au.GetAxes()*resolution);
