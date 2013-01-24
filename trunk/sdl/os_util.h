@@ -65,7 +65,7 @@ struct olx_critical_section  {
   pthread_mutexattr_t csa;
   olx_critical_section() {
     pthread_mutexattr_init(&csa);
-    pthread_mutexattr_settype(&csa, PTHREAD_MUTEX_DEFAULT);
+    pthread_mutexattr_settype(&csa, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&cs, &csa);
   }
 
@@ -73,7 +73,7 @@ struct olx_critical_section  {
     pthread_mutex_destroy(&cs);
     pthread_mutexattr_destroy(&csa);
   }
-  bool tryEnter()  {  return pthread_mutex_trylock(&cs) != EBUSY;  }
+  bool tryEnter()  {  return (pthread_mutex_trylock(&cs) != EBUSY);  }
   void enter() {  pthread_mutex_lock(&cs);  }
   void leave() {  pthread_mutex_unlock(&cs);  }
 #endif

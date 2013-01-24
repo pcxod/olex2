@@ -49,7 +49,10 @@ public:
     const_strlist prepareList(size_t level);
   };
 protected:
-  static olx_critical_section cs;
+  static olx_critical_section& GetCriticalSection() {
+    static olx_critical_section cs;
+    return cs;
+  }
   static Record *current;
   static void print();
 public:
