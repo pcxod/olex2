@@ -2426,7 +2426,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else  {
     if( !IsVisible() )  return;
     FileFilter ff;
-    ff.AddAll("ins;cif;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
+    ff.AddAll("ins;cif;cmf;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
     ff.Add("*.mol", "MDL MOL");
     ff.Add("*.mas", "XD master");
     ff.Add("*.mol2", "Tripos MOL2");
@@ -5457,7 +5457,7 @@ public:
 };
 void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TStrList files;
-  TEFile::ListCurrentDir(files, "*.cif", sefFile);
+  TEFile::ListCurrentDir(files, "*.cif;*.cmf", sefFile);
   TCif cif;
   TAsymmUnit& au = cif.GetAsymmUnit();
 
