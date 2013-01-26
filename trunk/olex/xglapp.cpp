@@ -207,6 +207,7 @@ bool TGlXApp::OnInit()  {
 
   TCif *Cif = new TCif;  // the objects will be automatically removed by the XApp
   XApp->RegisterXFileFormat(Cif, "cif");
+  XApp->RegisterXFileFormat(Cif, "cmf");
   XApp->RegisterXFileFormat(Cif, "fcf");
   XApp->RegisterXFileFormat(Cif, "fco");
   XApp->RegisterXFileFormat(new TMol, "mol");
