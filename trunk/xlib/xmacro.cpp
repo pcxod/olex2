@@ -3139,7 +3139,7 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options,
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
-    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif;cmf");
+    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if( TEFile::Exists(cifFN) ) 
       Cif1.LoadFromFile(cifFN);
     else  {
@@ -3206,7 +3206,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
-    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif;cmf");
+    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if( TEFile::Exists(cifFN ) )  {
       Cif1.LoadFromFile(cifFN);
     }
@@ -3372,7 +3372,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
-    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif;cmf");
+    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if( TEFile::Exists(cifFN) )
       Cif2.LoadFromFile(cifFN);
     else {
@@ -3728,7 +3728,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
-    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif;cmf");
+    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if( TEFile::Exists(cifFN) )  {
       Cif1.LoadFromFile(cifFN);
     }
