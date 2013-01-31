@@ -9,6 +9,7 @@
 
 #include "olxvar.h"
 #include "egc.h"
+#include "efile.h"
 
 TOlxVars* TOlxVars::Instance = NULL;
 #ifndef _NO_PYTHON
@@ -225,6 +226,18 @@ void olxvar_funSetVar(const TStrObjList& Params, TMacroError &E) {
 void olxvar_funIsVar(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal(TOlxVars::IsVar(Params[0]));
 }
+void olxvar_funFlush(const TStrObjList& Params, TMacroError &E) {
+  TStrList settings;
+  olxstr mask = (Params[1].IsEmpty() ? olxstr('*') : Params[1]);
+  size_t from = Params.Count() == 3 ? Params[2].ToSizeT() : 0;
+  Wildcard wc(Params[1]);
+  for (size_t i=0; i < TOlxVars::VarCount(); i++) {
+    olxstr vn = TOlxVars::GetVarName(i);
+    if (!wc.DoesMatch(vn) || vn.Length() < from) continue;
+    settings.Add(vn.SubStringFrom(from)) << '=' << TOlxVars::GetVarStr(i);
+  }
+  TCStrList(settings).SaveToFile(Params[0]);
+}
 TLibrary *TOlxVars::ExportLibrary(const olxstr &name, TLibrary *_l) {
   TLibrary *l = _l == NULL ? new TLibrary(name) : _l;
   l->Register(
@@ -241,6 +254,13 @@ TLibrary *TOlxVars::ExportLibrary(const olxstr &name, TLibrary *_l) {
   l->Register(
     new TStaticFunction(&olxvar_funUnsetVar,
       "UnsetVar", fpOne, "Removes the specified variable"));
+  l->Register(
+    new TStaticFunction(&olxvar_funFlush,
+      "Flush", fpTwo|fpThree, "Saves variables to a file. The second argument is a "
+      "mask in the form '*' 'settings.*' etc, if the 3rd argument [0] is "
+      "specified the variable names used as substringFrom(3rd arg); note that "
+      "if the name is shorter that the value of the 3rd argument - the value "
+      "is not saved."));
   return l;
 }
 
