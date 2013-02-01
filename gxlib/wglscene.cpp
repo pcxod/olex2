@@ -143,14 +143,14 @@ TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   return glf;
 }
 //..............................................................................
-void TWGlScene::InitialiseBMP(HBITMAP Bmp) {
+void TWGlScene::InitialiseBMP(HBITMAP Bmp, uint8_t bpp) {
   Destroy();
-  if (FBitmap == NULL)
+  if (Bmp == NULL)
     throw TInvalidArgumentException(__OlxSourceInfo, "bitmap=NULL");
   FWContext = CreateCompatibleDC(NULL);
   FBitmap = Bmp;
   SelectObject(FWContext, FBitmap);
-  SetPixelFormatDescriptor(FWContext, 24);
+  SetPixelFormatDescriptor(FWContext, bpp);
   FGlContext = wglCreateContext(FWContext);
   if (FGlContext == NULL) {
     throw TFunctionFailedException(__OlxSourceInfo,
@@ -159,10 +159,6 @@ void TWGlScene::InitialiseBMP(HBITMAP Bmp) {
   if (!MakeCurrent()) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "could not make current context");
-  }
-  if (FWContext != NULL) {
-    DeleteDC(FWContext);
-    FWContext = NULL;
   }
 }
 //..............................................................................
@@ -186,33 +182,14 @@ bool TWGlScene::MakeCurrent() {
 }
 //..............................................................................
 void TWGlScene::StartDraw() {
-  if (FBitmap != NULL) {
-    FWContext = CreateCompatibleDC(NULL);
-    SelectObject(FWContext, FBitmap);
-    SetPixelFormatDescriptor(FWContext, 24);
-  }
   AGlScene::StartDraw();
 }
 //..............................................................................
 void TWGlScene::EndDraw() {
   AGlScene::EndDraw();
-  if (FBitmap == NULL) {
-    //if( FWContext != NULL )
-    //  SwapBuffers(FWContext);
-  }
-  else if (FWContext != NULL) {
-    SelectObject(FWContext, NULL);
-    DeleteDC(FWContext);
-    FWContext = NULL;
-  }
 }
 //..............................................................................
 void TWGlScene::StartSelect(int x, int y, GLuint *Bf) {
-  if (FBitmap != NULL) {
-    FWContext = CreateCompatibleDC(NULL);
-    SelectObject(FWContext, FBitmap);
-    SetPixelFormatDescriptor(FWContext, 24);
-  }
   AGlScene::StartSelect(x, y, Bf);
 }
 //..............................................................................
