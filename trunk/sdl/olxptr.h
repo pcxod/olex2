@@ -44,6 +44,11 @@ template <typename ptr> struct olx_object_ptr  {
   }
   ptr& operator ()() const {  return *p->p;  }
   operator ptr& () const {  return *p->p;  }
+  // increases the reference count
+  ptr &release() const {
+    p->inc_ref();
+    return *p->p;
+  }
 };
 
 template <typename ptr> struct olx_array_ptr  {
@@ -74,6 +79,11 @@ template <typename ptr> struct olx_array_ptr  {
   bool is_null() const { return p->p == NULL; }
   ptr* operator ()() const {  return p->p;  }
   operator ptr* () const {  return p->p;  }
+  // increases the reference count
+  ptr *release() const {
+    p->inc_ref();
+    return p->p;
+  }
 };
 
 struct olx_ref {
