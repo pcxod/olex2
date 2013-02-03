@@ -15,23 +15,28 @@ template <typename ptr> struct olx_ptr_  {
   int ref_cnt;
   olx_ptr_(ptr* _p) : p(_p), ref_cnt(1)  {}
   olx_ptr_* inc_ref()  {  ref_cnt++;  return this;  }
+  template <bool is_array> int dec_ref() {
+    int rc = --ref_cnt;
+    if (rc <= 0) {
+      if (p != NULL) {
+        if (is_array)
+          delete [] p;
+        else
+          delete p;
+      }
+      delete this;
+    }
+    return rc;
+  }
 };
 
 template <typename ptr> struct olx_object_ptr  {
   olx_ptr_<ptr>* p;
   olx_object_ptr(ptr* _p) {  p = new olx_ptr_<ptr>(_p);  }
   olx_object_ptr(const olx_object_ptr& _p) : p(_p.p->inc_ref())  {}
-  ~olx_object_ptr()  {
-    if( --p->ref_cnt <= 0 )  {
-      if (p->p != NULL) delete p->p;
-      delete p;
-    }
-  }
+  ~olx_object_ptr()  { p->dec_ref<false>(); }
   olx_object_ptr& operator = (const olx_object_ptr& _p)  {
-    if( --p->ref_cnt <= 0 )  {
-      if (p->p != NULL) delete p->p;
-      delete p;
-    }
+    p->dec_ref<false>();
     p = _p.p->inc_ref();
     return *this;
   }
@@ -44,10 +49,11 @@ template <typename ptr> struct olx_object_ptr  {
   }
   ptr& operator ()() const {  return *p->p;  }
   operator ptr& () const {  return *p->p;  }
-  // increases the reference count
+  // releases the object from ALL references
   ptr &release() const {
-    p->inc_ref();
-    return *p->p;
+    ptr *p_ = p->p;
+    p->p = NULL;
+    return *p_;
   }
 };
 
@@ -55,17 +61,9 @@ template <typename ptr> struct olx_array_ptr  {
   olx_ptr_<ptr>* p;
   olx_array_ptr(ptr* _p) {  p = new olx_ptr_<ptr>(_p);  }
   olx_array_ptr(const olx_array_ptr& _p) : p(_p.p->inc_ref())  {}
-  ~olx_array_ptr()  {
-    if( --p->ref_cnt <= 0 )  {
-      if (p->p != NULL) delete [] p->p;
-      delete p;
-    }
-  }
+  ~olx_array_ptr() { p->dec_ref<true>(); }
   olx_array_ptr& operator = (const olx_array_ptr& _p)  {
-    if( --p->ref_cnt <= 0 )  {
-      if (p->p != NULL) delete [] p->p;
-      delete p;
-    }
+    p->dec_ref<true>();
     p = _p.p->inc_ref();
     return *this;
   }
@@ -79,10 +77,11 @@ template <typename ptr> struct olx_array_ptr  {
   bool is_null() const { return p->p == NULL; }
   ptr* operator ()() const {  return p->p;  }
   operator ptr* () const {  return p->p;  }
-  // increases the reference count
+  // releases the array from ALL references
   ptr *release() const {
-    p->inc_ref();
-    return p->p;
+    ptr *p_ = p->p;
+    p->p = NULL;
+    return p_;
   }
 };
 
