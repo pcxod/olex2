@@ -144,17 +144,17 @@ TGlFont& TWGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
 }
 //..............................................................................
 void TWGlScene::InitialiseBMP(HBITMAP Bmp, uint8_t bpp) {
-  Destroy();
   if (Bmp == NULL)
     throw TInvalidArgumentException(__OlxSourceInfo, "bitmap=NULL");
-  FWContext = CreateCompatibleDC(NULL);
+  Destroy();
   FBitmap = Bmp;
+  FWContext = CreateCompatibleDC(NULL);
   SelectObject(FWContext, FBitmap);
   SetPixelFormatDescriptor(FWContext, bpp);
   FGlContext = wglCreateContext(FWContext);
   if (FGlContext == NULL) {
     throw TFunctionFailedException(__OlxSourceInfo,
-      "could not create gl context");
+     "could not create gl context");
   }
   if (!MakeCurrent()) {
     throw TFunctionFailedException(__OlxSourceInfo,
@@ -215,6 +215,7 @@ void TWGlScene::Destroy() {
     FGlContext = NULL;
   }
   if (FWContext != NULL && FBitmap != NULL) {
+    SelectObject(FWContext, NULL);
     DeleteDC(FWContext);
     FWContext = NULL;
   }

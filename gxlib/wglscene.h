@@ -24,6 +24,7 @@ public:
   virtual ~TWGlScene()  {  Destroy();  }
   void InitialiseBMP(HBITMAP Bmp, uint8_t bpp=24);
   void InitialiseHDC(HDC Dc);
+  HDC GetDC() const { return FWContext; }
   void Destroy();
   void StartSelect(int x, int y, GLuint *Bf);
   int EndSelect();

@@ -1469,7 +1469,7 @@ void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
     name << app.XFile().GetLattice().GetObjects().planes.Count() << '_';
     size_t cnt=0;
     for (size_t i=0; i < rings.Count(); i++) {
-      if( app.AddPlane(name + (cnt+1),
+      if( app.AddPlane(name + olxstr(cnt+1),
          TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>()), false) != NULL)
       {
         cnt++;
