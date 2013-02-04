@@ -168,9 +168,28 @@ olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
   return sl.Count() == 1 ? (repository_tag=sl[0]) : EmptyString();
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
+PatchAPI::DataDirSettings::DataDirSettings()
+  : is_manually_set(false)
+{
+  Refresh();
+}
+//.............................................................................
+bool PatchAPI::DataDirSettings::Refresh() {
+  if (is_manually_set) return false;
+  is_static = olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE");
+  data_dir = olx_getenv("OLEX2_DATADIR");
+  if (!data_dir.IsEmpty())
+    TEFile::AddPathDelimeterI(data_dir);
+  return true;
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 olxstr PatchAPI::GetSharedDir(bool refresh) {
   olxstr rv = TEFile::AddPathDelimeter(_GetSharedDirRoot(refresh));
-  if( olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE") )
+  if (GetDDSetting().is_static)
     return rv;
 #ifdef __WIN32__
   return rv << "Olex2Data/";
@@ -181,7 +200,11 @@ olxstr PatchAPI::GetSharedDir(bool refresh) {
 //.............................................................................
 olxstr PatchAPI::_GetSharedDirRoot(bool refresh)  {
   if (!refresh && !shared_dir.IsEmpty()) return shared_dir;
-  const olxstr dd_str = olx_getenv("OLEX2_DATADIR");
+  if (GetDDSetting().is_manually_set)
+    return GetDDSetting().data_dir;
+  if (refresh)
+    GetDDSetting().Refresh();
+  const olxstr dd_str = GetDDSetting().data_dir;
   olxstr data_dir;
   if( !dd_str.IsEmpty() )  {
     data_dir = dd_str;
@@ -196,7 +219,7 @@ olxstr PatchAPI::_GetSharedDirRoot(bool refresh)  {
 olxstr PatchAPI::GetInstanceDir(bool refresh)  {
   if (!refresh && !instance_dir.IsEmpty()) return instance_dir;
   olxstr data_dir = _GetSharedDirRoot(refresh);
-  if( olx_getenv("OLEX2_DATADIR_STATIC").Equalsi("TRUE") )
+  if (GetDDSetting().is_static)
      return (instance_dir=data_dir);
   return (instance_dir=ComposeInstanceDir(data_dir));
 }
