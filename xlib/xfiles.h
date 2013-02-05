@@ -17,11 +17,14 @@ BeginXlibNamespace()
 
 class TBasicCFile: public ACollectionItem  {
 private:
+  void PostLoad();
 protected:
   olxstr FileName,  // file name if file is loaded
          Title;     // title of the file
   RefinementModel RefMod;
   TAsymmUnit AsymmUnit;
+  // do not use it directly - use LoadStrings instead
+  virtual void LoadFromStrings(const TStrList& Strings) = 0;
 public:
   TBasicCFile();
   virtual ~TBasicCFile();
@@ -36,9 +39,9 @@ public:
   preprocessing of changes before flushing...
   */
   virtual void SaveToStrings(TStrList& Strings) = 0;
-  virtual void LoadFromStrings(const TStrList& Strings) = 0;
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
+  void LoadStrings(const TStrList &lines);
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
@@ -59,6 +62,7 @@ protected:
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
     const IEObject *Data=NULL);
   void ValidateTabs();
+  void PostLoad(const olxstr &fn, TBasicCFile *loader, bool replicated);
 public:
   TXFile(ASObjectProvider& Objects);
   virtual ~TXFile();
@@ -111,6 +115,7 @@ public:
     instructions: Mw, Label, Label1, moiety size, weight, heaviest 
   */
   void Sort(const TStrList& instructions);
+  void LoadFromString(const TStrList& lines, const olxstr &fileType);
   void LoadFromFile(const olxstr& FN);
   void SaveToFile(const olxstr& FN, bool Sort);
   // clears the last loader and the model

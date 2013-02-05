@@ -47,6 +47,30 @@ void TBasicCFile::SaveToFile(const olxstr& fn)  {
   FileName = fn;
 };
 //..............................................................................
+void TBasicCFile::PostLoad() {
+  /* fix labels for not native formats, will not help for FE1A, because it
+  could come from Fe1A or from Fe1a ...
+  */
+  if (!IsNative()) {
+    for (size_t i=0; i < AsymmUnit.AtomCount(); i++) {
+      TCAtom& a = AsymmUnit.GetAtom(i);
+      if (a.GetType().symbol.Length() == 2 &&
+          a.GetLabel().StartsFromi(a.GetType().symbol))
+      {
+        a.SetLabel(a.GetType().symbol +
+          a.GetLabel().SubStringFrom(a.GetType().symbol.Length()), false);
+      }
+    }
+  }
+}
+//..............................................................................
+void TBasicCFile::LoadStrings(const TStrList &lines) {
+  FileName.SetLength(0);
+  Title.SetLength(0);
+  LoadFromStrings(lines);
+  PostLoad();
+}
+//..............................................................................
 void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
   TStopWatch(__FUNC__);
   TXFile::NameArg file_n = TXFile::ParseName(_fn);
@@ -74,20 +98,7 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
     FileName.SetLength(0);
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  /* fix labels for not native formats, will not help for FE1A, because it
-  could come from Fe1A or from Fe1a ...
-  */
-  if( !IsNative() )  {
-    for( size_t i=0; i < AsymmUnit.AtomCount(); i++ )  {
-      TCAtom& a = AsymmUnit.GetAtom(i);
-      if( a.GetType().symbol.Length() == 2 &&
-          a.GetLabel().StartsFromi(a.GetType().symbol) )
-      {
-        a.SetLabel(a.GetType().symbol +
-          a.GetLabel().SubStringFrom(a.GetType().symbol.Length()), false);
-      }
-    }
-  }
+  PostLoad();
   FileName = file_n.file_name;
 }
 //----------------------------------------------------------------------------//
@@ -167,38 +178,19 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
   return true;
 }
 //..............................................................................
-void TXFile::LoadFromFile(const olxstr & _fn) {
-  TStopWatch(__FUNC__);
-  const NameArg file_n = ParseName(_fn);
-  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
-  // this thows an exception if the file format loader does not exist
-  TBasicCFile* Loader = FindFormat(ext);
-  bool replicated = false;
-  if( FLastLoader == Loader )  {
-    Loader = (TBasicCFile*)Loader->Replicate();
-    replicated = true;
-  }
-  try  {
-    Loader->LoadFromFile(_fn);
-    for (size_t i=0; i < Loader->GetAsymmUnit().AtomCount(); i++) {
-      TCAtom &a = Loader->GetAsymmUnit().GetAtom(i);
-      if (olx_abs(a.ccrd()[0]) > 127 ||
-          olx_abs(a.ccrd()[1]) > 127 ||
-          olx_abs(a.ccrd()[2]) > 127)
-      {
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          olxstr("atom coordinates for ").quote() << a.GetLabel());
-      }
+void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
+  for (size_t i=0; i < Loader->GetAsymmUnit().AtomCount(); i++) {
+    TCAtom &a = Loader->GetAsymmUnit().GetAtom(i);
+    if (olx_abs(a.ccrd()[0]) > 127 ||
+      olx_abs(a.ccrd()[1]) > 127 ||
+      olx_abs(a.ccrd()[2]) > 127)
+    {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("atom coordinates for ").quote() << a.GetLabel());
     }
   }
-  catch( const TExceptionBase& exc )  {
-    if( replicated )
-      delete Loader;
-    throw TFunctionFailedException(__OlxSourceInfo, exc);
-  }
-
   if( !Loader->IsNative() )  {
-    OnFileLoad.Enter(this, &_fn);
+    OnFileLoad.Enter(this, &fn);
     try  {
       GetRM().Clear(rm_clear_ALL);
       GetLattice().Clear(true);
@@ -229,6 +221,48 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
     GetRM().SetHKLSource(src);
   }
   TXApp::GetInstance().SetLastSGResult_(EmptyString());
+}
+//..............................................................................
+void TXFile::LoadFromString(const TStrList& lines, const olxstr &fileType) {
+  TStopWatch(__FUNC__);
+  // this thows an exception if the file format loader does not exist
+  TBasicCFile* Loader = FindFormat(fileType);
+  bool replicated = false;
+  if( FLastLoader == Loader )  {
+    Loader = (TBasicCFile*)Loader->Replicate();
+    replicated = true;
+  }
+  try  {
+    Loader->LoadStrings(lines);
+  }
+  catch( const TExceptionBase& exc )  {
+    if( replicated )
+      delete Loader;
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+  PostLoad(EmptyString(), Loader, replicated);
+}
+//..............................................................................
+void TXFile::LoadFromFile(const olxstr & _fn) {
+  TStopWatch(__FUNC__);
+  const NameArg file_n = ParseName(_fn);
+  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
+  // this thows an exception if the file format loader does not exist
+  TBasicCFile* Loader = FindFormat(ext);
+  bool replicated = false;
+  if( FLastLoader == Loader )  {
+    Loader = (TBasicCFile*)Loader->Replicate();
+    replicated = true;
+  }
+  try  {
+    Loader->LoadFromFile(_fn);
+  }
+  catch( const TExceptionBase& exc )  {
+    if( replicated )
+      delete Loader;
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+  PostLoad(_fn, Loader, replicated);
 }
 //..............................................................................
 void TXFile::UpdateAsymmUnit()  {
