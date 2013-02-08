@@ -41,7 +41,9 @@ public:
   virtual void SaveToStrings(TStrList& Strings) = 0;
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
-  void LoadStrings(const TStrList &lines);
+  // name toke cas specify the dataset index or name
+  void LoadStrings(const TStrList &lines,
+    const olxstr &nameToken=EmptyString());
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
@@ -115,7 +117,8 @@ public:
     instructions: Mw, Label, Label1, moiety size, weight, heaviest 
   */
   void Sort(const TStrList& instructions);
-  void LoadFromString(const TStrList& lines, const olxstr &fileType);
+  // nameToken is build is simlar way to the NameArg!
+  void LoadFromString(const TStrList& lines, const olxstr &nameToken);
   void LoadFromFile(const olxstr& FN);
   void SaveToFile(const olxstr& FN, bool Sort);
   // clears the last loader and the model
