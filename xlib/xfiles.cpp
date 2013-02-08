@@ -64,10 +64,29 @@ void TBasicCFile::PostLoad() {
   }
 }
 //..............................................................................
-void TBasicCFile::LoadStrings(const TStrList &lines) {
+void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
   FileName.SetLength(0);
   Title.SetLength(0);
-  LoadFromStrings(lines);
+  TXFile::NameArg file_n = TXFile::ParseName(nameToken);
+  if (lines.IsEmpty())
+    throw TInvalidArgumentException(__OlxSourceInfo, "empty content");
+  try  {
+    LoadFromStrings(lines);
+    if (EsdlInstanceOf(*this, TCif)) {
+      if (!file_n.data_name.IsEmpty()) {
+        if (file_n.is_index)
+          ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
+        else
+          ((TCif*)this)->SetCurrentBlock(file_n.data_name);
+      }
+      else {  // set first then
+        ((TCif*)this)->SetCurrentBlock(InvalidIndex);
+      }
+    }
+  }
+  catch (const TExceptionBase& exc) {
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
   PostLoad();
 }
 //..............................................................................
@@ -77,28 +96,14 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
   TStrList L;
   L.LoadFromFile(file_n.file_name);
-  if( L.IsEmpty() )
+  if (L.IsEmpty())
     throw TEmptyFileException(__OlxSourceInfo, _fn);
-  FileName = file_n.file_name;
-  try  {
-    LoadFromStrings(L);
-    if( EsdlInstanceOf(*this, TCif) )  {
-      if( !file_n.data_name.IsEmpty() ) {
-        if( file_n.is_index )
-          ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
-        else
-          ((TCif*)this)->SetCurrentBlock(file_n.data_name);
-      }
-      else  {  // set first then
-        ((TCif*)this)->SetCurrentBlock(InvalidIndex);
-      }
-    }
+  try {
+    LoadStrings(L, _fn);
   }
-  catch( const TExceptionBase& exc )  {
-    FileName.SetLength(0);
+  catch (const TExceptionBase& exc) {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  PostLoad();
   FileName = file_n.file_name;
 }
 //----------------------------------------------------------------------------//
@@ -223,17 +228,19 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
   TXApp::GetInstance().SetLastSGResult_(EmptyString());
 }
 //..............................................................................
-void TXFile::LoadFromString(const TStrList& lines, const olxstr &fileType) {
+void TXFile::LoadFromString(const TStrList& lines, const olxstr &nameToken) {
   TStopWatch(__FUNC__);
   // this thows an exception if the file format loader does not exist
-  TBasicCFile* Loader = FindFormat(fileType);
+  const NameArg file_n = ParseName(nameToken);
+  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
+  TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
   if( FLastLoader == Loader )  {
     Loader = (TBasicCFile*)Loader->Replicate();
     replicated = true;
   }
   try  {
-    Loader->LoadStrings(lines);
+    Loader->LoadStrings(lines, nameToken);
   }
   catch( const TExceptionBase& exc )  {
     if( replicated )
