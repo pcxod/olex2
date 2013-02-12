@@ -783,19 +783,19 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
 }
 //..............................................................................
 void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
-  TStrList &Res)
+  TStrList &Res, int sz)
 {
   olxstr Tmp = Ins;
   if( Tmp.Length() > 80-InsName.Length() )  {
     while( Tmp.Length() > 80-InsName.Length() )  {
-      size_t spindex = Tmp.LastIndexOf(' ', 80-InsName.Length());
+      size_t spindex = Tmp.LastIndexOf(' ', sz-InsName.Length());
       if( spindex != InvalidIndex && spindex > 0 )  {
         Res.Add(InsName + Tmp.SubStringTo(spindex));
         Tmp = Tmp.SubStringFrom(spindex+1);
       }
       else  {
         Res.Add(InsName + Tmp.SubStringTo(80-InsName.Length()-2));
-        Tmp = Tmp.SubStringFrom(80-InsName.Length()-2);
+        Tmp = Tmp.SubStringFrom(sz-InsName.Length()-2);
       }
     }
     if( !Tmp.IsEmpty() )
@@ -805,12 +805,12 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
     Res.Add(InsName + Tmp);
 }
 //..............................................................................
-void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
+void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   bool MultiLine = false, added = false;
   olxstr Tmp(Ins), Tmp1;
-  while( Tmp.Length() > 79 )  {
+  while( Tmp.Length() >= sz )  {
     MultiLine = true;
-    size_t spindex = Tmp.LastIndexOf(' ', 77); // for the right hypernation
+    size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hypernation
     if( spindex != InvalidIndex && spindex > 0 )  {
       if( added )  Tmp1 = ' ';
       Tmp1 << Tmp.SubStringTo(spindex);
@@ -823,9 +823,9 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
     }
     else  {
       Tmp1 = ' ';  // a space before each line
-      Tmp1 << Tmp.SubStringTo(79);
+      Tmp1 << Tmp.SubStringTo(sz-1);
       Res.Add(Tmp1);
-      Tmp.Delete(0, 79);
+      Tmp.Delete(0, sz-1);
     }
   }
   if( !Tmp.IsEmpty() )  {  // add the last bit
@@ -1081,7 +1081,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfi('c')+1);
   else
     spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetType())+1);
-  HyphenateIns(_AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
+  HyphenateIns(AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetId());
   for( size_t i=0; i < a.DependentHfixGroupCount(); i++ )  {
@@ -1423,7 +1423,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   return atom;
 }
 //..............................................................................
-olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
+olxstr TIns::AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
   evecd Q(6);
   olxstr Tmp = CA.GetLabel();
   Tmp.RightPadding(6, ' ', true);
