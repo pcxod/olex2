@@ -246,7 +246,8 @@ public:
   olxstr _SummFormula(const olxstr& sep, double mult) const;
   /* returns molecular weight of the asymmetric unit */
   double MolWeight() const;
-  size_t CountElements(const olxstr& Symbol) const;
+  // returns sum of occupancy of any given element
+  double CountElementOccupancy(const olxstr& Element) const;
 
   // sorts the content of the asymmetric unit or the list if provided
   void Sort(TCAtomPList* list = NULL);
