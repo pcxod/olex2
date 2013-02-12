@@ -1117,7 +1117,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
       }
       for (size_t sc=0; sc < DI->ItemCount(); sc++) {
         size_t ci = LT->ColIndex(DI->GetItem(sc).GetName());
-        if (ci = InvalidIndex) continue;
+        if (ci == InvalidIndex) continue;
         if (Cif_ValidateColumn(DI->GetItem(sc), *(*LT)[i][ci])) {
           Table[i-RowDeleted][j] << DI->GetItem(sc).GetFieldValue("before") <<
             (*LT)[i][ci]->GetStringValue() <<
