@@ -79,8 +79,9 @@ public:
     olxstr name;
     uint64_t size;
     time_t timestamp;
+    FileID() : size(InvalidSize), timestamp(-1) {}
     FileID(const olxstr& _name, uint64_t _size, time_t _timestamp)
-      : name(_name), size(_size), timestamp(_timestamp) { }
+      : name(_name), size(_size), timestamp(_timestamp) {}
     // comparison operator
     bool operator == (const FileID& fi) const {
       return (timestamp == fi.timestamp && size == fi.size && name == fi.name);

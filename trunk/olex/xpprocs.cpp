@@ -2374,7 +2374,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool ReadStyle = !Options.Contains('r');
   bool OverlayXFile = Options.Contains('*');
   if( Cmds.Count() >= 1 && !Cmds[0].IsEmpty() )  {  // merge the file name if a long one...
-    file_n = TXFile::ParseName(TEFile::ExpandRelativePath(Cmds.Text(' ')));
+    file_n = TEFile::ExpandRelativePath(Cmds.Text(' '));
     if( TEFile::UnixPath(file_n.file_name).StartsFrom("http://") )  {
       TUrl url(TEFile::UnixPath(file_n.file_name));
       TStrList files;
@@ -2448,7 +2448,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( OverlayXFile )  {
       sw.start("Loading overlayed file");
       TXFile& xf = FXApp->NewOverlayedXFile();
-      xf.LoadFromFile(TXFile::ComposeName(file_n));
+      xf.LoadFromFile(file_n.ToString());
       FXApp->CreateObjects(false);
       FXApp->AlignOverlayedXFiles();
       FXApp->CenterView(true);
@@ -2551,7 +2551,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TFileHandlerManager::Clear(plStructure);
       }
       sw.start("Loading the XFile");
-      FXApp->LoadXFile(TXFile::ComposeName(file_n));
+      FXApp->LoadXFile(file_n.ToString());
       sw.start("Creating bad reflections and refinement info tables");
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
@@ -2571,7 +2571,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
         if (TEFile::Exists(file_n.file_name)) {
           try {
-            FXApp->LoadXFile(TXFile::ComposeName(file_n));
+            FXApp->LoadXFile(file_n.ToString());
             TBasicApp::NewLogEntry(logError) << "Last operation was not"
               " successful, the INS file is reloaded, please resolve the "
               "conflicts and re-run the process again";

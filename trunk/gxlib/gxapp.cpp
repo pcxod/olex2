@@ -2405,20 +2405,34 @@ TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L)  {
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
-  TKillUndo *undo = new TKillUndo(new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
+  TKillUndo *undo = new TKillUndo(
+    new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
   if( L.IsEmpty() )
     return undo;
-  TXAtomPList XAL;
   for( size_t i=0; i < L.Count(); i++ )  {
     TXAtom* XA = L[i];
-    if( XA->IsDeleted() )  continue;
+    if (XA->IsDeleted())  continue;
     undo->AddSAtom(*XA);
-    for( size_t j=0; j < XA->NodeCount();j++ ) {
-      TXAtom& SH = XA->Node(j);
-      if( SH.IsDeleted() )  continue;
-      if( XA->GetType().GetMr() > 3.5 && SH.GetType() == iHydrogenZ )  {
-        XAL.Add(SH)->SetDeleted(true);
-        undo->AddSAtom(*XAL.GetLast());
+    if (XA->GetType().z > 1) {
+      for (size_t j=0; j < XA->NodeCount();j++) {
+        TXAtom& SH = XA->Node(j);
+        if (SH.IsDeleted())  continue;
+        if (SH.GetType() == iHydrogenZ) {
+          SH.SetDeleted(true);
+          undo->AddSAtom(SH);
+        }
+        else { // go one level deeper
+          for (size_t k=0; k < SH.NodeCount(); k++) {
+            TXAtom& SH1 = SH.Node(k);
+            if (SH1.IsDeleted() || SH1.GetType() != iHydrogenZ) continue;
+            if (SH1.CAtom().GetParentAfixGroup() != NULL &&
+              SH1.CAtom().GetParentAfixGroup()->GetM() != 0)
+            {
+              SH1.SetDeleted(true);
+              undo->AddSAtom(SH1);
+            }
+          }
+        }
       }
     }
     XA->SetDeleted(true);
