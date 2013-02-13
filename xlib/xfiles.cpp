@@ -67,7 +67,7 @@ void TBasicCFile::PostLoad() {
 void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
   FileName.SetLength(0);
   Title.SetLength(0);
-  TXFile::NameArg file_n = TXFile::ParseName(nameToken);
+  TXFile::NameArg file_n(nameToken);
   if (lines.IsEmpty())
     throw TInvalidArgumentException(__OlxSourceInfo, "empty content");
   try  {
@@ -92,7 +92,7 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
 //..............................................................................
 void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
   TStopWatch(__FUNC__);
-  TXFile::NameArg file_n = TXFile::ParseName(_fn);
+  TXFile::NameArg file_n(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
   TStrList L;
   L.LoadFromFile(file_n.file_name);
@@ -231,7 +231,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
 void TXFile::LoadFromString(const TStrList& lines, const olxstr &nameToken) {
   TStopWatch(__FUNC__);
   // this thows an exception if the file format loader does not exist
-  const NameArg file_n = ParseName(nameToken);
+  const NameArg file_n(nameToken);
   const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
   TBasicCFile* Loader = FindFormat(ext);
   bool replicated = false;
@@ -252,7 +252,7 @@ void TXFile::LoadFromString(const TStrList& lines, const olxstr &nameToken) {
 //..............................................................................
 void TXFile::LoadFromFile(const olxstr & _fn) {
   TStopWatch(__FUNC__);
-  const NameArg file_n = ParseName(_fn);
+  const NameArg file_n(_fn);
   const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
   // this thows an exception if the file format loader does not exist
   TBasicCFile* Loader = FindFormat(ext);
@@ -732,48 +732,53 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   return lib;
 }
 //..............................................................................
-TXFile::NameArg TXFile::ParseName(const olxstr& fn)  {
-  TXFile::NameArg rv;
-  rv.file_name = fn;
-  rv.is_index = false;
-  const size_t di = fn.LastIndexOf('.');
+void TXFile::NameArg::Parse(const olxstr& fn)  {
+  this->file_name = fn;
+  this->data_name.SetLength(0);
+  this->is_index = false;
   const size_t hi = fn.LastIndexOf('#');
   const size_t ui = fn.LastIndexOf('$');
-  if( hi == InvalidIndex && ui == InvalidIndex )
-    return rv;
-  if( di != InvalidIndex )  {
-    if( hi != InvalidIndex && ui != InvalidIndex && di < hi && di < ui ) {
+  if (hi == InvalidIndex && ui == InvalidIndex)
+    return;
+  const size_t di = fn.LastIndexOf('.');
+  if (di != InvalidIndex) {
+    if (hi != InvalidIndex && ui != InvalidIndex && di < hi && di < ui) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "only one data ID is allowed");
     }
-    if( hi != InvalidIndex && di < hi )  {
-      rv.data_name = fn.SubStringFrom(hi+1);
-      rv.file_name = fn.SubStringTo(hi);
-      rv.is_index = true;
+    if (hi != InvalidIndex && di < hi) {
+      this->data_name = fn.SubStringFrom(hi+1);
+      this->file_name = fn.SubStringTo(hi);
+      this->is_index = true;
     }
-    else if( ui != InvalidIndex && di < ui )  {
-      rv.data_name = fn.SubStringFrom(ui+1);
-      rv.file_name = fn.SubStringTo(ui);
-      rv.is_index = false;
+    else if (ui != InvalidIndex && di < ui) {
+      this->data_name = fn.SubStringFrom(ui+1);
+      this->file_name = fn.SubStringTo(ui);
+      this->is_index = false;
     }
   }
-  else  {
-    if( hi != InvalidIndex && ui != InvalidIndex ) {
+  else {
+    if (hi != InvalidIndex && ui != InvalidIndex) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "only one data ID is allowed");
     }
-    if( hi != InvalidIndex )  {
-      rv.data_name = fn.SubStringFrom(hi+1);
-      rv.file_name = fn.SubStringTo(hi);
-      rv.is_index = true;
+    if (hi != InvalidIndex) {
+      this->data_name = fn.SubStringFrom(hi+1);
+      this->file_name = fn.SubStringTo(hi);
+      this->is_index = true;
     }
-    else if( ui != InvalidIndex )  {
-      rv.data_name = fn.SubStringFrom(ui+1);
-      rv.file_name = fn.SubStringTo(ui);
-      rv.is_index = false;
+    else if (ui != InvalidIndex) {
+      this->data_name = fn.SubStringFrom(ui+1);
+      this->file_name = fn.SubStringTo(ui);
+      this->is_index = false;
     }
   }
-  return rv;
+}
+//..............................................................................
+olxstr TXFile::NameArg::ToString() const {
+  if (data_name.IsEmpty())
+    return file_name;
+  return olxstr(file_name) << (is_index ? '#' : '$') << data_name;
 }
 //..............................................................................
 olxstr TXFile::LocateHklFile()  {

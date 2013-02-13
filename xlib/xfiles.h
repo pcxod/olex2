@@ -144,17 +144,22 @@ public:
   void LibGetMu(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
+  /* describes a file name with which may carry reference to the dataset in the
+  case of multiple-dataset files
+  */
   struct NameArg  {
     olxstr file_name;
     olxstr data_name;
     bool is_index;
+    NameArg() : is_index(false) {}
+    NameArg(const olxstr &name) { Parse(name); }
+    NameArg &operator = (const olxstr &name) {
+      Parse(name);
+      return *this;
+    }
+    olxstr ToString() const;
+    void Parse(const olxstr& fn);
   };
-  static NameArg ParseName(const olxstr& fn);
-  static olxstr ComposeName(const NameArg& an)  {
-    if( an.data_name.IsEmpty() )
-      return an.file_name;
-    return olxstr(an.file_name) << (an.is_index ? '#' : '$') << an.data_name;
-  }
 };
 //---------------------------------------------------------------------------
 EndXlibNamespace()
