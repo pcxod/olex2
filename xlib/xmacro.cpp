@@ -3303,7 +3303,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
         CLA, // cell attributes,
         true,
         TD->GetFieldValue("coln", "1").ToInt(),
-        TD->GetFieldValue("colsa")
+        TD->GetFieldValue("colsa"),
+        TD->GetFieldValue("across", FalseString()).ToBool()
       ); //bool Format) const  {
       //DT.CreateHTMLList(SL, Tmp, true, false, true);
     }

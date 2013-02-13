@@ -741,7 +741,6 @@
     <ClInclude Include="..\..\..\sdl\settingsfile.h" />
     <ClInclude Include="..\..\..\sdl\sha.h" />
     <ClInclude Include="..\..\..\sdl\singleton.h" />
-    <ClInclude Include="..\..\..\sdl\sls.h" />
     <ClInclude Include="..\..\..\sdl\smart\strbuf.h" />
     <ClInclude Include="..\..\..\sdl\sorted.h" />
     <ClInclude Include="..\..\..\sdl\sortedlist.h" />
