@@ -245,9 +245,6 @@
     <ClInclude Include="..\..\..\sdl\singleton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\sdl\sls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\sdl\sparser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
