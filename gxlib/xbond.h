@@ -27,6 +27,7 @@ private:
   short FDrawStyle;
   static double FDefR;
   static int FDefM;
+  static bool DefSelectable;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
@@ -121,6 +122,8 @@ public:
   static int DefMask();
   static void DefR(double V);
   static double DefR();
+  static bool IsSelectableByDef() { return DefSelectable; }
+  static void SetSelectableByDef(bool v) { DefSelectable=v; }
   short DrawStyle() const {  return FDrawStyle; }
 
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);
