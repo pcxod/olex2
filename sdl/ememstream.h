@@ -85,21 +85,24 @@ public:
 };
 // a simple class to read from a memory array
 class TEMemoryInputStream : public IDataInputStream {
-  // borrowed pointed
-  unsigned char const* Data;
+  // borrowed pointer
+  uint8_t const* Data;
   size_t Length;
   size_t Position;
 public:
   TEMemoryInputStream(const void* data, size_t length) : 
     Data((unsigned char const*)data), 
     Length(length),
-    Position(0) {}
+    Position(0)
+    {}
   
   virtual inline uint64_t GetSize() const {  return Length;  }
   virtual inline uint64_t GetPosition() const {  return Position;  }
   virtual void SetPosition(uint64_t pos)  {
     Position = OlxIStream::CheckSizeT(pos);
   }
+  const uint8_t *GetData() const { return &Data[Position]; }
+  uint64_t Remaining() { return Length-Position; }
   virtual void Read(void* to, size_t count)  {
 #ifdef _DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, Position+count, 0, Length+1);

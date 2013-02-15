@@ -60,7 +60,6 @@ TBasicApp::~TBasicApp()  {
   if (LogFile != NULL)
     delete LogFile;
   Instance = NULL;
-  LeaveCriticalSection();
 }
 //..............................................................................
 olxstr TBasicApp::GetModuleName() {

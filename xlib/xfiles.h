@@ -41,7 +41,9 @@ public:
   virtual void SaveToStrings(TStrList& Strings) = 0;
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
-  // name toke cas specify the dataset index or name
+  // default implementation read strings and calls LoadStrings
+  virtual void LoadFromStream(IInputStream &is, const olxstr& nameToken);
+  // name token can specify the dataset index or name
   void LoadStrings(const TStrList &lines,
     const olxstr &nameToken=EmptyString());
   // only oxm loader is native
@@ -117,8 +119,9 @@ public:
     instructions: Mw, Label, Label1, moiety size, weight, heaviest 
   */
   void Sort(const TStrList& instructions);
-  // nameToken is build is simlar way to the NameArg!
-  void LoadFromString(const TStrList& lines, const olxstr &nameToken);
+  // nameToken is build is similar way to the NameArg!
+  void LoadFromStream(IInputStream &is, const olxstr &nameToken);
+  void LoadFromStrings(const TStrList& lines, const olxstr &nameToken);
   void LoadFromFile(const olxstr& FN);
   void SaveToFile(const olxstr& FN, bool Sort);
   // clears the last loader and the model
