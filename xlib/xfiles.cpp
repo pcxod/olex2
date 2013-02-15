@@ -95,6 +95,7 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
   catch (const TExceptionBase& exc) {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
+  FileName = nameToken;
   PostLoad();
 }
 //..............................................................................
