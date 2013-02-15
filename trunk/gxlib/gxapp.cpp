@@ -123,7 +123,7 @@ public:
     SameFile = false;
     state = 0;
   }
-  ~xappXFileLoad()  {  
+  ~xappXFileLoad()  {
     if( GrowInfo != NULL )
       delete GrowInfo;
     return;  
@@ -4416,11 +4416,19 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
       new TXGlLabel(
         *FGlRender, PLabelsCollectionName)).FromDataItem(labels.GetItem(i));
   }
-
+  bool vis;
   TDataItem *frame_i = item.FindItem("3DFrame");
-  if ( frame_i != NULL)
+  if ( frame_i != NULL) {
+    vis = F3DFrame->IsVisible();
     F3DFrame->FromDataItem(*frame_i);
+    if (vis != F3DFrame->IsVisible())
+      OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), F3DFrame);
+  }
+  vis = FXGrid->IsVisible();
   FXGrid->FromDataItem(item.FindRequiredItem("Grid"), zis);
+  if (vis != FXGrid->IsVisible())
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FXGrid);
+
   FDBasis->FromDataItem(item.FindRequiredItem("DBasis"));
 
   TDataItem *lines = item.FindItem("Lines");
@@ -4442,9 +4450,15 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   FQPeaksVisible = visibility.GetRequiredField("q_atoms").ToBool();
   FQPeakBondsVisible = visibility.GetRequiredField("q_bonds").ToBool();
   CreateObjects(true);
-
+  vis = FDBasis->IsVisible();
   FDBasis->SetVisible(visibility.GetRequiredField("basis").ToBool());
+  if (vis != FDBasis->IsVisible())
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDBasis);
+
+  vis = FDUnitCell->IsVisible();
   FDUnitCell->SetVisible(visibility.GetRequiredField("cell").ToBool());
+  if (vis != FDUnitCell->IsVisible())
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDUnitCell);
 
   const TDataItem* atom_labels = item.FindItem("AtomLabels");
   if( atom_labels != NULL )  {

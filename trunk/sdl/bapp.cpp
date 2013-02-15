@@ -171,8 +171,13 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
 //..............................................................................
 const olxstr& TBasicApp::SetBaseDir(const olxstr& _bd)  {
   olxstr bd = TEFile::ExtractFilePath(olxstr(_bd).Trim('"').Trim('\''));
-  if( !TEFile::Exists(bd) || !TEFile::IsDir(bd) )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Invalid basedir: ") << bd);
+  if (!TEFile::Exists(bd) || !TEFile::IsDir(bd)) {
+    bd = TEFile::ExtractFilePath(TBasicApp::GetModuleName());
+  }
+  if (!TEFile::Exists(bd) || !TEFile::IsDir(bd)) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("Invalid basedir: ").quote() << bd);
+  }
   TBasicApp& inst = GetInstance();
   inst.BaseDir = bd;
   inst.ExeName = TEFile::ExtractFileName(_bd);
