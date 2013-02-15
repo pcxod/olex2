@@ -29,7 +29,9 @@ enum {
   XFILE_UNIQ
 };
 
-TBasicCFile::TBasicCFile() : RefMod(AsymmUnit), AsymmUnit(NULL)  {  
+TBasicCFile::TBasicCFile()
+  : RefMod(AsymmUnit), AsymmUnit(NULL)
+{
   AsymmUnit.SetRefMod(&RefMod);
 }
 //..............................................................................
@@ -62,6 +64,12 @@ void TBasicCFile::PostLoad() {
       }
     }
   }
+}
+//..............................................................................
+void TBasicCFile::LoadFromStream(IInputStream &is, const olxstr& nameToken) {
+  TStrList lines;
+  lines.LoadFromTextStream(is);
+  LoadStrings(lines, nameToken);
 }
 //..............................................................................
 void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
@@ -228,7 +236,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
   TXApp::GetInstance().SetLastSGResult_(EmptyString());
 }
 //..............................................................................
-void TXFile::LoadFromString(const TStrList& lines, const olxstr &nameToken) {
+void TXFile::LoadFromStrings(const TStrList& lines, const olxstr &nameToken) {
   TStopWatch(__FUNC__);
   // this thows an exception if the file format loader does not exist
   const NameArg file_n(nameToken);
@@ -241,6 +249,28 @@ void TXFile::LoadFromString(const TStrList& lines, const olxstr &nameToken) {
   }
   try  {
     Loader->LoadStrings(lines, nameToken);
+  }
+  catch( const TExceptionBase& exc )  {
+    if( replicated )
+      delete Loader;
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+  PostLoad(EmptyString(), Loader, replicated);
+}
+//..............................................................................
+void TXFile::LoadFromStream(IInputStream& in, const olxstr &nameToken) {
+  TStopWatch(__FUNC__);
+  // this thows an exception if the file format loader does not exist
+  const NameArg file_n(nameToken);
+  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
+  TBasicCFile* Loader = FindFormat(ext);
+  bool replicated = false;
+  if( FLastLoader == Loader )  {
+    Loader = (TBasicCFile*)Loader->Replicate();
+    replicated = true;
+  }
+  try  {
+    Loader->LoadFromStream(in, nameToken);
   }
   catch( const TExceptionBase& exc )  {
     if( replicated )
