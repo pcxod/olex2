@@ -50,6 +50,7 @@ TGraphicsStyle* TXBond::FBondParams=NULL;
 TXBond::TStylesClear *TXBond::OnStylesClear=NULL;
 double TXBond::FDefR = -1;
 int TXBond::FDefM = -1;
+bool TXBond::DefSelectable = true;
 //..............................................................................
 TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   TSBond(net),
@@ -57,6 +58,7 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   FDrawStyle(0x0001)
 {
   SetGroupable(true);
+  SetSelectable(DefSelectable);
   Params().Resize(5);
   Params()[4] = 0.8;
   Label = new TXGlLabel(GetParent(), PLabelsCollectionName);
