@@ -1447,9 +1447,40 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   catch(const TExceptionBase& e)  {
     Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
   }
-  q_draw.Unlock();
   XApp.XFile().GetLattice().Init();
   delete XApp.FixHL();
+  // check if any of the H atoms got more than 1 bond!
+  size_t deleted_cnt=0;
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    TCAtom &ca = au.GetAtom(i);
+    if (ca.GetType() == iHydrogenZ) {
+      if (ca.GetParentAfixGroup() != NULL &&
+        ca.GetParentAfixGroup()->GetM() > 0)
+      {
+        size_t attached_cnt=0;
+        for (size_t j=0; j < ca.AttachedSiteCount(); j++) {
+          if (!ca.GetAttachedAtom(j).IsDeleted() &&
+            ca.GetAttachedAtom(j).GetType() != iQPeakZ)
+          {
+            attached_cnt++;
+          }
+        }
+        if (attached_cnt > 1) {
+          TAfixGroup &ag = *ca.GetParentAfixGroup();
+          olxstr glabel;
+          for (size_t gi=0; gi < ag.Count(); gi++)
+            ag[gi].SetDeleted(true);
+          TBasicApp::NewLogEntry(logError) << "Group at " <<
+            ag.GetPivot().GetLabel() << " had invalid connectivity and was "
+            "removed. Please revise your model";
+          deleted_cnt+=ag.Count();
+          ag.Clear();
+        }
+      }
+    }
+  }
+  if (deleted_cnt > 0)
+    XApp.XFile().GetLattice().Init();
 }
 //.............................................................................
 void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options,
