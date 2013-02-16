@@ -7576,8 +7576,8 @@ void XLibMacros::macCalcVol(TStrObjList &Cmds, const TParamList &Options,
   bool normalise = Options.GetBoolOption('n');
   for( size_t i=0; i < xatoms.Count(); i++ )  {
     TSAtomPList atoms;
-    for( size_t j=0; j < atoms[i]->NodeCount(); j++ ) {
-      TSAtom& A = atoms[i]->Node(j);
+    for( size_t j=0; j < xatoms[i]->NodeCount(); j++ ) {
+      TSAtom& A = xatoms[i]->Node(j);
       if( A.IsDeleted() || (A.GetType() == iQPeakZ) )
         continue;
       atoms.Add(A);
