@@ -1893,7 +1893,7 @@ public:
   //...........................................................................
   TTSString& AppendFromStream(IInputStream& ios, size_t len)  {
     T::checkBufferForModification(T::_Length + len+1);
-    ios.Read((void*)&T::SData->Data[T::_Start+T::_Length], len*T::CharSize);
+    ios.Read((void*)&T::SData->Data[T::_Start+T::_Length], len*sizeof(TC));
     T::_Length += len;
     return *this;
   }
@@ -1902,8 +1902,8 @@ public:
     uint32_t code, len, charsize;
     ios.Read(&code, sizeof(uint32_t));
     charsize = ExtractCharSize(code);
-    if( T::CharSize != charsize )  {
-      if( charsize != 0 || T::CharSize == 2 )  {
+    if( sizeof(TC) != charsize )  {
+      if( charsize != 0 || sizeof(TC) == 2 )  {
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
           "incompatible Char size");
       }
@@ -1925,14 +1925,14 @@ public:
       }
     }
     if( T::SData == NULL )  T::SData = new struct T::Buffer(T::_Length);
-    ios.Read((void*)T::SData->Data, T::_Length*T::CharSize);
+    ios.Read((void*)T::SData->Data, T::_Length*sizeof(TC));
     return *this;
   }
   //...........................................................................
   void ToBinaryStream(IOutputStream& os) const {
-    uint32_t len = (uint32_t)(CodeLength(T::CharSize, T::_Length));
+    uint32_t len = (uint32_t)(CodeLength(sizeof(TC), T::_Length));
     os.Write(&len, sizeof(uint32_t));
-    os.Write((void*)T::Data(), T::_Length*T::CharSize);
+    os.Write((void*)T::Data(), T::_Length*sizeof(TC));
   }
   //...........................................................................
   static TTSString CharStr(TC ch, size_t count)  {

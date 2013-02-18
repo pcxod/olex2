@@ -176,6 +176,27 @@ public:
   //...........................................................................
   RegistryType& GetRegistry()  {  return data->registry;  }
   //...........................................................................
+  ConstPtrList<TSAtom> FindAll(const TCAtom &a) const {
+    TSAtomPList rv;
+    for (size_t i=0; i < data->registry.Length1(); i++) {
+      for (size_t j=0; j < data->registry.Length2(); j++) {
+        for (size_t k=0; k < data->registry.Length3(); k++) {
+          TArrayList<TSAtomPList*>* aum_slice = data->registry.Data[i][j][k];
+          if (aum_slice == NULL) continue;
+          for (size_t l=0; l < aum_slice->Count(); l++) {
+            TSAtomPList *au_slice = (*aum_slice)[l];
+            if (au_slice == NULL) continue;
+            if (a.GetId() >= au_slice->Count())
+              throw TFunctionFailedException(__OlxSourceInfo, "assert");
+            if (!(*au_slice)[a.GetId()]->IsDeleted())
+              rv.Add((*au_slice)[a.GetId()]);
+          }
+        }
+      }
+    }
+    return rv;
+  }
+  //...........................................................................
   TSAtom* Find(const TSAtom::Ref& ref) const {
     if( data == NULL )  return NULL;
     const vec3i t = smatd::GetT(ref.matrix_id);

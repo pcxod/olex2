@@ -155,6 +155,10 @@ public:
           xa.CAtom().SetQPeak(1.0);
         gxapp.XFile().GetLattice().UpdateConnectivity();
         gxapp.UpdateDuplicateLabels();
+        if (TXApp::DoUseSafeAfix()) {
+          gxapp.GetUndo().Push(
+            gxapp.XFile().GetLattice().ValidateHGroups(true, true));
+        }
       }
       else  {  // do selection then
         UpdateSelectionCrds();

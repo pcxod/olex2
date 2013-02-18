@@ -170,7 +170,7 @@ public:
   inline void PackBonds()  {  Bonds.Pack();  } 
   inline void ClearBonds()  {  Bonds.Clear();  }
 
-  inline void SetCapacity(size_t v)  {  
+  inline void SetCapacity(size_t v)  {
     Nodes.SetCapacity(v);  
     Bonds.SetCapacity(v);  
   }

@@ -28,6 +28,8 @@ TXApp::TXApp(const olxstr &basedir, bool)
   min_hbond_angle_i = false;
   preserve_fvars = false;
   preserve_fvars_i = false;
+  safe_afix = true;
+  safe_afix_i = false;
 }
 //..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
@@ -215,14 +217,14 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       else if( Labl.Length() < 3 && parts.Count() > 1 )
         Labl << (char)('a'+i);  // part ID
       if( al.Count() > 1 )
-        Labl << (char)('a' + lablInc++);      
+        Labl << (char)('a' + lablInc++);
       if( CheckLabel )  {
         TCAtom* CA;
         while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
           if( CA == &al[j]->CAtom() || CA->IsDeleted() || CA->GetTag() < 0 )
             break;
           Labl = al[j]->GetType().symbol + Name;
-          if( Labl.Length() >= 4 )  
+          if( Labl.Length() >= 4 )
             Labl.SetLength(3);
           else if( Labl.Length() < 3 && parts.Count() > 1 )
             Labl << (char)('a'+i);
@@ -230,7 +232,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
           if( next_ch > 'z' )
             Labl = CA->GetParent()->CheckLabel(NULL, Labl);
           else
-            Labl << next_ch;      
+            Labl << next_ch;
         }
       }
       if( al[j]->GetLabel() != Labl )  {
@@ -872,6 +874,18 @@ bool TXApp::DoPreserveFVARs() {
     .FindValue("preserve_fvars", FalseString()).ToBool();
     a.preserve_fvars_i = true;
     return a.preserve_fvars;
+  }
+}
+//..............................................................................
+bool TXApp::DoUseSafeAfix() {
+  TXApp &a = GetInstance();
+  if (a.safe_afix_i)
+    return a.safe_afix;
+  else {
+    a.safe_afix = TBasicApp::GetInstance().GetOptions()
+    .FindValue("safe_afix", TrueString()).ToBool();
+    a.safe_afix_i = true;
+    return a.safe_afix;
   }
 }
 //..............................................................................

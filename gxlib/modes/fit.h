@@ -201,6 +201,10 @@ public:
       gxapp.GetUndo().Push(undo);
       undo = NULL;
     }
+    if (TXApp::DoUseSafeAfix()) {
+      gxapp.GetUndo().Push(
+        gxapp.XFile().GetLattice().ValidateHGroups(true, true));
+    }
   }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {

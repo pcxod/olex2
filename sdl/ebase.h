@@ -98,6 +98,8 @@ template <typename T> T *olx_realloc(T *a, size_t sz) {
   return (T*)olx_realloc_(a, sz*sizeof(T));
 }
 template <typename T> void olx_free(T *a) {  if( a != NULL )  free(a);  }
+template <typename T> void olx_del_obj(T *a) { if (a != NULL) delete a;  }
+template <typename T> void olx_del_arr(T *a) { if (a != NULL) delete [] a; }
 template <typename T> T *olx_memcpy(T *dest, const T *src, size_t sz) {
   return (T *)memcpy(dest, src, sz*sizeof(T));
 }
@@ -107,7 +109,6 @@ template <typename T> T *olx_memmove(T *dest, const T *src, size_t sz) {
 // string base
 template <class T> class TTIString {
 public:
-  static const unsigned short CharSize;
   struct Buffer  {
     T *Data;
     unsigned int RefCnt;
@@ -153,7 +154,7 @@ protected:
     }
     else if( SData->RefCnt == 1 && _Start != 0 )  {
       if( _Length != 0 )
-        memmove(SData->Data, &SData->Data[_Start], _Length*CharSize);
+        memmove(SData->Data, &SData->Data[_Start], _Length*sizeof(T));
       _Start = 0;
     }
     if( SData->Length < newSize )
@@ -174,7 +175,7 @@ public:
   // might not have '\0' char, to be used with Length or RawLen (char count)
   T * raw_str() const { return ((SData == NULL) ? NULL : &SData->Data[_Start]);  }
   // length in bytes
-  size_t RawLen() const { return _Length*CharSize;  }
+  size_t RawLen() const {  return _Length*sizeof(T);  }
   // length in items
   size_t Length() const { return _Length;  }
   // for internal: use with caution!
@@ -223,7 +224,6 @@ public:
   template <typename,typename> friend class TTSString;
 };
 
-template <typename T> const unsigned short TTIString<T>::CharSize = sizeof(T);
 typedef TTIString<olxch> TIString;
 typedef TTIString<char> TICString;
 typedef TTIString<wchar_t> TIWString;
