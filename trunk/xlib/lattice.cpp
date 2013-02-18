@@ -1511,16 +1511,29 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         }
       }
     }
-    if( !parts.IsEmpty() )  {  // here we go..
+    if (!parts.IsEmpty()) {  // here we go..
       TTypeList<TCAtomPList> gen_atoms;
       ProcessingAtoms.Remove(atom);
-      for( size_t i=0; i < parts.Count(); i++ )  {
-        _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i],
+      if (parts.Count() > 1) {
+        for (size_t i=0; i < parts.Count(); i++) {
+          _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i],
+            &gen_atoms.AddNew());
+          TCAtomPList& gen = gen_atoms.GetLast();
+          for (size_t j=0; j < gen.Count(); j++) {
+            gen[j]->SetPart(parts[i]);
+            rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i]);
+          }
+        }
+      }
+      else { // special case with just a single part
+        _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, 0,
           &gen_atoms.AddNew());
         TCAtomPList& gen = gen_atoms.GetLast();
-        for( size_t j=0; j < gen.Count(); j++ )  {
-          gen[j]->SetPart(parts[i]);
-          rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i]);
+        double soccu = (olx_abs(occu[0]) > 5 ? -occu[0] : 1-occu[0]);
+        int spart = (parts[0] == 2 ? 1 : olx_abs(parts[0])+1);
+        for (size_t j=0; j < gen.Count(); j++) {
+          gen[j]->SetPart(spart);
+          rm->Vars.SetParam(*gen[j], catom_var_name_Sof, soccu);
         }
       }
       cg.AnalyseMultipart(AE, gen_atoms);
