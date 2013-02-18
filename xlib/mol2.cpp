@@ -90,11 +90,14 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
       TStrList toks(line, ' ');
       if( toks.Count() < 6 )  continue;
       vec3d crd(toks[2].ToDouble(), toks[3].ToDouble(), toks[4].ToDouble());
-      if( XElementLib::IsElement(toks[5]) )  {
+      TStrList ent(toks[5], '.');
+      cm_Element *elm = XElementLib::FindBySymbol(ent[0]);
+      if (elm != NULL) {
         TCAtom& CA = GetAsymmUnit().NewAtom();
         CA.ccrd() = crd;
-        CA.SetLabel( (toks[5] << GetAsymmUnit().AtomCount()+1) );
-        atoms(toks[0].ToInt(), &CA); 
+        CA.SetLabel(toks[1], false);
+        CA.SetType(*elm);
+        atoms(toks[0].ToInt(), &CA);
       }
       continue;
     }
