@@ -484,6 +484,10 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
         olxstr("invalid syntax: ") << Cmds.Text(' '));
     }
   }
+  if (TXApp::DoUseSafeAfix()) {
+    app.GetUndo().Push(
+      app.XFile().GetLattice().ValidateHGroups(true, true));
+  }
 }
 //.............................................................................
 void GXLibMacros::macQual(TStrObjList &Cmds, const TParamList &Options,

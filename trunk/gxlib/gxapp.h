@@ -13,7 +13,6 @@
 #include "xapp.h"
 #include "etable.h"
 #include "symmlib.h"
-#include "undo.h"
 #include "bitarray.h"
 #include "xfader.h"
 #include "glmouse.h"
@@ -150,7 +149,6 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   are visible, also considers H, and Q bonds special handling
   */
   void _syncBondsVisibility();
-  TUndoStack UndoStack;
   class TStateRegistry *States;
   TStrList TextureNames;
 public:
@@ -218,7 +216,6 @@ public:
   AtomIterator GetAtoms() const {  return AtomIterator(*this);  }
   BondIterator GetBonds() const {  return BondIterator(*this);  }
   PlaneIterator GetPlanes() const {  return PlaneIterator(*this);  }
-  TUndoStack &GetUndo() { return UndoStack; }
 protected:
   TGlRenderer* FGlRender;
   TXFader* Fader;
@@ -347,8 +344,7 @@ protected:
     throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
   }
 public:
-  /* stores groups beforehand abd restores afterwards, also considers overlayed
-  files
+  /* considers overlayed files
   */
   void UpdateConnectivity();
   size_t stateStructureVisible,
@@ -641,9 +637,11 @@ protected:
   void FillXBondList(TXBondPList& res, TXBondPList* providedBonds);
 public:
   void RestoreSelection();
-  TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels, bool ClearSelection);
+  TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels,
+    bool ClearSelection);
   TUndoData* Name(TXAtom& Atom, const olxstr& Name, bool CheckLabels);
-  TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To, bool CheckLabels);
+  TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To,
+    bool CheckLabels);
 
   void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort,
     int precision=3, bool cart=false);
@@ -766,8 +764,6 @@ public:     void CalcProbFactor(float Prob);
 // X interface
   TUndoData* DeleteXAtoms(TXAtomPList& L);
   TUndoData* DeleteXObjects(const AGDObjList& L);
-  /* function undoes deleted atoms bonds and planes */
-  void undoDelete(TUndoData *data);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   /* function undoes hiding of objects */

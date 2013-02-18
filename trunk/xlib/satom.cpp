@@ -159,7 +159,7 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   }
 }
 //..............................................................................
-void TSAtom::UpdateMatrix(const smatd *M) {  
+void TSAtom::UpdateMatrix(const smatd *M) {
   if (M->IsFirst() || M->GetId() < Matrix->GetId())
     Matrix = M;
 }
@@ -186,4 +186,6 @@ TSAtom::Ref TSAtom::GetMinRef(const TCAtom &a, const smatd &generator) {
   }
   return Ref(a.GetId(), m_id);
 }
+//..............................................................................
+TLattice &TSAtom::GetParent() const { return GetNetwork().GetLattice(); }
 //..............................................................................

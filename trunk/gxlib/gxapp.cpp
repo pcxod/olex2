@@ -88,14 +88,6 @@ int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-// UNDO DATA CLASSES
-class TKillUndo: public TUndoData  {
-public:
-  TTypeList<TSAtom::Ref> SAtomIds;
-  TKillUndo(IUndoAction *action):TUndoData(action)  {  }
-  virtual ~TKillUndo()  {  }
-  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCopy(SA.GetRef());  }
-};
 class THideUndo: public TUndoData  {
 public:
   AGDObjList Objects;
@@ -2346,14 +2338,6 @@ TXAtom& TGXApp::AddAtom(TXAtom* templ)  {
   return A;
 }
 //..............................................................................
-void TGXApp::undoDelete(TUndoData *data)  {
-  TKillUndo *undo = dynamic_cast<TKillUndo*>(data);
-  TLattice& latt = XFile().GetLattice();
-  for( size_t i=0; i < undo->SAtomIds.Count(); i++ )
-    latt.RestoreAtom(undo->SAtomIds[i]);
-  UpdateConnectivity();
-}
-//..............................................................................
 void TGXApp::undoName(TUndoData *data)  {
   TNameUndo *undo = dynamic_cast<TNameUndo*>(data);
   const TAsymmUnit& au = XFile().GetAsymmUnit();
@@ -2405,31 +2389,32 @@ TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L)  {
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
-  TKillUndo *undo = new TKillUndo(
-    new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
-  if( L.IsEmpty() )
-    return undo;
+  if (L.IsEmpty()) return NULL;
+  TSAtomPList deleted;
+  bool safe_afix = TXApp::DoUseSafeAfix();
   for( size_t i=0; i < L.Count(); i++ )  {
     TXAtom* XA = L[i];
     if (XA->IsDeleted())  continue;
-    undo->AddSAtom(*XA);
+    deleted.Add(XA);
     if (XA->GetType().z > 1) {
       for (size_t j=0; j < XA->NodeCount();j++) {
         TXAtom& SH = XA->Node(j);
-        if (SH.IsDeleted())  continue;
+        if (SH.IsDeleted() || SH.GetType() == iQPeakZ)
+          continue;
         if (SH.GetType() == iHydrogenZ) {
           SH.SetDeleted(true);
-          undo->AddSAtom(SH);
+          deleted.Add(SH);
         }
-        else { // go one level deeper
+        else if (safe_afix) { // go one level deeper
           for (size_t k=0; k < SH.NodeCount(); k++) {
             TXAtom& SH1 = SH.Node(k);
             if (SH1.IsDeleted() || SH1.GetType() != iHydrogenZ) continue;
             if (SH1.CAtom().GetParentAfixGroup() != NULL &&
-              SH1.CAtom().GetParentAfixGroup()->GetM() != 0)
+              SH1.CAtom().GetParentAfixGroup()->GetM() != 0 &&
+              TNetwork::IsBondAllowed(XA->CAtom(), SH1.CAtom()))
             {
               SH1.SetDeleted(true);
-              undo->AddSAtom(SH1);
+              deleted.Add(SH1);
             }
           }
         }
@@ -2437,9 +2422,21 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
     }
     XA->SetDeleted(true);
   }
+  //CenterView();
+  TUndoData *undo = new TDeleteUndo(NULL);
+  olxdict<const TLattice *, TDeleteUndo *, TPointerComparator> lud;
+  for (size_t i=0; i < deleted.Count(); i++) {
+    TDeleteUndo *du = lud.Find(&deleted[i]->GetParent(), NULL);
+    if (du == NULL) {
+      lud(&deleted[i]->GetParent(),
+        (du=new TDeleteUndo(
+          UndoAction::New(&deleted[i]->GetParent(), &TLattice::undoDelete))));
+      undo->AddAction(du);
+    }
+    du->AddSAtom(*deleted[i]);
+  }
   GetSelection().Clear();
   UpdateConnectivity();
-  //CenterView();
   return undo;
 }
 //..............................................................................

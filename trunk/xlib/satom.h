@@ -112,7 +112,7 @@ public:
   vec3d const& crd() const {  return FCenter;  }
   // pointers comparison!
   bool operator == (const TSAtom& a) const {  return this == &a;  }
-
+  class TLattice &GetParent() const;
   void SortNodesByDistanceAsc()  {
     QuickSorter::SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceAsc);
   }

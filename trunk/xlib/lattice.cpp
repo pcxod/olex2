@@ -1369,8 +1369,10 @@ void TLattice::CompaqClosest()  {
         TSAtom& fb = netb->Node(k);
         if( fb.IsDeleted() )  continue;
         fb.CAtom().ccrd() = *transform * fb.CAtom().ccrd();
-        if( fb.CAtom().GetEllipsoid() != NULL )
-          *fb.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(transform->GetContainerId(), fb.CAtom().GetId());
+        if( fb.CAtom().GetEllipsoid() != NULL ) {
+          *fb.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(
+          transform->GetContainerId(), fb.CAtom().GetId());
+        }
       }
       // this needs to be done if any one fragment is transformed multiple times...
       GetUnitCell().UpdateEllipsoids();
@@ -1443,7 +1445,7 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
       for( size_t j=0; j < fragAtoms[i]->GetNetwork().NodeCount(); j++ )  {
         TSAtom& SA = fragAtoms[i]->GetNetwork().Node(j);
         SA.CAtom().ccrd() = transform * SA.CAtom().ccrd();
-        if( SA.CAtom().GetEllipsoid() != NULL ) 
+        if( SA.CAtom().GetEllipsoid() != NULL )
           SA.CAtom().GetEllipsoid()->Mult(etm, J, Jt);
       }
     }
@@ -2542,6 +2544,61 @@ void TLattice::SetDeltaI(double v)  {
     GetUnitCell().FindSymmEq();
     UpdateConnectivity();
   }
+}
+//..............................................................................
+void TLattice::undoDelete(TUndoData *data)  {
+  TDeleteUndo *undo = dynamic_cast<TDeleteUndo*>(data);
+  for (size_t i=0; i < undo->SAtomIds.Count(); i++)
+    RestoreAtom(undo->SAtomIds[i]);
+  UpdateConnectivity();
+}
+//..............................................................................
+TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
+  TAsymmUnit &au = GetAsymmUnit();
+  TCAtomPList deleted;
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    TCAtom &ca = au.GetAtom(i);
+    if (ca.GetType() == iHydrogenZ) {
+      if (ca.GetParentAfixGroup() != NULL &&
+        ca.GetParentAfixGroup()->GetM() > 0)
+      {
+        size_t attached_cnt=0;
+        for (size_t j=0; j < ca.AttachedSiteCount(); j++) {
+          if (!ca.GetAttachedAtom(j).IsDeleted() &&
+            ca.GetAttachedAtom(j).GetType() != iQPeakZ)
+          {
+            attached_cnt++;
+          }
+        }
+        if (attached_cnt > 1) {
+          TAfixGroup &ag = *ca.GetParentAfixGroup();
+          olxstr glabel;
+          for (size_t gi=0; gi < ag.Count(); gi++) {
+            deleted.Add(ag[gi])->SetDeleted(true);
+          }
+          if (report) {
+            TBasicApp::NewLogEntry(logError) << "Group at " <<
+              ag.GetPivot().GetLabel() << " had invalid connectivity and was "
+              "removed. Please revise your model";
+          }
+          ag.Clear();
+        }
+      }
+    }
+  }
+  if (deleted.IsEmpty()) return NULL;
+  TDeleteUndo *du = new TDeleteUndo(
+    UndoAction::New(this, &TLattice::undoDelete));
+  for (size_t i=0; i < deleted.Count(); i++) {
+    TSAtomPList dl = Objects.atomRegistry.FindAll(*deleted[i]);
+    du->SAtomIds.SetCapacity(du->SAtomIds.Count()+dl.Count());
+    for (size_t j=0; j < dl.Count(); j++)
+      du->AddSAtom(*dl[j]);
+  }
+  if (reinit) {
+    Init();
+  }
+  return du;
 }
 //..............................................................................
 //..............................................................................

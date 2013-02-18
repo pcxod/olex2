@@ -84,7 +84,7 @@ protected:
     if( SData != NULL )  {
       if( SData->RefCnt == 1 )  { // owed by this object
         SData->SetCapacity(_Length);
-        memcpy(SData->Data, bf, _Length*CharSize);
+        olx_memcpy(SData->Data, bf, _Length);
       }
       else  {
         SData->RefCnt--;

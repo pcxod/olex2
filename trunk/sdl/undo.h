@@ -49,7 +49,8 @@ public:
   TUndoData(IUndoAction* a) { UndoAction = a; }
   virtual ~TUndoData();
   virtual void Undo() {
-    UndoAction->Execute(this);
+    if (UndoAction)
+      UndoAction->Execute(this);
     for (size_t i=0; i < UndoList.Count(); i++)
       UndoList[i]->Undo();
   }
@@ -63,7 +64,7 @@ template <class BaseClass> class TUndoActionImplMF
   BaseClass *BC;
   void (BaseClass::*MFunc)(TUndoData*);
 public:
-  TUndoActionImplMF( BaseClass* base, void (BaseClass::*f)(TUndoData*) )
+  TUndoActionImplMF(BaseClass* base, void (BaseClass::*f)(TUndoData*))
     : BC(base), MFunc(f)
   {}
   virtual void Execute(TUndoData *Data) { (BC->*MFunc)(Data); }
@@ -72,10 +73,22 @@ public:
 class TUndoActionImplSF: public IUndoAction {
   void (*SFunc)(TUndoData*);
 public:
-  TUndoActionImplSF(void (*f)(TUndoData*) )
+  TUndoActionImplSF(void (*f)(TUndoData*))
     : SFunc(f)
   {}
   virtual void Execute(TUndoData *Data) { (*SFunc)(Data); }
+};
+
+struct UndoAction {
+  template <class base_t>
+  static TUndoActionImplMF<base_t> *
+  New(base_t *base, void (base_t::*f)(TUndoData*)) {
+    return new TUndoActionImplMF<base_t>(base, f);
+  }
+
+  static TUndoActionImplSF *New(void (*f)(TUndoData*)) {
+    return new TUndoActionImplSF(f);
+  }
 };
 
 EndEsdlNamespace()
