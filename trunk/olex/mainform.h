@@ -284,6 +284,7 @@ protected:
   void OnDrawStyleChange(wxCommandEvent& event);
   void OnDrawQChange(wxCommandEvent& event);
   void OnViewAlong(wxCommandEvent& event);
+  void OnCloseWindow(wxCloseEvent &evt);
   void OnInternalIdle();
 
   friend class TObjectVisibilityChange;

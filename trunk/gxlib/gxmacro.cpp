@@ -3034,15 +3034,8 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         }
         TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
         TSAtomPList atomsToTransform;
-        TBasicApp::NewLogEntry() << "Matching pairs:";
-        olxstr tmp('=');
-        for( size_t i=0; i < res.Count(); i++ )  {
-          tmp << '{' << netA.Node( res[i].GetA()).GetLabel() <<
-            ',' << netB.Node(res[i].GetB()).GetLabel() << '}';
-
-          if( atomsToTransform.IndexOf(
-                &netB.Node(res[i].GetB())) == InvalidIndex )
-          {
+        for (size_t i=0; i < res.Count(); i++) {
+          if (!atomsToTransform.Contains(&netB.Node(res[i].GetB()))) {
             atomsToTransform.Add(netB.Node(res[i].GetB()));
             satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()),
               &netB.Node(res[i].GetB()));
@@ -3100,21 +3093,38 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         // execute callback function
         GXLibMacros_CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
         // ends execute callback
-        if( align )  {
+        { // print pairs
+          mat3d m;
+          QuaternionToMatrix(align_info.align_out.quaternions[0], m);
+          vec3d center = align_info.align_out.center_b;
+          if (align_info.inverted) {
+            m *= -1;
+            center *= -1;
+          }
+          TBasicApp::NewLogEntry() << "Matching pairs:";
+          for( size_t i=0; i < res.Count(); i++ )  {
+            vec3d v = au.Orthogonalise(netB.Node(res[i].GetB()).ccrd());
+            v = (v - center)*m + align_info.align_out.center_a;
+            v -= au.Orthogonalise(netA.Node(res[i].GetA()).ccrd());
+            TBasicApp::NewLogEntry() << '{' <<
+              netA.Node(res[i].GetA()).GetLabel() << ',' <<
+              netB.Node(res[i].GetB()).GetLabel() << "}: " <<
+              olxstr::FormatFloat(3, v.Length()) << "A";
+          }
+        }
+        if (align)  {
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
           app.UpdateBonds();
           app.CenterView();
         }
-
-        TBasicApp::NewLogEntry() << tmp;
         if( subgraph )  {
           sk.Add( res[0].GetB() );
           res.Clear();
-          while( atoms[0]->GetNetwork().IsSubgraphOf(
-                   atoms[1]->GetNetwork(), res, sk) )
+          while (atoms[0]->GetNetwork().IsSubgraphOf(
+                 atoms[1]->GetNetwork(), res, sk))
           {
-            sk.Add( res[0].GetB() );
-            tmp = '=';
+            sk.Add(res[0].GetB());
+            olxstr tmp = '=';
             for( size_t i=0; i < res.Count(); i++ )  {
               tmp << '{' <<
                 atoms[0]->GetNetwork().Node(res[i].GetA()).GetLabel() << ',' <<
