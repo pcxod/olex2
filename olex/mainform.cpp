@@ -218,6 +218,7 @@ public:
 BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_SIZE(TMainForm::OnSize)
   EVT_MOVE(TMainForm::OnMove)
+  EVT_CLOSE(TMainForm::OnCloseWindow)
   EVT_MENU(ID_FILE0, TMainForm::OnFileOpen)
   EVT_MENU(ID_FILE0+1, TMainForm::OnFileOpen)
   EVT_MENU(ID_FILE0+2, TMainForm::OnFileOpen)
@@ -3638,6 +3639,30 @@ void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
   catch (const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
   }
+}
+//..............................................................................
+void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
+  olxstr v = FXApp->GetOptions().FindValue("confirm_on_close", FalseString());
+  if (!v.IsBool()) v = FalseString();
+  if (v.ToBool()) {
+    wxMessageDialog* dialog = new wxMessageDialog(this,
+      olxT("Would you like to exit?"), olxT("Olex2"), wxYES_NO|wxICON_QUESTION);
+    int rv = dialog->ShowModal();
+    dialog->Destroy();
+    switch (rv) {
+    case wxID_YES:
+      Destroy();
+      break;
+    case wxID_NO:
+      if (!evt.CanVeto())
+        Destroy();
+      else
+        evt.Veto();
+      break;
+    }
+  }
+  else 
+    Destroy();
 }
 //..............................................................................
 //..............................................................................
