@@ -4808,7 +4808,7 @@ bool TGXApp::ToClipboard(const olxstr &text) const {
 #elif defined(__WIN32__)
   if (OpenClipboard(NULL)) {
     EmptyClipboard();
-    HGLOBAL cd = GlobalAlloc(GMEM_MOVEABLE, text.RawLen()+1);
+    HGLOBAL cd = GlobalAlloc(GMEM_MOVEABLE, text.RawLen()+sizeof(olxch));
     if (!cd) {
       CloseClipboard();
       return false;
@@ -4825,6 +4825,7 @@ bool TGXApp::ToClipboard(const olxstr &text) const {
 #endif
       cd);
     CloseClipboard();
+    return true;
   }
   else {
     return false;

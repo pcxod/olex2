@@ -1732,6 +1732,23 @@ public:
     return *this;
   }
   //...........................................................................
+  template <typename AC> TTSString& TrimL(AC wht) {
+    if (T::_Length == 0)  return *this;
+    size_t start = 0;
+    while (TTIString<TC>::CharAt(start) == wht && ++start < end)  ;
+    T::_Start += start;
+    T::_Length = (T::_Length + 1 - start);
+    return *this;
+  }
+  //...........................................................................
+  template <typename AC> TTSString& TrimR(AC wht)  {
+    if( T::_Length == 0 )  return *this;
+    size_t end = T::_Length;
+    while (--end > 0 && TTIString<TC>::CharAt(end) == wht)  ;
+    T::_Length = (end + 1);
+    return *this;
+  }
+  //...........................................................................
   bool IsWhiteCharString() const {
     const TC* data = T::Data();
     for( size_t i=0; i < T::_Length; i++ )
