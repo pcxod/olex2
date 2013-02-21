@@ -176,7 +176,7 @@ PyObject* pyTranslate(PyObject* self, PyObject* args)  {
   if( !PythonExt::ParseTuple(args, "w", &str) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
 #ifdef _CONSOLE
-  PythonExt::BuildString(str);
+  return PythonExt::BuildString(str);
 #else
   if (!AOlex2App::HasInstance())
     return PythonExt::BuildString(str);
