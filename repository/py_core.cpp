@@ -8,7 +8,11 @@
 ******************************************************************************/
 
 #include "py_core.h"
+#ifndef _CONSOLE
 #include "olex2app.h"
+#else
+#include "xapp.h"
+#endif
 #include "efile.h"
 #include "settingsfile.h"
 #include "url.h"
@@ -154,6 +158,9 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
+#ifdef _CONSOLE
+  return PythonExt::PyNone();
+#else
   if (!AOlex2App::HasInstance())
     return PythonExt::PyNone();
   TStrList rv(AOlex2App::GetInstance().GetPluginList());
@@ -161,16 +168,21 @@ PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
   for( size_t i=0; i < rv.Count(); i++ )
     PyTuple_SetItem(af, i, PythonExt::BuildString(rv[i]));
   return af;
+#endif
 }
 //..............................................................................
 PyObject* pyTranslate(PyObject* self, PyObject* args)  {
   olxstr str;
   if( !PythonExt::ParseTuple(args, "w", &str) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+#ifdef _CONSOLE
+  PythonExt::BuildString(str);
+#else
   if (!AOlex2App::HasInstance())
     return PythonExt::BuildString(str);
   return PythonExt::BuildString(
     AOlex2App::GetInstance().TranslateString(str));
+#endif
 }
 //..............................................................................
 PyObject* pyDescRef(PyObject* self, PyObject* args)  {
