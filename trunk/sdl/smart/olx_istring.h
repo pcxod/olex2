@@ -1735,7 +1735,7 @@ public:
   template <typename AC> TTSString& TrimL(AC wht) {
     if (T::_Length == 0)  return *this;
     size_t start = 0;
-    while (TTIString<TC>::CharAt(start) == wht && ++start < end)  ;
+    while (TTIString<TC>::CharAt(start) == wht && ++start < T::_Length)  ;
     T::_Start += start;
     T::_Length = (T::_Length + 1 - start);
     return *this;
