@@ -479,19 +479,34 @@ namespace olx_mat  {
   }
 };  //end of namespace olx_mat
 
-template <typename float_type>
-  static void olx_sincos(const float_type ang,
-    float_type *sina, float_type *cosa)
-  {
+static void olx_sincos(double ang, double *sina, double *cosa) {
 #if defined(__WIN32__) && !defined(_WIN64) && !defined(__GNUC__) &&\
   !defined(__BORLANDC__)
   _asm  {
-    FLD  ang
+    FLD  QWORD ptr [ang]
     FSINCOS
     MOV EAX, [cosa]
     FSTP  QWORD PTR [EAX]    // cosine
     MOV EAX, [sina]
     FSTP  QWORD PTR [EAX]    // sine
+    FWAIT
+  }
+#else
+  *sina = sin(ang);
+  *cosa = cos(ang);
+#endif
+}
+
+static void olx_sincos(float ang, float *sina, float *cosa) {
+#if defined(__WIN32__) && !defined(_WIN64) && !defined(__GNUC__) &&\
+  !defined(__BORLANDC__)
+  _asm  {
+    FLD  DWORD ptr [ang]
+    FSINCOS
+    MOV EAX, [cosa]
+    FSTP  DWORD PTR [EAX]    // cosine
+    MOV EAX, [sina]
+    FSTP  DWORD PTR [EAX]    // sine
     FWAIT
   }
 #else

@@ -795,7 +795,7 @@ void OrtDraw::Init(PSWriter& pw)  {
   BondRad = 0.05f*DrawScale;
   SceneOrigin = basis.GetCenter();
   DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
-  ProjMatr = basis.GetMatrix()*DrawScale;  
+  ProjMatr = basis.GetMatrix()*DrawScale;
   UnProjMatr = ProjMatr.Inverse();
 }
 /*
