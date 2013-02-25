@@ -590,7 +590,9 @@ void TMainForm::XApp(Olex2App *XA)  {
     "commands");
   this_InitMacro(AddLabel, , fpThree|fpFive);
 
-  this_InitMacroD(Hide, EmptyString(), fpAny,
+  this_InitMacroD(Hide,
+    "b-also hides all bonds atatched to the selected atoms",
+    fpAny,
     "Hides selected objects or provided atom names (no atom related objects as"
     " bonds are hidden automatically)");
 

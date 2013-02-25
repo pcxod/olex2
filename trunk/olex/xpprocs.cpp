@@ -1080,18 +1080,33 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 0 || Cmds[0].Equalsi("sel") )  {
+  bool ab = Options.GetBoolOption("b");
+  if (Cmds.Count() == 0 || Cmds[0].Equalsi("sel")) {
     AGDObjList Objects;
     TGlGroup& sel = FXApp->GetSelection();
-    for( size_t i=0; i < sel.Count(); i++ )  
-      Objects.Add( sel[i] );
-    FXApp->GetUndo().Push( FXApp->SetGraphicsVisible( Objects, false ) );
+    for (size_t i=0; i < sel.Count(); i++) {
+      if (ab && EsdlInstanceOf(sel[i], TXAtom)) {
+        TXAtom &a = dynamic_cast<TXAtom&>(sel[i]);
+        for (size_t j=0; j < a.BondCount(); j++) {
+          Objects.Add(a.Bond(j));
+        }
+      }
+      Objects.Add(sel[i]);
+    }
+    FXApp->GetUndo().Push(FXApp->SetGraphicsVisible(Objects, false));
     sel.Clear();
   }
-  else  {
-    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h'));
-    if( Atoms.IsEmpty() )  return;
+  else {
+    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true);
+    if (Atoms.IsEmpty()) return;
     AGDObjList go(Atoms, StaticCastAccessor<AGDrawObject>());
+    if (ab) {
+      for (size_t i=0; i < Atoms.Count(); i++) {
+        for (size_t j=0; j < Atoms[i]->BondCount(); j++) {
+          go.Add(Atoms[i]->Bond(j));
+        }
+      }
+    }
     FXApp->GetUndo().Push(FXApp->SetGraphicsVisible(go, false));
   }
 }
