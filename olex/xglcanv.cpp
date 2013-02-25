@@ -173,7 +173,7 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
     FXApp->ResetMouseState();
   }
   FXApp->Draw();
-  FXApp->ResetMouseState();
+  //FXApp->ResetMouseState();
   MouseButton = 0;
 }
 //..............................................................................
