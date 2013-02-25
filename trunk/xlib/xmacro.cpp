@@ -960,21 +960,28 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TBasicApp::NewLogEntry() << Output;
 }
 //.............................................................................
-void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TXApp::GetInstance().XFile().Sort(TStrList(Cmds));
-  TBasicApp::NewLogEntry() << "Atom order after sorting:";
-  olxstr atoms;
+void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TStrList cmds = (Cmds.IsEmpty() ? TStrList("+ml moiety", ' ')
+    : TStrList(Cmds));
+  TXApp::GetInstance().XFile().Sort(cmds);
+  TBasicApp::NewLogEntry() <<
+    "Atom order after sorting (note that H atoms position may be not final "
+    "when they\n are AFIX-ed or have riding U):";
+  olxstr_buf atoms;
+  olxstr ws = ' ';
   const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
   for (size_t i=0; i < au.AtomCount(); i++) {
     olxstr l = au.GetAtom(i).GetResiLabel();
     if (atoms.Length() + l.Length() >= 80) {
-      TBasicApp::NewLogEntry() << atoms;
-      atoms.SetLength(0);
+      TBasicApp::NewLogEntry() << olxstr(atoms);
+      atoms.Clear();
     }
-    atoms << ' ' << au.GetAtom(i).GetResiLabel();
+    atoms << ws << au.GetAtom(i).GetResiLabel();
   }
   if (!atoms.IsEmpty())
-    TBasicApp::NewLogEntry() << atoms;
+    TBasicApp::NewLogEntry() << olxstr(atoms);
 }
 //.............................................................................
 void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
