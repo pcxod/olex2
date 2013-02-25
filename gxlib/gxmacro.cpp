@@ -299,7 +299,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "a-align&;"
     "i-try inversion&;"
     "u-unmatch&;"
-    "esd-calculate esd (works for pairs only)",
+    "esd-calculate esd (works for pairs only)&;"
+    "h-excludes H atoms from matching and the RMSD calculation",
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
@@ -1783,7 +1784,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       fr.SetEdge(6, m[0] + m[1] + m[2]);
       fr.SetEdge(7, m[0] + m[2]);
       fr.UpdateEdges();
-      app.SetGraphicsVisible(&fr, true);
+      app.GetUndo().Push(app.SetGraphicsVisible(&fr, true));
     }
     else {
       TSAtomPList atoms;
@@ -1811,7 +1812,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         fr.SetEdge(7, px+ny+pz);
         fr.UpdateEdges();
         fr.Translate(bs.center);
-        app.SetGraphicsVisible(&fr, true);
+        app.GetUndo().Push(app.SetGraphicsVisible(&fr, true));
       }
     }
   }
@@ -2994,6 +2995,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   else
     app.CenterView();
   app.UpdateBonds();
+  const bool exclude_h = Options.GetBoolOption('h');
   if( Options.Contains("u") )  // do nothing...
     return;
   olex::IOlexProcessor::GetInstance()->callCallbackFunc(
@@ -3037,6 +3039,8 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         for (size_t i=0; i < res.Count(); i++) {
           if (!atomsToTransform.Contains(&netB.Node(res[i].GetB()))) {
             atomsToTransform.Add(netB.Node(res[i].GetB()));
+            if (exclude_h && netB.Node(res[i].GetB()).GetType().z == 1)
+              continue;
             satomp.AddNew<TSAtom*,TSAtom*>(&netA.Node(res[i].GetA()),
               &netB.Node(res[i].GetB()));
           }
@@ -3225,6 +3229,8 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         matched.SetTrue(j);
         TTypeList<AnAssociation2<TSAtom*,TSAtom*> > ap;
         for( size_t k=0; k < res.Count(); k++ ) {
+          if (exclude_h && nets[i]->Node(res[k].GetA()).GetType() == 1)
+            continue;
           ap.AddNew<TSAtom*,TSAtom*>(
             &nets[i]->Node(res[k].GetA()), &nets[j]->Node(res[k].GetB()));
         }
@@ -3235,6 +3241,8 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         ap.Clear();
         nets[i]->DoMatch(*nets[j], res, true, weight_calculator);
         for( size_t k=0; k < res.Count(); k++ ) {
+          if (exclude_h && nets[i]->Node(res[k].GetA()).GetType() == 1)
+            continue;
           ap.AddNew<TSAtom*,TSAtom*>(
             &nets[i]->Node(res[k].GetA()), &nets[j]->Node(res[k].GetB()));
         }

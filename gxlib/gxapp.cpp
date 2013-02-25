@@ -727,7 +727,7 @@ bool TGXApp::IsCellVisible() const {
 }
 //..............................................................................
 void TGXApp::SetCellVisible(bool v)  {
-  SetGraphicsVisible(FDUnitCell, v);
+  GetUndo().Push(SetGraphicsVisible(FDUnitCell, v));
 }
 //..............................................................................
 bool TGXApp::IsBasisVisible() const {
@@ -735,26 +735,30 @@ bool TGXApp::IsBasisVisible() const {
 }
 //..............................................................................
 void TGXApp::SetBasisVisible(bool v)  {
-  SetGraphicsVisible(FDBasis, v);
+  GetUndo().Push(SetGraphicsVisible(FDBasis, v));
 }
 //..............................................................................
 TUndoData* TGXApp::SetGraphicsVisible(AGDrawObject *G, bool v)  {
-  if( v != IsGraphicsVisible(G) )  {
+  THideUndo* undo = new THideUndo(UndoAction::New(this, &TGXApp::undoHide));
+  if (v != IsGraphicsVisible(G)) {
     G->SetVisible(v);
+    undo->AddObject(G);
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), G);
     Draw();
   }
-  return NULL;
+  return undo;
 }
 //..............................................................................
 TUndoData* TGXApp::SetGraphicsVisible(AGDObjList& G, bool v)  {
+  THideUndo* undo = new THideUndo(UndoAction::New(this, &TGXApp::undoHide));
   for( size_t i=0; i < G.Count(); i++ )  {
     if( v == G[i]->IsVisible() )  continue;
     G[i]->SetVisible(v);
-    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), G[i]);
+    undo->AddObject(G[i]);
   }
+  OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), &G);
   Draw();
-  return NULL;
+  return undo;
 }
 //..............................................................................
 olxstr macSel_GetName2(const TSAtom& a1, const TSAtom& a2)  {
@@ -1904,8 +1908,11 @@ void TGXApp::CheckQBonds(TXAtom& XA)  {
   }
 }
 //..............................................................................
-TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, bool CheckLabels)  {
-  TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
+TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To,
+  bool CheckLabels)
+{
+  TNameUndo *undo = new TNameUndo(
+    new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
   for( size_t i=0; i < xatoms.Count(); i++ )  {
     const olxstr oldL = xatoms[i]->GetLabel();
     olxstr newL = xatoms[i]->GetType().symbol;
@@ -2360,7 +2367,7 @@ void TGXApp::undoName(TUndoData *data)  {
 void TGXApp::undoHide(TUndoData *data)  {
   THideUndo *undo = dynamic_cast<THideUndo*>(data);
   for( size_t i=0; i < undo->Objects.Count(); i++ )
-    undo->Objects[i]->SetVisible(true);
+    undo->Objects[i]->SetVisible(!undo->Objects[i]->IsVisible());
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L)  {
@@ -3401,10 +3408,8 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
       NewLogEntry(logError) << "Cannot display empty grid";
       return false;
     }
-    SetGraphicsVisible(FXGrid, true);
   }
-  else
-    SetGraphicsVisible(FXGrid, false);
+  GetUndo().Push(SetGraphicsVisible(FXGrid, false));
   return v;
 }
 //..............................................................................
