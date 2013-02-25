@@ -36,6 +36,10 @@ const short
   smeRotateZ  = 4,
   smeZoom     = 5,
   smeSelect   = 6;
+const short
+  smeMouseUp = 1,
+  smeMouseDown = 2,
+  smeMouseMove = 4;
 // mouse actions
 const short
   glmaTranslateXY  = 1,
@@ -44,29 +48,78 @@ const short
   glmaTranslateZ   = 4,
   glmaZoom         = 5;
 
-typedef void (*MMoveHandler)(class TGlMouse *, int dx, int dy);
+//typedef void (*MMoveHandler)(class TGlMouse *, int dx, int dy);
 
 struct TMouseData: public IEObject  {
   TMouseData() :
-    Button(0), Shift(0),
+    Button(0), Shift(0), Event(0),
     DownX(0), DownY(0), UpX(0), UpY(0),
     Object(NULL)  {}
   virtual ~TMouseData()  {}
   short Button, // mouse button
-    Shift;      // shift state
+    Shift,      // shift state
+    Event;
   short DownX, DownY, // position of mouse when pressed down
-        UpX, UpY,     // position of mous when released
+        UpX, UpY,     // position of mouse when released
         X, Y;         // current position
-  class AGDrawObject* Object;  // object under the mouse
+  class AGDrawObject *Object;  // object under the mouse
+  class TGlMouse *GlMouse;
 };
 
-struct TGlMMoveEvent  {
-  MMoveHandler Handler;
-  short Button, Shift;
-  bool ButtonDown;   // executed only if the mouse button is pressed
-  TGlMMoveEvent()  {
-    Button = Shift = 0;
-    ButtonDown = true;
+struct AMouseEvtHandler {
+  short Button, Shift, Event;
+  AMouseEvtHandler(short btn, short shift, short evt)
+    : Button(btn), Shift(shift), Event(evt)
+  {}
+  virtual ~AMouseEvtHandler() {}
+  virtual bool WillProcess(const TMouseData &md) const {
+    return md.Button == Button && md.Shift == Shift && (md.Event&Event) != 0;
+  }
+  virtual bool operator == (const AMouseEvtHandler &eh) const {
+    bool r = eh.Button == Button && eh.Shift == Shift && (Event&eh.Event) != 0;
+    if (r && Event != eh.Event) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "overlapping mouse handlers");
+    }
+    return r;
+  }
+  virtual void Process(const TMouseData &md) = 0;
+};
+
+struct MouseEvtHandler {
+  struct StaticMouseEvtHandler : public AMouseEvtHandler {
+    void (*sf)(const TMouseData &md);
+    StaticMouseEvtHandler(short btn, short shift, short evt,
+      void (*sf_)(const TMouseData &))
+      : AMouseEvtHandler(btn, shift, evt),
+      sf(sf_)
+    {}
+    virtual void Process(const TMouseData &md) { (*sf)(md); }
+  };
+
+  template <class base_t>
+  struct MemberMouseEvtHandler : public AMouseEvtHandler {
+    void (base_t::*sf)(const TMouseData &md);
+    base_t &instance;
+    MemberMouseEvtHandler(short btn, short shift, short evt,
+      base_t &inst, void (base_t::*sf_)(const TMouseData &))
+      : AMouseEvtHandler(btn, shift, evt),
+      instance(inst),
+      sf(sf_)
+    {}
+    virtual void Process(const TMouseData &md) { (instance.*sf)(md); }
+  };
+
+  static StaticMouseEvtHandler &New(short btn, short shift, short evt,
+      void (*sf)(const TMouseData &))
+  {
+    return *(new StaticMouseEvtHandler(btn, shift, evt, sf));
+  }
+  template <class base_t>
+  static MemberMouseEvtHandler<base_t> &New(short btn, short shift, short evt,
+    base_t &inst, void (base_t::*sf)(const TMouseData &))
+  {
+    return *(new MemberMouseEvtHandler<base_t>(btn, shift, evt, inst, sf));
   }
 };
 
@@ -76,8 +129,8 @@ class TGlMouse: public IEObject {
   TActionQList Actions;
 protected:
   int FSX, FSY;
-  bool FButtonDown, FDblClick;
-  TPtrList<TGlMMoveEvent> Handlers;
+  bool FDblClick;
+  TPtrList<AMouseEvtHandler> Handlers;
   TMouseData MData;
   short Action;
   bool SelectionEnabled,
@@ -85,8 +138,7 @@ protected:
     TranslationEnabled,
     ZoomingEnabled,
     InMode;
-  class TGlGroup* FindObjectGroup(const AGDrawObject& obj);
-  // to distinguish clicking on an object 
+  // to distinguish clicking on an object
   int ClickThreshold;
   void process_command_list(TStrObjList& Cmds, bool enable);
 public:
@@ -98,12 +150,21 @@ public:
   void ResetMouseState();
   bool MouseDown(int x, int y, short Shift, short button);
   bool MouseMove(int x, int y, short Shift);
-  inline TGlRenderer* Parent() const {  return FParent;  }
+  TGlRenderer* Parent() const {  return FParent;  }
   int SX() const {  return FSX;  }
   int SY() const {  return FSY;  }
-  void SetHandler(short Button, short Shift, MMoveHandler MH);
+  bool IsClick(const TMouseData &md) {
+    return (olx_abs(md.DownX-md.UpX) <= ClickThreshold) &&
+          (olx_abs(md.DownY-md.UpY) <= ClickThreshold);
+  }
+  // the pointer created with new is expected (use MouseEvtHandler)
+  AMouseEvtHandler &SetHandler(AMouseEvtHandler &eh);
   // is set by handlers
   void SetAction(short A)  {  Action = A;  }
+  /* find objects group. If selected or the parent group is selected - the
+  selection group is returned
+  */
+  class TGlGroup* FindObjectGroup(const AGDrawObject& obj);
   DefPropBIsSet(SelectionEnabled)
   DefPropBIsSet(RotationEnabled)
   DefPropBIsSet(TranslationEnabled)
@@ -122,12 +183,12 @@ TLibrary *ExportLib(const olxstr &name="mouse");
 };
 
 // default behaviour to mouse events
-void meMoveXY(TGlMouse *, int dx, int dy);
-void meMoveZ(TGlMouse *, int dx, int dy);
-void meRotateXY(TGlMouse *, int dx, int dy);
-void meRotateZ(TGlMouse *, int dx, int dy);
-void meZoom(TGlMouse *, int dx, int dy);
-void meZoomI(TGlMouse *, int dx, int dy);
+void meMoveXY(const TMouseData &);
+void meMoveZ(const TMouseData &);
+void meRotateXY(const TMouseData &);
+void meRotateZ(const TMouseData &);
+void meZoom(const TMouseData &);
+void meZoomI(const TMouseData &);
 
 EndGlNamespace()
 #endif
