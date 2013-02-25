@@ -20,6 +20,17 @@ class TTStrBuffer {
   };
   size_t _Length;
   Entry *Head, *Tail;
+  void _Clear() {
+    Entry* en = Head;
+    while (en != NULL) {
+      Head = en->Next;
+      if (--en->Data->RefCnt == 0)
+        delete en->Data;
+      delete en;
+      en = Head;
+    }
+  }
+
 public:
   TTStrBuffer()  {
     Tail = Head = NULL;
@@ -40,15 +51,12 @@ public:
     this->operator << (v);
   }
 
-  virtual ~TTStrBuffer()  {
-    Entry* en = Head;
-    while( en != NULL )  {
-      Head = en->Next;
-      if( --en->Data->RefCnt == 0 )
-        delete en->Data;
-      delete en;
-      en = Head;
-    }
+  virtual ~TTStrBuffer()  { _Clear(); }
+
+  void Clear()  {
+    _Clear();
+    Head = Tail = NULL;
+    _Length = 0;
   }
 
   TTStrBuffer& operator << (const str_t& v)  {

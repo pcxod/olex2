@@ -1128,7 +1128,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   ValidateRestraintsAtomNames(GetRM());
   UpdateParams();
-  SaveHeader(SL, false, true);
+  SaveHeader(SL, false, false);
   SL.Add(EmptyString());
   int afix = 0, part = 0;
   uint32_t fragmentId = ~0;
