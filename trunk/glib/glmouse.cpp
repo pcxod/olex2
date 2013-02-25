@@ -182,8 +182,6 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
         return true;
     }
   }
-  TBasicApp::NewLogEntry() << (int)MData.Button << ' ' << (int)MData.Shift;
-  this->Parent()->Draw();
   // default handlers...
   for (size_t i=0; i < Handlers.Count(); i++) {
     if (Handlers[i]->WillProcess(MData)) {
