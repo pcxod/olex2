@@ -17,11 +17,7 @@ TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName)
   : AGDrawObject(Render, collectionName)
 {
   AGDrawObject::SetSelectable(false);
-  Materials_.AddCopy(Render.GetSelection().GetGlM())
-    .SetFlags(sglmAmbientF|sglmIdentityDraw);
-  Materials_.AddCopy(Render.GetSelection().GetGlM())
-    .SetFlags(sglmAmbientF|sglmIdentityDraw);
-  Materials_.GetLast().AmbientF = 0xff;
+  Colors_ << 0 << 0xff;
 }
 //..............................................................................
 void TXGlLabels::Create(const olxstr& cName)  {
@@ -36,6 +32,9 @@ void TXGlLabels::Create(const olxstr& cName)  {
   GlP.SetProperties(
     GPC.GetStyle().GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
+  TGraphicsStyle &gs = GPC.GetStyle();
+  Colors_[0] = gs.GetNumParam("processed_color", Colors_[0], true);
+  Colors_[1] = gs.GetNumParam("duplicate_color", Colors_[1], true);
 }
 //..............................................................................
 void TXGlLabels::Clear()  {  Marks.Clear();  }
@@ -51,7 +50,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   const bool zoomed_rendering = Parent.GetExtraZoom() > 1;
   const bool optimise_ati = (Parent.IsATI() && !zoomed_rendering);
   P.SetFont(&Fnt);
-  TGlMaterial& OGlM = P.GetProperties();
+  TGlMaterial GlM = P.GetProperties();
   Fnt.Reset_ATI(optimise_ati);
   const RefinementModel& rm = app.XFile().GetRM();
   for( size_t i=0; ai.HasNext(); i++ )  {
@@ -175,29 +174,31 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     const double Z = Parent.CalcRasterZ(0.001);
     if( !Fnt.IsVectorFont() )  {
       if (!matInited) {
-        if (Marks[i] < Materials_.Count()) {
-          Materials_[Marks[i]].Init(Parent.IsColorStereo());
+        if (Marks[i] < Colors_.Count()) {
+          GlM.AmbientF = Colors_[Marks[i]];
+          GlM.Init(Parent.ForcePlain());
           currentM = Marks[i];
           Fnt.Reset_ATI(optimise_ati);
         }
         else  {
-          P.GetProperties().Init(Parent.IsColorStereo());
+          P.GetProperties().Init(Parent.ForcePlain());
           currentM = -1;
           Fnt.Reset_ATI(optimise_ati);
         }
         matInited = true;
       }
       else  {
-        if (Marks[i] < Materials_.Count()) {
+        if (Marks[i] < Colors_.Count()) {
           if (currentM != Marks[i])  {
-            Materials_[Marks[i]].Init(Parent.IsColorStereo());
+            GlM.AmbientF = Colors_[Marks[i]];
+            GlM.Init(Parent.ForcePlain());
             currentM = Marks[i];
             Fnt.Reset_ATI(optimise_ati);
           }
         }
         else  {
           if (currentM != -1) {
-            P.GetProperties().Init(Parent.IsColorStereo());
+            P.GetProperties().Init(Parent.ForcePlain());
             currentM = -1;
             Fnt.Reset_ATI(optimise_ati);
           }
@@ -223,7 +224,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       Fnt.DrawVectorText(T, Tmp, Parent.GetBasis().GetZoom()/Parent.CalcZoom());
     }
   }
-  OGlM.Init(Parent.IsColorStereo());
+  P.GetProperties().Init(Parent.ForcePlain());
   return true;
 }
 //..............................................................................

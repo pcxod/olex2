@@ -41,7 +41,7 @@ enum LabelMaterialIndex {
 };
 
 class TXGlLabels: public AGDrawObject  {
-  TTypeList<TGlMaterial> Materials_;
+  TArrayList<uint32_t> Colors_;
   TArrayList<uint8_t> Marks;
   short Mode;
   size_t FontIndex;
@@ -68,8 +68,8 @@ public:
   uint8_t GetMaterialIndex(size_t i) const {
     return i < Marks.Count() ? Marks[i] : ~0;
   }
-  TTypeList<TGlMaterial>& Materials() {  return Materials_; }
-  const TTypeList<TGlMaterial>& Materials() const {  return Materials_; }
+  TArrayList<uint32_t> Colors() {  return Colors_; }
+  const TArrayList<uint32_t> Colors() const {  return Colors_; }
   TGlFont& GetFont() const;
 };
 

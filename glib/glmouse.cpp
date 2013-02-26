@@ -59,7 +59,7 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
       if (InMode && button == smbLeft && Shift == 0 && is_click &&
           OnObject.Execute(this, MData.Object))
       {
-        ;
+        res = true;
       }
       else {
         TGlGroup *PColl = FindObjectGroup(*MData.Object);

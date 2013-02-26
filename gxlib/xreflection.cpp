@@ -52,13 +52,13 @@ bool TXReflection::Orient(TGlPrimitive& GlP)  {
   const double scale1 = sqrt(atan(FParams[0])*2/M_PI);
   olx_gl::scale(1.0+scale1*6);
 
-  if( IsSelected() || !GlP.GetProperties().IsTransparent() )  
+  if (IsSelected() || !GlP.GetProperties().IsTransparent())
     return false;
 
-  TGlMaterial GlM = GlP.GetProperties();
-  const double scale = (1.0-FParams[0]);
-  GlM.AmbientF[3] = (float)scale;
-  GlM.Init(Parent.IsColorStereo());
+  //TGlMaterial GlM = GlP.GetProperties();
+  //const double scale = (1.0-FParams[0]);
+  //GlM.AmbientF[3] = (float)scale;
+  //GlM.Init(Parent.ForcePlain());
   return false;
 }
 //..............................................................................

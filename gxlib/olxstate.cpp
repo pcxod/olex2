@@ -63,7 +63,6 @@ AMode::~AMode() {
   TModeRegistry::GetInstance().OnChange.Execute(NULL, &mc);
   //reset the screen cursor
   olex2.processMacro("cursor()");
-  gxapp.ClearLabelMarks();  // hide atom marks if any
 }
 //..............................................................................
 //..............................................................................
@@ -76,6 +75,7 @@ AModeWithLabels::AModeWithLabels(size_t id) : AMode(id)  {
 AModeWithLabels::~AModeWithLabels()  {
   gxapp.SetLabelsVisible(LabelsVisible);
   gxapp.SetLabelsMode(LabelsMode);
+  gxapp.UpdateDuplicateLabels();
 }
 //..............................................................................
 //..............................................................................

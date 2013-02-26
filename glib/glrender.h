@@ -179,6 +179,7 @@ public:
   double GetLineWidth() const {  return LineWidth;  }
   void SetLineWidth(double v);
   float GetExtraZoom() const {  return FZoom;  }
+  bool ForcePlain() const { return IsColorStereo() || IsSelecting(); }
   bool IsColorStereo() const {  return StereoFlag==glStereoColor;  }
   bool IsCrossStereo() const {  return StereoFlag==glStereoCross;  }
   bool IsAnaglyphStereo() const {  return StereoFlag==glStereoAnaglyph;  }

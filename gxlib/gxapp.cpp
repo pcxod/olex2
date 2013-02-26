@@ -538,7 +538,7 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   XLabels.Pack();
 
   for( size_t i=0; i < Lines.Count(); i++ )  {
-    if( Lines[i].IsVisible() )  
+    if( Lines[i].IsVisible() )
       Lines[i].Create();
     else
       Lines.NullItem(i);
@@ -1547,6 +1547,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
       CreateRings();
       CreateObjects(false);
       Disassembling = false;
+      UpdateDuplicateLabels();
     }
     else if( MsgSubId == msiEnter )  {  // backup the selection
       if( ObjectsStored )
@@ -2719,11 +2720,13 @@ void TGXApp::UpdateDuplicateLabels() {
   }
 }
 //..............................................................................
-bool TGXApp::AreLabelsVisible()    const {  return FLabels->IsVisible(); }
+bool TGXApp::AreLabelsVisible()  const {  return FLabels->IsVisible(); }
 //..............................................................................
-void TGXApp::SetLabelsVisible(bool v)    {
+void TGXApp::SetLabelsVisible(bool v)  {
+  bool update = v != FLabels->IsVisible();
   FLabels->SetVisible(v);
-  UpdateDuplicateLabels();
+  if (update)
+    UpdateDuplicateLabels();
 }
 //..............................................................................
 void TGXApp::SetLabelsMode(short lmode)  {  FLabels->SetMode(lmode); }
