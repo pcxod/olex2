@@ -3644,23 +3644,23 @@ void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
 }
 //..............................................................................
 void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
-  olxstr v = FXApp->GetOptions().FindValue("confirm_on_close", FalseString());
+  olxstr v = FXApp->GetOptions().FindValue("confirm_on_close", TrueString());
   if (!v.IsBool()) v = FalseString();
   if (v.ToBool()) {
-    wxMessageDialog* dialog = new wxMessageDialog(this,
-      olxT("Would you like to exit?"), olxT("Olex2"), wxYES_NO|wxICON_QUESTION);
-    int rv = dialog->ShowModal();
-    dialog->Destroy();
-    switch (rv) {
-    case wxID_YES:
+    olxstr rv = TdlgMsgBox::Execute(this, "Would you like to exit Olex2?",
+      "Question",
+      "Always exit without asking",
+      wxYES|wxCANCEL|wxICON_QUESTION, true);
+    bool do_exit = rv.Contains('Y');
+    if (do_exit && rv.Containsi('R'))
+      UpdateUserOptions("confirm_on_close", false);
+    if (exit)
       Destroy();
-      break;
-    case wxID_NO:
+    else {
       if (!evt.CanVeto())
         Destroy();
       else
         evt.Veto();
-      break;
     }
   }
   else 

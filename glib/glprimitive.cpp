@@ -537,4 +537,64 @@ AGOProperties& TGlPrimitive::SetProperties(const AGOProperties& C)  {
   return Props;
 }
 //..............................................................................
+void TGlPrimitive::TriangularFromEdges(const vec3d *edges, size_t count,
+  double sz, const TTypeList<vec3s> &faces)
+{
+  Vertices.SetCount(faces.Count()*3);
+  Normals.SetCount(faces.Count());
+  for (size_t i=0; i < faces.Count(); i++) {
+    vec3d d = edges[faces[i][0]]+edges[faces[i][1]]+edges[faces[i][2]];
+    vec3d n = (edges[faces[i][0]]-edges[faces[i][1]])
+      .XProdVec(edges[faces[i][2]]-edges[faces[i][1]]).Normalise();
+    Vertices[i*3+0] = edges[faces[i][0]]*sz;
+    Vertices[i*3+1] = edges[faces[i][1]]*sz;
+    Vertices[i*3+2] = edges[faces[i][2]]*sz;
+    if (d.DotProd(n) < 1)
+      n *= -1;
+    else
+      Vertices.Swap(i*3+0, i*3+2);
+    Normals[i] = n;
+  }
+}
+//..............................................................................
+void TGlPrimitive::MakeTetrahedron(double sz) {
+  if (GetType() != sgloTriangles)
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid object type");
+  static vec3d edges [] = {
+    vec3d(1, 1, 1),
+    vec3d(-1, -1, 1),
+    vec3d(-1, 1, -1),
+    vec3d(1, -1, -1)
+  };
+  TTypeList<vec3s> faces;
+  faces.AddNew(0, 1, 2);
+  faces.AddNew(0, 1, 3);
+  faces.AddNew(0, 2, 3);
+  faces.AddNew(1, 2, 3);
+  TriangularFromEdges(&edges[0], 4, sz, faces);
+}
+//..............................................................................
+void TGlPrimitive::MakeOctahedron(double sz) {
+  if (GetType() != sgloTriangles)
+    throw TFunctionFailedException(__OlxSourceInfo, "invlaid object type");
+  static vec3d edges [] = {
+    vec3d(1, 0, 0),
+    vec3d(0, 1, 0),
+    vec3d(-1, 0, 0),
+    vec3d(0, -1, 0),
+    vec3d(0, 0, 1),
+    vec3d(0, 0, -1)
+  };
+  TTypeList<vec3s> faces;
+  faces.AddNew(0, 1, 4);
+  faces.AddNew(0, 1, 5);
+  faces.AddNew(0, 3, 4);
+  faces.AddNew(0, 3, 5);
+  faces.AddNew(1, 2, 4);
+  faces.AddNew(1, 2, 5);
+  faces.AddNew(2, 3, 4);
+  faces.AddNew(2, 3, 5);
+  TriangularFromEdges(&edges[0], 6, sz, faces);
+}
+//..............................................................................
 
