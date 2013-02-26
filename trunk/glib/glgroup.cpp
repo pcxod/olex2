@@ -126,7 +126,7 @@ void TGlGroup::InitMaterial() const {
   if( GetParentGroup() != NULL )
     GetParentGroup()->InitMaterial();
   else
-    GlM.Init(Parent.IsColorStereo());
+    GlM.Init(Parent.ForcePlain());
 }
 //..............................................................................
 void TGlGroup::DoDraw(bool SelectPrimitives, bool SelectObjects) const {

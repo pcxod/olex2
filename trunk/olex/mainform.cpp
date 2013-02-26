@@ -3106,15 +3106,6 @@ bool TMainForm::OnMouseDown(int x, int y, short Flags, short Buttons) {
   return false;
 }
 bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
-  if( Modes->GetCurrent() != NULL && Buttons == smbLeft )  {
-    if( (abs(x-MousePositionX) < 3) && (abs(y-MousePositionY) < 3) )  {
-      AGDrawObject *G = FXApp->SelectObject(x, y);
-      if( G != FObjectUnderMouse )
-        return false;
-      if( G != NULL && Modes->GetCurrent()->OnObject(*G) )
-        return true;
-    }
-  }
   // HKL "grid snap on mouse release
   if( FXApp->XFile().HasLastLoader() && FXApp->IsHklVisible() && false )  {
     mat3d cellM, M;
@@ -3654,7 +3645,7 @@ void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
     bool do_exit = rv.Contains('Y');
     if (do_exit && rv.Containsi('R'))
       UpdateUserOptions("confirm_on_close", false);
-    if (exit)
+    if (do_exit)
       Destroy();
     else {
       if (!evt.CanVeto())

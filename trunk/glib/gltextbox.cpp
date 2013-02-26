@@ -83,7 +83,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
       const size_t ii = FBuffer.Count() - i - 1;
       TGlMaterial* GlM = FBuffer.GetObject(ii);
       if( GlM != NULL )  {
-        GlM->Init(Parent.IsColorStereo());
+        GlM->Init(Parent.ForcePlain());
         mat_changed = true;
       }
       olxstr line = FBuffer[ii].SubStringTo(
@@ -100,7 +100,7 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
       T[1] += (olx_max(tr.height, max_h)+LineSpacer)*scale;
     }
     if( mat_changed )
-      P.GetProperties().Init(Parent.IsColorStereo());
+      P.GetProperties().Init(Parent.ForcePlain());
     return true;
   }
   else  {

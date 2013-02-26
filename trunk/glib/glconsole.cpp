@@ -172,9 +172,9 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
         }
         TGlMaterial* GlMP = FBuffer.GetObject(i);
         if( GlMP != NULL ) 
-          GlMP->Init(Parent.IsColorStereo());
+          GlMP->Init(Parent.ForcePlain());
         else
-          OGlM.Init(Parent.IsColorStereo());
+          OGlM.Init(Parent.ForcePlain());
         P.SetString(&line);
         const TTextRect tr = Fnt.GetTextRect(line);
         if( tr.top < 0 )
@@ -186,7 +186,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
         LinesVisible++;
       }
     }
-    OGlM.Init(Parent.IsColorStereo()); // restore the material properties
+    OGlM.Init(Parent.ForcePlain()); // restore the material properties
   }
   if( PromptVisible && !FCommand.IsEmpty() )  {
     Fnt.Reset_ATI(Parent.IsATI());

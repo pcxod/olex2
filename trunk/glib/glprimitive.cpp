@@ -201,7 +201,7 @@ void TGlPrimitive::Compile()  {
 }
 //..............................................................................
 void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
-  if( !Renderer.IsColorStereo() )  {
+  if( !Renderer.ForcePlain() )  {
     olx_gl::pushAttrib(GL_LIGHTING_BIT);
     olx_gl::disable(GL_LIGHTING);
     olx_gl::enable(GL_COLOR_MATERIAL);
@@ -212,12 +212,12 @@ void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
 //..............................................................................
 void TGlPrimitive::EndColorRendering() const {
   olx_gl::end();
-  if( !Renderer.IsColorStereo() )
+  if( !Renderer.ForcePlain() )
     olx_gl::popAttrib();
 }
 //..............................................................................
 void TGlPrimitive::SetColor(const uint32_t& cl) const {
-  if( !Renderer.IsColorStereo() )
+  if( !Renderer.ForcePlain() )
     olx_gl::color((float)OLX_GetRValue(cl)/255, (float)OLX_GetGValue(cl)/255,
       (float)OLX_GetBValue(cl)/255, (float)OLX_GetAValue(cl)/255);
 }
