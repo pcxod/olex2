@@ -3392,7 +3392,7 @@ void TGXApp::SetHklVisible(bool v)  {
     FHklVisible = false;
     CreateXRefs();
   }
-  for( size_t i=0; i < XReflections.Count(); i++ )  
+  for( size_t i=0; i < XReflections.Count(); i++ )
     XReflections[i].SetVisible(v);
   FHklVisible = v;
   FDUnitCell->SetReciprocal(v);
@@ -3409,7 +3409,7 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
       return false;
     }
   }
-  GetUndo().Push(SetGraphicsVisible(FXGrid, false));
+  GetUndo().Push(SetGraphicsVisible(FXGrid, v));
   return v;
 }
 //..............................................................................
