@@ -81,11 +81,11 @@ protected:
   */
   TEBasis* Basis;
   void CreateQuadric();
-  GLuint ListId, 
-         TextureId, 
+  GLuint ListId,
+         TextureId,
          OwnerId,
-         QuadricDrawStyle, 
-         QuadricNormals, 
+         QuadricDrawStyle,
+         QuadricNormals,
          QuadricOrientation;
 
   void SetType(short T);
@@ -139,6 +139,9 @@ protected:
     for (int j=0; j < 4; j++)
       DrawVertex(Vertices[i+j], Colors[i+j], TextureCrds[i+j]);
   }
+  // creates a triangle based polyhedra
+  void TriangularFromEdges(const vec3d *edges, size_t count, double sz,
+    const TTypeList<vec3s> &faces);
 public:
   TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short type);
   ~TGlPrimitive();
@@ -171,12 +174,17 @@ public:
 
   DefPropC(olxstr, Name)
 
-  TGlMaterial& GetProperties() const {  return (TGlMaterial&)AGroupObject::GetProperties();  }
+  TGlMaterial& GetProperties() const {
+    return (TGlMaterial&)AGroupObject::GetProperties();
+  }
   AGOProperties& SetProperties(const AGOProperties& C);
 
   void PrepareColorRendering(uint16_t _begin) const;
   void EndColorRendering() const;
-
+  /* the primitive must have sgloTriangles type. sz = height of the tetrahedron
+  */
+  void MakeTetrahedron(double sz);
+  void MakeOctahedron(double sz);
   static void CallList(TGlPrimitive* GlP)  {
     if( GlP->IsList() )
       olx_gl::callList(GlP->GetListId()); 

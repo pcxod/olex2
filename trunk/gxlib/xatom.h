@@ -48,7 +48,9 @@ const uint32_t
   xatom_SmallSphereId = 3,
   xatom_RimsId        = 4,
   xatom_DisksId       = 5,
-  xatom_CrossId       = 6;
+  xatom_CrossId       = 6,
+  xatom_TetrahedronId = 7
+  ;
 
 class TXAtom: public TSAtom, public AGlMouseHandlerImp  {
 public:
@@ -64,7 +66,9 @@ private:
     SmallSphereIndex,
     RimsIndex,
     DisksIndex,
-    CrossIndex;
+    CrossIndex,
+    TetrahedronIndex
+    ;
   static GLuint
     OrtepSpheres, // 8 glLists
     LockedAtomSphere, // 1 list
