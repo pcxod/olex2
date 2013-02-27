@@ -3218,12 +3218,12 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         nets[i]->GetLattice().RestoreADPs();
     }
     TEBitArray matched(nets.Count());
-    for( size_t i=0; i < nets.Count(); i++ )  {
-      if( !nets[i]->IsSuitableForMatching() || matched[i] )  continue;
-      for( size_t j=i+1; j < nets.Count(); j++ )  {
-        if( !nets[j]->IsSuitableForMatching() || matched[j] )  continue;
+    for (size_t i=0; i < nets.Count(); i++) {
+      if (!nets[i]->IsSuitableForMatching() || matched[i])  continue;
+      for (size_t j=i+1; j < nets.Count(); j++) {
+        if (!nets[j]->IsSuitableForMatching() || matched[j])  continue;
         TTypeList<AnAssociation2<size_t, size_t> > res;
-        if( !nets[i]->DoMatch(*nets[j], res, false, weight_calculator) )
+        if (!nets[i]->DoMatch(*nets[j], res, false, weight_calculator))
           continue;
         match_cnt++;
         matched.SetTrue(j);
