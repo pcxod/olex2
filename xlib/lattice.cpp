@@ -233,7 +233,7 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     Objects.atoms.Pack();
     OnAtomsDeleted.Exit(this);
   }
-  QuickSorter::SortSF(Fragments, CompareFragmentsBySize);
+  BubbleSorter::SortSF(Fragments, CompareFragmentsBySize);
   for( size_t i=0; i < Fragments.Count(); i++ )  {
     for( size_t j=0; j < Fragments[i]->NodeCount(); j++ )
       Fragments[i]->Node(j).CAtom().SetFragmentId((uint32_t)i);

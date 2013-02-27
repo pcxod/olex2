@@ -466,8 +466,8 @@ struct GraphAnalyser  {
       if( Validator(n1, n2, pos) )
         rv = true;
 #ifdef _DEBUG
-      TBasicApp::NewLogEntry() << n1.GetObject()->GetLabel() << '_'
-        << pos.Count();
+      //TBasicApp::NewLogEntry() << n1.GetObject()->GetLabel() << '_'
+      //  << pos.Count();
 #endif
       used.Add(n1[i].GetGroupIndex());
     }
