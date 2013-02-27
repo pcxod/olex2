@@ -1703,16 +1703,19 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
-      else if( v < 120 && d1 > 1.45 && d2 > 1.45 )  {
+      else if( v < 121 && d1 > 1.45 && d2 > 1.45 )  {
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R2NH2+";
         cg.FixAtom(AE, fgNH2, h_elm, NULL, generated);
       }
-      else if( v < 120 && (d1 < 1.3 || d2 < 1.3) )
+      else if( v < 121 && (d1 < 1.3 || d2 < 1.3) )
         ;
       else  {
         if( (d1+d2) > 2.70 && v < 140 )  {
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYNH";
-          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
+          if (d1 > 1.4 && d2 > 1.4)
+            cg.FixAtom(AE, fgNH1t, h_elm, NULL, generated);
+          else
+            cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
     }
@@ -2565,7 +2568,7 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
         size_t attached_cnt=0;
         for (size_t j=0; j < ca.AttachedSiteCount(); j++) {
           if (!ca.GetAttachedAtom(j).IsDeleted() &&
-            ca.GetAttachedAtom(j).GetType() != iQPeakZ)
+            ca.GetAttachedAtom(j).GetType().z > 1)
           {
             attached_cnt++;
           }

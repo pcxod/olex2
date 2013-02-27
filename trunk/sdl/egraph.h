@@ -262,7 +262,7 @@ public:
     if( IsRoot() )  {
       double permutations = 1;
       this->AnalyseMutability(node, permutations);
-      if( permutations > 1e10 ) {
+      if( permutations > 1e15 ) {
         throw TFunctionFailedException(__OlxSourceInfo, 
           olxstr("Matching aborted due to high graph symmetry, number of "
                  "permutations: ") << permutations);

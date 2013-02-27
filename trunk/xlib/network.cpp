@@ -571,7 +571,7 @@ bool TNetwork::DoMatch(TNetwork& net,
         weight_calculator);
       ga.Invert = Invert;
       ga.atomsToMatch = NodeCount();
-      ga.CalcRMSForH = ((NodeCount() - HCount) < 4); 
+      ga.CalcRMSForH = ((NodeCount() - HCount) < 4);
       try  {  thisGraph.GetRoot().FullMatchEx(thatGraph->GetRoot(), ga);  }
       catch(const TExceptionBase& e)  {
         TBasicApp::NewLogEntry() << e.GetException()->GetError();

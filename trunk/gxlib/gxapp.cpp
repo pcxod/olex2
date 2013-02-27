@@ -4187,18 +4187,55 @@ TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
 void TGXApp::InitFadeMode()  {
 }
 //..............................................................................
+struct SceneMaskTask : public TaskBase {
+  TAsymmUnit &au;
+  TTypeList<AnAssociation2<vec3d,double> >& atoms;
+  TArray3D<vec3d> &cmap;
+  TArray3D<bool>& mdata;
+  size_t da, db, dc;
+public:
+    SceneMaskTask(TAsymmUnit &au,
+      TTypeList<AnAssociation2<vec3d,double> >& atoms,
+      TArray3D<vec3d> &cmap,
+      TArray3D<bool>& mdata)
+      : au(au), cmap(cmap), atoms(atoms), mdata(mdata)
+    {
+      da = mdata.Length1();
+      db = mdata.Length2();
+      dc = mdata.Length3();
+    }
+    void Run(size_t ind) const {
+      for (size_t j = 0; j < da; j++) {
+        for (size_t k = 0; k < db; k++) {
+          for (size_t l = 0; l < dc; l++) {
+            if (cmap.Data[j][k][l].QDistanceTo(atoms[ind].GetA()) <=
+                atoms[ind].GetB())
+            {
+              mdata.Data[j][k][l] = true;
+            }
+          }
+        }
+      }
+    }
+    SceneMaskTask* Replicate() const {
+      return new SceneMaskTask(au, atoms, cmap, mdata);
+    }
+
+};
+
 void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
+  TStopWatch st(__FUNC__);
+  st.start("Initialising");
   TAsymmUnit& au = XFile().GetAsymmUnit();
-  vec3d mn(100, 100, 100), 
+  vec3d mn(100, 100, 100),
         mx(-100, -100, -100),
         norms(au.GetAxes());
   TTypeList<AnAssociation2<vec3d,double> > atoms;
   AtomIterator ai(*this);
   atoms.SetCapacity(ai.count);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if( xa.IsDeleted() || !xa.IsVisible() )  continue;
-    //if( XAtoms[i].GetType() == iQPeakZ )  continue;
+    if (xa.IsDeleted() || !xa.IsVisible()) continue;
     vec3d::UpdateMinMax(xa.ccrd(), mn, mx);
     atoms.AddNew(xa.crd(), olx_sqr(xa.GetType().r_vdw)+inc);
   }
@@ -4209,28 +4246,22 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   norms /= res;
   TArray3D<bool>* mdata = mask.GetMask();
   mdata->FastInitWith(0);
-  const size_t 
-    da = mdata->Length1(),
-    db = mdata->Length2(),
-    dc = mdata->Length3();
-  const size_t ac = atoms.Count();
-  for( size_t j = 0; j < da; j++ )  {
-    const double dx = (double)j/norms[0];
-    for( size_t k = 0; k < db; k++ )  {
-      const double dy = (double)k/norms[1];
-      for( size_t l = 0; l < dc; l++ )  {
-        vec3d p(dx, dy, (double)l/norms[2]);
-        p += mn;
-        au.CellToCartesian(p);
-        for( size_t i=0; i < ac; i++ )  {
-          if( p.QDistanceTo( atoms[i].GetA() ) <= atoms[i].GetB() )  {  
-            mdata->Data[j][k][l] = true;
-            break;
-          }
-        }
+  TArray3D<vec3d> cmap(0, mdata->Length1(),
+    0, mdata->Length2(),
+    0, mdata->Length3());
+  for (size_t j = 0; j < mdata->Length1(); j++) {
+    const double dx = (double)j/norms[0] + mn[0];
+    for (size_t k = 0; k < mdata->Length2(); k++) {
+      const double dy = (double)k/norms[1] + mn[1];
+      for (size_t l = 0; l < mdata->Length3(); l++) {
+        cmap.Data[j][k][l] = au.Orthogonalise(
+          vec3d(dx, dy, (double)l/norms[2]+mn[2]));
       }
     }
   }
+  st.start("Building scene mask");
+  SceneMaskTask task(au, atoms, cmap, *mdata);
+  TListIteratorManager<SceneMaskTask> im(task, atoms.Count(), tLinearTask, 10);
 }
 //..............................................................................
 void TGXApp::SaveStructureStyle(TDataItem& item) const {
