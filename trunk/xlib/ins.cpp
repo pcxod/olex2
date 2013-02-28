@@ -96,7 +96,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       else if( ParseIns(InsFile, Toks, cx, i) )
         continue;
       else if( Toks[0].Equalsi("END") )  {   //reset RESI to default
-        cx.End = true;  
+        // this will help with recognising ins after end which to be ignored
+        Ins.Add(Toks[0]);
+        cx.End = true;
         cx.Resi = &GetAsymmUnit().GetResidue(0);
         cx.AfixGroups.Clear();
         cx.Part = 0;
@@ -299,7 +301,11 @@ void TIns::_FinishParsing(ParseContext& cx)  {
   __ProcessConn(cx);
   for( size_t i=0; i < Ins.Count(); i++ )  {
     TStrList toks(Ins[i], ' ');
-    if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
+    if (toks.Count() == 1 && toks[0].Equalsi("END")) {
+      Ins.DeleteRange(i, Ins.Count()-i);
+      break;
+    }
+    else if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
          toks[0].StartsFromi("MPLA")) && toks.Count() > 2 )
     {
       cx.rm.AddInfoTab(toks);
