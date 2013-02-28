@@ -910,7 +910,8 @@ olxstr TEFile::CreateRelativePath(const olxstr& path, const olxstr& _base)  {
   if (max_cnt == 0) return OLX_OS_PATH(path);
   while(baseToks[match_count] == pathToks[match_count] && ++match_count < max_cnt )
     continue;
-  if( match_count == 0 )  return OLX_OS_PATH(path);
+  if (match_count == 0)
+    return TrimPathDelimeter(path); //make sure the result is consistent!
   olxstr rv;
   for( size_t i=match_count; i < baseToks.Count(); i++ )  {
     rv << "..";
@@ -956,5 +957,43 @@ olxstr TEFile::Which(const olxstr& filename, const TStrList &paths) {
       return d;
   }
   return EmptyString();
+}
+//..............................................................................
+/* Ref:
+http://blogs.msdn.com/b/twistylittlepassagesallalike/archive/2011/04/23/everyone-quotes-arguments-the-wrong-way.aspx
+*/
+olxstr TEFile::QuotePath(const olxstr &a) {
+  using namespace exparse;
+  if (a.ContainAnyOf(olxstr(" \"\t\v\n\r"))) {
+    olxstr rv(EmptyString(), a.Length()+7);
+    rv << '"';
+    for (size_t i=0; i < a.Length(); i++) {
+      size_t sc=0;
+      while (i < a.Length() && a[i] == '\\') {
+        sc++;
+        i++;
+      }
+      if (i == a.Length()) {
+        rv.Insert('\\', rv.Length(), sc*2);
+        break;
+      }
+      else {
+        if (a[i] == '"')
+          rv.Insert('\\', rv.Length(), sc*2+1);
+        else
+          rv.Insert('\\', rv.Length(), sc);
+        rv << a[i];
+      }
+    }
+    return rv << '"';
+  }
+  else
+    return a;
+}
+//..............................................................................
+olxstr TEFile::UnquotePath(const olxstr &p) {
+  using namespace exparse;
+  olxstr rv = parser_util::unescape(parser_util::unquote(p));
+  return rv.Replace("\\\\", '\\');
 }
 //..............................................................................

@@ -49,4 +49,30 @@ void RelativePathTest(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
 }
 //...................................................................................................
+void PathQuoteTest(OlxTests& t)  {
+  t.description = __FUNC__;
+  char *paths[] = {
+    "x", "x",
+    "x\\", "x\\",
+    "x\"", "\"x\\\"\"",
+    "x\t", "\"x\t\"",
+    "x y", "\"x y\"",
+    "x \n\"", "\"x \n\\\"\"",
+    "C:\\program files\\", "\"C:\\program files\\\\\"",
+    NULL
+  };
+
+  int i=0;
+  while (paths[i] != NULL) {
+    if (TEFile::QuotePath(paths[i]) != paths[i+1])
+      throw TFunctionFailedException(__OlxSourceInfo, "path quoting failed");
+    if (TEFile::UnquotePath(paths[i+1]) != paths[i])
+      throw TFunctionFailedException(__OlxSourceInfo, "path unquoting failed");
+    i+=2;
+  }
+}
+void FileTests(OlxTests &t) {
+  t.Add(&RelativePathTest)
+    .Add(&PathQuoteTest);
+}
 };  //namespace test

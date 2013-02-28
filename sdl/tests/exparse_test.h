@@ -101,6 +101,6 @@ void Test(OlxTests& t)  {
 }
 //...................................................................................................
 void ExparseTests(OlxTests& t)  {
-  t.Add(test::exparse::Test);
+  t.Add(&test::exparse::Test);
 }
 }};  //namespace test::exparse

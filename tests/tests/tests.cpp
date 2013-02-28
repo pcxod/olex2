@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     Add(&test::SHA2Test);
   tests.Add(new test::CriticalSectionTest(true), &test::CriticalSectionTest::DoTest).
     Add(new test::CriticalSectionTest(false), &test::CriticalSectionTest::DoTest);
-  tests.Add(&test::RelativePathTest);
+  tests.Add(&test::FileTests);
   tests.Add(new test::SortTest, &test::SortTest::DoTest);
   tests.Add(&test::TestSVD).
     Add(&test::TestInvert).

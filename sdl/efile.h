@@ -296,6 +296,9 @@ public:
   static FileID GetFileID(const olxstr& name);
 
   static void CheckFileExists(const olxstr& location, const olxstr& fileName);
+
+  static olxstr QuotePath(const olxstr &p);
+  static olxstr UnquotePath(const olxstr &p);
   
   static const olxstr AllFilesMask;
 };

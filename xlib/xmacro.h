@@ -147,6 +147,7 @@ public:
   static DefMacro(Export)
   static DefMacro(Sgen)
   static DefMacro(LstSymm)
+  static DefMacro(RSA)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
