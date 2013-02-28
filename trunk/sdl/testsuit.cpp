@@ -15,14 +15,16 @@ void OlxTests::run()  {
   for( size_t i=0; i < tests.Count(); i++ )  {
     try  { 
       description.SetLength(0);
-      tests[i].run(*this);  
-      TBasicApp::NewLogEntry() << "Running test " << i+1 << '/' << tests.Count() << ": "
-        << description;
+      tests[i].run(*this);
+      if (description.IsEmpty())
+        description = "Test container...";
+      TBasicApp::NewLogEntry() << "Running test " << i+1 << '/' <<
+        tests.Count() << ": " << description;
       TBasicApp::NewLogEntry() << "Done";
     }
     catch( TExceptionBase& exc )  {
-      TBasicApp::NewLogEntry() << "Running test " << i+1 << '/' << tests.Count() << ": "
-        << description;
+      TBasicApp::NewLogEntry() << "Running test " << i+1 << '/' <<
+        tests.Count() << ": " << description;
       TBasicApp::NewLogEntry(logError) << exc.GetException()->GetFullMessage();
       TBasicApp::NewLogEntry() << "Failed";
       failed_cnt++;

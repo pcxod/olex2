@@ -542,6 +542,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     "\nR2' is invariant under the rotation and is calculated as\n"
     "R2'=sum(i=1..3,j=1..3)((Uobs_ij-Utls_ij)^2)/sum(i=1..3,j=1..3)(Uobs_ij^2)"
     );
+  xlib_InitMacro(RSA,
+    EmptyString(),
+    fpAny|psFileLoaded,
+    "Identifies chiral centres and prints R/S their stereo configuration");
 //_____________________________________________________________________________
 //_____________________________________________________________________________
 
@@ -7702,5 +7706,161 @@ void XLibMacros::macBang(TStrObjList &Cmds, const TParamList &Options,
 //..............................................................................
 void XLibMacros::funSGList(const TStrObjList &, TMacroError &E) {
   E.SetRetVal(TXApp::GetInstance().GetLastSGResult());
+}
+//..............................................................................
+int BondOrder(const TCAtom &a, const TCAtom ::Site &to) {
+  double d = a.GetParent()->Orthogonalise(a.ccrd()-to.matrix*to.atom->ccrd())
+    .Length();
+  if (a.GetType().z == iCarbonZ || to.atom->GetType().z == iCarbonZ) {
+    const cm_Element &other = (a.GetType().z == iCarbonZ ? to.atom->GetType()
+      : a.GetType());
+    if (other.z == iCarbonZ) { //C-C
+      if (d < 1.2) return 3;
+      if (d < 1.45) return 2;
+      return 1;
+    }
+    if (other.z == iOxygenZ) { //C-O
+      if (d < 1.3) return 2;
+      return 1;
+    }
+    if (other.z == iNitrogenZ) { //C-N
+      if (d < 1.2) return 3;
+      if (d < 1.4) return 2;
+      return 1;
+    }
+  }
+  if (a.GetType().z == iNitrogenZ || to.atom->GetType().z == iNitrogenZ) {
+    const cm_Element &other = (a.GetType().z == iCarbonZ ? to.atom->GetType()
+      : a.GetType());
+    if (other.z == iOxygenZ) {
+      if (d < 1.2) return 2;
+      return 1;
+    }
+  }
+  return 1;
+}
+
+typedef AnAssociation2<const TCAtom::Site *, const cm_Element *> SiteInfo;
+typedef TTypeList<SiteInfo > AtomEnvList;
+int RSA_CompareSites(const SiteInfo &a, const SiteInfo &b) {
+  return olx_cmp(a.GetB()->z, b.GetB()->z);
+}
+int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
+  size_t sz = olx_min(a.Count(), b.Count());
+  if (sz == 0)
+    return olx_cmp(a.Count(), b.Count());
+  for (size_t i=0; i < sz; i++) {
+    size_t ai = a.Count()-i-1;
+    size_t bi = b.Count()-i-1;
+    int res = RSA_CompareSites(a[ai], b[bi]);
+    if (a[ai].GetA() != NULL) a[ai].A()->atom->SetTag(2);
+    if (b[bi].GetA() != NULL) b[bi].A()->atom->SetTag(3);
+    if (res != 0)
+      return res;
+  }
+  int res = olx_cmp(a.Count(), b.Count());
+  if (res != 0) return res;
+  // equal? expand further
+  for (size_t i=0; i < sz; i++) {
+    if (a[i].GetA() == NULL) continue;
+    TCAtom &atomA = *a[i].GetA()->atom;
+    for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
+      TCAtom::Site &s = atomA.GetAttachedSite(j);
+      if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 3) ||
+        s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
+      {
+        continue;
+      }
+      a.Add(new SiteInfo(&s, &s.atom->GetType()));
+      int bo = BondOrder(atomA, s);
+      for (int k=1; k < bo; k++)
+        a.Add(new SiteInfo(NULL, &s.atom->GetType()));
+    }
+    TCAtom &atomB = *b[i].GetA()->atom;
+    for (size_t j=0; j < atomB.AttachedSiteCount(); j++) {
+      TCAtom::Site &s = atomB.GetAttachedSite(j);
+      if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 2) ||
+        s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
+      {
+        continue;
+      }
+      b.Add(new SiteInfo(&s, &s.atom->GetType()));
+      int bo = BondOrder(atomB, s);
+      for (int k=1; k < bo; k++)
+        b.Add(new SiteInfo(NULL, &s.atom->GetType()));
+    }
+  }
+  if (!a.IsEmpty()) {
+    a.DeleteRange(0, sz);
+    BubbleSorter::SortSF(a, &RSA_CompareSites);
+  }
+  if (!b.IsEmpty()) {
+    b.DeleteRange(0, sz);
+    BubbleSorter::SortSF(b, &RSA_CompareSites);
+  }
+  return RSA_GetAtomPriorityX(a, b);
+}
+struct RSA_EnviSorter {
+  TCAtom &center;
+  RSA_EnviSorter(TCAtom &center) : center(center) {}
+
+  int Comparator(const TCAtom::Site &a, const TCAtom ::Site &b) const {
+    a.atom->GetParent()->GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+    center.SetTag(1);
+    AtomEnvList ea, eb;
+    ea.Add(new SiteInfo(&a, &a.atom->GetType()));
+    eb.Add(new SiteInfo(&b, &b.atom->GetType()));
+    return RSA_GetAtomPriorityX(ea, eb);
+  }
+};
+void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  TXApp &app = TXApp::GetInstance();
+  const TAsymmUnit &au = app.XFile().GetAsymmUnit();
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    TCAtom &a = au.GetAtom(i);
+    if (a.IsDeleted() || a.GetType() < 2) continue;
+    TPtrList<TCAtom::Site> attached;
+    for (size_t j=0; j < a.AttachedSiteCount(); j++) {
+      TCAtom &aa = a.GetAttachedAtom(j);
+      if (aa.IsDeleted() || aa.GetType() == iQPeakZ) continue;
+      attached.Add(a.GetAttachedSite(j));
+    }
+    if (attached.Count() == 4) {
+      RSA_EnviSorter es(a);
+      BubbleSorter::SortMF(attached, es, &RSA_EnviSorter::Comparator);
+      bool chiral=true;
+      olxstr w;
+      for (int j=0; j < attached.Count(); j++) {
+        w << attached[j]->atom->GetLabel();
+        if ((j+1) < 4) w << " < ";
+        if (j == 0) continue;
+        if(es.Comparator(*attached[j-1], *attached[j]) == 0) {
+          chiral = false;
+          break;
+        }
+      }
+      if (!chiral)
+        continue;
+      vec3d_alist crds(4);
+      for (int j=0; j < 4; j++) {
+        crds[j] = au.Orthogonalise(
+          attached[j]->matrix*attached[j]->atom->ccrd());
+      }
+      vec3d cnt = (crds[1]+crds[2]+crds[3])/3;
+      vec3d n = (crds[1]-crds[2]).XProdVec(crds[3]-crds[2]).Normalise();
+      if ((crds[0]-cnt).DotProd(n) < 0)
+        n *= -1;
+      vec3d np = (crds[1]-cnt).XProdVec(n);
+      olxstr lbl = a.GetLabel();
+      lbl.RightPadding(5, ' ') << ':';
+      if ((crds[3]-cnt).DotProd(np) < 0) //clockwise
+        lbl << " R";
+      else
+        lbl << " S";
+      TBasicApp::NewLogEntry() << lbl << " (" << w << ')';
+    }
+  }
 }
 //..............................................................................

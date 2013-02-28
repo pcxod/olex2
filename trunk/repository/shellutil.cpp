@@ -522,32 +522,7 @@ bool TShellUtil::RunElevated(const olxstr &fn, const olxstr &args) {
 http://blogs.msdn.com/b/twistylittlepassagesallalike/archive/2011/04/23/everyone-quotes-arguments-the-wrong-way.aspx
 */
 olxstr TShellUtil::QuoteArg(const olxstr &a) {
-  using namespace exparse;
-  if (a.ContainAnyOf(olxstr(" \"\t\v\n\r"))) {
-    olxstr rv(EmptyString(), a.Length()+7);
-    rv << '"';
-    for (size_t i=0; i < a.Length(); i++) {
-      size_t sc=0;
-      while (i < a.Length() && a[i] == '\\') {
-        sc++;
-        i++;
-      }
-      if (i == a.Length()) {
-        rv.Insert('\\', rv.Length(), sc*2);
-        break;
-      }
-      else {
-        if (a[i] == '"')
-          rv.Insert('\\', rv.Length(), sc*2+1);
-        else
-          rv.Insert('\\', rv.Length(), sc);
-        rv << a[i];
-      }
-    }
-    return rv << '"';
-  }
-  else
-    return a;
+  return TEFile::QuotePath(a);
 }
 //.............................................................................
 olxstr TShellUtil::GetCmdLineArgs(const olxstr &fn,
