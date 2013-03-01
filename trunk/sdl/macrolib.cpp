@@ -116,7 +116,7 @@ ABasicFunction *TEMacroLib::FindEvaluator(exparse::expression_tree *&e,
 //.............................................................................
 olxstr TEMacroLib::ProcessEvaluator(
   exparse::expression_tree *e, TMacroError& me,
-  const TStrList &argv)
+  const TStrList &argv, bool allow_dummy)
 {
   me.GetStack().Push(e->ToStringBuffer());
   olxstr name = e->evator == NULL ? e->data : e->evator->name;
@@ -127,7 +127,7 @@ olxstr TEMacroLib::ProcessEvaluator(
   else {
     ABasicFunction *f = FindEvaluator(e, name);
     if (f == NULL) {
-      if (e->evator == NULL)
+      if (e->evator == NULL && allow_dummy)
         return unquote(SubstituteArgs(e->data, argv));
       me.NonexitingMacroError(name);
       return EmptyString();
@@ -342,7 +342,6 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
     TBasicApp::NewLogEntry(logInfo) << Cmd;
   olxstr Command = olxstr(Cmd).TrimWhiteChars();
   if (Command.IsEmpty()) return;
-  Error.GetStack().Push(Cmd);
   // processing environment variables
   size_t ind = Command.FirstIndexOf('|');
   while( ind != InvalidIndex )  {
@@ -371,10 +370,6 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error,
     exparse::expression_parser expr(Command);
     expr.root->expand_cmd();
     ProcessEvaluator(expr.root, Error, argv);
-    if( Error.IsSuccessful() )
-      Error.GetStack().Pop();
-    else if (Command.Contains('('))
-      ProcessFunction(Command, Error, false, argv);
   }
   catch (const TExceptionBase &e) {
     Error.ProcessingException(__OlxSourceInfo, e);
@@ -448,12 +443,12 @@ void TEMacroLib::funIF(exparse::evaluator<exparse::expression_tree> *t,
     return;
   }
   r = EvaluateArg(t->args[bi], me, argv);
-  if (r.GetB().Equalsi("none")) return;
+  if (r.GetB().Equalsi("none") || r.GetB().IsBool()) return;
   TStrList toks = TParamList::StrtokLines(r.GetB(), ">>", false);
   for (size_t i=0; i < toks.Count(); i++) {
     exparse::expression_parser expr(toks[i]);
     expr.root->expand_cmd();
-    ProcessEvaluator(expr.root, me, argv);
+    ProcessEvaluator(expr.root, me, argv, true);
   }
 }
 //.............................................................................
