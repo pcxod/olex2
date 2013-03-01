@@ -34,6 +34,14 @@ TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "mismatching asymmetric unit");
   }
+  if (ma != NULL) {
+    for (size_t i=0; i < aa.EquivCount(); i++) {
+      if (aa.GetEquiv(i).GetId() == ma->GetId()) {
+        ma = NULL;
+        break;
+      }
+    }
+  }
   Atoms.AddExplicit(aa, ma);
   return *this;
 }

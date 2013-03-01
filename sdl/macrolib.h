@@ -82,8 +82,12 @@ public:
   static ABasicFunction *FindEvaluator(const olxstr &name, bool macro_first);
   static ABasicFunction *FindEvaluator(exparse::expression_tree *&e,
     olxstr &name);
+  /* allow dummy - if the expression is not an evaluator - it returns unquoted
+  version of the tree data, otherwise if the value of dummy is false - it
+  reports non-existent macro/function
+  */
   static olxstr ProcessEvaluator(exparse::expression_tree *e,
-    TMacroError& me, const TStrList &argv);
+    TMacroError& me, const TStrList &argv, bool allow_dummy=false);
   static arg_t EvaluateArg(exparse::expression_tree *t,
     TMacroError& me, const TStrList &argv);
   /* if has_owner is true, then in the case the function does not exist no
