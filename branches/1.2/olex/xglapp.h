@@ -11,12 +11,13 @@
 #define __olx_xglApp_H
 #include "wx/wx.h"
 #include "gxapp.h"
+#include "olex2app_imp.h"
 
 class TGlXApp: public wxApp  {
 private:
   bool OnInit();
   int OnExit();
-  TGXApp* XApp;
+  Olex2App* XApp;
   class TMainForm* MainForm;
   static TGlXApp* Instance;
   TEFile* pid_file;
@@ -28,7 +29,7 @@ public:
   TGlXApp() : pid_file(NULL)  {}
   bool Dispatch();
 //  int MainLoop();
-
+  TEFile *GetPIDFile() const { return pid_file; }
   static TGlXApp*  GetInstance()  {  return Instance;  }
   static TMainForm* GetMainForm() {  return GetInstance()->MainForm;  }
   static TGXApp* GetGXApp()       {  return GetInstance()->XApp;  }

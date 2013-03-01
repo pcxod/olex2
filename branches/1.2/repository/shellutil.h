@@ -34,9 +34,13 @@ class TShellUtil  {
 public:
   static bool CreateShortcut(const olxstr& ShortcutPath,
     const olxstr& ObjectPath, const olxstr& description, bool AddRunAs);
-  static olxstr GetSpecialFolderLocation( short folderId );
+  static olxstr GetSpecialFolderLocation(short folderId);
   static olxstr PickFolder(const olxstr& Title, const olxstr& SelectedFolder,
-     const olxstr& RootFolder );
+     const olxstr& RootFolder);
+  static olxstr PickFile(const olxstr& Title, const olxstr &Filter,
+    bool open=false,
+    const olxstr& DefFolder=EmptyString(),
+    const olxstr &DefFile=EmptyString());
   // lists all interface names and related MAC addresses
   typedef TTOStringList<TObjectStrListData<olxstr,
     TArrayList<unsigned char> > > MACInfo;
@@ -46,7 +50,8 @@ protected:
 public:
   static void ListMACAddresses(MACInfo& rv);
   static olxstr QuoteArg(const olxstr &a);
-  static olxstr GetCmdLineArgs(const olxstr &fn);
+  static olxstr GetCmdLineArgs(const olxstr &fn,
+    bool args=true, bool options=false);
 #ifdef __WIN32__
   static bool VerifyEmbeddedSignature(const olxstr &file_name);
   static olxstr GetFileVersion(const olxstr &fn,

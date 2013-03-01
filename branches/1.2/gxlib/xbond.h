@@ -27,6 +27,7 @@ private:
   short FDrawStyle;
   static double FDefR;
   static int FDefM;
+  static bool DefSelectable;
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
@@ -72,8 +73,8 @@ public:
   // creates legend up three levels (0 to 2)
   static olxstr GetLegend(const TSBond& B, const short level);
 
-  void SetRadius(float V);
-  inline double GetRadius() const {  return FParams[4]; }
+  void SetRadius(double V);
+  double GetRadius() const {  return FParams[4]; }
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &, vec3d &)  {  return false; }
@@ -121,6 +122,8 @@ public:
   static int DefMask();
   static void DefR(double V);
   static double DefR();
+  static bool IsSelectableByDef() { return DefSelectable; }
+  static void SetSelectableByDef(bool v) { DefSelectable=v; }
   short DrawStyle() const {  return FDrawStyle; }
 
   void UpdatePrimitiveParams(TGlPrimitive *Primitive);

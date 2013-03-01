@@ -63,7 +63,6 @@ AMode::~AMode() {
   TModeRegistry::GetInstance().OnChange.Execute(NULL, &mc);
   //reset the screen cursor
   olex2.processMacro("cursor()");
-  gxapp.ClearLabelMarks();  // hide atom marks if any
 }
 //..............................................................................
 //..............................................................................
@@ -76,6 +75,7 @@ AModeWithLabels::AModeWithLabels(size_t id) : AMode(id)  {
 AModeWithLabels::~AModeWithLabels()  {
   gxapp.SetLabelsVisible(LabelsVisible);
   gxapp.SetLabelsMode(LabelsMode);
+  gxapp.UpdateDuplicateLabels();
 }
 //..............................................................................
 //..............................................................................
@@ -89,20 +89,22 @@ TModeRegistry::TModeRegistry()
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
-  Modes.Add("name",   new TModeFactory<TNameMode>(Modes.Count()+1));
-  Modes.Add("match",  new TModeFactory<TMatchMode>(Modes.Count()+1));
-  Modes.Add("split",  new TModeFactory<TSplitMode>(Modes.Count()+1));
-  Modes.Add("himp",   new TModeFactory<THimpMode>(Modes.Count()+1));
-  Modes.Add("hfix",   new TModeFactory<THfixMode>(Modes.Count()+1));
-  Modes.Add("part",   new TModeFactory<TPartMode>(Modes.Count()+1));
-  Modes.Add("occu",   new TModeFactory<TOccuMode>(Modes.Count()+1));
-  Modes.Add("fixu",   new TModeFactory<TFixUMode>(Modes.Count()+1));
-  Modes.Add("fixxyz", new TModeFactory<TFixCMode>(Modes.Count()+1));
-  Modes.Add("grow",   new TModeFactory<TGrowMode>(Modes.Count()+1));
-  Modes.Add("pack",   new TModeFactory<TPackMode>(Modes.Count()+1));
-  Modes.Add("move",   new TModeFactory<TMoveMode>(Modes.Count()+1));
-  Modes.Add("fit",    new TModeFactory<TFitMode>(Modes.Count()+1));
-  Modes.Add("lock",   new TModeFactory<TLockMode>(Modes.Count()+1));
+  Modes.Add("name",   new TModeFactory<TNameMode>(0));
+  Modes.Add("match",  new TModeFactory<TMatchMode>(0));
+  Modes.Add("split",  new TModeFactory<TSplitMode>(0));
+  Modes.Add("himp",   new TModeFactory<THimpMode>(0));
+  Modes.Add("hfix",   new TModeFactory<THfixMode>(0));
+  Modes.Add("part",   new TModeFactory<TPartMode>(0));
+  Modes.Add("occu",   new TModeFactory<TOccuMode>(0));
+  Modes.Add("fixu",   new TModeFactory<TFixUMode>(0));
+  Modes.Add("fixxyz", new TModeFactory<TFixCMode>(0));
+  Modes.Add("grow",   new TModeFactory<TGrowMode>(0));
+  Modes.Add("pack",   new TModeFactory<TPackMode>(0));
+  Modes.Add("move",   new TModeFactory<TMoveMode>(0));
+  Modes.Add("fit",    new TModeFactory<TFitMode>(0));
+  Modes.Add("lock",   new TModeFactory<TLockMode>(0));
+  for (size_t i=0; i < Modes.Count(); i++)
+    Modes.GetValue(i)->SetId_(i);
   CurrentMode = NULL;
 }
 //..............................................................................
@@ -147,7 +149,7 @@ TModeRegistry::~TModeRegistry()  {
 }
 //..............................................................................
 size_t TModeRegistry::DecodeMode(const olxstr& mode)  {
-  return GetInstance().Modes.IndexOf(mode) + 1;  // -1 +1 = 0 = mmNone
+  return GetInstance().Modes.IndexOf(mode);
 }
 //..............................................................................
 TModeRegistry &TModeRegistry::GetInstance() {

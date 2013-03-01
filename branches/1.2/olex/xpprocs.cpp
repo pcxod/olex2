@@ -112,6 +112,10 @@
   #endif
 #endif
 
+#ifdef __linux__
+#include <signal.h>
+#endif
+
 #include "olxmps.h"
 #include "maputil.h"
 
@@ -713,9 +717,9 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   od.SetElpLineWidth(Options.FindValue("lw_ellipse", "1").ToDouble());
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
   od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
-  od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat<float>()/100.0f);
+  od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat()/100.0f);
   od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
-  od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat<float>()/100.0f);
+  od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat()/100.0f);
   if( Options.Contains('p') )
     od.SetPerspective(true);
   olxstr octants = Options.FindValue("octants", "-$C");
@@ -1076,18 +1080,33 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 0 || Cmds[0].Equalsi("sel") )  {
+  bool ab = Options.GetBoolOption("b");
+  if (Cmds.Count() == 0 || Cmds[0].Equalsi("sel")) {
     AGDObjList Objects;
     TGlGroup& sel = FXApp->GetSelection();
-    for( size_t i=0; i < sel.Count(); i++ )  
-      Objects.Add( sel[i] );
-    FXApp->GetUndo().Push( FXApp->SetGraphicsVisible( Objects, false ) );
+    for (size_t i=0; i < sel.Count(); i++) {
+      if (ab && EsdlInstanceOf(sel[i], TXAtom)) {
+        TXAtom &a = dynamic_cast<TXAtom&>(sel[i]);
+        for (size_t j=0; j < a.BondCount(); j++) {
+          Objects.Add(a.Bond(j));
+        }
+      }
+      Objects.Add(sel[i]);
+    }
+    FXApp->GetUndo().Push(FXApp->SetGraphicsVisible(Objects, false));
     sel.Clear();
   }
-  else  {
-    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true, Options.Contains('h'));
-    if( Atoms.IsEmpty() )  return;
+  else {
+    TXAtomPList Atoms = FXApp->FindXAtoms(Cmds.Text(' '), true);
+    if (Atoms.IsEmpty()) return;
     AGDObjList go(Atoms, StaticCastAccessor<AGDrawObject>());
+    if (ab) {
+      for (size_t i=0; i < Atoms.Count(); i++) {
+        for (size_t j=0; j < Atoms[i]->BondCount(); j++) {
+          go.Add(Atoms[i]->Bond(j));
+        }
+      }
+    }
     FXApp->GetUndo().Push(FXApp->SetGraphicsVisible(go, false));
   }
 }
@@ -1715,7 +1734,8 @@ void TMainForm::macHtmlPanelWidth(TStrObjList &Cmds, const TParamList &Options, 
   }
   if( Cmds.Count() == 1 )  {
     FHtmlWidthFixed = !Cmds[0].EndsWith('%');
-    float width = (FHtmlWidthFixed ? Cmds[0].ToDouble() : Cmds[0].SubStringTo(Cmds[0].Length()-1).ToDouble());
+    float width = (FHtmlWidthFixed ? Cmds[0].ToDouble()
+      : Cmds[0].SubStringTo(Cmds[0].Length()-1).ToDouble());
     if( !FHtmlWidthFixed )  {
       width /= 100;
       if( width < 0.01 )
@@ -1740,7 +1760,7 @@ void TMainForm::macHtmlPanelWidth(TStrObjList &Cmds, const TParamList &Options, 
     OnResize();
     return;
   }
-  E.ProcessingError(__OlxSrcInfo, "wrong number of arguments" );
+  E.ProcessingError(__OlxSrcInfo, "wrong number of arguments");
   return;
 }
 //..............................................................................
@@ -1748,7 +1768,7 @@ void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options, TMac
   if( Cmds.IsEmpty() )
     TBasicApp::NewLogEntry() << "Current Q-Peak scale: " << FXApp->GetQPeakScale();
   else  {
-    float scale = Cmds[0].ToFloat<float>();
+    float scale = Cmds[0].ToFloat();
     FXApp->SetQPeakScale(scale);
     return;
   }
@@ -1758,7 +1778,7 @@ void TMainForm::macQPeakSizeScale(TStrObjList &Cmds, const TParamList &Options, 
   if( Cmds.IsEmpty() )
     TBasicApp::NewLogEntry() << "Current Q-Peak size scale: " << FXApp->GetQPeakSizeScale();
   else  {
-    float scale = Cmds[0].ToFloat<float>();
+    float scale = Cmds[0].ToFloat();
     FXApp->SetQPeakSizeScale(scale);
     return;
   }
@@ -1960,7 +1980,6 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   TXAtomPList Atoms;
   TIns* Ins = FXApp->CheckFileType<TIns>() ?
     &FXApp->XFile().GetLastLoader<TIns>() : NULL;
-
   if( !FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs")) )  {
     E.ProcessingError(__OlxSrcInfo, "wrong atom names");
     return;
@@ -2179,7 +2198,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr HklFN( FXApp->LocateHklFile() );
+  olxstr HklFN = FXApp->XFile().LocateHklFile();
   if( !TEFile::Exists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file");
     return;
@@ -2330,13 +2349,47 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Cmds << cmdl_fn;
     }
   }
-  SetSGList(EmptyString());
+  // check if crashed last time
+  {
+    TStrList pid_files;
+    olxstr conf_dir = TBasicApp::GetInstanceDir(); 
+    TEFile::ListDir(conf_dir, pid_files, olxstr("*.") <<
+      patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll);
+    size_t del_cnt=0;
+    olxstr spidfn = TGlXApp::GetInstance()->GetPIDFile() == NULL ? EmptyString()
+      : TGlXApp::GetInstance()->GetPIDFile()->GetName();
+#ifdef __linux__
+    size_t ext_len = olxstr::o_strlen(patcher::PatchAPI::GetOlex2PIDFileExt())+1;
+#endif
+    for (size_t i=0; i < pid_files.Count(); i++) {
+      olxstr fn = conf_dir + pid_files[i];
+      if (fn == spidfn) continue;
+#ifdef __linux__
+      if (ext_len >= pid_files[i].Length()) continue;
+      olxstr spid = pid_files[i].SubStringTo(pid_files[i].Length()-ext_len);
+      if (spid.IsInt()) {
+         int pid = spid.ToInt();
+         if (kill(pid, 0) == 0)
+           continue;
+      }
+#endif
+      if (TEFile::DelFile(fn))
+        del_cnt++;
+    }
+    if (del_cnt != 0) {
+      TBasicApp::NewLogEntry(logError) << "It appears that Olex2 has crashed "
+        "last time: skipping loading of the the last file. Please contact "
+        "Olex2 team if the problem persists";
+      return;
+    }
+  }
+
   TXFile::NameArg file_n;
   bool Blind = Options.Contains('b'); // a switch showing if the last file is remembered
   bool ReadStyle = !Options.Contains('r');
   bool OverlayXFile = Options.Contains('*');
   if( Cmds.Count() >= 1 && !Cmds[0].IsEmpty() )  {  // merge the file name if a long one...
-    file_n = TXFile::ParseName(TEFile::ExpandRelativePath(Cmds.Text(' ')));
+    file_n = TEFile::ExpandRelativePath(Cmds.Text(' '));
     if( TEFile::UnixPath(file_n.file_name).StartsFrom("http://") )  {
       TUrl url(TEFile::UnixPath(file_n.file_name));
       TStrList files;
@@ -2345,7 +2398,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if (file_n.file_name.EndsWithi(".cif")) {
         files << olxstr(file_n.file_name).Replace("cif", "hkl");
       }
-      olxstr dest_dir = getDataDir() + "web/";
+      olxstr dest_dir = TBasicApp::GetInstanceDir() + "web/";
       if (DownloadFiles(files, dest_dir) > 0) {
         olxstr dest_fn = dest_dir + TEFile::ExtractFileName(url.GetPath());
         if (TEFile::Exists(dest_fn)) {
@@ -2388,7 +2441,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else  {
     if( !IsVisible() )  return;
     FileFilter ff;
-    ff.AddAll("ins;cif;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
+    ff.AddAll("ins;cif;cmf;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
     ff.Add("*.mol", "MDL MOL");
     ff.Add("*.mas", "XD master");
     ff.Add("*.mol2", "Tripos MOL2");
@@ -2410,7 +2463,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( OverlayXFile )  {
       sw.start("Loading overlayed file");
       TXFile& xf = FXApp->NewOverlayedXFile();
-      xf.LoadFromFile(TXFile::ComposeName(file_n));
+      xf.LoadFromFile(file_n.ToString());
       FXApp->CreateObjects(false);
       FXApp->AlignOverlayedXFiles();
       FXApp->CenterView(true);
@@ -2513,7 +2566,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TFileHandlerManager::Clear(plStructure);
       }
       sw.start("Loading the XFile");
-      FXApp->LoadXFile(TXFile::ComposeName(file_n));
+      FXApp->LoadXFile(file_n.ToString());
       sw.start("Creating bad reflections and refinement info tables");
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
@@ -2533,7 +2586,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
         if (TEFile::Exists(file_n.file_name)) {
           try {
-            FXApp->LoadXFile(TXFile::ComposeName(file_n));
+            FXApp->LoadXFile(file_n.ToString());
             TBasicApp::NewLogEntry(logError) << "Last operation was not"
               " successful, the INS file is reloaded, please resolve the "
               "conflicts and re-run the process again";
@@ -3071,8 +3124,7 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if( Cmds[0].Equalsi("dictionary") )  {
-    if( TEFile::Exists(DictionaryFile) )
-      Dictionary.SetCurrentLanguage(DictionaryFile, Dictionary.GetCurrentLanguage() );
+    FXApp->SetCurrentLanguage(FXApp->Dictionary.GetCurrentLanguage());
   }
   else if( Cmds[0].Equalsi("options") )  {
     olxstr of = FXApp->GetConfigDir() + ".options";
@@ -3376,7 +3428,7 @@ public:
 void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  if( !FPluginItem->ItemExists(Cmds[0]) )  {
+  if (!FXApp->IsPluginInstalled(Cmds[0])) {
     olxstr local_file = Options['l'];
     if( !local_file.IsEmpty() )  {
       if( !TEFile::Exists(local_file) )  {
@@ -3401,11 +3453,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       if (Cause != NULL)
         throw TFunctionFailedException(__OlxSourceInfo, Cause);
 
-      FPluginItem->AddItem(Cmds[0]);
-      TStateRegistry::GetInstance().SetState(statePluginInstalled, true,
-        EmptyString(), true);
-
-      FPluginFile.SaveToXLFile( PluginFile );
+      FXApp->AddPlugin(Cmds[0]);
       TBasicApp::NewLogEntry() << "Installation complete";
       FXApp->Draw();
     }
@@ -3417,8 +3465,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
           new TOnSync(*FXApp, TBasicApp::GetBaseDir()),
           Cmds[0]);
         if( res == updater::uapi_OK )  {
-          FPluginItem->AddItem(Cmds[0]);
-          FPluginFile.SaveToXLFile(PluginFile);
+          FXApp->AddPlugin(Cmds[0]);
           TBasicApp::NewLogEntry() << "\rInstallation complete";
         }
         else  {
@@ -3435,20 +3482,20 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else  {
-    TDataItem* di = FPluginItem->FindItem(Cmds[0]);
-    if( di != NULL )  {
+    if (FXApp->IsPluginInstalled(Cmds[0])) {
       Macros.ProcessMacro(olxstr("uninstallplugin ") << Cmds[0], E);
     }
-    else  {
+    else {
       TBasicApp::NewLogEntry() << "Specified plugin does not exist: " << Cmds[0];
     }
   }
 }
 //..............................................................................
-void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TDataItem* di = FPluginItem->FindItem(Cmds[0]);
-  if( di )  di->AddField("signature", Cmds[1]);
-  FPluginFile.SaveToXLFile(PluginFile);
+void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  if (!FXApp->AddPluginField(Cmds[0], "signature", Cmds[1]))
+    E.ProcessingError(__OlxSrcInfo, "Failed to sign the plugin");
 }
 //..............................................................................
 // local linkage (for classes within functions) is not supported by Borland, though MSVC is fine
@@ -3523,16 +3570,12 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "cannot uninstall core components");
     return;
   }
-  TDataItem* di = FPluginItem->FindItem( Cmds[0] );
-  if( di != NULL )  {
-    FPluginItem->DeleteItem(di);
-    TStateRegistry::GetInstance().SetState(statePluginInstalled, false,
-      EmptyString(), true);
+
+  if (FXApp->RemovePlugin(Cmds[0])) {
     olxstr indexFile = TBasicApp::GetBaseDir() + "index.ind";
     if( TEFile::Exists(indexFile) )  {
       TOSFileSystem osFS(TBasicApp::GetBaseDir());
       TFSIndex fsIndex(osFS);
-
       fsIndex.LoadIndex(indexFile);
       TFSTraverser* trav = new TFSTraverser(*FXApp, TBasicApp::GetBaseDir(),
         updater::UpdateAPI::GetPluginProperties(Cmds[0]));
@@ -3543,11 +3586,10 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       FXApp->Draw();
     }
   }
-  FPluginFile.SaveToXLFile(PluginFile);
 }
 //..............................................................................
 void TMainForm::funIsPluginInstalled(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( FPluginItem->ItemExists(Params[0]) );
+  E.SetRetVal(FXApp->IsPluginInstalled(Params[0]));
 }
 //..............................................................................
 void TMainForm::funValidatePlugin(const TStrObjList& Params, TMacroError &E) {
@@ -3691,28 +3733,30 @@ void TMainForm::macOFileDel(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 }
 //..............................................................................
-void TMainForm::macOFileSwap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macOFileSwap(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   FXApp->SetActiveXFile(Cmds[0].ToSizeT());
 }
 //..............................................................................
 void TMainForm::funTranslatePhrase(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal(TranslatePhrase(Params[0]));
+  E.SetRetVal(FXApp->TranslatePhrase(Params[0]));
 }
 //..............................................................................
 void TMainForm::funCurrentLanguageEncoding(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( Dictionary.GetCurrentLanguageEncodingStr() );
+  E.SetRetVal(FXApp->Dictionary.GetCurrentLanguageEncodingStr());
 }
 //..............................................................................
 void TMainForm::funIsCurrentLanguage(const TStrObjList& Params, TMacroError &E) {
   TStrList toks;
   toks.Strtok(Params[0], ';');
-  for( size_t i=0; i < toks.Count(); i++ )  {
-    if( toks[i] == Dictionary.GetCurrentLanguage() )  {
-      E.SetRetVal( true );
+  for (size_t i=0; i < toks.Count(); i++) {
+    if (toks[i] == FXApp->Dictionary.GetCurrentLanguage()) {
+      E.SetRetVal(true);
       return;
     }
   }
-  E.SetRetVal( false );
+  E.SetRetVal(false);
 }
 //..............................................................................
 void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3731,9 +3775,9 @@ void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options, TMacro
   task.LastCalled = TETime::Now();
 }
 //..............................................................................
-void TMainForm::funSGList(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal(GetSGList());
-}
+//void TMainForm::funSGList(const TStrObjList& Params, TMacroError &E) {
+//  E.SetRetVal(GetSGList());
+//}
 //..............................................................................
 void TMainForm::funChooseElement(const TStrObjList& Params, TMacroError &E) {
   TPTableDlg *Dlg = new TPTableDlg(this);
@@ -4539,23 +4583,24 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
 }
 
 void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds[0].Equalsi("cell") && Cmds.Count() == 2 )  {
-    if( !TEFile::Exists( Cmds[1] )  )  {
+  if (Cmds[0].Equalsi("cell") && Cmds.Count() == 2) {
+    if (!TEFile::Exists(Cmds[1]) ) {
       Error.ProcessingError(__OlxSrcInfo, "file does not exist");
       return;
     }
     TBasicCFile* bcf = FXApp->XFile().FindFormat(TEFile::ExtractFileExt(Cmds[1]));
-    if( bcf == NULL )  {
+    if (bcf == NULL) {
       Error.ProcessingError(__OlxSrcInfo, "unknown file format");
       return;
     }
-    bcf = (TBasicCFile*)bcf->Replicate();
-    try  {  bcf->LoadFromFile(Cmds[1]);  }
-    catch(const TExceptionBase& exc)  {
+    bcf = dynamic_cast<TBasicCFile *>(bcf->Replicate());
+    try { bcf->LoadFromFile(Cmds[1]); }
+    catch(const TExceptionBase& exc) {
       delete bcf;
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
-    TDUnitCell* duc = new TDUnitCell(FXApp->GetRender(), olxstr("cell") << (UserCells.Count()+1) );
+    TDUnitCell* duc = new TDUnitCell(FXApp->GetRender(),
+      olxstr("cell") << (UserCells.Count()+1));
     const double cell[6] = {
       bcf->GetAsymmUnit().GetAxes()[0],
       bcf->GetAsymmUnit().GetAxes()[1],
@@ -4595,7 +4640,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     sg->GetMatrices(ml, mattAll);
     vec3d_list p, allPoints;
 
-    if( Cmds[0].Equalsi("sphere") )  {
+    if (Cmds[0].Equalsi("sphere")) {
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloSphere, Cmds[1]);
       try  {
         if( Cmds.Count() == 4 )
@@ -4632,30 +4677,30 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       //FXApp->AddObjectToCreate(uo);
       //uo->Create();
     }
-    else if( Cmds[0].Equalsi("line") )  {
-      if( (Cmds.Count()-3)%6 != 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments" );
+    else if (Cmds[0].Equalsi("line")) {
+      if ((Cmds.Count()-3)%6 != 0) {
+        Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments");
         return;
       }
-      for( size_t i=3; i < Cmds.Count(); i+= 6 )  {
+      for (size_t i=3; i < Cmds.Count(); i+= 6) {
         p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
         p.AddNew(Cmds[i+3].ToDouble(), Cmds[i+4].ToDouble(), Cmds[i+5].ToDouble());
       }
       main_GenerateCrd(p, ml, allPoints);
-      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count() ));
-      for( size_t i=0; i < allPoints.Count(); i++ )
+      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
+      for (size_t i=0; i < allPoints.Count(); i++)
         data[i] = allPoints[i] * uc->GetCellToCartesian();
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloLines, Cmds[1]);
       uo->SetVertices(&data);
       FXApp->AddObjectToCreate(uo);
       uo->Create();
     }
-    else if( Cmds[0].Equalsi("plane") )  {
-      if( (Cmds.Count()-3)%12 != 0 )  {
+    else if (Cmds[0].Equalsi("plane")) {
+      if ((Cmds.Count()-3)%12 != 0) {
         Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments");
         return;
       }
-      for( size_t i=3; i < Cmds.Count(); i+= 12 )  {
+      for (size_t i=3; i < Cmds.Count(); i+= 12) {
         p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
         p.AddNew(Cmds[i+3].ToDouble(), Cmds[i+4].ToDouble(), Cmds[i+5].ToDouble());
         p.AddNew(Cmds[i+6].ToDouble(), Cmds[i+7].ToDouble(), Cmds[i+8].ToDouble());
@@ -4663,15 +4708,98 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       }
       main_GenerateCrd(p, ml, allPoints);
       TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count()));
-      for( size_t i=0; i < allPoints.Count(); i++ )
+      for (size_t i=0; i < allPoints.Count(); i++)
         data[i] = allPoints[i] * uc->GetCellToCartesian();
       TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, "user_plane");
       uo->SetVertices(&data);
       FXApp->AddObjectToCreate(uo);
       uo->Create();
     }
-    else if( Cmds[0].Equalsi("poly") )  {
-      ;
+    else if (Cmds[0].Equalsi("poly") && Cmds.Count() > 3) {
+      TStrList svertices, striangles;
+      if (Cmds.Count() == 4 && TEFile::Exists(Cmds[3])) {
+        TStrList sl;
+        TStrList toks(sl.LoadFromFile(Cmds[3]).Text(';'), ';');
+        if (toks.Count() != 2) {
+          Error.ProcessingError(__OlxSrcInfo, "a list of vertices seperated "
+            "by comma and list of triangles formed by 0-based vertex indices"
+            " is expected");
+        }
+        svertices.Strtok(toks[0], ',');
+        striangles.Strtok(toks[1], ',');
+      }
+      else {
+        TStrList toks(Cmds.Text(EmptyString(), 3), ';');
+        if (toks.Count() != 2) {
+          Error.ProcessingError(__OlxSrcInfo, "a list of vertices seperated "
+            "by comma and list of triangles formed by 0-based vertex indices"
+            " is expected");
+        }
+        svertices.Strtok(toks[0], ',');
+        striangles.Strtok(toks[1], ',');
+      }
+      if (svertices.Count() < 3 || striangles.IsEmpty()) {
+        Error.ProcessingError(__OlxSrcInfo, "at least three vertices and 1 "
+          "triangle are expected");
+      }
+      if (Error.IsSuccessful()) {
+        TArrayList<vec3f> vertices(svertices.Count());
+        TArrayList<vec3s> triags(striangles.Count());
+        vec3f center;
+        for (size_t i=0; i < svertices.Count(); i++) {
+          TStrList toks(svertices[i], ' ');
+          if (toks.Count() != 3) {
+            TBasicApp::NewLogEntry(logError) << "Invalid vertex: '" <<
+              svertices[i] << '\'';
+            continue;
+          }
+          for (int j=0; j < 3; j++)
+            vertices[i][j] = toks[j].ToFloat();
+          center += vertices[i];
+        }
+        center /= vertices.Count();
+        for (size_t i=0; i < striangles.Count(); i++) {
+          TStrList toks(striangles[i], ' ');
+          if (toks.Count() != 3) {
+            TBasicApp::NewLogEntry(logError) << "Invalid triangle: '" <<
+              svertices[i] << '\'';
+            continue;
+          }
+          for (int j=0; j < 3; j++) {
+            if ((triags[i][j]=toks[j].ToSizeT()) >= vertices.Count()) {
+              triags[i][j] = 0;
+              TBasicApp::NewLogEntry(logError) << "Vertex index out of range: '"
+                << toks[j] << '\'';
+            }
+          }
+        }
+        TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count()));
+        TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count()*3));
+        for (size_t i=0; i < triags.Count(); i++) {
+          vec3f tc;
+          for (int j=0; j < 3; j++) {
+            data[3*i+j] = vertices[triags[i][j]];
+            tc += vertices[triags[i][j]];
+          }
+          tc /= 3;
+          vec3f n = (vertices[triags[i][0]]-vertices[triags[i][1]]).XProdVec(
+            (vertices[triags[i][2]]-vertices[triags[i][1]])).Normalise();
+          if ((tc-center).DotProd(n) < 0) {
+            n *= -1;
+          }
+          else
+            olx_swap(data[3*i], data[3*i+2]);
+          normals[i] = n;
+        }
+        TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloTriangles,
+          Cmds[1]);
+        uo->SetVertices(&data);
+        uo->SetNormals(&normals);
+        FXApp->AddObjectToCreate(uo);
+        uo->SetZoomable(true);
+        uo->SetMoveable(true);
+        uo->Create();
+      }
     }
     else
       Error.ProcessingError(__OlxSrcInfo, "unknown object type");
@@ -5344,7 +5472,7 @@ public:
 };
 void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TStrList files;
-  TEFile::ListCurrentDir(files, "*.cif", sefFile);
+  TEFile::ListCurrentDir(files, "*.cif;*.cmf", sefFile);
   TCif cif;
   TAsymmUnit& au = cif.GetAsymmUnit();
 
@@ -5648,7 +5776,9 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   xyz.SaveToFile(FN);
 }
 //..............................................................................
-void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds,
+  const TParamList &Options, TMacroError &E)
+{
   QPeakTable(false);
 }
 //..............................................................................
@@ -5665,10 +5795,10 @@ void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroError &E)  {
-  if( Params.IsEmpty() )
-    E.SetRetVal(Dictionary.GetCurrentLanguage());
+  if (Params.IsEmpty())
+    E.SetRetVal(FXApp->Dictionary.GetCurrentLanguage());
   else
-    Dictionary.SetCurrentLanguage(DictionaryFile, Params[0] );
+    FXApp->SetCurrentLanguage(Params[0]);
 }
 //..............................................................................
 //..............................................................................

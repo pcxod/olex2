@@ -220,7 +220,9 @@ namespace SFUtil {
     {
       sg::GenUniqueHkl(hkl, out, ps);
     }
-    template <class RefList, bool centro> struct SFCalculateTask  {
+    template <class RefList, bool centro> struct SFCalculateTask
+      : public TaskBase
+    {
       const SF_Util& parent;
       const IMillerIndexList& refs;
       const mat3d& hkl2c;
@@ -261,7 +263,7 @@ namespace SFUtil {
               if( olx_is_valid_index(atoms[j]->GetEllpId()) )  {
                 const double* Q = &U[j*6];  // pick up the correct ellipsoid
                 const double B = exp(
-                  (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] + 
+                  (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] +
                   (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] + 
                   (Q[2]*rv[k][2])*rv[k][2]);
                 l += ca*B;

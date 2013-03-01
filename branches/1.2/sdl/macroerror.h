@@ -13,6 +13,7 @@
 #include "ptypes.h"
 #include "estack.h"
 #include "emath.h"
+#include "log.h"
 BeginEsdlNamespace()
 
 class ABasicFunction;
@@ -100,6 +101,9 @@ public:
   IEObject* RetObj() const {  return RetValue;  }
   
   str_stack& GetStack() {  return Stack;  }
+
+  void PrintStack(int logEvt=logError, bool annotate=false,
+    const olxstr &prefix=EmptyString()) const;
 
   // the type is validated
   template <class EObj> EObj* GetRetObj()  {

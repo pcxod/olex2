@@ -13,16 +13,15 @@
 #include "asymmunit.h"
 #include "refmodel.h"
 
-TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
-  AGDrawObject(Render, collectionName)
+TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName)
+  : AGDrawObject(Render, collectionName)
 {
   AGDrawObject::SetSelectable(false);
-  FMarkMaterial = Render.GetSelection().GetGlM();
-  FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
+  Colors_ << 0 << 0xff;
 }
 //..............................................................................
 void TXGlLabels::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
   
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
@@ -33,6 +32,9 @@ void TXGlLabels::Create(const olxstr& cName)  {
   GlP.SetProperties(
     GPC.GetStyle().GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
+  TGraphicsStyle &gs = GPC.GetStyle();
+  Colors_[0] = gs.GetNumParam("processed_color", Colors_[0], true);
+  Colors_[1] = gs.GetNumParam("duplicate_color", Colors_[1], true);
 }
 //..............................................................................
 void TXGlLabels::Clear()  {  Marks.Clear();  }
@@ -43,17 +45,18 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   TGXApp::AtomIterator ai = app.GetAtoms();
   if( ai.count == 0 || Marks.Count() != ai.count )
     return true;
-  bool currentGlM, matInited = false;
+  bool matInited = false;
+  int currentM = -1;
   const bool zoomed_rendering = Parent.GetExtraZoom() > 1;
   const bool optimise_ati = (Parent.IsATI() && !zoomed_rendering);
   P.SetFont(&Fnt);
-  TGlMaterial& OGlM = P.GetProperties();
+  TGlMaterial GlM = P.GetProperties();
   Fnt.Reset_ATI(optimise_ati);
   const RefinementModel& rm = app.XFile().GetRM();
   for( size_t i=0; ai.HasNext(); i++ )  {
     const TXAtom& XA = ai.Next();
     if( XA.IsDeleted() || !XA.IsVisible() )  continue;
-    if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )  
+    if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )
       continue;
     if( (Mode & lmQPeak) == 0 && (XA.GetType() == iQPeakZ) )  continue;
     if( (Mode & lmIdentity) != 0 && !XA.IsAUAtom() )  continue;
@@ -170,31 +173,33 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     P.SetString(&Tmp);
     const double Z = Parent.CalcRasterZ(0.001);
     if( !Fnt.IsVectorFont() )  {
-      if( !matInited )  {
-        if( Marks[i] ) {
-          FMarkMaterial.Init(Parent.IsColorStereo());
-          currentGlM = false;
+      if (!matInited) {
+        if (Marks[i] < Colors_.Count()) {
+          GlM.AmbientF = Colors_[Marks[i]];
+          GlM.Init(Parent.ForcePlain());
+          currentM = Marks[i];
           Fnt.Reset_ATI(optimise_ati);
         }
         else  {
-          P.GetProperties().Init(Parent.IsColorStereo());
-          currentGlM = true;
+          P.GetProperties().Init(Parent.ForcePlain());
+          currentM = -1;
           Fnt.Reset_ATI(optimise_ati);
         }
         matInited = true;
       }
       else  {
-        if( Marks[i] )  {
-          if( currentGlM )  {
-            FMarkMaterial.Init(Parent.IsColorStereo());
-            currentGlM = false;
+        if (Marks[i] < Colors_.Count()) {
+          if (currentM != Marks[i])  {
+            GlM.AmbientF = Colors_[Marks[i]];
+            GlM.Init(Parent.ForcePlain());
+            currentM = Marks[i];
             Fnt.Reset_ATI(optimise_ati);
           }
         }
         else  {
-          if( !currentGlM )  {
-            P.GetProperties().Init(Parent.IsColorStereo());
-            currentGlM = true;
+          if (currentM != -1) {
+            P.GetProperties().Init(Parent.ForcePlain());
+            currentM = -1;
             Fnt.Reset_ATI(optimise_ati);
           }
         }
@@ -219,44 +224,50 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       Fnt.DrawVectorText(T, Tmp, Parent.GetBasis().GetZoom()/Parent.CalcZoom());
     }
   }
-  OGlM.Init(Parent.IsColorStereo());
+  P.GetProperties().Init(Parent.ForcePlain());
   return true;
 }
 //..............................................................................
-void TXGlLabels::Init()  {
-  Marks.SetSize(TGXApp::GetInstance().GetAtoms().count);
+void TXGlLabels::Init() {
+  Marks.SetCount(TGXApp::GetInstance().GetAtoms().count);
+  ClearLabelMarks();
 }
 //..............................................................................
-void TXGlLabels::Selected(bool On) {  
-  AGDrawObject::SetSelected(false);  
+void TXGlLabels::Selected(bool On) {
+  AGDrawObject::SetSelected(false);
 }
 //..............................................................................
-void TXGlLabels::ClearLabelMarks()  {
-  Marks.SetAll(false);
+void TXGlLabels::ClearLabelMarks() {
+  Marks.ForEach(olx_list_init::value((uint8_t)~0));
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
   if( A.GetOwnerId() < Marks.Count() )
-    Marks.Set(A.GetOwnerId(), v);
+    Marks[A.GetOwnerId()] = v ? lmiMark : ~0;
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(size_t i, bool v)  {
-  if( i < Marks.Count() )
-    Marks.Set(i, v);
+  if (i < Marks.Count())
+    Marks[i] = v ? lmiMark : ~0;
 }
 //..............................................................................
 bool TXGlLabels::IsLabelMarked(const TXAtom& atom) const {
-  if( atom.GetOwnerId() < Marks.Count() )
-    return Marks[atom.GetOwnerId()];
+  if (atom.GetOwnerId() < Marks.Count())
+    return Marks[atom.GetOwnerId()] != ~0;
   return false;  // should not happen...
 }
 //..............................................................................
 bool TXGlLabels::IsLabelMarked(size_t i) const {
-  if( i < Marks.Count() )  return Marks[i];
+  if(i < Marks.Count()) return Marks[i] != ~0;
   return false;  // should not happen...
 }
 //..............................................................................
 TGlFont& TXGlLabels::GetFont() const {
   return Parent.GetScene().GetFont(FontIndex, true);
+}
+//..............................................................................
+void TXGlLabels::SetMaterialIndex(size_t idx, LabelMaterialIndex mi) {
+  if (idx < Marks.Count())
+    Marks[idx] = mi;
 }
 //..............................................................................

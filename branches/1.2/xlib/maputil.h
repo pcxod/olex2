@@ -17,7 +17,7 @@ BeginXlibNamespace()
 
 class MapUtil  {
 public:
-  struct peak  { 
+  struct peak  {
     bool process;
     double summ;
     uint32_t count;
@@ -26,8 +26,9 @@ public:
     peak(int _x, int _y, int _z) : process(true),  
       summ(0), count(0), center(_x, _y, _z) {}
   };
+
 protected:
-  template <typename MapT> 
+  template <typename MapT>
   static void peak_search(MapT*** const data, const vec3s& dim,
     MapT pos_level, const TArray3D<bool>& Mask, TArrayList<peak>& maxima)  
   {
@@ -46,7 +47,7 @@ protected:
         peak.count++;
         new_cent += cent;
         for( size_t i=0; i < 3; i++ )  {
-          norm_cent[i] = norm_cent[i]%(int)dim[i]; 
+          norm_cent[i] = norm_cent[i]%(int)dim[i];
           if( norm_cent[i] < 0 )
             norm_cent[i] += (int)dim[i];
         }
@@ -399,8 +400,8 @@ public:
       return p;
     }
     MapGetter(mapT*** const _src, const vec3s& _dim) : src(_src), dim(_dim)  {}
-    mapT Get(const vec3d& fractional_crd) const {
-      const vec3d p(fractional_crd[0]*dim[0], fractional_crd[1]*dim[1],
+    mapT Get(const TVector3<mapT>& fractional_crd) const {
+      const TVector3<mapT> p(fractional_crd[0]*dim[0], fractional_crd[1]*dim[1],
         fractional_crd[2]*dim[2]);
       if( type == 0 )  {  // cropped index value
         const vec3i i = NormaliseIndex(p);

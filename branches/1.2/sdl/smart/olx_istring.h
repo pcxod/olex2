@@ -1202,9 +1202,11 @@ public:
     return negative ? -bp : bp;
   }
   //...........................................................................
-  double ToDouble() const {  return o_atof<double>(T::Data(), T::_Length);  }
+  double ToDouble() const { return ToFloatT<double>(); }
   //...........................................................................
-  template <typename FT> FT ToFloat() const {
+  float ToFloat() const { return ToFloatT<float>(); }
+  //...........................................................................
+  template <typename FT> FT ToFloatT() const {
     return o_atof<FT>(T::Data(), T::_Length);
   }
   //...........................................................................
@@ -1232,8 +1234,8 @@ public:
   uint64_t ToNumber(uint64_t &b) const {
     return (b=o_atoui<uint64_t>(T::Data(), T::_Length, 10));
   }
-  float ToNumber(float &b) const { return (b=ToFloat<float>()); }
-  double ToNumber(double &b) const { return (b=ToFloat<double>()); }
+  float &ToNumber(float &b) const { return (b=ToFloatT<float>()); }
+  double &ToNumber(double &b) const { return (b=ToFloatT<double>()); }
   //...........................................................................
   template <typename num_t> num_t ToNumber() const {
     num_t n;
@@ -1730,6 +1732,23 @@ public:
     return *this;
   }
   //...........................................................................
+  template <typename AC> TTSString& TrimL(AC wht) {
+    if (T::_Length == 0)  return *this;
+    size_t start = 0;
+    while (TTIString<TC>::CharAt(start) == wht && ++start < T::_Length)  ;
+    T::_Start += start;
+    T::_Length = (T::_Length + 1 - start);
+    return *this;
+  }
+  //...........................................................................
+  template <typename AC> TTSString& TrimR(AC wht)  {
+    if( T::_Length == 0 )  return *this;
+    size_t end = T::_Length;
+    while (--end > 0 && TTIString<TC>::CharAt(end) == wht)  ;
+    T::_Length = (end + 1);
+    return *this;
+  }
+  //...........................................................................
   bool IsWhiteCharString() const {
     const TC* data = T::Data();
     for( size_t i=0; i < T::_Length; i++ )
@@ -1891,7 +1910,7 @@ public:
   //...........................................................................
   TTSString& AppendFromStream(IInputStream& ios, size_t len)  {
     T::checkBufferForModification(T::_Length + len+1);
-    ios.Read((void*)&T::SData->Data[T::_Start+T::_Length], len*T::CharSize);
+    ios.Read((void*)&T::SData->Data[T::_Start+T::_Length], len*sizeof(TC));
     T::_Length += len;
     return *this;
   }
@@ -1900,8 +1919,8 @@ public:
     uint32_t code, len, charsize;
     ios.Read(&code, sizeof(uint32_t));
     charsize = ExtractCharSize(code);
-    if( T::CharSize != charsize )  {
-      if( charsize != 0 || T::CharSize == 2 )  {
+    if( sizeof(TC) != charsize )  {
+      if( charsize != 0 || sizeof(TC) == 2 )  {
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
           "incompatible Char size");
       }
@@ -1923,14 +1942,14 @@ public:
       }
     }
     if( T::SData == NULL )  T::SData = new struct T::Buffer(T::_Length);
-    ios.Read((void*)T::SData->Data, T::_Length*T::CharSize);
+    ios.Read((void*)T::SData->Data, T::_Length*sizeof(TC));
     return *this;
   }
   //...........................................................................
   void ToBinaryStream(IOutputStream& os) const {
-    uint32_t len = (uint32_t)(CodeLength(T::CharSize, T::_Length));
+    uint32_t len = (uint32_t)(CodeLength(sizeof(TC), T::_Length));
     os.Write(&len, sizeof(uint32_t));
-    os.Write((void*)T::Data(), T::_Length*T::CharSize);
+    os.Write((void*)T::Data(), T::_Length*sizeof(TC));
   }
   //...........................................................................
   static TTSString CharStr(TC ch, size_t count)  {

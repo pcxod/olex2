@@ -205,7 +205,10 @@ olxstr parser_util::unescape(const olxstr& exp)  {
   olxstr out(EmptyString(), exp.Length());
   for( size_t i=0; i < exp.Length(); i++ )  {
     if( exp.CharAt(i) == '\\' )  {
-      if( ++i >= exp.Length() )  break;
+      if( ++i >= exp.Length() )  {
+        out << '\\';
+        break;
+      }
       switch( exp.CharAt(i) )  {
         case 'r':   out << '\r';  break;
         case 'n':   out << '\n';  break;

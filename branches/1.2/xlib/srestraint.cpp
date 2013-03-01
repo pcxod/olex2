@@ -34,6 +34,14 @@ TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "mismatching asymmetric unit");
   }
+  if (ma != NULL) {
+    for (size_t i=0; i < aa.EquivCount(); i++) {
+      if (aa.GetEquiv(i).GetId() == ma->GetId()) {
+        ma = NULL;
+        break;
+      }
+    }
+  }
   Atoms.AddExplicit(aa, ma);
   return *this;
 }
@@ -228,8 +236,16 @@ PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms,
 #endif
 //..............................................................................
 void TSRestraintList::FromDataItem(const TDataItem& item) {
-  for( size_t i=0; i < item.ItemCount(); i++ )
-    AddNew().FromDataItem(item.GetItem(i));
+  for (size_t i=0; i < item.ItemCount(); i++) {
+    try {
+      AddNew().FromDataItem(item.GetItem(i));
+    }
+    catch (const TExceptionBase &) {
+      TBasicApp::NewLogEntry() << "One of the " << GetIdName() << " was not "
+        "saved correctly and was removed";
+      Restraints.Delete(Restraints.Count()-1);
+    }
+  }
 }
 //..............................................................................
 TSimpleRestraint& TSRestraintList::AddNew()  {

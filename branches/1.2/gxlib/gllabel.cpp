@@ -13,6 +13,7 @@
 #include "glrender.h"
 #include "glprimitive.h"
 #include "pers_util.h"
+#include "povdraw.h"
 
 TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   AGlMouseHandlerImp(R, collectionName), Transformer(NULL)
@@ -73,7 +74,8 @@ vec3d TXGlLabel::GetRasterPosition() const {
 }
 //..............................................................................
 vec3d TXGlLabel::GetVectorPosition() const {
-  vec3d off = Parent.GetBasis().GetMatrix()*(GetCenter()+vec3d(-text_rect.width/2,text_rect.height/2,0));
+  vec3d off = Parent.GetBasis().GetMatrix()*(GetCenter()+
+    vec3d(-text_rect.width/2,text_rect.height/2,0));
   //vec3d off = Parent.GetBasis().GetMatrix()*GetCenter();
   const double Scale = Parent.GetScale();
   const double ScaleR = Parent.GetExtraZoom()*Parent.GetViewZoom();
@@ -155,5 +157,26 @@ void TXGlLabel::FromDataItem(const TDataItem& item) {
     PersUtil::VecFromStr(item.GetRequiredField("offset"), Offset);
     PersUtil::VecFromStr(item.GetRequiredField("center"), _Center);
   }
+}
+//..............................................................................
+const_strlist TXGlLabel::ToPov(
+  olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const
+{
+  TStrList out;
+  TGlPrimitive *glp = GetPrimitives().FindPrimitiveByName("Text");
+  if (glp == NULL) return out;
+  const TGPCollection &gpc = GetPrimitives();
+  vec3d off = GetOffset() + (GetCenter() +
+    vec3d(-text_rect.width/2,text_rect.height/2,0))*Parent.GetScale();
+  pov::CrdTransformer crdc(Parent.GetBasis());
+  vec3d T = crdc.crd(off);
+  olxstr p_mat = pov::get_mat_name(glp->GetProperties(), materials);
+  out.Add("  text { ttf \"timrom.ttf\" ").quote('"') <<
+    exparse::parser_util::escape(FLabel) << ' ' << "0.25" <<
+      " 0 texture {" <<      p_mat << "}";
+  out.Add("   scale ") << 0.5;
+  out.Add("   translate ") << pov::to_str(T);
+  out.Add("  }");
+  return out;
 }
 //..............................................................................

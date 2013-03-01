@@ -77,10 +77,11 @@ public:
   // a simple file ID, validates file by modification time, name and the size..
   struct FileID {
     olxstr name;
-    size_t size;
+    uint64_t size;
     time_t timestamp;
-    FileID(const olxstr& _name, size_t _size, time_t _timestamp)
-      : name(_name), size(_size), timestamp(_timestamp) { }
+    FileID() : size(InvalidSize), timestamp(-1) {}
+    FileID(const olxstr& _name, uint64_t _size, time_t _timestamp)
+      : name(_name), size(_size), timestamp(_timestamp) {}
     // comparison operator
     bool operator == (const FileID& fi) const {
       return (timestamp == fi.timestamp && size == fi.size && name == fi.name);
@@ -295,6 +296,9 @@ public:
   static FileID GetFileID(const olxstr& name);
 
   static void CheckFileExists(const olxstr& location, const olxstr& fileName);
+
+  static olxstr QuotePath(const olxstr &p);
+  static olxstr UnquotePath(const olxstr &p);
   
   static const olxstr AllFilesMask;
 };

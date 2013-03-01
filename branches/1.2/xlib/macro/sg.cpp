@@ -16,7 +16,9 @@
 #include "integration.h"
 using namespace olex;
 
-void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TXApp &XApp = TXApp::GetInstance();
   TPtrList<TSpaceGroup>* rv = NULL;
   if( E.RetObj() != NULL )
@@ -24,8 +26,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
 
   IOlexProcessor* olx_inst = IOlexProcessor::GetInstance();
 
-  if( olx_inst != NULL )
-    olx_inst->setVar( IOlexProcessor::SGListVarName, EmptyString() );
+  XApp.SetLastSGResult_(EmptyString());
 
   const TSymmLib& SymmLib = TSymmLib::GetInstance();
   TTypeList<TBravaisLatticeRef> BravaisLattices;
@@ -506,8 +507,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         Output1.Add(tmp);  ncscount++;
       }
     }
-    if( olx_inst != NULL )
-      olx_inst->setVar( IOlexProcessor::SGListVarName, sglist );
+    XApp.SetLastSGResult_(sglist);
 
     XApp.NewLogEntry() << "Noncentrosymmetric:";
     if( !Output1.IsEmpty() )

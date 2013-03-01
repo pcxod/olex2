@@ -184,9 +184,9 @@ void TdlgMatProp::Init()  {
   }
 
 #if !wxCHECK_VERSION(2,9,0)
-  wxFlexGridSizer *grid = new wxFlexGridSizer(6, 7);
+  wxFlexGridSizer *grid = new wxFlexGridSizer(6, 5);
 #else
-  wxFlexGridSizer *grid = new wxFlexGridSizer(6, 7, wxDefaultSize);
+  wxFlexGridSizer *grid = new wxFlexGridSizer(6, 5, 5);
 #endif
   grid->Add(new wxStaticText(this, -1,
     wxT("Destination"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border);

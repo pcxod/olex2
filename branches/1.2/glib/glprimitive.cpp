@@ -201,7 +201,7 @@ void TGlPrimitive::Compile()  {
 }
 //..............................................................................
 void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
-  if( !Renderer.IsColorStereo() )  {
+  if( !Renderer.ForcePlain() )  {
     olx_gl::pushAttrib(GL_LIGHTING_BIT);
     olx_gl::disable(GL_LIGHTING);
     olx_gl::enable(GL_COLOR_MATERIAL);
@@ -212,12 +212,12 @@ void TGlPrimitive::PrepareColorRendering(uint16_t _begin) const {
 //..............................................................................
 void TGlPrimitive::EndColorRendering() const {
   olx_gl::end();
-  if( !Renderer.IsColorStereo() )
+  if( !Renderer.ForcePlain() )
     olx_gl::popAttrib();
 }
 //..............................................................................
 void TGlPrimitive::SetColor(const uint32_t& cl) const {
-  if( !Renderer.IsColorStereo() )
+  if( !Renderer.ForcePlain() )
     olx_gl::color((float)OLX_GetRValue(cl)/255, (float)OLX_GetGValue(cl)/255,
       (float)OLX_GetBValue(cl)/255, (float)OLX_GetAValue(cl)/255);
 }
@@ -535,6 +535,66 @@ AGOProperties& TGlPrimitive::SetProperties(const AGOProperties& C)  {
   TGlMaterial& Props = (TGlMaterial&)AGroupObject::SetProperties(C);
   Renderer.SetProperties(Props);
   return Props;
+}
+//..............................................................................
+void TGlPrimitive::TriangularFromEdges(const vec3d *edges, size_t count,
+  double sz, const TTypeList<vec3s> &faces)
+{
+  Vertices.SetCount(faces.Count()*3);
+  Normals.SetCount(faces.Count());
+  for (size_t i=0; i < faces.Count(); i++) {
+    vec3d d = edges[faces[i][0]]+edges[faces[i][1]]+edges[faces[i][2]];
+    vec3d n = (edges[faces[i][0]]-edges[faces[i][1]])
+      .XProdVec(edges[faces[i][2]]-edges[faces[i][1]]).Normalise();
+    Vertices[i*3+0] = edges[faces[i][0]]*sz;
+    Vertices[i*3+1] = edges[faces[i][1]]*sz;
+    Vertices[i*3+2] = edges[faces[i][2]]*sz;
+    if (d.DotProd(n) < 1)
+      n *= -1;
+    else
+      Vertices.Swap(i*3+0, i*3+2);
+    Normals[i] = n;
+  }
+}
+//..............................................................................
+void TGlPrimitive::MakeTetrahedron(double sz) {
+  if (GetType() != sgloTriangles)
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid object type");
+  static vec3d edges [] = {
+    vec3d(1, 1, 1),
+    vec3d(-1, -1, 1),
+    vec3d(-1, 1, -1),
+    vec3d(1, -1, -1)
+  };
+  TTypeList<vec3s> faces;
+  faces.AddNew(0, 1, 2);
+  faces.AddNew(0, 1, 3);
+  faces.AddNew(0, 2, 3);
+  faces.AddNew(1, 2, 3);
+  TriangularFromEdges(&edges[0], 4, sz, faces);
+}
+//..............................................................................
+void TGlPrimitive::MakeOctahedron(double sz) {
+  if (GetType() != sgloTriangles)
+    throw TFunctionFailedException(__OlxSourceInfo, "invlaid object type");
+  static vec3d edges [] = {
+    vec3d(1, 0, 0),
+    vec3d(0, 1, 0),
+    vec3d(-1, 0, 0),
+    vec3d(0, -1, 0),
+    vec3d(0, 0, 1),
+    vec3d(0, 0, -1)
+  };
+  TTypeList<vec3s> faces;
+  faces.AddNew(0, 1, 4);
+  faces.AddNew(0, 1, 5);
+  faces.AddNew(0, 3, 4);
+  faces.AddNew(0, 3, 5);
+  faces.AddNew(1, 2, 4);
+  faces.AddNew(1, 2, 5);
+  faces.AddNew(2, 3, 4);
+  faces.AddNew(2, 3, 5);
+  TriangularFromEdges(&edges[0], 6, sz, faces);
 }
 //..............................................................................
 

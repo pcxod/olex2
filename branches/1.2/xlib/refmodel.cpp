@@ -737,13 +737,33 @@ olxstr RefinementModel::AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
   return rv;
 }
 //.............................................................................
+void formatRidingUHelper(olxstr &l,
+  olxdict<const TCAtom *, TCAtomPList, TPointerComparator> &r)
+{
+  for (size_t j=0; j < r.Count(); j++) {
+    if (l.Length() > 2) l << ", ";
+    TCAtomPList &al = r.GetValue(j);
+    if (al.Count() == 1) {
+      l << al[0]->GetLabel() << " of " <<
+        r.GetKey(j)->GetLabel();
+    }
+    else {
+      l << '{';
+      for (size_t k=0; k < al.Count(); k++) {
+        l << al[k]->GetLabel();
+        if ((k+1) < al.Count()) l << ',';
+      }
+      l << "} of " << r.GetKey(j)->GetLabel();
+    }
+  }
+}
 const_strlist RefinementModel::Describe() {
   TStrList lst;
   Validate();
   int sec_num = 0;
   // riding atoms..
-  olxdict<double, 
-    olxdict<const TCAtom *, TCAtomPList, TPointerComparator>, 
+  olxdict<double, // scale
+    olxdict<const TCAtom *, TCAtomPList, TPointerComparator>,
     TPrimitiveComparator> riding_u;
   for (size_t i=0; i < aunit.AtomCount(); i++) {
     TCAtom &a = aunit.GetAtom(i);
@@ -751,26 +771,68 @@ const_strlist RefinementModel::Describe() {
       riding_u.Add(a.GetUisoScale()).Add(a.GetUisoOwner()).Add(a);
   }
   if (!riding_u.IsEmpty()) {
-    lst.Add(olxstr(++sec_num)) << ". Fixed Uiso";
+    olxdict<uint32_t, //low-to-high: 8 - bond count, 8 - riding z, 8 - pivot z
+      olxdict<double,
+        SortedPtrList<const TCAtom, TPointerComparator>,
+        TPrimitiveComparator>,
+      TPrimitiveComparator> riding_u_g;
     for (size_t i=0; i < riding_u.Count(); i++) {
-      lst.Add(" At ") << riding_u.GetKey(i) << " times of:";
-      olxstr &l = lst.Add("  ");
       for (size_t j=0; j < riding_u.GetValue(i).Count(); j++) {
-        if (l.Length() > 2) l << ", ";
         TCAtomPList &al = riding_u.GetValue(i).GetValue(j);
-        if (al.Count() == 1) {
-          l << al[0]->GetLabel() << " of " <<
-            riding_u.GetValue(i).GetKey(j)->GetLabel();
-        }
-        else {
-          l << '{';
-          for (size_t k=0; k < al.Count(); k++) {
-            l << al[k]->GetLabel();
-            if ((k+1) < al.Count()) l << ',';
+        bool same_type=true;
+        for (size_t k=1; k < al.Count(); k++) {
+          if (al[k]->GetType() != al[0]->GetType()) {
+            same_type = false;
+            break;
           }
-          l << "} of " << riding_u.GetValue(i).GetKey(j)->GetLabel();
+        }
+        if (!same_type) continue;
+        uint32_t key1=riding_u.GetValue(i).GetKey(j)->GetType().z << 16;
+        key1 = key1 | (al[0]->GetType().z << 8) | (uint8_t)(al.Count());
+        riding_u_g.Add(key1).Add(riding_u.GetKey(i)).AddUnique(
+          riding_u.GetValue(i).GetKey(j));
+      }
+    }
+    // eliminate groups
+    for (size_t i=0; i < riding_u_g.Count(); i++) {
+      if (riding_u_g.GetValue(i).Count() != 1) continue;
+      size_t idx = riding_u.IndexOf(riding_u_g.GetValue(i).GetKey(0));
+      for (size_t j=0; j < riding_u_g.GetValue(i).GetValue(0).Count(); j++) {
+        riding_u.GetValue(idx).Remove(riding_u_g.GetValue(i).GetValue(0)[j]);
+      }
+      if (riding_u.GetValue(idx).IsEmpty())
+        riding_u.Delete(idx);
+    }
+
+    lst.Add(olxstr(++sec_num)) << ". Fixed Uiso";
+    olxdict<double, TSizeList, TPrimitiveComparator> gg;
+    // groups first
+    for (size_t i=0; i < riding_u_g.Count(); i++) {
+      if (riding_u_g.GetValue(i).Count() != 1) continue;
+      gg.Add(riding_u_g.GetValue(i).GetKey(0)).Add(i);
+    }
+    for (size_t i=0; i < gg.Count(); i++) {
+      lst.Add(" At ") << gg.GetKey(i) << " times of:";
+      olxstr &l = lst.Add("  ");
+      for (size_t j=0; j < gg.GetValue(i).Count(); j++) {
+        uint32_t gk = riding_u_g.GetKey(gg.GetValue(i)[j]);
+        cm_Element *e1 = XElementLib::FindByZ((gk&0x00ff0000)>>16);
+        cm_Element *e2 = XElementLib::FindByZ((gk&0x0000ff00)>>8);
+        size_t bonds = (gk&0x000000ff);
+        if (l.Length() > 2) l << ", ";
+        l << "All " << e1->symbol << '(' << e2->symbol;
+        for (size_t bi=1; bi < bonds; bi++) l << ',' << e2->symbol;
+        l << ") groups";
+        size_t idx = riding_u.IndexOf(gg.GetKey(i));
+        if (idx != InvalidIndex) {
+          formatRidingUHelper(l, riding_u.GetValue(idx));
+          riding_u.Delete(idx);
         }
       }
+    }
+    for (size_t i=0; i < riding_u.Count(); i++) {
+      lst.Add(" At ") << riding_u.GetKey(i) << " times of:";
+      formatRidingUHelper(lst.Add("  "), riding_u.GetValue(i));
     }
   }
   // site related
@@ -1437,7 +1499,50 @@ vec3i RefinementModel::CalcMaxHklIndex(double two_theta) const {
   double t = 2*sin(two_theta*M_PI/360)/expl.GetRadiation();
   const mat3d& f2c = aunit.GetCellToCartesian();
   vec3d rv = vec3d(f2c[0][0], f2c[1][1], f2c[2][2])*t;
-  return vec3i(rv);
+  return rv.Round<int>();
+}
+//..............................................................................
+double RefinementModel::CalcCompletnessTo2Theta(double tt) const {
+  TUnitCell::SymmSpace sp =
+    aunit.GetLattice().GetUnitCell().GetSymmSpace();
+  mat3d h2c = aunit.GetHklToCartesian();
+  SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+
+  double two_sin_2t = 2*sin(tt*M_PI/360.0);
+  double max_d = expl.GetRadiation()/(two_sin_2t == 0 ? 1e-6 : two_sin_2t);
+
+  TRefList refs = GetReflections();
+  for (size_t i=0; i < refs.Count(); i++)
+    refs[i].Standardise(info_ex);
+  TReflection::SortList(refs);
+  size_t u_cnt = 0;
+  for (size_t i=0; i < refs.Count(); i++) {
+    TReflection &r = refs[i];
+    while (++i < refs.Count() && r.CompareTo(refs[i]) == 0)
+      ;
+    i--;
+    if (r.IsAbsent()) continue;
+    double d = 1/r.ToCart(h2c).Length();
+    if (d >= max_d) u_cnt++;
+  }
+
+  vec3i mx = CalcMaxHklIndex(tt);
+  vec3i mn = -mx;
+  size_t e_cnt=0;
+  for (int h=mn[0]; h <= mx[0]; h++) {
+    for (int k=mn[1]; k <= mx[1]; k++) {
+      for (int l=mn[2]; l <= mx[2]; l++) {
+        if (h==0 && k==0 && l==0) continue;
+        vec3i hkl(h,k,l);
+        vec3i shkl = TReflection::Standardise(hkl, info_ex);
+        if (shkl != hkl) continue;
+        if (TReflection::IsAbsent(hkl, info_ex)) continue;
+        double d = 1/TReflection::ToCart(hkl, h2c).Length();
+        if (d >= max_d) e_cnt++;
+      }
+    }
+  }
+  return double(u_cnt) / (e_cnt);
 }
 //..............................................................................
 adirection& RefinementModel::DirectionById(const olxstr &id) const {
@@ -1556,7 +1661,7 @@ bool RefinementModel::DoShowRestraintDefaults() const {
     return v;
   }
   catch (const TExceptionBase &e) {
-    TBasicApp::NewLogEntry(logExceptionTrace) << e;
+    e.GetException()->PrintStackTrace();
     return false;
   }
 }
@@ -1838,6 +1943,12 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
+void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,
+  TMacroError& E)
+{
+  E.SetRetVal(CalcCompletnessTo2Theta(Params[0].ToDouble()));
+}
+//..............................................................................
 TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("rm") : name);
   lib->Register(
@@ -1860,6 +1971,11 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
       "UpdateCR",
       fpAny^(fpNone|fpOne|fpTwo),
 "Updates constraint or restraint parameters (name, index, {values})") );
+  lib->Register(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibCalcCompleteness,
+      "Completeness",
+      fpOne,
+"") );
   lib->Register(
     new TMacro<RefinementModel>(this, &RefinementModel::LibShareADP,
       "ShareADP", EmptyString(),

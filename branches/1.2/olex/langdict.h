@@ -11,7 +11,6 @@
 #define __olx_langdict_H
 #include "estlist.h"
 #include "estrlist.h"
-#include "wx/wx.h"
 
 class TLangDict  {
   TSStrPObjList<olxstr,olxstr*, true> Records;

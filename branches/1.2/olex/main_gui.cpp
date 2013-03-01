@@ -484,8 +484,8 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
         FCurrentPopup->Enable(ID_SelUnGroup, true);
       }
     }
-    AquireTooltipValue();
-    FCurrentPopup->Enable(ID_SelLabel, !Tooltip.IsEmpty());
+    olxstr tt = FXApp->GetObjectInfoAt(MousePositionX, MousePositionY);
+    FCurrentPopup->Enable(ID_SelLabel, !tt.IsEmpty());
   }
   if( EsdlInstanceOf(*G, TGlGroup) )  {
     pmSelection->Enable(ID_SelGroup, G->IsSelected() && FXApp->GetSelection().Count() > 1);
@@ -640,19 +640,8 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( event.GetId() == ID_AtomGrow )
     processMacro(olxstr("grow #s") << XA->GetOwnerId());
-  else if( event.GetId() == ID_AtomSelRings )  {
-    TTypeList<TSAtomPList> rings;
-    XA->GetNetwork().FindAtomRings(*XA, rings);
-    if( !rings.IsEmpty() )  {
-      for( size_t i=0; i < rings.Count(); i++ )  {
-        for( size_t j=0; j < rings[i].Count(); j++ )  {
-          TXAtom* xa = static_cast<TXAtom*>(rings[i][j]);
-          if( !xa->IsSelected() )
-            FXApp->GetRender().Select(*xa);
-        }
-      }
-    }
-  }
+  else if( event.GetId() == ID_AtomSelRings )
+    processMacro(olxstr("sel rings *#s") << XA->GetOwnerId());
   else if( event.GetId() == ID_AtomCenter )  {
     if( !XA->IsSelected() )
       processMacro(olxstr("center #s") << XA->GetOwnerId());
@@ -714,7 +703,8 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
     }
     if( cnt != 0 )
       cent /= cnt;
-    FXApp->CreateLabel(cent, Tooltip, 4);
+    FXApp->CreateLabel(cent,
+      FXApp->GetObjectInfoAt(MousePositionX, MousePositionY), 4);
     TimePerFrame = FXApp->Draw();
   }
 }

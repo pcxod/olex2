@@ -59,7 +59,7 @@ struct HklBrushRef  {
 
 void XLibMacros::macHklBrush(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp &XApp = TXApp::GetInstance();
-  olxstr HklFN(XApp.LocateHklFile());
+  olxstr HklFN(XApp.XFile().LocateHklFile());
 
   if( HklFN.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate HKL file");

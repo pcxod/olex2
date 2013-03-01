@@ -16,6 +16,7 @@
 #include "ins.h"
 #include "crs.h"
 #include "cif.h"
+#include "hkl.h"
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
@@ -28,7 +29,9 @@ enum {
   XFILE_UNIQ
 };
 
-TBasicCFile::TBasicCFile() : RefMod(AsymmUnit), AsymmUnit(NULL)  {  
+TBasicCFile::TBasicCFile()
+  : RefMod(AsymmUnit), AsymmUnit(NULL)
+{
   AsymmUnit.SetRefMod(&RefMod);
 }
 //..............................................................................
@@ -46,46 +49,69 @@ void TBasicCFile::SaveToFile(const olxstr& fn)  {
   FileName = fn;
 };
 //..............................................................................
-void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
-  TStopWatch(__FUNC__);
-  TXFile::NameArg file_n = TXFile::ParseName(_fn);
-  TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
-  TStrList L;
-  L.LoadFromFile(file_n.file_name);
-  if( L.IsEmpty() )
-    throw TEmptyFileException(__OlxSourceInfo, _fn);
-  FileName = file_n.file_name;
-  try  {
-    LoadFromStrings(L);
-    if( EsdlInstanceOf(*this, TCif) )  {
-      if( !file_n.data_name.IsEmpty() ) {
-        if( file_n.is_index )
-          ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
-        else
-          ((TCif*)this)->SetCurrentBlock(file_n.data_name);
-      }
-      else  {  // set first then
-        ((TCif*)this)->SetCurrentBlock(InvalidIndex);
-      }
-    }
-  }
-  catch( const TExceptionBase& exc )  {
-    FileName.SetLength(0);
-    throw TFunctionFailedException(__OlxSourceInfo, exc);
-  }
+void TBasicCFile::PostLoad() {
   /* fix labels for not native formats, will not help for FE1A, because it
   could come from Fe1A or from Fe1a ...
   */
-  if( !IsNative() )  {
-    for( size_t i=0; i < AsymmUnit.AtomCount(); i++ )  {
+  if (!IsNative()) {
+    for (size_t i=0; i < AsymmUnit.AtomCount(); i++) {
       TCAtom& a = AsymmUnit.GetAtom(i);
-      if( a.GetType().symbol.Length() == 2 &&
-          a.GetLabel().StartsFromi(a.GetType().symbol) )
+      if (a.GetType().symbol.Length() == 2 &&
+          a.GetLabel().StartsFromi(a.GetType().symbol))
       {
         a.SetLabel(a.GetType().symbol +
           a.GetLabel().SubStringFrom(a.GetType().symbol.Length()), false);
       }
     }
+  }
+}
+//..............................................................................
+void TBasicCFile::LoadFromStream(IInputStream &is, const olxstr& nameToken) {
+  TStrList lines;
+  lines.LoadFromTextStream(is);
+  LoadStrings(lines, nameToken);
+}
+//..............................................................................
+void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
+  FileName.SetLength(0);
+  Title.SetLength(0);
+  TXFile::NameArg file_n(nameToken);
+  if (lines.IsEmpty())
+    throw TInvalidArgumentException(__OlxSourceInfo, "empty content");
+  try  {
+    LoadFromStrings(lines);
+    if (EsdlInstanceOf(*this, TCif)) {
+      if (!file_n.data_name.IsEmpty()) {
+        if (file_n.is_index)
+          ((TCif*)this)->SetCurrentBlock(file_n.data_name.ToSizeT());
+        else
+          ((TCif*)this)->SetCurrentBlock(file_n.data_name);
+      }
+      else {  // set first then
+        ((TCif*)this)->SetCurrentBlock(InvalidIndex);
+      }
+    }
+  }
+  catch (const TExceptionBase& exc) {
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+  FileName = nameToken;
+  PostLoad();
+}
+//..............................................................................
+void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
+  TStopWatch(__FUNC__);
+  TXFile::NameArg file_n(_fn);
+  TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
+  TStrList L;
+  L.LoadFromFile(file_n.file_name);
+  if (L.IsEmpty())
+    throw TEmptyFileException(__OlxSourceInfo, _fn);
+  try {
+    LoadStrings(L, _fn);
+  }
+  catch (const TExceptionBase& exc) {
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
   FileName = file_n.file_name;
 }
@@ -166,38 +192,19 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
   return true;
 }
 //..............................................................................
-void TXFile::LoadFromFile(const olxstr & _fn) {
-  TStopWatch(__FUNC__);
-  const NameArg file_n = ParseName(_fn);
-  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
-  // this thows an exception if the file format loader does not exist
-  TBasicCFile* Loader = FindFormat(ext);
-  bool replicated = false;
-  if( FLastLoader == Loader )  {
-    Loader = (TBasicCFile*)Loader->Replicate();
-    replicated = true;
-  }
-  try  {
-    Loader->LoadFromFile(_fn);
-    for (size_t i=0; i < Loader->GetAsymmUnit().AtomCount(); i++) {
-      TCAtom &a = Loader->GetAsymmUnit().GetAtom(i);
-      if (olx_abs(a.ccrd()[0]) > 127 ||
-          olx_abs(a.ccrd()[1]) > 127 ||
-          olx_abs(a.ccrd()[2]) > 127)
-      {
-        throw TInvalidArgumentException(__OlxSourceInfo,
-          olxstr("atom coordinates for ").quote() << a.GetLabel());
-      }
+void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
+  for (size_t i=0; i < Loader->GetAsymmUnit().AtomCount(); i++) {
+    TCAtom &a = Loader->GetAsymmUnit().GetAtom(i);
+    if (olx_abs(a.ccrd()[0]) > 127 ||
+      olx_abs(a.ccrd()[1]) > 127 ||
+      olx_abs(a.ccrd()[2]) > 127)
+    {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("atom coordinates for ").quote() << a.GetLabel());
     }
   }
-  catch( const TExceptionBase& exc )  {
-    if( replicated )
-      delete Loader;
-    throw TFunctionFailedException(__OlxSourceInfo, exc);
-  }
-
   if( !Loader->IsNative() )  {
-    OnFileLoad.Enter(this, &_fn);
+    OnFileLoad.Enter(this, &fn);
     try  {
       GetRM().Clear(rm_clear_ALL);
       GetLattice().Clear(true);
@@ -222,11 +229,78 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
   if( GetRM().GetHKLSource().IsEmpty() ||
      !TEFile::Exists(GetRM().GetHKLSource()) )
   {
-    olxstr src = TXApp::GetInstance().LocateHklFile();
+    olxstr src = LocateHklFile();
     if( !src.IsEmpty() && !TEFile::Existsi(olxstr(src), src) )
       src.SetLength(0);
     GetRM().SetHKLSource(src);
   }
+  TXApp::GetInstance().SetLastSGResult_(EmptyString());
+}
+//..............................................................................
+void TXFile::LoadFromStrings(const TStrList& lines, const olxstr &nameToken) {
+  TStopWatch(__FUNC__);
+  // this thows an exception if the file format loader does not exist
+  const NameArg file_n(nameToken);
+  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
+  TBasicCFile* Loader = FindFormat(ext);
+  bool replicated = false;
+  if( FLastLoader == Loader )  {
+    Loader = (TBasicCFile*)Loader->Replicate();
+    replicated = true;
+  }
+  try  {
+    Loader->LoadStrings(lines, nameToken);
+  }
+  catch( const TExceptionBase& exc )  {
+    if( replicated )
+      delete Loader;
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+  PostLoad(EmptyString(), Loader, replicated);
+}
+//..............................................................................
+void TXFile::LoadFromStream(IInputStream& in, const olxstr &nameToken) {
+  TStopWatch(__FUNC__);
+  // this thows an exception if the file format loader does not exist
+  const NameArg file_n(nameToken);
+  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
+  TBasicCFile* Loader = FindFormat(ext);
+  bool replicated = false;
+  if( FLastLoader == Loader )  {
+    Loader = (TBasicCFile*)Loader->Replicate();
+    replicated = true;
+  }
+  try  {
+    Loader->LoadFromStream(in, nameToken);
+  }
+  catch( const TExceptionBase& exc )  {
+    if( replicated )
+      delete Loader;
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+  PostLoad(EmptyString(), Loader, replicated);
+}
+//..............................................................................
+void TXFile::LoadFromFile(const olxstr & _fn) {
+  TStopWatch(__FUNC__);
+  const NameArg file_n(_fn);
+  const olxstr ext(TEFile::ExtractFileExt(file_n.file_name));
+  // this thows an exception if the file format loader does not exist
+  TBasicCFile* Loader = FindFormat(ext);
+  bool replicated = false;
+  if( FLastLoader == Loader )  {
+    Loader = (TBasicCFile*)Loader->Replicate();
+    replicated = true;
+  }
+  try  {
+    Loader->LoadFromFile(_fn);
+  }
+  catch( const TExceptionBase& exc )  {
+    if( replicated )
+      delete Loader;
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+  PostLoad(_fn, Loader, replicated);
 }
 //..............................................................................
 void TXFile::UpdateAsymmUnit()  {
@@ -609,24 +683,29 @@ void TXFile::LibGetMu(const TStrObjList& Params, TMacroError& E)  {
   ContentList cont = GetAsymmUnit().GetContentList();
   double mu=0;
   for( size_t i=0; i < cont.Count(); i++ )  {
-    double v = ac.CalcMuOverRhoForE(
-      GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
-    mu += (cont[i].count*cont[i].element.GetMr())*v;
+    XScatterer *xs = GetRM().FindSfacData(cont[i].element.symbol);
+    if (xs != NULL && xs->IsSet(XScatterer::setMu)) {
+      mu += cont[i].count*xs->GetMu()/10;
+    }
+    else {
+      double v = ac.CalcMuOverRhoForE(
+        GetRM().expl.GetRadiationEnergy(), *ac.locate(cont[i].element.symbol));
+      mu += (cont[i].count*cont[i].element.GetMr())*v/6.022142;
+    }
   }
   mu *= GetAsymmUnit().GetZ()/GetAsymmUnit().CalcCellVolume()/
     GetAsymmUnit().GetZPrime();
-  mu /= 6.022142;
   E.SetRetVal(olxstr::FormatFloat(3,mu));
 }
 //..............................................................................
 TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
-  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name );
+  TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name);
 
   lib->Register(
     new TFunction<TXFile>(this, &TXFile::LibGetFormula, "GetFormula",
       fpNone|fpOne|fpTwo|psFileLoaded,
       "Returns a string for content of the asymmetric unit. Takes single or "
-      "none parameters. If parameter equals 'html' and html formatted string is" 
+      "none parameters. If parameter equals 'html' and html formatted string is"
       " returned, for 'list' parameter a string like 'C:26,N:45' is returned. "
       "If no parameter is specified, just formula is returned")
    );
@@ -684,48 +763,91 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   return lib;
 }
 //..............................................................................
-TXFile::NameArg TXFile::ParseName(const olxstr& fn)  {
-  TXFile::NameArg rv;
-  rv.file_name = fn;
-  rv.is_index = false;
-  const size_t di = fn.LastIndexOf('.');
+void TXFile::NameArg::Parse(const olxstr& fn)  {
+  this->file_name = fn;
+  this->data_name.SetLength(0);
+  this->is_index = false;
   const size_t hi = fn.LastIndexOf('#');
   const size_t ui = fn.LastIndexOf('$');
-  if( hi == InvalidIndex && ui == InvalidIndex )
-    return rv;
-  if( di != InvalidIndex )  {
-    if( hi != InvalidIndex && ui != InvalidIndex && di < hi && di < ui ) {
+  if (hi == InvalidIndex && ui == InvalidIndex)
+    return;
+  const size_t di = fn.LastIndexOf('.');
+  if (di != InvalidIndex) {
+    if (hi != InvalidIndex && ui != InvalidIndex && di < hi && di < ui) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "only one data ID is allowed");
     }
-    if( hi != InvalidIndex && di < hi )  {
-      rv.data_name = fn.SubStringFrom(hi+1);
-      rv.file_name = fn.SubStringTo(hi);
-      rv.is_index = true;
+    if (hi != InvalidIndex && di < hi) {
+      this->data_name = fn.SubStringFrom(hi+1);
+      this->file_name = fn.SubStringTo(hi);
+      this->is_index = true;
     }
-    else if( ui != InvalidIndex && di < ui )  {
-      rv.data_name = fn.SubStringFrom(ui+1);
-      rv.file_name = fn.SubStringTo(ui);
-      rv.is_index = false;
+    else if (ui != InvalidIndex && di < ui) {
+      this->data_name = fn.SubStringFrom(ui+1);
+      this->file_name = fn.SubStringTo(ui);
+      this->is_index = false;
     }
   }
-  else  {
-    if( hi != InvalidIndex && ui != InvalidIndex ) {
+  else {
+    if (hi != InvalidIndex && ui != InvalidIndex) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "only one data ID is allowed");
     }
-    if( hi != InvalidIndex )  {
-      rv.data_name = fn.SubStringFrom(hi+1);
-      rv.file_name = fn.SubStringTo(hi);
-      rv.is_index = true;
+    if (hi != InvalidIndex) {
+      this->data_name = fn.SubStringFrom(hi+1);
+      this->file_name = fn.SubStringTo(hi);
+      this->is_index = true;
     }
-    else if( ui != InvalidIndex )  {
-      rv.data_name = fn.SubStringFrom(ui+1);
-      rv.file_name = fn.SubStringTo(ui);
-      rv.is_index = false;
+    else if (ui != InvalidIndex) {
+      this->data_name = fn.SubStringFrom(ui+1);
+      this->file_name = fn.SubStringTo(ui);
+      this->is_index = false;
     }
   }
-  return rv;
+}
+//..............................................................................
+olxstr TXFile::NameArg::ToString() const {
+  if (data_name.IsEmpty())
+    return file_name;
+  return olxstr(file_name) << (is_index ? '#' : '$') << data_name;
+}
+//..............................................................................
+olxstr TXFile::LocateHklFile()  {
+  olxstr HklFN = GetRM().GetHKLSource();
+  if (TEFile::Existsi(olxstr(HklFN), HklFN))
+    return HklFN;
+  const olxstr fn = GetFileName();
+  HklFN = TEFile::ChangeFileExt(fn, "hkl");
+  if (TEFile::Existsi(olxstr(HklFN), HklFN))
+    return HklFN;
+  HklFN = TEFile::ChangeFileExt(fn, "raw");
+  if (TEFile::Existsi(olxstr(HklFN), HklFN)) {
+    THklFile Hkl;
+    Hkl.LoadFromFile(HklFN);
+    HklFN = TEFile::ChangeFileExt(fn, "hkl");
+    for (size_t i=0; i < Hkl.RefCount(); i++) {
+      Hkl[i].SetI((double)olx_round(Hkl[i].GetI())/100.0);
+      Hkl[i].SetS((double)olx_round(Hkl[i].GetS())/100.0);
+    }
+    Hkl.SaveToFile(HklFN);
+    TBasicApp::NewLogEntry() << "The scaled hkl file is prepared";
+    return HklFN;
+  }
+  else {  // check for stoe format
+    HklFN = TEFile::ChangeFileExt(fn, "hkl");
+    olxstr HkcFN = TEFile::ChangeFileExt(fn, "hkc");
+    if (TEFile::Existsi(olxstr(HkcFN), HkcFN)) {
+      TEFile::Copy(HkcFN, HklFN);
+      return HklFN;
+    }
+  }
+  // last chance - get any hkl in the same folder (only if one!)
+  TStrList hkl_files;
+  olxstr dir = TEFile::ExtractFilePath(fn);
+  TEFile::ListDir(dir, hkl_files, "*.hkl", sefFile);
+  if (hkl_files.Count() == 1)
+    return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
+  return EmptyString();
 }
 //..............................................................................
 

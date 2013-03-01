@@ -13,7 +13,6 @@
 #include "xapp.h"
 #include "etable.h"
 #include "symmlib.h"
-#include "undo.h"
 #include "bitarray.h"
 #include "xfader.h"
 #include "glmouse.h"
@@ -150,7 +149,6 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   are visible, also considers H, and Q bonds special handling
   */
   void _syncBondsVisibility();
-  TUndoStack UndoStack;
   class TStateRegistry *States;
   TStrList TextureNames;
 public:
@@ -218,7 +216,6 @@ public:
   AtomIterator GetAtoms() const {  return AtomIterator(*this);  }
   BondIterator GetBonds() const {  return BondIterator(*this);  }
   PlaneIterator GetPlanes() const {  return PlaneIterator(*this);  }
-  TUndoStack &GetUndo() { return UndoStack; }
 protected:
   TGlRenderer* FGlRender;
   TXFader* Fader;
@@ -347,8 +344,7 @@ protected:
     throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
   }
 public:
-  /* stores groups beforehand abd restores afterwards, also considers overlayed
-  files
+  /* considers overlayed files
   */
   void UpdateConnectivity();
   size_t stateStructureVisible,
@@ -390,6 +386,9 @@ public:
   void CreateObjects(bool CenterModel, bool init_visibility=true);
   void UpdateBonds();
   AGDrawObject* AddObjectToCreate(AGDrawObject* obj);
+  bool RemoveObjectToCreate(const AGDrawObject* obj) {
+    return ObjectsToCreate.Remove(obj);
+  }
   void Clear();
   void ClearXGrowPoints();
   // changes the graphics quality
@@ -426,19 +425,19 @@ public:
   // restores the on-screen rendering
   void FinishDrawBitmap();
   void Resize(int new_w, int new_h)  {  FGlRender->Resize(new_w, new_h); }
-  AGDrawObject* SelectObject(int x, int y)  {
+  AGDrawObject* SelectObject(int x, int y) const {
     return FGlRender->SelectObject(x, y);
   }
-  TGlPrimitive *SelectPrimitive(int x, int y)  {
+  TGlPrimitive *SelectPrimitive(int x, int y) const {
     return FGlRender->SelectPrimitive(x, y);
   }
   DefPropP(double, ExtraZoom)
 //..............................................................................
 // TXApp interface
-  TDUnitCell& DUnitCell()  {  return *FDUnitCell; }
-  TDBasis& DBasis()  {  return *FDBasis; }
+  TDUnitCell& DUnitCell() const {  return *FDUnitCell; }
+  TDBasis& DBasis() const {  return *FDBasis; }
   THklFile& HklFile()  {  return *FHklFile; }
-  TDFrame& DFrame()  {  return *FDFrame; }
+  TDFrame& DFrame() const {  return *FDFrame; }
   TXGrid& XGrid() const {  return *FXGrid;  }
   T3DFrameCtrl& Get3DFrame() const { return *F3DFrame;  }
   TGlMouse& GetMouseHandler() const { return *FGlMouse; }
@@ -473,7 +472,8 @@ public:
   void UnGroupSelection();
   void UnGroup(TGlGroup& G);
   // if list is true - the selection is considered as a list of bonds
-  olxstr GetSelectionInfo(bool list=false);
+  olxstr GetSelectionInfo(bool list=false) const;
+  olxstr GetObjectInfoAt(int x, int y) const;
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);
   virtual void ExpandSelectionEx(TSAtomPList& atoms);
@@ -502,15 +502,16 @@ protected:
        XGrowPointsVisible,
        FXPolyVisible,
        DisplayFrozen,
-       ZoomAfterModelBuilt;
+       ZoomAfterModelBuilt,
+       ShowChemicalOccu;
   short FGrowMode, PackMode;
 public:
   TXGlLabels& GetLabels() const {  return *FLabels; }
+  void UpdateDuplicateLabels();
   bool AreLabelsVisible() const;
   void SetLabelsVisible(bool v);
   void SetLabelsMode(short lmode);
   short GetLabelsMode() const;
-  TGlMaterial& LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
   void MarkLabel(size_t index, bool mark);
   bool IsLabelMarked(const TXAtom& A) const;
@@ -636,9 +637,11 @@ protected:
   void FillXBondList(TXBondPList& res, TXBondPList* providedBonds);
 public:
   void RestoreSelection();
-  TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels, bool ClearSelection);
+  TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels,
+    bool ClearSelection);
   TUndoData* Name(TXAtom& Atom, const olxstr& Name, bool CheckLabels);
-  TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To, bool CheckLabels);
+  TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To,
+    bool CheckLabels);
 
   void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort,
     int precision=3, bool cart=false);
@@ -657,9 +660,9 @@ public:
 protected:  float ProbFactor(float Prob);
 public:     void CalcProbFactor(float Prob);
 
-  TXPlane *AddPlane(const olxstr &name, TXAtomPList& Atoms, bool Rectangular,
-    double weightExtent=0);
-  TSPlane *TmpPlane(TXAtomPList* Atoms=NULL, double weightExtent=0); 
+  TXPlane *AddPlane(const olxstr &name, const TXAtomPList& Atoms,
+    bool Rectangular, double weightExtent=0);
+  TSPlane *TmpPlane(const TXAtomPList* Atoms=NULL, double weightExtent=0); 
   void DeletePlane(TXPlane* plane);
   void ClearPlanes();
   TXPlane *FindPlane(const olxstr& PlaneName);
@@ -686,7 +689,13 @@ public:     void CalcProbFactor(float Prob);
     SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings 
   */
   void SelectRings(const olxstr& Condition, bool Invert=false);
-  void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings );
+  TTypeList<TSAtomPList>& FindRings(const olxstr& Condition,
+    TTypeList<TSAtomPList>& rings);
+  ConstTypeList<TSAtomPList> FindRings(const olxstr& Condition) {
+    TTypeList<TSAtomPList> l;
+    return FindRings(Condition, l);
+  }
+
   // these two create structure scope labels
   TXGlLabel& CreateLabel(const vec3d& center, const olxstr& T, uint16_t FontIndex);
   TXGlLabel& CreateLabel(const TXAtom& A, uint16_t FontIndex);
@@ -755,8 +764,6 @@ public:     void CalcProbFactor(float Prob);
 // X interface
   TUndoData* DeleteXAtoms(TXAtomPList& L);
   TUndoData* DeleteXObjects(const AGDObjList& L);
-  /* function undoes deleted atoms bonds and planes */
-  void undoDelete(TUndoData *data);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   /* function undoes hiding of objects */

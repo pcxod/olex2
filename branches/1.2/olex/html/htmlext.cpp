@@ -360,6 +360,9 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
            Tag1 = "<!-- #includeif ",
            Tag2 = "<!-- #include",
            comment_open = "<!--", comment_close = "-->";
+  Olex2App *app=NULL;
+  try { app = &Olex2App::GetInstance(); }
+  catch(...) {}
   olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
   for( size_t i=0; i < Lst.Count(); i++ )  {
     Lst[i].Replace("~popup_name~", PopupName);
@@ -381,9 +384,9 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
     }
 
     // TRANSLATION START
-    if (op != NULL) {
-      Lst[i] = op->TranslateString(Lst[i]);
-      if( Lst[i].IndexOf("$") != InvalidIndex ) {
+    if (app != NULL) {
+      Lst[i] = app->TranslateString(Lst[i]);
+      if (Lst[i].IndexOf("$") != InvalidIndex && op != NULL) {
         op->processFunction(Lst[i],
           olxstr(Sender.GetCurrentFile()) << '#' << (i+1));
       }

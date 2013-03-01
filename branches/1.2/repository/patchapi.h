@@ -47,6 +47,18 @@ class PatchAPI  {
         olxstr("Failed to delete file: ") << src);
     }
   }
+
+  struct DataDirSettings {
+    bool is_static, is_manually_set;
+    olxstr data_dir;
+    DataDirSettings();
+    // does nothing if set manually
+    bool Refresh();
+  };
+  static DataDirSettings &GetDDSetting() {
+    static DataDirSettings st;
+    return st;
+  }
   static TEFile* lock_file;
   static void _RestoreExecuableFlags();
   static olxstr repository_tag, repository_base_dir,
@@ -82,6 +94,12 @@ public:
   static const char* GetPatchFolder()  {  return "patch";  }
   //reads current repository tag, returns EmptyString() in the case of error
   static olxstr ReadRepositoryTag(const olxstr& base_dir=EmptyString());
+  static void SetDataDir(const olxstr &dir, bool is_static) {
+    if (dir.IsEmpty())
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty data dir");
+    GetDDSetting().is_static = is_static;
+    GetDDSetting().data_dir = dir;
+  }
   /* return 'AppData' or OLEX2_DATADIR if defined
   */
   static olxstr _GetSharedDirRoot(bool refresh=false);
@@ -105,7 +123,7 @@ public:
 #else
     new_shared_dir << "data/";
 #endif
-    return TEFile::AddPathDelimeterI( 
+    return TEFile::AddPathDelimeterI(
       new_shared_dir << MD5::Digest(
         esdl::olxcstr(base_dir + ReadRepositoryTag(base_dir))));
   }

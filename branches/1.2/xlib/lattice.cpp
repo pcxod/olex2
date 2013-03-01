@@ -188,7 +188,7 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     for( size_t i=0; i < ac; i++ )  {
       TSAtom& sa = Objects.atoms[i];
       (*ocrd)[i] = sa.crd();
-      GetAsymmUnit().CellToCartesian(sa.ccrd(), sa.crd());
+      sa.crd() = GetAsymmUnit().Orthogonalise(sa.ccrd());
       if( !sa.CAtom().IsAvailable() )
         dac++;
     }
@@ -233,7 +233,7 @@ void TLattice::GenerateBondsAndFragments(TArrayList<vec3d> *ocrd)  {
     Objects.atoms.Pack();
     OnAtomsDeleted.Exit(this);
   }
-  QuickSorter::SortSF(Fragments, CompareFragmentsBySize);
+  BubbleSorter::SortSF(Fragments, CompareFragmentsBySize);
   for( size_t i=0; i < Fragments.Count(); i++ )  {
     for( size_t j=0; j < Fragments[i]->NodeCount(); j++ )
       Fragments[i]->Node(j).CAtom().SetFragmentId((uint32_t)i);
@@ -323,7 +323,7 @@ void TLattice::Generate(TCAtomPList* Template, bool ClearCont)  {
       if( sa.IsDeleted() )
         da++;
       else
-        GetAsymmUnit().CellToCartesian(sa.ccrd(), sa.crd());
+        sa.crd() = GetAsymmUnit().Orthogonalise(sa.ccrd());
     }
     if( da != 0 )  {
       const size_t ac = Objects.atoms.Count();
@@ -372,7 +372,7 @@ void TLattice::GenerateCell()  {
         lm->t += t;
         lm->SetRawId(m_id);
       }
-      au.CellToCartesian(sa.ccrd(), sa.crd());
+      sa.crd() = au.Orthogonalise(sa.ccrd());
       sa.SetEllipsoid(&GetUnitCell().GetEllipsoid(m.GetContainerId(),
         ca.GetId()));
       sa._SetMatrix(lm);
@@ -711,8 +711,7 @@ TSAtom& TLattice::GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net)  {
   TSAtom& SA = Objects.atoms.New(net == NULL ? Network : net);
   SA.CAtom(a);
   SA._SetMatrix(&symop);
-  SA.ccrd() = symop * SA.ccrd();
-  GetAsymmUnit().CellToCartesian(SA.ccrd(), SA.crd());
+  SA.crd() = GetAsymmUnit().Orthogonalise(SA.ccrd() = symop * SA.ccrd());
   SA.SetEllipsoid(&GetUnitCell().GetEllipsoid(
     symop.GetContainerId(), SA.CAtom().GetId()));
   return SA;
@@ -1370,8 +1369,10 @@ void TLattice::CompaqClosest()  {
         TSAtom& fb = netb->Node(k);
         if( fb.IsDeleted() )  continue;
         fb.CAtom().ccrd() = *transform * fb.CAtom().ccrd();
-        if( fb.CAtom().GetEllipsoid() != NULL )
-          *fb.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(transform->GetContainerId(), fb.CAtom().GetId());
+        if( fb.CAtom().GetEllipsoid() != NULL ) {
+          *fb.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(
+          transform->GetContainerId(), fb.CAtom().GetId());
+        }
       }
       // this needs to be done if any one fragment is transformed multiple times...
       GetUnitCell().UpdateEllipsoids();
@@ -1408,7 +1409,7 @@ void TLattice::CompaqType(short type)  {
     }
     if( transform == NULL )  continue;
     sa.ccrd() = sa.CAtom().ccrd() = (*transform * sa.ccrd());
-    au.CellToCartesian(sa.CAtom().ccrd(), sa.crd());
+    sa.crd() = au.Orthogonalise(sa.CAtom().ccrd());
     if( sa.CAtom().GetEllipsoid() != NULL )  {
       *sa.CAtom().GetEllipsoid() = GetUnitCell().GetEllipsoid(
         transform->GetContainerId(), sa.CAtom().GetId());
@@ -1444,7 +1445,7 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms,
       for( size_t j=0; j < fragAtoms[i]->GetNetwork().NodeCount(); j++ )  {
         TSAtom& SA = fragAtoms[i]->GetNetwork().Node(j);
         SA.CAtom().ccrd() = transform * SA.CAtom().ccrd();
-        if( SA.CAtom().GetEllipsoid() != NULL ) 
+        if( SA.CAtom().GetEllipsoid() != NULL )
           SA.CAtom().GetEllipsoid()->Mult(etm, J, Jt);
       }
     }
@@ -1483,7 +1484,7 @@ void TLattice::RestoreCoordinates()  {
   const size_t ac = Objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = Objects.atoms[i];
-    GetAsymmUnit().CellToCartesian(sa.ccrd(), sa.crd());
+    sa.crd() = GetAsymmUnit().Orthogonalise(sa.ccrd());
   }
 }
 //..............................................................................
@@ -1512,16 +1513,29 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         }
       }
     }
-    if( !parts.IsEmpty() )  {  // here we go..
+    if (!parts.IsEmpty()) {  // here we go..
       TTypeList<TCAtomPList> gen_atoms;
       ProcessingAtoms.Remove(atom);
-      for( size_t i=0; i < parts.Count(); i++ )  {
-        _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i],
+      if (parts.Count() > 1) {
+        for (size_t i=0; i < parts.Count(); i++) {
+          _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i],
+            &gen_atoms.AddNew());
+          TCAtomPList& gen = gen_atoms.GetLast();
+          for (size_t j=0; j < gen.Count(); j++) {
+            gen[j]->SetPart(parts[i]);
+            rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i]);
+          }
+        }
+      }
+      else { // special case with just a single part
+        _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, 0,
           &gen_atoms.AddNew());
         TCAtomPList& gen = gen_atoms.GetLast();
-        for( size_t j=0; j < gen.Count(); j++ )  {
-          gen[j]->SetPart(parts[i]);
-          rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i]);
+        double soccu = (olx_abs(occu[0]) > 5 ? -occu[0] : 1-occu[0]);
+        int spart = (parts[0] == 2 ? 1 : olx_abs(parts[0])+1);
+        for (size_t j=0; j < gen.Count(); j++) {
+          gen[j]->SetPart(spart);
+          rm->Vars.SetParam(*gen[j], catom_var_name_Sof, soccu);
         }
       }
       cg.AnalyseMultipart(AE, gen_atoms);
@@ -1689,16 +1703,19 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
-      else if( v < 120 && d1 > 1.45 && d2 > 1.45 )  {
+      else if( v < 121 && d1 > 1.45 && d2 > 1.45 )  {
         TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": R2NH2+";
         cg.FixAtom(AE, fgNH2, h_elm, NULL, generated);
       }
-      else if( v < 120 && (d1 < 1.3 || d2 < 1.3) )
+      else if( v < 121 && (d1 < 1.3 || d2 < 1.3) )
         ;
       else  {
         if( (d1+d2) > 2.70 && v < 140 )  {
           TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": XYNH";
-          cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
+          if (d1 > 1.4 && d2 > 1.4)
+            cg.FixAtom(AE, fgNH1t, h_elm, NULL, generated);
+          else
+            cg.FixAtom(AE, fgNH1, h_elm, NULL, generated);
         }
       }
     }
@@ -2409,7 +2426,7 @@ void TLattice::RestoreADPs(bool restoreCoordinates)  {
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = Objects.atoms[i];
     if( restoreCoordinates )
-      au.CellToCartesian(sa.ccrd(), sa.crd());
+      sa.crd() = au.Orthogonalise(sa.ccrd());
     if( sa.CAtom().GetEllipsoid() != NULL ) {
       sa.SetEllipsoid(
         &uc.GetEllipsoid(sa.GetMatrix().GetContainerId(), sa.CAtom().GetId()));
@@ -2530,6 +2547,61 @@ void TLattice::SetDeltaI(double v)  {
     GetUnitCell().FindSymmEq();
     UpdateConnectivity();
   }
+}
+//..............................................................................
+void TLattice::undoDelete(TUndoData *data)  {
+  TDeleteUndo *undo = dynamic_cast<TDeleteUndo*>(data);
+  for (size_t i=0; i < undo->SAtomIds.Count(); i++)
+    RestoreAtom(undo->SAtomIds[i]);
+  UpdateConnectivity();
+}
+//..............................................................................
+TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
+  TAsymmUnit &au = GetAsymmUnit();
+  TCAtomPList deleted;
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    TCAtom &ca = au.GetAtom(i);
+    if (ca.GetType() == iHydrogenZ) {
+      if (ca.GetParentAfixGroup() != NULL &&
+        ca.GetParentAfixGroup()->GetM() > 0)
+      {
+        size_t attached_cnt=0;
+        for (size_t j=0; j < ca.AttachedSiteCount(); j++) {
+          if (!ca.GetAttachedAtom(j).IsDeleted() &&
+            ca.GetAttachedAtom(j).GetType().z > 1)
+          {
+            attached_cnt++;
+          }
+        }
+        if (attached_cnt > 1) {
+          TAfixGroup &ag = *ca.GetParentAfixGroup();
+          olxstr glabel;
+          for (size_t gi=0; gi < ag.Count(); gi++) {
+            deleted.Add(ag[gi])->SetDeleted(true);
+          }
+          if (report) {
+            TBasicApp::NewLogEntry(logError) << "Group at " <<
+              ag.GetPivot().GetLabel() << " had invalid connectivity and was "
+              "removed. Please revise your model";
+          }
+          ag.Clear();
+        }
+      }
+    }
+  }
+  if (deleted.IsEmpty()) return NULL;
+  TDeleteUndo *du = new TDeleteUndo(
+    UndoAction::New(this, &TLattice::undoDelete));
+  for (size_t i=0; i < deleted.Count(); i++) {
+    TSAtomPList dl = Objects.atomRegistry.FindAll(*deleted[i]);
+    du->SAtomIds.SetCapacity(du->SAtomIds.Count()+dl.Count());
+    for (size_t j=0; j < dl.Count(); j++)
+      du->AddSAtom(*dl[j]);
+  }
+  if (reinit) {
+    Init();
+  }
+  return du;
 }
 //..............................................................................
 //..............................................................................

@@ -166,6 +166,7 @@ public:
       }
       gxapp.XFile().GetLattice().SetAnis(to_iso, false);
       gxapp.XFile().GetLattice().Uniq();
+      gxapp.UpdateDuplicateLabels();
     }
     else  {
       TUnitCell& uc = gxapp.XFile().GetUnitCell();
@@ -199,6 +200,10 @@ public:
     if (undo != NULL) {
       gxapp.GetUndo().Push(undo);
       undo = NULL;
+    }
+    if (TXApp::DoUseSafeAfix()) {
+      gxapp.GetUndo().Push(
+        gxapp.XFile().GetLattice().ValidateHGroups(true, true));
     }
   }
   virtual bool OnObject(AGDrawObject &obj)  {

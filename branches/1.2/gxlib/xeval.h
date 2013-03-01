@@ -148,6 +148,16 @@ public:
   {}
   bool EvaluateBool() const {  return Parent->GetTXAtom()->IsSelected();  }
 };
+class TXAtom_VisibleEvaluator
+  : public TEvaluator<ITXAtom_DataProvider,IBoolEvaluator,TXAtom_VisibleEvaluator>
+{
+public:
+  // constructor
+  TXAtom_VisibleEvaluator(ITXAtom_DataProvider* parent)
+    : parent_t(parent)
+  {}
+  bool EvaluateBool() const { return Parent->GetTXAtom()->IsVisible(); }
+};
 
 // factory class implementation
 class TTGlGroupEvaluatorFactory : public IEvaluatorFactory {
@@ -176,11 +186,11 @@ public:
 };
 // evaluator implementation for complex A
 template <int n>
-class TXBond_AtomEvaluator : public ITSAtom_DataProvider {
+class TXBond_AtomEvaluator : public ITXAtom_DataProvider {
   ITXBond_DataProvider *Parent;
 public:
   TXBond_AtomEvaluator(ITXBond_DataProvider* parent) : Parent(parent) {}
-  TSAtom* GetTSAtom()  {
+  virtual TXAtom *GetTXAtom() {
     return &(n ==1 ? Parent->GetTXBond()->A() : Parent->GetTXBond()->B());
   }
 };

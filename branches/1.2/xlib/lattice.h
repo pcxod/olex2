@@ -10,6 +10,7 @@
 #ifndef __olx_xl_lattice_H
 #define __olx_xl_lattice_H
 #include "xbase.h"
+#include "undo.h"
 #include "symmat.h"
 #include "catom.h"
 #include "satom.h"
@@ -23,6 +24,13 @@
 #include "bitarray.h"
 
 BeginXlibNamespace()
+
+class TDeleteUndo: public TUndoData {
+public:
+  TTypeList<TSAtom::Ref> SAtomIds;
+  TDeleteUndo(IUndoAction *action) : TUndoData(action) {}
+  void AddSAtom(const TSAtom& SA) { SAtomIds.AddCopy(SA.GetRef()); }
+};
 
 class TLattice: public IEObject  {
 private:
@@ -234,6 +242,14 @@ protected:
 public:
   // implements HADD command
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);
+  /* function undoes deleting atoms */
+  void undoDelete(TUndoData *data);
+  /* checks if the HFIX groups have valid connectivity. Returns NULL if nothing
+  was deleted.
+  reinit: the connectivity is updated after some of the groups were removed
+  report: prints the names of the removed groups
+  */
+  TUndoData *ValidateHGroups(bool reinit, bool report=false);
   // returns a chemical moiety string for CIF
   olxstr CalcMoiety() const;
   double GetDelta() const {  return Delta;  }

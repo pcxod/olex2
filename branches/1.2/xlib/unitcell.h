@@ -18,6 +18,8 @@
 #include "lattice.h"
 #include "asymmunit.h"
 #include "symmlib.h"
+#include "olxmps.h"
+
 #ifdef QLength  // on Linux it is defined as something...
   #undef QLength
 #endif
@@ -465,7 +467,7 @@ public:
   };
 
 protected:
-  class TSearchSymmEqTask  {
+  class TSearchSymmEqTask : public TaskBase {
     TPtrList<TCAtom>& Atoms;
     const smatd_list& Matrices;
     TAsymmUnit* AU;
@@ -478,7 +480,7 @@ protected:
       return new TSearchSymmEqTask(Atoms, Matrices);
     }
   };
-  class TBuildDistanceMapTask  {
+  class TBuildDistanceMapTask : public TaskBase {
     float*** map;
     TTypeList<AnAssociation3<vec3f,TCAtom*, float> >& atoms;
     const vec3s& dims;

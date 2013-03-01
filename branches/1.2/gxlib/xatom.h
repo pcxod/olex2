@@ -48,7 +48,9 @@ const uint32_t
   xatom_SmallSphereId = 3,
   xatom_RimsId        = 4,
   xatom_DisksId       = 5,
-  xatom_CrossId       = 6;
+  xatom_CrossId       = 6,
+  xatom_TetrahedronId = 7
+  ;
 
 class TXAtom: public TSAtom, public AGlMouseHandlerImp  {
 public:
@@ -64,13 +66,15 @@ private:
     SmallSphereIndex,
     RimsIndex,
     DisksIndex,
-    CrossIndex;
+    CrossIndex,
+    TetrahedronIndex
+    ;
   static GLuint
     OrtepSpheres, // 8 glLists
     LockedAtomSphere, // 1 list
     ConstrainedAtomSphere // 1 list
     ;
-  static double MinQAlpha;
+  static float MinQAlpha;
   Poly* Polyhedron;
   TXGlLabel* Label;
   bool label_forced;
@@ -153,8 +157,8 @@ public:
   static void SetQPeakScale(float V);    // to use with q-peaks
   static float GetQPeakSizeScale();    // to use with q-peaks
   static void SetQPeakSizeScale(float V);    // to use with q-peaks
-  static double GetMinQAlpha() { return MinQAlpha; }
-  static void SetMinQAlpha(double v) { MinQAlpha = v; }
+  static float GetMinQAlpha() { return MinQAlpha; }
+  static void SetMinQAlpha(float v) { MinQAlpha = v; }
   void CalcRad(short DefAtomR);
 
   void ApplyStyle(TGraphicsStyle& S);

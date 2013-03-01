@@ -1017,99 +1017,119 @@ void TCif::MultValue(olxstr &Val, const olxstr &N)  {
   Val = (TEValue<double>(Val) *= N.ToDouble()).ToString();
 }
 //..............................................................................
-bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& SymmList) const {
+//..............................................................................
+bool Cif_ValidateColumn(const TDataItem &col, const ICifEntry &entry) {
+  olxstr val = entry.GetStringValue();
+  olxstr Tmp = col.GetFieldValue("mustequal", EmptyString());
+  TStrList Toks(Tmp, ';');
+   // equal to
+  if (!Tmp.IsEmpty() && (Toks.IndexOfi(val) == InvalidIndex))
+    return false;
+  Tmp = col.GetFieldValue("mustnotequal", EmptyString());
+  Toks.Clear();
+  Toks.Strtok(Tmp, ';');
+  if (!Tmp.IsEmpty() && (Toks.IndexOfi(val) != InvalidIndex) ) // not equal to
+    return false;
+
+  Tmp = col.GetFieldValue("atypeequal", EmptyString());
+  if (!Tmp.IsEmpty()) {  // check for atom type equals to
+    if (EsdlInstanceOf(entry, AtomCifEntry))
+      if (!((AtomCifEntry&)entry).data.GetType().symbol.Equalsi(Tmp)) {
+        return false;
+      }
+  }
+  Tmp = col.GetFieldValue("atypenotequal", EmptyString());
+  if (!Tmp.IsEmpty()) {  // check for atom type equals to
+    if (EsdlInstanceOf(entry, AtomCifEntry))
+      if (((AtomCifEntry&)entry).data.GetType().symbol.Equalsi(Tmp)) {
+        return false;
+      }
+  }
+  return true;
+}
+bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
+  smatd_list& SymmList) const
+{
   int RowDeleted=0, ColDeleted=0;
   SymmList.Clear();
   const CifTable* LT = NULL;
-  for( size_t i=0; i < LoopCount(); i++ )  {
+  for (size_t i=0; i < LoopCount(); i++) {
     LT = &GetLoop(i).GetData();
-    if( LT->ColCount() < TD->ItemCount() )  {
+    if (LT->ColCount() < TD->ItemCount()) {
       LT = NULL;
       continue;
     }
     size_t defcnt = 0;
-    for( size_t j=0; j < LT->ColCount(); j++ )  {
-      if( TD->FindItemi(LT->ColName(j)) != NULL )
+    for (size_t j=0; j < LT->ColCount(); j++) {
+      if (TD->FindItemi(LT->ColName(j)) != NULL)
         defcnt ++;
     }
-    if( defcnt == TD->ItemCount() )  break;
+    if (defcnt == TD->ItemCount()) break;
     else
       LT = NULL;
   }
-  if( LT == NULL || LT->RowCount() == 0 )
+  if (LT == NULL || LT->RowCount() == 0)
     return false;
   Table.Resize(LT->RowCount(), LT->ColCount());
-  for( size_t i =0; i < Table.ColCount(); i++ )  {
+  for (size_t i =0; i < Table.ColCount(); i++) {
     Table.ColName(i) = LT->ColName(i);
-    for( size_t j=0; j < Table.RowCount(); j++ )
+    for (size_t j=0; j < Table.RowCount(); j++)
       Table[j][i] = (*LT)[j][i]->GetStringValue();
   }
   // process rows
-  for( size_t i=0; i < LT->RowCount(); i++ )  {
+  for (size_t i=0; i < LT->RowCount(); i++) {
     bool AddRow = true;
-    for( size_t j=0; j < LT->ColCount(); j++ )  {
+    for (size_t j=0; j < LT->ColCount(); j++) {
       TDataItem *DI = TD->FindItemi(LT->ColName(j));
-      if( LT->ColName(j).StartsFrom("_geom_") && 
-        LT->ColName(j).IndexOf("site_symmetry") != InvalidIndex)
+      if (LT->ColName(j).StartsFrom("_geom_") &&
+          LT->ColName(j).IndexOf("site_symmetry") != InvalidIndex)
       {
-        if( (*LT)[i][j]->GetStringValue() != '.' )  {  // 1_555
-          olxstr tmp = LT->ColName(j).SubStringFrom(LT->ColName(j).LastIndexOf('_')+1);
+        if ((*LT)[i][j]->GetStringValue() != '.')  {  // 1_555
+          olxstr tmp = LT->ColName(j).SubStringFrom(
+            LT->ColName(j).LastIndexOf('_')+1);
           //if( !tmp.IsNumber() ) continue;
           olxstr Tmp = "label_";
           Tmp << tmp;
           smatd SymmMatr = SymmCodeToMatrix((*LT)[i][j]->GetStringValue());
           size_t matIndex = SymmList.IndexOf(SymmMatr);
-          if( matIndex == InvalidIndex )  {
+          if (matIndex == InvalidIndex) {
             SymmList.AddCopy(SymmMatr);
             matIndex = SymmList.Count()-1;
           }
-          for( size_t k=0; k < Table.ColCount(); k++ )  {
-            if( Table.ColName(k).EndsWith(Tmp) )  {
+          for (size_t k=0; k < Table.ColCount(); k++) {
+            if (Table.ColName(k).EndsWith(Tmp)) {
               Table[i-RowDeleted][k] << "<sup>" << (matIndex+1) << "</sup>";
               break;
             }
           }
         }
       }
-      if( DI == NULL )  continue;
-      olxstr Val = (*LT)[i][j]->GetStringValue();
-      olxstr Tmp = DI->GetFieldValue("mustequal", EmptyString());
-      TStrList Toks(Tmp, ';');
-      if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) == InvalidIndex) ) // equal to
-      {  AddRow = false;  break;  }
-
-      Tmp = DI->GetFieldValue("atypeequal", EmptyString());
-      if( !Tmp.IsEmpty() )  {  // check for atom type equals to
-        ICifEntry* CD = (*LT)[i][j];
-        if( CD != NULL && EsdlInstanceOf(*CD, AtomCifEntry) )
-          if( !((AtomCifEntry*)CD)->data.GetType().symbol.Equalsi(Tmp) )  {
-            AddRow = false;
-            break;
-          }
+      if (DI == NULL)  continue;
+      if (!Cif_ValidateColumn(*DI, *(*LT)[i][j])) {
+        AddRow = false;
+        break;
       }
-      Tmp = DI->GetFieldValue("atypenotequal", EmptyString());
-      if( !Tmp.IsEmpty() )  {  // check for atom type equals to
-        ICifEntry* CD = (*LT)[i][j];
-        if( CD != NULL && EsdlInstanceOf(*CD, AtomCifEntry) )
-          if( ((AtomCifEntry*)CD)->data.GetType().symbol.Equalsi(Tmp) )  {
-            AddRow = false;
-            break;
-          }
-      }
-      Tmp = DI->GetFieldValue("mustnotequal", EmptyString());
-      Toks.Clear();
-      Toks.Strtok(Tmp, ';');
-      if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val) != InvalidIndex) ) // not equal to
-      {  AddRow = false;  break;  }
-
-      Tmp = DI->GetFieldValue("multiplier", EmptyString());
-      if( !Tmp.IsEmpty() )  {  // Multiply
-        Val = Table[i-RowDeleted][j];
+      olxstr Tmp = DI->GetFieldValue("multiplier", EmptyString());
+      if (!Tmp.IsEmpty()) {  // Multiply
+        olxstr Val = Table[i-RowDeleted][j];
         MultValue(Val, Tmp);
         Table[i-RowDeleted][j] = Val;
       }
+      for (size_t sc=0; sc < DI->ItemCount(); sc++) {
+        size_t ci = LT->ColIndex(DI->GetItem(sc).GetName());
+        if (ci == InvalidIndex) continue;
+        if (Cif_ValidateColumn(DI->GetItem(sc), *(*LT)[i][ci])) {
+          Table[i-RowDeleted][j] << DI->GetItem(sc).GetFieldValue("before") <<
+            (*LT)[i][ci]->GetStringValue() <<
+            DI->GetItem(sc).GetFieldValue("after");
+        }
+        else {
+          AddRow = false;
+          break;
+        }
+      }
     }
-    if( !AddRow )  {
+    if (!AddRow) {
       Table.DelRow(i-RowDeleted);
       RowDeleted++;
     }

@@ -19,10 +19,11 @@
 #include "wx/image.h"
 BeginGxlNamespace()
 
-class TwxGlScene: public AGlScene  {
+class TwxGlScene: public AGlScene {
 private:
   olxstr FontsFolder;
   TIntList FontSizes;
+  wxGLCanvas *Canvas;
 protected:
   //olxstr ComposeIdString();
   virtual TGlFont& DoCreateFont(TGlFont& fnt, bool half_size) const;
@@ -38,15 +39,20 @@ public:
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale();
   
-  virtual olxstr ShowFontDialog(TGlFont* glf=NULL, const olxstr& fontDesc=EmptyString());
+  virtual olxstr ShowFontDialog(TGlFont* glf=NULL,
+    const olxstr& fontDesc=EmptyString());
 
   virtual void Destroy()  { AGlScene::Destroy();  }
-  virtual void StartSelect(int x, int y, GLuint *Bf) {  AGlScene::StartSelect(x, y, Bf);  }
+  virtual void StartSelect(int x, int y, GLuint *Bf) {
+    AGlScene::StartSelect(x, y, Bf);
+  }
   virtual int EndSelect()  {  return AGlScene::EndSelect();  }
-
+  /* the canvas must be set for this operation to succeed. 
+  */
+  virtual bool MakeCurrent();
   virtual void StartDraw()  {  AGlScene::StartDraw();  }
   virtual void EndDraw()  {  AGlScene::EndDraw();  }
-  
+  DefPropP(wxGLCanvas *, Canvas)
   // final object (at least the constructor calls only the SetIdString of THIS object
   class MetaFont : public AGlScene::MetaFont {
   public:

@@ -41,12 +41,12 @@ class TIns: public TBasicCFile  {
     TResidue* Resi;
     TCAtom* Last,
       // this are used to evaluate riding H Uiso coded like -1.5
-      *LastWithU, *LastNonH;
+      *LastWithU, *LastRideable;
     TIns* ins;
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
-    ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit), 
-      Resi(NULL), Last(NULL), LastWithU(NULL), LastNonH(NULL)
+    ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit),
+      Resi(NULL), Last(NULL), LastWithU(NULL), LastRideable(NULL)
     {
       End = SetNextPivot = CellFound = false;
       PartOccu = 0;
@@ -57,9 +57,6 @@ class TIns: public TBasicCFile  {
 private:
   TStrPObjList<olxstr, TInsList*> Ins;  // instructions
   TStrList Skipped;
-  static void HyphenateIns(const olxstr &InsName, const olxstr &Ins,
-    TStrList &Res);
-  static void HyphenateIns(const olxstr &Ins, TStrList &Res);
   // mean error of cell parameters. Can be used for estimation of other lengths
   double R1;
   bool LoadQPeaks;// true if Q-peaks should be loaded
@@ -67,8 +64,6 @@ private:
 protected:
   static TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx,
     TCAtom* atom = NULL);
-  static olxstr _AtomToString(RefinementModel& rm, TCAtom& CA,
-    index_t SfacIndex);
   olxstr _CellToString();
   olxstr _ZerrToString();
   static void _SaveFVar(RefinementModel& rm, TStrList& SL);
@@ -259,6 +254,12 @@ public:
     lst.Insert(0, name);
     return AddIns(lst, rm, CheckUniq);
   }
+  // utility functions
+  static olxstr AtomToString(RefinementModel& rm, TCAtom& CA,
+    index_t SfacIndex);
+  static void HyphenateIns(const olxstr &InsName, const olxstr &Ins,
+    TStrList &Res, int sz=80);
+  static void HyphenateIns(const olxstr &Ins, TStrList &Res, int sz=80);
 protected:
   // index will be automatically incremented if more then one line is parsed
   static bool ParseIns(const TStrList& ins, const TStrList& toks,

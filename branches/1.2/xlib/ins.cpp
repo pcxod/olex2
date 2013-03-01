@@ -96,7 +96,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       else if( ParseIns(InsFile, Toks, cx, i) )
         continue;
       else if( Toks[0].Equalsi("END") )  {   //reset RESI to default
-        cx.End = true;  
+        // this will help with recognising ins after end which to be ignored
+        Ins.Add(Toks[0]);
+        cx.End = true;
         cx.Resi = &GetAsymmUnit().GetResidue(0);
         cx.AfixGroups.Clear();
         cx.Part = 0;
@@ -136,8 +138,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
           atom->SetType(elmQPeak);
         else
           atom->SetType(*cx.BasicAtoms.GetObject(Toks[1].ToInt()-1));
-        if( atom->GetType().GetMr() > 3.5 )
-          cx.LastNonH = atom;
+        if (atom->GetType().z > 1 &&
+          (cx.AfixGroups.IsEmpty() || cx.AfixGroups.Top().GetB()->GetAfix() != 3))
+        {
+          cx.LastRideable = atom;
+        }
         _ProcessAfix(*atom, cx);
       }
     }
@@ -296,7 +301,11 @@ void TIns::_FinishParsing(ParseContext& cx)  {
   __ProcessConn(cx);
   for( size_t i=0; i < Ins.Count(); i++ )  {
     TStrList toks(Ins[i], ' ');
-    if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
+    if (toks.Count() == 1 && toks[0].Equalsi("END")) {
+      Ins.DeleteRange(i, Ins.Count()-i);
+      break;
+    }
+    else if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
          toks[0].StartsFromi("MPLA")) && toks.Count() > 2 )
     {
       cx.rm.AddInfoTab(toks);
@@ -366,25 +375,25 @@ void TIns::_FinishParsing(ParseContext& cx)  {
 //..............................................................................
 void TIns::_ProcessAfix0(ParseContext& cx)  {
   if( !cx.AfixGroups.IsEmpty() )  {
-    int old_m = cx.AfixGroups.Current().GetB()->GetM();
-    if( cx.AfixGroups.Current().GetA() > 0 )  {
+    int old_m = cx.AfixGroups.Top().GetB()->GetM();
+    if( cx.AfixGroups.Top().GetA() > 0 )  {
       if( old_m != 0 )
         throw TFunctionFailedException(__OlxSourceInfo,
         olxstr("incomplete AFIX group") <<
         (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString()));
       else  {
         TBasicApp::NewLogEntry(logWarning) << "Possibly incorrect AFIX " <<
-          cx.AfixGroups.Current().GetB()->GetAfix() <<
+          cx.AfixGroups.Top().GetB()->GetAfix() <<
           (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString());
       }
     }
-    if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )  {
+    if( cx.AfixGroups.Top().GetB()->GetPivot() == NULL )  {
       throw TFunctionFailedException(__OlxSourceInfo,
         "undefined pivot atom for a fitted group");
     }
     // pop all complete
     size_t po = 0;
-    while( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() == 0 )  {
+    while( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Top().GetA() == 0 )  {
       cx.AfixGroups.Pop();
       po++;
     }
@@ -471,7 +480,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         a new one
         */
         if( !cx.AfixGroups.IsEmpty() &&
-            !cx.AfixGroups.Current().B()->IsFixedGroup() &&
+            !cx.AfixGroups.Top().B()->IsFixedGroup() &&
             !TAfixGroup::IsFixedGroup(afix) )
         {
           cx.AfixGroups.Pop();
@@ -480,8 +489,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       }
       else {
         if( !cx.AfixGroups.IsEmpty() &&
-            cx.AfixGroups.Current().B()->IsFixedGroup() &&
-            cx.AfixGroups.Current().GetA() == 0 )
+            cx.AfixGroups.Top().B()->IsFixedGroup() &&
+            cx.AfixGroups.Top().GetA() == 0 )
         {
           cx.AfixGroups.Pop();
         }
@@ -494,7 +503,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       _ProcessAfix0(cx);
     else  {
       // pop m = 0 as well
-      if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() == 0 )  {
+      if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Top().GetA() == 0 )  {
         cx.AfixGroups.Pop();
       }
       if( afixg != NULL )  {
@@ -558,12 +567,12 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
             !TAfixGroup::HasPivot(n);  // if not riding
         }
         if( !cx.SetNextPivot )  {
-          if( cx.LastNonH == NULL  )  {
+          if( cx.LastRideable == NULL )  {
             throw TFunctionFailedException(__OlxSourceInfo,
               "undefined pivot atom for a fitted group");
           }
           // have to check if several afixes for one atom (if the last is H)
-          afixg->SetPivot(*cx.LastNonH);
+          afixg->SetPivot(*cx.LastRideable);
         }
       }
     }
@@ -780,19 +789,19 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
 }
 //..............................................................................
 void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
-  TStrList &Res)
+  TStrList &Res, int sz)
 {
   olxstr Tmp = Ins;
   if( Tmp.Length() > 80-InsName.Length() )  {
     while( Tmp.Length() > 80-InsName.Length() )  {
-      size_t spindex = Tmp.LastIndexOf(' ', 80-InsName.Length());
+      size_t spindex = Tmp.LastIndexOf(' ', sz-InsName.Length());
       if( spindex != InvalidIndex && spindex > 0 )  {
         Res.Add(InsName + Tmp.SubStringTo(spindex));
         Tmp = Tmp.SubStringFrom(spindex+1);
       }
       else  {
         Res.Add(InsName + Tmp.SubStringTo(80-InsName.Length()-2));
-        Tmp = Tmp.SubStringFrom(80-InsName.Length()-2);
+        Tmp = Tmp.SubStringFrom(sz-InsName.Length()-2);
       }
     }
     if( !Tmp.IsEmpty() )
@@ -802,12 +811,12 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
     Res.Add(InsName + Tmp);
 }
 //..............................................................................
-void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
+void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   bool MultiLine = false, added = false;
   olxstr Tmp(Ins), Tmp1;
-  while( Tmp.Length() > 79 )  {
+  while( Tmp.Length() >= sz )  {
     MultiLine = true;
-    size_t spindex = Tmp.LastIndexOf(' ', 77); // for the right hypernation
+    size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hypernation
     if( spindex != InvalidIndex && spindex > 0 )  {
       if( added )  Tmp1 = ' ';
       Tmp1 << Tmp.SubStringTo(spindex);
@@ -820,9 +829,9 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
     }
     else  {
       Tmp1 = ' ';  // a space before each line
-      Tmp1 << Tmp.SubStringTo(79);
+      Tmp1 << Tmp.SubStringTo(sz-1);
       Res.Add(Tmp1);
-      Tmp.Delete(0, 79);
+      Tmp.Delete(0, sz-1);
     }
   }
   if( !Tmp.IsEmpty() )  {  // add the last bit
@@ -971,7 +980,7 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
   }
 }
 //..............................................................................
-void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
+void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl,
   TIndexList* index, bool checkSame, bool checkResi)
 {
@@ -1008,14 +1017,13 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         if( !sg.GetDependent(i).IsValidForSave() )
           continue;
         olxstr tmp("SAME ");
-        tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' ' 
+        tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' '
             << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
         if( !overlap && sg.GetDependent(i).Count() > 1 &&
           sg.GetDependent(i).AreAllAtomsUnique() )
         {
           tmp << ' ' << sg.GetDependent(i)[0].GetResiLabel();
-          if (sg.GetDependent(i)[0].GetId() <
-            sg.GetDependent(i)[sg.GetDependent(i).Count()-1].GetId())
+          if (sg[0].GetId() < sg[sg.Count()-1].GetId())
             tmp << " > ";
           else
             tmp << " < ";
@@ -1079,7 +1087,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfi('c')+1);
   else
     spindex = (sfac == NULL ? -2 : (index_t)sfac->IndexOfObject(&a.GetType())+1);
-  HyphenateIns(_AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
+  HyphenateIns(AtomToString(rm, a, spindex == 0 ? 1 : spindex), sl);
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetId());
   for( size_t i=0; i < a.DependentHfixGroupCount(); i++ )  {
@@ -1126,7 +1134,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   ValidateRestraintsAtomNames(GetRM());
   UpdateParams();
-  SaveHeader(SL, false, true);
+  SaveHeader(SL, false, false);
   SL.Add(EmptyString());
   int afix = 0, part = 0;
   uint32_t fragmentId = ~0;
@@ -1228,8 +1236,11 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       atomCount++;
       atom_labels.AddNew(atom, Toks[0]);
       atom->SetType(*elm);
-      if (atom->GetType().z > 1)
-        cx.LastNonH = atom;
+      if (atom->GetType().z > 1 &&
+        (cx.AfixGroups.IsEmpty() || cx.AfixGroups.Top().GetB()->GetAfix() != 3))
+      {
+        cx.LastRideable = atom;
+      }
       _ProcessAfix(*atom, cx);
     }
   }
@@ -1336,22 +1347,22 @@ void TIns::SavePattSolution(const olxstr& FileName,
 void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
   if( cx.AfixGroups.IsEmpty() )  return;
   if( cx.SetNextPivot )  {
-    cx.AfixGroups.Current().B()->SetPivot(a);
+    cx.AfixGroups.Top().B()->SetPivot(a);
     cx.SetNextPivot = false;
     return;
   }
-  if( cx.AfixGroups.Current().GetA() == 0 )
+  if( cx.AfixGroups.Top().GetA() == 0 )
     cx.AfixGroups.Pop();
   else  {
-    if( cx.AfixGroups.Current().GetC() )  {
+    if( cx.AfixGroups.Top().GetC() )  {
       if( a.GetType() != iHydrogenZ )  {
-        cx.AfixGroups.Current().A()--;
-        cx.AfixGroups.Current().B()->AddDependent(a);
+        cx.AfixGroups.Top().A()--;
+        cx.AfixGroups.Top().B()->AddDependent(a);
       }
     }
     else  {
-      cx.AfixGroups.Current().A()--;
-      cx.AfixGroups.Current().B()->AddDependent(a);
+      cx.AfixGroups.Top().A()--;
+      cx.AfixGroups.Top().B()->AddDependent(a);
     }
   }
 }
@@ -1418,7 +1429,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   return atom;
 }
 //..............................................................................
-olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
+olxstr TIns::AtomToString(RefinementModel& rm, TCAtom& CA, index_t SfacIndex)  {
   evecd Q(6);
   olxstr Tmp = CA.GetLabel();
   Tmp.RightPadding(6, ' ', true);

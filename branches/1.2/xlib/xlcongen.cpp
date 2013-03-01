@@ -168,6 +168,10 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
         else if( envi.Count() == 2 )
           afix = 43;
         break;
+      case fgNH1t:
+        if (envi.Count() == 2)
+          afix = 3;
+        break;
       case fgBH1:
         if( envi.Count() == 3 )
           afix = 13;

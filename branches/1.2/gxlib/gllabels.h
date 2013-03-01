@@ -35,9 +35,14 @@ const short
   lmIdentity = 0x2000,  // only for identity atoms
   lmCOccu    = 0x4000;  // chemical occupancy
 
+enum LabelMaterialIndex {
+  lmiMark,
+  lmiDuplicateLabel
+};
+
 class TXGlLabels: public AGDrawObject  {
-  TGlMaterial FMarkMaterial;
-  TEBitArray Marks;
+  TArrayList<uint32_t> Colors_;
+  TArrayList<uint8_t> Marks;
   short Mode;
   size_t FontIndex;
 public:
@@ -59,7 +64,12 @@ public:
   void MarkLabel(size_t index, bool v);
   bool IsLabelMarked(const TXAtom& atom) const;
   bool IsLabelMarked(size_t index) const;
-  TGlMaterial& MarkMaterial()  {  return FMarkMaterial;  }
+  void SetMaterialIndex(size_t idx, LabelMaterialIndex mi);
+  uint8_t GetMaterialIndex(size_t i) const {
+    return i < Marks.Count() ? Marks[i] : ~0;
+  }
+  TArrayList<uint32_t> Colors() {  return Colors_; }
+  const TArrayList<uint32_t> Colors() const {  return Colors_; }
   TGlFont& GetFont() const;
 };
 

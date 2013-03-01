@@ -147,6 +147,7 @@ public:
   static DefMacro(Export)
   static DefMacro(Sgen)
   static DefMacro(LstSymm)
+  static DefMacro(RSA)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
@@ -184,6 +185,7 @@ public:
   static DefFunc(Crd) // cartesian coordinates of atoms
   static DefFunc(CalcR) // calculates R factors
   static DefFunc(GetCompilationInfo)
+  static DefFunc(SGList)
 
   static TActionQList Actions;
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,

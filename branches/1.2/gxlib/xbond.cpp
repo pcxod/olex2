@@ -50,6 +50,7 @@ TGraphicsStyle* TXBond::FBondParams=NULL;
 TXBond::TStylesClear *TXBond::OnStylesClear=NULL;
 double TXBond::FDefR = -1;
 int TXBond::FDefM = -1;
+bool TXBond::DefSelectable = true;
 //..............................................................................
 TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   TSBond(net),
@@ -57,6 +58,7 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
   FDrawStyle(0x0001)
 {
   SetGroupable(true);
+  SetSelectable(DefSelectable);
   Params().Resize(5);
   Params()[4] = 0.8;
   Label = new TXGlLabel(GetParent(), PLabelsCollectionName);
@@ -77,7 +79,7 @@ TXBond::~TXBond()  {
 void TXBond::Update()  {
   if( !IsValid() )  return;
   vec3d C(B().crd() - A().crd());
-  if( C.IsNull() )  
+  if( C.IsNull() )
     Params().Null();
   else  {
     Params()[3] = C.Length();
@@ -606,7 +608,7 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
   return L << ".u";
 }
 //..............................................................................
-void TXBond::SetRadius(float V)  {
+void TXBond::SetRadius(double V)  {
   Params()[4] = V;
   if( this->Primitives != NULL )  {
     GetPrimitives().GetStyle().SetParam("R", V, IsRadiusSaveable());

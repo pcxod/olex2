@@ -27,7 +27,7 @@ UseEsdlNamespace()
 
 TBasicApp* TBasicApp::Instance = NULL;
 
-TBasicApp::TBasicApp(const olxstr& FileName)
+TBasicApp::TBasicApp(const olxstr& FileName, bool read_options)
   : OnProgress(Actions.New("PROGRESS")),
     OnTimer(Actions.New("TIMER")), OnIdle(Actions.New("IDLE"))
 {
@@ -38,6 +38,12 @@ TBasicApp::TBasicApp(const olxstr& FileName)
   Instance = this;
 
   MaxThreadCount = 1;
+#ifdef __WIN32__
+  SYSTEM_INFO si;
+  memset(&si, 0, sizeof(si));
+  GetSystemInfo(&si);
+  MaxThreadCount = (short)si.dwNumberOfProcessors;
+#endif
   LogFile = NULL;
   Log = new TLog;
 
@@ -45,16 +51,15 @@ TBasicApp::TBasicApp(const olxstr& FileName)
   // attach GC to the instance, if detached...
   TEGC::Initialise();
   SetBaseDir(FileName);
-  ReadOptions(GetBaseDir() + ".options");
+  if (read_options)
+    ReadOptions(GetBaseDir() + ".options");
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
-  EnterCriticalSection();
   delete Log;
   if (LogFile != NULL)
     delete LogFile;
   Instance = NULL;
-  LeaveCriticalSection();
 }
 //..............................................................................
 olxstr TBasicApp::GetModuleName() {
@@ -66,7 +71,7 @@ olxstr TBasicApp::GetModuleName() {
   while (rv == MAX_PATH) {
     if (n > 1) delete [] bf;
     bf = new olxch[MAX_PATH*n];
-    rv = GetModuleFileName(NULL, bf, MAX_PATH*n);
+    rv = GetModuleFileName((HMODULE)Module().GetHandle(), bf, MAX_PATH*n);
     n++;
   }
   name = olxstr::FromExternal(bf, rv);
@@ -122,7 +127,6 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
 }
 //..............................................................................
 bool TBasicApp::HasInstance()  {
-  volatile olx_scope_cs cs(GetCriticalSection());
   return Instance != NULL;
 }
 //..............................................................................
@@ -167,8 +171,13 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
 //..............................................................................
 const olxstr& TBasicApp::SetBaseDir(const olxstr& _bd)  {
   olxstr bd = TEFile::ExtractFilePath(olxstr(_bd).Trim('"').Trim('\''));
-  if( !TEFile::Exists(bd) || !TEFile::IsDir(bd) )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Invalid basedir: ") << bd);
+  if (!TEFile::Exists(bd) || !TEFile::IsDir(bd)) {
+    bd = TEFile::ExtractFilePath(TBasicApp::GetModuleName());
+  }
+  if (!TEFile::Exists(bd) || !TEFile::IsDir(bd)) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("Invalid basedir: ").quote() << bd);
+  }
   TBasicApp& inst = GetInstance();
   inst.BaseDir = bd;
   inst.ExeName = TEFile::ExtractFileName(_bd);

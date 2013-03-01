@@ -117,7 +117,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <CLRSupport>false</CLRSupport>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -129,7 +129,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <CLRSupport>false</CLRSupport>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
     <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-debug|x64'" Label="Configuration">
@@ -400,7 +400,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <StructMemberAlignment>Default</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -413,6 +413,9 @@
       <DebugInformationFormat>
       </DebugInformationFormat>
       <CallingConvention>Cdecl</CallingConvention>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode-release-static|Win32'">
@@ -701,6 +704,7 @@
     <ClInclude Include="..\..\..\sdl\hashing.h" />
     <ClInclude Include="..\..\..\sdl\index_range.h" />
     <ClInclude Include="..\..\..\sdl\integration.h" />
+    <ClInclude Include="..\..\..\sdl\ipimp.h" />
     <ClInclude Include="..\..\..\sdl\istream.h" />
     <ClInclude Include="..\..\..\sdl\libfile.h" />
     <ClInclude Include="..\..\..\sdl\library.h" />
@@ -737,7 +741,6 @@
     <ClInclude Include="..\..\..\sdl\settingsfile.h" />
     <ClInclude Include="..\..\..\sdl\sha.h" />
     <ClInclude Include="..\..\..\sdl\singleton.h" />
-    <ClInclude Include="..\..\..\sdl\sls.h" />
     <ClInclude Include="..\..\..\sdl\smart\strbuf.h" />
     <ClInclude Include="..\..\..\sdl\sorted.h" />
     <ClInclude Include="..\..\..\sdl\sortedlist.h" />

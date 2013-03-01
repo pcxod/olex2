@@ -57,6 +57,7 @@ public:
 typedef TSObject<TNetwork> SObject;
 typedef TPtrList<SObject> SObjectPtrList;
 class TXApp : public TBasicApp, public ALibraryContainer  {
+  TUndoStack UndoStack;
 protected:
   TXFile *FXFile;
   TLibrary Library;
@@ -65,12 +66,14 @@ protected:
   bool preserve_fvars, preserve_fvars_i;
   double min_hbond_angle;
   bool min_hbond_angle_i;
+  bool safe_afix, safe_afix_i;
 protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
   void ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last);
   TXApp(const olxstr &basedir, bool dummy);
   void Init(ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);
+  olxstr LastSGResult;
 public:
   TXApp(const olxstr &basedir, ASObjectProvider* objectProvider=NULL,
     ASelectionOwner* selOwner=NULL);
@@ -81,8 +84,7 @@ public:
 
   virtual class TLibrary&  GetLibrary()  {  return Library;  }
 
-  // locates related HKL file, processes raw or hkc file if necessary
-  olxstr LocateHklFile();
+  TUndoStack &GetUndo() { return UndoStack; }
 
   // fills the list with the matrices of the UnitCell
   void GetSymm(smatd_list& ml) const;
@@ -138,6 +140,9 @@ public:
   returns the source of the matrix like: shelxl or smtbx
  */
   olxstr InitVcoV(class VcoVContainer& vcov) const;
+  olxstr GetLastSGResult() const { return LastSGResult; }
+  // for the internal use
+  void SetLastSGResult_(const olxstr &r) { LastSGResult = r; }
 
   static ElementRadii ReadVdWRadii(const olxstr& fileName);
   static void PrintVdWRadii(const ElementRadii& radii,
@@ -174,6 +179,8 @@ public:
   static double GetMinHBondAngle();
   // preserve free vaiable if referenced once only
   static bool DoPreserveFVARs();
+  // if true - AFIX are validated adter naming, deleting and HADD
+  static bool DoUseSafeAfix();
 
   static const_strlist BangList(const TSAtom &A);
   static void BangTable(const TSAtom& A, TTTable<TStrList>& Table);

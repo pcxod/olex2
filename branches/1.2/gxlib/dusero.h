@@ -28,14 +28,14 @@ protected:
     Basis.Rotate(vec, angle);  return true;
   }
   virtual bool DoZoom(double zoom, bool inc)  {
-    if( inc )  Basis.SetZoom(ValidateZoom(Basis.GetZoom() + zoom));
-    else       Basis.SetZoom(ValidateZoom(zoom));
+    if (inc) Basis.SetZoom(ValidateZoom(Basis.GetZoom() + zoom));
+    else Basis.SetZoom(ValidateZoom(zoom));
     return true;
   }
 public:
   TDUserObj(TGlRenderer& Render, short type, const olxstr& collectionName);
   TDUserObj(TGlRenderer& Render, const TDataItem &di);
-  virtual ~TDUserObj()  {  
+  virtual ~TDUserObj()  {
     if (Vertices != NULL) delete Vertices;
     if (Normals != NULL) delete Normals;
     if (Colors != NULL) delete Colors;
@@ -59,8 +59,8 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
   void ToDataItem(TDataItem &di) const;
   void FromDataItem(const TDataItem &di);
-  const_strlist ToPov(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const;
+  const_strlist ToPov(
+    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
   short GetType() const { return Type; }
   TEBasis Basis;
 };

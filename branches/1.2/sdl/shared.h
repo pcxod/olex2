@@ -17,7 +17,8 @@ class shared_base {
 protected:
   mutable olx_ptr_<cont_t> *p;
   static void throw_invalid(const char* file, const char* function, int line) {
-    TExceptionBase::ThrowFunctionFailed(file, function, line, "uninitialised object");
+    TExceptionBase::ThrowFunctionFailed(file, function, line,
+      "uninitialised object");
   }
   void on_modify()  {
     if( p->ref_cnt > 1 ) {

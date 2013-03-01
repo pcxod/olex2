@@ -209,54 +209,56 @@ public:
     const TStrList& clAttr,
     bool Format=true,
     unsigned short colCount = 1,
-    const olxstr& colSepAttr=EmptyString()) const
+    const olxstr& colSepAttr=EmptyString(),
+    bool across=false // if colCount > 1 - horisontal or vertical
+    ) const
   {
     olxstr Tmp;
-    if( Format )  {
-      L.Add( olxstr("<table ") << tabAttr << '>' );
-      if( !Title.IsEmpty() )  
+    if (Format)  {
+      L.Add("<table ") << tabAttr << '>';
+      if (!Title.IsEmpty())
         L.Add("<caption ") << titlePAttr << '>' << Title << "</caption>";
     }
-    else if( !Title.IsEmpty() )  
+    else if (!Title.IsEmpty())
       L.Add("<p ") << titlePAttr << '>' << Title << "</p>";
 
-    if( colNames )  {
+    if (colNames) {
       Tmp = "<tr>";
-      if( rowNames )
+      if (rowNames)
         Tmp << "<th>" << thAttr[0] << "</th>";
-      for( size_t i=0; i < colCount; i++ )  {
-        for( size_t j=0; j < ColNames.Count(); j++ )
+      for (size_t i=0; i < colCount; i++) {
+        for (size_t j=0; j < ColNames.Count(); j++)
           Tmp << "<th " << thAttr[j+1] << '>' << ColNames[j] << "</th>";
-        if( (i+1) < colCount )
+        if ((i+1) < colCount)
           Tmp << "<td " << colSepAttr << ">&nbsp;</td>";
       }
       L.Add(Tmp << "</tr>");
     }
     size_t inc = (Rows.Count()%colCount)!=0 ? colCount : 0,
-           l_l = (Rows.Count()+inc)/colCount;
-    for( size_t i=0; i < l_l; i++ )  {
+      l_l = (Rows.Count()+inc)/colCount;
+    for (size_t i=0; i < l_l; i++) {
       Tmp = "<tr ";
       Tmp << rowAttr << '>';
-      for( size_t j=0; j < colCount; j++ )  {
-        size_t index = i+ j*(Rows.Count()+inc)/colCount;
-        if( index >= RowCount() )  {
-          if( rowNames )
+      for (size_t j=0; j < colCount; j++) {
+        size_t index = across ? i*colCount + j : i + j*l_l;
+        if (index >= RowCount()) {
+          if (rowNames)
             Tmp << "<td " << clAttr[0] << ">&nbsp;</td>";
-          for( size_t k=0; k < ColNames.Count(); k++ )
+          for (size_t k=0; k < ColNames.Count(); k++)
             Tmp << "<td " << clAttr[k+1] << ">&nbsp;</td>";
           continue;
         }
-        if( rowNames )
+        if (rowNames)
           Tmp << "<td " << clAttr[0] << '>' << RowNames[index] << "</td>";
-        for( size_t k=0; k < ColNames.Count(); k++ )
+        for (size_t k=0; k < ColNames.Count(); k++)
           Tmp << "<td " << clAttr[k+1] << '>' << Rows[index][k] << "</td>";
-        if( (j+1) < colCount )
+        if ((j+1) < colCount)
           Tmp << "<td " << colSepAttr << ">&nbsp;</td>";
       }
-      L.Add( (Tmp << "</tr>") );
+      L.Add(Tmp << "</tr>");
     }
-    if( Format )  L.Add("</table>");
-    if( !footer.IsEmpty() )
+    if (Format) L.Add("</table>");
+    if (!footer.IsEmpty())
       L.Add("<p ") << footerPAttr << '>' << footer << "</p>";
     return L;
   }

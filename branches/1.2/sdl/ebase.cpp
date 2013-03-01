@@ -39,9 +39,8 @@ bool IEObject::_HasDestructionHandler(
   IEObject::a_destruction_handler *dh) const
 {
   a_destruction_handler *e = dsh_head;
-  const void *id = dh->get_identifier();
   while (e != NULL) {
-    if (e->get_identifier() == id)
+    if ((*e) == dh)
       return true;
     e = e->next;
   }
@@ -56,13 +55,13 @@ IEObject* IEObject::Replicate() const {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //.............................................................................
-void IEObject::_RemoveDestructionHandler(const void* identifier) {
+void IEObject::_RemoveDestructionHandler(const a_destruction_handler &dh) {
   a_destruction_handler *cr = dsh_head, *prev=NULL;
-  while( cr != NULL )  {
-    if( cr->get_identifier() == identifier )  {
-      if( prev != NULL )  prev->next = cr->next;
-      if( cr == dsh_tail )  dsh_tail = prev;
-      if( dsh_head == cr )  dsh_head = NULL;
+  while (cr != NULL) {
+    if (dh == cr) {
+      if (prev != NULL)  prev->next = cr->next;
+      if (cr == dsh_tail)  dsh_tail = prev;
+      if (dsh_head == cr)  dsh_head = NULL;
       delete cr;
       break;
     }

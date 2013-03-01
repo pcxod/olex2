@@ -466,8 +466,8 @@ struct GraphAnalyser  {
       if( Validator(n1, n2, pos) )
         rv = true;
 #ifdef _DEBUG
-      TBasicApp::NewLogEntry() << n1.GetObject()->GetLabel() << '_'
-        << pos.Count();
+      //TBasicApp::NewLogEntry() << n1.GetObject()->GetLabel() << '_'
+      //  << pos.Count();
 #endif
       used.Add(n1[i].GetGroupIndex());
     }
@@ -571,7 +571,7 @@ bool TNetwork::DoMatch(TNetwork& net,
         weight_calculator);
       ga.Invert = Invert;
       ga.atomsToMatch = NodeCount();
-      ga.CalcRMSForH = ((NodeCount() - HCount) < 4); 
+      ga.CalcRMSForH = ((NodeCount() - HCount) < 4);
       try  {  thisGraph.GetRoot().FullMatchEx(thatGraph->GetRoot(), ga);  }
       catch(const TExceptionBase& e)  {
         TBasicApp::NewLogEntry() << e.GetException()->GetError();

@@ -50,6 +50,8 @@ public:
     else if( Pivot->DependentHfixGroupCount() != 0 )
       Pivot->RemoveDependentHfixGroup(*this);
   }
+  const TAfixGroups &GetParent() const { return Parent; }
+  TAfixGroups &GetParent() { return Parent; }
   DefPropP(double, D)
   DefPropP(double, Sof)
   DefPropP(double, U)
@@ -199,6 +201,8 @@ public:
         Groups.NullItem(i);
     Groups.Pack();
   }
+  void Release(TAfixGroup &ag);
+  void Restore(TAfixGroup &ag);
   void ToDataItem(TDataItem& item);
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);

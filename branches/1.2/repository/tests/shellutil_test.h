@@ -25,6 +25,8 @@ void ArgQuoteTest(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
   if (TShellUtil::QuoteArg("x \n\"") != "\"x \n\\\"\"")
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (TShellUtil::QuoteArg("C:\\program files\\") != "\"C:\\program files\\\\\"")
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
 }
 
 void ShellUtilTests(OlxTests& t) {

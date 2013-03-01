@@ -17,11 +17,14 @@ BeginXlibNamespace()
 
 class TBasicCFile: public ACollectionItem  {
 private:
+  void PostLoad();
 protected:
   olxstr FileName,  // file name if file is loaded
          Title;     // title of the file
   RefinementModel RefMod;
   TAsymmUnit AsymmUnit;
+  // do not use it directly - use LoadStrings instead
+  virtual void LoadFromStrings(const TStrList& Strings) = 0;
 public:
   TBasicCFile();
   virtual ~TBasicCFile();
@@ -36,9 +39,13 @@ public:
   preprocessing of changes before flushing...
   */
   virtual void SaveToStrings(TStrList& Strings) = 0;
-  virtual void LoadFromStrings(const TStrList& Strings) = 0;
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
+  // default implementation read strings and calls LoadStrings
+  virtual void LoadFromStream(IInputStream &is, const olxstr& nameToken);
+  // name token can specify the dataset index or name
+  void LoadStrings(const TStrList &lines,
+    const olxstr &nameToken=EmptyString());
   // only oxm loader is native
   virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
@@ -59,6 +66,7 @@ protected:
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
     const IEObject *Data=NULL);
   void ValidateTabs();
+  void PostLoad(const olxstr &fn, TBasicCFile *loader, bool replicated);
 public:
   TXFile(ASObjectProvider& Objects);
   virtual ~TXFile();
@@ -104,11 +112,16 @@ public:
   is not required
   */
   TBasicCFile* LastLoader() const {  return FLastLoader;  }
+  // locates related HKL file, processes raw or hkc file if necessary
+  olxstr LocateHklFile();
   void UpdateAsymmUnit();
   /* Generic sort procedure, taking string instructions...
     instructions: Mw, Label, Label1, moiety size, weight, heaviest 
   */
   void Sort(const TStrList& instructions);
+  // nameToken is build is similar way to the NameArg!
+  void LoadFromStream(IInputStream &is, const olxstr &nameToken);
+  void LoadFromStrings(const TStrList& lines, const olxstr &nameToken);
   void LoadFromFile(const olxstr& FN);
   void SaveToFile(const olxstr& FN, bool Sort);
   // clears the last loader and the model
@@ -134,17 +147,22 @@ public:
   void LibGetMu(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 
+  /* describes a file name with which may carry reference to the dataset in the
+  case of multiple-dataset files
+  */
   struct NameArg  {
     olxstr file_name;
     olxstr data_name;
     bool is_index;
+    NameArg() : is_index(false) {}
+    NameArg(const olxstr &name) { Parse(name); }
+    NameArg &operator = (const olxstr &name) {
+      Parse(name);
+      return *this;
+    }
+    olxstr ToString() const;
+    void Parse(const olxstr& fn);
   };
-  static NameArg ParseName(const olxstr& fn);
-  static olxstr ComposeName(const NameArg& an)  {
-    if( an.data_name.IsEmpty() )
-      return an.file_name;
-    return olxstr(an.file_name) << (an.is_index ? '#' : '$') << an.data_name;
-  }
 };
 //---------------------------------------------------------------------------
 EndXlibNamespace()

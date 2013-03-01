@@ -15,7 +15,6 @@
 #include "symmlib.h"
 #include "cif.h"
 #include "etime.h"
-#include "olxmps.h"
 #include "egc.h"
 #include "eutf8.h"
 #include "filetree.h"
@@ -803,6 +802,12 @@ void TAutoDB::LoadFromStream(IDataInputStream& input)  {
   input >> listCount;  // nt MaxConnectivity is overriden!
   Nodes.Clear();
   Nodes.SetCapacity(listCount);
+  
+  TOnProgress pg;
+  pg.SetAction("Loading database...");
+  pg.SetMax(listCount);
+  TBasicApp::GetInstance().OnProgress.Enter(NULL, &pg);
+  
   for( uint32_t i=0; i < listCount; i++ )  {
     Nodes.AddNew();
     input >> ind;
@@ -812,6 +817,8 @@ void TAutoDB::LoadFromStream(IDataInputStream& input)  {
       Nodes[i][j]->SetId(nodeCount + j);
     }
     nodeCount += ind;
+    pg.SetPos(i);
+    TBasicApp::GetInstance().OnProgress.Execute(NULL, &pg);
   }
 
   input >> ind;
@@ -820,6 +827,9 @@ void TAutoDB::LoadFromStream(IDataInputStream& input)  {
     Nets.Add(new TAutoDBNet(input));
 
   PrepareForSearch();
+  pg.SetPos(pg.GetMax());
+  TBasicApp::GetInstance().OnProgress.Execute(NULL, &pg);
+  TBasicApp::GetInstance().OnProgress.Exit(NULL, &pg);
 }
 //..............................................................................
 void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {

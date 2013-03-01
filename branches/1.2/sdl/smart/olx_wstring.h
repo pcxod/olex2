@@ -108,8 +108,8 @@ protected:
   inline const wchar_t* printFormat(const unsigned int)           const {  return L"%u";  }
   inline const wchar_t* printFormat(const long int)               const {  return L"%ld";  }
   inline const wchar_t* printFormat(const unsigned long int)      const {  return L"%lu";  }
-  inline const wchar_t* printFormat(const long long int)          const {  return L"%Ld";  }
-  inline const wchar_t* printFormat(const unsigned long long int) const {  return L"%Lu";  }
+  inline const wchar_t* printFormat(const long long int)          const {  return L"%lld";  }
+  inline const wchar_t* printFormat(const unsigned long long int) const {  return L"%llu";  }
   inline const wchar_t* printFormat(const float)                  const {  return L"%f";  }
   inline const wchar_t* printFormat(const double)                 const {  return L"%lf";  }
   inline const wchar_t* printFormat(const long double)            const {  return L"%Lf";  }

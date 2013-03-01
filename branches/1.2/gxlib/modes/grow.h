@@ -91,7 +91,7 @@ public:
           TCAtom &ca = latt.GetAsymmUnit().NewAtom();
           ca.ccrd() = a.ccrd();
           ca.SetType(a.GetType());
-          ca.SetPart(part);
+          ca.SetPart((int8_t)part);
           ca.SetOccu(a.CAtom().GetOccu());
           ca.SetLabel(a.GetLabel(), false);
           lc.Correct(ca);

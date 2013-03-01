@@ -13,18 +13,17 @@
 #include "wx/dnd.h"
 #include "wx/process.h"
 #include "wx/thread.h"
-#include "gxapp.h"
+#include "olex2app_imp.h"
 #include "ctrls.h"
 #include "eprocess.h"
 #include "glconsole.h"
 #include "datafile.h"
 #include "gltextbox.h"
-#include "integration.h"
+#include "ipimp.h"
 #include "macroerror.h"
 #include "library.h"
 #include "eaccell.h"
 #include "estlist.h"
-#include "langdict.h"
 #include "updateth.h"
 #include "macrolib.h"
 #include "exparse/exptree.h"
@@ -203,45 +202,9 @@ class TGlXApp;
 
 //............................................................................//
 class TMainForm: public TMainFrame, public AEventsDispatcher,
-  public olex::IOlexProcessor
+  public olex::OlexProcessorImp
 {
   //TFrameMaker FrameMaker;
-public:
-  virtual void print(const olxstr& function, const short MessageType = olex::mtNone);
-  virtual bool registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn);
-  virtual void unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName);
-  virtual const olxstr& getDataDir() const;
-  virtual const olxstr& getVar(const olxstr& name, const olxstr& defval=EmptyString()) const;
-  virtual void setVar(const olxstr& name, const olxstr& val) const;
-  virtual TStrList GetPluginList() const;
-  virtual bool processFunction(olxstr &cmd,
-    const olxstr& location=EmptyString(), bool quiet=false)
-  {
-    TMacroError err;
-    err.SetLocation(location);
-    const bool rv = Macros.ProcessFunction(cmd, err, false);
-    AnalyseErrorEx(err, quiet);
-    return rv;
-  }
-  virtual bool processMacro(const olxstr& cmd,
-    const olxstr& location=EmptyString(), bool quiet=false)
-  {
-    TMacroError err;
-    err.SetLocation(location);
-    Macros.ProcessTopMacro(cmd, err, *this,
-      quiet ? NULL : &TMainForm::AnalyseError);
-    return err.IsSuccessful();
-  }
-  virtual bool processMacroEx(const olxstr& cmd, TMacroError &err,
-    const olxstr& location=EmptyString(), bool quiet=false)
-  {
-    err.SetLocation(location);
-    Macros.ProcessTopMacro(cmd, err, *this,
-      quiet ? NULL : &TMainForm::AnalyseError);
-    return err.IsSuccessful();
-  }
-  virtual void callCallbackFunc(const olxstr& cbEvent, const TStrList& params);
-  TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
 protected:
   bool Destroying;
   TStack<AnAssociation2<wxCursor,wxString> > CursorStack;
@@ -258,24 +221,17 @@ protected:
   TPtrList<IOlxTask> RunWhenVisibleTasks;
 
   class TGlCanvas *FGlCanvas;
-  TGXApp* FXApp;
-  TDataFile FHelpFile, FMacroFile, FPluginFile;
-  TDataItem *FHelpItem, *FPluginItem;
+  Olex2App* FXApp;
+  TDataFile FHelpFile, FMacroFile;
+  TDataItem *FHelpItem;
   
-  macrolib::TEMacroLib Macros;
-
-  olxstr DictionaryFile, GradientPicture;
-  TLangDict Dictionary;
-
+  olxstr GradientPicture;
   TGlConsole *FGlConsole;
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
   // a list of commands called when a file is changed by another process
   TStrList FOnListenCmds;
   TMacroError MacroError;
   
-  olxstr Tooltip;
-  void AquireTooltipValue();
-
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd, bool inc_files);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
@@ -283,7 +239,6 @@ protected:
   TModeRegistry *Modes;
   size_t
     stateHtmlVisible,
-    statePluginInstalled,
     stateInfoWidnowVisible,
     stateHelpWindowVisible,
     stateCmdLineVisible,
@@ -319,8 +274,6 @@ public:
   }
 protected:
   void PostCmdHelp(const olxstr &Cmd, bool Full=false);
-  void AnalyseErrorEx(TMacroError& error, bool queit=false);
-  void AnalyseError(TMacroError& error)  {  AnalyseErrorEx(error);  }
 
   void OnSize(wxSizeEvent& event);
   void OnMove(wxMoveEvent& event);
@@ -331,6 +284,7 @@ protected:
   void OnDrawStyleChange(wxCommandEvent& event);
   void OnDrawQChange(wxCommandEvent& event);
   void OnViewAlong(wxCommandEvent& event);
+  void OnCloseWindow(wxCloseEvent &evt);
   void OnInternalIdle();
 
   friend class TObjectVisibilityChange;
@@ -542,8 +496,6 @@ private:
   DefFunc(IsCurrentLanguage)
   DefFunc(CurrentLanguageEncoding)
 
-  DefFunc(SGList)
-
   DefFunc(ChooseElement)
   DefFunc(StrDir)
   DefFunc(ChooseFont)
@@ -564,10 +516,7 @@ private:
   DefFunc(Freeze)
 //..............................................................................
 public:
-  const olxstr&  TranslatePhrase(const olxstr& phrase);
-  virtual TLibrary& GetLibrary()  {  return FXApp->GetLibrary();  }
-  virtual olxstr TranslateString(const olxstr& str) const;
-  virtual bool IsControl(const olxstr& cname) const;
+  bool IsControl(const olxstr& cname) const;
   //............................................................................
 
   void OnKeyUp(wxKeyEvent& event);
@@ -581,8 +530,7 @@ public:
     ScenesDir, 
     DefStyle,         // default style file
     DefSceneP,        // default scene parameters file
-    TutorialDir,
-    PluginFile;
+    TutorialDir;
   TGlMaterial
     HelpFontColorCmd, HelpFontColorTxt,
     ExecFontColor, InfoFontColor,
@@ -618,10 +566,6 @@ private:
   
   olxstr FListenFile;
 
-  /* internal function - sets/gets list of proposed space groups  */
-  const olxstr& GetSGList() const;
-  void SetSGList(const olxstr &sglist);
-
   TStrPObjList<olxstr,wxMenuItem*> FRecentFiles;
   TSStrStrList<olxstr,true> Bindings;
   uint16_t FRecentFilesToShow;
@@ -632,8 +576,7 @@ private:
 
   bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed, 
        RunOnceProcessed,
-       StartupInitialised,
-       ShowChemicalOccu;
+       StartupInitialised;
   bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, _UseGlTooltip;
 
   float FHtmlPanelWidth;
@@ -673,9 +616,6 @@ public:
 
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const {  return FHtmlPanelWidth;  }
-  const olxstr& GetCurrentLanguageEncodingStr() const {
-    return Dictionary.GetCurrentLanguageEncodingStr();
-  }
 //..............................................................................
 // properties
 protected:
@@ -737,8 +677,8 @@ public:
 // TMainForm interface
   void GlCanvas(TGlCanvas *GC)  {  FGlCanvas = GC;  }
   TGlCanvas * GlCanvas()  {  return FGlCanvas;  }
-  void XApp(TGXApp *XA);
-  TGXApp *XApp()  {  return FXApp; }
+  void XApp(Olex2App *XA);
+  Olex2App *XApp()  {  return FXApp; }
   bool FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool GetAll, bool unselect);
   ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds,bool GetAll, bool unselect)  {
     TXAtomPList atoms;

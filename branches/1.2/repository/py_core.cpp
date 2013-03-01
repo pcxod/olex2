@@ -8,7 +8,11 @@
 ******************************************************************************/
 
 #include "py_core.h"
+#ifndef _CONSOLE
+#include "olex2app.h"
+#else
 #include "xapp.h"
+#endif
 #include "efile.h"
 #include "settingsfile.h"
 #include "url.h"
@@ -116,14 +120,6 @@ PyObject* pyUnsetVar(PyObject* self, PyObject* args)  {
     : PythonExt::PyFalse();
 }
 //..............................................................................
-PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
-  TStrList rv(IOlexProcessor::GetInstance()->GetPluginList());
-  PyObject* af = PyTuple_New( rv.Count() );
-  for( size_t i=0; i < rv.Count(); i++ )
-    PyTuple_SetItem(af, i, PythonExt::BuildString(rv[i]));
-  return af;
-}
-//..............................................................................
 PyObject* pyExpFun(PyObject* self, PyObject* args)  {
   TBasicFunctionPList functions;
   IOlexProcessor::GetInstance()->GetLibrary().ListAllFunctions(functions);
@@ -161,12 +157,32 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
   return af;
 }
 //..............................................................................
+PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
+#ifdef _CONSOLE
+  return PythonExt::PyNone();
+#else
+  if (!AOlex2App::HasInstance())
+    return PythonExt::PyNone();
+  TStrList rv(AOlex2App::GetInstance().GetPluginList());
+  PyObject* af = PyTuple_New( rv.Count() );
+  for( size_t i=0; i < rv.Count(); i++ )
+    PyTuple_SetItem(af, i, PythonExt::BuildString(rv[i]));
+  return af;
+#endif
+}
+//..............................................................................
 PyObject* pyTranslate(PyObject* self, PyObject* args)  {
   olxstr str;
   if( !PythonExt::ParseTuple(args, "w", &str) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+#ifdef _CONSOLE
+  return PythonExt::BuildString(str);
+#else
+  if (!AOlex2App::HasInstance())
+    return PythonExt::BuildString(str);
   return PythonExt::BuildString(
-    IOlexProcessor::GetInstance()->TranslateString(str));
+    AOlex2App::GetInstance().TranslateString(str));
+#endif
 }
 //..............................................................................
 PyObject* pyDescRef(PyObject* self, PyObject* args)  {
@@ -181,9 +197,13 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "b");
   }
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
-  // make the labels unique inside residues...
-  for( size_t i=0; i < au.ResidueCount(); i++ )
-    LabelCorrector(false).CorrectAll(au.GetResidue(i));
+  /* make the labels unique globally. This needs to be done since the number of
+  files containing atom labels (like VcV) and information may be miss
+  -represented
+  */
+  LabelCorrector lc(au, false);
+  for (size_t i=0; i < au.AtomCount(); i++ )
+    lc.CorrectGlobal(au.GetAtom(i));
   return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
 }
 //..............................................................................
@@ -456,6 +476,8 @@ static PyMethodDef CORE_Methods[] = {
   },
   {"GetPluginList", pyGetPlugins, METH_VARARGS,
   "Returns a list of installed plugins"},
+  {"Translate", pyTranslate, METH_VARARGS,
+  "Returns translated version of provided string"},
   {"ExportFunctionList", pyExpFun, METH_VARARGS,
   "Exports a list of Olex2 functions and their description"},
   {"ExportMacroList", pyExpMac, METH_VARARGS,
@@ -476,8 +498,6 @@ static PyMethodDef CORE_Methods[] = {
   "Returns name of specified variable"},
   {"FindVarName", pyFindGetVarName, METH_VARARGS,
   "Returns name of variable name corresponding to provided object"},
-  {"Translate", pyTranslate, METH_VARARGS,
-  "Returns translated version of provided string"},
   {"DescribeRefinement", pyDescRef, METH_VARARGS,
   "Returns a string describing current refinement model"},
   {"GetRefinementModel", pyRefModel, METH_VARARGS,

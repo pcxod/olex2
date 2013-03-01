@@ -20,6 +20,6 @@ using namespace olex;
     IOlexProcessor* IOlexProcessor::Instance;
 #endif
 
-  const olxstr IOlexProcessor::SGListVarName("olx_int_sglist");
+//  const olxstr IOlexProcessor::SGListVarName("olx_int_sglist");
 
 IOlexRunnable* OlexPort::GetOlexRunnable()  {  return OlexRunnable;  }

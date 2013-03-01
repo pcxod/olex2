@@ -98,6 +98,8 @@ template <typename T> T *olx_realloc(T *a, size_t sz) {
   return (T*)olx_realloc_(a, sz*sizeof(T));
 }
 template <typename T> void olx_free(T *a) {  if( a != NULL )  free(a);  }
+template <typename T> void olx_del_obj(T *a) { if (a != NULL) delete a;  }
+template <typename T> void olx_del_arr(T *a) { if (a != NULL) delete [] a; }
 template <typename T> T *olx_memcpy(T *dest, const T *src, size_t sz) {
   return (T *)memcpy(dest, src, sz*sizeof(T));
 }
@@ -107,7 +109,6 @@ template <typename T> T *olx_memmove(T *dest, const T *src, size_t sz) {
 // string base
 template <class T> class TTIString {
 public:
-  static const unsigned short CharSize;
   struct Buffer  {
     T *Data;
     unsigned int RefCnt;
@@ -153,7 +154,7 @@ protected:
     }
     else if( SData->RefCnt == 1 && _Start != 0 )  {
       if( _Length != 0 )
-        memmove(SData->Data, &SData->Data[_Start], _Length*CharSize);
+        memmove(SData->Data, &SData->Data[_Start], _Length*sizeof(T));
       _Start = 0;
     }
     if( SData->Length < newSize )
@@ -174,7 +175,7 @@ public:
   // might not have '\0' char, to be used with Length or RawLen (char count)
   T * raw_str() const { return ((SData == NULL) ? NULL : &SData->Data[_Start]);  }
   // length in bytes
-  size_t RawLen() const { return _Length*CharSize;  }
+  size_t RawLen() const {  return _Length*sizeof(T);  }
   // length in items
   size_t Length() const { return _Length;  }
   // for internal: use with caution!
@@ -223,7 +224,6 @@ public:
   template <typename,typename> friend class TTSString;
 };
 
-template <typename T> const unsigned short TTIString<T>::CharSize = sizeof(T);
 typedef TTIString<olxch> TIString;
 typedef TTIString<char> TICString;
 typedef TTIString<wchar_t> TIWString;
@@ -241,7 +241,7 @@ class IEObject  {
     }
     virtual ~a_destruction_handler() {}
     virtual void call(IEObject* obj) const = 0;
-    virtual const void* get_identifier() const = 0;
+    virtual bool operator == (const a_destruction_handler *) const = 0;
   };
   struct static_destruction_handler : public a_destruction_handler {
     void (*destruction_handler)(IEObject* obj);
@@ -251,8 +251,10 @@ class IEObject  {
         a_destruction_handler(prev),
         destruction_handler(_destruction_handler) {}
     virtual void call(IEObject* obj) const {  (*destruction_handler)(obj);  }
-    virtual const void* get_identifier() const {
-      return (const void*)destruction_handler;
+    virtual bool operator == (const a_destruction_handler *p_) const {
+      const static_destruction_handler *p =
+        dynamic_cast<const static_destruction_handler *>(p_);
+      return (p && p->destruction_handler == destruction_handler);
     }
   };
   template <class base>
@@ -269,14 +271,17 @@ class IEObject  {
     virtual void call(IEObject* obj) const {
       (instance.*destruction_handler)(obj);
     }
-    virtual const void* get_identifier() const {
-      return (const void*)destruction_handler;
+    virtual bool operator == (const a_destruction_handler *p_) const {
+      const member_destruction_handler *p =
+        dynamic_cast<const member_destruction_handler *>(p_);
+      return (p && &instance == &p->instance &&
+        p->destruction_handler == destruction_handler);
     }
   };
-  
+
   a_destruction_handler *dsh_head, *dsh_tail;
   
-  void _RemoveDestructionHandler(const void* identifier);
+  void _RemoveDestructionHandler(const a_destruction_handler &);
   bool _HasDestructionHandler(a_destruction_handler *dh) const;
 public:
   IEObject() : dsh_head(NULL), dsh_tail(NULL) {}
@@ -304,8 +309,16 @@ public:
     }
     return true;
   }
-  template <class T> void RemoveDestructionHandler(const T& identifier)  {
-    _RemoveDestructionHandler((const void*)identifier);
+  void RemoveDestructionHandler(const a_destruction_handler &dh) {
+    _RemoveDestructionHandler(dh);
+  }
+  void RemoveDestructionHandler(void (*func)(IEObject*)) {
+    _RemoveDestructionHandler(static_destruction_handler(NULL, func));
+  }
+  template <class base_t>
+  void RemoveDestructionHandler(base_t &inst, void (base_t::*func)(IEObject*)) {
+    _RemoveDestructionHandler(
+      member_destruction_handler<base_t>(NULL, inst, func));
   }
 };
 

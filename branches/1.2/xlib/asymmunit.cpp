@@ -631,17 +631,19 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label,
   return LB;
 }
 //..............................................................................
-size_t TAsymmUnit::CountElements(const olxstr& Symbol) const  {
+double TAsymmUnit::CountElementOccupancy(const olxstr& Symbol) const  {
   cm_Element* elm = XElementLib::FindBySymbol(Symbol);
   if( elm == NULL ) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("unknown element: ").quote() << Symbol);
   }
-  size_t cnt = 0;
-  for( size_t i=0; i < AtomCount(); i++ )
-    if( !GetAtom(i).IsDeleted() && GetAtom(i).GetType() == *elm )
-      cnt++;
-  return cnt;
+  double sum = 0;
+  for (size_t i=0; i < AtomCount(); i++) {
+    if (!GetAtom(i).IsDeleted() && GetAtom(i).GetType() == *elm) {
+      sum += GetAtom(i).GetOccu();
+    }
+  }
+  return sum;
 }
 //..............................................................................
 void TAsymmUnit::Sort(TCAtomPList* list) {

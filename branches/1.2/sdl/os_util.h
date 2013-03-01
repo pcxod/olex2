@@ -33,6 +33,17 @@ bool olx_setenv(const olxstr& v);
 #ifdef __WIN32__
   inline char olx_env_sep() { return ';'; }
   bool IsWow64();
+  /* this to work around the DLL handle. A DLL should set the handle in the
+  DLLMain function, otherwise, module handle dependent functions will use the
+  module of the executable which has loaded the DLL
+  */
+  struct Module {
+    static HANDLE handle;
+  public:
+    Module() {}
+    HANDLE GetHandle() const;
+    HANDLE SetHandle(HANDLE h);
+  };
 #else
   inline char olx_env_sep() { return ':'; }
 #endif
@@ -54,7 +65,7 @@ struct olx_critical_section  {
   pthread_mutexattr_t csa;
   olx_critical_section() {
     pthread_mutexattr_init(&csa);
-    pthread_mutexattr_settype(&csa, PTHREAD_MUTEX_DEFAULT);
+    pthread_mutexattr_settype(&csa, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&cs, &csa);
   }
 
@@ -62,13 +73,13 @@ struct olx_critical_section  {
     pthread_mutex_destroy(&cs);
     pthread_mutexattr_destroy(&csa);
   }
-  bool tryEnter()  {  return pthread_mutex_trylock(&cs) != EBUSY;  }
+  bool tryEnter()  {  return (pthread_mutex_trylock(&cs) != EBUSY);  }
   void enter() {  pthread_mutex_lock(&cs);  }
   void leave() {  pthread_mutex_unlock(&cs);  }
 #endif
 };
-/* 'scope critical section' to be used for automatic management of small portions of code.
-use it like:
+/* 'scope critical section' to be used for automatic management of small
+portions of code. Use it like:
   {
     // make sure that optimiser does not delete it at once...
     volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
@@ -77,10 +88,15 @@ use it like:
 */
 struct olx_scope_cs  {
 protected:
-  olx_critical_section& cs;
+  olx_critical_section* cs;
 public:
-  olx_scope_cs(olx_critical_section& _cs) : cs(_cs)  {  cs.enter();  }
-  ~olx_scope_cs() {  cs.leave();  }
+  olx_scope_cs(olx_critical_section* _cs) : cs(_cs)  {
+    if (cs != NULL) cs->enter();
+  }
+  olx_scope_cs(olx_critical_section& _cs) : cs(&_cs)  {  cs->enter();  }
+  ~olx_scope_cs() {
+    if (cs != NULL) cs->leave();
+  }
 };
 
 inline void olx_sleep(time_t msec)  {

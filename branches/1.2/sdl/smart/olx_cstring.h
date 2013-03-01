@@ -84,7 +84,7 @@ protected:
     if( SData != NULL )  {
       if( SData->RefCnt == 1 )  { // owed by this object
         SData->SetCapacity(_Length);
-        memcpy(SData->Data, bf, _Length*CharSize);
+        olx_memcpy(SData->Data, bf, _Length);
       }
       else  {
         SData->RefCnt--;
@@ -101,8 +101,8 @@ protected:
   inline const char* printFormat(const unsigned int)           const {  return "%u";  }
   inline const char* printFormat(const long int)               const {  return "%ld";  }
   inline const char* printFormat(const unsigned long int)      const {  return "%lu";  }
-  inline const char* printFormat(const long long int)          const {  return "%Ld";  }
-  inline const char* printFormat(const unsigned long long int) const {  return "%Lu";  }
+  inline const char* printFormat(const long long int)          const {  return "%lld";  }
+  inline const char* printFormat(const unsigned long long int) const {  return "%llu";  }
   inline const char* printFormat(const float)                  const {  return "%f";  }
   inline const char* printFormat(const double)                 const {  return "%lf";  }
   inline const char* printFormat(const long double)            const {  return "%Lf";  }

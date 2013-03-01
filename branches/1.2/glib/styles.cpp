@@ -325,13 +325,13 @@ void TGraphicsStyles::ToDataItem(TDataItem& item, const TPtrList<TGraphicsStyle>
         throw TFunctionFailedException(__OlxSourceInfo, "unregistered primitive style");
       }
       if( DataItems[mi] == NULL )  {
-        TDataItem& SI1 = SI.AddItem( olxstr("Prop") << matc++ );
+        TDataItem& SI1 = SI.AddItem(olxstr("Prop") << matc++);
         glm.ToDataItem(SI1);
         DataItems[mi] = &SI1;
       }
     }
     for( size_t j=0; j < gs->StyleCount(); j++ )  // recursion implementation
-      allStyles.Add( &gs->GetStyle(j) );
+      allStyles.Add(gs->GetStyle(j));
   }
   item.AddField("Name", Name);
   item.AddField("LinkFile", LinkFile);
