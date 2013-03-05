@@ -30,6 +30,7 @@ TXGrid::TLegend::TLegend(TGlRenderer& Render, const olxstr& collectionName)
 {
   SetMove2D(true);
   SetMoveable(true);
+  SetSelectable(false);
   Top = Left = 0;
   Width = 64;
   Height = 128;
