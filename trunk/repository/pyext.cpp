@@ -101,9 +101,9 @@ public:
 //.............................................................................
 //.............................................................................
 //.............................................................................
-
+olx_critical_section py_io_cs_;
 PyObject* runWriteImage(PyObject* self, PyObject* args)  {
-  //IOlexProcessor* o_r = PythonExt::GetOlexProcessor();
+  volatile olx_scope_cs cs(py_io_cs_);
   char *data = NULL;
   olxstr name;
   int persistenceId = 0;
@@ -121,12 +121,11 @@ PyObject* runWriteImage(PyObject* self, PyObject* args)  {
 }
 //.............................................................................
 PyObject* runReadImage(PyObject* self, PyObject* args)  {
-  //IOlexProcessor* o_r = PythonExt::GetOlexProcessor();
+  volatile olx_scope_cs cs(py_io_cs_);
   olxstr name;
   if( !PythonExt::ParseTuple(args, "w", &name) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
   if( !name.IsEmpty() )  {
-    //o_r->print(olxstr("PyExt - reading image: ") << name);
     IInputStream* io = TFileHandlerManager::GetInputStream(name);
     if( io != NULL )  {
       const size_t is = io->GetAvailableSizeT();
@@ -436,14 +435,16 @@ PythonExt::PythonExt(IOlexProcessor* olexProcessor, const olxstr &module_name)
 //.............................................................................
 PythonExt::~PythonExt()  {
   ClearToDelete();
-  if( Py_IsInitialized() )
+  if( Py_IsInitialized() ) {
     Py_Finalize();
+  }
   Instance = NULL;
 }
 //.............................................................................
 void PythonExt::CheckInitialised()  {
   if( !Py_IsInitialized() )  {
     Py_Initialize();
+    PyEval_InitThreads();
     Py_InitModule(module_name.c_str(), Methods);
     for( size_t i=0; i < ToRegister.Count(); i++ )
       (*ToRegister[i])();

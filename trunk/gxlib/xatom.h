@@ -74,6 +74,10 @@ private:
     LockedAtomSphere, // 1 list
     ConstrainedAtomSphere // 1 list
     ;
+  static int16_t QualityValue;
+  GLuint ActualSphere;
+  // picks the correct sphere for rendering
+  void InitActualSphere();
   static float MinQAlpha;
   Poly* Polyhedron;
   TXGlLabel* Label;
@@ -82,7 +86,7 @@ private:
   // returns the center of the created polyhedron
   vec3f TriangulateType2(Poly& p, const TSAtomPList& atoms);
   void CreateNormals(TXAtom::Poly& pl, const vec3f& cnt);
-  void CreatePoly(const TSAtomPList& atoms, short type, 
+  void CreatePoly(const TSAtomPList& atoms, short type,
     const vec3d* normal=NULL, const vec3d* center=NULL);
   // returns different names for isotropic and anisotropic atoms
 protected:

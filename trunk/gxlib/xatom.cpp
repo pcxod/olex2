@@ -62,6 +62,7 @@ float TXAtom::FDefZoom = 0;
 short TXAtom::FDefRad = 0;
 short TXAtom::FDefDS = 0;
 short TXAtom::FDefMask = -1;
+int16_t TXAtom::QualityValue = -1; // qaMedium by default
 GLuint TXAtom::OrtepSpheres = ~0;
 GLuint TXAtom::LockedAtomSphere = ~0;
 GLuint TXAtom::ConstrainedAtomSphere = ~0;
@@ -88,6 +89,7 @@ TXAtom::TXAtom(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
   else
     FDrawStyle = adsSphere;
   FRadius = darIsot;
+  ActualSphere = ~0;
   Params().Resize(2);
   Params()[0] = 1; // radius
   Params()[1] = 1; // zoom
@@ -122,8 +124,17 @@ void TXAtom::ClearStaticObjects()  {
   }
 }
 //..............................................................................
+void TXAtom::InitActualSphere() {
+  ActualSphere = ~0;
+  if (QualityValue == qaPict)
+    return;
+  if (CAtom().GetExyzGroup() != NULL && ConstrainedAtomSphere != ~0)
+    ActualSphere = ConstrainedAtomSphere;
+  else if (CAtom().IsFixedType() && LockedAtomSphere != ~0)
+    ActualSphere = LockedAtomSphere;
+}
+//..............................................................................
 int16_t TXAtom::Quality(int16_t V)  {
-  static int16_t previous_value = -1;
   if (V == -1) V = qaMedium;
   ValidateAtomParams();
   olxstr &SphereQ   = FAtomParams->GetParam("SphereQ", EmptyString(), true);
@@ -165,8 +176,8 @@ int16_t TXAtom::Quality(int16_t V)  {
       break;
   }
   DiskOR = RimR;
-  int16_t rv = previous_value;
-  previous_value = V;
+  int16_t rv = QualityValue;
+  QualityValue = V;
   return rv;
 }
 //..............................................................................
@@ -260,6 +271,7 @@ void TXAtom::Create(const olxstr& cName)  {
   TGPCollection *GPC = NULL;
   if( FStaticObjects.IsEmpty() )
     CreateStaticObjects(Parent);
+  InitActualSphere();
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXAtom>());
   //Label->SetLabel(Atom().GetLabel());
   Label->Create();
@@ -454,6 +466,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
         }
       }
     }
+    // for the case when parts are shown - we need to render all atoms
     //else if (&(*exyz)[0] != &CAtom())
     //  return true;
   }
@@ -484,12 +497,8 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
           GetEllipsoid()->GetSZ()*scale
           );
         if (GlP.GetOwnerId() == xatom_SphereId && !Parent.IsSelecting()) {
-          if (exyz != NULL && ConstrainedAtomSphere != ~0) {
-            olx_gl::callList(ConstrainedAtomSphere);
-            return true;
-          }
-          if (CAtom().IsFixedType() && LockedAtomSphere != ~0) {
-            olx_gl::callList(LockedAtomSphere);
+          if (ActualSphere != ~0) {
+            olx_gl::callList(ActualSphere);
             return true;
           }
           if (FDrawStyle == adsOrtep) {
@@ -516,13 +525,8 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   }
 
   if (GlP.GetOwnerId() == xatom_SphereId && !Parent.IsSelecting()) {
-    if (exyz != NULL && ConstrainedAtomSphere != ~0) {
-      olx_gl::callList(ConstrainedAtomSphere);
-      return true;
-    }
-    if (CAtom().IsFixedType() && LockedAtomSphere != ~0)
-    {
-      olx_gl::callList(LockedAtomSphere);
+    if (ActualSphere != ~0) {
+      olx_gl::callList(ActualSphere);
       return true;
     }
   }
