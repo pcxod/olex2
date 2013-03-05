@@ -443,8 +443,8 @@ PythonExt::~PythonExt()  {
 //.............................................................................
 void PythonExt::CheckInitialised()  {
   if( !Py_IsInitialized() )  {
-    Py_Initialize();
     PyEval_InitThreads();
+    Py_Initialize();
     Py_InitModule(module_name.c_str(), Methods);
     for( size_t i=0; i < ToRegister.Count(); i++ )
       (*ToRegister[i])();

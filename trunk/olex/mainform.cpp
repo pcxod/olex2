@@ -1450,10 +1450,12 @@ bool TMainForm::CreateUpdateThread() {
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
   const IEObject *Data)
 {
-  if (Py_IsInitialized()) {
+  if (StartupInitialised && PyEval_ThreadsInitialized()) {
+    PyGILState_STATE st = PyGILState_Ensure();
     Py_BEGIN_ALLOW_THREADS
-      olx_sleep(15);
+      olx_sleep(10);
     Py_END_ALLOW_THREADS
+    PyGILState_Release(st);
   }
 
   bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
