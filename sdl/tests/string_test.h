@@ -105,13 +105,13 @@ void PrintTest(OlxTests& t_) {
   if (olx_print("%lf", 10.1) != "10.1")
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
   olxstr t="abc";
-  if (olx_print("%lf %% %w", 10.1, t) != "10.1 % abc")
+  if (olx_print("%lf %% %w", 10.1, &t) != "10.1 % abc")
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
 }
 //...................................................................................................
 void StringTests(OlxTests& t)  {
   t.Add(&ReplaceTest).Add(&IsNumberTest)
     .Add(&SubstringTest)
-    .Add(PrintTest);
+    .Add(&PrintTest);
 }
 };  //namespace test

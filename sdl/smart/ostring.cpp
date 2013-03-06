@@ -92,7 +92,11 @@ olxstr esdl::olx_print(const olxstr &format, ...) {
                 rv << va_arg(argptr, unsigned long int);
                 break;
               case 'c':
+#ifdef __WIN32__
                 rv << va_arg(argptr, wchar_t);
+#else
+                rv << va_arg(argptr, int);
+#endif
                 break;
               case 's':
                 rv << va_arg(argptr, wchar_t*);
@@ -107,9 +111,17 @@ olxstr esdl::olx_print(const olxstr &format, ...) {
         case 'h': // h d/u
           if (++i < format.Length()) {
             if (format.CharAt(i) == 'd')
+#ifdef __WIn32__
               rv << va_arg(argptr, short int);
+#else
+              rv << va_arg(argptr, int);
+#endif
             else if (format.CharAt(i) == 'u')
+#ifdef __WIN32__
               rv << va_arg(argptr, unsigned short int);
+#else
+              rv << va_arg(argptr, unsigned int);
+#endif
             else
               throw TInvalidArgumentException(__OlxSourceInfo,
                 olxstr("argument for h: '") << format.CharAt(i) << '\'');
@@ -125,7 +137,11 @@ olxstr esdl::olx_print(const olxstr &format, ...) {
           }
           break;
         case 'f':
+#ifdef __WIN32__
           rv << va_arg(argptr, float);
+#else
+          rv << va_arg(argptr, double);
+#endif
           break;
         case 'd':
           rv << va_arg(argptr, int);
@@ -134,13 +150,17 @@ olxstr esdl::olx_print(const olxstr &format, ...) {
           rv << va_arg(argptr, unsigned int);
           break;
         case 'c':
+#ifdef __WIN32__
           rv << va_arg(argptr, char);
+#else
+          rv << va_arg(argptr, int);
+#endif
           break;
         case 's':
           rv << va_arg(argptr, char*);
           break;
         case 'w':
-          rv << va_arg(argptr, olxstr);
+          rv << *va_arg(argptr, olxstr*);
           break;
         default:
           throw TInvalidArgumentException(__OlxSourceInfo,
