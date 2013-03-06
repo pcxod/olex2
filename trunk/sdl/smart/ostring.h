@@ -43,5 +43,8 @@ public:
   }
 };
 
+// this throws exceptions
+extern olxstr olx_print(const olxstr &format, ...);
+
 EndEsdlNamespace()
 #endif

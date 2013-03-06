@@ -1203,7 +1203,22 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       "operation is not applicable to the grown structure");
     return;
   }
-  double max_d = 2.9, min_ang = TXApp::GetMinHBondAngle();
+  double def_max_d = 2.9,
+    def_min_ang =TXApp::GetMinHBondAngle();
+#ifndef _NO_PYTHON
+  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  if (op) {
+    olxstr f = "spy.GetParam('snum.cif.htab_max_d')";
+    if (op->processFunction(f) && f.IsNumber())
+      def_max_d = f.ToDouble();
+    if (op->processFunction(f="spy.GetParam('snum.cif.htab_min_angle')") &&
+      f.IsNumber())
+    {
+      def_min_ang = f.ToDouble();
+    }
+  }
+#endif
+  double max_d = def_max_d, min_ang = def_min_ang;
   size_t cnt = XLibMacros::Parse(Cmds, "dd", &max_d, &min_ang);
   if( cnt == 1 )  {
     if( max_d > 10 )  {
@@ -1217,6 +1232,12 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
     else
       max_d = 2.9;
   }
+#ifndef _NO_PYTHON
+  if (op) {
+    op->processMacro(olx_print("spy.SetParam('snum.cif.htab_max_d', %lf)", max_d));
+    op->processMacro(olx_print("spy.SetParam('snum.cif.htab_min_angle', %lf)", min_ang));
+  }
+#endif
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   TStrList current;

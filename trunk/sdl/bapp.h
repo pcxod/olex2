@@ -69,6 +69,7 @@ public:
   consequently will update the values
   */
   void ReadOptions(const olxstr &fn);
+  void SaveOptions() const;
   template <typename T>
   void UpdateOption(const T &name, const olxstr &value) {
     Options.AddParam(name, value);
