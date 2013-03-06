@@ -3635,17 +3635,7 @@ size_t TMainForm::DownloadFiles(const TStrList &files, const olxstr &dest) {
 //..............................................................................
 void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
   FXApp->UpdateOption(option, value);
-  try {
-    TSettingsFile st;
-    olxstr fn = FXApp->GetConfigDir() + ".options";
-    if (TEFile::Exists(fn))
-      st.LoadSettings(fn);
-    st.SetParam(option, value);
-    st.SaveSettings(fn);
-  }
-  catch (const TExceptionBase &e) {
-    TBasicApp::NewLogEntry(logExceptionTrace) << e;
-  }
+  FXApp->SaveOptions();
 }
 //..............................................................................
 void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
