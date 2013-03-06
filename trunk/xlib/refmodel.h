@@ -91,6 +91,8 @@ protected:
   TTypeListExt<class InfoTab, IEObject> InfoTables;
   // adds a givin direction (if unique) and returns its name
   adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
+  // atoms omitted from the maps
+  AtomRefList Omitted;
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
@@ -174,20 +176,21 @@ public:
   virtual ~RefinementModel() {  Clear(rm_clear_DEF);  }
   ExperimentalDetails expl;
   XVarManager Vars;
-  TSRestraintList rDFIX,  // restrained distances (DFIX)
-                  rDANG,  // restrained angles (DANG)
-                  rSADI,  // similar distances (SADI)
-                  rCHIV,  // restrained atomic volume (CHIV)
-                  rFLAT,  // planar groups (FLAT)
-                  rDELU,  // rigid bond restraints (DELU)
-                  rSIMU,  // similar Uij (SIMU)
-                  rISOR,  // Uij components approximate to isotropic behavior (ISOR)
-                  rEADP,  // equivalent adp, constraint
-                  rAngle,
-                  rDihedralAngle,
-                  rFixedUeq,
-                  rSimilarUeq,
-                  rSimilarAdpVolume;
+  TSRestraintList
+    rDFIX,  // restrained distances (DFIX)
+    rDANG,  // restrained angles (DANG)
+    rSADI,  // similar distances (SADI)
+    rCHIV,  // restrained atomic volume (CHIV)
+    rFLAT,  // planar groups (FLAT)
+    rDELU,  // rigid bond restraints (DELU)
+    rSIMU,  // similar Uij (SIMU)
+    rISOR,  // Uij components approximate to isotropic behavior (ISOR)
+    rEADP,  // equivalent adp, constraint
+    rAngle,
+    rDihedralAngle,
+    rFixedUeq,
+    rSimilarUeq,
+    rSimilarAdpVolume;
   TExyzGroups ExyzGroups;
   TAfixGroups AfixGroups;
   TSameGroupList  rSAME;
@@ -210,10 +213,10 @@ public:
 #endif
 
   TDoubleList used_weight, proposed_weight;
-  TIntList LS;      // up to four params
+  TIntList LS;       // up to four params
   TDoubleList PLAN;  // up to three params
 
-  ConnInfo Conn;          // extra connectivity information
+  ConnInfo Conn;     // extra connectivity information
   
   const olxstr& GetHKLSource() const {  return HKLSource;  }
   //TODO: handle the change
@@ -295,6 +298,7 @@ public:
   double GetEXTI() const {  return EXTI;  }
   void SetEXTI(double v)  {  EXTI = v;  EXTI_set = true;  }
   bool HasEXTI() const {  return EXTI_set;  }
+  void ClearEXTI() { EXTI_set = false; }
   
   double GetOMIT_s() const {  return OMIT_s;  }
   void SetOMIT_s(double v)  {  OMIT_s = v;  OMIT_set = true;  }
@@ -307,7 +311,10 @@ public:
   void ClearOmits()  {  Omits.Clear();  OMITs_Modified = true;  }
   const vec3i_list& GetOmits() const {  return Omits;  }
   template <class list> void AddOMIT(const list& omit)  {
-    if( omit.Count() == 3 )  {  // reflection omit
+    if (!omit.IsEmpty() && !omit[0].IsNumber()) {
+      Omitted.Build(omit.Text(' '));
+    }
+    else if( omit.Count() == 3 )  {  // reflection omit
       Omits.AddNew(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
       OMITs_Modified = true;
     }
@@ -319,6 +326,7 @@ public:
       OMIT_set = true;
     }
   }
+  const AtomRefList &OmittedAtoms() const { return Omitted; }
   olxstr GetOMITStr() const {
     return olxstr(OMIT_s) << ' ' << OMIT_2t;
   }
@@ -349,6 +357,7 @@ public:
       SHEL_set = true;
     }
   }
+  void ClearShell() { SHEL_set = false; }
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
   const TDoubleList& GetBASF() const {  return BASF;  }
@@ -401,7 +410,7 @@ Friedel opposites of components 1 ... m
   bool HasTWIN() const {  return TWIN_set;  }
   void RemoveTWIN()  {  TWIN_set = false;  }
 
-  void AddBASF(double val)  {  
+  void AddBASF(double val)  {
     BASF.Add(val);  
     BASF_Vars.Add(NULL);
   }
@@ -447,6 +456,8 @@ Friedel opposites of components 1 ... m
   void DeleteInfoTab(size_t i)  {  InfoTables.Delete(i);  }
   InfoTab& AddHTAB();
   InfoTab& AddRTAB(const olxstr& codename);
+  // if the name is empty - all tabs a removed
+  void ClearInfoTab(const olxstr &name);
   bool ValidateInfoTab(const InfoTab& it);
   // adss new symmetry matrics, used in restraints/constraints 
   const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString());

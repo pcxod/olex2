@@ -1904,6 +1904,16 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
       TXApp::GetInstance().XFile().GetRM().RemoveTWIN();
     else if( Cmds[0].Equalsi("BASF") )
       TXApp::GetInstance().XFile().GetRM().ClearBASF();
+    else if( Cmds[0].Equalsi("EXTI") )
+      TXApp::GetInstance().XFile().GetRM().ClearEXTI();
+    else if( Cmds[0].Equalsi("HTAB") )
+      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("HTAB");
+    else if( Cmds[0].Equalsi("RTAB") )
+      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("RTAB");
+    else if( Cmds[0].Equalsi("BOND") )
+      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("BOND");
+    else if( Cmds[0].Equalsi("MPLA") )
+      TXApp::GetInstance().XFile().GetRM().ClearInfoTab("MPLA");
     else  {
       for( size_t i=0; i < Ins.InsCount(); i++ )  {
         if( Ins.InsName(i).Equalsi(Cmds[0]) )  {
