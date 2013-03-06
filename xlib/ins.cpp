@@ -1780,6 +1780,8 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
     HyphenateIns(Ins[i]+' ', L->Text(' ') , SL);
   }
   SL << Skipped;
+  if (!GetRM().OmittedAtoms().IsEmpty())
+    SL.Add("OMIT ") << GetRM().OmittedAtoms().GetExpression();
 
   if( GetRM().HasEXTI() )
     SL.Add("EXTI ") << GetRM().GetEXTI();
