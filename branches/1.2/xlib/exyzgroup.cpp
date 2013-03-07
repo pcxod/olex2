@@ -47,8 +47,10 @@ PyObject* TExyzGroup::PyExport(TPtrList<PyObject>& atoms)  {
 #endif
 //..............................................................................
 void TExyzGroup::FromDataItem(TDataItem& item) {
-  for( size_t i=0; i < item.FieldCount(); i++ )
+  for (size_t i=0; i < item.FieldCount(); i++) {
     Atoms.Add(Parent.RM.aunit.GetAtom(item.GetField(i).ToSizeT()));
+    Atoms.GetLast()->SetExyzGroup(this);
+  }
 }
 //..............................................................................
 //..............................................................................

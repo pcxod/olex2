@@ -141,6 +141,21 @@ void TBasicApp::ReadOptions(const olxstr &fn) {
   catch(...)  {}
 }
 //..............................................................................
+void TBasicApp::SaveOptions() const {
+  try {
+    TSettingsFile st;
+    olxstr fn = GetConfigDir() + ".options";
+    if (TEFile::Exists(fn))
+      st.LoadSettings(fn);
+    for (size_t i=0; i < Options.Count(); i++)
+      st.SetParam(Options.GetName(i), Options.GetValue(i));
+    st.SaveSettings(fn);
+  }
+  catch (const TExceptionBase &e) {
+    NewLogEntry(logExceptionTrace) << e;
+  }
+}
+//..............................................................................
 olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
   olxstr bd, path;
   TStrList toks;
@@ -365,6 +380,9 @@ void BAPP_GetOptValue(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal(TBasicApp::GetInstance().GetOptions().FindValue(
     Params[0], Params.Count() == 2 ? Params[1] : EmptyString()));
 }
+void BAPP_SaveOptions(const TStrObjList&, TMacroError& E)  {
+  TBasicApp::GetInstance().SaveOptions();
+}
 //..............................................................................
 void BAPP_Profiling(const TStrObjList& Params, TMacroError &E)  {
   if( Params.IsEmpty() )
@@ -424,6 +442,8 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   lib->Register(new TStaticFunction(BAPP_GetOptValue,
     "OptValue", fpOne|fpTwo,
     "Returns value of the given option (default may be provided)"));
+  lib->Register(new TStaticFunction(BAPP_SaveOptions,
+    "SaveOptions", fpNone, "Saves options to ConfigDir/.options file"));
   lib->Register(new TStaticFunction(BAPP_Profiling,
     "Profiling", fpNone|fpOne,
     "Sets/Returns current procedure profiling status"));

@@ -223,7 +223,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   return EmptyString();
 }
 //...........................................................................................
-void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers, TCAtomPList& alist)  {
+void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatterers,
+  TCAtomPList& alist)
+{
   const mat3d& hkl2c = au.GetHklToCartesian();
   double quad[6];
   // the thermal ellipsoid scaling factors
@@ -235,9 +237,17 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, ElementPList& scatte
   BM[1] *= BM[1];
   BM[2] *= BM[2];
   
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+  if (au.GetRefMod() && !au.GetRefMod()->OmittedAtoms().IsEmpty()) {
+    TTypeList<ExplicitCAtomRef> l =
+      au.GetRefMod()->OmittedAtoms().ExpandList(*au.GetRefMod());
+    for (size_t i=0; i < l.Count(); i++)
+      l[i].GetAtom().SetTag(1);
+  }
   for( size_t i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
-    if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+    if (ca.IsDeleted() || ca.GetType() == iQPeakZ || ca.GetTag() != 0)
+      continue;
     size_t ind = scatterers.IndexOf(ca.GetType());
     if( ind == InvalidIndex )  {
       scatterers.Add(ca.GetType());

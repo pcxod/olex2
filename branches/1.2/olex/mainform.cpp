@@ -864,7 +864,10 @@ void TMainForm::XApp(Olex2App *XA)  {
   #endif
 
   this_InitFunc(CmdList, fpOne);
-  this_InitFunc(Alert, fpTwo|fpThree|fpFour);
+  this_InitFuncD(Alert, fpTwo|fpThree|fpFour,
+    "title message [flags YNCO-yes,no,cancel,ok "
+    "XHEIQ-icon:exclamation,hand,eror,information,question "
+    "R-show checkbox] [checkbox message]");
 
   this_InitFunc(IsPluginInstalled, fpOne);
   this_InitFunc(ValidatePlugin, fpOne);
@@ -1396,6 +1399,10 @@ void TMainForm::StartupInit()  {
 
   }
 
+  olxstr textures_dir = FXApp->GetBaseDir() + "etc/Textures";
+  if (TEFile::IsDir(textures_dir))
+    FXApp->LoadTextures(textures_dir);
+
   // do the iterpreters job...
   if (FXApp->GetArguments().Count() >= 2) {
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
@@ -1418,9 +1425,6 @@ void TMainForm::StartupInit()  {
   CreateUpdateThread();
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
-  olxstr textures_dir = FXApp->GetBaseDir() + "etc/Textures";
-  if (TEFile::IsDir(textures_dir))
-    FXApp->LoadTextures(textures_dir);
 }
 //..............................................................................
 bool TMainForm::CreateUpdateThread() {
@@ -1443,7 +1447,17 @@ bool TMainForm::CreateUpdateThread() {
 #endif
 }
 //..............................................................................
-bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
+bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
+  const IEObject *Data)
+{
+  if (StartupInitialised && PyEval_ThreadsInitialized()) {
+    PyGILState_STATE st = PyGILState_Ensure();
+    Py_BEGIN_ALLOW_THREADS
+      olx_sleep(10);
+    Py_END_ALLOW_THREADS
+    PyGILState_Release(st);
+  }
+
   bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
   static bool actionEntered = false, downloadEntered=false;
   if( Destroying )  {
@@ -3621,17 +3635,7 @@ size_t TMainForm::DownloadFiles(const TStrList &files, const olxstr &dest) {
 //..............................................................................
 void TMainForm::UpdateUserOptions(const olxstr &option, const olxstr &value) {
   FXApp->UpdateOption(option, value);
-  try {
-    TSettingsFile st;
-    olxstr fn = FXApp->GetConfigDir() + ".options";
-    if (TEFile::Exists(fn))
-      st.LoadSettings(fn);
-    st.SetParam(option, value);
-    st.SaveSettings(fn);
-  }
-  catch (const TExceptionBase &e) {
-    TBasicApp::NewLogEntry(logExceptionTrace) << e;
-  }
+  FXApp->SaveOptions();
 }
 //..............................................................................
 void TMainForm::OnCloseWindow(wxCloseEvent &evt) {

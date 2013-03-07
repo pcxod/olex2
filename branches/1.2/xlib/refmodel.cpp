@@ -26,6 +26,7 @@
 
 RefinementModel::RefinementModel(TAsymmUnit& au) :
   VarRefrencerId("basf"),
+  Omitted(*this),
   HklStatFileID(EmptyString(), 0, 0),
   HklFileID(EmptyString(), 0, 0),
   Vars(*this),
@@ -124,6 +125,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   Conn.Clear();
   PLAN.Clear();
   LS.Clear();
+  Omitted.Clear();
   if( (clear_mask & rm_clear_AFIX) != 0 )
     AfixGroups.Clear();
   if( (clear_mask & rm_clear_VARS) != 0 )
@@ -266,7 +268,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
     if( UsedSymm.GetValue(i).ref_cnt == 0 )
       UsedSymm.Delete(i--);
   }
-  
+  Omitted.Assign(rm.Omitted);
   return *this;
 }
 //.............................................................................
@@ -366,6 +368,18 @@ bool RefinementModel::ValidateInfoTab(const InfoTab& it)  {
     return false;
   }
   return true;
+}
+//.............................................................................
+void RefinementModel::ClearInfoTab(const olxstr &name) {
+  if (name.IsEmpty())
+    InfoTables.Clear();
+  else {
+    for (size_t i=0; i < InfoTables.Count(); i++) {
+      if (InfoTables[i].GetName() == name)
+        InfoTables.NullItem(i);
+    }
+    InfoTables.Pack();
+  }
 }
 //.............................................................................
 void RefinementModel::AddInfoTab(const TStrList& l)  {
