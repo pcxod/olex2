@@ -350,7 +350,7 @@ public:
   TArrayList& SetCount(size_t v, const init_t &initialiser)  {
     const size_t cnt = FCount;
     SetCount(v);
-    for (size_t i=FCount; i < cnt; i++)
+    for (size_t i=cnt; i < FCount; i++)
       initialiser.OnItem(Items[i], i);
   }
 //..............................................................................

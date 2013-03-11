@@ -188,8 +188,9 @@ public:
             if (au_slice == NULL) continue;
             if (a.GetId() >= au_slice->Count())
               throw TFunctionFailedException(__OlxSourceInfo, "assert");
-            if (!(*au_slice)[a.GetId()]->IsDeleted())
-              rv.Add((*au_slice)[a.GetId()]);
+            TSAtom *sa = (*au_slice)[a.GetId()];
+            if (sa != NULL && !sa->IsDeleted())
+              rv.Add(sa);
           }
         }
       }
