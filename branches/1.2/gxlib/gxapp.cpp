@@ -40,7 +40,7 @@
 #include "glbackground.h"
 #include "olxstate.h"
 #include "vcov.h"
-
+#include "ins.h"
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
   #include "wx/string.h"
