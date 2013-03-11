@@ -3354,6 +3354,9 @@ void TGXApp::SetStructureVisible(bool v)  {
 void TGXApp::LoadXFile(const olxstr& fn)  {
   volatile TStopWatch sw(__FUNC__);
   FXFile->LoadFromFile(fn);
+  if (CheckFileType<TIns>() && DoUseSafeAfix()) {
+    GetUndo().Push(FXFile->GetLattice().ValidateHGroups(true, true));
+  }
   if( !FStructureVisible )
     NewLogEntry() << "Note: structure is invisible";
   else {

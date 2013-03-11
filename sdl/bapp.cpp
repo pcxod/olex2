@@ -132,10 +132,14 @@ bool TBasicApp::HasInstance()  {
 //..............................................................................
 void TBasicApp::ReadOptions(const olxstr &fn) {
   try {
-    if( TEFile::Exists(fn) )  {
+    if (TEFile::Exists(fn)) {
       TSettingsFile sf(fn);
-      for( size_t i=0; i < sf.ParamCount(); i++ )
+      for (size_t i=0; i < sf.ParamCount(); i++) {
         Options.AddParam(sf.ParamName(i), sf.ParamValue(i), false);
+        if (sf.ParamName(i) == "profiling" && sf.ParamValue(i).IsBool()) {
+          SetProfiling(sf.ParamValue(i).ToBool());
+        }
+      }
     }
   }
   catch(...)  {}

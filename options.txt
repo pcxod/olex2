@@ -15,3 +15,4 @@ preserve_restraint_defaults [false] - if set, the default restraint values/weigh
  the ins file. This option has no effect when DEFS instruction is set.
 safe_afix [True] - checks AFIXes are correct after atom naming, deleting and HAdd itself
 confirm_on_close [False] - asks a confirmation question before closing the application
+profile [False] - switches application profiling on/off

@@ -21,8 +21,8 @@
 #include "twinning.h"
 #include "math/plane.h"
 #include "ins.h"
-#include "analysis.h"
 #include "math/composite.h"
+#include "estopwatch.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) :
   VarRefrencerId("basf"),
@@ -461,6 +461,7 @@ void RefinementModel::SetHKLSource(const olxstr& src) {
 }
 //.............................................................................
 const TRefList& RefinementModel::GetReflections() const {
+  TStopWatch sw(__FUNC__);
   try {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
     if( !_Reflections.IsEmpty() &&
@@ -487,6 +488,7 @@ const TRefList& RefinementModel::GetReflections() const {
     }
     _HklStat.FileMinInd = hf.GetMinHkl();
     _HklStat.FileMaxInd = hf.GetMaxHkl();
+    sw.start("Building 3D reflection array");
     TArray3D<TRefPList*> hkl3d(_HklStat.FileMinInd , _HklStat.FileMaxInd);
     hkl3d.FastInitWith(0);
     HklFileID = hkl_src_id;
@@ -511,9 +513,9 @@ const TRefList& RefinementModel::GetReflections() const {
       if( rl->Count() > maxRedundancy )
         maxRedundancy = rl->Count();
     }
+    sw.start("Analysing redundancy and Friedel pairs");
     _Redundancy.SetCount(maxRedundancy);
-    for( size_t i=0; i < maxRedundancy; i++ )
-      _Redundancy[i] = 0;
+    _Redundancy.ForEach(olx_list_init::zero());
     for( int h=_HklStat.FileMinInd[0]; h <= _HklStat.FileMaxInd[0]; h++ )  {
       for( int k=_HklStat.FileMinInd[1]; k <= _HklStat.FileMaxInd[1]; k++ )  {
         for( int l=_HklStat.FileMinInd[2]; l <= _HklStat.FileMaxInd[2]; l++ )  {
@@ -544,6 +546,7 @@ const TRefList& RefinementModel::GetReflections() const {
 //.............................................................................
 const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   // we need to take into the account MERG, HKLF and OMIT things here...
+  TStopWatch sw(__FUNC__);
   try {
     GetReflections();
     bool update = (HklStatFileID != HklFileID);
@@ -578,6 +581,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.HKLF_m = HKLF_m;
       _HklStat.HKLF_s = HKLF_s;
       _HklStat.MERG = MERG;
+      sw.start("Analysing reflections: absent, completeness, limits");
       mat3d h2c = aunit.GetHklToCartesian();
       size_t e_cnt=0;
       SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
@@ -609,6 +613,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
 RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
   RefinementModel::HklStat& stats)
 {
+  TStopWatch sw(__FUNC__);
   const TRefList& all_refs = GetReflections();
   // swap the values if in wrong order
   if( SHEL_hr > SHEL_lr )
