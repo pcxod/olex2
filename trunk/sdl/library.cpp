@@ -51,7 +51,7 @@ ABasicFunction *TLibrary::Register(
 {
   TSizeList list;
   ABasicFunction *rv = NULL;
-  container.GetIndexes(fm->GetName(), list);
+  container.GetIndices(fm->GetName(), list);
   if (fm->GetArgStateMask() == uint32_t(~0)) {
     if (list.Count() > 1)
       throw TInvalidArgumentException(__OlxSourceInfo, "ambiguous replacement");
@@ -110,7 +110,7 @@ ABasicFunction *TLibrary::Register(
 //..............................................................................
 size_t TLibrary::LocateLocalFunctions( const olxstr& name, TBasicFunctionPList& store)  {
   TSizeList list;
-  Functions.GetIndexes(name, list);
+  Functions.GetIndices(name, list);
   for( size_t i=0; i < list.Count(); i++ )
     store.Add(Functions.GetObject(list[i]));
   return list.Count();
@@ -118,7 +118,7 @@ size_t TLibrary::LocateLocalFunctions( const olxstr& name, TBasicFunctionPList& 
 //..............................................................................
 size_t TLibrary::LocateLocalMacros( const olxstr& name, TBasicFunctionPList& store)  {
   TSizeList list;
-  Functions.GetIndexes(name, list);
+  Functions.GetIndices(name, list);
   for( size_t i=0; i < list.Count(); i++ )
     store.Add(Macros.GetObject(list[i]));
   return list.Count();
@@ -145,7 +145,7 @@ ABasicFunction* TLibrary::LocateFunction(const olxstr& name, uint32_t argc)  {
   }
   else  {
     TSizeList list;
-    Functions.GetIndexes(name, list);
+    Functions.GetIndices(name, list);
     for( size_t i=0; i < list.Count(); i++ )  {
       if( Functions.GetObject( list[i] )->GetArgStateMask() & (1 << argc) )
         return Functions.GetObject(list[i]);
@@ -161,7 +161,7 @@ ABasicFunction* TLibrary::LocateMacro(const olxstr& name, uint32_t argc)  {
   }
   else  {
     TSizeList list;
-    Macros.GetIndexes(name, list);
+    Macros.GetIndices(name, list);
     for( size_t i=0; i < list.Count(); i++ )  {
       if( Macros.GetObject(list[i])->GetArgStateMask() & (1 << argc) )
         return Macros.GetObject(list[i]);

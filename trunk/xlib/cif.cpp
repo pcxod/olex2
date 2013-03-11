@@ -491,7 +491,6 @@ void TCif::Initialize()  {
         A.SetOccuEsd(A.GetOccuEsd()/degen);
       }
     }
-      
     ALoop->Set(i, ALabel, new AtomCifEntry(A));
     if( Part != InvalidIndex )
       ALoop->Set(i, Part, new AtomPartCifEntry(A));
@@ -642,7 +641,7 @@ void TCif::Initialize()  {
       }
     }
   }
-  // read in the dispersio values
+  // read in the dispersion values
   ALoop = FindLoop("_atom_type");
   if( ALoop != NULL )  {
     const size_t ind_s = ALoop->ColIndex("_atom_type_symbol");
@@ -657,6 +656,34 @@ void TCif::Initialize()  {
                 r[ind_i]->GetStringValue().ToDouble()));
         GetRM().AddSfac(*sc);
       }
+    }
+  }
+  // identify EXYZ/EADP
+  {
+    TAsymmUnit &au = GetAsymmUnit();
+    TPSTypeList<long, TCAtom *> atom_map;
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      atom_map.Add(olx_round(a.ccrd().Prod()*1000), &a);
+      a.SetTag(0);
+    }
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      if (a.GetTag() != 0) continue;
+      long av = olx_round(a.ccrd().Prod()*1000);
+      TSizeList idx;
+      atom_map.GetIndices(av, idx);
+      if (idx.IsEmpty())
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      if (idx.Count() < 2) continue;
+      for (size_t j=0; j < idx.Count(); j++) {
+        if (!a.ccrd().Equals(atom_map.GetObject(idx[j])->ccrd(), 1e-2))
+          idx.Delete(j--);
+      }
+      if (idx.Count() < 2) continue;
+      TExyzGroup &g = GetRM().ExyzGroups.New();
+      for (size_t j=0; j < idx.Count(); j++)
+        g.Add(*atom_map.GetObject(idx[j])).SetTag(1);
     }
   }
 }

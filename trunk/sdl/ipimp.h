@@ -137,7 +137,7 @@ public:
   virtual void callCallbackFunc(const olxstr& cbEvent, const TStrList& params) {
     TSizeList indexes;
     TMacroError me;
-    CallbackFuncs.GetIndexes(cbEvent, indexes);
+    CallbackFuncs.GetIndices(cbEvent, indexes);
     for( size_t i=0; i < indexes.Count(); i++ )  {
       CallbackFuncs.GetObject(indexes[i])->Run(params, me);
       AnalyseError(me);

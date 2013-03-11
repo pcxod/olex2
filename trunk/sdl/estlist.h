@@ -99,7 +99,7 @@ public:
   // retrieves indexes of all entries with same key and returns the number
   // of added entries
   template <class T, class size_t_list_t>
-  size_t GetIndexes(const T& key, size_t_list_t& il)  {
+  size_t GetIndices(const T& key, size_t_list_t& il)  {
     if( Data.IsEmpty() )  return 0;
     if( Data.Count() == 1 )  {
       if( Data[0]->Compare(key) != 0 )  return 0;
