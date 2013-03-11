@@ -374,30 +374,39 @@ void TIns::_FinishParsing(ParseContext& cx)  {
 }
 //..............................................................................
 void TIns::_ProcessAfix0(ParseContext& cx)  {
-  if( !cx.AfixGroups.IsEmpty() )  {
+  if (!cx.AfixGroups.IsEmpty()) {
     int old_m = cx.AfixGroups.Top().GetB()->GetM();
-    if( cx.AfixGroups.Top().GetA() > 0 )  {
-      if( old_m != 0 )
-        throw TFunctionFailedException(__OlxSourceInfo,
-        olxstr("incomplete AFIX group") <<
-        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString()));
-      else  {
-        TBasicApp::NewLogEntry(logWarning) << "Possibly incorrect AFIX " <<
+    bool valid = true;
+    if (cx.AfixGroups.Top().GetA() > 0) {
+      if( old_m != 0 ) {
+        TBasicApp::NewLogEntry(logError) << olxstr("Incomplete AFIX group") <<
+        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel())
+          : EmptyString());
+        valid = false;
+      }
+      else {
+        TBasicApp::NewLogEntry(logError) << "Possibly incorrect AFIX " <<
           cx.AfixGroups.Top().GetB()->GetAfix() <<
-          (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString());
+          (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel())
+            : EmptyString());
       }
     }
-    if( cx.AfixGroups.Top().GetB()->GetPivot() == NULL )  {
-      throw TFunctionFailedException(__OlxSourceInfo,
-        "undefined pivot atom for a fitted group");
+    if (cx.AfixGroups.Top().GetB()->GetPivot() == NULL) {
+      TBasicApp::NewLogEntry(logError) << "Undefined pivot atom for a fitted "
+        "group" << (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel())
+          : EmptyString());
+      valid = false;
+    }
+    if (!valid) {
+      cx.AfixGroups.Top().GetB()->Clear();
     }
     // pop all complete
     size_t po = 0;
-    while( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Top().GetA() == 0 )  {
+    while (!cx.AfixGroups.IsEmpty() && cx.AfixGroups.Top().GetA() == 0) {
       cx.AfixGroups.Pop();
       po++;
     }
-    if( po == 0 )  //pop last then
+    if (po == 0)  //pop last then
       cx.AfixGroups.Pop();
   }
 }

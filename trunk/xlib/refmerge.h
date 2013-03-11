@@ -10,6 +10,7 @@
 #ifndef __olx_ref_merge_H
 #define __olx_ref_merge_H
 #include "reflection.h"
+#include "estopwatch.h"
 BeginXlibNamespace()
 
 struct MergeStats  {
@@ -468,6 +469,7 @@ public:
   static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output,
     const vec3i_list& omits, bool mergeFP)
   {
+    TStopWatch sw(__FUNC__);
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
     if( mergeFP )  info_ex.centrosymmetric = true; 
     TRefPList refs(Refs);
@@ -477,6 +479,7 @@ public:
   static MergeStats Merge(const SymmSpace::InfoEx& si, RefList& Refs,
     TRefList& output, const vec3i_list& omits)
   {
+    TStopWatch sw(__FUNC__);
     TRefPList refs(Refs);
     return _DoMerge<RefListMerger>(si, refs, omits, output);
   }
@@ -487,6 +490,7 @@ public:
   static MergeStats DryMerge(const MatList& ml, RefList& Refs,
     const vec3i_list& omits, bool mergeFP)
   {
+    TStopWatch sw(__FUNC__);
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
     if( mergeFP )
       info_ex.centrosymmetric = true; 
@@ -497,6 +501,7 @@ public:
   static MergeStats DryMerge(const SymmSpace::InfoEx& si, RefList& Refs,
     const vec3i_list& omits)
   {
+    TStopWatch sw(__FUNC__);
     TRefPList refs(Refs);
     return _DryMerge<RefListMerger>(si, refs, omits);
   }
@@ -507,6 +512,7 @@ public:
   static MergeStats MergeInP1(const RefList& Refs, TRefList& output,
     const vec3i_list& omits)
   {
+    TStopWatch sw(__FUNC__);
     TPtrList<const TReflection> refs(Refs);
     return _DoMergeInP1<RefListMerger>(refs, omits, output);
   }
@@ -514,6 +520,7 @@ public:
   static MergeStats DryMergeInP1(const RefList& Refs,
     const vec3i_list& omits)
   {
+    TStopWatch sw(__FUNC__);
     TPtrList<const TReflection> refs(Refs);
     return _DryMergeInP1<RefListMerger>(refs, omits);
   }
@@ -522,6 +529,7 @@ public:
   static MergeStats SGFilter(const MatList& ml, RefList& Refs,
     TRefList& output, const vec3i_list& omits)
   {
+    TStopWatch sw(__FUNC__);
     TRefPList refs(Refs);
     return _DoSGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
       refs, omits, output);
@@ -530,6 +538,7 @@ public:
   static MergeStats DrySGFilter(const MatList& ml, RefList& Refs,
     const vec3i_list& omits)
   {
+    TStopWatch sw(__FUNC__);
     TRefPList refs(Refs);
     return _DoDrySGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
       refs, omits);
