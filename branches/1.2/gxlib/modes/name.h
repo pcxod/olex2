@@ -13,6 +13,7 @@
 class TNameMode : public AModeWithLabels  {
   size_t Index;
   olxstr Prefix, Suffix, Symbol;
+  bool Lock;
   TUndoData* FirstUndo;
   bool AutoComplete;
 protected:
@@ -32,13 +33,29 @@ protected:
     }
     void AddAtom(TXAtom& xa)  {  LabelIndices.Add(xa.GetOwnerId());  }
     void undo(TUndoData* data)  {
-      if( TNameMode::Instance != NULL )  {
-        for( size_t i=0; i < LabelIndices.Count(); i++ )  {
+      if (TNameMode::Instance != NULL) {
+        for (size_t i=0; i < LabelIndices.Count(); i++) {
           TGXApp::GetInstance().MarkLabel(LabelIndices[i], false);
           TNameMode::Instance->Index--;
         }
         TNameMode::Instance->SetCursor();
       }
+    }
+  };
+  class TLockUndo : public TUndoData {
+    TCAtom &a;
+    bool v;
+  public:
+    TLockUndo(TCAtom& a)
+      : TUndoData(new TUndoActionImplMF<TLockUndo>(
+          this, &TLockUndo::undo)),
+        a(a), v(a.IsFixedType())
+    {}
+    void undo(TUndoData* data) {
+      a.SetFixedType(v);
+      TGXApp::AtomIterator ai = TGXApp::GetInstance().GetAtoms();
+      while (ai.HasNext()) // update the locked atom view if any
+        ai.Next().Update();
     }
   };
 #ifdef __BORLANDC__
@@ -82,6 +99,7 @@ public:
     Prefix = Options.FindValue('p');
     Suffix = Options.FindValue('s');
     Symbol = Options.FindValue('t');  // type
+    Lock = Options.GetBoolOption('l');
     AutoComplete = Options.Contains('a');
     // validate if type is correct
     if( !Symbol.IsEmpty() && !XElementLib::IsElement(Symbol) )
@@ -113,6 +131,11 @@ public:
       Labl << Prefix <<  Index << Suffix;
       TNameModeUndo* undo = new TNameModeUndo(XA);
       undo->AddAction(gxapp.Name(XA, Labl, false));
+      if (Lock) {
+        undo->AddAction(new TLockUndo(XA.CAtom()));
+        XA.CAtom().SetFixedType(true);
+        XA.Update();
+      }
       gxapp.GetUndo().Push(undo);
       gxapp.MarkLabel(XA, true);
       Index++;

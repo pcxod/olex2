@@ -14,16 +14,22 @@ class TLockMode : public AModeWithLabels {
 protected:
   class TLockModeUndo : public TUndoData {
     size_t index;
+    TCAtom &a;
     bool v;
   public:
     TLockModeUndo(TXAtom& xa, bool v)
       : TUndoData(new TUndoActionImplMF<TLockModeUndo>(
           this, &TLockModeUndo::undo)),
         index(xa.GetOwnerId()),
+        a(xa.CAtom()),
         v(v)
     {}
     void undo(TUndoData* data) {
+      a.SetFixedType(!v);
       TGXApp::GetInstance().MarkLabel(index, !v);
+      TGXApp::AtomIterator ai = TGXApp::GetInstance().GetAtoms();
+      while (ai.HasNext())
+        ai.Next().Update();
     }
   };
 public:
@@ -55,6 +61,7 @@ public:
       TLockModeUndo* undo = new TLockModeUndo(XA, !XA.CAtom().IsFixedType());
       gxapp.GetUndo().Push(undo);
       XA.CAtom().SetFixedType(!XA.CAtom().IsFixedType());
+      XA.Update();
       gxapp.MarkLabel(XA, XA.CAtom().IsFixedType());
       return true;
     }

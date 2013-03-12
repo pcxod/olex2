@@ -504,8 +504,16 @@ const TRefList& RefinementModel::GetReflections() const {
       if (hf[i].IsOmitted()) continue;
       hf[i].SetI(hf[i].GetI()*HKLF_s);
       hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
-      if (hf[i].GetBatch() <= 0) continue;
       TReflection& r = _Reflections.AddNew(hf[i]);
+      if (hf[i].GetBatch() <= 0) {
+        // warn about the wrong batch
+        if (hf[i].GetBatch() == -1) {
+          olxstr r_str = hf[i].ToString();
+          TBasicApp::NewLogEntry(logError) << olx_print("Invalid batch number "
+            "for reflection #%u: %w", i+1, &r_str);
+        }
+        continue;
+      }
       TRefPList* rl = hkl3d(hf[i].GetHkl());
       if( rl == NULL )
         hkl3d(hf[i].GetHkl()) = rl = new TRefPList;
@@ -624,11 +632,13 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
   out.SetCapacity(ref_cnt);
   for( size_t i=0; i < ref_cnt; i++ )  {
     const TReflection& r = all_refs[i];
-    if( r.IsOmitted() )  {
+    if (r.GetBatch() < 0)
+      continue;
+    if (r.IsOmitted()) {
       stats.OmittedReflections++;
       continue;
     }
-    if( !rsf.IsOutside(r) )
+    if (!rsf.IsOutside(r))
       out.AddCopy(r);
   }
   stats.TotalReflections = out.Count();

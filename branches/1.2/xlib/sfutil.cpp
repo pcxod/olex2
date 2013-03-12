@@ -85,7 +85,7 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i&
   }
 }
 //...........................................................................................
-olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F, 
+olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   short mapType, short sfOrigin, short scaleType, double scale)
 {
   TXApp& xapp = TXApp::GetInstance();
