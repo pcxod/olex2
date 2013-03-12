@@ -5721,8 +5721,10 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       Fc2 /= sqrt(1+0.0005*exti*Fc2*l*l*l/sqrt(olx_max(0,x*(1-x))));
     }
     const double Fc = sqrt(olx_abs(Fc2));
-    double Fo2 = olx_abs(r.GetI()*scale_k);
-    const double Fo = sqrt(Fo2);
+    const double Fo2 = r.GetI()*scale_k;
+    const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
+    //double Fo2 = olx_abs(r.GetI()*scale_k);
+    //const double Fo = sqrt(Fo2);
     const double sigFo2 = r.GetS()*scale_k;
     const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
     const double w =
