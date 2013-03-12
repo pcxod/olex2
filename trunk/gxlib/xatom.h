@@ -132,7 +132,8 @@ public:
   index_t DecTag()  {  return TSAtom::DecTag();  }
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
-  void UpdateLabel()  {  GetGlLabel().UpdateLabel();  }
+  virtual void Update();
+  virtual void UpdateLabel()  {  GetGlLabel().UpdateLabel();  }
   inline TXAtom& Node(size_t i) const {  return (TXAtom&)TSAtom::Node(i); }
   inline TXBond& Bond(size_t i) const {  return (TXBond&)TSAtom::Bond(i); }
   // returns full legend with symm code

@@ -124,6 +124,10 @@ void TXAtom::ClearStaticObjects()  {
   }
 }
 //..............................................................................
+void TXAtom::Update()  {
+  InitActualSphere();
+}
+//..............................................................................
 void TXAtom::InitActualSphere() {
   ActualSphere = ~0;
   if (QualityValue == qaPict)
