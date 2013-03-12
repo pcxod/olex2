@@ -665,7 +665,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "bonds between the same atoms; [fit] rotation angle increment (smooth "
     "rotation by default)\n&;"
     "v-[grow] use user provided delta for connectivity analysis, default 2A\n&;"
-    "shells-[grow] grow atom shells vs fragments", 
+    "shells-[grow] grow atom shells vs fragments&;"
+    "l-[name] lock atom types after naming\n&;",
     (fpAny^fpNone)|psFileLoaded, 
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
     " name, occu, pack, part, split, fit");
