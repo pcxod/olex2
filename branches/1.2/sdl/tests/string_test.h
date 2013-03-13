@@ -104,6 +104,8 @@ void PrintTest(OlxTests& t_) {
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
   if (olx_print("%lf", 10.1) != "10.1")
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  if (olx_print("%llu", (uint64_t)10) != "10")
+    throw TFunctionFailedException(__OlxSourceInfo, "assert");
   olxstr t="abc";
   if (olx_print("%lf %% %w", 10.1, &t) != "10.1 % abc")
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
