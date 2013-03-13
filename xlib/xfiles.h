@@ -142,7 +142,8 @@ public:
   void LibDataName(const TStrObjList& Params, TMacroError& E);
   void LibGetFormula(const TStrObjList& Params, TMacroError& E);
   void LibSetFormula(const TStrObjList& Params, TMacroError& E);
-  void LibEndUpdate(const TStrObjList& Params, TMacroError& E);
+  void LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
+    TMacroError &E);
   void LibSaveSolution(const TStrObjList& Params, TMacroError& E);
   void LibGetMu(const TStrObjList& Params, TMacroError& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());

@@ -46,9 +46,10 @@ const olxstr &esdl::TrueString()  {  return CTrueString();  }
 const olxstr &esdl::FalseString()  { return CFalseString();  }
 #endif
 
-olxstr esdl::olx_print(const olxstr &format, ...) {
+olxstr esdl::olx_print(const char *format_, ...) {
   va_list argptr;
-  va_start(argptr, format);
+  va_start(argptr, format_);
+  const olxstr format = format_;
   olxstr_buf rv;
   size_t str_st = 0;
   try {
@@ -99,7 +100,7 @@ olxstr esdl::olx_print(const olxstr &format, ...) {
 #endif
                 break;
               case 's':
-                rv << va_arg(argptr, wchar_t*);
+                rv << va_arg(argptr, const wchar_t*);
                 break;
               default:
                 throw TInvalidArgumentException(__OlxSourceInfo,
@@ -157,7 +158,7 @@ olxstr esdl::olx_print(const olxstr &format, ...) {
 #endif
           break;
         case 's':
-          rv << va_arg(argptr, char*);
+          rv << va_arg(argptr, const char*);
           break;
         case 'w':
           rv << *va_arg(argptr, olxstr*);

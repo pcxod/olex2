@@ -634,7 +634,9 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
   }
 }
 //..............................................................................
-void TXFile::LibEndUpdate(const TStrObjList& Params, TMacroError& E)  {
+void TXFile::LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   EndUpdate();
 }
 //..............................................................................
@@ -718,7 +720,8 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   );
 
   lib->Register(
-    new TFunction<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate",
+    new TMacro<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate",
+      EmptyString(),
       fpNone|psCheckFileTypeIns,
       "Must be called after the content of the asymmetric unit has changed - "
       "this function will update the program state")
