@@ -311,6 +311,10 @@ void TIns::_FinishParsing(ParseContext& cx)  {
       cx.rm.AddInfoTab(toks);
       Ins.Delete(i--);
     }
+    else if (toks[0].Equalsi("OMIT")) {
+      cx.rm.AddOMIT(toks.SubListFrom(1));
+      Ins.Delete(i--);
+    }
     else if( toks[0].StartsFromi("ANIS") )  {
       Ins.Delete(i--);
       try  {

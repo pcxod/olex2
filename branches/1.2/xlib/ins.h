@@ -190,8 +190,6 @@ public:
         rm.SetBASF(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("DEFS") && (Toks.Count() > 1) )
         rm.SetDEFS(Toks.SubListFrom(1));
-      else if( Toks[0].Equalsi("OMIT") )
-        rm.AddOMIT(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("SHEL") )
         rm.SetSHEL(Toks.SubListFrom(1));
       else if( Toks[0].Equalsi("TWIN") )
