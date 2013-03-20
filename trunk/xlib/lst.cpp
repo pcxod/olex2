@@ -36,7 +36,6 @@ void TLst::Clear()  {
 bool TLst::LoadFromFile(const olxstr &FN)  {
   TEFile::CheckFileExists(__OlxSourceInfo, FN);
   TStrList SL;
-  size_t ind;
   bool TRefC  = false,
        URefC  = false,
        DRef   = false,
@@ -55,8 +54,6 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   TStrList Toks;
   Clear();
   SL.LoadFromFile(FN);
-  TLstRef *LstRef;
-  TLstSplitAtom *SplitA;
   for( size_t i=0; i < SL.Count(); i++ )  {
     Toks.Clear();
     if (!header_found && SL[i].Contains("++") &&
@@ -77,263 +74,217 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         params.Add("version") = Toks[Toks.Count()-2];
       }
       header_found = true;
-      continue;
     }
-    if( !TRefC )  {
-      ind = SL[i].FirstIndexOf("Reflections read,");
-      if( ind != InvalidIndex )  {
+    else if (!TRefC && SL[i].Contains("Reflections read,")) {
+      Toks.Strtok(SL[i], ' ');
+      if (Toks.Count() < 3)  continue;
+      params("ref_total", Toks[0]);
+      int rt = Toks[0].ToInt();
+      try {  //bug: 662044  Reflections read, of which447594  rejected
+        int ur = rt - Toks[5].ToInt(); // uniq = total - rejected
+        params("ref_unique", ur);
+      }
+      catch(...)  {}
+      TRefC = true;
+    }
+    else if (!URefC && SL[i].Contains("Unique reflections,")) {
+      Toks.Strtok(SL[i], ' ');
+      if (Toks.Count() < 3) continue;
+      params("ref_unique", Toks[0]);
+      URefC = true;
+    }
+    else if (!DRef  && SL[i].Contains("Disagreeable Reflections")) {
+      i += 4;
+      while (i < SL.Count() && !SL[i].Contains("Bond")) {
         Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() < 3 )  continue;
-        params("ref_total", Toks[0]);
-        int rt = Toks[0].ToInt();
-        try  {  //bug: 662044  Reflections read, of which447594  rejected
-          int ur = rt - Toks[5].ToInt(); // uniq = total - rejected
-          params("ref_unique", ur);
-        }
-        catch(...)  {}
-        TRefC = true;
-        continue;
-      }
-    }
-    if( !URefC )  {
-      ind = SL[i].FirstIndexOf("Unique reflections,");
-      if( ind != InvalidIndex )  {
-        Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() < 3 )  continue;
-        params("ref_unique", Toks[0]);
-        URefC = true;
-        continue;
-      }
-    }
-    if( !DRef )  {
-      ind = SL[i].FirstIndexOf("Disagreeable Reflections");
-      if( ind != InvalidIndex )  {
-        i += 4;
-        while( i < SL.Count() && (SL[i].FirstIndexOf("Bond") == InvalidIndex) )  {
-          Toks.Strtok(SL[i], ' ');
-          if( Toks.Count() < 8 )  break;
-          size_t inc = 0, requiredCount = 8 ;
-          if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
-          if( Toks.Count() >= requiredCount )  {
-            LstRef = new TLstRef;
-            LstRef->H = Toks[0+inc].ToInt();
-            LstRef->K = Toks[1+inc].ToInt();
-            LstRef->L = Toks[2+inc].ToInt();
-            LstRef->Fo = Toks[3+inc].ToDouble();
-            LstRef->Fc = Toks[4+inc].ToDouble();
-            LstRef->DF = Toks[5+inc].ToDouble();
-            LstRef->Res = Toks[7+inc].ToDouble();
-            LstRef->Deleted = false;
-            FDRefs.Add(LstRef);
-            Toks.Clear();
-            i++;
-          }
-        }
-        DRef = true;
-        continue;
-      }
-    }
-    if( !TrefT )  {
-      ind = SL[i].FirstIndexOf("Try    Ralpha Nqual Sigma-1 M(abs) CFOM   Seminvariants");
-      if( ind != InvalidIndex )  {
-        i += 2;
-        while( i < SL.Count() && (SL[i].FirstIndexOf("CFOM") == InvalidIndex) )  {
-          Toks.Strtok(SL[i], ' ');
-          if( Toks.Count() < 7 )  { i++;  continue;  }
-          size_t inc = 0, requiredCount = 7;
-          if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
-          if( Toks.Count() >= requiredCount )  {
-            TTrefTry trtry;
-            trtry.Try = Toks[0+inc].SubString(0, Toks[0+inc].Length()-1).ToInt();
-            trtry.RAlpha = Toks[1+inc].ToDouble();
-            trtry.NQual = Toks[2+inc].ToDouble();
-            trtry.SigmaM1 = Toks[3+inc].ToDouble();
-            trtry.Mabs = Toks[4+inc].ToDouble();
-            trtry.CFOM = Toks[5+inc].Trim('*').ToDouble();
-            trtry.Semivariants.SetSize((uint32_t)((Toks.Count() - 6 - inc) * Toks[inc+6].Length()));
-            size_t bitIndex = 0;
-            for( size_t j= 6 + inc; j < Toks.Count(); j++ )  {
-              if( bitIndex >= trtry.Semivariants.Count() )  break;
-              for( size_t k=0; k < Toks[j].Length(); k++ )  {
-                if( Toks[j][k] == '+' )
-                  trtry.Semivariants.Set(bitIndex, true);
-                bitIndex++;
-                if( bitIndex >= trtry.Semivariants.Count() )  break;
-              }
-            }
-            TrefTries.AddCopy(trtry);
-            Toks.Clear();
-            i++;
-          }
-        }
-        QuickSorter::SortSF(TrefTries, SortTrefTries);
-        TrefT = true;
-        continue;
-      }
-    }
-    if( !PattS )  {
-      ind = SL[i].FirstIndexOf("Solution   1    CFOM =  ");
-      if( ind != InvalidIndex )  {
-        i += 7;
-        TTypeList<TPattAtom>* sol = new TTypeList<TPattAtom>;
-        PattSolutions.Add( sol );
-        while( i < SL.Count() && (SL[i].FirstIndexOf("Patterson") == InvalidIndex) )  {
-          if( SL[i].FirstIndexOf("Solution") != InvalidIndex )  {
-            i += 7;
-            if( i >= SL.Count() )  break;
-            sol = new TTypeList<TPattAtom>();
-            PattSolutions.Add( sol );
-          }
-          Toks.Strtok(SL[i], ' ');
-          if( Toks.Count() < 6 )  { i++;  continue;  }
-          TPattAtom& atom = sol->AddNew();
-          atom.SetName( Toks[0] );
-          atom.GetCrd()[0] = Toks[2].ToDouble();
-          atom.GetCrd()[1] = Toks[3].ToDouble();
-          atom.GetCrd()[2] = Toks[4].ToDouble();
-          atom.SetOccup( Toks[5].ToDouble() );
+        if (Toks.Count() < 8) break;
+        size_t inc = 0, requiredCount = 8;
+        if (Toks[0] == '*' ) { inc ++;  requiredCount++; }
+        if (Toks.Count() >= requiredCount) {
+          TLstRef *LstRef = new TLstRef;
+          LstRef->H = Toks[0+inc].ToInt();
+          LstRef->K = Toks[1+inc].ToInt();
+          LstRef->L = Toks[2+inc].ToInt();
+          LstRef->Fo = Toks[3+inc].ToDouble();
+          LstRef->Fc = Toks[4+inc].ToDouble();
+          LstRef->DF = Toks[5+inc].ToDouble();
+          LstRef->Res = Toks[7+inc].ToDouble();
+          LstRef->Deleted = false;
+          FDRefs.Add(LstRef);
           Toks.Clear();
-          i += 3;
-        }
-        PattS = true;
-        continue;
-      }
-    }
-    if( !RIS )  {
-      ind = SL[i].FirstIndexOf("R(int) =");
-      if( ind != InvalidIndex )  {
-        Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() < 6 )  continue;
-        params("Rint", Toks[2]);
-        params("Rsig", Toks[5]);
-        RIS = true;
-        continue;
-      }
-    }
-    if( !HP )  {
-      ind = SL[i].FirstIndexOf("Highest peak");
-      if( ind != InvalidIndex )  {
-        Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() < 4 )  continue;
-        params("peak", Toks[1].Length() > 4 ? Toks[1].SubStringFrom(4) : Toks[2]);
-        HP = true;
-        continue;
-      }
-    }
-    if( !DH )  {
-      ind = SL[i].FirstIndexOf("Deepest hole");
-      if( ind != InvalidIndex )  {
-        Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() < 4 )  continue;
-        params("hole", Toks[1].Length() > 4 ? Toks[1].SubStringFrom(4) : Toks[2]);
-        DH = true;
-        continue;
-      }
-    }
-    if( !RF )  {
-      ind = SL[i].FirstIndexOf("Final Structure Factor");
-      if( ind != InvalidIndex )  {
-        // extract total number of LS parameters
-        Toks.Clear();
-        i += 2;  if( i >= SL.Count() )  break;
-        Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() > 5 )
-          params("param_n", Toks[6]);
-
-        // extract R1 or 4sigma, R1a for all data and number of refs with Fo > 4sig(Fo)
-        Toks.Clear();
-        while( i < SL.Count() && SL[i].IndexOf("R1 = ") == InvalidIndex ) i++;
-        if( i >= SL.Count() )  break;
-        Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() > 8 )  {
-          params("R1", Toks[2]);
-          params("ref_4sig", Toks[4]);
-          params("R1all", Toks[9]);
-        }
-
-        // extract wR2 && Goof && restrained GooF
-        Toks.Clear();
-        i ++;  if( i >= SL.Count() )  break;
-        Toks.Strtok(SL[i].Replace(',', EmptyString()), ' ');
-        if( Toks.Count() > 11 )  {
-          params("wR2", Toks[2]);
-          params("S", Toks[7]);
-          params("rS", Toks[11]);
-        }
-        RF = true;
-        continue;
-      }
-    }
-    if( !SA )  {
-      ind = SL[i].FirstIndexOf("square atomic displacements");
-      if( ind != InvalidIndex )  {
-        i++;  // skip the line breaks
-        while( i < SL.Count() && SL[i].IsEmpty() )  i++;
-        /* do the search, the line break is the end of the section */
-        while( i < SL.Count() && !SL[i].IsEmpty() )  {
-          if( SL[i].FirstIndexOf("may be split into") != InvalidIndex )  {
-            Toks.Clear();
-            Toks.Strtok(SL[i], ' ');
-            if( Toks.Count() < 15 )  {  i++;  continue;  }
-            SplitA = new TLstSplitAtom();
-            SplitA->AtomName = Toks[3];
-            SplitA->PositionA[0] = Toks[8].ToDouble();
-            SplitA->PositionA[1] = Toks[9].ToDouble();
-            SplitA->PositionA[2] = Toks[10].ToDouble();
-            SplitA->PositionB[0] = Toks[12].ToDouble();
-            SplitA->PositionB[1] = Toks[13].ToDouble();
-            SplitA->PositionB[2] = Toks[14].ToDouble();
-            FSplitAtoms.Add(SplitA);
-          }
           i++;
         }
-        SA = true;
-        continue;
       }
+      DRef = true;
     }
-    if( !FlackF )  {
-      ind = SL[i].FirstIndexOf("Flack x parameter");
-      if( ind != InvalidIndex )  {
-        Toks.Clear();
+    else if (!TrefT && SL[i].Contains(
+        "Try    Ralpha Nqual Sigma-1 M(abs) CFOM   Seminvariants"))
+    {
+      i += 2;
+      while (i < SL.Count() && !SL[i].Contains("CFOM")) {
         Toks.Strtok(SL[i], ' ');
-        if( Toks.Count() == 8 )  {
-          TEValueD flack(Toks[4].ToDouble(), Toks[7].ToDouble());
-          params("flack", flack.ToString());
+        if (Toks.Count() < 7) { i++;  continue; }
+        size_t inc = 0, requiredCount = 7;
+        if (Toks[0] == '*') { inc ++;  requiredCount++; }
+        if (Toks.Count() >= requiredCount) {
+          TTrefTry trtry;
+          trtry.Try = Toks[0+inc].SubString(0, Toks[0+inc].Length()-1).ToInt();
+          trtry.RAlpha = Toks[1+inc].ToDouble();
+          trtry.NQual = Toks[2+inc].ToDouble();
+          trtry.SigmaM1 = Toks[3+inc].ToDouble();
+          trtry.Mabs = Toks[4+inc].ToDouble();
+          trtry.CFOM = Toks[5+inc].Trim('*').ToDouble();
+          trtry.Semivariants.SetSize((uint32_t)((Toks.Count() - 6 - inc) *
+            Toks[inc+6].Length()));
+          size_t bitIndex = 0;
+          for (size_t j= 6 + inc; j < Toks.Count(); j++) {
+            if (bitIndex >= trtry.Semivariants.Count())  break;
+            for (size_t k=0; k < Toks[j].Length(); k++) {
+              if ( Toks[j][k] == '+')
+                trtry.Semivariants.Set(bitIndex, true);
+              bitIndex++;
+              if (bitIndex >= trtry.Semivariants.Count()) break;
+            }
+          }
+          TrefTries.AddCopy(trtry);
+          Toks.Clear();
+          i++;
         }
-        FlackF = true;
-        continue;
+      }
+      QuickSorter::SortSF(TrefTries, SortTrefTries);
+      TrefT = true;
+    }
+    else if (!PattS && SL[i].Contains("Solution   1    CFOM =  ")) {
+      i += 7;
+      TTypeList<TPattAtom>* sol = new TTypeList<TPattAtom>;
+      PattSolutions.Add( sol );
+      while (i < SL.Count() && !SL[i].Contains("Patterson"))  {
+        if (SL[i].Contains("Solution")) {
+          i += 7;
+          if (i >= SL.Count()) break;
+          sol = new TTypeList<TPattAtom>();
+          PattSolutions.Add( sol );
+        }
+        Toks.Strtok(SL[i], ' ');
+        if (Toks.Count() < 6 ) { i++;  continue; }
+        TPattAtom& atom = sol->AddNew();
+        atom.SetName( Toks[0] );
+        atom.GetCrd()[0] = Toks[2].ToDouble();
+        atom.GetCrd()[1] = Toks[3].ToDouble();
+        atom.GetCrd()[2] = Toks[4].ToDouble();
+        atom.SetOccup( Toks[5].ToDouble() );
+        Toks.Clear();
+        i += 3;
+      }
+      PattS = true;
+    }
+    else if (!RIS && SL[i].Contains("R(int) =")) {
+      Toks.Strtok(SL[i], ' ');
+      if (Toks.Count() < 6) continue;
+      params("Rint", Toks[2]);
+      params("Rsig", Toks[5]);
+      RIS = true;
+    }
+    else if (!HP && SL[i].Contains("Highest peak")) {
+      Toks.Strtok(SL[i], ' ');
+      if (Toks.Count() < 4)  continue;
+      params("peak", Toks[1].Length() > 4 ? Toks[1].SubStringFrom(4) : Toks[2]);
+      HP = true;
+    }
+    else if (!DH && SL[i].Contains("Deepest hole")) {
+      Toks.Strtok(SL[i], ' ');
+      if( Toks.Count() < 4 )  continue;
+      params("hole", Toks[1].Length() > 4 ? Toks[1].SubStringFrom(4) : Toks[2]);
+      DH = true;
+    }
+    else if (!RF && SL[i].Contains("Final Structure Factor")) {
+      // extract total number of LS parameters
+      Toks.Clear();
+      if ((i+=2) >= SL.Count()) break;
+      Toks.Strtok(SL[i], ' ');
+      if (Toks.Count() > 5)
+        params("param_n", Toks[6]);
+      // extract R1 or 4sigma, R1a for all data and number of refs with Fo > 4sig(Fo)
+      Toks.Clear();
+      while (i < SL.Count() && !SL[i].Contains("R1 = "))
+        i++;
+      if (i >= SL.Count()) break;
+      Toks.Strtok(SL[i], ' ');
+      if (Toks.Count() > 8) {
+        params("R1", Toks[2]);
+        params("ref_4sig", Toks[4]);
+        params("R1all", Toks[9]);
+      }
+      // extract wR2 && Goof && restrained GooF
+      Toks.Clear();
+      if (++i >= SL.Count()) break;
+      Toks.Strtok(SL[i].Replace(',', EmptyString()), ' ');
+      if (Toks.Count() > 11) {
+        params("wR2", Toks[2]);
+        params("S", Toks[7]);
+        params("rS", Toks[11]);
       }
     }
-    if( !CellInfo &&
-      SL[i].IndexOf("F(000) = ") != InvalidIndex &&
-      SL[i].IndexOf("Mu = ") != InvalidIndex &&
-      SL[i].IndexOf("Rho = ") != InvalidIndex )
+    else if (!SA && SL[i].Contains("square atomic displacements")) {
+      while( ++i < SL.Count() && SL[i].IsEmpty())
+        ;
+      /* do the search, the line break is the end of the section */
+      while (i < SL.Count() && !SL[i].IsEmpty()) {
+        if (SL[i].Contains("may be split into")) {
+          Toks.Clear();
+          Toks.Strtok(SL[i], ' ');
+          if (Toks.Count() < 15) { i++;  continue; }
+          TLstSplitAtom *SplitA = new TLstSplitAtom();
+          SplitA->AtomName = Toks[3];
+          SplitA->PositionA[0] = Toks[8].ToDouble();
+          SplitA->PositionA[1] = Toks[9].ToDouble();
+          SplitA->PositionA[2] = Toks[10].ToDouble();
+          SplitA->PositionB[0] = Toks[12].ToDouble();
+          SplitA->PositionB[1] = Toks[13].ToDouble();
+          SplitA->PositionB[2] = Toks[14].ToDouble();
+          FSplitAtoms.Add(SplitA);
+        }
+        i++;
+      }
+      SA = true;
+    }
+    else if (!FlackF && SL[i].Contains("Flack x parameter")) {
+      Toks.Clear();
+      Toks.Strtok(SL[i], ' ');
+      if( Toks.Count() == 8 )  {
+        TEValueD flack(Toks[4].ToDouble(), Toks[7].ToDouble());
+        params("flack", flack.ToString());
+      }
+      FlackF = true;
+    }
+    else if (!CellInfo && SL[i].Contains("F(000) = ") &&
+      SL[i].Contains("Mu = ") && SL[i].Contains("Rho = "))
     {
       Toks.Clear();
       Toks.Strtok(SL[i], ' ');
-      if( Toks.Count() == 17 )  {
+      if (Toks.Count() == 17) {
         params("F000", Toks[5]);
         params("Mu", Toks[8]);
         params("Rho", Toks[16]);
         CellInfo = true;
-        continue;
       }
     }
-    if( !HasTwin && SL[i].StartsFromi(" TWIN ") )  {
+    else if (!HasTwin && SL[i].StartsFromi(" TWIN ")) {
       Toks.Clear();
       Toks.Strtok(SL[i], ' ');
-      if( Toks.Count() == 11 )  {
-        if( Toks.GetLastString().ToInt() != 2 )  continue;
+      if (Toks.Count() == 11) {
+        if (Toks.GetLastString().ToInt() != 2)
+          continue;
         InvTwin = true;
-        for( size_t j=1; j < 10; j++ )  {
+        for (size_t j=1; j < 10; j++) {
           const double v = Toks[j].ToDouble();
-          if( j == 1 || j == 5 || j == 9 )  {
-            if( v != -1 )  {
+          if (j == 1 || j == 5 || j == 9) {
+            if (v != -1) {
               InvTwin = false;
               break;
             }
           }
-          else if( v != 0 )  {
+          else if (v != 0) {
             InvTwin = false;
             break;
           }
@@ -342,29 +293,30 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         continue;
       }
     }
-    // errors
-    ind = SL[i].FirstIndexOf("**");
-    if( ind != InvalidIndex )  {
-      AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString());
-      if( SL[i].IndexOf(':') != InvalidIndex )
-        continue;
-      if( i >= 2 )  {
-        if( i > 2 && SL[i-3].EndsWith('=') )  {
-          msg.B() << SL[i-3].SubStringTo( SL[i-3].Length()-1 );
-          msg.B() << SL[i-2];
-        }
-        else  {
-          msg.B() << SL[i-2];
+    else {
+      // errors
+      if (SL[i].Contains("**")) {
+        AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString());
+        if (SL[i].Contains(':'))
+          continue;
+        if (i >= 2) {
+          if (i > 2 && SL[i-3].EndsWith('=')) {
+            msg.B() << SL[i-3].SubStringTo(SL[i-3].Length()-1);
+            msg.B() << SL[i-2];
+          }
+          else {
+            msg.B() << SL[i-2];
+          }
         }
       }
     }
-    if( DH && HP && DRef && TRefC &&URefC && RF && RIS)  break;
+    if (DH && HP && DRef && TRefC &&URefC && RF && RIS)
+      break;
   }
   // backwards for shifts
   int params_found=0;
-  bool basf_found=false;
   for (size_t i=SL.Count()-1; i != InvalidIndex; i--) {
-    if (SL[i].FirstIndexOf("Max. shift") != InvalidIndex) {
+    if (SL[i].Contains("Max. shift")) {
       TStrList toks(SL[i], ' ');
       if (toks.Count() < 12 || !toks[3].IsNumber()) continue;
       if (!toks[3].IsNumber()) continue;
@@ -380,29 +332,47 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
       params_found++;
     }
-    else if (SL[i].FirstIndexOf("Mean shift/esd") != InvalidIndex) {
+    else if (SL[i].Contains("Mean shift/esd")) {
       TStrList toks(SL[i], ' ');
       if (toks.Count() < 4 || !toks[3].IsNumber()) continue;
       params("mean_shift", toks[3].ToDouble());
       params_found++;
     }
-    if( HasTwin && InvTwin )  {
-      if( SL[i].IndexOf("BASF  ") != InvalidIndex )  {
+    else if (SL[i].Contains("N      value        esd    shift/esd  parameter")) {
+      size_t oi = i;
+      i++; // empty line
+      while (++i < SL.Count()) {
         TStrList toks(SL[i], ' ');
-        if( toks.Count() == 6 )  {
-          TEValueD flack(toks[1].ToDouble(), toks[2].ToDouble());
-          params.Add("flack") = flack.ToString();
-          basf_found = true;
+        if (toks.Count() < 5) break;
+        if (toks[4].Equalsi("OSF")) {
+          params("osf",
+            TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
+        }
+        else if (toks[4].Equalsi("EXTI")) {
+          params("exti",
+            TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
+        }
+        else if (toks[4].Equalsi("BASF")) {
+          if (HasTwin && InvTwin) {
+            params("flack",
+              TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
+          }
+          else if (toks.Count() == 6) {
+            params(olxstr("basf_") << toks[5],
+              TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
+          }
         }
       }
+      params_found++;
+      i = oi;
     }
-    if (params_found == 2 && (!(HasTwin && InvTwin) || basf_found) )
+    if (params_found == 3)
       break;
   }
   /* we do not consider SA, as it depends if there are any anisotropic atoms
    in the structure
   */
-  if( DH || HP || DRef || TRefC || URefC || RF || RIS )
+  if (DH || HP || DRef || TRefC || URefC || RF || RIS)
     Loaded = true;
   return Loaded;
 }

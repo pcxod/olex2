@@ -4000,19 +4000,20 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
   TRefList refs;
   olxstr col_names = "_refln_index_h,_refln_index_k,_refln_index_l,";
-  if( list_n == 4 )  {
+  if (list_n == 4) {
     ms = xapp.XFile().GetRM().GetRefinementRefList<
       TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
     col_names << "_refln_F_squared_calc,_refln_F_squared_meas,"
       "_refln_F_squared_sigma,_refln_observed_status";
   }
-  else if( list_n == 3 )  {
+  else if (list_n == 3) {
     ms = xapp.XFile().GetRM().GetFourierRefList<
       TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
     col_names << "_refln_F_meas,_refln_F_sigma,_refln_A_calc,_refln_B_calc";
   }
   else  {
-    Error.ProcessingError(__OlxSrcInfo, olxstr("unsupported list number: ") << list_n);
+    Error.ProcessingError(__OlxSrcInfo, "unsupported list number: ") <<
+      list_n;
     return;
   }
   TArrayList<compd> F;
@@ -5654,49 +5655,10 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
   TRefList refs;
   evecd Fsq;
-  TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
   RefinementModel& rm = xapp.XFile().GetRM();
-  const TDoubleList& basf = rm.GetBASF();
-  SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-  if( !basf.IsEmpty() )  {
-    if( rm.GetHKLF() >= 5 )  {
-      int tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
-      twinning::general twin(info_ex, rm.GetReflections(),
-        RefUtil::ResolutionAndSigmaFilter(rm), basf,
-        mat3d::Transpose(rm.GetTWIN_mat()), tn);
-      TArrayList<compd> F(twin.unique_indices.Count());
-      SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, F);
-      twin.calc_fsq(F, Fsq);
-      refs = twin.reflections;
-    }
-    else  {
-      RefinementModel::HklStat ms =
-        rm.GetRefinementRefList<
-          TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
-      if (ms.FriedelOppositesMerged)
-        info_ex.centrosymmetric = true;
-      TArrayList<compd> F(refs.Count());
-      SFUtil::CalcSF(xapp.XFile(), refs, F, ms.MERG != 4);
-      twinning::merohedral twin(
-        info_ex, refs, ms, basf, mat3d::Transpose(rm.GetTWIN_mat()),
-        rm.GetTWIN_n());
-      twin.calc_fsq(F, Fsq);
-    }
-  }
-  else  {
-    RefinementModel::HklStat ms =
-      rm.GetRefinementRefList<
-        TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
-    if (ms.FriedelOppositesMerged)
-      info_ex.centrosymmetric = true;
-    TArrayList<compd> F(refs.Count());
-    Fsq.Resize(refs.Count());
-    SFUtil::CalcSF(xapp.XFile(), refs, F);
-    for( size_t i=0; i < F.Count(); i++ )
-      Fsq[i] = F[i].qmod();
-  }
   double scale_k = 1./olx_sqr(rm.Vars.GetVar(0).GetValue());
-  if (!Params.IsEmpty() && Params[0].IndexOfi("scale") != InvalidIndex) {
+  xapp.CalcFsq(refs, Fsq, false);
+  if (!Params.IsEmpty() && Params[0].Contains("scale")) {
     double sup=0, sdn=0;
     for( size_t i=0; i < refs.Count(); i++ )  {
       if (refs[i].GetI() < 3*refs[i].GetS()) continue;
@@ -5711,15 +5673,10 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   while( wght.Count() < 6 )
     wght.Add(0);
   wght[5] = 1./3;
-  const double exti = rm.HasEXTI() ? rm.GetEXTI() : 0;
-  for( size_t i=0; i < refs.Count(); i++ )  {
+  TPSTypeList<double, int> dr;
+  for (size_t i=0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
     double Fc2 = Fsq[i];
-    if( exti != 0 )  {
-      const double l = rm.expl.GetRadiation();
-      double x = sp.HklToCart(r.GetHkl()).QLength()*l*l/4;
-      Fc2 /= sqrt(1+0.0005*exti*Fc2*l*l*l/sqrt(olx_max(0,x*(1-x))));
-    }
     const double Fc = sqrt(olx_abs(Fc2));
     const double Fo2 = r.GetI()*scale_k;
     const double Fo = sqrt(Fo2 < 0 ? 0 : Fo2);
@@ -5738,11 +5695,22 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       R1dp += Fo;
       r1p_cnt++;
     }
+    double k = olx_abs(Fc2-Fo2)/(sigFo2+1e-5);
+    if (k > 5) {
+      dr.Add(k, i);
+    }
   }
   double wR2 = sqrt(wR2u/wR2d);
   double R1 = R1u/R1d;
   double R1p = R1up/R1dp;
-  if( !Params.IsEmpty() && Params[0].IndexOfi("print") != InvalidIndex )  {
+  if (!Params.IsEmpty() && Params[0].IndexOfi("print") != InvalidIndex) {
+    for (size_t i=0; i < dr.Count(); i++) {
+      TReflection& r = refs[dr.GetObject(i)];
+      double Fc2 = Fsq[dr.GetObject(i)];
+      TBasicApp::NewLogEntry() <<
+        olx_print("R %lf %lf %lf = %lf", r.GetI()*scale_k, r.GetS()*scale_k,
+          Fc2, dr.GetKey(i));
+    }
     xapp.NewLogEntry() << "R1 (All, " << refs.Count() << ") = " <<
       olxstr::FormatFloat(4, R1);
     xapp.NewLogEntry() << "R1 (I/sig >= 2, " << r1p_cnt << ") = " <<
