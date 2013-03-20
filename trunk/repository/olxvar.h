@@ -13,6 +13,7 @@
 #include "actions.h"
 #include "bapp.h"
 #include "wildcard.h"
+#include "os_util.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -82,7 +83,12 @@ struct TOlxVarChangeData : public IEObject  {
 };
    
 class TOlxVars : public IEObject  {
+  // this object is a singleton
   static TOlxVars* Instance;
+  static olx_critical_section & CS() {
+    static olx_critical_section cs;
+    return cs;
+  }
   TSStrObjList<olxstr,TOlxPyVar, true> Vars;
 
   template <class T>
@@ -102,10 +108,10 @@ class TOlxVars : public IEObject  {
     OnVarChange->Execute(NULL, &vcd);
   }
   template <class T>
-  void _SetVar(const T& name, PyObject* value)  {
+  void _SetVar(const T& name, PyObject* value) {
     const size_t ind = Vars.IndexOf(name);
-    try  {
-      if( ind != InvalidIndex )
+    try {
+      if (ind != InvalidIndex)
         Vars.GetObject(ind).Set(value);
       else
         Vars.Add(name, value);
@@ -118,17 +124,17 @@ class TOlxVars : public IEObject  {
     OnVarChange->Execute(NULL, &vcd);
   }
 
-  const olxstr& _FindName(PyObject* value)  {
-    for( size_t i=0; i < Vars.Count(); i++ )
-      if( Vars.GetObject(i).GetObj()  == value )
+  const olxstr& _FindName(PyObject* value) {
+    for (size_t i=0; i < Vars.Count(); i++)
+      if (Vars.GetObject(i).GetObj()  == value)
         return Vars.GetString(i);
     return EmptyString();
   }
 
   template <class T>
-  bool _UnsetVar(const T& name)  {
+  bool _UnsetVar(const T& name) {
     const size_t ind = Vars.IndexOf(name);
-    if( ind != InvalidIndex )  {
+    if (ind != InvalidIndex) {
       Vars.Delete(ind);
       return true;
     }
@@ -143,64 +149,81 @@ class TOlxVars : public IEObject  {
     return c > 0;
   }
   TOlxVars();
-  ~TOlxVars()  {  Instance = NULL;  }
+  ~TOlxVars() { Instance = NULL; }
   TActionQList Actions;
 public:
 
   TActionQueue *OnVarChange;
 
-  static TOlxVars* GetInstance()  {  return Instance;  }
-  static TOlxVars& Init()  {  return *(new TOlxVars());  }
-  static void Finalise()   {  if( Instance != NULL )  delete Instance;  }
+  static TOlxVars* GetInstance() { return Instance; }
+  static TOlxVars& Init() { return *(new TOlxVars()); }
+  static void Finalise() {
+    if (Instance != NULL)
+      delete Instance;
+  }
 
-  static size_t VarCount()  {  return Instance != NULL ? Instance->Vars.Count() : 0;  }
+  static size_t VarCount() {
+    volatile olx_scope_cs cs(CS());
+    return Instance != NULL ? Instance->Vars.Count() : 0;
+  }
 
   static PyObject* GetVarValue(size_t index) {
+    volatile olx_scope_cs cs(CS());
     return Instance->Vars.GetObject(index).GetObjVal();
   }
   static PyObject* GetVarWrapper(size_t index) {
+    volatile olx_scope_cs cs(CS());
     return Instance->Vars.GetObject(index).GetObj();
   }
   static const olxstr& GetVarStr(size_t index);
 
   static const olxstr& GetVarName(size_t index) {
+    volatile olx_scope_cs cs(CS());
     return Instance->Vars.GetKey(index);
   }
 
   template <class T>
   static void SetVar(const T& name, const olxstr& value)  {
-    if( Instance == NULL )  new TOlxVars();
+    volatile olx_scope_cs cs(CS());
+    if (Instance == NULL) new TOlxVars();
     Instance->_SetVar(name, value);
   }
 
   template <class T>
   static bool UnsetVar(const T& name)  {
-    if( Instance == NULL )  return false;
+    volatile olx_scope_cs cs(CS());
+    if (Instance == NULL) return false;
     return Instance->_UnsetVar(name);
   }
 
   template <class T>
   static void SetVar(const T& name, PyObject *value)  {
-    if( Instance == NULL )  new TOlxVars();
+    volatile olx_scope_cs cs(CS());
+    if (Instance == NULL) new TOlxVars();
     Instance->_SetVar(name, value);
   }
 
   template <class T>
   static bool IsVar(const T& name) {
-    return (Instance == NULL) ? false : Instance->Vars.IndexOf(name) != InvalidIndex;
+    volatile olx_scope_cs cs(CS());
+    return (Instance == NULL) ? false
+      : Instance->Vars.IndexOf(name) != InvalidIndex;
   }
   template <class T>
   static size_t VarIndex(const T& name) {
+    volatile olx_scope_cs cs(CS());
     return (Instance == NULL) ? InvalidIndex : Instance->Vars.IndexOf(name);
   }
 
   template <class T>
   static olxstr FindValue(const T& name, const olxstr &def=EmptyString()) {
+    volatile olx_scope_cs cs(CS());
     size_t i = VarIndex(name);
     return (i == InvalidIndex) ? def : GetVarStr(i);
   }
 
   static const olxstr& FindVarName(PyObject *pyObj) {
+    volatile olx_scope_cs cs(CS());
     return (Instance == NULL) ? EmptyString() : Instance->_FindName(pyObj);
   }
   static TLibrary *ExportLibrary(const olxstr &name="env", TLibrary *l=NULL);
@@ -209,6 +232,10 @@ public:
 // use a very thin implementation with no python...
 class TOlxVars : public IEObject  {
   static TOlxVars* Instance;
+  static olx_critical_section & CS() {
+    static olx_critical_section cs;
+    return cs;
+  }
   TSStrObjList<olxstr,olxstr, true> Vars;
 
   template <class T>
@@ -241,35 +268,46 @@ public:
   static TOlxVars& Init()  {  return *(new TOlxVars());  }
   static void Finalise()  {  if( Instance != NULL )  delete Instance;  }
 
-  static size_t VarCount()  {  return Instance != NULL ? Instance->Vars.Count() : 0;  }
+  static size_t VarCount()  {
+    volatile olx_scope_cs cs(CS());
+    return Instance != NULL ? Instance->Vars.Count() : 0;
+  }
 
   static const olxstr& GetVarName(size_t index) {
+    volatile olx_scope_cs cs(CS());
     return Instance->Vars.GetKey(index);
   }
   static const olxstr& GetVarStr(size_t index) {
+    volatile olx_scope_cs cs(CS());
     return Instance->Vars.GetObject(index);
   }
 
   template <class T>
   static void SetVar(const T& name, const olxstr& value)  {
-    if( Instance == NULL )  new TOlxVars();
+    volatile olx_scope_cs cs(CS());
+    if (Instance == NULL) new TOlxVars();
     Instance->_SetVar(name, value);
   }
   template <class T>
   static bool UnsetVar(const T& name)  {
-    if( Instance == NULL )  return false;
+    volatile olx_scope_cs cs(CS());
+    if (Instance == NULL) return false;
     return Instance->_UnsetVar(name);
   }
   template <class T>
   static bool IsVar(const T& name) {
-    return (Instance == NULL) ? false : Instance->Vars.IndexOf(name) != InvalidIndex;
+    volatile olx_scope_cs cs(CS());
+    return (Instance == NULL) ? false
+      : Instance->Vars.IndexOf(name) != InvalidIndex;
   }
   template <class T>
   static size_t VarIndex(const T& name) {
+    volatile olx_scope_cs cs(CS());
     return (Instance == NULL) ? InvalidIndex : Instance->Vars.IndexOf(name);
   }
   template <class T>
   static olxstr FindValue(const T& name, const olxstr &def=EmptyString()) {
+    volatile olx_scope_cs cs(CS());
     size_t i = VarIndex(name);
     return (i == InvalidIndex) ? def : GetVarStr(i);
   }

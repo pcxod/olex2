@@ -21,7 +21,6 @@ TOlxPyVar::TOlxPyVar(PyObject* obj)  {
   Str = NULL;
   Obj = NULL;
   InitObject(obj);
-
 }
 //.............................................................................
 TOlxPyVar::TOlxPyVar(const TOlxPyVar& oo)  {
@@ -182,6 +181,7 @@ void TOlxPyVar::Set(const olxstr& str)  {
 }
 //.............................................................................
 const olxstr& TOlxVars::GetVarStr(size_t index)  {
+  volatile olx_scope_cs cs(CS());
   TOlxPyVar& oo = Instance->Vars.GetObject(index);
   if( oo.GetStr() != NULL )  return *oo.GetStr();
   PyObject *po = oo.GetObjVal();
@@ -195,7 +195,7 @@ const olxstr& TOlxVars::GetVarStr(size_t index)  {
 }
 //.............................................................................
 TOlxVars::TOlxVars()  {
-  if( Instance != NULL )
+  if (Instance != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
   OnVarChange = &Actions.New("OnVarChange");
