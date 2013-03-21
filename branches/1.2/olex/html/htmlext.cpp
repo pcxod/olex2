@@ -14,6 +14,7 @@
 #include "htmlswitch.h"
 #include "imgcellext.h"
 #include "wx/tooltip.h"
+#include "wx/clipbrd.h"
 #include "../xglapp.h"
 #include "olxstate.h"
 #include "wxzipfs.h"
@@ -32,6 +33,7 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_KEY_DOWN(THtml::OnKeyDown)
   EVT_CHAR(THtml::OnChar)
   EVT_SIZE(THtml::OnSizeEvt)
+  EVT_TEXT_COPY(-1, THtml::OnClipboard)
 END_EVENT_TABLE()
 //.............................................................................
 THtml::THtml(THtmlManager &manager, wxWindow *Parent,
@@ -321,6 +323,7 @@ void THtml::OnChar(wxKeyEvent& event)  {
   //Ctrl+c
   if( event.m_controlDown && event.GetKeyCode() == 'c'-'a'+1 )  {
     CopySelection();
+    event.Skip();
     return;
   }
   wxWindow* parent = GetParent();
@@ -1163,7 +1166,7 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(
     props->Add("width");
     props->Add("height");
   }
-  else if( type == typeid(TComboBox) )  {  
+  else if( type == typeid(TComboBox) )  {
 
     props->Add("val");
     props->Add("items");
@@ -1188,3 +1191,24 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(
   return props;
 }
 //.............................................................................
+void THtml::OnClipboard(wxClipboardTextEvent& evt) {
+  wxWindow *w = FindFocus();
+  if (w == NULL) return;
+  bool processed = true;
+  wxString text;
+  if (EsdlInstanceOf(*w, TTextEdit) || EsdlInstanceOf(*w, wxTextCtrl)) {
+    wxTextCtrl *tc = dynamic_cast<wxTextCtrl*>(w);
+    if (tc != NULL)
+      text = tc->GetStringSelection();
+  }
+  else if(EsdlInstanceOf(*w, TComboBox))
+    text = ((TComboBox*)w)->GetStringSelection();
+  else
+    processed = false;
+  if (processed && !text.IsEmpty() && wxTheClipboard->Open()) {
+    if (wxTheClipboard->IsSupported(wxDF_TEXT))
+      wxTheClipboard->SetData(new wxTextDataObject(text));
+    wxTheClipboard->Close();
+  }
+  evt.Skip(processed);
+}

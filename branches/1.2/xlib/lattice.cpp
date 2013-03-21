@@ -2563,11 +2563,18 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
   for (size_t i=0; i < rm.AfixGroups.Count(); i++) {
     TAfixGroup &ag = rm.AfixGroups[i];
     if (!ag.HasImplicitPivot() || ag.IsEmpty()) continue;
+    int part=0;
+    for (size_t j=0; j < ag.Count(); j++) {
+      if (ag[j].IsDeleted()) continue;
+      part = ag[j].GetPart();
+      break;
+    }
     size_t attached_cnt=0;
     for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
       TCAtom &a = ag.GetPivot().GetAttachedAtom(j);
       if (a.IsDeleted() || a.GetType().z < 2) continue;
-      attached_cnt++;
+      if (a.GetPart() == 0 || a.GetPart() == part)
+        attached_cnt++;
     }
     bool valid = true;
     int m = ag.GetM();
