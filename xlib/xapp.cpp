@@ -20,6 +20,8 @@
 #include "chemdata.h"
 #include "maputil.h"
 #include "vcov.h"
+#include "twinning.h"
+#include "sfutil.h"
 
 TXApp::TXApp(const olxstr &basedir, bool)
   : TBasicApp(basedir), Library(EmptyString(), this)
@@ -85,7 +87,7 @@ bool TXApp::CheckProgramState(unsigned int specialCheck)  {
  return false;
 }
 //..............................................................................
-void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
+void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) const {
   // initialise newly created atoms
   XFile().UpdateAsymmUnit();
   TAsymmUnit& au = XFile().GetAsymmUnit();
@@ -188,6 +190,86 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     F[i] = ir*multiplier;
   }
   delete [] Ucifs;
+}
+//..............................................................................
+RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
+  bool scale) const
+{
+  RefinementModel::HklStat rv;
+  RefinementModel& rm = XFile().GetRM();
+  TUnitCell::SymmSpace sp = XFile().GetUnitCell().GetSymmSpace();
+  const TDoubleList& basf = rm.GetBASF();
+  SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+  double exti = rm.HasEXTI() ? rm.GetEXTI() : 0;
+  const double l = rm.expl.GetRadiation(),
+    l_sq_4 = olx_sqr(rm.expl.GetRadiation())/4,
+    s_l_q_e = 0.0005*exti*l*l*l;
+  if (!basf.IsEmpty()) {
+    if (rm.GetHKLF() >= 5) {
+      int tn = rm.HasTWIN() ? rm.GetTWIN_n() : 0;
+      twinning::general twin(info_ex, rm.GetReflections(),
+        RefUtil::ResolutionAndSigmaFilter(rm), basf,
+        mat3d::Transpose(rm.GetTWIN_mat()), tn);
+      TArrayList<compd> F(twin.unique_indices.Count());
+      SFUtil::CalcSF(XFile(), twin.unique_indices, F);
+      twin.calc_fsq(F, Fsq);
+      refs.TakeOver(twin.reflections);
+      rv = twin.ms;
+    }
+    else  {
+      rv = rm.GetRefinementRefList<
+          TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+      if (rv.FriedelOppositesMerged)
+        info_ex.centrosymmetric = true;
+      TArrayList<compd> F(refs.Count());
+      SFUtil::CalcSF(XFile(), refs, F, rv.MERG != 4);
+      twinning::merohedral twin(
+        info_ex, refs, rv, basf, mat3d::Transpose(rm.GetTWIN_mat()),
+        rm.GetTWIN_n());
+      twin.calc_fsq(F, Fsq);
+    }
+  }
+  else  {
+    rv = rm.GetRefinementRefList<
+        TUnitCell::SymmSpace,RefMerger::ShelxMerger>(sp, refs);
+    if (rv.FriedelOppositesMerged)
+      info_ex.centrosymmetric = true;
+    TArrayList<compd> F(refs.Count());
+    Fsq.Resize(refs.Count());
+    SFUtil::CalcSF(XFile(), refs, F);
+    if (exti != 0) {
+      for (size_t i=0; i < F.Count(); i++) {
+        double x = sp.HklToCart(refs[i].GetHkl()).QLength()*l_sq_4;
+        double F2 = F[i].qmod();
+        Fsq[i] = F2/sqrt(1+F2*s_l_q_e/sqrt(olx_max(0,x*(1-x))));
+      }
+      exti = 0;
+    }
+    else {
+      for (size_t i=0; i < F.Count(); i++)
+        Fsq[i] = F[i].qmod();
+    }
+  }
+  if (exti != 0) {
+    for (size_t i=0; i < Fsq.Count(); i++) {
+      double x = sp.HklToCart(refs[i].GetHkl()).QLength()*l_sq_4;
+      Fsq[i] /= sqrt(1+Fsq[i]*s_l_q_e/sqrt(olx_max(0,x*(1-x))));
+    }
+  }
+  if (scale) {
+    double scale_k = 1./olx_sqr(rm.Vars.GetVar(0).GetValue());
+    rv.MaxI = 100;
+    rv.MaxI = -100;
+    for (size_t i=0; i < refs.Count(); i++) {
+      refs[i].SetI(refs[i].GetI()*scale_k);
+      if (refs[i].GetI() > rv.MaxI)
+        rv.MaxI = refs[i].GetI();
+      else if (refs[i].GetI() < rv.MinI)
+        rv.MinI = refs[i].GetI();
+      refs[i].SetS(refs[i].GetS()*scale_k);
+    }
+  }
+  return rv;
 }
 //..............................................................................
 void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {

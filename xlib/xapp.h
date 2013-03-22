@@ -104,10 +104,18 @@ public:
     }
     return *xai;
   }
-  /* calculates structure factors for current structure, F.Count must be greater
- or equal to the ref.Count
+  /* calculates structure factors for current structure, F.Count must be
+  greater or equal to the ref.Count. This function uses direct approach and is
+  to be used for testing mainly
  */
-  void CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F);
+  void CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) const;
+  /* calculates Fsq and fills the reflection list. spacial handling of twinned
+  data is used - the resulting Fsq are 'twinned'. It uses SFUtil functions to
+  calculate Fc. if scale is true, the refs i and S are scaled using the OSF
+  If extinction correction is used, it will be applied to the Fsq
+  */
+  RefinementModel::HklStat CalcFsq(TRefList &refs, evecd &Fsq,
+    bool scale) const;
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);
