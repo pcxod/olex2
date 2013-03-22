@@ -2572,7 +2572,11 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
     size_t attached_cnt=0;
     for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
       TCAtom &a = ag.GetPivot().GetAttachedAtom(j);
-      if (a.IsDeleted() || a.GetType().z < 2) continue;
+      if (a.IsDeleted() || a.GetType().z < 2 ||
+        XElementLib::IsMetal(a.GetType()))
+      {
+        continue;
+      }
       if (a.GetPart() == 0 || a.GetPart() == part)
         attached_cnt++;
     }
