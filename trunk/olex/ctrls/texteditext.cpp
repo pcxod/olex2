@@ -36,10 +36,7 @@ void TTextEdit::ChangeEvent(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
-  if (IsMultiLine()) {
-    AppendText(wxT("\n"));
-  }
-  else {
+  if (!IsMultiLine()) {
     OnReturn.Execute(this);
   }
   event.Skip();

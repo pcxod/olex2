@@ -311,6 +311,10 @@ void TIns::_FinishParsing(ParseContext& cx)  {
       cx.rm.AddInfoTab(toks);
       Ins.Delete(i--);
     }
+    else if (toks[0].Equalsi("OMIT")) {
+      cx.rm.AddOMIT(toks.SubListFrom(1));
+      Ins.Delete(i--);
+    }
     else if( toks[0].StartsFromi("ANIS") )  {
       Ins.Delete(i--);
       try  {
@@ -1610,14 +1614,14 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   typedef AnAssociation2<TSRestraintList*,RCInfo> ResInfo;
   TStrPObjList<olxstr, ResInfo> restraints;
   // fixed distances, has value, one esd, no atom limit
-  restraints.Add("DFIX", ResInfo(&rm.rDFIX, RCInfo(1, 1, -1)));
+  restraints.Add("DFIX", ResInfo(&rm.rDFIX, RCInfo(1, 1, 2)));
   // similar distances, no value, one esd, no atom limit
-  restraints.Add("SADI", ResInfo(&rm.rSADI, RCInfo(0, 1, -1)));
+  restraints.Add("SADI", ResInfo(&rm.rSADI, RCInfo(0, 1, 4)));
   // fixed "angles", has value, one esd, no atom limit
-  restraints.Add("DANG", ResInfo(&rm.rDANG, RCInfo(1, 1, -1)));
+  restraints.Add("DANG", ResInfo(&rm.rDANG, RCInfo(1, 1, 2)));
   /* fixed chiral atomic volumes, has value, one esd, no atom limit - volume
   restrained for each atom */
-  restraints.Add("CHIV", ResInfo(&rm.rCHIV, RCInfo(1, 1, -1)));
+  restraints.Add("CHIV", ResInfo(&rm.rCHIV, RCInfo(1, 1, 1)));
   // planar groups
   restraints.Add("FLAT", ResInfo(&rm.rFLAT, RCInfo(0, 1, 4)));
   // rigid bond restraint

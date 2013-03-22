@@ -2557,36 +2557,62 @@ void TLattice::undoDelete(TUndoData *data)  {
 }
 //..............................................................................
 TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
-  TAsymmUnit &au = GetAsymmUnit();
   TCAtomPList deleted;
-  for (size_t i=0; i < au.AtomCount(); i++) {
-    TCAtom &ca = au.GetAtom(i);
-    if (ca.GetType() == iHydrogenZ) {
-      if (ca.GetParentAfixGroup() != NULL &&
-        ca.GetParentAfixGroup()->GetM() > 0)
+  TAsymmUnit &au = GetAsymmUnit();
+  RefinementModel &rm = *au.GetRefMod();
+  for (size_t i=0; i < rm.AfixGroups.Count(); i++) {
+    TAfixGroup &ag = rm.AfixGroups[i];
+    if (!ag.HasImplicitPivot() || ag.IsEmpty()) continue;
+    int part=0;
+    for (size_t j=0; j < ag.Count(); j++) {
+      if (ag[j].IsDeleted()) continue;
+      part = ag[j].GetPart();
+      break;
+    }
+    size_t attached_cnt=0;
+    for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
+      TCAtom &a = ag.GetPivot().GetAttachedAtom(j);
+      if (a.IsDeleted() || a.GetType().z < 2 ||
+        XElementLib::IsMetal(a.GetType()))
       {
-        size_t attached_cnt=0;
-        for (size_t j=0; j < ca.AttachedSiteCount(); j++) {
-          if (!ca.GetAttachedAtom(j).IsDeleted() &&
-            ca.GetAttachedAtom(j).GetType().z > 1)
-          {
-            attached_cnt++;
-          }
-        }
-        if (attached_cnt > 1) {
-          TAfixGroup &ag = *ca.GetParentAfixGroup();
-          olxstr glabel;
-          for (size_t gi=0; gi < ag.Count(); gi++) {
-            deleted.Add(ag[gi])->SetDeleted(true);
-          }
-          if (report) {
-            TBasicApp::NewLogEntry(logError) << "Group at " <<
-              ag.GetPivot().GetLabel() << " had invalid connectivity and was "
-              "removed. Please revise your model";
-          }
-          ag.Clear();
-        }
+        continue;
       }
+      if (a.GetPart() == 0 || a.GetPart() == part)
+        attached_cnt++;
+    }
+    bool valid = true;
+    int m = ag.GetM();
+    switch (m) {
+    case 1: // XYZC-H
+      valid = (attached_cnt == 3);
+      break;
+    case 2: // XYC-H2
+    case 4: // XYC-H
+      valid = (attached_cnt == 2);
+      break;
+    case 3: // X-H3
+    case 8: // O-H
+    case 9: // X=C-H2
+    case 12: // X-H3 - disordered
+    case 13: // X-H3
+    case 14: // O-H
+    case 16: // CC-H
+      valid = (attached_cnt == 1);
+      break;
+    case 15: // {R4/5}B-H
+      valid = (attached_cnt == 4 || attached_cnt == 5);
+      break;
+    }
+    if (!valid) {
+      for (size_t gi=0; gi < ag.Count(); gi++) {
+        deleted.Add(ag[gi])->SetDeleted(true);
+      }
+      if (report) {
+        TBasicApp::NewLogEntry(logError) << "Pivot atom " <<
+          ag.GetPivot().GetLabel() << " has wrong connectivty for the given "
+          "AFIX group and the group was removed. Please revise your model.";
+      }
+      ag.Clear();
     }
   }
   if (deleted.IsEmpty()) return NULL;

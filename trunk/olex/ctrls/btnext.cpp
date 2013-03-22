@@ -150,7 +150,7 @@ void TImgButton::Render(wxDC& dc) const {
     wxMemoryDC mdc(tbmp);
     mdc.SetBackground(wxBrush(GetBackgroundColour()));
     mdc.Clear();
-    mdc.DrawBitmap(bmp, 0, 0);
+    mdc.DrawBitmap(bmp, 0, 0, true);
     dc.Blit(0, 0, bmp.GetWidth(), bmp.GetHeight(), &mdc, 0, 0, wxCOPY);
   }
 }

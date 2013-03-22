@@ -475,14 +475,14 @@ void AtomRefList::Assign(const AtomRefList &arl) {
 void AtomRefList::EnsureAtomGroups(size_t group_size) {
   for (size_t i=0; i < refs.Count(); i += group_size)  {
     bool valid = true;
-    for (size_t j=i; j < group_size; j++) {
+    for (size_t j=i; j < i+group_size; j++) {
       if (j >= refs.Count() || refs.IsNull(j) || !refs[j].IsValid()) {
         valid = false;
         break;
       }
     }
     if (!valid)  {
-      for( size_t j=i; j < group_size; j++) {
+      for( size_t j=i; j < i+group_size; j++) {
         if( j >= refs.Count() )  break;
         if( refs.IsNull(j) )  continue;
         refs.NullItem(j);

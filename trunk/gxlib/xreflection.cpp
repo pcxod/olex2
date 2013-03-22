@@ -21,9 +21,9 @@ TXReflection::TXReflection(TGlRenderer& r, const olxstr& collectionName,
   hkl = R.GetHkl();
   I = R.GetI();
   Center = vec3d(hkl)*au.GetHklToCartesian();
-  Params().Resize(1);
+  Params().Resize(2);
   Params()[0] = (I - minI) / (maxI + olx_abs(minI));
-  if( Params()[0] > 0 )  
+  if( Params()[0] > 0 )
     Params()[0] = sqrt(Params()[0]); 
 }
 //..............................................................................
@@ -52,13 +52,18 @@ bool TXReflection::Orient(TGlPrimitive& GlP)  {
   const double scale1 = sqrt(atan(FParams[0])*2/M_PI);
   olx_gl::scale(1.0+scale1*6);
 
-  if (IsSelected() || !GlP.GetProperties().IsTransparent())
-    return false;
+  return false;
+  //if (IsSelected() || !GlP.GetProperties().IsTransparent())
+  //  return false;
 
-  //TGlMaterial GlM = GlP.GetProperties();
+  TGlMaterial& GlM = GlP.GetProperties();
   //const double scale = (1.0-FParams[0]);
   //GlM.AmbientF[3] = (float)scale;
-  //GlM.Init(Parent.ForcePlain());
+  if (Params()[1] < 0)
+    GlM.AmbientF = 0x0000ff;
+  else
+    GlM.AmbientF = 0xff0000;
+  GlM.Init(Parent.ForcePlain());
   return false;
 }
 //..............................................................................

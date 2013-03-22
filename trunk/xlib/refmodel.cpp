@@ -748,7 +748,10 @@ olxstr RefinementModel::AtomListToStr(const TTypeList<ExplicitCAtomRef> &al,
     olxstr ss = '-';
     for (size_t i=0; i < al.Count(); i+=group_size) {
       for (size_t j=0; j < group_size; j++) {
-        rv << al[i+j].GetExpression(NULL);
+        if ((i + j) >= al.Count())
+          rv << '?';
+        else
+          rv << al[i+j].GetExpression(NULL);
         if (j+1 < group_size)
           rv << ss;
       }

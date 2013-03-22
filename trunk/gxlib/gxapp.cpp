@@ -427,16 +427,18 @@ void TGXApp::Clear()  {
 void TGXApp::CreateXRefs()  {
   if( !XReflections.IsEmpty() )  return;
   TRefList refs;
+  evecd Fsq;
   vec3d mind = FGlRender->MinDim(),
         maxd = FGlRender->MaxDim();
-  RefinementModel::HklStat stats = 
-    XFile().GetRM().GetRefinementRefList<
-    TUnitCell::SymmSpace,RefMerger::StandardMerger>(
-      XFile().GetUnitCell().GetSymmSpace(), refs);
+  RefinementModel::HklStat stats = CalcFsq(refs, Fsq, true);
   for( size_t i=0; i < refs.Count(); i++ )  {
     TXReflection* xr = new TXReflection(*FGlRender, "XReflection",
       stats.MinI, stats.MaxI, refs[i],
       FXFile->GetAsymmUnit());
+    if (olx_abs(refs[i].GetI()-Fsq[i])/(refs[i].GetS() + 1e-2) > 8)
+      xr->Params()[1] = -1;
+    else
+      xr->Params()[1] = 1;
     xr->Create();
     XReflections.Add(*xr);
     vec3d::UpdateMinMax(xr->GetCenter(), mind, maxd);
