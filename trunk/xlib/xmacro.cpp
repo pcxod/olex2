@@ -372,6 +372,18 @@ void XLibMacros::Export(TLibrary& lib)  {
     "\n\t'HklImport in.hkl fixed 7 7 7 9 9 out.hkl' or 'HklImport in.hkl "
     "separator \' \'' out.hkl"
    );
+  xlib_InitMacro(HklSplit,
+    "b-creates an HKLF 5 file (*_h5) with batches 1 and 2",
+    (fpTwo),
+    "Split an HKL file according to the Fc^2/esd or the value of |Fc^2-Fo^2|/esd"
+    ". The threshold value is the first argument. If it ends with '%' - the "
+    "pecentage of the merged reflections is taken into the account. The second"
+    " argument is the splitting criterion - 'i'  for intensity or 'a' for the "
+    "agreeability. Unless -b option is provided, the 'agreeable' reflections "
+    "end up in the *_a.hkl file,  'disagreeable' - in the *_d.hkl file; weaker"
+    " reflections end up in *_w.hkl and stronger reflections - in the *_s.hkl "
+    "files."
+   );
   xlib_InitMacroA(Update, @update, EmptyString(), fpAny,
     "Reads given file and if the atoms list of loaded file matches the atom "
     "list of the given file the atomic coordinates, FVAR and BASF values are "
@@ -5636,6 +5648,132 @@ void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
+void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  double percents=-1, th = -1;
+  if (Cmds[0].EndsWith('%')) {
+    percents = Cmds[0].SubStringFrom(0, 1).ToDouble();
+    if (percents <= 0 || percents >= 100) {
+      E.ProcessingError(__OlxSrcInfo, "(0..100)% Is expected");
+      return;
+    }
+  }
+  else {
+    th = Cmds[0].ToDouble();
+    if (th < 0) {
+      E.ProcessingError(__OlxSrcInfo, "A positive number is expected");
+      return;
+    }
+  }
+  if (!(Cmds[1].Equalsi('i') || Cmds[1].Equalsi('a'))) {
+    E.ProcessingError(__OlxSrcInfo, "Second argument can be only 'i' or 'a'");
+    return;
+  }
+
+  TXApp &app = TXApp::GetInstance();
+  TUnitCell::SymmSpace sp =
+      app.XFile().GetLattice().GetUnitCell().GetSymmSpace();
+  SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+
+  TRefList refs;
+  evecd Fsq;
+  RefinementModel::HklStat stats = app.CalcFsq(refs, Fsq, true);
+  TArrayList<double> fracts(refs.Count());
+  if (Cmds[1].Equalsi('a')) {
+    for (size_t i=0; i < refs.Count(); i++)
+      fracts[i] = olx_abs(refs[i].GetI()-Fsq[i])/(refs[i].GetS()+1e-6);
+  }
+  else { // I/esd
+    for (size_t i=0; i < refs.Count(); i++)
+      fracts[i] = refs[i].GetI()/(refs[i].GetS()+1e-6);
+  }
+  
+  TArray3D<size_t> hkl3d(stats.MinIndexes, stats.MaxIndexes);
+  hkl3d.FastInitWith(0);
+  for (size_t i=0; i < refs.Count(); i++) {
+    hkl3d(refs[i].GetHkl()) = i+1;
+  }
+  TRefList all_refs;
+  RefinementModel::HklStat stats1;
+  app.XFile().GetRM().FilterHkl(all_refs, stats1);
+  TPSTypeList<double, TReflection *> sorted;
+  sorted.SetCapacity(all_refs.Count());
+  for (size_t i=0; i < all_refs.Count(); i++) {
+    if (TReflection::IsAbsent(all_refs[i].GetHkl(), info_ex)) {
+      stats1.SystematicAbsencesRemoved++;
+      all_refs.NullItem(i);
+      continue;
+    }
+    vec3i hkl = TReflection::Standardise(all_refs[i].GetHkl(), info_ex);
+    if (hkl3d.IsInRange(hkl)) {
+      size_t idx = hkl3d(hkl);
+      if (idx != 0)
+        sorted.Add(fracts[idx-1], &all_refs[i]);
+      else {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "Miller arrays mismatch");
+      }
+    }
+    else {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "Miller arrays mismatch");
+    }
+  }
+  if (stats1.SystematicAbsencesRemoved != 0) {
+    all_refs.Pack();
+    TBasicApp::NewLogEntry() << stats1.SystematicAbsencesRemoved <<
+      " Systematic absences is removed.";
+  }
+  if (percents > 0) {
+    th = sorted.GetKey(olx_round(all_refs.Count()*percents/100));
+    TBasicApp::NewLogEntry() << "Threshold calculated for " << percents <<
+      "% is " << olxstr::FormatFloat(2, th);
+  }
+  if (all_refs.IsEmpty())
+    return;
+  olxstr fn = TEFile::ChangeFileExt(app.XFile().GetRM().GetHKLSource(),
+    EmptyString());
+  size_t cnt = 0;
+  bool hklf5 = Options.GetBoolOption('b');
+  if (hklf5) {
+    for (size_t i=0; i < sorted.Count(); i++) {
+      if (sorted.GetKey(i) < th) {
+        sorted.GetObject(i)->SetBatch(1);
+        cnt++;
+      }
+      else
+        sorted.GetObject(i)->SetBatch(2);
+    }
+    fn = olx_print("%w_hf5.hkl", &fn);
+    THklFile::SaveToFile(fn, all_refs);
+    TBasicApp::NewLogEntry() << cnt << " Reflection is assigned batch 1 and " <<
+      (sorted.Count()-cnt) << " reflection assigned batch 2 and wrotten to '" <<
+      TEFile::ExtractFileName(fn) << " file.";
+  }
+  else {
+    const size_t ref_str_len = all_refs[0].ToString().Length();
+    const size_t bf_sz = ref_str_len+10;
+    olx_array_ptr<char> ref_bf(new char[bf_sz]);
+    char ffs = Cmds[1].Equalsi('i') ? 'w' : 'a',
+      sfs = Cmds[1].Equalsi('i') ? 's' : 'd';
+    TEFile a(olx_print("%w_%c.hkl", &fn, ffs), "w+b"),
+      d(olx_print("%w_%c.hkl", &fn, sfs), "w+b");
+    for (size_t i=0; i < sorted.Count(); i++) {
+      if (sorted.GetKey(i) < th) {
+        a.Writecln(sorted.GetObject(i)->ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
+        cnt++;
+      }
+      else
+        d.Writecln(sorted.GetObject(i)->ToCBuffer(ref_bf, bf_sz, 1), ref_str_len);
+    }
+    TBasicApp::NewLogEntry() << cnt << " Reflection is written to '" <<
+      TEFile::ExtractFileName(a.GetName()) << "' and " << (sorted.Count()-cnt) <<
+      " reflection is written to '" << TEFile::ExtractFileName(d.GetName()) <<
+      " files.";
+  }
+}
+//.............................................................................
 void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
@@ -7833,7 +7971,7 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
       BubbleSorter::SortMF(attached, es, &RSA_EnviSorter::Comparator);
       bool chiral=true;
       olxstr w;
-      for (int j=0; j < attached.Count(); j++) {
+      for (size_t j=0; j < attached.Count(); j++) {
         w << attached[j]->atom->GetLabel();
         if ((j+1) < 4) w << " < ";
         if (j == 0) continue;

@@ -38,6 +38,7 @@ public:
   static DefMacro(HklAppend)
   static DefMacro(HklExclude)
   static DefMacro(HklImport)
+  static DefMacro(HklSplit)
   static DefMacro(SG)
   static DefMacro(SGE)
   static DefMacro(GraphSR)
