@@ -1,0 +1,18 @@
+p4p_automate [False] - specifies if the SG/SGE to be executed after loading the P4P/CRS file (used in reap)
+aromatic_rings [False] - specifies if the aromatic rings are to be automatically created
+mouse_invert_zoom [False] - specifies if the mouse zooming operation to be inverted
+mouse_click_threshold [2] - specifiec the rectangluar area size where the mouse click is recognised
+hbond_min_angle [120] - the minimal angle fo H-bonds to exist
+preserve_invalid_ins [false] - if invalid instructios are preserved vs being deleted
+q_peak_min_alpha [0] - minimum value for the Q-peak transparence (0-0.75)
+tooltip_occu_chem [True] - tooltip shows chemical occupancy vs crystallographic one
+gl_selection [True] - to use the OpenGl selection implementation. If False - a more limited
+ but working more precise with some drivers implementation is used. It however does not allow
+ the selection of objets which use textures (unless treated specifically) or colours..
+gl_multisample [False] - enables smoothing of the rendering, though reduces the prformace it
+ produces better quality picture
+preserve_restraint_defaults [false] - if set, the default restraint values/weights are shown in
+ the ins file. This option has no effect when DEFS instruction is set.
+safe_afix [True] - checks AFIXes are correct after atom naming, deleting and HAdd itself
+confirm_on_close [False] - asks a confirmation question before closing the application
+profile [False] - switches application profiling on/off
