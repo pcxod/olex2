@@ -373,7 +373,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "separator \' \'' out.hkl"
    );
   xlib_InitMacro(HklSplit,
-    "b-creates an HKLF 5 file (*_h5) with batches 1 and 2",
+    "b-creates an HKLF 5 file (*_h5) with batches 1 and -2; only applicable "
+    "when second parameter is 'a'",
     (fpTwo),
     "Split an HKL file according to the Fc^2/esd or the value of |Fc^2-Fo^2|/esd"
     ". The threshold value is the first argument. If it ends with '%' - the "
@@ -5736,7 +5737,7 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
     EmptyString());
   size_t cnt = 0;
   bool hklf5 = Options.GetBoolOption('b');
-  if (hklf5) {
+  if (hklf5 && Cmds[1].Equalsi('a')) {
     for (size_t i=0; i < sorted.Count(); i++) {
       if (sorted.GetKey(i) < th) {
         sorted.GetObject(i)->SetBatch(1);
@@ -5744,6 +5745,14 @@ void XLibMacros::macHklSplit(TStrObjList &Cmds, const TParamList &Options,
       }
       else
         sorted.GetObject(i)->SetBatch(2);
+    }
+    all_refs.SetCapacity(all_refs.Count() + (all_refs.Count()-cnt));
+    for (size_t i=0; i < all_refs.Count(); i++) {
+      if (all_refs[i].GetBatch() == 2) {
+        all_refs[i].SetBatch(1);
+        all_refs.InsertCopy(i+1, all_refs[i]).SetBatch(-2);
+        i++;
+      }
     }
     fn = olx_print("%w_hf5.hkl", &fn);
     THklFile::SaveToFile(fn, all_refs);
