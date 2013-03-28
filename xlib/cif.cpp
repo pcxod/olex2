@@ -324,8 +324,11 @@ void TCif::Initialize()  {
               Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew());
           }
           catch (const TExceptionBase &e) {
+            TStrList l;
+            l << "to process symmetry element:";
+            Loop->Get(i, sindex).ToStrings(l);
             throw TFunctionFailedException(__OlxSourceInfo, e,
-              "could not process symmetry matrix");
+              l.Text(NewLineSequence()) << NewLineSequence());
           }
           CifRow& row = symop_tab.AddRow();
           if( iindex == InvalidIndex )  {
