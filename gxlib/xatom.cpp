@@ -1240,18 +1240,42 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
     static const vec3d NullVec;
     TXAtom::Poly& pl = *((Polyhedron == NULL) ? (Polyhedron=new TXAtom::Poly) : Polyhedron);
     if( type == polyRegular )  {
+      vec3d pc;
+      for (size_t ai=0; ai < bound.Count(); ai++)
+        pc += bound[ai]->crd();
+      pc /= bound.Count();
+      bool centered = pc.DistanceTo(crd()) < 0.15;
       pl.vecs.SetCount(bound.Count());
       for( size_t i=0; i < bound.Count(); i++ )  {
         pl.vecs[i] = bound[i]->crd();
         for( size_t j=i+1; j < bound.Count(); j++ )  {
           for( size_t k=j+1; k < bound.Count(); k++ )  {
             // regular octahedron vol would be ~0.47A^3
-            if( olx_tetrahedron_volume(
+            double vol = olx_tetrahedron_volume(
               NullVec,
               (bound[i]->crd()-crd()).Normalise(),
               (bound[j]->crd()-crd()).Normalise(),
-              (bound[k]->crd()-crd()).Normalise() ) > 0.03 )
+              (bound[k]->crd()-crd()).Normalise());
+            if (vol > 0.03) {
               pl.faces.AddNew(i, j, k);
+            }
+            else if (!centered) { // check if there is another atom on the other side
+              vec3d n = (bound[i]->crd()-bound[j]->crd()).XProdVec(
+                bound[k]->crd()-bound[j]->crd()).Normalise();
+              if (pc.DotProd(n) < 0)
+                n *= -1;
+              bool exists=false;
+              for (size_t ai=0; ai < bound.Count(); ai++) {
+                double d = (bound[ai]->crd()-crd()).DotProd(n);
+                if (d > 0.1) { // at least 0.1 A away from this face
+                  exists = true;
+                  break;
+                }
+              }
+              if (!exists) {
+                pl.faces.AddNew(i, j, k);
+              }
+            }
           }
         }
       }
