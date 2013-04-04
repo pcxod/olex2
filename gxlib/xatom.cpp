@@ -1262,7 +1262,7 @@ void TXAtom::CreatePoly(const TSAtomPList& bound, short type,
             else if (!centered) { // check if there is another atom on the other side
               vec3d n = (bound[i]->crd()-bound[j]->crd()).XProdVec(
                 bound[k]->crd()-bound[j]->crd()).Normalise();
-              if (pc.DotProd(n) < 0)
+              if ((pc-crd()).DotProd(n) > 0)
                 n *= -1;
               bool exists=false;
               for (size_t ai=0; ai < bound.Count(); ai++) {
