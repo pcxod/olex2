@@ -503,8 +503,7 @@ void TGlPrimitive::Draw()  {
     }
   }
   else if( Type == sgloPolygon )  {
-    bool v = olx_gl::isEnabled(GL_CULL_FACE);
-    if (v)  olx_gl::disable(GL_CULL_FACE);
+    olx_gl::FlagDisabler fc(GL_CULL_FACE);
     if (Colors.IsEmpty() || GetRenderer().IsSelecting()) {
       olx_gl::begin(GL_POLYGON);
       for( size_t i=0; i < Vertices.Count(); i++ )
@@ -517,7 +516,6 @@ void TGlPrimitive::Draw()  {
         DrawVertex(Vertices[i], Colors[i]);
       EndColorRendering();
     }
-    if( v )  olx_gl::enable(GL_CULL_FACE);
   }
   if (ClipPlanes != NULL)  ClipPlanes->Enable(false);
   if( currentTexture != NULL )  {

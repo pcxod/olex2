@@ -25,12 +25,20 @@ const uint16_t
   plane_flag_regular = 0x0002;
 
 class TSPlane : public TSObject<TNetwork>  {
-  TTypeList< AnAssociation2<TSAtom*, double> > Crds;
+  TTypeList<AnAssociation2<TSAtom*, double> > Crds;
   vec3d Center;
   mat3d Normals;
   double Distance, wRMSD;  uint16_t Flags;
   size_t DefId;
   void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
+  // for Crd sorting by atom tag
+  struct AtomTagAccessor {
+    index_t operator() (
+      const AnAssociation2<TSAtom*, double> *p) const
+    {
+      return p->GetA()->GetTag();
+    }
+  };
 public:
   TSPlane() :TSObject<TNetwork>(NULL) {}
   TSPlane(TNetwork* Parent, size_t def_id = InvalidIndex)
@@ -42,7 +50,6 @@ public:
   // this is just a flag for the owner - is not used by the object itself
   DefPropBFIsSet(Regular, Flags, plane_flag_regular)
 
-  inline size_t CrdCount() const {  return Crds.Count(); }
   // an association point, weight is provided
   void Init(const TTypeList<AnAssociation2<TSAtom*, double> >& Points);
 
@@ -77,6 +84,10 @@ public:
   const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
   TSAtom& GetAtom(size_t i) {  return *Crds[i].A();  }
   double GetWeight(size_t i) const {  return Crds[i].GetB();  }
+  void _PlaneSortByAtomTags() {
+    BubbleSorter::Sort(Crds, AtomTagAccessor(), TPrimitiveComparator(),
+      DummySwapListener());
+  }
   /* returns inverse intersects with the lattice vectors, the vector is divided
   by modulus of the smallest non-zero value. Takes the orthogonalisation matrix
   plane normal and a point on the plane

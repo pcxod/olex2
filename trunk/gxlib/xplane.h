@@ -16,10 +16,13 @@
 BeginGxlNamespace()
 
 class TXPlane: public TSPlane, public AGDrawObject  {
+  mat3d RM;
+  vec3d MaxV;
 public:
-  TXPlane(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName) :
-    TSPlane(net),
-    AGDrawObject(Render, collectionName)  {}
+  TXPlane(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName)
+    : TSPlane(net),
+      AGDrawObject(Render, collectionName)
+  {}
   virtual ~TXPlane()  {}
   void Create(const olxstr& cName=EmptyString());
 

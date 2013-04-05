@@ -837,7 +837,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitFunc(FileLast, fpNone|fpOne);
   this_InitFunc(FileSave, fpThree|fpFour);
   this_InitFunc(FileOpen, fpThree|fpFour);
-  this_InitFunc(ChooseDir, fpNone|fpOne|fpTwo);
+  this_InitFuncD(ChooseDir, fpNone|fpOne|fpTwo,
+    "Shows a dialog to pick a folder. Arguments [title=Choose directory],"
+    " [default path=current directory].");
 
   this_InitFunc(Strcat, fpTwo);
   this_InitFunc(Strcmp, fpTwo);
