@@ -20,8 +20,8 @@ namespace PlaneSort {
     Sorter(const TSPlane& sp)  {  DoSort(sp);  }
     Sorter() { }
     void DoSort(const TSPlane& sp)  {
-      sortedPlane.SetCount(sp.CrdCount());
-      for( size_t i=0; i < sp.CrdCount(); i++ )
+      sortedPlane.SetCount(sp.Count());
+      for( size_t i=0; i < sp.Count(); i++ )
         sortedPlane[i] = sp.GetAtom(i).crd();
       olx_plane::Sort(sortedPlane, ListAccessor(sortedPlane), sp.GetCenter(),
         sp.GetNormal());
@@ -34,12 +34,25 @@ namespace PlaneSort {
         return p.GetA();
       }
     };
-    static void DoSort(const TSAtomPList& atoms, 
+
+    static void SortPlane(TSPlane &p) {
+      TArrayList<AnAssociation2<vec3d, TSAtom*> > sorted(p.Count());
+      for (size_t i=0; i < p.Count(); i++) {
+        sorted[i].A() = p.GetAtom(i).crd();
+        sorted[i].B() = &p.GetAtom(i);
+      }
+      olx_plane::Sort(sorted, PointAccessor(), p.GetCenter(), p.GetNormal());
+      for (size_t i=0; i < sorted.Count(); i++)
+        sorted[i].B()->SetTag((index_t)i);
+      p._PlaneSortByAtomTags();
+    }
+
+    static void DoSort(const TSAtomPList& atoms,
       // tag dependent translations
       const olxdict<index_t, vec3d, TPrimitiveComparator>& transforms,
       vec3d& center, const vec3d& normal, TSAtomPList& output)
     {
-      if( atoms.IsEmpty() )
+      if (atoms.IsEmpty())
         throw TInvalidArgumentException(__OlxSourceInfo, "atom list");
       TArrayList<AnAssociation2<vec3d, TSAtom*> > sorted(atoms.Count());
       for( size_t i=0; i < atoms.Count(); i++ )  {
