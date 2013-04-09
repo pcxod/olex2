@@ -2569,26 +2569,26 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
       part = ag[j].GetPart();
       break;
     }
-    size_t attached_cnt=0;
+    size_t attached_cnt=0, metal_cnt=0;
     for (size_t j=0; j < ag.GetPivot().AttachedSiteCount(); j++) {
       TCAtom &a = ag.GetPivot().GetAttachedAtom(j);
-      if (a.IsDeleted() || a.GetType().z < 2 ||
-        XElementLib::IsMetal(a.GetType()))
-      {
+      if (a.IsDeleted() || a.GetType().z < 2)
         continue;
-      }
-      if (a.GetPart() == 0 || a.GetPart() == part)
+      if (a.GetPart() == 0 || a.GetPart() == part) {
+        if (XElementLib::IsMetal(a.GetType()))
+          metal_cnt++;
         attached_cnt++;
+      }
     }
     bool valid = true;
     int m = ag.GetM();
     switch (m) {
     case 1: // XYZC-H
-      valid = (attached_cnt == 3);
+      valid = (attached_cnt == 3) || (attached_cnt-metal_cnt == 3);
       break;
     case 2: // XYC-H2
     case 4: // XYC-H
-      valid = (attached_cnt == 2);
+      valid = (attached_cnt == 2) || (attached_cnt-metal_cnt == 2);
       break;
     case 3: // X-H3
     case 8: // O-H
@@ -2597,10 +2597,11 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
     case 13: // X-H3
     case 14: // O-H
     case 16: // CC-H
-      valid = (attached_cnt == 1);
+      valid = (attached_cnt == 1) || (attached_cnt-metal_cnt == 1);
       break;
     case 15: // {R4/5}B-H
-      valid = (attached_cnt == 4 || attached_cnt == 5);
+      valid = (attached_cnt == 4 || attached_cnt == 5) || (
+        (attached_cnt-metal_cnt == 4) || (attached_cnt-metal_cnt == 5));
       break;
     }
     if (!valid) {
