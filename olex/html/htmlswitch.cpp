@@ -47,34 +47,43 @@ void THtmlSwitch::UpdateFileIndex()  {
   for( size_t i=0; i < Strings.Count(); i++ )  {
     if (Strings[i].StartsFrom(ignore_open)) {
       olxstr fn = Strings[i].SubStringFrom(ignore_open.Length()).TrimWhiteChars();
-      Strings[i].SetLength(0);
       if (fn.IsEmpty()) {
         TBasicApp::NewLogEntry(logError) <<
           (olxstr("Invalid ignoreif construct: ").quote() << Strings[i]);
       }
-      size_t j=i+1;
+      int oc=1;
+      size_t j=i;
       for (;j < Strings.Count(); j++) {
-        if (Strings[j].StartsFrom(ignore_close))
+        if (Strings[j].StartsFrom(ignore_close)) {
+          if (--oc == 0) break;
           break;
+        }
+        else if (Strings[i].StartsFrom(ignore_open))
+          oc++;
       }
       if (j >= Strings.Count()) {
         TBasicApp::NewLogEntry(logError) << "Missing closing ignoreif";
         j = Strings.Count()-1;
       }
-      else
-        Strings[j].SetLength(0);
       olxstr rv = fn;
       if (olex::IOlexProcessor::GetInstance()->processFunction(rv) ) {
-        if( rv.ToBool() )
+        if (rv.ToBool())
           Strings.DeleteRange(i, j-i+1);
+        else {
+          Strings.Delete(i);
+          if (--j < Strings.Count())
+            Strings.Delete(j);
+        }
       }
       else {
         TBasicApp::NewLogEntry(logError) <<
           (olxstr("Invalid function in ingnoreif: ").quote() << fn);
+        i = j+1; // skip the block
       }
+      i--;
     }
     // replace the parameters with their values
-    if( Strings[i].IndexOf('#') != InvalidIndex )  {
+    else if( Strings[i].IndexOf('#') != InvalidIndex )  {
       // "key word parameter"
       Strings[i].Replace("#switch_name", Name);
       if( ParentSwitch != NULL )  {
