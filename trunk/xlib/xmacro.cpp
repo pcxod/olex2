@@ -7132,11 +7132,11 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
           atoms << mi.bonds[i]->Another(*s) << s << mi.bonds[i+1]->Another(*s);
       }
     }
-    if ((mi.atoms.Count()%3)!=0) {
+    if ((atoms.Count()%3)!=0) {
       E.ProcessingError(__OlxSrcInfo, "triplets of atoms are expected");
       return;
     }
-    if (!mi.atoms.IsEmpty()) {
+    if (!atoms.IsEmpty()) {
       TSimpleRestraint &sr = rm.rAngle.AddNew();
       sr.SetValue(val);
       for (size_t i=0; i < atoms.Count(); i++)

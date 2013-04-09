@@ -1952,27 +1952,37 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
     srl = &rm.rEADP;
     RequiredParams = 0;  AcceptsParams = 0;
   }
-  else if( ins_name.Equalsi(rm.rAngle.GetIdName()) )  {
+  else if (ins_name.Equalsi(rm.rAngle.GetIdName()) ||
+    ins_name.Equalsi("Angle"))
+  {
     srl = &rm.rAngle;
     RequiredParams = 1;  AcceptsParams = 2;
     Vals[0] = &DefVal;  Vals[1] = &esd;
   }
-  else if( ins_name.Equalsi(rm.rDihedralAngle.GetIdName()) )  {
+  else if (ins_name.Equalsi(rm.rDihedralAngle.GetIdName()) ||
+    ins_name.Equalsi("DAngle"))
+  {
     srl = &rm.rDihedralAngle;
     RequiredParams = 1;  AcceptsParams = 2;
     Vals[0] = &DefVal;  Vals[1] = &esd;
   }
-  else if( ins_name.Equalsi(rm.rFixedUeq.GetIdName()) )  {
+  else if (ins_name.Equalsi(rm.rFixedUeq.GetIdName()) ||
+    ins_name.Equalsi("FIXU"))
+  {
     srl = &rm.rFixedUeq;
     RequiredParams = 1;  AcceptsParams = 2;
     Vals[0] = &DefVal;  Vals[1] = &esd;
   }
-  else if( ins_name.Equalsi(rm.rSimilarUeq.GetIdName()) )  {
+  else if (ins_name.Equalsi(rm.rSimilarUeq.GetIdName()) ||
+    ins_name.Equalsi("SIMQ"))
+  {
     srl = &rm.rSimilarUeq;
     RequiredParams = 0;  AcceptsParams = 1;
     Vals[0] = &esd;
   }
-  else if( ins_name.Equalsi(rm.rSimilarAdpVolume.GetIdName()) )  {
+  else if (ins_name.Equalsi(rm.rSimilarAdpVolume.GetIdName()) ||
+    ins_name.Equalsi("SIMV"))
+  {
     srl = &rm.rSimilarAdpVolume;
     RequiredParams = 0;  AcceptsParams = 1;
     Vals[0] = &esd;
