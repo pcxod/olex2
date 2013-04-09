@@ -274,7 +274,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Describes current refinement in a human readable form");
   xlib_InitMacro(Sort, EmptyString(), fpAny^psFileLoaded,
   "Sorts atoms of the default residue. Atom sort arguments: "
-  "\n\tm - atomic weight"
+  "\n\tm - atomic mass"
   "\n\tl - label, considering numbers"
   "\n\tp - part, 0 is first followed by all positive parts in ascending order "
   "and then negative ones"
@@ -284,11 +284,11 @@ void XLibMacros::Export(TLibrary& lib)  {
   "\n Moiety sort arguments:"
   "\n\ts - size"
   "\n\th - by heaviest atom"
-  "\n\tm - molecular weight"
+  "\n\tm - molecular mass"
   "\nUsage: sort [+atom_sort_type] or [Atoms] [moiety [+moety sort type] "
   "[moiety atoms]]. If just 'moiety' is provided - the atoms will be split "
   "into the moieties without sorting."
-  "\nExample: sort +ml F2 F1 moiety +s - will sort atoms by atomic weight and "
+  "\nExample: sort +ml F2 F1 moiety +s - will sort atoms by atomic mass and "
   "label, put F1 after F2 and form moieties sorted by size. Note that when "
   "sorting atoms, any subsequent sort type operates inside the groups created "
   "by the preceeding sort types."
