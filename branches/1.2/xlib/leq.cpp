@@ -212,7 +212,7 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
 XVarReference* XVarManager::ReleaseRef(IXVarReferencer& a, short var_name) {
   XVarReference* prf = a.GetVarRef(var_name);
   if( prf != NULL )  {
-    if( !olx_is_valid_index(prf->GetId()) )  
+    if( !olx_is_valid_index(prf->GetId()) )
       return NULL;
     prf->Parent._RemRef(*prf);
     References.Release(prf->GetId());
@@ -376,14 +376,14 @@ void XVarManager::Describe(TStrList& lst)  {
     for (size_t j=0; j < Vars[i]._RefCount(); j++) {
       if (l.Length() > 1) l << '=';
       if (Vars[i].GetRef(j).relation_type == relation_AsVar) {
-        l << Vars[i].GetRef(j).referencer.GetVarName(
-          Vars[i].GetRef(j).var_index) << '(' <<
-          Vars[i].GetRef(j).referencer.GetIdName() << ")";
+        l << Vars[i].GetRef(j).coefficient << '*' <<
+          Vars[i].GetRef(j).referencer.GetVarName(Vars[i].GetRef(j).var_index)
+          << '(' << Vars[i].GetRef(j).referencer.GetIdName() << ")";
       }
       else {
-        l << "1-" << Vars[i].GetRef(1).referencer.GetVarName(
-          Vars[i].GetRef(1).var_index) << "(" <<
-          Vars[i].GetRef(1).referencer.GetIdName() << ')';
+        l << "1-" <<Vars[i].GetRef(j).coefficient << '*' <<
+          Vars[i].GetRef(j).referencer.GetVarName(Vars[i].GetRef(j).var_index)
+          << "(" << Vars[i].GetRef(j).referencer.GetIdName() << ')';
       }
     }
   }
