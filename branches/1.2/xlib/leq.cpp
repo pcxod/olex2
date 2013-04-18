@@ -372,27 +372,33 @@ void XVarManager::Describe(TStrList& lst)  {
   }
   for (size_t i=1; i < Vars.Count(); i++) {
     if (Vars[i]._RefCount() < 2) continue;
-    olxstr &l = lst.Add(' ');
-    double kd=1;
+
+    olxdict<double, TPtrList<XVarReference>, TPrimitiveComparator>
+      avd;
     for (size_t j=0; j < Vars[i]._RefCount(); j++) {
-      if (l.Length() > 1) l << '=';
-      if (j==0) {
-        kd = Vars[i].GetRef(j).coefficient;
-      }
-      olxstr sk = olx_round(Vars[i].GetRef(j).coefficient/kd, 1000);
-      if (sk.Length() == 1 && sk.CharAt(0) == '1')
-        sk.SetLength(0);
+      if (Vars[i].GetRef(j).relation_type == relation_AsVar)
+        avd.Add(Vars[i].GetRef(j).coefficient).Add(Vars[i].GetRef(j));
       else
-        sk << '*';
-      if (Vars[i].GetRef(j).relation_type == relation_AsVar) {
-        l << sk <<
-          Vars[i].GetRef(j).referencer.GetVarName(Vars[i].GetRef(j).var_index)
-          << '(' << Vars[i].GetRef(j).referencer.GetIdName() << ")";
+        avd.Add(-Vars[i].GetRef(j).coefficient).Add(Vars[i].GetRef(j));
+    }
+    for (size_t j=0; j < avd.Count(); j++) {
+      olxstr &l = lst.Add(' ');
+      for (size_t k=0; k < avd.GetValue(j).Count(); k++) {
+        XVarReference &vr = *avd.GetValue(j)[k];
+        l << vr.referencer.GetVarName(vr.var_index) << '(' <<
+          vr.referencer.GetIdName() << ")=";
+      }
+      if (avd.GetKey(j) < 0) {
+        if (olx_abs(avd.GetKey(j)+1) < 1e-3)
+          l << "1-FVAR(" << Vars[i].GetId() << ')';
+        else
+          l << (-avd.GetKey(j)) << "*(1-FVAR(" << (Vars[i].GetId()+1) << "))";
       }
       else {
-        l << sk << "1-" <<
-          Vars[i].GetRef(j).referencer.GetVarName(Vars[i].GetRef(j).var_index)
-          << "(" << Vars[i].GetRef(j).referencer.GetIdName() << ')';
+        if (olx_abs(avd.GetKey(j)-1) < 1e-3)
+          l << "FVAR(" << Vars[i].GetId() << ')';
+        else
+          l << avd.GetKey(j) << "*FVAR(" << (Vars[i].GetId()+1) << ')';
       }
     }
   }
