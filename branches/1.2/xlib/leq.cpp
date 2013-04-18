@@ -373,15 +373,24 @@ void XVarManager::Describe(TStrList& lst)  {
   for (size_t i=1; i < Vars.Count(); i++) {
     if (Vars[i]._RefCount() < 2) continue;
     olxstr &l = lst.Add(' ');
+    double kd=1;
     for (size_t j=0; j < Vars[i]._RefCount(); j++) {
       if (l.Length() > 1) l << '=';
+      if (j==0) {
+        kd = Vars[i].GetRef(j).coefficient;
+      }
+      olxstr sk = olx_round(Vars[i].GetRef(j).coefficient/kd, 1000);
+      if (sk.Length() == 1 && sk.CharAt(0) == '1')
+        sk.SetLength(0);
+      else
+        sk << '*';
       if (Vars[i].GetRef(j).relation_type == relation_AsVar) {
-        l << Vars[i].GetRef(j).coefficient << '*' <<
+        l << sk <<
           Vars[i].GetRef(j).referencer.GetVarName(Vars[i].GetRef(j).var_index)
           << '(' << Vars[i].GetRef(j).referencer.GetIdName() << ")";
       }
       else {
-        l << "1-" <<Vars[i].GetRef(j).coefficient << '*' <<
+        l << sk << "1-" <<
           Vars[i].GetRef(j).referencer.GetVarName(Vars[i].GetRef(j).var_index)
           << "(" << Vars[i].GetRef(j).referencer.GetIdName() << ')';
       }
