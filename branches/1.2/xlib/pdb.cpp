@@ -21,6 +21,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
   char bf[120];
   double q[6];
   int iq[6];
+  double bk = 8*M_PI*M_PI;
   TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
   sprintf(bf, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d",
     GetAsymmUnit().GetAxes()[0],
@@ -38,14 +39,25 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     if (a.IsDeleted()) continue;
     olxstr label = olxstr(a.GetType().symbol) << (i+1);
     vec3d crd = GetAsymmUnit().Orthogonalise(a.ccrd());
-    sprintf(bf, "ATOM  %5d %5s UNK     0   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s ",
+    TResidue &r = GetAsymmUnit().GetResidue(a.GetResiId());
+    olxstr r_name = r.GetClassName();
+    olxcstr r_num, p_num;
+    if (r.GetId() != ~0)
+      r_num = r.GetNumber();
+    int p = olx_min(olx_abs(a.GetPart()), 9);
+    if (p != 0)
+      p_num = p;
+    sprintf(bf, "ATOM  %5d %4s%1s%3s  %4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s  ",
       i+1,
       label.c_str(),
+      p_num.c_str(),
+      r_name.c_str(),
+      r_num.c_str(),
       crd[0],
       crd[1],
       crd[2],
       a.GetOccu(),
-      a.GetUiso(),
+      a.GetUiso()*bk,
       a.GetType().symbol.c_str()
     );
     Strings.Add(bf);
@@ -85,23 +97,21 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   CrystF.Add(1);  // ws
   CrystF.Add(11);  // sg name
   CrystF.Add(4);  // z
-
+  //http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
   TSizeList AtomF;
   AtomF.Add(6);  //"ATOM  "
-  AtomF.Add(5);  //serial number
-  AtomF.Add(1);  //ws
+  AtomF.Add(5+1);  //serial number + ws
   AtomF.Add(4);  //name
   AtomF.Add(1);  //alternative location indicator
-  AtomF.Add(3);  //residue name
-  AtomF.Add(1);  //ws
+  AtomF.Add(3+1);  //residue name + ws
   AtomF.Add(1);  //chain ID
   AtomF.Add(4);  //  residue sequence number
-  AtomF.Add(4);  //iCode + 3 ws
+  AtomF.Add(1+3);  //iCode + 3 ws
   AtomF.Add(8);  // x
   AtomF.Add(8);  // y
   AtomF.Add(8);  // z
   AtomF.Add(6);  // occupancy
-  AtomF.Add(6);  // temperature factor
+  AtomF.Add(6+10);  // temperature factor + 10ws
   AtomF.Add(2);  // element
   AtomF.Add(2);  // charge
 
@@ -156,31 +166,49 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       if( toks.Count() > 9 )
         GetAsymmUnit().SetZ(toks[9].ToInt());
     }
-    else if( line == "ATOM" )  {
+    else if (line == "ATOM") {
       toks.Clear();
       toks.StrtokF(Strings[i], AtomF);
-      if( toks.Count() < 13 )  
+      if (toks.Count() < 12)
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
-      TCAtom& CA = GetAsymmUnit().NewAtom();
-      vec3d crd(toks[10].ToDouble(), toks[11].ToDouble(), toks[12].ToDouble());
-      GetAsymmUnit().CartesianToCell(crd);
-      CA.ccrd() = crd;
-      olxstr Tmp = toks[3].Trim(' ');
-      if( Tmp == "CA" )
-        Tmp = "C";
-      else  if( Tmp == "CD" )
-        Tmp = "C";
-      else  if( Tmp == "CE" )
-        Tmp = "C";
-      else  if( Tmp == "W" )
-        Tmp = "O";
-      Tmp << '_' << toks[5].Trim(' ') << '_' << toks[8].Trim(' ');
-      CA.SetLabel( Tmp );
+      TResidue *resi=NULL;
+      if (toks[6].IsNumber()) {
+        int r_num = toks[6].ToInt();
+        resi = GetAsymmUnit().FindResidue(r_num);
+        if (resi == NULL)
+          resi = &GetAsymmUnit().NewResidue(toks[4].TrimWhiteChars(), r_num);
+      }
+      TCAtom& CA = GetAsymmUnit().NewAtom(resi);
+      CA.ccrd() = GetAsymmUnit().Fractionalise(
+        vec3d(toks[8].ToDouble(), toks[9].ToDouble(), toks[10].ToDouble()));
+      if (toks.Count() > 11)
+        CA.SetOccu(toks[11].ToDouble());
+      if (toks.Count() > 12)
+        CA.SetUiso(toks[12].ToDouble()/(8*olx_sqr(M_PI)));
+      olxstr name = toks[2].TrimWhiteChars();
+      cm_Element *type = NULL;
+      if (toks.Count() > 13) {
+        type = XElementLib::FindBySymbol(toks[13].TrimWhiteChars());
+      }
+      else {
+        if (name.StartsFrom("CA") || name.StartsFrom("CD") || name.StartsFrom("CE"))
+          type = &XElementLib::GetByIndex(iCarbonIndex);
+        else if(name == 'W')
+          type = &XElementLib::GetByIndex(iOxygenIndex);
+      }
+      if (!toks[5].TrimWhiteChars().IsEmpty())
+        name << '_' << toks[5];
+      CA.SetLabel(name, type==NULL);
+      if (type != NULL)
+        CA.SetType(*type);
+      if (toks[3].IsNumber()) { // altLoc
+        CA.SetPart(toks[3].ToInt());
+      }
     }
     else if( line == "ANISOU" )  {
       toks.Clear();
       toks.StrtokF(Strings[i], AnisF);
-      if( toks.Count() < 16 )  
+      if( toks.Count() < 16 )
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
       QE[0] = toks[10].ToDouble();
       QE[1] = toks[11].ToDouble();
