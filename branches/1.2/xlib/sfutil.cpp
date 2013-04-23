@@ -165,7 +165,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       //xapp.CalcSF(refs, F);
       //sw.start("Calculation structure factors A");
       //fastsymm version is just about 10% faster...
-      CalcSF(xapp.XFile(), refs, F);
+      CalcSF(xapp.XFile(), refs, F, !info_ex.centrosymmetric);
       xapp.XFile().GetRM().DetwinShelx(refs, F, ms, info_ex);
       //xapp.XFile().GetRM().DetwinMixed(refs, F, ms, info_ex);
       //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
@@ -284,15 +284,32 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   TPtrList<TCAtom> alist;
   ElementPList scatterers;
   PrepareCalcSF(au, U, scatterers, alist);
-
+  TArrayList<compd> fpfdp(scatterers.Count(), olx_list_init::zero());
+  const double ev = xfile.GetRM().expl.GetRadiationEnergy();
+  olxdict<olxstr, XScatterer *, olxstrComparator<true> > scs;
+  for (size_t i=0; i < xfile.GetRM().SfacCount(); i++) {
+    XScatterer &sc = xfile.GetRM().GetSfacData(i);
+    scs(sc.GetLabel(), &sc);
+  }
+  for (size_t i=0; i < scatterers.Count(); i++) {
+    XScatterer *xs = scs.Find(scatterers[i]->symbol, NULL);
+    if (xs == NULL) {
+      fpfdp[i] = scatterers[i]->CalcFpFdp(ev);
+      fpfdp[i] -= scatterers[i]->z;
+    }
+    else {
+      fpfdp[i] = xs->GetFpFdp();
+    }
+    if (!UseFdp)
+      fpfdp[i].SetIm(0);
+  }
   sf_util->Calculate(
-    xfile.GetRM().expl.GetRadiationEnergy(),
     refs,
     au.GetHklToCartesian(),
     F, scatterers,
     alist,
     U,
-    UseFdp
+    fpfdp
   );
   delete sf_util;
   delete [] U;

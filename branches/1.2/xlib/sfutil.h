@@ -49,11 +49,11 @@ namespace SFUtil {
     /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6
     elements of Ucif or Uiso for each atom
     */
-    virtual void Calculate(double eV, const IMillerIndexList& refs,
+    virtual void Calculate(const IMillerIndexList& refs,
       const mat3d& hkl2c, TArrayList<compd>& F, 
       const ElementPList& scatterers, const TCAtomPList& atoms,
       const double* U,
-      bool UseFpFdp) const = 0;
+      const TArrayList<compd> &fpfdp) const = 0;
     virtual size_t GetSGOrder() const = 0;
   };
 
@@ -345,18 +345,14 @@ namespace SFUtil {
         }
       }
     }
-    virtual void Calculate(double eV, const IMillerIndexList& refs,
+    virtual void Calculate(const IMillerIndexList& refs,
       const mat3d& hkl2c, TArrayList<compd>& F,
-      const ElementPList& scatterers, const TCAtomPList& atoms, 
+      const ElementPList& scatterers, const TCAtomPList& atoms,
       const double* U,
-      bool UseFdp) const 
+      const TArrayList<compd> &fpfdp_) const
     {
-      TArrayList<compd> fpfdp(scatterers.Count());
-      for( size_t i=0; i < scatterers.Count(); i++ )  {
-        fpfdp[i] = scatterers[i]->CalcFpFdp(eV);
-        fpfdp[i] -= scatterers[i]->z;
-        if (!UseFdp) fpfdp[i].SetIm(0);
-      }
+      TArrayList<compd> fpfdp(fpfdp_);
+      fpfdp.SetCount(scatterers.Count(), olx_list_init::zero());
       if( centrosymmetric )  {
         SFCalculateTask<TRefList, true> task(*this, refs, hkl2c, F, scatterers,
           atoms, U, fpfdp);

@@ -111,10 +111,11 @@ void TGlRenderer::Initialise()  {
   FSelection->Create();
   FBackground->Create();
   FCeiling->Create();
-  ATI = olxcstr((const char*)olx_gl::getString(GL_VENDOR)).StartsFrom("ATI");
+  olxcstr vendor((const char*)olx_gl::getString(GL_VENDOR));
+  ATI = vendor.StartsFrom("ATI");
   olx_gl::get(GL_LINE_WIDTH, &LineWidth);
   GLUSelection = TBasicApp::GetInstance().GetOptions().FindValue(
-    "gl_selection", TrueString()).ToBool();
+    "gl_selection", vendor.StartsFrom("Intel")).ToBool();
   if (TBasicApp::GetInstance().GetOptions().FindValue(
     "gl_multisample", FalseString()).ToBool())
   {

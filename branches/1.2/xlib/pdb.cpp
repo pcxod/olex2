@@ -41,12 +41,12 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     vec3d crd = GetAsymmUnit().Orthogonalise(a.ccrd());
     TResidue &r = GetAsymmUnit().GetResidue(a.GetResiId());
     olxstr r_name = r.GetClassName();
-    olxcstr r_num, p_num;
+    olxcstr r_num, p_num(' ');
     if (r.GetId() != ~0)
       r_num = r.GetNumber();
-    int p = olx_min(olx_abs(a.GetPart()), 9);
+    char p = olx_min(olx_abs(a.GetPart()), 25);
     if (p != 0)
-      p_num = p;
+      p_num[0] = ('A'+p-1);
     sprintf(bf, "ATOM  %5d %4s%1s%3s  %4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s  ",
       i+1,
       label.c_str(),
@@ -66,7 +66,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     e->GetShelxQuad(q);
     for( int j=0; j < 6; j++ )
       iq[j] = (int)(q[j]*10000);
-    sprintf(bf, "ANISOU%5d %5s           %7d%7d%7d%7d%7d%7d      %2s ",
+    sprintf(bf, "ANISOU%5d %4s            %7d%7d%7d%7d%7d%7d      %2s ",
       i+1,
       label.c_str(),
       iq[0],
@@ -196,13 +196,16 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
         else if(name == 'W')
           type = &XElementLib::GetByIndex(iOxygenIndex);
       }
-      if (!toks[5].TrimWhiteChars().IsEmpty())
+      if (!toks[5].TrimWhiteChars().IsEmpty()) // chain ID
         name << '_' << toks[5];
       CA.SetLabel(name, type==NULL);
       if (type != NULL)
         CA.SetType(*type);
       if (toks[3].IsNumber()) { // altLoc
         CA.SetPart(toks[3].ToInt());
+      }
+      else if (olxstr::o_isalpha(toks[3].CharAt(0))) {
+        CA.SetPart((int)(toks[3].UpperCase().CharAt(0)-'A'+1));
       }
     }
     else if( line == "ANISOU" )  {
@@ -240,16 +243,26 @@ bool TPdb::Adopt(TXFile& XF)  {
   GetAsymmUnit().SetLatt(XF.GetAsymmUnit().GetLatt());
   GetAsymmUnit().SetZ((short)XF.GetLattice().GetUnitCell().MatrixCount());
   GetAsymmUnit().InitMatrices();
+  for (size_t i=1; i < XF.GetAsymmUnit().ResidueCount(); i++) {
+    TResidue &r = XF.GetAsymmUnit().GetResidue(i);
+    GetAsymmUnit().NewResidue(r.GetClassName(), r.GetNumber(), r.GetAlias());
+  }
 
   const ASObjectProvider& objects = XF.GetLattice().GetObjects();
   for( size_t i=0; i < objects.atoms.Count(); i++ )  {
     TSAtom& sa = objects.atoms[i];
     if( !sa.IsAvailable() || sa.GetType() == iQPeakZ )
       continue;
-    TCAtom& a = GetAsymmUnit().NewAtom();
+    TResidue *r=NULL;
+    if (sa.CAtom().GetResiId() != 0) {
+      r = GetAsymmUnit().FindResidue(
+        XF.GetAsymmUnit().GetResidue(sa.CAtom().GetResiId()).GetNumber());
+    }
+    TCAtom& a = GetAsymmUnit().NewAtom(r);
     a.SetLabel(sa.GetLabel(), false);
     a.ccrd() = sa.ccrd();
     a.SetType(sa.GetType());
+    a.SetPart(sa.CAtom().GetPart());
     TEllipsoid* se = sa.GetEllipsoid();
     if( se == NULL )  continue;
     TEllipsoid& e = GetAsymmUnit().NewEllp();
