@@ -115,7 +115,7 @@ void TGlRenderer::Initialise()  {
   ATI = vendor.StartsFrom("ATI");
   olx_gl::get(GL_LINE_WIDTH, &LineWidth);
   GLUSelection = TBasicApp::GetInstance().GetOptions().FindValue(
-    "gl_selection", vendor.StartsFrom("Intel")).ToBool();
+    "gl_selection", !vendor.StartsFrom("Intel")).ToBool();
   if (TBasicApp::GetInstance().GetOptions().FindValue(
     "gl_multisample", FalseString()).ToBool())
   {

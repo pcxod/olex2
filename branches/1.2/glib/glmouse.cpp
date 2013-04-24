@@ -29,9 +29,12 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
     "mouse_invert_zoom", FalseString()).ToBool() )
   {
     SetHandler(MouseEvtHandler::New(smbRight, 0, smeMouseMove, meZoom));
+    SetHandler(MouseEvtHandler::New(smbRight, sssAlt, smeMouseMove, meZoom));
   }
-  else
+  else {
     SetHandler(MouseEvtHandler::New(smbRight, 0, smeMouseMove, meZoomI));
+    SetHandler(MouseEvtHandler::New(smbRight, sssAlt, smeMouseMove, meZoomI));
+  }
   ClickThreshold = TBasicApp::GetInstance().GetOptions()
     .FindValue("mouse_click_threshold", "2").ToInt();
   // an alternative for MAC...
@@ -341,7 +344,9 @@ void GlobalGlFunction( meZoom(const TMouseData &md) )  {
   if (!md.GlMouse->IsZoomingEnabled()) return;
   TGlRenderer *R = md.GlMouse->Parent();
   const int dx = (md.X-md.GlMouse->SX()), dy = (md.GlMouse->SY()-md.Y);
-  static const double df = 600;
+  double df = 600;
+  if ((md.Shift&sssAlt) != 0)
+    df /= R->CalcZoom();
   R->SetZoom(R->GetZoom() + (double)dx/df - (double)dy/df);
   md.GlMouse->SetAction(glmaZoom);
 }
@@ -350,7 +355,9 @@ void GlobalGlFunction( meZoomI(const TMouseData &md) )  {
   if (!md.GlMouse->IsZoomingEnabled()) return;
   TGlRenderer *R = md.GlMouse->Parent();
   const int dx = (md.X-md.GlMouse->SX()), dy = (md.GlMouse->SY()-md.Y);
-  static const double df = 600;
+  double df = 600;
+  if ((md.Shift&sssAlt) != 0)
+    df /= R->CalcZoom();
   R->SetZoom(R->GetZoom() - (double)dx/df + (double)dy/df);
   md.GlMouse->SetAction(glmaZoom);
 }
