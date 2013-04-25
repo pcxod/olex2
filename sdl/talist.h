@@ -352,6 +352,7 @@ public:
     SetCount(v);
     for (size_t i=cnt; i < FCount; i++)
       initialiser.OnItem(Items[i], i);
+    return *this;
   }
 //..............................................................................
   TArrayList& SetCount(size_t v)  {

@@ -92,7 +92,10 @@ double TUnitCell::CalcVolume() const {
 }
 //..............................................................................
 TEValue<double> TUnitCell::CalcVolumeEx() const {
-  TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  return CalcVolumeEx(GetLattice().GetAsymmUnit());
+}
+//..............................................................................
+TEValue<double> TUnitCell::CalcVolumeEx(const TAsymmUnit& au) {
   static const double k = M_PI/180;
   const vec3d ang = au.GetAngles()*k;
   const vec3d ange = au.GetAngleEsds()*k;

@@ -161,7 +161,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psCheckFileTypeIns,
     "Adds a new element to the given/selected site. Takes one selected atom "
     "and element types as any subsequent argument. Alternatively can take a "
-    "few selected aoms of different type to be modelled as the type swapping "
+    "few selected atoms of different type to be modelled as the type swapping "
     "disorder."
 );
 //_____________________________________________________________________________
@@ -2428,12 +2428,12 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  const bool set_eadp = Options.Contains("eadp");
+  const bool set_eadp = Options.GetBoolOption("eadp");
   TCAtomPList processed;
   TPtrList<TExyzGroup> groups;
   RefinementModel& rm = xapp.XFile().GetRM();
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
-  if( atoms.Count() == 1 )  {
+  if (atoms.Count() == 1) {
     ElementPList elms;
     if( atoms[0]->CAtom().GetExyzGroup() != NULL &&
       !atoms[0]->CAtom().GetExyzGroup()->IsEmpty() )
@@ -2463,6 +2463,11 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     processed.Add(atoms[0]->CAtom());
+  }
+  // special case of atoms close to each other
+  else if (atoms.Count() == 2 && atoms[0]->crd().DistanceTo(atoms[1]->crd()) < 1) {
+    groups.Add(rm.ExyzGroups.New())->Add(atoms[0]->CAtom());
+    groups.GetLast()->Add(atoms[1]->CAtom());
   }
   else  {  // model type swapping disorder
     const int part = au.GetNextPart();
@@ -2495,7 +2500,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
     rm.Vars.AddVarRef(vr,
       (*groups[1])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
     rm.Vars.AddVarRef(vr,
-      (*groups[1])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+      (*groups[1])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
     if( set_eadp )  {
       rm.rEADP.AddNew()
         .AddAtom((*groups[0])[0], NULL)
@@ -2513,9 +2518,9 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
         if( groups[i]->Count() == 2 )  {
           XVar& vr = rm.Vars.NewVar();
           rm.Vars.AddVarRef(vr,
-            (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
+            (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0);
           rm.Vars.AddVarRef(vr,
-            (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+            (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
         }
         else
           leq = &rm.Vars.NewEquation();
@@ -2524,7 +2529,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
           if( leq != NULL )  {
             XVar& vr = rm.Vars.NewVar(1./groups[i]->Count());
             rm.Vars.AddVarRef(vr,
-              (*groups[i])[j], catom_var_name_Sof, relation_AsVar, 1.0); 
+              (*groups[i])[j], catom_var_name_Sof, relation_AsVar, 1.0);
             leq->AddMember(vr);
           }
           if( sr != NULL )
@@ -5820,7 +5825,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   while( wght.Count() < 6 )
     wght.Add(0);
   wght[5] = 1./3;
-  TPSTypeList<double, int> dr;
+  evecd wsqd(refs.Count());
   for (size_t i=0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
     double Fc2 = Fsq[i];
@@ -5833,7 +5838,8 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
     const double P = wght[5]*olx_max(0, Fo2) + (1.0-wght[5])*Fc2;
     const double w =
       1./(olx_sqr(sigFo2) + olx_sqr(wght[0]*P) + wght[1]*P + wght[2]);
-    wR2u += w*olx_sqr(Fo2-Fc2);
+    wsqd[i] = w*olx_sqr(Fo2-Fc2);
+    wR2u += wsqd[i];
     wR2d += w*olx_sqr(Fo2);
     R1u += olx_abs(Fo-Fc);
     R1d += Fo;
@@ -5842,21 +5848,24 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
       R1dp += Fo;
       r1p_cnt++;
     }
-    double k = olx_abs(Fc2-Fo2)/(sigFo2+1e-5);
-    if (k > 5) {
-      dr.Add(k, i);
-    }
   }
   double wR2 = sqrt(wR2u/wR2d);
   double R1 = R1u/R1d;
   double R1p = R1up/R1dp;
   if (!Params.IsEmpty() && Params[0].IndexOfi("print") != InvalidIndex) {
-    for (size_t i=0; i < dr.Count(); i++) {
+    TPSTypeList<double, int> dr;
+    double mv = wR2u/wsqd.Count();
+    for (size_t i=0; i < wsqd.Count(); i++) {
+      double df = sqrt(wsqd[i]/mv);
+      if (df > 5)
+        dr.Add(df, i);
+    }
+    for (size_t i=0; i < olx_min(10, dr.Count()); i++) {
       TReflection& r = refs[dr.GetObject(i)];
       double Fc2 = Fsq[dr.GetObject(i)];
       TBasicApp::NewLogEntry() <<
-        olx_print("R %lf %lf %lf = %lf", r.GetI()*scale_k, r.GetS()*scale_k,
-          Fc2, dr.GetKey(i));
+        olx_print("R %d %d %d %lf %lf %lf = %lf", r.GetH(), r.GetK(), r.GetL(),
+        r.GetI()*scale_k, r.GetS()*scale_k, Fc2, dr.GetKey(i));
     }
     xapp.NewLogEntry() << "R1 (All, " << refs.Count() << ") = " <<
       olxstr::FormatFloat(4, R1);
