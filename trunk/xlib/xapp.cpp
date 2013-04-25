@@ -236,7 +236,7 @@ RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
       info_ex.centrosymmetric = true;
     TArrayList<compd> F(refs.Count());
     Fsq.Resize(refs.Count());
-    SFUtil::CalcSF(XFile(), refs, F);
+    SFUtil::CalcSF(XFile(), refs, F, !info_ex.centrosymmetric);
     if (exti != 0) {
       for (size_t i=0; i < F.Count(); i++) {
         double x = sp.HklToCart(refs[i].GetHkl()).QLength()*l_sq_4;

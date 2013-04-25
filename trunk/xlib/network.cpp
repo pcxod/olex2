@@ -100,20 +100,24 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
     }
   }
   // in second pass - Nodes have to get initialised
+  SortedObjectList<int, TPrimitiveComparator> allowed;
+  allowed.Add(iNitrogenZ);
+  allowed.Add(iOxygenZ);
+  allowed.Add(iFluorineZ);
+  allowed.Add(iChlorineZ);
+  allowed.Add(iSulphurZ);
+  allowed.Add(iBromineZ);
+  allowed.Add(iSeleniumZ);
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& sa = objects.atoms[i];
     if( sa.IsDeleted() )  continue;
     const cm_Element& thisT = sa.GetType();
-    if( thisT != iHydrogenZ )  continue;
+    //if( thisT != iHydrogenZ )  continue;
     for( size_t j=0; j < sa.CAtom().AttachedSiteICount(); j++ )  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSiteI(j);
       const cm_Element& thatT = site.atom->GetType();
-      if( !(thatT == iNitrogenZ || thatT == iOxygenZ || thatT == iFluorineZ ||
-            thatT == iChlorineZ || thatT == iSulphurZ || thatT == iBromineZ ||
-            thatT == iSeleniumZ) )
-      {
+      if (!allowed.Contains(thatT.z))
         continue;
-      }
       const smatd m = sa.GetMatrix().IsFirst() ? site.matrix :
         uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(

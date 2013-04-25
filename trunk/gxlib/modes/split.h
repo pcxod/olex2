@@ -15,7 +15,7 @@ enum {
   mode_split_ObjectsCreate
 };
 class TSplitMode : public AEventsDispatcher, public AMode  {
-  TTypeList<AnAssociation2<TXAtom*,TXAtom*> > SplitAtoms;
+  TTypeList<AnAssociation2<TCAtom*,TCAtom*> > SplitAtoms;
 protected:
   void UpdateSelectionCrds() const {
     TGlGroup& sel = gxapp.GetSelection();
@@ -82,18 +82,18 @@ public:
     TCAtomPList to_isot;
     XVar& xv = rm.Vars.NewVar(0.75);
     for( size_t i=0; i < SplitAtoms.Count(); i++ )  {
-      TXAtom& a = *SplitAtoms[i].GetA();
-      TXAtom& b = *SplitAtoms[i].GetB();
-      to_isot.Add(a.CAtom());
-      const double sp = 1./a.CAtom().GetDegeneracy();
-      rm.Vars.AddVarRef(xv, a.CAtom(), catom_var_name_Sof, relation_AsVar, sp);
-      rm.Vars.AddVarRef(xv, b.CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, sp);
-      int part = a.CAtom().GetPart();
+      TCAtom& a = *SplitAtoms[i].GetA();
+      TCAtom& b = *SplitAtoms[i].GetB();
+      to_isot.Add(a);
+      const double sp = 1./a.GetDegeneracy();
+      rm.Vars.AddVarRef(xv, a, catom_var_name_Sof, relation_AsVar, sp);
+      rm.Vars.AddVarRef(xv, b, catom_var_name_Sof, relation_AsOneMinusVar, sp);
+      int part = a.GetPart();
       if( part == 0 )  part ++;
-      a.CAtom().SetPart(part);
-      a.CAtom().SetOccu(0.75*sp);
-      b.CAtom().SetPart(part+1);
-      b.CAtom().SetOccu(0.25*sp);
+      a.SetPart(part);
+      a.SetOccu(0.75*sp);
+      b.SetPart(part+1);
+      b.SetOccu(0.25*sp);
       TSimpleRestraint* sr = NULL;
       if( ReCon.IsEmpty() );
       else if( ReCon == "eadp" )
@@ -103,7 +103,7 @@ public:
       else if( ReCon == "simu" )
         sr = &rm.rSIMU.AddNew();
       if( sr != NULL )
-        sr->AddAtomPair(a.CAtom(), NULL, b.CAtom(), NULL);
+        sr->AddAtomPair(a, NULL, b, NULL);
     }
     gxapp.XFile().GetLattice().SetAnis(to_isot, false);
     gxapp.XFile().GetLattice().Uniq();
@@ -125,8 +125,8 @@ public:
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
       bool split = true;
-      for( size_t i=0; i < SplitAtoms.Count(); i++ )
-        if( SplitAtoms[i].A() == XA || SplitAtoms[i].B() == XA )  {
+      for (size_t i=0; i < SplitAtoms.Count(); i++)
+        if (*SplitAtoms[i].A() == XA->CAtom() || *SplitAtoms[i].B() == XA->CAtom()) {
           split = false;
           break;
         }
@@ -135,7 +135,7 @@ public:
         const TAsymmUnit& au = gxapp.XFile().GetAsymmUnit();
         xa.SetMoveable(true);
         xa.SetRoteable(true);
-        SplitAtoms.AddNew(XA, &xa);
+        SplitAtoms.AddNew(&XA->CAtom(), &xa.CAtom());
         int part = XA->CAtom().GetPart();
         if( part == 0 )  part ++;
         XA->CAtom().SetPart(part);

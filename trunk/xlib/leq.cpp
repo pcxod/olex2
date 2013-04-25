@@ -63,7 +63,7 @@ size_t XVar::RefCount() const {
 //.............................................................................
 void XVar::ToDataItem(TDataItem& item) const {
   item.AddField("val", Value);
-  for( size_t i=0; i < References.Count(); i++ ) 
+  for( size_t i=0; i < References.Count(); i++ )
     if( References[i]->referencer.IsValid() )
       References[i]->ToDataItem(item.AddItem(i));
 }
@@ -152,7 +152,7 @@ XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
     item.GetRequiredField("sig").ToDouble());
   for( size_t i=0; i < item.ItemCount(); i++ )  {
     const TDataItem& mi = item.GetItem(i);
-    leq->AddMember(parent.GetVar(mi.GetRequiredField("id").ToInt()), 
+    leq->AddMember(parent.GetVar(mi.GetRequiredField("id").ToInt()),
       mi.GetRequiredField("k").ToDouble());
   }
   return *leq;
@@ -212,7 +212,7 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
 XVarReference* XVarManager::ReleaseRef(IXVarReferencer& a, short var_name) {
   XVarReference* prf = a.GetVarRef(var_name);
   if( prf != NULL )  {
-    if( !olx_is_valid_index(prf->GetId()) )  
+    if( !olx_is_valid_index(prf->GetId()) )
       return NULL;
     prf->Parent._RemRef(*prf);
     References.Release(prf->GetId());
@@ -238,7 +238,7 @@ void XVarManager::RestoreRef(IXVarReferencer& a, short var_name,
     References.Add(vr);
   }
   else 
-    a.SetVarRef(var_name, NULL);   
+    a.SetVarRef(var_name, NULL);
   for( size_t i=0; i < References.Count(); i++ )
     References[i].SetId(i);
 }
@@ -297,10 +297,15 @@ double XVarManager::GetParam(const IXVarReferencer& ca, short var_index,
   double val) const
 {
   const XVarReference* vr = ca.GetVarRef(var_index);
-  if( vr == NULL )  return val;
-  if( vr->relation_type == relation_None )
-    return 10 + val;  // shelxl pecularity
-  if( vr->relation_type == relation_AsVar )
+  if (vr == NULL)  return val;
+  if (vr->relation_type == relation_None) {
+    const TCAtom *a = dynamic_cast<const TCAtom *>(&ca);
+    if (a != NULL && var_index >= catom_var_name_X && var_index <= catom_var_name_Z)
+      return 10 + val;  // shelxl pecularity
+    else
+      return olx_sign(val)*(olx_abs(val)+10);
+  }
+  if (vr->relation_type == relation_AsVar)
     return (vr->Parent.GetId()+1)*10+vr->coefficient;
   return -((vr->Parent.GetId()+1)*10+vr->coefficient);
   return 0;
@@ -372,18 +377,33 @@ void XVarManager::Describe(TStrList& lst)  {
   }
   for (size_t i=1; i < Vars.Count(); i++) {
     if (Vars[i]._RefCount() < 2) continue;
-    olxstr &l = lst.Add(' ');
+
+    olxdict<double, TPtrList<XVarReference>, TPrimitiveComparator>
+      avd;
     for (size_t j=0; j < Vars[i]._RefCount(); j++) {
-      if (l.Length() > 1) l << '=';
-      if (Vars[i].GetRef(j).relation_type == relation_AsVar) {
-        l << Vars[i].GetRef(j).referencer.GetVarName(
-          Vars[i].GetRef(j).var_index) << '(' <<
-          Vars[i].GetRef(j).referencer.GetIdName() << ")";
+      if (Vars[i].GetRef(j).relation_type == relation_AsVar)
+        avd.Add(Vars[i].GetRef(j).coefficient).Add(Vars[i].GetRef(j));
+      else
+        avd.Add(-Vars[i].GetRef(j).coefficient).Add(Vars[i].GetRef(j));
+    }
+    for (size_t j=0; j < avd.Count(); j++) {
+      olxstr &l = lst.Add(' ');
+      for (size_t k=0; k < avd.GetValue(j).Count(); k++) {
+        XVarReference &vr = *avd.GetValue(j)[k];
+        l << vr.referencer.GetVarName(vr.var_index) << '(' <<
+          vr.referencer.GetIdName() << ")=";
+      }
+      if (avd.GetKey(j) < 0) {
+        if (olx_abs(avd.GetKey(j)+1) < 1e-3)
+          l << "1-FVAR(" << Vars[i].GetId() << ')';
+        else
+          l << (-avd.GetKey(j)) << "*(1-FVAR(" << (Vars[i].GetId()+1) << "))";
       }
       else {
-        l << "1-" << Vars[i].GetRef(1).referencer.GetVarName(
-          Vars[i].GetRef(1).var_index) << "(" <<
-          Vars[i].GetRef(1).referencer.GetIdName() << ')';
+        if (olx_abs(avd.GetKey(j)-1) < 1e-3)
+          l << "FVAR(" << Vars[i].GetId() << ')';
+        else
+          l << avd.GetKey(j) << "*FVAR(" << (Vars[i].GetId()+1) << ')';
       }
     }
   }

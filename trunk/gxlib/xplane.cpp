@@ -130,12 +130,13 @@ const_strlist TXPlane::ToPov(olxdict<TGlMaterial, olxstr,
       vec3d zv = vec3d(),
         n = crdc.normal(GetNormal());
       const mat3f m = GetBasis();
-      for( size_t j=0; j < glp.Vertices.Count(); j++ )  {
+      for (size_t j=0; j < Count(); j++) {
         out.Add("    smooth_triangle {");
         out.Add("     ") << pov::to_str(zv) << pov::to_str(n);
-        out.Add("     ") << pov::to_str(crdc.normal(glp.Vertices[j]*m)) << pov::to_str(n);
+        out.Add("     ") << pov::to_str(crdc.normal(GetAtom(j).crd()-GetCenter()))
+          << pov::to_str(n);
         out.Add("     ") << pov::to_str(
-          crdc.normal(glp.Vertices[j == glp.Vertices.Count()-1 ? 0 : j+1]*m))
+          crdc.normal(GetAtom(j == Count()-1 ? 0 : j+1).crd()-GetCenter()))
           << pov::to_str(n);
         out.Add("     }");
       }
