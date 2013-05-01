@@ -94,8 +94,10 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       URefC = true;
     }
     else if (!DRef  && SL[i].Contains("Disagreeable Reflections")) {
-      i += 4;
-      while (i < SL.Count() && !SL[i].Contains("Bond")) {
+      while (++i < SL.Count() && !SL[i].IsEmpty())
+        ;
+      i += 2;
+      while (++i < SL.Count()) {
         Toks.Strtok(SL[i], ' ');
         if (Toks.Count() < 8) break;
         size_t inc = 0, requiredCount = 8;
@@ -112,7 +114,6 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           LstRef->Deleted = false;
           FDRefs.Add(LstRef);
           Toks.Clear();
-          i++;
         }
       }
       DRef = true;
