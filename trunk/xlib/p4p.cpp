@@ -9,6 +9,7 @@
 
 #include "p4p.h"
 #include "asymmunit.h"
+#include "unitcell.h"
 #include "symmlib.h"
 #include "xmacro.h"
 
@@ -22,22 +23,24 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
   SL.Add(olxstr("TITLE   ") << GetTitle());
   SL.Add(olxstr("CHEM    ") << GetRM().GetUserContentStr());
 
+  TEValueD vol = TUnitCell::CalcVolumeEx(GetAsymmUnit());
   SL.Add("CELL").stream(' ')
     << GetAsymmUnit().GetAxes()[0]
     << GetAsymmUnit().GetAxes()[1]
     << GetAsymmUnit().GetAxes()[2]
     << GetAsymmUnit().GetAngles()[0]
     << GetAsymmUnit().GetAngles()[1]
-    << GetAsymmUnit().GetAngles()[2];
+    << GetAsymmUnit().GetAngles()[2]
+    << vol.GetV();
 
   SL.Add("CELLSD").stream(' ')
-    << GetAsymmUnit().GetZ()
     << GetAsymmUnit().GetAxisEsds()[0]
     << GetAsymmUnit().GetAxisEsds()[1]
     << GetAsymmUnit().GetAxisEsds()[2]
     << GetAsymmUnit().GetAngleEsds()[0]
     << GetAsymmUnit().GetAngleEsds()[1]
-    << GetAsymmUnit().GetAngleEsds()[2];
+    << GetAsymmUnit().GetAngleEsds()[2]
+    << vol.GetE();
 
   SL.Add("MORPH   ") << GetMorph();
   SL.Add("CCOLOR  ") << GetColor();
