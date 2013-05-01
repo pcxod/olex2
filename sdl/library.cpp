@@ -174,6 +174,7 @@ ABasicFunction* TLibrary::FindFunction(const olxstr& name, uint32_t argc)  {
   if( name.IndexOf('.') != InvalidIndex )  {
     TLibrary* searchLib = this;
     TStrList libPath(name, '.') ;
+    if (libPath.IsEmpty()) return NULL;
     for( size_t i=0; i < libPath.Count()-1; i++ )  {
       searchLib = searchLib->GetLibraryByName(libPath[i]);
       if( searchLib == NULL )  break;
@@ -188,6 +189,7 @@ ABasicFunction* TLibrary::FindMacro(const olxstr& name, uint32_t argc)  {
   if( name.IndexOf('.') != InvalidIndex && !name.EndsWith('.') )  {
     TLibrary* searchLib = this;
     TStrList libPath(name, '.');
+    if (libPath.IsEmpty()) return NULL;
     for( size_t i=0; i < libPath.Count()-1; i++ )  {
       searchLib = searchLib->GetLibraryByName(libPath[i]);
       if( !searchLib )  break;
