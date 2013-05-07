@@ -7919,32 +7919,35 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
   if (res != 0) return res;
   // equal? expand further
   for (size_t i=0; i < sz; i++) {
-    if (a[i].GetA() == NULL) continue;
-    TCAtom &atomA = *a[i].GetA()->atom;
-    for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
-      TCAtom::Site &s = atomA.GetAttachedSite(j);
-      if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 3) ||
-        s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
-      {
-        continue;
+    if (a[i].GetA() != NULL) {
+      TCAtom &atomA = *a[i].GetA()->atom;
+      for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
+        TCAtom::Site &s = atomA.GetAttachedSite(j);
+        if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 3) ||
+          s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
+        {
+          continue;
+        }
+        a.Add(new SiteInfo(&s, &s.atom->GetType()));
+        int bo = BondOrder(atomA, s);
+        for (int k=1; k < bo; k++)
+          a.Add(new SiteInfo(NULL, &s.atom->GetType()));
       }
-      a.Add(new SiteInfo(&s, &s.atom->GetType()));
-      int bo = BondOrder(atomA, s);
-      for (int k=1; k < bo; k++)
-        a.Add(new SiteInfo(NULL, &s.atom->GetType()));
     }
-    TCAtom &atomB = *b[i].GetA()->atom;
-    for (size_t j=0; j < atomB.AttachedSiteCount(); j++) {
-      TCAtom::Site &s = atomB.GetAttachedSite(j);
-      if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 2) ||
-        s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
-      {
-        continue;
+    if (b[i].GetA() != NULL) {
+      TCAtom &atomB = *b[i].GetA()->atom;
+      for (size_t j=0; j < atomB.AttachedSiteCount(); j++) {
+        TCAtom::Site &s = atomB.GetAttachedSite(j);
+        if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 2) ||
+          s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
+        {
+          continue;
+        }
+        b.Add(new SiteInfo(&s, &s.atom->GetType()));
+        int bo = BondOrder(atomB, s);
+        for (int k=1; k < bo; k++)
+          b.Add(new SiteInfo(NULL, &s.atom->GetType()));
       }
-      b.Add(new SiteInfo(&s, &s.atom->GetType()));
-      int bo = BondOrder(atomB, s);
-      for (int k=1; k < bo; k++)
-        b.Add(new SiteInfo(NULL, &s.atom->GetType()));
     }
   }
   if (!a.IsEmpty()) {
