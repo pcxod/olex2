@@ -138,7 +138,7 @@ protected:
   mutable Buffer *SData;  // do not have much choice with c_str ...
   void IncLength(size_t len)  {  _Length += len;  }
   void DecLength(size_t len)  {  _Length -= len;  }
-  size_t GetCapacity()  const {  return SData->Length;  }
+  size_t GetCapacity()  const {  return SData == NULL ? 0 : SData->Length;  }
   size_t _Increment, _Length;
   mutable size_t _Start;
   TTIString() {}
@@ -169,8 +169,11 @@ public:
     _Increment = 8;
   }
   virtual ~TTIString() {
-    if( SData != NULL && --SData->RefCnt == 0 )
+    if (SData != NULL && --SData->RefCnt == 0) {
       delete SData;
+      SData = NULL;
+      _Length = 0;
+    }
   }
   // might not have '\0' char, to be used with Length or RawLen (char count)
   T * raw_str() const { return ((SData == NULL) ? NULL : &SData->Data[_Start]);  }

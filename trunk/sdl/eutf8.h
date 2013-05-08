@@ -28,7 +28,11 @@ http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451/
 class TUtf8  {
   olxcstr (*EncodeFunc)(const void* arr, size_t len);
   olxwstr (*DecodeFunc)(const char* arr, size_t len);
-  static TUtf8 Instance;
+  static TUtf8& GetInstance() {
+    static TUtf8 i_;
+    return i_;
+  }
+
 protected:
   TUtf8()  {
     short sz = sizeof(wchar_t);
@@ -44,33 +48,36 @@ protected:
 public:
   static inline olxcstr Encode(const olxcstr& str)  {  return str;  }
   static inline olxcstr Encode(const olxwstr& str)  {
-    return (*Instance.EncodeFunc)(str.raw_str(), str.Length());  
+    return (*GetInstance().EncodeFunc)(str.raw_str(), str.Length());
   }
   static inline olxcstr Encode(const TTIString<wchar_t>& str)  {
-    return (*Instance.EncodeFunc)(str.raw_str(), str.Length());
+    return (*GetInstance().EncodeFunc)(str.raw_str(), str.Length());
   }
   static inline olxcstr Encode(const wchar_t* wstr)  {
-    return (*Instance.EncodeFunc)(wstr, olxstr::o_strlen(wstr));
+    return (*GetInstance().EncodeFunc)(wstr, olxstr::o_strlen(wstr));
   }
   static inline olxcstr Encode(const wchar_t* wstr, size_t len)  {
-    return (*Instance.EncodeFunc)(wstr, len);
-  }
-  
-  static inline olxwstr Decode(const olxwstr& str)  {  return str;  }
-  static inline olxwstr Decode(const olxcstr& str)  {
-    return (*Instance.DecodeFunc)(str.raw_str(), str.Length());
-  }
-  static inline olxwstr Decode(const TTIString<char>& str)  {
-    return (*Instance.DecodeFunc)(str.raw_str(), str.Length());
-  }
-  static inline olxwstr Decode(const char* str)  {
-    return (*Instance.DecodeFunc)(str, olxstr::o_strlen(str));
-  }
-  static inline olxwstr Decode(const char* str, size_t len) {
-    return (*Instance.DecodeFunc)(str, len);
+    return (*GetInstance().EncodeFunc)(wstr, len);
   }
 
-  const static uint32_t FileSignature;
+  static inline olxwstr Decode(const olxwstr& str)  {  return str;  }
+  static inline olxwstr Decode(const olxcstr& str)  {
+    return (*GetInstance().DecodeFunc)(str.raw_str(), str.Length());
+  }
+  static inline olxwstr Decode(const TTIString<char>& str)  {
+    return (*GetInstance().DecodeFunc)(str.raw_str(), str.Length());
+  }
+  static inline olxwstr Decode(const char* str)  {
+    return (*GetInstance().DecodeFunc)(str, olxstr::o_strlen(str));
+  }
+  static inline olxwstr Decode(const char* str, size_t len) {
+    return (*GetInstance().DecodeFunc)(str, len);
+  }
+
+  static uint32_t& GetFileSignature() {
+    static uint32_t FileSignature = 0x00BFBBEF;
+    return FileSignature;
+  }
 
 protected:  // functions below are unsafe to use if wchar_t size is unknown!!
   static olxcstr Encode2(const void* vinput, size_t len)  {

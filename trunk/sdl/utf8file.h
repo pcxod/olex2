@@ -21,7 +21,7 @@ protected:
     if (io.GetSize() >= 3)  {
       uint32_t header = 0;
       io.Read(&header, 3);
-      if (header != TUtf8::FileSignature)  {
+      if (header != TUtf8::GetFileSignature())  {
         if (check_header) return false;
         else
           io.SetPosition(0);
@@ -52,12 +52,12 @@ protected:
 public:
   // pointer must be deleted
   static TUtf8File* Create(const olxstr& name, bool write_header=true)  {
-    TUtf8File* file = new TUtf8File(name, "w+b");  
+    TUtf8File* file = new TUtf8File(name, "w+b");
     if( write_header )
-      ((TEFile*)file)->Write(&TUtf8::FileSignature, 3);
+      ((TEFile*)file)->Write(&TUtf8::GetFileSignature(), 3);
     return file;
   }
-  
+
   // creates/opens, positioned at the begining
   static olx_object_ptr<TUtf8File> Open(
     const olxstr& name, const olxstr &attr, bool CheckHeader)
@@ -71,7 +71,7 @@ public:
   {
     TUtf8File file(name, "w+b");  
     if( write_header )
-      ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
+      ((TEFile&)file).Write(&TUtf8::GetFileSignature(), 3);
     file.Write(data);
   }
 
@@ -149,7 +149,7 @@ public:
   {
     TUtf8File file(fn, "w+b");
     if( WriteHeader )
-      ((TEFile&)file).Write(&TUtf8::FileSignature, 3);
+      ((TEFile&)file).Write(&TUtf8::GetFileSignature(), 3);
     for( size_t i=0; i < list.Count(); i++ )
       file.Writeln(list[i]);
   }

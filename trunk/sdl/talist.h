@@ -97,8 +97,11 @@ public:
 //..............................................................................
   //destructor - beware t40: error: expecthe objects are deleted!
   virtual ~TArrayList()  {
-    if( Items != NULL )
+    if (Items != NULL) {
       delete [] Items;
+      Items = NULL;
+      FCount = FCapacity = 0;
+    }
   }
 //..............................................................................
   //deletes the objects and clears the list
