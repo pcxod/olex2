@@ -26,7 +26,7 @@ namespace PlaneSort {
       olx_plane::Sort(sortedPlane, ListAccessor(sortedPlane), sp.GetCenter(),
         sp.GetNormal());
     }
-    
+
     struct PointAccessor {
       const vec3d &operator() (
         const AnAssociation2<vec3d, TSAtom*> &p) const
@@ -50,7 +50,7 @@ namespace PlaneSort {
     static void DoSort(const TSAtomPList& atoms,
       // tag dependent translations
       const olxdict<index_t, vec3d, TPrimitiveComparator>& transforms,
-      vec3d& center, const vec3d& normal, TSAtomPList& output)
+      const vec3d& center, const vec3d& normal, TSAtomPList& output)
     {
       if (atoms.IsEmpty())
         throw TInvalidArgumentException(__OlxSourceInfo, "atom list");

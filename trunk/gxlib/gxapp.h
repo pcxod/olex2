@@ -769,7 +769,7 @@ public:     void CalcProbFactor(float Prob);
   /* function undoes hiding of objects */
   void undoHide(TUndoData *data);
 
-  void SynchroniseBonds(TXAtomPList& XAtoms);
+  void SynchroniseBonds(const TXAtomPList& XAtoms);
   /* Saves only structure specific style as well as the scene properties.
   Three items will be added to the 'item' - Style, Scene and ICollections. The
   latter is important for restoring properties of individual atoms/bonds etc

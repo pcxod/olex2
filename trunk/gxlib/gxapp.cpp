@@ -3678,7 +3678,7 @@ size_t TGXApp::GetNextAvailableLabel(const olxstr& AtomType) {
   return nextLabel+1;
 }
 //..............................................................................
-void TGXApp::SynchroniseBonds(TXAtomPList& xatoms)  {
+void TGXApp::SynchroniseBonds(const TXAtomPList& xatoms)  {
   TXBondPList xbonds;
   for( size_t i=0; i < xatoms.Count(); i++ )
     xbonds.AddList(xatoms[i]->GetBonds(), StaticCastAccessor<TXBond>());
