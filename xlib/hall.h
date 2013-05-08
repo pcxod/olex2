@@ -22,33 +22,50 @@ protected:
     int rot_id;
     vec3d t;
   };
-  static void init();
-  static TTypeList<AnAssociation2<vec3d, olxstr> > trans;
+  void init();
+  TTypeList<AnAssociation2<vec3d, olxstr> > trans;
   //const TTypeList<AnAssociation2<mat3d, olxstr> > rotations;
-  static TTypeList<AnAssociation2<int,olxstr> >
+  TTypeList<AnAssociation2<int,olxstr> >
     rotx, roty, rotz, rotx1, roty1, rotz1, rot3;
-  static olxstr_dict<int> r_dict;
-  static olxstr_dict<vec3d*> t_dict;
-  static olxstr FindT(const vec3d& t, int order);
-  static olxstr FindTR(const vec3d& t, int order);
-  static int FindR(olxstr& hs, TTypeList<symop>& matrs,
-    const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full);
-  static vec3d get_screw_axis_t(int dir, int order);
+  olxstr_dict<int> r_dict;
+  olxstr_dict<vec3d*> t_dict;
+  olxstr FindT(const vec3d& t, int order) const;
+  olxstr FindTR(const vec3d& t, int order) const;
+  int FindR(olxstr& hs, TTypeList<symop>& matrs,
+    const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full) const;
+  vec3d get_screw_axis_t(int dir, int order) const;
   // dir - 1 for x, 2 for y, 3 for z, which - ' or "
-  static int find_diagonal(int dir, olxch which);
+  int find_diagonal(int dir, olxch which) const;
+  static HallSymbol &GetInstance() {
+    static HallSymbol i_;
+    i_.init();
+    return i_;
+  }
+  olxstr Evaluate_(int latt, const smatd_list& matrices) const;
+  olxstr EvaluateEx_(int latt, const smatd_list& matrices) const;
+  olxstr Evaluate_(const SymmSpace::Info& si) const;
+  SymmSpace::Info Expand_(const olxstr &hs) const;
 public:
   // a compact list of matrices is taken
-  static olxstr Evaluate(int latt, const smatd_list& matrices);
+  static olxstr Evaluate(int latt, const smatd_list& matrices) {
+    return GetInstance().Evaluate_(latt, matrices);
+  }
   /* a compact list of matrices is taken, expanded and compacted again -
   sometimes the asymmetric unit will have inversion expanded
   */
-  static olxstr EvaluateEx(int latt, const smatd_list& matrices);
+  static olxstr EvaluateEx(int latt, const smatd_list& matrices) {
+    return GetInstance().EvaluateEx_(latt, matrices);
+  }
   // takes full list of matrices
   static olxstr Evaluate(const smatd_list& matrices) {
     return Evaluate(SymmSpace::GetInfo(matrices));
   }
-  static olxstr Evaluate(const SymmSpace::Info& si);
-  static SymmSpace::Info Expand(const olxstr &hs);
+  static olxstr Evaluate(const SymmSpace::Info& si) {
+    return GetInstance().Evaluate_(si);
+  }
+  static SymmSpace::Info Expand(const olxstr &hs) {
+    return GetInstance().Expand_(hs);
+  }
 };
 
 EndXlibNamespace()

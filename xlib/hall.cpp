@@ -11,20 +11,9 @@
 #include "symmlib.h"
 #include "symmparser.h"
 
-TTypeList<AnAssociation2<vec3d, olxstr> > HallSymbol::trans;
-TTypeList<AnAssociation2<int,olxstr> >
-  HallSymbol::rotx,
-  HallSymbol::roty,
-  HallSymbol::rotz,
-  HallSymbol::rotx1,
-  HallSymbol::roty1,
-  HallSymbol::rotz1,
-  HallSymbol::rot3;
-olxstr_dict<int> HallSymbol::r_dict;
-olxstr_dict<vec3d*> HallSymbol::t_dict;
 //.............................................................................
 void HallSymbol::init()  {
-  if( trans.IsEmpty() )  {
+  if (trans.IsEmpty())  {
     trans.AddNew(vec3d(0.5, 0, 0), "a");
     trans.AddNew(vec3d(0, 0.5, 0), "b");
     trans.AddNew(vec3d(0, 0, 0.5), "c");
@@ -74,7 +63,7 @@ void HallSymbol::init()  {
   }
 }
 //.............................................................................
-olxstr HallSymbol::FindT(const vec3d& t, int order)  {
+olxstr HallSymbol::FindT(const vec3d& t, int order) const {
   for( size_t j=0; j < trans.Count(); j++ )  {
     if( trans[j].GetA().QDistanceTo(t) < 1e-6 )
       return trans[j].GetB();
@@ -97,7 +86,7 @@ olxstr HallSymbol::FindT(const vec3d& t, int order)  {
   return olxstr(" (") << t[0]*m << ' ' << t[1]*m << ' ' << t[2]*m << ')';
 }
 //.............................................................................
-olxstr HallSymbol::FindTR(const vec3d& t, int order)  {
+olxstr HallSymbol::FindTR(const vec3d& t, int order) const {
   const double v = t[0] != 0 ? t[0] : (t[1] != 0 ? t[1] : t[2]);
   if( v == 0 )  return EmptyString();
   if( order <= 2 || t.Length() != v )
@@ -128,7 +117,7 @@ olxstr HallSymbol::FindTR(const vec3d& t, int order)  {
 }
 //.............................................................................
 int HallSymbol::FindR(olxstr& hs, TTypeList<symop>& matrs,
-    const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full)
+    const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full) const
 {
   int previous = 0;
   for( size_t i=0; i < rot.Count(); i++ )  {
@@ -160,15 +149,13 @@ int HallSymbol::FindR(olxstr& hs, TTypeList<symop>& matrs,
   return previous;
 }
 //.............................................................................
-olxstr HallSymbol::EvaluateEx(int latt_, const smatd_list& matrices_) {
-  init();
+olxstr HallSymbol::EvaluateEx_(int latt_, const smatd_list& matrices_) const {
   smatd_list all_matrices;
   TSymmLib::GetInstance().ExpandLatt(all_matrices, matrices_, latt_);
   return Evaluate(SymmSpace::GetInfo(all_matrices));
 }
 //.............................................................................
-olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices) {
-  init();
+olxstr HallSymbol::Evaluate_(int latt, const smatd_list& matrices) const {
   olxstr hs;
   if( latt > 0 )  hs << '-';
   hs << TCLattice::SymbolForLatt(olx_abs(latt));
@@ -203,8 +190,7 @@ olxstr HallSymbol::Evaluate(int latt, const smatd_list& matrices) {
   return hs;
 }
 //..........................................................................................
-olxstr HallSymbol::Evaluate(const SymmSpace::Info& si)  {
-  init();
+olxstr HallSymbol::Evaluate_(const SymmSpace::Info& si) const {
   olxstr hs = Evaluate(si.centrosymmetric ? si.latt : -si.latt,
     si.matrices);
   // explicit inversion
@@ -216,13 +202,13 @@ olxstr HallSymbol::Evaluate(const SymmSpace::Info& si)  {
   return hs;
 }
 //.............................................................................
-vec3d HallSymbol::get_screw_axis_t(int dir, int order) {
+vec3d HallSymbol::get_screw_axis_t(int dir, int order) const {
   vec3d rv;
   rv[dir-1] = (double)order/12;
   return rv;
 }
 //.............................................................................
-int HallSymbol::find_diagonal(int axis, olxch which) {
+int HallSymbol::find_diagonal(int axis, olxch which) const {
   int index = which == '\'' ? 0 : 1;
   if (axis == 1)  return rotx1[index].GetA();
   if (axis == 2)  return roty1[index].GetA();
@@ -231,7 +217,7 @@ int HallSymbol::find_diagonal(int axis, olxch which) {
     olxstr("axis direction: ") << axis << ", which: " << which);
 }
 //.............................................................................
-SymmSpace::Info HallSymbol::Expand(const olxstr &_hs) {
+SymmSpace::Info HallSymbol::Expand_(const olxstr &_hs) const {
   smatdd change_of_basis;
   change_of_basis.r.I();
   SymmSpace::Info info;
