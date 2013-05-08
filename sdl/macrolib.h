@@ -49,7 +49,13 @@ class TEMacroLib {
   uint8_t LogLevel;
   static olxstr_dict<void (*)(
     exparse::evaluator<exparse::expression_tree> *t,
-    TMacroError& E, const TStrList &argv)> builtins;
+    TMacroError& E, const TStrList &argv)>& GetBuiltins()
+  {
+    static olxstr_dict<void (*)(
+      exparse::evaluator<exparse::expression_tree> *t,
+      TMacroError& E, const TStrList &argv)> b_;
+    return b_;
+  }
   static olxstr SubstituteArgs(const olxstr &arg, const TStrList &argv,
     const olxstr &location=EmptyString());
 protected:

@@ -120,9 +120,9 @@ olxstr TEMacroLib::ProcessEvaluator(
 {
   me.GetStack().Push(e->ToStringBuffer());
   olxstr name = e->evator == NULL ? e->data : e->evator->name;
-  size_t bi_ind = builtins.IndexOf(name);
+  size_t bi_ind = GetBuiltins().IndexOf(name);
   if (bi_ind != InvalidIndex && e->evator != NULL) {
-    (*builtins.GetValue(bi_ind))(e->evator, me, argv);
+    (*GetBuiltins().GetValue(bi_ind))(e->evator, me, argv);
   }
   else {
     ABasicFunction *f = FindEvaluator(e, name);
@@ -214,18 +214,15 @@ TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
 }
 //.............................................................................
 //.............................................................................
-olxstr_dict<void (*)(
-  exparse::evaluator<exparse::expression_tree> *t,
-  TMacroError& E, const TStrList &argv)> TEMacroLib::builtins;
 //.............................................................................
 TEMacroLib::TEMacroLib(olex::IOlexProcessor& olexProcessor)
   : OlexProcessor(olexProcessor), LogLevel(macro_log_macro)
 {
-  if (builtins.IsEmpty()) {
-    builtins.Add("if", &TEMacroLib::funIF);
-    builtins.Add("and", &TEMacroLib::funAnd);
-    builtins.Add("or", &TEMacroLib::funOr);
-    builtins.Add("not", &TEMacroLib::funNot);
+  if (GetBuiltins().IsEmpty()) {
+    GetBuiltins().Add("if", &TEMacroLib::funIF);
+    GetBuiltins().Add("and", &TEMacroLib::funAnd);
+    GetBuiltins().Add("or", &TEMacroLib::funOr);
+    GetBuiltins().Add("not", &TEMacroLib::funNot);
   }
 }
 //.............................................................................

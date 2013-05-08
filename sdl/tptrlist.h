@@ -87,7 +87,11 @@ public:
       Set(i, list[i]);
   }
 //..............................................................................
-  virtual ~TPtrList()  {  olx_free(Items);  }
+  virtual ~TPtrList()  {
+    olx_free(Items);
+    Items = NULL;
+    FCount = FCapacity = 0;
+  }
 //..............................................................................
   //deletes the objects and clears the list
   inline void Clear()  {  
