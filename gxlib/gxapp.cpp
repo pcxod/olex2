@@ -1777,16 +1777,22 @@ ConstPtrList<TXBond> TGXApp::GetXBonds(const olxstr& BondName)  {
   return res;
 }
 //..............................................................................
-TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
-  if( AtomName.Equalsi("sel" ) )  {
+TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection) {
+  if (AtomName.Equalsi("sel")) {
     TXAtomPList L = GetSelectedXAtoms(clearSelection);
-    if( L.Count() != 1 )  return NULL;
+    if (L.Count() != 1) return NULL;
     return L[0];
   }
+  else if (AtomName.StartsFrom("#s")) {  // SAtom.LatId
+    const size_t id = AtomName.SubStringFrom(2).ToSizeT();
+    if (id < XFile().GetLattice().GetObjects().atoms.Count()) {
+      return &dynamic_cast<TXAtom&>(XFile().GetLattice().GetObjects().atoms[id]);
+    }
+  }
   AtomIterator ai(*this);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if( xa.GetLabel().Equalsi(AtomName) )
+    if (xa.GetLabel().Equalsi(AtomName))
       return &xa;
   }
   return NULL;
@@ -1989,11 +1995,12 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name, bool CheckLabel)  {
   //NameHydrogens(XA.Atom(), undo, CheckLabel);
   if( checkBonds )  CheckQBonds(XA);
   if( recreate )  {
-    XA.GetPrimitives().RemoveObject(XA);
-    XA.Create();
-    TXAtomPList atoms;
-    atoms.Add(XA);
-    SynchroniseBonds(atoms);
+    AGDObjList objects = XA.GetPrimitives().GetObjects();
+    XA.GetPrimitives().ClearObjects();
+    for (size_t i=0; i < objects.Count(); i++) {
+      objects[i]->Create();
+    }
+    SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
   }
   UpdateDuplicateLabels();
   return undo;
@@ -2012,9 +2019,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
   TXAtomPList Atoms = FindXAtoms(From, ClearSelection),
     ChangedAtoms;
   // leave only AU atoms
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->SetTag(Atoms[i]->IsAUAtom() ? 1 : 0);
-  Atoms.Pack(ACollectionItem::TagAnalyser(0));
+  Atoms.ForEach(ACollectionItem::IndexTagSetter());
+  Atoms.Pack(ACollectionItem::IndexTagAnalyser());
   if( From.Equalsi("sel") && To.IsNumber() )  {
     int j = To.ToInt();
     for( size_t i=0; i < Atoms.Count(); i++ )  {
@@ -2118,12 +2124,16 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
       }
     }
   }
+  AGDObjList objects;
   for( size_t i=0; i < ChangedAtoms.Count(); i++ )  {
     XA = ChangedAtoms[i];
-    XA->GetPrimitives().RemoveObject(*XA);
-    XA->Create();
+    objects.AddList(XA->GetPrimitives().GetObjects());
+    XA->GetPrimitives().ClearObjects();
   }
-  SynchroniseBonds(ChangedAtoms);
+  for (size_t i=0; i < objects.Count(); i++) {
+    objects[i]->Create();
+  }
+  SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
   UpdateDuplicateLabels();
   return undo;
 }
