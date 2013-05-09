@@ -245,6 +245,7 @@ namespace cif_dp {
     TStrPObjList<olxstr, ICifEntry*> params;
     CifBlock* parent;
     CifBlock(const CifBlock& v);
+    // if parent is not NULL, creates save_ rather than data_
     CifBlock(const olxstr& _name, CifBlock* _parent=NULL)
       : name(_name), parent(_parent)  {}
     virtual ~CifBlock();
@@ -288,7 +289,7 @@ namespace cif_dp {
     };
     bool ExtractLoop(size_t& start, parse_context& context);
     static bool IsLoopBreaking(const olxstr& v)  {
-      return v.StartsFrom('_') || v.StartsFromi("loop_") || 
+      return v.StartsFrom('_') || v.StartsFromi("loop_") ||
         v.StartsFromi("data_") || v.StartsFromi("save_");
     }
   public:
@@ -304,9 +305,10 @@ namespace cif_dp {
       TStrList out;
       return SaveToStrings(out);
     }
-    //Finds a value by name
-    inline size_t Count() const {  return data.Count();  }
+    // number of data blocks
+    size_t Count() const {  return data.Count();  }
     CifBlock& operator [] (size_t i) const {  return data[i];  }
+    // if parent is not null - it is save_ rather than data_ block
     CifBlock& Add(const olxstr& name, CifBlock* parent=NULL)  {
       const size_t i = data_map.IndexOf(name);
       if( i != InvalidIndex )
@@ -314,6 +316,7 @@ namespace cif_dp {
       else
         return *data_map.Add(name, &data.Add(new CifBlock(name, parent)));
     }
+    //Finds a value by name
     CifBlock* Find(const olxstr& data_name) const {
       return data_map.Find(data_name, NULL);
     }

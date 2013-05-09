@@ -45,7 +45,7 @@ TBasicCFile::~TBasicCFile()  {
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
   TStrList L;
   SaveToStrings(L);
-  TUtf8File::WriteLines(fn, L, false); 
+  TUtf8File::WriteLines(fn, L, false);
   FileName = fn;
 };
 //..............................................................................

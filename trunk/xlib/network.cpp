@@ -37,6 +37,7 @@ void TNetwork::SortNodes()  {
 }
 //..............................................................................
 void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Frags)  {
+  objects.atoms.ForEach(ACollectionItem::TagSetter(1));
   const size_t ac = objects.atoms.Count();
   for( size_t i=0; i < ac; i++ )  {
     TSAtom& A1 = objects.atoms[i];
@@ -59,7 +60,7 @@ void TNetwork::CreateBondsAndFragments(ASObjectProvider& objects, TNetPList& Fra
             B.SetType(sotBond);
             B.SetA(A2); 
             B.SetB(A3);
-            A2.AddBond(B);  
+            A2.AddBond(B);
             A3.AddBond(B);
             Net->AddBond(B);
             A3.SetTag(0);
@@ -84,13 +85,12 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
   const double cos_th = cos(TXApp::GetMinHBondAngle()*M_PI/180);
   const TUnitCell& uc = Lattice->GetUnitCell();
   const size_t ac = objects.atoms.Count();
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i=0; i < ac; i++) {
     TSAtom& sa = objects.atoms[i];
     sa.ClearBonds();
     sa.ClearNodes();
-    sa.SetTag(1);
-    if( sa.IsDeleted() )  continue;
-    for( size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++ )  {
+    if (sa.IsDeleted()) continue;
+    for (size_t j=0; j < sa.CAtom().AttachedSiteCount(); j++) {
       TCAtom::Site& site = sa.CAtom().GetAttachedSite(j);
       const smatd m = uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
@@ -100,24 +100,18 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
     }
   }
   // in second pass - Nodes have to get initialised
-  SortedObjectList<int, TPrimitiveComparator> allowed;
-  allowed.Add(iNitrogenZ);
-  allowed.Add(iOxygenZ);
-  allowed.Add(iFluorineZ);
-  allowed.Add(iChlorineZ);
-  allowed.Add(iSulphurZ);
-  allowed.Add(iBromineZ);
-  allowed.Add(iSeleniumZ);
-  for( size_t i=0; i < ac; i++ )  {
+  SortedObjectList<int, TPrimitiveComparator> &from = TXApp::GetInteractionsFrom();
+  SortedObjectList<int, TPrimitiveComparator> &to = TXApp::GetInteractionsTo();
+  objects.atoms.ForEach(ACollectionItem::TagSetter(0));
+  for (size_t i=0; i < ac; i++) {
     TSAtom& sa = objects.atoms[i];
-    if( sa.IsDeleted() )  continue;
+    if (sa.IsDeleted() || sa.GetTag() != 0) continue;
     const cm_Element& thisT = sa.GetType();
-    //if( thisT != iHydrogenZ )  continue;
+    if (!from.Contains(thisT.z))  continue;
     for( size_t j=0; j < sa.CAtom().AttachedSiteICount(); j++ )  {
       TCAtom::Site& site = sa.CAtom().GetAttachedSiteI(j);
       const cm_Element& thatT = site.atom->GetType();
-      if (!allowed.Contains(thatT.z))
-        continue;
+      if (!to.Contains(thatT.z)) continue;
       const smatd m = sa.GetMatrix().IsFirst() ? site.matrix :
         uc.MulMatrix(site.matrix, sa.GetMatrix());
       TSAtom* a = objects.atomRegistry.Find(
@@ -132,6 +126,7 @@ void TNetwork::Disassemble(ASObjectProvider& objects, TNetPList& Frags)  {
         }
       }
       if (a != NULL) {
+        a->SetTag(1);
         bool process = true;
         double min_cs = cos_th;
         for( size_t k=0; k < sa.NodeCount(); k++ )  {
