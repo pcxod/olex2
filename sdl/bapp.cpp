@@ -83,8 +83,7 @@ olxstr TBasicApp::GetModuleName() {
     if (HasInstance())
       name = TEFile::ExpandRelativePath(name, GetBaseDir());
     else {
-      printf("NAME: %s\n", name.c_str());
-      TEFile::AddPathDelimeter(TEFile::CurrentDir()) << name;
+      name = TEFile::ExpandRelativePath(name, TEFile::CurrentDir());
     }
   }
 #endif

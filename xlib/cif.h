@@ -169,8 +169,16 @@ public:
       block_index = i;
     _LoadCurrent();
   }
-  void SetCurrentBlock(const olxstr& block_name)  {
+  /* Sets current block and creates if specified to in the case the block does
+  not exist. When a block is created, parent can be used to create save_blocks
+  */
+  void SetCurrentBlock(const olxstr& block_name, bool create=false,
+    cif_dp::CifBlock *parent=NULL)
+  {
     cif_dp::CifBlock* cb = data_provider.Find(block_name);
+    if (cb == NULL && create) {
+      cb = &data_provider.Add(block_name, parent);
+    }
     block_index = data_provider.IndexOf(*cb);
     _LoadCurrent();
   }

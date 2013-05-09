@@ -67,6 +67,10 @@ protected:
   double min_hbond_angle;
   bool min_hbond_angle_i;
   bool safe_afix, safe_afix_i;
+  bool interactions_i;
+  SortedObjectList<int, TPrimitiveComparator> interactions_from,
+    interactions_to;
+  void InitInteractions();
 protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
   void ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last);
@@ -189,6 +193,9 @@ public:
   static bool DoPreserveFVARs();
   // if true - AFIX are validated adter naming, deleting and HADD
   static bool DoUseSafeAfix();
+  // used in the analysis of what short interactions to display
+  static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsFrom();
+  static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsTo();
 
   static const_strlist BangList(const TSAtom &A);
   static void BangTable(const TSAtom& A, TTTable<TStrList>& Table);

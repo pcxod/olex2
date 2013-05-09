@@ -32,6 +32,7 @@ TXApp::TXApp(const olxstr &basedir, bool)
   preserve_fvars_i = false;
   safe_afix = true;
   safe_afix_i = false;
+  interactions_i = false;
 }
 //..............................................................................
 TXApp::TXApp(const olxstr &basedir, ASObjectProvider* objectProvider,
@@ -969,6 +970,47 @@ bool TXApp::DoUseSafeAfix() {
     a.safe_afix_i = true;
     return a.safe_afix;
   }
+}
+//..............................................................................
+void TXApp::InitInteractions() {
+  if (interactions_i)
+    return;
+  TStrList toks(TBasicApp::GetInstance().GetOptions()
+    .FindValue("interactions_from", "H"), ',');
+  for (size_t i=0; i < toks.Count(); i++) {
+    cm_Element *e = XElementLib::FindBySymbol(toks[i]);
+    if (e == NULL) {
+      TBasicApp::NewLogEntry() << "interactions_from, invalid symbol: " <<
+        toks[i];
+    }
+    else
+      interactions_from.AddUnique(e->z);
+  }
+  toks.Clear();
+  toks.Strtok(TBasicApp::GetInstance().GetOptions()
+    .FindValue("interactions_to", "N,O,F,Cl,S,Br,Se"), ',');
+  for (size_t i=0; i < toks.Count(); i++) {
+    cm_Element *e = XElementLib::FindBySymbol(toks[i]);
+    if (e == NULL) {
+      TBasicApp::NewLogEntry() << "interactions_to, invalid symbol: " <<
+        toks[i];
+    }
+    else
+      interactions_to.AddUnique(e->z);
+  }
+  interactions_i = true;
+}
+//..............................................................................
+SortedObjectList<int, TPrimitiveComparator>& TXApp::GetInteractionsFrom() {
+  TXApp &a = GetInstance();
+  a.InitInteractions();
+  return a.interactions_from;
+}
+//..............................................................................
+SortedObjectList<int, TPrimitiveComparator>& TXApp::GetInteractionsTo() {
+  TXApp &a = GetInstance();
+  a.InitInteractions();
+  return a.interactions_to;
 }
 //..............................................................................
 const_strlist TXApp::BangList(const TSAtom& A)  {

@@ -179,7 +179,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "f-creates final CIF with embedded RES file and HKL loop",
     fpAny|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)");
-  xlib_InitMacro(CifExtract, EmptyString(), fpTwo|psFileLoaded,
+  xlib_InitMacro(CifExtract,
+    "i-a custom CIF with items to extract [etc/CIF/extract.cif]",
+    fpOne|fpTwo|psFileLoaded,
     "extract a list of items from one cif to another");
   xlib_InitMacro(CifCreate, EmptyString(), fpNone|psFileLoaded,
     "Creates cif from current file, variance-covariance matrix should be "
@@ -3780,41 +3782,49 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   TXApp& xapp = TXApp::GetInstance();
-  olxstr Dictionary = Cmds[0];
-  if( !TEFile::Exists(Dictionary) )  {  // check if the dictionary exists
-    Dictionary = xapp.GetCifTemplatesDir();  Dictionary << Cmds[0];
-    if( !TEFile::Exists(Dictionary) )  {
+  olxstr items_file = Options.FindValue("i");
+  if (items_file.IsEmpty() || !TEFile::Exists(items_file)) {  // check if the dictionary exists
+    items_file = xapp.GetCifTemplatesDir() + "extract.cif";
+    if (!TEFile::Exists(items_file)) {
       Error.ProcessingError(__OlxSrcInfo, "dictionary file does not exists");
       return;
     }
   }
-  TCif In,  Out, *Cif, Cif1;
-  if( xapp.CheckFileType<TCif>() )
-    Cif = &xapp.XFile().GetLastLoader<TCif>();
-  else  {
-    olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists(cifFN) )  {
-      Cif1.LoadFromFile(cifFN);
-    }
-    else
-      throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
+  TCif items;
+  items.LoadFromFile(items_file);
+
+  TCif *Cif, Cif1;
+  if (Cmds.Count() == 2) { // in -> out
+    Cif1.LoadFromFile(Cmds[0]);
     Cif = &Cif1;
   }
-  // dictionary does not have cell etc - so it should fail to initialise
-  try  {  In.LoadFromFile(Dictionary);  }
-  catch( TExceptionBase& )  {}
-
-  for( size_t i=0; i < In.ParamCount(); i++ )  {
-    cif_dp::ICifEntry* CifData = Cif->FindParam<cif_dp::ICifEntry>(
-      In.ParamName(i));
-    if( CifData != NULL )
-      Out.SetParam(*CifData);
+  else {
+    if (xapp.CheckFileType<TCif>())
+      Cif = &xapp.XFile().GetLastLoader<TCif>();
+    else {
+      olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
+      if (TEFile::Exists(cifFN))  {
+        Cif1.LoadFromFile(cifFN);
+        Cif = &Cif1;
+      }
+      else {
+        Error.ProcessingError(__OlxSrcInfo, "could not locate source file");
+      }
+    }
   }
-  try  {  Out.SaveToFile(Cmds[1]);  }
-  catch( TExceptionBase& )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not save file: ") << Cmds[1];
-    return;
+  using namespace cif_dp;
+  items.RenameCurrentBlock("extract");
+  cif_dp::TCifDP out_dp;
+  CifBlock& out = out_dp.Add("extract");
+  for (size_t i=0; i < items.ParamCount(); i++) {
+    ICifEntry* CifData =
+      Cif->FindParam<cif_dp::ICifEntry>(items.ParamName(i));
+    if (CifData != NULL)
+      out.Add(CifData->Replicate());
   }
+  TStrList content;
+  TUtf8File::WriteLines(Cmds[Cmds.Count() == 1 ? 0 : 1],
+    out_dp.SaveToStrings(content), false);
 }
 //.............................................................................
 void XLibMacros::macCifCreate(TStrObjList &Cmds, const TParamList &Options,
