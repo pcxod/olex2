@@ -180,14 +180,21 @@ void TCif::SaveToStrings(TStrList& Strings)  {
 }
 //..............................................................................
 olxstr TCif::GetParamAsString(const olxstr &Param) const {
-  if( block_index == InvalidIndex )  return EmptyString();
-  IStringCifEntry* ce = dynamic_cast<IStringCifEntry*>(
-    data_provider[block_index].param_map.Find(Param, NULL));
-  if( ce == NULL || ce->Count() == 0 )
+  if (block_index == InvalidIndex)  return EmptyString();
+  ICifEntry* ce = data_provider[block_index].param_map.Find(Param, NULL);
+  if (ce == NULL)
     return EmptyString();
-  olxstr rv = (*ce)[0];
-  for( size_t i = 1; i < ce->Count(); i++ )
-    rv << '\n' << (*ce)[i];
+  IStringCifEntry* ci = dynamic_cast<IStringCifEntry*>(ce);
+  if (ci == NULL) {
+    TStrList rv;
+    ce->ToStrings(rv);
+    return rv.Text('\n');
+  }
+  if (ci->Count() == 0)
+    return EmptyString();
+  olxstr rv = (*ci)[0];
+  for( size_t i = 1; i < ci->Count(); i++ )
+    rv << '\n' << (*ci)[i];
   return rv;
 }
 //..............................................................................
