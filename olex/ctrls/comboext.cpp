@@ -100,26 +100,24 @@ void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
 }
 //..............................................................................
 void TComboBox::ChangeEvent(wxCommandEvent& event)  {
-  StrValue = GetValue();
-  if( !Data.IsEmpty() )
-    TOlxVars::SetVar(Data, GetText());
-  OnChange.Execute(this);
+  olxstr v = GetValue();
+  bool changed = (v != StrValue);
+  if (changed) {
+    StrValue = v;
+    if (!Data.IsEmpty())
+      TOlxVars::SetVar(Data, GetText());
+    OnChange.Execute(this);
+  }
   event.Skip();
 }
 //..............................................................................
 void TComboBox::LeaveEvent(wxFocusEvent& event)  {
-  olxstr v = GetValue();
-  bool changed = (v != StrValue);
-  if( changed )  {
-    OnChange.Execute(this);
-    StrValue = v;
-  }
-  OnLeave.Execute(this);
+  HandleOnLeave();
   event.Skip();
 }
 //..............................................................................
 void TComboBox::EnterEvent(wxFocusEvent& event)  {
-  OnEnter.Execute(this);
+  HandleOnEnter();
   event.Skip();
 }
 //..............................................................................
@@ -164,18 +162,26 @@ void TComboBox::AddItems(const TStrList& EL) {
   }
 }
 //..............................................................................
-void TComboBox::HandleOnLeave()  {
-  olxstr v = GetValue();
-  bool changed = (v != StrValue);
-  if( changed )  {
-    OnChange.Execute(this);
-    StrValue = v;
+void TComboBox::HandleOnLeave() {
+  if (OnLeave.IsEnabled()) {
+    olxstr v = GetValue();
+    bool changed = (v != StrValue);
+    if (changed) {
+      StrValue = v;
+      OnChange.Execute(this);
+    }
+    OnLeave.Execute(this);
+    OnLeave.SetEnabled(false);
+    OnEnter.SetEnabled(true);
   }
-  OnLeave.Execute(this);
 }
 //..............................................................................
 void TComboBox::HandleOnEnter()  {
-  OnEnter.Execute(this);
+  if (OnEnter.IsEnabled()) {
+    OnEnter.Execute(this);
+    OnEnter.SetEnabled(false);
+    OnLeave.SetEnabled(true);
+  }
 }
 //..............................................................................
 #ifdef __WIN32__

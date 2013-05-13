@@ -184,8 +184,9 @@ void THtml::OnChildFocus(wxChildFocusEvent& event)  {
     if( Traversables[i].GetB() == wx_next )
       next = Traversables[i].GetA();
   }
+  bool skip = true;
   if( prev != next || next == NULL || prev == NULL )  {
-    DoHandleFocusEvent(prev, next);
+    skip = DoHandleFocusEvent(prev, next);
     InFocus = wx_next;
   }
   event.Skip();
@@ -254,10 +255,11 @@ void THtml::GetTraversibleIndeces(index_t& current, index_t& another,
   }
 }
 //.............................................................................
-void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
+bool THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
   // prevent page re-loading and object deletion
   volatile THtmlManager::DestructionLocker dm =
     Manager.LockDestruction(this, this);
+  bool rv = false;
   if( prev != NULL )  {
     if( EsdlInstanceOf(*prev, TTextEdit) )  {
       olxstr s = ((TTextEdit*)prev)->OnLeave.data;
@@ -266,6 +268,8 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
     else if( EsdlInstanceOf(*prev, TComboBox) )  {
       ((TComboBox*)prev)->HandleOnLeave();
     }
+    else
+      rv = true;
   }
   if( next != NULL )  {
     if( EsdlInstanceOf(*next, TTextEdit) )  {
@@ -277,7 +281,10 @@ void THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
       ((TComboBox*)next)->HandleOnEnter();
       ((TComboBox*)next)->SetSelection(-1,-1);
     }
+    else
+      rv = true;
   }
+  return rv;
 }
 //.............................................................................
 void THtml::DoNavigate(bool forward)  {

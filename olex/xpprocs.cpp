@@ -2765,9 +2765,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  int width = Options.FindValue("w", "100").ToInt(), 
-    height = Options.FindValue("h", "200").ToInt(), 
-    x = Options.FindValue("x", "0").ToInt(), 
+  int width = Options.FindValue("w", "100").ToInt(),
+    height = Options.FindValue("h", "200").ToInt(),
+    x = Options.FindValue("x", "0").ToInt(),
     y = Options.FindValue("y", "0").ToInt();
   olxstr border = Options.FindValue("b"), 
     title = Options.FindValue("t"), 

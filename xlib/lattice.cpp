@@ -1531,7 +1531,10 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, 0,
           &gen_atoms.AddNew());
         TCAtomPList& gen = gen_atoms.GetLast();
-        double soccu = (olx_abs(occu[0]) > 5 ? occu[0] : 1-occu[0]);
+        /* if occu is fixed, it is > 5, then we 'invert' the variable like
+        21 -> -21, otherwise, just set a value of 1-occu
+        */
+        double soccu = (olx_abs(occu[0]) > 5 ? -occu[0] : 1-occu[0]);
         int spart = (parts[0] == 2 ? 1 : olx_abs(parts[0])+1);
         for (size_t j=0; j < gen.Count(); j++) {
           gen[j]->SetPart(spart);

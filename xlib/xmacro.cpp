@@ -3771,9 +3771,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   }
   // update the refinement description
   cetNamedStringList description("_olex2_refinement_description");
-  description.lines = xapp.XFile().GetRM().Describe();
-  for (size_t i=0; i < description.lines.Count(); i++)
-    description.lines[i].Replace(" ~ ", " \\\\sim ");
+  TStrList ri = xapp.XFile().GetRM().Describe();
+  for (size_t i=0; i < ri.Count(); i++) {
+    description.lines.Hyphenate(ri[i].Replace(" ~ ", " \\\\sim "), 80, true);
+  }
   Cif->SetParam(description);
   Cif->SaveToFile(Cif->GetFileName());
 }

@@ -54,7 +54,10 @@ namespace ctrl_ext {
       OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
       OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
       OnEnter(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_enter_id)),
-      OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id)) {}
+      OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id))
+    {
+      OnLeave.SetEnabled(false);
+    }
     virtual ~TComboBox();
 
     void Clear();
