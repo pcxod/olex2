@@ -119,10 +119,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     "r-Uiso multiplier for riding atoms&;"
     "ao-actual occupancy (as in the ins file)&;"
     "qi-Q peak intensity&;"
-    "i-display labels for identity atoms only&;"
-    "f-applies given format to the labels like -f=AaBB Aaaa or -f=Aabb etc",
-    fpNone,
-    "Inverts visibility of atom labels on/off. Look at the options");
+    "i-display labels for identity atoms only&;",
+    fpNone|fpOne,
+    "Shows/hides atom labels. Takes no argument is given to invert current "
+    "labels visibility or a boolean value");
   gxlib_InitMacro(Label,
     "type-type of labels to make - subscript, brackers, default&;"
     "symm-symmetry dependent tag type {[$], #, full}&;"
