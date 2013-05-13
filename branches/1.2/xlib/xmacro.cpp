@@ -161,7 +161,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psCheckFileTypeIns,
     "Adds a new element to the given/selected site. Takes one selected atom "
     "and element types as any subsequent argument. Alternatively can take a "
-    "few selected aoms of different type to be modelled as the type swapping "
+    "few selected atoms of different type to be modelled as the type swapping "
     "disorder."
 );
 //_____________________________________________________________________________
@@ -2428,12 +2428,12 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  const bool set_eadp = Options.Contains("eadp");
+  const bool set_eadp = Options.GetBoolOption("eadp");
   TCAtomPList processed;
   TPtrList<TExyzGroup> groups;
   RefinementModel& rm = xapp.XFile().GetRM();
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
-  if( atoms.Count() == 1 )  {
+  if (atoms.Count() == 1) {
     ElementPList elms;
     if( atoms[0]->CAtom().GetExyzGroup() != NULL &&
       !atoms[0]->CAtom().GetExyzGroup()->IsEmpty() )
@@ -2463,6 +2463,11 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     processed.Add(atoms[0]->CAtom());
+  }
+  // special case of atoms close to each other
+  else if (atoms.Count() == 2 && atoms[0]->crd().DistanceTo(atoms[1]->crd()) < 1) {
+    groups.Add(rm.ExyzGroups.New())->Add(atoms[0]->CAtom());
+    groups.GetLast()->Add(atoms[1]->CAtom());
   }
   else  {  // model type swapping disorder
     const int part = au.GetNextPart();
@@ -2495,7 +2500,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
     rm.Vars.AddVarRef(vr,
       (*groups[1])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
     rm.Vars.AddVarRef(vr,
-      (*groups[1])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+      (*groups[1])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
     if( set_eadp )  {
       rm.rEADP.AddNew()
         .AddAtom((*groups[0])[0], NULL)
@@ -2513,9 +2518,9 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
         if( groups[i]->Count() == 2 )  {
           XVar& vr = rm.Vars.NewVar();
           rm.Vars.AddVarRef(vr,
-            (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
+            (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0);
           rm.Vars.AddVarRef(vr,
-            (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
+            (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
         }
         else
           leq = &rm.Vars.NewEquation();
@@ -2524,7 +2529,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
           if( leq != NULL )  {
             XVar& vr = rm.Vars.NewVar(1./groups[i]->Count());
             rm.Vars.AddVarRef(vr,
-              (*groups[i])[j], catom_var_name_Sof, relation_AsVar, 1.0); 
+              (*groups[i])[j], catom_var_name_Sof, relation_AsVar, 1.0);
             leq->AddMember(vr);
           }
           if( sr != NULL )
@@ -7915,32 +7920,35 @@ int RSA_GetAtomPriorityX(AtomEnvList &a, AtomEnvList &b) {
   if (res != 0) return res;
   // equal? expand further
   for (size_t i=0; i < sz; i++) {
-    if (a[i].GetA() == NULL) continue;
-    TCAtom &atomA = *a[i].GetA()->atom;
-    for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
-      TCAtom::Site &s = atomA.GetAttachedSite(j);
-      if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 3) ||
-        s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
-      {
-        continue;
+    if (a[i].GetA() != NULL) {
+      TCAtom &atomA = *a[i].GetA()->atom;
+      for (size_t j=0; j < atomA.AttachedSiteCount(); j++) {
+        TCAtom::Site &s = atomA.GetAttachedSite(j);
+        if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 3) ||
+          s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
+        {
+          continue;
+        }
+        a.Add(new SiteInfo(&s, &s.atom->GetType()));
+        int bo = BondOrder(atomA, s);
+        for (int k=1; k < bo; k++)
+          a.Add(new SiteInfo(NULL, &s.atom->GetType()));
       }
-      a.Add(new SiteInfo(&s, &s.atom->GetType()));
-      int bo = BondOrder(atomA, s);
-      for (int k=1; k < bo; k++)
-        a.Add(new SiteInfo(NULL, &s.atom->GetType()));
     }
-    TCAtom &atomB = *b[i].GetA()->atom;
-    for (size_t j=0; j < atomB.AttachedSiteCount(); j++) {
-      TCAtom::Site &s = atomB.GetAttachedSite(j);
-      if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 2) ||
-        s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
-      {
-        continue;
+    if (b[i].GetA() != NULL) {
+      TCAtom &atomB = *b[i].GetA()->atom;
+      for (size_t j=0; j < atomB.AttachedSiteCount(); j++) {
+        TCAtom::Site &s = atomB.GetAttachedSite(j);
+        if (!(s.atom->GetTag() == 0 || s.atom->GetTag() == 2) ||
+          s.atom->GetType() == iQPeakZ || s.atom->IsDeleted())
+        {
+          continue;
+        }
+        b.Add(new SiteInfo(&s, &s.atom->GetType()));
+        int bo = BondOrder(atomB, s);
+        for (int k=1; k < bo; k++)
+          b.Add(new SiteInfo(NULL, &s.atom->GetType()));
       }
-      b.Add(new SiteInfo(&s, &s.atom->GetType()));
-      int bo = BondOrder(atomB, s);
-      for (int k=1; k < bo; k++)
-        b.Add(new SiteInfo(NULL, &s.atom->GetType()));
     }
   }
   if (!a.IsEmpty()) {

@@ -63,7 +63,7 @@ size_t XVar::RefCount() const {
 //.............................................................................
 void XVar::ToDataItem(TDataItem& item) const {
   item.AddField("val", Value);
-  for( size_t i=0; i < References.Count(); i++ ) 
+  for( size_t i=0; i < References.Count(); i++ )
     if( References[i]->referencer.IsValid() )
       References[i]->ToDataItem(item.AddItem(i));
 }
@@ -152,7 +152,7 @@ XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
     item.GetRequiredField("sig").ToDouble());
   for( size_t i=0; i < item.ItemCount(); i++ )  {
     const TDataItem& mi = item.GetItem(i);
-    leq->AddMember(parent.GetVar(mi.GetRequiredField("id").ToInt()), 
+    leq->AddMember(parent.GetVar(mi.GetRequiredField("id").ToInt()),
       mi.GetRequiredField("k").ToDouble());
   }
   return *leq;
@@ -238,7 +238,7 @@ void XVarManager::RestoreRef(IXVarReferencer& a, short var_name,
     References.Add(vr);
   }
   else 
-    a.SetVarRef(var_name, NULL);   
+    a.SetVarRef(var_name, NULL);
   for( size_t i=0; i < References.Count(); i++ )
     References[i].SetId(i);
 }
@@ -297,10 +297,15 @@ double XVarManager::GetParam(const IXVarReferencer& ca, short var_index,
   double val) const
 {
   const XVarReference* vr = ca.GetVarRef(var_index);
-  if( vr == NULL )  return val;
-  if( vr->relation_type == relation_None )
-    return 10 + val;  // shelxl pecularity
-  if( vr->relation_type == relation_AsVar )
+  if (vr == NULL)  return val;
+  if (vr->relation_type == relation_None) {
+    const TCAtom *a = dynamic_cast<const TCAtom *>(&ca);
+    if (a != NULL && var_index >= catom_var_name_X && var_index <= catom_var_name_Z)
+      return 10 + val;  // shelxl pecularity
+    else
+      return olx_sign(val)*(olx_abs(val)+10);
+  }
+  if (vr->relation_type == relation_AsVar)
     return (vr->Parent.GetId()+1)*10+vr->coefficient;
   return -((vr->Parent.GetId()+1)*10+vr->coefficient);
   return 0;

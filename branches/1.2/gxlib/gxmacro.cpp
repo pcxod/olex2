@@ -2617,6 +2617,24 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
           values.Add("Plane [") << pld2 << "] to plane shift distance: " <<
             vcovc.CalcP2PShiftDistance(p2, p1).ToString() << " A";
         }
+        if (xp1.Count() == xp2.Count() && xp1.Count() == 3) {
+          TSAtomPList atoms(6), sorted_atoms;
+          for (size_t i=0; i < 3; i++) {
+            (atoms[i] = &xp1.GetAtom(i))->SetTag(0);
+            (atoms[i+3] = &xp2.GetAtom(i))->SetTag(1);
+          }
+          olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
+          transforms.Add(1, -xp2.GetCenter());
+          transforms.Add(0, -xp1.GetCenter());
+          PlaneSort::Sorter::DoSort(atoms, transforms, vec3d(),
+            xp2.GetNormal(), sorted_atoms);
+          vec3d_alist pts;
+          TEValueD v = vcovc.CalcTraingluarTwist(sorted_atoms);
+          if (v.GetV() > 60) {
+            v.V() = 120-v.GetV();
+          }
+          values.Add("Mean triange twist angle: ") << v.ToString();
+        }
       }
     }
     else if( sel.Count() == 3 )  {

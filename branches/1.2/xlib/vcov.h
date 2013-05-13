@@ -435,17 +435,46 @@ public:
       // translation for second face
       const vec3d c2 = (points[2] + points[4] + points[6])/3;
       for( short i=0; i < 6; i+=2 )  {
-        pl[i] = (points[i+1] - c1).Normalise();
-        pl[i+1] = (points[i+2] - c2).Normalise();
+        pl[i] = (points[i+1] - c1);
+        pl[i+1] = (points[i+2] - c2);
       }
       const PlaneInfo pi = CalcPlane(pl, weights, 0);
       double sum = 0;
       for( short i=0; i < 6; i+=2 )  {
-        const vec3d v1 = pl[i].Projection(pi.normal);
-        const vec3d v2 = pl[i+1].Projection(pi.normal);
+        const vec3d v1 = pl[i].Projection(pi.center, pi.normal);
+        const vec3d v2 = pl[i+1].Projection(pi.center, pi.normal);
         sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
       }
       return (sum*180/3)/M_PI;
+    }
+  };
+  // triangle twist (in degrees), using best plane approach
+  struct TriangleTwistBP  {
+    const vec3d_alist& points;
+    vec3d_alist pl;
+    TDoubleList weights;
+    mutable evecd angles;
+    TriangleTwistBP(const vec3d_alist& _points)
+      : points(_points), pl(6), weights(6, olx_list_init::value(1.0)),
+      angles(3)
+    {}
+    double calc() const {
+      // translation for first face
+      const vec3d c1 = (points[0] + points[2] + points[4])/3;
+      // translation for second face
+      const vec3d c2 = (points[1] + points[3] + points[5])/3;
+      for (short i=0; i < 6; i+=2) {
+        pl[i] = (points[i] - c1);
+        pl[i+1] = (points[i+1] - c2);
+      }
+      const PlaneInfo pi = CalcPlane(pl, weights, 0);
+      for (short i=0; i < 6; i++) {
+        pl[i] = pl[i].Projection(pi.center, pi.normal);
+      }
+      for (short i=0; i < 6; i+=2) {
+        angles[i/2] = acos(pl[i].CAngle(pl[i+1]));
+      }
+      return (olx_sum(angles)*180/3)/M_PI;
     }
   };
 protected:
@@ -836,6 +865,13 @@ public:
   TEValue<double> CalcOHDistortionBP(const TSAtomCPList& atoms)  {
     CalcHelper ch(*this, atoms);
     return ch.DoCalc(OctahedralDistortionBP(ch.points));
+  }
+  /* twist between trianglua planes. This function uses mean plane defined by
+  the 6 points arranged around the origin
+  */
+  TEValue<double> CalcTraingluarTwist(const TSAtomCPList& atoms)  {
+    CalcHelper ch(*this, atoms);
+    return ch.DoCalc(TriangleTwistBP(ch.points));
   }
   const VcoVMatrix& GetMatrix() const {  return vcov;  }
 };

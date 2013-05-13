@@ -940,18 +940,29 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
         TXPlane &a = ((TXPlane&)Sel[0]),
           &b = ((TXPlane&)Sel[1]);
         
-        vec3d n_c = (b.GetCenter()-a.GetCenter()).XProdVec(
-          a.GetNormal()+b.GetNormal()).Normalise();
-        vec3d p_a = a.GetNormal() -  n_c*n_c.DotProd(a.GetNormal());
-        vec3d p_b = b.GetNormal() -  n_c*n_c.DotProd(b.GetNormal());
         const double ang = a.Angle(b);
         Tmp = "Angle (plane-plane): ";
         Tmp << olxstr::FormatFloat(3, ang) <<
-          "\nTwist Angle (plane-plane, experimental): " <<
-          olxstr::FormatFloat(3, olx_dihedral_angle(a.GetCenter()+a.GetNormal(),
-            a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal())) <<
-          "\nFold Angle (plane-plane, experimental): " <<
-          olxstr::FormatFloat(3, acos(p_a.CAngle(p_b))*180/M_PI) <<
+          "\nTwist Angle (plane-plane, experimental): ";
+        try {
+          Tmp << olxstr::FormatFloat(3, olx_dihedral_angle(a.GetCenter()+a.GetNormal(),
+            a.GetCenter(), b.GetCenter(), b.GetCenter()+b.GetNormal()));
+        }
+        catch (const TDivException &) {
+          Tmp << "n/a";
+        }
+        Tmp << "\nFold Angle (plane-plane, experimental): ";
+        try {
+          vec3d n_c = (b.GetCenter()-a.GetCenter()).XProdVec(
+            a.GetNormal()+b.GetNormal()).Normalise();
+          vec3d p_a = a.GetNormal() -  n_c*n_c.DotProd(a.GetNormal());
+          vec3d p_b = b.GetNormal() -  n_c*n_c.DotProd(b.GetNormal());
+          Tmp << olxstr::FormatFloat(3, acos(p_a.CAngle(p_b))*180/M_PI);
+        }
+        catch (const TDivException &) {
+          Tmp << "n/a";
+        }
+        Tmp <<
           "\nDistance (plane centroid-plane centroid): " <<
           olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter()))  <<
           "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<
@@ -969,6 +980,27 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
             sqrt(olx_max(0, a.GetCenter().QDistanceTo(b.GetCenter())
             -
             olx_sqr(b.DistanceTo(a.GetCenter())))));
+        }
+        if (a.Count() == b.Count() && a.Count() == 3) {
+          TSAtomPList atoms(6), sorted_atoms;
+          for (size_t i=0; i < 3; i++) {
+            (atoms[i] = &a.GetAtom(i))->SetTag(0);
+            (atoms[i+3] = &b.GetAtom(i))->SetTag(1);
+          }
+          olxdict<index_t, vec3d, TPrimitiveComparator> transforms;
+          transforms.Add(1, -b.GetCenter());
+          transforms.Add(0, -a.GetCenter());
+          PlaneSort::Sorter::DoSort(atoms, transforms, vec3d(),
+            b.GetNormal(), sorted_atoms);
+          vec3d_alist pts;
+          pts << vec3d_alist::FromList(sorted_atoms,
+            FunctionAccessor::Make(&TSAtom::crd));
+          VcoVContainer::TriangleTwistBP tt(pts);
+          double v = tt.calc();
+          if (v > 60) {
+            v = 120-v;
+          }
+          Tmp << "\nMean triange twist angle: " << olxstr::FormatFloat(3, v);
         }
       }
     }
@@ -1745,16 +1777,22 @@ ConstPtrList<TXBond> TGXApp::GetXBonds(const olxstr& BondName)  {
   return res;
 }
 //..............................................................................
-TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection)  {
-  if( AtomName.Equalsi("sel" ) )  {
+TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection) {
+  if (AtomName.Equalsi("sel")) {
     TXAtomPList L = GetSelectedXAtoms(clearSelection);
-    if( L.Count() != 1 )  return NULL;
+    if (L.Count() != 1) return NULL;
     return L[0];
   }
+  else if (AtomName.StartsFrom("#s")) {  // SAtom.LatId
+    const size_t id = AtomName.SubStringFrom(2).ToSizeT();
+    if (id < XFile().GetLattice().GetObjects().atoms.Count()) {
+      return &dynamic_cast<TXAtom&>(XFile().GetLattice().GetObjects().atoms[id]);
+    }
+  }
   AtomIterator ai(*this);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if( xa.GetLabel().Equalsi(AtomName) )
+    if (xa.GetLabel().Equalsi(AtomName))
       return &xa;
   }
   return NULL;
@@ -1957,11 +1995,12 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name, bool CheckLabel)  {
   //NameHydrogens(XA.Atom(), undo, CheckLabel);
   if( checkBonds )  CheckQBonds(XA);
   if( recreate )  {
-    XA.GetPrimitives().RemoveObject(XA);
-    XA.Create();
-    TXAtomPList atoms;
-    atoms.Add(XA);
-    SynchroniseBonds(atoms);
+    AGDObjList objects = XA.GetPrimitives().GetObjects();
+    XA.GetPrimitives().ClearObjects();
+    for (size_t i=0; i < objects.Count(); i++) {
+      objects[i]->Create();
+    }
+    SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
   }
   UpdateDuplicateLabels();
   return undo;
@@ -1980,9 +2019,8 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
   TXAtomPList Atoms = FindXAtoms(From, ClearSelection),
     ChangedAtoms;
   // leave only AU atoms
-  for( size_t i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->SetTag(Atoms[i]->IsAUAtom() ? 1 : 0);
-  Atoms.Pack(ACollectionItem::TagAnalyser(0));
+  Atoms.ForEach(ACollectionItem::IndexTagSetter());
+  Atoms.Pack(ACollectionItem::IndexTagAnalyser());
   if( From.Equalsi("sel") && To.IsNumber() )  {
     int j = To.ToInt();
     for( size_t i=0; i < Atoms.Count(); i++ )  {
@@ -2086,12 +2124,16 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel,
       }
     }
   }
+  AGDObjList objects;
   for( size_t i=0; i < ChangedAtoms.Count(); i++ )  {
     XA = ChangedAtoms[i];
-    XA->GetPrimitives().RemoveObject(*XA);
-    XA->Create();
+    objects.AddList(XA->GetPrimitives().GetObjects());
+    XA->GetPrimitives().ClearObjects();
   }
-  SynchroniseBonds(ChangedAtoms);
+  for (size_t i=0; i < objects.Count(); i++) {
+    objects[i]->Create();
+  }
+  SynchroniseBonds(TXAtomPList(objects, DynamicCastAccessor<TXAtom>()));
   UpdateDuplicateLabels();
   return undo;
 }

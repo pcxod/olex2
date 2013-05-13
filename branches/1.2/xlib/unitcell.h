@@ -80,6 +80,7 @@ public:
     return CalcVolume(vec3d(v[0], v[1], v[2]), vec3d(v[3], v[4], v[5]));
   }
   double CalcVolume()  const;
+  static TEValue<double> CalcVolumeEx(const TAsymmUnit &au);
   TEValue<double> CalcVolumeEx() const;
   inline TLattice& GetLattice() const {  return *Lattice;  }
   void Clear();
