@@ -52,7 +52,7 @@ protected:
   void OnMouseMotion(wxMouseEvent& event);
   void OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y);
   void OnChildFocus(wxChildFocusEvent& event);
-  void DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next);
+  bool DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next);
   void OnClipboard(wxClipboardTextEvent& event);
   olxstr OnSizeData, OnDblClickData;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
