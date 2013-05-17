@@ -205,7 +205,7 @@ public:
     PyObject* val = BuildString(olxstr(location) << ": " << msg);
     PyErr_SetObject(err_type, val);
     Py_DECREF(val);
-    return PyNone();
+    return NULL;
   }
   static PyObject* SetErrorMsg(PyObject* err_type, const olxcstr& location,
     const char* msg)
@@ -213,7 +213,7 @@ public:
     PyObject* val = Py_BuildValue("s: s", location.c_str(), msg);
     PyErr_SetObject(err_type, val);
     Py_DECREF(val);
-    return PyNone();
+    return NULL;
   }
   static PyObject* InvalidArgumentException(const olxcstr& location,
     const char* msg)
@@ -222,7 +222,7 @@ public:
       "invalid argument format for ", msg);
     PyErr_SetObject(PyExc_TypeError, val);
     Py_DECREF(val);
-    return PyNone();
+    return NULL;
   }
   static PyObject* PyNone()  {  Py_INCREF(Py_None);  return Py_None;  }
   static PyObject* PyTrue()  {  Py_INCREF(Py_True);  return Py_True;  }
