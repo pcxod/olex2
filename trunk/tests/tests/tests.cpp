@@ -39,7 +39,7 @@
 #include "tests/formula_test.h"
 #include "tests/smat_test.h"
 #include "tests/exparse_test.h"
-#include "tests/shellutil_test.h"
+#include "../repository/tests/shellutil_test.h"
 
 class Listener : public AActionHandler  {
 public:

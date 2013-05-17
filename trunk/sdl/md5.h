@@ -16,14 +16,16 @@ BeginEsdlNamespace()
   http://en.wikipedia.org/wiki/MD5
 */
 class MD5Impl  {
-  unsigned char digest[16];
+  uint8_t digest[16];
   uint32_t state[4], bf[16];
-  static const uint32_t consts[];
-  static const unsigned char rotations[];
+  static const uint32_t *consts();
+  static const unsigned char *rotations();
   // digest 64 byte message updating current stat
 protected:
   MD5Impl();
   void digest64(const uint32_t* msg);
+  const uint8_t *GetDigest() { return &digest[0]; }
+  size_t DigestSize() const { return 16; }
   olxcstr formatDigest(); 
 };
 

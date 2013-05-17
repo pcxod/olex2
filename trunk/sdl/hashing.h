@@ -9,7 +9,7 @@
 
 #ifndef __olx_hashing__H
 #define __olx_hashing__H
-#include "ebase.h"
+#include "talist.h"
 BeginEsdlNamespace()
 
 struct HashingUtils  {
@@ -73,52 +73,60 @@ class HashingBase : public Impl  {
 protected:
   uint32_t bf[16];
   unsigned char cbf[64];
-  olxcstr DoDigest(const void* msg, size_t len)  {
+  void DoRawDigest(const void* msg, size_t len) {
     const size_t blocks = len>>6;
-    for( size_t i=0; i < blocks; i++ )  {
+    for (size_t i=0; i < blocks; i++) {
       Tools::hs_copy(&((const unsigned char*)msg)[i<<6], bf, 64);
       Impl::digest64(bf);
     }
     const size_t part = len&0x3F;
     memset(cbf, 0, 64);
-    if( part > 0 )
+    if (part > 0)
       memcpy(cbf, msg, part);
     cbf[part] |= (0x01 << 7);
-    if( part > 56 )  {  // will not the length fit?
+    if (part > 56) { // will not the length fit?
       Tools::hs_copy(cbf, bf, 64);
       Impl::digest64(bf);
       memset(cbf, 0, 64);
     }
-    uint64_t len_bits_o = len<<3; 
+    uint64_t len_bits_o = len<<3;
     Tools::hs_write_len(cbf, len_bits_o);
     Tools::hs_copy(cbf, bf, 64);
     Impl::digest64(bf);
+  }
+
+  olxcstr DoDigest(const void* msg, size_t len) {
+    DoRawDigest(msg, len);
     // prepeare the digest
     return Impl::formatDigest();
   }
 
-  olxcstr DoDigest(IInputStream& stream)  {
+  void DoRawDigest(IInputStream& stream) {
     unsigned char cbf[64];
     const uint64_t blocks = stream.GetSize() >> 6;
-    for( uint64_t i=0; i < blocks; i++ )  {
+    for (uint64_t i=0; i < blocks; i++) {
       stream.Read(cbf, 64);
       Tools::hs_copy(cbf, bf, 64);
       Impl::digest64(bf);
     }
     const size_t part = stream.GetSize()&0x3F;
     memset(cbf, 0, 64);
-    if( part > 0 )
+    if (part > 0)
       stream.Read(cbf, part);
     cbf[part] |= (0x01 << 7);
-    if( part >= 56 )  {  // will not the length fit?
+    if (part >= 56) { // will not the length fit?
       Tools::hs_copy(cbf, bf, 64);
       Impl::digest64(bf);
       memset(cbf, 0, 64);
     }
-    uint64_t len_bits_o = stream.GetSize()<<3; 
+    uint64_t len_bits_o = stream.GetSize()<<3;
     Tools::hs_write_len(cbf, len_bits_o);
     Tools::hs_copy(cbf, bf, 64);
     Impl::digest64(bf);
+  }
+
+  olxcstr DoDigest(IInputStream& stream) {
+    DoRawDigest(stream);
     // prepeare the digest
     return Impl::formatDigest();
   }
@@ -145,6 +153,38 @@ public:
   }
   static olxcstr Digest(IInputStream& stream){
     return HashingBase<Impl,Tools>().DoDigest(stream);
+  }
+
+  static ConstArrayList<uint8_t> RawDigest(const olxcstr& str) {
+    HashingBase<Impl,Tools> t;
+    t.DoRawDigest(str.raw_str(), str.RawLen());
+    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+  }
+  static ConstArrayList<uint8_t> RawDigest(const olxwstr& str) {
+    HashingBase<Impl,Tools> t;
+    t.DoRawDigest(str.raw_str(), str.RawLen());
+    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+  }
+  static ConstArrayList<uint8_t> RawDigest(const char* str, size_t len) {
+    HashingBase<Impl,Tools> t;
+    t.DoRawDigest(str, len);
+    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+  }
+  static ConstArrayList<uint8_t> RawDigest(const wchar_t* str, size_t len)  {
+    HashingBase<Impl,Tools> t;
+    t.DoRawDigest(str, len*sizeof(wchar_t));
+    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+  }
+  static ConstArrayList<uint8_t> RawDigest(const char* str) {
+    return RawDigest(str, olxstr::o_strlen(str));
+  }
+  static ConstArrayList<uint8_t> RawDigest(const wchar_t* str) {
+    return RawDigest(str, olxstr::o_strlen(str));
+  }
+  static ConstArrayList<uint8_t> RawDigest(IInputStream& stream){
+    HashingBase<Impl,Tools> t;
+    t.DoDigest(stream);
+    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
   }
 };
 

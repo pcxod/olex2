@@ -7,7 +7,7 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "shellutil.h"
+#include "../repository/shellutil.h"
 
 namespace test {
 
