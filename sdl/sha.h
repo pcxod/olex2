@@ -23,7 +23,10 @@ protected:
   void digest64(const uint32_t* msg);
   const uint8_t *GetDigest() { return &digest[0]; }
   size_t DigestSize() const { return 20; }
-  olxcstr formatDigest(); 
+  void finalise() {
+    HashingUtilsBE::hs_copy(state, digest, 5);
+  }
+  olxcstr formatDigest();
 };
 
 template <class Impl>
@@ -36,20 +39,26 @@ protected:
 protected:
   void digest64(const uint32_t* msg);
   const uint8_t *GetDigest() { return &digest[0]; }
-  size_t DigestSize() const { return 32; }
 };
 
 class SHA256Impl : public SHA2<SHA256Impl> {
 protected:
   SHA256Impl();
+  void finalise() {
+    HashingUtilsBE::hs_copy(state, digest, 8);
+  }
+  size_t DigestSize() const { return 32; }
   olxcstr formatDigest();
 };
 
 class SHA224Impl : public SHA2<SHA224Impl> {
 protected:
   SHA224Impl();
+  void finalise() {
+    HashingUtilsBE::hs_copy(state, digest, 7);
+  }
   size_t DigestSize() const { return 28; }
-  olxcstr formatDigest(); 
+  olxcstr formatDigest();
 };
 
 typedef HashingBase<SHA1Impl, HashingUtilsBE> SHA1;

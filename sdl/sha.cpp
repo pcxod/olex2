@@ -61,7 +61,6 @@ void SHA1Impl::digest64(const uint32_t* msg)  {
 }
 
 olxcstr SHA1Impl::formatDigest()  {
-  HashingUtilsBE::hs_copy(state, digest, 5);
   olxcstr rv;
   rv.Allocate(45, false);
   for( int i=0; i < 20; i++ )  {
@@ -152,7 +151,6 @@ SHA256Impl::SHA256Impl()  {
 
 olxcstr SHA256Impl::formatDigest()  {
   //volatile olx_scope_cs _cs( TBasicApp::GetCriticalSection() );
-  HashingUtilsBE::hs_copy(state, digest, 8);
   // (CEmptyString(), 256) global data, like EmptyString() MUST not be used in threads without semaphores!
   olxcstr rv;
   rv.Allocate(72, false);
@@ -177,7 +175,6 @@ SHA224Impl::SHA224Impl()  {
 }
 
 olxcstr SHA224Impl::formatDigest()  {
-  HashingUtilsBE::hs_copy(state, digest, 7);
   olxcstr rv;
   rv.Allocate(63, false);
   for( int i=0; i < 28; i++ )  {

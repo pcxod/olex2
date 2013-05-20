@@ -49,7 +49,7 @@ void MD5Impl::digest64(const uint32_t* msg)  {
            c = state[2],
            d = state[3];
   for( int i=0; i < 64; i++ )  {
-    uint32_t f, g;    
+    uint32_t f, g;
     if( i < 16 )  {
       f = (b & c) | (~b & d);
       g = i;
@@ -82,7 +82,6 @@ void MD5Impl::digest64(const uint32_t* msg)  {
 }
 
 olxcstr MD5Impl::formatDigest()  {
-  HashingUtilsLE::hs_copy(state, digest, 4);
   olxcstr rv;
   rv.Allocate(33, false);
   for( int i=0; i < 16; i++ )  {
