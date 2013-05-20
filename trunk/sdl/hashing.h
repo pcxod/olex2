@@ -93,6 +93,7 @@ protected:
     Tools::hs_write_len(cbf, len_bits_o);
     Tools::hs_copy(cbf, bf, 64);
     Impl::digest64(bf);
+    Impl::finalise();
   }
 
   olxcstr DoDigest(const void* msg, size_t len) {
@@ -123,6 +124,7 @@ protected:
     Tools::hs_write_len(cbf, len_bits_o);
     Tools::hs_copy(cbf, bf, 64);
     Impl::digest64(bf);
+    Impl::finalise();
   }
 
   olxcstr DoDigest(IInputStream& stream) {
@@ -158,22 +160,22 @@ public:
   static ConstArrayList<uint8_t> RawDigest(const olxcstr& str) {
     HashingBase<Impl,Tools> t;
     t.DoRawDigest(str.raw_str(), str.RawLen());
-    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+    return new TArrayList<uint8_t>(t.DigestSize(), t.GetDigest());
   }
   static ConstArrayList<uint8_t> RawDigest(const olxwstr& str) {
     HashingBase<Impl,Tools> t;
     t.DoRawDigest(str.raw_str(), str.RawLen());
-    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+    return new TArrayList<uint8_t>(t.DigestSize(), t.GetDigest());
   }
   static ConstArrayList<uint8_t> RawDigest(const char* str, size_t len) {
     HashingBase<Impl,Tools> t;
     t.DoRawDigest(str, len);
-    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+    return new TArrayList<uint8_t>(t.DigestSize(), t.GetDigest());
   }
   static ConstArrayList<uint8_t> RawDigest(const wchar_t* str, size_t len)  {
     HashingBase<Impl,Tools> t;
     t.DoRawDigest(str, len*sizeof(wchar_t));
-    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+    return new TArrayList<uint8_t>(t.DigestSize(), t.GetDigest());
   }
   static ConstArrayList<uint8_t> RawDigest(const char* str) {
     return RawDigest(str, olxstr::o_strlen(str));
@@ -184,7 +186,7 @@ public:
   static ConstArrayList<uint8_t> RawDigest(IInputStream& stream){
     HashingBase<Impl,Tools> t;
     t.DoDigest(stream);
-    return new TArrayList<uint8_t>(Impl::DigestSize(), Impl::GetDigest());
+    return new TArrayList<uint8_t>(t.DigestSize(), t.GetDigest());
   }
 };
 

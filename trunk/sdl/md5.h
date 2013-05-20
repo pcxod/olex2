@@ -26,6 +26,9 @@ protected:
   void digest64(const uint32_t* msg);
   const uint8_t *GetDigest() { return &digest[0]; }
   size_t DigestSize() const { return 16; }
+  void finalise() {
+    HashingUtilsLE::hs_copy(state, digest, 4);
+  }
   olxcstr formatDigest(); 
 };
 
