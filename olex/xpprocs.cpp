@@ -19,6 +19,7 @@
 #include "wx/colordlg.h"
 #include "wx/fontdlg.h"
 #include "wx/progdlg.h"
+#include "wx/dynlib.h"
 
 #include "wx/image.h"
 #include "wx/dcps.h"
@@ -378,38 +379,27 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, EmptyString());
 }
 //..............................................................................
-#ifdef __WIN32__
-//..............................................................................
-void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E)  {
-  if( !TEFile::Exists( Cmds[0] ) )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate specified file" );
+void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E) {
+  wxDynamicLibrary dl(Cmds[0].u_str());
+  if (!dl.IsLoaded()) {
+    E.ProcessingError(__OlxSrcInfo, "could not load the library");
     return;
   }
-  HINSTANCE lib_inst = LoadLibrary(Cmds[0].u_str());
-  if( !lib_inst )  {
-    E.ProcessingError(__OlxSrcInfo, "could not load the library" );
+  typedef olex::IOlexRunnable* (*GOR)();
+  GOR gor = (GOR)dl.GetSymbol(wxT("GetOlexRunnable"));
+  if (gor == NULL) {
+    E.ProcessingError(__OlxSrcInfo, "could not locate initialisation point");
     return;
   }
-  FARPROC initPoint = GetProcAddress(lib_inst, "@olex@OlexPort@GetOlexRunnable$qv");
-  if( !initPoint )
-    initPoint = GetProcAddress(lib_inst, "?GetOlexRunnable@OlexPort@olex@@SGPAVIOlexRunnable@2@XZ");
-  if( !initPoint )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate initialisation point" );
-    FreeLibrary( lib_inst );
+  olex::IOlexRunnable* runnable = (*gor)();
+  if (!runnable) {
+    E.ProcessingError(__OlxSrcInfo, "NULL runnable");
     return;
   }
-  typedef olex::IOlexRunnable* (*GetOlexRunnable)();
-  olex::IOlexRunnable* runnable = ((GetOlexRunnable)initPoint)();
-
-  if( !runnable )  {
-    E.ProcessingError(__OlxSrcInfo, "NULL runnable" );
-    FreeLibrary( lib_inst );
-    return;
+  if (!runnable->Run(*this)) {
+    dl.Detach();
   }
-  runnable->Run( *this );
-  //FreeLibrary( lib_inst );
 }
-#endif // __WIN32__
 //..............................................................................
 void TMainForm::macLines(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   FGlConsole->SetLinesToShow(Cmds[0].ToInt());
