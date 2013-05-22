@@ -862,9 +862,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitFunc(HtmlPanelWidth, fpNone|fpOne);
 
-  #ifdef __WIN32__
   this_InitFunc(LoadDll, fpOne);
-  #endif
 
   this_InitFunc(CmdList, fpOne);
   this_InitFuncD(Alert, fpTwo|fpThree|fpFour,
