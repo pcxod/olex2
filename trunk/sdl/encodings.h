@@ -13,16 +13,31 @@
 BeginEsdlNamespace()
 
 namespace encoding  {
-  namespace base64  {
-    static const char *_base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-    inline olxcstr encode(const char* data, size_t len)  {
+  struct data {
+    static const char *base16() {
+      static const char *_base16 = "0123456789abcdef";
+      return _base16;
+    }
+    static const char *base16Capitals() {
+      static const char *_base16 = "0123456789ABCDEF";
+      return _base16;
+    }
+    static const char *base64() {
+      static const char *_base64 =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+      return _base64;
+    }
+  };
+  struct base64  {
+    static olxcstr encode(const char* data, size_t len)  {
       size_t from = 0;
       olxcstr rv;
+      const char *_base64 = data::base64();
       while (len >= 3) { // encode full blocks first
-        rv << _base64[(data[from] >> 2) & 0x3f] << 
-              _base64[((data[from] << 4) & 0x30) | ((data[from+1] >> 4) & 0xf)];
-        rv << _base64[((data[from+1] << 2) & 0x3c) | ((data[from+2] >> 6) & 0x3)] <<
-              _base64[data[from+2] & 0x3f];
+        rv << _base64[(data[from] >> 2) & 0x3f] <<
+          _base64[((data[from] << 4) & 0x30) | ((data[from+1] >> 4) & 0xf)];
+        rv << _base64[((data[from+1] << 2) & 0x3c) |
+          ((data[from+2] >> 6) & 0x3)] << _base64[data[from+2] & 0x3f];
         from += 3;
         len -= 3;
       }
@@ -39,7 +54,7 @@ namespace encoding  {
       }
       return rv;
     }
-    inline size_t _index_of(char ch)  {
+    static size_t _index_of(char ch)  {
       if( ch >= 'A' && ch <= 'Z' )  return ch-'A';
       if( ch >= 'a' && ch <= 'z' )  return ch-'a' + 26;
       if( ch >= '0' && ch <= '9' )  return ch-'0' + 52;
@@ -49,7 +64,7 @@ namespace encoding  {
       throw TInvalidArgumentException(__OlxSourceInfo, "base64 char");
       return InvalidIndex;
     }
-    inline olxcstr decode(const char* data, size_t len)  {
+    static olxcstr decode(const char* data, size_t len)  {
       if( (len%4) != 0 )
         throw TInvalidArgumentException(__OlxSourceInfo, "base64 length");
       olxcstr rv;
@@ -67,19 +82,92 @@ namespace encoding  {
       }
       return rv;
     }
-    inline olxcstr encode(const unsigned char* data, size_t len)  {
+    static olxcstr encode(const uint8_t* data, size_t len)  {
       return encode((const char*)data, len);
     }
-    inline olxcstr decode(const unsigned char* data, size_t len)  {
+    static olxcstr decode(const uint8_t* data, size_t len)  {
       return encode((const char*)data, len);
     }
-    inline olxcstr decode(const olxcstr& str)  {
+    static olxcstr decode(const olxcstr& str)  {
       return decode(str.raw_str(), str.RawLen());
     }
-    inline olxcstr encode(const olxcstr& str)  {
+    static olxcstr encode(const olxcstr& str)  {
       return encode(str.raw_str(), str.RawLen());
     }
-  } // end namespace base64
+  }; // end struct base64
+  struct base16 {
+    static olxcstr encode(const uint8_t* data, size_t len, const char *base16)  {
+      size_t rv_len = len*2+1;
+      char *rv = olx_malloc<char>(rv_len);
+      for (size_t i=0; i < len; i++) {
+        size_t idx = i<<1;
+        rv[idx] = base16[data[i]>>4];
+        rv[idx+1] = base16[data[i]&0x0F];
+      }
+      rv[rv_len-1] = '\0';
+      olxcstr s = olxcstr::FromExternal(rv, rv_len);
+      s.SetLength(s.Length()-1);
+      return s;
+    }
+    // inserts a hyphen each given bytes
+    static olxcstr encode(const uint8_t* data, size_t len, const char *base16,
+      size_t hyphen_each, char hypeh_char='-')
+    {
+      if (hyphen_each == 0)
+        return encode(data, len, base16);
+      size_t rv_len = len*2+len/hyphen_each+((len%hyphen_each)==0 ? 0 : 1);
+      char *rv = olx_malloc<char>(rv_len);
+      for (size_t i=0, j=0; i < len; i++, j+=2) {
+        rv[j] = base16[data[i] >> 4];
+        rv[j+1] = base16[data[i]&0x0F];
+        if (((i+1)%hyphen_each) == 0 && (i+1) < len) {
+          rv[j+2] = hypeh_char;
+          j++;
+        }
+      }
+      rv[rv_len-1] = '\0';
+      olxcstr s = olxcstr::FromExternal(rv, rv_len);
+      s.SetLength(s.Length()-1);
+      return s;
+    }
+    /* decodes hex string in to dest, if the decoder encountered an invalid
+    char it returns InvalidIndex, otherwise return the number of decoded chars,
+    len at max
+    */
+    template <class T>
+    static size_t decode(const T &in, char *dest, size_t dest_len) {
+      size_t off=0;
+      size_t len = olxstr::o_strlen(in);
+      for (size_t i=0; i < len; i++) {
+        olxch c = in[i];
+        if (c >= '0' && c <= '9')       c -= '0';
+        else if (c >= 'a' && c <= 'z')  c -= ('a'-10);
+        else if (c >= 'A' && c <= 'Z')  c -= ('A'-10);
+        else if (c == '-')
+          continue;
+        else
+          return InvalidIndex;
+        size_t ro = off >> 1;
+        if (ro >= dest_len)
+          return dest_len;
+        if ((off&1) == 0)
+          dest[ro] = c << 4;
+        else
+          dest[ro] |= c;
+        off++;
+      }
+      return (off>>1);
+    }
+    static olxcstr encode(const uint8_t *data, size_t len) {
+      return encode(data, len, data::base16());
+    }
+    static olxcstr encode(const uint8_t *data, size_t len, size_t hyphen_each,
+      char hyphen_char='-')
+    {
+      return encode(data, len, data::base16(),
+        hyphen_each, hyphen_char);
+    }
+  }; // end struct base16
 };
 
 EndEsdlNamespace()

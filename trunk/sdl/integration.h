@@ -29,11 +29,10 @@
 
 namespace olex {
 
-  class IOlexProcessor  {
-    static IOlexProcessor* Instance;
+  class IOlexProcessor {
   public:
-    IOlexProcessor()  {  Instance = this;  }
-    virtual ~IOlexProcessor()  {}
+    IOlexProcessor() { GetInstance() = this; }
+    virtual ~IOlexProcessor() {}
 
     // uses custom macro error to set args, get rv
     virtual bool processMacro(const olxstr& cmdLine,
@@ -53,29 +52,34 @@ namespace olex {
 
     virtual TLibrary&  GetLibrary() = 0;
 
-    static DllExport IOlexProcessor* GetInstance()  {  return Instance;  }
+    static IOlexProcessor *&GetInstance() {
+      static IOlexProcessor* Instance=NULL;
+      return Instance;
+    }
   };
 
-  class IOlexRunnable : public IEObject  {
+  class IOlexRunnable : public IEObject {
   public:
-    virtual ~IOlexRunnable()  {}
+    IOlexRunnable() { GetOlexRunnable() = this; }
+    virtual ~IOlexRunnable() {}
+    /* if run returns true - the library can be unloaded, otherwise */
     virtual bool Run(IOlexProcessor& olexProcessor) = 0;
-  };
-  class OlexPort : public IEObject  {
-    static IOlexRunnable *OlexRunnable;
-  protected:
-  public:
-    OlexPort()  {  OlexRunnable = NULL;  }
-    ~OlexPort()  {
-      if( OlexRunnable != NULL )
-        delete OlexRunnable;
+
+    static IOlexRunnable *&GetOlexRunnable() {
+      static IOlexRunnable *OlexRunnable = NULL;
+      return OlexRunnable;
     }
-  //............................................................................
-    static void SetOlexRunnable(IOlexRunnable* o_r)  {  OlexRunnable = o_r;  }
-  //............................................................................
-    static DllExport IOlexRunnable* GetOlexRunnable();
-  //............................................................................
   };
+  //............................................................................
 };  // end namespace olex
+
+/*
+  extern "C" DllExport olex::IOlexProcessor *GetOlexProcessor() {
+    return IOlexProcessor::GetInstance();
+  }
+  extern "C" DllExport olex::IOlexRunnable *GetOlexRunnable() {
+    return IOlexRunnable::GetOlexRunnable();
+}
+*/
 
 #endif

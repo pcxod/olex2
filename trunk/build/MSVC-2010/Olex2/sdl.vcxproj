@@ -617,13 +617,10 @@
     <ClCompile Include="..\..\..\sdl\esort.cpp" />
     <ClCompile Include="..\..\..\sdl\estopwatch.cpp" />
     <ClCompile Include="..\..\..\sdl\etime.cpp" />
-    <ClCompile Include="..\..\..\sdl\eutf8.cpp" />
     <ClCompile Include="..\..\..\sdl\exception.cpp" />
     <ClCompile Include="..\..\..\sdl\filetree.cpp" />
     <ClCompile Include="..\..\..\sdl\function.cpp" />
     <ClCompile Include="..\..\..\sdl\groupobj.cpp" />
-    <ClCompile Include="..\..\..\sdl\hashing.cpp" />
-    <ClCompile Include="..\..\..\sdl\integration.cpp" />
     <ClCompile Include="..\..\..\sdl\istream.cpp" />
     <ClCompile Include="..\..\..\sdl\libfile.cpp" />
     <ClCompile Include="..\..\..\sdl\library.cpp" />

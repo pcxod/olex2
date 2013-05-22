@@ -32,7 +32,7 @@ protected:
 template <class Impl>
 class SHA2 {
 protected:
-  static const uint32_t *table();
+  static const uint32_t *table_();
   uint8_t digest[32];
   uint32_t state[8], bf[64];
   SHA2() {}

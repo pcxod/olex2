@@ -8,8 +8,9 @@
 ******************************************************************************/
 
 #include "md5.h"
+#include "encodings.h"
 
-const uint32_t *MD5Impl::consts() {
+const uint32_t *MD5Impl::consts_() {
   static const uint32_t c[] = {
     0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a,
     0xa8304613, 0xfd469501, 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
@@ -48,6 +49,7 @@ void MD5Impl::digest64(const uint32_t* msg)  {
            b = state[1],
            c = state[2],
            d = state[3];
+  const uint32_t *consts = consts_();
   for( int i=0; i < 64; i++ )  {
     uint32_t f, g;
     if( i < 16 )  {
@@ -72,7 +74,7 @@ void MD5Impl::digest64(const uint32_t* msg)  {
     const uint32_t tmp = d;
     d = c;
     c = b;
-    b += HashingUtils::hs_rotl( a+f+consts()[i]+ msg[g], rotations()[i]);
+    b += HashingUtils::hs_rotl( a+f+consts[i]+ msg[g], rotations()[i]);
     a = tmp;
   }
   state[0] += a;
@@ -82,11 +84,5 @@ void MD5Impl::digest64(const uint32_t* msg)  {
 }
 
 olxcstr MD5Impl::formatDigest()  {
-  olxcstr rv;
-  rv.Allocate(33, false);
-  for( int i=0; i < 16; i++ )  {
-    rv << HashingUtils::digest_chars[((unsigned char)digest[i]) >> 4] <<
-      HashingUtils::digest_chars[digest[i]&0x0F];
-  }
-  return rv;
+  return encoding::base16::encode(digest, 16);
 }
