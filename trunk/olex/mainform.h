@@ -482,9 +482,7 @@ private:
   DefFunc(Color)
 
   DefFunc(HtmlPanelWidth)
-  #ifdef __WIN32__
   DefFunc(LoadDll)
-  #endif
 
   DefFunc(CmdList)
   DefFunc(Alert)
