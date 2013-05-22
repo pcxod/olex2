@@ -2055,6 +2055,18 @@ public:
   static bool o_isoneof(TC ch, TC a, TC b) {
     return ch == a || ch == b;
   }
+
+  // Java-compatible string hash code
+  template <typename AC>
+  static int32_t o_hashcode(const AC *data, size_t len) {
+    int32_t h=0;
+    for (size_t i=0; i < len; i++) {
+      h = 31*h + data[i];
+    }
+    return h;
+  }
+  int32_t HashCode() const { return o_hashcode(T::Data(), T::_Length); }
+
 };
 
 #include "olx_strcvt.h"

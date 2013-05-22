@@ -18,7 +18,7 @@ BeginEsdlNamespace()
 class MD5Impl  {
   uint8_t digest[16];
   uint32_t state[4], bf[16];
-  static const uint32_t *consts();
+  static const uint32_t *consts_();
   static const unsigned char *rotations();
   // digest 64 byte message updating current stat
 protected:

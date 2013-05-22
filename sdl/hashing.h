@@ -13,7 +13,6 @@
 BeginEsdlNamespace()
 
 struct HashingUtils  {
-  static const char digest_chars[17];
   static inline uint32_t hs_rotl(uint32_t v, uint32_t c)  {
     return (v << c) | (v >> (32-c));
   }
@@ -23,14 +22,14 @@ struct HashingUtils  {
 };
 struct HashingUtilsLE : public HashingUtils {
   // operates on 64 byte blocks only, little endian
-  static inline void hs_copy(const unsigned char* src, uint32_t* dest, size_t src_len)  {
+  static inline void hs_copy(const uint8_t* src, uint32_t* dest, size_t src_len)  {
     for( size_t i=0, j=0; i < src_len; i += 4, j++ )
       dest[j] = ((uint32_t)src[i]) | 
       (((uint32_t)src[i+1]) << 8) | 
       (((uint32_t)src[i+2]) << 16) | 
       (((uint32_t)src[i+3]) << 24);
   }
-  static inline void hs_copy(const uint32_t* src, unsigned char* dest, size_t src_len)  {
+  static inline void hs_copy(const uint32_t* src, uint8_t* dest, size_t src_len)  {
     for( size_t i=0, j=0; j < src_len; i += 4, j++ )  {
       dest[i] =   (char)src[j];
       dest[i+1] = (char)(src[j] >> 8);
@@ -38,23 +37,23 @@ struct HashingUtilsLE : public HashingUtils {
       dest[i+3] = (char)(src[j] >> 24);
     }
   }
-  static inline void hs_write_len(unsigned char* dest, const uint64_t& len)  {
+  static inline void hs_write_len(uint8_t* dest, const uint64_t& len)  {
     for( int i=8; i >= 1; i-- )
-      dest[64-i] = ((unsigned char*)&len)[8-i];
+      dest[64-i] = ((uint8_t*)&len)[8-i];
   }
 };
 
 struct HashingUtilsBE : public HashingUtils {
 public:
   // operates on 64 byte blocks only, big endian
-  static inline void hs_copy(const unsigned char* src, uint32_t* dest, size_t src_len)  {
+  static inline void hs_copy(const uint8_t* src, uint32_t* dest, size_t src_len)  {
     for( size_t i=0, j=0; i < src_len; i += 4, j++ )
       dest[j] = ((uint32_t)src[i+3]) | 
       (((uint32_t)src[i+2]) << 8) | 
       (((uint32_t)src[i+1]) << 16) | 
       (((uint32_t)src[i]) << 24);
   }
-  static inline void hs_copy(const uint32_t* src, unsigned char* dest, size_t src_len)  {
+  static inline void hs_copy(const uint32_t* src, uint8_t* dest, size_t src_len)  {
     for( size_t i=0, j=0; j < src_len; i += 4, j++ )  {
       dest[i+3] = (char)src[j];
       dest[i+2] = (char)(src[j] >> 8);
@@ -62,9 +61,9 @@ public:
       dest[i] =   (char)(src[j] >> 24);
     }
   }
-  static inline void hs_write_len(unsigned char* dest, const uint64_t& len)  {
+  static inline void hs_write_len(uint8_t* dest, const uint64_t& len)  {
     for( int i=8; i >= 1; i-- )
-      dest[64-i] = ((unsigned char*)&len)[i-1];
+      dest[64-i] = ((uint8_t*)&len)[i-1];
   }
 };
 
@@ -72,11 +71,11 @@ template <class Impl, class Tools>
 class HashingBase : public Impl  {
 protected:
   uint32_t bf[16];
-  unsigned char cbf[64];
+  uint8_t cbf[64];
   void DoRawDigest(const void* msg, size_t len) {
     const size_t blocks = len>>6;
     for (size_t i=0; i < blocks; i++) {
-      Tools::hs_copy(&((const unsigned char*)msg)[i<<6], bf, 64);
+      Tools::hs_copy(&((const uint8_t*)msg)[i<<6], bf, 64);
       Impl::digest64(bf);
     }
     const size_t part = len&0x3F;
@@ -103,7 +102,7 @@ protected:
   }
 
   void DoRawDigest(IInputStream& stream) {
-    unsigned char cbf[64];
+    uint8_t cbf[64];
     const uint64_t blocks = stream.GetSize() >> 6;
     for (uint64_t i=0; i < blocks; i++) {
       stream.Read(cbf, 64);

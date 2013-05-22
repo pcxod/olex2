@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #include "sha.h"
-#include "bapp.h"
+#include "encodings.h"
 
 SHA1Impl::SHA1Impl()  {
   state[0] = 0x67452301;
@@ -29,7 +29,7 @@ void SHA1Impl::digest64(const uint32_t* msg)  {
   for( size_t i=16; i < 80; i++ )
     bf[i] = HashingUtils::hs_rotl((bf[i-3]^bf[i-8]^bf[i-14]^bf[i-16]), 1);
   for( size_t i=0; i < 80; i++ )  {
-    uint32_t f, k;    
+    uint32_t f, k;
     if( i < 20 )  {
       f = (b&c) | (~b & d);
       k = 0x5A827999;
@@ -61,20 +61,12 @@ void SHA1Impl::digest64(const uint32_t* msg)  {
 }
 
 olxcstr SHA1Impl::formatDigest()  {
-  olxcstr rv;
-  rv.Allocate(45, false);
-  for( int i=0; i < 20; i++ )  {
-    if( i > 0 && (i%4) == 0 )
-      rv << ' ';
-    rv << HashingUtils::digest_chars[((unsigned char)digest[i]) >> 4] <<
-      HashingUtils::digest_chars[digest[i]&0x0F];
-  }
-  return rv;
+  return encoding::base16::encode(digest, 20, 4, ' ');
 }
 
 
 ////////////////////////////// SHA 256 ///////////////////////////////////////////////////
-template <class T> const uint32_t *SHA2<T>::table() {
+template <class T> const uint32_t *SHA2<T>::table_() {
   static const uint32_t t[] = {
      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
      0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -101,6 +93,7 @@ void SHA2<T>::digest64(const uint32_t* msg)  {
            f = state[5],
            g = state[6],
            h = state[7];
+  const uint32_t *table = table_();
   for( int i=0; i < 16; i++ )
     bf[i] = msg[i];
   for( size_t i=16; i < 64; i++ )  {
@@ -118,7 +111,7 @@ void SHA2<T>::digest64(const uint32_t* msg)  {
     const uint32_t s1 = HashingUtils::hs_rotr(e,6)^
       HashingUtils::hs_rotr(e,11)^HashingUtils::hs_rotr(e,25);
     const uint32_t ch = (e&f) ^ (~e & g);
-    const uint32_t t1 = h + s1 + ch + table()[i] + bf[i];
+    const uint32_t t1 = h + s1 + ch + table[i] + bf[i];
     h = g;
     g = f;
     f = e;
@@ -150,17 +143,7 @@ SHA256Impl::SHA256Impl()  {
 }
 
 olxcstr SHA256Impl::formatDigest()  {
-  //volatile olx_scope_cs _cs( TBasicApp::GetCriticalSection() );
-  // (CEmptyString(), 256) global data, like EmptyString() MUST not be used in threads without semaphores!
-  olxcstr rv;
-  rv.Allocate(72, false);
-  for( int i=0; i < 32; i++ )  {
-    if( i > 0 && (i%4) == 0 )
-      rv << ' ';
-    rv << HashingUtils::digest_chars[((unsigned char)digest[i]) >> 4] <<
-      HashingUtils::digest_chars[digest[i]&0x0F];
-  }
-  return rv;
+  return encoding::base16::encode(digest, 32, 4, ' ');
 }
 
 SHA224Impl::SHA224Impl()  {
@@ -175,15 +158,7 @@ SHA224Impl::SHA224Impl()  {
 }
 
 olxcstr SHA224Impl::formatDigest()  {
-  olxcstr rv;
-  rv.Allocate(63, false);
-  for( int i=0; i < 28; i++ )  {
-    if( i > 0 && (i%4) == 0 )
-      rv << ' ';
-    rv << HashingUtils::digest_chars[((unsigned char)digest[i]) >> 4] <<
-      HashingUtils::digest_chars[digest[i]&0x0F];
-  }
-  return rv;
+  return encoding::base16::encode(digest, 28, 4, ' ');
 }
 
 template class esdl::SHA2<SHA224Impl>;
