@@ -621,6 +621,7 @@
     <ClCompile Include="..\..\..\sdl\filetree.cpp" />
     <ClCompile Include="..\..\..\sdl\function.cpp" />
     <ClCompile Include="..\..\..\sdl\groupobj.cpp" />
+    <ClCompile Include="..\..\..\sdl\integration.cpp" />
     <ClCompile Include="..\..\..\sdl\istream.cpp" />
     <ClCompile Include="..\..\..\sdl\libfile.cpp" />
     <ClCompile Include="..\..\..\sdl\library.cpp" />

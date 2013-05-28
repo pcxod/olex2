@@ -492,7 +492,7 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
         return NULL;
       }
     }
-    catch( const TExceptionBase& )  {  
+    catch( const TExceptionBase& )  {
       return NULL;
     }
   }
@@ -532,7 +532,7 @@ void TFSItem::DelFile() {
 }
 //.............................................................................
 void TFSItem::_DelFile() {
-  if (!GetIndexFS().HasAccess(afs_DeleteAccess) || IsFolder()) return;
+  if (!EsdlInstanceOf(GetIndexFS(), TOSFileSystem) || IsFolder()) return;
   olxstr fn = GetIndexFS().GetBase()+ GetFullName();
   if (TEFile::Exists(fn)) {
     TEFile::Chmod(fn, S_IWRITE);
