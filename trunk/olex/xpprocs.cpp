@@ -396,7 +396,7 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E) {
     E.ProcessingError(__OlxSrcInfo, "NULL runnable");
     return;
   }
-  if (!runnable->Run(*this)) {
+  if (!runnable->Init(&c_process_function, &c_process_macro)) {
     dl.Detach();
   }
 }

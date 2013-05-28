@@ -63,7 +63,9 @@ namespace olex {
     IOlexRunnable() { GetOlexRunnable() = this; }
     virtual ~IOlexRunnable() {}
     /* if run returns true - the library can be unloaded, otherwise */
-    virtual bool Run(IOlexProcessor& olexProcessor) = 0;
+    virtual bool Init(
+      const olxch * (*c_process_function)(const olxch *),
+      bool (*_process_macro)(const olxch *)) = 0;
 
     static IOlexRunnable *&GetOlexRunnable() {
       static IOlexRunnable *OlexRunnable = NULL;
@@ -73,13 +75,7 @@ namespace olex {
   //............................................................................
 };  // end namespace olex
 
-/*
-  extern "C" DllExport olex::IOlexProcessor *GetOlexProcessor() {
-    return IOlexProcessor::GetInstance();
-  }
-  extern "C" DllExport olex::IOlexRunnable *GetOlexRunnable() {
-    return IOlexRunnable::GetOlexRunnable();
-}
-*/
+extern "C" const olxch *c_process_function(const olxch *f);
+extern "C" bool c_process_macro(const olxch *f);
 
 #endif
