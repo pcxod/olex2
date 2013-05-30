@@ -140,7 +140,7 @@ texture is applied
   struct Data {
     olx_array_ptr<unsigned char> data;
     GLint width, height, border;
-    Data() : data(NULL), width(0), height(0), border(0) {}
+    Data() : width(0), height(0), border(0) {}
   };
   static Data ReadData(const TGlTexture& tex);
   Data ReadData() const { return ReadData(*this); }

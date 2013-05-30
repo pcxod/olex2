@@ -36,7 +36,7 @@ TNameMode* TNameMode::Instance = NULL;
 
 AMode::AMode(size_t id)
   : Id(id), gxapp(TGXApp::GetInstance()),
-    olex2(*olex::IOlexProcessor::GetInstance()),
+    olex2(*olex2::IOlex2Processor::GetInstance()),
     ObjectPicker(*this)
 {
   TModeChange mc(Id, true);
@@ -117,7 +117,7 @@ AMode* TModeRegistry::SetMode(const olxstr& name, const olxstr &args)  {
   CurrentMode = NULL;  // mf->New Calls other functions, validating current mode...
   CurrentMode = (mf == NULL) ? NULL : mf->New();
   if (CurrentMode != NULL || name.Equalsi("off")) {
-    olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+    olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
     olxstr tmp = name;
     if (!args.IsEmpty()) tmp << ' ' << args;
     op->callCallbackFunc(ModeChangeCB, TStrList() << tmp);
@@ -186,7 +186,7 @@ void TStateRegistry::SetState(size_t id, bool status, const olxstr &data,
 {
   TStateChange sc(id, status, data);
   OnChange.Execute(NULL, &sc);
-  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   TStrList args;
   args.Add(slots[id]->name);
   args.Add(status);
@@ -201,7 +201,7 @@ void TStateRegistry::TMacroSetter::operator ()(bool v, const olxstr &data) {
   olxstr c = cmd;
   c << ' ' << v;
   if (!data.IsEmpty()) c << ' ' << data;
-  olex::IOlexProcessor::GetInstance()->processMacro(c, __OlxSrcInfo);
+  olex2::IOlex2Processor::GetInstance()->processMacro(c, __OlxSrcInfo);
 }
 //..............................................................................
 TStateRegistry &TStateRegistry::GetInstance() {

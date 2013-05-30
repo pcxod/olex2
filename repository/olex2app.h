@@ -11,7 +11,7 @@
 #define __olx2_app_H
 #include "gxapp.h"
 
-namespace olex {
+namespace olex2 {
 
 class AOlex2App : public TGXApp {
 public:

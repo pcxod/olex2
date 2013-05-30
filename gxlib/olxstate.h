@@ -197,7 +197,7 @@ class AMode : public IEObject {
 protected:
   size_t Id;
   TGXApp &gxapp;
-  olex::IOlexProcessor &olex2;
+  olex2::IOlex2Processor &olex2;
   void SetUserCursor(const olxstr &val, const olxstr &name) const{
     olxstr v = val;
     v.Replace('$', "\\$");

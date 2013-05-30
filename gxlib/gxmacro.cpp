@@ -602,7 +602,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
       q_draw_changed = true;
     }
     app.XFile().GetLattice().Init();
-    olex::IOlexProcessor::GetInstance()->processMacro("compaq -q");
+    olex2::IOlex2Processor::GetInstance()->processMacro("compaq -q");
     if( q_draw != NULL && q_draw_changed )
       q_draw->SetEnabled(true);
   }  // integration
@@ -2991,7 +2991,7 @@ void GXLibMacros_CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS) 
     if( (i+1) < netB.NodeCount() )  arg << ',';
   }
   callBackArg.Add(arg);
-  olex::IOlexProcessor::GetInstance()->callCallbackFunc(
+  olex2::IOlex2Processor::GetInstance()->callCallbackFunc(
     OnMatchCBName, callBackArg);
 }
 //..............................................................................
@@ -3016,7 +3016,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   const bool exclude_h = Options.GetBoolOption('h');
   if( Options.Contains("u") )  // do nothing...
     return;
-  olex::IOlexProcessor::GetInstance()->callCallbackFunc(
+  olex2::IOlex2Processor::GetInstance()->callCallbackFunc(
     StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.Contains("i");
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;

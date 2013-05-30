@@ -16,7 +16,7 @@ void LibMath::Eval(const TStrObjList& Params, TMacroError& E) {
   math_eval::ExpEvaluator evtr;
   olxstr param = Params[0];
   evtr.build(param);
-  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   for (size_t i=0; i < evtr.Evaluators.Count(); i++) {
     math_eval::Evaluator *e = evtr.Evaluators[i];
     TStrObjList Params;

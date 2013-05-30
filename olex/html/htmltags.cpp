@@ -93,7 +93,7 @@ TAG_HANDLER_PROC(tag)  {
   int ax=-1, ay=-1;
   bool WidthInPercent = false, HeightInPercent = false;
   int fl = 0;
-  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   wxString text = tag.GetParam(wxT("TEXT")),
            mapName = tag.GetParam(wxT("USEMAP"));
   olxstr ObjectName = tag.GetParam(wxT("NAME")),
@@ -187,7 +187,7 @@ olxstr ExpandMacroShortcuts(const olxstr &s,
 TAG_HANDLER_BEGIN(INPUT, "INPUT")
 TAG_HANDLER_PROC(tag)  {
   const olxstr TagName = tag.GetParam(wxT("TYPE"));
-  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   THtml * html = dynamic_cast<THtml*>(
     m_WParser->GetWindowInterface()->GetHTMLWindow());
   olxstr ObjectName, Value, Data, Tmp, Label;

@@ -13,7 +13,7 @@
 #include "langdict.h"
 #include "olxstate.h"
 
-class Olex2App : public olex::AOlex2App {
+class Olex2App : public olex2::AOlex2App {
   size_t statePluginInstalled;
   SortedObjectList<olxstr, olxstrComparator<true> > plugins;
   bool CheckState(size_t state, const olxstr& stateData) const {
@@ -24,7 +24,7 @@ public:
   TLangDict Dictionary;
 
   Olex2App(const olxstr& FileName, AGlScene *scene=NULL)
-    : olex::AOlex2App(FileName, scene)
+    : olex2::AOlex2App(FileName, scene)
   {
     TStateRegistry &states = GetStatesRegistry();
     statePluginInstalled = TStateRegistry::GetInstance().Register(

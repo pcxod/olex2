@@ -26,12 +26,12 @@
   #endif
 #endif
 //---------------------------------------------------------------------------
-using namespace olex;
+using namespace olex2;
 typedef void (*pyRegFunc)();
 
 class PythonExt  {
   static PythonExt* Instance;
-  IOlexProcessor* OlexProcessor;
+  IOlex2Processor* OlexProcessor;
   TLibrary *Library, *BindLibrary;
   TTypeList<pyRegFunc> ToRegister;
 //.............................................................................
@@ -100,12 +100,12 @@ public:
   void funLogLevel(const TStrObjList& Params, TMacroError& E);
   void funExport(const TStrObjList& Params, TMacroError& E);
   olxstr module_name;
-  PythonExt(IOlexProcessor* olexProcessor, const olxstr &module_name);
+  PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name);
   uint16_t LogLevel;
 public:
   ~PythonExt();
   // must be called only once
-  static PythonExt& Init(IOlexProcessor* olexProcessor,
+  static PythonExt& Init(IOlex2Processor* olexProcessor,
     const olxstr &module_name="olex")
   {
     return *(new PythonExt(olexProcessor, module_name));
@@ -130,7 +130,7 @@ public:
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 //  static TLibrary* GetExportedLibrary()  {  return Library;  }
   TLibrary* GetBindLibrary()  {  return BindLibrary;  }
-  IOlexProcessor* GetOlexProcessor()  {  return OlexProcessor;  }
+  IOlex2Processor* GetOlexProcessor()  {  return OlexProcessor;  }
   void CheckInitialised();
 
   static PythonExt* GetInstance()  {

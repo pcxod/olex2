@@ -42,7 +42,7 @@ public:
 };
 
 class TEMacroLib {
-  olex::IOlexProcessor& OlexProcessor;
+  olex2::IOlex2Processor& OlexProcessor;
   static bool is_allowed_in_name(olxch ch) {
     return (olxstr::o_isalphanumeric(ch) || ch == '_' || ch == '.');
   }
@@ -79,7 +79,7 @@ protected:
   static void funNot(exparse::evaluator<exparse::expression_tree> *t,
     TMacroError& E, const TStrList &argv);
 public:
-  TEMacroLib(olex::IOlexProcessor& olexProcessor);
+  TEMacroLib(olex2::IOlex2Processor& olexProcessor);
   ~TEMacroLib() {}
   void Init();  // extends the Library with functionality
   void Load(const TDataItem& m_root);
