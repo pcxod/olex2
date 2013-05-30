@@ -25,7 +25,7 @@
 #include "symmparser.h"
 #undef GetObject
 
-using namespace olex;
+using namespace olex2;
 #ifndef _NO_PYTHON
 
 PyObject* pyVarValue(PyObject* self, PyObject* args)  {
@@ -122,7 +122,7 @@ PyObject* pyUnsetVar(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* pyExpFun(PyObject* self, PyObject* args)  {
   TBasicFunctionPList functions;
-  IOlexProcessor::GetInstance()->GetLibrary().ListAllFunctions(functions);
+  IOlex2Processor::GetInstance()->GetLibrary().ListAllFunctions(functions);
   PyObject* af = PyTuple_New(functions.Count()), *f;
   for( size_t i=0; i < functions.Count(); i++ )  {
     ABasicFunction* func = functions[i];
@@ -138,7 +138,7 @@ PyObject* pyExpFun(PyObject* self, PyObject* args)  {
 //..............................................................................
 PyObject* pyExpMac(PyObject* self, PyObject* args)  {
   TBasicFunctionPList functions;
-  IOlexProcessor::GetInstance()->GetLibrary().ListAllMacros(functions);
+  IOlex2Processor::GetInstance()->GetLibrary().ListAllMacros(functions);
   PyObject* af = PyTuple_New( functions.Count() ), *f, *s;
   for( size_t i=0; i < functions.Count(); i++ )  {
     ABasicFunction* func = functions[i];

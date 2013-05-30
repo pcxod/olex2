@@ -385,18 +385,18 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E) {
     E.ProcessingError(__OlxSrcInfo, "could not load the library");
     return;
   }
-  typedef olex::IOlexRunnable* (*GOR)();
-  GOR gor = (GOR)dl.GetSymbol(wxT("GetOlexRunnable"));
+  typedef olex2::IOlex2Runnable* (*GOR)();
+  GOR gor = (GOR)dl.GetSymbol(wxT("GetOlex2Runnable"));
   if (gor == NULL) {
     E.ProcessingError(__OlxSrcInfo, "could not locate initialisation point");
     return;
   }
-  olex::IOlexRunnable* runnable = (*gor)();
+  olex2::IOlex2Runnable* runnable = (*gor)();
   if (!runnable) {
     E.ProcessingError(__OlxSrcInfo, "NULL runnable");
     return;
   }
-  if (!runnable->Init(&c_process_function, &c_process_macro)) {
+  if (!runnable->Init(this)) {
     dl.Detach();
   }
 }

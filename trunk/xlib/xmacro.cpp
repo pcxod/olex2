@@ -1004,8 +1004,8 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  using namespace olex;
-  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  using namespace olex2;
+  IOlex2Processor* op = IOlex2Processor::GetInstance();
   if( op == NULL ) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "this function requires Olex2 processor implementation");
@@ -1221,7 +1221,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   double def_max_d = 2.9,
     def_min_ang =TXApp::GetMinHBondAngle();
 #ifndef _NO_PYTHON
-  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   if (op) {
     olxstr f = "spy.GetParam('snum.cif.htab_max_d')";
     if (op->processFunction(f) && f.IsNumber())
@@ -1832,7 +1832,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   if( Sort )  {
-    olex::IOlexProcessor* op = olex::IOlexProcessor::GetInstance();
+    olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
       if( op != NULL )
         op->processMacro(olxstr("reap \'") << Tmp << '\'');
   }
@@ -2978,8 +2978,8 @@ void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {
 }
 //.............................................................................
 void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
-  using namespace olex;
-  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  using namespace olex2;
+  IOlex2Processor* op = IOlex2Processor::GetInstance();
   if( op == NULL ) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "this function requires Olex2 processor implementation");
@@ -3379,8 +3379,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 olxstr XLibMacros::CifResolve(const olxstr& func)  {
-  using namespace olex;
-  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  using namespace olex2;
+  IOlex2Processor* op = IOlex2Processor::GetInstance();
   if( op == NULL )  return func;
   olxstr rv = func;
   op->processFunction(rv);
@@ -3388,8 +3388,8 @@ olxstr XLibMacros::CifResolve(const olxstr& func)  {
 }
 //.............................................................................
 bool XLibMacros::ProcessExternalFunction(olxstr& func)  {
-  using namespace olex;
-  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  using namespace olex2;
+  IOlex2Processor* op = IOlex2Processor::GetInstance();
   if( op == NULL )  return false;
   olxstr rv = func;
   if( op->processFunction(rv) )  {
@@ -4539,9 +4539,9 @@ void XLibMacros::macFlush(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //.............................................................................
 void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  using namespace olex;
+  using namespace olex2;
   TXApp& xapp = TXApp::GetInstance();
-  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  IOlex2Processor* op = IOlex2Processor::GetInstance();
   if( op == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
   TSpaceGroup* sg = NULL;
@@ -4996,8 +4996,8 @@ void XLibMacros::macReset(TStrObjList &Cmds, const TParamList &Options,
   {
     return;
   }
-  using namespace olex;
-  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  using namespace olex2;
+  IOlex2Processor* op = IOlex2Processor::GetInstance();
   olxstr newSg(Options.FindValue('s')), 
          content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
          fileName(Options.FindValue('f'));
@@ -7352,7 +7352,7 @@ void XLibMacros::macConstrain(TStrObjList &Cmds, const TParamList &Options,
   {
     Cmds.DeleteRange(0, 2);
     ABasicFunction *bf =
-      olex::IOlexProcessor::GetInstance()->GetLibrary().FindMacro(
+      olex2::IOlex2Processor::GetInstance()->GetLibrary().FindMacro(
       "xf.rm.ShareADP");
     if (bf == NULL) {
       E.ProcessingError(__OlxSrcInfo, "could not locate required function");

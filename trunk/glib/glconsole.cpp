@@ -39,7 +39,7 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   PromptVisible = true;
   SkipPosting = false;
   PromptStr = InviteStr;
-  olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+  olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
   FShowBuffer = true;
   SetSelectable(false);
@@ -80,7 +80,7 @@ void TGlConsole::Create(const olxstr& cName)  {
   GlP.SetProperties(GS.GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
   FCursor->Create();
-  olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+  olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
   FStringPos = FCommand.Length();
 }
@@ -225,7 +225,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     if( !olx_is_valid_size(FCmdPos) )  FCmdPos = FCommands.Count()-1;
     if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
       PromptStr = InviteStr;
-      olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+      olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
       FCommand << FCommands[FCmdPos];
       SetInsertPosition(FCommand.Length());
@@ -237,7 +237,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     if( FCmdPos >= FCommands.Count() )  FCmdPos = 0;
     if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
       PromptStr = InviteStr;
-      olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+      olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
       FCommand << FCommands[FCmdPos];
       SetInsertPosition(FCommand.Length());
@@ -319,7 +319,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   
   if( Key == OLX_KEY_ESCAPE )  {
     PromptStr = InviteStr;
-    olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+    olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
     FCommand = PromptStr;
     SetInsertPosition(FCommand.Length());
     return true;
@@ -338,7 +338,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
     if( FCommand.IsEmpty() )  {
       PromptStr = InviteStr;
-      olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+      olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
     }
     SetInsertPosition(FCommand.Length());
@@ -457,7 +457,7 @@ olxstr TGlConsole::GetCommand() const  {
 //..............................................................................
 void TGlConsole::SetCommand(const olxstr& NewCmd)  {
   PromptStr = InviteStr;
-  olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+  olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
   FCommand << NewCmd;
   SetInsertPosition( FCommand.Length() );
@@ -579,7 +579,7 @@ void TGlConsole::SetInviteString(const olxstr &S)  {
   GetPrimitives().GetStyle().SetParam("Prompt",
     InviteStr.Replace("\\(", '('), true);
   olxstr cmd = GetCommand();
-  olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+  olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
   FCommand = PromptStr;
   FCommand << cmd;
   SetInsertPosition(FCommand.Length());
@@ -693,7 +693,7 @@ void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroError& E)  {
 void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
   if (!Params.IsEmpty()) {
     olxstr ps = Params[0];
-    if (!olex::IOlexProcessor::GetInstance()->processFunction(
+    if (!olex2::IOlex2Processor::GetInstance()->processFunction(
       ps, EmptyString(), true))
     {
       TBasicApp::NewLogEntry() << "Failed to process the console prompt string"
@@ -711,7 +711,7 @@ void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroError& E)  {
 void TGlConsole::LibCommand(const TStrObjList& Params, TMacroError& E)  {
   if( !Params.IsEmpty() )  {
     PromptStr = InviteStr;
-    olex::IOlexProcessor::GetInstance()->processFunction(PromptStr);
+    olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
     FCommand = PromptStr;
     FCommand << Params[0];
     SetInsertPosition(FCommand.Length());

@@ -259,7 +259,7 @@ void Kinect::processSkeleton()  {
       olxstr cmd = commands.Find("cross_up", EmptyString());
       last_command = "cross_up";
       if( !cmd.IsEmpty() )  {
-        olex::IOlexProcessor *op = IOlexProcessor::GetInstance();
+        olex2::IOlex2Processor *op = IOlex2Processor::GetInstance();
         op->executeMacro(cmd);
       }
     }
@@ -269,7 +269,7 @@ void Kinect::processSkeleton()  {
       olxstr cmd = commands.Find("cross_down", EmptyString());
       last_command = "cross_down";
       if( !cmd.IsEmpty() )  {
-        olex::IOlexProcessor *op = IOlexProcessor::GetInstance();
+        olex2::IOlex2Processor *op = IOlex2Processor::GetInstance();
         op->executeMacro(cmd);
       }
     }

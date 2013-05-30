@@ -14,7 +14,7 @@
 #include "log.h"
 #include "etable.h"
 #include "integration.h"
-using namespace olex;
+using namespace olex2;
 
 void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
@@ -24,7 +24,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
   if( E.RetObj() != NULL )
     rv = E.GetRetObj< TPtrList<TSpaceGroup> >();
 
-  IOlexProcessor* olx_inst = IOlexProcessor::GetInstance();
+  IOlex2Processor* olx_inst = IOlex2Processor::GetInstance();
 
   XApp.SetLastSGResult_(EmptyString());
 

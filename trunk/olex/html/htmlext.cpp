@@ -373,7 +373,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
   Olex2App *app=NULL;
   try { app = &Olex2App::GetInstance(); }
   catch(...) {}
-  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   for( size_t i=0; i < Lst.Count(); i++ )  {
     Lst[i].Replace("~popup_name~", PopupName);
     olxstr tmp = olxstr(Lst[i]).TrimWhiteChars();
@@ -1001,7 +1001,7 @@ void THtml::TObjectsState::SaveState()  {
 }
 //.............................................................................
 void THtml::TObjectsState::RestoreState()  {
-  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   for( size_t i=0; i < html.ObjectCount(); i++ )  {
     if( !html.IsObjectManageble(i) )  continue;
     size_t ind = Objects.IndexOf( html.GetObjectName(i) );

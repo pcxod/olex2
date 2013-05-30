@@ -31,7 +31,7 @@ void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
 {
   TStrList args;
   args.SetCapacity(Args.Count());
-  olex::IOlexProcessor *ip = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
   olxstr location = __OlxSourceInfo;
   for (size_t i=0; i < Args.Count(); i++) {
     // processing needs to be done for the defaults only - the rest already ARE
@@ -96,7 +96,7 @@ olxstr TEMacroLib::SubstituteArgs(const olxstr &arg_, const TStrList &argv,
 }
 //.............................................................................
 ABasicFunction *TEMacroLib::FindEvaluator(const olxstr &name, bool macro_first) {
-  olex::IOlexProcessor *ip = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
   ABasicFunction *f = macro_first ? ip->GetLibrary().FindMacro(name)
     : ip->GetLibrary().FindFunction(name);
   if (f == NULL) {
@@ -215,7 +215,7 @@ TEMacroLib::arg_t TEMacroLib::EvaluateArg(exparse::expression_tree *t,
 //.............................................................................
 //.............................................................................
 //.............................................................................
-TEMacroLib::TEMacroLib(olex::IOlexProcessor& olexProcessor)
+TEMacroLib::TEMacroLib(olex2::IOlex2Processor& olexProcessor)
   : OlexProcessor(olexProcessor), LogLevel(macro_log_macro)
 {
   if (GetBuiltins().IsEmpty()) {

@@ -12,12 +12,12 @@
 #include "integration.h"
 #include "macrolib.h"
 
-/* This is a default and sufficient implementation of the IOlexProcessor
+/* This is a default and sufficient implementation of the IOlex2Processor
 interface
 */
 namespace olex {
 
-class OlexProcessorImp : public IOlexProcessor {
+class OlexProcessorImp : public IOlex2Processor {
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
   ALibraryContainer *LibraryContainer;
   // object destruction handler

@@ -56,7 +56,7 @@ bool TDataFile::LoadFromXLFile(const olxstr &DataFile, TStrList* Log)  {
 //.............................................................................
 void TDataFile::Include(TStrList* Log)  {
   TDataItem *Inc = FRoot->GetAnyItem("#include");
-  olex::IOlexProcessor *op = olex::IOlexProcessor::GetInstance();
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   while( Inc != NULL )  {
     olxstr Tmp = Inc->GetValue();
     if (op != NULL)

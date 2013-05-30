@@ -260,7 +260,7 @@ PyObject* runGetProfileInfo(PyObject* self, PyObject* args)  {
 }
 //.............................................................................
 PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
-  IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
+  IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr macroName;
   if( !PythonExt::ParseTuple(args, "w", &macroName) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
@@ -269,7 +269,7 @@ PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
 }
 //.............................................................................
 PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
-  IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
+  IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr functionName;
   if( !PythonExt::ParseTuple(args, "w", &functionName) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
@@ -283,7 +283,7 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args)  {
 //.............................................................................
 PyObject* runOlexFunctionEx(PyObject* self, PyObject* args)  {
   using namespace macrolib;
-  IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
+  IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr name;
   bool macro;
   PyObject *args_, *kwds_=NULL;
@@ -423,7 +423,7 @@ olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep,
   }
 }
 //.............................................................................
-PythonExt::PythonExt(IOlexProcessor* olexProcessor, const olxstr &module_name)
+PythonExt::PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name)
   : module_name(module_name),
     LogLevel(macrolib::macro_log_macro)
 {
@@ -520,7 +520,7 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
 }
 //.............................................................................
 void PythonExt::funExport(const TStrObjList& Cmds, TMacroError& E)  {
-  IOlexProcessor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
+  IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   if( o_r == NULL )  return;
   // clean up legacy export
   if( TEFile::Exists(Cmds[0]+".py") )
