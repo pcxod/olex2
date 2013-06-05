@@ -506,12 +506,6 @@ const TRefList& RefinementModel::GetReflections() const {
       hf[i].SetS(hf[i].GetS()*HKLF_s/HKLF_wt);
       TReflection& r = _Reflections.AddNew(hf[i]);
       if (hf[i].GetBatch() <= 0) {
-        // warn about the wrong batch
-        if (hf[i].GetBatch() == -1) {
-          olxstr r_str = hf[i].ToString();
-          TBasicApp::NewLogEntry(logError) << olx_print("Invalid batch number "
-            "for reflection #%u: %w", i+1, &r_str);
-        }
         continue;
       }
       TRefPList* rl = hkl3d(hf[i].GetHkl());
