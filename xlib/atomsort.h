@@ -41,29 +41,16 @@ public:
   }
   static int atom_cmp_Suffix(const TCAtom &a1, const TCAtom &a2)  {
     olxstr sa, sb;
-    for( size_t i=0; i < a1.GetLabel().Length(); i++ )  {
-      if( olxstr::o_isalpha(a1.GetLabel().CharAt(a1.GetLabel().Length()-i-1)) )
-        sa << a1.GetLabel().CharAt(a1.GetLabel().Length()-i-1);
-      else
-        break;
-    }
-    for( size_t i=0; i < a2.GetLabel().Length(); i++ )  {
-      if( olxstr::o_isalpha(a2.GetLabel().CharAt(a2.GetLabel().Length()-i-1)) )
-        sb << a2.GetLabel().CharAt(a2.GetLabel().Length()-i-1);
-      else
-        break;
-    }
-    // reverse
-    for( size_t i=0; i < sa.Length()/2; i++ )  {
-      olxch t = sa.CharAt(i);
-      sa[i] = sa.CharAt(sa.Length()-i-1);
-      sa[sa.Length()-i-1] = t;
-    }
-    for( size_t i=0; i < sb.Length()/2; i++ )  {
-      olxch t = sb.CharAt(i);
-      sb[i] = sb.CharAt(sb.Length()-i-1);
-      sb[sb.Length()-i-1] = t;
-    }
+    size_t i=a1.GetType().symbol.Length();
+    while (++i < a1.GetLabel().Length() && olxstr::o_isdigit(a1.GetLabel()[i]))
+      ;
+    if (i < a1.GetLabel().Length())
+      sa = a1.GetLabel().SubStringFrom(i);
+    i = a2.GetType().symbol.Length();
+    while (++i < a2.GetLabel().Length() && olxstr::o_isdigit(a2.GetLabel()[i]))
+      ;
+    if (i < a2.GetLabel().Length())
+      sb = a2.GetLabel().SubStringFrom(i);
     return olxstrComparator<false>::Compare(sa, sb);
   }
   static int atom_cmp_Number(const TCAtom &a1, const TCAtom &a2)  {

@@ -402,7 +402,7 @@ void TXFile::Sort(const TStrList& ins)  {
             MoietySorter::SortBySize(list);
           else if( sort.CharAt(i) == 'h' )
             MoietySorter::SortByHeaviestElement(list);
-          else if( sort.CharAt(i) == 'm' )  
+          else if( sort.CharAt(i) == 'm' )
             MoietySorter::SortByWeight(list);
         }
         if( !labels.IsEmpty() )
