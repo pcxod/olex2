@@ -992,6 +992,7 @@ void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options,
   olxstr ws = ' ';
   const TAsymmUnit &au = TXApp::GetInstance().XFile().GetAsymmUnit();
   for (size_t i=0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).IsDeleted()) continue;
     olxstr l = au.GetAtom(i).GetResiLabel();
     if (atoms.Length() + l.Length() >= 80) {
       TBasicApp::NewLogEntry() << olxstr(atoms);
