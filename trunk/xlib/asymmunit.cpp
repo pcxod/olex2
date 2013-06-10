@@ -591,40 +591,39 @@ void TAsymmUnit::AddMatrix(const smatd& a)  {
 olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label,
   char a, char b, char c) const
 {
-  olxstr LB( (Label.Length() > 4) ? Label.SubStringTo(2) : Label );
-  if( ca != NULL )  {
+  olxstr LB((Label.Length() > 4) ? Label.SubStringTo(2) : Label);
+  if (ca != NULL) {
     const TResidue& resi = GetResidue(ca->GetResiId());
-    for( size_t i=0; i < resi.Count(); i++ )  {
+    for (size_t i=0; i < resi.Count(); i++) {
       const TCAtom& atom = resi[i];
       if( atom.GetPart() != ca->GetPart() &&
-          (atom.GetPart()|ca->GetPart()) != 0 )
+          (atom.GetPart()|ca->GetPart()) != 0)
       {
         continue;
       }
-      if( !atom.IsDeleted() && (atom.GetLabel().Equalsi(Label) ) && 
-        (atom.GetId() != ca->GetId()) )  {
+      if (!atom.IsDeleted() && (atom.GetLabel().Equalsi(Label) ) &&
+        (atom.GetId() != ca->GetId()))
+      {
         LB = atom.GetType().symbol;
-        if( LB.Length() == 2 )  LB[0] = LB.o_toupper(LB[0]);
         LB << a << b;
-        if( LB.Length() < 4 )  LB << c;
-        if( a < '9' )  return CheckLabel(ca, LB, (char)(a+1), b, c);
-        if( b < 'z' )  return CheckLabel(ca, LB, '0', (char)(b+1), c);
-        if( c < 'z' )  return CheckLabel(ca, LB, '0', 'a', (char)(c+1));
+        if (LB.Length() < 4)  LB << c;
+        if (a < '9')  return CheckLabel(ca, LB, (char)(a+1), b, c);
+        if (b < 'z')  return CheckLabel(ca, LB, '0', (char)(b+1), c);
+        if (c < 'z')  return CheckLabel(ca, LB, '0', 'a', (char)(c+1));
         throw TFunctionFailedException(__OlxSourceInfo, "cannot create label");
       }
     }
     return LB;
   }
-  for( size_t i=0; i < AtomCount(); i++ )  {
+  for (size_t i=0; i < AtomCount(); i++) {
     const TCAtom& CA = GetAtom(i);
-    if( !CA.IsDeleted() && CA.GetLabel().Equalsi(Label) )  {
+    if (!CA.IsDeleted() && CA.GetLabel().Equalsi(Label)) {
       LB = CA.GetType().symbol;
-      if( LB.Length() == 2 )  LB[0] = LB.o_toupper(LB[0]);
       LB << a << b;
-      if( LB.Length() < 4 )  LB << c;
-      if( a < '9' )  return CheckLabel(ca, LB, (char)(a+1), b, c);
-      if( b < 'z' )  return CheckLabel(ca, LB, '0', (char)(b+1), c);
-      if( c < 'z' )  return CheckLabel(ca, LB, '0', 'a', (char)(c+1));
+      if (LB.Length() < 4)  LB << c;
+      if (a < '9')  return CheckLabel(ca, LB, (char)(a+1), b, c);
+      if (b < 'z')  return CheckLabel(ca, LB, '0', (char)(b+1), c);
+      if (c < 'z')  return CheckLabel(ca, LB, '0', 'a', (char)(c+1));
       throw TFunctionFailedException(__OlxSourceInfo, "cannot create label");
     }
   }

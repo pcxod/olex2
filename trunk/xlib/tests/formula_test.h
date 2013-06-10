@@ -15,7 +15,7 @@ void FormulaParseTest(OlxTests& t)  {
   t.description = __FUNC__;
   TStrList s_toks;
   TDoubleList n_toks;
-  for (int itr=0; itr <= 4; itr++) {  
+  for (int itr=0; itr <= 4; itr++) {
     if (itr == 0) {
       s_toks << "Pb" << "Co" << "O2";
       n_toks << 1 << 1 << 2;
@@ -23,20 +23,20 @@ void FormulaParseTest(OlxTests& t)  {
     else if (itr == 1) {
       s_toks.Clear();
       n_toks.Clear();
-      s_toks << "PB" << "CO" << "O2";
-      n_toks << 1 << 1 << 2;
+      s_toks << "P" << "B" << "C" << "OO2";
+      n_toks << 1 << 1 << 1 << 3;
     }
     else if (itr == 2) {
       s_toks.Clear();
       n_toks.Clear();
-      s_toks << "PB1" << "CO1" << "OO2";
-      n_toks << 1 << 1 << 3;
+      s_toks << "P" << "B1" << "C" << "O1OO2";
+      n_toks << 1 << 1 << 1 << 4;
     }
     else if (itr == 3) {
       s_toks.Clear();
       n_toks.Clear();
-      s_toks << "P1" << "B1" << "CO1" << "OO2";
-      n_toks << 1 << 1 << 1 << 3;
+      s_toks << "P1" << "B1" << "C" << "O1OO2";
+      n_toks << 1 << 1 << 1 << 4;
     }
     else if (itr == 4) {
       s_toks.Clear();

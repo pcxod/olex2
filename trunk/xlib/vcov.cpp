@@ -326,7 +326,7 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
       throw TInvalidArgumentException(__OlxSourceInfo, "annotation");
     const olxstr atom_name = annotations[i].SubStringTo(di);
     const olxstr param_name = annotations[i].SubStringFrom(di+1);
-    if( last_atom_name != atom_name )  {
+    if (last_atom_name != atom_name) {
       atom = au.FindCAtom(atom_name);
       last_atom_name = atom_name;
     }

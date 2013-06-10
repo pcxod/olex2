@@ -770,6 +770,9 @@ bool TIns::InsExists(const olxstr &Name)  {
 }
 //..............................................................................
 bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
+  if (toks[0].Equalsi("ACTA")) {
+    TBasicApp::NewLogEntry() << "ACTA";
+  }
   // special instructions
   if( _ParseIns(rm, toks) || ParseRestraint(rm, toks) )  return true;
   // check for uniqueness
@@ -778,15 +781,11 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
       if( Ins[i].Equalsi(toks[0]) )  {
         TInsList *ps = Ins.GetObject(i);
         if( ps->Count() == (toks.Count()-1) )  {
-          bool unique = false;
           for( size_t j=0; j < ps->Count(); j++ )  {
             if( !ps->GetString(j).Equalsi(toks[j+1]) )  {
-              unique = true;
-              break;
+              return false;
             }
           }
-          if( !unique )  
-            return false;
         }
       }
     }

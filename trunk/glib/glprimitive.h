@@ -73,7 +73,7 @@ protected:
   TGlClipPlanes* ClipPlanes;
   AEvaluator* Evaluator;
   TGPCollection* ParentCollection;
-  olxstr* String; // for text object, nut be initialised with a proper pointer
+  const olxstr* String; // for text object
   TGlFont* Font;
   /* if Basis is NULL, then the orientation of the primitive is default
    to use asign it a value Basis = new TEBasis; the object will free memory
@@ -166,7 +166,7 @@ public:
   short GetType() const {  return Type;  }
 
   DefPropP(TGlClipPlanes*, ClipPlanes)
-  DefPropP(olxstr*, String)
+  DefPropP(const olxstr*, String)
   DefPropP(TGlFont*, Font)
   DefPropP(TEBasis*, Basis)
   DefPropP(AEvaluator*, Evaluator)

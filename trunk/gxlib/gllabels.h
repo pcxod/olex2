@@ -18,22 +18,24 @@ BeginGxlNamespace()
 
 class TXAtom;
 // label modes
-const short
-  lmLabels   = 0x0001,  // atom label
-  lmPart     = 0x0002,  // part
-  lmAfix     = 0x0004,  // afix
-  lmOVar     = 0x0008,  // occupancy variable
-  lmOccp     = 0x0010,  // occupancy
-  lmUiso     = 0x0020,  // Uiso
-  lmUisR     = 0x0040,  // Uiso for riding atoms (negative)
-  lmAOcc     = 0x0080,  // actuall occupancy (as read from ins )
-  lmHydr     = 0x0100,  // include hydrogens
-  lmQPeak    = 0x0200,  // include Q-peaks
-  lmQPeakI   = 0x0400,  // Q-peaks intensity
-  lmFixed    = 0x0800,  // fixed values
-  lmConRes   = 0x1000,  // restraints, constraints
-  lmIdentity = 0x2000,  // only for identity atoms
-  lmCOccu    = 0x4000;  // chemical occupancy
+const uint32_t
+  lmLabels   = 0x00000001,  // atom label
+  lmPart     = 0x00000002,  // part
+  lmAfix     = 0x00000004,  // afix
+  lmOVar     = 0x00000008,  // occupancy variable
+  lmOccp     = 0x00000010,  // occupancy
+  lmUiso     = 0x00000020,  // Uiso
+  lmUisR     = 0x00000040,  // Uiso for riding atoms (negative)
+  lmAOcc     = 0x00000080,  // actuall occupancy (as read from ins )
+  lmHydr     = 0x00000100,  // include hydrogens
+  lmQPeak    = 0x00000200,  // include Q-peaks
+  lmQPeakI   = 0x00000400,  // Q-peaks intensity
+  lmFixed    = 0x00000800,  // fixed values
+  lmConRes   = 0x00001000,  // restraints, constraints
+  lmIdentity = 0x00002000,  // only for identity atoms
+  lmCOccu    = 0x00004000,  // chemical occupancy
+
+  lmBonds    = 0x00010000;  // exclusive for bond lengths
 
 enum LabelMaterialIndex {
   lmiMark,
@@ -43,8 +45,20 @@ enum LabelMaterialIndex {
 class TXGlLabels: public AGDrawObject  {
   TArrayList<uint32_t> Colors_;
   TArrayList<uint8_t> Marks;
-  short Mode;
+  uint32_t Mode;
   size_t FontIndex;
+  struct RenderContext {
+    TGlPrimitive &primitive;
+    TGlFont &font;
+    bool &matInitialised;
+    TGlMaterial GlM;
+    int currentMaterial;
+    bool optimizeATI;
+    double vectorZoom;
+  };
+  void RenderLabel(const vec3d &crd, const olxstr &label,
+    size_t index,
+    RenderContext &rc) const;
 public:
   TXGlLabels(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName=EmptyString());
@@ -53,7 +67,7 @@ public:
   void Clear();
   void ClearLabelMarks();
 
-  DefPropP(short, Mode)
+  DefPropP(uint32_t, Mode)
   void Selected(bool On);
 
   bool Orient(TGlPrimitive& P);

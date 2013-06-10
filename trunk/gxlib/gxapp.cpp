@@ -2745,7 +2745,8 @@ void TGXApp::UpdateDuplicateLabels() {
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
     if (!a.IsAvailable() || !a.GetMatrix().IsFirst()) continue;
-    size_t idx = ld.IndexOf(a.GetLabel());
+    olxstr gl = a.GetGuiLabel();
+    size_t idx = ld.IndexOf(gl);
     if (idx != InvalidIndex) {
       if (ld.GetValue(idx) != InvalidIndex) {
         if (FLabels->GetMaterialIndex(ld.GetValue(idx)) != lmiMark) {
@@ -2757,7 +2758,7 @@ void TGXApp::UpdateDuplicateLabels() {
         FLabels->SetMaterialIndex(a.GetOwnerId(), lmiDuplicateLabel);
     }
     else {
-      ld(a.GetLabel(), a.GetOwnerId());
+      ld(gl, a.GetOwnerId());
       if (FLabels->GetMaterialIndex(a.GetOwnerId()) == lmiDuplicateLabel)
         FLabels->SetMaterialIndex(a.GetOwnerId(), (LabelMaterialIndex)~0);
     }
@@ -2773,7 +2774,7 @@ void TGXApp::SetLabelsVisible(bool v)  {
     UpdateDuplicateLabels();
 }
 //..............................................................................
-void TGXApp::SetLabelsMode(short lmode)  {  FLabels->SetMode(lmode); }
+void TGXApp::SetLabelsMode(uint32_t lmode)  {  FLabels->SetMode(lmode); }
 //..............................................................................
 short TGXApp::GetLabelsMode()      const {  return FLabels->GetMode(); }
 //..............................................................................

@@ -201,10 +201,19 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
   files containing atom labels (like VcV) and information may be miss
   -represented
   */
+  TStrList o_labels(au.AtomCount());
   LabelCorrector lc(au, false);
-  for (size_t i=0; i < au.AtomCount(); i++ )
-    lc.CorrectGlobal(au.GetAtom(i));
-  return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    lc.Correct(au.GetAtom(i));
+    o_labels[i] = au.GetAtom(i).GetLabel();
+    au.GetAtom(i).SetLabel(au.GetAtom(i).GetResiLabel(), false);
+  }
+  PyObject *rv = TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
+  // restore labels
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    au.GetAtom(i).SetLabel(o_labels[i], false);
+  }
+  return rv;
 }
 //..............................................................................
 PyObject* pySGInfo(PyObject* self, PyObject* args)  {

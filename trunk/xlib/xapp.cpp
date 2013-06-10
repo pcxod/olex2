@@ -275,7 +275,7 @@ RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
 //..............................................................................
 void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
-  int lablInc = 0; 
+  int lablInc = 0;
   olxdict<int,TSAtomPList,TPrimitiveComparator> parts;
   olxstr Name( 
     SA.GetLabel().StartsFromi(SA.GetType().symbol) ? 
@@ -302,24 +302,29 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       if( al.Count() > 1 )
         Labl << (char)('a' + lablInc++);
       if( CheckLabel )  {
+        olxstr appx;
+        if (SA.CAtom().GetResiId() != -1) {
+          appx << '_' << SA.CAtom().GetParent()->GetResidue(
+            SA.CAtom().GetResiId()).GetNumber();
+        }
         TCAtom* CA;
-        while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
-          if( CA == &al[j]->CAtom() || CA->IsDeleted() || CA->GetTag() < 0 )
+        while ((CA = XFile().GetAsymmUnit().FindCAtom(Labl+appx)) != NULL) {
+          if (CA == &al[j]->CAtom() || CA->IsDeleted() || CA->GetTag() < 0)
             break;
           Labl = al[j]->GetType().symbol + Name;
-          if( Labl.Length() >= 4 )
+          if (Labl.Length() >= 4)
             Labl.SetLength(3);
-          else if( Labl.Length() < 3 && parts.Count() > 1 )
+          else if (Labl.Length() < 3 && parts.Count() > 1)
             Labl << (char)('a'+i);
           const char next_ch = 'a' + lablInc++;
-          if( next_ch > 'z' )
-            Labl = CA->GetParent()->CheckLabel(NULL, Labl);
+          if (next_ch > 'z')
+            Labl = CA->GetParent()->CheckLabel(CA, Labl);
           else
             Labl << next_ch;
         }
       }
-      if( al[j]->GetLabel() != Labl )  {
-        if( nu != NULL )  
+      if (al[j]->GetLabel() != Labl) {
+        if (nu != NULL)
           nu->AddAtom(al[j]->CAtom(), al[j]->GetLabel());
         al[j]->CAtom().SetLabel(Labl, false);
       }
@@ -350,54 +355,54 @@ TUndoData* TXApp::FixHL()  {
   TIntList frag_id;
   TSAtomPList satoms;
   FindSAtoms(EmptyString(), satoms, false, true);  //the selection might be returned
-  if( !satoms.IsEmpty() )  {
-    for( size_t i=0; i < satoms.Count(); i++ )  {
-      if( !satoms[i]->IsAUAtom() )  continue;
-      if( frag_id.IndexOf(satoms[i]->CAtom().GetFragmentId()) == InvalidIndex )
+  if (!satoms.IsEmpty()) {
+    for (size_t i=0; i < satoms.Count(); i++) {
+      if (!satoms[i]->IsAUAtom())  continue;
+      if (frag_id.IndexOf(satoms[i]->CAtom().GetFragmentId()) == InvalidIndex)
         frag_id.Add(satoms[i]->CAtom().GetFragmentId());
     }
   }
   ASObjectProvider& objects = XFile().GetLattice().GetObjects();
   const size_t ac = objects.atoms.Count();
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i=0; i < ac; i++) {
     TSAtom& sa = objects.atoms[i];
-    if( !sa.CAtom().IsAvailable() || sa.GetType() == iQPeakZ ||
-      !sa.IsAUAtom() )
+    if (!sa.CAtom().IsAvailable() || sa.GetType() == iQPeakZ ||
+      !sa.IsAUAtom())
     {
       sa.SetTag(-1);
       continue;
     }
-    if( sa.GetType() == iHydrogenZ )  {
+    if (sa.GetType() == iHydrogenZ) {
       sa.SetTag(-2);  // mark as unpocessed
       sa.CAtom().SetTag(-2);
       sa.CAtom().SetLabel(EmptyString(), false);
       continue;
     }
-    if( frag_id.IsEmpty() ||
-        frag_id.IndexOf(sa.CAtom().GetFragmentId()) != InvalidIndex )
+    if (frag_id.IsEmpty() ||
+        frag_id.IndexOf(sa.CAtom().GetFragmentId()) != InvalidIndex)
     {
       frags.Add(sa.CAtom().GetFragmentId()).Add(sa);
     }
   }
-  if( frag_id.IsEmpty() )  {
-    for( size_t i=0; i < frags.Count(); i++ )  {
+  if (frag_id.IsEmpty()) {
+    for (size_t i=0; i < frags.Count(); i++) {
       TSAtomPList& al = frags.GetValue(i);
-      for( size_t j=0; j < al.Count(); j++ )
+      for (size_t j=0; j < al.Count(); j++)
         NameHydrogens(*al[j], undo, true);
     }
   }
-  else  {
-    for( size_t i=0; i < frag_id.Count(); i++ )  {
+  else {
+    for (size_t i=0; i < frag_id.Count(); i++) {
       TSAtomPList& al = frags[frag_id[i]];
-      for( size_t j=0; j < al.Count(); j++ )
+      for (size_t j=0; j < al.Count(); j++)
         NameHydrogens(*al[j], undo, true);
     }
   }
   // check if there are any standalone h atoms left...
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i=0; i < ac; i++) {
     TSAtom& sa = objects.atoms[i];
-    if( !sa.CAtom().IsAvailable() || !sa.IsAUAtom() )  continue;
-    if( sa.GetType() == iHydrogenZ && sa.CAtom().GetTag() == -2 )
+    if (!sa.CAtom().IsAvailable() || !sa.IsAUAtom())  continue;
+    if (sa.GetType() == iHydrogenZ && sa.CAtom().GetTag() == -2)
       NameHydrogens(sa, undo, true);
   }
   return undo;

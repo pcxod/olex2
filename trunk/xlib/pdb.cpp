@@ -143,7 +143,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
     olxstr line = Strings[i].SubStringTo(spi).UpperCase();
     if( line == "CRYST1" )  {
       toks.StrtokF(Strings[i], CrystF);
-      if( toks.Count() < 7 )  
+      if( toks.Count() < 7 )
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
       GetAsymmUnit().GetAxes() = vec3d(
         toks[1].ToDouble(), toks[2].ToDouble(), toks[3].ToDouble());
@@ -196,7 +196,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
         else if(name == 'W')
           type = &XElementLib::GetByIndex(iOxygenIndex);
       }
-      if (!toks[5].TrimWhiteChars().IsEmpty()) // chain ID
+      if (!toks[5].TrimWhiteChars().IsEmpty() && resi==NULL) // chain ID
         name << '_' << toks[5];
       CA.SetLabel(name, type==NULL);
       if (type != NULL)
