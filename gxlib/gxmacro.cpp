@@ -119,7 +119,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "r-Uiso multiplier for riding atoms&;"
     "ao-actual occupancy (as in the ins file)&;"
     "qi-Q peak intensity&;"
-    "i-display labels for identity atoms only&;",
+    "i-display labels for identity atoms only&;"
+    "b-bond lengths&;",
     fpNone|fpOne,
     "Shows/hides atom labels. Takes no argument is given to invert current "
     "labels visibility or a boolean value");
@@ -797,7 +798,7 @@ void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  short lmode = 0;
+  uint32_t lmode = 0;
   if (Options.Contains('p'))   lmode |= lmPart;
   if (Options.Contains('l'))   lmode |= lmLabels;
   if (Options.Contains('v'))   lmode |= lmOVar;
@@ -811,7 +812,8 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
   if (Options.Contains("qi"))  lmode |= lmQPeakI;
   if (Options.Contains('i'))   lmode |= lmIdentity;
   if (Options.Contains("co"))  lmode |= lmCOccu;
-  if( lmode == 0 )  {
+  if (Options.Contains("b"))  lmode |= lmBonds;
+  if (lmode == 0) {
     lmode |= lmLabels;
     lmode |= lmQPeak;
     app.SetLabelsMode(lmode);
@@ -820,10 +822,11 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     else
       app.SetLabelsVisible(!app.AreLabelsVisible());
   }
-  else  {
+  else {
     app.SetLabelsMode(lmode |= lmQPeak);
     app.SetLabelsVisible(true);
   }
+  app.GetLabels().Init();
   TStateRegistry::GetInstance().SetState(app.stateLabelsVisible,
     app.AreLabelsVisible(), EmptyString(), true);
 }

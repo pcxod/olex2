@@ -510,7 +510,7 @@ public:
   void UpdateDuplicateLabels();
   bool AreLabelsVisible() const;
   void SetLabelsVisible(bool v);
-  void SetLabelsMode(short lmode);
+  void SetLabelsMode(uint32_t lmode);
   short GetLabelsMode() const;
   void MarkLabel(const TXAtom& A, bool mark);
   void MarkLabel(size_t index, bool mark);

@@ -18,6 +18,7 @@ TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName)
 {
   AGDrawObject::SetSelectable(false);
   Colors_ << 0 << 0xff;
+  Mode = 0;
 }
 //..............................................................................
 void TXGlLabels::Create(const olxstr& cName)  {
@@ -39,189 +40,215 @@ void TXGlLabels::Create(const olxstr& cName)  {
 //..............................................................................
 void TXGlLabels::Clear()  {  Marks.Clear();  }
 //..............................................................................
+void TXGlLabels::RenderLabel(const vec3d &crd, const olxstr &label,
+  size_t index, TXGlLabels::RenderContext &rc) const
+{
+  if (label.IsEmpty())  return;
+  rc.primitive.SetString(&label);
+  const double Z = Parent.CalcRasterZ(0.001);
+  if (!rc.font.IsVectorFont()) {
+    if (!rc.matInitialised) {
+      if (Marks[index] < Colors_.Count()) {
+        rc.GlM.AmbientF = Colors_[Marks[index]];
+        rc.GlM.Init(Parent.ForcePlain());
+        rc.currentMaterial = Marks[index];
+        rc.font.Reset_ATI(rc.optimizeATI);
+      }
+      else  {
+        rc.primitive.GetProperties().Init(Parent.ForcePlain());
+        rc.currentMaterial = -1;
+        rc.font.Reset_ATI(rc.optimizeATI);
+      }
+      rc.matInitialised = true;
+    }
+    else  {
+      if (Marks[index] < Colors_.Count()) {
+        if (rc.currentMaterial != Marks[index])  {
+          rc.GlM.AmbientF = Colors_[Marks[index]];
+          rc.GlM.Init(Parent.ForcePlain());
+          rc.currentMaterial = Marks[index];
+          rc.font.Reset_ATI(rc.optimizeATI);
+        }
+      }
+      else  {
+        if (rc.currentMaterial != -1) {
+          rc.primitive.GetProperties().Init(Parent.ForcePlain());
+          rc.currentMaterial = -1;
+          rc.font.Reset_ATI(rc.optimizeATI);
+        }
+      }
+    }
+    vec3d V = crd + Parent.GetBasis().GetCenter();
+    V *= Parent.GetBasis().GetMatrix();
+    V *= Parent.GetBasis().GetZoom();
+    if( Parent.GetExtraZoom() > 1 )  {
+      V *= (1./Parent.GetScale());
+      Parent.DrawTextSafe(vec3d(V[0]+0.01, V[1]+0.01, Z), label, rc.font);
+    }
+    else  {
+      olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, Z);
+      rc.primitive.Draw();
+    }
+  }
+  else  {  // vector font?
+    vec3d T = Parent.GetBasis().GetCenter() + crd;
+    T *= Parent.GetBasis().GetMatrix();
+    T *= Parent.GetBasis().GetZoom();
+    T[2] = Z;
+    rc.font.DrawVectorText(T, label, rc.vectorZoom);
+  }
+}
+//..............................................................................
 bool TXGlLabels::Orient(TGlPrimitive& P)  {
   TGlFont &Fnt = GetFont();
   TGXApp& app = TGXApp::GetInstance();
-  TGXApp::AtomIterator ai = app.GetAtoms();
-  if( ai.count == 0 || Marks.Count() != ai.count )
-    return true;
   bool matInited = false;
-  int currentM = -1;
   const bool zoomed_rendering = Parent.GetExtraZoom() > 1;
-  const bool optimise_ati = (Parent.IsATI() && !zoomed_rendering);
+  RenderContext rc = {P, Fnt, matInited, P.GetProperties(), -1,
+    (Parent.IsATI() && !zoomed_rendering),
+    Parent.GetBasis().GetZoom()/Parent.CalcZoom()
+  };
   P.SetFont(&Fnt);
-  TGlMaterial GlM = P.GetProperties();
-  Fnt.Reset_ATI(optimise_ati);
-  const RefinementModel& rm = app.XFile().GetRM();
-  for( size_t i=0; ai.HasNext(); i++ )  {
-    const TXAtom& XA = ai.Next();
-    if( XA.IsDeleted() || !XA.IsVisible() )  continue;
-    if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )
-      continue;
-    if( (Mode & lmQPeak) == 0 && (XA.GetType() == iQPeakZ) )  continue;
-    if( (Mode & lmIdentity) != 0 && !XA.IsAUAtom() )  continue;
-    const TCAtom& ca = XA.CAtom();
-    olxstr Tmp(EmptyString(), 48);
-    if( (Mode & lmLabels) != 0 )  {
-      Tmp << XA.GetLabel();
-      if( XA.CAtom().GetResiId() != 0 )  {
-        size_t resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
-        Tmp << '_' << resi;
+  Fnt.Reset_ATI(rc.optimizeATI);
+  if ((Mode&lmBonds) == 0) {
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    if (ai.count == 0 || Marks.Count() != ai.count)
+      return true;
+    const RefinementModel& rm = app.XFile().GetRM();
+    for( size_t i=0; ai.HasNext(); i++ )  {
+      const TXAtom& XA = ai.Next();
+      if( XA.IsDeleted() || !XA.IsVisible() )  continue;
+      if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )
+        continue;
+      if( (Mode & lmQPeak) == 0 && (XA.GetType() == iQPeakZ) )  continue;
+      if( (Mode & lmIdentity) != 0 && !XA.IsAUAtom() )  continue;
+      const TCAtom& ca = XA.CAtom();
+      olxstr Tmp(EmptyString(), 48);
+      if( (Mode & lmLabels) != 0 )  {
+        Tmp << XA.GetLabel();
+        if( XA.CAtom().GetResiId() != 0 )  {
+          size_t resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
+          Tmp << '_' << resi;
+        }
       }
-    }
-    if( (Mode & lmPart) != 0 && ca.GetPart() != 0 )  {
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << (int)ca.GetPart();
-    }
-    if( (Mode & lmAfix) != 0 && ca.GetAfix() != 0 ) {
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << ca.GetAfix();
-    }
-    if( (Mode & lmOVar) != 0 )  {
-      const XVarReference* vr = ca.GetVarRef(catom_var_name_Sof);
-      if( vr != NULL )  {
-        if( vr->relation_type != relation_None )  {
+      if( (Mode & lmPart) != 0 && ca.GetPart() != 0 )  {
+        if( !Tmp.IsEmpty() )  Tmp << ", ";
+        Tmp << (int)ca.GetPart();
+      }
+      if( (Mode & lmAfix) != 0 && ca.GetAfix() != 0 ) {
+        if( !Tmp.IsEmpty() )  Tmp << ", ";
+        Tmp << ca.GetAfix();
+      }
+      if( (Mode & lmOVar) != 0 )  {
+        const XVarReference* vr = ca.GetVarRef(catom_var_name_Sof);
+        if( vr != NULL )  {
+          if( vr->relation_type != relation_None )  {
+            if( !Tmp.IsEmpty() )  Tmp << ", ";
+            if( vr->relation_type == relation_AsVar )
+              Tmp << vr->Parent.GetId()+1;
+            else
+              Tmp << -(int)(vr->Parent.GetId()+1);
+          }
+        }
+      }
+      if( (Mode & lmQPeakI) != 0 && (XA.GetType() == iQPeakZ) )  {
+        if( !Tmp.IsEmpty() )  Tmp << ", ";
+        Tmp << olxstr::FormatFloat(1, ca.GetQPeak());
+      }
+      if( (Mode & lmAOcc) != 0 )  {
+        if( !Tmp.IsEmpty() )  Tmp << ", ";
+        Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Sof));
+      }
+      if( (Mode & lmCOccu) != 0 )  {
+        const double val = ca.GetChemOccu();
+        if( olx_abs(val-1) < 1e-5 )  continue;
+        if( !Tmp.IsEmpty() )  Tmp << ", ";
+        Tmp << olxstr::FormatFloat(3, val);
+      }
+      if( (Mode & lmUiso) != 0 && ca.GetUisoOwner() == NULL )  {
+        if( !Tmp.IsEmpty() )  Tmp << ", ";
+        Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Uiso));
+      }
+      if( (Mode & lmUisR) != 0 )  {
+        if( ca.GetUisoOwner() != NULL )  {
           if( !Tmp.IsEmpty() )  Tmp << ", ";
-          if( vr->relation_type == relation_AsVar )
-            Tmp << vr->Parent.GetId()+1;
-          else
-            Tmp << -(int)(vr->Parent.GetId()+1);
+          Tmp << olxstr::FormatFloat(2, ca.GetUisoScale());
         }
       }
-    }
-    if( (Mode & lmQPeakI) != 0 && (XA.GetType() == iQPeakZ) )  {
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(1, ca.GetQPeak());
-    }
-    if( (Mode & lmAOcc) != 0 )  {
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Sof));
-    }
-    if( (Mode & lmCOccu) != 0 )  {
-      const double val = ca.GetChemOccu();
-      if( olx_abs(val-1) < 1e-5 )  continue;
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(3, val);
-    }
-    if( (Mode & lmUiso) != 0 && ca.GetUisoOwner() == NULL )  {
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Uiso));
-    }
-    if( (Mode & lmUisR) != 0 )  {
-      if( ca.GetUisoOwner() != NULL )  {
-        if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << olxstr::FormatFloat(2, ca.GetUisoScale());
-      }
-    }
-    if( (Mode & lmFixed) != 0 )  {
-      olxstr fXyz;
-      for( size_t j=0; j < 3; j++ )  {
-        if( ca.GetVarRef(catom_var_name_X+j) != NULL &&
-            ca.GetVarRef(catom_var_name_X+j)->relation_type == relation_None )
-        {
-          fXyz << (olxch)('X'+j);
-        }
-      }
-      if( !fXyz.IsEmpty() )  {
-        if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << fXyz;
-      }
-      if( ca.GetVarRef(catom_var_name_Sof) != NULL &&
-          ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
-      {
-        if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << "occu";
-      }
-      if( ca.GetEllipsoid() != NULL )  {
-        olxstr eadp((const char*)"Ua:", 40);
-        size_t ec=0;
-        for( size_t j=0; j < 6; j++ )  {
-          if( ca.GetVarRef(catom_var_name_U11+j) != NULL &&
-              ca.GetVarRef(catom_var_name_U11+j)->relation_type == relation_None )
+      if( (Mode & lmFixed) != 0 )  {
+        olxstr fXyz;
+        for( size_t j=0; j < 3; j++ )  {
+          if( ca.GetVarRef(catom_var_name_X+j) != NULL &&
+              ca.GetVarRef(catom_var_name_X+j)->relation_type == relation_None )
           {
-            ec++;
-            eadp << (olxch)('A'+j);
+            fXyz << (olxch)('X'+j);
           }
         }
-        if( ec > 0 )  {
+        if( !fXyz.IsEmpty() )  {
           if( !Tmp.IsEmpty() )  Tmp << ", ";
-          if( ec == 6 )
-            Tmp << "Uani";
-          else Tmp << eadp;
+          Tmp << fXyz;
+        }
+        if( ca.GetVarRef(catom_var_name_Sof) != NULL &&
+            ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
+        {
+          if( !Tmp.IsEmpty() )  Tmp << ", ";
+          Tmp << "occu";
+        }
+        if( ca.GetEllipsoid() != NULL )  {
+          olxstr eadp((const char*)"Ua:", 40);
+          size_t ec=0;
+          for( size_t j=0; j < 6; j++ )  {
+            if( ca.GetVarRef(catom_var_name_U11+j) != NULL &&
+                ca.GetVarRef(catom_var_name_U11+j)->relation_type == relation_None )
+            {
+              ec++;
+              eadp << (olxch)('A'+j);
+            }
+          }
+          if( ec > 0 )  {
+            if( !Tmp.IsEmpty() )  Tmp << ", ";
+            if( ec == 6 )
+              Tmp << "Uani";
+            else Tmp << eadp;
+          }
+        }
+        else if( ca.GetVarRef(catom_var_name_Uiso) != NULL &&
+                 ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None )
+        {
+          if( !Tmp.IsEmpty() )  Tmp << ", ";
+          Tmp << "Uiso";
         }
       }
-      else if( ca.GetVarRef(catom_var_name_Uiso) != NULL &&
-               ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None )
-      {
+      if( (Mode & lmOccp) != 0 && ca.GetOccu() != 1.0 )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << "Uiso";
+        Tmp << olxstr::FormatFloat(3, ca.GetOccu());
       }
+      if( (Mode & lmConRes) != 0 && ca.GetOccu() != 1.0 )  {
+        if( !Tmp.IsEmpty() )  Tmp << ", ";
+        Tmp << olxstr::FormatFloat(3, ca.GetOccu());
+      }
+  #ifdef _DEBUG
+      if( olx_is_valid_index(ca.GetSameId()) )
+        Tmp << ':' << ca.GetSameId();
+  #endif
+      RenderLabel(XA.crd(), Tmp, i, rc);
     }
-    if( (Mode & lmOccp) != 0 && ca.GetOccu() != 1.0 )  {
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(3, ca.GetOccu());
-    }
-    if( (Mode & lmConRes) != 0 && ca.GetOccu() != 1.0 )  {
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(3, ca.GetOccu());
-    }
-#ifdef _DEBUG
-    if( olx_is_valid_index(ca.GetSameId()) )
-      Tmp << ':' << ca.GetSameId();
-#endif
-    if( Tmp.IsEmpty() )  continue;
-    P.SetString(&Tmp);
-    const double Z = Parent.CalcRasterZ(0.001);
-    if( !Fnt.IsVectorFont() )  {
-      if (!matInited) {
-        if (Marks[i] < Colors_.Count()) {
-          GlM.AmbientF = Colors_[Marks[i]];
-          GlM.Init(Parent.ForcePlain());
-          currentM = Marks[i];
-          Fnt.Reset_ATI(optimise_ati);
-        }
-        else  {
-          P.GetProperties().Init(Parent.ForcePlain());
-          currentM = -1;
-          Fnt.Reset_ATI(optimise_ati);
-        }
-        matInited = true;
+  }
+  else { // bonds
+    TGXApp::BondIterator bi = app.GetBonds();
+    if (bi.count == 0 || Marks.Count() != bi.count)
+      return true;
+    for (size_t i=0; bi.HasNext(); i++) {
+      TXBond &b = bi.Next();
+      if (!b.IsVisible()) continue;
+      if( (Mode & lmHydr) == 0 &&
+        (b.A().GetType() == iHydrogenZ || b.B().GetType() == iHydrogenZ))
+      {
+        continue;
       }
-      else  {
-        if (Marks[i] < Colors_.Count()) {
-          if (currentM != Marks[i])  {
-            GlM.AmbientF = Colors_[Marks[i]];
-            GlM.Init(Parent.ForcePlain());
-            currentM = Marks[i];
-            Fnt.Reset_ATI(optimise_ati);
-          }
-        }
-        else  {
-          if (currentM != -1) {
-            P.GetProperties().Init(Parent.ForcePlain());
-            currentM = -1;
-            Fnt.Reset_ATI(optimise_ati);
-          }
-        }
-      }
-      vec3d V = XA.crd() + Parent.GetBasis().GetCenter();
-      V *= Parent.GetBasis().GetMatrix();
-      V *= Parent.GetBasis().GetZoom();
-      if( Parent.GetExtraZoom() > 1 )  {
-        V *= (1./Parent.GetScale());
-        Parent.DrawTextSafe(vec3d(V[0]+0.01, V[1]+0.01, Z), Tmp, Fnt);
-      }
-      else  {
-        olx_gl::rasterPos(V[0]+0.01, V[1]+0.01, Z);
-        P.Draw();
-      }
-    }
-    else  {  // vector font?
-      vec3d T = Parent.GetBasis().GetCenter() + XA.crd();
-      T *= Parent.GetBasis().GetMatrix();
-      T *= Parent.GetBasis().GetZoom();
-      T[2] = Z;
-      Fnt.DrawVectorText(T, Tmp, Parent.GetBasis().GetZoom()/Parent.CalcZoom());
+      RenderLabel((b.A().crd()+b.B().crd())/2,
+        olxstr::FormatFloat(3, b.A().crd().DistanceTo(b.B().crd())),
+        i, rc);
     }
   }
   P.GetProperties().Init(Parent.ForcePlain());
@@ -229,7 +256,13 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
 }
 //..............................................................................
 void TXGlLabels::Init() {
-  Marks.SetCount(TGXApp::GetInstance().GetAtoms().count);
+  if (Mode == 0) return;
+  if ((Mode&lmBonds) != 0) {
+    Marks.SetCount(TGXApp::GetInstance().GetBonds().count);
+  }
+  else {
+    Marks.SetCount(TGXApp::GetInstance().GetAtoms().count);
+  }
   ClearLabelMarks();
 }
 //..............................................................................

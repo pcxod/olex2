@@ -234,7 +234,12 @@ public:
   others
   */
   bool IsSuitableForMatching() const {
-    return NodeCount() >= 3 && !Node(0).CAtom().IsDetached();
+    size_t cnt=0;
+    for (size_t i=0; i < NodeCount(); i++) {
+      if (Node(i).CAtom().IsAvailable() && ++cnt > 3)
+        return true;
+    }
+    return false;
   }
   struct AlignInfo  {
     align::out align_out;

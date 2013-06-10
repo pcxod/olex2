@@ -82,10 +82,10 @@ struct LabelCorrector  {
   void Correct(TCAtom& a)  {
     if( trim && a.GetLabel().Length() > 4 )
       a.SetLabel(a.GetLabel().SubStringTo(4), false);
-    TCAtom* lo = uniq_labels.Find(a.GetLabel(), NULL);
-    if( lo != NULL )  {
+    TCAtom* lo = uniq_labels.Find(a.GetResiLabel(), NULL);
+    if (lo != NULL) {
       // is diplicate allowed?
-      if( a.GetPart() != lo->GetPart() && a.GetPart() != 0 && lo->GetPart() != 0 )
+      if (a.GetPart() != lo->GetPart() && a.GetPart() != 0 && lo->GetPart() != 0)
         return;
       LabelIterator *li;
       if( labels.HasKey(&a.GetType()) )
@@ -98,7 +98,7 @@ struct LabelCorrector  {
       while( uniq_labels.IndexOf(li->label) != InvalidIndex )
         li->inc();
       a.SetLabel(li->label, false);
-      uniq_labels.Add(li->label, &a);
+      uniq_labels.Add(a.GetResiLabel(), &a);
       li->inc();
     }
     else
