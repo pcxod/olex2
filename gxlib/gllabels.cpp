@@ -125,11 +125,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       const TCAtom& ca = XA.CAtom();
       olxstr Tmp(EmptyString(), 48);
       if( (Mode & lmLabels) != 0 )  {
-        Tmp << XA.GetLabel();
-        if( XA.CAtom().GetResiId() != 0 )  {
-          size_t resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
-          Tmp << '_' << resi;
-        }
+        Tmp << XA.CAtom().GetResiLabel();
       }
       if( (Mode & lmPart) != 0 && ca.GetPart() != 0 )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";

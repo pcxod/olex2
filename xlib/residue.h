@@ -66,11 +66,11 @@ public:
   const TCAtomPList& GetAtomList() const {  return Atoms;  }
   TAsymmUnit& GetParent()  {  return Parent;  }
   virtual TIString ToString() const {
-    if( Id == 0 )  return EmptyString();
+    if (Id == 0)  return EmptyString();
     olxstr rv("RESI ");
-    rv << ClassName;
-    if( Number != 0 )  rv << ' ' << Number;
-    return rv << (!HasAlias() ? EmptyString() : (olxstr(' ') << Alias));
+    rv << ClassName << ' ' << Number;
+    if (HasAlias()) rv << ' ' << Alias;
+    return rv;
   }
   size_t Count() const {  return Atoms.Count();  }
   TCAtom& GetAtom(size_t i) const {  return *Atoms[i];  }

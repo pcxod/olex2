@@ -248,12 +248,24 @@ void TAsymmUnit::InitData()  {
 }
 //..............................................................................
 TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias)  {
+  if (number == 0) {
+    if (!RClass.IsEmpty()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "Cannot rename main residue");
+    }
+    return MainResidue;
+  }
   TResidue *er = ResidueRegistry.Find(number, NULL);
   if (er == NULL && alias != number)
     er = ResidueRegistry.Find(alias, NULL);
   if (er != NULL) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-          "overlapping residue number and alias");
+    if (!er->GetClassName().Equalsi(RClass)) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olx_print("Residue number %d is already assigned class %w", number,
+          &er->GetClassName())
+        );
+    }
+    return *er;
   }
   TResidue &r = Residues.Add(
     new TResidue(*this, (uint32_t)Residues.Count()+1, RClass, number, alias)

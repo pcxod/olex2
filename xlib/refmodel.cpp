@@ -888,10 +888,12 @@ const_strlist RefinementModel::Describe() {
           lst.Add(' ') << AtomListToStr(atoms[j], 2,
             (&res == &rSADI ? " ~ "  : " = "));
         }
-        if (&res == &rSADI)
-          lst.Add(" with sigma of ") << sr.GetEsd();
-        else
-          lst.Add(" ") << sr.GetValue() << " with sigma of " << sr.GetEsd();
+        if (!atoms.IsEmpty()) {
+          if (&res == &rSADI)
+            lst.Add(" with sigma of ") << sr.GetEsd();
+          else
+            lst.Add(" ") << sr.GetValue() << " with sigma of " << sr.GetEsd();
+        }
       }
     }
   }
