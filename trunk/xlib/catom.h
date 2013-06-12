@@ -402,7 +402,7 @@ public:
   /* if atom's Residue is default or residue number equals to ResiNumber - it
   it dropped
   */
-  olxstr GetFullLabel(const RefinementModel& rm, const int ResiNumber) const;
+  olxstr GetFullLabel(const RefinementModel& rm, int ResiNumber) const;
   /* if Resiname is number - calls the function above with ResiNumber.ToInt(),
   else if it is empty - calls the single argument function, otherwise compares
   the atoms' residue name with ResiName and if the names match - drops it

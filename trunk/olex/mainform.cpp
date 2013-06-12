@@ -3454,7 +3454,7 @@ void TMainForm::SaveVFS(short persistenceId)  {
     TEFile::Rename(dbFN + ".tmp", dbFN);
   }
   catch(const TExceptionBase &e)  {
-    ShowAlert(e, "Failed to save VFS");
+    TBasicApp::NewLogEntry(logInfo) << "Failed to save VFS: " << e;
   }
 }
 //..............................................................................

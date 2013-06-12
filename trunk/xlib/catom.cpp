@@ -330,7 +330,7 @@ void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool>& chars)  {
   olxstr Dig, Char;
   for( size_t i=0; i < str.Length(); i++ )  {
     if( str[i] <= '9' && str[i] >= '0' )  {
-      if( !Char.IsEmpty() )      {
+      if( !Char.IsEmpty() )  {
         chars.Add(Char, true);
         Char.SetLength(0);
       }
@@ -463,10 +463,12 @@ void TCAtom::UpdateAttachedSites()  {
 }
 //..............................................................................
 olxstr TCAtom::GetResiLabel() const {
-  if( GetResiId() == 0 )
-    return GetLabel();
-  return (olxstr(GetLabel()) << '_' <<
-    GetParent()->GetResidue(GetResiId()).GetNumber());
+  olxstr rv = GetLabel();
+  if (GetResiId() != 0) {
+    TResidue &r = GetParent()->GetResidue(GetResiId());
+    rv << '_' << r.GetNumber();
+  }
+  return rv;
 }
 //..............................................................................
 SiteSymmCon TCAtom::GetSiteConstraints() const {
@@ -479,31 +481,29 @@ SiteSymmCon TCAtom::GetSiteConstraints() const {
 //..............................................................................
 //..............................................................................
 olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm) const  {
-  olxstr name(Atom->GetLabel());
-  if( Atom->GetResiId() == 0 )  {
-    if( Matrix != NULL )
+  olxstr name = Atom->GetResiLabel();
+  if (Atom->GetResiId() == 0) {
+    if (Matrix != NULL)
       name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
   }
-  else  {  // it is however shown that shelx just IGNORES $EQIV in this notation...
-    name << '_' << Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber();
-    if( Matrix != NULL )
+  else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
+    if (Matrix != NULL)
       name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
   }
   return name;
 }
 //..............................................................................
 olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
-  const int resiId) const
+  int resiId) const
 {
-  olxstr name(Atom->GetLabel());
-  if( Atom->GetResiId() == 0 || 
-    Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber() == resiId )
-  {
-    if( Matrix != NULL )
+  olxstr name = Atom->GetLabel();
+  TResidue &r = Atom->GetParent()->GetResidue(Atom->GetResiId());
+  if( Atom->GetResiId() == 0 || r.GetNumber() == resiId) {
+    if (Matrix != NULL)
       name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
   }
-  else  {  // it is however shown that shelx just IGNORES $EQIV in this notation...
-    name << '_' << Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber();
+  else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
+    name << '_' << r.GetNumber();
     if( Matrix != NULL )
       name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
   }

@@ -302,8 +302,12 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       if( al.Count() > 1 )
         Labl << (char)('a' + lablInc++);
       if( CheckLabel )  {
+        if (lablInc > 25) {
+          Labl = al[j]->CAtom().GetParent()->CheckLabel(&al[j]->CAtom(), Labl);
+          continue;
+        }
         olxstr appx;
-        if (SA.CAtom().GetResiId() != -1) {
+        if (SA.CAtom().GetResiId() != 0) {
           appx << '_' << SA.CAtom().GetParent()->GetResidue(
             SA.CAtom().GetResiId()).GetNumber();
         }
@@ -317,8 +321,10 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
           else if (Labl.Length() < 3 && parts.Count() > 1)
             Labl << (char)('a'+i);
           const char next_ch = 'a' + lablInc++;
-          if (next_ch > 'z')
-            Labl = CA->GetParent()->CheckLabel(CA, Labl);
+          if (next_ch > 'z') {
+            Labl = CA->GetParent()->CheckLabel(&al[j]->CAtom(), Labl);
+            break;
+          }
           else
             Labl << next_ch;
         }

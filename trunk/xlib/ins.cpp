@@ -590,12 +590,12 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       }
     }
   }
-  else if( Toks[0].Equalsi("RESI") )  {
-    if( Toks.Count() < 2 )  {
+  else if (Toks[0].Equalsi("RESI")) {
+    if (Toks.Count() < 2) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "number of arguments for RESI");
     }
-    if( Toks[1].IsNumber() )  {
+    if (Toks[1].IsNumber()) {
       int n = Toks[1].ToInt();
       if (Toks.Count() > 2) {
         if (Toks[2].IsNumber()) {
@@ -610,9 +610,10 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         cx.Resi = &cx.au.NewResidue(EmptyString(), n, n);
       }
     }
-    else if( Toks.Count() > 2 )  {
-      if( !Toks[2].IsNumber() )
+    else {
+      if (Toks.Count() < 3 || !Toks[2].IsNumber()) {
         throw TInvalidArgumentException(__OlxSourceInfo, "number for RESI");
+      }
       int n = Toks[2].ToInt();
       cx.Resi = &cx.au.NewResidue(Toks[1], n,
         (Toks.Count() > 3) ? Toks[3].ToInt() : n);
@@ -770,9 +771,6 @@ bool TIns::InsExists(const olxstr &Name)  {
 }
 //..............................................................................
 bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
-  if (toks[0].Equalsi("ACTA")) {
-    TBasicApp::NewLogEntry() << "ACTA";
-  }
   // special instructions
   if( _ParseIns(rm, toks) || ParseRestraint(rm, toks) )  return true;
   // check for uniqueness

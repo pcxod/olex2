@@ -48,17 +48,13 @@ void TSAtom::Assign(const TSAtom& S)  {
   Matrix = S.Matrix;
 }
 //..............................................................................
-olxstr TSAtom::GetGuiLabel() const  {  
-  olxstr rv(FCAtom->GetLabel());
-  if( FCAtom->GetResiId() != 0 )  {
-    rv << '_' <<
-      FCAtom->GetParent()->GetResidue(FCAtom->GetResiId()).GetNumber();
-  }
-  if( Network == NULL || Matrix->IsI() )
+olxstr TSAtom::GetGuiLabel() const {
+  olxstr rv = FCAtom->GetResiLabel();
+  if (Network == NULL || Matrix->IsFirst())
     return rv;
   else
     return rv << '.' << TSymmParser::MatrixToSymmCode(
-    Network->GetLattice().GetUnitCell().GetSymmSpace(), *Matrix);
+      Network->GetLattice().GetUnitCell().GetSymmSpace(), *Matrix);
 }
 //..............................................................................
 void TSAtom::RemoveNode(TSAtom& node)  {
@@ -68,13 +64,9 @@ void TSAtom::RemoveNode(TSAtom& node)  {
   Nodes.Delete(ind);
 }
 //..............................................................................
-olxstr TSAtom::GetGuiLabelEx() const  {  
-  olxstr rv(FCAtom->GetLabel());
-  if( FCAtom->GetResiId() != 0 )  {
-    rv << '_' <<
-      FCAtom->GetParent()->GetResidue(FCAtom->GetResiId()).GetNumber();
-  }
-  if( Network == NULL || Matrix->IsI() )
+olxstr TSAtom::GetGuiLabelEx() const {
+  olxstr rv = FCAtom->GetResiLabel();
+  if (Network == NULL || Matrix->IsFirst())
     return rv;
   else
     return rv << '(' << TSymmParser::MatrixToSymmEx(*Matrix) << ')';
