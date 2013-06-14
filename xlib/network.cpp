@@ -250,7 +250,7 @@ class TNetTraverser  {
   olxstr Data;
 public:
   TNetTraverser() {  Data.SetIncrement(1024);  }
-  bool OnItem(const TEGraphNode<size_t, TSAtom*>& v) {
+  bool OnItem(const TEGraphNode<uint64_t, TSAtom*>& v) {
     olxstr tmp(v.GetData(), v.Count()*6);
     tmp << '{';
     for( size_t i=0; i < v.Count(); i++ )  {
@@ -266,8 +266,8 @@ public:
 };
 
 void ResultCollector(
-  TEGraphNode<size_t,TSAtom*>& subRoot, 
-  TEGraphNode<size_t,TSAtom*>& Root, 
+  TEGraphNode<uint64_t,TSAtom*>& subRoot, 
+  TEGraphNode<uint64_t,TSAtom*>& Root, 
   TTypeList<AnAssociation2<size_t, size_t> >& res)
 {
   res.AddNew(subRoot.GetObject()->GetFragmentId(),
@@ -283,8 +283,8 @@ void ResultCollector(
   }
 }
 void ResultCollector(
-  TEGraphNode<size_t,TSAtom*>& subRoot,
-  TEGraphNode<size_t,TSAtom*>& Root,
+  TEGraphNode<uint64_t,TSAtom*>& subRoot,
+  TEGraphNode<uint64_t,TSAtom*>& Root,
   TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res)
 {
   if( !subRoot.ShallowEquals(Root) )  return;
@@ -300,8 +300,97 @@ void ResultCollector(
   }
 }
 
-void BuildGraph(TEGraphNode<size_t,TSAtom*>& graphNode)  {
-  typedef TEGraphNode<size_t,TSAtom*> node_t;
+/* calculates a node idenifier based on the atom type and the breadth first
+graph size and complexity
+*/
+uint64_t CalculateNodeHash(TEGraphNode<uint64_t,TSAtom*>& graphNode) {
+  typedef TEGraphNode<uint64_t,TSAtom*> node_t;
+  TNetwork& net = graphNode.GetObject()->GetNetwork();
+  net.GetNodes().ForEach(ACollectionItem::TagSetter(-1));
+  TQueue<TSAtom*> aqueue;
+  aqueue.Push(graphNode.GetObject());
+  aqueue.Push(NULL);
+  index_t v = 0;
+  TArrayList<size_t> counts(16);
+  while (!aqueue.IsEmpty()) {
+    TSAtom *n = aqueue.Pop();
+    if (n == NULL) {
+      if (aqueue.IsEmpty()) break;
+      v++;
+      aqueue.Push(NULL);
+      continue;
+    }
+    if (n->GetTag() != -1) continue;
+    n->SetTag(v);
+    if (counts.Count() <= (size_t)v)
+      counts.SetCount(v+1);
+    counts[v] += (size_t)n->GetType().z;
+    for (size_t i=0; i < n->NodeCount(); i++) {
+      if (n->Node(i).GetTag() == -1)
+        aqueue.Push(&n->Node(i));
+    }
+  }
+  uint64_t rv=((uint64_t)graphNode.GetObject()->GetType().z)<<56;
+  rv |= ((uint64_t)v) << 48;
+  int64_t h=0;
+  for (size_t i=counts.Count(); i != 0; i--) {
+    h = (h<<4)|counts[i-1];
+  }
+  rv |= (h&0x0000ffffffffffffUL);
+  return rv;
+}
+
+uint64_t CalculateNodeHash2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
+  const olxdict<TSAtom*, TEGraphNode<uint64_t,TSAtom*>*, TPointerComparator>& map)
+{
+  TSAtom &a = *graphNode.GetObject();
+  TArrayList<uint64_t> ids(a.NodeCount());
+  for (size_t i=0; i < a.NodeCount(); i++) {
+    ids[i] = map[&a.Node(i)]->GetData();
+  }
+  BubbleSorter::Sort(ids, TPrimitiveComparator());
+  uint64_t id=0;
+  for (size_t i=0; i < ids.Count(); i++) {
+    if ((id&1)==1)
+      id |= (ids[i]<<16);
+    else
+      id ^= (ids[i]>>16);
+  }
+  uint64_t rv=(graphNode.GetData()&0xffff000000000000UL);
+  rv |= (id&0x0000ffffffffffffUL);
+  return rv;
+}
+
+void AssignHashes(TEGraphNode<uint64_t,TSAtom*>& graphNode) {
+  graphNode.SetData(CalculateNodeHash(graphNode));
+  for (size_t i=0; i < graphNode.Count(); i++) {
+    AssignHashes(graphNode.Item(i));
+  }
+  graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
+}
+void CalculateHashes2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
+  const olxdict<TSAtom*, TEGraphNode<uint64_t,TSAtom*>*, TPointerComparator>& map,
+  olxdict<TEGraphNode<uint64_t,TSAtom*>*, uint64_t, TPointerComparator>& vs)
+{
+  vs(&graphNode, CalculateNodeHash2(graphNode, map));
+  for (size_t i=0; i < graphNode.Count(); i++) {
+    CalculateHashes2(graphNode.Item(i), map, vs);
+  }
+  graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
+}
+void AssignHashes2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
+  const olxdict<TEGraphNode<uint64_t,TSAtom*>*, uint64_t, TPointerComparator>& vs)
+{
+  graphNode.SetData(vs[&graphNode]);
+  for (size_t i=0; i < graphNode.Count(); i++) {
+    AssignHashes2(graphNode.Item(i), vs);
+  }
+  graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
+}
+
+void BuildGraph(TEGraphNode<uint64_t,TSAtom*>& graphNode)  {
+  typedef TEGraphNode<uint64_t,TSAtom*> node_t;
+  olxdict<TSAtom*, node_t*, TPointerComparator> map;
   TNetwork& net = graphNode.GetObject()->GetNetwork();
   net.GetNodes().ForEach(ACollectionItem::TagSetter(-1));
   TQueue<TSAtom*> aqueue;
@@ -318,7 +407,6 @@ void BuildGraph(TEGraphNode<size_t,TSAtom*>& graphNode)  {
     }
     if (n->GetTag() != -1) continue;
     n->SetTag(v);
-    //n->CAtom().SetLabel(EmptyString(), false);
     for (size_t i=0; i < n->NodeCount(); i++) {
       if (n->Node(i).GetTag() == -1)
         aqueue.Push(&n->Node(i));
@@ -326,20 +414,26 @@ void BuildGraph(TEGraphNode<size_t,TSAtom*>& graphNode)  {
   }
   TQueue<node_t*> queue;
   queue.Push(&graphNode);
+  map.Add(graphNode.GetObject(), &graphNode);
   while (!queue.IsEmpty()) {
     node_t *n = queue.Pop();
     for (size_t i=0; i < n->GetObject()->NodeCount(); i++) {
       TSAtom &sa = n->GetObject()->Node(i);
       if (sa.GetTag() > n->GetObject()->GetTag()) {
-       // sa.CAtom().SetLabel(sa.CAtom().GetLabel() + "x", false);
-        queue.Push(&n->NewNode((sa.NodeCount()<<16)|sa.GetType().z, &sa));
+        node_t *nd =
+          queue.Push(&n->NewNode((sa.NodeCount()<<16)|sa.GetType().z, &sa));
+        map.Add(&sa, nd);
       }
     }
   }
+  AssignHashes(graphNode);
+  olxdict<node_t *, uint64_t, TPointerComparator> h2s;
+  CalculateHashes2(graphNode, map, h2s);
+  AssignHashes2(graphNode, h2s);
 }
 
 struct GraphAnalyser  {
-  TEGraphNode<size_t,TSAtom*> &RootA, &RootB; 
+  TEGraphNode<uint64_t,TSAtom*> &RootA, &RootB; 
   int CallsCount;
   bool Invert, CalcRMSForH;
   vec3d bCent;
@@ -350,13 +444,13 @@ struct GraphAnalyser  {
   struct TagSetter  {
     size_t calls;
     TagSetter() : calls(0)  {}
-    bool OnItem(const TEGraphNode<size_t, TSAtom*>& v) {
+    bool OnItem(const TEGraphNode<uint64_t, TSAtom*>& v) {
       v.GetObject()->SetTag(1);
       return true;
     }
   };
-  GraphAnalyser(TEGraphNode<size_t,TSAtom*>& rootA,
-    TEGraphNode<size_t,TSAtom*>& rootB,
+  GraphAnalyser(TEGraphNode<uint64_t,TSAtom*>& rootA,
+    TEGraphNode<uint64_t,TSAtom*>& rootB,
     double (*_weight_calculator)(const TSAtom&))
     : RootA(rootA), RootB(rootB), CallsCount(0), Invert(false),
       weight_calculator(_weight_calculator)
@@ -365,7 +459,7 @@ struct GraphAnalyser  {
     CalcRMSForH = true;
   }
 
-  double CalcRMS()  {
+  double CalcRMS() {
     TTypeList< AnAssociation2<TSAtom*,TSAtom*> > matchedAtoms;
     TagSetter tag_s;
     RootA.Traverser.Traverse(RootA, tag_s);
@@ -402,8 +496,8 @@ struct GraphAnalyser  {
     bestMatrix.t = ao.center_a;
     return ao.rmsd[0];
   }
-  double CalcRMS(const TEGraphNode<size_t,TSAtom*>& src,
-    const TEGraphNode<size_t,TSAtom*>& dest)
+  double CalcRMS(const TEGraphNode<uint64_t,TSAtom*>& src,
+    const TEGraphNode<uint64_t,TSAtom*>& dest)
   {
     if( CalcRMSForH )
       return CalcRMS();
@@ -445,8 +539,8 @@ struct GraphAnalyser  {
     if( mrms != 1e6 )
       minRms = mrms;
   }
-  bool GroupValidator(const TEGraphNode<size_t,TSAtom*>& n1,
-    TEGraphNode<size_t,TSAtom*>& n2)
+  bool GroupValidator(const TEGraphNode<uint64_t,TSAtom*>& n1,
+    TEGraphNode<uint64_t,TSAtom*>& n2)
   {
     bool rv = false;
     TSizeList used;
@@ -477,8 +571,8 @@ struct GraphAnalyser  {
     return rv;
   }
   // since the H-atoms are given a smaller weights...
-  bool Validator(const TEGraphNode<size_t,TSAtom*>& n1,
-    TEGraphNode<size_t,TSAtom*>& n2, const TSizeList& pos)
+  bool Validator(const TEGraphNode<uint64_t,TSAtom*>& n1,
+    TEGraphNode<uint64_t,TSAtom*>& n2, const TSizeList& pos)
   {
     if( pos.Count() < 2 )  return false;
     const TAsymmUnit& au = *n2[0].GetObject()->CAtom().GetParent();
@@ -506,7 +600,7 @@ struct GraphAnalyser  {
       GeneratePermutation(permutation, hits.GetObject(0));
       rv = true;
     }
-    TPtrList<TEGraphNode<size_t,TSAtom*> > nodes(n2.GetNodes());
+    TPtrList<TEGraphNode<uint64_t,TSAtom*> > nodes(n2.GetNodes());
     for( size_t i=0; i < pos.Count(); i++ )
       n2.GetNodes()[pos[permutation[i]]] = nodes[pos[i]];
     return rv;
@@ -612,7 +706,7 @@ bool TNetwork::IsSubgraphOf(TNetwork& net,
     }
   }
   TEGraph<size_t, TSAtom*> thisGraph( thisSa->GetType().z, thisSa);
-  BuildGraph( thisGraph.GetRoot());
+  BuildGraph(thisGraph.GetRoot());
   TIntList GraphId;
   for( size_t i=0; i < net.NodeCount(); i++ )  {
     TSAtom* thatSa = &net.Node(i);
