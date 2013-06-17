@@ -311,7 +311,7 @@ uint64_t CalculateNodeHash(TEGraphNode<uint64_t,TSAtom*>& graphNode) {
   aqueue.Push(graphNode.GetObject());
   aqueue.Push(NULL);
   index_t v = 0;
-  TArrayList<size_t> counts(16);
+  TArrayList<size_t> counts(16, olx_list_init::zero());
   while (!aqueue.IsEmpty()) {
     TSAtom *n = aqueue.Pop();
     if (n == NULL) {
@@ -323,7 +323,7 @@ uint64_t CalculateNodeHash(TEGraphNode<uint64_t,TSAtom*>& graphNode) {
     if (n->GetTag() != -1) continue;
     n->SetTag(v);
     if (counts.Count() <= (size_t)v)
-      counts.SetCount(v+1);
+      counts.SetCount(v+1, olx_list_init::zero());
     counts[v] += (size_t)n->GetType().z;
     for (size_t i=0; i < n->NodeCount(); i++) {
       if (n->Node(i).GetTag() == -1)
@@ -643,6 +643,7 @@ bool TNetwork::DoMatch(TNetwork& net,
   bool Invert, double (*weight_calculator)(const TSAtom&))
 {
   if( NodeCount() != net.NodeCount() )  return false;
+  TStopWatch st(__FUNC__);
   TSAtom* thisSa = NULL;
   size_t maxbc = 0;
   double maxMw = 0;
