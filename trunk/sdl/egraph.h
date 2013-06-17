@@ -25,6 +25,7 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   mutable bool Passed, Mutable;
   AssociatedOC Object;
   mutable olxdict<NodeType*, TTypeList<ConnInfo>, TPointerComparator> Connectivity;
+  TTypeList<TSizeList> *Permutations;
 protected:
   inline bool IsPassed() const {  return Passed;  }
   inline void SetPassed(bool v)  {  Passed = v;  }
@@ -46,33 +47,33 @@ protected:
 
   TTypeList<ConnInfo>& GetConnInfo(NodeType& node) const {
     TTypeList<ConnInfo>& conn = Connectivity.Add(&node);
-    if( !conn.IsEmpty() )  return conn;
+    if (!conn.IsEmpty()) return conn;
     const size_t node_cnt = Count();
-    for( size_t i=0; i < node_cnt; i++ )  {
-      for( size_t j=0; j < node_cnt; j++ )  {
+    for (size_t i=0; i < node_cnt; i++) {
+      for (size_t j=0; j < node_cnt; j++) {
         if (Nodes[i]->GroupIndex == node[j].GroupIndex &&
           Nodes[i]->GroupIndex != InvalidIndex)
         {
-          if (!Nodes[i]->ShallowEquals(node[j])) {
+          if (!Nodes[i]->ShallowEquals(node[j])) { // sanity check
             throw TFunctionFailedException(__OlxSourceInfo,
               "due to graph connectivity");
           }
           bool found = false;
-          for( size_t k=0; k < conn.Count(); k++ )  {
-            if( conn[k].GetB().IndexOf(i) != InvalidIndex )  {
-              if( conn[k].GetA().IndexOf(j) == InvalidIndex )
+          for (size_t k=0; k < conn.Count(); k++) {
+            if (conn[k].GetB().Contains(i)) {
+              if (!conn[k].GetA().Contains(j))
                 conn[k].A().Add(j);
               found = true;
               break;
             }
-            else if( conn[k].GetA().IndexOf(j) != InvalidIndex )  {
-              if( conn[k].GetB().IndexOf(i) == InvalidIndex )
+            else if (conn[k].GetA().Contains(j)) {
+              if (!conn[k].GetB().Contains(i))
                 conn[k].B().Add(i);
               found = true;
               break;
             }
           }
-          if( !found )  {
+          if (!found) {
             ConnInfo& ci = conn.AddNew();
             ci.A().Add(j);
             ci.B().Add(i);
@@ -123,9 +124,15 @@ public:
     Data = data;
     Mutable = Root = Passed = RingNode = false;
     Object = object;
+    Permutations = NULL;
   }
-  ~TEGraphNode()  {  Nodes.DeleteItems(false);  }
-  
+  ~TEGraphNode()  {
+    Nodes.DeleteItems(false);
+    if (Permutations != NULL)
+      delete Permutations;
+  }
+  const IC & GetData() const { return Data; }
+  void SetData(const IC &d) { Data = d; }
   bool IsRingNode() const {  return RingNode;  }
   bool IsMutable() const {  return Mutable;  }
   size_t GetGroupIndex() const {  return GroupIndex;  }
@@ -138,16 +145,15 @@ public:
     Nodes.BubleSorter.SortSF(Nodes, &TEGraphNode::_SortNodesByTag);
   }
   TPtrList<NodeType>& GetNodes() {  return Nodes;  }
-  inline const IC& GetData() const {  return Data;  }
   inline const AssociatedOC& GetObject() const {  return Object;  }
 
   inline size_t Count() const {  return Nodes.Count();  }
   // this is for the traverser
   inline TEGraphNode& Item(size_t i) const {  return  *Nodes[i];  }
   inline TEGraphNode& operator [](size_t i) const {  return  *Nodes[i];  }
-  void SwapItems(size_t i, size_t j)  {  
+  void SwapItems(size_t i, size_t j)  {
     if( i != j )
-      Nodes.Swap(i,j);  
+      Nodes.Swap(i,j);
   }
   bool ShallowEquals(const TEGraphNode& node) const {
     if( node.GetData() != GetData() )  return false;
@@ -178,6 +184,7 @@ public:
     node.Nodes.Rearrange(indices);
     return true;
   }
+
   /* Compares graphs to establish their equality */
   bool DryMatch(TEGraphNode& node) const {
     if (!ShallowEquals(node)) return false;
@@ -220,35 +227,35 @@ public:
   }
 
   bool AnalyseMutability(TEGraphNode& node, double& permutations)  {
-    if( node.GetData() != GetData() )  return false;
-    if( node.Count() != Count() )  return false;
+    if (node.GetData() != GetData()) return false;
+    if (node.Count() != Count()) return false;
     Mutable = false;
-    for( size_t i=0; i < Count(); i++ )  {
+    for (size_t i=0; i < Count(); i++) {
       size_t mc = 0;
-      for( size_t j=0; j < Count(); j++ )  {  // Count equals for both nodes
+      for (size_t j=0; j < Count(); j++) {  // Count equals for both nodes
         if( j > i )  // do consistent node ordering for all non-unique
           Nodes[i]->DoMatch(*Nodes[j]);
-        if( Nodes[i]->DoMatch(node[j]) &&
-            Nodes[i]->AnalyseMutability(node[j], permutations) )
+        if (Nodes[i]->DoMatch(node[j]) &&
+            Nodes[i]->AnalyseMutability(node[j], permutations))
         {
-          if( node[j].GroupIndex == InvalidIndex )  {
+          if (node[j].GroupIndex == InvalidIndex) {
             mc++;
-            if( Nodes[i]->GroupIndex == InvalidIndex )
+            if (Nodes[i]->GroupIndex == InvalidIndex)
               Nodes[i]->GroupIndex = node[j].GroupIndex = i;
             else
               node[j].GroupIndex = Nodes[i]->GroupIndex;
           }
-          else  {
-            if( Nodes[i]->GroupIndex != InvalidIndex &&
-                Nodes[i]->GroupIndex != node[j].GroupIndex )
+          else {
+            if (Nodes[i]->GroupIndex != InvalidIndex &&
+                Nodes[i]->GroupIndex != node[j].GroupIndex)
             {
-              throw 1;
+              throw TFunctionFailedException(__OlxSourceInfo, "assert");
             }
             Nodes[i]->GroupIndex = node[j].GroupIndex;
           }
         }
       }
-      if( mc > 1 )  {
+      if (mc > 1) {
         Mutable = true;
         permutations *= olx_factorial_t<double,size_t>(mc);
       }
@@ -262,11 +269,7 @@ public:
     if( IsRoot() )  {
       double permutations = 1;
       this->AnalyseMutability(node, permutations);
-      if( permutations > 1e15 ) {
-        throw TFunctionFailedException(__OlxSourceInfo, 
-          olxstr("Matching aborted due to high graph symmetry, number of "
-                 "permutations: ") << permutations);
-      }
+      analyser.OnStart(permutations);
     }
     if (!ShallowEquals(node)) return false;
     const size_t node_cnt = Count();
@@ -274,16 +277,19 @@ public:
     TTypeList<ConnInfo>& conn = GetConnInfo(node);
     size_t dest_ind = 0;
     TSizeList dest(node_cnt);
-    for( size_t i=0; i < conn.Count(); i++ )  {
+    for (size_t i=0; i < conn.Count(); i++) {
       const ConnInfo& ci = conn[i];
-      for( size_t j=0; j < ci.GetB().Count(); j++ )
+      for (size_t j=0; j < ci.GetB().Count(); j++)
         dest[dest_ind++] = ci.GetB()[j];
     }
     if( dest_ind != node_cnt )
       return false;
     TPtrList<TEGraphNode> ond(node.Nodes);
-    TTypeList<TSizeList> permutations;
-    GeneratePermutations(conn, permutations);
+    if (Permutations == NULL) {
+      Permutations = new TTypeList<TSizeList>();
+      GeneratePermutations(conn, *Permutations);
+    }
+    TTypeList<TSizeList> &permutations = *Permutations;
     const size_t perm_cnt = permutations.Count();
     size_t best_perm = 0;
     double minRms = -1;
