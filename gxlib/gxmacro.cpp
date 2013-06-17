@@ -3126,15 +3126,44 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             m *= -1;
             center *= -1;
           }
-          TBasicApp::NewLogEntry() << "Matching pairs:";
-          for( size_t i=0; i < res.Count(); i++ )  {
+          TPSTypeList<double, size_t> sorted_pairs;
+          for (size_t i=0; i < res.Count(); i++) {
             vec3d v = au.Orthogonalise(netB.Node(res[i].GetB()).ccrd());
             v = (v - center)*m + align_info.align_out.center_a;
             v -= au.Orthogonalise(netA.Node(res[i].GetA()).ccrd());
-            TBasicApp::NewLogEntry() << '{' <<
-              netA.Node(res[i].GetA()).GetLabel() << ',' <<
-              netB.Node(res[i].GetB()).GetLabel() << "}: " <<
-              olxstr::FormatFloat(3, v.Length()) << "A";
+            sorted_pairs.Add(v.Length(), i);
+          }
+          TTable tab(res.Count()/3+((res.Count()%3)!=0 ? 1 : 0), 9);
+          tab.ColName(0) = tab.ColName(3) = tab.ColName(6) = "Atom A";
+          tab.ColName(1) = tab.ColName(4) = tab.ColName(7) = "Atom B";
+          tab.ColName(2) = tab.ColName(5) = tab.ColName(8) = "Dist/A";
+          TBasicApp::NewLogEntry() << "Matching pairs:";
+          for (size_t i=0; i < sorted_pairs.Count(); i++) {
+            size_t idx = sorted_pairs.GetObject(i);
+            size_t c_off = (i%3)*3, r_i = i/3;
+            tab[r_i][c_off+0] = netA.Node(res[idx].GetA()).GetLabel();
+            tab[r_i][c_off+1] = netB.Node(res[idx].GetB()).GetLabel();
+            tab[r_i][c_off+2] = olxstr::FormatFloat(3, sorted_pairs.GetKey(i));
+          }
+          TBasicApp::NewLogEntry() <<
+            tab.CreateTXTList("Matching pairs", true, false, "  ");
+          TBasicApp::NewLogEntry() << NewLineSequence() <<
+            "Transformation matrix (fractional):";
+          mat3d m1 = au.GetCellToCartesian()*m*au.GetCartesianToCell();
+          for (int i=0; i < 3; i++) {
+            TLog::LogEntry e = TBasicApp::NewLogEntry();
+            for (int j=0; j < 3; j++) {
+              e << olxstr::FormatFloat(-3, m1[i][j]) << ' ';
+            }
+          }
+          TBasicApp::NewLogEntry() << "Matrix determinant: " <<
+            olxstr::FormatFloat(3, m1.Determinant());
+          
+          TLog::LogEntry log_entry = TBasicApp::NewLogEntry();
+          log_entry << NewLineSequence() << "Translation (fractional): ";
+          vec3d center1 = au.Fractionalise(center);
+          for (int i=0; i < 3; i++) {
+            log_entry << olxstr::FormatFloat(-3, center1[i]) << ' ';
           }
         }
         if (align)  {
@@ -3202,30 +3231,6 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             GXLibMacros_MatchAtomPairsQT(satomp, TryInvert, weight_calculator);
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
           GXLibMacros_CallMatchCallbacks(netA, netB, align_info.rmsd.GetV());
-          //for (size_t ai=0; ai < netA.NodeCount(); ai++) {
-          //  TSAtom &a = netA.Node(ai);
-          //  TSAtom &b = netB.Node(ai);
-          //  if (a.GetEllipsoid() == NULL || b.GetEllipsoid() == NULL) continue;
-          //  mat3d m = a.GetEllipsoid()->GetMatrix();
-          //  m[0] *= a.GetEllipsoid()->GetSX();
-          //  m[1] *= a.GetEllipsoid()->GetSY();
-          //  m[2] *= a.GetEllipsoid()->GetSZ();
-          //  mat3d m1 = b.GetEllipsoid()->GetMatrix();
-          //  m1[0] *= b.GetEllipsoid()->GetSX();
-          //  m1[1] *= b.GetEllipsoid()->GetSY();
-          //  m1[2] *= b.GetEllipsoid()->GetSZ();
-          //  m -= m1;
-          //  vec3d v = m[0].XProdVec(m[1]);
-          //  if (m[2].CAngle(v) < 0)
-          //    m[2] *= -1;
-          //  a.GetEllipsoid()->SetMatrix(m);
-          //  a.GetEllipsoid()->SetSX(1);
-          //  a.GetEllipsoid()->SetSY(1);
-          //  a.GetEllipsoid()->SetSZ(1);
-          //  b.GetEllipsoid()->SetSX(0.01);
-          //  b.GetEllipsoid()->SetSY(0.01);
-          //  b.GetEllipsoid()->SetSZ(0.01);
-          //}
         }
       }
     }
@@ -3460,4 +3465,3 @@ void GXLibMacros::funMatchFiles(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(XLibMacros::NAString());
 }
 //..............................................................................
-

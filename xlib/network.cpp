@@ -366,7 +366,7 @@ void AssignHashes(TEGraphNode<uint64_t,TSAtom*>& graphNode) {
   for (size_t i=0; i < graphNode.Count(); i++) {
     AssignHashes(graphNode.Item(i));
   }
-  graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
+  //graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
 }
 void CalculateHashes2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
   const olxdict<TSAtom*, TEGraphNode<uint64_t,TSAtom*>*, TPointerComparator>& map,
@@ -376,7 +376,7 @@ void CalculateHashes2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
   for (size_t i=0; i < graphNode.Count(); i++) {
     CalculateHashes2(graphNode.Item(i), map, vs);
   }
-  graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
+  //graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
 }
 void AssignHashes2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
   const olxdict<TEGraphNode<uint64_t,TSAtom*>*, uint64_t, TPointerComparator>& vs)
@@ -385,7 +385,7 @@ void AssignHashes2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
   for (size_t i=0; i < graphNode.Count(); i++) {
     AssignHashes2(graphNode.Item(i), vs);
   }
-  graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
+  //graphNode.GetObject()->CAtom().SetLabel(graphNode.GetData(), false);
 }
 
 void BuildGraph(TEGraphNode<uint64_t,TSAtom*>& graphNode)  {
@@ -438,9 +438,10 @@ struct GraphAnalyser  {
   bool Invert, CalcRMSForH;
   vec3d bCent;
   smatdd bestMatrix;
-  double minRms;
+  double minRms, permutations;
   double (*weight_calculator)(const TSAtom&);
   size_t atomsToMatch;
+  time_t start_time;
   struct TagSetter  {
     size_t calls;
     TagSetter() : calls(0)  {}
@@ -457,6 +458,11 @@ struct GraphAnalyser  {
   {
     minRms = -1;
     CalcRMSForH = true;
+  }
+
+  void OnStart(double perms) {
+    permutations = perms;
+    start_time = TETime::msNow();
   }
 
   double CalcRMS() {
@@ -496,22 +502,37 @@ struct GraphAnalyser  {
     bestMatrix.t = ao.center_a;
     return ao.rmsd[0];
   }
+  double CalcDsq(const TEGraphNode<uint64_t,TSAtom*>& src,
+    const TEGraphNode<uint64_t,TSAtom*>& dest)
+  {
+    const TAsymmUnit& au_a = *src.GetObject()->CAtom().GetParent();
+    const TAsymmUnit& au_b = *dest.GetObject()->CAtom().GetParent();
+    vec3d v = dest.GetObject()->ccrd();
+    if( Invert )  v *= -1;
+    v = bestMatrix*(au_b.CellToCartesian(v) - bCent);
+    return v.QDistanceTo(au_a.Orthogonalise(src.GetObject()->ccrd()));
+  }
   double CalcRMS(const TEGraphNode<uint64_t,TSAtom*>& src,
     const TEGraphNode<uint64_t,TSAtom*>& dest)
   {
-    if( CalcRMSForH )
+    if ((TETime::msNow()-start_time) >= 60000) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("the procedure was terminated. Number of permutations: ") <<
+          permutations << ", number of calls: " << CallsCount
+        );
+    }
+    if (CalcRMSForH)
       return CalcRMS();
     size_t h_cnt = 0;
-    for( size_t i=0; i < src.Count(); i++ )
-      if( src[i].GetObject()->GetType() == iHydrogenZ )
+    for (size_t i=0; i < src.Count(); i++)
+      if (src[i].GetObject()->GetType() == iHydrogenZ)
         h_cnt++;
-    if( h_cnt < 2 )
+    if (h_cnt < 2)
       return CalcRMS();
-    if( bestMatrix.r.Trace() == 0 )
+    if (bestMatrix.r.Trace() == 0)
       CalcRMS();
-    //alignmentMatrix.t = aCent;
-    if( ++CallsCount > 1e5 )
-      throw TFunctionFailedException(__OlxSourceInfo, "too many iterations");
+    //if (++CallsCount > 1e5)
+    //  throw TFunctionFailedException(__OlxSourceInfo, "too many iterations");
     const TAsymmUnit& au_a = *src[0].GetObject()->CAtom().GetParent();
     const TAsymmUnit& au_b = *dest[0].GetObject()->CAtom().GetParent();
     double rsum = 0;
