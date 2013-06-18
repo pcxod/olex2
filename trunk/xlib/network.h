@@ -249,13 +249,15 @@ public:
   static AlignInfo GetAlignmentRMSD(
     const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
     bool invert,
-    double (*weight_calculator)(const TSAtom&));
+    double (*weight_calculator)(const TSAtom&),
+    bool reset_crd=true
+    );
   // prepares a list of atoms, coordinates and weights for VcoV calculations
   static void PrepareESDCalc(
     const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
     bool TryInversion,
     TSAtomPList& atoms_out,
-    vec3d_alist& crd_out, 
+    vec3d_alist& crd_out,
     TDoubleList& wght_out,
     double (*weight_calculator)(const TSAtom&));
 
@@ -270,11 +272,14 @@ public:
     const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
     bool invert,
     double (*weight_calculator)(const TSAtom&),
-    TArrayList<align::pair>& pairs);
+    TArrayList<align::pair>& pairs,
+    bool reset_crd=true);
+
   static align::out GetAlignmentInfo(
     const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
     bool invert,
-    double (*weight_calculator)(const TSAtom&));
+    double (*weight_calculator)(const TSAtom&),
+    bool reset_crd=true);
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };

@@ -568,16 +568,30 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   BmpFile->Write(DIBits, (BmpWidth*(bits/8)+extraBytes)*BmpHeight);
   DeleteObject(DIBmp);
   delete BmpFile;
+  olxstr f_ext = TEFile::ExtractFileExt(outFN);
   //check if the image is bmp
-  if( TEFile::ExtractFileExt(outFN).Equalsi("bmp") )
+  if (f_ext.Equalsi("bmp"))
     return;
   wxImage image;
   image.LoadFile(bmpFN.u_str(), wxBITMAP_TYPE_BMP);
-  if( !image.Ok() )  {
+  if (!image.Ok()) {
     Error.ProcessingError(__OlxSrcInfo, "could not process image conversion");
     return;
   }
-  image.SetOption(wxT("quality"), 85);
+  if (f_ext.Equalsi("jpeg")) {
+    f_ext = "jpg";
+    outFN = TEFile::ChangeFileExt(outFN, f_ext);
+  }
+  if (f_ext.Equalsi("jpg")) {
+    image.SetOption(wxIMAGE_OPTION_QUALITY, 100);
+  }
+#if wxCHECK_VERSION(2,9,4)
+  else if(f_ext.Equalsi("tif")) {
+    image.SetOption(wxIMAGE_OPTION_COMPRESSION, 32946);
+  }
+#endif
+  image.SetOption(wxIMAGE_OPTION_RESOLUTIONX, 300);
+  image.SetOption(wxIMAGE_OPTION_RESOLUTIONY, 300);
   image.SaveFile(outFN.u_str() );
   image.Destroy();
   TEFile::DelFile(bmpFN);
@@ -671,13 +685,15 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   FXApp->GetRender().OnDraw.SetEnabled(true);
   FGlConsole->SetVisible(true);
   // end drawing etc
-  FXApp->GetRender().Resize(orgWidth, orgHeight); 
+  FXApp->GetRender().Resize(orgWidth, orgHeight);
   FXApp->GetRender().LookAt(0,0,1);
   FXApp->GetRender().SetView(false, 1);
   FXApp->Draw();
   olxstr bmpFN;
-  if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )
-    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName(Cmds[0]);
+  if (FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0])) {
+    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) <<
+      TEFile::ExtractFileName(Cmds[0]);
+  }
   else
     bmpFN = Cmds[0];
   wxImage image;
@@ -685,8 +701,13 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   if (alpha_bytes != NULL)
     image.SetAlpha(alpha_bytes);
   // correct a common typo
-  if( TEFile::ExtractFileExt(bmpFN).Equalsi("jpeg") )
+  if (TEFile::ExtractFileExt(bmpFN).Equalsi("jpeg"))
     bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
+  if (bmpFN.EndsWithi(".jpg")) {
+    image.SetOption(wxIMAGE_OPTION_QUALITY, 100);
+  }
+  image.SetOption(wxIMAGE_OPTION_RESOLUTIONX, 300);
+  image.SetOption(wxIMAGE_OPTION_RESOLUTIONY, 300);
   image.SaveFile(bmpFN.u_str());
 }
 //..............................................................................

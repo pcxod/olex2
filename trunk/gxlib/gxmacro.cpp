@@ -3036,9 +3036,9 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   }
   TXAtomPList atoms = app.FindXAtoms(Cmds, false, true);
   size_t match_cnt=0;
-  if( !atoms.IsEmpty() )  {
-    if( atoms.Count() == 2 &&
-        (&atoms[0]->GetNetwork() != &atoms[1]->GetNetwork()) )
+  if (!atoms.IsEmpty()) {
+    if (atoms.Count() == 2 &&
+        (&atoms[0]->GetNetwork() != &atoms[1]->GetNetwork()))
     {
       TTypeList<AnAssociation2<size_t, size_t> > res;
       TSizeList sk;
@@ -3047,10 +3047,10 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
         netA.DoMatch(netB, res, TryInvert, weight_calculator);
       TBasicApp::NewLogEntry() << "Graphs match: " << match;
-      if( match )  {
+      if (match) {
         match_cnt++;
         // restore the other unit cell, if any...
-        if( &latt != &netA.GetLattice() || &latt != &netB.GetLattice() )  {
+        if (&latt != &netA.GetLattice() || &latt != &netB.GetLattice()) {
           TLattice& latt1 = (&latt == &netA.GetLattice()) ? netB.GetLattice()
             : netA.GetLattice();
           latt1.RestoreADPs();
@@ -3066,18 +3066,18 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
               &netB.Node(res[i].GetB()));
           }
         }
-        if( name )  {
+        if (name) {
           // change CXXX to CSuffix+whatever left of XXX
-          if( suffix.Length() > 1 && suffix.CharAt(0) == '$' )  {
+          if (suffix.Length() > 1 && suffix.CharAt(0) == '$') {
             olxstr new_l;
             const olxstr l_val = suffix.SubStringFrom(1);
-            for( size_t i=0; i < res.Count(); i++ )  {
+            for (size_t i=0; i < res.Count(); i++) {
               const olxstr& old_l = netA.Node(res[i].GetA()).GetLabel();
               const cm_Element& elm = netA.Node(res[i].GetA()).GetType();
               const index_t l_d = old_l.Length() - elm.symbol.Length();
-              if( l_d <= (index_t)l_val.Length() ) 
+              if (l_d <= (index_t)l_val.Length())
                 new_l = elm.symbol + l_val;
-              else if( l_d > (index_t)l_val.Length() ) {
+              else if (l_d > (index_t)l_val.Length()){
                 new_l = olxstr(elm.symbol) << l_val <<
                   old_l.SubStringFrom(elm.symbol.Length()+l_val.Length());
               }
@@ -3085,22 +3085,22 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             }
           }
           // change the ending
-          else if( suffix.Length() > 1 && suffix.CharAt(0) == '-' )  {
+          else if (suffix.Length() > 1 && suffix.CharAt(0) == '-') {
             olxstr new_l;
             const olxstr l_val = suffix.SubStringFrom(1);
-            for( size_t i=0; i < res.Count(); i++ )  {
+            for (size_t i=0; i < res.Count(); i++) {
               const olxstr& old_l = netA.Node(res[i].GetA()).GetLabel();
               const cm_Element& elm = netA.Node(res[i].GetA()).GetType();
               const index_t l_d = old_l.Length() - elm.symbol.Length();
-              if( l_d <= (index_t)l_val.Length() ) 
+              if (l_d <= (index_t)l_val.Length())
                 new_l = elm.symbol + l_val;
-              else if( l_d > (index_t)l_val.Length() )
+              else if (l_d > (index_t)l_val.Length())
                 new_l = old_l.SubStringTo(old_l.Length()-l_val.Length()) << l_val;
               netB.Node(res[i].GetB()).CAtom().SetLabel(new_l, false);
             }
           }
-          else  {
-            for( size_t i=0; i < res.Count(); i++ ) {
+          else {
+            for (size_t i=0; i < res.Count(); i++) {
               netB.Node(res[i].GetB()).CAtom().SetLabel(
                netA.Node(res[i].GetA()).GetLabel() + suffix, false);
             }
@@ -3126,60 +3126,124 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             m *= -1;
             center *= -1;
           }
+          vec3d total_t = align_info.align_out.center_a-center*m;
           TPSTypeList<double, size_t> sorted_pairs;
           for (size_t i=0; i < res.Count(); i++) {
             vec3d v = au.Orthogonalise(netB.Node(res[i].GetB()).ccrd());
-            v = (v - center)*m + align_info.align_out.center_a;
+            v = v*m + total_t;
             v -= au.Orthogonalise(netA.Node(res[i].GetA()).ccrd());
             sorted_pairs.Add(v.Length(), i);
           }
-          TTable tab(res.Count()/3+((res.Count()%3)!=0 ? 1 : 0), 9);
-          tab.ColName(0) = tab.ColName(3) = tab.ColName(6) = "Atom A";
-          tab.ColName(1) = tab.ColName(4) = tab.ColName(7) = "Atom B";
-          tab.ColName(2) = tab.ColName(5) = tab.ColName(8) = "Dist/A";
+          TTable tab(res.Count()/4+((res.Count()%4)!=0 ? 1 : 0), 12);
+          tab.ColName(0) = tab.ColName(3) = tab.ColName(6) = tab.ColName(9) =
+            "Atom A";
+          tab.ColName(1) = tab.ColName(4) = tab.ColName(7) = tab.ColName(10) =
+            "Atom B";
+          tab.ColName(2) = tab.ColName(5) = tab.ColName(8) = tab.ColName(11) =
+            "Dist/A";
           TBasicApp::NewLogEntry() << "Matching pairs:";
           for (size_t i=0; i < sorted_pairs.Count(); i++) {
             size_t idx = sorted_pairs.GetObject(i);
-            size_t c_off = (i%3)*3, r_i = i/3;
+            size_t c_off = (i%4)*3, r_i = i/4;
             tab[r_i][c_off+0] = netA.Node(res[idx].GetA()).GetLabel();
             tab[r_i][c_off+1] = netB.Node(res[idx].GetB()).GetLabel();
             tab[r_i][c_off+2] = olxstr::FormatFloat(3, sorted_pairs.GetKey(i));
           }
           TBasicApp::NewLogEntry() <<
             tab.CreateTXTList("Matching pairs", true, false, "  ");
-          TBasicApp::NewLogEntry() << NewLineSequence() <<
-            "Transformation matrix (fractional):";
-          mat3d m1 = au.GetCellToCartesian()*m*au.GetCartesianToCell();
-          for (int i=0; i < 3; i++) {
-            TLog::LogEntry e = TBasicApp::NewLogEntry();
-            for (int j=0; j < 3; j++) {
-              e << olxstr::FormatFloat(-3, m1[i][j]) << ' ';
+          {
+            TBasicApp::NewLogEntry() << NewLineSequence() <<
+              "Transformation matrix (fractional):";
+            /* AtxBtxCt = (CxBxA)t
+            the matrix wil be used on fractional coordinates like R*x + t and
+            knowing that m-1 = mt :
+            */
+            mat3d m1 = mat3d::Transpose(
+              au.GetCellToCartesian()*m*au.GetCartesianToCell());
+            for (int i=0; i < 3; i++) {
+              TLog::LogEntry e = TBasicApp::NewLogEntry();
+              for (int j=0; j < 3; j++) {
+                e << olxstr::FormatFloat(-3, m1[i][j]) << ' ';
+              }
+            }
+            TLog::LogEntry log_entry = TBasicApp::NewLogEntry();
+            log_entry << NewLineSequence() << "Translation (fractional): ";
+            vec3d center1 = au.Fractionalise(total_t);
+            for (int i=0; i < 3; i++) {
+              log_entry << olxstr::FormatFloat(-3, center1[i]) << ' ';
             }
           }
-          TBasicApp::NewLogEntry() << "Matrix determinant: " <<
-            olxstr::FormatFloat(3, m1.Determinant());
-          
-          TLog::LogEntry log_entry = TBasicApp::NewLogEntry();
-          log_entry << NewLineSequence() << "Translation (fractional): ";
-          vec3d center1 = au.Fractionalise(center);
-          for (int i=0; i < 3; i++) {
-            log_entry << olxstr::FormatFloat(-3, center1[i]) << ' ';
+          {
+            mat3d_list pms;
+            pms.AddCopy(m);
+            vec3d_list o_crd;
+            const TSpaceGroup &sg = app.XFile().GetLastLoaderSG();
+            if (sg.MatrixCount() > 0) {
+              o_crd.SetCount(atomsToTransform.Count());
+              for (size_t i=0; i < atomsToTransform.Count(); i++)
+                o_crd[i] = atomsToTransform[i]->crd();
+            }
+            for (size_t mi=0; mi < sg.MatrixCount(); mi++) {
+              for (size_t ai=0; ai < atomsToTransform.Count(); ai++) {
+                atomsToTransform[ai]->crd() = au.Orthogonalise(
+                  sg.GetMatrix(mi) * atomsToTransform[ai]->ccrd());
+              }
+              TNetwork::AlignInfo ai = TNetwork::GetAlignmentRMSD(satomp,
+                TryInvert, weight_calculator, false);
+              mat3d tm;
+              QuaternionToMatrix(ai.align_out.quaternions[0], tm);
+              vec3d center = ai.align_out.center_b;
+              if (ai.inverted) {
+                tm *= -1;
+                center *= -1;
+              }
+              bool found=false;
+              for (size_t j=0; j < pms.Count(); j++) {
+                double d=0;
+                for (int j1=0; j1 <3; j1++) {
+                  for (int j2=0; j2 <3; j2++)
+                    d += olx_abs(pms[j][j1][j2]-tm[j][j2]);
+                }
+                if (d < 1e-2) {
+                  found = true;
+                  break;
+                }
+              }
+              if (found) continue;
+              pms.AddCopy(tm);
+              mat3d m1 = mat3d::Transpose(
+                au.GetCellToCartesian()*tm*au.GetCartesianToCell());
+              TBasicApp::NewLogEntry() << NewLineSequence() <<
+                "Transformation matrix (fractional) for " <<
+                TSymmParser::MatrixToSymmEx(sg.GetMatrix(mi)) << ':';
+              for (int i=0; i < 3; i++) {
+                TLog::LogEntry e = TBasicApp::NewLogEntry();
+                for (int j=0; j < 3; j++) {
+                  e << olxstr::FormatFloat(-3, m1[i][j]) << ' ';
+                }
+              }
+            }
+            // rest the coordinates if needed
+            if (sg.MatrixCount() > 0) {
+              for (size_t i=0; i < atomsToTransform.Count(); i++)
+                atomsToTransform[i]->crd() = o_crd[i];
+            }
           }
         }
-        if (align)  {
+        if (align) {
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
           app.UpdateBonds();
           app.CenterView();
         }
-        if( subgraph )  {
-          sk.Add( res[0].GetB() );
+        if (subgraph) {
+          sk.Add(res[0].GetB());
           res.Clear();
           while (atoms[0]->GetNetwork().IsSubgraphOf(
                  atoms[1]->GetNetwork(), res, sk))
           {
             sk.Add(res[0].GetB());
             olxstr tmp = '=';
-            for( size_t i=0; i < res.Count(); i++ )  {
+            for (size_t i=0; i < res.Count(); i++) {
               tmp << '{' <<
                 atoms[0]->GetNetwork().Node(res[i].GetA()).GetLabel() << ',' <<
                 atoms[1]->GetNetwork().Node(res[i].GetB()).GetLabel() << '}';
