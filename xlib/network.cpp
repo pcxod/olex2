@@ -667,7 +667,7 @@ bool TNetwork::DoMatch(TNetwork& net,
   }
 
   if( thisSa == NULL )  return false;
-  TEGraph<size_t, TSAtom*> thisGraph(thisSa->GetType().z, thisSa),
+  TEGraph<uint64_t, TSAtom*> thisGraph(thisSa->GetType().z, thisSa),
     *minGraph = NULL;
   BuildGraph(thisGraph.GetRoot());
   double minRMSD = 1e6;
@@ -678,8 +678,8 @@ bool TNetwork::DoMatch(TNetwork& net,
     {
       continue;
     }
-    TEGraph<size_t, TSAtom*>* thatGraph =
-      new TEGraph<size_t, TSAtom*>(thatSa.GetType().z, &thatSa);
+    TEGraph<uint64_t, TSAtom*>* thatGraph =
+      new TEGraph<uint64_t, TSAtom*>(thatSa.GetType().z, &thatSa);
     BuildGraph(thatGraph->GetRoot());
     if( thisGraph.GetRoot().DoMatch(thatGraph->GetRoot()) )  {  // match
       GraphAnalyser ga(thisGraph.GetRoot(), thatGraph->GetRoot(),
@@ -727,7 +727,7 @@ bool TNetwork::IsSubgraphOf(TNetwork& net,
       maxbc = Node(i).NodeCount();
     }
   }
-  TEGraph<size_t, TSAtom*> thisGraph( thisSa->GetType().z, thisSa);
+  TEGraph<uint64_t, TSAtom*> thisGraph( thisSa->GetType().z, thisSa);
   BuildGraph(thisGraph.GetRoot());
   TIntList GraphId;
   for( size_t i=0; i < net.NodeCount(); i++ )  {
@@ -738,7 +738,7 @@ bool TNetwork::IsSubgraphOf(TNetwork& net,
       continue;
     for( size_t j=0; j < net.NodeCount(); j++ )
       net.Node(j).SetTag(0);
-    TEGraph<size_t, TSAtom*> thatGraph(thatSa->GetType().z, thatSa);
+    TEGraph<uint64_t, TSAtom*> thatGraph(thatSa->GetType().z, thatSa);
     BuildGraph(thatGraph.GetRoot());
     //continue;
     if( thisGraph.GetRoot().IsSubgraphOf(thatGraph.GetRoot()) )  {
@@ -1194,12 +1194,14 @@ void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform,
 TNetwork::AlignInfo TNetwork::GetAlignmentRMSD(
   const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool invert,
-  double (*weight_calculator)(const TSAtom&))
+  double (*weight_calculator)(const TSAtom&),
+  bool reset_crd
+  )
 {
   TArrayList<align::pair> pairs;
   AlignInfo rv;
   rv.align_out = align::FindAlignmentQuaternions(AtomsToPairs(atoms, invert,
-     weight_calculator, pairs));
+     weight_calculator, pairs, reset_crd));
   rv.rmsd = align::CalcRMSD(pairs, rv.align_out);
   rv.inverted = invert;
   return rv;
@@ -1208,18 +1210,27 @@ TNetwork::AlignInfo TNetwork::GetAlignmentRMSD(
 TArrayList<align::pair>& TNetwork::AtomsToPairs(
   const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
   bool invert, double (*weight_calculator)(const TSAtom&),
-  TArrayList<align::pair>& pairs)
+  TArrayList<align::pair>& pairs,
+  bool reset_crd
+  )
 {
-  if( atoms.IsEmpty() )  return pairs;
+  if (atoms.IsEmpty()) return pairs;
+  pairs.SetCount(atoms.Count());
   const TAsymmUnit& au1 =
     atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
   const TAsymmUnit& au2 =
     atoms[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
-  pairs.SetCount(atoms.Count());
-  for( size_t i=0; i < atoms.Count(); i++ )  {
-    vec3d v1 = atoms[i].GetA()->ccrd();
-    vec3d v2 = atoms[i].GetB()->ccrd();
-    if( invert )  v2 *= -1;
+  for (size_t i=0; i < atoms.Count(); i++) {
+    vec3d v1, v2;
+    if (reset_crd) {
+      v1 = atoms[i].GetA()->ccrd();
+      v2 = atoms[i].GetB()->ccrd();
+    }
+    else {
+      v1 = au1.Fractionalise(atoms[i].GetA()->crd());
+      v2 = au2.Fractionalise(atoms[i].GetB()->crd());
+    }
+    if (invert)  v2 *= -1;
     pairs[i].a.value = au1.CellToCartesian(v1);
     pairs[i].a.weight = weight_calculator(*atoms[i].GetA());
     pairs[i].b.value = au2.CellToCartesian(v2);
@@ -1230,11 +1241,11 @@ TArrayList<align::pair>& TNetwork::AtomsToPairs(
 //..............................................................................
 align::out TNetwork::GetAlignmentInfo(
   const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-  bool invert, double (*weight_calculator)(const TSAtom&))
+  bool invert, double (*weight_calculator)(const TSAtom&), bool reset_crd)
 {
   TArrayList<align::pair> pairs;
   return align::FindAlignmentQuaternions(AtomsToPairs(atoms, invert,
-    weight_calculator, pairs));
+    weight_calculator, pairs, reset_crd));
 }
 //..............................................................................
 bool TNetwork::RingInfo::IsSingleCSubstituted() const  {

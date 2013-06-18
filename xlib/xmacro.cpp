@@ -6949,6 +6949,23 @@ void XLibMacros::macSgen(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   TXApp &app = TXApp::GetInstance();
+  // check if a single full matrix is given
+  if (Cmds.Count() == 12 && olx_list_and(Cmds, &olxstr::IsNumber)) {
+    smatdd m;
+    for (int i=0; i < 9; i++)
+      m.r[i/3][i%3] = Cmds[i].ToDouble();
+    for (int i=0; i < 3; i++)
+      m.t[i] = Cmds[9+i].ToDouble();
+    TLattice & latt = app.XFile().GetLattice();
+    TSAtomPList atoms = app.FindSAtoms("sel");
+    for (size_t i=0; i < atoms.Count(); i++) {
+      vec3d c = m * atoms[i]->ccrd();
+      TSAtom &a = latt.NewAtom(c);
+      a.CAtom().SetType(atoms[i]->CAtom().GetType());
+    }
+    latt.Init();
+    return;
+  }
   smatd_list symm;
   smatd matr;
   for (size_t i=0; i < Cmds.Count(); i++) {
