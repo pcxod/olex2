@@ -459,7 +459,7 @@ void TMainForm::ObjectUnderMouse(AGDrawObject *G)  {
     TStrList SL = FXApp->TangList(XB);
     pmTang->Clear();
     for( size_t i=0; i < SL.Count(); i++ )
-      pmTang->Append(0, SL[i].u_str());
+      pmTang->Append(-1, SL[i].u_str());
 
     pmBond->Enable(ID_MenuTang, SL.Count() != 0);
     T = XB->A().GetLabel();

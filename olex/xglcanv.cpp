@@ -40,7 +40,8 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
 #if wxCHECK_VERSION(2,9,0) || !(defined(__WXX11__) || defined(__MAC__))
   wxGLCanvas(parent, id, gl_attr, pos, size, style, name )  {
   Context = new wxGLContext(this, NULL);
-#  ifdef __WIN32__ // on GTK the context initialisation is delayed
+// on GTK the context initialisation is delayed
+#  if defined(__WIN32__) || defined(__MAC__)
   Context->SetCurrent(*this);
 #  endif
 #else
