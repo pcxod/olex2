@@ -103,19 +103,21 @@ public:
 //.............................................................................
 TwxGlScene::TwxGlScene(const olxstr& fontsFolder)
   : FontsFolder(fontsFolder),
-  Canvas(NULL)
+  Canvas(NULL),
+  Context(NULL)
 {}
 //.............................................................................
 TwxGlScene::~TwxGlScene()  {
   Destroy();
 }
 bool TwxGlScene::MakeCurrent() {
-  if (Canvas == NULL) return false;
-#if defined(__WXX11__) || defined(__MAC__)  // context is null
-  Canvas->GetContext()->SetCurrent();
-#else
-  Canvas->GetContext()->SetCurrent(*Canvas);
-#endif  
+  if (Canvas == NULL || Context == NULL) return false;
+  if (!Canvas->GetParent()->IsShown()) return false;
+#if wxCHECK_VERSION(2,9,0) || !(defined(__WXX11__) || defined(__MAC__))
+  Canvas->SetCurrent(*Context);
+#elif defined(__WXX11__) || defined(__MAC__)
+  Context->SetCurrent();
+#endif
   return true;
 }
 

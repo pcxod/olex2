@@ -10,6 +10,7 @@
 #include "xglcanv.h"
 #include "mainform.h"
 #include "glgroup.h"
+#include "wxglscene.h"
 
 int* TGlCanvas::glAttrib = NULL;
 
@@ -36,28 +37,46 @@ END_EVENT_TABLE()
 //..............................................................................
 TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
     const wxPoint& pos, const wxSize& size, long style, const wxString& name):
-#if defined(__WXX11__) || defined(__MAC__)
-  wxGLCanvas(parent, (wxGLCanvas*)NULL, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
-  Context = NULL;
-#else
+#if wxCHECK_VERSION(2,9,0) || !(defined(__WXX11__) || defined(__MAC__))
   wxGLCanvas(parent, id, gl_attr, pos, size, style, name )  {
   Context = new wxGLContext(this, NULL);
-#ifdef __WIN32__ // on GTK the context initialisation is delayed
+#  ifdef __WIN32__ // on GTK the context initialisation is delayed
   Context->SetCurrent(*this);
-#endif
+#  endif
+#else
+  wxGLCanvas(parent, (wxGLCanvas*)NULL, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
+  Context = NULL;
 #endif
   FXApp = NULL;
   MouseButton = 0;
   FParent = parent;
 }
 //..............................................................................
-TGlCanvas::~TGlCanvas(){
-  if( Context != NULL )
+TGlCanvas::~TGlCanvas() {
+  TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&FXApp->GetRender().GetScene());
+  if (wgls != NULL) {
+    wgls->SetCanvas(NULL);
+    wgls->SetContext(NULL);
+  }
+
+  if (Context != NULL)
     delete Context;
   if( glAttrib != NULL )  {
     delete [] glAttrib;
     glAttrib = NULL;
   }
+}
+//..............................................................................
+void TGlCanvas::XApp(TGXApp *XA) {
+  FXApp = XA;
+  TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&XA->GetRender().GetScene());
+  if (wgls == NULL)  return;
+  wgls->SetCanvas(this);
+#if wxCHECK_VERSION(2,9,0) || !(defined(__WXX11__) || defined(__MAC__))
+  wgls->SetContext(Context);
+#else
+  wgls->SetContext(GetContext());
+#endif
 }
 //..............................................................................
 void TGlCanvas::Render()  {
@@ -78,14 +97,6 @@ void TGlCanvas::Render()  {
 void TGlCanvas::OnPaint(wxPaintEvent& event)  {
   wxPaintDC dc(this);
   Render();
-}
-//..............................................................................
-void TGlCanvas::OnSize(wxSizeEvent& event)  {
-  // this is also necessary to update the context on some platforms
-  wxGLCanvas::OnSize(event);
-  // this causes many problems with GTK, as BadMatch ...
-//  if( IsShown() )
-//    Context->SetCurrent(*this); 
 }
 //..............................................................................
 void TGlCanvas::OnEraseBackground(wxEraseEvent& event)  {
