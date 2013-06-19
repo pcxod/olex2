@@ -487,7 +487,9 @@ void TMainForm::XApp(Olex2App *XA)  {
     "c-embossed output in color&;"
     "bw-embossed output in b&w&;"
     "pq-highest (picture) quality&;"
-    "nbg-mask the background with 0 alpha (an rgb colour may be gives)",
+    "nbg-mask the background with 0 alpha (an rgb colour may be gives)&;"
+    "dpi-the physical resolution to be written to the file&;"
+    ,
     fpOne|fpTwo,
     "Outputs a raster picture. Output file name is required, if a second "
     "numerical parameter is provided, it is considered to be image resolution "
@@ -495,7 +497,9 @@ void TMainForm::XApp(Olex2App *XA)  {
     "as the desired picture width.");
   this_InitMacroD(Picta,
     "pq-picture quality&;"
-    "nbg-mask the background with 0 alpha (an rgb colour may be gives)",
+    "nbg-mask the background with 0 alpha (an rgb colour may be gives)&;"
+    "dpi-the physical resolution to be written to the file&;"
+    ,
     fpOne|fpTwo,
     "A portable version of pict with limited resolution (OS/graphics card "
     "dependent). Not stable on some graphics cards");
