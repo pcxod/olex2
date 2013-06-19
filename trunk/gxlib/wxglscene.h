@@ -24,6 +24,7 @@ private:
   olxstr FontsFolder;
   TIntList FontSizes;
   wxGLCanvas *Canvas;
+  wxGLContext *Context;
 protected:
   //olxstr ComposeIdString();
   virtual TGlFont& DoCreateFont(TGlFont& fnt, bool half_size) const;
@@ -38,7 +39,7 @@ public:
   virtual void ScaleFonts(double scale);
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale();
-  
+
   virtual olxstr ShowFontDialog(TGlFont* glf=NULL,
     const olxstr& fontDesc=EmptyString());
 
@@ -53,6 +54,7 @@ public:
   virtual void StartDraw()  {  AGlScene::StartDraw();  }
   virtual void EndDraw()  {  AGlScene::EndDraw();  }
   DefPropP(wxGLCanvas *, Canvas)
+  DefPropP(wxGLContext *, Context)
   // final object (at least the constructor calls only the SetIdString of THIS object
   class MetaFont : public AGlScene::MetaFont {
   public:

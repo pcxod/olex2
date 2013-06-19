@@ -336,7 +336,7 @@ uint64_t CalculateNodeHash(TEGraphNode<uint64_t,TSAtom*>& graphNode) {
   for (size_t i=counts.Count(); i != 0; i--) {
     h = (h<<4)|counts[i-1];
   }
-  rv |= (h&0x0000ffffffffffffUL);
+  rv |= (h&0x0000ffffffffffffULL);
   return rv;
 }
 
@@ -356,8 +356,8 @@ uint64_t CalculateNodeHash2(TEGraphNode<uint64_t,TSAtom*>& graphNode,
     else
       id ^= (ids[i]>>16);
   }
-  uint64_t rv=(graphNode.GetData()&0xffff000000000000UL);
-  rv |= (id&0x0000ffffffffffffUL);
+  uint64_t rv=(graphNode.GetData()&0xffff000000000000ULL);
+  rv |= (id&0x0000ffffffffffffULL);
   return rv;
 }
 

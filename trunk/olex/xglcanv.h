@@ -31,17 +31,18 @@ private:
   static int* glAttrib;
   short EncodeEvent(const wxMouseEvent &evt, bool update_button=true);
 public:
-  TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1, const wxPoint& pos = wxDefaultPosition,
-    const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxT("TGlCanvas"));
+  TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1,
+    const wxPoint& pos = wxDefaultPosition,
+    const wxSize& size = wxDefaultSize, long style = 0,
+    const wxString& name = wxT("TGlCanvas"));
   ~TGlCanvas();
 
   void OnPaint(wxPaintEvent& event);
-  void OnSize(wxSizeEvent& event);
   void OnEraseBackground(wxEraseEvent& event);
   void OnMouse( wxMouseEvent& event );
   void InitGL(void);
-  void XApp(TGXApp *XA){  FXApp = XA; };
-  TGXApp *GetXApp()    {  return FXApp;};
+  void XApp(TGXApp *XA);
+  TGXApp *GetXApp() { return FXApp; }
 
   void Render();
   /* the arrays is staically allocated and should not be modified!!! 

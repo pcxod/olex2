@@ -1288,6 +1288,8 @@ void TMainForm::XApp(Olex2App *XA)  {
 void TMainForm::StartupInit()  {
   if( StartupInitialised )  return;
   StartupInitialised = true;
+  if (FGlCanvas != NULL)
+    FGlCanvas->XApp(FXApp);
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRender().GetScene();
@@ -1337,7 +1339,6 @@ void TMainForm::StartupInit()  {
   processMacro("reload help", __OlxSrcInfo);
 
   FTimer->Start(15);
-  if( FGlCanvas != NULL )  FGlCanvas->XApp(FXApp);
 
   if( TEFile::Exists(FXApp->GetBaseDir() + "settings.xld") )  {
     TDataFile settings;
