@@ -23,8 +23,16 @@
 
 #include "wx/image.h"
 #include "wx/dcps.h"
-#include "imagep.h"
 
+//#if wxCHECK_VERSION(2,9,4)
+//#include "../src/tiff/libtiff/tiff.h"
+//#else
+//#include "../src/tiff/tiff.h"
+//#endif
+// hack for the the TIF
+#define COMPRESSION_DEFLATE 32946
+
+#include "imagep.h"
 #include "dgrad.h"
 #include "edit.h"
 #include "updateoptions.h"
@@ -405,14 +413,17 @@ void TMainForm::macLines(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FGlConsole->SetLinesToShow(Cmds[0].ToInt());
 }
 //..............................................................................
-void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
 #ifdef __WIN32__
-  bool Emboss = Options.Contains("bw"), 
-    EmbossColour = Options.Contains("c"), 
+  bool Emboss = Options.Contains("bw"),
+    EmbossColour = Options.Contains("c"),
     PictureQuality = Options.Contains("pq");
-  if( EmbossColour )  Emboss = true;
+  if (EmbossColour) Emboss = true;
+  uint32_t dpi=Options.FindValue("dpi", "0").ToUInt();
   int32_t previous_quality = -1;
-  if( PictureQuality )  {
+  if (PictureQuality) {
     previous_quality = FXApp->Quality(qaPict);
   }
 
@@ -422,53 +433,52 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     bg_g = OLX_GetGValue(clear_color),
     bg_b = OLX_GetBValue(clear_color);
 
-  short bits = mask_bg ? 32 : 24,
-    extraBytes;
+  short bits = mask_bg ? 32 : 24;
   // keep old size values
-  const int vpLeft = FXApp->GetRender().GetLeft(),
-      vpTop = FXApp->GetRender().GetTop(),
-      vpWidth = FXApp->GetRender().GetActualWidth(),
-      vpHeight = FXApp->GetRender().GetHeight();
+  const int
+    vpLeft = FXApp->GetRender().GetLeft(),
+    vpTop = FXApp->GetRender().GetTop(),
+    vpWidth = FXApp->GetRender().GetActualWidth(),
+    vpHeight = FXApp->GetRender().GetHeight();
 
   double res = 2;
-  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )
+  if (Cmds.Count() == 2 && Cmds[1].IsNumber())
     res = Cmds[1].ToDouble();
-  if( res >= 100 )  // width provided
+  if (res >= 100)  // width provided
     res /= vpWidth;
-  if( res > 10 )
+  if (res > 10)
     res = 10;
-  if( res <= 0 )
+  else if (res <= 0)
     res = 1;
 
   int BmpHeight = vpHeight*res, BmpWidth = vpWidth*res;
-
-  extraBytes = (4-(BmpWidth*(bits/8))%4)%4;
+  // padding for word alignment
+  const int extraBytes = (4-(BmpWidth*(bits/8))%4)%4;
 
   HDC hDC = wglGetCurrentDC();
   HGLRC glc = wglGetCurrentContext();
   HDC dDC = CreateCompatibleDC(NULL);
 
-  BITMAPFILEHEADER BmpFHdr;
+  BITMAPFILEHEADER BmpFHdr = {0};
   // intialise bitmap header
-  BITMAPINFO BmpInfo;
+  BITMAPINFO BmpInfo = {0};
   BmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
   BmpInfo.bmiHeader.biWidth = BmpWidth;
   BmpInfo.bmiHeader.biHeight = BmpHeight;
   BmpInfo.bmiHeader.biPlanes = 1;
   BmpInfo.bmiHeader.biBitCount = (WORD) bits;
   BmpInfo.bmiHeader.biCompression = BI_RGB;
-  //TODO: +1 check!!!
-  BmpInfo.bmiHeader.biSizeImage = (BmpWidth*(bits/8)+extraBytes+1)*BmpHeight;
-  BmpInfo.bmiHeader.biXPelsPerMeter = 0;
-  BmpInfo.bmiHeader.biYPelsPerMeter = 0;
+  BmpInfo.bmiHeader.biSizeImage = (BmpWidth*(bits/8)+extraBytes)*BmpHeight;
+  if (dpi != 0) {
+    BmpInfo.bmiHeader.biXPelsPerMeter = olx_round(dpi*100/2.54);
+    BmpInfo.bmiHeader.biYPelsPerMeter = BmpInfo.bmiHeader.biXPelsPerMeter;
+  }
   BmpInfo.bmiHeader.biClrUsed = 0;
   BmpInfo.bmiHeader.biClrImportant = 0;
-
   BmpFHdr.bfType = 0x4d42;
-  BmpFHdr.bfSize = sizeof(BmpFHdr)  + sizeof(BITMAPINFOHEADER) +
-    (BmpWidth*(bits/8)+extraBytes)*BmpHeight;
-  BmpFHdr.bfReserved1 = BmpFHdr.bfReserved2 = 0;
   BmpFHdr.bfOffBits = sizeof(BmpFHdr) + sizeof(BmpInfo.bmiHeader);
+  BmpFHdr.bfSize = BmpFHdr.bfOffBits + BmpInfo.bmiHeader.biSizeImage;
+  BmpFHdr.bfReserved1 = BmpFHdr.bfReserved2 = 0;
 
   unsigned char *DIBits = NULL;
   HBITMAP DIBmp = CreateDIBSection(dDC, &BmpInfo, DIB_RGB_COLORS,
@@ -481,7 +491,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     1,
     PFD_SUPPORT_OPENGL | PFD_SUPPORT_GDI | PFD_DRAW_TO_BITMAP,
     PFD_TYPE_RGBA,
-    bits, //bits
+    bits,
     0,0,0,0,0,0,
     0,0,
     0,0,0,0,0,
@@ -516,31 +526,32 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->GetRender().Resize(vpLeft, vpTop, vpWidth, vpHeight, 1);
   FGlConsole->SetVisible(true);
   FXApp->FinishDrawBitmap();
-  if( PictureQuality )  FXApp->Quality(previous_quality);
+  if (PictureQuality)
+    FXApp->Quality(previous_quality);
   FXApp->GetRender().EnableFog(FXApp->GetRender().IsFogEnabled());
 
-  if( Emboss )  {
-    if( EmbossColour )  {
+  if (Emboss) {
+    if (EmbossColour) {
       TProcessImage::EmbossC(DIBits, BmpWidth, BmpHeight, 3,
-                       FXApp->GetRender().LightModel.GetClearColor().GetRGB());
+        FXApp->GetRender().LightModel.GetClearColor().GetRGB());
     }
-    else  {
+    else {
       TProcessImage::EmbossBW(DIBits, BmpWidth, BmpHeight, 3,
-                       FXApp->GetRender().LightModel.GetClearColor().GetRGB());
+        FXApp->GetRender().LightModel.GetClearColor().GetRGB());
     }
   }
   olxstr bmpFN, outFN;
-  if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) ) {
+  if (FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0])) {
     outFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) <<
-      TEFile::ExtractFileName( Cmds[0] );
+      TEFile::ExtractFileName(Cmds[0]);
   }
   else
     outFN = Cmds[0];
   // correct a common typo
-  if( TEFile::ExtractFileExt(outFN).Equalsi("jpeg") )
+  if (TEFile::ExtractFileExt(outFN).Equalsi("jpeg"))
     outFN = TEFile::ChangeFileExt(outFN, "jpg");
 
-  if( TEFile::ExtractFileExt(outFN).Equalsi("bmp") )
+  if (TEFile::ExtractFileExt(outFN).Equalsi("bmp"))
     bmpFN = TEFile::ChangeFileExt(outFN, "bmp");
   else
     bmpFN = TEFile::ChangeFileExt(outFN, "bmp.tmp");
@@ -578,21 +589,21 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "could not process image conversion");
     return;
   }
-  if (f_ext.Equalsi("jpeg")) {
-    f_ext = "jpg";
-    outFN = TEFile::ChangeFileExt(outFN, f_ext);
-  }
-  if (f_ext.Equalsi("jpg")) {
+  if (bmpFN.EndsWithi("jpg")) {
     image.SetOption(wxIMAGE_OPTION_QUALITY, 100);
   }
 #if wxCHECK_VERSION(2,9,4)
-  else if(f_ext.Equalsi("tif")) {
-    image.SetOption(wxIMAGE_OPTION_COMPRESSION, 32946);
+  else if(bmpFN.EndsWithi("tif")) {
+    image.SetOption(wxIMAGE_OPTION_COMPRESSION, COMPRESSION_DEFLATE);
   }
 #endif
-  image.SetOption(wxIMAGE_OPTION_RESOLUTIONX, 300);
-  image.SetOption(wxIMAGE_OPTION_RESOLUTIONY, 300);
-  image.SaveFile(outFN.u_str() );
+  if (dpi != 0) {
+    image.SetOption(wxIMAGE_OPTION_RESOLUTION, dpi);
+    image.SetOption(wxIMAGE_OPTION_RESOLUTIONX, dpi);
+    image.SetOption(wxIMAGE_OPTION_RESOLUTIONY, dpi);
+    image.SetOption(wxIMAGE_OPTION_RESOLUTIONUNIT, wxIMAGE_RESOLUTION_INCHES);
+  }
+  image.SaveFile(outFN.u_str());
   image.Destroy();
   TEFile::DelFile(bmpFN);
 #else
@@ -605,26 +616,27 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
 {
   int orgHeight = FXApp->GetRender().GetHeight(),
       orgWidth  = FXApp->GetRender().GetWidth();
+  uint32_t dpi=Options.FindValue("dpi", "0").ToUInt();
   double res = 1;
-  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )
+  if (Cmds.Count() == 2 && Cmds[1].IsNumber())
     res = Cmds[1].ToDouble();
-  if( res >= 100 )  // width provided
+  if (res >= 100)  // width provided
     res /= orgWidth;
-  if( res > 10 )
+  if (res > 10)
     res = 10;
-  if( res <= 0 )
+  else if (res <= 0)
     res = 1;
-  if( res > 1 && res < 100 )
+  if (res > 1 && res < 100)
     res = olx_round(res);
 
   int SrcHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
       SrcWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
   int BmpHeight = (int)(SrcHeight*res), BmpWidth = (int)(SrcWidth*res);
-  if( BmpHeight < SrcHeight )
+  if (BmpHeight < SrcHeight)
     SrcHeight = BmpHeight;
-  if( BmpWidth < SrcWidth )
+  if (BmpWidth < SrcWidth)
     SrcWidth = BmpWidth;
-  FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res); 
+  FXApp->GetRender().Resize(0, 0, SrcWidth, SrcHeight, res);
   bool mask_bg = Options.Contains("nbg");
   uint32_t clear_color = FXApp->GetRender().LightModel.GetClearColor().GetRGB();
   unsigned char bg_r = OLX_GetRValue(clear_color),
@@ -639,21 +651,21 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   FGlConsole->SetVisible(false);
   FXApp->GetRender().OnDraw.SetEnabled(false);
   int32_t previous_quality = -1;
-  if( res != 1 )  {
+  if (res != 1) {
     FXApp->GetRender().GetScene().ScaleFonts(res);
-    if( res >= 2 )
+    if (res > 1)
       previous_quality = FXApp->Quality(qaPict);
     FXApp->UpdateLabels();
   }
-  for( int i=0; i < res; i++ )  {
-    for( int j=0; j < res; j++ )  {
+  for (int i=0; i < res; i++) {
+    for (int j=0; j < res; j++) {
       FXApp->GetRender().LookAt(j, i, (int)(res < 1 ? 1 : res));
       FXApp->GetRender().Draw();
       char *PP = FXApp->GetRender().GetPixels(false, 1);
       int mj = j*SrcWidth;
       int mi = i*SrcHeight;
-      for( int k=0; k < SrcWidth; k++ )  {
-        for( int l=0; l < SrcHeight; l++ )  {
+      for (int k=0; k < SrcWidth; k++) {
+        for (int l=0; l < SrcHeight; l++) {
           int indexA = (l*SrcWidth + k)*3;
           int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
           bmpData[indexB] = PP[indexA];
@@ -676,7 +688,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
       delete [] PP;
     }
   }
-  if( res != 1 ) {
+  if (res > 1) {
     FXApp->GetRender().GetScene().RestoreFontScale();
     FXApp->Quality(previous_quality);
     FXApp->UpdateLabels();
@@ -686,7 +698,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   FGlConsole->SetVisible(true);
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight);
-  FXApp->GetRender().LookAt(0,0,1);
+  FXApp->GetRender().LookAt(0, 0, 1);
   FXApp->GetRender().SetView(false, 1);
   FXApp->Draw();
   olxstr bmpFN;
@@ -697,17 +709,28 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   else
     bmpFN = Cmds[0];
   wxImage image;
-  image.SetData(bmpData, BmpWidth, BmpHeight); 
+  image.SetData(bmpData, BmpWidth, BmpHeight);
   if (alpha_bytes != NULL)
     image.SetAlpha(alpha_bytes);
   // correct a common typo
   if (TEFile::ExtractFileExt(bmpFN).Equalsi("jpeg"))
     bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
+  if (dpi != 0) {
+    image.SetOption(wxIMAGE_OPTION_RESOLUTION, dpi);
+    image.SetOption(wxIMAGE_OPTION_RESOLUTIONX, dpi);
+    image.SetOption(wxIMAGE_OPTION_RESOLUTIONY, dpi);
+    image.SetOption(wxIMAGE_OPTION_RESOLUTIONUNIT, wxIMAGE_RESOLUTION_INCHES);
+  }
   if (bmpFN.EndsWithi(".jpg")) {
     image.SetOption(wxIMAGE_OPTION_QUALITY, 100);
   }
-  image.SetOption(wxIMAGE_OPTION_RESOLUTIONX, 300);
-  image.SetOption(wxIMAGE_OPTION_RESOLUTIONY, 300);
+  else if (bmpFN.EndsWithi(".png")) {
+  }
+#if wxCHECK_VERSION(2,9,4)
+  else if(bmpFN.EndsWithi(".tif")) {
+    image.SetOption(wxIMAGE_OPTION_COMPRESSION, COMPRESSION_DEFLATE);
+  }
+#endif
   image.SaveFile(bmpFN.u_str());
 }
 //..............................................................................
