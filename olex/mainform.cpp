@@ -3302,6 +3302,9 @@ bool TMainForm::ProcessEvent(wxEvent& evt)  {
     }
   }
   evt.Skip();
+#ifdef __MAC__
+  return false;
+#endif
   return wxFrame::ProcessEvent(evt);
 }
 //..............................................................................
