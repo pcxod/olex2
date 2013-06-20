@@ -3302,9 +3302,6 @@ bool TMainForm::ProcessEvent(wxEvent& evt)  {
     }
   }
   evt.Skip();
-#ifdef __MAC__
-  return false;
-#endif
   return wxFrame::ProcessEvent(evt);
 }
 //..............................................................................
@@ -3786,7 +3783,7 @@ void TMainForm::ProcessHandler::AfterPrint() {
 }
 //..............................................................................
 void TMainForm::ProcessHandler::OnWait() {
-  parent.FParent->Dispatch();
+  parent.FParent->Yield();
   TBasicApp::GetInstance().OnTimer.Execute(&(AEventsDispatcher&)parent);
 }
 //..............................................................................

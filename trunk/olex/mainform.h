@@ -32,7 +32,7 @@
 #include "olxstate.h"
 
 enum  {
-  ID_HtmlPanel=1,  // view menu
+  ID_HtmlPanel=wxID_HIGHEST,  // view menu
 
   ID_StrGenerate,  // structure menu
 
