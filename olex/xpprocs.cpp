@@ -1166,7 +1166,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else
     flags = spfSynchronised;
 
-#ifdef __WIN32__
+#if defined(__WIN32__)
   TWinProcess* Process  = new TWinProcess(Tmp, flags);
 #elif defined(__WXWIDGETS__)
   TWxProcess* Process = new TWxProcess(Tmp, flags);
@@ -1824,8 +1824,7 @@ void TMainForm::macFocus(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  while( wxTheApp->Pending() )
-    wxTheApp->Dispatch();
+  wxTheApp->Yield();
 }
 //..............................................................................
 //..............................................................................

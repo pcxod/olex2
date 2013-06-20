@@ -76,7 +76,7 @@ protected:
   double HKLF_s, HKLF_wt, HKLF_m;
   double OMIT_s, OMIT_2t;
   double SHEL_lr, SHEL_hr;
-  double EXTI;
+  TEValueD EXTI;
   mat3d TWIN_mat;
   int TWIN_n;
   bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified,
@@ -295,8 +295,11 @@ public:
   void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
   bool HasMERG() const {  return MERG_set;  }
   
-  double GetEXTI() const {  return EXTI;  }
-  void SetEXTI(double v)  {  EXTI = v;  EXTI_set = true;  }
+  const TEValueD& GetEXTI() const {  return EXTI;  }
+  void SetEXTI(double v, double e) {
+    EXTI.V() = v;  EXTI.E() = e;
+    EXTI_set = true;
+  }
   bool HasEXTI() const {  return EXTI_set;  }
   void ClearEXTI() { EXTI_set = false; }
   
@@ -676,29 +679,31 @@ Friedel opposites of components 1 ... m
   template <class RefList, class FList, class SymSpace>
   void CorrectExtiForF(const RefList& refs, FList& F, const SymSpace& sp) const
   {
-    if( !EXTI_set || EXTI == 0 ) return;
-    if( refs.Count() != F.Count() )
+    if (!EXTI_set || EXTI.GetV() == 0) return;
+    if (refs.Count() != F.Count())
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
-    const double l = expl.GetRadiation();
-    for( size_t i=0; i < refs.Count(); i++ )  {
+    const double l = expl.GetRadiation(),
+      k = 0.0005*EXTI.GetV()*l*l*l, lsqo4 = l*l/4;
+    for (size_t i=0; i < refs.Count(); i++) {
       const double x =
-        sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
+        sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*lsqo4;
       F[i] *=
-        pow(1+0.0005*EXTI*F[i].qmod()*l*l*l/sqrt(olx_max(0,x*(1-x))), -0.25);
+        pow(1+F[i].qmod()*k/sqrt(olx_max(0,x*(1-x))), -0.25);
     }
   }
   template <class RefList, class FsqList, class SymSpace>
   void CorrectExtiForFsq(const RefList& refs, FsqList& Fsq,
     const SymSpace& sp) const
   {
-    if( !EXTI_set || EXTI == 0 ) return;
-    if( refs.Count() != Fsq.Count() )
+    if (!EXTI_set || EXTI.GetV() == 0) return;
+    if (refs.Count() != Fsq.Count())
       throw TInvalidArgumentException(__OlxSrcInfo, "arrays size");
-    const double l = expl.GetRadiation();
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      const double x
-        = sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*l*l/4;
-      Fsq[i] /= sqrt(1+0.0005*EXTI*Fsq[i]*l*l*l/sqrt(olx_max(0,x*(1-x))));
+    const double l = expl.GetRadiation(),
+      k = 0.0005*EXTI.GetV()*l*l*l, lsqo4 = l*l/4;
+    for (size_t i=0; i < refs.Count(); i++) {
+      const double x =
+        sp.HklToCart(TReflection::GetHkl(refs[i])).QLength()*lsqo4;
+      Fsq[i] /= sqrt(1+Fsq[i]*k/sqrt(olx_max(0,x*(1-x))));
     }
   }
   // returns the number of pairs

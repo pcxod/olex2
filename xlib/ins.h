@@ -181,7 +181,7 @@ public:
       else if( Toks[0].Equalsi("MERG") && Toks.Count() == 2 )
         rm.SetMERG(Toks[1].ToInt());
       else if( Toks[0].Equalsi("EXTI") )
-        rm.SetEXTI(Toks.Count() == 1 ? 0.0 : Toks[1].ToDouble());
+        rm.SetEXTI(Toks.Count() == 1 ? 0.0 : Toks[1].ToDouble(), 0);
       else if( Toks[0].Equalsi("SIZE") && (Toks.Count() == 4) ) {
         rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(),
           Toks[3].ToDouble());

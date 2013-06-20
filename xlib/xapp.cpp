@@ -201,7 +201,7 @@ RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
   TUnitCell::SymmSpace sp = XFile().GetUnitCell().GetSymmSpace();
   const TDoubleList& basf = rm.GetBASF();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-  double exti = rm.HasEXTI() ? rm.GetEXTI() : 0;
+  double exti = rm.HasEXTI() ? rm.GetEXTI().GetV() : 0;
   const double l = rm.expl.GetRadiation(),
     l_sq_4 = olx_sqr(rm.expl.GetRadiation())/4,
     s_l_q_e = 0.0005*exti*l*l*l;

@@ -62,6 +62,16 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
   }
   sw.start("Loading the file");
   TBasicCFile::LoadFromFile(fileName);
+  if (Lst.IsLoaded() && GetRM().HasEXTI()) {
+    try {
+      olxstr str_exti = Lst.params.Find("exti", EmptyString());
+      if (!str_exti.IsEmpty()) {
+        TEValueD exti = str_exti;
+        GetRM().SetEXTI(exti.GetV(), exti.GetE());
+      }
+    }
+    catch(...)  {}
+  }
 }
 //..............................................................................
 void TIns::LoadFromStrings(const TStrList& FileContent)  {
@@ -1793,8 +1803,8 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
   if (!GetRM().OmittedAtoms().IsEmpty())
     SL.Add("OMIT ") << GetRM().OmittedAtoms().GetExpression();
 
-  if( GetRM().HasEXTI() )
-    SL.Add("EXTI ") << GetRM().GetEXTI();
+  if (GetRM().HasEXTI())
+    SL.Add("EXTI ") << GetRM().GetEXTI().GetV();
 
   _SaveHklInfo(SL, false);
 

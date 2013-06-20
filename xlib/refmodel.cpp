@@ -1235,7 +1235,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
   item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
-  item.AddItem("EXTI", EXTI_set).AddField("val", EXTI);
+  item.AddItem("EXTI", EXTI_set).AddField("val", EXTI.ToString());
   Conn.ToDataItem(item.AddItem("CONN"));
   item.AddField("UserContent", GetUserContentStr());
 
@@ -1320,12 +1320,12 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   }
   {
     TDataItem& exti = *item.FindItem("EXTI");
-    if( &exti != NULL )  {
+    if (&exti != NULL) {
       EXTI_set = exti.GetValue().ToBool();
-      EXTI = exti.GetRequiredField("val").ToDouble();
+      EXTI = exti.GetRequiredField("val");
     }
   }
-  // restraints and BASF may use some of the vars...  
+  // restraints and BASF may use some of the vars...
   Vars.FromDataItem(item.FindRequiredItem("LEQS"));
   Conn.FromDataItem(item.FindRequiredItem("CONN"));
   SetUserFormula(item.GetFieldValue("UserContent"), false);
@@ -1438,8 +1438,8 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
     PythonExt::SetDictItem(shel, "low", Py_BuildValue("d", SHEL_lr));
     PythonExt::SetDictItem(shel, "high", Py_BuildValue("d", SHEL_hr));
   }
-  if( EXTI_set )
-    PythonExt::SetDictItem(main, "exti", Py_BuildValue("f", EXTI));
+  if (EXTI_set)
+    PythonExt::SetDictItem(main, "exti", Py_BuildValue("f", EXTI.GetV()));
 
   PythonExt::SetDictItem(main, "conn", Conn.PyExport());
 
@@ -1858,12 +1858,14 @@ void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
 void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
     if( EXTI_set )
-      E.SetRetVal(EXTI);
+      E.SetRetVal(EXTI.ToString());
     else
       E.SetRetVal<olxstr>("n/a");
   }
-  else
-    SetEXTI(Params[0].ToDouble());
+  else {
+    SetEXTI(Params[0].ToDouble(),
+      Params.Count() == 1 ? 0.0 : Params[1].ToDouble());
+  }
 }
 //..............................................................................
 void RefinementModel::LibUpdateCRParams(const TStrObjList& Params,
@@ -1992,8 +1994,8 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI,
       "Exti",
-      fpNone|fpOne,
-"Returns/sets EXTI") );
+      fpNone|fpOne|fpTwo,
+"Returns/sets EXTI"));
   lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibUpdateCRParams,
       "UpdateCR",
