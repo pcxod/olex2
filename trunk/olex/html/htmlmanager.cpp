@@ -927,7 +927,7 @@ void THtmlManager::funEndModal(const TStrObjList &Params, TMacroError &E)  {
 //.............................................................................
 void THtmlManager::funShowModal(const TStrObjList &Params, TMacroError &E)  {
   THtmlManager::TPopupData *pd = Popups.Find(Params[0], NULL);
-  if( pd == NULL )  {
+  if (pd == NULL) {
     E.ProcessingError(__OlxSrcInfo,
       "undefined html window: ").quote() << Params[0];
     return;
