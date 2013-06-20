@@ -112,12 +112,14 @@ void TComboBox::ChangeEvent(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TComboBox::LeaveEvent(wxFocusEvent& event)  {
-  HandleOnLeave();
+  if (--entered_counter == 0)
+    HandleOnLeave();
   event.Skip();
 }
 //..............................................................................
 void TComboBox::EnterEvent(wxFocusEvent& event)  {
-  HandleOnEnter();
+  if (++entered_counter == 1)
+    HandleOnEnter();
   event.Skip();
 }
 //..............................................................................
@@ -127,9 +129,11 @@ const IEObject* TComboBox::GetObject(int i)  {
 }
 //..............................................................................
 olxstr TComboBox::GetText() const {
+  if (IsReadOnly() && GetSelection() < 0)
+    return EmptyString();
   olxstr cv = GetValue();
-  for( unsigned int i=0; i < GetCount(); i++ )  {
-    if( cv == GetString(i) )  {
+  for (unsigned int i=0; i < GetCount(); i++) {
+    if (cv == GetString(i)) {
       TDataObj* res = (TDataObj*)GetClientData(i);
       return (res != NULL && res->Delete) ? res->Data->ToString() : cv;
     }

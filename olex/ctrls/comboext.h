@@ -33,6 +33,7 @@ namespace ctrl_ext {
     void EnterEvent(wxFocusEvent& event);
     olxstr Data;
     olxstr StrValue;
+    int entered_counter;
   protected:
     void _AddObject(const olxstr &Item, IEObject* Data, bool Delete);
 #ifdef __WIN32__
@@ -57,6 +58,7 @@ namespace ctrl_ext {
       OnReturn(AOlxCtrl::ActionQueue::New(Actions, evt_on_return_id))
     {
       OnLeave.SetEnabled(false);
+      entered_counter = 0;
     }
     virtual ~TComboBox();
 
