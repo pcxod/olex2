@@ -73,19 +73,19 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
     
   wxFlexGridSizer *LightPosGridSizer = new wxFlexGridSizer(4, 3, Border, Border);
   LightPosGridSizer->Add(stX, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
-  LightPosGridSizer->Add(tbX, 1, wxEXPAND | wxEXPAND | wxALL, 1);
+  LightPosGridSizer->Add(tbX, 1, wxEXPAND | wxALL, 1);
   LightPosGridSizer->Add(teX, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1);
 
   LightPosGridSizer->Add(stY, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
-  LightPosGridSizer->Add(tbY, 1, wxEXPAND | wxEXPAND | wxALL, 1);
+  LightPosGridSizer->Add(tbY, 1, wxEXPAND | wxALL, 1);
   LightPosGridSizer->Add(teY, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1);
 
   LightPosGridSizer->Add(stZ, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
-  LightPosGridSizer->Add(tbZ, 1, wxEXPAND | wxEXPAND | wxALL, 1);
+  LightPosGridSizer->Add(tbZ, 1, wxEXPAND | wxALL, 1);
   LightPosGridSizer->Add(teZ, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1);
 
   LightPosGridSizer->Add(stR, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
-  LightPosGridSizer->Add(tbR, 1, wxEXPAND | wxEXPAND | wxALL, 1);
+  LightPosGridSizer->Add(tbR, 1, wxEXPAND | wxALL, 1);
   LightPosGridSizer->Add(teR, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1);
   LightPosGridSizer->AddGrowableCol(1);
   

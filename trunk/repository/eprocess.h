@@ -20,6 +20,8 @@
   #include "wx/process.h"
 #endif
 
+/* Windows specific implementation is inspired by the Python source code */
+
 #ifdef __WIN32__
   #include <winuser.h>
 #endif
@@ -36,7 +38,7 @@ enum {
   process_manager_kill
 };
 
-class IProcessOutput  {
+class IProcessOutput {
 public:
   virtual ~IProcessOutput() {}
   virtual void write_char(char ch) = 0;
@@ -44,6 +46,7 @@ public:
   virtual olxstr readAll() = 0;
   virtual bool isEmpty() const = 0;
 };
+
 class ProcessOutput : public IProcessOutput {
 protected:
   TDirectionalList<char> data;
@@ -59,6 +62,7 @@ public:
     return rv;
   }
 };
+
 class SynchronisedProcessOutput : public IProcessOutput {
 protected:
   TDirectionalList<char> data;
@@ -90,9 +94,11 @@ class BufferedProcessOutput {
 protected:
   IProcessOutput& data;
 public:
-  BufferedProcessOutput(bool thread_use) : 
+  BufferedProcessOutput(bool thread_use) :
       data(*(thread_use ? 
-        (IProcessOutput*)(new SynchronisedProcessOutput) : (IProcessOutput*)(new ProcessOutput))) {}
+        (IProcessOutput*)(new SynchronisedProcessOutput)
+        : (IProcessOutput*)(new ProcessOutput)))
+  {}
   ~BufferedProcessOutput()  {  delete &data;  }
   void Write(char ch)  {  data.write_char(ch);  }
   void Write(const char* bf, size_t len)  {  data.write_array(bf, len);  }
@@ -100,7 +106,7 @@ public:
   olxstr ReadAll() {  return data.readAll();  }
 };
 
-class AProcess : public IEObject {
+class AProcess : public virtual IEObject {
 private:
   TActionQList Actions;
   TStrList FOnTerminateCmds;
@@ -145,30 +151,16 @@ public:
 };
 
 #ifdef __WXWIDGETS__
-class TIStream : public wxThread  {
-  wxInputStream *FStream;
-  AProcess *FParent;
-  bool Terminated;
-public:
-  TIStream(class TWxProcess *Parent, wxInputStream *IS);
-  virtual ~TIStream();
-  virtual void* Entry();
-  void OnTerminate();
-};
-
-class TWxProcess : public wxProcess, public AProcess  {
-  TIStream *FStream;
-  wxInputStream *FInputStream;
-  wxOutputStream *FOutputStream;
-  wxInputStream *FErrorStream;
-protected:
-  virtual void OnTerminate(int pid, int status);
-  bool InitStreams();
+class TWxProcess
+  : protected wxProcess, public AProcess, public AEventsDispatcher
+{
+  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data);
+  // override to stop automatic deletion of the object
+  virtual void OnTerminate(int pid, int status) {}
 public:
   TWxProcess(const olxstr& cmdl, short flags);
-  virtual ~TWxProcess();
-
-  TIStream* GetStream()  {  return FStream; }
+  ~TWxProcess();
 
   virtual void Write(const olxstr& Cmd);
   virtual void Writenl();
@@ -189,7 +181,8 @@ protected:
   bool InitStreams();
   void CloseStreams();
   void CloseThreadStreams();
-  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
+  bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+    const IEObject *Data);
 public:
   TWinProcess(const olxstr& cmdl, short flags);
   virtual ~TWinProcess();
