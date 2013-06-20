@@ -23,6 +23,7 @@
 #include "cdsfs.h"
 #include "label_corrector.h"
 #include "symmparser.h"
+#include "updateapi.h"
 #undef GetObject
 
 using namespace olex2;
@@ -404,7 +405,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   olxstr index, index_fn, repos, dest, proxy;
   if( !PythonExt::ParseTuple(args, "ww", &index, &dest) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ww");
-  olxstr SettingsFile(TBasicApp::GetBaseDir() + "usettings.dat");
+  olxstr SettingsFile = updater::UpdateAPI::GetSettingsFileName();
   if( TEFile::Exists(SettingsFile) )  {
     const TSettingsFile settings(SettingsFile);
     proxy = settings["proxy"];

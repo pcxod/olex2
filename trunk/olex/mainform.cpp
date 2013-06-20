@@ -2335,8 +2335,6 @@ void TMainForm::OnResize()  {
   int w=0, h=0, l=0;
   int dheight = InfoWindowVisible ? FInfoBox->GetHeight() : 1;
   GetClientSize(&w, &h);
-
-  FInfoBox->SetTop(1);
   if( FHtmlMinimized )  {
     if( FHtmlOnLeft )  {
       HtmlManager.main->SetSize(0, 0, 10, h);
@@ -2382,8 +2380,11 @@ void TMainForm::OnResize()  {
   FGlCanvas->GetClientSize(&w, &h);
   FXApp->GetRender().Resize(0, 0, w, h, 1);
   FGlConsole->Resize(0, dheight, w, h - dheight);
-  FInfoBox->SetWidth(w);
-  FInfoBox->SetLeft(0);
+  if (FInfoBox->IsCreated()) {
+    FInfoBox->SetTop(1);
+    FInfoBox->SetWidth(w);
+    FInfoBox->SetLeft(0);
+  }
 }
 //..............................................................................
 olxstr TMainForm::ExpandCommand(const olxstr &Cmd, bool inc_files)  {

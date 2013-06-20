@@ -3491,7 +3491,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       FXApp->Draw();
     }
     else  {
-      olxstr SettingsFile(TBasicApp::GetBaseDir() + "usettings.dat");
+      olxstr SettingsFile = updater::UpdateAPI::GetSettingsFileName();
       if( TEFile::Exists(SettingsFile) )  {
         updater::UpdateAPI api;
         short res = api.InstallPlugin(new TDownloadProgress(*FXApp), 
@@ -3510,7 +3510,8 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
         FXApp->Draw();
       }
       else  {
-        TBasicApp::NewLogEntry() << "Could not locate usettings.dat file";
+        TBasicApp::NewLogEntry() << "Could not locate " << SettingsFile <<
+          " file";
       }
     }
   }
@@ -3637,8 +3638,8 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
     return;
   }
 #endif
-  olxstr SettingsFile( TBasicApp::GetBaseDir() + "usettings.dat" );
-  TEFile::CheckFileExists( __OlxSourceInfo, SettingsFile );
+  olxstr SettingsFile = updater::UpdateAPI::GetSettingsFileName();
+  TEFile::CheckFileExists( __OlxSourceInfo, SettingsFile);
   const TSettingsFile settings(SettingsFile);
   olxstr Proxy, Repository;
   bool Force = Options.Contains('f');
