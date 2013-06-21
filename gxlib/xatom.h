@@ -238,6 +238,10 @@ public:
     TComparableComparator> &materials) const;
   static const_strlist PovDeclare();
 
+  const_strlist ToWrl(olxdict<TGlMaterial, olxstr,
+    TComparableComparator> &materials) const;
+  static const_strlist WrlDeclare();
+
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
 };

@@ -175,7 +175,8 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
     new TFuncWrapper(fun, true, profile));
   try  {
     lib->Register(new TFunction<TFuncWrapper>(
-      fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny), true);
+      fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny),
+      libReplace);
     return Py_BuildValue("b", true);
   }
   catch( const TExceptionBase& exc )  {
