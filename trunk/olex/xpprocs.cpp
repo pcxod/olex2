@@ -852,6 +852,10 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TCStrList(TStrList(FXApp->ToPov())).SaveToFile(file_name);
 }
 //..............................................................................
+void TMainForm::macPictWR(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  olxstr file_name = (Cmds[0].EndsWith(".wrl") ? Cmds[0] : olxstr(Cmds[0]) << ".wrl");
+  TCStrList(TStrList(FXApp->ToWrl())).SaveToFile(file_name);
+}
 //..............................................................................
 void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
   FGlConsole->ClearBuffer();

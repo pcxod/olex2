@@ -22,6 +22,7 @@
 #include "exyzgroup.h"
 #include "glutil.h"
 #include "povdraw.h"
+#include "wrldraw.h"
 #include "gltexture.h"
 
 bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
@@ -805,6 +806,151 @@ const_strlist TXAtom::PovDeclare()  {
     out.Add("  }");
   }
   out.Add("}}");
+  return out;
+}
+//..............................................................................
+const_strlist TXAtom::ToWrl(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
+{
+  TStrList out;
+  if (DrawStyle() == adsStandalone && !IsStandalone())
+    return out;
+  out.Add(" Group { children [");
+  pov::CrdTransformer crdc(Parent.GetBasis());
+  if( (DrawStyle() == adsEllipsoid || DrawStyle() == adsOrtep) &&
+    GetEllipsoid() != NULL && !GetEllipsoid()->IsNPD())
+  {
+    mat3d m = GetEllipsoid()->GetMatrix()*GetDrawScale(),
+      q;
+    m[0] *= GetEllipsoid()->GetSX();
+    m[1] *= GetEllipsoid()->GetSY();
+    m[2] *= GetEllipsoid()->GetSZ();
+    m = crdc.matr(m);
+    vec3d scale(m[0].Length(), m[1].Length(), m[2].Length());
+    m[0] /= scale[0];
+    m[1] /= scale[1];
+    m[2] /= scale[2];
+    vec3d rv;
+    double ang = wrl::decompose(m, rv);
+    out.Add("  Transform {");
+    double ds = GetDrawScale();
+    out.Add("   scale").stream(' ') << scale[0] << scale[1] << scale[2];
+    out.Add("   rotation").stream(' ') << rv[0] << rv[1] << rv[2] << ang;
+  }
+  else {
+    out.Add("  Transform {");
+    double ds = GetDrawScale();
+    out.Add("   scale").stream(' ') << ds << ds << ds;
+  }
+    out.Add("   translation ") << wrl::to_str(crdc.crd(crd()));
+  out.Add("   children [");
+  const TGPCollection &gpc = GetPrimitives();
+  for (size_t i=0; i < gpc.PrimitiveCount(); i++) {
+    TGlPrimitive &glp = gpc.GetPrimitive(i);
+    if (glp.GetOwnerId() == xatom_PolyId) continue;
+    if (GetEllipsoid() == NULL &&
+        (glp.GetOwnerId() == xatom_DisksId || glp.GetOwnerId() == xatom_RimsId ))
+      continue;
+    olxstr glp_name = glp.GetName().ToLowerCase().Replace(' ', '_'),
+      name_extra;
+    if (GetEllipsoid() != NULL) {
+      if (GetEllipsoid()->IsNPD()) {
+        glp_name = "tetrahedron";
+      }
+      else if (FDrawStyle == adsOrtep &&
+          glp.GetOwnerId() == xatom_SphereId)
+      {
+        short mask = 0;
+        const mat3d mat = GetEllipsoid()->GetMatrix()*Parent.GetBasis().GetMatrix();
+        for (int i=0; i < 3; i++) {
+          if (mat[i][2] < 0)
+            mask |= (1<<i);
+        }
+        name_extra = mask+1;
+      }
+    }
+    olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials, this);
+    out.Add("    Shape {");
+    out.Add("     appearance ") << p_mat << " {}";
+    out.Add("     geometry DEF ap ") << "atom_" << glp_name << name_extra << " {}";
+    out.Add("    }");  // Shape
+  }
+  out.Add("  ]}");
+  //if( GetPolyhedronType() != polyNone && GetPolyhedron() != NULL )  {
+  //  olxstr poly_mat_name = pov::get_mat_name("Polyhedron",
+  //    GetPrimitives().GetStyle(), materials, this);
+  //  TXAtom::Poly &p = *GetPolyhedron();
+  //  out.Add(" union { //") << GetLabel();
+  //  for( size_t i=0; i < p.faces.Count(); i++ )  {
+  //    out.Add("  smooth_triangle {");
+  //    for( int j=0; j < 3; j++ )  {
+  //      out.Add("   ") << pov::to_str(crdc.crd(p.vecs[p.faces[i][j]]))
+  //        << pov::to_str(crdc.normal(p.norms[i]));
+  //    }
+  //    out.Add("   texture {") << poly_mat_name << '}';
+  //    out.Add("  }");
+  //  }
+  //  out.Add(" }");
+  //}
+  out.Add(" ]}");  // group
+  return out;
+}
+//..............................................................................
+const_strlist TXAtom::WrlDeclare() {
+  TStrList out;
+  out.Add("PROTO atom_sphere[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_sphere1[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_sphere2[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_sphere3[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_sphere4[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_sphere5[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_sphere6[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_sphere7[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_sphere8[]{ Sphere{ radius 1}}");
+  out.Add("PROTO atom_small_sphere[]{ Sphere{ radius 0.5}}");
+  const double RimR = FAtomParams->GetNumParam("RimR", 1.02, true);  // radius
+  const double RimW = FAtomParams->GetNumParam("RimW", 0.05, true);  // width
+  out.Add("PROTO atom_rims[]{ Group{ children[ ");
+  out.Add(" DEF rim Shape{ geometry Cylinder{ height ") << RimW << " radius " <<
+    RimR << " top FALSE bottom FALSE}}";
+  out.Add(" Transform{ rotation 0 0 1 1.571 children USE rim }");
+  out.Add(" Transform{ rotation 1 0 0 1.571 children USE rim }");
+  out.Add("]}}");
+
+  //double DiskIR = FAtomParams->GetNumParam("DiskIR", 0.0, true);  // inner radius for disks
+  //double DiskOR = FAtomParams->GetNumParam("DiskOR", RimR, true);  // outer radius
+  //double DiskS = FAtomParams->GetNumParam("DiskS", RimW, true);  // separation
+
+  //out.Add("PROTO atom_disks[] Group{ children[ ");
+  //out.Add(" geometry DEF disk Cone { radius ") << DiskOR << " height 0 bottom false";
+  //out.Add(" transform { rotation 0 0 1 1.57 children[ geometry use rim] }");
+  //out.Add(" transform { rotation 0 1 0 1.57 children[ geometry use rim] }");
+  //out.Add("]}");
+
+  //out.Add("#declare atom_disks=object{ union {");
+  //out.Add(" disc {<") << DiskS << ",0,0>, <-1,0,0>, " << DiskOR << ',' << DiskIR << '}';
+  //out.Add(" disc {<-") << DiskS << ",0,0>, <1,0,0>, " << DiskOR << ',' << DiskIR << '}';
+  //out.Add(" disc {<0,") << DiskS << ",0>, <0,-1,0>, " << DiskOR << ',' << DiskIR << '}';
+  //out.Add(" disc {<0,-") << DiskS << ",0>, <0,1,0>, " << DiskOR << ',' << DiskIR << '}';
+  //out.Add(" disc {<0,0,") << DiskS << ">, <0,0,-1>, " << DiskOR << ',' << DiskIR << '}';
+  //out.Add(" disc {<0,0,-") << DiskS << ">, <0,0,1>, " << DiskOR << ',' << DiskIR << '}';
+  //out.Add("}}");
+  //out.Add("#declare atom_cross=object{ union {");
+  //out.Add(" cylinder {<-1,0,0>, <1,0,0>, 0.05}");
+  //out.Add(" cylinder {<0,-1,0>, <0,1,0>, 0.05}");
+  //out.Add(" cylinder {<0,0,-1>, <0,0,1>, 0.05}");
+  //out.Add("}}");
+  //TGlPrimitive *glp = FStaticObjects.GetObject(TetrahedronIndex);
+  //out.Add("#declare atom_tetrahedron=object{ union {");
+  //for (size_t i=0; i < glp->Vertices.Count(); i+=3) {
+  //  out.Add("  smooth_triangle {");
+  //  for( int j=0; j < 3; j++ )  {
+  //    out.Add("   ") << pov::to_str(glp->Vertices[i+j])
+  //      << pov::to_str(glp->Normals[i/3]);
+  //  }
+  //  out.Add("  }");
+  //}
+  //out.Add("}}");
   return out;
 }
 //..............................................................................

@@ -551,6 +551,7 @@
     <ClInclude Include="..\..\..\glib\gpcollection.h" />
     <ClInclude Include="..\..\..\glib\povdraw.h" />
     <ClInclude Include="..\..\..\glib\styles.h" />
+    <ClInclude Include="..\..\..\glib\wrldraw.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

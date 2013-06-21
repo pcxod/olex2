@@ -783,6 +783,7 @@ public:     void CalcProbFactor(float Prob);
   void LoadModel(const olxstr& file_name);
 
   const_strlist ToPov() const;
+  const_strlist ToWrl() const;
 //..............................................................................
   static TGXApp& GetInstance()  {
     TBasicApp& bai = TBasicApp::GetInstance();

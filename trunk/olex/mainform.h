@@ -340,6 +340,7 @@ private:
   DefMacro(PictTEX)
   DefMacro(PictS)
   DefMacro(PictPR)
+  DefMacro(PictWR)
   DefMacro(Group)
   DefMacro(Clear)
   DefMacro(Rota)
