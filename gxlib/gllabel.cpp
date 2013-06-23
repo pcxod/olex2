@@ -14,6 +14,7 @@
 #include "glprimitive.h"
 #include "pers_util.h"
 #include "povdraw.h"
+#include "wrldraw.h"
 
 TXGlLabel::TXGlLabel(TGlRenderer& R, const olxstr& collectionName) :
   AGlMouseHandlerImp(R, collectionName), Transformer(NULL)
@@ -177,6 +178,25 @@ const_strlist TXGlLabel::ToPov(
   out.Add("   scale ") << 0.5;
   out.Add("   translate ") << pov::to_str(T);
   out.Add("  }");
+  return out;
+}
+//..............................................................................
+const_strlist TXGlLabel::ToWrl(
+  olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const
+{
+  TStrList out;
+  TGlPrimitive *glp = GetPrimitives().FindPrimitiveByName("Text");
+  if (glp == NULL) return out;
+  const TGPCollection &gpc = GetPrimitives();
+  vec3d off = GetOffset() + (GetCenter() +
+    vec3d(-text_rect.width/2,text_rect.height/2,0))*Parent.GetScale();
+  wrl::CrdTransformer crdc(Parent.GetBasis());
+  vec3d T = crdc.crd(off);
+  olxstr p_mat = wrl::get_mat_str(glp->GetProperties(), materials);
+  out.Add("  Transform{ translation").stream(' ') << wrl::to_str(T) <<
+    "children Shape{ appearance" << p_mat <<
+    "geometry Text { fontStyle FontStyle {size 0.5} string[\"";
+  out.GetLastString() << exparse::parser_util::escape(FLabel) << "\"]}}}";
   return out;
 }
 //..............................................................................

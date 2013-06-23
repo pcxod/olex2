@@ -133,9 +133,14 @@ public:
   virtual void Update();
 
   const_strlist ToPov(olxdict<TGlMaterial, olxstr,
-  TComparableComparator> &materials) const;
-  virtual const vec3d &GetBaseCrd() const;
+    TComparableComparator> &materials) const;
   static const_strlist PovDeclare();
+
+  const_strlist ToWrl(olxdict<TGlMaterial, olxstr,
+    TComparableComparator> &materials) const;
+  static const_strlist WrlDeclare();
+
+  virtual const vec3d &GetBaseCrd() const;
   static TGraphicsStyle* GetParamStyle()  {  return FBondParams;  }
   static void CreateStaticObjects(TGlRenderer& parent);
 };

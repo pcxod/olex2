@@ -60,6 +60,8 @@ public:
   void FromDataItem(const TDataItem& di);
   const_strlist ToPov(
     olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
+  const_strlist ToWrl(
+    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
 };
 
 EndGxlNamespace()
