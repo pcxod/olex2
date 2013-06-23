@@ -518,6 +518,7 @@
     <ClCompile Include="..\..\..\glib\gpcollection.cpp" />
     <ClCompile Include="..\..\..\glib\povdraw.cpp" />
     <ClCompile Include="..\..\..\glib\styles.cpp" />
+    <ClCompile Include="..\..\..\glib\wrldraw.cpp" />
     <ClCompile Include="..\..\..\glib\xfader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -539,7 +540,6 @@
     <ClInclude Include="..\..\..\glib\glmaterial.h" />
     <ClInclude Include="..\..\..\glib\glmouse.h" />
     <ClInclude Include="..\..\..\glib\glmousehandler.h" />
-    <ClInclude Include="..\..\..\glib\globj.h" />
     <ClInclude Include="..\..\..\glib\gloption.h" />
     <ClInclude Include="..\..\..\glib\glpixels.h" />
     <ClInclude Include="..\..\..\glib\glprimitive.h" />

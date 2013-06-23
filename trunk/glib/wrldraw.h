@@ -22,26 +22,32 @@ class AGDrawObject;
 
 struct wrl {
   template <typename NumT>
-  static olxstr to_str(const TVector3<NumT> &v)  {
+  static olxstr to_str(const TVector3<NumT> &v) {
     return olxstr(EmptyString(), 64).stream(' ') << v[0] << v[1] << v[2];
-  }
-  template <typename NumT>
-  static olxstr to_str(const TMatrix33<NumT> &m,
-    const TVector3<NumT> &t)
-  {
-    return olxstr("matrix", 120).stream(' ')
-      << m[0][0] << m[0][1] << m[0][2] << '0'
-      << m[1][0] << m[1][1] << m[1][2] << '0'
-      << m[2][0] << m[2][1] << m[2][2] << '0'
-      << t[0] << t[1] << t[2] << '1';
   }
   static olxstr to_str(const TGlOption &v) {
     return olxstr(EmptyString(), 64).stream(' ') << v[0] << v[1] << v[2];
+  }
+
+  static bool check_r_matrix(const mat3d &m, const vec3d &v, double ca,
+    double sa,
+    const int *s)
+  {
+    const double t = 1-ca;
+    if (olx_abs(m[0][1] - (t*v[0]*v[1]*s[0]*s[1] + sa*v[2]*s[2])) > 1e-3 ||
+        olx_abs(m[0][2] - (t*v[0]*v[2]*s[0]*s[2] - sa*v[1]*s[1])) > 1e-3 ||
+        olx_abs(m[1][0] - (t*v[0]*v[1]*s[0]*s[1] - sa*v[2]*s[2])) > 1e-3 ||
+        olx_abs(m[1][2] - (t*v[1]*v[2]*s[1]*s[2] + sa*v[0]*s[0])) > 1e-3 ||
+        olx_abs(m[2][0] - (t*v[0]*v[2]*s[0]*s[2] + sa*v[1]*s[1])) > 1e-3 ||
+        olx_abs(m[2][1] - (t*v[1]*v[2]*s[1]*s[2] - sa*v[0]*s[0])) > 1e-3)
+      return false;
+    return true;
   }
   /* Decomposes a rotation matrix into the rotation vector (axis) and the angle
   */
   static double decompose(const mat3d &m, vec3d &rv) {
     double ca = (m.Trace()-1)/2,
+      sa = (olx_abs(ca) > 1e-15) ? sqrt(1-ca*ca) : 1,
       C = 1-ca;
     if (olx_abs(C) < 1e-3) {
       rv[0] = m[2][1];
@@ -49,35 +55,24 @@ struct wrl {
       rv[2] = m[1][0];
       return 0;
     }
-    else { // do it stupid way
+    else { // do it straightforward way, no fancy decompositions
       rv[0] = (m[0][0]-ca)/C;
       rv[1] = (m[1][1]-ca)/C;
       rv[2] = (m[2][2]-ca)/C;
       rv.Abs().Sqrt();
       static int p[8][3] = {
-        {1,1,1},
-        {1,1,-1},
-        {1,-1,1},
-        {1,-1,-1},
-        {-1,1,1},
-        {-1,1,-1},
-        {-1,-1,1},
-        {-1,-1,-1}
+        {1,1,1}, {1,1,-1}, {1,-1,1}, {1,-1,-1},
+        {-1,1,1}, {-1,1,-1}, {-1,-1,1}, {-1,-1,-1}
       };
-      mat3d rm;
-      int perm=0;
+      int perm=-1;
       for (int i=0; i < 8; i++) {
-        olx_create_rotation_matrix(rm,
-          vec3d(p[i][0]*rv[0], p[i][1]*rv[1], p[i][2]*rv[2]), ca);
-        double dev=0;
-        for (int x=0; x < 3; x++) {
-          for (int y=0; y < 3; y++)
-            dev += olx_abs(m[x][y]-rm[x][y]);
-        }
-        if (dev < 1e-3) {
+        if (check_r_matrix(m, rv, ca, sa, &p[i][0])) {
           perm = i;
           break;
         }
+      }
+      if (perm == -1) {
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
       }
       rv[0] *= p[perm][0];
       rv[1] *= p[perm][1];
@@ -86,9 +81,21 @@ struct wrl {
     }
   }
 
-  struct CrdTransformer  {
+  static olxstr wrl::get_mat_str(const olxstr &primitive_name,
+    TGraphicsStyle &style, olxdict<TGlMaterial, olxstr,
+    TComparableComparator> &materials,
+    const AGDrawObject *sender=NULL);
+
+  static olxstr get_mat_str(const TGlMaterial& glm,
+    olxdict<TGlMaterial, olxstr, TComparableComparator> &materials,
+    const AGDrawObject *sender=NULL);
+
+  struct CrdTransformer {
     TEBasis basis;
     double scale;
+    CrdTransformer(double _scale=1.0)
+      : scale (_scale)
+    {}
     CrdTransformer(const TEBasis &_basis, double _scale=1.0)
       : basis(_basis), scale(_scale) {}
     vec3d crd(const vec3d &v) const {

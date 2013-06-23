@@ -41,6 +41,7 @@
 #include "olxstate.h"
 #include "vcov.h"
 #include "ins.h"
+#include "xmacro.h"
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
   #include "wx/string.h"
@@ -4806,53 +4807,44 @@ const_strlist TGXApp::ToWrl() const {
   olxdict<TGlMaterial, olxstr, TComparableComparator> materials;
   TStrList out;// = GetRender().GetScene().ToPov();
   out << TXAtom::WrlDeclare();
+  out << TXBond::WrlDeclare();
   TGXApp::AtomIterator ai = GetAtoms();
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom &a = ai.Next();
-    if( a.IsVisible() )
+    if (a.IsVisible())
       out << a.ToWrl(materials);
   }
-  TStrList mat_out;
-  for( size_t i=0; i < materials.Count(); i++ )  {
-    mat_out.Add("PROTO ") << materials.GetValue(i) << "[] { Appearance {";
-    mat_out.Add(materials.GetKey(i).ToWRL()) << "}}";
+  TGXApp::BondIterator bi = GetBonds();
+  while (bi.HasNext()) {
+    TXBond &b = bi.Next();
+    if (b.IsVisible())
+      out << b.ToWrl(materials);
   }
-  mat_out.Insert(0, "#VRML V2.0 utf8");
-  return mat_out << out;
-  //TGXApp::BondIterator bi = GetBonds();
-  //while( bi.HasNext() )  {
-  //  TXBond &b = bi.Next();
-  //  if( b.IsVisible() )
-  //    out << b.ToPov(materials);
-  //}
+  for (size_t i=0; i < Lines.Count(); i++) {
+    if (Lines[i].IsVisible())
+      out << Lines[i].ToWrl(materials);
+  }
+  for (size_t i=0; i < XGrowLines.Count(); i++) {
+    if (XGrowLines[i].IsVisible())
+      out << XGrowLines[i].ToWrl(materials);
+  }
+  if (DUnitCell().IsVisible())
+    out << DUnitCell().ToWrl(materials);
+  out.Insert(0, "#Created by Olex2 ") << XLibMacros::GetCompilationInfo();
+  out.Insert(0, "#VRML V2.0 utf8");
+  return out;
   //TGXApp::PlaneIterator pi = GetPlanes();
   //while( pi.HasNext() )  {
   //  TXPlane &p = pi.Next();
   //  if( p.IsVisible() )
   //    out << p.ToPov(materials);
   //}
-  //for( size_t i=0; i < Lines.Count(); i++ )  {
-  //  if( Lines[i].IsVisible() )
-  //    out << Lines[i].ToPov(materials);
-  //}
-  //for( size_t i=0; i < XGrowLines.Count(); i++ )  {
-  //  if( XGrowLines[i].IsVisible() )
-  //    out << XGrowLines[i].ToPov(materials);
-  //}
   //if( XGrid().IsVisible() && !XGrid().IsEmpty() )
   //  out << XGrid().ToPov(materials);
   //for (size_t i=0; i < UserObjects.Count(); i++)
   //  out << UserObjects[i].ToPov(materials);
 
-  //if (DUnitCell().IsVisible())
-  //  out << DUnitCell().ToPov(materials);
   //out.Add("}");
-  //TStrList mat_out;
-  //for( size_t i=0; i < materials.Count(); i++ )  {
-  //  mat_out.Add("#declare ") << materials.GetValue(i) << '=';
-  //  mat_out.Add(materials.GetKey(i).ToPOV());
-  //}
-  //return mat_out << out;
 }
 //..............................................................................
 void TGXApp::CreateRings(bool force, bool create)  {

@@ -14,6 +14,7 @@
 #include "symmparser.h"
 #include "unitcell.h"
 #include "povdraw.h"
+#include "wrldraw.h"
 
 bool TXBond::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
   TXBond::FBondParams = NULL;
@@ -83,7 +84,7 @@ void TXBond::Update()  {
     Params().Null();
   else  {
     Params()[3] = C.Length();
-    C.Normalise();
+    C /= Params()[3];
     Params()[0] = acos(C[2])*180/M_PI;
     if( olx_abs(Params()[0]-180) < 1e-3 )  { // degenerate case with Pi rotation
       Params()[1] = 0;
@@ -340,7 +341,112 @@ const_strlist TXBond::PovDeclare()  {
 
   out.Add("#declare bond_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
   out.Add("#declare bond_stippled_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
-  
+
+  return out;
+}
+//..............................................................................
+const_strlist TXBond::ToWrl(olxdict<TGlMaterial, olxstr,
+    TComparableComparator> &materials) const
+{
+  TStrList out;
+  if (olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3 || Params()[3] < 1e-3)
+    return out;
+  out.Add(" Group{ children[ Transform{");
+  wrl::CrdTransformer crdt(Parent.GetBasis());
+  vec3d t = crdt.crd(GetBaseCrd());
+  mat3d m;
+  olx_create_rotation_matrix(m, vec3d(Params()[1], Params()[2], 0).Normalise(),
+    cos(Params()[0]*M_PI/180));
+  m = crdt.matr(m);
+  vec3d r;
+  double ang = wrl::decompose(m, r);
+  out.Add("  translation ") << wrl::to_str(t);
+  out.Add("  rotation ").stream(' ') << r[0] << r[1] << r[2] << ang;
+  out.Add("  scale ").stream(' ') << Params()[4] << Params()[4] << Params()[3];
+  out.Add("  children[");
+  const TGPCollection &gpc = GetPrimitives();
+  for (size_t i=0; i < gpc.PrimitiveCount(); i++) {
+    TGlPrimitive &glp = gpc.GetPrimitive(i);
+    olxstr p_mat = wrl::get_mat_str(glp.GetProperties(), materials, this);
+    out.Add("   DEF b ") << "bond_" <<
+      glp.GetName().ToLowerCase().Replace(' ', '_') << "{appr " << p_mat << '}';
+  }
+  out.Add(" ]}]}");
+  return out;
+}
+//..............................................................................
+const_strlist TXBond::WrlDeclare() {
+  TStrList out;
+  out.Add("PROTO bond_single_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.5 "
+    "children Shape{ appearance IS appr "
+    "geometry Cylinder{ height 1 radius 0.1 top FALSE bottom FALSE}}}}";
+  out.Add("PROTO bond_top_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.75 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0.5 radius 0.1 top FALSE bottom FALSE}}}}";
+  out.Add("PROTO bond_bottom_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.25 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0.5 radius 0.1 top FALSE bottom FALSE}}}}";
+  out.Add("PROTO bond_top_line[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.75 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0.5 radius 0.01 top FALSE bottom FALSE}}}}";
+  out.Add("PROTO bond_bottom_line[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.25 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0.5 radius 0.01 top FALSE bottom FALSE}}}}";
+  out.Add("PROTO bond_top_disk[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 1 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0 radius 0.1 side FALSE}}}}";
+  out.Add("PROTO bond_bottom_disk[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0 radius 0.1 side FALSE}}}}";
+  out.Add("PROTO bond_middle_disk[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.5 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0 radius 0.1 side FALSE}}}}";
+
+  double ConeStipples = FBondParams->GetNumParam("ConeStipples", 6.0, true);
+  double step = 0.5/ConeStipples;
+  out.Add("PROTO bond_stipple_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 children[";
+  for (double i=0; i < ConeStipples; i++) {
+    out.Add(" Transform{ translation 0 ") << 0.05+i/ConeStipples <<
+      " 0 children Shape{ appearance IS appr geometry Cylinder{ height " <<
+      step << " radius 0.1}}}";
+  }
+  out.Add("]}}");
+  out.Add("PROTO bond_bottom_stipple_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 children[";
+  for( double i=0; i < ConeStipples/2; i++ )  {
+    out.Add(" Transform{ translation 0 ") << 0.05+i/ConeStipples <<
+      " 0 children Shape{ appearance IS appr geometry Cylinder{ height " <<
+      step << " radius 0.1}}}";
+  }
+  out.Add("]}}");
+  out.Add("PROTO bond_top_stipple_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 children[";
+  for( double i=0; i < ConeStipples/2; i++ )  {
+    out.Add(" Transform{ translation 0 ") << 0.55+i/ConeStipples <<
+      " 0 children Shape{ appearance IS appr geometry Cylinder{ height " <<
+      step << " radius 0.1}}}";
+  }
+  out.Add("]}}");
+  out.Add("PROTO bond_balls_bond[exposedField SFNode appr NULL]{") <<
+    " Transform{ children[";
+  for( double i=0; i < 12; i++ )  {
+    out.Add(" Transform{ translation 0 0 ") << i/12 <<
+      " children Shape{ appearance IS appr geometry Sphere{ radius 0.02}}}";
+  }
+  out.Add("]}}");
+
+
+  //out.Add("#declare bond_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
+  //out.Add("#declare bond_stippled_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
   return out;
 }
 //..............................................................................

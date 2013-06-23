@@ -231,6 +231,13 @@ public:
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     return (*this /= l);
   }
+  // returns previous length
+  double NormaliseEx()   {
+    T l = Length();
+    if (l == 0) throw TDivException(__OlxSourceInfo);
+    *this /= l;
+    return l;
+  }
   TVector3<T>& NormaliseTo(T val)  {
     const T l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
@@ -364,12 +371,15 @@ public:
   }
 
   template <class AT> TVector3<T> ColMul(const TMatrix33<AT>& a) const {
-    return TVector3<T>( data[0]*(a[0][0] + a[0][1] + a[0][2]),
-                        data[1]*(a[1][0] + a[1][1] + a[1][2]),
-                        data[2]*(a[2][0] + a[2][1] + a[2][2]));
+    return TVector3<T>(
+      data[0]*(a[0][0] + a[0][1] + a[0][2]),
+      data[1]*(a[1][0] + a[1][1] + a[1][2]),
+      data[2]*(a[2][0] + a[2][1] + a[2][2]));
   }
 
-  /* beware - transposed form, use M.v for normal multiplication  */
+  /* beware - row vector (or Mt is used), use M.v for column vector
+  multiplication
+  */
   template <class AT> TVector3<T>  operator * (const TMatrix33<AT>& a) const {
     return TVector3<T>(
       data[0]*a[0][0] + data[1]*a[1][0] + data[2]*a[2][0],
@@ -379,9 +389,10 @@ public:
 
   /* beware - transposed form, use M.v for normal multiplication  */
   template <class AT> TVector3<T>& operator *= (const TMatrix33<AT>& a)  {
-    T bf[] = {(T)(data[0]*a[0][0] + data[1]*a[1][0] + data[2]*a[2][0]),
-              (T)(data[0]*a[0][1] + data[1]*a[1][1] + data[2]*a[2][1]),
-              (T)(data[0]*a[0][2] + data[1]*a[1][2] + data[2]*a[2][2])};
+    T bf[] = {
+      (T)(data[0]*a[0][0] + data[1]*a[1][0] + data[2]*a[2][0]),
+      (T)(data[0]*a[0][1] + data[1]*a[1][1] + data[2]*a[2][1]),
+      (T)(data[0]*a[0][2] + data[1]*a[1][2] + data[2]*a[2][2])};
     data[0] = bf[0];  data[1] = bf[1];  data[2] = bf[2];
     return *this;
   }
@@ -547,9 +558,10 @@ public:
     return *this;
   }
   static TMatrix33 Transpose (const TMatrix33& v)  {
-    return TMatrix33<T>(v[0][0], v[1][0], v[2][0],
-                        v[0][1], v[1][1], v[2][1],
-                        v[0][2], v[1][2], v[2][2]);
+    return TMatrix33<T>(
+      v[0][0], v[1][0], v[2][0],
+      v[0][1], v[1][1], v[2][1],
+      v[0][2], v[1][2], v[2][2]);
   }
   TMatrix33 operator -() const {
     return TMatrix33<T>(-data[0], -data[1], -data[2]);
@@ -576,21 +588,43 @@ public:
     data[2].Normalise();
     return *this;
   }
+  // normalises each vector and returns the vector of lengths
+  TVector3<T> NormaliseEx() {
+    return TVector3<T>(data[0].NormaliseEx(),
+      data[1].NormaliseEx(),
+      data[2].NormaliseEx());
+  }
   static TMatrix33<T> Normalise(const TMatrix33<T>& m)  {
     return TMatrix33<T>(m).Normalise();
   }
   bool IsI() const {
-    return (data[0][0] == 1 && data[1][1] == 1 && data[2][2] == 1 && 
+    return (data[0][0] == 1 && data[1][1] == 1 && data[2][2] == 1 &&
             data[0][1] == 0 && data[0][2] == 0 && data[1][0] == 0 &&
             data[1][2] == 0 && data[2][0] == 0 && data[2][1] == 0);
+  }
+  bool IsI(T e) const {
+    return (olx_abs(data[0][0]-1) < e &&
+            olx_abs(data[1][1]-1) < e &&
+            olx_abs(data[2][2]-1) < e &&
+            olx_abs(data[0][1]) < e && olx_abs(data[0][2]) < e &&
+            olx_abs(data[1][0]) < e && olx_abs(data[1][2]) < e &&
+            olx_abs(data[2][0]) < e && olx_abs(data[2][1]) < e);
   }
   TMatrix33<T>& Null()  {
     data[0].Null();  data[1].Null();  data[2].Null();
     return *this;
   }
 
+  bool Equals(const TMatrix33& v) const {
+    return (data[0].Equals(v[0]) && data[1].Equals(v[1]) && data[2].Equals(v[2]));
+  }
+  bool Equals(const TMatrix33& v, T eps) const {
+    return (data[0].Equals(v[0], eps) &&
+      data[1].Equals(v[1], eps) &&
+      data[2].Equals(v[2], eps));
+  }
   bool operator == (const TMatrix33& v) const {
-    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]);
+    return Equals(v);
   }
   bool operator != (const TMatrix33& v) const {
     return !(operator == (v));
@@ -671,7 +705,7 @@ public:
     data[0][0] /= v;  data[0][1] /= v;  data[0][2] /= v;
     data[1][0] /= v;  data[1][1] /= v;  data[1][2] /= v;
     data[2][0] /= v;  data[2][1] /= v;  data[2][2] /= v;
-	return *this;
+    return *this;
   }
   template <class AT> TMatrix33<T> operator / (AT v) const {
     return TMatrix33<T>(data[0][0]/v, data[0][1]/v, data[0][2]/v,
@@ -680,11 +714,11 @@ public:
   }
   T Trace() const {  return data[0][0]+data[1][1]+data[2][2];  }
   T Determinant() const {
-    return data[0][0]*(data[1][1]*data[2][2] - data[1][2]*data[2][1]) - 
+    return data[0][0]*(data[1][1]*data[2][2] - data[1][2]*data[2][1]) -
            data[0][1]*(data[1][0]*data[2][2] - data[1][2]*data[2][0]) +
            data[0][2]*(data[1][0]*data[2][1] - data[1][1]*data[2][0]);
   }
-  TMatrix33<T> Inverse()  const {
+  TMatrix33<T> Inverse() const {
     return TMatrix33<T>(
       data[2][2]*data[1][1] - data[2][1]*data[1][2],
       data[2][1]*data[0][2] - data[2][2]*data[0][1],
@@ -696,13 +730,15 @@ public:
       data[2][0]*data[0][1] - data[2][1]*data[0][0],
       data[1][1]*data[0][0] - data[1][0]*data[0][1])/=Determinant();
   }
-  template <class AT> TVector3<AT>  operator * (const TVector3<AT>& a) const {
+  /* column vector */
+  template <class AT> TVector3<AT> operator * (const TVector3<AT>& a) const {
     return TVector3<AT>(
       a[0]*data[0][0] + a[1]*data[0][1] + a[2]*data[0][2],
       a[0]*data[1][0] + a[1]*data[1][1] + a[2]*data[1][2],
       a[0]*data[2][0] + a[1]*data[2][1] + a[2]*data[2][2]);
   }
-  static void  EigenValues(TMatrix33& A, TMatrix33& I)  {
+  // for real symmetric matrices only
+  static void EigenValues(TMatrix33& A, TMatrix33& I)  {
     size_t i, j;
     T a = 2;
     while( olx_abs(a) > 1e-15 )  {
@@ -711,8 +747,10 @@ public:
       a = MatMaxX(A, i, j);
     }
   }
-protected: 
-// used in the Jacoby eigenvalues search procedure
+protected:
+  /* used in the Jacoby eigenvalues search procedure. applicable to real
+  symmetric matices only
+  */
   static T MatMaxX(const TMatrix33& m, size_t &i, size_t &j )  {
     const T c = olx_abs(m[0][1]);
     i = 0;  j = 1;
@@ -767,7 +805,7 @@ public:
   */
   static TVector3<T> CramerSolve(const TMatrix33<T>& arr, const TVector3<T>& b) {
     T det = arr.Determinant();
-    if( det == 0 )  throw TDivException(__OlxSourceInfo);
+    if (olx_abs(det) < 1e-15) throw TDivException(__OlxSourceInfo);
     // det( {b[0], a12, a13}, {b[1], a22, a23}, {b[2], a32, a33} )/det
     return TVector3<T>(
       b[0]*(arr[1][1]*arr[2][2] - arr[1][2]*arr[2][1]) -
@@ -795,7 +833,7 @@ public:
         arr[i][2] += arr[j-1][2];
         b[i] += b[j-1];
       }
-    if( arr[2][2] == 0 ) {
+    if (olx_abs(arr[2][2]) < 1e-15) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "dependent set of equations");
     }

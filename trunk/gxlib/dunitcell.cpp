@@ -14,6 +14,7 @@
 #include "gpcollection.h"
 #include "styles.h"
 #include "povdraw.h"
+#include "wrldraw.h"
 
 TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) :
   AGDrawObject(R, collectionName)
@@ -199,6 +200,32 @@ const_strlist TDUnitCell::ToPov(olxdict<TGlMaterial, olxstr,
   for (int i=0; i < 4; i++)
     out << Labels[i]->ToPov(materials);
   out.Add("  }}");
+  return out;
+}
+//..............................................................................
+const_strlist TDUnitCell::ToWrl(olxdict<TGlMaterial, olxstr,
+  TComparableComparator> &materials) const
+{
+  TStrList out;
+  if (FGlP == NULL) return out;
+  olxstr p_mat = wrl::get_mat_str(FGlP->GetProperties(), materials);
+  out.Add(" Group{ children[ Shape{ appearance ") << p_mat <<
+    " geometry IndexedLineSet{ colorPerVertex FALSE coord Coordinate{ point[";
+  const TGPCollection &gpc = GetPrimitives();
+  wrl::CrdTransformer crdc(Parent.GetBasis());
+  for (int i=0; i < VertexCount(); i++) {
+    out.Add("  ") << wrl::to_str(crdc.crd(GetVertex(i)));
+    if (i+1 < VertexCount())
+      out.GetLastString() << ',';
+  }
+  out.GetLastString() << "]}";
+  out.Add("  coordIndex[0 1 5 3 0 2 4 7 6 2 -1 3 6 -1 5 7 -1 1 4 -1]");
+  out.Add("  color Color{ color[") <<
+    wrl::to_str(FGlP->GetProperties().AmbientF) << "]}";
+  out.Add("  colorIndex[0 0 0 0]}}");
+  for (int i=0; i < 4; i++)
+    out << Labels[i]->ToWrl(materials);
+  out.Add(" ]}");
   return out;
 }
 //..............................................................................
