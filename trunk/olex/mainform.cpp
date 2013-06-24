@@ -538,10 +538,12 @@ void TMainForm::XApp(Olex2App *XA)  {
     "h-output image height [screen*resolution]",
     fpOne|fpTwo|psFileLoaded,
     "Stereoscopic picture rendering");
-  this_InitMacroD(PictPR, EmptyString(), fpOne|psFileLoaded, 
+  this_InitMacroD(PictPR, EmptyString(), fpOne|psFileLoaded,
     "PovRay output");
-  this_InitMacroD(PictWR, EmptyString(), fpOne|psFileLoaded, 
-    "VRML output, testing");
+  this_InitMacroD(PictWR, EmptyString(), fpOne|psFileLoaded,
+    "VRML output");
+  this_InitMacroD(PictSTL, EmptyString(), fpOne|psFileLoaded,
+    "STL output, testing");
   // contains an accumulation buffer. prints only when '\n' is encountered
   this_InitMacroD(Post, EmptyString(), fpAny,
     "Prints a string, but only after a new line character is encountered");
