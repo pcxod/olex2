@@ -158,6 +158,7 @@
 #include "analysis.h"
 #include "label_corrector.h"
 #include "estopwatch.h"
+#include "ememstream.h"
 //#include "gl2ps/gl2ps.c"
 
 static const olxstr OnModeChangeCBName("modechange");
@@ -455,11 +456,6 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
   // padding for word alignment
   const int extraBytes = (4-(BmpWidth*(bits/8))%4)%4;
 
-  HDC hDC = wglGetCurrentDC();
-  HGLRC glc = wglGetCurrentContext();
-  HDC dDC = CreateCompatibleDC(NULL);
-
-  BITMAPFILEHEADER BmpFHdr = {0};
   // intialise bitmap header
   BITMAPINFO BmpInfo = {0};
   BmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -473,19 +469,20 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
     BmpInfo.bmiHeader.biXPelsPerMeter = olx_round(dpi*100/2.54);
     BmpInfo.bmiHeader.biYPelsPerMeter = BmpInfo.bmiHeader.biXPelsPerMeter;
   }
-  BmpInfo.bmiHeader.biClrUsed = 0;
-  BmpInfo.bmiHeader.biClrImportant = 0;
+  BITMAPFILEHEADER BmpFHdr = {0};
   BmpFHdr.bfType = 0x4d42;
   BmpFHdr.bfOffBits = sizeof(BmpFHdr) + sizeof(BmpInfo.bmiHeader);
   BmpFHdr.bfSize = BmpFHdr.bfOffBits + BmpInfo.bmiHeader.biSizeImage;
-  BmpFHdr.bfReserved1 = BmpFHdr.bfReserved2 = 0;
+
+  HDC hDC = wglGetCurrentDC();
+  HGLRC glc = wglGetCurrentContext();
+  HDC dDC = CreateCompatibleDC(NULL);
 
   unsigned char *DIBits = NULL;
   HBITMAP DIBmp = CreateDIBSection(dDC, &BmpInfo, DIB_RGB_COLORS,
     (void **)&DIBits, NULL, 0);
 
   SelectObject(dDC, DIBmp);
-
   PIXELFORMATDESCRIPTOR pfd = {
     sizeof(PIXELFORMATDESCRIPTOR),
     1,
@@ -505,10 +502,11 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
   int PixelFormat = ChoosePixelFormat(dDC, &pfd);
   SetPixelFormat(dDC, PixelFormat, &pfd);
   HGLRC dglc = wglCreateContext(dDC);
-  FXApp->GetRender().Resize(0, 0, BmpWidth, BmpHeight, res);
   FXApp->GetRender().BeforeContextChange();
+  FXApp->GetRender().Resize(0, 0, BmpWidth, BmpHeight, res);
   wglMakeCurrent(dDC, dglc);
   FXApp->GetRender().AfterContextChange();
+  FXApp->GetRender().GetScene().SetEnabled(false);
   FBitmapDraw = true;
   FGlConsole->SetVisible(false);
   FXApp->BeginDrawBitmap(res);
@@ -522,6 +520,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
   wglDeleteContext(dglc);
   DeleteDC(dDC);
   wglMakeCurrent(hDC, glc);
+  FXApp->GetRender().GetScene().SetEnabled(true);
   FXApp->GetRender().AfterContextChange();
   FXApp->GetRender().Resize(vpLeft, vpTop, vpWidth, vpHeight, 1);
   FGlConsole->SetVisible(true);
@@ -589,11 +588,11 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
     Error.ProcessingError(__OlxSrcInfo, "could not process image conversion");
     return;
   }
-  if (bmpFN.EndsWithi("jpg")) {
+  if (outFN.EndsWithi("jpg")) {
     image.SetOption(wxIMAGE_OPTION_QUALITY, 100);
   }
 #if wxCHECK_VERSION(2,9,4)
-  else if(bmpFN.EndsWithi("tif")) {
+  else if(outFN.EndsWithi("tif")) {
     image.SetOption(wxIMAGE_OPTION_COMPRESSION, COMPRESSION_DEFLATE);
   }
 #endif
@@ -852,148 +851,6 @@ void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TCStrList(TStrList(FXApp->ToPov())).SaveToFile(file_name);
 }
 //..............................................................................
-void TMainForm::macPictWR(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr file_name = (Cmds[0].EndsWith(".wrl") ? Cmds[0] : olxstr(Cmds[0]) << ".wrl");
-  TCStrList(TStrList(FXApp->ToWrl())).SaveToFile(file_name);
-}
-//..............................................................................
-void TMainForm::macPictSTL(TStrObjList &Cmds, const TParamList &Options,
-  TMacroError &Error)
-{
-  olxstr file_name = (Cmds[0].EndsWith(".stl") ? Cmds[0] : olxstr(Cmds[0]) << ".stl");
-  TTypeList<vec3f> s_vecs, c_vecs;
-  TTypeList<IndexTriangle> s_triags, c_triags;
-  typedef GlSphereEx<float, OctahedronFP<vec3f> > gls;
-  gls::Generate(1, 4, s_vecs, s_triags);
-  {
-    size_t divs = 25, divsz=1;
-    float r = 0.1f, height=1.0f/divsz;
-    vec3f sf(r, 0, 0), pv;
-    float sa, ca;
-    olx_sincos((float)(2*M_PI/divs), &sa, &ca);
-    for (size_t i=0; i <= divs; i++) {
-      c_vecs.AddCopy(vec3f(sf[0], sf[1], 0.0f));
-      c_vecs.AddCopy(vec3f(sf[0], sf[1], height));
-      if ((i+1) > divs) break;
-      float x = sf[0];
-      sf[0] = (x*ca + sf[1]*sa);
-      sf[1] = (sf[1]*ca - x*sa);
-      size_t idx = i*2;
-      c_triags.AddNew(idx, idx+1, idx+2);
-      c_triags.AddNew(idx+2, idx+1, idx+3);
-    }
-    size_t li = c_vecs.Count()-2;
-    c_triags.AddNew(li, li+1, 0);
-    c_triags.AddNew(0, li+1, 1);
-    size_t vc = c_vecs.Count(), tc = c_triags.Count();
-    c_vecs.SetCapacity(vc*4);
-    c_triags.SetCapacity(tc*5);
-    for (size_t i=1; i < divsz; i++) {
-      for (size_t j=0; j < vc; j++) {
-        c_vecs.AddCopy(c_vecs[j])[2] += height*i;
-      }
-      for (size_t j=0; j < tc; j++) {
-        IndexTriangle &t = c_triags.AddCopy(c_triags[j]);
-        t.vertices[0] += vc*i;
-        t.vertices[1] += vc*i;
-        t.vertices[2] += vc*i;
-      }
-    }
-  }
-  TGXApp::AtomIterator ai = FXApp->GetAtoms();
-  uint32_t t_cnt=0;
-  while (ai.HasNext()) {
-    TXAtom &a = ai.Next();
-    if (!a.IsVisible() || a.GetPrimitiveMask() == 0) continue;
-    t_cnt++;
-  }
-  ai.Reset();
-  t_cnt *= s_triags.Count();
-
-  TGXApp::BondIterator bi = FXApp->GetBonds();
-  while (bi.HasNext()) {
-    TXBond &b = bi.Next();
-    if (!b.IsVisible() || b.GetPrimitiveMask() == 0) continue;
-    t_cnt += c_triags.Count();
-  }
-  bi.Reset();
-
-  TEFile out(file_name, "wb+");
-  olxcstr hdr = olxcstr("Created with Olex2 ") << XLibMacros::GetCompilationInfo();
-  if (hdr.Length() < 80)
-    hdr << olxcstr::CharStr(' ', 80-hdr.Length());
-  out.Write(hdr.c_str(), 80);
-  out.Write(&t_cnt, sizeof(t_cnt));
-  while (ai.HasNext()) {
-    TXAtom &a = ai.Next();
-    if (!a.IsVisible() || a.GetPrimitiveMask() == 0) continue;
-    TGlPrimitive *glp = a.GetPrimitives().FindPrimitiveByName("Sphere");
-    uint16_t cl= 1 << 15;
-    if (glp != NULL) {
-      TGlOption &gc = glp->GetProperties().AmbientF;
-      cl |= (uint16_t)(31*gc[0]);
-      cl |= (uint16_t)(31*gc[1]) << 5;
-      cl |= (uint16_t)(31*gc[2]) << 10;
-    }
-    mat3d m;
-    if ((a.DrawStyle() == adsEllipsoid || a.DrawStyle() == adsOrtep) &&
-      a.GetEllipsoid() != NULL && !a.GetEllipsoid()->IsNPD())
-    {
-      m = a.GetEllipsoid()->GetMatrix()*a.GetDrawScale();
-      m[0] *= a.GetEllipsoid()->GetSX();
-      m[1] *= a.GetEllipsoid()->GetSY();
-      m[2] *= a.GetEllipsoid()->GetSZ();
-    }
-    else {
-      m.I() *= a.GetDrawScale();
-    }
-    mat3d fm = m, nm = fm;
-    nm.Normalise();
-    for (size_t i=0; i < s_triags.Count(); i++) {
-      vec3f n;
-      for (int j=0; j < 3; j++)
-        n += s_vecs[s_triags[i][j]];
-      n /= 3;
-      n = n*nm;
-      out.Write(n.GetData(), 12);
-      for (int j=0; j < 3; j++) {
-        vec3f fc = a.crd() + s_vecs[s_triags[i][j]]*fm;
-        out.Write(fc.GetData(), 12);
-      }
-      out.Write(&cl, sizeof(cl));
-    }
-  }
-  while (bi.HasNext()) {
-    TXBond &b = bi.Next();
-    if (!b.IsVisible() || b.GetPrimitiveMask() == 0) continue;
-    uint16_t cl = 0;//1 << 15;
-    mat3f nm;
-    olx_create_rotation_matrix(nm, vec3f(b.Params()[1], b.Params()[2], 0).Normalise(),
-      cos(b.Params()[0]*M_PI/180));
-    mat3f m = nm;
-    m[0] *= b.Params()[4];
-    m[1] *= b.Params()[4];
-    m[2] *= b.Params()[3];
-    for (size_t i=0; i < c_triags.Count(); i++) {
-      vec3f n;
-      if (c_vecs[c_triags[i][0]][2] == c_vecs[c_triags[i][2]][2]) {
-        n = c_vecs[c_triags[i][0]] + c_vecs[c_triags[i][2]];
-      }
-      else {
-        n = c_vecs[c_triags[i][1]] + c_vecs[c_triags[i][2]];
-      }
-      n[2] = 0;
-      n = n.Normalise()*nm;
-      out.Write(n.GetData(), 12);
-      for (int j=0; j < 3; j++) {
-        vec3f fc = b.A().crd() + c_vecs[c_triags[i][j]]*m;
-        out.Write(fc.GetData(), 12);
-      }
-      out.Write(&cl, sizeof(cl));
-    }
-  }
-}
-//..............................................................................
 void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
   FGlConsole->ClearBuffer();
 }
@@ -1150,7 +1007,7 @@ void TMainForm::macPost(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  Close(true);
+  Close(false);
 }
 //..............................................................................
 void TMainForm::macCapitalise(TStrObjList &Cmds, const TParamList &Options,

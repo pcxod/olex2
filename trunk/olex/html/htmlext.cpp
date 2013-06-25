@@ -271,15 +271,17 @@ bool THtml::DoHandleFocusEvent(AOlxCtrl* prev, AOlxCtrl* next)  {
     else
       rv = true;
   }
-  if( next != NULL )  {
-    if( EsdlInstanceOf(*next, TTextEdit) )  {
+  if (next != NULL) {
+    if (EsdlInstanceOf(*next, TTextEdit)) {
       olxstr s = ((TTextEdit*)next)->OnEnter.data;
       ((TTextEdit*)next)->OnEnter.Execute(next, &s);
-      ((TTextEdit*)next)->SetSelection(-1,-1);
+      if (!((TTextEdit*)next)->IsReadOnly())
+        ((TTextEdit*)next)->SetSelection(-1,-1);
     }
-    else if( EsdlInstanceOf(*next, TComboBox) )  {
+    else if (EsdlInstanceOf(*next, TComboBox)) {
       ((TComboBox*)next)->HandleOnEnter();
-      ((TComboBox*)next)->SetSelection(-1,-1);
+      if (!((TTextEdit*)next)->IsReadOnly())
+        ((TComboBox*)next)->SetSelection(-1,-1);
     }
     else
       rv = true;
@@ -609,12 +611,6 @@ bool THtml::UpdatePage(bool update_indices)  {
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
         wnd = cb;
-#ifdef __WIN32__
-        if( cb->GetTextCtrl() != NULL )  {
-          cb->GetTextCtrl()->SetInsertionPoint(0);
-          wnd = cb->GetTextCtrl();
-        }
-#endif
       }
       else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
@@ -641,17 +637,7 @@ void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
 bool THtml::AddObject(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
   bool Manage)
 {
-#ifdef __WIN32__
-  wxWindow* ew = wxWin;
-  if( Object != NULL && EsdlInstanceOf(*Object, TComboBox) )  {
-    TComboBox* cb = (TComboBox*)Object;
-    if( cb->GetTextCtrl() != NULL )
-      ew = cb->GetTextCtrl();
-  }
-  Traversables.Add(Association::New(Object, ew));
-#else
   Traversables.Add(Association::New(Object,wxWin));
-#endif
   if( Name.IsEmpty() )  return true;  // an anonymous object
   if( Objects.IndexOf(Name) != InvalidIndex )  return false;
   Objects.Add(Name, Association::Create(Object, wxWin, Manage));
@@ -1102,23 +1088,11 @@ void THtml::TObjectsState::RestoreState()  {
         TComboBox* Box = (TComboBox*)win;
         if( !fg.IsEmpty() )  {
           wxColor fgCl = wxColor(fg.u_str());
-          //Box->SetForegroundColour(fgCl);
-#ifdef __WIN32__
-          if( Box->GetPopupControl() != NULL )
-            Box->GetPopupControl()->GetControl()->SetForegroundColour(fgCl);
-          if( Box->GetTextCtrl() != NULL )
-            Box->GetTextCtrl()->SetForegroundColour(fgCl);
-#endif
+          Box->SetForegroundColour(fgCl);
         }
         if( !bg.IsEmpty() )  {
           wxColor bgCl = wxColor(bg.u_str());
-          //Box->SetBackgroundColour(bgCl);
-#ifdef __WIN32__
-          if( Box->GetPopupControl() != NULL )
-            Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgCl);
-          if( Box->GetTextCtrl() != NULL )
-            Box->GetTextCtrl()->SetBackgroundColour(bgCl);
-#endif
+          Box->SetBackgroundColour(bgCl);
         }
       }
       else  {

@@ -12,17 +12,9 @@
 #include "olxvar.h"
 
 using namespace ctrl_ext;
-#ifndef __WIN32__
 IMPLEMENT_CLASS(TComboBox, wxComboBox)
-#else
-IMPLEMENT_CLASS(TComboBox, wxOwnerDrawnComboBox)
-#endif
 
-#ifndef __WIN32__
 BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
-#else
-BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
-#endif
   EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
   EVT_TEXT_ENTER(-1, TComboBox::EnterPressedEvent)
   EVT_KILL_FOCUS(TComboBox::LeaveEvent)
@@ -53,10 +45,6 @@ void TComboBox::SetText(const olxstr& T) {
   }
   StrValue = actual_val;
   SetValue(StrValue.u_str());
-#ifdef __WIN32__
-  if( GetTextCtrl() != NULL )
-    GetTextCtrl()->SetInsertionPoint(0);
-#endif
 }
 //..............................................................................
 void TComboBox::Clear() {
@@ -69,11 +57,7 @@ void TComboBox::Clear() {
       delete d_o;
     }
   }
-#ifndef __WIN32__
   wxComboBox::Clear();
-#else
-  wxOwnerDrawnComboBox::Clear();
-#endif
 }
 //..............................................................................
 void TComboBox::_AddObject(const olxstr &Item, IEObject* Data, bool Delete)  {
@@ -188,25 +172,3 @@ void TComboBox::HandleOnEnter()  {
   }
 }
 //..............................................................................
-#ifdef __WIN32__
-void TComboBox::OnDrawItem( wxDC& dc, const wxRect& rect, int item,
-  int flags ) const
-{
-  wxOwnerDrawnComboBox::OnDrawItem(dc, rect, item, flags);
-  return;
-}
-//..............................................................................
-wxCoord TComboBox::OnMeasureItem(size_t item) const {
-  return this->GetCharHeight();
-}
-//..............................................................................
-wxCoord TComboBox::OnMeasureItemWidth(size_t item) const {
-  return wxOwnerDrawnComboBox::OnMeasureItem(item);
-}
-//..............................................................................
-void TComboBox::OnDrawBg(wxDC& dc, const wxRect& rect, int item,
-  int flags) const
-{
-  wxOwnerDrawnComboBox::OnDrawBackground(dc, rect, item, flags);
-}
-#endif

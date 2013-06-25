@@ -885,30 +885,6 @@ TAG_HANDLER_PROC(tag)  {
   if( LinkInfo != NULL )  delete LinkInfo;
   if( ObjectName.IsEmpty() )  {  }  // create random name?
   if( CreatedWindow != NULL )  {  // set default colors
-#ifdef __WIN32__
-    if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {
-      TComboBox* Box = (TComboBox*)CreatedWindow;
-      if( Box->GetTextCtrl() != NULL )  {
-        if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() ) {
-          Box->GetTextCtrl()->SetBackgroundColour(
-            m_WParser->GetContainer()->GetBackgroundColour());
-        }
-        if( m_WParser->GetActualColor().IsOk() )
-          Box->GetTextCtrl()->SetForegroundColour(m_WParser->GetActualColor());
-      }
-      if( Box->GetPopupControl() != NULL &&
-          Box->GetPopupControl()->GetControl() != NULL )
-      {
-        if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
-          Box->GetPopupControl()->GetControl()->SetBackgroundColour(
-            m_WParser->GetContainer()->GetBackgroundColour());
-        if( m_WParser->GetActualColor().IsOk() )  {
-          Box->GetPopupControl()->GetControl()->SetForegroundColour(
-            m_WParser->GetActualColor());
-        }
-      }
-    }
-#endif
     if( m_WParser->GetActualColor().IsOk() )
       CreatedWindow->SetForegroundColour(m_WParser->GetActualColor());
     if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() ) {
@@ -939,27 +915,9 @@ TAG_HANDLER_PROC(tag)  {
         TComboBox* Box = (TComboBox*)CreatedWindow;
         if( !bgc.IsEmpty() )  {
           wxColor bgCl = wxColor(bgc.u_str());
-#ifdef __WIN32__          
-          if( Box->GetTextCtrl() != NULL )
-            Box->GetTextCtrl()->SetBackgroundColour(bgCl);
-          if( Box->GetPopupControl() != NULL &&
-              Box->GetPopupControl()->GetControl() != NULL )
-          {
-            Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgCl);
-          }
-#endif
         }
         if( !fgc.IsEmpty() )  {
           wxColor fgCl = wxColor(bgc.u_str());
-#ifdef __WIN32__          
-          if( Box->GetTextCtrl() != NULL )
-            Box->GetTextCtrl()->SetForegroundColour( fgCl );
-          if( Box->GetPopupControl() != NULL &&
-              Box->GetPopupControl()->GetControl() != NULL)
-          {
-            Box->GetPopupControl()->GetControl()->SetForegroundColour(fgCl);
-          }
-#endif
         }
       }
       if( !bgc.IsEmpty() )

@@ -18,11 +18,7 @@
 #endif
 
 namespace ctrl_ext {
-#ifndef __WIN32__
   class TComboBox: public wxComboBox, public AOlxCtrl  {
-#else
-  class TComboBox: public wxOwnerDrawnComboBox, public AOlxCtrl  {
-#endif
     struct TDataObj  {
       IEObject* Data;
       bool Delete;
@@ -36,21 +32,10 @@ namespace ctrl_ext {
     int entered_counter;
   protected:
     void _AddObject(const olxstr &Item, IEObject* Data, bool Delete);
-#ifdef __WIN32__
-    virtual void OnDrawItem( wxDC& dc, const wxRect& rect, int item, int flags ) const;
-    virtual wxCoord OnMeasureItem( size_t item ) const;
-    virtual wxCoord OnMeasureItemWidth( size_t item ) const;
-    virtual void OnDrawBg(wxDC& dc, const wxRect& rect, int item, int flags) const;
-#endif
   public:
     TComboBox(wxWindow *Parent, bool ReadOnly=false, const wxSize& sz=wxDefaultSize) :
-#ifndef __WIN32__
       wxComboBox(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
         wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER),
-#else
-      wxOwnerDrawnComboBox(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
-        wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER),
-#endif
       AOlxCtrl(this),
       OnChange(AOlxCtrl::ActionQueue::New(Actions, evt_change_id)),
       OnLeave(AOlxCtrl::ActionQueue::New(Actions, evt_on_mouse_leave_id)),
