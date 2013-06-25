@@ -545,7 +545,9 @@ void THtmlManager::funSetValue(const TStrObjList &Params, TMacroError &E)  {
   }
   else  {
     c.html->SetObjectValue(c.ctrl, Params[1]);
-    c.html->Refresh();
+    wxWindow *w = dynamic_cast<wxWindow *>(c.ctrl);
+    if (w != NULL)
+      w->Refresh();
   }
 }
 //.............................................................................
@@ -741,10 +743,6 @@ void THtmlManager::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   else if( EsdlInstanceOf(*c.wnd, TComboBox) )  {
     TComboBox* cb = (TComboBox*)c.wnd;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
-#ifdef __WIN32__
-    cb->GetTextCtrl()->SetInsertionPoint(0);
-    c.html->InFocus = cb->GetTextCtrl();
-#endif
   }
   c.html->InFocus->SetFocus();
 }
@@ -858,12 +856,6 @@ void THtmlManager::funSetFG(const TStrObjList &Params, TMacroError &E)  {
   if( EsdlInstanceOf(*c.wnd, TComboBox) )  {
     TComboBox* Box = (TComboBox*)c.wnd;
     //Box->SetForegroundColour(fgc);
-#ifdef __WIN32__
-    if( Box->GetPopupControl() != NULL )
-      Box->GetPopupControl()->GetControl()->SetForegroundColour(fgc);
-    if( Box->GetTextCtrl() != NULL )
-      Box->GetTextCtrl()->SetForegroundColour(fgc);
-#endif
   }
   c.wnd->Refresh();
 }
@@ -875,12 +867,6 @@ void THtmlManager::funSetBG(const TStrObjList &Params, TMacroError &E)  {
   c.wnd->SetBackgroundColour(bgc);
   if( EsdlInstanceOf(*c.wnd, TComboBox) )  {
     TComboBox* Box = (TComboBox*)c.wnd;
-#ifdef __WIN32__
-    if( Box->GetPopupControl() != NULL )
-      Box->GetPopupControl()->GetControl()->SetBackgroundColour(bgc);
-    if( Box->GetTextCtrl() != NULL )
-      Box->GetTextCtrl()->SetBackgroundColour(bgc);
-#endif
   }
   //else if( EsdlInstanceOf(*wxw, TTrackBar) )  {
   //  TTrackBar* Bar = (TTrackBar*)wxw;

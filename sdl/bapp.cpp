@@ -140,7 +140,7 @@ void TBasicApp::ReadOptions(const olxstr &fn) {
     if (TEFile::Exists(fn)) {
       TSettingsFile sf(fn);
       for (size_t i=0; i < sf.ParamCount(); i++) {
-        Options.AddParam(sf.ParamName(i), sf.ParamValue(i), false);
+        Options.AddParam(sf.ParamName(i), sf.ParamValue(i), true);
         if (sf.ParamName(i) == "profiling" && sf.ParamValue(i).IsBool()) {
           SetProfiling(sf.ParamValue(i).ToBool());
         }
@@ -242,13 +242,14 @@ const olxstr& TBasicApp::GetSharedDir() {
   return GetInstance().SharedDir; 
 }
 //..............................................................................
-void TBasicApp::SetInstanceDir(const olxstr &d) {  
+void TBasicApp::SetInstanceDir(const olxstr &d) {
   if (!TEFile::Exists(d))
     TEFile::MakeDirs(d);
   InstanceDir = TEFile::AddPathDelimeter(d); 
-  // read user settings
-  if (!InstanceDir.Equals(BaseDir))
-    ReadOptions(InstanceDir + ".options");
+  //2013.06.25 - do it manually only!
+  //// read user settings
+  //if (!InstanceDir.Equals(BaseDir))
+  //  ReadOptions(InstanceDir + ".options");
 }
 //..............................................................................
 void TBasicApp::SetConfigdDir(const olxstr &cd) {

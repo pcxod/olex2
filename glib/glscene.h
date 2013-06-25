@@ -23,14 +23,15 @@ class AGlScene: public IEObject {
 private:
   olxdict<olxstr, TGlFont*, olxstrComparator<false> > FontsDict;
   TPtrList<TGlFont> Fonts, SmallFonts;
-  olxdict<std::type_info const*, size_t, TPointerComparator> FontRegistry; 
+  olxdict<std::type_info const*, size_t, TPointerComparator> FontRegistry;
+  bool Enabled;
 protected:
   class TGlRenderer *FParent;
   /* The function creates or replaces a font (if exists under the same name)
   */
   virtual TGlFont& DoCreateFont(TGlFont& glf, bool half_size) const = 0;
 public:
-  AGlScene() : FParent(NULL) {}
+  AGlScene() : FParent(NULL), Enabled(true) {}
   virtual ~AGlScene();
   TGlRenderer *Parent() { return FParent; }
   /* must be called by TGlRender */
@@ -54,6 +55,8 @@ public:
   virtual int EndSelect();
   // returns true if successful
   virtual bool MakeCurrent() = 0;
+  // if the Scene is disabled, MakeCurrent should not do anything
+  DefPropBIsSet(Enabled)
   virtual void StartDraw();
   virtual void EndDraw();
 

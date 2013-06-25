@@ -738,38 +738,37 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   const double D = 3.1, qD = D*D;
   const size_t ac = au.AtomCount();
-  for( size_t i=0; i < ac; i++ )  {
+  SortedObjectList<int, TPrimitiveComparator> types;
+  types.Add(iNitrogenZ);
+  types.Add(iOxygenZ);
+  types.Add(iFluorineZ);
+  types.Add(iChlorineZ);
+  types.Add(iSulphurZ);
+  types.Add(iBromineZ);
+  for (size_t i=0; i < ac; i++) {
     TCAtom& A = au.GetAtom(i);
-    if( A.GetType() == iQPeakZ || A.IsDeleted() )  continue;
+    if (A.IsDeleted() || !types.Contains(A.GetType().z)) continue;
     const bool considerI =  (A != ae.GetBase().CAtom());
-    // O and N and S for a while
-    if( !(A.GetType() == iOxygenZ ||
-          A.GetType() == iNitrogenZ ||
-          A.GetType() == iChlorineZ) )
-    {
-      continue;
-    }
-
     smatd_list ms = GetInRange(ae.GetBase().ccrd(), A.ccrd(), D, considerI);
-    for( size_t j=0; j < ms.Count(); j++ )  {
+    for (size_t j=0; j < ms.Count(); j++) {
       const vec3d a_crd = au.Orthogonalise(ms[j] * A.ccrd());
       const double qd = a_crd.QDistanceTo(ae.GetBase().crd());
-      if(  qd < 2*2 || qd > qD )  continue;
-      if( ae.Count() == 1 )  {
-        // 90 - 150 degrees
+      if (qd < 2*2 || qd > qD) continue;
+      if (ae.Count() == 1) {
+        // 80 - 150 degrees
         const double ca = (ae.GetCrd(0) - ae.GetBase().crd()).CAngle(
           a_crd - ae.GetBase().crd());
-        if( ca > 0 || ca < -0.866 )  continue;
+        if (ca > 0.174 || ca < -0.866) continue;
       }
       // make sure that atoms on center of symmetry are not counted twice
       bool add = true;
-      for( size_t k=0; k < envi.Count(); k++ )  {
-        if( envi.GetCAtom(k) == A && envi.GetCrd(k).Equals(a_crd, 1e-3) )  {
+      for (size_t k=0; k < envi.Count(); k++) {
+        if (envi.GetCAtom(k) == A && envi.GetCrd(k).Equals(a_crd, 1e-3)) {
           add = false;
           break;
         }
       }
-      if( add )
+      if (add)
         envi.Add(A, ms[j], a_crd);
     }
   }
