@@ -234,10 +234,10 @@ int* TGlCanvas::GetGlAttributes(bool _default, bool stereo, short depth_bits)  {
   glAttrib[2*cnt] = 0;
   glAttrib[0] = WX_GL_RGBA;  glAttrib[1] = 1;
   glAttrib[2] = WX_GL_DOUBLEBUFFER;  glAttrib[3] = 1;
-  glAttrib[4] = WX_GL_MIN_ACCUM_RED;  glAttrib[5] = 16;
-  glAttrib[6] = WX_GL_MIN_ACCUM_GREEN;  glAttrib[7] = 16;
-  glAttrib[8] = WX_GL_MIN_ACCUM_BLUE;  glAttrib[9] = 16;
-  glAttrib[10] = WX_GL_MIN_ACCUM_ALPHA;  glAttrib[11] = 16;
+  glAttrib[4] = WX_GL_MIN_ACCUM_RED;  glAttrib[5] = 8;
+  glAttrib[6] = WX_GL_MIN_ACCUM_GREEN;  glAttrib[7] = 8;
+  glAttrib[8] = WX_GL_MIN_ACCUM_BLUE;  glAttrib[9] = 8;
+  glAttrib[10] = WX_GL_MIN_ACCUM_ALPHA;  glAttrib[11] = 8;
   glAttrib[12] = WX_GL_DEPTH_SIZE;  glAttrib[13] = depth_bits;
   glAttrib[14] = WX_GL_STENCIL_SIZE;  glAttrib[15] = 8;
   if( stereo )  {
