@@ -301,7 +301,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "i-try inversion&;"
     "u-unmatch&;"
     "esd-calculate esd (works for pairs only)&;"
-    "h-excludes H atoms from matching and the RMSD calculation",
+    "h-excludes H atoms from matching and the RMSD calculation&;"
+    "cm-copies the transformation matrix suitable for sgen to clipboard&;"
+    ,
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
   gxlib_InitFunc(ExtraZoom, fpNone|fpOne,
@@ -3160,18 +3162,25 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             */
             mat3d m1 = mat3d::Transpose(
               au.GetCellToCartesian()*m*au.GetCartesianToCell());
+            olxstr_buf mo;
             for (int i=0; i < 3; i++) {
               TLog::LogEntry e = TBasicApp::NewLogEntry();
               for (int j=0; j < 3; j++) {
-                e << olxstr::FormatFloat(-3, m1[i][j]) << ' ';
+                olxstr s = olxstr::FormatFloat(-3, m1[i][j]) << ' ';
+                mo << s;
+                e << s;
               }
             }
             TLog::LogEntry log_entry = TBasicApp::NewLogEntry();
             log_entry << NewLineSequence() << "Translation (fractional): ";
             vec3d center1 = au.Fractionalise(total_t);
             for (int i=0; i < 3; i++) {
-              log_entry << olxstr::FormatFloat(-3, center1[i]) << ' ';
+              olxstr s = olxstr::FormatFloat(-3, center1[i]) << ' ';
+              mo << s;
+              log_entry << s;
             }
+            if (Options.GetBoolOption("cm"))
+              app.ToClipboard(olxstr(mo));
           }
           {
             mat3d_list pms;

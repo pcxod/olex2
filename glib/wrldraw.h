@@ -81,7 +81,7 @@ struct wrl {
     }
   }
 
-  static olxstr wrl::get_mat_str(const olxstr &primitive_name,
+  static olxstr get_mat_str(const olxstr &primitive_name,
     TGraphicsStyle &style, olxdict<TGlMaterial, olxstr,
     TComparableComparator> &materials,
     const AGDrawObject *sender=NULL);
