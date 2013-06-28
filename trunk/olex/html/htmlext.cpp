@@ -928,7 +928,7 @@ void THtml::TObjectsState::SaveState()  {
       props->Add("data", tb->GetData());
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {
-      TSpinCtrl* sc = (TSpinCtrl*)obj;  
+      TSpinCtrl* sc = (TSpinCtrl*)obj;
       props->Add("min", sc->GetMin());
       props->Add("max", sc->GetMax());
       props->Add("val", sc->GetValue());
@@ -962,17 +962,17 @@ void THtml::TObjectsState::SaveState()  {
       props->Add("data", cb->GetData());
     }
     else if( EsdlInstanceOf(*obj, TListBox) )  {
-      TListBox* lb = (TListBox*)obj;  
+      TListBox* lb = (TListBox*)obj;
       props->Add("val", lb->GetValue());
       props->Add("items", lb->ItemsToString(';'));
       props->Add("data", lb->GetData());
     }
     else if( EsdlInstanceOf(*obj, TTreeView) )  {
-      TTreeView* tv = (TTreeView*)obj;  
+      TTreeView* tv = (TTreeView*)obj;
       props->Add("state", tv->SaveState());
     }
     else if( EsdlInstanceOf(*obj, TLabel) )  {
-      TLabel* lb = (TLabel*)obj;  
+      TLabel* lb = (TLabel*)obj;
       props->Add("val", lb->GetCaption());
       props->Add("data", lb->GetData());
     }
@@ -990,7 +990,7 @@ void THtml::TObjectsState::RestoreState()  {
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   for( size_t i=0; i < html.ObjectCount(); i++ )  {
     if( !html.IsObjectManageble(i) )  continue;
-    size_t ind = Objects.IndexOf( html.GetObjectName(i) );
+    size_t ind = Objects.IndexOf(html.GetObjectName(i));
     if( ind == InvalidIndex )  continue;
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
@@ -1048,7 +1048,7 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnClick.SetEnabled(true);
     }
     else if( EsdlInstanceOf(*obj, TImgButton) )  {
-      TImgButton* bt = (TImgButton*)obj;  
+      TImgButton* bt = (TImgButton*)obj;
       bt->SetData(props["data"]);
       bt->SetImages(props["val"], props["width"].ToInt(), props["height"].ToInt());
       bt->SetDown(props["checked"].ToBool());
@@ -1056,9 +1056,11 @@ void THtml::TObjectsState::RestoreState()  {
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {
       TComboBox* cb = (TComboBox*)obj;
-      TStrList toks(props["items"], ';');
-      cb->Clear();
-      cb->AddItems(toks);
+      if (!cb->IsReadOnly()) {
+        TStrList toks(props["items"], ';');
+        cb->Clear();
+        cb->AddItems(toks);
+      }
       cb->SetText(props["val"] );
       cb->SetData(props["data"]);
     }
