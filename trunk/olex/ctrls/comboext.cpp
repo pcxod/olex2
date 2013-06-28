@@ -113,7 +113,7 @@ const IEObject* TComboBox::GetObject(int i)  {
 }
 //..............................................................................
 olxstr TComboBox::GetText() const {
-  if (IsReadOnly() && GetSelection() < 0)
+  if (!HasValue())
     return EmptyString();
   olxstr cv = GetValue();
   for (unsigned int i=0; i < GetCount(); i++) {
