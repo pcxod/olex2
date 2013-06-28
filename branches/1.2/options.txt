@@ -13,6 +13,7 @@ gl_multisample [False] - enables smoothing of the rendering, though reduces the 
  produces better quality picture
 preserve_restraint_defaults [false] - if set, the default restraint values/weights are shown in
  the ins file. This option has no effect when DEFS instruction is set.
+preserve_fvars - preserves the even if they are refered only once
 safe_afix [True] - checks AFIXes are correct after atom naming, deleting and HAdd itself
 confirm_on_close [False] - asks a confirmation question before closing the application
 profile [False] - switches application profiling on/off

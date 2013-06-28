@@ -950,6 +950,11 @@ void TMainForm::XApp(Olex2App *XA)  {
 #ifdef _CUSTOM_BUILD_
   CustomCodeBase::Initialise(Library);
 #endif
+  {
+    olxstr f = "GetCompilationInfo(full)";
+    if (processFunction(f, EmptyString(), true))
+      FXApp->NewLogEntry(logInfo, true) << "Welcome to Olex2 " << f;
+  }
   // menu initialisation
   MenuBar = new wxMenuBar;
 
@@ -1172,10 +1177,6 @@ void TMainForm::XApp(Olex2App *XA)  {
   TFileHandlerManager::AddBaseDir(FXApp->GetInstanceDir());
 
   SetStatusText(XA->GetBaseDir().u_str());
-
-  // put log file to the user data folder
-  XA->CleanupLogs();
-  XA->CreateLogFile(XA->GetOptions().FindValue("log_name", "olex2"));
 
   TBasicApp::GetLog().OnInfo.Add(this, ID_INFO, msiEnter);
   TBasicApp::GetLog().OnWarning.Add(this, ID_WARNING, msiEnter);

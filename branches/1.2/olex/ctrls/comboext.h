@@ -60,6 +60,11 @@ namespace ctrl_ext {
 
     olxstr ItemsToString(const olxstr &separator);
 
+    bool HasValue() const {
+      if (IsReadOnly() && GetSelection() < 0)
+        return false;
+      return true;
+    }
     olxstr GetText() const;
     void SetText(const olxstr &text);
 

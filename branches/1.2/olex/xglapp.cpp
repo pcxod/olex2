@@ -30,7 +30,6 @@
 #include "cdsfs.h"
 #include "efile.h"
 #include "wxzipfs.h"
-
 #ifndef __WIN32__
   #include "icons/olex2.xpm"
   #include <unistd.h>
@@ -185,6 +184,8 @@ bool TGlXApp::OnInit()  {
     if (!config_dir.IsEmpty())
       XApp->SetConfigdDir(config_dir);
     XApp->ReadOptions(XApp->GetConfigDir() + ".options");
+    XApp->CleanupLogs();
+    XApp->CreateLogFile(XApp->GetOptions().FindValue("log_name", "olex2"));
   }
   catch(const TExceptionBase& e)  {
     TMainFrame::ShowAlert(e);
