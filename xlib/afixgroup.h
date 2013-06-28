@@ -102,7 +102,7 @@ public:
   // these require an implicit pivot (outside the group)
   static bool HasImplicitPivot(int afix)  {
     const int n = GetN(afix);
-    return (n == 3 || n == 4 || n == 5 || n == 7 || n == 8 || afix == -1);
+    return (n == 3 || n == 4 || n == 7 || n == 8 || afix == -1);
   }
   // these are just 'service' AFIX...
   static bool HasPivot(int afix)  {
