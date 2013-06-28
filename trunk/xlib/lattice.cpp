@@ -2582,7 +2582,7 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
         if (TAfixGroup::HasImplicitPivot(a.GetAfix())) {
           continue;
         }
-        if (a.GetPart() == 0 || a.GetPart() == part) {
+        if (part == 0 || a.GetPart() == 0 || a.GetPart() == part) {
           if (XElementLib::IsMetal(a.GetType()))
             metal_cnt++;
           attached_cnt++;
@@ -2620,6 +2620,9 @@ TUndoData *TLattice::ValidateHGroups(bool reinit, bool report) {
           TBasicApp::NewLogEntry(logError) << "Pivot atom " <<
             ag.GetPivot().GetLabel() << " has wrong connectivty for the given "
             "AFIX group and the group was removed. Please revise your model.";
+          TBasicApp::NewLogEntry() << ag.GetPivot().GetLabel() << ", AFIX " <<
+            ag.GetAfix() << ", attached atoms " << attached_cnt <<
+            ", attached metals " << metal_cnt;
         }
         ag.Clear();
       }
