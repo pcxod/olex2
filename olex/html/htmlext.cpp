@@ -896,7 +896,7 @@ THtml::TObjectsState::~TObjectsState()  {
 void THtml::TObjectsState::SaveState()  {
   for( size_t i=0; i < html.ObjectCount(); i++ )  {
     if( !html.IsObjectManageble(i) )  continue;
-    size_t ind = Objects.IndexOf( html.GetObjectName(i) );
+    size_t ind = Objects.IndexOf(html.GetObjectName(i));
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
     TSStrStrList<olxstr,false>* props;
@@ -909,45 +909,45 @@ void THtml::TObjectsState::SaveState()  {
       props->Clear();
     }
     props->Add("type", EsdlClassName(*obj));  // type
-    if( EsdlInstanceOf(*obj, TTextEdit))  {  
+    if( EsdlInstanceOf(*obj, TTextEdit))  {
       TTextEdit* te = (TTextEdit*)obj;
       props->Add("val", te->GetText());
       props->Add("data", te->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TCheckBox) )  {  
-      TCheckBox* cb = (TCheckBox*)obj;   
+    else if( EsdlInstanceOf(*obj, TCheckBox) )  {
+      TCheckBox* cb = (TCheckBox*)obj;
       props->Add("val", cb->GetCaption());
       props->Add("checked", cb->IsChecked());
       props->Add("data", cb->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TTrackBar) )  {  
-      TTrackBar* tb = (TTrackBar*)obj;  
+    else if( EsdlInstanceOf(*obj, TTrackBar) )  {
+      TTrackBar* tb = (TTrackBar*)obj;
       props->Add("min", tb->GetMin());
       props->Add("max", tb->GetMax());
       props->Add("val", tb->GetValue());
       props->Add("data", tb->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {  
+    else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {
       TSpinCtrl* sc = (TSpinCtrl*)obj;  
       props->Add("min", sc->GetMin());
       props->Add("max", sc->GetMax());
       props->Add("val", sc->GetValue());
       props->Add("data", sc->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TButton) )    {  
+    else if( EsdlInstanceOf(*obj, TButton) )  {
       TButton* bt = (TButton*)obj;
       props->Add("val", bt->GetCaption());
       props->Add("checked", bt->IsDown());
       props->Add("data", bt->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
-      TBmpButton* bt = (TBmpButton*)obj;  
+    else if( EsdlInstanceOf(*obj, TBmpButton) )  {
+      TBmpButton* bt = (TBmpButton*)obj;
       props->Add("checked", bt->IsDown());
       props->Add("val", bt->GetSource());
       props->Add("data", bt->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TImgButton) )    {  
-      TImgButton* bt = (TImgButton*)obj;  
+    else if( EsdlInstanceOf(*obj, TImgButton) )  {
+      TImgButton* bt = (TImgButton*)obj;
       props->Add("checked", bt->IsDown());
       props->Add("enabled", bt->IsEnabled());
       props->Add("val", bt->GetSource());
@@ -955,26 +955,26 @@ void THtml::TObjectsState::SaveState()  {
       props->Add("height", bt->GetHeight());
       props->Add("data", bt->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TComboBox) )  {  
-      TComboBox* cb = (TComboBox*)obj;  
-      props->Add("val", cb->GetValue());
+    else if( EsdlInstanceOf(*obj, TComboBox) )  {
+      TComboBox* cb = (TComboBox*)obj;
+      props->Add("val", (cb->HasValue() ? cb->GetValue() : EmptyString()));
       props->Add("items", cb->ItemsToString(';'));
       props->Add("data", cb->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TListBox) )  {  
+    else if( EsdlInstanceOf(*obj, TListBox) )  {
       TListBox* lb = (TListBox*)obj;  
-      props->Add("val", lb->GetValue() );
-      props->Add("items", lb->ItemsToString(';') );
-      props->Add("data", lb->GetData() );
+      props->Add("val", lb->GetValue());
+      props->Add("items", lb->ItemsToString(';'));
+      props->Add("data", lb->GetData());
     }
-    else if( EsdlInstanceOf(*obj, TTreeView) )  {  
+    else if( EsdlInstanceOf(*obj, TTreeView) )  {
       TTreeView* tv = (TTreeView*)obj;  
       props->Add("state", tv->SaveState());
     }
-    else if( EsdlInstanceOf(*obj, TLabel) )  {  
+    else if( EsdlInstanceOf(*obj, TLabel) )  {
       TLabel* lb = (TLabel*)obj;  
-      props->Add("val", lb->GetCaption() );
-      props->Add("data", lb->GetData() );
+      props->Add("val", lb->GetCaption());
+      props->Add("data", lb->GetData());
     }
     else //?
       ;
@@ -1006,13 +1006,13 @@ void THtml::TObjectsState::RestoreState()  {
       te->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TCheckBox) )  {
-      TCheckBox* cb = (TCheckBox*)obj;   
+      TCheckBox* cb = (TCheckBox*)obj;
       cb->SetCaption(props["val"]);
       cb->SetChecked(props["checked"].ToBool());
       cb->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TTrackBar) )  {
-      TTrackBar* tb = (TTrackBar*)obj;  
+      TTrackBar* tb = (TTrackBar*)obj;
       tb->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       tb->SetValue(olx_round(props["val"].ToDouble()));
       tb->SetData(props["data"]);
@@ -1036,7 +1036,7 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnClick.SetEnabled(true);
     }
     else if( EsdlInstanceOf(*obj, TBmpButton) )  {
-      TBmpButton* bt = (TBmpButton*)obj;  
+      TBmpButton* bt = (TBmpButton*)obj;
       bt->SetData(props["data"]);
       bt->SetSource(props["val"] );
       bt->OnDown.SetEnabled(false);
@@ -1055,7 +1055,7 @@ void THtml::TObjectsState::RestoreState()  {
       bt->SetEnabled(props["enabled"].ToBool());
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {
-      TComboBox* cb = (TComboBox*)obj;  
+      TComboBox* cb = (TComboBox*)obj;
       TStrList toks(props["items"], ';');
       cb->Clear();
       cb->AddItems(toks);
@@ -1063,7 +1063,7 @@ void THtml::TObjectsState::RestoreState()  {
       cb->SetData(props["data"]);
     }
     else if( EsdlInstanceOf(*obj, TListBox) )  {
-      TListBox* lb = (TListBox*)obj;  
+      TListBox* lb = (TListBox*)obj;
       TStrList toks(props["items"], ';');
       lb->Clear();
       lb->AddItems(toks);
@@ -1072,7 +1072,7 @@ void THtml::TObjectsState::RestoreState()  {
       ((TTreeView*)obj)->RestoreState(props["state"]);
     }
     else if( EsdlInstanceOf(*obj, TLabel) )  {
-      TLabel* lb = (TLabel*)obj;  
+      TLabel* lb = (TLabel*)obj;
       lb->SetCaption(props["val"]);
     }
     else //?
@@ -1148,7 +1148,6 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(
     props->Add("height");
   }
   else if( type == typeid(TComboBox) )  {
-
     props->Add("val");
     props->Add("items");
   }
