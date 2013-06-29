@@ -136,6 +136,7 @@ public:
   static DefMacro(DELU)
   static DefMacro(ISOR)
   static DefMacro(Same)
+  static DefMacro(RIGU)
   static DefMacro(Delta)
   static DefMacro(DeltaI)
   static DefMacro(AddBond)

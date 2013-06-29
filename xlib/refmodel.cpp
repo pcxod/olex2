@@ -44,6 +44,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rFixedUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq", rptValue|rptEsd),
   rSimilarUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq_similar", rptEsd),
   rSimilarAdpVolume(*this, rltAtoms, "olex2.restraint.adp_volume_similar", rptEsd),
+  rRIGU(*this, rltAtoms, "RIGU", rptEsd|rptEsd1),
   ExyzGroups(*this),
   AfixGroups(*this),
   rSAME(*this),
@@ -59,12 +60,14 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rcRegister.Add(SharedRotatedADPs.GetName(), &SharedRotatedADPs);
   rcRegister.Add(Directions.GetName(), &Directions);
   rcRegister.Add(SameGroups.GetName(), &SameGroups);
+  rcRegister.Add(cTLS.GetName(), &cTLS);
   rcList.Add(&Directions);
   rcList.Add(&SharedRotatedADPs);
   rcList.Add(&SameGroups);
   rcList1 << rDFIX <<rDANG << rSADI << rCHIV << rFLAT << rDELU
     << rSIMU << rISOR  << rEADP <<
-    rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq << rSimilarAdpVolume;
+    rAngle << rDihedralAngle << rFixedUeq << rSimilarUeq << rSimilarAdpVolume
+    << rRIGU;
   //RefContainers(aunit.GetIdName(), &aunit);
   RefContainers(GetIdName(), this);
   au.SetRefMod(this);
@@ -1042,6 +1045,23 @@ const_strlist RefinementModel::Describe() {
       str << ": with sigma of " << sr.GetEsd();
     }
   }
+  if (rRIGU.Count() != 0) {
+    lst.Add(olxstr(++sec_num)) << ". Rigid body (RIGU) restrains";
+    for (size_t i=0; i < rRIGU.Count(); i++) {
+      TSimpleRestraint& sr = rRIGU[i];
+      if (sr.GetEsd() == 0 || sr.GetEsd1() == 0)  continue;
+      if (sr.IsAllNonHAtoms())
+        lst.Add(" All non-hydrogen atoms");
+      else {
+        TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this);
+        for (size_t j=0; j < atoms.Count(); j++)
+          lst.Add(' ') << AtomListToStr(atoms[j], InvalidSize, ", ");
+      }
+      lst.Add(" with sigma for 1-2 distances of ") << sr.GetEsd() <<
+        " and sigma for 1-3 distances of " <<
+        sr.GetEsd1();
+    }
+  }
   // fragment related
   if( rSAME.Count() != 0 )  {
     lst.Add(olxstr(++sec_num)) << ". Same fragment restrains";
@@ -1622,6 +1642,10 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
     r.SetEsd(DEFS[2]);
     r.SetEsd1(DEFS[2]);
   }
+  else if (container.GetIdName().Equals("RIGU")) {
+    r.SetEsd(0.004);
+    r.SetEsd1(0.004);
+  }
   else if( container.GetIdName().Equals("SIMU") )  {
     r.SetEsd(DEFS[3]);
     r.SetEsd1(DEFS[3]*2);
@@ -1662,6 +1686,9 @@ bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {
   }
   else if( container.GetIdName().Equals("DELU") )  {
     return r.GetEsd() == DEFS[2] && r.GetEsd1() == DEFS[2];
+  }
+  else if( container.GetIdName().Equals("RIGU") )  {
+    return r.GetEsd() == 0.004 && r.GetEsd1() == 0.004;
   }
   else if( container.GetIdName().Equals("SIMU") )  {
     return r.GetEsd() == DEFS[3] && r.GetEsd1() == DEFS[3]*2 &&

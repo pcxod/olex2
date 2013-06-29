@@ -1635,6 +1635,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   restraints.Add("DELU", ResInfo(&rm.rDELU, RCInfo(0, 2, -1)));
   // similar U restraint
   restraints.Add("SIMU", ResInfo(&rm.rSIMU, RCInfo(-1, 2, -1)));
+  // rigid body restraint
+  restraints.Add("RIGU", ResInfo(&rm.rRIGU, RCInfo(0, 2, -1)));
   // Uanis restraint to behave like Uiso
   restraints.Add("ISOR", ResInfo(&rm.rISOR, RCInfo(0, 2, -1)));
   // equivalent EADP constraint
@@ -1935,6 +1937,13 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   }
   else if( ins_name.Equalsi("DELU") )  {
     srl = &rm.rDELU;
+    Esd1Mult = 1;
+    RequiredParams = 0;  AcceptsParams = 2;
+    Vals[0] = &esd;  Vals[1] = &esd1;
+    AcceptsAll = true;
+  }
+  else if( ins_name.Equalsi("RIGU") )  {
+    srl = &rm.rRIGU;
     Esd1Mult = 1;
     RequiredParams = 0;  AcceptsParams = 2;
     Vals[0] = &esd;  Vals[1] = &esd1;

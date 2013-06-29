@@ -178,6 +178,37 @@ public:
 #endif
 };
 
+struct tls_group_constraint {
+protected:
+  tls_group_constraint() {}
+public:
+  TCAtomPList atoms;
+  tls_group_constraint(const TCAtomPList &atoms_)
+  : atoms(atoms_)
+  {}
+  bool IsValid() {
+    for (size_t i=0; i < atoms.Count(); i++) {
+      if (atoms[i]->IsDeleted())
+        atoms[i] = NULL;
+    }
+    atoms.Pack();
+    return atoms.Count() > 3;
+  }
+  olxstr ToInsStr(const RefinementModel& rm) const;
+  static void FromToks(const TStrList& toks, RefinementModel& rm,
+    TTypeList<tls_group_constraint>& out);
+  static tls_group_constraint*
+    Copy(RefinementModel& rm, const tls_group_constraint& c);
+  static const olxstr& GetName();
+  olxstr Describe() const;
+  void UpdateParams(const TStrList& toks);
+  void ToDataItem(TDataItem& di) const;
+  static tls_group_constraint* FromDataItem(const TDataItem& di,
+    const RefinementModel& rm);
+#ifndef _NO_PYTHON
+  PyObject* PyExport() const;
+#endif
+};
 class IConstraintContainer {
 public:
   virtual ~IConstraintContainer() {}
