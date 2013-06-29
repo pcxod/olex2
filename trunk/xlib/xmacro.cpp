@@ -508,6 +508,11 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Creates SAME instruction for two fragments (two selected atoms or two "
     "atoms provided) or number_of_groups and groups following each another "
     "(or selection)");
+  xlib_InitMacro(RIGU,
+    EmptyString(),
+    fpAny|psFileLoaded,
+    "Creates rigid bond (RIGU) restraint for a group of provided atoms"
+    "(or selection)");
   xlib_InitMacro(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded,
     "Creates residue with given class name and optionally number and adds "
     "selected or provided atoms into the residue. If provided residue class "
@@ -7517,6 +7522,28 @@ void XLibMacros::macSame(TStrObjList &Cmds, const TParamList &Options,
   else  {
     E.ProcessingError(__OlxSrcInfo, "invalid input arguments");
   }
+}
+//.............................................................................
+void XLibMacros::macRIGU(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  double esd1 = 0.01, esd2=0.01;  // esd
+  size_t cnt = XLibMacros::Parse(Cmds, "dd", &esd1, &esd2);
+  if (cnt == 1) esd2 = esd1;
+  TXApp &app = TXApp::GetInstance();
+  TSAtomPList Atoms = app.FindSAtoms(Cmds, false, !Options.Contains("cs"));
+  // validate that atoms of the same type
+  TSimpleRestraint& sr = app.XFile().GetRM().rRIGU.AddNew();
+  if (cnt > 0) {
+    sr.SetEsd(esd1);
+    sr.SetEsd1(esd2);
+  }
+  sr.SetAllNonHAtoms(Atoms.IsEmpty());
+  for (size_t i=0; i < Atoms.Count(); i++)
+    sr.AddAtom(Atoms[i]->CAtom(), NULL);
+  app.XFile().GetRM().rDELU.ValidateRestraint(sr);
+  TBasicApp::NewLogEntry() << "Placing the following restraints: ";
+  TBasicApp::NewLogEntry() << sr.ToString();
 }
 //.............................................................................
 void XLibMacros::macRESI(TStrObjList &Cmds, const TParamList &Options,

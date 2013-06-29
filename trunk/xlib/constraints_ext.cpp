@@ -128,7 +128,8 @@ void adirection::FromToks(const TStrList& toks, RefinementModel& rm,
     uint16_t type = adirection::DecodeType(toks[0]);
     if( type == direction_static )  {
       if( toks.Count() < 5 )  {
-        TBasicApp::NewLogEntry(logError) << "Too few parameters for static direction";
+        TBasicApp::NewLogEntry(logError) <<
+          "Too few parameters for a static direction";
         return;
       }
       out.Add(new static_direction(toks[1],
@@ -198,7 +199,7 @@ PyObject *direction::PyExport() const {
       atoms[i].GetAtom()->GetTag(),
       atoms[i].GetMatrix() == NULL ? -1 : atoms[i].GetMatrix()->GetId()));
   }
-  return rv;  
+  return rv;
 }
 #endif
 //.............................................................................
@@ -370,4 +371,91 @@ olxstr same_group_constraint::Describe() const {
   }
   return olxstr('{') << rv << '}';
 }
+//.............................................................................
+//.............................................................................
+//.............................................................................
+olxstr tls_group_constraint::ToInsStr(const RefinementModel& rm) const {
+  olxstr_buf rv;
+  olxstr ws(' ');
+  rv << GetName();
+  for (size_t i=0; i < atoms.Count(); i++) {
+    rv << ws << atoms[i]->GetLabel();
+  }
+  return olxstr(rv);
+}
+//.............................................................................
+void tls_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
+  TTypeList<tls_group_constraint>& out)
+{
+  if (toks.Count() < 4) return;
+  TAtomReference aref(toks.Text(' ', 1));
+  TCAtomGroup agroup;
+  size_t atomAGroup;
+  aref.Expand(rm, agroup, EmptyString(), atomAGroup);
+  if (agroup.Count() < 3)
+    throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
+  TCAtomPList l(agroup, FunctionAccessor::MakeConst(&TGroupCAtom::GetAtom));
+  out.Add(new tls_group_constraint(l));
+}
+//.............................................................................
+tls_group_constraint* tls_group_constraint::Copy(
+  RefinementModel& rm, const tls_group_constraint& c)
+{
+  TCAtomPList l(c.atoms.Count());
+  for (size_t i=0; i < c.atoms.Count(); i++) {
+    TCAtom* a = rm.aunit.FindCAtomById(c.atoms[i]->GetId());
+    if (a == NULL) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "asymmetric units do not match");
+    }
+    l[i] = a;
+  }
+  return new tls_group_constraint(l);
+}
+//.............................................................................
+const olxstr& tls_group_constraint::GetName() {
+  static olxstr name("olex2.constraint.tls_group");
+  return name;
+}
+//.............................................................................
+olxstr tls_group_constraint::Describe() const {
+  return olxstr("TLS [") << olx_analysis::alg::label(atoms, ',') << ']';
+}
+//.............................................................................
+void tls_group_constraint::UpdateParams(const TStrList& toks) {
+  if (!toks.IsEmpty())
+    throw TNotImplementedException(__OlxSourceInfo);
+}
+//.............................................................................
+void tls_group_constraint::ToDataItem(TDataItem& di) const {
+  IndexRange::Builder rb;
+  for (size_t i=0; i < atoms.Count(); i++) {
+    rb << atoms[i]->GetTag();
+  }
+  di.AddField("atoms", rb.GetString());
+}
+//.............................................................................
+tls_group_constraint* tls_group_constraint::FromDataItem(const TDataItem& di,
+  const RefinementModel& rm)
+{
+  IndexRange::RangeItr ai(di.GetRequiredField("atoms"));
+  TCAtomPList l;
+  while (ai.HasNext()) {
+    l.Add(rm.aunit.GetAtom(ai.Next()));
+  }
+  if (l.Count() < 3) {
+    throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
+  }
+  return new tls_group_constraint(l);
+}
+//.............................................................................
+#ifndef _NO_PYTHON
+PyObject* tls_group_constraint::PyExport() const {
+  PyObject *a = PyTuple_New(atoms.Count());
+  for (size_t i=0; i < atoms.Count(); i++)
+    PyTuple_SetItem(a, i, Py_BuildValue("i", atoms[i]->GetTag()));
+  return a;
+}
+#endif
+
 //.............................................................................
