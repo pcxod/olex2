@@ -2122,21 +2122,25 @@ void GXLibMacros::macCenter(TStrObjList &Cmds, const TParamList &Options,
   }
   else  {
     if (Options.GetBoolOption('z')) {
-      app.GetRender().GetBasis().SetZoom(
-        app.GetRender().CalcZoom()*app.GetExtraZoom());
+      vec3d miv(100,100,100), mav(-100,-100,-100);
+      for (size_t i=0; i < app.GetRender().ObjectCount(); i++) {
+        AGDrawObject &o = app.GetRender().GetObject(i);
+        if (!o.IsVisible()) continue;
+        o.GetDimensions(mav, miv);
+      }
+      double sd = olx_max(mav.DistanceTo(miv), 1.0);
+      app.GetRender().GetBasis().SetZoom(app.GetExtraZoom()/sd);
     }
-    else  {
-      TXAtomPList atoms = app.FindXAtoms(Cmds, true, true);
-      vec3d center;
-      double sum = 0;
-      for (size_t i=0; i < atoms.Count(); i++) {
-        center += atoms[i]->crd()*atoms[i]->CAtom().GetOccu();
-        sum += atoms[i]->CAtom().GetOccu();;
-      }
-      if (sum != 0) {
-        center /= sum;
-        app.GetRender().GetBasis().SetCenter(-center);
-      }
+    TXAtomPList atoms = app.FindXAtoms(Cmds, true, true);
+    vec3d center;
+    double sum = 0;
+    for (size_t i=0; i < atoms.Count(); i++) {
+    center += atoms[i]->crd()*atoms[i]->CAtom().GetOccu();
+    sum += atoms[i]->CAtom().GetOccu();
+    }
+    if (sum != 0) {
+    center /= sum;
+    app.GetRender().GetBasis().SetCenter(-center);
     }
   }
 }
