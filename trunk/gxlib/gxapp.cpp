@@ -1745,7 +1745,8 @@ ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName) {
   else {
     size_t idx = AtomName.IndexOf('_');
     olxstr label;
-    int32_t resi_n = MAXINT32;
+    static const int32_t mxi32 = (int32_t)((uint32_t)(~0) >> 1);
+    int32_t resi_n = mxi32;
     if (idx != InvalidIndex && AtomName.SubStringFrom(idx+1).IsNumber()) {
       label = AtomName.SubStringTo(idx);
       resi_n = AtomName.SubStringFrom(idx+1).ToInt();
@@ -1758,7 +1759,7 @@ ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName) {
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (!xa.IsVisible()) continue;
-      if ((resi_n == MAXINT32 ||
+      if ((resi_n == mxi32 ||
             resi_n == au.GetResidue(xa.CAtom().GetResiId()).GetNumber()) &&
           xa.GetLabel().Equalsi(label))
       {
