@@ -25,7 +25,7 @@ TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
 }
 //..............................................................................
 void TGlGroup::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
