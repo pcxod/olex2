@@ -74,7 +74,20 @@ protected:
         for (size_t j=0; j < pc; j++) {
           TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
           if (!Select) {
+            bool initialised=false;
             if (&G == rotation_anchor) {
+              if (EsdlInstanceOf(G, TXAtom)) {
+                TXAtom &a = (TXAtom &)G;
+                if (a.crd().Equals(RotationCenter, 1e-3))
+                  initialised = true;
+              }
+              else if (EsdlInstanceOf(G, TXBond)) {
+                TXBond &b = (TXBond &)G;
+                if (RotationCenter.Equals((b.A().crd()+b.B().crd())/2, 1e-3))
+                  initialised = true;
+              }
+            }
+            if (initialised) {
               TGlGroup::GetGlM().Init(false);
             }
             else {
