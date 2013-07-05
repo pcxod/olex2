@@ -6359,9 +6359,17 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else if (!Atoms.IsEmpty() ) {
-      TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
-      for (size_t i=1; i < Atoms.Count(); i++)
-        ag.AddDependent(Atoms[i]->CAtom());
+      if (Atoms[0]->CAtom().GetUisoOwner() != NULL) {
+        TBasicApp::NewLogEntry(logError) << "Cannot use '" <<
+          Atoms[0]->GetLabel() << "' as a pivot for the AFIX group";
+      }
+      else {
+        if (Atoms[0]->CAtom().GetDependentAfixGroup() != NULL)
+          Atoms[0]->CAtom().GetDependentAfixGroup()->Clear();
+        TAfixGroup& ag = rm.AfixGroups.New(&Atoms[0]->CAtom(), afix);
+        for (size_t i=1; i < Atoms.Count(); i++)
+          ag.AddDependent(Atoms[i]->CAtom());
+      }
     }
   }
 }
