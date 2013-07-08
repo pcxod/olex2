@@ -333,7 +333,7 @@ END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent)
   : TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
-  olex::OlexProcessorImp(NULL),
+  olex2::OlexProcessorImp(NULL),
   HtmlManager(*(new THtmlManager(this))),
   _ProcessHandler(*this)
 {
@@ -467,7 +467,7 @@ TMainForm::~TMainForm()  {
 }
 //..............................................................................
 void TMainForm::XApp(Olex2App *XA)  {
-  olex::OlexProcessorImp::SetLibraryContainer(*XA);
+  olex2::OlexProcessorImp::SetLibraryContainer(*XA);
   FXApp = XA;
 
   _ProcessManager = new ProcessManager(_ProcessHandler);
