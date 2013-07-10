@@ -1046,16 +1046,16 @@ void GXLibMacros::macShowH(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 int GXLibMacros::QPeakSortA(const TCAtom &a, const TCAtom &b)  {
-  double v = a.GetQPeak() - b.GetQPeak();
+  int v = olx_cmp(a.GetQPeak(), b.GetQPeak());
   if (v == 0 && a.GetLabel().Length() > 1 && b.GetLabel().Length() > 1) {
     if (a.GetLabel().SubStringFrom(1).IsNumber() &&
         b.GetLabel().SubStringFrom(1).IsNumber())
     {
-      v = b.GetLabel().SubStringFrom(1).ToInt() -
-        a.GetLabel().SubStringFrom(1).ToInt();
+      v = olx_cmp(b.GetLabel().SubStringFrom(1).ToInt(),
+        a.GetLabel().SubStringFrom(1).ToInt());
     }
   }
-  return v < 0 ? 1 : (v > 0 ? -1 : 0);
+  return v;;
 }
 void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
@@ -1874,12 +1874,26 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    if (flag == glSelectionSelect)
-      app.SelectAll(true);
-    else if (flag == glSelectionUnselect)
-      app.SelectAll(false);
-    else if (flag == glSelectionInvert)
-      app.GetRender().InvertSelection();
+    if (Cmds.IsEmpty()) {
+      if (flag == glSelectionSelect)
+        app.SelectAll(true);
+      else if (flag == glSelectionUnselect)
+        app.SelectAll(false);
+      else if (flag == glSelectionInvert)
+        app.GetRender().InvertSelection();
+    }
+    else {
+      TXAtomPList atoms = app.FindXAtoms(Cmds.Text(' '), false, false);
+      TGlRenderer &r = app.GetRender();
+      for (size_t i=0; i < atoms.Count(); i++) {
+        if (flag == glSelectionSelect)
+          r.Select(*atoms[i], true);
+        else if (flag == glSelectionUnselect)
+          r.Select(*atoms[i], false);
+        else if (flag == glSelectionInvert || flag == glSelectionNone)
+          r.Select(*atoms[i], !atoms[i]->IsSelected());
+      }
+    }
   }
 }
 //.............................................................................

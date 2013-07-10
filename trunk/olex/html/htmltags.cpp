@@ -303,12 +303,12 @@ TAG_HANDLER_PROC(tag)  {
           }
           wc->SetDescent(0);
           contC->InsertCell( wc );
-          contC->InsertCell(new wxHtmlWidgetCell(wnd, fl));
+          contC->InsertCell(new THtmlWidgetCell(wnd, fl));
           if( valign != -1 )  contC->SetAlignVer(valign);
           if( halign != -1 )  contC->SetAlignHor(halign);
         }
         else
-          m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(wnd, fl));
+          m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(wnd, fl));
       }
       return false;
     }
@@ -342,12 +342,12 @@ TAG_HANDLER_PROC(tag)  {
       if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
       contC->InsertCell( wc );
-      contC->InsertCell(new wxHtmlWidgetCell(Text, fl));
+      contC->InsertCell(new THtmlWidgetCell(Text, fl));
       if( valign != -1 )  contC->SetAlignVer(valign);
       if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
+      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Text, fl));
 
     if( tag.HasParam(wxT("ONCHANGE")) )  {
       Text->OnChange.data =
@@ -398,12 +398,12 @@ TAG_HANDLER_PROC(tag)  {
       if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
       contC->InsertCell( wc );
-      contC->InsertCell(new wxHtmlWidgetCell(DT, fl));
+      contC->InsertCell(new THtmlWidgetCell(DT, fl));
       if( valign != -1 )  contC->SetAlignVer(valign);
       if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(DT, fl));
+      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(DT, fl));
 
     if( tag.HasParam(wxT("ONCHANGE")) )  {
       DT->OnChange.data =
@@ -428,12 +428,12 @@ TAG_HANDLER_PROC(tag)  {
       if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
       contC->InsertCell( wc );
-      contC->InsertCell(new wxHtmlWidgetCell(CC, fl));
+      contC->InsertCell(new THtmlWidgetCell(CC, fl));
       if( valign != -1 )  contC->SetAlignVer(valign);
       if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(CC, fl));
+      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(CC, fl));
 
     if( tag.HasParam(wxT("ONCHANGE")) )  {
       CC->OnChange.data =
@@ -450,7 +450,7 @@ TAG_HANDLER_PROC(tag)  {
     Text->WI.SetWidth(ax);
     Text->WI.SetHeight(ay);
     Text->SetData(Data);
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
+    m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Text, fl));
   }
 /******************* BUTTON ***************************************************/
   else if( TagName.Equalsi("button") )  {
@@ -550,7 +550,7 @@ TAG_HANDLER_PROC(tag)  {
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
     if( !modeDependent.IsEmpty() )
       Btn->SetActionQueue(TModeRegistry::GetInstance().OnChange, modeDependent);
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(CreatedWindow, fl));
+    m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(CreatedWindow, fl));
   }
 /******************* COMBOBOX *************************************************/
   else if( TagName.Equalsi("combo") )  {
@@ -559,11 +559,11 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Box;
     CreatedWindow = Box;
-    Box->WI.SetWidth(ax);
+    //Box->WI.SetWidth(ax);
 #ifdef __MAC__
     Box->WI.SetHeight(olx_max(ay, Box->GetCharHeight()+10));
 #else
-    Box->WI.SetHeight(ay);
+    //Box->WI.SetHeight(ay);
 #endif    
     if( tag.HasParam(wxT("ITEMS")) )  {
       olxstr Items = tag.GetParam(wxT("ITEMS"));
@@ -614,12 +614,12 @@ TAG_HANDLER_PROC(tag)  {
       if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
       contC->InsertCell(wc);
-      contC->InsertCell(new wxHtmlWidgetCell(Box, fl));
+      contC->InsertCell(new THtmlWidgetCell(Box, fl));
       if( valign != -1 )  contC->SetAlignVer(valign);
       if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
+      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
   }
 /******************* SPIN CONTROL *********************************************/
   else if( TagName.Equalsi("spin") )  {
@@ -655,12 +655,12 @@ TAG_HANDLER_PROC(tag)  {
       if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
       contC->InsertCell(wc);
-      contC->InsertCell(new wxHtmlWidgetCell(Spin, fl));
+      contC->InsertCell(new THtmlWidgetCell(Spin, fl));
       if( valign != -1 )  contC->SetAlignVer(valign);
       if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Spin, fl));
+      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Spin, fl));
   }
 /******************* SLIDER ***************************************************/
   else  if( TagName.Equalsi("slider") )  {
@@ -700,12 +700,12 @@ TAG_HANDLER_PROC(tag)  {
       if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
       contC->InsertCell(wc);
-      contC->InsertCell(new wxHtmlWidgetCell(Track, fl));
+      contC->InsertCell(new THtmlWidgetCell(Track, fl));
       if( valign != -1 )  contC->SetAlignVer(valign);
       if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
-      m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Track, fl));
+      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Track, fl));
   }
 /******************* CHECKBOX *************************************************/
   else if( TagName.Equalsi("checkbox") )  {
@@ -753,7 +753,7 @@ TAG_HANDLER_PROC(tag)  {
       Box->SetActionQueue(TModeRegistry::GetInstance().OnChange,
         tag.GetParam(wxT("MODEDEPENDENT")));
     }
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
+    m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
   }
 /******************* TREE CONTROL *********************************************/
   else if( TagName.Equalsi("tree") )  {
@@ -794,7 +794,7 @@ TAG_HANDLER_PROC(tag)  {
         ExpandMacroShortcuts(tag.GetParam(wxT("ONEDIT")), macro_map);
       Tree->OnEdit.Add(&html->Manager);
     }
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Tree, fl));
+    m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Tree, fl));
     if( ios == NULL )  {  // create test tree
       TBasicApp::NewLogEntry(logError) <<
         "THTML: could not locate tree source: \'" << src <<  '\'';
@@ -879,7 +879,7 @@ TAG_HANDLER_PROC(tag)  {
       List->OnDblClick.Add(&html->Manager);
     }
     // creating cell
-    m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(List, fl));
+    m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(List, fl));
   }
 /******************* END OF CONTROLS ******************************************/
   if( LinkInfo != NULL )  delete LinkInfo;

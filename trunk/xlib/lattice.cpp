@@ -1527,7 +1527,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           }
         }
       }
-      else { // special case with just a single part
+      else if (parts[0] > 0) { // special case with just a single part
         _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, 0,
           &gen_atoms.AddNew());
         TCAtomPList& gen = gen_atoms.GetLast();
