@@ -426,7 +426,7 @@ PythonExt::PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name)
   : module_name(module_name),
     LogLevel(macrolib::macro_log_macro)
 {
-  if (Instance != NULL)
+  if (Instance() != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance() = this;
   OlexProcessor = olexProcessor;
