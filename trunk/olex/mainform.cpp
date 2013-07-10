@@ -106,9 +106,9 @@
 
   IMPLEMENT_CLASS(TMainForm, TMainFrame)
 
-static const olxstr ProcessOutputCBName("procout");
-static const olxstr OnStateChangeCBName("statechange");
-static const olxstr OnLogCBName("onlog");
+const olxstr ProcessOutputCBName("procout");
+const olxstr OnStateChangeCBName("statechange");
+const olxstr OnLogCBName("onlog");
 
 class TObjectVisibilityChange: public AActionHandler  {
   TMainForm *FParent;
