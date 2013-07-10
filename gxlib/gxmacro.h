@@ -14,10 +14,6 @@
 class GXLibMacros : public IEObject {
 protected:
   TGXApp &app;
-  static int QPeakSortA(const TCAtom &a, const TCAtom &b);
-  static int QPeakSortD(const TCAtom &a, const TCAtom &b) {
-    return QPeakSortA(b, a);
-  }
 public:
   GXLibMacros(TGXApp &app) : app(app) {}
   DefMacro(Grow)
@@ -70,6 +66,11 @@ public:
   DefMacro(Fmol)
 
   DefFunc(ExtraZoom)
+
+  static int QPeakSortA(const TCAtom &a, const TCAtom &b);
+  static int QPeakSortD(const TCAtom &a, const TCAtom &b) {
+    return QPeakSortA(b, a);
+  }
 
   void Export(TLibrary& lib);
 };

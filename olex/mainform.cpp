@@ -94,6 +94,7 @@
 #include "exparse/exptree.h"
 #include "math/libmath.h"
 #include "libfile.h"
+#include "gxmacro.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -1188,7 +1189,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
-  HtmlManager.InitialiseMain(4|wxVSCROLL|wxALWAYS_SHOW_SB);
+  HtmlManager.InitialiseMain(wxBORDER_NONE|wxVSCROLL|wxALWAYS_SHOW_SB|wxCLIP_CHILDREN);
   GetLibrary().AttachLibrary(HtmlManager.ExportLibrary());
 
   HtmlManager.OnLink.Add(this, ID_ONLINK);
@@ -2900,9 +2901,6 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   return true;
 }
 //..............................................................................
-int SortQPeak(const TCAtom &a1, const TCAtom &a2)  {
-  return olx_cmp(a2.GetQPeak(), a1.GetQPeak());
-}
 void TMainForm::QPeakTable(bool TableDef, bool Create)  {
   static const olxstr QPeakTableFile("qpeaks.htm");
   if( !Create )  {
@@ -2931,8 +2929,8 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       double pv = olx_abs(atoms[i]->GetQPeak());
       if (pv > max_peak) max_peak = pv;
     }
-    QuickSorter::SortSF(atoms, SortQPeak);
-    Table.Resize( olx_min(10, atoms.Count()), 3);
+    QuickSorter::SortSF(atoms, &GXLibMacros::QPeakSortD);
+    Table.Resize(olx_min(10, atoms.Count()), 3);
     size_t rowIndex = 0;
     for( size_t i=0; i < atoms.Count(); i++, rowIndex++ )  {
       if( i > 8 )  i = atoms.Count() -1;
@@ -2958,13 +2956,10 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       Table[rowIndex][2] = Tmp;
     }
   }
-  TStrList Output;
-  Table.CreateHTMLList(Output, EmptyString(), false, false, TableDef);
+  TStrList Output = Table.CreateHTMLList(EmptyString(), false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
-  TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(), cst.Length(), plStructure);
-  if( TEFile::Exists(QPeakTableFile) )
-    TEFile::DelFile(QPeakTableFile);
-  //TUtf8File::WriteLines( FN, Output, false );
+  TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(),
+    cst.Length(), plStructure);
 }
 //..............................................................................
 void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
