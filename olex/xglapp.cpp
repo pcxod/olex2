@@ -41,8 +41,6 @@
 #include <signal.h>
 #endif
 
-TGlXApp* TGlXApp::Instance = NULL;
-
 class TProgress: public AActionHandler  {
   wxProgressDialog *Progress;
   int Max, Start;
@@ -129,7 +127,7 @@ END_EVENT_TABLE()
 bool TGlXApp::OnInit()  {
   setlocale(LC_NUMERIC, "C");
   wxApp::SetAppName(wxT("olex2"));
-  Instance = this;
+  Instance() = this;
 //  wxToolTip::Enable(true);
   int ScreenW = wxSystemSettings::GetMetric(wxSYS_SCREEN_X),
       ScreenH = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
