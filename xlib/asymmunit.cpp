@@ -827,7 +827,7 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   }
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn)  {
   for( size_t i=0; i < CAtoms.Count(); i++ )
     CAtoms[i]->SetId(i);

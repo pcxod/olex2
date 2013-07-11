@@ -32,7 +32,7 @@ size_t TAtomEnvi::CountCovalent() const {
   return cnt;
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* neighbours = PyTuple_New( Envi.Count() );
   for( size_t i=0; i < Envi.Count(); i++ )  {

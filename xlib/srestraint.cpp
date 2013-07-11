@@ -78,7 +78,7 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
   Atoms.ToDataItem(item.AddItem("AtomList"));
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {
@@ -217,7 +217,7 @@ void TSRestraintList::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {

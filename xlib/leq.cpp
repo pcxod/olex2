@@ -23,7 +23,7 @@ void XVarReference::ToDataItem(TDataItem& item) const {
   item.AddField("rel", XVarManager::RelationNames[relation_type]);
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "name",
@@ -68,7 +68,7 @@ void XVar::ToDataItem(TDataItem& item) const {
       References[i]->ToDataItem(item.AddItem(i));
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* XVar::PyExport(TPtrList<PyObject>& atoms)  {
   size_t rc = 0;
   for( size_t i=0; i < References.Count(); i++ )  {
@@ -132,7 +132,7 @@ void XLEQ::ToDataItem(TDataItem& item) const {
   }
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* XLEQ::PyExport(TPtrList<PyObject>& _vars)  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "value", Py_BuildValue("d", Value));
@@ -444,7 +444,7 @@ void XVarManager::ToDataItem(TDataItem& item) const {
     Equations[i].ToDataItem( eqs.AddItem(i) );
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* XVarManager::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
   

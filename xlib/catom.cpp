@@ -217,7 +217,7 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
     item.AddField("peak", QPeak);
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TCAtom::PyExport(bool export_attached_sites)  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "label", PythonExt::BuildString(Label));

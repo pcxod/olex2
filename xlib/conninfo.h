@@ -45,7 +45,7 @@ protected:
     }
     void ToDataItem(TDataItem& item) const;
     void FromDataItem(const TDataItem& item, RefinementModel& rm, TCAtom& atom);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
     PyObject* PyExport();
 #endif
   };
@@ -65,7 +65,7 @@ protected:
     }
     void ToDataItem(TDataItem& item) const;
     void FromDataItem(const TDataItem& item, const cm_Element* elm);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
     PyObject* PyExport();
 #endif
   };
@@ -117,7 +117,7 @@ public:
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport();
 #endif
 };

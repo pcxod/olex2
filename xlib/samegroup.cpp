@@ -61,7 +61,7 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
     item.AddField("parent", ParentGroup->GetId());
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
   TPtrList<PyObject>& _atoms)
 {
@@ -186,7 +186,7 @@ void TSameGroupList::ToDataItem(TDataItem& item) const {
   item.AddField("n", cnt);
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
   size_t id = 0;
   for( size_t i=0; i < Groups.Count(); i++ )  {

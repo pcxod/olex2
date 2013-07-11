@@ -21,7 +21,7 @@
 #include "ememstream.h"
 #include "povdraw.h"
 
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   #include "pyext.h"
 #endif
 
@@ -190,7 +190,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   Instance = this;
   Loading_ = Boxed = Extended = false;
   RenderMode = planeRenderModeFill;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PythonExt::GetInstance()->Register(&TXGrid::PyInit);
 #endif
   XApp = xapp;
@@ -1295,7 +1295,7 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* pyImport(PyObject* self, PyObject* args)  {
   char* data;
   int dim1, dim2, dim3, focus1, focus2, focus3;
@@ -1436,4 +1436,4 @@ static PyMethodDef XGRID_Methods[] = {
 void TXGrid::PyInit()  {
   Py_InitModule( "olex_xgrid", XGRID_Methods );
 }
-#endif // _NO_PYTHON
+#endif // _PYTHON

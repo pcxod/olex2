@@ -42,7 +42,7 @@ rotated_adp_constraint* rotated_adp_constraint::Copy(
     *atom, rm.DirectionById(c.dir.id), c.angle, c.refine_angle);
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* rotated_adp_constraint::PyExport() const {
   return Py_BuildValue("i,i,O,d,b", source.GetTag(), destination.GetTag(),
     PythonExt::BuildString(dir.id), angle, refine_angle
@@ -176,7 +176,7 @@ olxstr static_direction::Describe() const {
   return  rv << " [" << value.ToString() << ']';
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject *static_direction::PyExport() const {
   return Py_BuildValue("s, s, (f,f,f)",
     PythonExt::BuildString(adirection::EncodeType(direction_static)),
@@ -308,7 +308,7 @@ same_group_constraint* same_group_constraint::Copy(
   return &g;
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* same_group_constraint::PyExport() const {
   PyObject *gs = PyTuple_New(groups.Count());
   for( size_t i=0; i < groups.Count(); i++ )  {
@@ -449,7 +449,7 @@ tls_group_constraint* tls_group_constraint::FromDataItem(const TDataItem& di,
   return new tls_group_constraint(l);
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* tls_group_constraint::PyExport() const {
   PyObject *a = PyTuple_New(atoms.Count());
   for (size_t i=0; i < atoms.Count(); i++)

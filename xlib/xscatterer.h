@@ -208,7 +208,7 @@ public:
       wt = toks[ind++].ToDouble();
     source = XElementLib::FindBySymbol(Label);
   }
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport()  {
     PyObject* main = PyDict_New();
     if( (set_items & setGaussian) != 0 )  {

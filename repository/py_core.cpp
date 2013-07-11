@@ -27,7 +27,7 @@
 #undef GetObject
 
 using namespace olex2;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 
 PyObject* pyVarValue(PyObject* self, PyObject* args)  {
   olxstr varName;

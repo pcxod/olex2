@@ -48,7 +48,7 @@ void ExperimentalDetails::ToDataItem(TDataItem& item) const {
   item.AddField("crystal_size", PersUtil::VecToStr(CrystalSize));
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* ExperimentalDetails::PyExport() {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "radiation", Py_BuildValue("d", Radiation));

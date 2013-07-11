@@ -113,7 +113,7 @@ public:
   virtual olxstr GetIdName() const;
   void ToDataItem(TDataItem& item) const;
   virtual TIString ToString() const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   ConstPtrList<PyObject> PyExport(TPtrList<PyObject>& atoms,
     TPtrList<PyObject>& equiv);
 #endif
@@ -175,7 +175,7 @@ public:
   virtual size_t ReferencerCount() const {  return Restraints.Count();  }
 //
   void ToDataItem(TDataItem& item) const;
-  #ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
   void FromDataItem(const TDataItem& item);

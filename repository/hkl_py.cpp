@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #include "hkl_py.h"
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 
 PyMethodDef hkl_py::Methods[] = {
   {"Read", hkl_py::Read, METH_VARARGS, "reads an HKL file and returns a tuple of the reflections"},
