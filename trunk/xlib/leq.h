@@ -13,7 +13,7 @@
 #include "rm_base.h"
 #include "typelist.h"
 #include "dataitem.h"
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   #include "pyext.h"
 #endif
 
@@ -56,7 +56,7 @@ public:
   // returns the value of the atom parameter associated with this reference
   double GetActualValue() const {  return referencer.GetValue(var_index);  }
   void ToDataItem(TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& referrers);
 #endif
   // returns a new instance created with new
@@ -95,7 +95,7 @@ public:
   DefPropP(size_t, Id)  
 
   void ToDataItem(TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif
   static XVar& FromDataItem(const TDataItem& item, XVarManager& parent);
@@ -149,7 +149,7 @@ public:
   DefPropP(double, Sigma)
   DefPropP(size_t, Id)
   void ToDataItem(TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& vars);
 #endif
   static XLEQ& FromDataItem(const TDataItem& item, XVarManager& parent);
@@ -288,7 +288,7 @@ public:
   void Describe(TStrList& lst);
 
   void ToDataItem(TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif
   void FromDataItem(const TDataItem& item);

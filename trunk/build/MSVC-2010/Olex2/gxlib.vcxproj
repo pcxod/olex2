@@ -229,7 +229,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswd;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -248,7 +248,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\mswd;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;_DEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -268,7 +268,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\msw;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;WIN32;NDEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -290,7 +290,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\msw;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;WIN32;NDEBUG;__WXWIDGETS__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -307,7 +307,7 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -329,7 +329,7 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\mswud;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -349,7 +349,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -376,7 +376,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\mswud;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -405,7 +405,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;_NO_PYTHON;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;_UNICODE;_NO_PYTHON;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -431,7 +431,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\mswud;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;_NO_PYTHON;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;_UNICODE;_NO_PYTHON;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -454,7 +454,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -481,7 +481,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\mswud;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -505,7 +505,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(OLX_WX_DIR)\lib\vc_lib\mswud;$(OLX_WX_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -531,7 +531,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(OLX_WX64_DIR)\lib\vc_lib\mswud;$(OLX_WX64_DIR)\include;..\..\..\glib;..\..\..\xlib;..\..\..\repository;$(OLX_PY64_DIR)\include;..\..\..\sdl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_PYTHON;__WXWIDGETS__;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>

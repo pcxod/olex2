@@ -29,7 +29,7 @@ void TExyzGroup::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TExyzGroup::PyExport(TPtrList<PyObject>& atoms)  {
   int atom_cnt = 0;
   for( size_t i=0; i < Atoms.Count(); i++ )  {
@@ -70,7 +70,7 @@ void TExyzGroups::ToDataItem(TDataItem& item) {
     Groups[i].ToDataItem(item.AddItem(group_id++));
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TExyzGroups::PyExport(TPtrList<PyObject>& atoms)  {
   int group_id = 0;
   for( size_t i=0; i < Groups.Count(); i++ )  {

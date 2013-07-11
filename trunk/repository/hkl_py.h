@@ -10,7 +10,7 @@
 #ifndef __olx_hkl_py_H
 #define __olx_hkl_py_H
 
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 #include "pyext.h"
 #include "hkl.h"
 

@@ -13,7 +13,7 @@
 #include "etime.h"
 #include "etbuffer.h"
 
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 #if defined __APPLE__ && defined __MACH__
   #include "Python/python.h"
 #else

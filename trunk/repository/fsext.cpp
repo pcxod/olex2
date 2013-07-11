@@ -13,7 +13,7 @@
 #include "egc.h"
 #include "eutf8.h"
 #include "bapp.h"
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 #include "pyext.h"
 #endif
 
@@ -57,7 +57,7 @@ TFileHandlerManager::TFileHandlerManager()  {
   if (Handler() != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   TEGC::AddP(Handler() = this);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PythonExt::GetInstance()->Register(&TFileHandlerManager::PyInit);
 #endif
 }
@@ -381,7 +381,7 @@ TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* fsext_pyExists(PyObject* self, PyObject* args)  {
   olxstr fn;
   PythonExt::ParseTuple(args, "w", &fn);
@@ -468,4 +468,4 @@ static PyMethodDef OLEXFS_Methods[] = {
 void TFileHandlerManager::PyInit()  {
   Py_InitModule( "olex_fs", OLEXFS_Methods );
 }
-#endif //_NO_PYTHON
+#endif //_PYTHON

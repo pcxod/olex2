@@ -160,7 +160,7 @@ public:
   TIString ToString() const;
 
   void ToDataItem(TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif
   void FromDataItem(TDataItem& item);
@@ -204,7 +204,7 @@ public:
   void Release(TAfixGroup &ag);
   void Restore(TAfixGroup &ag);
   void ToDataItem(TDataItem& item);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif
   void FromDataItem(TDataItem& item);

@@ -1366,7 +1366,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   aunit._UpdateConnInfo();
 }
 //.............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* RefinementModel::PyExport(bool export_conn)  {
   PyObject* main = PyDict_New(), 
     *hklf = PyDict_New(), 

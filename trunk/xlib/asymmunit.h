@@ -295,7 +295,7 @@ public:
   virtual size_t ReferencerCount() const {  return CAtoms.Count();  }
 //
   void ToDataItem(TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, bool export_conn);
 #endif
   void FromDataItem(TDataItem& item);

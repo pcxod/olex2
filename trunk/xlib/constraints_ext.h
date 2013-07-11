@@ -41,7 +41,7 @@ struct adirection : public AReferencible {
   }
   virtual adirection* CreateFromDataItem(const TDataItem& di,
     const RefinementModel& rm) const = 0;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   virtual PyObject* PyExport() const = 0;
 #endif
   static const olxstr& GetName();
@@ -65,7 +65,7 @@ struct static_direction : public adirection {
   virtual olxstr ToInsStr(const RefinementModel& rm) const;
   virtual void ToDataItem(TDataItem& di) const;
   virtual olxstr Describe() const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   virtual PyObject* PyExport() const;
 #endif
 };
@@ -93,7 +93,7 @@ struct direction : public adirection {
   olxstr ToInsStr(const RefinementModel& rm) const;
   virtual olxstr Describe() const;
   void ToDataItem(TDataItem& di) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport() const;
 #endif
 };
@@ -131,7 +131,7 @@ struct rotated_adp_constraint  {
   void ToDataItem(TDataItem& di) const;
   static rotated_adp_constraint* FromDataItem(const TDataItem& di,
     const RefinementModel& rm);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport() const;
 #endif
 };
@@ -173,7 +173,7 @@ public:
   void ToDataItem(TDataItem& di) const;
   static same_group_constraint* FromDataItem(const TDataItem& di,
     const RefinementModel& rm);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport() const;
 #endif
 };
@@ -205,7 +205,7 @@ public:
   void ToDataItem(TDataItem& di) const;
   static tls_group_constraint* FromDataItem(const TDataItem& di,
     const RefinementModel& rm);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport() const;
 #endif
 };
@@ -221,7 +221,7 @@ public:
   virtual TDataItem& ToDataItem(TDataItem& di) const = 0;
   virtual void FromDataItem(const TDataItem* di, const RefinementModel& rm) = 0;
   virtual void Assign(RefinementModel& rm, const IConstraintContainer& c) = 0;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   virtual PyObject* PyExport() const = 0;
 #endif
 };
@@ -279,7 +279,7 @@ public:
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, items.Count());
     items[index].UpdateParams(toks);
   }
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport() const {
     size_t cnt = 0;
     for( size_t i=0; i < items.Count(); i++ )  {

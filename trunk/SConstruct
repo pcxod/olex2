@@ -247,6 +247,7 @@ if sys.platform[:3] == 'win':
       cc_flags.append( '/arch:'+sse)
     env.Append(CCFLAGS = cc_flags) 
     env.Append(CPPPATH=[pyFolder+'include'])
+    env.Append(CCFLAGS = ['-D_PYTHON'])
     #env.Append(LINKFLAGS=['/LTCG'])
   else:
     cc_flags = ['/EHsc', '/RTC1', '-D_DUBUG', '/Od', '/MDd', '/bigobj', '/fp:fast']
@@ -289,6 +290,7 @@ else:
     tests_env = env.Clone()
     env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
     unirun_env = env.Clone()
+    env.Append(CCFLAGS = ['-D_PYTHON'])
     env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --libs")
   except:
@@ -309,6 +311,7 @@ generic_files = processFileNameList(generic_files_list, env, out_dir+'generic')
 
 if sys.platform[:3] == 'win':
   tests_env = env.Clone()
+  tests_env['CCFLAGS'].remove('-D_PYTHON')
   wx_env = env.Clone()
   wx_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
   wx_env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
@@ -327,6 +330,7 @@ if sys.platform[:3] == 'win':
   wx_env.Append(LIBS = Split(wx_libs.replace('$$', wxVersion)))
   olex2_env = wx_env.Clone()
   unirun_env = wx_env.Clone()
+  unirun_env['CCFLAGS'].remove('-D_PYTHON')
 else:
   olex2_env = env
 
@@ -353,13 +357,11 @@ unirun_files.append('./repository/updateapi.cpp')
 #unirun_files.append('./repository/shellutil.cpp')
 unirun_files = processFileNameList(unirun_files, unirun_env, out_dir+'unirun')
 
-unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 if sys.platform[:3] == 'win':
   unirun_env.Append(LINKFLAGS=['/MANIFEST', '/MANIFESTUAC:"level=\'asInvoker\'"',
     '/PDB:' + out_dir + 'exe/unirun.pdb'])
 unirun_env.Program(out_dir+'exe/unirun', unirun_files)
 
-tests_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 tests_files = generic_files_list + fileListToStringList('tests/tests', tests)
 tests_files.append('./repository/olxvar.cpp')
 tests_files.append('./repository/fsext.cpp')

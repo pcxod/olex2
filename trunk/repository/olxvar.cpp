@@ -12,7 +12,7 @@
 #include "efile.h"
 
 TOlxVars* TOlxVars::Instance = NULL;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 #include "pyext.h"
 char TOlxPyVar::svmn[] = "setValue";
 char TOlxPyVar::gvmn[] = "getValue";
@@ -201,7 +201,7 @@ TOlxVars::TOlxVars()  {
   OnVarChange = &Actions.New("OnVarChange");
 //  TEGC::AddP(this);  // we cannot do this, as Pyhon might be Finalised beforehand!!!
 }
-#endif // _NO_PYTHON
+#endif // _PYTHON
 //............................................................................
 void olxvar_funUnsetVar(const TStrObjList& Params, TMacroError &E)  {
   TOlxVars::UnsetVar(Params[0]);

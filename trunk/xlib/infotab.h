@@ -76,7 +76,7 @@ public:
 
   void ToDataItem(TDataItem& di) const;
   void FromDataItem(const TDataItem& di, RefinementModel& rm);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport();
 #endif
 };

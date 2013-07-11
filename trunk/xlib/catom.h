@@ -17,7 +17,7 @@
 #include "dataitem.h"
 #include "leq.h"
 
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   #include "pyext.h"
 #endif
 
@@ -279,7 +279,7 @@ public:
 //
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(bool export_attached_sites);
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);

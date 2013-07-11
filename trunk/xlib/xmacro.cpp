@@ -1226,7 +1226,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
   }
   double def_max_d = 2.9,
     def_min_ang =TXApp::GetMinHBondAngle();
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   if (op) {
     olxstr f = "spy.GetParam('snum.cif.htab_max_d')";
@@ -1253,7 +1253,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
     else
       max_d = 2.9;
   }
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   if (op) {
     op->processMacro(olx_print("spy.SetParam('snum.cif.htab_max_d', %lf)", max_d));
     op->processMacro(olx_print("spy.SetParam('snum.cif.htab_min_angle', %lf)", min_ang));
@@ -2244,7 +2244,7 @@ void XLibMacros::macLstVar(TStrObjList &Cmds, const TParamList &Options,
   TTTable<TStrList> tab(TOlxVars::VarCount(), 3);
   tab.ColName(0) = "Name";
   tab.ColName(1) = "Value";
-#ifndef _NO_PYTHON_
+#ifdef _PYTHON_
   tab.ColName(2) = "RefCnt";
 #endif
   size_t rowsCount = 0;
@@ -2260,7 +2260,7 @@ void XLibMacros::macLstVar(TStrObjList &Cmds, const TParamList &Options,
     if( !add )  continue;
     tab[rowsCount][0] = vn;
     tab[rowsCount][1] = TOlxVars::GetVarStr(i);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
     if( TOlxVars::GetVarWrapper(i) != NULL )
       tab[rowsCount][2] = TOlxVars::GetVarWrapper(i)->ob_refcnt;
     else

@@ -97,7 +97,7 @@ public:
     TMacroError &Error);
   static TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 protected:
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   static void PyInit();
 #endif
 

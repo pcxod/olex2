@@ -214,7 +214,7 @@ public:
   void LibRenderMode(const TStrObjList& Params, TMacroError& E);
   void LibIsvalid(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString());
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   static void PyInit();
 #endif  
   void ToDataItem(TDataItem& item, IOutputStream& zos) const;
