@@ -6,7 +6,7 @@
 * This source file is distributed under the terms of the licence located in   *
 * the root folder.                                                            *
 ******************************************************************************/
-
+#include <cstdarg>
 #include "ostring.h"
 #include "../exception.h"
 
