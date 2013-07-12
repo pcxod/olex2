@@ -555,117 +555,141 @@ void TCif::Initialize()  {
   }
   // geometric parameters
   ALoop = FindLoop("_geom_bond");
-  if( ALoop != NULL )  {
-    const size_t ALabel =  ALoop->ColIndex("_geom_bond_atom_site_label_1");
-    const size_t ALabel1 = ALoop->ColIndex("_geom_bond_atom_site_label_2");
-    const size_t BD =      ALoop->ColIndex("_geom_bond_distance");
-    const size_t SymmA = ALoop->ColIndex("_geom_bond_site_symmetry_2");
-    if( (ALabel|ALabel1|BD|SymmA) != InvalidIndex )  {
-      TEValueD ev;
-      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
-        const CifRow& Row = (*ALoop)[i];
-        ev = Row[BD]->GetStringValue();
-        TCAtomPList atoms = FindAtoms(TStrList() <<
-          Row[ALabel]->GetStringValue() << Row[ALabel1]->GetStringValue());
-        if (atoms.Count() == 2) {
-          ACifValue* cv = NULL;
-          if( Row[SymmA]->GetStringValue() == '.' )  {
-            cv = new CifBond(*atoms[0], *atoms[1], ev);
+  if (ALoop != NULL) {
+    try {
+      const size_t ALabel =  ALoop->ColIndex("_geom_bond_atom_site_label_1");
+      const size_t ALabel1 = ALoop->ColIndex("_geom_bond_atom_site_label_2");
+      const size_t BD =      ALoop->ColIndex("_geom_bond_distance");
+      const size_t SymmA = ALoop->ColIndex("_geom_bond_site_symmetry_2");
+      if ((ALabel|ALabel1|BD|SymmA) != InvalidIndex) {
+        TEValueD ev;
+        for (size_t i=0; i < ALoop->RowCount(); i++) {
+          const CifRow& Row = (*ALoop)[i];
+          ev = Row[BD]->GetStringValue();
+          TCAtomPList atoms = FindAtoms(TStrList() <<
+            Row[ALabel]->GetStringValue() << Row[ALabel1]->GetStringValue());
+          if (atoms.Count() == 2) {
+            ACifValue* cv = NULL;
+            if (Row[SymmA]->GetStringValue() == '.') {
+              cv = new CifBond(*atoms[0], *atoms[1], ev);
+            }
+            else  {
+              cv = new CifBond(*atoms[0], *atoms[1],
+                SymmCodeToMatrix(Row[SymmA]->GetStringValue()), ev);
+            }
+            DataManager.AddValue(cv);
           }
-          else  {
-            cv = new CifBond(*atoms[0], *atoms[1],
-              SymmCodeToMatrix(Row[SymmA]->GetStringValue()), ev);
-          }
-          DataManager.AddValue(cv);
         }
       }
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logException) << "Failed to read the '" <<
+        ALoop->GetName() << " loop: " << e.GetException()->GetFullMessage();
     }
   }
   ALoop = FindLoop("_geom_hbond");
-  if( ALoop != NULL )  {
-    const size_t ALabel =  ALoop->ColIndex("_geom_hbond_atom_site_label_D");
-    const size_t ALabel1 = ALoop->ColIndex("_geom_hbond_atom_site_label_A");
-    const size_t BD =      ALoop->ColIndex("_geom_hbond_distance_DA");
-    const size_t SymmA =   ALoop->ColIndex("_geom_hbond_site_symmetry_A");
-    if( (ALabel|ALabel1|BD|SymmA) != InvalidIndex )  {
-      TEValueD ev;
-      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
-        const CifRow& Row = (*ALoop)[i];
-        ev = Row[BD]->GetStringValue();
-        TCAtomPList atoms = FindAtoms(TStrList() <<
-          Row[ALabel]->GetStringValue() << Row[ALabel1]->GetStringValue());
-        if (atoms.Count() == 2) {
-          ACifValue* cv = NULL;
-          if( Row[SymmA]->GetStringValue() == '.' )  {
-            cv = new CifBond(*atoms[0], *atoms[1], ev);
+  if (ALoop != NULL) {
+    try {
+      const size_t ALabel =  ALoop->ColIndex("_geom_hbond_atom_site_label_D");
+      const size_t ALabel1 = ALoop->ColIndex("_geom_hbond_atom_site_label_A");
+      const size_t BD =      ALoop->ColIndex("_geom_hbond_distance_DA");
+      const size_t SymmA =   ALoop->ColIndex("_geom_hbond_site_symmetry_A");
+      if ((ALabel|ALabel1|BD|SymmA) != InvalidIndex) {
+        TEValueD ev;
+        for (size_t i=0; i < ALoop->RowCount(); i++) {
+          const CifRow& Row = (*ALoop)[i];
+          ev = Row[BD]->GetStringValue();
+          TCAtomPList atoms = FindAtoms(TStrList() <<
+            Row[ALabel]->GetStringValue() << Row[ALabel1]->GetStringValue());
+          if (atoms.Count() == 2) {
+            ACifValue* cv = NULL;
+            if (Row[SymmA]->GetStringValue() == '.') {
+              cv = new CifBond(*atoms[0], *atoms[1], ev);
+            }
+            else {
+              cv = new CifBond(*atoms[0], *atoms[1],
+                SymmCodeToMatrix(Row[SymmA]->GetStringValue()),
+                ev);
+            }
+            DataManager.AddValue(cv);
           }
-          else  {
-            cv = new CifBond(*atoms[0], *atoms[1],
-              SymmCodeToMatrix(Row[SymmA]->GetStringValue()),
-              ev);
-          }
-          DataManager.AddValue(cv);
         }
       }
     }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logException) << "Failed to read the '" <<
+        ALoop->GetName() << " loop: " << e.GetException()->GetFullMessage();
+    }
   }
   ALoop = FindLoop("_geom_angle");
-  if( ALoop != NULL )  {
-    const size_t ind_l =  ALoop->ColIndex("_geom_angle_atom_site_label_1");
-    const size_t ind_m =  ALoop->ColIndex("_geom_angle_atom_site_label_2");
-    const size_t ind_r =  ALoop->ColIndex("_geom_angle_atom_site_label_3");
-    const size_t ind_a =  ALoop->ColIndex("_geom_angle");
-    const size_t ind_sl = ALoop->ColIndex("_geom_angle_site_symmetry_1");
-    const size_t ind_sr = ALoop->ColIndex("_geom_angle_site_symmetry_3");
-    if( (ind_l|ind_m|ind_r|ind_a|ind_sl|ind_sr) != InvalidIndex )  {
-      TEValueD ev;
-      smatd im;
-      im.I();
-      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
-        const CifRow& Row = (*ALoop)[i];
-        ev = Row[ind_a]->GetStringValue();
-        TCAtomPList atoms = FindAtoms(TStrList() <<
-          Row[ind_l]->GetStringValue() <<
-          Row[ind_m]->GetStringValue() <<
-          Row[ind_r]->GetStringValue());
-        if (atoms.Count() == 3) {
-          ACifValue* cv = NULL;
-          if( Row[ind_sl]->GetStringValue() == '.' &&
-              Row[ind_sr]->GetStringValue() == '.' )
-          {
-            cv = new CifAngle(*atoms[0], *atoms[1], *atoms[2], ev);
+  if (ALoop != NULL) {
+    try {
+      const size_t ind_l =  ALoop->ColIndex("_geom_angle_atom_site_label_1");
+      const size_t ind_m =  ALoop->ColIndex("_geom_angle_atom_site_label_2");
+      const size_t ind_r =  ALoop->ColIndex("_geom_angle_atom_site_label_3");
+      const size_t ind_a =  ALoop->ColIndex("_geom_angle");
+      const size_t ind_sl = ALoop->ColIndex("_geom_angle_site_symmetry_1");
+      const size_t ind_sr = ALoop->ColIndex("_geom_angle_site_symmetry_3");
+      if ((ind_l|ind_m|ind_r|ind_a|ind_sl|ind_sr) != InvalidIndex) {
+        TEValueD ev;
+        smatd im;
+        im.I();
+        for (size_t i=0; i < ALoop->RowCount(); i++) {
+          const CifRow& Row = (*ALoop)[i];
+          ev = Row[ind_a]->GetStringValue();
+          TCAtomPList atoms = FindAtoms(TStrList() <<
+            Row[ind_l]->GetStringValue() <<
+            Row[ind_m]->GetStringValue() <<
+            Row[ind_r]->GetStringValue());
+          if (atoms.Count() == 3) {
+            ACifValue* cv = NULL;
+            if (Row[ind_sl]->GetStringValue() == '.' &&
+                Row[ind_sr]->GetStringValue() == '.')
+            {
+              cv = new CifAngle(*atoms[0], *atoms[1], *atoms[2], ev);
+            }
+            else {
+              cv = new CifAngle(
+                *atoms[0],
+                *atoms[1],
+                *atoms[2],
+                Row[ind_sl]->GetStringValue() == '.' ? im
+                  : SymmCodeToMatrix(Row[ind_sl]->GetStringValue()),
+                Row[ind_sr]->GetStringValue() == '.' ? im
+                  : SymmCodeToMatrix(Row[ind_sr]->GetStringValue()),
+                ev);
+            }
+            DataManager.AddValue(cv);
           }
-          else  {
-            cv = new CifAngle(
-              *atoms[0],
-              *atoms[1],
-              *atoms[2],
-              Row[ind_sl]->GetStringValue() == '.' ? im
-                : SymmCodeToMatrix(Row[ind_sl]->GetStringValue()),
-              Row[ind_sr]->GetStringValue() == '.' ? im
-                : SymmCodeToMatrix(Row[ind_sr]->GetStringValue()),
-              ev);
-          }
-          DataManager.AddValue(cv);
         }
       }
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logException) << "Failed to read the '" <<
+        ALoop->GetName() << " loop: " << e.GetException()->GetFullMessage();
     }
   }
   // read in the dispersion values
   ALoop = FindLoop("_atom_type");
-  if( ALoop != NULL )  {
-    const size_t ind_s = ALoop->ColIndex("_atom_type_symbol");
-    const size_t ind_r = ALoop->ColIndex("_atom_type_scat_dispersion_real");
-    const size_t ind_i = ALoop->ColIndex("_atom_type_scat_dispersion_imag");
-    if( (ind_s|ind_r|ind_i) != InvalidIndex )  {
-      for( size_t i=0; i < ALoop->RowCount(); i++ )  {
-        const CifRow& r = (*ALoop)[i];
-        XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
-        sc->SetFpFdp(
-          compd(r[ind_r]->GetStringValue().ToDouble(),
-                r[ind_i]->GetStringValue().ToDouble()));
-        GetRM().AddSfac(*sc);
+  if (ALoop != NULL) {
+    try {
+      const size_t ind_s = ALoop->ColIndex("_atom_type_symbol");
+      const size_t ind_r = ALoop->ColIndex("_atom_type_scat_dispersion_real");
+      const size_t ind_i = ALoop->ColIndex("_atom_type_scat_dispersion_imag");
+      if ((ind_s|ind_r|ind_i) != InvalidIndex) {
+        for (size_t i=0; i < ALoop->RowCount(); i++) {
+          const CifRow& r = (*ALoop)[i];
+          XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
+          sc->SetFpFdp(
+            compd(r[ind_r]->GetStringValue().ToDouble(),
+                  r[ind_i]->GetStringValue().ToDouble()));
+          GetRM().AddSfac(*sc);
+        }
       }
+    }
+    catch (const TExceptionBase &e) {
+      throw TFunctionFailedException(__OlxSourceInfo, e,
+        olxstr("while reading ").quote() << ALoop->GetName() << " loop");
     }
   }
   // identify EXYZ/EADP
