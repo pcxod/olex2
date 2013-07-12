@@ -3244,7 +3244,7 @@ void TMainForm::OnInternalIdle()  {
 //..............................................................................
 void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
   wxBitmap bmp(32, 32);
-  wxMemoryDC memDC;
+  wxMemoryDC memDC(bmp);
   wxBrush Brush = memDC.GetBrush();
   Brush.SetColour(*wxWHITE);
   memDC.SetBrush(Brush);
@@ -3260,7 +3260,6 @@ void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
 #endif
 
   memDC.SetFont(Font);
-  memDC.SelectObject(bmp);
   memDC.Clear();
   Brush.SetColour(*wxGREEN);
   memDC.SetBrush(Brush);
