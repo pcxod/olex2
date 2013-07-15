@@ -910,16 +910,6 @@ TAG_HANDLER_PROC(tag)  {
         fgc = ExpandMacroShortcuts(tag.GetParam(wxT("FGCOLOR")), macro_map);
         op->processFunction(fgc, SrcInfo, false);
       }
-
-      if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {
-        TComboBox* Box = (TComboBox*)CreatedWindow;
-        if( !bgc.IsEmpty() )  {
-          wxColor bgCl = wxColor(bgc.u_str());
-        }
-        if( !fgc.IsEmpty() )  {
-          wxColor fgCl = wxColor(bgc.u_str());
-        }
-      }
       if( !bgc.IsEmpty() )
         CreatedWindow->SetBackgroundColour(wxColor(bgc.u_str()));
       if( !fgc.IsEmpty() )
