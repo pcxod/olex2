@@ -94,7 +94,7 @@ public:
   bool IsDefaultColor() const {  return DefaultColor;  }
   bool IsBlended() const {  return Blended;  }
   void SetBlended(bool v);
-  const TGlMaterial& GetGlM()  {  return GlM; }
+  const TGlMaterial& GetGlM() const {  return GlM; }
   void SetGlM(const TGlMaterial& m);
   // returns the actually rendered material
   virtual TGlMaterial GetActualMaterial(const TGlMaterial &) const;

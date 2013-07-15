@@ -1720,34 +1720,51 @@ void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
     matrices);
 }
 //..............................................................................
-ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName)  {
+ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName) {
   TXAtomPList res;
-  if( AtomName.StartsFrom("#c") )  {  // TCAtom.Id
+  if (AtomName.StartsFrom("#c")) {  // TCAtom.Id
     const size_t id = AtomName.SubStringFrom(2).ToSizeT();
     AtomIterator ai(*this);
-    while( ai.HasNext() )  {
+    while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
-      if( xa.CAtom().GetId() == id && xa.IsVisible() )
+      if (xa.CAtom().GetId() == id && xa.IsVisible())
         res.Add(xa);
     }
   }
-  else if( AtomName.StartsFrom("#s") )  {  // SAtom.LatId
+  else if (AtomName.StartsFrom("#s"))  {  // SAtom.LatId
     const size_t id = AtomName.SubStringFrom(2).ToSizeT();
     AtomIterator ai(*this);
-    while( ai.HasNext() )  {
+    while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
-      if( xa.GetOwnerId() == id && xa.IsVisible() )  {
+      if (xa.GetOwnerId() == id && xa.IsVisible()) {
         res.Add(xa);
         break;
       }
     }
   }
-  else  {
+  else {
+    size_t idx = AtomName.IndexOf('_');
+    olxstr label;
+    static const int32_t mxi32 = (int32_t)((uint32_t)(~0) >> 1);
+    int32_t resi_n = mxi32;
+    if (idx != InvalidIndex && AtomName.SubStringFrom(idx+1).IsNumber()) {
+      label = AtomName.SubStringTo(idx);
+      resi_n = AtomName.SubStringFrom(idx+1).ToInt();
+    }
+    else {
+      label = AtomName;
+    }
+    TAsymmUnit &au = XFile().GetAsymmUnit();
     AtomIterator ai(*this);
-    while( ai.HasNext() )  {
+    while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
-      if( xa.GetLabel().Equalsi(AtomName) && xa.IsVisible() )  
+      if (!xa.IsVisible()) continue;
+      if ((resi_n == mxi32 ||
+            resi_n == au.GetResidue(xa.CAtom().GetResiId()).GetNumber()) &&
+          xa.GetLabel().Equalsi(label))
+      {
         res.Add(xa);
+      }
     }
   }
   return res;

@@ -19,9 +19,12 @@ private:
   int OnExit();
   Olex2App* XApp;
   class TMainForm* MainForm;
-  static TGlXApp* Instance;
+  static TGlXApp *&Instance() {
+    static TGlXApp* Instance=NULL;
+    return Instance;
+  }
   TEFile* pid_file;
-  void OnChar(wxKeyEvent& event);  
+  void OnChar(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);
   void OnNavigation(wxNavigationKeyEvent& event);
   void OnIdle(wxIdleEvent& event);
@@ -30,9 +33,9 @@ public:
   bool Dispatch();
 //  int MainLoop();
   TEFile *GetPIDFile() const { return pid_file; }
-  static TGlXApp*  GetInstance()  {  return Instance;  }
-  static TMainForm* GetMainForm() {  return GetInstance()->MainForm;  }
-  static TGXApp* GetGXApp()       {  return GetInstance()->XApp;  }
+  static TGlXApp* GetInstance() { return Instance(); }
+  static TMainForm* GetMainForm() { return GetInstance()->MainForm; }
+  static TGXApp* GetGXApp() { return GetInstance()->XApp; }
 
   DECLARE_EVENT_TABLE()
 };

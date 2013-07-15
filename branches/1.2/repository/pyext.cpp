@@ -23,9 +23,7 @@
 // egc cannot be used here as python can be finalised before egc is called
 // causing troubles with reference counting ...
 //#include "egc.h"
-#ifndef _NO_PYTHON
-
-PythonExt* PythonExt::Instance = NULL;
+#ifdef _PYTHON
 //.............................................................................
 //.............................................................................
 class TFuncWrapper : public PythonExt::BasicWrapper  {
@@ -428,18 +426,18 @@ PythonExt::PythonExt(IOlex2Processor* olexProcessor, const olxstr &module_name)
   : module_name(module_name),
     LogLevel(macrolib::macro_log_macro)
 {
-  if( Instance != NULL )
+  if (Instance() != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
-  Instance = this;
+  Instance() = this;
   OlexProcessor = olexProcessor;
 }
 //.............................................................................
-PythonExt::~PythonExt()  {
+PythonExt::~PythonExt() {
   ClearToDelete();
-  if( Py_IsInitialized() ) {
+  if (Py_IsInitialized()) {
     Py_Finalize();
   }
-  Instance = NULL;
+  Instance() = NULL;
 }
 //.............................................................................
 void PythonExt::CheckInitialised()  {
@@ -651,7 +649,7 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...)  {
         os->Append(str, len);
       }
       else if( io->ob_type == &PyUnicode_Type )  {
-        int usz =  PyUnicode_GetSize(io);
+        Py_ssize_t usz =  PyUnicode_GetSize(io);
         TTBuffer<wchar_t> wc_bf(usz+1);
         usz = PyUnicode_AsWideChar((PyUnicodeObject*)io, wc_bf.Data(), usz);
         if( usz > 0 )

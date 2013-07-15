@@ -74,7 +74,7 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "afix", Py_BuildValue("i", Afix));
@@ -165,7 +165,7 @@ void TAfixGroups::ToDataItem(TDataItem& item) {
     Groups[i].ToDataItem(item.AddItem(i));
 }
 //..............................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
   int group_id = 0;
   for( size_t i=0; i < Groups.Count(); i++ )  {

@@ -95,7 +95,7 @@ void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
   }
 }
 
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* InfoTab::PyExport() {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "type",

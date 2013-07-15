@@ -91,7 +91,7 @@ public:
   double Esd12, Esd13;
 
   void ToDataItem(TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
     TPtrList<PyObject>& atoms);
 #endif
@@ -125,7 +125,7 @@ public:
   void Restore(TSameGroup& sg);
 
   void ToDataItem(TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif
   void FromDataItem(TDataItem& item);

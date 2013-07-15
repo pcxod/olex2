@@ -15,7 +15,7 @@
 /* This is a default and sufficient implementation of the IOlex2Processor
 interface
 */
-namespace olex {
+namespace olex2 {
 
 class OlexProcessorImp : public IOlex2Processor {
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;

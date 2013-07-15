@@ -15,7 +15,7 @@
 #include "wildcard.h"
 #include "os_util.h"
 
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   #include "pyext.h"
 // python object types
 const short
@@ -228,7 +228,7 @@ public:
   }
   static TLibrary *ExportLibrary(const olxstr &name="env", TLibrary *l=NULL);
 };
-#else  // _NO_PYTHON
+#else  // _PYTHON
 // use a very thin implementation with no python...
 class TOlxVars : public IEObject  {
   static TOlxVars* Instance;
@@ -313,7 +313,7 @@ public:
   }
   static TLibrary *ExportLibrary(const olxstr &name="env", TLibrary *l=NULL);
 };
-#endif  // _NO_PYTHON
+#endif  // _PYTHON
 /* a convinience object: sets var withi given name on the creation and unsets
 on destruction thread safe - synchronised
 */

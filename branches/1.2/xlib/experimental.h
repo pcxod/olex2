@@ -16,7 +16,7 @@
 #include "macroerror.h"
 #include "evalue.h"
 
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   #include "pyext.h"
 #endif
 
@@ -61,7 +61,7 @@ public:
     TempValue = -1000;
   }
   void ToDataItem(class TDataItem& item) const;
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport();
 #endif
   void FromDataItem(const TDataItem& item);

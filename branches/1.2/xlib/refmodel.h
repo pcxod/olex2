@@ -25,7 +25,7 @@
 
 BeginXlibNamespace()
 
-static const double 
+static const double
   def_HKLF_s  = 1,
   def_HKLF_wt = 1,
   def_HKLF_m  = 0,
@@ -190,7 +190,8 @@ public:
     rDihedralAngle,
     rFixedUeq,
     rSimilarUeq,
-    rSimilarAdpVolume;
+    rSimilarAdpVolume,
+    rRIGU;
   TExyzGroups ExyzGroups;
   TAfixGroups AfixGroups;
   TSameGroupList  rSAME;
@@ -200,6 +201,7 @@ public:
   ConstraintContainer<rotated_adp_constraint> SharedRotatedADPs;
   ConstraintContainer<same_group_constraint> SameGroups;
   ConstraintContainer<adirection> Directions;
+  ConstraintContainer<tls_group_constraint> cTLS;
   // restraints and constraints register
   olxdict<olxstr, IConstraintContainer*, olxstrComparator<false> > rcRegister;
   TPtrList<IConstraintContainer> rcList;  // when order matters
@@ -208,7 +210,7 @@ public:
   void Validate();
   // creates a human readable description of the refinement
   const_strlist Describe();
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(bool export_connectivity);
 #endif
 

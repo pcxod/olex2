@@ -34,59 +34,78 @@ class TXGroup : public TGlGroup, public AGlMouseHandler {
   const vec3d_alist* original_crds;
   TXAtomPList Atoms;
   TXBondPList Bonds;
+  AGDrawObject *rotation_anchor;
   double AngleInc, AngleAcc;
 protected:
   virtual void DoDraw(bool SelectPrimitives, bool SelectObjects) const {
-    if( GetParentGroup() != NULL )  {  // is inside a group?
+    if (GetParentGroup() != NULL) {  // is inside a group?
       TGlGroup::DoDraw(SelectPrimitives, SelectObjects);
       return;
     }
-    for( int ditr=0; ditr < 2; ditr++ )  {
-      if( ditr == 0 )  {
-        if( original_crds != NULL && original_crds->Count() == Atoms.Count() )  {
-          for( size_t i=0; i < Atoms.Count(); i++ )
+    for (int ditr=0; ditr < 2; ditr++) {
+      if (ditr == 0) {
+        if (original_crds != NULL && original_crds->Count() == Atoms.Count()) {
+          for (size_t i=0; i < Atoms.Count(); i++)
             olx_swap((*original_crds)[i], Atoms[i]->crd());
-          for( size_t i=0; i < Bonds.Count(); i++ )
+          for (size_t i=0; i < Bonds.Count(); i++)
             Bonds[i]->Update();
         }
         else
           continue;
       }
-      else  if( original_crds != NULL && original_crds->Count() == Atoms.Count() )  {
-        for( size_t i=0; i < Atoms.Count(); i++ )
+      else if (original_crds != NULL && original_crds->Count() == Atoms.Count()) {
+        for (size_t i=0; i < Atoms.Count(); i++)
           olx_swap((*original_crds)[i], Atoms[i]->crd());
-        for( size_t i=0; i < Bonds.Count(); i++ )
+        for (size_t i=0; i < Bonds.Count(); i++)
           Bonds[i]->Update();
       }
-      for( size_t i=0; i < TGlGroup::Count(); i++ )  {
+      for (size_t i=0; i < TGlGroup::Count(); i++) {
         AGDrawObject& G = GetObject(i);
-        if( !G.IsVisible() )  continue;
-        if( G.IsGroup() ) {
+        if (!G.IsVisible()) continue;
+        if (G.IsGroup()) {
           TGlGroup* group = dynamic_cast<TGlGroup*>(&G);
-          if( group != NULL )  {
+          if (group != NULL) {
             group->Draw(SelectPrimitives, SelectObjects);
             continue;
           }
         }
         bool Select = (SelectObjects|SelectPrimitives);
         const size_t pc = G.GetPrimitives().PrimitiveCount();
-        for( size_t j=0; j < pc; j++ )  {
+        for (size_t j=0; j < pc; j++) {
           TGlPrimitive& GlP = G.GetPrimitives().GetPrimitive(j);
           if (!Select) {
-            TGlMaterial glm = GlP.GetProperties();
-            glm.SetFlags(glm.GetFlags()|sglmShininessF|sglmSpecularF);
-            glm.AmbientF *= 0.75;
-            if( ditr == 1 )
-              glm.AmbientF = glm.AmbientF.GetRGB() | 0x007070;
-            else
-              glm.AmbientF = glm.AmbientF.GetRGB() | 0x700070;
-            glm.ShininessF = 32;
-            glm.SpecularF = 0xff00;
-            glm.Init(false);
+            bool initialised=false;
+            if (&G == rotation_anchor) {
+              if (EsdlInstanceOf(G, TXAtom)) {
+                TXAtom &a = (TXAtom &)G;
+                if (a.crd().Equals(RotationCenter, 1e-3))
+                  initialised = true;
+              }
+              else if (EsdlInstanceOf(G, TXBond)) {
+                TXBond &b = (TXBond &)G;
+                if (RotationCenter.Equals((b.A().crd()+b.B().crd())/2, 1e-3))
+                  initialised = true;
+              }
+            }
+            if (initialised) {
+              TGlGroup::GetGlM().Init(false);
+            }
+            else {
+              TGlMaterial glm = GlP.GetProperties();
+              glm.SetFlags(glm.GetFlags()|sglmShininessF|sglmSpecularF);
+              glm.AmbientF *= 0.75;
+              if (ditr == 1)
+                glm.AmbientF = glm.AmbientF.GetRGB() | 0x007070;
+              else
+                glm.AmbientF = glm.AmbientF.GetRGB() | 0x700070;
+              glm.ShininessF = 32;
+              glm.SpecularF = 0xff00;
+              glm.Init(false);
+            }
           }
           Parent.HandleSelection(G, GlP, SelectObjects, SelectPrimitives);
           olx_gl::pushMatrix();
-          if( G.Orient(GlP) )  {
+          if (G.Orient(GlP)) {
             olx_gl::popMatrix();
             continue;
           }
@@ -97,28 +116,28 @@ protected:
     }
   }
   virtual bool DoTranslate(const vec3d& t) {
-    for( size_t i=0; i < Atoms.Count(); i++ )
+    for (size_t i=0; i < Atoms.Count(); i++)
       Atoms[i]->crd() += t;
     RotationCenter += t;
-    for( size_t i=0; i < Count(); i++ )
+    for (size_t i=0; i < Count(); i++)
       GetObject(i).Update();
     return true;
   }
-  virtual bool DoRotate(const vec3d& vec, double angle)  {
-    if( AngleInc != 0 )  {
-      if( olx_abs(AngleAcc += angle) < AngleInc )
+  virtual bool DoRotate(const vec3d& vec, double angle) {
+    if (AngleInc != 0) {
+      if (olx_abs(AngleAcc += angle) < AngleInc)
         return true;
       angle = AngleInc*olx_sign(AngleAcc);
       AngleAcc = 0;
     }
-    mat3d m;  
-    if( RotationDir.IsNull() )
+    mat3d m;
+    if (RotationDir.IsNull())
       olx_create_rotation_matrix(m, vec, cos(angle), sin(angle));
     else
       olx_create_rotation_matrix(m, RotationDir, cos(angle), sin(angle));
-    for( size_t i=0; i < Atoms.Count(); i++ )
+    for (size_t i=0; i < Atoms.Count(); i++)
       Atoms[i]->crd() = (Atoms[i]->crd()-RotationCenter)*m+RotationCenter;
-    for( size_t i=0; i < Bonds.Count(); i++ )
+    for (size_t i=0; i < Bonds.Count(); i++)
       Bonds[i]->Update();
     return true;
   }
@@ -128,16 +147,31 @@ protected:
     return GetHandler().OnMouseDown(*this, Data);
   }
   bool OnMouseUp(const IEObject *Sender, const TMouseData& Data)  {
-    if( Data.Button == smbRight )  {
-      if( Data.Object != NULL )  {
-        if( EsdlInstanceOf(*Data.Object, TXAtom) )  {
-          RotationCenter = ((TXAtom*)Data.Object)->crd();
-          RotationDir.Null();
+    if (Data.Button == smbRight) {
+      if (Data.Object != NULL)  {
+        if (EsdlInstanceOf(*Data.Object, TXAtom)) {
+          if (rotation_anchor == Data.Object) {
+            rotation_anchor = NULL;
+            UpdateRotationCenter();
+          }
+          else {
+            rotation_anchor = Data.Object;
+            RotationCenter = ((TXAtom*)Data.Object)->crd();
+            RotationDir.Null();
+          }
         }
-        else if( EsdlInstanceOf(*Data.Object, TXBond) )  {
-          TXBond* xb = (TXBond*)Data.Object;
-          RotationCenter = (xb->A().crd() + xb->B().crd())/2;
-          RotationDir = (xb->B().crd() - xb->A().crd()).Normalise();
+        else if (EsdlInstanceOf(*Data.Object, TXBond)) {
+          if (rotation_anchor == Data.Object) {
+            rotation_anchor = NULL;
+            RotationDir.Null();
+            UpdateRotationCenter();
+          }
+          else {
+            rotation_anchor = Data.Object;
+            TXBond* xb = (TXBond*)Data.Object;
+            RotationCenter = (xb->A().crd() + xb->B().crd())/2;
+            RotationDir = (xb->B().crd() - xb->A().crd()).Normalise();
+          }
         }
         return true;
       }
@@ -154,6 +188,7 @@ public:
   TXGroup(TGlRenderer& R, const olxstr& colName) :
     TGlGroup(R, colName),
     original_crds(NULL),
+    rotation_anchor(NULL),
     AngleInc(0), AngleAcc(0)
   {
     SetMoveable(true);
@@ -163,8 +198,10 @@ public:
     original_crds = NULL;
     TGlGroup::AddObjects(atoms);
     Atoms.SetCapacity(atoms.Count());
-    for( size_t i=0; i < atoms.Count(); i++ )
-      Bonds.AddList(Atoms.Add(atoms[i])->GetBonds(), StaticCastAccessor<TXBond>());
+    for (size_t i=0; i < atoms.Count(); i++) {
+      Bonds.AddList(Atoms.Add(atoms[i])->GetBonds(),
+        StaticCastAccessor<TXBond>());
+    }
     Bonds.ForEach(ACollectionItem::IndexTagSetter());
     Bonds.Pack(
       olx_alg::olx_or(
@@ -183,21 +220,21 @@ public:
     Bonds.Clear();
     original_crds = NULL;
   }
-  void Update()  {
+  void Update() {
     original_crds = NULL;
     Atoms.Clear();
     Bonds.Clear();
-    for( size_t i=0; i < TGlGroup::Count(); i++ )  {
+    for (size_t i=0; i < TGlGroup::Count(); i++) {
       AGDrawObject& G = GetObject(i);
-      if( EsdlInstanceOf(G, TXAtom) )
+      if (EsdlInstanceOf(G, TXAtom))
         Atoms.Add((TXAtom&)G);
-      else if( EsdlInstanceOf(G, TXBond) )
+      else if (EsdlInstanceOf(G, TXBond))
         Bonds.Add((TXBond&)G);
     }
   }
-  void UpdateRotationCenter()  {
+  void UpdateRotationCenter() {
     RotationCenter.Null();
-    for( size_t i=0; i < Atoms.Count(); i++ )
+    for (size_t i=0; i < Atoms.Count(); i++)
       RotationCenter += Atoms[i]->crd();
     RotationCenter /= Atoms.Count();
   }

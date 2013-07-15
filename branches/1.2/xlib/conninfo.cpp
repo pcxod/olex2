@@ -357,7 +357,7 @@ void ConnInfo::FromDataItem(const TDataItem& item)  {
     AtomInfo.Add(&ca).FromDataItem(ai_item.GetItem(i), rm, ca);
   }
 }
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* ConnInfo::PyExport()  {
   PyObject* main = PyDict_New(),
     *type = PyDict_New(),
@@ -406,7 +406,7 @@ void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item,
   maxBonds = item.GetRequiredField("b").ToInt();
 }
 //........................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* ConnInfo::TypeConnInfo::PyExport()  {
   return Py_BuildValue("{s:f,s:i}", "radius", r, "bonds", maxBonds);
 }
@@ -666,7 +666,7 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
   }
 }
 //........................................................................
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 PyObject* ConnInfo::AtomConnInfo::PyExport()  {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "radius", Py_BuildValue("f", r));

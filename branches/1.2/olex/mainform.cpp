@@ -94,6 +94,7 @@
 #include "exparse/exptree.h"
 #include "math/libmath.h"
 #include "libfile.h"
+#include "gxmacro.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -105,9 +106,9 @@
 
   IMPLEMENT_CLASS(TMainForm, TMainFrame)
 
-static const olxstr ProcessOutputCBName("procout");
-static const olxstr OnStateChangeCBName("statechange");
-static const olxstr OnLogCBName("onlog");
+const olxstr ProcessOutputCBName("procout");
+const olxstr OnStateChangeCBName("statechange");
+const olxstr OnLogCBName("onlog");
 
 class TObjectVisibilityChange: public AActionHandler  {
   TMainForm *FParent;
@@ -333,7 +334,7 @@ END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent)
   : TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
-  olex::OlexProcessorImp(NULL),
+  olex2::OlexProcessorImp(NULL),
   HtmlManager(*(new THtmlManager(this))),
   _ProcessHandler(*this)
 {
@@ -467,7 +468,7 @@ TMainForm::~TMainForm()  {
 }
 //..............................................................................
 void TMainForm::XApp(Olex2App *XA)  {
-  olex::OlexProcessorImp::SetLibraryContainer(*XA);
+  olex2::OlexProcessorImp::SetLibraryContainer(*XA);
   FXApp = XA;
 
   _ProcessManager = new ProcessManager(_ProcessHandler);
@@ -1188,7 +1189,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
-  HtmlManager.InitialiseMain(4|wxVSCROLL|wxALWAYS_SHOW_SB);
+  HtmlManager.InitialiseMain(wxBORDER_NONE|wxVSCROLL|wxALWAYS_SHOW_SB|wxCLIP_CHILDREN);
   GetLibrary().AttachLibrary(HtmlManager.ExportLibrary());
 
   HtmlManager.OnLink.Add(this, ID_ONLINK);
@@ -2900,9 +2901,6 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   return true;
 }
 //..............................................................................
-int SortQPeak(const TCAtom &a1, const TCAtom &a2)  {
-  return olx_cmp(a2.GetQPeak(), a1.GetQPeak());
-}
 void TMainForm::QPeakTable(bool TableDef, bool Create)  {
   static const olxstr QPeakTableFile("qpeaks.htm");
   if( !Create )  {
@@ -2931,8 +2929,8 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       double pv = olx_abs(atoms[i]->GetQPeak());
       if (pv > max_peak) max_peak = pv;
     }
-    QuickSorter::SortSF(atoms, SortQPeak);
-    Table.Resize( olx_min(10, atoms.Count()), 3);
+    QuickSorter::SortSF(atoms, &GXLibMacros::QPeakSortD);
+    Table.Resize(olx_min(10, atoms.Count()), 3);
     size_t rowIndex = 0;
     for( size_t i=0; i < atoms.Count(); i++, rowIndex++ )  {
       if( i > 8 )  i = atoms.Count() -1;
@@ -2958,13 +2956,10 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       Table[rowIndex][2] = Tmp;
     }
   }
-  TStrList Output;
-  Table.CreateHTMLList(Output, EmptyString(), false, false, TableDef);
+  TStrList Output = Table.CreateHTMLList(EmptyString(), false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
-  TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(), cst.Length(), plStructure);
-  if( TEFile::Exists(QPeakTableFile) )
-    TEFile::DelFile(QPeakTableFile);
-  //TUtf8File::WriteLines( FN, Output, false );
+  TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(),
+    cst.Length(), plStructure);
 }
 //..............................................................................
 void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
@@ -3249,7 +3244,7 @@ void TMainForm::OnInternalIdle()  {
 //..............................................................................
 void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
   wxBitmap bmp(32, 32);
-  wxMemoryDC memDC;
+  wxMemoryDC memDC(bmp);
   wxBrush Brush = memDC.GetBrush();
   Brush.SetColour(*wxWHITE);
   memDC.SetBrush(Brush);
@@ -3265,7 +3260,6 @@ void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
 #endif
 
   memDC.SetFont(Font);
-  memDC.SelectObject(bmp);
   memDC.Clear();
   Brush.SetColour(*wxGREEN);
   memDC.SetBrush(Brush);

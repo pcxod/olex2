@@ -202,7 +202,7 @@ class TGlXApp;
 
 //............................................................................//
 class TMainForm: public TMainFrame, public AEventsDispatcher,
-  public olex::OlexProcessorImp
+  public olex2::OlexProcessorImp
 {
   //TFrameMaker FrameMaker;
 protected:

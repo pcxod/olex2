@@ -13,7 +13,7 @@
 #include "etime.h"
 #include "etbuffer.h"
 
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
 #if defined __APPLE__ && defined __MACH__
   #include "Python/python.h"
 #else
@@ -30,7 +30,10 @@ using namespace olex2;
 typedef void (*pyRegFunc)();
 
 class PythonExt  {
-  static PythonExt* Instance;
+  static PythonExt *&Instance() {
+    static PythonExt* inst=NULL;
+    return inst;
+  }
   IOlex2Processor* OlexProcessor;
   TLibrary *Library, *BindLibrary;
   TTypeList<pyRegFunc> ToRegister;
@@ -111,9 +114,9 @@ public:
     return *(new PythonExt(olexProcessor, module_name));
   }
   static void Finilise()  {
-    if( Instance != NULL )  {
-      delete Instance;
-      Instance = NULL;
+    if (Instance() != NULL) {
+      delete Instance();
+      Instance() = NULL;
     }
   }
   int RunPython(const olxstr& script);
@@ -133,10 +136,10 @@ public:
   IOlex2Processor* GetOlexProcessor()  {  return OlexProcessor;  }
   void CheckInitialised();
 
-  static PythonExt* GetInstance()  {
-    if( Instance == NULL )
+  static PythonExt* GetInstance() {
+    if (Instance() == NULL)
       throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised object");
-    return Instance;
+    return Instance();
   }
   PyObject* GetProfileInfo();
 // building string

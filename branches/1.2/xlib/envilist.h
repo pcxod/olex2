@@ -69,7 +69,7 @@ public:
   coordinates
   */
   void ApplySymm(const smatd& sym);
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif
 };

@@ -38,16 +38,24 @@ class TFileHandlerManager : public IEObject  {
 //  TSStrPObjList<olxstr,TOZPFS*, false> FOZPFiles;
 #endif
   TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
-  static const int16_t FVersion;
-  static const char FSignature[];
+  static const int16_t Version() { return 0x0001; }
+  static const char *Signature() { return "ODF_"; }
+  static size_t SignatureLength() { return 4; }
 protected:
-  TMemoryBlock *GetMemoryBlock( const olxstr &FN );
+  TMemoryBlock *GetMemoryBlock(const olxstr &FN);
 public:
   TFileHandlerManager();
   ~TFileHandlerManager();
 protected:
-  static TFileHandlerManager *FHandler;
-  static TStrList BaseDirs;
+  static TFileHandlerManager *&Handler() {
+    static TFileHandlerManager *h;
+    return h;
+  }
+  static TStrList &BaseDirs() {
+    static TStrList l;
+    return l;
+  }
+  
   void _Clear();
   IDataInputStream *_GetInputStream(const olxstr &FN);
 #ifdef __WXWIDGETS__
@@ -64,7 +72,7 @@ protected:
 public:
   static IDataInputStream *GetInputStream(const olxstr &FN);
 #ifdef __WXWIDGETS__
-  static wxFSFile *GetFSFileHandler( const olxstr &FN );
+  static wxFSFile *GetFSFileHandler(const olxstr &FN);
 #endif
   static void Clear(short persistenceMask = ~0);
   static void AddBaseDir(const olxstr& bd);
@@ -89,7 +97,7 @@ public:
     TMacroError &Error);
   static TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 protected:
-#ifndef _NO_PYTHON
+#ifdef _PYTHON
   static void PyInit();
 #endif
 
