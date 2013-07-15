@@ -1195,7 +1195,3 @@ void THtml::OnClipboard(wxClipboardTextEvent& evt) {
   evt.Skip(processed);
 }
 //.............................................................................
-void THtml::CreateLayout() {
-  wxHtmlWindow::CreateLayout();
-}
-//.............................................................................
