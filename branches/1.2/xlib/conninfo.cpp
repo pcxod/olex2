@@ -408,7 +408,8 @@ void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item,
 //........................................................................
 #ifdef _PYTHON
 PyObject* ConnInfo::TypeConnInfo::PyExport()  {
-  return Py_BuildValue("{s:f,s:i}", "radius", r, "bonds", maxBonds);
+  return Py_BuildValue("{s:f,s:i}", "radius",
+    r < 0 ? atomType->r_bonding : r, "bonds", maxBonds);
 }
 #endif
 //........................................................................
