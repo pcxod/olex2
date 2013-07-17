@@ -2359,6 +2359,10 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
   const double en = rm.expl.GetRadiationEnergy();
   cm_Absorption_Coefficient_Reg ac;
   if (!full) {
+    if (rm.SfacCount() > 0 && rm.GetSfacData(0).IsNeutron()) {
+      TBasicApp::NewLogEntry() << "Skipping DISP generation for neutron data";
+      return;
+    }
     for (size_t i=0; i < content.Count(); i++) {
       XScatterer* sc = new XScatterer(content[i].element.symbol);
       sc->SetFpFdp(content[i].element.CalcFpFdp(en) - content[i].element.z);
