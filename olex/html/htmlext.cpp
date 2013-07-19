@@ -583,6 +583,12 @@ bool THtml::UpdatePage(bool update_indices)  {
   SetPage(Res.Text(' ').u_str());
   ObjectsState.RestoreState();
   wxHtmlWindow::Scroll(xPos, yPos);
+#if defined(__MAC__)
+  CreateLayout();
+  Show();
+  Refresh();
+  Update();
+#endif
   for( size_t i=0; i < Objects.Count(); i++ )  {
     if( Objects.GetValue(i).B() != NULL )  {
 #ifndef __MAC__
@@ -593,7 +599,7 @@ bool THtml::UpdatePage(bool update_indices)  {
   }
 #if defined(__WIN32__)
   Thaw();
-#else
+#elif defined(__linux__)
   CreateLayout();
   Show();
   Refresh();

@@ -208,6 +208,15 @@ public:
     for (size_t i=0; i < l.Count(); i++) rv.Add(l[i]);
     return rv;
   }
+  template <class LT, class accessor_t> static
+    ConstSortedObjectList<ObjectClass, Comparator> FromList(const LT &l,
+    const accessor_t &accessor)
+  {
+    SortedObjectList rv;
+    rv.SetCapacity(l.Count());
+    for (size_t i=0; i < l.Count(); i++) rv.Add(accessor(l[i]));
+    return rv;
+  }
   static ConstSortedObjectList<ObjectClass, Comparator>
     FromArray(const ObjectClass *a, size_t sz)
   {
@@ -254,6 +263,15 @@ public:
     SortedPtrList rv;
     rv.SetCapacity(l.Count());
     for (size_t i=0; i < l.Count(); i++) rv.Add(l[i]);
+    return rv;
+  }
+  template <class LT, class accessor_t> static
+    ConstSortedPtrList<ObjectClass, Comparator> FromList(const LT &l,
+    const accessor_t &accessor)
+  {
+    SortedPtrList rv;
+    rv.SetCapacity(l.Count());
+    for (size_t i=0; i < l.Count(); i++) rv.Add(accessor(l[i]));
     return rv;
   }
 public:

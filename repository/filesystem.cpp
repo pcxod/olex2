@@ -532,7 +532,7 @@ void TFSItem::DelFile() {
 }
 //.............................................................................
 void TFSItem::_DelFile() {
-  if (!EsdlInstanceOf(GetIndexFS(), TOSFileSystem) || IsFolder()) return;
+  if (!EsdlInstanceOf(GetIndexFS(), TUpdateFS) || IsFolder()) return;
   olxstr fn = GetIndexFS().GetBase()+ GetFullName();
   if (TEFile::Exists(fn)) {
     TEFile::Chmod(fn, S_IWRITE);

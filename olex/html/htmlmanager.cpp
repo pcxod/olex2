@@ -43,6 +43,7 @@ void THtmlManager::Destroy() {
 void THtmlManager::InitialiseMain(long flags) {
   main = new THtml(*this, mainWindow, EmptyString(), flags);
   main->OnLink.Add(this);
+  main->AlwaysShowScrollbars();
 }
 //.............................................................................
 void THtmlManager::ProcessPageLoadRequests() {
