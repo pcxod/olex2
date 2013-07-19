@@ -2033,7 +2033,7 @@ public:
 
   template <typename sep_t>
   TTSString(const SeperatedStream<sep_t>& str)  {  InitFromString(str.dest);  }
-  
+
   TTSString(const TTStrBuffer<TC,TTSString<T,TC> > &buf)  {
     T::_Start = 0;
     T::_Increment = 8;
@@ -2066,23 +2066,23 @@ public:
     return h;
   }
   int32_t HashCode() const { return o_hashcode(T::Data(), T::_Length); }
-  
+
   template <class list_t>
-  static olxstr Join(const list_t &l, const olxstr &sep) {
+  static TTSString Join(const list_t &l, const TTSString &sep) {
     size_t sz = l.Count();
     if (sz == 0) return EmptyString();
-    olxstr_buf rv;
-    rv << olxstr(l[0]);
+    TTStrBuffer<TC,TTSString<T,TC> > rv;
+    rv << TTSString(l[0]);
     sz -= 1;
     for (size_t i=1; i < sz; i++)
-      rv << sep << olxstr(l[i]);
+      rv << sep << TTSString(l[i]);
     if (sz > 0)
-      rv << sep << olxstr(l[sz]);
-    return olxstr(rv);
+      rv << sep << TTSString(l[sz]);
+    return TTSString(rv);
   }
 
   template <class list_t>
-  olxstr Join(const list_t &l) const { return Join(l, *this); }
+  TTSString Join(const list_t &l) const { return Join(l, *this); }
 
 };
 
