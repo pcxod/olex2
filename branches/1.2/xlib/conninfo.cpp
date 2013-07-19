@@ -54,43 +54,58 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
 }
 //........................................................................
 void ConnInfo::ProcessBind(const TStrList& ins)  {
-  TAtomReference ar(ins.Text(' '));
-  TCAtomGroup ag;
-  size_t aag;
-  try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
-  catch(const TExceptionBase&)  {
-    TBasicApp::NewLogEntry(logError) << "Could not locate atoms for BIND " <<
-      ar.GetExpression();
-    return;
-  }
-  if( ag.Count() == 0 || (ag.Count()%2) != 0 )  {
-    TBasicApp::NewLogEntry(logError) <<
-      "Even number of atoms is expected for FREE " <<
-      ar.GetExpression() << ' ' << ag.Count() << " is provided";
-    return;
-  }
-  for( size_t i=0; i < ag.Count(); i += 2 )  {
-    if( ag[i].GetMatrix() != NULL && ag[i+1].GetMatrix() != NULL )  {
-      TBasicApp::NewLogEntry(logError) <<
-        "Only one eqivalent is expected in BIND, skipping " <<
-        ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
-      continue;
+  if (olx_list_and(ins, &olxstr::IsNumber)) {
+    SortedIntList &group = PartGroups.AddNew();
+    for (size_t i=0; i < ins.Count(); i++) {
+      group.AddUnique(ins[i].ToInt());
     }
-    // validate
-    if( ag[i].GetAtom()->GetId() == ag[i+1].GetAtom()->GetId() )  {
-      if( (ag[i].GetMatrix() != NULL && ag[i].GetMatrix()->r.IsI() &&
-           ag[i].GetMatrix()->t.IsNull()) ||
-        (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() &&
-         ag[i+1].GetMatrix()->t.IsNull()) ||
-        (ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL) )
-      {
-        TBasicApp::NewLogEntry(logError) << "Dummy BIND, skipping " <<
+    for (size_t i=0; i < group.Count(); i++) {
+      SortedIntList &l = PartGroups_.Add(group[i]);
+      for (size_t j=0; j < group.Count(); j++) {
+        if (i == j) continue;
+        l.AddUnique(group[j]);
+      }
+    }
+  }
+  else {
+    TAtomReference ar(ins.Text(' '));
+    TCAtomGroup ag;
+    size_t aag;
+    try  {  ar.Expand(rm, ag, EmptyString(), aag);  }
+    catch(const TExceptionBase&)  {
+      TBasicApp::NewLogEntry(logError) << "Could not locate atoms for BIND " <<
+        ar.GetExpression();
+      return;
+    }
+    if( ag.Count() == 0 || (ag.Count()%2) != 0 )  {
+      TBasicApp::NewLogEntry(logError) <<
+        "Even number of atoms is expected for FREE " <<
+        ar.GetExpression() << ' ' << ag.Count() << " is provided";
+      return;
+    }
+    for( size_t i=0; i < ag.Count(); i += 2 )  {
+      if( ag[i].GetMatrix() != NULL && ag[i+1].GetMatrix() != NULL )  {
+        TBasicApp::NewLogEntry(logError) <<
+          "Only one eqivalent is expected in BIND, skipping " <<
           ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
         continue;
       }
+      // validate
+      if( ag[i].GetAtom()->GetId() == ag[i+1].GetAtom()->GetId() )  {
+        if( (ag[i].GetMatrix() != NULL && ag[i].GetMatrix()->r.IsI() &&
+             ag[i].GetMatrix()->t.IsNull()) ||
+          (ag[i+1].GetMatrix() != NULL && ag[i+1].GetMatrix()->r.IsI() &&
+           ag[i+1].GetMatrix()->t.IsNull()) ||
+          (ag[i].GetMatrix() == NULL && ag[i+1].GetMatrix() == NULL) )
+        {
+          TBasicApp::NewLogEntry(logError) << "Dummy BIND, skipping " <<
+            ag[i].GetFullLabel(rm) << ' ' << ag[i+1].GetFullLabel(rm);
+          continue;
+        }
+      }
+      AddBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(),
+        ag[i+1].GetMatrix(), true);
     }
-    AddBond(*ag[i].GetAtom(), *ag[i+1].GetAtom(), ag[i].GetMatrix(),
-      ag[i+1].GetMatrix(), true);
   }
 }
 //........................................................................
@@ -241,10 +256,14 @@ void ConnInfo::ToInsList(TStrList& ins) const {
       }
     }
   }
+  for (size_t i=0; i < PartGroups.Count(); i++) {
+    if (PartGroups[i].Count() < 2) continue;
+    ins.Add("BIND ") << olxstr(' ').Join(PartGroups[i]);
+  }
 }
 //........................................................................
 CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
-  CXConnInfo& ci = *(new CXConnInfo);  
+  CXConnInfo& ci = *(new CXConnInfo);
   size_t ai_ind, ti_ind;
   if( (ti_ind = TypeInfo.IndexOf(&ca.GetType())) != InvalidIndex )  {
     const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
@@ -305,8 +324,8 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
       }
       if( ca->IsDeleted() )
         continue;
-      const smatd* sm = _aci.BondsToCreate[j].matr == NULL ? NULL :
-                        &rm.AddUsedSymm(*_aci.BondsToCreate[j].matr);
+      const smatd* sm = _aci.BondsToCreate[j].matr == NULL ? NULL
+        : &rm.AddUsedSymm(*_aci.BondsToCreate[j].matr);
       aci.BondsToCreate.Add(new CXBondInfo(*ca, sm));
     }
     for( size_t j=0; j < _aci.BondsToRemove.Count(); j++ )  {
@@ -317,13 +336,15 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
       }
       if( ca->IsDeleted() )
         continue;
-      const smatd* sm = _aci.BondsToRemove[j].matr == NULL ? NULL :
-                        &rm.AddUsedSymm(*_aci.BondsToRemove[j].matr);
+      const smatd* sm = _aci.BondsToRemove[j].matr == NULL ? NULL
+        : &rm.AddUsedSymm(*_aci.BondsToRemove[j].matr);
       aci.BondsToRemove.Add(new CXBondInfo(*ca, sm));
     }
   }
   for( size_t i=0; i < ci.TypeInfo.Count(); i++ ) 
     TypeInfo.Add(ci.TypeInfo.GetKey(i), ci.TypeInfo.GetValue(i));
+  PartGroups = ci.PartGroups;
+  PartGroups_ = ci.PartGroups_;
 }
 //........................................................................
 void ConnInfo::ToDataItem(TDataItem& item) const {
@@ -338,9 +359,18 @@ void ConnInfo::ToDataItem(TDataItem& item) const {
     AtomInfo.GetValue(i).ToDataItem(
       ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
   }
+  if (!PartGroups.IsEmpty()) {
+    TDataItem& groups = item.AddItem("PART");
+    size_t cnt=0;
+    for (size_t i=0; i < PartGroups.Count(); i++) {
+      if (PartGroups[i].Count() < 2) continue;
+      TDataItem& group = groups.AddItem(++cnt, olxstr(' ').Join(PartGroups[i]));
+    }
+  }
 }
 //........................................................................
 void ConnInfo::FromDataItem(const TDataItem& item)  {
+  Clear();
   TDataItem& ti_item = item.FindRequiredItem("TYPE");
   for( size_t i=0; i < ti_item.ItemCount(); i++ )  {
     cm_Element* elm = XElementLib::FindBySymbol(ti_item.GetItem(i).GetName());
@@ -355,6 +385,14 @@ void ConnInfo::FromDataItem(const TDataItem& item)  {
   for( size_t i=0; i < ai_item.ItemCount(); i++ )  {
     TCAtom& ca = rm.aunit.GetAtom(ai_item.GetItem(i).GetName().ToSizeT());
     AtomInfo.Add(&ca).FromDataItem(ai_item.GetItem(i), rm, ca);
+  }
+  TDataItem* groups = item.FindItem("PART");
+  if (groups != NULL) {
+    for (size_t i=0; i < groups->ItemCount(); i++) {
+      PartGroups.AddNew().FromList(
+        TStrList(groups->GetItem(i).GetValue(), ' '),
+        FunctionAccessor::MakeConst(&olxstr::ToInt));
+    }
   }
 }
 #ifdef _PYTHON
@@ -388,6 +426,21 @@ PyObject* ConnInfo::PyExport()  {
   PythonExt::SetDictItem(main, "atom", atom);
   PythonExt::SetDictItem(main, "delta",
     Py_BuildValue("f", rm.aunit.GetLattice().GetDelta()));
+  size_t gc=0;
+  for (size_t i=0; i < PartGroups.Count(); i++) {
+    if (PartGroups[i].Count() > 1)
+      gc++;
+  }
+  PyObject *part = PyList_New(gc);
+  for (size_t i=0; i < PartGroups.Count(); i++) {
+    if (PartGroups[i].Count() < 2) continue;
+    PyObject *p = PyList_New(PartGroups[i].Count());
+    for (size_t j=0; j < PartGroups[i].Count(); j++) {
+      PyList_SetItem(p, j, Py_BuildValue("i", PartGroups[i][j]));
+    }
+    PyList_SetItem(part, i, p);
+  }
+  PythonExt::SetDictItem(main, "part", part);
   return main;
 }
 #endif

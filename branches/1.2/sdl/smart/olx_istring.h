@@ -2066,6 +2066,23 @@ public:
     return h;
   }
   int32_t HashCode() const { return o_hashcode(T::Data(), T::_Length); }
+  
+  template <class list_t>
+  static olxstr Join(const list_t &l, const olxstr &sep) {
+    size_t sz = l.Count();
+    if (sz == 0) return EmptyString();
+    olxstr_buf rv;
+    rv << olxstr(l[0]);
+    sz -= 1;
+    for (size_t i=1; i < sz; i++)
+      rv << sep << olxstr(l[i]);
+    if (sz > 0)
+      rv << sep << olxstr(l[sz]);
+    return olxstr(rv);
+  }
+
+  template <class list_t>
+  olxstr Join(const list_t &l) const { return Join(l, *this); }
 
 };
 
