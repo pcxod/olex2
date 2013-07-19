@@ -71,6 +71,10 @@ protected:
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerComparator> AtomInfo;
   olxdict<const cm_Element*, TypeConnInfo, TPointerComparator> TypeInfo;
+  typedef SortedObjectList<int, TPrimitiveComparator> SortedIntList;
+  TTypeList<SortedIntList> PartGroups;
+  // optimised for search
+  olxdict<int, SortedIntList, TPrimitiveComparator> PartGroups_;
   // 
   const smatd* GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
     bool release) const;
@@ -105,10 +109,19 @@ public:
   //.................................................................
   void ProcessFree(const TStrList& ins);
   void ProcessBind(const TStrList& ins);
-  
+  // checks if the two parts are bound by BIND
+  bool ArePartsGroupped(int a, int b) {
+    size_t idx = PartGroups_.IndexOf(a);
+    if (idx != InvalidIndex) {
+      return PartGroups_.GetValue(idx).Contains(b);
+    }
+    return false;
+  }
   void Clear()  {
     AtomInfo.Clear();
     TypeInfo.Clear();
+    PartGroups.Clear();
+    PartGroups_.Clear();
   }
 
   void ToInsList(TStrList& ins) const;

@@ -103,16 +103,17 @@ public:
     const smatd& sm, const double& qD) const;
 
   static bool BondExists(const TSAtom& a1, const TSAtom& a2, double D,
-    double delta)  {
-    if(  D < (a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta) )
+    double delta)
+  {
+    if (D < (a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta))
       return IsBondAllowed(a1, a2);
     return false;
   }
   static bool BondExistsQ(const TSAtom& a1, const TSAtom& a2, double qD,
     double delta)
   {
-    if(  qD < olx_sqr(
-      a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta) )
+    if (qD < olx_sqr(
+      a1.CAtom().GetConnInfo().r + a2.CAtom().GetConnInfo().r + delta))
     {
       return IsBondAllowed(a1, a2);
     }
@@ -121,15 +122,15 @@ public:
   static bool BondExists(const TSAtom& a1, const TCAtom& a2, const smatd& m,
     double D, double delta)
   {
-    if(  D < (a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta) )
+    if (D < (a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta))
       return IsBondAllowed(a1, a2, m);
     return false;
   }
   static bool BondExistsQ(const TSAtom& a1, const TCAtom& a2, const smatd& m,
     double qD, double delta)
   {
-    if(  qD < olx_sqr(
-      a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta) )
+    if (qD < olx_sqr(
+      a1.CAtom().GetConnInfo().r + a2.GetConnInfo().r + delta))
     {
       return IsBondAllowed(a1, a2, m);
     }
@@ -138,28 +139,28 @@ public:
   static bool BondExists(const TCAtom& a1, const TCAtom& a2, const smatd& m,
     double D, double delta)
   {
-    if( D < (a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
+    if (D < (a1.GetConnInfo().r + a2.GetConnInfo().r + delta))
       return IsBondAllowed(a1, a2, m);
     return false;
   }
   static bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, const smatd& m,
     double qD, double delta)
   {
-    if( qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
+    if (qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta))
       return IsBondAllowed(a1, a2, m);
     return false;
   }
   static bool BondExists(const TCAtom& a1, const TCAtom& a2, double D,
     double delta)
   {
-    if( D < (a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
+    if (D < (a1.GetConnInfo().r + a2.GetConnInfo().r + delta))
       return IsBondAllowed(a1, a2);
     return false;
   }
   static bool BondExistsQ(const TCAtom& a1, const TCAtom& a2, double qD,
     double delta)
   {
-    if( qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta) )
+    if (qD < olx_sqr(a1.GetConnInfo().r + a2.GetConnInfo().r + delta))
       return IsBondAllowed(a1, a2);
     return false;
   }

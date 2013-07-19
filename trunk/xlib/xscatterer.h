@@ -73,14 +73,14 @@ public:
     set_items = setAll^setMu;
   }
   // updates a scetterer info
-  void Merge(const XScatterer& sc)  {
-    if( (sc.set_items & setGaussian) )
+  void Merge(const XScatterer& sc) {
+    if ((sc.set_items & setGaussian))
       SetGaussians(sc.gaussians);
-    if( (sc.set_items & setDispersion) )
+    if ((sc.set_items & setDispersion))
       SetFpFdp(sc.fpfdp);
-    if( (sc.set_items & setMu) )
+    if ((sc.set_items & setMu))
       SetMu(sc.mu);
-    if( (sc.set_items & setR) )
+    if ((sc.set_items & setR))
       SetR(sc.r);
     if( (sc.set_items & setWt) )
       SetWeight(sc.wt);
@@ -98,6 +98,12 @@ public:
   void SetFpFdp(const compd& v) {
     fpfdp = v;
     set_items |= setDispersion;
+  }
+  bool IsNeutron() const {
+    return gaussians.a1 == 0 && gaussians.b1 == 0 &&
+      gaussians.a2 == 0 && gaussians.b2 == 0 &&
+      gaussians.a3 == 0 && gaussians.b3 == 0 &&
+      gaussians.a4 == 0 && gaussians.b4 == 0;
   }
   const compd& GetFpFdp() const {  return fpfdp;  }
   // sets custom bonding radius
@@ -128,18 +134,30 @@ public:
   // return an INS file string representation
   olxstr ToInsString() const {
     if( set_items == setDispersion || set_items == (setDispersion|setMu) )  {
-      olxstr rv("DISP ", 80);
-      rv << Label << ' ' << fpfdp.GetRe() << ' ' << fpfdp.GetIm();
+      olxstr rv("DISP", 80);
+      rv.stream(' ') << Label <<
+        olxstr::FormatFloat(3, fpfdp.GetRe()).TrimFloat() <<
+        olxstr::FormatFloat(3, fpfdp.GetIm()).TrimFloat();
       if( (set_items & setMu) != 0 )
-        rv << ' ' << mu;
+        rv << ' ' << olxstr::FormatFloat(3, mu).TrimFloat();
       return rv;
     }
     else if( set_items == setAll ) {
       olxstr rv("SFAC ", 100);
-      rv.stream(' ') << Label << gaussians.a1 << -gaussians.b1 << gaussians.a2
-        << -gaussians.b2 << gaussians.a3 << -gaussians.b3 << gaussians.a4
-        << -gaussians.b4 << gaussians.c << fpfdp.GetRe() << fpfdp.GetIm()
-        << mu << r << wt;
+      rv.stream(' ') << Label << olxstr::FormatFloat(3, gaussians.a1) <<
+        olxstr::FormatFloat(3, -gaussians.b1).TrimFloat() <<
+        olxstr::FormatFloat(3, gaussians.a2).TrimFloat() <<
+        olxstr::FormatFloat(3, -gaussians.b2).TrimFloat() <<
+        olxstr::FormatFloat(3, gaussians.a3).TrimFloat() <<
+        olxstr::FormatFloat(3, -gaussians.b3).TrimFloat() <<
+        olxstr::FormatFloat(3, gaussians.a4).TrimFloat() <<
+        olxstr::FormatFloat(3, -gaussians.b4).TrimFloat() <<
+        olxstr::FormatFloat(3, gaussians.c).TrimFloat() <<
+        olxstr::FormatFloat(3, fpfdp.GetRe()).TrimFloat() <<
+        olxstr::FormatFloat(3, fpfdp.GetIm()).TrimFloat() <<
+        olxstr::FormatFloat(3, mu).TrimFloat() <<
+        olxstr::FormatFloat(3, r).TrimFloat() <<
+        olxstr::FormatFloat(3, wt).TrimFloat();
       return rv;
     }
     throw TInvalidArgumentException(__OlxSourceInfo,
