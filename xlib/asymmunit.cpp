@@ -288,13 +288,13 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const{
   }
   else  {
     if( resi == '*' )  {  //special case
-      list.Add(MainResidue);
       list.SetCapacity(Residues.Count()+1);
+      list.Add(MainResidue);
       for (size_t i=0; i < Residues.Count(); i++)
         list.Add(Residues[i]);
     }
     else {
-      for( size_t i=0; i < Residues.Count(); i++ )
+      for (size_t i=0; i < Residues.Count(); i++)
         if (Residues[i].GetClassName().Equalsi(resi))
           list.Add(Residues[i]);
     }

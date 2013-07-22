@@ -13,7 +13,7 @@
 class TNameMode : public AModeWithLabels  {
   size_t Index;
   olxstr Prefix, Suffix, Symbol;
-  bool Lock;
+  bool Lock, NameResidues;
   TUndoData* FirstUndo;
   bool AutoComplete;
 protected:
@@ -100,7 +100,8 @@ public:
     Suffix = Options.FindValue('s');
     Symbol = Options.FindValue('t');  // type
     Lock = Options.GetBoolOption('l');
-    AutoComplete = Options.Contains('a');
+    AutoComplete = Options.GetBoolOption('a');
+    NameResidues = Options.GetBoolOption('r');
     // validate if type is correct
     if( !Symbol.IsEmpty() && !XElementLib::IsElement(Symbol) )
       throw TInvalidArgumentException(__OlxSourceInfo, "element type");
@@ -131,6 +132,9 @@ public:
       Labl << Prefix <<  Index << Suffix;
       TNameModeUndo* undo = new TNameModeUndo(XA);
       undo->AddAction(gxapp.Name(XA, Labl, false));
+      if (NameResidues) {
+        undo->AddAction(gxapp.SynchroniseResidues(TXAtomPList() << XA));
+      }
       if (Lock) {
         undo->AddAction(new TLockUndo(XA.CAtom()));
         XA.CAtom().SetFixedType(true);

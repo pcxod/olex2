@@ -668,7 +668,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;"
     "r-[split] a restraint/constraint for split atoms; [grow] show radial "
     "bonds between the same atoms; [fit] rotation angle increment (smooth "
-    "rotation by default)\n&;"
+    "rotation by default); [name] synchronise names in the residues\n&;"
     "v-[grow] use user provided delta for connectivity analysis, default 2A\n&;"
     "shells-[grow] grow atom shells vs fragments&;"
     "l-[name] lock atom types after naming\n&;",
