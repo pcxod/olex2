@@ -859,7 +859,8 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     for( size_t i=0; i < symlib.BravaisLatticeCount(); i++ )  {
       TBravaisLattice& bl = symlib.GetBravaisLattice(i);
       bl.FindSpaceGroups(sgList);
-      TBasicApp::NewLogEntry() << "------------------- " << bl.GetName() << " --- "  << sgList.Count();
+      TBasicApp::NewLogEntry() << "------------------- " << bl.GetName() <<
+        " --- "  << sgList.Count();
       olxstr tmp, tmp1;
       TPSTypeList<int, TSpaceGroup*> SortedSG;
       for( size_t j=0; j < sgList.Count(); j++ )
@@ -6891,18 +6892,17 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   TXApp &app = TXApp::GetInstance();
-  olxstr hkl_name = (!Cmds.IsEmpty() ? Cmds[0]
-    : TEFile::ChangeFileExt(app.XFile().GetFileName(), "hkl"));
-
-  if (TEFile::Exists(hkl_name)) {
-    E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
-    return;
-  }
   TCif* C = NULL;
   if (E.RetObj() != NULL && EsdlInstanceOf(*E.RetObj(), TCif))
     C = E.GetRetObj<TCif>();
   else
     C = &app.XFile().GetLastLoader<TCif>();
+  olxstr hkl_name = (!Cmds.IsEmpty() ? Cmds[0]
+    : C->GetDataName() + ".hkl");
+  if (TEFile::Exists(hkl_name)) {
+    E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
+    return;
+  }
   cif_dp::cetTable* hklLoop = C->FindLoopGlobal("_refln", true);
   if (hklLoop == NULL) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
@@ -6937,7 +6937,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   // check if the res file is there
-  olxstr res_name = TEFile::ChangeFileExt(app.XFile().GetFileName(), "res");
+  olxstr res_name = TEFile::ChangeFileExt(hkl_name, "res");
   if (!TEFile::Exists(res_name)) {
     cif_dp::cetStringList *ci = dynamic_cast<cif_dp::cetStringList *>(
       C->FindEntry("_shelx_res_file"));
