@@ -10,9 +10,7 @@
 #ifndef __olx_httpfs_H
 #define __olx_httpfs_H
 #include "ebase.h"
-#ifdef __WIN32__
-  #include <winsock.h>
-#else
+#if !defined(__WIN32__)
   #include <sys/socket.h>
   #include <netinet/in.h>
   #include <netdb.h>
@@ -33,10 +31,16 @@ const uint16_t  // extra request headers
 class THttpFileSystem: public AFileSystem  {
   bool Connected;
   TUrl Url;
-  static olxcstr ExecutableSession;
+  static olxcstr &ExecutableSession_() {
+    static olxcstr s;
+    return s;
+  }
   uint16_t ExtraHeaders;
 #ifdef __WIN32__
-  static bool Initialised;
+  static bool &Initialised_() {
+    static bool i;
+    return i;
+  }
 #endif
 protected:
 #ifdef __WIN32__
