@@ -9,9 +9,9 @@
 
 #ifndef __olx_xglApp_H
 #define __olx_xglApp_H
-#include "wx/wx.h"
 #include "gxapp.h"
 #include "olex2app_imp.h"
+#include "wx/wx.h"
 
 class TGlXApp: public wxApp  {
 private:

@@ -7,12 +7,11 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "wx/protocol/http.h"
-
 #include "mainform.h"
 #include "xglcanv.h"
 #include "xglapp.h"
 
+#include "wx/protocol/http.h"
 #include "wx/clipbrd.h"
 #include "wx/filesys.h"
 #include "wx/cursor.h"

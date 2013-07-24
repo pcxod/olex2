@@ -20,6 +20,11 @@
 #define this_InitMacroAD(realMacroName, macroName, validOptions, argc, desc)\
   Library.Register( new TMacro<TMainForm>(this, &TMainForm::mac##realMacroName, #macroName, (validOptions), argc, desc))
 
+#include "mainform.h"
+#include "xglcanv.h"
+#include "xglapp.h"
+#include "wxglscene.h"
+
 #include "wx/utils.h"
 #include "wx/wxhtml.h"
 #include "wx/image.h"
@@ -27,10 +32,6 @@
 #include "wx/fontdlg.h"
 #include "wx/tooltip.h"
 #include "wx/clipbrd.h"
-#include "mainform.h"
-#include "xglcanv.h"
-#include "xglapp.h"
-#include "wxglscene.h"
 
 #include "gpcollection.h"
 #include "glgroup.h"

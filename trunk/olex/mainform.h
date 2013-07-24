@@ -9,10 +9,7 @@
 
 #ifndef _xl_mainformH
 #define _xl_mainformH
-#include "wx/wx.h"
-#include "wx/dnd.h"
-#include "wx/process.h"
-#include "wx/thread.h"
+
 #include "olex2app_imp.h"
 #include "ctrls.h"
 #include "eprocess.h"
@@ -30,6 +27,11 @@
 #include "nui/nui.h"
 #include "tasks.h"
 #include "olxstate.h"
+
+#include "wx/wx.h"
+#include "wx/dnd.h"
+#include "wx/process.h"
+#include "wx/thread.h"
 
 enum  {
   ID_HtmlPanel=wxID_HIGHEST,  // view menu

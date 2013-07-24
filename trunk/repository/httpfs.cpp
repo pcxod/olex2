@@ -15,68 +15,57 @@
 #include "md5.h"
 #include <errno.h>
 
-#ifdef __WIN32__
-  bool THttpFileSystem::Initialised = false;
-#endif
-olxcstr THttpFileSystem::ExecutableSession;
 //..............................................................................
-THttpFileSystem::~THttpFileSystem()  {
-  if( Connected )
+THttpFileSystem::~THttpFileSystem() {
+  if (Connected)
     Disconnect();
 }
 //..............................................................................
 void THttpFileSystem::Init() {
-#ifdef __WIN32__
-  if( !Initialised )
-    Initialise();
-#endif
+  Initialise();
   ExtraHeaders = 0;
   Access = afs_ReadOnlyAccess;
   Connected = false;
 }
 //..............................................................................
 void THttpFileSystem::SetUrl(const TUrl& url) {
-  if( Connected )
-    Disconnect();
-#ifdef __WIN32__
-  if( !Initialised )
-    Initialise();
-#endif
-  if( ExecutableSession.IsEmpty() )  { // not UUID, but quite unique
-    ExecutableSession = MD5::Digest(olxstr(TETime::msNow()));
+  if (Connected) Disconnect();
+  Initialise();
+  if (ExecutableSession_().IsEmpty()) { // not UUID, but quite unique
+    ExecutableSession_() = MD5::Digest(olxstr(TETime::msNow()));
     olx_sleep(1);
-    ExecutableSession = MD5::Digest(ExecutableSession+olxstr(TETime::msNow()));
+    ExecutableSession_() = MD5::Digest(ExecutableSession_()+
+      olxstr(TETime::msNow()));
   }
   Url = url;
   SetBase(url.GetPath());
 }
 //..............................................................................
-void THttpFileSystem::Initialise()  {
+void THttpFileSystem::Initialise() {
 #ifdef __WIN32__
   volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
-  if( !Initialised )  {
-    WSADATA  WsaData;
-    if( WSAStartup(0x0001, &WsaData) != 0 )
+  if (!Initialised_()) {
+    WSADATA WsaData;
+    if (WSAStartup(0x0001, &WsaData) != 0)
       throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised WinSocks");
-    Initialised = true;
-    TEGC::AddP(new THttpFileSystem::Finaliser);
+    Initialised_() = true;
+    TEGC::AddP(new THttpFileSystem::Finaliser());
   }
 #endif
 }
 //..............................................................................
-void THttpFileSystem::Finalise()  {
+void THttpFileSystem::Finalise() {
 #ifdef __WIN32__
-  if( Initialised )  {  
-    volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
+  volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
+  if (Initialised_()) {
     WSACleanup();
-    Initialised = false;
+    Initialised_() = false;
   }
 #endif
 }
 //..............................................................................
-void THttpFileSystem::DoConnect()  {
- if( IsConnected() )
-    Disconnect();
+void THttpFileSystem::DoConnect() {
+ if (IsConnected()) Disconnect();
   Connect();
 }
 //..............................................................................
@@ -86,15 +75,19 @@ void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
   memset(Result, 0, sizeof(*Result));
   memset(&Address, 0, sizeof(Address));
   olxstr HostAdd = Url.HasProxy() ? Url.GetProxy().GetHost() : Url.GetHost();
-  Host = gethostbyname(olxcstr(HostAdd).c_str());  // c_str() on unicode is not thread safe!
+  // c_str() on unicode is not thread safe!
+  Host = gethostbyname(olxcstr(HostAdd).c_str());
   if( Host != NULL )  {
     Address.sin_family  = AF_INET;
-    Address.sin_port    = htons((unsigned short)(Url.HasProxy() ? Url.GetProxy().GetPort() : Url.GetPort()));
+    Address.sin_port    = htons((unsigned short)(Url.HasProxy()
+      ? Url.GetProxy().GetPort() : Url.GetPort()));
     memcpy(&Address.sin_addr, Host->h_addr_list[0], Host->h_length);
     memcpy(Result, &Address, sizeof(Address));
    }
-   else
-     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Can't map hostname: ") << Url.GetHost() );
+   else {
+     throw TFunctionFailedException(__OlxSourceInfo,
+       olxstr("Can't map hostname: ") << Url.GetHost());
+   }
 }
 //..............................................................................
 void THttpFileSystem::Disconnect()  {
@@ -120,12 +113,15 @@ bool THttpFileSystem::Connect()  {
   int timeout = 10000; // ms ?
 #else
   struct timeval timeout;
-	memset(&timeout, 0, sizeof(timeout));
-	timeout.tv_sec = 10;
+  memset(&timeout, 0, sizeof(timeout));
+  timeout.tv_sec = 10;
 #endif
-  if( setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) != 0 ||  
+  if( setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) != 0 ||
       setsockopt(Socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout)) != 0 )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to setup timeout: ") << errno);
+  {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("Failed to setup timeout: ") << errno);
+  }
 
   Status = connect(Socket, &SockAddr, sizeof(SockAddr));
   if( Status >= 0 )
@@ -140,21 +136,24 @@ olxcstr THttpFileSystem::GenerateRequest(const olxcstr& cmd, const olxcstr& File
 {
   olxcstr request(cmd);
   request << ' '
-    << TUtf8::Encode(Url.GetFullHost() << '/' << TEFile::UnixPath(FileName)).Replace(' ', "%20")
-    << " HTTP/1.0\n";
-  if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
+    << TUtf8::Encode(Url.GetFullHost() << '/' <<
+    TEFile::UnixPath(FileName)).Replace(' ', "%20") << " HTTP/1.0\n";
+  if (Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() &&
+      !Url.GetProxy().GetPassword().IsEmpty())
+  {
     request << "Authorization: " << olxcstr(Url.GenerateHTTPAuthString()) << '\n';
-  if( (ExtraHeaders & httpHeaderPlatform) != 0 )
+  }
+  if ((ExtraHeaders & httpHeaderPlatform) != 0)
     request << "Platform: " << TBasicApp::GetPlatformString() << '\n';
-  if( (ExtraHeaders & httpHeaderESession) != 0 )
-    request << "ESession: " << ExecutableSession << '\n';
-  if( position != InvalidIndex && position != 0 )
+  if ((ExtraHeaders & httpHeaderESession) != 0)
+    request << "ESession: " << ExecutableSession_() << '\n';
+  if (position != InvalidIndex && position != 0)
     request << "Resume-From: " << position << '\n';
   return request << '\n';
 }
 //..............................................................................
-THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(const olxcstr& str,
-  const olxcstr& sep, const olxstr& src)
+THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(
+  const olxcstr& str, const olxcstr& sep, const olxstr& src)
 {
   ResponseInfo rv;
   if( str.IsEmpty() )  return rv;
@@ -163,7 +162,8 @@ THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(const olxcstr& 
   for( size_t i=1; i < header_toks.Count(); i++ )  {
     const size_t si = header_toks[i].IndexOf(':');
     if( si == InvalidIndex )  continue;
-    rv.headers(header_toks[i].SubStringTo(si), header_toks[i].SubStringFrom(si+1).Trim(' '));
+    rv.headers(header_toks[i].SubStringTo(si),
+      header_toks[i].SubStringFrom(si+1).Trim(' '));
   }
   size_t ii = rv.headers.IndexOf("Content-MD5");
   if( ii != InvalidIndex )  {
@@ -357,7 +357,7 @@ bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check)  {
     else
       return Index->GetRoot().FindByFullName(fn) != NULL;
   }
-  if( !forced_check )  return false;  
+  if( !forced_check )  return false;
   try  {
     DoConnect();
     const size_t BufferSize = 1024;
