@@ -7,11 +7,6 @@
 * This source file is distributed under the terms of the licence located in   *
 * the root folder.                                                            *
 ******************************************************************************/
-
-#include <stdio.h>
-
-#include "wx/app.h"
-
 #include "efile.h"
 #include "bapp.h"
 #include "log.h"
@@ -30,6 +25,10 @@
 #include "egc.h"
 #include <iostream>
 #include "wxzipfs.h"
+
+#include <stdio.h>
+#include "wx/app.h"
+
 using namespace std;
 
 class TProgress: public AActionHandler  {

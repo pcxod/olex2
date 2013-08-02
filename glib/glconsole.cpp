@@ -327,7 +327,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   if( Key == OLX_KEY_RETURN )  {
     FCommand = GetCommand();
     if( FCommand.Length() )  {
-      if( FCommands.Count() != 0 && FCommands[FCommands.Count()-1] == FCommand)  {
+      if( !FCommands.IsEmpty() && FCommands.GetLastString() == FCommand)  {
         ;
       }
       else  {
