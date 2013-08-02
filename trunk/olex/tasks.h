@@ -11,7 +11,7 @@
 #include "evector.h"
 #include "p4p.h"
 
-// a schecduled macro
+// a scheduled macro
 struct TScheduledTask  {
   bool Repeatable;
   olxstr Task;

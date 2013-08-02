@@ -1641,7 +1641,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
       else  {
         if( FFadeVector[0] < FFadeVector[1] )  {
           FFadeVector[0] = FFadeVector[1];
-          FMode ^= mFade;       
+          FMode ^= mFade;
         }
       }
       if( (FMode & mFade) != 0 )  {
