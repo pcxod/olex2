@@ -295,7 +295,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "hides all atom and bond labels");
   gxlib_InitMacro(Match,
     "s-subgraph match&;"
-    "w-use Z as weights&;"
+    "w-use non-unit weights [ZO - atomic number X occupancy], Z - atomic number"
+    ", EM - atomic mass, AM - atomic mass X occupancy, O - occupancy&;"
     "n-naming. If the value a symbol [or set of] this is appended to the "
     "label, '$xx' replaces the symbols after the atom type symbol with xx, "
     "leaving the ending, '-xx' - changes the ending of the label with xx&;"
@@ -3057,9 +3058,21 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   olex2::IOlex2Processor::GetInstance()->callCallbackFunc(
     StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.Contains("i");
-  double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
-  if( Options.Contains('w') )
-    weight_calculator = &TSAtom::weight_occu_z;
+  double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_unit;
+  
+  if (Options.Contains('w')) {
+    olxstr w = Options.FindValue('w', "zo").ToLowerCase();
+    if (w == 'o')
+      weight_calculator = &TSAtom::weight_occu;
+    else if (w == "zo")
+      weight_calculator = &TSAtom::weight_occu_z;
+    else if (w == 'z')
+      weight_calculator = &TSAtom::weight_z;
+    else if (w == "em")
+      weight_calculator = &TSAtom::weight_element_mass;
+    else if (w == "am")
+      weight_calculator = &TSAtom::weight_atom_mass;
+  }
   const bool subgraph = Options.Contains("s");
   olxstr suffix = Options.FindValue("n");
   const bool name = Options.Contains("n");
