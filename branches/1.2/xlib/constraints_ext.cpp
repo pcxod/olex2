@@ -326,7 +326,7 @@ olxstr same_group_constraint::ToInsStr(const RefinementModel& rm) const {
   rv << GetName() << ' ' << groups.Count();
   for( size_t i=0; i < groups.Count(); i++ )  {
     for( size_t j=0; j < groups[i].Count(); j++ )
-      rv << ' ' << groups[i][j]->GetLabel();
+      rv << ' ' << groups[i][j]->GetResiLabel();
   }
   return rv;
 }
@@ -379,7 +379,7 @@ olxstr tls_group_constraint::ToInsStr(const RefinementModel& rm) const {
   olxstr ws(' ');
   rv << GetName();
   for (size_t i=0; i < atoms.Count(); i++) {
-    rv << ws << atoms[i]->GetLabel();
+    rv << ws << atoms[i]->GetResiLabel();
   }
   return olxstr(rv);
 }

@@ -598,6 +598,7 @@ bool THtml::UpdatePage(bool update_indices)  {
     }
   }
 #if defined(__WIN32__)
+  CreateLayout();
   Thaw();
 #elif defined(__linux__)
   CreateLayout();

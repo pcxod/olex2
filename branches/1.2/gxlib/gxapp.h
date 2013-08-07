@@ -638,10 +638,13 @@ protected:
 public:
   void RestoreSelection();
   TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels,
-    bool ClearSelection);
+    bool ClearSelection, bool NameResi=false);
   TUndoData* Name(TXAtom& Atom, const olxstr& Name, bool CheckLabels);
   TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To,
     bool CheckLabels);
+  // makes sure that residues have the same labels as the reference atoms
+  TUndoData* SynchroniseResidues(const TXAtomPList &reference);
+
 
   void InfoList(const olxstr& Atoms, TStrList& Info, bool Sort,
     int precision=3, bool cart=false);

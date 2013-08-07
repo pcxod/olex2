@@ -54,11 +54,13 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Name,
     "c-enables checking labels for duplications&;"
     "s-simply changes suffix of provided atoms to the provided one (or none)&;"
-    "cs-leaves current selection unchanged",
-    fpOne|fpTwo,
-    "Names atoms. If the 'sel' keyword is used and a number is provided as "
-    "second argument the numbering will happen in the order the atoms were "
-    "selected (make sure -c option is added)");
+    "cs-leaves current selection unchanged&;"
+    "r-synchronise names in the residues"
+    ,
+    fpNone|fpOne|fpTwo,
+    "Names atoms. If the 'sel' keyword is used and a number (or just the number)"
+    " is provided as second argument the numbering will happen in the order the"
+    " atoms were selected");
 
   gxlib_InitMacro(CalcPatt, EmptyString(), fpNone|psFileLoaded,
     "Calculates Patterson map");
@@ -293,7 +295,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "hides all atom and bond labels");
   gxlib_InitMacro(Match,
     "s-subgraph match&;"
-    "w-use Z as weights&;"
+    "w-use non-unit weights [ZO - atomic number X occupancy], Z - atomic number"
+    ", EM - atomic mass, AM - atomic mass X occupancy, O - occupancy&;"
     "n-naming. If the value a symbol [or set of] this is appended to the "
     "label, '$xx' replaces the symbols after the atom type symbol with xx, "
     "leaving the ending, '-xx' - changes the ending of the label with xx&;"
@@ -452,38 +455,48 @@ void GXLibMacros::macPack(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  bool checkLabels = Options.Contains("c");
-  bool changeSuffix = Options.Contains("s");
-  if( changeSuffix )  {
+  bool checkLabels = Options.GetBoolOption('c');
+  bool changeSuffix = Options.Contains('s');
+  bool nameResi = Options.GetBoolOption('r');
+  if (changeSuffix) {
     TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.Contains("cs"));
     if (!xatoms.IsEmpty()) {
-      app.GetUndo().Push(app.ChangeSuffix(
-        xatoms, Options.FindValue("s"), checkLabels));
+      TUndoData *ud = app.GetUndo().Push(app.ChangeSuffix(
+        xatoms, Options.FindValue('s'), checkLabels));
+      if (nameResi) {
+        TUndoData *rud = app.SynchroniseResidues(xatoms);
+        if (ud != NULL)
+          ud->AddAction(rud);
+        else
+          app.GetUndo().Push(rud);
+      }
     }
   }
-  else  {
+  else {
     bool processed = false;
-    if( Cmds.Count() == 1 )  { // bug #49
+    if (Cmds.Count() == 1) { // bug #49
       const size_t spi = Cmds[0].IndexOf(' ');
-      if( spi != InvalidIndex )  {
+      if (spi != InvalidIndex) {
         app.GetUndo().Push(
           app.Name(Cmds[0].SubStringTo(spi),
           Cmds[0].SubStringFrom(spi+1), checkLabels,
-          !Options.Contains("cs"))
+          !Options.Contains("cs"), nameResi)
         );
       }
       else {
         app.GetUndo().Push(
-          app.Name("sel", Cmds[0], checkLabels, !Options.Contains("cs")));
+          app.Name("sel", Cmds[0], checkLabels, !Options.Contains("cs"),
+          nameResi));
       }
       processed = true;
     }
-    else if( Cmds.Count() == 2 )  {
+    else if (Cmds.Count() == 2) {
       app.GetUndo().Push(app.Name(
-        Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")));
+        Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs"),
+        nameResi));
       processed = true;
     }
-    if( !processed )  {
+    if (!processed) {
       Error.ProcessingError(__OlxSrcInfo,
         olxstr("invalid syntax: ") << Cmds.Text(' '));
     }
@@ -2153,7 +2166,7 @@ void GXLibMacros::macCenter(TStrObjList &Cmds, const TParamList &Options,
     double sum = 0;
     for (size_t i=0; i < atoms.Count(); i++) {
       center += atoms[i]->crd()*atoms[i]->CAtom().GetChemOccu();
-      sum += atoms[i]->CAtom().GetOccu();
+      sum += atoms[i]->CAtom().GetChemOccu();
     }
     if (sum != 0) {
       center /= sum;
@@ -3045,9 +3058,21 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   olex2::IOlex2Processor::GetInstance()->callCallbackFunc(
     StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.Contains("i");
-  double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_occu;
-  if( Options.Contains('w') )
-    weight_calculator = &TSAtom::weight_occu_z;
+  double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_unit;
+  
+  if (Options.Contains('w')) {
+    olxstr w = Options.FindValue('w', "zo").ToLowerCase();
+    if (w == 'o')
+      weight_calculator = &TSAtom::weight_occu;
+    else if (w == "zo")
+      weight_calculator = &TSAtom::weight_occu_z;
+    else if (w == 'z')
+      weight_calculator = &TSAtom::weight_z;
+    else if (w == "em")
+      weight_calculator = &TSAtom::weight_element_mass;
+    else if (w == "am")
+      weight_calculator = &TSAtom::weight_atom_mass;
+  }
   const bool subgraph = Options.Contains("s");
   olxstr suffix = Options.FindValue("n");
   const bool name = Options.Contains("n");

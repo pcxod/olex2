@@ -68,6 +68,7 @@ public:\
   #if !defined(_WIN32_WINNT) && _MSC_VER < 1500
     #define _WIN32_WINNT 0x400
   #endif
+  #include <WinSock2.h>
   #include <windows.h>
 #endif
 // there is a mistery how it manages to disapper!!!!

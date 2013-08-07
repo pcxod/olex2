@@ -7,12 +7,11 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#include "wx/protocol/http.h"
-
 #include "mainform.h"
 #include "xglcanv.h"
 #include "xglapp.h"
 
+#include "wx/protocol/http.h"
 #include "wx/clipbrd.h"
 #include "wx/filesys.h"
 #include "wx/cursor.h"
@@ -3796,12 +3795,8 @@ void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options, TMacro
     Error.ProcessingError(__OlxSrcInfo, "invalid syntax: <interval 'task'> are expected ");
     return;
   }
-  bool repeatable = false;
-  for( size_t i=0; i < Options.Count(); i++ )
-    if( Options.GetName(i)[0] == 'r' )  {  repeatable = true;  break;  }
-
   TScheduledTask& task = Tasks.AddNew();
-  task.Repeatable= repeatable;
+  task.Repeatable= Options.GetBoolOption('r');
   task.Interval = Cmds[0].ToInt();
   task.Task = Cmds[1];
   task.LastCalled = TETime::Now();

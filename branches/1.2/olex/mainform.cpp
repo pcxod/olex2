@@ -20,6 +20,11 @@
 #define this_InitMacroAD(realMacroName, macroName, validOptions, argc, desc)\
   Library.Register( new TMacro<TMainForm>(this, &TMainForm::mac##realMacroName, #macroName, (validOptions), argc, desc))
 
+#include "mainform.h"
+#include "xglcanv.h"
+#include "xglapp.h"
+#include "wxglscene.h"
+
 #include "wx/utils.h"
 #include "wx/wxhtml.h"
 #include "wx/image.h"
@@ -27,10 +32,6 @@
 #include "wx/fontdlg.h"
 #include "wx/tooltip.h"
 #include "wx/clipbrd.h"
-#include "mainform.h"
-#include "xglcanv.h"
-#include "xglapp.h"
-#include "wxglscene.h"
 
 #include "gpcollection.h"
 #include "glgroup.h"
@@ -668,7 +669,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "c-[grow] covalent bonds; [move] copy fragments instead of moving\n&;"
     "r-[split] a restraint/constraint for split atoms; [grow] show radial "
     "bonds between the same atoms; [fit] rotation angle increment (smooth "
-    "rotation by default)\n&;"
+    "rotation by default); [name] synchronise names in the residues\n&;"
     "v-[grow] use user provided delta for connectivity analysis, default 2A\n&;"
     "shells-[grow] grow atom shells vs fragments&;"
     "l-[name] lock atom types after naming\n&;",
@@ -1640,7 +1641,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
       else  {
         if( FFadeVector[0] < FFadeVector[1] )  {
           FFadeVector[0] = FFadeVector[1];
-          FMode ^= mFade;       
+          FMode ^= mFade;
         }
       }
       if( (FMode & mFade) != 0 )  {
