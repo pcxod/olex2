@@ -1201,20 +1201,21 @@ bool TIns::Adopt(TXFile& XF)  {
 void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   const TIndexList& index, TStrList& SL, TStrList& Instructions)
 {
-  if( index.IsEmpty() )  return;
+  if (index.IsEmpty()) return;
   size_t atomCount = 0;
   ParseContext cx(rm);
   Preprocess(SL);
-  for( size_t i=0; i < index.Count(); i++ )  {
-    if( (size_t)index[i] >= rm.aunit.AtomCount() )
+  for (size_t i=0; i < index.Count(); i++) {
+    if ((size_t)index[i] >= rm.aunit.AtomCount())
       throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
     TCAtom &ca = rm.aunit.GetAtom(index[i]);
-    if( ca.GetParentAfixGroup() != NULL )
+    if (ca.GetParentAfixGroup() != NULL)
       ca.GetParentAfixGroup()->Clear();
-    if( ca.GetDependentAfixGroup() != NULL )
+    if (ca.GetDependentAfixGroup() != NULL)
       ca.GetDependentAfixGroup()->Clear();
-    if( ca.GetExyzGroup() != NULL )
+    if (ca.GetExyzGroup() != NULL)
       ca.GetExyzGroup()->Clear();
+    ca.SetFixedType(false);
   }
   TTypeList<AnAssociation2<TCAtom *, olxstr> > atom_labels;
   for( size_t i=0; i < SL.Count(); i++ )  {
@@ -1823,6 +1824,8 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
 //..............................................................................
 void TIns::ParseHeader(const TStrList& in)  {
   // clear all but the atoms
+  for (size_t i=0; i < AsymmUnit.AtomCount(); i++)
+    AsymmUnit.GetAtom(i).SetFixedType(false);
   for( size_t i=0; i < Ins.Count(); i++ )
     delete Ins.GetObject(i);
   Ins.Clear();
