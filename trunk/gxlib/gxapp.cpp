@@ -3728,24 +3728,22 @@ void TGXApp::Collectivise(const TXAtomPList& atoms, short _level, int32_t mask) 
 }
 //..............................................................................
 size_t TGXApp::GetNextAvailableLabel(const olxstr& AtomType) {
-  size_t nextLabel = 0, currentLabel;
+  size_t nextLabel = 0;
   cm_Element* elm = XElementLib::FindBySymbol(AtomType);
-  if( elm == NULL )  return nextLabel;
-  AtomIterator ai(*this);
-  while( ai.HasNext() )  {
-    TXAtom& xa = ai.Next();
-    if( xa.GetType() == *elm)  {
-      olxstr label = xa.GetLabel().SubStringFrom(elm->symbol.Length());
-      if( label.IsEmpty() )  continue;
-      olxstr nLabel;
+  if (elm == NULL) return nextLabel+1;
+  TAsymmUnit &au = XFile().GetAsymmUnit();
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    TCAtom &ca = au.GetAtom(i);
+    if (ca.GetType() == *elm) {
+      olxstr label = ca.GetLabel().SubStringFrom(elm->symbol.Length());
+      if (label.IsEmpty()) continue;
       size_t j=0;
-      while( (j < label.Length()) && olxstr::o_isdigit(label.CharAt(j)) )  {
-        nLabel << label[j];
+      while ((j < label.Length()) && olxstr::o_isdigit(label.CharAt(j))) {
         j++;
       }
-      if( !nLabel.Length() )  continue;
-      currentLabel = nLabel.ToUInt();
-      if( currentLabel > nextLabel )  nextLabel = currentLabel;
+      if (j == 0) continue;
+      size_t cl = label.SubStringTo(j).ToUInt();
+      if (cl > nextLabel) nextLabel = cl;
     }
   }
   return nextLabel+1;
