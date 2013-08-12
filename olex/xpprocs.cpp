@@ -1821,7 +1821,7 @@ void TMainForm::macFocus(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  wxTheApp->Yield();
+  wxTheApp->Yield(true);
 }
 //..............................................................................
 //..............................................................................
@@ -1829,25 +1829,24 @@ void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  // this variable is set when the mode is changed from within this function
   static bool ChangingMode = false;
-
-  if( ChangingMode )  return;
+  if (ChangingMode)  return;
+  ChangingMode = true;
   olxstr name = Cmds[0], args;
   Cmds.Delete(0);
   args << Cmds.Text(' ');
   for (size_t i=0; i < Options.Count(); i++)
     args << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
   AMode* md = Modes->SetMode(name, args);
-  if( md != NULL )  {
-    try  {
-      if( !md->Initialise(Cmds, Options) )  {
+  if (md != NULL) {
+    try {
+      if (!md->Initialise(Cmds, Options)) {
         E.ProcessingError(__OlxSrcInfo, "Current mode is unavailable");
         Modes->ClearMode(false);
         return;
       }
     }
-    catch(const TExceptionBase& e)  {
+    catch (const TExceptionBase& e) {
       Modes->ClearMode(false);
       throw TFunctionFailedException(__OlxSrcInfo, e);
     }

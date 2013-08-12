@@ -3676,12 +3676,12 @@ void TGXApp::Collectivise(const TXBondPList& bonds, short _level, int32_t mask) 
     if( cl == 0 || (_level != -1 && cl < _level) )  continue;
     const olxstr leg = b.GetLegend(b, _level == -1 ? cl-1 : _level);
     TGPCollection* indCol = FGlRender->FindCollection(leg);
-    if( &b.GetPrimitives() == indCol )  
+    if( &b.GetPrimitives() == indCol )
       continue;
     if( indCol == NULL )
       indCol = &FGlRender->NewCollection(leg);
     const size_t index = IndividualCollections.IndexOf(b.GetPrimitives().GetName());
-    if( index != InvalidIndex )  
+    if( index != InvalidIndex )
       IndividualCollections.Delete(index);
     TPtrList<AGDrawObject> objects = b.GetPrimitives().GetObjects();
     b.GetPrimitives().ClearObjects();
