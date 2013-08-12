@@ -194,7 +194,7 @@ olxstr PatchAPI::GetSharedDir(bool refresh) {
 #ifdef __WIN32__
   return rv << "Olex2Data/";
 #else
-  return TEFile::TrimPathDelimeterI(rv) << "data/";
+  return rv << "data/";
 #endif
 }
 //.............................................................................
