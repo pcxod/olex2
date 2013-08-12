@@ -105,7 +105,7 @@ public:
     // validate if type is correct
     if( !Symbol.IsEmpty() && !XElementLib::IsElement(Symbol) )
       throw TInvalidArgumentException(__OlxSourceInfo, "element type");
-    if( Cmds.IsEmpty() && !Symbol.IsEmpty() )
+    if (Cmds.IsEmpty() && !Symbol.IsEmpty())
       Index = gxapp.GetNextAvailableLabel(Symbol);
 
     SetCursor();
