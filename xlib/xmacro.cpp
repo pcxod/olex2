@@ -6106,22 +6106,22 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
   RefinementModel& rm = app.XFile().GetRM();
   int part = DefNoPart;
   double occu = 0;
-  const size_t partCount = Options.FindValue("p", "1").ToSizeT();
   XLibMacros::Parse(Cmds, "id", &part, &occu);
-  const bool linkOccu = Options.Contains("lo");
-  const bool copy = Options.Contains("c");
+  const size_t partCount = Options.FindValue("p", "1").ToSizeT();
+  const bool linkOccu = Options.GetBoolOption("lo");
+  const bool copy = Options.GetBoolOption("c");
 
   TSAtomPList Atoms = app.FindSAtoms(Cmds,false, !Options.Contains("cs") );
-  if( partCount == 0 || (Atoms.Count()%partCount) != 0 )  {
+  if (partCount == 0 || (Atoms.Count()%partCount) != 0) {
     E.ProcessingError(__OlxSrcInfo, "wrong number of parts");
     return;
   }
-  if( copy )  {
-    if( part == DefNoPart )
+  if (copy) {
+    if (part == DefNoPart)
       part = rm.aunit.GetNextPart(true);
     XVar& xv = rm.Vars.NewVar(0.5);
-    for( size_t i=0; i < Atoms.Count(); i++ )  {
-      if( !Atoms[i]->GetMatrix().IsFirst() )  {
+    for (size_t i=0; i < Atoms.Count(); i++) {
+      if (!Atoms[i]->GetMatrix().IsFirst()) {
         TCAtom& ca = rm.aunit.NewAtom();
         ca.Assign(Atoms[i]->CAtom());
         ca.SetPart(-1);
@@ -6137,59 +6137,60 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
   }
   XVar* xv = NULL;
   XLEQ* leq = NULL;
-  if( linkOccu )  {
+  if (linkOccu) {
     // -21 -> 21
-    if( partCount == 2 )
+    if (partCount == 2)
       xv = &rm.Vars.NewVar(0.5);
     // SUMP
-    if( partCount > 2 )
+    if (partCount > 2)
       leq = &rm.Vars.NewEquation(1.0, 0.01);
   }
 
-  if( part == DefNoPart )
+  if (part == DefNoPart)
     part = rm.aunit.GetNextPart();
 
-  for( size_t i=0; i < partCount; i++ )  {
-    for( size_t j=(Atoms.Count()/partCount)*i;
-           j < (Atoms.Count()/partCount)*(i+1); j++ )
+  for (size_t i=0; i < partCount; i++) {
+    if (partCount > 2) {
+      xv = &rm.Vars.NewVar(1./partCount);
+      leq->AddMember(*xv);
+    }
+    for (size_t j=(Atoms.Count()/partCount)*i;
+           j < (Atoms.Count()/partCount)*(i+1); j++)
     {
-      Atoms[j]->CAtom().SetPart(part);
+      SortedPtrList<TCAtom, TPointerComparator> atoms;
+      atoms.Add(&Atoms[j]->CAtom());
       if (!linkOccu && occu != 0) {
         app.XFile().GetRM().Vars.SetParam(
           Atoms[j]->CAtom(), catom_var_name_Sof, occu);
       }
-
-      if( Atoms[j]->GetType() == iHydrogenZ || Atoms[j]->GetType() == iQPeakZ )
-        continue;
-      for( size_t k=0; k <  Atoms[j]->NodeCount(); k++ )  {
+      if (Atoms[j]->GetType().z < 2) continue;
+      for (size_t k=0; k <  Atoms[j]->NodeCount(); k++) {
         TSAtom& SA = Atoms[j]->Node(k);
-        if( SA.GetType() == iHydrogenZ )  {
+        if (SA.GetType() == iHydrogenZ) {
           // skip if the afix group already exists and not this one
-          if( SA.CAtom().GetParentAfixGroup() != NULL && 
-            SA.CAtom().GetParentAfixGroup()->GetPivot() != Atoms[j]->CAtom() )
+          if (SA.CAtom().GetParentAfixGroup() != NULL &&
+            SA.CAtom().GetParentAfixGroup()->GetPivot() != Atoms[j]->CAtom())
             continue;
-          SA.CAtom().SetPart(part);
+          atoms.AddUnique(&SA.CAtom());
         }
       }
-      if( linkOccu )  {
-        if( partCount == 2 )  {
-          if( i != 0 )    {
-            rm.Vars.AddVarRef(*xv, Atoms[j]->CAtom(), catom_var_name_Sof,
-              relation_AsVar, 1.0/Atoms[j]->CAtom().GetDegeneracy());
+      for (size_t k=0; k < atoms.Count(); k++) {
+        atoms[k]->SetPart(part);
+        if (linkOccu) {
+          if (partCount == 2) {
+            if (i != 0) {
+              rm.Vars.AddVarRef(*xv, *atoms[k], catom_var_name_Sof,
+                relation_AsVar, 1.0/atoms[k]->GetDegeneracy());
+            }
+            else {
+              rm.Vars.AddVarRef(*xv, *atoms[k], catom_var_name_Sof,
+                relation_AsOneMinusVar, 1.0/atoms[k]->GetDegeneracy());
+            }
           }
-          else  {
-            rm.Vars.AddVarRef(*xv, Atoms[j]->CAtom(), catom_var_name_Sof,
-              relation_AsOneMinusVar, 1.0/Atoms[j]->CAtom().GetDegeneracy());
+          if (partCount > 2) {
+            rm.Vars.AddVarRef(*xv, *atoms[k], catom_var_name_Sof,
+              relation_AsVar, 1.0/atoms[k]->GetDegeneracy());
           }
-        }
-        if( partCount > 2 )  {
-          if( Atoms[j]->CAtom().GetVarRef(catom_var_name_Sof) == NULL )  {
-            XVar& nv = rm.Vars.NewVar(1./Atoms.Count());
-            rm.Vars.AddVarRef(nv, Atoms[j]->CAtom(), catom_var_name_Sof,
-              relation_AsVar, 1.0/Atoms[j]->CAtom().GetDegeneracy());
-          }
-          leq->AddMember(
-            Atoms[j]->CAtom().GetVarRef(catom_var_name_Sof)->Parent);
         }
       }
     }

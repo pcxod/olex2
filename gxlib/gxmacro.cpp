@@ -1064,86 +1064,88 @@ int GXLibMacros::QPeakSortA(const TCAtom &a, const TCAtom &b)  {
     if (a.GetLabel().SubStringFrom(1).IsNumber() &&
         b.GetLabel().SubStringFrom(1).IsNumber())
     {
+      // larger the number - 'smaller' the peak
       v = olx_cmp(b.GetLabel().SubStringFrom(1).ToInt(),
         a.GetLabel().SubStringFrom(1).ToInt());
     }
   }
-  return v;;
+  return v;
 }
 void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   double wheel = Options.FindValue("wheel", '0').ToDouble();
   TEBasis basis = app.GetRender().GetBasis();
-  if( wheel != 0 )  {
+  if (wheel != 0) {
     //if( !app.QPeaksVisible() )  return;
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     TCAtomPList qpeaks;
-    for( size_t i=0; i < au.AtomCount(); i++ )
-      if( !au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ )
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      if (!au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ)
         qpeaks.Add(au.GetAtom(i));
-    QuickSorter::SortSF(qpeaks, GXLibMacros::QPeakSortA);
+    }
+    QuickSorter::SortSF(qpeaks, &GXLibMacros::QPeakSortD);
     index_t d_cnt = 0;
-    for( size_t i=0; i < qpeaks.Count(); i++ )
-      if( !qpeaks[i]->IsDetached() )
+    for (size_t i=0; i < qpeaks.Count(); i++)
+      if (!qpeaks[i]->IsDetached())
         d_cnt++;
-    if( d_cnt == 0 && wheel < 0 )  return;
-    if( d_cnt == (index_t)qpeaks.Count() && wheel > 0 )  return;
+    if (d_cnt == 0 && wheel < 0) return;
+    if (d_cnt == (index_t)qpeaks.Count() && wheel > 0) return;
     d_cnt += (index_t)(wheel);
-    if( d_cnt < 0 )  d_cnt = 0;
-    if( d_cnt > (index_t)qpeaks.Count() )
+    if (d_cnt < 0)  d_cnt = 0;
+    if (d_cnt > (index_t)qpeaks.Count())
       d_cnt = qpeaks.Count();
-    for( size_t i=0; i < qpeaks.Count(); i++ )
+    for (size_t i=0; i < qpeaks.Count(); i++)
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
-    //app.XFile().GetLattice().UpdateConnectivityInfo();
     app.UpdateConnectivity();
     app.Draw();
   }
-  else if( Cmds.Count() == 2 )  {
+  else if (Cmds.Count() == 2) {
     bool v = Cmds[1].ToBool();
-    if( Cmds[0] == "a" )  {
-      if( v && !app.AreQPeaksVisible() )  {
+    if (Cmds[0] == 'a') {
+      if (v && !app.AreQPeaksVisible()) {
         app.SetQPeaksVisible(true);
       }
-      else if( !v && app.AreQPeaksVisible() )  {
+      else if (!v && app.AreQPeaksVisible()) {
         app.SetQPeaksVisible(false);
       }
     }
-    else if( Cmds[0] == "b" )  {
-      if( v && !app.AreQPeakBondsVisible() )  {
+    else if (Cmds[0] == 'b') {
+      if (v && !app.AreQPeakBondsVisible()) {
         app.SetQPeakBondsVisible(true);
       }
-      else if( !v && app.AreQPeakBondsVisible() )  {
+      else if (!v && app.AreQPeakBondsVisible()) {
         app.SetQPeakBondsVisible(false);
       }
     }
   }
-  else if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
+  else if (Cmds.Count() == 1 && Cmds[0].IsNumber()) {
     index_t num = Cmds[0].ToInt();
     const bool negative = num < 0;
-    if( num < 0 )  num = olx_abs(num);
+    num = olx_abs(num);
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     TCAtomPList qpeaks;
-    for( size_t i=0; i < au.AtomCount(); i++ )
-      if( au.GetAtom(i).GetType() == iQPeakZ )
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      if (au.GetAtom(i).GetType() == iQPeakZ)
         qpeaks.Add(au.GetAtom(i));
+    }
     QuickSorter::SortSF(qpeaks,
-      negative ? GXLibMacros::QPeakSortD : GXLibMacros::QPeakSortA);
+      &(negative ? GXLibMacros::QPeakSortD : GXLibMacros::QPeakSortA));
     num = olx_min(qpeaks.Count()*num/100, qpeaks.Count());
-    for( size_t i=0; i < qpeaks.Count(); i++ )  
-      qpeaks[i]->SetDetached( i >= (size_t)num );
+    for (size_t i=0; i < qpeaks.Count(); i++)
+      qpeaks[i]->SetDetached(i >= (size_t)num);
     app.GetSelection().Clear();
     app.UpdateConnectivity();
     app.Draw();
   }
-  else  {
-    if( (!app.AreQPeaksVisible() && !app.AreQPeakBondsVisible()) )  {
+  else {
+    if ((!app.AreQPeaksVisible() && !app.AreQPeakBondsVisible())) {
       app.SetQPeaksVisible(true);
     }
-    else if( app.AreQPeaksVisible() && !app.AreQPeakBondsVisible())  {
+    else if (app.AreQPeaksVisible() && !app.AreQPeakBondsVisible()) {
       app.SetQPeakBondsVisible(true);
     }
-    else if( app.AreQPeaksVisible() && app.AreQPeakBondsVisible() )  {
+    else if (app.AreQPeaksVisible() && app.AreQPeakBondsVisible()) {
       app.SetQPeaksVisible(false);
       app.SetQPeakBondsVisible(false);
     }

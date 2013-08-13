@@ -1215,21 +1215,21 @@ void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
     GetRefMod()->Vars.SetParam(a, catom_var_name_Sof, val);
 }
 //..............................................................................
-void TAsymmUnit::_UpdateQPeaks()  {
+void TAsymmUnit::_UpdateQPeaks() {
   TPSTypeList<double, TCAtom*> sortedPeaks;
   size_t ac = CAtoms.Count();
-  for( size_t i=0; i < ac; i++ )  {
-    if( CAtoms[i]->GetType() != iQPeakZ || CAtoms[i]->IsDeleted() )  continue;
+  for (size_t i=0; i < ac; i++) {
+    if (CAtoms[i]->GetType() != iQPeakZ || CAtoms[i]->IsDeleted()) continue;
     sortedPeaks.Add(CAtoms[i]->GetQPeak(), CAtoms[i]);
   }
   ac = sortedPeaks.Count();
-  for( size_t i=0; i < ac; i++ )
+  for (size_t i=0; i < ac; i++)
     sortedPeaks.GetObject(i)->SetLabel(olxstr('Q') << olxstr(ac-i), false);
-  if( ac )  {
+  if (ac != 0) {
     MinQPeak = sortedPeaks.GetKey(0);
     MaxQPeak = sortedPeaks.GetLast().Comparable;
   }
-  else  {
+  else {
     MaxQPeak = -1000;
     MinQPeak = 1000;
   }
