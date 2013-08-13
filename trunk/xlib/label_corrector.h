@@ -79,8 +79,9 @@ struct LabelCorrector  {
       uniq_labels.Add(a.GetLabel(), &a);
     }
   }
-  void Correct(TCAtom& a)  {
-    if( trim && a.GetLabel().Length() > 4 )
+  void Correct(TCAtom& a) {
+    if (a.IsDeleted()) return;
+    if (trim && a.GetLabel().Length() > 4)
       a.SetLabel(a.GetLabel().SubStringTo(4), false);
     TCAtom* lo = uniq_labels.Find(a.GetResiLabel(), NULL);
     if (lo != NULL) {
@@ -88,14 +89,14 @@ struct LabelCorrector  {
       if (a.GetPart() != lo->GetPart() && a.GetPart() != 0 && lo->GetPart() != 0)
         return;
       LabelIterator *li;
-      if( labels.HasKey(&a.GetType()) )
+      if (labels.HasKey(&a.GetType()))
         li = &labels[&a.GetType()];
-      else  {
+      else {
         const size_t off = a.GetType().symbol.Length();
         li = &labels(&a.GetType(),
           LabelIterator(olxstr(a.GetType().symbol) << '1', off));
       }
-      while( uniq_labels.IndexOf(li->label) != InvalidIndex )
+      while (uniq_labels.IndexOf(li->label) != InvalidIndex)
         li->inc();
       a.SetLabel(li->label, false);
       uniq_labels.Add(a.GetResiLabel(), &a);
@@ -104,32 +105,31 @@ struct LabelCorrector  {
     else
       uniq_labels.Add(a.GetLabel(), &a);
   }
-  void CorrectAll(TResidue& r)  {
+  void CorrectAll(TResidue& r) {
     uniq_labels.SetCapacity(r.Count());
-    for( size_t i=0; i < r.Count(); i++ )  {
-      if( !r[i].IsDeleted() )
-        Correct(r[i]);
-    }
+    for (size_t i=0; i < r.Count(); i++)
+      Correct(r[i]);
   }
   // must be initialised with AsymmUnit!
-  void CorrectGlobal(TCAtom& a)  {
+  void CorrectGlobal(TCAtom& a) {
+    if (a.IsDeleted()) return;
     TCAtom* lo = uniq_labels.Find(a.GetLabel(), NULL);
-    if( lo != &a )  {
+    if (lo != &a) {
       LabelIterator *li;
-      if( labels.HasKey(&a.GetType()) )
+      if (labels.HasKey(&a.GetType()))
         li = &labels[&a.GetType()];
-      else  {
+      else {
         const size_t off = a.GetType().symbol.Length();
         li = &labels(&a.GetType(),
           LabelIterator(olxstr(a.GetType().symbol) << '1', off));
       }
-      while( uniq_labels.IndexOf(li->label) != InvalidIndex )
+      while (uniq_labels.IndexOf(li->label) != InvalidIndex)
         li->inc();
       a.SetLabel(li->label, false);
       uniq_labels.Add(li->label);
       li->inc();
     }
-    else if( lo == NULL ) {
+    else if (lo == NULL) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Incorrectly intialised object - use the right constructor");
     }
@@ -138,7 +138,7 @@ struct LabelCorrector  {
     TCAtom* lo = uniq_labels.Find(a.GetLabel(), NULL);
     if (lo != &a)
       return false;
-    else if( lo == NULL ) {
+    else if (lo == NULL) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Incorrectly intialised object - use the right constructor");
     }
