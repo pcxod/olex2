@@ -999,8 +999,8 @@ void TUnitCell::BuildStructureMap_Masks(TArray3D<short>& map, double delta, shor
     delete scatterers.GetValue(i);
 }
 //..................................................................................
-void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, short val, 
-  ElementRadii* _radii, const TCAtomPList* _template) const
+void TUnitCell::BuildDistanceMap_Direct(TArray3D<short>& _map, double delta, short val,
+  const ElementRadii* _radii, const TCAtomPList* _template) const
 {
   TTypeList< AnAssociation3<vec3f,TCAtom*, float> > allAtoms;
   GenereteAtomCoordinates(allAtoms, true, _template);
@@ -1092,8 +1092,8 @@ void TUnitCell::TBuildDistanceMapTask::Run(size_t ind) const {
   }
 }
 //..................................................................................
-void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short val, 
-  ElementRadii* radii, const TCAtomPList* _template) const
+void TUnitCell::BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short val,
+  const ElementRadii* radii, const TCAtomPList* _template) const
 {
   const vec3s dims = map.GetSize();
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();

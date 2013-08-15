@@ -832,11 +832,14 @@ void TMainForm::XApp(Olex2App *XA)  {
     "point on the sphere with a unique color corresponding to fragments.");
   this_InitMacroD(UpdateQPeakTable, EmptyString(), fpNone|psFileLoaded,
     "Internal routine for synchronisation");
-  this_InitMacroD(FlushFS, EmptyString(), 
+  this_InitMacroD(FlushFS, EmptyString(),
     (fpOne|fpNone),
     "Saves current content of the virtual file system. If no parameters is "
     "given - the global state is saved. Possible arguments: global, "
     "structure");
+  this_InitMacroD(Elevate, EmptyString(),
+    fpNone,
+    "Runs Olex2 in elevated mode - only available on Windows");
 
   // FUNCTIONS _________________________________________________________________
 
