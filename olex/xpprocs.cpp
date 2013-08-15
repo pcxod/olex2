@@ -2460,12 +2460,14 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       file_n.file_name = TEFile::ExtractFilePath(file_n.file_name);
       if( !file_n.file_name.IsEmpty() )
         TEFile::AddPathDelimeterI(file_n.file_name);
-      file_n.file_name << wfd.cFileName;
+      file_n.file_name << &wfd.cFileName[0];
       FindClose(fsh);
     }
 #endif // win32
-    if( TEFile::ExtractFilePath(file_n.file_name).IsEmpty() )
-      file_n.file_name = XLibMacros::CurrentDir + file_n.file_name;
+    if (TEFile::ExtractFilePath(file_n.file_name).IsEmpty()) {
+      file_n.file_name = TEFile::AddPathDelimeter(XLibMacros::CurrentDir)
+        + file_n.file_name;
+    }
   }
   else  {
     if( !IsVisible() )  return;
@@ -6040,7 +6042,8 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 #ifdef __WIN32__
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TBasicApp::GetBaseDir());
-  if (TShellUtil::RunElevated(TBasicApp::GetModuleName())) {
+  olxstr mn = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
+  if (TShellUtil::RunElevated(mn)) {
     FXApp->UpdateOption("confirm_on_close", FalseString());
     Close(false);
   }
