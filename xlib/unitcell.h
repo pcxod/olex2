@@ -322,11 +322,11 @@ public:
   void BuildStructureMap_Masks(TArray3D<short>& map, double delta, short value,
     ElementRadii* radii, const TCAtomPList* _template = NULL) const;
   /**/
-  void BuildDistanceMap_Direct(TArray3D<short>& map, double delta, short value, 
-    ElementRadii* radii, const TCAtomPList* _template = NULL) const;
+  void BuildDistanceMap_Direct(TArray3D<short>& map, double delta, short value,
+    const ElementRadii* radii, const TCAtomPList* _template = NULL) const;
   // much faster, but less 'precise' version
-  void BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short value, 
-    ElementRadii* radii, const TCAtomPList* _template = NULL) const;
+  void BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short value,
+    const ElementRadii* radii, const TCAtomPList* _template = NULL) const;
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 

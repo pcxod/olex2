@@ -3457,6 +3457,11 @@ public:
 void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
+  if (!FXApp->IsBaseDirWriteable()) {
+    E.ProcessingError(__OlxSrcInfo, "Please run Olex2 as administrator - "
+      "the installation folder is write protected");
+    return;
+  }
   if (!FXApp->IsPluginInstalled(Cmds[0])) {
     olxstr local_file = Options['l'];
     if( !local_file.IsEmpty() )  {
@@ -3596,7 +3601,12 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options,
 void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  if( Cmds[0].StartsFrom("olex") )  {
+  if (!FXApp->IsBaseDirWriteable()) {
+    E.ProcessingError(__OlxSrcInfo, "Please run Olex2 as administrator - "
+      "the installation folder is write protected");
+    return;
+  }
+  if (Cmds[0].StartsFrom("olex")) {
     E.ProcessingError(__OlxSrcInfo, "cannot uninstall core components");
     return;
   }
@@ -6025,4 +6035,18 @@ void TMainForm::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   CreateUpdateThread();
 }
-  //..............................................................................
+//..............................................................................
+void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+#ifdef __WIN32__
+  olxstr cd = TEFile::CurrentDir();
+  TEFile::ChangeDir(TBasicApp::GetBaseDir());
+  if (TShellUtil::RunElevated(TBasicApp::GetModuleName())) {
+    FXApp->UpdateOption("confirm_on_close", FalseString());
+    Close(false);
+  }
+  TEFile::ChangeDir(cd);
+#else
+  throw TNotImplementedException(__OlxSourceInfo);
+#endif
+}
+//..............................................................................
