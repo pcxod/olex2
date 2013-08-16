@@ -434,6 +434,18 @@ void BAPP_ModuleHash(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(TBasicApp::GetModuleMD5Hash());
 }
 //..............................................................................
+void BAPP_IsBaseDirWritable(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal(TBasicApp::IsBaseDirWriteable());
+}
+//..............................................................................
+void BAPP_IsDebugBuild(const TStrObjList& Params, TMacroError &E)  {
+#ifdef _DEBUG
+  E.SetRetVal(TrueString());
+#else
+  E.SetRetVal(FalseString());
+#endif
+}
+//..............................................................................
 TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   TLibrary* lib = new TLibrary(lib_name);
   lib->Register(new TStaticFunction(BAPP_GetArgCount,
@@ -478,6 +490,12 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
     "Returns current platform like WIN, MAC, Linux 32/64"));
   lib->Register(new TStaticFunction(BAPP_ModuleHash,
     "ModuleHash", fpNone,
-    "Returns curren module MD5 hash"));
+    "Returns current module MD5 hash"));
+  lib->Register(new TStaticFunction(BAPP_IsBaseDirWritable,
+    "IsBaseDirWritable", fpNone,
+    "Returns true if the application can write to the BaseDir()"));
+  lib->Register(new TStaticFunction(BAPP_IsDebugBuild,
+    "IsDebugBuild", fpNone,
+    "Returns true if the application is built with debug info"));
  return lib;
 }
