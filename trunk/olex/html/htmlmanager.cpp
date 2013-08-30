@@ -43,7 +43,9 @@ void THtmlManager::Destroy() {
 void THtmlManager::InitialiseMain(long flags) {
   main = new THtml(*this, mainWindow, EmptyString(), flags);
   main->OnLink.Add(this);
+#if wxCHECK_VERSION(2,9,0)
   main->AlwaysShowScrollbars();
+#endif
 }
 //.............................................................................
 void THtmlManager::ProcessPageLoadRequests() {
