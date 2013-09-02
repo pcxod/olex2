@@ -1387,49 +1387,57 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
 //.............................................................................
 void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp &XApp = TXApp::GetInstance();
-  if( XApp.XFile().GetLattice().IsGenerated() )  {
+  if (XApp.XFile().GetLattice().IsGenerated()) {
     Error.ProcessingError(__OlxSrcInfo, "not applicable to grown structures");
     return;
   }
   int Hfix = 0;
-  if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
+  if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
     Hfix = Cmds[0].ToInt();
     Cmds.Delete(0);
   }
   TAsymmUnit &au = XApp.XFile().GetAsymmUnit();
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
+  for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &ca = au.GetAtom(i);
-    if( ca.GetType() == iHydrogenZ )
+    if (ca.GetType() == iHydrogenZ)
       ca.SetDetached(false);
   }
   TActionQueueLock q_draw(XApp.FindActionQueue(olxappevent_GL_DRAW));
   try  {
+    TLattice &latt = XApp.XFile().GetLattice();
     TSAtomPList satoms = XApp.FindSAtoms(Cmds.Text(' '), true);
+    for (size_t i=0; i < satoms.Count(); i++) {
+      if (satoms[i]->GetParent() != latt)
+        satoms[i] = NULL;
+    }
+    satoms.Pack();
     // find atoms first, or selection gets lost...
     XApp.XFile().GetLattice().UpdateConnectivity();
-    TXlConGen xlConGen(XApp.XFile().GetRM());
-    if( Hfix == 0 ) 
-      XApp.XFile().GetLattice().AnalyseHAdd(xlConGen, satoms);
+    RefinementModel &rm = XApp.XFile().GetRM();
+    TXlConGen xlConGen(rm);
+    TUnitCell &uc = XApp.XFile().GetUnitCell();
+    if (Hfix == 0) {
+      latt.AnalyseHAdd(xlConGen, satoms);
+    }
     else  {
-      RefinementModel& rm = XApp.XFile().GetRM();
-      for( size_t aitr=0; aitr < satoms.Count(); aitr++ )  {
+      for (size_t aitr=0; aitr < satoms.Count(); aitr++) {
         TIntList parts;
         TDoubleList occu;
         TAtomEnvi AE;
-        XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE);
-        for( size_t i=0; i < AE.Count(); i++ )  {
+        uc.GetAtomEnviList(*satoms[aitr], AE);
+        for (size_t i=0; i < AE.Count(); i++) {
           if( AE.GetCAtom(i).GetPart() != 0 &&
               AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() )
           {
-            if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex )  {
+            if (parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex) {
               parts.Add(AE.GetCAtom(i).GetPart());
               occu.Add(rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof));
             }
           }
         }
-        if( parts.Count() < 2 )  {
+        if (parts.Count() < 2) {
           int afix = TXlConGen::ShelxToOlex(Hfix, AE);
-          if( afix != -1 )  {
+          if (afix != -1) {
             TCAtomPList generated;
             xlConGen.FixAtom(AE, afix, XElementLib::GetByIndex(iHydrogenIndex),
               NULL, &generated);
@@ -1439,31 +1447,30 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
               generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
             }
           }
-          else  {
+          else {
             XApp.NewLogEntry() << "Failed to translate HFIX code for " <<
               satoms[aitr]->GetLabel() << " with " << AE.Count() << " bonds";
           }
         }
-        else  {
+        else {
           XApp.NewLogEntry() << "Processing " << parts.Count() << " parts";
-          for( size_t i=0; i < parts.Count(); i++ )  {
+          for (size_t i=0; i < parts.Count(); i++) {
             AE.Clear();
-            XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE,
-              false, parts[i]);
+            uc.GetAtomEnviList(*satoms[aitr], AE, false, parts[i]);
             /*consider special case where the atom is bound to itself but
             very long bond > 1.6 A */
             smatd* eqiv = NULL;
-            for( size_t j=0; j < AE.Count(); j++ )  {
-              if( &AE.GetCAtom(j) == &AE.GetBase().CAtom() )  {
+            for (size_t j=0; j < AE.Count(); j++) {
+              if (&AE.GetCAtom(j) == &AE.GetBase().CAtom()) {
                 const double d = AE.GetCrd(j).DistanceTo(AE.GetBase().crd());
-                if( d > 1.6 )  {
+                if (d > 1.6) {
                   eqiv = new smatd(AE.GetMatrix(j));
                   AE.Delete(j);
                   break;
                 }
               }
             }
-            if( eqiv != NULL )  {
+            if (eqiv != NULL) {
               const smatd& e = rm.AddUsedSymm(*eqiv);
               rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(),
                 NULL, &e, true);
@@ -1474,16 +1481,16 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             }
             //
             int afix = TXlConGen::ShelxToOlex(Hfix, AE);
-            if( afix != -1 )  {
+            if (afix != -1) {
               TCAtomPList generated;
               xlConGen.FixAtom(AE, afix,
                 XElementLib::GetByIndex(iHydrogenIndex), NULL, &generated);
-              for( size_t j=0; j < generated.Count(); j++ )  {
+              for (size_t j=0; j < generated.Count(); j++) {
                 generated[j]->SetPart(parts[i]);
                 rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
               }
-              if( !generated.IsEmpty() &&
-                  generated[0]->GetParentAfixGroup() != NULL )
+              if (!generated.IsEmpty() &&
+                  generated[0]->GetParentAfixGroup() != NULL)
               {
                 // a hack again
                 generated[0]->GetParentAfixGroup()->SetAfix(Hfix);

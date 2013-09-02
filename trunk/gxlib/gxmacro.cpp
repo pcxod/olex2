@@ -306,6 +306,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "esd-calculate esd (works for pairs only)&;"
     "h-excludes H atoms from matching and the RMSD calculation&;"
     "cm-copies the transformation matrix suitable for sgen to clipboard&;"
+    "o-matches overlayed lattices&;"
     ,
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
@@ -1668,6 +1669,33 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       TXAtom &a = ai.Next();
       if (a.IsVisible() && a.CAtom().GetTag() == 1)
         app.GetRender().Select(a, true);
+    }
+  }
+  else if (Cmds.Count() > 1 && Cmds[0].Equalsi("ofile")) {
+    if (flag == glSelectionNone) flag = glSelectionSelect;
+    TSizeList fi;
+    for (size_t i=1; i < Cmds.Count(); i++)
+      fi << Cmds[i].ToSizeT();
+    for (size_t i=0; i < fi.Count(); i++) {
+      TXFile *f=NULL;
+      if (fi[i] == 0) {
+        f = &app.XFile();
+      }
+      else if (fi[i] <= app.OverlayedXFileCount()) {
+        f = &app.GetOverlayedXFile(fi[i]-1);
+      }
+      if (f == NULL) continue;
+      ASObjectProvider &op = f->GetLattice().GetObjects();
+      for (size_t j=0; j < op.atoms.Count(); j++) {
+        TXAtom &a = (TXAtom &)op.atoms[j];
+        if (!a.IsAvailable()) continue;
+        app.GetRender().Select(a, flag);
+      }
+      for (size_t j=0; j < op.bonds.Count(); j++) {
+        TXBond &b = (TXBond &)op.bonds[j];
+        if (!b.IsAvailable()) continue;
+        app.GetRender().Select(b, flag);
+      }
     }
   }
   else if (Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0])) {
@@ -3288,6 +3316,16 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         if (align) {
+          if (Options.GetBoolOption('o')) {
+            if (netA.GetLattice() == netB.GetLattice()) {
+              TBasicApp::NewLogEntry() << "Skipping -o option - the fragments "
+                "belong to the same lattice";
+            }
+            else {
+              atomsToTransform.Clear();
+              atomsToTransform.AddList(netB.GetLattice().GetObjects().atoms);
+            }
+          }
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
           app.UpdateBonds();
           app.CenterView();

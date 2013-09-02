@@ -761,7 +761,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   
   this_InitMacroD(OFileDel, EmptyString(), fpOne,
     "Deletes overlayed file specified by index");
-  this_InitMacroD(OFileSwap, EmptyString(), fpOne,
+  this_InitMacroD(OFileSwap, EmptyString(), fpNone|fpOne,
     "Makes overlayed file, given by index the current file to which all "
     "commands are applied");
 
@@ -838,8 +838,9 @@ void TMainForm::XApp(Olex2App *XA)  {
     "given - the global state is saved. Possible arguments: global, "
     "structure");
   this_InitMacroD(Elevate, EmptyString(),
-    fpNone,
-    "Runs Olex2 in elevated mode - only available on Windows");
+    fpNone|fpOne,
+    "Runs Olex2 in elevated/desktop mode [true]/false- only available on "
+    "Windows");
 
   // FUNCTIONS _________________________________________________________________
 

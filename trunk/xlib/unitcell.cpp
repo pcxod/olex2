@@ -697,6 +697,10 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
 void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ,
   int part) const
 {
+  if (atom.GetParent() != this->GetLattice()) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "atom must belong to the same lattice as the unit cell");
+  }
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   envi.SetBase(atom);
   smatd I;

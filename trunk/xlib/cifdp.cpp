@@ -187,8 +187,14 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
         }
       }
     }
-    else if( line.StartsFromi("data_") )
-      context.current_block = &Add(line.SubStringFrom(5));
+    else if( line.StartsFromi("data_") ) {
+      olxstr dn = line.SubStringFrom(5);
+      if (data_map.HasKey(dn)) {
+        TBasicApp::NewLogEntry(logError) <<
+          "Duplicate CIF data name '" << dn << '\'';
+      }
+      context.current_block = &Add(dn);
+    }
     else if( line.StartsFromi("save_" ) )  {
       if( line.Length() > 5 )  {
         context.current_block = &Add(line.SubStringFrom(5),
