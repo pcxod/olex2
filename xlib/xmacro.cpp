@@ -277,11 +277,12 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Sort, EmptyString(), fpAny^psFileLoaded,
   "Sorts atoms of the default residue. Atom sort arguments: "
   "\n\tm - atomic mass"
+  "\n\tz - atomic number"
   "\n\tl - label, considering numbers"
   "\n\tp - part, 0 is first followed by all positive parts in ascending order "
   "and then negative ones"
   "\n\th - to treat hydrogen atoms independent of the pivot atom"
-  "\n\tz - non-numerical labels suffix"
+  "\n\ts - non-numerical labels suffix"
   "\n\tn - number after the atom symbol"
   "\n Moiety sort arguments:"
   "\n\ts - size"
@@ -1406,13 +1407,8 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   try  {
     TLattice &latt = XApp.XFile().GetLattice();
     TSAtomPList satoms = XApp.FindSAtoms(Cmds.Text(' '), true);
-    for (size_t i=0; i < satoms.Count(); i++) {
-      if (satoms[i]->GetParent() != latt)
-        satoms[i] = NULL;
-    }
-    satoms.Pack();
     // find atoms first, or selection gets lost...
-    XApp.XFile().GetLattice().UpdateConnectivity();
+    latt.UpdateConnectivity();
     RefinementModel &rm = XApp.XFile().GetRM();
     TXlConGen xlConGen(rm);
     TUnitCell &uc = XApp.XFile().GetUnitCell();
@@ -5885,7 +5881,7 @@ void XLibMacros::funCalcR(const TStrObjList& Params, TMacroError &E)  {
   double R1 = R1u/R1d;
   double R1p = R1up/R1dp;
   if (!Params.IsEmpty() && Params[0].IndexOfi("print") != InvalidIndex) {
-    TPSTypeList<double, int> dr;
+    TPSTypeList<double, size_t> dr;
     double mv = wR2u/wsqd.Count();
     for (size_t i=0; i < wsqd.Count(); i++) {
       double df = sqrt(wsqd[i]/mv);

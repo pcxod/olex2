@@ -231,7 +231,7 @@ protected:
 
   void FragmentVisible( TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data=NULL);
+    const IEObject *Data, TActionQueue *);
   void GetGPCollections(AGDObjList& GDObjects, TPtrList<TGPCollection>& Result);
   struct BondRef  {
     const TLattice& latt;
@@ -610,13 +610,9 @@ public:
     bool ClearSelection=true, bool FindHidden=false);
   ConstPtrList<TXAtom> FindXAtoms(const TStrObjList &Cmds, bool GetAll,
     bool unselect);
+  // this function will return atoms WITHOUT atoms of th eoverlayed files!
   virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res,
-    bool ReturnAll=true, bool ClearSelection=true)
-  {
-    size_t c = res.Count();
-    return res.AddList(FindXAtoms(condition, ReturnAll, ClearSelection),
-      StaticCastAccessor<TSAtom>()).Count() > c;
-  }
+    bool ReturnAll=true, bool ClearSelection=true);
 
   //TXAtom& GetAtom(size_t i) {  return XAtoms[i];  }
   //const TXAtom& GetAtom(size_t i) const {  return XAtoms[i];  }

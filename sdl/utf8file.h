@@ -69,7 +69,7 @@ public:
   static void Create(const olxstr& name, const TIString& data,
     bool write_header=true)
   {
-    TUtf8File file(name, "w+b");  
+    TUtf8File file(name, "w+b");
     if( write_header )
       ((TEFile&)file).Write(&TUtf8::GetFileSignature(), 3);
     file.Write(data);
@@ -85,17 +85,14 @@ public:
     }
   }
 
-  virtual size_t Write(const olxwstr &S)  {
-    return TEFile::Write(TUtf8::Encode(S));
+  size_t Write(const olxwstr &S)  {
+    return IDataOutputStream::Write(TUtf8::Encode(S));
   }
   virtual size_t Write(const TIWString& S)  {
-    return TEFile::Write(TUtf8::Encode(S));
+    return IDataOutputStream::Write(TUtf8::Encode(S));
   }
-  virtual size_t Write(const wchar_t* bf)  {
-    return TEFile::Write(TUtf8::Encode(bf));
-  }
-  virtual size_t Write(const wchar_t* bf, size_t size)  {
-    return TEFile::Write(TUtf8::Encode(bf, size));
+  size_t Write(const wchar_t* bf, size_t size)  {
+    return IDataOutputStream::Write(TUtf8::Encode(bf, size));
   }
   virtual size_t Write(const void* bf, size_t size)  {
     return TEFile::Write(bf, size);

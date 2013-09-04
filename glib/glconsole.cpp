@@ -555,7 +555,9 @@ TGlFont &TGlConsole::GetFont() const {
   return Parent.GetScene().GetFont(FontIndex, true);
 }
 //..............................................................................
-bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data)  {
+bool TGlConsole::Enter(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   if( IsVisible() )
     UpdateCursorPosition(false);
   return true;

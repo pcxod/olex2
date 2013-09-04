@@ -56,7 +56,7 @@ protected:
   void OnClipboard(wxClipboardTextEvent& event);
   olxstr OnSizeData, OnDblClickData;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-    const IEObject* Data=NULL);
+    const IEObject* Data, TActionQueue *);
   /* on GTK scrolling makes mess out of the controls so will try to "fix it"
   here
   */

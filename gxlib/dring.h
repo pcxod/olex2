@@ -31,7 +31,7 @@ protected:
   class TContextClear: public AActionHandler  {
   public:
     TContextClear(TGlRenderer& Render);
-    bool Enter(const IEObject *Sender, const IEObject *Data);
+    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   };
   static TGlPrimitive* torus;
   static bool initialised;

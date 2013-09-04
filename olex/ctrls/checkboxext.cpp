@@ -31,7 +31,9 @@ void TCheckBox::SetActionQueue(TActionQueue& q, const olxstr& dependMode)  {
   DependMode = dependMode;
   ActionQueue->Add(this);
 }
-bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data)  {
+bool TCheckBox::Execute(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {
     const TModeChange* mc = (const TModeChange*)Data;
     SetChecked(TModeRegistry::CheckMode(DependMode));

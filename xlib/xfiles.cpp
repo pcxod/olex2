@@ -171,7 +171,7 @@ void TXFile::LastLoaderChanged() {
 }
 //..............................................................................
 bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-  const IEObject* Data)
+  const IEObject* Data, TActionQueue *)
 {
   if( MsgId == XFILE_SG_Change )  {
     if( Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup) )
@@ -328,28 +328,28 @@ void TXFile::UpdateAsymmUnit()  {
   LL->GetAsymmUnit().GetAngleEsds() = GetAsymmUnit().GetAngleEsds();
 }
 //..............................................................................
-void TXFile::Sort(const TStrList& ins)  {
-  if( FLastLoader == NULL )  return;
-  if( !FLastLoader->IsNative() )
+void TXFile::Sort(const TStrList& ins) {
+  if (FLastLoader == NULL) return;
+  if (!FLastLoader->IsNative())
     UpdateAsymmUnit();
   TStrList labels;
   TCAtomPList &list = GetAsymmUnit().GetResidue(0).GetAtomList();
   size_t moiety_index = InvalidIndex, h_cnt=0, del_h_cnt = 0, free_h_cnt = 0;
   bool keeph = true;
-  for( size_t i=0; i < list.Count(); i++ )  {
-    if( list[i]->GetType() == iHydrogenZ )  {
-      if( !list[i]->IsDeleted() )  {
+  for (size_t i=0; i < list.Count(); i++) {
+    if (list[i]->GetType() == iHydrogenZ) {
+      if (!list[i]->IsDeleted()) {
         h_cnt++;
-        if( list[i]->GetParentAfixGroup() == NULL )
+        if (list[i]->GetParentAfixGroup() == NULL)
           free_h_cnt++;
       }
       else
         del_h_cnt++;
     }
   }
-  if( h_cnt == 0 || del_h_cnt != 0 )  {
+  if (h_cnt == 0 || del_h_cnt != 0) {
     keeph = false;
-    if( del_h_cnt != 0 && free_h_cnt != 0 )  {
+    if (del_h_cnt != 0 && free_h_cnt != 0) {
       TBasicApp::NewLogEntry(logError) << "Hydrogen atoms, which are not "
         "attached using AFIX will not be kept with pivot atom until the file "
         "is reloaded";
@@ -358,36 +358,40 @@ void TXFile::Sort(const TStrList& ins)  {
   try {
     AtomSorter::CombiSort cs;
     olxstr sort;
-    for( size_t i=0; i < ins.Count(); i++ )  {
-      if( ins[i].CharAt(0) == '+' )
+    for (size_t i=0; i < ins.Count(); i++) {
+      if (ins[i].CharAt(0) == '+')
         sort << ins[i].SubStringFrom(1);
-      else if( ins[i].Equalsi("moiety") )  {
+      else if (ins[i].Equalsi("moiety")) {
         moiety_index = i;
         break;
       }
       else
         labels.Add(ins[i]);
     }
-    for( size_t i=0; i < sort.Length(); i++ )  {
-      if( sort.CharAt(i) == 'm' )
-        cs.sequence.Add(&AtomSorter::atom_cmp_Mw);
-      else if( sort.CharAt(i) == 'l' )
-        cs.sequence.Add(&AtomSorter::atom_cmp_Label);
-      else if( sort.CharAt(i) == 'p' )
-        cs.sequence.Add(&AtomSorter::atom_cmp_Part);
-      else if( sort.CharAt(i) == 'h' )
+    for (size_t i=0; i < sort.Length(); i++) {
+      if (sort.CharAt(i) == 'm')
+        cs.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
+      else if (sort.CharAt(i) == 'z')
+        cs.sequence.AddNew(&AtomSorter::atom_cmp_Z);
+      else if (sort.CharAt(i) == 'l')
+        cs.sequence.AddNew(&AtomSorter::atom_cmp_Label);
+      else if (sort.CharAt(i) == 'p')
+        cs.sequence.AddNew(&AtomSorter::atom_cmp_Part);
+      else if (sort.CharAt(i) == 'h')
         keeph = false;
-       else if( sort.CharAt(i) == 'z' )
-        cs.sequence.Add(&AtomSorter::atom_cmp_Suffix);
-       else if( sort.CharAt(i) == 'n' )
-        cs.sequence.Add(&AtomSorter::atom_cmp_Number);
+      else if (sort.CharAt(i) == 's')
+        cs.sequence.AddNew(&AtomSorter::atom_cmp_Suffix);
+      else if (sort.CharAt(i) == 'n')
+        cs.sequence.AddNew(&AtomSorter::atom_cmp_Number);
     }
-    if( !cs.sequence.IsEmpty() )
+    if (!cs.sequence.IsEmpty()) {
+      if (!labels.IsEmpty()) {
+        for (size_t i=0; i < cs.sequence.Count(); i++)
+          cs.sequence[i].AddExceptions(labels);
+      }
       AtomSorter::Sort(list, cs);
-    if( !labels.IsEmpty() )  {
-      AtomSorter::SortByName(list, labels);
-      labels.Clear();
     }
+    labels.Clear();
     if( moiety_index != InvalidIndex )  {
       sort.SetLength(0);
       if( moiety_index+1 < ins.Count() )  {

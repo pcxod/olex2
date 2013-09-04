@@ -153,7 +153,7 @@ void THtml::OnSizeEvt(wxSizeEvent& event)  {
 }
 //.............................................................................
 bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-  const IEObject* Data)
+  const IEObject* Data, TActionQueue *)
 {
   if( MsgId == html_parent_resize )  {
     volatile THtmlManager::DestructionLocker dm =

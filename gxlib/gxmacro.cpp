@@ -2962,7 +2962,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       out << ' ';
       Objects.Add(sel[i]);
     }
-    if( !out.IsEmpty()  )  {
+    if( !out.IsEmpty() )  {
       TBasicApp::NewLogEntry() << "Deleting " << out;
       app.GetUndo().Push(app.DeleteXObjects(Objects));
       sel.Clear();
@@ -2979,26 +2979,30 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
     while( bi.HasNext() )
       bi.Next().GetGlLabel().SetVisible(false);
   }
-  else  {
-    if( Options.Contains("au") )  {
+  else {
+    if (Options.Contains("au")) {
       TCAtomPList atoms = app.FindCAtoms(Cmds.Text(' '), false);
-      for( size_t i=0; i < atoms.Count(); i++ )
+      for (size_t i=0; i < atoms.Count(); i++)
         atoms[i]->SetDeleted(true);
     }
-    else  {
+    else {
       TXAtomPList Atoms = app.FindXAtoms(Cmds.Text(' '), true, false),
         Selected;
-      if( Atoms.IsEmpty() )  return;
-      for( size_t i=0; i < Atoms.Count(); i++ )
-        if( Atoms[i]->IsSelected() )
-          Selected.Add(Atoms[i]);
+      if (Atoms.IsEmpty()) return;
+      olx_list_filter::Filter(Atoms, Selected,
+        AGDrawObject::FlagsAnalyser(sgdoSelected));
       TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
-      if( todel.IsEmpty() )
-        return;
-      app.GetLog() << "Deleting ";
+      TLattice &latt = app.XFile().GetLattice();
+      for (size_t i=0; i < todel.Count(); i++) {
+        if (((TSAtom*)todel[i])->GetParent() != latt)
+          todel[i] = NULL;
+      }
+      todel.Pack();
+      if (todel.IsEmpty()) return;
+      olxstr log = "Deleting";
       for( size_t i=0; i < todel.Count(); i++ )
-        app.GetLog() << todel[i]->GetLabel() << ' ';
-      app.NewLogEntry();
+        log << ' ' << todel[i]->GetLabel();
+      app.NewLogEntry() << log;
       app.GetUndo().Push(app.DeleteXAtoms(todel));
     }
   }

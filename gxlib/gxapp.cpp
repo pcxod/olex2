@@ -121,7 +121,7 @@ public:
       delete GrowInfo;
     return;  
   }
-  bool Enter(const IEObject *Sender, const IEObject *Data)  {
+  bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     state = 1;
     FParent->GetUndo().Clear();
     if( GrowInfo != NULL )  {
@@ -168,7 +168,7 @@ public:
     FParent->HklFile().Clear();
     return true;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     state = 2;
     const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
     bool sameAU = true, hasNonQ = false;
@@ -213,7 +213,7 @@ public:
     AtomNames.Clear();
     return false;
   }
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     if( state == 1 )  // somehing went not as expected? try to recover then...
       FParent->CreateObjects(true);
     state = 3;
@@ -1534,7 +1534,9 @@ void TGXApp::Select(const vec3d& From, const vec3d& To )  {
   Draw();
 }
 //..............................................................................
-bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
+bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
+  const IEObject *Data, TActionQueue *)
+{
   static bool ObjectsStored = false, LoadingFile = false, Disassembling = false;
   if( MsgId == ID_OnSelect )  {
     if( FGlMouse->IsSelectionEnabled() )  {
@@ -1840,6 +1842,22 @@ ConstPtrList<TXAtom> TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask)  {
       rv.Add(XA);
   }
   return rv;
+}
+//..............................................................................
+bool TGXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res,
+  bool ReturnAll, bool ClearSelection)
+{
+  TPtrList<TXAtom> al = FindXAtoms(condition, ReturnAll, ClearSelection);
+  if (!OverlayedXFiles.IsEmpty()) {
+    TLattice &latt = XFile().GetLattice();
+    for (size_t i=0; i < al.Count(); i++) {
+      if (((TSAtom*)al[i])->GetParent() != latt)
+        al[i] = NULL;
+    }
+    al.Pack();
+  }
+  res.AddList(al, StaticCastAccessor<TSAtom>());
+  return !al.IsEmpty();
 }
 //..............................................................................
 ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
@@ -3354,9 +3372,13 @@ void TGXApp::SetHydrogensVisible(bool v)  {
 }
 //..............................................................................
 void TGXApp::UpdateConnectivity()  {
-  for( size_t i = 0; i < OverlayedXFiles.Count(); i++ )
+  XFile().GetLattice().OnDisassemble.Enter(NULL);
+  XFile().GetLattice().OnDisassemble.SetEnabled(false);
+  for (size_t i = 0; i < OverlayedXFiles.Count(); i++)
     OverlayedXFiles[i].GetLattice().UpdateConnectivity();
   XFile().GetLattice().UpdateConnectivity();
+  XFile().GetLattice().OnDisassemble.SetEnabled(true);
+  XFile().GetLattice().OnDisassemble.Exit(NULL);
 }
 //..............................................................................
 void TGXApp::SetQPeaksVisible(bool v)  {

@@ -104,4 +104,11 @@
   #define olxT(a) (a)
 #endif
 
+#ifdef _MSC_VER
+// member function does not override any base class virtual member function
+//#  pragma warning(3:4263)
+// secure functions alternative warning
+#  pragma warning(disable:4996)
+#endif
+
 #endif

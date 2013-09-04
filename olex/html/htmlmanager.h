@@ -14,9 +14,9 @@
 class THtmlManager : public AActionHandler {
   wxWindow *mainWindow;
   TActionQList Actions;
-  virtual bool Enter(const IEObject *, const IEObject *);
-  virtual bool Exit(const IEObject *, const IEObject *);
-  virtual bool Execute(const IEObject *, const IEObject *);
+  virtual bool Enter(const IEObject *, const IEObject *, TActionQueue *);
+  virtual bool Exit(const IEObject *, const IEObject *, TActionQueue *);
+  virtual bool Execute(const IEObject *, const IEObject *, TActionQueue *);
   bool destroyed;
 protected:
   // library

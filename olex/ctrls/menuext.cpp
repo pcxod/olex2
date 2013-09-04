@@ -79,7 +79,9 @@ void TMenuItem::ValidateState()  {
   }
 }
 //..............................................................................
-bool TMenuItem::Execute(const IEObject *Sender, const IEObject *Data)  {
+bool TMenuItem::Execute(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   if( Data && EsdlInstanceOf(*Data, TModeChange) )  {
     const TModeChange* mc = (const TModeChange*)Data;
     if( this->IsCheckable() )

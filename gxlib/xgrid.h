@@ -112,8 +112,8 @@ protected:
   public:
     TContextClear(TGlRenderer& Render);
     virtual ~TContextClear()  {}
-    bool Enter(const IEObject *Sender, const IEObject *Data);
-    bool Exit(const IEObject *Sender, const IEObject *Data);
+    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   };
   static void _ResetLists()  {
     if( Instance != NULL )  {

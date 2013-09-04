@@ -27,8 +27,7 @@ private:
   TPtrList<TSpinCtrl> SpinCtrls;
 protected:
   void OnOK(wxCommandEvent& event);
-  bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
-  void OnRemove()  {}
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   TTypeList<TGlMaterial> Materials;
   AGDrawObject* Object;
   int FCurrentMaterial;

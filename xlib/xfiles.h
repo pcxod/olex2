@@ -64,7 +64,7 @@ protected:
   TBasicCFile *FLastLoader;
   TSpaceGroup* FSG;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data=NULL);
+    const IEObject *Data, TActionQueue *);
   void ValidateTabs();
   void PostLoad(const olxstr &fn, TBasicCFile *loader, bool replicated);
 public:

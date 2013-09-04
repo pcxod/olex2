@@ -172,7 +172,7 @@ void TGlTextBox::Fit()  {
         tr.width *= scale;
       }
       Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight()));
-      if (tr.width > Width) Width = olx_round(tr.width);
+      if (tr.width > Width) Width = (uint16_t)olx_round(tr.width);
     }
     Height += (uint16_t)olx_round(LineSpacer*(FBuffer.Count()-1));
   }
