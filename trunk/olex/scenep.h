@@ -32,7 +32,7 @@ protected:
   void OnOpen(wxCommandEvent& event);
   void OnSave(wxCommandEvent& event);
   void OnApply(wxCommandEvent& event);
-  bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   TGlLightModel FLightModel, FOriginalModel;
   int FCurrentLight;
   void InitLight( TGlLight &GlL );

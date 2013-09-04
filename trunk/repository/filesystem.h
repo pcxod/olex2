@@ -51,7 +51,7 @@ protected:
   virtual IInputStream* _DoOpenFile(const olxstr& src)=0;
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
   // handles OnBreak
-  virtual bool Execute(const IEObject* Sender, const IEObject* Data=NULL) {
+  virtual bool Execute(const IEObject* Sender, const IEObject* Data, TActionQueue *) {
     DoBreak();
     return true;
  }

@@ -116,7 +116,7 @@ class TObjectVisibilityChange: public AActionHandler  {
 public:
   TObjectVisibilityChange(TMainForm *Parent){  FParent = Parent; }
   virtual ~TObjectVisibilityChange()  {  ;  }
-  bool Execute(const IEObject *Sender, const IEObject *Obj)  {
+  bool Execute(const IEObject *Sender, const IEObject *Obj, TActionQueue *)  {
     if( !Obj )  return false;
     if( EsdlInstanceOf(*Obj, TDBasis) )
       FParent->BasisVChange();
@@ -1461,7 +1461,7 @@ bool TMainForm::CreateUpdateThread() {
 }
 //..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data)
+  const IEObject *Data, TActionQueue *)
 {
   if (StartupInitialised && PyEval_ThreadsInitialized()) {
     PyGILState_STATE st = PyGILState_Ensure();

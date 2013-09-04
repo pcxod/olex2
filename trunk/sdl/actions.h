@@ -32,27 +32,35 @@ struct TDispatchInfo  {
   int MsgId;
   int MsgSubId;
   AEventsDispatcher* Dispatcher;
-  TDispatchInfo(int msgid, int subid, AEventsDispatcher* dispatcher) : 
+  TDispatchInfo(int msgid, int subid, AEventsDispatcher* dispatcher) :
     MsgId(msgid), MsgSubId(subid), Dispatcher(dispatcher) {}
 };
 // abstract class;  an item of the actionqueue
-class AActionHandler : public ACollectionItem  {
-  bool  Enabled, // not executed if false
-        ToDelete;  // default is true - the object will be deleted by the collection!!
+class AActionHandler : public ACollectionItem {
+  bool Enabled, // not executed if false
+       ToDelete;  // default is true - the object will be deleted by the collection!!
 public:
-  AActionHandler() : Enabled(true), ToDelete(true)  {}
-  virtual ~AActionHandler()  {}
-  // handler before the event
-  virtual bool Enter(const IEObject *, const IEObject *)  {  return false;  }
-  // handler after the event
-  virtual bool Exit(const IEObject *, const IEObject *)  {  return false;  }
+  AActionHandler() : Enabled(true), ToDelete(true) {}
+  virtual ~AActionHandler() {}
+  // handler before the event: sender, data, parent queue
+  virtual bool Enter(const IEObject *, const IEObject *, TActionQueue *) {
+    return false;
+  }
+  // handler after the event: sender, data, parent queue
+  virtual bool Exit(const IEObject *, const IEObject *, TActionQueue *) {
+    return false;
+  }
   /* handler during the event, does some operation when Obj is changed;
-     the action depends on the type of queue
+     the action depends on the type of queue: sender, data, parent queue
   */
-  virtual void UpdateData(const IEObject *, const IEObject *)  {}
-  virtual bool Execute(const IEObject *, const IEObject *)  {  return false;  }
+  virtual void UpdateData(const IEObject *, const IEObject *, TActionQueue *)
+  {}
+  //: sender, data, parent queue
+  virtual bool Execute(const IEObject *, const IEObject *, TActionQueue *) {
+    return false;
+  }
   // the function is called the object is removed from the queue
-  virtual void OnRemove()  {}
+  virtual void OnRemove(TActionQueue *) {}
   DefPropBIsSet(Enabled)
   /* beware that it is set to true by default, which means that the object will
     be automatically deleted by the parent queue
@@ -65,64 +73,78 @@ public:
  simply derive your class from this one and write the Dispartch method
  Register it in an ActionQueue object (see below)
  */
-class AEventsDispatcher: public ACollectionItem  {
+class AEventsDispatcher: public ACollectionItem {
   bool Enabled;
 public:
-  AEventsDispatcher() : Enabled(true)  {}
-  virtual ~AEventsDispatcher()  {}
-  /* dispatch is called all time an event occures, MsgId is the Id passed when the
-     object is registered in a queue, MsgSubId is one msiEnter, msiExecute, msiExit or
-     msiUpdateData (see the discription of cirtain events). Sender is the object sending the message,
-     Data -  is the object being changed or some data object
+  AEventsDispatcher() : Enabled(true) {}
+  virtual ~AEventsDispatcher() {}
+  /* dispatch is called all time an event occures, MsgId is the Id passed when
+  the object is registered in a queue, MsgSubId is one msiEnter, msiExecute,
+  msiExit or msiUpdateData (see the discription of cirtain events). Sender is
+  the object sending the message, Data - is the object being changed or some
+  data object
   */
-  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data=NULL)=0;
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
+    const IEObject* Data, TActionQueue *)=0;
   DefPropBIsSet(Enabled)
 };
-class TActionQueue: public AActionHandler  {
+
+class TActionQueue: public AActionHandler {
   TPtrList<AActionHandler> Handlers;
   TTypeList<TDispatchInfo> Dispatchers;
   olxstr Name;
   TActionQList* Parent;
-  bool ExecuteOnce; // set to true to stop of the first successful handler, false by default
+  // set to true to stop on the first successful handler, false by default
+  bool RunOnce;
 public:
   TActionQueue(TActionQList* Parent, const olxstr& Name);
-  virtual ~TActionQueue()  {}
-  
+  virtual ~TActionQueue() {}
+  DefPropBIsSet(RunOnce)
   // copies handlers and dispatchers etc and clears the aq
   void TakeOver(TActionQueue& aq);
 
-  size_t HandlerCount() const {  return Handlers.Count(); };
-  AActionHandler& GetHandler(size_t i) const {  return *Handlers[i]; }
+  size_t HandlerCount() const { return Handlers.Count(); };
+  AActionHandler& GetHandler(size_t i) const { return *Handlers[i]; }
 
   size_t DispatcherCount() const {  return Dispatchers.Count(); };
-  AEventsDispatcher& GetDispatcher(size_t i) const {  return *Dispatchers[i].Dispatcher;  }
+  AEventsDispatcher& GetDispatcher(size_t i) const {
+    return *Dispatchers[i].Dispatcher;
+  }
   // adds new handler
   void Add(AActionHandler* handler);
-  /* inserts a new handler at the beginning of the list so that it will be executed first of all */
+  /* inserts a new handler at the beginning of the list so that it will be
+  executed first of all
+  */
   void AddFirst(AActionHandler* handler);
-  // adds new dispatcher, no AddFirst - Handlers are executed before the dispatchers...
-  void Add(AEventsDispatcher* dispatcher, int MsgId, short MsgSubId = msiAll);
+  /* adds new dispatcher, no AddFirst - Handlers are executed before the
+  dispatchers...
+  */
+  void Add(AEventsDispatcher* dispatcher, int MsgId, short MsgSubId=msiAll);
   //makes subsequent calls to the handlers stored in the list
-  bool Execute(const IEObject* Sender, const IEObject* Data=NULL);
-  bool Enter(const IEObject* Sender, const IEObject* Data=NULL);
-  bool Exit(const IEObject* Sender, const IEObject* Data=NULL);
-  void UpdateData(const IEObject* Sender, const IEObject* Data);
-  virtual void OnRemove()  {}
+  bool Execute(const IEObject* Sender, const IEObject* Data=NULL,
+    TActionQueue *caller=NULL);
+  bool Enter(const IEObject* Sender, const IEObject* Data=NULL,
+    TActionQueue *caller=NULL);
+  bool Exit(const IEObject* Sender, const IEObject* Data=NULL,
+    TActionQueue *caller=NULL);
+  void UpdateData(const IEObject* Sender, const IEObject* Data,
+    TActionQueue *caller=NULL);
+  virtual void OnRemove(TActionQueue *caller=NULL) {}
   // empties the queue
   void Clear();
   // removes specified handler from the queue
   void Remove(AActionHandler* handler);
-  bool Contains(AActionHandler* handler);
+  bool Contains(const AActionHandler* handler);
 
   // removes specified dispatcher from the queue
-  void Remove(AEventsDispatcher* dispatcher);
+  void Remove(const AEventsDispatcher* dispatcher);
   // returns true if a specified handler belongs to the queue
-  bool Contains(AEventsDispatcher* dispatcher);
+  bool Contains(const AEventsDispatcher* dispatcher);
   // returns the name of the queue
-  const olxstr& GetName() const {  return Name;  }
+  const olxstr& GetName() const { return Name; }
 };
 
-class TActionQList: public IEObject  {
+class TActionQList: public IEObject {
 private:
   TCSTypeList<olxstr,TActionQueue*> Queues;
 public:
@@ -137,7 +159,8 @@ public:
   */
   TActionQueue& Add(TActionQueue *queue);
   // executes a named queue
-  bool Execute(const olxstr& Name, const IEObject* Sender, const IEObject* Data=NULL);
+  bool Execute(const olxstr& Name, const IEObject* Sender,
+    const IEObject* Data=NULL);
 
   bool Exists(const olxstr& Name) const {
     return Queues.IndexOf(Name) != InvalidIndex;
@@ -149,7 +172,9 @@ public:
   }
   // queue by index
   TActionQueue& Get(size_t index) const {  return *Queues.GetObject(index);  }
-  TActionQueue& operator [](size_t index) const {  return *Queues.GetObject(index);  }
+  TActionQueue& operator [](size_t index) const {
+    return *Queues.GetObject(index);
+  }
   // returns the number of queues
   size_t Count() const {  return Queues.Count();  }
   // empties the list
@@ -157,67 +182,77 @@ public:
 };
 
 // action proxy object, allows synchronisation of two action queues
-class TActionProxy : public AActionHandler  {
+class TActionProxy : public AActionHandler {
   TActionQueue& queue;
 public:
   TActionProxy(TActionQueue& q) : queue(q) {}
-  virtual bool Enter(const IEObject* Sender, const IEObject* Data=NULL) {  
-    return queue.Enter(Sender, Data);
+  virtual bool Enter(const IEObject* Sender, const IEObject* Data,
+    TActionQueue *caller)
+  {
+    return queue.Enter(Sender, Data, caller);
   }
-  virtual bool Exit(const IEObject* Sender, const IEObject* Data=NULL)  {
-    return queue.Exit(Sender, Data);
+  virtual bool Exit(const IEObject* Sender, const IEObject* Data,
+    TActionQueue *caller)
+  {
+    return queue.Exit(Sender, Data, caller);
   }
-  virtual void UpdateData(const IEObject* Sender, const IEObject* Data=NULL)  {
-    queue.UpdateData(Sender, Data);
+  virtual void UpdateData(const IEObject* Sender, const IEObject* Data,
+    TActionQueue *caller)
+  {
+    queue.UpdateData(Sender, Data, caller);
   }
-  virtual bool Execute(const IEObject* Sender, const IEObject* Data=NULL)  {
-    return queue.Execute(Sender, Data);
+  virtual bool Execute(const IEObject* Sender, const IEObject* Data,
+    TActionQueue *caller)
+  {
+    return queue.Execute(Sender, Data, caller);
   } 
 };
-// disabled the queue when created and restores the state (if was enabled!) when destroyed
-class TActionQueueLock  {
+/* disabled the queue when created and restores the state (if was enabled!)
+when destroyed
+*/
+class TActionQueueLock {
   TActionQueue* queue;
   bool changed;
 public:
-  TActionQueueLock(TActionQueue* _queue) : queue(_queue), changed(false)  {
-    if( queue != NULL )  {
-      if( queue->IsEnabled() )  {
+  TActionQueueLock(TActionQueue* _queue) : queue(_queue), changed(false) {
+    if (queue != NULL) {
+      if (queue->IsEnabled()) {
         changed = true;
         queue->SetEnabled(false);
       }
     }
   }
-  ~TActionQueueLock()  {
-    if( changed && queue != NULL )
+  ~TActionQueueLock() {
+    if (changed && queue != NULL)
       queue->SetEnabled(true);
   }
-  void Unlock()  {
-    if( changed )  {
-      if( queue != NULL )
+  void Unlock() {
+    if (changed) {
+      if (queue != NULL)
         queue->SetEnabled(true);
       changed = false;
     }
   }
 };
-
-class TOnProgress: public IEObject {  // generic on progress data
+// generic on progress data
+class TOnProgress: public IEObject {
   uint64_t Max, Pos;
   olxstr Action;
 public:
-  TOnProgress() : Max(0), Pos(0)  {}
-  virtual ~TOnProgress()  {}
+  TOnProgress() : Max(0), Pos(0) {}
+  virtual ~TOnProgress() {}
   // set Max to a valid number before OnProgress is executed!
   DefPropP(uint64_t, Max)
   DefPropP(uint64_t, Pos)
-  inline void IncPos(uint64_t v=1)   {  Pos += v;  }
+  void IncPos(uint64_t v=1) { Pos += v; }
   DefPropC(olxstr, Action)
-	
-	TOnProgress& operator = (const TOnProgress& pg)  {
-	  Max = pg.Max;
-		Pos = pg.Pos;
-		Action = pg.Action;
-		return *this;
-	}
+
+ TOnProgress& operator = (const TOnProgress& pg) {
+    Max = pg.Max;
+    Pos = pg.Pos;
+    Action = pg.Action;
+    return *this;
+  }
 };
 
 EndEsdlNamespace()

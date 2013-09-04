@@ -54,12 +54,12 @@ public:
     return;
   }
   virtual ~TProgress()  {  if( Progress )    delete Progress;  }
-  bool Enter(const IEObject *Sender, const IEObject *Data)  {
+  bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     StartTime = wxDateTime::UNow();
     Start = 0;
     return false;
   }
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     if( Progress )  {
       delete Progress;
       Progress = NULL;
@@ -67,7 +67,7 @@ public:
     }
     return false;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     return false; // not good for now...
     if( !EsdlInstanceOf(*Data, TOnProgress) )
       return false;

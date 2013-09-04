@@ -25,13 +25,17 @@
 #include "wrldraw.h"
 #include "gltexture.h"
 
-bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+bool TXAtom::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   TXAtom::FAtomParams = NULL; 
   TXAtom::ClearStaticObjects();
   return true; 
 }
 //..............................................................................
-bool TXAtom::TStylesClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+bool TXAtom::TStylesClear::Exit(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   TXAtom::ValidateAtomParams();
   TXAtom::ClearStaticObjects();
   return true;
@@ -42,12 +46,16 @@ TXAtom::TContextClear::TContextClear(TGlRenderer& Render)  {
   Render.OnClear.Add(this);
 }
 //..............................................................................
-bool TXAtom::TContextClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+bool TXAtom::TContextClear::Enter(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   TXAtom::ClearStaticObjects();
   return true; 
 }
 //..............................................................................
-bool TXAtom::TContextClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+bool TXAtom::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   return true;
 }
 //..............................................................................

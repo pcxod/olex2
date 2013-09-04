@@ -26,12 +26,47 @@ const short
 
 class AtomSorter {
 public:
+  struct Sorter {
+    int (*func)(const TCAtom &, const TCAtom &);
+    olxdict<olxstr, int, olxstrComparator<true> > label_exc;
+    olxdict<const cm_Element *, int, TPointerComparator> type_exc;
+
+    Sorter(int (*f)(const TCAtom &, const TCAtom &)) : func(f) {}
+    void AddExceptions(const TStrList &e) {
+      for (size_t i=0; i < e.Count(); i++) {
+        if (e[i].StartsFrom('$')) {
+          cm_Element *elm = XElementLib::FindBySymbol(e[i].SubStringFrom(1));
+          if (elm == NULL) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              olxstr("element ").quote() << e[i].SubStringFrom(1));
+          }
+          type_exc.Add(elm, type_exc.Count());
+        }
+        else {
+          label_exc.Add(e[i], label_exc.Count());
+        }
+      }
+    }
+    int sort(const TCAtom &a, const TCAtom &b) const {
+      if (label_exc.HasKey(a.GetLabel()) && label_exc.HasKey(b.GetLabel())) {
+        return olx_cmp(label_exc[a.GetLabel()], label_exc[b.GetLabel()]);
+      }
+      else if (type_exc.HasKey(&a.GetType()) && type_exc.HasKey(&b.GetType())) {
+        return olx_cmp(type_exc[&a.GetType()], type_exc[&b.GetType()]);
+      }
+      return (*func)(a, b);
+    }
+  };
+
   static int atom_cmp_Part(const TCAtom &a1, const TCAtom &a2) {
     if( a2.GetPart() < 0 && a1.GetPart() >= 0 )
       return -1;
     if( a2.GetPart() >= 0 && a1.GetPart() < 0 )
       return 1;
     return a1.GetPart() - a2.GetPart();  // smallest goes first
+  }
+  static int atom_cmp_Z(const TCAtom &a1, const TCAtom &a2) {
+    return olx_cmp(a2.GetType().z, a1.GetType().z);
   }
   static int atom_cmp_Mw(const TCAtom &a1, const TCAtom &a2) {
     return olx_cmp(a2.GetType().GetMr(), a1.GetType().GetMr());
@@ -82,13 +117,11 @@ public:
   }
 
   struct CombiSort {
-    //typedef int (*sort_func)(const TCAtom*, const TCAtom*);
-    TArrayList<int (*)(const TCAtom &, const TCAtom &)> sequence;
+    TTypeList<Sorter> sequence;
     int atom_cmp(const TCAtom &a1, const TCAtom &a2) const {
       for( size_t i=0; i < sequence.Count(); i++ )  {
-        int res = (*sequence[i])(a1, a2);
-        if( res != 0 )
-          return res;
+        int res = sequence[i].sort(a1, a2);
+        if (res != 0) return res;
       }
       return 0;
     }

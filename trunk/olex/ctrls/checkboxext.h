@@ -30,8 +30,8 @@ namespace ctrl_ext  {
     virtual ~TCheckBox()  {  if( ActionQueue != NULL )  ActionQueue->Remove(this);  }
 
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode);
-    bool Execute(const IEObject *Sender, const IEObject *Data);
-    void OnRemove()  {  ActionQueue = NULL;  }
+    bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    void OnRemove(TActionQueue *)  {  ActionQueue = NULL;  }
 
     DefPropC(olxstr, Data)
 

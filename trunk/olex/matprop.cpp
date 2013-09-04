@@ -274,7 +274,9 @@ TdlgMatProp::~TdlgMatProp()  {
   tcSpecB->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
+bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   if( EsdlInstanceOf( *Sender, TTextEdit) )  {
     wxColourDialog *CD = new wxColourDialog(this);
     wxColor wc = ((TTextEdit*)Sender)->GetBackgroundColour();

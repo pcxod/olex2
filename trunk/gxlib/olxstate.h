@@ -207,7 +207,7 @@ protected:
   public:
     ObjectPicker_(AMode &mode) : mode(mode) {}
     AMode &mode;
-    virtual bool Execute(const IEObject *sender, const IEObject *data);
+    virtual bool Execute(const IEObject *sender, const IEObject *data, TActionQueue *);
   } ObjectPicker;
 public:
   AMode(size_t id);

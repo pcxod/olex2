@@ -154,10 +154,9 @@ public:
     return fileno(FHandle);
 #endif
   }
-
   virtual void Read(void *Bf, size_t count);
   virtual size_t Write(const void *Bf, size_t count);
-  template <class T> inline size_t Write(const T& data)  {
+  template <class T> inline size_t Write(const T& data) {
     return IDataOutputStream::Write(data);
   }
 

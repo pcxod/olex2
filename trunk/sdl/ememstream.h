@@ -21,6 +21,7 @@ class TEMemoryStream: protected TDirectionalList<char>,
   size_t Position;
 protected:
   void Clear()  {  TDirectionalList<char>::Clear();  Position = 0;  }
+  // returns updated position
 public:
   TEMemoryStream(long BufferSize=DefBufferSize)
     : TDirectionalList<char>(BufferSize), Position(0)
@@ -29,6 +30,16 @@ public:
   virtual ~TEMemoryStream()  {}
   //void operator >> (IEOutputStream *os);
 
+  virtual size_t Write(const void *D, size_t count)  {
+    if( Position == GetLength() )
+        TDirectionalList<char>::Write((const char*)D, count);
+    else
+      TDirectionalList<char>::Write((const char*)D, Position, count);
+    return (Position += count);
+  }
+  template <class T> inline size_t Write(const T& data) {
+    return IDataOutputStream::Write(data);
+  }
   virtual uint64_t GetSize() const {  return GetLength();  }
   virtual uint64_t GetPosition() const {  return Position;  }
   virtual void SetPosition(uint64_t pos)  {
@@ -37,17 +48,6 @@ public:
       (size_t)pos, 0, GetLength()+1);
 #endif
     Position = OlxIStream::CheckSizeT(pos);
-  }
-  // returns updated position
-  virtual size_t Write(const void *D, size_t count)  {
-    if( Position == GetLength() )
-        TDirectionalList<char>::Write((const char*)D, count);
-    else
-      TDirectionalList<char>::Write((const char*)D, Position, count);
-    return (Position += count);
-  }
-  template <class T> inline size_t Write(const T& data)  {
-    return IDataOutputStream::Write(data);
   }
   // returns updated position
   virtual void Read(void *D, size_t count)  {

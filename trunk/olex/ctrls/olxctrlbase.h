@@ -28,7 +28,9 @@ namespace ctrl_ext  {
         {
           parent.Add(this);
         }
-        bool Execute(const IEObject *Sender, const IEObject *Data=NULL)  {
+        bool Execute(const IEObject *Sender, const IEObject *Data=NULL,
+          TActionQueue *caller=NULL)
+        {
           return TActionQueue::Execute(Sender, Data == NULL ? &data : Data);
         }
         static ActionQueue& New(TActionQList &parent, const olxstr &name)  {
@@ -41,7 +43,7 @@ namespace ctrl_ext  {
         Actions.Find(name.ToUpperCase()));
       if( q == NULL )  return false;
       olxstr data = GetActionQueueData(*q);
-      q->Execute(this, &data);
+      q->Execute(this, &data, NULL);
       return true;
     }
   protected:

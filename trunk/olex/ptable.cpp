@@ -90,7 +90,9 @@ data:
   B->SetTag( ii );
 }
 //..............................................................................
-bool TPTableDlg::Execute(const IEObject *Sender, const IEObject *Data)  {
+bool TPTableDlg::Execute(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   TButton *S = (TButton*)(AOlxCtrl*)Sender;
   Selected = &XElementLib::GetByIndex(S->GetTag()-1);
   wxDialog::EndModal(wxID_OK);

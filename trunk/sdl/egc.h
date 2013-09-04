@@ -94,7 +94,7 @@ public:
     return (Instance!=NULL ? Instance : (Instance = new TEGC));
   }
 
-  virtual bool Execute(const IEObject*, const IEObject*) {
+  virtual bool Execute(const IEObject*, const IEObject*, TActionQueue *) {
     ClearASAP();
     return true;
   }

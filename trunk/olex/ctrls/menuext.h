@@ -48,7 +48,7 @@ namespace ctrl_ext {
     virtual ~TMenuItem();
     void SetActionQueue(TActionQueue& q, const olxstr& dependMode,
       short dependentOn);
-    bool Execute(const IEObject *Sender, const IEObject *Data);
+    bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *);
     // updates checked status
     void ValidateState(); 
     DefPropC(olxstr, Command)
