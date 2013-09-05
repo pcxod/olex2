@@ -638,17 +638,24 @@ void fragments::fragment::breadth_first_tags(size_t start,
       continue;
     }
     if (a->GetTag() != -1 ) {
-      if (a->GetTag() >= tv && ring_atoms != NULL)
-        ring_atoms->Add(a);
+      if (a->GetTag() >= tv) {
+        a->SetRingAtom(true);
+        if (ring_atoms != NULL)
+         ring_atoms->Add(a);
+      }
       continue;
     }
     a->SetTag(tv);
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
+      if (!st.atom->IsAvailable()) continue;
       if (st.atom->GetTag() == -1)
         queue.Push(st.atom);
-      else if (st.atom->GetTag() >= tv && ring_atoms != NULL)
-        ring_atoms->Add(st.atom);
+      else if (st.atom->GetTag() >= tv) {
+        st.atom->SetRingAtom(true);
+        if (ring_atoms != NULL)
+          ring_atoms->Add(st.atom);
+      }
     }
   }
 }
@@ -715,6 +722,7 @@ void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
     a->SetTag(tv);
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
+      if (!st.atom->IsAvailable()) continue;
       if (st.atom->GetTag() == -1)
         queue.Push(st.atom);
     }
@@ -722,6 +730,7 @@ void fragments::fragment::init_ring(size_t i, TTypeList<ring> &rings) {
   for (size_t i=0; i < r.atoms.Count(); i++) {
     for (size_t j=0; j < r.atoms[i]->AttachedSiteCount(); j++) {
       TCAtom &a = r.atoms[i]->GetAttachedAtom(j);
+      if (!a.IsAvailable()) continue;
       if (a.GetTag() == 1 && a.GetType().z > 1) {
         ring::substituent &s = r.substituents.Add(
           new ring::substituent(r, *r.atoms[i]));
@@ -776,6 +785,7 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
   queue.Push(ring.Add(a))->SetProcessed(true);
   for (size_t i=0; i < a.AttachedSiteCount(); i++) {
     TCAtom::Site &st = a.GetAttachedSite(i);
+    if (!st.atom->IsAvailable()) continue;
     if (st.atom->GetTag() == a.GetTag())
       queue.Push(ring.Add(st.atom))->SetProcessed(true);
   }
@@ -784,6 +794,7 @@ ConstPtrList<TCAtom> fragments::fragment::trace_ring(TCAtom &a) {
     TCAtom *a = queue.Pop();
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom::Site &st = a->GetAttachedSite(i);
+      if (!st.atom->IsAvailable()) continue;
       if (st.atom->GetTag() < a->GetTag()) {
         if (st.atom->IsProcessed())
           la = st.atom;
@@ -815,7 +826,7 @@ void fragments::fragment::trace_substituent(ring::substituent &s) {
     if (s.atoms[i]->IsProcessed()) continue;
     for (size_t j=0; j < s.atoms[i]->AttachedSiteCount(); j++) {
       TCAtom &a = s.atoms[i]->GetAttachedAtom(j);
-      if (a.IsProcessed()) continue;
+      if (a.IsProcessed() || !a.IsAvailable()) continue;
       if (a.GetTag() <= s.atoms[i]->GetTag()) {
         if (a.GetTag() == -2)
           s.ring_count++;
@@ -833,6 +844,7 @@ TCAtom *fragments::fragment::trace_branch(TCAtom *a, tree_node &b) {
     b.trunk.Add(a);
     for (size_t i=0; i < a->AttachedSiteCount(); i++) {
       TCAtom &st = a->GetAttachedAtom(i);
+      if (!st.IsAvailable()) continue;
       if (st.IsProcessed() || st.GetTag() == 0) {
         b.trunk.Add(st);
         b.trunk.ForEach(TCAtom::FlagSetter(catom_flag_Processed, true));
