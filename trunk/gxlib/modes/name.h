@@ -9,13 +9,14 @@
 
 #ifndef __OLX_NAME_MODE_H
 #define __OLX_NAME_MODE_H
+#include "analysis.h"
 
 class TNameMode : public AModeWithLabels  {
   size_t Index;
   olxstr Prefix, Suffix, Symbol;
   bool Lock, NameResidues;
   TUndoData* FirstUndo;
-  bool AutoComplete;
+  short AutoComplete;
 protected:
   static TNameMode* Instance;
   class TNameModeUndo : public TUndoData {
@@ -65,32 +66,89 @@ protected:
     olxstr Labl = Symbol.IsEmpty() ? olxstr('$') : Symbol;
     SetUserCursor(Labl << Prefix << Index << Suffix, "name");
   }
-  void Autocomplete(TXAtom& xa, TNameModeUndo* undo)  {
+  void DoNumber(TXAtom &a, TNameModeUndo* undo) {
+    olxstr Labl =  Symbol.IsEmpty() ? a.GetType().symbol : Symbol;
+    Labl << Prefix <<  Index << Suffix;
+    undo->AddAction(TGXApp::GetInstance().Name(a, Labl, false));
+    undo->AddAtom(a);
+    TGXApp::GetInstance().MarkLabel(a, true);
+    Index++;
+  }
+  static int RSorter(const TXAtom &a, const TXAtom &b) {
+    if (a.CAtom().IsRingAtom()) {
+      if (b.CAtom().IsRingAtom()) return 0;
+      return -1;
+    }
+    if (b.CAtom().IsRingAtom())
+      return 1;
+    return 0;
+  }
+  void Autocomplete(TXAtom& xa, TNameModeUndo* undo, bool recursion=false) {
+    if (!recursion) {
+      TGXApp::AtomIterator ai = gxapp.GetAtoms();
+      while (ai.HasNext()) {
+        TXAtom &a = ai.Next();
+        a.SetTag(gxapp.IsLabelMarked(a) ? 1 : 0);
+      }
+    }
+    if (recursion && xa.GetTag() == 1) return;
+    xa.SetTag(1);
     TXAtomPList outgoing;
-    for( size_t i=0; i < xa.NodeCount(); i++ )  {
-      TXAtom& nd = static_cast<TXAtom&>(xa.Node(i));
-      if( nd.IsDeleted() || nd.GetType() < 2 ) // H,D,Q
+    for (size_t i=0; i < xa.NodeCount(); i++) {
+      TXAtom& nd = xa.Node(i);
+      if (nd.IsDeleted() || nd.GetType() < 2 || nd.GetTag() == 1) // H,D,Q
         continue;
-      if( gxapp.IsLabelMarked(nd) )
+      if ((AutoComplete&2) == 2 && xa.GetType() != nd.GetType())
         continue;
-      // 2009.07.17 --
-      if( xa.GetType() != nd.GetType() )
-        continue;
-      // 2009.08.03 --
-      if( xa.CAtom().GetPart() != nd.CAtom().GetPart() )
+      if ((AutoComplete&4) == 4 && xa.CAtom().GetPart() != nd.CAtom().GetPart())
         continue;
       outgoing.Add(nd);
     }
-    if( outgoing.Count() == 1 )  {
-      olxstr Labl (Symbol.IsEmpty() ? outgoing[0]->GetType().symbol : Symbol);
-      Labl << Prefix <<  Index << Suffix;
-      undo->AddAction(TGXApp::GetInstance().Name(*outgoing[0], Labl, false));
-      undo->AddAtom( *outgoing[0] );
-      TGXApp::GetInstance().MarkLabel(*outgoing[0], true);
-      Index++;
-      SetCursor();
-      Autocomplete(*outgoing[0], undo);
+    bool set_cursor=false;
+    if (outgoing.Count() == 1) {
+      DoNumber(*outgoing[0], undo);
+      Autocomplete(*outgoing[0], undo, true);
+      set_cursor=true;
     }
+    else if((AutoComplete&8) == 8) {
+      TXAtomPList to_number;
+      QuickSorter::SortSF(outgoing, &TNameMode::RSorter);
+      for (size_t i=0; i < outgoing.Count(); i++) {
+        TXAtom &a = *outgoing[i];
+        if (a.GetTag() == 1) continue;
+        size_t cnt=0;
+        for (size_t i=0; i < a.NodeCount(); i++) {
+          TXAtom& nd = a.Node(i);
+          if (nd.IsDeleted() || nd.GetType() < 2 || nd.GetTag() == 1) continue;
+          if ((AutoComplete&2) == 2 && xa.GetType() != nd.GetType())
+            continue;
+          if ((AutoComplete&4) == 4 && xa.CAtom().GetPart() != nd.CAtom().GetPart())
+            continue;
+          cnt++;
+        }
+        if (a.CAtom().IsRingAtom()) {
+          set_cursor=true;
+          DoNumber(a, undo);
+          Autocomplete(a, undo, true);
+        }
+        else {
+          if (cnt == 0) {
+            set_cursor=true;
+            DoNumber(a, undo);
+          }
+          else if (a.GetTag() == 0)
+            to_number << a;
+        }
+      }
+      for (size_t i=0; i < to_number.Count(); i++) {
+        if (to_number[i]->GetTag() == 1) continue;
+        set_cursor=true;
+        DoNumber(*to_number[i], undo);
+        Autocomplete(*to_number[i], undo, true);
+      }
+    }
+    if (!recursion && set_cursor)
+      SetCursor();
   }
 public:
   TNameMode(size_t id) : AModeWithLabels(id)  {  Instance = this;  }
@@ -100,7 +158,7 @@ public:
     Suffix = Options.FindValue('s');
     Symbol = Options.FindValue('t');  // type
     Lock = Options.GetBoolOption('l');
-    AutoComplete = Options.GetBoolOption('a');
+    AutoComplete = (short)Options.FindValue('a', '0').ToInt();
     NameResidues = Options.GetBoolOption('r');
     // validate if type is correct
     if( !Symbol.IsEmpty() && !XElementLib::IsElement(Symbol) )
@@ -116,6 +174,20 @@ public:
     TGXApp::BondIterator bi = gxapp.GetBonds();
     while( bi.HasNext() )
       bi.Next().SetSelectable(false);
+    if ((AutoComplete&8) == 8) {
+      gxapp.SetQPeaksVisible(false);
+      using namespace olx_analysis;
+      TTypeList<fragments::fragment> frags = fragments::extract(
+        gxapp.XFile().GetAsymmUnit());
+      for (size_t i=0; i < frags.Count(); i++) {
+        TCAtomPList r_atoms;
+        frags[i].breadth_first_tags(InvalidIndex, &r_atoms);
+        TTypeList<fragments::ring> rings = frags[i].get_rings(r_atoms);
+        for (size_t j=0; j < rings.Count(); j++) {
+          rings[j].atoms.ForEach(TCAtom::FlagSetter(catom_flag_RingAtom, true));
+        }
+      }
+    }
     return true;
   }
   ~TNameMode() {  Instance = NULL;  }
@@ -144,7 +216,7 @@ public:
       gxapp.MarkLabel(XA, true);
       Index++;
       SetCursor();
-      if( AutoComplete )
+      if (AutoComplete != 0)
         Autocomplete(XA, undo);
       return true;
     }
