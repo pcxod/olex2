@@ -163,12 +163,16 @@ TXGrid::TContextClear::TContextClear(TGlRenderer& r)  {
   r.OnClear.Add(this);
 }
 //.............................................................................
-bool TXGrid::TContextClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+bool TXGrid::TContextClear::Enter(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   TXGrid::_ResetLists();
   return true;
 }
 //.............................................................................
-bool TXGrid::TContextClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+bool TXGrid::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   return true;
 }
 //.............................................................................

@@ -15,6 +15,13 @@
 #include "glscene.h"
 #include "efile.h"
 
+#if wxCHECK_VERSION(2,9,0)
+#  define wxComp(a,b) (a)
+#else 
+#  define wxComp(a,b) (b)
+#endif
+
+
 BEGIN_EVENT_TABLE(TdlgSceneProps, TDialog)
   EVT_BUTTON(wxID_OK, TdlgSceneProps::OnOK)
   EVT_BUTTON(wxID_CANCEL, TdlgSceneProps::OnCancel)
@@ -30,13 +37,13 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   short Border = 2;
   // Fonts ********************************************************************
   wxStaticBox *boxFonts = new wxStaticBox(this, -1, wxT("Fonts"));
-  cbFonts = new TComboBox(boxFonts);
+  cbFonts = new TComboBox(wxComp(boxFonts, this));
   AGlScene& ascene = TGXApp::GetInstance().GetRender().GetScene();
   for (size_t i=0; i < ascene.FontCount(); i++)
     cbFonts->AddObject(ascene._GetFont(i).GetName(), &ascene._GetFont(i));
   cbFonts->SetSelection(0);
   cbFonts->OnChange.Add(this);
-  tbEditFont = new TButton(boxFonts);
+  tbEditFont = new TButton(wxComp(boxFonts, this));
   tbEditFont->SetCaption("Edit Font");
   tbEditFont->OnClick.Add(this);
   wxStaticBoxSizer *sizerFonts = new wxStaticBoxSizer(boxFonts, wxHORIZONTAL);
@@ -45,30 +52,30 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   // Light sources*************************************************************
   wxStaticBox *boxLS = new wxStaticBox(this, -1, wxT("Light sources"));
   //    Light position ********************************************************
-  wxStaticBox *boxLP = new wxStaticBox(boxLS, -1, wxT("Light position"));
-  wxStaticText *stX = new wxStaticText(boxLP, -1, wxT("X"), wxDefaultPosition);
-  tbX = new TTrackBar(boxLP, wxDefaultSize);
+  wxStaticBox *boxLP = new wxStaticBox(wxComp(boxLS, this), -1, wxT("Light position"));
+  wxStaticText *stX = new wxStaticText(wxComp(boxLP, this), -1, wxT("X"), wxDefaultPosition);
+  tbX = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
     tbX->OnChange.Add(this);
     tbX->SetRange(-100,100);
-  teX = new TTextEdit(boxLP);
+  teX = new TTextEdit(wxComp(boxLP, this));
     teX->SetReadOnly(true);
-  wxStaticText *stY = new wxStaticText(boxLP, -1, wxT("Y"), wxDefaultPosition);
-  tbY = new TTrackBar(boxLP, wxDefaultSize);
+  wxStaticText *stY = new wxStaticText(wxComp(boxLP, this), -1, wxT("Y"), wxDefaultPosition);
+  tbY = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
     tbY->OnChange.Add(this);
     tbY->SetRange(-100,100);
-  teY = new TTextEdit(boxLP);
+  teY = new TTextEdit(wxComp(boxLP, this));
     teY->SetReadOnly(true);
-  wxStaticText *stZ = new wxStaticText(boxLP, -1, wxT("Z"), wxDefaultPosition);
-  tbZ = new TTrackBar(boxLP, wxDefaultSize);
+  wxStaticText *stZ = new wxStaticText(wxComp(boxLP, this), -1, wxT("Z"), wxDefaultPosition);
+  tbZ = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
     tbZ->OnChange.Add(this);
     tbZ->SetRange(-100,100);
-  teZ = new TTextEdit(boxLP);
+  teZ = new TTextEdit(wxComp(boxLP, this));
     teZ->SetReadOnly(true);
-  wxStaticText *stR = new wxStaticText(boxLP, -1, wxT("R"), wxDefaultPosition);
-  tbR  = new TTrackBar(boxLP, wxDefaultSize);
+  wxStaticText *stR = new wxStaticText(wxComp(boxLP, this), -1, wxT("R"), wxDefaultPosition);
+  tbR  = new TTrackBar(wxComp(boxLP, this), wxDefaultSize);
     tbR->OnChange.Add(this);
     tbR->SetRange(-3,3);
-  teR = new TTextEdit(boxLP);
+  teR = new TTextEdit(wxComp(boxLP, this));
     teR->SetReadOnly(true);
     
   wxFlexGridSizer *LightPosGridSizer = new wxFlexGridSizer(4, 3, Border, Border);
@@ -92,29 +99,29 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   wxStaticBoxSizer *sizerLP = new wxStaticBoxSizer(boxLP, wxVERTICAL);
   sizerLP->Add(LightPosGridSizer, 1, wxEXPAND | wxALL, 1);
   //    light colours *********************************************************
-  wxStaticBox *boxLC = new wxStaticBox(boxLS, -1, wxT("Light colours"));
-  wxStaticText *stcolour = new wxStaticText(boxLC, -1, wxT("Colour"));
-  wxStaticText *sttransparency = new wxStaticText(boxLC, -1, wxT("Transparency"));
+  wxStaticBox *boxLC = new wxStaticBox(wxComp(boxLS, this), -1, wxT("Light colours"));
+  wxStaticText *stcolour = new wxStaticText(wxComp(boxLC, this), -1, wxT("Colour"));
+  wxStaticText *sttransparency = new wxStaticText(wxComp(boxLC, this), -1, wxT("Transparency"));
 
-  wxStaticText *stAmb = new wxStaticText(boxLC, -1, wxT("Ambient"));
-  teAmb = new TTextEdit(boxLC);
+  wxStaticText *stAmb = new wxStaticText(wxComp(boxLC, this), -1, wxT("Ambient"));
+  teAmb = new TTextEdit(wxComp(boxLC, this));
     teAmb->SetReadOnly(true);
     teAmb->OnClick.Add(this);
-  scAmbA = new TSpinCtrl(boxLC);
-  wxStaticText *stDiff = new wxStaticText(boxLC, -1, wxT("Diffuse"));
-  teDiff = new TTextEdit(boxLC);
+  scAmbA = new TSpinCtrl(wxComp(boxLC, this));
+  wxStaticText *stDiff = new wxStaticText(wxComp(boxLC, this), -1, wxT("Diffuse"));
+  teDiff = new TTextEdit(wxComp(boxLC, this));
     teDiff->SetReadOnly(true);
     teDiff->OnClick.Add(this);
   //teDiff = new wxColourPickerCtrl(this, -1); //teDiff->OnClick.Add(this);
-  scDiffA = new TSpinCtrl(boxLC);
+  scDiffA = new TSpinCtrl(wxComp(boxLC, this));
 
-  wxStaticText *stSpec = new wxStaticText(boxLC, -1, wxT("Specular"));
-  teSpec  = new TTextEdit(boxLC);
+  wxStaticText *stSpec = new wxStaticText(wxComp(boxLC, this), -1, wxT("Specular"));
+  teSpec  = new TTextEdit(wxComp(boxLC, this));
     teSpec->SetReadOnly(true);
     teSpec->OnClick.Add(this);
-  scSpecA = new TSpinCtrl(boxLC);
-  wxStaticText *stSExp = new wxStaticText(boxLC, -1, wxT("Spot exponent"));
-  scSExp = new TSpinCtrl(boxLC);
+  scSpecA = new TSpinCtrl(wxComp(boxLC, this));
+  wxStaticText *stSExp = new wxStaticText(wxComp(boxLC, this), -1, wxT("Spot exponent"));
+  scSExp = new TSpinCtrl(wxComp(boxLC, this));
     scSExp->SetRange(0, 128);
 
   wxFlexGridSizer *GridSizer = new wxFlexGridSizer(5, 3, Border, Border);
@@ -147,7 +154,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   TSizer0->Add(sizerLP, 1, wxEXPAND | wxALL, Border);//Light position frame
 
   //Light dropdown menu
-  cbLights = new TComboBox(boxLS);
+  cbLights = new TComboBox(wxComp(boxLS, this));
   for (int i=0; i < 8; i++)
     cbLights->AddObject(olxstr("Light ") << (i + 1));
   cbLights->SetValue(cbLights->GetItem(0).u_str());
@@ -155,7 +162,7 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   //end Light dropdown menu
 
   // checkbox enabled
-  cbEnabled = new wxCheckBox(boxLS, -1, wxT("Enabled"));
+  cbEnabled = new wxCheckBox(wxComp(boxLS, this), -1, wxT("Enabled"));
   wxBoxSizer *sizerE = new wxBoxSizer(wxHORIZONTAL);
   sizerE->Add(cbEnabled, 1, wxEXPAND | wxALL, Border);
   //end checkbox enabled
@@ -165,22 +172,22 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   SizerLt->Add(sizerE, 1, wxEXPAND | wxALL, Border);
 
   // spot cutoff **************************************************************
-  wxStaticBox *boxSC = new wxStaticBox(boxLS, -1, wxT("Spot cutoff"));
-  cbUniform = new wxCheckBox(boxSC, -1, wxT("Uniform"));
-  scSCO = new TSpinCtrl(boxSC);
+  wxStaticBox *boxSC = new wxStaticBox(wxComp(boxLS, this), -1, wxT("Spot cutoff"));
+  cbUniform = new wxCheckBox(wxComp(boxSC, this), -1, wxT("Uniform"));
+  scSCO = new TSpinCtrl(wxComp(boxSC, this));
   scSCO->SetRange(1, 180);
     scSCO->OnChange.Add(this);
   wxStaticBoxSizer *sizerSC = new wxStaticBoxSizer(boxSC, wxHORIZONTAL);
   sizerSC->Add(scSCO, 0, wxEXPAND | wxALL, Border);
   sizerSC->Add(cbUniform, 0, wxEXPAND | wxALL, Border);
   //spot direction ************************************************************
-  wxStaticBox *boxSD = new wxStaticBox(boxLS, -1, wxT("Spot direction"));
-  wxStaticText *stSCX = new wxStaticText(boxSD, -1, wxT("X"));
-  teSCX = new TTextEdit(boxSD);
-  wxStaticText *stSCY = new wxStaticText(boxSD, -1, wxT("Y"));
-  teSCY = new TTextEdit(boxSD);
-  wxStaticText *stSCZ = new wxStaticText(boxSD, -1, wxT("Z"));
-  teSCZ = new TTextEdit(boxSD);
+  wxStaticBox *boxSD = new wxStaticBox(wxComp(boxLS, this), -1, wxT("Spot direction"));
+  wxStaticText *stSCX = new wxStaticText(wxComp(boxSD, this), -1, wxT("X"));
+  teSCX = new TTextEdit(wxComp(boxSD, this));
+  wxStaticText *stSCY = new wxStaticText(wxComp(boxSD, this), -1, wxT("Y"));
+  teSCY = new TTextEdit(wxComp(boxSD, this));
+  wxStaticText *stSCZ = new wxStaticText(wxComp(boxSD, this), -1, wxT("Z"));
+  teSCZ = new TTextEdit(wxComp(boxSD, this));
 
   wxStaticBoxSizer *sizerSD = new wxStaticBoxSizer(boxSD, wxHORIZONTAL);
   sizerSD->Add(stSCX, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 2);
@@ -194,13 +201,13 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
   sizerSpot->Add(sizerSC, 1, wxEXPAND | wxALL, Border);
   sizerSpot->Add(sizerSD, 1, wxEXPAND | wxALL, Border);
   // attenuation **************************************************************
-  wxStaticBox *boxA = new wxStaticBox(boxLS, -1, wxT("Attenuation"));
-  teAA = new TTextEdit(boxA);  //GL_QUADRATIC_ATTENUATION
-  wxStaticText *stAA = new wxStaticText(boxA, -1, wxT("Quadratic"));
-  teAB = new TTextEdit(boxA);  //GL_LINEAR_ATTENUATION
-  wxStaticText *stAB = new wxStaticText(boxA, -1, wxT("Linear"));
-  teAC = new TTextEdit(boxA);  //GL_CONSTANT_ATTENUATION
-  wxStaticText *stAC = new wxStaticText(boxA, -1, wxT("Constant"));
+  wxStaticBox *boxA = new wxStaticBox(wxComp(boxLS, this), -1, wxT("Attenuation"));
+  teAA = new TTextEdit(wxComp(boxA, this));  //GL_QUADRATIC_ATTENUATION
+  wxStaticText *stAA = new wxStaticText(wxComp(boxA, this), -1, wxT("Quadratic"));
+  teAB = new TTextEdit(wxComp(boxA, this));  //GL_LINEAR_ATTENUATION
+  wxStaticText *stAB = new wxStaticText(wxComp(boxA, this), -1, wxT("Linear"));
+  teAC = new TTextEdit(wxComp(boxA, this));  //GL_CONSTANT_ATTENUATION
+  wxStaticText *stAC = new wxStaticText(wxComp(boxA, this), -1, wxT("Constant"));
 
   wxStaticBoxSizer *sizerA = new wxStaticBoxSizer(boxA, wxHORIZONTAL);
   sizerA->Add(stAA, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 2);
@@ -218,16 +225,16 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame) :
 
   //light model ***************************************************************
   wxStaticBox *boxLM = new wxStaticBox(this, -1, wxT("Light model"));
-  cbLocalV = new wxCheckBox(boxLM, -1, wxT("Local viewer"));
-  cbTwoSide = new wxCheckBox(boxLM, -1, wxT("Two side"));
-  cbSmooth = new wxCheckBox(boxLM, -1, wxT("Smooth shade"));
-  tcAmbLM = new TTextEdit(boxLM);
+  cbLocalV = new wxCheckBox(wxComp(boxLM, this), -1, wxT("Local viewer"));
+  cbTwoSide = new wxCheckBox(wxComp(boxLM, this), -1, wxT("Two side"));
+  cbSmooth = new wxCheckBox(wxComp(boxLM, this), -1, wxT("Smooth shade"));
+  tcAmbLM = new TTextEdit(wxComp(boxLM, this));
     tcAmbLM->SetReadOnly(true);
     tcAmbLM->OnClick.Add(this);
-  wxStaticText *stAmbLM = new wxStaticText(boxLM, -1, wxT("Ambient color"));
-  tcBgClr = new TTextEdit(boxLM); tcBgClr->SetReadOnly(true);
+  wxStaticText *stAmbLM = new wxStaticText(wxComp(boxLM, this), -1, wxT("Ambient color"));
+  tcBgClr = new TTextEdit(wxComp(boxLM, this)); tcBgClr->SetReadOnly(true);
     tcBgClr->OnClick.Add(this);
-  wxStaticText *stBgClr = new wxStaticText(boxLM, -1, wxT("Background color"));
+  wxStaticText *stBgClr = new wxStaticText(wxComp(boxLM, this), -1, wxT("Background color"));
 
   wxStaticBoxSizer *SizerLM = new wxStaticBoxSizer(boxLM, wxHORIZONTAL);
 #if !wxCHECK_VERSION(2,9,0)
@@ -306,7 +313,9 @@ TdlgSceneProps::~TdlgSceneProps()  {
   tbEditFont->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgSceneProps::Execute(const IEObject* Sender, const IEObject* Data)  {
+bool TdlgSceneProps::Execute(const IEObject* Sender, const IEObject* Data,
+  TActionQueue *)
+{
   if ((TTrackBar*)Sender == tbX)
     teX->SetText(tbX->GetValue());
   else if ((TTrackBar*)Sender == tbY)

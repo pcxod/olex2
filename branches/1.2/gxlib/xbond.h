@@ -42,15 +42,15 @@ protected:
   class TStylesClear: public AActionHandler  {
   public:
     TStylesClear(TGlRenderer& Render)  {  Render.OnStylesClear.Add(this);  }
-    bool Enter(const IEObject *Sender, const IEObject *Data);
-    bool Exit(const IEObject *Sender, const IEObject *Data);
+    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   };
   static TStylesClear *OnStylesClear;
   class TContextClear: public AActionHandler  {
   public:
     TContextClear(TGlRenderer& Render);
-    bool Enter(const IEObject *Sender, const IEObject *Data);
-    bool Exit(const IEObject *Sender, const IEObject *Data);
+    bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
+    bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   };
   static void ClearStaticObjects()  {  FStaticObjects.Clear();  }
 public:

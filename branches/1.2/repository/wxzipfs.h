@@ -67,29 +67,35 @@ class TwxZipFileSystem: public AZipFS  {
   }
 protected:
   // proxying functions
-  virtual bool Enter(const IEObject *Sender, const IEObject *Data) {  
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data,
+    TActionQueue * caller)
+  {
     if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
-      OnProgress.Enter(this, Data);
+      OnProgress.Enter(this, Data, caller);
       return true;
     }
     else
-      return AFileSystem::Enter(Sender, Data);
+      return AFileSystem::Enter(Sender, Data, caller);
   }
-  virtual bool Exit(const IEObject *Sender, const IEObject *Data=NULL)  {  
+  virtual bool Exit(const IEObject *Sender, const IEObject *Data,
+    TActionQueue *caller)
+  {
     if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
-      OnProgress.Exit(this, Data);
+      OnProgress.Exit(this, Data, caller);
       return true;
     }
     else
-      return AFileSystem::Exit(Sender, Data);
+      return AFileSystem::Exit(Sender, Data, caller);
   }
-  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {  
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data,
+    TActionQueue *caller)
+  {
     if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
-      OnProgress.Execute(this, Data);
+      OnProgress.Execute(this, Data, caller);
       return true;
     }
     else
-      return AFileSystem::Execute(Sender, Data);
+      return AFileSystem::Execute(Sender, Data, caller);
   }
   virtual bool _DoDelFile(const olxstr& f) {  return false;  }
   virtual bool _DoDelDir(const olxstr& f)  {  return false;  }

@@ -155,7 +155,7 @@ class TWxProcess
   : protected wxProcess, public AProcess, public AEventsDispatcher
 {
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data);
+    const IEObject *Data, TActionQueue *);
   // override to stop automatic deletion of the object
   virtual void OnTerminate(int pid, int status) {}
 public:
@@ -182,7 +182,7 @@ protected:
   void CloseStreams();
   void CloseThreadStreams();
   bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-    const IEObject *Data);
+    const IEObject *Data, TActionQueue *);
 public:
   TWinProcess(const olxstr& cmdl, short flags);
   virtual ~TWinProcess();
@@ -220,7 +220,7 @@ private:
 protected:
   IProcessHandler& OutputHandler;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-  const IEObject* Data=NULL)
+  const IEObject* Data, TActionQueue *)
   {
     if( MsgSubId != msiExecute )  return false;
     if( MsgId == process_manager_timer )  {

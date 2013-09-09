@@ -96,7 +96,8 @@ protected:
   virtual void SetPosition(uint64_t newPos)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-  virtual bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data,
+    TActionQueue *);
   void OnResize();
 public:
   TGlConsole(TGlRenderer& Render, const olxstr& collectionName);

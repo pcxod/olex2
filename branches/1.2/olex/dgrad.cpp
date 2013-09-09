@@ -70,7 +70,9 @@ TdlgGradient::~TdlgGradient()  {
   tcD->OnClick.Clear();
 }
 //..............................................................................
-bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data)  {
+bool TdlgGradient::Execute(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   if( EsdlInstanceOf( *Sender, TTextEdit) )  {
     wxColourDialog *CD = new wxColourDialog(this);
     wxColor wc = ((TTextEdit*)Sender)->GetBackgroundColour();

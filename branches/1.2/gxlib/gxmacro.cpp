@@ -306,6 +306,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "esd-calculate esd (works for pairs only)&;"
     "h-excludes H atoms from matching and the RMSD calculation&;"
     "cm-copies the transformation matrix suitable for sgen to clipboard&;"
+    "o-matches overlayed lattices&;"
     ,
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
@@ -1670,6 +1671,33 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
         app.GetRender().Select(a, true);
     }
   }
+  else if (Cmds.Count() > 1 && Cmds[0].Equalsi("ofile")) {
+    if (flag == glSelectionNone) flag = glSelectionSelect;
+    TSizeList fi;
+    for (size_t i=1; i < Cmds.Count(); i++)
+      fi << Cmds[i].ToSizeT();
+    for (size_t i=0; i < fi.Count(); i++) {
+      TXFile *f=NULL;
+      if (fi[i] == 0) {
+        f = &app.XFile();
+      }
+      else if (fi[i] <= app.OverlayedXFileCount()) {
+        f = &app.GetOverlayedXFile(fi[i]-1);
+      }
+      if (f == NULL) continue;
+      ASObjectProvider &op = f->GetLattice().GetObjects();
+      for (size_t j=0; j < op.atoms.Count(); j++) {
+        TXAtom &a = (TXAtom &)op.atoms[j];
+        if (!a.IsAvailable()) continue;
+        app.GetRender().Select(a, flag);
+      }
+      for (size_t j=0; j < op.bonds.Count(); j++) {
+        TXBond &b = (TXBond &)op.bonds[j];
+        if (!b.IsAvailable()) continue;
+        app.GetRender().Select(b, flag);
+      }
+    }
+  }
   else if (Cmds.Count() == 1 && TSymmParser::IsRelSymm(Cmds[0])) {
     if (flag == glSelectionNone) flag = glSelectionSelect;
     const smatd matr = TSymmParser::SymmCodeToMatrix(
@@ -2934,7 +2962,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       out << ' ';
       Objects.Add(sel[i]);
     }
-    if( !out.IsEmpty()  )  {
+    if( !out.IsEmpty() )  {
       TBasicApp::NewLogEntry() << "Deleting " << out;
       app.GetUndo().Push(app.DeleteXObjects(Objects));
       sel.Clear();
@@ -2951,26 +2979,30 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
     while( bi.HasNext() )
       bi.Next().GetGlLabel().SetVisible(false);
   }
-  else  {
-    if( Options.Contains("au") )  {
+  else {
+    if (Options.Contains("au")) {
       TCAtomPList atoms = app.FindCAtoms(Cmds.Text(' '), false);
-      for( size_t i=0; i < atoms.Count(); i++ )
+      for (size_t i=0; i < atoms.Count(); i++)
         atoms[i]->SetDeleted(true);
     }
-    else  {
+    else {
       TXAtomPList Atoms = app.FindXAtoms(Cmds.Text(' '), true, false),
         Selected;
-      if( Atoms.IsEmpty() )  return;
-      for( size_t i=0; i < Atoms.Count(); i++ )
-        if( Atoms[i]->IsSelected() )
-          Selected.Add(Atoms[i]);
+      if (Atoms.IsEmpty()) return;
+      olx_list_filter::Filter(Atoms, Selected,
+        AGDrawObject::FlagsAnalyser(sgdoSelected));
       TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
-      if( todel.IsEmpty() )
-        return;
-      app.GetLog() << "Deleting ";
+      TLattice &latt = app.XFile().GetLattice();
+      for (size_t i=0; i < todel.Count(); i++) {
+        if (((TSAtom*)todel[i])->GetParent() != latt)
+          todel[i] = NULL;
+      }
+      todel.Pack();
+      if (todel.IsEmpty()) return;
+      olxstr log = "Deleting";
       for( size_t i=0; i < todel.Count(); i++ )
-        app.GetLog() << todel[i]->GetLabel() << ' ';
-      app.NewLogEntry();
+        log << ' ' << todel[i]->GetLabel();
+      app.NewLogEntry() << log;
       app.GetUndo().Push(app.DeleteXAtoms(todel));
     }
   }
@@ -3288,6 +3320,16 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
           }
         }
         if (align) {
+          if (Options.GetBoolOption('o')) {
+            if (netA.GetLattice() == netB.GetLattice()) {
+              TBasicApp::NewLogEntry() << "Skipping -o option - the fragments "
+                "belong to the same lattice";
+            }
+            else {
+              atomsToTransform.Clear();
+              atomsToTransform.AddList(netB.GetLattice().GetObjects().atoms);
+            }
+          }
           TNetwork::DoAlignAtoms(atomsToTransform, align_info);
           app.UpdateBonds();
           app.CenterView();

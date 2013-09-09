@@ -1674,7 +1674,7 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( !IsVisible() )  return;
     while( FMode & mFade )  {
       FParent->Dispatch();
-      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
       olx_sleep(50);
     }
   }
@@ -1682,14 +1682,14 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( !IsVisible() )  return;
     while( FXApp->GetFader().GetPosition() < 1 && FXApp->GetFader().IsVisible() )  {
       FParent->Dispatch();
-      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
       olx_sleep(50);
     }
   }
   else if( Cmds[0].Equalsi("rota") )  {
     while( FMode & mRota )  {
       FParent->Dispatch();
-      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
+      Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
       olx_sleep(50);
     }
   }
@@ -3418,7 +3418,7 @@ public:
   TOnSync(TGXApp& xapp, const olxstr baseDir) : xa(xapp)  {
     BaseDir = baseDir;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     if( !EsdlInstanceOf(*Data, olxstr) )  return false;
     olxstr cpath = olxstr::CommonString(BaseDir, *(const olxstr*)Data);
     TBasicApp::GetLog() << ( olxstr("\rInstalling /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) );
@@ -3431,16 +3431,16 @@ class TDownloadProgress: public AActionHandler  {
     TGXApp* xa;
 public:
   TDownloadProgress(TGXApp& xapp) : xa(&xapp) {  }
-  bool Enter(const IEObject *Sender, const IEObject *Data)  {
+  bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )
       TBasicApp::NewLogEntry() << ((TOnProgress*)Data)->GetAction();
     return true;
   }
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
+  bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     TBasicApp::NewLogEntry() << NewLineSequence() << "Done";
     return true;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
     if( !EsdlInstanceOf(*Data, TOnProgress) )
       return false;
     IEObject* p_d = const_cast<IEObject*>(Data);
@@ -3778,7 +3778,7 @@ void TMainForm::macOFileDel(TStrObjList &Cmds, const TParamList &Options, TMacro
 void TMainForm::macOFileSwap(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  FXApp->SetActiveXFile(Cmds[0].ToSizeT());
+  FXApp->SetActiveXFile(Cmds.IsEmpty() ? 0 : Cmds[0].ToSizeT());
 }
 //..............................................................................
 void TMainForm::funTranslatePhrase(const TStrObjList& Params, TMacroError &E) {
@@ -6043,9 +6043,19 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroE
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TBasicApp::GetBaseDir());
   olxstr mn = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
-  if (TShellUtil::RunElevated(mn)) {
-    FXApp->UpdateOption("confirm_on_close", FalseString());
-    Close(false);
+  if (Cmds.IsEmpty() || Cmds[0].ToBool()) {
+    if (TShellUtil::RunElevated(mn)) {
+      FXApp->UpdateOption("confirm_on_close", FalseString());
+      Close(false);
+    }
+  }
+  else {
+    //HWND d_wnd = GetDesktopWindow();
+    //DWORD d_pid;
+    //DWORD d_thid = GetWindowThreadProcessId(d_wnd, &d_pid);
+    //HANDLE d_p = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, d_pid);
+    //if (p) {
+    //}
   }
   TEFile::ChangeDir(cd);
 #else

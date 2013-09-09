@@ -225,7 +225,7 @@ void TWinProcess::Writenl() {
 }
 //.............................................................................
 bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data)
+  const IEObject *Data, TActionQueue *)
 {
   bool Terminated = false;
   if (MsgId == ID_Timer) {
@@ -381,7 +381,7 @@ bool TWxProcess::Execute() {
 }
 //.............................................................................
 bool TWxProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,
-  const IEObject *Data)
+  const IEObject *Data, TActionQueue *)
 {
   bool Terminated = false;
   if (MsgId == ID_Timer) {

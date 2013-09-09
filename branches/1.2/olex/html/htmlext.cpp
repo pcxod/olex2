@@ -153,7 +153,7 @@ void THtml::OnSizeEvt(wxSizeEvent& event)  {
 }
 //.............................................................................
 bool THtml::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender,
-  const IEObject* Data)
+  const IEObject* Data, TActionQueue *)
 {
   if( MsgId == html_parent_resize )  {
     volatile THtmlManager::DestructionLocker dm =
@@ -583,7 +583,7 @@ bool THtml::UpdatePage(bool update_indices)  {
   SetPage(Res.Text(' ').u_str());
   ObjectsState.RestoreState();
   wxHtmlWindow::Scroll(xPos, yPos);
-#if defined(__MAC__)
+#if defined(__MAC__) || (defined(__linux__) && !wxCHECK_VERSION(2,9,0))
   CreateLayout();
   Show();
   Refresh();
@@ -600,7 +600,7 @@ bool THtml::UpdatePage(bool update_indices)  {
 #if defined(__WIN32__)
   CreateLayout();
   Thaw();
-#elif defined(__linux__)
+#elif defined(__linux__) && wxCHECK_VERSION(2,9,0)
   CreateLayout();
   Show();
   Refresh();

@@ -61,8 +61,10 @@ namespace ctrl_ext {
     olxstr ItemsToString(const olxstr &separator);
 
     bool HasValue() const {
+#if wxCHECK_VERSION(2,9,0)
       if (IsReadOnly() && GetSelection() < 0)
         return false;
+#endif
       return true;
     }
     olxstr GetText() const;

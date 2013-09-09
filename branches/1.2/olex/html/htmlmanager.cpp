@@ -43,7 +43,9 @@ void THtmlManager::Destroy() {
 void THtmlManager::InitialiseMain(long flags) {
   main = new THtml(*this, mainWindow, EmptyString(), flags);
   main->OnLink.Add(this);
+#if wxCHECK_VERSION(2,9,0)
   main->AlwaysShowScrollbars();
+#endif
 }
 //.............................................................................
 void THtmlManager::ProcessPageLoadRequests() {
@@ -109,7 +111,9 @@ THtml* THtmlManager::FindHtml(const olxstr& name) const {
   return pd == NULL ? NULL : pd->Html;
 }
 //.............................................................................
-bool THtmlManager::Enter(const IEObject *sender, const IEObject *data) {
+bool THtmlManager::Enter(const IEObject *sender, const IEObject *data,
+  TActionQueue *)
+{
   if (sender != NULL) {
     const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
     THtml *html = dynamic_cast<THtml*>(wx->GetParent());
@@ -124,7 +128,9 @@ bool THtmlManager::Enter(const IEObject *sender, const IEObject *data) {
   return true;
 }
 //.............................................................................
-bool THtmlManager::Exit(const IEObject *sender, const IEObject *data) {
+bool THtmlManager::Exit(const IEObject *sender, const IEObject *data,
+  TActionQueue *)
+{
   if (sender != NULL) {
     const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
     THtml *html = dynamic_cast<THtml*>(wx->GetParent());
@@ -139,7 +145,9 @@ bool THtmlManager::Exit(const IEObject *sender, const IEObject *data) {
   return true;
 }
 //.............................................................................
-bool THtmlManager::Execute(const IEObject *sender, const IEObject *data) {
+bool THtmlManager::Execute(const IEObject *sender, const IEObject *data,
+  TActionQueue *)
+{
   if (sender != NULL) {
     const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
     THtml *html = dynamic_cast<THtml*>(wx->GetParent());

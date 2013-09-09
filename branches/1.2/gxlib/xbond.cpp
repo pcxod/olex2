@@ -16,13 +16,17 @@
 #include "povdraw.h"
 #include "wrldraw.h"
 
-bool TXBond::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+bool TXBond::TStylesClear::Enter(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   TXBond::FBondParams = NULL;
   TXBond::ClearStaticObjects();
   return true;
 }
 //..............................................................................
-bool TXBond::TStylesClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+bool TXBond::TStylesClear::Exit(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   TXBond::ValidateBondParams();
   TXBond::ClearStaticObjects();
   return true;
@@ -33,12 +37,16 @@ TXBond::TContextClear::TContextClear(TGlRenderer& Render)  {
   Render.OnClear.Add(this);
 }
 //..............................................................................
-bool TXBond::TContextClear::Enter(const IEObject *Sender, const IEObject *Data)  {
+bool TXBond::TContextClear::Enter(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   TXBond::ClearStaticObjects();
   return true;
 }
 //..............................................................................
-bool TXBond::TContextClear::Exit(const IEObject *Sender, const IEObject *Data)  {
+bool TXBond::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
+{
   return true;
 }
 //..............................................................................
@@ -68,11 +76,8 @@ TXBond::TXBond(TNetwork* net, TGlRenderer& R, const olxstr& collectionName) :
 }
 //..............................................................................
 TXBond::~TXBond()  {
-  if( GetParentGroup() != NULL )  {
+  if (GetParentGroup() != NULL) {
     GetParentGroup()->Remove(*this);
-#ifdef _DEBUG
-    throw TFunctionFailedException(__OlxSourceInfo, "assert");
-#endif
   }
   delete Label;
 }

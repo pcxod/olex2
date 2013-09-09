@@ -22,7 +22,8 @@ TDRing::TContextClear::TContextClear(TGlRenderer& Render)  {
   Render.OnClear.Add(this);
 }
 //..............................................................................
-bool TDRing::TContextClear::Enter(const IEObject *Sender, const IEObject *Data)
+bool TDRing::TContextClear::Enter(const IEObject *Sender, const IEObject *Data,
+  TActionQueue *)
 {
   TDRing::torus = NULL;
   return true;

@@ -88,7 +88,7 @@ bool IOlex2Processor::extend_macros(const wchar_t *name,
       true);
     return true;
   }
-  catch(const TExceptionBase &e) {
+  catch(const TExceptionBase &) {
     return false;
   }
 }
@@ -107,7 +107,7 @@ bool IOlex2Processor::extend_functions(const wchar_t *name,
       true);
     return true;
   }
-  catch(const TExceptionBase &e) {
+  catch(const TExceptionBase &) {
     return false;
   }
 }
