@@ -156,13 +156,13 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Flush, EmptyString(), fpNone|fpOne, "Flushes log streams");
 //_____________________________________________________________________________
   xlib_InitMacro(EXYZ,
-    "eadp-sets the equivalent anisotropic parameter constraint for the shared "
-    "site",
+    "eadp-does not set the equivalent ADP constraint for the shared site",
     fpAny|psCheckFileTypeIns,
     "Adds a new element to the given/selected site. Takes one selected atom "
     "and element types as any subsequent argument. Alternatively can take a "
     "few selected atoms of different type to be modelled as the type swapping "
-    "disorder."
+    "disorder or a set of atoms of the same type and new element type on the "
+    "command line."
 );
 //_____________________________________________________________________________
   xlib_InitMacro(EADP, EmptyString(), fpAny|psCheckFileTypeIns,
@@ -2421,55 +2421,33 @@ void XLibMacros::macGenDisp(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
-  if( !xapp.FindSAtoms(EmptyString(), atoms, false, true) )  {
+  TSAtomPList atoms = xapp.FindSAtoms("sel", false, true);
+  if (atoms.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, "No atoms provided");
     return;
   }
-  if( atoms.Count() == 1 && Cmds.IsEmpty() )  {
+  if (atoms.Count() == 1 && Cmds.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, "Please specify additional atom type(s)");
     return;
   }
-  if( atoms.Count() > 1 )  {
-    if( !Cmds.IsEmpty() )  {
-      E.ProcessingError(__OlxSrcInfo, "No arguments is expected");
-      return;
-    }
-    else  {
-      ElementDict elms;
-      for( size_t i=0; i < atoms.Count(); i++ )  {
-        if( elms.IndexOf(&atoms[i]->GetType()) != InvalidIndex )  {
-          E.ProcessingError(__OlxSrcInfo,
-            "Atoms of different type are expected");
-          return;
-        }
-      }
-    }
-  }
-  const bool set_eadp = Options.GetBoolOption("eadp");
+  const bool set_eadp = Options.GetBoolOption("eadp", false, true);
   TCAtomPList processed;
   TPtrList<TExyzGroup> groups;
   RefinementModel& rm = xapp.XFile().GetRM();
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   if (atoms.Count() == 1) {
     ElementPList elms;
-    if( atoms[0]->CAtom().GetExyzGroup() != NULL &&
-      !atoms[0]->CAtom().GetExyzGroup()->IsEmpty() )
-    {
-      groups.Add(atoms[0]->CAtom().GetExyzGroup());
-      elms.Add(atoms[0]->GetType());
-    }
-    else  {
-      groups.Add(rm.ExyzGroups.New())->Add(atoms[0]->CAtom());
-    }
-    for( size_t i=0; i < Cmds.Count(); i++ )  {
+    if (atoms[0]->CAtom().GetExyzGroup() != NULL)
+      atoms[0]->CAtom().GetExyzGroup()->Clear();
+    groups.Add(rm.ExyzGroups.New())->Add(atoms[0]->CAtom());
+    for (size_t i=0; i < Cmds.Count(); i++) {
       cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
-      if( elm == NULL )  {
+      if (elm == NULL) {
         xapp.NewLogEntry(logError) << "Unknown element: " << Cmds[i];
         continue;
       }
-      if( elms.IndexOf(elm) == InvalidIndex )  {
+      if (elms.IndexOf(elm) == InvalidIndex) {
         TCAtom& ca = au.NewAtom();
         ca.ccrd() = atoms[0]->CAtom().ccrd();
         ca.SetLabel(elm->symbol + atoms[0]->GetLabel().SubStringFrom( 
@@ -2484,15 +2462,25 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
     processed.Add(atoms[0]->CAtom());
   }
   // special case of atoms close to each other
-  else if (atoms.Count() == 2 && atoms[0]->crd().DistanceTo(atoms[1]->crd()) < 1) {
+  else if (atoms.Count() == 2 && Cmds.IsEmpty() &&
+    atoms[0]->crd().DistanceTo(atoms[1]->crd()) < 1)
+  {
     groups.Add(rm.ExyzGroups.New())->Add(atoms[0]->CAtom());
     groups.GetLast()->Add(atoms[1]->CAtom());
   }
-  else  {  // model type swapping disorder
-    const int part = au.GetNextPart();
-    for( size_t i=0; i < atoms.Count(); i++ )  {
+  else if (Cmds.IsEmpty()) {  // model type swapping disorder
+    SortedPtrList<const cm_Element, TPointerComparator> group_types;
+    for (size_t i=0; i < atoms.Count(); i++) {
+      if (!group_types.AddUnique(&atoms[i]->GetType())) {
+        E.ProcessingError(__OlxSrcInfo, "Unique atom types are expected");
+        return;
+      }
+    }
+    for (size_t i=0; i < atoms.Count(); i++) {
+      if (atoms[i]->CAtom().GetExyzGroup() != NULL)
+        atoms[i]->CAtom().GetExyzGroup()->Clear();
       groups.Add(rm.ExyzGroups.New())->Add(atoms[i]->CAtom());
-      for( size_t j=1; j < atoms.Count(); j++ )  {
+      for (size_t j=1; j < atoms.Count(); j++) {
         TCAtom& ref = atoms[(i+j)%atoms.Count()]->CAtom();
         TCAtom& ca = au.NewAtom();
         ca.ccrd() = atoms[i]->ccrd();
@@ -2504,58 +2492,96 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
         ca.SetUiso(ref.GetUiso());
         groups[i]->Add(ca);
       }
-      for( size_t j=0; j < groups[i]->Count(); j++ )
-        (*groups[i])[j].SetPart((int8_t)(part+j));
       processed.Add(atoms[i]->CAtom());
     }
   }
-  // special case - cross-link 4 atoms by one variable
-  if( groups.Count() == 2 && groups[0]->Count() == 2 && groups[1]->Count() )  {
-    XVar& vr = rm.Vars.NewVar();
-    rm.Vars.AddVarRef(vr,
-      (*groups[0])[0], catom_var_name_Sof, relation_AsVar, 1.0);
-    rm.Vars.AddVarRef(vr,
-      (*groups[0])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
-    rm.Vars.AddVarRef(vr,
-      (*groups[1])[0], catom_var_name_Sof, relation_AsVar, 1.0); 
-    rm.Vars.AddVarRef(vr,
-      (*groups[1])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
-    if( set_eadp )  {
-      rm.rEADP.AddNew()
-        .AddAtom((*groups[0])[0], NULL)
-        .AddAtom((*groups[0])[1], NULL);
-      rm.rEADP.AddNew()
-        .AddAtom((*groups[1])[0], NULL)
-        .AddAtom((*groups[1])[1], NULL);
+  // several atoms and types are provided
+  else {
+    const cm_Element *e = &atoms[0]->GetType();
+    for (size_t i=1; i < atoms.Count(); i++) {
+      if (e != &atoms[i]->GetType()) {
+        E.ProcessingError(__OlxSrcInfo, "Atoms of the same type are expected");
+        return;
+      }
+    }
+    TPtrList<const cm_Element> elms;
+    for (size_t i=0; i < Cmds.Count(); i++) {
+      cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
+      if (elm == NULL) {
+        xapp.NewLogEntry(logError) << "Unknown element type: " << Cmds[i];
+        continue;
+      }
+      if (elm == e) {
+        xapp.NewLogEntry(logError) << "Skipping the original element type";
+        continue;
+      }
+      elms.AddUnique(elm);
+    }
+    if (elms.IsEmpty()) {
+      E.ProcessingError(__OlxSrcInfo, "No new element types is provided");
+      return;
+    }
+    for (size_t i=0; i < atoms.Count(); i++) {
+      if (atoms[i]->CAtom().GetExyzGroup() != NULL)
+        atoms[i]->CAtom().GetExyzGroup()->Clear();
+      groups.Add(rm.ExyzGroups.New())->Add(atoms[i]->CAtom());
+      for (size_t j=0; j < elms.Count(); j++) {
+        TCAtom& ca = au.NewAtom();
+        ca.ccrd() = atoms[i]->ccrd();
+        ca.SetLabel(elms[j]->symbol + atoms[i]->GetLabel().SubStringFrom(
+          atoms[i]->GetType().symbol.Length()), false);
+        ca.SetType(*elms[j]);
+        ca.AssignEquivs(atoms[i]->CAtom());
+        rm.Vars.FixParam(ca, catom_var_name_Sof);
+        ca.SetUiso(atoms[i]->CAtom().GetUiso());
+        groups[i]->Add(ca);
+      }
+      processed.Add(atoms[i]->CAtom());
     }
   }
-  else  {
-    for( size_t i=0; i < groups.Count(); i++ )  {
-      if( groups[i]->Count() > 1 )  {
-        TSimpleRestraint* sr = set_eadp ? &rm.rEADP.AddNew() : NULL;
-        XLEQ* leq = NULL;
-        if( groups[i]->Count() == 2 )  {
-          XVar& vr = rm.Vars.NewVar();
+  if (groups.Count() > 1) {
+    bool groups_equal=true;
+    const size_t group0_sz = groups[0]->Count();
+    for (size_t i=1; i < groups.Count(); i++) {
+      if (groups[i]->Count() != group0_sz) {
+        groups_equal = false;
+        break;
+      }
+    }
+    if (groups_equal && group0_sz > 1) {
+      if (group0_sz == 2) {
+        XVar& vr = rm.Vars.NewVar();
+        for (size_t i=0; i < groups.Count(); i++) {
           rm.Vars.AddVarRef(vr,
             (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0);
           rm.Vars.AddVarRef(vr,
             (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
         }
-        else
-          leq = &rm.Vars.NewEquation();
-        for( size_t j=0; j < groups[i]->Count(); j++ )  {
-          if( (*groups[i])[j].IsDeleted() )  continue;
-          if( leq != NULL )  {
-            XVar& vr = rm.Vars.NewVar(1./groups[i]->Count());
+      }
+      else {
+        XLEQ &leq = rm.Vars.NewEquation();
+        for (size_t i=0; i < group0_sz; i++) {
+          XVar& vr = rm.Vars.NewVar(1./group0_sz);
+          leq.AddMember(vr);
+          for (size_t j=0; j < groups.Count(); j++) {
             rm.Vars.AddVarRef(vr,
-              (*groups[i])[j], catom_var_name_Sof, relation_AsVar, 1.0);
-            leq->AddMember(vr);
+              (*groups[j])[i], catom_var_name_Sof, relation_AsVar, 1.0);
           }
-          if( sr != NULL )
-            sr->AddAtom((*groups[i])[j], NULL);
+        }
+      }
+      if (set_eadp) {
+        for (size_t i=0; i < groups.Count(); i++) {
+          TSimpleRestraint& sr = rm.rEADP.AddNew();
+          for (size_t j=0; j < groups[i]->Count(); j++)
+            sr.AddAtom((*groups[i])[j], NULL);
         }
       }
     }
+  }
+  const int part = au.GetNextPart();
+  for (size_t i=0; i < groups.Count(); i++) {
+    for (size_t j=0; j < groups[i]->Count(); j++)
+      (*groups[i])[j].SetPart((int8_t)(part+j));
   }
   // force the split atom to become isotropic
   xapp.XFile().GetLattice().SetAnis(processed, false);
