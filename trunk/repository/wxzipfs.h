@@ -34,7 +34,10 @@ protected:
   bool UseCache;
   bool Break;
 public:
-  static olxstr ZipUrlSignature;
+  static const olxstr& ZipUrlSignature_() {
+    static olxstr sig = "@zip:";
+    return sig;
+  }
 
   TZipWrapper(const olxstr &zipName, bool useCache);
   TZipWrapper(TEFile* zipName, bool useCache);

@@ -2436,28 +2436,34 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
   TPtrList<TExyzGroup> groups;
   RefinementModel& rm = xapp.XFile().GetRM();
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
+  TPtrList<cm_Element> elements;
+  for (size_t i=0; i < Cmds.Count(); i++) {
+    cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
+    if (elm == NULL) {
+      xapp.NewLogEntry(logError) << "Unknown element: " << Cmds[i];
+      continue;
+    }
+    elements.AddUnique(elm);
+  }
   if (atoms.Count() == 1) {
-    ElementPList elms;
+    elements.Remove(atoms[0]->GetType());
+    if (elements.IsEmpty()) {
+      E.ProcessingError(__OlxSrcInfo, "At least one more element type is expected");
+      return;
+    }
     if (atoms[0]->CAtom().GetExyzGroup() != NULL)
       atoms[0]->CAtom().GetExyzGroup()->Clear();
     groups.Add(rm.ExyzGroups.New())->Add(atoms[0]->CAtom());
-    for (size_t i=0; i < Cmds.Count(); i++) {
-      cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
-      if (elm == NULL) {
-        xapp.NewLogEntry(logError) << "Unknown element: " << Cmds[i];
-        continue;
-      }
-      if (elms.IndexOf(elm) == InvalidIndex) {
-        TCAtom& ca = au.NewAtom();
-        ca.ccrd() = atoms[0]->CAtom().ccrd();
-        ca.SetLabel(elm->symbol + atoms[0]->GetLabel().SubStringFrom( 
-          atoms[0]->GetType().symbol.Length()), false);
-        ca.SetType(*elm);
-        ca.AssignEquivs(atoms[0]->CAtom());
-        rm.Vars.FixParam(ca, catom_var_name_Sof);
-        groups[0]->Add(ca);
-        ca.SetUiso(atoms[0]->CAtom().GetUiso());
-      }
+    for (size_t i=0; i < elements.Count(); i++) {
+      TCAtom& ca = au.NewAtom();
+      ca.ccrd() = atoms[0]->CAtom().ccrd();
+      ca.SetLabel(elements[i]->symbol + atoms[0]->GetLabel().SubStringFrom( 
+        atoms[0]->GetType().symbol.Length()), false);
+      ca.SetType(*elements[i]);
+      ca.AssignEquivs(atoms[0]->CAtom());
+      rm.Vars.FixParam(ca, catom_var_name_Sof);
+      groups[0]->Add(ca);
+      ca.SetUiso(atoms[0]->CAtom().GetUiso());
     }
     processed.Add(atoms[0]->CAtom());
   }
@@ -2504,20 +2510,8 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
         return;
       }
     }
-    TPtrList<const cm_Element> elms;
-    for (size_t i=0; i < Cmds.Count(); i++) {
-      cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
-      if (elm == NULL) {
-        xapp.NewLogEntry(logError) << "Unknown element type: " << Cmds[i];
-        continue;
-      }
-      if (elm == e) {
-        xapp.NewLogEntry(logError) << "Skipping the original element type";
-        continue;
-      }
-      elms.AddUnique(elm);
-    }
-    if (elms.IsEmpty()) {
+    elements.Remove(e);
+    if (elements.IsEmpty()) {
       E.ProcessingError(__OlxSrcInfo, "No new element types is provided");
       return;
     }
@@ -2525,12 +2519,12 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       if (atoms[i]->CAtom().GetExyzGroup() != NULL)
         atoms[i]->CAtom().GetExyzGroup()->Clear();
       groups.Add(rm.ExyzGroups.New())->Add(atoms[i]->CAtom());
-      for (size_t j=0; j < elms.Count(); j++) {
+      for (size_t j=0; j < elements.Count(); j++) {
         TCAtom& ca = au.NewAtom();
         ca.ccrd() = atoms[i]->ccrd();
-        ca.SetLabel(elms[j]->symbol + atoms[i]->GetLabel().SubStringFrom(
+        ca.SetLabel(elements[j]->symbol + atoms[i]->GetLabel().SubStringFrom(
           atoms[i]->GetType().symbol.Length()), false);
-        ca.SetType(*elms[j]);
+        ca.SetType(*elements[j]);
         ca.AssignEquivs(atoms[i]->CAtom());
         rm.Vars.FixParam(ca, catom_var_name_Sof);
         ca.SetUiso(atoms[i]->CAtom().GetUiso());
@@ -2539,42 +2533,40 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       processed.Add(atoms[i]->CAtom());
     }
   }
-  if (groups.Count() > 1) {
-    bool groups_equal=true;
-    const size_t group0_sz = groups[0]->Count();
-    for (size_t i=1; i < groups.Count(); i++) {
-      if (groups[i]->Count() != group0_sz) {
-        groups_equal = false;
-        break;
+  bool groups_equal=true;
+  const size_t group0_sz = groups[0]->Count();
+  for (size_t i=1; i < groups.Count(); i++) {
+    if (groups[i]->Count() != group0_sz) {
+      groups_equal = false;
+      break;
+    }
+  }
+  if (groups_equal && group0_sz > 1) {
+    if (group0_sz == 2) {
+      XVar& vr = rm.Vars.NewVar();
+      for (size_t i=0; i < groups.Count(); i++) {
+        rm.Vars.AddVarRef(vr,
+          (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0);
+        rm.Vars.AddVarRef(vr,
+          (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
       }
     }
-    if (groups_equal && group0_sz > 1) {
-      if (group0_sz == 2) {
-        XVar& vr = rm.Vars.NewVar();
-        for (size_t i=0; i < groups.Count(); i++) {
+    else {
+      XLEQ &leq = rm.Vars.NewEquation();
+      for (size_t i=0; i < group0_sz; i++) {
+        XVar& vr = rm.Vars.NewVar(1./group0_sz);
+        leq.AddMember(vr);
+        for (size_t j=0; j < groups.Count(); j++) {
           rm.Vars.AddVarRef(vr,
-            (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0);
-          rm.Vars.AddVarRef(vr,
-            (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
+            (*groups[j])[i], catom_var_name_Sof, relation_AsVar, 1.0);
         }
       }
-      else {
-        XLEQ &leq = rm.Vars.NewEquation();
-        for (size_t i=0; i < group0_sz; i++) {
-          XVar& vr = rm.Vars.NewVar(1./group0_sz);
-          leq.AddMember(vr);
-          for (size_t j=0; j < groups.Count(); j++) {
-            rm.Vars.AddVarRef(vr,
-              (*groups[j])[i], catom_var_name_Sof, relation_AsVar, 1.0);
-          }
-        }
-      }
-      if (set_eadp) {
-        for (size_t i=0; i < groups.Count(); i++) {
-          TSimpleRestraint& sr = rm.rEADP.AddNew();
-          for (size_t j=0; j < groups[i]->Count(); j++)
-            sr.AddAtom((*groups[i])[j], NULL);
-        }
+    }
+    if (set_eadp) {
+      for (size_t i=0; i < groups.Count(); i++) {
+        TSimpleRestraint& sr = rm.rEADP.AddNew();
+        for (size_t j=0; j < groups[i]->Count(); j++)
+          sr.AddAtom((*groups[i])[j], NULL);
       }
     }
   }
