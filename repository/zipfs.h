@@ -20,16 +20,21 @@ class ZipFSFactory  {
 public:
   typedef AZipFS *(*instance_maker_t)(const olxstr &zip_name, bool use_cache);
 protected:
-  static instance_maker_t instance_maker;
+  static instance_maker_t &instance_maker_() {
+    static instance_maker_t instance_maker;
+    return instance_maker;
+  }
 public:
   static AZipFS *GetInstance(const olxstr &zip_name, bool use_cache=false) {
-    if( instance_maker == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "due to uninitialised ZipfFS factory");
-    return instance_maker(zip_name, use_cache);
+    if (instance_maker_() == NULL) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "due to uninitialised ZipfFS factory");
+    }
+    return instance_maker_()(zip_name, use_cache);
   }
   // returns previously registered maker
   static instance_maker_t Register(instance_maker_t maker)  {
-    olx_swap(instance_maker, maker);
+    olx_swap(instance_maker_(), maker);
     return maker;
   }
 };

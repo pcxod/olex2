@@ -1463,7 +1463,8 @@ bool TMainForm::CreateUpdateThread() {
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
   const IEObject *Data, TActionQueue *)
 {
-  if (StartupInitialised && PyEval_ThreadsInitialized()) {
+  
+  if (StartupInitialised && PyEval_ThreadsInitialized() && wxThread::IsMain()) {
     PyGILState_STATE st = PyGILState_Ensure();
     Py_BEGIN_ALLOW_THREADS
       olx_sleep(10);
@@ -1541,7 +1542,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
      }
   }
   else if( MsgId == ID_UpdateThreadDownload )  {
-    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     if( MsgSubId == msiEnter )  {
       if( UpdateProgress == NULL )
         UpdateProgress = new TOnProgress;
@@ -1561,7 +1562,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
     }
   }
   else if( MsgId == ID_UpdateThreadAction )  {
-    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
     if( MsgSubId == msiEnter )  {
       if( ActionProgress == NULL )
         ActionProgress = new TOnProgress;
