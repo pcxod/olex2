@@ -187,7 +187,7 @@ public:
   /* if fails or the repository is uptodate return NULL, res can be NULL, if
   not it will be set to updater::uapi_UptoDate or an error code
   */
-  AFileSystem* FindActiveUpdateRepositoryFS(short* res) const;
+  AFileSystem* FindActiveUpdateRepositoryFS(short* res, bool force=false) const;
   // creates an FS from string - ftpfs, httpfs, os-fs or zipfs
   static AFileSystem* FSFromString(const olxstr& repo_str,
     const olxstr& proxy_str);

@@ -6034,7 +6034,7 @@ void TMainForm::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       "Updates already available, please restart the program to apply";
     return;
   }
-  CreateUpdateThread();
+  CreateUpdateThread(true);
 }
 //..............................................................................
 void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
