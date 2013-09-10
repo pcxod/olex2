@@ -23,6 +23,7 @@ class UpdateThread : public AOlxThread  {
   TFSItem::SkipOptions toSkip;
   olxstr PatchDir;
   volatile bool _DoUpdate;
+  bool ForceUpdate;
   void CleanUp()  {
     if( Index != NULL )  {
       delete Index;
@@ -37,12 +38,12 @@ class UpdateThread : public AOlxThread  {
       destFS = NULL;
     }
   }
-  void DoInit();
+  void DoInit(bool force);
   virtual void OnSendTerminate();
   TActionQList Actions;
   void MarkCompleted(const TStrList &cmds);
 public:
-  UpdateThread(const olxstr& patch_dir);
+  UpdateThread(const olxstr& patch_dir, bool force_update);
 
   virtual ~UpdateThread()  {  CleanUp();  }
   void DoUpdate() {  _DoUpdate = true;  }  

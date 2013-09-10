@@ -13,17 +13,20 @@
 #include "patchapi.h"
 #include "log.h"
 
-UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0),
+UpdateThread::UpdateThread(const olxstr& patch_dir, bool force_update)
+  : time_out(0),
   PatchDir(patch_dir), srcFS(NULL), destFS(NULL), Index(NULL),
   _DoUpdate(false), UpdateSize(0),
   OnDownload(Actions.New("ON_DOWNLOAD")),
   OnAction(Actions.New("ON_ACTION"))
-{}
+{
+  ForceUpdate = force_update;
+}
 //.............................................................................
-void UpdateThread::DoInit()  {
-  if( !TBasicApp::HasInstance() || Terminate ) 
+void UpdateThread::DoInit(bool force)  {
+  if (!TBasicApp::HasInstance() || Terminate)
     return;
-  try  {
+  try {
     if (TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName()))
       return;
     // compatibility with older versions!
@@ -36,7 +39,7 @@ void UpdateThread::DoInit()  {
     }
     // end of the compatibility section
     updater::UpdateAPI uapi;
-    srcFS = uapi.FindActiveUpdateRepositoryFS(NULL);
+    srcFS = uapi.FindActiveUpdateRepositoryFS(NULL, force);
     if( srcFS == NULL )  return;
     Index = new TFSIndex(*srcFS);
     destFS = new TUpdateFS(PatchDir,
@@ -52,7 +55,7 @@ void UpdateThread::DoInit()  {
 }
 //.............................................................................
 int UpdateThread::Run()  {
-  DoInit();
+  DoInit(ForceUpdate);
   if( !TBasicApp::HasInstance() || Terminate ||
     srcFS == NULL || destFS == NULL || Index == NULL )
   {

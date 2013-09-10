@@ -1435,19 +1435,20 @@ void TMainForm::StartupInit()  {
   HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
   // must move it here since on Linux things will not get initialised at the previous position
-  CreateUpdateThread();
+  CreateUpdateThread(false);
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
 }
 //..............................................................................
-bool TMainForm::CreateUpdateThread() {
+bool TMainForm::CreateUpdateThread(bool force) {
   volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
   if (_UpdateThread != NULL) return false;
 #ifndef __WIN32__ // do updates on non-Win only if the folder is writable
   if( FXApp->IsBaseDirWriteable() )  {
 #endif
     _UpdateThread = new UpdateThread(FXApp->GetInstanceDir() +
-      patcher::PatchAPI::GetPatchFolder());
+      patcher::PatchAPI::GetPatchFolder(),
+      force);
     _UpdateThread->OnTerminate.Add(this, ID_UpdateThreadTerminate);
     _UpdateThread->OnDownload.Add(this, ID_UpdateThreadDownload);
     _UpdateThread->OnAction.Add(this, ID_UpdateThreadAction);
