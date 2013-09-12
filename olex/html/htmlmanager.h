@@ -66,6 +66,7 @@ protected:
   DefFunc(ContainerWidth)
   DefFunc(ContainerHeight)
   DefFunc(Call)
+  DefFunc(Snippet)
   struct Control {
     THtml *html;
     AOlxCtrl *ctrl;

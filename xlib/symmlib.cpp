@@ -1347,7 +1347,8 @@ TSpaceGroup &TSymmLib::CreateNew(const SymmSpace::Info &si) {
   return sg == NULL ? CreateNew(si, hs) : *sg;
 }
 //..............................................................................
-TSpaceGroup &TSymmLib::CreateNew(const olxstr &hs) {
+TSpaceGroup &TSymmLib::CreateNew(const olxstr &hs_) {
+  olxstr hs = olxstr(hs_).TrimWhiteChars();
   SymmSpace::Info si = HallSymbol::Expand(hs);
   TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
   return sg == NULL ? CreateNew(si, hs) : *sg;

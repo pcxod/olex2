@@ -196,7 +196,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(VoidE, EmptyString(), fpNone|psFileLoaded,
     "calculates number of electrons in the voids area");
 //_____________________________________________________________________________
-  xlib_InitMacro(ChangeSG, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+  xlib_InitMacro(ChangeSG,
+    "c-apply cell change according to the centering change (experimental!)",
+    (fpAny^fpNone)|psFileLoaded,
     "[shift] SG. Changes space group of current structure, applying given shit"
     " prior (if provided) to the change of symmetry of the unit cell");
 //_____________________________________________________________________________
@@ -4452,61 +4454,65 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 
 //.............................................................................
-void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TXApp& xapp = TXApp::GetInstance();
   TLattice& latt = xapp.XFile().GetLattice();
   TUnitCell& uc = latt.GetUnitCell();
   TAsymmUnit& au = latt.GetAsymmUnit();
-  if( au.AtomCount() == 0 )  {
-    E.ProcessingError(__OlxSrcInfo, "Empty asymmetric unit");
-    return;
-  }
-  if( xapp.XFile().GetRM().UsedSymmCount() != 0 )  {
-    E.ProcessingError(__OlxSrcInfo,
-      "Please remove used symmetry (EQIV) instructions before using this operation");
-    return;
+  if (xapp.XFile().GetRM().UsedSymmCount() != 0) {
+    xapp.XFile().GetRM().ClearUsedSymm();
   }
   TSpaceGroup& from_sg = xapp.XFile().GetLastLoaderSG();
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroupByName(Cmds.GetLastString());
-  if( sg == NULL )  {
+  TSpaceGroup* sg;
+  if (Cmds.GetLastString().Contains(' ')) {
+    sg = &TSymmLib::GetInstance().CreateNew(Cmds.GetLastString());
+  }
+  else {
+    sg = TSymmLib::GetInstance().FindGroupByName(Cmds.GetLastString());
+  }
+  if (sg == NULL) {
     E.ProcessingError(__OlxSrcInfo, "Could not identify given space group");
     return;
   }
   // change centering?
-  if( from_sg.GetName().SubStringFrom(1) == sg->GetName().SubStringFrom(1) )  {
+  if (Options.GetBoolOption("c") &&
+    from_sg.GetName().SubStringFrom(1) == sg->GetName().SubStringFrom(1))
+  {
     olxch from = from_sg.GetLattice().GetSymbol()[0],
           to = sg->GetLattice().GetSymbol()[0];
     mat3d tm;
     tm.I();
-    if( from == 'I' )  {
-      if( to == 'P' )
+    if (from == 'I') {
+      if (to == 'P')
         tm = mat3d(-0.5, 0.5, 0.5, -0.5, 0.5, -0.5);
     }
-    else if( from == 'P' )  {
-      if( to == 'I' )
+    else if (from == 'P') {
+      if (to == 'I')
         tm = mat3d(0, 1, 1, 0, 1, 0);
-      else if( to == 'C' )  {
+      else if (to == 'C') {
         tm = mat3d(0, 1, 1, 0, 1, 0);  // P->I
         tm *= mat3d(-1, 0, 1, 0, 1, 0, -1, 0, 0);  // I->C, uniq axis b
       }
-      else if( to == 'F' )
+      else if (to == 'F')
         tm = mat3d(-1, 1, 1, -1, 1, 1);
     }
-    else if( from == 'C' )  {
-      if( to == 'P' )  {
+    else if (from == 'C') {
+      if (to == 'P') {
         tm = mat3d(0, 0, -1, 0, 1, 0, 1, 0, -1);  // C->I, uniq axis b
         tm *= mat3d(-0.5, 0.5, 0.5, -0.5, 0.5, -0.5);  // I->P 
       }
     }
-    else if( from == 'F')  {
-      if( to == 'P' )
+    else if (from == 'F') {
+      if (to == 'P')
         tm = mat3d(0, 0.5, 0.5, 0, 0.5, 0);
     }
-    if( !tm.IsI() )  {
+    if (!tm.IsI()) {
       TBasicApp::NewLogEntry() << "EXPERIMENTAL: transformations considering b unique";
       ChangeCell(tm, *sg, EmptyString());
     }
-    else  {
+    else {
       TBasicApp::NewLogEntry() << "The transformation is not supported";
     }
     return;
@@ -4515,52 +4521,52 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
   sg->GetMatrices(ml, mattAll);
   TTypeList<AnAssociation3<vec3d,TCAtom*, int> > list;
   uc.GenereteAtomCoordinates(list, true);
-  if( Cmds.Count() == 4 )  {
+  if (Cmds.Count() == 4) {
     vec3d trans(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble());
-    for( size_t i=0; i < list.Count(); i++ )  {
+    for (size_t i=0; i < list.Count(); i++) {
       list[i].A() += trans;
       list[i].SetC(1);
     }
   }
-  else   {
-    for( size_t i=0; i < list.Count(); i++ )
+  else {
+    for (size_t i=0; i < list.Count(); i++)
       list[i].SetC(1);
   }
-  for( size_t i=0; i < list.Count(); i++ )  {
-    if( list[i].GetC() == 0 )  continue;
-    for( size_t j=i+1; j < list.Count(); j++ )  {
-      if( list[j].GetC() == 0 )  continue;
-      for( size_t k=1; k < ml.Count(); k++ )  {
+  for (size_t i=0; i < list.Count(); i++) {
+    if (list[i].GetC() == 0) continue;
+    for (size_t j=i+1; j < list.Count(); j++) {
+      if (list[j].GetC() == 0) continue;
+      for (size_t k=1; k < ml.Count(); k++) {
         vec3d v = ml[k] * list[i].GetA();
         v -= list[j].GetA();
         v -= v.Round<int>();
         au.CellToCartesian(v);
-        if( v.QLength() < 0.01 )  {
+        if (v.QLength() < 0.01 ) {
           list[i].C() ++;
           list[j].SetC(0);
         }
       }
     }
   }
-  for( size_t i=0; i < au.AtomCount(); i++ )
+  for (size_t i=0; i < au.AtomCount(); i++)
     au.GetAtom(i).SetTag(0);
   TCAtomPList newAtoms;
-  for( size_t i=0; i < list.Count(); i++ )  {
-    if( list[i].GetC() == 0 )  continue;
+  for (size_t i=0; i < list.Count(); i++) {
+    if (list[i].GetC() == 0) continue;
     TCAtom* ca;
-    if( list[i].GetB()->GetTag() > 0 )  {
+    if (list[i].GetB()->GetTag() > 0) {
       ca = &au.NewAtom();
       ca->Assign(*list[i].GetB());
     }
-    else  {
+    else {
       ca = list[i].GetB();
       ca->SetTag(ca->GetTag() + 1);
     }
     ca->ccrd() = list[i].GetA();
     ca->AssignEllp(NULL);
   }
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).GetTag() == 0 )
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).GetTag() == 0)
       au.GetAtom(i).SetDeleted(true);
   }
   au.ChangeSpaceGroup(*sg);
