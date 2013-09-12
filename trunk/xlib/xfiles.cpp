@@ -559,7 +559,7 @@ void TXFile::FromDataItem(TDataItem& item) {
 //..............................................................................
 //..............................................................................
 void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
-  bool list = false, html = false, split = false;
+  bool list = false, html = false, split = false, unit=false;
   int digits = -1;
   if( Params.Count() > 0 )  {
     if( Params[0].Equalsi("list") )
@@ -568,23 +568,26 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
       html = true;
     else if( Params[0].Equalsi("split") )
       split = true;
+    else if( Params[0].Equalsi("unit") )
+      unit = true;
   }
-  if( Params.Count() == 2 )
+  if (Params.Count() == 2)
     digits = Params[1].ToInt();
 
   const ContentList& content = GetRM().GetUserContent();
   olxstr rv;
-  for( size_t i=0; i < content.Count(); i++) {
+  for (size_t i=0; i < content.Count(); i++) {
     rv << content[i].element.symbol;
-    if( list )  rv << ':';
+    if (list)  rv << ':';
     else if (split) rv << ' ';
     bool subAdded = false;
-    const double dv = content[i].count/GetAsymmUnit().GetZ();
+    const double dv = unit ? olx_round(content[i].count)
+      : (content[i].count/GetAsymmUnit().GetZ());
     olxstr tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : olxstr(dv);
-    if( tmp.IndexOf('.') != InvalidIndex )
+    if (tmp.IndexOf('.') != InvalidIndex)
       tmp.TrimFloat();
-    if( html )  {
-      if( olx_abs(dv-1) > 0.01 && olx_abs(dv) > 0.01 )  {
+    if (html) {
+      if (olx_abs(dv-1) > 0.01 && olx_abs(dv) > 0.01) {
         rv << "<sub>" << tmp;
         subAdded = true;
       }
@@ -592,11 +595,11 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
     else
       rv << tmp;
 
-    if( (i+1) <  content.Count() )  {
-      if( list )
+    if ((i+1) <  content.Count()) {
+      if (list)
         rv << ',';
       else
-        if( html )  {
+        if (html) {
           if( subAdded )
             rv << "</sub>";
         }
@@ -604,7 +607,7 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
           rv << ' ';
     }
     else  // have to close the html tag
-      if( html && subAdded )
+      if (html && subAdded)
         rv << "</sub>";
 
   }
