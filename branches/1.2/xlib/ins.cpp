@@ -1132,7 +1132,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         sc++;
       }
     }
-    if( sc != 0 && afix > 0 )  {
+    if (afix > 0) {
       sl.Add("AFIX 0");
       afix = 0;
     }

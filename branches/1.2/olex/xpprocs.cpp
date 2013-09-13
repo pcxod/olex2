@@ -3654,29 +3654,28 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
 
   Proxy = settings["proxy"];
   Repository = settings["repository"];
-  if( settings.GetParam("update").Equalsi("never") )  {
-    TBasicApp::NewLogEntry() << "User settings prevented updating file: " << Cmds[0];
-    return;
-  }
-  if( !Repository.IsEmpty() && !Repository.EndsWith('/') )  Repository << '/';
+  if (!Repository.IsEmpty() && !Repository.EndsWith('/'))
+    Repository << '/';
 
   TUrl url(Repository);
-  if( !Proxy.IsEmpty() ) 
-    url.SetProxy( Proxy );
+  if (!Proxy.IsEmpty())
+    url.SetProxy(Proxy);
 
   TSocketFS httpFS(url);
   TOSFileSystem osFS(TBasicApp::GetBaseDir());
   TFSIndex fsIndex(httpFS);
 
   IEObject* Cause = NULL;
-  try  {
-    if( fsIndex.UpdateFile(osFS, Cmds[0], Force) )
+  try {
+    if (fsIndex.UpdateFile(osFS, Cmds[0], Force))
       TBasicApp::NewLogEntry() << "Updated '" << Cmds[0] << '\'';
     else
       TBasicApp::NewLogEntry() << "Up-to-date '" << Cmds[0] << '\'';
   }
-  catch( const TExceptionBase& exc )  {  Cause = exc.Replicate();  }
-  if( Cause != NULL )
+  catch (const TExceptionBase& exc) {
+    Cause = exc.Replicate();
+  }
+  if (Cause != NULL)
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
 }
 //..............................................................................
@@ -6035,7 +6034,7 @@ void TMainForm::macUpdate(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       "Updates already available, please restart the program to apply";
     return;
   }
-  CreateUpdateThread();
+  CreateUpdateThread(true);
 }
 //..............................................................................
 void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

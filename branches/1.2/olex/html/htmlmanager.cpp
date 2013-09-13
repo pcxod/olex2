@@ -9,6 +9,7 @@
 
 #include "htmlmanager.h"
 #include "htmlswitch.h"
+#include "fsext.h"
 #include "utf8file.h"
 #include "olxstate.h"
 
@@ -1025,6 +1026,94 @@ void THtmlManager::macGroup(TStrObjList &Cmds, const TParamList &Options,
   //Groups.AddNew(Cmds);
 }
 //.............................................................................
+void THtmlManager::funSnippet(const TStrObjList &Params,
+  TMacroError &E)
+{
+  IInputStream *is = TFileHandlerManager::GetInputStream(Params[0]);
+  if (is == NULL) {
+    TBasicApp::NewLogEntry(logError) <<
+      (olxstr("THtmlSwitch::File does not exist: ").quote() << Params[0]);
+    return;
+  }
+  TStrList lines;
+#ifdef _UNICODE
+  TUtf8File::ReadLines(*is, lines, false);
+#else
+  lines.LoadFromTextStream(*is);
+#endif
+  delete is;
+  olxstr_dict<olxstr, true> values;
+
+  size_t data_start=0;
+  for (size_t i=0; i < lines.Count(); i++) {
+    if (!lines[i].StartsFrom('#')) {
+      data_start = i;
+      break;
+    }
+    size_t idx = lines[i].IndexOf('=');
+    if (idx == InvalidIndex) {
+      values(lines[i].SubStringFrom(1).TrimWhiteChars(), EmptyString());
+    }
+    else {
+      olxstr name = lines[i].SubStringTo(idx).SubStringFrom(1).TrimWhiteChars();
+      values(name, lines[i].SubStringFrom(idx+1));
+    }
+  }
+
+  for (size_t i=1; i < Params.Count(); i++) {
+    size_t idx = Params[i].IndexOf('=');
+    olxstr pn, vl;
+    if (idx == InvalidIndex) {
+      pn = olxstr(Params[i]);
+      vl = EmptyString();
+    }
+    else {
+      pn = Params[i].SubStringTo(idx);
+      vl = Params[i].SubStringFrom(idx+1);
+    }
+    pn.TrimWhiteChars();
+    idx = values.IndexOf(pn);
+    if (idx != InvalidIndex)
+      values.GetValue(idx) = vl;
+    else
+      values.Add(pn, vl);
+  }
+  for (size_t i=data_start; i < lines.Count(); i++) {
+    bool remove=false;
+    int replaces=0;
+    size_t idx=InvalidIndex;
+    while (true) {
+      idx = lines[i].FirstIndexOf('#', idx+1);
+      if (idx == InvalidIndex) {
+        break;
+      }
+      size_t j=idx+1;
+      for (; j < lines[i].Length(); j++) {
+        if (!olxstr::o_isalphanumeric(lines[i].CharAt(j))) {
+          break;
+        }
+      }
+      if (j-idx > 1) {
+        olxstr pn = lines[i].SubString(idx+1, j-idx-1);
+        if (values.HasKey(pn)) {
+          lines[i].Delete(idx, j-idx);
+          lines[i].Insert(values[pn], idx);
+          idx=InvalidIndex;
+          replaces++;
+          remove = false;
+        }
+        if (replaces == 0)
+          remove = true;
+      }
+    }
+    if (remove) {
+      lines.Delete(i--);
+      continue;
+    }
+  }
+  E.SetRetVal(lines.Text(NewLineSequence(), data_start));
+}
+//.............................................................................
 TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   TLibrary &Library = *(new TLibrary(name));
   InitMacroD(Library, THtmlManager, ItemState,
@@ -1147,6 +1236,9 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
     "Returns/sets height of a popup window");
   this_InitFuncD(Call, fpOne,
     "Calls event of specified control, expects [popup.]control.event");
+  this_InitFuncD(Snippet, fpAny^fpNone,
+    "Loades a file (first arg), replaces #name from name=val for following "
+    "params and returns the result.");
   return &Library;
 }
 

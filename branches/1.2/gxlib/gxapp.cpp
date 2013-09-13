@@ -467,7 +467,6 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
   const vec3d glCenter = FGlRender->GetBasis().GetCenter();
-  FLabels->Clear();
   ClearXObjects();
   FGlRender->ClearObjects();
   FGlRender->SetSceneComplete(false);
@@ -560,7 +559,7 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   for( size_t i=0; i < Rings.Count(); i++ )
     Rings[i].Create();
 
-  FLabels->Init();
+  FLabels->Init(false);
   FLabels->Create();
 
   if( FXGrowLinesVisible )  CreateXGrowLines();

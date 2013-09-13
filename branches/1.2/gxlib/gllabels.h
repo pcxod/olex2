@@ -39,7 +39,9 @@ const uint32_t
 
 enum LabelMaterialIndex {
   lmiMark,
-  lmiDuplicateLabel
+  lmiDuplicateLabel,
+  lmiMasked,
+  lmiDefault
 };
 
 class TXGlLabels: public AGDrawObject  {
@@ -65,7 +67,7 @@ public:
   virtual ~TXGlLabels()  {}
 
   void Clear();
-  void ClearLabelMarks();
+  void ClearLabelMarks(uint8_t value=(uint8_t)~0);
 
   DefPropP(uint32_t, Mode)
   void Selected(bool On);
@@ -73,7 +75,7 @@ public:
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min) {  return false;  }
  
-  void Init();
+  void Init(bool clear=true, uint8_t value=(uint8_t)~0);
   void MarkLabel(const TXAtom& atom, bool v);
   void MarkLabel(size_t index, bool v);
   bool IsLabelMarked(const TXAtom& atom) const;

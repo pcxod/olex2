@@ -398,6 +398,25 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
     // TRANSLATION START
     if (app != NULL) {
       Lst[i] = app->TranslateString(Lst[i]);
+      size_t bs = Lst[i].IndexOf("$+");
+      if (bs != InvalidIndex) {
+        TStrList blk;
+        blk.Add(Lst[i].SubStringFrom(bs+2).TrimWhiteChars(true, false));
+        Lst[i].Delete(bs, Lst[i].Length()-bs);
+        size_t bi=i;
+        while (++bi < Lst.Count()) {
+          size_t be = Lst[bi].IndexOf("$-");
+          if (be != InvalidIndex) {
+            blk.Add(Lst[bi].SubStringTo(be).TrimWhiteChars(true, false));
+            Lst[bi].Delete(0, be+2);
+            break;
+          }
+          else
+            blk.Add(Lst[bi].TrimWhiteChars(true, false));
+        }
+        Lst.DeleteRange(i+1, blk.Count()-2);
+        Lst.Insert(i+1, olxstr('$') << blk.Text(EmptyString()), NULL);
+      }
       if (Lst[i].IndexOf("$") != InvalidIndex && op != NULL) {
         op->processFunction(Lst[i],
           olxstr(Sender.GetCurrentFile()) << '#' << (i+1));

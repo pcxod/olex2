@@ -100,6 +100,7 @@ void TXGlLabels::RenderLabel(const vec3d &crd, const olxstr &label,
 }
 //..............................................................................
 bool TXGlLabels::Orient(TGlPrimitive& P)  {
+  if (Mode == 0) return true;
   TGlFont &Fnt = GetFont();
   TGXApp& app = TGXApp::GetInstance();
   bool matInited = false;
@@ -115,8 +116,9 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
     if (ai.count == 0 || Marks.Count() != ai.count)
       return true;
     const RefinementModel& rm = app.XFile().GetRM();
-    for( size_t i=0; ai.HasNext(); i++ )  {
+    for (size_t i=0; ai.HasNext(); i++) {
       const TXAtom& XA = ai.Next();
+      if (Marks[XA.GetOwnerId()] == lmiMasked) continue;
       if( XA.IsDeleted() || !XA.IsVisible() )  continue;
       if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )
         continue;
@@ -227,7 +229,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       if( olx_is_valid_index(ca.GetSameId()) )
         Tmp << ':' << ca.GetSameId();
   #endif
-      RenderLabel(XA.crd(), Tmp, i, rc);
+      RenderLabel(XA.crd(), Tmp, XA.GetOwnerId(), rc);
     }
   }
   else { // bonds
@@ -251,23 +253,33 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   return true;
 }
 //..............................................................................
-void TXGlLabels::Init() {
+void TXGlLabels::Init(bool clear, uint8_t value) {
   if (Mode == 0) return;
+  bool size_changed = false;
   if ((Mode&lmBonds) != 0) {
-    Marks.SetCount(TGXApp::GetInstance().GetBonds().count);
+    size_t sz = TGXApp::GetInstance().GetBonds().count;
+    if (sz != Marks.Count()) {
+      Marks.SetCount(sz);
+      size_changed = true;
+    }
   }
   else {
-    Marks.SetCount(TGXApp::GetInstance().GetAtoms().count);
+    size_t sz = TGXApp::GetInstance().GetAtoms().count;
+    if (sz != Marks.Count()) {
+      Marks.SetCount(sz);
+      size_changed = true;
+    }
   }
-  ClearLabelMarks();
+  if (clear || size_changed)
+    ClearLabelMarks(value);
 }
 //..............................................................................
 void TXGlLabels::Selected(bool On) {
   AGDrawObject::SetSelected(false);
 }
 //..............................................................................
-void TXGlLabels::ClearLabelMarks() {
-  Marks.ForEach(olx_list_init::value((uint8_t)~0));
+void TXGlLabels::ClearLabelMarks(uint8_t value) {
+  Marks.ForEach(olx_list_init::value(value));
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {

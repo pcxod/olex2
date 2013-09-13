@@ -196,7 +196,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(VoidE, EmptyString(), fpNone|psFileLoaded,
     "calculates number of electrons in the voids area");
 //_____________________________________________________________________________
-  xlib_InitMacro(ChangeSG, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+  xlib_InitMacro(ChangeSG,
+    "c-apply cell change according to the centering change (experimental!)",
+    (fpAny^fpNone)|psFileLoaded,
     "[shift] SG. Changes space group of current structure, applying given shit"
     " prior (if provided) to the change of symmetry of the unit cell");
 //_____________________________________________________________________________
@@ -2436,28 +2438,34 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
   TPtrList<TExyzGroup> groups;
   RefinementModel& rm = xapp.XFile().GetRM();
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
+  TPtrList<cm_Element> elements;
+  for (size_t i=0; i < Cmds.Count(); i++) {
+    cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
+    if (elm == NULL) {
+      xapp.NewLogEntry(logError) << "Unknown element: " << Cmds[i];
+      continue;
+    }
+    elements.AddUnique(elm);
+  }
   if (atoms.Count() == 1) {
-    ElementPList elms;
+    elements.Remove(atoms[0]->GetType());
+    if (elements.IsEmpty()) {
+      E.ProcessingError(__OlxSrcInfo, "At least one more element type is expected");
+      return;
+    }
     if (atoms[0]->CAtom().GetExyzGroup() != NULL)
       atoms[0]->CAtom().GetExyzGroup()->Clear();
     groups.Add(rm.ExyzGroups.New())->Add(atoms[0]->CAtom());
-    for (size_t i=0; i < Cmds.Count(); i++) {
-      cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
-      if (elm == NULL) {
-        xapp.NewLogEntry(logError) << "Unknown element: " << Cmds[i];
-        continue;
-      }
-      if (elms.IndexOf(elm) == InvalidIndex) {
-        TCAtom& ca = au.NewAtom();
-        ca.ccrd() = atoms[0]->CAtom().ccrd();
-        ca.SetLabel(elm->symbol + atoms[0]->GetLabel().SubStringFrom( 
-          atoms[0]->GetType().symbol.Length()), false);
-        ca.SetType(*elm);
-        ca.AssignEquivs(atoms[0]->CAtom());
-        rm.Vars.FixParam(ca, catom_var_name_Sof);
-        groups[0]->Add(ca);
-        ca.SetUiso(atoms[0]->CAtom().GetUiso());
-      }
+    for (size_t i=0; i < elements.Count(); i++) {
+      TCAtom& ca = au.NewAtom();
+      ca.ccrd() = atoms[0]->CAtom().ccrd();
+      ca.SetLabel(elements[i]->symbol + atoms[0]->GetLabel().SubStringFrom( 
+        atoms[0]->GetType().symbol.Length()), false);
+      ca.SetType(*elements[i]);
+      ca.AssignEquivs(atoms[0]->CAtom());
+      rm.Vars.FixParam(ca, catom_var_name_Sof);
+      groups[0]->Add(ca);
+      ca.SetUiso(atoms[0]->CAtom().GetUiso());
     }
     processed.Add(atoms[0]->CAtom());
   }
@@ -2504,20 +2512,8 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
         return;
       }
     }
-    TPtrList<const cm_Element> elms;
-    for (size_t i=0; i < Cmds.Count(); i++) {
-      cm_Element* elm = XElementLib::FindBySymbol(Cmds[i]);
-      if (elm == NULL) {
-        xapp.NewLogEntry(logError) << "Unknown element type: " << Cmds[i];
-        continue;
-      }
-      if (elm == e) {
-        xapp.NewLogEntry(logError) << "Skipping the original element type";
-        continue;
-      }
-      elms.AddUnique(elm);
-    }
-    if (elms.IsEmpty()) {
+    elements.Remove(e);
+    if (elements.IsEmpty()) {
       E.ProcessingError(__OlxSrcInfo, "No new element types is provided");
       return;
     }
@@ -2525,12 +2521,12 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       if (atoms[i]->CAtom().GetExyzGroup() != NULL)
         atoms[i]->CAtom().GetExyzGroup()->Clear();
       groups.Add(rm.ExyzGroups.New())->Add(atoms[i]->CAtom());
-      for (size_t j=0; j < elms.Count(); j++) {
+      for (size_t j=0; j < elements.Count(); j++) {
         TCAtom& ca = au.NewAtom();
         ca.ccrd() = atoms[i]->ccrd();
-        ca.SetLabel(elms[j]->symbol + atoms[i]->GetLabel().SubStringFrom(
+        ca.SetLabel(elements[j]->symbol + atoms[i]->GetLabel().SubStringFrom(
           atoms[i]->GetType().symbol.Length()), false);
-        ca.SetType(*elms[j]);
+        ca.SetType(*elements[j]);
         ca.AssignEquivs(atoms[i]->CAtom());
         rm.Vars.FixParam(ca, catom_var_name_Sof);
         ca.SetUiso(atoms[i]->CAtom().GetUiso());
@@ -2539,42 +2535,40 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       processed.Add(atoms[i]->CAtom());
     }
   }
-  if (groups.Count() > 1) {
-    bool groups_equal=true;
-    const size_t group0_sz = groups[0]->Count();
-    for (size_t i=1; i < groups.Count(); i++) {
-      if (groups[i]->Count() != group0_sz) {
-        groups_equal = false;
-        break;
+  bool groups_equal=true;
+  const size_t group0_sz = groups[0]->Count();
+  for (size_t i=1; i < groups.Count(); i++) {
+    if (groups[i]->Count() != group0_sz) {
+      groups_equal = false;
+      break;
+    }
+  }
+  if (groups_equal && group0_sz > 1) {
+    if (group0_sz == 2) {
+      XVar& vr = rm.Vars.NewVar();
+      for (size_t i=0; i < groups.Count(); i++) {
+        rm.Vars.AddVarRef(vr,
+          (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0);
+        rm.Vars.AddVarRef(vr,
+          (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
       }
     }
-    if (groups_equal && group0_sz > 1) {
-      if (group0_sz == 2) {
-        XVar& vr = rm.Vars.NewVar();
-        for (size_t i=0; i < groups.Count(); i++) {
+    else {
+      XLEQ &leq = rm.Vars.NewEquation();
+      for (size_t i=0; i < group0_sz; i++) {
+        XVar& vr = rm.Vars.NewVar(1./group0_sz);
+        leq.AddMember(vr);
+        for (size_t j=0; j < groups.Count(); j++) {
           rm.Vars.AddVarRef(vr,
-            (*groups[i])[0], catom_var_name_Sof, relation_AsVar, 1.0);
-          rm.Vars.AddVarRef(vr,
-            (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
+            (*groups[j])[i], catom_var_name_Sof, relation_AsVar, 1.0);
         }
       }
-      else {
-        XLEQ &leq = rm.Vars.NewEquation();
-        for (size_t i=0; i < group0_sz; i++) {
-          XVar& vr = rm.Vars.NewVar(1./group0_sz);
-          leq.AddMember(vr);
-          for (size_t j=0; j < groups.Count(); j++) {
-            rm.Vars.AddVarRef(vr,
-              (*groups[j])[i], catom_var_name_Sof, relation_AsVar, 1.0);
-          }
-        }
-      }
-      if (set_eadp) {
-        for (size_t i=0; i < groups.Count(); i++) {
-          TSimpleRestraint& sr = rm.rEADP.AddNew();
-          for (size_t j=0; j < groups[i]->Count(); j++)
-            sr.AddAtom((*groups[i])[j], NULL);
-        }
+    }
+    if (set_eadp) {
+      for (size_t i=0; i < groups.Count(); i++) {
+        TSimpleRestraint& sr = rm.rEADP.AddNew();
+        for (size_t j=0; j < groups[i]->Count(); j++)
+          sr.AddAtom((*groups[i])[j], NULL);
       }
     }
   }
@@ -4460,61 +4454,65 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 
 //.............................................................................
-void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TXApp& xapp = TXApp::GetInstance();
   TLattice& latt = xapp.XFile().GetLattice();
   TUnitCell& uc = latt.GetUnitCell();
   TAsymmUnit& au = latt.GetAsymmUnit();
-  if( au.AtomCount() == 0 )  {
-    E.ProcessingError(__OlxSrcInfo, "Empty asymmetric unit");
-    return;
-  }
-  if( xapp.XFile().GetRM().UsedSymmCount() != 0 )  {
-    E.ProcessingError(__OlxSrcInfo,
-      "Please remove used symmetry (EQIV) instructions before using this operation");
-    return;
+  if (xapp.XFile().GetRM().UsedSymmCount() != 0) {
+    xapp.XFile().GetRM().ClearUsedSymm();
   }
   TSpaceGroup& from_sg = xapp.XFile().GetLastLoaderSG();
-  TSpaceGroup* sg = TSymmLib::GetInstance().FindGroupByName(Cmds.GetLastString());
-  if( sg == NULL )  {
+  TSpaceGroup* sg;
+  if (Cmds.GetLastString().Contains(' ')) {
+    sg = &TSymmLib::GetInstance().CreateNew(Cmds.GetLastString());
+  }
+  else {
+    sg = TSymmLib::GetInstance().FindGroupByName(Cmds.GetLastString());
+  }
+  if (sg == NULL) {
     E.ProcessingError(__OlxSrcInfo, "Could not identify given space group");
     return;
   }
   // change centering?
-  if( from_sg.GetName().SubStringFrom(1) == sg->GetName().SubStringFrom(1) )  {
+  if (Options.GetBoolOption("c") &&
+    from_sg.GetName().SubStringFrom(1) == sg->GetName().SubStringFrom(1))
+  {
     olxch from = from_sg.GetLattice().GetSymbol()[0],
           to = sg->GetLattice().GetSymbol()[0];
     mat3d tm;
     tm.I();
-    if( from == 'I' )  {
-      if( to == 'P' )
+    if (from == 'I') {
+      if (to == 'P')
         tm = mat3d(-0.5, 0.5, 0.5, -0.5, 0.5, -0.5);
     }
-    else if( from == 'P' )  {
-      if( to == 'I' )
+    else if (from == 'P') {
+      if (to == 'I')
         tm = mat3d(0, 1, 1, 0, 1, 0);
-      else if( to == 'C' )  {
+      else if (to == 'C') {
         tm = mat3d(0, 1, 1, 0, 1, 0);  // P->I
         tm *= mat3d(-1, 0, 1, 0, 1, 0, -1, 0, 0);  // I->C, uniq axis b
       }
-      else if( to == 'F' )
+      else if (to == 'F')
         tm = mat3d(-1, 1, 1, -1, 1, 1);
     }
-    else if( from == 'C' )  {
-      if( to == 'P' )  {
+    else if (from == 'C') {
+      if (to == 'P') {
         tm = mat3d(0, 0, -1, 0, 1, 0, 1, 0, -1);  // C->I, uniq axis b
         tm *= mat3d(-0.5, 0.5, 0.5, -0.5, 0.5, -0.5);  // I->P 
       }
     }
-    else if( from == 'F')  {
-      if( to == 'P' )
+    else if (from == 'F') {
+      if (to == 'P')
         tm = mat3d(0, 0.5, 0.5, 0, 0.5, 0);
     }
-    if( !tm.IsI() )  {
+    if (!tm.IsI()) {
       TBasicApp::NewLogEntry() << "EXPERIMENTAL: transformations considering b unique";
       ChangeCell(tm, *sg, EmptyString());
     }
-    else  {
+    else {
       TBasicApp::NewLogEntry() << "The transformation is not supported";
     }
     return;
@@ -4523,52 +4521,52 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
   sg->GetMatrices(ml, mattAll);
   TTypeList<AnAssociation3<vec3d,TCAtom*, int> > list;
   uc.GenereteAtomCoordinates(list, true);
-  if( Cmds.Count() == 4 )  {
+  if (Cmds.Count() == 4) {
     vec3d trans(Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble());
-    for( size_t i=0; i < list.Count(); i++ )  {
+    for (size_t i=0; i < list.Count(); i++) {
       list[i].A() += trans;
       list[i].SetC(1);
     }
   }
-  else   {
-    for( size_t i=0; i < list.Count(); i++ )
+  else {
+    for (size_t i=0; i < list.Count(); i++)
       list[i].SetC(1);
   }
-  for( size_t i=0; i < list.Count(); i++ )  {
-    if( list[i].GetC() == 0 )  continue;
-    for( size_t j=i+1; j < list.Count(); j++ )  {
-      if( list[j].GetC() == 0 )  continue;
-      for( size_t k=1; k < ml.Count(); k++ )  {
+  for (size_t i=0; i < list.Count(); i++) {
+    if (list[i].GetC() == 0) continue;
+    for (size_t j=i+1; j < list.Count(); j++) {
+      if (list[j].GetC() == 0) continue;
+      for (size_t k=1; k < ml.Count(); k++) {
         vec3d v = ml[k] * list[i].GetA();
         v -= list[j].GetA();
         v -= v.Round<int>();
         au.CellToCartesian(v);
-        if( v.QLength() < 0.01 )  {
+        if (v.QLength() < 0.01 ) {
           list[i].C() ++;
           list[j].SetC(0);
         }
       }
     }
   }
-  for( size_t i=0; i < au.AtomCount(); i++ )
+  for (size_t i=0; i < au.AtomCount(); i++)
     au.GetAtom(i).SetTag(0);
   TCAtomPList newAtoms;
-  for( size_t i=0; i < list.Count(); i++ )  {
-    if( list[i].GetC() == 0 )  continue;
+  for (size_t i=0; i < list.Count(); i++) {
+    if (list[i].GetC() == 0) continue;
     TCAtom* ca;
-    if( list[i].GetB()->GetTag() > 0 )  {
+    if (list[i].GetB()->GetTag() > 0) {
       ca = &au.NewAtom();
       ca->Assign(*list[i].GetB());
     }
-    else  {
+    else {
       ca = list[i].GetB();
       ca->SetTag(ca->GetTag() + 1);
     }
     ca->ccrd() = list[i].GetA();
     ca->AssignEllp(NULL);
   }
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i).GetTag() == 0 )
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    if (au.GetAtom(i).GetTag() == 0)
       au.GetAtom(i).SetDeleted(true);
   }
   au.ChangeSpaceGroup(*sg);

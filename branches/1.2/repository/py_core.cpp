@@ -318,6 +318,7 @@ PyObject* pySGInfo(PyObject* self, PyObject* args)  {
         PythonExt::BuildString(sg_elm[i]->GetName()), matr_out));
     }
     PythonExt::SetDictItem(out, "SysAbs", sysabs_out);
+    PythonExt::SetDictItem(out, "Axis", PythonExt::BuildString(sg->GetAxis()));
   return out;
 }
 //..............................................................................

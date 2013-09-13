@@ -123,7 +123,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "qi-Q peak intensity&;"
     "i-display labels for identity atoms only&;"
     "b-bond lengths&;",
-    fpNone|fpOne,
+    fpAny,
     "Shows/hides atom labels. Takes no argument is given to invert current "
     "labels visibility or a boolean value");
   gxlib_InitMacro(Label,
@@ -833,8 +833,10 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     lmode |= lmLabels;
     lmode |= lmQPeak;
     app.SetLabelsMode(lmode);
-    if (Cmds.Count() == 1 && Cmds[0].IsBool())
+    if (!Cmds.IsEmpty() == 1 && Cmds[0].IsBool()) {
       app.SetLabelsVisible(Cmds[0].ToBool());
+      Cmds.Delete(0);
+    }
     else
       app.SetLabelsVisible(!app.AreLabelsVisible());
   }
@@ -842,7 +844,13 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     app.SetLabelsMode(lmode |= lmQPeak);
     app.SetLabelsVisible(true);
   }
-  app.GetLabels().Init();
+  if (app.GetLabels().IsVisible()) {
+    app.GetLabels().Init(true, lmiMasked);
+    TXAtomPList atoms = app.FindXAtoms(Cmds, true, false);
+    for (size_t i=0; i < atoms.Count(); i++) {
+      app.GetLabels().SetMaterialIndex(atoms[i]->GetOwnerId(), lmiDefault);
+    }
+  }
   TStateRegistry::GetInstance().SetState(app.stateLabelsVisible,
     app.AreLabelsVisible(), EmptyString(), true);
 }
@@ -1736,6 +1744,27 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       app.SelectAtomsWhere(cond);
     }
   }
+  else if (Cmds.Count() > 1 && Cmds[0].Equalsi("afix")) {
+    Cmds.Delete(0);
+    SortedObjectList<int, TPrimitiveComparator> afixes;
+    for (size_t i=0; Cmds.Count(); i++) {
+      if (Cmds[i].IsNumber()) {
+        afixes.AddUnique(Cmds[i].ToInt());
+        Cmds.Delete(i--);
+      }
+      else
+        break;
+    }
+    if (!afixes.IsEmpty()) {
+      if (flag == glSelectionNone) flag = glSelectionSelect;
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      while (ai.HasNext()) {
+        TXAtom& xa = ai.Next();
+        if (afixes.Contains(xa.CAtom().GetAfix()))
+          app.GetRender().Select(xa, flag);
+      }
+    }
+  }
   else if (Cmds.Count() > 1 && Cmds[0].Equalsi("fvar")) {
     if (flag == glSelectionNone) flag = glSelectionSelect;
     Cmds.Delete(0);
@@ -1768,7 +1797,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("isot")) {
     if (flag == glSelectionNone) flag = glSelectionSelect;
     TGXApp::AtomIterator ai = app.GetAtoms();
-    while (ai.HasNext())  {
+    while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (xa.GetEllipsoid() == NULL)
         app.GetRender().Select(xa, flag);
@@ -1777,7 +1806,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("anis")) {
     if (flag == glSelectionNone) flag = glSelectionSelect;
     TGXApp::AtomIterator ai = app.GetAtoms();
-    while (ai.HasNext())  {
+    while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (xa.GetEllipsoid() != NULL)
         app.GetRender().Select(xa, flag);

@@ -14,7 +14,6 @@
 #include "log.h"
 #include "ememstream.h"
 
-olxstr TZipWrapper::ZipUrlSignature = "@zip:";
 //..............................................................................
 TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
   olxstr entryName( TEFile::UnixPath(EM) );
@@ -68,16 +67,15 @@ TZipWrapper::TZipWrapper(TEFile* file, bool useCache) :
 }
 //..............................................................................
 TZipWrapper::~TZipWrapper()  {
-  TMemoryBlock *mb;
   for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
-    mb = FMemoryBlocks.GetObject(i);
+    TMemoryBlock *mb = FMemoryBlocks.GetObject(i);
     delete [] mb->Buffer;
     delete mb;
   }
   for( size_t i=0; i < FEntries.Count(); i++ )
     delete FEntries.GetObject(i);
   if( FInputStream != NULL )  delete FInputStream;
-  if( wxfile != NULL )   {
+  if( wxfile != NULL )  {
     wxfile->Detach();
     delete wxfile;
   }
@@ -123,9 +121,9 @@ bool TZipWrapper::ExtractAll(const olxstr& dest)  {
       res = false;
       break;
     }
+    if( FEntries.GetString(i).EndsWith('/') )  continue;
     if( !FInputStream->OpenEntry(*FEntries.GetObject(i)) )
       continue;
-    if( FEntries.GetString(i).EndsWith('/') )  continue;
     Progress.SetPos(i+1);
     Progress.SetAction(FEntries.GetString(i));
     OnProgress.Execute(NULL, &Progress);
@@ -157,7 +155,7 @@ bool TZipWrapper::ExtractAll(const olxstr& dest)  {
 }
 //..............................................................................
 bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
-  size_t zi = FN.IndexOf(ZipUrlSignature);
+  size_t zi = FN.IndexOf(ZipUrlSignature_());
   if( zi != InvalidIndex )  {
     if( TEFile::Exists(ExtractZipName(FN)) )  return true;
     return false;
@@ -166,40 +164,40 @@ bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
 }
 //..............................................................................
 bool TZipWrapper::IsZipFile(const olxstr &FN)  {
-  size_t ind = FN.IndexOf(ZipUrlSignature);
+  size_t ind = FN.IndexOf(ZipUrlSignature_());
   return ind != InvalidIndex && ind != 0;
 }
 //..............................................................................
 olxstr TZipWrapper::ExtractZipName(const olxstr &FN)  {
-  size_t zi = FN.IndexOf(ZipUrlSignature);
+  size_t zi = FN.IndexOf(ZipUrlSignature_());
   if( zi != InvalidIndex && zi > 0 )
     return FN.SubStringTo(zi);
   return EmptyString();
 }
 //..............................................................................
 olxstr TZipWrapper::ExtractZipEntryName(const olxstr &FN)  {
-  size_t zi = FN.IndexOf(ZipUrlSignature);
+  size_t zi = FN.IndexOf(ZipUrlSignature_());
   if( zi != InvalidIndex && zi > 0 )
-    return FN.SubStringFrom(zi+ZipUrlSignature.Length());
+    return FN.SubStringFrom(zi+ZipUrlSignature_().Length());
   return EmptyString();
 }
 //..............................................................................
 bool TZipWrapper::SplitZipUrl(const olxstr &fullName, TZipEntry &ZE)  {
-  size_t zi = fullName.IndexOf(ZipUrlSignature);
+  size_t zi = fullName.IndexOf(ZipUrlSignature_());
   if( zi == InvalidIndex )  return false;
   ZE.ZipName = fullName.SubStringTo(zi);
   ZE.ZipName = TEFile::UnixPath( ZE.ZipName );
-  ZE.EntryName = fullName.SubStringFrom(zi + ZipUrlSignature.Length());
+  ZE.EntryName = fullName.SubStringFrom(zi + ZipUrlSignature_().Length());
   ZE.EntryName = TEFile::UnixPath( ZE.EntryName );
   return true;
 }
 //..............................................................................
 olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FNA)  {
-  size_t zi = ZipFileNameA.IndexOf(ZipUrlSignature);
+  size_t zi = ZipFileNameA.IndexOf(ZipUrlSignature_());
   if( zi == InvalidIndex )  return FNA;
   olxstr ZipFileName = TEFile::WinPath(ZipFileNameA),
            FN = TEFile::WinPath(FNA);
-  olxstr zipPart = ZipFileName.SubStringTo(zi+ZipUrlSignature.Length());
+  olxstr zipPart = ZipFileName.SubStringTo(zi+ZipUrlSignature_().Length());
   olxstr zipPath = TEFile::ExtractFilePath(zipPart);
   TEFile::AddPathDelimeterI(zipPath);
   if( FN.StartsFrom(zipPath) )
