@@ -451,7 +451,7 @@ PyObject* pyGetVdWRadii(PyObject* self, PyObject* args)  {
     const size_t ei = radii.IndexOf(&content[i].element);
     const double r = (ei == InvalidIndex ? content[i].element.r_vdw
       : radii.GetValue(ei));
-    PyDict_SetItem(dict,
+    PythonExt::SetDictItem(dict,
       PythonExt::BuildString(content[i].element.symbol),
       Py_BuildValue("f", r));
   }
