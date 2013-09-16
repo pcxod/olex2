@@ -1775,14 +1775,9 @@ ConstPtrList<TXBond> TGXApp::GetXBonds(const olxstr& BondName)  {
   TXBondPList res;
   if( BondName.StartsFrom("#t") )  {  // SBond.LatId
     size_t id = BondName.SubStringFrom(2).ToSizeT();
-
-    BondIterator bi(*this);
-    while( bi.HasNext() )  {
-      TXBond& xb = bi.Next();
-      if( xb.GetOwnerId() == id && xb.IsVisible() )  {
-        res.Add(xb);
-        break;
-      }
+    if (id < XFile().GetLattice().GetObjects().bonds.Count()) {
+      res.Add(
+        dynamic_cast<TXBond &>(XFile().GetLattice().GetObjects().bonds[id]));
     }
   }
   else  {

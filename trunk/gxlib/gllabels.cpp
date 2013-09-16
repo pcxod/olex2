@@ -113,12 +113,12 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   Fnt.Reset_ATI(rc.optimizeATI);
   if ((Mode&lmBonds) == 0) {
     TGXApp::AtomIterator ai = app.GetAtoms();
-    if (ai.count == 0 || Marks.Count() != ai.count)
+    if (ai.count == 0 || Marks.Count() < ai.count)
       return true;
     const RefinementModel& rm = app.XFile().GetRM();
     for (size_t i=0; ai.HasNext(); i++) {
       const TXAtom& XA = ai.Next();
-      if (Marks[XA.GetOwnerId()] == lmiMasked) continue;
+      if (Marks[i] == lmiMasked) continue;
       if( XA.IsDeleted() || !XA.IsVisible() )  continue;
       if( (Mode & lmHydr) == 0 && (XA.GetType() == iHydrogenZ) )
         continue;
@@ -229,16 +229,16 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
       if( olx_is_valid_index(ca.GetSameId()) )
         Tmp << ':' << ca.GetSameId();
   #endif
-      RenderLabel(XA.crd(), Tmp, XA.GetOwnerId(), rc);
+      RenderLabel(XA.crd(), Tmp, i, rc);
     }
   }
   else { // bonds
     TGXApp::BondIterator bi = app.GetBonds();
-    if (bi.count == 0 || Marks.Count() != bi.count)
+    if (bi.count == 0 || Marks.Count() < bi.count)
       return true;
     for (size_t i=0; bi.HasNext(); i++) {
       TXBond &b = bi.Next();
-      if (!b.IsVisible()) continue;
+      if (!b.IsVisible() || Marks[i] == lmiMasked) continue;
       if( (Mode & lmHydr) == 0 &&
         (b.A().GetType() == iHydrogenZ || b.B().GetType() == iHydrogenZ))
       {
@@ -258,14 +258,14 @@ void TXGlLabels::Init(bool clear, uint8_t value) {
   bool size_changed = false;
   if ((Mode&lmBonds) != 0) {
     size_t sz = TGXApp::GetInstance().GetBonds().count;
-    if (sz != Marks.Count()) {
+    if (sz > Marks.Count()) {
       Marks.SetCount(sz);
       size_changed = true;
     }
   }
   else {
     size_t sz = TGXApp::GetInstance().GetAtoms().count;
-    if (sz != Marks.Count()) {
+    if (sz > Marks.Count()) {
       Marks.SetCount(sz);
       size_changed = true;
     }

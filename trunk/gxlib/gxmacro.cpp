@@ -845,10 +845,25 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     app.SetLabelsVisible(true);
   }
   if (app.GetLabels().IsVisible()) {
-    app.GetLabels().Init(true, lmiMasked);
-    TXAtomPList atoms = app.FindXAtoms(Cmds, true, false);
-    for (size_t i=0; i < atoms.Count(); i++) {
-      app.GetLabels().SetMaterialIndex(atoms[i]->GetOwnerId(), lmiDefault);
+    if ((app.GetLabels().GetMode()&lmBonds) == lmBonds) {
+      TGlGroup &sel = app.GetSelection();
+      TXBondPList bonds = sel.Extract<TXBond>();
+      if (bonds.IsEmpty()) {
+        app.GetLabels().Init(true, lmiDefault);
+      }
+      else {
+        app.GetLabels().Init(true, lmiMasked);
+        for (size_t i=0; i < bonds.Count(); i++) {
+          app.GetLabels().SetMaterialIndex(bonds[i]->GetOwnerId(), lmiDefault);
+        }
+      }
+    }
+    else {
+      app.GetLabels().Init(true, lmiMasked);
+      TXAtomPList atoms = app.FindXAtoms(Cmds, true, false);
+      for (size_t i=0; i < atoms.Count(); i++) {
+        app.GetLabels().SetMaterialIndex(atoms[i]->GetOwnerId(), lmiDefault);
+      }
     }
   }
   TStateRegistry::GetInstance().SetState(app.stateLabelsVisible,
