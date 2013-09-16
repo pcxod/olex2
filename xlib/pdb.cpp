@@ -42,7 +42,7 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
     TResidue &r = GetAsymmUnit().GetResidue(a.GetResiId());
     olxstr r_name = r.GetClassName();
     olxcstr r_num, p_num(' ');
-    if (r.GetId() != ~0)
+    if (r.GetId() != 0)
       r_num = r.GetNumber();
     char p = olx_min(olx_abs(a.GetPart()), 25);
     if (p != 0)
