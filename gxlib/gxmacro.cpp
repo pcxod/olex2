@@ -1162,7 +1162,7 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
     app.UpdateConnectivity();
     app.Draw();
   }
-  else {
+  else  {
     if ((!app.AreQPeaksVisible() && !app.AreQPeakBondsVisible())) {
       app.SetQPeaksVisible(true);
     }
