@@ -173,7 +173,7 @@ public:
     }
     else if( pobj->ob_type == &PyUnicode_Type )  {
       size_t sz =  PyUnicode_GetSize(pobj);
-      TTBuffer<wchar_t> wc_bf(sz+1);      
+      TTBuffer<wchar_t> wc_bf(sz+1);
       sz = PyUnicode_AsWideChar((PyUnicodeObject*)pobj, wc_bf.Data(), sz);
       if( sz > 0 )
         rv.Append( wc_bf.Data(), sz);
@@ -195,6 +195,7 @@ public:
     PyObject* val)
   {
     PyDict_SetItem(dict, field_name, val);
+    Py_DECREF(field_name);
     Py_DECREF(val);
   }
   static void SetDictItem(PyObject* dict, const olxstr& field_name,
@@ -241,5 +242,6 @@ public:
   */
   static bool ParseTuple(PyObject* tuple, const char* format, ...);
 };
+
 #endif
 #endif

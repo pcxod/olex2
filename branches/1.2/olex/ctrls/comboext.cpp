@@ -49,6 +49,7 @@ void TComboBox::SetText(const olxstr& T) {
 //..............................................................................
 void TComboBox::Clear() {
   StrValue.SetLength(0);
+  if (GetCount() == 0) return;
   for( unsigned int i=0; i < GetCount(); i++ )  {
     TDataObj* d_o = (TDataObj*)GetClientData(i);
     if( d_o != NULL )  {
