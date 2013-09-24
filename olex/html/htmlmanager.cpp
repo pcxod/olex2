@@ -1144,7 +1144,7 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
     " an HTML window name and the second - a boolean value. This function "
     "executes the htmltt state change event"
   );
-  InitMacroD(Library, THtmlManager, SetFonts, EmptyString(), fpThree,
+  InitMacroD(Library, THtmlManager, SetFonts, EmptyString(), fpTwo|fpThree,
     "Sets normal and fixed fonts to display HTML content"
     " [html normal_face fixed_face]");
   InitMacroD(Library, THtmlManager, SetBorders, EmptyString(), fpOne|fpTwo,
