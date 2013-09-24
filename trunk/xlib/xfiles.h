@@ -134,6 +134,7 @@ public:
   void EndUpdate();
   void LastLoaderChanged();  // performs complete reinitialisation
 
+  const_strlist ToJSON() const;
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
 

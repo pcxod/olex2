@@ -916,7 +916,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   // if to save atoms - update the SFAC and fix labels
   if (save_atoms)
     BasicAtoms = FixTypeListAndLabels();
-  SaveSfacUnit(RefMod, RefMod.GetUserContent(), SL, SL.Count()-1);
+  SaveSfacUnit(RefMod, RefMod.GetUserContent(), SL, SL.Count()-1, false);
 
   _SaveSizeTemp(SL);
   if( rems )
@@ -950,7 +950,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
 }
 //..............................................................................
 void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
-  TStrList& list, size_t pos)
+  TStrList& list, size_t pos, bool save_disp)
 {
   TStrList lines;
   short state = 0;
@@ -981,11 +981,13 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
       }
     }
   }
-  for( size_t i=0; i < rm.SfacCount(); i++ )  {
-    if( rm.GetSfacData(i).IsDISP() &&
-      elms.Contains(rm.GetSfacData(i).GetLabel()))
-    {
-      list.Insert(pos++, rm.GetSfacData(i).ToInsString());
+  if (save_disp) {
+    for( size_t i=0; i < rm.SfacCount(); i++ )  {
+      if( rm.GetSfacData(i).IsDISP() &&
+        elms.Contains(rm.GetSfacData(i).GetLabel()))
+      {
+        list.Insert(pos++, rm.GetSfacData(i).ToInsString());
+      }
     }
   }
   olxstr& unit = list.Insert(pos++, "UNIT");

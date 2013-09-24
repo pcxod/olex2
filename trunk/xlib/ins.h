@@ -265,7 +265,7 @@ protected:
 public:
   // helper function...
   static void SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
-    TStrList& list, size_t sfac_pos);
+    TStrList& list, size_t sfac_pos, bool save_disp=true);
   template <class List> static List& Preprocess(List& l)  {
     // combine lines
     for( size_t i=0; i < l.Count(); i++ )  {
