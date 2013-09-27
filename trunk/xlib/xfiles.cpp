@@ -600,7 +600,10 @@ const_strlist TXFile::ToJSON() const {
 
     l << "},";
   }
-  out.GetLastString().SetLength(out.GetLastString().Length()-1);
+  if (cnt > 0) {
+    out.GetLastString().SetLength(out.GetLastString().Length()-1);
+    cnt = 0;
+  }
   out << ']'; // atoms
 
   out << ", \"bonds\": [";
@@ -613,8 +616,11 @@ const_strlist TXFile::ToJSON() const {
     if (b.GetType() == sotHBond)
       l << ", \"hbond\": true";
     l << "},";
+    cnt++;
   }
-  out.GetLastString().SetLength(out.GetLastString().Length()-1);
+  if (cnt > 0) {
+    out.GetLastString().SetLength(out.GetLastString().Length()-1);
+  }
   out << ']'; // bonds
   {
     const mat3d& ucm = GetAsymmUnit().GetCellToCartesian();

@@ -198,10 +198,13 @@ public:
   template <typename AC> TTSString(const AC& v) : T(v)  {}
   //...........................................................................
   // creates a string from external array allocated with alloc
-  static TTSString FromExternal(TC* data, size_t len)  {
+  static TTSString FromExternal(TC* data, size_t len,
+    size_t buffer_size=InvalidIndex)
+  {
     TTSString rv;
     rv._Length = len;
-    rv.SData = new struct T::Buffer(data, len);
+    rv.SData = new struct T::Buffer(data,
+      buffer_size==InvalidIndex ? len : buffer_size);
     return rv;
   }
   static TTSString FromExternal(TC* data)  {
