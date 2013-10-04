@@ -105,6 +105,14 @@
   #undef Bool
 #endif
 
+#ifndef WXK_RAW_CONTROL
+# define WXK_RAW_CONTROL WXK_CONTROL
+#endif
+
+#ifndef wxMOD_RAW_CONTROL
+#define wxMOD_RAW_CONTROL wxMOD_CONTROL
+#endif
+
   IMPLEMENT_CLASS(TMainForm, TMainFrame)
 
 const olxstr ProcessOutputCBName("procout");
@@ -2020,11 +2028,11 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   m.Skip(false);
   short Fl=0;
   olxstr Cmd, FullCmd;
-  if( m.m_altDown )      Fl |= sssAlt;
-  if( m.m_shiftDown )    Fl |= sssShift;
-  if( m.m_controlDown )  Fl |= sssCtrl;
+  if (m.GetModifiers() & wxMOD_ALT) Fl |= sssAlt;
+  if (m.GetModifiers() & wxMOD_RAW_CONTROL) Fl |= sssCtrl;
+  if (m.GetModifiers() & wxMOD_SHIFT) Fl |= sssShift;
   // Alt + Up,Down,Left, Right - rotation, +Shift - speed
-  if( ((Fl & sssShift)) || (Fl & sssAlt) )  {
+  if (((Fl & sssShift)) || (Fl & sssAlt)) {
     int inc = 3;
     double zoom_inc = 0.01;
     if( (Fl & sssShift) )  {
@@ -2209,7 +2217,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   }
 
   short Fl = 0;
-  if( m.m_keyCode == WXK_CONTROL ||
+  if( m.m_keyCode == WXK_RAW_CONTROL ||
       m.m_keyCode == WXK_MENU ||
       m.m_keyCode == WXK_SHIFT ||
       m.m_keyCode == WXK_ALT)
@@ -2224,9 +2232,9 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     }
   }
 
-  if( m.m_altDown )      Fl |= sssAlt;
-  if( m.m_shiftDown )    Fl |= sssShift;
-  if( m.m_controlDown )  Fl |= sssCtrl;
+  if (m.GetModifiers() & wxMOD_ALT) Fl |= sssAlt;
+  if (m.GetModifiers() & wxMOD_RAW_CONTROL) Fl |= sssCtrl;
+  if (m.GetModifiers() & wxMOD_SHIFT) Fl |= sssShift;
   // process built-ins first
   if( m.GetModifiers() == wxMOD_CMD )  {
   // paste, Cmd+V, Ctrl+V
@@ -2277,7 +2285,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
       return;
     }
   }
-  if( !AccShortcuts.ValueExists(Fl<<16 | m.m_keyCode) )  {
+  if (!AccShortcuts.ValueExists(Fl<<16 | m.m_keyCode)) {
     m.Skip();
     return;
   }
