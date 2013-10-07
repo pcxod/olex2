@@ -258,6 +258,15 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
       FlackF = true;
     }
+    else if (!FlackF && SL[i].Contains("Flack x")) { // 2013 version
+      Toks.Clear();
+      Toks.Strtok(SL[i], ' ');
+      if (Toks.Count() > 3) {
+        TEValueD flack = Toks[3];
+        params("flack", flack.ToString());
+      }
+      FlackF = true;
+    }
     else if (!CellInfo && SL[i].Contains("F(000) = ") &&
       SL[i].Contains("Mu = ") && SL[i].Contains("Rho = "))
     {
