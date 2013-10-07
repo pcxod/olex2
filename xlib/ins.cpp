@@ -1809,7 +1809,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames,
     SL.Add("OMIT ") << GetRM().OmittedAtoms().GetExpression();
 
   if (GetRM().HasEXTI())
-    SL.Add("EXTI ") << GetRM().GetEXTI().GetV();
+    SL.Add("EXTI ") << GetRM().GetEXTI().ToString();
 
   _SaveHklInfo(SL, false);
 

@@ -3149,16 +3149,17 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
     }
     else  {
       Tmp = Cmds[0];
-      Tmp.Replace("%#", olxstr(sg->GetNumber()) ).\
+      Tmp.Replace("%#", olxstr(sg->GetNumber())).\
         Replace("%n", sg->GetName()).\
         Replace("%N", sg->GetFullName()).\
         Replace("%HS", sg->GetHallSymbol()).\
         Replace("%s", sg->GetBravaisLattice().GetName());
         Tmp.Replace("%H", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
-        if( sg->GetName() == olxstr::DeleteChars(sg->GetFullName(), ' ') ) 
+        if (sg->GetName() == olxstr::DeleteChars(sg->GetFullName(), ' '))
           Tmp.Replace("%h", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
         else
           Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg->GetName()));
+        Tmp.Replace("%c", (sg->IsCentrosymmetric() ? TrueString() : FalseString()));
     }
     E.SetRetVal(Tmp);
   }
@@ -3442,16 +3443,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TXApp& xapp = TXApp::GetInstance();
   TCif *Cif, Cif2;
   cif_dp::TCifDP src;
-  const size_t _Translation_count = 5;
   TTypeList<AnAssociation2<olxstr,olxstr> > Translations;
-  olxstr CifCustomisationFN(xapp.GetConfigDir() + "cif_customisation.xlt");
-  if (!TEFile::Exists(CifCustomisationFN)) {
-    CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
-    TBasicApp::NewLogEntry() << "Using default CIF customisation";
-  }
-  else {
-    TBasicApp::NewLogEntry() << "Using user CIF customisation";
-  }
+  olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
+  SortedObjectList<olxstr, olxstrComparator<true> > items_to_skip;
   if (TEFile::Exists(CifCustomisationFN)) {
     try {
       TDataFile df;
@@ -3460,11 +3454,21 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           "falied to load CIF customisation file");
         return;
       }
+      df.Include(NULL);
       TDataItem& di = df.Root().FindRequiredItem(
         "cif_customisation").FindRequiredItem("translation");
       for (size_t i=0; i < di.ItemCount(); i++) {
         Translations.AddNew(di.GetItem(i).GetRequiredField("from"),
           di.GetItem(i).GetRequiredField("to"));
+      }
+      {
+        TDataItem *si = df.Root().FindRequiredItem(
+          "cif_customisation").FindItem("skip_merge");
+        if (si != NULL) {
+          for (size_t i=0; i < si->ItemCount(); i++) {
+            items_to_skip.AddUnique(si->GetItem(i).GetName());
+          }
+        }
       }
     }
     catch (const TExceptionBase& e) {
@@ -3696,7 +3700,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       src[0].Rename(Translations[i].GetA(), Translations[i].GetB());
     for( size_t j=0; j < src[0].param_map.Count(); j++ )  {
       const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
-      if( !e.HasName() )  continue;
+      if (!e.HasName())  continue;
+      if (items_to_skip.Contains(e.GetName()))
+        continue;
       bool skip = false;
       for( size_t k=0; k < _loop_names_to_skip.Count(); k++ )  {
         olxstr i_name = e.GetName();
