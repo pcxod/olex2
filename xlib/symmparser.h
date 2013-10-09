@@ -15,15 +15,21 @@
 BeginXlibNamespace()
 
 class TSymmParser  {
+  static const char *GetAxis() {
+    static char axis[] = "XYZ";
+    return &axis[0];
+  }
   // compares p with values in array axes. Used in SymmToMatrix function
   static short IsAxis(const olxstr& p) {
-    if( p.IsEmpty() )  return -1;
-    for( int i=0; i < 3; i++ )
-      if( Axis[i] == p.CharAt(0) )  
+    if (p.Length() != 1) return -1;
+    const char *axis= GetAxis();
+    olxch a = p[0];
+    for (int i=0; i < 3; i++)
+      if (axis[i] == a)
         return i;
     return -1;
   }
-  
+
   template <typename vc>  static vc& ExtractTranslation(const olxstr& str,
     vc& t)
   {
@@ -45,42 +51,60 @@ class TSymmParser  {
   }
   static olxstr FormatFloatEx(double f)  {
     olxstr rv;
-    if( f < 0 )  rv << '-';
+    if (f < 0)  rv << '-';
     int v = olx_abs(olx_round(f*12)), base = 12;
     int denom = olx_gcd(v, base);
-    if( denom != 1 )  {
+    if (denom != 1) {
       v /= denom;
       base /= denom;
     }
-    if( base == 1 )  return rv << v;
-    else             return rv << v << '/' << base;
+    if (base == 1)
+      return rv << v;
+    else
+      return rv << v << '/' << base;
   }
-  template <class SM> static olxstr _MatrixToSymm(const SM& M, bool fraction) {
-    olxstr T, T1;
-    for( int j=0; j < 3; j ++ )  {
-      if( j != 0 )
-        T << ',';
-      for( int i=0; i < 3; i ++ )  {
-        if( i == j )  {
-          if( M.r[j][i] != 0 )  {
-            T1 << olx_sign_char(M.r[j][i]);
-            T1 << Axis[j];
+  template <class VT> static olxstr _RowToStr(const VT &v, int j) {
+    olxstr rv;
+    rv.SetCapacity(16);
+    for (int i=0; i < 3; i ++) {
+      if (i == j) {
+        if (v[i] != 0) {
+          if (olx_abs(v[i]) == 1)
+            rv << olx_sign_char(v[i]) << GetAxis()[j];
+          else {
+            if (v[i] > 0) rv << '+';
+            rv << v[i] << '*' << GetAxis()[j];
           }
-          continue;
         }
-        if( M.r[j][i] != 0 )  {
-          T1.Insert(Axis[i], 0);
-          T1.Insert(olx_sign_char(M.r[j][i]), 0);
+        continue;
+      }
+      if (v[i] != 0) {
+        if (olx_abs(v[i]) == 1) {
+          rv.Insert(GetAxis()[i], 0);
+          rv.Insert(olx_sign_char(v[i]), 0);
+        }
+        else {
+          olxstr is;
+          if (v[i] > 0) is << '+';
+          rv.Insert(is << v[i] << '*' << GetAxis()[i], 0);
         }
       }
-      if( M.t[j] != 0 )  {
-        if( !fraction )
+    }
+    return rv;
+  }
+  template <class SM> static olxstr _MatrixToSymm(const SM& M, bool fraction) {
+    olxstr_buf T;
+    olxstr cm(',');
+    for (int j=0; j < 3; j++) {
+      if (j != 0) T << cm;
+      olxstr T1 = _RowToStr(M.r[j], j);
+      if (M.t[j] != 0 ) {
+        if (!fraction)
           T1.Insert(olxstr::FormatFloat(3, M.t[j], false).TrimFloat(), 0);
         else
           T1.Insert(FormatFloatEx(M.t[j]), 0);
       }
       T << T1;
-      T1.SetLength(0);
     }
     return T;
   }
@@ -122,8 +146,6 @@ class TSymmParser  {
     mSymm.SetRawId(smatd::GenerateId((uint8_t)isymm, t));
     return mSymm;
   }
-  
-  static const char Axis[];
 public:
     // Transforms matrix to standard SYMM operation (INS, CIF files)
   static olxstr MatrixToSymm(const smatd& M)  {
@@ -138,12 +160,18 @@ public:
   /* Transforms matrix to standard SYMM operation (INS, CIF files), using
   fractions of 12 for translations
   */
-  static olxstr MatrixToSymmEx(const mat3i& M);
+  template <typename MT>
+  static olxstr MatrixToSymmEx(const TMatrix33<MT>& M) {
+    olxstr_buf T;
+    olxstr cm(',');
+    for (int j=0; j < 3; j++) {
+      if (j != 0) T << cm;
+      T << _RowToStr(M[j], j);
+    }
+    return T;
+  }
     // Transforms standard SYMM operation (INS, CIF files) to matrix
   static smatdd SymmToMatrix(const olxstr& symm);
-  static void SymmToMatrix(const olxstr &symm, smatd& M) {
-    M = SymmToMatrix(symm);
-  }
   // return a matrix representation of 1_555 or 1_505050 code for the unit cell
   static smatd SymmCodeToMatrix(const smatd_list& ml, const olxstr& Code)  {
     size_t index = InvalidIndex;
@@ -169,15 +197,8 @@ public:
     {
       baseVal = 50;
     }
-    static char bf[64];
-#ifdef _MSC_VER
-    sprintf_s(bf, 64, "%i_%i%i%i", M.GetContainerId()+1,
+    return olx_print("%i_%i%i%i", M.GetContainerId()+1,
       baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
-#else
-    sprintf(bf, "%i_%i%i%i", M.GetContainerId()+1,
-      baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
-#endif
-    return olxstr(bf);
   }
   /*checks if the given string represents a symmetry operation
   (1_554, 1554, 1505149, x,y,z) works as a combination of the two following

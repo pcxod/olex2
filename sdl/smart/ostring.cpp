@@ -86,6 +86,7 @@ olxstr esdl::olx_print(const char *format_, ...) {
               case 'f':
                 rv << va_arg(argptr, double);
                 break;
+              case 'i':
               case 'd':
                 rv << va_arg(argptr, long int);
                 break;
@@ -144,6 +145,7 @@ olxstr esdl::olx_print(const char *format_, ...) {
           rv << va_arg(argptr, double);
 #endif
           break;
+        case 'i':
         case 'd':
           rv << va_arg(argptr, int);
           break;

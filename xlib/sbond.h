@@ -33,16 +33,30 @@ public:
 
   struct Ref  {
     TSAtom::Ref a, b;
-    Ref(const TSAtom::Ref& _a, const TSAtom::Ref& _b) : a(_a), b(_b)  {}
+    Ref(const TSAtom::Ref& _a, const TSAtom::Ref& _b)
+      : a(_a.catom_id < _b.catom_id ? _a : _b),
+        b(_a.catom_id < _b.catom_id ? _b : _a)
+    {}
     Ref(const Ref& r) : a(r.a), b(r.b)  {}
+    Ref(const TDataItem &di) { FromDataItem(di); }
     Ref& operator = (const Ref& r)  {
       a = r.a;
       b = r.b;
       return *this;
     }
     bool operator == (const TSBond::Ref& r) const {
-      return (a == r.a && b == r.b) || (a == r.b && b == r.a); 
+      //sorted in the constructor, no swapping neeeded
+      return (a == r.a && b == r.b);
     }
+    void ToDataItem(TDataItem& item) const {
+      a.ToDataItem(item.AddItem("a"));
+      b.ToDataItem(item.AddItem("b"));
+    }
+    void FromDataItem(const TDataItem& item)  {
+      a.FromDataItem(item.FindRequiredItem('a'));
+      b.FromDataItem(item.FindRequiredItem('b'));
+    }
+
     int Compare(const Ref& r) const {
       const int rv = a.Compare(r.a);
       return rv == 0 ? b.Compare(r.b) : rv;

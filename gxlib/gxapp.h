@@ -288,7 +288,9 @@ protected:
   void StoreGroup(const TGlGroup& glg, GroupData& group);
   void _UpdateGroupIds();
   size_t LattCount() const {  return OverlayedXFiles.Count()+1;  }
-  TLattice& GetLatt(size_t i) const {  return (i == 0 ? XFile() : OverlayedXFiles[i-1]).GetLattice();  }
+  TLattice& GetLatt(size_t i) const {
+    return (i == 0 ? XFile() : OverlayedXFiles[i-1]).GetLattice();
+  }
   static size_t CalcMaxAtomTag(const TLattice& latt)  {
     size_t ac = 0;
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )
@@ -322,26 +324,24 @@ protected:
     return InvalidIndex;
   }
   TXAtom& GetXAtom(size_t ind)  {
-    if( ind < XFile().GetLattice().GetObjects().atoms.Count() )
-      return static_cast<TXAtom&>(XFile().GetLattice().GetObjects().atoms[ind]);
-    ind -= XFile().GetLattice().GetObjects().atoms.Count();
-    for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
-      if( ind < OverlayedXFiles[i].GetLattice().GetObjects().atoms.Count() )
-        return static_cast<TXAtom&>(OverlayedXFiles[i].GetLattice().GetObjects().atoms[ind]);
-      ind -= OverlayedXFiles[i].GetLattice().GetObjects().atoms.Count();
+    size_t li=0;
+    while (ind > GetLatt(li).GetObjects().atoms.Count()) {
+      ind -= GetLatt(li).GetObjects().atoms.Count();
+      if (++li >= LattCount()) {
+        throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
+      }
     }
-    throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
+    return static_cast<TXAtom&>(GetLatt(li).GetObjects().atoms[ind]);
   }
   TXBond& GetXBond(size_t ind)  {
-    if( ind < XFile().GetLattice().GetObjects().bonds.Count() )
-      return static_cast<TXBond&>(XFile().GetLattice().GetObjects().bonds[ind]);
-    ind -= XFile().GetLattice().GetObjects().bonds.Count();
-    for( size_t i=0; i < OverlayedXFiles.Count(); i++ )  {
-      if( ind < OverlayedXFiles[i].GetLattice().GetObjects().bonds.Count() )
-        return static_cast<TXBond&>(OverlayedXFiles[i].GetLattice().GetObjects().bonds[ind]);
-      ind -= OverlayedXFiles[i].GetLattice().GetObjects().bonds.Count();
+    size_t li=0;
+    while (ind > GetLatt(li).GetObjects().bonds.Count()) {
+      ind -= GetLatt(li).GetObjects().bonds.Count();
+      if (++li >= LattCount()) {
+        throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
+      }
     }
-    throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
+    return static_cast<TXBond&>(GetLatt(li).GetObjects().bonds[ind]);
   }
 public:
   /* considers overlayed files
@@ -359,7 +359,7 @@ public:
     stateXGridVisible,
     stateWBoxVisible;
   TStateRegistry & GetStatesRegistry() const { return *States; }
-  // only works with wxWidgets
+  // only works with wxWidgets and windows
   virtual bool ToClipboard(const olxstr &text) const;
   /* funny enough, if this is not overriden - all TStrLists are being converted
   to string, thus making the compilation impossible...
@@ -633,6 +633,8 @@ protected:
   void FillXBondList(TXBondPList& res, TXBondPList* providedBonds);
 public:
   void RestoreSelection();
+  void CopySelection() const;
+  void PasteSelection();
   TUndoData* Name(const olxstr& From, const olxstr& To, bool CheckLabels,
     bool ClearSelection, bool NameResi=false);
   TUndoData* Name(TXAtom& Atom, const olxstr& Name, bool CheckLabels);

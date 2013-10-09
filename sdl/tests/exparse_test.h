@@ -70,7 +70,7 @@ void Test(OlxTests& t)  {
   //iv = _exp.build("c = c + 100");
   //iv = _exp.build("c = 1.2 + 1.1 - .05");
   iv = _exp.build("a.len() + 1.2 + 1.1 - abs(-.05)*cos(PI/2)");
-  if (olx_abs(*iv->cast<double>().val-13.3) > 1e-6)
+  if (olx_abs(*iv->cast<double>().val-15.3) > 1e-6)
     throw TFunctionFailedException(__OlxSourceInfo, "assert");
   if (iv->ref_cnt() == 0) delete iv;
   iv = _exp.build("a='AaBc'.charAt(2)");

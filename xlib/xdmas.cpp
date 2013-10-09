@@ -77,10 +77,8 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
   if( !CellFound || !LattFound )
     throw TFunctionFailedException(__OlxSourceInfo, "CELL or LATT is missing");
 
-  smatd sm;
   for( size_t i=0; i < symm.Count(); i++ )  {
-    TSymmParser::SymmToMatrix(symm[i], sm);
-    GetAsymmUnit().AddMatrix(sm);
+    GetAsymmUnit().AddMatrix(TSymmParser::SymmToMatrix(symm[i]));
   }
   
   for( size_t i=0; i < crds.Count(); i++ )  {

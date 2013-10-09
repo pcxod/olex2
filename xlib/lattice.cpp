@@ -2195,8 +2195,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
   const TDataItem& mat = item.FindRequiredItem("Matrices");
   Matrices.SetCapacity(mat.ItemCount());
   for( size_t i=0; i < mat.ItemCount(); i++ )  {
-    smatd* m = new smatd;
-    TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue(), *m);
+    smatd* m = new smatd(TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue()));
     GetUnitCell().InitMatrixId(*Matrices.Add(m));
     m->SetRawId(mat.GetItem(i).GetRequiredField("id").ToUInt());
   }

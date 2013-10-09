@@ -42,6 +42,7 @@
 #include "vcov.h"
 #include "ins.h"
 #include "xmacro.h"
+#include "md5.h"
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
   #include "wx/string.h"
@@ -1623,6 +1624,105 @@ ConstPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
   return rv;  // GCC needs this code!
 }
 //..............................................................................
+void TGXApp::CopySelection() const {
+  TDataItem root(NULL, "root"),
+    &di = root.AddItem("objects"),
+    &atoms = di.AddItem("atoms"),
+    &bonds = di.AddItem("bonds");
+  olxstr fid = XFile().GetFileName() + XFile().GetLastLoaderSG().GetName();
+  di.SetValue(MD5::Digest(fid));
+  TGlGroup &sel = GetRender().GetSelection();
+  for (size_t i=0; i < sel.Count(); i++) {
+    TXAtom *a = dynamic_cast<TXAtom *>(&sel[i]);
+    if (a != NULL) {
+      a->GetRef().ToDataItem(atoms.AddItem(atoms.ItemCount()+1));
+    }
+    else {
+      TXBond *b = dynamic_cast<TXBond *>(&sel[i]);
+      if (b != NULL) {
+        b->GetRef().ToDataItem(bonds.AddItem(bonds.ItemCount()+1));
+      }
+    }
+  }
+  TEStrBuffer bf;
+  di.SaveToStrBuffer(bf);
+  ToClipboard(bf.ToString());
+}
+//..............................................................................
+void TGXApp::PasteSelection() {
+  olxstr content;
+#if defined(__WXWIDGETS__)
+  if( wxTheClipboard->Open() )  {
+    if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
+      wxTextDataObject data;
+      wxTheClipboard->GetData(data);
+      content = data.GetText();
+    }
+    wxTheClipboard->Close();
+  }
+#elif __WIN32__
+  if (OpenClipboard(NULL)) {
+    HGLOBAL data=NULL;
+    bool unicode=false;
+    if (IsClipboardFormatAvailable(CF_UNICODETEXT)) {
+      data = GetClipboardData(CF_UNICODETEXT);
+      unicode = true;
+    }
+    else if (IsClipboardFormatAvailable(CF_TEXT)) {
+      data = GetClipboardData(CF_TEXT);
+    }
+    if (data == NULL) {
+      RestoreSelection();
+    }
+    else {
+      uint8_t *str = (uint8_t *)GlobalLock(data);
+      if (str) {
+        if (unicode)
+          content = olxwstr((const wchar_t *)str);
+        else
+          content = olxcstr((const char *)str);
+        GlobalUnlock(data);
+      }
+    }
+    CloseClipboard();
+  }
+#endif
+  if (!content.IsEmpty()) {
+    try {
+      TDataItem root(NULL, "root");
+      root.LoadFromString(0, content, NULL);
+      TDataItem &di = root.FindRequiredItem("objects");
+      olxstr fid = XFile().GetFileName() + XFile().GetLastLoaderSG().GetName();
+      if (di.GetValue() == MD5::Digest(fid)) {
+        TDataItem &atoms = di.FindRequiredItem("atoms"),
+          &bonds = di.FindRequiredItem("bonds");
+        SelectAll(false);
+        for (size_t i=0; i < atoms.ItemCount(); i++) {
+          TSAtom *sa = XFile().GetLattice().GetAtomRegistry().Find(
+            TSAtom::Ref(atoms.GetItem(i)));
+          if (sa != NULL) {
+            GetRender().Select(*dynamic_cast<TXAtom *>(sa), true);
+          }
+        }
+        for (size_t i=0; i < bonds.ItemCount(); i++) {
+          TSBond *sb = XFile().GetLattice().GetAtomRegistry().Find(
+            TSBond::Ref(bonds.GetItem(i)));
+          if (sb != NULL) {
+            GetRender().Select(*dynamic_cast<TXBond *>(sb), true);
+          }
+        }
+      }
+      else {
+        RestoreSelection();
+      }
+    }
+    catch(const TExceptionBase &e) {
+      RestoreSelection();
+    }
+  }
+  Draw();
+}
+//..............................................................................
 void TGXApp::RestoreSelection()  {
   if( !SelectionCopy[0].IsEmpty() || SelectionCopy[1].IsEmpty() )
     return;
@@ -1866,7 +1966,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
     }
     if( !rv.IsEmpty() )  {
       if (ClearSelection)
-        GetRender().SelectAll(false);
+        SelectAll(false);
       return rv;
     }
     if (getAll) {

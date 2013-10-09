@@ -161,16 +161,14 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         olxstr("at line #") << i+1 << " ('" << InsFile[i] << "')");
     }
   }
-  smatd sm;
-  for( size_t i=0; i < cx.Symm.Count(); i++ )  {
-    TSymmParser::SymmToMatrix(cx.Symm[i], sm);
-    GetAsymmUnit().AddMatrix(sm);
+  for (size_t i=0; i < cx.Symm.Count(); i++) {
+    GetAsymmUnit().AddMatrix(TSymmParser::SymmToMatrix(cx.Symm[i]));
   }
   // remove dublicated instructtions, rems ONLY
-  for( size_t i = 0; i < Ins.Count(); i++ )  {
-    if( Ins[i].IsEmpty() || !Ins[i].StartsFromi("REM"))  continue;
-    for( size_t j = i+1; j < Ins.Count(); j++ )  {
-      if( Ins[i] == Ins[j] )
+  for (size_t i = 0; i < Ins.Count(); i++) {
+    if (Ins[i].IsEmpty() || !Ins[i].StartsFromi("REM")) continue;
+    for (size_t j = i+1; j < Ins.Count(); j++) {
+      if (Ins[i] == Ins[j])
         Ins[j].SetLength(0);
     }
   }
@@ -316,7 +314,8 @@ void TIns::_FinishParsing(ParseContext& cx)  {
       break;
     }
     else if( (toks[0].StartsFromi("HTAB") || toks[0].StartsFromi("RTAB") ||
-         toks[0].StartsFromi("MPLA")) && toks.Count() > 2 )
+      toks[0].StartsFromi("MPLA") || toks[0].StartsFromi("CONF")) &&
+      toks.Count() > 2 )
     {
       cx.rm.AddInfoTab(toks);
       Ins.Delete(i--);
@@ -1869,10 +1868,8 @@ void TIns::ParseHeader(const TStrList& in)  {
         olxstr("at line #") << i+1 << " ('" << lst[i] << "')");
     }
   }
-  smatd sm;
-  for( size_t i=0; i < cx.Symm.Count(); i++ )  {
-    TSymmParser::SymmToMatrix(cx.Symm[i], sm);
-    GetAsymmUnit().AddMatrix(sm);
+  for (size_t i=0; i < cx.Symm.Count(); i++) {
+    GetAsymmUnit().AddMatrix(TSymmParser::SymmToMatrix(cx.Symm[i]));
   }
   Ins.Pack();
   ParseRestraints(cx.rm, Ins);
@@ -1884,14 +1881,12 @@ bool TIns::ParseRestraint(RefinementModel& rm, const TStrList& _toks)  {
   if( _toks.IsEmpty() )  return false;
   TStrList toks(_toks);
   if( toks[0].Equalsi("EQIV") && toks.Count() >= 3 )  {
-    smatd SymM;
     try  {
-      TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2), SymM);
+      rm.AddUsedSymm(TSymmParser::SymmToMatrix(toks.Text(EmptyString(), 2)));
     }
     catch(const TExceptionBase &e)  {
       throw TFunctionFailedException(__OlxSourceInfo, e, "to parse EQIV");
     }
-    rm.AddUsedSymm(SymM, toks[1]);
     return true;
   }
   TSRestraintList* srl = NULL;

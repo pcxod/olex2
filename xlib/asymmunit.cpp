@@ -927,8 +927,8 @@ void TAsymmUnit::FromDataItem(TDataItem& item)  {
   TDataItem& symm = item.FindRequiredItem("symm");
   Latt = symm.GetRequiredField("latt").ToInt();
   TPtrList<TDataItem> atom_items;
-  for( size_t i=0; i < symm.ItemCount(); i++ )  
-    TSymmParser::SymmToMatrix(symm.GetItem(i).GetValue(), Matrices.AddNew());
+  for (size_t i=0; i < symm.ItemCount(); i++)
+    Matrices.AddCopy(TSymmParser::SymmToMatrix(symm.GetItem(i).GetValue()));
   TDataItem& resis = item.FindRequiredItem("residues");
   for( size_t i=0; i < resis.ItemCount(); i++ )  {
     TDataItem& resi = resis.GetItem(i);

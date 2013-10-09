@@ -7,9 +7,11 @@
 * the root folder.                                                            *
 ******************************************************************************/
 #include "infotab.h"
+#include "lattice.h"
+#include "unitcell.h"
 
 bool InfoTab::operator == (const InfoTab &it) const {
-  if ( Type != it.Type)  return false;
+  if (Type != it.Type) return false;
   // planes...
   if (Type == infotab_mpla) return false;
   if (atoms.GetResi() != it.atoms.GetResi()) return false;
@@ -20,9 +22,7 @@ bool InfoTab::operator == (const InfoTab &it) const {
   for (size_t i=0; i < ra.Count(); i++) {
     if (ra[i].GetAtom() != rb[i].GetAtom() ||
       ra[i].GetMatrix() != rb[i].GetMatrix())
-    {
-      return false;
-    }
+        return false;
   }
   return true;
 }
@@ -44,6 +44,7 @@ bool InfoTab::IsValid() const {
   if (Type == infotab_rtab && ac >= 1 && ac <= 4 && !ParamName.IsEmpty())
     return true;
   if (Type == infotab_mpla && ac >= 3) return true;
+  if (Type == infotab_conf && ac >= 4) return true;
   return false;
 }
 
@@ -67,14 +68,16 @@ void InfoTab::ToDataItem(TDataItem& di) const {
 }
 
 void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
-  if( di.GetValue() == "HTAB")
+  if (di.GetValue() == "HTAB")
     Type = infotab_htab;
-  else if( di.GetValue() == "RTAB")
+  else if (di.GetValue() == "RTAB")
     Type = infotab_rtab;
-  else if( di.GetValue() == "MPLA")
+  else if (di.GetValue() == "MPLA")
     Type = infotab_mpla;
-  else
+  else if (di.GetValue() == "BOND")
     Type = infotab_bond;
+  else
+    Type = infotab_conf;
   if (Type == infotab_mpla) {
     AtomCount = di.GetFieldValue("atomCount", "-1").ToInt();
   }

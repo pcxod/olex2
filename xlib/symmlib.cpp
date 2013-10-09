@@ -1034,7 +1034,7 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
     TStrList toks(olx_SGLib[i].matrices, ';');
     smatd_list ml(toks.Count());
     for( size_t j=0; j < toks.Count(); j++ )  {
-      TSymmParser::SymmToMatrix(toks[j], ml[j]);
+      ml[j] = TSymmParser::SymmToMatrix(toks[j]);
     }
     TSpaceGroup* SG = new TSpaceGroup(
       ml,
