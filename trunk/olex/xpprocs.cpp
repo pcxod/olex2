@@ -2465,7 +2465,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
 #endif // win32
     if (TEFile::ExtractFilePath(file_n.file_name).IsEmpty()) {
-      file_n.file_name = TEFile::AddPathDelimeter(XLibMacros::CurrentDir)
+      file_n.file_name = TEFile::AddPathDelimeter(XLibMacros::CurrentDir())
         + file_n.file_name;
     }
   }
@@ -2480,7 +2480,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       ff.Add("*.oxm", "Olex2 model");
     file_n.file_name = PickFile("Open File",
       ff.GetString(),
-      XLibMacros::CurrentDir, EmptyString(), true);
+      XLibMacros::CurrentDir(), EmptyString(), true);
   }
   // the dialog has been successfully executed
   if( !file_n.file_name.IsEmpty() )  {
@@ -2713,14 +2713,14 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       OnResize();
 
       olxstr Tmp = TEFile::ExtractFilePath(file_n.file_name);
-      if( !Tmp.IsEmpty() && !(Tmp == XLibMacros::CurrentDir) )  {
+      if( !Tmp.IsEmpty() && !(Tmp == XLibMacros::CurrentDir()) )  {
         if( !TEFile::ChangeDir(Tmp) )  {
           TBasicApp::NewLogEntry() << "Cannot change current folder '" <<
             TEFile::CurrentDir() << "' to '" << Tmp << '\'';
         }
         else  {
           if( !Blind )
-            XLibMacros::CurrentDir = Tmp;
+            XLibMacros::CurrentDir() = Tmp;
         }
       }
       if( !Blind )  UpdateRecentFile(file_n.file_name);
@@ -3170,17 +3170,21 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TMainForm::macSelBack(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macSelBack(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   FXApp->RestoreSelection();
 }
 //..............................................................................
-void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   const size_t ind = StoredParams.IndexOf(Cmds[0]);
-  if( ind == InvalidIndex )
-    StoredParams.Add( Cmds[0], Cmds[1] );
+  if (ind == InvalidIndex)
+    StoredParams.Add(Cmds[0], Cmds[1]);
   else
     StoredParams.GetObject(ind) = Cmds[1];
-  if( Cmds.Count() == 3 && Cmds[2].ToBool() )
+  if (Cmds.Count() == 3 && Cmds[2].ToBool())
     SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
 }
 //..............................................................................
@@ -5702,7 +5706,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     olxstr FN = PickFile("Load Fragment", "XYZ files (*.xyz)|*.xyz",
-      XLibMacros::CurrentDir, EmptyString(), true);
+      XLibMacros::CurrentDir(), EmptyString(), true);
     if (FN.IsEmpty()) {
       E.ProcessingError(__OlxSrcInfo, "A file is expected");
       return;
@@ -5800,7 +5804,7 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     return;
   }
   olxstr FN = PickFile("Save Fragment as...", "XYZ files (*.xyz)|*.xyz",
-    XLibMacros::CurrentDir, EmptyString(), false);
+    XLibMacros::CurrentDir(), EmptyString(), false);
   if( FN.IsEmpty() )  return;
   TXyz xyz;
   for( size_t i=0; i < nets[0]->NodeCount(); i++ )  {

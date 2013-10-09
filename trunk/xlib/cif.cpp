@@ -301,8 +301,8 @@ void TCif::Initialize()  {
     if( sindex != InvalidIndex )  {
       for( size_t i=0; i < Loop->RowCount(); i++ )  {
         try {
-          TSymmParser::SymmToMatrix(
-            Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew());
+          Matrices.AddCopy(
+            TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue()));
         }
         catch (const TExceptionBase &e) {
           throw TFunctionFailedException(__OlxSourceInfo, e,
@@ -327,8 +327,8 @@ void TCif::Initialize()  {
       if( sindex != InvalidIndex )  {
         for( size_t i=0; i < Loop->RowCount(); i++ )  {
           try {
-            TSymmParser::SymmToMatrix(
-              Loop->Get(i, sindex).GetStringValue(), Matrices.AddNew());
+            Matrices.AddCopy(
+              TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue()));
           }
           catch (const TExceptionBase &e) {
             TStrList l;

@@ -20,12 +20,13 @@ const short
   infotab_htab = 1,
   infotab_rtab = 2,
   infotab_mpla = 3,
-  infotab_bond = 4;
+  infotab_bond = 4,
+  infotab_conf = 5;
 
 class InfoTab : public IEObject {  // need to cast to delete
   RefinementModel& RM;
   short Type,
-    AtomCount; // for MPLA
+    AtomCount; // for MPLA, CONF
   olxstr ParamName;
   AtomRefList atoms;
 public:
@@ -67,7 +68,8 @@ public:
   olxstr GetName() const {
     return olxstr(Type == infotab_htab ? "HTAB" :
       (Type == infotab_rtab ? "RTAB"
-        : (Type == infotab_mpla ? "MPLA" : "BOND")));
+        : (Type == infotab_mpla ? "MPLA"
+        : (Type == infotab_bond ? "BOND" : "CONF"))));
   }
 
   TIString ToString() const;

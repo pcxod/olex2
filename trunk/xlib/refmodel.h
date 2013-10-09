@@ -461,6 +461,7 @@ Friedel opposites of components 1 ... m
   void DeleteInfoTab(size_t i)  {  InfoTables.Delete(i);  }
   InfoTab& AddHTAB();
   InfoTab& AddRTAB(const olxstr& codename);
+  InfoTab& AddCONF();
   // if the name is empty - all tabs a removed
   void ClearInfoTab(const olxstr &name);
   bool ValidateInfoTab(const InfoTab& it);

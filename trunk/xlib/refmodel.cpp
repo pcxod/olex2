@@ -338,6 +338,10 @@ InfoTab& RefinementModel::AddRTAB(const olxstr& codename) {
   return InfoTables.Add(new InfoTab(*this, infotab_rtab, codename));
 }
 //.............................................................................
+InfoTab& RefinementModel::AddCONF() {
+  return InfoTables.Add(new InfoTab(*this, infotab_conf));
+}
+//.............................................................................
 void RefinementModel::Validate() {
   for( size_t i=0; i < rcList1.Count(); i++ )
     rcList1[i]->ValidateAll();
@@ -392,16 +396,24 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   : l[0].SubStringTo(resi_ind));
   olxstr resi_name = (resi_ind == InvalidIndex ? EmptyString()
     : l[0].SubStringFrom(resi_ind+1));
-  if( tab_name.Equalsi("HTAB") ) {
+  if (tab_name.Equalsi("HTAB")) {
     InfoTables.Add(
       new InfoTab(*this, infotab_htab, EmptyString()));
   }
-  else if( tab_name.Equalsi("RTAB") ) {
+  else if (tab_name.Equalsi("BOND")) {
+    InfoTables.Add(
+      new InfoTab(*this, infotab_bond, EmptyString()));
+  }
+  else if (tab_name.Equalsi("CONF")) {
+    InfoTables.Add(
+      new InfoTab(*this, infotab_conf, EmptyString()));
+  }
+  else if (tab_name.Equalsi("RTAB")) {
     InfoTables.Add(
       new InfoTab(*this, infotab_rtab, l[atom_start++]));
   }
-  else if( tab_name.Equalsi("MPLA") )  {
-    if( l[atom_start].IsNumber() ) {
+  else if (tab_name.Equalsi("MPLA")) {
+    if (l[atom_start].IsNumber()) {
       InfoTables.Add(
         new InfoTab(*this, infotab_mpla, l[atom_start+1],
           l[atom_start].ToInt()));
@@ -419,21 +431,21 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   try  {
     InfoTables.GetLast().FromExpression(l.Text(' ', atom_start), resi_name);
   }
-  catch( const TExceptionBase& ex )  {
+  catch (const TExceptionBase& ex) {
     TBasicApp::NewLogEntry(logError) <<
       "Invalid info table atoms: " << l.Text(' ');
     TBasicApp::NewLogEntry(logError) << ex.GetException()->GetFullMessage();
     InfoTables.Delete(InfoTables.Count()-1);
     return;
   }
-  if( !InfoTables.GetLast().IsValid() )  {
+  if (!InfoTables.GetLast().IsValid()) {
     TBasicApp::NewLogEntry(logError) <<
       "Invalid info table: " << l.Text(' ');
     InfoTables.Delete(InfoTables.Count()-1);
     return;
   }
-  for( size_t i=0; i < InfoTables.Count()-1; i++ )  {
-    if( InfoTables[i] == InfoTables.GetLast() )  {
+  for (size_t i=0; i < InfoTables.Count()-1; i++) {
+    if (InfoTables[i] == InfoTables.GetLast()) {
       TBasicApp::NewLogEntry(logError) <<
         "Duplicate info table: " << l.Text(' ');
       InfoTables.Delete(InfoTables.Count()-1);
@@ -1232,7 +1244,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   }
   
   Vars.ToDataItem(item.AddItem("LEQS"));
-  expl.ToDataItem(item.AddItem("EXPL"));  
+  expl.ToDataItem(item.AddItem("EXPL"));
 
   AfixGroups.ToDataItem(item.AddItem("AFIX"));
   ExyzGroups.ToDataItem(item.AddItem("EXYZ"));
@@ -1252,7 +1264,8 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   omits.AddField("s", OMIT_s);
   omits.AddField("2theta", OMIT_2t);
   omits.AddField("hkl", PersUtil::VecListToStr(Omits));
-  item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
+  item.AddItem("TWIN", TWIN_set).AddField("mat",
+    TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
   item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
   item.AddItem("EXTI", EXTI_set).AddField("val", EXTI.ToString());
@@ -1290,9 +1303,10 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   PersUtil::NumberListFromStr(item.GetRequiredField("RefInArg"), LS);
 
   TDataItem& eqiv = item.FindRequiredItem("EQIV");
-  for( size_t i=0; i < eqiv.ItemCount(); i++ )
-    TSymmParser::SymmToMatrix(
-      eqiv.GetItem(i).GetValue(), UsedSymm.Add(eqiv.GetItem(i).GetName()).symop);
+  for (size_t i=0; i < eqiv.ItemCount(); i++) {
+    UsedSymm.Add(eqiv.GetItem(i).GetName()).symop =
+      TSymmParser::SymmToMatrix(eqiv.GetItem(i).GetValue());
+  }
 
   UpdateUsedSymm(aunit.GetLattice().GetUnitCell());
   expl.FromDataItem(item.FindRequiredItem("EXPL"));
@@ -1310,9 +1324,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   HKLF_s = hklf.GetRequiredField("s").ToDouble();
   HKLF_wt = hklf.GetRequiredField("wt").ToDouble();
   HKLF_m = hklf.GetRequiredField("m").ToDouble();
-  smatd tmp_m;
-  TSymmParser::SymmToMatrix(hklf.GetRequiredField("mat"), tmp_m);
-  HKLF_mat = tmp_m.r;
+  HKLF_mat = TSymmParser::SymmToMatrix(hklf.GetRequiredField("mat")).r;
 
   TDataItem& omits = item.FindRequiredItem("OMIT");
   OMIT_set = omits.GetValue().ToBool();
@@ -1322,8 +1334,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 
   TDataItem& twin = item.FindRequiredItem("TWIN");
   TWIN_set = twin.GetValue().ToBool();
-  TSymmParser::SymmToMatrix(twin.GetRequiredField("mat"), tmp_m);
-  TWIN_mat = tmp_m.r;
+  TWIN_mat = TSymmParser::SymmToMatrix(twin.GetRequiredField("mat")).r;
   TWIN_n = twin.GetRequiredField("n").ToInt();
   {
     TDataItem& merge = item.FindRequiredItem("MERG");

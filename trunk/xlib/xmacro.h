@@ -150,6 +150,7 @@ public:
   static DefMacro(Sgen)
   static DefMacro(LstSymm)
   static DefMacro(RSA)
+  static DefMacro(CONF)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
@@ -189,7 +190,6 @@ public:
   static DefFunc(GetCompilationInfo)
   static DefFunc(SGList)
 
-  static TActionQList Actions;
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);
   static const olxstr &NAString() {
@@ -200,7 +200,10 @@ public:
     static olxstr NoneString("none");
     return NoneString;
   }
-  static olxstr CurrentDir;
+  static olxstr& CurrentDir() {
+    static olxstr cd;
+    return cd;
+  }
   /* finds numbers and removes them from the list and returns the number of
   found numbers
   */
@@ -358,7 +361,25 @@ public:
     return cnt;
   }
   static void Export(class TLibrary& lib);
-  static TActionQueue &OnDelIns, &OnAddIns;
+
+  static TActionQList &Actions() {
+    static TActionQList Actions_;
+    return Actions_;
+  }
+  static TActionQueue &OnDelIns() {
+    static TActionQueue *OnDelIns=NULL;
+    if (OnDelIns == NULL) {
+      OnDelIns = &XLibMacros::Actions().New("OnDelIns");
+    }
+    return *OnDelIns;
+  }
+  static TActionQueue &OnAddIns() {
+    static TActionQueue *OnAddIns=NULL;
+    if (OnAddIns == NULL) {
+      OnAddIns = &XLibMacros::Actions().New("OnAddIns");
+    }
+    return *OnAddIns;
+  }
   static olxstr VarName_ResetLock()  {  return "olx_lock_reset";  }
   static olxstr VarName_InternalTref()  {  return "olx_internal_tref";  }
   static olxstr GetCompilationInfo();

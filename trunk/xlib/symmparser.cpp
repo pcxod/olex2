@@ -11,99 +11,84 @@
 #include "estack.h"
 #include "estrlist.h"
 #include "emath.h"
+#include "exparse/expbuilder.h"
 //---------------------------------------------------------------------------
-const char TSymmParser::Axis[] = {'X','Y','Z'};
 //..............................................................................
 // Transforms standard SYMM operation (INS, CIF files) to matrix
 smatdd TSymmParser::SymmToMatrix(const olxstr& S)  {
+  using namespace exparse;
   smatdd M;
   bool res = true;
   try {
     M.Null();
     TStrList toks(S.ToUpperCase().DeleteChars(' '), ',');
-    if( toks.Count() != 3 )  {
+    if (toks.Count() != 3) {
       res = false;
       throw TFunctionFailedException(__OlxSourceInfo,
-        olxstr("Invalid number of toks ").quote() << S);
+        olxstr("Invalid number of tokens ").quote() << S);
     }
-
     str_stack stack;
-    for( int i=0; i < 3; i++ )  {
-      stack.LoadFromExpression(toks[i]);
-      olxstr p = stack.Pop();
-      short op = IsAxis(p);
-      if( op < 0 )  {
-        olxstr p1 = stack.Pop();
-        if( stack.IsEmpty() )  {
-          res = false;  break;
+    try {
+      for (int i=0; i < 3; i++) {
+        stack.LoadFromExpression(toks[i]);
+        while (!stack.IsEmpty()) {
+          olxstr p = stack.Pop();
+          const short op = IsAxis(p);
+          if (op < 0) {
+            if (stack.IsEmpty()) {
+              M.t[i] = p.ToDouble();
+              continue;
+            }
+            olxstr p1 = stack.Pop();
+            if (p1.CharAt(0) == '/') {
+              p1 = stack.Pop();
+              double ratio = p1.ToDouble()/p.ToDouble(), sig=1;
+              if (!stack.IsEmpty()) {
+                p1 = stack.Pop();
+                if (p1 == '-') sig = -1;
+                else if (p1 != '+') {
+                  throw TInvalidArgumentException(__OlxSourceInfo, "expression");
+                }
+              }
+              M.t[i] = ratio*sig;
+            }
+            else {
+              M.t[i] = p.ToDouble();
+              if (p1 == '-')
+                M.t[i] = -M.t[i];
+              else if (p1 != '+')
+                throw TInvalidArgumentException(__OlxSourceInfo, "expression");
+            }
+          }
+          else {
+            M.r[i][op] = 1;
+            if (stack.IsEmpty()) continue;
+            p = stack.Pop();
+            if (p == '-')
+              M.r[i][op] = -1;  // inversion
+            else if (p == '*') {
+              p = stack.Pop();
+              M.r[i][op] = p.ToDouble();
+              if (!stack.IsEmpty()) {
+                p = stack.Pop();
+                if (p == '-') {
+                  M.r[i][op] = -M.r[i][op];
+                }
+              }
+            }
+            else if (p != '+')
+              throw TInvalidArgumentException(__OlxSourceInfo, "expression");
+          }
         }
-        if( p1.CharAt(0) == '/' )  {
-          p1 = stack.Pop();
-          double ratio = p1.ToDouble()/p.ToDouble();
-          p1 = stack.Pop();
-          if( p1 == '+' )  
-            M.t[i] = ratio;
-          else if( p1 == '-' )
-            M.t[i] = -ratio;
-        }
-        else
-          M.t[i] = (p1 == '-' ? -p.ToDouble() : p.ToDouble());
-
-        p = stack.Pop();
       }
-next_oper:
-      if( abs(p.CharAt(0)-'Z') > 2 )  {
-        res = false;
-        break;
-      }
-      int index = 2 - 'Z' + p.CharAt(0);
-      M.r[i][index] = 1;
-      if( stack.IsEmpty() )  continue;
-      p = stack.Pop();
-      if( p == '-' )
-        M.r[i][index] = -1;  // inversion
-      bool mul = (p == '*');
-      if( stack.IsEmpty() )  continue;
-      p = stack.Pop();
-      op = IsAxis(p);
-      if( op < 0 )  {
-        if( stack.IsEmpty() )  {
-          M.t[i] = p.ToDouble();  // translation
-          continue;
-        }
-        if( stack.Count() == 1 )  {
-          p = stack.Pop() << p;
-          M.t[i] = p.ToDouble();  // translation
-          continue;
-        }
-        olxstr opr = stack.Pop();  // should be '/'
-        if( opr != '/' )  {
-          res = false;  
-          break;
-        }
-        olxstr p1 = stack.Pop();
-        double ratio = p1.ToDouble()/p.ToDouble();
-        if( !stack.IsEmpty() )  {
-          p = stack.Pop();
-          if( p == '-' )
-            ratio *= -1;
-          else if( p == '+' )
-            ;
-          else
-            stack.Push(p);
-        }
-        if (mul)
-          M.r[i][index] = ratio;
-        else
-          M.t[i] = ratio;  // translation
-      }
-      else
-        goto next_oper;
+    }
+    catch (const TExceptionBase &e) {
+      res = false;
     }
     if( res == false )  {
       throw TFunctionFailedException(__OlxSourceInfo,
-        olxstr("due to operation sign is missing or operation is incomplete while parsing ")
-          .quote() << S);
+        olxstr("due to operation sign is missing or operation is incomplete "
+        "while parsing ").quote() << S);
     }
     // normalise the translations...
     for( int i=0; i < 3; i++ )  {
@@ -125,35 +110,11 @@ next_oper:
   }
 }
 //..............................................................................
-olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
-  olxstr T, T1;
-  for( int j=0; j < 3; j ++ )  {
-    if( j != 0 )
-      T << ',';
-    for( int i=0; i < 3; i ++ )  {
-      if( i == j )  {
-        if( M[j][i] != 0 )  {
-          T1 << olx_sign_char(M[j][i]);
-          T1 << Axis[j];
-        }
-      }
-      else if( M[j][i] != 0 )  {
-        T1.Insert(Axis[i], 0);
-        T1.Insert(olx_sign_char(M[j][i]), 0);
-      }
-    }
-    T << T1;
-    T1.SetLength(0);
-  }
-  return T;
-}
-//..............................................................................
 bool TSymmParser::IsAbsSymm(const olxstr& s)  {
   if( s.Length() < 5 )  return false;
   if( s.IndexOf(',') != InvalidIndex )  { // asbolute representation
-    smatd m;
     try  {
-      SymmToMatrix(s, m);
+      SymmToMatrix(s);
       return true;
     }
     catch(...)  {  return false;  }
