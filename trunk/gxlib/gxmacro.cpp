@@ -225,7 +225,11 @@ void GXLibMacros::Export(TLibrary& lib) {
     "l-display labels for the created lines",
     fpAny|psFileLoaded,
     "Creates an illustration of a pi-system to metal bonds");
-  gxlib_InitMacro(ShowP, "m-do not modify the display view", fpAny,
+  gxlib_InitMacro(ShowP,
+    "m-do not modify the display view&;"
+    "v-operate only on currently visible atoms/fragments;"
+    ,
+    fpAny,
     "Shows specified or all parts of the structure");
   gxlib_InitMacro(Undo, EmptyString(), fpNone,
     "Reverts some of the previous operations");
@@ -2102,7 +2106,7 @@ void GXLibMacros::macShowP(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i=0; i < Cmds.Count(); i++)
       parts.Add(Cmds[i].ToInt());
   }
-  app.ShowPart(parts, true);
+  app.ShowPart(parts, true, Options.GetBoolOption('v'));
   if (!Options.GetBoolOption('m'))
     app.CenterView();
 }

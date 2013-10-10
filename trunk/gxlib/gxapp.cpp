@@ -3601,23 +3601,69 @@ void TGXApp::LoadXFile(const olxstr& fn)  {
   Draw();  // fixes native loader is not draw after load
 }
 //..............................................................................
-void TGXApp::ShowPart(const TIntList& parts, bool show)  {
-  if( parts.IsEmpty() )  {
-    AllVisible(true);
+void ShowPart_TagSetter(TCAtom &a, index_t v) {
+  if (a.IsProcessed()) return;
+  a.SetProcessed(true);
+  for (size_t i=0; i < a.AttachedSiteCount(); i++) {
+    TCAtom &aa = a.GetAttachedAtom(i);
+    aa.SetTag(v);
+    ShowPart_TagSetter(aa, v);
+  }
+}
+void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
+  if (visible_only) {
+    SortedObjectList<uint32_t, TPrimitiveComparator> tags;
+    AtomIterator ai(*this);
+    TAsymmUnit &au = XFile().GetAsymmUnit();
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      a.SetProcessed(false);
+      a.SetTag(-1);
+    }
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      if (!a.IsProcessed())
+        ShowPart_TagSetter(a, (index_t)i);
+
+    }
+    while (ai.HasNext()) {
+      TXAtom& xa = ai.Next();
+      if (xa.IsVisible()) {
+        tags.AddUnique(xa.CAtom().GetFragmentId());
+      }
+    }
+    ai.Reset();
+    while (ai.HasNext()) {
+      TXAtom& xa = ai.Next();
+      if (!xa.IsVisible() && tags.Contains(xa.CAtom().GetTag())) {
+        xa.SetVisible(true);
+        xa.SetMasked(false);
+      }
+    }
+    if (parts.IsEmpty()) {
+      _maskInvisible();
+      UpdateConnectivity();
+    }
+  }
+  if (parts.IsEmpty()) {
+    if (!visible_only)
+      AllVisible(true);
     return;
   }
   AtomIterator ai(*this);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if( parts.IndexOf(xa.CAtom().GetPart()) != InvalidIndex )  {
+    if (visible_only && !xa.IsVisible())
+      continue;
+    if (parts.IndexOf(xa.CAtom().GetPart()) != InvalidIndex) {
       xa.SetVisible(show);
       xa.SetMasked(!show);
     }
-    else  {
+    else {
       xa.SetVisible(!show);
       xa.SetMasked(show);
     }
-    if( xa.IsVisible() )
+    if (xa.IsVisible())
       xa.SetVisible(xa.IsAvailable());
   }
   _maskInvisible();
