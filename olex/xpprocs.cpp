@@ -1145,7 +1145,7 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   bool Asyn = !Options.Contains('s'), // synchronously
     Cout = !Options.Contains('o'),    // catch output
-    quite = Options.Contains('q');
+    quite = Options.GetBoolOption('q');
 
   olxstr dubFile(Options.FindValue('s',EmptyString()));
 

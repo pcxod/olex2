@@ -581,7 +581,7 @@ public:
   void SetHklVisible(bool v);
   bool IsHklVisible() const {  return FHklVisible;  }
   bool IsStructureVisible() const {  return FStructureVisible;  }
-  void ShowPart(const TIntList& parts, bool show);
+  void ShowPart(const TIntList& parts, bool show, bool visible_only);
 
   void SetXGrowLinesVisible(bool v);
   bool GetXGrowLinesVisible() const {  return FXGrowLinesVisible;  }
