@@ -890,8 +890,14 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
   if( CreatedObject != NULL )  {
+    bool manage = false;
+    if (tag.HasParam(wxT("MANAGE"))) {
+      olxstr v = tag.GetParam(wxT("MANAGE"));
+      if (v.IsBool())
+        manage = v.ToBool();
+    }
     if( !html->AddObject(
-      ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
+      ObjectName, CreatedObject, CreatedWindow, manage))
     {
       TBasicApp::NewLogEntry(logError) << "HTML: duplicated object \'" <<
         ObjectName << '\'';
