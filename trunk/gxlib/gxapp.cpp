@@ -3629,15 +3629,15 @@ void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (xa.IsVisible()) {
-        tags.AddUnique(xa.CAtom().GetFragmentId());
+        tags.AddUnique(xa.CAtom().GetTag());
       }
     }
     ai.Reset();
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (!xa.IsVisible() && tags.Contains(xa.CAtom().GetTag())) {
-        xa.SetVisible(true);
         xa.SetMasked(false);
+        xa.SetVisible(true);
       }
     }
     if (parts.IsEmpty()) {
@@ -3655,7 +3655,7 @@ void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
     TXAtom& xa = ai.Next();
     if (visible_only && !xa.IsVisible())
       continue;
-    if (parts.IndexOf(xa.CAtom().GetPart()) != InvalidIndex) {
+    if (parts.Contains(xa.CAtom().GetPart())) {
       xa.SetVisible(show);
       xa.SetMasked(!show);
     }
