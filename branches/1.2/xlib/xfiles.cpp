@@ -556,6 +556,89 @@ void TXFile::FromDataItem(TDataItem& item) {
   GetLattice().FinaliseLoading();
 }
 //..............................................................................
+const_strlist TXFile::ToJSON() const {
+  TStrList out;
+  vec3d center;
+  out << '{';
+  const ASObjectProvider &objects = GetLattice().GetObjects();
+  for (size_t i=0; i < objects.atoms.Count(); i++)
+    center += objects.atoms[i].crd();
+  if (!objects.atoms.IsEmpty())
+    center /= objects.atoms.Count();
+
+  out << "\"atoms\": [";
+  index_t cnt=0;
+  for (size_t i=0; i < objects.atoms.Count(); i++) {
+    TSAtom &a = objects.atoms[i];
+    if (!a.IsAvailable()) continue;
+    a.SetTag(cnt++);
+    olxstr &l = (out.Add(" {\"type\":").quote('"') << a.GetType().symbol);
+    l << ", \"label\":\"" << a.GetLabel() << "\", \"crd\":[";
+    vec3d crd = a.crd() - center;
+    l << crd[0] << ',' << crd[1] << ',' << crd[2] << "]";
+    if (a.GetEllipsoid() != NULL) {
+      l << ", \"matrix\":[";
+      mat3d m = a.GetEllipsoid()->GetMatrix();
+      m[0] *= a.GetEllipsoid()->GetSX();
+      m[1] *= a.GetEllipsoid()->GetSY();
+      m[2] *= a.GetEllipsoid()->GetSZ();
+      for (int mi=0; mi < 3; mi++)
+        for (int mj=0; mj < 3; mj++)
+          l << m[mi][mj] << ',';
+      l.SetLength(l.Length()-1); // strip last comma
+      l << ']';
+    }
+    l << ", \"Uiso\":" << a.CAtom().GetUiso();
+    if (a.CAtom().GetQPeak() != 0) {
+      l << ", \"Peak\":" << a.CAtom().GetQPeak();
+    }
+    uint32_t cl = a.GetType().def_color;
+    l << ", \"color\":[" <<
+      (float)(cl&0xFF)/255 << ',' <<
+      (float)((cl>>8)&0xFF)/255 << ',' <<
+      (float)((cl>>16)&0xFF)/255 << ']';
+
+    l << "},";
+  }
+  if (cnt > 0) {
+    out.GetLastString().SetLength(out.GetLastString().Length()-1);
+    cnt = 0;
+  }
+  out << ']'; // atoms
+
+  out << ", \"bonds\": [";
+  for (size_t i=0; i < objects.bonds.Count(); i++) {
+    TSBond &b = objects.bonds[i];
+    if (!b.A().IsAvailable() || !b.B().IsAvailable())
+      continue;
+    olxstr &l = out.Add();
+    l << " {\"from\":" << b.A().GetTag() << ", \"to\":" << b.B().GetTag();
+    if (b.GetType() == sotHBond)
+      l << ", \"hbond\": true";
+    l << "},";
+    cnt++;
+  }
+  if (cnt > 0) {
+    out.GetLastString().SetLength(out.GetLastString().Length()-1);
+  }
+  out << ']'; // bonds
+  {
+    const mat3d& ucm = GetAsymmUnit().GetCellToCartesian();
+    olxstr &l = out.Add(", \"cell\": {");
+    l << "\"o\":[" << -center[0] << ',' << -center[1] << ',' << -center[2] << ']';
+    for (int i=0; i < 3; i++) {
+      l << ", \"" << (olxch)('a'+i) << "\":[";
+      for (int j=0; j < 3; j++) {
+        l << (ucm[i][j]-center[j]);
+        if (j != 2) l << ',';
+      }
+      l << ']';
+    }
+    l << '}'; // cell
+  }
+  return (out << '}');
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {

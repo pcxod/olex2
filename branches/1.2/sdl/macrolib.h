@@ -70,6 +70,7 @@ protected:
   DefMacro(Abort)
   DefFunc(LastError)
   DefFunc(LogLevel)
+  DefFunc(Process)
   static void funIF(exparse::evaluator<exparse::expression_tree> *t,
     TMacroError& E, const TStrList &argv);
   static void funOr(exparse::evaluator<exparse::expression_tree> *t,

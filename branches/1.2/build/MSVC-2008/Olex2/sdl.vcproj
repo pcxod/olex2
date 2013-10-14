@@ -1113,10 +1113,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\eutf8.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\exception.cpp"
 				>
 			</File>
@@ -1130,10 +1126,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\groupobj.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\hashing.cpp"
 				>
 			</File>
 			<File

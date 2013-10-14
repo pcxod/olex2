@@ -560,18 +560,15 @@ TAG_HANDLER_PROC(tag)  {
     CreatedObject = Box;
     CreatedWindow = Box;
     //Box->WI.SetWidth(ax);
-#ifdef __MAC__
-    Box->WI.SetHeight(olx_max(ay, Box->GetCharHeight()+10));
-#else
-    //Box->WI.SetHeight(ay);
-#endif    
     if( tag.HasParam(wxT("ITEMS")) )  {
       olxstr Items = tag.GetParam(wxT("ITEMS"));
       op->processFunction(Items, SrcInfo, true);
       TStrList SL(Items, ';');
       if( SL.IsEmpty() ) {
         // fix the bug in wxWidgets (if Up pressed, crash occurs)
+#if wxCHECK_VERSION(2,8,0)
         Box->AddObject(EmptyString());
+#endif
       }
       else
         Box->AddItems(SL);
@@ -893,8 +890,14 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
   if( CreatedObject != NULL )  {
+    bool manage = false;
+    if (tag.HasParam(wxT("MANAGE"))) {
+      olxstr v = tag.GetParam(wxT("MANAGE"));
+      if (v.IsBool())
+        manage = v.ToBool();
+    }
     if( !html->AddObject(
-      ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
+      ObjectName, CreatedObject, CreatedWindow, manage))
     {
       TBasicApp::NewLogEntry(logError) << "HTML: duplicated object \'" <<
         ObjectName << '\'';

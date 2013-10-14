@@ -40,10 +40,10 @@ public:
             throw TInvalidArgumentException(__OlxSourceInfo,
               olxstr("element ").quote() << e[i].SubStringFrom(1));
           }
-          type_exc.Add(elm, type_exc.Count());
+          type_exc.Add(elm, (int)type_exc.Count());
         }
         else {
-          label_exc.Add(e[i], label_exc.Count());
+          label_exc.Add(e[i], (int)label_exc.Count());
         }
       }
     }

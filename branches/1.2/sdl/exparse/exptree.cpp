@@ -362,17 +362,21 @@ void expression_tree::expand(const parser_util::operator_set &os)  {
       if (os.parse_control_chars(data, opr, i))  {
         if (opr == '.')  {  // treat floating point values...
           bool number = false;
-          if (i == 1 || (i+1) >= data.Length())  // .1 or 1.
+          size_t dec=1;
+          if (i > 1 && olxstr::o_isdigit(data.CharAt(i-2))) { // 1.
             number = true;
-          else if ((i > 1 && olxstr::o_isdigit(data.CharAt(i-2))) ||
-                   (i < data.Length() && olxstr::o_isdigit(data.CharAt(i))))
-          {
+            dec = 2;
+          }
+          if (!number && i < data.Length() && olxstr::o_isdigit(data.CharAt(i))) { // .1
             number = true;
           }
-          if (number ) {
-            dt_st = --i; // '.'
-            while (++i < data.Length() && olxstr::o_isdigit(data.CharAt(i)))
+          if (number) {
+            dt_st = (i-=dec);
+            while (++i < data.Length() &&
+              (olxstr::o_isdigit(data.CharAt(i)) || data.CharAt(i) == '.'))
+            {
               ;
+            }
             i--;
             continue;
           }

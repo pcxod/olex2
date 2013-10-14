@@ -253,6 +253,10 @@ void TEMacroLib::Init()  {
     "Returns/sets log level, default is 'm' - for macro, accepts/returns 'm', "
     "'mf' or 'f'"));
   lib.Register(
+    new TFunction<TEMacroLib>(this,  &TEMacroLib::funProcess,
+    "Process", fpOne,
+    "Processes a function passed as the argument and returns the result"));
+  lib.Register(
     new TMacro<TEMacroLib>(this,  &TEMacroLib::macAbort, "Abort",
     EmptyString(), fpNone,
     "'abort' statement to terminate a macro execution"));
@@ -522,3 +526,8 @@ void TEMacroLib::macAbort(TStrObjList &Cmds, const TParamList &Options,
   E.ProcessingError(__OlxSrcInfo, "abnormally terminated");
 }
 //.............................................................................
+void TEMacroLib::funProcess(const TStrObjList& Params, TMacroError &E) {
+  olxstr cmd = Params[0];
+  this->ProcessFunction(cmd, E, false);
+}
+//..............................................................................

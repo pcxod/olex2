@@ -42,6 +42,7 @@
 #include "vcov.h"
 #include "ins.h"
 #include "xmacro.h"
+#include "md5.h"
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
   #include "wx/string.h"
@@ -1623,6 +1624,105 @@ ConstPtrList<TCAtom> TGXApp::GetSelectedCAtoms(bool Clear)  {
   return rv;  // GCC needs this code!
 }
 //..............................................................................
+void TGXApp::CopySelection() const {
+  TDataItem root(NULL, "root"),
+    &di = root.AddItem("objects"),
+    &atoms = di.AddItem("atoms"),
+    &bonds = di.AddItem("bonds");
+  olxstr fid = XFile().GetFileName() + XFile().GetLastLoaderSG().GetName();
+  di.SetValue(MD5::Digest(fid));
+  TGlGroup &sel = GetRender().GetSelection();
+  for (size_t i=0; i < sel.Count(); i++) {
+    TXAtom *a = dynamic_cast<TXAtom *>(&sel[i]);
+    if (a != NULL) {
+      a->GetRef().ToDataItem(atoms.AddItem(atoms.ItemCount()+1));
+    }
+    else {
+      TXBond *b = dynamic_cast<TXBond *>(&sel[i]);
+      if (b != NULL) {
+        b->GetRef().ToDataItem(bonds.AddItem(bonds.ItemCount()+1));
+      }
+    }
+  }
+  TEStrBuffer bf;
+  di.SaveToStrBuffer(bf);
+  ToClipboard(bf.ToString());
+}
+//..............................................................................
+void TGXApp::PasteSelection() {
+  olxstr content;
+#if defined(__WXWIDGETS__)
+  if( wxTheClipboard->Open() )  {
+    if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
+      wxTextDataObject data;
+      wxTheClipboard->GetData(data);
+      content = data.GetText();
+    }
+    wxTheClipboard->Close();
+  }
+#elif __WIN32__
+  if (OpenClipboard(NULL)) {
+    HGLOBAL data=NULL;
+    bool unicode=false;
+    if (IsClipboardFormatAvailable(CF_UNICODETEXT)) {
+      data = GetClipboardData(CF_UNICODETEXT);
+      unicode = true;
+    }
+    else if (IsClipboardFormatAvailable(CF_TEXT)) {
+      data = GetClipboardData(CF_TEXT);
+    }
+    if (data == NULL) {
+      RestoreSelection();
+    }
+    else {
+      uint8_t *str = (uint8_t *)GlobalLock(data);
+      if (str) {
+        if (unicode)
+          content = olxwstr((const wchar_t *)str);
+        else
+          content = olxcstr((const char *)str);
+        GlobalUnlock(data);
+      }
+    }
+    CloseClipboard();
+  }
+#endif
+  if (!content.IsEmpty()) {
+    try {
+      TDataItem root(NULL, "root");
+      root.LoadFromString(0, content, NULL);
+      TDataItem &di = root.FindRequiredItem("objects");
+      olxstr fid = XFile().GetFileName() + XFile().GetLastLoaderSG().GetName();
+      if (di.GetValue() == MD5::Digest(fid)) {
+        TDataItem &atoms = di.FindRequiredItem("atoms"),
+          &bonds = di.FindRequiredItem("bonds");
+        SelectAll(false);
+        for (size_t i=0; i < atoms.ItemCount(); i++) {
+          TSAtom *sa = XFile().GetLattice().GetAtomRegistry().Find(
+            TSAtom::Ref(atoms.GetItem(i)));
+          if (sa != NULL) {
+            GetRender().Select(*dynamic_cast<TXAtom *>(sa), true);
+          }
+        }
+        for (size_t i=0; i < bonds.ItemCount(); i++) {
+          TSBond *sb = XFile().GetLattice().GetAtomRegistry().Find(
+            TSBond::Ref(bonds.GetItem(i)));
+          if (sb != NULL) {
+            GetRender().Select(*dynamic_cast<TXBond *>(sb), true);
+          }
+        }
+      }
+      else {
+        RestoreSelection();
+      }
+    }
+    catch(const TExceptionBase &e) {
+      RestoreSelection();
+    }
+  }
+  Draw();
+}
+//..............................................................................
 void TGXApp::RestoreSelection()  {
   if( !SelectionCopy[0].IsEmpty() || SelectionCopy[1].IsEmpty() )
     return;
@@ -1866,7 +1966,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
     }
     if( !rv.IsEmpty() )  {
       if (ClearSelection)
-        GetRender().SelectAll(false);
+        SelectAll(false);
       return rv;
     }
     if (getAll) {
@@ -3501,23 +3601,69 @@ void TGXApp::LoadXFile(const olxstr& fn)  {
   Draw();  // fixes native loader is not draw after load
 }
 //..............................................................................
-void TGXApp::ShowPart(const TIntList& parts, bool show)  {
-  if( parts.IsEmpty() )  {
-    AllVisible(true);
+void ShowPart_TagSetter(TCAtom &a, index_t v) {
+  if (a.IsProcessed()) return;
+  a.SetProcessed(true);
+  for (size_t i=0; i < a.AttachedSiteCount(); i++) {
+    TCAtom &aa = a.GetAttachedAtom(i);
+    aa.SetTag(v);
+    ShowPart_TagSetter(aa, v);
+  }
+}
+void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
+  if (visible_only) {
+    SortedObjectList<uint32_t, TPrimitiveComparator> tags;
+    AtomIterator ai(*this);
+    TAsymmUnit &au = XFile().GetAsymmUnit();
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      a.SetProcessed(false);
+      a.SetTag(-1);
+    }
+    for (size_t i=0; i < au.AtomCount(); i++) {
+      TCAtom &a = au.GetAtom(i);
+      if (!a.IsProcessed())
+        ShowPart_TagSetter(a, (index_t)i);
+
+    }
+    while (ai.HasNext()) {
+      TXAtom& xa = ai.Next();
+      if (xa.IsVisible()) {
+        tags.AddUnique(xa.CAtom().GetTag());
+      }
+    }
+    ai.Reset();
+    while (ai.HasNext()) {
+      TXAtom& xa = ai.Next();
+      if (!xa.IsVisible() && tags.Contains(xa.CAtom().GetTag())) {
+        xa.SetMasked(false);
+        xa.SetVisible(true);
+      }
+    }
+    if (parts.IsEmpty()) {
+      _maskInvisible();
+      UpdateConnectivity();
+    }
+  }
+  if (parts.IsEmpty()) {
+    if (!visible_only)
+      AllVisible(true);
     return;
   }
   AtomIterator ai(*this);
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if( parts.IndexOf(xa.CAtom().GetPart()) != InvalidIndex )  {
+    if (visible_only && !xa.IsVisible())
+      continue;
+    if (parts.Contains(xa.CAtom().GetPart())) {
       xa.SetVisible(show);
       xa.SetMasked(!show);
     }
-    else  {
+    else {
       xa.SetVisible(!show);
       xa.SetMasked(show);
     }
-    if( xa.IsVisible() )
+    if (xa.IsVisible())
       xa.SetVisible(xa.IsAvailable());
   }
   _maskInvisible();

@@ -17,28 +17,28 @@ template <class MC, class VC> class TSymmMat {
 public:
   TSymmMat() : Id(~0) {}
   // copy constructor
-  TSymmMat(const TSymmMat& v) : 
+  TSymmMat(const TSymmMat& v) :
     Id(v.Id),
     r(v.r),
     t(v.t)
   {}
-  template <typename AMC, typename AVC> 
-  TSymmMat(const TSymmMat<AMC,AVC>& v) : 
+  template <typename AMC, typename AVC>
+  TSymmMat(const TSymmMat<AMC,AVC>& v) :
     Id(v.GetId()),
     r(v.r),
     t(v.t)
   {}
   // composing constructor
-  template <typename AMC, typename AVC> 
+  template <typename AMC, typename AVC>
   TSymmMat(const TMatrix33<AMC>& m, const TVector3<AVC>& v)
     : Id(~0), r(m), t(v) {}
 
-  template <typename AMC, typename AVC> 
+  template <typename AMC>
   TSymmMat(const TMatrix33<AMC>& m)
     : Id(~0), r(m)
   {}
 
-  template <class AT> 
+  template <class AT>
   TVector3<VC> operator * (const TVector3<AT>& a) const {
     return TVector3<VC>(r*a).operator +=(t);
   }
@@ -97,7 +97,7 @@ public:
   bool IsI() const  {
     return (r.IsI() && t.QLength() < 1e-6);
   }
-  static TSymmMat Identity()  { return  TSymmMat(TMatrix33<MC>::I()); }
+  static TSymmMat Identity()  { return  TSymmMat(TMatrix33<MC>::Idenity()); }
   
   TSymmMat& Null()  {
     r.Null();

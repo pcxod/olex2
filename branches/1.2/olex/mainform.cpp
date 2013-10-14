@@ -105,6 +105,14 @@
   #undef Bool
 #endif
 
+#ifndef WXK_RAW_CONTROL
+# define WXK_RAW_CONTROL WXK_CONTROL
+#endif
+
+#ifndef wxMOD_RAW_CONTROL
+#define wxMOD_RAW_CONTROL wxMOD_CONTROL
+#endif
+
   IMPLEMENT_CLASS(TMainForm, TMainFrame)
 
 const olxstr ProcessOutputCBName("procout");
@@ -1190,8 +1198,8 @@ void TMainForm::XApp(Olex2App *XA)  {
   TBasicApp::GetLog().OnException.Add(this, ID_EXCEPTION, msiEnter);
   TBasicApp::GetLog().OnPost.Add(this, ID_LOG, msiExecute);
   FXApp->OnObjectsDestroy.Add(this, ID_XOBJECTSDESTROY, msiEnter);
-  XLibMacros::OnDelIns.Add(this, ID_DELINS, msiExit);
-  XLibMacros::OnAddIns.Add(this, ID_ADDINS, msiExit);
+  XLibMacros::OnDelIns().Add(this, ID_DELINS, msiExit);
+  XLibMacros::OnAddIns().Add(this, ID_ADDINS, msiExit);
   LoadVFS(plGlobal);
 
   HtmlManager.InitialiseMain(wxBORDER_NONE|wxVSCROLL|wxALWAYS_SHOW_SB|wxCLIP_CHILDREN);
@@ -2020,11 +2028,11 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   m.Skip(false);
   short Fl=0;
   olxstr Cmd, FullCmd;
-  if( m.m_altDown )      Fl |= sssAlt;
-  if( m.m_shiftDown )    Fl |= sssShift;
-  if( m.m_controlDown )  Fl |= sssCtrl;
+  if (m.GetModifiers() & wxMOD_ALT) Fl |= sssAlt;
+  if (m.GetModifiers() & wxMOD_RAW_CONTROL) Fl |= sssCtrl;
+  if (m.GetModifiers() & wxMOD_SHIFT) Fl |= sssShift;
   // Alt + Up,Down,Left, Right - rotation, +Shift - speed
-  if( ((Fl & sssShift)) || (Fl & sssAlt) )  {
+  if (((Fl & sssShift)) || (Fl & sssAlt)) {
     int inc = 3;
     double zoom_inc = 0.01;
     if( (Fl & sssShift) )  {
@@ -2209,7 +2217,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   }
 
   short Fl = 0;
-  if( m.m_keyCode == WXK_CONTROL ||
+  if( m.m_keyCode == WXK_RAW_CONTROL ||
       m.m_keyCode == WXK_MENU ||
       m.m_keyCode == WXK_SHIFT ||
       m.m_keyCode == WXK_ALT)
@@ -2224,19 +2232,19 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     }
   }
 
-  if( m.m_altDown )      Fl |= sssAlt;
-  if( m.m_shiftDown )    Fl |= sssShift;
-  if( m.m_controlDown )  Fl |= sssCtrl;
+  if (m.GetModifiers() & wxMOD_ALT) Fl |= sssAlt;
+  if (m.GetModifiers() & wxMOD_RAW_CONTROL) Fl |= sssCtrl;
+  if (m.GetModifiers() & wxMOD_SHIFT) Fl |= sssShift;
   // process built-ins first
-  if( m.GetModifiers() == wxMOD_CMD )  {
+  if (m.GetModifiers() == wxMOD_CMD) {
   // paste, Cmd+V, Ctrl+V
-    if( m.GetKeyCode() == 'V' )  {
+    if (m.GetKeyCode() == 'V') {
       // avoid duplication
       if (CmdLineVisible && FindFocus() != FCmdLine)
         return;
       olxstr content;
-      if( wxTheClipboard->Open() )  {
-        if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
+      if (wxTheClipboard->Open()) {
+        if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
           wxTextDataObject data;
           wxTheClipboard->GetData(data);
           content = data.GetText();
@@ -2248,7 +2256,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
         cmdl = FCmdLine->GetCommand();
       else
         cmdl = FGlConsole->GetCommand();
-      if( !ImportFrag(content) )  {
+      if (!ImportFrag(content)) {
         olxstr trimmed_content = content;
         trimmed_content.Trim(' ').Trim('\n').Trim('\r');
         size_t ip;
@@ -2258,7 +2266,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
         }
         else
           ip = FGlConsole->GetCmdInsertPosition();
-        if( ip >= cmdl.Length() )
+        if (ip >= cmdl.Length())
           cmdl << content;
         else
           cmdl.Insert(content, ip);
@@ -2271,13 +2279,23 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
       return;
     }
     //undo, Cmd+Z, Ctrl+Z
-    else if( m.GetKeyCode() == 'Z' )  {
+    else if (m.GetKeyCode() == 'Z') {
       processMacro("undo");
       TimePerFrame = FXApp->Draw();
       return;
     }
+    else if(m.GetKeyCode() == WXK_INSERT) {
+      FXApp->CopySelection();
+      return;
+    }
   }
-  if( !AccShortcuts.ValueExists(Fl<<16 | m.m_keyCode) )  {
+  else if (m.GetModifiers() == wxMOD_SHIFT) {
+    if(m.GetKeyCode() == WXK_INSERT) {
+      FXApp->PasteSelection();
+      return;
+    }
+  }
+  if (!AccShortcuts.ValueExists(Fl<<16 | m.m_keyCode)) {
     m.Skip();
     return;
   }
@@ -2488,7 +2506,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("Scenes",
     olxstr().quote('"') << TEFile::CreateRelativePath(ScenesDir));
   I->AddField("Current",
-    olxstr().quote('"') << TEFile::CreateRelativePath(XLibMacros::CurrentDir));
+    olxstr().quote('"') << TEFile::CreateRelativePath(XLibMacros::CurrentDir()));
 
   I = &DF.Root().AddItem("HTML");
   I->AddField("Minimized", FHtmlMinimized);
@@ -2594,9 +2612,9 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   ScenesDir = TEFile::ExpandRelativePath(
     exparse::parser_util::unquote(I->GetFieldValue("Scenes")));
   processFunction(ScenesDir);
-  XLibMacros::CurrentDir = TEFile::ExpandRelativePath(
+  XLibMacros::CurrentDir() = TEFile::ExpandRelativePath(
     exparse::parser_util::unquote(I->GetFieldValue("Current")));
-  processFunction(XLibMacros::CurrentDir);
+  processFunction(XLibMacros::CurrentDir());
 
   I = DF.Root().FindItem("HTML");
   if( I != NULL )  {
@@ -2656,7 +2674,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     InfoWindowVisible = I->GetFieldValue("Info", TrueString()).ToBool();
     CmdLineVisible = I->GetFieldValue("CmdLine", FalseString()).ToBool();
   }
-  TEFile::ChangeDir(XLibMacros::CurrentDir);
+  TEFile::ChangeDir(XLibMacros::CurrentDir());
 
   I = DF.Root().FindItem("Recent_files");
   if( I != NULL )  {

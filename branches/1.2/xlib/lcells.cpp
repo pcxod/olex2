@@ -138,8 +138,8 @@ int CellReader::ExtractLattFromSymmetry(const cif_dp::CifBlock &block)  {
       size_t sindex = Loop->ColIndex("_space_group_symop_operation_xyz");
       if( sindex == InvalidIndex )  return 0;
       for( size_t i=0; i < Loop->RowCount(); i++ )  {
-        TSymmParser::SymmToMatrix(
-          Loop->Get(i, sindex).GetStringValue(), matrices.AddNew());
+        matrices.AddCopy(
+          TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue()));
       }
     }
     else  {
@@ -150,8 +150,8 @@ int CellReader::ExtractLattFromSymmetry(const cif_dp::CifBlock &block)  {
         size_t sindex = Loop->ColIndex("_symmetry_equiv_pos_as_xyz");
         if( sindex == InvalidIndex )  return 0;
         for( size_t i=0; i < Loop->RowCount(); i++ )  {
-          TSymmParser::SymmToMatrix(
-            Loop->Get(i, sindex).GetStringValue(), matrices.AddNew());
+          matrices.AddCopy(
+            TSymmParser::SymmToMatrix(Loop->Get(i, sindex).GetStringValue()));
         }
       }
     }

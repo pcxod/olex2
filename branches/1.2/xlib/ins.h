@@ -180,8 +180,11 @@ public:
       }
       else if( Toks[0].Equalsi("MERG") && Toks.Count() == 2 )
         rm.SetMERG(Toks[1].ToInt());
-      else if( Toks[0].Equalsi("EXTI") )
-        rm.SetEXTI(Toks.Count() == 1 ? 0.0 : Toks[1].ToDouble(), 0);
+      else if (Toks[0].Equalsi("EXTI")) {
+        TEValueD ev;
+        if (Toks.Count() > 1) ev = Toks[1];
+        rm.SetEXTI(ev.GetV(), ev.GetE());
+      }
       else if( Toks[0].Equalsi("SIZE") && (Toks.Count() == 4) ) {
         rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(),
           Toks[3].ToDouble());
@@ -265,7 +268,7 @@ protected:
 public:
   // helper function...
   static void SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
-    TStrList& list, size_t sfac_pos);
+    TStrList& list, size_t sfac_pos, bool save_disp=true);
   template <class List> static List& Preprocess(List& l)  {
     // combine lines
     for( size_t i=0; i < l.Count(); i++ )  {
