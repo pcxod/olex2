@@ -30,6 +30,7 @@ namespace ctrl_ext {
     olxstr Data;
     olxstr StrValue;
     int entered_counter;
+    bool OnChangeAlways;
   protected:
     void _AddObject(const olxstr &Item, IEObject* Data, bool Delete);
   public:
@@ -44,6 +45,7 @@ namespace ctrl_ext {
     {
       OnLeave.SetEnabled(false);
       entered_counter = 0;
+      OnChangeAlways = false;
     }
     virtual ~TComboBox();
 
@@ -72,10 +74,11 @@ namespace ctrl_ext {
 
     DefPropC(olxstr, Data)
 
-    bool IsReadOnly() const {   return WI.HasWindowStyle(wxCB_READONLY);  }
-    void SetReadOnly(bool v)   {  
-      v ? WI.AddWindowStyle(wxCB_READONLY) : WI.DelWindowStyle(wxCB_READONLY);  
+    bool IsReadOnly() const { return WI.HasWindowStyle(wxCB_READONLY); }
+    void SetReadOnly(bool v) {
+      v ? WI.AddWindowStyle(wxCB_READONLY) : WI.DelWindowStyle(wxCB_READONLY);
     }
+    DefPropBIsSet(OnChangeAlways)
 
     void HandleOnLeave();
     void HandleOnEnter();

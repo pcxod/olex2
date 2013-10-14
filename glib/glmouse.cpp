@@ -117,9 +117,12 @@ bool TGlMouse::DblClick()  {
   return (MData.Object != NULL) ? MData.Object->OnDblClick(this, MData) : false;
 }
 //..............................................................................
-void TGlMouse::ResetMouseState()  {
+void TGlMouse::ResetMouseState(short x, short y, short shift, short button) {
   FDblClick = false;
-  MData.Button = MData.Shift = 0;
+  MData.Button = button;
+  MData.Shift = shift;
+  FSX = MData.X = x;
+  FSY = MData.Y = y;
   MData.Object = NULL;
 }
 //..............................................................................

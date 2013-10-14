@@ -553,57 +553,50 @@ TAG_HANDLER_PROC(tag)  {
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(CreatedWindow, fl));
   }
 /******************* COMBOBOX *************************************************/
-  else if( TagName.Equalsi("combo") )  {
+  else if (TagName.Equalsi("combo")) {
     TComboBox *Box = new TComboBox(html,
       tag.HasParam(wxT("READONLY")), wxSize(ax, ay));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Box;
     CreatedWindow = Box;
-    //Box->WI.SetWidth(ax);
-    if( tag.HasParam(wxT("ITEMS")) )  {
+    if (tag.HasParam(wxT("ITEMS"))) {
       olxstr Items = tag.GetParam(wxT("ITEMS"));
       op->processFunction(Items, SrcInfo, true);
       TStrList SL(Items, ';');
-      if( SL.IsEmpty() ) {
-        // fix the bug in wxWidgets (if Up pressed, crash occurs)
-#if wxCHECK_VERSION(2,8,0)
-        Box->AddObject(EmptyString());
-#endif
-      }
-      else
         Box->AddItems(SL);
     }
-    else  {
-      /* need to intialise the items - or wxWidgets will crash (pressing Up
-      button)
-      */
+    else {
       Box->AddObject(Value);
-      // fix the bug in wxWidgets (if Up pressed, crass occurs)
-      Box->AddObject(EmptyString());
     }
     Box->SetText(Value);
     Box->SetData(Data);
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
+    if (tag.HasParam(wxT("ONCHANGE"))) {
       Box->OnChange.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Box->OnChange.Add(&html->Manager);
+      if (tag.HasParam(wxT("ONCHANGEALWAYS"))) {
+        olxstr uc = tag.GetParam(wxT("ONCHANGEALWAYS"));
+        if (uc.IsBool()) {
+          Box->SetOnChangeAlways(uc.ToBool());
+        }
+      }
     }
-    if( tag.HasParam(wxT("ONLEAVE")) )  {
+    if (tag.HasParam(wxT("ONLEAVE"))) {
       Box->OnLeave.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map);
       Box->OnLeave.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONENTER")) )  {
+    if (tag.HasParam(wxT("ONENTER"))) {
       Box->OnEnter.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map);
       Box->OnEnter.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONRETURN")) )  {
+    if (tag.HasParam(wxT("ONRETURN"))) {
       Box->OnReturn.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map);
       Box->OnReturn.Add(&html->Manager);
     }
-    if( !Label.IsEmpty() )  {
+    if (!Label.IsEmpty()) {
       wxHtmlContainerCell* contC =
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
@@ -612,8 +605,8 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell(wc);
       contC->InsertCell(new THtmlWidgetCell(Box, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
+      if (valign != -1) contC->SetAlignVer(valign);
+      if (halign != -1) contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
