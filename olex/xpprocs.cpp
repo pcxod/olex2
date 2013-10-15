@@ -1440,51 +1440,70 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       FXApp->XFile().LoadFromFile(FN);
     }
   }
-  else if ( Cmds[0].Equalsi("radii") )  {
-    if( Cmds.Count() > 1  )  {
+  else if (Cmds[0].Equalsi("radii")) {
+    if (Cmds.Count() > 1) {
       olxstr fn = Cmds.Text(' ', 2);
-      if( fn.IsEmpty() ) {
+      if (fn.IsEmpty()) {
         fn = PickFile("Load atomic radii", "Text files|*.txt",
           EmptyString(), EmptyString(), true);
       }
-      if( TEFile::Exists(fn) )  {
+      if (TEFile::Exists(fn)) {
         olxdict<olxstr,double,olxstrComparator<false> > radii;
-        TStrList sl, toks;
+        TStrList sl, changed;
         sl.LoadFromFile(fn);
         // parse the file and fill the dictionary
-        TBasicApp::NewLogEntry() << "Using user defined radii for:";
         for( size_t i=0; i < sl.Count(); i++ )  {
-          toks.Clear();
-          toks.Strtok(sl[i], ' ');
-          if( toks.Count() == 2 )  {
-            TBasicApp::NewLogEntry() << ' ' << toks[0] << '\t' << toks[1];
-            radii(toks[0], toks[1].ToDouble());
+          size_t idx = sl[i].IndexOf(' ');
+          if (idx != InvalidIndex) {
+            radii(sl[i].SubStringTo(idx), sl[i].SubStringFrom(idx+1).ToDouble());
           }
         }
         // end the file parsing
-        if( Cmds[1].Equalsi("sfil") )  {
-          for( size_t i=0; i < radii.Count(); i++ )  {
+        if (Cmds[1].Equalsi("sfil")) {
+          for (size_t i=0; i < radii.Count(); i++) {
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-            if( cme != NULL )
+            if (cme != NULL && cme->r_sfil != radii.GetValue(i)) {
               cme->r_sfil = radii.GetValue(i);
+              changed << cme->symbol;
+            }
           }
         }
-        else if( Cmds[1].Equalsi("pers") )  {
-          for( size_t i=0; i < radii.Count(); i++ )  {
+        else if (Cmds[1].Equalsi("pers")) {
+          for (size_t i=0; i < radii.Count(); i++) {
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-            if( cme != NULL )
+            if (cme != NULL && cme->r_pers != radii.GetValue(i)) {
               cme->r_pers = radii.GetValue(i);
+              changed << cme->symbol;
+            }
           }
         }
-        else if( Cmds[1].Equalsi("vdw") )  {
-          for( size_t i=0; i < radii.Count(); i++ )  {
+        else if (Cmds[1].Equalsi("vdw")) {
+          for (size_t i=0; i < radii.Count(); i++) {
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-            if( cme != NULL )
+            if (cme != NULL && cme->r_vdw != radii.GetValue(i)) {
               cme->r_vdw = radii.GetValue(i);
+              changed << cme->symbol;
+            }
+          }
+        }
+        else if (Cmds[1].Equalsi("bonding")) {
+          for (size_t i=0; i < radii.Count(); i++) {
+            cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+            if (cme != NULL && cme->r_bonding != radii.GetValue(i)) {
+              cme->r_bonding = radii.GetValue(i);
+              changed << cme->symbol;
+            }
           }
         }
         else
           Error.ProcessingError(__OlxSrcInfo, "undefined radii name");
+        if (!changed.IsEmpty()) {
+          TBasicApp::NewLogEntry() << "Using user defined " << Cmds[1] <<
+            " radii for:";
+          olxstr all = changed.Text(' ');
+          changed.Clear();
+          TBasicApp::NewLogEntry() << changed.Hyphenate(all, 80, true);
+        }
       }
     }
   }
