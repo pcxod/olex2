@@ -285,7 +285,7 @@ void TXGrid::Create(const olxstr& cName)  {
 }
 //.............................................................................
 void TXGrid::TPlaneCalculationTask::Run(size_t ind)  {
-  for( size_t j=0; j < max_dim; j++ )  {  // (i,j,Depth)        
+  for( size_t j=0; j < max_dim; j++ )  {  // (i,j,Depth)
     vec3f p((float)(ind-hh)/size, (float)(j-hh)/size,  depth);
     p = proj_m*p;
     p -= center;
@@ -409,6 +409,8 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       ContourCrds[0], ContourCrds[1], 
       ContourLevelCount, ContourLevels, mf);
     GlP.EndColorRendering();
+  }
+  if ((RenderMode&planeRenderModePlane) != 0) {
     float legend_step = (maxVal-minVal)/32;
     for (int i=0; i < 32; i++) {
       float val = minVal + legend_step*i;
