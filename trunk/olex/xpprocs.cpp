@@ -5224,6 +5224,7 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
   const TLattice &latt;
   TSAtom &center;
   TArrayList<uint32_t> colors;
+  bool emboss;
   PointAnalyser(const TLattice &l, TXAtom &c)
     : latt(l), center(c)
   {
@@ -5231,8 +5232,11 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
       TSAtom &a = latt.GetObjects().atoms[i];
       if( !a.IsAvailable() )  continue;
-      if( a.CAtom().GetFragmentId() > max_net_id )
+      if (a.CAtom().GetFragmentId() > max_net_id &&
+          a.CAtom().GetFragmentId() != ~0)
+      {
         max_net_id = a.CAtom().GetFragmentId();
+      }
     }
     colors.SetCount(max_net_id+1);
     if( max_net_id >= 1 )  {
@@ -5243,9 +5247,11 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
       colors[2] = 0xff0000;
     }
   }
-  uint32_t Analyse(const vec3f &p)  {
+  uint32_t Analyse(vec3f &p_)  {
     uint64_t cl = 0;
     size_t cnt = 0;
+    vec3f p = p_;
+    float maxd=1;
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
       TSAtom &a = latt.GetObjects().atoms[i];
       if( &a == &center || !a.IsAvailable() )
@@ -5256,15 +5262,21 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
         continue;
       float d = (v-p*dp).Length();
       if( d < a.GetType().r_vdw )  {
-        cl += colors[a.CAtom().GetFragmentId()];
-        cnt++;
+        if (a.CAtom().GetFragmentId() < colors.Count()) {
+          cl += colors[a.CAtom().GetFragmentId()];
+          cnt++;
+        }
+        if (dp > maxd)
+          maxd = dp;
       }
     }
+    if (emboss)
+      p_.NormaliseTo(maxd);
     if( cnt == 0 )
       cl = 0x00ffffff;
     else if( cnt > 1 )
       cl /= cnt;
-    if( OLX_GetAValue(cl) != 0 )
+    if( OLX_GetAValue(cl) != 0 ) 
       return cl;
     return cl|(127<<24);
   }
@@ -5284,6 +5296,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   static size_t counter = 0;
   PointAnalyser &pa = *new PointAnalyser(FXApp->XFile().GetLattice(), *xatoms[0]);
+  pa.emboss = Options.GetBoolOption('e');
   {
     if( pa.colors.Count() == 1 && !colors.IsEmpty() )
       pa.colors[0] = colors[0];

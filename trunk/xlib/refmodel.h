@@ -153,10 +153,25 @@ public:
 
   struct BadReflection {
     vec3i index;
-    double Fo, Fc, esd;
-    BadReflection(const vec3i &_index, double _Fo, double _Fc, double _esd)
-    : index(_index), Fo(_Fo), Fc(_Fc), esd(_esd) {}
-    BadReflection() : Fo(0), Fc(0), esd(0) {}
+    double Fo, Fc, esd, factor;
+    BadReflection(const vec3i &_index, double _Fo, double _Fc, double _esd,
+      double _factor=0)
+    : index(_index), Fo(_Fo), Fc(_Fc), esd(_esd), factor(_factor)
+    {
+      if (factor == 0 && esd != 0)
+        factor = (Fo-Fc)/esd;
+    }
+    BadReflection() : Fo(0), Fc(0), esd(0), factor(0) {}
+    void UpdateFactor() {
+      if (esd != 0)
+        factor = (Fo-Fc)/esd;
+    }
+    static int CompareDirect(const BadReflection &r1, const BadReflection &r2) {
+      return olx_cmp(r1.factor, r2.factor);
+    }
+    static int CompareAbs(const BadReflection &r1, const BadReflection &r2) {
+      return olx_cmp(olx_abs(r1.factor), olx_abs(r2.factor));
+    }
   };
 
 protected:

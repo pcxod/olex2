@@ -57,18 +57,24 @@ void TDSphere::Create(const olxstr& cName)  {
   olx_gl::begin(GL_TRIANGLES);
   for( size_t i = 0; i < tc; i++ )  {
     const IndexTriangle& t = triags[i];
-    for( size_t j=0; j < 3; j++ )  {
-      uint32_t cl = colors[t.vertices[j]];
-      vec3f n = (vecs[t.vertices[0]]+vecs[t.vertices[1]]+vecs[t.vertices[2]])/3;
-      olx_gl::normal(n);
-      if( cl != last_cl )  {
-        olx_gl::color((float)OLX_GetRValue(cl)/255,
-          (float)OLX_GetGValue(cl)/255,
-          (float)OLX_GetBValue(cl)/255,
-          (float)OLX_GetAValue(cl)/255);
-        last_cl = cl;
+    try {
+      for( size_t j=0; j < 3; j++ )  {
+        uint32_t cl = colors[t.vertices[j]];
+        vec3f n = (vecs[t.vertices[0]]-vecs[t.vertices[1]]).XProdVec(
+          vecs[t.vertices[2]]-vecs[t.vertices[1]]).Normalise();
+        olx_gl::normal(-n);
+        if( cl != last_cl )  {
+          olx_gl::color((float)OLX_GetRValue(cl)/255,
+            (float)OLX_GetGValue(cl)/255,
+            (float)OLX_GetBValue(cl)/255,
+            (float)OLX_GetAValue(cl)/255);
+          last_cl = cl;
+        }
+        olx_gl::vertex(vecs[t.vertices[j]]);
       }
-      olx_gl::vertex(vecs[t.vertices[j]]);
+    }
+    catch(TDivException) {
+      break;
     }
   }
   olx_gl::end();

@@ -159,9 +159,6 @@
     <ClCompile Include="..\..\..\sdl\os_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\sdl\esort.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\sdl\wildcard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
