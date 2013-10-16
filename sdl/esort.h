@@ -104,23 +104,70 @@ struct FunctionComparator {
   }
 };
 //.............................................................................
-template <class cmp_t> struct ReverseComparator_ {
-  const cmp_t &cmp;
-  ReverseComparator_(const cmp_t &cmp_) : cmp(cmp_) {}
-  template <typename item_t> int Compare(
-    const item_t &i1, const item_t &i2) const
+
+struct ReverseComparator {
+  template <class cmp_t> struct ReverseComparator_ {
+    const cmp_t &cmp;
+    ReverseComparator_(const cmp_t &cmp_) : cmp(cmp_) {}
+    template <typename item_t> int Compare(
+      const item_t &i1, const item_t &i2) const
+    {
+      return cmp.Compare(i2, i1);
+    }
+  };
+  template <typename item_t> struct ReverseSF {
+    int (*func)(const item_t &, const item_t&);
+    ReverseSF(int (*func_)(const item_t &, const item_t&)) : func(func_) {}
+    int Compare(const item_t &i1, const item_t &i2) const {
+      return (*func)(i2, i1);
+    }
+  };
+  template <class base_t, typename item_t> struct ReverseMF {
+    base_t &instance;
+    int (base_t::*func)(const item_t &, const item_t&);
+    ReverseMF(base_t &instance_,
+      int (base_t::*func_)(const item_t &, const item_t&))
+    : instance(instance_), func(func_)
+    {}
+    int Compare(const item_t &i1, const item_t &i2) const {
+      return (instance.*func)(i2, i1);
+    }
+  };
+  template <class base_t, typename item_t> struct ReverseCMF {
+    const base_t &instance;
+    int (base_t::*func)(const item_t &, const item_t&) const;
+    ReverseCMF(const base_t &instance_,
+      int (base_t::*func_)(const item_t &, const item_t&) const)
+    : instance(instance_), func(func_)
+    {}
+    int Compare(const item_t &i1, const item_t &i2) const {
+      return (instance.*func)(i2, i1);
+    }
+  };
+
+  template <typename item_t>
+   static ReverseSF<item_t> Make(int (*func)(const item_t &, const item_t&)) {
+     return ReverseSF<item_t>(func);
+  }
+  template <class base_t, typename item_t>
+   static ReverseMF<base_t, item_t> Make(base_t &instance,
+     int (base_t::*func)(const item_t &, const item_t&))
   {
-    return cmp.Compare(i2, i1);
+    return ReverseMF<base_t, item_t>(instance, func);
+  }
+  template <class base_t, typename item_t>
+   static ReverseCMF<base_t, item_t> MakeConst(const base_t &instance,
+     int (base_t::*func)(const item_t &, const item_t&) const)
+  {
+    return ReverseCMF<base_t, item_t>(instance, func);
+  }
+  template <class cmp_t>
+   static ReverseComparator_<cmp_t> Make(const cmp_t& cmp)
+  {
+    return ReverseComparator_<cmp_t>(cmp);
   }
 };
-// generic reverse comparator
-template <class cmp_t> ReverseComparator_<cmp_t> olx_reverse_cmp(
-  const cmp_t &cmp)
-{
-  return ReverseComparator_<cmp_t>(cmp);
-}
-// to be used with the objects having Compare method
-ReverseComparator_<TComparableComparator> olx_reverse_cmp();
+
 //.............................................................................
 struct DummySwapListener  {
   static void OnSwap(size_t, size_t)  {}

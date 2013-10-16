@@ -834,7 +834,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroD(ExportFrag, EmptyString(), fpNone|psFileLoaded,
     "Exports selected fragment to an external file");
   this_InitMacroD(ProjSph,
-    "g-sphere quality [6]",
+    "g-sphere quality [6]&;"
+    "e-emboss the sphere"
+    ,
     fpAny|psFileLoaded, 
     "Creates a projection from the selected atom onto a sphere, coloring each "
     "point on the sphere with a unique color corresponding to fragments.");
@@ -2996,28 +2998,33 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
     TFileHandlerManager::AddMemoryBlock(BadRefsFile, NULL, 0, plStructure);
     return;
   }
-  const TTypeList<RefinementModel::BadReflection> bad_refs =
+  bool sort_abs = TOlxVars::FindValue(
+    "olex2.disagreeable.sort_abs", TrueString()).ToBool();
+  double sort_th = TOlxVars::FindValue(
+    "olex2.disagreeable.threshold", "10").ToDouble();
+  TTypeList<RefinementModel::BadReflection> bad_refs =
     FXApp->XFile().GetRM().GetBadReflectionList();
+  if (bad_refs.IsEmpty()) return;
+  if (!sort_abs) {
+    QuickSorter::Sort(bad_refs,
+      ReverseComparator::Make(&RefinementModel::BadReflection::CompareDirect));
+  }
   TTTable<TStrList> Table;
-  TStrList Output;
   Table.Resize(bad_refs.Count(), 5);
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
-  Table.ColName(3) = "(Fc<sup>2</sup>-Fo<sup>2</sup>)/esd";
-  for( size_t i=0; i < bad_refs.Count(); i++ )  {
+  Table.ColName(3) = "Error/esd";
+  for (size_t i=0; i < bad_refs.Count(); i++) {
     for (int j=0; j < 3; j++)
       Table[i][j] = bad_refs[i].index[j];
-    double df = (bad_refs[i].Fc-bad_refs[i].Fo)/bad_refs[i].esd;
-    if( olx_abs(df) >= 10 ) {
+    if (olx_abs(bad_refs[i].factor) >= sort_th) {
       Table[i][3] << "<font color=\'red\'>" <<
-        olxstr::FormatFloat(2, df) << "</font>";
+        olxstr::FormatFloat(2, bad_refs[i].factor) << "</font>";
     }
-    else  
-      Table[i][3] << olxstr::FormatFloat(2, df);
-    if( FXApp->XFile().GetRM().GetOmits().IndexOf(
-      bad_refs[i].index) != InvalidIndex )
-    {
+    else
+      Table[i][3] << olxstr::FormatFloat(2, bad_refs[i].factor);
+    if (FXApp->XFile().GetRM().GetOmits().Contains(bad_refs[i].index)) {
       Table[i][4] << "Omitted";
     }
     else {
@@ -3026,7 +3033,11 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
         "omit" << "</a>";
     }
   }
-  Table.CreateHTMLList(Output, EmptyString(), true, false, TableDef);
+  TStrList Output = Table.CreateHTMLList(EmptyString(), true, false, TableDef);
+  Output.Add("Error = sig(D)"
+    "(wD<sup>2</sup>/&lt;wD<sup>2</sup>&gt)<sup>1/2</sup>,"
+    " where D=Fc<sup>2</sup>-Fo<sup>2</sup> (Shelx)"
+    " or just D (olex2.refine)");
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(),
     plStructure);

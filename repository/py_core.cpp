@@ -473,7 +473,7 @@ PyObject* pySetBadReflections(PyObject* self, PyObject* args)  {
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiiddd");
     }
     Py_DECREF(r);
-    bad_refs.AddCopy(br);
+    bad_refs.AddCopy(br).UpdateFactor();
   }
   TXApp::GetInstance().XFile().GetRM().SetBadReflectionList(bad_refs);
   
