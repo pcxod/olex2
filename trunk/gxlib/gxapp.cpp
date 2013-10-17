@@ -5078,25 +5078,26 @@ const_strlist TGXApp::ToWrl() const {
   //out.Add("}");
 }
 //..............................................................................
-void TGXApp::CreateRings(bool force, bool create)  {
-  if( !force &&
-    !TBasicApp::Options.FindValue("aromatic_rings", FalseString()).ToBool() )
+void TGXApp::CreateRings(bool force, bool create) {
+  if (!force &&
+    !TBasicApp::Options.FindValue("aromatic_rings", FalseString()).ToBool())
   {
     return;
   }
   TGraphicsStyle *cgs = GetRender().GetStyles().FindStyle('C');
   TGlMaterial *glm = NULL;
-  if( cgs != NULL )
+  if (cgs != NULL)
     glm = cgs->FindMaterial("Sphere");
-  
+  TStrList str_rings(TBasicApp::GetOptions().FindValue(
+    "aromatic_rings_def", "C5,C6,NC5,SC4"), ',');
   TTypeList<TSAtomPList> rings;
-  FindRings("C5", rings);
-  FindRings("C6", rings);
-  FindRings("NC5", rings);
-  for( size_t i=0; i < rings.Count(); i++ )  {
+  for (size_t i=0; i < str_rings.Count(); i++) {
+    FindRings(str_rings[i], rings);
+  }
+  for (size_t i=0; i < rings.Count(); i++) {
     vec3d normal, center;
-    if( TSPlane::CalcPlane(rings[i], normal, center) > 0.05 ||
-      !TNetwork::IsRingRegular(rings[i]) )
+    if (TSPlane::CalcPlane(rings[i], normal, center) > 0.05 ||
+      !TNetwork::IsRingRegular(rings[i]))
     {
       continue;
     }
@@ -5105,16 +5106,16 @@ void TGXApp::CreateRings(bool force, bool create)  {
     r.Basis.OrientNormal(normal);
     r.Basis.SetCenter(center);
     double min_d = 100;
-    for( size_t j=0; j < rings[i].Count(); j++ )  {
+    for (size_t j=0; j < rings[i].Count(); j++) {
       const double qd = rings[i][j]->crd().QDistanceTo(center);
-      if( qd < min_d )
+      if (qd < min_d)
         min_d = qd;
     }
     min_d = sqrt(min_d)*cos(M_PI/rings[i].Count())/r.GetRadius();
     r.Basis.SetZoom(min_d*0.85);
     if( glm != NULL )
       r.material = *glm;
-    if( create )
+    if (create)
       r.Create();
   }
 }
