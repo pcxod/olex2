@@ -63,7 +63,11 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
         if( readImg )
 #endif // wxUSE_GIF && wxUSE_TIMER
         {
-          wxImage image(*s, wxBITMAP_TYPE_ANY);
+          wxImage image;
+          {
+            wxLogNull nl;
+            image.LoadFile(*s, wxBITMAP_TYPE_ANY);
+          }
           if( image.Ok() )
             SetImage(image);
           else  {
