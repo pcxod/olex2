@@ -3612,7 +3612,7 @@ void ShowPart_TagSetter(TCAtom &a, index_t v) {
 }
 void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
   if (visible_only) {
-    SortedObjectList<uint32_t, TPrimitiveComparator> tags;
+    SortedObjectList<index_t, TPrimitiveComparator> tags;
     AtomIterator ai(*this);
     TAsymmUnit &au = XFile().GetAsymmUnit();
     for (size_t i=0; i < au.AtomCount(); i++) {

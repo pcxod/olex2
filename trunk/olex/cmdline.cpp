@@ -98,9 +98,9 @@ bool TCmdLine::WillProcessKey(wxKeyEvent& evt) {
   if (evt.HasModifiers()) return false;
   olxstr tx = GetText();
   if (evt.GetKeyCode() == WXK_DELETE)
-    return GetInsertionPoint() < tx.Length();
+    return GetInsertionPoint() < (long)tx.Length();
   else if (evt.GetKeyCode() == WXK_BACK)
-    return GetInsertionPoint() >= PromptStr.Length();
+    return GetInsertionPoint() >= (long)PromptStr.Length();
   return false;
 }
 //..............................................................................

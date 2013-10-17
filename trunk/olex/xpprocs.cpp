@@ -559,8 +559,8 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
   if (mask_bg) {
     const size_t inc = bits/8,
       ws = BmpWidth*inc;
-    for (size_t i=0; i < BmpHeight; i++) {
-      for (size_t j=0; j < BmpWidth; j++) {
+    for (int i=0; i < BmpHeight; i++) {
+      for (int j=0; j < BmpWidth; j++) {
         size_t off = (BmpWidth*inc+extraBytes)*i + j*inc;
         if (DIBits[off+2]   == bg_r &&
           DIBits[off+1] == bg_g &&

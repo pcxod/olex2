@@ -836,7 +836,7 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
 void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   bool MultiLine = false, added = false;
   olxstr Tmp(Ins), Tmp1;
-  while( Tmp.Length() >= sz )  {
+  while( Tmp.Length() >= (size_t)sz )  {
     MultiLine = true;
     size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hypernation
     if( spindex != InvalidIndex && spindex > 0 )  {

@@ -32,14 +32,14 @@ namespace olex2 {
   // this can be safelly used in DLLs
   class IDllOlex2 {
   public:
-    virtual olx_dll_ptr<wchar_t> process_function(const wchar_t *f) = 0;
-    virtual bool process_macro(const wchar_t *m) = 0;
-    virtual void log_message(const wchar_t *m, int level) = 0;
-    virtual bool extend_macros(const wchar_t *name,
-      bool (*func)(uint32_t, const wchar_t **, void *),
+    virtual olx_dll_ptr<olxch> process_function(const olxch *f) = 0;
+    virtual bool process_macro(const olxch *m) = 0;
+    virtual void log_message(const olxch *m, int level) = 0;
+    virtual bool extend_macros(const olxch *name,
+      bool (*func)(uint32_t, const olxch **, void *),
       void *instance) = 0;
-    virtual bool extend_functions(const wchar_t *name,
-      olx_dll_ptr<wchar_t> (*func)(uint32_t, const wchar_t **, void *),
+    virtual bool extend_functions(const olxch *name,
+      olx_dll_ptr<olxch> (*func)(uint32_t, const olxch **, void *),
       void *instance) = 0;
   };
 
@@ -67,15 +67,15 @@ namespace olex2 {
     virtual TLibrary&  GetLibrary() = 0;
 
     //IDllOlex2 implementation
-    virtual olx_dll_ptr<wchar_t> process_function(const wchar_t *f);
-    virtual bool process_macro(const wchar_t *m);
+    virtual olx_dll_ptr<olxch> process_function(const olxch *f);
+    virtual bool process_macro(const olxch *m);
     // lvele is onr of logInfo/logWarning/logError/logException/logDefault
-    virtual void log_message(const wchar_t *m, int level=logDefault);
-    virtual bool extend_macros(const wchar_t *name,
-      bool (*func)(uint32_t, const wchar_t **, void *),
+    virtual void log_message(const olxch *m, int level=logDefault);
+    virtual bool extend_macros(const olxch *name,
+      bool (*func)(uint32_t, const olxch **, void *),
       void *instance);
-    virtual bool extend_functions(const wchar_t *name,
-      olx_dll_ptr<wchar_t> (*func)(uint32_t, const wchar_t **, void *),
+    virtual bool extend_functions(const olxch *name,
+      olx_dll_ptr<olxch> (*func)(uint32_t, const olxch **, void *),
       void *instance);
 
     static IOlex2Processor *&GetInstance() {

@@ -13,15 +13,15 @@
 namespace olex2 {
 
 struct ExternalMacro : public IEObject {
-  bool (*func)(uint32_t arc, const wchar_t **, void *);
+  bool (*func)(uint32_t arc, const olxch **, void *);
   void *instance;
-  ExternalMacro(bool (*func)(uint32_t, const wchar_t **, void *), void *inst)
+  ExternalMacro(bool (*func)(uint32_t, const olxch **, void *), void *inst)
     : func(func), instance(inst)
   {}
   void Run(TStrObjList &Cmds, const TParamList &Options,
     TMacroError &E)
   {
-    olx_array_ptr<const wchar_t *> argv(new const wchar_t*[Cmds.Count()+1]);
+    olx_array_ptr<const olxch *> argv(new const olxch*[Cmds.Count()+1]);
     for (size_t i=0; i < Cmds.Count(); i++) {
       argv()[i] = Cmds[i].u_str();
     }
@@ -31,18 +31,18 @@ struct ExternalMacro : public IEObject {
 };
 
 struct ExternalFunction : public IEObject {
-  olx_dll_ptr<wchar_t> (*func)(uint32_t arc, const wchar_t **, void *);
+  olx_dll_ptr<olxch> (*func)(uint32_t arc, const olxch **, void *);
   void *instance;
-  ExternalFunction(olx_dll_ptr<wchar_t> (*func)(uint32_t, const wchar_t **, void *),
+  ExternalFunction(olx_dll_ptr<olxch> (*func)(uint32_t, const olxch **, void *),
     void *inst)
     : func(func), instance(inst)
   {}
   void Run(const TStrObjList& Params, TMacroError &E) {
-    olx_array_ptr<const wchar_t *> argv(new const wchar_t*[Params.Count()+1]);
+    olx_array_ptr<const olxch *> argv(new const olxch*[Params.Count()+1]);
     for (size_t i=0; i < Params.Count(); i++) {
       argv()[i] = Params[i].u_str();
     }
-    olx_dll_ptr<wchar_t> rv = (*func)((uint32_t)Params.Count(), argv(), instance);
+    olx_dll_ptr<olxch> rv = (*func)((uint32_t)Params.Count(), argv(), instance);
     if (!rv.is_valid())
       E.ProcessingError(__OlxSrcInfo, "external function failed");
     else
@@ -50,32 +50,32 @@ struct ExternalFunction : public IEObject {
   }
 };
 
-olx_dll_ptr<wchar_t> IOlex2Processor::process_function(const wchar_t *f) {
+olx_dll_ptr<olxch> IOlex2Processor::process_function(const olxch *f) {
   IOlex2Processor *ip = GetInstance();
   if (ip == NULL)
-    return olx_dll_ptr<wchar_t>();
+    return olx_dll_ptr<olxch>();
   olxstr s(f);
   if (ip->processFunction(s)) {
-    return olx_dll_ptr<wchar_t>::copy(s.u_str(), s.Length()+1);
+    return olx_dll_ptr<olxch>::copy(s.u_str(), s.Length()+1);
   }
-  return olx_dll_ptr<wchar_t>();
+  return olx_dll_ptr<olxch>();
 }
 
-bool IOlex2Processor::process_macro(const wchar_t *f) {
+bool IOlex2Processor::process_macro(const olxch *f) {
   IOlex2Processor *ip = GetInstance();
   if (ip == NULL)
     return false;
   return ip->processMacro(f);
 }
 
-void IOlex2Processor::log_message(const wchar_t *f, int level) {
+void IOlex2Processor::log_message(const olxch *f, int level) {
   if (!TBasicApp::HasInstance())
     return;
     TBasicApp::NewLogEntry(level) << f;
 }
 
-bool IOlex2Processor::extend_macros(const wchar_t *name,
-  bool (*f)(uint32_t, const wchar_t **, void *), void *instance)
+bool IOlex2Processor::extend_macros(const olxch *name,
+  bool (*f)(uint32_t, const olxch **, void *), void *instance)
 {
   IOlex2Processor *ip = GetInstance();
   if (ip == NULL) return false;
@@ -93,8 +93,8 @@ bool IOlex2Processor::extend_macros(const wchar_t *name,
   }
 }
 
-bool IOlex2Processor::extend_functions(const wchar_t *name,
-  olx_dll_ptr<wchar_t> (*f)(uint32_t, const wchar_t **, void *), void *instance)
+bool IOlex2Processor::extend_functions(const olxch *name,
+  olx_dll_ptr<olxch> (*f)(uint32_t, const olxch **, void *), void *instance)
 {
   IOlex2Processor *ip = GetInstance();
   if (ip == NULL) return false;
