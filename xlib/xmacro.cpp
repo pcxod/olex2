@@ -8214,7 +8214,7 @@ void CONF_Process(TCAtom &a, const smatd &am, TCAtom &b, const smatd &bm,
       atoms.Add(new TGroupCAtom(&a, am.IsFirst() ? NULL : &am));
       atoms.Add(new TGroupCAtom(&b, bm.IsFirst() ? NULL : &bm));
       atoms.AddCopy(right[j]);
-      for (int k=0; k < atoms.Count(); k++) {
+      for (size_t k=0; k < atoms.Count(); k++) {
         size_t idx = (reverse ? (atoms.Count()-k-1) : k);
         it.AddAtom(*atoms[idx].GetAtom(), atoms[idx].GetMatrix());
       }

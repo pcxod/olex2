@@ -93,6 +93,9 @@
     <ClCompile Include="..\..\..\glib\povdraw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\glib\wrldraw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\glib\dframe.h">
@@ -140,9 +143,6 @@
     <ClInclude Include="..\..\..\glib\glmouse.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\glib\globj.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\glib\gloption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -183,6 +183,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\glib\glalg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\glib\wrldraw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
