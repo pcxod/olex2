@@ -210,7 +210,11 @@ void TImgButton::SetImages(const olxstr& src, int w, int h)  {
         ": could not locate image '" << fn << '\'';
       continue;
     }
-    wxImage* img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+    wxImage* img;
+    {
+      wxLogNull bl;
+      img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+    }
     if( dest.Equalsi("up") )  {
       imgState |= TImgButton::stUp;
       images.Set(0, img);

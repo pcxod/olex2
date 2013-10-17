@@ -2278,7 +2278,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr HklFN = FXApp->XFile().LocateHklFile();
-  if( !TEFile::Exists(HklFN) )  {
+  if (!TEFile::Exists(HklFN)) {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file");
     return;
   }
@@ -2287,38 +2287,28 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TSpaceGroup& sg = FXApp->XFile().GetLastLoaderSG();
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN);
-  TRefPList Hkls;
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
   SL.Add();
-  if( Cmds.Count() != 3 && FXApp->CheckFileType<TIns>() )  {
-    const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
-    if( Lst.IsLoaded() )  {
-      for( size_t i=0; i < Lst.DRefCount(); i++ )  {
-        olxstr Tmp = "REM    ";
-        Tmp << Lst.DRef(i).H << ' ';
-        Tmp << Lst.DRef(i).K << ' ';
-        Tmp << Lst.DRef(i).L << ' ';
-        Tmp << "Delta(F^2)/esd=" << Lst.DRef(i).DF;
-        Tmp << " Resolution=" << Lst.DRef(i).Res;
-        SL.Add(Tmp);
-        Hkls.Clear();
-        TReflection ref(Lst.DRef(i).H, Lst.DRef(i).K, Lst.DRef(i).L);
-        Hkl.AllRefs(ref, matrices, Hkls);
-
-        for( size_t j=0; j < Hkls.Count(); j++ )
-          SL.Add(Hkls[j]->ToNString());
-        SL.Add();
-      }
+  if (Cmds.Count() != 3 && FXApp->CheckFileType<TIns>()) {
+    const TTypeList<RefinementModel::BadReflection> &bad_refs =
+      FXApp->XFile().GetRM().GetBadReflectionList();
+    for (size_t i=0; i < bad_refs.Count(); i++) {
+      olxstr &Tmp = SL.Add("REM   ");
+      Tmp.stream(' ') << bad_refs[i].index[0] << bad_refs[i].index[1] <<
+        bad_refs[i].index[2] << "Error/esd=" << bad_refs[i].factor;
+      TRefPList refs = Hkl.AllRefs(bad_refs[i].index, matrices);
+      for (size_t j=0; j < refs.Count(); j++)
+        SL.Add(refs[j]->ToNString());
+      SL.Add();
     }
   }
   else  {
     TReflection Refl(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt());
-    Hkls.Clear();
-    Hkl.AllRefs(Refl, matrices, Hkls);
-    for( size_t i=0; i < Hkls.Count(); i++ )
-      SL.Add( Hkls[i]->ToNString());
+    TRefPList refs = Hkl.AllRefs(Refl, matrices);
+    for (size_t i=0; i < refs.Count(); i++)
+      SL.Add(refs[i]->ToNString());
   }
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));

@@ -359,24 +359,26 @@ void THklFile::InitHkl3D()  {
   Hkl3D = &hkl3D;
 }
 //..............................................................................
-void THklFile::AllRefs(const TReflection& R, const smatd_list& ml,
-  TRefPList& Res)
+ConstPtrList<TReflection> THklFile::AllRefs(const vec3i& idx,
+  const smatd_list& ml)
 {
+  TRefPList rv;
   vec3i_list ri;
-  for( size_t i=0; i < ml.Count(); i++ )  {
-    vec3i hklv = R.MulHkl(ml[i]);
+  for (size_t i=0; i < ml.Count(); i++) {
+    vec3i hklv = TReflection::MulHkl(idx, ml[i]);
     // check if the range of the reflection is valid
-    if( !vec3i::IsInRangeExc(hklv, MinHkl, MaxHkl) )
+    if (!vec3i::IsInRangeExc(hklv, MinHkl, MaxHkl))
       continue;
-    if( ri.IndexOf(hklv) == InvalidIndex )
+    if (ri.IndexOf(hklv) == InvalidIndex)
       ri.AddCopy(hklv);
   }
   InitHkl3D();
-  for( size_t j=0; j < ri.Count(); j++ )  {
+  for (size_t j=0; j < ri.Count(); j++) {
     TRefPList* r = Hkl3D->Value(ri[j]);
-    if( r != NULL )  
-      Res.AddList(*r);
+    if (r != NULL)
+      rv.AddList(*r);
   }
+  return rv;
 }
 //..............................................................................
 void THklFile::Append(TReflection& hkl)  {

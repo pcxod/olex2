@@ -71,7 +71,10 @@ public:
   bool SaveToFile(const olxstr& FN);
   void UpdateRef(const TReflection& R);
   // returns reflections owned by this object
-  void AllRefs(const TReflection& R, const smatd_list& sg, TRefPList& Res);
+  ConstPtrList<TReflection> AllRefs(const TReflection& R, const smatd_list& sg) {
+    return AllRefs(R.GetHkl(), sg);
+  }
+  ConstPtrList<TReflection> AllRefs(const vec3i& idx, const smatd_list& sg);
   bool HasCell() const {
     return !(Cell.IsEmpty() || CellEsd.IsEmpty() || Radiation == 0);
   }
