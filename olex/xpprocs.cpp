@@ -1442,6 +1442,37 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
   }
   else if (Cmds[0].Equalsi("radii")) {
     if (Cmds.Count() > 1) {
+      if (TEFile::Exists(Cmds[1]) && Cmds[1].EndsWith(".xld")) {
+        bool loaded = false;
+        try {
+          TDataFile df;
+          df.LoadFromXLFile(Cmds[1]);
+          TDataItem &elements = df.Root().FindRequiredItem("elements");
+          for (size_t i=0; i < elements.ItemCount(); i++) {
+            TDataItem &e = elements.GetItem(i);
+            cm_Element* cme = XElementLib::FindBySymbol(e.GetName());
+            if (cme == NULL) {
+              TBasicApp::NewLogEntry(logError) << "Undefined element: '" <<
+                e.GetName() << '\'';
+              continue;
+            }
+            for (size_t j=0; j < e.FieldCount(); j++) {
+              if (e.FieldName(j).Equals("sfil"))
+                cme->r_sfil = e.GetField(j).ToDouble();
+              else if (e.FieldName(j).Equals("pers"))
+                cme->r_pers = e.GetField(j).ToDouble();
+              else if (e.FieldName(j).Equals("vdw"))
+                cme->r_vdw = e.GetField(j).ToDouble();
+              else if (e.FieldName(j).Equals("bonding"))
+                cme->r_bonding = e.GetField(j).ToDouble();
+            }
+          }
+          TBasicApp::NewLogEntry(logInfo) <<
+            "Custom radii file loaded: '" << Cmds[1] << '\'';
+          return;
+        }
+        catch(TExceptionBase &) {}
+      }
       olxstr fn = Cmds.Text(' ', 2);
       if (fn.IsEmpty()) {
         fn = PickFile("Load atomic radii", "Text files|*.txt",
