@@ -698,9 +698,15 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Track, fl));
   }
 /******************* CHECKBOX *************************************************/
-  else if( TagName.Equalsi("checkbox") )  {
+  else if (TagName.Equalsi("checkbox")) {
+    bool label_to_the_right = false;
+    if (tag.HasParam(wxT("RIGHT"))) {
+      olxstr v = tag.GetParam(wxT("RIGHT"));
+      if (v.IsBool())
+        label_to_the_right = v.ToBool();
+    }
     TCheckBox *Box = new TCheckBox(html,
-      (tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0));
+      (label_to_the_right ? wxALIGN_RIGHT : 0));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
     wxa->centreX.Absolute(0);
@@ -710,36 +716,36 @@ TAG_HANDLER_PROC(tag)  {
     Box->WI.SetWidth(ax);
     Box->WI.SetHeight(ay);
     Box->SetCaption(Value);
-    if( tag.HasParam(wxT("CHECKED")) )  {
+    if (tag.HasParam(wxT("CHECKED"))) {
       Tmp = tag.GetParam(wxT("CHECKED"));
       op->processFunction(Tmp, SrcInfo, false);
-      if( Tmp.IsEmpty() )
+      if (Tmp.IsEmpty())
         Box->SetChecked(true);
-      else if( Tmp.IsBool() )
+      else if (Tmp.IsBool())
         Box->SetChecked(Tmp.ToBool());
-      else  {
+      else {
         TBasicApp::NewLogEntry(logError) << 
           (olxstr("Invalid value for boolean: ").quote() << Tmp);
       }
     }
     Box->SetData(Data);
     // binding events
-    if( tag.HasParam(wxT("ONCLICK")) )  {
+    if (tag.HasParam(wxT("ONCLICK"))) {
       Box->OnClick.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCLICK")), macro_map);
       Box->OnClick.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONCHECK")) )  {
+    if (tag.HasParam(wxT("ONCHECK"))) {
       Box->OnCheck.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHECK")), macro_map);
       Box->OnCheck.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONUNCHECK")) )  {
+    if (tag.HasParam(wxT("ONUNCHECK"))) {
       Box->OnUncheck.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONUNCHECK")), macro_map);
       Box->OnUncheck.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("MODEDEPENDENT")) ) {
+    if (tag.HasParam(wxT("MODEDEPENDENT"))) {
       Box->SetActionQueue(TModeRegistry::GetInstance().OnChange,
         tag.GetParam(wxT("MODEDEPENDENT")));
     }

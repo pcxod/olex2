@@ -32,7 +32,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     time_t lst_fa = TEFile::FileAge(lstFN);
     time_t mat_fa = TEFile::FileAge(fileName);
     if( lst_fa > mat_fa && (lst_fa-mat_fa) > 5 )
-      TBasicApp::NewLogEntry() << "The mat file is possibly out of date";
+      TBasicApp::NewLogEntry(logWarning) << "The mat file is possibly out of date";
   }
   TCStrList sl, toks;
   sl.LoadFromFile(fileName);
