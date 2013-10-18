@@ -103,9 +103,9 @@ bool TReflection::FromString(const olxstr& Str)  {
   return false;
 }
 //..............................................................................
-bool TReflection::FromNString(const olxstr& str)  {
+bool TReflection::FromNString(const olxstr& str) {
   TStrList Toks(str, ' ');
-  if( Toks.Count() > 5 )  {
+  if (Toks.Count() > 5) {
     if( Toks[0].GetLast() != '.' )  return false;
     Toks[0].SetLength(Toks[0].Length()-1);
     SetTag(Toks[0].ToInt());
@@ -115,7 +115,7 @@ bool TReflection::FromNString(const olxstr& str)  {
     hkl[2] = Toks[3].ToInt();
     I = Toks[4].ToDouble();
     S = Toks[5].ToDouble();
-    if( Toks.Count() > 6 )
+    if (Toks.Count() > 6)
       SetBatch(Toks[6].ToInt());
     return true;
   }

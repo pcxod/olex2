@@ -350,8 +350,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Prints molecular volume, surface area and other information for "
     "visible/selected atoms");
-  xlib_InitMacro(RTab, EmptyString(), fpAny|psCheckFileTypeIns,
-    "Adds RTAB with given name for provided atoms/selection");
+  xlib_InitMacro(RTab, EmptyString(), fpAny^(fpNone)|psCheckFileTypeIns,
+    "Adds RTAB with given name (first argument) for provided atoms/selection");
   xlib_InitMacro(HklMerge, "z-zero negative intensity", fpAny|psFileLoaded,
     "Merges current HKL file (ehco HKLSrc()) to given file name. "
     "Warning: if no arguments provided, the current file is overwritten");
@@ -4585,7 +4585,8 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void XLibMacros::macFlush(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TBasicApp::GetLog().Flush();
+  if (Cmds.IsEmpty() || Cmds[0].Equalsi("log"))
+    TBasicApp::GetLog().Flush();
 }
 //.............................................................................
 void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8214,7 +8215,7 @@ void CONF_Process(TCAtom &a, const smatd &am, TCAtom &b, const smatd &bm,
       atoms.Add(new TGroupCAtom(&a, am.IsFirst() ? NULL : &am));
       atoms.Add(new TGroupCAtom(&b, bm.IsFirst() ? NULL : &bm));
       atoms.AddCopy(right[j]);
-      for (int k=0; k < atoms.Count(); k++) {
+      for (size_t k=0; k < atoms.Count(); k++) {
         size_t idx = (reverse ? (atoms.Count()-k-1) : k);
         it.AddAtom(*atoms[idx].GetAtom(), atoms[idx].GetMatrix());
       }

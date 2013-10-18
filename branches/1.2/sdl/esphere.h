@@ -22,40 +22,46 @@ struct IndexTriangle {
 };
 // Octahedron face provider
 template <class vec_type> struct OctahedronFP  {
-  static vec_type vertices[6];
-  static IndexTriangle faces[8];
-  static size_t vertex_count, face_count;
+  static const vec_type *vertices() {
+    static vec_type v[6] = {
+      vec_type(0,0,1),  vec_type(1,0,0),  vec_type(0,1,0),
+      vec_type(-1,0,0), vec_type(0,-1,0), vec_type(0,0,-1)
+    };
+    return &v[0];
+  }
+  static const IndexTriangle *faces() {
+    static IndexTriangle f[8] = {
+      IndexTriangle(0, 1, 2), IndexTriangle(0, 2, 3),
+      IndexTriangle(0, 3, 4), IndexTriangle(0, 4, 1),
+      IndexTriangle(5, 2, 1), IndexTriangle(5, 3, 2),
+      IndexTriangle(5, 4, 3), IndexTriangle(5, 1, 4)
+    };
+    return &f[0];
+  }
+  static size_t vertex_count() { return 6; }
+  static size_t face_count() { return 8; }
 };
-template <class vec_type> vec_type OctahedronFP<vec_type>::vertices[6] = {
-  vec_type(0,0,1),  vec_type(1,0,0),  vec_type(0,1,0),
-  vec_type(-1,0,0), vec_type(0,-1,0), vec_type(0,0,-1)
-};
-template <class vec_type> IndexTriangle OctahedronFP<vec_type>::faces[8] = {
-  IndexTriangle(0, 1, 2), IndexTriangle(0, 2, 3),
-  IndexTriangle(0, 3, 4), IndexTriangle(0, 4, 1),
-  IndexTriangle(5, 2, 1), IndexTriangle(5, 3, 2),
-  IndexTriangle(5, 4, 3), IndexTriangle(5, 1, 4)
-};
-template <class vec_type> size_t OctahedronFP<vec_type>::vertex_count = 6;
-template <class vec_type> size_t OctahedronFP<vec_type>::face_count = 8;
 // tetrahedron face provider
 // vertices are as from http://en.wikipedia.org/wiki/Tetrahedron
 template <class vec_type> struct TetrahedronFP  {
-  static vec_type vertices[4];
-  static IndexTriangle faces[4];
-  static size_t vertex_count, face_count;
+  static const vec_type *vertices() {
+    const static double k = 1./sqrt(3.0);
+    static vec_type v[4] = {
+      vec_type(k, k, k), vec_type(-k, -k, k), vec_type(-k, k, -k),
+      vec_type(k, -k, -k)
+    };
+    return &v[0];
+  }
+  static const IndexTriangle *faces() {
+    static IndexTriangle f[4] = {
+      IndexTriangle(0, 2, 1), IndexTriangle(0, 1, 3),
+      IndexTriangle(0, 3, 2), IndexTriangle(1, 2, 3)
+    };
+    return &f[0];
+  }
+  static size_t vertex_count() { return 4; }
+  static size_t face_count() { return 4; }
 };
-template <class vec_type> vec_type TetrahedronFP<vec_type>::vertices[4] = {
-  vec_type(1, 1, 1), vec_type(-1, -1, 1), vec_type(-1, 1, -1),
-  vec_type(1, -1, -1)
-};
-template <class vec_type> IndexTriangle TetrahedronFP<vec_type>::faces[4] = {
-  IndexTriangle(0, 2, 1), IndexTriangle(0, 1, 3),
-  IndexTriangle(0, 3, 2), IndexTriangle(1, 2, 3)
-};
-template <class vec_type> size_t TetrahedronFP<vec_type>::vertex_count = 4;
-template <class vec_type> size_t TetrahedronFP<vec_type>::face_count = 4;
-
 /* a class to build sphere by partitioning an octahedron. Alows custom masks to
 be aplied when rendering the sphere in OpenGL or other rendering engine. All
 methods and members can be made static...
@@ -80,16 +86,16 @@ public:
     TTypeList<IndexTriangle>& to,
     TArrayList<TVector3<float_type> >* _normals=NULL)
   {
-    size_t nc = FaceProvider::face_count;
+    size_t nc = FaceProvider::face_count();
     for( size_t i=0; i < ext; i++ )
       nc += nc*3;
     
     to.SetCapacity(nc+1);
     vo.SetCapacity(nc-1);
-    for( size_t i=0; i < FaceProvider::vertex_count; i++ )
-      vo.AddNew(FaceProvider::vertices[i]);
-    for( size_t i=0; i < FaceProvider::face_count; i++ )
-      to.AddNew(FaceProvider::faces[i]);
+    for( size_t i=0; i < FaceProvider::vertex_count(); i++ )
+      vo.AddNew(FaceProvider::vertices()[i]);
+    for( size_t i=0; i < FaceProvider::face_count(); i++ )
+      to.AddNew(FaceProvider::faces()[i]);
     for( size_t i=0; i < ext; i++ ) {
       const size_t t_cnt = to.Count();
       for( size_t j=0; j < t_cnt; j++ )  {

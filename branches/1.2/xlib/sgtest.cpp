@@ -100,7 +100,7 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
     const size_t ref_cnt = Refs.Count();
     for( size_t j=0; j < ref_cnt; j++ )  {
       if( Refs[j].GetI() < AverageI )  continue;
-      vec3i hklv = Refs[j].MulHkl(m);
+      vec3i hklv = Refs[j] * m;
       if( !vec3i::IsInRangeExc(hklv, minInd, maxInd) )  continue;
       if( !Refs[j].EqHkl(hklv) )  {
         const TReflection* ref = Hkl3D(hklv);

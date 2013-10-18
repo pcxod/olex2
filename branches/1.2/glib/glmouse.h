@@ -147,7 +147,7 @@ public:
 
   bool MouseUp(int x, int y, short Shift, short button);
   bool DblClick();
-  void ResetMouseState();
+  void ResetMouseState(short x, short y, short shift=0, short button=0);
   bool MouseDown(int x, int y, short Shift, short button);
   bool MouseMove(int x, int y, short Shift);
   TGlRenderer* Parent() const {  return FParent;  }

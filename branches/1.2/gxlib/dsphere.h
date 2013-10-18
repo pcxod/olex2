@@ -18,7 +18,7 @@ class TDSphere: public AGlMouseHandlerImp  {
 public:
   struct PointAnalyser {
     virtual ~PointAnalyser()  {}
-    virtual uint32_t Analyse(const vec3f &p) = 0;
+    virtual uint32_t Analyse(vec3f &p) = 0;
   };
 protected:
   virtual bool DoTranslate(const vec3d& t) {

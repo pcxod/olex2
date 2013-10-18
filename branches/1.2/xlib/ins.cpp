@@ -185,18 +185,21 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     throw TInvalidArgumentException(__OlxSourceInfo, "empty CELL");
   }
   // update the refinement model data
-  TTypeList<RefinementModel::BadReflection> bad_refs;
-  for (size_t i=0; i < Lst.DRefCount(); i++) {
-    const TLstRef &lr = Lst.DRef(i);
-    bad_refs.Add(
-      new RefinementModel::BadReflection(
-      vec3i(lr.H, lr.K, lr.L),
-      lr.Fo,
-      lr.Fc,
-      olx_abs(lr.Fo-lr.Fc)/lr.DF)
-      );
+  if (Lst.IsLoaded()) {
+    TTypeList<RefinementModel::BadReflection> bad_refs;
+    for (size_t i=0; i < Lst.DRefCount(); i++) {
+      const TLstRef &lr = Lst.DRef(i);
+      bad_refs.Add(
+        new RefinementModel::BadReflection(
+        vec3i(lr.H, lr.K, lr.L),
+        lr.Fo,
+        lr.Fc,
+        olx_abs(lr.Fo-lr.Fc)/lr.DF,
+        lr.DF*olx_sign(lr.Fc-lr.Fo))
+        );
+    }
+    GetRM().SetBadReflectionList(bad_refs);
   }
-  GetRM().SetBadReflectionList(bad_refs);
 }
 //..............................................................................
 void TIns::_ProcessSame(ParseContext& cx)  {
@@ -833,7 +836,7 @@ void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins,
 void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   bool MultiLine = false, added = false;
   olxstr Tmp(Ins), Tmp1;
-  while( Tmp.Length() >= sz )  {
+  while( Tmp.Length() >= (size_t)sz )  {
     MultiLine = true;
     size_t spindex = Tmp.LastIndexOf(' ', sz-3); // for the right hypernation
     if( spindex != InvalidIndex && spindex > 0 )  {

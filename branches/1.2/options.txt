@@ -1,5 +1,6 @@
 p4p_automate [False] - specifies if the SG/SGE to be executed after loading the P4P/CRS file (used in reap)
 aromatic_rings [False] - specifies if the aromatic rings are to be automatically created
+aromatic_rings_def [C5,C6,NC5,SC4] - aromatic ring definitions
 mouse_invert_zoom [False] - specifies if the mouse zooming operation to be inverted
 mouse_click_threshold [2] - specifiec the rectangluar area size where the mouse click is recognised
 hbond_min_angle [120] - the minimal angle fo H-bonds to exist

@@ -559,8 +559,8 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options,
   if (mask_bg) {
     const size_t inc = bits/8,
       ws = BmpWidth*inc;
-    for (size_t i=0; i < BmpHeight; i++) {
-      for (size_t j=0; j < BmpWidth; j++) {
+    for (int i=0; i < BmpHeight; i++) {
+      for (int j=0; j < BmpWidth; j++) {
         size_t off = (BmpWidth*inc+extraBytes)*i + j*inc;
         if (DIBits[off+2]   == bg_r &&
           DIBits[off+1] == bg_g &&
@@ -1440,51 +1440,101 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       FXApp->XFile().LoadFromFile(FN);
     }
   }
-  else if ( Cmds[0].Equalsi("radii") )  {
-    if( Cmds.Count() > 1  )  {
+  else if (Cmds[0].Equalsi("radii")) {
+    if (Cmds.Count() > 1) {
+      if (TEFile::Exists(Cmds[1]) && Cmds[1].EndsWith(".xld")) {
+        bool loaded = false;
+        try {
+          TDataFile df;
+          df.LoadFromXLFile(Cmds[1]);
+          TDataItem &elements = df.Root().FindRequiredItem("elements");
+          for (size_t i=0; i < elements.ItemCount(); i++) {
+            TDataItem &e = elements.GetItem(i);
+            cm_Element* cme = XElementLib::FindBySymbol(e.GetName());
+            if (cme == NULL) {
+              TBasicApp::NewLogEntry(logError) << "Undefined element: '" <<
+                e.GetName() << '\'';
+              continue;
+            }
+            for (size_t j=0; j < e.FieldCount(); j++) {
+              if (e.FieldName(j).Equals("sfil"))
+                cme->r_sfil = e.GetField(j).ToDouble();
+              else if (e.FieldName(j).Equals("pers"))
+                cme->r_pers = e.GetField(j).ToDouble();
+              else if (e.FieldName(j).Equals("vdw"))
+                cme->r_vdw = e.GetField(j).ToDouble();
+              else if (e.FieldName(j).Equals("bonding"))
+                cme->r_bonding = e.GetField(j).ToDouble();
+            }
+          }
+          TBasicApp::NewLogEntry(logInfo) <<
+            "Custom radii file loaded: '" << Cmds[1] << '\'';
+          return;
+        }
+        catch(TExceptionBase &) {}
+      }
       olxstr fn = Cmds.Text(' ', 2);
-      if( fn.IsEmpty() ) {
+      if (fn.IsEmpty()) {
         fn = PickFile("Load atomic radii", "Text files|*.txt",
           EmptyString(), EmptyString(), true);
       }
-      if( TEFile::Exists(fn) )  {
+      if (TEFile::Exists(fn)) {
         olxdict<olxstr,double,olxstrComparator<false> > radii;
-        TStrList sl, toks;
+        TStrList sl, changed;
         sl.LoadFromFile(fn);
         // parse the file and fill the dictionary
-        TBasicApp::NewLogEntry() << "Using user defined radii for:";
         for( size_t i=0; i < sl.Count(); i++ )  {
-          toks.Clear();
-          toks.Strtok(sl[i], ' ');
-          if( toks.Count() == 2 )  {
-            TBasicApp::NewLogEntry() << ' ' << toks[0] << '\t' << toks[1];
-            radii(toks[0], toks[1].ToDouble());
+          size_t idx = sl[i].IndexOf(' ');
+          if (idx != InvalidIndex) {
+            radii(sl[i].SubStringTo(idx), sl[i].SubStringFrom(idx+1).ToDouble());
           }
         }
         // end the file parsing
-        if( Cmds[1].Equalsi("sfil") )  {
-          for( size_t i=0; i < radii.Count(); i++ )  {
+        if (Cmds[1].Equalsi("sfil")) {
+          for (size_t i=0; i < radii.Count(); i++) {
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-            if( cme != NULL )
+            if (cme != NULL && cme->r_sfil != radii.GetValue(i)) {
               cme->r_sfil = radii.GetValue(i);
+              changed << cme->symbol;
+            }
           }
         }
-        else if( Cmds[1].Equalsi("pers") )  {
-          for( size_t i=0; i < radii.Count(); i++ )  {
+        else if (Cmds[1].Equalsi("pers")) {
+          for (size_t i=0; i < radii.Count(); i++) {
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-            if( cme != NULL )
+            if (cme != NULL && cme->r_pers != radii.GetValue(i)) {
               cme->r_pers = radii.GetValue(i);
+              changed << cme->symbol;
+            }
           }
         }
-        else if( Cmds[1].Equalsi("vdw") )  {
-          for( size_t i=0; i < radii.Count(); i++ )  {
+        else if (Cmds[1].Equalsi("vdw")) {
+          for (size_t i=0; i < radii.Count(); i++) {
             cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
-            if( cme != NULL )
+            if (cme != NULL && cme->r_vdw != radii.GetValue(i)) {
               cme->r_vdw = radii.GetValue(i);
+              changed << cme->symbol;
+            }
+          }
+        }
+        else if (Cmds[1].Equalsi("bonding")) {
+          for (size_t i=0; i < radii.Count(); i++) {
+            cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+            if (cme != NULL && cme->r_bonding != radii.GetValue(i)) {
+              cme->r_bonding = radii.GetValue(i);
+              changed << cme->symbol;
+            }
           }
         }
         else
           Error.ProcessingError(__OlxSrcInfo, "undefined radii name");
+        if (!changed.IsEmpty()) {
+          TBasicApp::NewLogEntry() << "Using user defined " << Cmds[1] <<
+            " radii for:";
+          olxstr all = changed.Text(' ');
+          changed.Clear();
+          TBasicApp::NewLogEntry() << changed.Hyphenate(all, 80, true);
+        }
       }
     }
   }
@@ -1829,9 +1879,7 @@ void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  static bool ChangingMode = false;
-  if (ChangingMode)  return;
-  ChangingMode = true;
+  olx_scope_cs cs_(TBasicApp::GetCriticalSection());
   olxstr name = Cmds[0], args;
   Cmds.Delete(0);
   args << Cmds.Text(' ');
@@ -1851,17 +1899,18 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
       throw TFunctionFailedException(__OlxSrcInfo, e);
     }
   }
-  ChangingMode = false;
 }
 //..............................................................................
-void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options,
+void TMainForm::macFlush(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  olxstr log="output.txt";
-  if (!Cmds.IsEmpty()) log = Cmds[0];
-  olxstr FN = FXApp->GetInstanceDir() + log;
-  TUtf8File::WriteLines(FN, FGlConsole->Buffer());
-  Macros.ProcessMacro(olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
+  if (Cmds.Count() > 0 && Cmds[0].Equalsi("output")) {
+    olxstr log = "output.txt";
+    if (Cmds.Count() == 2) log = Cmds[1];
+    TUtf8File::WriteLines(FXApp->GetInstanceDir() + log, FGlConsole->Buffer());
+  }
+  else
+    E.SetUnhandled(true);
 }
 //..............................................................................
 void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -2228,7 +2277,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr HklFN = FXApp->XFile().LocateHklFile();
-  if( !TEFile::Exists(HklFN) )  {
+  if (!TEFile::Exists(HklFN)) {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file");
     return;
   }
@@ -2237,38 +2286,28 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TSpaceGroup& sg = FXApp->XFile().GetLastLoaderSG();
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN);
-  TRefPList Hkls;
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
   SL.Add();
-  if( Cmds.Count() != 3 && FXApp->CheckFileType<TIns>() )  {
-    const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
-    if( Lst.IsLoaded() )  {
-      for( size_t i=0; i < Lst.DRefCount(); i++ )  {
-        olxstr Tmp = "REM    ";
-        Tmp << Lst.DRef(i).H << ' ';
-        Tmp << Lst.DRef(i).K << ' ';
-        Tmp << Lst.DRef(i).L << ' ';
-        Tmp << "Delta(F^2)/esd=" << Lst.DRef(i).DF;
-        Tmp << " Resolution=" << Lst.DRef(i).Res;
-        SL.Add(Tmp);
-        Hkls.Clear();
-        TReflection ref(Lst.DRef(i).H, Lst.DRef(i).K, Lst.DRef(i).L);
-        Hkl.AllRefs(ref, matrices, Hkls);
-
-        for( size_t j=0; j < Hkls.Count(); j++ )
-          SL.Add(Hkls[j]->ToNString());
-        SL.Add();
-      }
+  if (Cmds.Count() != 3 && FXApp->CheckFileType<TIns>()) {
+    const TTypeList<RefinementModel::BadReflection> &bad_refs =
+      FXApp->XFile().GetRM().GetBadReflectionList();
+    for (size_t i=0; i < bad_refs.Count(); i++) {
+      olxstr &Tmp = SL.Add("REM   ");
+      Tmp.stream(' ') << bad_refs[i].index[0] << bad_refs[i].index[1] <<
+        bad_refs[i].index[2] << "Error/esd=" << bad_refs[i].factor;
+      TRefPList refs = Hkl.AllRefs(bad_refs[i].index, matrices);
+      for (size_t j=0; j < refs.Count(); j++)
+        SL.Add(refs[j]->ToNString());
+      SL.Add();
     }
   }
   else  {
     TReflection Refl(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt());
-    Hkls.Clear();
-    Hkl.AllRefs(Refl, matrices, Hkls);
-    for( size_t i=0; i < Hkls.Count(); i++ )
-      SL.Add( Hkls[i]->ToNString());
+    TRefPList refs = Hkl.AllRefs(Refl, matrices);
+    for (size_t i=0; i < refs.Count(); i++)
+      SL.Add(refs[i]->ToNString());
   }
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
@@ -5205,6 +5244,7 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
   const TLattice &latt;
   TSAtom &center;
   TArrayList<uint32_t> colors;
+  bool emboss;
   PointAnalyser(const TLattice &l, TXAtom &c)
     : latt(l), center(c)
   {
@@ -5212,8 +5252,11 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
       TSAtom &a = latt.GetObjects().atoms[i];
       if( !a.IsAvailable() )  continue;
-      if( a.CAtom().GetFragmentId() > max_net_id )
+      if (a.CAtom().GetFragmentId() > max_net_id &&
+          a.CAtom().GetFragmentId() != ~0)
+      {
         max_net_id = a.CAtom().GetFragmentId();
+      }
     }
     colors.SetCount(max_net_id+1);
     if( max_net_id >= 1 )  {
@@ -5224,9 +5267,11 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
       colors[2] = 0xff0000;
     }
   }
-  uint32_t Analyse(const vec3f &p)  {
+  uint32_t Analyse(vec3f &p_)  {
     uint64_t cl = 0;
     size_t cnt = 0;
+    vec3f p = p_;
+    float maxd=1;
     for( size_t i=0; i < latt.GetObjects().atoms.Count(); i++ )  {
       TSAtom &a = latt.GetObjects().atoms[i];
       if( &a == &center || !a.IsAvailable() )
@@ -5237,15 +5282,21 @@ struct PointAnalyser : public TDSphere::PointAnalyser {
         continue;
       float d = (v-p*dp).Length();
       if( d < a.GetType().r_vdw )  {
-        cl += colors[a.CAtom().GetFragmentId()];
-        cnt++;
+        if (a.CAtom().GetFragmentId() < colors.Count()) {
+          cl += colors[a.CAtom().GetFragmentId()];
+          cnt++;
+        }
+        if (dp > maxd)
+          maxd = dp;
       }
     }
+    if (emboss)
+      p_.NormaliseTo(maxd);
     if( cnt == 0 )
       cl = 0x00ffffff;
     else if( cnt > 1 )
       cl /= cnt;
-    if( OLX_GetAValue(cl) != 0 )
+    if( OLX_GetAValue(cl) != 0 ) 
       return cl;
     return cl|(127<<24);
   }
@@ -5265,6 +5316,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   static size_t counter = 0;
   PointAnalyser &pa = *new PointAnalyser(FXApp->XFile().GetLattice(), *xatoms[0]);
+  pa.emboss = Options.GetBoolOption('e');
   {
     if( pa.colors.Count() == 1 && !colors.IsEmpty() )
       pa.colors[0] = colors[0];

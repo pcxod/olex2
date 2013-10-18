@@ -553,57 +553,50 @@ TAG_HANDLER_PROC(tag)  {
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(CreatedWindow, fl));
   }
 /******************* COMBOBOX *************************************************/
-  else if( TagName.Equalsi("combo") )  {
+  else if (TagName.Equalsi("combo")) {
     TComboBox *Box = new TComboBox(html,
       tag.HasParam(wxT("READONLY")), wxSize(ax, ay));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Box;
     CreatedWindow = Box;
-    //Box->WI.SetWidth(ax);
-    if( tag.HasParam(wxT("ITEMS")) )  {
+    if (tag.HasParam(wxT("ITEMS"))) {
       olxstr Items = tag.GetParam(wxT("ITEMS"));
       op->processFunction(Items, SrcInfo, true);
       TStrList SL(Items, ';');
-      if( SL.IsEmpty() ) {
-        // fix the bug in wxWidgets (if Up pressed, crash occurs)
-#if wxCHECK_VERSION(2,8,0)
-        Box->AddObject(EmptyString());
-#endif
-      }
-      else
         Box->AddItems(SL);
     }
-    else  {
-      /* need to intialise the items - or wxWidgets will crash (pressing Up
-      button)
-      */
+    else {
       Box->AddObject(Value);
-      // fix the bug in wxWidgets (if Up pressed, crass occurs)
-      Box->AddObject(EmptyString());
     }
     Box->SetText(Value);
     Box->SetData(Data);
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
+    if (tag.HasParam(wxT("ONCHANGE"))) {
       Box->OnChange.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Box->OnChange.Add(&html->Manager);
+      if (tag.HasParam(wxT("ONCHANGEALWAYS"))) {
+        olxstr uc = tag.GetParam(wxT("ONCHANGEALWAYS"));
+        if (uc.IsBool()) {
+          Box->SetOnChangeAlways(uc.ToBool());
+        }
+      }
     }
-    if( tag.HasParam(wxT("ONLEAVE")) )  {
+    if (tag.HasParam(wxT("ONLEAVE"))) {
       Box->OnLeave.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map);
       Box->OnLeave.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONENTER")) )  {
+    if (tag.HasParam(wxT("ONENTER"))) {
       Box->OnEnter.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map);
       Box->OnEnter.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONRETURN")) )  {
+    if (tag.HasParam(wxT("ONRETURN"))) {
       Box->OnReturn.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map);
       Box->OnReturn.Add(&html->Manager);
     }
-    if( !Label.IsEmpty() )  {
+    if (!Label.IsEmpty()) {
       wxHtmlContainerCell* contC =
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
@@ -612,8 +605,8 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell(wc);
       contC->InsertCell(new THtmlWidgetCell(Box, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
+      if (valign != -1) contC->SetAlignVer(valign);
+      if (halign != -1) contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
@@ -705,9 +698,15 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Track, fl));
   }
 /******************* CHECKBOX *************************************************/
-  else if( TagName.Equalsi("checkbox") )  {
+  else if (TagName.Equalsi("checkbox")) {
+    bool label_to_the_right = false;
+    if (tag.HasParam(wxT("RIGHT"))) {
+      olxstr v = tag.GetParam(wxT("RIGHT"));
+      if (v.IsBool())
+        label_to_the_right = v.ToBool();
+    }
     TCheckBox *Box = new TCheckBox(html,
-      (tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0));
+      (label_to_the_right ? wxALIGN_RIGHT : 0));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
     wxa->centreX.Absolute(0);
@@ -717,36 +716,36 @@ TAG_HANDLER_PROC(tag)  {
     Box->WI.SetWidth(ax);
     Box->WI.SetHeight(ay);
     Box->SetCaption(Value);
-    if( tag.HasParam(wxT("CHECKED")) )  {
+    if (tag.HasParam(wxT("CHECKED"))) {
       Tmp = tag.GetParam(wxT("CHECKED"));
       op->processFunction(Tmp, SrcInfo, false);
-      if( Tmp.IsEmpty() )
+      if (Tmp.IsEmpty())
         Box->SetChecked(true);
-      else if( Tmp.IsBool() )
+      else if (Tmp.IsBool())
         Box->SetChecked(Tmp.ToBool());
-      else  {
+      else {
         TBasicApp::NewLogEntry(logError) << 
           (olxstr("Invalid value for boolean: ").quote() << Tmp);
       }
     }
     Box->SetData(Data);
     // binding events
-    if( tag.HasParam(wxT("ONCLICK")) )  {
+    if (tag.HasParam(wxT("ONCLICK"))) {
       Box->OnClick.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCLICK")), macro_map);
       Box->OnClick.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONCHECK")) )  {
+    if (tag.HasParam(wxT("ONCHECK"))) {
       Box->OnCheck.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHECK")), macro_map);
       Box->OnCheck.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONUNCHECK")) )  {
+    if (tag.HasParam(wxT("ONUNCHECK"))) {
       Box->OnUncheck.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONUNCHECK")), macro_map);
       Box->OnUncheck.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("MODEDEPENDENT")) ) {
+    if (tag.HasParam(wxT("MODEDEPENDENT"))) {
       Box->SetActionQueue(TModeRegistry::GetInstance().OnChange,
         tag.GetParam(wxT("MODEDEPENDENT")));
     }

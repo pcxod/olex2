@@ -726,7 +726,9 @@ public:     void CalcProbFactor(float Prob);
     return FGlMouse->MouseMove(x, y, Shift);
   }
   bool DblClick()  {  return FGlMouse->DblClick();  }
-  void ResetMouseState()  {  FGlMouse->ResetMouseState();  }
+  void ResetMouseState(short x, short y, short shift=0, short button=0) {
+    FGlMouse->ResetMouseState(x, y, shift, button);
+  }
   void EnableSelection(bool v)  {  FGlMouse->SetSelectionEnabled(v);  }
 //..............................................................................
 // actions

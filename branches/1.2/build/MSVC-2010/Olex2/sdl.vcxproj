@@ -614,7 +614,6 @@
     <ClCompile Include="..\..\..\sdl\egc.cpp" />
     <ClCompile Include="..\..\..\sdl\emath.cpp" />
     <ClCompile Include="..\..\..\sdl\ememstream.cpp" />
-    <ClCompile Include="..\..\..\sdl\esort.cpp" />
     <ClCompile Include="..\..\..\sdl\estopwatch.cpp" />
     <ClCompile Include="..\..\..\sdl\etime.cpp" />
     <ClCompile Include="..\..\..\sdl\exception.cpp" />

@@ -84,10 +84,9 @@ void TComboBox::EnterPressedEvent(wxCommandEvent &event)  {
   event.Skip();
 }
 //..............................................................................
-void TComboBox::ChangeEvent(wxCommandEvent& event)  {
+void TComboBox::ChangeEvent(wxCommandEvent& event) {
   olxstr v = GetValue();
-  bool changed = (v != StrValue);
-  if (changed) {
+  if (IsOnChangeAlways() || v != StrValue) {
     StrValue = v;
     if (!Data.IsEmpty())
       TOlxVars::SetVar(Data, GetText());

@@ -213,7 +213,7 @@ const_strlist TDUnitCell::ToWrl(olxdict<TGlMaterial, olxstr,
     " geometry IndexedLineSet{ colorPerVertex FALSE coord Coordinate{ point[";
   const TGPCollection &gpc = GetPrimitives();
   wrl::CrdTransformer crdc(Parent.GetBasis());
-  for (int i=0; i < VertexCount(); i++) {
+  for (size_t i=0; i < VertexCount(); i++) {
     out.Add("  ") << wrl::to_str(crdc.crd(GetVertex(i)));
     if (i+1 < VertexCount())
       out.GetLastString() << ',';

@@ -183,9 +183,6 @@
     <ClCompile Include="..\..\..\repository\cdsfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\repository\zipfs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\olex\ctrls\colorext.cpp">
       <Filter>ctrl\sources</Filter>
     </ClCompile>

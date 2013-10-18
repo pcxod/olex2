@@ -1463,20 +1463,21 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
 //..............................................................................
 void TGXApp::AllVisible(bool V)  {
   OnAllVisible.Enter(dynamic_cast<TBasicApp*>(this), NULL);
-  if( !V )  {
+  if (!V) {
     AtomIterator ai(*this);
-    while( ai.HasNext() )  ai.Next().SetVisible(false);
+    while (ai.HasNext()) ai.Next().SetVisible(false);
     BondIterator bi(*this);
-    while( bi.HasNext() )  bi.Next().SetVisible(false);
+    while (bi.HasNext()) bi.Next().SetVisible(false);
   }
-  else  {
+  else {
     AtomIterator ai(*this);
-    while( ai.HasNext() )  ai.Next().SetMasked(false);
+    while (ai.HasNext()) ai.Next().SetMasked(false);
     TAsymmUnit& au = XFile().GetAsymmUnit();
-    for( size_t i=0; i < au.AtomCount(); i++ )
+    for (size_t i=0; i < au.AtomCount(); i++)
       au.GetAtom(i).SetMasked(false);
     UpdateConnectivity();
     CenterView(true);
+    UpdateDuplicateLabels();
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
   Draw();
@@ -2929,6 +2930,7 @@ void TGXApp::UpdateDuplicateLabels() {
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
     if (!a.IsAvailable() || !a.GetMatrix().IsFirst()) continue;
+    FLabels->SetMaterialIndex(a.GetOwnerId(), lmiDefault);
     olxstr gl = a.GetGuiLabel();
     size_t idx = ld.IndexOf(gl);
     if (idx != InvalidIndex) {
@@ -3612,7 +3614,7 @@ void ShowPart_TagSetter(TCAtom &a, index_t v) {
 }
 void TGXApp::ShowPart(const TIntList& parts, bool show, bool visible_only)  {
   if (visible_only) {
-    SortedObjectList<uint32_t, TPrimitiveComparator> tags;
+    SortedObjectList<index_t, TPrimitiveComparator> tags;
     AtomIterator ai(*this);
     TAsymmUnit &au = XFile().GetAsymmUnit();
     for (size_t i=0; i < au.AtomCount(); i++) {
@@ -5078,25 +5080,26 @@ const_strlist TGXApp::ToWrl() const {
   //out.Add("}");
 }
 //..............................................................................
-void TGXApp::CreateRings(bool force, bool create)  {
-  if( !force &&
-    !TBasicApp::Options.FindValue("aromatic_rings", FalseString()).ToBool() )
+void TGXApp::CreateRings(bool force, bool create) {
+  if (!force &&
+    !TBasicApp::Options.FindValue("aromatic_rings", FalseString()).ToBool())
   {
     return;
   }
   TGraphicsStyle *cgs = GetRender().GetStyles().FindStyle('C');
   TGlMaterial *glm = NULL;
-  if( cgs != NULL )
+  if (cgs != NULL)
     glm = cgs->FindMaterial("Sphere");
-  
+  TStrList str_rings(TBasicApp::GetOptions().FindValue(
+    "aromatic_rings_def", "C5,C6,NC5,SC4"), ',');
   TTypeList<TSAtomPList> rings;
-  FindRings("C5", rings);
-  FindRings("C6", rings);
-  FindRings("NC5", rings);
-  for( size_t i=0; i < rings.Count(); i++ )  {
+  for (size_t i=0; i < str_rings.Count(); i++) {
+    FindRings(str_rings[i], rings);
+  }
+  for (size_t i=0; i < rings.Count(); i++) {
     vec3d normal, center;
-    if( TSPlane::CalcPlane(rings[i], normal, center) > 0.05 ||
-      !TNetwork::IsRingRegular(rings[i]) )
+    if (TSPlane::CalcPlane(rings[i], normal, center) > 0.05 ||
+      !TNetwork::IsRingRegular(rings[i]))
     {
       continue;
     }
@@ -5105,16 +5108,16 @@ void TGXApp::CreateRings(bool force, bool create)  {
     r.Basis.OrientNormal(normal);
     r.Basis.SetCenter(center);
     double min_d = 100;
-    for( size_t j=0; j < rings[i].Count(); j++ )  {
+    for (size_t j=0; j < rings[i].Count(); j++) {
       const double qd = rings[i][j]->crd().QDistanceTo(center);
-      if( qd < min_d )
+      if (qd < min_d)
         min_d = qd;
     }
     min_d = sqrt(min_d)*cos(M_PI/rings[i].Count())/r.GetRadius();
     r.Basis.SetZoom(min_d*0.85);
     if( glm != NULL )
       r.material = *glm;
-    if( create )
+    if (create)
       r.Create();
   }
 }

@@ -110,26 +110,28 @@ void TGlCanvas::InitGL()  {
 //..............................................................................
 short TGlCanvas::EncodeEvent(const wxMouseEvent &evt, bool update_button)  {
   short Fl = 0;
-  if( evt.m_altDown )  Fl |= sssAlt;
-  if( evt.m_shiftDown )  Fl |= sssShift;
-  if( evt.m_controlDown )  Fl |= sssCtrl;
-  if( update_button )  {
+  if (evt.m_altDown)  Fl |= sssAlt;
+  if (evt.m_shiftDown)  Fl |= sssShift;
+  if (evt.m_controlDown)  Fl |= sssCtrl;
+  if (update_button) {
     MouseButton = 0;
-    if( evt.LeftIsDown() )  MouseButton = smbLeft;
-    if( evt.MiddleIsDown() )  MouseButton |= smbMiddle;
-    if( evt.RightIsDown() )  MouseButton |= smbRight;
+    if (evt.LeftIsDown())  MouseButton = smbLeft;
+    if (evt.MiddleIsDown())  MouseButton |= smbMiddle;
+    if (evt.RightIsDown())  MouseButton |= smbRight;
   }
   return Fl;
 }
 //..............................................................................
 void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
+  //short mb = MouseButton;
   short Fl = EncodeEvent(me);
+  //MouseButton |= mb;
   FParent->OnMouseDown(me.m_x, me.m_y, Fl, MouseButton);
   FXApp->MouseDown(me.m_x, me.m_y, Fl, MouseButton);
   AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
-  if( G != NULL )  {
+  if (G != NULL) {
     TGlGroup *GlG = FXApp->FindObjectGroup(*G);
-    if( GlG != NULL )  
+    if (GlG != NULL)
       G = GlG;
   }
   FParent->ObjectUnderMouse(G);
@@ -143,7 +145,7 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   me.Skip();
   short mb = MouseButton;
   short Fl = EncodeEvent(me, true);
-  MouseButton ^= mb;
+  short up = MouseButton ^ mb;
   int left = 0, top = 0;
 #ifdef __MAC__  // a solution for MAC's single button
   int os_mask = sssCtrl;
@@ -152,28 +154,28 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
 #endif
   GetPosition(&left, &top);
 
-  if( FParent->OnMouseUp(me.m_x, me.m_y, Fl, MouseButton) )  {
+  if (FParent->OnMouseUp(me.m_x, me.m_y, Fl, up)) {
   }
-  else if( FXApp->MouseUp(me.m_x, me.m_y, Fl, MouseButton) )  {
+  else if (FXApp->MouseUp(me.m_x, me.m_y, Fl, up)) {
   }
-  else if( (abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
-    (MouseButton == smbRight) && (Fl == os_mask || Fl == 0) )
+  else if ((abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
+    (up == smbRight) && (Fl == os_mask || Fl == 0))
   {
 //    FMY += (wxSystemSettings::GetMetric(wxSYS_MENU_Y)*FParent->pmMenu->GetMenuItemCount());
 //      FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn);
     AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
     bool Handled = false;
-    if( G != NULL )  {
+    if (G != NULL) {
       TGlGroup *GlG = FXApp->FindObjectGroup(*G);
-      if( GlG == NULL )  
+      if (GlG == NULL)
         FParent->ObjectUnderMouse(G);
-      else        
+      else
         FParent->ObjectUnderMouse(GlG);
-      if( FParent->CurrentPopupMenu() )  {
+      if (FParent->CurrentPopupMenu()) {
         FParent->PopupMenu(FParent->CurrentPopupMenu(), FMX+left, FMY+top);
         Handled = true;
       }
-      if( !Handled )
+      if (!Handled)
         FParent->PopupMenu(FParent->DefaultPopup(), FMX+left, FMY+top);
     }
     else
@@ -181,19 +183,20 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
     SetFocus();
     return;
   }
-  else if( FParent->OnMouseUp(me.m_x, me.m_y, Fl, MouseButton) )  {
-    FXApp->ResetMouseState();
+  else if (FParent->OnMouseUp(me.m_x, me.m_y, Fl, up)) {
+    FXApp->ResetMouseState(me.m_x, me.m_y);
   }
   FXApp->Draw();
-  //FXApp->ResetMouseState();
+  FXApp->ResetMouseState(me.m_x, me.m_y, Fl, MouseButton);
   MouseButton = 0;
 }
 //..............................................................................
-void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
+void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
   short Fl = EncodeEvent(me, false);
-  if( MouseButton == 0 )  
+  if (MouseButton == 0)
     FParent->OnMouseMove(me.m_x, me.m_y);
-  if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  {  // check if a handler for the event is found
+  // check if a handler for the event is found
+  if (FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl)) {
 #ifdef __WIN32__
     wxWindow::Refresh();  // this seems to help but not to solve! with the desktop compositionon Vista/7
 #else
@@ -204,13 +207,19 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
 //..............................................................................
 void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
   short Fl = EncodeEvent(me);
-  if( FXApp != NULL && !FXApp->DblClick() )
+  if (FXApp != NULL && !FXApp->DblClick())
     FParent->OnMouseDblClick(me.m_x, me.m_y, Fl, MouseButton);
 }
 //..............................................................................
-void TGlCanvas::OnMouse(wxMouseEvent& me)  {
-  if( me.GetWheelRotation() != 0 )  
-    FParent->OnMouseWheel(me.GetX(), me.GetY(), (double)me.GetWheelRotation()/me.GetWheelDelta());
+void TGlCanvas::OnMouse(wxMouseEvent& me) {
+  if (me.Entering()) {
+    short fl = EncodeEvent(me, true);
+    FXApp->ResetMouseState(me.m_x, me.m_y, fl, MouseButton);
+  }
+  if (me.GetWheelRotation() != 0) {
+    FParent->OnMouseWheel(me.GetX(), me.GetY(),
+    (double)me.GetWheelRotation()/me.GetWheelDelta());
+  }
   me.Skip();
 }
 //..............................................................................

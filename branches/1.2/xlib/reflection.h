@@ -70,7 +70,7 @@ public:
   inline void SetL(int v)   {  hkl[2] = v;  }
 
   template <class VC>
-  bool EqHkl (const VC& v) const {
+  bool EqHkl(const VC& v) const {
     return ((int)v[0] == hkl[0]) && ((int)v[1] == hkl[1]) &&
             ((int)v[2] == hkl[2]);
   }
@@ -79,55 +79,31 @@ public:
     return ((int)v[0] == -hkl[0]) && ((int)v[1] == -hkl[1]) &&
       ((int)v[2] == -hkl[2]);
    }
-  // generates symmetry equivalent miller index and stores it in res
-  template <class VC, class MC> VC& MulHkl(VC& res, const MC& mat) const {
-    res[0] = (hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
-    res[1] = (hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
-    res[2] = (hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
-    return res;
+  template <class VC, class MC>
+  static VC MulHkl(const VC& hkl, const MC& mat) {
+    return VC((hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]),
+      (hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]),
+      (hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]));
   }
-  template <class MC> vec3i MulHkl(const MC& mat) const {
-    return vec3i(
-      hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0],
-      hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1],
-      hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
-  }
-  vec3i MulHkl(const smatd& mat) const {  return MulHkl(mat.r);  }
-  template <class MC> vec3i operator * (const MC& mat) const {
-    return vec3i(
-      hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0],
-      hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1],
-      hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
-  }
-  // generates index of an equivalen reflection
-  template <class VC> VC& MulHkl(VC& res, const smatd& mat) const {
-    return MulHkl(res, mat.r);
-  }
-  vec3i operator * (const smatd& mat) const {
-    return vec3i(
-      hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0],
-      hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1],
-      hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
+  static vec3i MulHkl(const vec3i& hkl, const smatd& mat) {
+    return MulHkl(hkl, mat.r);
   }
   // generates an equivalent using rounding on the resulting indexes
-  template <class VC, class MC> VC& MulHklR(VC& res, const MC& mat) const {
-    res[0] = olx_round(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
-    res[1] = olx_round(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
-    res[2] = olx_round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
-    return res;
-  }
-  template <class MC> vec3i MulHklR(const MC& mat) const {
+  template <class VC, class MC>
+  static vec3i MulHklR(const VC &hkl, const MC& mat) {
     return vec3i(
       olx_round(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]),
       olx_round(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]),
       olx_round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]));
   }
-  // generates an equivalent using rounding on the resulting indexes
-  template <class VC> VC& MulHklR(VC& res, const smatdd& mat) const {
-    return MulHklR(res, mat.r);
+  vec3i operator * (const smatd& mat) const { return MulHkl(hkl, mat.r); }
+  template <class MC> vec3i operator * (const MC& mat) const {
+    return MulHkl(hkl, mat);
   }
-//..............................................................................
-  /* replaces hkl with standard hkl accroding to provided matrices. 
+  template <class MC> vec3i MulHklR(const MC& mat) const {
+    return MulHklR(hkl, mat);
+  }
+  /* replaces hkl with standard hkl accroding to provided matrices.
   Also performs the reflection analysis, namely:
   Initialises Absent flag
   */
@@ -186,28 +162,29 @@ public:
   multiplicity
   */
   template <class MatList> void Analyse(const MatList& ml)  {
-    vec3i hklv;
     _reset_flags(0, 1, GetBatch());
     for( size_t i=0; i < ml.Count(); i++ )  {
-      MulHkl(hklv, ml[i]);
-      if( EqHkl(hklv) )  {  // symmetric reflection
+      vec3i hklv = MulHkl(hkl, ml[i]);
+      if (EqHkl(hklv)) {  // symmetric reflection
         IncMultiplicity();
-        if( !IsAbsent() )  {
+        if (!IsAbsent()) {
           const double l = PhaseShift(ml[i]);
           SetAbsent(olx_abs(l - olx_round(l)) > 0.01);
         }
       }
-      else if( !IsCentric() && EqNegHkl(hklv) )  // centric reflection
+      else if (!IsCentric() && EqNegHkl(hklv))  // centric reflection
         SetCentric(true);
     }
   }
 //..............................................................................
   void Analyse(const SymmSpace::InfoEx& info);
 //..............................................................................
-  inline bool IsSymmetric(const smatd& m) const {  return EqHkl(MulHkl(m.r));  }
+  bool IsSymmetric(const smatd& m) const {
+    return EqHkl(MulHkl(hkl, m));
+  }
 //..............................................................................
-  inline bool IsCentrosymmetric(const smatd& m) const {
-    return EqNegHkl(MulHkl(m.r));
+  bool IsCentrosymmetric(const smatd& m) const {
+    return EqNegHkl(MulHkl(hkl, m));
   }
 //..............................................................................
   int CompareTo(const TReflection &r) const {
@@ -267,7 +244,7 @@ public:
   olxstr ToNString() const {
     olxstr Str(IsOmitted() ? '-' : '+', 80);
     Str << olx_abs(GetTag()) << '.';
-    return (Str.RightPadding(7, ' ', true) << ToString());
+    return (Str.RightPadding(10, ' ', true) << ToString());
   }
 //..............................................................................
   bool FromString(const olxstr& Str);
