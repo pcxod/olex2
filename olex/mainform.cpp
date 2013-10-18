@@ -1792,8 +1792,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
       else if( MsgId == ID_WARNING )   glm = &WarningFontColor;
       else if( MsgId == ID_ERROR )     glm = &ErrorFontColor;
       else if( MsgId == ID_EXCEPTION ) glm = &ExceptionFontColor;
-      if( !( (FMode&mSilent) != 0 &&  (MsgId == ID_INFO || MsgId == ID_WARNING))
-            || (MsgId == ID_ERROR || MsgId == ID_EXCEPTION) )  {
+      if( !( (FMode&mSilent) != 0 &&  (MsgId == ID_INFO)) ||
+        (MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION))
+      {
         FGlConsole->OnPost.SetEnabled(false); // the proporgation will happen after we return false
         FGlConsole->PrintText(Data->ToString(), glm, true);
         FGlConsole->PrintText(EmptyString());
