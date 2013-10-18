@@ -4585,7 +4585,8 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 void XLibMacros::macFlush(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TBasicApp::GetLog().Flush();
+  if (Cmds.IsEmpty() || Cmds[0].Equalsi("log"))
+    TBasicApp::GetLog().Flush();
 }
 //.............................................................................
 void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

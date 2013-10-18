@@ -685,9 +685,12 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
     " name, occu, pack, part, split, fit");
 
-  this_InitMacroD(Text, EmptyString(), fpNone|fpOne,
-    "Shows the console buffer in an external editor, defined by defeditor "
-    "variable");
+  Library.Register(new TMacro<TMainForm>(this, &TMainForm::macFlush,
+    "Flush",
+    EmptyString(), fpNone|fpOne|fpTwo,
+    "An extension to 'flush log' to 'flush output' to flush console buffer "
+    "into DataDir()/[output.txt] file, the file name can follow the command"),
+    libChain);
   this_InitMacroD(ShowStr, EmptyString(), fpNone|fpOne|psFileLoaded,
     "Shows/hides structure and console buffer");
   // not implemented

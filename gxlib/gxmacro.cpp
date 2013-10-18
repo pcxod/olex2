@@ -849,8 +849,8 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     app.SetLabelsVisible(true);
   }
   if (app.GetLabels().IsVisible()) {
+    TGlGroup &sel = app.GetSelection();
     if ((app.GetLabels().GetMode()&lmBonds) == lmBonds) {
-      TGlGroup &sel = app.GetSelection();
       TXBondPList bonds = sel.Extract<TXBond>();
       if (bonds.IsEmpty()) {
         app.GetLabels().Init(true, lmiDefault);
@@ -863,10 +863,16 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else {
-      app.GetLabels().Init(true, lmiMasked);
-      TXAtomPList atoms = app.FindXAtoms(Cmds, true, false);
-      for (size_t i=0; i < atoms.Count(); i++) {
-        app.GetLabels().SetMaterialIndex(atoms[i]->GetOwnerId(), lmiDefault);
+      TXAtomPList atoms = sel.Extract<TXAtom>();
+      if (atoms.IsEmpty() && Cmds.IsEmpty()) {
+        app.GetLabels().Init(true, lmiDefault);
+      }
+      else {
+        app.GetLabels().Init(true, lmiMasked);
+        TXAtomPList atoms = app.FindXAtoms(Cmds, true, false);
+        for (size_t i = 0; i < atoms.Count(); i++) {
+          app.GetLabels().SetMaterialIndex(atoms[i]->GetOwnerId(), lmiDefault);
+        }
       }
     }
   }

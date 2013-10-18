@@ -385,7 +385,7 @@ private:
 
   DefMacro(Mode)
 
-  DefMacro(Text)
+  DefMacro(Flush)
   DefMacro(ShowStr)
 
   DefMacro(Bind)
