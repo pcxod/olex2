@@ -361,7 +361,7 @@ void TGlRenderer::Resize(int l, int t, size_t w, size_t h, float Zoom)  {
 //..............................................................................
 void TGlRenderer::SetView(bool i, short Res)  {  SetView(0, 0, i , false, Res);  }
 //..............................................................................
-void TGlRenderer::SetZoom(double V) {  
+void TGlRenderer::SetZoom(double V) {
   //const double MaxZ = olx_max(FMaxV.DistanceTo(FMinV), 1);
   //double dv = V*MaxZ;
   if( V < 0.001 )  //  need to fix the zoom
@@ -776,10 +776,15 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y) {
     return Result;
   }
   else {
+    bool fe = olx_gl::isEnabled(GL_FOG);
+    if (fe)
+      olx_gl::disable(GL_FOG);
     SetView(x, y, false, true, 1);
     GetScene().StartDraw();
     DrawObjects(x, y, true, false);
     GetScene().EndDraw();
+    if (fe)
+      olx_gl::enable(GL_FOG);
     memset(&SelectionBuffer, 0, sizeof(SelectionBuffer));
     olx_gl::readPixels(x-1, Height-y-1, 3, 3, GL_RGB, GL_UNSIGNED_BYTE,
       &SelectionBuffer[0]);

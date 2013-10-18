@@ -1463,20 +1463,21 @@ void TGXApp::SyncAtomAndBondVisiblity(short atom_type, bool show_a, bool show_b)
 //..............................................................................
 void TGXApp::AllVisible(bool V)  {
   OnAllVisible.Enter(dynamic_cast<TBasicApp*>(this), NULL);
-  if( !V )  {
+  if (!V) {
     AtomIterator ai(*this);
-    while( ai.HasNext() )  ai.Next().SetVisible(false);
+    while (ai.HasNext()) ai.Next().SetVisible(false);
     BondIterator bi(*this);
-    while( bi.HasNext() )  bi.Next().SetVisible(false);
+    while (bi.HasNext()) bi.Next().SetVisible(false);
   }
-  else  {
+  else {
     AtomIterator ai(*this);
-    while( ai.HasNext() )  ai.Next().SetMasked(false);
+    while (ai.HasNext()) ai.Next().SetMasked(false);
     TAsymmUnit& au = XFile().GetAsymmUnit();
-    for( size_t i=0; i < au.AtomCount(); i++ )
+    for (size_t i=0; i < au.AtomCount(); i++)
       au.GetAtom(i).SetMasked(false);
     UpdateConnectivity();
     CenterView(true);
+    UpdateDuplicateLabels();
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
   Draw();
@@ -2929,6 +2930,7 @@ void TGXApp::UpdateDuplicateLabels() {
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
     if (!a.IsAvailable() || !a.GetMatrix().IsFirst()) continue;
+    FLabels->SetMaterialIndex(a.GetOwnerId(), lmiDefault);
     olxstr gl = a.GetGuiLabel();
     size_t idx = ld.IndexOf(gl);
     if (idx != InvalidIndex) {

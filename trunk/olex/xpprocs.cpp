@@ -1879,9 +1879,7 @@ void TMainForm::macRefresh(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  static bool ChangingMode = false;
-  if (ChangingMode)  return;
-  ChangingMode = true;
+  olx_scope_cs cs_(TBasicApp::GetCriticalSection());
   olxstr name = Cmds[0], args;
   Cmds.Delete(0);
   args << Cmds.Text(' ');
@@ -1901,17 +1899,18 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options,
       throw TFunctionFailedException(__OlxSrcInfo, e);
     }
   }
-  ChangingMode = false;
 }
 //..............................................................................
-void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options,
+void TMainForm::macFlush(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  olxstr log="output.txt";
-  if (!Cmds.IsEmpty()) log = Cmds[0];
-  olxstr FN = FXApp->GetInstanceDir() + log;
-  TUtf8File::WriteLines(FN, FGlConsole->Buffer());
-  Macros.ProcessMacro(olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
+  if (Cmds.Count() > 0 && Cmds[0].Equalsi("output")) {
+    olxstr log = "output.txt";
+    if (Cmds.Count() == 2) log = Cmds[1];
+    TUtf8File::WriteLines(FXApp->GetInstanceDir() + log, FGlConsole->Buffer());
+  }
+  else
+    E.SetUnhandled(true);
 }
 //..............................................................................
 void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
