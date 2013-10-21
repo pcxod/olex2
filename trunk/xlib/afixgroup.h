@@ -134,8 +134,10 @@ public:
   static bool IsDependent(int afix)  {
     return GetN(afix) == 5;
   }
-  TCAtom& AddDependent(TCAtom& a)  {
+  TCAtom& AddDependent(TCAtom& a) {
     Dependent.Add(&a);
+    if (a.GetParentAfixGroup() != NULL)
+      a.GetParentAfixGroup()->RemoveDependent(a);
     a.SetParentAfixGroup(this);
     return a;
   }

@@ -1385,9 +1385,9 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   TPtrList<PyObject> atoms, equivs;
   PythonExt::SetDictItem(main, "aunit", aunit.PyExport(atoms, export_conn));
   TArrayList<uint32_t> mat_tags(UsedSymm.Count());
-  for( size_t i=0; i < UsedSymm.Count(); i++ )  {
+  for (size_t i=0; i < UsedSymm.Count(); i++) {
     smatd& m = UsedSymm.GetValue(i).symop;
-    PyTuple_SetItem(eq, i, 
+    PyTuple_SetItem(eq, i,
       equivs.Add(
       Py_BuildValue("(iii)(iii)(iii)(ddd)", m.r[0][0], m.r[0][1], m.r[0][2],
       m.r[1][0], m.r[1][1], m.r[1][2],
@@ -1404,7 +1404,7 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   PythonExt::SetDictItem(main, "afix", AfixGroups.PyExport(atoms));
   PythonExt::SetDictItem(main, "exyz", ExyzGroups.PyExport(atoms));
   PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms));
-  for( size_t i=0; i < rcList1.Count(); i++ )  {
+  for (size_t i=0; i < rcList1.Count(); i++) {
     PythonExt::SetDictItem(main, rcList1[i]->GetIdName().ToLowerCase(),
       rcList1[i]->PyExport(atoms, equivs));
   }
