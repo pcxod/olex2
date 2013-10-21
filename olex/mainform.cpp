@@ -3414,7 +3414,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
       ((TXGlLabel*)G)->SetLabel(label);
 
   }
-  else if( EsdlInstanceOf(*G, TXAtom) )  {
+  else if (EsdlInstanceOf(*G, TXAtom)) {
     TXAtom * xa = (TXAtom*)G;
     if (xa->CAtom().GetExyzGroup() != NULL) {
       TGXApp::AtomIterator ai = FXApp->GetAtoms();
@@ -3425,22 +3425,22 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
       }
       FXApp->SelectAll(false);
     }
-    else {
+    else if (FXApp->GetMouseHandler().IsSelectionEnabled()) {
       TNetwork& n = xa->GetNetwork();
       size_t sel_cnt=0, cnt = 0;
-      for( size_t i=0; i < n.NodeCount(); i++ )  {
+      for (size_t i=0; i < n.NodeCount(); i++) {
         TXAtom& a = (TXAtom&)n.Node(i);
         if( !a.IsVisible() )  continue;
         cnt++;
         if( a.IsSelected() )  sel_cnt++;
       }
-      for( size_t i=0; i < n.BondCount(); i++ )  {
+      for (size_t i=0; i < n.BondCount(); i++) {
         TXBond& b = (TXBond&)n.Bond(i);
-        if( !b.IsVisible() )  continue;
+        if (!b.IsVisible()) continue;
         cnt++;
-        if( b.IsSelected() )  sel_cnt++;
+        if (b.IsSelected())  sel_cnt++;
       }
-      if( cnt > 0 )  {
+      if (cnt > 0) {
         FXApp->SelectFragments(TNetPList() << &n, ((double)sel_cnt/cnt) < .75);
       }
     }

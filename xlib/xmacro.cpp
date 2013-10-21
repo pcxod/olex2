@@ -3448,7 +3448,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   cif_dp::TCifDP src;
   TTypeList<AnAssociation2<olxstr,olxstr> > Translations;
   olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
-  SortedObjectList<olxstr, olxstrComparator<true> > items_to_skip;
+  typedef SortedObjectList<olxstr, olxstrComparator<true> > SortedStrList;
+  SortedStrList items_to_skip;
+  TTypeList<Wildcard> masks_to_skip;
   if (TEFile::Exists(CifCustomisationFN)) {
     try {
       TDataFile df;
@@ -3469,7 +3471,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           "cif_customisation").FindItem("skip_merge");
         if (si != NULL) {
           for (size_t i=0; i < si->ItemCount(); i++) {
-            items_to_skip.AddUnique(si->GetItem(i).GetName());
+            if (si->GetItem(i).GetName().ContainAnyOf("*?"))
+              masks_to_skip.AddNew(si->GetItem(i).GetName());
+            else
+              items_to_skip.AddUnique(si->GetItem(i).GetName());
           }
         }
       }
@@ -3701,14 +3706,24 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     // normalise
     for( size_t i=0; i < Translations.Count(); i++ )
       src[0].Rename(Translations[i].GetA(), Translations[i].GetB());
-    for( size_t j=0; j < src[0].param_map.Count(); j++ )  {
+    for (size_t j = 0; j < src[0].param_map.Count(); j++)  {
       const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
       if (!e.HasName())  continue;
-      if (items_to_skip.Contains(e.GetName()))
+      if (items_to_skip.Contains(e.GetName())) {
+        TBasicApp::NewLogEntry() << "Skipping '" << e.GetName() << '\'';
         continue;
+      }
       bool skip = false;
-      for( size_t k=0; k < _loop_names_to_skip.Count(); k++ )  {
-        olxstr i_name = e.GetName();
+      for (size_t k = 0; k < masks_to_skip.Count(); k++) {
+        if (masks_to_skip[k].DoesMatch(e.GetName())) {
+          TBasicApp::NewLogEntry() << "Skipping '" << e.GetName() << '\'';
+          skip = true;
+          break;
+        }
+      }
+      if (skip) continue;
+      for (size_t k=0; k < _loop_names_to_skip.Count(); k++) {
+        const olxstr &i_name = e.GetName();
         if(i_name.StartsFromi(_loop_names_to_skip[k]) &&
           (i_name.Length()>_loop_names_to_skip[k].Length() &&
            i_name.CharAt(_loop_names_to_skip[k].Length()) == '_'))
@@ -3717,8 +3732,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           break;
         }
       }
-      if( !skip )
+      if (!skip)
         Cif->SetParam(e);
+      else {
+        TBasicApp::NewLogEntry() << "Skipping '" << e.GetName() << '\'';
+      }
     }
   }
   if (Options.Contains('f')) {

@@ -168,8 +168,8 @@ void TAfixGroups::ToDataItem(TDataItem& item) {
 #ifdef _PYTHON
 PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
   int group_id = 0;
-  for( size_t i=0; i < Groups.Count(); i++ )  {
-    if( Groups[i].IsEmpty() )  {
+  for (size_t i=0; i < Groups.Count(); i++) {
+    if (Groups[i].IsEmpty()) {
       Groups.NullItem(i);
       continue;
     }
@@ -178,7 +178,7 @@ PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
   Groups.Pack();
 
   PyObject* main = PyTuple_New( Groups.Count() );
-  for( size_t i=0; i < Groups.Count(); i++ )
+  for (size_t i=0; i < Groups.Count(); i++)
     PyTuple_SetItem(main, i, Groups[i].PyExport(atoms));
   return main;
 }
