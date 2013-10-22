@@ -254,7 +254,12 @@ namespace cif_dp {
     template <class SC>
     bool Remove(const SC &pname) { return Delete(param_map.IndexOf(pname)); }
     bool Remove(const ICifEntry& e)  {  return Remove(e.GetName());  }
-    void Rename(const olxstr& old_name, const olxstr& new_name);
+    /*Renames an item, if new_name already exists, replace_if_exists controls
+    what happens to it - if this flag is true, the old value will replace the
+    new one, otherwise it will be deleted
+    */
+    void Rename(const olxstr& old_name, const olxstr& new_name,
+      bool replace_if_exists=false);
     virtual void ToStrings(TStrList& list) const;
     virtual void Format();
     virtual ICifEntry* Replicate() const {  return new CifBlock(*this);  }
