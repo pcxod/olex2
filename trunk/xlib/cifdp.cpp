@@ -523,12 +523,24 @@ bool CifBlock::Delete(size_t idx)  {
   param_map.Delete(idx);
   return true;
 }
-void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name)  {
+void CifBlock::Rename(const olxstr& old_name, const olxstr& new_name,
+  bool replace_if_exists)
+{
   const size_t i = param_map.IndexOf(old_name);
-  if( i == InvalidIndex )  return;
+  if (i == InvalidIndex) return;
   ICifEntry* val = param_map.GetValue(i);
-  if( !val->HasName() )  return;
-  try  {  val->SetName(new_name);  }
+  if (!val->HasName()) return;
+  const size_t ni = param_map.IndexOf(new_name);
+  if (ni != InvalidIndex) {
+    if (!replace_if_exists) {
+      Delete(i);
+      return;
+    }
+    else {
+      Delete(ni);
+    }
+  }
+  try { val->SetName(new_name); }
   catch(...)  {  return;  }  // read only name?
   param_map.Delete(i);
   param_map.Add(new_name, val);

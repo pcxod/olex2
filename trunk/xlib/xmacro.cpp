@@ -3444,7 +3444,6 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   TXApp& xapp = TXApp::GetInstance();
-  TCif *Cif, Cif2;
   cif_dp::TCifDP src;
   TTypeList<AnAssociation2<olxstr,olxstr> > Translations;
   olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
@@ -3484,17 +3483,19 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   TStrList _loop_names_to_skip("_atom_site;_geom;_space_group", ';');
-  if( xapp.CheckFileType<TCif>() )
+  TCif *Cif;
+  olx_object_ptr<TCif> Cif2(new TCif);
+  if (xapp.CheckFileType<TCif>())
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists(cifFN) )
-      Cif2.LoadFromFile(cifFN);
+    if (TEFile::Exists(cifFN))
+      Cif2().LoadFromFile(cifFN);
     else {
       throw TFunctionFailedException(__OlxSourceInfo,
         "existing cif is expected");
     }
-    Cif = &Cif2;
+    Cif = &Cif2();
   }
   // normalise
   for( size_t i=0; i < Translations.Count(); i++ )
@@ -3689,10 +3690,11 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  for( size_t i=0; i < Cmds.Count(); i++ )  {
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
+  for (size_t i=0; i < Cmds.Count(); i++) {
     try {
       IInputStream *is = TFileHandlerManager::GetInputStream(Cmds[i]);
-      if( is == NULL )  {
+      if (is == NULL) {
         TBasicApp::NewLogEntry(logError) << "Could not find file: " << Cmds[i];
         continue;
       }
@@ -3701,22 +3703,22 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
       delete is;
       src.LoadFromStrings(sl);
     }
-    catch( ... )  {}  // most like the cif does not have cell, so pass it
-    if( src.Count() == 0 )  continue;
+    catch(...) {}  // most like the cif does not have cell, so pass it
+    if (src.Count() == 0) continue;
     // normalise
-    for( size_t i=0; i < Translations.Count(); i++ )
+    for (size_t i=0; i < Translations.Count(); i++)
       src[0].Rename(Translations[i].GetA(), Translations[i].GetB());
     for (size_t j = 0; j < src[0].param_map.Count(); j++)  {
       const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
       if (!e.HasName())  continue;
       if (items_to_skip.Contains(e.GetName())) {
-        TBasicApp::NewLogEntry() << "Skipping '" << e.GetName() << '\'';
+        TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
         continue;
       }
       bool skip = false;
       for (size_t k = 0; k < masks_to_skip.Count(); k++) {
         if (masks_to_skip[k].DoesMatch(e.GetName())) {
-          TBasicApp::NewLogEntry() << "Skipping '" << e.GetName() << '\'';
+          TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
           skip = true;
           break;
         }
@@ -3732,8 +3734,25 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           break;
         }
       }
-      if (!skip)
-        Cif->SetParam(e);
+      if (!skip) {
+        bool processed = false;
+        if (op != NULL && EsdlInstanceOf(e, cif_dp::cetNamedString)) {
+          olxstr sv = e.GetStringValue();
+          if (sv.StartsFrom('$')) {
+            try {
+              if (op->processFunction(sv)) {
+                Cif->SetParam(cif_dp::cetNamedString(e.GetName(), sv));
+                processed = true;
+              }
+            }
+            catch (TExceptionBase &e) {
+              TBasicApp::NewLogEntry(logInfo) << e;
+            }
+          }
+        }
+        if (!processed)
+          Cif->SetParam(e);
+      }
       else {
         TBasicApp::NewLogEntry() << "Skipping '" << e.GetName() << '\'';
       }
