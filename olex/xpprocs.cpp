@@ -3843,14 +3843,18 @@ void TMainForm::funIsCurrentLanguage(const TStrObjList& Params, TMacroError &E) 
   E.SetRetVal(false);
 }
 //..............................................................................
-void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !Cmds[0].IsNumber() )  {
-    Error.ProcessingError(__OlxSrcInfo, "invalid syntax: <interval 'task'> are expected ");
+void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  if (!Cmds[0].IsNumber())  {
+    Error.ProcessingError(__OlxSrcInfo,
+      "invalid syntax: <interval 'task'> is expected");
     return;
   }
   TScheduledTask& task = Tasks.AddNew();
   task.Repeatable= Options.GetBoolOption('r');
-  task.Interval = Cmds[0].ToInt();
+  task.NeedsGUI = Options.GetBoolOption('g');
+  Cmds[0].ToNumber(task.Interval);
   task.Task = Cmds[1];
   task.LastCalled = TETime::Now();
 }

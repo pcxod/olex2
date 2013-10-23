@@ -776,7 +776,11 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Makes overlayed file, given by index the current file to which all "
     "commands are applied");
 
-  this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
+  this_InitMacroD(Schedule,
+    "r-repeatable&;"
+    "g-requires GUI"
+    ,
+    fpAny^(fpNone|fpOne),
     "Schedules a particular macro (second argument) to be executed within "
     "provided interval (first argument)");
 
@@ -1595,16 +1599,18 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
        }
     }
   }
-  else if( MsgId == ID_TIMER )  {
+  else if (MsgId == ID_TIMER) {
     FTimer->OnTimer.SetEnabled(false);
-    if( nui_interface != NULL )  {
+    if (nui_interface != NULL) {
       nui_interface->DoProcessing();
     }
     // execute tasks ...
-    for( size_t i=0; i < Tasks.Count(); i++ )  {
-      if(  (TETime::Now() - Tasks[i].LastCalled) > Tasks[i].Interval )  {
-        olxstr tmp(Tasks[i].Task);
-        if( !Tasks[i].Repeatable )  {
+    for (size_t i=0; i < Tasks.Count(); i++) {
+      if (Tasks[i].NeedsGUI && !this->IsShownOnScreen())
+        continue;
+      if ((TETime::Now() - Tasks[i].LastCalled) > Tasks[i].Interval) {
+        olxstr tmp = Tasks[i].Task;
+        if (!Tasks[i].Repeatable) {
           Tasks.Delete(i);
           i--;
         }

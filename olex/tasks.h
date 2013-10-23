@@ -13,9 +13,12 @@
 
 // a scheduled macro
 struct TScheduledTask  {
-  bool Repeatable;
+  bool Repeatable, NeedsGUI;
   olxstr Task;
-  long Interval, LastCalled;
+  time_t Interval, LastCalled;
+  TScheduledTask()
+    : Repeatable(false), NeedsGUI(false), Interval(0), LastCalled(0)
+  {}
 };
 /* some tasks which can be executed at startup, but the main window must be
 visible
