@@ -1944,12 +1944,10 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options,
       TXApp::GetInstance().XFile().GetRM().ClearInfoTab("MPLA");
     else if( Cmds[0].Equalsi("CONF") )
       TXApp::GetInstance().XFile().GetRM().ClearInfoTab("CONF");
-    else  {
-      for( size_t i=0; i < Ins.InsCount(); i++ )  {
-        if( Ins.InsName(i).Equalsi(Cmds[0]) )  {
-          Ins.DelIns(i--);
-          continue;
-        }
+    for (size_t i=0; i < Ins.InsCount(); i++) {
+      if (Ins.InsName(i).Equalsi(Cmds[0])) {
+        Ins.DelIns(i--);
+        continue;
       }
     }
   }
