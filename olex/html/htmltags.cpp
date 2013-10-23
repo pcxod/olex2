@@ -23,6 +23,32 @@
   #define _StrFormat_ wxT("%s")
 #endif
 
+bool GetBoolAttribute(const wxHtmlTag &tag, const olxstr &attr) {
+  if (tag.HasParam(attr.u_str())) {
+    olxstr v = tag.GetParam(attr.u_str());
+    if (v.IsBool())
+      return v.ToBool();
+    else
+      return true;
+  }
+  return false;
+}
+
+void AdjustSize(wxWindow &w, bool height=true, bool width=false) {
+  wxSize sz = w.GetSize(), bsz = w.GetBestSize();
+  if (height) {
+    if (width) {
+      w.SetSize(bsz.x, bsz.y);
+    }
+    else {
+      w.SetSize(sz.x, bsz.y);
+    }
+  }
+  else if (width) {
+    w.SetSize(bsz.x, sz.y);
+  }
+}
+
 // helper tag
 TAG_HANDLER_BEGIN(SWITCHINFOS, "SWITCHINFOS")
 TAG_HANDLER_PROC(tag)  {
@@ -330,11 +356,12 @@ TAG_HANDLER_PROC(tag)  {
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
     CreatedWindow = Text;
-    Text->SetSize(ax, ay);
-    Text->SetData( Data );
-
     Text->SetText(Value);
-    if( !Label.IsEmpty() )  {
+    Text->SetSize(ax, ay);
+    AdjustSize(*Text);
+    Text->SetData(Data);
+
+    if (!Label.IsEmpty())  {
       wxHtmlContainerCell* contC =
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
@@ -555,8 +582,9 @@ TAG_HANDLER_PROC(tag)  {
 /******************* COMBOBOX *************************************************/
   else if (TagName.Equalsi("combo")) {
     TComboBox *Box = new TComboBox(html,
-      tag.HasParam(wxT("READONLY")), wxSize(ax, ay));
+      GetBoolAttribute(tag, "READONLY"), wxSize(ax, ay));
     Box->SetFont(m_WParser->GetDC()->GetFont());
+    AdjustSize(*Box);
     CreatedObject = Box;
     CreatedWindow = Box;
     if (tag.HasParam(wxT("ITEMS"))) {
@@ -574,12 +602,7 @@ TAG_HANDLER_PROC(tag)  {
       Box->OnChange.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Box->OnChange.Add(&html->Manager);
-      if (tag.HasParam(wxT("ONCHANGEALWAYS"))) {
-        olxstr uc = tag.GetParam(wxT("ONCHANGEALWAYS"));
-        if (uc.IsBool()) {
-          Box->SetOnChangeAlways(uc.ToBool());
-        }
-      }
+      Box->SetOnChangeAlways(GetBoolAttribute(tag, "ONCHANGEALWAYS"));
     }
     if (tag.HasParam(wxT("ONLEAVE"))) {
       Box->OnLeave.data =
@@ -612,32 +635,33 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
   }
 /******************* SPIN CONTROL *********************************************/
-  else if( TagName.Equalsi("spin") )  {
+  else if (TagName.Equalsi("spin")) {
     TSpinCtrl *Spin = new TSpinCtrl(html);
     Spin->SetFont(m_WParser->GetDC()->GetFont());
+    Spin->WI.SetHeight(ay);
+    Spin->WI.SetWidth(ax);
+    AdjustSize(*Spin);
     Spin->SetForegroundColour(m_WParser->GetDC()->GetTextForeground());
     int min=0, max = 100;
-    if( tag.HasParam( wxT("MIN") ) )
+    if (tag.HasParam( wxT("MIN")))
       tag.ScanParam(wxT("MIN"), wxT("%i"), &min);
-    if( tag.HasParam( wxT("MAX") ) )
+    if (tag.HasParam( wxT("MAX")))
       tag.ScanParam(wxT("MAX"), wxT("%i"), &max);
     Spin->SetRange(min, max);
-    try  {  Spin->SetValue((int)Value.ToDouble());  }
-    catch(...)  {
+    try  { Spin->SetValue((int)Value.ToDouble()); }
+    catch(...) {
       TBasicApp::NewLogEntry() << "Invalid value for spin control: \'" <<
         Value << '\'';
     }
     CreatedObject = Spin;
     CreatedWindow = Spin;
-    Spin->WI.SetHeight(ay);
-    Spin->WI.SetWidth(ax);
     Spin->SetData(Data);
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
+    if (tag.HasParam(wxT("ONCHANGE"))) {
       Spin->OnChange.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Spin->OnChange.Add(&html->Manager);
     }
-    if( !Label.IsEmpty() )  {
+    if (!Label.IsEmpty()) {
       wxHtmlContainerCell* contC =
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
@@ -646,43 +670,44 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell(wc);
       contC->InsertCell(new THtmlWidgetCell(Spin, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
+      if (valign != -1) contC->SetAlignVer(valign);
+      if (halign != -1) contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Spin, fl));
   }
 /******************* SLIDER ***************************************************/
-  else  if( TagName.Equalsi("slider") )  {
+  else if (TagName.Equalsi("slider")) {
     TTrackBar *Track = new TTrackBar(html);
     Track->SetFont(m_WParser->GetDC()->GetFont());
+    Track->WI.SetWidth(ax);
+    Track->WI.SetHeight(ay);
+    AdjustSize(*Track);
     CreatedObject = Track;
     CreatedWindow = Track;
     int min=0, max = 100;
-    if( tag.HasParam( wxT("MIN") ) )
+    if (tag.HasParam( wxT("MIN")))
       tag.ScanParam(wxT("MIN"), wxT("%i"), &min);
-    if( tag.HasParam( wxT("MAX") ) )
+    if (tag.HasParam( wxT("MAX")))
       tag.ScanParam(wxT("MAX"), wxT("%i"), &max);
-    Track->WI.SetWidth(ax);
-    Track->WI.SetHeight(ay);
-    if( min < max )
+    if (min < max)
       Track->SetRange(min, max);
-    try  {  Track->SetValue((int)Value.ToDouble());  }
-    catch(...)  {
+    try { Track->SetValue((int)Value.ToDouble()); }
+    catch(...) {
       TBasicApp::NewLogEntry() << "Invalid value slider: \'" << Value << '\'';
     }
     Track->SetData(Data);
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
+    if (tag.HasParam(wxT("ONCHANGE"))) {
       Track->OnChange.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Track->OnChange.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONMOUSEUP")) )  {
+    if (tag.HasParam(wxT("ONMOUSEUP"))) {
       Track->OnMouseUp.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONMOUSEUP")), macro_map);
       Track->OnMouseUp.Add(&html->Manager);
     }
-    if( !Label.IsEmpty() )  {
+    if (!Label.IsEmpty()) {
       wxHtmlContainerCell* contC =
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
@@ -691,30 +716,26 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell(wc);
       contC->InsertCell(new THtmlWidgetCell(Track, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
+      if (valign != -1) contC->SetAlignVer(valign);
+      if (halign != -1) contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Track, fl));
   }
 /******************* CHECKBOX *************************************************/
   else if (TagName.Equalsi("checkbox")) {
-    bool label_to_the_right = false;
-    if (tag.HasParam(wxT("RIGHT"))) {
-      olxstr v = tag.GetParam(wxT("RIGHT"));
-      if (v.IsBool())
-        label_to_the_right = v.ToBool();
-    }
+    bool label_to_the_right = GetBoolAttribute(tag, "RIGHT");
     TCheckBox *Box = new TCheckBox(html,
       (label_to_the_right ? wxALIGN_RIGHT : 0));
     Box->SetFont(m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
     wxa->centreX.Absolute(0);
     Box->SetConstraints(wxa);
-    CreatedObject = Box;
-    CreatedWindow = Box;
     Box->WI.SetWidth(ax);
     Box->WI.SetHeight(ay);
+    AdjustSize(*Box, true, true);
+    CreatedObject = Box;
+    CreatedWindow = Box;
     Box->SetCaption(Value);
     if (tag.HasParam(wxT("CHECKED"))) {
       Tmp = tag.GetParam(wxT("CHECKED"));
@@ -889,12 +910,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
   if( CreatedObject != NULL )  {
-    bool manage = false;
-    if (tag.HasParam(wxT("MANAGE"))) {
-      olxstr v = tag.GetParam(wxT("MANAGE"));
-      if (v.IsBool())
-        manage = v.ToBool();
-    }
+    bool manage = GetBoolAttribute(tag, "MANAGE");
     if( !html->AddObject(
       ObjectName, CreatedObject, CreatedWindow, manage))
     {
