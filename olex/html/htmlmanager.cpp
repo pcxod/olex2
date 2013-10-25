@@ -325,7 +325,7 @@ void THtmlManager::funIsItem(const TStrObjList &Params, TMacroError &E)  {
 //.............................................................................
 void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
   ShowTooltips = v;
-  TStateRegistry::GetInstance().SetState(stateTooltipsVisible, v,
+  TStateRegistry::GetInstance().SetState(stateTooltipsVisible(), v,
     EmptyString(), true);
 }
 //.............................................................................

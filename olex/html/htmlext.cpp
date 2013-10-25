@@ -19,10 +19,6 @@
 #include "olxstate.h"
 #include "wxzipfs.h"
 
-olxstr THtml::SwitchSource;
-str_stack THtml::SwitchSources;
-size_t THtml::stateTooltipsVisible = InvalidIndex;
-
 BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_LEFT_DCLICK(THtml::OnMouseDblClick)
   EVT_LEFT_DOWN(THtml::OnMouseDown)
@@ -53,8 +49,8 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   MouseDown = false;
   ShowTooltips = true;
   PageLoadRequested = false;
-  if (stateTooltipsVisible == InvalidIndex) {
-    stateTooltipsVisible = TStateRegistry::GetInstance().Register("htmlttvis",
+  if (stateTooltipsVisible() == InvalidIndex) {
+    stateTooltipsVisible() = TStateRegistry::GetInstance().Register("htmlttvis",
       new TStateRegistry::Slot(
         TStateRegistry::NewGetter(*this, &THtml::GetShowTooltips),
         new TStateRegistry::TMacroSetter("html.Tooltips")
@@ -625,8 +621,8 @@ bool THtml::UpdatePage(bool update_indices)  {
   Refresh();
   Update();
 #endif
-  SwitchSources.Clear();
-  SwitchSource.SetLength(0);
+  SwitchSources().Clear();
+  SwitchSource().SetLength(0);
   TEFile::ChangeDir(oldPath);
   if( !FocusedControl.IsEmpty() )  {
     size_t ind = Objects.IndexOf( FocusedControl );
