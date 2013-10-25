@@ -52,8 +52,8 @@ void AdjustSize(wxWindow &w, bool height=true, bool width=false) {
 // helper tag
 TAG_HANDLER_BEGIN(SWITCHINFOS, "SWITCHINFOS")
 TAG_HANDLER_PROC(tag)  {
-  THtml::SwitchSources.Push( THtml::SwitchSource );
-  THtml::SwitchSource = tag.GetParam(wxT("SRC"));
+  THtml::SwitchSources().Push(THtml::SwitchSource());
+  THtml::SwitchSource() = tag.GetParam(wxT("SRC"));
   return true;
 }
 TAG_HANDLER_END(SWITCHINFOS)
@@ -61,7 +61,12 @@ TAG_HANDLER_END(SWITCHINFOS)
 TAG_HANDLER_BEGIN(SWITCHINFOE, "SWITCHINFOE")
 TAG_HANDLER_PROC(tag)
 {
-  THtml::SwitchSource = THtml::SwitchSources.Pop();
+  try {
+    THtml::SwitchSource() = THtml::SwitchSources().Pop();
+  }
+  catch (TExceptionBase &e) {
+    TBasicApp::NewLogEntry(logException) << e;
+  }
   return true;
 }
 TAG_HANDLER_END(SWITCHINFOE)
@@ -164,8 +169,8 @@ TAG_HANDLER_PROC(tag)  {
   if (op != NULL)
     op->processFunction(src, EmptyString(), true);
 
-  if( TZipWrapper::IsZipFile(THtml::SwitchSource) && !TZipWrapper::IsZipFile(src) )
-    src = TZipWrapper::ComposeFileName(THtml::SwitchSource, src);
+  if (TZipWrapper::IsZipFile(THtml::SwitchSource()) && !TZipWrapper::IsZipFile(src))
+    src = TZipWrapper::ComposeFileName(THtml::SwitchSource(), src);
 
   wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
   if( fsFile == NULL )

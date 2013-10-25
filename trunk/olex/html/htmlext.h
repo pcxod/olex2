@@ -36,7 +36,10 @@ private:
   wxWindow* InFocus;
   TActionQList Actions;
   olxstr PopupName;
-  static size_t stateTooltipsVisible;
+  static size_t &stateTooltipsVisible() {
+    static size_t v=InvalidIndex;
+    return v;
+  }
 protected:
   olxstr WebFolder, // the base of all web files
     FileName, HomePage;
@@ -206,8 +209,14 @@ public:
 
   TWindowInterface WI;
   // global data for the HTML parsing....
-  static olxstr SwitchSource;
-  static str_stack SwitchSources;
+  static olxstr &SwitchSource() {
+    static olxstr src;
+    return src;
+  }
+  static str_stack &SwitchSources() {
+    static str_stack st;
+    return st;
+  }
   // an extention...
   class WordCell : public wxHtmlWordCell  {
   public:
