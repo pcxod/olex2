@@ -3854,7 +3854,7 @@ void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options,
   TScheduledTask& task = Tasks.AddNew();
   task.Repeatable= Options.GetBoolOption('r');
   task.NeedsGUI = Options.GetBoolOption('g');
-  Cmds[0].ToNumber(task.Interval);
+  task.Interval = Cmds[0].ToUInt();
   task.Task = Cmds[1];
   task.LastCalled = TETime::Now();
 }
