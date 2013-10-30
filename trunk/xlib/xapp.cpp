@@ -393,15 +393,19 @@ TUndoData* TXApp::FixHL()  {
   if (frag_id.IsEmpty()) {
     for (size_t i=0; i < frags.Count(); i++) {
       TSAtomPList& al = frags.GetValue(i);
-      for (size_t j=0; j < al.Count(); j++)
-        NameHydrogens(*al[j], undo, true);
+      for (size_t j = 0; j < al.Count(); j++) {
+        if (!XElementLib::IsMetal(al[j]->GetType()))
+          NameHydrogens(*al[j], undo, true);
+      }
     }
   }
   else {
     for (size_t i=0; i < frag_id.Count(); i++) {
       TSAtomPList& al = frags[frag_id[i]];
-      for (size_t j=0; j < al.Count(); j++)
-        NameHydrogens(*al[j], undo, true);
+      for (size_t j = 0; j < al.Count(); j++) {
+        if (!XElementLib::IsMetal(al[j]->GetType()))
+          NameHydrogens(*al[j], undo, true);
+      }
     }
   }
   // check if there are any standalone h atoms left...
