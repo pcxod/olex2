@@ -819,20 +819,34 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   uint32_t lmode = 0;
-  if (Options.Contains('p'))   lmode |= lmPart;
-  if (Options.Contains('l'))   lmode |= lmLabels;
-  if (Options.Contains('v'))   lmode |= lmOVar;
-  if (Options.Contains('o'))   lmode |= lmOccp;
-  if (Options.Contains("ao"))  lmode |= lmAOcc;
-  if (Options.Contains('u'))   lmode |= lmUiso;
-  if (Options.Contains('r'))   lmode |= lmUisR;
-  if (Options.Contains('a'))   lmode |= lmAfix;
-  if (Options.Contains('h'))   lmode |= lmHydr;
-  if (Options.Contains('f'))   lmode |= lmFixed;
-  if (Options.Contains("qi"))  lmode |= lmQPeakI;
-  if (Options.Contains('i'))   lmode |= lmIdentity;
-  if (Options.Contains("co"))  lmode |= lmCOccu;
-  if (Options.Contains("b"))  lmode |= lmBonds;
+  if (Options.IsEmpty()) {
+    TGlGroup &sel = app.GetSelection();
+    bool bonds_only = true;
+    for (size_t i = 0; i < sel.Count(); i++) {
+      if (!EsdlInstanceOf(sel[i], TXBond)) {
+        bonds_only = false;
+        break;
+      }
+    }
+    if (!sel.IsEmpty() && bonds_only && !app.AreLabelsVisible())
+      lmode = lmBonds;
+  }
+  else {
+    if (Options.Contains('p'))   lmode |= lmPart;
+    if (Options.Contains('l'))   lmode |= lmLabels;
+    if (Options.Contains('v'))   lmode |= lmOVar;
+    if (Options.Contains('o'))   lmode |= lmOccp;
+    if (Options.Contains("ao"))  lmode |= lmAOcc;
+    if (Options.Contains('u'))   lmode |= lmUiso;
+    if (Options.Contains('r'))   lmode |= lmUisR;
+    if (Options.Contains('a'))   lmode |= lmAfix;
+    if (Options.Contains('h'))   lmode |= lmHydr;
+    if (Options.Contains('f'))   lmode |= lmFixed;
+    if (Options.Contains("qi"))  lmode |= lmQPeakI;
+    if (Options.Contains('i'))   lmode |= lmIdentity;
+    if (Options.Contains("co"))  lmode |= lmCOccu;
+    if (Options.Contains("b"))  lmode |= lmBonds;
+  }
   if (lmode == 0) {
     lmode |= lmLabels;
     lmode |= lmQPeak;

@@ -293,21 +293,27 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     MatProp->Destroy();
     TimePerFrame = FXApp->Draw();
   }
-  else if( event.GetId() == ID_GraphicsSelect )  {
-    if( FObjectUnderMouse->IsSelected() )  {
+  else if (event.GetId() == ID_GraphicsSelect) {
+    if (FObjectUnderMouse->IsSelected()) {
       SortedPtrList<TGPCollection, TPointerComparator> colls;
       TGlGroup& sel = FXApp->GetSelection();
-      for( size_t i=0; i < sel.Count(); i++ )  {
+      for (size_t i=0; i < sel.Count(); i++) {
         TGPCollection& gpc = sel.GetObject(i).GetPrimitives();
-        if( colls.AddUnique(&gpc) )  {
-          for( size_t j=0; j < gpc.ObjectCount(); j++ )
-            FXApp->GetRender().Select(gpc.GetObject(j), true);
+        if (colls.AddUnique(&gpc)) {
+          for (size_t j = 0; j < gpc.ObjectCount(); j++) {
+            AGDrawObject &go = gpc.GetObject(j);
+            if (go.IsVisible())
+              FXApp->GetRender().Select(go, true);
+          }
         }
       }
     }
-    else  {
-      for( size_t i=0; i < FObjectUnderMouse->GetPrimitives().ObjectCount(); i++ )
-        FXApp->GetRender().Select(FObjectUnderMouse->GetPrimitives().GetObject(i), true);
+    else {
+      for (size_t i = 0; i < FObjectUnderMouse->GetPrimitives().ObjectCount(); i++) {
+        AGDrawObject &go = FObjectUnderMouse->GetPrimitives().GetObject(i);
+        if (go.IsVisible())
+          FXApp->GetRender().Select(go, true);
+      }
     }
     TimePerFrame = FXApp->Draw();
   }

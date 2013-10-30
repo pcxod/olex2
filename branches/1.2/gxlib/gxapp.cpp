@@ -62,28 +62,23 @@
 
 int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
   size_t minl = olx_min(Str1.Length(), Str.Length());
-  for( size_t i = 0; i < minl; i++ )  {
-    int diff = Str[i] - Str1[i];
-    if( olxstr::o_isdigit(Str[i]) )  {
-      if( olxstr::o_isdigit(Str1[i]) )  {
-        olxstr S, S1;
+  for (size_t i = 0; i < minl; i++) {
+    if (olxstr::o_isdigit(Str[i])) {
+      if (olxstr::o_isdigit(Str1[i])) {
         size_t j = i, k = i;
-        while( (j < Str.Length()) && olxstr::o_isdigit(Str[j]) )  {
-          S << Str[j];  j++;
-        }
-        while( (k < Str1.Length()) && olxstr::o_isdigit(Str1[k]) )  {
-          S1 << Str1[k];  k++;
-        }
-        int diff1 = S.ToInt() - S1.ToInt();
-        if( diff1 != 0 )  return diff1;
-        // if the number of digits different - diff1 != 0, so now k=j
+        while ((++j < Str.Length()) && olxstr::o_isdigit(Str[j]))
+          ;
+        while ((++k < Str1.Length()) && olxstr::o_isdigit(Str1[k]))
+          ;
+        int diff = Str.SubString(i, j-i).ToInt() - Str1.SubString(i, k-i).ToInt();
+        if (diff != 0) return diff;
         i = k-1;
       }
     }
-    else  {
-      diff = IC ? (olxstr::o_toupper(Str[i]) - olxstr::o_toupper(Str1[i])) :
-                 (Str[i] - Str1[i]);
-      if( diff != 0 )  return diff;
+    else {
+      int diff = IC ? (olxstr::o_toupper(Str[i]) - olxstr::o_toupper(Str1[i]))
+        : (Str[i] - Str1[i]);
+      if (diff != 0)  return diff;
     }
   }
   return 0;
@@ -169,20 +164,20 @@ public:
     FParent->HklFile().Clear();
     return true;
   }
-  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *)  {
+  bool Execute(const IEObject *Sender, const IEObject *Data, TActionQueue *) {
     state = 2;
     const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
     bool sameAU = true, hasNonQ = false;
     size_t ac = 0;
-    for( size_t i=0; i < au.AtomCount(); i++ )  {
+    for (size_t i=0; i < au.AtomCount(); i++) {
       const TCAtom& ca = au.GetAtom(i);
-      if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+      if (ca.IsDeleted() || ca.GetType() == iQPeakZ) continue;
       hasNonQ = true;
-      if( ac >= AtomNames.Count() )  {
+      if (ac >= AtomNames.Count()) {
         sameAU = false;
         break;
       }
-      if( !AtomNames[ac++].Equalsi(ca.GetLabel()) )  {
+      if (!AtomNames[ac++].Equalsi(ca.GetLabel())) {
         sameAU = false;
         break;
       }
@@ -191,22 +186,22 @@ public:
       !FParent->AreQPeaksVisible());
     FParent->XFile().GetAsymmUnit().DetachAtomType(iHydrogenZ,
       !FParent->AreHydrogensVisible());
-    if( sameAU )  {  // apply masks
+    if (sameAU) {  // apply masks
       ac = 0;
-      for( size_t i=0; i < au.AtomCount(); i++ )  {
+      for (size_t i=0; i < au.AtomCount(); i++) {
         TCAtom& ca = au.GetAtom(i);
-        if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+        if (ca.IsDeleted() || ca.GetType() == iQPeakZ) continue;
         ca.SetMasked(CAtomMasks[ac++]);
       }
       FParent->XFile().GetLattice().SetGrowInfo(GrowInfo);
       GrowInfo = NULL;
     }
-    else  {  // definition will get broken otherwise
+    else {  // definition will get broken otherwise
       FParent->ClearStructureRelated();
     }
-    if( !hasNonQ && !FParent->AreQPeaksVisible() )
+    if (!hasNonQ && !FParent->AreQPeaksVisible())
       FParent->SetQPeaksVisible(true);
-    if( GrowInfo != NULL )  {
+    if (GrowInfo != NULL) {
       delete GrowInfo;
       GrowInfo = NULL;
     }
@@ -1477,6 +1472,7 @@ void TGXApp::AllVisible(bool V)  {
       au.GetAtom(i).SetMasked(false);
     UpdateConnectivity();
     CenterView(true);
+    GetLabels().ClearLabelMarks(lmiDefault);
     UpdateDuplicateLabels();
   }
   OnAllVisible.Exit(dynamic_cast<TBasicApp*>(this), NULL);
@@ -2930,7 +2926,6 @@ void TGXApp::UpdateDuplicateLabels() {
   while (ai.HasNext()) {
     TXAtom &a = ai.Next();
     if (!a.IsAvailable() || !a.GetMatrix().IsFirst()) continue;
-    FLabels->SetMaterialIndex(a.GetOwnerId(), lmiDefault);
     olxstr gl = a.GetGuiLabel();
     size_t idx = ld.IndexOf(gl);
     if (idx != InvalidIndex) {
@@ -5150,6 +5145,7 @@ void TGXApp::ClearStructureRelated() {
   GetRender().SelectAll(false);
   UserObjects.Clear();
   Rings.Clear();
+  GetLabels().ClearLabelMarks(lmiDefault);
 }
 //..............................................................................
 olxstr TGXApp::Label(const TXAtomPList &atoms, const olxstr &sp) {
