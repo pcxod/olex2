@@ -1196,16 +1196,20 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
     }
   }
   // process columns
-  for( size_t i=0; i < LT->ColCount(); i++ )  {
+  olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
+  for (size_t i=0; i < LT->ColCount(); i++) {
     TDataItem *DI = TD->FindItemi(LT->ColName(i));
-    if( DI != NULL )  {
+    if (DI != NULL) {
       Table.ColName(i-ColDeleted) = DI->GetFieldValueCI("caption");
-      if( !DI->GetFieldValueCI("visible", FalseString()).ToBool() )  {
+      olxstr v = DI->GetFieldValueCI("visible", FalseString());
+      if (!v.IsBool() && ip != NULL)
+        ip->processFunction(v);
+      if (!v.ToBool()) {
         Table.DelCol(i-ColDeleted);
         ColDeleted++;
       }
     }
-    else  {
+    else {
       Table.DelCol(i-ColDeleted);
       ColDeleted++;
     }
