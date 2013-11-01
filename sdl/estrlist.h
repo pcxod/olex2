@@ -364,6 +364,11 @@ public:
     io.Read(bf, fl);
     return LoadFromTextArray(bf, fl, true);
   }
+  static ConstStrList<T> FromFile(const olxstr& fn) {
+    TStrList l;
+    l.LoadFromFile(fn);
+    return l;
+  }
   TTStrList& LoadFromFile(const olxstr& fileName)  {
     TEFile file(fileName, "rb");
     return LoadFromTextStream(file);
