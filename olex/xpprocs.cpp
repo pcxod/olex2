@@ -2276,6 +2276,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TStopWatch sw(__FUNC__);
   olxstr HklFN = FXApp->XFile().LocateHklFile();
   if (!TEFile::Exists(HklFN)) {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file");
@@ -2284,8 +2285,10 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
   smatd_list matrices;
   FXApp->GetSymm(matrices);
   TSpaceGroup& sg = FXApp->XFile().GetLastLoaderSG();
+  sw.start("Loading HKL");
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN);
+  sw.start("Preparing input");
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
@@ -2309,6 +2312,7 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
     for (size_t i=0; i < refs.Count(); i++)
       SL.Add(refs[i]->ToNString());
   }
+  sw.stop();
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText(SL.Text('\n'));
   if( dlg->ShowModal() == wxID_OK )  {
@@ -2316,12 +2320,14 @@ void TMainForm::macHklEdit(TStrObjList &Cmds, const TParamList &Options, TMacroE
     SL.Clear();
     SL.Strtok(Tmp, '\n');
     TReflection R(0, 0, 0);
-    for( size_t i=0; i < SL.Count(); i++ )  {
-      if( SL[i].ToUpperCase().StartsFrom("REM") )  continue;
+    for (size_t i=0; i < SL.Count(); i++) {
+      if (SL[i].ToUpperCase().StartsFrom("REM"))  continue;
       R.FromNString(SL[i]);
       Hkl.UpdateRef(R);
     }
+    sw.start("Saving HKL");
     Hkl.SaveToFile(HklFN);
+    sw.stop();
   }
   dlg->Destroy();
 }
