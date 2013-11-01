@@ -18,6 +18,7 @@
 #include "log.h"
 #include "symmlib.h"
 #include "etime.h"
+#include "integration.h"
 
 using namespace exparse::parser_util;
 using namespace cif_dp;

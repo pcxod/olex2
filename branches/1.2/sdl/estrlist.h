@@ -365,7 +365,7 @@ public:
     return LoadFromTextArray(bf, fl, true);
   }
   static ConstStrList<T> FromFile(const olxstr& fn) {
-    TStrList l;
+    TTStrList l;
     l.LoadFromFile(fn);
     return l;
   }
