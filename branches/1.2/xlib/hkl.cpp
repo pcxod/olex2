@@ -346,13 +346,14 @@ int THklFile::HklCmp(const TReflection &R1, const TReflection &R2)  {
   return r;
 }
 //..............................................................................
-void THklFile::InitHkl3D()  {
-  if( Hkl3D != NULL )  return;
+void THklFile::InitHkl3D() {
+  if (Hkl3D != NULL)  return;
+  volatile TStopWatch sw(__FUNC__);
   TArray3D<TRefPList*> &hkl3D = *(new TArray3D<TRefPList*>(MinHkl, MaxHkl));
-  for( size_t i=0; i < Refs.Count(); i++ )  {
+  for (size_t i=0; i < Refs.Count(); i++) {
     TReflection *r1 = Refs[i];
     TRefPList *&rl = hkl3D(r1->GetHkl());
-    if( rl == NULL )
+    if (rl == NULL)
       rl = new TRefPList();
     rl->Add(r1);
   }
@@ -363,17 +364,13 @@ ConstPtrList<TReflection> THklFile::AllRefs(const vec3i& idx,
   const smatd_list& ml)
 {
   TRefPList rv;
-  vec3i_list ri;
+  SortedObjectList<vec3i, TComparableComparator> ri;
   for (size_t i=0; i < ml.Count(); i++) {
-    vec3i hklv = TReflection::MulHkl(idx, ml[i]);
-    // check if the range of the reflection is valid
-    if (!vec3i::IsInRangeExc(hklv, MinHkl, MaxHkl))
-      continue;
-    if (ri.IndexOf(hklv) == InvalidIndex)
-      ri.AddCopy(hklv);
+    ri.AddUnique(TReflection::MulHkl(idx, ml[i]));
   }
   InitHkl3D();
   for (size_t j=0; j < ri.Count(); j++) {
+    if (!Hkl3D->IsInRange(ri[j])) continue;
     TRefPList* r = Hkl3D->Value(ri[j]);
     if (r != NULL)
       rv.AddList(*r);

@@ -3020,7 +3020,7 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
       ReverseComparator::Make(&RefinementModel::BadReflection::CompareDirect));
   }
   TTTable<TStrList> Table;
-  Table.Resize(bad_refs.Count(), 5);
+  Table.Resize(bad_refs.Count(), 6);
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
@@ -3042,6 +3042,8 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
         bad_refs[i].index[1] << ' ' << bad_refs[i].index[2] << "\'>" <<
         "omit" << "</a>";
     }
+    Table[i][5].stream(' ') << "<a href='HklEdit" << bad_refs[i].index[0]
+      << bad_refs[i].index[1] << bad_refs[i].index[2] << "'>Edit...</a>";
   }
   TStrList Output = Table.CreateHTMLList(EmptyString(), true, false, TableDef);
   Output.Add("Error = sig(D)"
@@ -3051,7 +3053,7 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(),
     plStructure);
-  if( TEFile::Exists(BadRefsFile) )
+  if (TEFile::Exists(BadRefsFile))
     TEFile::DelFile(BadRefsFile);
   //TUtf8File::WriteLines( BadRefsFile, Output, false );
 }

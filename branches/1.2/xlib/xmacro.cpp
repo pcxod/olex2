@@ -1671,38 +1671,74 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //.............................................................................
-void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   olxstr vars = Cmds[0];
   Cmds.Delete(0);
   TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )  return;
-  if( vars.Equalsi( "XYZ" ) )  {
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      for( short j=0; j < 3; j++ )
+  if (!xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true))
+    return;
+  if (vars.Equalsi( "XYZ")) {
+    for (size_t i=0; i < atoms.Count(); i++) {
+      for (short j=0; j < 3; j++)
         xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_X+j);
     }
   }
-  else if( vars.Equalsi( "UISO" ) )  {
-    for( size_t i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->CAtom().GetEllipsoid() == NULL )  {  // isotropic atom
-        xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_Uiso);
+  else if (vars.Equalsi( "UISO")) {
+    for (size_t i=0; i < atoms.Count(); i++) {
+      if (atoms[i]->CAtom().GetEllipsoid() == NULL) {  // isotropic atom
+        xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(),
+          catom_var_name_Uiso);
       }
-      else  {
-        for( short j=0; j < 6; j++ )
-          xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_U11+j);
+      else {
+        for (short j=0; j < 6; j++)
+          xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(),
+          catom_var_name_U11+j);
       }
-      if( atoms[i]->CAtom().GetUisoOwner() != NULL )  {
+      if (atoms[i]->CAtom().GetUisoOwner() != NULL) {
         TAfixGroup *ag = atoms[i]->CAtom().GetParentAfixGroup();
-        if( ag != NULL && ag->GetAfix() == -1 )
+        if (ag != NULL && ag->GetAfix() == -1)
           ag->RemoveDependent(atoms[i]->CAtom());
         atoms[i]->CAtom().SetUisoOwner(NULL);
       }
     }
   }
-  else if( vars.Equalsi( "OCCU" ) )  {
-    for( size_t i=0; i < atoms.Count(); i++ ) 
-      xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_Sof);
+  else if (vars.Equalsi( "OCCU")) {
+    xapp.XFile().GetAsymmUnit().GetAtoms().ForEach(
+      ACollectionItem::TagSetter(0));
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      if (atoms[i]->CAtom().GetTag() != 0) continue;
+      xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(),
+        catom_var_name_Sof);
+      atoms[i]->CAtom().SetTag(1);
+    }
+    // now check if the H atoms are freed
+    for (size_t i = 0; i < atoms.Count(); i++) {
+      TCAtom &a = atoms[i]->CAtom();
+      TCAtomPList hs;
+      for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+        TCAtom &aa = a.GetAttachedAtom(j);
+        if (aa.GetType() == iHydrogenZ && aa.GetTag() == 0) {
+          if (aa.GetParentAfixGroup() != NULL &&
+            aa.GetParentAfixGroup()->GetPivot() == a)
+          {
+            hs << aa;
+          }
+        }
+      }
+      if (!hs.IsEmpty()) {
+        RefinementModel &rm = xapp.XFile().GetRM();
+        XVar &v = rm.Vars.NewVar(atoms[i]->CAtom().GetOccu());
+        rm.Vars.AddVarRef(v, atoms[i]->CAtom(),
+          catom_var_name_Sof, relation_AsVar, 1);
+        for (size_t j = 0; j < hs.Count(); j++) {
+          rm.Vars.AddVarRef(v, *hs[j], catom_var_name_Sof, relation_AsVar, 1);
+        }
+      }
+    }
+
   }
 }
 //.............................................................................
@@ -3276,64 +3312,63 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   olxstr CifTablesFile = Options.FindValue('t', "tables.xlt");
   if (!TEFile::IsAbsolutePath(CifTablesFile))
     CifTablesFile = xapp.GetCifTemplatesDir() + CifTablesFile;
-  if( !TEFile::Exists(CifTablesFile) )  {
+  if (!TEFile::Exists(CifTablesFile)) {
     Error.ProcessingError(__OlxSrcInfo, "tables definition file is not found");
     return;
   }
 
   olxstr CifDictionaryFile(xapp.GetCifTemplatesDir() + "cifindex.dat");
-  if( Cmds.IsEmpty() )  {
+  if (Cmds.IsEmpty()) {
     TDataFile DF;
     TStrList SL;
     TDataItem *Root;
     olxstr Tmp;
     DF.LoadFromXLFile(CifTablesFile, &SL);
     Root = DF.Root().FindItemi("Cif_Tables");
-    if( Root != NULL )  {
+    if (Root != NULL) {
       xapp.NewLogEntry(logInfo) << "Found table definitions:";
-      for( size_t i=0; i < Root->ItemCount(); i++ )  {
-        Tmp = "Table "; 
-        Tmp << Root->GetItem(i).GetName()  << '(' << " #" << (int)i+1 <<  "): caption <---";
+      for (size_t i=0; i < Root->ItemCount(); i++) {
+        Tmp = "Table ";
+        Tmp << Root->GetItem(i).GetName()  << '(' << " #" << (int)i+1 <<
+          "): caption <---";
         xapp.NewLogEntry(logInfo) << Tmp;
         xapp.NewLogEntry(logInfo) << Root->GetItem(i).GetFieldValueCI("caption");
         xapp.NewLogEntry(logInfo) << "--->";
       }
     }
-    else  {
+    else {
       Error.ProcessingError(__OlxSrcInfo, "tables definition node is not found");
       return;
     }
     return;
   }
-  TCif *Cif, Cif1;
-
-  if( xapp.CheckFileType<TCif>() )
+  TCif *Cif;
+  olx_object_ptr<TCif> Cif1(new TCif());
+  if (xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
-  else  {
+  else {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
-    if( TEFile::Exists(cifFN ) )  {
-      Cif1.LoadFromFile(cifFN);
+    if (TEFile::Exists(cifFN)) {
+      Cif1().LoadFromFile(cifFN);
     }
     else
-        throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
-    Cif = &Cif1;
+      throw TFunctionFailedException(__OlxSourceInfo, "existing cif is expected");
+    Cif = &Cif1();
   }
 
-  TStrList SL, SL1, Dic, 
-    CLA, // cell attributes
-    THA;  // header (th) attributes
+  TStrList SL, Dic;
   TDataFile DF;
   TTTable<TStrList> DT;
   DF.LoadFromXLFile(CifTablesFile, NULL);
   Dic.LoadFromFile(CifDictionaryFile);
-  olxstr RF(Options.FindValue('n'));
-  if( RF.IsEmpty() )  {
+  olxstr RF = Options.FindValue('n');
+  if (RF.IsEmpty()) {
     RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString());
     RF << "_tables";
   }
   TDataItem* Root = DF.Root().FindItemi("Cif_Tables");
   if (Root == NULL) {
-    Error.ProcessingError(__OlxSrcInfo, "wrong root");
+    Error.ProcessingError(__OlxSrcInfo, "wrong root for table definitions");
     return;
   }
   { // guess format
@@ -3343,56 +3378,55 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   }
   smatd_list SymmList;
   size_t tab_count = 1;
-  for( size_t i=0; i < Cmds.Count(); i++ )  {
+  for (size_t i=0; i < Cmds.Count(); i++) {
     TDataItem* TD = NULL;
-    if( Cmds[i].IsNumber() )  {
+    if (Cmds[i].IsNumber()) {
       size_t index = Cmds[i].ToSizeT();
-      if( index < Root->ItemCount() )
+      if (index < Root->ItemCount())
         TD = &Root->GetItem(index);
     }
-    if( TD == NULL  )
+    if (TD == NULL)
       TD = Root->FindItem(Cmds[i]);
-    if( TD == NULL )  {
-      xapp.NewLogEntry(logWarning) << "Could not find table definition: " << Cmds[i];
+    if (TD == NULL) {
+      xapp.NewLogEntry(logWarning) << "Could not find table definition: " <<
+        Cmds[i];
       continue;
     }
-    if( TD->GetName().Equalsi("footer") || TD->GetName().Equalsi("header") )  {
+    if (TD->GetName().Equalsi("footer") || TD->GetName().Equalsi("header")) {
       olxstr fn = TD->GetFieldValue("source");
-      if( fn.IndexOf('$') != InvalidIndex )
+      if (fn.Contains('$'))
         ProcessExternalFunction(fn);
-      if( !TEFile::IsAbsolutePath(fn) )
+      if (!TEFile::IsAbsolutePath(fn))
         fn = xapp.GetCifTemplatesDir() + fn;
-      SL1.LoadFromFile(fn);
-      for( size_t j=0; j < SL1.Count(); j++ )  {
+      TStrList SL1 = TStrList::FromFile(fn);
+      for (size_t j=0; j < SL1.Count(); j++) {
         Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', &XLibMacros::CifResolve);
         SL.Add(SL1[j]);
       }
       continue;
     }
-    if( Cif->CreateTable(TD, DT, SymmList) )  {
+    if (Cif->CreateTable(TD, DT, SymmList) && DT.RowCount() > 0) {
       olxstr Tmp = "Table ";
       Tmp << ++tab_count << ' ' << TD->GetFieldValueCI("caption");
       Tmp.Replace("%DATA_NAME%", Cif->GetDataName());
-      if( Tmp.IndexOf('$') != InvalidIndex )
+      if (Tmp.Contains('$'))
         ProcessExternalFunction(Tmp);
-      // attributes of the row names ...
-      CLA.Clear();
-      THA.Clear();
+      // attributes
+      TStrList CLA, THA;
       CLA.Add(TD->GetFieldValue("tha"));
       THA.Add(TD->GetFieldValue("tha"));
-      for( size_t j=0; j < TD->ItemCount(); j++ )  {
+      for (size_t j=0; j < TD->ItemCount(); j++) {
         CLA.Add(TD->GetItem(j).GetFieldValue("cola"));
         THA.Add(TD->GetItem(j).GetFieldValue("tha"));
       }
-
       olxstr footer;
-      for( size_t i=0; i < SymmList.Count(); i++ )  {
+      for (size_t i=0; i < SymmList.Count(); i++) {
         footer << "<sup>" << (i+1) << "</sup>" <<
           TSymmParser::MatrixToSymmEx(SymmList[i]);
-        if( (i+1) < SymmList.Count() )
+        if ((i+1) < SymmList.Count())
           footer << "; ";
       }
-      if( tab_count > 1 )
+      if (tab_count > 1)
         SL.Add("<p>&nbsp;</p>");
       DT.CreateHTMLList(
         SL,
@@ -6231,19 +6265,13 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
     {
       SortedPtrList<TCAtom, TPointerComparator> atoms;
       atoms.Add(&Atoms[j]->CAtom());
-      if (!linkOccu && occu != 0) {
-        app.XFile().GetRM().Vars.SetParam(
-          Atoms[j]->CAtom(), catom_var_name_Sof, occu);
-      }
-      if (Atoms[j]->GetType().z < 2) continue;
-      for (size_t k=0; k <  Atoms[j]->NodeCount(); k++) {
-        TSAtom& SA = Atoms[j]->Node(k);
-        if (SA.GetType() == iHydrogenZ) {
-          // skip if the afix group already exists and not this one
-          if (SA.CAtom().GetParentAfixGroup() != NULL &&
-            SA.CAtom().GetParentAfixGroup()->GetPivot() != Atoms[j]->CAtom())
+      for (size_t k=0; k <  Atoms[j]->CAtom().AttachedSiteCount(); k++) {
+        TCAtom &aa = Atoms[j]->CAtom().GetAttachedAtom(k);
+        if (aa.GetType() == iHydrogenZ) {
+          if (aa.GetParentAfixGroup() != NULL &&
+            aa.GetParentAfixGroup()->GetPivot() != Atoms[j]->CAtom())
             continue;
-          atoms.AddUnique(&SA.CAtom());
+          atoms.AddUnique(&aa);
         }
       }
       for (size_t k=0; k < atoms.Count(); k++) {
@@ -6263,6 +6291,9 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
             rm.Vars.AddVarRef(*xv, *atoms[k], catom_var_name_Sof,
               relation_AsVar, 1.0/atoms[k]->GetDegeneracy());
           }
+        }
+        else if (occu != 0) {
+          app.XFile().GetRM().Vars.SetParam(*atoms[k], catom_var_name_Sof, occu);
         }
       }
     }

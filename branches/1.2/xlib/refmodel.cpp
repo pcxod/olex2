@@ -1870,6 +1870,24 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+void RefinementModel::LibHasOccu(const TStrObjList& Params,
+  TMacroError& E)
+{
+  bool has = false;
+  for (size_t i = 0; i < aunit.AtomCount(); i++) {
+    TCAtom &a = aunit.GetAtom(i);
+    if (a.IsDeleted()) continue;
+    XVarReference *vr = a.GetVarRef(catom_var_name_Sof);
+    if (vr == NULL || vr->relation_type != relation_None ||
+        olx_abs(a.GetChemOccu()-1) > 1e-3)
+    {
+      has = true;
+      break;
+    }
+  }
+  E.SetRetVal(has);
+}
+//..............................................................................
 void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )
     E.SetRetVal(Vars.VarCount() == 0 ? 0.0 : Vars.GetVar(0).GetValue());
@@ -2051,5 +2069,11 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
 "Creates a rotated ADP constraint for given atoms. Currently works only for "
 "T-X3 groups (X-CMe3, X-CF3 etc) and for rings"
 ));
+
+  lib->Register(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibHasOccu,
+    "HasOccu",
+    fpNone,
+    "Returns true if occupancy of any of the atoms is refined or deviates from 1"));
   return lib;
 }

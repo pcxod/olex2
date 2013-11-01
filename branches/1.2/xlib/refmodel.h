@@ -791,6 +791,7 @@ Friedel opposites of components 1 ... m
   bool IsDefaultRestraint(const TSimpleRestraint &restraint) const;
   // feeds on .options - instance static
   bool DoShowRestraintDefaults() const;
+  void LibHasOccu(const TStrObjList& Params, TMacroError& E);
   void LibOSF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);
