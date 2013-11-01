@@ -104,7 +104,7 @@ public:
 
   template <class list_t, class accessor_t>
   static ConstStrList<T> FromAny(const list_t &list, const accessor_t &acc) {
-    TTStrList<T> l;
+    TTStrList l;
     l.SetCapacity(list.Count());
     for (size_t i=0; i < list.Count(); i++)
       l.Add(acc(list[i]));
@@ -365,7 +365,7 @@ public:
     return LoadFromTextArray(bf, fl, true);
   }
   static ConstStrList<T> FromFile(const olxstr& fn) {
-    TStrList l;
+    TTStrList l;
     l.LoadFromFile(fn);
     return l;
   }
