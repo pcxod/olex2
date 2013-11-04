@@ -1082,6 +1082,8 @@ void TCif::MultValue(olxstr &Val, const olxstr &N)  {
 //..............................................................................
 bool Cif_ValidateColumn(const TDataItem &col, const ICifEntry &entry) {
   olxstr val = entry.GetStringValue();
+  if (val.IsNumber())
+    val.TrimFloat();
   olxstr Tmp = col.GetFieldValue("mustequal", EmptyString());
   TStrList Toks(Tmp, ';');
    // equal to
