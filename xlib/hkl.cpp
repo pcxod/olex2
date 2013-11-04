@@ -190,7 +190,8 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
             ref->SetHkl(nih);
           }
           UpdateMinMax(*ref);
-          Refs.Add(ref)->SetTag(Refs.Count());
+          Refs.Add(ref);
+          ref->SetTag(Refs.Count());
         }
         catch(const TExceptionBase& e)  {
           throw TFunctionFailedException(__OlxSourceInfo, e,
