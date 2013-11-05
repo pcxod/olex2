@@ -212,9 +212,9 @@ void TMainForm::OnAtomUisoChange(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
   switch( event.GetId() )  {
-    case ID_DQH:  processMacro("qual -h");  break;
-    case ID_DQM:  processMacro("qual -m");  break;
-    case ID_DQL:  processMacro("qual -l");  break;
+    case ID_DQH:  processMacro("qual 3");  break;
+    case ID_DQM:  processMacro("qual 2");  break;
+    case ID_DQL:  processMacro("qual 1");  break;
   }
 }
 //..............................................................................
