@@ -687,7 +687,9 @@ TAG_HANDLER_PROC(tag)  {
     Track->SetFont(m_WParser->GetDC()->GetFont());
     Track->WI.SetWidth(ax);
     Track->WI.SetHeight(ay);
+#ifdef __MAC__
     AdjustSize(*Track);
+#endif
     CreatedObject = Track;
     CreatedWindow = Track;
     int min=0, max = 100;
