@@ -105,12 +105,14 @@
   #undef Bool
 #endif
 
+#if !wxCHECK_VERSION(2,9,0)
 #ifndef WXK_RAW_CONTROL
 # define WXK_RAW_CONTROL WXK_CONTROL
 #endif
 
 #ifndef wxMOD_RAW_CONTROL
 #define wxMOD_RAW_CONTROL wxMOD_CONTROL
+#endif
 #endif
 
   IMPLEMENT_CLASS(TMainForm, TMainFrame)
