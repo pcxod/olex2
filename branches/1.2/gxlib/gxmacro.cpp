@@ -78,10 +78,9 @@ void GXLibMacros::Export(TLibrary& lib) {
   "Calculates fourier map");
 
   gxlib_InitMacro(Qual,
-    "h-High&;"
-    "m-Medium&;"
-    "l-Low", fpNone,
-    "Sets drawings quality");
+    EmptyString(),
+    fpOne,
+    "Sets drawings quality, 1 - low, 2 - medium, 3 - high");
 
   gxlib_InitMacro(Mask, EmptyString(), fpAny^fpNone, 
     "Sets primitives for atoms or bonds according to provided mask. Accepts "
@@ -144,7 +143,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Prints out information for gived [all] atoms");
   gxlib_InitMacro(ShowQ,
     "wheel-number of peaks to hide (if negative) or to show ",
-    fpNone|fpOne|fpTwo|psFileLoaded,
+    fpNone|fpOne|fpTwo,
     "Traverses the three states - peaks and peak bonds are visible, only peaks"
     " visible, no peaks or peak bonds. One numeric argument is taken to "
     "increment/decrement the numegbr of visibe peaks. Two aruments are taken "
@@ -515,19 +514,18 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macQual(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  if( Options.IsEmpty() )
-    Error.ProcessingError(__OlxSrcInfo, "wrong number of arguments");
-  else  {
-    int32_t v;
-     if( Options.GetName(0)[0] == 'h' ) v = qaHigh;
-     else if( Options.GetName(0)[0] == 'm' ) v = qaMedium;
-     else if( Options.GetName(0)[0] == 'l' ) v = qaLow;
-     else {
-       Error.ProcessingError(__OlxSrcInfo, "wrong argument");
-       return;
-     }
-    app.Quality(v);
+  int v = Cmds[0].ToInt();
+  if (v == 1)
+    v = qaLow;
+  else if (v == 2)
+    v = qaMedium;
+  else if (v == 3)
+    v = qaHigh;
+  else {
+    Error.ProcessingError(__OlxSrcInfo, "1, 2 or 3 is expected");
+    return;
   }
+  app.Quality(v);
 }
 //.............................................................................
 void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
@@ -798,7 +796,13 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
-  app.CalcProbFactor(Cmds[0].ToFloat());
+  float p = Cmds[0].ToFloat();
+  if (p > 0)
+    app.CalcProbFactor(p);
+  else {
+    TXAtom::TelpProb(-p);
+    app.Draw();
+  }
 }
 //.............................................................................
 void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
@@ -1122,6 +1126,9 @@ int GXLibMacros::QPeakSortA(const TCAtom &a, const TCAtom &b)  {
 void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
+  if (!app.XFile().HasLastLoader()) {
+    return; // quiet this down
+  }
   double wheel = Options.FindValue("wheel", '0').ToDouble();
   TEBasis basis = app.GetRender().GetBasis();
   if (wheel != 0) {

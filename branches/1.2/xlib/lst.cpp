@@ -54,7 +54,13 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   TStrList Toks;
   Clear();
   SL.LoadFromFile(FN);
-  for( size_t i=0; i < SL.Count(); i++ )  {
+  // skip INS file
+  size_t start = 0;
+  while (start < SL.Count() && !SL[start].Contains("Reflections read,")) {
+    start++;
+    continue;
+  }
+  for( size_t i=start; i < SL.Count(); i++ )  {
     Toks.Clear();
     if (!header_found && SL[i].Contains("++") &&
       (i+1) < SL.Count() && SL[i].Contains('+'))
@@ -258,7 +264,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
       FlackF = true;
     }
-    else if (!FlackF && SL[i].Contains("Flack x")) { // 2013 version
+    else if (!FlackF && SL[i].Contains("Flack x") && // 2013 version
+      SL[i].Contains("fit to all intensities"))
+    {
       Toks.Clear();
       Toks.Strtok(SL[i], ' ');
       if (Toks.Count() > 3) {
