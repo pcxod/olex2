@@ -918,19 +918,40 @@ smatd TCif::SymmCodeToMatrix(const olxstr &Code) const {
   return mSymm;
 }
 //..............................................................................
+
+const_strlist CIF_ParseArgumemnts(const olxstr &arg, olxch q) {
+  TStrList args;
+  size_t s = 0;
+  for (size_t i = 0; i < arg.Length(); i++) {
+    if (arg[i] == q) {
+      while (++i < arg.Length() && (arg[i] != q || is_escaped(arg, i)))
+        ;
+    }
+    else if (arg[i] == ',' && !is_escaped(arg, i)) {
+      args.Add(arg.SubString(s, i - s));
+      s = i + 1;
+    }
+  }
+  if (s < arg.Length()) {
+    args.Add(arg.SubStringFrom(s));
+  }
+  return args;
+}
+
 bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
  olxch Quote,
- olxstr (*ResolveExternal)(const olxstr& valueName),
+ olxstr (*ResolveExternal_)(const olxstr& valueName),
  bool DoubleTheta) const
 {
+  olex2::IOlex2Processor *op = olex2::IOlex2Processor::GetInstance();
   size_t start, end;
-  for( size_t i=0; i < String.Length(); i++ )  {
-    if( String.CharAt(i) == Quote )  {
-      if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
+  for (size_t i=0; i < String.Length(); i++) {
+    if (String.CharAt(i) == Quote) {
+      if ((i+1) < String.Length() && String.CharAt(i+1) == Quote) {
         String.Delete(i, 1);
         continue;
       }
-      if( i > 0 && String.CharAt(i-1) == '\\' )  // escaped?
+      if (i > 0 && String.CharAt(i-1) == '\\')  // escaped?
         continue;
       olxstr Val;
       if( (i+1) < String.Length() &&
@@ -938,56 +959,83 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           olxstr::o_isdigit(String.CharAt(i+1))) )
       {
         start = i;
-        while( ++i < String.Length() )  {
-          if( String.CharAt(i) == Quote )  {
-            if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
+        while (++i < String.Length()) {
+          if (String.CharAt(i) == Quote) {
+            if ((i+1) < String.Length() && String.CharAt(i+1) == Quote) {
               String.Delete(i, 1);
               Val << Quote;
               continue;
             }
-            else if( String.CharAt(i-1) == '\\' ) // escaped?
+            else if (String.CharAt(i-1) == '\\') // escaped?
               ;
-            else  {
-              end = i;  
+            else {
+              end = i;
               break;
             }
           }
           Val << String.CharAt(i);
         }
       }
-      if( !Val.IsEmpty() )  {
-        if( !Val.IsNumber() )  {
-          if( Val.CharAt(0) == '$' )  {
-            if( ResolveExternal != NULL )  {
+      if (!Val.IsEmpty()) {
+        if (!Val.IsNumber()) {
+          if (Val.CharAt(0) == '$') {
+            if (op != NULL ) {
               String.Delete(start, end-start+1);
               Val.Replace("\\%", '%');
-              ResolveParamsFromDictionary(Dic, Val, Quote, ResolveExternal);
-              olxstr Tmp = ResolveExternal(Val);
-              ResolveParamsFromDictionary(Dic, Tmp, Quote, ResolveExternal);
+              olxstr Tmp;
+              size_t ob = Val.FirstIndexOf('('),
+                cb = Val.LastIndexOf(')');
+              if (ob < cb && cb != InvalidIndex) {
+                TStrList args = CIF_ParseArgumemnts(
+                  Val.SubString(ob + 1, cb - ob - 1), Quote);
+                for (size_t ai = 0; ai < args.Count(); ai++) {
+                  ResolveParamsFromDictionary(Dic, args[ai], Quote, ResolveExternal_);
+                  args[ai] = unquote(args[ai]);
+                }
+                ABasicFunction *f = op->GetLibrary().FindFunction(Val.SubString(1, ob-1));
+                if (f != NULL) {
+                  TMacroError e;
+                  f->Run(TStrObjList(args), e);
+                  if (e.IsSuccessful())
+                    Tmp = e.GetRetVal();
+                }
+                else {
+                  TBasicApp::NewLogEntry(logInfo) << "Undefined function '" <<
+                    Val.SubString(1, ob - 1) << '\'';
+                }
+              }
+              else if (ResolveExternal_ != NULL) {
+                ResolveParamsFromDictionary(Dic, Val, Quote, ResolveExternal_);
+                Tmp = ResolveExternal_(Val);
+              }
+              ResolveParamsFromDictionary(Dic, Tmp, Quote, ResolveExternal_);
               String.Insert(Tmp, start);
               i = start + Tmp.Length() - 1;
             }
           }
-          else if( Val.CharAt(0) == '_' )  {
+          else if (Val.CharAt(0) == '_') {
             olxstr val_name = Val, new_line = ' ';
             const size_t c_i = Val.IndexOf(',');
-            if( c_i != InvalidIndex )  {
+            if (c_i != InvalidIndex) {
               val_name = Val.SubStringTo(c_i);
               new_line = Val.SubStringFrom(c_i+1);
             }
             IStringCifEntry* Params = FindParam<IStringCifEntry>(val_name);
             olxstr Tmp = "<font color=red>N/A</font>";
-            if( Params != NULL && Params->Count() != 0 )  {
+            if (Params != NULL && Params->Count() != 0) {
               Tmp = (*Params)[0];
-              for( size_t pi=1; pi < Params->Count(); pi++ )
+              for (size_t pi=1; pi < Params->Count(); pi++)
                 Tmp << new_line << (*Params)[pi];
             }
             String.Delete(start, end-start+1);
             String.Insert(Tmp, start);
             i = start + Tmp.Length() - 1;
           }
-          else
-            TBasicApp::NewLogEntry() << "A number or function starting from '$' or '_' is expected";
+          else {
+            TBasicApp::NewLogEntry() <<
+              "A number or function starting from '$' or '_' is expected, "
+              "found: '" << Val << '\'';
+          }
           continue;
         }
         size_t index = Val.ToSizeT();
@@ -1010,57 +1058,66 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           continue;
         }
         */
-        if( (index > Dic.Count()) || (index <= 0) )
+        if ((index > Dic.Count()) || (index <= 0))
           TBasicApp::NewLogEntry(logError) << "Wrong parameter index " << index;
-        else  {  // resolve indexes
+        else {  // resolve indexes
           String.Delete(start, end-start+1);
           olxstr SVal = Dic[index-1];
           olxstr value;
-          if( !SVal.IsEmpty() )  {
-            if( SVal.Equalsi("date") )
+          if (!SVal.IsEmpty()) {
+            if (SVal.Equalsi("date"))
               value = TETime::FormatDateTime(TETime::Now());
-            else if( SVal.Equalsi("sg_number") )  {
+            else if (SVal.Equalsi("sg_number")) {
               TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(GetAsymmUnit());
               if (sg.GetNumber() > 0)
                 value = sg.GetNumber();
               else
                 value = "unknown";
             }
-            else if( SVal.Equalsi("data_name") )
+            else if (SVal.Equalsi("data_name"))
               value = GetDataName();
-            else if( SVal.Equalsi("weighta") )
+            else if (SVal.Equalsi("weighta"))
               value = WeightA;
-            else if( SVal.Equalsi("weightb") )
+            else if (SVal.Equalsi("weightb"))
               value = WeightB;
             else {
               IStringCifEntry* Params = FindParam<IStringCifEntry>(SVal);
-              if( Params == NULL )  {
-                TBasicApp::NewLogEntry(logInfo) << "The parameter \'" << SVal << "' is not found";
+              if (Params == NULL) {
+                TBasicApp::NewLogEntry(logInfo) << "The parameter \'" <<
+                  SVal << "' is not found";
                 value = "<font color=red>N/A</font>";
               }
-              else if( Params->Count() == 0 )  {
-                TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" << SVal << "' is not found";
+              else if (Params->Count() == 0) {
+                TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" <<
+                  SVal << "' is not found";
                   value = "none";
               }
-              else if( Params->Count() == 1 )  {
-                if( (*Params)[0].IsEmpty() )  {
-                  TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" << SVal << "' is not found";
+              else if (Params->Count() == 1) {
+                if ((*Params)[0].IsEmpty()) {
+                  TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" <<
+                    SVal << "' is not found";
                   value = "none";
                 }
-                else if( (*Params)[0].CharAt(0) == '?' )  {
-                  TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" << SVal << "' is not defined";
+                else if ((*Params)[0].CharAt(0) == '?') {
+                  TBasicApp::NewLogEntry(logInfo) << "Value of parameter \'" <<
+                    SVal << "' is not defined";
                   value = '?';
                 }
-                else  {
-                  if( DoubleTheta && (index == 13 || index == 14 || index == 30 || index == 61 || index == 62 ) )
-                    value = (*Params)[0].ToDouble()*2;
-                  else
-                    value = (*Params)[0];
+                else {
+                  if (DoubleTheta &&
+                      (index == 13 || index == 14 || index == 30 ||
+                       index == 61 || index == 62))
+                  {
+                    value = (*Params)[0].ToDouble() * 2;
+                  }
+                  else {
+                  value = (*Params)[0];
+                  }
                 }
               }
-              else  {
+              else {
                 value = (*Params)[0];
-                for( size_t sti=1; sti < Params->Count(); sti++ )  {
+                for (size_t sti=1; sti < Params->Count(); sti++) {
                   value << ' ' << (*Params)[sti];
                 }
               }
