@@ -686,7 +686,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
       delete [] PP;
     }
   }
-  if (res > 1) {
+  if (res != 1) {
     FXApp->GetRender().GetScene().RestoreFontScale();
     FXApp->Quality(previous_quality);
     FXApp->UpdateLabels();
