@@ -349,14 +349,14 @@ TAG_HANDLER_PROC(tag)  {
   op->processFunction(Value, SrcInfo, true);
   Data = tag.GetParam(wxT("DATA"));
 /******************* TEXT CONTROL *********************************************/
-  if( TagName.Equalsi("text") )  {
+  if (TagName.Equalsi("text")) {
     int flags = wxWANTS_CHARS;
-    if( tag.HasParam( wxT("MULTILINE") ) )
+    if (GetBoolAttribute(tag, "MULTILINE"))
       flags |= wxTE_MULTILINE;
     else
       flags = wxTE_PROCESS_ENTER;
-      
-    if( tag.HasParam( wxT("PASSWORD") ) )   flags |= wxTE_PASSWORD;
+    if (GetBoolAttribute(tag, "PASSWORD"))
+      flags |= wxTE_PASSWORD;
     TTextEdit *Text = new TTextEdit(html, flags);
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
@@ -366,37 +366,37 @@ TAG_HANDLER_PROC(tag)  {
     AdjustSize(*Text);
     Text->SetData(Data);
 
-    if (!Label.IsEmpty())  {
+    if (!Label.IsEmpty()) {
       wxHtmlContainerCell* contC =
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
         new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-      if( LinkInfo != NULL ) wc->SetLink(*LinkInfo);
+      if (LinkInfo != NULL) wc->SetLink(*LinkInfo);
       wc->SetDescent(0);
-      contC->InsertCell( wc );
+      contC->InsertCell(wc);
       contC->InsertCell(new THtmlWidgetCell(Text, fl));
-      if( valign != -1 )  contC->SetAlignVer(valign);
-      if( halign != -1 )  contC->SetAlignHor(halign);
+      if (valign != -1)  contC->SetAlignVer(valign);
+      if (halign != -1)  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Text, fl));
 
-    if( tag.HasParam(wxT("ONCHANGE")) )  {
+    if (tag.HasParam(wxT("ONCHANGE"))) {
       Text->OnChange.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
       Text->OnChange.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONLEAVE")) )  {
+    if (tag.HasParam(wxT("ONLEAVE"))) {
       Text->OnLeave.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map);
       Text->OnLeave.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONENTER")) )  {
+    if (tag.HasParam(wxT("ONENTER"))) {
       Text->OnEnter.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map);
       Text->OnEnter.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONRETURN")) )  {
+    if (tag.HasParam(wxT("ONRETURN"))) {
       Text->OnReturn.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map);
       Text->OnReturn.Add(&html->Manager);
