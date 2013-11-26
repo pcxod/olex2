@@ -23,13 +23,13 @@ protected:
   }
 public:
   TMatchMode(size_t id) : AMode(id)  {}
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     AtomsToMatch.Clear();
     SetUserCursor(0, "<M>");
     return true;
   }
-  void Finalise()  {}
-  virtual bool OnObject(AGDrawObject& obj)  {
+  void Finalise_()  {}
+  virtual bool OnObject_(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) && AtomsToMatch.Count() < 7 )  {
       AtomsToMatch.Add((TXAtom&)obj);
       FitAtoms(AtomsToMatch, true);
@@ -42,7 +42,7 @@ public:
     AtomsToMatch.Clear();
     SetUserCursor(0, "<M>");
   }
-  virtual bool OnKey(int keyId, short shiftState)  {
+  virtual bool OnKey_(int keyId, short shiftState)  {
     if( shiftState == 0 && keyId == OLX_KEY_ESCAPE )  {
       if( AtomsToMatch.IsEmpty() )  return false;
       AtomsToMatch.Delete(AtomsToMatch.Count()-1);

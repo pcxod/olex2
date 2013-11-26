@@ -13,7 +13,7 @@
 class TPackMode : public AMode  {
 public:
   TPackMode(size_t id) : AMode(id)  {}
-  bool Initialise(TStrObjList &Cmds, const TParamList &Options) {
+  bool Initialise_(TStrObjList &Cmds, const TParamList &Options) {
     olxstr AtomsToGrow( Cmds.Text(' ') );
     olex2.processMacro("cursor(hand)");
     gxapp.SetPackMode( 0, AtomsToGrow );
@@ -21,11 +21,11 @@ public:
     gxapp.SetZoomAfterModelBuilt(false);
     return true;
   }
-  void Finalise() {
+  void Finalise_() {
     gxapp.SetZoomAfterModelBuilt(true);
     gxapp.SetXGrowPointsVisible(false);
   }
-  virtual bool OnObject(AGDrawObject& obj)  {
+  virtual bool OnObject_(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXGrowPoint) )  {
       gxapp.Grow((TXGrowPoint&)obj);
       return true;

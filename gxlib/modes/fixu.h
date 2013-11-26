@@ -53,7 +53,7 @@ protected:
 #endif
 public:
   TFixUMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     Val = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
     olex2.processMacro("labels -f -r -h");
     if( Val == 0 )
@@ -63,8 +63,8 @@ public:
     return true;
   }
   ~TFixUMode() {  HasInstance = false;  }
-  void Finalise()  {}
-  virtual bool OnObject(AGDrawObject& obj)  {
+  void Finalise_()  {}
+  virtual bool OnObject_(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       gxapp.GetUndo().Push(new TFixUModeUndo(&XA));
