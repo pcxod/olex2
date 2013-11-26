@@ -15,7 +15,7 @@ class THimpMode : public AMode  {
 protected:
 public:
   THimpMode(size_t id) : AMode(id)  {}
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     BondLength = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
     if( BondLength <= 0.5 )  {
       TBasicApp::NewLogEntry(logError) << "suspicious bond length";
@@ -24,10 +24,10 @@ public:
     SetUserCursor("<->", olxstr(BondLength));
     return true;
   }
-  void Finalise()  {
+  void Finalise_()  {
     gxapp.XFile().GetLattice().UpdateConnectivity();
   }
-  virtual bool OnObject(AGDrawObject& obj)  {
+  virtual bool OnObject_(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       if( XA.GetType() == iHydrogenZ )  {

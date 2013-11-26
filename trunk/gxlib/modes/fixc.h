@@ -47,14 +47,14 @@ protected:
 #endif
 public:
   TFixCMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     olex2.processMacro("labels -f");
     SetUserCursor("XYZ", "fix");
     return true;
   }
   ~TFixCMode() {  HasInstance = false;  }
-  void Finalise()  {}
-  virtual bool OnObject(AGDrawObject &obj)  {
+  void Finalise_()  {}
+  virtual bool OnObject_(AGDrawObject &obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       gxapp.GetUndo().Push(new TFixCModeUndo(&XA));

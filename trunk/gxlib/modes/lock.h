@@ -34,7 +34,7 @@ protected:
   };
 public:
   TLockMode(size_t id) : AModeWithLabels(id) {}
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     olex2.processMacro("cursor(hand)");
     olex2.processMacro("labels -l");
     TGXApp::BondIterator bi = gxapp.GetBonds();
@@ -49,13 +49,13 @@ public:
     return true;
   }
   ~TLockMode() {}
-  void Finalise()  {
+  void Finalise_()  {
     TGXApp::BondIterator bi = gxapp.GetBonds();
     while (bi.HasNext())
       bi.Next().SetSelectable(true);
     gxapp.XFile().GetLattice().UpdateConnectivity();
   }
-  virtual bool OnObject(AGDrawObject& obj) {
+  virtual bool OnObject_(AGDrawObject& obj) {
     if (EsdlInstanceOf(obj, TXAtom)) {
       TXAtom &XA = (TXAtom&)obj;
       TLockModeUndo* undo = new TLockModeUndo(XA, !XA.CAtom().IsFixedType());

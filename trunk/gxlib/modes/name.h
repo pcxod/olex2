@@ -152,7 +152,7 @@ protected:
   }
 public:
   TNameMode(size_t id) : AModeWithLabels(id)  {  Instance = this;  }
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     Index = Cmds.IsEmpty() ? 1 : Cmds[0].ToInt();
     Prefix = Options.FindValue('p');
     Suffix = Options.FindValue('s');
@@ -191,13 +191,13 @@ public:
     return true;
   }
   ~TNameMode() {  Instance = NULL;  }
-  void Finalise()  {
+  void Finalise_()  {
     TGXApp::BondIterator bi = gxapp.GetBonds();
     while( bi.HasNext() )
       bi.Next().SetSelectable(true);
     gxapp.XFile().GetLattice().UpdateConnectivity();
   }
-  virtual bool OnObject(AGDrawObject& obj)  {
+  virtual bool OnObject_(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom &XA = (TXAtom&)obj;
       olxstr Labl(Symbol.IsEmpty() ? XA.GetType().symbol : Symbol);

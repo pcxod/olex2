@@ -16,7 +16,7 @@ class TMoveMode : public AMode  {
 protected:
 public:
   TMoveMode(size_t id) : AMode(id)  {}
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     Copy = Options.Contains('c');
     TXAtomPList Atoms = gxapp.FindXAtoms(Cmds.Text(' '), true);
     for( size_t i=0; i < Atoms.Count(); i++ )
@@ -26,8 +26,8 @@ public:
     olex2.processMacro("cursor(hand)");
     return true;
   }
-  void Finalise()  {}
-  virtual bool OnObject(AGDrawObject& obj)  {
+  void Finalise_()  {}
+  virtual bool OnObject_(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       gxapp.MoveFragment(Center, &(TXAtom&)obj, Copy);
       return true;

@@ -37,17 +37,17 @@ protected:
 #endif
 public:
   TPartMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     Part = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     SetUserCursor(Part, "part");
     olex2.processMacro("labels -p -h");
     return true;
   }
   ~TPartMode() {  HasInstance = false;  }
-  void Finalise() {
+  void Finalise_() {
     TXApp::GetInstance().XFile().GetLattice().UpdateConnectivity();
   }
-  virtual bool OnObject(AGDrawObject& obj) {
+  virtual bool OnObject_(AGDrawObject& obj) {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       gxapp.GetUndo().Push(new TPartModeUndo(&XA));

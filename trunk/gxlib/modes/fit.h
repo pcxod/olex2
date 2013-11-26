@@ -83,7 +83,7 @@ public:
     gxapp.XFile().GetLattice().OnStructureGrow.AddFirst(uniq_handler);
     gxapp.EnableSelection(false);
   }
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     DoSplit = Options.Contains('s');
     if (DoSplit) {
       split_offset = 0;
@@ -123,7 +123,7 @@ public:
     if (undo != NULL) delete undo;
     gxapp.EnableSelection(true);
   }
-  void Finalise() {
+  void Finalise_() {
     gxapp.GetRender().ReplaceSelection<TGlGroup>();
     Initialised = false;
     RefinementModel& rm = gxapp.XFile().GetRM();
@@ -206,7 +206,7 @@ public:
         gxapp.XFile().GetLattice().ValidateHGroups(true, true));
     }
   }
-  virtual bool OnObject(AGDrawObject &obj)  {
+  virtual bool OnObject_(AGDrawObject &obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       if( AtomsToMatch.IsEmpty() && Atoms.IndexOf((TXAtom&)obj) == InvalidIndex )
         return true;
@@ -246,7 +246,7 @@ public:
     }
     return true;
   }
-  virtual bool OnKey(int keyId, short shiftState)  {
+  virtual bool OnKey_(int keyId, short shiftState)  {
     if( shiftState == 0 && keyId == OLX_KEY_ESCAPE )  {
       if( AtomsToMatch.IsEmpty() )  return false;
       AtomsToMatch.Delete(AtomsToMatch.Count()-1);

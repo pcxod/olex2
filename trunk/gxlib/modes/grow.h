@@ -21,7 +21,7 @@ protected:
 public:
   TGrowMode(size_t id)
     : AMode(id), GrowShells(false), mode(0), part(0)  {}
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     bool SI = Options.Contains('s'),
          Cov = Options.Contains('c'),
          VdW = Options.Contains('v'),
@@ -70,7 +70,7 @@ public:
     gxapp.SetZoomAfterModelBuilt(false);
     return true;
   }
-  void Finalise() {
+  void Finalise_() {
     gxapp.SetXGrowLinesVisible(false);
     gxapp.SetZoomAfterModelBuilt(true);
     if( !detached.IsEmpty() )  {
@@ -117,7 +117,7 @@ public:
       latt.Init();
     }
   }
-  virtual bool OnObject(AGDrawObject& obj)  {
+  virtual bool OnObject_(AGDrawObject& obj)  {
     TLattice& latt = gxapp.XFile().GetLattice();
     if( EsdlInstanceOf(obj, TXGrowLine) )  {
       TXGrowLine& xl = (TXGrowLine&)obj;

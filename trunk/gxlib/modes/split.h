@@ -53,7 +53,7 @@ public:
     gxapp.XFile().GetLattice().OnDisassemble.Add(
       this, mode_split_Disassemble, msiEnter);
   }
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     if( !gxapp.CheckFileType<TIns>() )  return false;
     ReCon = Options.FindValue("r", EmptyString()).ToLowerCase();
     olex2.processMacro("cursor(hand)");
@@ -66,7 +66,7 @@ public:
     gxapp.OnObjectsCreate.Remove(this);
     gxapp.XFile().GetLattice().OnDisassemble.Remove(this);
   }
-  void Finalise() {
+  void Finalise_() {
     RefinementModel& rm = gxapp.XFile().GetRM();
     UpdateCrds();
     // if this is not done here it interferes and may cause a crash
@@ -121,8 +121,8 @@ public:
     }
     return true;
   }
-  virtual bool OnObject(AGDrawObject &obj)  {
-    if( EsdlInstanceOf( obj, TXAtom) )  {
+  virtual bool OnObject_(AGDrawObject &obj)  {
+    if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
       bool split = true;
       for (size_t i=0; i < SplitAtoms.Count(); i++)
