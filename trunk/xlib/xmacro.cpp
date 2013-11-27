@@ -5073,26 +5073,30 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
   static olxstr sig("OMIT");
   TXApp &app = TXApp::GetInstance();
   RefinementModel& rm = app.XFile().GetRM();
-  if( Cmds.Count() == 1 )  {
-    if( Cmds[0].IsNumber() )  {
+  bool processed = false;
+  if (Cmds.Count() == 1) {
+    if (Cmds[0].IsNumber()) {
       const double th = Cmds[0].ToDouble();
       const TTypeList<RefinementModel::BadReflection> &bad_refs =
         rm.GetBadReflectionList();
-      for( size_t i=0; i < bad_refs.Count(); i++ )  {
-        if( rm.GetOmits().IndexOf(bad_refs[i].index) == InvalidIndex &&
-          olx_abs(bad_refs[i].Fc-bad_refs[i].Fo)/bad_refs[i].esd >= th )
+      for (size_t i=0; i < bad_refs.Count(); i++) {
+        if (rm.GetOmits().IndexOf(bad_refs[i].index) == InvalidIndex &&
+          olx_abs(bad_refs[i].Fc-bad_refs[i].Fo)/bad_refs[i].esd >= th)
         {
           rm.Omit(bad_refs[i].index);
         }
       }
+      processed = true;
     }
   }
-  else if( Cmds.Count() == 2 )  {
+  else if (Cmds.Count() == 2 && olx_list_and(Cmds, &olxstr::IsNumber)) {
     rm.SetOMIT_s(Cmds[0].ToDouble());
     rm.SetOMIT_2t(Cmds[1].ToDouble());
+    processed = true;
   }
-  else 
+  if (!processed) {
     rm.AddOMIT(Cmds);
+  }
   OnAddIns().Exit(NULL, &sig);
 }
 //.............................................................................
