@@ -34,15 +34,20 @@ public:
     return Item.GetFieldValue("PName");
   }
 
-  AGOProperties& SetProperties(const AGOProperties& C) {
-    return AGroupObject::SetProperties(C);
+  TGlMaterial& SetProperties(const AGOProperties& C) {
+    return dynamic_cast<TGlMaterial&>(AGroupObject::SetProperties(C));
   }
   TGlMaterial& GetProperties() const {
-    return (TGlMaterial&)AGroupObject::GetProperties();
+    TGlMaterial &m = (TGlMaterial&)AGroupObject::GetProperties();
+    if (&m == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "uninitialised properties");
+    }
+    return m;
   }
 
   bool operator == (const TPrimitiveStyle &S ) const  {
-    if( Name != S.GetName() || !(GetProperties() == S.GetProperties()) )  
+    if( Name != S.GetName() || !(GetProperties() == S.GetProperties()) )
       return false;
     return true; 
   }
@@ -255,13 +260,16 @@ public:
 
   void Update();
   void Apply();
-  // for extenal use
+  // for external use
   TPrimitiveStyle *NewPrimitiveStyle(const olxstr& PName);
+  // creates but does not store in this object - can be safely deleted
+  TPrimitiveStyle *NewPrimitiveStyle_(const olxstr& PName);
+  TPrimitiveStyle *AddPrimitiveStyle(TPrimitiveStyle *);
   TDataItem* GetDataItem(const TPrimitiveStyle* Style) const;
   TGlMaterial* GetMaterial(TDataItem& I) const;
   //
-  inline TGraphicsStyle* FindStyle(const olxstr& collName)  {  
-    return Root->FindStyle(collName);  
+  inline TGraphicsStyle* FindStyle(const olxstr& collName)  {
+    return Root->FindStyle(collName);
   }
   TGraphicsStyle* FindStyle(TGraphicsStyle* Style)  { return Root->FindStyle(Style);  }
   TGraphicsStyle& NewStyle(const olxstr& Name, bool Force=false)  {
