@@ -93,23 +93,23 @@ PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
 //.............................................................................
 void TSameGroup::FromDataItem(TDataItem& item) {
   Clear();
-  Esd12 = item.GetRequiredField("esd12").ToDouble();
-  Esd13 = item.GetRequiredField("esd13").ToDouble();
+  Esd12 = item.GetFieldByName("esd12").ToDouble();
+  Esd13 = item.GetFieldByName("esd13").ToDouble();
   TAsymmUnit& au = Parent.RM.aunit;
   const TDataItem* _atoms = item.FindItem("atoms");
   if( _atoms != NULL )  {
     for( size_t i=0; i < _atoms->ItemCount(); i++ )
-      Add(au.GetAtom(_atoms->GetItem(i).GetValue().ToSizeT()));
+      Add(au.GetAtom(_atoms->GetItemByIndex(i).GetValue().ToSizeT()));
   }
   else  {  // index range then
-    IndexRange::RangeItr ai(item.GetRequiredField("atom_range"));
+    IndexRange::RangeItr ai(item.GetFieldByName("atom_range"));
     while( ai.HasNext() )
       Add(au.GetAtom(ai.Next()));
   }
-  TDataItem& dep = item.FindRequiredItem("dependent");
+  TDataItem& dep = item.GetItemByName("dependent");
   for( size_t i=0; i < dep.ItemCount(); i++ )
-    AddDependent(Parent[dep.GetItem(i).GetValue().ToInt()]);
-  const olxstr p_id = item.GetFieldValue("parent");
+    AddDependent(Parent[dep.GetItemByIndex(i).GetValue().ToInt()]);
+  const olxstr p_id = item.FindField("parent");
   if( !p_id.IsEmpty() )
     ParentGroup = &Parent[p_id.ToInt()];
 }
@@ -179,7 +179,7 @@ void TSameGroupList::ToDataItem(TDataItem& item) const {
   size_t cnt=0;
   for( size_t i=0; i < Groups.Count(); i++ )  {
     if( Groups[i].IsValidForSave() )  {
-      Groups[i].ToDataItem(item.AddItem(i));
+      Groups[i].ToDataItem(item.AddItem("group"));
       cnt++;
     }
   }
@@ -209,7 +209,7 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
 //.............................................................................
 void TSameGroupList::FromDataItem(TDataItem& item) {
   Clear();
-  size_t n = item.GetRequiredField("n").ToSizeT();
+  size_t n = item.GetFieldByName("n").ToSizeT();
   if( n != item.ItemCount() ) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "number of groups does not match the number of items");
@@ -217,7 +217,7 @@ void TSameGroupList::FromDataItem(TDataItem& item) {
   for( size_t i=0; i < n; i++ )
     New();
   for( size_t i=0; i < n; i++ )
-    Groups[i].FromDataItem(item.GetItem(i));
+    Groups[i].FromDataItem(item.GetItemByIndex(i));
 }
 //.............................................................................
 void TSameGroupList::Assign(TAsymmUnit& tau, const TSameGroupList& sl)  {

@@ -31,7 +31,7 @@ public:
 
   const olxstr& GetName() const {  return Name; }
   static const olxstr& ReadName(const TDataItem& Item)  {
-    return Item.GetFieldValue("PName");
+    return Item.FindField("PName");
   }
 
   TGlMaterial& SetProperties(const AGOProperties& C) {
@@ -300,7 +300,7 @@ public:
   inline short GetVersion() const {  return Version;  }
   // reads the style version (0 - no version) from a dataitem 
   static int ReadStyleVersion(const TDataItem& Item) {
-    return Item.GetFieldValue("Version", "0").ToInt();
+    return Item.FindField("Version", "0").ToInt();
   }
   // this is the current version of the styles
   static const int CurrentVersion;

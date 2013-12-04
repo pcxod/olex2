@@ -284,29 +284,32 @@ PyObject* TCAtom::PyExport(bool export_attached_sites)  {
 #endif
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
-  Type = XElementLib::FindBySymbol(item.GetRequiredField("type"));
+  Type = XElementLib::FindBySymbol(item.GetFieldByName("type"));
   if( Type == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
   TEValue<double> ev;
-  Label = item.GetRequiredField("label");
-  Part = item.GetRequiredField("part").ToInt();
-  ev = item.GetRequiredField("sof");
+  Label = item.GetFieldByName("label");
+  Part = item.GetFieldByName("part").ToInt();
+  ev = item.GetFieldByName("sof");
   Occu = ev.GetV();  OccuEsd = ev.GetE();
-  Flags = item.GetRequiredField("flags").ToInt();
-  ev = item.GetRequiredField("x");
+  Flags = item.GetFieldByName("flags").ToInt();
+  ev = item.GetFieldByName("x");
   Center[0] = ev.GetV();  Esd[0] = ev.GetE();
-  ev = item.GetRequiredField("y");
+  ev = item.GetFieldByName("y");
   Center[1] = ev.GetV();  Esd[1] = ev.GetE();
-  ev = item.GetRequiredField("z");
+  ev = item.GetFieldByName("z");
   Center[2] = ev.GetV();  Esd[2] = ev.GetE();
 
   TDataItem* adp = item.FindItem("adp");
   if( adp != NULL )  {
     double Q[6], E[6];
-    if( adp->FieldCount() != 6 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "6 parameters expected for the ADP");
-    for( int i=0; i < 6; i++ )  {
-      ev = adp->GetField(i);
+    if (adp->FieldCount() != 6) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "6 parameters expected for the ADP");
+    }
+    const char *names[] = {"xx", "yy", "zz", "yz", "xz", "xy"};
+    for (int i=0; i < 6; i++) {
+      ev = adp->GetFieldByName(names[i]);
       E[i] = ev.GetE();  Q[i] = ev.GetV();
     }
     EllpId = Parent->NewEllp().Initialise(Q,E).GetId();
@@ -314,16 +317,16 @@ void TCAtom::FromDataItem(TDataItem& item)  {
   }
   else  {
     EllpId = InvalidIndex;
-    ev = item.GetRequiredField("Uiso");
+    ev = item.GetFieldByName("Uiso");
     Uiso = ev.GetV();  UisoEsd = ev.GetE();
     TDataItem* uo = item.FindItem("Uowner");
     if( uo != NULL )  {
-      UisoOwner = &GetParent()->GetAtom(uo->GetRequiredField("id").ToSizeT());
-      UisoScale = uo->GetRequiredField("k").ToDouble();
+      UisoOwner = &GetParent()->GetAtom(uo->GetFieldByName("id").ToSizeT());
+      UisoScale = uo->GetFieldByName("k").ToDouble();
     }
   }
   if( *Type == iQPeakZ )
-    QPeak = item.GetRequiredField("peak").ToDouble();
+    QPeak = item.GetFieldByName("peak").ToDouble();
 }
 //..............................................................................
 void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool>& chars)  {
@@ -554,8 +557,8 @@ void TGroupCAtom::ToDataItem(TDataItem& di) const {
 }
 //..............................................................................
 void TGroupCAtom::FromDataItem(const TDataItem& di, const RefinementModel& rm)  {
-  Atom = &rm.aunit.GetAtom(di.GetRequiredField("atom_id").ToSizeT());
-  int m_id = di.GetRequiredField("matr_id").ToInt();
+  Atom = &rm.aunit.GetAtom(di.GetFieldByName("atom_id").ToSizeT());
+  int m_id = di.GetFieldByName("matr_id").ToInt();
   Matrix = (m_id == -1 ? NULL :&rm.GetUsedSymm(m_id));
 }
 //..............................................................................

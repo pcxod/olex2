@@ -1262,7 +1262,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
 
   TDataItem& omits = item.AddItem("OMIT", OMIT_set);
   omits.AddField("s", OMIT_s);
-  omits.AddField("2theta", OMIT_2t);
+  omits.AddField("two_theta", OMIT_2t);
   omits.AddField("hkl", PersUtil::VecListToStr(Omits));
   item.AddItem("TWIN", TWIN_set).AddField("mat",
     TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
@@ -1276,13 +1276,13 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   size_t info_tab_cnt=0;
   for( size_t i=0; i < InfoTables.Count(); i++ )  {
     if( InfoTables[i].IsValid() )
-      InfoTables[i].ToDataItem(info_tables.AddItem(++info_tab_cnt));
+      InfoTables[i].ToDataItem(info_tables.AddItem("item"));
   }
 
   if( !SfacData.IsEmpty() )  {
     TDataItem& sfacs = item.AddItem("SFAC");
     for( size_t i=0; i < SfacData.Count(); i++ )
-      SfacData.GetValue(i)->ToDataItem(sfacs);      
+      SfacData.GetValue(i)->ToDataItem(sfacs);
   }
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
@@ -1291,86 +1291,90 @@ void RefinementModel::ToDataItem(TDataItem& item) {
 //.............................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
   Clear(rm_clear_ALL);
-  PersUtil::NumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
-  PersUtil::NumberListFromStr(item.GetRequiredField("Weight"), used_weight);
-  PersUtil::NumberListFromStr(item.GetRequiredField("ProposedWeight"), proposed_weight);
-  HKLSource = item.GetRequiredField("HklSrc");
-  RefinementMethod = item.GetRequiredField("RefMeth");
-  SolutionMethod = item.GetRequiredField("SolMeth");
-  PersUtil::NumberListFromStr(item.GetRequiredField("BatchScales"), BASF);
+  PersUtil::NumberListFromStr(item.GetFieldByName("RefOutArg"), PLAN);
+  PersUtil::NumberListFromStr(item.GetFieldByName("Weight"), used_weight);
+  PersUtil::NumberListFromStr(item.GetFieldByName("ProposedWeight"), proposed_weight);
+  HKLSource = item.GetFieldByName("HklSrc");
+  RefinementMethod = item.GetFieldByName("RefMeth");
+  SolutionMethod = item.GetFieldByName("SolMeth");
+  PersUtil::NumberListFromStr(item.GetFieldByName("BatchScales"), BASF);
   for( size_t i=0; i < BASF.Count(); i++ )
     BASF_Vars.Add(NULL);
-  PersUtil::NumberListFromStr(item.GetRequiredField("RefInArg"), LS);
+  PersUtil::NumberListFromStr(item.GetFieldByName("RefInArg"), LS);
 
-  TDataItem& eqiv = item.FindRequiredItem("EQIV");
+  TDataItem& eqiv = item.GetItemByName("EQIV");
   for (size_t i=0; i < eqiv.ItemCount(); i++) {
-    UsedSymm.Add(eqiv.GetItem(i).GetName()).symop =
-      TSymmParser::SymmToMatrix(eqiv.GetItem(i).GetValue());
+    UsedSymm.Add(eqiv.GetItemByIndex(i).GetName()).symop =
+      TSymmParser::SymmToMatrix(eqiv.GetItemByIndex(i).GetValue());
   }
 
   UpdateUsedSymm(aunit.GetLattice().GetUnitCell());
-  expl.FromDataItem(item.FindRequiredItem("EXPL"));
+  expl.FromDataItem(item.GetItemByName("EXPL"));
 
-  AfixGroups.FromDataItem(item.FindRequiredItem("AFIX"));
-  ExyzGroups.FromDataItem(item.FindRequiredItem("EXYZ"));
-  rSAME.FromDataItem(item.FindRequiredItem("SAME"));
+  AfixGroups.FromDataItem(item.GetItemByName("AFIX"));
+  ExyzGroups.FromDataItem(item.GetItemByName("EXYZ"));
+  rSAME.FromDataItem(item.GetItemByName("SAME"));
   for( size_t i=0; i < rcList1.Count(); i++ )
     rcList1[i]->FromDataItem(item.FindItem(rcList1[i]->GetIdName()));
   for( size_t i=0; i < rcList.Count(); i++ )
     rcList[i]->FromDataItem(item.FindItem(rcList[i]->GetName()), *this);
 
-  TDataItem& hklf = item.FindRequiredItem("HKLF");
+  TDataItem& hklf = item.GetItemByName("HKLF");
   HKLF = hklf.GetValue().ToInt();
-  HKLF_s = hklf.GetRequiredField("s").ToDouble();
-  HKLF_wt = hklf.GetRequiredField("wt").ToDouble();
-  HKLF_m = hklf.GetRequiredField("m").ToDouble();
-  HKLF_mat = TSymmParser::SymmToMatrix(hklf.GetRequiredField("mat")).r;
+  HKLF_s = hklf.GetFieldByName("s").ToDouble();
+  HKLF_wt = hklf.GetFieldByName("wt").ToDouble();
+  HKLF_m = hklf.GetFieldByName("m").ToDouble();
+  HKLF_mat = TSymmParser::SymmToMatrix(hklf.GetFieldByName("mat")).r;
 
-  TDataItem& omits = item.FindRequiredItem("OMIT");
+  TDataItem& omits = item.GetItemByName("OMIT");
   OMIT_set = omits.GetValue().ToBool();
-  OMIT_s = omits.GetRequiredField("s").ToDouble();
-  OMIT_2t = omits.GetRequiredField("2theta").ToDouble();
-  PersUtil::VecListFromStr(omits.GetRequiredField("hkl"), Omits);
+  OMIT_s = omits.GetFieldByName("s").ToDouble();
+  size_t tt_idx = omits.FieldIndex("two_theta");
+  if (tt_idx == InvalidIndex)
+    OMIT_2t = omits.GetFieldByName("2theta").ToDouble();
+  else
+    OMIT_2t = omits.GetFieldByIndex(tt_idx).ToDouble();
+  PersUtil::VecListFromStr(omits.GetFieldByName("hkl"), Omits);
 
-  TDataItem& twin = item.FindRequiredItem("TWIN");
+  TDataItem& twin = item.GetItemByName("TWIN");
   TWIN_set = twin.GetValue().ToBool();
-  TWIN_mat = TSymmParser::SymmToMatrix(twin.GetRequiredField("mat")).r;
-  TWIN_n = twin.GetRequiredField("n").ToInt();
+  TWIN_mat = TSymmParser::SymmToMatrix(twin.GetFieldByName("mat")).r;
+  TWIN_n = twin.GetFieldByName("n").ToInt();
   {
-    TDataItem& merge = item.FindRequiredItem("MERG");
+    TDataItem& merge = item.GetItemByName("MERG");
     MERG_set = merge.GetValue().ToBool();
-    MERG = merge.GetRequiredField("val").ToInt();
+    MERG = merge.GetFieldByName("val").ToInt();
   }
   {
     TDataItem& shel = *item.FindItem("SHEL");
     if( &shel != NULL )  {
       SHEL_set = shel.GetValue().ToBool();
-      SHEL_lr = shel.GetRequiredField("low").ToDouble();
-      SHEL_hr = shel.GetRequiredField("high").ToDouble();
+      SHEL_lr = shel.GetFieldByName("low").ToDouble();
+      SHEL_hr = shel.GetFieldByName("high").ToDouble();
     }
   }
   {
     TDataItem& exti = *item.FindItem("EXTI");
     if (&exti != NULL) {
       EXTI_set = exti.GetValue().ToBool();
-      EXTI = exti.GetRequiredField("val");
+      EXTI = exti.GetFieldByName("val");
     }
   }
   // restraints and BASF may use some of the vars...
-  Vars.FromDataItem(item.FindRequiredItem("LEQS"));
-  Conn.FromDataItem(item.FindRequiredItem("CONN"));
-  SetUserFormula(item.GetFieldValue("UserContent"), false);
+  Vars.FromDataItem(item.GetItemByName("LEQS"));
+  Conn.FromDataItem(item.GetItemByName("CONN"));
+  SetUserFormula(item.FindField("UserContent"), false);
   
   TDataItem* info_tables = item.FindItem("INFO_TABLES");
   if( info_tables != NULL )  {
     for( size_t i=0; i < info_tables->ItemCount(); i++ )
-      InfoTables.Add(new InfoTab(*this, info_tables->GetItem(i)));
+      InfoTables.Add(new InfoTab(*this, info_tables->GetItemByIndex(i)));
   }
   TDataItem* sfac = item.FindItem("SFAC");
   if( sfac != NULL )  {
     for( size_t i=0; i < sfac->ItemCount(); i++ )  {
       XScatterer* sc = new XScatterer(EmptyString());
-      sc->FromDataItem(sfac->GetItem(i));
+      sc->FromDataItem(sfac->GetItemByIndex(i));
       SfacData.Add(sc->GetLabel(), sc);
     }
   }
@@ -1807,18 +1811,18 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
   TDataItem *restraints = di.FindItem("restraints");
   if( restraints != NULL )   {
     for( size_t i=0; i < restraints->ItemCount(); i++ )  {
-      TStrList toks(restraints->GetItem(i).GetValue(), ' ');
+      TStrList toks(restraints->GetItemByIndex(i).GetValue(), ' ');
       if( !TIns::ParseRestraint(*this, toks) )  {
         TBasicApp::NewLogEntry() << (olxstr(
           "Invalid Olex2 restraint: ").quote()
-          << restraints->GetItem(i).GetValue());
+          << restraints->GetItemByIndex(i).GetValue());
       }
     }
   }
   TDataItem *constraints = di.FindItem("constraints");
   if( constraints != NULL )  {
     for( size_t i=0; i < constraints->ItemCount(); i++ )  {
-      TStrList toks(constraints->GetItem(i).GetValue(), ' ');
+      TStrList toks(constraints->GetItemByIndex(i).GetValue(), ' ');
       IConstraintContainer *cc = rcRegister.Find(toks[0], NULL);
       if( cc != NULL )  {
         cc->FromToks(toks.SubListFrom(1), *this);
@@ -1828,7 +1832,7 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
         if( ca == NULL )  {
           TBasicApp::NewLogEntry() << (olxstr(
             "Invalid Olex2 constraint: ").quote()
-            << constraints->GetItem(i).GetValue());
+            << constraints->GetItemByIndex(i).GetValue());
           continue;
         }
         if( ca->GetAfix() != 0 )  // already set
@@ -1839,7 +1843,7 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
           if( ca == NULL )  {
             TBasicApp::NewLogEntry(logError) << (olxstr(
               "Warning - possibly invalid Olex2 constraint: ").quote()
-              << constraints->GetItem(i).GetValue());
+              << constraints->GetItemByIndex(i).GetValue());
             continue;
           }
           if (ca->GetAfix() == 0)
@@ -1849,7 +1853,7 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
       else {
         TBasicApp::NewLogEntry() << (olxstr(
           "Unknown Olex2 constraint: ").quote()
-          << constraints->GetItem(i).GetValue());
+          << constraints->GetItemByIndex(i).GetValue());
       }
     }
   }

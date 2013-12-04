@@ -551,8 +551,8 @@ void TXFile::ToDataItem(TDataItem& item) {
 //..............................................................................
 void TXFile::FromDataItem(TDataItem& item) {
   GetRM().Clear(rm_clear_ALL);
-  GetLattice().FromDataItem(item.FindRequiredItem("Lattice"));
-  GetRM().FromDataItem(item.FindRequiredItem("RefModel"));
+  GetLattice().FromDataItem(item.GetItemByName("Lattice"));
+  GetRM().FromDataItem(item.GetItemByName("RefModel"));
   GetLattice().FinaliseLoading();
 }
 //..............................................................................

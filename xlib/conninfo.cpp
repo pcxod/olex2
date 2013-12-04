@@ -371,26 +371,28 @@ void ConnInfo::ToDataItem(TDataItem& item) const {
 //........................................................................
 void ConnInfo::FromDataItem(const TDataItem& item)  {
   Clear();
-  TDataItem& ti_item = item.FindRequiredItem("TYPE");
+  TDataItem& ti_item = item.GetItemByName("TYPE");
   for( size_t i=0; i < ti_item.ItemCount(); i++ )  {
-    cm_Element* elm = XElementLib::FindBySymbol(ti_item.GetItem(i).GetName());
+    cm_Element* elm = XElementLib::FindBySymbol(
+      ti_item.GetItemByIndex(i).GetName());
     if( elm == NULL ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
-        olxstr("Unknown symbol: ") << ti_item.GetItem(i).GetName());
+        olxstr("Unknown symbol: ") << ti_item.GetItemByIndex(i).GetName());
     }
-    TypeInfo.Add(elm).FromDataItem(ti_item.GetItem(i), elm);
+    TypeInfo.Add(elm).FromDataItem(ti_item.GetItemByIndex(i), elm);
 
   }
-  TDataItem& ai_item = item.FindRequiredItem("ATOM");
+  TDataItem& ai_item = item.GetItemByName("ATOM");
   for( size_t i=0; i < ai_item.ItemCount(); i++ )  {
-    TCAtom& ca = rm.aunit.GetAtom(ai_item.GetItem(i).GetName().ToSizeT());
-    AtomInfo.Add(&ca).FromDataItem(ai_item.GetItem(i), rm, ca);
+    TCAtom& ca = rm.aunit.GetAtom(
+      ai_item.GetItemByIndex(i).GetName().ToSizeT());
+    AtomInfo.Add(&ca).FromDataItem(ai_item.GetItemByIndex(i), rm, ca);
   }
   TDataItem* groups = item.FindItem("PART");
   if (groups != NULL) {
     for (size_t i=0; i < groups->ItemCount(); i++) {
       PartGroups.AddNew().FromList(
-        TStrList(groups->GetItem(i).GetValue(), ' '),
+        TStrList(groups->GetItemByIndex(i).GetValue(), ' '),
         FunctionAccessor::MakeConst(&olxstr::ToInt));
     }
   }
@@ -455,8 +457,8 @@ void ConnInfo::TypeConnInfo::FromDataItem(const TDataItem& item,
   const cm_Element* elm)
 {
   atomType = elm;
-  r = item.GetRequiredField("r").ToDouble();
-  maxBonds = item.GetRequiredField("b").ToInt();
+  r = item.GetFieldByName("r").ToDouble();
+  maxBonds = item.GetFieldByName("b").ToInt();
 }
 //........................................................................
 #ifdef _PYTHON
@@ -693,13 +695,14 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
   RefinementModel& rm, TCAtom& a)
 {
   atom = &a;
-  r = item.GetRequiredField('r').ToDouble();
-  maxBonds = item.GetRequiredField('b').ToInt();
-  temporary = item.GetFieldValue('t', FalseString()).ToBool();
-  TDataItem& ab = item.FindRequiredItem("ADDBOND");
+  r = item.GetFieldByName('r').ToDouble();
+  maxBonds = item.GetFieldByName('b').ToInt();
+  temporary = item.FindField('t', FalseString()).ToBool();
+  TDataItem& ab = item.GetItemByName("ADDBOND");
   for( size_t i=0; i < ab.ItemCount(); i++ )  {
-    TCAtom& ca = rm.aunit.GetAtom(ab.GetItem(i).GetRequiredField("to").ToInt());
-    const olxstr& eq = ab.GetItem(i).GetFieldValue("eqiv");
+    TCAtom& ca = rm.aunit.GetAtom(
+      ab.GetItemByIndex(i).GetFieldByName("to").ToInt());
+    const olxstr& eq = ab.GetItemByIndex(i).FindField("eqiv");
     smatd const* eqiv = NULL;
     if( !eq.IsEmpty() )  { 
       eqiv = &rm.GetUsedSymm(eq.ToInt());
@@ -707,12 +710,13 @@ void ConnInfo::AtomConnInfo::FromDataItem(const TDataItem& item,
     }
     BondsToCreate.Add(new CXBondInfo(ca, eqiv));
   }
-  TDataItem& db = item.FindRequiredItem("DELBOND");
+  TDataItem& db = item.GetItemByName("DELBOND");
   for( size_t i=0; i < db.ItemCount(); i++ )  {
-    TCAtom& ca = rm.aunit.GetAtom(db.GetItem(i).GetRequiredField("to").ToInt());
-    const olxstr& eq = db.GetItem(i).GetFieldValue("eqiv");
+    TCAtom& ca = rm.aunit.GetAtom(
+      db.GetItemByIndex(i).GetFieldByName("to").ToInt());
+    const olxstr& eq = db.GetItemByIndex(i).FindField("eqiv");
     smatd const* eqiv = NULL;
-    if( !eq.IsEmpty() )  { 
+    if( !eq.IsEmpty() )  {
       eqiv = &rm.GetUsedSymm(eq.ToInt());
       rm.AddUsedSymm(*eqiv);  // persist
     }

@@ -79,22 +79,22 @@ void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
   else
     Type = infotab_conf;
   if (Type == infotab_mpla) {
-    AtomCount = di.GetFieldValue("atomCount", "-1").ToInt();
+    AtomCount = di.FindField("atomCount", "-1").ToInt();
   }
-  ParamName = di.GetFieldValue("param");
+  ParamName = di.FindField("param");
   TDataItem *ais = di.FindItem("atoms");
   if (ais != NULL) {
-    //ResiName = di.GetFieldValue("resi");
+    //ResiName = di.FindField("resi");
     for( size_t i=0; i < ais->ItemCount(); i++ )  {
-      const TDataItem& ai = ais->GetItem(i);
+      const TDataItem& ai = ais->GetItemByIndex(i);
       size_t atom_id = ai.GetValue().ToSizeT();
-      olxstr matr_id = ai.GetFieldValue("matrix");
+      olxstr matr_id = ai.FindField("matrix");
       AddAtom(rm.aunit.GetAtom(atom_id),
         matr_id.IsEmpty() ? NULL : &rm.GetUsedSymm(matr_id.ToSizeT()));
     }
   }
   else {
-    atoms.FromDataItem(di.FindRequiredItem("AtomList"));
+    atoms.FromDataItem(di.GetItemByName("AtomList"));
   }
 }
 

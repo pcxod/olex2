@@ -106,22 +106,22 @@ void TEBasis::ToDataItem(TDataItem& Item) const  {
 bool TEBasis::FromDataItem(const TDataItem& Item)  {
   TDataItem *matr = Item.FindItem("matrix");
   if( matr == NULL )  return false;
-  FMatrix[0][0] = matr->GetFieldValue("xx").ToDouble();
-  FMatrix[0][1] = matr->GetFieldValue("xy").ToDouble();
-  FMatrix[0][2] = matr->GetFieldValue("xz").ToDouble();
-  FMatrix[1][0] = matr->GetFieldValue("yx").ToDouble();
-  FMatrix[1][1] = matr->GetFieldValue("yy").ToDouble();
-  FMatrix[1][2] = matr->GetFieldValue("yz").ToDouble();
-  FMatrix[2][0] = matr->GetFieldValue("zx").ToDouble();
-  FMatrix[2][1] = matr->GetFieldValue("zy").ToDouble();
-  FMatrix[2][2] = matr->GetFieldValue("zz").ToDouble();
+  FMatrix[0][0] = matr->GetFieldByName("xx").ToDouble();
+  FMatrix[0][1] = matr->GetFieldByName("xy").ToDouble();
+  FMatrix[0][2] = matr->GetFieldByName("xz").ToDouble();
+  FMatrix[1][0] = matr->GetFieldByName("yx").ToDouble();
+  FMatrix[1][1] = matr->GetFieldByName("yy").ToDouble();
+  FMatrix[1][2] = matr->GetFieldByName("yz").ToDouble();
+  FMatrix[2][0] = matr->GetFieldByName("zx").ToDouble();
+  FMatrix[2][1] = matr->GetFieldByName("zy").ToDouble();
+  FMatrix[2][2] = matr->GetFieldByName("zz").ToDouble();
 
   TDataItem *center = Item.FindItem("center");
   if( center == NULL )  return false;
-  FCenter[0] = center->GetFieldValue("x").ToDouble();
-  FCenter[1] = center->GetFieldValue("y").ToDouble();
-  FCenter[2] = center->GetFieldValue("z").ToDouble();
-  const double z = Item.GetFieldValue("zoom", "-1").ToDouble();
+  FCenter[0] = center->GetFieldByName("x").ToDouble();
+  FCenter[1] = center->GetFieldByName("y").ToDouble();
+  FCenter[2] = center->GetFieldByName("z").ToDouble();
+  const double z = Item.FindField("zoom", "-1").ToDouble();
   if( z != -1 )
     FZoom = z;
   return true;

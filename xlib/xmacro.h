@@ -87,6 +87,7 @@ public:
   static DefMacro(SGInfo)
   static DefMacro(SAInfo)
   static DefMacro(PiPi)
+  static DefMacro(PiSig)
   static DefMacro(Split)
   static DefMacro(Bang)
 

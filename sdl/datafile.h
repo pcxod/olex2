@@ -21,11 +21,14 @@ public:
   TDataFile();
   virtual ~TDataFile();
   virtual bool LoadFromTextStream(IInputStream& io, TStrList* Log=NULL);
-  virtual bool LoadFromXLFile(const olxstr& DataFile, TStrList* Log=NULL);
+  virtual bool LoadFromXMLTextStream(IInputStream& io, TStrList* Log = NULL);
+  virtual bool LoadFromXLFile(const olxstr& DataFile, TStrList* Log = NULL);
+  virtual bool LoadFromXMLFile(const olxstr& DataFile, TStrList* Log = NULL);
   virtual void SaveToXLFile(const olxstr& DataFile);
+  virtual void SaveToXMLFile(const olxstr& DataFile);
   virtual void Include(TStrList* Log);
-  inline TDataItem& Root()          {  return *FRoot; }
-  const olxstr& GetFileName() const {  return FileName;  }
+  inline TDataItem& Root() { return *FRoot; }
+  const olxstr& GetFileName() const { return FileName; }
 };
 
 EndEsdlNamespace()

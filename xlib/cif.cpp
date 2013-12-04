@@ -147,13 +147,13 @@ void TCif::SaveToStrings(TStrList& Strings)  {
       TDataFile df;
       if( !df.LoadFromXLFile(CifCustomisationFN) )
         throw TFunctionFailedException(__OlxSourceInfo, "falied to load CIF customisation file");
-      const TDataItem& ist = df.Root().FindRequiredItem("cif_customisation").FindRequiredItem("sorting");
-      const TDataItem& ipv = ist.FindRequiredItem("pivots");
+      const TDataItem& ist = df.Root().GetItemByName("cif_customisation").GetItemByName("sorting");
+      const TDataItem& ipv = ist.GetItemByName("pivots");
       for( size_t i=0; i < ipv.ItemCount(); i++ )
-        pivots.Add(ipv.GetItem(i).GetValue());
-      const TDataItem& ied = ist.FindRequiredItem("endings");
+        pivots.Add(ipv.GetItemByIndex(i).GetValue());
+      const TDataItem& ied = ist.GetItemByName("endings");
       for( size_t i=0; i < ied.ItemCount(); i++ )
-        pivots.Add(ied.GetItem(i).GetValue());
+        pivots.Add(ied.GetItemByIndex(i).GetValue());
     }
     catch(const TExceptionBase& e)  {
       throw TFunctionFailedException(__OlxSourceInfo, e);
@@ -1141,25 +1141,25 @@ bool Cif_ValidateColumn(const TDataItem &col, const ICifEntry &entry) {
   olxstr val = entry.GetStringValue();
   if (val.IsNumber())
     val.TrimFloat();
-  olxstr Tmp = col.GetFieldValue("mustequal", EmptyString());
+  olxstr Tmp = col.FindField("mustequal", EmptyString());
   TStrList Toks(Tmp, ';');
    // equal to
   if (!Tmp.IsEmpty() && (Toks.IndexOfi(val) == InvalidIndex))
     return false;
-  Tmp = col.GetFieldValue("mustnotequal", EmptyString());
+  Tmp = col.FindField("mustnotequal", EmptyString());
   Toks.Clear();
   Toks.Strtok(Tmp, ';');
   if (!Tmp.IsEmpty() && (Toks.IndexOfi(val) != InvalidIndex) ) // not equal to
     return false;
 
-  Tmp = col.GetFieldValue("atypeequal", EmptyString());
+  Tmp = col.FindField("atypeequal", EmptyString());
   if (!Tmp.IsEmpty()) {  // check for atom type equals to
     if (EsdlInstanceOf(entry, AtomCifEntry))
       if (!((AtomCifEntry&)entry).data.GetType().symbol.Equalsi(Tmp)) {
         return false;
       }
   }
-  Tmp = col.GetFieldValue("atypenotequal", EmptyString());
+  Tmp = col.FindField("atypenotequal", EmptyString());
   if (!Tmp.IsEmpty()) {  // check for atom type equals to
     if (EsdlInstanceOf(entry, AtomCifEntry))
       if (((AtomCifEntry&)entry).data.GetType().symbol.Equalsi(Tmp)) {
@@ -1230,19 +1230,19 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
         AddRow = false;
         break;
       }
-      olxstr Tmp = DI->GetFieldValue("multiplier", EmptyString());
+      olxstr Tmp = DI->FindField("multiplier", EmptyString());
       if (!Tmp.IsEmpty()) {  // Multiply
         olxstr Val = Table[i-RowDeleted][j];
         MultValue(Val, Tmp);
         Table[i-RowDeleted][j] = Val;
       }
       for (size_t sc=0; sc < DI->ItemCount(); sc++) {
-        size_t ci = LT->ColIndex(DI->GetItem(sc).GetName());
+        size_t ci = LT->ColIndex(DI->GetItemByIndex(sc).GetName());
         if (ci == InvalidIndex) continue;
-        if (Cif_ValidateColumn(DI->GetItem(sc), *(*LT)[i][ci])) {
-          Table[i-RowDeleted][j] << DI->GetItem(sc).GetFieldValue("before") <<
-            (*LT)[i][ci]->GetStringValue() <<
-            DI->GetItem(sc).GetFieldValue("after");
+        if (Cif_ValidateColumn(DI->GetItemByIndex(sc), *(*LT)[i][ci])) {
+          Table[i - RowDeleted][j] << DI->GetItemByIndex(sc).FindField("before")
+            << (*LT)[i][ci]->GetStringValue()
+            << DI->GetItemByIndex(sc).FindField("after");
         }
         else {
           AddRow = false;
@@ -1260,8 +1260,8 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
   for (size_t i=0; i < LT->ColCount(); i++) {
     TDataItem *DI = TD->FindItemi(LT->ColName(i));
     if (DI != NULL) {
-      Table.ColName(i-ColDeleted) = DI->GetFieldValueCI("caption");
-      olxstr v = DI->GetFieldValueCI("visible", FalseString());
+      Table.ColName(i-ColDeleted) = DI->FindField("caption");
+      olxstr v = DI->FindField("visible", FalseString());
       if (!v.IsBool() && ip != NULL)
         ip->processFunction(v);
       if (!v.ToBool()) {

@@ -144,19 +144,19 @@ void TXGlLabel::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 void TXGlLabel::FromDataItem(const TDataItem& item) {
-  SetVisible( item.GetRequiredField("visible").ToBool() );
-  FontIndex = item.GetRequiredField("font_id").ToInt();
-  SetLabel(item.GetRequiredField("text"));
+  SetVisible( item.GetFieldByName("visible").ToBool() );
+  FontIndex = item.GetFieldByName("font_id").ToInt();
+  SetLabel(item.GetFieldByName("text"));
   TDataItem* basis = item.FindItem("Basis");
   if( basis != NULL )  {
-    PersUtil::VecFromStr(item.GetRequiredField("center"), Offset);
+    PersUtil::VecFromStr(item.GetFieldByName("center"), Offset);
     TEBasis b;
     b.FromDataItem(*basis);
     _Center = b.GetCenter();
   }
   else  {
-    PersUtil::VecFromStr(item.GetRequiredField("offset"), Offset);
-    PersUtil::VecFromStr(item.GetRequiredField("center"), _Center);
+    PersUtil::VecFromStr(item.GetFieldByName("offset"), Offset);
+    PersUtil::VecFromStr(item.GetFieldByName("center"), _Center);
   }
 }
 //..............................................................................

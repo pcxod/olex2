@@ -34,9 +34,9 @@ void TSBond::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 void TSBond::FromDataItem(const TDataItem& item, TLattice& parent) {
-  Network = &parent.GetFragment(item.GetRequiredField("net_id").ToInt());
-  FA = &parent.GetObjects().atoms[item.GetRequiredField("a_id").ToInt()];
-  FB = &parent.GetObjects().atoms[item.GetRequiredField("b_id").ToInt()];
-  Type = item.GetRequiredField("type").ToInt();
+  Network = &parent.GetFragment(item.GetFieldByName("net_id").ToInt());
+  FA = &parent.GetObjects().atoms[item.GetFieldByName("a_id").ToInt()];
+  FB = &parent.GetObjects().atoms[item.GetFieldByName("b_id").ToInt()];
+  Type = item.GetFieldByName("type").ToInt();
 }
 //..............................................................................

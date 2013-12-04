@@ -357,7 +357,6 @@ private:
   DefMacro(Exit)
   DefMacro(SetEnv)
   DefMacro(Help)
-  DefMacro(Qual)
   DefMacro(AddLabel)
   DefMacro(Hide)
   DefMacro(Exec)
@@ -465,6 +464,7 @@ private:
   DefMacro(Capitalise)
   DefMacro(FlushFS)
   DefMacro(Elevate)
+  DefMacro(ADPDisp)
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////FUNCTIONS/////////////////////////////////////////
   DefFunc(FileLast)

@@ -201,7 +201,7 @@ public:
   void FromDataItem(const TDataItem& di)  {
     Label = di.GetName();
     set_items = di.GetValue().ToInt();
-    const TStrList toks(di.GetRequiredField("data"), ' ');
+    const TStrList toks(di.GetFieldByName("data"), ' ');
     size_t ind=0;
     if( (set_items & setGaussian) != 0 )  {
       gaussians.a1 = toks[ind++].ToDouble();

@@ -119,6 +119,17 @@ public:
   static TVector3<T> Abs(const TVector3<T>& v)  {
     return TVector3<T>(v).Abs();
   }
+  // returns vector with 1/ values
+  TVector3<T>& Inverse()  {
+    data[0] = T(1)/data[0];
+    data[1] = T(1)/data[1];
+    data[2] = T(1)/data[2];
+    return *this;
+  }
+  // returns vector with 1/ values
+  static TVector3<T> Inverse(const TVector3<T>& v)  {
+    return TVector3<T>(v).Inverse();
+  }
   // returns sum of vector elements
   T Sum() const {  return data[0]+data[1]+data[2];  }
   // returns product of vector elements
@@ -232,7 +243,7 @@ public:
     return (*this /= l);
   }
   // returns previous length
-  double NormaliseEx()   {
+  double NormaliseEx()  {
     T l = Length();
     if (l == 0) throw TDivException(__OlxSourceInfo);
     *this /= l;
@@ -588,14 +599,32 @@ public:
     data[2].Normalise();
     return *this;
   }
+  static TMatrix33<T> Normalise(const TMatrix33<T>& m)  {
+    return TMatrix33<T>(m).Normalise();
+  }
   // normalises each vector and returns the vector of lengths
   TVector3<T> NormaliseEx() {
     return TVector3<T>(data[0].NormaliseEx(),
       data[1].NormaliseEx(),
       data[2].NormaliseEx());
   }
-  static TMatrix33<T> Normalise(const TMatrix33<T>& m)  {
-    return TMatrix33<T>(m).Normalise();
+  // normalises vectors to the given values
+  TMatrix33<T>& NormaliseTo(const TVector3<T> &s)  {
+    data[0].NormaliseTo(s[0]);
+    data[1].NormaliseTo(s[1]);
+    data[2].NormaliseTo(s[2]);
+    return *this;
+  }
+  // multiplies vectors by the given values
+  TMatrix33<T>& Scale(const TVector3<T> &s) {
+    data[0] *= s[0];
+    data[1] *= s[1];
+    data[2] *= s[2];
+    return *this;
+  }
+  // multiplies vectors by the given values
+  static TMatrix33<T> Scale(const TMatrix33<T>& m, const TVector3<T> &s) {
+    return TMatrix33<T>(m).Scale(s);
   }
   bool IsI() const {
     return (data[0][0] == 1 && data[1][1] == 1 && data[2][2] == 1 &&

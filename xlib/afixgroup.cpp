@@ -9,6 +9,7 @@
 
 #include "afixgroup.h"
 #include "refmodel.h"
+#include "index_range.h"
 
 const olxstr TAfixGroup::m_names[] = {
   EmptyString(),
@@ -66,12 +67,12 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
   item.AddField("d", D);
   item.AddField("u", U);
   item.AddField("pivot_atom_id", Pivot->GetTag());
-  TDataItem& dep = item.AddItem("dependent");
-  int dep_id = 0;
-  for( size_t i=0; i < Dependent.Count(); i++ )  {
-    if( Dependent[i]->IsDeleted() )  continue;
-    dep.AddField(olxstr("atom_id_") << dep_id++, Dependent[i]->GetTag());
+  IndexRange::Builder rb;
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    if (!Dependent[i]->IsDeleted())
+      rb << Dependent[i]->GetTag();
   }
+  item.AddItem("dependent_range", rb.GetString());
 }
 //..............................................................................
 #ifdef _PYTHON
@@ -81,7 +82,7 @@ PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
   PythonExt::SetDictItem(main, "u", Py_BuildValue("d", U));
   PythonExt::SetDictItem(main, "d", Py_BuildValue("d", D));
   PythonExt::SetDictItem(main, "pivot", Py_BuildValue("i", Pivot->GetTag()));
-  int dep_cnt = 0;
+  size_t dep_cnt = 0;
   for( size_t i=0; i < Dependent.Count(); i++ )  {
     if( Dependent[i]->IsDeleted() )  continue;
     dep_cnt++;
@@ -90,7 +91,8 @@ PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
   dep_cnt = 0;
   for( size_t i=0; i < Dependent.Count(); i++ )  {
     if( Dependent[i]->IsDeleted() )  continue;
-    PyTuple_SetItem(dependent, dep_cnt++, Py_BuildValue("i", Dependent[i]->GetTag()));
+    PyTuple_SetItem(dependent, dep_cnt++,
+      Py_BuildValue("i", Dependent[i]->GetTag()));
   }
   PythonExt::SetDictItem(main, "dependent", dependent);
   return main;
@@ -98,13 +100,25 @@ PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
 #endif
 //..............................................................................
 void TAfixGroup::FromDataItem(TDataItem& item) {
-  Afix = item.GetRequiredField("afix").ToInt();
-  D = item.GetRequiredField("d").ToDouble();
-  U = item.GetRequiredField("u").ToDouble();
-  SetPivot(Parent.RM.aunit.GetAtom(item.GetRequiredField("pivot_atom_id").ToSizeT()));
-  TDataItem& dep = item.FindRequiredItem("dependent");
-  for( size_t i=0; i < dep.FieldCount(); i++ )
-    Dependent.Add(Parent.RM.aunit.GetAtom(dep.GetField(i).ToInt()))->SetParentAfixGroup(this);
+  Afix = item.GetFieldByName("afix").ToInt();
+  D = item.GetFieldByName("d").ToDouble();
+  U = item.GetFieldByName("u").ToDouble();
+  SetPivot(Parent.RM.aunit.GetAtom(item.GetFieldByName("pivot_atom_id").ToSizeT()));
+  TDataItem* dep = item.FindItem("dependent");
+  if (dep != NULL) {
+    TStrStrList ordered = dep->GetOrderedFieldList();
+    for (size_t i = 0; i < ordered.Count(); i++) {
+      Dependent.Add(Parent.RM.aunit.GetAtom(
+        ordered.GetObject(i).ToInt()))->SetParentAfixGroup(this);
+    }
+  }
+  else {
+    IndexRange::RangeItr i = item.GetItemByName("dependent_range").GetValue();
+    while (i.HasNext()) {
+      Dependent.Add(
+        Parent.RM.aunit.GetAtom(i.Next()))->SetParentAfixGroup(this);
+    }
+  }
 }
 //..............................................................................
 olxstr TAfixGroup::Describe() const {
@@ -162,7 +176,7 @@ void TAfixGroups::ToDataItem(TDataItem& item) {
   Groups.Pack();
   item.AddField("n", Groups.Count());
   for( size_t i=0; i < Groups.Count(); i++ )
-    Groups[i].ToDataItem(item.AddItem(i));
+    Groups[i].ToDataItem(item.AddItem("group"));
 }
 //..............................................................................
 #ifdef _PYTHON
@@ -186,12 +200,12 @@ PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
 //..............................................................................
 void TAfixGroups::FromDataItem(TDataItem& item) {
   Clear();
-  size_t n = item.GetRequiredField("n").ToSizeT();
+  size_t n = item.GetFieldByName("n").ToSizeT();
   if( n != item.ItemCount() )
     throw TFunctionFailedException(__OlxSourceInfo, "number of items mismatch");
   for( size_t i=0; i < n; i++ )  {
     Groups.Add(new TAfixGroup(*this)).SetId(i);
-    Groups.GetLast().FromDataItem(item.GetItem(i));
+    Groups.GetLast().FromDataItem(item.GetItemByIndex(i));
   }
 }
 //.............................................................................

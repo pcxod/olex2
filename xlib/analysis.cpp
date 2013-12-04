@@ -348,6 +348,70 @@ void fragments::tree_node::reverse() {
 }
 //.............................................................................
 //.............................................................................
+vec3d fragments::cart_ring::calc_center() const {
+  vec3d cent;
+  for (size_t i = 0; i < atoms.Count(); i++)
+    cent += atoms[i].xyz;
+  return (cent /= atoms.Count());
+}
+//.............................................................................
+fragments::cart_plane fragments::cart_ring::calc_plane() const {
+  cart_plane cp;
+  cp.center = calc_center();
+  mat3d m;
+  for (size_t i = 0; i < atoms.Count(); i++)  {
+    const vec3d t = (atoms[i].xyz - cp.center);
+    m[0][0] += (t[0] * t[0]);
+    m[0][1] += (t[0] * t[1]);
+    m[0][2] += (t[0] * t[2]);
+    m[1][1] += (t[1] * t[1]);
+    m[1][2] += (t[1] * t[2]);
+    m[2][2] += (t[2] * t[2]);
+  }
+  m[1][0] = m[0][1];
+  m[2][0] = m[0][2];
+  m[2][1] = m[1][2];
+  mat3d normals;
+  mat3d::EigenValues(m, normals.I());
+  int mi = 0;
+  if (m[1][1] < m[mi][mi]) mi = 1;
+  if (m[2][2] < m[mi][mi]) mi = 2;
+  cp.normal = normals[mi];
+  cp.rmsd = sqrt(olx_max(0, m[mi][mi]));
+  return cp;
+}
+//.............................................................................
+bool fragments::cart_ring::is_regular() const {
+  vec3d cent = calc_center();
+  double avAng = 2 * M_PI / atoms.Count(),
+    avDis = 0;
+  for (size_t i = 0; i < atoms.Count(); i++)
+    avDis += cent.DistanceTo(atoms[i].xyz);
+  avDis /= atoms.Count();
+  for (size_t i = 0; i < atoms.Count(); i++)  {
+    double d = cent.DistanceTo(atoms[i].xyz);
+    if (olx_abs(d - avDis) > 0.2)
+      return false;
+  }
+  for (size_t i = 0; i < atoms.Count(); i++)  {
+    vec3d a = atoms[i].xyz, b;
+    if ((i + 1) == atoms.Count())
+      b = atoms[0].xyz;
+    else
+      b = atoms[i + 1].xyz;
+    a -= cent;
+    b -= cent;
+    double ca = a.CAngle(b);
+    if (ca < -1)  ca = -1;
+    if (ca > 1) ca = 1;
+    ca = acos(ca);
+    if (olx_abs(ca - avAng) > 5. / M_PI)
+      return false;
+  }
+  return true;
+}
+//.............................................................................
+//.............................................................................
 bool fragments::ring::is_leq(const ring &r) const {
   atoms.ForEach(TCAtom::FlagSetter(catom_flag_Processed, false));
   r.atoms.ForEach(TCAtom::FlagSetter(catom_flag_Processed, true));
@@ -424,6 +488,41 @@ void fragments::ring::reverse() {
   const size_t hs = (atoms.Count()-1)/2;
   for (size_t i=0; i < hs; i++)
     atoms.Swap(i+1, atoms.Count()-i-1);
+}
+//.............................................................................
+fragments::cart_ring fragments::ring::to_cart() const {
+  cart_ring r;
+  if (atoms.IsEmpty()) return r;
+  TAsymmUnit &au = *atoms[0]->GetParent();
+  smatd m = smatd::Identity();
+  r.atoms.Add(new cart_atom(atoms[0], au.Orthogonalise(atoms[0]->ccrd()), m));
+  for (size_t i = 1; i < atoms.Count(); i++) {
+    TCAtom &pa = *atoms[i - 1];
+    bool found = false;
+    for (size_t j = 0; j < pa.AttachedSiteCount(); j++) {
+      TCAtom::Site &s = pa.GetAttachedSite(j);
+      if (s.atom == atoms[i]) {
+        m *= s.matrix;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      TBasicApp::NewLogEntry() << alg::label(atoms);
+      throw TFunctionFailedException(__OlxSourceInfo, "disconnected ring");
+    }
+    else {
+      r.atoms.Add(new cart_atom(atoms[i], au.Orthogonalise(m*atoms[i]->ccrd()), m));
+#ifdef _DEBUG
+      double d = r[i].xyz.DistanceTo(r[i - 1].xyz);
+      if (d > 3) {
+        TBasicApp::NewLogEntry() << d << ": " << r[i].atom.GetLabel() <<
+          '-' << r[i-1].atom.GetLabel();
+      }
+#endif
+    }
+  }
+  return r;
 }
 //.............................................................................
 //.............................................................................
@@ -603,7 +702,7 @@ bool fragments::fragment::is_flat() const {
   vec3d n;
   vec3d_list crds = build_coordinates();
   double rmsd = 0;
-  if (crds.Count() <= 3) { 
+  if (crds.Count() <= 3) {
     return true;
   }
   else { 
@@ -880,10 +979,12 @@ ConstTypeList<fragments::ring> fragments::fragment::get_rings(
         rv[i] = ring_sorter(rv[i].atoms);
       }
       catch (const TExceptionBase &e) {
+        rv.NullItem(i);
         TBasicApp::NewLogEntry(logInfo) << e.GetException()->GetFullMessage();
       }
     }
   }
+  rv.Pack();
   return rv;
 }
 //.............................................................................
@@ -902,6 +1003,7 @@ ConstPtrList<TCAtom> fragments::fragment::ring_sorter(const TCAtomPList &r) {
       }
     }
     if (!set) {
+      TBasicApp::NewLogEntry() << alg::label(r, '-');
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("ring ") << alg::label(r));
     }

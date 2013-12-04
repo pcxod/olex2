@@ -108,22 +108,22 @@ ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
 #endif
 //..............................................................................
 void TSimpleRestraint::FromDataItem(const TDataItem& item) {
-  AllNonHAtoms = item.GetRequiredField("allNonH").ToBool();
-  Esd = item.GetRequiredField("esd").ToDouble();
-  Esd1 = item.GetRequiredField("esd1").ToDouble();
-  Value = item.GetRequiredField("val").ToDouble();
+  AllNonHAtoms = item.GetFieldByName("allNonH").ToBool();
+  Esd = item.GetFieldByName("esd").ToDouble();
+  Esd1 = item.GetFieldByName("esd1").ToDouble();
+  Value = item.GetFieldByName("val").ToDouble();
   TDataItem* atoms = item.FindItem("atoms");
   if ( atoms != NULL) {
     for( size_t i=0; i < atoms->ItemCount(); i++ )  {
-      TDataItem& ai = atoms->GetItem(i);
-      size_t aid = ai.GetRequiredField("atom_id").ToSizeT();
-      uint32_t eid = ai.GetRequiredField("eqiv_id").ToUInt();
+      TDataItem& ai = atoms->GetItemByIndex(i);
+      size_t aid = ai.GetFieldByName("atom_id").ToSizeT();
+      uint32_t eid = ai.GetFieldByName("eqiv_id").ToUInt();
       AddAtom(Parent.GetRM().aunit.GetAtom(aid),
         olx_is_valid_index(eid) ? &Parent.GetRM().GetUsedSymm(eid) : NULL);
     }
   }
   else {
-    Atoms.FromDataItem(item.FindRequiredItem("AtomList"));
+    Atoms.FromDataItem(item.GetItemByName("AtomList"));
   }
 }
 //..............................................................................
@@ -213,7 +213,7 @@ void TSRestraintList::ToDataItem(TDataItem& item) const {
   for( size_t i=0; i < Restraints.Count(); i++ )  {
     if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].Validate().IsEmpty() )
       continue;
-    Restraints[i].ToDataItem(item.AddItem(rs_id++));
+    Restraints[i].ToDataItem(item.AddItem("item"));
   }
 }
 //..............................................................................
@@ -238,7 +238,7 @@ PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms,
 void TSRestraintList::FromDataItem(const TDataItem& item) {
   for (size_t i=0; i < item.ItemCount(); i++) {
     try {
-      AddNew().FromDataItem(item.GetItem(i));
+      AddNew().FromDataItem(item.GetItemByIndex(i));
     }
     catch (const TExceptionBase &) {
       TBasicApp::NewLogEntry() << "One of the " << GetIdName() << " was not "

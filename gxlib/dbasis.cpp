@@ -223,21 +223,21 @@ void TDBasis::ToDataItem(TDataItem& di) const {
 }
 //..............................................................................
 void TDBasis::FromDataItem(const TDataItem& di)  {
-  const olxstr& c = di.GetFieldValue("center");
+  const olxstr& c = di.FindField("center");
   if( c.IsEmpty() )  {
     TEBasis b;
-    b.FromDataItem(di.FindRequiredItem("basis"));
+    b.FromDataItem(di.GetItemByName("basis"));
     _Center = b.GetCenter();
     Zoom = b.GetZoom();
   }
   else  {
     PersUtil::VecFromStr(c, _Center);
-    Zoom = di.GetRequiredField("zoom").ToDouble();
+    Zoom = di.GetFieldByName("zoom").ToDouble();
   }
   const TDataItem* labels = di.FindItem("Labels");
   if( labels != NULL && labels->ItemCount() == 3 )  {
     for( int i=0; i < 3; i++ )
-      Labels[i]->FromDataItem(labels->GetItem(i));
+      Labels[i]->FromDataItem(labels->GetItemByIndex(i));
   }
 }
 //..............................................................................

@@ -275,9 +275,10 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
   const float _brad = brad*(1+pers_scale)*scalex;
   if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
     mat3f elm = *atom_a.elpm;
-    mat3f ielm = mat3f(elm).Normalise().Inverse();
+    mat3f ielm = mat3f(elm).Normalise().Transpose();
     /* etm projects to ellipsoid and un-projects back to the cartesian frame
-    with the ellipsoid scale accumulated
+    with the ellipsoid scale accumulated - this is the quadractic form of the
+    ellipsoid (QLQt)
     */
     mat3f erm, etm = ielm*elm;// ietm=etm.Inverse();
     // below is same as: vec3f pv = (touch_point*ietm).Normalise();
@@ -375,13 +376,13 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
     }
   }
   else  {
-    if( (mask&((1<<13)|(1<<11)|(1<<10)|(1<<9)|(1<<8))) != 0)
+    if ((mask&((1 << 13) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8))) != 0)
       pw.drawQuads(parent.BondProjF, parent.BondProjT, 16, &PSWriter::fill);
     else
       pw.drawQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);
 
     // renders an intersection bond and ellipsoid ellipse
-    //if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
+    //if (!atom_a.IsSpherical() && atom_a.IsSolid())  {
     //  pw.color(0xff);
     //  mat3f pm = proj_mat;
     //  pm[0].Normalise();
@@ -390,8 +391,8 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
     //  pm *= *atom_a.p_ielpm;
     //  pw.drawEllipse(NullVec, pm);
     //}
-    // renders bond directions...
-    //if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
+    ////renders bond directions...
+    //if (!atom_a.IsSpherical() && atom_a.IsSolid())  {
     //  pw.color(0xff);
     //  pw.drawLine(NullVec, dir_vec*parent.DrawScale);
     //}

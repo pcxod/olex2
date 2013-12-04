@@ -67,10 +67,10 @@ void TXLine::ToDataItem(TDataItem &di) const {
 //..............................................................................
 void TXLine::FromDataItem(const TDataItem &di)  {
   SetCollectionName(di.GetValue());
-  PersUtil::VecFromStr(di.GetRequiredField("base"), FBase);
-  PersUtil::VecFromStr(di.GetRequiredField("edge"), FEdge);
-  SetRadius(di.GetRequiredField("r").ToDouble());
-  GetGlLabel().FromDataItem(di.FindRequiredItem("Label"));
+  PersUtil::VecFromStr(di.GetFieldByName("base"), FBase);
+  PersUtil::VecFromStr(di.GetFieldByName("edge"), FEdge);
+  SetRadius(di.GetFieldByName("r").ToDouble());
+  GetGlLabel().FromDataItem(di.GetItemByName("Label"));
   Init(false);
 }
 //..............................................................................

@@ -53,8 +53,8 @@ public:
       b.ToDataItem(item.AddItem("b"));
     }
     void FromDataItem(const TDataItem& item)  {
-      a.FromDataItem(item.FindRequiredItem('a'));
-      b.FromDataItem(item.FindRequiredItem('b'));
+      a.FromDataItem(item.GetItemByName('a'));
+      b.FromDataItem(item.GetItemByName('b'));
     }
 
     int Compare(const Ref& r) const {

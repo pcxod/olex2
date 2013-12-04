@@ -273,7 +273,7 @@ public:
   void FromDataItem(const TDataItem& di, const RefinementModel& rm)  {
     Clear();
     for( size_t i=0; i < di.ItemCount(); i++ )
-      items.Add(constraint_t::FromDataItem(di.GetItem(i), rm));
+      items.Add(constraint_t::FromDataItem(di.GetItemByIndex(i), rm));
   }
   void UpdateParams(size_t index, const TStrList& toks)  {
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, items.Count());
