@@ -118,6 +118,36 @@ public:
     // reverses the trunk direction and re-sorts the branches
     void reverse();
   };
+  struct cart_atom {
+    TCAtom &atom;
+    vec3d xyz;
+    smatd matrix;
+    cart_atom(TCAtom *a, const vec3d &c, const smatd &m)
+      : atom(*a), xyz(c), matrix(m)
+    {}
+  };
+  struct cart_plane {
+    vec3d center, normal;
+    double rmsd;
+    cart_plane() : rmsd(0) {}
+    cart_plane(const vec3d &c, const vec3d &n, double rmsd_=0)
+      : center(c), normal(n), rmsd(rmsd_)
+    {}
+    double distance_to(const vec3d &v) const {
+      return normal.DotProd(v-center);
+    }
+    double angle(const vec3d &v) const {
+      return acos(normal.CAngle(v)) * 180 / M_PI;
+    }
+  };
+  struct cart_ring {
+    TTypeList<cart_atom> atoms;
+    cart_atom &operator [] (size_t i) { return atoms[i];  }
+    const cart_atom &operator [] (size_t i) const { return atoms[i]; }
+    vec3d calc_center() const;
+    cart_plane calc_plane() const;
+    bool is_regular() const;
+  };
   struct ring {
     struct substituent {
       // always start from the ring atom
@@ -155,6 +185,7 @@ public:
       return olx_cmp(r1.atoms.Count(), r2.atoms.Count());
     }
     void reverse();
+    cart_ring to_cart() const;
   };
   struct fragment {
   protected:

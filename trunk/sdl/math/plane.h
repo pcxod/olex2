@@ -35,6 +35,8 @@ namespace olx_plane {
     for( size_t i=0; i < points.Count(); i++ )  {
       if (i==m_i) continue;
       vec_t vec = accessor(points[i]) - center;
+      if (vec.QLength() < 1e-6) // atom on the center!
+        continue;
       double ca = origin.CAngle(vec);
       vec = origin.XProdVec(vec);
       /* negative - vec is on the right, positive - on the left, if ca == 0,

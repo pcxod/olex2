@@ -651,7 +651,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   int32_t previous_quality = -1;
   if (res != 1) {
     FXApp->GetRender().GetScene().ScaleFonts(res);
-    if (res > 1)
+    if (res != 1)
       previous_quality = FXApp->Quality(qaPict);
     FXApp->UpdateLabels();
   }
@@ -1059,7 +1059,7 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         for( size_t j=0; j < period; j++ )  {
           if( (i+j) >= FHelpItem->ItemCount() )
             break;
-          Tmp << FHelpItem->GetItem(i+j).GetName();
+          Tmp << FHelpItem->GetItemByIndex(i + j).GetName();
           Tmp.RightPadding((j+1)*10, ' ', true);
         }
         FGlConsole->PrintText(Tmp);
@@ -1071,11 +1071,11 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TStrList Cats;
         TDataItem *Cat;
         for( size_t i=0; i < FHelpItem->ItemCount(); i++ )  {
-          Cat = FHelpItem->GetItem(i).FindItemi("category");
+          Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
           if( Cat == NULL )  continue;
           for( size_t j=0; j < Cat->ItemCount(); j++ )  {
-            if( Cats.IndexOf(Cat->GetItem(j).GetName()) == InvalidIndex )
-              Cats.Add(Cat->GetItem(j).GetName());
+            if (Cats.IndexOf(Cat->GetItemByIndex(j).GetName()) == InvalidIndex)
+              Cats.Add(Cat->GetItemByIndex(j).GetName());
           }
         }
         if( Cats.Count() )
@@ -1096,11 +1096,11 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         FGlConsole->PrintText(olxstr("Macroses for category: ") << Cmds[0]);
         TDataItem *Cat;
         for( size_t i=0; i < FHelpItem->ItemCount(); i++ )  {
-          Cat = FHelpItem->GetItem(i).FindItemi("category");
+          Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
           if( Cat == NULL )  continue;
           for( size_t j=0; j < Cat->ItemCount(); j++ )  {
-            if( Cat->GetItem(j).GetName().Equalsi(Cmds[0]) )  {
-              FGlConsole->PrintText(FHelpItem->GetItem(i).GetName());
+            if (Cat->GetItemByIndex(j).GetName().Equalsi(Cmds[0]))  {
+              FGlConsole->PrintText(FHelpItem->GetItemByIndex(i).GetName());
               break;
             }
           }
@@ -1425,7 +1425,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       TDataFile DF;
       DF.LoadFromXLFile(FN);
       FXApp->GetRender().GetBasis().FromDataItem(
-        DF.Root().FindRequiredItem("basis"));
+        DF.Root().GetItemByName("basis"));
     }
   }
   else if( Cmds[0].Equalsi("model") )  {
@@ -1447,9 +1447,9 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
         try {
           TDataFile df;
           df.LoadFromXLFile(Cmds[1]);
-          TDataItem &elements = df.Root().FindRequiredItem("elements");
+          TDataItem &elements = df.Root().GetItemByName("elements");
           for (size_t i=0; i < elements.ItemCount(); i++) {
-            TDataItem &e = elements.GetItem(i);
+            TDataItem &e = elements.GetItemByIndex(i);
             cm_Element* cme = XElementLib::FindBySymbol(e.GetName());
             if (cme == NULL) {
               TBasicApp::NewLogEntry(logError) << "Undefined element: '" <<
@@ -1457,14 +1457,14 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
               continue;
             }
             for (size_t j=0; j < e.FieldCount(); j++) {
-              if (e.FieldName(j).Equals("sfil"))
-                cme->r_sfil = e.GetField(j).ToDouble();
-              else if (e.FieldName(j).Equals("pers"))
-                cme->r_pers = e.GetField(j).ToDouble();
-              else if (e.FieldName(j).Equals("vdw"))
-                cme->r_vdw = e.GetField(j).ToDouble();
-              else if (e.FieldName(j).Equals("bonding"))
-                cme->r_bonding = e.GetField(j).ToDouble();
+              if (e.GetFieldName(j).Equals("sfil"))
+                cme->r_sfil = e.GetFieldByIndex(j).ToDouble();
+              else if (e.GetFieldName(j).Equals("pers"))
+                cme->r_pers = e.GetFieldByIndex(j).ToDouble();
+              else if (e.GetFieldName(j).Equals("vdw"))
+                cme->r_vdw = e.GetFieldByIndex(j).ToDouble();
+              else if (e.GetFieldName(j).Equals("bonding"))
+                cme->r_bonding = e.GetFieldByIndex(j).ToDouble();
             }
           }
           TBasicApp::NewLogEntry(logInfo) <<
@@ -1549,7 +1549,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
         FN = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << FN;
       TDataFile df;
       df.LoadFromXLFile(FN);
-      FXApp->LoadStructureStyle(df.Root().FindRequiredItem("GraphicsView"));
+      FXApp->LoadStructureStyle(df.Root().GetItemByName("GraphicsView"));
     }
   }
   else
@@ -3895,9 +3895,25 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  return;
-  //TXAtomPList atoms = FindXAtoms(Cmds, true, true);
-
+  TDataFile df;
+  FXApp->XFile().ToDataItem(df.Root().AddItem("str"));
+  df.SaveToXMLFile("e:/1.xml");
+  //TXAtomPList atoms = FindXAtoms(Cmds, false, true);
+  //if (atoms.Count() == 2) {
+  //  if (atoms[0]->GetEllipsoid() != NULL) {
+  //    double s = atoms[0]->GetEllipsoid()->CalcScale(
+  //      (atoms[1]->crd() - atoms[0]->crd()));
+  //    for (size_t i = 0; i < atoms[0]->BondCount(); i++) {
+  //      TXBond &b = atoms[0]->Bond(i);
+  //      if ((b.A() == *atoms[0] && b.B() == *atoms[1]) ||
+  //        (b.A() == *atoms[1] && b.B() == *atoms[2]))
+  //      {
+  //        b.Params()[3] = 1;
+  //      }
+  //    }
+  //    TBasicApp::NewLogEntry() << s << ", " << ProbFactorEx(s);
+  //  }
+  //}
   //return;
   //TXApp& xapp = TXApp::GetInstance();
   //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
@@ -4368,8 +4384,8 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //      num = toks[0];
 //
 //    for( size_t j=0; j < df.Root().ItemCount(); j++ )  {
-//      if( df.Root().Item(j).GetFieldValue( "#" ) == num &&
-//          df.Root().Item(j).GetFieldValue("AXIS") == axis )  {
+//      if( df.Root().Item(j).FindField( "#" ) == num &&
+//          df.Root().Item(j).FindField("AXIS") == axis )  {
 //        TBasicApp::GetLog() << ( olxstr("Found ") << df.Root().Item(j).GetName() );
 //        olxstr tmp = toks[1];
 //        tmp << ' ' << toks[2] << ' ' << toks[3] << ' ' << toks[4];
@@ -4380,7 +4396,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //  }
 //  // validating
 //  for( size_t i=0; i < df.Root().ItemCount(); i++ )  {
-//    olxstr tmp = df.Root().Item(i).GetFieldValue("FULL");
+//    olxstr tmp = df.Root().Item(i).FindField("FULL");
 //    if( tmp.IsEmpty() )  {
 //      if( df.Root().Item(i).GetName().Length() == 4 )  {
 //        tmp << df.Root().Item(i).GetName()[0] << ' ' <<
@@ -6126,5 +6142,70 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 #else
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
+}
+//..............................................................................
+double ProbFactorEx(double scale)  {
+  // max of 4pi*int(0,inf)(exp(-x/2)*x^2dx) [/(4*pi*100)]
+  static const double max_val = sqrt(8 * M_PI*M_PI*M_PI) / (4 * M_PI);
+  const double inc = 1e-4;
+  double ProbFactor = 0, summ = 0;
+  while (ProbFactor < scale)  {
+    const double v_sq = olx_sqr(ProbFactor + inc / 2);
+    summ += exp(-v_sq / 2)*v_sq*inc;
+    ProbFactor += inc;
+  }
+  return summ * 100 / max_val;
+
+}
+void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  double s50 = TGXApp::ProbFactor(50);
+  if (Cmds.Count() == 2) {
+    TTTable<TStrList> out(0, 4);
+    out.ColName(0) = "Atom";
+    out.ColName(1) = "Displacement/A";
+    out.ColName(2) = "50% ADP scale, %";
+    out.ColName(3) = "Scaled ADP level, %";
+
+    olx_object_ptr<TXFile> f1((TXFile *)FXApp->XFile().Replicate());
+    olx_object_ptr<TXFile> f2((TXFile *)FXApp->XFile().Replicate());
+    f1().LoadFromFile(Cmds[0]);
+    f2().LoadFromFile(Cmds[1]);
+    TAsymmUnit &au1 = f1().GetAsymmUnit(),
+      &au2 = f2().GetAsymmUnit();
+    if (au1.AtomCount() != au2.AtomCount()) {
+      Error.ProcessingError(__OlxSrcInfo, "asymmetric units mismatch");
+      return;
+    }
+    for (size_t i = 0; i < au1.AtomCount(); i++) {
+      TCAtom &a1 = au1.GetAtom(i);
+      if (a1.GetEllipsoid() == NULL) {
+        TBasicApp::NewLogEntry() << "No ADP for " << a1.GetLabel() <<
+          " skipping..";
+        continue;
+      }
+      TCAtom *a2 = au2.FindCAtom(a1.GetLabel());
+      if (a2 == NULL) {
+        TBasicApp::NewLogEntry() << "No pair for " << a1.GetLabel() <<
+          " skipping..";
+        continue;
+      }
+      vec3d dv = a2->ccrd() - a1.ccrd();
+      dv -= dv.Floor<int>();
+      for (int j = 0; j < 3; j++) {
+        if (dv[j] > 0.5)
+          dv[j] -= 1;
+      }
+      dv = au1.Orthogonalise(dv);
+      double s = a1.GetEllipsoid()->CalcScale(dv);
+      TStrList &r = out.AddRow();
+      r[0] = a1.GetLabel();
+      r[1] = olxstr::FormatFloat(4, dv.Length());
+      r[2] = olxstr::FormatFloat(4, s*100/s50);
+      r[3] = olxstr::FormatFloat(4, ProbFactorEx(s));
+    }
+    TBasicApp::NewLogEntry() << out.CreateTXTList("Summary", true, false, "  ");
+  }
 }
 //..............................................................................

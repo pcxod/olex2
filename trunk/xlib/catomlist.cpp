@@ -13,7 +13,7 @@
 
 //.............................................................................
 IAtomRef &IAtomRef::FromDataItem(const TDataItem &di, RefinementModel& rm) {
-  olxstr t = di.GetRequiredField("type");
+  olxstr t = di.GetFieldByName("type");
   if (t == ExplicitCAtomRef::GetTypeId())
     return *(new ExplicitCAtomRef(di, rm));
   else if (t == ImplicitCAtomRef::GetTypeId())
@@ -27,8 +27,8 @@ IAtomRef &IAtomRef::FromDataItem(const TDataItem &di, RefinementModel& rm) {
 //.............................................................................
 //.............................................................................
 ExplicitCAtomRef::ExplicitCAtomRef(const TDataItem & di, RefinementModel& rm) {
-  size_t aid = di.GetRequiredField("atom_id").ToSizeT();
-  uint32_t eid = di.GetRequiredField("eqiv_id").ToUInt();
+  size_t aid = di.GetFieldByName("atom_id").ToSizeT();
+  uint32_t eid = di.GetFieldByName("eqiv_id").ToUInt();
   atom = &rm.aunit.GetAtom(aid);
   DealWithSymm(eid == ~0 ? NULL : &rm.GetUsedSymm(eid));
 }
@@ -270,9 +270,9 @@ void ImplicitCAtomRef::ToDataItem(TDataItem &di) const {
 //.............................................................................
 //.............................................................................
 ListIAtomRef::ListIAtomRef(const TDataItem &di, RefinementModel& rm)
-  : start(IAtomRef::FromDataItem(di.FindRequiredItem("start"), rm)),
-    end(IAtomRef::FromDataItem(di.FindRequiredItem("end"), rm)),
-    op(di.GetRequiredField("operation"))
+  : start(IAtomRef::FromDataItem(di.GetItemByName("start"), rm)),
+    end(IAtomRef::FromDataItem(di.GetItemByName("end"), rm)),
+    op(di.GetFieldByName("operation"))
 {}
 //.............................................................................
 size_t ListIAtomRef::Expand(const RefinementModel& rm, TAtomRefList& res,
@@ -511,19 +511,19 @@ void AtomRefList::ToDataItem(TDataItem &di) const {
   size_t cnt=0;
   for (size_t i=0; i < refs.Count(); i++) {
     if (refs[i].IsValid())
-      refs[i].ToDataItem(di.AddItem(++cnt));
+      refs[i].ToDataItem(di.AddItem("item"));
   }
   
 }
 //.............................................................................
 void AtomRefList::FromDataItem(const TDataItem &di) {
-  residue = di.GetRequiredField("residue");
-  expression = di.GetRequiredField("expression");
-  ContainsImplicitAtoms = di.GetRequiredField("has_implicit").ToBool();
+  residue = di.GetFieldByName("residue");
+  expression = di.GetFieldByName("expression");
+  ContainsImplicitAtoms = di.GetFieldByName("has_implicit").ToBool();
   refs.Clear();
   refs.SetCapacity(di.ItemCount());
   for (size_t i=0; i < di.ItemCount(); i++)
-    refs.Add(IAtomRef::FromDataItem(di.GetItem(i), rm));
+    refs.Add(IAtomRef::FromDataItem(di.GetItemByIndex(i), rm));
 }
 //.............................................................................
 void AtomRefList::UpdateResi() {

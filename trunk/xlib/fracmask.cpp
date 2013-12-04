@@ -51,10 +51,10 @@ void FractMask::ToDataItem(TDataItem& di, IOutputStream& os) const {
 }
 //..................................................................................................
 void FractMask::FromDataItem(const TDataItem& di, IInputStream& is)  {
-  PersUtil::VecFromStr(di.GetRequiredField("norm"), Norm);
-  vec3i _min = PersUtil::VecFromStr<vec3i>(di.GetRequiredField("min"));
-  vec3i _max = PersUtil::VecFromStr<vec3i>(di.GetRequiredField("max"));
-  size_t cc = di.GetRequiredField("char_count").ToSizeT();
+  PersUtil::VecFromStr(di.GetFieldByName("norm"), Norm);
+  vec3i _min = PersUtil::VecFromStr<vec3i>(di.GetFieldByName("min"));
+  vec3i _max = PersUtil::VecFromStr<vec3i>(di.GetFieldByName("max"));
+  size_t cc = di.GetFieldByName("char_count").ToSizeT();
   if( Mask != NULL )
     delete Mask;
   Mask = new TArray3D<bool>(_min[0], _max[0], _min[1], _max[1], _min[2], _max[2]);

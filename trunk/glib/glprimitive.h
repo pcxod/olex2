@@ -175,7 +175,12 @@ public:
   DefPropC(olxstr, Name)
 
   TGlMaterial& GetProperties() const {
-    return (TGlMaterial&)AGroupObject::GetProperties();
+    TGlMaterial &m = (TGlMaterial&)AGroupObject::GetProperties();
+    if (&m == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "uninitialised properties");
+    }
+    return m;
   }
   AGOProperties& SetProperties(const AGOProperties& C);
 

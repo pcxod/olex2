@@ -116,15 +116,16 @@ void TSPlane::FromDataItem(const TDataItem& item)  {
   Crds.Clear();
   ASObjectProvider& objects = Network->GetLattice().GetObjects();
   for( size_t i=0; i < item.ItemCount(); i++ )  {
-    Crds.AddNew(&objects.atoms[item.GetItem(i).GetRequiredField("atom_id").ToInt()],
-      item.GetItem(i).GetValue().ToDouble());
+    Crds.AddNew(
+      &objects.atoms[item.GetItemByIndex(i).GetFieldByName("atom_id").ToInt()],
+      item.GetItemByIndex(i).GetValue().ToDouble());
   }
   TTypeList< AnAssociation2<vec3d, double> > points;
   points.SetCapacity(Crds.Count());
   for( size_t i=0; i < Crds.Count(); i++ )
     points.AddNew( Crds[i].GetA()->crd(), Crds[i].GetB());
   _Init(points);
-  SetRegular(item.GetFieldValue("regular", FalseString()).ToBool());
+  SetRegular(item.FindField("regular", FalseString()).ToBool());
 }
 //..............................................................................
 olxstr TSPlane::StrRepr() const {
@@ -196,8 +197,8 @@ void TSPlane::Def::DefData::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 void TSPlane::Def::DefData::FromDataItem(const TDataItem& item)  {
-  weight = item.GetRequiredField("weight").ToDouble();
-  ref.FromDataItem(item.GetItem(0));  //!! may be changed if extended
+  weight = item.GetFieldByName("weight").ToDouble();
+  ref.FromDataItem(item.GetItemByIndex(0));  //!! may be changed if extended
 }
 //..............................................................................
 void TSPlane::Def::ToDataItem(TDataItem& item) const {
@@ -208,9 +209,9 @@ void TSPlane::Def::ToDataItem(TDataItem& item) const {
 //..............................................................................
 void TSPlane::Def::FromDataItem(const TDataItem& item)  {
   atoms.Clear();
-  regular = item.GetRequiredField("regular").ToBool();
+  regular = item.GetFieldByName("regular").ToBool();
   for( size_t i=0; i < item.ItemCount(); i++ )
-    atoms.AddNew(item.GetItem(i));
+    atoms.AddNew(item.GetItemByIndex(i));
 }
 //..............................................................................
 TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,

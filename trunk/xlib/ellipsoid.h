@@ -97,6 +97,8 @@ public:
   double GetUeq() const {  return (Quad[0]+Quad[1]+Quad[2])/3;  }
   const evecd &GetQuad() const { return Quad; }
   const evecd &GetEsd() const { return Esd; }
+  /* the matrix is the transposed eigenvalues of the quadratic form
+  */
   const mat3d& GetMatrix() const {  return Matrix;  }
   mat3d ExpandQuad() const { return ExpandShelxQuad(Quad); }
   template <typename QT>
@@ -124,6 +126,10 @@ public:
   }
   // resets the ellipsoid into a sphere of given radius
   void ToSpherical(double r);
+  /* Calculates the scale to be applied to the ellipsoid in order v to lie on
+  its surface
+  */
+  double CalcScale(const vec3d &v);
   DefPropP(size_t, Id)
 };
   typedef TTypeList<TEllipsoid>  TEllpList;

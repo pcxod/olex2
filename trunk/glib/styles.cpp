@@ -26,7 +26,7 @@ bool TPrimitiveStyle::FromDataItem(const TDataItem& Item)  {
   TDataItem* MI = Item.FindItem("Material");
   if (MI != NULL) {
     if (MI->ItemCount() != 0) {
-      TGlMaterial* GlM = Parent.GetMaterial(MI->GetItem(0));
+      TGlMaterial* GlM = Parent.GetMaterial(MI->GetItemByIndex(0));
       if (GlM != NULL) {
         SetProperties(*GlM);
         return true;
@@ -97,28 +97,28 @@ void TGraphicsStyle::ToDataItem(TDataItem& Item, bool saveAll) const {
 }
 //..............................................................................
 bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
-  Name = Item.GetFieldValue("Name");
-  SetPersistent(Item.GetFieldValue("Persistent", FalseString()).ToBool());
+  Name = Item.FindField("Name");
+  SetPersistent(Item.FindField("Persistent", FalseString()).ToBool());
   size_t i = IsPersistent() ? 2 : 1;
   for( ; i < Item.FieldCount(); i++ )
-    SetParam(Item.FieldName(i), Item.GetField(i), Level < 2);
+    SetParam(Item.GetFieldName(i), Item.GetFieldByIndex(i), Level < 2);
 //    SetParam(Item.FieldName(i), Item.Field(i), FParent->GetVersion() > 0 );
   TDataItem* I = Item.FindItem("SubStyles");
   size_t off = 0;
   if (I != NULL) {
     off = 1;
     for (i=0; i < I->ItemCount(); i++) {
-      const TDataItem& si = I->GetItem(i);
-      const olxstr& si_name = si.GetFieldValue("Name");
+      const TDataItem& si = I->GetItemByIndex(i);
+      const olxstr& si_name = si.FindField("Name");
       TGraphicsStyle* GS = FindLocalStyle(si_name);
       if (GS == NULL)
         GS = Styles.Add(si_name, new TGraphicsStyle(Parent, this, si_name)).Object;
-      GS->FromDataItem(I->GetItem(i));
+      GS->FromDataItem(I->GetItemByIndex(i));
     }
   }
   // merging happens here...
   for (i=off; i < Item.ItemCount(); i++) {
-    const TDataItem& psi = Item.GetItem(i);
+    const TDataItem& psi = Item.GetItemByIndex(i);
     const olxstr& psi_name = TPrimitiveStyle::ReadName(psi);
     TPrimitiveStyle* PS = NULL;
     for (size_t j=0; j < PStyles.Count(); j++) {
@@ -129,7 +129,7 @@ bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
     }
     if (PS == NULL) {
       PS = Parent.NewPrimitiveStyle_(psi_name);
-      if (PS->FromDataItem(Item.GetItem(i))) {
+      if (PS->FromDataItem(Item.GetItemByIndex(i))) {
         PStyles.Add(Parent.AddPrimitiveStyle(PS));
       }
       else {
@@ -137,7 +137,7 @@ bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
       }
     }
     else
-      PS->FromDataItem(Item.GetItem(i));
+      PS->FromDataItem(Item.GetItemByIndex(i));
   }
   return true;
 }
@@ -365,13 +365,13 @@ bool TGraphicsStyles::FromDataItem(const TDataItem& Item, bool merge) {
   TPtrList<TGlMaterial> mats;
   for (size_t i=0; i < SI->ItemCount(); i++) {
     TGlMaterial* GlM = new TGlMaterial;
-    SI->GetItem(i).SetData(GlM);
-    GlM->FromDataItem(SI->GetItem(i));
+    SI->GetItemByIndex(i).SetData(GlM);
+    GlM->FromDataItem(SI->GetItemByIndex(i));
     mats.Add(GlM);
   }
-  Name = Item.GetFieldValue("Name");
-  LinkFile = Item.GetFieldValue("LinkFile");
-  Version = Item.GetFieldValue("Version", "0").ToInt();
+  Name = Item.FindField("Name");
+  LinkFile = Item.FindField("LinkFile");
+  Version = Item.FindField("Version", "0").ToInt();
   SI = Item.FindItem("Root");
   if (SI != NULL) {
     Root->FromDataItem(*SI);

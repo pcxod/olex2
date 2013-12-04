@@ -33,15 +33,15 @@ TGlLight& TGlLight::operator = (const TGlLight &S )  {
 }
 //..............................................................................
 bool TGlLight::FromDataItem(const TDataItem& Item) {
-  Ambient.FromString(Item.GetFieldValue("Ambient"));
-  Diffuse.FromString(Item.GetFieldValue("Diffuse"));
-  Specular.FromString(Item.GetFieldValue("Specular"));
-  Position.FromString(Item.GetFieldValue("Position"));
-  Attenuation.FromString(Item.GetFieldValue("Attenuation"));
-  SpotDirection.FromString(Item.GetFieldValue("SpotDirection"));
-  SpotCutoff = Item.GetFieldValue("SpotCutoff", "180").ToInt();
-  SpotExponent = Item.GetFieldValue("SpotExponent", "0").ToInt();
-  Enabled = Item.GetFieldValue("Enabled").ToBool();
+  Ambient.FromString(Item.FindField("Ambient"));
+  Diffuse.FromString(Item.FindField("Diffuse"));
+  Specular.FromString(Item.FindField("Specular"));
+  Position.FromString(Item.FindField("Position"));
+  Attenuation.FromString(Item.FindField("Attenuation"));
+  SpotDirection.FromString(Item.FindField("SpotDirection"));
+  SpotCutoff = Item.FindField("SpotCutoff", "180").ToInt();
+  SpotExponent = Item.FindField("SpotExponent", "0").ToInt();
+  Enabled = Item.FindField("Enabled").ToBool();
   return true;
 }
 //..............................................................................

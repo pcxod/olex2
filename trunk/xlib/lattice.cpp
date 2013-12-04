@@ -1128,7 +1128,7 @@ void TLattice::MoveToCenter()  {
     if( m == NULL )  continue;
     double d1 = GetAsymmUnit().Orthogonalise(molCenter).DistanceTo(ocnt);
     double d2 = GetAsymmUnit().Orthogonalise(*m*molCenter).DistanceTo(ocnt);
-    if (olx_abs(d1-d2) < 1e-2) {
+    if (olx_abs(d1-d2) < 1e-4) {
       delete m;
       continue;
     }
@@ -2129,7 +2129,7 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   */
   TArrayList<uint32_t> m_tags(mat_c);
   for( size_t i=0; i < mat_c; i++ )  {
-    mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i]))
+    mat.AddItem("symop", TSymmParser::MatrixToSymmEx(*Matrices[i]))
       .AddField("id", Matrices[i]->GetId());
     m_tags[i] = Matrices[i]->GetId();
     Matrices[i]->SetRawId((uint32_t)i);
@@ -2191,44 +2191,45 @@ void TLattice::ToDataItem(TDataItem& item) const  {
 void TLattice::FromDataItem(TDataItem& item)  {
   TActionQueueLock ql(&OnAtomsDeleted);
   Clear(true);
-  Delta = item.GetRequiredField("delta").ToDouble();
-  DeltaI = item.GetRequiredField("deltai").ToDouble();
-  GetAsymmUnit().FromDataItem(item.FindRequiredItem("AUnit"));
+  Delta = item.GetFieldByName("delta").ToDouble();
+  DeltaI = item.GetFieldByName("deltai").ToDouble();
+  GetAsymmUnit().FromDataItem(item.GetItemByName("AUnit"));
   GetUnitCell().InitMatrices();
-  const TDataItem& mat = item.FindRequiredItem("Matrices");
+  const TDataItem& mat = item.GetItemByName("Matrices");
   Matrices.SetCapacity(mat.ItemCount());
   for( size_t i=0; i < mat.ItemCount(); i++ )  {
-    smatd* m = new smatd(TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue()));
+    smatd* m = new smatd(
+      TSymmParser::SymmToMatrix(mat.GetItemByIndex(i).GetValue()));
     GetUnitCell().InitMatrixId(*Matrices.Add(m));
-    m->SetRawId(mat.GetItem(i).GetRequiredField("id").ToUInt());
+    m->SetRawId(mat.GetItemByIndex(i).GetFieldByName("id").ToUInt());
   }
   // precreate fragments
-  const TDataItem& frags = item.FindRequiredItem("Fragments");
+  const TDataItem& frags = item.GetItemByName("Fragments");
   Fragments.SetCapacity(frags.ItemCount());
   for( size_t i=0; i < frags.ItemCount(); i++ )
     Fragments.Add(new TNetwork(this, NULL));
   // precreate bonds
-  const TDataItem& bonds = item.FindRequiredItem("Bonds");
+  const TDataItem& bonds = item.GetItemByName("Bonds");
   Objects.bonds.IncCapacity(bonds.ItemCount());
   for( size_t i=0; i < bonds.ItemCount(); i++ )
     Objects.bonds.New(NULL);
   // precreate and load atoms
-  const TDataItem& atoms = item.FindRequiredItem("Atoms");
+  const TDataItem& atoms = item.GetItemByName("Atoms");
   Objects.atoms.IncCapacity(atoms.ItemCount());
   for( size_t i=0; i < atoms.ItemCount(); i++ )
     Objects.atoms.New(NULL);
   for( size_t i=0; i < atoms.ItemCount(); i++ )
-    Objects.atoms[i].FromDataItem(atoms.GetItem(i), *this);
+    Objects.atoms[i].FromDataItem(atoms.GetItemByIndex(i), *this);
   // load bonds
   for( size_t i=0; i < bonds.ItemCount(); i++ )
-    Objects.bonds[i].FromDataItem(bonds.GetItem(i), *this);
+    Objects.bonds[i].FromDataItem(bonds.GetItemByIndex(i), *this);
   // load fragments
   for( size_t i=0; i < frags.ItemCount(); i++ )
-    Fragments[i]->FromDataItem(frags.GetItem(i));
-  TDataItem& planes = item.FindRequiredItem("Planes");
+    Fragments[i]->FromDataItem(frags.GetItemByIndex(i));
+  TDataItem& planes = item.GetItemByName("Planes");
   for( size_t i=0; i < planes.ItemCount(); i++ )  {
     TSPlane& p = Objects.planes.New(Network);
-    p.FromDataItem(planes.GetItem(i));
+    p.FromDataItem(planes.GetItemByIndex(i));
     TSPlane::Def def = p.GetDef();
     size_t di = InvalidIndex;
     for( size_t j=0; j < PlaneDefs.Count(); j++ )  {

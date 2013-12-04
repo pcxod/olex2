@@ -69,11 +69,11 @@ void TGlLightModel::Init()  {
 }
 //..............................................................................
 bool TGlLightModel::FromDataItem(const TDataItem& Item)  {
-  Flags = Item.GetFieldValue("Flags").ToInt();
-  AmbientColor.FromString(Item.GetFieldValue("Ambient"));
-  ClearColor.FromString(Item.GetFieldValue("ClearColor"));
+  Flags = Item.FindField("Flags").ToInt();
+  AmbientColor.FromString(Item.FindField("Ambient"));
+  ClearColor.FromString(Item.FindField("ClearColor"));
   for( int i=0; i < 8; i++ )  {
-    TDataItem &SI = Item.FindRequiredItem(olxstr("Light") << i);
+    TDataItem &SI = Item.GetItemByName(olxstr("Light") << i);
     Lights[i].FromDataItem(SI);
   }
   return true;

@@ -104,3 +104,21 @@ ConstMatrix<double> TEllipsoid::GetTransformationJ(const mat3d &tm) {
   return J;
 }
 //..............................................................................
+double TEllipsoid::CalcScale(const vec3d &v) {
+  /*
+  Q = MatrixT*M(SX^2,SY^2,SZ^2)*Matrix
+  */
+  mat3d elm = mat3d::Transpose(Matrix),
+    telm = Matrix;
+  /* vector in original frame which ends up in the given direction when
+  transformed by the ellipsoid basis vectors
+  */
+  vec3d scale(SX, SY, SZ);
+  mat3d etm = elm*mat3d::Scale(telm, scale);
+  //mat3d ietm = etm.Inverse();
+  mat3d ietm = elm*mat3d::Scale(telm, vec3d::Inverse(scale));
+  vec3d x = (ietm*v).Normalise();
+  vec3d nv = etm*x;
+  return sqrt(v.QLength() / nv.QLength());
+}
+//..............................................................................

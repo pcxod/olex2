@@ -177,10 +177,10 @@ void TDUnitCell::ToDataItem(TDataItem& di) const {
 }
 //..............................................................................
 void TDUnitCell::FromDataItem(const TDataItem& di)  {
-  SetReciprocal(di.GetFieldValue("reciprocal").ToBool());
-  const TDataItem& labels = di.FindRequiredItem("Labels");
+  SetReciprocal(di.FindField("reciprocal").ToBool());
+  const TDataItem& labels = di.GetItemByName("Labels");
   for( int i=0; i < 4; i++ )
-    Labels[i]->FromDataItem(labels.GetItem(i));
+    Labels[i]->FromDataItem(labels.GetItemByIndex(i));
 }
 //..............................................................................
 const_strlist TDUnitCell::ToPov(olxdict<TGlMaterial, olxstr,

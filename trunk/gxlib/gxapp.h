@@ -658,8 +658,9 @@ public:
   void AtomZoom(float Zoom, TXAtomPList* Atoms=NULL);  // takes %
 
   void BondRad(float R, TXBondPList* Bonds=NULL);
-protected:  float ProbFactor(float Prob);
-public:     void CalcProbFactor(float Prob);
+public:
+  static double ProbFactor(double Prob);
+  void CalcProbFactor(double Prob);
 
   TXPlane *AddPlane(const olxstr &name, const TXAtomPList& Atoms,
     bool Rectangular, double weightExtent=0);

@@ -65,8 +65,8 @@ public:
   /* this should be used carefull - any change will affect all objects of the
   group!
   */
-  AGOProperties& GetProperties()   {  return *Properties;  }
-  const AGOProperties& GetProperties() const {  return *Properties;  }
+  AGOProperties& GetProperties() { return *Properties; }
+  const AGOProperties& GetProperties() const { return *Properties; }
   /* a copy of C is created and returned if the property does not exists
    otherwise a pointer to existing property is returned
   */

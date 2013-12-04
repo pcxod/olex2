@@ -21,11 +21,11 @@ class TEStrBuffer;
 
 class TDataItem: public AReferencible  {
   TStrPObjList<olxstr,TDataItem*> Items;
-  TStrStrList  Fields;
+  typedef AnAssociation2<olxstr, size_t> field_t;
+  olxstr_dict<field_t, false> Fields;
   olxstr Name, Value;
-  olxstr ExtractBlockName(olxstr &Str);
   TDataItem* Parent;
-  int Level, Index;
+  size_t Level;
   void* Data;
 protected:
   TDataItem& Root();
@@ -35,11 +35,12 @@ protected:
   TDataItem& AddItem(TDataItem& Item);
   olxstr* FieldPtr(const olxstr &Name) {
     const size_t i = Fields.IndexOf(Name);
-    return (i != InvalidIndex) ? &Fields.GetObject(i) : NULL;
+    return (i != InvalidIndex) ? &Fields.GetValue(i).A() : NULL;
   }
   // to be called from the parser
   void _AddField(const olxstr& name, const olxstr& val) {
-    Fields.Add(name, exparse::parser_util::unescape(val));
+    field_t & f = Fields.Add(name, exparse::parser_util::unescape(val));
+    f.SetB(Fields.Count()-1);
   }
   inline void SetParent(TDataItem* p)  {  Parent = p;  }
   TEStrBuffer& writeFullName(TEStrBuffer& bf) const;
@@ -52,7 +53,9 @@ public:
   void Sort();
   void ResolveFields(TStrList* Log); // resolves referenced fields
   size_t LoadFromString(size_t start, const olxstr &Data, TStrList* Log);
+  size_t LoadFromXMLString(size_t start, const olxstr &Data, TStrList* Log);
   void SaveToStrBuffer(TEStrBuffer &Data) const;
+  void SaveToXMLStrBuffer(TEStrBuffer &Data) const;
 
   TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString());
   /* if extend is true the item's content is extended instead of being
@@ -62,9 +65,10 @@ public:
   // implementation of the include instruction object.item
   TDataItem& AddItem(const olxstr &Name, TDataItem *Reference);
   void DeleteItem(TDataItem *Item);
-
-  TDataItem* GetAnyItem(const olxstr& Name) const;
-  TDataItem* GetAnyItemCI(const olxstr& Name) const;
+  // does recursive search
+  TDataItem* FindAnyItem(const olxstr& Name) const;
+  // does recursive search
+  TDataItem* FindAnyItemi(const olxstr& Name) const;
   // returns an item by name using recursive search within subitems as well
   // as in the current item
   template <class T> TDataItem* FindItemi(const T& Name) const {
@@ -73,31 +77,29 @@ public:
   template <class T> TDataItem* FindItem(const T& Name) const {
     return Items.FindObject(Name);
   }
-  template <class T> TDataItem& FindRequiredItem(const T& Name) const {  
+  /* finds and returns specified item, throws an exception if the items
+  does not exist.
+  */
+  template <class T> TDataItem& GetItemByName(const T& Name) const {
     size_t i = Items.IndexOf(Name);
-    if( i == InvalidIndex )  {
+    if (i == InvalidIndex) {
       throw TFunctionFailedException(__OlxSourceInfo,
-        olxstr("Required item does not exist: ") << Name);
+        olxstr("Required item does not exist: ").quote() << Name);
     }
-    return *Items.GetObject(i);  
+    return *Items.GetObject(i);
   }
 
-  TDataItem& GetItem(size_t index) {  return *Items.GetObject(index); }
-  const TDataItem& GetItem(size_t index) const {
+  TDataItem& GetItemByIndex(size_t index) const {
     return *Items.GetObject(index);
   }
   void FindSimilarItems(const olxstr& StartsFrom, TPtrList<TDataItem>& List);
-  inline size_t ItemCount() const {  return Items.Count(); }
+  size_t ItemCount() const { return Items.Count(); }
   template <class T> bool ItemExists(const T &Name) const {
     return Items.IndexOf(Name) != InvalidIndex;
   }
-  size_t IndexOf(TDataItem *I) const {  return Items.IndexOfObject(I); }
 
-  TDataItem& AddField(const olxstr& Name, const olxstr& Data)  {
-    Fields.Add(Name, Data);
-    return *this;
-  }
-  inline size_t FieldCount() const {  return Fields.Count();  }
+  size_t IndexOf(TDataItem *I) const { return Items.IndexOfObject(I); }
+  size_t FieldCount() const { return Fields.Count(); }
 
   template <class T> size_t FieldIndex(const T& Name) const {
     return Fields.IndexOf(Name);
@@ -105,58 +107,57 @@ public:
   template <class T> size_t FieldIndexi(const T& Name) const {
     return Fields.IndexOfi(Name);
   }
-
-  const olxstr& GetField(size_t i) const {  return Fields.GetObject(i); }
-  // the filed will not be decoded
-  const olxstr& FieldName(size_t i) const {  return Fields.GetString(i); }
-  // if field does not exist, a new one is added
-  void SetField(const olxstr& fieldName, const olxstr& newValue) {
+  template <typename T>
+  TDataItem & AddField(const T& fieldName, const olxstr& newValue) {
     const size_t i = Fields.IndexOf(fieldName);
-    if( i == InvalidIndex )
-      Fields.Add(fieldName, newValue);
-    else
-      Fields.GetObject(i) = newValue;
+    if (i == InvalidIndex) {
+      field_t &f = Fields.Add(fieldName, newValue);
+      f.SetB(Fields.Count() - 1);
+    }
+    else {
+      Fields.GetValue(i).SetA(newValue);
+    }
+    return *this;
   }
-  // deletes field by index
-  void DeleteField(size_t index)  {  Fields.Delete(index);  }
-  /* deletes field by name, only deletes the first one if there are several
-  with the same name
-  */
-  template <class T> void DeleteField(const T& Name) {
-    const size_t fieldIndex = FieldIndex(Name);
-    if( fieldIndex != InvalidIndex )  
-      DeleteField(fieldIndex);
+  const olxstr& GetFieldByIndex(size_t i) const {
+    return Fields.GetValue(i).GetA();
   }
-  template <class T>
-  const olxstr& GetFieldValue( const T& Name,
-    const olxstr& Default=EmptyString() ) const
-  {
+  template <class T> const olxstr& GetFieldByName(const T& Name) const {
     const size_t i = Fields.IndexOf(Name);
-    return (i==InvalidIndex) ? Default : Fields.GetObject(i);
-  }
-  template <class T>
-  const olxstr& GetFieldValueCI( const T& Name,
-    const olxstr& Default=EmptyString() ) const
-  {
-    const size_t i = Fields.IndexOfi(Name);
-    return (i==InvalidIndex) ? Default : Fields.GetObject(i);
-  }
-  template <class T> const olxstr& GetRequiredField(const T& Name) const  {
-    const size_t i = Fields.IndexOf(Name);
-    if( i == InvalidIndex ) {
+    if (i == InvalidIndex) {
       throw TFunctionFailedException(__OlxSourceInfo,
         olxstr("Required attribute is missing: ").quote() << Name);
     }
-    return Fields.GetObject(i);
+    return Fields.GetValue(i).GetA();
+  }
+  const olxstr& GetFieldName(size_t i) const { return Fields.GetKey(i); }
+  // deletes field by index
+  void DeleteFieldByIndex(size_t index) { Fields.Delete(index); }
+  /* deletes field by name, only deletes the first one if there are several
+  with the same name. Returns true if the field is deleted.
+  */
+  template <class T> bool DeleteFieldByName(const T& Name) {
+    const size_t fieldIndex = FieldIndex(Name);
+    if (fieldIndex != InvalidIndex) {
+      DeleteField(fieldIndex);
+      return true;
+    }
+    return false;
+  }
+  template <class T> const olxstr& FindField(const T& Name,
+    const olxstr& Default=EmptyString()) const
+  {
+    const size_t i = Fields.IndexOf(Name);
+    return (i==InvalidIndex) ? Default : Fields.GetValue(i).GetA();
   }
 
-  template <class T> bool FieldExists(const T& Name)  {
+  template <class T> bool FieldExists(const T& Name) {
     return Fields.IndexOf(Name) != InvalidIndex;
   }
+  const_strstrlist GetOrderedFieldList() const;
 
-  TDataItem* GetParent() const {  return Parent; }
-  int GetLevel() const {  return Level; }
-  int GetIndex() const {  return Index; }
+  TDataItem* GetParent() const { return Parent; }
+  size_t GetLevel() const { return Level; }
   DefPropC(olxstr, Name)
   olxstr GetValue() const {  return Value; }
   void SetValue(const olxstr &V)  {  Value = V; }
