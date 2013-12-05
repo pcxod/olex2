@@ -39,15 +39,15 @@ protected:
 #endif
 public:
   TOccuMode(size_t id) : AModeWithLabels(id)  {  HasInstance = true;  }
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     Occu = Cmds.IsEmpty() ? 0 : Cmds[0].ToDouble();
     SetUserCursor(Occu, "occu");
     olex2.processMacro("labels -ao");
     return true;
   }
   ~TOccuMode() {  HasInstance = false;  }
-  void Finalise()  {}
-  virtual bool OnObject(AGDrawObject& obj)  {
+  void Finalise_()  {}
+  virtual bool OnObject_(AGDrawObject& obj)  {
     if( EsdlInstanceOf(obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;
       gxapp.GetUndo().Push(new TOccuModeUndo(&XA));

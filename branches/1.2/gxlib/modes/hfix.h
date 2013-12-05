@@ -19,7 +19,7 @@ protected:
   TXlConGen* xlConGen;
 public:
   THfixMode(size_t id) : AModeWithLabels(id), xlConGen(NULL)  {}
-  bool Initialise(TStrObjList& Cmds, const TParamList& Options) {
+  bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     if( !gxapp.CheckFileType<TIns>() )
       return false;
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
@@ -28,11 +28,11 @@ public:
     olex2.processMacro("labels -a -h");
     return true;
   }
-  void Finalise()  {
+  void Finalise_()  {
     if( xlConGen != NULL )
       delete xlConGen;
   }
-  virtual bool OnObject(AGDrawObject &obj)  {
+  virtual bool OnObject_(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
       if( TAfixGroup::IsFittedRing(Hfix) )  {

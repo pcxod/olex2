@@ -978,7 +978,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
       }
       if (!Val.IsEmpty()) {
         if (!Val.IsNumber()) {
-          if (Val.CharAt(0) == '$') {
+          if (Val.StartsFrom('$')) {
             if (op != NULL ) {
               String.Delete(start, end-start+1);
               Val.Replace("\\%", '%');
@@ -990,6 +990,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
                   Val.SubString(ob + 1, cb - ob - 1), Quote);
                 for (size_t ai = 0; ai < args.Count(); ai++) {
                   ResolveParamsFromDictionary(Dic, args[ai], Quote, ResolveExternal_);
+                  op->processFunction(args[ai]);
                   args[ai] = unquote(args[ai]);
                 }
                 ABasicFunction *f = op->GetLibrary().FindFunction(Val.SubString(1, ob-1));

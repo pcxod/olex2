@@ -209,20 +209,45 @@ protected:
     AMode &mode;
     virtual bool Execute(const IEObject *sender, const IEObject *data, TActionQueue *);
   } ObjectPicker;
+  bool Initialised;
+  virtual bool Initialise_(TStrObjList &Cmds, const TParamList &Options) = 0;
+  virtual void Finalise_() = 0;
+  // an action to be exected then any particular object is selected/clicked
+  virtual bool OnObject_(AGDrawObject &obj) = 0;
+  virtual bool OnKey_(int keyId, short shiftState)  { return false; }
+  DefPropBIsSet(Initialised)
 public:
   AMode(size_t id);
   virtual ~AMode();
   // mode initialisation
-  virtual bool Initialise(TStrObjList &Cmds, const TParamList &Options) = 0;
-  virtual void Finalise() = 0;
+  bool Initialise(TStrObjList &Cmds, const TParamList &Options) {
+    if (IsInitialised()) return true;
+    if (Initialise_(Cmds, Options)) {
+      SetInitialised(true);
+      return true;
+    }
+    return false;
+  }
+  void Finalise() {
+    if (!IsInitialised())
+      throw TFunctionFailedException(__OlxSourceInfo, "mode not initialised");
+    Finalise_();
+    SetInitialised(false);
+  }
   // an action to be exected then any particular object is selected/clicked
-  virtual bool OnObject(AGDrawObject &obj) = 0;
+  bool OnObject(AGDrawObject &obj) {
+    if (!IsInitialised()) return false;
+    return OnObject_(obj);
+  }
   /* if the mode holds any reference to graphical objects - these should be
   cleared
   */
   virtual void OnGraphicsDestroy()  {}
   //if the mode processes the key - true should be returned to skip the event
-  virtual bool OnKey(int keyId, short shiftState)  {  return false;  }
+  bool OnKey(int keyId, short shiftState)  {
+    if (!IsInitialised()) return false;
+    return OnKey_(keyId, shiftState);
+  }
   // if the function supported - returns true
   virtual bool AddAtoms(const TPtrList<TXAtom>& atoms) {  return false;  }
   size_t GetId() const {  return Id;  }

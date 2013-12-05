@@ -37,7 +37,8 @@ TNameMode* TNameMode::Instance = NULL;
 AMode::AMode(size_t id)
   : Id(id), gxapp(TGXApp::GetInstance()),
     olex2(*olex2::IOlex2Processor::GetInstance()),
-    ObjectPicker(*this)
+    ObjectPicker(*this),
+    Initialised(false)
 {
   TModeChange mc(Id, true);
   TModeRegistry::GetInstance().OnChange.Execute(NULL, &mc);
