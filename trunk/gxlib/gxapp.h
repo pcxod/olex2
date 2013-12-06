@@ -325,7 +325,7 @@ protected:
   }
   TXAtom& GetXAtom(size_t ind)  {
     size_t li=0;
-    while (ind > GetLatt(li).GetObjects().atoms.Count()) {
+    while (ind >= GetLatt(li).GetObjects().atoms.Count()) {
       ind -= GetLatt(li).GetObjects().atoms.Count();
       if (++li >= LattCount()) {
         throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);
@@ -335,7 +335,7 @@ protected:
   }
   TXBond& GetXBond(size_t ind)  {
     size_t li=0;
-    while (ind > GetLatt(li).GetObjects().bonds.Count()) {
+    while (ind >= GetLatt(li).GetObjects().bonds.Count()) {
       ind -= GetLatt(li).GetObjects().bonds.Count();
       if (++li >= LattCount()) {
         throw TIndexOutOfRangeException(__OlxSourceInfo, ind, 0, 0);

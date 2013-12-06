@@ -1128,7 +1128,7 @@ void TLattice::MoveToCenter()  {
     if( m == NULL )  continue;
     double d1 = GetAsymmUnit().Orthogonalise(molCenter).DistanceTo(ocnt);
     double d2 = GetAsymmUnit().Orthogonalise(*m*molCenter).DistanceTo(ocnt);
-    if (olx_abs(d1-d2) < 1e-4) {
+    if (olx_abs(d1-d2) < 1e-6) {
       delete m;
       continue;
     }

@@ -78,7 +78,8 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
   TXFile::NameArg file_n(nameToken);
   if (lines.IsEmpty())
     throw TInvalidArgumentException(__OlxSourceInfo, "empty content");
-  try  {
+  try {
+    FileName = file_n.file_name;
     LoadFromStrings(lines);
     if (EsdlInstanceOf(*this, TCif)) {
       if (!file_n.data_name.IsEmpty()) {
@@ -93,6 +94,7 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
     }
   }
   catch (const TExceptionBase& exc) {
+    FileName.SetLength(0);
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
   FileName = nameToken;
