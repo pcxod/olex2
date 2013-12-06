@@ -3487,7 +3487,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TTypeList<AnAssociation2<olxstr,olxstr> > Translations;
   olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() + "customisation.xlt";
   typedef SortedObjectList<olxstr, olxstrComparator<true> > SortedStrList;
-  SortedStrList items_to_skip;
+  SortedStrList items_to_skip, items_to_merge;
   TTypeList<Wildcard> masks_to_skip;
   if (TEFile::Exists(CifCustomisationFN)) {
     try {
@@ -3513,6 +3513,15 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
               masks_to_skip.AddNew(si->GetItemByIndex(i).GetName());
             else
               items_to_skip.AddUnique(si->GetItemByIndex(i).GetName());
+          }
+        }
+      }
+      {
+        TDataItem *mi = df.Root().GetItemByName(
+          "cif_customisation").FindItem("do_merge");
+        if (mi != NULL) {
+          for (size_t i = 0; i < mi->ItemCount(); i++) {
+            items_to_merge.AddUnique(mi->GetItemByIndex(i).GetName());
           }
         }
       }
@@ -3750,13 +3759,17 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     for (size_t j = 0; j < src[0].param_map.Count(); j++)  {
       const cif_dp::ICifEntry& e = *src[0].param_map.GetValue(j);
       if (!e.HasName())  continue;
-      if (items_to_skip.Contains(e.GetName())) {
+      if (items_to_skip.Contains(e.GetName()) &&
+          !items_to_merge.Contains(e.GetName()))
+      {
         TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
         continue;
       }
       bool skip = false;
       for (size_t k = 0; k < masks_to_skip.Count(); k++) {
-        if (masks_to_skip[k].DoesMatch(e.GetName())) {
+        if (masks_to_skip[k].DoesMatch(e.GetName()) &&
+            !items_to_merge.Contains(e.GetName()))
+        {
           TBasicApp::NewLogEntry(logInfo) << "Skipping '" << e.GetName() << '\'';
           skip = true;
           break;
