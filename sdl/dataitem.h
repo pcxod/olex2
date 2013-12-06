@@ -104,9 +104,6 @@ public:
   template <class T> size_t FieldIndex(const T& Name) const {
     return Fields.IndexOf(Name);
   }
-  template <class T> size_t FieldIndexi(const T& Name) const {
-    return Fields.IndexOfi(Name);
-  }
   template <typename T>
   TDataItem & AddField(const T& fieldName, const olxstr& newValue) {
     const size_t i = Fields.IndexOf(fieldName);
@@ -139,7 +136,7 @@ public:
   template <class T> bool DeleteFieldByName(const T& Name) {
     const size_t fieldIndex = FieldIndex(Name);
     if (fieldIndex != InvalidIndex) {
-      DeleteField(fieldIndex);
+      DeleteFieldByIndex(fieldIndex);
       return true;
     }
     return false;
