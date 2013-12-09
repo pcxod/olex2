@@ -120,7 +120,8 @@ public:
        Name(name),
        Level(parent_style == 0 ? 0 : parent_style->Level+1),
        Saveable(true),
-       Persistent(false) {}
+       Persistent(false)
+  {}
 
   ~TGraphicsStyle() {  Clear();  }
   
@@ -149,8 +150,8 @@ public:
         return (TGlMaterial&)PStyles[i]->SetProperties(mat);
     return CreatePrimitiveMaterial(PName, mat);
   }
-  
-  
+
+
   /* tries to find primitive material in this or parent styles */
   template <class T>
   TGlMaterial* FindMaterial(const T& PName, TGlMaterial* def=NULL) {
@@ -171,9 +172,9 @@ public:
   template <class T, class VT>
   void SetParam(const T& name, const VT& val, bool saveable=false) {
     size_t ind = Params.IndexOf(name);
-    if( ind != InvalidIndex )  
+    if( ind != InvalidIndex )
       Params.GetObject(ind).val = val;
-    else            
+    else
       Params.Add(name, TGSParam(val, saveable));
   }  
   /* returns value of specified parameter, if the parameter does not exist, a new one is created
