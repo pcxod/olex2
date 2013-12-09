@@ -97,17 +97,27 @@ void TGraphicsStyle::ToDataItem(TDataItem& Item, bool saveAll) const {
 }
 //..............................................................................
 bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
-  Name = Item.FindField("Name");
-  SetPersistent(Item.FindField("Persistent", FalseString()).ToBool());
-  size_t i = IsPersistent() ? 2 : 1;
-  for( ; i < Item.FieldCount(); i++ )
-    SetParam(Item.GetFieldName(i), Item.GetFieldByIndex(i), Level < 2);
+  bool name_set = false,
+    persistence_set = false;
+  for (size_t i = 0; i < Item.FieldCount(); i++) {
+    if (!name_set && Item.GetFieldName(i) == "Name") {
+      Name = Item.GetFieldByIndex(i);
+      name_set = true;
+    }
+    else if (!persistence_set && Item.GetFieldName(i) == "Persistent") {
+      SetPersistent(Item.GetFieldByIndex(i).ToBool());
+      persistence_set = true;
+    }
+    else {
+      SetParam(Item.GetFieldName(i), Item.GetFieldByIndex(i), Level < 2);
+    }
+  }
 //    SetParam(Item.FieldName(i), Item.Field(i), FParent->GetVersion() > 0 );
   TDataItem* I = Item.FindItem("SubStyles");
   size_t off = 0;
   if (I != NULL) {
     off = 1;
-    for (i=0; i < I->ItemCount(); i++) {
+    for (size_t i=0; i < I->ItemCount(); i++) {
       const TDataItem& si = I->GetItemByIndex(i);
       const olxstr& si_name = si.FindField("Name");
       TGraphicsStyle* GS = FindLocalStyle(si_name);
@@ -117,7 +127,7 @@ bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
     }
   }
   // merging happens here...
-  for (i=off; i < Item.ItemCount(); i++) {
+  for (size_t i=off; i < Item.ItemCount(); i++) {
     const TDataItem& psi = Item.GetItemByIndex(i);
     const olxstr& psi_name = TPrimitiveStyle::ReadName(psi);
     TPrimitiveStyle* PS = NULL;

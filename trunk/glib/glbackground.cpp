@@ -54,7 +54,7 @@ void TGlBackground::Create(const olxstr& cName) {
   GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 0;
 }
 //..............................................................................
-void TGlBackground::SetTexture(TGlTexture* tx)  {  
+void TGlBackground::SetTexture(TGlTexture* tx)  {
   Texture = tx;
 }
 //..............................................................................
