@@ -177,10 +177,10 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId)  {
     olxstr retVal;
     switch( folderId )  {
       case fiAppData:
-        retVal = wxStandardPaths().GetUserDataDir();
+        retVal = wxStandardPaths::Get().GetUserDataDir();
       break;
       case fiMyDocuments:
-        retVal = wxStandardPaths().GetDocumentsDir();
+        retVal = wxStandardPaths::Get().GetDocumentsDir();
       break;
       default:
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
