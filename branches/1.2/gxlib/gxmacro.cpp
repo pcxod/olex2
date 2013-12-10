@@ -1895,47 +1895,52 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds.Count() >= 1 && Cmds[0].Equalsi("wbox")) {
-    if (Cmds.Count() >= 2 && Cmds[1].Equalsi("cell")) {
-      const mat3d m = app.XFile().GetAsymmUnit().GetCellToCartesian();
-      T3DFrameCtrl& fr = app.Get3DFrame();
-      fr.SetEdge(0, vec3d());
-      fr.SetEdge(1, m[1]);
-      fr.SetEdge(2, m[0] + m[1]);
-      fr.SetEdge(3, m[0]);
-      fr.SetEdge(4, m[2]);
-      fr.SetEdge(5, m[1] + m[2]);
-      fr.SetEdge(6, m[0] + m[1] + m[2]);
-      fr.SetEdge(7, m[0] + m[2]);
-      fr.UpdateEdges();
-      app.GetUndo().Push(app.SetGraphicsVisible(&fr, true));
+    if (app.Get3DFrame().IsVisible()) {
+      app.Get3DFrame().SetVisible(false);
     }
     else {
-      TSAtomPList atoms;
-      if (app.FindSAtoms(EmptyString(), atoms, true)) {
-        const WBoxInfo bs = TXApp::CalcWBox(atoms, NULL, TSAtom::weight_occu);
+      if (Cmds.Count() >= 2 && Cmds[1].Equalsi("cell")) {
+        const mat3d m = app.XFile().GetAsymmUnit().GetCellToCartesian();
         T3DFrameCtrl& fr = app.Get3DFrame();
-        vec3d nx = bs.normals[0]*bs.s_from[0];
-        vec3d px = bs.normals[0]*bs.s_to[0];
-        vec3d ny = bs.normals[1]*bs.s_from[1];
-        vec3d py = bs.normals[1]*bs.s_to[1];
-        vec3d nz = bs.normals[2]*bs.s_from[2];
-        vec3d pz = bs.normals[2]*bs.s_to[2];
-        if (ny.XProdVec(nx).DotProd(nz) < 0) {
-          olx_swap(nx, px);
-          olx_swap(ny, py);
-          olx_swap(nz, pz);
-        }
-        fr.SetEdge(0, nx+ny+nz);
-        fr.SetEdge(1, nx+py+nz);
-        fr.SetEdge(2, px+py+nz);
-        fr.SetEdge(3, px+ny+nz);
-        fr.SetEdge(4, nx+ny+pz);
-        fr.SetEdge(5, nx+py+pz);
-        fr.SetEdge(6, px+py+pz);
-        fr.SetEdge(7, px+ny+pz);
+        fr.SetEdge(0, vec3d());
+        fr.SetEdge(1, m[1]);
+        fr.SetEdge(2, m[0] + m[1]);
+        fr.SetEdge(3, m[0]);
+        fr.SetEdge(4, m[2]);
+        fr.SetEdge(5, m[1] + m[2]);
+        fr.SetEdge(6, m[0] + m[1] + m[2]);
+        fr.SetEdge(7, m[0] + m[2]);
         fr.UpdateEdges();
-        fr.Translate(bs.center);
         app.GetUndo().Push(app.SetGraphicsVisible(&fr, true));
+      }
+      else {
+        TSAtomPList atoms;
+        if (app.FindSAtoms(EmptyString(), atoms, true)) {
+          const WBoxInfo bs = TXApp::CalcWBox(atoms, NULL, TSAtom::weight_occu);
+          T3DFrameCtrl& fr = app.Get3DFrame();
+          vec3d nx = bs.normals[0] * bs.s_from[0];
+          vec3d px = bs.normals[0] * bs.s_to[0];
+          vec3d ny = bs.normals[1] * bs.s_from[1];
+          vec3d py = bs.normals[1] * bs.s_to[1];
+          vec3d nz = bs.normals[2] * bs.s_from[2];
+          vec3d pz = bs.normals[2] * bs.s_to[2];
+          if (ny.XProdVec(nx).DotProd(nz) < 0) {
+            olx_swap(nx, px);
+            olx_swap(ny, py);
+            olx_swap(nz, pz);
+          }
+          fr.SetEdge(0, nx + ny + nz);
+          fr.SetEdge(1, nx + py + nz);
+          fr.SetEdge(2, px + py + nz);
+          fr.SetEdge(3, px + ny + nz);
+          fr.SetEdge(4, nx + ny + pz);
+          fr.SetEdge(5, nx + py + pz);
+          fr.SetEdge(6, px + py + pz);
+          fr.SetEdge(7, px + ny + pz);
+          fr.UpdateEdges();
+          fr.Translate(bs.center);
+          app.GetUndo().Push(app.SetGraphicsVisible(&fr, true));
+        }
       }
     }
   }
@@ -3063,7 +3068,15 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
     else {
       TXAtomPList Atoms = app.FindXAtoms(Cmds.Text(' '), true, false),
         Selected;
-      if (Atoms.IsEmpty()) return;
+      if (Atoms.IsEmpty() && Cmds.Count() == 1) {
+        TGPCollection *col = app.GetRender().FindCollection(Cmds[0]);
+        if (col != NULL) {
+          for (size_t i = 0; i < col->ObjectCount(); i++) {
+            col->GetObject(i).SetVisible(false);
+          }
+        }
+        return;
+      }
       olx_list_filter::Filter(Atoms, Selected,
         AGDrawObject::FlagsAnalyser(sgdoSelected));
       TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
