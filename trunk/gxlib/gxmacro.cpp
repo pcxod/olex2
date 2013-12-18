@@ -2977,6 +2977,47 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   app.CreateRings(true, true);
+  TGXApp::BondIterator bi = app.GetBonds();
+  SortedPtrList<TGPCollection, TPointerComparator> cols;
+  TPtrList<TXBond> changed;
+  while (bi.HasNext()) {
+    TXBond &b = bi.Next();
+    short order = 0;
+    if (b.B().GetType() == iOxygenZ) {
+      if (b.A().GetType() == iSulphurZ) {
+        if (b.Length() < 1.48)
+          order = 2;
+      }
+    }
+    else if (b.B().GetType() == iCarbonZ &&
+      (b.A().GetType() == iCarbonZ || b.A().GetType() == iNitrogenZ)) {
+      double l = b.Length();
+      if (l < 1.2)
+        order = 3;
+      else if (l < 1.30)
+        order = 2;
+    }
+    b.SetOrder(order);
+    if (order > 1) {
+      changed << b;
+    }
+  }
+  for (size_t i = 0; i < changed.Count(); i++) {
+    changed[i]->GetPrimitives().RemoveObject(*changed[i]);
+    changed[i]->Create(TXBond::GetLegend(*changed[i], 0));
+    if (cols.Contains(&changed[i]->GetPrimitives())) {
+      continue;
+    }
+    cols.AddUnique(&changed[i]->GetPrimitives());
+    short order = changed[i]->GetOrder();
+    if (order == 2) {
+      changed[i]->UpdatePrimitives((1 << 14) | (1 << 15));
+    }
+    else if (order == 3) {
+      changed[i]->UpdatePrimitives((1 << 16) | (1 << 17));
+    }
+
+  }
 }
 //.............................................................................
 void GXLibMacros::macPoly(TStrObjList &Cmds, const TParamList &Options,
