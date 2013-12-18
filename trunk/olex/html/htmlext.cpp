@@ -66,17 +66,20 @@ THtml::~THtml()  {
 }
 //.............................................................................
 void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
-  if( !MouseDown )  return;
+  if (!MouseDown)  return;
   MouseDown = false;
   olxstr Href = link.GetHref();
   size_t ind = Href.FirstIndexOf('%');
-  while( ind != InvalidIndex && ((ind+2) < Href.Length()) )  {
+  while (ind != InvalidIndex && ((ind+2) < Href.Length()) &&
+    olxstr::o_ishexdigit(Href[ind + 1]) &&
+    olxstr::o_ishexdigit(Href[ind + 2]))
+  {
     int val = Href.SubString(ind+1, 2).RadInt<int>(16);
     Href.Delete(ind, 3);
     Href.Insert(val, ind);
     ind = Href.FirstIndexOf('%');
   }
-  if( !OnLink.Execute(this, (IEObject*)&Href) )  {
+  if (!OnLink.Execute(this, (IEObject*)&Href)) {
     wxHtmlLinkInfo NewLink(Href.u_str(), link.GetTarget());
     wxHtmlWindow::OnLinkClicked(NewLink);
   }

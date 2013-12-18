@@ -127,15 +127,18 @@ void TXBond::Create(const olxstr& cName)  {
     (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
 
   GPC->AddObject(*this);
-  if( PrimitiveMask == 0 )  
+  if( PrimitiveMask == 0 )
     return;  // nothing to create then...
 
   Params()[4]= GS.GetNumParam('R', DefR());
   const uint16_t legend_level = TXAtom::LegendLevel(GetPrimitives().GetName());
-  for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
-    if( (PrimitiveMask & (1<<i)) != 0 )    {
+  for (size_t i=0; i < FStaticObjects.Count(); i++) {
+    if( (PrimitiveMask & (1<<i)) != 0 ) {
       TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
       TGlPrimitive& GlP = GPC->NewPrimitive(FStaticObjects[i], sgloCommandList);
+      if (i >= 14) {
+        GlP.SetOwnerId(i);
+      }
       /* copy the default drawing style tag source */
       GlP.Params.Resize(GlP.Params.Count()+1);
       GlP.Params.GetLast() = SGlP->Params.GetLast();
@@ -143,7 +146,7 @@ void TXBond::Create(const olxstr& cName)  {
       GlP.StartList();
       GlP.CallList(SGlP);
       GlP.EndList();
-      TGlMaterial* style_mat = 
+      TGlMaterial* style_mat =
         legend_level == 3 ? GS.FindMaterial(FStaticObjects[i]) : NULL;
       if( IsValid() )  {
         if( style_mat != NULL )
@@ -227,9 +230,40 @@ void TXBond::UpdateStyle()  {
 }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive& GlP)  {
-  olx_gl::translate(A().crd());
-  olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
-  olx_gl::scale(Params()[4], Params()[4], Params()[3]);
+  if (GlP.GetOwnerId() >= 14 && GlP.GetOwnerId() <= 18) {
+    vec3d v = (B().crd() - A().crd()).Normalise();
+    const mat3d& m = Parent.GetBasis().GetMatrix();
+    v = m*v*m;
+    v = vec3d(m[0][2], m[1][2], m[2][2]).XProdVec(v);
+    double vl = v.Length();
+    if (vl > 0) {
+      v *= (0.1*Params()[4] / vl);
+      if (GlP.GetOwnerId() > 15) {
+        olx_gl::pushMatrix();
+        olx_gl::translate(A().crd());
+        olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+        olx_gl::scale(Params()[4], Params()[4], Params()[3]);
+        GlP.Draw();
+        olx_gl::popMatrix();
+      }
+      olx_gl::pushMatrix();
+      olx_gl::translate(A().crd() + v);
+      olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+      olx_gl::scale(Params()[4], Params()[4], Params()[3]);
+      GlP.Draw();
+      olx_gl::popMatrix();
+      olx_gl::translate(A().crd() - v);
+      olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+      olx_gl::scale(Params()[4], Params()[4], Params()[3]);
+      GlP.Draw();
+    }
+    return true;
+  }
+  else {
+    olx_gl::translate(A().crd());
+    olx_gl::rotate(Params()[0], Params()[1], Params()[2], 0.0);
+    olx_gl::scale(Params()[4], Params()[4], Params()[3]);
+  }
   return false;
 }
 //..............................................................................
@@ -690,6 +724,66 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.GetLast() = ddsDefAtomA;
+  //..............................
+  // create bottom double cylinder
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Bottom double cone", GlP);
+
+  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
+  GlPRC1->Params[0] = 0.1 / 2;    GlPRC1->Params[1] = 0.1 / 2;  GlPRC1->Params[2] = 0.5;
+  GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
+  GlPRC1->Compile();
+
+  GlP->StartList();
+  GlP->CallList(GlPRC1);
+  GlP->EndList();
+  GlP->Params.Resize(GlP->Params.Count() + 1);  //
+  GlP->Params.GetLast() = ddsDefAtomA;
+  // create top double cylinder
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Top double cone", GlP);
+
+  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
+  GlPRC1->Params[0] = 0.1 / 2;    GlPRC1->Params[1] = 0.1 / 2;  GlPRC1->Params[2] = 0.5;
+  GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
+  GlPRC1->Compile();
+
+  GlP->StartList();
+  olx_gl::translate(0.0f, 0.0f, 0.5f);
+  GlP->CallList(GlPRC1);
+  GlP->EndList();
+  GlP->Params.Resize(GlP->Params.Count() + 1);  //
+  GlP->Params.GetLast() = ddsDefAtomB;
+  //..............................
+  // create bottom tripple cylinder
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Bottom triple cone", GlP);
+
+  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
+  GlPRC1->Params[0] = 0.1 / 3;    GlPRC1->Params[1] = 0.1 / 3;  GlPRC1->Params[2] = 0.5;
+  GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
+  GlPRC1->Compile();
+
+  GlP->StartList();
+  GlP->CallList(GlPRC1);
+  GlP->EndList();
+  GlP->Params.Resize(GlP->Params.Count() + 1);  //
+  GlP->Params.GetLast() = ddsDefAtomA;
+  // create top double cylinder
+  GlP = &Parent.NewPrimitive(sgloCommandList);
+  FStaticObjects.Add("Top triple cone", GlP);
+
+  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
+  GlPRC1->Params[0] = 0.1 / 3;    GlPRC1->Params[1] = 0.1 / 3;  GlPRC1->Params[2] = 0.5;
+  GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
+  GlPRC1->Compile();
+
+  GlP->StartList();
+  olx_gl::translate(0.0f, 0.0f, 0.5f);
+  GlP->CallList(GlPRC1);
+  GlP->EndList();
+  GlP->Params.Resize(GlP->Params.Count() + 1);  //
+  GlP->Params.GetLast() = ddsDefAtomB;
 }
 //..............................................................................
 olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {

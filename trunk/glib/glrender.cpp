@@ -407,7 +407,7 @@ void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  
     w = {(Bf[3][0]*x+Bf[3][1]*y+Bf[3][2]*z+Bf[3][3]*w)}
   */
   if( !identity )  {
-    static float Bf[4][4];
+    float Bf[4][4];
     memcpy(&Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
     Bf[3][0] = Bf[3][1] = 0;
     Bf[3][2] = -1;

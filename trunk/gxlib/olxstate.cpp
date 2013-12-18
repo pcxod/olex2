@@ -111,7 +111,8 @@ TModeRegistry::TModeRegistry()
 //..............................................................................
 AMode* TModeRegistry::SetMode(const olxstr& name, const olxstr &args)  {
   AModeFactory* mf = Modes.Find(name, NULL);
-  if( CurrentMode != NULL )  {
+  if (CurrentMode != NULL) {
+    if (CurrentMode->IsInitialised())
     CurrentMode->Finalise();
     delete CurrentMode;
   }

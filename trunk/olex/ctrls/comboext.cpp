@@ -58,7 +58,11 @@ void TComboBox::Clear() {
       delete d_o;
     }
   }
+#if defined(__MAC__) && wxCHECK_VERSION(2,9,0)
+  wxComboBox::DoClear();
+#else
   wxComboBox::Clear();
+#endif
 }
 //..............................................................................
 void TComboBox::_AddObject(const olxstr &Item, IEObject* Data, bool Delete)  {
