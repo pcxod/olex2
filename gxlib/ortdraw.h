@@ -252,8 +252,8 @@ public:
   void Render(const olxstr& fileName);
 
   DefPropP(uint16_t, ElpDiv)
-  DefPropP(uint16_t, PieDiv) 
-  DefPropP(uint16_t, BondDiv) 
+  DefPropP(uint16_t, PieDiv)
+  DefPropP(uint16_t, BondDiv)
   DefPropP(uint16_t, ColorMode)
   DefPropP(uint32_t, BondOutlineColor)
   DefPropP(uint32_t, AtomOutlineColor)

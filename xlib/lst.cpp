@@ -267,13 +267,15 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     else if (!FlackF && SL[i].Contains("Flack x") && // 2013 version
       SL[i].Contains("fit to all intensities"))
     {
-      Toks.Clear();
-      Toks.Strtok(SL[i], ' ');
-      if (Toks.Count() > 3) {
-        TEValueD flack = Toks[3];
-        params("flack", flack.ToString());
+      if (i + 1 < SL.Count()) {
+        Toks.Clear();
+        Toks.Strtok(SL[i+1], ' ');
+        if (!Toks.IsEmpty()) {
+          TEValueD flack = Toks[0];
+          params("flack", flack.ToString());
+        }
+        FlackF = true;
       }
-      FlackF = true;
     }
     else if (!CellInfo && SL[i].Contains("F(000) = ") &&
       SL[i].Contains("Mu = ") && SL[i].Contains("Rho = "))

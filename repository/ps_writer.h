@@ -296,10 +296,10 @@ public:
   */
   template <class vec_lt>
   void drawQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func)  {
-    if( sidea.Count() != sideb.Count() )
+    if (sidea.Count() != sideb.Count())
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
-    if( sidea.Count() < 2 )  return;
-    for( size_t j=1; j < sidea.Count(); j++ )  {
+    if (sidea.Count() < 2) return;
+    for (size_t j = 1; j < sidea.Count(); j++) {
       newPath();
       quad(sidea[j-1], sideb[j-1], sideb[j], sidea[j]);
       (this->*func)();
@@ -307,6 +307,66 @@ public:
     newPath();
     quad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0]);
     (this->*func)();
+  }
+  //..........................................................................
+  /*draws a cone using sidea and sideb points and calling func after every
+  quadraterial
+  */
+  template <class vec_lt>
+  void drawOuterQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func)  {
+    if (sidea.Count() != sideb.Count())
+      throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
+    if (sidea.Count() < 2) return;
+    vec3f ca, cb;
+    for (size_t j = 0; j < sidea.Count(); j++) {
+      ca += sidea[j];
+      cb += sideb[j];
+    }
+    ca /= sidea.Count();
+    cb /= sidea.Count();
+    vec3f n = (cb - ca).XProdVec(vec3f(0, 0, 1));
+    float nl = n.Length();
+    if (nl > 0) {
+      n *= 1.0f / nl;
+      size_t tl = 0, tr = 0, bl = 0, br = 0;
+      float mtl = 0, mtr = 0, mbl = 0, mbr = 0;
+      for (size_t j = 0; j < sidea.Count(); j++) {
+        float v = sidea[j].DotProd(n);
+        if (v < 0) {
+          if (-v > mtl) {
+            tl = j;
+            mtl = -v;
+          }
+        }
+        else {
+          if (v > mtr) {
+            tr = j;
+            mtr = v;
+          }
+        }
+        v = sideb[j].DotProd(n);
+        if (v < 0) {
+          if (-v > mbl) {
+            bl = j;
+            mbl = -v;
+          }
+        }
+        else {
+          if (v > mbr) {
+            br = j;
+            mbr = v;
+          }
+        }
+      }
+      newPath();
+      quad(sidea[tl], sidea[tl] + (sidea[tr] - sidea[tl]) / 4,
+        sideb[bl] + (sideb[br] - sideb[bl]) / 4, sideb[bl]);
+      (this->*func)();
+      newPath();
+      quad(sidea[tr] - (sidea[tr] - sidea[tl]) / 4, sidea[tr],
+        sideb[br], sideb[br] - (sideb[br] - sideb[bl]) / 4);
+      (this->*func)();
+    }
   }
   //..........................................................................
   template <class vec_lt>

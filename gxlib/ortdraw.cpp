@@ -375,12 +375,16 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
       }
     }
   }
-  else  {
-    if ((mask&((1 << 13) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8))) != 0)
-      pw.drawQuads(parent.BondProjF, parent.BondProjT, 16, &PSWriter::fill);
-    else
-      pw.drawQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);
-
+  else {
+    if ( (mask& ((1 << 14) | (1 << 15))) != 0 ) {
+      pw.drawOuterQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);
+    }
+    else {
+      if ((mask&((1 << 13) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8))) != 0)
+        pw.drawQuads(parent.BondProjF, parent.BondProjT, 16, &PSWriter::fill);
+      else
+        pw.drawQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);
+    }
     // renders an intersection bond and ellipsoid ellipse
     //if (!atom_a.IsSpherical() && atom_a.IsSolid())  {
     //  pw.color(0xff);
@@ -581,7 +585,7 @@ void ort_bond_line::_render(PSWriter& pw, float scalex, uint32_t mask) const {
     }
   }
   else  {
-    if( (mask&((1<<13)|(1<<11)|(1<<10)|(1<<9)|(1<<8))) != 0)
+    if ((mask&((1 << 13) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8))) != 0)
       pw.drawQuads(parent.BondProjF, parent.BondProjT, 16, &PSWriter::fill);
     else
       pw.drawQuads(parent.BondProjF, parent.BondProjT, &PSWriter::fill);
