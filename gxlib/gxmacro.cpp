@@ -2983,11 +2983,50 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
   while (bi.HasNext()) {
     TXBond &b = bi.Next();
     short order = 0;
-    if (b.B().GetType() == iOxygenZ) {
+    double l = b.Length();
+    if (b.A().GetType() == iOxygenZ || b.B().GetType() == iOxygenZ) {
       if (b.A().GetType() == iSulphurZ) {
-        if (b.Length() < 1.48)
+        if (l < 1.48)
           order = 2;
       }
+      else if (b.B().GetType() == iNitrogenZ) {
+        if (l < 1.1)
+          order = 3;
+        else if (l < 1.22)
+          order = 2;
+      }
+      else if (b.B().GetType() == iCarbonZ) {
+        if (l < 1.15)
+          order = 3;
+        else if (l < 1.3)
+          order = 2;
+      }
+    }
+    else if (b.A().GetType() == iNitrogenZ || b.B().GetType() == iNitrogenZ) {
+      if (b.A().GetType() == iNitrogenZ && b.B().GetType() == iNitrogenZ) {
+        if (l < 1.15)
+          order = 3;
+        else if (l < 1.22)
+          order = 2;
+      }
+      else if (b.B().GetType() == iCarbonZ) {
+        if (l < 1.2)
+          order = 3;
+        else if (l < 1.30)
+          order = 2;
+      }
+    }
+    else if (b.A().GetType() == iCarbonZ || b.B().GetType() == iCarbonZ) {
+      if (b.A().GetType() == iCarbonZ && b.B().GetType() == iCarbonZ) {
+        if (l < 1.2)
+          order = 3;
+        else if (l < 1.36)
+          order = 2;
+      }
+    }
+    b.SetOrder(order);
+    if (order > 1) {
+      changed << b;
     }
     else if (b.B().GetType() == iCarbonZ &&
       (b.A().GetType() == iCarbonZ || b.A().GetType() == iNitrogenZ)) {

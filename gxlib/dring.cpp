@@ -47,7 +47,7 @@ double TDRing::GetRadius() const {
 }
 //...........................................................................
 void TDRing::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);

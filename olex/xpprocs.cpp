@@ -732,7 +732,9 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   image.SaveFile(bmpFN.u_str());
 }
 //..............................................................................
-void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   OrtDraw od;
   uint16_t color_mode = 0;
   if( Options.Contains("color_fill") )
@@ -748,12 +750,19 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   od.SetPieLineWidth(Options.FindValue("lw_pie", "0.5").ToDouble());
   od.SetElpLineWidth(Options.FindValue("lw_ellipse", "1").ToDouble());
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
-  od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
-  od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat()/100.0f);
-  od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
-  od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat()/100.0f);
-  if( Options.Contains('p') )
-    od.SetPerspective(true);
+  od.SetBondOutlineColor(
+    Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
+  od.SetBondOutlineSize(
+    Options.FindValue("bond_outline_oversize", "10").ToFloat()/100.0f);
+  od.SetAtomOutlineColor(
+    Options.FindValue("atom_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
+  od.SetAtomOutlineSize(
+    Options.FindValue("atom_outline_oversize", "5").ToFloat()/100.0f);
+  od.SetPerspective(Options.GetBoolOption('p'));
+  od.SetAutoStippleDisorder(
+    Options.GetBoolOption("stipple_disorder", true, true));
+  od.SetMultipleBondsWidth(
+    Options.FindValue("multiple_bond_width", "0").ToFloat());
   olxstr octants = Options.FindValue("octants", "-$C");
   // store the atom draw styles
   TGXApp::AtomIterator ai = FXApp->GetAtoms();
