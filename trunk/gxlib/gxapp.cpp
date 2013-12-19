@@ -5129,12 +5129,13 @@ void TGXApp::CreateRings(bool force, bool create) {
     double min_d = 100;
     for (size_t j=0; j < rings[i].Count(); j++) {
       const double qd = rings[i][j]->crd().QDistanceTo(center);
+      rings[i][j]->CAtom().SetRingAtom(true);
       if (qd < min_d)
         min_d = qd;
     }
     min_d = sqrt(min_d)*cos(M_PI/rings[i].Count())/r.GetRadius();
     r.Basis.SetZoom(min_d*0.85);
-    if( glm != NULL )
+    if (glm != NULL)
       r.material = *glm;
     if (create)
       r.Create();

@@ -536,7 +536,12 @@ void TMainForm::XApp(Olex2App *XA)  {
     "bond_outline_color-bond outline color[0xffffff]&;"
     "bond_outline_oversize-the extra size of the outline in percents [10]&;"
     "atom_outline_color-atom outline color[0xffffff]&;"
-    "atom_outline_oversize- the extra size of outline in percents[5]",
+    "atom_outline_oversize- the extra size of outline in percents[5]&;"
+    "stipple_disorder- render stippled bonds for atoms in non 0 part [true]&;"
+    "multiple_bond_width- if 0 double and triple bonds are rendered as a "
+    "fraction of their real width. If a values is not 0 - it specifies the "
+    "width of the strips&;"
+    ,
     fpOne|psFileLoaded, 
     "Postscript rendering");
   this_InitMacroD(PictTEX,

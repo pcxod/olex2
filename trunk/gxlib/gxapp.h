@@ -704,6 +704,9 @@ public:
   /* creates aromatic rings, if force is false - only creates if aromatic_rings
   option is set to true */
   void CreateRings(bool force=false, bool create=false);
+  const TTypeListExt<TDRing, AGDrawObject> &GetRings() const {
+    return Rings;
+  }
   // recreated all labels (if any) in case if font size etc changed
   size_t LabelCount() const {  return XLabels.Count();  }
   TXGlLabel& GetLabel(size_t i)  {  return XLabels[i];  }

@@ -211,11 +211,11 @@ public:
     //tx ty 1
     //[a b c d tx ty]
     psw_sprintf(bf, "[%f %f %f %f %f %f] concat", (float)basis[0][0], 
-      (float)basis[0][1], 
+      (float)basis[0][1],
       (float)basis[1][0],
       (float)basis[1][1],
-      (float)center[0], 
-      (float)center[1] 
+      (float)center[0],
+      (float)center[1]
     );
     out.Writeln(bf);
     out.Writeln( "0 0 1 0 360 arc");
@@ -266,8 +266,8 @@ public:
   }
   //..........................................................................
   template <class vec_t>
-  void stippledQuad(const vec_t& p1, const vec_t& p2, 
-    const vec_t& p3, const vec_t& p4, size_t div, RenderFunc func ) 
+  void stippledQuad(const vec_t& p1, const vec_t& p2,
+    const vec_t& p3, const vec_t& p4, size_t div, RenderFunc func)
   {
     const float x_inc1 = (p2[0]-p1[0])/div;
     const float x_inc2 = (p3[0]-p4[0])/div;
@@ -283,7 +283,7 @@ public:
       lineto(tx2, ty2);
       lineto(fx2, fy2);
       lineto(fx1, fy1);
-      fx1 = tx1+x_inc1;  fy1 = ty1+y_inc1;  
+      fx1 = tx1+x_inc1;  fy1 = ty1+y_inc1;
       fx2 = tx2+x_inc2;  fy2 = ty2+y_inc2;
       tx1 += 2*x_inc1;  ty1 += 2*y_inc1;
       tx2 += 2*x_inc2;  ty2 += 2*y_inc2;
@@ -295,25 +295,39 @@ public:
   quadraterial
   */
   template <class vec_lt>
-  void drawQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func)  {
+  void drawQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func,
+    size_t divs=0)
+  {
     if (sidea.Count() != sideb.Count())
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
     if (sidea.Count() < 2) return;
-    for (size_t j = 1; j < sidea.Count(); j++) {
+    if (divs == 0) {
+      for (size_t j = 1; j < sidea.Count(); j++) {
+        newPath();
+        quad(sidea[j - 1], sideb[j - 1], sideb[j], sidea[j]);
+        (this->*func)();
+      }
       newPath();
-      quad(sidea[j-1], sideb[j-1], sideb[j], sidea[j]);
+      quad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0]);
       (this->*func)();
     }
-    newPath();
-    quad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0]);
-    (this->*func)();
+    else {
+      for (size_t j = 1; j < sidea.Count(); j++) {
+        stippledQuad(sidea[j - 1], sideb[j - 1], sideb[j], sidea[j], divs,
+          func);
+      }
+      stippledQuad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0], divs,
+        func);
+    }
   }
   //..........................................................................
   /*draws a cone using sidea and sideb points and calling func after every
   quadraterial
   */
   template <class vec_lt>
-  void drawOuterQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func)  {
+  void drawOuterQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func,
+    bool render_middle=false, float width=0, size_t divs=0)
+  {
     if (sidea.Count() != sideb.Count())
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
     if (sidea.Count() < 2) return;
@@ -358,14 +372,43 @@ public:
           }
         }
       }
-      newPath();
-      quad(sidea[tl], sidea[tl] + (sidea[tr] - sidea[tl]) / 4,
-        sideb[bl] + (sideb[br] - sideb[bl]) / 4, sideb[bl]);
-      (this->*func)();
-      newPath();
-      quad(sidea[tr] - (sidea[tr] - sidea[tl]) / 4, sidea[tr],
-        sideb[br], sideb[br] - (sideb[br] - sideb[bl]) / 4);
-      (this->*func)();
+      typedef typename vec_lt::list_item_type vec_t;
+      vec_t tt, bt;
+      if (width <= 0) {
+        const float w = render_middle ? 5 : 4;
+        tt = (sidea[tr] - sidea[tl]) / w;
+        bt = (sideb[br] - sideb[bl]) / w;
+      }
+      else {
+        tt = (sidea[tr] - sidea[tl]).NormaliseTo(width);
+        bt = (sideb[br] - sideb[bl]).NormaliseTo(width);
+      }
+      if (divs == 0) {
+        newPath();
+        quad(sidea[tl], sidea[tl] + tt, sideb[bl] + bt, sideb[bl]);
+        (this->*func)();
+        newPath();
+        quad(sidea[tr] - tt, sidea[tr], sideb[br], sideb[br] - bt);
+        (this->*func)();
+        if (render_middle) {
+          vec_t v1 = (sidea[tr] + sidea[tl] - tt) / 2;
+          vec_t v2 = (sideb[br] + sideb[bl] - bt) / 2;
+          newPath();
+          quad(v1, v1 + tt, v2 + bt, v2);
+          (this->*func)();
+        }
+      }
+      else {
+        stippledQuad(sidea[tl], sideb[bl], sideb[bl] + bt, sidea[tl] + tt,
+          divs, func);
+        stippledQuad(sidea[tr] - tt, sideb[br] - bt, sideb[br], sidea[tr],
+          divs, func);
+        if (render_middle) {
+          vec_t v1 = (sidea[tr] + sidea[tl] - tt) / 2;
+          vec_t v2 = (sideb[br] + sideb[bl] - bt) / 2;
+          stippledQuad(v1, v2, v2 + bt, v1 + tt, divs, func);
+        }
+      }
     }
   }
   //..........................................................................
@@ -400,19 +443,6 @@ public:
     (this->*func)();
   }
   //..........................................................................
-  template <class vec_lt>
-  void drawQuads(const vec_lt& sidea, const vec_lt& sideb, 
-    size_t parts, RenderFunc func)  
-  {
-    if( sidea.Count() != sideb.Count() )
-      throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
-    if( sidea.Count() < 2 )  return;
-    for( size_t j=1; j < sidea.Count(); j++ )
-      stippledQuad(sidea[j-1], sideb[j-1], sideb[j], sidea[j], parts, func);
-    stippledQuad(sidea.GetLast(), sideb.GetLast(), sideb[0], sidea[0], parts,
-      func);
-  }
-  //..........................................................................
   template <typename vec_t, typename float_t>
   void arc(const vec_t& center, const float_t& rad, const float_t startAngle,
     const float_t& endAngle)
@@ -423,7 +453,7 @@ public:
   }
   //..........................................................................
   void writeBoundingBox(const evecf &b)  {
-    if( !olx_is_valid_index(bounding_box_pos) )  {
+    if (!olx_is_valid_index(bounding_box_pos)) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "bounding box space must be reserved");
     }
