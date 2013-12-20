@@ -17,11 +17,12 @@
 #include "wrldraw.h"
 
 TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) :
-  AGDrawObject(R, collectionName)
+AGDrawObject(R, collectionName), Edges(24)
 {
   SetSelectable(false);
   Reciprocal = false;
-  FGlP = NULL;
+  Thickness = 1;
+
   CellToCartesian.I();
   HklToCartesian.I();
   olxstr label_cn("duc_label");
@@ -67,47 +68,45 @@ void TDUnitCell::Init(const double cell[6])  {
 }
 //...........................................................................
 void TDUnitCell::SetReciprocal(bool v, double scale)  {
-  if( FGlP == NULL )  return;
-
   mat3d M = v ? HklToCartesian : CellToCartesian;
-  FGlP->Vertices[1] = M[0];  //000-A
-  FGlP->Vertices[3] = M[1];  //000-B
-  FGlP->Vertices[5] = M[2];  //000-C
+  Edges[1] = M[0];  //000-A
+  Edges[3] = M[1];  //000-B
+  Edges[5] = M[2];  //000-C
 
-  FGlP->Vertices[6] = M[0];  //A
-  FGlP->Vertices[7] = M[1]+M[0];  //AB
+  Edges[6] = M[0];  //A
+  Edges[7] = M[1]+M[0];  //AB
 
-  FGlP->Vertices[8] = M[0];  //A
-  FGlP->Vertices[9] = M[2]+M[0];  //AC
+  Edges[8] = M[0];  //A
+  Edges[9] = M[2]+M[0];  //AC
 
-  FGlP->Vertices[10] = M[1];  //B
-  FGlP->Vertices[11] = M[1]+M[0];  //AB
+  Edges[10] = M[1];  //B
+  Edges[11] = M[1]+M[0];  //AB
 
-  FGlP->Vertices[12] = M[1];  //B
-  FGlP->Vertices[13] = M[2]+M[1];  //BC
+  Edges[12] = M[1];  //B
+  Edges[13] = M[2]+M[1];  //BC
 
-  FGlP->Vertices[14] = M[2];  //C
-  FGlP->Vertices[15] = M[2]+M[0];  //AC
+  Edges[14] = M[2];  //C
+  Edges[15] = M[2]+M[0];  //AC
 
-  FGlP->Vertices[16] = M[2];  //C
-  FGlP->Vertices[17] = M[2]+M[1];  //BC
+  Edges[16] = M[2];  //C
+  Edges[17] = M[2]+M[1];  //BC
 
-  FGlP->Vertices[18] = M[1]+M[0];  //AB
-  FGlP->Vertices[19] = M[2]+M[0]+M[1] ;  //ABC
+  Edges[18] = M[1]+M[0];  //AB
+  Edges[19] = M[2]+M[0]+M[1] ;  //ABC
 
-  FGlP->Vertices[20] = M[2]+M[1];  //BC
-  FGlP->Vertices[21] = M[2]+M[1]+M[0] ;  //ABC
+  Edges[20] = M[2]+M[1];  //BC
+  Edges[21] = M[2]+M[1]+M[0] ;  //ABC
 
-  FGlP->Vertices[22] = M[2]+M[0];  //AC
-  FGlP->Vertices[23] = M[2]+M[1]+M[0];  //ABC
+  Edges[22] = M[2]+M[0];  //AC
+  Edges[23] = M[2]+M[1]+M[0];  //ABC
   Reciprocal = v;
-  for (size_t i=0; i < FGlP->Vertices.Count(); i++)
-    FGlP->Vertices[i] *= scale;
+  for (size_t i=0; i < Edges.Count(); i++)
+    Edges[i] *= scale;
   // reinitialise labels
   const size_t FontIndex = Parent.GetScene().FindFontIndexForType<TDUnitCell>();
-  for( int i=0; i < 3; i++ )  {  
+  for (int i=0; i < 3; i++) {
     Labels[i]->SetFontIndex(FontIndex);
-    Labels[i]->SetOffset(FGlP->Vertices[i*2+1]);
+    Labels[i]->SetOffset(Edges[i*2+1]);
     Labels[i]->SetLabel(olxstr((char)('a'+i)));
   }
   Labels[3]->SetFontIndex(FontIndex);
@@ -115,51 +114,82 @@ void TDUnitCell::SetReciprocal(bool v, double scale)  {
 }
 //...........................................................................
 void TDUnitCell::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if (!cName.IsEmpty())
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
-  if( GPC.PrimitiveCount() != 0 )  {  // GetDimensions will be called
-    FGlP = GPC.FindPrimitiveByName("Lines");
-    if( FGlP != NULL )  {
-      GPC.AddObject(*this);
-      for( int i=0; i < 4; i++ )
-        Labels[i]->Create();
-      return;
-    }
-    GPC.ClearPrimitives();
+  if (GPC.PrimitiveCount() != 0) {  // GetDimensions will be called
+    GPC.AddObject(*this);
+    for (int i=0; i < 4; i++)
+      Labels[i]->Create();
+    return;
   }
-  TGraphicsStyle& GS = GPC.GetStyle();
-  FGlP = &GPC.NewPrimitive("Lines", sgloLines);
-  TGlMaterial GlM;
-  GlM.SetFlags(sglmAmbientF);
-  GlM.AmbientF = 0;
-  FGlP->SetProperties(GS.GetMaterial(FGlP->GetName(), GlM));
-  FGlP->Vertices.SetCount(24);
-  SetReciprocal(Reciprocal);
   GPC.AddObject(*this);
+  TGraphicsStyle& GS = GPC.GetStyle();
+  Thickness = GS.GetNumParam("Thickness", 1.0, true);
+  TGlMaterial GlM("85;2131693327;4286611584;41975936;32");
+  double d = 0.025;
+  TGlPrimitive* GlP = &GPC.NewPrimitive("Sphere", sgloSphere);
+  
+  GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
+  GlP->Params[0] = d;  GlP->Params[1] = 6;  GlP->Params[2] = 6;
 
-  for( int i=0; i < 4; i++ )
+  GlP = &GPC.NewPrimitive("Cylinder", sgloCylinder);
+  GlP->Params[0] = d;    GlP->Params[1] = d;  GlP->Params[2] = 1;
+  GlP->Params[3] = 5;  GlP->Params[4] = 1;
+  GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
+  Compile();
+  SetReciprocal(IsReciprocal());
+
+  for (int i=0; i < 4; i++)
     Labels[i]->Create();
 }
 //..............................................................................
-bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
-  if( FGlP == NULL )  return false;
+bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min) {
+  if (Edges.IsEmpty()) return false;
   vec3d _min(100,100,100), _max(-100, -100, -100);
-  for( int i=0; i < 8; i++ )
+  for (int i=0; i < 8; i++)
     vec3d::UpdateMinMax(GetVertex(i), _min, _max);
-  Min = _min;  
-  Max = _max;  
+  Min = _min;
+  Max = _max;
   return true;
 }
 //..............................................................................
-bool TDUnitCell::Orient(TGlPrimitive& P)  {  return false;  }
+bool TDUnitCell::Orient(TGlPrimitive& P) {
+  if (P.GetType() == sgloCylinder) {
+    for (int i = 0; i < Edges.Count(); i += 2) {
+      vec3d v = (Edges[i + 1] - Edges[i]);
+      double l = v.Length();
+      v *= 1.0 / l;
+      olx_gl::pushMatrix();
+      olx_gl::translate(Edges[i]);
+      olx_gl::rotate(acos(v[2]) * 180 / M_PI, -v[1], v[0], 0.0);
+      olx_gl::scale(Thickness, Thickness, l);
+      P.Draw();
+      olx_gl::popMatrix();
+    }
+  }
+  else {
+    for (int i = 0; i < VertexCount(); i ++) {
+      const vec3f &v = GetVertex(i);
+      olx_gl::translate(v);
+      if (Thickness != 1)
+        olx_gl::scale(Thickness);
+      P.Draw();
+      if (Thickness != 1)
+        olx_gl::scale(1./Thickness);
+      olx_gl::translate(-v);
+    }
+
+  }
+  return true;
+}
 //..............................................................................
 void TDUnitCell::ListPrimitives(TStrList &List) const {}
 //..............................................................................
 void TDUnitCell::UpdatePrimitives(int32_t Mask)  {}
 //..............................................................................
-void TDUnitCell::UpdateLabel()  {
-  for( int i=0; i < 4; i++ )
+void TDUnitCell::UpdateLabel() {
+  for (int i=0; i < 4; i++)
     Labels[i]->Update();
 }
 //..............................................................................
@@ -172,14 +202,14 @@ void TDUnitCell::SetVisible(bool v)  {
 void TDUnitCell::ToDataItem(TDataItem& di) const {
   di.AddField("reciprocal", IsReciprocal());
   TDataItem& labels = di.AddItem("Labels");
-  for( int i=0; i < 4; i++ )
+  for (int i=0; i < 4; i++)
     Labels[i]->ToDataItem(labels.AddItem(olxstr((olxch)('x'+i))));
 }
 //..............................................................................
 void TDUnitCell::FromDataItem(const TDataItem& di)  {
   SetReciprocal(di.FindField("reciprocal").ToBool());
   const TDataItem& labels = di.GetItemByName("Labels");
-  for( int i=0; i < 4; i++ )
+  for (int i=0; i < 4; i++)
     Labels[i]->FromDataItem(labels.GetItemByIndex(i));
 }
 //..............................................................................
@@ -187,11 +217,13 @@ const_strlist TDUnitCell::ToPov(olxdict<TGlMaterial, olxstr,
   TComparableComparator> &materials) const
 {
   TStrList out;
-  if (FGlP == NULL) return out;
+  if (Edges.IsEmpty()) return out;
   out.Add(" object { union {");
   const TGPCollection &gpc = GetPrimitives();
   pov::CrdTransformer crdc(Parent.GetBasis());
-  olxstr p_mat = pov::get_mat_name(FGlP->GetProperties(), materials);
+  olxstr p_mat = pov::get_mat_name(
+    GetPrimitives().FindPrimitiveByName("Cylinder")->GetProperties(),
+    materials);
   for (int i=0; i < 24; i+=2) {
     out.Add("  object { cylinder {") << pov::to_str(crdc.crd(GetEdge(i))) <<
       ',' << pov::to_str(crdc.crd(GetEdge(i+1))) << ", 0.01} texture {" <<
@@ -207,8 +239,10 @@ const_strlist TDUnitCell::ToWrl(olxdict<TGlMaterial, olxstr,
   TComparableComparator> &materials) const
 {
   TStrList out;
-  if (FGlP == NULL) return out;
-  olxstr p_mat = wrl::get_mat_str(FGlP->GetProperties(), materials);
+  if (Edges.IsEmpty()) return out;
+  const TGlMaterial &m = GetPrimitives()
+    .FindPrimitiveByName("Cylinder")->GetProperties();
+  olxstr p_mat = wrl::get_mat_str(m, materials);
   out.Add(" Group{ children[ Shape{ appearance ") << p_mat <<
     " geometry IndexedLineSet{ colorPerVertex FALSE coord Coordinate{ point[";
   const TGPCollection &gpc = GetPrimitives();
@@ -221,7 +255,7 @@ const_strlist TDUnitCell::ToWrl(olxdict<TGlMaterial, olxstr,
   out.GetLastString() << "]}";
   out.Add("  coordIndex[0 1 5 3 0 2 4 7 6 2 -1 3 6 -1 5 7 -1 1 4 -1]");
   out.Add("  color Color{ color[") <<
-    wrl::to_str(FGlP->GetProperties().AmbientF) << "]}";
+    wrl::to_str(m.AmbientF) << "]}";
   out.Add("  colorIndex[0 0 0 0]}}");
   for (int i=0; i < 4; i++)
     out << Labels[i]->ToWrl(materials);
@@ -229,3 +263,22 @@ const_strlist TDUnitCell::ToWrl(olxdict<TGlMaterial, olxstr,
   return out;
 }
 //..............................................................................
+void TDUnitCell::funThickness(const TStrObjList& Params, TMacroError& E) {
+  if (Params.IsEmpty()) {
+    E.SetRetVal(GetThickness());
+  }
+  else {
+    SetThickness(Params[0].ToDouble());
+    GetPrimitives().GetStyle().SetParam("Thickness", GetThickness(), true);
+  }
+}
+//..............................................................................
+TLibrary *TDUnitCell::ExportLibrary(const olxstr &name) {
+  TLibrary *l = new TLibrary(name.IsEmpty() ? olxstr("cell") : name);
+  l->Register(
+    new TFunction<TDUnitCell>(this,
+      &TDUnitCell::funThickness, "Thickness", fpNone | fpOne,
+    "Returns or sets current cell thickness")
+    );
+  return l;
+}

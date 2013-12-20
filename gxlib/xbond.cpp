@@ -308,11 +308,11 @@ const_strlist TXBond::ToPov(olxdict<TGlMaterial, olxstr,
   TComparableComparator> &materials) const
 {
   TStrList out;
-  if( olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3 )
+  if (olx_abs(Params()[1]) + olx_abs(Params()[2]) < 1e-3)
     return out;
   out.Add(" object { union {");
   const TGPCollection &gpc = GetPrimitives();
-  for( size_t i=0; i < gpc.PrimitiveCount(); i++ )  {
+  for (size_t i=0; i < gpc.PrimitiveCount(); i++) {
     TGlPrimitive &glp = gpc.GetPrimitive(i);
     olxstr p_mat = pov::get_mat_name(glp.GetProperties(), materials, this);
     out.Add("  object {") << "bond_" << glp.GetName().ToLowerCase().Replace(' ', '_')
@@ -322,10 +322,19 @@ const_strlist TXBond::ToPov(olxdict<TGlMaterial, olxstr,
   mat3d m;
   olx_create_rotation_matrix(m, vec3d(Params()[1], Params()[2], 0).Normalise(),
     cos(Params()[0]*M_PI/180));
+  const mat3d &b = Parent.GetBasis().GetMatrix();
+  m *= b;
+
+  vec3d x(1, 0, 0), v = x*m;
+  if (!v.IsParallel(x)) {
+    mat3d cm;
+    vec3d d = vec3d(B().crd() - A().crd()).Normalise()*b;
+    olx_create_rotation_matrix(cm, -d, v.CAngle(d.Normal(x)));
+    m *= cm;
+  }
   m[0] *= Params()[4];
   m[1] *= Params()[4];
   m[2] *= Params()[3];
-  m *= Parent.GetBasis().GetMatrix();
   vec3d t = pov::CrdTransformer(Parent.GetBasis()).crd(GetBaseCrd());
   out.Add("  transform {");
   out.Add("   matrix") << pov::to_str(m, t);
@@ -380,6 +389,28 @@ const_strlist TXBond::PovDeclare()  {
 
   out.Add("#declare bond_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
   out.Add("#declare bond_stippled_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
+
+  out.Add("#declare bond_bottom_double_cone=object { union {");
+  out.Add(" cylinder {<0.1,0,0>, <0.1,0,0.5>, 0.05}");
+  out.Add(" cylinder {<-0.1,0,0>, <-0.1,0,0.5>, 0.05}");
+  out.Add("}}");
+
+  out.Add("#declare bond_top_double_cone=object { union {");
+  out.Add(" cylinder {<0.1,0,0.5>, <0.1,0,1>, 0.05}");
+  out.Add(" cylinder {<-0.1,0,0.5>, <-0.1,0,1>, 0.05}");
+  out.Add("}}");
+
+  out.Add("#declare bond_bottom_triple_cone=object { union {");
+  out.Add(" cylinder {<0.1,0,0>, <0.1,0,0.5>, 0.03}");
+  out.Add(" cylinder {<0,0,0>, <0,0,0.5>, 0.03}");
+  out.Add(" cylinder {<-0.1,0,0>, <-0.1,0,0.5>, 0.03}");
+  out.Add("}}");
+
+  out.Add("#declare bond_top_triple_cone=object { union {");
+  out.Add(" cylinder {<0.1,0,0.5>, <0.1,0,1>, 0.03}");
+  out.Add(" cylinder {<0,0,0.5>, <0,0,1>, 0.03}");
+  out.Add(" cylinder {<-0.1,0,0.5>, <-0.1,0,1>, 0.03}");
+  out.Add("}}");
 
   return out;
 }
@@ -483,6 +514,22 @@ const_strlist TXBond::WrlDeclare() {
   }
   out.Add("]}}");
 
+  out.Add("PROTO bond_bottom_double_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.25 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0.5 radius 0.1 top FALSE bottom FALSE}}}}";
+  out.Add("PROTO bond_top_double_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.75 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0.5 radius 0.1 top FALSE bottom FALSE}}}}";
+  out.Add("PROTO bond_bottom_triple_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.25 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0.5 radius 0.1 top FALSE bottom FALSE}}}}";
+  out.Add("PROTO bond_top_triple_cone[exposedField SFNode appr NULL]{") <<
+    " Transform{ rotation 1 0 0 1.5708 translation 0 0 0.75 "
+    "children Shape{ appearance IS appr geometry "
+    "Cylinder{ height 0.5 radius 0.1 top FALSE bottom FALSE}}}}";
 
   //out.Add("#declare bond_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
   //out.Add("#declare bond_stippled_line=object{ cylinder {<0,0,0>, <0,0,1>, 0.01} }");
@@ -726,17 +773,11 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
   //..............................
   // create bottom double cylinder
-  GlP = &Parent.NewPrimitive(sgloCommandList);
+  GlP = &Parent.NewPrimitive(sgloCylinder);
   FStaticObjects.Add("Bottom double cone", GlP);
-
-  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
-  GlPRC1->Params[0] = 0.1 / 2;    GlPRC1->Params[1] = 0.1 / 2;  GlPRC1->Params[2] = 0.5;
-  GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
-  GlPRC1->Compile();
-
-  GlP->StartList();
-  GlP->CallList(GlPRC1);
-  GlP->EndList();
+  GlP->Params[0] = 0.1 / 2;    GlP->Params[1] = 0.1 / 2;  GlP->Params[2] = 0.5;
+  GlP->Params[3] = ConeQ;  GlP->Params[4] = 1;
+  GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count() + 1);  //
   GlP->Params.GetLast() = ddsDefAtomA;
   // create top double cylinder
@@ -756,17 +797,11 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomB;
   //..............................
   // create bottom tripple cylinder
-  GlP = &Parent.NewPrimitive(sgloCommandList);
+  GlP = &Parent.NewPrimitive(sgloCylinder);
   FStaticObjects.Add("Bottom triple cone", GlP);
-
-  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
-  GlPRC1->Params[0] = 0.1 / 3;    GlPRC1->Params[1] = 0.1 / 3;  GlPRC1->Params[2] = 0.5;
-  GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
-  GlPRC1->Compile();
-
-  GlP->StartList();
-  GlP->CallList(GlPRC1);
-  GlP->EndList();
+  GlP->Params[0] = 0.1 / 3;    GlP->Params[1] = 0.1 / 3;  GlP->Params[2] = 0.5;
+  GlP->Params[3] = ConeQ;  GlP->Params[4] = 1;
+  GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count() + 1);  //
   GlP->Params.GetLast() = ddsDefAtomA;
   // create top double cylinder

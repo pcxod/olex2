@@ -14,11 +14,12 @@
 #include "glprimitive.h"
 BeginGxlNamespace()
 
-class TDUnitCell: public AGDrawObject  {
+class TDUnitCell: public AGDrawObject {
   bool Reciprocal;
-  TGlPrimitive *FGlP;
   mat3d CellToCartesian, HklToCartesian;
   TXGlLabel* Labels[4];
+  vec3d_alist Edges;
+  double Thickness;
 public:
   TDUnitCell(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDUnitCell();
@@ -32,32 +33,36 @@ public:
   void ListPrimitives(TStrList &List) const;
   void UpdatePrimitives(int32_t Mask);
 
-  size_t VertexCount() const {  return FGlP == NULL ? 0 : 8;  }
-  const vec3f& GetVertex(size_t i) const {
-    if( FGlP == NULL )
+  size_t VertexCount() const {  return Edges.IsEmpty() ? 0 : 8;  }
+  const vec3d& GetVertex(size_t i) const {
+    if (Edges.IsEmpty())
       throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
-    switch(i)  {
-      case 0:  return FGlP->Vertices[0];  break;
-      case 1:  return FGlP->Vertices[1];  break;
-      case 2:  return FGlP->Vertices[3];  break;
-      case 3:  return FGlP->Vertices[5];  break;
-      case 4:  return FGlP->Vertices[7];  break;
-      case 5:  return FGlP->Vertices[9];  break;
-      case 6:  return FGlP->Vertices[13];  break;
-      case 7:  return FGlP->Vertices[19];  break;
+    switch(i) {
+      case 0:  return Edges[0];  break;
+      case 1:  return Edges[1];  break;
+      case 2:  return Edges[3];  break;
+      case 3:  return Edges[5];  break;
+      case 4:  return Edges[7];  break;
+      case 5:  return Edges[9];  break;
+      case 6:  return Edges[13];  break;
+      case 7:  return Edges[19];  break;
       default:
         throw TInvalidArgumentException(__OlxSourceInfo, "vertex index");
     }
   }
-  size_t EdgeCount() const {  return FGlP == NULL ? 0 : 24;  }
-  const vec3f& GetEdge(size_t i) const {  return FGlP->Vertices[i];  }
-  inline bool IsReciprocal() const {  return Reciprocal;  }
+  size_t EdgeCount() const { return Edges.Count(); }
+  const vec3d& GetEdge(size_t i) const { return Edges[i]; }
+  bool IsReciprocal() const {  return Reciprocal;  }
   void SetReciprocal(bool v, double scale=1);
   virtual void SetVisible(bool v);
-  inline const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
-  inline const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
+  const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
+  const mat3d& GetHklToCartesian() const {  return HklToCartesian;  }
+  DefPropP(double, Thickness)
   void ToDataItem(TDataItem& di) const;
   void FromDataItem(const TDataItem& di);
+  void funThickness(const TStrObjList& Params, TMacroError& E);
+  TLibrary *ExportLibrary(const olxstr &name=EmptyString());
+  
   const_strlist ToPov(
     olxdict<TGlMaterial, olxstr, TComparableComparator> &materials) const;
   const_strlist ToWrl(

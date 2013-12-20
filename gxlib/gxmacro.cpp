@@ -2982,6 +2982,11 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
   TPtrList<TXBond> changed;
   while (bi.HasNext()) {
     TXBond &b = bi.Next();
+    if (!b.IsVisible() ||
+      (b.A().CAtom().IsRingAtom() && b.B().CAtom().IsRingAtom()))
+    {
+      continue;
+    }
     short order = 0;
     double l = b.Length();
     if (b.A().GetType() == iOxygenZ || b.B().GetType() == iOxygenZ) {
