@@ -4566,7 +4566,7 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
 }
 //..............................................................................
 void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
-  TSizeList LattAtomSz(LattCount()), 
+  TSizeList LattAtomSz(LattCount()),
     LattBondSz(LattCount());
   XFile().ToDataItem(item.AddItem("XFile"));
   LattAtomSz[0] = CalcMaxAtomTag(XFile().GetLattice());
@@ -4592,16 +4592,17 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   // store objects visibility
   size_t a_cnt = 0;
   AtomIterator ai(*this);
-  while( ai.HasNext() )
-    if( !ai.Next().IsDeleted() )
+  while (ai.HasNext()) {
+    if (!ai.Next().IsDeleted())
       a_cnt++;
+  }
   TEBitArray vis(a_cnt);
   TPtrList<TXGlLabel> atom_labels(a_cnt);
   a_cnt = 0;
   ai.Reset();
-  while( ai.HasNext() )  {
+  while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if( !xa.IsDeleted() )  {
+    if (!xa.IsDeleted()) {
       atom_labels.Set(a_cnt, xa.GetGlLabel());
       vis.Set(a_cnt++, xa.IsVisible());
     }
@@ -4609,16 +4610,17 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   visibility.AddField("atoms", vis.ToBase64String());
   size_t b_cnt = 0;
   BondIterator bi(*this);
-  while( bi.HasNext() )
-    if( !bi.Next().IsDeleted() )
+  while (bi.HasNext()) {
+    if (!bi.Next().IsDeleted())
       b_cnt++;
+  }
   vis.SetSize(b_cnt);
   TPtrList<TXGlLabel> bond_labels(b_cnt);
   b_cnt = 0;
   bi.Reset();
-  while( bi.HasNext() )  {
+  while (bi.HasNext()) {
     TXBond& xb = bi.Next();
-    if( !xb.IsDeleted() )  {
+    if (!xb.IsDeleted()) {
       bond_labels.Set(b_cnt, xb.GetGlLabel());
       vis.Set(b_cnt++, xb.IsVisible());
     }
@@ -4626,15 +4628,15 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   visibility.AddField("bonds", vis.ToBase64String());
   size_t p_cnt = 0;
   PlaneIterator pi(*this);
-  while( pi.HasNext() )
-    if( !pi.Next().IsDeleted() )
+  while (pi.HasNext())
+    if (!pi.Next().IsDeleted())
       p_cnt++;
   vis.SetSize(p_cnt);
   p_cnt = 0;
   pi.Reset();
-  while( pi.HasNext() )  {
+  while (pi.HasNext()) {
     TXPlane& xp = pi.Next();
-    if( !xp.IsDeleted() )
+    if (!xp.IsDeleted())
       vis.Set(p_cnt++, xp.IsVisible());
   }
   visibility.AddField("planes", vis.ToBase64String());
@@ -4644,20 +4646,20 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   FDBasis->ToDataItem(item.AddItem("DBasis"));
 
   TDataItem& labels = item.AddItem("Labels");
-  for( size_t i=0; i < XLabels.Count(); i++ )
+  for (size_t i=0; i < XLabels.Count(); i++)
     XLabels[i].ToDataItem(labels.AddItem("Label"));
   TDataItem& atom_labels_item = item.AddItem("AtomLabels");
-  for( size_t i=0; i < atom_labels.Count(); i++ )
+  for (size_t i=0; i < atom_labels.Count(); i++)
     atom_labels[i]->ToDataItem(atom_labels_item.AddItem("Label"));
   TDataItem& bond_labels_item = item.AddItem("BondLabels");
-  for( size_t i=0; i < bond_labels.Count(); i++ )
+  for (size_t i=0; i < bond_labels.Count(); i++)
     bond_labels[i]->ToDataItem(bond_labels_item.AddItem("Label"));
 
   FGlRender->GetSelection().SetTag(-1);
   FGlRender->GetGroups().ForEach(ACollectionItem::IndexTagSetter());
   
   TDataItem& groups = item.AddItem("Groups");
-  for( size_t i=0; i < FGlRender->GroupCount(); i++ )  {
+  for (size_t i=0; i < FGlRender->GroupCount(); i++) {
     TGlGroup& glG = FGlRender->GetGroup(i);
     TDataItem& group = groups.AddItem(i, glG.GetCollectionName());
     group.AddField("visible", glG.IsVisible());
@@ -4678,17 +4680,20 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
   }
 
   TDataItem &lines = item.AddItem("Lines");
-  size_t l_cnt=0;
-  for( size_t i=0; i < Lines.Count(); i++ )  {
-    if( Lines[i].IsVisible() )
-      Lines[i].ToDataItem(lines.AddItem(++l_cnt));
+  for (size_t i=0; i < Lines.Count(); i++) {
+    if (Lines[i].IsVisible())
+      Lines[i].ToDataItem(lines.AddItem("object"));
   }
 
   TDataItem &user_objects = item.AddItem("UserObjects");
-  l_cnt=0;
-  for( size_t i=0; i < UserObjects.Count(); i++ )  {
-    if( UserObjects[i].IsVisible() )
-      UserObjects[i].ToDataItem(user_objects.AddItem(++l_cnt));
+  for (size_t i=0; i < UserObjects.Count(); i++) {
+    if (UserObjects[i].IsVisible())
+      UserObjects[i].ToDataItem(user_objects.AddItem("object"));
+  }
+  TDataItem &rings = item.AddItem("Rings");
+  for (size_t i = 0; i < Rings.Count(); i++) {
+    if (Rings[i].IsVisible())
+      Rings[i].ToDataItem(rings.AddItem("object"));
   }
 
   TDataItem& renderer = item.AddItem("Renderer");
@@ -4723,13 +4728,13 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
 
   FXFile->FromDataItem(item.GetItemByName("XFile"));
   TDataItem* overlays = item.FindItem("Overlays");
-  if( overlays != NULL )  {
-    for( size_t i=0; i < overlays->ItemCount(); i++ )
+  if (overlays != NULL) {
+    for (size_t i=0; i < overlays->ItemCount(); i++)
       NewOverlayedXFile().FromDataItem(overlays->GetItemByIndex(i));
   }
   LoadStructureStyle(item);
   const TDataItem& labels = item.GetItemByName("Labels");
-  for( size_t i=0; i < labels.ItemCount(); i++ ) {
+  for (size_t i=0; i < labels.ItemCount(); i++) {
     XLabels.Add(
       new TXGlLabel(
       *FGlRender, PLabelsCollectionName)).FromDataItem(
@@ -4737,7 +4742,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   }
   bool vis;
   TDataItem *frame_i = item.FindItem("3DFrame");
-  if ( frame_i != NULL) {
+  if (frame_i != NULL) {
     vis = F3DFrame->IsVisible();
     F3DFrame->FromDataItem(*frame_i);
     if (vis != F3DFrame->IsVisible())
@@ -4749,18 +4754,31 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FXGrid);
 
   FDBasis->FromDataItem(item.GetItemByName("DBasis"));
-
-  TDataItem *lines = item.FindItem("Lines");
-  if( lines != NULL )  {
-    for( size_t i=0; i < lines->ItemCount(); i++ )
-      Lines.Add(new TXLine(*FGlRender)).FromDataItem(lines->GetItemByIndex(i));
+  {
+    TDataItem *lines = item.FindItem("Lines");
+    if (lines != NULL) {
+      for (size_t i = 0; i < lines->ItemCount(); i++) {
+        Lines.Add(new TXLine(*FGlRender))
+          .FromDataItem(lines->GetItemByIndex(i));
+      }
+    }
   }
-
-  TDataItem *user_objects = item.FindItem("UserObjects");
-  if (user_objects != NULL)  {
-    for (size_t i = 0; i < user_objects->ItemCount(); i++) {
-      UserObjects.Add(
-        new TDUserObj(*FGlRender, user_objects->GetItemByIndex(i)));
+  {
+    TDataItem *user_objects = item.FindItem("UserObjects");
+    if (user_objects != NULL) {
+      for (size_t i = 0; i < user_objects->ItemCount(); i++) {
+        UserObjects.Add(
+          new TDUserObj(*FGlRender, user_objects->GetItemByIndex(i)));
+      }
+    }
+  }
+  {
+    const TDataItem *rings = item.FindItem("Rings");
+    if (rings != NULL) {
+      for (size_t i = 0; i < rings->ItemCount(); i++) {
+        Rings.Add(new TDRing(GetRender(), EmptyString()))
+          .FromDataItem(rings->GetItemByIndex(i));
+      }
     }
   }
 
@@ -4781,21 +4799,21 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDUnitCell);
 
   const TDataItem* atom_labels = item.FindItem("AtomLabels");
-  if( atom_labels != NULL )  {
+  if (atom_labels != NULL) {
     AtomIterator ai(*this);
-    if( ai.count != atom_labels->ItemCount() )
+    if (ai.count != atom_labels->ItemCount())
       throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
     size_t i=0;
-    while( ai.HasNext() )
+    while (ai.HasNext())
       ai.Next().GetGlLabel().FromDataItem(atom_labels->GetItemByIndex(i++));
   }
   const TDataItem* bond_labels = item.FindItem("BondLabels");
-  if( bond_labels != NULL )  {
+  if (bond_labels != NULL) {
     BondIterator bi(*this);
-    if( bi.count != bond_labels->ItemCount() )
+    if (bi.count != bond_labels->ItemCount())
       throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
     size_t i = 0;
-    while( bi.HasNext() )
+    while (bi.HasNext())
       bi.Next().GetGlLabel().FromDataItem(bond_labels->GetItemByIndex(i++));
   }
   //// restore 
@@ -4806,17 +4824,17 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
   const TDataItem& groups = item.GetItemByName("Groups");
   // pre-create all groups
   GroupDict.Clear();
-  for( size_t i=0; i < groups.ItemCount(); i++ )
+  for (size_t i=0; i < groups.ItemCount(); i++)
     FGlRender->NewGroup(groups.GetItemByIndex(i).GetValue());
   // load groups
-  for( size_t i=0; i < groups.ItemCount(); i++ )  {
+  for (size_t i=0; i < groups.ItemCount(); i++) {
     const TDataItem& group = groups.GetItemByIndex(i);
     TGlGroup& glG = FGlRender->GetGroup(i);
     glG.SetVisible(group.GetFieldByName("visible").ToBool());
     const int p_id = group.GetFieldByName("parent_id").ToInt();
-    if( p_id == -1 )
+    if (p_id == -1)
       FGlRender->GetSelection().Add(glG);
-    else if( p_id >= 0 )
+    else if (p_id >= 0)
       FGlRender->GetGroup(p_id).Add(glG);
     // compatibility
     TDataItem* atoms = group.FindItem("Atoms");
@@ -4846,7 +4864,6 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis)  {
     GroupDict(&glG, GroupDefs.Count()-1);
   }
   _UpdateGroupIds();
-
   TDataItem& renderer = item.GetItemByName("Renderer");
   vec3d min, max;
   PersUtil::VecFromStr(renderer.GetFieldByName("min"), min);

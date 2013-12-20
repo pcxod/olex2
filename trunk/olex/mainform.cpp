@@ -981,6 +981,7 @@ void TMainForm::XApp(Olex2App *XA)  {
   Library.AttachLibrary(XA->XFile().ExportLibrary());
   Library.AttachLibrary(XA->GetFader().ExportLibrary());
   Library.AttachLibrary(XA->XGrid().ExportLibrary());
+  Library.AttachLibrary(XA->DUnitCell().ExportLibrary());
   Library.AttachLibrary(TFileHandlerManager::ExportLibrary());
   TOlxVars::ExportLibrary(EmptyString(), &Library);
 #ifdef _CUSTOM_BUILD_

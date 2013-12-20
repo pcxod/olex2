@@ -599,7 +599,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(IsFileType, fpOne,
     "Checks type of currently loaded file [ins,res,ires,cif,cmf,mol,xyz]");
 //_____________________________________________________________________________
-  xlib_InitFunc(BaseDir, fpNone|fpOne, "Returns the startup folder");
+  xlib_InitFunc(BaseDir, fpNone, "Returns the startup folder");
   xlib_InitFunc(DataDir, fpNone, "Returns the location of user data");
   xlib_InitFunc(HKLSrc, fpNone|fpOne|psFileLoaded,
     "Returns/sets hkl source for currently loaded file");

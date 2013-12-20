@@ -702,7 +702,8 @@ public:
   TXGlLabel& CreateLabel(const vec3d& center, const olxstr& T, uint16_t FontIndex);
   TXGlLabel& CreateLabel(const TXAtom& A, uint16_t FontIndex);
   /* creates aromatic rings, if force is false - only creates if aromatic_rings
-  option is set to true */
+  option is set to true. The function also marks ring atoms (SetRingAtom(true)
+  */
   void CreateRings(bool force=false, bool create=false);
   const TTypeListExt<TDRing, AGDrawObject> &GetRings() const {
     return Rings;
