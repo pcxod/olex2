@@ -3535,7 +3535,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   olx_object_ptr<TCif> Cif2(new TCif);
   if (xapp.CheckFileType<TCif>())
     Cif = &xapp.XFile().GetLastLoader<TCif>();
-  else  {
+  else {
     olxstr cifFN = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "cif");
     if (TEFile::Exists(cifFN))
       Cif2().LoadFromFile(cifFN);
@@ -3546,47 +3546,47 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     Cif = &Cif2();
   }
   // normalise
-  for( size_t i=0; i < Translations.Count(); i++ )
+  for (size_t i=0; i < Translations.Count(); i++)
     Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
   // update the atom_site loop and H treatment if AU match
-  if( Options.Contains('u') )  {
-    if( xapp.CheckFileType<TCif>() )  {
+  if (Options.Contains('u')) {
+    if (xapp.CheckFileType<TCif>()) {
       TBasicApp::NewLogEntry() <<
         "Cannot update the CIF - the real refinement model is unknown";
     }
-    else  {
+    else {
       const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
       const TAsymmUnit &tau = Cif->GetAsymmUnit();
       bool match = (tau.AtomCount() <= au.AtomCount()),
         has_parts = false,
         has_special_positions = false;
-      if( match )  {
+      if (match) {
         size_t ind=0;
-        for( size_t i=0; i < tau.AtomCount(); i++, ind++ )  {
+        for (size_t i=0; i < tau.AtomCount(); i++, ind++) {
           TCAtom& ta = tau.GetAtom(i);
-          while( ind < au.AtomCount() &&
-            (au.GetAtom(ind).IsDeleted() || au.GetAtom(ind).GetType() == iQPeakZ) )
+          while (ind < au.AtomCount() &&
+            (au.GetAtom(ind).IsDeleted() || au.GetAtom(ind).GetType() == iQPeakZ))
           {
             ind++;
           }
-          if( ind >= au.AtomCount() )  {
+          if (ind >= au.AtomCount()) {
             match = false;
             break;
           }
           TCAtom &a = au.GetAtom(ind);
-          if( !a.GetLabel().Equalsi(ta.GetLabel()) ||
-            a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3 )
+          if (!a.GetLabel().Equalsi(ta.GetLabel()) ||
+            a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3)
           {
             match = false;
             break;
           }
-          if( a.GetPart() != 0 )
+          if (a.GetPart() != 0)
             has_parts = true;
           if (a.GetDegeneracy() != 1)
             has_special_positions = true;
         }
       }
-      if( !match )  {
+      if (!match) {
         TBasicApp::NewLogEntry() << "Could not update the atom information loop - "
           "the asymmetric units mismatch";
       }
@@ -3632,10 +3632,10 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           TBasicApp::NewLogEntry() << "Could not locate the atom_site loop or"
            " its content mismatches the asymmetric unit";
         }
-        else  {
+        else {
           tab->RemoveCol("_atom_site_refinement_flags");
           size_t rf_pos_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
-          if( rf_pos_ind == InvalidIndex )  {
+          if (rf_pos_ind == InvalidIndex) {
             tab->AddCol("_atom_site_refinement_flags_posn");
             rf_pos_ind = tab->ColCount()-1;
           }
@@ -3647,92 +3647,162 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             rf_adp_ind = tab->ColCount()-1;
           }
           size_t dg_ind = tab->ColIndex("_atom_site_disorder_group");
-          if( dg_ind == InvalidIndex && has_parts )  {
+          if (dg_ind == InvalidIndex && has_parts) {
             tab->AddCol("_atom_site_disorder_group");
             dg_ind = tab->ColCount()-1;
           }
           TIntList h_t;
           size_t ri=0;
-          for( size_t i=0; i < au.AtomCount(); i++, ri++ )  {
-            while( i < au.AtomCount() &&
-              (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ) )
+          for (size_t i=0; i < au.AtomCount(); i++, ri++) {
+            while (i < au.AtomCount() &&
+              (au.GetAtom(i).IsDeleted() || au.GetAtom(i).GetType() == iQPeakZ))
             {
               i++;
             }
             // last condition must not ever happen
-            if( i >= au.AtomCount() || ri >= tab->RowCount() )
+            if (i >= au.AtomCount() || ri >= tab->RowCount())
               break;
             TCAtom &a = au.GetAtom(i);
-            if( a.GetType() == iHydrogenZ )  {
+            if (a.GetType() == iHydrogenZ) {
               int& h = h_t.Add(0);
-              if( a.GetUisoOwner() != NULL )  {  // u constrained
+              /*
+              0 - all refined
+              1 - Uiso constrained
+              2 - U/Uiso - fixed
+              4 - xyz constrained
+              8 - xyz fixed
+              *16 - occu fixed - NOT USED
+              */
+              if (a.GetUisoOwner() != NULL) {  // u constrained
                 h |= 0x0001;
               }
-              if( a.GetParentAfixGroup() != NULL &&  // coordinates constrained
-                a.GetParentAfixGroup()->GetAfix() > 0 )
-              {
-                if( !a.GetParentAfixGroup()->IsRefinable() )
-                  h |= 0x0002;
-                else
-                  h |= 0x0004;
+              else {
+                if (a.GetEllipsoid() == NULL) {
+                  XVarReference *r = a.GetVarRef(catom_var_name_Uiso);
+                  if (r != NULL && r->relation_type == relation_None)
+                    h |= 0x0002;
+                }
+                else {
+                  bool all_fixed = true;
+                  for (short vi = catom_var_name_U11; vi <= catom_var_name_U33; vi++) {
+                    XVarReference *r = a.GetVarRef(vi);
+                    if (r == NULL || r->relation_type != relation_None) {
+                      all_fixed = false;
+                      break;
+                    }
+                  }
+                  if (all_fixed)
+                    h |= 0x0002;
+                }
               }
+              // position
+              {
+                bool all_fixed = true;
+                for (short vi = catom_var_name_X; vi <= catom_var_name_Z; vi++) {
+                  XVarReference *r = a.GetVarRef(vi);
+                  if (r == NULL || r->relation_type != relation_None) {
+                    all_fixed = false;
+                    break;
+                  }
+                }
+                if (all_fixed)
+                  h |= 0x0008;
+                else {
+                  if (a.GetParentAfixGroup() != NULL &&  // coordinates constrained
+                    a.GetParentAfixGroup()->GetAfix() > 0)
+                  {
+                    h |= 0x0004;
+                  }
+                }
+              }
+              // occupancy
+              //{
+              //  XVarReference *r = a.GetVarRef(catom_var_name_Sof);
+              //  if (r != NULL && r->relation_type == relation_None)
+              //    h |= 0x0010;
+              //}
             }
             olxstr pos_t, adp_t;
             if (rD.Contains(&a))
               pos_t << 'D';
-            if( a.GetParentAfixGroup() != NULL )  {
-              if( a.GetParentAfixGroup()->IsRefinable() )
+            if (a.GetParentAfixGroup() != NULL) {
+              if (a.GetParentAfixGroup()->IsRefinable())
                 pos_t << 'G';
-              if( a.GetParentAfixGroup()->IsRiding() )
+              if (a.GetParentAfixGroup()->IsRiding())
                 pos_t << 'R';
             }
-            if( a.GetDegeneracy() != 1 ) {
+            if (a.GetDegeneracy() != 1) {
               pos_t << 'S';
               adp_t << 'T';
             }
             if (rU.Contains(&a))
               adp_t << 'U';
-            if( pos_t.IsEmpty() )
+            if (pos_t.IsEmpty())
               tab->Set(ri, rf_pos_ind, new cetString('.'));
             else
               tab->Set(ri, rf_pos_ind, new cetString(pos_t));
             
             if (rf_adp_ind != InvalidIndex) {
-              if( adp_t.IsEmpty() )
+              if (adp_t.IsEmpty())
                 tab->Set(ri, rf_adp_ind, new cetString('.'));
               else
                 tab->Set(ri, rf_adp_ind, new cetString(adp_t));
             }
-            if( has_parts )  {
-              if( a.GetPart() == 0 )
+            if (has_parts) {
+              if (a.GetPart() == 0)
                 tab->Set(ri, dg_ind, new cetString('.'));
               else
                 tab->Set(ri, dg_ind, new cetString((int)a.GetPart()));
             }
           }
-          if( h_t.IsEmpty() )
-            Cif->SetParam("_refine_ls_hydrogen_treatment", "undef", false);
-          else  {
-            int v = h_t[0];
-            bool all_same = true;
-            for( size_t i=1; i < h_t.Count(); i++ )  {
-              if( h_t[i] != v )  {
-                all_same = false;
-                break;
+          bool force_update = false;
+          if (xapp.CheckFileType<TIns>()) {
+            TLst &lst = xapp.XFile().GetLastLoader<TIns>().GetLst();
+            olxstr version = lst.params.Find("version", EmptyString());
+            // 2013/1
+            size_t si = version.IndexOf('/');
+            if (si == InvalidIndex)
+              force_update = true;
+            else {
+              try {
+                int v = version.SubStringTo(si).ToInt();
+                if (v < 2013)
+                  force_update = true;
               }
+              catch (...) {}
             }
-            if( all_same )  {
-              if( v == 1 )
-                Cif->SetParam("_refine_ls_hydrogen_treatment", "refxyz", false);
-              else if( v == 2 )
-                Cif->SetParam("_refine_ls_hydrogen_treatment", "refU", false);
-              else if( v == 4 )
-                Cif->SetParam("_refine_ls_hydrogen_treatment", "noref", false);
+          }
+          if (force_update ||
+            !Cif->ParamExists("_refine_ls_hydrogen_treatment"))
+          {
+            if (h_t.IsEmpty())
+              Cif->SetParam("_refine_ls_hydrogen_treatment", "undef", false);
+            else {
+              int v = h_t[0];
+              bool all_same = true;
+              for (size_t i = 1; i < h_t.Count(); i++) {
+                if (h_t[i] != v)  {
+                  all_same = false;
+                  break;
+                }
+              }
+              if (all_same) {
+                if (v == 0)
+                  Cif->SetParam("_refine_ls_hydrogen_treatment", "refall", false);
+                else if (v == 2) // fixed U
+                  Cif->SetParam("_refine_ls_hydrogen_treatment", "refxyz", false);
+                else if (v == 8) // fixed xyz
+                  Cif->SetParam("_refine_ls_hydrogen_treatment", "refU", false);
+                else if (v == 10) // fixed U and xyz
+                  Cif->SetParam("_refine_ls_hydrogen_treatment", "noref", false);
+                else if (v == 1 || v == 4 || v == 5) // constrained U, xyz or both
+                  Cif->SetParam("_refine_ls_hydrogen_treatment", "constr", false);
+                else
+                  Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
+              }
               else
-                Cif->SetParam("_refine_ls_hydrogen_treatment", "constr", false);
+                Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
             }
-            else
-              Cif->SetParam("_refine_ls_hydrogen_treatment", "mixed", false);
           }
         }
       }

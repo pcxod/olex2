@@ -205,7 +205,7 @@ ort_bond<draw_t>::ort_bond(const OrtDraw& parent,
 template <class draw_t>
 uint32_t ort_bond<draw_t>::get_color(int primitive, uint32_t def) const {
   TGlPrimitive *glp = object.GetPrimitives().FindPrimitiveByName(
-    TXBond::StaticPrimitives()[primitive]);
+    TXBond::GetStaticPrimitives()[primitive]);
   if( (draw_style&ortep_color_bond) == 0 )  {
     return glp == NULL ? 0 :
     (glp->GetProperties().AmbientF.GetRGB() == def ? 0
@@ -478,7 +478,7 @@ ort_bond_line::ort_bond_line(const OrtDraw& parent, const TXLine& line,
 
 uint32_t ort_bond_line::get_color(int primitive, uint32_t def) const {
   TGlPrimitive *glp = line.GetPrimitives().FindPrimitiveByName(
-    TXBond::StaticPrimitives()[primitive]);
+    TXBond::GetStaticPrimitives()[primitive]);
   if( (draw_style&ortep_color_bond) == 0 )  {
     return glp == NULL ? 0 :
     (glp->GetProperties().AmbientF.GetRGB() == def ? 0

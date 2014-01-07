@@ -1559,6 +1559,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       TDataFile df;
       df.LoadFromXLFile(FN);
       FXApp->LoadStructureStyle(df.Root().GetItemByName("GraphicsView"));
+      FXApp->CreateObjects(false);
     }
   }
   else

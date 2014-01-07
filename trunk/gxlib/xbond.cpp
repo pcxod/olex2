@@ -53,8 +53,6 @@ bool TXBond::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
 //----------------------------------------------------------------------------//
 // TXBond function bodies
 //----------------------------------------------------------------------------//
-TStrPObjList<olxstr,TGlPrimitive*> TXBond::FStaticObjects;
-TArrayList<TGlPrimitiveParams>  TXBond::FPrimitiveParams;
 TGraphicsStyle* TXBond::FBondParams=NULL;
 TXBond::TStylesClear *TXBond::OnStylesClear=NULL;
 double TXBond::FDefR = -1;
@@ -104,9 +102,9 @@ void TXBond::Update()  {
 //..............................................................................
 void TXBond::Create(const olxstr& cName)  {
   SetCreated(true);
-  if( !cName.IsEmpty() )
+  if (!cName.IsEmpty())
     SetCollectionName(cName);
-  if( FStaticObjects.IsEmpty() )
+  if (GetStaticPrimitives().IsEmpty())
     CreateStaticObjects(Parent);
   Label->SetFontIndex(Parent.GetScene().FindFontIndexForType<TXBond>());
   Label->Create();
@@ -132,10 +130,11 @@ void TXBond::Create(const olxstr& cName)  {
 
   Params()[4]= GS.GetNumParam('R', DefR());
   const uint16_t legend_level = TXAtom::LegendLevel(GetPrimitives().GetName());
-  for (size_t i=0; i < FStaticObjects.Count(); i++) {
+  const TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
+  for (size_t i=0; i < primitives.Count(); i++) {
     if( (PrimitiveMask & (1<<i)) != 0 ) {
-      TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
-      TGlPrimitive& GlP = GPC->NewPrimitive(FStaticObjects[i], sgloCommandList);
+      TGlPrimitive* SGlP = primitives.GetObject(i);
+      TGlPrimitive& GlP = GPC->NewPrimitive(primitives[i], sgloCommandList);
       if (i >= 14) {
         GlP.SetOwnerId(i);
       }
@@ -147,7 +146,7 @@ void TXBond::Create(const olxstr& cName)  {
       GlP.CallList(SGlP);
       GlP.EndList();
       TGlMaterial* style_mat =
-        legend_level == 3 ? GS.FindMaterial(FStaticObjects[i]) : NULL;
+        legend_level == 3 ? GS.FindMaterial(primitives[i]) : NULL;
       if( IsValid() )  {
         if( style_mat != NULL )
           GlP.SetProperties(*style_mat);
@@ -172,13 +171,13 @@ void TXBond::Create(const olxstr& cName)  {
               TXAtom::GetDefSphereMaterial(B(), RGlM);
           }
           if( legend_level == 4 )
-            GlP.SetProperties(GS.GetMaterial(FStaticObjects[i], RGlM));
+            GlP.SetProperties(GS.GetMaterial(primitives[i], RGlM));
           else // must be updated from atoms always
             GlP.SetProperties(RGlM);
         }
       }
       else  {  // no atoms
-        GlP.SetProperties(GS.GetMaterial(FStaticObjects[i],
+        GlP.SetProperties(GS.GetMaterial(primitives[i],
           TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
       }
     }
@@ -193,11 +192,12 @@ void TXBond::UpdateStyle()  {
   TGraphicsStyle& GS = gpc.GetStyle();
   const int PrimitiveMask = GS.GetNumParam(GetPrimitiveMaskName(),
     (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
-  for( size_t i=0; i < FStaticObjects.Count(); i++ )  {
-    if( (PrimitiveMask & (1<<i)) != 0 )    {
-      TGlPrimitive *SGlP = FStaticObjects.GetObject(i);
-      TGlPrimitive *GlP = gpc.FindPrimitiveByName(FStaticObjects[i]);
-      if( GlP == NULL )  // must not ever happen...
+  const TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
+  for (size_t i = 0; i < primitives.Count(); i++) {
+    if( (PrimitiveMask & (1<<i)) != 0 )  {
+      TGlPrimitive *SGlP = primitives.GetObject(i);
+      TGlPrimitive *GlP = gpc.FindPrimitiveByName(primitives[i]);
+      if (GlP == NULL)  // must not ever happen...
         continue;
       if( IsValid() )  {
         TGlMaterial RGlM;
@@ -222,7 +222,7 @@ void TXBond::UpdateStyle()  {
         GlP->SetProperties(RGlM);
       }
       else  {  // no atoms
-        GlP->SetProperties(GS.GetMaterial(FStaticObjects[i],
+        GlP->SetProperties(GS.GetMaterial(primitives[i],
           TGlMaterial("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36")));
       }
     }
@@ -277,7 +277,7 @@ void TXBond::UpdatePrimitiveParams(TGlPrimitive *Primitive)  {
 }
 //..............................................................................
 void TXBond::ListPrimitives(TStrList &List) const {
-  List.Assign(FStaticObjects);
+  List.Assign(GetStaticPrimitives());
 }
 //..............................................................................
 int16_t TXBond::Quality(int16_t Val)  {
@@ -542,6 +542,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
     new TContextClear(Parent);
   }
   ClearStaticObjects();
+  TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   ValidateBondParams();
@@ -550,7 +551,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create single color cylinder
   GlP = &Parent.NewPrimitive(sgloCylinder);
-  FStaticObjects.Add("Single cone", GlP);
+  primitives.Add("Single cone", GlP);
 
   GlP->Params[0] = 0.1;  GlP->Params[1] = 0.1;  GlP->Params[2] = 1;
   GlP->Params[3] = ConeQ;   GlP->Params[4] = 1;
@@ -560,7 +561,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create top disk
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Top disk", GlP);
+  primitives.Add("Top disk", GlP);
 
   GlPRC1 = &Parent.NewPrimitive(sgloDisk); 
   GlPRC1->Params[0] = 0;  GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = ConeQ;
@@ -577,7 +578,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create bottom disk
   GlP = &Parent.NewPrimitive(sgloDisk);
-  FStaticObjects.Add("Bottom disk", GlP);
+  primitives.Add("Bottom disk", GlP);
 
   GlP->SetQuadricOrientation(GLU_INSIDE);
   GlP->Params[0] = 0;  GlP->Params[1] = 0.1;  GlP->Params[2] = ConeQ;
@@ -589,7 +590,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create middle disk
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Middle disk", GlP);
+  primitives.Add("Middle disk", GlP);
 
   GlPRC1 = &Parent.NewPrimitive(sgloDisk);
   GlPRC1->Params[0] = 0;  GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = ConeQ;
@@ -606,7 +607,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create bottom cylinder
   GlP = &Parent.NewPrimitive(sgloCylinder);
-  FStaticObjects.Add("Bottom cone", GlP);
+  primitives.Add("Bottom cone", GlP);
 
   GlP->Params[0] = 0.1;  GlP->Params[1] = 0.1;  GlP->Params[2] = 0.5;
   GlP->Params[3] = ConeQ;   GlP->Params[4] = 1;
@@ -617,7 +618,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create top cylinder
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Top cone", GlP);
+  primitives.Add("Top cone", GlP);
 
   GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = 0.1;    GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = 0.5;
@@ -633,7 +634,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create bottom line
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Bottom line", GlP);
+  primitives.Add("Bottom line", GlP);
 
   GlP->StartList();
     olx_gl::begin(GL_LINES);
@@ -646,7 +647,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create top line
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Top line", GlP);
+  primitives.Add("Top line", GlP);
 
   GlP->StartList();
     olx_gl::begin(GL_LINES);
@@ -660,7 +661,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   // create stipple cone
   float CL = (float)(1.0/(2*ConeStipples));
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Stipple cone", GlP);
+  primitives.Add("Stipple cone", GlP);
 
   GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = 0.1;    GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = CL;
@@ -692,7 +693,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDef;
   //..............................
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Bottom stipple cone", GlP);
+  primitives.Add("Bottom stipple cone", GlP);
 
   GlP->StartList();
   olx_gl::translate(0.0f, 0.0f, CL/2);
@@ -709,7 +710,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
   //..............................
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Top stipple cone", GlP);
+  primitives.Add("Top stipple cone", GlP);
 
   GlP->StartList();
   olx_gl::translate(0.0f, 0.0f, (float)(0.5 + CL/2));
@@ -728,7 +729,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   // create stipped ball bond
   CL = (float)(1.0/(12.0));
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Balls bond", GlP);
+  primitives.Add("Balls bond", GlP);
 
   GlPRC1 = &Parent.NewPrimitive(sgloSphere);
   GlPRC1->Params[0] = 0.02;    GlPRC1->Params[1] = 5;  GlPRC1->Params[2] = 5;
@@ -745,7 +746,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create line
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Line", GlP);
+  primitives.Add("Line", GlP);
 
   GlP->StartList();
     olx_gl::begin(GL_LINES);
@@ -758,7 +759,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
 //..............................
   // create stippled line
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Stippled line", GlP);
+  primitives.Add("Stippled line", GlP);
 
   GlP->StartList();
     olx_gl::enable(GL_LINE_STIPPLE);
@@ -774,7 +775,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   //..............................
   // create bottom double cylinder
   GlP = &Parent.NewPrimitive(sgloCylinder);
-  FStaticObjects.Add("Bottom double cone", GlP);
+  primitives.Add("Bottom double cone", GlP);
   GlP->Params[0] = 0.1 / 2;    GlP->Params[1] = 0.1 / 2;  GlP->Params[2] = 0.5;
   GlP->Params[3] = ConeQ;  GlP->Params[4] = 1;
   GlP->Compile();
@@ -782,7 +783,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
   // create top double cylinder
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Top double cone", GlP);
+  primitives.Add("Top double cone", GlP);
 
   GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = 0.1 / 2;    GlPRC1->Params[1] = 0.1 / 2;  GlPRC1->Params[2] = 0.5;
@@ -798,7 +799,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   //..............................
   // create bottom tripple cylinder
   GlP = &Parent.NewPrimitive(sgloCylinder);
-  FStaticObjects.Add("Bottom triple cone", GlP);
+  primitives.Add("Bottom triple cone", GlP);
   GlP->Params[0] = 0.1 / 3;    GlP->Params[1] = 0.1 / 3;  GlP->Params[2] = 0.5;
   GlP->Params[3] = ConeQ;  GlP->Params[4] = 1;
   GlP->Compile();
@@ -806,7 +807,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
   GlP->Params.GetLast() = ddsDefAtomA;
   // create top double cylinder
   GlP = &Parent.NewPrimitive(sgloCommandList);
-  FStaticObjects.Add("Top triple cone", GlP);
+  primitives.Add("Top triple cone", GlP);
 
   GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = 0.1 / 3;    GlPRC1->Params[1] = 0.1 / 3;  GlPRC1->Params[2] = 0.5;
@@ -866,19 +867,19 @@ uint32_t TXBond::GetPrimitiveMask() const {
     (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
 }
 //..............................................................................
-void TXBond::OnPrimitivesCleared()  {
-  if( !FStaticObjects.IsEmpty() )
-    FStaticObjects.Clear();
+void TXBond::OnPrimitivesCleared() {
+  if (!GetStaticPrimitives().IsEmpty())
+    ClearStaticObjects();
 }
 //..............................................................................
-void TXBond::ValidateBondParams()  {
-  if( FBondParams == NULL )  {
+void TXBond::ValidateBondParams() {
+  if (FBondParams == NULL) {
     FBondParams = &TGlRenderer::_GetStyles().NewStyle("BondParams", true);
     FBondParams->SetPersistent(true);
   }
 }
 //..............................................................................
-void TXBond::DefMask(int V)  {
+void TXBond::DefMask(int V) {
   ValidateBondParams();
   FBondParams->SetParam("DefM", (FDefM=V), true);
 }

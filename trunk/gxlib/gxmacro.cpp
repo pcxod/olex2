@@ -2112,7 +2112,7 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
       TGlMaterial *sm = ms.FindMaterial("Sphere");
       if (sm != NULL) {
         l.GetPrimitives().GetStyle().SetMaterial(
-          TXBond::StaticPrimitives()[9], *sm);
+          TXBond::GetStaticPrimitives()[9], *sm);
       }
       l.UpdatePrimitives((1<<9)|(1<<10));
       l.SetRadius(0.5);

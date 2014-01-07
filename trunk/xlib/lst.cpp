@@ -57,31 +57,29 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   // skip INS file
   size_t start = 0;
   while (start < SL.Count() && !SL[start].Contains("Reflections read,")) {
+    if (!header_found && SL[start].Contains("++") &&
+      (start + 1) < SL.Count() && SL[start + 1].Contains('+'))
+    {
+      start++;
+      {
+        Toks.Strtok(SL[start], ' ');
+        if (Toks.Count() > 1)
+          params("program", Toks[1]);
+      }
+      if (++start >= SL.Count()) continue;
+      Toks.Clear();
+      Toks.Strtok(SL[start], ' ');
+      if (Toks.Count() > 3) {
+        params.Add("version") = Toks[Toks.Count() - 2];
+      }
+      header_found = true;
+    }
     start++;
     continue;
   }
   for( size_t i=start; i < SL.Count(); i++ )  {
     Toks.Clear();
-    if (!header_found && SL[i].Contains("++") &&
-      (i+1) < SL.Count() && SL[i].Contains('+'))
-    {
-      i++;
-      size_t hi = SL[i].FirstIndexOf('-');
-      size_t spi = SL[i].LastIndexOf(' ', hi);
-      if (spi == InvalidIndex || hi == InvalidIndex) continue;
-      params("program", SL[i].SubString(spi+1, hi-spi-1));
-      spi = SL[i].FirstIndexOf(' ', hi);
-      if (spi == InvalidIndex) continue;
-      params("version", SL[i].SubString(hi+1, spi-hi-1));
-      i++;
-      if (i >= SL.Count()) continue;
-      Toks.Strtok(SL[i], ' ');
-      if (Toks.Count() > 3 && Toks[Toks.Count()-3].Equals("Release")) {
-        params.Add("version") = Toks[Toks.Count()-2];
-      }
-      header_found = true;
-    }
-    else if (!TRefC && SL[i].Contains("Reflections read,")) {
+    if (!TRefC && SL[i].Contains("Reflections read,")) {
       Toks.Strtok(SL[i], ' ');
       if (Toks.Count() < 3)  continue;
       params("ref_total", Toks[0]);

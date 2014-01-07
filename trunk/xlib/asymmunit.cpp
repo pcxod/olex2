@@ -568,15 +568,19 @@ olxstr TAsymmUnit::_SummFormula(const olxstr &Sep, double mult) const {
 olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
   size_t matrixInc = 0;
   // searching the identity matrix
-  bool Uniq = true;
-  for( size_t i=0; i < MatrixCount(); i++ )  {
-    if( GetMatrix(i).IsI() )  {
-      Uniq = false;
+  bool hasI = false;
+  for (size_t i=0; i < MatrixCount(); i++) {
+    if (GetMatrix(i).IsI()) {
+      hasI = true;
       break;
     }
   }
-  if( Uniq )  matrixInc ++;
-  return _SummFormula(Sep, MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
+  if (!hasI)  matrixInc ++;
+  double m = 1;
+  if (MultiplyZ) {
+    m = (MatrixCount() + matrixInc)*TCLattice::GetLattMultiplier(this->Latt);
+  }
+  return _SummFormula(Sep, m);
 }
 //..............................................................................
 double TAsymmUnit::GetZPrime() const {

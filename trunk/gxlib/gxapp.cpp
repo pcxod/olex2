@@ -4708,7 +4708,7 @@ void TGXApp::LoadStructureStyle(const TDataItem &item) {
     FGlRender->GetScene().FromDataItem(*scene_item);
   IndividualCollections.Clear();
   TDataItem& ind_col = item.GetItemByName("ICollections");
-  for( size_t i=0; i < ind_col.FieldCount(); i++ )
+  for (size_t i=0; i < ind_col.FieldCount(); i++)
     IndividualCollections.Add(ind_col.GetFieldByIndex(i));
 }
 //..............................................................................

@@ -12,6 +12,7 @@
 TStopWatchManager::Record *TStopWatchManager::current = NULL;
 //.............................................................................
 const_strlist TStopWatchManager::Record::prepareList(size_t level)  {
+  volatile olx_scope_cs cs_(GetCriticalSection());
   TStrList out;
   olxstr ident = olxstr::CharStr(' ', level*2);
   (out.Add(ident) << "Profiling information for " << FunctionName)
