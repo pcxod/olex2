@@ -589,18 +589,24 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const uint16_t sF
 }
 #endif
 //..............................................................................
-bool TEFile::ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const uint16_t sF)  {
-  olxstr cd( TEFile::CurrentDir() );
-  if( !TEFile::ChangeDir(dir) )
+bool TEFile::ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask,
+  const uint16_t sF)
+{
+  volatile olx_scope_cs cs_(TBasicApp::GetCriticalSection());
+  olxstr cd = TEFile::CurrentDir();
+  if (!TEFile::ChangeDir(dir))
     return false;
   bool res = ListCurrentDirEx(Out, Mask, sF);
   TEFile::ChangeDir(cd);
   return res;
 }
 //..............................................................................
-bool TEFile::ListDir(const olxstr& dir, TStrList &Out, const olxstr &Mask, const uint16_t sF)  {
-  olxstr cd( TEFile::CurrentDir() );
-  if( !TEFile::ChangeDir(dir) )
+bool TEFile::ListDir(const olxstr& dir, TStrList &Out, const olxstr &Mask,
+  const uint16_t sF)
+{
+  volatile olx_scope_cs cs_(TBasicApp::GetCriticalSection());
+  olxstr cd = TEFile::CurrentDir();
+  if (!TEFile::ChangeDir(dir))
     return false;
   bool res = ListCurrentDir(Out, Mask, sF);
   TEFile::ChangeDir(cd);

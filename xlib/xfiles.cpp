@@ -730,6 +730,12 @@ void TXFile::LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   EndUpdate();
+  if (Cmds.Count() == 1 && Cmds[0].ToBool()) {
+    TIns * ins = dynamic_cast<TIns *>(FLastLoader);
+    if (ins != NULL) {
+      ins->GetLst().Clear();
+    }
+  }
 }
 //..............................................................................
 void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
@@ -814,9 +820,11 @@ TLibrary* TXFile::ExportLibrary(const olxstr& name)  {
   lib->Register(
     new TMacro<TXFile>(this,  &TXFile::LibEndUpdate, "EndUpdate",
       EmptyString(),
-      fpNone|psCheckFileTypeIns,
+      fpNone|fpOne|psCheckFileTypeIns,
       "Must be called after the content of the asymmetric unit has changed - "
-      "this function will update the program state")
+      "this function will update the program state. If true is passed as an "
+      "argument - the loader related metainformation (like LST for INS) will "
+      "be cleared too.")
   );
 
   lib->Register(

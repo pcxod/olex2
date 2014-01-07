@@ -3411,7 +3411,10 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
   AGDrawObject *G = FXApp->SelectObject(x, y);
-  if( G == NULL )  {
+  if (Modes->GetCurrent() != NULL && Modes->GetCurrent()->OnDblClick()) {
+    return true;
+  }
+  if (G == NULL) {
     processMacro("sel -u");
     return true;
   }
