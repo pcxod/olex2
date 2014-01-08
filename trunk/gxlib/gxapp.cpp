@@ -5127,7 +5127,7 @@ void TGXApp::CreateRings(bool force, bool create) {
   if (cgs != NULL)
     glm = cgs->FindMaterial("Sphere");
   TStrList str_rings(TBasicApp::GetOptions().FindValue(
-    "aromatic_rings_def", "C5,C6,NC5,SC4"), ',');
+    "aromatic_rings_def", "C5,C6,NC5,SC4,N2C3,NCNC2"), ',');
   TTypeList<TSAtomPList> rings;
   for (size_t i=0; i < str_rings.Count(); i++) {
     FindRings(str_rings[i], rings);

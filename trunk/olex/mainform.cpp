@@ -2603,7 +2603,27 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     FXApp->GetRender().GetStyles().Clear();
   }
   DF.SaveToXLFile(FN+".tmp");
-  TEFile::Rename(FN+".tmp", FN);
+  TEFile::Rename(FN + ".tmp", FN);
+  /* check if the stereo buffers are available and if not disable - this way the
+  multisamplin can be enabled!
+  */
+  {
+    GLboolean stereo_supported = GL_FALSE;
+    olx_gl::get(GL_STEREO, &stereo_supported);
+    if (stereo_supported == GL_FALSE) {
+      try {
+        olxstr str_glStereo = olx_getenv("OLEX2_GL_STEREO");
+        bool stereo_enabled = FXApp->GetOptions().FindValue("gl_stereo",
+          str_glStereo.IsEmpty() ? TrueString() : str_glStereo).ToBool();
+        if (stereo_enabled) {
+          this->UpdateUserOptions("gl_stereo", FalseString());
+        }
+      }
+      catch (const TExceptionBase &e) {
+        TBasicApp::NewLogEntry(logExceptionTrace) << e;
+      }
+    }
+  }
 }
 //..............................................................................
 void TMainForm::LoadSettings(const olxstr &FN)  {

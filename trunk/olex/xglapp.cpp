@@ -143,19 +143,6 @@ bool TGlXApp::OnInit()  {
 #endif
   // register wxWidgets to handle ZIP files
   TwxZipFileSystem::RegisterFactory();
-  // KUBUNTU opengl does not want any parameters :)
-  olxstr str_glAttr = olx_getenv("OLEX2_GL_DEFAULT"),
-         str_glStereo = olx_getenv("OLEX2_GL_STEREO"),
-         str_glDepth = olx_getenv("OLEX2_GL_DEPTH_BITS");
-  short depth_bits = str_glDepth.IsInt() ? str_glDepth.ToInt() : 24;
-  int *gl_attr = TGlCanvas::GetGlAttributes(
-    !str_glAttr.IsEmpty() && str_glAttr.Equalsi("TRUE"),
-    str_glStereo.IsEmpty() || str_glStereo.Equalsi("TRUE"),
-    depth_bits
-    );
-  MainForm->GlCanvas(new TGlCanvas(
-    MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0,
-      wxT("GL_CANVAS")));
   // create an instance of the XApplication
   olxstr BaseDir(argv[0]);
   // 2008.09.29
@@ -226,7 +213,22 @@ bool TGlXApp::OnInit()  {
 #ifdef __WIN32__  // on LInux they are multiline by default...
   MainForm->SetToolTip(wxT("\n")); // force multiline ttoltips with (&#10;)
 #endif
-  try  {  MainForm->XApp(XApp);  }  // his sets XApp for the canvas as well
+  olxstr str_glAttr = olx_getenv("OLEX2_GL_DEFAULT"),
+    str_glStereo = olx_getenv("OLEX2_GL_STEREO"),
+    str_glDepth = olx_getenv("OLEX2_GL_DEPTH_BITS");
+  short depth_bits = str_glDepth.IsInt() ? str_glDepth.ToInt() : 24;
+  olx_array_ptr<int> gl_attr = TGlCanvas::GetGlAttributes(
+    !str_glAttr.IsEmpty() && str_glAttr.Equalsi("TRUE"),
+    XApp->GetOptions().FindValue(
+    "gl_stereo", str_glStereo.IsEmpty() ? TrueString() : str_glStereo).ToBool(),
+    XApp->GetOptions().FindValue(
+    "gl_multisample", TrueString()).ToBool(),
+    depth_bits
+    );
+  MainForm->GlCanvas(new TGlCanvas(
+    MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0,
+    wxT("GL_CANVAS")));
+  try  { MainForm->XApp(XApp); }  // his sets XApp for the canvas as well
   catch(const TExceptionBase& e)  {
     TMainForm::ShowAlert(e);
   }
