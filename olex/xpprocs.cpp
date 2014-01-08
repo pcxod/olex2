@@ -3904,10 +3904,322 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal( GetStructureOlexFolder().SubStringFrom(0,1) );
 }
 //..............................................................................
+struct FormulaFitter {
+  typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+  olxstr_dict <olx_object_ptr<atype> > input;
+  SortedPtrList<const cm_Element, TPointerComparator> elements;
+  ematd inm, VcV; // inverted normal matrix
+  evecd nr; // parameter estimations
+  double S, R1;
+  TPSTypeList<double, size_t> residuals;
+  void fit() {
+    elements.Clear();
+    residuals.Clear();
+    for (size_t i = 0; i < input.Count(); i++) {
+      const atype &v = input.GetValue(i);
+      for (size_t j = 0; j < v.GetB().Count(); j++) {
+        elements.AddUnique(&v.GetB()[j].element);
+      }
+    }
+    ematd mt(input.Count(), elements.Count());
+    evecd r(input.Count());
+    for (size_t i = 0; i < input.Count(); i++) {
+      atype & v = input.GetValue(i);
+      for (size_t j = 0; j < v.GetB().Count(); j++) {
+        size_t ei = elements.IndexOf(&v.GetB()[j].element);
+        mt[i][ei] = v.GetB()[j].count;
+      }
+      r[i] = v.GetA();
+    }
+    ematd m = mt;
+    mt.Transpose();
+    math::LU::Invert(inm = mt*m);
+    nr = (inm*mt)*r;
+    double R1t = 0, R1b = 0;
+    S = 0;
+    for (size_t i = 0; i < input.Count(); i++) {
+      atype & v = input.GetValue(i);
+      double calc = 0;
+      for (size_t j = 0; j < v.GetB().Count(); j++) {
+        size_t ei = elements.IndexOf(&v.GetB()[j].element);
+        calc += v.GetB()[j].count*nr[ei];
+      }
+      double diff = v.GetA() - calc;
+      R1t += olx_abs(diff);
+      R1b += v.GetA();
+      double r = diff*diff;
+      S += r;
+      residuals.Add(r, i);
+    }
+    R1 = R1t / R1b;
+    VcV = inm*(S / (input.Count() - elements.Count()));
+  }
+  void printResiduals(size_t count=10) {
+    TBasicApp::NewLogEntry() << count << " Highest residuals:";
+    size_t top = olx_min(residuals.Count(), count);
+    for (size_t i = 0; i < top; i++) {
+      size_t idx = residuals.Count() - i - 1;
+      const olxstr &key = input.GetKey(residuals.GetObject(idx));
+      TBasicApp::NewLogEntry() << olxstr::FormatFloat(3, residuals.GetKey(idx))
+        << ": " << key;
+    }
+    TBasicApp::NewLogEntry() << "Mean residual: " <<
+      olxstr::FormatFloat(3, S / input.Count());
+  }
+  bool filterResiduals(double th=0) {
+    if (th == 0) {
+      th = (S / input.Count()) * 9;
+    }
+    TStrList keys;
+    for (size_t i = 0; i < residuals.Count(); i++) {
+      size_t idx = residuals.Count() - i - 1;
+      if (residuals.GetKey(idx) > th)
+        keys << input.GetKey(residuals.GetObject(idx));
+      else
+        break;
+    }
+    for (size_t i = 0; i < keys.Count(); i++) {
+      input.Delete(input.IndexOf(keys[i]));
+    }
+    return !keys.IsEmpty();
+  }
+  void printResults() {
+    TSizeList cnts(elements.Count(), olx_list_init::zero());
+    for (size_t i = 0; i < input.Count(); i++) {
+      atype & v = input.GetValue(i);
+      for (size_t j = 0; j < v.GetB().Count(); j++) {
+        cnts[elements.IndexOf(&v.GetB()[j].element)]++;
+      }
+    }
+    for (size_t i = 0; i < elements.Count(); i++) {
+      double vsu = sqrt(VcV[i][i]);
+      TEValueD v(nr[i], vsu);
+      double r = olx_sphere_radius(nr[i]);
+      TEValueD v1(r, r/3*vsu/nr[i]);
+      TBasicApp::NewLogEntry() << elements[i]->symbol << ' ' <<
+        v.ToString() << ' ' <<
+        v1.ToString() <<
+        " observations: " << cnts[i];
+    }
+    TBasicApp::NewLogEntry() << "R1 = " << olxstr::FormatFloat(2, R1*100);
+  }
+  TEValueD estimate(const TTypeList<ElementCount> &f) {
+    double res = 0, su = 0;
+    for (size_t j = 0; j < f.Count(); j++) {
+      size_t ei = elements.IndexOf(&f[j].element);
+      if (ei == InvalidIndex)
+        return -1;
+      res += f[j].count*nr[ei];
+      su += olx_sqr(f[j].count)*VcV[ei][ei];
+      //for (size_t k = 0; k < f.Count(); k++) {
+      //  if (k == j) continue;
+      //  size_t vi = elements.IndexOf(&f[k].element);
+      //  su += 2 * f[j].count*f[k].count*VcV[ei][vi];
+      //}
+    }
+    return TEValueD(res, sqrt(su));
+  }
+  void toDataItem(TDataItem &di) {
+    TDataItem &ei = di.AddItem("elements");
+    for (size_t i = 0; i < elements.Count(); i++) {
+      ei.AddItem(elements[i]->symbol, nr[i]);
+    }
+    olxstr v;
+    v.Allocate(elements.Count()*(elements.Count() + 1) * 10 / 2);
+    for (size_t i = 0; i < elements.Count(); i++) {
+      for (size_t j = i; j < elements.Count(); j++) {
+        v << VcV[i][j] << ' ';
+      }
+    }
+    di.AddItem("VcV", v);
+  }
+  void fromDataItem(const TDataItem &di) {
+    elements.Clear();
+    TDataItem &ei = di.GetItemByName("elements");
+    elements.SetCapacity(ei.ItemCount());
+    nr.Resize(ei.ItemCount());
+    for (size_t i = 0; i < ei.ItemCount(); i++) {
+      TDataItem &e = ei.GetItemByIndex(i);
+      elements.Add(XElementLib::FindBySymbol(e.GetName()));
+      nr[i] = e.GetValue().ToDouble();
+    }
+    TStrList toks(di.GetItemByName("VcV").GetValue(), ' ');
+    VcV.Resize(ei.ItemCount(), ei.ItemCount());
+    for (size_t i = 0, idx = 0; i < elements.Count(); i++) {
+      for (size_t j = i; j < elements.Count(); j++, idx++) {
+        VcV[i][j] = VcV[j][i] = toks[idx].ToDouble();
+      }
+    }
+  }
+};
+class ExtractInfoTask : public TaskBase {
+  TCif cif;
+  const TStrList &files;
+  TLattice latt;
+  RefinementModel rm;
+  TStrList &out;
+public:
+  ExtractInfoTask(const TStrList &files, TStrList &out) :
+    files(files),
+    latt(*(new SObjectProvider)),
+    rm(latt.GetAsymmUnit()),
+    out(out)
+  {
+    latt.GetAsymmUnit().SetRefMod(&rm);
+  }
+  void Run(size_t i) {
+    try {
+      cif.LoadFromFile(files[i]);
+      rm.Clear(rm_clear_ALL);
+      latt.Clear(false);
+      rm.Assign(cif.GetRM(), true);
+      latt.Init();
+      olx_critical_section *cs = GetCriticalSection();
+      if (cs) cs->enter();
+      olxstr &l = out.Add(TEFile::ExtractFileName(files[i]));
+      l << ' ' << latt.GetAsymmUnit().SummFormula(' ') << ' ' <<
+        latt.GetAsymmUnit().CalcCellVolume();
+      if (cs) cs->leave();
+    }
+    catch (...) {
+    }
+  }
+  ExtractInfoTask *Replicate() {
+    return new ExtractInfoTask(files, out);
+  }
+};
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TDataFile df;
-  FXApp->XFile().ToDataItem(df.Root().AddItem("str"));
-  df.SaveToXMLFile("e:/1.xml");
+  olxstr sf = FXApp->XFile().GetAsymmUnit().SummFormula(' ', true);
+
+  if (false) {
+    TFileTree ft("f:/r2");
+    ft.Expand();
+    TStrList files;
+    ft.GetRoot().ListFiles(files, "*.cif");
+    TStrList out;
+    ExtractInfoTask task(files, out);
+    TListIteratorManager<ExtractInfoTask> job(task, files.Count(),
+      tLinearTask, 20);
+    TCStrList(out).SaveToFile("e:/c-v.txt");
+  }
+  {
+    FormulaFitter fitter;
+    olxstr result_file = "e:/vol-res.xld";
+    if (TEFile::Exists(result_file)) {
+      TDataFile df;
+      df.LoadFromXLFile(result_file);
+      fitter.fromDataItem(df.Root());
+    }
+    else {
+      TStrList f;
+      typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+      //f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
+      f.LoadFromFile("e:/c-v.txt");
+      for (size_t li = 0; li < f.Count(); li++) {
+        TStrList toks(f[li].Replace('\t', ' '), ' ');
+        if (toks.Count() < 3) continue;
+        if (toks[0].Equalsi("rem")) continue;
+        double vol = toks.GetLastString().ToDouble();
+        fitter.input.Add(toks[0],
+          new atype(vol,
+          XElementLib::ParseElementString(toks.Text(' ', 1, toks.Count() - 1))));
+      }
+      fitter.fit();
+      fitter.printResults();
+      fitter.printResiduals(10);
+      while (fitter.filterResiduals()) {
+        fitter.fit();
+        fitter.printResults();
+        fitter.printResiduals(10);
+      }
+      TDataFile df;
+      fitter.toDataItem(df.Root());
+      df.SaveToXLFile(result_file);
+    }
+
+    if (Cmds.Count() > 0) {
+      TTypeList<ElementCount> f =
+        XElementLib::ParseElementString(Cmds.Text(' '));
+      TBasicApp::NewLogEntry() << "Calculated: " << fitter.estimate(f).ToString();
+    }
+  }
+  //{
+  //  TStrList f;
+  //  typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+  //    olxstr_dict <olx_object_ptr<atype> > input;
+  //  f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
+  //  for (size_t li = 0; li < f.Count(); li++) {
+  //    TStrList toks(f[li].Replace('\t', ' '), ' ');
+  //    if (toks.Count() < 3) continue;
+  //    double vol = toks.GetLastString().ToDouble();
+  //    input.Add(toks[0],
+  //      new atype(vol,
+  //        XElementLib::ParseElementString(toks.Text(' ', 1, toks.Count() - 1))));
+  //  }
+  //  ematd mt(input.Count(), 2), rt(1, input.Count());
+  //  evecd r(input.Count());
+  //  for (size_t i = 0; i < input.Count(); i++) {
+  //    atype & v = input.GetValue(i);
+  //    double cnt = 0, vs=0;
+  //    for (size_t j = 0; j < v.GetB().Count(); j++) {
+  //      cnt += v.GetB()[j].count;
+  //      vs += v.GetB()[j].count*olx_sphere_volume(v.GetB()[j].element.r_vdw);
+  //    }
+  //    mt[i][0] = -cnt;
+  //    mt[i][1] = 1;
+  //    r[i] = rt[0][i] = (v.GetA() - vs);
+  //  }
+  //  ematd m = mt;
+  //  mt.Transpose();
+  //  ematd nm = mt*m, inm = nm;
+  //  math::LU::Invert(inm);
+  //  evecd nr = (inm*mt)*r;
+  //  //ematd H = (m*inm)*mt, I(H.RowCount(), H.ColCount());
+  //  //I.I();
+  //  //ematd ImH = I - H;
+  //  //evecd S = (rt*ImH)*r;
+  //  double R1t=0, R1b=0, mr=10000;
+  //  for (size_t i = 0; i < input.Count(); i++) {
+  //    atype & v = input.GetValue(i);
+  //    double cnt = 0, vs = 0;
+  //    for (size_t j = 0; j < v.GetB().Count(); j++) {
+  //      cnt += v.GetB()[j].count;
+  //      vs += v.GetB()[j].count*olx_sphere_volume(v.GetB()[j].element.r_vdw);
+  //    }
+  //    double calc = vs - cnt*nr[0] + nr[1];
+  //    double diff = v.GetA() - calc;
+  //    R1t += olx_abs(diff);
+  //    R1b += v.GetA();
+  //    double r = diff*diff;
+  //    if (i == 0) {
+  //      mr = r;
+  //    }
+  //    else if (r < mr) {
+  //      mr = r;
+  //    }
+  //  }
+  //  double R1 = R1t / R1b;
+  //  ematd VcV = inm*(mr / (input.Count() - 2));
+  //  for (size_t i = 0; i < nr.Count(); i++) {
+  //    TEValueD v(nr[i], sqrt(VcV[i][i]));
+  //    TBasicApp::NewLogEntry() << v.ToString();
+  //  }
+  //  if (Cmds.Count() > 0) {
+  //    TTypeList<ElementCount> f =
+  //      XElementLib::ParseElementString(Cmds.Text(' '));
+  //    double cnt = 0, vs = 0;
+  //    for (size_t j = 0; j < f.Count(); j++) {
+  //      cnt += f[j].count;
+  //      vs += f[j].count*olx_sphere_volume(f[j].element..r_vdw);
+  //    }
+  //    double calc = vs - cnt*nr[0] + nr[1];
+  //    TBasicApp::NewLogEntry() << "Calculated: " << calc;
+  //  }
+  //}
+//  TDataFile df;
+//  FXApp->XFile().ToDataItem(df.Root().AddItem("str"));
+//  df.SaveToXMLFile("e:/1.xml");
+
   //TXAtomPList atoms = FindXAtoms(Cmds, false, true);
   //if (atoms.Count() == 2) {
   //  if (atoms[0]->GetEllipsoid() != NULL) {

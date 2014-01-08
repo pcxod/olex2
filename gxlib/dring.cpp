@@ -62,7 +62,7 @@ void TDRing::Create(const olxstr& cName) {
   if (torus == NULL) {
     torus = &Parent.NewPrimitive(sgloCommandList);
     torus->StartList();
-    GlTorus::Render(0.075, 1, 8, 20);
+    GlTorus::Render(0.075, 1, 8, 25);
     torus->EndList();
   }
   GlP.StartList();

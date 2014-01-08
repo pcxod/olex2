@@ -12,8 +12,6 @@
 #include "glgroup.h"
 #include "wxglscene.h"
 
-int* TGlCanvas::glAttrib = NULL;
-
 IMPLEMENT_CLASS(TGlCanvas, wxGLCanvas)
 
 BEGIN_EVENT_TABLE(TGlCanvas, wxGLCanvas)
@@ -62,10 +60,6 @@ TGlCanvas::~TGlCanvas() {
 
   if (Context != NULL)
     delete Context;
-  if( glAttrib != NULL )  {
-    delete [] glAttrib;
-    glAttrib = NULL;
-  }
 }
 //..............................................................................
 void TGlCanvas::XApp(TGXApp *XA) {
@@ -234,25 +228,29 @@ void TGlCanvas::OnChar(wxKeyEvent& m)  {
   FParent->OnChar(m);
 }
 //..............................................................................
-int* TGlCanvas::GetGlAttributes(bool _default, bool stereo, short depth_bits)  {
-  if( _default )  return NULL;
-  if( glAttrib != NULL )
-    delete [] glAttrib;
-  const int cnt = stereo ? 9 : 8;
-  glAttrib = new int [2*cnt+1];
-  glAttrib[2*cnt] = 0;
-  glAttrib[0] = WX_GL_RGBA;  glAttrib[1] = 1;
-  glAttrib[2] = WX_GL_DOUBLEBUFFER;  glAttrib[3] = 1;
-  glAttrib[4] = WX_GL_MIN_ACCUM_RED;  glAttrib[5] = 8;
-  glAttrib[6] = WX_GL_MIN_ACCUM_GREEN;  glAttrib[7] = 8;
-  glAttrib[8] = WX_GL_MIN_ACCUM_BLUE;  glAttrib[9] = 8;
-  glAttrib[10] = WX_GL_MIN_ACCUM_ALPHA;  glAttrib[11] = 8;
-  glAttrib[12] = WX_GL_DEPTH_SIZE;  glAttrib[13] = depth_bits;
-  glAttrib[14] = WX_GL_STENCIL_SIZE;  glAttrib[15] = 8;
-  if( stereo )  {
-    glAttrib[16] = WX_GL_STEREO;  glAttrib[17] = 1;
+olx_array_ptr<int> TGlCanvas::GetGlAttributes(bool _default, bool stereo,
+  bool multisampling, short depth_bits)
+{
+  if (_default)  return (int*)NULL;
+  size_t idx=0;
+  olx_array_ptr<int> glAttrib(2*11+1);
+  glAttrib[idx++] = WX_GL_RGBA;
+  glAttrib[idx++] = WX_GL_DOUBLEBUFFER;
+  glAttrib[idx++] = WX_GL_MIN_ACCUM_RED;  glAttrib[idx++] = 8;
+  glAttrib[idx++] = WX_GL_MIN_ACCUM_GREEN;  glAttrib[idx++] = 8;
+  glAttrib[idx++] = WX_GL_MIN_ACCUM_BLUE;  glAttrib[idx++] = 8;
+  glAttrib[idx++] = WX_GL_MIN_ACCUM_ALPHA;  glAttrib[idx++] = 8;
+  glAttrib[idx++] = WX_GL_DEPTH_SIZE;  glAttrib[idx++] = depth_bits;
+  glAttrib[idx++] = WX_GL_STENCIL_SIZE;  glAttrib[idx++] = 8;
+#if wxCHECK_VERSION(2,9,0)
+  if (multisampling) {
+    glAttrib[idx++] = WX_GL_SAMPLE_BUFFERS;  glAttrib[idx++] = 1;
+    glAttrib[idx++] = WX_GL_SAMPLES;  glAttrib[idx++] = 4;
   }
-//  WX_GL_SAMPLE_BUFFERS, 1,  // these are not defined though documented...
-//  WX_GL_SAMPLES, 4,
+#endif
+  if (stereo)  {
+    glAttrib[idx++] = WX_GL_STEREO;
+  }
+  glAttrib[idx++] = 0;
   return glAttrib;
 }

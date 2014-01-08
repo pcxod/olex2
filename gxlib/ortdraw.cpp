@@ -196,7 +196,7 @@ ort_bond<draw_t>::ort_bond(const OrtDraw& parent,
   object(object),
   atom_a(a1.get_z() < a2.get_z() ? a1 : a2),
   atom_b(a1.get_z() < a2.get_z() ? a2 : a1),
-  swapped(a1.get_z() > a2.get_z())
+  swapped(a2.get_z() <= a1.get_z())
 {
   draw_style = 0;
 }
@@ -275,7 +275,15 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
       vec3f(-touch_point[1], touch_point[0], 0).Normalise(), touch_point[2]);
   const mat3f proj_mat = rot_mat*parent.ProjMatr;
   const float _brad = brad*(1+pers_scale)*scalex;
-  if( !atom_a.IsSpherical() && atom_a.IsSolid() )  {
+  if (olx_abs(atom_a.get_z() - atom_b.get_z()) < 1e-3f) {
+    for (uint16_t j = 0; j < parent.BondDiv; j++)  {
+      parent.BondProjF[j] = ((parent.BondCrd[j] * rot_mat)*parent.ProjMatr).
+        NormaliseTo(_brad);
+      parent.BondProjT[j] = (parent.BondCrd[j] * proj_mat).
+        NormaliseTo(brad * 2 * scalex) + dir_vec*b_len;
+    }
+  }
+  else if (!atom_a.IsSpherical() && atom_a.IsSolid()) {
     mat3f elm = *atom_a.elpm;
     mat3f ielm = mat3f(elm).Normalise().Transpose();
     /* etm projects to ellipsoid and un-projects back to the cartesian frame
@@ -289,7 +297,7 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
     const vec3f tp = etm*touch_point;
     // create rotation to compensate for the elliptical distrortion
     const float erm_ca = tp.CAngle(touch_point);
-    if( erm_ca != 1 )  {
+    if (olx_abs(erm_ca-1) > 1e-3f) {
       olx_create_rotation_matrix_(
         erm, tp.XProdVec(touch_point).Normalise(), tp.CAngle(touch_point));
     }
@@ -316,7 +324,7 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
       parent.BondProjF[j] += dir_vec*off_len;
     }
   }
-  if( scalex < 1.1 &&
+  if ((draw_style&ortep_color_bond) != 0 && scalex < 1.1 &&
     (mask&((1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 9) | (1 << 10)
     | (1 << 14) | (1 << 15) | (1 << 16) | (1 << 17))) != 0)
   {

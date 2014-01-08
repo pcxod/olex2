@@ -76,7 +76,8 @@ struct ort_bond : public a_ort_object  {
   virtual void render(PSWriter&) const;
   //virtual float get_z() const {  return (atom_a.crd[2]+atom_b.crd[2])/2;  }
   virtual float get_z() const {
-    return olx_min(atom_a.crd[2], atom_b.crd[2])+0.01f;
+    return olx_min(atom_a.crd[2], atom_b.crd[2]) +
+      (olx_abs(atom_a.crd[2]-atom_b.crd[2]) < 1e-3f ? -0.01f : +0.01f);
   }
 protected:
   void _render(PSWriter&, float scalex, uint32_t mask) const;

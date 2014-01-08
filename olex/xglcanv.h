@@ -28,7 +28,6 @@ private:
   short MouseButton;
   class TMainForm *FParent;
   wxGLContext* Context;
-  static int* glAttrib;
   short EncodeEvent(const wxMouseEvent &evt, bool update_button=true);
 public:
   TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1,
@@ -45,10 +44,11 @@ public:
   TGXApp *GetXApp() { return FXApp; }
 
   void Render();
-  /* the arrays is staically allocated and should not be modified!!! 
-  wxWidgets needs not a const pointer... If default is true - NULL is returned,
-  else if stereo is true - Olex2 will try to initialise stereo buffers */
-  static int* GetGlAttributes(bool _default, bool stereo, short depth_bits);
+  /* If default is true - NULL is returned,
+  else if stereo is true - Olex2 will try to initialise stereo buffers
+  */
+  static olx_array_ptr<int> GetGlAttributes(bool _default, bool stereo,
+    bool multisampling, short depth_bits);
   DECLARE_CLASS(wxGLCanvas)
   DECLARE_EVENT_TABLE()
 };

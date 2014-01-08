@@ -117,7 +117,7 @@ void TGlRenderer::Initialise()  {
   GLUSelection = TBasicApp::GetInstance().GetOptions().FindValue(
     "gl_selection", !vendor.StartsFrom("Intel")).ToBool();
   if (TBasicApp::GetInstance().GetOptions().FindValue(
-    "gl_multisample", FalseString()).ToBool())
+    "gl_multisample", TrueString()).ToBool())
   {
     olx_gl::enable(GL_MULTISAMPLE);
   }
@@ -369,7 +369,7 @@ void TGlRenderer::SetZoom(double V) {
   else if( V > 100 )
     FBasis.SetZoom(100);
   else
-    FBasis.SetZoom(V); 
+    FBasis.SetZoom(V);
 }
 //..............................................................................
 void TGlRenderer::SetView(int x, int y, bool identity, bool Select, short Res)  {
