@@ -3633,12 +3633,29 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
            " its content mismatches the asymmetric unit";
         }
         else {
+          bool need_new_site_m =
+            tab->RemoveCol("_atom_site_symmetry_multiplicity");
+          if (!need_new_site_m) {
+            need_new_site_m = (
+              (tab->ColIndex("_atom_site_site_symmetry_multiplicity") == InvalidIndex)
+              &&
+              (tab->ColIndex("_atom_site_site_symmetry_order") == InvalidIndex));
+          }
+          size_t st_order_ind = InvalidIndex;
+          if (need_new_site_m && has_special_positions) {
+            tab->AddCol("_atom_site_site_symmetry_order");
+            st_order_ind = tab->ColCount() - 1;
+          }
           tab->RemoveCol("_atom_site_refinement_flags");
           size_t rf_pos_ind = tab->ColIndex("_atom_site_refinement_flags_posn");
           if (rf_pos_ind == InvalidIndex) {
             tab->AddCol("_atom_site_refinement_flags_posn");
             rf_pos_ind = tab->ColCount()-1;
           }
+          // re-evaluate col indices!
+          if (st_order_ind != InvalidIndex)
+            st_order_ind = tab->ColIndex("_atom_site_site_symmetry_order");
+          // no more removals - so indices will stick
           size_t rf_adp_ind = tab->ColIndex("_atom_site_refinement_flags_adp");
           if ((!rU.IsEmpty() || has_special_positions) &&
             rf_adp_ind == InvalidIndex)
@@ -3646,11 +3663,17 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             tab->AddCol("_atom_site_refinement_flags_adp");
             rf_adp_ind = tab->ColCount()-1;
           }
+          size_t rf_occu_ind = tab->ColIndex("_atom_site_refinement_flags_occupancy");
+          if (has_special_positions && rf_occu_ind == InvalidIndex) {
+            tab->AddCol("_atom_site_refinement_flags_occupancy");
+            rf_occu_ind = tab->ColCount() - 1;
+          }
           size_t dg_ind = tab->ColIndex("_atom_site_disorder_group");
           if (dg_ind == InvalidIndex && has_parts) {
             tab->AddCol("_atom_site_disorder_group");
             dg_ind = tab->ColCount()-1;
           }
+
           TIntList h_t;
           size_t ri=0;
           for (size_t i=0; i < au.AtomCount(); i++, ri++) {
@@ -3753,6 +3776,15 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
                 tab->Set(ri, dg_ind, new cetString('.'));
               else
                 tab->Set(ri, dg_ind, new cetString((int)a.GetPart()));
+            }
+            if (has_special_positions) {
+              if (a.GetDegeneracy() == 1)
+                tab->Set(ri, rf_occu_ind, new cetString('.'));
+              else
+                tab->Set(ri, rf_occu_ind, new cetString('P'));
+            }
+            if (st_order_ind != InvalidIndex) {
+              tab->Set(ri, st_order_ind, new cetString(a.GetDegeneracy()));
             }
           }
           bool force_update = false;
