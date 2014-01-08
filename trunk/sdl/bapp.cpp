@@ -378,7 +378,7 @@ void BAPP_GetOptCount(const TStrObjList&, TMacroError& E)  {
 void BAPP_GetOpt(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
   TBasicApp &a = TBasicApp::GetInstance();
-  if (i > a.GetOptions().Count()) {
+  if (i >= a.GetOptions().Count()) {
     E.SetRetVal(EmptyString());
     return;
   }

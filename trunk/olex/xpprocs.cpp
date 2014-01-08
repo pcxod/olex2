@@ -4008,7 +4008,7 @@ struct FormulaFitter {
     for (size_t j = 0; j < f.Count(); j++) {
       size_t ei = elements.IndexOf(&f[j].element);
       if (ei == InvalidIndex)
-        return -1;
+        return TEValueD(-1.0);
       res += f[j].count*nr[ei];
       su += olx_sqr(f[j].count)*VcV[ei][ei];
       //for (size_t k = 0; k < f.Count(); k++) {
