@@ -27,6 +27,7 @@ class TDataItem: public AReferencible  {
   TDataItem* Parent;
   size_t Level;
   void* Data;
+  void UpdateFieldIndices(size_t deleted);
 protected:
   TDataItem& Root();
   olxstr GetFullName();
@@ -54,6 +55,7 @@ public:
   void ResolveFields(TStrList* Log); // resolves referenced fields
   size_t LoadFromString(size_t start, const olxstr &Data, TStrList* Log);
   size_t LoadFromXMLString(size_t start, const olxstr &Data, TStrList* Log);
+  void ValueFieldToValue();
   void SaveToStrBuffer(TEStrBuffer &Data) const;
   void SaveToXMLStrBuffer(TEStrBuffer &Data) const;
 
@@ -129,14 +131,20 @@ public:
   }
   const olxstr& GetFieldName(size_t i) const { return Fields.GetKey(i); }
   // deletes field by index
-  void DeleteFieldByIndex(size_t index) { Fields.Delete(index); }
+  void DeleteFieldByIndex(size_t index, bool updateIndices = false) {
+    Fields.Delete(index);
+    if (updateIndices)
+      UpdateFieldIndices(index);
+  }
   /* deletes field by name, only deletes the first one if there are several
   with the same name. Returns true if the field is deleted.
   */
-  template <class T> bool DeleteFieldByName(const T& Name) {
+  template <class T> bool DeleteFieldByName(const T& Name,
+    bool updateIndices = false)
+  {
     const size_t fieldIndex = FieldIndex(Name);
     if (fieldIndex != InvalidIndex) {
-      DeleteFieldByIndex(fieldIndex);
+      DeleteFieldByIndex(fieldIndex, updateIndices);
       return true;
     }
     return false;

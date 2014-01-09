@@ -55,6 +55,7 @@ bool TDataFile::LoadFromXMLTextStream(IInputStream& io, TStrList* Log)  {
     FRoot->LoadFromXMLString(i, in, Log);
     break;
   }
+  FRoot->ValueFieldToValue();
   return true;
 }
 //.............................................................................
