@@ -122,6 +122,8 @@ void TDataFile::SaveToXLFile(const olxstr &DataFile)  {
 void TDataFile::SaveToXMLFile(const olxstr &DataFile) {
   FileName = DataFile;
   TEStrBuffer bf(1024 * 32);
+  if (FRoot->FindItem("?xml") == NULL)
+    bf << "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
   FRoot->SaveToXMLStrBuffer(bf);
   TUtf8File::Create(DataFile, bf.ToString());
 }

@@ -783,6 +783,7 @@
     <ClInclude Include="..\..\..\sdl\exparse\exptree.h" />
     <ClInclude Include="..\..\..\sdl\exparse\expvalue.h" />
     <ClInclude Include="..\..\..\sdl\exparse\funcwrap.h" />
+    <ClInclude Include="..\..\..\sdl\xml.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
