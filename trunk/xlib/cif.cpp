@@ -1278,5 +1278,98 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
   return true;
 }
 //..............................................................................
-
-
+void TCif::ToDataItem(TDataItem &di_) const {
+  TDataItem &di = di_.AddItem("data");
+  olxstr_dict<olxstr> out_map;
+  for (size_t i = 0; i < data_provider.Count(); i++)  {
+    CifBlock& cb = data_provider[i];
+    olxstr block_name = cb.GetName();
+    if (block_name.IsEmpty() || block_name.IsNumber()) {
+      block_name = out_map(block_name, olxstr("data_") << block_name);
+    }
+    TDataItem &block = di.AddItem(block_name);
+    for (size_t j = 0; j < cb.params.Count(); j++) {
+      if (!cb.params.GetObject(j)->HasName()) {
+        block.AddItem("comment", cb.params.GetObject(j)->GetStringValue());
+        continue;
+      }
+      TStrList toks(cb.params[j], '_');
+      for (size_t ti = 0; ti < toks.Count(); ti++) {
+        size_t idx = out_map.IndexOf(toks[ti]);
+        if (idx == InvalidIndex) {
+          if (toks[ti].ContainAnyOf("/%")) {
+            const olxstr &rep =
+              out_map(toks[ti],
+                olxstr(toks[ti]).Replace('/', "_over_")
+                .Replace('%', "percent")
+                );
+            toks[ti] = rep;
+          }
+        }
+        else {
+          toks[ti] = out_map.GetValue(idx);
+        }
+        if (ti > 0) {
+          if (olxstr::o_isdigit(toks[ti].CharAt(0))) {
+            toks[ti - 1] << '_' << toks[ti];
+            toks.Delete(ti--);
+          }
+        }
+      }
+      size_t idx = 0;
+      TDataItem *p = block.FindItem(toks[idx]);
+      while (p != NULL) {
+        TDataItem *p1 = p->FindItem(toks[++idx]);
+        if (p1 == 0) break;
+        p = p1;
+      }
+      if (p == 0) p = &block;
+      for (size_t k = idx; k < toks.Count(); k++) {
+        p = &p->AddItem(toks[k]);
+      }
+      ICifEntry *ice = cb.params.GetObject(j);
+      IStringCifEntry *ise = dynamic_cast<IStringCifEntry*>(ice);
+      if (ise != 0) {
+        TStrList cnt;
+        if (ise->HasComment())
+          cnt.Add('#') << ise->GetComment();
+        for (size_t li = 0; li < ise->Count(); li++)
+          cnt << (*ise)[li];
+          p->SetValue(cnt.Text(NewLineSequence()));
+      }
+      else {
+        cetTable *tab = dynamic_cast<cetTable*>(ice);
+        if (tab != NULL) {
+          const size_t nf = tab->GetName().IsEmpty() ? 0
+            : (tab->GetName().Length()+1);
+          for (size_t tr = 0; tr < tab->RowCount(); tr++) {
+            TDataItem &tri = p->AddItem("tr");
+            for (size_t td = 0; td < tab->ColCount(); td++) {
+              TStrList cnt;
+              IStringCifEntry *tce = dynamic_cast<IStringCifEntry *>(
+                (*tab)[tr][td]);
+              for (size_t li = 0; li < tce->Count(); li++)
+                cnt << (*tce)[li];
+              olxstr name;
+              if (tab->ColName(td).Length() <= nf)
+                name = "value";
+              else
+                name = tab->ColName(td).SubStringFrom(nf);
+              tri.AddItem(name, cnt.Text(NewLineSequence()));
+            }
+          }
+        }
+      }
+    }
+  }
+  if (!out_map.IsEmpty()) {
+    TDataItem &tr = di_.AddItem("translation");
+    for (size_t i = 0; i < out_map.Count(); i++) {
+      tr.AddItem(out_map.GetValue(i), out_map.GetKey(i));
+    }
+  }
+}
+//..............................................................................
+void TCif::FromDataItem(const TDataItem &di_) {
+  return;
+}

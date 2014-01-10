@@ -10,6 +10,7 @@
 #include "dataitem.h"
 #include "estrbuffer.h"
 #include "estack.h"
+#include "xml.h"
 
 UseEsdlNamespace()
 using namespace exparse::parser_util;
@@ -189,7 +190,9 @@ TDataItem& TDataItem::AddItem(const olxstr& name, const olxstr& val)  {
   return AddItem(*(new TDataItem(this, name, val)));
 }
 //..............................................................................
-size_t TDataItem::LoadFromString(size_t start, const olxstr &Data, TStrList* Log)  {
+size_t TDataItem::LoadFromString(size_t start, const olxstr &Data,
+  TStrList* Log)
+{
   const size_t sl = Data.Length();
   for( size_t i=start; i < sl; i++ )  {
     olxch ch = Data[i];
@@ -363,7 +366,7 @@ size_t TDataItem::LoadFromXMLString(size_t start, const olxstr &Data,
         else { // the spaces can separate just two field names
           i--;
         }
-        _AddField(FieldName, FieldValue);
+        Fields.Add(FieldName, XML::decode(FieldValue)).SetB(Fields.Count());
         if ((i + 1) >= sl) return sl + 1;
         if (Data[i] == '/' && Data[i + 1] == '>') return i + 1;
       }
@@ -375,7 +378,7 @@ size_t TDataItem::LoadFromXMLString(size_t start, const olxstr &Data,
             break;
           i++;
         }
-        SetValue(Data.SubString(fn_start, i-fn_start));
+        Value = XML::decode(Data.SubString(fn_start, i-fn_start));
         i--;
       }
     }
@@ -483,15 +486,15 @@ void TDataItem::SaveToXMLStrBuffer(TEStrBuffer &Data) const {
     Data << ident.SubStringFrom(1);
     Data << '<' << Name;
     if (Name.StartsFrom('!')) {
-      Data << GetValue() << '>';
+      Data << XML::encode(GetValue()) << '>';
     }
     else {
       for (size_t i = 0; i < Fields.Count(); i++) {
         Data << ' ' << GetFieldName(i) << "=\"" <<
-          escape(GetFieldByIndex(i)) << '"';
+          XML::encode(GetFieldByIndex(i)) << '"';
       }
       if (!Value.IsEmpty()) {
-        Data << '>' << Value << "</" << Name << '>';
+        Data << '>' << XML::encode(Value) << "</" << Name << '>';
       }
       else {
         Data << (Name.StartsFrom('?') ? '?' : '/') << '>';
@@ -506,11 +509,11 @@ void TDataItem::SaveToXMLStrBuffer(TEStrBuffer &Data) const {
       Data << ident.SubStringFrom(1);
       Data << '<' << Name;
       if (!Value.IsEmpty()) {
-        Data << " value=\"" << escape(Value) << '"';
+        Data << " value=\"" << XML::encode(Value) << '"';
       }
       for (size_t i = 0; i < Fields.Count(); i++) {
         Data << ' ' << GetFieldName(i) << "=\"" <<
-          escape(GetFieldByIndex(i)) << '"';
+          XML::encode(GetFieldByIndex(i)) << '"';
       }
       if (si > 0) {
         Data << '>';

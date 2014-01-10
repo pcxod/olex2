@@ -43,7 +43,7 @@ protected:
     field_t & f = Fields.Add(name, exparse::parser_util::unescape(val));
     f.SetB(Fields.Count()-1);
   }
-  inline void SetParent(TDataItem* p)  {  Parent = p;  }
+  void SetParent(TDataItem* p)  {  Parent = p;  }
   TEStrBuffer& writeFullName(TEStrBuffer& bf) const;
 public:
   TDataItem(TDataItem *Parent, const olxstr& Name,
