@@ -12,6 +12,7 @@
 #include "symmspace.h"
 #include "math/composite.h"
 #include "xapp.h"
+#include "datafile.h"
 
 using namespace lcells;
 

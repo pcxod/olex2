@@ -574,7 +574,7 @@ public:
     const vec3i_list& omits)
   {
     TStopWatch sw(__FUNC__);
-    return DryMergeInP1Ex<RefListMerger>(refs, omits,
+    return DryMergeInP1Ex<RefListMerger>(Refs, omits,
       FunctionComparator::Make(&TReflection::Compare));
   }
 
@@ -593,7 +593,7 @@ public:
     TRefList& output, const vec3i_list& omits)
   {
     TStopWatch sw(__FUNC__);
-    return SGFilterEx(ml, refs, omits, output,
+    return SGFilterEx(ml, Refs, omits, output,
       FunctionComparator::Make(&TReflection::Compare));
   }
 

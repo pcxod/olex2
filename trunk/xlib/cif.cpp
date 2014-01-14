@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #include "cif.h"
-#include "dataitem.h"
+#include "datafile.h"
 #include "catom.h"
 #include "satom.h"
 #include "symmparser.h"
