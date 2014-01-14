@@ -22,7 +22,7 @@ struct MergeStats  {
     UniqueReflections,
     CentricReflections,
     ReflectionAPotMax,
-    OmittedByUser;      // OMIT h k l, all equivs
+    OmittedByUser;  // OMIT h k l, all equivs
   // symmetry independent reflections = sum(1/multiplicity)
   double IndependentReflections;
   bool FriedelOppositesMerged;
@@ -62,24 +62,24 @@ struct MergeStats  {
     FriedelOppositesMerged = false;
     IndependentReflections = 0;
   }
-  //bool IsEmpty() const {  return TotalReflections == 0;  }
 };
 //..............................................................................
 class RefMerger {
-  template <class RefListMerger> 
+  template <class RefListMerger, class Comparator>
   static MergeStats _DoMerge(const SymmSpace::InfoEx& info_ex, TRefPList& refs,
-    const vec3i_list& omits, TRefList& output)
+    const vec3i_list& omits, TRefList& output, const Comparator &cmp)
   {
     if( refs.IsEmpty() )
       throw TInvalidArgumentException(__OlxSourceInfo, "empty reflection list");
     MergeStats stats;
     const size_t ref_cnt = refs.Count();
-    for( size_t i=0; i < ref_cnt; i++ )
+    for (size_t i=0; i < ref_cnt; i++)
       refs[i]->Standardise(info_ex);
     stats.FriedelOppositesMerged = info_ex.centrosymmetric;
     /* standartise reflection indexes according to provided list of symmetry
     operators
     */
+    QuickSorter::Sort(refs, cmp);
     TReflection::SortList(refs);
     output.SetCapacity(ref_cnt); // better more that none :)
     // merge reflections
@@ -87,7 +87,7 @@ class RefMerger {
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       const size_t from = i;
-      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
+      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) )
         ;
       const size_t merged_count = i - from;
       bool omitted = false;
@@ -141,9 +141,10 @@ class RefMerger {
       : stats.UniqueReflections);
     return stats;
   }
-  template <class RefListMerger> 
+
+  template <class RefListMerger, class Comparator>
   static MergeStats _DryMerge(const SymmSpace::InfoEx& info_ex,
-    TRefPList& refs, const vec3i_list& omits)
+    TRefPList& refs, const vec3i_list& omits, const Comparator &cmp)
   {
     if( refs.IsEmpty() ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -158,13 +159,13 @@ class RefMerger {
       refs[i]->Standardise(info_ex);
     stats.FriedelOppositesMerged = info_ex.centrosymmetric;
     // sort the list
-    TReflection::SortList(refs);
+    QuickSorter::Sort(refs, cmp);
     // merge reflections
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       size_t from = i;
-      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
+      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) )
         ;
       bool omitted = false;
       const size_t merged_count = i - from;
@@ -215,9 +216,10 @@ class RefMerger {
       : stats.UniqueReflections);
     return stats;
   }
-  template <class MatList>
+
+  template <class MatList, class Comparator>
   static MergeStats _DoSGFilter(const MatList& ml, TRefPList& refs,
-    const vec3i_list& omits, TRefList& output)  
+    const vec3i_list& omits, TRefList& output, const Comparator &cmp)
   {
     if( refs.IsEmpty() ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -227,14 +229,14 @@ class RefMerger {
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
     // sort the list
-    TReflection::SortList(refs);
+    QuickSorter::Sort(refs, cmp);
     output.SetCapacity(ref_cnt); // better more that none :)
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
       const size_t from = i;
       size_t real_count=ref->GetBatch() > 0 ? 1 : 0;
-      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) ) {
+      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) ) {
         if (refs[i]->GetBatch() > 0) real_count++;
       }
       const size_t merged_count = i - from;
@@ -279,9 +281,10 @@ class RefMerger {
       : stats.UniqueReflections);
     return stats;
   }
-  template <class MatList>
+
+  template <class MatList, class Comparator>
   static MergeStats _DoDrySGFilter(const MatList& ml, TRefPList& refs,
-    const vec3i_list& omits)
+    const vec3i_list& omits, const Comparator &cmp)
   {
     if( refs.IsEmpty() ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -291,13 +294,13 @@ class RefMerger {
     stats.FriedelOppositesMerged = false;
     const size_t ref_cnt = refs.Count();
     // sort the list
-    TReflection::SortList(refs);
+    QuickSorter::Sort(refs, cmp);
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
       const size_t from = i;
       size_t real_count=ref->GetBatch() > 0 ? 1 : 0;
-      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) ) {
+      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) ) {
         if (refs[i]->GetBatch() > 0) real_count++;
       }
       const size_t merged_count = i - from;
@@ -340,9 +343,9 @@ class RefMerger {
     return stats;
   }
 
-  template <class RefListMerger>
+  template <class RefListMerger, class Comparator>
   static MergeStats _DoMergeInP1(TPtrList<const TReflection>& refs,
-    const vec3i_list& omits, TRefList& output)
+    const vec3i_list& omits, TRefList& output, const Comparator &cmp)
   {
     if( refs.IsEmpty() ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -350,7 +353,7 @@ class RefMerger {
     }
     MergeStats stats;
     // sort the list
-    TReflection::SortList(refs);
+    QuickSorter::Sort(refs, cmp);
     const size_t ref_cnt = refs.Count();
     output.SetCapacity( ref_cnt ); // better more that none :)
     // merge reflections
@@ -358,7 +361,7 @@ class RefMerger {
     const TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       const size_t from = i;
-      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
+      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) )
         ;
       const size_t merged_count = i - from;
       bool omitted = false;
@@ -403,9 +406,10 @@ class RefMerger {
     stats.IndependentReflections = (double)stats.UniqueReflections;
     return stats;
   }
-  template <class RefListMerger>
+
+  template <class RefListMerger, class Comparator>
   static MergeStats _DryMergeInP1(TPtrList<const TReflection>& refs,
-    const vec3i_list& omits)
+    const vec3i_list& omits, const Comparator &cmp)
   {
     if( refs.IsEmpty() ) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -413,14 +417,14 @@ class RefMerger {
     }
     MergeStats stats;
     // sort the list
-    TReflection::SortList(refs);
+    QuickSorter::Sort(refs, cmp);
     // merge reflections
     const size_t ref_cnt = refs.Count();
     double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;
     const TReflection* ref = refs[0];
     for( size_t i=0; i < ref_cnt; )  {
       const size_t from = i;
-      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
+      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) )
         ;
       const size_t merged_count = i - from;
       bool omitted = false;
@@ -465,83 +469,150 @@ public:
    The reflections are standardised. The resulting reflections are stored in
    the output.
 */
-  template <class MatList, class RefListMerger, class RefList> 
-  static MergeStats Merge(const MatList& ml, RefList& Refs, TRefList& output,
-    const vec3i_list& omits, bool mergeFP)
+  template <class RefListMerger, class RefList, class Comparator>
+  static MergeStats MergeExS(const SymmSpace::InfoEx& si, RefList& Refs,
+    TRefList& output, const vec3i_list& omits, const Comparator &cmp)
+  {
+    TStopWatch sw(__FUNC__);
+    TRefPList refs(Refs);
+    return _DoMerge<RefListMerger>(si, refs, omits, output, cmp);
+  }
+  template <class RefListMerger, class MatList, class RefList, class Comparator>
+  static MergeStats MergeExM(const MatList& ml, RefList& Refs, TRefList& output,
+    const vec3i_list& omits, bool mergeFP, const Comparator &cmp)
   {
     TStopWatch sw(__FUNC__);
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
-    if( mergeFP )  info_ex.centrosymmetric = true; 
-    TRefPList refs(Refs);
-    return _DoMerge<RefListMerger>(info_ex, refs, omits, output);
+    if (mergeFP)  info_ex.centrosymmetric = true; 
+    return MergeExS<RefListMerger>(info_ex, Refs, output, omits, cmp);
   }
-  template <class RefListMerger, class RefList> 
+  
+  template <class RefListMerger, class RefList>
   static MergeStats Merge(const SymmSpace::InfoEx& si, RefList& Refs,
     TRefList& output, const vec3i_list& omits)
   {
     TStopWatch sw(__FUNC__);
-    TRefPList refs(Refs);
-    return _DoMerge<RefListMerger>(si, refs, omits, output);
+    return MergeExS<RefListMerger>(si, Refs, output, omits,
+      FunctionComparator::Make(&TReflection::Compare));
+  }
+  template <class RefListMerger,class MatList, class RefList>
+  static MergeStats Merge(const MatList& ml, RefList& Refs,
+    TRefList& output, const vec3i_list& omits, bool MergeFP)
+  {
+    TStopWatch sw(__FUNC__);
+    return MergeExM<RefListMerger>(ml, Refs, output, omits, MergeFP,
+      FunctionComparator::Make(&TReflection::Compare));
   }
   /* Functions gets the statistic on the list of provided reflections (which
   get stantardised)
   */
-  template <class MatList, class RefListMerger, class RefList> 
-  static MergeStats DryMerge(const MatList& ml, RefList& Refs,
-    const vec3i_list& omits, bool mergeFP)
+  template <class RefListMerger, class RefList, class Comparator>
+  static MergeStats DryMergeExS(const SymmSpace::InfoEx& si, RefList& Refs,
+    const vec3i_list& omits, const Comparator &cmp)
+  {
+    TStopWatch sw(__FUNC__);
+    TRefPList refs(Refs);
+    return _DryMerge<RefListMerger>(si, refs, omits, cmp);
+  }
+  template <class RefListMerger, class MatList, class RefList, class Comparator>
+  static MergeStats DryMergeExM(const MatList& ml, RefList& Refs,
+    const vec3i_list& omits, bool mergeFP, const Comparator &cmp)
   {
     TStopWatch sw(__FUNC__);
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
-    if( mergeFP )
-      info_ex.centrosymmetric = true; 
-    TRefPList refs(Refs);
-    return _DryMerge<RefListMerger>(info_ex, refs, omits);
+    if (mergeFP) info_ex.centrosymmetric = true;
+    return DryMergeExS<RefListMerger>(info_ex, Refs, omits, cmp);
   }
-  template <class RefListMerger, class RefList> 
+
+  template <class RefListMerger, class RefList>
   static MergeStats DryMerge(const SymmSpace::InfoEx& si, RefList& Refs,
     const vec3i_list& omits)
   {
     TStopWatch sw(__FUNC__);
-    TRefPList refs(Refs);
-    return _DryMerge<RefListMerger>(si, refs, omits);
+    return DryMergeExS<RefListMerger>(si, Refs, omits,
+      FunctionComparator::Make(&TReflection::Compare));
   }
+  template <class RefListMerger, class MatList, class RefList>
+  static MergeStats DryMerge(const MatList& ml, RefList& Refs,
+    const vec3i_list& omits, bool mergeFP)
+  {
+    TStopWatch sw(__FUNC__);
+    return DryMergeExM<RefListMerger>(ml, Refs, omits, mergeFP,
+      FunctionComparator::Make(&TReflection::Compare));
+  }
+
   /* The function merges provided reflections in P1 and strores the result in
   the output
   */
-  template <class RefListMerger, class RefList> 
+  template <class RefListMerger, class RefList, class Comparator>
+  static MergeStats MergeInP1Ex(const RefList& Refs, TRefList& output,
+    const vec3i_list& omits, const Comparator &cmp)
+  {
+    TStopWatch sw(__FUNC__);
+    TPtrList<const TReflection> refs(Refs);
+    return _DoMergeInP1<RefListMerger>(refs, omits, output, cmp);
+  }
+  template <class RefListMerger, class RefList>
   static MergeStats MergeInP1(const RefList& Refs, TRefList& output,
     const vec3i_list& omits)
   {
     TStopWatch sw(__FUNC__);
-    TPtrList<const TReflection> refs(Refs);
-    return _DoMergeInP1<RefListMerger>(refs, omits, output);
+    return MergeInP1Ex<RefListMerger>(Refs, output, omits,
+      FunctionComparator::Make(&TReflection::Compare));
   }
-  template <class RefListMerger, class RefList> 
+
+  template <class RefListMerger, class RefList, class Comparator>
+  static MergeStats DryMergeInP1Ex(const RefList& Refs,
+    const vec3i_list& omits, const Comparator &cmp)
+  {
+    TStopWatch sw(__FUNC__);
+    TPtrList<const TReflection> refs(Refs);
+    return _DryMergeInP1<RefListMerger>(refs, omits, cmp);
+  }
+  template <class RefListMerger, class RefList>
   static MergeStats DryMergeInP1(const RefList& Refs,
     const vec3i_list& omits)
   {
     TStopWatch sw(__FUNC__);
-    TPtrList<const TReflection> refs(Refs);
-    return _DryMergeInP1<RefListMerger>(refs, omits);
+    return DryMergeInP1Ex<RefListMerger>(refs, omits,
+      FunctionComparator::Make(&TReflection::Compare));
   }
+
   /* The function filters out systematic absences */
-  template <class MatList, class RefList> 
-  static MergeStats SGFilter(const MatList& ml, RefList& Refs,
-    TRefList& output, const vec3i_list& omits)
+  template <class MatList, class RefList, class Comparator>
+  static MergeStats SGFilterEx(const MatList& ml, RefList& Refs,
+    TRefList& output, const vec3i_list& omits, const Comparator &cmp)
   {
     TStopWatch sw(__FUNC__);
     TRefPList refs(Refs);
     return _DoSGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
-      refs, omits, output);
+      refs, omits, output, cmp);
   }
-  template <class MatList, class RefList> 
+  template <class MatList, class RefList>
+  static MergeStats SGFilter(const MatList& ml, RefList& Refs,
+    TRefList& output, const vec3i_list& omits)
+  {
+    TStopWatch sw(__FUNC__);
+    return SGFilterEx(ml, refs, omits, output,
+      FunctionComparator::Make(&TReflection::Compare));
+  }
+
+  template <class MatList, class RefList, class Comparator>
+  static MergeStats DrySGFilterEx(const MatList& ml, RefList& Refs,
+    const vec3i_list& omits, const Comparator &cmp)
+  {
+    TStopWatch sw(__FUNC__);
+    TRefPList refs(Refs);
+    return _DoDrySGFilter(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
+      refs, omits, cmp);
+  }
+  template <class MatList, class RefList>
   static MergeStats DrySGFilter(const MatList& ml, RefList& Refs,
     const vec3i_list& omits)
   {
     TStopWatch sw(__FUNC__);
-    TRefPList refs(Refs);
-    return _DoDrySGFilter<MatList>(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
-      refs, omits);
+    return DrySGFilterEx(ml, Refs, omits,
+      FunctionComparator::Make(&TReflection::Compare));
   }
 
   struct MergerOut  {

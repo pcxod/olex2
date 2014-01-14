@@ -97,8 +97,8 @@ public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
     double MaxD, MinD, LimDmin, LimDmax, 
-      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s,
-      Completeness;
+      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI, HKLF_m, HKLF_s;
+    TDoubleList Completeness;
     mat3d HKLF_mat;
     int MERG;
     //vec3i maxInd, minInd;
@@ -146,9 +146,11 @@ public:
       OMIT_2t = def_OMIT_2t;
       SHEL_lr = def_SHEL_lr;
       SHEL_hr = def_SHEL_hr;
-      Completeness = 0;
+      Completeness.Clear();
     }
-    size_t GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
+    size_t GetReadReflections() const {
+      return TotalReflections+OmittedReflections;
+    }
   };
 
   struct BadReflection {
@@ -624,7 +626,7 @@ Friedel opposites of components 1 ... m
     FilterHkl(refs, stats);
     if( MERG != 0 && HKLF != 5 )  {
       bool mergeFP = (MERG == 4 || MERG == 3) && !sp.IsCentrosymmetric();
-      stats = RefMerger::Merge<SymSpace,Merger>(sp, refs, out, 
+      stats = RefMerger::Merge<Merger>(sp, refs, out,
         Omits, mergeFP);
       stats.MERG = MERG;
     }
@@ -638,7 +640,7 @@ Friedel opposites of components 1 ... m
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
-    stats = RefMerger::Merge<Symm,Merger>(sp, refs, out, Omits, true);
+    stats = RefMerger::Merge<Merger>(sp, refs, out, Omits, true);
     return AdjustIntensity(out, stats);
   }
   // P-1 merged, filtered
@@ -648,7 +650,7 @@ Friedel opposites of components 1 ... m
     FilterHkl(refs, stats);
     smatd_list ml;
     ml.AddNew().I();
-    stats = RefMerger::Merge<smatd_list,Merger>(ml, refs, out, Omits, true);
+    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits, true);
     return AdjustIntensity(out, stats);
   }
   // P1 merged, unfiltered
