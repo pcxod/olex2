@@ -57,8 +57,9 @@ struct FunctionComparator {
     ComparatorMF_(Base& instance,
       int (Base::*func)(const ItemClass &a, const ItemClass &b))
       :  Instance(instance), Func(func) {}
-    int Compare(const ItemClass &a, const ItemClass &b) const {
-      return (Instance.*Func)(a, b);
+    template <typename item_t>
+    int Compare(const item_t &a, const item_t &b) const {
+      return (Instance.*Func)(olx_ref::get(a), olx_ref::get(b));
     }
   };
   template <class Base, typename ItemClass> struct ComparatorCMF_ {
@@ -67,8 +68,9 @@ struct FunctionComparator {
     ComparatorCMF_(const Base& instance,
       int (Base::*func)(const ItemClass &a, const ItemClass &b) const)
       :  Instance(instance), Func(func) {}
-    int Compare(const ItemClass &a, const ItemClass &b) const {
-      return (Instance.*Func)(a, b);
+    template <typename item_t>
+    int Compare(const item_t &a, const item_t &b) const {
+      return (Instance.*Func)(olx_ref::get(a), olx_ref::get(b));
     }
   };
   template <typename ItemClass> struct ComparatorSF_ {
@@ -76,8 +78,9 @@ struct FunctionComparator {
     ComparatorSF_(
       int (*func)(const ItemClass &a, const ItemClass &b))
       : Func(func)  {}
-    int Compare(const ItemClass &a, const ItemClass &b) const {
-      return (*Func)(a, b);
+    template <typename item_t>
+    int Compare(const item_t &a, const item_t &b) const {
+      return (*Func)(olx_ref::get(a), olx_ref::get(b));
     }
   };
 
@@ -118,8 +121,9 @@ struct ReverseComparator {
   template <typename item_t> struct ReverseSF {
     int (*func)(const item_t &, const item_t&);
     ReverseSF(int (*func_)(const item_t &, const item_t&)) : func(func_) {}
-    int Compare(const item_t &i1, const item_t &i2) const {
-      return (*func)(i2, i1);
+    template <class i_t>
+    int Compare(const i_t &i1, const i_t &i2) const {
+      return (*func)(olx_ref::get(i2), olx_ref::get(i1));
     }
   };
   template <class base_t, typename item_t> struct ReverseMF {
@@ -129,8 +133,9 @@ struct ReverseComparator {
       int (base_t::*func_)(const item_t &, const item_t&))
     : instance(instance_), func(func_)
     {}
-    int Compare(const item_t &i1, const item_t &i2) const {
-      return (instance.*func)(i2, i1);
+    template <class i_t>
+    int Compare(const i_t &i1, const i_t &i2) const {
+      return (instance.*func)(olx_ref::get(i2), olx_ref::get(i1));
     }
   };
   template <class base_t, typename item_t> struct ReverseCMF {
@@ -140,8 +145,9 @@ struct ReverseComparator {
       int (base_t::*func_)(const item_t &, const item_t&) const)
     : instance(instance_), func(func_)
     {}
-    int Compare(const item_t &i1, const item_t &i2) const {
-      return (instance.*func)(i2, i1);
+    template <class i_t>
+    int Compare(const i_t &i1, const i_t &i2) const {
+      return (instance.*func)(olx_ref::get(i2), olx_ref::get(i1));
     }
   };
 

@@ -588,8 +588,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         aunit.GetLattice().GetUnitCell().GetSymmSpace();
       if( MERG != 0 && HKLF != 5 )  {
         bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
-        _HklStat = RefMerger::DryMerge<
-          TUnitCell::SymmSpace,RefMerger::ShelxMerger>(
+        _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
             sp, refs, Omits, mergeFP);
       }
       else
@@ -617,7 +616,24 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
           }
         }
       }
-      _HklStat.Completeness = double(_HklStat.UniqueReflections) / (e_cnt);
+      if (HKLF == 5) {
+        TSizeList cnts(BASF.Count() + 1, olx_list_init::zero());
+        for (size_t i = 0; i < refs.Count(); i++) {
+          size_t idx = refs[i].GetBatch() - 1;
+          if (idx >= cnts.Count()) {
+            throw TInvalidArgumentException(__OlxSourceInfo,
+              olxstr("Batch number: ") << refs[i].GetBatch());
+          }
+          cnts[idx]++;
+        }
+        BubbleSorter::Sort(cnts, ReverseComparator::Make(TPrimitiveComparator()));
+        for (size_t i = 0; i < cnts.Count(); i++) {
+          _HklStat.Completeness.Add(double(cnts[i]) / (e_cnt));
+        }
+      }
+      else {
+        _HklStat.Completeness.Add(double(_HklStat.UniqueReflections) / (e_cnt));
+      }
     }
   }
   catch(const TExceptionBase& e)  {
@@ -641,8 +657,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
   out.SetCapacity(ref_cnt);
   for( size_t i=0; i < ref_cnt; i++ )  {
     const TReflection& r = all_refs[i];
-    if (r.GetBatch() < 0)
-      continue;
+    if (r.GetBatch() < 0) continue;
     if (r.IsOmitted()) {
       stats.OmittedReflections++;
       continue;

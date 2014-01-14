@@ -372,8 +372,12 @@ PyObject* pyHklStat(PyObject* self, PyObject* args)  {
     PythonExt::SetDictItem(out, "Rsigma", Py_BuildValue("d", hs.Rsigma));
     PythonExt::SetDictItem(out, "MeanIOverSigma",
       Py_BuildValue("d", hs.MeanIOverSigma));
-    PythonExt::SetDictItem(out, "Completeness",
-      Py_BuildValue("d", hs.Completeness));
+    {
+      PyObject *cms = PyTuple_New(hs.Completeness.Count());
+      for (size_t i = 0; i < hs.Completeness.Count(); i++)
+        PyTuple_SetItem(cms, i, Py_BuildValue("d", hs.Completeness[i]));
+      PythonExt::SetDictItem(out, "Completeness", cms);
+    }
     PythonExt::SetDictItem(out, "MaxIndexes",
       Py_BuildValue("(iii)", hs.MaxIndexes[0],
         hs.MaxIndexes[1], hs.MaxIndexes[2]));

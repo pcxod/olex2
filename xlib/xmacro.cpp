@@ -1084,7 +1084,10 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     tab[15][0] << "Rsigma, %";
       tab[15][1] << (hs.Rsigma < 0 ? NAString() : olxstr::FormatFloat(2, hs.Rsigma*100));
     tab[16][0] << "Completeness, [d_min-d_max] %";
-      tab[16][1] << olxstr::FormatFloat(2, hs.Completeness*100);
+    for (size_t ti = 0; ti < hs.Completeness.Count(); ti++) {
+      if (!tab[16][1].IsEmpty()) tab[16][1] << ", ";
+      tab[16][1] << olxstr::FormatFloat(2, hs.Completeness[ti] * 100);
+    }
     tab[17][0] << "Mean I/sig";
       tab[17][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
     tab[18][0] << "HKL range (refinement)";                    
