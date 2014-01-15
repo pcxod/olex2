@@ -215,14 +215,23 @@ bool TGlXApp::OnInit()  {
 #endif
   olxstr str_glAttr = olx_getenv("OLEX2_GL_DEFAULT"),
     str_glStereo = olx_getenv("OLEX2_GL_STEREO"),
+    str_glMultisampling = olx_getenv("OLEX2_GL_MULTISAMPLE"),
     str_glDepth = olx_getenv("OLEX2_GL_DEPTH_BITS");
+#ifdef __WIN32__
+  olxstr str_glDefStereo = TrueString(),
+    str_glDefMultisampling = TrueString();
+#else
+  olxstr str_glDefStereo = FalseString(),
+    str_glDefMultisampling = FalseString();
+#endif
   short depth_bits = str_glDepth.IsInt() ? str_glDepth.ToInt() : 24;
   olx_array_ptr<int> gl_attr = TGlCanvas::GetGlAttributes(
     !str_glAttr.IsEmpty() && str_glAttr.Equalsi("TRUE"),
     XApp->GetOptions().FindValue(
-    "gl_stereo", str_glStereo.IsEmpty() ? TrueString() : str_glStereo).ToBool(),
+    "gl_stereo", str_glStereo.IsEmpty() ? str_glDefStereo : str_glStereo).ToBool(),
     XApp->GetOptions().FindValue(
-    "gl_multisample", TrueString()).ToBool(),
+    "gl_multisample", str_glMultisampling.IsEmpty() ? str_glDefMultisampling
+    : str_glMultisampling).ToBool(),
     depth_bits
     );
   MainForm->GlCanvas(new TGlCanvas(
