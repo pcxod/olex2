@@ -278,11 +278,11 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           }
           else
             params("flack", flack_c.ToString());
-          FlackF = true;
         }
         else {
           params("flack", flack_c.ToString());
         }
+        FlackF = true;
       }
     }
     else if (!CellInfo && SL[i].Contains("F(000) = ") &&
