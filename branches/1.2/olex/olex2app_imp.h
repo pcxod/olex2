@@ -57,8 +57,8 @@ public:
         plugins.SetCapacity(pi->ItemCount());
         for (size_t i=0; i < pi->ItemCount(); i++) {
           TStateRegistry::GetInstance().SetState(
-            statePluginInstalled, true, pi->GetItem(i).GetName(), true);
-          plugins.Add(pi->GetItem(i).GetName());
+            statePluginInstalled, true, pi->GetItemByIndex(i).GetName(), true);
+          plugins.Add(pi->GetItemByIndex(i).GetName());
         }
       }
     }
@@ -105,7 +105,7 @@ public:
     if (pi == NULL) return false;
     pi = pi->FindItemi(pn);
     if (pi == NULL) return false;
-    pi->SetField(field, value);
+    pi->AddField(field, value);
     df.SaveToXLFile(PluginFileName);
     return true;
   }

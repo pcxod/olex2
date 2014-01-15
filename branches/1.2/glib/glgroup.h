@@ -48,6 +48,7 @@ public:
   void Draw(bool SelectPrimitives=false, bool SelectObjects=false) const {
     DoDraw(SelectPrimitives, SelectObjects);
   }
+  void IncCapacity(size_t v) { Objects.SetCapacity(Objects.Count() + v); }
   // Adds an object to the list if it is not there and removes it otherwise
   // returns true if the object is added and false if it is removed
   bool Add(AGDrawObject& G, bool remove=true);

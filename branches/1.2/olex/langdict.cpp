@@ -47,12 +47,12 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
   }
 
   CurrentLanguageIndex = (lang.IsEmpty() ? 1 : toks.IndexOf(lang) );
-  if(  CurrentLanguageIndex <= 0 ) {
+  if (CurrentLanguageIndex == 0 || CurrentLanguageIndex == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("Invalid language ").quote() << lang);
   }
   TCStrList toks1(sl[1], '\t');  // encodings
-  if( toks.Count() != toks1.Count() ) {
+  if (toks.Count() != toks1.Count()) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "Number of languages mismatches the number of encodings");
   }

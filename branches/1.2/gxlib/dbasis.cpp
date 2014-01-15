@@ -46,12 +46,13 @@ void TDBasis::SetAsymmUnit(TAsymmUnit& au)  {
 }
 //..............................................................................
 void TDBasis::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+  if( !cName.IsEmpty() )
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  if( GPC.PrimitiveCount() != 0 )  {
-    for( int i=0; i < 3; i++ )
+  if (GPC.PrimitiveCount() != 0) {
+    GPC.AddObject(*this);
+    for (int i = 0; i < 3; i++)
       Labels[i]->Create();
     return;
   }
@@ -60,14 +61,14 @@ void TDBasis::Create(const olxstr& cName)  {
   if( m[0].QLength() < 1.e-6 )
     m.I();
   TGlMaterial GlM, GlM1;
-  GlM.SetFlags(0);   
-  GlM.ShininessF = 128;      
-  GlM.SpecularF = 0x03030303;  
+  GlM.SetFlags(0);
+  GlM.ShininessF = 128;
+  GlM.SpecularF = 0x03030303;
   GlM.SpecularF = 0x03030303;
   
-  GlM1.SetFlags(0);  
-  GlM1.ShininessF = 128;     
-  GlM1.SpecularF = 0x03030303;  
+  GlM1.SetFlags(0);
+  GlM1.ShininessF = 128;
+  GlM1.SpecularF = 0x03030303;
   GlM1.SpecularB = 0x03030303;
 
   const double ConeH = 0.8, ConeW = 0.2; // cylinder dimensions
@@ -223,21 +224,21 @@ void TDBasis::ToDataItem(TDataItem& di) const {
 }
 //..............................................................................
 void TDBasis::FromDataItem(const TDataItem& di)  {
-  const olxstr& c = di.GetFieldValue("center");
+  const olxstr& c = di.FindField("center");
   if( c.IsEmpty() )  {
     TEBasis b;
-    b.FromDataItem(di.FindRequiredItem("basis"));
+    b.FromDataItem(di.GetItemByName("basis"));
     _Center = b.GetCenter();
     Zoom = b.GetZoom();
   }
   else  {
     PersUtil::VecFromStr(c, _Center);
-    Zoom = di.GetRequiredField("zoom").ToDouble();
+    Zoom = di.GetFieldByName("zoom").ToDouble();
   }
   const TDataItem* labels = di.FindItem("Labels");
   if( labels != NULL && labels->ItemCount() == 3 )  {
     for( int i=0; i < 3; i++ )
-      Labels[i]->FromDataItem(labels->GetItem(i));
+      Labels[i]->FromDataItem(labels->GetItemByIndex(i));
   }
 }
 //..............................................................................

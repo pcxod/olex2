@@ -16,14 +16,22 @@
 
 BeginXlibNamespace()
 
+const short
+  sboUndefined = 0,
+  sboSingle = 1,
+  sboDouble = 2,
+  sboTripple = 3;
+
+
 class TSBond: public TBasicBond<class TNetwork, TSAtom>  {
 private:
   virtual void OnAtomSet();
 protected:
   bool Deleted;
+  short Order;
 public:
   TSBond(TNetwork* Parent);
-  virtual ~TSBond() { }
+  virtual ~TSBond() {}
 
   DefPropBIsSet(Deleted)
   bool IsAvailable() const {  return (!IsDeleted() && FA->IsAvailable() && FB->IsAvailable()); }
@@ -53,8 +61,8 @@ public:
       b.ToDataItem(item.AddItem("b"));
     }
     void FromDataItem(const TDataItem& item)  {
-      a.FromDataItem(item.FindRequiredItem('a'));
-      b.FromDataItem(item.FindRequiredItem('b'));
+      a.FromDataItem(item.GetItemByName('a'));
+      b.FromDataItem(item.GetItemByName('b'));
     }
 
     int Compare(const Ref& r) const {
@@ -68,6 +76,7 @@ public:
   bool operator == (const Ref& r) const {
     return (*FA == r.a && *FB == r.b) || (*FA == r.b && *FB == r.a);
   }
+  DefPropP(short, Order)
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item, class TLattice& parent);
 };

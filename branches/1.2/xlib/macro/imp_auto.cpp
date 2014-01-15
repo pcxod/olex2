@@ -18,7 +18,7 @@
 #include "estopwatch.h"
 #include "analysis.h"
 
-struct _auto_BI {  
+struct _auto_BI {
   int type;
   uint32_t min_bonds, max_bonds;
 };
@@ -332,16 +332,23 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options,
             TSAtom& sa = frag.Node(j);
             if( sa.IsDeleted() || sa.GetType() == iHydrogenZ )  continue;
             if( sa.GetType() != iQPeakZ && sa.CAtom().GetUiso() > Uisos[i]*3) {
-              if (check_demotion &&
-                  olx_analysis::helper::can_demote(sa.GetType(), AvailableTypes))
-              {
-                continue;
+              size_t bc = 0;
+              for (size_t bi = 0; bi < sa.CAtom().AttachedSiteCount(); bi++) {
+                if (sa.CAtom().GetAttachedAtom(bi).GetType() > 1)
+                  bc++;
               }
-              TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() <<
-                " too large, deleting";
-              sa.SetDeleted(true);
-              sa.CAtom().SetDeleted(true);
-              changes = true;
+              if (bc > 1 || (sa.CAtom().GetUiso() > Uisos[i] * 3.5)) {
+                if (check_demotion &&
+                  olx_analysis::helper::can_demote(sa.GetType(), AvailableTypes))
+                {
+                  continue;
+                }
+                TBasicApp::NewLogEntry(logInfo) << sa.GetLabel() <<
+                  " too large, deleting";
+                sa.SetDeleted(true);
+                sa.CAtom().SetDeleted(true);
+                changes = true;
+              }
             }
           }
         }

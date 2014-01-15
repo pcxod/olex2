@@ -143,6 +143,7 @@ olxcstr THttpFileSystem::GenerateRequest(const olxcstr& cmd, const olxcstr& File
   {
     request << "Authorization: " << olxcstr(Url.GenerateHTTPAuthString()) << '\n';
   }
+  request << "Host: " << Url.GetHost() << ':' << Url.GetPort() << '\n';
   if ((ExtraHeaders & httpHeaderPlatform) != 0)
     request << "Platform: " << TBasicApp::GetPlatformString() << '\n';
   if ((ExtraHeaders & httpHeaderESession) != 0)

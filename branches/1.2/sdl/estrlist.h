@@ -610,7 +610,7 @@ public:
       Add(list[i], list.GetObject(i));
   }
   TTOStringList(const ConstStrObjList<GC> &list)  {
-    PList::Strings.TakeOver(list.Relase(), true);
+    PList::TakeOver(list.Release(), true);
   }
   // creates a list with strtok entries in it
   TTOStringList(const string_type& string, const string_type& sep,
@@ -697,8 +697,8 @@ public:
     return Assign(list);
   }
 
-  TTOStringList *operator = (const ConstStrObjList<GC> &list)  {
-    PList::Strings.TakeOver(list.Relase(), true);
+  TTOStringList& operator = (const ConstStrObjList<GC> &list)  {
+    PList::TakeOver(list.Release(), true);
     return *this;
   }
 

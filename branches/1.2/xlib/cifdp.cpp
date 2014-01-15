@@ -191,7 +191,13 @@ void TCifDP::LoadFromStrings(const TStrList& Strings)  {
       olxstr dn = line.SubStringFrom(5);
       if (data_map.HasKey(dn)) {
         TBasicApp::NewLogEntry(logError) <<
-          "Duplicate CIF data name '" << dn << '\'';
+          "Duplicate CIF data name '" << dn << '\'' << " auto renaming...";
+        olxstr new_name = dn + '1';
+        size_t idx=1;
+        while (data_map.HasKey(new_name))
+          new_name = dn + olxstr(++idx);
+        dn = new_name;
+        TBasicApp::NewLogEntry(logInfo) << "New name: " << dn;
       }
       context.current_block = &Add(dn);
     }

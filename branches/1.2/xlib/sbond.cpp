@@ -10,7 +10,9 @@
 #include "sbond.h"
 #include "lattice.h"
 
-TSBond::TSBond(TNetwork *P) : TBasicBond<TNetwork,TSAtom>(P)  {
+TSBond::TSBond(TNetwork *P) :
+  TBasicBond<TNetwork,TSAtom>(P), Order(sboUndefined)
+{
   SetType(sotBond);
   Deleted = false;
 }
@@ -31,12 +33,14 @@ void TSBond::ToDataItem(TDataItem& item) const {
   item.AddField("a_id", FA->GetTag());
   item.AddField("b_id", FB->GetTag());
   item.AddField("type", GetType());
+  item.AddField("order", GetOrder());
 }
 //..............................................................................
 void TSBond::FromDataItem(const TDataItem& item, TLattice& parent) {
-  Network = &parent.GetFragment(item.GetRequiredField("net_id").ToInt());
-  FA = &parent.GetObjects().atoms[item.GetRequiredField("a_id").ToInt()];
-  FB = &parent.GetObjects().atoms[item.GetRequiredField("b_id").ToInt()];
-  Type = item.GetRequiredField("type").ToInt();
+  Network = &parent.GetFragment(item.GetFieldByName("net_id").ToInt());
+  FA = &parent.GetObjects().atoms[item.GetFieldByName("a_id").ToInt()];
+  FB = &parent.GetObjects().atoms[item.GetFieldByName("b_id").ToInt()];
+  Type = item.GetFieldByName("type").ToInt();
+  SetOrder(item.FindField("order", '0').ToInt());
 }
 //..............................................................................

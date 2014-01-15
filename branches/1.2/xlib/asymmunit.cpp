@@ -568,15 +568,19 @@ olxstr TAsymmUnit::_SummFormula(const olxstr &Sep, double mult) const {
 olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
   size_t matrixInc = 0;
   // searching the identity matrix
-  bool Uniq = true;
-  for( size_t i=0; i < MatrixCount(); i++ )  {
-    if( GetMatrix(i).IsI() )  {
-      Uniq = false;
+  bool hasI = false;
+  for (size_t i=0; i < MatrixCount(); i++) {
+    if (GetMatrix(i).IsI()) {
+      hasI = true;
       break;
     }
   }
-  if( Uniq )  matrixInc ++;
-  return _SummFormula(Sep, MultiplyZ ? (MatrixCount()+matrixInc) : 1.0);
+  if (!hasI)  matrixInc ++;
+  double m = 1;
+  if (MultiplyZ) {
+    m = (MatrixCount() + matrixInc)*TCLattice::GetLattMultiplier(this->Latt);
+  }
+  return _SummFormula(Sep, m);
 }
 //..............................................................................
 double TAsymmUnit::GetZPrime() const {
@@ -799,8 +803,8 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   cell.AddField("Z", Z);
   TDataItem& symm = item.AddItem("symm");
   symm.AddField("latt", Latt);
-  for( size_t i=0; i < Matrices.Count(); i++ )
-    symm.AddItem(i, TSymmParser::MatrixToSymmEx(Matrices[i]));
+  for (size_t i=0; i < Matrices.Count(); i++)
+    symm.AddItem("symmop", TSymmParser::MatrixToSymmEx(Matrices[i]));
   size_t aid=0;
   for( size_t i=0; i < ResidueCount(); i++ )  {
     TResidue& r = GetResidue(i);
@@ -820,9 +824,10 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
       if (r.HasAlias())
         ri->AddField("alias", r.GetAlias());
     }
+    olxstr atom_di = "atom";
     for( size_t j=0; j < r.Count(); j++ )  {
       if( r[j].GetTag() < 0  )  continue;
-      r[j].ToDataItem(ri->AddItem(r[j].GetTag()));
+      r[j].ToDataItem(ri->AddItem(atom_di));
     }
   }
 }
@@ -908,36 +913,38 @@ PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms, bool export_conn)  {
 //..............................................................................
 void TAsymmUnit::FromDataItem(TDataItem& item)  {
   Clear();
-  TDataItem& cell = item.FindRequiredItem("cell");
+  TDataItem& cell = item.GetItemByName("cell");
   TEValueD evalue;
-  evalue = cell.GetRequiredField("a");
+  evalue = cell.GetFieldByName("a");
   Axes[0] = evalue.GetV();  AxisEsds[0] = evalue.GetE();
-  evalue = cell.GetRequiredField("b");
+  evalue = cell.GetFieldByName("b");
   Axes[1] = evalue.GetV();  AxisEsds[1] = evalue.GetE();
-  evalue = cell.GetRequiredField("c");
+  evalue = cell.GetFieldByName("c");
   Axes[2] = evalue.GetV();  AxisEsds[2] = evalue.GetE();
 
-  evalue = cell.GetRequiredField("alpha");
+  evalue = cell.GetFieldByName("alpha");
   Angles[0] = evalue.GetV();  AngleEsds[0] = evalue.GetE();
-  evalue = cell.GetRequiredField("beta");
+  evalue = cell.GetFieldByName("beta");
   Angles[1] = evalue.GetV();  AngleEsds[1] = evalue.GetE();
-  evalue = cell.GetRequiredField("gamma");
+  evalue = cell.GetFieldByName("gamma");
   Angles[2] = evalue.GetV();  AngleEsds[2] = evalue.GetE();
-  Z = cell.GetRequiredField("Z").RadUInt<unsigned short>();
-  TDataItem& symm = item.FindRequiredItem("symm");
-  Latt = symm.GetRequiredField("latt").ToInt();
+  Z = cell.GetFieldByName("Z").RadUInt<unsigned short>();
+  TDataItem& symm = item.GetItemByName("symm");
+  Latt = symm.GetFieldByName("latt").ToInt();
   TPtrList<TDataItem> atom_items;
-  for (size_t i=0; i < symm.ItemCount(); i++)
-    Matrices.AddCopy(TSymmParser::SymmToMatrix(symm.GetItem(i).GetValue()));
-  TDataItem& resis = item.FindRequiredItem("residues");
+  for (size_t i = 0; i < symm.ItemCount(); i++) {
+    Matrices.AddCopy(
+      TSymmParser::SymmToMatrix(symm.GetItemByIndex(i).GetValue()));
+  }
+  TDataItem& resis = item.GetItemByName("residues");
   for( size_t i=0; i < resis.ItemCount(); i++ )  {
-    TDataItem& resi = resis.GetItem(i);
+    TDataItem& resi = resis.GetItemByIndex(i);
     TResidue& r = (i==0 ? MainResidue
-      : NewResidue(resi.GetRequiredField("class_name"),
+      : NewResidue(resi.GetFieldByName("class_name"),
         resi.GetName().ToInt(),
-        resi.GetFieldValue("alias",resi.GetName()).ToInt()));
+        resi.FindField("alias",resi.GetName()).ToInt()));
     for( size_t j=0; j < resi.ItemCount(); j++ )  {
-      atom_items.Add(resi.GetItem(j));
+      atom_items.Add(resi.GetItemByIndex(j));
       NewAtom(&r);
     }
   }

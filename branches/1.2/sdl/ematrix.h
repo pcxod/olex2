@@ -17,7 +17,6 @@
 #include "exception.h"
 #include "estrlist.h"
 #include "ebase.h"
-#include "datafile.h"
 #include "typelist.h"
 #include "tptrlist.h"
 

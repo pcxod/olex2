@@ -42,13 +42,13 @@ XVarReference& XVarReference::FromDataItem(const TDataItem& item,
   XVar& parent)
 {
   IXVarReferencerContainer& rc = parent.Parent.RM.GetRefContainer(
-    item.GetRequiredField("id_name"));
+    item.GetFieldByName("id_name"));
   IXVarReferencer& ref = rc.GetReferencer(
-    item.GetRequiredField("owner_id").ToSizeT());
+    item.GetFieldByName("owner_id").ToSizeT());
   return *(new XVarReference(parent, ref, 
-    item.GetRequiredField("var_index").ToInt(), 
-    XVarManager::RelationIndex(item.GetRequiredField("rel")),
-    item.GetRequiredField("k").ToDouble()));
+    item.GetFieldByName("var_index").ToInt(), 
+    XVarManager::RelationIndex(item.GetFieldByName("rel")),
+    item.GetFieldByName("k").ToDouble()));
 }
 //.............................................................................
 //.............................................................................
@@ -65,7 +65,7 @@ void XVar::ToDataItem(TDataItem& item) const {
   item.AddField("val", Value);
   for( size_t i=0; i < References.Count(); i++ )
     if( References[i]->referencer.IsValid() )
-      References[i]->ToDataItem(item.AddItem(i));
+      References[i]->ToDataItem(item.AddItem("reference"));
 }
 //.............................................................................
 #ifdef _PYTHON
@@ -91,9 +91,9 @@ PyObject* XVar::PyExport(TPtrList<PyObject>& atoms)  {
 #endif
 //.............................................................................
 XVar& XVar::FromDataItem(const TDataItem& item, XVarManager& parent) {
-  XVar* var = new XVar(parent, item.GetRequiredField("val").ToDouble());
+  XVar* var = new XVar(parent, item.GetFieldByName("val").ToDouble());
   for( size_t i=0; i < item.ItemCount(); i++ )  {
-    XVarReference& rf = XVarReference::FromDataItem(item.GetItem(i), *var);
+    XVarReference& rf = XVarReference::FromDataItem(item.GetItemByIndex(i), *var);
     parent.AddVarRef(rf);
     var->References.Add(&rf);
   }
@@ -148,12 +148,12 @@ PyObject* XLEQ::PyExport(TPtrList<PyObject>& _vars)  {
 #endif
 //.............................................................................
 XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
-  XLEQ* leq = new XLEQ(parent, item.GetRequiredField("val").ToDouble(), 
-    item.GetRequiredField("sig").ToDouble());
+  XLEQ* leq = new XLEQ(parent, item.GetFieldByName("val").ToDouble(), 
+    item.GetFieldByName("sig").ToDouble());
   for( size_t i=0; i < item.ItemCount(); i++ )  {
-    const TDataItem& mi = item.GetItem(i);
-    leq->AddMember(parent.GetVar(mi.GetRequiredField("id").ToInt()),
-      mi.GetRequiredField("k").ToDouble());
+    const TDataItem& mi = item.GetItemByIndex(i);
+    leq->AddMember(parent.GetVar(mi.GetFieldByName("id").ToInt()),
+      mi.GetFieldByName("k").ToDouble());
   }
   return *leq;
 }
@@ -438,10 +438,10 @@ void XVarManager::Describe(TStrList& lst)  {
 void XVarManager::ToDataItem(TDataItem& item) const {
   TDataItem& vars = item.AddItem("vars");
   for( size_t i=0; i < Vars.Count(); i++ )
-    Vars[i].ToDataItem(vars.AddItem(i));
+    Vars[i].ToDataItem(vars.AddItem("item"));
   TDataItem& eqs = item.AddItem("eqs");
   for( size_t i=0; i < Equations.Count(); i++ )
-    Equations[i].ToDataItem( eqs.AddItem(i) );
+    Equations[i].ToDataItem(eqs.AddItem("item"));
 }
 //.............................................................................
 #ifdef _PYTHON
@@ -464,12 +464,14 @@ PyObject* XVarManager::PyExport(TPtrList<PyObject>& atoms)  {
 //.............................................................................
 void XVarManager::FromDataItem(const TDataItem& item) {
   ClearAll();
-  TDataItem& vars = item.FindRequiredItem("vars");
-  for( size_t i=0; i < vars.ItemCount(); i++ )
-    Vars.Add(XVar::FromDataItem(vars.GetItem(i), *this)).SetId(Vars.Count());
-  TDataItem& eqs = item.FindRequiredItem("eqs");
+  TDataItem& vars = item.GetItemByName("vars");
+  for (size_t i = 0; i < vars.ItemCount(); i++) {
+    Vars.Add(XVar::FromDataItem(vars.GetItemByIndex(i), *this))
+      .SetId(Vars.Count());
+  }
+  TDataItem& eqs = item.GetItemByName("eqs");
   for( size_t i=0; i < eqs.ItemCount(); i++ ) {
-    Equations.Add( XLEQ::FromDataItem(eqs.GetItem(i), *this))
+    Equations.Add(XLEQ::FromDataItem(eqs.GetItemByIndex(i), *this))
       .SetId(Vars.Count());
   }
   for( size_t i=0; i < References.Count(); i++ ) {

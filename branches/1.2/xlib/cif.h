@@ -48,6 +48,13 @@ public:
   case of failure
   */
   virtual void SaveToStrings(TStrList& Strings);
+  /* Saves the content into a TDataItem object which can later be saved to XML
+  or other formats
+  */
+  void ToDataItem(TDataItem &d) const;
+  /* Loads content from a TDataItem object
+  */
+  void FromDataItem(const TDataItem &i);
   /* Adopts the content of a file (asymmetric unit, loops, etc) to a specified
   source file
   */

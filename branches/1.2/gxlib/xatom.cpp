@@ -202,7 +202,7 @@ void TXAtom::ListPrimitives(TStrList &List) const {
 //..............................................................................
 TStrList* TXAtom::FindPrimitiveParams(TGlPrimitive *P)  {
   for( size_t i=0; i < FPrimitiveParams.Count(); i++ )  {
-    if( FPrimitiveParams[i].GlP == P )  
+    if( FPrimitiveParams[i].GlP == P )
       return &(FPrimitiveParams[i].Params);
   }
   return NULL;
@@ -210,7 +210,7 @@ TStrList* TXAtom::FindPrimitiveParams(TGlPrimitive *P)  {
 //..............................................................................
 void TXAtom::ListParams(TStrList &List, TGlPrimitive *P)  {
   TStrList *L = FindPrimitiveParams(P);
-  if( L != NULL )  
+  if( L != NULL )
     List.Assign(*L);
 }
 //..............................................................................
@@ -1245,7 +1245,7 @@ short TXAtom::DefRad()  {
 }
 //..............................................................................
 short TXAtom::DefDS()  {
-  if( FDefDS != 0 )  
+  if( FDefDS != 0 )
     return FDefDS;
   ValidateAtomParams();
   return (FDefDS = FAtomParams->GetNumParam("DefDS", adsSphere, true));

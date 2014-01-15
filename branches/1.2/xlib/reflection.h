@@ -204,8 +204,26 @@ public:
   }
   // could be list of pointers or list of const pointers
   template <class RefPList> static void SortList(RefPList& lst)  {
-    QuickSorter::SortSF(lst, &TReflection::Compare);  
+    QuickSorter::SortSF(lst, &TReflection::Compare);
   }
+  //..............................................................................
+  int CompareToIndices(const TReflection &r) const {
+    int res = hkl[2] - r.hkl[2];
+    if (res == 0)  {
+      res = hkl[1] - r.hkl[1];
+      if (res == 0)
+        res = hkl[0] - r.hkl[0];
+    }
+    return res;
+  }
+  static int CompareIndices(const TReflection &a, const TReflection &b)  {
+    return a.CompareToIndices(b);
+  }
+  // could be list of pointers or list of const pointers
+  template <class RefPList> static void SortListByIndices(RefPList& lst)  {
+    QuickSorter::SortSF(lst, &TReflection::CompareIndices);
+  }
+  //..............................................................................
   bool operator == (const vec3i &hkl_) const {
     return hkl == hkl_;
   }

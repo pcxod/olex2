@@ -228,14 +228,14 @@ TEMacroLib::TEMacroLib(olex2::IOlex2Processor& olexProcessor)
 //.............................................................................
 void TEMacroLib::Load(const TDataItem& m_root)  {
   for( size_t i=0; i < m_root.ItemCount(); i++ )  {
-    const TDataItem& m_def = m_root.GetItem(i);
+    const TDataItem& m_def = m_root.GetItemByIndex(i);
     const TDataItem* di = m_def.FindItem("body");
     if( di == NULL )  {
       TBasicApp::NewLogEntry(logError) << "Macro body is not defined: " <<
         m_def.GetName();
       continue;
     }
-    TEMacro* m = new TEMacro(m_def.GetName(), m_def.GetFieldValue("help"));
+    TEMacro* m = new TEMacro(m_def.GetName(), m_def.FindField("help"));
     OlexProcessor.GetLibrary().Register(m, libReplace);
     ParseMacro(*di, *m);
   }
@@ -382,21 +382,20 @@ void TEMacroLib::ParseMacro(const TDataItem& macro_def, TEMacro& macro)  {
   TDataItem* di = macro_def.FindItem("cmd");
   if( di != NULL )  {
     for( size_t i=0; i < di->ItemCount(); i++ )
-      if( ExtractItemVal(di->GetItem(i), Tmp) )
+      if( ExtractItemVal(di->GetItemByIndex(i), Tmp) )
         macro.AddCmd(Tmp);
   }
   di = macro_def.FindItem("args");
   if( di != NULL )  {
     for( size_t i=0; i < di->ItemCount(); i++ )  {
-      const TDataItem& tdi = di->GetItem(i);
-      macro.AddArg(tdi.GetFieldValue("name",
-        EmptyString()), tdi.GetFieldValue("def"));
+      const TDataItem& tdi = di->GetItemByIndex(i);
+      macro.AddArg(tdi.FindField("name"), tdi.FindField("def"));
     }
   }
   di = macro_def.FindItem("onabort");
   if( di != NULL )  {
     for( size_t i=0; i < di->ItemCount(); i++ )
-      if( ExtractItemVal(di->GetItem(i), Tmp) )
+      if( ExtractItemVal(di->GetItemByIndex(i), Tmp) )
         macro.AddOnAbortCmd(Tmp);
   }
 }

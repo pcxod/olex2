@@ -9,6 +9,7 @@
 
 #include "exyzgroup.h"
 #include "refmodel.h"
+#include "index_range.h"
 
 void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
 //..............................................................................
@@ -22,11 +23,12 @@ void TExyzGroup::Assign(const TExyzGroup& ag)  {
 }
 //..............................................................................
 void TExyzGroup::ToDataItem(TDataItem& item) const {
-  size_t atom_id = 0;
-  for( size_t i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
-    item.AddField(olxstr("atom_id_") << atom_id++, Atoms[i]->GetTag());
+  IndexRange::Builder rb;
+  for (size_t i=0; i < Atoms.Count(); i++) {
+    if (!Atoms[i]->IsDeleted())
+      rb << Atoms[i]->GetTag();
   }
+  item.AddField("atom_range", rb.GetString());
 }
 //..............................................................................
 #ifdef _PYTHON
@@ -47,16 +49,26 @@ PyObject* TExyzGroup::PyExport(TPtrList<PyObject>& atoms)  {
 #endif
 //..............................................................................
 void TExyzGroup::FromDataItem(TDataItem& item) {
-  for (size_t i=0; i < item.FieldCount(); i++) {
-    Atoms.Add(Parent.RM.aunit.GetAtom(item.GetField(i).ToSizeT()));
-    Atoms.GetLast()->SetExyzGroup(this);
+  size_t ai = item.FieldIndex("atom_range");
+  if(ai != InvalidIndex) {
+    IndexRange::RangeItr i = item.GetFieldByIndex(ai);
+    while (i.HasNext()) {
+      Atoms.Add(Parent.RM.aunit.GetAtom(i.Next()))->SetExyzGroup(this);
+    }
+  }
+  else {
+    TStrStrList fields = item.GetOrderedFieldList();
+    for (size_t i = 0; i < fields.Count(); i++) {
+      Atoms.Add(Parent.RM.aunit.GetAtom(fields.GetObject(i).ToSizeT()));
+      Atoms.GetLast()->SetExyzGroup(this);
+    }
   }
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 void TExyzGroups::ToDataItem(TDataItem& item) {
-  int group_id = 0;
+  size_t group_id = 0;
   for( size_t i=0; i < Groups.Count(); i++ )  {
     if( Groups[i].IsEmpty() )  {
       Groups.NullItem(i);
@@ -66,13 +78,13 @@ void TExyzGroups::ToDataItem(TDataItem& item) {
   }
   Groups.Pack();
   item.AddField("n", Groups.Count());
-  for( size_t i=0; i < Groups.Count(); i++ ) 
-    Groups[i].ToDataItem(item.AddItem(group_id++));
+  for (size_t i=0; i < Groups.Count(); i++)
+    Groups[i].ToDataItem(item.AddItem("group"));
 }
 //..............................................................................
 #ifdef _PYTHON
 PyObject* TExyzGroups::PyExport(TPtrList<PyObject>& atoms)  {
-  int group_id = 0;
+  size_t group_id = 0;
   for( size_t i=0; i < Groups.Count(); i++ )  {
     if( Groups[i].IsEmpty() )  {
       Groups.NullItem(i);
@@ -92,11 +104,11 @@ PyObject* TExyzGroups::PyExport(TPtrList<PyObject>& atoms)  {
 //..............................................................................
 void TExyzGroups::FromDataItem(TDataItem& item) {
   Clear();
-  size_t n = item.GetRequiredField("n").ToSizeT();
-  if( n != item.ItemCount() )
+  size_t n = item.GetFieldByName("n").ToSizeT();
+  if (n != item.ItemCount())
     throw TFunctionFailedException(__OlxSourceInfo, "number of items mismatch");
-  for( size_t i=0; i < n; i++ )  {
-    New().FromDataItem(item.GetItem(i));
+  for (size_t i=0; i < n; i++) {
+    New().FromDataItem(item.GetItemByIndex(i));
   }
 }
 //..............................................................................

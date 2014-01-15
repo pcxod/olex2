@@ -72,10 +72,12 @@ void AGlScene::ToDataItem(TDataItem &di) const {
 }
 //.............................................................................
 void AGlScene::FromDataItem(const TDataItem &di)  {
-  FParent->LightModel.FromDataItem(di.FindRequiredItem("LightModel"));
-  TDataItem &fonts = di.FindRequiredItem("Fonts");
-  for( size_t i=0; i < fonts.ItemCount(); i++ )
-    CreateFont(fonts.GetItem(i).GetName(), fonts.GetItem(i).GetValue());
+  FParent->LightModel.FromDataItem(di.GetItemByName("LightModel"));
+  TDataItem &fonts = di.GetItemByName("Fonts");
+  for (size_t i = 0; i < fonts.ItemCount(); i++) {
+    CreateFont(fonts.GetItemByIndex(i).GetName(),
+      fonts.GetItemByIndex(i).GetValue());
+  }
 }
 //.............................................................................
 const_strlist AGlScene::ToPov() const {

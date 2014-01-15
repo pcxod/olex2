@@ -31,9 +31,6 @@ private:
 protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
-  //TEStringList* FindPrimitiveParams(TGlPrimitive *P);
-  static TArrayList<TGlPrimitiveParams> FPrimitiveParams;
-  static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
   static void ValidateBondParams();
   static TGraphicsStyle *FBondParams;
   virtual bool IsMaskSaveable() const {  return false;  }
@@ -46,27 +43,29 @@ protected:
     bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   };
   static TStylesClear *OnStylesClear;
-  class TContextClear: public AActionHandler  {
+  class TContextClear: public AActionHandler {
   public:
     TContextClear(TGlRenderer& Render);
     bool Enter(const IEObject *Sender, const IEObject *Data, TActionQueue *);
     bool Exit(const IEObject *Sender, const IEObject *Data, TActionQueue *);
   };
-  static void ClearStaticObjects()  {  FStaticObjects.Clear();  }
+  static void ClearStaticObjects()  {  GetStaticPrimitives().Clear();  }
 public:
   TXBond(TNetwork* net, TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName=EmptyString());
   virtual ~TXBond();
 
   // multiple inheritance...
-  void SetTag(index_t v) {   TSBond::SetTag(v);  }
+  void SetTag(index_t v) {  TSBond::SetTag(v);  }
   index_t GetTag() const {  return TSBond::GetTag();  }
   index_t IncTag()  {  return TSBond::IncTag();  }
   index_t DecTag()  {  return TSBond::DecTag();  }
 
   TXAtom& A() const {  return (TXAtom&)TSBond::A();  }
   TXAtom& B() const {  return (TXAtom&)TSBond::B();  }
-  TXAtom& Another(const TSAtom& a) const {  return (TXAtom&)TSBond::Another(a);  }
+  TXAtom& Another(const TSAtom& a) const {
+    return (TXAtom&)TSBond::Another(a);
+  }
 
   TXGlLabel& GetGlLabel() const {  return *Label;  }
   void UpdateLabel()  {  GetGlLabel().UpdateLabel();  }
@@ -88,8 +87,10 @@ public:
   /* returns a list of static primitives. This list has the same order as
   primtives masks, so primitives names can be obtained for any particular mask
   */
-  static const TStrPObjList<olxstr,TGlPrimitive*> &StaticPrimitives() {
-    return FStaticObjects;
+  static TStrPObjList<olxstr,TGlPrimitive*> &GetStaticPrimitives() {
+    //static TArrayList<TGlPrimitiveParams> FPrimitiveParams;
+    static TStrPObjList<olxstr, TGlPrimitive*> sp;
+    return sp;
   }
   // updates primitive properties from atoms
   void UpdateStyle();

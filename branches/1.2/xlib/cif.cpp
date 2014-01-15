@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #include "cif.h"
-#include "dataitem.h"
+#include "datafile.h"
 #include "catom.h"
 #include "satom.h"
 #include "symmparser.h"
@@ -147,13 +147,13 @@ void TCif::SaveToStrings(TStrList& Strings)  {
       TDataFile df;
       if( !df.LoadFromXLFile(CifCustomisationFN) )
         throw TFunctionFailedException(__OlxSourceInfo, "falied to load CIF customisation file");
-      const TDataItem& ist = df.Root().FindRequiredItem("cif_customisation").FindRequiredItem("sorting");
-      const TDataItem& ipv = ist.FindRequiredItem("pivots");
+      const TDataItem& ist = df.Root().GetItemByName("cif_customisation").GetItemByName("sorting");
+      const TDataItem& ipv = ist.GetItemByName("pivots");
       for( size_t i=0; i < ipv.ItemCount(); i++ )
-        pivots.Add(ipv.GetItem(i).GetValue());
-      const TDataItem& ied = ist.FindRequiredItem("endings");
+        pivots.Add(ipv.GetItemByIndex(i).GetValue());
+      const TDataItem& ied = ist.GetItemByName("endings");
       for( size_t i=0; i < ied.ItemCount(); i++ )
-        pivots.Add(ied.GetItem(i).GetValue());
+        pivots.Add(ied.GetItemByIndex(i).GetValue());
     }
     catch(const TExceptionBase& e)  {
       throw TFunctionFailedException(__OlxSourceInfo, e);
@@ -1142,25 +1142,25 @@ bool Cif_ValidateColumn(const TDataItem &col, const ICifEntry &entry) {
   olxstr val = entry.GetStringValue();
   if (val.IsNumber())
     val.TrimFloat();
-  olxstr Tmp = col.GetFieldValue("mustequal", EmptyString());
+  olxstr Tmp = col.FindField("mustequal", EmptyString());
   TStrList Toks(Tmp, ';');
    // equal to
   if (!Tmp.IsEmpty() && (Toks.IndexOfi(val) == InvalidIndex))
     return false;
-  Tmp = col.GetFieldValue("mustnotequal", EmptyString());
+  Tmp = col.FindField("mustnotequal", EmptyString());
   Toks.Clear();
   Toks.Strtok(Tmp, ';');
   if (!Tmp.IsEmpty() && (Toks.IndexOfi(val) != InvalidIndex) ) // not equal to
     return false;
 
-  Tmp = col.GetFieldValue("atypeequal", EmptyString());
+  Tmp = col.FindField("atypeequal", EmptyString());
   if (!Tmp.IsEmpty()) {  // check for atom type equals to
     if (EsdlInstanceOf(entry, AtomCifEntry))
       if (!((AtomCifEntry&)entry).data.GetType().symbol.Equalsi(Tmp)) {
         return false;
       }
   }
-  Tmp = col.GetFieldValue("atypenotequal", EmptyString());
+  Tmp = col.FindField("atypenotequal", EmptyString());
   if (!Tmp.IsEmpty()) {  // check for atom type equals to
     if (EsdlInstanceOf(entry, AtomCifEntry))
       if (((AtomCifEntry&)entry).data.GetType().symbol.Equalsi(Tmp)) {
@@ -1231,19 +1231,19 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
         AddRow = false;
         break;
       }
-      olxstr Tmp = DI->GetFieldValue("multiplier", EmptyString());
+      olxstr Tmp = DI->FindField("multiplier", EmptyString());
       if (!Tmp.IsEmpty()) {  // Multiply
         olxstr Val = Table[i-RowDeleted][j];
         MultValue(Val, Tmp);
         Table[i-RowDeleted][j] = Val;
       }
       for (size_t sc=0; sc < DI->ItemCount(); sc++) {
-        size_t ci = LT->ColIndex(DI->GetItem(sc).GetName());
+        size_t ci = LT->ColIndex(DI->GetItemByIndex(sc).GetName());
         if (ci == InvalidIndex) continue;
-        if (Cif_ValidateColumn(DI->GetItem(sc), *(*LT)[i][ci])) {
-          Table[i-RowDeleted][j] << DI->GetItem(sc).GetFieldValue("before") <<
-            (*LT)[i][ci]->GetStringValue() <<
-            DI->GetItem(sc).GetFieldValue("after");
+        if (Cif_ValidateColumn(DI->GetItemByIndex(sc), *(*LT)[i][ci])) {
+          Table[i - RowDeleted][j] << DI->GetItemByIndex(sc).FindField("before")
+            << (*LT)[i][ci]->GetStringValue()
+            << DI->GetItemByIndex(sc).FindField("after");
         }
         else {
           AddRow = false;
@@ -1261,8 +1261,8 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
   for (size_t i=0; i < LT->ColCount(); i++) {
     TDataItem *DI = TD->FindItemi(LT->ColName(i));
     if (DI != NULL) {
-      Table.ColName(i-ColDeleted) = DI->GetFieldValueCI("caption");
-      olxstr v = DI->GetFieldValueCI("visible", FalseString());
+      Table.ColName(i-ColDeleted) = DI->FindField("caption");
+      olxstr v = DI->FindField("visible", FalseString());
       if (!v.IsBool() && ip != NULL)
         ip->processFunction(v);
       if (!v.ToBool()) {
@@ -1278,5 +1278,98 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table,
   return true;
 }
 //..............................................................................
-
-
+void TCif::ToDataItem(TDataItem &di_) const {
+  TDataItem &di = di_.AddItem("data");
+  olxstr_dict<olxstr> out_map;
+  for (size_t i = 0; i < data_provider.Count(); i++)  {
+    CifBlock& cb = data_provider[i];
+    olxstr block_name = cb.GetName();
+    if (block_name.IsEmpty() || block_name.IsNumber()) {
+      block_name = out_map(block_name, olxstr("data_") << block_name);
+    }
+    TDataItem &block = di.AddItem(block_name);
+    for (size_t j = 0; j < cb.params.Count(); j++) {
+      if (!cb.params.GetObject(j)->HasName()) {
+        block.AddItem("comment", cb.params.GetObject(j)->GetStringValue());
+        continue;
+      }
+      TStrList toks(cb.params[j], '_');
+      for (size_t ti = 0; ti < toks.Count(); ti++) {
+        size_t idx = out_map.IndexOf(toks[ti]);
+        if (idx == InvalidIndex) {
+          if (toks[ti].ContainAnyOf("/%")) {
+            const olxstr &rep =
+              out_map(toks[ti],
+                olxstr(toks[ti]).Replace('/', "_over_")
+                .Replace('%', "percent")
+                );
+            toks[ti] = rep;
+          }
+        }
+        else {
+          toks[ti] = out_map.GetValue(idx);
+        }
+        if (ti > 0) {
+          if (olxstr::o_isdigit(toks[ti].CharAt(0))) {
+            toks[ti - 1] << '_' << toks[ti];
+            toks.Delete(ti--);
+          }
+        }
+      }
+      size_t idx = 0;
+      TDataItem *p = block.FindItem(toks[idx]);
+      while (p != NULL) {
+        TDataItem *p1 = p->FindItem(toks[++idx]);
+        if (p1 == 0) break;
+        p = p1;
+      }
+      if (p == 0) p = &block;
+      for (size_t k = idx; k < toks.Count(); k++) {
+        p = &p->AddItem(toks[k]);
+      }
+      ICifEntry *ice = cb.params.GetObject(j);
+      IStringCifEntry *ise = dynamic_cast<IStringCifEntry*>(ice);
+      if (ise != 0) {
+        TStrList cnt;
+        if (ise->HasComment())
+          cnt.Add('#') << ise->GetComment();
+        for (size_t li = 0; li < ise->Count(); li++)
+          cnt << (*ise)[li];
+          p->SetValue(cnt.Text(NewLineSequence()));
+      }
+      else {
+        cetTable *tab = dynamic_cast<cetTable*>(ice);
+        if (tab != NULL) {
+          const size_t nf = tab->GetName().IsEmpty() ? 0
+            : (tab->GetName().Length()+1);
+          for (size_t tr = 0; tr < tab->RowCount(); tr++) {
+            TDataItem &tri = p->AddItem("tr");
+            for (size_t td = 0; td < tab->ColCount(); td++) {
+              TStrList cnt;
+              IStringCifEntry *tce = dynamic_cast<IStringCifEntry *>(
+                (*tab)[tr][td]);
+              for (size_t li = 0; li < tce->Count(); li++)
+                cnt << (*tce)[li];
+              olxstr name;
+              if (tab->ColName(td).Length() <= nf)
+                name = "value";
+              else
+                name = tab->ColName(td).SubStringFrom(nf);
+              tri.AddItem(name, cnt.Text(NewLineSequence()));
+            }
+          }
+        }
+      }
+    }
+  }
+  if (!out_map.IsEmpty()) {
+    TDataItem &tr = di_.AddItem("translation");
+    for (size_t i = 0; i < out_map.Count(); i++) {
+      tr.AddItem(out_map.GetValue(i), out_map.GetKey(i));
+    }
+  }
+}
+//..............................................................................
+void TCif::FromDataItem(const TDataItem &di_) {
+  return;
+}

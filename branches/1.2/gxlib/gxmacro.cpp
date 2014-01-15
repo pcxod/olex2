@@ -2112,7 +2112,7 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
       TGlMaterial *sm = ms.FindMaterial("Sphere");
       if (sm != NULL) {
         l.GetPrimitives().GetStyle().SetMaterial(
-          TXBond::StaticPrimitives()[9], *sm);
+          TXBond::GetStaticPrimitives()[9], *sm);
       }
       l.UpdatePrimitives((1<<9)|(1<<10));
       l.SetRadius(0.5);
@@ -2977,6 +2977,91 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
   app.CreateRings(true, true);
+  TGXApp::BondIterator bi = app.GetBonds();
+  SortedPtrList<TGPCollection, TPointerComparator> cols;
+  TPtrList<TXBond> changed;
+  while (bi.HasNext()) {
+    TXBond &b = bi.Next();
+    if (!b.IsVisible() ||
+      (b.A().CAtom().IsRingAtom() && b.B().CAtom().IsRingAtom()))
+    {
+      continue;
+    }
+    short order = 0;
+    double l = b.Length();
+    if (b.A().GetType() == iOxygenZ || b.B().GetType() == iOxygenZ) {
+      if (b.A().GetType() == iSulphurZ) {
+        if (l < 1.48)
+          order = 2;
+      }
+      else if (b.B().GetType() == iNitrogenZ) {
+        if (l < 1.1)
+          order = 3;
+        else if (l < 1.22)
+          order = 2;
+      }
+      else if (b.B().GetType() == iCarbonZ) {
+        if (l < 1.15)
+          order = 3;
+        else if (l < 1.3)
+          order = 2;
+      }
+    }
+    else if (b.A().GetType() == iNitrogenZ || b.B().GetType() == iNitrogenZ) {
+      if (b.A().GetType() == iNitrogenZ && b.B().GetType() == iNitrogenZ) {
+        if (l < 1.15)
+          order = 3;
+        else if (l < 1.22)
+          order = 2;
+      }
+      else if (b.B().GetType() == iCarbonZ) {
+        if (l < 1.2)
+          order = 3;
+        else if (l < 1.30)
+          order = 2;
+      }
+    }
+    else if (b.A().GetType() == iCarbonZ || b.B().GetType() == iCarbonZ) {
+      if (b.A().GetType() == iCarbonZ && b.B().GetType() == iCarbonZ) {
+        if (l < 1.2)
+          order = 3;
+        else if (l < 1.36)
+          order = 2;
+      }
+    }
+    b.SetOrder(order);
+    if (order > 1) {
+      changed << b;
+    }
+    else if (b.B().GetType() == iCarbonZ &&
+      (b.A().GetType() == iCarbonZ || b.A().GetType() == iNitrogenZ)) {
+      double l = b.Length();
+      if (l < 1.2)
+        order = 3;
+      else if (l < 1.30)
+        order = 2;
+    }
+    b.SetOrder(order);
+    if (order > 1) {
+      changed << b;
+    }
+  }
+  for (size_t i = 0; i < changed.Count(); i++) {
+    changed[i]->GetPrimitives().RemoveObject(*changed[i]);
+    changed[i]->Create(TXBond::GetLegend(*changed[i], 0));
+    if (cols.Contains(&changed[i]->GetPrimitives())) {
+      continue;
+    }
+    cols.AddUnique(&changed[i]->GetPrimitives());
+    short order = changed[i]->GetOrder();
+    if (order == 2) {
+      changed[i]->UpdatePrimitives((1 << 14) | (1 << 15));
+    }
+    else if (order == 3) {
+      changed[i]->UpdatePrimitives((1 << 16) | (1 << 17));
+    }
+
+  }
 }
 //.............................................................................
 void GXLibMacros::macPoly(TStrObjList &Cmds, const TParamList &Options,

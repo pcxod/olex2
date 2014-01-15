@@ -1220,28 +1220,28 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
 void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   Clear();
   Loading_ = true;
-  bool empty = item.GetRequiredField("empty").ToBool();
+  bool empty = item.GetFieldByName("empty").ToBool();
   if( empty )  return;
-  //Visible( item.GetRequiredField("visible").ToBool() );
+  //Visible( item.GetFieldByName("visible").ToBool() );
   SetVisible(true);
-  RenderMode = item.GetRequiredField("draw_mode").ToInt();
-  Size = item.GetRequiredField("size").ToFloat();
-  Extended = item.GetFieldValue("extended", FalseString()).ToBool();
-  Boxed = item.GetFieldValue("boxed", FalseString()).ToBool();
+  RenderMode = item.GetFieldByName("draw_mode").ToInt();
+  Size = item.GetFieldByName("size").ToFloat();
+  Extended = item.FindField("extended", FalseString()).ToBool();
+  Boxed = item.FindField("boxed", FalseString()).ToBool();
   ExtMin = vec3f(-1,-1,-1);
   ExtMax = vec3f(1,1,1);
   const size_t ed_i = item.FieldIndex("ext_max");
   if( ed_i != InvalidIndex )  {
-    PersUtil::VecFromStr(item.GetField(ed_i), ExtMin);
-    PersUtil::VecFromStr(item.GetRequiredField("ext_min"), ExtMax);
+    PersUtil::VecFromStr(item.GetFieldByIndex(ed_i), ExtMin);
+    PersUtil::VecFromStr(item.GetFieldByName("ext_min"), ExtMax);
   }
-  Scale = item.GetRequiredField("scale").ToFloat();
-  InitGrid( item.GetRequiredField("max_x").ToInt(),
-            item.GetRequiredField("max_y").ToInt(),
-            item.GetRequiredField("max_z").ToInt());
-  MaxVal = item.GetRequiredField("max_val").ToFloat();
-  MinVal = item.GetRequiredField("min_val").ToFloat();
-  Depth = item.GetRequiredField("depth").ToFloat();
+  Scale = item.GetFieldByName("scale").ToFloat();
+  InitGrid( item.GetFieldByName("max_x").ToInt(),
+            item.GetFieldByName("max_y").ToInt(),
+            item.GetFieldByName("max_z").ToInt());
+  MaxVal = item.GetFieldByName("max_val").ToFloat();
+  MinVal = item.GetFieldByName("min_val").ToFloat();
+  Depth = item.GetFieldByName("depth").ToFloat();
   for( size_t x=0; x < MaxX; x++ )
     for( size_t y=0; y < MaxY; y++ )
       zis.Read(ED->Data[x][y], sizeof(float)*MaxZ);

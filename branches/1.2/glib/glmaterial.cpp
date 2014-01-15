@@ -170,17 +170,17 @@ void TGlMaterial::ToDataItem(TDataItem& Item) const {
 //..............................................................................
 bool TGlMaterial::FromDataItem(const TDataItem& Item)  {
   if( Item.FieldCount() != 0 )  {  // backwards compatibility
-    AmbientF.FromString(Item.GetFieldValue("AmbientF"));
-    AmbientB.FromString(Item.GetFieldValue("AmbientB"));
-    DiffuseF.FromString(Item.GetFieldValue("DiffuseF"));
-    DiffuseB.FromString(Item.GetFieldValue("DiffuseB"));
-    EmissionF.FromString(Item.GetFieldValue("EmissionF"));
-    EmissionB.FromString(Item.GetFieldValue("EmissionB"));
-    SpecularF.FromString(Item.GetFieldValue("SpecularF"));
-    SpecularB.FromString(Item.GetFieldValue("SpecularB"));
-    ShininessF = Item.GetFieldValue("ShininessF").ToInt();
-    ShininessB = Item.GetFieldValue("ShininessB").ToInt();
-    Flags = Item.GetFieldValue("Flags").ToInt();
+    AmbientF.FromString(Item.FindField("AmbientF"));
+    AmbientB.FromString(Item.FindField("AmbientB"));
+    DiffuseF.FromString(Item.FindField("DiffuseF"));
+    DiffuseB.FromString(Item.FindField("DiffuseB"));
+    EmissionF.FromString(Item.FindField("EmissionF"));
+    EmissionB.FromString(Item.FindField("EmissionB"));
+    SpecularF.FromString(Item.FindField("SpecularF"));
+    SpecularB.FromString(Item.FindField("SpecularB"));
+    ShininessF = Item.FindField("ShininessF").ToInt();
+    ShininessB = Item.FindField("ShininessB").ToInt();
+    Flags = Item.FindField("Flags").ToInt();
   }
   else
     FromString( Item.GetValue() );

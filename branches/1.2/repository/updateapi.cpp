@@ -364,7 +364,7 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
       if( PluginItem != NULL )  {
         for( size_t i=0; i < PluginItem->ItemCount(); i++ )  {
           props.AddList(GetPluginProperties(
-            PluginItem->GetItem(i).GetName()));
+            PluginItem->GetItemByIndex(i).GetName()));
         }
       }
     }

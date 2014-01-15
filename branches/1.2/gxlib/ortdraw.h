@@ -74,7 +74,11 @@ struct ort_bond : public a_ort_object  {
   ort_bond(const OrtDraw& parent, const draw_t &object,
     const ort_atom& a1, const ort_atom& a2);
   virtual void render(PSWriter&) const;
-  virtual float get_z() const {  return (atom_a.crd[2]+atom_b.crd[2])/2;  }
+  //virtual float get_z() const {  return (atom_a.crd[2]+atom_b.crd[2])/2;  }
+  virtual float get_z() const {
+    return olx_min(atom_a.crd[2], atom_b.crd[2]) +
+      (olx_abs(atom_a.crd[2]-atom_b.crd[2]) < 1e-3f ? -0.01f : +0.01f);
+  }
 protected:
   void _render(PSWriter&, float scalex, uint32_t mask) const;
   uint32_t get_color(int primitive, uint32_t def) const;
@@ -88,7 +92,8 @@ struct ort_bond_line : public a_ort_object  {
   ort_bond_line(const OrtDraw& parent, const TXLine& line,
     const vec3f& from, const vec3f& to);
   virtual void render(PSWriter&) const;
-  virtual float get_z() const {  return (p_from[2]+p_to[2])/2;  }
+  //virtual float get_z() const { return (p_from[2] + p_to[2]) / 2; }
+  virtual float get_z() const { return olx_min(p_from[2], p_to[2]); }
   virtual void update_size(evecf &sz) const {
     a_ort_object::update_min_max(sz, p_from);
     a_ort_object::update_min_max(sz, p_to);
@@ -106,7 +111,8 @@ struct ort_line : public a_ort_object  {
     :  a_ort_object(parent), from(_from), to(_to), color(_color)
   {}
   virtual void render(PSWriter&) const;
-  virtual float get_z() const {  return (from[2]+to[2])/2;  }
+  //virtual float get_z() const {  return (from[2]+to[2])/2;  }
+  virtual float get_z() const { return olx_min(from[2], to[2]); }
   void update_size(evecf &sz) const {
     a_ort_object::update_min_max(sz, from);
     a_ort_object::update_min_max(sz, to);
@@ -126,17 +132,17 @@ struct ort_poly : public a_ort_object  {
   virtual void render(PSWriter&) const;
   virtual float get_z() const {
     float z = 0;
-    for( size_t i=0; i < points.Count(); i++ )
+    for ( size_t i=0; i < points.Count(); i++)
       z += points[i][2];
     return points.IsEmpty() ? 0 : z/points.Count();
   }
   void update_size(evecf &sz) const {
-    for( size_t i=0; i < points.Count(); i++ )
+    for (size_t i=0; i < points.Count(); i++)
       a_ort_object::update_min_max(sz, points[i]);
   }
 };
 
-struct ort_circle : public a_ort_object  {
+struct ort_circle : public a_ort_object {
   vec3f center;
   bool fill;
   float line_width, r;
@@ -191,12 +197,12 @@ private:
   float BondOutlineSize, AtomOutlineSize;
 protected:
   float PieLineWidth,
-    ElpLineWidth, 
+    ElpLineWidth,
     QuadLineWidth,
     FontLineWidth,
-    HBondScale;
+    HBondScale, MultipleBondsWidth;
   const TEBasis& basis;
-  bool Perspective;
+  bool Perspective, AutoStippleDisorder;
   uint16_t ElpDiv, PieDiv, BondDiv;
   mutable TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT,
     BondProjM;
@@ -207,8 +213,12 @@ protected:
   float GetBondRad(const ort_bond<draw_t>& b, uint32_t mask) const {
     float r = (b.atom_a.atom.GetType() == iHydrogenZ ||
       b.atom_b.atom.GetType() == iHydrogenZ) ? BondRad*HBondScale : BondRad;
-    if( (mask&((1<<13)|(1<<12)|(1<<11)|(1<<7)|(1<<6))) != 0 )
+    if ((mask&((1<<13)|(1<<12)|(1<<11)|(1<<7)|(1<<6))) != 0)
       r /= 4;
+    else if ((mask&((1 << 14) | (1 << 15))) != 0)
+      r *= 1.25;
+    else if ((mask&((1 << 16) | (1 << 17))) != 0)
+      r *= 1.5;
     return r;
   }
   float GetLineRad(const ort_bond_line& b, uint32_t mask) const;
@@ -245,15 +255,37 @@ public:
     BondOutlineSize = 0.1;
     AtomOutlineSize = 0.05;
     Perspective = false;
+    AutoStippleDisorder = true;
+    MultipleBondsWidth = 0;
   }
   // create ellipse and pie coordinates
   void Init(PSWriter& pw);
 
   void Render(const olxstr& fileName);
 
+  static size_t stipples_for_mask(uint32_t mask, bool half) {
+    size_t rv = 0;
+    if ((mask &((1 << 13) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8))) != 0)
+      return half ? 6 : 12;
+    return 0;
+  }
+  size_t GetStippleCount(const ort_bond<TXBond> &b, bool half) const {
+    if (!IsAutoStippleDisorder()) return 0;
+    int8_t pa = b.object.A().CAtom().GetPart(),
+      pb = b.object.B().CAtom().GetPart();
+    if ((pa != 0 && pa != 1) || (pb != 0 && pb != 1))
+      return (half ? 6 :12);
+    return stipples_for_mask(b.object.GetPrimitiveMask(), half);
+  }
+  template <class draw_t>
+  size_t GetStippleCount(const ort_bond<draw_t> &b, bool half) const {
+    return stipples_for_mask(b.object.GetPrimitiveMask(), half);
+  }
+  size_t GetStippleCount(const ort_bond_line &l, bool half) const;
+
   DefPropP(uint16_t, ElpDiv)
-  DefPropP(uint16_t, PieDiv) 
-  DefPropP(uint16_t, BondDiv) 
+  DefPropP(uint16_t, PieDiv)
+  DefPropP(uint16_t, BondDiv)
   DefPropP(uint16_t, ColorMode)
   DefPropP(uint32_t, BondOutlineColor)
   DefPropP(uint32_t, AtomOutlineColor)
@@ -264,7 +296,9 @@ public:
   DefPropP(float, QuadLineWidth)
   DefPropP(float, PieLineWidth)
   DefPropP(float, ElpLineWidth)
+  DefPropP(float, MultipleBondsWidth)
   DefPropBIsSet(Perspective)
+  DefPropBIsSet(AutoStippleDisorder)
 
   friend struct ort_bond_base;
   friend struct ort_bond<TXBond>;

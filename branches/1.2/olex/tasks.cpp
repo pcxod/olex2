@@ -76,9 +76,9 @@ void CellChangeTask::Run() {
     n << ' ' << TEValueD(cell[i], esds[i]).ToString() <<
       ' ' << TEValueD(cell[3+i], esds[3+i]).ToString();
   }
-  olxstr opt = TBasicApp::GetInstance().GetOptions().FindValue("use_hkl_cell");
-  bool use = false;
-  if (opt.IsEmpty() && o != n) {
+  bool use = TBasicApp::GetInstance().GetOptions().FindValue(
+    "use_hkl_cell", TrueString()).ToBool();
+  if (!use && o != n) {
     olxstr msg = "Cell parameters in your HKL file differ from currently "
       "used.\nCurrent:";
     msg << o << "\nNew:" << n << "\nWould you like to update them?";

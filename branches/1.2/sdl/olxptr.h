@@ -32,7 +32,8 @@ template <typename ptr> struct olx_ptr_  {
 
 template <typename ptr> struct olx_object_ptr  {
   olx_ptr_<ptr>* p;
-  olx_object_ptr(ptr* _p) {  p = new olx_ptr_<ptr>(_p);  }
+  olx_object_ptr() { p = new olx_ptr_<ptr>(NULL); }
+  olx_object_ptr(ptr* _p) { p = new olx_ptr_<ptr>(_p); }
   olx_object_ptr(const olx_object_ptr& _p) : p(_p.p->inc_ref())  {}
   ~olx_object_ptr()  { p->template dec_ref<false>(); }
   olx_object_ptr& operator = (const olx_object_ptr& _p)  {

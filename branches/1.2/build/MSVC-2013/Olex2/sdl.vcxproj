@@ -725,6 +725,7 @@
     <ClInclude Include="..\..\..\sdl\math\composite.h" />
     <ClInclude Include="..\..\..\sdl\math\dmatrix.h" />
     <ClInclude Include="..\..\..\sdl\math\evaln.h" />
+    <ClInclude Include="..\..\..\sdl\math\integration.h" />
     <ClInclude Include="..\..\..\sdl\math\libmath.h" />
     <ClInclude Include="..\..\..\sdl\math\mmath.h" />
     <ClInclude Include="..\..\..\sdl\math\plane.h" />
@@ -782,6 +783,7 @@
     <ClInclude Include="..\..\..\sdl\exparse\exptree.h" />
     <ClInclude Include="..\..\..\sdl\exparse\expvalue.h" />
     <ClInclude Include="..\..\..\sdl\exparse\funcwrap.h" />
+    <ClInclude Include="..\..\..\sdl\xml.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

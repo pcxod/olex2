@@ -215,6 +215,7 @@ protected:
   // an action to be exected then any particular object is selected/clicked
   virtual bool OnObject_(AGDrawObject &obj) = 0;
   virtual bool OnKey_(int keyId, short shiftState)  { return false; }
+  virtual bool OnDblClick_() { return false; }
   DefPropBIsSet(Initialised)
 public:
   AMode(size_t id);
@@ -238,6 +239,11 @@ public:
   bool OnObject(AGDrawObject &obj) {
     if (!IsInitialised()) return false;
     return OnObject_(obj);
+  }
+  // an action to be exected doublc click occurs
+  bool OnDblClick() {
+    if (!IsInitialised()) return false;
+    return OnDblClick_();
   }
   /* if the mode holds any reference to graphical objects - these should be
   cleared

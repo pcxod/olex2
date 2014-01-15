@@ -15,17 +15,15 @@
 #include "styles.h"
 #include "glutil.h"
 
-TGlPrimitive* TDRing::torus = NULL;
-bool TDRing::initialised = false;
 //..............................................................................
-TDRing::TContextClear::TContextClear(TGlRenderer& Render)  {
+TDRing::TContextClear::TContextClear(TGlRenderer& Render) {
   Render.OnClear.Add(this);
 }
 //..............................................................................
-bool TDRing::TContextClear::Enter(const IEObject *Sender, const IEObject *Data,
+bool TDRing::TContextClear::Enter(const IEObject *, const IEObject *,
   TActionQueue *)
 {
-  TDRing::torus = NULL;
+  TDRing::Torus() = NULL;
   return true;
 }
 //..............................................................................
@@ -36,8 +34,8 @@ TDRing::TDRing(TGlRenderer& R, const olxstr& collectionName) :
   material("85;0;4286611584;4290822336;64")
 {
   SetSelectable(false);
-  if( !initialised )  {
-    initialised = true;
+  if (!Initialised()) {
+    Initialised() = true;
     new TContextClear(R);
   }
 }
@@ -46,24 +44,25 @@ double TDRing::GetRadius() const {
   return 1.0 + 0.075;
 }
 //...........................................................................
-void TDRing::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  
+void TDRing::Create(const olxstr& cName) {
+  if (!cName.IsEmpty())
     SetCollectionName(cName);
   olxstr NewL;
   TGPCollection* GPC = Parent.FindCollectionX(GetCollectionName(), NewL);
-  if( GPC == NULL )
+  if (GPC == NULL)
     GPC = &Parent.NewCollection(NewL);
   GPC->AddObject(*this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  if (GPC->PrimitiveCount() != 0) return;
 
   TGraphicsStyle& GS = GPC->GetStyle();
   GS.SetSaveable(false);
   TGlPrimitive& GlP = GPC->NewPrimitive("Torus", sgloCommandList);
   GlP.SetProperties(GS.GetMaterial("Object", material));
-  if( torus == NULL ) {
+  TGlPrimitive *&torus = Torus();
+  if (torus == NULL) {
     torus = &Parent.NewPrimitive(sgloCommandList);
     torus->StartList();
-    GlTorus::Render(0.075, 1, 8, 20);
+    GlTorus::Render(0.075, 1, 8, 25);
     torus->EndList();
   }
   GlP.StartList();
@@ -71,9 +70,19 @@ void TDRing::Create(const olxstr& cName)  {
   GlP.EndList();
 }
 //...........................................................................
-bool TDRing::Orient(TGlPrimitive& P)  {
+bool TDRing::Orient(TGlPrimitive &) {
   olx_gl::orient(Basis.GetMDataT());
   olx_gl::scale(Basis.GetZoom());
   return false;
+}
+//...........................................................................
+void TDRing::ToDataItem(TDataItem &i) const {
+  i.SetValue(GetCollectionName());
+  Basis.ToDataItem(i.AddItem("basis"));
+}
+//...........................................................................
+void TDRing::FromDataItem(const TDataItem &i) {
+  SetCollectionName(i.GetValue());
+  Basis.FromDataItem(i.GetItemByName("basis"));
 }
 //...........................................................................

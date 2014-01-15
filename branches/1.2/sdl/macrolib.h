@@ -63,7 +63,7 @@ protected:
   bool ExtractItemVal(const TDataItem& tdi, olxstr& val)  {  // helper function
     val = tdi.GetValue();
     if( val.IsEmpty() )
-      val = tdi.GetFieldValue("cmd", EmptyString());
+      val = tdi.FindField("cmd");
     return !val.IsEmpty();
   }
   void ParseMacro(const TDataItem& macro_def, TEMacro& macro);

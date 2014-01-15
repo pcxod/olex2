@@ -105,46 +105,46 @@ void TSAtom::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
-  const size_t net_id = item.GetRequiredField("net_id").ToInt();
+  const size_t net_id = item.GetFieldByName("net_id").ToInt();
   Network = &parent.GetFragment(net_id);
   if( net_id != InvalidIndex )  {
     ASObjectProvider& objects = parent.GetObjects();
     const TDataItem* _nodes = item.FindItem("Nodes");
     if( _nodes != NULL )  {
-      const TDataItem& nodes = *_nodes;
-      Nodes.SetCapacity(nodes.FieldCount());
-      for( size_t i=0; i < nodes.FieldCount(); i++ )
-        Nodes.Add(objects.atoms[nodes.GetField(i).ToSizeT()]);
-      const TDataItem& bonds = item.FindRequiredItem("Bonds");
-      Bonds.SetCapacity(bonds.FieldCount());
-      for( size_t i=0; i < bonds.FieldCount(); i++ )
-        Bonds.Add(objects.bonds[bonds.GetField(i).ToSizeT()]);
+      TStrStrList nodes = _nodes->GetOrderedFieldList();
+      Nodes.SetCapacity(nodes.Count());
+      for( size_t i=0; i < nodes.Count(); i++ )
+        Nodes.Add(objects.atoms[nodes.GetObject(i).ToSizeT()]);
+      nodes = item.GetItemByName("Bonds").GetOrderedFieldList();
+      Bonds.SetCapacity(nodes.Count());
+      for( size_t i=0; i < nodes.Count(); i++ )
+        Bonds.Add(objects.bonds[nodes.GetObject(i).ToSizeT()]);
     }
     else  {  // index range then
-      IndexRange::RangeItr ai(item.GetRequiredField("node_range"));
+      IndexRange::RangeItr ai(item.GetFieldByName("node_range"));
       Nodes.SetCapacity(ai.CalcSize());
       while( ai.HasNext() )
         Nodes.Add(objects.atoms[ai.Next()]);
-      IndexRange::RangeItr bi(item.GetRequiredField("bond_range"));
+      IndexRange::RangeItr bi(item.GetFieldByName("bond_range"));
       Bonds.SetCapacity(bi.CalcSize());
       while( bi.HasNext() )
         Bonds.Add(objects.bonds[bi.Next()]);
     }
   }
   TLattice& latt = Network->GetLattice();
-  const size_t ca_id = item.GetRequiredField("atom_id").ToSizeT();
+  const size_t ca_id = item.GetFieldByName("atom_id").ToSizeT();
   CAtom(latt.GetAsymmUnit().GetAtom(ca_id));
   TDataItem* matrices = item.FindItem("Matrices");
   if (matrices == NULL) {
-    Matrix = &latt.GetMatrix(item.GetRequiredField("matrix_id").ToSizeT());
+    Matrix = &latt.GetMatrix(item.GetFieldByName("matrix_id").ToSizeT());
   }
   else {
-    const size_t mi = matrices->GetField(0).ToSizeT();
+    const size_t mi = matrices->GetFieldByIndex(0).ToSizeT();
     Matrix = &latt.GetMatrix(mi);
   }
   FCCenter = GetMatrix() * FCCenter;
-  PersUtil::VecFromStr(item.GetRequiredField("crd"), FCenter);
-  Flags = item.GetRequiredField("flags").ToInt();
+  PersUtil::VecFromStr(item.GetFieldByName("crd"), FCenter);
+  Flags = item.GetFieldByName("flags").ToInt();
   if( CAtom().GetEllipsoid() != NULL )  {
     SetEllipsoid(&latt.GetUnitCell().GetEllipsoid(
       GetMatrix().GetContainerId(), CAtom().GetId()));

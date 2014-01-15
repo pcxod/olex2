@@ -12,6 +12,7 @@
 #include "symmspace.h"
 #include "math/composite.h"
 #include "xapp.h"
+#include "datafile.h"
 
 using namespace lcells;
 
@@ -505,13 +506,13 @@ void IndexManager::LoadConfig(const olxstr &file_name)  {
   else {
     TDataFile df;
     df.LoadFromXLFile(file_name);
-    TDataItem &root = df.Root().FindRequiredItem("indices");
+    TDataItem &root = df.Root().GetItemByName("indices");
     for( size_t i=0; i < root.ItemCount(); i++ )  {
-      TDataItem &idx = root.GetItem(i);
-      olxstr fn = idx.GetRequiredField("file");
+      TDataItem &idx = root.GetItemByIndex(i);
+      olxstr fn = idx.GetFieldByName("file");
       if( !TEFile::IsAbsolutePath(fn) )
         fn = TEFile::ExpandRelativePath(fn, TBasicApp::GetInstanceDir());
-      olxstr root_dir = idx.GetRequiredField("root");
+      olxstr root_dir = idx.GetFieldByName("root");
       if( !TEFile::Exists(fn) &&
           (root_dir.IsEmpty() || !TEFile::Exists(root_dir)))
       {
@@ -522,7 +523,7 @@ void IndexManager::LoadConfig(const olxstr &file_name)  {
       Item &itm = indices.AddNew();
       itm.index_file_name = fn;
       itm.root = TEFile::UnixPathI(TEFile::TrimPathDelimeterI(root_dir));
-      itm.update = idx.GetRequiredField("update").ToBool();
+      itm.update = idx.GetFieldByName("update").ToBool();
     }
   }
 }

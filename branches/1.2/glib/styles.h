@@ -31,7 +31,7 @@ public:
 
   const olxstr& GetName() const {  return Name; }
   static const olxstr& ReadName(const TDataItem& Item)  {
-    return Item.GetFieldValue("PName");
+    return Item.FindField("PName");
   }
 
   TGlMaterial& SetProperties(const AGOProperties& C) {
@@ -120,7 +120,8 @@ public:
        Name(name),
        Level(parent_style == 0 ? 0 : parent_style->Level+1),
        Saveable(true),
-       Persistent(false) {}
+       Persistent(false)
+  {}
 
   ~TGraphicsStyle() {  Clear();  }
   
@@ -149,8 +150,8 @@ public:
         return (TGlMaterial&)PStyles[i]->SetProperties(mat);
     return CreatePrimitiveMaterial(PName, mat);
   }
-  
-  
+
+
   /* tries to find primitive material in this or parent styles */
   template <class T>
   TGlMaterial* FindMaterial(const T& PName, TGlMaterial* def=NULL) {
@@ -171,9 +172,9 @@ public:
   template <class T, class VT>
   void SetParam(const T& name, const VT& val, bool saveable=false) {
     size_t ind = Params.IndexOf(name);
-    if( ind != InvalidIndex )  
+    if( ind != InvalidIndex )
       Params.GetObject(ind).val = val;
-    else            
+    else
       Params.Add(name, TGSParam(val, saveable));
   }  
   /* returns value of specified parameter, if the parameter does not exist, a new one is created
@@ -300,7 +301,7 @@ public:
   inline short GetVersion() const {  return Version;  }
   // reads the style version (0 - no version) from a dataitem 
   static int ReadStyleVersion(const TDataItem& Item) {
-    return Item.GetFieldValue("Version", "0").ToInt();
+    return Item.FindField("Version", "0").ToInt();
   }
   // this is the current version of the styles
   static const int CurrentVersion;

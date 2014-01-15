@@ -439,13 +439,14 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
   const smatd* minMatr = NULL;
   const TAsymmUnit &au = GetLattice().GetAsymmUnit();
   vec3i mint;
-  double minD=10000;
-  if( ConsiderOriginal )  {
+  smatd I = smatd::Identity();
+  double minD = 10000;
+  if (ConsiderOriginal) {
     minD = au.Orthogonalise(from-to).QLength();
-    if( dist != NULL )
+    if (dist != NULL)
       *dist = minD;
   }
-  for( size_t i=0; i < Matrices.Count(); i++ )  {
+  for (size_t i=0; i < Matrices.Count(); i++) {
     const smatd& matr = Matrices[i];
     vec3d v = matr * from - to;
     const vec3i shift = -v.Round<int>();
@@ -453,23 +454,23 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from,
     // check for identity matrix
     if( i == 0 && shift.IsNull() )  continue;
     const double D = au.CellToCartesian(v).QLength();
-    if( D < minD )  {
+    if (D < minD) {
       minD = D;
       minMatr = &matr;
       mint = shift;
     }
-    else  {
-      if( D == minD && minMatr == NULL )  {
+    else {
+      if (D == minD && minMatr == NULL) {
         minMatr = &matr;
         mint = shift;
       }
     }
   }
-  if( minMatr != NULL)  {
+  if (minMatr != NULL) {
     smatd* retVal = new smatd(*minMatr);
     retVal->t += mint;
     retVal->SetId(minMatr->GetContainerId(), mint);
-    if( dist != NULL )
+    if (dist != NULL)
       *dist = sqrt(minD);
     return retVal;
   }

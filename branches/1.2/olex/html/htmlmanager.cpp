@@ -149,6 +149,21 @@ bool THtmlManager::Exit(const IEObject *sender, const IEObject *data,
 bool THtmlManager::Execute(const IEObject *sender, const IEObject *data,
   TActionQueue *)
 {
+  olxstr dt;
+  if (EsdlInstanceOf(*data, olxstr)) {
+    dt = *(olxstr *)data;
+    size_t ind = dt.FirstIndexOf('%');
+    while (ind != InvalidIndex && ((ind + 2) < dt.Length()) &&
+      olxstr::o_ishexdigit(dt[ind + 1]) &&
+      olxstr::o_ishexdigit(dt[ind + 2]))
+    {
+      int val = dt.SubString(ind + 1, 2).RadInt<int>(16);
+      dt.Delete(ind, 3);
+      dt.Insert(val, ind);
+      ind = dt.FirstIndexOf('%');
+    }
+    data = &dt;
+  }
   if (sender != NULL) {
     const wxWindow *wx = dynamic_cast<const wxWindow*>(sender);
     THtml *html = dynamic_cast<THtml*>(wx->GetParent());

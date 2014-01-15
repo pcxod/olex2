@@ -363,7 +363,8 @@ TAG_HANDLER_PROC(tag)  {
     CreatedWindow = Text;
     Text->SetText(Value);
     Text->SetSize(ax, ay);
-    AdjustSize(*Text);
+    if ((flags&wxTE_MULTILINE) == 0)
+      AdjustSize(*Text);
     Text->SetData(Data);
 
     if (!Label.IsEmpty()) {

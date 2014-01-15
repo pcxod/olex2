@@ -126,26 +126,26 @@ void TDUserObj::FromDataItem(const TDataItem &di) {
     delete Colors;
     Colors = NULL;
   }
-  di.GetRequiredField("type").ToNumber(Type);
-  di.GetRequiredField("flags").ToNumber(AGlMouseHandlerImp::glml_Flags);
-  SetCollectionName(di.GetRequiredField("name"));
-  Basis.FromDataItem(di.FindRequiredItem("Basis"));
-  olxstr v = di.GetFieldValue("vertices");
+  di.GetFieldByName("type").ToNumber(Type);
+  di.GetFieldByName("flags").ToNumber(AGlMouseHandlerImp::glml_Flags);
+  SetCollectionName(di.GetFieldByName("name"));
+  Basis.FromDataItem(di.GetItemByName("Basis"));
+  olxstr v = di.FindField("vertices");
   if (!v.IsEmpty()) {
     Vertices = new vec3f_alist;
     PersUtil::VecListFromStr(v, *Vertices);
   }
-  v = di.GetFieldValue("normals");
+  v = di.FindField("normals");
   if (!v.IsEmpty()) {
     Normals = new vec3f_alist;
     PersUtil::VecListFromStr(v, *Normals);
   }
-  v = di.GetFieldValue("colors");
+  v = di.FindField("colors");
   if (!v.IsEmpty()) {
     Colors = new TArrayList<uint32_t>;
     PersUtil::NumberListFromStr(v, *Colors);
   }
-  v = di.GetFieldValue("params");
+  v = di.FindField("params");
   if (!v.IsEmpty()) {
     PersUtil::NumberListFromStr(v, Params());
   }

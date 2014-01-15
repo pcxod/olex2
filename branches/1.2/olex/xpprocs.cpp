@@ -651,7 +651,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   int32_t previous_quality = -1;
   if (res != 1) {
     FXApp->GetRender().GetScene().ScaleFonts(res);
-    if (res > 1)
+    if (res != 1)
       previous_quality = FXApp->Quality(qaPict);
     FXApp->UpdateLabels();
   }
@@ -732,7 +732,9 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options,
   image.SaveFile(bmpFN.u_str());
 }
 //..............................................................................
-void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   OrtDraw od;
   uint16_t color_mode = 0;
   if( Options.Contains("color_fill") )
@@ -748,12 +750,19 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   od.SetPieLineWidth(Options.FindValue("lw_pie", "0.5").ToDouble());
   od.SetElpLineWidth(Options.FindValue("lw_ellipse", "1").ToDouble());
   od.SetQuadLineWidth(Options.FindValue("lw_octant", "0.5").ToDouble());
-  od.SetBondOutlineColor(Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
-  od.SetBondOutlineSize(Options.FindValue("bond_outline_oversize", "10").ToFloat()/100.0f);
-  od.SetAtomOutlineColor(Options.FindValue("atom_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
-  od.SetAtomOutlineSize(Options.FindValue("atom_outline_oversize", "5").ToFloat()/100.0f);
-  if( Options.Contains('p') )
-    od.SetPerspective(true);
+  od.SetBondOutlineColor(
+    Options.FindValue("bond_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
+  od.SetBondOutlineSize(
+    Options.FindValue("bond_outline_oversize", "10").ToFloat()/100.0f);
+  od.SetAtomOutlineColor(
+    Options.FindValue("atom_outline_color", "0xFFFFFF").SafeUInt<uint32_t>());
+  od.SetAtomOutlineSize(
+    Options.FindValue("atom_outline_oversize", "5").ToFloat()/100.0f);
+  od.SetPerspective(Options.GetBoolOption('p'));
+  od.SetAutoStippleDisorder(
+    Options.GetBoolOption("stipple_disorder", true, true));
+  od.SetMultipleBondsWidth(
+    Options.FindValue("multiple_bond_width", "0").ToFloat());
   olxstr octants = Options.FindValue("octants", "-$C");
   // store the atom draw styles
   TGXApp::AtomIterator ai = FXApp->GetAtoms();
@@ -1059,7 +1068,7 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         for( size_t j=0; j < period; j++ )  {
           if( (i+j) >= FHelpItem->ItemCount() )
             break;
-          Tmp << FHelpItem->GetItem(i+j).GetName();
+          Tmp << FHelpItem->GetItemByIndex(i + j).GetName();
           Tmp.RightPadding((j+1)*10, ' ', true);
         }
         FGlConsole->PrintText(Tmp);
@@ -1071,11 +1080,11 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TStrList Cats;
         TDataItem *Cat;
         for( size_t i=0; i < FHelpItem->ItemCount(); i++ )  {
-          Cat = FHelpItem->GetItem(i).FindItemi("category");
+          Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
           if( Cat == NULL )  continue;
           for( size_t j=0; j < Cat->ItemCount(); j++ )  {
-            if( Cats.IndexOf(Cat->GetItem(j).GetName()) == InvalidIndex )
-              Cats.Add(Cat->GetItem(j).GetName());
+            if (Cats.IndexOf(Cat->GetItemByIndex(j).GetName()) == InvalidIndex)
+              Cats.Add(Cat->GetItemByIndex(j).GetName());
           }
         }
         if( Cats.Count() )
@@ -1096,11 +1105,11 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         FGlConsole->PrintText(olxstr("Macroses for category: ") << Cmds[0]);
         TDataItem *Cat;
         for( size_t i=0; i < FHelpItem->ItemCount(); i++ )  {
-          Cat = FHelpItem->GetItem(i).FindItemi("category");
+          Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
           if( Cat == NULL )  continue;
           for( size_t j=0; j < Cat->ItemCount(); j++ )  {
-            if( Cat->GetItem(j).GetName().Equalsi(Cmds[0]) )  {
-              FGlConsole->PrintText(FHelpItem->GetItem(i).GetName());
+            if (Cat->GetItemByIndex(j).GetName().Equalsi(Cmds[0]))  {
+              FGlConsole->PrintText(FHelpItem->GetItemByIndex(i).GetName());
               break;
             }
           }
@@ -1425,7 +1434,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       TDataFile DF;
       DF.LoadFromXLFile(FN);
       FXApp->GetRender().GetBasis().FromDataItem(
-        DF.Root().FindRequiredItem("basis"));
+        DF.Root().GetItemByName("basis"));
     }
   }
   else if( Cmds[0].Equalsi("model") )  {
@@ -1447,9 +1456,9 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
         try {
           TDataFile df;
           df.LoadFromXLFile(Cmds[1]);
-          TDataItem &elements = df.Root().FindRequiredItem("elements");
+          TDataItem &elements = df.Root().GetItemByName("elements");
           for (size_t i=0; i < elements.ItemCount(); i++) {
-            TDataItem &e = elements.GetItem(i);
+            TDataItem &e = elements.GetItemByIndex(i);
             cm_Element* cme = XElementLib::FindBySymbol(e.GetName());
             if (cme == NULL) {
               TBasicApp::NewLogEntry(logError) << "Undefined element: '" <<
@@ -1457,14 +1466,14 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
               continue;
             }
             for (size_t j=0; j < e.FieldCount(); j++) {
-              if (e.FieldName(j).Equals("sfil"))
-                cme->r_sfil = e.GetField(j).ToDouble();
-              else if (e.FieldName(j).Equals("pers"))
-                cme->r_pers = e.GetField(j).ToDouble();
-              else if (e.FieldName(j).Equals("vdw"))
-                cme->r_vdw = e.GetField(j).ToDouble();
-              else if (e.FieldName(j).Equals("bonding"))
-                cme->r_bonding = e.GetField(j).ToDouble();
+              if (e.GetFieldName(j).Equals("sfil"))
+                cme->r_sfil = e.GetFieldByIndex(j).ToDouble();
+              else if (e.GetFieldName(j).Equals("pers"))
+                cme->r_pers = e.GetFieldByIndex(j).ToDouble();
+              else if (e.GetFieldName(j).Equals("vdw"))
+                cme->r_vdw = e.GetFieldByIndex(j).ToDouble();
+              else if (e.GetFieldName(j).Equals("bonding"))
+                cme->r_bonding = e.GetFieldByIndex(j).ToDouble();
             }
           }
           TBasicApp::NewLogEntry(logInfo) <<
@@ -1549,7 +1558,8 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
         FN = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << FN;
       TDataFile df;
       df.LoadFromXLFile(FN);
-      FXApp->LoadStructureStyle(df.Root().FindRequiredItem("GraphicsView"));
+      FXApp->LoadStructureStyle(df.Root().GetItemByName("GraphicsView"));
+      FXApp->CreateObjects(false);
     }
   }
   else
@@ -3894,10 +3904,338 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal( GetStructureOlexFolder().SubStringFrom(0,1) );
 }
 //..............................................................................
+struct FormulaFitter {
+  typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+  olxstr_dict <olx_object_ptr<atype> > input;
+  SortedPtrList<const cm_Element, TPointerComparator> elements;
+  ematd inm, VcV; // inverted normal matrix
+  evecd nr; // parameter estimations
+  double S, R1;
+  TPSTypeList<double, size_t> residuals;
+  void fit() {
+    elements.Clear();
+    residuals.Clear();
+    for (size_t i = 0; i < input.Count(); i++) {
+      const atype &v = input.GetValue(i);
+      for (size_t j = 0; j < v.GetB().Count(); j++) {
+        elements.AddUnique(&v.GetB()[j].element);
+      }
+    }
+    ematd mt(input.Count(), elements.Count());
+    evecd r(input.Count());
+    for (size_t i = 0; i < input.Count(); i++) {
+      atype & v = input.GetValue(i);
+      for (size_t j = 0; j < v.GetB().Count(); j++) {
+        size_t ei = elements.IndexOf(&v.GetB()[j].element);
+        mt[i][ei] = v.GetB()[j].count;
+      }
+      r[i] = v.GetA();
+    }
+    ematd m = mt;
+    mt.Transpose();
+    math::LU::Invert(inm = mt*m);
+    nr = (inm*mt)*r;
+    double R1t = 0, R1b = 0;
+    S = 0;
+    for (size_t i = 0; i < input.Count(); i++) {
+      atype & v = input.GetValue(i);
+      double calc = 0;
+      for (size_t j = 0; j < v.GetB().Count(); j++) {
+        size_t ei = elements.IndexOf(&v.GetB()[j].element);
+        calc += v.GetB()[j].count*nr[ei];
+      }
+      double diff = v.GetA() - calc;
+      R1t += olx_abs(diff);
+      R1b += v.GetA();
+      double r = diff*diff;
+      S += r;
+      residuals.Add(r, i);
+    }
+    R1 = R1t / R1b;
+    VcV = inm*(S / (input.Count() - elements.Count()));
+  }
+  void printResiduals(size_t count=10) {
+    TBasicApp::NewLogEntry() << count << " Highest residuals:";
+    size_t top = olx_min(residuals.Count(), count);
+    for (size_t i = 0; i < top; i++) {
+      size_t idx = residuals.Count() - i - 1;
+      const olxstr &key = input.GetKey(residuals.GetObject(idx));
+      TBasicApp::NewLogEntry() << olxstr::FormatFloat(3, residuals.GetKey(idx))
+        << ": " << key;
+    }
+    TBasicApp::NewLogEntry() << "Mean residual: " <<
+      olxstr::FormatFloat(3, S / input.Count());
+  }
+  bool filterResiduals(double th=0) {
+    if (th == 0) {
+      th = (S / input.Count()) * 9;
+    }
+    TStrList keys;
+    for (size_t i = 0; i < residuals.Count(); i++) {
+      size_t idx = residuals.Count() - i - 1;
+      if (residuals.GetKey(idx) > th)
+        keys << input.GetKey(residuals.GetObject(idx));
+      else
+        break;
+    }
+    for (size_t i = 0; i < keys.Count(); i++) {
+      input.Delete(input.IndexOf(keys[i]));
+    }
+    return !keys.IsEmpty();
+  }
+  void printResults() {
+    TSizeList cnts(elements.Count(), olx_list_init::zero());
+    for (size_t i = 0; i < input.Count(); i++) {
+      atype & v = input.GetValue(i);
+      for (size_t j = 0; j < v.GetB().Count(); j++) {
+        cnts[elements.IndexOf(&v.GetB()[j].element)]++;
+      }
+    }
+    for (size_t i = 0; i < elements.Count(); i++) {
+      double vsu = sqrt(VcV[i][i]);
+      TEValueD v(nr[i], vsu);
+      double r = olx_sphere_radius(nr[i]);
+      TEValueD v1(r, r/3*vsu/nr[i]);
+      TBasicApp::NewLogEntry() << elements[i]->symbol << ' ' <<
+        v.ToString() << ' ' <<
+        v1.ToString() <<
+        " observations: " << cnts[i];
+    }
+    TBasicApp::NewLogEntry() << "R1 = " << olxstr::FormatFloat(2, R1*100);
+  }
+  TEValueD estimate(const TTypeList<ElementCount> &f) {
+    double res = 0, su = 0;
+    for (size_t j = 0; j < f.Count(); j++) {
+      size_t ei = elements.IndexOf(&f[j].element);
+      if (ei == InvalidIndex)
+        return TEValueD(-1.0);
+      res += f[j].count*nr[ei];
+      su += olx_sqr(f[j].count)*VcV[ei][ei];
+      //for (size_t k = 0; k < f.Count(); k++) {
+      //  if (k == j) continue;
+      //  size_t vi = elements.IndexOf(&f[k].element);
+      //  su += 2 * f[j].count*f[k].count*VcV[ei][vi];
+      //}
+    }
+    return TEValueD(res, sqrt(su));
+  }
+  void toDataItem(TDataItem &di) {
+    TDataItem &ei = di.AddItem("elements");
+    for (size_t i = 0; i < elements.Count(); i++) {
+      ei.AddItem(elements[i]->symbol, nr[i]);
+    }
+    olxstr v;
+    v.Allocate(elements.Count()*(elements.Count() + 1) * 10 / 2);
+    for (size_t i = 0; i < elements.Count(); i++) {
+      for (size_t j = i; j < elements.Count(); j++) {
+        v << VcV[i][j] << ' ';
+      }
+    }
+    di.AddItem("VcV", v);
+  }
+  void fromDataItem(const TDataItem &di) {
+    elements.Clear();
+    TDataItem &ei = di.GetItemByName("elements");
+    elements.SetCapacity(ei.ItemCount());
+    nr.Resize(ei.ItemCount());
+    for (size_t i = 0; i < ei.ItemCount(); i++) {
+      TDataItem &e = ei.GetItemByIndex(i);
+      elements.Add(XElementLib::FindBySymbol(e.GetName()));
+      nr[i] = e.GetValue().ToDouble();
+    }
+    TStrList toks(di.GetItemByName("VcV").GetValue(), ' ');
+    VcV.Resize(ei.ItemCount(), ei.ItemCount());
+    for (size_t i = 0, idx = 0; i < elements.Count(); i++) {
+      for (size_t j = i; j < elements.Count(); j++, idx++) {
+        VcV[i][j] = VcV[j][i] = toks[idx].ToDouble();
+      }
+    }
+  }
+};
+class ExtractInfoTask : public TaskBase {
+  TCif cif;
+  const TStrList &files;
+  TLattice latt;
+  RefinementModel rm;
+  TStrList &out;
+public:
+  ExtractInfoTask(const TStrList &files, TStrList &out) :
+    files(files),
+    latt(*(new SObjectProvider)),
+    rm(latt.GetAsymmUnit()),
+    out(out)
+  {
+    latt.GetAsymmUnit().SetRefMod(&rm);
+  }
+  void Run(size_t i) {
+    try {
+      cif.LoadFromFile(files[i]);
+      rm.Clear(rm_clear_ALL);
+      latt.Clear(false);
+      rm.Assign(cif.GetRM(), true);
+      latt.Init();
+      olx_critical_section *cs = GetCriticalSection();
+      if (cs) cs->enter();
+      olxstr &l = out.Add(TEFile::ExtractFileName(files[i]));
+      l << ' ' << latt.GetAsymmUnit().SummFormula(' ') << ' ' <<
+        latt.GetAsymmUnit().CalcCellVolume();
+      if (cs) cs->leave();
+    }
+    catch (...) {
+    }
+  }
+  ExtractInfoTask *Replicate() {
+    return new ExtractInfoTask(files, out);
+  }
+};
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  return;
-  //TXAtomPList atoms = FindXAtoms(Cmds, true, true);
+  olxstr sf = FXApp->XFile().GetAsymmUnit().SummFormula(' ', true);
 
+  if (false) {
+    TFileTree ft("f:/r2");
+    ft.Expand();
+    TStrList files;
+    ft.GetRoot().ListFiles(files, "*.cif");
+    TStrList out;
+    ExtractInfoTask task(files, out);
+    TListIteratorManager<ExtractInfoTask> job(task, files.Count(),
+      tLinearTask, 20);
+    TCStrList(out).SaveToFile("e:/c-v.txt");
+  }
+  {
+    FormulaFitter fitter;
+    olxstr result_file = "e:/vol-res.xld";
+    if (TEFile::Exists(result_file)) {
+      TDataFile df;
+      df.LoadFromXLFile(result_file);
+      fitter.fromDataItem(df.Root());
+    }
+    else {
+      TStrList f;
+      typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+      //f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
+      f.LoadFromFile("e:/c-v.txt");
+      for (size_t li = 0; li < f.Count(); li++) {
+        TStrList toks(f[li].Replace('\t', ' '), ' ');
+        if (toks.Count() < 3) continue;
+        if (toks[0].Equalsi("rem")) continue;
+        double vol = toks.GetLastString().ToDouble();
+        fitter.input.Add(toks[0],
+          new atype(vol,
+          XElementLib::ParseElementString(toks.Text(' ', 1, toks.Count() - 1))));
+      }
+      fitter.fit();
+      fitter.printResults();
+      fitter.printResiduals(10);
+      while (fitter.filterResiduals()) {
+        fitter.fit();
+        fitter.printResults();
+        fitter.printResiduals(10);
+      }
+      TDataFile df;
+      fitter.toDataItem(df.Root());
+      df.SaveToXLFile(result_file);
+    }
+
+    if (Cmds.Count() > 0) {
+      TTypeList<ElementCount> f =
+        XElementLib::ParseElementString(Cmds.Text(' '));
+      TBasicApp::NewLogEntry() << "Calculated: " << fitter.estimate(f).ToString();
+    }
+  }
+  //{
+  //  TStrList f;
+  //  typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+  //    olxstr_dict <olx_object_ptr<atype> > input;
+  //  f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
+  //  for (size_t li = 0; li < f.Count(); li++) {
+  //    TStrList toks(f[li].Replace('\t', ' '), ' ');
+  //    if (toks.Count() < 3) continue;
+  //    double vol = toks.GetLastString().ToDouble();
+  //    input.Add(toks[0],
+  //      new atype(vol,
+  //        XElementLib::ParseElementString(toks.Text(' ', 1, toks.Count() - 1))));
+  //  }
+  //  ematd mt(input.Count(), 2), rt(1, input.Count());
+  //  evecd r(input.Count());
+  //  for (size_t i = 0; i < input.Count(); i++) {
+  //    atype & v = input.GetValue(i);
+  //    double cnt = 0, vs=0;
+  //    for (size_t j = 0; j < v.GetB().Count(); j++) {
+  //      cnt += v.GetB()[j].count;
+  //      vs += v.GetB()[j].count*olx_sphere_volume(v.GetB()[j].element.r_vdw);
+  //    }
+  //    mt[i][0] = -cnt;
+  //    mt[i][1] = 1;
+  //    r[i] = rt[0][i] = (v.GetA() - vs);
+  //  }
+  //  ematd m = mt;
+  //  mt.Transpose();
+  //  ematd nm = mt*m, inm = nm;
+  //  math::LU::Invert(inm);
+  //  evecd nr = (inm*mt)*r;
+  //  //ematd H = (m*inm)*mt, I(H.RowCount(), H.ColCount());
+  //  //I.I();
+  //  //ematd ImH = I - H;
+  //  //evecd S = (rt*ImH)*r;
+  //  double R1t=0, R1b=0, mr=10000;
+  //  for (size_t i = 0; i < input.Count(); i++) {
+  //    atype & v = input.GetValue(i);
+  //    double cnt = 0, vs = 0;
+  //    for (size_t j = 0; j < v.GetB().Count(); j++) {
+  //      cnt += v.GetB()[j].count;
+  //      vs += v.GetB()[j].count*olx_sphere_volume(v.GetB()[j].element.r_vdw);
+  //    }
+  //    double calc = vs - cnt*nr[0] + nr[1];
+  //    double diff = v.GetA() - calc;
+  //    R1t += olx_abs(diff);
+  //    R1b += v.GetA();
+  //    double r = diff*diff;
+  //    if (i == 0) {
+  //      mr = r;
+  //    }
+  //    else if (r < mr) {
+  //      mr = r;
+  //    }
+  //  }
+  //  double R1 = R1t / R1b;
+  //  ematd VcV = inm*(mr / (input.Count() - 2));
+  //  for (size_t i = 0; i < nr.Count(); i++) {
+  //    TEValueD v(nr[i], sqrt(VcV[i][i]));
+  //    TBasicApp::NewLogEntry() << v.ToString();
+  //  }
+  //  if (Cmds.Count() > 0) {
+  //    TTypeList<ElementCount> f =
+  //      XElementLib::ParseElementString(Cmds.Text(' '));
+  //    double cnt = 0, vs = 0;
+  //    for (size_t j = 0; j < f.Count(); j++) {
+  //      cnt += f[j].count;
+  //      vs += f[j].count*olx_sphere_volume(f[j].element..r_vdw);
+  //    }
+  //    double calc = vs - cnt*nr[0] + nr[1];
+  //    TBasicApp::NewLogEntry() << "Calculated: " << calc;
+  //  }
+  //}
+//  TDataFile df;
+//  FXApp->XFile().ToDataItem(df.Root().AddItem("str"));
+//  df.SaveToXMLFile("e:/1.xml");
+
+  //TXAtomPList atoms = FindXAtoms(Cmds, false, true);
+  //if (atoms.Count() == 2) {
+  //  if (atoms[0]->GetEllipsoid() != NULL) {
+  //    double s = atoms[0]->GetEllipsoid()->CalcScale(
+  //      (atoms[1]->crd() - atoms[0]->crd()));
+  //    for (size_t i = 0; i < atoms[0]->BondCount(); i++) {
+  //      TXBond &b = atoms[0]->Bond(i);
+  //      if ((b.A() == *atoms[0] && b.B() == *atoms[1]) ||
+  //        (b.A() == *atoms[1] && b.B() == *atoms[2]))
+  //      {
+  //        b.Params()[3] = 1;
+  //      }
+  //    }
+  //    TBasicApp::NewLogEntry() << s << ", " << ProbFactorEx(s);
+  //  }
+  //}
   //return;
   //TXApp& xapp = TXApp::GetInstance();
   //TRefList refs;// = xapp.XFile().GetRM().GetFriedelPairs();
@@ -4368,8 +4706,8 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //      num = toks[0];
 //
 //    for( size_t j=0; j < df.Root().ItemCount(); j++ )  {
-//      if( df.Root().Item(j).GetFieldValue( "#" ) == num &&
-//          df.Root().Item(j).GetFieldValue("AXIS") == axis )  {
+//      if( df.Root().Item(j).FindField( "#" ) == num &&
+//          df.Root().Item(j).FindField("AXIS") == axis )  {
 //        TBasicApp::GetLog() << ( olxstr("Found ") << df.Root().Item(j).GetName() );
 //        olxstr tmp = toks[1];
 //        tmp << ' ' << toks[2] << ' ' << toks[3] << ' ' << toks[4];
@@ -4380,7 +4718,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //  }
 //  // validating
 //  for( size_t i=0; i < df.Root().ItemCount(); i++ )  {
-//    olxstr tmp = df.Root().Item(i).GetFieldValue("FULL");
+//    olxstr tmp = df.Root().Item(i).FindField("FULL");
 //    if( tmp.IsEmpty() )  {
 //      if( df.Root().Item(i).GetName().Length() == 4 )  {
 //        tmp << df.Root().Item(i).GetName()[0] << ' ' <<
@@ -6126,5 +6464,70 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroE
 #else
   throw TNotImplementedException(__OlxSourceInfo);
 #endif
+}
+//..............................................................................
+double ProbFactorEx(double scale)  {
+  // max of 4pi*int(0,inf)(exp(-x/2)*x^2dx) [/(4*pi*100)]
+  static const double max_val = sqrt(8 * M_PI*M_PI*M_PI) / (4 * M_PI);
+  const double inc = 1e-4;
+  double ProbFactor = 0, summ = 0;
+  while (ProbFactor < scale)  {
+    const double v_sq = olx_sqr(ProbFactor + inc / 2);
+    summ += exp(-v_sq / 2)*v_sq*inc;
+    ProbFactor += inc;
+  }
+  return summ * 100 / max_val;
+
+}
+void TMainForm::macADPDisp(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  double s50 = TGXApp::ProbFactor(50);
+  if (Cmds.Count() == 2) {
+    TTTable<TStrList> out(0, 4);
+    out.ColName(0) = "Atom";
+    out.ColName(1) = "Displacement/A";
+    out.ColName(2) = "50% ADP scale, %";
+    out.ColName(3) = "Scaled ADP level, %";
+
+    olx_object_ptr<TXFile> f1((TXFile *)FXApp->XFile().Replicate());
+    olx_object_ptr<TXFile> f2((TXFile *)FXApp->XFile().Replicate());
+    f1().LoadFromFile(Cmds[0]);
+    f2().LoadFromFile(Cmds[1]);
+    TAsymmUnit &au1 = f1().GetAsymmUnit(),
+      &au2 = f2().GetAsymmUnit();
+    if (au1.AtomCount() != au2.AtomCount()) {
+      Error.ProcessingError(__OlxSrcInfo, "asymmetric units mismatch");
+      return;
+    }
+    for (size_t i = 0; i < au1.AtomCount(); i++) {
+      TCAtom &a1 = au1.GetAtom(i);
+      if (a1.GetEllipsoid() == NULL) {
+        TBasicApp::NewLogEntry() << "No ADP for " << a1.GetLabel() <<
+          " skipping..";
+        continue;
+      }
+      TCAtom *a2 = au2.FindCAtom(a1.GetLabel());
+      if (a2 == NULL) {
+        TBasicApp::NewLogEntry() << "No pair for " << a1.GetLabel() <<
+          " skipping..";
+        continue;
+      }
+      vec3d dv = a2->ccrd() - a1.ccrd();
+      dv -= dv.Floor<int>();
+      for (int j = 0; j < 3; j++) {
+        if (dv[j] > 0.5)
+          dv[j] -= 1;
+      }
+      dv = au1.Orthogonalise(dv);
+      double s = a1.GetEllipsoid()->CalcScale(dv);
+      TStrList &r = out.AddRow();
+      r[0] = a1.GetLabel();
+      r[1] = olxstr::FormatFloat(4, dv.Length());
+      r[2] = olxstr::FormatFloat(4, s*100/s50);
+      r[3] = olxstr::FormatFloat(4, ProbFactorEx(s));
+    }
+    TBasicApp::NewLogEntry() << out.CreateTXTList("Summary", true, false, "  ");
+  }
 }
 //..............................................................................

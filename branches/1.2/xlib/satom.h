@@ -162,8 +162,8 @@ public:
       item.AddField("a_id", catom_id).AddField("m_id", matrix_id);
     }
     void FromDataItem(const TDataItem& item)  {
-      catom_id = item.GetRequiredField("a_id").ToSizeT();
-      matrix_id = item.GetRequiredField("m_id").ToUInt();
+      catom_id = item.GetFieldByName("a_id").ToSizeT();
+      matrix_id = item.GetFieldByName("m_id").ToUInt();
     }
   };
 

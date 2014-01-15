@@ -72,11 +72,11 @@ rotated_adp_constraint* rotated_adp_constraint::FromDataItem(
   const TDataItem& di, const RefinementModel& rm)
 {
   return new rotated_adp_constraint(
-    rm.aunit.GetAtom(di.GetRequiredField("source").ToSizeT()),
-    rm.aunit.GetAtom(di.GetRequiredField("destination").ToSizeT()),
-      rm.DirectionById(di.GetRequiredField("dir_id")),
-      di.GetRequiredField("angle").ToDouble(),
-      di.GetRequiredField("refine_angle").ToBool()
+    rm.aunit.GetAtom(di.GetFieldByName("source").ToSizeT()),
+    rm.aunit.GetAtom(di.GetFieldByName("destination").ToSizeT()),
+      rm.DirectionById(di.GetFieldByName("dir_id")),
+      di.GetFieldByName("angle").ToDouble(),
+      di.GetFieldByName("refine_angle").ToBool()
     );
 }
 //.............................................................................
@@ -237,7 +237,7 @@ void direction::ToDataItem(TDataItem& di) const {
 adirection* adirection::FromDataItem(const TDataItem& di,
   const RefinementModel& rm)
 {
-  uint16_t type = adirection::DecodeType(di.GetRequiredField("type"));
+  uint16_t type = adirection::DecodeType(di.GetFieldByName("type"));
   if( type == direction_static )
     return static_direction().CreateFromDataItem(di, rm);
   else
@@ -247,19 +247,19 @@ adirection* adirection::FromDataItem(const TDataItem& di,
 adirection* static_direction::CreateFromDataItem(const TDataItem& di,
   const RefinementModel& rm) const
 {
-  return new static_direction(di.GetRequiredField("id"),
-    PersUtil::VecFromStr<vec3d>(di.GetRequiredField("value")));
+  return new static_direction(di.GetFieldByName("id"),
+    PersUtil::VecFromStr<vec3d>(di.GetFieldByName("value")));
 }
 //.............................................................................
 adirection* direction::CreateFromDataItem(const TDataItem& di,
   const RefinementModel& rm) const
 {
-  uint16_t type = adirection::DecodeType(di.GetRequiredField("type"));
+  uint16_t type = adirection::DecodeType(di.GetFieldByName("type"));
   TCAtomGroup agroup;
   agroup.SetCapacity(di.ItemCount());
   for( size_t i=0; i < di.ItemCount(); i++ )
-    agroup.Add(new TGroupCAtom(di.GetItem(i), rm));
-  return new direction(di.GetRequiredField("id"), agroup, type);
+    agroup.Add(new TGroupCAtom(di.GetItemByIndex(i), rm));
+  return new direction(di.GetFieldByName("id"), agroup, type);
 }
 //.............................................................................
 vec3d direction::get() const {
@@ -351,7 +351,7 @@ same_group_constraint* same_group_constraint::FromDataItem(
 {
   size_t n = di.GetValue().ToSizeT();
   same_group_constraint &g = *new same_group_constraint;
-  IndexRange::RangeItr ai(di.GetRequiredField("atoms"));
+  IndexRange::RangeItr ai(di.GetFieldByName("atoms"));
   size_t ag = n/ai.CalcSize();
   for( size_t i=0; i < n; i++ )  {
     TCAtomPList &l = g.groups.AddNew(ag);
@@ -438,7 +438,7 @@ void tls_group_constraint::ToDataItem(TDataItem& di) const {
 tls_group_constraint* tls_group_constraint::FromDataItem(const TDataItem& di,
   const RefinementModel& rm)
 {
-  IndexRange::RangeItr ai(di.GetRequiredField("atoms"));
+  IndexRange::RangeItr ai(di.GetFieldByName("atoms"));
   TCAtomPList l;
   while (ai.HasNext()) {
     l.Add(rm.aunit.GetAtom(ai.Next()));
