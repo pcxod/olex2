@@ -122,7 +122,7 @@ int UpdateThread::Run()  {
   catch(const TExceptionBase&)  { // oups...
     CleanUp();
     patcher::PatchAPI::UnlockUpdater();
-    return 0;  
+    return 0;
   }  
   return 1;
 }
@@ -140,7 +140,7 @@ void UpdateThread::MarkCompleted(const TStrList &cmds_) {
   if( TEFile::Exists(cmd_fn) )  {
     TStrList pc;
 #ifdef _UNICODE
-    TUtf8File::ReadLines(cmd_fn, pc);
+    pc = TUtf8File::ReadLines(cmd_fn);
 #else
     pc.LoadFromFile(cmd_fn);
 #endif

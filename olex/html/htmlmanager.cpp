@@ -1052,7 +1052,7 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
   }
   TStrList lines;
 #ifdef _UNICODE
-  TUtf8File::ReadLines(*is, lines, false);
+  lines = TUtf8File::ReadLines(*is, false);
 #else
   lines.LoadFromTextStream(*is);
 #endif

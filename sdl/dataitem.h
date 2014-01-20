@@ -30,7 +30,6 @@ class TDataItem: public AReferencible  {
   void UpdateFieldIndices(size_t deleted);
 protected:
   TDataItem& Root();
-  olxstr GetFullName();
   TDataItem *DotItem(const olxstr& DotName, TStrList* Log);
   olxstr *DotField(const olxstr& DotName, olxstr &RefFieldName);
   TDataItem& AddItem(TDataItem& Item);
@@ -163,6 +162,7 @@ public:
 
   TDataItem* GetParent() const { return Parent; }
   size_t GetLevel() const { return Level; }
+  olxstr GetFullName(const olxstr &sep='.', const TDataItem *upto=NULL) const;
   DefPropC(olxstr, Name)
   olxstr GetValue() const {  return Value; }
   void SetValue(const olxstr &V)  {  Value = V; }

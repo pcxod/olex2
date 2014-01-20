@@ -39,6 +39,7 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
     .FindValue("mouse_click_threshold", "2").ToInt();
   // an alternative for MAC...
   SetHandler(MouseEvtHandler::New(smbLeft, sssAlt, smeMouseMove, meZoom));
+  SetHandler(MouseEvtHandler::New(smbLeft, sssAlt|sssShift, smeMouseMove, meRotateZ));
   FDFrame = Frame;
   TranslationEnabled = SelectionEnabled = RotationEnabled =
     ZoomingEnabled = true;
