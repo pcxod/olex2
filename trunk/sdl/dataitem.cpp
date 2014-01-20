@@ -66,15 +66,21 @@ TEStrBuffer& TDataItem::writeFullName(TEStrBuffer& bf) const {
   return bf;
 }
 //..............................................................................
-olxstr TDataItem::GetFullName()  {
-  if( GetParent() == NULL )
-    return GetName();
+olxstr TDataItem::GetFullName(const olxstr &sep, const TDataItem *upto) const {
+  if (GetParent() == NULL) return GetName();
   olxstr_buf res = GetName();
-  olxstr ds = '.';
   TDataItem *p = GetParent();
-  while( p != NULL )  {
-    res << ds << p->GetName();
-    p = p->GetParent();
+  if (upto == NULL) {
+    while (p != NULL && p->GetParent() != NULL) {
+      res << sep << p->GetName();
+      p = p->GetParent();
+    }
+  }
+  else {
+    while (p != NULL && p != upto) {
+      res << sep << p->GetName();
+      p = p->GetParent();
+    }
   }
   return olxstr::FromExternal(
           res.ReverseRead(olx_malloc<olxch>(res.Length()+1)), res.Length());
@@ -275,6 +281,8 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr &Data,
 size_t TDataItem::LoadFromXMLString(size_t start, const olxstr &Data,
   TStrList* Log)
 {
+  static const olxch* wch = olxT(" \t\r\n");
+  static size_t wch_l = olxstr::o_strlen(wch);
   bool can_have_fields = true;
   const size_t sl = Data.Length();
   if (Name.StartsFrom('!')) {
@@ -296,7 +304,7 @@ size_t TDataItem::LoadFromXMLString(size_t start, const olxstr &Data,
       const size_t name_start_i = i + 1;
       while (++i < sl) {
         ch = Data[i];
-        if (ch == '>' || olxstr::o_iswhitechar(ch))
+        if (ch == '>' || olxstr::o_isoneof(ch, wch, wch_l))
           break;
       }
       olxstr ItemName = Data.SubString(name_start_i, i - name_start_i);
@@ -343,22 +351,22 @@ size_t TDataItem::LoadFromXMLString(size_t start, const olxstr &Data,
           Log->Add((this->GetName() + ':') << " invalid / occurance");
       }
     }
-    if (!olxstr::o_iswhitechar(ch)) {
+    if (!olxstr::o_isoneof(ch, wch, wch_l)) {
       if (can_have_fields) {
         olxstr FieldName, FieldValue;
         const size_t fn_start = i;
         while (i < sl)  {  // extract field name
           ch = Data.CharAt(i);
-          if (ch == '=' || olxstr::o_iswhitechar(ch))
+          if (ch == '=' || olxstr::o_isoneof(ch, wch, wch_l))
             break;
           i++;
         }
         FieldName = Data.SubString(fn_start, i - fn_start);
-        if ((skip_whitechars(Data, i)) >= sl)
+        if ((skip_chars(Data, i, wch, wch_l)) >= sl)
           return sl + 1;
         if (Data[i] == '=') {  // extract field value
           i++;
-          if ((skip_whitechars(Data, i)) >= sl)
+          if ((skip_chars(Data, i, wch, wch_l)) >= sl)
             return sl + 1;
           if (is_quote(Data[i]))  // field value
             parse_string(Data, FieldValue, i);

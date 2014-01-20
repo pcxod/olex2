@@ -834,7 +834,7 @@ TAG_HANDLER_PROC(tag)  {
     else  {
       TStrList list;
 #ifdef _UNICODE
-      TUtf8File::ReadLines(*ios, list, false);
+      list = TUtf8File::ReadLines(*ios, false);
 #else
       list.LoadFromTextStream(*ios);
 #endif
@@ -872,7 +872,7 @@ TAG_HANDLER_PROC(tag)  {
       }
       else  {
 #ifdef _UNICODE
-      TUtf8File::ReadLines(*ios, itemsList, false);
+        itemsList = TUtf8File::ReadLines(*ios, false);
 #else
         itemsList.LoadFromTextStream( *ios );
 #endif

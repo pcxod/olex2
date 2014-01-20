@@ -487,7 +487,6 @@ private:
   DefFunc(HtmlPanelWidth)
   DefFunc(LoadDll)
 
-  DefFunc(CmdList)
   DefFunc(Alert)
 
   DefFunc(ValidatePlugin)

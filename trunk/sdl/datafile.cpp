@@ -48,7 +48,7 @@ bool TDataFile::LoadFromXMLTextStream(IInputStream& io, TStrList* Log)  {
   FileName.SetLength(0);
   try  { in = TUtf8File::ReadAsString(io, false); }
   catch (...)  { return false; }
-  in.DeleteCharSet("\n\r");
+  //in.DeleteCharSet("\n\r");
   if (in.IsEmpty())  return false;
   for (size_t i = 0; i < in.Length(); i++)
   if (in.CharAt(i) == '<') {
