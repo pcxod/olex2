@@ -1919,6 +1919,13 @@ void TMainForm::macFlush(TStrObjList &Cmds, const TParamList &Options,
     if (Cmds.Count() == 2) log = Cmds[1];
     TUtf8File::WriteLines(FXApp->GetInstanceDir() + log, FGlConsole->Buffer());
   }
+  else if (Cmds.Count() > 0 && Cmds[0].Equalsi("history")) {
+    olxstr fn = "history.txt";
+    if (Cmds.Count() == 2) fn = Cmds[1];
+    const TStrList &cmds = FGlConsole->GetCommands();
+    TUtf8File::WriteLines(FXApp->GetInstanceDir() + fn,
+      cmds.SubListFrom(cmds.Count() - olx_min(999, cmds.Count())));
+  }
   else
     E.SetUnhandled(true);
 }
@@ -3162,27 +3169,19 @@ void TMainForm::macUncheckMenu(TStrObjList &Cmds, const TParamList &Options, TMa
   menu->Check((int)ind, false);
 }
 //..............................................................................
-void TMainForm::macCreateShortcut(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  AccShortcuts.AddAccell( TranslateShortcut( Cmds[0]), Cmds[1] );
+void TMainForm::macCreateShortcut(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
+  AccShortcuts.AddAccell(TranslateShortcut( Cmds[0]), Cmds[1]);
 }
 //..............................................................................
 void TMainForm::macSetCmd(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  FGlConsole->SetCommand( Cmds.Text(' ') );
+  FGlConsole->SetCommand(Cmds.Text(' '));
 }
 //..............................................................................
-void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E) {
-  if( FGlConsole->GetCommandCount() == 0 ) return;
-  size_t cc = FGlConsole->GetCommandIndex() + Cmds[0].ToInt();
-  if( FGlConsole->GetCommandCount() == 0 )  {
-    E.SetRetVal(EmptyString());
-    return;
-  }
-  if( cc >= FGlConsole->GetCommandCount() )
-    cc = 0;
-  E.SetRetVal(FGlConsole->GetCommandByIndex(cc));
-}
-//..............................................................................
-void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &E)
+{
   TdlgUpdateOptions* dlg = new TdlgUpdateOptions(this);
   dlg->ShowModal();
   dlg->Destroy();
@@ -4089,6 +4088,24 @@ public:
   }
 };
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  {
+    TDataFile df;
+    FXApp->XFile().GetLastLoader<TCif>().ToDataItem(df.Root().AddItem("CIF"));
+    df.SaveToXMLFile("e:/1cif.xml");
+    df.LoadFromXMLFile("e:/1cif.xml");
+    df.SaveToXMLFile("e:/2cif.xml");
+    FXApp->XFile().GetLastLoader<TCif>().FromDataItem(df.Root().GetItemByName("CIF"));
+    FXApp->XFile().GetLastLoader<TCif>().SaveToFile("e:/1cif.cif");
+  }
+  {
+    TDataFile df;
+    FXApp->XFile().ToDataItem(df.Root().AddItem("OXM"));
+    //df.LoadFromXMLFile("e:/1.xml");
+    df.SaveToXMLFile("e:/1o.xml");
+    //FXApp->XFile().FromDataItem(df.Root().GetItemByName("OXM"));
+    //FXApp->XFile().EndUpdate();
+    return;
+  }
   olxstr sf = FXApp->XFile().GetAsymmUnit().SummFormula(' ', true);
 
   if (false) {

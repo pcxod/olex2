@@ -131,7 +131,7 @@ bool parser_util::skip_brackets(const olxstr& exp, size_t& ind)  {
 //.............................................................................
 size_t parser_util::skip_whitechars(const olxstr& exp, size_t& ind) {
   size_t el = exp.Length();
-  if ( ind >= el) return ind;
+  if (ind >= el) return ind;
   while (olxstr::o_iswhitechar(exp[ind]) && ++ind < el) ;
   return ind;
 }

@@ -1293,22 +1293,15 @@ void TCif::ToDataItem(TDataItem &di_) const {
         block.AddItem("comment", cb.params.GetObject(j)->GetStringValue());
         continue;
       }
-      TStrList toks(cb.params[j], '_');
+      olxstr item_name = cb.params[j];
+      if (item_name.ContainAnyOf("/%")) {
+        out_map(cb.params[j],
+          item_name.Replace('/', "_over_")
+          .Replace('%', "percent")
+          );
+      }
+      TStrList toks(item_name, '_');
       for (size_t ti = 0; ti < toks.Count(); ti++) {
-        size_t idx = out_map.IndexOf(toks[ti]);
-        if (idx == InvalidIndex) {
-          if (toks[ti].ContainAnyOf("/%")) {
-            const olxstr &rep =
-              out_map(toks[ti],
-                olxstr(toks[ti]).Replace('/', "_over_")
-                .Replace('%', "percent")
-                );
-            toks[ti] = rep;
-          }
-        }
-        else {
-          toks[ti] = out_map.GetValue(idx);
-        }
         if (ti > 0) {
           if (olxstr::o_isdigit(toks[ti].CharAt(0))) {
             toks[ti - 1] << '_' << toks[ti];
@@ -1316,10 +1309,19 @@ void TCif::ToDataItem(TDataItem &di_) const {
           }
         }
       }
+      olxstr tab_name;
+      ICifEntry *ice = cb.params.GetObject(j);
+      IStringCifEntry *ise = dynamic_cast<IStringCifEntry*>(ice);
+      cetTable *tab = dynamic_cast<cetTable*>(ice);
+      if (tab != NULL) {
+        tab_name = toks.GetLastString();
+        toks.Delete(toks.Count() - 1);
+      }
       size_t idx = 0;
       TDataItem *p = block.FindItem(toks[idx]);
       while (p != NULL) {
-        TDataItem *p1 = p->FindItem(toks[++idx]);
+        if (++idx >= toks.Count()) break;
+        TDataItem *p1 = p->FindItem(toks[idx]);
         if (p1 == 0) break;
         p = p1;
       }
@@ -1327,8 +1329,6 @@ void TCif::ToDataItem(TDataItem &di_) const {
       for (size_t k = idx; k < toks.Count(); k++) {
         p = &p->AddItem(toks[k]);
       }
-      ICifEntry *ice = cb.params.GetObject(j);
-      IStringCifEntry *ise = dynamic_cast<IStringCifEntry*>(ice);
       if (ise != 0) {
         TStrList cnt;
         if (ise->HasComment())
@@ -1337,26 +1337,25 @@ void TCif::ToDataItem(TDataItem &di_) const {
           cnt << (*ise)[li];
           p->SetValue(cnt.Text(NewLineSequence()));
       }
-      else {
-        cetTable *tab = dynamic_cast<cetTable*>(ice);
-        if (tab != NULL) {
-          const size_t nf = tab->GetName().IsEmpty() ? 0
-            : (tab->GetName().Length()+1);
-          for (size_t tr = 0; tr < tab->RowCount(); tr++) {
-            TDataItem &tri = p->AddItem("tr");
-            for (size_t td = 0; td < tab->ColCount(); td++) {
-              TStrList cnt;
-              IStringCifEntry *tce = dynamic_cast<IStringCifEntry *>(
-                (*tab)[tr][td]);
-              for (size_t li = 0; li < tce->Count(); li++)
-                cnt << (*tce)[li];
-              olxstr name;
-              if (tab->ColName(td).Length() <= nf)
-                name = "value";
-              else
-                name = tab->ColName(td).SubStringFrom(nf);
-              tri.AddItem(name, cnt.Text(NewLineSequence()));
+      else if (tab != NULL) {
+        p = &p->AddItem("table");
+        const size_t nf = tab->GetName().IsEmpty() ? 0
+          : (tab->GetName().Length()+1);
+        for (size_t tr = 0; tr < tab->RowCount(); tr++) {
+          TDataItem &tri = p->AddItem(tab_name);
+          for (size_t td = 0; td < tab->ColCount(); td++) {
+            TStrList cnt;
+            IStringCifEntry *tce = dynamic_cast<IStringCifEntry *>(
+              (*tab)[tr][td]);
+            for (size_t li = 0; li < tce->Count(); li++)
+              cnt << (*tce)[li];
+            olxstr name;
+            if (tab->ColName(td).Length() <= nf) {
+              name = "value";
             }
+            else
+              name = tab->ColName(td).SubStringFrom(nf);
+            tri.AddItem(name, cnt.Text(NewLineSequence()));
           }
         }
       }
@@ -1370,6 +1369,73 @@ void TCif::ToDataItem(TDataItem &di_) const {
   }
 }
 //..............................................................................
+void DataItemToCifEntry(const TDataItem &root, const TDataItem &di,
+  olxstr_dict<olxstr> &translations, CifBlock &out)
+{
+  if (di.ItemCount() == 0) {
+    if (di.GetName().Equals("comment")) {
+      out.Add(new cetComment(di.GetValue()));
+    }
+    else {
+      olxstr name = olxstr('_') << di.GetFullName('_', &root);
+      name = translations.Find(name, name);
+      if (di.GetValue().Contains('\n')) {
+        cetNamedStringList *sl = new cetNamedStringList(name);
+        sl->lines.Strtok(di.GetValue(), '\n', false);
+        for (size_t i = 0; i < sl->lines.Count(); i++) {
+          sl->lines[i].TrimR('\r');
+        }
+        out.Add(sl);
+      }
+      else {
+        out.Add(new cetNamedString(name, di.GetValue()));
+      }
+    }
+  }
+  else if (di.GetName().Equals("table")) {
+    if (di.ItemCount() == 0) return;
+    olxstr cols;
+    for (size_t i = 0; i < di.GetItemByIndex(0).ItemCount(); i++) {
+      olxstr cn = olxstr('_') <<
+        di.GetItemByIndex(0).GetItemByIndex(i).GetFullName('_', &root);
+      if (cn.EndsWith("_value")) {
+        cn.SetLength(cn.Length()-6);
+      }
+      cols << cn.Replace("_table", EmptyString()) << ',';
+    }
+    cols.SetLength(cols.Length() - 1);
+    cetTable *tab = new cetTable(cols, di.ItemCount());
+    for (size_t i = 0; i < di.ItemCount(); i++) {
+      for (size_t j = 0; j < tab->ColCount(); j++) {
+        tab->Set(i, j,
+          new cetString(di.GetItemByIndex(i).GetItemByIndex(j).GetValue()));
+      }
+    }
+    out.Add(tab);
+  }
+  else {
+    for (size_t i = 0; i < di.ItemCount(); i++) {
+      DataItemToCifEntry(root, di.GetItemByIndex(i), translations, out);
+    }
+  }
+}
 void TCif::FromDataItem(const TDataItem &di_) {
-  return;
+  olxstr_dict<olxstr> translations;
+  {
+    TDataItem *t = di_.FindItem("translation");
+    if (t != NULL) {
+      for (size_t i = 0; i < t->ItemCount(); i++) {
+        const TDataItem &ti = t->GetItemByIndex(i);
+        translations.Add(ti.GetName(), ti.GetValue());
+      }
+    }
+  }
+  data_provider.Clear();
+  TDataItem &di = di_.GetItemByName("data");
+  for (size_t i = 0; i < di.ItemCount(); i++) {
+    TDataItem &data = di.GetItemByIndex(i);
+    CifBlock &cb = data_provider.Add(
+      translations.Find(data.GetName(), data.GetName()));
+    DataItemToCifEntry(data, data, translations, cb);
+  }
 }

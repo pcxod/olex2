@@ -49,6 +49,20 @@ namespace exparse  {
     returns the updated index value
     */
     size_t skip_whitechars(const olxstr& exp, size_t& ind);
+    /* more control over the chars to skip
+    */
+    template <typename seq_t>
+    size_t skip_chars(const olxstr& exp, size_t& ind, const seq_t &seq, size_t seq_l) {
+      size_t el = exp.Length();
+      if (ind >= el) return ind;
+      while (olxstr::o_isoneof(exp[ind], seq, seq_l) && ++ind < el);
+      return ind;
+    }
+    template <typename seq_t>
+    size_t skip_chars(const olxstr& exp, size_t& ind, const seq_t &seq) {
+      return skip_chars(exp, ind, seq, olxstr::o_strlen(seq));
+    }
+
     bool parse_string(const olxstr& exp, olxstr& dest, size_t& ind);
     // does not check for escaped quotes
     bool parse_escaped_string(const olxstr& exp, olxstr& dest, size_t& ind);

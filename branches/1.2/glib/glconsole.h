@@ -120,12 +120,10 @@ public:
   void SetPromptVisible(bool v);
   // returns this objects Z coordinate
   double GetZ() const;
-  size_t GetCommandCount() const {  return FCommands.Count();  }
-  const olxstr& GetCommandByIndex(size_t i) const {  return FCommands[i];  }
   const olxstr& GetLastCommand(const olxstr &name) const;
 
-  size_t GetCommandIndex() const {  return FCmdPos;  }
-  void SetCommandIndex(size_t i) {  FCmdPos = i;  }
+  const TStrList &GetCommands() {return FCommands; }
+  void SetCommands(const const_strlist & l);
 
   bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);

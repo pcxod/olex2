@@ -335,7 +335,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
       }
       FCmdPos = FCommands.Count();
     }
-    OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this) );
+    OnCommand.Execute(dynamic_cast<IEObject*>((AActionHandler*)this));
     if( FCommand.IsEmpty() )  {
       PromptStr = InviteStr;
       olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
@@ -658,6 +658,11 @@ void TGlConsole::Resize(int l, int t, int w, int h) {
   Width = (uint16_t)w;
   Height = (uint16_t)h;
   OnResize();
+}
+//..............................................................................
+void TGlConsole::SetCommands(const const_strlist &l) {
+  FCommands = l;
+  FCmdPos = FCommands.Count();
 }
 //..............................................................................
 //..............................................................................

@@ -2060,15 +2060,21 @@ public:
   }
   //...........................................................................
   template <typename seq_t>
-  static bool o_isoneof(TC ch, const seq_t &seq) {
-    size_t l = o_strlen(seq);
-    for (size_t i=0; i < l; i++)
-      if (ch == seq[i])
-        return true;
+  static bool o_isoneof(TC ch, const seq_t &seq, size_t l) {
+    for (size_t i = 0; i < l; i++)
+    if (ch == seq[i])
+      return true;
     return false;
   }
+  template <typename seq_t>
+  static bool o_isoneof(TC ch, const seq_t &seq) {
+    return o_isoneof(ch, seq, o_strlen(seq));
+  }
   // convenience method
-  static bool o_isoneof(TC ch, TC a, TC b) {
+  static bool o_isoneof(TC ch, char a, char b) {
+    return ch == a || ch == b;
+  }
+  static bool o_isoneof(TC ch, wchar_t a, wchar_t b) {
     return ch == a || ch == b;
   }
 

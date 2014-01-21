@@ -904,7 +904,6 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitFunc(LoadDll, fpOne);
 
-  this_InitFunc(CmdList, fpOne);
   this_InitFuncD(Alert, fpTwo|fpThree|fpFour,
     "title message [flags YNCO-yes,no,cancel,ok "
     "XHEIQ-icon:exclamation,hand,eror,information,question "
@@ -1357,7 +1356,15 @@ void TMainForm::StartupInit()  {
     TEFile::AddPathDelimeterI(T);
     T << FLastSettingsFile;
   }
-  try  {  LoadSettings(T);  }
+  try  {
+    LoadSettings(T);
+    olxstr hfn = FXApp->GetConfigDir() + "history.txt";
+    if (TEFile::Exists(hfn)) {
+      TStrList h;
+      h.LoadFromFile(hfn);
+      FGlConsole->SetCommands(h);
+    }
+   }
   catch(const TExceptionBase& e)  {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
     FXApp->CreateObjects(false);
@@ -2602,7 +2609,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     TBasicApp::NewLogEntry(logExceptionTrace) << e;
     FXApp->GetRender().GetStyles().Clear();
   }
-  DF.SaveToXLFile(FN+".tmp");
+  DF.SaveToXLFile(FN + ".tmp");
   TEFile::Rename(FN + ".tmp", FN);
   /* check if the stereo buffers are available and if not disable - this way the
   multisamplin can be enabled!
