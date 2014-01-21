@@ -393,6 +393,26 @@ void TXFile::Sort(const TStrList& ins) {
       }
       AtomSorter::Sort(list, cs);
     }
+    else {
+      TSizeList indices(list.Count(), olx_list_init::index());
+      TPtrList<TCAtom> atoms;
+      TSizeList found;;
+      for (size_t i = 0; i < labels.Count(); i++) {
+        if (labels[i].StartsFrom('$')) continue;
+        size_t pos = InvalidIndex;
+        for (size_t j = 0; j < list.Count(); j++) {
+          if (list[j]->GetLabel().Equalsi(labels[i])) {
+            found.Add(j);
+            atoms.Add(list[j]);
+            break;
+          }
+        }
+      }
+      QuickSorter::Sort(found, TPrimitiveComparator());
+      for (size_t i = 0; i < found.Count(); i++) {
+        list[found[i]] = atoms[i];
+      }
+    }
     labels.Clear();
     if( moiety_index != InvalidIndex )  {
       sort.SetLength(0);
