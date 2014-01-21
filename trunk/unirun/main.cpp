@@ -163,6 +163,8 @@ int main(int argc, char** argv)  {
     }
     TBasicApp bapp(TBasicApp::GuessBaseDir(base_dir, var_name));
     bapp.GetLog().AddStream(&out, false);
+    //bapp.GetLog().AddStream(TUtf8File::Create(
+    //  patcher::PatchAPI::GetInstanceDir() + "unirun.log", true), false);
     if( print_help ) {
       TLog& log = bapp.GetLog();
       log.NewEntry().nl() << "Unirun, Olex2 update/install program";
@@ -177,6 +179,7 @@ int main(int argc, char** argv)  {
     }
     // parse out options
     bapp.InitArguments(argc, argv);
+    bapp.SetSharedDir(patcher::PatchAPI::GetSharedDir());
     bapp.SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
     DoRun();
 #ifdef _DEBUG
@@ -390,6 +393,11 @@ void DoLaunch(const TStrList &args_)  {
     olx_setenv("OLEX2_GL_STEREO", "FALSE");
 #  ifdef __MAC__
   olx_setenv("OLEX2_DIR", bd);
+  olxstr data_dir = olx_getenv("OLEX2_DATADIR");
+  // override new ~/Library/Application Support!
+  if (data_dir.IsEmpty()) {
+    olx_setvar("OLEX2_DATADIR", patcher::PatchAPI::_GetSharedDirRoot());
+  }
   static const olxcstr ld_var = "DYLD_LIBRARY_PATH";
 #  else
   static const olxcstr ld_var = "LD_LIBRARY_PATH";
