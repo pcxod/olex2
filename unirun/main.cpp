@@ -396,7 +396,7 @@ void DoLaunch(const TStrList &args_)  {
   olxstr data_dir = olx_getenv("OLEX2_DATADIR");
   // override new ~/Library/Application Support!
   if (data_dir.IsEmpty()) {
-    olx_setvar("OLEX2_DATADIR", patcher::PatchAPI::_GetSharedDirRoot());
+    olx_setenv("OLEX2_DATADIR", patcher::PatchAPI::_GetSharedDirRoot());
   }
   static const olxcstr ld_var = "DYLD_LIBRARY_PATH";
 #  else
