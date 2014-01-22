@@ -370,6 +370,8 @@ void TXFile::Sort(const TStrList& ins) {
       else
         labels.Add(ins[i]);
     }
+    bool insert_at_fisrt_label = false,
+      label_swap = false;
     for (size_t i=0; i < sort.Length(); i++) {
       if (sort.CharAt(i) == 'm')
         cs.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
@@ -385,6 +387,10 @@ void TXFile::Sort(const TStrList& ins) {
         cs.sequence.AddNew(&AtomSorter::atom_cmp_Suffix);
       else if (sort.CharAt(i) == 'n')
         cs.sequence.AddNew(&AtomSorter::atom_cmp_Number);
+      else if (sort.CharAt(i) == 'f')
+        insert_at_fisrt_label = true;
+      else if (sort.CharAt(i) == 'w')
+        label_swap = true;
     }
     if (!cs.sequence.IsEmpty()) {
       if (!labels.IsEmpty()) {
@@ -392,26 +398,16 @@ void TXFile::Sort(const TStrList& ins) {
           cs.sequence[i].AddExceptions(labels);
       }
       AtomSorter::Sort(list, cs);
+      if (label_swap)
+        AtomSorter::ReorderByName(list, labels);
+      else
+        AtomSorter::SortByName(list, labels, insert_at_fisrt_label);
     }
     else {
-      TSizeList indices(list.Count(), olx_list_init::index());
-      TPtrList<TCAtom> atoms;
-      TSizeList found;;
-      for (size_t i = 0; i < labels.Count(); i++) {
-        if (labels[i].StartsFrom('$')) continue;
-        size_t pos = InvalidIndex;
-        for (size_t j = 0; j < list.Count(); j++) {
-          if (list[j]->GetLabel().Equalsi(labels[i])) {
-            found.Add(j);
-            atoms.Add(list[j]);
-            break;
-          }
-        }
-      }
-      QuickSorter::Sort(found, TPrimitiveComparator());
-      for (size_t i = 0; i < found.Count(); i++) {
-        list[found[i]] = atoms[i];
-      }
+      if (label_swap)
+        AtomSorter::ReorderByName(list, labels);
+      else
+        AtomSorter::SortByName(list, labels, insert_at_fisrt_label);
     }
     labels.Clear();
     if( moiety_index != InvalidIndex )  {

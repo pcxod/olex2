@@ -1052,14 +1052,16 @@ void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
-void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( FHelpItem == NULL )  {  // just print out built in functions if any
-    if( Cmds.IsEmpty() )
+void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  if (FHelpItem == NULL) {  // just print out built in functions if any
+    if (Cmds.IsEmpty())
       return;
     PostCmdHelp(Cmds[0], true);
     return;
   }
-  if( Cmds.IsEmpty() )  {
+  if (Cmds.IsEmpty()) {
     if( !Options.Count() )  {
       size_t period=6;
       olxstr Tmp;
@@ -1097,18 +1099,17 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
   }
-  else  {
-    if( !Options.Count() )
+  else {
+    if (Options.IsEmpty())
       PostCmdHelp(Cmds[0], true);
-    else  {
-      if( Options.GetName(0)[0] ==  'c' )  {  // show categories
+    else {
+      if (Options.GetName(0)[0] ==  'c') {  // show categories
         FGlConsole->PrintText(olxstr("Macroses for category: ") << Cmds[0]);
-        TDataItem *Cat;
         for( size_t i=0; i < FHelpItem->ItemCount(); i++ )  {
-          Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
-          if( Cat == NULL )  continue;
-          for( size_t j=0; j < Cat->ItemCount(); j++ )  {
-            if (Cat->GetItemByIndex(j).GetName().Equalsi(Cmds[0]))  {
+          TDataItem *Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
+          if (Cat == NULL) continue;
+          for (size_t j=0; j < Cat->ItemCount(); j++) {
+            if (Cat->GetItemByIndex(j).GetName().Equalsi(Cmds[0])) {
               FGlConsole->PrintText(FHelpItem->GetItemByIndex(i).GetName());
               break;
             }

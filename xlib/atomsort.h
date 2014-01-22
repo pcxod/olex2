@@ -28,7 +28,6 @@ class AtomSorter {
 public:
   struct Sorter {
     int (*func)(const TCAtom &, const TCAtom &);
-    olxdict<olxstr, int, olxstrComparator<true> > label_exc;
     olxdict<const cm_Element *, int, TPointerComparator> type_exc;
 
     Sorter(int (*f)(const TCAtom &, const TCAtom &)) : func(f) {}
@@ -42,16 +41,10 @@ public:
           }
           type_exc.Add(elm, (int)type_exc.Count());
         }
-        else {
-          label_exc.Add(e[i], (int)label_exc.Count());
-        }
       }
     }
     int sort(const TCAtom &a, const TCAtom &b) const {
-      if (label_exc.HasKey(a.GetLabel()) && label_exc.HasKey(b.GetLabel())) {
-        return olx_cmp(label_exc[a.GetLabel()], label_exc[b.GetLabel()]);
-      }
-      else if (type_exc.HasKey(&a.GetType()) && type_exc.HasKey(&b.GetType())) {
+      if (type_exc.HasKey(&a.GetType()) && type_exc.HasKey(&b.GetType())) {
         return olx_cmp(type_exc[&a.GetType()], type_exc[&b.GetType()]);
       }
       return (*func)(a, b);
@@ -177,6 +170,7 @@ public:
         l1[atom_count++] = atom_tree[i].GetB()[j];
     }
   }
+
   static void SyncLists(const TCAtomPList& ref, TCAtomPList& list)  {
     if( ref.Count() != list.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "lists mismatch");
@@ -194,39 +188,67 @@ public:
         throw TInvalidArgumentException(__OlxSourceInfo, "lists content mismatch");
     }
   }
-  static void SortByName(TCAtomPList& list, const TStrList& atom_names)  {
-    if( atom_names.Count() < 2 )
-      return;
-    size_t fi = InvalidIndex;
+  /* Sorts the list according to the atom_names. The atoms named by the
+  atom_names will be following each other in the specified order and will be
+  postioned at the location of the first found of the atom_names if
+  insert_at_first_name is true and at the smallest index in the list
+  */
+  static void SortByName(TCAtomPList& list, const TStrList& atom_names,
+    bool insert_at_first_name)
+  {
+    if (atom_names.Count() < 2) return;
     TCAtomPList sorted;
-    for( size_t i=0; i < list.Count(); i++ )  {
-      if( list[i]->GetLabel().Equalsi(atom_names[0]) )  {
-        fi = i;
-        sorted.Add(list[i]);
-        list[i] = NULL;
-        break;
-      }
-    }
-    if( fi == InvalidIndex )
-      throw TInvalidArgumentException(__OlxSourceInfo, "atom names");
-    for( size_t i=1; i < atom_names.Count(); i++ )  {
-      for( size_t j=0; j < list.Count(); j++ )  {
-        if( list[j] == NULL )  continue;
-        if( list[j]->GetLabel().Equalsi(atom_names[i]) )  {
+    size_t fi = InvalidIndex;
+    for (size_t i=0; i < atom_names.Count(); i++) {
+      for (size_t j=0; j < list.Count(); j++) {
+        if (list[j] == NULL) continue;
+        if (list[j]->GetLabel().Equalsi(atom_names[i])) {
+          if (insert_at_first_name) {
+            if (fi == InvalidIndex)
+              fi = j;
+          }
+          else if (j < fi)
+            fi = j;
           sorted.Add(list[j]);
           list[j] = NULL;
           break;
         }
       }
     }
+    if (fi == InvalidIndex) return;
     size_t ins_pos = 0;
-    for( size_t i=0; i < fi; i++ )  {
-      if( list[i] != NULL  )  
+    for (size_t i=0; i < fi; i++) {
+      if (list[i] != NULL)
         ins_pos++;
     }
     list.Pack();
     list.Insert(ins_pos, sorted);
   }
+
+  /* Reorders the atom_names in the given order (the positions of the other
+  atoms stay the same.
+  */
+  static void ReorderByName(TCAtomPList& list, const TStrList& atom_names) {
+    if (atom_names.Count() < 2) return;
+    TSizeList indices(list.Count(), olx_list_init::index());
+    TPtrList<TCAtom> atoms;
+    TSizeList found;;
+    for (size_t i = 0; i < atom_names.Count(); i++) {
+      size_t pos = InvalidIndex;
+      for (size_t j = 0; j < list.Count(); j++) {
+        if (list[j]->GetLabel().Equalsi(atom_names[i])) {
+          found.Add(j);
+          atoms.Add(list[j]);
+          break;
+        }
+      }
+    }
+    QuickSorter::Sort(found, TPrimitiveComparator());
+    for (size_t i = 0; i < found.Count(); i++) {
+      list[found[i]] = atoms[i];
+    }
+  }
+
   static void Sort(TCAtomPList& list,
     int (*sort_func)(const TCAtom&, const TCAtom&))
   {
