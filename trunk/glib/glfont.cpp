@@ -1381,7 +1381,7 @@ TCStrList TGlFont::RenderPSLabel(const vec3d& pos, const olxstr& label,
         continue;
       }
       else if( label.CharAt(i+1) == '0' )  {
-        if( cstate != 0 )  {          
+        if( cstate != 0 )  {
           out.Add("4/3 4/3 scale");
           if( cstate == 1 )
             out.Add("0 -") <<  2*st << " translate";

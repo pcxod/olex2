@@ -127,17 +127,23 @@ void TDUnitCell::Create(const olxstr& cName)  {
   TGraphicsStyle& GS = GPC.GetStyle();
   Thickness = GS.GetNumParam("Thickness", 1.0, true);
   TGlMaterial GlM("85;2131693327;4286611584;41975936;32");
-  double d = 0.025;
-  TGlPrimitive* GlP = &GPC.NewPrimitive("Sphere", sgloSphere);
-  
-  GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
-  GlP->Params[0] = d;  GlP->Params[1] = 6;  GlP->Params[2] = 6;
+  if (GS.GetParam("RenderLine", FalseString(), true).ToBool()) {
+    TGlPrimitive* GlP = &GPC.NewPrimitive("Lines", sgloLines);
+    GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
+  }
+  else {
+    double d = 0.025;
+    TGlPrimitive* GlP = &GPC.NewPrimitive("Sphere", sgloSphere);
 
-  GlP = &GPC.NewPrimitive("Cylinder", sgloCylinder);
-  GlP->Params[0] = d;    GlP->Params[1] = d;  GlP->Params[2] = 1;
-  GlP->Params[3] = 5;  GlP->Params[4] = 1;
-  GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
-  Compile();
+    GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
+    GlP->Params[0] = d;  GlP->Params[1] = 6;  GlP->Params[2] = 6;
+
+    GlP = &GPC.NewPrimitive("Cylinder", sgloCylinder);
+    GlP->Params[0] = d;    GlP->Params[1] = d;  GlP->Params[2] = 1;
+    GlP->Params[3] = 5;  GlP->Params[4] = 1;
+    GlP->SetProperties(GS.GetMaterial(GlP->GetName(), GlM));
+    Compile();
+  }
   SetReciprocal(IsReciprocal());
 
   for (int i=0; i < 4; i++)
@@ -156,7 +162,7 @@ bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min) {
 //..............................................................................
 bool TDUnitCell::Orient(TGlPrimitive& P) {
   if (P.GetType() == sgloCylinder) {
-    for (int i = 0; i < Edges.Count(); i += 2) {
+    for (size_t i = 0; i < Edges.Count(); i += 2) {
       vec3d v = (Edges[i + 1] - Edges[i]);
       double l = v.Length();
       v *= 1.0 / l;
@@ -168,8 +174,8 @@ bool TDUnitCell::Orient(TGlPrimitive& P) {
       olx_gl::popMatrix();
     }
   }
-  else {
-    for (int i = 0; i < VertexCount(); i ++) {
+  else if (P.GetType() == sgloSphere) {
+    for (size_t i = 0; i < VertexCount(); i++) {
       const vec3f &v = GetVertex(i);
       olx_gl::translate(v);
       if (Thickness != 1)
@@ -180,6 +186,20 @@ bool TDUnitCell::Orient(TGlPrimitive& P) {
       olx_gl::translate(-v);
     }
 
+  }
+  else {
+    GLdouble th;
+    olx_gl::get(GL_LINE_WIDTH, &th);
+    if (th != Thickness)
+      olx_gl::lineWidth(Thickness);
+    olx_gl::begin(GL_LINES);
+    for (size_t i = 0; i < Edges.Count(); i += 2) {
+      olx_gl::vertex(Edges[i]);
+      olx_gl::vertex(Edges[i + 1]);
+    }
+    olx_gl::end();
+    if (th != Thickness)
+      olx_gl::lineWidth(th);
   }
   return true;
 }
@@ -273,12 +293,37 @@ void TDUnitCell::funThickness(const TStrObjList& Params, TMacroError& E) {
   }
 }
 //..............................................................................
+void TDUnitCell::funDrawstyle(const TStrObjList& Params, TMacroError& E) {
+  if (Params.IsEmpty()) {
+    bool rl = GetPrimitives().GetStyle().GetParam(
+      "RenderLine", FalseString(), true).ToBool();
+    E.SetRetVal<olxstr>(rl ? "line" : "cone");
+  }
+  else {
+    bool nv = false;
+    if (Params[0].Equalsi("line"))
+      nv = true;
+    bool rl = GetPrimitives().GetStyle().GetParam(
+      "RenderLine", FalseString(), true).ToBool();
+    if (nv != rl) {
+      GetPrimitives().GetStyle().SetParam("RenderLine", nv, true);
+      GetPrimitives().ClearPrimitives();
+      Create();
+    }
+  }
+}
+//..............................................................................
 TLibrary *TDUnitCell::ExportLibrary(const olxstr &name) {
   TLibrary *l = new TLibrary(name.IsEmpty() ? olxstr("cell") : name);
   l->Register(
     new TFunction<TDUnitCell>(this,
       &TDUnitCell::funThickness, "Thickness", fpNone | fpOne,
     "Returns or sets current cell thickness")
+    );
+  l->Register(
+    new TFunction<TDUnitCell>(this,
+    &TDUnitCell::funDrawstyle, "DrawStyle", fpNone | fpOne,
+    "Returns or sets current cell drawing style [line,cone]")
     );
   return l;
 }
