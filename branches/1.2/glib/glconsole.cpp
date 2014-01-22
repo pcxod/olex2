@@ -367,37 +367,37 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   return true;
 }
 //..............................................................................
-void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
-  if( IsSkipPosting() )  {
-    //SetSkipPosting(false);
+void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate) {
+  if (IsSkipPosting()) {
     return;
   }
   bool SingleLine = false;
-  if( Hyphenate || S.IndexOf('\n') != InvalidIndex )  {
+  if (Hyphenate || S.IndexOf('\n') != InvalidIndex) {
     const size_t sz = GetFont().MaxTextLength(Parent.GetWidth());
-    if( sz <= 0 )  return;
+    if (sz == 0) return;
     TStrList Txt(S, '\n'), toks;
-    for( size_t i=0; i < Txt.Count(); i++ )  {
-      toks.Hyphenate(Txt[i], sz, true);
-      if( toks.Count() > 1 )  {
+    for (size_t i=0; i < Txt.Count(); i++) {
+      size_t xsz = olx_min(sz-Txt[i].CharCount('\t') * 8, sz);
+      toks.Hyphenate(Txt[i], xsz, true);
+      if (toks.Count() > 1) {
         Txt[i] = toks[0];
-        for( size_t j=1; j < toks.Count(); j++ )
+        for (size_t j=1; j < toks.Count(); j++)
           Txt.Insert(++i, toks[j]);
       }
       toks.Clear();
     }
-    if( Txt.Count() > 1 )
+    if (Txt.Count() > 1)
       PrintText(Txt, M, false);
     else
       SingleLine = true;
   }
-  if( !Hyphenate || SingleLine )  {
+  if (!Hyphenate || SingleLine) {
     TGlMaterial *GlM = NULL;
-    if( M != NULL )  GlM = new TGlMaterial(*M);
-    if( !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty() )  {
+    if (M != NULL) GlM = new TGlMaterial(*M);
+    if (!FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty()) {
       FBuffer.GetLastString() = S;
       /* this line is added after memory leak analysis by Compuware DevPartner 8.2 trial */
-      if( FBuffer.GetLast().Object != NULL )
+      if (FBuffer.GetLast().Object != NULL)
         delete FBuffer.GetLast().Object;
       FBuffer.GetLast().Object = GlM;
     }
@@ -407,7 +407,6 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
-  //FBuffer.Add(EmptyString());
 }
 //..............................................................................
 void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  {

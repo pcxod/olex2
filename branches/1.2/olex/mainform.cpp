@@ -2511,23 +2511,25 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd, bool inc_files)  {
 //..............................................................................
 void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
   ABasicFunction *MF = FXApp->GetLibrary().FindMacro(Cmd);
-  if( MF != NULL )  {
+  if (MF != NULL) {
     FGlConsole->PrintText( olxstr("Built in macro ") << MF->GetName());
     FGlConsole->PrintText(olxstr(" Signature: ") << MF->GetSignature());
-    FGlConsole->PrintText(olxstr(" Description: ") << MF->GetDescription());
-    if( MF->GetOptions().Count() != 0 )  {
-      FGlConsole->PrintText(" Switches: ");
-      for( size_t i=0; i < MF->GetOptions().Count(); i++ )  {
-        FGlConsole->PrintText( olxstr("   ") << MF->GetOptions().GetKey(i) << " - "
-          << MF->GetOptions().GetObject(i) );
+    FGlConsole->PrintText((olxstr(" Description: ") <<
+      MF->GetDescription()).Replace('\t', "  "));
+    if (MF->GetOptions().IsEmpty()) {
+      FGlConsole->PrintText(" Options: ");
+      for (size_t i=0; i < MF->GetOptions().Count(); i++) {
+        FGlConsole->PrintText(olxstr("   ") << MF->GetOptions().GetKey(i) << " - "
+          << MF->GetOptions().GetObject(i));
       }
     }
   }
   MF = FXApp->GetLibrary().FindFunction(Cmd);
-  if( MF != NULL )  {
-    FGlConsole->PrintText( olxstr("Built in function ") << MF->GetName());
+  if (MF != NULL) {
+    FGlConsole->PrintText(olxstr("Built in function ") << MF->GetName());
     FGlConsole->PrintText(olxstr(" Signature: ") << MF->GetSignature());
-    FGlConsole->PrintText(olxstr(" Description: ") << MF->GetDescription());
+    FGlConsole->PrintText((olxstr(" Description: ") <<
+      MF->GetDescription()).Replace('\t', "  "));
   }
 }
 //..............................................................................

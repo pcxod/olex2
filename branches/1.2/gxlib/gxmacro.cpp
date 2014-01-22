@@ -3260,11 +3260,11 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     app.CenterView();
   app.UpdateBonds();
   const bool exclude_h = Options.GetBoolOption('h');
-  if( Options.Contains("u") )  // do nothing...
+  if (Options.GetBoolOption('u') )  // do nothing...
     return;
   olex2::IOlex2Processor::GetInstance()->callCallbackFunc(
     StartMatchCBName, TStrList() << EmptyString());
-  const bool TryInvert = Options.Contains("i");
+  const bool TryInvert = Options.GetBoolOption('i');
   double (*weight_calculator)(const TSAtom&) = &TSAtom::weight_unit;
   
   if (Options.Contains('w')) {
@@ -3280,10 +3280,10 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     else if (w == "am")
       weight_calculator = &TSAtom::weight_atom_mass;
   }
-  const bool subgraph = Options.Contains("s");
-  olxstr suffix = Options.FindValue("n");
-  const bool name = Options.Contains("n");
-  const bool align = Options.Contains("a");
+  const bool subgraph = Options.GetBoolOption('s');
+  olxstr suffix = Options.FindValue('n');
+  const bool name = Options.Contains('n');
+  const bool align = Options.GetBoolOption('a');
   size_t group_cnt = 2;
   if (!Cmds.IsEmpty() && Cmds[0].IsNumber()) {
     group_cnt = Cmds[0].ToSizeT();

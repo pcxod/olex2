@@ -486,14 +486,14 @@ TAG_HANDLER_PROC(tag)  {
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Text, fl));
   }
 /******************* BUTTON ***************************************************/
-  else if( TagName.Equalsi("button") )  {
+  else if (TagName.Equalsi("button")) {
     AButtonBase *Btn;
     long flags = 0;
-    if( tag.HasParam(wxT("FIT")) )  flags |= wxBU_EXACTFIT;
-    if( tag.HasParam(wxT("FLAT")) )  flags |= wxNO_BORDER;
+    if (GetBoolAttribute(tag, "FIT"))  flags |= wxBU_EXACTFIT;
+    if (GetBoolAttribute(tag, "FLAT"))  flags |= wxNO_BORDER;
     olxstr buttonImage = tag.GetParam(wxT("IMAGE"));
-    if( !buttonImage.IsEmpty() )  {
-      if( buttonImage.IndexOf(',') != InvalidIndex )  {
+    if (!buttonImage.IsEmpty()) {
+      if (buttonImage.IndexOf(',') != InvalidIndex) {
         TImgButton* ibtn = new TImgButton(html);
         ibtn->SetImages(buttonImage, width_set ? ax : -1, height_set ? ay : -1);
         if( tag.HasParam(wxT("ENABLED")) )
@@ -503,47 +503,57 @@ TAG_HANDLER_PROC(tag)  {
         CreatedWindow = ibtn;
         Btn = ibtn;
       }
-      else  {
+      else {
         Btn = new TBmpButton(html, -1, wxNullBitmap,
           wxDefaultPosition, wxDefaultSize, flags );
         ((TBmpButton*)Btn)->SetSource( buttonImage );
         wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler(buttonImage);
-        if( fsFile == NULL ) {
+        if (fsFile == NULL) {
           TBasicApp::NewLogEntry(logError) <<
             "THTML: could not locate image for button: " << ObjectName;
         }
-        else  {
+        else {
           wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
-          if ( !image.Ok() ) {
+          if (!image.Ok()) {
             TBasicApp::NewLogEntry(logError) <<
               "THTML: could not load image for button: " << ObjectName;
           }
-          else  {
-            if( (image.GetWidth() > ax || image.GetHeight() > ay) &&
-                 tag.HasParam(wxT("STRETCH")) )
+          else {
+            if ((image.GetWidth() > ax || image.GetHeight() > ay) &&
+              GetBoolAttribute(tag, "STRETCH"))
+            {
               image = image.Scale(ax, ay);
+            }
             else  {
               ax = image.GetWidth();
               ay = image.GetHeight();
             }
-            ((TBmpButton*)Btn)->SetBitmapLabel( image );
+            ((TBmpButton*)Btn)->SetBitmapLabel(image);
           }
           delete fsFile;
         }
-        Btn->WI.SetWidth(ax);
-        Btn->WI.SetHeight(ay);
+        if ((flags & wxBU_EXACTFIT) == 0) {
+          Btn->WI.SetWidth(ax);
+          Btn->WI.SetHeight(ay);
+        }
+        else {
+          ((TBmpButton*)Btn)->Fit();
+        }
         ((TBmpButton*)Btn)->SetFont(m_WParser->GetDC()->GetFont());
         CreatedWindow = (TBmpButton*)Btn;
       }
     }
-    else  {
+    else {
       Btn = new TButton(html, -1, wxEmptyString,
         wxDefaultPosition, wxDefaultSize, flags);
       ((TButton*)Btn)->SetCaption(Value);
       ((TButton*)Btn)->SetFont(m_WParser->GetDC()->GetFont());
-      if( (flags & wxBU_EXACTFIT) == 0 )  {
+      if ((flags & wxBU_EXACTFIT) == 0) {
         Btn->WI.SetWidth(ax);
         Btn->WI.SetHeight(ay);
+      }
+      else {
+        ((TButton*)Btn)->Fit();
       }
 #ifdef __WXGTK__  // got no idea what happens here, client size does not work?
       wxFont fnt(m_WParser->GetDC()->GetFont());
@@ -559,29 +569,29 @@ TAG_HANDLER_PROC(tag)  {
     }
     CreatedObject = Btn;
     Btn->SetData(Data);
-    if( tag.HasParam(wxT("ONCLICK")) )  {
+    if (tag.HasParam(wxT("ONCLICK"))) {
       Btn->OnClick.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONCLICK")), macro_map);
       Btn->OnClick.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONDOWN")) )  {
+    if (tag.HasParam(wxT("ONDOWN"))) {
       Btn->OnUp.data = ExpandMacroShortcuts(tag.GetParam(wxT("ONUP")), macro_map);
       Btn->OnUp.Add(&html->Manager);
     }
-    if( tag.HasParam(wxT("ONDOWN")) )  {
+    if (tag.HasParam(wxT("ONDOWN"))) {
       Btn->OnDown.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONDOWN")),macro_map);
       Btn->OnDown.Add(&html->Manager);
     }
-    if( html->GetShowTooltips() )  {
+    if (html->GetShowTooltips()) {
       Btn->SetHint(
         ExpandMacroShortcuts(tag.GetParam(wxT("HINT")),macro_map));
     }
-    if( tag.HasParam(wxT("DOWN")) )
+    if (tag.HasParam(wxT("DOWN")))
       Btn->SetDown(tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")) == 0);
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
-    if( !modeDependent.IsEmpty() )
+    if (!modeDependent.IsEmpty())
       Btn->SetActionQueue(TModeRegistry::GetInstance().OnChange, modeDependent);
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(CreatedWindow, fl));
   }
@@ -741,10 +751,10 @@ TAG_HANDLER_PROC(tag)  {
     Box->SetConstraints(wxa);
     Box->WI.SetWidth(ax);
     Box->WI.SetHeight(ay);
+    Box->SetCaption(Value);
     AdjustSize(*Box, true, true);
     CreatedObject = Box;
     CreatedWindow = Box;
-    Box->SetCaption(Value);
     if (tag.HasParam(wxT("CHECKED"))) {
       Tmp = tag.GetParam(wxT("CHECKED"));
       op->processFunction(Tmp, SrcInfo, false);
