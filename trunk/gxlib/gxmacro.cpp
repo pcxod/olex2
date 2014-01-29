@@ -1944,6 +1944,20 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  else if (Cmds.Count() >= 2 && Cmds[0].Equalsi("cif")) {
+    if (Cmds[1].Equalsi("bonds")) {
+      app.XFile().GetRM().GetSelectedTableRows().AddSelectedBonds(
+        TStrList(Cmds.Text(' ', 2), ';'), app.XFile().GetAsymmUnit());
+    }
+    else if (Cmds[1].Equalsi("angles")) {
+      app.XFile().GetRM().GetSelectedTableRows().AddSelectedAngles(
+        TStrList(Cmds.Text(' ', 2), ';'), app.XFile().GetAsymmUnit());
+    }
+    else if (Cmds[1].Equalsi("torsions") || Cmds[1].Equalsi("dihedrals")) {
+      app.XFile().GetRM().GetSelectedTableRows().AddSelectedDihedrals(
+        TStrList(Cmds.Text(' ', 2), ';'), app.XFile().GetAsymmUnit());
+    }
+  }
   else if (flag == glSelectionNone) {
     size_t period=5;
     TXAtomPList Atoms = app.FindXAtoms("sel", false, false);

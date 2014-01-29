@@ -22,6 +22,7 @@
 #include "symmlib.h"
 #include "edict.h"
 #include "constraints_ext.h"
+#include "selected.h"
 
 BeginXlibNamespace()
 
@@ -33,7 +34,7 @@ static const double
   def_OMIT_2t = 180.0,
   def_SHEL_hr = 0,
   def_SHEL_lr = 100;  // ['infinity' in A]
-static const short 
+static const short
   def_MERG   = 2,
   def_TWIN_n = 2;
 
@@ -89,6 +90,7 @@ protected:
     RefContainers;
   void SetDefaults();
   TTypeListExt<class InfoTab, IEObject> InfoTables;
+  SelectedTableRows selectedTableRows;
   // adds a givin direction (if unique) and returns its name
   adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
   // atoms omitted from the maps
@@ -271,7 +273,7 @@ public:
   }
   template <class list> void SetHKLF(const list& hklf) {
     if( hklf.IsEmpty() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "empty HKLF");  
+      throw TInvalidArgumentException(__OlxSourceInfo, "empty HKLF");
     HKLF = hklf[0].ToInt();
     if( HKLF > 4 )
       MERG = 0;
@@ -481,6 +483,10 @@ Friedel opposites of components 1 ... m
   InfoTab& AddCONF();
   // if the name is empty - all tabs a removed
   void ClearInfoTab(const olxstr &name);
+  SelectedTableRows &GetSelectedTableRows() { return selectedTableRows;  }
+  const SelectedTableRows &GetSelectedTableRows() const {
+    return selectedTableRows;
+  }
   bool ValidateInfoTab(const InfoTab& it);
   // adss new symmetry matrics, used in restraints/constraints 
   const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString());

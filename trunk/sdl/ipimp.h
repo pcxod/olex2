@@ -45,6 +45,8 @@ protected:
       error.PrintStack(quiet ? logInfo : logDefault, false, '\t');
     }
   }
+  virtual void beforeCall(const olxstr &cmd) {}
+  virtual void afterCall(const olxstr &cmd) {}
 public:
   OlexProcessorImp(ALibraryContainer *lc)
     : LibraryContainer(lc),
@@ -109,32 +111,40 @@ public:
   virtual bool processFunction(olxstr &cmd,
     const olxstr& location=EmptyString(), bool quiet=false)
   {
+    const olxstr cmd_ = cmd;
+    beforeCall(cmd_);
     TMacroError err;
     err.SetLocation(location);
     const bool rv = Macros.ProcessFunction(cmd, err, false);
     AnalyseErrorEx(err, quiet);
+    afterCall(cmd_);
     return rv;
   }
 
   virtual bool processMacro(const olxstr& cmd,
     const olxstr& location=EmptyString(), bool quiet=false)
   {
+    beforeCall(cmd);
     TMacroError err;
     err.SetLocation(location);
     Macros.ProcessTopMacro(cmd, err, *this,
       quiet ? NULL : &OlexProcessorImp::AnalyseError);
+    afterCall(cmd);
     return err.IsSuccessful();
   }
 
   virtual bool processMacroEx(const olxstr& cmd, TMacroError &err,
     const olxstr& location=EmptyString(), bool quiet=false)
   {
+    beforeCall(cmd);
     err.SetLocation(location);
     Macros.ProcessTopMacro(cmd, err, *this,
       quiet ? NULL : &OlexProcessorImp::AnalyseError);
+    afterCall(cmd);
     return err.IsSuccessful();
   }
   virtual void callCallbackFunc(const olxstr& cbEvent, const TStrList& params) {
+    beforeCall(cbEvent);
     TSizeList indexes;
     TMacroError me;
     CallbackFuncs.GetIndices(cbEvent, indexes);
@@ -143,6 +153,7 @@ public:
       AnalyseError(me);
       me.Reset();
     }
+    afterCall(cbEvent);
   }
 }; // end OlexProcessorImp
 } //end namespace olex

@@ -120,6 +120,7 @@ BEGIN_EVENT_TABLE(TGlXApp, wxApp)
   EVT_IDLE(TGlXApp::OnIdle)
   EVT_CHAR(TGlXApp::OnChar)
   EVT_KEY_DOWN(TGlXApp::OnKeyDown)
+  EVT_MOUSE_EVENTS(TGlXApp::OnMouse)
   EVT_NAVIGATION_KEY(TGlXApp::OnNavigation)
 END_EVENT_TABLE()
 
@@ -281,13 +282,6 @@ bool TGlXApp::Dispatch()  {
   return wxApp::Dispatch();
 }
 //..............................................................................
-//int TGlXApp::MainLoop()  {
-//  while( wxApp::Pending() )  wxApp::Dispatch();
-  //TBasicApp::GetInstance().OnTimer->Clear();
-
-//  return wxApp::MainLoop();
-//}
-//..............................................................................
 void TGlXApp::OnChar(wxKeyEvent& event)  {
   //MainForm->OnChar(event);
   event.Skip(); // pass it to the controls...
@@ -303,6 +297,12 @@ void TGlXApp::OnNavigation(wxNavigationKeyEvent& event)  {
 //..............................................................................
 void TGlXApp::OnIdle(wxIdleEvent& event)  {
   event.Skip();
+  if (GetMainForm()->idle_start == 0)
+    GetMainForm()->idle_start = TETime::msNow();
+}
+//..............................................................................
+void TGlXApp::OnMouse(wxMouseEvent &evt) {
+  evt.Skip();
 }
 //..............................................................................
 

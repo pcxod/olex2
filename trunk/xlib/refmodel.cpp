@@ -129,6 +129,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   PLAN.Clear();
   LS.Clear();
   Omitted.Clear();
+  selectedTableRows.Clear();
   if( (clear_mask & rm_clear_AFIX) != 0 )
     AfixGroups.Clear();
   if( (clear_mask & rm_clear_VARS) != 0 )
@@ -272,6 +273,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
       UsedSymm.Delete(i--);
   }
   Omitted.Assign(rm.Omitted);
+  selectedTableRows.Assign(rm.selectedTableRows, aunit);
   return *this;
 }
 //.............................................................................
@@ -1815,6 +1817,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   if (!fixed_types.IsEmpty()) {
     di.AddItem("fixed_types", fixed_types.SubStringFrom(1));
   }
+  selectedTableRows.ToDataItem(di.AddItem("selected_cif_records"));
   TEStrBuffer bf;
   di.SaveToStrBuffer(bf);
   return bf.ToString();
@@ -1885,6 +1888,18 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
       a->SetFixedType(true);
     }
   }
+  TDataItem *selected_cif_records = di.FindItem("selected_cif_records");
+  if (selected_cif_records != NULL) {
+    try {
+      selectedTableRows.FromDataItem(*selected_cif_records, aunit);
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logError) <<
+        "While loading Selected CIF records: " <<
+        e.GetException()->GetFullMessage();
+    }
+  }
+
 }
 //..............................................................................
 //..............................................................................

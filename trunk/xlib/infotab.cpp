@@ -26,7 +26,7 @@ bool InfoTab::operator == (const InfoTab &it) const {
   }
   return true;
 }
-
+//.............................................................................
 InfoTab& InfoTab::operator = (const InfoTab& it)  {
   ParamName = it.ParamName;
   AtomCount = it.AtomCount;
@@ -34,7 +34,7 @@ InfoTab& InfoTab::operator = (const InfoTab& it)  {
   atoms.Assign(it.atoms);
   return *this;
 }
-
+//.............................................................................
 bool InfoTab::IsValid() const {
  TTypeList<ExplicitCAtomRef> a = atoms.ExpandList(RM);
  size_t ac = a.Count();
@@ -47,7 +47,7 @@ bool InfoTab::IsValid() const {
   if (Type == infotab_conf && ac >= 4) return true;
   return false;
 }
-
+//.............................................................................
 olxstr InfoTab::InsStr() const {
   olxstr rv = GetName();
   if (!atoms.GetResi().IsEmpty())
@@ -58,7 +58,7 @@ olxstr InfoTab::InsStr() const {
     rv << ' ' << AtomCount;
   return (rv << ' ' << atoms.GetExpression());
 }
-
+//.............................................................................
 void InfoTab::ToDataItem(TDataItem& di) const {
   di.SetValue(GetName());
   di.AddField("param", ParamName);
@@ -66,7 +66,7 @@ void InfoTab::ToDataItem(TDataItem& di) const {
     di.AddField("atomCount", AtomCount);
   atoms.ToDataItem(di.AddItem("AtomList"));
 }
-
+//.............................................................................
 void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
   if (di.GetValue() == "HTAB")
     Type = infotab_htab;
@@ -97,7 +97,7 @@ void InfoTab::FromDataItem(const TDataItem& di, RefinementModel& rm)  {
     atoms.FromDataItem(di.GetItemByName("AtomList"));
   }
 }
-
+//.............................................................................
 #ifdef _PYTHON
 PyObject* InfoTab::PyExport() {
   PyObject* main = PyDict_New();
@@ -117,7 +117,7 @@ PyObject* InfoTab::PyExport() {
   return main;
 }
 #endif
-
+//.............................................................................
 TIString InfoTab::ToString() const {
   olxstr rv = InsStr();
   TTypeList<ExplicitCAtomRef> a = atoms.ExpandList(RM);
@@ -133,7 +133,8 @@ TIString InfoTab::ToString() const {
   }
   return rv;
 }
-
+//.............................................................................
 void InfoTab::AddAtom(TCAtom& ca, const smatd* sm)  {
   atoms.AddExplicit(ca, sm);
 }
+//.............................................................................

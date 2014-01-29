@@ -209,7 +209,7 @@ public:
   TCAtom* FindCAtom(const olxstr &Label, TResidue* resi = NULL) const;
   /* direct label match search */
   TCAtom* FindCAtomDirect(const olxstr &Label) const;
-  //returns an atom by LoaderId
+  //returns an atom by Id
   TCAtom* FindCAtomById(size_t id) const  {
     return (id >= CAtoms.Count()) ? NULL : CAtoms[id];
   }
