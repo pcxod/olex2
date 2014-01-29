@@ -189,6 +189,8 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
   short Fl = EncodeEvent(me, false);
   if (MouseButton == 0)
     FParent->OnMouseMove(me.m_x, me.m_y);
+  else
+    FParent->OnNonIdle();
   // check if a handler for the event is found
   if (FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl)) {
 #ifdef __WIN32__

@@ -164,20 +164,20 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   for (size_t i=0; i < cx.Symm.Count(); i++) {
     GetAsymmUnit().AddMatrix(TSymmParser::SymmToMatrix(cx.Symm[i]));
   }
-  // remove dublicated instructtions, rems ONLY
-  for (size_t i = 0; i < Ins.Count(); i++) {
-    if (Ins[i].IsEmpty() || !Ins[i].StartsFromi("REM")) continue;
-    for (size_t j = i+1; j < Ins.Count(); j++) {
-      if (Ins[i] == Ins[j])
-        Ins[j].SetLength(0);
-    }
-  }
 
-  Ins.Pack();
   ParseRestraints(cx.rm, Ins);
   Ins.Pack();
   _ProcessSame(cx);
   _FinishParsing(cx);
+  // remove dublicated instructions, rems ONLY
+  for (size_t i = 0; i < Ins.Count(); i++) {
+    if (Ins[i].IsEmpty() || !Ins[i].StartsFromi("REM")) continue;
+    for (size_t j = i + 1; j < Ins.Count(); j++) {
+      if (Ins[i] == Ins[j])
+        Ins[j].SetLength(0);
+    }
+  }
+  Ins.Pack();
   // initialise asu data
   GetAsymmUnit().InitData();
   if( !cx.CellFound )  {  // in case there are no atoms
@@ -355,8 +355,9 @@ void TIns::_FinishParsing(ParseContext& cx)  {
       TStrList extras;
       size_t j = i;
       while( ++j < Ins.Count() && !Ins[j].Equalsi("REM </olex2.extras>") )  {
-        if( Ins[j].StartsFromi("REM") )
+        if (Ins[j].StartsFromi("REM")) {
           extras.Add(Ins[j].SubStringFrom(3));
+        }
       }
       Ins.DeleteRange(i, j-i+1);
       cx.rm.ReadInsExtras(extras);
@@ -694,7 +695,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       sc->SetMu(Toks[4].ToDouble());
     cx.rm.AddSfac(*sc);
   }
-  else if( Toks[0].Equalsi("REM") )  {  
+  else if( Toks[0].Equalsi("REM") )  {
     if( Toks.Count() > 1 )  {
       if( Toks[1].Equalsi("R1") && Toks.Count() > 4 && Toks[3].IsNumber() )  {
         if( cx.ins != NULL )  cx.ins->R1 = Toks[3].ToDouble();
@@ -732,7 +733,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       }
       else if( !cx.End  && !cx.rm.IsHKLFSet() )
         if( cx.ins != NULL )
-          cx.ins->Ins.Add(Toks.Text(' ')); 
+          cx.ins->Ins.Add(Toks.Text(' '));
     }
   }
   else if( Toks[0].Equalsi("SAME") )  {

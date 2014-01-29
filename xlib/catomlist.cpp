@@ -10,6 +10,7 @@
 #include "catomlist.h"
 #include "refmodel.h"
 #include "satom.h"
+#include "atomref.h"
 
 //.............................................................................
 IAtomRef &IAtomRef::FromDataItem(const TDataItem &di, RefinementModel& rm) {
@@ -126,40 +127,39 @@ ImplicitCAtomRef::ImplicitCAtomRef(const TDataItem &di) {
 size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
   TAtomRefList& res, TResidue& resi) const
 {
-  if( Name.Equalsi("last") )  {
-    if( res.IsEmpty() )  return 0;
+  if (Name.Equalsi("last")) {
+    if (res.IsEmpty()) return 0;
     size_t i = resi.Count()-1;
-    while( resi[i].IsDeleted() && --i != InvalidIndex )
+    while (resi[i].IsDeleted() && --i != InvalidIndex)
       ;
-    if( i == InvalidIndex )  return 0;
+    if (i == InvalidIndex ) return 0;
     res.Add(new ExplicitCAtomRef(resi[i], NULL));
     return 1;
   }
-  if( Name.Equalsi("first") )  {
+  if (Name.Equalsi("first")) {
     size_t i = 0;
-    while( resi[i++].IsDeleted() && i <= resi.Count() )
+    while (resi[i++].IsDeleted() && i <= resi.Count())
       ;
-    if( i == resi.Count() )   return 0;
+    if (i == resi.Count()) return 0;
     res.Add(new ExplicitCAtomRef(resi[i], NULL));
     return 1;
   }
-  if( Name.Equalsi('*') )  {
-    size_t ac = 0;
-    for( size_t i=0; i < resi.Count(); i++ )  {
+  if (Name.Equalsi('*')) {
+    size_t ac = res.Count();
+    for (size_t i=0; i < resi.Count(); i++) {
       TCAtom& ca = resi[i];
       // skip deleted atoms, q-peaks and H (D)
-      if( ca.IsDeleted() || ca.GetType().z < 2 )  continue;
-      res.Add( new ExplicitCAtomRef(resi[i], NULL) );
-      ac++;
+      if (ca.IsDeleted() || ca.GetType().z < 2) continue;
+      res.Add(new ExplicitCAtomRef(resi[i], NULL));
     }
-    return ac;
+    return res.Count()-ac;
   }
-  if( Name.EndsWith("_+") )  {
+  if (Name.EndsWith("_+")) {
     TResidue* next_resi = resi.Next();
-    if( next_resi != NULL )  {
+    if (next_resi != NULL) {
       IAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, Name.SubStringFrom(0,2),
         EmptyString(), next_resi);
-      if( ar != NULL )  {
+      if (ar != NULL) {
         size_t ac = ar->Expand(rm, res, *next_resi);
         delete ar;
         return ac;
@@ -167,12 +167,12 @@ size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
     }
     return 0;
   }
-  if( Name.EndsWith("_-") )  {
+  if (Name.EndsWith("_-")) {
     TResidue* prev_resi = resi.Prev();
-    if( prev_resi != NULL )  {
+    if (prev_resi != NULL) {
       IAtomRef* ar = ImplicitCAtomRef::NewInstance(rm, Name.SubStringFrom(0,2),
         EmptyString(), prev_resi);
-      if( ar != NULL )  {
+      if (ar != NULL) {
         size_t ac = ar->Expand(rm, res, *prev_resi);
         delete ar;
         return ac;
@@ -182,19 +182,19 @@ size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
   }
   ResiPList residues;
   const smatd* symm = NULL;
-  olxstr aname(Name);
+  olxstr aname = Name;
   size_t us_ind = Name.IndexOf('_');
-  if( us_ind == InvalidIndex )  // atom name, type
+  if (us_ind == InvalidIndex)  // atom name, type
     residues.Add(resi);
-  else  {
-    if( us_ind+1 == Name.Length() )  // invalid residue/symm reference
+  else {
+    if (us_ind+1 == Name.Length())  // invalid residue/symm reference
       return 0;
     olxstr resi_ref = Name.SubStringFrom(us_ind+1);
     // symmetry reference
     size_t symm_ind = resi_ref.IndexOf('$');
-    if( symm_ind != InvalidIndex )  {
+    if (symm_ind != InvalidIndex) {
       symm = rm.FindUsedSymm(resi_ref.SubStringFrom(symm_ind));
-      if( symm == NULL )  return 0;
+      if (symm == NULL) return 0;
       resi_ref = resi_ref.SubStringTo(symm_ind);
     }
     if (resi_ref.IsEmpty())
@@ -204,22 +204,24 @@ size_t ImplicitCAtomRef::Expand(const RefinementModel& rm,
     aname = Name.SubStringTo(us_ind);
   }
   size_t ac = 0;
-  if( aname.StartsFrom('$') )  {
-    cm_Element* elm = XElementLib::FindBySymbol(aname.SubStringFrom(1));
-    if( elm == NULL )  return 0;
-    for( size_t i=0; i < residues.Count(); i++ )  {
-      for( size_t j=0; j < residues[i]->Count(); j++ )  {
-        if( residues[i]->GetAtom(j).IsDeleted() || 
-          residues[i]->GetAtom(j).GetType() != *elm )
-        {
-          continue;
+  if (aname.StartsFrom('$')) {
+    SortedElementPList elms =
+      TAtomReference::DecodeTypes(aname.SubStringFrom(1), rm.aunit);
+    for (size_t ei = 0; ei < elms.Count(); ei++) {
+      for (size_t i = 0; i < residues.Count(); i++) {
+        for (size_t j = 0; j < residues[i]->Count(); j++) {
+          if (residues[i]->GetAtom(j).IsDeleted() ||
+            residues[i]->GetAtom(j).GetType() != *elms[ei])
+          {
+            continue;
+          }
+          res.Add(new ExplicitCAtomRef(residues[i]->GetAtom(j), symm));
+          ac++;
         }
-        res.Add(new ExplicitCAtomRef(residues[i]->GetAtom(j), symm));
-        ac++;
       }
     }
   }
-  else  {
+  else {
     for( size_t i=0; i < residues.Count(); i++ )  {
       for( size_t j=0; j < residues[i]->Count(); j++ )  {
         if( !residues[i]->GetAtom(j).IsDeleted() &&

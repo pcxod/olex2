@@ -349,6 +349,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   HtmlManager(*(new THtmlManager(this))),
   _ProcessHandler(*this)
 {
+  idle_time = idle_start = 0;
   TEGC::AddP(&HtmlManager);
   nui_interface = NULL;
   _UpdateThread = NULL;
@@ -1558,6 +1559,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender,
       //olx_gl::drawPixels(glsz.GetWidth(), glsz.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, bf);
       //delete [] bf;
       FGlCanvas->SwapBuffers();
+      OnNonIdle();
     }
     //wxClientDC dc(FGlCanvas);
     //dc.DrawText(wxT("RRRRRRRRRRRR"), 0, 0);
@@ -2057,7 +2059,8 @@ bool TMainForm::ImportFrag(const olxstr& line)  {
   catch(...)  {  return false;  }
 }
 //..............................................................................
-void TMainForm::OnChar(wxKeyEvent& m)  {
+void TMainForm::OnChar(wxKeyEvent& m) {
+  OnNonIdle();
   m.Skip(false);
   short Fl=0;
   olxstr Cmd, FullCmd;
@@ -3186,7 +3189,7 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
 void TMainForm::OnMouseWheel(int x, int y, double delta)  {
   size_t ind = Bindings.IndexOf("wheel");
   if( ind == InvalidIndex )  return;
-  olxstr cmd( Bindings.GetObject(ind) );
+  olxstr cmd = Bindings.GetObject(ind);
   ind = TOlxVars::VarIndex("core_wheel_step");
   const olxstr& step( ind == InvalidIndex ? EmptyString() : TOlxVars::GetVarStr(ind));
   if( step.IsNumber() )
@@ -3197,7 +3200,7 @@ void TMainForm::OnMouseWheel(int x, int y, double delta)  {
 //..............................................................................
 void TMainForm::OnMouseMove(int x, int y)  {
   if( MousePositionX == x && MousePositionY == y )
-    return;  
+    return;
   else  {
     MouseMoveTimeElapsed = 0;
     MousePositionX = x;
@@ -3777,6 +3780,16 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   return Py_BuildValue("b", TGlXApp::GetMainForm()->IsControl(cname));
 }
 //..............................................................................
+PyObject* pyGetIdleTime(PyObject* self, PyObject* args)  {
+  time_t t = TGlXApp::GetMainForm()->idle_time;
+  return Py_BuildValue("d", (double)t/1000);
+}
+//..............................................................................
+PyObject* pyResetIdleTime(PyObject* self, PyObject* args)  {
+  TGlXApp::GetMainForm()->idle_time = 0;
+  return PythonExt::PyNone();
+}
+//..............................................................................
 PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
   olxstr title, str;
   int flags = 0;
@@ -3814,7 +3827,9 @@ static PyMethodDef CORE_Methods[] = {
   "given control exists"
   },
   {"GetPPI", pyPPI, METH_VARARGS, "Returns screen PPI"},
-  {NULL, NULL, 0, NULL}
+  { "GetIdleTime", pyGetIdleTime, METH_VARARGS, "Returns idle time" },
+  { "ResetIdleTime", pyResetIdleTime, METH_VARARGS, "Resets idle time to 0" },
+  { NULL, NULL, 0, NULL }
 };
 //..............................................................................
 void TMainForm::PyInit()  {
@@ -3856,6 +3871,25 @@ void TMainForm::UpdateInfoBox()  {
     FInfoBox->PostText("No file is loaded");
   }
 }
+//..............................................................................
+void TMainForm::beforeCall(const olxstr &cmd) {
+  OnNonIdle();
+}
+//..............................................................................
+void TMainForm::afterCall(const olxstr &cmd) {
+  OnNonIdle();
+}
+//..............................................................................
+void TMainForm::OnNonIdle() {
+  if (idle_start != 0) {
+    idle_start = TETime::msNow() - idle_start;
+    if (idle_start > 10000)
+      idle_time += idle_start;
+  }
+  idle_start = 0;
+}
+//..............................................................................
+//..............................................................................
 //..............................................................................
 void TMainForm::ProcessHandler::BeforePrint() {
   parent.FGlConsole->SetPrintMaterial(&parent.ExecFontColor);

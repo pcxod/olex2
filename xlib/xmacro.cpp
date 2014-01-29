@@ -4021,6 +4021,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     description.lines.Hyphenate(ri[i].Replace(" ~ ", " \\\\sim "), 80, true);
   }
   Cif->SetParam(description);
+  xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
   Cif->SaveToFile(Cif->GetFileName());
 }
 //.............................................................................

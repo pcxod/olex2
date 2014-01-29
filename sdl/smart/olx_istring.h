@@ -113,7 +113,7 @@ template <class SC>
     T::SData = str.Data_();
     T::_Length = str.Length();
     T::_Start = str.Start_();
-    if( T::SData != NULL )  
+    if( T::SData != NULL )
       T::SData->RefCnt++;
     T::_Increment = 8;
   }
@@ -2089,23 +2089,35 @@ public:
   }
   int32_t HashCode() const { return o_hashcode(T::Data(), T::_Length); }
 
-  template <class list_t>
-  static TTSString Join(const list_t &l, const TTSString &sep) {
+  template <class list_t, typename accessor_t>
+  static TTSString Join(const list_t &l, const accessor_t &accessor,
+    const TTSString &sep)
+  {
     size_t sz = l.Count();
     if (sz == 0) return EmptyString();
-    TTStrBuffer<TC,TTSString<T,TC> > rv;
-    rv << TTSString(l[0]);
+    TTStrBuffer<TC, TTSString<T, TC> > rv;
+    rv << TTSString(accessor(olx_ref::get(l[0])));
     sz -= 1;
-    for (size_t i=1; i < sz; i++)
-      rv << sep << TTSString(l[i]);
+    for (size_t i = 1; i < sz; i++)
+      rv << sep << TTSString(accessor(olx_ref::get(l[i])));
     if (sz > 0)
-      rv << sep << TTSString(l[sz]);
+      rv << sep << TTSString(accessor(olx_ref::get(l[sz])));
     return TTSString(rv);
+  }
+
+  template <class list_t>
+  static TTSString Join(const list_t &l, const TTSString &sep)
+  {
+    return Join(l, DummyAccessor(), sep);
   }
 
   template <class list_t>
   TTSString Join(const list_t &l) const { return Join(l, *this); }
 
+  template <class list_t, typename accessor_t>
+  TTSString Join(const list_t &l, const accessor_t &acc) const {
+    return Join(l, acc, *this);
+  }
 };
 
 #include "olx_strcvt.h"
