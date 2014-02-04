@@ -1845,10 +1845,17 @@ ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName) {
     size_t idx = AtomName.IndexOf('_');
     olxstr label;
     static const int32_t mxi32 = (int32_t)((uint32_t)(~0) >> 1);
-    int32_t resi_n = mxi32;
-    if (idx != InvalidIndex && AtomName.SubStringFrom(idx+1).IsNumber()) {
-      label = AtomName.SubStringTo(idx);
-      resi_n = AtomName.SubStringFrom(idx+1).ToInt();
+    int32_t resi_n = mxi32, part_n = mxi32;
+    if (idx != InvalidIndex) {
+      olxstr sfx = AtomName.SubStringFrom(idx + 1);
+      if (sfx.IsNumber()) {
+        label = AtomName.SubStringTo(idx);
+        resi_n = AtomName.SubStringFrom(idx + 1).ToInt();
+      }
+      else if (sfx.Length() == 1 && olxstr::o_isalpha(sfx.CharAt(0))) {
+        label = AtomName.SubStringTo(idx);
+        part_n = (sfx.CharAt(0) - 'a') + 1;
+      }
     }
     else {
       label = AtomName;
@@ -1858,11 +1865,15 @@ ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName) {
     while (ai.HasNext()) {
       TXAtom& xa = ai.Next();
       if (!xa.IsVisible()) continue;
-      if ((resi_n == mxi32 ||
-            resi_n == au.GetResidue(xa.CAtom().GetResiId()).GetNumber()) &&
-          xa.GetLabel().Equalsi(label))
-      {
-        res.Add(xa);
+      bool le = xa.GetLabel().Equalsi(label);
+      if (!le) continue;
+      if (resi_n != mxi32) {
+        if (resi_n == au.GetResidue(xa.CAtom().GetResiId()).GetNumber())
+          res.Add(xa);
+      }
+      else if (part_n != mxi32) {
+        if (part_n == xa.CAtom().GetPart())
+          res.Add(xa);
       }
     }
   }
@@ -1979,8 +1990,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const olxstr &Atoms, bool getAll,
     }
   }
   else  {
-    TStrList Toks;
-    Toks.Strtok(Atoms, ' ');
+    TStrList Toks(Atoms, ' ');
     //TXAtom *XAFrom, *XATo;
     for( size_t i = 0; i < Toks.Count(); i++ )  {
       olxstr Tmp = Toks[i];
