@@ -41,8 +41,14 @@ bool InfoTab::IsValid() const {
  if (ac == 0) return false;
   if ((Type == infotab_htab || Type == infotab_bond) && (ac%2) == 0)
     return true;
-  if (Type == infotab_rtab && ac >= 1 && ac <= 4 && !ParamName.IsEmpty())
-    return true;
+  if (Type == infotab_rtab) {
+    if (ac >= 1 && ac <= 4 && !ParamName.IsEmpty()) {
+      return true;
+    }
+    else if (ac > 4 && ParamName.Equalsi("D2CG")) // == covered above
+      return true;
+    return false;
+  }
   if (Type == infotab_mpla && ac >= 3) return true;
   if (Type == infotab_conf && ac >= 4) return true;
   return false;
