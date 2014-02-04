@@ -650,6 +650,7 @@
     <ClCompile Include="..\..\..\xlib\samegroup.cpp" />
     <ClCompile Include="..\..\..\xlib\satom.cpp" />
     <ClCompile Include="..\..\..\xlib\sbond.cpp" />
+    <ClCompile Include="..\..\..\xlib\selected.cpp" />
     <ClCompile Include="..\..\..\xlib\seval.cpp" />
     <ClCompile Include="..\..\..\xlib\sfutil.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\sg.cpp" />

@@ -154,9 +154,16 @@ void SelectedTableRows::ToDataItem(const TTypeList<SelectedTableRows::row_t> &wh
 }
 //.............................................................................
 void SelectedTableRows::ToDataItem(TDataItem &di) const {
-  ToDataItem(bonds, di.AddItem("bonds"));
-  ToDataItem(angles, di.AddItem("angles"));
-  ToDataItem(dihedrals, di.AddItem("dihedrals"));
+  TDataItem *i;
+  ToDataItem(bonds, *(i = &di.AddItem("bonds")));
+  if (i->ItemCount() == 0)
+    di.DeleteItem(i);
+  ToDataItem(angles, *(i = &di.AddItem("angles")));
+  if (i->ItemCount() == 0)
+    di.DeleteItem(i);
+  ToDataItem(dihedrals, *(i = &di.AddItem("dihedrals")));
+  if (i->ItemCount() == 0)
+    di.DeleteItem(i);
 }
 //.............................................................................
 void SelectedTableRows::FromDataItem(TTypeList<row_t> &what,
@@ -182,9 +189,14 @@ void SelectedTableRows::Clear() {
 void SelectedTableRows::FromDataItem(const TDataItem &di,
   const TAsymmUnit &au)
 {
-  FromDataItem(bonds, di.GetItemByName("bonds"), au);
-  FromDataItem(angles, di.GetItemByName("angles"), au);
-  FromDataItem(dihedrals, di.GetItemByName("dihedrals"), au);
+  TDataItem *i;
+  if ((i = di.FindItem("bonds")) !=0 )
+    FromDataItem(bonds, *i, au);
+  if ((i = di.FindItem("bonds")) !=0 )
+  if ((i = di.FindItem("angles")) != 0)
+    FromDataItem(angles, *i, au);
+  if ((i = di.FindItem("dihedrals")) != 0)
+    FromDataItem(dihedrals, *i, au);
 }
 //.............................................................................
 void SelectedTableRows::Assign(TTypeList<SelectedTableRows::row_t> &dest,
