@@ -46,10 +46,10 @@ class AtomTypeMask : public IAtomMask {
   struct AtomType {
     short z;
     const cm_Element *element;
-    bool not;
-    AtomType(short z, bool not) : z(z), element(0), not(not)
+    bool Not;
+    AtomType(short z, bool Not) : z(z), element(0), Not(Not)
     {}
-    AtomType(const cm_Element &elm, bool not) : z(0), element(&elm), not(not)
+    AtomType(const cm_Element &elm, bool Not) : z(0), element(&elm), Not(Not)
     {}
     int Compare(const AtomType &a) const {
       if (element == 0) {
@@ -73,14 +73,14 @@ class AtomTypeMask : public IAtomMask {
       return 'X';
     }
     olxstr toString() const {
-      return not ? str().Insert('-', 0) : str();
+      return Not ? str().Insert('-', 0) : str();
     }
   };
   SortedObjectList<AtomType, TComparableComparator> types;
-  bool not;
+  bool Not;
 public:
   AtomTypeMask(const AtomTypeMask &m)
-    : types(m.types), not(m.not)
+    : types(m.types), Not(m.Not)
   {}
   AtomTypeMask(const olxstr &exp, const TAsymmUnit &);
   virtual bool matches(const TCAtom &a) const;

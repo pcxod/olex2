@@ -42,7 +42,7 @@ bool AtomNameMask::equals(const IAtomMask &m_) const {
 AtomTypeMask::AtomTypeMask(const olxstr &exp, const TAsymmUnit &) {
   TStrList toks(exp, ',');
   if (toks[0] == '*') {
-    not = true;
+    Not = true;
     for (size_t i = 1; i < toks.Count(); i++) {
       olxstr en = toks[i].StartsFrom('-') ? toks[i].SubStringFrom(1) : toks[i];
       if (en.Equalsi('M')) {
@@ -60,7 +60,7 @@ AtomTypeMask::AtomTypeMask(const olxstr &exp, const TAsymmUnit &) {
     }
   }
   else {
-    not = false;
+    Not = false;
     for (size_t i = 0; i < toks.Count(); i++) {
       bool excl = toks[i].StartsFrom('-');
       olxstr en = excl ? toks[i].SubStringFrom(1) : toks[i];
@@ -85,9 +85,9 @@ AtomTypeMask::AtomTypeMask(const olxstr &exp, const TAsymmUnit &) {
 bool AtomTypeMask::matches(const TCAtom &a) const {
   size_t idx = types.IndexOf(AtomType(a.GetType(), false));
   if (idx != InvalidIndex) {
-    return !types[idx].not;
+    return !types[idx].Not;
   }
-  return not;
+  return Not;
 }
 //.............................................................................
 bool AtomTypeMask::equals(const IAtomMask &m_) const {
@@ -102,11 +102,11 @@ bool AtomTypeMask::equals(const IAtomMask &m_) const {
 }
 //.............................................................................
 olxstr AtomTypeMask::toString() const {
-  if (types.IsEmpty() && not)
+  if (types.IsEmpty() && Not)
     return "$*";
   olxstr rv = olxstr(',').Join(types,
     FunctionAccessor::MakeConst(&AtomType::toString));
-  return not ? rv.Insert("$*,", 0) : rv.Insert('$', 0);
+  return Not ? rv.Insert("$*,", 0) : rv.Insert('$', 0);
 }
 //.............................................................................
 //.............................................................................
