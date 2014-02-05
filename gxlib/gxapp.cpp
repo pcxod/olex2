@@ -1875,6 +1875,9 @@ ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName) {
         if (part_n == xa.CAtom().GetPart())
           res.Add(xa);
       }
+      else {
+        res.Add(xa);
+      }
     }
   }
   return res;
