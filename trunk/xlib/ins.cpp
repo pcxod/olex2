@@ -173,8 +173,10 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   for (size_t i = 0; i < Ins.Count(); i++) {
     if (Ins[i].IsEmpty() || !Ins[i].StartsFromi("REM")) continue;
     for (size_t j = i + 1; j < Ins.Count(); j++) {
-      if (Ins[i] == Ins[j])
+      if (Ins[i] == Ins[j]) {
+        delete Ins.GetObject(j);
         Ins[j].SetLength(0);
+      }
     }
   }
   Ins.Pack();
