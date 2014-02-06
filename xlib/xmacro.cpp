@@ -3813,23 +3813,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
               tab->Set(ri, st_order_ind, new cetString(a.GetDegeneracy()));
             }
           }
-          bool force_update = false;
-          if (xapp.CheckFileType<TIns>()) {
-            TLst &lst = xapp.XFile().GetLastLoader<TIns>().GetLst();
-            olxstr version = lst.params.Find("version", EmptyString());
-            // 2013/1
-            size_t si = version.IndexOf('/');
-            if (si == InvalidIndex)
-              force_update = true;
-            else {
-              try {
-                int v = version.SubStringTo(si).ToInt();
-                if (v < 2013)
-                  force_update = true;
-              }
-              catch (...) {}
-            }
-          }
+          bool force_update = shelxl_version_number.IsEmpty();
           if (force_update ||
             !Cif->ParamExists("_refine_ls_hydrogen_treatment"))
           {
