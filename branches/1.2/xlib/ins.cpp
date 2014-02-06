@@ -171,10 +171,12 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   _FinishParsing(cx);
   // remove dublicated instructions, rems ONLY
   for (size_t i = 0; i < Ins.Count(); i++) {
-    if (Ins[i].IsEmpty() || !Ins[i].StartsFromi("REM")) continue;
+    if (!Ins[i].StartsFromi("REM")) continue;
     for (size_t j = i + 1; j < Ins.Count(); j++) {
-      if (Ins[i] == Ins[j])
+      if (Ins[i] == Ins[j]) {
+        delete Ins.GetObject(j);
         Ins[j].SetLength(0);
+      }
     }
   }
   Ins.Pack();
