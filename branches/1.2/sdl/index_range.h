@@ -121,10 +121,14 @@ struct IndexRange  {
         Reset();
       return rv;
     }
-    void Reset()  {
+    /* resets the object and returns the accumulated result
+    */
+    olxstr Reset() {
+      olxstr rv = range;
       range.SetLength(0);
       last = InvalidIndex;
       last_written = false;
+      return rv;
     }
   };
   template <class list_t, class accessor_t>

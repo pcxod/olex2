@@ -1731,30 +1731,30 @@ void TMainForm::macFade(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   // we need to call the timer in case it is disabled ...
-  if( Cmds[0].Equalsi("fade") )  {
-    if( !IsVisible() )  return;
-    while( FMode & mFade )  {
+  if (Cmds[0].Equalsi("fade")) {
+    if (!IsVisible())  return;
+    while (FMode & mFade) {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
       olx_sleep(50);
     }
   }
-  if( Cmds[0].Equalsi("xfader") )  {
-    if( !IsVisible() )  return;
-    while( FXApp->GetFader().GetPosition() < 1 && FXApp->GetFader().IsVisible() )  {
+  if (Cmds[0].Equalsi("xfader")) {
+    if (!IsVisible())  return;
+    while (FXApp->GetFader().GetPosition() < 1 && FXApp->GetFader().IsVisible()) {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
       olx_sleep(50);
     }
   }
-  else if( Cmds[0].Equalsi("rota") )  {
+  else if (Cmds[0].Equalsi("rota")) {
     while( FMode & mRota )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL, NULL);
       olx_sleep(50);
     }
   }
-  else if( Cmds[0].Equalsi("process") )  {
+  else if (Cmds[0].Equalsi("process")) {
     _ProcessManager->WaitForLast();
   }
 }

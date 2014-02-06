@@ -24,8 +24,9 @@ protected:
   struct MacroInput {
     ConstPtrList<TSAtom> atoms;
     ConstPtrList<TSBond> bonds;
-    MacroInput(TSAtomPList &a, TSBondPList &b)
-    : atoms(a), bonds(b)
+    ConstPtrList<TSPlane> planes;
+    MacroInput(TSAtomPList &a, TSBondPList &b, TSPlanePList &p)
+      : atoms(a), bonds(b), planes(p)
     {}
   };
   static MacroInput ExtractSelection(const TStrObjList &Cmds,
@@ -152,6 +153,7 @@ public:
   static DefMacro(LstSymm)
   static DefMacro(RSA)
   static DefMacro(CONF)
+  static DefMacro(D2CG)
 
   static DefFunc(Lst)
   static DefFunc(FileName)

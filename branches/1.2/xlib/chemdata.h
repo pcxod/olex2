@@ -187,6 +187,7 @@ public:
   bool operator == (short _z) const {  return z == _z;  }
   bool operator != (short _z) const {  return z != _z;  }
   int Compare(const cm_Element &e) const { return z - e.z; }
+  const olxstr &GetSymbol() const { return symbol; }
 };
 
 struct ElementCount {

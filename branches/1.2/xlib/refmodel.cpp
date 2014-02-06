@@ -129,6 +129,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   PLAN.Clear();
   LS.Clear();
   Omitted.Clear();
+  selectedTableRows.Clear();
   if( (clear_mask & rm_clear_AFIX) != 0 )
     AfixGroups.Clear();
   if( (clear_mask & rm_clear_VARS) != 0 )
@@ -272,6 +273,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
       UsedSymm.Delete(i--);
   }
   Omitted.Assign(rm.Omitted);
+  selectedTableRows.Assign(rm.selectedTableRows, aunit);
   return *this;
 }
 //.............................................................................
@@ -441,7 +443,8 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   if (!InfoTables.GetLast().IsValid()) {
     TBasicApp::NewLogEntry(logError) <<
       "Invalid info table: " << l.Text(' ');
-    InfoTables.Delete(InfoTables.Count()-1);
+    if (!TIns::DoPreserveInvalid())
+      InfoTables.Delete(InfoTables.Count()-1);
     return;
   }
   for (size_t i=0; i < InfoTables.Count()-1; i++) {
@@ -1299,6 +1302,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
     for( size_t i=0; i < SfacData.Count(); i++ )
       SfacData.GetValue(i)->ToDataItem(sfacs);
   }
+  selectedTableRows.ToDataItem(item.AddItem("selected_cif_records"));
   // restore matrix tags
   for( size_t i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).symop.SetRawId(mat_tags[i]);
@@ -1313,12 +1317,12 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   RefinementMethod = item.GetFieldByName("RefMeth");
   SolutionMethod = item.GetFieldByName("SolMeth");
   PersUtil::NumberListFromStr(item.GetFieldByName("BatchScales"), BASF);
-  for( size_t i=0; i < BASF.Count(); i++ )
+  for (size_t i = 0; i < BASF.Count(); i++)
     BASF_Vars.Add(NULL);
   PersUtil::NumberListFromStr(item.GetFieldByName("RefInArg"), LS);
 
   TDataItem& eqiv = item.GetItemByName("EQIV");
-  for (size_t i=0; i < eqiv.ItemCount(); i++) {
+  for (size_t i = 0; i < eqiv.ItemCount(); i++) {
     UsedSymm.Add(eqiv.GetItemByIndex(i).GetName()).symop =
       TSymmParser::SymmToMatrix(eqiv.GetItemByIndex(i).GetValue());
   }
@@ -1329,9 +1333,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   AfixGroups.FromDataItem(item.GetItemByName("AFIX"));
   ExyzGroups.FromDataItem(item.GetItemByName("EXYZ"));
   rSAME.FromDataItem(item.GetItemByName("SAME"));
-  for( size_t i=0; i < rcList1.Count(); i++ )
+  for (size_t i = 0; i < rcList1.Count(); i++)
     rcList1[i]->FromDataItem(item.FindItem(rcList1[i]->GetIdName()));
-  for( size_t i=0; i < rcList.Count(); i++ )
+  for (size_t i = 0; i < rcList.Count(); i++)
     rcList[i]->FromDataItem(item.FindItem(rcList[i]->GetName()), *this);
 
   TDataItem& hklf = item.GetItemByName("HKLF");
@@ -1362,7 +1366,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   }
   {
     TDataItem& shel = *item.FindItem("SHEL");
-    if( &shel != NULL )  {
+    if (&shel != NULL)  {
       SHEL_set = shel.GetValue().ToBool();
       SHEL_lr = shel.GetFieldByName("low").ToDouble();
       SHEL_hr = shel.GetFieldByName("high").ToDouble();
@@ -1379,20 +1383,25 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   Vars.FromDataItem(item.GetItemByName("LEQS"));
   Conn.FromDataItem(item.GetItemByName("CONN"));
   SetUserFormula(item.FindField("UserContent"), false);
-  
+
   TDataItem* info_tables = item.FindItem("INFO_TABLES");
-  if( info_tables != NULL )  {
-    for( size_t i=0; i < info_tables->ItemCount(); i++ )
+  if (info_tables != NULL)  {
+    for (size_t i = 0; i < info_tables->ItemCount(); i++)
       InfoTables.Add(new InfoTab(*this, info_tables->GetItemByIndex(i)));
   }
   TDataItem* sfac = item.FindItem("SFAC");
-  if( sfac != NULL )  {
-    for( size_t i=0; i < sfac->ItemCount(); i++ )  {
+  if (sfac != NULL)  {
+    for (size_t i = 0; i < sfac->ItemCount(); i++)  {
       XScatterer* sc = new XScatterer(EmptyString());
       sc->FromDataItem(sfac->GetItemByIndex(i));
       SfacData.Add(sc->GetLabel(), sc);
     }
   }
+  TDataItem *cif_sel = item.FindItem("selected_cif_records");
+  if (cif_sel != NULL) {
+    selectedTableRows.FromDataItem(*cif_sel, aunit);
+  }
+
   aunit._UpdateConnInfo();
 }
 //.............................................................................
@@ -1815,6 +1824,14 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   if (!fixed_types.IsEmpty()) {
     di.AddItem("fixed_types", fixed_types.SubStringFrom(1));
   }
+  {
+    TDataItem *sci;
+    selectedTableRows.ToDataItem(*(sci = &di.AddItem("selected_cif_records")));
+    if (sci->ItemCount() == 0)
+      di.DeleteItem(sci);
+  }
+  if (di.ItemCount() == 0 && di.FieldCount() == 0)
+    return EmptyString();
   TEStrBuffer bf;
   di.SaveToStrBuffer(bf);
   return bf.ToString();
@@ -1885,6 +1902,18 @@ void RefinementModel::ReadInsExtras(const TStrList &items)  {
       a->SetFixedType(true);
     }
   }
+  TDataItem *selected_cif_records = di.FindItem("selected_cif_records");
+  if (selected_cif_records != NULL) {
+    try {
+      selectedTableRows.FromDataItem(*selected_cif_records, aunit);
+    }
+    catch (const TExceptionBase &e) {
+      TBasicApp::NewLogEntry(logError) <<
+        "While loading Selected CIF records: " <<
+        e.GetException()->GetFullMessage();
+    }
+  }
+
 }
 //..............................................................................
 //..............................................................................

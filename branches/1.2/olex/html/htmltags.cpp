@@ -544,9 +544,8 @@ TAG_HANDLER_PROC(tag)  {
       }
     }
     else {
-      Btn = new TButton(html, -1, wxEmptyString,
+      Btn = new TButton(html, -1, Value.u_str(),
         wxDefaultPosition, wxDefaultSize, flags);
-      ((TButton*)Btn)->SetCaption(Value);
       ((TButton*)Btn)->SetFont(m_WParser->GetDC()->GetFont());
       if ((flags & wxBU_EXACTFIT) == 0) {
         Btn->WI.SetWidth(ax);

@@ -60,14 +60,14 @@ void reflection_tests(OlxTests& t)  {
 
   if( olxstr(ref.ToString()) != "   0   1   2   10.00    1.00   0" )
     throw TFunctionFailedException(__OlxSourceInfo, "ToString");
-  if( olxstr(ref.ToNString()) != "-1.       0   1   2   10.00    1.00   0" )
+  if( olxstr(ref.ToNString()) != "-1.          0   1   2   10.00    1.00   0" )
     throw TFunctionFailedException(__OlxSourceInfo, "ToString");
   ref.SetOmitted(false);
-  if( olxstr(ref.ToNString()) != "+1.       0   1   2   10.00    1.00   0" )
+  if( olxstr(ref.ToNString()) != "+1.          0   1   2   10.00    1.00   0" )
     throw TFunctionFailedException(__OlxSourceInfo, "ToNString");
 
-  if( !ref.FromNString("-1.       0   1   2   10.00    1.00   0") ||
-       olxstr(ref.ToNString()) != "-1.       0   1   2   10.00    1.00   0" )
+  if( !ref.FromNString("-1.          0   1   2   10.00    1.00   0") ||
+       olxstr(ref.ToNString()) != "-1.          0   1   2   10.00    1.00   0" )
     throw TFunctionFailedException(__OlxSourceInfo, "FromNString");
 }
 };  //namespace test

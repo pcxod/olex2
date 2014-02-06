@@ -256,6 +256,9 @@ protected:
   void UpdateInfoBox();
   olx_nui::INUI *nui_interface;
   class THtmlManager &HtmlManager;
+
+  virtual void beforeCall(const olxstr &cmd);
+  virtual void afterCall(const olxstr &cmd);
 public:
   void OnMouseMove(int x, int y);
   void OnMouseWheel(int x, int y, double delta);
@@ -561,9 +564,9 @@ private:
 
   double FRotationIncrement, FRotationAngle;
   vec3d FRotationVector;
-  
+
   vec3d FFadeVector; // stores: current position, end and increment
-  
+
   olxstr FListenFile;
 
   TStrPObjList<olxstr,wxMenuItem*> FRecentFiles;
@@ -616,7 +619,9 @@ public:
 
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const {  return FHtmlPanelWidth;  }
-//..............................................................................
+  time_t idle_time, idle_start;
+  void OnNonIdle();
+  //..............................................................................
 // properties
 protected:
   wxToolBar   *ToolBar;

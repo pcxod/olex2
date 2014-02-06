@@ -82,6 +82,6 @@ public:
   PyObject* PyExport();
 #endif
 };
-EndXlibNamespace()
 
+EndXlibNamespace()
 #endif

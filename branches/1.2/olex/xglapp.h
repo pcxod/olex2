@@ -28,6 +28,7 @@ private:
   void OnKeyDown(wxKeyEvent& event);
   void OnNavigation(wxNavigationKeyEvent& event);
   void OnIdle(wxIdleEvent& event);
+  void OnMouse(wxMouseEvent &evt);
 public:
   TGlXApp() : pid_file(NULL)  {}
   bool Dispatch();

@@ -582,7 +582,13 @@ void XLibMacros::Export(TLibrary& lib)  {
     fpAny|psFileLoaded,
     "Adds dihedral angle calculation instructions to create corresponding "
     "tables in the CIF");
-//_____________________________________________________________________________
+  xlib_InitMacro(D2CG,
+    "c-copies the values to the Clipboard",
+    fpAny | psFileLoaded,
+    "Calculates distacne from first atom to the unit weight-centroid formed by"
+    " the rest. If the variance-covariance matrix existsm also calculates the "
+    "esd.");
+  //_____________________________________________________________________________
 //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -3553,6 +3559,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     }
     Cif = &Cif2();
   }
+  const olxstr shelxl_version_number =
+    Cif->GetParamAsString("_shelxl_version_number");
+  const bool shelxl2014 = shelxl_version_number.StartsFrom("2014");
   // normalise
   for (size_t i=0; i < Translations.Count(); i++)
     Cif->Rename(Translations[i].GetA(), Translations[i].GetB());
@@ -3582,9 +3591,18 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
             break;
           }
           TCAtom &a = au.GetAtom(ind);
-          if (!a.GetLabel().Equalsi(ta.GetLabel()) ||
-            a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3)
-          {
+          if (!a.GetLabel().Equalsi(ta.GetLabel())) {
+            // negative parts do not produce generated labels
+            if (shelxl2014 && a.GetPart() > 0) {
+              olxstr tl = olxstr(a.GetLabel()) << '_' <<
+                olxch('a' + a.GetPart()-1);
+              if (!ta.GetLabel().Equalsi(tl)) {
+                match = false;
+                break;
+              }
+            }
+          }
+          if (a.ccrd().QDistanceTo(ta.ccrd()) > 1e-3) {
             match = false;
             break;
           }
@@ -3795,23 +3813,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
               tab->Set(ri, st_order_ind, new cetString(a.GetDegeneracy()));
             }
           }
-          bool force_update = false;
-          if (xapp.CheckFileType<TIns>()) {
-            TLst &lst = xapp.XFile().GetLastLoader<TIns>().GetLst();
-            olxstr version = lst.params.Find("version", EmptyString());
-            // 2013/1
-            size_t si = version.IndexOf('/');
-            if (si == InvalidIndex)
-              force_update = true;
-            else {
-              try {
-                int v = version.SubStringTo(si).ToInt();
-                if (v < 2013)
-                  force_update = true;
-              }
-              catch (...) {}
-            }
-          }
+          bool force_update = shelxl_version_number.IsEmpty();
           if (force_update ||
             !Cif->ParamExists("_refine_ls_hydrogen_treatment"))
           {
@@ -4021,6 +4023,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
     description.lines.Hyphenate(ri[i].Replace(" ~ ", " \\\\sim "), 80, true);
   }
   Cif->SetParam(description);
+  xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
   Cif->SaveToFile(Cif->GetFileName());
 }
 //.............................................................................
@@ -6747,6 +6750,7 @@ XLibMacros::MacroInput XLibMacros::ExtractSelection(const TStrObjList &Cmds,
 {
   TSAtomPList atoms;
   TSBondPList bonds;
+  TSPlanePList planes;
   TXApp &app = TXApp::GetInstance();
   if (!Cmds.IsEmpty())
     atoms = app.FindSAtoms(Cmds, false, unselect);
@@ -6761,9 +6765,12 @@ XLibMacros::MacroInput XLibMacros::ExtractSelection(const TStrObjList &Cmds,
       TSAtom* sa = dynamic_cast<TSAtom*>(sel[i]);
       if (sa != NULL)
         atoms << sa;
+      TSPlane* sp = dynamic_cast<TSPlane*>(sel[i]);
+      if (sp != NULL)
+        planes << sp;
     }
   }
-  return XLibMacros::MacroInput(atoms, bonds);
+  return XLibMacros::MacroInput(atoms, bonds, planes);
 }
 //.............................................................................
 void XLibMacros::macDfix(TStrObjList &Cmds, const TParamList &Options,
@@ -8550,5 +8557,53 @@ void XLibMacros::macCONF(TStrObjList &Cmds, const TParamList &Options,
   }
   for (size_t i=0; i < matrices.Count(); i++)
     delete matrices.GetValue(i);
+}
+//..............................................................................
+void XLibMacros::macD2CG(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  MacroInput ma = ExtractSelection(Cmds, true);
+  if (!(ma.atoms.Count() > 1 ||
+      (ma.atoms.Count() == 1 && ma.planes.Count() == 1)))
+  {
+    Error.ProcessingError(__OlxSrcInfo, "more than 1 atoms or a single atom "
+      "and a plane are expected");
+    return;
+  }
+  TXApp &app = TXApp::GetInstance();
+  VcoVContainer vcovc(app.XFile().GetAsymmUnit());
+  try  {
+    olxstr src_mat = app.InitVcoV(vcovc);
+    app.NewLogEntry() << "Using " << src_mat << " matrix for the calculation";
+  }
+  catch (TExceptionBase& e)  {
+    Error.ProcessingError(__OlxSrcInfo, e.GetException()->GetError());
+    return;
+  }
+  TSAtom &a = *ma.atoms[0];
+  TSAtomCPList atoms;
+  if (ma.atoms.Count() > 1)
+    atoms = ma.atoms.GetObject().SubListFrom(1);
+  else {
+    atoms.SetCapacity(ma.planes[0]->Count());
+    for (size_t i = 0; i < ma.planes[0]->Count(); i++) {
+      atoms << ma.planes[0]->GetAtom(i);
+    }
+  }
+  TStrList out;
+  out.Add(a.GetLabel()) << " to centroid of " <<
+    olx_analysis::alg::label(TCAtomPList(atoms,
+    FunctionAccessor::MakeConst(&TSAtom::CAtom)), '-') << " distance: " <<
+    vcovc.CalcPC2ADistance(atoms, a).ToString();
+  if (atoms.Count() > 2) {
+    out.Add(a.GetLabel()) << " to plane formed by " <<
+      olx_analysis::alg::label(TCAtomPList(atoms,
+      FunctionAccessor::MakeConst(&TSAtom::CAtom)), '-') <<
+      " projection length: " << vcovc.CalcP2ADistance(atoms, a).ToString();
+  }
+  if (Options.GetBoolOption('c')) {
+    app.ToClipboard(out);
+  }
+  TBasicApp::NewLogEntry() << out;
 }
 //..............................................................................
