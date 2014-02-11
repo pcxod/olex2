@@ -1688,7 +1688,7 @@ TSimpleRestraint & RefinementModel::SetRestraintDefaults(
   else if( container.GetIdName().Equals("SIMU") )  {
     r.SetEsd(DEFS[3]);
     r.SetEsd1(DEFS[3]*2);
-    r.SetValue(1.7);
+    r.SetValue(2);
   }
   else if( container.GetIdName().Equals("ISOR") )  {
     r.SetEsd(0.1);
@@ -1731,7 +1731,7 @@ bool RefinementModel::IsDefaultRestraint(const TSimpleRestraint &r) const {
   }
   else if( container.GetIdName().Equals("SIMU") )  {
     return r.GetEsd() == DEFS[3] && r.GetEsd1() == DEFS[3]*2 &&
-      r.GetValue() == 1.7;
+      r.GetValue() == 2;
   }
   else if( container.GetIdName().Equals("ISOR") )  {
     return r.GetEsd() == 0.1 && r.GetEsd1() == 0.2;

@@ -221,7 +221,9 @@ void XLibMacros::Export(TLibrary& lib)  {
     "Generates anisotropic dispertion parameters for current radiation "
     "wavelength");
 //_____________________________________________________________________________
-  xlib_InitMacro(AddIns,EmptyString(), (fpAny^fpNone)|psCheckFileTypeIns,
+  xlib_InitMacro(AddIns,
+    "q-quiet if has not added",
+    (fpAny^fpNone)|psCheckFileTypeIns,
     "Adds an instruction to the INS file");
   xlib_InitMacro(DelIns, EmptyString(), fpOne|psCheckFileTypeIns,
     "A number or the name (will remove all accurances) can be provided");
@@ -1966,7 +1968,9 @@ void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options,
   the ins file
   */
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
-  if( !Ins.AddIns(TStrList(Cmds), TXApp::GetInstance().XFile().GetRM()) )  {
+  if (!Ins.AddIns(TStrList(Cmds), TXApp::GetInstance().XFile().GetRM()) &&
+    !Options.GetBoolOption('q'))
+  {
     Error.ProcessingError(__OlxSrcInfo,
       olxstr("could not add instruction: ") << Cmds.Text(' '));
     return;
