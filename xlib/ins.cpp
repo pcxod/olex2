@@ -787,24 +787,28 @@ bool TIns::InsExists(const olxstr &Name)  {
 //..............................................................................
 bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
   // special instructions
-  if( _ParseIns(rm, toks) || ParseRestraint(rm, toks) )  return true;
+  if (_ParseIns(rm, toks) || ParseRestraint(rm, toks)) return true;
   // check for uniqueness
-  if( CheckUniq )  {
-    for( size_t i=0; i < Ins.Count(); i++ )  {
-      if( Ins[i].Equalsi(toks[0]) )  {
+  if (CheckUniq) {
+    bool unique = false;
+    for (size_t i = 0; i < Ins.Count(); i++) {
+      if (Ins[i].Equalsi(toks[0])) {
         TInsList *ps = Ins.GetObject(i);
-        if( ps->Count() == (toks.Count()-1) )  {
-          for( size_t j=0; j < ps->Count(); j++ )  {
-            if( !ps->GetString(j).Equalsi(toks[j+1]) )  {
-              return false;
+        if (ps->Count() == (toks.Count()-1)) {
+          for (size_t j=0; j < ps->Count(); j++) {
+            if (!ps->GetString(j).Equalsi(toks[j+1])) {
+              unique = true;
+              break;
             }
           }
+          if (!unique)
+            return false;
         }
       }
     }
   }
   TInsList& Params = *(new TInsList(toks.Count()-1));
-  for( size_t i=1; i < toks.Count(); i++ )  {
+  for (size_t i=1; i < toks.Count(); i++) {
     Params[i-1] = toks[i];
     Params.GetObject(i-1) = GetAsymmUnit().FindCAtom(toks[i]);
   }
