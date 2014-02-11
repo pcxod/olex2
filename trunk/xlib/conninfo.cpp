@@ -545,27 +545,34 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
 {
   const smatd* eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);
   size_t ind = InvalidIndex;
-  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+  for (size_t i=0; i < AtomInfo.Count(); i++) {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i),
       a1, a2, eqiv);
-    if( ind != InvalidIndex )
+    if (ind != InvalidIndex)
       break;
   }
-  if( ind == InvalidIndex )  {
-    AtomConnInfo &ci = AtomInfo.Add(&a1, AtomConnInfo(a1));
-    ci.BondsToCreate.Add(new CXBondInfo(a2, eqiv));
-    ci.temporary = true;
-    size_t ti = TypeInfo.IndexOf(a1.GetType());
-    if (ti != InvalidIndex) {
-      ci.maxBonds = TypeInfo.GetValue(ti).maxBonds;
-      ci.r = TypeInfo.GetValue(ti).r;
+  if (ind == InvalidIndex) {
+    const size_t aii = AtomInfo.IndexOf(&a1);
+    AtomConnInfo *ci = NULL;
+    if (aii != InvalidIndex) {
+      ci = &AtomInfo.GetValue(aii);
     }
+    else {
+      ci = &AtomInfo.Add(&a1, AtomConnInfo(a1));
+      ci->temporary = true;
+      size_t ti = TypeInfo.IndexOf(a1.GetType());
+      if (ti != InvalidIndex) {
+        ci->maxBonds = TypeInfo.GetValue(ti).maxBonds;
+        ci->r = TypeInfo.GetValue(ti).r;
+      }
+    }
+    ci->BondsToCreate.Add(new CXBondInfo(a2, eqiv));
   }
   // validate the bonds to delete
-  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+  for (size_t i=0; i < AtomInfo.Count(); i++) {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i),
       a1, a2, eqiv);
-    if( ind != InvalidIndex )  {
+    if (ind != InvalidIndex) {
       AtomInfo.GetValue(i).BondsToRemove.Delete(ind);
       break;
     }
@@ -577,30 +584,37 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
 {
   const smatd* eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);
   size_t ind = InvalidIndex;
-  for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+  for (size_t i=0; i < AtomInfo.Count(); i++) {
     ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i),
       a1, a2, eqiv);
-    if( ind != InvalidIndex )
+    if (ind != InvalidIndex)
       break;
   }
-  if( ind == InvalidIndex )  {
+  if (ind == InvalidIndex) {
     // validate the bonds to create
-    for( size_t i=0; i < AtomInfo.Count(); i++ )  {
+    for (size_t i=0; i < AtomInfo.Count(); i++) {
       ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate,
         AtomInfo.GetKey(i), a1, a2, eqiv);
-      if( ind != InvalidIndex )  {
+      if (ind != InvalidIndex) {
         AtomInfo.GetValue(i).BondsToCreate.Delete(ind);
         break;
       }
     }
-    AtomConnInfo &ci = AtomInfo.Add(&a1, AtomConnInfo(a1));
-    ci.BondsToRemove.Add(new CXBondInfo(a2, eqiv));
-    ci.temporary = true;
-    size_t ti = TypeInfo.IndexOf(a1.GetType());
-    if (ti != InvalidIndex) {
-      ci.maxBonds = TypeInfo.GetValue(ti).maxBonds;
-      ci.r = TypeInfo.GetValue(ti).r;
+    const size_t aii = AtomInfo.IndexOf(&a1);
+    AtomConnInfo *ci = NULL;
+    if (aii != InvalidIndex) {
+      ci = &AtomInfo.GetValue(aii);
     }
+    else {
+      ci = &AtomInfo.Add(&a1, AtomConnInfo(a1));
+      ci->temporary = true;
+      size_t ti = TypeInfo.IndexOf(a1.GetType());
+      if (ti != InvalidIndex) {
+        ci->maxBonds = TypeInfo.GetValue(ti).maxBonds;
+        ci->r = TypeInfo.GetValue(ti).r;
+      }
+    }
+    ci->BondsToRemove.Add(new CXBondInfo(a2, eqiv));
   }
 }
 //........................................................................
