@@ -2617,7 +2617,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   DF.SaveToXLFile(FN + ".tmp");
   TEFile::Rename(FN + ".tmp", FN);
   /* check if the stereo buffers are available and if not disable - this way the
-  multisamplin can be enabled!
+  multisampling can be enabled!
   */
   {
     GLboolean stereo_supported = GL_FALSE;

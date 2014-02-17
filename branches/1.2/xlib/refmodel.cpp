@@ -120,6 +120,11 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   HKLSource.SetLength(0);
   Omits.Clear();
   BASF.Clear();
+  for (size_t i = 0; i < BASF_Vars.Count(); i++) {
+    if (BASF_Vars[i] != NULL) {
+      delete Vars.ReleaseRef(*this, (short)i);
+    }
+  }
   BASF_Vars.Clear();
   DEFS.Clear();
   SetDefaults();

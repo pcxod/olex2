@@ -218,7 +218,7 @@ bool TGlXApp::OnInit()  {
     str_glStereo = olx_getenv("OLEX2_GL_STEREO"),
     str_glMultisampling = olx_getenv("OLEX2_GL_MULTISAMPLE"),
     str_glDepth = olx_getenv("OLEX2_GL_DEPTH_BITS");
-#ifdef __WIN32__
+#if defined(__WIN32__) && 0
   olxstr str_glDefStereo = TrueString(),
     str_glDefMultisampling = TrueString();
 #else
