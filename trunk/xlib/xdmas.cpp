@@ -20,8 +20,8 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
 
   GetAsymmUnit().Clear();
 
-  TStrList crds, symm;
-  crds.LoadFromFile(crdfn);
+  TStrList crds = TEFile::ReadLines(crdfn),
+    symm;
   bool CellFound = false, LattFound = false;
   double Q[6];
 

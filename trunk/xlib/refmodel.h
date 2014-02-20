@@ -83,7 +83,8 @@ protected:
   bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified,
     EXTI_set, DEFS_set;
   vec3i_list Omits;
-  TDoubleList BASF, DEFS;
+  TDoubleList DEFS;
+  TArrayList<TEValueD> BASF;
   TPtrList<XVarReference> BASF_Vars;
   olxstr VarRefrencerId;
   olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> >
@@ -384,20 +385,24 @@ public:
   void ClearShell() { SHEL_set = false; }
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
-  const TDoubleList& GetBASF() const {  return BASF;  }
+  const TArrayList<TEValueD>& GetBASF() const {  return BASF;  }
+  ConstArrayList<double> GetBASFAsDoubleList() const {
+    return TDoubleList::FromList(GetBASF(),
+      FunctionAccessor::MakeConst(&TEValueD::GetV));
+  }
   // returns a list of [1-sum(basf), basf[0], basf[1],...] - complete scales
   TDoubleList GetScales() const {
-    if( !GetBASF().IsEmpty() )  {
+    if (!GetBASF().IsEmpty()) {
       double pi = 0;  // 'prime' reflection fraction
-      for( size_t bi=0; bi < GetBASF().Count(); bi++ )
-        pi += GetBASF()[bi];
-      return TDoubleList() << 1-pi << GetBASF();
+      for (size_t bi=0; bi < GetBASF().Count(); bi++)
+        pi += GetBASF()[bi].GetV();
+      return TDoubleList() << 1-pi << GetBASFAsDoubleList();
     }
-    else  {
-      if( GetTWIN_n() != 0 )  {  // all the fractions are the same
+    else {
+      if (GetTWIN_n() != 0 ) {  // all the fractions are the same
         double f = 1./olx_abs(GetTWIN_n());
         TDoubleList rv(olx_abs(GetTWIN_n()));
-        for( size_t i=0; i < rv.Count(); i++ )
+        for (size_t i=0; i < rv.Count(); i++)
           rv[i] = f;
         return rv;
       }
@@ -435,18 +440,18 @@ Friedel opposites of components 1 ... m
   void RemoveTWIN()  {  TWIN_set = false;  }
 
   void AddBASF(double val)  {
-    BASF.Add(val);  
+    BASF.Add(TEValueD(val));
     BASF_Vars.Add(NULL);
   }
   template <class list> void SetBASF(const list& bs)  {
     BASF.SetCount(bs.Count());
     BASF_Vars.SetCount(bs.Count());
-    for( uint16_t i=0; i < bs.Count(); i++ )  {
+    for (size_t i=0; i < bs.Count(); i++) {
       BASF_Vars[i] = NULL;
-      BASF[i] = Vars.SetParam(*this, i, bs[i].ToDouble());
+      Vars.SetParam(*this, (short)i, bs[i].ToDouble());
     }
   }
-  void ClearBASF()  {
+  void ClearBASF() {
     BASF.Clear();
     BASF_Vars.Clear();
   }
@@ -747,33 +752,36 @@ Friedel opposites of components 1 ... m
   }
 // IXVarReferencer implementation
   virtual size_t VarCount() const {  return BASF.Count();  }
-  virtual olxstr GetVarName(size_t i) const {  
-    if( i >= BASF_Vars.Count() )
+  virtual olxstr GetVarName(size_t i) const {
+    if (i >= BASF_Vars.Count())
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return olxstr("k") << (i+1);  
+    return olxstr("k") << (i+1);
   }
-  virtual XVarReference* GetVarRef(size_t i) const {  
-    if( i >= BASF_Vars.Count() )
+  virtual XVarReference* GetVarRef(size_t i) const {
+    if (i >= BASF_Vars.Count())
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    return BASF_Vars[i];  
+    return BASF_Vars[i];
   }
-  virtual void SetVarRef(size_t i, XVarReference* var_ref)  {  
-    if( i >= BASF_Vars.Count() )
+  virtual void SetVarRef(size_t i, XVarReference* var_ref)  {
+    if (i >= BASF_Vars.Count())
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
-    BASF_Vars[i] = var_ref;  
+    if (var_ref != NULL) {
+      BASF[i].E() = var_ref->coefficient*var_ref->Parent.GetEsd();
+    }
+    BASF_Vars[i] = var_ref;
   }
   virtual const IXVarReferencerContainer& GetParentContainer() const {
     return *this;
   }
   virtual double GetValue(size_t var_index) const {
-    if( var_index >= BASF.Count() )
+    if (var_index >= BASF.Count())
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
-    return BASF[var_index];  
+    return BASF[var_index].GetV();
   }
   virtual void SetValue(size_t var_index, const double& val) {
-    if( var_index >= BASF.Count() )
+    if (var_index >= BASF.Count())
       throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
-    BASF[var_index] = val;  
+    BASF[var_index] = val;
   }
   virtual bool IsValid() const {  return true;  }
 //
@@ -801,6 +809,7 @@ Friedel opposites of components 1 ... m
   bool DoShowRestraintDefaults() const;
   void LibHasOccu(const TStrObjList& Params, TMacroError& E);
   void LibOSF(const TStrObjList& Params, TMacroError& E);
+  void LibBASF(const TStrObjList& Params, TMacroError& E);
   void LibFVar(const TStrObjList& Params, TMacroError& E);
   void LibEXTI(const TStrObjList& Params, TMacroError& E);
   void LibUpdateCRParams(const TStrObjList& Params, TMacroError& E);

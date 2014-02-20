@@ -120,6 +120,11 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   HKLSource.SetLength(0);
   Omits.Clear();
   BASF.Clear();
+  for (size_t i = 0; i < BASF_Vars.Count(); i++) {
+    if (BASF_Vars[i] != NULL) {
+      delete Vars.ReleaseRef(*this, (short)i);
+    }
+  }
   BASF_Vars.Clear();
   DEFS.Clear();
   SetDefaults();
@@ -279,7 +284,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
 //.............................................................................
 olxstr RefinementModel::GetBASFStr() const {
   olxstr rv;
-  for( size_t i=0; i < BASF.Count(); i++ )  {
+  for (size_t i=0; i < BASF.Count(); i++) {
     rv << Vars.GetParam(*this, (short)i);
     if( (i+1) < BASF.Count() )
       rv << ' ';
@@ -308,14 +313,14 @@ olxstr RefinementModel::GetTWINStr() const {
   return rv << TWIN_n;
 }
 //.............................................................................
-void RefinementModel::SetIterations(int v)  {  
+void RefinementModel::SetIterations(int v)  {
   if( LS.IsEmpty() )
     LS.Add(v);
   else
     LS[0] = v;
 }
 //.............................................................................
-void RefinementModel::SetPlan(int v)  {  
+void RefinementModel::SetPlan(int v)  {
   if( PLAN.IsEmpty() )
     PLAN.Add(v);
   else
@@ -750,8 +755,8 @@ void RefinementModel::DetwinMixed(TRefList& refs, const TArrayList<compd>& F,
   if( !BASF.IsEmpty() )  {
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    merohedral(info_ex, refs, st, BASF, mat3d::Transpose(GetTWIN_mat()), 2).
-      detwin(detwinner_mixed(), refs, F);
+    merohedral(info_ex, refs, st, GetBASFAsDoubleList(),
+      mat3d::Transpose(GetTWIN_mat()), 2).detwin(detwinner_mixed(), refs, F);
   }
 }
 //.............................................................................
@@ -762,8 +767,8 @@ void RefinementModel::DetwinShelx(TRefList& refs, const TArrayList<compd>& F,
   if( !BASF.IsEmpty() )  {
     if( refs.Count() != F.Count() )
       throw TInvalidArgumentException(__OlxSourceInfo, "F.size()!=refs.size()");
-    merohedral(info_ex, refs, st, BASF, mat3d::Transpose(GetTWIN_mat()), 2).
-      detwin(detwinner_shelx(), refs, F);
+    merohedral(info_ex, refs, st, GetBASFAsDoubleList(), 
+      mat3d::Transpose(GetTWIN_mat()), 2).detwin(detwinner_shelx(), refs, F);
   }
 }
 //.............................................................................
@@ -1249,7 +1254,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddField("HklSrc", HKLSource);
   item.AddField("RefMeth", RefinementMethod);
   item.AddField("SolMeth", SolutionMethod);
-  item.AddField("BatchScales", PersUtil::NumberListToStr(BASF));
+  item.AddField("BatchScales", PersUtil::ComplexListToStr(BASF));
   item.AddField("RefInArg", PersUtil::NumberListToStr(LS));
 
   // save used equivalent positions
@@ -1316,7 +1321,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   HKLSource = item.GetFieldByName("HklSrc");
   RefinementMethod = item.GetFieldByName("RefMeth");
   SolutionMethod = item.GetFieldByName("SolMeth");
-  PersUtil::NumberListFromStr(item.GetFieldByName("BatchScales"), BASF);
+  PersUtil::ComplexListFromStr(item.GetFieldByName("BatchScales"), BASF);
   for (size_t i = 0; i < BASF.Count(); i++)
     BASF_Vars.Add(NULL);
   PersUtil::NumberListFromStr(item.GetFieldByName("RefInArg"), LS);
@@ -1450,7 +1455,7 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   if( HKLF > 4 )  {  // special case, twin entry also has BASF!
     PyObject* basf = PyTuple_New(BASF.Count());
     for( size_t i=0; i < BASF.Count(); i++ )
-      PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
+      PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i].GetV()) );
     PythonExt::SetDictItem(hklf, "basf", basf);
   }
   PythonExt::SetDictItem(main, "hklf", hklf);
@@ -1949,14 +1954,33 @@ void RefinementModel::LibOSF(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void RefinementModel::LibFVar(const TStrObjList& Params, TMacroError& E)  {
   size_t i = Params[0].ToSizeT();
-  if( Vars.VarCount() <= i )  {
+  if (Vars.VarCount() <= i) {
     E.ProcessingError(__OlxSrcInfo, "FVar index out of bounds");
     return;
   }
-  if( Params.Count() == 1 )
+  if (Params.Count() == 1)
     E.SetRetVal(Vars.GetVar(i).GetValue());
-  else
+  else {
     Vars.GetVar(i).SetValue(Params[1].ToDouble());
+    if (Params.Count() == 3)
+      Vars.GetVar(i).SetEsd(Params[2].ToDouble());
+  }
+}
+//..............................................................................
+void RefinementModel::LibBASF(const TStrObjList& Params, TMacroError& E)  {
+  size_t i = Params[0].ToSizeT();
+  if (BASF.Count() <= i) {
+    E.ProcessingError(__OlxSrcInfo, "BASF index out of bounds");
+    return;
+  }
+  if (Params.Count() == 1) {
+    E.SetRetVal(BASF[i].ToString());
+  }
+  else {
+    Vars.SetParam(*this, (short)i, Params[1].ToDouble());
+    if (Params.Count() == 3)
+      BASF[i].E() = Params[2].ToDouble();
+  }
 }
 //..............................................................................
 void RefinementModel::LibEXTI(const TStrObjList& Params, TMacroError& E)  {
@@ -2093,8 +2117,13 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name)  {
   lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibFVar,
       "FVar",
-      fpOne|fpTwo,
+      fpOne|fpTwo|fpThree,
 "Returns/sets FVAR referred by index"));
+  lib->Register(
+    new TFunction<RefinementModel>(this, &RefinementModel::LibBASF,
+    "BASF",
+    fpOne | fpTwo | fpThree,
+    "Returns/sets BASF referred by index"));
   lib->Register(
     new TFunction<RefinementModel>(this, &RefinementModel::LibEXTI,
       "Exti",

@@ -17,8 +17,7 @@
 using namespace lcells;
 
 ConstArrayList<CellInfo> CellReader::read(const olxstr &fn)  {
-  TStrList lines;
-  lines.LoadFromFile(fn);
+  TStrList lines = TEFile::ReadLines(fn);
   TArrayList<CellInfo> rvl;
   const olxstr ext = TEFile::ExtractFileExt(fn).ToLowerCase();
   try {

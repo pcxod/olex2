@@ -227,7 +227,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     output.Add("#<|E^2-1|> = ") << olxstr::FormatFloat(3,E2);
     output.Add("#%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count());
 
-    TCStrList(output).SaveToFile(outputFileName) ;
+    TEFile::WriteLines(outputFileName, TCStrList(output));
     XApp.NewLogEntry() << outputFileName << " file was created";
 
     if( E2 -(0.968+0.736)/2 < 0 )

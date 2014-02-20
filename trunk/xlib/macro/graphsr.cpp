@@ -190,7 +190,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     header.Add("RMS = ") << olxstr::FormatFloat(3, rms);
     tab.CreateTXTList(header, "Sum(|Fo|)/Sum(|Fc|) vs sin(theta)/lambda.", false, false, EmptyString());
     XApp.NewLogEntry() << header;
-    TCStrList(output).SaveToFile( outputFileName ) ;
+    TEFile::WriteLines(outputFileName, TCStrList(output));
     XApp.NewLogEntry() << outputFileName << " file was created";
   }
 }

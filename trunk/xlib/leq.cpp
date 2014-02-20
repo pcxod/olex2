@@ -62,7 +62,7 @@ size_t XVar::RefCount() const {
 }
 //.............................................................................
 void XVar::ToDataItem(TDataItem& item) const {
-  item.AddField("val", Value);
+  item.AddField("val", TEValueD(Value, Esd).ToString());
   for( size_t i=0; i < References.Count(); i++ )
     if( References[i]->referencer.IsValid() )
       References[i]->ToDataItem(item.AddItem("reference"));
@@ -91,8 +91,9 @@ PyObject* XVar::PyExport(TPtrList<PyObject>& atoms)  {
 #endif
 //.............................................................................
 XVar& XVar::FromDataItem(const TDataItem& item, XVarManager& parent) {
-  XVar* var = new XVar(parent, item.GetFieldByName("val").ToDouble());
-  for( size_t i=0; i < item.ItemCount(); i++ )  {
+  TEValueD v = item.GetFieldByName("val");
+  XVar* var = new XVar(parent, v.GetV(), v.GetE());
+  for (size_t i=0; i < item.ItemCount(); i++ ) {
     XVarReference& rf = XVarReference::FromDataItem(item.GetItemByIndex(i), *var);
     parent.AddVarRef(rf);
     var->References.Add(&rf);
@@ -148,7 +149,7 @@ PyObject* XLEQ::PyExport(TPtrList<PyObject>& _vars)  {
 #endif
 //.............................................................................
 XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
-  XLEQ* leq = new XLEQ(parent, item.GetFieldByName("val").ToDouble(), 
+  XLEQ* leq = new XLEQ(parent, item.GetFieldByName("val").ToDouble(),
     item.GetFieldByName("sig").ToDouble());
   for( size_t i=0; i < item.ItemCount(); i++ )  {
     const TDataItem& mi = item.GetItemByIndex(i);
@@ -175,7 +176,7 @@ void XVarManager::ClearAll()  {
 void XVarManager::Assign(const XVarManager& vm) {
   ClearAll();
   for( size_t i=0; i < vm.Vars.Count(); i++ )
-    NewVar(vm.Vars[i].GetValue());
+    NewVar(vm.Vars[i].GetValue()).SetEsd(vm.Vars[i].GetEsd());
   for( size_t i=0; i < vm.References.Count(); i++ )  {
     XVarReference& vr = vm.References[i];
     IXVarReferencerContainer& rc =

@@ -99,7 +99,6 @@
 
 UseEsdlNamespace()
 
-const olxstr TEFile::AllFilesMask("*.*");
 //----------------------------------------------------------------------------//
 // TEFile function bodies
 //----------------------------------------------------------------------------//
@@ -423,7 +422,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t
   if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
   if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
   sd.dwFileAttributes = flags; 
-  HANDLE hn = FindFirstFile(AllFilesMask.u_str(), &sd);
+  HANDLE hn = FindFirstFile(AllFilesMask().u_str(), &sd);
   if( hn == INVALID_HANDLE_VALUE )  
     return false;
   bool done = true;
@@ -477,7 +476,7 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF
   if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
   if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
   sd.dwFileAttributes = flags; 
-  HANDLE hn = FindFirstFile(AllFilesMask.u_str(), &sd);
+  HANDLE hn = FindFirstFile(AllFilesMask().u_str(), &sd);
   if( hn == INVALID_HANDLE_VALUE )  
     return false;
   bool done = true;

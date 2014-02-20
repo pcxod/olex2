@@ -186,7 +186,7 @@ void SharedListTest(OlxTests& t)  {
   if( *aplist[0] != 10 || *aplist[1] != 9 )
     throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
 
-  TArrayList<int> al = aalist, // release reference through copy constructor
+  TArrayList<int> al(aalist), // release reference through copy constructor
     al1;
   al1 = balist; // release reference through assignmnet
   if( aalist.IsValid() || balist.IsValid() )
@@ -194,14 +194,14 @@ void SharedListTest(OlxTests& t)  {
   if( al.Count() != 10 || al1.Count() != 10 )
     throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
 
-  TTypeList<int> tl = atlist, tl1;
+  TTypeList<int> tl(atlist), tl1;
   tl1 = btlist;
   if( atlist.IsValid() || btlist.IsValid() )
     throw TFunctionFailedException(__OlxSourceInfo, "Release failed");
   if( tl.Count() != 10 || tl1.Count() != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
 
-  TPtrList<const int> pl = aplist, pl1;
+  TPtrList<const int> pl(aplist), pl1;
   pl1 = bplist;
   if( aplist.IsValid() || bplist.IsValid() )
     throw TFunctionFailedException(__OlxSourceInfo, "Release failed");

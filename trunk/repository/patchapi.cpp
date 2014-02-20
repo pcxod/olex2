@@ -93,8 +93,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy,
 olxstr PatchAPI::GetUpdateLocation()  {
   olxstr update_location = GetUpdateLocationFileName();
   if( TEFile::Exists(update_location) )  {
-    TCStrList fc;
-    fc.LoadFromFile(update_location);
+    TCStrList fc = TEFile::ReadCLines(update_location);
     if( fc.Count() == 1 ) {
       olxstr path = TUtf8::Decode(fc[0]);
       if (TEFile::IsAbsolutePath(path))
@@ -163,8 +162,7 @@ olxstr PatchAPI::ReadRepositoryTag(const olxstr& base_dir)  {
   olxstr tag_fn = repository_base_dir + GetTagFileName();
   if( !TEFile::Exists(tag_fn) )
     return (repository_tag=EmptyString());
-  TStrList sl;
-  sl.LoadFromFile(tag_fn);
+  TStrList sl = TEFile::ReadLines(tag_fn);
   return sl.Count() == 1 ? (repository_tag=sl[0]) : EmptyString();
 }
 //.............................................................................

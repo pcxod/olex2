@@ -856,7 +856,7 @@ void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macPictPR(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   olxstr file_name = (Cmds[0].EndsWith(".pov") ? Cmds[0] : olxstr(Cmds[0]) << ".pov");
-  TCStrList(TStrList(FXApp->ToPov())).SaveToFile(file_name);
+  TEFile::WriteLines(file_name, TCStrList(FXApp->ToPov().GetObject()));
 }
 //..............................................................................
 void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
@@ -1490,8 +1490,8 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       }
       if (TEFile::Exists(fn)) {
         olxdict<olxstr,double,olxstrComparator<false> > radii;
-        TStrList sl, changed;
-        sl.LoadFromFile(fn);
+        TStrList sl = TEFile::ReadLines(fn),
+          changed;
         // parse the file and fill the dictionary
         for( size_t i=0; i < sl.Count(); i++ )  {
           size_t idx = sl[i].IndexOf(' ');
@@ -2929,9 +2929,7 @@ void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         "|All files (*.*)|*.*",
         TBasicApp::GetBaseDir(), EmptyString(), true);
       if( !FN.IsEmpty() && TEFile::Exists(FN) )  {
-        TStrList sl;
-        sl.LoadFromFile(FN);
-        dlg->SetText(sl.Text('\n'));
+        dlg->SetText(TEFile::ReadLines(FN).Text('\n'));
       }
     }
     else
@@ -4118,7 +4116,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     ExtractInfoTask task(files, out);
     TListIteratorManager<ExtractInfoTask> job(task, files.Count(),
       tLinearTask, 20);
-    TCStrList(out).SaveToFile("e:/c-v.txt");
+    TEFile::WriteLines("e:/c-v.txt", TCStrList(out));
   }
   {
     FormulaFitter fitter;
@@ -4129,10 +4127,9 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       fitter.fromDataItem(df.Root());
     }
     else {
-      TStrList f;
+      TStrList f = TEFile::ReadLines("e:/c-v.txt");
       typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
       //f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
-      f.LoadFromFile("e:/c-v.txt");
       for (size_t li = 0; li < f.Count(); li++) {
         TStrList toks(f[li].Replace('\t', ' '), ' ');
         if (toks.Count() < 3) continue;
@@ -5164,8 +5161,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     else if (Cmds[0].Equalsi("poly") && Cmds.Count() > 3) {
       TStrList svertices, striangles;
       if (Cmds.Count() == 4 && TEFile::Exists(Cmds[3])) {
-        TStrList sl;
-        TStrList toks(sl.LoadFromFile(Cmds[3]).Text(';'), ';');
+        TStrList toks(TEFile::ReadLines(Cmds[3]).Text(';'), ';');
         if (toks.Count() != 2) {
           Error.ProcessingError(__OlxSrcInfo, "a list of vertices seperated "
             "by comma and list of triangles formed by 0-based vertex indices"
@@ -5261,8 +5257,7 @@ void TMainForm::macTextm(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Error.ProcessingError(__OlxSrcInfo, "file does not exist");
     return;
   }
-  TStrList sl;
-  sl.LoadFromFile( Cmds[0] );
+  TStrList sl = TEFile::ReadLines(Cmds[0]);
   for( size_t i=0; i < sl.Count(); i++ )  {
     Macros.ProcessMacro(sl[i], Error);
     if( !Error.IsSuccessful() )  break;
@@ -6003,7 +5998,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       tmp_data[j] += data[j]*100.0;
       sl.Add( (double)j/100 ) << '\t' << data[j]*1000.0;  // normalised by 1000 square
     }
-    sl.SaveToFile( (Cmds[0]+'_') << atomTypes.GetKey(i)->symbol << ".xlt");
+    TEFile::WriteLines((Cmds[0] + '_') << atomTypes.GetKey(i)->symbol << ".xlt", sl);
     out << (int16_t)atomTypes.GetKey(i)->index;
     out.Write(data, 600*sizeof(double));
     delete [] data;
@@ -6011,8 +6006,8 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
   TCStrList sl;
   sl.SetCapacity( 600 );
   for( size_t i=0; i < 600; i++ )
-    sl.Add( (double)i/100 ) << '\t' << tmp_data[i];
-  sl.SaveToFile( (Cmds[0]+"_all") << ".xlt");
+    sl.Add((double)i/100) << '\t' << tmp_data[i];
+  TEFile::WriteLines((Cmds[0] + "_all") << ".xlt", sl);
   return;
 // old procedure
   TestDistanceAnalysisIteration testdai(files);
@@ -6020,8 +6015,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
 //  TListIteratorManager<TestDistanceAnalysisIteration>* Test = new TListIteratorManager<TestDistanceAnalysisIteration>(testdai, files.Count(), tLinearTask, 0);
 //  delete Test;
   if( files.Count() == 1 && TEFile::Exists(Cmds[0]) )  {
-    TStrList sl;
-    sl.LoadFromFile( Cmds[0] );
+    TStrList sl = TEFile::ReadLines(Cmds[0]);
     TPSTypeList<int, int> ref_data, &data = testdai.XYZ;
     for( size_t i=0; i < sl.Count(); i++ )  {
       const size_t ind = sl[i].IndexOf('\t');
@@ -6029,7 +6023,8 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
         TBasicApp::NewLogEntry() << "could not parse '" << sl[i] << "\'";
         continue;
       }
-      ref_data.Add( olx_round(sl[i].SubStringTo(ind).ToDouble()*100), sl[i].SubStringFrom(ind+1).ToInt() );
+      ref_data.Add( olx_round(sl[i].SubStringTo(ind).ToDouble()*100),
+        sl[i].SubStringFrom(ind+1).ToInt() );
     }
     double R = 0;
     for( size_t i=0; i < data.Count(); i++ )  {
@@ -6059,7 +6054,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       for( size_t j=0; j < d.Count(); j++ )  {
         sl.Add( (double)d.GetKey(j)/100 ) << '\t' << d.GetObject(j);
       }
-      sl.SaveToFile( (Cmds[0]+data[i]) << ".xlt");
+      TEFile::WriteLines((Cmds[0] + data[i]) << ".xlt", sl);
     }
   }
 }
@@ -6129,7 +6124,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
       E.ProcessingError(__OlxSrcInfo, "A file is expected");
       return;
     }
-    content.LoadFromFile(FN);
+    TEFile::ReadLines(FN, content);
   }
   TXyz xyz;
   xyz.LoadFromStrings(content);

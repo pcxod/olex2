@@ -16,9 +16,7 @@
 
 #ifdef __WXWIDGETS__
   #ifdef _PYTHON
-  #if defined __APPLE__ && defined __MACH__
-    #include "Python/python.h"
-  #else
+    #include "wx/string.h"
     #ifdef _DEBUG
       #undef _DEBUG
       #include "Python.h"
@@ -27,8 +25,6 @@
       #include "Python.h"
     #endif
   #endif
-  #endif
-  #include "wx/string.h"
 #endif
 
 #define CharSizeMask 0xE0000000

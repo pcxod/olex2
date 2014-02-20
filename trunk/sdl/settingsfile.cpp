@@ -14,7 +14,7 @@
 void TSettingsFile::LoadSettings(const olxstr& fileName)  {
   Clear();
   TEFile::CheckFileExists(__OlxSourceInfo, fileName);
-  Lines.LoadFromFile(fileName);
+  TEFile::ReadLines(fileName, Lines);
 
   for( size_t i=0; i < Lines.Count(); i++ )  {
     olxstr ln = Lines[i].Trim(' ');
