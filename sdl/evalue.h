@@ -59,20 +59,20 @@ public:
     return *this;
   }
 
-  const TEValue& operator = (const TEValue& p)  {
+  TEValue& operator = (const TEValue& p)  {
     FV = p.FV;
     FE = p.FE;
-    return p;
+    return *this;
   }
 
   template <class AType>
-    const TEValue<AType>& operator = (const TEValue<AType>& p)  {
+    TEValue<AType>& operator = (const TEValue<AType>& p)  {
       FV = (EType)p.FV;
       FE = (EType)p.FE;
-      return p;
+      return *this;
     }
 
-  const olxstr& operator = (const olxstr& S)  {
+  TEValue &operator = (const olxstr& S)  {
     size_t i = S.LastIndexOf('(');
     if( i != InvalidIndex && i > 0 )  {
       FV = (EType)S.SubStringTo(i).ToDouble();
@@ -90,7 +90,7 @@ public:
       FV = (EType)S.ToDouble();
       FE = 0;
     }
-    return S;
+    return *this;
   }
 
   template <class AType>

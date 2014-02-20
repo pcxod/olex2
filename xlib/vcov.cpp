@@ -34,9 +34,9 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     if( lst_fa > mat_fa && (lst_fa-mat_fa) > 5 )
       TBasicApp::NewLogEntry(logWarning) << "The mat file is possibly out of date";
   }
-  TCStrList sl, toks;
-  sl.LoadFromFile(fileName);
-  if( sl.Count() < 10 )
+  TCStrList sl = TEFile::ReadCLines(fileName),
+    toks;
+  if (sl.Count() < 10)
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file content");
   toks.Strtok(sl[3], ' ');
   const size_t param_cnt = toks[0].ToSizeT();
@@ -297,8 +297,7 @@ double VcoVMatrix::Find(const olxstr& atom, const short va,
 }
 //.............................................................................
 void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
-  TStrList in;
-  in.LoadFromFile(fileName);
+  TStrList in = TEFile::ReadLines(fileName);
   if( in.Count() != 3 || !in[0].Equals("VCOV") )
     throw TInvalidArgumentException(__OlxSourceInfo, "file format");
   TStrList annotations(in[1], ' '),

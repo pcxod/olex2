@@ -184,25 +184,25 @@ public:
   }
 
   TMatrix& operator += (FT V)  {
-    for( size_t i = 0; i < Fn; i++ )  
+    for( size_t i = 0; i < Fn; i++ )
       FData[i] += V;
     return *this;
   }
 
   TMatrix& operator -= (FT V)  {
-    for( size_t i = 0; i < Fn; i++ )  
+    for( size_t i = 0; i < Fn; i++ )
       FData[i] -= V;
     return *this;
   }
 
   TMatrix& operator *= (FT V)  {
-    for( size_t i = 0; i < Fn; i++ )  
+    for( size_t i = 0; i < Fn; i++ )
       FData[i] *= V;
     return *this;
   }
     
   TMatrix& operator /= (FT V)  {
-    for( size_t i = 0; i < Fn; i++ )  
+    for( size_t i = 0; i < Fn; i++ )
       FData[i] /= V;
     return *this;
   }
@@ -256,15 +256,15 @@ public:
   }
 
   void Null()  {
-    for( size_t i=0; i < Fn; i++ )  
+    for( size_t i=0; i < Fn; i++ )
       FData[i].Null();
   }
 
   bool IsI() const  {
     for( size_t i=0; i < Fn; i++ )
       for( size_t j=0; j < Fm; j++ )
-        if( FData[i][j] != (i ==j ? 1 : 0) ) 
-          return false; 
+        if( FData[i][j] != (i ==j ? 1 : 0) )
+          return false;
     return true;
   }
 
@@ -274,14 +274,14 @@ public:
     }
     else if( Fn == n )  {
       if( Fm != m )  {
-        for( size_t i=0; i < n; i++ )  
+        for( size_t i=0; i < n; i++ )
           FData[i].Resize(m);
         Fm = m;
       }
     }
     else if( n < Fn )  {  // do not shrink - just change the size indicator
       if( Fm != m )  {
-        for( size_t i=0; i < n; i++ )  
+        for( size_t i=0; i < n; i++ )
           FData[i].Resize(m);
         Fm = m;
       }
@@ -293,7 +293,7 @@ public:
         nd[i] = FData[i];
       delete [] FData;
       FData = nd;
-      Fn = n;  
+      Fn = n;
       Fm = m;
       for( size_t i=0; i < Fn; i++ )
         FData[i].Resize(Fm);
@@ -313,24 +313,24 @@ public:
 
   void AddRows(size_t to, size_t which)  {  FData[to] += FData[which];  }
   
-  void AddCols(size_t to, size_t which)    {  
-    for( size_t i=0; i < Fn; i++ )  
-      FData[i][to] += FData[i][which];  
+  void AddCols(size_t to, size_t which)  {
+    for( size_t i=0; i < Fn; i++ )
+      FData[i][to] += FData[i][which];
   }
 
   void SubRows(size_t from, size_t which )  {  FData[from] -= FData[which];  }
   
-  void SubCols(size_t from, size_t which)  {  
-    for( size_t i=0; i < Fn; i++ )  
-      FData[i][from] -= FData[i][which];  
+  void SubCols(size_t from, size_t which)  {
+    for( size_t i=0; i < Fn; i++ )
+      FData[i][from] -= FData[i][which];
   }
   
   void MulRow(size_t which, FT v)  {  FData[which] *= v;  }
   void DivRow(size_t which, FT v)  {  FData[which] /= v;  }
 
-  void MulCol(size_t which, FT v)  {    
-    for( size_t i=0; i < Fn; i++ )  
-      FData[i][which] *= v;  
+  void MulCol(size_t which, FT v)  {
+    for( size_t i=0; i < Fn; i++ )
+      FData[i][which] *= v;
   }
 
   void DivCol(size_t which, FT v)  {
@@ -377,7 +377,7 @@ public:
         "incompatible matrix dimensions");
     }
     FT a = 0;
-    for( size_t i = 0; i < Fn; i++ )  
+    for( size_t i = 0; i < Fn; i++ )
       a += FData[i][i];
     return a;
   }
@@ -402,7 +402,7 @@ public:
         if( dim == 0 )  return false;
         Resize(S.Count(), dim);
       }
-      if( Toks.Count() != Fm )  
+      if( Toks.Count() != Fm )
         throw TFunctionFailedException(__OlxSourceInfo, "file rows not even");
       for( size_t j=0; j < Fm; j++ )
         FData[i][j] = (FT)Toks[j].ToDouble();
@@ -413,9 +413,9 @@ public:
   void SaveToFile(const olxstr& FN)  {
     TCStrList S;
     for( size_t i=0; i < Fn; i++ )  {
-      olxstr& T = S.Add(EmptyString());
+      olxcstr& T = S.Add();
       for( size_t j=0; j < Fm; j++ )
-        T << olxstr::FormatFloat(5, FData[i][j], true) << '\t';
+        T << olxcstr::FormatFloat(5, FData[i][j], true) << '\t';
     }
     S.SaveToFile(FN);
   }

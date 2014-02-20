@@ -50,7 +50,7 @@ public:
   FT Length() const { return sqrt(QLength()); }
 
   template <typename AT>
-  static FT CAngle(const AT& v)  {
+  FT CAngle(const AT& v) const {
     FT dp = DotProd(v);
     const FT l = sqrt(QLength()*v.QLength());
     if (l == 0) throw TDivException(__OlxSourceInfo);

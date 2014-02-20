@@ -292,8 +292,7 @@ public:
           TBasicApp::NewLogEntry(logError) << "Included file missing: " << fn;
           continue;
         }
-        TStrList lst;
-        lst.LoadFromFile(fn);
+        TStrList lst = TEFile::ReadLines(fn);
         l.Delete(i);
         l.Insert(i, lst);
         i += lst.Count();

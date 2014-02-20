@@ -506,8 +506,8 @@ void TXGrid::DeleteObjects()  {
 //.............................................................................
 bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   TEFile::CheckFileExists(__OlxSourceInfo, GridFile);
-  TStrList SL, toks;
-  SL.LoadFromFile(GridFile);
+  TCStrList SL = TEFile::ReadCLines(GridFile),
+    toks;
   toks.Strtok(SL[0], ' ');
 
   int vc = 3;

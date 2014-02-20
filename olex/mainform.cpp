@@ -1361,8 +1361,7 @@ void TMainForm::StartupInit()  {
     LoadSettings(T);
     olxstr hfn = FXApp->GetConfigDir() + "history.txt";
     if (TEFile::Exists(hfn)) {
-      TStrList h;
-      h.LoadFromFile(hfn);
+      TStrList h = TEFile::ReadLines(hfn);
       FGlConsole->SetCommands(h);
     }
    }
@@ -1458,8 +1457,7 @@ void TMainForm::StartupInit()  {
   // do the iterpreters job...
   if (FXApp->GetArguments().Count() >= 2) {
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
-      TStrList in;
-      in.LoadFromFile(FXApp->GetArguments().GetLastString());
+      TStrList in = TEFile::ReadLines(FXApp->GetArguments().GetLastString());
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
     else // disable reading last file in
@@ -2617,7 +2615,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   DF.SaveToXLFile(FN + ".tmp");
   TEFile::Rename(FN + ".tmp", FN);
   /* check if the stereo buffers are available and if not disable - this way the
-  multisamplin can be enabled!
+  multisampling can be enabled!
   */
   {
     GLboolean stereo_supported = GL_FALSE;
@@ -2648,12 +2646,11 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       olxcstr l = f.ReadLine(), ds("\\\\");
       f.Close();
       if (l.Contains('\\') && !l.Contains(ds)) { // no escapes, needs converting
-        TCStrList t;
-        t.LoadFromFile(FN);
+        TCStrList t = TEFile::ReadCLines(FN);
         for (size_t i=0; i < t.Count(); i++)
           t[i].Replace('\\', ds);
         try {
-          t.SaveToFile(FN);
+          TEFile::WriteLines(FN, t);
         }
         catch (const TExceptionBase &e) {
           TBasicApp::NewLogEntry(logException) << e;
@@ -3315,7 +3312,7 @@ void TMainForm::OnInternalIdle()  {
     for( size_t i=0; i < rof.Count(); i++ )  {
       rof[i] = FXApp->GetBaseDir()+rof[i];
       try  {
-        macros.LoadFromFile( rof[i] );
+        TEFile::ReadLines(rof[i], macros);
         macros.CombineLines('\\');
         for( size_t j=0; j < macros.Count(); j++ )  {
           processMacro(macros[j]);

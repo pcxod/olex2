@@ -521,15 +521,14 @@ void PythonExt::funExport(const TStrObjList& Cmds, TMacroError& E)  {
   bool do_export = true;
   olxstr last_exp_fn = Cmds[0] + ".cache";
   if (TEFile::Exists(last_exp_fn)) {
-    TCStrList l;
-    l.LoadFromFile(last_exp_fn);
+    TCStrList l = TEFile::ReadCLines(last_exp_fn);
     if (l.Count() > 0 && l[0] == TBasicApp::GetModuleMD5Hash())
       do_export = false;
   }
   if (do_export || !TEFile::Exists(Cmds[0])) {
     TCStrList l;
     l << TBasicApp::GetModuleMD5Hash();
-    l.SaveToFile(last_exp_fn);
+    TEFile::WriteLines(last_exp_fn, l);
     ExportLib(Cmds[0], o_r->GetLibrary(), module_name);
   }
 }

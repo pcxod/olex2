@@ -299,7 +299,38 @@ public:
   static olxstr QuotePath(const olxstr &p);
   static olxstr UnquotePath(const olxstr &p);
   
-  static const olxstr AllFilesMask;
+  static const olxstr& AllFilesMask() {
+    static olxstr m = "*.";
+    return m;
+  };
+
+  static const_cstrlist ReadCLines(const olxstr &fn) {
+    TCStrList l;
+    TEFile f(fn, "rb");
+    return l.LoadFromTextStream(f);
+  }
+  static const_wstrlist ReadWLines(const olxstr &fn) {
+    TWStrList l;
+    TEFile f(fn, "rb");
+    return l.LoadFromTextStream(f);
+  }
+  static const_strlist ReadLines(const olxstr &fn) {
+    TStrList l;
+    TEFile f(fn, "rb");
+    return l.LoadFromTextStream(f);
+  }
+  template <class list_t>
+  static void ReadLines(const olxstr &fn, list_t &l) {
+    TEFile f(fn, "rb");
+    l.LoadFromTextStream(f);
+  }
+  template <class str_t>
+  static const TTStrList<str_t> & WriteLines(const olxstr &fn,
+    const TTStrList<str_t> &lines)
+  {
+    TEFile out(fn, "wb");
+    return lines.SaveToTextStream(out);
+  }
 };
 
 EndEsdlNamespace()

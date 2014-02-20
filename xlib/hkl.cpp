@@ -77,12 +77,11 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins,
   try  {
     Clear();
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
-    TCStrList SL;
     bool ZeroRead = false, 
       HklFinished = false,
       HasBatch = false,
       FormatInitialised = false;
-    SL.LoadFromFile(FN);
+    TCStrList SL = TEFile::ReadCLines(FN);
     if( SL.IsEmpty() )
       throw TEmptyFileException(__OlxSrcInfo, FN);
     {  // validate if 'real' HKL, not fcf

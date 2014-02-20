@@ -236,7 +236,7 @@ void olxvar_funFlush(const TStrObjList& Params, TMacroError &E) {
     if (!wc.DoesMatch(vn) || vn.Length() < from) continue;
     settings.Add(vn.SubStringFrom(from)) << '=' << TOlxVars::GetVarStr(i);
   }
-  TCStrList(settings).SaveToFile(Params[0]);
+  TEFile::WriteLines(Params[0], TCStrList(settings));
 }
 TLibrary *TOlxVars::ExportLibrary(const olxstr &name, TLibrary *_l) {
   TLibrary *l = _l == NULL ? new TLibrary(name) : _l;

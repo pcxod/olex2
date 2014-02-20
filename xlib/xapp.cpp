@@ -199,7 +199,7 @@ RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
   RefinementModel::HklStat rv;
   RefinementModel& rm = XFile().GetRM();
   TUnitCell::SymmSpace sp = XFile().GetUnitCell().GetSymmSpace();
-  const TDoubleList& basf = rm.GetBASF();
+  const TDoubleList basf = rm.GetBASFAsDoubleList();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
   double exti = rm.HasEXTI() ? rm.GetEXTI().GetV() : 0;
   const double l = rm.expl.GetRadiation(),
@@ -839,8 +839,7 @@ olxstr TXApp::InitVcoV(VcoVContainer& vcovc) const {
 ElementRadii TXApp::ReadVdWRadii(const olxstr& fileName)  {
   ElementRadii radii;
   if( TEFile::Exists(fileName) )  {
-    TStrList sl;
-    sl.LoadFromFile(fileName);
+    TStrList sl = TEFile::ReadLines(fileName);
     for( size_t i=0; i < sl.Count(); i++ )  {
       TStrList toks(sl[i], ' ');
       if( toks.Count() == 2 )  {

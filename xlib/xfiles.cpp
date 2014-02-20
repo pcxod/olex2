@@ -105,8 +105,7 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn)  {
   TStopWatch(__FUNC__);
   TXFile::NameArg file_n(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
-  TStrList L;
-  L.LoadFromFile(file_n.file_name);
+  TStrList L = TEFile::ReadLines(file_n.file_name);
   if (L.IsEmpty())
     throw TEmptyFileException(__OlxSourceInfo, _fn);
   try {

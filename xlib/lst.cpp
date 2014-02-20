@@ -35,7 +35,6 @@ void TLst::Clear()  {
 //..............................................................................
 bool TLst::LoadFromFile(const olxstr &FN)  {
   TEFile::CheckFileExists(__OlxSourceInfo, FN);
-  TStrList SL;
   bool TRefC  = false,
        URefC  = false,
        DRef   = false,
@@ -53,7 +52,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   bool header_found = false;
   TStrList Toks;
   Clear();
-  SL.LoadFromFile(FN);
+  TStrList SL = TEFile::ReadLines(FN);
   // skip INS file
   size_t start = 0;
   while (start < SL.Count() && !SL[start].Contains("Reflections read,")) {
@@ -385,10 +384,14 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             params("flack",
               TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
           }
-          else if (toks.Count() == 6) {
+          if (toks.Count() == 6) {
             params(olxstr("basf_") << toks[5],
               TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
           }
+        }
+        else if (toks[4].Equalsi("FVAR") && toks.Count() == 6) {
+          params(olxstr("fvar_") << toks[5],
+            TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
         }
       }
       params_found++;

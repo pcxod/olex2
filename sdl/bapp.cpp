@@ -97,8 +97,7 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
   bool do_calculate = true;
   olxstr last_dg_fn = GetInstanceDir() + "app.md5";
   if (TEFile::Exists(last_dg_fn)) {
-    TCStrList l;
-    l.LoadFromFile(last_dg_fn);
+    TCStrList l = TEFile::ReadCLines(last_dg_fn);
     if (l.Count() > 3) {
       TEFile::FileID fd = TEFile::GetFileID(name);
       if (l[0] == name &&
@@ -120,7 +119,7 @@ const olxstr &TBasicApp::GetModuleMD5Hash() {
       l << fd.size;
       l << fd.timestamp;
       l << Digest;
-      l.SaveToFile(last_dg_fn);
+      TEFile::WriteLines(last_dg_fn, l);
     }
     catch (const TExceptionBase &e) {
       TBasicApp::NewLogEntry(logExceptionTrace) << e;

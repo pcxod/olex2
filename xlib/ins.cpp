@@ -62,15 +62,49 @@ void TIns::LoadFromFile(const olxstr& fileName)  {
   }
   sw.start("Loading the file");
   TBasicCFile::LoadFromFile(fileName);
-  if (Lst.IsLoaded() && GetRM().HasEXTI()) {
+  if (Lst.IsLoaded()) {
     try {
-      olxstr str_exti = Lst.params.Find("exti", EmptyString());
-      if (!str_exti.IsEmpty()) {
-        TEValueD exti = str_exti;
-        GetRM().SetEXTI(exti.GetV(), exti.GetE());
+      if (GetRM().HasEXTI()) {
+        olxstr str_exti = Lst.params.Find("exti", EmptyString());
+        if (!str_exti.IsEmpty()) {
+          TEValueD exti = str_exti;
+          GetRM().SetEXTI(exti.GetV(), exti.GetE());
+        }
+      }
+      olxstr val_n = "basf_", val;
+      size_t cnt = 1;
+      while (!(val = Lst.params.Find(olxstr(val_n) << cnt, EmptyString()))
+        .IsEmpty())
+      {
+        if (GetRM().GetBASF().Count() >= cnt) {
+          TEValueD dv = val;
+          if (olx_abs(GetRM().GetBASF()[cnt - 1].GetV() - dv.GetV()) < dv.GetE())
+            GetRM().GetBASF()[cnt - 1] = dv;
+          else
+            break;
+          cnt++;
+        }
+        else
+          break;
+      }
+      val_n = "fvar_";
+      cnt = 2;
+      while (!(val = Lst.params.Find(olxstr(val_n) << cnt, EmptyString()))
+        .IsEmpty())
+      {
+        if (GetRM().Vars.VarCount() >= cnt) {
+          TEValueD dv = val;
+          if (olx_abs(GetRM().Vars.GetVar(cnt-1).GetValue() - dv.GetV()) < dv.GetE())
+            GetRM().Vars.GetVar(cnt - 1).SetEsd(dv.GetE());
+          else
+            break;
+          cnt++;
+        }
+        else
+          break;
       }
     }
-    catch(...)  {}
+    catch (...)  {}
   }
 }
 //..............................................................................
@@ -952,9 +986,9 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.Add("END");
 #ifdef _UNICODE
-  TCStrList(SL).SaveToFile(FileName);
+  TEFile::WriteLines(FileName, TCStrList(SL));
 #else
-  SL.SaveToFile(FileName);
+  TEFile::WriteLines(FileName, SL);
 #endif
 }
 //..............................................................................
@@ -1370,9 +1404,9 @@ void TIns::SavePattSolution(const olxstr& FileName,
   SL.Add("HKLF ") << GetRM().GetHKLFStr();
   SL.Add(EmptyString());
 #ifdef _UNICODE
-  TCStrList(SL).SaveToFile(FileName);
+  TEFile::WriteLines(FileName, TCStrList(SL));
 #else
-  SL.SaveToFile(FileName);
+  TEFIle::WriteLines(FileName, SL);
 #endif
 }
 //..............................................................................

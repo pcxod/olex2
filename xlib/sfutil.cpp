@@ -172,7 +172,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     }
     else  {
       twinning::general twin(info_ex, rm.GetReflections(),
-        RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASF());
+        RefUtil::ResolutionAndSigmaFilter(rm), rm.GetBASFAsDoubleList());
       TArrayList<compd> Fc(twin.unique_indices.Count());
       SFUtil::CalcSF(xapp.XFile(), twin.unique_indices, Fc);
       twin.detwin_and_merge(twinning::detwinner_shelx(),

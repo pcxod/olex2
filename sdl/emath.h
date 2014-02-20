@@ -294,13 +294,13 @@ namespace olx_vec  {
           o(i) += v(j)*m(j,i) + v(j+1)*m(j+1,i) +
             v(j+2)*m(j+2, i) + v(j+3)*m(j+3,i);
         }
-        for (; j < vc; j)
+        for (; j < vc; j++)
           o(i) += v(j)*m(j,i);
       }
     }
     else {
       for (size_t i=0; i < cc; i++)  {
-        for (size_t j=0; j < vc; j)
+        for (size_t j=0; j < vc; j++)
           o(i) += v(j)*m(j,i);
       }
     }

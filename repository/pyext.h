@@ -14,16 +14,12 @@
 #include "etbuffer.h"
 
 #ifdef _PYTHON
-#if defined __APPLE__ && defined __MACH__
-  #include "Python/python.h"
+#ifdef _DEBUG
+  #undef _DEBUG
+  #include "Python.h"
+  #define _DEBUG
 #else
-  #ifdef _DEBUG
-    #undef _DEBUG
-    #include "Python.h"
-    #define _DEBUG
-  #else
-    #include "Python.h"
-  #endif
+  #include "Python.h"
 #endif
 //---------------------------------------------------------------------------
 using namespace olex2;

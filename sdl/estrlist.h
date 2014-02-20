@@ -21,7 +21,6 @@ BeginEsdlNamespace()
 
 template <typename> class ConstStrList;
 template <typename> class ConstStrObjList;
-class TEFile;
 
 template <class SC> struct TSingleStringWrapper  {
   SC String;
@@ -364,15 +363,6 @@ public:
     io.Read(bf, fl);
     return LoadFromTextArray(bf, fl, true);
   }
-  static ConstStrList<T> FromFile(const olxstr& fn) {
-    TTStrList l;
-    l.LoadFromFile(fn);
-    return l;
-  }
-  TTStrList& LoadFromFile(const olxstr& fileName)  {
-    TEFile file(fileName, "rb");
-    return LoadFromTextStream(file);
-  }
   void operator >> (IDataOutputStream &Stream) const {
     Stream << (uint32_t)Count();
     for( size_t i=0; i < Count(); i++ )
@@ -393,10 +383,6 @@ public:
     for( size_t i=0; i < Count(); i++ )
       os.Writeln(Strings[i]->String);
     return *this;
-  }
-  const TTStrList& SaveToFile(const olxstr& fileName) const {
-    TEFile file(fileName, "wb+");
-    return SaveToTextStream(file);
   }
 
   virtual TIString ToString() const {
@@ -860,7 +846,7 @@ typedef
 typedef TTStrList<TSingleStringWrapper<olxstr> > TStrList;
 typedef ConstStrList<TSingleStringWrapper<olxstr> > const_strlist;
 typedef TTStrList<TSingleStringWrapper<olxcstr> > TCStrList;
-typedef ConstStrList<TSingleStringWrapper<olxstr> > const_cstrlist;
+typedef ConstStrList<TSingleStringWrapper<olxcstr> > const_cstrlist;
 typedef TTStrList<TSingleStringWrapper<olxwstr> > TWStrList;
 typedef ConstStrList< TSingleStringWrapper<olxstr> > const_wstrlist;
 

@@ -3322,8 +3322,8 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options,
   }
   RF = TEFile::ChangeFileExt(RF, TEFile::ExtractFileExt(TN));
 
-  SL.LoadFromFile(TN);
-  Dic.LoadFromFile(CifDictionaryFile);
+  SL = TEFile::ReadLines(TN);
+  Dic = TEFile::ReadLines(CifDictionaryFile);
   for( size_t i=0; i < SL.Count(); i++ )
     Cif->ResolveParamsFromDictionary(Dic, SL[i], '%', &XLibMacros::CifResolve);
   TUtf8File::WriteLines(RF, SL, false);
@@ -3385,7 +3385,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
   TDataFile DF;
   TTTable<TStrList> DT;
   DF.LoadFromXLFile(CifTablesFile, NULL);
-  Dic.LoadFromFile(CifDictionaryFile);
+  Dic = TEFile::ReadLines(CifDictionaryFile);
   olxstr RF = Options.FindValue('n');
   if (RF.IsEmpty()) {
     RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString());
@@ -3423,7 +3423,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options,
         ProcessExternalFunction(fn);
       if (!TEFile::IsAbsolutePath(fn))
         fn = xapp.GetCifTemplatesDir() + fn;
-      TStrList SL1 = TStrList::FromFile(fn);
+      TStrList SL1 = TEFile::ReadLines(fn);
       for (size_t j=0; j < SL1.Count(); j++) {
         Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', &XLibMacros::CifResolve);
         SL.Add(SL1[j]);
@@ -4381,7 +4381,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       row[6] = new cetString('o');
     }
   }
-  TCStrList(fcf_dp.SaveToStrings()).SaveToFile(fn);
+  TEFile::WriteLines(fn, TCStrList(fcf_dp.SaveToStrings()));
 }
 //.............................................................................
 struct XLibMacros_StrF  {
@@ -5948,8 +5948,7 @@ void XLibMacros::macHklExclude(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macHklImport(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &E)
 {
-  TStrList lines;
-  lines.LoadFromFile(Cmds[0]);
+  TStrList lines = TEFile::ReadLines(Cmds[0]);
   const olxstr out_name = Cmds.GetLastString();
   Cmds.Delete(Cmds.Count()-1);
   if( Cmds[1].Equalsi("fixed") )  {
@@ -7234,7 +7233,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
     if (ci == NULL)
       TBasicApp::NewLogEntry() << "No hkl loop or data found";
     else
-      TCStrList(ci->lines).SaveToFile(hkl_name);
+      TEFile::WriteLines(hkl_name, TCStrList(ci->lines));
   }
   else {
     const size_t hInd = hklLoop->ColIndex("_refln_index_h");
@@ -7267,7 +7266,7 @@ void XLibMacros::macExport(TStrObjList &Cmds, const TParamList &Options,
       C->FindEntry("_shelx_res_file"));
     if (ci != NULL) {
       TBasicApp::NewLogEntry() << "Exporting RES file";
-      TCStrList(ci->lines).SaveToFile(res_name);
+      TEFile::WriteLines(res_name, TCStrList(ci->lines));
     }
   }
 }

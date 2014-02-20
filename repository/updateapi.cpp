@@ -487,7 +487,7 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name,
 void UpdateAPI::GetAvailableMirrors(TStrList& res) const {
   olxstr mirrors_fn = GetMirrorsFileName();
   if( TEFile::Exists(mirrors_fn) )
-    res.LoadFromFile(mirrors_fn);
+    TEFile::ReadLines(mirrors_fn, res);
   TStrList defs = GetDefaultRepositories();
   for( size_t i=0; i < defs.Count(); i++ )  {
     if( res.IndexOf(defs[defs.Count()-i-1]) == InvalidIndex )
