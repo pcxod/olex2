@@ -15,6 +15,7 @@
 #include <string>
 
 #ifdef __WXWIDGETS__
+  #include "wx/wx.h"
   #include "wx/string.h"
   #ifdef _PYTHON
     #ifdef _DEBUG
@@ -24,11 +25,6 @@
     #else
       #include "Python.h"
     #endif
-    #undef isupper
-    #udnef toupper
-    #udnef islower
-    #udnef tolower
-    #udnef isspace
   #endif
 #endif
 

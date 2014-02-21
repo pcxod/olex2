@@ -282,7 +282,8 @@ else:
       env.Append(CCFLAGS = '-D__MAC__')
       if architecture == '64bit':
         env.ParseConfig("wx-config --cxxflags --version=3.0 --static=yes --libs std gl")
-        env.Append(LINKLAGS=['-mmacosx_version_min=10.5'])
+        env.Append(CCFLAGS=['-mmacosx-version-min=10.5'])
+        env.Append(LINKFLAGS=['-mmacosx-version-min=10.5'])
       else:
         env.ParseConfig("wx-config --cxxflags --version=2.9 --static=yes --libs std gl")
       env.Append(FRAMEWORKS=['OpenGL', 'AGL'])
