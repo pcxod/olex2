@@ -40,7 +40,7 @@ namespace PersUtil {
   }
 
   template <class lc> static olxstr ComplexListToStr(const lc& v)  {
-    typedef lc::list_item_type lit;
+    typedef typename lc::list_item_type lit;
     return olxstr(',').Join(v,
       FunctionAccessor::MakeConst(&lit::ToString));
   }

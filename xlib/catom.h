@@ -290,7 +290,7 @@ public:
     const Accessor &accessor;
     const short ref_flags;
     FlagsAnalyser_(const Accessor &accessor_, short _ref_flags)
-      : accessor(accessor), ref_flags(_ref_flags)  {}
+      : accessor(accessor_), ref_flags(_ref_flags)  {}
     template <class Item>
     bool OnItem(const Item& o, size_t) const {
       return (accessor(o).Flags&ref_flags) != 0;
@@ -302,7 +302,7 @@ public:
   }
   static FlagsAnalyser_<DirectAccessor>
   FlagsAnalyser(short flags) {
-    return FlagsAnalyser(DirectAccessor(), flags);
+    return FlagsAnalyser_<DirectAccessor>(DirectAccessor(), flags);
   }
   
   template <class Accessor> struct FlagSetter_ {
@@ -322,7 +322,7 @@ public:
   }
   static FlagSetter_<DirectAccessor>
   FlagSetter(short ref_flags, bool set) {
-    return FlagSetter(DirectAccessor(), ref_flags, set);
+    return FlagSetter_<DirectAccessor>(DirectAccessor(), ref_flags, set);
   }
 
   template <class Accessor> struct TypeAnalyser_ {
@@ -344,11 +344,11 @@ public:
   }
   static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(short z) {
-    return TypeAnalyser(DirectAccessor(), z);
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), z);
   }
   static TypeAnalyser_<DirectAccessor>
   TypeAnalyser(const cm_Element &e) {
-    return TypeAnalyser(DirectAccessor(), e.z);
+    return TypeAnalyser_<DirectAccessor>(DirectAccessor(), e.z);
   }
 
   friend class TAsymmUnit;
