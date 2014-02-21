@@ -15,8 +15,8 @@
 #include <string>
 
 #ifdef __WXWIDGETS__
+  #include "wx/string.h"
   #ifdef _PYTHON
-    #include "wx/string.h"
     #ifdef _DEBUG
       #undef _DEBUG
       #include "Python.h"
