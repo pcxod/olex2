@@ -392,11 +392,10 @@ public:
   }
 
   bool LoadFromFile(const olxstr& FN)  {
-    TStrList S;
-    S.LoadFromFile( FN );
+    TCStrList S = TEFile::ReadCLines(FN);
     if( S.IsEmpty() )  return false;
     for( size_t i=0; i < S.Count(); i++ )  {
-      TStrList Toks(S[i].Replace('\t', ' '), ' ');
+      TCStrList Toks(S[i].Replace('\t', ' '), ' ');
       if( i == 0 )  {
         size_t dim = Toks.Count();
         if( dim == 0 )  return false;
@@ -417,7 +416,7 @@ public:
       for( size_t j=0; j < Fm; j++ )
         T << olxcstr::FormatFloat(5, FData[i][j], true) << '\t';
     }
-    S.SaveToFile(FN);
+    TEFile::WriteLines(FN, S);
   }
 
 //------------------------------------------------------------------------------

@@ -14,13 +14,6 @@
 #include "etbuffer.h"
 
 #ifdef _PYTHON
-#ifdef _DEBUG
-  #undef _DEBUG
-  #include "Python.h"
-  #define _DEBUG
-#else
-  #include "Python.h"
-#endif
 //---------------------------------------------------------------------------
 using namespace olex2;
 typedef void (*pyRegFunc)();

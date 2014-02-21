@@ -16,9 +16,6 @@
 #include "planesort.h"
 #include "xmacro.h"
 #include "cif.h"
-#ifdef __WXWIDGETS__
-#include "wx/wx.h"
-#endif
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\

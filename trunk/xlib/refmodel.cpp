@@ -1492,7 +1492,7 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
       TWIN_mat[1][0], TWIN_mat[1][1], TWIN_mat[1][2],
       TWIN_mat[2][0], TWIN_mat[2][1], TWIN_mat[2][2]));
     for( size_t i=0; i < BASF.Count(); i++ )
-      PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
+      PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i].GetV()));
     PythonExt::SetDictItem(twin, "basf", basf);
     PythonExt::SetDictItem(main, "twin", twin );
   }
