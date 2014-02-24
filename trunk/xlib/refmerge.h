@@ -86,9 +86,10 @@ class RefMerger {
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
-      const size_t from = i;
-      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) )
-        ;
+      const size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
+        i++;
+      }
       const size_t merged_count = i - from;
       bool omitted = false;
       for( size_t j=0; j < omits.Count(); j++ )  {
@@ -164,9 +165,10 @@ class RefMerger {
     double Sdiff = 0, SI = 0, SS = 0, SI_tot = 0;
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
-      size_t from = i;
-      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) )
-        ;
+      size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
+        i++;
+      }
       bool omitted = false;
       const size_t merged_count = i - from;
       for( size_t j=0; j < omits.Count(); j++ )  {
@@ -234,10 +236,11 @@ class RefMerger {
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
-      const size_t from = i;
+      const size_t from = i++;
       size_t real_count=ref->GetBatch() > 0 ? 1 : 0;
-      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) ) {
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
         if (refs[i]->GetBatch() > 0) real_count++;
+        i++;
       }
       const size_t merged_count = i - from;
       bool omitted = false;
@@ -298,10 +301,11 @@ class RefMerger {
     TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
       ref->Analyse(ml);
-      const size_t from = i;
+      const size_t from = i++;
       size_t real_count=ref->GetBatch() > 0 ? 1 : 0;
-      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) ) {
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
         if (refs[i]->GetBatch() > 0) real_count++;
+        i++;
       }
       const size_t merged_count = i - from;
       bool omitted = false;
@@ -360,9 +364,10 @@ class RefMerger {
     double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;
     const TReflection* ref = refs[0];  // reference reflection
     for( size_t i=0; i < ref_cnt; )  {
-      const size_t from = i;
-      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) )
-        ;
+      const size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
+        i++;
+      }
       const size_t merged_count = i - from;
       bool omitted = false;
       for( size_t j=0; j < omits.Count(); j++ )  {
@@ -423,9 +428,10 @@ class RefMerger {
     double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;
     const TReflection* ref = refs[0];
     for( size_t i=0; i < ref_cnt; )  {
-      const size_t from = i;
-      while( (++i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0) )
-        ;
+      const size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
+        i++;
+      }
       const size_t merged_count = i - from;
       bool omitted = false;
       for( size_t j=0; j < omits.Count(); j++ )  {
