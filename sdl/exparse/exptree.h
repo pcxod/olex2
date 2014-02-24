@@ -53,9 +53,12 @@ namespace exparse  {
     */
     template <typename seq_t>
     size_t skip_chars(const olxstr& exp, size_t& ind, const seq_t &seq, size_t seq_l) {
-      size_t el = exp.Length();
+      const size_t el = exp.Length();
       if (ind >= el) return ind;
-      while (olxstr::o_isoneof(exp[ind], seq, seq_l) && ++ind < el);
+      while (olxstr::o_isoneof(exp[ind], seq, seq_l)) {
+        if (++ind == el)
+          break;
+      }
       return ind;
     }
     template <typename seq_t>
@@ -104,15 +107,15 @@ namespace exparse  {
         return;
       }
       size_t start = 0;
-      for( size_t i=0; i < exp.Length(); i++ )  {
+      for (size_t i=0; i < exp.Length(); i++) {
         const olxch ch = exp.CharAt(i);
         if (is_bracket(ch) && !is_escaped(exp, i)) {
           skip_brackets(exp, i);
         }
-        else if (is_quote(ch) && !is_escaped(exp, i))  {  // skip strings
+        else if (is_quote(ch) && !is_escaped(exp, i)) {  // skip strings
           skip_string(exp, i);
         }
-        else if( ch == ',' )  {
+        else if (ch == ',') {
           res.Add(exp.SubString(start, i-start)).TrimWhiteChars();
           start = i+1;
         }

@@ -798,6 +798,9 @@
     <ClCompile Include="..\..\..\xlib\atomref.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\selected.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">
@@ -1068,6 +1071,9 @@
       <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\planesort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\selected.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

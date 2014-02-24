@@ -17,14 +17,15 @@
 #ifdef __WXWIDGETS__
   #include "wx/wx.h"
   #include "wx/string.h"
-  #ifdef _PYTHON
-    #ifdef _DEBUG
-      #undef _DEBUG
-      #include "Python.h"
-      #define _DEBUG
-    #else
-      #include "Python.h"
-    #endif
+#endif
+#ifdef _PYTHON
+  #undef HAVE_SSIZE_T
+  #ifdef _DEBUG
+    #undef _DEBUG
+    #include "Python.h"
+    #define _DEBUG
+  #else
+    #include "Python.h"
   #endif
 #endif
 

@@ -171,8 +171,8 @@ public:
   inline void ClearBonds()  {  Bonds.Clear();  }
 
   inline void SetCapacity(size_t v)  {
-    Nodes.SetCapacity(v);  
-    Bonds.SetCapacity(v);  
+    Nodes.SetCapacity(v);
+    Bonds.SetCapacity(v);
   }
 };
 

@@ -11,10 +11,11 @@
 #define __olx_wxzip_fs_H
 
 #ifdef __WXWIDGETS__
+#include "fsext.h"
+#include <wx/wx.h>
 #include <wx/zipstrm.h>
 #include <wx/mstream.h>
 #include <wx/wfstream.h>
-#include "fsext.h"
 #include "zipfs.h"
 
 struct TZipEntry  {
