@@ -744,9 +744,11 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   specials.Add("P41212", "P43212");
   specials.Add("P4132", "P4321");
   // re-map the reverse
-  size_t s_c = specials.Count();
-  for( size_t i=0; i < s_c; i++ )
-    specials.Add(specials.GetValue(i), specials.GetKey(i));
+  {
+    const olxstr_dict<olxstr> tmp = specials;
+    for (size_t i = 0; i < tmp.Count(); i++)
+      specials.Add(tmp.GetValue(i), tmp.GetKey(i));
+  }
 
   TSAtomPList atoms = xapp.FindSAtoms(Cmds.Text(' '), true);
   SortedObjectList<const TNetwork*, TPointerComparator> frags;
@@ -758,7 +760,7 @@ void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options,
   tm.I() *= -1;
   tm.t = sg->GetInversionCenter()*(-2);
   xapp.XFile().GetLattice().TransformFragments(atoms, tm);
-  s_c = specials.IndexOf(sg->GetName());
+  size_t s_c = specials.IndexOf(sg->GetName());
   if( s_c != InvalidIndex )  {
     TBasicApp::NewLogEntry() << "Changing spacegroup from "
       << specials.GetKey(s_c) << " to " << specials.GetValue(s_c);
