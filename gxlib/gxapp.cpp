@@ -4044,6 +4044,43 @@ struct TGXApp_Transform1 : public TGXApp_Transform {
   vec3d dest;
 };
 //..............................................................................
+struct TGXApp_GBondCreator {
+  TGlRenderer &renderer;
+  const olxstr def_legend;
+  TGraphicsStyle *gbst;
+  TGlMaterial *bc_mat;
+  TGXApp_GBondCreator(TGlRenderer &renderer) : renderer(renderer),
+    def_legend("GrowBonds")
+  {
+    gbst = renderer.GetStyles().FindStyle(def_legend);
+    bc_mat = gbst == 0 ? 0 : gbst->FindMaterial("Bottom cone");
+  }
+  TXGrowLine &Create(const TGXApp_Transform& nt) {
+    TXGrowLine& gl = *(new TXGrowLine(renderer, EmptyString(),
+      *nt.from, *nt.to, nt.transform));
+    TGraphicsStyle *ast = renderer.GetStyles().FindStyle(nt.to->GetType().symbol);
+    olxstr legend = def_legend;
+    if (ast != NULL) {
+      legend = olxstr("GrowBond") << '_' << nt.to->GetType().symbol;
+      if (renderer.GetStyles().FindStyle(legend) == 0) {
+        TGraphicsStyle &st = renderer.GetStyles().NewStyle(legend);
+        st.SetParam(gl.GetPrimitiveMaskName(), 1040, false);
+        TGlMaterial *glm = ast->FindMaterial("Sphere");
+        if (glm != 0)
+          st.SetMaterial("Top stipple cone", *glm);
+        if (bc_mat != 0)
+          glm = bc_mat;
+        else
+          glm = nt.from->Style().FindMaterial("Sphere");
+        if (glm != 0)
+          st.SetMaterial("Bottom cone", *glm);
+      }
+    }
+    gl.Create(legend);
+    return gl;
+  }
+};
+//..............................................................................
 void TGXApp::CreateXGrowLines()  {
   if( !XGrowLines.IsEmpty() )  {  // clear the existing ones...
     TPtrList<TGPCollection> colls; // list of unique collections
@@ -4159,11 +4196,9 @@ void TGXApp::CreateXGrowLines()  {
       }
     }
   }
-  for( size_t i=0; i < tr_list.Count(); i++ )  {
-    TGXApp_Transform1& nt = tr_list[i];
-    TXGrowLine& gl = XGrowLines.Add(
-      new TXGrowLine(*FGlRender, EmptyString(), *nt.from, *nt.to, nt.transform));
-    gl.Create("GrowBonds");
+  TGXApp_GBondCreator bc(GetRender());
+  for (size_t i = 0; i < tr_list.Count(); i++)  {
+    XGrowLines.Add(bc.Create(tr_list[i]));
   }
   Info.DeleteItems(true);
 }
@@ -4239,13 +4274,11 @@ void TGXApp::_CreateXGrowVLines()  {
       }
     }
   }
+  TGXApp_GBondCreator bc(GetRender());
   for( size_t i=0; i < net_tr.Count(); i++ )  {
     const tr_list& ntl = net_tr.GetValue(i);
     for( size_t j=0; j < ntl.Count(); j++ )  {
-      TGXApp_Transform& nt = ntl[j];
-      TXGrowLine& gl = XGrowLines.Add(
-        new TXGrowLine(*FGlRender, EmptyString(), *nt.from, *nt.to, nt.transform));
-      gl.Create("GrowBonds");
+      XGrowLines.Add(bc.Create(ntl[j]));
     }
   }
   Info.DeleteItems(true);
