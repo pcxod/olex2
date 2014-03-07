@@ -232,7 +232,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
       vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
       const vec3i shift = v.Round<int>();
       // collect asymetric unit bonds
-      if( j == 0 && shift.IsNull() )  {  // I
+      if (j == 0 && shift.IsNull()) {  // I
         AU->CellToCartesian(v);
         const double qd = v.QLength();
         if (qd < 1e-4) {
@@ -560,18 +560,20 @@ ConstTypeList<smatd> TUnitCell::GetInRange(const vec3d& to, const vec3d& from,
   double R, bool IncludeI) const
 {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const double ma = olx_min(olx_min(au.GetAxes()[0], au.GetAxes()[1]),
+    au.GetAxes()[2]);
+  const int pr = int(R / ma) + 1, mr = -pr;
   smatd_list retVal;
   R *= R;
   for( size_t i=0; i < MatrixCount(); i++ )  {
     const vec3i shift = -vec3d(Matrices[i] * from - to).Round<int>();
-    for (int ii = -2; ii <= 2; ii++) {
-      for (int ij = -2; ij <= 2; ij++) {
-        for (int ik = -2; ik <= 2; ik++) {
+    for (int ii = mr; ii <= pr; ii++) {
+      for (int ij = mr; ij <= pr; ij++) {
+        for (int ik = mr; ik <= pr; ik++) {
           const vec3i shift1(shift[0] + ii, shift[1] + ij, shift[2] + ik);
           smatd tm = Matrices[i];
           tm.t += shift1;
-          const double D = au.Orthogonalise(tm*from - to)
-            .QLength();
+          const double D = au.Orthogonalise(tm*from - to).QLength();
           if (D < R && D > 0.0001) {
           }
         }
@@ -586,6 +588,9 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
   const TCAtomPList* _atoms) const
 {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  const double ma = olx_min(olx_min(au.GetAxes()[0], au.GetAxes()[1]),
+    au.GetAxes()[2]);
+  const int pr = int(R / ma) + 1, mr = -pr;
   const TCAtomPList& atoms = (_atoms == NULL ? au.GetAtoms() : *_atoms);
   R *= R;
   const size_t ac = atoms.Count();
@@ -595,14 +600,13 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
     if (a.IsDeleted() && !find_deleted)  continue;
     for (size_t j = 0; j < mc; j++) {
       const vec3i shift = -vec3d(Matrices[j] * a.ccrd() - to).Round<int>();
-      for (int ii = -2; ii <= 2; ii++) {
-        for (int ij = -2; ij <= 2; ij++) {
-          for (int ik = -2; ik <= 2; ik++) {
+      for (int ii = mr; ii <= pr; ii++) {
+        for (int ij = mr; ij <= pr; ij++) {
+          for (int ik = mr; ik <= pr; ik++) {
             const vec3i shift1(shift[0] + ii, shift[1] + ij, shift[2] + ik);
             smatd tm = Matrices[j];
             tm.t += shift1;
-            const double D = au.Orthogonalise(tm*a.ccrd() - to)
-              .QLength();
+            const double D = au.Orthogonalise(tm*a.ccrd() - to).QLength();
             if (D < R && D > 0.0001) {
               res.AddNew(atoms[i], tm, au.Orthogonalise(tm*a.ccrd()))
                 .B().SetId(Matrices[j].GetContainerId(), shift1);
@@ -615,7 +619,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
   UnifyAMCList(res);
 }
 //..............................................................................
-void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta, 
+void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
   TTypeList<AnAssociation3<TCAtom*,smatd, vec3d> >& res, const TCAtomPList* _atoms) const
 {
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
@@ -626,36 +630,23 @@ void TUnitCell::_FindBinding(const TCAtom& to, const smatd& ctm, double delta,
   I.I().SetId(0);
   vec3d i_t;
   const vec3d to_center = ctm*to.ccrd();
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i=0; i < ac; i++) {
     const TCAtom& a = *atoms[i];
-    if( a.IsDeleted() )  continue;
-    for( size_t j=0; j < mc; j++ )  {
-      vec3d vec = Matrices[j] * a.ccrd();
-      vec3d V1(vec-to_center);
-      const vec3i shift = -V1.Round<int>();
-      if (i == 0) i_t = shift;
-      const double qD = au.CellToCartesian(V1 += shift).QLength();
-      if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, Matrices[j], qD, delta) )  {
-        smatd& m = res.AddNew(atoms[i], Matrices[j], au.CellToCartesian(vec += shift)).B();
-        m.t += shift;
-        m.SetId(Matrices[j].GetContainerId(), shift);
-      }
-    }
-    for( int ii=-1; ii <= 1; ii++ )  {
-      for( int ij=-1; ij <= 1; ij++ ) {
-        for( int ik=-1; ik <= 1; ik++ )  {
-          if (ii == 0 && ij == 0 && ik == 0) {
-            if (i_t.IsNull(1e-3))
-              continue;
-          }
-          const vec3i shift(ii, ij, ik);
-          const vec3d vec = au.Orthogonalise(a.ccrd() + shift - to_center);
-          const double qD = vec.QLength();
-          if( qD > 1e-6 && TNetwork::BondExistsQ(to, a, I, qD, delta) )  {
-            smatd& m = res.AddNew(atoms[i]).B().I();
-            m.t += shift;
-            m.SetId(0, shift);
-            res.GetLast().C() = au.Orthogonalise(a.ccrd() + shift);
+    if (a.IsDeleted())  continue;
+    for (size_t j = 0; j < mc; j++) {
+      const vec3i shift = -vec3d(Matrices[j] * a.ccrd() - to_center).Round<int>();
+      for (int ii = -1; ii <= 1; ii++)  {
+        for (int ij = -1; ij <= 1; ij++) {
+          for (int ik = -1; ik <= 1; ik++)  {
+            const vec3i shift1(shift[0] + ii, shift[1] + ij, shift[2] + ik);
+            smatd tm = Matrices[j];
+            tm.t += shift1;
+            const double qD = au.Orthogonalise(tm*a.ccrd() - to_center)
+              .QLength();
+            if (qD > 1e-6 && TNetwork::BondExistsQ(to, a, Matrices[j], qD, delta)) {
+              res.AddNew(atoms[i], tm, au.Orthogonalise(tm*a.ccrd()))
+                .B().SetId(Matrices[j].GetContainerId(), shift1);
+            }
           }
         }
       }

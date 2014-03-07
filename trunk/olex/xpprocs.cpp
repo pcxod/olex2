@@ -992,29 +992,36 @@ void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options,
   TMacroError &Error)
 {
   olxstr m = Options.FindValue('m');
-  if( !m.IsEmpty() )  {
-    if( m.Equalsi("info") )
-      FGlConsole->SetPrintMaterial(&InfoFontColor);
-    else if( m.Equalsi("warning") )
-      FGlConsole->SetPrintMaterial(&WarningFontColor);
-    else if( m.Equalsi("error") )
-      FGlConsole->SetPrintMaterial(&ErrorFontColor);
-    else if( m.Equalsi("exception") )
-      FGlConsole->SetPrintMaterial(&ExceptionFontColor);
+  TGlMaterial *mat = NULL;
+  if (!m.IsEmpty()) {
+    if (m.Equalsi("info"))
+      mat = &InfoFontColor;
+    else if (m.Equalsi("warning"))
+      mat = &WarningFontColor;
+    else if (m.Equalsi("error"))
+      mat = &ErrorFontColor;
+    else if (m.Equalsi("exception"))
+      mat = &ExceptionFontColor;
   }
-  TBasicApp::NewLogEntry() << Cmds.Text(' ');
-  if (Options.Contains('c'))
+  FGlConsole->PrintText(TStrList(Cmds), mat, true);
+  FGlConsole->SetSkipPosting(true);
+  TBasicApp::NewLogEntry() << Cmds;
+  if (Options.GetBoolOption('c'))
     FXApp->ToClipboard(Cmds.Text(' '));
 }
 //..............................................................................
-void TMainForm::macPost(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( FXApp == NULL || FGlConsole == NULL )  return;
-  TBasicApp::NewLogEntry() << Cmds.Text(' ');
+void TMainForm::macPost(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
+  if (FXApp == NULL || FGlConsole == NULL)  return;
+  TBasicApp::NewLogEntry() << Cmds;
   FXApp->Draw();
   wxTheApp->Dispatch();
 }
 //..............................................................................
-void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options,
+  TMacroError &Error)
+{
   Close(false);
 }
 //..............................................................................
@@ -1153,8 +1160,8 @@ void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  bool Asyn = !Options.Contains('s'), // synchronously
-    Cout = !Options.Contains('o'),    // catch output
+  bool Asyn = !Options.GetBoolOption('s'), // synchronously
+    Cout = !Options.GetBoolOption('o'),    // catch output
     quite = Options.GetBoolOption('q');
 
   olxstr dubFile(Options.FindValue('s',EmptyString()));
