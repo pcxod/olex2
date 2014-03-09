@@ -357,6 +357,8 @@ TAG_HANDLER_PROC(tag)  {
       flags = wxTE_PROCESS_ENTER;
     if (GetBoolAttribute(tag, "PASSWORD"))
       flags |= wxTE_PASSWORD;
+    if (GetBoolAttribute(tag, "READONLY"))
+      flags |= wxTE_READONLY;
     TTextEdit *Text = new TTextEdit(html, flags);
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
