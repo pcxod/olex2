@@ -2870,8 +2870,8 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     height = Options.FindValue("h", "200").ToInt(),
     x = Options.FindValue("x", "0").ToInt(),
     y = Options.FindValue("y", "0").ToInt();
-  olxstr border = Options.FindValue("b"), 
-    title = Options.FindValue("t"), 
+  olxstr border = Options.FindValue("b"),
+    title = Options.FindValue("t"),
     onDblClick = Options.FindValue("ondblclick"),
     onSize = Options.FindValue("onsize");
   int iBorder = 0;
@@ -2921,7 +2921,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   pd->Html->OnKey.Add(this, ID_HTMLKEY);
   pd->Html->OnDblClick.Add(this, ID_ONLINK);
   pd->Html->OnSize.Add(this, ID_ONLINK);
-  if( !Options.Contains('s') )
+  if (!Options.GetBoolOption('s'))
     dlg->Show();
 }
 //..............................................................................

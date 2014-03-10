@@ -362,7 +362,13 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     else if (SL[i].Contains("Mean shift/esd")) {
       TStrList toks(SL[i], ' ');
       if (toks.Count() < 4 || !toks[3].IsNumber()) continue;
-      params("mean_shift", toks[3].ToDouble());
+      params("mean_shift/esd", toks[3].ToDouble());
+      if (toks.Count() > 8) {
+        params("max_shift/esd", toks[6]);
+        params("max_shift/esd_parameter", toks[8]);
+        if (toks.Count() > 9)
+          params("max_shift/esd_object", toks[9]);
+      }
       params_found++;
     }
     else if (SL[i].Contains("N      value        esd    shift/esd  parameter")) {
