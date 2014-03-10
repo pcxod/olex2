@@ -565,7 +565,7 @@ ConstTypeList<smatd> TUnitCell::GetInRange(const vec3d& to, const vec3d& from,
   const int pr = int(R / ma) + 1, mr = -pr;
   smatd_list retVal;
   R *= R;
-  for( size_t i=0; i < MatrixCount(); i++ )  {
+  for (size_t i=0; i < MatrixCount(); i++) {
     const vec3i shift = -vec3d(Matrices[i] * from - to).Round<int>();
     for (int ii = mr; ii <= pr; ii++) {
       for (int ij = mr; ij <= pr; ij++) {
@@ -575,6 +575,7 @@ ConstTypeList<smatd> TUnitCell::GetInRange(const vec3d& to, const vec3d& from,
           tm.t += shift1;
           const double D = au.Orthogonalise(tm*from - to).QLength();
           if (D < R && D > 0.0001) {
+            retVal.AddCopy(tm).SetId(Matrices[i].GetContainerId(), shift1);
           }
         }
       }
