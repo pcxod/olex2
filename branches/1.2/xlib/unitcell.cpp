@@ -614,14 +614,6 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
                 .B().SetId(Matrices[j].GetContainerId(), shift1);
             }
           }
-          const vec3i shift(ii, ij, ik);
-          const double D = au.Orthogonalise(a.ccrd() + shift - to).QLength();
-          if( D < R && D > 0.0001 )  {
-            smatd& m = res.AddNew(atoms[i]).B().I();
-            m.t += shift;
-            m.SetId(0, shift);
-            res.GetLast().C() = au.Orthogonalise(a.ccrd() + shift);
-          }
         }
       }
     }
