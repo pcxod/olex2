@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2009 Pascal Parois and O. Dolomanov (OlexSys)                 *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
