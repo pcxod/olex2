@@ -2675,7 +2675,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   processFunction(ScenesDir);
   XLibMacros::CurrentDir() = TEFile::ExpandRelativePath(
     exparse::parser_util::unquote(I->FindField("Current")));
-  processFunction(XLibMacros::CurrentDir());
+  if (!TEFile::IsAbsolutePath(XLibMacros::CurrentDir()))
+    processFunction(XLibMacros::CurrentDir());
 
   I = DF.Root().FindItem("HTML");
   if( I != NULL )  {

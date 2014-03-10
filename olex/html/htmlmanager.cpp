@@ -440,8 +440,15 @@ void THtmlManager::macHide(TStrObjList &Cmds, const TParamList &Options,
     //E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  if( html->Dialog->IsShown() )
+  if (html->Dialog->IsShown()) {
+    if (html->Dialog->IsModal()) {
+      E.ProcessingError(__OlxSrcInfo,
+        "Use html.EndModal to close a modal dialog!");
+      return;
+    }
     html->Dialog->Show(false);
+  }
+
 }
 //.............................................................................
 void THtmlManager::macDump(TStrObjList &Cmds, const TParamList &Options,
