@@ -1289,23 +1289,23 @@ void XElementLib::ExpandShortcut(const olxstr& sh, ContentList& res, double cnt)
 ContentList& XElementLib::SortContentList(ContentList& cl)  {
   const cm_Element *c_type = NULL, *h_type = NULL;
   ElementPList elms;
-  for( size_t i=0; i < cl.Count(); i++ )  {
+  for (size_t i = 0; i < cl.Count(); i++) {
     elms.Add(cl[i].element);
-    if( *elms.GetLast() == iCarbonZ )
+    if (*elms.GetLast() == iCarbonZ)
       c_type = elms.GetLast();
-    else if( *elms.GetLast() == iHydrogenZ )
+    else if (*elms.GetLast() == iHydrogenZ)
       h_type = elms.GetLast();
   }
-  QuickSorter::Sort(elms,
-    ElementSymbolSorter(),
-    SyncSwapListener::Make(cl));
-  if( c_type != NULL && elms.Count() > 1 )  {
-    size_t ind = elms.IndexOf(c_type);
-    cl.Move(ind, 0);
-  }
-  if( h_type != NULL && elms.Count() > 2 )  {
-    size_t ind = elms.IndexOf(h_type);
-    cl.Move(ind, 1);
+  QuickSorter::Sort(elms, ElementSymbolSorter(), SyncSwapListener::Make(cl));
+  if (c_type != NULL && h_type != NULL) {
+    if (c_type != NULL && elms.Count() > 1) {
+      size_t ind = elms.IndexOf(c_type);
+      cl.Move(ind, 0);
+    }
+    if (h_type != NULL && elms.Count() > 2) {
+      size_t ind = elms.IndexOf(h_type);
+      cl.Move(ind, 1);
+    }
   }
   return cl;
 }
