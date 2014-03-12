@@ -327,7 +327,7 @@ public:
   inline T const & operator [] (size_t index) const {  return Rows[index];  }
 
   template <class Comparator> void SortRows(const Comparator& cmp)  {
-    QuickSorter::Sort(Rows, cmp, SyncSwapListener::Make(RowNames));
+    QuickSorter::Sort(Rows, cmp, SyncSortListener::Make(RowNames));
   }
   void SwapRows(size_t r1, size_t r2)  {
     Rows.Swap(r1, r2);

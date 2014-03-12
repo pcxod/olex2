@@ -1448,14 +1448,14 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
   PythonExt::SetDictItem(hklf, "s", Py_BuildValue("d", HKLF_s));
   PythonExt::SetDictItem(hklf, "m", Py_BuildValue("d", HKLF_m));
   PythonExt::SetDictItem(hklf, "wt", Py_BuildValue("d", HKLF_wt));
-  PythonExt::SetDictItem(hklf, "matrix", 
+  PythonExt::SetDictItem(hklf, "matrix",
     Py_BuildValue("(ddd)(ddd)(ddd)", HKLF_mat[0][0], HKLF_mat[0][1], HKLF_mat[0][2],
     HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
     HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
   if( HKLF > 4 )  {  // special case, twin entry also has BASF!
     PyObject* basf = PyTuple_New(BASF.Count());
     for( size_t i=0; i < BASF.Count(); i++ )
-      PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i].GetV()) );
+      PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i].GetV()));
     PythonExt::SetDictItem(hklf, "basf", basf);
   }
   PythonExt::SetDictItem(main, "hklf", hklf);
@@ -1494,7 +1494,7 @@ PyObject* RefinementModel::PyExport(bool export_conn)  {
     for( size_t i=0; i < BASF.Count(); i++ )
       PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i].GetV()));
     PythonExt::SetDictItem(twin, "basf", basf);
-    PythonExt::SetDictItem(main, "twin", twin );
+    PythonExt::SetDictItem(main, "twin", twin);
   }
   if( SHEL_set )  {
     PyObject* shel;

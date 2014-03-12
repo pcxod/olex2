@@ -159,17 +159,27 @@ PyObject* pyExpMac(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
+  TStrList rv;
+  olxstr fn = TBasicApp::GetBaseDir()+"plugins.xld";
 #ifdef _CONSOLE
-  return PythonExt::PyNone();
+  if (TEFile::Exists(fn)) {
+    TDataFile df;
+    df.LoadFromXLFile(fn);
+    TDataItem *pi = df.Root().FindItem("Plugin");
+    if (pi != NULL) {
+      for (size_t i=0; i < pi->ItemCount(); i++)
+        rv.Add(pi->GetItemByIndex(i).GetName());
+    }
+  }
 #else
   if (!AOlex2App::HasInstance())
     return PythonExt::PyNone();
-  TStrList rv(AOlex2App::GetInstance().GetPluginList());
-  PyObject* af = PyTuple_New( rv.Count() );
+  rv = AOlex2App::GetInstance().GetPluginList();
+#endif
+  PyObject* af = PyTuple_New(rv.Count());
   for( size_t i=0; i < rv.Count(); i++ )
     PyTuple_SetItem(af, i, PythonExt::BuildString(rv[i]));
   return af;
-#endif
 }
 //..............................................................................
 PyObject* pyTranslate(PyObject* self, PyObject* args)  {

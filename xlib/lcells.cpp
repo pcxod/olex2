@@ -353,7 +353,7 @@ ConstTypeList<Index::ResultEntry> Index::Search(const CellInfo &cell,
   }
   // search by cell volume
   QuickSorter::Sort(all, CellInfo::VolumeComparator(),
-    SyncSwapListener::Make(usage));
+    SyncSortListener::Make(usage));
   const size_t vi = sorted::FindInsertIndex(
     all, CellInfo::VolumeComparator(), to_search);
   // go right
