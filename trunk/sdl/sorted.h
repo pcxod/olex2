@@ -23,14 +23,14 @@ namespace sorted {
       if( (to-from) == 1 )  return to;
       const size_t index = (to+from)/2;
       const int cr = cmp.Compare(list[index], entity);
-      if( cr < 0 )  
+      if( cr < 0 )
         from = index;
       else  {
-        if( cr > 0 )  
+        if( cr > 0 )
           to  = index;
         else
-          if( cr == 0 )  
-            return index;  
+          if( cr == 0 )
+            return index;
       }
     }
     return InvalidIndex;  // should never happen - infinite loop above!
@@ -42,7 +42,7 @@ namespace sorted {
   {
     size_t from = 0, to = list.Count()-1;
     while( true )  {
-      if( (to-from) == 1 )  {  
+      if( (to-from) == 1 )  {
         if( cmp.Compare(list[from], entity) == 0 )  {
           exists = true;
           return from;
@@ -56,15 +56,15 @@ namespace sorted {
       }
       const size_t index = (to+from)/2;
       const int cr = cmp.Compare(list[index], entity);
-      if( cr < 0 )  
+      if( cr < 0 )
         from = index;
       else  {
-        if( cr > 0 )  
+        if( cr > 0 )
           to  = index;
         else
-          if( cr == 0 )  {  
-            exists = true;  
-            return index;  
+          if( cr == 0 )  {
+            exists = true;
+            return index;
           }
       }
     }
@@ -76,7 +76,7 @@ namespace sorted {
     const KeyC &entity)
   {
     if( list.Count() == 0 )  return InvalidIndex;
-    if( list.Count() == 1 )  
+    if( list.Count() == 1 )
       return cmp.Compare(list[0],entity) == 0 ? 0 : InvalidIndex;
     size_t from = 0, to = list.Count()-1;
     const int from_cr = cmp.Compare(list[from], entity);
@@ -87,16 +87,16 @@ namespace sorted {
     if( to_cr < 0  )  return InvalidIndex;
     while( true ) {
       const size_t index = (to+from)/2;
-      if( index == from || index == to)  
+      if( index == from || index == to)
         return InvalidIndex;
       const int cr = cmp.Compare(list[index], entity);
-      if( cr < 0 )  
+      if( cr < 0 )
         from = index;
       else  {
-        if( cr > 0 )  
+        if( cr > 0 )
           to  = index;
         else  {
-          if( cr == 0 )  
+          if( cr == 0 )
             return index;
         }
       }
@@ -134,37 +134,37 @@ namespace sorted {
   bool AddUnique(ListClass &list, const Comparator &cmp,
     TypeClass entry, size_t *pos=NULL)
   {
-    if( list.Count() == 0 )  {  
-      list.Add(entry);  
+    if( list.Count() == 0 )  {
+      list.Add(entry);
       if( pos != NULL )  *pos = 0;
-      return true;  
+      return true;
     }
     if( list.Count() == 1 )  {
       const int cmp_val = cmp.Compare(list[0], entry);
-      if(  cmp_val < 0 )  {  
-        list.Add(entry);  
+      if(  cmp_val < 0 )  {
+        list.Add(entry);
         if( pos != NULL )  *pos = 1;
-        return true;  
+        return true;
       }
-      else if( cmp_val > 0 )  {  
-        list.Insert(0, entry);  
-        if( pos != NULL )  *pos = 0;      
-        return true;  
-      }
-      else  {  
+      else if( cmp_val > 0 )  {
+        list.Insert(0, entry);
         if( pos != NULL )  *pos = 0;
-        return false;  
+        return true;
+      }
+      else  {
+        if( pos != NULL )  *pos = 0;
+        return false;
       }
     }
     if( cmp.Compare(list[0],entry) > 0 )  {  // smaller than the first
-      list.Insert(0, entry);  
+      list.Insert(0, entry);
       if( pos != NULL )  *pos = 0;
-      return true; 
+      return true;
     }
     if( cmp.Compare(list.GetLast(), entry) < 0 )  {  // larger than the last
-      list.Add(entry);  
+      list.Add(entry);
       if( pos != NULL ) *pos = list.Count()-1;
-      return true; 
+      return true;
     }
     bool exists = false;
     size_t ps = FindInsertIndexEx(list, cmp, entry, exists);

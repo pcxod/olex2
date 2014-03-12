@@ -86,7 +86,7 @@ public:
   double GetWeight(size_t i) const {  return Crds[i].GetB();  }
   void _PlaneSortByAtomTags() {
     BubbleSorter::Sort(Crds, AtomTagAccessor(), TPrimitiveComparator(),
-      DummySwapListener());
+      DummySortListener());
   }
   /* returns inverse intersects with the lattice vectors, the vector is divided
   by modulus of the smallest non-zero value. Takes the orthogonalisation matrix

@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_esort_H
 #define __olx_sdl_esort_H
 #include "ebase.h"
+#include "equeue.h"
 BeginEsdlNamespace()
 
 /* a comparator for primitive types, or object having < and > operators only
@@ -175,20 +176,22 @@ struct ReverseComparator {
 };
 
 //.............................................................................
-struct DummySwapListener  {
+struct DummySortListener {
   static void OnSwap(size_t, size_t)  {}
+  static void OnMove(size_t, size_t)  {}
 };
 
-struct SyncSwapListener {
-  template <typename List> struct SyncSwapListener_ {
+struct SyncSortListener {
+  template <typename List> struct SyncSortListener_ {
     List& list;
-    SyncSwapListener_(List& _list) : list(_list)  {}
+    SyncSortListener_(List& _list) : list(_list)  {}
     void OnSwap(size_t i, size_t j) const {  list.Swap(i, j);  }
+    void OnMove(size_t i, size_t j) const {  list.Move(i, j);  }
   };
-  template <class list_t> static SyncSwapListener_<list_t> Make(
+  template <class list_t> static SyncSortListener_<list_t> Make(
     list_t &l)
   {
-    return SyncSwapListener_<list_t>(l);
+    return SyncSortListener_<list_t>(l);
   }
 };
 //.............................................................................
@@ -215,7 +218,7 @@ struct SortInterface {
     Sorter::Make(list,
       TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
       cmp,
-      DummySwapListener()).Sort();
+      DummySortListener()).Sort();
   }
   template <class list_t>
   static void Sort(list_t &list)
@@ -223,7 +226,7 @@ struct SortInterface {
     Sorter::Make(list,
       TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
       TComparableComparator(),
-      DummySwapListener()).Sort();
+      DummySortListener()).Sort();
   }
 
   template <class list_t, class item_t>
@@ -232,7 +235,7 @@ struct SortInterface {
     Sorter::Make(list,
       TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
       FunctionComparator::Make(f),
-      DummySwapListener()).Sort();
+      DummySortListener()).Sort();
   }
   template <class list_t, class base_t, class item_t>
   static void SortMF(list_t &list,
@@ -242,7 +245,7 @@ struct SortInterface {
     Sorter::Make(list,
       TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
       FunctionComparator::MakeConst(base, f),
-      DummySwapListener()).Sort();
+      DummySortListener()).Sort();
   }
 };
 struct QuickSorter : public SortInterface<QuickSorter> {
@@ -254,58 +257,79 @@ struct QuickSorter : public SortInterface<QuickSorter> {
       : list(list_), accessor(accessor_), listener(listener_),
         cmp(comparator_)
     {}
-    void Sort()  {
-      if( list.list.Count() < 2 )  return;
-      DoSort(0, list.list.Count()-1);
+    void Sort() {
+      size_t cnt = list.list.Count();
+      if (cnt < 2)  return;
+      DoSort(0, cnt - 1);
     }
   protected:
     typename list_t::InternalAccessor list;
     const accessor_t& accessor;
     const listener_t& listener;
     const comparator_t& cmp;
-    void DoSort(size_t lo0, size_t hi0)  {
-      const size_t diff = hi0-lo0;
-      if( diff == 1 )  {
-        if( cmp.Compare(
-          olx_ref::get(accessor(list[lo0])),
-          olx_ref::get(accessor(list[hi0]))) > 0 )
-        {
-          listener.OnSwap(lo0, hi0);
-          list.list.Swap(lo0, hi0);
+    void DoSort(size_t lo0_, size_t hi0_) {
+      typedef AnAssociation3<size_t, size_t, bool> d_t;
+      TQueue<d_t> stack;
+      stack.Push(d_t(lo0_, hi0_, true));
+      while (!stack.IsEmpty()) {
+        const d_t tv = stack.Pop();
+        const size_t diff = tv.GetB() - tv.GetA();
+        if (diff == 1) {
+          if (cmp.Compare(
+            olx_ref::get(accessor(list[tv.GetA()])),
+            olx_ref::get(accessor(list[tv.GetB()]))) > 0)
+          {
+            listener.OnSwap(tv.GetA(), tv.GetB());
+            list.list.Swap(tv.GetA(), tv.GetB());
+          }
         }
-      }
-      else if( diff > 0 ) {
-        size_t lo = lo0;
-        size_t hi = hi0;
-        const size_t m_ind = (lo0 + hi0)/2;
-        typename accessor_t::return_type mid = accessor(list[m_ind]);
-        while( lo <= hi )  {
-          while( cmp.Compare(
-            olx_ref::get(accessor(list[lo])),
-            olx_ref::get(mid)) < 0 )
-          {
-            if( ++lo >= hi0 )  break;
-          }
-          while( cmp.Compare(
-            olx_ref::get(accessor(list[hi])),
-            olx_ref::get(mid)) > 0 )
-          {
-            if( --hi <= lo0 )  break;
-          }
-          if( lo <= hi )  {
-            if( lo != hi )  {
-              listener.OnSwap(lo, hi);
-              list.list.Swap(lo, hi);
+        else if (diff > 0) {
+          size_t pi = tv.GetA() + (diff >> 1);
+          if (tv.GetC()) { // try to fix pivot
+            size_t inc = (diff >> 2), li = pi - inc, ri = pi + inc;
+            int c1 = cmp.Compare(
+              olx_ref::get(accessor(list[pi])),
+              olx_ref::get(accessor(list[li])));
+            int c2 = cmp.Compare(
+              olx_ref::get(accessor(list[pi])),
+              olx_ref::get(accessor(list[ri])));
+            if ((c1 > 0 && c2 > 0) || (c1 < 0 && c2 < 0)) {
+              int c3 = cmp.Compare(
+                olx_ref::get(accessor(list[li])),
+                olx_ref::get(accessor(list[ri])));
+              if (c1 < 0) { // li/ri < mi
+                pi = (c3 < 0 ? ri : li);
+              }
+              else { // mi < li/ri
+                pi = (c3 < 0 ? li : ri);
+              }
             }
-            lo++;
-            if( --hi == InvalidIndex )
-              break;
           }
+          typename accessor_t::return_type mid = accessor(list[pi]);
+          listener.OnSwap(pi, tv.GetB());
+          list.list.Swap(pi, tv.GetB());
+          pi = tv.GetA();
+          for (size_t i = tv.GetA(); i < tv.GetB(); i++) {
+            if (cmp.Compare(
+              olx_ref::get(accessor(list[i])),
+              olx_ref::get(mid)) <= 0)
+            {
+              listener.OnSwap(i, pi);
+              list.list.Swap(i, pi);
+              pi++;
+            }
+          }
+          listener.OnSwap(pi, tv.GetB());
+          list.list.Swap(pi, tv.GetB());
+          size_t l1 = pi - tv.GetA(), l2 = tv.GetB() - pi,
+            ml = olx_max(l1, l2);
+          bool sp = (l1 == 0 || l2 == 0) ? true
+            : (ml > 32 && (double)ml / (double)olx_min(l1, l2) >= 1.75);
+          if (l2 > 0)
+            stack.Push(d_t(pi + 1, tv.GetB(), sp ? l2 == ml : false));
+          if (l1 > 0)
+            stack.Push(d_t(tv.GetA(), pi - 1, sp ? l1 == ml : false));
         }
-        if( lo0 < hi && hi != InvalidIndex )
-          DoSort(lo0, hi);
-        if( lo < hi0 )
-          DoSort(lo, hi0);
       }
     }
   };
@@ -329,20 +353,20 @@ struct BubbleSorter : public SortInterface<BubbleSorter> {
       : list(list_), accessor(accessor_), cmp(cmp_),
         listener(listener_)  {}
     void Sort()  {
-      bool changes = true;
-      const size_t lc = list.list.Count();
-      while( changes )  {
-        changes = false;
-        for( size_t i=1; i < lc; i++ )  {
-          if( cmp.Compare(
-            olx_ref::get(accessor(list[i-1])),
-            olx_ref::get(accessor(list[i]))) > 0 )
+      size_t lc = list.list.Count();
+      while (lc > 0) {
+        size_t nlc = 0;
+        for (size_t i=0; i < lc-1; i++) {
+          if (cmp.Compare(
+            olx_ref::get(accessor(list[i+1])),
+            olx_ref::get(accessor(list[i]))) < 0)
           {
-            list.list.Swap(i-1, i);
-            listener.OnSwap(i-1, i);
-            changes = true;
+            list.list.Swap(i+1, i);
+            listener.OnSwap(i+1, i);
+            nlc = i+1;
           }
         }
+        lc = nlc;
       }
     }
   protected:
@@ -359,6 +383,78 @@ struct BubbleSorter : public SortInterface<BubbleSorter> {
   {
     return BubbleSorter_<list_t,accessor_t,comparator_t,listener_t>(
       list, accessor, cmp, listener);
+  }
+};
+//.............................................................................
+struct MoveSorter : public SortInterface<MoveSorter> {
+  template <class list_t, class accessor_t,
+  class comparator_t, class listener_t>
+  struct MoveSorter_  {
+    typedef typename accessor_t::return_type item_t;
+    MoveSorter_(list_t &list_, const accessor_t &accessor_,
+    const comparator_t &cmp_, const listener_t &listener_)
+    : list(list_), accessor(accessor_), cmp(cmp_),
+      listener(listener_)
+    {}
+    size_t findIndex(size_t sz) {
+      if (cmp.Compare(olx_ref::get(list[sz]),
+          olx_ref::get(accessor(list[0]))) <= 0)
+      {
+        return 0;
+      }
+      if (cmp.Compare(olx_ref::get(list[sz]),
+          olx_ref::get(accessor(list[sz-1]))) >= 0)
+      {
+        return sz;
+      }
+      size_t from = 0, to = sz-1;
+      while (true) {
+        if ((to-from) == 1) return to;
+        const size_t index = from + (to-from) / 2;
+        const int cr = cmp.Compare(olx_ref::get(list[index]),
+          olx_ref::get(accessor(list[sz])));
+        if (cr < 0)
+          from = index;
+        else if (cr > 0)
+          to = index;
+        else
+          return index;
+      }
+      return from;
+    }
+    void Sort() {
+      size_t lc = list.list.Count();
+      if (lc < 2) return;
+      if (cmp.Compare(olx_ref::get(list[0]),
+        olx_ref::get(accessor(list[1]))) > 0)
+      {
+        list.list.Move(1, 0);
+        listener.OnMove(1, 0);
+      }
+      size_t sorted_sz = 2;
+      while (sorted_sz != lc) {
+        size_t np = findIndex(sorted_sz);
+        if (np != sorted_sz) {
+          list.list.Move(sorted_sz, np);
+          listener.OnMove(sorted_sz, np);
+        }
+        sorted_sz++;
+      }
+    }
+  protected:
+    typename list_t::InternalAccessor list;
+    const accessor_t &accessor;
+    const comparator_t &cmp;
+    const listener_t &listener;
+  };
+  template <class list_t, class accessor_t,
+  class comparator_t, class listener_t> static
+    MoveSorter_<list_t, accessor_t, comparator_t, listener_t> Make(
+    list_t &list, const accessor_t &accessor,
+    const comparator_t &cmp, const listener_t &listener)
+  {
+      return MoveSorter_<list_t, accessor_t, comparator_t, listener_t>(
+        list, accessor, cmp, listener);
   }
 };
 //.............................................................................
