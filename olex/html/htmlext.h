@@ -73,21 +73,21 @@ protected:
   THtmlSwitch* Root;
   olxdict<olxstr, AnAssociation3<AOlxCtrl*,wxWindow*,bool>,
     olxstrComparator<true> > Objects;
-  TTypeList<AnAssociation2<AOlxCtrl*,wxWindow*> > Traversables;
-  TSStrPObjList<olxstr,size_t,true> SwitchStates;
+  TTypeList<olx_pair_t<AOlxCtrl*,wxWindow*> > Traversables;
+  olxstr_dict<size_t,true> SwitchStates;
   TTypeList<TStrList> Groups;
   olxstr FocusedControl;
   class TObjectsState  {
-    TSStrPObjList<olxstr,TSStrStrList<olxstr,false>*, true> Objects;
+    olxstr_dict<olxstr_dict<olxstr,false>*, true> Objects;
     THtml& html;
   public:
     TObjectsState(THtml& htm) : html(htm) { }
     ~TObjectsState();
-    TSStrStrList<olxstr,false>* FindProperties(const olxstr& cname) {
+    olxstr_dict<olxstr,false>* FindProperties(const olxstr& cname) {
       const size_t ind = Objects.IndexOf(cname);
-      return (ind == InvalidIndex) ? NULL : Objects.GetObject(ind);
+      return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind);
     }
-    TSStrStrList<olxstr,false>* DefineControl(const olxstr& name,
+    olxstr_dict<olxstr,false>* DefineControl(const olxstr& name,
       const std::type_info& type);
     void SaveState();
     void RestoreState();
@@ -181,15 +181,15 @@ public:
     bool Manage = false);
   AOlxCtrl *FindObject(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
-    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).A();
+    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).a;
   }
   wxWindow *FindObjectWindow(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
-    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).B();
+    return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind).b;
   }
   size_t ObjectCount() const {  return Objects.Count();  }
-  AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).A();  }
-  wxWindow* GetWindow(size_t i)  {  return Objects.GetValue(i).B();  }
+  AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).a;  }
+  wxWindow* GetWindow(size_t i)  {  return Objects.GetValue(i).b;  }
   const olxstr& GetObjectName(size_t i) const {  return Objects.GetKey(i);  }
   bool IsObjectManageble(size_t i) const {
     return Objects.GetValue(i).GetC();

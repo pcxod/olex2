@@ -18,7 +18,7 @@ const_strlist TStopWatchManager::Record::prepareList(size_t level)  {
   (out.Add(ident) << "Profiling information for " << FunctionName)
     .RightPadding(75, ' ', true) << termination_time-creation_time << "ms";
   if (!steps.IsEmpty() && steps.GetLast().GetC() == 0)
-    steps.GetLast().C() = termination_time;
+    steps.GetLast().c = termination_time;
   for (size_t i=0; i < sequence.Count(); i++) {
     size_t idx = olx_abs(sequence[i])-1;
     if (sequence[i] < 0) {

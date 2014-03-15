@@ -155,7 +155,7 @@ integer which allows to access the texture object, but must not be used to bind
 textures - just use texture::SetCurrent()
 */
 class TTextureManager : public IEObject  {
-  TPSTypeList<GLuint, TGlTexture*> Textures;
+  sorted::PrimitiveAssociation<GLuint, TGlTexture*> Textures;
   TTypeList<TGlTexture::Data> TextureData;
 public:
    TTextureManager()  {}
@@ -179,12 +179,12 @@ public:
   //int GetTextureIndex( const TGlTexture& tex) const {  return Textures.}
   TGlTexture* FindTexture(GLuint textureIndex)  {
     const size_t index = Textures.IndexOf(textureIndex);
-    return Textures.GetObject(index);
+    return Textures.GetValue(index);
   }
   TGlTexture* FindByName(const olxstr &name)  {
     for (size_t i=0; i < Textures.Count(); i++) {
-      if (Textures.GetObject(i)->GetName() == name)
-        return Textures.GetObject(i);
+      if (Textures.GetValue(i)->GetName() == name)
+        return Textures.GetValue(i);
     }
     return NULL;
   }

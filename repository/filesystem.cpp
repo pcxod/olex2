@@ -148,7 +148,7 @@ AFileSystem& TFSItem::GetIndexFS() const  {  return Index.IndexFS; }
 //.............................................................................
 void TFSItem::Clear()  {
   for( size_t i=0; i < Items.Count(); i++ )
-    delete Items.GetObject(i);  // destructor calls Clear()
+    delete Items.GetValue(i);  // destructor calls Clear()
   Items.Clear();
   Name.SetLength(0);
   DateTime = 0;
@@ -160,7 +160,7 @@ size_t TFSItem::UpdateDigest()  {
   if( IsFolder() )  {
     size_t rv = 0;
     for( size_t i=0; i < Items.Count(); i++ )
-      rv += Items.GetObject(i)->UpdateDigest();
+      rv += Items.GetValue(i)->UpdateDigest();
     return rv;
   }
   try  {
@@ -182,14 +182,14 @@ void TFSItem::operator >> (TStrList& S) const  {
   str << ',' << GetSize() << ',' << GetDigest() << ",{";
   for( size_t i=0; i < Properties.Count(); i++ )  {
     str << Properties[i];
-    if( (i+1) < Properties.Count() )  
+    if( (i+1) < Properties.Count() )
       str << ';';
   }
   if( !Properties.IsEmpty() && !Actions.IsEmpty() )
     str << ';';
   for( size_t i=0; i < Actions.Count(); i++ )  {
     str << "action:" << Actions[i];
-    if( (i+1) < Actions.Count() )  
+    if( (i+1) < Actions.Count() )
       str << ';';
   }
   str << '}';
@@ -305,7 +305,7 @@ size_t TFSItem::ReadStrings(size_t& index, TFSItem* caller, TStrList& strings,
 }
 //.............................................................................
 TFSItem& TFSItem::NewItem(const olxstr& name)  {
-  return *Items.Add(name, new TFSItem(Index, this, name)).Object;
+  return *Items.Add(name, new TFSItem(Index, this, name));
 }
 //.............................................................................
 olxstr TFSItem::GetFullName() const {
@@ -521,7 +521,7 @@ void TFSItem::DelFile() {
   if (!GetIndexFS().HasAccess(afs_DeleteAccess)) return;
   if (IsFolder()) {
     for (size_t i=0; i < Count(); i++)
-      delete Items.GetObject(i);
+      delete Items.GetValue(i);
     Items.Clear();
     // this will remove ALL files, not only the files in the index
     GetIndexFS().DelDir(GetIndexFS().GetBase() + GetFullName());
@@ -596,14 +596,14 @@ void TFSItem::ClearNonexisting()  {
       if( Index.ShouldExist(Item(i)) && 
         !GetIndexFS().Exists(GetIndexFS().GetBase() + Item(i).GetFullName()) )
       {
-        delete Items.GetObject(i);
+        delete Items.GetValue(i);
         Items.Delete(i--);
       }
     }
     else  {
       Item(i).ClearNonexisting();
       if( Item(i).IsEmpty() )  {
-        delete Items.GetObject(i);
+        delete Items.GetValue(i);
         Items.Delete(i--);
       }
     }
@@ -616,7 +616,7 @@ void TFSItem::ClearEmptyFolders()  {
       if( Item(i).Count() > 0 )
         Item(i).ClearEmptyFolders();
       if( Item(i).IsEmpty() )  {
-        delete Items.GetObject(i);
+        delete Items.GetValue(i);
         Items.Delete(i);
         i--;
       }

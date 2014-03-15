@@ -15,7 +15,7 @@ enum {
   mode_split_ObjectsCreate
 };
 class TSplitMode : public AEventsDispatcher, public AMode  {
-  TTypeList<AnAssociation2<TCAtom*,TCAtom*> > SplitAtoms;
+  TTypeList<olx_pair_t<TCAtom*,TCAtom*> > SplitAtoms;
 protected:
   void UpdateSelectionCrds() const {
     TGlGroup& sel = gxapp.GetSelection();
@@ -126,7 +126,9 @@ public:
       TXAtom *XA = &(TXAtom&)obj;
       bool split = true;
       for (size_t i=0; i < SplitAtoms.Count(); i++)
-        if (*SplitAtoms[i].A() == XA->CAtom() || *SplitAtoms[i].B() == XA->CAtom()) {
+        if (*SplitAtoms[i].GetA() == XA->CAtom() ||
+          *SplitAtoms[i].GetB() == XA->CAtom())
+        {
           split = false;
           break;
         }

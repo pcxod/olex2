@@ -146,7 +146,7 @@ void TGlRenderer::Clear()  {
     CompiledListId = -1;
   }
   for( size_t i=0; i < FCollections.Count(); i++ )
-    delete FCollections.GetObject(i);
+    delete FCollections.GetValue(i);
   FCollections.Clear();
   for( size_t i=0; i < Primitives.ObjectCount(); i++ )
     delete &Primitives.GetObject(i);
@@ -173,7 +173,7 @@ void TGlRenderer::ClearObjects()  {
     CompiledListId = -1;
   }
   for( size_t i=0; i < FCollections.Count(); i++ )
-    FCollections.GetObject(i)->ClearObjects();
+    FCollections.GetValue(i)->ClearObjects();
   FGObjects.Clear();
   ClearMinMax();
   ReleaseGlImage();
@@ -215,13 +215,13 @@ void TGlRenderer::operator = (const TGlRenderer &G)  { ; }
 void TGlRenderer::_OnStylesClear()  {
   OnStylesClear.Enter(this);
   for( size_t i=0; i < FCollections.Count(); i++ )
-    FCollections.GetObject(i)->SetStyle(NULL);
+    FCollections.GetValue(i)->SetStyle(NULL);
 }
 //..............................................................................
 void TGlRenderer::_OnStylesLoaded()  {
   for( size_t i=0; i < FCollections.Count(); i++ ) {
-    FCollections.GetObject(i)->SetStyle(
-      &FStyles->NewStyle(FCollections.GetObject(i)->GetName(), true));
+    FCollections.GetValue(i)->SetStyle(
+      &FStyles->NewStyle(FCollections.GetValue(i)->GetName(), true));
   }
   // groups are deleted by Clear, so should be removed!
   for( size_t i=0; i < FGroups.Count(); i++ )
@@ -250,7 +250,7 @@ void TGlRenderer::_OnStylesLoaded()  {
 //..............................................................................
 TGPCollection& TGlRenderer::NewCollection(const olxstr &Name)  {
   TGPCollection *GPC =
-    FCollections.Add(Name, new TGPCollection(*this, Name)).Object;
+    FCollections.Add(Name, new TGPCollection(*this, Name));
   GPC->SetStyle(&FStyles->NewStyle(Name, true));
   return *GPC;
 }
@@ -283,7 +283,7 @@ TGPCollection *TGlRenderer::FindCollectionX(const olxstr& Name,
   if( di != InvalidIndex )  {
     const size_t ind = FCollections.IndexOf(Name);
     if( ind != InvalidIndex )  
-      return FCollections.GetObject(ind);
+      return FCollections.GetValue(ind);
 
     TGPCollection *BestMatch=NULL;
     short maxMatchLevels = 0;
@@ -293,10 +293,10 @@ TGPCollection *TGlRenderer::FindCollectionX(const olxstr& Name,
       // keep the one with shortes name
       if( BestMatch != NULL && dc == maxMatchLevels )  {
         if( BestMatch->GetName().Length() > FCollections.GetKey(i).Length() )
-          BestMatch = FCollections.GetObject(i);
+          BestMatch = FCollections.GetValue(i);
       }
       else
-        BestMatch = FCollections.GetObject(i);
+        BestMatch = FCollections.GetValue(i);
       maxMatchLevels = dc;
     }
     if( BestMatch != NULL )  {
@@ -1072,7 +1072,7 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
   Primitives.GetObjects().ForEach(ACollectionItem::TagSetter(-1));
   GP.GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
   Primitives.RemoveObjectsByTag(0);
-  FCollections.Delete(FCollections.IndexOfObject(&GP));
+  FCollections.Delete(FCollections.IndexOfValue(&GP));
   for( size_t i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
     if( GlM.IsTransparent() && GlM.IsIdentityDraw()  )
@@ -1094,7 +1094,7 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   Primitives.GetObjects().ForEach(ACollectionItem::TagSetter(-1));
   for( size_t i=0; i < Colls.Count(); i++ )  {
     Colls[i]->GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
-    const size_t col_ind = FCollections.IndexOfObject(Colls[i]);
+    const size_t col_ind = FCollections.IndexOfValue(Colls[i]);
     FCollections.Delete(col_ind);
     delete Colls[i];
   }
@@ -1156,7 +1156,7 @@ void TGlRenderer::CleanUpStyles()  {// removes styles, which are not used by any
   OnStylesClear.Enter(this);
   GetStyles().SetStylesTag(0);
   for( size_t i=0; i < FCollections.Count(); i++ )
-    FCollections.GetObject(i)->GetStyle().SetTag(1);
+    FCollections.GetValue(i)->GetStyle().SetTag(1);
   GetStyles().RemoveStylesByTag(0);
   OnStylesClear.Exit(this);
 }

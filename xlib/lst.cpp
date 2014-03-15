@@ -323,16 +323,16 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     else {
       // errors
       if (SL[i].Contains("**")) {
-        AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString());
+        olx_pair_t<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString());
         if (SL[i].Contains(':'))
           continue;
         if (i >= 2) {
           if (i > 2 && SL[i-3].EndsWith('=')) {
-            msg.B() << SL[i-3].SubStringTo(SL[i-3].Length()-1);
-            msg.B() << SL[i-2];
+            msg.b << SL[i-3].SubStringTo(SL[i-3].Length()-1);
+            msg.b << SL[i-2];
           }
           else {
-            msg.B() << SL[i-2];
+            msg.b << SL[i-2];
           }
         }
       }

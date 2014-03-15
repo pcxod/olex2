@@ -61,7 +61,7 @@ class TGlConsole: public AGDrawObject,
   double FLineSpacing;
   uint16_t Width, Height, Top, Left; // to clip the content
   double GlLeft, GlTop;
-  TStrPObjList<olxstr,TGlMaterial*> FBuffer;
+  TStringToList<olxstr, TGlMaterial*> FBuffer;
   TStrList FCommands;   // the content
   olxstr FCommand;    // the command
   olxstr InviteStr, PromptStr;   //
@@ -111,7 +111,7 @@ public:
       (FStringPos - PromptStr.Length()) : FStringPos);
   }
 
-  const TStrPObjList<olxstr,TGlMaterial*>& Buffer() const {
+  const TStringToList<olxstr,TGlMaterial*>& Buffer() const {
     return FBuffer;
   }
   void ClearBuffer();

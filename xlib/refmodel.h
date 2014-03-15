@@ -745,7 +745,7 @@ Friedel opposites of components 1 ... m
   vec3i CalcMaxHklIndex(double two_theta=60) const;
   double CalcCompletnessTo2Theta(double tt) const;
   IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
-    try {  return *RefContainers[id_name];  }
+    try {  return *RefContainers.Get(id_name);  }
     catch(...)  {
       throw TInvalidArgumentException(__OlxSourceInfo, "container id");
     }

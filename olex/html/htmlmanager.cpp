@@ -477,7 +477,7 @@ void THtmlManager::macDefineControl(TStrObjList &Cmds,
       " already exists";
     return;
   }
-  TSStrStrList<olxstr,false>* props = NULL;
+  olxstr_dict<olxstr,false>* props = NULL;
   if( Cmds[1].Equalsi("text") )  {
     props = html->ObjectsState.DefineControl(objName, typeid(TTextEdit));
   }
@@ -518,7 +518,7 @@ void THtmlManager::macDefineControl(TStrObjList &Cmds,
     (*props)["fg"] = Options.FindValue("fg");
     if( props->IndexOf("data") != InvalidIndex )
       (*props)["data"] = Options.FindValue("data", EmptyString());
-    if( props->IndexOf("val") != InvalidIndex )
+    if (props->HasKey("val"))
       (*props)["val"] = Options.FindValue("v");
   }
 }
@@ -527,7 +527,7 @@ void THtmlManager::funGetValue(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
-    TSStrStrList<olxstr,false>* props =
+    olxstr_dict<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -549,7 +549,7 @@ void THtmlManager::funSetValue(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
-    TSStrStrList<olxstr,false>* props =
+    olxstr_dict<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -587,7 +587,7 @@ void THtmlManager::funGetData(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
-    TSStrStrList<olxstr,false>* props =
+    olxstr_dict<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -644,7 +644,7 @@ void THtmlManager::funGetState(const TStrObjList &Params, TMacroError &E)  {
   Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
   if( c.html == NULL )  return;
   if( c.ctrl == NULL )  {
-    TSStrStrList<olxstr,false>* props =
+    olxstr_dict<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,
@@ -799,7 +799,7 @@ bool THtmlManager::SetState(const TStrObjList &Params, TMacroError &E)  {
   if( c.html == NULL )  return false;
   const bool state = Params.GetLastString().ToBool();
   if( c.ctrl == NULL )  {
-    TSStrStrList<olxstr,false>* props =
+    olxstr_dict<olxstr,false>* props =
       c.html->ObjectsState.FindProperties(c.ctrl_name);
     if( props == NULL )  {
       E.ProcessingError(__OlxSrcInfo,

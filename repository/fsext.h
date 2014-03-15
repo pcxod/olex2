@@ -35,10 +35,10 @@ struct TMemoryBlock  {
 /*____________________________________________________________________________*/
 class TFileHandlerManager : public IEObject  {
 #ifdef __WXWIDGETS__
-  TSStrPObjList<olxstr,TZipWrapper*, false> FZipFiles;
+  olxstr_dict<TZipWrapper*, false> FZipFiles;
 //  TSStrPObjList<olxstr,TOZPFS*, false> FOZPFiles;
 #endif
-  TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
+  olxstr_dict<TMemoryBlock*, false> FMemoryBlocks;
   static const int16_t Version() { return 0x0001; }
   static const char *Signature() { return "ODF_"; }
   static size_t SignatureLength() { return 4; }
@@ -68,7 +68,7 @@ protected:
   void _SaveToStream(IDataOutputStream& os, short persistenceMask);
   void _LoadFromStream(IDataInputStream& is, short persistenceId);
   inline bool IsMemoryBlock(const olxstr &EM) const {
-    return FMemoryBlocks[TEFile::UnixPath(EM)] != NULL;
+    return FMemoryBlocks.HasKey(TEFile::UnixPath(EM));
   }
 public:
   static IDataInputStream *GetInputStream(const olxstr &FN);

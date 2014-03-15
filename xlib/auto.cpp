@@ -109,21 +109,21 @@ int TAutoDBNode::SortMetricsFunc(const TAttachedNode &a,
   return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b.GetCenter()),
                 TAutoDBNode::SortCenter.DistanceTo(a.GetCenter()));
 }
-int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d> &a,
-                                const AnAssociation2<TCAtom*, vec3d> &b)  {
+int TAutoDBNode::SortCAtomsFunc(const olx_pair_t<TCAtom*, vec3d> &a,
+                                const olx_pair_t<TCAtom*, vec3d> &b)  {
   return olx_cmp(TAutoDBNode::SortCenter.DistanceTo(b.GetB()),
                 TAutoDBNode::SortCenter.DistanceTo(a.GetB()));
 }
 
 TAutoDBNode::TAutoDBNode(TSAtom& sa,
-  TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms)
+  TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms)
 {
   Center = sa.crd();
   Element = &sa.GetType();
   const TCAtom& ca = sa.CAtom();
   const TUnitCell& uc = sa.GetNetwork().GetLattice().GetUnitCell();
   const TAsymmUnit& au = sa.GetNetwork().GetLattice().GetAsymmUnit();
-  //TArrayList<AnAssociation2<const TCAtom *, vec3d> > res;
+  //TArrayList<olx_pair_t<const TCAtom *, vec3d> > res;
   //uc.FindInRangeAC(sa.ccrd(), 2, res);
   //for (size_t i=0; i < res.Count(); i++) {
   //  if (res[i].GetB().QDistanceTo(sa.crd()) < 1e-3 ) {
@@ -634,7 +634,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
 struct TTmpNetData  {
   TSAtom* Atom;
   TAutoDBNode* Node;
-  TTypeList<AnAssociation2<TCAtom*, vec3d> >* neighbours;
+  TTypeList<olx_pair_t<TCAtom*, vec3d> >* neighbours;
 };
 void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
   if( net.NodeCount() == 0 )  return;
@@ -646,7 +646,7 @@ void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
     if (net.Node(i).GetType().z < 2 ||net.Node(i).IsDeleted())
       continue;
     netItem = new TTmpNetData;
-    netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, vec3d> >;
+    netItem->neighbours = new TTypeList<olx_pair_t<TCAtom*, vec3d> >;
     netItem->Atom = &net.Node(i);
     TAutoDBNode* dbn = new TAutoDBNode(net.Node(i), netItem->neighbours);
     /* instead of MaxConnectivity we use Nodes.Count() to comply with db
@@ -694,10 +694,10 @@ void TAutoDB::ProcessNodes(TAutoDBIdObject* currentFile, TNetwork& net)  {
     // build connectivity
     for( size_t i=0; i < netMatch.Count(); i++ )  {
       for( size_t j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
-        if( netMatch[i]->neighbours->GetItem(j).A()->GetTag() < 0 )
+        if( netMatch[i]->neighbours->GetItem(j).GetA()->GetTag() < 0 )
           continue;
         net.Node(i).AttachNode(
-          &net.Node(netMatch[i]->neighbours->GetItem(j).A()->GetTag()));
+          &net.Node(netMatch[i]->neighbours->GetItem(j).GetA()->GetTag()));
       }
     }
     for( size_t i=0; i < netMatch.Count(); i++ ) {
@@ -720,7 +720,7 @@ TAutoDBNet* TAutoDB::BuildSearchNet(TNetwork& net, TSAtomPList& cas)  {
 //    if( net.Node(i).GetType() != iQPeakZ &&
     if( net.Node(i).GetType() != iHydrogenZ ) {
       TTmpNetData *netItem = new TTmpNetData;
-      netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, vec3d> >;
+      netItem->neighbours = new TTypeList<olx_pair_t<TCAtom*, vec3d> >;
       netItem->Atom = &net.Node(i);
       TAutoDBNode* dbn = new TAutoDBNode(net.Node(i), netItem->neighbours);
       if( dbn->NodeCount() < 1 || dbn->NodeCount() > 12 )  {
@@ -746,10 +746,10 @@ TAutoDBNet* TAutoDB::BuildSearchNet(TNetwork& net, TSAtomPList& cas)  {
     }
     for( size_t i=0; i < netMatch.Count(); i++ )  {
       for( size_t j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
-        if( netMatch[i]->neighbours->GetItem(j).A()->GetTag() < 0 )
+        if( netMatch[i]->neighbours->GetItem(j).GetA()->GetTag() < 0 )
           continue;
         dbnet->Node(i).AttachNode(
-          &dbnet->Node(netMatch[i]->neighbours->GetItem(j).A()->GetTag()));
+          &dbnet->Node(netMatch[i]->neighbours->GetItem(j).GetA()->GetTag()));
       }
     }
     for( size_t i=0; i < netMatch.Count(); i++ ) {
@@ -848,7 +848,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
   TAutoDBNetNode& node = sn->Node(index);
   if( node.Count() < 1 || node.Count() > Nodes.Count() ) return;
   TPtrList< TAutoDBNode >& segment = Nodes[node.Count() - 1];
-  TTypeList< AnAssociation2<TAutoDBNode*, int> > S1Match;
+  TTypeList< olx_pair_t<TAutoDBNode*, int> > S1Match;
   TTypeList< AnAssociation3<TAutoDBNetNode*, int, TAutoDBIdPList*> > S2Match,
     S3Match;
   for( size_t i=0; i < segment.Count(); i++ )  {
@@ -858,7 +858,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
       bool found = false;
       for( size_t j=0; j < S1Match.Count(); j++ )  {
         if( S1Match[j].GetA()->IsSameType(*segment[i]) )  {
-          S1Match[j].B() ++;
+          S1Match[j].b ++;
           found = true;
           break;
         }
@@ -875,8 +875,8 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
           found = false;
           for( size_t k=0; k < S2Match.Count(); k++ )  {
             if( S2Match[k].GetA()->IsSameType(netnd, false) )  {
-              S2Match[k].B() ++;
-              S2Match[k].C()->Add(segment[i]->GetParent(j)->Reference());
+              S2Match[k].b ++;
+              S2Match[k].c->Add(segment[i]->GetParent(j)->Reference());
               found = true;
               break;
             }
@@ -884,7 +884,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
           if( !found )  {
             S2Match.AddNew<TAutoDBNetNode*,int,TAutoDBIdPList*>(
               &netnd, 1, new TAutoDBIdPList);
-            S2Match[S2Match.Count()-1].C()->Add(
+            S2Match[S2Match.Count()-1].c->Add(
               segment[i]->GetParent(j)->Reference());
           }
           //
@@ -893,8 +893,8 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
             found = false;
             for( size_t k=0; k < S3Match.Count(); k++ )  {
               if( S3Match[k].GetA()->IsSameType(netnd, false) )  {
-                S3Match[k].B() ++;
-                S3Match[k].C()->Add(segment[i]->GetParent(j)->Reference());
+                S3Match[k].b ++;
+                S3Match[k].c->Add(segment[i]->GetParent(j)->Reference());
                 found = true;
                 break;
               }
@@ -902,7 +902,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
             if( !found )  {
               S3Match.AddNew<TAutoDBNetNode*,int,TAutoDBIdPList*>(
                 &netnd, 1, new TAutoDBIdPList);
-              S3Match[S3Match.Count()-1].C()->Add(
+              S3Match[S3Match.Count()-1].c->Add(
                 segment[i]->GetParent(j)->Reference());
             }
             //
@@ -1401,7 +1401,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   else
     TBasicApp::NewLogEntry(logInfo) << "Could not locate confident atom types";
   // assigning atom types according to L3 and L2 and printing stats
-  SortedPtrList<TAutoDBNetNode, TPointerComparator> processed;
+  sorted::PointerPointer<TAutoDBNetNode> processed;
   for( size_t i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetId() == 0 )  {
       if (UisoCnt==0 && proposed_atoms==NULL && !guesses[i].list1.IsEmpty()) {
@@ -1411,7 +1411,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         continue;
       }
     }
-    TTypeList< THitList<TAutoDBNetNode> > &guessN =
+    TTypeList<THitList<TAutoDBNetNode> > &guessN =
       !guesses[i].list3.IsEmpty() ? guesses[i].list3 : guesses[i].list2;
     const cm_Element* type = NULL;
     if (sn->Node(i).GetId() != 0) {
@@ -1645,7 +1645,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt,
   }
   report.Add(olxstr("Current space group is ") << sga.GetName() );
   // have to locate possible translation using 'hard' method
-  TTypeList< AnAssociation2<vec3d,TCAtom*> > alist, blist;
+  TTypeList< olx_pair_t<vec3d,TCAtom*> > alist, blist;
   TTypeList< TSymmTestData > vlist;
   latt.GetUnitCell().GenereteAtomCoordinates(alist, false);
   XFile.GetUnitCell().GenereteAtomCoordinates(blist, false);
@@ -1753,9 +1753,9 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
         bool found = false;
         for( size_t j=0; j < pm->Tries.Count(); j++ )  {
           if( pm->Tries[j].GetA() == list[i].Type )  {
-            pm->Tries[j].C() = list[i].MeanFom();
+            pm->Tries[j].c = list[i].MeanFom();
             if( list[i].Type == &guess.atom->GetType() )
-              pm->Tries[j].B() = guess.atom->GetUiso();
+              pm->Tries[j].b = guess.atom->GetUiso();
             found = true;
             break;
           }
@@ -1764,7 +1764,7 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
           pm->Tries.AddNew<const cm_Element*,double,double>(
             list[i].Type, -1, list[i].MeanFom());
           if( *list[i].Type == guess.atom->GetType() )
-            pm->Tries[pm->Tries.Count()-1].B() = guess.atom->GetUiso();
+            pm->Tries[pm->Tries.Count()-1].b = guess.atom->GetUiso();
         }
       }
     }
@@ -1773,9 +1773,9 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
         bool found = false;
         for( size_t j=0; j < pm->Tries.Count(); j++ )  {
           if( pm->Tries[j].GetA() == guess.list1[i].Type )  {
-            pm->Tries[j].C() = guess.list1[i].MeanFom();
+            pm->Tries[j].c = guess.list1[i].MeanFom();
             if( guess.list1[i].Type == &guess.atom->GetType() )
-              pm->Tries[j].B() = guess.atom->GetUiso();
+              pm->Tries[j].b = guess.atom->GetUiso();
             found = true;
             break;
           }
@@ -1784,7 +1784,7 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
           pm->Tries.AddNew<const cm_Element*,double,double>(
             guess.list1[i].Type, -1, guess.list1[i].MeanFom());
           if( guess.list1[i].Type == &guess.atom->GetType() )
-            pm->Tries[pm->Tries.Count()-1].B() = guess.atom->GetUiso();
+            pm->Tries[pm->Tries.Count()-1].b = guess.atom->GetUiso();
         }
       }
     }

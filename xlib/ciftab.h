@@ -51,13 +51,17 @@ struct CifTabAngle  {
 };
 //---------------------------------------------------------------------------
 class TLLTBondSort  {
+  int Compare_(const CifTabBond &I, const CifTabBond &I1) const;
 public:
   CifTabAtom &Atom; // must be initilaised before the call
   const TStrList &Symmetry;
   short SortType;
   TLLTBondSort(CifTabAtom& atom, const TStrList& symm, short sort_type)
     : Atom(atom), Symmetry(symm), SortType(sort_type)  {}
-  int Compare(const CifTabBond &I, const CifTabBond &I1) const;
+  template <class item_a_t, class item_b_t>
+  int Compare(const item_a_t &I, const item_b_t &I1) const {
+    return Compare_(olx_ref::get(I), olx_ref::get(I1));
+  }
 };
 //---------------------------------------------------------------------------
 class TLinkedLoopTable: public IEObject  {

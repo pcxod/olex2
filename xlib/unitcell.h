@@ -186,8 +186,8 @@ public:
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
-      out[i].A() = res[i].A();
-      out[i].B() = res[i].GetB(); 
+      out[i].a = res[i].a;
+      out[i].b = res[i].GetB();
     }
   }
   /* As above, but expects a list of
@@ -201,9 +201,9 @@ public:
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
-      out[i].A() = res[i].A();
-      out[i].B() = res[i].GetB();
-      out[i].C() = res[i].GetC(); 
+      out[i].a = res[i].a;
+      out[i].b = res[i].GetB();
+      out[i].c = res[i].GetC();
     }
   }
   /* finds only bound atoms defined by delta, can take both TCAtom and TSAtom.
@@ -218,8 +218,8 @@ public:
     _FindBinding(center, delta, res, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
-      out[i].A() = res[i].A();
-      out[i].B() = res[i].GetB(); 
+      out[i].a = res[i].a;
+      out[i].b = res[i].GetB();
     }
   }
   /* As above but provides an association of atoms with the cartesian
@@ -233,8 +233,8 @@ public:
     _FindInRange(center, R, res, false, atoms);
     out.SetCount(res.Count());
     for( size_t i=0; i < res.Count(); i++ )  {
-      out[i].A() = res[i].A();
-      out[i].B() = res[i].GetC(); 
+      out[i].a = res[i].a;
+      out[i].b = res[i].GetC();
     }
   }
 
@@ -328,7 +328,7 @@ public:
   void BuildDistanceMap_Masks(TArray3D<short>& map, double delta, short value,
     const ElementRadii* radii, const TCAtomPList* _template = NULL) const;
 protected:
-  // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
+  // helper function, association should be olx_pair_t+<vec3d,TCAtom*,+>
   template <class Association> 
     static int AtomsSortByDistance(const Association &A1,
       const Association &A2)
@@ -343,7 +343,7 @@ public:
     TSymmLib::GetInstance().ExpandLatt(out,
       MatrixListAdaptor<TAsymmUnit>(au), latt);
   }
-  /* association should be AnAssociation2+<vec3d,TCAtom*,+>, generates all
+  /* association should be olx_pair_t+<vec3d,TCAtom*,+>, generates all
   atoms of the aunit
   */
   template <class Association> void GenereteAtomCoordinates(
@@ -416,22 +416,22 @@ public:
       const double yi = v[1] < c_min ? 1 : (v[1] > c_max ? -1 : 0);
       const double zi = v[2] < c_min ? 1 : (v[2] > c_max ? -1 : 0);
       if( xi != 0 )  {
-        list.AddNew(vec3d(v[0]+xi, v[1], v[2]), list[i].B());
+        list.AddNew(vec3d(v[0]+xi, v[1], v[2]), list[i].b);
         if( yi != 0 )  {
-          list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]), list[i].B());
+          list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]), list[i].b);
           if( zi != 0 )
-            list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]+zi), list[i].B());
+            list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]+zi), list[i].b);
         }
         if( zi != 0 )
-          list.AddNew(vec3d(v[0]+xi, v[1], v[2]+zi), list[i].B());
+          list.AddNew(vec3d(v[0]+xi, v[1], v[2]+zi), list[i].b);
       }
       if( yi != 0 )  {
-        list.AddNew(vec3d(v[0], v[1]+yi, v[2]), list[i].B());
+        list.AddNew(vec3d(v[0], v[1]+yi, v[2]), list[i].b);
         if( zi != 0 )
-          list.AddNew(vec3d(v[0], v[1]+yi, v[2]+zi), list[i].B());
+          list.AddNew(vec3d(v[0], v[1]+yi, v[2]+zi), list[i].b);
       }
       if( zi != 0 )
-        list.AddNew(vec3d(v[0], v[1], v[2]+zi), list[i].B());
+        list.AddNew(vec3d(v[0], v[1], v[2]+zi), list[i].b);
     }
   }
   // finds an atom at given position
@@ -458,8 +458,8 @@ public:
     vec3d center;
     AC_Sort(const vec3d &_center) : center(_center) {}
     int Compare(
-      const AnAssociation2<const TCAtom *, vec3d> &a1,
-      const AnAssociation2<const TCAtom *, vec3d> &a2) const
+      const olx_pair_t<const TCAtom *, vec3d> &a1,
+      const olx_pair_t<const TCAtom *, vec3d> &a2) const
     {
       return olx_cmp(
         center.QDistanceTo(a1.GetB()),

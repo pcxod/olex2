@@ -58,9 +58,9 @@ protected:
     struct Points3  {
       IsoPoint ps[3];
     };
-    typedef TPSTypeList<int, Points3> IsoPointListZ;  //x
-    typedef TPSTypeList<int, IsoPointListZ*> IsoPointListY;  //y
-    typedef TPSTypeList<int, IsoPointListY*> IsoPointListX;  //z
+    typedef olxdict<int, Points3, TPrimitiveComparator> IsoPointListZ;  //x
+    typedef olxdict<int, IsoPointListZ*, TPrimitiveComparator> IsoPointListY;  //y
+    typedef olxdict<int, IsoPointListY*, TPrimitiveComparator> IsoPointListX;  //z
     IsoPointListX Data;
     size_t Count;
   public:
@@ -71,23 +71,23 @@ protected:
       IsoPoint* ip;
       const size_t yi = Data.IndexOf(x);
       if( yi == InvalidIndex )  {
-        ip = &Data.Add(x, new IsoPointListY).Object->Add(y, new IsoPointListZ).
-          Object->Add(z, Points3()).Object.ps[edgeId]; 
+        ip = &Data.Add(x, new IsoPointListY)->Add(y, new IsoPointListZ)->
+          Add(z, Points3()).ps[edgeId]; 
       }
       else  {
-        IsoPointListY* ly = Data.GetObject(yi);
+        IsoPointListY* ly = Data.GetValue(yi);
         const size_t zi = ly->IndexOf(y);
         if( zi == InvalidIndex )  {
-          ip = &ly->Add(y, new IsoPointListZ).Object->Add(z, Points3()).Object.ps[edgeId]; 
+          ip = &ly->Add(y, new IsoPointListZ)->Add(z, Points3()).ps[edgeId];
         }
         else  {
-          IsoPointListZ* lz = ly->GetObject(zi);
+          IsoPointListZ* lz = ly->GetValue(zi);
           const size_t pi = lz->IndexOf(z);
           if( pi == InvalidIndex )  {
-            ip = &lz->Add(z, Points3()).Object.ps[edgeId]; 
+            ip = &lz->Add(z, Points3()).ps[edgeId]; 
           }
           else  {
-            ip = &lz->GetObject(pi).ps[edgeId];
+            ip = &lz->GetValue(pi).ps[edgeId];
           }
         }
       }
@@ -98,18 +98,18 @@ protected:
       Count++;
     }
     const IsoPoint& Get(int x, int y, int z, int extra) const {
-      return (*(*Data[x])[y])[z].ps[extra];
+      return Data.Get(x)->Get(y)->Get(z).ps[extra];
     }
     const IsoPoint& Get(uint32_t crd) const {
       int x, y, z, e;
       decode(crd, x, y, z, e);
-      return (*(*Data[x])[y])[z].ps[e];
+      return Data.Get(x)->Get(y)->Get(z).ps[e];
     }
     void Clear()  {
       for( size_t i=0; i < Data.Count(); i++ )  {
-        IsoPointListY* ly = Data.GetObject(i);
+        IsoPointListY* ly = Data.GetValue(i);
         for( size_t j=0; j < ly->Count(); j++ ) 
-          delete ly->GetObject(j);
+          delete ly->GetValue(j);
         delete ly;
       }
       Data.Clear();
@@ -119,11 +119,11 @@ protected:
       v.SetCount(Count);
       size_t ind = 0;
       for( size_t i=0; i < Data.Count(); i++ )  {
-        IsoPointListY* ly = Data.GetObject(i);
+        IsoPointListY* ly = Data.GetValue(i);
         for( size_t j=0; j < ly->Count(); j++ )  {
-          IsoPointListZ* lz = ly->GetObject(j);
+          IsoPointListZ* lz = ly->GetValue(j);
           for( size_t k=0; k < lz->Count(); k++ )  {
-            Points3& p = lz->GetObject(k);
+            Points3& p = lz->GetValue(k);
             for(int l=0; l < 3; l++ )  {
               if( p.ps[l].initialised )  {
                 p.ps[l].newID = ind;

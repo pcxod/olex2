@@ -41,12 +41,12 @@ public:
   TSAtom& GetBase() const { return *Base; }
   void SetBase(TSAtom& base) { Base = &base; }
   const olxstr& GetLabel(size_t ind) const {
-    return Envi[ind].A()->GetLabel();
+    return Envi[ind].a->GetLabel();
   }
   const cm_Element& GetType(size_t ind) const {
-    return Envi[ind].A()->GetType();
+    return Envi[ind].a->GetType();
   }
-  TCAtom& GetCAtom(size_t ind) const { return *Envi[ind].A(); }
+  TCAtom& GetCAtom(size_t ind) const { return *Envi[ind].a; }
   const vec3d& GetCrd(size_t ind) const { return Envi[ind].GetC(); }
   const smatd& GetMatrix(size_t ind) const { return Envi[ind].GetB(); }
   void Delete(size_t i) { Envi.Delete(i); }

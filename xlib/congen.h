@@ -45,7 +45,7 @@ const uint16_t
   fgPlaner      = 2,
   fgTetrahedral = 3;
 
-typedef TTypeList< AnAssociation2<double, double> > TFixedValueList;
+typedef TTypeList< olx_pair_t<double, double> > TFixedValueList;
 
 class AConstraintGenerator : public IEObject{
 protected:

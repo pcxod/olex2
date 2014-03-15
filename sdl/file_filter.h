@@ -12,7 +12,7 @@
 #include "estlist.h"
 
 class FileFilter {
-  TCSTypeList<olxstr, olxstr> extensions;
+  olxstr_dict<olxstr> extensions;
 public:
   FileFilter() {}
   void Add(const olxstr &ext, const olxstr &desc=EmptyString())  {
@@ -49,12 +49,12 @@ public:
     }
     for( size_t i=0; i < extensions.Count(); i++ )  {
       out << isep;
-      if( extensions.GetObject(i).IsEmpty() )  {
+      if (extensions.GetValue(i).IsEmpty())  {
         if( extensions.GetKey(i).StartsFrom("*.") )
           out << extensions.GetKey(i).SubStringFrom(2).ToUpperCase();
       }
       else
-        out << extensions.GetObject(i);
+        out << extensions.GetValue(i);
       out << " files (" << extensions.GetKey(i) << ')' << isep <<
         ProcessExt(extensions.GetKey(i));
     }

@@ -85,7 +85,7 @@ public:
   void Init();  // extends the Library with functionality
   void Load(const TDataItem& m_root);
   
-  typedef AnAssociation2<olxstr,olxstr> arg_t;
+  typedef olx_pair_t<olxstr,olxstr> arg_t;
   static ABasicFunction *FindEvaluator(const olxstr &name, bool macro_first);
   static ABasicFunction *FindEvaluator(exparse::expression_tree *&e,
     olxstr &name);

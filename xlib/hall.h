@@ -23,16 +23,16 @@ protected:
     vec3d t;
   };
   void init();
-  TTypeList<AnAssociation2<vec3d, olxstr> > trans;
-  //const TTypeList<AnAssociation2<mat3d, olxstr> > rotations;
-  TTypeList<AnAssociation2<int,olxstr> >
+  TTypeList<olx_pair_t<vec3d, olxstr> > trans;
+  //const TTypeList<olx_pair_t<mat3d, olxstr> > rotations;
+  TTypeList<olx_pair_t<int,olxstr> >
     rotx, roty, rotz, rotx1, roty1, rotz1, rot3;
   olxstr_dict<int> r_dict;
   olxstr_dict<vec3d*> t_dict;
   olxstr FindT(const vec3d& t, int order) const;
   olxstr FindTR(const vec3d& t, int order) const;
   int FindR(olxstr& hs, TTypeList<symop>& matrs,
-    const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full) const;
+    const TTypeList<olx_pair_t<int,olxstr> >& rot, bool full) const;
   vec3d get_screw_axis_t(int dir, int order) const;
   // dir - 1 for x, 2 for y, 3 for z, which - ' or "
   int find_diagonal(int dir, olxch which) const;

@@ -58,7 +58,7 @@ TSGTest::~TSGTest()  {
 void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats>& res )  {
   typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
-  typedef AnAssociation2<mat3i, SGpList> MatrixAss;
+  typedef olx_pair_t<mat3i, SGpList> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatricesNT;
   SGList SGHitsNT;
@@ -83,14 +83,14 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
       for( size_t k=0; k < umnt_cnt; k++ )  {
         if( UniqMatricesNT[k].GetA() == m.r )  {
           uniq = false;
-          UniqMatricesNT[k].B().Add( &sgvNT );
-          sgvNT.D() ++;
+          UniqMatricesNT[k].b.Add(&sgvNT);
+          sgvNT.d ++;
           break;
         }
       }
       if( uniq )  {
-        sgvNT.D() ++;
-        UniqMatricesNT.AddNew<mat3i>(m.r).B().Add(&sgvNT);
+        sgvNT.d ++;
+        UniqMatricesNT.AddNew<mat3i>(m.r).b.Add(&sgvNT);
       }
     }
   }
@@ -112,23 +112,25 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
         //double weight = diff * HklScaleFactor;
         // 5% of an average reflection itensity
         for( size_t k=0; k < UniqMatricesNT[i].GetB().Count(); k++ )  {
-          UniqMatricesNT[i].GetB()[k]->C().A() += diff;
-          UniqMatricesNT[i].GetB()[k]->C().B() += (olx_sqr(ref->GetS()) + olx_sqr(Refs[j].GetS()));
-          UniqMatricesNT[i].GetB()[k]->C().C() ++;
+          UniqMatricesNT[i].GetB()[k]->c.a += diff;
+          UniqMatricesNT[i].GetB()[k]->c.b += (olx_sqr(ref->GetS()) +
+            olx_sqr(Refs[j].GetS()));
+          UniqMatricesNT[i].GetB()[k]->c.c ++;
         }
       }
     }
   }
   for( size_t i=0; i < SGHitsNT.Count(); i++ )  {
-    SGHitsNT[i].C().B() = sqrt( SGHitsNT[i].GetC().GetB() );
-    res.AddNew<TSpaceGroup*, TwoDoublesInt>( SGHitsNT[i].GetA(), SGHitsNT[i].GetC());
+    SGHitsNT[i].c.b = sqrt(SGHitsNT[i].GetC().GetB());
+    res.AddNew<TSpaceGroup*, TwoDoublesInt>(
+      SGHitsNT[i].GetA(), SGHitsNT[i].GetC());
   }
 }
 //..............................................................................
 void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TTypeList<TSAStats>& saRes )  {
   typedef AnAssociation3<TCLattice*, TwoDoublesInt*, TwoDoublesInt*> LatticeAss;
-  typedef AnAssociation2<TSymmElement*, TwoDoublesInt*> NamedSE;
-  typedef AnAssociation2<NamedSE*, TPtrList<NamedSE>*> SECondition;
+  typedef olx_pair_t<TSymmElement*, TwoDoublesInt*> NamedSE;
+  typedef olx_pair_t<NamedSE*, TPtrList<NamedSE>*> SECondition;
   TTypeList<SECondition> SAExclusions;
   TTypeList<NamedSE> SAElements;
   TTypeList<LatticeAss> LatticeHits;
@@ -137,38 +139,64 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   const TSymmLib& sgLib = TSymmLib::GetInstance();
 
   LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt* >(sgLib.FindLattice("P"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
-  LatticeAss& LattA = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(sgLib.FindLattice("A"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
-  LatticeAss& LattB = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(sgLib.FindLattice("B"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
-  LatticeAss& LattC = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(sgLib.FindLattice("C"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
-  LatticeAss& LattF = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(sgLib.FindLattice("F"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
-  LatticeAss& LattI = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(sgLib.FindLattice("I"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
-  LatticeAss& LattR = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(sgLib.FindLattice("R"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
+  LatticeAss& LattA = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(
+    sgLib.FindLattice("A"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
+  LatticeAss& LattB = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(
+    sgLib.FindLattice("B"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
+  LatticeAss& LattC = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(
+    sgLib.FindLattice("C"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
+  LatticeAss& LattF = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(
+    sgLib.FindLattice("F"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
+  LatticeAss& LattI = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(
+    sgLib.FindLattice("I"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
+  LatticeAss& LattR = LatticeHits.AddNew<TCLattice*,TwoDoublesInt*,TwoDoublesInt*>(
+    sgLib.FindLattice("R"), new TwoDoublesInt(0,0,0), new TwoDoublesInt(0,0,0) );
 
-  NamedSE& GlideB1 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("b--"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideC1 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("c--"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideN1 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("n--"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideD1 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("d--"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideB1 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("b--"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideC1 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("c--"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideN1 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("n--"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideD1 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("d--"), new TwoDoublesInt(0.0,0.0,0));
 
-  NamedSE& GlideA2 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("-a-"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideC2 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("-c-"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideN2 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("-n-"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideD2 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("-d-"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideA2 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("-a-"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideC2 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("-c-"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideN2 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>
+    (sgLib.FindSymmElement("-n-"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideD2 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("-d-"), new TwoDoublesInt(0.0,0.0,0));
 
-  NamedSE& GlideB3 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("--b"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideA3 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("--a"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideN3 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("--n"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& GlideD3 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("--d"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideB3 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("--b"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideA3 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("--a"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideN3 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("--n"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& GlideD3 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("--d"), new TwoDoublesInt(0.0,0.0,0));
 
-  NamedSE& Screw21 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("21--"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& Screw22 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("-21-"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& Screw23 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("--21"), new TwoDoublesInt(0.0,0.0,0) );
+  NamedSE& Screw21 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("21--"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw22 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("-21-"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw23 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("--21"), new TwoDoublesInt(0.0,0.0,0) );
 
-  NamedSE& Screw41 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("41"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& Screw42 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("42"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& Screw43 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("43"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw41 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("41"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw42 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("42"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw43 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("43"), new TwoDoublesInt(0.0,0.0,0));
 
-  NamedSE& Screw33 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("31"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& Screw63 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib.FindSymmElement("61"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw33 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("31"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw63 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
+    sgLib.FindSymmElement("61"), new TwoDoublesInt(0.0,0.0,0));
 
   TPtrList<NamedSE> Glide1ExcG;
   Glide1ExcG.Add(GlideB1);
@@ -180,12 +208,12 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   Glide1ExcS.Add(Screw23);
   Glide1ExcS.Add(Screw42);
   Glide1ExcS.Add(Screw43);
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideB1, &Glide1ExcS );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideC1, &Glide1ExcS );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN1, &Glide1ExcS );
-//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN1, &Glide1ExcG );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD1, &Glide1ExcS );
-//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD1, &Glide1ExcGD );
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideB1, &Glide1ExcS);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideC1, &Glide1ExcS);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN1, &Glide1ExcS);
+//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN1, &Glide1ExcG);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD1, &Glide1ExcS);
+//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD1, &Glide1ExcGD);
   TPtrList<NamedSE> Glide2ExcG;
   Glide2ExcG.Add(GlideA2);
   Glide2ExcG.Add(GlideC2);
@@ -196,12 +224,12 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   Glide2ExcS.Add(Screw23);
   Glide2ExcS.Add(Screw41);
   Glide2ExcS.Add(Screw43);
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideA2, &Glide2ExcS );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideC2, &Glide2ExcS );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN2, &Glide2ExcS );
-//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN2, &Glide2ExcG );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD2, &Glide2ExcS );
-//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD2, &Glide2ExcGD );
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideA2, &Glide2ExcS);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideC2, &Glide2ExcS);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN2, &Glide2ExcS);
+//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN2, &Glide2ExcG);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD2, &Glide2ExcS);
+//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD2, &Glide2ExcGD);
   TPtrList<NamedSE> Glide3ExcG;
   Glide3ExcG.Add(GlideA3);
   Glide3ExcG.Add(GlideB3);
@@ -212,72 +240,200 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   Glide3ExcS.Add(Screw22);
   Glide3ExcS.Add(Screw41);
   Glide3ExcS.Add(Screw42);
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideB3, &Glide3ExcS );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideA3, &Glide3ExcS );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN3, &Glide3ExcS );
-//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN3, &Glide3ExcG );
-  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD3, &Glide3ExcS );
-//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD3, &Glide3ExcGD );
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideB3, &Glide3ExcS);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideA3, &Glide3ExcS);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN3, &Glide3ExcS);
+//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN3, &Glide3ExcG);
+  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD3, &Glide3ExcS);
+//  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD3, &Glide3ExcGD);
   const size_t ref_cnt = Refs.Count();
   for( size_t i=0; i < ref_cnt; i++ )  {
     const TReflection& ref = Refs[i];
-    int H = ref.GetH(), 
-        K = ref.GetK(), 
+    int H = ref.GetH(),
+        K = ref.GetK(),
         L = ref.GetL();
 
-    if( ((H+K)%2) != 0 )  {  LattC.GetC()->A() += ref.GetI();  LattC.GetC()->B() += olx_sqr(ref.GetS());  LattC.GetC()->C()++;  }
-    else                  {  LattC.GetB()->A() += ref.GetI();  LattC.GetB()->B() += olx_sqr(ref.GetS());  LattC.GetB()->C()++;  }
-    if( ((H+L)%2) != 0 )  {  LattB.GetC()->A() += ref.GetI();  LattB.GetC()->B() += olx_sqr(ref.GetS());  LattB.GetC()->C()++;  }
-    else                  {  LattB.GetB()->A() += ref.GetI();  LattB.GetB()->B() += olx_sqr(ref.GetS());  LattB.GetB()->C()++;  }
-    if( ((K+L)%2) != 0 )  {  LattA.GetC()->A() += ref.GetI();  LattA.GetC()->B() += olx_sqr(ref.GetS());  LattA.GetC()->C()++;  }
-    else                  {  LattA.GetB()->A() += ref.GetI();  LattA.GetB()->B() += olx_sqr(ref.GetS());  LattA.GetB()->C()++;  }
-    if( ((H+K+L)%2) != 0 ){  LattI.GetC()->A() += ref.GetI();  LattI.GetC()->B() += olx_sqr(ref.GetS());  LattI.GetC()->C()++;  }
-    else                  {  LattI.GetB()->A() += ref.GetI();  LattI.GetB()->B() += olx_sqr(ref.GetS());  LattI.GetB()->C()++;  }
-    if( (((H+K)%2) != 0 && ((H+L)%2) !=0 && ((K+L)%2) != 0 )  ||
-        ( (H%2)==0 && (K%2) == 0 && (L%2) == 0 )  ||
-        ( (H%2)!=0 && (K%2) != 0 && (L%2) != 0 )  )
-                          {  LattF.GetB()->A() += ref.GetI();  LattF.GetB()->B() += olx_sqr(ref.GetS());  LattF.GetB()->C()++;  }
-    else                   {  LattF.GetC()->A() += ref.GetI();  LattF.GetC()->B() += olx_sqr(ref.GetS());  LattF.GetC()->C()++;  }
-    if( ((-H+K+L)%3) != 0 ){  LattR.GetC()->A() += ref.GetI();  LattR.GetC()->B() += olx_sqr(ref.GetS());  LattR.GetC()->C()++;  }
-    else                   {  LattR.GetB()->A() += ref.GetI();  LattR.GetB()->B() += olx_sqr(ref.GetS());  LattR.GetB()->C()++;  }
+    if (((H+K)%2) != 0) {
+      LattC.GetC()->a += ref.GetI();
+      LattC.GetC()->b += olx_sqr(ref.GetS());
+      LattC.GetC()->c++;
+    }
+    else {
+      LattC.GetB()->a += ref.GetI();
+      LattC.GetB()->b += olx_sqr(ref.GetS());
+      LattC.GetB()->c++;
+    }
+    if (((H+L)%2) != 0) {
+      LattB.GetC()->a += ref.GetI();
+      LattB.GetC()->b += olx_sqr(ref.GetS());
+      LattB.GetC()->c++;
+    }
+    else {
+      LattB.GetB()->a += ref.GetI();
+      LattB.GetB()->b += olx_sqr(ref.GetS());
+      LattB.GetB()->c++;
+    }
+    if (((K+L)%2) != 0) {
+      LattA.GetC()->a += ref.GetI();
+      LattA.GetC()->b += olx_sqr(ref.GetS());
+      LattA.GetC()->c++;
+    }
+    else  {
+      LattA.GetB()->a += ref.GetI();
+      LattA.GetB()->b += olx_sqr(ref.GetS());
+      LattA.GetB()->c++;
+    }
+    if (((H+K+L)%2) != 0) {
+      LattI.GetC()->a += ref.GetI();
+      LattI.GetC()->b += olx_sqr(ref.GetS());
+      LattI.GetC()->c++;
+    }
+    else {
+      LattI.GetB()->a += ref.GetI();
+      LattI.GetB()->b += olx_sqr(ref.GetS());
+      LattI.GetB()->c++;
+    }
+    if ((((H+K)%2) != 0 && ((H+L)%2) !=0 && ((K+L)%2) != 0 ) ||
+        ((H%2)==0 && (K%2) == 0 && (L%2) == 0 ) ||
+        ((H%2)!=0 && (K%2) != 0 && (L%2) != 0 ))
+    {
+      LattF.GetB()->a += ref.GetI();
+      LattF.GetB()->b += olx_sqr(ref.GetS());
+      LattF.GetB()->c++;
+    }
+    else {
+      LattF.GetC()->a += ref.GetI();
+      LattF.GetC()->b += olx_sqr(ref.GetS());
+      LattF.GetC()->c++;
+    }
+    if (((-H+K+L)%3) != 0) {
+      LattR.GetC()->a += ref.GetI();
+      LattR.GetC()->b += olx_sqr(ref.GetS());
+      LattR.GetC()->c++;
+    }
+    else {
+      LattR.GetB()->a += ref.GetI();
+      LattR.GetB()->b += olx_sqr(ref.GetS());
+      LattR.GetB()->c++;
+    }
 
-    if( H == 0 )  {
-      if( (K%2) != 0 )    {  GlideB1.GetB()->A() += ref.GetI();  GlideB1.GetB()->B() += olx_sqr(ref.GetS());  GlideB1.GetB()->C()++;  }
-      if( (L%2) != 0 )    {  GlideC1.GetB()->A() += ref.GetI();  GlideC1.GetB()->B() += olx_sqr(ref.GetS());  GlideC1.GetB()->C()++;  }
-      if( ((K+L)%2) != 0 ){  GlideN1.GetB()->A() += ref.GetI();  GlideN1.GetB()->B() += olx_sqr(ref.GetS());  GlideN1.GetB()->C()++;  }
-      if( ((K+L)%4) != 0 ){  GlideD1.GetB()->A() += ref.GetI();  GlideD1.GetB()->B() += olx_sqr(ref.GetS());  GlideD1.GetB()->C()++;  }
+    if (H == 0) {
+      if ((K%2) != 0) {
+        GlideB1.GetB()->a += ref.GetI();
+        GlideB1.GetB()->b += olx_sqr(ref.GetS());
+        GlideB1.GetB()->c++;
+      }
+      if ((L%2) != 0) {
+        GlideC1.GetB()->a += ref.GetI();
+        GlideC1.GetB()->b += olx_sqr(ref.GetS());
+        GlideC1.GetB()->c++;
+      }
+      if (((K+L)%2) != 0) {
+        GlideN1.GetB()->a += ref.GetI();
+        GlideN1.GetB()->b += olx_sqr(ref.GetS());
+        GlideN1.GetB()->c++;
+      }
+      if (((K+L)%4) != 0) {
+        GlideD1.GetB()->a += ref.GetI(); 
+        GlideD1.GetB()->b += olx_sqr(ref.GetS());
+        GlideD1.GetB()->c++;
+      }
     }
-    if( K == 0 )  {
-      if( (H%2) != 0 )    {  GlideA2.GetB()->A() += ref.GetI();  GlideA2.GetB()->B() += olx_sqr(ref.GetS());  GlideA2.GetB()->C()++;  }
-      if( (L%2) != 0 )    {  GlideC2.GetB()->A() += ref.GetI();  GlideC2.GetB()->B() += olx_sqr(ref.GetS());  GlideC2.GetB()->C()++;  }
-      if( ((H+L)%2) != 0 ){  GlideN2.GetB()->A() += ref.GetI();  GlideN2.GetB()->B() += olx_sqr(ref.GetS());  GlideN2.GetB()->C()++;  }
-      if( ((H+L)%4) != 0 ){  GlideD2.GetB()->A() += ref.GetI();  GlideD2.GetB()->B() += olx_sqr(ref.GetS());  GlideD2.GetB()->C()++;  }
+    if (K == 0) {
+      if ((H%2) != 0) {
+        GlideA2.GetB()->a += ref.GetI();
+        GlideA2.GetB()->b += olx_sqr(ref.GetS());
+        GlideA2.GetB()->c++;
+      }
+      if ((L%2) != 0) {
+        GlideC2.GetB()->a += ref.GetI();
+        GlideC2.GetB()->b += olx_sqr(ref.GetS());
+        GlideC2.GetB()->c++;
+      }
+      if (((H+L)%2) != 0) {
+        GlideN2.GetB()->a += ref.GetI();
+        GlideN2.GetB()->b += olx_sqr(ref.GetS());
+        GlideN2.GetB()->c++;
+      }
+      if (((H+L)%4) != 0) {
+        GlideD2.GetB()->a += ref.GetI();
+        GlideD2.GetB()->b += olx_sqr(ref.GetS());
+        GlideD2.GetB()->c++;
+      }
     }
-    if( L == 0 )  {
-      if( (K%2) != 0 )    {  GlideB3.GetB()->A() += ref.GetI();  GlideB3.GetB()->B() += olx_sqr(ref.GetS());  GlideB3.GetB()->C()++;  }
-      if( (H%2) != 0 )    {  GlideA3.GetB()->A() += ref.GetI();  GlideA3.GetB()->B() += olx_sqr(ref.GetS());  GlideA3.GetB()->C()++;  }
-      if( ((H+K)%2) != 0 ){  GlideN3.GetB()->A() += ref.GetI();  GlideN3.GetB()->B() += olx_sqr(ref.GetS());  GlideN3.GetB()->C()++;  }
-      if( ((H+K)%4) != 0 ){  GlideD3.GetB()->A() += ref.GetI();  GlideD3.GetB()->B() += olx_sqr(ref.GetS());  GlideD3.GetB()->C()++;  }
+    if (L == 0) {
+      if ((K%2) != 0) {
+        GlideB3.GetB()->a += ref.GetI();
+        GlideB3.GetB()->b += olx_sqr(ref.GetS());
+        GlideB3.GetB()->c++;
+      }
+      if ((H%2) != 0) {
+        GlideA3.GetB()->a += ref.GetI();
+        GlideA3.GetB()->b += olx_sqr(ref.GetS());
+        GlideA3.GetB()->c++;
+      }
+      if (((H+K)%2) != 0) {
+        GlideN3.GetB()->a += ref.GetI();
+        GlideN3.GetB()->b += olx_sqr(ref.GetS());
+        GlideN3.GetB()->c++;
+      }
+      if (((H+K)%4) != 0) {
+        GlideD3.GetB()->a += ref.GetI();
+        GlideD3.GetB()->b += olx_sqr(ref.GetS());
+        GlideD3.GetB()->c++;
+      }
     }
-    if( K == 0 && L == 0 )  {
-      if( (H%2) != 0 )    {  Screw21.GetB()->A() += ref.GetI();  Screw21.GetB()->B() += olx_sqr(ref.GetS());  Screw21.GetB()->C()++;  }
-      if( (H%4) != 0 )    {  Screw41.GetB()->A() += ref.GetI();  Screw41.GetB()->B() += olx_sqr(ref.GetS());  Screw41.GetB()->C()++;  }
+    if (K == 0 && L == 0) {
+      if ((H%2) != 0) {
+        Screw21.GetB()->a += ref.GetI();
+        Screw21.GetB()->b += olx_sqr(ref.GetS());
+        Screw21.GetB()->c++;
+      }
+      if ((H%4) != 0) {
+        Screw41.GetB()->a += ref.GetI();
+        Screw41.GetB()->b += olx_sqr(ref.GetS());
+        Screw41.GetB()->c++;
+      }
     }
-    if( H == 0 && L == 0 )  {
-      if( (K%2) != 0 )    {  Screw22.GetB()->A() += ref.GetI();  Screw22.GetB()->B() += olx_sqr(ref.GetS());  Screw22.GetB()->C()++;  }
-      if( (K%4) != 0 )    {  Screw42.GetB()->A() += ref.GetI();  Screw42.GetB()->B() += olx_sqr(ref.GetS());  Screw42.GetB()->C()++;  }
+    if (H == 0 && L == 0) {
+      if ((K%2) != 0) {
+        Screw22.GetB()->a += ref.GetI();
+        Screw22.GetB()->b += olx_sqr(ref.GetS());
+        Screw22.GetB()->c++;
+      }
+      if ((K%4) != 0) {
+        Screw42.GetB()->a += ref.GetI();
+        Screw42.GetB()->b += olx_sqr(ref.GetS());
+        Screw42.GetB()->c++;
+      }
     }
-    if( H == 0 && K == 0 )  {
-      if( (L%2) != 0 )    {  Screw23.GetB()->A() += ref.GetI();  Screw23.GetB()->B() += olx_sqr(ref.GetS());  Screw23.GetB()->C()++;  }
-      if( (L%4) != 0 )    {  Screw43.GetB()->A() += ref.GetI();  Screw43.GetB()->B() += olx_sqr(ref.GetS());  Screw43.GetB()->C()++;  }
-      if( (L%3) != 0 )    {  Screw33.GetB()->A() += ref.GetI();  Screw33.GetB()->B() += olx_sqr(ref.GetS());  Screw33.GetB()->C()++;  }
-      if( (L%6) != 0 )    {  Screw63.GetB()->A() += ref.GetI();  Screw63.GetB()->B() += olx_sqr(ref.GetS());  Screw63.GetB()->C()++;  }
+    if (H == 0 && K == 0) {
+      if ((L%2) != 0) {
+        Screw23.GetB()->a += ref.GetI();
+        Screw23.GetB()->b += olx_sqr(ref.GetS());
+        Screw23.GetB()->c++;
+      }
+      if ((L%4) != 0) {
+        Screw43.GetB()->a += ref.GetI();
+        Screw43.GetB()->b += olx_sqr(ref.GetS());
+        Screw43.GetB()->c++;
+      }
+      if ((L%3) != 0) {
+        Screw33.GetB()->a += ref.GetI();
+        Screw33.GetB()->b += olx_sqr(ref.GetS());
+        Screw33.GetB()->c++;
+      }
+      if ((L%6) != 0) {
+        Screw63.GetB()->a += ref.GetI();
+        Screw63.GetB()->b += olx_sqr(ref.GetS());
+        Screw63.GetB()->c++;
+      }
     }
   }
   //double averageSAI = 0;
   //size_t saCount = 0;
   //for( size_t i=0; i < SAElements.Count(); i++ )  {
-  //  SAElements[i].GetB()->B() = sqrt( SAElements[i].GetB()->GetB() );
+  //  SAElements[i].GetB()->b = sqrt( SAElements[i].GetB()->GetB() );
   //  if( SAElements[i].GetB()->GetC() != 0 )  {
   //    averageSAI += SAElements[i].GetB()->GetA()/SAElements[i].GetB()->GetC();
   //    saCount++;
@@ -285,14 +441,14 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   //}
   //if( saCount )  averageSAI /= saCount;
   //for( size_t i=0; i < SAElements.Count(); i++ )  {
-  //  SAElements[i].GetB()->A() /= 100;
-  //  SAElements[i].GetB()->B() = sqrt( SAElements[i].GetB()->GetB() )/100;
+  //  SAElements[i].GetB()->a /= 100;
+  //  SAElements[i].GetB()->b = sqrt( SAElements[i].GetB()->GetB() )/100;
   //}
   for( size_t i=0; i < SAElements.Count(); i++ )  {
-    SAElements[i].GetB()->B() = sqrt( SAElements[i].GetB()->GetB() );
+    SAElements[i].GetB()->b = sqrt( SAElements[i].GetB()->GetB() );
     if( SAElements[i].GetB()->GetC() != 0 )  {
       if( SAElements[i].GetB()->GetA() > 0 )  {
-        if( SAElements[i].GetB()->GetA()/SAElements[i].GetB()->GetC() < AverageI/7.5 || 
+        if( SAElements[i].GetB()->GetA()/SAElements[i].GetB()->GetC() < AverageI/7.5 ||
             SAElements[i].GetB()->GetA() < 4*SAElements[i].GetB()->GetB() )
           PresentElements.Add( &SAElements[i] );
       }
@@ -354,8 +510,8 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
     }
   }
   for( size_t i=0; i < LatticeHits.Count(); i++ )  {
-    LatticeHits[i].GetB()->B() = sqrt( LatticeHits[i].GetB()->GetB() );
-    LatticeHits[i].GetC()->B() = sqrt( LatticeHits[i].GetC()->GetB() );
+    LatticeHits[i].GetB()->b = sqrt( LatticeHits[i].GetB()->GetB() );
+    LatticeHits[i].GetC()->b = sqrt( LatticeHits[i].GetC()->GetB() );
     latRes.AddNew<TCLattice*, TwoDoublesInt, TwoDoublesInt>(LatticeHits[i].GetA(),
       *LatticeHits[i].GetB(),
       *LatticeHits[i].GetC() );
@@ -370,7 +526,7 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
 void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElementStats<TSpaceGroup*> >& res)  {
   typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
-  typedef AnAssociation2<smatd, SGpList> MatrixAss;
+  typedef olx_pair_t<smatd, SGpList> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatrices;
   SGList SGHits;
@@ -406,14 +562,14 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
       for( size_t k=0; k < UniqMatrices.Count(); k++ )  {
         if( UniqMatrices[k].GetA() == m )  {
           uniq = false;
-          UniqMatrices[k].B().Add( &sgv );
-          sgv.D() ++;
+          UniqMatrices[k].b.Add(&sgv);
+          sgv.d ++;
           break;
         }
       }
       if( uniq )  {
-        sgv.D() ++;
-        UniqMatrices.AddNew<smatd>(m).B().Add(&sgv);
+        sgv.d ++;
+        UniqMatrices.AddNew<smatd>(m).b.Add(&sgv);
       }
     }
     sgMl.Clear();
@@ -422,22 +578,22 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
   const size_t um_cnt = UniqMatrices.Count();
   for( size_t i=0; i < um_cnt; i++ )  {
     const smatd& m = UniqMatrices[i].GetA();
-    const size_t ref_cnt = Refs.Count(); 
+    const size_t ref_cnt = Refs.Count();
     for( size_t j=0; j < ref_cnt; j++ )  {
-      if(  Refs[j].IsSymmetric(m)  )  {
+      if( Refs[j].IsSymmetric(m) )  {
         double len = Refs[j].PhaseShift(m);
         if( olx_abs(len - olx_round(len)) < 0.01 )  {
           for( size_t k=0; k < UniqMatrices[i].GetB().Count(); k++ )  {
-            UniqMatrices[i].GetB()[k]->B().A() += Refs[j].GetI();
-            UniqMatrices[i].GetB()[k]->B().B() += Refs[j].GetS();
-            UniqMatrices[i].GetB()[k]->B().C() ++;
+            UniqMatrices[i].GetB()[k]->b.a += Refs[j].GetI();
+            UniqMatrices[i].GetB()[k]->b.b += Refs[j].GetS();
+            UniqMatrices[i].GetB()[k]->b.c ++;
           }
         }
         else  {
           for( size_t k=0; k < UniqMatrices[i].GetB().Count(); k++ )  {
-            UniqMatrices[i].GetB()[k]->C().A() += Refs[j].GetI();
-            UniqMatrices[i].GetB()[k]->C().B() += Refs[j].GetS();
-            UniqMatrices[i].GetB()[k]->C().C() ++;
+            UniqMatrices[i].GetB()[k]->c.a += Refs[j].GetI();
+            UniqMatrices[i].GetB()[k]->c.b += Refs[j].GetS();
+            UniqMatrices[i].GetB()[k]->c.c ++;
           }
         }
       }
@@ -446,6 +602,6 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
   for( size_t i=0; i < SGHits.Count(); i++ )  {
     res.AddNew<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt>( SGHits[i].GetA(),
       SGHits[i].GetB(),
-      SGHits[i].GetC() );
+      SGHits[i].GetC());
   }
 }

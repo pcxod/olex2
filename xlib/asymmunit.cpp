@@ -28,11 +28,9 @@
 
 class TAU_SfacSorter  {
 public:
-  static int Compare(const TPrimitiveStrListData<olxstr,const cm_Element*>* s1, 
-                    const TPrimitiveStrListData<olxstr,const cm_Element*>* s2)
-  {
-    const double diff = s1->Object->GetMr() - s1->Object->GetMr();
-    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  template <class item_t>
+  static int Compare(const item_t& s1, const item_t &s2) {
+    returm olx_cmp(olx_ptr:get(s1)->GetMr(), olx_ptr:get(s2)->GetMr());
   }
 };
 
@@ -578,7 +576,7 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
   if (!hasI)  matrixInc ++;
   double m = 1;
   if (MultiplyZ) {
-    m = (MatrixCount() + matrixInc)*TCLattice::GetLattMultiplier(this->Latt);
+    m =(double) (MatrixCount() + matrixInc)*TCLattice::GetLattMultiplier(this->Latt);
   }
   return _SummFormula(Sep, m);
 }
@@ -782,13 +780,13 @@ void TAsymmUnit::FitAtoms(TTypeList<AnAssociation3<TCAtom*, const cm_Element*,
     }
     v = tm*(v-tr);
     if( _atoms[i].GetA() == NULL )  {
-      _atoms[i].A() = &NewAtom();
-      _atoms[i].A()->SetType(*_atoms[i].GetB());
-      _atoms[i].A()->SetLabel(
-        _atoms[i].A()->GetType().symbol+(olxstr('x') << (char)('a'+i)), false);
-      GetRefMod()->Vars.SetParam(*_atoms[i].A(), catom_var_name_Sof, 11.0);
+      _atoms[i].a = &NewAtom();
+      _atoms[i].a->SetType(*_atoms[i].GetB());
+      _atoms[i].a->SetLabel(
+        _atoms[i].GetA()->GetType().symbol+(olxstr('x') << (char)('a'+i)), false);
+      GetRefMod()->Vars.SetParam(*_atoms[i].a, catom_var_name_Sof, 11.0);
     }
-    _atoms[i].A()->ccrd() = CartesianToCell(v);
+    _atoms[i].a->ccrd() = CartesianToCell(v);
   }
 }
 //..............................................................................
@@ -1223,7 +1221,7 @@ void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::_UpdateQPeaks() {
-  TPSTypeList<double, TCAtom*> sortedPeaks;
+  sorted::PrimitiveAssociation<double, TCAtom*> sortedPeaks;
   size_t ac = CAtoms.Count();
   for (size_t i=0; i < ac; i++) {
     if (CAtoms[i]->GetType() != iQPeakZ || CAtoms[i]->IsDeleted()) continue;
@@ -1231,10 +1229,10 @@ void TAsymmUnit::_UpdateQPeaks() {
   }
   ac = sortedPeaks.Count();
   for (size_t i=0; i < ac; i++)
-    sortedPeaks.GetObject(i)->SetLabel(olxstr('Q') << olxstr(ac-i), false);
+    sortedPeaks.GetValue(i)->SetLabel(olxstr('Q') << olxstr(ac - i), false);
   if (ac != 0) {
     MinQPeak = sortedPeaks.GetKey(0);
-    MaxQPeak = sortedPeaks.GetLast().Comparable;
+    MaxQPeak = sortedPeaks.GetLast().Key;
   }
   else {
     MaxQPeak = -1000;

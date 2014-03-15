@@ -21,10 +21,10 @@ the most recent value will be kept
 */
 class TSettingsFile: public IEObject  {
   olxstr_dict<olxstr, true> Params;
-  TTOStringList<TObjectStrListData<olxstr,bool> > Lines;
+  TStringToList<olxstr, bool> Lines;
 protected:
-  void Clear()  {  
-    Params.Clear();  
+  void Clear()  {
+    Params.Clear();
     Lines.Clear();
   }
 public:

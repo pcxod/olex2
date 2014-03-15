@@ -189,7 +189,7 @@ private:
   bool Folder;
   mutable bool Processed;
   uint64_t DateTime, Size;
-  TCSTypeList<olxstr, TFSItem*> Items;
+  olxstr_dict<TFSItem*> Items;
   olxstr Name, Digest;
   TStrList Properties, Actions;
 protected:
@@ -221,7 +221,7 @@ public:
   void ClearNonexisting();
 
   TFSItem& operator = (const TFSItem& FI);
-  TFSItem& Item(size_t i) const { return *Items.GetObject(i); }
+  TFSItem& Item(size_t i) const { return *Items.GetValue(i); }
   size_t Count() const { return Items.Count(); }
   bool IsEmpty() const { return Items.IsEmpty(); }
   TFSItem& NewItem(const olxstr& name);
@@ -261,8 +261,7 @@ public:
   size_t UpdateDigest();
 
   template <class SC> TFSItem* FindByName(const SC& Name) const {
-    const size_t ind = Items.IndexOf(Name);
-    return (ind == InvalidIndex) ? NULL : Items.GetObject(ind);
+    return Items.Find(Name, NULL);
  }
 	// does a search of /parent_folder/parent_folder/file_name
   TFSItem* FindByFullName(const olxstr& Name) const;

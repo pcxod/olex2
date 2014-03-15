@@ -18,7 +18,7 @@ interface
 namespace olex2 {
 
 class OlexProcessorImp : public IOlex2Processor {
-  TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
+  sorted::StringAssociation<ABasicFunction*> CallbackFuncs;
   ALibraryContainer *LibraryContainer;
   // object destruction handler
   void ODH(IEObject *o) {
@@ -54,7 +54,7 @@ public:
   {}
   virtual ~OlexProcessorImp() {
     for (size_t i=0; i < CallbackFuncs.Count(); i++)
-      delete CallbackFuncs.GetObject(i);
+      delete CallbackFuncs.GetValue(i);
     if (LibraryContainer)
       LibraryContainer->RemoveDestructionHandler(*this, &OlexProcessorImp::ODH);
   }
@@ -89,8 +89,8 @@ public:
     while (i < CallbackFuncs.Count() &&
       CallbackFuncs.GetKey(i).Equals(cbEvent))
     {
-      if (CallbackFuncs.GetObject(i)->GetName() == funcName) {
-        delete CallbackFuncs.GetObject(i);
+      if (CallbackFuncs.GetValue(i)->GetName() == funcName) {
+        delete CallbackFuncs.GetValue(i);
         CallbackFuncs.Delete(i);
         return;
       }
@@ -99,8 +99,8 @@ public:
     // go backwards
     i = ind-1;
     while (i !=InvalidIndex && (!CallbackFuncs.GetKey(i).Compare(cbEvent))) {
-      if (CallbackFuncs.GetObject(i)->GetName() == funcName) {
-        delete CallbackFuncs.GetObject(i);
+      if (CallbackFuncs.GetValue(i)->GetName() == funcName) {
+        delete CallbackFuncs.GetValue(i);
         CallbackFuncs.Delete(i);
         return;
       }
@@ -149,7 +149,7 @@ public:
     TMacroError me;
     CallbackFuncs.GetIndices(cbEvent, indexes);
     for( size_t i=0; i < indexes.Count(); i++ )  {
-      CallbackFuncs.GetObject(indexes[i])->Run(params, me);
+      CallbackFuncs.GetValue(indexes[i])->Run(params, me);
       AnalyseError(me);
       me.Reset();
     }

@@ -101,7 +101,7 @@ olxstr ABasicFunction::GetQualifiedName() const {
 }
 //.............................................................................
 void ABasicFunction::ParseOptions(const olxstr& Options,
-  TCSTypeList<olxstr,olxstr>& list)
+  olxstr_dict<olxstr>& list)
 {
   if( Options.IsEmpty() )  return;
   TStrList toks(Options, "&;");
@@ -115,14 +115,14 @@ void ABasicFunction::ParseOptions(const olxstr& Options,
 }
 //.............................................................................
 olxstr ABasicFunction::OptionsToString(
-  const TCSTypeList<olxstr,olxstr>& list) const
+  const olxstr_dict<olxstr>& list) const
 {
   olxstr_buf rv;
   olxstr sep1 = '-', sep2 = "&;";
   for( size_t i=0; i < list.Count(); i++ )  {
     rv << list.GetKey(i);
-    if( !list.GetObject(i).IsEmpty() )
-      rv << sep1 << list.GetObject(i);
+    if( !list.GetValue(i).IsEmpty() )
+      rv << sep1 << list.GetValue(i);
     rv << sep2;
   }
   return rv;
@@ -224,7 +224,7 @@ void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroError& E) {
 //.............................................................................
 void FunctionChainer::Update(TMacro<FunctionChainer> &m) {
   uint32_t args=0;
-  TCSTypeList<olxstr,olxstr> options;
+  olxstr_dict<olxstr> options;
   TStrList description;
   description << NewLineSequence();
   for (size_t i=0; i < functions.Count(); i++) {

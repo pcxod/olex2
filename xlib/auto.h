@@ -103,7 +103,7 @@ class TAutoDBNode  {
   int32_t Id;
   // runtime information
   // this is the "index"
-  TTypeList<AnAssociation2<TAutoDBNet*,uint32_t> > Parents;
+  TTypeList<olx_pair_t<TAutoDBNet*,uint32_t> > Parents;
   evecd Params; // pre-calculated parameters
   void _PreCalc();
   double CalcDistance(size_t i) const {
@@ -112,11 +112,11 @@ class TAutoDBNode  {
   double CalcAngle(size_t i, size_t j) const;
 protected:
   static int SortMetricsFunc(const TAttachedNode &a, const TAttachedNode &b);
-  static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d> &a,
-                            const AnAssociation2<TCAtom*, vec3d> &b);
+  static int SortCAtomsFunc(const olx_pair_t<TCAtom*, vec3d> &a,
+                            const olx_pair_t<TCAtom*, vec3d> &b);
   static vec3d SortCenter;
 public:
-  TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms);
+  TAutoDBNode(TSAtom& sa, TTypeList<olx_pair_t<TCAtom*, vec3d> >* atoms);
   TAutoDBNode(IDataInputStream& in)  {  LoadFromStream(in);  }
 
   const olxstr& ToString() const;

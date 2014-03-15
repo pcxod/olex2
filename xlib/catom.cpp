@@ -329,7 +329,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     QPeak = item.GetFieldByName("peak").ToDouble();
 }
 //..............................................................................
-void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool>& chars)  {
+void DigitStrtok(const olxstr &str, TStringToList<olxstr,bool>& chars)  {
   olxstr Dig, Char;
   for( size_t i=0; i < str.Length(); i++ )  {
     if( str[i] <= '9' && str[i] >= '0' )  {
@@ -352,7 +352,7 @@ void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool>& chars)  {
 }
 //..............................................................................
 int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
-  TStrPObjList<olxstr, bool> Chars1, Chars2;
+  TStringToList<olxstr, bool> Chars1, Chars2;
 
   DigitStrtok(S, Chars1);
   DigitStrtok(S1, Chars2);

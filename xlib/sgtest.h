@@ -17,7 +17,7 @@
 
 BeginXlibNamespace()
 
-  typedef AnAssociation2<double, double> TwoDoubles;
+  typedef olx_pair_t<double, double> TwoDoubles;
   typedef AnAssociation3<double, double, int> TwoDoublesInt;
 
 

@@ -18,7 +18,7 @@
 template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   IC Data;
   typedef TEGraphNode<IC, AssociatedOC> NodeType;
-  typedef AnAssociation2<TSizeList,TSizeList> ConnInfo;
+  typedef olx_pair_t<TSizeList,TSizeList> ConnInfo;
   TPtrList<NodeType> Nodes;
   bool RingNode, Root;
   size_t GroupIndex;
@@ -62,21 +62,21 @@ protected:
           for (size_t k=0; k < conn.Count(); k++) {
             if (conn[k].GetB().Contains(i)) {
               if (!conn[k].GetA().Contains(j))
-                conn[k].A().Add(j);
+                conn[k].a.Add(j);
               found = true;
               break;
             }
             else if (conn[k].GetA().Contains(j)) {
               if (!conn[k].GetB().Contains(i))
-                conn[k].B().Add(i);
+                conn[k].b.Add(i);
               found = true;
               break;
             }
           }
           if (!found) {
             ConnInfo& ci = conn.AddNew();
-            ci.A().Add(j);
-            ci.B().Add(i);
+            ci.a.Add(j);
+            ci.b.Add(i);
           }
         }
       }

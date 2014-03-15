@@ -52,7 +52,7 @@ bool parser_util::operator_set::parse_control_chars(const olxstr& exp,
 }
 //.............................................................................
 bool parser_util::operator_set::add_operator(const olxstr &opr) {
-  if (!operators.AddUnique(opr)) return false;
+  if (!operators.AddUnique(opr).GetB()) return false;
   for (size_t i=0; i < opr.Length(); i++)
     control_chars.AddUnique(opr[i]);
   return true;

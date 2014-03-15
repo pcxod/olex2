@@ -359,13 +359,16 @@ public:
 //..............................................................................
 class TCAtomComparator  {
 public:
-  static int Compare(const TCAtom &a1, const TCAtom &a2)  {
-    if( a1.GetFragmentId() != a2.GetFragmentId() )
+  template <class item_a_t, class item_b_t>
+  static int Compare(const item_a_t &a1_, const item_b_t &a2_) {
+    const TCAtom &a1 = olx_ref::get(a1_),
+      &a2 = olx_ref::get(a2_);
+    if (a1.GetFragmentId() != a2.GetFragmentId())
       return a1.GetFragmentId() - a2.GetFragmentId();
-    if( a1.GetResiId() != a2.GetResiId() )
+    if (a1.GetResiId() != a2.GetResiId())
       return olx_cmp(a1.GetResiId(), a2.GetResiId());
     // by label
-    if( a1.GetType() == a2.GetType() )
+    if (a1.GetType() == a2.GetType())
       return TCAtom::CompareAtomLabels(a1.GetLabel(), a2.GetLabel());
     // by mass
     return olx_cmp(a1.GetType().GetMr(), a2.GetType().GetMr());

@@ -249,12 +249,12 @@ public:
 /* these types are used to specify found bravais latteces: int < 0 - symmetry
 is lower and int > 0 - symmetry is higher (normally never returned :))
 */
-typedef AnAssociation2<TBravaisLattice*,int> TBravaisLatticeRef;
+typedef olx_pair_t<TBravaisLattice*,int> TBravaisLatticeRef;
 
 class TSymmLib: public IEObject  {
-  TSStrPObjList<olxstr,TSpaceGroup*, true> SpaceGroups;
-  TStrPObjList<olxstr,TCLattice*> Lattices;
-  TStrPObjList<olxstr,TBravaisLattice*> BravaisLattices;
+  sorted::StringAssociation<TSpaceGroup*, true> SpaceGroups;
+  TStringToList<olxstr, TCLattice*> Lattices;
+  TStringToList<olxstr, TBravaisLattice*> BravaisLattices;
   TPtrList<TSpaceGroup> PointGroups;
   TTypeList<TPtrList<TSpaceGroup> > _PointGroups;
   TTypeList<TSymmElement> SymmetryElements;
@@ -294,16 +294,15 @@ public:
     TPtrList<TSpaceGroup>& res) const;
 
   size_t SGCount() const {  return SpaceGroups.Count();  }
-  TSpaceGroup& GetGroup(size_t i) const {  return *SpaceGroups.GetObject(i);  }
+  TSpaceGroup& GetGroup(size_t i) const {  return *SpaceGroups.GetValue(i);  }
   void GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const;
   TSpaceGroup* FindGroupByName(const olxstr& Name) const {
-    return SpaceGroups[Name];
+    return SpaceGroups.Find(Name);
   }
   TSpaceGroup* FindGroupByHallSymbol(const olxstr &hs,
   TSpaceGroup *def=NULL) const
  {
-    size_t i = hall_symbols.IndexOf(hs);
-    return i == InvalidIndex ? def : hall_symbols.GetValue(i);
+    return hall_symbols.Find(hs, def);
   }
 
   size_t SymmElementCount() const {  return SymmetryElements.Count();  }

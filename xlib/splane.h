@@ -25,16 +25,16 @@ const uint16_t
   plane_flag_regular = 0x0002;
 
 class TSPlane : public TSObject<TNetwork>  {
-  TTypeList<AnAssociation2<TSAtom*, double> > Crds;
+  TTypeList<olx_pair_t<TSAtom*, double> > Crds;
   vec3d Center;
   mat3d Normals;
   double Distance, wRMSD;  uint16_t Flags;
   size_t DefId;
-  void _Init(const TTypeList<AnAssociation2<vec3d, double> >& points);
+  void _Init(const TTypeList<olx_pair_t<vec3d, double> >& points);
   // for Crd sorting by atom tag
   struct AtomTagAccessor {
     index_t operator() (
-      const AnAssociation2<TSAtom*, double> *p) const
+      const olx_pair_t<TSAtom*, double> *p) const
     {
       return p->GetA()->GetTag();
     }
@@ -51,7 +51,7 @@ public:
   DefPropBFIsSet(Regular, Flags, plane_flag_regular)
 
   // an association point, weight is provided
-  void Init(const TTypeList<AnAssociation2<TSAtom*, double> >& Points);
+  void Init(const TTypeList<olx_pair_t<TSAtom*, double> >& Points);
 
   inline const vec3d& GetNormal() const {  return Normals[0]; }
   // note that the Normal (or Z) is the first row of the matrix
@@ -82,10 +82,11 @@ public:
   }
   size_t Count() const {  return Crds.Count();  }
   const TSAtom& GetAtom(size_t i) const {  return *Crds[i].GetA();  }
-  TSAtom& GetAtom(size_t i) {  return *Crds[i].A();  }
+  TSAtom& GetAtom(size_t i) {  return *Crds[i].a;  }
   double GetWeight(size_t i) const {  return Crds[i].GetB();  }
   void _PlaneSortByAtomTags() {
-    BubbleSorter::Sort(Crds, AtomTagAccessor(), TPrimitiveComparator(),
+    InsertSorter::Sort(Crds,
+      ComplexComparator::Make(AtomTagAccessor(), TPrimitiveComparator()),
       DummySortListener());
   }
   /* returns inverse intersects with the lattice vectors, the vector is divided
@@ -188,7 +189,7 @@ one since the priority will be given to some points and
 RMSD'=(sum(w^2*distances^2)/sum(w^2))^0.5, where distance will be smaller for
 higher weights... there are functions to calculate both values 
 */
-template <class List>  // AnAssociation2<vec3d, double> list, returning & on []
+template <class List>  // olx_pair_t<vec3d, double> list, returning & on []
 bool TSPlane::CalcPlanes(const List& Points, mat3d& Params, vec3d& rms,
   vec3d& center, bool sort)
 {

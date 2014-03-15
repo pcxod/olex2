@@ -17,7 +17,7 @@ void TCHNExp::Clear()  {
 }
 //..............................................................................
 olxstr TCHNExp::SummFormula(const olxstr &Separator)  {
-  TStrPObjList<olxstr,double> E1;
+  TStringToList<olxstr, double> E1;
   CalcSummFormula(E1);
   olxstr Res;
   double v;
@@ -32,7 +32,7 @@ olxstr TCHNExp::SummFormula(const olxstr &Separator)  {
 }
 //..............................................................................
 double TCHNExp::MolWeight()  {
-  TStrPObjList<olxstr,double> E1;
+  TStringToList<olxstr, double> E1;
   CalcSummFormula(E1);
   double w = 0;
   for( size_t i=0; i < E1.Count(); i++ )  {
@@ -45,7 +45,7 @@ double TCHNExp::MolWeight()  {
 }
 //..............................................................................
 double TCHNExp::CHN(olxdict<short, double, TPrimitiveComparator>& rv) const {
-  TStrPObjList<olxstr,double> E1;
+  TStringToList<olxstr, double> E1;
   CalcSummFormula(E1);
   ElementPList bais(E1.Count());
   double w = 0;
@@ -65,7 +65,7 @@ double TCHNExp::CHN(olxdict<short, double, TPrimitiveComparator>& rv) const {
 }
 //..............................................................................
 void TCHNExp::CHN(double &C, double &H, double &N, double &Mr) const {
-  TStrPObjList<olxstr,double> E1;
+  TStringToList<olxstr, double> E1;
   CalcSummFormula(E1);
   ElementPList elms(E1.Count());
   double w = 0;
@@ -86,7 +86,7 @@ void TCHNExp::CHN(double &C, double &H, double &N, double &Mr) const {
 }
 //..............................................................................
 olxstr TCHNExp::Composition()  {
-  TStrPObjList<olxstr,double> E1;
+  TStringToList<olxstr, double> E1;
   CalcSummFormula(E1);
   ElementPList elms(E1.Count());
   double w = 0;
@@ -109,9 +109,9 @@ olxstr TCHNExp::Composition()  {
   return Res;
 }
 //..............................................................................
-void TCHNExp::CalcSummFormula(TStrPObjList<olxstr,double>& E) const {
+void TCHNExp::CalcSummFormula(TStringToList<olxstr, double>& E) const {
   bool Added;
-  TStrPObjList<olxstr,double> E1;
+  TStringToList<olxstr, double> E1;
   for( size_t i=0; i < Exp.Count(); i++ )  {
     Added = false;
     for( size_t j=0; j < E1.Count(); j++ )  {

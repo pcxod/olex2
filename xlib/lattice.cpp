@@ -492,9 +492,9 @@ SortedObjectList<smatd, smatd::ContainerIdComparator>
         if (aa.IsDeleted() || (!use_q_peaks && aa.GetType() == iQPeakZ))
           continue;
         smatd m = uc.MulMatrix(a.GetAttachedSite(k).matrix, ref_m);
-        size_t idx;
-        if( res.AddUnique(m, &idx) )
-          q.Push(&res[idx]);
+        olx_pair_t<size_t, bool> idx = res.AddUnique(m);
+        if(idx.b)
+          q.Push(&res[idx.a]);
       }
     }
   }
@@ -528,7 +528,7 @@ void TLattice::GetGrowMatrices(smatd_list& res) const {
 void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Template)  {
   RestoreCoordinates();
   const TUnitCell& uc = GetUnitCell();
-  SortedPtrList<smatd, smatd::IdComparator> matrices;
+  SortedPointerList<smatd, smatd::IdComparator> matrices;
   matrices.SetCapacity(Matrices.Count());
   for (size_t i=0; i < Matrices.Count(); i++)
     matrices.AddUnique(Matrices[i]);
@@ -647,7 +647,7 @@ void TLattice::GrowFragments(
     if (fi != InvalidIndex) {
       const smatd_list &l = job.GetValue(fi);
       for( size_t j=0; j < l.Count(); j++)
-        GenerateAtom(ca, *matrix_map[l[j].GetId()]);
+        GenerateAtom(ca, *matrix_map.Get(l[j].GetId()));
     }
   }
   RestoreCoordinates();
@@ -890,7 +890,7 @@ TSPlanePList TLattice::NewPlane(const TSAtomPList& Atoms, double weightExtent, b
 TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
   if( atoms.Count() < 3 )  return NULL;
   //TODO: need to consider occupancy for disordered groups ...
-  TTypeList<AnAssociation2<TSAtom*, double> > Points;
+  TTypeList<olx_pair_t<TSAtom*, double> > Points;
   Points.SetCapacity(atoms.Count());
   if( weightExtent != 0 )  {
     double swg = 0;
@@ -902,7 +902,7 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, double weightExtent)  {
     // normalise the sum of weights to atoms.Count()...
     const double m = atoms.Count()/swg;
     for( size_t i=0; i < Points.Count(); i++ )
-      Points[i].B() *= m;
+      Points[i].b *= m;
   }
   else  {
     for( size_t i=0; i < atoms.Count(); i++ )
@@ -2051,7 +2051,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
   }
   // choose the shortest bond ...
   if( Envi.Count() > 1 )  {
-    TPSTypeList<double, TCAtom*> hits;
+    sorted::PrimitiveAssociation<double, TCAtom*> hits;
     for( size_t i=0; i < Envi.Count(); i++ )  {
       double d = Envi.GetBase().crd().DistanceTo(Envi.GetCrd(i));
       if( Envi.GetMatrix(i).IsFirst() && // prioritise sligtly longer intramolecular bonds
@@ -2064,13 +2064,13 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
 
     while( hits.Count() > 1 &&
       ((hits.GetLastKey() - hits.GetKey(0)) > 0.15) )  {
-      Envi.Exclude(*hits.GetObject(hits.Count()-1));
+      Envi.Exclude(*hits.GetValue(hits.Count() - 1));
       hits.Delete(hits.Count()-1);
     }
   }
   // all similar length  .... Q peaks might help :)
   if( Envi.Count() > 1 )  {
-    TPSTypeList<double, TCAtom*> hits;
+    sorted::PrimitiveAssociation<double, TCAtom*> hits;
     AE.Clear();
     UnitCell->GetAtomQEnviList(Envi.GetBase(), AE);
     for( size_t i=0; i < AE.Count(); i++ )  {
@@ -2087,7 +2087,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
       hits.Add(olx_abs(-1 + vec2.CAngle(vec1)), &Envi.GetCAtom(i));
     }
     while( hits.Count() > 1 )  {
-      Envi.Exclude(*hits.GetObject( hits.Count() - 1 ) );
+      Envi.Exclude(*hits.GetValue(hits.Count() - 1));
       hits.Delete(hits.Count() - 1);
     }
   }
@@ -2379,7 +2379,7 @@ olxstr TLattice::CalcMoiety() const {
         }
       }
       if( equals )  {
-        frags[j].A() += cl[0].count/frags[j].GetB()[0].count;
+        frags[j].a += cl[0].count/frags[j].GetB()[0].count;
         uniq = false;
         break;
       }
@@ -2401,9 +2401,9 @@ olxstr TLattice::CalcMoiety() const {
       const TCAtomPList& l = cfrags[frags[i].GetC()];
       const size_t generators = GetFragmentGrowMatrices(l, false).Count();
       const int gd = int(generators == 0 ? 1 : generators);
-      frags[i].A() *= zp_mult/gd;
+      frags[i].a *= zp_mult/gd;
       for( size_t j=0; j < frags[i].GetB().Count(); j++ )
-        frags[i].B()[j].count *= gd;
+        frags[i].b[j].count *= gd;
     }
   }
   olxstr rv;

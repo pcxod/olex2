@@ -90,7 +90,7 @@ struct LabelCorrector  {
         return;
       LabelIterator *li;
       if (labels.HasKey(&a.GetType()))
-        li = &labels[&a.GetType()];
+        li = &labels.Get(&a.GetType());
       else {
         const size_t off = a.GetType().symbol.Length();
         li = &labels(&a.GetType(),
@@ -117,7 +117,7 @@ struct LabelCorrector  {
     if (lo != &a) {
       LabelIterator *li;
       if (labels.HasKey(&a.GetType()))
-        li = &labels[&a.GetType()];
+        li = &labels.Get(&a.GetType());
       else {
         const size_t off = a.GetType().symbol.Length();
         li = &labels(&a.GetType(),

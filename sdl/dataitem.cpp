@@ -117,7 +117,7 @@ olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName)  {
 }
 //..............................................................................
 TDataItem *TDataItem::FindAnyItem(const olxstr& Name) const {
-  TDataItem *DI = Items.FindObject(Name);
+  TDataItem *DI = Items.FindObject(Name, NULL);
   if (DI == NULL) {
     for (size_t i=0; i < ItemCount(); i++) {
       DI = GetItemByIndex(i).FindAnyItem(Name);
@@ -591,7 +591,7 @@ const_strstrlist TDataItem::GetOrderedFieldList() const {
 void TDataItem::UpdateFieldIndices(size_t deleted) {
   for (size_t i = 0; i < Fields.Count(); i++) {
     if (Fields.GetValue(i).GetB() > deleted)
-      Fields.GetValue(i).B()--;
+      Fields.GetValue(i).b--;
   }
 }
 //..............................................................................

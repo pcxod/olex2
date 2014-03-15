@@ -11,7 +11,7 @@
 #include "cif.h"
 
 // TLLTBondSort function bodies - bond sorting procedure in TLinkedLoopTable
-int TLLTBondSort::Compare(const CifTabBond &I, const CifTabBond &I1) const {
+int TLLTBondSort::Compare_(const CifTabBond &I, const CifTabBond &I1) const {
   double v;
   if( (SortType & cCifTabSortLength) != 0 )  {  // length, Mr, Label
     v = I.Value.ToDouble() - I1.Value.ToDouble();

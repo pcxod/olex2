@@ -295,11 +295,11 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   }
   else if (event.GetId() == ID_GraphicsSelect) {
     if (FObjectUnderMouse->IsSelected()) {
-      SortedPtrList<TGPCollection, TPointerComparator> colls;
+      sorted::PointerPointer<TGPCollection> colls;
       TGlGroup& sel = FXApp->GetSelection();
       for (size_t i=0; i < sel.Count(); i++) {
         TGPCollection& gpc = sel.GetObject(i).GetPrimitives();
-        if (colls.AddUnique(&gpc)) {
+        if (colls.AddUnique(&gpc).b) {
           for (size_t j = 0; j < gpc.ObjectCount(); j++) {
             AGDrawObject &go = gpc.GetObject(j);
             if (go.IsVisible())

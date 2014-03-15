@@ -10,7 +10,7 @@
 #ifndef __olx_actions_H
 #define __olx_actions_H
 #include "ebase.h"
-#include "estlist.h"
+#include "edict.h"
 #include "tptrlist.h"
 #include "typelist.h"
 #undef GetObject
@@ -146,7 +146,7 @@ public:
 
 class TActionQList: public IEObject {
 private:
-  TCSTypeList<olxstr,TActionQueue*> Queues;
+  olxstr_dict<TActionQueue*> Queues;
 public:
   TActionQList()  {}
   virtual ~TActionQList() {  Clear();  }
@@ -167,13 +167,14 @@ public:
   }
   /* find a queue by name, returns NULL if not found */
   TActionQueue* Find(const olxstr& Name) const {
-    size_t i = Queues.IndexOf(Name);
-    return i == InvalidIndex ? NULL : Queues.GetObject(i);
+    return Queues.Find(Name, NULL);
   }
   // queue by index
-  TActionQueue& Get(size_t index) const {  return *Queues.GetObject(index);  }
+  TActionQueue& Get(size_t index) const {
+    return *Queues.GetValue(index);
+  }
   TActionQueue& operator [](size_t index) const {
-    return *Queues.GetObject(index);
+    return *Queues.GetValue(index);
   }
   // returns the number of queues
   size_t Count() const {  return Queues.Count();  }

@@ -182,7 +182,7 @@ void TOlxPyVar::Set(const olxstr& str)  {
 //.............................................................................
 const olxstr& TOlxVars::GetVarStr(size_t index)  {
   volatile olx_scope_cs cs(CS());
-  TOlxPyVar& oo = Instance->Vars.GetObject(index);
+  TOlxPyVar& oo = Instance->Vars.GetValue(index);
   if( oo.GetStr() != NULL )  return *oo.GetStr();
   PyObject *po = oo.GetObjVal();
   double fv;

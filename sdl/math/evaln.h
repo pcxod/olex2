@@ -149,7 +149,7 @@ struct ExpEvaluator {
   static double div(double a, double b) { return a/b; }
   static double mod(double a, double b) { return (int)a%(int)b; }
 
-  TStrPObjList<olxstr, AEvaluable *> ScopeVariables;
+  TStringToList<olxstr, AEvaluable *> ScopeVariables;
   // these are filled in by the build function
   TPtrList<Variable> Variables;
   TPtrList<Evaluator> Evaluators;
