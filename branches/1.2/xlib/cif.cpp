@@ -142,24 +142,28 @@ void TCif::SaveToStrings(TStrList& Strings)  {
   TStrList pivots, endings;
   TXApp& xapp = TXApp::GetInstance();
   olxstr CifCustomisationFN(xapp.GetCifTemplatesDir() + "customisation.xlt");
-  if( TEFile::Exists(CifCustomisationFN) )  {
-    try  {
+  if (TEFile::Exists(CifCustomisationFN)) {
+    try {
       TDataFile df;
-      if( !df.LoadFromXLFile(CifCustomisationFN) )
-        throw TFunctionFailedException(__OlxSourceInfo, "falied to load CIF customisation file");
-      const TDataItem& ist = df.Root().GetItemByName("cif_customisation").GetItemByName("sorting");
+      if (!df.LoadFromXLFile(CifCustomisationFN)) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "failed to load CIF customisation file");
+      }
+      df.Include(NULL);
+      const TDataItem& ist = df.Root().GetItemByName("cif_customisation")
+        .GetItemByName("sorting");
       const TDataItem& ipv = ist.GetItemByName("pivots");
-      for( size_t i=0; i < ipv.ItemCount(); i++ )
+      for (size_t i=0; i < ipv.ItemCount(); i++)
         pivots.Add(ipv.GetItemByIndex(i).GetValue());
       const TDataItem& ied = ist.GetItemByName("endings");
-      for( size_t i=0; i < ied.ItemCount(); i++ )
+      for (size_t i=0; i < ied.ItemCount(); i++)
         pivots.Add(ied.GetItemByIndex(i).GetValue());
     }
-    catch(const TExceptionBase& e)  {
+    catch(const TExceptionBase& e) {
       throw TFunctionFailedException(__OlxSourceInfo, e);
     }
   }
-  else  {
+  else {
     pivots.Strtok(def_pivots, ',');
     endings.Strtok(def_endings, ',');
   }
