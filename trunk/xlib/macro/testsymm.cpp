@@ -100,7 +100,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
 
   smatd_list presentSymm;
-  TTOStringList<TObjectStrListData<olxstr,smatd> > toTest;
+  TStringToList<olxstr, smatd> toTest;
   smatd a, r3, r4, r6, res;
   smatd nxx, xnx, xxn;
   smatd xr2x, r2xx, xxr2;

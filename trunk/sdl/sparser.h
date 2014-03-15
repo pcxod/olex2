@@ -411,7 +411,7 @@ public:
 };
 
 class TEvaluatorFactory  {
-  TSStrPObjList<olxstr,IClassDefinition*, true> ClassDefinitions;
+  olxstr_dict<IClassDefinition*, true> ClassDefinitions;
 public:
   TEvaluatorFactory() {  ;  }
   IEvaluator* Evaluator(const olxstr &Val) {
@@ -421,15 +421,15 @@ public:
       // in the future
       return NULL;
     }
-    IClassDefinition * classDef = ClassDefinitions[toks[0]];
+    IClassDefinition * classDef = ClassDefinitions.Find(toks[0], NULL);
     //TODO: report the error
     if( !classDef )  return NULL;
     toks.Delete(0);
-    return ProcessProperties( classDef, toks );
+    return ProcessProperties(classDef, toks);
   }
 protected:
-  IEvaluator* ProcessProperties(IClassDefinition *classDef, TStrList props) {
-    short memberType = classDef->GetMemberType( props[0] );
+  IEvaluator* ProcessProperties(IClassDefinition *classDef, const TStrList &props) {
+    short memberType = classDef->GetMemberType(props[0]);
     switch( memberType ) {
       case mtProperty:
         break;
@@ -619,7 +619,7 @@ class TSyntaxParser  {
   TPtrList<IEvaluable> Evaluables;
   TPtrList<IEvaluator> Evaluators;
   TStrList FErrors;
-  TSStrPObjList<olxstr,TObjectFactory<IEvaluable>*, false > LogicalOperators,
+  olxstr_dict<TObjectFactory<IEvaluable>*, false> LogicalOperators,
     ComparisonOperators, ArithmeticFunctions;
 protected:
   IEvaluable* SimpleParse(const olxstr& Expression);

@@ -288,7 +288,7 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
   }
   if( Params.IsEmpty() )  {
     if( !CursorStack.IsEmpty() )  {
-      AnAssociation2<wxCursor,wxString> ci = CursorStack.Pop();
+      olx_pair_t<wxCursor,wxString> ci = CursorStack.Pop();
       SetCursor(ci.GetA());
       FGlCanvas->SetCursor(ci.GetA());
       SetStatusText(ci.GetB());
@@ -302,7 +302,7 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
   }
   else  {
     if (!Params[0].Equalsi("user")) {
-      CursorStack.Push(AnAssociation2<wxCursor,wxString>(
+      CursorStack.Push(olx_pair_t<wxCursor,wxString>(
         FGlCanvas->GetCursor(), GetStatusBar()->GetStatusText()));
     }
     if( Params[0].Equalsi("busy") )  {
@@ -1971,7 +1971,7 @@ void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( ind == InvalidIndex )
       Bindings.Add("wheel", Cmds[1]);
     else
-      Bindings.GetObject(ind) = Cmds[1];
+      Bindings.GetValue(ind) = Cmds[1];
   }
   else
     E.ProcessingError(__OlxSrcInfo, olxstr("unknown binding parameter: ") << Cmds[0]);
@@ -2095,7 +2095,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   if( Ins != NULL )
     Ins->UpdateParams();
   // get CAtoms and EXYZ equivalents
-  SortedPtrList<TResidue, TPointerComparator> residues_to_release;
+  sorted::PointerPointer<TResidue> residues_to_release;
   au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   for( size_t i=0; i < Atoms.Count(); i++ )  {
     TCAtom &ca = Atoms[i]->CAtom();
@@ -2166,7 +2166,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options,
   TXApp::UnifyPAtomList(CAtoms);
   FXApp->XFile().GetAsymmUnit().Sort(&CAtoms);
   TStrList SL;
-  TStrPObjList<olxstr, TStrList* > RemovedIns;
+  TStringToList<olxstr, TStrList* > RemovedIns;
   SL.Add("REM please do not modify atom names inside the instructions - they will be updated");
   SL.Add("REM by Olex2 automatically, though you can change any parameters");
   SL.Add("REM Also do not change the atoms order");
@@ -2965,14 +2965,14 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   if( Options.Contains("#") )  itemType = mtSeparator;
   olxstr stateDependent = Options.FindValue("s");
   olxstr modeDependent = Options.FindValue("m");
-  TMenu* menu = Menus[menuName];
+  TMenu* menu = Menus.Find(menuName, NULL);
   if( menu == NULL )  {
     TStrList toks;
     toks.Strtok( Cmds[0], ';');
     size_t mi=0;
     while( (ind = menuName.LastIndexOf(';')) != InvalidIndex && ! menu )  {
       menuName = menuName.SubStringTo(ind);
-      menu = Menus[menuName];
+      menu = Menus.Find(menuName, NULL);
       mi++;
       
       if( menu )  break;
@@ -3098,13 +3098,13 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
 }
 //..............................................................................
 void TMainForm::macDeleteMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TMenu* menu = Menus[Cmds[0]];
+  TMenu* menu = Menus.Find(Cmds[0], NULL);
   if( menu == NULL )  {
     size_t ind = Cmds[0].LastIndexOf(';');
     if( ind == InvalidIndex )  return;
     olxstr menuName = Cmds[0].SubStringTo(ind);
     olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-    menu = Menus[menuName];
+    menu = Menus.Find(menuName, NULL);
     if( menu == NULL )  return;
     ind = menu->FindItem(itemName.u_str());
     if( ind == InvalidIndex )  return;
@@ -3132,7 +3132,7 @@ void TMainForm::macEnableMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   if( ind == InvalidIndex )  return;
   olxstr menuName = Cmds[0].SubStringTo(ind);
   olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-  TMenu* menu = Menus[menuName];
+  TMenu* menu = Menus.Find(menuName, NULL);
   if( menu == NULL )  return;
   ind = menu->FindItem(itemName.u_str());
   if( ind == InvalidIndex )  return;
@@ -3144,7 +3144,7 @@ void TMainForm::macDisableMenu(TStrObjList &Cmds, const TParamList &Options, TMa
   if( ind == InvalidIndex )  return;
   olxstr menuName = Cmds[0].SubStringTo(ind);
   olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-  TMenu* menu = Menus[menuName];
+  TMenu* menu = Menus.Find(menuName, NULL);
   if( menu == NULL )  return;
   ind = menu->FindItem(itemName.u_str());
   if( ind == InvalidIndex )  return;
@@ -3156,7 +3156,7 @@ void TMainForm::macCheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacr
   if( ind == InvalidIndex )  return;
   olxstr menuName = Cmds[0].SubStringTo(ind);
   olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-  TMenu* menu = Menus[menuName];
+  TMenu* menu = Menus.Find(menuName, NULL);
   if( menu == NULL )  return;
   ind = menu->FindItem(itemName.u_str());
   if( ind == InvalidIndex )  return;
@@ -3168,8 +3168,8 @@ void TMainForm::macUncheckMenu(TStrObjList &Cmds, const TParamList &Options, TMa
   if( ind == InvalidIndex )  return;
   olxstr menuName = Cmds[0].SubStringTo(ind);
   olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-  TMenu* menu = Menus[menuName];
-  if( menu == NULL )  return;
+  TMenu* menu = Menus.Find(menuName, NULL);
+  if (menu == NULL)  return;
   ind = menu->FindItem(itemName.u_str());
   if( ind == InvalidIndex )  return;
   menu->Check((int)ind, false);
@@ -3243,7 +3243,7 @@ void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options,
   if (ind == InvalidIndex)
     StoredParams.Add(Cmds[0], Cmds[1]);
   else
-    StoredParams.GetObject(ind) = Cmds[1];
+    StoredParams.GetValue(ind) = Cmds[1];
   if (Cmds.Count() == 3 && Cmds[2].ToBool())
     SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
 }
@@ -3910,13 +3910,13 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 struct FormulaFitter {
-  typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+  typedef olx_pair_t<double, TTypeList<ElementCount> > atype;
   olxstr_dict <olx_object_ptr<atype> > input;
-  SortedPtrList<const cm_Element, TPointerComparator> elements;
+  sorted::PointerPointer<const cm_Element> elements;
   ematd inm, VcV; // inverted normal matrix
   evecd nr; // parameter estimations
   double S, R1;
-  TPSTypeList<double, size_t> residuals;
+  sorted::PrimitiveAssociation<double, size_t> residuals;
   void fit() {
     elements.Clear();
     residuals.Clear();
@@ -3964,7 +3964,7 @@ struct FormulaFitter {
     size_t top = olx_min(residuals.Count(), count);
     for (size_t i = 0; i < top; i++) {
       size_t idx = residuals.Count() - i - 1;
-      const olxstr &key = input.GetKey(residuals.GetObject(idx));
+      const olxstr &key = input.GetKey(residuals.GetValue(idx));
       TBasicApp::NewLogEntry() << olxstr::FormatFloat(3, residuals.GetKey(idx))
         << ": " << key;
     }
@@ -3979,7 +3979,7 @@ struct FormulaFitter {
     for (size_t i = 0; i < residuals.Count(); i++) {
       size_t idx = residuals.Count() - i - 1;
       if (residuals.GetKey(idx) > th)
-        keys << input.GetKey(residuals.GetObject(idx));
+        keys << input.GetKey(residuals.GetValue(idx));
       else
         break;
     }
@@ -4135,7 +4135,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     else {
       TStrList f = TEFile::ReadLines("e:/c-v.txt");
-      typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+      typedef olx_pair_t<double, TTypeList<ElementCount> > atype;
       //f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
       for (size_t li = 0; li < f.Count(); li++) {
         TStrList toks(f[li].Replace('\t', ' '), ' ');
@@ -4167,7 +4167,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   //{
   //  TStrList f;
-  //  typedef AnAssociation2<double, TTypeList<ElementCount> > atype;
+  //  typedef olx_pair_t<double, TTypeList<ElementCount> > atype;
   //    olxstr_dict <olx_object_ptr<atype> > input;
   //  f.LoadFromFile("C:/Users/Oleg Dolomanov/Dropbox/content-volume-out.txt");
   //  for (size_t li = 0; li < f.Count(); li++) {
@@ -5062,7 +5062,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     duc->Init(cell);
     FXApp->AddObjectToCreate(duc);
     TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(bcf->GetAsymmUnit());
-    UserCells.Add(AnAssociation2<TDUnitCell*, TSpaceGroup*>(duc, &sg));
+    UserCells.Add(olx_pair_t<TDUnitCell*, TSpaceGroup*>(duc, &sg));
     duc->Create();
     delete bcf;
   }
@@ -5079,8 +5079,8 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       sg = &TSymmLib::GetInstance().FindSG(FXApp->XFile().GetAsymmUnit());
     }
     else if( cr >=0 && (size_t)cr < UserCells.Count() )  {
-      uc = UserCells[cr].A();
-      sg = UserCells[cr].B();
+      uc = UserCells[cr].a;
+      sg = UserCells[cr].b;
     }
     else {
       Error.ProcessingError(__OlxSrcInfo, "invalid unit cell reference");
@@ -5844,7 +5844,8 @@ class TestDistanceAnalysisIteration {
   TAsymmUnit& au;
   smatd_list ml;
 public:
-  TPSTypeList<int, int> XYZ, XY, XZ, YZ, XX, YY, ZZ;  // length, occurence 
+  sorted::PrimitiveAssociation<int, int>
+    XYZ, XY, XZ, YZ, XX, YY, ZZ;  // length, occurence 
 
   TestDistanceAnalysisIteration( const TStrList& f_list) : 
       files(f_list), au(cif.GetAsymmUnit())  
@@ -5882,54 +5883,56 @@ public:
         // XYZ
         size_t ind = XYZ.IndexOf(d);
         if( ind == InvalidIndex )  XYZ.Add(d, 1);
-        else  XYZ.GetObject(ind)++;
+        else  XYZ.GetValue(ind)++;
         // XY
         diff[0] = from[0]-to[0];  diff[1] = from[1]-to[1]; diff[2] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
         ind = XY.IndexOf(d);
         if( ind == InvalidIndex )  XY.Add(d, 1);
-        else  XY.GetObject(ind)++;
+        else  XY.GetValue(ind)++;
         // XZ
         diff[0] = from[0]-to[0];  diff[2] = from[2]-to[2]; diff[1] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
         ind = XZ.IndexOf(d);
         if( ind == InvalidIndex )  XZ.Add(d, 1);
-        else  XZ.GetObject(ind)++;
+        else  XZ.GetValue(ind)++;
         // YZ
         diff[1] = from[1]-to[1];  diff[2] = from[2]-to[2]; diff[0] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
         ind = YZ.IndexOf(d);
         if( ind == InvalidIndex )  YZ.Add(d, 1);
-        else  YZ.GetObject(ind)++;
+        else  YZ.GetValue(ind)++;
         // XX
         diff[0] = from[0]-to[0];  diff[1] = 0; diff[2] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
         ind = XX.IndexOf(d);
         if( ind == InvalidIndex )  XX.Add(d, 1);
-        else  XX.GetObject(ind)++;
+        else  XX.GetValue(ind)++;
         // YY
         diff[1] = from[1]-to[1];  diff[0] = 0; diff[2] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
         ind = YY.IndexOf(d);
         if( ind == InvalidIndex )  YY.Add(d, 1);
-        else  YY.GetObject(ind)++;
+        else  YY.GetValue(ind)++;
         // ZZ
         diff[2] = from[2]-to[2];  diff[0] = 0; diff[1] = 0;
         au.CellToCartesian(diff);
         d = olx_round(diff.Length()*100);  // keep two numbers
         ind = ZZ.IndexOf(d);
         if( ind == InvalidIndex )  ZZ.Add(d, 1);
-        else  ZZ.GetObject(ind)++;
+        else  ZZ.GetValue(ind)++;
       }
     }
     return cc;
   }
-  inline TestDistanceAnalysisIteration* Replicate() const {  return new TestDistanceAnalysisIteration(files);  }
+  inline TestDistanceAnalysisIteration* Replicate() const {
+    return new TestDistanceAnalysisIteration(files);
+  }
 };
 void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TStrList files;
@@ -5937,7 +5940,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
   TCif cif;
   TAsymmUnit& au = cif.GetAsymmUnit();
 
-  TPSTypeList<const cm_Element*, double*> atomTypes;
+  sorted::PointerAssociation<const cm_Element*, double*> atomTypes;
   vec3d v1;
   double tmp_data[601];
   smatd_list ml;
@@ -5956,7 +5959,8 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       if( a1.GetTag() == -1 )  continue;
       if( a1.GetType() == iHydrogenZ )  continue;
       const size_t ai = atomTypes.IndexOf(&a1.GetType());
-      double* data = ((ai == InvalidIndex) ? new double[601] : atomTypes.GetObject(ai));
+      double* data = ((ai == InvalidIndex) ? new double[601]
+        : atomTypes.GetValue(ai));
       if( ai == InvalidIndex )  {// new array, initialise
         memset(data, 0, sizeof(double)*600);
         atomTypes.Add(&a1.GetType(), data);
@@ -5992,7 +5996,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
   memset(tmp_data, 0, sizeof(double)*600);
   TEFile out("c:\\tmp\\bin_r5.db", "w+b");
   for( size_t i=0; i < atomTypes.Count(); i++ )  {
-    double* data = atomTypes.GetObject(i);
+    double* data = atomTypes.GetValue(i);
     TCStrList sl;
     sl.SetCapacity( 600 );
     double sq = 0;
@@ -6023,7 +6027,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
 //  delete Test;
   if( files.Count() == 1 && TEFile::Exists(Cmds[0]) )  {
     TStrList sl = TEFile::ReadLines(Cmds[0]);
-    TPSTypeList<int, int> ref_data, &data = testdai.XYZ;
+    sorted::PrimitiveAssociation<int, int> ref_data, &data = testdai.XYZ;
     for( size_t i=0; i < sl.Count(); i++ )  {
       const size_t ind = sl[i].IndexOf('\t');
       if( ind == InvalidIndex )  {
@@ -6040,13 +6044,13 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
         TBasicApp::NewLogEntry() << "undefined distance " << data.GetKey(i);
         continue;
       }
-      R += sqrt( (double)ref_data.GetObject(ind)*data.GetObject(i) );
+      R += sqrt((double)ref_data.GetValue(ind)*data.GetValue(i));
     }
 //    if( cc != 0 )
 //      TBasicApp::GetLog() << (olxstr("Rc=") << R/cc);
   }
   else  {  // just save the result
-    TStrPObjList<olxstr, TPSTypeList<int, int>* > data;
+    TStringToList<olxstr, sorted::PrimitiveAssociation<int, int>* > data;
     data.Add("xyz", &testdai.XYZ);
     data.Add("xx", &testdai.XX);
     data.Add("xy", &testdai.XY);
@@ -6056,10 +6060,10 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     data.Add("zz", &testdai.ZZ);
     for( size_t i=0; i < data.Count(); i++ )  {
       TCStrList sl;
-      TPSTypeList<int, int>& d = *data.GetObject(i);
+      sorted::PrimitiveAssociation<int, int>& d = *data.GetObject(i);
       sl.SetCapacity( d.Count() );
       for( size_t j=0; j < d.Count(); j++ )  {
-        sl.Add( (double)d.GetKey(j)/100 ) << '\t' << d.GetObject(j);
+        sl.Add((double)d.GetKey(j) / 100) << '\t' << d.GetValue(j);
       }
       TEFile::WriteLines((Cmds[0] + data[i]) << ".xlt", sl);
     }

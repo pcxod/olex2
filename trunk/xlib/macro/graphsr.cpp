@@ -146,7 +146,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 
   TStrList output, header;
-  TTypeList< AnAssociation2<double,double> > binData;
+  TTypeList< olx_pair_t<double,double> > binData;
   for( size_t i=0; i < bins.Count(); i++ )  {
     if( bins[i]->Count != 0 )  {
       double rt = bins[i]->SFo / bins[i]->SFc;

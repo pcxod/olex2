@@ -21,7 +21,7 @@ bool TIPattern::Calc(const olxstr& Exp, olxstr& Msg, bool Combine, double Delta)
   Clear();
   olxstr Tmp;
   TCHNExp CHN;
-  TStrPObjList<olxstr,double> SL;
+  TStringToList<olxstr,double> SL;
   TIDistribution ID;
   CHN.LoadFromExpression(Exp);
   CHN.MolWeight(); // to check the correctness of the formula

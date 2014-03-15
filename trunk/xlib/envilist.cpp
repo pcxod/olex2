@@ -13,8 +13,8 @@
 //.............................................................................
 void TAtomEnvi::ApplySymm(const smatd& sym) {
   for (size_t i=0; i < Envi.Count(); i++) {
-    Envi[i].B() *= sym;
-    Envi[i].C() = Envi[i].GetB() * Envi[i].GetA()->ccrd();
+    Envi[i].b *= sym;
+    Envi[i].c = Envi[i].GetB() * Envi[i].GetA()->ccrd();
   }
 }
 //.............................................................................

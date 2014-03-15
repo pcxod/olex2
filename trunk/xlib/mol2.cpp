@@ -110,9 +110,9 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
       if( toks.Count() < 4 )
         continue;
       TMol2Bond& MB = Bonds.Add(new TMol2Bond(Bonds.Count()));
-      MB.a1 = atoms[toks[1].ToInt()];
-      MB.a2 = atoms[toks[2].ToInt()];
-      MB.BondType = DecodeBondType(toks[3]);   // bond type
+      MB.a1 = atoms.Get(toks[1].ToInt());
+      MB.a2 = atoms.Get(toks[2].ToInt());
+      MB.BondType = DecodeBondType(toks[3]);  // bond type
       continue;
     }
     if( line.Equals("@<TRIPOS>ATOM") )  {

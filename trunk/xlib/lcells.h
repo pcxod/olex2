@@ -79,13 +79,13 @@ namespace lcells {
       }
       struct NameComparator {
         static int Compare(const Entry &a, const Entry &b) {
-          return olxstrComparator<false>::Compare(a.name, b.name);
+          return a.name.Compare(b.name);
         }
         static int Compare(const Entry *a, const Entry *b) {
-          return olxstrComparator<false>::Compare(a->name, b->name);
+          return a->name.Compare(b->name);
         }
         static int Compare(const Entry &a, const olxstr &b) {
-          return olxstrComparator<false>::Compare(a.name, b);
+          return a.name.Compare(b);
         }
       };
       olxstr FullName() const {

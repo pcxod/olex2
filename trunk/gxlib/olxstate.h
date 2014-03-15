@@ -184,7 +184,7 @@ public:
     return slots[id]->Get(data);
   }
   bool CheckState(const olxstr &str_id, const olxstr &data=EmptyString()) {
-    return slots[slots_d[str_id]]->Get(data);
+    return slots[slots_d.Get(str_id)]->Get(data);
   }
   void SetState(size_t id, bool status, const olxstr &data=EmptyString(),
     bool internal_call=false);

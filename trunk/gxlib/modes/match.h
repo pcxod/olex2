@@ -165,10 +165,10 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, bool group){
     TransformAtoms(atomsA, rm, rm*AtomsToMatch[0]->crd()-AtomsToMatch[1]->crd());
   }
   else  {
-    TArrayList<AnAssociation2<TSAtom*,TSAtom*> > atoms(AtomsToMatch.Count()/2);
+    TArrayList<olx_pair_t<TSAtom*,TSAtom*> > atoms(AtomsToMatch.Count()/2);
     for( size_t i=0; i < AtomsToMatch.Count(); i+=2 )  {
-      atoms[i/2].A() = AtomsToMatch[i];
-      atoms[i/2].B() = AtomsToMatch[i+1];
+      atoms[i/2].a = AtomsToMatch[i];
+      atoms[i/2].b = AtomsToMatch[i+1];
     }
     align::out ao = TNetwork::GetAlignmentInfo(atoms, false, TSAtom::weight_z);
     mat3d m;

@@ -96,7 +96,7 @@ AEvaluable *ExpEvaluator::create(exparse::expression_tree *t) {
     if (t->data.IsNumber())
       return new NumberEvaluator(t->data.ToDouble());
     else {
-      AEvaluable *ae = ScopeVariables.FindObject(t->data);
+      AEvaluable *ae = ScopeVariables.FindObject(t->data, NULL);
       if (ae != NULL) return ae;
       return Variables.Add(new Variable(t->data));
     }

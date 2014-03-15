@@ -62,7 +62,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   Clear();
   olxstr Tmp, TmpUC, Cell, Zerr, Sg, fcId("FACE"), sfac, unit;
   TStrList toks;
-  TStrPObjList<olxstr, olxstr*> params;
+  TStringToList<olxstr, olxstr*> params;
   params.Add("TITL", &Title);
   params.Add("CELL", &Cell);
   params.Add("ZERR", &Zerr);

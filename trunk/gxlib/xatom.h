@@ -103,7 +103,7 @@ protected:
   static short FDefRad, FDefDS, FDefMask;
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
-  static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
+  static TStringToList<olxstr,TGlPrimitive*> FStaticObjects;
 
   class TStylesClear: public AActionHandler  {
   public:

@@ -13,7 +13,7 @@
 #include "estrlist.h"
 
 class TLangDict  {
-  TSStrPObjList<olxstr,olxstr*, true> Records;
+  olxstr_dict<olxstr*, true> Records;
   olxstr CurrentLanguage, CurrentLanguageEncodingStr;
   size_t CurrentLanguageIndex;
 protected:
@@ -23,7 +23,9 @@ public:
   virtual ~TLangDict();
 
   const olxstr& Translate( const olxstr& Phrase) const;
-  const olxstr& GetCurrentLanguageEncodingStr() const {  return CurrentLanguageEncodingStr;  }
+  const olxstr& GetCurrentLanguageEncodingStr() const {
+    return CurrentLanguageEncodingStr;
+  }
   void SetCurrentLanguage(const olxstr& fileName, const olxstr& lang);
   const olxstr& GetCurrentLanguage()  const {  return CurrentLanguage;  }
 

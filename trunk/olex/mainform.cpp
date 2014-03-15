@@ -1446,7 +1446,7 @@ void TMainForm::StartupInit()  {
   // set the variables
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
     processMacro(olxstr("setvar(") << StoredParams.GetKey(i) << ",\"" <<
-      StoredParams.GetObject(i) << "\")");
+      StoredParams.GetValue(i) << "\")");
 
   }
 
@@ -2521,7 +2521,7 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
       FGlConsole->PrintText(" Options: ");
       for (size_t i=0; i < MF->GetOptions().Count(); i++) {
         FGlConsole->PrintText(olxstr("   ") << MF->GetOptions().GetKey(i) << " - "
-          << MF->GetOptions().GetObject(i));
+          << MF->GetOptions().GetValue(i));
       }
     }
   }
@@ -2601,7 +2601,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I = &DF.Root().AddItem("Stored_params");
   for( size_t i=0; i < StoredParams.Count(); i++ )  {
     TDataItem& it = I->AddItem(StoredParams.GetKey(i));
-    it.AddField("value", olxstr().quote('"') << StoredParams.GetObject(i));
+    it.AddField("value", olxstr().quote('"') << StoredParams.GetValue(i));
   }
 
   SaveScene(DF.Root().AddItem("Scene"), FXApp->GetRender().LightModel);
@@ -3187,9 +3187,10 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
 void TMainForm::OnMouseWheel(int x, int y, double delta)  {
   size_t ind = Bindings.IndexOf("wheel");
   if( ind == InvalidIndex )  return;
-  olxstr cmd = Bindings.GetObject(ind);
+  olxstr cmd = Bindings.GetValue(ind);
   ind = TOlxVars::VarIndex("core_wheel_step");
-  const olxstr& step( ind == InvalidIndex ? EmptyString() : TOlxVars::GetVarStr(ind));
+  const olxstr& step( ind == InvalidIndex ? EmptyString()
+    : TOlxVars::GetVarStr(ind));
   if( step.IsNumber() )
     delta *= step.ToDouble();
   cmd << delta;

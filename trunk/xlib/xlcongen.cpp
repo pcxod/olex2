@@ -88,7 +88,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
       case fgOH3:
         break;
       case fgOH2:
-        dis = Distances[GenId(fgOH2,0)];
+        dis = Distances.Get(GenId(fgOH2,0));
         if( CreatedAtoms.Count() == 2 )  {
           if (envi.Count() == 1 &&
               XElementLib::IsMetal(envi.GetCAtom(0).GetType()))
@@ -130,7 +130,7 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group,
           const double d1 = envi.GetCrd(0).DistanceTo(envi.GetBase().crd());
           const double d2 = envi.GetCrd(1).DistanceTo(envi.GetBase().crd());
           //afix = 3; // possible...
-          dis = Distances[GenId(fgOH2,0)];
+          dis = Distances.Get(GenId(fgOH2,0));
           sr = &RefMod.rDFIX.AddNew();
           sr->SetEsd(0.01);
           sr->SetValue(dis);

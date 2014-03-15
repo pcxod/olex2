@@ -12,7 +12,11 @@ namespace test {
 class SortTest  {
   static int icmp(const int& a, const int& b)  {  return a-b;  }
   struct Cmp {
-    int Compare(const int &a, const int &b) const {
+    template <class it>
+    int Compare(const it &a, const it &b) const {
+      return olx_ref::get(a)-olx_ref::get(b);
+    }
+    int compare(const int &a, const int &b) const {
       return a-b;
     }
   };
@@ -35,7 +39,7 @@ public:
         SyncSortListener::Make(al2));
       Sorter::Sort(pl1, Cmp(),
         SyncSortListener::Make(pl2));
-      Sorter::Sort(tl1, FunctionComparator::MakeConst(cmp, &Cmp::Compare),
+      Sorter::Sort(tl1, FunctionComparator::MakeConst(cmp, &Cmp::compare),
         SyncSortListener::Make(tl2));
       for( size_t i=0; i < al1.Count(); i++ )  {
         if( i > 0 && (al1[i-1] > al1[i] || tl1[i-1] > tl2[i] || *pl1[i-1] > *pl2[i]) )
@@ -49,7 +53,7 @@ public:
         if (i > 0 && (al1[i-1] < al1[i] || al2[i-1] < al2[i] || al1[i] != al2[i]))
           throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
       }
-      Sorter::Sort(al2, ReverseComparator::MakeConst(cmp, &Cmp::Compare));
+      Sorter::Sort(al2, ReverseComparator::MakeConst(cmp, &Cmp::compare));
       for( size_t i=0; i < al1.Count(); i++ )  {
         if (al1[i] != al2[i])
           throw TFunctionFailedException(__OlxSourceInfo, "sorting failed");
@@ -67,7 +71,7 @@ public:
   void DoTest(OlxTests& t) {
     t.Add( &SortTest::DoTestT<BubbleSorter>)
       .Add(&SortTest::DoTestT<QuickSorter>)
-      .Add(&SortTest::DoTestT<MoveSorter>);
+      .Add(&SortTest::DoTestT<InsertSorter>);
   }
 };
 //.........................................................................

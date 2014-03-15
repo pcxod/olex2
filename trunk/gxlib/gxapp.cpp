@@ -1126,7 +1126,7 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
         // centroids
         vec3d c1 = (atoms[0]->crd() + atoms[2]->crd() + atoms[4]->crd())/3;
         vec3d c2 = (atoms[1]->crd() + atoms[3]->crd() + atoms[5]->crd())/3;
-        TTypeList<AnAssociation2<vec3d, double> > p1;
+        TTypeList<olx_pair_t<vec3d, double> > p1;
         for( size_t i=0; i < atoms.Count(); i++ )
           p1.AddNew(atoms[i]->crd() - ((i%2)==0 ? c1 : c2), 1.0);
         vec3d normal, center;
@@ -1336,7 +1336,7 @@ void TGXApp::SelectFragments(const TNetPList& frags, bool v)  {
 //..............................................................................
 void TGXApp::FragmentVisible(TNetwork *N, bool V)  {
   TXAtomPList XA;
-  SortedPtrList<TGlGroup, TPointerComparator> groups;
+  sorted::PointerPointer<TGlGroup> groups;
 //  OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), dynamic_cast<IEObject*>(N));
   XA.SetCapacity(N->NodeCount());
   for( size_t i=0; i < N->NodeCount(); i++ )
@@ -2308,7 +2308,8 @@ TUndoData* TGXApp::SynchroniseResidues(const TXAtomPList &reference) {
   for (size_t i=0; i < reference.Count(); i++) {
     TCAtom &a = reference[i]->CAtom();
     if (a.GetResiId() == 0) continue;
-    TTypeList<TCAtomPList> &g = groups[au.GetResidue(a.GetResiId()).GetClassName()];
+    TTypeList<TCAtomPList> &g = groups.Get(
+      au.GetResidue(a.GetResiId()).GetClassName());
     size_t idx = InvalidIndex;
     for (size_t j=0; j < g.Count(); j++) {
       if ((size_t)a.GetTag() < g[j].Count() &&
@@ -2341,7 +2342,7 @@ int XAtomLabelSort(const TXAtom &I1, const TXAtom &I2)  {
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort,
   int precision, bool cart)
 {
-  TTypeList<AnAssociation2<vec3d, TCAtom*> > atoms;
+  TTypeList<olx_pair_t<vec3d, TCAtom*> > atoms;
   bool have_q = false;
   if( XFile().GetLattice().IsGenerated() )  {
     TXAtomPList AtomsList = FindXAtoms(Atoms, false);
@@ -4128,7 +4129,7 @@ void TGXApp::CreateXGrowLines()  {
   }
   AtomsToProcess.Pack();
   TTypeList<TGXApp_Transform1> tr_list;
-  typedef TArrayList<AnAssociation2<TCAtom*,smatd> > GInfo;
+  typedef TArrayList<olx_pair_t<TCAtom*,smatd> > GInfo;
   TPtrList<GInfo> Info(au.AtomCount());
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
     TXAtom* A = AtomsToProcess[i];
@@ -4159,13 +4160,13 @@ void TGXApp::CreateXGrowLines()  {
         for( size_t j=0; j < A->CAtom().AttachedSiteCount(); j++ )  {
           if( !A->CAtom().GetAttachedAtom(j).IsAvailable() )  continue;
           TCAtom::Site& site = A->CAtom().GetAttachedSite(j);
-          gi->Add(AnAssociation2<TCAtom*,smatd>(site.atom, site.matrix));
+          gi->Add(olx_pair_t<TCAtom*,smatd>(site.atom, site.matrix));
         }
       }
       Info[A->CAtom().GetId()] = gi;
     }
     for( size_t j=0; j < gi->Count(); j++ )  {
-      const AnAssociation2<TCAtom*,smatd>& gii = (*gi)[j];
+      const olx_pair_t<TCAtom*,smatd>& gii = (*gi)[j];
       smatd transform = (A->GetMatrix().IsFirst() ? gii.GetB()
         : uc.MulMatrix(gii.GetB(), A->GetMatrix()));
       vec3d tc = transform*gii.GetA()->ccrd();
@@ -4229,12 +4230,12 @@ void TGXApp::_CreateXGrowVLines()  {
   }
   typedef TTypeList<TGXApp_Transform> tr_list;
   olxdict<int, tr_list, TPrimitiveComparator> net_tr;
-  TPtrList<TArrayList<AnAssociation2<TCAtom*,smatd> > > Info(au.AtomCount());
+  TPtrList<TArrayList<olx_pair_t<TCAtom*,smatd> > > Info(au.AtomCount());
   for( size_t i=0; i < AtomsToProcess.Count(); i++ )  {
     TXAtom* A = AtomsToProcess[i];
-    TArrayList<AnAssociation2<TCAtom*,smatd> >* envi = Info[A->CAtom().GetId()];
+    TArrayList<olx_pair_t<TCAtom*,smatd> >* envi = Info[A->CAtom().GetId()];
     if( envi == NULL )  {
-      Info[A->CAtom().GetId()] = envi = new TArrayList<AnAssociation2<TCAtom*,smatd> >;
+      Info[A->CAtom().GetId()] = envi = new TArrayList<olx_pair_t<TCAtom*,smatd> >;
       uc.FindInRangeAM(A->CAtom().ccrd(), DeltaV + A->GetType().r_bonding, *envi);
     }
     for( size_t j=0; j < envi->Count(); j++ )  {
@@ -4513,13 +4514,13 @@ void TGXApp::InitFadeMode()  {
 //..............................................................................
 struct SceneMaskTask : public TaskBase {
   TAsymmUnit &au;
-  TTypeList<AnAssociation2<vec3d,double> >& atoms;
+  TTypeList<olx_pair_t<vec3d,double> >& atoms;
   TArray3D<vec3d> &cmap;
   TArray3D<bool>& mdata;
   size_t da, db, dc;
 public:
     SceneMaskTask(TAsymmUnit &au,
-      TTypeList<AnAssociation2<vec3d,double> >& atoms,
+      TTypeList<olx_pair_t<vec3d,double> >& atoms,
       TArray3D<vec3d> &cmap,
       TArray3D<bool>& mdata)
       : au(au), cmap(cmap), atoms(atoms), mdata(mdata)
@@ -4554,7 +4555,7 @@ void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   vec3d mn(100, 100, 100),
         mx(-100, -100, -100),
         norms(au.GetAxes());
-  TTypeList<AnAssociation2<vec3d,double> > atoms;
+  TTypeList<olx_pair_t<vec3d,double> > atoms;
   AtomIterator ai(*this);
   atoms.SetCapacity(ai.count);
   while (ai.HasNext()) {

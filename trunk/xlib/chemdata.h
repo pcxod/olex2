@@ -213,9 +213,9 @@ struct ElementCount {
 };
 
 typedef TPtrList<const cm_Element> ElementPList;
-typedef SortedPtrList<const cm_Element, TComparableComparator>
+typedef sorted::PointerComparable<const cm_Element>
   SortedElementPList;
-typedef ConstSortedPtrList<const cm_Element, TComparableComparator>
+typedef ConstSortedPointerList<const cm_Element, TComparableComparator>
   ConstSortedElementPList;
 typedef TTypeList<ElementCount> ContentList;
 typedef olxdict<const cm_Element*, double, TPointerComparator> ElementRadii;
@@ -223,14 +223,16 @@ typedef olxdict<const cm_Element*, double, TPointerComparator> ElementDict;
 
 // sorts element by Z descending 
 struct ElementZSorter  {
-  static int Compare(const cm_Element &s1, const cm_Element &s2)  {
-    return s2.z - s1.z;
+  template <class item_t>
+  static int Compare(const item_t &s1, const item_t &s2)  {
+    return olx_ref::get(s2).z - olx_ref::get(s1).z;
   }
 };
 // sorts element by symbol ascending
 struct ElementSymbolSorter  {
-  static int Compare(const cm_Element &s1, const cm_Element &s2)  {
-    return s1.symbol.Compare(s2.symbol);
+  template <class item_t>
+  static int Compare(const item_t &s1, const item_t &s2)  {
+    return olx_ref::get(s1).symbol.Compare(olx_ref::get(s2).symbol);
   }
 };
 

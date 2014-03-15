@@ -387,12 +387,13 @@ public:
   static olxstr VarName_InternalTref()  {  return "olx_internal_tref";  }
   static olxstr GetCompilationInfo();
 protected:
-  class TEnviComparator  {
+  class TEnviComparator {
   public:
-    int Compare(AnAssociation3<TCAtom*, smatd, vec3d> const& i1,
-      AnAssociation3<TCAtom*, smatd, vec3d> const& i2) const
+    template <class item_a_t, class item_b_t>
+    int Compare(item_a_t const& i1, item_b_t const& i2) const
     {
-      return olx_cmp(i1.GetC().QLength(), i2.GetC().QLength());
+      return olx_cmp(olx_ref::get(i1).GetC().QLength(),
+        olx_ref::get(i2).GetC().QLength());
     }
   };
 };

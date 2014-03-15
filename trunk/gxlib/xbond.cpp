@@ -130,7 +130,7 @@ void TXBond::Create(const olxstr& cName)  {
 
   Params()[4]= GS.GetNumParam('R', DefR());
   const uint16_t legend_level = TXAtom::LegendLevel(GetPrimitives().GetName());
-  const TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
+  const TStringToList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
   for (size_t i=0; i < primitives.Count(); i++) {
     if( (PrimitiveMask & (1<<i)) != 0 ) {
       TGlPrimitive* SGlP = primitives.GetObject(i);
@@ -192,7 +192,7 @@ void TXBond::UpdateStyle()  {
   TGraphicsStyle& GS = gpc.GetStyle();
   const int PrimitiveMask = GS.GetNumParam(GetPrimitiveMaskName(),
     (GetType() == sotHBond) ? 2048 : DefMask(), IsMaskSaveable());
-  const TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
+  const TStringToList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
   for (size_t i = 0; i < primitives.Count(); i++) {
     if( (PrimitiveMask & (1<<i)) != 0 )  {
       TGlPrimitive *SGlP = primitives.GetObject(i);
@@ -542,7 +542,7 @@ void TXBond::CreateStaticObjects(TGlRenderer& Parent)  {
     new TContextClear(Parent);
   }
   ClearStaticObjects();
-  TStrPObjList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
+  TStringToList<olxstr, TGlPrimitive*> &primitives = GetStaticPrimitives();
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   ValidateBondParams();

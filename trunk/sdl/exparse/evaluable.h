@@ -151,7 +151,7 @@ namespace exparse  {
         &typeid(T), &ANumberEvaluator::primitive_cast<T>);
     }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {
-      return cast_operators[&ti];
+      return cast_operators.Get(&ti);
     }
     virtual double Evaluate() const {
       IEvaluable* ev = _evaluate();

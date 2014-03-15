@@ -16,7 +16,7 @@
 
 BeginXlibNamespace()
 
-  typedef TTypeList< AnAssociation2<size_t,size_t> > TIntPairList;
+  typedef TTypeList< olx_pair_t<size_t,size_t> > TIntPairList;
 
 struct TSymmTestData  {
   vec3d Center;
@@ -29,7 +29,7 @@ struct TSymmTestData  {
 };
 
 class TSymmTest : public IEObject {
-  TTypeList<AnAssociation2<vec3d,TCAtom*> > Atoms;
+  TTypeList<olx_pair_t<vec3d,TCAtom*> > Atoms;
   vec3d GCenter;
   TTypeList<TSymmTestData> Vecs;
 
@@ -58,7 +58,7 @@ public:
   inline size_t AtomCount() const  {  return Atoms.Count();  }
   void Push(const vec3d& t)  {
     for( size_t i=0; i < Atoms.Count(); i++ )
-      Atoms[i].A() += t; 
+      Atoms[i].a += t; 
   }
 
   //bool EvaluateMatrix(int rowIndex, const vec3d& trans, smatd& res)  {
@@ -153,8 +153,8 @@ public:
     QuickSorter::SortSF(Vecs,VecsCmpByCount);
   }
   static void TestDependency(
-    const TTypeList< AnAssociation2<vec3d,TCAtom*> >& lista,
-    const TTypeList< AnAssociation2<vec3d,TCAtom*> >& listb,
+    const TTypeList< olx_pair_t<vec3d,TCAtom*> >& lista,
+    const TTypeList< olx_pair_t<vec3d,TCAtom*> >& listb,
     TTypeList< TSymmTestData >& Vecs,
     const smatd& matr, double tol)
   {

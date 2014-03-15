@@ -209,15 +209,15 @@ class TMainForm: public TMainFrame, public AEventsDispatcher,
   //TFrameMaker FrameMaker;
 protected:
   bool Destroying;
-  TStack<AnAssociation2<wxCursor,wxString> > CursorStack;
+  TStack<olx_pair_t<wxCursor,wxString> > CursorStack;
   UpdateThread* _UpdateThread;
   TOnProgress* UpdateProgress, *ActionProgress;
   TEFile* ActiveLogFile;
   static void PyInit();
   TActionQList Action;
   TGlXApp* FParent;
-  TArrayList< AnAssociation2<TDUnitCell*, TSpaceGroup*> > UserCells;
-  TCSTypeList<olxstr, olxstr> StoredParams;
+  TArrayList< olx_pair_t<TDUnitCell*, TSpaceGroup*> > UserCells;
+  olxstr_dict<olxstr> StoredParams;
 
   TTypeList<TScheduledTask> Tasks;
   TPtrList<IOlxTask> RunWhenVisibleTasks;
@@ -569,8 +569,8 @@ private:
 
   olxstr FListenFile;
 
-  TStrPObjList<olxstr,wxMenuItem*> FRecentFiles;
-  TSStrStrList<olxstr,true> Bindings;
+  TStringToList<olxstr,wxMenuItem*> FRecentFiles;
+  olxstr_dict<olxstr,true> Bindings;
   uint16_t FRecentFilesToShow;
   void UpdateRecentFile(const olxstr& FN);
   TGlOption FBgColor;
@@ -592,7 +592,7 @@ private:
   TAccellList<olxstr> AccShortcuts;
   TAccellList<TMenuItem*> AccMenus;
 
-  TSStrPObjList<olxstr,TMenu*, false> Menus;
+  olxstr_dict<TMenu*, false> Menus;
   int32_t TranslateShortcut(const olxstr& sk);
   void SaveVFS(short persistenceId);
   void LoadVFS(short persistenceId);

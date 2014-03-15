@@ -129,9 +129,9 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) cons
     if( ind == InvalidIndex )  {
       scatterers.AddNew<const cm_Element*,compd,compd>(&ca.GetType(), 0, 0);
       bais.Add(ca.GetType());
-      scatterers.GetLast().C() =
+      scatterers.GetLast().c =
         scatterers.GetLast().GetA()->CalcFpFdp(r_e);
-      scatterers.GetLast().C() -= scatterers.GetLast().GetA()->z;
+      scatterers.GetLast().c -= scatterers.GetLast().GetA()->z;
       ind = scatterers.Count() - 1;
     }
     ca.SetTag(ind);
@@ -154,8 +154,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F) cons
     const TReflection& ref = refs[i];
     const double d_s2 = ref.ToCart(hkl2c).QLength()*0.25;
     for( size_t j=0; j < scatterers.Count(); j++)  {
-      scatterers[j].B() = scatterers[j].GetA()->gaussians->calc_sq(d_s2);
-      scatterers[j].B() += scatterers[j].GetC();
+      scatterers[j].b = scatterers[j].GetA()->gaussians->calc_sq(d_s2);
+      scatterers[j].b += scatterers[j].GetC();
     }
     compd ir;
     for( size_t j=0; j < a_cnt; j++ )  {
@@ -401,7 +401,7 @@ TUndoData* TXApp::FixHL()  {
   }
   else {
     for (size_t i=0; i < frag_id.Count(); i++) {
-      TSAtomPList& al = frags[frag_id[i]];
+      TSAtomPList& al = frags.Get(frag_id[i]);
       for (size_t j = 0; j < al.Count(); j++) {
         if (!XElementLib::IsMetal(al[j]->GetType()))
           NameHydrogens(*al[j], undo, true);
@@ -913,10 +913,10 @@ WBoxInfo TXApp::CalcWBox(const TSAtomPList& atoms, const TDoubleList* radii,
 {
   if( radii != NULL && atoms.Count() != radii->Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "radii count");
-  TArrayList<AnAssociation2<vec3d, double> > crds(atoms.Count());
+  TArrayList<olx_pair_t<vec3d, double> > crds(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )  {
-    crds[i].A() = atoms[i]->crd();
-    crds[i].B() = (*weight_calculator)(*atoms[i]);
+    crds[i].a = atoms[i]->crd();
+    crds[i].b = (*weight_calculator)(*atoms[i]);
   }
 
   WBoxInfo rv;

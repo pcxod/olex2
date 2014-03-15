@@ -21,7 +21,7 @@
 
 TMemoryBlock *TFileHandlerManager::GetMemoryBlock(const olxstr& FN)  {
   olxstr fileName = TEFile::UnixPath(FN);
-  TMemoryBlock *mb = FMemoryBlocks[fileName];
+  TMemoryBlock *mb = FMemoryBlocks.Find(fileName, NULL);
   if( mb == NULL )  {
     if( !TEFile::Exists(fileName) )  return NULL;
     try {
@@ -69,13 +69,13 @@ TFileHandlerManager::~TFileHandlerManager()  {
 //..............................................................................
 void TFileHandlerManager::_Clear()  {
   for (size_t i=0; i < FMemoryBlocks.Count(); i++) {
-    delete [] FMemoryBlocks.GetObject(i)->Buffer;
-    delete FMemoryBlocks.GetObject(i);
+    delete[] FMemoryBlocks.GetValue(i)->Buffer;
+    delete FMemoryBlocks.GetValue(i);
   }
   FMemoryBlocks.Clear();
 #ifdef __WXWIDGETS__
   for( size_t i=0; i < FZipFiles.Count(); i++ )
-    delete FZipFiles.GetObject(i);
+    delete FZipFiles.GetValue(i);
   FZipFiles.Clear();
 #endif
 }
@@ -85,7 +85,7 @@ IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN)  {
   if( TZipWrapper::IsZipFile(FN) )  {
     TZipEntry ze;
     TZipWrapper::SplitZipUrl(FN, ze);
-    TZipWrapper *zw = FZipFiles[ze.ZipName];
+    TZipWrapper *zw = FZipFiles.Find(ze.ZipName, NULL);
     if( zw == NULL )  {
       zw = new TZipWrapper( ze.ZipName, true );
       FZipFiles.Add( ze.ZipName, zw );
@@ -111,7 +111,7 @@ wxFSFile *TFileHandlerManager::_GetFSFileHandler(const olxstr &FN)  {
   if( TZipWrapper::IsZipFile(FN) )  {
     TZipEntry ze;
     TZipWrapper::SplitZipUrl(FN, ze);
-    TZipWrapper *zw = FZipFiles[ze.ZipName];
+    TZipWrapper *zw = FZipFiles.Find(ze.ZipName, NULL);
     if( zw == NULL )  {
       zw = new TZipWrapper( ze.ZipName, true );
       FZipFiles.Add( ze.ZipName, zw );
@@ -136,15 +136,15 @@ void TFileHandlerManager::_SaveToStream(IDataOutputStream& os,
 
   uint32_t ic = 0, strl;
   for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
-    if( (FMemoryBlocks.GetObject(i)->PersistenceId & persistenceMask) != 0  )
+    if ((FMemoryBlocks.GetValue(i)->PersistenceId & persistenceMask) != 0)
       ic++;
   }
   os << ic;
   olxcstr utfstr;
   for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
-    TMemoryBlock *mb = FMemoryBlocks.GetObject(i);
+    TMemoryBlock *mb = FMemoryBlocks.GetValue(i);
     if( (mb->PersistenceId & persistenceMask) != 0 )  {
-      utfstr = TUtf8::Encode(FMemoryBlocks.GetString(i));
+      utfstr = TUtf8::Encode(FMemoryBlocks.GetKey(i));
       strl = (uint32_t)utfstr.Length();
       os << strl;
       os.Write((void*)utfstr.raw_str(), strl);
@@ -180,7 +180,7 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is,
     }
     olxcstr utfstr;
     olxstr in = TUtf8::Decode(utfstr.AppendFromStream(is, strl));
-    TMemoryBlock* mb = FMemoryBlocks[in];
+    TMemoryBlock* mb = FMemoryBlocks.Find(in, NULL);
     if( mb == NULL )  {
       mb = new TMemoryBlock;
       mb->PersistenceId = persistenceId;
@@ -206,7 +206,7 @@ void TFileHandlerManager::_LoadFromStream(IDataInputStream& is,
 const TMemoryBlock* TFileHandlerManager::FindMemoryBlock(const olxstr& bn) {
   if( bn.IsEmpty() )  return NULL;
   if( Handler() == NULL )  new TFileHandlerManager;
-  return Handler()->FMemoryBlocks[TEFile::UnixPath(bn)];
+  return Handler()->FMemoryBlocks.Find(TEFile::UnixPath(bn), NULL);
 }
 //..............................................................................
 IDataInputStream *TFileHandlerManager::GetInputStream(const olxstr &FN)  {
@@ -229,7 +229,7 @@ void TFileHandlerManager::Clear(short persistenceMask)  {
     }
     else  {
       for( size_t i=0; i < Handler()->FMemoryBlocks.Count(); i++ )  {
-        TMemoryBlock *mb = Handler()->FMemoryBlocks.GetObject(i);
+        TMemoryBlock *mb = Handler()->FMemoryBlocks.GetValue(i);
         if( (mb->PersistenceId & persistenceMask) != 0 )  {
           delete [] mb->Buffer;
           delete mb;
@@ -262,7 +262,7 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
   size_t length, short persistenceId)
 {
   olxstr fileName = TEFile::UnixPath(name);
-  TMemoryBlock *mb = FMemoryBlocks[fileName];
+  TMemoryBlock *mb = FMemoryBlocks.Find(fileName, NULL);
   if( mb == NULL )  {
     mb = new TMemoryBlock;
     FMemoryBlocks.Add(fileName, mb);
@@ -291,20 +291,20 @@ size_t TFileHandlerManager::Count()  {
 //..............................................................................
 const olxstr& TFileHandlerManager::GetBlockName(size_t i)  {
   if( Handler() == NULL )  Handler() = new TFileHandlerManager;
-  return Handler()->FMemoryBlocks.GetString(i);
+  return Handler()->FMemoryBlocks.GetKey(i);
 }
 //..............................................................................
 size_t TFileHandlerManager::GetBlockSize(size_t i)  {
   if( Handler() == NULL )  Handler() = new TFileHandlerManager;
-  return Handler()->FMemoryBlocks.GetObject(i)->Length;
+  return Handler()->FMemoryBlocks.GetValue(i)->Length;
 }
 //..............................................................................
 olxstr TFileHandlerManager::GetBlockDateTime(size_t i)  {
-  return Handler()->FMemoryBlocks.GetObject(i)->DateTime;
+  return Handler()->FMemoryBlocks.GetValue(i)->DateTime;
 }
 //..............................................................................
 short TFileHandlerManager::GetPersistenceId(size_t i)  {
-  return Handler()->FMemoryBlocks.GetObject(i)->PersistenceId;
+  return Handler()->FMemoryBlocks.GetValue(i)->PersistenceId;
 }
 //..............................................................................
 void TFileHandlerManager::SaveToStream(IDataOutputStream& os,

@@ -181,8 +181,10 @@ public:
   
   // sorts atoms according to the distcance from {0,0,0}
   struct SortByDistance {
-    static int Compare(const TSAtom &A, const TSAtom &A1)  {
-      return olx_cmp(A.crd().QLength(), A1.crd().QLength());
+    template <class item_a_t, class item_b_t>
+    int Compare(const item_a_t &A, const item_b_t &A1) const {
+      return olx_cmp(olx_ref::get(A).crd().QLength(),
+        olx_ref::get(A1).crd().QLength());
     }
   };
 

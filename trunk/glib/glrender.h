@@ -49,10 +49,10 @@ class TGlGroup;
 class TGlRenderer : public IEObject  {
   // a list of all groups of primitives
   ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;
-  TSStrPObjList<olxstr,TGPCollection*, false> FCollections;
+  olxstr_dict<TGPCollection*, false> FCollections;
   TPtrList<TGlMaterial> FTranslucentObjects,
     FIdentityObjects, FTranslucentIdentityObjects;
-  typedef SortedPtrList<AGDrawObject, TPointerComparator> GObjectList;
+  typedef sorted::PointerPointer<AGDrawObject> GObjectList;
   GObjectList FGObjects;
   TPtrList<TGlGroup> FGroups;   // list of groups
   TGlGroup* FSelection;  // list of selected objects
@@ -278,17 +278,17 @@ public:
   void operator = (const TGlRenderer &G);
   TGPCollection& NewCollection(const olxstr &Name);
   TGPCollection& GetCollection(size_t ind) const {
-    return *FCollections.GetObject(ind);
+    return *FCollections.GetValue(ind);
   }
   template <class T>
   TGPCollection* FindCollection(const T& Name)  {
     const size_t ind = FCollections.IndexOf(Name);
-    return (ind != InvalidIndex) ? FCollections.GetObject(ind) : NULL;
+    return (ind != InvalidIndex) ? FCollections.GetValue(ind) : NULL;
   }
   template <class T>
   TGPCollection& FindOrCreateCollection(const T& Name)  {
     const size_t ind = FCollections.IndexOf(Name);
-    return (ind != InvalidIndex) ? *FCollections.GetObject(ind)
+    return (ind != InvalidIndex) ? *FCollections.GetValue(ind)
       : NewCollection(Name);
   }
 

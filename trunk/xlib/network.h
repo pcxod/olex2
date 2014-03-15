@@ -175,11 +175,11 @@ public:
   static bool IsRingRegular(const TSAtomPList& ring);
   static bool IsRingPrimitive(const TSAtomPList& ring);
   // invertion must be specified for the permutational graph match
-  bool DoMatch(TNetwork& net, TTypeList< AnAssociation2<size_t, size_t> >& res,
+  bool DoMatch(TNetwork& net, TTypeList< olx_pair_t<size_t, size_t> >& res,
     bool Invert,
     double (*weight_calculator)(const TSAtom&));
   bool IsSubgraphOf(TNetwork& net,
-    TTypeList< AnAssociation2<size_t, size_t> >& res,
+    TTypeList< olx_pair_t<size_t, size_t> >& res,
     const TSizeList& rootsToSkip);
 
 protected:
@@ -248,14 +248,14 @@ public:
     bool inverted;
   };
   static AlignInfo GetAlignmentRMSD(
-    const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+    const TTypeList< olx_pair_t<TSAtom*,TSAtom*> >& atoms,
     bool invert,
     double (*weight_calculator)(const TSAtom&),
     bool reset_crd=true
     );
   // prepares a list of atoms, coordinates and weights for VcoV calculations
   static void PrepareESDCalc(
-    const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+    const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
     bool TryInversion,
     TSAtomPList& atoms_out,
     vec3d_alist& crd_out,
@@ -270,14 +270,14 @@ public:
     const mat3d &m, const vec3d &shift);
   
   static TArrayList<align::pair>& AtomsToPairs(
-    const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+    const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
     bool invert,
     double (*weight_calculator)(const TSAtom&),
     TArrayList<align::pair>& pairs,
     bool reset_crd=true);
 
   static align::out GetAlignmentInfo(
-    const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+    const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
     bool invert,
     double (*weight_calculator)(const TSAtom&),
     bool reset_crd=true);

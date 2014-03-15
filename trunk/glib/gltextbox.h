@@ -18,7 +18,7 @@ class TGlTextBox: public AGlMouseHandlerImp  {
   float LineSpacing;
   uint16_t Width, Height, MaxStringLength;
   int Top, Left;
-  TStrPObjList<olxstr,TGlMaterial*> FBuffer;  // the content
+  TStringToList<olxstr, TGlMaterial*> FBuffer;  // the content
   double Z;
   uint16_t FontIndex;
   bool ScrollDirectionUp;
@@ -54,7 +54,7 @@ public:
 
   void PostText(const olxstr &S, class TGlMaterial *M=NULL);
   void PostText(const TStrList &SL, TGlMaterial *M=NULL);
-  const TStrPObjList<olxstr,TGlMaterial*> &GetText() const {
+  const TStringToList<olxstr, TGlMaterial*> &GetText() const {
     return FBuffer;
   }
   void NewLine()  {  FBuffer.Add();  }

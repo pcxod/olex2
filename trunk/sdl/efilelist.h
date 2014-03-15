@@ -48,7 +48,10 @@ BeginEsdlNamespace()
         return (ind != InvalidIndex) ?  fn.SubStringFrom(ind+1) : EmptyString();
       }
     public:
-      static int Compare(const TFileListItem &i1, const TFileListItem &i2 )  {
+      template <class item_a_t, class item_b_t>
+      static int Compare(const item_a_t &i1_, const item_b_t &i2_) {
+        const TFileListItem &i1 = olx_ref::get(i1_),
+          &i2 = olx_ref::get(i2_);
         if( field == 0 )
           return i1.GetName().Compare(i2.GetName());
         if( field == 1 ) {

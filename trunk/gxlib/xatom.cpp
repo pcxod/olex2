@@ -62,7 +62,7 @@ bool TXAtom::TContextClear::Exit(const IEObject *Sender, const IEObject *Data,
 //----------------------------------------------------------------------------//
 // TSAtom function bodies
 //----------------------------------------------------------------------------//
-TStrPObjList<olxstr,TGlPrimitive*> TXAtom::FStaticObjects;
+TStringToList<olxstr,TGlPrimitive*> TXAtom::FStaticObjects;
 TTypeList<TGlPrimitiveParams> TXAtom::FPrimitiveParams;
 float TXAtom::FTelpProb = 0;
 float TXAtom::FQPeakScale = 0;
@@ -1335,7 +1335,7 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {
 }
 vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   TSPlane plane(NULL);
-  TTypeList< AnAssociation2<TSAtom*, double> > pa;
+  TTypeList< olx_pair_t<TSAtom*, double> > pa;
   vec3f cnt;
   double wght = 0;
   for( size_t i=0; i < atoms.Count(); i++ )  {

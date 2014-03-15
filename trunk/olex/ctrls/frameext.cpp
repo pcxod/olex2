@@ -20,7 +20,7 @@ TMainFrame* TMainFrame::MainFrameInstance = NULL;
 void TMainFrame::RestorePosition(wxWindow *Window)  {
   size_t ind = WindowPos.IndexOf(Window->GetName());
   if ( ind == InvalidIndex )  return;
-  TWindowInfo &wi = WindowPos[Window->GetName()];
+  TWindowInfo &wi = WindowPos.Get(Window->GetName());
   Window->Move(wi.x, wi.y);
 }
 //..............................................................................

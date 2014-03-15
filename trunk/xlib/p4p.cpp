@@ -67,7 +67,7 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
 void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   Clear();
   olxstr Cell, CellSd, Size, Source, chem;
-  TStrPObjList<olxstr,olxstr*> params;
+  TStringToList<olxstr, olxstr*> params;
   params.Add("SITEID",  &SiteId);
   params.Add("MORPH",   &Morph);
   params.Add("CCOLOR",  &Color);

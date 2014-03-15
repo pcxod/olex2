@@ -383,7 +383,7 @@ void cetTable::DataFromStrings(TStrList& lines)  {
       data[i][j] = cells[i*ColCount+j];
   }
 }
-int cetTable::TableSorter::Compare(const CifRow &r1, const CifRow &r2)  {
+int cetTable::TableSorter::Compare_(const CifRow &r1, const CifRow &r2) const {
   const size_t sz = r1.Count();
   size_t cmpb_cnt = 0;
   for( size_t i=0; i < sz; i++ )
@@ -592,7 +592,7 @@ void CifBlock::Sort(const TStrList& pivots, const TStrList& endings)  {
   }
 }
 //.............................................................................
-int CifBlock::CifSorter::Compare(const CifBlock::EntryGroup &e1,
+int CifBlock::CifSorter::Compare_(const CifBlock::EntryGroup &e1,
   const CifBlock::EntryGroup &e2) const
 {
   size_t c1=InvalidIndex, c2=InvalidIndex, c1_l=0, c2_l=0;

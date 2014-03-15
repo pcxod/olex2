@@ -16,7 +16,7 @@
 BeginChemNamespace()
 
 class TCHNExp: public IEObject  {
-  TStrPObjList<olxstr,double> Exp; // Objects - double for content
+  TStringToList<olxstr, double> Exp; // Objects - double for content
   TTypeList<TCHNExp> Dependencies; // TCHNExp list of dependencies
   double FMult;
 protected:
@@ -34,7 +34,7 @@ public:
   // expects a distrionary with keys of TBasicAtomInfo::GetIndex()
   double CHN(olxdict<short, double, TPrimitiveComparator>& rv) const;
   void LoadFromExpression(const olxstr &E);
-  void CalcSummFormula(TStrPObjList<olxstr,double>& Exp) const;
+  void CalcSummFormula(TStringToList<olxstr, double> &Exp) const;
   void SetMult(const olxstr& S)  {  FMult = S.ToDouble();  }
   void SetMult(double v)  {  FMult = v;  }
   inline double GetMult() const {  return FMult;  }

@@ -60,7 +60,7 @@ private:
   RefinementModel RefMod;
 protected:
   TActionQList Actions;
-  TStrPObjList<olxstr,TBasicCFile*> FileFormats;
+  TStringToList<olxstr,TBasicCFile*> FileFormats;
   TBasicCFile *FLastLoader;
   TSpaceGroup* FSG;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender,

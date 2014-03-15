@@ -242,8 +242,8 @@ void TIns::_ProcessSame(ParseContext& cx)  {
   TSameGroupList& sgl = cx.rm.rSAME;
   TStrList toks;
   for( size_t i=0; i < cx.Same.Count(); i++ )  {
-    TCAtom* ca = cx.Same[i].B();
-    TStrList& sl = cx.Same[i].A();
+    TCAtom* ca = cx.Same[i].b;
+    TStrList& sl = cx.Same[i].a;
     if( ca == NULL ) // should not happen
       continue;
     TSameGroup& sg = sgl.New();  // main, reference, group
@@ -542,7 +542,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         a new one
         */
         if( !cx.AfixGroups.IsEmpty() &&
-            !cx.AfixGroups.Top().B()->IsFixedGroup() &&
+            !cx.AfixGroups.Top().b->IsFixedGroup() &&
             !TAfixGroup::IsFixedGroup(afix) )
         {
           cx.AfixGroups.Pop();
@@ -551,7 +551,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
       }
       else {
         if( !cx.AfixGroups.IsEmpty() &&
-            cx.AfixGroups.Top().B()->IsFixedGroup() &&
+            cx.AfixGroups.Top().b->IsFixedGroup() &&
             cx.AfixGroups.Top().GetA() == 0 )
         {
           cx.AfixGroups.Pop();
@@ -775,11 +775,11 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
   else if( Toks[0].Equalsi("SAME") )  {
     // no atom so far, add to the list of Same
     if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )
-      cx.Same.GetLast().A().Add(Toks.Text(' ', 1));
+      cx.Same.GetLast().a.Add(Toks.Text(' ', 1));
     else  {
-      cx.Same.Add(new AnAssociation2<TStrList,TCAtom*>);
-      cx.Same.GetLast().B() = NULL;
-      cx.Same.GetLast().A().Add(Toks.Text(' ', 1));
+      cx.Same.Add(new olx_pair_t<TStrList,TCAtom*>);
+      cx.Same.GetLast().b = NULL;
+      cx.Same.GetLast().a.Add(Toks.Text(' ', 1));
     }
   }
   else if( Toks[0].Equalsi("ANIS") )  {
@@ -904,8 +904,8 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res, int sz)  {
   }
 }
 //..............................................................................
-TStrPObjList<olxstr,const cm_Element*> TIns::FixTypeListAndLabels() {
-  TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
+TStringToList<olxstr,const cm_Element*> TIns::FixTypeListAndLabels() {
+  TStringToList<olxstr,const cm_Element*> BasicAtoms;
   for( size_t i=0; i < GetRM().GetUserContent().Count(); i++ )  {
     BasicAtoms.Add(GetRM().GetUserContent()[i].element.symbol,
       &GetRM().GetUserContent()[i].element);
@@ -955,7 +955,7 @@ void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod,
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
   SL.Add(EmptyString());
-  TStrPObjList<olxstr,const cm_Element*> BasicAtoms;
+  TStringToList<olxstr,const cm_Element*> BasicAtoms;
   // if to save atoms - update the SFAC and fix labels
   if (save_atoms)
     BasicAtoms = FixTypeListAndLabels();
@@ -1046,7 +1046,7 @@ void TIns::SaveSfacUnit(const RefinementModel& rm, const ContentList& content,
 }
 //..............................................................................
 void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
-  TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl,
+  TStringToList<olxstr,const cm_Element*>* sfac, TStrList& sl,
   TIndexList* index, bool checkSame, bool checkResi)
 {
   if( a.IsDeleted() || a.IsSaved() )  return;
@@ -1185,7 +1185,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 }
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
-  TStrPObjList<olxstr,const cm_Element*> BasicAtoms =
+  TStringToList<olxstr,const cm_Element*> BasicAtoms =
     FixTypeListAndLabels();
   for (size_t i=0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom &ca = GetAsymmUnit().GetAtom(i);
@@ -1262,7 +1262,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
       ca.GetExyzGroup()->Clear();
     ca.SetFixedType(false);
   }
-  TTypeList<AnAssociation2<TCAtom *, olxstr> > atom_labels;
+  TTypeList<olx_pair_t<TCAtom *, olxstr> > atom_labels;
   for( size_t i=0; i < SL.Count(); i++ )  {
     olxstr Tmp = olxstr::DeleteSequencesOf<char>(SL[i], true);
     if( Tmp.IsEmpty() )  continue;
@@ -1314,7 +1314,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
   ParseRestraints(cx.rm, Instructions);
   Instructions.Pack();
   for (size_t i=0; i < atom_labels.Count(); i++)
-    atom_labels[i].A()->SetLabel(atom_labels[i].GetB(), false);
+    atom_labels[i].a->SetLabel(atom_labels[i].GetB(), false);
 }
 //..............................................................................
 bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
@@ -1413,7 +1413,7 @@ void TIns::SavePattSolution(const olxstr& FileName,
 void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
   if( cx.AfixGroups.IsEmpty() )  return;
   if( cx.SetNextPivot )  {
-    cx.AfixGroups.Top().B()->SetPivot(a);
+    cx.AfixGroups.Top().b->SetPivot(a);
     cx.SetNextPivot = false;
     return;
   }
@@ -1422,13 +1422,13 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
   else  {
     if( cx.AfixGroups.Top().GetC() )  {
       if( a.GetType() != iHydrogenZ )  {
-        cx.AfixGroups.Top().A()--;
-        cx.AfixGroups.Top().B()->AddDependent(a);
+        cx.AfixGroups.Top().a--;
+        cx.AfixGroups.Top().b->AddDependent(a);
       }
     }
     else  {
-      cx.AfixGroups.Top().A()--;
-      cx.AfixGroups.Top().B()->AddDependent(a);
+      cx.AfixGroups.Top().a--;
+      cx.AfixGroups.Top().b->AddDependent(a);
     }
   }
 }
@@ -1443,7 +1443,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   // update the context
   cx.Last = atom;
   if( !cx.Same.IsEmpty() && cx.Same.GetLast().GetB() == NULL )
-    cx.Same.GetLast().B() = atom;
+    cx.Same.GetLast().b = atom;
 
   cx.rm.Vars.SetParam(*atom, catom_var_name_Sof,
     cx.PartOccu == 0 ? Toks[5].ToDouble() : cx.PartOccu);
@@ -1664,8 +1664,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   bool write_internals)
 {
   size_t oindex = SL.Count();
-  typedef AnAssociation2<TSRestraintList*,RCInfo> ResInfo;
-  TStrPObjList<olxstr, ResInfo> restraints;
+  typedef olx_pair_t<TSRestraintList*,RCInfo> ResInfo;
+  TStringToList<olxstr, ResInfo> restraints;
   // fixed distances, has value, one esd, no atom limit
   restraints.Add("DFIX", ResInfo(&rm.rDFIX, RCInfo(1, 1, 2)));
   // similar distances, no value, one esd, no atom limit
@@ -1693,7 +1693,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( size_t i=0; i < restraints.Count(); i++ )  {
     ResInfo& r = restraints.GetObject(i);
     for( size_t j=0; j < r.GetA()->Count(); j++ )  {
-      TSimpleRestraint& sr = (*r.A())[j];
+      TSimpleRestraint& sr = (*r.a)[j];
       sr.UpdateResi();
       const RCInfo& ri = r.GetB();
       sr.Validate();
@@ -1733,7 +1733,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       rm.GetFrag(i).ToStrings(SL);
   }
   else  {
-    SortedPtrList<const Fragment, TPointerComparator> saved;
+    sorted::PointerPointer<const Fragment> saved;
     for( size_t i=0; i < atoms->Count(); i++ )  {
       const int m = TAfixGroup::GetM((*atoms)[i]->GetAfix());
       if( m < 17 )  continue;

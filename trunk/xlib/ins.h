@@ -24,7 +24,7 @@
 
 BeginXlibNamespace()
 
-  typedef TStrPObjList<olxstr,TCAtom*> TInsList;
+typedef TStringToList<olxstr, TCAtom*> TInsList;
 
 class TIns: public TBasicCFile  {
   // parsing context state and varables
@@ -32,7 +32,7 @@ class TIns: public TBasicCFile  {
     RefinementModel& rm;
     TAsymmUnit& au;
     TStrList Symm;
-    TStrPObjList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
+    TStringToList<olxstr, const cm_Element*>  BasicAtoms;  // SFAC container
     bool CellFound, SetNextPivot, End;
     int Part, ToAnis;
     // number of atoms (left), pivot, Hydrogens or not
@@ -44,7 +44,7 @@ class TIns: public TBasicCFile  {
       *LastWithU, *LastRideable;
     TIns* ins;
     // SAME instructions and the first atom after it/them
-    TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
+    TTypeList< olx_pair_t<TStrList,TCAtom*> > Same;
     ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit),
       Resi(NULL), Last(NULL), LastWithU(NULL), LastRideable(NULL)
     {
@@ -55,7 +55,7 @@ class TIns: public TBasicCFile  {
     }
   };
 private:
-  TStrPObjList<olxstr, TInsList*> Ins;  // instructions
+  TStringToList<olxstr, TInsList*> Ins;  // instructions
   TStrList Skipped;
   // mean error of cell parameters. Can be used for estimation of other lengths
   double R1;
@@ -77,7 +77,7 @@ protected:
   static void _ProcessAfix0(ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL) 
   static void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
-    TStrPObjList<olxstr,const cm_Element*>* sfac, TStrList& sl,
+    TStringToList<olxstr, const cm_Element*>* sfac, TStrList& sl,
     TIndexList* index=NULL, bool checkSame=true, bool checkResi=true);
   static void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
@@ -85,7 +85,7 @@ protected:
   // processes CONN, FREE and BIND, called from _FinishParsing
   void __ProcessConn(ParseContext& cx);
   // also updates the RM user content if any of the types missing
-  TStrPObjList<olxstr,const cm_Element*> FixTypeListAndLabels();
+  TStringToList<olxstr, const cm_Element*> FixTypeListAndLabels();
 public:
   TIns();
   virtual ~TIns();

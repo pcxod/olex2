@@ -19,10 +19,9 @@ TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
   olxstr entryName( TEFile::UnixPath(EM) );
   TMemoryBlock * mb = NULL;
   if( UseCache )
-    mb = FMemoryBlocks[entryName];
-
+    mb = FMemoryBlocks.Find(entryName, NULL);
   if( mb == NULL )  {
-    wxZipEntry *entry = FEntries[TEFile::UnixPath(entryName)];
+    wxZipEntry *entry = FEntries.Find(TEFile::UnixPath(entryName), NULL);
     if( !entry )  return NULL;
     if( !FInputStream->OpenEntry(*entry) )  return NULL;
     //if( FInputStream->GetLength() <=0 )  {  FInputStream->CloseEntry();  return NULL;  }
@@ -68,12 +67,12 @@ TZipWrapper::TZipWrapper(TEFile* file, bool useCache) :
 //..............................................................................
 TZipWrapper::~TZipWrapper()  {
   for( size_t i=0; i < FMemoryBlocks.Count(); i++ )  {
-    TMemoryBlock *mb = FMemoryBlocks.GetObject(i);
+    TMemoryBlock *mb = FMemoryBlocks.GetValue(i);
     delete [] mb->Buffer;
     delete mb;
   }
   for( size_t i=0; i < FEntries.Count(); i++ )
-    delete FEntries.GetObject(i);
+    delete FEntries.GetValue(i);
   if( FInputStream != NULL )  delete FInputStream;
   if( wxfile != NULL )  {
     wxfile->Detach();
@@ -121,14 +120,14 @@ bool TZipWrapper::ExtractAll(const olxstr& dest)  {
       res = false;
       break;
     }
-    if( FEntries.GetString(i).EndsWith('/') )  continue;
-    if( !FInputStream->OpenEntry(*FEntries.GetObject(i)) )
+    if( FEntries.GetKey(i).EndsWith('/') )  continue;
+    if (!FInputStream->OpenEntry(*FEntries.GetValue(i)))
       continue;
     Progress.SetPos(i+1);
-    Progress.SetAction(FEntries.GetString(i));
+    Progress.SetAction(FEntries.GetKey(i));
     OnProgress.Execute(NULL, &Progress);
 
-    olxstr dest_file = extractPath + FEntries.GetString(i);
+    olxstr dest_file = extractPath + FEntries.GetKey(i);
     olxstr dst_dir = TEFile::ExtractFilePath(dest_file);
     if( !TEFile::Exists(dst_dir) )
       if( !TEFile::MakeDirs(dst_dir) )  {

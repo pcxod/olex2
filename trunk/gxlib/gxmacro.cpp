@@ -2989,7 +2989,7 @@ void GXLibMacros::macChemDraw(TStrObjList &Cmds, const TParamList &Options,
 {
   app.CreateRings(true, true);
   TGXApp::BondIterator bi = app.GetBonds();
-  SortedPtrList<TGPCollection, TPointerComparator> cols;
+  sorted::PointerPointer<TGPCollection> cols;
   TPtrList<TXBond> changed;
   while (bi.HasNext()) {
     TXBond &b = bi.Next();
@@ -3193,7 +3193,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 TNetwork::AlignInfo GXLibMacros_MatchAtomPairsQT(
-  const TTypeList<AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+  const TTypeList<olx_pair_t<TSAtom*,TSAtom*> >& atoms,
   bool TryInversion, double (*weight_calculator)(const TSAtom&),
   bool print = true)
 {
@@ -3214,7 +3214,7 @@ TNetwork::AlignInfo GXLibMacros_MatchAtomPairsQT(
 }
 //..............................................................................
 TNetwork::AlignInfo GXLibMacros_MatchAtomPairsQTEsd(
-  const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+  const TTypeList< olx_pair_t<TSAtom*,TSAtom*> >& atoms,
   bool TryInversion, double (*weight_calculator)(const TSAtom&))
 {
   TXApp& xapp = TXApp::GetInstance();
@@ -3306,7 +3306,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     if (atoms.Count() == 2 &&
         (&atoms[0]->GetNetwork() != &atoms[1]->GetNetwork()))
     {
-      TTypeList<AnAssociation2<size_t, size_t> > res;
+      TTypeList<olx_pair_t<size_t, size_t> > res;
       TSizeList sk;
       TNetwork &netA = atoms[0]->GetNetwork(),
         &netB = atoms[1]->GetNetwork();
@@ -3321,7 +3321,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             : netA.GetLattice();
           latt1.RestoreADPs();
         }
-        TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
+        TTypeList< olx_pair_t<TSAtom*,TSAtom*> > satomp;
         TSAtomPList atomsToTransform;
         for (size_t i=0; i < res.Count(); i++) {
           if (!atomsToTransform.Contains(&netB.Node(res[i].GetB()))) {
@@ -3393,7 +3393,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             center *= -1;
           }
           vec3d total_t = align_info.align_out.center_a-center*m;
-          TPSTypeList<double, size_t> sorted_pairs;
+          sorted::PrimitiveAssociation<double, size_t> sorted_pairs;
           for (size_t i=0; i < res.Count(); i++) {
             vec3d v = au.Orthogonalise(netB.Node(res[i].GetB()).ccrd());
             v = v*m + total_t;
@@ -3409,7 +3409,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             "Dist/A";
           TBasicApp::NewLogEntry() << "Matching pairs:";
           for (size_t i=0; i < sorted_pairs.Count(); i++) {
-            size_t idx = sorted_pairs.GetObject(i);
+            size_t idx = sorted_pairs.GetValue(i);
             size_t c_off = (i%4)*3, r_i = i/4;
             tab[r_i][c_off+0] = netA.Node(res[idx].GetA()).GetLabel();
             tab[r_i][c_off+1] = netB.Node(res[idx].GetB()).GetLabel();
@@ -3540,7 +3540,7 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     // a full basis provided
     else if (atoms.Count() >= 3*group_cnt && (atoms.Count()%group_cnt) == 0) {
       const size_t atom_a_group = atoms.Count()/group_cnt;
-      TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp(atom_a_group);
+      TTypeList<olx_pair_t<TSAtom*,TSAtom*> > satomp(atom_a_group);
       // fill the reference group
       for (size_t i=0; i < atom_a_group; i++)
         satomp[i].SetA(atoms[i]);
@@ -3595,12 +3595,12 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       if (!nets[i]->IsSuitableForMatching() || matched[i])  continue;
       for (size_t j=i+1; j < nets.Count(); j++) {
         if (!nets[j]->IsSuitableForMatching() || matched[j])  continue;
-        TTypeList<AnAssociation2<size_t, size_t> > res;
+        TTypeList<olx_pair_t<size_t, size_t> > res;
         if (!nets[i]->DoMatch(*nets[j], res, false, weight_calculator))
           continue;
         match_cnt++;
         matched.SetTrue(j);
-        TTypeList<AnAssociation2<TSAtom*,TSAtom*> > ap;
+        TTypeList<olx_pair_t<TSAtom*,TSAtom*> > ap;
         for( size_t k=0; k < res.Count(); k++ ) {
           if (exclude_h && nets[i]->Node(res[k].GetA()).GetType() == 1)
             continue;
@@ -3666,7 +3666,7 @@ olxstr GXLibMacros_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert,
   bool verbose,
   double (*w_c)(const TSAtom&))
 {
-  TTypeList<AnAssociation2<size_t, size_t> > res;
+  TTypeList<olx_pair_t<size_t, size_t> > res;
   TSizeList sk;
   bool match = false;
   try  {  match = netA.DoMatch(netB, res, invert, w_c);  }
@@ -3675,7 +3675,7 @@ olxstr GXLibMacros_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert,
   }
   if( match )  {
     olxstr rv;
-    TTypeList<AnAssociation2<TSAtom*,TSAtom*> > satomp;
+    TTypeList<olx_pair_t<TSAtom*,TSAtom*> > satomp;
     for( size_t i=0; i < res.Count(); i++ ) {
       satomp.AddNew<TSAtom*,TSAtom*>(
         &netA.Node(res[i].GetA()), &netB.Node(res[i].GetB()));
@@ -3685,7 +3685,7 @@ olxstr GXLibMacros_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert,
     rv = olxstr::FormatFloat(3, align_info.rmsd.GetV());
     mat3d m;
     QuaternionToMatrix(align_info.align_out.quaternions[0], m);
-    TPSTypeList<double, AnAssociation2<TSAtom*,TSAtom*>*> pairs;
+    sorted::PrimitiveAssociation<double, olx_pair_t<TSAtom*,TSAtom*>*> pairs;
     pairs.SetCapacity(satomp.Count());
     const TAsymmUnit& au2 =
       satomp[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
@@ -3702,16 +3702,16 @@ olxstr GXLibMacros_funMatchNets(TNetwork& netA, TNetwork& netB, bool invert,
       for( size_t i=0; i < pairs.Count(); i++ )  {
         size_t index = pairs.Count() - i -1;
         rv << olxstr::FormatFloat(3, pairs.GetKey(index)) << "(";
-        rv << pairs.GetObject(index)->GetA()->GetLabel() << ',' <<
-          pairs.GetObject(index)->GetB()->GetLabel() << ')';
+        rv << pairs.GetValue(index)->GetA()->GetLabel() << ',' <<
+          pairs.GetValue(index)->GetB()->GetLabel() << ')';
         if( i+1 < pairs.Count() )
           rv << ',';
       }
     }
     else  {
       rv << olxstr::FormatFloat(3, pairs.GetLastKey()) << "(";
-      rv << pairs.GetLastObject()->GetA()->GetLabel() << ',' <<
-        pairs.GetLastObject()->GetB()->GetLabel() << ')';
+      rv << pairs.GetLastValue()->GetA()->GetLabel() << ',' <<
+        pairs.GetLastValue()->GetB()->GetLabel() << ')';
     }
     return rv << '}';
   }

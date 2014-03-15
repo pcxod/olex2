@@ -97,12 +97,11 @@ void THtml::SetSwitchState(THtmlSwitch& sw, size_t state)  {
   if( ind == InvalidIndex )
     SwitchStates.Add(sw.GetName(), state);
   else
-    SwitchStates.GetObject(ind) = state;
+    SwitchStates.GetValue(ind) = state;
 }
 //.............................................................................
 size_t THtml::GetSwitchState(const olxstr& switchName)  {
-  const size_t ind = SwitchStates.IndexOf( switchName );
-  return (ind == InvalidIndex) ? UnknownSwitchState : SwitchStates.GetObject(ind);
+  return SwitchStates.Find(switchName, UnknownSwitchState);
 }
 //.............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
@@ -364,7 +363,7 @@ void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
 }
 //.............................................................................
 void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
-  TStrPObjList<olxstr,THtmlSwitch*>& Lst = Sender.GetStrings();
+  TStringToList<olxstr,THtmlSwitch*>& Lst = Sender.GetStrings();
   TStrList Toks;
   using namespace exparse::parser_util;
   static const olxstr Tag  = "<!-- #include ",
@@ -607,12 +606,12 @@ bool THtml::UpdatePage(bool update_indices)  {
   Refresh();
   Update();
 #endif
-  for( size_t i=0; i < Objects.Count(); i++ )  {
-    if( Objects.GetValue(i).B() != NULL )  {
+  for (size_t i=0; i < Objects.Count(); i++) {
+    if (Objects.GetValue(i).GetB() != NULL) {
 #ifndef __MAC__
-      Objects.GetValue(i).B()->Move(16000, 0);
+      Objects.GetValue(i).b->Move(16000, 0);
 #endif
-      Objects.GetValue(i).B()->Show();
+      Objects.GetValue(i).b->Show();
     }
   }
 #if defined(__WIN32__)
@@ -630,7 +629,7 @@ bool THtml::UpdatePage(bool update_indices)  {
   if( !FocusedControl.IsEmpty() )  {
     size_t ind = Objects.IndexOf( FocusedControl );
     if( ind != InvalidIndex )  {
-      wxWindow* wnd = Objects.GetValue(ind).B();
+      wxWindow* wnd = Objects.GetValue(ind).b;
       if( EsdlInstanceOf(*wnd, TTextEdit) )
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
@@ -915,7 +914,7 @@ void THtml::SetObjectState(AOlxCtrl *Obj, bool State, const olxstr& state_name) 
 //.............................................................................
 THtml::TObjectsState::~TObjectsState()  {
   for( size_t i=0; i < Objects.Count(); i++ )
-    delete Objects.GetObject(i);
+    delete Objects.GetValue(i);
 }
 //.............................................................................
 void THtml::TObjectsState::SaveState()  {
@@ -924,13 +923,13 @@ void THtml::TObjectsState::SaveState()  {
     size_t ind = Objects.IndexOf(html.GetObjectName(i));
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
-    TSStrStrList<olxstr,false>* props;
+    olxstr_dict<olxstr,false>* props;
     if( ind == InvalidIndex )  {
-      props = new TSStrStrList<olxstr,false>;
+      props = new olxstr_dict<olxstr,false>;
       Objects.Add(html.GetObjectName(i), props);
     }
     else  {
-      props = Objects.GetObject(ind);
+      props = Objects.GetValue(ind);
       props->Clear();
     }
     props->Add("type", EsdlClassName(*obj));  // type
@@ -1019,10 +1018,10 @@ void THtml::TObjectsState::RestoreState()  {
     if( ind == InvalidIndex )  continue;
     AOlxCtrl* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
-    TSStrStrList<olxstr,false>& props = *Objects.GetObject(ind);
-    if( props["type"] != EsdlClassName(*obj) )  {
+    olxstr_dict<olxstr, false>& props = *Objects.GetValue(ind);
+    if( props.Get("type") != EsdlClassName(*obj) )  {
       TBasicApp::NewLogEntry(logError) << "Object type changed for: "
-        << Objects.GetString(ind);
+        << Objects.GetKey(ind);
       continue;
     }
     if( EsdlInstanceOf(*obj, TTextEdit) )  {
@@ -1041,12 +1040,14 @@ void THtml::TObjectsState::RestoreState()  {
       tb->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       tb->SetValue(olx_round(props["val"].ToDouble()));
       tb->SetData(props["data"]);
+      tb->SetData(props.Get("data"));
     }
     else if( EsdlInstanceOf(*obj, TSpinCtrl) )  {
-      TSpinCtrl* sc = (TSpinCtrl*)obj;  
+      TSpinCtrl* sc = (TSpinCtrl*)obj;
       sc->SetRange(olx_round(props["min"].ToDouble()), olx_round(props["max"].ToDouble()));
       sc->SetValue(olx_round(props["val"].ToDouble()));
       sc->SetData(props["data"]);
+      sc->SetData(props.Get("data"));
     }
     else if( EsdlInstanceOf(*obj, TButton) )  {
       TButton* bt = (TButton*)obj;
@@ -1137,13 +1138,13 @@ bool THtml::TObjectsState::LoadFromFile(const olxstr& fn)  {
   return true;
 }
 //.............................................................................
-TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(
+olxstr_dict<olxstr,false>* THtml::TObjectsState::DefineControl(
   const olxstr& name, const std::type_info& type)
 {
   const size_t ind = Objects.IndexOf( name );
   if( ind != InvalidIndex )
     throw TFunctionFailedException(__OlxSourceInfo, "object already exists");
-  TSStrStrList<olxstr,false>* props = new TSStrStrList<olxstr,false>;
+  olxstr_dict<olxstr,false>* props = new olxstr_dict<olxstr,false>;
 
   props->Add("type", type.name());  // type
   props->Add("data");

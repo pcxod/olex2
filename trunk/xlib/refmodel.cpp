@@ -837,7 +837,7 @@ const_strlist RefinementModel::Describe() {
   if (!riding_u.IsEmpty()) {
     olxdict<uint32_t, //low-to-high: 8 - bond count, 8 - riding z, 8 - pivot z
       olxdict<double,
-        SortedPtrList<const TCAtom, TPointerComparator>,
+        sorted::PointerPointer<const TCAtom>,
         TPrimitiveComparator>,
       TPrimitiveComparator> riding_u_g;
     for (size_t i=0; i < riding_u.Count(); i++) {
@@ -1769,7 +1769,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   bool write_internals) const
 {
   TDataItem di(NULL, "root");
-  typedef AnAssociation2<const TSRestraintList*, TIns::RCInfo> ResInfo;
+  typedef olx_pair_t<const TSRestraintList*, TIns::RCInfo> ResInfo;
   TTypeList<ResInfo> restraints;
   restraints.AddNew(&rAngle, TIns::RCInfo(1, 1, -1, true));
   restraints.AddNew(&rDihedralAngle, TIns::RCInfo(1, 1, -1, true));

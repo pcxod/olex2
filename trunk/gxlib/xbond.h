@@ -87,9 +87,9 @@ public:
   /* returns a list of static primitives. This list has the same order as
   primtives masks, so primitives names can be obtained for any particular mask
   */
-  static TStrPObjList<olxstr,TGlPrimitive*> &GetStaticPrimitives() {
+  static TStringToList<olxstr, TGlPrimitive*> &GetStaticPrimitives() {
     //static TArrayList<TGlPrimitiveParams> FPrimitiveParams;
-    static TStrPObjList<olxstr, TGlPrimitive*> sp;
+    static TStringToList<olxstr, TGlPrimitive*> sp;
     return sp;
   }
   // updates primitive properties from atoms

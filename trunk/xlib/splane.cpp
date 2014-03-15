@@ -16,29 +16,29 @@
 #include "pers_util.h"
 
 double TSPlane::CalcRMSD(const TSAtomPList& atoms)  {
-  if( atoms.Count() < 3 )  return -1;
-  vec3d p, c;
-  TArrayList<AnAssociation2<vec3d, double> > Points(atoms.Count());
-  for( size_t i=0; i < atoms.Count(); i++ ) {
-    Points[i].A() = atoms[i]->crd();
-    Points[i].B() = 1;
+  if (atoms.Count() < 3) return -1;
+  TArrayList<olx_pair_t<vec3d, double> > Points(atoms.Count());
+  for (size_t i=0; i < atoms.Count(); i++) {
+    Points[i].a = atoms[i]->crd();
+    Points[i].b = 1;
   }
+  vec3d p, c;
   return CalcPlane(Points, p, c);
 }
 //..............................................................................
 double TSPlane::CalcRMSD(const TAtomEnvi& atoms)  {
-  if( atoms.Count() < 3 )  return -1;
-  vec3d p, c;
-  TArrayList<AnAssociation2<vec3d, double> > Points(atoms.Count());
-  for( size_t i=0; i < atoms.Count(); i++ ) {
-    Points[i].A() = atoms.GetCrd(i);
-    Points[i].B() = 1;
+  if (atoms.Count() < 3) return -1;
+  TArrayList<olx_pair_t<vec3d, double> > Points(atoms.Count());
+  for (size_t i=0; i < atoms.Count(); i++) {
+    Points[i].a = atoms.GetCrd(i);
+    Points[i].b = 1;
   }
+  vec3d p, c;
   return CalcPlane(Points, p, c);
 }
 //..............................................................................
-void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
-  TTypeList<AnAssociation2<vec3d, double> > points;
+void TSPlane::Init(const TTypeList< olx_pair_t<TSAtom*, double> >& atoms)  {
+  TTypeList<olx_pair_t<vec3d, double> > points;
   points.SetCapacity(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ ) {
     points.AddNew(atoms[i].GetA()->crd(), atoms[i].GetB());
@@ -47,7 +47,7 @@ void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
   Crds.Clear().AddList(atoms);
 }
 //..............................................................................
-void TSPlane::_Init(const TTypeList<AnAssociation2<vec3d, double> >& points)  {
+void TSPlane::_Init(const TTypeList<olx_pair_t<vec3d, double> >& points)  {
   vec3d rms;
   CalcPlanes(points, Normals, rms, Center, true);
   const double nl = GetNormal().Length();
@@ -81,7 +81,7 @@ double TSPlane::CalcWeightedRMSD() const {
 bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
   vec3d& center)
 {
-  TTypeList< AnAssociation2<vec3d, double> > Points;
+  TTypeList< olx_pair_t<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )
     Points.AddNew(atoms[i]->crd(), 1.0);
@@ -91,7 +91,7 @@ bool TSPlane::CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms,
 double TSPlane::CalcPlane(const TSAtomPList& atoms, 
                         vec3d& Params, vec3d& center, const short type)
 {
-  TTypeList< AnAssociation2<vec3d, double> > Points;
+  TTypeList< olx_pair_t<vec3d, double> > Points;
   Points.SetCapacity(atoms.Count());
   for( size_t i=0; i < atoms.Count(); i++ )
     Points.AddNew(atoms[i]->crd(), 1.0);
@@ -120,7 +120,7 @@ void TSPlane::FromDataItem(const TDataItem& item)  {
       &objects.atoms[item.GetItemByIndex(i).GetFieldByName("atom_id").ToInt()],
       item.GetItemByIndex(i).GetValue().ToDouble());
   }
-  TTypeList< AnAssociation2<vec3d, double> > points;
+  TTypeList< olx_pair_t<vec3d, double> > points;
   points.SetCapacity(Crds.Count());
   for( size_t i=0; i < Crds.Count(); i++ )
     points.AddNew( Crds[i].GetA()->crd(), Crds[i].GetB());
@@ -217,7 +217,7 @@ void TSPlane::Def::FromDataItem(const TDataItem& item)  {
 TSPlane* TSPlane::Def::FromAtomRegistry(ASObjectProvider& ar, size_t def_id,
   TNetwork* parent, const smatd& matr) const
 {
-  TTypeList<AnAssociation2<TSAtom*, double> > points;
+  TTypeList<olx_pair_t<TSAtom*, double> > points;
   const TUnitCell& uc = parent->GetLattice().GetUnitCell();
   const TAsymmUnit& au = parent->GetLattice().GetAsymmUnit();
   if( matr.IsFirst() )  {

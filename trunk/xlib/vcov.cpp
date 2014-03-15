@@ -180,10 +180,10 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       throw TFunctionFailedException(__OlxSourceInfo,
         "matrix is not upto date");
     }
-    Index[i].C() = ca->GetId();
+    Index[i].c = ca->GetId();
     size_t j = i;
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
-      Index[j].C() = ca->GetId();
+      Index[j].c = ca->GetId();
     i = j-1;
   }
   // expand refined parameters into crystallographic ones
@@ -383,10 +383,10 @@ void VcoVMatrix::ReadSmtbxMat(const olxstr& fileName, TAsymmUnit& au)  {
   }
   for( size_t i=0; i < Index.Count(); i++ )  {
     TCAtom* ca = au.FindCAtom(Index[i].GetA());
-    Index[i].C() = ca->GetId();
+    Index[i].c = ca->GetId();
     size_t j = i;
     while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
-      Index[j].C() = ca->GetId();
+      Index[j].c = ca->GetId();
     i = j-1;
   }
   const mat3d& f2c = au.GetCellToCartesian();

@@ -163,7 +163,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
   }
 
-  TTypeList< AnAssociation2<double,double> > binData;
+  TTypeList< olx_pair_t<double,double> > binData;
   // normalise summs
   for( size_t i=0; i < bins.Count(); i++ )  {
     if( bins[i].Count == 0 )  continue;
@@ -256,7 +256,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
           ebins[j]->Count ++;
       }
     }
-    TTypeList< AnAssociation2<double,double> > ebinData;
+    TTypeList< olx_pair_t<double,double> > ebinData;
 
     for( size_t i=0; i < ebins.Count(); i++ )  {
       if( ebins[i]->Count == 0 )  continue;

@@ -375,7 +375,7 @@ public:
 
     //temporary colour dictionary
     //map<olxstr,string> ColourDic;
-    olxdict <olxstr,olxstr,olxstrComparator<false> > ColourDic;
+    olxdict <olxstr,olxcstr,olxstrComparator<false> > ColourDic;
     ColourDic("H","white");
     ColourDic("D","white");
     ColourDic("He","white");
@@ -480,7 +480,7 @@ public:
     ColourDic("Lr","white");
     ColourDic("Ne","white");
     ColourDic("Ar","white");
-
+    olxcstr def_color = "white";
 
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDrawTex::OrtAtom> atoms;
@@ -508,10 +508,10 @@ public:
       //writing of the color definition of the atom
       if(CurrentAtom == false)
       {
-        sprintf(bf, "\\newcommand{\\color%s}{%s!90!black}",         
+        sprintf(bf, "\\newcommand{\\color%s}{%s!90!black}",
           sa.GetType().symbol.c_str(),
-          ColourDic[sa.GetType().symbol].c_str()
-          );        
+          ColourDic.Find(sa.GetType().symbol, def_color).c_str()
+          );
         pw.Writenl(bf);
 
         sprintf(bf, "\\pgfdeclareradialshading{ballshading%s}{\\pgfpoint{-10bp}{10bp}}",
@@ -560,7 +560,7 @@ public:
           p[0]/5, p[1]/5,
           AradScale*sqrt(sa.GetType().r_bonding)/5,
           sa.GetType().symbol.c_str()
-          );        
+          );
         pw.Writenl(bf);
         //write a node to make life easier later
         sprintf(bf, "\\node (atom%i) at (%fmm,%fmm) {};",

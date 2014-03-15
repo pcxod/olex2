@@ -30,17 +30,21 @@ template <class SC> struct TSingleStringWrapper  {
   typedef SC string_type;
 };
 
-template <class T, bool CaseInsensetive> class TStringWrapperComparator  {
+template <bool CaseInsensetive> class TStringWrapperComparator {
 public:
-  static int Compare(const T &A, const T &B)  {
-   return (CaseInsensetive) ? A.String.Comparei(B.String)
-     : A.String.Compare(B.String);
+  TStringWrapperComparator() {}
+  template <class item_a_t, class item_b_t>
+  int Compare(const item_a_t &A, const item_b_t &B) const {
+    return (CaseInsensetive) ?
+      olx_ref::get(A).String.Comparei(olx_ref::get(B).String)
+      : olx_ref::get(A).String.Compare(olx_ref::get(B).String);
   }
 };
 // string class, string container class
 template <class T> class TTStrList : public IEObject {
 public:
   typedef typename T::string_type string_type;
+  typedef typename T::string_type list_item_type;
 protected:
   TPtrList<T> Strings;
   template <class StrClass>
@@ -75,7 +79,7 @@ public:
     for( size_t i=0; i < list.Count(); i++ )
       Add(list[i]);
   }
-  TTStrList(const ConstStrList<T> &list)  {
+  TTStrList(const ConstStrList<TTStrList<T> > &list)  {
     TakeOver(list.Release(), true);
   }
   TTStrList(size_t count)  {
@@ -93,7 +97,7 @@ public:
   }
 
   template <class list_t>
-  static ConstStrList<T> FromAny(const list_t &list) {
+  static ConstStrList<TTStrList<T> > FromAny(const list_t &list) {
     TTStrList l;
     l.SetCapacity(list.Count());
     for (size_t i=0; i < list.Count(); i++)
@@ -102,7 +106,9 @@ public:
   }
 
   template <class list_t, class accessor_t>
-  static ConstStrList<T> FromAny(const list_t &list, const accessor_t &acc) {
+  static ConstStrList<TTStrList<T> > FromAny(const list_t &list,
+    const accessor_t &acc)
+  {
     TTStrList l;
     l.SetCapacity(list.Count());
     for (size_t i=0; i < list.Count(); i++)
@@ -173,7 +179,7 @@ public:
       Add(list[i]);
     return *this;
   }
-  TTStrList& operator << (const ConstStrList<T>& list)  {
+  TTStrList& operator << (const ConstStrList<TTStrList<T> >& list)  {
     return *this << list.GetObject();
   }
 
@@ -231,12 +237,12 @@ public:
     return SL;
   }
 
-  ConstStrList<T> SubListFrom(size_t offset) const {
+  ConstStrList<TTStrList<T> > SubListFrom(size_t offset) const {
     TTStrList SL;
     return SubList(offset, Strings.Count()-offset, SL);
   }
 
-  ConstStrList<T> SubListTo(size_t to) const {
+  ConstStrList<TTStrList<T> > SubListTo(size_t to) const {
     TTStrList SL;
     return SubList(0, to, SL);
   }
@@ -351,7 +357,7 @@ public:
     // must preserve the new lines on Linux!!! 2008.08.17
     Strtok(str, '\n', false);
     for( size_t i=0; i < Count(); i++ )
-      if( GetString(i).EndsWith('\r') )  
+      if( GetString(i).EndsWith('\r') )
         GetString(i).SetLength(GetString(i).Length()-1);
     return *this;
   }
@@ -390,15 +396,15 @@ public:
   }
 
   TTStrList& operator = (const TTStrList& list)  {  return Assign(list);  }
-  TTStrList &operator = (const ConstStrList<T> &list)  {
+  TTStrList &operator = (const ConstStrList<TTStrList<T> > &list) {
     return TakeOver(list.Release(), true);
   }
 
   void QSort(bool ci)  {
     if( ci )
-      QuickSorter::Sort(Strings, TStringWrapperComparator<T,true>());
+      QuickSorter::Sort(Strings, TStringWrapperComparator<true>());
     else 
-      QuickSorter::Sort(Strings, TStringWrapperComparator<T,false>());
+      QuickSorter::Sort(Strings, TStringWrapperComparator<false>());
   }
 
   size_t StrtokF(const string_type& Str, const TSizeList& indexes)  {
@@ -549,231 +555,175 @@ public:
 };
 
 
-template <class SC, typename OC> 
-struct TPrimitiveStrListData : public TSingleStringWrapper<SC>  {
-  OC Object;
-  TPrimitiveStrListData() : Object(0) {}
-  template <class T>
-  TPrimitiveStrListData(const T& str, const OC& obj = 0)
-    : TSingleStringWrapper<SC>(str), Object(obj) {}
-  typedef OC object_type;
-};
-
 template <class SC, typename OC> struct TObjectStrListData
   : public TSingleStringWrapper<SC>
 {
   OC Object;
   TObjectStrListData()  {}
   template <class S>
-  TObjectStrListData(const S& str) : TSingleStringWrapper<SC>(str)  {}
-  template <class S>
   TObjectStrListData(const S& str, const OC& obj)
-    : TSingleStringWrapper<SC>(str), Object(obj)  {}
+    : TSingleStringWrapper<SC>(str), Object(obj)
+  {}
+  template <class S>
+  TObjectStrListData(const S& str)
+    : TSingleStringWrapper<SC>(str), Object(0)
+  {}
   typedef OC object_type;
 };
 
-template <class GC> class TTOStringList
-  : public TTStrList<GC>
+template <class SC, class OT> class TStringToList
+  : public TTStrList<TObjectStrListData<SC, OT> >
 {
-  typedef TTStrList<GC> PList;
-  typedef typename GC::string_type string_type;
-  typedef typename GC::object_type object_type;
+  typedef TTStrList<TObjectStrListData<SC, OT> > PList;
+  typedef typename ConstStrObjList<TStringToList<SC, OT> > const_list;
 public:
+  typedef TObjectStrListData<SC, OT> item_t;
+  typedef typename SC string_type;
+  typedef typename OT object_type;
   // creates empty list
-  TTOStringList()  {}
-  TTOStringList(size_t count) : TTStrList<GC>(count)  {}
+  TStringToList()  {}
+  TStringToList(size_t count)
+    : TTStrList<item_t>(count)
+  {}
   // copy constructor
   template <class T1>
-  TTOStringList(const TTStrList<T1>& list)  {
+  TStringToList(const TTStrList<T1>& list) {
     PList::Strings.SetCapacity(list.Count());
-    for( size_t i=0; i < list.Count(); i++ )
+    for (size_t i=0; i < list.Count(); i++)
       Add(list[i]);
   }
 
-  TTOStringList(const TTOStringList& list)  {
+  TStringToList(const TStringToList& list) {
     PList::Strings.SetCapacity(list.Count());
-    for( size_t i=0; i < list.Count(); i++ )
+    for (size_t i=0; i < list.Count(); i++)
       Add(list[i], list.GetObject(i));
   }
-  TTOStringList(const ConstStrObjList<GC> &list)  {
+  TStringToList(const const_list &list) {
     PList::TakeOver(list.Release(), true);
   }
   // creates a list with strtok entries in it
-  TTOStringList(const string_type& string, const string_type& sep,
+  TStringToList(const string_type& string, const string_type& sep,
     TTypeList<object_type>* objects=NULL)
     : TTStrList<GC>(string, sep)
   {
-    if( objects != NULL )  {
-      for( size_t i=0; i < objects->Count(); i++ )  {
-        if( (i+1) >= PList::Count() )  break;
+    if (objects != NULL) {
+      for (size_t i=0; i < objects->Count(); i++) {
+        if ((i+1) >= PList::Count())  break;
         GetObject(i) = objects->GetItem(i);
       }
     }
   }
   // creates a list with strtok entries in it
-  TTOStringList(const PList& strings, char sep, 
+  TStringToList(const PList& strings, char sep,
     TTypeList<object_type>* objects = NULL)
     : TTStrList<GC>(strings, sep)
   {
-    if( objects != NULL )  {
-      for( size_t i=0; i < objects->Count(); i++ )  {
-        if( (i-1) > PList::Count() )  break;
+    if (objects != NULL) {
+      for (size_t i=0; i < objects->Count(); i++) {
+        if ((i-1) > PList::Count()) break;
         GetObject(i) = objects->GetItem(i);
       }
     }
   }
-  virtual ~TTOStringList()  {}
+  virtual ~TStringToList()  {}
 
-  TTOStringList& SubList(size_t offset, size_t count, TTOStringList& SL) const
+  TStringToList& SubList(size_t offset, size_t count,
+    TStringToList& SL) const
   {
-    for( size_t i=offset; i < offset+count; i++ )
+    for (size_t i=offset; i < offset+count; i++)
       SL.Add(PList::GetString(i), GetObject(i));
     return SL;
   }
 
-  ConstStrObjList<GC> SubListFrom(size_t offset) const {
-    TTOStringList SL;
+  const_list SubListFrom(size_t offset) const {
+    TStringToList SL;
     return SubList(offset, PList::Count()-offset, SL);
   }
 
-  ConstStrObjList<GC> SubListTo(size_t to) const {
-    TTOStringList SL;
+  const_list SubListTo(size_t to) const {
+    TStringToList SL;
     return SubList(0, to, SL);
   }
 
   template <class T1>
-  TTOStringList& Assign(const TTStrList<T1>& S)  {
+  TStringToList& Assign(const TTStrList<T1>& S) {
     PList::Clear();
     PList::SetCapacity(S.Count());
-    for( size_t i=0; i < S.Count(); i++ )
+    for (size_t i=0; i < S.Count(); i++)
       Add(S[i]);
     return *this;
   }
 
-  TTOStringList& Assign(const TTOStringList& S)  {
+  TStringToList& Assign(const TStringToList& S) {
     PList::Clear();
     PList::SetCapacity(S.Count());
-    for( size_t i=0; i < S.Count(); i++ )
+    for (size_t i=0; i < S.Count(); i++)
       Add(S[i], S.GetObject(i));
     return *this;
   }
 
-  TTOStringList AddList(const TTOStringList& S)  {
-    for( size_t i=0; i < S.Count(); i++ )
+  TStringToList AddList(const TStringToList& S) {
+    for (size_t i=0; i < S.Count(); i++)
       Add(S[i], S.GetObject(i));
     return *this;
   }
 
-  GC& Add()  {  return *PList::Strings.Add(new GC);  }
-  GC& Add(const string_type& S)  {  return *PList::Strings.Add(new GC(S));  }
-  GC& Add(const string_type& S, const object_type& Object)  {
-    return *PList::Strings.Add(new GC(S,Object));
+  item_t& Add() {
+    return *PList::Strings.Add(new item_t());
   }
-  GC& Insert(size_t i, const string_type& S, const object_type& O)  {
-    return *PList::Strings.Insert(i, new GC(S,O));
+  item_t& Add(const string_type& S) {
+    return *PList::Strings.Add(new item_t(S));
   }
-  GC& Set(size_t i, const string_type& S, const object_type& O)  {  
+  item_t& Add(const string_type& S, const object_type& Object) {
+    return *PList::Strings.Add(new item_t(S, Object));
+  }
+  item_t& Insert(size_t i, const string_type& S, const object_type& O) {
+    return *PList::Strings.Insert(i, new item_t(S,O));
+  }
+  item_t& Set(size_t i, const string_type& S, const object_type& O) {
     delete PList::Strings[i];
-    return *(PList::Strings[i] = new GC(S,O));
+    return (PList::Strings[i] = new item_t(S,O));
   }
 
-  object_type& GetObject(size_t i) const { return PList::Strings[i]->Object;  }
+  object_type& GetObject(size_t i) const { return PList::Strings[i]->Object; }
 
-  TTOStringList& operator = (const TTOStringList& list)  {
+  TStringToList& operator = (const TStringToList& list) {
     return Assign(list);
   }
 
-  TTOStringList& operator = (const ConstStrObjList<GC> &list)  {
+  TStringToList& operator = (const const_list &list) {
     PList::TakeOver(list.Release(), true);
     return *this;
   }
 
   size_t IndexOfObject(const object_type& C) const {
-    for( size_t i=0; i < PList::Count(); i++ )
-      if( PList::Strings[i]->Object == C )
+    for (size_t i=0; i < PList::Count(); i++)
+      if (PList::Strings[i]->Object == C)
         return i;
     return InvalidIndex;
   }
-  // the find function with this signature work only for objects;
-  // for pointers it causes a lot of trouble
-  template <class StrClass>
-  const object_type& FindObject(const StrClass& Name) const {
-    size_t in = PList::IndexOf(Name);
-    return (in != InvalidIndex) ? PList::Strings[in]->Object
-      : *(object_type*)NULL;
-  }
 
   template <class StrClass>
-  object_type* FindObjecti(const StrClass& Name) const {
-    size_t in = PList::IndexOfi(Name);
-    return (in != InvalidIndex) ? &PList::Strings[in]->Object
-      : (object_type*)NULL;
-  }
-};
-
-template <class SC, typename OC> class TStrPObjList:
-   public TTOStringList<TPrimitiveStrListData<SC,OC> >
-{
-  typedef TPrimitiveStrListData<SC,OC> data_t;
-  typedef TTOStringList<data_t> PList;
-public:
-  TStrPObjList()  {}
-  TStrPObjList(size_t count) : PList(count)  {}
-  TStrPObjList(const ConstStrObjList<data_t> &list) {
-    PList::TakeOver(list.Release(), true);
-  }
-
-  template <class T1> TStrPObjList(const TTStrList<T1>& list)
-    : PList(list) {}
-
-  TStrPObjList(const TTOStringList<data_t>& list)
-    : PList(list)  {}
-
-  TStrPObjList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL)
-    : PList(string, sep, objects)  {}
-
-  TStrPObjList(const SC& string, char sep, TTypeList<OC>* objects = NULL)
-    : PList(string, sep, objects)  {}
-
-  template <typename StrClass> OC FindObject(const StrClass& Name) const {
-    const size_t in = PList::IndexOf(Name);
-    return (in != InvalidIndex) ? PList::Strings[in]->Object : NULL;
-  }
-
-  template <typename StrClass> OC FindObjecti(const StrClass& Name) const {
-    const size_t in = PList::IndexOfi(Name);
-    return (in != InvalidIndex) ? PList::Strings[in]->Object : NULL;
-  }
-
-  TStrPObjList &operator = (const ConstStrObjList<data_t> &list) {
-    PList::Strings.TakeOver(list.Relase(), true);
-    return *this;
-  }
-
-  TStrPObjList& SubList(size_t offset, size_t count, TStrPObjList& SL) const
+  const object_type& FindObject(const StrClass& Name,
+    const object_type &def) const
   {
-    for( size_t i=offset; i < offset+count; i++ )
-      SL.Add(PList::GetString(i), PList::GetObject(i));
-    return SL;
+    size_t in = PList::IndexOf(Name);
+    return (in != InvalidIndex) ? PList::Strings[in]->Object : def;
   }
 
-  ConstStrObjList<data_t> SubListFrom(size_t offset) const {
-    TStrPObjList SL;
-    return SubList(offset, PList::Count()-offset, SL);
+  template <class StrClass>
+  object_type& FindObjecti(const StrClass& Name,
+    const object_type &def = *(object_type*)0) const
+  {
+    size_t in = PList::IndexOfi(Name);
+    return (in != InvalidIndex) ? PList::Strings[in]->Object : def;
   }
-
-  ConstStrObjList<data_t> SubListTo(size_t to) const {
-    TStrPObjList SL;
-    return SubList(0, to, SL);
-  }
-
 };
 
 // const_strlist
-template <typename item_t>
-class ConstStrList : public const_list<TTStrList<item_t> >
+template <typename list_t>
+class ConstStrList : public const_list<list_t>
 {
-  typedef TTStrList<item_t> list_t;
   typedef const_list<list_t> parent_t;
 public:
   typedef typename list_t::list_item_type list_item_type;
@@ -793,12 +743,14 @@ public:
 };
 
 // const_strobjlist
-template <typename item_t>
-class ConstStrObjList : public const_list<TTOStringList<item_t> > {
-  typedef TTOStringList<item_t> list_t;
+template <typename list_t>
+class ConstStrObjList : public const_list<list_t>
+{
   typedef const_list<list_t> parent_t;
-public:
   typedef typename list_t::list_item_type list_item_type;
+  typedef typename list_t::string_type list_str_type;
+  typedef typename list_t::object_type list_obj_type;
+public:
 
   ConstStrObjList(const ConstStrObjList &d) : parent_t(d) {}
   ConstStrObjList(list_t &d) : parent_t(d) {}
@@ -807,10 +759,10 @@ public:
     parent_t::operator = (d);
     return *this;
   }
-  typename item_t::object_type& GetObject(size_t i) const {
+  list_obj_type& GetObject(size_t i) const {
     return parent_t::GetObject().GetObject(i);
   }
-  const list_t & GetObject() const { return parent_t::GetObject(); }
+  const list_obj_type & GetObject() const { return parent_t::GetObject(); }
   list_item_type Text(const list_item_type& Sep,
     size_t start=InvalidIndex, size_t end=InvalidIndex) const
   {
@@ -818,37 +770,26 @@ public:
   }
 };
 
-typedef TStrPObjList<olxstr, IEObject*> TStrObjList;
-typedef ConstStrObjList<TPrimitiveStrListData<olxstr,IEObject*> >
-  const_strobjlist;
-typedef TStrPObjList<olxcstr, IEObject*> TCStrObjList;
-typedef ConstStrObjList<TPrimitiveStrListData<olxcstr,IEObject*> >
-  const_cstrobjlist;
-typedef TStrPObjList<olxwstr, IEObject*> TWStrObjList;
-typedef ConstStrObjList<TPrimitiveStrListData<olxwstr,IEObject*> >
-  const_wstrobjlist;
+typedef TStringToList<olxstr, IEObject*> TStrObjList;
+typedef TStringToList<olxcstr, IEObject*> TCStrObjList;
+typedef TStringToList<olxwstr, IEObject*> TWStrObjList;
+typedef ConstStrObjList<TStrObjList> const_strobjlist;
+typedef ConstStrObjList<TCStrObjList> const_cstrobjlist;
+typedef ConstStrObjList<TWStrObjList> const_wstrobjlist;
 
-typedef TTOStringList<TObjectStrListData<olxstr,olxstr> >
-  TStrStrList;
-typedef ConstStrObjList<TObjectStrListData<olxstr,olxstr> >
-  const_strstrlist;
-typedef TTOStringList<TObjectStrListData<olxcstr,olxcstr> >
-  TCStrCStrList;
-typedef 
-  ConstStrObjList<TObjectStrListData<olxcstr,olxcstr> >
-  const_cstrcstrlist;
-typedef TTOStringList<TObjectStrListData<olxwstr,olxwstr> >
-  TWStrWStrList;
-typedef
-  ConstStrObjList<TObjectStrListData<olxwstr,olxwstr> >
-  const_wstrwstrlist;
-
+typedef TStringToList<olxstr, olxstr> TStrStrList;
+typedef ConstStrObjList<TStrStrList> const_strstrlist;
+typedef TStringToList<olxcstr, olxcstr> TCStrCStrList;
+typedef ConstStrObjList<TCStrCStrList> const_cstrcstrlist;
+typedef TStringToList<olxwstr,olxwstr> TWStrWStrList;
+typedef ConstStrObjList<TWStrWStrList> const_wstrwstrlist;
+//
 typedef TTStrList<TSingleStringWrapper<olxstr> > TStrList;
-typedef ConstStrList<TSingleStringWrapper<olxstr> > const_strlist;
+typedef ConstStrList<TStrList> const_strlist;
 typedef TTStrList<TSingleStringWrapper<olxcstr> > TCStrList;
-typedef ConstStrList<TSingleStringWrapper<olxcstr> > const_cstrlist;
+typedef ConstStrList<TCStrList> const_cstrlist;
 typedef TTStrList<TSingleStringWrapper<olxwstr> > TWStrList;
-typedef ConstStrList< TSingleStringWrapper<olxstr> > const_wstrlist;
+typedef ConstStrList<TWStrList> const_wstrlist;
 
 
 EndEsdlNamespace()

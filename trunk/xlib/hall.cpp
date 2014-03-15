@@ -49,7 +49,7 @@ void HallSymbol::init()  {
 
     rot3.AddNew(rotation_id::get(mat3d( 0, 0, 1,   1, 0, 0,   0, 1, 0)), "3*");
     
-    TPtrList<TTypeList<AnAssociation2<int,olxstr> > > rots;
+    TPtrList<TTypeList<olx_pair_t<int,olxstr> > > rots;
     rots << rotx << roty << rotz << rot3;
     for (size_t i=0; i < rots.Count(); i++) {
       for (size_t j=0; j < rots[i]->Count(); j++)
@@ -59,7 +59,7 @@ void HallSymbol::init()  {
     // a-b
     r_dict.Add("2'", rotz1[0].GetA());
     for (size_t i=0; i < trans.Count(); i++)
-      t_dict.Add(trans[i].GetB(), &trans[i].A());
+      t_dict.Add(trans[i].GetB(), &trans[i].a);
   }
 }
 //.............................................................................
@@ -117,7 +117,7 @@ olxstr HallSymbol::FindTR(const vec3d& t, int order) const {
 }
 //.............................................................................
 int HallSymbol::FindR(olxstr& hs, TTypeList<symop>& matrs,
-    const TTypeList<AnAssociation2<int,olxstr> >& rot, bool full) const
+    const TTypeList<olx_pair_t<int,olxstr> >& rot, bool full) const
 {
   int previous = 0;
   for( size_t i=0; i < rot.Count(); i++ )  {
@@ -263,7 +263,7 @@ SymmSpace::Info HallSymbol::Expand_(const olxstr &_hs) const {
       olxstr("Hall symbol: ").quote() << _hs);
   }
   const int ii_id = rotation_id::get(-mat3i().I());
-  const int i_id = r_dict['1'];
+  const int i_id = r_dict.Get('1');
   info.latt = TCLattice::LattForSymbol(
       toks[0].CharAt(info.centrosymmetric ? 1 : 0));
   int previous = 0, dir = 0;

@@ -20,8 +20,8 @@ BeginEsdlNamespace()
 class TEStrBuffer;
 
 class TDataItem: public AReferencible  {
-  TStrPObjList<olxstr,TDataItem*> Items;
-  typedef AnAssociation2<olxstr, size_t> field_t;
+  TStringToList<olxstr, TDataItem*> Items;
+  typedef olx_pair_t<olxstr, size_t> field_t;
   olxstr_dict<field_t, false> Fields;
   olxstr Name, Value;
   TDataItem* Parent;
@@ -35,7 +35,7 @@ protected:
   TDataItem& AddItem(TDataItem& Item);
   olxstr* FieldPtr(const olxstr &Name) {
     const size_t i = Fields.IndexOf(Name);
-    return (i != InvalidIndex) ? &Fields.GetValue(i).A() : NULL;
+    return (i != InvalidIndex) ? &Fields.GetValue(i).a : NULL;
   }
   // to be called from the parser
   void _AddField(const olxstr& name, const olxstr& val) {
@@ -72,11 +72,11 @@ public:
   TDataItem* FindAnyItemi(const olxstr& Name) const;
   // returns an item by name using recursive search within subitems as well
   // as in the current item
-  template <class T> TDataItem* FindItemi(const T& Name) const {
+  template <class T> TDataItem* FindItemi(const T& Name, TDataItem * def=0) const {
     return Items.FindObjecti(Name);
   }
-  template <class T> TDataItem* FindItem(const T& Name) const {
-    return Items.FindObject(Name);
+  template <class T> TDataItem* FindItem(const T& Name, TDataItem * def=0) const {
+    return Items.FindObject(Name, def);
   }
   /* finds and returns specified item, throws an exception if the items
   does not exist.

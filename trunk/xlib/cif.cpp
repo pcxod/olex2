@@ -142,24 +142,28 @@ void TCif::SaveToStrings(TStrList& Strings)  {
   TStrList pivots, endings;
   TXApp& xapp = TXApp::GetInstance();
   olxstr CifCustomisationFN(xapp.GetCifTemplatesDir() + "customisation.xlt");
-  if( TEFile::Exists(CifCustomisationFN) )  {
-    try  {
+  if (TEFile::Exists(CifCustomisationFN)) {
+    try {
       TDataFile df;
-      if( !df.LoadFromXLFile(CifCustomisationFN) )
-        throw TFunctionFailedException(__OlxSourceInfo, "falied to load CIF customisation file");
-      const TDataItem& ist = df.Root().GetItemByName("cif_customisation").GetItemByName("sorting");
+      if (!df.LoadFromXLFile(CifCustomisationFN)) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          "failed to load CIF customisation file");
+      }
+      df.Include(NULL);
+      const TDataItem& ist = df.Root().GetItemByName("cif_customisation")
+        .GetItemByName("sorting");
       const TDataItem& ipv = ist.GetItemByName("pivots");
-      for( size_t i=0; i < ipv.ItemCount(); i++ )
+      for (size_t i=0; i < ipv.ItemCount(); i++)
         pivots.Add(ipv.GetItemByIndex(i).GetValue());
       const TDataItem& ied = ist.GetItemByName("endings");
-      for( size_t i=0; i < ied.ItemCount(); i++ )
+      for (size_t i=0; i < ied.ItemCount(); i++)
         pivots.Add(ied.GetItemByIndex(i).GetValue());
     }
-    catch(const TExceptionBase& e)  {
+    catch(const TExceptionBase& e) {
       throw TFunctionFailedException(__OlxSourceInfo, e);
     }
   }
-  else  {
+  else {
     pivots.Strtok(def_pivots, ',');
     endings.Strtok(def_endings, ',');
   }
@@ -696,7 +700,7 @@ void TCif::Initialize()  {
   // identify EXYZ/EADP
   {
     TAsymmUnit &au = GetAsymmUnit();
-    TPSTypeList<long, TCAtom *> atom_map;
+    sorted::PrimitiveAssociation<long, TCAtom*> atom_map;
     for (size_t i=0; i < au.AtomCount(); i++) {
       TCAtom &a = au.GetAtom(i);
       atom_map.Add(olx_round(a.ccrd().Prod()*1000), &a);
@@ -712,13 +716,13 @@ void TCif::Initialize()  {
         throw TFunctionFailedException(__OlxSourceInfo, "assert");
       if (idx.Count() < 2) continue;
       for (size_t j=0; j < idx.Count(); j++) {
-        if (!a.ccrd().Equals(atom_map.GetObject(idx[j])->ccrd(), 1e-2))
+        if (!a.ccrd().Equals(atom_map.GetValue(idx[j])->ccrd(), 1e-2))
           idx.Delete(j--);
       }
       if (idx.Count() < 2) continue;
       TExyzGroup &g = GetRM().ExyzGroups.New();
       for (size_t j=0; j < idx.Count(); j++)
-        g.Add(*atom_map.GetObject(idx[j])).SetTag(1);
+        g.Add(*atom_map.GetValue(idx[j])).SetTag(1);
     }
   }
 }

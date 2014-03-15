@@ -22,31 +22,33 @@ BeginEsdlNamespace()
    of QS that location will get changed as Swap operations used!
 */
 
-//.............................................................................
-class TPrimitiveComparator  {
+class TPrimitiveComparator {
 public:
+  TPrimitiveComparator() {}
   template <class ComparableA, class ComparableB>
-  static inline int Compare(const ComparableA& A, const ComparableB& B)  {
-    if( olx_ref::get(A) < olx_ref::get(B) )  return -1;
-    if( olx_ref::get(A) > olx_ref::get(B) )  return 1;
+  inline int Compare(const ComparableA& A, const ComparableB& B) const {
+    if (olx_ref::get(A) < olx_ref::get(B))  return -1;
+    if (olx_ref::get(A) > olx_ref::get(B))  return 1;
     return 0;
   }
 };
 //.............................................................................
-class TPointerComparator  {
+class TPointerComparator {
 public:
+  TPointerComparator() {}
   template <class ComparableA, class ComparableB>
-  static inline int Compare(const ComparableA& A, const ComparableB& B)  {
-    if( olx_ptr::get(A) < olx_ptr::get(B) )  return -1;
-    if( olx_ptr::get(A) > olx_ptr::get(B) )  return 1;
+  inline int Compare(const ComparableA& A, const ComparableB& B) const {
+    if (olx_ptr::get(A) < olx_ptr::get(B))  return -1;
+    if (olx_ptr::get(A) > olx_ptr::get(B))  return 1;
     return 0;
   }
 };
 //.............................................................................
-class TComparableComparator  {
+class TComparableComparator {
 public:
+  TComparableComparator() {}
   template <class ComparableA, class ComparableB>
-  static int Compare(const ComparableA& A, const ComparableB& B)  {
+  inline int Compare(const ComparableA& A, const ComparableB& B) const {
     return olx_ref::get(A).Compare(olx_ref::get(B));
   }
 };
@@ -57,9 +59,10 @@ struct FunctionComparator {
     int (Base::*Func)(const ItemClass &a, const ItemClass &b);
     ComparatorMF_(Base& instance,
       int (Base::*func)(const ItemClass &a, const ItemClass &b))
-      :  Instance(instance), Func(func) {}
-    template <typename item_t>
-    int Compare(const item_t &a, const item_t &b) const {
+      :  Instance(instance), Func(func)
+    {}
+    template <typename item_a_t, typename item_b_t>
+    int Compare(const item_a_t &a, const item_b_t &b) const {
       return (Instance.*Func)(olx_ref::get(a), olx_ref::get(b));
     }
   };
@@ -68,19 +71,19 @@ struct FunctionComparator {
     int (Base::*Func)(const ItemClass &a, const ItemClass &b) const;
     ComparatorCMF_(const Base& instance,
       int (Base::*func)(const ItemClass &a, const ItemClass &b) const)
-      :  Instance(instance), Func(func) {}
-    template <typename item_t>
-    int Compare(const item_t &a, const item_t &b) const {
+      :  Instance(instance), Func(func)
+    {}
+    template <typename item_a_t, typename item_b_t>
+    int Compare(const item_a_t &a, const item_b_t &b) const {
       return (Instance.*Func)(olx_ref::get(a), olx_ref::get(b));
     }
   };
   template <typename ItemClass> struct ComparatorSF_ {
     int (*Func)(const ItemClass &a, const ItemClass &b);
-    ComparatorSF_(
-      int (*func)(const ItemClass &a, const ItemClass &b))
+    ComparatorSF_(int (*func)(const ItemClass &a, const ItemClass &b))
       : Func(func)  {}
-    template <typename item_t>
-    int Compare(const item_t &a, const item_t &b) const {
+    template <typename item_a_t, typename item_b_t>
+    int Compare(const item_a_t &a, const item_b_t &b) const {
       return (*Func)(olx_ref::get(a), olx_ref::get(b));
     }
   };
@@ -108,22 +111,43 @@ struct FunctionComparator {
   }
 };
 //.............................................................................
+struct ComplexComparator {
+  template <class Accessor, class Comparator>
+  class TComplexComparator {
+    Accessor acc;
+    Comparator cmp;
+  public:
+    TComplexComparator(const Accessor &acc, const Comparator &cmp)
+      : acc(acc), cmp(cmp)
+    {}
+    template <class ComparableA, class ComparableB>
+    inline int Compare(const ComparableA& A, const ComparableB& B) const {
+      return cmp.Compare(acc(A), acc(B));
+    }
+  };
+
+  template <class Accessor, class Comparator>
+  static TComplexComparator<Accessor, Comparator>
+    Make(const Accessor &acc, const Comparator &cmp) {
+      return TComplexComparator<Accessor, Comparator>(acc, cmp);
+    }
+};
+//.............................................................................
 
 struct ReverseComparator {
   template <class cmp_t> struct ReverseComparator_ {
     const cmp_t &cmp;
     ReverseComparator_(const cmp_t &cmp_) : cmp(cmp_) {}
-    template <typename item_t> int Compare(
-      const item_t &i1, const item_t &i2) const
-    {
+    template <typename item_a_t, typename item_b_t>
+    int Compare(const item_a_t &i1, const item_b_t &i2) const {
       return cmp.Compare(i2, i1);
     }
   };
   template <typename item_t> struct ReverseSF {
     int (*func)(const item_t &, const item_t&);
     ReverseSF(int (*func_)(const item_t &, const item_t&)) : func(func_) {}
-    template <class i_t>
-    int Compare(const i_t &i1, const i_t &i2) const {
+    template <typename item_a_t, typename item_b_t>
+    int Compare(const item_a_t &i1, const item_b_t &i2) const {
       return (*func)(olx_ref::get(i2), olx_ref::get(i1));
     }
   };
@@ -134,8 +158,8 @@ struct ReverseComparator {
       int (base_t::*func_)(const item_t &, const item_t&))
     : instance(instance_), func(func_)
     {}
-    template <class i_t>
-    int Compare(const i_t &i1, const i_t &i2) const {
+    template <typename item_a_t, typename item_b_t>
+    int Compare(const item_a_t &i1, const item_b_t &i2) const {
       return (instance.*func)(olx_ref::get(i2), olx_ref::get(i1));
     }
   };
@@ -146,8 +170,8 @@ struct ReverseComparator {
       int (base_t::*func_)(const item_t &, const item_t&) const)
     : instance(instance_), func(func_)
     {}
-    template <class i_t>
-    int Compare(const i_t &i1, const i_t &i2) const {
+    template <typename item_a_t, typename item_b_t>
+    int Compare(const item_a_t &i1, const item_b_t &i2) const {
       return (instance.*func)(olx_ref::get(i2), olx_ref::get(i1));
     }
   };
@@ -197,65 +221,41 @@ struct SyncSortListener {
 //.............................................................................
 template <class Sorter>
 struct SortInterface {
-  template <class list_t, class accessor_t, class comparator_t,
-            class listener_t>
-  static void Sort(list_t &list, const accessor_t &acc,
-    const comparator_t &cmp, const listener_t &listener)
-  {
-    Sorter::Make(list, acc, cmp, listener).Sort();
-  }
   template <class list_t, class comparator_t, class listener_t>
   static void Sort(list_t &list, const comparator_t& cmp,
     const listener_t& l)
   {
-    
-    Sorter::Make(list,
-      TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
-      cmp, l).Sort();
+    Sorter::Make(list, cmp, l).Sort();
   }
   template <class list_t, class comparator_t>
   static void Sort(list_t &list, const comparator_t &cmp)  {
-    Sorter::Make(list,
-      TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
-      cmp,
-      DummySortListener()).Sort();
+    Sorter::Make(list, cmp, DummySortListener()).Sort();
   }
   template <class list_t>
-  static void Sort(list_t &list)
-  {
-    Sorter::Make(list,
-      TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
-      TComparableComparator(),
-      DummySortListener()).Sort();
+  static void Sort(list_t &list) {
+    Sorter::Make(list, TComparableComparator(), DummySortListener()).Sort();
   }
 
   template <class list_t, class item_t>
   static void SortSF(list_t &list, int (*f)(const item_t&, const item_t&))
   {
-    Sorter::Make(list,
-      TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
-      FunctionComparator::Make(f),
-      DummySortListener()).Sort();
+    Sorter::Make(list, FunctionComparator::Make(f), DummySortListener()).Sort();
   }
   template <class list_t, class base_t, class item_t>
   static void SortMF(list_t &list,
     const base_t &base,
     int (base_t::*f)(const item_t&, const item_t&) const)
   {
-    Sorter::Make(list,
-      TDirectAccessor<typename list_t::InternalAccessor::list_item_type>(),
-      FunctionComparator::MakeConst(base, f),
+    Sorter::Make(list, FunctionComparator::MakeConst(base, f),
       DummySortListener()).Sort();
   }
 };
 struct QuickSorter : public SortInterface<QuickSorter> {
-  template <class list_t, class accessor_t, class comparator_t,
-            class listener_t>
+  template <class list_t, class comparator_t, class listener_t>
   struct QuickSorter_ {
-    QuickSorter_(list_t& list_, const accessor_t &accessor_,
-      const comparator_t& comparator_, const listener_t& listener_)
-      : list(list_), accessor(accessor_), listener(listener_),
-        cmp(comparator_)
+    QuickSorter_(list_t& list_, const comparator_t& comparator_,
+    const listener_t& listener_)
+      : list(list_), listener(listener_), cmp(comparator_)
     {}
     void Sort() {
       size_t cnt = list.list.Count();
@@ -264,9 +264,9 @@ struct QuickSorter : public SortInterface<QuickSorter> {
     }
   protected:
     typename list_t::InternalAccessor list;
-    const accessor_t& accessor;
     const listener_t& listener;
     const comparator_t& cmp;
+    typedef typename list_t::InternalAccessor::list_item_type item_t;
     void DoSort(size_t lo0_, size_t hi0_) {
       typedef AnAssociation3<size_t, size_t, bool> d_t;
       TQueue<d_t> stack;
@@ -275,10 +275,7 @@ struct QuickSorter : public SortInterface<QuickSorter> {
         const d_t tv = stack.Pop();
         const size_t diff = tv.GetB() - tv.GetA();
         if (diff == 1) {
-          if (cmp.Compare(
-            olx_ref::get(accessor(list[tv.GetA()])),
-            olx_ref::get(accessor(list[tv.GetB()]))) > 0)
-          {
+          if (cmp.Compare(list[tv.GetA()], list[tv.GetB()]) > 0) {
             listener.OnSwap(tv.GetA(), tv.GetB());
             list.list.Swap(tv.GetA(), tv.GetB());
           }
@@ -287,16 +284,10 @@ struct QuickSorter : public SortInterface<QuickSorter> {
           size_t pi = tv.GetA() + (diff >> 1);
           if (tv.GetC()) { // try to fix pivot
             size_t inc = (diff >> 2), li = pi - inc, ri = pi + inc;
-            int c1 = cmp.Compare(
-              olx_ref::get(accessor(list[pi])),
-              olx_ref::get(accessor(list[li])));
-            int c2 = cmp.Compare(
-              olx_ref::get(accessor(list[pi])),
-              olx_ref::get(accessor(list[ri])));
+            int c1 = cmp.Compare(list[pi], list[li]);
+            int c2 = cmp.Compare(list[pi], list[ri]);
             if ((c1 > 0 && c2 > 0) || (c1 < 0 && c2 < 0)) {
-              int c3 = cmp.Compare(
-                olx_ref::get(accessor(list[li])),
-                olx_ref::get(accessor(list[ri])));
+              int c3 = cmp.Compare(list[li], list[ri]);
               if (c1 < 0) { // li/ri < mi
                 pi = (c3 < 0 ? ri : li);
               }
@@ -305,15 +296,12 @@ struct QuickSorter : public SortInterface<QuickSorter> {
               }
             }
           }
-          typename accessor_t::return_type mid = accessor(list[pi]);
+          item_t mid = list[pi];
           listener.OnSwap(pi, tv.GetB());
           list.list.Swap(pi, tv.GetB());
           pi = tv.GetA();
           for (size_t i = tv.GetA(); i < tv.GetB(); i++) {
-            if (cmp.Compare(
-              olx_ref::get(accessor(list[i])),
-              olx_ref::get(mid)) <= 0)
-            {
+            if (cmp.Compare(list[i], mid) <= 0) {
               listener.OnSwap(i, pi);
               list.list.Swap(i, pi);
               pi++;
@@ -333,34 +321,27 @@ struct QuickSorter : public SortInterface<QuickSorter> {
       }
     }
   };
-  template <class list_t, class accessor_t, class comparator_t,
-            class listener_t> static
-  QuickSorter_ <list_t,accessor_t,comparator_t,listener_t> Make(
-    list_t& list, const accessor_t &acc, const comparator_t& cmp,
-    const listener_t& listener)
-  {
-    return QuickSorter_<list_t,accessor_t,comparator_t,listener_t>(
-      list, acc, cmp, listener);
+  template <class list_t, class comparator_t, class listener_t> 
+  static QuickSorter_ <list_t,comparator_t,listener_t>
+  Make(list_t& list, const comparator_t& cmp, const listener_t& listener) {
+    return QuickSorter_<list_t,comparator_t,listener_t>(
+      list, cmp, listener);
   }
 };
 //.............................................................................
 struct BubbleSorter : public SortInterface<BubbleSorter> {
-  template <class list_t, class accessor_t,
-            class comparator_t, class listener_t>
-  struct BubbleSorter_  {
-    BubbleSorter_(list_t &list_, const accessor_t &accessor_,
-      const comparator_t &cmp_, const listener_t &listener_)
-      : list(list_), accessor(accessor_), cmp(cmp_),
-        listener(listener_)  {}
+  template <class list_t, class comparator_t, class listener_t>
+  struct BubbleSorter_ {
+    BubbleSorter_(list_t &list_, const comparator_t &cmp_,
+      const listener_t &listener_)
+      : list(list_), cmp(cmp_), listener(listener_)
+    {}
     void Sort()  {
       size_t lc = list.list.Count();
       while (lc > 0) {
         size_t nlc = 0;
         for (size_t i=0; i < lc-1; i++) {
-          if (cmp.Compare(
-            olx_ref::get(accessor(list[i+1])),
-            olx_ref::get(accessor(list[i]))) < 0)
-          {
+          if (cmp.Compare(list[i+1], list[i]) < 0) {
             list.list.Swap(i+1, i);
             listener.OnSwap(i+1, i);
             nlc = i+1;
@@ -371,48 +352,35 @@ struct BubbleSorter : public SortInterface<BubbleSorter> {
     }
   protected:
     typename list_t::InternalAccessor list;
-    const accessor_t &accessor;
     const comparator_t &cmp;
     const listener_t &listener;
   };
-  template <class list_t, class accessor_t,
-            class comparator_t, class listener_t> static
-  BubbleSorter_<list_t,accessor_t,comparator_t,listener_t> Make(
-    list_t &list, const accessor_t &accessor,
-    const comparator_t &cmp, const listener_t &listener)
-  {
-    return BubbleSorter_<list_t,accessor_t,comparator_t,listener_t>(
-      list, accessor, cmp, listener);
+  template <class list_t, class comparator_t, class listener_t>
+  static BubbleSorter_<list_t,comparator_t,listener_t>
+  Make(list_t &list, const comparator_t &cmp, const listener_t &listener) {
+    return BubbleSorter_<list_t,comparator_t,listener_t>(
+      list, cmp, listener);
   }
 };
 //.............................................................................
-struct MoveSorter : public SortInterface<MoveSorter> {
-  template <class list_t, class accessor_t,
-  class comparator_t, class listener_t>
-  struct MoveSorter_  {
-    typedef typename accessor_t::return_type item_t;
-    MoveSorter_(list_t &list_, const accessor_t &accessor_,
-    const comparator_t &cmp_, const listener_t &listener_)
-    : list(list_), accessor(accessor_), cmp(cmp_),
-      listener(listener_)
+struct InsertSorter : public SortInterface<InsertSorter> {
+  template <class list_t, class comparator_t, class listener_t>
+  struct InsertSorter_ {
+    InsertSorter_(list_t &list_, const comparator_t &cmp_,
+      const listener_t &listener_)
+    : list(list_), cmp(cmp_), listener(listener_)
     {}
     size_t findIndex(size_t sz) {
-      if (cmp.Compare(olx_ref::get(list[sz]),
-          olx_ref::get(accessor(list[0]))) <= 0)
-      {
+      if (cmp.Compare(list[sz], list[0]) <= 0) {
         return 0;
       }
-      if (cmp.Compare(olx_ref::get(list[sz]),
-          olx_ref::get(accessor(list[sz-1]))) >= 0)
-      {
+      if (cmp.Compare(list[sz], list[sz-1]) >= 0) {
         return sz;
       }
       size_t from = 0, to = sz-1;
-      while (true) {
-        if ((to-from) == 1) return to;
+      while ((to - from) != 1) {
         const size_t index = from + (to-from) / 2;
-        const int cr = cmp.Compare(olx_ref::get(list[index]),
-          olx_ref::get(accessor(list[sz])));
+        const int cr = cmp.Compare(list[index], list[sz]);
         if (cr < 0)
           from = index;
         else if (cr > 0)
@@ -420,14 +388,12 @@ struct MoveSorter : public SortInterface<MoveSorter> {
         else
           return index;
       }
-      return from;
+      return to;
     }
     void Sort() {
       size_t lc = list.list.Count();
       if (lc < 2) return;
-      if (cmp.Compare(olx_ref::get(list[0]),
-        olx_ref::get(accessor(list[1]))) > 0)
-      {
+      if (cmp.Compare(list[0], list[1]) > 0) {
         list.list.Move(1, 0);
         listener.OnMove(1, 0);
       }
@@ -443,18 +409,14 @@ struct MoveSorter : public SortInterface<MoveSorter> {
     }
   protected:
     typename list_t::InternalAccessor list;
-    const accessor_t &accessor;
     const comparator_t &cmp;
     const listener_t &listener;
   };
-  template <class list_t, class accessor_t,
-  class comparator_t, class listener_t> static
-    MoveSorter_<list_t, accessor_t, comparator_t, listener_t> Make(
-    list_t &list, const accessor_t &accessor,
-    const comparator_t &cmp, const listener_t &listener)
-  {
-      return MoveSorter_<list_t, accessor_t, comparator_t, listener_t>(
-        list, accessor, cmp, listener);
+  template <class list_t, class comparator_t, class listener_t>
+  static InsertSorter_<list_t, comparator_t, listener_t>
+   Make(list_t &list, const comparator_t &cmp, const listener_t &listener) {
+      return InsertSorter_<list_t, comparator_t, listener_t>(
+        list, cmp, listener);
   }
 };
 //.............................................................................

@@ -343,7 +343,7 @@ public:
 };
 
   typedef TTTable< TStrList > TTable;
-  typedef TTTable< TStrPObjList<olxstr,void*> > TETable;
+  typedef TTTable< TStringToList<olxstr,void*> > TETable;
 
 EndEsdlNamespace()
 #endif

@@ -150,7 +150,7 @@ ConstArrayList<size_t> alg::find_hetero_indices(const TCAtomPList &atoms,
 }
 //.............................................................................
 double alg::rate_envi(const TUnitCell &uc, const vec3d& fcrd, double r) {
-  TArrayList<AnAssociation2<TCAtom const*, vec3d> > res;
+  TArrayList<olx_pair_t<TCAtom const*, vec3d> > res;
   uc.FindInRangeAC(fcrd, r, res);
   const vec3d center = uc.GetLattice().GetAsymmUnit().Orthogonalise(fcrd);
   for (size_t j=0; j < res.Count(); j++) {
@@ -706,10 +706,10 @@ bool fragments::fragment::is_flat() const {
     return true;
   }
   else { 
-    TArrayList<AnAssociation2<vec3d, double> > points(crds.Count());
+    TArrayList<olx_pair_t<vec3d, double> > points(crds.Count());
     for (size_t i=0; i < crds.Count(); i++) {
-      points[i].A() = crds[i];
-      points[i].B() = 1;
+      points[i].a = crds[i];
+      points[i].b = 1;
     }
     vec3d center;
     rmsd = TSPlane::CalcPlane(points, n, center, plane_best);
