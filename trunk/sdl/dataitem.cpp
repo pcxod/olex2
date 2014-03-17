@@ -92,7 +92,7 @@ TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
   for( size_t i=0; i < SL.Count(); i++ )  {
     root = root->FindItem(SL[i]);
     if( root == NULL )  {
-      if( Log != NULL )  
+      if( Log != NULL )
         Log->Add("Unresolved reference: ") << DotName;
       break;
     }
@@ -117,7 +117,7 @@ olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName)  {
 }
 //..............................................................................
 TDataItem *TDataItem::FindAnyItem(const olxstr& Name) const {
-  TDataItem *DI = Items.FindObject(Name, NULL);
+  TDataItem *DI = FindItem(Name);
   if (DI == NULL) {
     for (size_t i=0; i < ItemCount(); i++) {
       DI = GetItemByIndex(i).FindAnyItem(Name);
@@ -128,7 +128,7 @@ TDataItem *TDataItem::FindAnyItem(const olxstr& Name) const {
 }
 //..............................................................................
 TDataItem *TDataItem::FindAnyItemi(const olxstr &Name) const {
-  TDataItem *DI = Items.FindObjecti(Name);
+  TDataItem *DI = FindItemi(Name);
   if (DI == NULL) {
     for (size_t i=0; i < ItemCount(); i++) {
       DI = GetItemByIndex(i).FindAnyItemi(Name);

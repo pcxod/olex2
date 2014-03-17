@@ -44,7 +44,6 @@ public:
 template <class T> class TTStrList : public IEObject {
 public:
   typedef typename T::string_type string_type;
-  typedef typename T::string_type list_item_type;
 protected:
   TPtrList<T> Strings;
   template <class StrClass>
@@ -575,11 +574,10 @@ template <class SC, class OT> class TStringToList
   : public TTStrList<TObjectStrListData<SC, OT> >
 {
   typedef TTStrList<TObjectStrListData<SC, OT> > PList;
-  typedef typename ConstStrObjList<TStringToList<SC, OT> > const_list;
 public:
   typedef TObjectStrListData<SC, OT> item_t;
-  typedef typename SC string_type;
-  typedef typename OT object_type;
+  typedef SC string_type;
+  typedef OT object_type;
   // creates empty list
   TStringToList()  {}
   TStringToList(size_t count)
@@ -598,13 +596,13 @@ public:
     for (size_t i=0; i < list.Count(); i++)
       Add(list[i], list.GetObject(i));
   }
-  TStringToList(const const_list &list) {
+  TStringToList(const ConstStrObjList<TStringToList<SC, OT> > &list) {
     PList::TakeOver(list.Release(), true);
   }
   // creates a list with strtok entries in it
   TStringToList(const string_type& string, const string_type& sep,
     TTypeList<object_type>* objects=NULL)
-    : TTStrList<GC>(string, sep)
+    : TTStrList<item_t>(string, sep)
   {
     if (objects != NULL) {
       for (size_t i=0; i < objects->Count(); i++) {
@@ -616,7 +614,7 @@ public:
   // creates a list with strtok entries in it
   TStringToList(const PList& strings, char sep,
     TTypeList<object_type>* objects = NULL)
-    : TTStrList<GC>(strings, sep)
+    : TTStrList<item_t>(strings, sep)
   {
     if (objects != NULL) {
       for (size_t i=0; i < objects->Count(); i++) {
@@ -635,12 +633,12 @@ public:
     return SL;
   }
 
-  const_list SubListFrom(size_t offset) const {
+  ConstStrObjList<TStringToList<SC, OT> > SubListFrom(size_t offset) const {
     TStringToList SL;
     return SubList(offset, PList::Count()-offset, SL);
   }
 
-  const_list SubListTo(size_t to) const {
+  ConstStrObjList<TStringToList<SC, OT> > SubListTo(size_t to) const {
     TStringToList SL;
     return SubList(0, to, SL);
   }
@@ -691,7 +689,7 @@ public:
     return Assign(list);
   }
 
-  TStringToList& operator = (const const_list &list) {
+  TStringToList& operator = (const ConstStrObjList<TStringToList<SC, OT> > &list) {
     PList::TakeOver(list.Release(), true);
     return *this;
   }
@@ -704,7 +702,24 @@ public:
   }
 
   template <class StrClass>
-  const object_type& FindObject(const StrClass& Name,
+  object_type FindPointer(const StrClass& Name,
+    object_type def) const
+  {
+    size_t in = PList::IndexOf(Name);
+    return (in != InvalidIndex) ? PList::Strings[in]->Object : def;
+  }
+
+  /* This function is to be used with pointers */
+  template <class StrClass>
+  object_type FindPointeri(const StrClass& Name,
+    object_type def) const
+  {
+    size_t in = PList::IndexOfi(Name);
+    return (in != InvalidIndex) ? PList::Strings[in]->Object : def;
+  }
+
+  template <class StrClass>
+  const object_type &FindObject(const StrClass& Name,
     const object_type &def) const
   {
     size_t in = PList::IndexOf(Name);
@@ -712,8 +727,8 @@ public:
   }
 
   template <class StrClass>
-  object_type& FindObjecti(const StrClass& Name,
-    const object_type &def = *(object_type*)0) const
+  const object_type &FindObjecti(const StrClass& Name,
+    const object_type &def) const
   {
     size_t in = PList::IndexOfi(Name);
     return (in != InvalidIndex) ? PList::Strings[in]->Object : def;

@@ -72,11 +72,15 @@ public:
   TDataItem* FindAnyItemi(const olxstr& Name) const;
   // returns an item by name using recursive search within subitems as well
   // as in the current item
-  template <class T> TDataItem* FindItemi(const T& Name, TDataItem * def=0) const {
-    return Items.FindObjecti(Name);
+  template <class T> TDataItem* FindItemi(const T& Name,
+    TDataItem *def=0) const
+  {
+    return Items.FindPointeri(Name, def);
   }
-  template <class T> TDataItem* FindItem(const T& Name, TDataItem * def=0) const {
-    return Items.FindObject(Name, def);
+  template <class T> TDataItem* FindItem(const T& Name,
+    TDataItem *def=0) const
+  {
+    return Items.FindPointer(Name, def);
   }
   /* finds and returns specified item, throws an exception if the items
   does not exist.

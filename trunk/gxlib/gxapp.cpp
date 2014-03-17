@@ -2690,13 +2690,13 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
 //..............................................................................
 void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
   olxstr str = Where.ToLowerCase();
-  if( str.FirstIndexOf("xatom") != InvalidIndex || str.FirstIndexOf("satom") != InvalidIndex)  {
+  if (str.Contains("xatom") || str.Contains("satom")) {
     NewLogEntry(logError) << "SelectBonds: xatom/satom are not allowed here";
     return;
   }
-  if( str.FirstIndexOf("sel") != InvalidIndex )  {
-    if( FGlRender->GetSelection().Count() != 1 ||
-        !EsdlInstanceOf(FGlRender->GetSelection()[0], TXBond) )
+  if (str.Contains(" sel.")) {
+    if (FGlRender->GetSelection().Count() != 1 ||
+      !EsdlInstanceOf(FGlRender->GetSelection()[0], TXBond))
     {
       NewLogEntry(logError) << "SelectBonds: please select one bond only";
       return;
@@ -2707,13 +2707,13 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
   TTGlGroupEvaluatorFactory *sel = (TTGlGroupEvaluatorFactory*)rf.BindingFactory("sel");
   sel->SetTGlGroup(&FGlRender->GetSelection());
   TSyntaxParser SyntaxParser(&rf, Where);
-  if( !SyntaxParser.Errors().Count() )  {
+  if (!SyntaxParser.Errors().Count()) {
     BondIterator bi(*this);
-    while( bi.HasNext() )  {
+    while (bi.HasNext()) {
       TXBond& xb = bi.Next();
-      if( xb.IsSelected() )  continue;
+      if (xb.IsSelected()) continue;
       xbond->provider->SetTXBond(&xb);
-      if( SyntaxParser.Evaluate() )  
+      if (SyntaxParser.Evaluate())
         GetRender().Select(xb);
     }
   }
@@ -2723,16 +2723,16 @@ void TGXApp::SelectBondsWhere(const olxstr &Where, bool Invert)  {
 //..............................................................................
 void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
   olxstr str = Where.ToLowerCase();
-  if( str.FirstIndexOf("xbond") != InvalidIndex || str.FirstIndexOf("satom") != InvalidIndex )  {
+  if (str.Contains("xbond") || str.Contains("sbond")) {
     NewLogEntry(logError) << "SelectAtoms: xbond/satom are not allowed here";
     return;
   }
-  if( str.FirstIndexOf("sel") != InvalidIndex )  {
-    if( FGlRender->GetSelection().Count() != 1 )  {
+  if (str.Contains(" sel.")) {
+    if (FGlRender->GetSelection().Count() != 1) {
       NewLogEntry(logError) << "SelectAtoms: please select one atom only";
       return;
     }
-    if( !EsdlInstanceOf(FGlRender->GetSelection()[0], TXAtom) )  {
+    if (!EsdlInstanceOf(FGlRender->GetSelection()[0], TXAtom)) {
       NewLogEntry(logError) << "SelectAtoms: please select an atom";
       return;
     }
@@ -2742,13 +2742,13 @@ void TGXApp::SelectAtomsWhere(const olxstr &Where, bool Invert)  {
   TTGlGroupEvaluatorFactory *sel = (TTGlGroupEvaluatorFactory*)rf.BindingFactory("sel");
   sel->SetTGlGroup(&FGlRender->GetSelection());
   TSyntaxParser SyntaxParser(&rf, Where);
-  if( !SyntaxParser.Errors().Count() )  {
+  if (!SyntaxParser.Errors().Count())  {
     AtomIterator ai(*this);
-    while( ai.HasNext() )  {
+    while (ai.HasNext())  {
       TXAtom& xa = ai.Next();
-      if( xa.IsSelected() )  continue;
+      if (xa.IsSelected())  continue;
       xatom->provider->SetTXAtom(&xa);
-      if( SyntaxParser.Evaluate() )  
+      if (SyntaxParser.Evaluate())
         GetRender().Select(xa);
     }
   }
