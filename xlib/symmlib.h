@@ -322,7 +322,7 @@ public:
     return *Lattices.GetObject(l);
   }
   TCLattice* FindLattice(const olxstr& Symbol) const {
-    return Lattices.FindObjecti(Symbol);
+    return Lattices.FindPointeri(Symbol, NULL);
   }
 
   size_t PointGroupCount() const {  return PointGroups.Count();  }
@@ -333,7 +333,7 @@ public:
     return *BravaisLattices.GetObject(i);
   }
   TBravaisLattice *FindBravaisLattice(const olxstr& Name) const {
-    return BravaisLattices.FindObjecti(Name);
+    return BravaisLattices.FindPointeri(Name, NULL);
   }
 
   template <typename MatList> void ExpandLatt(smatd_list& out,

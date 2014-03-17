@@ -53,7 +53,6 @@ MAINICON           ICON         "olex2.ico"
         VALUE "Translation", 0x809, 1252
     END
  END
-END
 
 
 #ifdef APSTUDIO_INVOKED
@@ -62,13 +61,13 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE  
-BEGIN
+1 TEXTINCLUDE
+ BEGIN
     "resource.h\0"
     "\0"
-END
+ END
 
-2 TEXTINCLUDE  
+2 TEXTINCLUDE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"

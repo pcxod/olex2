@@ -26,11 +26,11 @@
 
 #undef GetObject
 
-class TAU_SfacSorter  {
+class TAU_SfacSorter {
 public:
   template <class item_t>
   static int Compare(const item_t& s1, const item_t &s2) {
-    returm olx_cmp(olx_ptr:get(s1)->GetMr(), olx_ptr:get(s2)->GetMr());
+    return olx_cmp(olx_ptr::get(s1)->GetMr(), olx_ptr::get(s2)->GetMr());
   }
 };
 
@@ -39,7 +39,7 @@ const olxstr TAsymmUnit::IdName("catom");
 TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, 0))),
   OnSGChange(Actions.New("AU_SG_CHANGE"))
 {
-  Lattice   = L;
+  Lattice = L;
   Latt = -1;
   Assigning = false;
   Z = 1;
