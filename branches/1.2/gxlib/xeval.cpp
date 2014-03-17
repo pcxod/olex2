@@ -75,14 +75,6 @@ TTGlGroupEvaluatorFactory::TTGlGroupEvaluatorFactory(
 }
 //.............................................................................
 TXFactoryRegister::TXFactoryRegister()  {
-  TTBasicAtomInfoEvaluatorFactory *tTBasicAtomInfoEvaluatorFactory =
-    new TTBasicAtomInfoEvaluatorFactory(this, new TTBasicAtomInfoDataProvider);
-  Factories.Add("TTBasicAtomInfoEvaluatorFactory", tTBasicAtomInfoEvaluatorFactory);
-  FactoryMap.Add("bai", tTBasicAtomInfoEvaluatorFactory);
-  TTSAtom_EvaluatorFactory *tTSAtom_EvaluatorFactory =
-    new TTSAtom_EvaluatorFactory(this, new TTSAtom_DataProvider);
-  Factories.Add("TTSAtom_EvaluatorFactory", tTSAtom_EvaluatorFactory);
-  FactoryMap.Add("SAtom", tTSAtom_EvaluatorFactory);
   TTXAtom_EvaluatorFactory *tTXAtomEvaluatorFactory =
     new TTXAtom_EvaluatorFactory(this, new TTXAtom_DataProvider);
   Factories.Add("TTXAtomEvaluatorFactory", tTXAtomEvaluatorFactory);
